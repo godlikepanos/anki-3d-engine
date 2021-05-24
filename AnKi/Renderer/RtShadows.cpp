@@ -280,6 +280,9 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 		rpass.newDependency(RenderPassDependency(m_runCtx.m_prevHistoryLengthRt, TextureUsageBit::SAMPLED_TRACE_RAYS));
 		rpass.newDependency(
 			RenderPassDependency(m_runCtx.m_currentHistoryLengthRt, TextureUsageBit::IMAGE_TRACE_RAYS_WRITE));
+
+		rpass.newDependency(RenderPassDependency(ctx.m_clusteredShading.m_clustersBufferHandle,
+												 BufferUsageBit::STORAGE_TRACE_RAYS_READ));
 	}
 
 	// Denoise pass horizontal

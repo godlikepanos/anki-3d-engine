@@ -279,18 +279,32 @@ inline RenderTargetHandle RenderGraphDescription::newRenderTarget(const RenderTa
 	return out;
 }
 
-inline BufferHandle RenderGraphDescription::importBuffer(BufferPtr buff, BufferUsageBit usage)
+inline BufferHandle RenderGraphDescription::importBuffer(BufferPtr buff, BufferUsageBit usage, PtrSize offset,
+														 PtrSize range)
 {
+	// Checks
+	if(range == MAX_PTR_SIZE)
+	{
+		ANKI_ASSERT(offset < buff->getSize());
+	}
+	else
+	{
+		ANKI_ASSERT((offset + range) <= buff->getSize());
+	}
+
 	for(const Buffer& bb : m_buffers)
 	{
 		(void)bb;
-		ANKI_ASSERT(bb.m_importedBuff != buff && "Already imported");
+		ANKI_ASSERT((bb.m_importedBuff != buff || !bufferRangeOverlaps(bb.m_offset, bb.m_range, offset, range))
+					&& "Range already imported");
 	}
 
 	Buffer& b = *m_buffers.emplaceBack(m_alloc);
 	b.setName(buff->getName());
 	b.m_usage = usage;
 	b.m_importedBuff = buff;
+	b.m_offset = offset;
+	b.m_range = range;
 
 	BufferHandle out;
 	out.m_idx = m_buffers.getSize() - 1;

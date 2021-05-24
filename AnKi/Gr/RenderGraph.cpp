@@ -41,6 +41,8 @@ class RenderGraph::Buffer
 public:
 	BufferUsageBit m_usage;
 	BufferPtr m_buffer; ///< Hold a reference.
+	PtrSize m_offset;
+	PtrSize m_range;
 };
 
 class RenderGraph::AS
@@ -724,6 +726,8 @@ RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphDescription& 
 		ctx->m_buffers[buffIdx].m_usage = descr.m_buffers[buffIdx].m_usage;
 		ANKI_ASSERT(descr.m_buffers[buffIdx].m_importedBuff.isCreated());
 		ctx->m_buffers[buffIdx].m_buffer = descr.m_buffers[buffIdx].m_importedBuff;
+		ctx->m_buffers[buffIdx].m_offset = descr.m_buffers[buffIdx].m_offset;
+		ctx->m_buffers[buffIdx].m_range = descr.m_buffers[buffIdx].m_range;
 	}
 
 	// AS
@@ -1266,8 +1270,8 @@ void RenderGraph::run() const
 		}
 		for(const BufferBarrier& barrier : batch.m_bufferBarriersBefore)
 		{
-			cmdb->setBufferBarrier(m_ctx->m_buffers[barrier.m_idx].m_buffer, barrier.m_usageBefore,
-								   barrier.m_usageAfter, 0, MAX_PTR_SIZE);
+			const Buffer& b = m_ctx->m_buffers[barrier.m_idx];
+			cmdb->setBufferBarrier(b.m_buffer, barrier.m_usageBefore, barrier.m_usageAfter, b.m_offset, b.m_range);
 		}
 		for(const ASBarrier& barrier : batch.m_asBarriersBefore)
 		{
@@ -1682,8 +1686,8 @@ Error RenderGraph::dumpDependencyDotFile(const RenderGraphDescription& descr, co
 	slist.pushBackSprintf("}");
 
 	File file;
-	ANKI_CHECK(
-		file.open(StringAuto(alloc).sprintf("%s/rgraph_%u.dot", &path[0], m_version).toCString(), FileOpenFlag::WRITE));
+	ANKI_CHECK(file.open(StringAuto(alloc).sprintf("%s/rgraph_%05u.dot", &path[0], m_version).toCString(),
+						 FileOpenFlag::WRITE));
 	for(const String& s : slist)
 	{
 		ANKI_CHECK(file.writeText("%s", &s[0]));

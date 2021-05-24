@@ -136,6 +136,8 @@ public:
 	StagingGpuMemoryToken m_clustersToken;
 	void* m_clustersAddress = nullptr;
 
+	BufferHandle m_clustersBufferHandle; ///< To track dependencies. Don't track all tokens, not worth it.
+
 	TextureViewPtr m_diffuseDecalTextureView;
 	TextureViewPtr m_specularRoughnessDecalTextureView;
 };

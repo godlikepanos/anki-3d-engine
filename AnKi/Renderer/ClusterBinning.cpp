@@ -53,6 +53,12 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 {
 	m_runCtx.m_ctx = &ctx;
 
+	writeClustererBuffers(ctx);
+
+	ctx.m_clusteredShading.m_clustersBufferHandle = ctx.m_renderGraphDescr.importBuffer(
+		ctx.m_clusteredShading.m_clustersToken.m_buffer, BufferUsageBit::NONE,
+		ctx.m_clusteredShading.m_clustersToken.m_offset, ctx.m_clusteredShading.m_clustersToken.m_range);
+
 	const RenderQueue& rqueue = *m_runCtx.m_ctx->m_renderQueue;
 	if(ANKI_LIKELY(rqueue.m_pointLights.getSize() || rqueue.m_spotLights.getSize() || rqueue.m_decals.getSize()
 				   || rqueue.m_reflectionProbes.getSize() || rqueue.m_fogDensityVolumes.getSize()
@@ -66,9 +72,10 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 				static_cast<ClusterBinning*>(rgraphCtx.m_userData)->run(rgraphCtx);
 			},
 			this, 0);
-	}
 
-	writeClustererBuffers(ctx);
+		pass.newDependency(
+			RenderPassDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::STORAGE_COMPUTE_WRITE));
+	}
 }
 
 void ClusterBinning::run(RenderPassWorkContext& rgraphCtx)

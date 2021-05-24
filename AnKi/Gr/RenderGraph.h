@@ -511,7 +511,7 @@ public:
 	RenderTargetHandle newRenderTarget(const RenderTargetDescription& initInf);
 
 	/// Import a buffer.
-	BufferHandle importBuffer(BufferPtr buff, BufferUsageBit usage);
+	BufferHandle importBuffer(BufferPtr buff, BufferUsageBit usage, PtrSize offset = 0, PtrSize range = MAX_PTR_SIZE);
 
 	/// Import an AS.
 	AccelerationStructureHandle importAccelerationStructure(AccelerationStructurePtr as,
@@ -554,6 +554,8 @@ private:
 	public:
 		BufferUsageBit m_usage;
 		BufferPtr m_importedBuff;
+		PtrSize m_offset;
+		PtrSize m_range;
 	};
 
 	class AS : public Resource
@@ -569,6 +571,24 @@ private:
 	DynamicArray<Buffer> m_buffers;
 	DynamicArray<AS> m_as;
 	Bool m_gatherStatistics = false;
+
+	/// Return true if 2 buffer ranges overlap.
+	static Bool bufferRangeOverlaps(PtrSize offsetA, PtrSize rangeA, PtrSize offsetB, PtrSize rangeB)
+	{
+		ANKI_ASSERT(rangeA > 0 && rangeB > 0);
+		if(rangeA == MAX_PTR_SIZE || rangeB == MAX_PTR_SIZE)
+		{
+			return true;
+		}
+		else if(offsetA <= offsetB)
+		{
+			return offsetA + rangeA >= offsetB;
+		}
+		else
+		{
+			return offsetB + rangeB >= offsetA;
+		}
+	}
 };
 
 /// Statistics.

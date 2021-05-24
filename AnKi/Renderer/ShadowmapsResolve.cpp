@@ -62,9 +62,13 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 		[](RenderPassWorkContext& rgraphCtx) { static_cast<ShadowmapsResolve*>(rgraphCtx.m_userData)->run(rgraphCtx); },
 		this, 0);
 
-	rpass.newDependency({m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
-	rpass.newDependency({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_COMPUTE});
-	rpass.newDependency({m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::SAMPLED_COMPUTE});
+	rpass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
+	rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_COMPUTE));
+	rpass.newDependency(
+		RenderPassDependency(m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::SAMPLED_COMPUTE));
+
+	rpass.newDependency(
+		RenderPassDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::STORAGE_COMPUTE_READ));
 }
 
 void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx)
