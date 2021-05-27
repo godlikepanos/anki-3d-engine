@@ -22,7 +22,7 @@ void MicroCommandBuffer::destroy()
 
 void MicroCommandBuffer::reset()
 {
-	ANKI_TRACE_SCOPED_EVENT(GR_COMMAND_BUFFER_RESET);
+	ANKI_TRACE_SCOPED_EVENT(VK_COMMAND_BUFFER_RESET);
 
 	ANKI_ASSERT(m_refcount.load() == 0);
 	ANKI_ASSERT(!m_fence.isCreated() || m_fence->done());
@@ -30,6 +30,7 @@ void MicroCommandBuffer::reset()
 	for(GrObjectType type : EnumIterable<GrObjectType>())
 	{
 		m_objectRefs[type].destroy(m_fastAlloc);
+		++i;
 	}
 
 	m_fastAlloc.getMemoryPool().reset();
@@ -53,8 +54,7 @@ void CommandBufferThreadAllocator::destroyList(IntrusiveList<MicroCommandBuffer>
 {
 	while(!list.isEmpty())
 	{
-		MicroCommandBuffer* ptr = &list.getFront();
-		list.popFront();
+		MicroCommandBuffer* ptr = list.popFront();
 		ptr->destroy();
 		getAllocator().deleteInstance(ptr);
 #if ANKI_EXTRA_CHECKS
@@ -99,22 +99,22 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 	const Bool smallBatch = !!(cmdbFlags & CommandBufferFlag::SMALL_BATCH);
 	CmdbType& type = m_types[secondLevel][smallBatch];
 
-	// Move the deleted to (possibly) in-use
+	// Move the deleted to (possibly) in-use or ready
 	{
 		LockGuard<Mutex> lock(type.m_deletedMtx);
 
 		while(!type.m_deletedCmdbs.isEmpty())
 		{
-			MicroCommandBuffer* ptr = &type.m_deletedCmdbs.getFront();
-			type.m_deletedCmdbs.popFront();
+			MicroCommandBuffer* ptr = type.m_deletedCmdbs.popFront();
 
 			if(secondLevel)
 			{
-				type.m_readyCmdbs.pushBack(ptr);
+				type.m_readyCmdbs.pushFront(ptr);
+				ptr->reset();
 			}
 			else
 			{
-				type.m_inUseCmdbs.pushBack(ptr);
+				type.m_inUseCmdbs.pushFront(ptr);
 			}
 		}
 	}
@@ -125,28 +125,35 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 	{
 		// Primary
 
-		IntrusiveList<MicroCommandBuffer> inUseCmdbs; // Push to temporary
+		// Try to reuse a ready buffer
+		if(!type.m_readyCmdbs.isEmpty())
+		{
+			out = type.m_readyCmdbs.popFront();
+		}
 
+		// Do a sweep and move in-use buffers to ready
+		IntrusiveList<MicroCommandBuffer> inUseCmdbs; // Push to temporary because we are iterating
 		while(!type.m_inUseCmdbs.isEmpty())
 		{
-			MicroCommandBuffer* mcmdb = &type.m_inUseCmdbs.getFront();
-			type.m_inUseCmdbs.popFront();
+			MicroCommandBuffer* inUseCmdb = type.m_inUseCmdbs.popFront();
 
-			if(!mcmdb->m_fence.isCreated() || mcmdb->m_fence->done())
+			if(!inUseCmdb->m_fence.isCreated() || inUseCmdb->m_fence->done())
 			{
-				// Can re-use it
+				// It's ready
+
 				if(out)
 				{
-					inUseCmdbs.pushBack(mcmdb);
+					type.m_readyCmdbs.pushFront(inUseCmdb);
+					inUseCmdb->reset();
 				}
 				else
 				{
-					out = mcmdb;
+					out = inUseCmdb;
 				}
 			}
 			else
 			{
-				inUseCmdbs.pushBack(mcmdb);
+				inUseCmdbs.pushBack(inUseCmdb);
 			}
 		}
 
@@ -155,12 +162,13 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 	}
 	else
 	{
+		// Secondary
+
 		ANKI_ASSERT(type.m_inUseCmdbs.isEmpty());
 
 		if(!type.m_readyCmdbs.isEmpty())
 		{
-			out = &type.m_readyCmdbs.getFront();
-			type.m_readyCmdbs.popFront();
+			out = type.m_readyCmdbs.popFront();
 		}
 	}
 
@@ -174,7 +182,7 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 		ci.level = (secondLevel) ? VK_COMMAND_BUFFER_LEVEL_SECONDARY : VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 		ci.commandBufferCount = 1;
 
-		ANKI_TRACE_INC_COUNTER(VK_CMD_BUFFER_CREATE, 1);
+		ANKI_TRACE_INC_COUNTER(VK_COMMAND_BUFFER_CREATE, 1);
 		VkCommandBuffer cmdb;
 		ANKI_VK_CHECK(vkAllocateCommandBuffers(m_factory->m_dev, &ci, &cmdb));
 

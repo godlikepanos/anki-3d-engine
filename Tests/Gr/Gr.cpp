@@ -294,7 +294,7 @@ static StagingGpuMemoryManager* stagingMem = nullptr;
 	ConfigSet cfg = DefaultConfigSet::get(); \
 	cfg.set("width", WIDTH); \
 	cfg.set("height", HEIGHT); \
-	cfg.set("gr_debugContext", true); \
+	cfg.set("gr_validation", true); \
 	cfg.set("gr_vsync", false); \
 	cfg.set("gr_rayTracing", true); \
 	cfg.set("gr_debugMarkers", true); \

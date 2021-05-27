@@ -225,7 +225,7 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 	// Layers
 	static Array<const char*, 1> LAYERS = {"VK_LAYER_KHRONOS_validation"};
 	Array<const char*, LAYERS.getSize()> layersToEnable; // Keep it alive in the stack
-	if(init.m_config->getBool("gr_debugContext"))
+	if(init.m_config->getBool("gr_validation"))
 	{
 		uint32_t count;
 		vkEnumerateInstanceLayerProperties(&count, nullptr);
@@ -573,7 +573,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &devFeatures);
 		m_devFeatures = devFeatures.features;
 		m_devFeatures.robustBufferAccess =
-			(init.m_config->getBool("gr_debugContext") && m_devFeatures.robustBufferAccess) ? true : false;
+			(init.m_config->getBool("gr_validation") && m_devFeatures.robustBufferAccess) ? true : false;
 		ANKI_VK_LOGI("Robust buffer access is %s", (m_devFeatures.robustBufferAccess) ? "enabled" : "disabled");
 
 		ci.pEnabledFeatures = &m_devFeatures;

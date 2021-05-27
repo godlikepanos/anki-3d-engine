@@ -143,8 +143,8 @@ private:
 	class CmdbType
 	{
 	public:
-		IntrusiveList<MicroCommandBuffer> m_readyCmdbs;
-		IntrusiveList<MicroCommandBuffer> m_inUseCmdbs;
+		IntrusiveList<MicroCommandBuffer> m_readyCmdbs; ///< Buffers that are ready to be used.
+		IntrusiveList<MicroCommandBuffer> m_inUseCmdbs; ///< Buffer that got dereferenced and maybe in-use.
 
 		IntrusiveList<MicroCommandBuffer> m_deletedCmdbs;
 		Mutex m_deletedMtx; ///< Lock because the dallocations may happen anywhere.

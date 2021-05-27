@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-ANKI_CONFIG_OPTION(gr_debugContext, 0, 0, 1)
+ANKI_CONFIG_OPTION(gr_validation, 0, 0, 1)
 ANKI_CONFIG_OPTION(gr_vsync, 0, 0, 1)
 ANKI_CONFIG_OPTION(gr_debugMarkers, 0, 0, 1)
 ANKI_CONFIG_OPTION(gr_maxBindlessTextures, 256, 8, 1024)
