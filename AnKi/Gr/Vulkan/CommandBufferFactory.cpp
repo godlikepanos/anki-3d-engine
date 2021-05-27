@@ -30,7 +30,6 @@ void MicroCommandBuffer::reset()
 	for(GrObjectType type : EnumIterable<GrObjectType>())
 	{
 		m_objectRefs[type].destroy(m_fastAlloc);
-		++i;
 	}
 
 	m_fastAlloc.getMemoryPool().reset();

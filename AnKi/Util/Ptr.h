@@ -294,6 +294,7 @@ class UniquePtr : public PtrBase<T>
 public:
 	using Base = PtrBase<T>;
 	using Deleter = TDeleter;
+	using Base::m_ptr;
 
 	UniquePtr()
 		: Base()
@@ -336,15 +337,15 @@ public:
 	void reset(T* ptr, const Deleter& deleter = Deleter())
 	{
 		destroy();
-		Base::m_ptr = ptr;
+		m_ptr = ptr;
 		m_deleter = deleter;
 	}
 
 	/// Move the ownership of the pointer outside the UniquePtr.
 	void moveAndReset(T*& ptr)
 	{
-		ptr = Base::m_ptr;
-		Base::m_ptr = nullptr;
+		ptr = m_ptr;
+		m_ptr = nullptr;
 		m_deleter = Deleter();
 	}
 
@@ -353,10 +354,10 @@ private:
 
 	void destroy()
 	{
-		if(Base::m_ptr)
+		if(m_ptr)
 		{
-			m_deleter(Base::m_ptr);
-			Base::m_ptr = nullptr;
+			m_deleter(m_ptr);
+			m_ptr = nullptr;
 			m_deleter = Deleter();
 		}
 	}
@@ -378,6 +379,7 @@ class IntrusivePtr : public PtrBase<T>
 public:
 	using Base = PtrBase<T>;
 	using Deleter = TDeleter;
+	using Base::m_ptr;
 
 	IntrusivePtr()
 		: Base()
@@ -444,34 +446,37 @@ public:
 	/// Set a new pointer. Will destroy the previous.
 	void reset(T* ptr)
 	{
-		destroy();
-		if(ptr)
+		if(ptr != m_ptr)
 		{
-			ptr->getRefcount().fetchAdd(1);
-			Base::m_ptr = ptr;
+			destroy();
+			if(ptr)
+			{
+				ptr->getRefcount().fetchAdd(1);
+				m_ptr = ptr;
+			}
 		}
 	}
 
 private:
 	void destroy()
 	{
-		if(Base::m_ptr)
+		if(m_ptr)
 		{
-			auto count = Base::m_ptr->getRefcount().fetchSub(1);
+			auto count = m_ptr->getRefcount().fetchSub(1);
 			if(ANKI_UNLIKELY(count == 1))
 			{
 				TDeleter deleter;
-				deleter(Base::m_ptr);
+				deleter(m_ptr);
 			}
 
-			Base::m_ptr = nullptr;
+			m_ptr = nullptr;
 		}
 	}
 
 	void move(IntrusivePtr& b)
 	{
-		ANKI_ASSERT(Base::m_ptr == nullptr);
-		Base::m_ptr = b.m_ptr;
+		ANKI_ASSERT(m_ptr == nullptr);
+		m_ptr = b.m_ptr;
 		b.m_ptr = nullptr;
 	}
 };
