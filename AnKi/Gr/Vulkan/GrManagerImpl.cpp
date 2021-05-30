@@ -222,10 +222,10 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 	ci.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	ci.pApplicationInfo = &app;
 
-	// Layers
+	// Validation layers
 	static Array<const char*, 1> LAYERS = {"VK_LAYER_KHRONOS_validation"};
 	Array<const char*, LAYERS.getSize()> layersToEnable; // Keep it alive in the stack
-	if(init.m_config->getBool("gr_validation"))
+	if(init.m_config->getBool("gr_validation") || init.m_config->getBool("gr_debugPrintf"))
 	{
 		uint32_t count;
 		vkEnumerateInstanceLayerProperties(&count, nullptr);
@@ -262,6 +262,33 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 				ci.ppEnabledLayerNames = &layersToEnable[0];
 			}
 		}
+	}
+
+	// Validation features
+	DynamicArrayAuto<VkValidationFeatureEnableEXT> enabledValidationFeatures(getAllocator());
+	DynamicArrayAuto<VkValidationFeatureDisableEXT> disabledValidationFeatures(getAllocator());
+	if(init.m_config->getBool("gr_debugPrintf"))
+	{
+		enabledValidationFeatures.emplaceBack(VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT);
+	}
+
+	if(!init.m_config->getBool("gr_validation"))
+	{
+		disabledValidationFeatures.emplaceBack(VK_VALIDATION_FEATURE_DISABLE_ALL_EXT);
+	}
+
+	VkValidationFeaturesEXT validationFeatures = {};
+	if(enabledValidationFeatures.getSize() || disabledValidationFeatures.getSize())
+	{
+		validationFeatures.sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
+
+		validationFeatures.disabledValidationFeatureCount = disabledValidationFeatures.getSize();
+		validationFeatures.enabledValidationFeatureCount = enabledValidationFeatures.getSize();
+		validationFeatures.pDisabledValidationFeatures = disabledValidationFeatures.getBegin();
+		validationFeatures.pEnabledValidationFeatures = enabledValidationFeatures.getBegin();
+
+		validationFeatures.pNext = ci.pNext;
+		ci.pNext = &validationFeatures;
 	}
 
 	// Extensions
@@ -310,7 +337,8 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 				m_extensions |= VulkanExtensions::KHR_SURFACE;
 				instExtensions[instExtensionCount++] = VK_KHR_SURFACE_EXTENSION_NAME;
 			}
-			else if(CString(instExtensionInf[i].extensionName) == VK_EXT_DEBUG_REPORT_EXTENSION_NAME)
+			else if(CString(instExtensionInf[i].extensionName) == VK_EXT_DEBUG_REPORT_EXTENSION_NAME
+					&& (init.m_config->getBool("gr_validation") || init.m_config->getBool("gr_debugPrintf")))
 			{
 				m_extensions |= VulkanExtensions::EXT_DEBUG_REPORT;
 				instExtensions[instExtensionCount++] = VK_EXT_DEBUG_REPORT_EXTENSION_NAME;
@@ -357,6 +385,12 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 		ci.pfnCallback = debugReportCallbackEXT;
 		ci.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT
 				   | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
+
+		if(init.m_config->getBool("gr_debugPrintf"))
+		{
+			ci.flags |= VK_DEBUG_REPORT_INFORMATION_BIT_EXT;
+		}
+
 		ci.pUserData = this;
 
 		PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT =
@@ -552,6 +586,11 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 					&& init.m_config->getBool("core_displayStats"))
 			{
 				m_extensions |= VulkanExtensions::PIPELINE_EXECUTABLE_PROPERTIES;
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
+			}
+			else if(extensionName == VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME
+					&& init.m_config->getBool("gr_debugPrintf"))
+			{
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
 		}

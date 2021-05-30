@@ -4,8 +4,9 @@
 // http://www.anki3d.org/LICENSE
 
 ANKI_CONFIG_OPTION(gr_validation, 0, 0, 1)
-ANKI_CONFIG_OPTION(gr_vsync, 0, 0, 1)
+ANKI_CONFIG_OPTION(gr_debugPrintf, 0, 0, 1)
 ANKI_CONFIG_OPTION(gr_debugMarkers, 0, 0, 1)
+ANKI_CONFIG_OPTION(gr_vsync, 0, 0, 1)
 ANKI_CONFIG_OPTION(gr_maxBindlessTextures, 256, 8, 1024)
 ANKI_CONFIG_OPTION(gr_maxBindlessImages, 32, 8, 1024)
 ANKI_CONFIG_OPTION(gr_rayTracing, 0, 0, 1, "Try enabling ray tracing")
