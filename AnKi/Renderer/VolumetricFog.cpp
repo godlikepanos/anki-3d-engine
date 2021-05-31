@@ -32,7 +32,6 @@ Error VolumetricFog::init(const ConfigSet& config)
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addConstant("VOLUME_SIZE", UVec3(m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]));
-	variantInitInfo.addConstant("TILE_COUNT", m_r->getTileCounts());
 	variantInitInfo.addConstant("Z_SPLIT_COUNT", m_r->getZSplitCount());
 	variantInitInfo.addConstant("FINAL_Z_SPLIT", m_finalZSplit);
 

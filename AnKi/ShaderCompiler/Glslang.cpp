@@ -6,6 +6,7 @@
 #include <AnKi/ShaderCompiler/Glslang.h>
 #include <AnKi/Util/StringList.h>
 #include <AnKi/Util/File.h>
+#include <AnKi/Util/Filesystem.h>
 
 #if ANKI_COMPILER_GCC_COMPATIBLE
 #	pragma GCC diagnostic push
@@ -300,8 +301,12 @@ Error compilerGlslToSpirv(CString src, ShaderType shaderType, GenericMemoryPoolA
 		}
 
 		File file;
+
+		StringAuto tmpDir(tmpAlloc);
+		ANKI_CHECK(getTempDirectory(tmpDir));
+
 		StringAuto fname(tmpAlloc);
-		fname.sprintf("/tmp/%u.glsl", count);
+		fname.sprintf("%s/%u.glsl", tmpDir.cstr(), count);
 		ANKI_CHECK(file.open(fname, FileOpenFlag::WRITE));
 		ANKI_CHECK(file.writeText("%s", src.cstr()));
 	}
@@ -352,8 +357,12 @@ Error compilerGlslToSpirv(CString src, ShaderType shaderType, GenericMemoryPoolA
 		}
 
 		File file;
+
+		StringAuto tmpDir(tmpAlloc);
+		ANKI_CHECK(getTempDirectory(tmpDir));
+
 		StringAuto fname(tmpAlloc);
-		fname.sprintf("/tmp/%u.spv", count);
+		fname.sprintf("%s/%u.spv", tmpDir.cstr(), count);
 		ANKI_CHECK(file.open(fname, FileOpenFlag::WRITE | FileOpenFlag::BINARY));
 		ANKI_CHECK(file.write(spirv.getBegin(), spirv.getSizeInBytes()));
 	}

@@ -209,6 +209,12 @@ Error getHomeDirectory(StringAuto& out)
 	return Error::NONE;
 }
 
+Error getTempDirectory(StringAuto& out)
+{
+	out.create("/tmp/");
+	return Error::NONE;
+}
+
 Error getFileModificationTime(CString filename, U32& year, U32& month, U32& day, U32& hour, U32& min, U32& second)
 {
 	struct stat buff;

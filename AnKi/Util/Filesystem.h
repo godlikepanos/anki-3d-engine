@@ -44,9 +44,10 @@ ANKI_USE_RESULT Error removeDirectory(const CString& dir, GenericMemoryPoolAlloc
 ANKI_USE_RESULT Error createDirectory(const CString& dir);
 
 /// Get the home directory.
-/// Write the home directory to @a buff. The @a buffSize is the size of the @a buff. If the @buffSize is not enough the
-/// function will throw an exception.
 ANKI_USE_RESULT Error getHomeDirectory(StringAuto& out);
+
+/// Get the temp directory.
+ANKI_USE_RESULT Error getTempDirectory(StringAuto& out);
 
 /// Get the time the file was last modified.
 ANKI_USE_RESULT Error getFileModificationTime(CString filename, U32& year, U32& month, U32& day, U32& hour, U32& min,

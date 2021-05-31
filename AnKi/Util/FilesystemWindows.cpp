@@ -79,6 +79,21 @@ Error getHomeDirectory(StringAuto& out)
 	return Error::NONE;
 }
 
+Error getTempDirectory(StringAuto& out)
+{
+	char path[MAX_PATH + 1];
+
+	const DWORD len = GetTempPathA(sizeof(path), path);
+	if(len == 0)
+	{
+		ANKI_UTIL_LOGE("GetTempPathA() failed");
+		return Error::FUNCTION_FAILED;
+	}
+
+	out.create(path);
+	return Error::NONE;
+}
+
 static Error walkDirectoryTreeInternal(const CString& dir, void* userData, WalkDirectoryTreeCallback callback,
 									   U baseDirLen)
 {
