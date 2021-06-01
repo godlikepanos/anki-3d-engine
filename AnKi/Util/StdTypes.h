@@ -197,10 +197,10 @@ private:
 #define ANKI_CHECK(x_) \
 	do \
 	{ \
-		const Error error = x_; \
-		if(error) \
+		const Error retError = x_; \
+		if(retError) \
 		{ \
-			return error; \
+			return retError; \
 		} \
 	} while(0)
 

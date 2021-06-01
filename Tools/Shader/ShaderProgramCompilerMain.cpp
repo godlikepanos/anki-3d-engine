@@ -7,7 +7,7 @@
 #include <AnKi/Util.h>
 using namespace anki;
 
-static const char* USAGE = R"(Usage: %s shader_program_file [options]
+static const char* USAGE = R"(Usage: %s input_shader_program_file [options]
 Options:
 -o <name of output>    : The name of the output binary
 -j <thread count>      : Number of threads. Defaults to system's max
@@ -183,20 +183,15 @@ static Error work(const CmdLineArgs& info)
 		(info.m_threadCount) ? alloc.newInstance<ThreadHive>(info.m_threadCount, alloc, true) : nullptr;
 	taskManager.m_alloc = alloc;
 
-	// Some dummy caps
-	GpuDeviceCapabilities caps;
-	caps.m_gpuVendor = GpuVendor::AMD;
-	caps.m_minorApiVersion = 1;
-	caps.m_majorApiVersion = 1;
-
-	BindlessLimits limits;
-	limits.m_bindlessImageCount = 16;
-	limits.m_bindlessTextureCount = 16;
+	// Compiler options
+	ShaderCompilerOptions compilerOptions;
+	compilerOptions.m_bindlessLimits.m_bindlessImageCount = 16;
+	compilerOptions.m_bindlessLimits.m_bindlessTextureCount = 16;
 
 	// Compile
 	ShaderProgramBinaryWrapper binary(alloc);
 	ANKI_CHECK(compileShaderProgram(info.m_inputFname, fsystem, nullptr, (info.m_threadCount) ? &taskManager : nullptr,
-									alloc, caps, limits, binary));
+									alloc, compilerOptions, binary));
 
 	// Store the binary
 	ANKI_CHECK(binary.serializeToFile(info.m_outFname));

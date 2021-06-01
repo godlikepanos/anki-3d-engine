@@ -10,97 +10,77 @@
 //
 // Common uniforms
 //
-#if defined(LIGHT_COMMON_UNIS_BINDING)
-
-layout(set = LIGHT_SET, binding = LIGHT_COMMON_UNIS_BINDING, std140, row_major) uniform lu0_
+#if defined(CLUSTERED_SHADING_UNIFORMS_BINDING)
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_UNIFORMS_BINDING, scalar) uniform b_clusteredShading
 {
-	LightingUniforms u_lightingUniforms;
+	ClusteredShadingUniforms u_clusteredShading;
 };
-
-#	define u_near UNIFORM(u_lightingUniforms.m_near)
-#	define u_far UNIFORM(u_lightingUniforms.m_far)
-#	define u_cameraPos UNIFORM(u_lightingUniforms.m_cameraPos)
-#	define u_clusterCountX UNIFORM(u_lightingUniforms.m_clusterCount.x)
-#	define u_clusterCountY UNIFORM(u_lightingUniforms.m_clusterCount.y)
-#	define u_clustererMagic u_lightingUniforms.m_clustererMagicValues
-#	define u_prevClustererMagic u_lightingUniforms.m_prevClustererMagicValues
-#	define u_time UNIFORM(u_lightingUniforms.m_time)
-#	define u_unprojectionParams UNIFORM(u_lightingUniforms.m_unprojectionParams)
-#	define u_rendererSize u_lightingUniforms.m_rendererSize
-#	define u_lightVolumeLastCluster UNIFORM(u_lightingUniforms.m_lightVolumeLastCluster)
-
-#	define u_viewMat u_lightingUniforms.m_viewMat
-#	define u_invViewMat u_lightingUniforms.m_invViewMat
-#	define u_projMat u_lightingUniforms.m_projMat
-#	define u_invProjMat u_lightingUniforms.m_invProjMat
-#	define u_viewProjMat u_lightingUniforms.m_viewProjMat
-#	define u_invViewProjMat u_lightingUniforms.m_invViewProjMat
-#	define u_prevViewProjMat u_lightingUniforms.m_prevViewProjMat
-#	define u_prevViewProjMatMulInvViewProjMat u_lightingUniforms.m_prevViewProjMatMulInvViewProjMat
-#	define u_dirLight u_lightingUniforms.m_dirLight
 #endif
 
 //
 // Light uniforms (3)
 //
-#if defined(LIGHT_LIGHTS_BINDING)
-layout(set = LIGHT_SET, binding = LIGHT_LIGHTS_BINDING, std140) uniform u1_
+#if defined(CLUSTERED_SHADING_LIGHTS_BINDING)
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_LIGHTS_BINDING, scalar) uniform b_pointLights
 {
-	PointLight u_pointLights[UBO_MAX_SIZE / ANKI_SIZEOF(PointLight)];
+	PointLight u_pointLights2[MAX_VISIBLE_POINT_LIGHTS];
 };
 
-layout(set = LIGHT_SET, binding = LIGHT_LIGHTS_BINDING + 1, std140, row_major) uniform u2_
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_LIGHTS_BINDING + 1, scalar) uniform b_spotLights
 {
-	SpotLight u_spotLights[UBO_MAX_SIZE / ANKI_SIZEOF(SpotLight)];
+	SpotLight u_spotLights2[MAX_VISIBLE_SPOT_LIGHTS];
 };
 
-layout(set = LIGHT_SET, binding = LIGHT_LIGHTS_BINDING + 2) uniform highp texture2D u_shadowTex;
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_LIGHTS_BINDING + 2) uniform texture2D u_shadowAtlasTex;
 #endif
 
 //
-// Indirect uniforms (3)
+// Reflection probes (3)
 //
-#if defined(LIGHT_INDIRECT_SPECULAR_BINDING)
-layout(std140, row_major, set = LIGHT_SET, binding = LIGHT_INDIRECT_SPECULAR_BINDING) uniform u3_
+#if defined(CLUSTERED_SHADING_REFLECTIONS_BINDING)
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_REFLECTIONS_BINDING, scalar) uniform b_reflectionProbes
 {
-	ReflectionProbe u_reflectionProbes[UBO_MAX_SIZE / ANKI_SIZEOF(ReflectionProbe)];
+	ReflectionProbe u_reflectionProbes2[MAX_VISIBLE_REFLECTION_PROBES];
 };
 
-layout(set = LIGHT_SET, binding = LIGHT_INDIRECT_SPECULAR_BINDING + 1) uniform textureCubeArray u_reflectionsTex;
-layout(set = LIGHT_SET, binding = LIGHT_INDIRECT_SPECULAR_BINDING + 2) uniform texture2D u_integrationLut;
+layout(set = CLUSTERED_SHADING_SET,
+	   binding = CLUSTERED_SHADING_REFLECTIONS_BINDING + 1) uniform textureCubeArray u_reflectionsTex2;
+layout(set = CLUSTERED_SHADING_SET,
+	   binding = CLUSTERED_SHADING_REFLECTIONS_BINDING + 2) uniform texture2D u_integrationLut2;
 #endif
 
 //
 // Decal uniforms (3)
 //
-#if defined(LIGHT_DECALS_BINDING)
-layout(std140, row_major, set = LIGHT_SET, binding = LIGHT_DECALS_BINDING) uniform u4_
+#if defined(CLUSTERED_SHADING_DECALS_BINDING)
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_DECALS_BINDING, scalar) uniform b_decals
 {
-	Decal u_decals[UBO_MAX_SIZE / ANKI_SIZEOF(Decal)];
+	Decal u_decals2[MAX_VISIBLE_DECALS];
 };
 
-layout(set = LIGHT_SET, binding = LIGHT_DECALS_BINDING + 1) uniform texture2D u_diffDecalTex;
-layout(set = LIGHT_SET, binding = LIGHT_DECALS_BINDING + 2) uniform texture2D u_specularRoughnessDecalTex;
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_DECALS_BINDING + 1) uniform texture2D u_diffuseDecalTex;
+layout(set = CLUSTERED_SHADING_SET,
+	   binding = CLUSTERED_SHADING_DECALS_BINDING + 2) uniform texture2D u_specularRoughnessDecalTex;
 #endif
 
 //
 // Fog density uniforms (1)
 //
-#if defined(LIGHT_FOG_DENSITY_VOLUMES_BINDING)
-layout(std140, row_major, set = LIGHT_SET, binding = LIGHT_FOG_DENSITY_VOLUMES_BINDING) uniform u5_
+#if defined(CLUSTERED_SHADING_FOG_BINDING)
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_FOG_BINDING, scalar) uniform b_fogDensityVolumes
 {
-	FogDensityVolume u_fogDensityVolumes[UBO_MAX_SIZE / ANKI_SIZEOF(FogDensityVolume)];
+	FogDensityVolume u_fogDensityVolumes[MAX_VISIBLE_FOG_DENSITY_VOLUMES];
 };
 #endif
 
 //
 // GI (2)
 //
-#if defined(LIGHT_GLOBAL_ILLUMINATION_BINDING)
-layout(set = LIGHT_SET, binding = LIGHT_GLOBAL_ILLUMINATION_BINDING) uniform texture3D
+#if defined(CLUSTERED_SHADING_GI_BINDING)
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_GI_BINDING) uniform texture3D
 	u_globalIlluminationTextures[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES];
 
-layout(set = LIGHT_SET, binding = LIGHT_GLOBAL_ILLUMINATION_BINDING + 1) uniform ugi_
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_GI_BINDING + 1, scalar) uniform b_giProbes
 {
 	GlobalIlluminationProbe u_giProbes[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES];
 };
@@ -109,54 +89,109 @@ layout(set = LIGHT_SET, binding = LIGHT_GLOBAL_ILLUMINATION_BINDING + 1) uniform
 //
 // Cluster uniforms
 //
-#if defined(LIGHT_CLUSTERS_BINDING)
-layout(set = LIGHT_SET, binding = LIGHT_CLUSTERS_BINDING, std430) readonly buffer s0_
+#if defined(CLUSTERED_SHADING_CLUSTERS_BINDING)
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_CLUSTERS_BINDING, scalar) readonly buffer b_clusters
 {
-	U32 u_clusters[];
-};
-
-layout(set = LIGHT_SET, binding = LIGHT_CLUSTERS_BINDING + 1, std430) readonly buffer s1_
-{
-	U32 u_lightIndices[];
+	Cluster u_clusters2[];
 };
 #endif
 
 // Debugging function
-Vec3 lightHeatmap(U32 firstIndex, U32 maxObjects, U32 typeMask)
+Vec3 clusterHeatmap(Cluster cluster, U32 objectTypeMask)
 {
-	U32 count = 0;
-	U32 idx;
+	U32 maxObjects = 0u;
+	I32 count = 0;
 
-	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
+	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_POINT_LIGHT)) != 0u)
 	{
-		count += ((typeMask & (1u << 0u)) != 0u) ? 1u : 0u;
+		maxObjects += MAX_VISIBLE_POINT_LIGHTS;
+		count += I32(bitCount(cluster.m_pointLightsMask));
 	}
 
-	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
+	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_SPOT_LIGHT)) != 0u)
 	{
-		count += ((typeMask & (1u << 1u)) != 0u) ? 1u : 0u;
+		maxObjects += MAX_VISIBLE_SPOT_LIGHTS;
+		count += I32(bitCount(cluster.m_spotLightsMask));
 	}
 
-	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
+	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_DECAL)) != 0u)
 	{
-		count += ((typeMask & (1u << 2u)) != 0u) ? 1u : 0u;
+		maxObjects += MAX_VISIBLE_DECALS;
+		count += I32(bitCount(cluster.m_decalsMask));
 	}
 
-	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
+	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_FOG_DENSITY_VOLUME)) != 0u)
 	{
-		count += ((typeMask & (1u << 3u)) != 0u) ? 1u : 0u;
+		maxObjects += MAX_VISIBLE_FOG_DENSITY_VOLUMES;
+		count += bitCount(cluster.m_fogDensityVolumesMask);
 	}
 
-	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
+	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_REFLECTION_PROBE)) != 0u)
 	{
-		count += ((typeMask & (1u << 4u)) != 0u) ? 1u : 0u;
+		maxObjects += MAX_VISIBLE_REFLECTION_PROBES;
+		count += bitCount(cluster.m_reflectionProbesMask);
 	}
 
-	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
+	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE)) != 0u)
 	{
-		count += ((typeMask & (1u << 5u)) != 0u) ? 1u : 0u;
+		maxObjects += MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES;
+		count += bitCount(cluster.m_giProbesMask);
 	}
 
 	const F32 factor = min(1.0, F32(count) / F32(maxObjects));
 	return heatmap(factor);
 }
+
+/// Returns the index of the zSplit or linearizeDepth(n, f, depth)*zSplitCount
+/// Simplifying this equation is 1/(a+b/depth) where a=(n-f)/(n*zSplitCount) and b=f/(n*zSplitCount)
+U32 computeZSplitClusterIndex(F32 depth, U32 zSplitCount, F32 a, F32 b)
+{
+	const F32 fSplitIdx = 1.0 / (a + b / depth);
+	return min(zSplitCount - 1u, U32(fSplitIdx));
+}
+
+/// Return the tile index.
+U32 computeTileClusterIndexFragCoord(Vec2 fragCoord, U32 tileSize, U32 tileCountX)
+{
+	const UVec2 tileXY = UVec2(fragCoord / F32(tileSize));
+	return tileXY.y * tileCountX + tileXY.x;
+}
+
+/// Merge the tiles with z splits into a single cluster.
+Cluster mergeClusters(Cluster tileCluster, Cluster zCluster)
+{
+//#define ANKI_OR_MASKS(x) subgroupOr(x)
+#define ANKI_OR_MASKS(x) (x)
+
+	Cluster outCluster;
+	outCluster.m_pointLightsMask = ANKI_OR_MASKS(tileCluster.m_pointLightsMask & zCluster.m_pointLightsMask);
+	outCluster.m_spotLightsMask = ANKI_OR_MASKS(tileCluster.m_spotLightsMask & zCluster.m_spotLightsMask);
+	outCluster.m_decalsMask = ANKI_OR_MASKS(tileCluster.m_decalsMask & zCluster.m_decalsMask);
+	outCluster.m_fogDensityVolumesMask =
+		ANKI_OR_MASKS(tileCluster.m_fogDensityVolumesMask & zCluster.m_fogDensityVolumesMask);
+	outCluster.m_reflectionProbesMask =
+		ANKI_OR_MASKS(tileCluster.m_reflectionProbesMask & zCluster.m_reflectionProbesMask);
+	outCluster.m_giProbesMask = ANKI_OR_MASKS(tileCluster.m_giProbesMask & zCluster.m_giProbesMask);
+
+#undef ANKI_OR_MASKS
+
+	return outCluster;
+}
+
+#if defined(CLUSTERED_SHADING_CLUSTERS_BINDING)
+/// Get the final cluster after ORing and ANDing the masks.
+Cluster getClusterFragCoord(Vec3 fragCoord, U32 tileSize, UVec2 tileCounts, U32 zSplitCount, F32 a, F32 b)
+{
+	const Cluster tileCluster = u_clusters2[computeTileClusterIndexFragCoord(fragCoord.xy, tileSize, tileCounts.x)];
+	const Cluster zCluster =
+		u_clusters2[computeZSplitClusterIndex(fragCoord.z, zSplitCount, a, b) + tileCounts.x * tileCounts.y];
+	return mergeClusters(tileCluster, zCluster);
+}
+
+Cluster getClusterFragCoord(Vec3 fragCoord)
+{
+	return getClusterFragCoord(fragCoord, u_clusteredShading.m_tileSize, u_clusteredShading.m_tileCounts,
+							   u_clusteredShading.m_zSplitCount, u_clusteredShading.m_zSplitMagic.x,
+							   u_clusteredShading.m_zSplitMagic.y);
+}
+#endif

@@ -57,7 +57,7 @@ ANKI_TEST(Ui, Ui)
 	ConfigSet cfg = DefaultConfigSet::get();
 	initConfig(cfg);
 	cfg.set("gr_vsync", 1);
-	cfg.set("gr_debugContext", 0);
+	cfg.set("gr_validation", 0);
 	cfg.set("width", 1024);
 	cfg.set("height", 760);
 	cfg.set("rsrc_dataPaths", "EngineAssets");

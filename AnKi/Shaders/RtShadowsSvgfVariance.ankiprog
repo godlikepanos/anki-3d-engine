@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(FB_SIZE, 0, UVec2(1));
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(FB_SIZE, 0u);
 
 #pragma anki start comp
 
@@ -97,7 +97,7 @@ void main()
 
 				F32 shadowLayers[MAX_RT_SHADOW_LAYERS];
 				unpackRtShadows(textureLod(u_shadowsTex, u_nearestAnyClampSampler, sampleUv, 0.0), shadowLayers);
-				ANKI_UNROLL for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
+				ANKI_UNROLL for(U32 i = 0u; i < MAX_RT_SHADOW_LAYERS; ++i)
 				{
 					sumShadowLayers[i] += shadowLayers[i] * w;
 				}
@@ -108,7 +108,7 @@ void main()
 
 		sumWeight += EPSILON;
 
-		ANKI_UNROLL for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
+		ANKI_UNROLL for(U32 i = 0u; i < MAX_RT_SHADOW_LAYERS; ++i)
 		{
 			sumShadowLayers[i] /= sumWeight;
 		}

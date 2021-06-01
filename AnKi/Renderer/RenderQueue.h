@@ -141,6 +141,7 @@ public:
 	F32 m_outerAngle;
 	F32 m_innerAngle;
 	Vec3 m_diffuseColor;
+	Array<Vec3, 4> m_edgePoints;
 	RenderQueue* m_shadowRenderQueue;
 	RenderQueueDrawCallback m_debugDrawCallback;
 	const void* m_debugDrawCallbackUserData;
@@ -163,8 +164,8 @@ static_assert(std::is_trivially_destructible<SpotLightQueueElement>::value == tr
 class DirectionalLightQueueElement final
 {
 public:
-	Array<Mat4, MAX_SHADOW_CASCADES> m_textureMatrices;
-	Array<RenderQueue*, MAX_SHADOW_CASCADES> m_shadowRenderQueues;
+	Array<Mat4, MAX_SHADOW_CASCADES2> m_textureMatrices;
+	Array<RenderQueue*, MAX_SHADOW_CASCADES2> m_shadowRenderQueues;
 	RenderQueueDrawCallback m_drawCallback;
 	const void* m_drawCallbackUserData;
 	U64 m_uuid; ///< Zero means that there is no dir light

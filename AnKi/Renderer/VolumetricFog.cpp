@@ -18,16 +18,13 @@ namespace anki
 Error VolumetricFog::init(const ConfigSet& config)
 {
 	// Misc
-	const U32 fractionXY = config.getNumberU32("r_volumetricLightingAccumulationClusterFractionXY");
-	ANKI_ASSERT(fractionXY >= 1);
-	const U32 fractionZ = config.getNumberU32("r_volumetricLightingAccumulationClusterFractionZ");
-	ANKI_ASSERT(fractionZ >= 1);
-	m_finalClusterZ = config.getNumberU32("r_volumetricLightingAccumulationFinalClusterInZ");
-	ANKI_ASSERT(m_finalClusterZ > 0 && m_finalClusterZ < m_r->getClusterCount()[2]);
+	const F32 qualityXY = config.getNumberF32("r_volumetricLightingAccumulationQualityXY");
+	const F32 qualityZ = config.getNumberF32("r_volumetricLightingAccumulationQualityZ");
+	m_finalZSplit = min(m_r->getZSplitCount(), config.getNumberU32("r_volumetricLightingAccumulationFinalZSplit"));
 
-	m_volumeSize[0] = m_r->getClusterCount()[0] * fractionXY;
-	m_volumeSize[1] = m_r->getClusterCount()[1] * fractionXY;
-	m_volumeSize[2] = (m_finalClusterZ + 1) * fractionZ;
+	m_volumeSize[0] = U32(F32(m_r->getTileCounts().x()) * qualityXY);
+	m_volumeSize[1] = U32(F32(m_r->getTileCounts().y()) * qualityXY);
+	m_volumeSize[2] = U32(F32(m_finalZSplit + 1) * qualityZ);
 	ANKI_R_LOGI("Initializing volumetric fog. Size %ux%ux%u", m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]);
 
 	// Shaders
@@ -35,7 +32,8 @@ Error VolumetricFog::init(const ConfigSet& config)
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addConstant("VOLUME_SIZE", UVec3(m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]));
-	variantInitInfo.addConstant("FINAL_CLUSTER_Z", m_finalClusterZ);
+	variantInitInfo.addConstant("Z_SPLIT_COUNT", m_r->getZSplitCount());
+	variantInitInfo.addConstant("FINAL_Z_SPLIT", m_finalZSplit);
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
@@ -70,17 +68,17 @@ void VolumetricFog::run(RenderPassWorkContext& rgraphCtx)
 		F32 m_fogScatteringCoeff;
 		F32 m_fogAbsorptionCoeff;
 		F32 m_density;
-		F32 m_padding0;
+		F32 m_near;
 		Vec3 m_fogDiffuse;
-		U32 m_padding1;
-		ClustererMagicValues m_clustererMagic;
+		F32 m_far;
 	} regs;
 
 	regs.m_fogScatteringCoeff = m_fogScatteringCoeff;
 	regs.m_fogAbsorptionCoeff = m_fogAbsorptionCoeff;
 	regs.m_density = m_fogDensity;
 	regs.m_fogDiffuse = m_fogDiffuseColor;
-	regs.m_clustererMagic = ctx.m_clusterBinOut.m_shaderMagicValues;
+	regs.m_near = ctx.m_renderQueue->m_cameraNear;
+	regs.m_far = ctx.m_renderQueue->m_cameraFar;
 
 	cmdb->setPushConstants(&regs, sizeof(regs));
 

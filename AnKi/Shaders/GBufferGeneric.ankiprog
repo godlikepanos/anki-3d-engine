@@ -158,7 +158,7 @@ void skinning()
 {
 	Mat4 skinMat = u_ankiBoneTransforms[in_boneIndices[0]] * in_boneWeights[0];
 	Mat4 prevSkinMat = u_ankiPrevFrameBoneTransforms[in_boneIndices[0]] * in_boneWeights[0];
-	ANKI_UNROLL for(U32 i = 1; i < 4; ++i)
+	ANKI_UNROLL for(U32 i = 1u; i < 4u; ++i)
 	{
 		skinMat += u_ankiBoneTransforms[in_boneIndices[i]] * in_boneWeights[i];
 		prevSkinMat += u_ankiPrevFrameBoneTransforms[in_boneIndices[i]] * in_boneWeights[i];
@@ -258,8 +258,8 @@ void main()
 #if REALLY_USING_PARALLAX
 Vec2 computeTextureCoordParallax(texture2D heightMap, sampler sampl, Vec2 uv, F32 heightMapScale)
 {
-	const U32 MAX_SAMPLES = 25;
-	const U32 MIN_SAMPLES = 1;
+	const U32 MAX_SAMPLES = 25u;
+	const U32 MIN_SAMPLES = 1u;
 	const F32 MAX_EFFECTIVE_DISTANCE = 32.0;
 
 	// Get that because we are sampling inside a loop
@@ -291,7 +291,7 @@ Vec2 computeTextureCoordParallax(texture2D heightMap, sampler sampl, Vec2 uv, F3
 	F32 lastSampledHeight = 1.0;
 	F32 crntSampledHeight = 1.0;
 
-	U32 crntSample = 0;
+	U32 crntSample = 0u;
 
 	const U32 sampleCount = U32(sampleCountf);
 	ANKI_LOOP while(crntSample < sampleCount)
@@ -306,7 +306,7 @@ Vec2 computeTextureCoordParallax(texture2D heightMap, sampler sampl, Vec2 uv, F3
 
 			crntOffset = mix(crntOffset, lastOffset, ratio);
 
-			crntSample = sampleCount + 1;
+			crntSample = sampleCount + 1u;
 		}
 		else
 		{

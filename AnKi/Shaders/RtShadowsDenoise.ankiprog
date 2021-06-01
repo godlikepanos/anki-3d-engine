@@ -7,9 +7,9 @@
 
 #pragma anki start comp
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(OUT_IMAGE_SIZE, 0, UVec2(1));
-ANKI_SPECIALIZATION_CONSTANT_U32(MIN_SAMPLE_COUNT, 2, 1);
-ANKI_SPECIALIZATION_CONSTANT_U32(MAX_SAMPLE_COUNT, 3, 1);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(OUT_IMAGE_SIZE, 0u);
+ANKI_SPECIALIZATION_CONSTANT_U32(MIN_SAMPLE_COUNT, 2u);
+ANKI_SPECIALIZATION_CONSTANT_U32(MAX_SAMPLE_COUNT, 3u);
 
 #include <AnKi/Shaders/BilateralFilter.glsl>
 #include <AnKi/Shaders/Pack.glsl>
@@ -111,7 +111,7 @@ void main()
 		sampleCount = U32(sampleCountf);
 	}
 
-	sampleCount = sampleCount / 2;
+	sampleCount = sampleCount / 2u;
 
 	// Sample
 	F32 weight = 1.0; // TODO fix that
@@ -136,9 +136,9 @@ void main()
 		// F32 w = calculateBilateralWeighPlane(depthCenter, depthTap, 1.0);
 		F32 w = calculateBilateralWeightPlane(positionCenter, normalCenter, positionTap, normalTap, 1.0);
 
-		w *= gaussianWeight(0.4, abs(F32(i)) / F32(sampleCount + 1));
+		w *= gaussianWeight(0.4, abs(F32(i)) / F32(sampleCount + 1u));
 
-		ANKI_UNROLL for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
+		ANKI_UNROLL for(U32 i = 0u; i < MAX_RT_SHADOW_LAYERS; ++i)
 		{
 			shadowFactors[i] += localShadowFactors[i] * w;
 		}
@@ -147,7 +147,7 @@ void main()
 	}
 
 	// Write value
-	ANKI_UNROLL for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
+	ANKI_UNROLL for(U32 i = 0u; i < MAX_RT_SHADOW_LAYERS; ++i)
 	{
 		shadowFactors[i] /= weight;
 	}

@@ -18,7 +18,7 @@
 
 #define DEBUG_MODE 0 // 0: disable, 1: different color per dice face, 2: different color per cell
 
-const U32 WORKGROUP_SIZE = WORKGROUP_SIZE_XY * WORKGROUP_SIZE_XY;
+const U32 WORKGROUP_SIZE = U32(WORKGROUP_SIZE_XY) * U32(WORKGROUP_SIZE_XY);
 
 layout(local_size_x = WORKGROUP_SIZE_XY, local_size_y = WORKGROUP_SIZE_XY, local_size_z = 1) in;
 
@@ -59,9 +59,9 @@ shared Vec3 s_diceIrradiance[6u];
 Vec3 sampleLightShadingTexture(const U32 face)
 {
 #if LIGHT_SHADING_TEX == 0
-	const Vec2 INPUT_TEXTURES_SIZE = Vec2(WORKGROUP_SIZE_XY * 6u, WORKGROUP_SIZE_XY);
-	const Vec2 uv =
-		(Vec2(gl_LocalInvocationID.x + WORKGROUP_SIZE_XY * face, gl_LocalInvocationID.y) + 0.5) / INPUT_TEXTURES_SIZE;
+	const Vec2 INPUT_TEXTURES_SIZE = Vec2(U32(WORKGROUP_SIZE_XY) * 6u, U32(WORKGROUP_SIZE_XY));
+	const Vec2 uv = (Vec2(gl_LocalInvocationID.x + U32(WORKGROUP_SIZE_XY) * face, gl_LocalInvocationID.y) + 0.5)
+					/ INPUT_TEXTURES_SIZE;
 
 	return textureLod(u_lightShadingTex2d, u_nearestAnyClampSampler, uv, 0.0).rgb;
 #else
@@ -95,8 +95,8 @@ void main()
 		const Vec3 irradiance = lightShading * lambert * cubeCoordSolidAngle(ndc, WORKGROUP_SIZE_XY_F);
 
 		// Store
-		u_integrationResults[f * WORKGROUP_SIZE + gl_LocalInvocationID.y * WORKGROUP_SIZE_XY + gl_LocalInvocationID.x] =
-			irradiance.xyzx;
+		u_integrationResults[f * WORKGROUP_SIZE + gl_LocalInvocationID.y * U32(WORKGROUP_SIZE_XY)
+							 + gl_LocalInvocationID.x] = irradiance.xyzx;
 	}
 
 	memoryBarrierBuffer();
@@ -159,8 +159,8 @@ void main()
 			(firstBounceIrradiance + lightShading * lambert) * cubeCoordSolidAngle(ndc, WORKGROUP_SIZE_XY_F);
 
 		// Store
-		u_integrationResults[f * WORKGROUP_SIZE + gl_LocalInvocationID.y * WORKGROUP_SIZE_XY + gl_LocalInvocationID.x] =
-			irradiance.xyzx;
+		u_integrationResults[f * WORKGROUP_SIZE + gl_LocalInvocationID.y * U32(WORKGROUP_SIZE_XY)
+							 + gl_LocalInvocationID.x] = irradiance.xyzx;
 	}
 
 	memoryBarrierBuffer();

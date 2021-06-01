@@ -441,10 +441,11 @@ inline void CommandBufferImpl::traceRaysInternal(BufferPtr& sbtBuffer, PtrSize s
 	}
 
 	Array<VkStridedDeviceAddressRegionKHR, 4> regions;
-	const U64 stbFufferAddress = sbtBuffer->getGpuAddress();
+	const U64 stbBufferAddress = sbtBuffer->getGpuAddress() + sbtBufferOffset;
+	ANKI_ASSERT(isAligned(getGrManagerImpl().getDeviceCapabilities().m_sbtRecordAlignment, stbBufferAddress));
 
 	// Rgen
-	regions[0].deviceAddress = stbFufferAddress;
+	regions[0].deviceAddress = stbBufferAddress;
 	regions[0].stride = sbtRecordSize;
 	regions[0].size = sbtRecordSize;
 

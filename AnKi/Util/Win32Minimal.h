@@ -100,6 +100,7 @@ ANKI_WINBASEAPI HRESULT ANKI_WINAPI SHGetFolderPathA(HWND hwnd, int csidl, HANDL
 ANKI_WINBASEAPI HANDLE ANKI_WINAPI FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData);
 ANKI_WINBASEAPI BOOL ANKI_WINAPI FindClose(HANDLE hFindFile);
 ANKI_WINBASEAPI BOOL ANKI_WINAPI FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData);
+ANKI_WINBASEAPI DWORD ANKI_WINAPI GetTempPathA(DWORD nBufferLength, LPSTR lpBuffer);
 
 // Other
 ANKI_WINBASEAPI DWORD ANKI_WINAPI GetLastError(VOID);
@@ -407,6 +408,11 @@ inline BOOL FindClose(HANDLE hFindFile)
 inline BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 {
 	return ::FindNextFileA(hFindFile, reinterpret_cast<::LPWIN32_FIND_DATAA>(lpFindFileData));
+}
+
+inline DWORD GetTempPathA(DWORD nBufferLength, LPSTR lpBuffer)
+{
+	return ::GetTempPathA(nBufferLength, lpBuffer);
 }
 
 // Other

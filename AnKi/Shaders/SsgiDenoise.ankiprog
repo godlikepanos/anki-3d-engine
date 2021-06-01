@@ -7,7 +7,7 @@
 #pragma anki mutator ORIENTATION 0 1 // 0: VERTICAL, 1: HORIZONTAL
 #pragma anki mutator SAMPLE_COUNT 3 5 7 9 11 13 15
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(IN_TEXTURE_SIZE, 0, UVec2(1));
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(IN_TEXTURE_SIZE, 0u);
 
 #pragma anki start comp
 
@@ -82,10 +82,10 @@ void main()
 #else
 	const UVec2 depthReadOffset = UVec2(1, 0);
 #endif
-	const Vec2 depthUv = (Vec2(gl_GlobalInvocationID.xy * 2 + depthReadOffset) + 0.5) / Vec2(IN_TEXTURE_SIZE * 2);
+	const Vec2 depthUv = (Vec2(gl_GlobalInvocationID.xy * 2u + depthReadOffset) + 0.5) / Vec2(IN_TEXTURE_SIZE * 2u);
 
 	const Vec2 IN_TEXEL_SIZE = 1.0 / Vec2(IN_TEXTURE_SIZE);
-	const Vec2 DEPTH_TEXEL_SIZE = 1.0 / Vec2(IN_TEXTURE_SIZE * 2);
+	const Vec2 DEPTH_TEXEL_SIZE = 1.0 / Vec2(IN_TEXTURE_SIZE * 2u);
 
 	// Reference
 	Vec3 color = textureLod(u_inTex, u_linearAnyClampSampler, inUv, 0.0).rgb;
@@ -106,7 +106,7 @@ void main()
 	Vec2 depthUvOffset = Vec2(0.0);
 	depthUvOffset.X_OR_Y = 2.0 * DEPTH_TEXEL_SIZE.X_OR_Y;
 
-	ANKI_UNROLL for(U32 i = 0u; i < (SAMPLE_COUNT - 1u) / 2u; ++i)
+	ANKI_UNROLL for(U32 i = 0u; i < (U32(SAMPLE_COUNT) - 1u) / 2u; ++i)
 	{
 		sampleTex(inUv + inUvOffset, depthUv + depthUvOffset, positionCenter, normalCenter, color, weight);
 		sampleTex(inUv - inUvOffset, depthUv - depthUvOffset, positionCenter, normalCenter, color, weight);

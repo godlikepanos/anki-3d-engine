@@ -8,6 +8,7 @@
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/String.h>
 #include <AnKi/Util/BitSet.h>
+#include <AnKi/Gr/Common.h>
 
 namespace anki
 {
@@ -20,7 +21,7 @@ namespace anki
 #define ANKI_SHADER_COMPILER_LOGW(...) ANKI_LOG("SHCO", WARNING, __VA_ARGS__)
 #define ANKI_SHADER_COMPILER_LOGF(...) ANKI_LOG("SHCO", FATAL, __VA_ARGS__)
 
-constexpr U32 MAX_SHADER_BINARY_NAME_LENGTH = 63;
+constexpr U32 MAX_SHADER_BINARY_NAME_LENGTH = 127;
 
 using MutatorValue = I32; ///< The type of the mutator value
 
@@ -45,6 +46,13 @@ public:
 	virtual void enqueueTask(void (*callback)(void* userData), void* userData) = 0;
 
 	virtual ANKI_USE_RESULT Error joinTasks() = 0;
+};
+
+/// Options to be passed to the compiler.
+class ShaderCompilerOptions
+{
+public:
+	BindlessLimits m_bindlessLimits;
 };
 /// @}
 

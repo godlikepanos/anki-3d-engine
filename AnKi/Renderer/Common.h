@@ -9,6 +9,7 @@
 #include <AnKi/Core/StagingGpuMemoryManager.h>
 #include <AnKi/Util/Ptr.h>
 #include <AnKi/Shaders/Include/Evsm.h>
+#include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 
 namespace anki
 {
@@ -47,8 +48,8 @@ class ShadowmapsResolve;
 class RtShadows;
 class AccelerationStructureBuilder;
 class MotionVectors;
+class ClusterBinning;
 
-class RenderingContext;
 class DebugDrawer;
 
 class RenderQueue;
@@ -60,16 +61,12 @@ class ReflectionProbeQueueElement;
 class DecalQueueElement;
 
 class ShaderProgramResourceVariant;
-class ClusterBin;
 
 /// @addtogroup renderer
 /// @{
 
 /// Don't create second level command buffers if they contain more drawcalls than this constant.
 constexpr U32 MIN_DRAWCALLS_PER_2ND_LEVEL_COMMAND_BUFFER = 16;
-
-/// FS size is rendererSize/FS_FRACTION.
-constexpr U32 FS_FRACTION = 2;
 
 /// SSAO size is rendererSize/SSAO_FRACTION.
 constexpr U32 SSAO_FRACTION = 2;
@@ -117,6 +114,59 @@ constexpr Format SHADOW_COLOR_PIXEL_FORMAT = Format::R32G32B32A32_SFLOAT;
 #else
 constexpr Format SHADOW_COLOR_PIXEL_FORMAT = Format::R32G32_SFLOAT;
 #endif
+
+/// GPU buffers and textures that the clusterer refers to.
+class ClusteredShadingContext
+{
+public:
+	StagingGpuMemoryToken m_pointLightsToken;
+	void* m_pointLightsAddress = nullptr;
+	StagingGpuMemoryToken m_spotLightsToken;
+	void* m_spotLightsAddress = nullptr;
+	StagingGpuMemoryToken m_reflectionProbesToken;
+	void* m_reflectionProbesAddress = nullptr;
+	StagingGpuMemoryToken m_decalsToken;
+	void* m_decalsAddress = nullptr;
+	StagingGpuMemoryToken m_fogDensityVolumesToken;
+	void* m_fogDensityVolumesAddress = nullptr;
+	StagingGpuMemoryToken m_globalIlluminationProbesToken;
+	void* m_globalIlluminationProbesAddress = nullptr;
+	StagingGpuMemoryToken m_clusteredShadingUniformsToken;
+	void* m_clusteredShadingUniformsAddress = nullptr;
+	StagingGpuMemoryToken m_clustersToken;
+	void* m_clustersAddress = nullptr;
+
+	BufferHandle m_clustersBufferHandle; ///< To track dependencies. Don't track all tokens, not worth it.
+
+	TextureViewPtr m_diffuseDecalTextureView;
+	TextureViewPtr m_specularRoughnessDecalTextureView;
+};
+
+/// Rendering context.
+class RenderingContext
+{
+public:
+	StackAllocator<U8> m_tempAllocator;
+	RenderQueue* m_renderQueue = nullptr;
+
+	RenderGraphDescription m_renderGraphDescr;
+
+	CommonMatrices m_matrices;
+	CommonMatrices m_prevMatrices;
+
+	/// The render target that the Renderer will populate.
+	RenderTargetHandle m_outRenderTarget;
+	U32 m_outRenderTargetWidth = 0;
+	U32 m_outRenderTargetHeight = 0;
+
+	ClusteredShadingContext m_clusteredShading;
+
+	RenderingContext(const StackAllocator<U8>& alloc)
+		: m_tempAllocator(alloc)
+		, m_renderGraphDescr(alloc)
+	{
+	}
+};
 
 /// A convenience function to find empty cache entries. Used for various probes.
 template<typename THashMap, typename TCacheEntryArray, typename TAlloc>

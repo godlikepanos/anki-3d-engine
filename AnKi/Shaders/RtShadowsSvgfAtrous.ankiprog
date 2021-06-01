@@ -5,7 +5,7 @@
 
 #pragma anki mutator LAST_PASS 0 1
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(FB_SIZE, 0, UVec2(1));
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(FB_SIZE, 0u);
 
 #pragma anki start comp
 
@@ -45,7 +45,7 @@ Vec3 toViewspace(Vec2 uv, F32 depth)
 F32 computeShadowsLuma(F32 shadowLayers[MAX_RT_SHADOW_LAYERS])
 {
 	F32 l = 0.0;
-	ANKI_UNROLL for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
+	ANKI_UNROLL for(U32 i = 0u; i < MAX_RT_SHADOW_LAYERS; ++i)
 	{
 		l += shadowLayers[i];
 	}
@@ -141,7 +141,7 @@ void main()
 			// w *= KERNEL_WEIGHTS[abs(offsetx)] * KERNEL_WEIGHTS[abs(offsety)];
 
 			// Sum
-			ANKI_UNROLL for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
+			ANKI_UNROLL for(U32 i = 0u; i < MAX_RT_SHADOW_LAYERS; ++i)
 			{
 				sumShadowLayers[i] += shadowLayers[i] * w;
 			}
@@ -154,7 +154,7 @@ void main()
 	// Normalize
 	sumWeight += EPSILON;
 
-	ANKI_UNROLL for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
+	ANKI_UNROLL for(U32 i = 0u; i < MAX_RT_SHADOW_LAYERS; ++i)
 	{
 		sumShadowLayers[i] /= sumWeight;
 	}

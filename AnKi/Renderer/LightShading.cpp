@@ -57,10 +57,9 @@ Error LightShading::initLightShading(const ConfigSet& config)
 	ANKI_CHECK(getResourceManager().loadResource("Shaders/LightShading.ankiprog", m_lightShading.m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_lightShading.m_prog);
-	variantInitInfo.addConstant("CLUSTER_COUNT_X", U32(m_r->getClusterCount()[0]));
-	variantInitInfo.addConstant("CLUSTER_COUNT_Y", U32(m_r->getClusterCount()[1]));
-	variantInitInfo.addConstant("CLUSTER_COUNT_Z", U32(m_r->getClusterCount()[2]));
-	variantInitInfo.addConstant("CLUSTER_COUNT", U32(m_r->getClusterCount()[3]));
+	variantInitInfo.addConstant("TILE_COUNTS", m_r->getTileCounts());
+	variantInitInfo.addConstant("Z_SPLIT_COUNT", m_r->getZSplitCount());
+	variantInitInfo.addConstant("TILE_SIZE", m_r->getTileSize());
 	variantInitInfo.addConstant("IR_MIPMAP_COUNT", U32(m_r->getProbeReflections().getReflectionTextureMipmapCount()));
 	const ShaderProgramResourceVariant* variant;
 
@@ -94,7 +93,8 @@ Error LightShading::initApplyFog(const ConfigSet& config)
 	ANKI_CHECK(getResourceManager().loadResource("Shaders/LightShadingApplyFog.ankiprog", m_applyFog.m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_applyFog.m_prog);
-	variantInitInfo.addConstant("FOG_LAST_CLASTER", m_r->getVolumetricFog().getFinalClusterInZ());
+	variantInitInfo.addConstant("Z_SPLIT_COUNT", m_r->getZSplitCount());
+	variantInitInfo.addConstant("FINAL_Z_SPLIT", m_r->getVolumetricFog().getFinalClusterInZ());
 
 	const ShaderProgramResourceVariant* variant;
 	m_applyFog.m_prog->getOrCreateVariant(variantInitInfo, variant);
@@ -107,7 +107,6 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 {
 	const RenderingContext& ctx = *m_runCtx.m_ctx;
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	const ClusterBinOut& rsrc = ctx.m_clusterBinOut;
 
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 
@@ -118,40 +117,40 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 		cmdb->setDepthWrite(false);
 
 		// Bind all
-		bindUniforms(cmdb, 0, 0, ctx.m_lightShadingUniformsToken);
+		const ClusteredShadingContext& binning = ctx.m_clusteredShading;
+		bindUniforms(cmdb, 0, 0, binning.m_clusteredShadingUniformsToken);
 
-		bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
-		bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
+		bindUniforms(cmdb, 0, 1, binning.m_pointLightsToken);
+		bindUniforms(cmdb, 0, 2, binning.m_spotLightsToken);
 		rgraphCtx.bindColorTexture(0, 3, m_r->getShadowMapping().getShadowmapRt());
 
-		bindUniforms(cmdb, 0, 4, rsrc.m_reflectionProbesToken);
+		bindUniforms(cmdb, 0, 4, binning.m_reflectionProbesToken);
 		rgraphCtx.bindColorTexture(0, 5, m_r->getProbeReflections().getReflectionRt());
 		cmdb->bindTexture(0, 6, m_r->getProbeReflections().getIntegrationLut(), TextureUsageBit::SAMPLED_FRAGMENT);
 
 		m_r->getGlobalIllumination().bindVolumeTextures(ctx, rgraphCtx, 0, 7);
-		bindUniforms(cmdb, 0, 8, rsrc.m_globalIlluminationProbesToken);
+		bindUniforms(cmdb, 0, 8, binning.m_globalIlluminationProbesToken);
 
-		bindStorage(cmdb, 0, 9, rsrc.m_clustersToken);
-		bindStorage(cmdb, 0, 10, rsrc.m_indicesToken);
+		bindStorage(cmdb, 0, 9, binning.m_clustersToken);
 
-		cmdb->bindSampler(0, 11, m_r->getSamplers().m_nearestNearestClamp);
-		cmdb->bindSampler(0, 12, m_r->getSamplers().m_trilinearClamp);
-		rgraphCtx.bindColorTexture(0, 13, m_r->getGBuffer().getColorRt(0));
-		rgraphCtx.bindColorTexture(0, 14, m_r->getGBuffer().getColorRt(1));
-		rgraphCtx.bindColorTexture(0, 15, m_r->getGBuffer().getColorRt(2));
-		rgraphCtx.bindTexture(0, 16, m_r->getGBuffer().getDepthRt(),
+		cmdb->bindSampler(0, 10, m_r->getSamplers().m_nearestNearestClamp);
+		cmdb->bindSampler(0, 11, m_r->getSamplers().m_trilinearClamp);
+		rgraphCtx.bindColorTexture(0, 12, m_r->getGBuffer().getColorRt(0));
+		rgraphCtx.bindColorTexture(0, 13, m_r->getGBuffer().getColorRt(1));
+		rgraphCtx.bindColorTexture(0, 14, m_r->getGBuffer().getColorRt(2));
+		rgraphCtx.bindTexture(0, 15, m_r->getGBuffer().getDepthRt(),
 							  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
-		rgraphCtx.bindColorTexture(0, 17, m_r->getSsr().getRt());
-		rgraphCtx.bindColorTexture(0, 18, m_r->getSsao().getRt());
-		rgraphCtx.bindColorTexture(0, 19, m_r->getSsgi().getRt());
+		rgraphCtx.bindColorTexture(0, 16, m_r->getSsr().getRt());
+		rgraphCtx.bindColorTexture(0, 17, m_r->getSsao().getRt());
+		rgraphCtx.bindColorTexture(0, 18, m_r->getSsgi().getRt());
 
 		if(m_r->getRtShadowsEnabled())
 		{
-			rgraphCtx.bindColorTexture(0, 20, m_r->getRtShadows().getRt());
+			rgraphCtx.bindColorTexture(0, 19, m_r->getRtShadows().getRt());
 		}
 		else
 		{
-			rgraphCtx.bindColorTexture(0, 21, m_r->getShadowmapsResolve().getRt());
+			rgraphCtx.bindColorTexture(0, 20, m_r->getShadowmapsResolve().getRt());
 		}
 
 		// Draw
@@ -171,13 +170,15 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 							  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
 		rgraphCtx.bindColorTexture(0, 3, m_r->getVolumetricFog().getRt());
 
-		struct PushConsts
+		class PushConsts
 		{
-			ClustererMagicValues m_clustererMagic;
-			Mat4 m_invViewProjMat;
+		public:
+			Vec2 m_padding;
+			F32 m_near;
+			F32 m_far;
 		} regs;
-		regs.m_clustererMagic = ctx.m_clusterBinOut.m_shaderMagicValues;
-		regs.m_invViewProjMat = ctx.m_matrices.m_viewProjectionJitter.getInverse();
+		regs.m_near = ctx.m_renderQueue->m_cameraNear;
+		regs.m_far = ctx.m_renderQueue->m_cameraFar;
 
 		cmdb->setPushConstants(&regs, sizeof(regs));
 
@@ -211,33 +212,39 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	pass.setFramebufferInfo(m_lightShading.m_fbDescr, {{m_runCtx.m_rt}}, {m_r->getGBuffer().getDepthRt()});
 
 	// Light shading
-	pass.newDependency({m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-	pass.newDependency({m_r->getGBuffer().getColorRt(0), TextureUsageBit::SAMPLED_FRAGMENT});
-	pass.newDependency({m_r->getGBuffer().getColorRt(1), TextureUsageBit::SAMPLED_FRAGMENT});
-	pass.newDependency({m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_FRAGMENT});
-	pass.newDependency({m_r->getGBuffer().getDepthRt(),
-						TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ,
-						TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
-	pass.newDependency({m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::SAMPLED_FRAGMENT});
-	pass.newDependency({m_r->getSsao().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
-	pass.newDependency({m_r->getSsgi().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+	pass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
+	pass.newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(0), TextureUsageBit::SAMPLED_FRAGMENT));
+	pass.newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(1), TextureUsageBit::SAMPLED_FRAGMENT));
+	pass.newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_FRAGMENT));
+	pass.newDependency(
+		RenderPassDependency(m_r->getGBuffer().getDepthRt(),
+							 TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ,
+							 TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)));
+	pass.newDependency(
+		RenderPassDependency(m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::SAMPLED_FRAGMENT));
+	pass.newDependency(RenderPassDependency(m_r->getSsao().getRt(), TextureUsageBit::SAMPLED_FRAGMENT));
+	pass.newDependency(RenderPassDependency(m_r->getSsgi().getRt(), TextureUsageBit::SAMPLED_FRAGMENT));
 	if(m_r->getRtShadowsEnabled())
 	{
-		pass.newDependency({m_r->getRtShadows().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newDependency(RenderPassDependency(m_r->getRtShadows().getRt(), TextureUsageBit::SAMPLED_FRAGMENT));
 	}
 	else
 	{
-		pass.newDependency({m_r->getShadowmapsResolve().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newDependency(
+			RenderPassDependency(m_r->getShadowmapsResolve().getRt(), TextureUsageBit::SAMPLED_FRAGMENT));
 	}
+	pass.newDependency(
+		RenderPassDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::STORAGE_FRAGMENT_READ));
 
 	// Refl & indirect
-	pass.newDependency({m_r->getSsr().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
-	pass.newDependency({m_r->getProbeReflections().getReflectionRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+	pass.newDependency(RenderPassDependency(m_r->getSsr().getRt(), TextureUsageBit::SAMPLED_FRAGMENT));
+	pass.newDependency(
+		RenderPassDependency(m_r->getProbeReflections().getReflectionRt(), TextureUsageBit::SAMPLED_FRAGMENT));
 
 	m_r->getGlobalIllumination().setRenderGraphDependencies(ctx, pass, TextureUsageBit::SAMPLED_FRAGMENT);
 
 	// Fog
-	pass.newDependency({m_r->getVolumetricFog().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+	pass.newDependency(RenderPassDependency(m_r->getVolumetricFog().getRt(), TextureUsageBit::SAMPLED_FRAGMENT));
 
 	// For forward shading
 	m_r->getForwardShading().setDependencies(ctx, pass);

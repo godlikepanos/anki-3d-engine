@@ -67,7 +67,8 @@ enum class VulkanExtensions : U16
 	EXT_DEBUG_REPORT = 1 << 9,
 	AMD_SHADER_INFO = 1 << 10,
 	AMD_RASTERIZATION_ORDER = 1 << 11,
-	KHR_RAY_TRACING = 1 << 12
+	KHR_RAY_TRACING = 1 << 12,
+	PIPELINE_EXECUTABLE_PROPERTIES = 1 << 13,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VulkanExtensions)
 
@@ -94,7 +95,7 @@ static_assert(!(BufferUsageBit::ALL & PrivateBufferUsageBit::ALL_PRIVATE), "Upda
 	do \
 	{ \
 		VkResult rez; \
-		if((rez = (x)) < 0) \
+		if(ANKI_UNLIKELY((rez = (x)) < 0)) \
 		{ \
 			ANKI_VK_LOGF("Vulkan function failed (VkResult: %s): %s", vkResultToString(rez), #x); \
 		} \
@@ -105,7 +106,7 @@ static_assert(!(BufferUsageBit::ALL & PrivateBufferUsageBit::ALL_PRIVATE), "Upda
 	do \
 	{ \
 		VkResult rez; \
-		if((rez = (x)) < 0) \
+		if(ANKI_UNLIKELY((rez = (x)) < 0)) \
 		{ \
 			ANKI_VK_LOGE("Vulkan function failed (VkResult: %s): %s", vkResultToString(rez), #x); \
 			return Error::FUNCTION_FAILED; \

@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(INPUT_TEXTURE_SIZE, 0, UVec2(1));
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(INPUT_TEXTURE_SIZE, 0u);
 
 #pragma anki start comp
 #include <AnKi/Shaders/GaussianBlurCommon.glsl>
@@ -65,7 +65,7 @@ void main()
 	const F32 w1 = BOX_WEIGHTS[1u];
 	const F32 w2 = BOX_WEIGHTS[2u];
 	Vec4 moments;
-	if(u_uniforms.m_blur != 0)
+	if(u_uniforms.m_blur != 0u)
 	{
 		moments = computeMoments(uv) * w0;
 		moments += computeMoments(clamp(uv + Vec2(UV_OFFSET.x, 0.0), minUv, maxUv)) * w1;

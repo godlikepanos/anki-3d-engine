@@ -32,11 +32,10 @@ public:
 
 private:
 	Array<TexturePtr, 2> m_rtTextures;
+	Array<Bool, 2> m_rtTexturesImportedOnce = {};
 
 	ShaderProgramResourcePtr m_prog;
 	Array<ShaderProgramPtr, 2> m_grProgs;
-
-	Array<U32, 2> m_workgroupSize = {};
 
 	class
 	{

@@ -25,8 +25,8 @@ class ShaderProgramBinaryWrapper : public NonCopyable
 											  ShaderProgramPostParseInterface* postParseCallback,
 											  ShaderProgramAsyncTaskInterface* taskManager,
 											  GenericMemoryPoolAllocator<U8> tempAllocator,
-											  const GpuDeviceCapabilities& gpuCapabilities,
-											  const BindlessLimits& bindlessLimits, ShaderProgramBinaryWrapper& binary);
+											  const ShaderCompilerOptions& compilerOptions,
+											  ShaderProgramBinaryWrapper& binary);
 
 public:
 	ShaderProgramBinaryWrapper(GenericMemoryPoolAllocator<U8> alloc)
@@ -62,8 +62,8 @@ ANKI_USE_RESULT Error compileShaderProgram(CString fname, ShaderProgramFilesyste
 										   ShaderProgramPostParseInterface* postParseCallback,
 										   ShaderProgramAsyncTaskInterface* taskManager,
 										   GenericMemoryPoolAllocator<U8> tempAllocator,
-										   const GpuDeviceCapabilities& gpuCapabilities,
-										   const BindlessLimits& bindlessLimits, ShaderProgramBinaryWrapper& binary);
+										   const ShaderCompilerOptions& compilerOptions,
+										   ShaderProgramBinaryWrapper& binary);
 /// @}
 
 } // end namespace anki

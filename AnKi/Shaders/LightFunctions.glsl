@@ -8,9 +8,9 @@
 #pragma once
 
 #include <AnKi/Shaders/Functions.glsl>
+#include <AnKi/Shaders/CollisionFunctions.glsl>
 #include <AnKi/Shaders/Pack.glsl>
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
-#include <AnKi/Shaders/Include/ClusteredShadingFunctions.h>
 #include <AnKi/Shaders/Include/Evsm.h>
 
 // Do some EVSM magic with depth
@@ -164,7 +164,7 @@ U32 computeShadowSampleCount(const U32 COUNT, F32 zVSpace)
 
 F32 computeShadowFactorSpotLight(SpotLight light, Vec3 worldPos, texture2D spotMap, sampler spotMapSampler)
 {
-	const Vec4 texCoords4 = light.m_texProjectionMat * Vec4(worldPos, 1.0);
+	const Vec4 texCoords4 = light.m_textureMatrix * Vec4(worldPos, 1.0);
 	const Vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
 
 	const Vec4 shadowMoments = textureLod(spotMap, spotMapSampler, texCoords3.xy, 0.0);
@@ -181,7 +181,7 @@ F32 computeShadowFactorPointLight(PointLight light, Vec3 frag2Light, texture2D s
 
 	// 1) Project the dist to light's proj mat
 	//
-	const F32 near = LIGHT_FRUSTUM_NEAR_PLANE;
+	const F32 near = CLUSTER_OBJECT_FRUSTUM_NEAR_PLANE;
 	const F32 far = light.m_radius;
 	const F32 g = near - far;
 
@@ -198,9 +198,7 @@ F32 computeShadowFactorPointLight(PointLight light, Vec3 frag2Light, texture2D s
 	Vec2 uv = convertCubeUvsu(dir, faceIdxu);
 
 	// Get the atlas offset
-	Vec2 atlasOffset;
-	atlasOffset.x = light.m_shadowAtlasTileOffsets[faceIdxu >> 1u][(faceIdxu & 1u) << 1u];
-	atlasOffset.y = light.m_shadowAtlasTileOffsets[faceIdxu >> 1u][((faceIdxu & 1u) << 1u) + 1u];
+	const Vec2 atlasOffset = light.m_shadowAtlasTileOffsets[faceIdxu];
 
 	// Compute UV
 	uv = fma(uv, Vec2(light.m_shadowAtlasTileScale), atlasOffset);
@@ -222,7 +220,7 @@ F32 computeShadowFactorDirLight(DirectionalLight light, U32 cascadeIdx, Vec3 wor
 #define ANKI_FAST_CASCADES_WORKAROUND 1 // Doesn't make sense but it's super fast
 
 #if ANKI_FAST_CASCADES_WORKAROUND
-	// Assumes MAX_SHADOW_CASCADES is 4
+	// Assumes MAX_SHADOW_CASCADES2 is 4
 	Mat4 lightProjectionMat;
 	switch(cascadeIdx)
 	{
@@ -305,7 +303,7 @@ Vec3 intersectProbe(Vec3 fragPos, // Ray origin
 )
 {
 	// Compute the intersection point
-	const F32 intresectionDist = rayAabbIntersectionInside(fragPos, rayDir, probeAabbMin, probeAabbMax);
+	const F32 intresectionDist = testRayAabbInside(fragPos, rayDir, probeAabbMin, probeAabbMax);
 	const Vec3 intersectionPoint = fragPos + intresectionDist * rayDir;
 
 	// Compute the cubemap vector
@@ -374,4 +372,12 @@ Vec3 sampleGlobalIllumination(const Vec3 worldPos, const Vec3 normal, const Glob
 											  irradiancePerDir[3], irradiancePerDir[4], irradiancePerDir[5], normal);
 
 	return irradiance;
+}
+
+U32 computeShadowCascadeIndex(F32 distance, F32 p, F32 effectiveShadowDistance, U32 shadowCascadeCount)
+{
+	const F32 shadowCascadeCountf = F32(shadowCascadeCount);
+	F32 idx = pow(distance / effectiveShadowDistance, 1.0f / p) * shadowCascadeCountf;
+	idx = min(idx, shadowCascadeCountf - 1.0f);
+	return U32(idx);
 }

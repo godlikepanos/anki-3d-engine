@@ -64,7 +64,7 @@ public:
 	/// Get the last cluster split in Z axis that will be affected by lighting.
 	U32 getFinalClusterInZ() const
 	{
-		return m_finalClusterZ;
+		return m_finalZSplit;
 	}
 
 private:
@@ -73,7 +73,7 @@ private:
 
 	RenderTargetDescription m_rtDescr;
 
-	U32 m_finalClusterZ = 0;
+	U32 m_finalZSplit = 0;
 
 	Array<U32, 2> m_workgroupSize = {};
 	Array<U32, 3> m_volumeSize;

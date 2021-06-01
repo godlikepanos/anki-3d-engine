@@ -22,7 +22,7 @@ class UiManager;
 /// @{
 
 /// MainRenderer statistics.
-class MainRendererStats : public RendererStats
+class MainRendererStats
 {
 public:
 	Second m_renderingCpuTime ANKI_DEBUG_CODE(= -1.0);

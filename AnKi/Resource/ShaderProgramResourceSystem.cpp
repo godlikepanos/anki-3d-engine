@@ -65,10 +65,9 @@ Error ShaderProgramResourceSystem::compileAllShaders(CString cacheDir, GrManager
 	ThreadHive threadHive(getCpuCoresCount(), alloc, false);
 
 	// Compute hash for both
-	const GpuDeviceCapabilities caps = gr.getDeviceCapabilities();
-	const BindlessLimits limits = gr.getBindlessLimits();
-	U64 gpuHash = computeHash(&caps, sizeof(caps));
-	gpuHash = appendHash(&limits, sizeof(limits), gpuHash);
+	ShaderCompilerOptions compilerOptions;
+	compilerOptions.m_bindlessLimits = gr.getBindlessLimits();
+	U64 gpuHash = computeHash(&compilerOptions, sizeof(compilerOptions));
 	gpuHash = appendHash(&SHADER_BINARY_VERSION, sizeof(SHADER_BINARY_VERSION), gpuHash);
 
 	ANKI_CHECK(fs.iterateAllFilenames([&](CString fname) -> Error {
@@ -201,7 +200,7 @@ Error ShaderProgramResourceSystem::compileAllShaders(CString cacheDir, GrManager
 
 		// Compile
 		ShaderProgramBinaryWrapper binary(alloc);
-		ANKI_CHECK(compileShaderProgram(fname, fsystem, &skip, &taskManager, alloc, caps, limits, binary));
+		ANKI_CHECK(compileShaderProgram(fname, fsystem, &skip, &taskManager, alloc, compilerOptions, binary));
 
 		const Bool cachedBinIsUpToDate = metafileHash == skip.m_newHash;
 		if(!cachedBinIsUpToDate)

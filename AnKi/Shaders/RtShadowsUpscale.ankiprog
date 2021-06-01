@@ -9,7 +9,7 @@
 #include <AnKi/Shaders/Functions.glsl>
 #include <AnKi/Shaders/BilateralFilter.glsl>
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(OUT_IMAGE_SIZE, 0, UVec2(1));
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(OUT_IMAGE_SIZE, 0u);
 
 const UVec2 WORKGROUP_SIZE = UVec2(8u, 8u);
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
@@ -37,7 +37,7 @@ void main()
 	zeroRtShadowLayers(sumShadowLayers);
 
 	// Do a bilateral upscale
-	const Vec2 texelSize = 1.0 / Vec2(OUT_IMAGE_SIZE / 2);
+	const Vec2 texelSize = 1.0 / Vec2(OUT_IMAGE_SIZE / 2u);
 	const I32 radius = 1;
 	F32 sumWeight = EPSILON;
 	for(I32 x = -radius; x <= radius; ++x)
@@ -52,7 +52,7 @@ void main()
 			F32 shadowLayers[MAX_RT_SHADOW_LAYERS];
 			unpackRtShadows(textureLod(u_quarterShadowsTex, u_nearestAnyClampSampler, sampleUv, 0.0), shadowLayers);
 
-			for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
+			for(U32 i = 0u; i < MAX_RT_SHADOW_LAYERS; ++i)
 			{
 				sumShadowLayers[i] += shadowLayers[i] * w;
 			}
@@ -61,7 +61,7 @@ void main()
 		}
 	}
 
-	for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
+	for(U32 i = 0u; i < MAX_RT_SHADOW_LAYERS; ++i)
 	{
 		sumShadowLayers[i] /= sumWeight;
 	}

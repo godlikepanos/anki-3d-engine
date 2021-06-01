@@ -51,7 +51,7 @@ Error StagingGpuMemoryManager::init(GrManager* gr, const ConfigSet& cfg)
 void StagingGpuMemoryManager::initBuffer(StagingGpuMemoryType type, U32 alignment, PtrSize maxAllocSize,
 										 BufferUsageBit usage, GrManager& gr)
 {
-	auto& perframe = m_perFrameBuffers[type];
+	PerFrameBuffer& perframe = m_perFrameBuffers[type];
 
 	perframe.m_buff = gr.newBuffer(BufferInitInfo(perframe.m_size, usage, BufferMapAccessBit::WRITE, "Staging"));
 	perframe.m_alloc.init(perframe.m_size, alignment, maxAllocSize);
@@ -61,7 +61,7 @@ void StagingGpuMemoryManager::initBuffer(StagingGpuMemoryType type, U32 alignmen
 void* StagingGpuMemoryManager::allocateFrame(PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token)
 {
 	PerFrameBuffer& buff = m_perFrameBuffers[usage];
-	Error err = buff.m_alloc.allocate(size, token.m_offset);
+	const Error err = buff.m_alloc.allocate(size, token.m_offset);
 	if(err)
 	{
 		ANKI_CORE_LOGF("Out of staging GPU memory. Usage: %u", U32(usage));

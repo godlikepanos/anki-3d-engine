@@ -13,14 +13,11 @@
 layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 1) uniform texture2D u_gbufferDepthRt;
 layout(set = 0, binding = 2) uniform texture3D u_lightVol;
-#define LIGHT_SET 0
-#define LIGHT_COMMON_UNIS_BINDING 3
-#define LIGHT_LIGHTS_BINDING 4
-#define LIGHT_CLUSTERS_BINDING 7
+#define CLUSTERED_SHADING_SET 0
+#define CLUSTERED_SHADING_UNIFORMS_BINDING 3
+#define CLUSTERED_SHADING_LIGHTS_BINDING 4
+#define CLUSTERED_SHADING_CLUSTERS_BINDING 7
 #include <AnKi/Shaders/ClusteredShadingCommon.glsl>
-
-#define anki_u_time u_time
-#define RENDERER_SIZE (u_rendererSize)
 
 layout(location = 0) out Vec4 out_color;
 
@@ -43,16 +40,14 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos)
 	Vec3 outColor = Vec3(0.0);
 
 	// Find the cluster and then the light counts
-	const U32 clusterIdx = computeClusterIndex(u_clustererMagic, gl_FragCoord.xy / RENDERER_SIZE, worldPos,
-											   u_clusterCountX, u_clusterCountY);
-
-	U32 idxOffset = u_clusters[clusterIdx];
+	Cluster cluster = getClusterFragCoord(gl_FragCoord.xyz);
 
 	// Point lights
-	U32 idx;
-	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
+	ANKI_LOOP while(cluster.m_pointLightsMask != 0ul)
 	{
-		const PointLight light = u_pointLights[idx];
+		const I32 idx = findLSB64(cluster.m_pointLightsMask);
+		cluster.m_pointLightsMask &= ~(1ul << U64(idx));
+		const PointLight light = u_pointLights2[idx];
 
 		const Vec3 diffC = diffCol * light.m_diffuseColor;
 
@@ -65,7 +60,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos)
 		F32 shadow = 1.0;
 		if(light.m_shadowAtlasTileScale >= 0.0)
 		{
-			shadow = computeShadowFactorPointLight(light, frag2Light, u_shadowTex, u_linearAnyClampSampler);
+			shadow = computeShadowFactorPointLight(light, frag2Light, u_shadowAtlasTex, u_linearAnyClampSampler);
 		}
 #endif
 
@@ -73,9 +68,11 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos)
 	}
 
 	// Spot lights
-	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
+	ANKI_LOOP while(cluster.m_spotLightsMask != 0ul)
 	{
-		const SpotLight light = u_spotLights[idx];
+		const I32 idx = findLSB64(cluster.m_spotLightsMask);
+		cluster.m_spotLightsMask &= ~(1ul << U64(idx));
+		const SpotLight light = u_spotLights2[idx];
 
 		const Vec3 diffC = diffCol * light.m_diffuseColor;
 
@@ -84,16 +81,15 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos)
 
 		const Vec3 l = normalize(frag2Light);
 
-		const F32 spot = computeSpotFactor(l, light.m_outerCos, light.m_innerCos, light.m_dir);
+		const F32 spot = computeSpotFactor(l, light.m_outerCos, light.m_innerCos, light.m_direction);
 
 #if LOD > 1
 		const F32 shadow = 1.0;
 #else
 		F32 shadow = 1.0;
-		const F32 shadowmapLayerIdx = light.m_shadowmapId;
-		if(shadowmapLayerIdx >= 0.0)
+		ANKI_BRANCH if(light.m_shadowLayer != MAX_U32)
 		{
-			shadow = computeShadowFactorSpotLight(light, worldPos, u_shadowTex, u_linearAnyClampSampler);
+			shadow = computeShadowFactorSpotLight(light, worldPos, u_shadowAtlasTex, u_linearAnyClampSampler);
 		}
 #endif
 
@@ -106,10 +102,13 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos)
 // Just read the light color from the vol texture
 Vec3 computeLightColorLow(Vec3 diffCol, Vec3 worldPos)
 {
-	const Vec2 uv = gl_FragCoord.xy / RENDERER_SIZE;
-	const Vec3 uv3d = computeClustererVolumeTextureUvs(u_clustererMagic, uv, worldPos, u_lightVolumeLastCluster + 1u);
+	const Vec2 uv = gl_FragCoord.xy / u_clusteredShading.m_renderingSize;
+	const F32 linearDepth = linearizeDepth(gl_FragCoord.z, u_clusteredShading.m_near, u_clusteredShading.m_far);
+	const Vec3 uvw =
+		Vec3(uv, linearDepth
+					 * (F32(u_clusteredShading.m_zSplitCount) / F32(u_clusteredShading.m_lightVolumeLastZSplit + 1u)));
 
-	const Vec3 light = textureLod(u_lightVol, u_linearAnyClampSampler, uv3d, 0.0).rgb;
+	const Vec3 light = textureLod(u_lightVol, u_linearAnyClampSampler, uvw, 0.0).rgb;
 	return diffuseLambert(diffCol) * light;
 }
 
@@ -120,13 +119,14 @@ void particleAlpha(Vec4 color, Vec4 scaleColor, Vec4 biasColor)
 
 void fog(Vec3 color, F32 fogAlphaScale, F32 fogDistanceOfMaxThikness, F32 zVSpace)
 {
-	const Vec2 screenSize = 1.0 / RENDERER_SIZE;
+	const Vec2 screenSize = 1.0 / u_clusteredShading.m_renderingSize;
 
 	const Vec2 texCoords = gl_FragCoord.xy * screenSize;
 	const F32 depth = textureLod(u_gbufferDepthRt, u_linearAnyClampSampler, texCoords, 0.0).r;
 	F32 zFeatherFactor;
 
-	const Vec4 fragPosVspace4 = u_invProjMat * Vec4(Vec3(UV_TO_NDC(texCoords), depth), 1.0);
+	const Vec4 fragPosVspace4 =
+		u_clusteredShading.m_matrices.m_invertedProjectionJitter * Vec4(Vec3(UV_TO_NDC(texCoords), depth), 1.0);
 	const F32 sceneZVspace = fragPosVspace4.z / fragPosVspace4.w;
 
 	const F32 diff = max(0.0, zVSpace - sceneZVspace);

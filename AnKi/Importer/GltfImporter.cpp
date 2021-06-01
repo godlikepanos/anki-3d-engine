@@ -1250,15 +1250,11 @@ Error GltfImporter::writeLight(const cgltf_node& node, const HashMapAuto<CString
 	auto lensFlaresFname = extras.find("lens_flare");
 	if(lensFlaresFname != extras.getEnd())
 	{
-		ANKI_CHECK(m_sceneFile.writeText("node:loadLensFlare(\"%s\")\n", lensFlaresFname->cstr()));
+		ANKI_CHECK(m_sceneFile.writeText("lfcomp = node:getSceneNodeBase():getLensFlareComponent()\n"));
+		ANKI_CHECK(m_sceneFile.writeText("lfcomp:loadTextureResource(\"%s\")\n", lensFlaresFname->cstr()));
 
 		auto lsSpriteSize = extras.find("lens_flare_first_sprite_size");
 		auto lsColor = extras.find("lens_flare_color");
-
-		if(lsSpriteSize != extras.getEnd() || lsColor != extras.getEnd())
-		{
-			ANKI_CHECK(m_sceneFile.writeText("lfcomp = node:getSceneNodeBase():getLensFlareComponent()\n"));
-		}
 
 		if(lsSpriteSize != extras.getEnd())
 		{

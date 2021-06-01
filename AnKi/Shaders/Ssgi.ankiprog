@@ -39,16 +39,16 @@ layout(set = 0, binding = 8) uniform texture2D u_motionVectorRejectionTex;
 void main()
 {
 	// Compute a global invocation ID that takes the checkerboard pattern into account
-	UVec2 fixedGlobalInvocationId = IVec2(gl_GlobalInvocationID.xy);
-	fixedGlobalInvocationId *= 2;
+	UVec2 fixedGlobalInvocationId = gl_GlobalInvocationID.xy;
+	fixedGlobalInvocationId *= 2u;
 #if VARIANT == 0
 	// Nothing
 #elif VARIANT == 1
-	fixedGlobalInvocationId.x += 1;
+	fixedGlobalInvocationId.x += 1u;
 #elif VARIANT == 2
-	fixedGlobalInvocationId += 1;
+	fixedGlobalInvocationId += 1u;
 #else
-	fixedGlobalInvocationId.y += 1;
+	fixedGlobalInvocationId.y += 1u;
 #endif
 
 	if(fixedGlobalInvocationId.x >= u_unis.m_framebufferSize.x
@@ -74,14 +74,14 @@ void main()
 
 	// Get a random point inside the hemisphere. Use hemisphereSampleCos to avoid perpendicular vecs to viewNormal
 	const UVec2 random = rand3DPCG16(UVec3(gl_GlobalInvocationID.xy, u_unis.m_frameCount)).xy;
-	Vec2 randomCircle = hammersleyRandom16(0, 0xFFFFu, random);
+	Vec2 randomCircle = hammersleyRandom16(0u, 0xFFFFu, random);
 	randomCircle.x *= 0.85; // Reduce the cone angle a bit to avoid self-collisions
 	const Vec3 randomHemisphere = rotationFromDirection(viewNormal) * hemisphereSampleCos(randomCircle);
 
 	// Trace
 	Vec3 hitPoint;
 	F32 hitAttenuation;
-	const U32 lod = 0;
+	const U32 lod = 0u;
 	const F32 minStepf = 4.0;
 	const F32 noise = F32(random.x) * (1.0 / 65536.0);
 	raymarchGroundTruth(viewPos, randomHemisphere, uv, depth, u_unis.m_projMat, u_unis.m_maxSteps, u_depthRt,

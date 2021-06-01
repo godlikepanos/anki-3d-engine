@@ -96,19 +96,19 @@ public:
 
 	/// @name Mess with the local transform
 	/// @{
-	void rotateLocalX(F32 angDegrees)
+	void rotateLocalX(F32 angleRad)
 	{
-		m_ltrf.getRotation().rotateXAxis(angDegrees);
+		m_ltrf.getRotation().rotateXAxis(angleRad);
 		markForUpdate();
 	}
-	void rotateLocalY(F32 angDegrees)
+	void rotateLocalY(F32 angleRad)
 	{
-		m_ltrf.getRotation().rotateYAxis(angDegrees);
+		m_ltrf.getRotation().rotateYAxis(angleRad);
 		markForUpdate();
 	}
-	void rotateLocalZ(F32 angDegrees)
+	void rotateLocalZ(F32 angleRad)
 	{
-		m_ltrf.getRotation().rotateZAxis(angDegrees);
+		m_ltrf.getRotation().rotateZAxis(angleRad);
 		markForUpdate();
 	}
 	void moveLocalX(F32 distance)

@@ -53,9 +53,6 @@ Error TemporalAA::initInternal(const ConfigSet& config)
 		const ShaderProgramResourceVariant* variant;
 		m_prog->getOrCreateVariant(variantInitInfo, variant);
 		m_grProgs[i] = variant->getProgram();
-
-		m_workgroupSize[0] = variant->getWorkgroupSizes()[0];
-		m_workgroupSize[1] = variant->getWorkgroupSizes()[1];
 	}
 
 	for(U i = 0; i < 2; ++i)
@@ -87,7 +84,7 @@ void TemporalAA::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphC
 	rgraphCtx.bindImage(0, 5, m_runCtx.m_renderRt, TextureSubresourceInfo());
 	rgraphCtx.bindUniformBuffer(0, 6, m_r->getTonemapping().getAverageLuminanceBuffer());
 
-	dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_r->getWidth(), m_r->getHeight());
+	dispatchPPCompute(cmdb, 8, 8, m_r->getWidth(), m_r->getHeight());
 }
 
 void TemporalAA::populateRenderGraph(RenderingContext& ctx)
@@ -95,10 +92,21 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 	m_runCtx.m_ctx = &ctx;
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
+	const U32 historyRtIdx = (m_r->getFrameCount() + 1) & 1;
+	const U32 renderRtIdx = !historyRtIdx;
+
 	// Import RTs
-	m_runCtx.m_historyRt =
-		rgraph.importRenderTarget(m_rtTextures[(m_r->getFrameCount() + 1) & 1], TextureUsageBit::SAMPLED_FRAGMENT);
-	m_runCtx.m_renderRt = rgraph.importRenderTarget(m_rtTextures[m_r->getFrameCount() & 1], TextureUsageBit::NONE);
+	if(ANKI_LIKELY(m_rtTexturesImportedOnce[historyRtIdx]))
+	{
+		m_runCtx.m_historyRt = rgraph.importRenderTarget(m_rtTextures[historyRtIdx]);
+	}
+	else
+	{
+		m_runCtx.m_historyRt = rgraph.importRenderTarget(m_rtTextures[historyRtIdx], TextureUsageBit::SAMPLED_FRAGMENT);
+		m_rtTexturesImportedOnce[historyRtIdx] = true;
+	}
+
+	m_runCtx.m_renderRt = rgraph.importRenderTarget(m_rtTextures[renderRtIdx], TextureUsageBit::NONE);
 
 	// Create pass
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("TemporalAA");

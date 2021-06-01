@@ -3,28 +3,12 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-ANKI_SPECIALIZATION_CONSTANT_U32(CLUSTER_COUNT_X, 0, 1);
-ANKI_SPECIALIZATION_CONSTANT_U32(CLUSTER_COUNT_Y, 1, 1);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(TILE_COUNTS, 0u);
+ANKI_SPECIALIZATION_CONSTANT_U32(Z_SPLIT_COUNT, 2u);
+ANKI_SPECIALIZATION_CONSTANT_U32(TILE_SIZE, 3u);
 
 #pragma anki start vert
-#include <AnKi/Shaders/Common.glsl>
-
-layout(location = 0) out Vec2 out_uv;
-layout(location = 1) out Vec2 out_clusterIJ;
-
-out gl_PerVertex
-{
-	Vec4 gl_Position;
-};
-
-void main()
-{
-	out_uv = Vec2(gl_VertexID & 1, gl_VertexID >> 1) * 2.0;
-	const Vec2 pos = out_uv * 2.0 - 1.0;
-	gl_Position = Vec4(pos, 0.0, 1.0);
-
-	out_clusterIJ = Vec2(CLUSTER_COUNT_X, CLUSTER_COUNT_Y) * out_uv;
-}
+#include <AnKi/Shaders/QuadVert.glsl>
 #pragma anki end
 
 #pragma anki start frag
@@ -33,16 +17,15 @@ void main()
 
 layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
 layout(set = 0, binding = 1) uniform texture2D u_msDepthRt;
-
 layout(set = 0, binding = 2) uniform sampler u_trilinearRepeatSampler;
-#define LIGHT_SET 0
-#define LIGHT_COMMON_UNIS_BINDING 3
-#define LIGHT_DECALS_BINDING 4
-#define LIGHT_CLUSTERS_BINDING 7
+
+#define CLUSTERED_SHADING_SET 0
+#define CLUSTERED_SHADING_UNIFORMS_BINDING 3
+#define CLUSTERED_SHADING_DECALS_BINDING 4
+#define CLUSTERED_SHADING_CLUSTERS_BINDING 7
 #include <AnKi/Shaders/ClusteredShadingCommon.glsl>
 
 layout(location = 0) in Vec2 in_uv;
-layout(location = 1) in Vec2 in_clusterIJ;
 
 layout(location = 0) out Vec4 out_color0;
 layout(location = 1) out Vec4 out_color1;
@@ -62,33 +45,27 @@ void main()
 	// Get worldPos
 	const F32 depth = textureLod(u_msDepthRt, u_nearestAnyClampSampler, in_uv, 0.0).r;
 	const Vec2 ndc = UV_TO_NDC(in_uv);
-	const Vec4 worldPos4 = u_invViewProjMat * Vec4(ndc, depth, 1.0);
+	const Vec4 worldPos4 = u_clusteredShading.m_matrices.m_invertedViewProjectionJitter * Vec4(ndc, depth, 1.0);
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
-	// Get first decal index
-	U32 idxOffset;
-	{
-		const U32 k = computeClusterK(u_clustererMagic, worldPos);
-		const U32 clusterIdx =
-			k * (CLUSTER_COUNT_X * CLUSTER_COUNT_Y) + U32(in_clusterIJ.y) * CLUSTER_COUNT_X + U32(in_clusterIJ.x);
-
-		idxOffset = u_clusters[clusterIdx];
-		idxOffset = u_lightIndices[idxOffset - 2u]; // Use the offset metadata
-	}
+	// Get the cluster
+	Cluster cluster = getClusterFragCoord(Vec3(gl_FragCoord.xy, depth), TILE_SIZE, TILE_COUNTS, Z_SPLIT_COUNT,
+										  u_clusteredShading.m_zSplitMagic.x, u_clusteredShading.m_zSplitMagic.y);
 
 	// Process decals
-	U32 idx = u_lightIndices[idxOffset];
-	if(idx == MAX_U32)
+	if(cluster.m_decalsMask == 0ul)
 	{
 		discard;
 	}
 
-	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
+	ANKI_LOOP while(cluster.m_decalsMask != 0ul)
 	{
-		const Decal decal = u_decals[idx];
+		const I32 idx = findLSB64(cluster.m_decalsMask);
+		cluster.m_decalsMask &= ~(1ul << U64(idx));
+		const Decal decal = u_decals2[idx];
 
 		// Project pos to decal space
-		const Vec4 texCoords4 = decal.m_texProjectionMat * Vec4(worldPos, 1.0);
+		const Vec4 texCoords4 = decal.m_textureMatrix * Vec4(worldPos, 1.0);
 		if(texCoords4.w <= 0.7)
 		{
 			// Behind the decal, skip
@@ -101,8 +78,8 @@ void main()
 		texCoords2 = saturate(texCoords2);
 
 		// Read diffuse
-		const Vec2 diffUv = mad(texCoords2, decal.m_diffUv.zw, decal.m_diffUv.xy);
-		const Vec4 decalDiff = texture(u_diffDecalTex, u_trilinearRepeatSampler, diffUv);
+		const Vec2 diffUv = mad(texCoords2, decal.m_diffuseUv.zw, decal.m_diffuseUv.xy);
+		const Vec4 decalDiff = texture(u_diffuseDecalTex, u_trilinearRepeatSampler, diffUv);
 
 		// Read roughness
 		const Vec2 specUv = mad(texCoords2, decal.m_normRoughnessUv.zw, decal.m_normRoughnessUv.xy);

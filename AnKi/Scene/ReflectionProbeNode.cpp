@@ -110,7 +110,7 @@ ReflectionProbeNode::ReflectionProbeNode(SceneGraph* scene, CString name)
 
 		FrustumComponent* frc = newComponent<FrustumComponent>();
 		frc->setFrustumType(FrustumType::PERSPECTIVE);
-		frc->setPerspective(LIGHT_FRUSTUM_NEAR_PLANE, 10.0f, ang, ang);
+		frc->setPerspective(CLUSTER_OBJECT_FRUSTUM_NEAR_PLANE, 10.0f, ang, ang);
 		frc->setWorldTransform(m_frustumTransforms[i]);
 		frc->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
 		frc->setEffectiveShadowDistance(getSceneGraph().getConfig().m_reflectionProbeShadowEffectiveDistance);

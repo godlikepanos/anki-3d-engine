@@ -21,9 +21,6 @@ static const Array<CString, U32(ShaderType::COUNT)> SHADER_STAGE_NAMES = {
 	 "ANY_HIT", "CLOSEST_HIT", "MISS", "INTERSECTION", "CALLABLE"}};
 
 static const char* SHADER_HEADER = R"(#version 460 core
-#define ANKI_BACKEND_MINOR %u
-#define ANKI_BACKEND_MAJOR %u
-#define ANKI_VENDOR_%s 1
 #define ANKI_%s_SHADER 1
 
 #define gl_VertexID gl_VertexIndex
@@ -54,6 +51,8 @@ static const char* SHADER_HEADER = R"(#version 460 core
 #extension GL_EXT_shader_explicit_arithmetic_types_float16 : enable
 #extension GL_EXT_shader_explicit_arithmetic_types_float32 : enable
 #extension GL_EXT_shader_explicit_arithmetic_types_float64 : enable
+#extension GL_EXT_shader_atomic_int64 : enable
+#extension GL_EXT_shader_subgroup_extended_types_int64 : enable
 
 #extension GL_EXT_nonuniform_qualifier : enable
 #extension GL_EXT_scalar_block_layout : enable
@@ -61,7 +60,7 @@ static const char* SHADER_HEADER = R"(#version 460 core
 #define ANKI_MAX_BINDLESS_TEXTURES %u
 #define ANKI_MAX_BINDLESS_IMAGES %u
 
-#if %u || defined(ANKI_RAY_GEN_SHADER) || defined(ANKI_ANY_HIT_SHADER) || defined(ANKI_CLOSEST_HIT_SHADER) || defined(ANKI_MISS_SHADER) || defined(ANKI_INTERSECTION_SHADER) || defined(ANKI_CALLABLE_SHADER)
+#if defined(ANKI_RAY_GEN_SHADER) || defined(ANKI_ANY_HIT_SHADER) || defined(ANKI_CLOSEST_HIT_SHADER) || defined(ANKI_MISS_SHADER) || defined(ANKI_INTERSECTION_SHADER) || defined(ANKI_CALLABLE_SHADER)
 #	extension GL_EXT_ray_tracing : enable
 #endif
 
@@ -74,102 +73,102 @@ static const char* SHADER_HEADER = R"(#version 460 core
 	layout(set = set_, binding = 1) uniform readonly image2D u_bindlessImages2dF32[ANKI_MAX_BINDLESS_IMAGES]
 
 #define F32 float
-#define _ANKI_SIZEOF_float 4
+#define _ANKI_SIZEOF_float 4u
 #define Vec2 vec2
-#define _ANKI_SIZEOF_vec2 8
+#define _ANKI_SIZEOF_vec2 8u
 #define Vec3 vec3
-#define _ANKI_SIZEOF_vec3 12
+#define _ANKI_SIZEOF_vec3 12u
 #define Vec4 vec4
-#define _ANKI_SIZEOF_vec4 16
+#define _ANKI_SIZEOF_vec4 16u
 
 #define F16 float16_t
-#define _ANKI_SIZEOF_float16_t 2
+#define _ANKI_SIZEOF_float16_t 2u
 #define HVec2 f16vec2
-#define _ANKI_SIZEOF_f16vec2 4
+#define _ANKI_SIZEOF_f16vec2 4u
 #define HVec3 f16vec3
-#define _ANKI_SIZEOF_f16vec3 6
+#define _ANKI_SIZEOF_f16vec3 6u
 #define HVec4 f16vec4
-#define _ANKI_SIZEOF_f16vec4 8
+#define _ANKI_SIZEOF_f16vec4 8u
 
 #define U8 uint8_t
-#define _ANKI_SIZEOF_uint8_t 1
+#define _ANKI_SIZEOF_uint8_t 1u
 #define U8Vec2 u8vec2
-#define _ANKI_SIZEOF_u8vec2 2
+#define _ANKI_SIZEOF_u8vec2 2u
 #define U8Vec3 u8vec3
-#define _ANKI_SIZEOF_u8vec3 3
+#define _ANKI_SIZEOF_u8vec3 3u
 #define U8Vec4 u8vec4
-#define _ANKI_SIZEOF_u8vec4 4
+#define _ANKI_SIZEOF_u8vec4 4u
 
 #define I8 int8_t
-#define _ANKI_SIZEOF_int8_t 1
+#define _ANKI_SIZEOF_int8_t 1u
 #define I8Vec2 i8vec2
-#define _ANKI_SIZEOF_i8vec2 2
+#define _ANKI_SIZEOF_i8vec2 2u
 #define I8Vec3 i8vec3
-#define _ANKI_SIZEOF_i8vec3 3
+#define _ANKI_SIZEOF_i8vec3 3u
 #define I8Vec4 i8vec4
-#define _ANKI_SIZEOF_i8vec4 4
+#define _ANKI_SIZEOF_i8vec4 4u
 
 #define U16 uint16_t
-#define _ANKI_SIZEOF_uint16_t 2
+#define _ANKI_SIZEOF_uint16_t 2u
 #define U16Vec2 u16vec2
-#define _ANKI_SIZEOF_u16vec2 4
+#define _ANKI_SIZEOF_u16vec2 4u
 #define U16Vec3 u16vec3
-#define _ANKI_SIZEOF_u16vec3 6
+#define _ANKI_SIZEOF_u16vec3 6u
 #define U16Vec4 u16vec4
-#define _ANKI_SIZEOF_u16vec4 8
+#define _ANKI_SIZEOF_u16vec4 8u
 
 #define I16 int16_t
-#define _ANKI_SIZEOF_int16_t 2
+#define _ANKI_SIZEOF_int16_t 2u
 #define I16Vec2 i16vec2
-#define _ANKI_SIZEOF_i16vec2 4
+#define _ANKI_SIZEOF_i16vec2 4u
 #define I16Vec3 i16vec3
-#define _ANKI_SIZEOF_i16vec3 6
+#define _ANKI_SIZEOF_i16vec3 6u
 #define i16Vec4 i16vec4
-#define _ANKI_SIZEOF_i16vec4 8
+#define _ANKI_SIZEOF_i16vec4 8u
 
 #define U32 uint
-#define _ANKI_SIZEOF_uint 4
+#define _ANKI_SIZEOF_uint 4u
 #define UVec2 uvec2
-#define _ANKI_SIZEOF_uvec2 8
+#define _ANKI_SIZEOF_uvec2 8u
 #define UVec3 uvec3
-#define _ANKI_SIZEOF_uvec3 12
+#define _ANKI_SIZEOF_uvec3 12u
 #define UVec4 uvec4
-#define _ANKI_SIZEOF_uvec4 16
+#define _ANKI_SIZEOF_uvec4 16u
 
 #define I32 int
-#define _ANKI_SIZEOF_int 4
+#define _ANKI_SIZEOF_int 4u
 #define IVec2 ivec2
-#define _ANKI_SIZEOF_ivec2 8
+#define _ANKI_SIZEOF_ivec2 8u
 #define IVec3 ivec3
-#define _ANKI_SIZEOF_ivec3 12
+#define _ANKI_SIZEOF_ivec3 12u
 #define IVec4 ivec4
-#define _ANKI_SIZEOF_ivec4 16
+#define _ANKI_SIZEOF_ivec4 16u
 
 #define U64 uint64_t
-#define _ANKI_SIZEOF_uint64_t 8
+#define _ANKI_SIZEOF_uint64_t 8u
 #define U64Vec2 u64vec2
-#define _ANKI_SIZEOF_u64vec2 16
+#define _ANKI_SIZEOF_u64vec2 16u
 #define U64Vec3 u64vec3
-#define _ANKI_SIZEOF_u64vec3 24
+#define _ANKI_SIZEOF_u64vec3 24u
 #define U64Vec4 u64vec4
-#define _ANKI_SIZEOF_u64vec4 32
+#define _ANKI_SIZEOF_u64vec4 32u
 
 #define I64 int64_t
-#define _ANKI_SIZEOF_int64_t 8
+#define _ANKI_SIZEOF_int64_t 8u
 #define I64Vec2 i64vec2
-#define _ANKI_SIZEOF_i64vec2 16
+#define _ANKI_SIZEOF_i64vec2 16u
 #define I64Vec3 i64vec3
-#define _ANKI_SIZEOF_i64vec3 24
+#define _ANKI_SIZEOF_i64vec3 24u
 #define I64Vec4 i64vec4
-#define _ANKI_SIZEOF_i64vec4 32
+#define _ANKI_SIZEOF_i64vec4 32u
 
 #define Mat3 mat3
 
 #define Mat4 mat4
-#define _ANKI_SIZEOF_mat4 64
+#define _ANKI_SIZEOF_mat4 64u
 
 #define Mat3x4 mat3x4
-#define _ANKI_SIZEOF_mat3x4 48
+#define _ANKI_SIZEOF_mat3x4 48u
 
 #define Bool bool
 
@@ -179,55 +178,44 @@ static const char* SHADER_HEADER = R"(#version 460 core
 #define ANKI_SIZEOF(type) _ANKI_CONCATENATE(_ANKI_SIZEOF_, type)
 #define ANKI_ALIGNOF(type) _ANKI_CONCATENATE(_ANKI_ALIGNOF_, type)
 
-#define _ANKI_SCONST_X(type, n, id, defltVal) \
-	layout(constant_id = id) const type n = defltVal; \
+#define _ANKI_SCONST_X(type, n, id) \
+	layout(constant_id = id) const type n = type(1); \
 	const U32 ANKI_CONCATENATE(n, _CONST_ID) = id
 
-#define _ANKI_SCONST_X2(type, componentType, n, id, defltVal, constWorkaround) \
-	layout(constant_id = id + 0) const componentType ANKI_CONCATENATE(_anki_const_0_2_, n) = defltVal[0]; \
-	layout(constant_id = id + 1) const componentType ANKI_CONCATENATE(_anki_const_1_2_, n) = defltVal[1]; \
-	constWorkaround componentType ANKI_CONCATENATE(n, _X) = ANKI_CONCATENATE(_anki_const_0_2_, n) + componentType(0); \
-	constWorkaround componentType ANKI_CONCATENATE(n, _Y) = ANKI_CONCATENATE(_anki_const_1_2_, n) + componentType(0); \
-	constWorkaround type n = type(ANKI_CONCATENATE(n, _X), ANKI_CONCATENATE(n, _Y)); \
-	const UVec2 ANKI_CONCATENATE(n, _CONST_ID) = UVec2(id, id + 1)
+#define _ANKI_SCONST_X2(type, componentType, n, id, constWorkaround) \
+	layout(constant_id = id + 0u) const componentType ANKI_CONCATENATE(_anki_const_0_2_, n) = componentType(1); \
+	layout(constant_id = id + 1u) const componentType ANKI_CONCATENATE(_anki_const_1_2_, n) = componentType(1); \
+	constWorkaround type n = type(ANKI_CONCATENATE(_anki_const_0_2_, n), ANKI_CONCATENATE(_anki_const_1_2_, n))
 
-#define _ANKI_SCONST_X3(type, componentType, n, id, defltVal, constWorkaround) \
-	layout(constant_id = id + 0) const componentType ANKI_CONCATENATE(_anki_const_0_3_, n) = defltVal[0]; \
-	layout(constant_id = id + 1) const componentType ANKI_CONCATENATE(_anki_const_1_3_, n) = defltVal[1]; \
-	layout(constant_id = id + 2) const componentType ANKI_CONCATENATE(_anki_const_2_3_, n) = defltVal[2]; \
-	constWorkaround componentType ANKI_CONCATENATE(n, _X) = ANKI_CONCATENATE(_anki_const_0_3_, n) + componentType(0); \
-	constWorkaround componentType ANKI_CONCATENATE(n, _Y) = ANKI_CONCATENATE(_anki_const_1_3_, n) + componentType(0); \
-	constWorkaround componentType ANKI_CONCATENATE(n, _Z) = ANKI_CONCATENATE(_anki_const_2_3_, n) + componentType(0); \
-	constWorkaround type n = type(ANKI_CONCATENATE(n, _X), ANKI_CONCATENATE(n, _Y), ANKI_CONCATENATE(n, _Z)); \
-	const UVec3 ANKI_CONCATENATE(n, _CONST_ID) = UVec3(id, id + 1, id + 2)
+#define _ANKI_SCONST_X3(type, componentType, n, id, constWorkaround) \
+	layout(constant_id = id + 0u) const componentType ANKI_CONCATENATE(_anki_const_0_3_, n) = componentType(1); \
+	layout(constant_id = id + 1u) const componentType ANKI_CONCATENATE(_anki_const_1_3_, n) = componentType(1); \
+	layout(constant_id = id + 2u) const componentType ANKI_CONCATENATE(_anki_const_2_3_, n) = componentType(1); \
+	constWorkaround type n = type(ANKI_CONCATENATE(_anki_const_0_3_, n), ANKI_CONCATENATE(_anki_const_1_3_, n), \
+		ANKI_CONCATENATE(_anki_const_2_3_, n))
 
-#define _ANKI_SCONST_X4(type, componentType, n, id, defltVal, constWorkaround) \
-	layout(constant_id = id + 0) const componentType ANKI_CONCATENATE(_anki_const_0_4_, n) = defltVal[0]; \
-	layout(constant_id = id + 1) const componentType ANKI_CONCATENATE(_anki_const_1_4_, n) = defltVal[1]; \
-	layout(constant_id = id + 2) const componentType ANKI_CONCATENATE(_anki_const_2_4_, n) = defltVal[2]; \
-	layout(constant_id = id + 3) const componentType ANKI_CONCATENATE(_anki_const_3_4_, n) = defltVal[3]; \
-	constWorkaround componentType ANKI_CONCATENATE(n, _X) = ANKI_CONCATENATE(_anki_const_0_4_, n) + componentType(0); \
-	constWorkaround componentType ANKI_CONCATENATE(n, _Y) = ANKI_CONCATENATE(_anki_const_1_4_, n) + componentType(0); \
-	constWorkaround componentType ANKI_CONCATENATE(n, _Z) = ANKI_CONCATENATE(_anki_const_2_4_, n) + componentType(0); \
-	constWorkaround componentType ANKI_CONCATENATE(n, _W) = ANKI_CONCATENATE(_anki_const_3_4_, n) + componentType(0); \
-	constWorkaround type n = type(ANKI_CONCATENATE(n, _X), ANKI_CONCATENATE(n, _Y), ANKI_CONCATENATE(n, _Z), \
-		ANKI_CONCATENATE(n, _W)); \
-	const UVec4 ANKI_CONCATENATE(n, _CONST_ID) = UVec4(id, id + 1, id + 2, id + 3)
+#define _ANKI_SCONST_X4(type, componentType, n, id, constWorkaround) \
+	layout(constant_id = id + 0u) const componentType ANKI_CONCATENATE(_anki_const_0_4_, n) = componentType(1); \
+	layout(constant_id = id + 1u) const componentType ANKI_CONCATENATE(_anki_const_1_4_, n) = componentType(1); \
+	layout(constant_id = id + 2u) const componentType ANKI_CONCATENATE(_anki_const_2_4_, n) = componentType(1); \
+	layout(constant_id = id + 3u) const componentType ANKI_CONCATENATE(_anki_const_3_4_, n) = componentType(1); \
+	constWorkaround type n = type(ANKI_CONCATENATE(_anki_const_0_4_, n), ANKI_CONCATENATE(_anki_const_1_4_, n), \
+		ANKI_CONCATENATE(_anki_const_2_4_, n), ANKI_CONCATENATE(_anki_const_2_4_, n))
 
-#define ANKI_SPECIALIZATION_CONSTANT_I32(n, id, defltVal) _ANKI_SCONST_X(I32, n, id, defltVal)
-#define ANKI_SPECIALIZATION_CONSTANT_IVEC2(n, id, defltVal) _ANKI_SCONST_X2(IVec2, I32, n, id, defltVal, const)
-#define ANKI_SPECIALIZATION_CONSTANT_IVEC3(n, id, defltVal) _ANKI_SCONST_X3(IVec3, I32, n, id, defltVal, const)
-#define ANKI_SPECIALIZATION_CONSTANT_IVEC4(n, id, defltVal) _ANKI_SCONST_X4(IVec4, I32, n, id, defltVal, const)
+#define ANKI_SPECIALIZATION_CONSTANT_I32(n, id) _ANKI_SCONST_X(I32, n, id)
+#define ANKI_SPECIALIZATION_CONSTANT_IVEC2(n, id) _ANKI_SCONST_X2(IVec2, I32, n, id, const)
+#define ANKI_SPECIALIZATION_CONSTANT_IVEC3(n, id) _ANKI_SCONST_X3(IVec3, I32, n, id, const)
+#define ANKI_SPECIALIZATION_CONSTANT_IVEC4(n, id) _ANKI_SCONST_X4(IVec4, I32, n, id, const)
 
-#define ANKI_SPECIALIZATION_CONSTANT_U32(n, id, defltVal) _ANKI_SCONST_X(U32, n, id, defltVal)
-#define ANKI_SPECIALIZATION_CONSTANT_UVEC2(n, id, defltVal) _ANKI_SCONST_X2(UVec2, U32, n, id, defltVal, const)
-#define ANKI_SPECIALIZATION_CONSTANT_UVEC3(n, id, defltVal) _ANKI_SCONST_X3(UVec3, U32, n, id, defltVal, const)
-#define ANKI_SPECIALIZATION_CONSTANT_UVEC4(n, id, defltVal) _ANKI_SCONST_X4(UVec4, U32, n, id, defltVal, const)
+#define ANKI_SPECIALIZATION_CONSTANT_U32(n, id) _ANKI_SCONST_X(U32, n, id)
+#define ANKI_SPECIALIZATION_CONSTANT_UVEC2(n, id) _ANKI_SCONST_X2(UVec2, U32, n, id, const)
+#define ANKI_SPECIALIZATION_CONSTANT_UVEC3(n, id) _ANKI_SCONST_X3(UVec3, U32, n, id, const)
+#define ANKI_SPECIALIZATION_CONSTANT_UVEC4(n, id) _ANKI_SCONST_X4(UVec4, U32, n, id, const)
 
-#define ANKI_SPECIALIZATION_CONSTANT_F32(n, id, defltVal) _ANKI_SCONST_X(F32, n, id, defltVal)
-#define ANKI_SPECIALIZATION_CONSTANT_VEC2(n, id, defltVal) _ANKI_SCONST_X2(Vec2, F32, n, id, defltVal,)
-#define ANKI_SPECIALIZATION_CONSTANT_VEC3(n, id, defltVal) _ANKI_SCONST_X3(Vec3, F32, n, id, defltVal,)
-#define ANKI_SPECIALIZATION_CONSTANT_VEC4(n, id, defltVal) _ANKI_SCONST_X4(Vec4, F32, n, id, defltVal,)
+#define ANKI_SPECIALIZATION_CONSTANT_F32(n, id) _ANKI_SCONST_X(F32, n, id)
+#define ANKI_SPECIALIZATION_CONSTANT_VEC2(n, id) _ANKI_SCONST_X2(Vec2, F32, n, id,)
+#define ANKI_SPECIALIZATION_CONSTANT_VEC3(n, id) _ANKI_SCONST_X3(Vec3, F32, n, id,)
+#define ANKI_SPECIALIZATION_CONSTANT_VEC4(n, id) _ANKI_SCONST_X4(Vec4, F32, n, id,)
 
 #define ANKI_REF(type, alignment) \
 	layout(buffer_reference, scalar, buffer_reference_align = (alignment)) buffer type##Ref \
@@ -245,13 +233,11 @@ static const U64 SHADER_HEADER_HASH = computeHash(SHADER_HEADER, sizeof(SHADER_H
 
 ShaderProgramParser::ShaderProgramParser(CString fname, ShaderProgramFilesystemInterface* fsystem,
 										 GenericMemoryPoolAllocator<U8> alloc,
-										 const GpuDeviceCapabilities& gpuCapabilities,
-										 const BindlessLimits& bindlessLimits)
+										 const ShaderCompilerOptions& compilerOptions)
 	: m_alloc(alloc)
 	, m_fname(alloc, fname)
 	, m_fsystem(fsystem)
-	, m_gpuCapabilities(gpuCapabilities)
-	, m_bindlessLimits(bindlessLimits)
+	, m_compilerOptions(compilerOptions)
 {
 }
 
@@ -915,12 +901,12 @@ Error ShaderProgramParser::parse()
 	return Error::NONE;
 }
 
-void ShaderProgramParser::generateAnkiShaderHeader(ShaderType shaderType, const GpuDeviceCapabilities& caps,
-												   const BindlessLimits& limits, StringAuto& header)
+void ShaderProgramParser::generateAnkiShaderHeader(ShaderType shaderType, const ShaderCompilerOptions& compilerOptions,
+												   StringAuto& header)
 {
-	header.sprintf(SHADER_HEADER, caps.m_minorApiVersion, caps.m_majorApiVersion,
-				   GPU_VENDOR_STR[caps.m_gpuVendor].cstr(), SHADER_STAGE_NAMES[shaderType].cstr(),
-				   limits.m_bindlessTextureCount, limits.m_bindlessImageCount, U(caps.m_rayTracingEnabled));
+	header.sprintf(SHADER_HEADER, SHADER_STAGE_NAMES[shaderType].cstr(),
+				   compilerOptions.m_bindlessLimits.m_bindlessTextureCount,
+				   compilerOptions.m_bindlessLimits.m_bindlessImageCount);
 }
 
 Error ShaderProgramParser::generateVariant(ConstWeakArray<MutatorValue> mutation,
@@ -955,7 +941,7 @@ Error ShaderProgramParser::generateVariant(ConstWeakArray<MutatorValue> mutation
 
 		// Create the header
 		StringAuto header(m_alloc);
-		generateAnkiShaderHeader(shaderType, m_gpuCapabilities, m_bindlessLimits, header);
+		generateAnkiShaderHeader(shaderType, m_compilerOptions, header);
 
 		// Create the final source without the bindings
 		StringAuto finalSource(m_alloc);

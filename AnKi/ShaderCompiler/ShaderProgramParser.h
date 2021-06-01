@@ -91,7 +91,7 @@ class ShaderProgramParser : public NonCopyable
 {
 public:
 	ShaderProgramParser(CString fname, ShaderProgramFilesystemInterface* fsystem, GenericMemoryPoolAllocator<U8> alloc,
-						const GpuDeviceCapabilities& gpuCapabilities, const BindlessLimits& bindlessLimits);
+						const ShaderCompilerOptions& compilerOptions);
 
 	~ShaderProgramParser();
 
@@ -133,8 +133,8 @@ public:
 	}
 
 	/// Generates the common header that will be used by all AnKi shaders.
-	static void generateAnkiShaderHeader(ShaderType shaderType, const GpuDeviceCapabilities& caps,
-										 const BindlessLimits& limits, StringAuto& header);
+	static void generateAnkiShaderHeader(ShaderType shaderType, const ShaderCompilerOptions& compilerOptions,
+										 StringAuto& header);
 
 private:
 	using Mutator = ShaderProgramParserMutator;
@@ -179,8 +179,7 @@ private:
 
 	ShaderTypeBit m_shaderTypes = ShaderTypeBit::NONE;
 	Bool m_insideShader = false;
-	GpuDeviceCapabilities m_gpuCapabilities;
-	BindlessLimits m_bindlessLimits;
+	ShaderCompilerOptions m_compilerOptions;
 
 	StringAuto m_libName = {m_alloc};
 	U32 m_rayType = MAX_U32;

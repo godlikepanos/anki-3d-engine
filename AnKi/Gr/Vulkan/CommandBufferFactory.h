@@ -63,6 +63,8 @@ public:
 	}
 
 private:
+	static constexpr U32 MAX_REF_OBJECT_SEARCH = 16;
+
 	StackAllocator<U8> m_fastAlloc;
 	VkCommandBuffer m_handle = {};
 
@@ -81,11 +83,21 @@ private:
 	void pushToArray(DynamicArray<GrObjectPtr>& arr, GrObject* grobj)
 	{
 		ANKI_ASSERT(grobj);
-		// Check what if gobj is already there to avoid allocations and excessive dereferencing
-		if(arr.getSize() == 0 || arr.getBack().get() != grobj)
+
+		// Search the temp cache to avoid setting the ref again
+		if(arr.getSize() >= MAX_REF_OBJECT_SEARCH)
 		{
-			arr.emplaceBack(m_fastAlloc, GrObjectPtr(grobj));
+			for(U32 i = arr.getSize() - MAX_REF_OBJECT_SEARCH; i < arr.getSize(); ++i)
+			{
+				if(arr[i].get() == grobj)
+				{
+					return;
+				}
+			}
 		}
+
+		// Not found in the temp cache, add it
+		arr.emplaceBack(m_fastAlloc, GrObjectPtr(grobj));
 	}
 };
 
@@ -143,8 +155,8 @@ private:
 	class CmdbType
 	{
 	public:
-		IntrusiveList<MicroCommandBuffer> m_readyCmdbs;
-		IntrusiveList<MicroCommandBuffer> m_inUseCmdbs;
+		IntrusiveList<MicroCommandBuffer> m_readyCmdbs; ///< Buffers that are ready to be used.
+		IntrusiveList<MicroCommandBuffer> m_inUseCmdbs; ///< Buffer that got dereferenced and maybe in-use.
 
 		IntrusiveList<MicroCommandBuffer> m_deletedCmdbs;
 		Mutex m_deletedMtx; ///< Lock because the dallocations may happen anywhere.

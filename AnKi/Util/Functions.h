@@ -273,8 +273,8 @@ inline constexpr TPtr numberToPtr(PtrSize num)
 ///
 /// Example:
 /// @code
-/// double a = 1234.456;
-/// RemovePointer<decltype(&a)>::Type b = a;
+/// using Ptr = double*;
+/// RemovePointer<Ptr>::Type b = 666.0;
 /// @endcode
 /// The b is of type double
 template<typename T>

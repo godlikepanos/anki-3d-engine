@@ -7,7 +7,7 @@
 #pragma anki mutator SAMPLE_COUNT 3 5 7 9 11 13 15
 #pragma anki mutator COLOR_COMPONENTS 4 3 1
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(TEXTURE_SIZE, 0, UVec2(1));
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(TEXTURE_SIZE, 0u);
 
 #include <AnKi/Shaders/Common.glsl>
 
@@ -113,7 +113,7 @@ void main()
 	Vec2 uvOffset = Vec2(0.0);
 	uvOffset.X_OR_Y = 1.5 * TEXEL_SIZE.X_OR_Y;
 
-	ANKI_UNROLL for(U32 i = 0u; i < (SAMPLE_COUNT - 1u) / 2u; ++i)
+	ANKI_UNROLL for(U32 i = 0u; i < (U32(SAMPLE_COUNT) - 1u) / 2u; ++i)
 	{
 		sampleTex(uv + uvOffset, refDepth, color, weight);
 		sampleTex(uv - uvOffset, refDepth, color, weight);

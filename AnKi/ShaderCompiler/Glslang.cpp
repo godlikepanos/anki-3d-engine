@@ -6,6 +6,7 @@
 #include <AnKi/ShaderCompiler/Glslang.h>
 #include <AnKi/Util/StringList.h>
 #include <AnKi/Util/File.h>
+#include <AnKi/Util/Filesystem.h>
 
 #if ANKI_COMPILER_GCC_COMPATIBLE
 #	pragma GCC diagnostic push
@@ -20,8 +21,14 @@
 #	pragma GCC diagnostic pop
 #endif
 
+#define ANKI_GLSLANG_DUMP 0
+
 namespace anki
 {
+
+#if ANKI_GLSLANG_DUMP
+static Atomic<U32> g_dumpFileCount;
+#endif
 
 class GlslangCtx
 {
@@ -191,8 +198,41 @@ static EShLanguage ankiToGlslangShaderType(ShaderType shaderType)
 	return gslangShader;
 }
 
-static void logShaderErrorCode(CString error, CString source, GenericMemoryPoolAllocator<U8> alloc)
+/// Parse Glslang's error message for the line of the error.
+static ANKI_USE_RESULT Error parseErrorLine(CString error, GenericMemoryPoolAllocator<U8> alloc, U32& lineNumber)
 {
+	lineNumber = MAX_U32;
+
+	StringListAuto lines(alloc);
+	lines.splitString(error, '\n');
+	for(String& line : lines)
+	{
+		if(line.find("ERROR: ") == 0)
+		{
+			StringListAuto tokens(alloc);
+			tokens.splitString(line, ':');
+
+			if(tokens.getSize() < 3 || (tokens.getBegin() + 2)->toNumber(lineNumber) != Error::NONE)
+			{
+
+				ANKI_SHADER_COMPILER_LOGE("Failed to parse the error message: %s", error.cstr());
+				return Error::FUNCTION_FAILED;
+			}
+			else
+			{
+				break;
+			}
+		}
+	}
+
+	return Error::NONE;
+}
+
+static ANKI_USE_RESULT Error logShaderErrorCode(CString error, CString source, GenericMemoryPoolAllocator<U8> alloc)
+{
+	U32 errorLineNumber = 0;
+	ANKI_CHECK(parseErrorLine(error, alloc, errorLineNumber));
+
 	StringAuto prettySrc(alloc);
 	StringListAuto lines(alloc);
 
@@ -200,19 +240,23 @@ static void logShaderErrorCode(CString error, CString source, GenericMemoryPoolA
 
 	lines.splitString(source, '\n', true);
 
-	I lineno = 0;
+	U32 lineno = 0;
 	for(auto it = lines.getBegin(); it != lines.getEnd(); ++it)
 	{
 		++lineno;
 		StringAuto tmp(alloc);
 
-		if(!it->isEmpty())
+		if(!it->isEmpty() && lineno == errorLineNumber)
 		{
-			tmp.sprintf("%8d: %s\n", lineno, &(*it)[0]);
+			tmp.sprintf(">>%8u: %s\n", lineno, &(*it)[0]);
+		}
+		else if(!it->isEmpty())
+		{
+			tmp.sprintf("  %8u: %s\n", lineno, &(*it)[0]);
 		}
 		else
 		{
-			tmp.sprintf("%8d:\n", lineno);
+			tmp.sprintf("  %8u:\n", lineno);
 		}
 
 		prettySrc.append(tmp);
@@ -220,6 +264,8 @@ static void logShaderErrorCode(CString error, CString source, GenericMemoryPoolA
 
 	ANKI_SHADER_COMPILER_LOGE("Shader compilation failed:\n%s\n%s\n%s\n%s\n%s\n%s", padding, &error[0], padding,
 							  &prettySrc[0], padding, &error[0]);
+
+	return Error::NONE;
 }
 
 Error preprocessGlsl(CString in, StringAuto& out)
@@ -245,6 +291,27 @@ Error preprocessGlsl(CString in, StringAuto& out)
 Error compilerGlslToSpirv(CString src, ShaderType shaderType, GenericMemoryPoolAllocator<U8> tmpAlloc,
 						  DynamicArrayAuto<U8>& spirv)
 {
+#if ANKI_GLSLANG_DUMP
+	// Dump it
+	{
+		const U32 count = g_dumpFileCount.fetchAdd(1) / 2;
+		if(count == 0)
+		{
+			ANKI_SHADER_COMPILER_LOGW("GLSL dumping is enabled");
+		}
+
+		File file;
+
+		StringAuto tmpDir(tmpAlloc);
+		ANKI_CHECK(getTempDirectory(tmpDir));
+
+		StringAuto fname(tmpAlloc);
+		fname.sprintf("%s/%u.glsl", tmpDir.cstr(), count);
+		ANKI_CHECK(file.open(fname, FileOpenFlag::WRITE));
+		ANKI_CHECK(file.writeText("%s", src.cstr()));
+	}
+#endif
+
 	const EShLanguage stage = ankiToGlslangShaderType(shaderType);
 	const EShMessages messages = EShMessages(EShMsgSpvRules | EShMsgVulkanRules);
 
@@ -255,7 +322,7 @@ Error compilerGlslToSpirv(CString src, ShaderType shaderType, GenericMemoryPoolA
 	shader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_5);
 	if(!shader.parse(&GLSLANG_LIMITS, 100, false, messages))
 	{
-		logShaderErrorCode(shader.getInfoLog(), src, tmpAlloc);
+		ANKI_CHECK(logShaderErrorCode(shader.getInfoLog(), src, tmpAlloc));
 		return Error::USER_DATA;
 	}
 
@@ -280,18 +347,22 @@ Error compilerGlslToSpirv(CString src, ShaderType shaderType, GenericMemoryPoolA
 	spirv.resize(U32(glslangSpirv.size() * sizeof(unsigned int)));
 	memcpy(&spirv[0], &glslangSpirv[0], spirv.getSizeInBytes());
 
-#if 0
+#if ANKI_GLSLANG_DUMP
 	// Dump it
 	{
-		static U32 count = 0;
+		const U32 count = g_dumpFileCount.fetchAdd(1) / 2;
 		if(count == 0)
 		{
 			ANKI_SHADER_COMPILER_LOGW("SPIR-V dumping is enabled");
 		}
 
 		File file;
+
+		StringAuto tmpDir(tmpAlloc);
+		ANKI_CHECK(getTempDirectory(tmpDir));
+
 		StringAuto fname(tmpAlloc);
-		fname.sprintf("/tmp/%u.spv", count++);
+		fname.sprintf("%s/%u.spv", tmpDir.cstr(), count);
 		ANKI_CHECK(file.open(fname, FileOpenFlag::WRITE | FileOpenFlag::BINARY));
 		ANKI_CHECK(file.write(spirv.getBegin(), spirv.getSizeInBytes()));
 	}

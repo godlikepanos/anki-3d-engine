@@ -111,23 +111,23 @@ Vec4 nearestDepthUpscale(Vec2 uv, texture2D depthFull, texture2D depthHalf, text
 		const Vec4 a = textureGather(sampler2D(colorTex, linearAnyClampSampler), uv, 3);
 
 		F32 minDiff = diffs.x;
-		U32 comp = 0;
+		U32 comp = 0u;
 
 		if(diffs.y < minDiff)
 		{
-			comp = 1;
+			comp = 1u;
 			minDiff = diffs.y;
 		}
 
 		if(diffs.z < minDiff)
 		{
-			comp = 2;
+			comp = 2u;
 			minDiff = diffs.z;
 		}
 
 		if(diffs.w < minDiff)
 		{
-			comp = 3;
+			comp = 3u;
 		}
 
 		color = Vec4(r[comp], g[comp], b[comp], a[comp]);
@@ -390,24 +390,6 @@ F32 cubeCoordSolidAngle(Vec2 norm, F32 cubeFaceSize)
 	return areaElement(v0.x, v0.y) - areaElement(v0.x, v1.y) - areaElement(v1.x, v0.y) + areaElement(v1.x, v1.y);
 }
 
-// Intersect a ray against an AABB. The ray is inside the AABB. The function returns the distance 'a' where the
-// intersection point is rayOrigin + rayDir * a
-// https://community.arm.com/graphics/b/blog/posts/reflections-based-on-local-cubemaps-in-unity
-F32 rayAabbIntersectionInside(Vec3 rayOrigin, Vec3 rayDir, Vec3 aabbMin, Vec3 aabbMax)
-{
-	const Vec3 intersectMaxPointPlanes = (aabbMax - rayOrigin) / rayDir;
-	const Vec3 intersectMinPointPlanes = (aabbMin - rayOrigin) / rayDir;
-	const Vec3 largestParams = max(intersectMaxPointPlanes, intersectMinPointPlanes);
-	const F32 distToIntersect = min(min(largestParams.x, largestParams.y), largestParams.z);
-	return distToIntersect;
-}
-
-// Return true if to AABBs overlap
-Bool aabbsOverlap(const Vec3 aMin, const Vec3 aMax, const Vec3 bMin, const Vec3 bMax)
-{
-	return all(lessThan(aMin, bMax)) && all(lessThan(bMin, aMax));
-}
-
 // A convenience function to skip out of bounds invocations on post-process compute shaders. Both the arguments should
 // be constexpr.
 #if defined(ANKI_COMPUTE_SHADER)
@@ -449,51 +431,18 @@ Mat3 rotationFromDirection(Vec3 zAxis)
 #endif
 }
 
-// https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
-Bool rayTriangleIntersect(Vec3 orig, Vec3 dir, Vec3 v0, Vec3 v1, Vec3 v2, out F32 t, out F32 u, out F32 v)
-{
-	const Vec3 v0v1 = v1 - v0;
-	const Vec3 v0v2 = v2 - v0;
-	const Vec3 pvec = cross(dir, v0v2);
-	const F32 det = dot(v0v1, pvec);
-
-	if(det < EPSILON)
-	{
-		return false;
-	}
-
-	const F32 invDet = 1.0 / det;
-
-	const Vec3 tvec = orig - v0;
-	u = dot(tvec, pvec) * invDet;
-	if(u < 0.0 || u > 1.0)
-	{
-		return false;
-	}
-
-	const Vec3 qvec = cross(tvec, v0v1);
-	v = dot(dir, qvec) * invDet;
-	if(v < 0.0 || u + v > 1.0)
-	{
-		return false;
-	}
-
-	t = dot(v0v2, qvec) * invDet;
-	return true;
-}
-
 #if defined(ANKI_COMPUTE_SHADER)
 // See getOptimalGlobalInvocationId8x8Amd
 U32 ABfiM(U32 src, U32 ins, U32 bits)
 {
-	const U32 mask = (1 << bits) - 1;
+	const U32 mask = (1u << bits) - 1u;
 	return (ins & mask) | (src & (~mask));
 }
 
 // See getOptimalGlobalInvocationId8x8Amd
 U32 ABfe(U32 src, U32 off, U32 bits)
 {
-	const U32 mask = (1 << bits) - 1;
+	const U32 mask = (1u << bits) - 1u;
 	return (src >> off) & mask;
 }
 
@@ -582,4 +531,25 @@ Vec3 animateBlueNoise(Vec3 inputBlueNoise, U32 frameIdx)
 {
 	const F32 goldenRatioConjugate = 0.61803398875;
 	return fract(inputBlueNoise + F32(frameIdx % 64u) * goldenRatioConjugate);
+}
+
+#if defined(ANKI_FRAGMENT_SHADER)
+/// https://bgolus.medium.com/distinctive-derivative-differences-cce38d36797b
+/// normalizedUvs is uv*textureResolution
+F32 computeMipLevel(Vec2 normalizedUvs)
+{
+	const Vec2 dx = dFdxCoarse(normalizedUvs);
+	const Vec2 dy = dFdyCoarse(normalizedUvs);
+	const F32 deltaMax2 = max(dot(dx, dx), dot(dy, dy));
+	return max(0.0, 0.5 * log2(deltaMax2));
+}
+#endif
+
+/// The regular findLSB in glslang has some issues since it invokes a builtin that is only supposed to be used with
+/// 32bit input. This is an alternative implementation but it expects that the input is not zero.
+I32 findLSB64(U64 v)
+{
+	const I32 lsb1 = findLSB(U32(v));
+	const I32 lsb2 = findLSB(U32(v >> 32ul));
+	return (lsb1 >= 0) ? lsb1 : lsb2 + 32;
 }

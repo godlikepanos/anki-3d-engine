@@ -137,10 +137,9 @@ void main()
 	taskManager.m_alloc = alloc;
 
 	ShaderProgramBinaryWrapper binary(alloc);
-	BindlessLimits bindlessLimits;
-	GpuDeviceCapabilities gpuCapabilities;
-	ANKI_TEST_EXPECT_NO_ERR(compileShaderProgram("test.glslp", fsystem, nullptr, &taskManager, alloc, gpuCapabilities,
-												 bindlessLimits, binary));
+	ShaderCompilerOptions compilerOptions;
+	ANKI_TEST_EXPECT_NO_ERR(
+		compileShaderProgram("test.glslp", fsystem, nullptr, &taskManager, alloc, compilerOptions, binary));
 
 #if 1
 	StringAuto dis(alloc);
@@ -213,37 +212,37 @@ layout(set = 0, binding = 0) uniform ankiMaterial
 #if PASS == 0
 
 #if DIFFUSE_TEX == 0
-ANKI_SPECIALIZATION_CONSTANT_VEC3(diffColor, 0, Vec3(0));
+ANKI_SPECIALIZATION_CONSTANT_VEC3(diffColor, 0u);
 #else
 layout(set = 0, binding = 1) uniform texture2D diffTex;
 #endif
 
 #if SPECULAR_TEX == 0
-ANKI_SPECIALIZATION_CONSTANT_VEC3(specColor, 3, Vec3(0));
+ANKI_SPECIALIZATION_CONSTANT_VEC3(specColor, 3u);
 #else
 layout(set = 0, binding = 2) uniform texture2D specTex;
 #endif
 
 #if ROUGHNESS_TEX == 0
-ANKI_SPECIALIZATION_CONSTANT_F32(roughness, 6, 0.0);
+ANKI_SPECIALIZATION_CONSTANT_F32(roughness, 6u);
 #else
 layout(set = 0, binding = 3) uniform texture2D roughnessTex;
 #endif
 
 #if METAL_TEX == 0
-ANKI_SPECIALIZATION_CONSTANT_F32(metallic, 7, 0.0);
+ANKI_SPECIALIZATION_CONSTANT_F32(metallic, 7u);
 #else
 layout(set = 0, binding = 4) uniform texture2D metallicTex;
 #endif
 
 #if EMISSIVE_TEX == 0
-ANKI_SPECIALIZATION_CONSTANT_VEC3(emission, 8, Vec3(0.0));
+ANKI_SPECIALIZATION_CONSTANT_VEC3(emission, 8u, Vec3(0.0));
 #else
 layout(set = 0, binding = 5) uniform texture2D emissiveTex;
 #endif
 
 #if PARALLAX == 1 && LOD == 0
-ANKI_SPECIALIZATION_CONSTANT_F32(heightMapScale, 11, 0.0);
+ANKI_SPECIALIZATION_CONSTANT_F32(heightMapScale, 11u);
 layout(set = 0, binding = 6) uniform texture2D heightTex;
 #endif
 
@@ -334,10 +333,8 @@ void main()
 	taskManager.m_alloc = alloc;
 
 	ShaderProgramBinaryWrapper binary(alloc);
-	BindlessLimits bindlessLimits;
-	GpuDeviceCapabilities gpuCapabilities;
-	ANKI_TEST_EXPECT_NO_ERR(compileShaderProgram("test.glslp", fsystem, nullptr, &taskManager, alloc, gpuCapabilities,
-												 bindlessLimits, binary));
+	ANKI_TEST_EXPECT_NO_ERR(
+		compileShaderProgram("test.glslp", fsystem, nullptr, &taskManager, alloc, ShaderCompilerOptions(), binary));
 
 #if 1
 	StringAuto dis(alloc);

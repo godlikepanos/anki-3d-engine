@@ -3,7 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-ANKI_SPECIALIZATION_CONSTANT_U32(FOG_LAST_CLASTER, 0, 1u);
+ANKI_SPECIALIZATION_CONSTANT_U32(Z_SPLIT_COUNT, 0u);
+ANKI_SPECIALIZATION_CONSTANT_U32(FINAL_Z_SPLIT, 1u);
 
 #pragma anki start vert
 #include <AnKi/Shaders/QuadVert.glsl>
@@ -11,9 +12,7 @@ ANKI_SPECIALIZATION_CONSTANT_U32(FOG_LAST_CLASTER, 0, 1u);
 
 #pragma anki start frag
 
-#include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
-#include <AnKi/Shaders/Include/ClusteredShadingFunctions.h>
-#include <AnKi/Shaders/Common.glsl>
+#include <AnKi/Shaders/Functions.glsl>
 
 layout(location = 0) in Vec2 in_uv;
 layout(location = 0) out Vec4 out_color;
@@ -23,23 +22,27 @@ layout(set = 0, binding = 1) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 2) uniform texture2D u_depthRt;
 layout(set = 0, binding = 3) uniform texture3D u_fogVolume;
 
-layout(push_constant, std140, row_major) uniform pc_
+layout(push_constant, std140, row_major) uniform b_pc
 {
-	ClustererMagicValues u_clustererMagic;
-	Mat4 u_invViewProjMat;
+	Vec2 u_padding;
+	F32 u_near;
+	F32 u_far;
 };
 
 void main()
 {
-	const F32 depth = textureLod(u_depthRt, u_nearestAnyClampSampler, in_uv, 0.0).r;
+	Vec3 uvw;
 
-	// Get world position
-	const Vec4 worldPos4 = u_invViewProjMat * Vec4(UV_TO_NDC(in_uv), depth, 1.0);
-	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
+	// Compute W coordinate
+	const F32 depth = textureLod(u_depthRt, u_nearestAnyClampSampler, in_uv, 0.0).r;
+	const F32 linearDepth = linearizeDepth(depth, u_near, u_far);
+	uvw.z = linearDepth * (F32(Z_SPLIT_COUNT) / F32(FINAL_Z_SPLIT + 1u));
+
+	// Compute UV coordinates
+	uvw.xy = in_uv;
 
 	// Read the volume
-	const Vec3 uv3d = computeClustererVolumeTextureUvs(u_clustererMagic, in_uv, worldPos, FOG_LAST_CLASTER + 1u);
-	const Vec4 fogVals = textureLod(u_fogVolume, u_linearAnyClampSampler, uv3d, 0.0);
+	const Vec4 fogVals = textureLod(u_fogVolume, u_linearAnyClampSampler, uvw, 0.0);
 	const Vec3 inScattering = fogVals.rgb;
 	const F32 transmittance = fogVals.a;
 

@@ -39,7 +39,7 @@ void* RendererObject::allocateFrameStagingMemory(PtrSize size, StagingGpuMemoryT
 void RendererObject::bindUniforms(CommandBufferPtr& cmdb, U32 set, U32 binding,
 								  const StagingGpuMemoryToken& token) const
 {
-	if(token && !token.isUnused())
+	if(!token.isUnused())
 	{
 		cmdb->bindUniformBuffer(set, binding, token.m_buffer, token.m_offset, token.m_range);
 	}
@@ -51,7 +51,7 @@ void RendererObject::bindUniforms(CommandBufferPtr& cmdb, U32 set, U32 binding,
 
 void RendererObject::bindStorage(CommandBufferPtr& cmdb, U32 set, U32 binding, const StagingGpuMemoryToken& token) const
 {
-	if(token && !token.isUnused())
+	if(!token.isUnused())
 	{
 		cmdb->bindStorageBuffer(set, binding, token.m_buffer, token.m_offset, token.m_range);
 	}
