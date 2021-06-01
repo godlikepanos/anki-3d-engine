@@ -627,14 +627,14 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 		features.pNext = &m_11Features;
 		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
 
-		if(!m_11Features.storageBuffer16BitAccess || !m_11Features.uniformAndStorageBuffer16BitAccess
-		   || !m_11Features.storagePushConstant16)
+		if(!m_11Features.storageBuffer16BitAccess || !m_11Features.uniformAndStorageBuffer16BitAccess)
 		{
 			ANKI_VK_LOGE("16bit buffer access is not supported");
 			return Error::FUNCTION_FAILED;
 		}
 
 		// Disable a few things
+		m_11Features.storagePushConstant16 = false; // Because AMD doesn't support it
 		m_11Features.protectedMemory = false;
 		m_11Features.multiview = false;
 		m_11Features.multiviewGeometryShader = false;

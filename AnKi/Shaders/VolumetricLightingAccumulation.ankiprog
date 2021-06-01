@@ -60,9 +60,7 @@ Vec3 worldPosInsideClusterAndZViewSpace(Vec3 relativePos, out F32 negativeZViewS
 	const F32 zViewSpace = -negativeZViewSpace;
 
 	// Get the position in view space
-	const Vec2 uvMin = g_globalInvocationID.xy / Vec2(VOLUME_SIZE.xy);
-	const Vec2 uvMax = uvMin + 1.0 / Vec2(VOLUME_SIZE.xy);
-	const Vec2 uv = mix(uvMin, uvMax, relativePos.xy);
+	const Vec2 uv = mix(g_globalInvocationID.xy, g_globalInvocationID.xy + 1.0, relativePos.xy) / Vec2(VOLUME_SIZE.xy);
 	uvw.xy = uv;
 	const Vec2 xyViewSpace = UV_TO_NDC(uv) * u_clusteredShading.m_matrices.m_unprojectionParameters.xy * zViewSpace;
 
@@ -258,7 +256,7 @@ void main()
 	const Vec3 worldPos = worldPosInsideClusterAndZViewSpace(readRand(), negativeZViewSpace, uvw);
 
 	// Get the cluster
-	const UVec2 tileIdxXY = UVec2(uvw.xy * F32(TILE_COUNT));
+	const UVec2 tileIdxXY = UVec2(uvw.xy * Vec2(TILE_COUNT));
 	const U32 tileIdx = tileIdxXY.y * TILE_COUNT.x + tileIdxXY.x;
 	Cluster cluster = u_clusters2[tileIdx];
 
