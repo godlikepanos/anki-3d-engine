@@ -404,9 +404,9 @@ void ParticleEmitterComponent::draw(RenderQueueDrawContext& ctx) const
 		cmdb->bindShaderProgram(prog);
 
 		// Vertex attribs
-		cmdb->setVertexAttribute(0, 0, Format::R32G32B32_SFLOAT, 0);
-		cmdb->setVertexAttribute(1, 0, Format::R32_SFLOAT, sizeof(Vec3));
-		cmdb->setVertexAttribute(2, 0, Format::R32_SFLOAT, sizeof(Vec3) + sizeof(F32));
+		cmdb->setVertexAttribute(U32(VertexAttributeId::POSITION), 0, Format::R32G32B32_SFLOAT, 0);
+		cmdb->setVertexAttribute(U32(VertexAttributeId::SCALE), 0, Format::R32_SFLOAT, sizeof(Vec3));
+		cmdb->setVertexAttribute(U32(VertexAttributeId::ALPHA), 0, Format::R32_SFLOAT, sizeof(Vec3) + sizeof(F32));
 
 		// Vertex buff
 		cmdb->bindVertexBuffer(0, token.m_buffer, token.m_offset, VERTEX_SIZE, VertexStepRate::INSTANCE);

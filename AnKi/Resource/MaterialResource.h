@@ -439,8 +439,8 @@ private:
 
 	MaterialGpuDescriptor m_materialGpuDescriptor;
 
-	Array<TextureResourcePtr, TEXTURE_CHANNEL_COUNT> m_textureResources; ///< Keep the resources alive.
-	Array<TextureViewPtr, TEXTURE_CHANNEL_COUNT> m_textureViews; ///< Cache the GPU objects.
+	Array<TextureResourcePtr, U(TextureChannelId::COUNT)> m_textureResources; ///< Keep the resources alive.
+	Array<TextureViewPtr, U(TextureChannelId::COUNT)> m_textureViews; ///< Cache the GPU objects.
 	U8 m_textureViewCount = 0;
 
 	RayTypeBit m_rayTypes = RayTypeBit::NONE;

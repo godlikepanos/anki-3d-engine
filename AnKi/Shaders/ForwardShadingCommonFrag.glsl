@@ -8,6 +8,7 @@
 // Common code for all fragment shaders of FS
 #include <AnKi/Shaders/Common.glsl>
 #include <AnKi/Shaders/Functions.glsl>
+#include <AnKi/Shaders/Include/ModelTypes.h>
 
 // Global resources
 layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;

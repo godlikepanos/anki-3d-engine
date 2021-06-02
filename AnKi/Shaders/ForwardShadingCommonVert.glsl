@@ -7,9 +7,10 @@
 
 // Common code for all vertex shaders of FS
 #include <AnKi/Shaders/Common.glsl>
+#include <AnKi/Shaders/Include/ModelTypes.h>
 
 // In/out
-layout(location = POSITION_LOCATION) in Vec3 in_position;
+layout(location = VERTEX_ATTRIBUTE_ID_POSITION) in Vec3 in_position;
 
 out gl_PerVertex
 {

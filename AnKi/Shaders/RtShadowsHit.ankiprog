@@ -39,20 +39,17 @@ void main()
 
 	const U32 offset = U32(gl_PrimitiveID) * ANKI_SIZEOF(U16Vec3);
 	const UVec3 indices = UVec3(U16Vec3Ref(mesh.m_indexBufferPtr + U64(offset)).m_value);
+	const U64 vertBufferPtr = mesh.m_vertexBufferPtrs[VERTEX_ATTRIBUTE_BUFFER_ID_NORMAL_TANGENT_UV0];
 
-	const MainVertex vert0 =
-		MainVertexRef(mesh.m_mainVertexBufferPtr + U64(indices[0] * ANKI_SIZEOF(MainVertex))).m_value;
-	const MainVertex vert1 =
-		MainVertexRef(mesh.m_mainVertexBufferPtr + U64(indices[1] * ANKI_SIZEOF(MainVertex))).m_value;
-	const MainVertex vert2 =
-		MainVertexRef(mesh.m_mainVertexBufferPtr + U64(indices[2] * ANKI_SIZEOF(MainVertex))).m_value;
+	const MainVertex vert0 = MainVertexRef(vertBufferPtr + U64(indices[0] * ANKI_SIZEOF(MainVertex))).m_value;
+	const MainVertex vert1 = MainVertexRef(vertBufferPtr + U64(indices[1] * ANKI_SIZEOF(MainVertex))).m_value;
+	const MainVertex vert2 = MainVertexRef(vertBufferPtr + U64(indices[2] * ANKI_SIZEOF(MainVertex))).m_value;
 
 	const Vec3 barycentrics = Vec3(1.0f - g_attribs.x - g_attribs.y, g_attribs.x, g_attribs.y);
 
-	const Vec2 uv = vert0.m_uvs[UV_CHANNEL_0] * barycentrics.x + vert1.m_uvs[UV_CHANNEL_0] * barycentrics.y
-					+ vert2.m_uvs[UV_CHANNEL_0] * barycentrics.z;
+	const Vec2 uv = vert0.m_uv0 * barycentrics.x + vert1.m_uv0 * barycentrics.y + vert2.m_uv0 * barycentrics.z;
 
-	const U32 texIdx = U32(model.m_material.m_bindlessTextureIndices[TEXTURE_CHANNEL_DIFFUSE]);
+	const U32 texIdx = U32(model.m_material.m_bindlessTextureIndices[TEXTURE_CHANNEL_ID_DIFFUSE]);
 	const F32 alpha = textureLod(u_bindlessTextures2dF32[nonuniformEXT(texIdx)], u_sampler, uv, 3.0).a;
 
 	g_payload += alpha;

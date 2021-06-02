@@ -41,7 +41,7 @@ public:
 class ModelVertexAttribute
 {
 public:
-	VertexAttributeLocation m_location;
+	VertexAttributeId m_location;
 	Format m_format;
 	U32 m_bufferBinding;
 	U32 m_relativeOffset;
@@ -89,7 +89,7 @@ public:
 	Array<U32, U(RayType::COUNT)> m_shaderGroupHandleIndices;
 
 	/// Get some pointers that the m_descriptor is pointing to. Use these pointers for life tracking.
-	Array<GrObjectPtr, TEXTURE_CHANNEL_COUNT + 2> m_grObjectReferences;
+	Array<GrObjectPtr, U(TextureChannelId::COUNT) + 2> m_grObjectReferences;
 	U32 m_grObjectReferenceCount;
 };
 
@@ -126,7 +126,7 @@ public:
 	}
 
 private:
-	ModelResource* m_model ANKI_DEBUG_CODE(= nullptr);
+	ModelResource* m_model = nullptr;
 
 	MaterialResourcePtr m_mtl;
 

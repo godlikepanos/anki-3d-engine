@@ -61,7 +61,7 @@ void TraditionalDeferredLightShading::bindVertexIndexBuffers(MeshResourcePtr& me
 	U32 bufferBinding;
 	Format fmt;
 	U32 relativeOffset;
-	mesh->getVertexAttributeInfo(VertexAttributeLocation::POSITION, bufferBinding, fmt, relativeOffset);
+	mesh->getVertexAttributeInfo(VertexAttributeId::POSITION, bufferBinding, fmt, relativeOffset);
 
 	cmdb->setVertexAttribute(0, 0, fmt, relativeOffset);
 

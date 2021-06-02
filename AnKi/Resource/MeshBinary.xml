@@ -51,9 +51,9 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(MeshBinaryFlag)
 			<members>
 				<member name="m_magic" type="U8" array_size="8"/>
 				<member name="m_flags" type="MeshBinaryFlag"/>
-				<member name="m_vertexBuffers" type="MeshBinaryVertexBuffer" array_size="U32(VertexAttributeLocation::COUNT)"/>
+				<member name="m_vertexBuffers" type="MeshBinaryVertexBuffer" array_size="U32(VertexAttributeId::COUNT)"/>
 				<member name="m_vertexBufferCount" type="U32"/>
-				<member name="m_vertexAttributes" type="MeshBinaryVertexAttribute" array_size="U32(VertexAttributeLocation::COUNT)"/>
+				<member name="m_vertexAttributes" type="MeshBinaryVertexAttribute" array_size="U32(VertexAttributeId::COUNT)"/>
 				<member name="m_indexType" type="IndexType"/>
 				<member name="m_padding" type="U8" array_size="3"/>
 				<member name="m_totalIndexCount" type="U32"/>

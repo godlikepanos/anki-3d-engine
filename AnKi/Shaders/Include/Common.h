@@ -9,6 +9,9 @@
 // Macros & functions C++
 //
 #if defined(__cplusplus)
+
+#	include <AnKi/Math.h>
+
 #	define ANKI_BEGIN_NAMESPACE \
 		namespace anki \
 		{

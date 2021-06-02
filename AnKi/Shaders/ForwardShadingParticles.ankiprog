@@ -33,8 +33,8 @@ layout(set = 1, binding = 2) uniform texture2DArray u_diffuseMapArr;
 #pragma anki start vert
 #include <AnKi/Shaders/ForwardShadingCommonVert.glsl>
 
-layout(location = SCALE_LOCATION) in F32 in_scale;
-layout(location = ALPHA_LOCATION) in F32 in_alpha;
+layout(location = VERTEX_ATTRIBUTE_ID_SCALE) in F32 in_scale;
+layout(location = VERTEX_ATTRIBUTE_ID_ALPHA) in F32 in_alpha;
 
 layout(location = 0) flat out F32 out_alpha;
 layout(location = 1) out Vec2 out_uv;

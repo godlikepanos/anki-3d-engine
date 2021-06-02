@@ -10,7 +10,7 @@
 #include <AnKi/Util/String.h>
 #include <AnKi/Util/Ptr.h>
 #include <AnKi/Gr/Enums.h>
-#include <AnKi/Shaders/Include/Common.h>
+#include <AnKi/Shaders/Include/ModelTypes.h>
 
 namespace anki
 {
@@ -33,23 +33,6 @@ class TransferGpuAllocatorHandle;
 
 /// @name Constants
 /// @{
-
-/// Standard attribute locations. Should be the same as in Common.glsl.
-enum class VertexAttributeLocation : U8
-{
-	POSITION,
-	UV,
-	UV2,
-	NORMAL,
-	TANGENT,
-	COLOR,
-	BONE_WEIGHTS,
-	BONE_INDICES,
-
-	COUNT,
-	FIRST = POSITION,
-};
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexAttributeLocation)
 
 enum class RayType : U8
 {

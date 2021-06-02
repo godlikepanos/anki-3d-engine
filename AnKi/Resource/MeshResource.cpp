@@ -142,8 +142,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		BufferInitInfo(totalVertexBuffSize, vertexBufferUsage, BufferMapAccessBit::NONE,
 					   StringAuto(getTempAllocator()).sprintf("%s_%s", "Vert", basename.cstr())));
 
-	for(VertexAttributeLocation attrib = VertexAttributeLocation::FIRST; attrib < VertexAttributeLocation::COUNT;
-		++attrib)
+	for(VertexAttributeId attrib = VertexAttributeId::FIRST; attrib < VertexAttributeId::COUNT; ++attrib)
 	{
 		AttribInfo& out = m_attributes[attrib];
 		const MeshBinaryVertexAttribute& in = header.m_vertexAttributes[attrib];
@@ -193,7 +192,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		U32 bufferIdx;
 		Format format;
 		U32 relativeOffset;
-		getVertexAttributeInfo(VertexAttributeLocation::POSITION, bufferIdx, format, relativeOffset);
+		getVertexAttributeInfo(VertexAttributeId::POSITION, bufferIdx, format, relativeOffset);
 
 		BufferPtr buffer;
 		PtrSize offset;
@@ -215,23 +214,23 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		U32 bufferIdx;
 		Format format;
 		U32 relativeOffset;
-		getVertexAttributeInfo(VertexAttributeLocation::POSITION, bufferIdx, format, relativeOffset);
+		getVertexAttributeInfo(VertexAttributeId::POSITION, bufferIdx, format, relativeOffset);
 		BufferPtr buffer;
 		PtrSize offset;
 		PtrSize stride;
 		getVertexBufferInfo(bufferIdx, buffer, offset, stride);
 		m_meshGpuDescriptor.m_indexBufferPtr = m_indexBuffer->getGpuAddress();
-		m_meshGpuDescriptor.m_positionBufferPtr = buffer->getGpuAddress();
+		m_meshGpuDescriptor.m_vertexBufferPtrs[VertexAttributeBufferId::POSITION] = buffer->getGpuAddress();
 
-		getVertexAttributeInfo(VertexAttributeLocation::NORMAL, bufferIdx, format, relativeOffset);
+		getVertexAttributeInfo(VertexAttributeId::NORMAL, bufferIdx, format, relativeOffset);
 		getVertexBufferInfo(bufferIdx, buffer, offset, stride);
-		m_meshGpuDescriptor.m_mainVertexBufferPtr = buffer->getGpuAddress();
+		m_meshGpuDescriptor.m_vertexBufferPtrs[VertexAttributeBufferId::NORMAL_TANGENT_UV0] = buffer->getGpuAddress();
 
 		if(hasBoneWeights())
 		{
-			getVertexAttributeInfo(VertexAttributeLocation::BONE_WEIGHTS, bufferIdx, format, relativeOffset);
+			getVertexAttributeInfo(VertexAttributeId::BONE_WEIGHTS, bufferIdx, format, relativeOffset);
 			getVertexBufferInfo(bufferIdx, buffer, offset, stride);
-			m_meshGpuDescriptor.m_boneInfoVertexBufferPtr = buffer->getGpuAddress();
+			m_meshGpuDescriptor.m_vertexBufferPtrs[VertexAttributeBufferId::BONE] = buffer->getGpuAddress();
 		}
 
 		m_meshGpuDescriptor.m_indexCount = m_indexCount;

@@ -79,7 +79,7 @@ public:
 	}
 
 	/// Get attribute info. You need to check if the attribute is preset first (isVertexAttributePresent)
-	void getVertexAttributeInfo(const VertexAttributeLocation attrib, U32& bufferIdx, Format& format,
+	void getVertexAttributeInfo(const VertexAttributeId attrib, U32& bufferIdx, Format& format,
 								U32& relativeOffset) const
 	{
 		ANKI_ASSERT(isVertexAttributePresent(attrib));
@@ -89,7 +89,7 @@ public:
 	}
 
 	/// Check if a vertex attribute is present.
-	Bool isVertexAttributePresent(const VertexAttributeLocation attrib) const
+	Bool isVertexAttributePresent(const VertexAttributeId attrib) const
 	{
 		return !!m_attributes[attrib].m_format;
 	}
@@ -97,7 +97,7 @@ public:
 	/// Return true if it has bone weights.
 	Bool hasBoneWeights() const
 	{
-		return isVertexAttributePresent(VertexAttributeLocation::BONE_WEIGHTS);
+		return isVertexAttributePresent(VertexAttributeId::BONE_WEIGHTS);
 	}
 
 	AccelerationStructurePtr getBottomLevelAccelerationStructure() const
@@ -152,7 +152,7 @@ private:
 
 	DynamicArray<SubMesh> m_subMeshes;
 	DynamicArray<VertBuffInfo> m_vertexBufferInfos;
-	Array<AttribInfo, U(VertexAttributeLocation::COUNT)> m_attributes;
+	Array<AttribInfo, U(VertexAttributeId::COUNT)> m_attributes;
 
 	BufferPtr m_indexBuffer;
 	BufferPtr m_vertexBuffer;

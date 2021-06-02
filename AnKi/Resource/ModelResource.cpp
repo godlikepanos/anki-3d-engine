@@ -12,7 +12,7 @@
 namespace anki
 {
 
-static Bool attributeIsRequired(VertexAttributeLocation loc, Pass pass, Bool hasSkin)
+static Bool attributeIsRequired(VertexAttributeId loc, Pass pass, Bool hasSkin)
 {
 	if(pass == Pass::GB || pass == Pass::FS)
 	{
@@ -20,12 +20,12 @@ static Bool attributeIsRequired(VertexAttributeLocation loc, Pass pass, Bool has
 	}
 	else if(!hasSkin)
 	{
-		return loc == VertexAttributeLocation::POSITION;
+		return loc == VertexAttributeId::POSITION;
 	}
 	else
 	{
-		return loc == VertexAttributeLocation::POSITION || loc == VertexAttributeLocation::BONE_INDICES
-			   || loc == VertexAttributeLocation::BONE_WEIGHTS;
+		return loc == VertexAttributeId::POSITION || loc == VertexAttributeId::BONE_INDICES
+			   || loc == VertexAttributeId::BONE_WEIGHTS;
 	}
 }
 
@@ -44,7 +44,7 @@ void ModelPatch::getRenderingInfo(const RenderingKey& key, ModelRenderingInfo& i
 		inf.m_vertexAttributeCount = 0;
 		inf.m_vertexBufferBindingCount = 0;
 
-		for(VertexAttributeLocation loc = VertexAttributeLocation::FIRST; loc < VertexAttributeLocation::COUNT; ++loc)
+		for(VertexAttributeId loc = VertexAttributeId::FIRST; loc < VertexAttributeId::COUNT; ++loc)
 		{
 			if(!mesh.isVertexAttributePresent(loc) || !attributeIsRequired(loc, key.getPass(), key.isSkinned()))
 			{

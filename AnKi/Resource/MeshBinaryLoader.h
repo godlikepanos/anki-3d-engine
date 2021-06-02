@@ -48,7 +48,7 @@ public:
 	Bool hasBoneInfo() const
 	{
 		ANKI_ASSERT(isLoaded());
-		return m_header.m_vertexAttributes[VertexAttributeLocation::BONE_INDICES].m_format != Format::NONE;
+		return m_header.m_vertexAttributes[VertexAttributeId::BONE_INDICES].m_format != Format::NONE;
 	}
 
 	ConstWeakArray<MeshBinarySubMesh> getSubMeshes() const
@@ -97,7 +97,7 @@ private:
 	}
 
 	ANKI_USE_RESULT Error checkHeader() const;
-	ANKI_USE_RESULT Error checkFormat(VertexAttributeLocation type, ConstWeakArray<Format> supportedFormats,
+	ANKI_USE_RESULT Error checkFormat(VertexAttributeId type, ConstWeakArray<Format> supportedFormats,
 									  U32 vertexBufferIdx, U32 relativeOffset) const;
 };
 /// @}

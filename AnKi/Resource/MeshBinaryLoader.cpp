@@ -67,7 +67,7 @@ Error MeshBinaryLoader::load(const ResourceFilename& filename)
 	return Error::NONE;
 }
 
-Error MeshBinaryLoader::checkFormat(VertexAttributeLocation type, ConstWeakArray<Format> supportedFormats,
+Error MeshBinaryLoader::checkFormat(VertexAttributeId type, ConstWeakArray<Format> supportedFormats,
 									U32 vertexBufferIdx, U32 relativeOffset) const
 {
 	const MeshBinaryVertexAttribute& attrib = m_header.m_vertexAttributes[type];
@@ -138,17 +138,15 @@ Error MeshBinaryLoader::checkHeader() const
 	}
 
 	// Attributes
-	ANKI_CHECK(checkFormat(VertexAttributeLocation::POSITION, Array<Format, 1>{{Format::R32G32B32_SFLOAT}}, 0, 0));
+	ANKI_CHECK(checkFormat(VertexAttributeId::POSITION, Array<Format, 1>{{Format::R32G32B32_SFLOAT}}, 0, 0));
+	ANKI_CHECK(checkFormat(VertexAttributeId::NORMAL, Array<Format, 1>{{Format::A2B10G10R10_SNORM_PACK32}}, 1, 0));
+	ANKI_CHECK(checkFormat(VertexAttributeId::TANGENT, Array<Format, 1>{{Format::A2B10G10R10_SNORM_PACK32}}, 1, 4));
+	ANKI_CHECK(checkFormat(VertexAttributeId::UV0, Array<Format, 1>{{Format::R32G32_SFLOAT}}, 1, 8));
+	ANKI_CHECK(checkFormat(VertexAttributeId::UV1, Array<Format, 1>{{Format::NONE}}, 1, 0));
 	ANKI_CHECK(
-		checkFormat(VertexAttributeLocation::NORMAL, Array<Format, 1>{{Format::A2B10G10R10_SNORM_PACK32}}, 1, 0));
+		checkFormat(VertexAttributeId::BONE_INDICES, Array<Format, 2>{{Format::NONE, Format::R8G8B8A8_UINT}}, 2, 0));
 	ANKI_CHECK(
-		checkFormat(VertexAttributeLocation::TANGENT, Array<Format, 1>{{Format::A2B10G10R10_SNORM_PACK32}}, 1, 4));
-	ANKI_CHECK(checkFormat(VertexAttributeLocation::UV, Array<Format, 1>{{Format::R32G32_SFLOAT}}, 1, 8));
-	ANKI_CHECK(checkFormat(VertexAttributeLocation::UV2, Array<Format, 1>{{Format::NONE}}, 1, 0));
-	ANKI_CHECK(checkFormat(VertexAttributeLocation::BONE_INDICES,
-						   Array<Format, 2>{{Format::NONE, Format::R8G8B8A8_UINT}}, 2, 0));
-	ANKI_CHECK(checkFormat(VertexAttributeLocation::BONE_WEIGHTS,
-						   Array<Format, 2>{{Format::NONE, Format::R8G8B8A8_UNORM}}, 2, 4));
+		checkFormat(VertexAttributeId::BONE_WEIGHTS, Array<Format, 2>{{Format::NONE, Format::R8G8B8A8_UNORM}}, 2, 4));
 
 	// Vertex buffers
 	if(m_header.m_vertexBufferCount != 2 + U32(hasBoneInfo()))
@@ -279,7 +277,7 @@ Error MeshBinaryLoader::storeIndicesAndPosition(DynamicArrayAuto<U32>& indices, 
 	// Store positions
 	{
 		positions.resize(m_header.m_totalVertexCount);
-		const MeshBinaryVertexAttribute& attrib = m_header.m_vertexAttributes[VertexAttributeLocation::POSITION];
+		const MeshBinaryVertexAttribute& attrib = m_header.m_vertexAttributes[VertexAttributeId::POSITION];
 		ANKI_ASSERT(attrib.m_format == Format::R32G32B32_SFLOAT);
 		ANKI_CHECK(storeVertexBuffer(attrib.m_bufferBinding, &positions[0], positions.getSizeInBytes()));
 	}

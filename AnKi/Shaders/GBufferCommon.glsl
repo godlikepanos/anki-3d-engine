@@ -8,21 +8,22 @@
 #pragma once
 
 #include <AnKi/Shaders/Pack.glsl>
+#include <AnKi/Shaders/Include/ModelTypes.h>
 
 //
 // Vert input
 //
 #if defined(ANKI_VERTEX_SHADER)
-layout(location = POSITION_LOCATION) in Vec3 in_position;
+layout(location = VERTEX_ATTRIBUTE_ID_POSITION) in Vec3 in_position;
 #	if ANKI_PASS == PASS_GB
-layout(location = TEXTURE_COORDINATE_LOCATION) in Vec2 in_uv;
-layout(location = NORMAL_LOCATION) in Vec3 in_normal;
-layout(location = TANGENT_LOCATION) in Vec4 in_tangent;
+layout(location = VERTEX_ATTRIBUTE_ID_UV0) in Vec2 in_uv;
+layout(location = VERTEX_ATTRIBUTE_ID_NORMAL) in Vec3 in_normal;
+layout(location = VERTEX_ATTRIBUTE_ID_TANGENT) in Vec4 in_tangent;
 #	endif
 
 #	if ANKI_BONES
-layout(location = BONE_WEIGHTS_LOCATION) in Vec4 in_boneWeights;
-layout(location = BONE_INDICES_LOCATION) in UVec4 in_boneIndices;
+layout(location = VERTEX_ATTRIBUTE_ID_BONE_WEIGHTS) in Vec4 in_boneWeights;
+layout(location = VERTEX_ATTRIBUTE_ID_BONE_INDICES) in UVec4 in_boneIndices;
 #	endif
 #endif
 

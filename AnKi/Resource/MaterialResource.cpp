@@ -126,18 +126,18 @@ class GpuMaterialTexture
 {
 public:
 	const char* m_name;
-	U32 m_textureSlot;
+	TextureChannelId m_textureSlot;
 };
 
-static const Array<GpuMaterialTexture, TEXTURE_CHANNEL_COUNT> GPU_MATERIAL_TEXTURES = {
-	{{"TEXTURE_CHANNEL_DIFFUSE", TEXTURE_CHANNEL_DIFFUSE},
-	 {"TEXTURE_CHANNEL_NORMAL", TEXTURE_CHANNEL_NORMAL},
-	 {"TEXTURE_CHANNEL_ROUGHNESS_METALNESS", TEXTURE_CHANNEL_ROUGHNESS_METALNESS},
-	 {"TEXTURE_CHANNEL_EMISSION", TEXTURE_CHANNEL_EMISSION},
-	 {"TEXTURE_CHANNEL_HEIGHT", TEXTURE_CHANNEL_HEIGHT},
-	 {"TEXTURE_CHANNEL_AUX_0", TEXTURE_CHANNEL_AUX_0},
-	 {"TEXTURE_CHANNEL_AUX_1", TEXTURE_CHANNEL_AUX_1},
-	 {"TEXTURE_CHANNEL_AUX_2", TEXTURE_CHANNEL_AUX_2}}};
+static const Array<GpuMaterialTexture, U(TextureChannelId::COUNT)> GPU_MATERIAL_TEXTURES = {
+	{{"TEXTURE_CHANNEL_DIFFUSE", TextureChannelId::DIFFUSE},
+	 {"TEXTURE_CHANNEL_NORMAL", TextureChannelId::NORMAL},
+	 {"TEXTURE_CHANNEL_ROUGHNESS_METALNESS", TextureChannelId::ROUGHNESS_METALNESS},
+	 {"TEXTURE_CHANNEL_EMISSION", TextureChannelId::EMISSION},
+	 {"TEXTURE_CHANNEL_HEIGHT", TextureChannelId::HEIGHT},
+	 {"TEXTURE_CHANNEL_AUX_0", TextureChannelId::AUX_0},
+	 {"TEXTURE_CHANNEL_AUX_1", TextureChannelId::AUX_1},
+	 {"TEXTURE_CHANNEL_AUX_2", TextureChannelId::AUX_2}}};
 
 class GpuMaterialFloats
 {
@@ -1234,7 +1234,7 @@ Error MaterialResource::parseRtMaterial(XmlElement rtMaterialEl)
 					CString fname;
 					ANKI_CHECK(inputEl.getAttributeText("value", fname));
 
-					const U32 textureIdx = GPU_MATERIAL_TEXTURES[i].m_textureSlot;
+					const TextureChannelId textureIdx = GPU_MATERIAL_TEXTURES[i].m_textureSlot;
 					ANKI_CHECK(getManager().loadResource(fname, m_textureResources[textureIdx], false));
 
 					m_textureViews[m_textureViewCount] = m_textureResources[textureIdx]->getGrTextureView();

@@ -67,10 +67,6 @@ GrManagerImpl::~GrManagerImpl()
 
 	if(m_debugCallback)
 	{
-		PFN_vkDestroyDebugReportCallbackEXT vkDestroyDebugReportCallbackEXT =
-			reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(
-				vkGetInstanceProcAddr(m_instance, "vkDestroyDebugReportCallbackEXT"));
-
 		vkDestroyDebugReportCallbackEXT(m_instance, m_debugCallback, nullptr);
 	}
 
@@ -392,11 +388,6 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 		}
 
 		ci.pUserData = this;
-
-		PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT =
-			reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(
-				vkGetInstanceProcAddr(m_instance, "vkCreateDebugReportCallbackEXT"));
-		ANKI_ASSERT(vkCreateDebugReportCallbackEXT);
 
 		vkCreateDebugReportCallbackEXT(m_instance, &ci, nullptr, &m_debugCallback);
 	}

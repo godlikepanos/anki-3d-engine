@@ -25,19 +25,6 @@ const U32 MAX_SHARED_MEMORY = 32u * 1024u;
 #define saturate(x_) clamp((x_), 0.0, 1.0)
 #define mad(a_, b_, c_) fma((a_), (b_), (c_))
 
-// Common locations
-#define POSITION_LOCATION 0
-#define TEXTURE_COORDINATE_LOCATION 1
-#define TEXTURE_COORDINATE_LOCATION_2 2
-#define NORMAL_LOCATION 3
-#define TANGENT_LOCATION 4
-#define COLOR_LOCATION 5
-#define BONE_WEIGHTS_LOCATION 6
-#define BONE_INDICES_LOCATION 7
-
-#define SCALE_LOCATION 1
-#define ALPHA_LOCATION 2
-
 // Passes
 #define PASS_GB 0
 #define PASS_FS 1

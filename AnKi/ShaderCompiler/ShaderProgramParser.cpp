@@ -673,6 +673,12 @@ Error ShaderProgramParser::parseInclude(const StringAuto* begin, const StringAut
 		StringAuto fname2(m_alloc);
 		fname2.create(path.begin() + 1, path.begin() + path.getLength() - 1);
 
+		if(fname2.find("AnKi/Shaders/") == String::NPOS)
+		{
+			// The shaders can't include C++ files. Ignore the include
+			return Error::NONE;
+		}
+
 		if(parseFile(fname2, depth + 1))
 		{
 			ANKI_PP_ERROR_MALFORMED_MSG("Error parsing include. See previous errors");

@@ -624,28 +624,28 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 	memset(&header, 0, sizeof(header));
 	{
 		// Positions
-		MeshBinaryVertexAttribute& posa = header.m_vertexAttributes[VertexAttributeLocation::POSITION];
+		MeshBinaryVertexAttribute& posa = header.m_vertexAttributes[VertexAttributeId::POSITION];
 		posa.m_bufferBinding = 0;
 		posa.m_format = Format::R32G32B32_SFLOAT;
 		posa.m_relativeOffset = 0;
 		posa.m_scale = 1.0f;
 
 		// Normals
-		MeshBinaryVertexAttribute& na = header.m_vertexAttributes[VertexAttributeLocation::NORMAL];
+		MeshBinaryVertexAttribute& na = header.m_vertexAttributes[VertexAttributeId::NORMAL];
 		na.m_bufferBinding = 1;
 		na.m_format = Format::A2B10G10R10_SNORM_PACK32;
 		na.m_relativeOffset = 0;
 		na.m_scale = 1.0f;
 
 		// Tangents
-		MeshBinaryVertexAttribute& ta = header.m_vertexAttributes[VertexAttributeLocation::TANGENT];
+		MeshBinaryVertexAttribute& ta = header.m_vertexAttributes[VertexAttributeId::TANGENT];
 		ta.m_bufferBinding = 1;
 		ta.m_format = Format::A2B10G10R10_SNORM_PACK32;
 		ta.m_relativeOffset = sizeof(U32);
 		ta.m_scale = 1.0f;
 
 		// UVs
-		MeshBinaryVertexAttribute& uva = header.m_vertexAttributes[VertexAttributeLocation::UV];
+		MeshBinaryVertexAttribute& uva = header.m_vertexAttributes[VertexAttributeId::UV0];
 		uva.m_bufferBinding = 1;
 		uva.m_format = Format::R32G32_SFLOAT;
 		uva.m_relativeOffset = sizeof(U32) * 2;
@@ -654,13 +654,13 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 		// Bone weight
 		if(hasBoneWeights)
 		{
-			MeshBinaryVertexAttribute& bidxa = header.m_vertexAttributes[VertexAttributeLocation::BONE_INDICES];
+			MeshBinaryVertexAttribute& bidxa = header.m_vertexAttributes[VertexAttributeId::BONE_INDICES];
 			bidxa.m_bufferBinding = 2;
 			bidxa.m_format = Format::R8G8B8A8_UINT;
 			bidxa.m_relativeOffset = 0;
 			bidxa.m_scale = 1.0f;
 
-			MeshBinaryVertexAttribute& wa = header.m_vertexAttributes[VertexAttributeLocation::BONE_WEIGHTS];
+			MeshBinaryVertexAttribute& wa = header.m_vertexAttributes[VertexAttributeId::BONE_WEIGHTS];
 			wa.m_bufferBinding = 2;
 			wa.m_format = Format::R8G8B8A8_UNORM;
 			wa.m_relativeOffset = sizeof(U8Vec4);
@@ -773,7 +773,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 
 			verts[i].m_normal = packColorToR10G10B10A2SNorm(normal.x(), normal.y(), normal.z(), 0.0f);
 			verts[i].m_tangent = packColorToR10G10B10A2SNorm(tangent.x(), tangent.y(), tangent.z(), tangent.w());
-			verts[i].m_uvs[UV_CHANNEL_0] = uv;
+			verts[i].m_uv0 = uv;
 		}
 
 		ANKI_CHECK(file.write(&verts[0], verts.getSizeInBytes()));
