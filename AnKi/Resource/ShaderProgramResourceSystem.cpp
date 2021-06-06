@@ -319,7 +319,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(CString cacheDir, co
 		{
 			const U64 groupHash =
 				ShaderProgramRaytracingLibrary::generateShaderGroupGroupHash(filename, mutationHash, m_alloc);
-#if ANKI_ENABLE_ASSERTS
+#if ANKI_ENABLE_ASSERTIONS
 			for(const ShaderGroup& group : m_shaderGroups)
 			{
 				ANKI_ASSERT(group.m_hitGroupHash != groupHash && "Shouldn't find group with the same hash");

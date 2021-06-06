@@ -126,15 +126,50 @@ public:
 	}
 
 private:
+#if ANKI_ENABLE_ASSERTIONS
 	ModelResource* m_model = nullptr;
-
+#endif
 	MaterialResourcePtr m_mtl;
+	Array<MeshResourcePtr, MAX_LOD_COUNT> m_meshes; ///< Just keep the references.
 
-	Array<MeshResourcePtr, MAX_LOD_COUNT> m_meshes; ///< One for each LOD
-	U8 m_meshLodCount = 0;
+	// Begin cached data
+	class VertexAttributeInfo
+	{
+	public:
+		U32 m_bufferBinding : 8;
+		U32 m_relativeOffset : 24;
+		Format m_format = Format::NONE;
+	};
+
+	Array<VertexAttributeInfo, U(VertexAttributeId::COUNT)> m_vertexAttributeInfos;
+
+	class VertexBufferInfo
+	{
+	public:
+		BufferPtr m_buffer;
+		PtrSize m_stride : 16;
+		PtrSize m_offset : 48;
+	};
+
+	Array2d<VertexBufferInfo, MAX_LOD_COUNT, U(VertexAttributeBufferId::COUNT)> m_vertexBufferInfos;
+
+	class IndexBufferInfo
+	{
+	public:
+		BufferPtr m_buffer;
+		PtrSize m_offset = MAX_PTR_SIZE;
+		U32 m_indexCount = MAX_U32;
+	};
+
+	Array<IndexBufferInfo, MAX_LOD_COUNT> m_indexBufferInfos;
+	BitSet<U(VertexAttributeId::COUNT)> m_presentVertexAttributes = {false};
+	IndexType m_indexType : 2;
+	// End cached data
+
+	U8 m_meshLodCount : 6;
 
 	ANKI_USE_RESULT Error init(ModelResource* model, ConstWeakArray<CString> meshFNames, const CString& mtlFName,
-							   Bool async, ResourceManager* resources);
+							   U32 subMeshIndex, Bool async, ResourceManager* resources);
 
 	ANKI_USE_RESULT Bool supportsSkinning() const
 	{
@@ -160,7 +195,7 @@ private:
 /// </model>
 /// @endcode
 ///
-/// Requirements:
+/// Notes:
 /// - If the materials need texture coords then mesh should have them
 /// - If the subMeshIndex is not present then assume the whole mesh
 class ModelResource : public ResourceObject

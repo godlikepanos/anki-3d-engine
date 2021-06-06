@@ -137,7 +137,7 @@ void Octree::placeRecursive(const Aabb& volume, OctreePlaceable* placeable, Leaf
 		// Need to stop and bin the placeable to the leaf
 
 		// Checks
-#if ANKI_ENABLE_ASSERTS
+#if ANKI_ENABLE_ASSERTIONS
 		for(const LeafNode& node : placeable->m_leafs)
 		{
 			ANKI_ASSERT(node.m_leaf != parent && "Already binned. That's wrong");

@@ -189,7 +189,7 @@ public:
 	void bindImage(U32 set, U32 binding, RenderTargetHandle handle, U32 arrayIdx = 0)
 	{
 		TexturePtr tex;
-#if ANKI_ENABLE_ASSERTS
+#if ANKI_ENABLE_ASSERTIONS
 		tex = getTexture(handle);
 		ANKI_ASSERT(tex->getLayerCount() == 1 && tex->getMipmapCount() == 1
 					&& tex->getDepthStencilAspect() == DepthStencilAspectBit::NONE);

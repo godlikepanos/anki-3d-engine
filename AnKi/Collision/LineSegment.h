@@ -78,13 +78,13 @@ public:
 
 private:
 	Vec4 m_origin ///< P0
-#if ANKI_ENABLE_ASSERTS
+#if ANKI_ENABLE_ASSERTIONS
 		= Vec4(MAX_F32)
 #endif
 		;
 
 	Vec4 m_dir ///< P1 = origin+dir so dir = P1-origin
-#if ANKI_ENABLE_ASSERTS
+#if ANKI_ENABLE_ASSERTIONS
 		= Vec4(MAX_F32)
 #endif
 		;

@@ -139,7 +139,7 @@ public:
 
 	Bool usageValid(TextureUsageBit usage) const
 	{
-#if ANKI_ENABLE_ASSERTS
+#if ANKI_ENABLE_ASSERTIONS
 		LockGuard<SpinLock> lock(m_usedForMtx);
 		m_usedFor |= usage;
 #endif
@@ -192,7 +192,7 @@ private:
 
 	VkDeviceMemory m_dedicatedMem = VK_NULL_HANDLE;
 
-#if ANKI_ENABLE_ASSERTS
+#if ANKI_ENABLE_ASSERTIONS
 	mutable TextureUsageBit m_usedFor = TextureUsageBit::NONE;
 	mutable SpinLock m_usedForMtx;
 #endif

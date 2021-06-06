@@ -384,7 +384,7 @@ Error SpirvReflector::blockReflection(const spirv_cross::Resource& res, Bool isS
 		// Store the block
 		blocks.emplaceBack(std::move(newBlock));
 	}
-#if ANKI_ENABLE_ASSERTS
+#if ANKI_ENABLE_ASSERTIONS
 	else
 	{
 		DynamicArrayAuto<Var> vars(m_alloc);

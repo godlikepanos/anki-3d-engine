@@ -567,7 +567,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 
 void Renderer::registerDebugRenderTarget(RendererObject* obj, CString rtName)
 {
-#if ANKI_ENABLE_ASSERTS
+#if ANKI_ENABLE_ASSERTIONS
 	for(const DebugRtInfo& inf : m_debugRts)
 	{
 		ANKI_ASSERT(inf.m_rtName != rtName && "Choose different name");

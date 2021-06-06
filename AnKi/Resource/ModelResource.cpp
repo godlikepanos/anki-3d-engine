@@ -32,9 +32,7 @@ static Bool attributeIsRequired(VertexAttributeId loc, Pass pass, Bool hasSkin)
 void ModelPatch::getRenderingInfo(const RenderingKey& key, ModelRenderingInfo& inf) const
 {
 	ANKI_ASSERT(!(!m_model->supportsSkinning() && key.isSkinned()));
-
-	// Get the resources
-	const MeshResource& mesh = *getMesh(min<U32>(key.getLod(), m_meshLodCount - 1));
+	const U32 meshLod = min<U32>(key.getLod(), m_meshLodCount - 1);
 
 	// Vertex attributes & bindings
 	{
@@ -44,39 +42,50 @@ void ModelPatch::getRenderingInfo(const RenderingKey& key, ModelRenderingInfo& i
 		inf.m_vertexAttributeCount = 0;
 		inf.m_vertexBufferBindingCount = 0;
 
-		for(VertexAttributeId loc = VertexAttributeId::FIRST; loc < VertexAttributeId::COUNT; ++loc)
+		for(VertexAttributeId loc : EnumIterable<VertexAttributeId>())
 		{
-			if(!mesh.isVertexAttributePresent(loc) || !attributeIsRequired(loc, key.getPass(), key.isSkinned()))
+			if(!m_presentVertexAttributes.get(loc) || !attributeIsRequired(loc, key.getPass(), key.isSkinned()))
 			{
 				continue;
 			}
 
 			// Attribute
-			ModelVertexAttribute& attrib = inf.m_vertexAttributes[inf.m_vertexAttributeCount++];
-			attrib.m_location = loc;
-			mesh.getVertexAttributeInfo(loc, attrib.m_bufferBinding, attrib.m_format, attrib.m_relativeOffset);
+			ModelVertexAttribute& outAttribInfo = inf.m_vertexAttributes[inf.m_vertexAttributeCount++];
+			outAttribInfo.m_location = loc;
+			outAttribInfo.m_bufferBinding = m_vertexAttributeInfos[loc].m_bufferBinding;
+			outAttribInfo.m_relativeOffset = m_vertexAttributeInfos[loc].m_relativeOffset;
+			outAttribInfo.m_format = m_vertexAttributeInfos[loc].m_format;
 
 			// Binding. Also, remove any holes in the bindings
-			if(!(bufferBindingVisitedMask & (1 << attrib.m_bufferBinding)))
+			if(!(bufferBindingVisitedMask & (1 << outAttribInfo.m_bufferBinding)))
 			{
-				bufferBindingVisitedMask |= 1 << attrib.m_bufferBinding;
+				bufferBindingVisitedMask |= 1 << outAttribInfo.m_bufferBinding;
 
-				ModelVertexBufferBinding& binding = inf.m_vertexBufferBindings[inf.m_vertexBufferBindingCount];
-				mesh.getVertexBufferInfo(attrib.m_bufferBinding, binding.m_buffer, binding.m_offset, binding.m_stride);
+				ModelVertexBufferBinding& outBinding = inf.m_vertexBufferBindings[inf.m_vertexBufferBindingCount];
+				const VertexBufferInfo& inBinding = m_vertexBufferInfos[meshLod][outAttribInfo.m_bufferBinding];
+				outBinding.m_buffer = inBinding.m_buffer;
+				ANKI_ASSERT(outBinding.m_buffer.isCreated());
+				outBinding.m_offset = inBinding.m_offset;
+				ANKI_ASSERT(outBinding.m_offset != MAX_PTR_SIZE);
+				outBinding.m_stride = inBinding.m_stride;
+				ANKI_ASSERT(outBinding.m_stride != MAX_PTR_SIZE);
 
-				realBufferBindingToVirtual[attrib.m_bufferBinding] = inf.m_vertexBufferBindingCount;
+				realBufferBindingToVirtual[outAttribInfo.m_bufferBinding] = inf.m_vertexBufferBindingCount;
 				++inf.m_vertexBufferBindingCount;
 			}
 
 			// Change the binding of the attrib
-			attrib.m_bufferBinding = realBufferBindingToVirtual[attrib.m_bufferBinding];
+			outAttribInfo.m_bufferBinding = realBufferBindingToVirtual[outAttribInfo.m_bufferBinding];
 		}
 
 		ANKI_ASSERT(inf.m_vertexAttributeCount != 0 && inf.m_vertexBufferBindingCount != 0);
 	}
 
 	// Index buff
-	mesh.getIndexBufferInfo(inf.m_indexBuffer, inf.m_indexBufferOffset, inf.m_indexCount, inf.m_indexType);
+	inf.m_indexBuffer = m_indexBufferInfos[meshLod].m_buffer;
+	inf.m_indexBufferOffset = m_indexBufferInfos[meshLod].m_offset;
+	inf.m_indexCount = m_indexBufferInfos[meshLod].m_indexCount;
+	inf.m_indexType = m_indexType;
 
 	// Get program
 	{
@@ -134,29 +143,114 @@ void ModelPatch::getRayTracingInfo(U32 lod, ModelRayTracingInfo& info) const
 	}
 }
 
-Error ModelPatch::init(ModelResource* model, ConstWeakArray<CString> meshFNames, const CString& mtlFName, Bool async,
-					   ResourceManager* manager)
+Error ModelPatch::init(ModelResource* model, ConstWeakArray<CString> meshFNames, const CString& mtlFName,
+					   U32 subMeshIndex, Bool async, ResourceManager* manager)
 {
 	ANKI_ASSERT(meshFNames.getSize() > 0);
+#if ANKI_ENABLE_ASSERTIONS
 	m_model = model;
+#endif
 
 	// Load material
 	ANKI_CHECK(manager->loadResource(mtlFName, m_mtl, async));
 
 	// Load meshes
 	m_meshLodCount = 0;
-	for(U32 i = 0; i < meshFNames.getSize(); i++)
+	for(U32 lod = 0; lod < meshFNames.getSize(); lod++)
 	{
-		ANKI_CHECK(manager->loadResource(meshFNames[i], m_meshes[i], async));
+		ANKI_CHECK(manager->loadResource(meshFNames[lod], m_meshes[lod], async));
 
 		// Sanity check
-		if(i > 0 && !m_meshes[i]->isCompatible(*m_meshes[i - 1]))
+		if(lod > 0 && !m_meshes[lod]->isCompatible(*m_meshes[lod - 1]))
 		{
 			ANKI_RESOURCE_LOGE("Meshes not compatible");
 			return Error::USER_DATA;
 		}
 
+		// Submesh index
+		if(subMeshIndex != MAX_U32 && subMeshIndex >= m_meshes[lod]->getSubMeshCount())
+		{
+			ANKI_RESOURCE_LOGE("Wrong subMeshIndex given");
+			return Error::USER_DATA;
+		}
+
 		++m_meshLodCount;
+	}
+
+	// Create the cached items
+	{
+		// Vertex attributes
+		for(VertexAttributeId attrib : EnumIterable<VertexAttributeId>())
+		{
+			const MeshResource& mesh = *m_meshes[0].get();
+
+			const Bool enabled = mesh.isVertexAttributePresent(attrib);
+			m_presentVertexAttributes.set(U32(attrib), enabled);
+
+			if(!enabled)
+			{
+				continue;
+			}
+
+			VertexAttributeInfo& outAttribInfo = m_vertexAttributeInfos[attrib];
+			U32 bufferBinding, relativeOffset;
+			mesh.getVertexAttributeInfo(attrib, bufferBinding, outAttribInfo.m_format, relativeOffset);
+			outAttribInfo.m_bufferBinding = bufferBinding & 0xFu;
+			outAttribInfo.m_relativeOffset = relativeOffset & 0xFFFFFFu;
+		}
+
+		// Vertex buffers
+		for(U32 lod = 0; lod < m_meshLodCount; ++lod)
+		{
+			const MeshResource& mesh = *m_meshes[lod].get();
+
+			for(VertexAttributeId attrib : EnumIterable<VertexAttributeId>())
+			{
+				if(!m_presentVertexAttributes.get(attrib))
+				{
+					continue;
+				}
+
+				VertexBufferInfo& outVertBufferInfo =
+					m_vertexBufferInfos[lod][m_vertexAttributeInfos[attrib].m_bufferBinding];
+				if(!outVertBufferInfo.m_buffer.isCreated())
+				{
+					PtrSize offset, stride;
+					mesh.getVertexBufferInfo(m_vertexAttributeInfos[attrib].m_bufferBinding, outVertBufferInfo.m_buffer,
+											 offset, stride);
+					outVertBufferInfo.m_offset = offset & 0xFFFFFFFFFFFF;
+					outVertBufferInfo.m_stride = stride & 0xFFFF;
+				}
+			}
+		}
+
+		// Index buffer
+		for(U32 lod = 0; lod < m_meshLodCount; ++lod)
+		{
+			const MeshResource& mesh = *m_meshes[lod].get();
+			IndexBufferInfo& outIndexBufferInfo = m_indexBufferInfos[lod];
+
+			if(subMeshIndex == MAX_U32)
+			{
+				IndexType indexType;
+				mesh.getIndexBufferInfo(outIndexBufferInfo.m_buffer, outIndexBufferInfo.m_offset,
+										outIndexBufferInfo.m_indexCount, indexType);
+				m_indexType = indexType;
+			}
+			else
+			{
+				IndexType indexType;
+				mesh.getIndexBufferInfo(outIndexBufferInfo.m_buffer, outIndexBufferInfo.m_offset,
+										outIndexBufferInfo.m_indexCount, indexType);
+				m_indexType = indexType;
+
+				U32 firstIndex;
+				Aabb aabb;
+				mesh.getSubMeshInfo(subMeshIndex, firstIndex, outIndexBufferInfo.m_indexCount, aabb);
+
+				outIndexBufferInfo.m_offset = ((m_indexType == IndexType::U16) ? 2 : 4) * firstIndex;
+			}
+		}
 	}
 
 	return Error::NONE;
@@ -215,6 +309,14 @@ Error ModelResource::load(const ResourceFilename& filename, Bool async)
 	ANKI_CHECK(modelPatchesEl.getChildElement("modelPatch", modelPatchEl));
 	do
 	{
+		U32 subMeshIndex;
+		Bool subMeshIndexPresent;
+		ANKI_CHECK(modelPatchEl.getAttributeNumberOptional("subMeshIndex", subMeshIndex, subMeshIndexPresent));
+		if(!subMeshIndexPresent)
+		{
+			subMeshIndex = MAX_U32;
+		}
+
 		XmlElement materialEl;
 		ANKI_CHECK(modelPatchEl.getChildElement("material", materialEl));
 
@@ -247,8 +349,8 @@ Error ModelResource::load(const ResourceFilename& filename, Bool async)
 		CString cstr;
 		ANKI_CHECK(materialEl.getText(cstr));
 
-		ANKI_CHECK(m_modelPatches[count].init(this, ConstWeakArray<CString>(&meshesFnames[0], meshesCount), cstr, async,
-											  &getManager()));
+		ANKI_CHECK(m_modelPatches[count].init(this, ConstWeakArray<CString>(&meshesFnames[0], meshesCount), cstr,
+											  subMeshIndex, async, &getManager()));
 
 		if(count > 0 && m_modelPatches[count].supportsSkinning() != m_modelPatches[count - 1].supportsSkinning())
 		{

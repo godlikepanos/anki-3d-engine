@@ -177,7 +177,7 @@ inline void GraphicsRenderPassDescription::setFramebufferInfo(
 	const FramebufferDescription& fbInfo, ConstWeakArray<RenderTargetHandle> colorRenderTargetHandles,
 	RenderTargetHandle depthStencilRenderTargetHandle, U32 minx, U32 miny, U32 maxx, U32 maxy)
 {
-#if ANKI_ENABLE_ASSERTS
+#if ANKI_ENABLE_ASSERTIONS
 	ANKI_ASSERT(fbInfo.isBacked() && "Forgot call GraphicsRenderPassFramebufferInfo::bake");
 	for(U32 i = 0; i < colorRenderTargetHandles.getSize(); ++i)
 	{

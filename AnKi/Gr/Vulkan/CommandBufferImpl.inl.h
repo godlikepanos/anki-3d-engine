@@ -714,7 +714,7 @@ inline void CommandBufferImpl::drawcallCommon()
 	}
 
 	// Some checks
-#if ANKI_ENABLE_ASSERTS
+#if ANKI_ENABLE_ASSERTIONS
 	if(m_state.getPrimitiveTopology() == PrimitiveTopology::LINES
 	   || m_state.getPrimitiveTopology() == PrimitiveTopology::LINE_STRIP)
 	{
@@ -947,7 +947,7 @@ inline void CommandBufferImpl::setLineWidth(F32 width)
 	commandCommon();
 	vkCmdSetLineWidth(m_handle, width);
 
-#if ANKI_ENABLE_ASSERTS
+#if ANKI_ENABLE_ASSERTIONS
 	m_lineWidthSet = true;
 #endif
 }

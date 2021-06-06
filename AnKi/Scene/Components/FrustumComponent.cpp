@@ -149,7 +149,7 @@ void FrustumComponent::setEnabledVisibilityTests(FrustumComponentVisibilityTestF
 	m_flags = FrustumComponentVisibilityTestFlag::NONE;
 	m_flags |= bits;
 
-#if ANKI_ENABLE_ASSERTS
+#if ANKI_ENABLE_ASSERTIONS
 	if(!!(m_flags & FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS)
 	   || !!(m_flags & FrustumComponentVisibilityTestFlag::SHADOW_CASTERS))
 	{

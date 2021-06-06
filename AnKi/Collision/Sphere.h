@@ -112,13 +112,13 @@ public:
 
 private:
 	Vec4 m_center
-#if ANKI_ENABLE_ASSERTS
+#if ANKI_ENABLE_ASSERTIONS
 		= Vec4(MAX_F32)
 #endif
 		;
 
 	F32 m_radius
-#if ANKI_ENABLE_ASSERTS
+#if ANKI_ENABLE_ASSERTIONS
 		= -1.0f
 #endif
 		;

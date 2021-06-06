@@ -16,7 +16,7 @@ namespace anki
 
 TextureImpl::~TextureImpl()
 {
-#if ANKI_ENABLE_ASSERTS
+#if ANKI_ENABLE_ASSERTIONS
 	if(m_usage != m_usedFor)
 	{
 		ANKI_VK_LOGW("Texture %s hasn't been used in all types of usages", getName().cstr());
