@@ -32,7 +32,7 @@ void getFilepathFilename(const CString& filename, StringAuto& out)
 
 	if(pc == nullptr)
 	{
-		// Do nothing
+		out.create(filename);
 	}
 	else
 	{

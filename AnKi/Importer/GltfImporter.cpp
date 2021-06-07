@@ -597,15 +597,19 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			struct Ctx
 			{
 				GltfImporter* m_importer;
-				cgltf_mesh* m_mesh;
-				cgltf_material* m_mtl;
-				cgltf_skin* m_skin;
+				const cgltf_mesh* m_mesh;
+				Array<const cgltf_material*, 128> m_materials;
+				U32 m_materialCount = 0;
+				const cgltf_skin* m_skin;
 				RayTypeBit m_rayTypes;
 			};
 			Ctx* ctx = m_alloc.newInstance<Ctx>();
 			ctx->m_importer = this;
 			ctx->m_mesh = node.mesh;
-			ctx->m_mtl = node.mesh->primitives[0].material;
+			for(U32 i = 0; i < node.mesh->primitives_count; ++i)
+			{
+				ctx->m_materials[ctx->m_materialCount++] = node.mesh->primitives[i].material;
+			}
 			ctx->m_skin = node.skin;
 			ctx->m_rayTypes = (skipRt) ? RayTypeBit::NONE : RayTypeBit::ALL;
 
@@ -645,9 +649,9 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 					err = self.m_importer->writeMesh(*self.m_mesh, name, self.m_importer->computeLodFactor(2));
 				}
 
-				if(!err)
+				for(U32 i = 0; i < self.m_materialCount && !err; ++i)
 				{
-					err = self.m_importer->writeMaterial(*self.m_mtl, self.m_rayTypes);
+					err = self.m_importer->writeMaterial(*self.m_materials[i], self.m_rayTypes);
 				}
 
 				if(!err)
@@ -749,15 +753,8 @@ Error GltfImporter::writeTransform(const Transform& trf)
 
 Error GltfImporter::writeModel(const cgltf_mesh& mesh)
 {
-	StringAuto modelFname(m_alloc);
-	modelFname.sprintf("%s%s_%s.ankimdl", m_outDir.cstr(), mesh.name, mesh.primitives[0].material->name);
+	const StringAuto modelFname = computeModelResourceFilename(mesh);
 	ANKI_GLTF_LOGI("Importing model %s", modelFname.cstr());
-
-	if(mesh.primitives_count != 1)
-	{
-		ANKI_GLTF_LOGE("For now only one primitive is supported");
-		return Error::USER_DATA;
-	}
 
 	HashMapAuto<CString, StringAuto> extras(m_alloc);
 	ANKI_CHECK(getExtras(mesh.extras, extras));
@@ -768,38 +765,48 @@ Error GltfImporter::writeModel(const cgltf_mesh& mesh)
 	ANKI_CHECK(file.writeText("<model>\n"));
 	ANKI_CHECK(file.writeText("\t<modelPatches>\n"));
 
-	ANKI_CHECK(file.writeText("\t\t<modelPatch>\n"));
-
-	ANKI_CHECK(file.writeText("\t\t\t<mesh>%s%s.ankimesh</mesh>\n", m_rpath.cstr(), mesh.name));
-
-	if(m_lodCount > 1 && !skipMeshLod(mesh, 1))
+	for(U32 primIdx = 0; primIdx < mesh.primitives_count; ++primIdx)
 	{
-		StringAuto name(m_alloc);
-		name.sprintf("%s_lod1", mesh.name);
-		ANKI_CHECK(file.writeText("\t\t\t<mesh1>%s%s.ankimesh</mesh1>\n", m_rpath.cstr(), name.cstr()));
-	}
+		if(mesh.primitives_count == 1)
+		{
+			ANKI_CHECK(file.writeText("\t\t<modelPatch>\n"));
+		}
+		else
+		{
+			ANKI_CHECK(file.writeText("\t\t<modelPatch subMeshIndex=\"%u\">\n", primIdx));
+		}
 
-	if(m_lodCount > 2 && !skipMeshLod(mesh, 2))
-	{
-		StringAuto name(m_alloc);
-		name.sprintf("%s_lod2", mesh.name);
-		ANKI_CHECK(file.writeText("\t\t\t<mesh2>%s%s.ankimesh</mesh2>\n", m_rpath.cstr(), name.cstr()));
-	}
+		ANKI_CHECK(file.writeText("\t\t\t<mesh>%s%s.ankimesh</mesh>\n", m_rpath.cstr(), mesh.name));
 
-	HashMapAuto<CString, StringAuto> materialExtras(m_alloc);
-	ANKI_CHECK(getExtras(mesh.primitives[0].material->extras, materialExtras));
-	auto mtlOverride = materialExtras.find("material_override");
-	if(mtlOverride != materialExtras.getEnd())
-	{
-		ANKI_CHECK(file.writeText("\t\t\t<material>%s</material>\n", mtlOverride->cstr()));
-	}
-	else
-	{
-		ANKI_CHECK(file.writeText("\t\t\t<material>%s%s.ankimtl</material>\n", m_rpath.cstr(),
-								  mesh.primitives[0].material->name));
-	}
+		if(m_lodCount > 1 && !skipMeshLod(mesh, 1))
+		{
+			StringAuto name(m_alloc);
+			name.sprintf("%s_lod1", mesh.name);
+			ANKI_CHECK(file.writeText("\t\t\t<mesh1>%s%s.ankimesh</mesh1>\n", m_rpath.cstr(), name.cstr()));
+		}
 
-	ANKI_CHECK(file.writeText("\t\t</modelPatch>\n"));
+		if(m_lodCount > 2 && !skipMeshLod(mesh, 2))
+		{
+			StringAuto name(m_alloc);
+			name.sprintf("%s_lod2", mesh.name);
+			ANKI_CHECK(file.writeText("\t\t\t<mesh2>%s%s.ankimesh</mesh2>\n", m_rpath.cstr(), name.cstr()));
+		}
+
+		HashMapAuto<CString, StringAuto> materialExtras(m_alloc);
+		ANKI_CHECK(getExtras(mesh.primitives[primIdx].material->extras, materialExtras));
+		auto mtlOverride = materialExtras.find("material_override");
+		if(mtlOverride != materialExtras.getEnd())
+		{
+			ANKI_CHECK(file.writeText("\t\t\t<material>%s</material>\n", mtlOverride->cstr()));
+		}
+		else
+		{
+			ANKI_CHECK(file.writeText("\t\t\t<material>%s%s.ankimtl</material>\n", m_rpath.cstr(),
+									  mesh.primitives[primIdx].material->name));
+		}
+
+		ANKI_CHECK(file.writeText("\t\t</modelPatch>\n"));
+	}
 
 	ANKI_CHECK(file.writeText("\t</modelPatches>\n"));
 
@@ -1333,8 +1340,7 @@ Error GltfImporter::writeModelNode(const cgltf_node& node, const HashMapAuto<CSt
 	HashMapAuto<CString, StringAuto> extras(parentExtras);
 	ANKI_CHECK(getExtras(node.extras, extras));
 
-	StringAuto modelFname(m_alloc);
-	modelFname.sprintf("%s%s_%s.ankimdl", m_rpath.cstr(), node.mesh->name, node.mesh->primitives[0].material->name);
+	const StringAuto modelFname = computeModelResourceFilename(*node.mesh);
 
 	ANKI_CHECK(m_sceneFile.writeText("\nnode = scene:newModelNode(\"%s\")\n", getNodeName(node).cstr()));
 	ANKI_CHECK(m_sceneFile.writeText("node:getSceneNodeBase():getModelComponent():loadModelResource(\"%s\")\n",

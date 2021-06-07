@@ -38,7 +38,7 @@ Error MeshBinaryLoader::load(const ResourceFilename& filename)
 		U idxSum = 0;
 		for(U i = 0; i < m_subMeshes.getSize(); i++)
 		{
-			const MeshBinarySubMesh& sm = m_subMeshes[0];
+			const MeshBinarySubMesh& sm = m_subMeshes[i];
 			if(sm.m_firstIndex != idxSum || (sm.m_indexCount % indicesPerFace) != 0)
 			{
 				ANKI_RESOURCE_LOGE("Incorrect sub mesh info");

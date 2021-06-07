@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Util/String.h>
+#include <AnKi/Util/StringList.h>
 #include <AnKi/Util/File.h>
 #include <AnKi/Util/HashMap.h>
 #include <AnKi/Resource/Common.h>
@@ -128,6 +129,25 @@ private:
 	}
 
 	static U32 getMeshTotalVertexCount(const cgltf_mesh& mesh);
+
+	StringAuto computeModelResourceFilename(const cgltf_mesh& mesh) const
+	{
+		StringListAuto list(m_alloc);
+
+		list.pushBackSprintf("%s%s", m_rpath.cstr(), mesh.name);
+
+		for(U i = 0; i < mesh.primitives_count; ++i)
+		{
+			list.pushBackSprintf("_%s", mesh.primitives[i].material->name);
+		}
+
+		list.pushBack(".ankimdl");
+
+		StringAuto out(m_alloc);
+		list.join("", out);
+
+		return out;
+	}
 
 	// Resources
 	ANKI_USE_RESULT Error writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 decimateFactor);
