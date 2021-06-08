@@ -722,11 +722,11 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 	}
 
 	// Write indices
+	U32 vertCount = 0;
 	for(const SubMesh& submesh : submeshes)
 	{
 		DynamicArrayAuto<U16> indices(m_alloc);
 		indices.create(submesh.m_indices.getSize());
-		U32 vertCount = 0;
 		for(U32 i = 0; i < indices.getSize(); ++i)
 		{
 			const U32 idx = submesh.m_indices[i] + vertCount;

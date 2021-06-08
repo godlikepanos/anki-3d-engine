@@ -27,12 +27,16 @@ public:
 
 	~ModelNode();
 
+	Error frameUpdate(Second prevUpdateTime, Second crntTime) override;
+
 private:
 	class FeedbackComponent;
 	class RenderProxy;
 
 	Aabb m_aabbLocal;
 	DynamicArray<RenderProxy> m_renderProxies; ///< The size matches the number of render components.
+
+	Bool m_deferredRenderComponentUpdate = false;
 
 	void feedbackUpdate();
 

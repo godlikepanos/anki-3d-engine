@@ -83,8 +83,9 @@ void ModelPatch::getRenderingInfo(const RenderingKey& key, ModelRenderingInfo& i
 
 	// Index buff
 	inf.m_indexBuffer = m_indexBufferInfos[meshLod].m_buffer;
-	inf.m_indexBufferOffset = m_indexBufferInfos[meshLod].m_offset;
+	inf.m_indexBufferOffset = 0;
 	inf.m_indexCount = m_indexBufferInfos[meshLod].m_indexCount;
+	inf.m_firstIndex = m_indexBufferInfos[meshLod].m_firstIndex;
 	inf.m_indexType = m_indexType;
 
 	// Get program
@@ -233,22 +234,25 @@ Error ModelPatch::init(ModelResource* model, ConstWeakArray<CString> meshFNames,
 			if(subMeshIndex == MAX_U32)
 			{
 				IndexType indexType;
-				mesh.getIndexBufferInfo(outIndexBufferInfo.m_buffer, outIndexBufferInfo.m_offset,
-										outIndexBufferInfo.m_indexCount, indexType);
+				PtrSize offset;
+				mesh.getIndexBufferInfo(outIndexBufferInfo.m_buffer, offset, outIndexBufferInfo.m_indexCount,
+										indexType);
+				ANKI_ASSERT(offset == 0);
 				m_indexType = indexType;
+				outIndexBufferInfo.m_firstIndex = 0;
 			}
 			else
 			{
 				IndexType indexType;
-				mesh.getIndexBufferInfo(outIndexBufferInfo.m_buffer, outIndexBufferInfo.m_offset,
-										outIndexBufferInfo.m_indexCount, indexType);
+				PtrSize offset;
+				mesh.getIndexBufferInfo(outIndexBufferInfo.m_buffer, offset, outIndexBufferInfo.m_indexCount,
+										indexType);
+				ANKI_ASSERT(offset == 0);
 				m_indexType = indexType;
 
-				U32 firstIndex;
 				Aabb aabb;
-				mesh.getSubMeshInfo(subMeshIndex, firstIndex, outIndexBufferInfo.m_indexCount, aabb);
-
-				outIndexBufferInfo.m_offset = ((m_indexType == IndexType::U16) ? 2 : 4) * firstIndex;
+				mesh.getSubMeshInfo(subMeshIndex, outIndexBufferInfo.m_firstIndex, outIndexBufferInfo.m_indexCount,
+									aabb);
 			}
 		}
 	}

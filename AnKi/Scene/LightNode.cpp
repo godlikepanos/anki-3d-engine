@@ -85,7 +85,7 @@ void LightNode::frameUpdateCommon()
 	const LightComponent& lc = getFirstComponentOfType<LightComponent>();
 	const Bool castsShadow = lc.getShadowEnabled();
 
-	const Error err = iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) -> Error {
+	iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) {
 		if(castsShadow)
 		{
 			frc.setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::SHADOW_CASTERS);
@@ -94,10 +94,7 @@ void LightNode::frameUpdateCommon()
 		{
 			frc.setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
 		}
-
-		return Error::NONE;
 	});
-	(void)err;
 }
 
 void LightNode::onMoveUpdateCommon(const MoveComponent& move)
@@ -139,25 +136,18 @@ void PointLightNode::onMoved(const MoveComponent& move)
 
 	// Update the frustums
 	U32 count = 0;
-	const Error err = iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& fr) -> Error {
+	iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& fr) {
 		Transform trf = m_shadowData[count].m_localTrf;
 		trf.setOrigin(move.getWorldTransform().getOrigin());
 
 		fr.setWorldTransform(trf);
 		++count;
-
-		return Error::NONE;
 	});
-	(void)err;
 }
 
 void PointLightNode::onLightShapeUpdated(LightComponent& light)
 {
-	const Error err = iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& fr) -> Error {
-		fr.setFar(light.getRadius());
-		return Error::NONE;
-	});
-	(void)err;
+	iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& fr) { fr.setFar(light.getRadius()); });
 
 	SpatialComponent& spatialc = getFirstComponentOfType<SpatialComponent>();
 	spatialc.setSphereWorldSpace(Sphere(light.getWorldTransform().getOrigin(), light.getRadius()));
@@ -260,12 +250,8 @@ SpotLightNode::SpotLightNode(SceneGraph* scene, CString name)
 void SpotLightNode::onMoved(const MoveComponent& move)
 {
 	// Update the frustums
-	Error err = iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& fr) -> Error {
-		fr.setWorldTransform(move.getWorldTransform());
-		return Error::NONE;
-	});
-
-	(void)err;
+	iterateComponentsOfType<FrustumComponent>(
+		[&](FrustumComponent& fr) { fr.setWorldTransform(move.getWorldTransform()); });
 
 	onMoveUpdateCommon(move);
 }

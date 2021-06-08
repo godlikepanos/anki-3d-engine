@@ -91,7 +91,7 @@ public:
 		Base::addChild(getAllocator(), obj);
 	}
 
-	/// This is called by the scene every frame after logic and before rendering. By default it does nothing.
+	/// This is called by the scenegraph every frame after all component updates. By default it does nothing.
 	/// @param prevUpdateTime Timestamp of the previous update
 	/// @param crntTime Timestamp of this update
 	virtual ANKI_USE_RESULT Error frameUpdate(Second prevUpdateTime, Second crntTime)
@@ -135,40 +135,34 @@ public:
 
 	/// Iterate all components of a specific type
 	template<typename TComponent, typename TFunct>
-	ANKI_USE_RESULT Error iterateComponentsOfType(TFunct func) const
+	void iterateComponentsOfType(TFunct func) const
 	{
-		Error err = Error::NONE;
 		auto it = m_components.getBegin();
 		auto end = m_components.getEnd();
-		for(; !err && it != end; ++it)
+		for(; it != end; ++it)
 		{
 			if(it->getComponentClassId() == TComponent::getStaticClassId())
 			{
 				const SceneComponent* comp = *it;
-				err = func(static_cast<const TComponent&>(*comp));
+				func(static_cast<const TComponent&>(*comp));
 			}
 		}
-
-		return err;
 	}
 
 	/// Iterate all components of a specific type
 	template<typename TComponent, typename TFunct>
-	ANKI_USE_RESULT Error iterateComponentsOfType(TFunct func)
+	void iterateComponentsOfType(TFunct func)
 	{
-		Error err = Error::NONE;
 		auto it = m_components.getBegin();
 		auto end = m_components.getEnd();
-		for(; !err && it != end; ++it)
+		for(; it != end; ++it)
 		{
 			if(it->getComponentClassId() == TComponent::getStaticClassId())
 			{
 				SceneComponent* comp = *it;
-				err = func(static_cast<TComponent&>(*comp));
+				func(static_cast<TComponent&>(*comp));
 			}
 		}
-
-		return err;
 	}
 
 	/// Try geting a pointer to the first component of the requested type
@@ -278,11 +272,7 @@ public:
 	U32 countComponentsOfType() const
 	{
 		U32 count = 0;
-		const Error err = iterateComponentsOfType<TComponent>([&](const TComponent& c) -> Error {
-			++count;
-			return Error::NONE;
-		});
-		(void)err;
+		iterateComponentsOfType<TComponent>([&](const TComponent& c) { ++count; });
 		return count;
 	}
 

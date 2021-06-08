@@ -345,10 +345,9 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		WeakArray<RenderQueue> nextQueues;
 		WeakArray<FrustumComponent> nextQueueFrustumComponents; // Optional
 
-		if(rc)
-		{
+		node.iterateComponentsOfType<RenderComponent>([&](const RenderComponent& rc) {
 			RenderableQueueElement* el;
-			if(!!(rc->getFlags() & RenderComponentFlag::FORWARD_SHADING))
+			if(!!(rc.getFlags() & RenderComponentFlag::FORWARD_SHADING))
 			{
 				el = result.m_forwardShadingRenderables.newElement(alloc);
 			}
@@ -357,33 +356,35 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 				el = result.m_renderables.newElement(alloc);
 			}
 
-			rc->setupRenderableQueueElement(*el);
+			rc.setupRenderableQueueElement(*el);
 
 			// Compute distance from the frustum
 			const Plane& nearPlane = primaryFrc.getViewPlanes()[FrustumPlaneType::NEAR];
-			el->m_distanceFromCamera = !!(rc->getFlags() & RenderComponentFlag::SORT_LAST)
+			el->m_distanceFromCamera = !!(rc.getFlags() & RenderComponentFlag::SORT_LAST)
 										   ? primaryFrc.getFar()
 										   : max(0.0f, testPlane(nearPlane, spatialc->getAabbWorldSpace()));
 
 			el->m_lod = computeLod(primaryFrc, el->m_distanceFromCamera);
 
+			// Add to early Z
 			if(wantsEarlyZ && el->m_distanceFromCamera < m_frcCtx->m_visCtx->m_earlyZDist
-			   && !(rc->getFlags() & RenderComponentFlag::FORWARD_SHADING))
+			   && !(rc.getFlags() & RenderComponentFlag::FORWARD_SHADING))
 			{
 				RenderableQueueElement* el2 = result.m_earlyZRenderables.newElement(alloc);
 				*el2 = *el;
 			}
-		}
 
-		if(rtRc)
-		{
-			RayTracingInstanceQueueElement* el = result.m_rayTracingInstances.newElement(alloc);
+			// Add to RT
+			if(rtRc)
+			{
+				RayTracingInstanceQueueElement* el = result.m_rayTracingInstances.newElement(alloc);
 
-			// Compute the LOD
-			const Plane& nearPlane = primaryFrc.getViewPlanes()[FrustumPlaneType::NEAR];
-			const F32 dist = testPlane(nearPlane, spatialc->getAabbWorldSpace());
-			rtRc->setupRayTracingInstanceQueueElement(computeLod(primaryFrc, dist), *el);
-		}
+				// Compute the LOD
+				const Plane& nearPlane = primaryFrc.getViewPlanes()[FrustumPlaneType::NEAR];
+				const F32 dist = testPlane(nearPlane, spatialc->getAabbWorldSpace());
+				rc.setupRayTracingInstanceQueueElement(computeLod(primaryFrc, dist), *el);
+			}
+		});
 
 		if(lc)
 		{
@@ -592,11 +593,9 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 			if(ANKI_LIKELY(nextQueueFrustumComponents.getSize() == 0))
 			{
-				const Error err = node.iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) {
+				node.iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) {
 					m_frcCtx->m_visCtx->submitNewWork(frc, primaryFrc, nextQueues[count++], hive);
-					return Error::NONE;
 				});
-				(void)err;
 			}
 			else
 			{

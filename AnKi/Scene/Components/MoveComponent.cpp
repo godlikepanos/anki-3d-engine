@@ -75,17 +75,10 @@ Bool MoveComponent::updateWorldTransform(SceneNode& node)
 	// If this is dirty then make children dirty as well. Don't walk the whole tree because you will re-walk it later
 	if(dirty)
 	{
-		Error err = node.visitChildrenMaxDepth(1, [](SceneNode& childNode) -> Error {
-			Error e = childNode.iterateComponentsOfType<MoveComponent>([](MoveComponent& mov) -> Error {
-				mov.markForUpdate();
-				return Error::NONE;
-			});
-
-			(void)e;
-
+		const Error err = node.visitChildrenMaxDepth(1, [](SceneNode& childNode) -> Error {
+			childNode.iterateComponentsOfType<MoveComponent>([](MoveComponent& mov) { mov.markForUpdate(); });
 			return Error::NONE;
 		});
-
 		(void)err;
 	}
 

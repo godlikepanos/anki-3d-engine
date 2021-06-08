@@ -156,19 +156,16 @@ void GlobalIlluminationProbeNode::onShapeUpdateOrProbeNeedsRendering()
 
 		// Update frustum components
 		U count = 0;
-		const Error err = iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) -> Error {
+		iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) {
 			Transform trf = m_cubeFaceTransforms[count];
 			trf.setOrigin(gic.getRenderPosition().xyz0());
 
 			frc.setWorldTransform(trf);
 			frc.setFar(effectiveDistance);
 			++count;
-
-			return Error::NONE;
 		});
 
 		ANKI_ASSERT(count == 6);
-		(void)err;
 	}
 
 	// Update the spatial comp
@@ -190,11 +187,8 @@ Error GlobalIlluminationProbeNode::frameUpdate(Second prevUpdateTime, Second crn
 	const FrustumComponentVisibilityTestFlag testFlags =
 		(gic.getMarkedForRendering()) ? FRUSTUM_TEST_FLAGS : FrustumComponentVisibilityTestFlag::NONE;
 
-	const Error err = iterateComponentsOfType<FrustumComponent>([testFlags](FrustumComponent& frc) -> Error {
-		frc.setEnabledVisibilityTests(testFlags);
-		return Error::NONE;
-	});
-	(void)err;
+	iterateComponentsOfType<FrustumComponent>(
+		[testFlags](FrustumComponent& frc) { frc.setEnabledVisibilityTests(testFlags); });
 
 	return Error::NONE;
 }

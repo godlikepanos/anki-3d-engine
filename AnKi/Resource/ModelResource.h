@@ -73,6 +73,7 @@ public:
 	BufferPtr m_indexBuffer;
 	PtrSize m_indexBufferOffset;
 	IndexType m_indexType;
+	U32 m_firstIndex;
 	U32 m_indexCount;
 
 	U32 m_boneTransformsBinding;
@@ -157,7 +158,7 @@ private:
 	{
 	public:
 		BufferPtr m_buffer;
-		PtrSize m_offset = MAX_PTR_SIZE;
+		U32 m_firstIndex = MAX_U32;
 		U32 m_indexCount = MAX_U32;
 	};
 

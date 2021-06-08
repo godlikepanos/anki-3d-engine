@@ -135,18 +135,15 @@ void ReflectionProbeNode::onMoveUpdate(MoveComponent& move)
 {
 	// Update frustum components
 	U count = 0;
-	Error err = iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) -> Error {
+	iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) {
 		Transform trf = m_frustumTransforms[count];
 		trf.setOrigin(move.getWorldTransform().getOrigin());
 
 		frc.setWorldTransform(trf);
 		++count;
-
-		return Error::NONE;
 	});
 
 	ANKI_ASSERT(count == 6);
-	(void)err;
 
 	// Update the spatial comp
 	SpatialComponent& sp = getFirstComponentOfType<SpatialComponent>();
@@ -165,11 +162,7 @@ void ReflectionProbeNode::onShapeUpdate(ReflectionProbeComponent& reflc)
 	effectiveDistance = max(effectiveDistance, getSceneGraph().getConfig().m_reflectionProbeEffectiveDistance);
 
 	// Update frustum components
-	Error err = iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) -> Error {
-		frc.setFar(effectiveDistance);
-		return Error::NONE;
-	});
-	(void)err;
+	iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) { frc.setFar(effectiveDistance); });
 
 	// Update the spatial comp
 	SpatialComponent& sp = getFirstComponentOfType<SpatialComponent>();
@@ -184,11 +177,8 @@ Error ReflectionProbeNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 	const FrustumComponentVisibilityTestFlag testFlags =
 		reflc.getMarkedForRendering() ? FRUSTUM_TEST_FLAGS : FrustumComponentVisibilityTestFlag::NONE;
 
-	const Error err = iterateComponentsOfType<FrustumComponent>([testFlags](FrustumComponent& frc) -> Error {
-		frc.setEnabledVisibilityTests(testFlags);
-		return Error::NONE;
-	});
-	(void)err;
+	iterateComponentsOfType<FrustumComponent>(
+		[testFlags](FrustumComponent& frc) { frc.setEnabledVisibilityTests(testFlags); });
 
 	return Error::NONE;
 }

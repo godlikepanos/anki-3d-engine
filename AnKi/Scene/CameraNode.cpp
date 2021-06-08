@@ -94,7 +94,7 @@ void CameraNode::onMoveComponentUpdate(MoveComponent& move)
 
 	// Frustum
 	U count = 0;
-	const Error err = iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& fc) {
+	iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& fc) {
 		if(count == 0)
 		{
 			fc.setWorldTransform(worldTransform);
@@ -112,9 +112,7 @@ void CameraNode::onMoveComponentUpdate(MoveComponent& move)
 		}
 
 		++count;
-		return Error::NONE;
 	});
-	(void)err;
 }
 
 PerspectiveCameraNode::PerspectiveCameraNode(SceneGraph* scene, CString name)

@@ -76,7 +76,7 @@ void ModelNode::feedbackUpdate()
 		return;
 	}
 
-	const U64 globTimestamp = getGlobalTimestamp();
+	const Timestamp globTimestamp = getGlobalTimestamp();
 	Bool updateSpatial = false;
 
 	// Model update
@@ -92,8 +92,8 @@ void ModelNode::feedbackUpdate()
 		}
 		else
 		{
-			// Need to create more render components, deffer it
-			ANKI_ASSERT(!"TODO");
+			// Need to create more render components, can't do it at the moment, deffer it
+			m_deferredRenderComponentUpdate = true;
 		}
 	}
 
@@ -117,6 +117,43 @@ void ModelNode::feedbackUpdate()
 		const Aabb aabbWorld = m_aabbLocal.getTransformed(movec.getWorldTransform());
 		getFirstComponentOfType<SpatialComponent>().setAabbWorldSpace(aabbWorld);
 	}
+}
+
+Error ModelNode::frameUpdate(Second prevUpdateTime, Second crntTime)
+{
+	if(ANKI_LIKELY(!m_deferredRenderComponentUpdate))
+	{
+		return Error::NONE;
+	}
+
+	m_deferredRenderComponentUpdate = false;
+
+	const ModelComponent& modelc = getFirstComponentOfType<ModelComponent>();
+	const U32 modelPatchCount = modelc.getModelResource()->getModelPatches().getSize();
+	const U32 renderComponentCount = countComponentsOfType<RenderComponent>();
+
+	if(modelPatchCount > renderComponentCount)
+	{
+		const U32 diff = modelPatchCount - renderComponentCount;
+
+		for(U32 i = 0; i < diff; ++i)
+		{
+			newComponent<RenderComponent>();
+		}
+
+		m_renderProxies.resize(getAllocator(), modelPatchCount);
+	}
+	else
+	{
+		ANKI_ASSERT(!"TODO");
+	}
+
+	ANKI_ASSERT(countComponentsOfType<RenderComponent>() == modelPatchCount);
+
+	// Now you can init the render components
+	initRenderComponents();
+
+	return Error::NONE;
 }
 
 void ModelNode::initRenderComponents()
@@ -249,7 +286,8 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		cmdb->bindIndexBuffer(modelInf.m_indexBuffer, modelInf.m_indexBufferOffset, IndexType::U16);
 
 		// Draw
-		cmdb->drawElements(PrimitiveTopology::TRIANGLES, modelInf.m_indexCount, instanceCount, 0, 0, 0);
+		cmdb->drawElements(PrimitiveTopology::TRIANGLES, modelInf.m_indexCount, instanceCount, modelInf.m_firstIndex, 0,
+						   0);
 	}
 	else
 	{
