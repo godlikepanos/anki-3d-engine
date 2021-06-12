@@ -315,12 +315,8 @@ DirectionalLightNode::DirectionalLightNode(SceneGraph* scene, CString name)
 
 	SpatialComponent* spatialc = newComponent<SpatialComponent>();
 
-	// Make the bounding box large enough so it will always be visible. Because of that don't update the octree bounds
-	Aabb boundingBox;
-	boundingBox.setMin(getSceneGraph().getSceneMin());
-	boundingBox.setMax(getSceneGraph().getSceneMax());
-	spatialc->setAabbWorldSpace(boundingBox);
-	spatialc->setUpdateOctreeBounds(false);
+	// Make the spatial always visible
+	spatialc->setAlwaysVisible(true);
 }
 
 } // end namespace anki

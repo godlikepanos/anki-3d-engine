@@ -25,7 +25,7 @@ Font::~Font()
 	m_fontData.destroy(getAllocator());
 }
 
-Error Font::init(const CString& filename, const std::initializer_list<U32>& fontHeights)
+Error Font::init(const CString& filename, ConstWeakArray<U32> fontHeights)
 {
 	setImAllocator();
 	m_imFontAtlas.init();
@@ -36,7 +36,7 @@ Error Font::init(const CString& filename, const std::initializer_list<U32>& font
 	m_fontData.create(getAllocator(), U32(file->getSize()));
 	ANKI_CHECK(file->read(&m_fontData[0], file->getSize()));
 
-	m_fonts.create(getAllocator(), U32(fontHeights.size()));
+	m_fonts.create(getAllocator(), U32(fontHeights.getSize()));
 
 	// Bake font
 	ImFontConfig cfg;

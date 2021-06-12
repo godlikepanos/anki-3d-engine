@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include <AnKi/Scene/Common.h>
 #include <AnKi/Scene/Components/SceneComponent.h>
 #include <AnKi/Resource/MaterialResource.h>
 #include <AnKi/Core/StagingGpuMemoryManager.h>

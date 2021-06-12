@@ -183,7 +183,7 @@ private:
 	ScriptManager* m_script = nullptr;
 
 	// Misc
-	UiImmediateModeBuilderPtr m_statsUi;
+	StatsUi* m_statsUi = nullptr;
 	Bool m_displayStats = false;
 	UiImmediateModeBuilderPtr m_console;
 	Bool m_consoleEnabled = false;

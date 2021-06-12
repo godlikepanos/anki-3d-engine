@@ -26,7 +26,7 @@ Error DeveloperConsole::init(AllocAlignedCallback allocCb, void* allocCbUserData
 	m_alloc = HeapAllocator<U8>(allocCb, allocCbUserData);
 	zeroMemory(m_inputText);
 
-	ANKI_CHECK(m_manager->newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf", std::initializer_list<U32>{16}));
+	ANKI_CHECK(m_manager->newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{16}));
 
 	// Add a new callback to the logger
 	LoggerSingleton::get().addMessageHandler(this, loggerCallback);

@@ -16,6 +16,7 @@
 #include <AnKi/Scene/Components/SpatialComponent.h>
 #include <AnKi/Scene/Components/GlobalIlluminationProbeComponent.h>
 #include <AnKi/Scene/Components/GenericGpuComputeJobComponent.h>
+#include <AnKi/Scene/Components/UiComponent.h>
 #include <AnKi/Renderer/MainRenderer.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/ThreadHive.h>
@@ -325,6 +326,10 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::GENERIC_COMPUTE_JOB_COMPONENTS)
 					&& (computec = node.tryGetFirstComponentOfType<GenericGpuComputeJobComponent>());
 
+		UiComponent* uic = nullptr;
+		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::UI_COMPONENTS)
+					&& (uic = node.tryGetFirstComponentOfType<UiComponent>());
+
 		if(ANKI_UNLIKELY(!wantNode))
 		{
 			// Skip node
@@ -337,7 +342,8 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			continue;
 		}
 
-		if(!spatialInsideFrustum(testedFrc, *spatialc) || !testAgainstRasterizer(spatialc->getAabbWorldSpace()))
+		if(!spatialc->getAlwaysVisible()
+		   && (!spatialInsideFrustum(testedFrc, *spatialc) || !testAgainstRasterizer(spatialc->getAabbWorldSpace())))
 		{
 			continue;
 		}
@@ -390,7 +396,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		{
 			// Check if it casts shadow
 			Bool castsShadow = lc->getShadowEnabled();
-			if(castsShadow)
+			if(castsShadow && lc->getLightComponentType() != LightComponentType::DIRECTIONAL)
 			{
 				// Extra check
 
@@ -586,6 +592,12 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			computec->setupGenericGpuComputeJobQueueElement(*el);
 		}
 
+		if(uic)
+		{
+			UiQueueElement* el = result.m_uis.newElement(alloc);
+			uic->setupUiQueueElement(*el);
+		}
+
 		// Add more frustums to the list
 		if(nextQueues.getSize() > 0)
 		{
@@ -651,6 +663,7 @@ void CombineResultsTask::combine()
 	ANKI_VIS_COMBINE(GlobalIlluminationProbeQueueElement, m_giProbes);
 	ANKI_VIS_COMBINE(GenericGpuComputeJobQueueElement, m_genericGpuComputeJobs);
 	ANKI_VIS_COMBINE(RayTracingInstanceQueueElement, m_rayTracingInstances);
+	ANKI_VIS_COMBINE(UiQueueElement, m_uis);
 
 	for(U32 i = 0; i < threadCount; ++i)
 	{

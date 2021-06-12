@@ -102,6 +102,30 @@ void Octree::place(const Aabb& volume, OctreePlaceable* placeable, Bool updateAc
 	}
 }
 
+void Octree::placeAlwaysVisible(OctreePlaceable* placeable)
+{
+	ANKI_ASSERT(placeable);
+
+	LockGuard<Mutex> lock(m_globalMtx);
+
+	// Remove the placeable from the Octree
+	removeInternal(*placeable);
+
+	// Create the root leaf
+	if(!m_rootLeaf)
+	{
+		m_rootLeaf = newLeaf();
+		m_rootLeaf->m_aabbMin = m_sceneAabbMin;
+		m_rootLeaf->m_aabbMax = m_sceneAabbMax;
+	}
+
+	// Connect placeable and leaf
+	placeable->m_leafs.pushBack(newLeafNode(m_rootLeaf));
+	m_rootLeaf->m_placeables.pushBack(newPlaceableNode(placeable));
+
+	++m_placeableCount;
+}
+
 void Octree::remove(OctreePlaceable& placeable)
 {
 	LockGuard<Mutex> lock(m_globalMtx);
@@ -295,18 +319,17 @@ void Octree::removeInternal(OctreePlaceable& placeable)
 		while(!placeable.m_leafs.isEmpty())
 		{
 			// Pop a leaf node
-			LeafNode& leafNode = placeable.m_leafs.getFront();
-			placeable.m_leafs.popFront();
+			LeafNode* leafNode = placeable.m_leafs.popFront();
 
 			// Iterate the placeables of the leaf
 			Bool found = false;
 			(void)found;
-			for(PlaceableNode& placeableNode : leafNode.m_leaf->m_placeables)
+			for(PlaceableNode& placeableNode : leafNode->m_leaf->m_placeables)
 			{
 				if(placeableNode.m_placeable == &placeable)
 				{
 					found = true;
-					leafNode.m_leaf->m_placeables.erase(&placeableNode);
+					leafNode->m_leaf->m_placeables.erase(&placeableNode);
 					releasePlaceableNode(&placeableNode);
 					break;
 				}
@@ -314,7 +337,7 @@ void Octree::removeInternal(OctreePlaceable& placeable)
 			ANKI_ASSERT(found);
 
 			// Delete the leaf node
-			releaseLeafNode(&leafNode);
+			releaseLeafNode(leafNode);
 		}
 
 		// Cleanup the tree if there are no placeables

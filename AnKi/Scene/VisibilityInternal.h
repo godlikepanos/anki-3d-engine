@@ -105,6 +105,7 @@ public:
 	TRenderQueueElementStorage<GlobalIlluminationProbeQueueElement> m_giProbes;
 	TRenderQueueElementStorage<GenericGpuComputeJobQueueElement> m_genericGpuComputeJobs;
 	TRenderQueueElementStorage<RayTracingInstanceQueueElement> m_rayTracingInstances;
+	TRenderQueueElementStorage<UiQueueElement> m_uis;
 
 	Timestamp m_timestamp = 0;
 

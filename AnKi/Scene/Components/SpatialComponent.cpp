@@ -18,6 +18,7 @@ SpatialComponent::SpatialComponent(SceneNode* node)
 	, m_markedForUpdate(true)
 	, m_placed(false)
 	, m_updateOctreeBounds(true)
+	, m_alwaysVisible(false)
 {
 	ANKI_ASSERT(node);
 	m_octreeInfo.m_userData = this;
@@ -62,28 +63,35 @@ Error SpatialComponent::update(SceneNode& node, Second prevTime, Second crntTime
 	updated = m_markedForUpdate;
 	if(updated)
 	{
-		// Compute the AABB
-		switch(m_collisionObjectType)
+		if(!m_alwaysVisible)
 		{
-		case CollisionShapeType::AABB:
-			m_derivedAabb = m_aabb;
-			break;
-		case CollisionShapeType::OBB:
-			m_derivedAabb = computeAabb(m_obb);
-			break;
-		case CollisionShapeType::SPHERE:
-			m_derivedAabb = computeAabb(m_sphere);
-			break;
-		case CollisionShapeType::CONVEX_HULL:
-			m_derivedAabb = computeAabb(m_hull);
-			break;
-		default:
-			ANKI_ASSERT(0);
+			// Compute the AABB
+			switch(m_collisionObjectType)
+			{
+			case CollisionShapeType::AABB:
+				m_derivedAabb = m_aabb;
+				break;
+			case CollisionShapeType::OBB:
+				m_derivedAabb = computeAabb(m_obb);
+				break;
+			case CollisionShapeType::SPHERE:
+				m_derivedAabb = computeAabb(m_sphere);
+				break;
+			case CollisionShapeType::CONVEX_HULL:
+				m_derivedAabb = computeAabb(m_hull);
+				break;
+			default:
+				ANKI_ASSERT(0);
+			}
+
+			m_node->getSceneGraph().getOctree().place(m_derivedAabb, &m_octreeInfo, m_updateOctreeBounds);
+		}
+		else
+		{
+			m_node->getSceneGraph().getOctree().placeAlwaysVisible(&m_octreeInfo);
 		}
 
 		m_markedForUpdate = false;
-
-		m_node->getSceneGraph().getOctree().place(m_derivedAabb, &m_octreeInfo, m_updateOctreeBounds);
 		m_placed = true;
 	}
 

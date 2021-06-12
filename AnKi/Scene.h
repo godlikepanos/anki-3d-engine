@@ -42,6 +42,7 @@
 #include <AnKi/Scene/Components/ParticleEmitterComponent.h>
 #include <AnKi/Scene/Components/GpuParticleEmitterComponent.h>
 #include <AnKi/Scene/Components/ModelComponent.h>
+#include <AnKi/Scene/Components/UiComponent.h>
 
 #include <AnKi/Scene/Events/EventManager.h>
 #include <AnKi/Scene/Events/Event.h>

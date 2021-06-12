@@ -36,7 +36,7 @@ Error MeshBinaryLoader::load(const ResourceFilename& filename)
 		// Checks
 		const U32 indicesPerFace = !!(m_header.m_flags & MeshBinaryFlag::QUAD) ? 4 : 3;
 		U idxSum = 0;
-		for(U i = 0; i < m_subMeshes.getSize(); i++)
+		for(U32 i = 0; i < m_subMeshes.getSize(); i++)
 		{
 			const MeshBinarySubMesh& sm = m_subMeshes[i];
 			if(sm.m_firstIndex != idxSum || (sm.m_indexCount % indicesPerFace) != 0)

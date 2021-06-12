@@ -55,7 +55,7 @@ SceneGraph::~SceneGraph()
 }
 
 Error SceneGraph::init(AllocAlignedCallback allocCb, void* allocCbData, ThreadHive* threadHive,
-					   ResourceManager* resources, Input* input, ScriptManager* scriptManager,
+					   ResourceManager* resources, Input* input, ScriptManager* scriptManager, UiManager* uiManager,
 					   const Timestamp* globalTimestamp, const ConfigSet& config)
 {
 	m_globalTimestamp = globalTimestamp;
@@ -65,6 +65,7 @@ Error SceneGraph::init(AllocAlignedCallback allocCb, void* allocCbData, ThreadHi
 	m_physics = &m_resources->getPhysicsWorld();
 	m_input = input;
 	m_scriptManager = scriptManager;
+	m_uiManager = uiManager;
 
 	m_alloc = SceneAllocator<U8>(allocCb, allocCbData);
 	m_frameAlloc = SceneFrameAllocator<U8>(allocCb, allocCbData, 1 * 1024 * 1024);

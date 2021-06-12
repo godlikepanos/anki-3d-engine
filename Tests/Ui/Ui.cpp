@@ -80,7 +80,7 @@ ANKI_TEST(Ui, Ui)
 
 	{
 		FontPtr font;
-		ANKI_TEST_EXPECT_NO_ERR(ui->newInstance(font, "UbuntuRegular.ttf", std::initializer_list<U32>{10, 20, 30, 60}));
+		ANKI_TEST_EXPECT_NO_ERR(ui->newInstance(font, "UbuntuRegular.ttf", Array<U32, 4>{10, 20, 30, 60}));
 
 		CanvasPtr canvas;
 		ANKI_TEST_EXPECT_NO_ERR(ui->newInstance(canvas, font, 20, win->getWidth(), win->getHeight()));

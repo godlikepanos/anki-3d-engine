@@ -24,6 +24,7 @@ class Input;
 class ConfigSet;
 class PerspectiveCameraNode;
 class Octree;
+class UiManager;
 
 /// @addtogroup scene
 /// @{
@@ -62,7 +63,7 @@ public:
 
 	ANKI_USE_RESULT Error init(AllocAlignedCallback allocCb, void* allocCbData, ThreadHive* threadHive,
 							   ResourceManager* resources, Input* input, ScriptManager* scriptManager,
-							   const Timestamp* globalTimestamp, const ConfigSet& config);
+							   UiManager* uiManager, const Timestamp* globalTimestamp, const ConfigSet& config);
 
 	Timestamp getGlobalTimestamp() const
 	{
@@ -213,6 +214,11 @@ public:
 		return *m_input;
 	}
 
+	UiManager& getUiManager()
+	{
+		return *m_uiManager;
+	}
+
 	U64 getNewUuid()
 	{
 		return m_nodesUuid.fetchAdd(1);
@@ -242,6 +248,7 @@ private:
 	PhysicsWorld* m_physics = nullptr;
 	Input* m_input = nullptr;
 	ScriptManager* m_scriptManager = nullptr;
+	UiManager* m_uiManager = nullptr;
 
 	SceneAllocator<U8> m_alloc;
 	SceneFrameAllocator<U8> m_frameAlloc;

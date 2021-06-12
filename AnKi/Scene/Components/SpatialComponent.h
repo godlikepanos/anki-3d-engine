@@ -65,6 +65,7 @@ public:
 
 	const Aabb& getAabbWorldSpace() const
 	{
+		ANKI_ASSERT(!m_alwaysVisible);
 		return m_derivedAabb;
 	}
 
@@ -98,6 +99,18 @@ public:
 		m_updateOctreeBounds = update;
 	}
 
+	/// Make it or not always visible.
+	void setAlwaysVisible(Bool alwaysVisible)
+	{
+		m_alwaysVisible = alwaysVisible;
+	}
+
+	/// See if it's always visible or not.
+	Bool getAlwaysVisible() const
+	{
+		return m_alwaysVisible;
+	}
+
 	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override;
 
 private:
@@ -124,6 +137,7 @@ private:
 	Bool m_markedForUpdate : 1;
 	Bool m_placed : 1;
 	Bool m_updateOctreeBounds : 1;
+	Bool m_alwaysVisible : 1;
 };
 /// @}
 

@@ -309,14 +309,14 @@ public:
 static_assert(std::is_trivially_destructible<DecalQueueElement>::value == true, "Should be trivially destructible");
 
 /// Draw callback for drawing.
-using UiQueueDrawCallback = void (*)(CanvasPtr& canvas, void* userData);
+using UiQueueElementDrawCallback = void (*)(CanvasPtr& canvas, const void* userData);
 
 /// UI element render queue element.
 class UiQueueElement final
 {
 public:
-	void* m_userData;
-	UiQueueDrawCallback m_drawCallback;
+	const void* m_userData;
+	UiQueueElementDrawCallback m_drawCallback;
 
 	UiQueueElement()
 	{

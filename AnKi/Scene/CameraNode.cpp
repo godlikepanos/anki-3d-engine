@@ -68,7 +68,8 @@ void CameraNode::initCommon(FrustumType frustumType)
 		| FrustumComponentVisibilityTestFlag::FOG_DENSITY_COMPONENTS
 		| FrustumComponentVisibilityTestFlag::GLOBAL_ILLUMINATION_PROBES | FrustumComponentVisibilityTestFlag::EARLY_Z
 		| FrustumComponentVisibilityTestFlag::ALL_SHADOWS_ENABLED
-		| FrustumComponentVisibilityTestFlag::GENERIC_COMPUTE_JOB_COMPONENTS;
+		| FrustumComponentVisibilityTestFlag::GENERIC_COMPUTE_JOB_COMPONENTS
+		| FrustumComponentVisibilityTestFlag::UI_COMPONENTS;
 	frc->setEnabledVisibilityTests(visibilityFlags);
 	frc->setLodDistance(0, getSceneGraph().getConfig().m_maxLodDistances[0]);
 	frc->setLodDistance(1, getSceneGraph().getConfig().m_maxLodDistances[1]);

@@ -193,7 +193,7 @@ private:
 	I32 m_code = NONE;
 };
 
-/// Macro to check if a method/function returned an error.
+/// Macro to check if a method/function returned an error. It will return on error.
 #define ANKI_CHECK(x_) \
 	do \
 	{ \
@@ -202,6 +202,14 @@ private:
 		{ \
 			return retError; \
 		} \
+	} while(0)
+
+/// Macro to check if a method/function returned an error.
+#define ANKI_CHECK_AND_IGNORE(x_) \
+	do \
+	{ \
+		const Error retError = x_; \
+		(void)retError; \
 	} while(0)
 
 #if ANKI_EXTRA_CHECKS

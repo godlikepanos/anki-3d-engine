@@ -54,6 +54,10 @@ public:
 	/// @note It's thread-safe against place and remove methods.
 	void place(const Aabb& volume, OctreePlaceable* placeable, Bool updateActualSceneBounds);
 
+	/// Place the placeable somewhere where it's always visible.
+	/// @note It's thread-safe against place and remove methods.
+	void placeAlwaysVisible(OctreePlaceable* placeable);
+
 	/// Remove an element from the tree.
 	/// @note It's thread-safe against place and remove methods.
 	void remove(OctreePlaceable& placeable);

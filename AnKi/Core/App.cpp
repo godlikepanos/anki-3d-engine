@@ -41,7 +41,7 @@ namespace anki
 android_app* gAndroidApp = nullptr;
 #endif
 
-class App::StatsUi : public UiImmediateModeBuilder
+class App::StatsUi
 {
 public:
 	template<typename T>
@@ -72,6 +72,8 @@ public:
 		U32 m_count = 0;
 	};
 
+	GenericMemoryPoolAllocator<U8> m_alloc;
+
 	BufferedValue<Second> m_frameTime;
 	BufferedValue<Second> m_renderTime;
 	BufferedValue<Second> m_sceneUpdateTime;
@@ -92,12 +94,12 @@ public:
 	static const U32 BUFFERED_FRAMES = 16;
 	U32 m_bufferedFrames = 0;
 
-	StatsUi(UiManager* ui)
-		: UiImmediateModeBuilder(ui)
+	StatsUi(const GenericMemoryPoolAllocator<U8>& alloc)
+		: m_alloc(alloc)
 	{
 	}
 
-	void build(CanvasPtr canvas) override
+	void build(CanvasPtr canvas)
 	{
 		// Misc
 		++m_bufferedFrames;
@@ -173,7 +175,7 @@ public:
 
 		b = val;
 
-		StringAuto timestamp(getAllocator());
+		StringAuto timestamp(m_alloc);
 		if(gb)
 		{
 			timestamp.sprintf("%s: %4u,%04u,%04u,%04u", name.cstr(), gb, mb, kb, b);
@@ -268,7 +270,7 @@ App::~App()
 
 void App::cleanup()
 {
-	m_statsUi.reset(nullptr);
+	m_heapAlloc.deleteInstance(m_statsUi);
 	m_console.reset(nullptr);
 
 	m_heapAlloc.deleteInstance(m_scene);
@@ -477,8 +479,8 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	//
 	m_scene = m_heapAlloc.newInstance<SceneGraph>();
 
-	ANKI_CHECK(m_scene->init(m_allocCb, m_allocCbData, m_threadHive, m_resources, m_input, m_script, &m_globalTimestamp,
-							 config));
+	ANKI_CHECK(m_scene->init(m_allocCb, m_allocCbData, m_threadHive, m_resources, m_input, m_script, m_ui,
+							 &m_globalTimestamp, config));
 
 	// Inform the script engine about some subsystems
 	m_script->setRenderer(m_renderer);
@@ -487,7 +489,7 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	//
 	// Misc
 	//
-	ANKI_CHECK(m_ui->newInstance<StatsUi>(m_statsUi));
+	m_statsUi = m_heapAlloc.newInstance<StatsUi>(m_heapAlloc);
 	ANKI_CHECK(m_ui->newInstance<DeveloperConsole>(m_console, m_allocCb, m_allocCbData, m_script));
 
 	ANKI_CORE_LOGI("Application initialized");
@@ -622,23 +624,22 @@ Error App::mainLoop()
 			// Stats
 			if(m_displayStats)
 			{
-				StatsUi& statsUi = static_cast<StatsUi&>(*m_statsUi);
-				statsUi.m_frameTime.set(frameTime);
-				statsUi.m_renderTime.set(m_renderer->getStats().m_renderingCpuTime);
-				statsUi.m_sceneUpdateTime.set(m_scene->getStats().m_updateTime);
-				statsUi.m_visTestsTime.set(m_scene->getStats().m_visibilityTestsTime);
-				statsUi.m_physicsTime.set(m_scene->getStats().m_physicsUpdate);
-				statsUi.m_gpuTime.set(m_renderer->getStats().m_renderingGpuTime);
-				statsUi.m_allocatedCpuMem = m_memStats.m_allocatedMem.load();
-				statsUi.m_allocCount = m_memStats.m_allocCount.load();
-				statsUi.m_freeCount = m_memStats.m_freeCount.load();
+				m_statsUi->m_frameTime.set(frameTime);
+				m_statsUi->m_renderTime.set(m_renderer->getStats().m_renderingCpuTime);
+				m_statsUi->m_sceneUpdateTime.set(m_scene->getStats().m_updateTime);
+				m_statsUi->m_visTestsTime.set(m_scene->getStats().m_visibilityTestsTime);
+				m_statsUi->m_physicsTime.set(m_scene->getStats().m_physicsUpdate);
+				m_statsUi->m_gpuTime.set(m_renderer->getStats().m_renderingGpuTime);
+				m_statsUi->m_allocatedCpuMem = m_memStats.m_allocatedMem.load();
+				m_statsUi->m_allocCount = m_memStats.m_allocCount.load();
+				m_statsUi->m_freeCount = m_memStats.m_freeCount.load();
 
 				GrManagerStats grStats = m_gr->getStats();
-				statsUi.m_vkCpuMem = grStats.m_cpuMemory;
-				statsUi.m_vkGpuMem = grStats.m_gpuMemory;
-				statsUi.m_vkCmdbCount = grStats.m_commandBufferCount;
+				m_statsUi->m_vkCpuMem = grStats.m_cpuMemory;
+				m_statsUi->m_vkGpuMem = grStats.m_gpuMemory;
+				m_statsUi->m_vkCmdbCount = grStats.m_commandBufferCount;
 
-				statsUi.m_drawableCount = rqueue.countAllRenderables();
+				m_statsUi->m_drawableCount = rqueue.countAllRenderables();
 			}
 
 #if ANKI_ENABLE_TRACE
@@ -680,9 +681,9 @@ void App::injectUiElements(DynamicArrayAuto<UiQueueElement>& newUiElementArr, Re
 	U32 count = originalCount;
 	if(m_displayStats)
 	{
-		newUiElementArr[count].m_userData = m_statsUi.get();
-		newUiElementArr[count].m_drawCallback = [](CanvasPtr& canvas, void* userData) -> void {
-			static_cast<StatsUi*>(userData)->build(canvas);
+		newUiElementArr[count].m_userData = m_statsUi;
+		newUiElementArr[count].m_drawCallback = [](CanvasPtr& canvas, const void* userData) -> void {
+			static_cast<StatsUi*>(const_cast<void*>(userData))->build(canvas);
 		};
 		++count;
 	}
@@ -690,8 +691,8 @@ void App::injectUiElements(DynamicArrayAuto<UiQueueElement>& newUiElementArr, Re
 	if(m_consoleEnabled)
 	{
 		newUiElementArr[count].m_userData = m_console.get();
-		newUiElementArr[count].m_drawCallback = [](CanvasPtr& canvas, void* userData) -> void {
-			static_cast<DeveloperConsole*>(userData)->build(canvas);
+		newUiElementArr[count].m_drawCallback = [](CanvasPtr& canvas, const void* userData) -> void {
+			static_cast<DeveloperConsole*>(const_cast<void*>(userData))->build(canvas);
 		};
 		++count;
 	}

@@ -8,7 +8,7 @@
 #include <AnKi/Ui/UiObject.h>
 #include <AnKi/Gr/Texture.h>
 #include <AnKi/Util/ClassWrapper.h>
-#include <initializer_list>
+#include <AnKi/Util/WeakArray.h>
 
 namespace anki
 {
@@ -28,7 +28,7 @@ public:
 	~Font();
 
 	/// Initialize the font.
-	ANKI_USE_RESULT Error init(const CString& filename, const std::initializer_list<U32>& fontHeights);
+	ANKI_USE_RESULT Error init(const CString& filename, ConstWeakArray<U32> fontHeights);
 
 	/// Get font image atlas.
 	ANKI_INTERNAL const TextureViewPtr& getTextureView() const
