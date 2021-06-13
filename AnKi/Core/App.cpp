@@ -682,8 +682,8 @@ void App::injectUiElements(DynamicArrayAuto<UiQueueElement>& newUiElementArr, Re
 	if(m_displayStats)
 	{
 		newUiElementArr[count].m_userData = m_statsUi;
-		newUiElementArr[count].m_drawCallback = [](CanvasPtr& canvas, const void* userData) -> void {
-			static_cast<StatsUi*>(const_cast<void*>(userData))->build(canvas);
+		newUiElementArr[count].m_drawCallback = [](CanvasPtr& canvas, void* userData) -> void {
+			static_cast<StatsUi*>(userData)->build(canvas);
 		};
 		++count;
 	}
@@ -691,8 +691,8 @@ void App::injectUiElements(DynamicArrayAuto<UiQueueElement>& newUiElementArr, Re
 	if(m_consoleEnabled)
 	{
 		newUiElementArr[count].m_userData = m_console.get();
-		newUiElementArr[count].m_drawCallback = [](CanvasPtr& canvas, const void* userData) -> void {
-			static_cast<DeveloperConsole*>(const_cast<void*>(userData))->build(canvas);
+		newUiElementArr[count].m_drawCallback = [](CanvasPtr& canvas, void* userData) -> void {
+			static_cast<DeveloperConsole*>(userData)->build(canvas);
 		};
 		++count;
 	}

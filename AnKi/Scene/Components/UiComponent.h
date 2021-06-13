@@ -25,7 +25,7 @@ public:
 	{
 	}
 
-	void init(UiQueueElementDrawCallback callback, const void* userData)
+	void init(UiQueueElementDrawCallback callback, void* userData)
 	{
 		ANKI_ASSERT(callback != nullptr);
 		ANKI_ASSERT(userData != nullptr);
@@ -43,7 +43,7 @@ public:
 
 private:
 	UiQueueElementDrawCallback m_drawCallback = nullptr;
-	const void* m_userData = nullptr;
+	void* m_userData = nullptr;
 };
 /// @}
 
