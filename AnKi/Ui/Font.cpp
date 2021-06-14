@@ -91,7 +91,7 @@ void Font::createTexture(const void* data, U32 width, U32 height)
 
 	// Create the whole texture view
 	m_texView = m_manager->getGrManager().newTextureView(TextureViewInitInfo(m_tex, "Font"));
-	m_imFontAtlas->SetTexID(m_texView.get());
+	m_imFontAtlas->SetTexID(UiImageId(m_texView));
 
 	// Do the copy
 	static const TextureSurfaceInfo surf(0, 0, 0, 0);

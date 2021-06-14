@@ -23,6 +23,12 @@ public:
 
 		ANKI_CHECK_AND_IGNORE(getSceneGraph().getUiManager().newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf",
 																		 Array<U32, 1>{16}));
+
+		ANKI_CHECK_AND_IGNORE(getSceneGraph().getResourceManager().loadResource(
+			"AnKi/Shaders/UiVisualizeImage.ankiprog", m_imageProgram));
+		const ShaderProgramResourceVariant* variant;
+		m_imageProgram->getOrCreateVariant(variant);
+		m_imageGrProgram = variant->getProgram();
 	}
 
 	Error frameUpdate(Second prevUpdateTime, Second crntTime)
@@ -37,9 +43,13 @@ public:
 
 private:
 	FontPtr m_font;
+	ShaderProgramResourcePtr m_imageProgram;
+	ShaderProgramPtr m_imageGrProgram;
 	TextureViewPtr m_textureView;
 	U32 m_crntMip = 0;
 	F32 m_zoom = 1.0f;
+	Bool m_pointSampling = true;
+	Array<Bool, 4> m_colorChannel = {true, true, true, true};
 
 	void draw(CanvasPtr& canvas)
 	{
@@ -52,20 +62,32 @@ private:
 		ImGui::SetWindowPos(Vec2(0.0f, 0.0f));
 		ImGui::SetWindowSize(Vec2(F32(canvas->getWidth()), F32(canvas->getHeight())));
 
-		ImGui::BeginChild("Tools", ImVec2(ImGui::GetWindowContentRegionWidth() * 0.25f, -1.0f), false, 0);
+		ImGui::BeginChild("Tools", ImVec2(ImGui::GetWindowContentRegionWidth() * 0.25f, -1.0f), true, 0);
 
 		// Info
 		ImGui::TextWrapped("Size %ux%u Mips %u", grTex.getWidth(), grTex.getHeight(), grTex.getMipmapCount());
 
 		// Zoom
-		ImGui::DragFloat("Zoom", &m_zoom, 0.01f, 0.1f, 10.0f, "%.3f");
+		ImGui::DragFloat("Zoom", &m_zoom, 0.01f, 0.1f, 20.0f, "%.3f");
+
+		// Sampling
+		ImGui::Checkbox("Point sampling", &m_pointSampling);
+
+		// Colors
+		ImGui::Checkbox("Red", &m_colorChannel[0]);
+		ImGui::SameLine();
+		ImGui::Checkbox("Green", &m_colorChannel[1]);
+		ImGui::SameLine();
+		ImGui::Checkbox("Blue", &m_colorChannel[2]);
+		ImGui::SameLine();
+		ImGui::Checkbox("Alpha", &m_colorChannel[3]);
 
 		// Mips combo
 		{
-			Array<CString, 8> mipTexts = {"0", "1", "2", "3", "4", "5", "6", "7"};
+			Array<CString, 11> mipTexts = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"};
 			CString comboLevel = mipTexts[m_crntMip];
 			const U32 lastCrntMip = m_crntMip;
-			if(ImGui::BeginCombo("Mipmap", comboLevel.cstr(), 0))
+			if(ImGui::BeginCombo("Mipmap", comboLevel.cstr(), ImGuiComboFlags_HeightLarge))
 			{
 				for(U32 mip = 0; mip < grTex.getMipmapCount(); ++mip)
 				{
@@ -88,21 +110,35 @@ private:
 				// Re-create the image view
 				TextureViewInitInfo viewInitInf(m_textureResource->getGrTexture());
 				viewInitInf.m_firstMipmap = m_crntMip;
+				viewInitInf.m_mipmapCount = 1;
 				m_textureView = getSceneGraph().getGrManager().newTextureView(viewInitInf);
 			}
 		}
 
 		ImGui::EndChild();
-
 		ImGui::SameLine();
 
-		ImGui::BeginChild("Image", ImVec2(ImGui::GetWindowContentRegionWidth() * 0.75f, -1.0f), false,
-						  ImGuiWindowFlags_HorizontalScrollbar);
+		// Image
+		ImGui::BeginChild("Image", ImVec2(-1.0f, -1.0f), true, ImGuiWindowFlags_HorizontalScrollbar);
+		{
+			class ExtraPushConstants
+			{
+			public:
+				Vec4 m_colorScale;
+			} pc;
+			pc.m_colorScale.x() = F32(m_colorChannel[0]);
+			pc.m_colorScale.y() = F32(m_colorChannel[1]);
+			pc.m_colorScale.z() = F32(m_colorChannel[2]);
+			pc.m_colorScale.w() = F32(m_colorChannel[3]);
 
-		ImGui::Image(const_cast<TextureView*>(m_textureView.get()),
-					 ImVec2(F32(grTex.getWidth()) * m_zoom, F32(grTex.getHeight()) * m_zoom), ImVec2(0.0f, 0.0f),
-					 ImVec2(1.0f, 1.0f), Vec4(1.0f), Vec4(0.0f, 0.0f, 0.0f, 1.0f));
+			canvas->setShaderProgram(m_imageGrProgram, &pc, sizeof(pc));
 
+			ImGui::Image(UiImageId(m_textureView, m_pointSampling),
+						 ImVec2(F32(grTex.getWidth()) * m_zoom, F32(grTex.getHeight()) * m_zoom), ImVec2(0.0f, 0.0f),
+						 ImVec2(1.0f, 1.0f), Vec4(1.0f), Vec4(0.0f, 0.0f, 0.0f, 1.0f));
+
+			canvas->clearShaderProgram();
+		}
 		ImGui::EndChild();
 
 		canvas->popFont();

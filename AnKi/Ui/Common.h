@@ -11,6 +11,7 @@
 
 #include <AnKi/Util/Allocator.h>
 #include <AnKi/Util/Ptr.h>
+#include <AnKi/Gr/TextureView.h>
 
 namespace anki
 {
@@ -36,6 +37,45 @@ ANKI_UI_OBJECT_FW(Font)
 ANKI_UI_OBJECT_FW(Canvas)
 ANKI_UI_OBJECT_FW(UiImmediateModeBuilder)
 #undef ANKI_UI_OBJECT
+
+/// This is what someone should push to ImGui::Image() function.
+class UiImageId
+{
+	friend class Canvas;
+
+public:
+	UiImageId(TextureViewPtr textureView, Bool pointSampling = false)
+	{
+		m_bits.m_textureViewPtr = ptrToNumber(textureView.get()) & 0x7FFFFFFFFFFFFFFFllu;
+		m_bits.m_pointSampling = pointSampling;
+	}
+
+	operator void*() const
+	{
+		return numberToPtr<void*>(m_allBits);
+	}
+
+private:
+	class Bits
+	{
+	public:
+		U64 m_textureViewPtr : 63;
+		U64 m_pointSampling : 1;
+	};
+
+	union
+	{
+		Bits m_bits;
+		U64 m_allBits;
+	};
+
+	UiImageId(void* ptr)
+		: m_allBits(ptrToNumber(ptr))
+	{
+		ANKI_ASSERT(ptr);
+	}
+};
+static_assert(sizeof(UiImageId) == sizeof(void*), "See file");
 /// @}
 
 } // end namespace anki

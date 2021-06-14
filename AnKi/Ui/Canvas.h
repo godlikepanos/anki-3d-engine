@@ -64,17 +64,29 @@ public:
 		ImGui::PopFont();
 	}
 
+	/// Override the default program with a user defined one.
+	void setShaderProgram(ShaderProgramPtr program, const void* extraPushConstants, U32 extraPushConstantSize);
+
+	/// Undo what setShaderProgram() did.
+	void clearShaderProgram()
+	{
+		setShaderProgram(ShaderProgramPtr(), nullptr, 0);
+	}
+
 	void appendToCommandBuffer(CommandBufferPtr cmdb);
 	/// @}
 
 private:
+	class CustomCommand;
+	class DrawingState;
+
 	FontPtr m_font;
 	U32 m_dfltFontHeight = 0;
 	ImGuiContext* m_imCtx = nullptr;
 	U32 m_width;
 	U32 m_height;
 
-	enum SHADER_TYPE
+	enum ShaderType
 	{
 		NO_TEX,
 		RGBA_TEX,
@@ -83,7 +95,8 @@ private:
 
 	ShaderProgramResourcePtr m_prog;
 	Array<ShaderProgramPtr, SHADER_COUNT> m_grProgs;
-	SamplerPtr m_sampler;
+	SamplerPtr m_linearLinearRepeatSampler;
+	SamplerPtr m_nearestNearestRepeatSampler;
 
 	StackAllocator<U8> m_stackAlloc;
 
