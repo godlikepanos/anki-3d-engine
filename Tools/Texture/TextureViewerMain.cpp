@@ -55,17 +55,19 @@ private:
 	{
 		const Texture& grTex = *m_textureResource->getGrTexture().get();
 
-		ImGui::Begin("Console", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar);
+		ImGui::Begin("Console", nullptr,
+					 ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
 
 		canvas->pushFont(m_font, 16);
 
 		ImGui::SetWindowPos(Vec2(0.0f, 0.0f));
 		ImGui::SetWindowSize(Vec2(F32(canvas->getWidth()), F32(canvas->getHeight())));
 
-		ImGui::BeginChild("Tools", ImVec2(ImGui::GetWindowContentRegionWidth() * 0.25f, -1.0f), true, 0);
+		ImGui::BeginChild("Tools", Vec2(300.0f, -1.0f), true, 0);
 
 		// Info
 		ImGui::TextWrapped("Size %ux%u Mips %u", grTex.getWidth(), grTex.getHeight(), grTex.getMipmapCount());
+		ImGui::NewLine();
 
 		// Zoom
 		ImGui::DragFloat("Zoom", &m_zoom, 0.01f, 0.1f, 20.0f, "%.3f");
@@ -84,15 +86,19 @@ private:
 
 		// Mips combo
 		{
-			Array<CString, 11> mipTexts = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"};
-			CString comboLevel = mipTexts[m_crntMip];
+			StringListAuto mipLabels(getFrameAllocator());
+			for(U32 mip = 0; mip < grTex.getMipmapCount(); ++mip)
+			{
+				mipLabels.pushBackSprintf("%u (%llux%llu)", mip, grTex.getWidth() >> mip, grTex.getHeight() >> mip);
+			}
+
 			const U32 lastCrntMip = m_crntMip;
-			if(ImGui::BeginCombo("Mipmap", comboLevel.cstr(), ImGuiComboFlags_HeightLarge))
+			if(ImGui::BeginCombo("Mipmap", (mipLabels.getBegin() + m_crntMip)->cstr(), ImGuiComboFlags_HeightLarge))
 			{
 				for(U32 mip = 0; mip < grTex.getMipmapCount(); ++mip)
 				{
 					const Bool isSelected = (m_crntMip == mip);
-					if(ImGui::Selectable(mipTexts[mip].cstr(), isSelected))
+					if(ImGui::Selectable((mipLabels.getBegin() + mip)->cstr(), isSelected))
 					{
 						m_crntMip = mip;
 					}
@@ -119,8 +125,12 @@ private:
 		ImGui::SameLine();
 
 		// Image
-		ImGui::BeginChild("Image", ImVec2(-1.0f, -1.0f), true, ImGuiWindowFlags_HorizontalScrollbar);
+		ImGui::BeginChild("Image", Vec2(-1.0f, -1.0f), true, ImGuiWindowFlags_HorizontalScrollbar);
 		{
+			// Center image
+			const Vec2 imageSize = Vec2(F32(grTex.getWidth()), F32(grTex.getHeight())) * m_zoom;
+			// ImGui::SetCursorPos((toAnki(ImGui::GetContentRegionAvail()) - imageSize) * 0.5f);
+
 			class ExtraPushConstants
 			{
 			public:
@@ -133,11 +143,43 @@ private:
 
 			canvas->setShaderProgram(m_imageGrProgram, &pc, sizeof(pc));
 
-			ImGui::Image(UiImageId(m_textureView, m_pointSampling),
-						 ImVec2(F32(grTex.getWidth()) * m_zoom, F32(grTex.getHeight()) * m_zoom), ImVec2(0.0f, 0.0f),
-						 ImVec2(1.0f, 1.0f), Vec4(1.0f), Vec4(0.0f, 0.0f, 0.0f, 1.0f));
+			ImGui::Image(UiImageId(m_textureView, m_pointSampling), imageSize, Vec2(0.0f), Vec2(1.0f), Vec4(1.0f),
+						 Vec4(0.0f, 0.0f, 0.0f, 1.0f));
 
 			canvas->clearShaderProgram();
+
+			if(ImGui::IsItemHovered())
+			{
+				if(ImGui::GetIO().KeyCtrl)
+				{
+					// Zoom
+					const F32 zoomSpeed = 0.05f;
+					if(ImGui::GetIO().MouseWheel > 0.0f)
+					{
+						m_zoom *= 1.0f + zoomSpeed;
+					}
+					else if(ImGui::GetIO().MouseWheel < 0.0f)
+					{
+						m_zoom *= 1.0f - zoomSpeed;
+					}
+
+					// Pan
+					if(ImGui::GetIO().MouseDown[0])
+					{
+						const Vec2 velocity = toAnki(ImGui::GetIO().MouseDelta);
+
+						if(velocity.x() != 0.0f)
+						{
+							ImGui::SetScrollX(ImGui::GetScrollX() - velocity.x());
+						}
+
+						if(velocity.y() != 0.0f)
+						{
+							ImGui::SetScrollY(ImGui::GetScrollY() - velocity.y());
+						}
+					}
+				}
+			}
 		}
 		ImGui::EndChild();
 
@@ -151,6 +193,12 @@ class MyApp : public App
 public:
 	Error init(int argc, char** argv, CString appName)
 	{
+		if(argc < 2)
+		{
+			ANKI_LOGE("Wrong number of arguments");
+			return Error::USER_DATA;
+		}
+
 		HeapAllocator<U32> alloc(allocAligned, nullptr);
 		StringAuto mainDataPath(alloc, ANKI_SOURCE_DIRECTORY);
 
@@ -158,16 +206,11 @@ public:
 		config.set("window_fullscreen", false);
 		config.set("rsrc_dataPaths", mainDataPath);
 		config.set("gr_validation", 0);
-		ANKI_CHECK(config.setFromCommandLineArguments(argc - 1, argv + 1));
+		ANKI_CHECK(config.setFromCommandLineArguments(argc - 2, argv + 2));
 
 		ANKI_CHECK(App::init(config, allocAligned, nullptr));
 
 		// Load the texture
-		if(argc < 2)
-		{
-			ANKI_LOGE("Wrong number of arguments");
-			return Error::USER_DATA;
-		}
 		TextureResourcePtr tex;
 		ANKI_CHECK(getResourceManager().loadResource(argv[1], tex, false));
 

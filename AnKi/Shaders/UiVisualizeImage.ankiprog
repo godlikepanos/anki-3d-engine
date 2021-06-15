@@ -47,18 +47,19 @@ layout(set = 0, binding = 1) uniform texture2D u_tex;
 
 void main()
 {
-	out_col = in_col * texture(u_tex, u_trilinearRepeatSampler, in_uv) * u_colorScale;
+	const Vec4 rgba = texture(u_tex, u_trilinearRepeatSampler, in_uv);
+	out_col.rgb = in_col.rgb * rgba.rgb * u_colorScale.rgb;
 
-	if(u_colorScale.a == 0.0)
+	if(u_colorScale.a == 1.0)
 	{
-		out_col.a = 1.0;
+		// Draw a pattern to visualize alpha
+		F32 alphaPattern = ((U32(gl_FragCoord.x) / 16u) & 1u) == 1u ? 1.0 : 0.75;
+		alphaPattern *= ((U32(gl_FragCoord.y) / 16u) & 1u) == 1u ? 1.0 : 0.75;
+
+		out_col.rgb = mix(Vec3(alphaPattern), out_col.rgb, rgba.a);
 	}
 
-	F32 alphaPattern = ((U32(gl_FragCoord.x) / 16u) & 1u) == 1u ? 1.0 : 0.75;
-	alphaPattern *= ((U32(gl_FragCoord.y) / 16u) & 1u) == 1u ? 1.0 : 0.75;
-
-	out_col.rgb = mix(Vec3(alphaPattern), out_col.rgb, out_col.a);
-	out_col.a = 1.0f;
+	out_col.a = 1.0;
 }
 
 #pragma anki end

@@ -153,6 +153,8 @@ void Canvas::handleInput()
 		io.MouseWheel = -F32(in.getMouseButton(MouseButton::SCROLL_DOWN));
 	}
 
+	io.KeyCtrl = (in.getKey(KeyCode::LCTRL) || in.getKey(KeyCode::RCTRL));
+
 // Handle keyboard
 #define ANKI_HANDLE(ak) io.KeysDown[static_cast<int>(ak)] = (in.getKey(ak) == 1);
 

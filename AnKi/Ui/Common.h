@@ -38,6 +38,11 @@ ANKI_UI_OBJECT_FW(Canvas)
 ANKI_UI_OBJECT_FW(UiImmediateModeBuilder)
 #undef ANKI_UI_OBJECT
 
+inline Vec2 toAnki(const ImVec2& v)
+{
+	return Vec2(v.x, v.y);
+}
+
 /// This is what someone should push to ImGui::Image() function.
 class UiImageId
 {
