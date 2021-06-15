@@ -63,17 +63,29 @@ private:
 		ImGui::SetWindowPos(Vec2(0.0f, 0.0f));
 		ImGui::SetWindowSize(Vec2(F32(canvas->getWidth()), F32(canvas->getHeight())));
 
-		ImGui::BeginChild("Tools", Vec2(300.0f, -1.0f), true, 0);
-
-		// Info
-		ImGui::TextWrapped("Size %ux%u Mips %u", grTex.getWidth(), grTex.getHeight(), grTex.getMipmapCount());
-		ImGui::NewLine();
+		ImGui::BeginChild("Tools", Vec2(-1.0f, 30.0f), false, ImGuiWindowFlags_AlwaysAutoResize);
 
 		// Zoom
-		ImGui::DragFloat("Zoom", &m_zoom, 0.01f, 0.1f, 20.0f, "%.3f");
+		if(ImGui::Button("-"))
+		{
+			m_zoom -= 0.1f;
+		}
+		ImGui::SameLine();
+		ImGui::DragFloat("", &m_zoom, 0.01f, 0.1f, 20.0f, "Zoom %.3f");
+		ImGui::SameLine();
+		if(ImGui::Button("+"))
+		{
+			m_zoom += 0.1f;
+		}
+		ImGui::SameLine();
+		ImGui::Spacing();
+		ImGui::SameLine();
 
 		// Sampling
 		ImGui::Checkbox("Point sampling", &m_pointSampling);
+		ImGui::SameLine();
+		ImGui::Spacing();
+		ImGui::SameLine();
 
 		// Colors
 		ImGui::Checkbox("Red", &m_colorChannel[0]);
@@ -83,17 +95,20 @@ private:
 		ImGui::Checkbox("Blue", &m_colorChannel[2]);
 		ImGui::SameLine();
 		ImGui::Checkbox("Alpha", &m_colorChannel[3]);
+		ImGui::SameLine();
+		ImGui::Spacing();
+		ImGui::SameLine();
 
 		// Mips combo
 		{
 			StringListAuto mipLabels(getFrameAllocator());
 			for(U32 mip = 0; mip < grTex.getMipmapCount(); ++mip)
 			{
-				mipLabels.pushBackSprintf("%u (%llux%llu)", mip, grTex.getWidth() >> mip, grTex.getHeight() >> mip);
+				mipLabels.pushBackSprintf("Mip %u (%llux%llu)", mip, grTex.getWidth() >> mip, grTex.getHeight() >> mip);
 			}
 
 			const U32 lastCrntMip = m_crntMip;
-			if(ImGui::BeginCombo("Mipmap", (mipLabels.getBegin() + m_crntMip)->cstr(), ImGuiComboFlags_HeightLarge))
+			if(ImGui::BeginCombo("##Mipmap", (mipLabels.getBegin() + m_crntMip)->cstr(), ImGuiComboFlags_HeightLarge))
 			{
 				for(U32 mip = 0; mip < grTex.getMipmapCount(); ++mip)
 				{
@@ -122,14 +137,13 @@ private:
 		}
 
 		ImGui::EndChild();
-		ImGui::SameLine();
+		ImGui::BeginChild("Image", Vec2(-1.0f, -1.0f), false,
+						  ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar);
 
 		// Image
-		ImGui::BeginChild("Image", Vec2(-1.0f, -1.0f), true, ImGuiWindowFlags_HorizontalScrollbar);
 		{
 			// Center image
 			const Vec2 imageSize = Vec2(F32(grTex.getWidth()), F32(grTex.getHeight())) * m_zoom;
-			// ImGui::SetCursorPos((toAnki(ImGui::GetContentRegionAvail()) - imageSize) * 0.5f);
 
 			class ExtraPushConstants
 			{
@@ -181,6 +195,7 @@ private:
 				}
 			}
 		}
+
 		ImGui::EndChild();
 
 		canvas->popFont();
@@ -213,6 +228,12 @@ public:
 		// Load the texture
 		TextureResourcePtr tex;
 		ANKI_CHECK(getResourceManager().loadResource(argv[1], tex, false));
+
+		// Change window name
+		StringAuto title(alloc);
+		title.sprintf("%s %llux%llu Mips %u", argv[1], tex->getWidth(), tex->getHeight(),
+					  tex->getGrTexture()->getMipmapCount());
+		getWindow().setWindowTitle(title);
 
 		// Create the node
 		SceneGraph& scene = getSceneGraph();

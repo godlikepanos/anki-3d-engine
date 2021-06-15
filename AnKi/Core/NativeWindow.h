@@ -21,8 +21,8 @@ using Context = void*;
 class NativeWindowInitInfo
 {
 public:
-	U32 m_width = 640;
-	U32 m_height = 768;
+	U32 m_width = 1920;
+	U32 m_height = 1080;
 	Array<U32, 4> m_rgbaBits = {8, 8, 8, 0};
 	U32 m_depthBits = 0;
 	U32 m_stencilBits = 0;
@@ -31,10 +31,10 @@ public:
 	/// Create a fullscreen window with the desktop's resolution
 	Bool m_fullscreenDesktopRez = false;
 
-	CString m_title = "Untitled window";
+	CString m_title = "AnKi";
 };
 
-/// Native window with GL context
+/// Native window.
 class NativeWindow
 {
 public:
@@ -49,12 +49,6 @@ public:
 
 	ANKI_USE_RESULT Error init(NativeWindowInitInfo& initializer, HeapAllocator<U8>& alloc);
 
-	NativeWindowImpl& getNative()
-	{
-		ANKI_ASSERT(isCreated());
-		return *m_impl;
-	}
-
 	U32 getWidth() const
 	{
 		return m_width;
@@ -64,13 +58,18 @@ public:
 		return m_height;
 	}
 
-	/// @privatesector
-	/// @{
-	HeapAllocator<U8>& _getAllocator()
+	void setWindowTitle(CString title);
+
+	ANKI_INTERNAL HeapAllocator<U8> getAllocator() const
 	{
 		return m_alloc;
 	}
-	/// @}
+
+	ANKI_INTERNAL NativeWindowImpl& getNative()
+	{
+		ANKI_ASSERT(isCreated());
+		return *m_impl;
+	}
 
 private:
 	U32 m_width = 0;

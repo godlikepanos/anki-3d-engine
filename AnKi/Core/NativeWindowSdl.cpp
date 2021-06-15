@@ -122,4 +122,9 @@ void NativeWindow::destroy()
 	m_alloc.deleteInstance(m_impl);
 }
 
+void NativeWindow::setWindowTitle(CString title)
+{
+	SDL_SetWindowTitle(m_impl->m_window, title.cstr());
+}
+
 } // end namespace anki

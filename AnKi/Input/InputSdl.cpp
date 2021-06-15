@@ -38,9 +38,9 @@ Error Input::initInternal(NativeWindow* nativeWindow)
 	m_nativeWindow = nativeWindow;
 
 	// Init native
-	HeapAllocator<std::pair<const SDL_Keycode, KeyCode>> alloc = m_nativeWindow->_getAllocator();
+	HeapAllocator<std::pair<const SDL_Keycode, KeyCode>> alloc = m_nativeWindow->getAllocator();
 
-	m_impl = m_nativeWindow->_getAllocator().newInstance<InputImpl>(alloc);
+	m_impl = m_nativeWindow->getAllocator().newInstance<InputImpl>(alloc);
 
 // impl
 #define MAP(sdl, ak) m_impl->m_sdlToAnki[sdl] = KeyCode::ak
@@ -291,7 +291,7 @@ void Input::destroy()
 {
 	if(m_impl != nullptr)
 	{
-		m_nativeWindow->_getAllocator().deleteInstance(m_impl);
+		m_nativeWindow->getAllocator().deleteInstance(m_impl);
 		m_impl = nullptr;
 	}
 	m_nativeWindow = nullptr;

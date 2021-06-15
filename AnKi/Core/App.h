@@ -133,6 +133,11 @@ public:
 		return *m_physics;
 	}
 
+	NativeWindow& getWindow()
+	{
+		return *m_window;
+	}
+
 	HeapAllocator<U8> getAllocator() const
 	{
 		return m_heapAlloc;
