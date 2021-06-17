@@ -16,9 +16,6 @@
 namespace anki
 {
 
-// Forward
-class SpinLock;
-
 /// @addtogroup util_memory
 /// @{
 
@@ -173,34 +170,41 @@ public:
 	/// Destroy
 	~StackMemoryPool();
 
-	/// Init with parameters
-	/// @param allocCb The allocation function callback
-	/// @param allocCbUserData The user data to pass to the allocation function
+	/// Init with parameters.
+	/// @param allocCb The allocation function callback.
+	/// @param allocCbUserData The user data to pass to the allocation function.
 	/// @param initialChunkSize The size of the first chunk.
 	/// @param nextChunkScale Value that controls the next chunk.
 	/// @param nextChunkBias Value that controls the next chunk.
 	/// @param ignoreDeallocationErrors Method free() may fail if the ptr is not in the top of the stack. Set that to
-	///        true to suppress such errors
-	/// @param alignmentBytes The maximum supported alignment for returned memory
+	///        true to suppress such errors.
+	/// @param alignmentBytes The maximum supported alignment for returned memory.
 	void init(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize, F32 nextChunkScale = 2.0,
 			  PtrSize nextChunkBias = 0, Bool ignoreDeallocationErrors = true,
 			  PtrSize alignmentBytes = ANKI_SAFE_ALIGNMENT);
 
-	/// Allocate aligned memory. The operation is thread safe
-	/// @param size The size to allocate
-	/// @param alignmentBytes The alignment of the returned address
-	/// @return The allocated memory or nullptr on failure
+	/// Allocate aligned memory.
+	/// @param size The size to allocate.
+	/// @param alignmentBytes The alignment of the returned address.
+	/// @return The allocated memory or nullptr on failure.
+	///
+	/// @note The operation is thread safe with allocate() and free() methods.
 	void* allocate(PtrSize size, PtrSize alignmentBytes);
 
-	/// Free memory in StackMemoryPool. It will not actially free anything.
-	/// @param[in, out] ptr Memory block to deallocate
+	/// Free memory in StackMemoryPool. It will not actually do anything.
+	/// @param[in, out] ptr Memory block to deallocate.
 	void free(void* ptr);
 
-	/// Reinit the pool. All existing allocated memory will be lost
+	/// Reinit the pool. All existing allocated memory is effectively invalidated.
+	/// @note It's not thread safe with other methods.
 	void reset();
 
-	/// Get the current capacity of the pool. It's not thread safe.
-	PtrSize getMemoryCapacity() const;
+	/// Get the physical memory allocated by the pool.
+	/// @note It's not thread safe with other methods.
+	PtrSize getMemoryCapacity() const
+	{
+		return m_allocatedMemory;
+	}
 
 private:
 	/// The memory chunk.
@@ -245,12 +249,14 @@ private:
 	/// Chunk bias.
 	PtrSize m_nextChunkBias = 0;
 
+	/// Allocated memory.
+	PtrSize m_allocatedMemory = 0;
+
 	/// Ignore deallocation errors.
 	Bool m_ignoreDeallocationErrors = false;
 
-	/// The current chunk. Chose the more strict memory order to avoid compiler
-	/// re-ordering of instructions
-	Atomic<U32, AtomicMemoryOrder::SEQ_CST> m_crntChunkIdx = {0};
+	/// The current chunk. Chose the more strict memory order to avoid compiler re-ordering of instructions
+	Atomic<I32, AtomicMemoryOrder::SEQ_CST> m_crntChunkIdx = {-1};
 
 	/// The max number of chunks.
 	static const U MAX_CHUNKS = 256;
@@ -333,11 +339,11 @@ private:
 	/// Current chunk to allocate from.
 	Chunk* m_tailChunk = nullptr;
 
-	/// Fast thread locking.
-	SpinLock* m_lock = nullptr;
-
 	/// Size of the first chunk.
 	PtrSize m_initSize = 0;
+
+	/// Fast thread locking.
+	SpinLock m_lock;
 
 	/// Chunk scale.
 	F32 m_scale = 2.0;

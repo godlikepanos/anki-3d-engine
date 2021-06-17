@@ -45,7 +45,7 @@ Error ResourceManager::init(ResourceManagerInitInfo& init)
 	m_fs = init.m_resourceFs;
 	m_alloc = ResourceAllocator<U8>(init.m_allocCallback, init.m_allocCallbackData);
 
-	m_tmpAlloc = TempResourceAllocator<U8>(init.m_allocCallback, init.m_allocCallbackData, 10 * 1024 * 1024);
+	m_tmpAlloc = TempResourceAllocator<U8>(init.m_allocCallback, init.m_allocCallbackData, 10_MB);
 
 	m_cacheDir.create(m_alloc, init.m_cacheDir);
 

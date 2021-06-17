@@ -427,6 +427,23 @@ Error ResourceFilesystem::openFile(const ResourceFilename& filename, ResourceFil
 		return err;
 	}
 
+	// File not found? Try to find it outside the resource dirs
+	if(!rfile && fileExists(filename))
+	{
+		CResourceFile* file = m_alloc.newInstance<CResourceFile>(m_alloc);
+		err = file->m_file.open(filename, FileOpenFlag::READ);
+		if(err)
+		{
+			m_alloc.deleteInstance(file);
+			return err;
+		}
+
+		rfile = file;
+		ANKI_RESOURCE_LOGW(
+			"Loading resource outside the resource paths/archives. This is only OK for tools and debugging: %s",
+			filename.cstr());
+	}
+
 	if(!rfile)
 	{
 		ANKI_RESOURCE_LOGE("File not found: %s", &filename[0]);

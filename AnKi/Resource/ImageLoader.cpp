@@ -406,8 +406,6 @@ Error ImageLoader::loadAnkiTexture(FileInterface& file, U32 maxTextureSize,
 
 	if((header.m_compressionFormats & preferredCompression) == ImageLoaderDataCompression::NONE)
 	{
-		ANKI_RESOURCE_LOGW("File does not contain the requested compression");
-
 		// Fallback
 		preferredCompression = ImageLoaderDataCompression::RAW;
 
@@ -682,7 +680,7 @@ Error ImageLoader::loadInternal(FileInterface& file, const CString& filename, U3
 		ANKI_CHECK(loadAnkiTexture(file, maxTextureSize, m_compression, m_surfaces, m_volumes, m_alloc, m_width,
 								   m_height, m_depth, m_layerCount, m_mipCount, m_textureType, m_colorFormat));
 	}
-	else if(ext == "png")
+	else if(ext == "png" || ext == "jpg")
 	{
 		m_surfaces.create(m_alloc, 1);
 

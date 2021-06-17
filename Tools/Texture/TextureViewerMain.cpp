@@ -54,6 +54,7 @@ private:
 	void draw(CanvasPtr& canvas)
 	{
 		const Texture& grTex = *m_textureResource->getGrTexture().get();
+		const U32 colorComponentCount = getFormatInfo(grTex.getFormat()).m_componentCount;
 
 		ImGui::Begin("Console", nullptr,
 					 ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
@@ -94,8 +95,11 @@ private:
 		ImGui::SameLine();
 		ImGui::Checkbox("Blue", &m_colorChannel[2]);
 		ImGui::SameLine();
-		ImGui::Checkbox("Alpha", &m_colorChannel[3]);
-		ImGui::SameLine();
+		if(colorComponentCount == 4)
+		{
+			ImGui::Checkbox("Alpha", &m_colorChannel[3]);
+			ImGui::SameLine();
+		}
 		ImGui::Spacing();
 		ImGui::SameLine();
 
