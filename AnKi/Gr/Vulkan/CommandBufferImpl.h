@@ -50,6 +50,10 @@ public:
 	/// Default constructor
 	CommandBufferImpl(GrManager* manager, CString name)
 		: CommandBuffer(manager, name)
+		, m_renderedToDefaultFb(false)
+		, m_finalized(false)
+		, m_empty(false)
+		, m_beganRecording(false)
 	{
 	}
 
@@ -60,6 +64,11 @@ public:
 	void setFence(MicroFencePtr& fence)
 	{
 		m_microCmdb->setFence(fence);
+	}
+
+	const MicroCommandBufferPtr& getMicroCommandBuffer()
+	{
+		return m_microCmdb;
 	}
 
 	VkCommandBuffer getHandle() const
@@ -382,10 +391,10 @@ private:
 	VkCommandBuffer m_handle = VK_NULL_HANDLE;
 	ThreadId m_tid = ~ThreadId(0);
 	CommandBufferFlag m_flags = CommandBufferFlag::NONE;
-	Bool m_renderedToDefaultFb = false;
-	Bool m_finalized = false;
-	Bool m_empty = true;
-	Bool m_beganRecording = false;
+	Bool m_renderedToDefaultFb : 1;
+	Bool m_finalized : 1;
+	Bool m_empty : 1;
+	Bool m_beganRecording : 1;
 #if ANKI_EXTRA_CHECKS
 	U32 m_commandCount = 0;
 	U32 m_setPushConstantsSize = 0;

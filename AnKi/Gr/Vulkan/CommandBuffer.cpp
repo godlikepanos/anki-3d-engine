@@ -7,6 +7,7 @@
 #include <AnKi/Gr/Vulkan/CommandBufferImpl.h>
 #include <AnKi/Gr/Vulkan/GrManagerImpl.h>
 #include <AnKi/Gr/AccelerationStructure.h>
+#include <AnKi/Gr/Vulkan/FenceImpl.h>
 
 namespace anki
 {
@@ -24,18 +25,37 @@ CommandBuffer* CommandBuffer::newInstance(GrManager* manager, const CommandBuffe
 	return impl;
 }
 
-void CommandBuffer::flush(FencePtr* fence)
+void CommandBuffer::flush(ConstWeakArray<FencePtr> waitFences, FencePtr* signalFence)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.endRecording();
 
 	if(!self.isSecondLevel())
 	{
-		self.getGrManagerImpl().flushCommandBuffer(CommandBufferPtr(this), fence);
+		Array<MicroSemaphorePtr, 8> waitSemaphores;
+		for(U32 i = 0; i < waitFences.getSize(); ++i)
+		{
+			waitSemaphores[i] = static_cast<const FenceImpl&>(*waitFences[i]).m_semaphore;
+		}
+
+		MicroSemaphorePtr signalSemaphore;
+		self.getGrManagerImpl().flushCommandBuffer(
+			self.getMicroCommandBuffer(), self.renderedToDefaultFramebuffer(),
+			WeakArray<MicroSemaphorePtr>(waitSemaphores.getBegin(), waitFences.getSize()),
+			(signalFence) ? &signalSemaphore : nullptr);
+
+		if(signalFence)
+		{
+			FenceImpl* fenceImpl =
+				self.getGrManagerImpl().getAllocator().newInstance<FenceImpl>(&getManager(), "SignalFence");
+			fenceImpl->m_semaphore = signalSemaphore;
+			signalFence->reset(fenceImpl);
+		}
 	}
 	else
 	{
-		ANKI_ASSERT(fence == nullptr);
+		ANKI_ASSERT(signalFence == nullptr);
+		ANKI_ASSERT(waitFences.getSize() == 0);
 	}
 }
 

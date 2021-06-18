@@ -7,7 +7,7 @@
 
 #include <AnKi/Gr/Fence.h>
 #include <AnKi/Gr/Vulkan/VulkanObject.h>
-#include <AnKi/Gr/Vulkan/FenceFactory.h>
+#include <AnKi/Gr/Vulkan/SemaphoreFactory.h>
 
 namespace anki
 {
@@ -19,7 +19,7 @@ namespace anki
 class FenceImpl final : public Fence, public VulkanObject<Fence, FenceImpl>
 {
 public:
-	MicroFencePtr m_fence;
+	MicroSemaphorePtr m_semaphore; ///< Yes, it's a timeline semaphore and not a VkFence.
 
 	FenceImpl(GrManager* manager, CString name)
 		: Fence(manager, name)

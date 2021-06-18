@@ -1030,7 +1030,7 @@ ANKI_TEST(Gr, DrawWithTexture)
 	}
 
 	FencePtr fence;
-	cmdb->flush(&fence);
+	cmdb->flush({}, &fence);
 	transfAlloc->release(handle0, fence);
 	transfAlloc->release(handle1, fence);
 	transfAlloc->release(handle2, fence);
@@ -1450,7 +1450,7 @@ ANKI_TEST(Gr, 3DTextures)
 								  TextureVolumeInfo(1));
 
 	FencePtr fence;
-	cmdb->flush(&fence);
+	cmdb->flush({}, &fence);
 	transfAlloc->release(handle0, fence);
 	transfAlloc->release(handle1, fence);
 
@@ -2265,7 +2265,7 @@ void main()
 
 	// Read result
 	FencePtr fence;
-	cmdb->flush(&fence);
+	cmdb->flush({}, &fence);
 	transfAlloc->release(handle0, fence);
 	transfAlloc->release(handle1, fence);
 	transfAlloc->release(handle2, fence);

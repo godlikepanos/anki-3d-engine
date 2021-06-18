@@ -24,6 +24,7 @@ inline MicroFence::~MicroFence()
 {
 	if(m_handle)
 	{
+		ANKI_ASSERT(done());
 		vkDestroyFence(m_factory->m_dev, m_handle, nullptr);
 	}
 }
@@ -33,39 +34,27 @@ inline GrAllocator<U8> MicroFence::getAllocator() const
 	return m_factory->m_alloc;
 }
 
-inline void MicroFence::wait()
-{
-	ANKI_ASSERT(m_handle);
-	ANKI_VK_CHECKF(vkWaitForFences(m_factory->m_dev, 1, &m_handle, true, ~0U));
-}
-
 inline Bool MicroFence::done() const
 {
 	ANKI_ASSERT(m_handle);
-	VkResult status = vkGetFenceStatus(m_factory->m_dev, m_handle);
-	if(status == VK_SUCCESS)
-	{
-		return true;
-	}
-	else if(status != VK_NOT_READY)
-	{
-		ANKI_VK_LOGF("vkGetFenceStatus() failed");
-	}
-
-	return false;
+	VkResult status;
+	ANKI_VK_CHECKF(status = vkGetFenceStatus(m_factory->m_dev, m_handle));
+	return status == VK_SUCCESS;
 }
 
 inline Bool MicroFence::clientWait(Second seconds)
 {
+	ANKI_ASSERT(m_handle);
+
 	if(seconds == 0.0)
 	{
 		return done();
 	}
 	else
 	{
+		const F64 nsf = 1e+9 * seconds;
+		const U64 ns = U64(nsf);
 		VkResult res;
-		F64 nsf = 1e+9 * seconds;
-		U64 ns = U64(nsf);
 		ANKI_VK_CHECKF(res = vkWaitForFences(m_factory->m_dev, 1, &m_handle, true, ns));
 
 		return res != VK_TIMEOUT;

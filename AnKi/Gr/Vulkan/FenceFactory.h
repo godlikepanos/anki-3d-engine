@@ -40,11 +40,20 @@ public:
 
 	GrAllocator<U8> getAllocator() const;
 
-	void wait();
-
-	Bool done() const;
+	void wait()
+	{
+		// This is supposed to wait forever. Don't do that. If someone has to wait for more than 5 seconds then
+		// something is wrong
+		const Bool timeout = !clientWait(5.0);
+		if(ANKI_UNLIKELY(timeout))
+		{
+			ANKI_VK_LOGF("Waiting for a fence timed out");
+		}
+	}
 
 	Bool clientWait(Second seconds);
+
+	Bool done() const;
 
 private:
 	VkFence m_handle = VK_NULL_HANDLE;

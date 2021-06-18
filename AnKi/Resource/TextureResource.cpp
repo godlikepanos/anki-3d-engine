@@ -291,7 +291,7 @@ Error TextureResource::load(LoadingContext& ctx)
 
 		// Flush batch
 		FencePtr fence;
-		cmdb->flush(&fence);
+		cmdb->flush({}, &fence);
 
 		for(U i = 0; i < handleCount; ++i)
 		{

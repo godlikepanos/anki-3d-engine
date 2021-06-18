@@ -125,11 +125,11 @@ Error TextureImpl::initInternal(VkImage externalImage, const TextureInitInfo& in
 		range.layerCount = m_layerCount;
 		range.levelCount = m_mipCount;
 
-		static_cast<CommandBufferImpl&>(*cmdb).setTextureBarrierRange(TexturePtr(this), TextureUsageBit::NONE,
-																	  init.m_initialUsage, range);
+		CommandBufferImpl& cmdbImpl = static_cast<CommandBufferImpl&>(*cmdb);
+		cmdbImpl.setTextureBarrierRange(TexturePtr(this), TextureUsageBit::NONE, init.m_initialUsage, range);
 
-		static_cast<CommandBufferImpl&>(*cmdb).endRecording();
-		getGrManagerImpl().flushCommandBuffer(cmdb, nullptr);
+		cmdbImpl.endRecording();
+		getGrManagerImpl().flushCommandBuffer(cmdbImpl.getMicroCommandBuffer(), false, {}, nullptr);
 	}
 
 	// Create a view if the texture is a single surface

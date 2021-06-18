@@ -44,6 +44,18 @@ public:
 		return m_fence;
 	}
 
+	void setFence(MicroFencePtr& fence)
+	{
+		m_fence = fence;
+	}
+
+	Bool clientWait(Second seconds);
+
+	Bool isTimeline() const
+	{
+		return m_isTimeline;
+	}
+
 private:
 	VkSemaphore m_handle = VK_NULL_HANDLE;
 	Atomic<U32> m_refcount = {0};
@@ -52,7 +64,9 @@ private:
 	/// Fence to find out when it's safe to reuse this semaphore.
 	MicroFencePtr m_fence;
 
-	MicroSemaphore(SemaphoreFactory* f, MicroFencePtr fence);
+	Bool m_isTimeline = false;
+
+	MicroSemaphore(SemaphoreFactory* f, MicroFencePtr fence, Bool isTimeline);
 
 	~MicroSemaphore();
 };
@@ -79,20 +93,23 @@ public:
 		ANKI_ASSERT(dev);
 		m_alloc = alloc;
 		m_dev = dev;
-		m_recycler.init(alloc);
+		m_binaryRecycler.init(alloc);
+		m_timelineRecycler.init(alloc);
 	}
 
 	void destroy()
 	{
-		m_recycler.destroy();
+		m_binaryRecycler.destroy();
+		m_timelineRecycler.destroy();
 	}
 
-	MicroSemaphorePtr newInstance(MicroFencePtr fence);
+	MicroSemaphorePtr newInstance(MicroFencePtr fence, Bool isTimeline);
 
 private:
 	GrAllocator<U8> m_alloc;
 	VkDevice m_dev = VK_NULL_HANDLE;
-	MicroObjectRecycler<MicroSemaphore> m_recycler;
+	MicroObjectRecycler<MicroSemaphore> m_binaryRecycler;
+	MicroObjectRecycler<MicroSemaphore> m_timelineRecycler;
 };
 /// @}
 

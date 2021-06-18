@@ -55,7 +55,7 @@ Error Tonemapping::initInternal(const ConfigSet& initializer)
 	cmdb->copyBufferToBuffer(handle.getBuffer(), handle.getOffset(), m_luminanceBuff, 0, handle.getRange());
 
 	FencePtr fence;
-	cmdb->flush(&fence);
+	cmdb->flush({}, &fence);
 
 	m_r->getResourceManager().getTransferGpuAllocator().release(handle, fence);
 

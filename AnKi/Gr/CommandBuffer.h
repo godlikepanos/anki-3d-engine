@@ -8,6 +8,7 @@
 #include <AnKi/Gr/GrObject.h>
 #include <AnKi/Gr/Framebuffer.h>
 #include <AnKi/Util/Functions.h>
+#include <AnKi/Util/WeakArray.h>
 
 namespace anki
 {
@@ -129,8 +130,9 @@ public:
 	static const GrObjectType CLASS_TYPE = GrObjectType::COMMAND_BUFFER;
 
 	/// Finalize and submit if it's primary command buffer and just finalize if it's second level.
-	/// @param[out] fence Optionaly create fence.
-	void flush(FencePtr* fence = nullptr);
+	/// @param[in]  waitFences Optionally wait for some fences.
+	/// @param[out] signalFence Optionaly create fence that will be signaled when the submission is done.
+	void flush(ConstWeakArray<FencePtr> waitFences = {}, FencePtr* signalFence = nullptr);
 
 	/// @name State manipulation
 	/// @{

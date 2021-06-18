@@ -93,18 +93,15 @@ public:
 		return m_cmdbFactory;
 	}
 
-	MicroFencePtr newFence()
-	{
-		return m_fences.newInstance();
-	}
-
 	SamplerFactory& getSamplerFactory()
 	{
 		return m_samplerFactory;
 	}
 	/// @}
 
-	void flushCommandBuffer(CommandBufferPtr ptr, FencePtr* fence, Bool wait = false);
+	void flushCommandBuffer(MicroCommandBufferPtr cmdb, Bool cmdbRenderedToSwapchain,
+							WeakArray<MicroSemaphorePtr> waitSemaphores, MicroSemaphorePtr* signalSemaphore,
+							Bool wait = false);
 
 	/// @name Memory
 	/// @{
@@ -277,7 +274,7 @@ private:
 		MicroFencePtr m_presentFence;
 		MicroSemaphorePtr m_acquireSemaphore;
 
-		/// The semaphore that the submit that renders to the default FB.
+		/// Signaled by the submit that renders to the default FB. Present waits for it.
 		MicroSemaphorePtr m_renderSemaphore;
 	};
 
@@ -298,8 +295,8 @@ private:
 
 	CommandBufferFactory m_cmdbFactory;
 
-	FenceFactory m_fences;
-	SemaphoreFactory m_semaphores;
+	FenceFactory m_fenceFactory;
+	SemaphoreFactory m_semaphoreFactory;
 	DeferredBarrierFactory m_barrierFactory;
 	SamplerFactory m_samplerFactory;
 	/// @}

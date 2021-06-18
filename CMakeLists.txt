@@ -195,6 +195,9 @@ else()
 	if(${CMAKE_BUILD_TYPE} STREQUAL "Release" OR ${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
 		#add_definitions("/Ox")
 	endif()
+
+	# Full paths in compiler diagnostics else you can't click on visual studio have it open the file+line
+	add_compile_options("/FC")
 endif()
 
 # Use gold linker

@@ -331,7 +331,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 
 	// Finalize
 	FencePtr fence;
-	cmdb->flush(&fence);
+	cmdb->flush({}, &fence);
 
 	transferAlloc.release(handles[0], fence);
 	transferAlloc.release(handles[1], fence);

@@ -17,7 +17,7 @@ Fence* Fence::newInstance(GrManager* manager)
 
 Bool Fence::clientWait(Second seconds)
 {
-	return static_cast<FenceImpl*>(this)->m_fence->clientWait(seconds);
+	return static_cast<FenceImpl*>(this)->m_semaphore->clientWait(seconds);
 }
 
 } // end namespace anki
