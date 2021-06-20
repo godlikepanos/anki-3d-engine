@@ -44,7 +44,7 @@ Error Tonemapping::initInternal(const ConfigSet& initializer)
 		BufferMapAccessBit::NONE, "AvgLum"));
 
 	CommandBufferInitInfo cmdbinit;
-	cmdbinit.m_flags = CommandBufferFlag::SMALL_BATCH | CommandBufferFlag::TRANSFER_WORK;
+	cmdbinit.m_flags = CommandBufferFlag::SMALL_BATCH | CommandBufferFlag::GENERAL_WORK;
 	CommandBufferPtr cmdb = getGrManager().newCommandBuffer(cmdbinit);
 
 	TransferGpuAllocatorHandle handle;

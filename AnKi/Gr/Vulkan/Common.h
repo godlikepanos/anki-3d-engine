@@ -72,6 +72,16 @@ enum class VulkanExtensions : U16
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VulkanExtensions)
 
+enum class QueueType : U8
+{
+	GENERAL,
+	COMPUTE,
+
+	COUNT,
+	FIRST = 0
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(QueueType)
+
 /// @name Constants
 /// @{
 const U DESCRIPTOR_POOL_INITIAL_SIZE = 64;

@@ -335,7 +335,6 @@ inline void CommandBufferImpl::drawElementsIndirect(PrimitiveTopology topology, 
 inline void CommandBufferImpl::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
 {
 	ANKI_ASSERT(m_computeProg);
-	ANKI_ASSERT(!!(m_flags & CommandBufferFlag::COMPUTE_WORK));
 	ANKI_ASSERT(m_computeProg->getReflectionInfo().m_pushConstantsSize == m_setPushConstantsSize
 				&& "Forgot to set pushConstants");
 

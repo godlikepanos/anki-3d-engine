@@ -844,7 +844,7 @@ void RenderGraph::initBatches()
 		if(m_ctx->m_graphicsCmdbs.isEmpty() || drawsToPresentable)
 		{
 			CommandBufferInitInfo cmdbInit;
-			cmdbInit.m_flags = CommandBufferFlag::COMPUTE_WORK | CommandBufferFlag::GRAPHICS_WORK;
+			cmdbInit.m_flags = CommandBufferFlag::GENERAL_WORK;
 			CommandBufferPtr cmdb = getManager().newCommandBuffer(cmdbInit);
 
 			m_ctx->m_graphicsCmdbs.emplaceBack(m_ctx->m_alloc, cmdb);
@@ -923,7 +923,7 @@ void RenderGraph::initGraphicsPasses(const RenderGraphDescription& descr, StackA
 				{
 					outPass.m_secondLevelCmdbs.create(alloc, inPass.m_secondLevelCmdbsCount);
 					CommandBufferInitInfo& cmdbInit = outPass.m_secondLevelCmdbInitInfo;
-					cmdbInit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SECOND_LEVEL;
+					cmdbInit.m_flags = CommandBufferFlag::GENERAL_WORK | CommandBufferFlag::SECOND_LEVEL;
 					ANKI_ASSERT(cmdbInit.m_framebuffer.isCreated());
 					cmdbInit.m_colorAttachmentUsages = outPass.m_colorUsages;
 					cmdbInit.m_depthStencilAttachmentUsage = outPass.m_dsUsage;

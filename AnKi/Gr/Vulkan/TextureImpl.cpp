@@ -115,7 +115,7 @@ Error TextureImpl::initInternal(VkImage externalImage, const TextureInitInfo& in
 		ANKI_ASSERT(!(init.m_initialUsage & TextureUsageBit::GENERATE_MIPMAPS) && "That doesn't make any sense");
 
 		CommandBufferInitInfo cmdbinit;
-		cmdbinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
+		cmdbinit.m_flags = CommandBufferFlag::GENERAL_WORK | CommandBufferFlag::SMALL_BATCH;
 		CommandBufferPtr cmdb = getManager().newCommandBuffer(cmdbinit);
 
 		VkImageSubresourceRange range;
@@ -299,10 +299,9 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 	ci.samples = VK_SAMPLE_COUNT_1_BIT;
 	ci.tiling = VK_IMAGE_TILING_OPTIMAL;
 	ci.usage = convertTextureUsage(init.m_usage, init.m_format);
-	ci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-	ci.queueFamilyIndexCount = 1;
-	U32 queueIdx = getGrManagerImpl().getGraphicsQueueFamily();
-	ci.pQueueFamilyIndices = &queueIdx;
+	ci.sharingMode = VK_SHARING_MODE_CONCURRENT;
+	ci.queueFamilyIndexCount = getGrManagerImpl().getQueueFamilies().getSize();
+	ci.pQueueFamilyIndices = &getGrManagerImpl().getQueueFamilies()[0];
 	ci.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
 	ANKI_VK_CHECK(vkCreateImage(getDevice(), &ci, nullptr, &m_imageHandle));

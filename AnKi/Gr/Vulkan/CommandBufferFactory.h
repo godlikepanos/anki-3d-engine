@@ -19,6 +19,12 @@ class CommandBufferThreadAllocator;
 /// @addtogroup vulkan
 /// @{
 
+inline QueueType getQueueTypeFromCommandBufferFlags(CommandBufferFlag flags)
+{
+	ANKI_ASSERT(!!(flags & CommandBufferFlag::GENERAL_WORK) ^ !!(flags & CommandBufferFlag::COMPUTE_WORK));
+	return !!(flags & CommandBufferFlag::GENERAL_WORK) ? QueueType::GENERAL : QueueType::COMPUTE;
+}
+
 class MicroCommandBuffer : public IntrusiveListEnabled<MicroCommandBuffer>
 {
 	friend class CommandBufferThreadAllocator;
@@ -60,6 +66,11 @@ public:
 		ANKI_ASSERT(!(m_flags & CommandBufferFlag::SECOND_LEVEL));
 		ANKI_ASSERT(!m_fence.isCreated());
 		m_fence = fence;
+	}
+
+	CommandBufferFlag getFlags() const
+	{
+		return m_flags;
 	}
 
 private:
@@ -150,7 +161,7 @@ public:
 private:
 	CommandBufferFactory* m_factory;
 	ThreadId m_tid;
-	VkCommandPool m_pool = VK_NULL_HANDLE;
+	Array<VkCommandPool, U(QueueType::COUNT)> m_pools = {};
 
 	class CmdbType
 	{
@@ -166,7 +177,7 @@ private:
 	Atomic<U32> m_createdCmdbs = {0};
 #endif
 
-	Array2d<CmdbType, 2, 2> m_types;
+	Array3d<CmdbType, 2, 2, U(QueueType::COUNT)> m_types;
 
 	void destroyList(IntrusiveList<MicroCommandBuffer>& list);
 	void destroyLists();
@@ -183,7 +194,7 @@ public:
 
 	~CommandBufferFactory() = default;
 
-	ANKI_USE_RESULT Error init(GrAllocator<U8> alloc, VkDevice dev, uint32_t queueFamily);
+	ANKI_USE_RESULT Error init(GrAllocator<U8> alloc, VkDevice dev, Array<U32, U(QueueType::COUNT)> queueFamilies);
 
 	void destroy();
 
@@ -199,7 +210,7 @@ public:
 private:
 	GrAllocator<U8> m_alloc;
 	VkDevice m_dev = VK_NULL_HANDLE;
-	uint32_t m_queueFamily;
+	Array<U32, U(QueueType::COUNT)> m_queueFamilies;
 
 	DynamicArray<CommandBufferThreadAllocator*> m_threadAllocs;
 	RWMutex m_threadAllocMtx;

@@ -120,7 +120,7 @@ ANKI_TEST(Ui, Ui)
 			}
 
 			CommandBufferInitInfo cinit;
-			cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
+			cinit.m_flags = CommandBufferFlag::GENERAL_WORK | CommandBufferFlag::SMALL_BATCH;
 			CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 			cmdb->setTextureBarrier(presentTex, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,

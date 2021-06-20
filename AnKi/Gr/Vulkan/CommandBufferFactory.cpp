@@ -15,7 +15,8 @@ void MicroCommandBuffer::destroy()
 
 	if(m_handle)
 	{
-		vkFreeCommandBuffers(m_threadAlloc->m_factory->m_dev, m_threadAlloc->m_pool, 1, &m_handle);
+		vkFreeCommandBuffers(m_threadAlloc->m_factory->m_dev,
+							 m_threadAlloc->m_pools[getQueueTypeFromCommandBufferFlags(m_flags)], 1, &m_handle);
 		m_handle = {};
 	}
 }
@@ -39,12 +40,15 @@ void MicroCommandBuffer::reset()
 
 Error CommandBufferThreadAllocator::init()
 {
-	VkCommandPoolCreateInfo ci = {};
-	ci.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	ci.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	ci.queueFamilyIndex = m_factory->m_queueFamily;
+	for(QueueType qtype : EnumIterable<QueueType>())
+	{
+		VkCommandPoolCreateInfo ci = {};
+		ci.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+		ci.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+		ci.queueFamilyIndex = m_factory->m_queueFamilies[qtype];
 
-	ANKI_VK_CHECK(vkCreateCommandPool(m_factory->m_dev, &ci, nullptr, &m_pool));
+		ANKI_VK_CHECK(vkCreateCommandPool(m_factory->m_dev, &ci, nullptr, &m_pools[qtype]));
+	}
 
 	return Error::NONE;
 }
@@ -68,21 +72,27 @@ void CommandBufferThreadAllocator::destroyLists()
 	{
 		for(U j = 0; j < 2; ++j)
 		{
-			CmdbType& type = m_types[i][j];
+			for(QueueType qtype : EnumIterable<QueueType>())
+			{
+				CmdbType& type = m_types[i][j][qtype];
 
-			destroyList(type.m_deletedCmdbs);
-			destroyList(type.m_readyCmdbs);
-			destroyList(type.m_inUseCmdbs);
+				destroyList(type.m_deletedCmdbs);
+				destroyList(type.m_readyCmdbs);
+				destroyList(type.m_inUseCmdbs);
+			}
 		}
 	}
 }
 
 void CommandBufferThreadAllocator::destroy()
 {
-	if(m_pool)
+	for(VkCommandPool pool : m_pools)
 	{
-		vkDestroyCommandPool(m_factory->m_dev, m_pool, nullptr);
-		m_pool = {};
+		if(pool)
+		{
+			vkDestroyCommandPool(m_factory->m_dev, pool, nullptr);
+			pool = {};
+		}
 	}
 
 	ANKI_ASSERT(m_createdCmdbs.load() == 0 && "Someone still holds references to command buffers");
@@ -91,12 +101,12 @@ void CommandBufferThreadAllocator::destroy()
 Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags, MicroCommandBufferPtr& outPtr,
 													 Bool& createdNew)
 {
-	cmdbFlags = cmdbFlags & (CommandBufferFlag::SECOND_LEVEL | CommandBufferFlag::SMALL_BATCH);
+	ANKI_ASSERT(!!(cmdbFlags & CommandBufferFlag::COMPUTE_WORK) ^ !!(cmdbFlags & CommandBufferFlag::GENERAL_WORK));
 	createdNew = false;
 
 	const Bool secondLevel = !!(cmdbFlags & CommandBufferFlag::SECOND_LEVEL);
 	const Bool smallBatch = !!(cmdbFlags & CommandBufferFlag::SMALL_BATCH);
-	CmdbType& type = m_types[secondLevel][smallBatch];
+	CmdbType& type = m_types[secondLevel][smallBatch][getQueueTypeFromCommandBufferFlags(cmdbFlags)];
 
 	// Move the deleted to (possibly) in-use or ready
 	{
@@ -177,7 +187,7 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 
 		VkCommandBufferAllocateInfo ci = {};
 		ci.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		ci.commandPool = m_pool;
+		ci.commandPool = m_pools[getQueueTypeFromCommandBufferFlags(cmdbFlags)];
 		ci.level = (secondLevel) ? VK_COMMAND_BUFFER_LEVEL_SECONDARY : VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 		ci.commandBufferCount = 1;
 
@@ -208,8 +218,7 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 	}
 
 	ANKI_ASSERT(out && out->m_refcount.load() == 0);
-	ANKI_ASSERT(!!(out->m_flags & CommandBufferFlag::SECOND_LEVEL) == secondLevel);
-	ANKI_ASSERT(!!(out->m_flags & CommandBufferFlag::SMALL_BATCH) == smallBatch);
+	ANKI_ASSERT(out->m_flags == cmdbFlags);
 	outPtr.reset(out);
 	return Error::NONE;
 }
@@ -221,19 +230,19 @@ void CommandBufferThreadAllocator::deleteCommandBuffer(MicroCommandBuffer* ptr)
 	const Bool secondLevel = !!(ptr->m_flags & CommandBufferFlag::SECOND_LEVEL);
 	const Bool smallBatch = !!(ptr->m_flags & CommandBufferFlag::SMALL_BATCH);
 
-	CmdbType& type = m_types[secondLevel][smallBatch];
+	CmdbType& type = m_types[secondLevel][smallBatch][getQueueTypeFromCommandBufferFlags(ptr->m_flags)];
 
 	LockGuard<Mutex> lock(type.m_deletedMtx);
 	type.m_deletedCmdbs.pushBack(ptr);
 }
 
-Error CommandBufferFactory::init(GrAllocator<U8> alloc, VkDevice dev, uint32_t queueFamily)
+Error CommandBufferFactory::init(GrAllocator<U8> alloc, VkDevice dev, Array<U32, U(QueueType::COUNT)> queueFamilies)
 {
 	ANKI_ASSERT(dev);
 
 	m_alloc = alloc;
 	m_dev = dev;
-	m_queueFamily = queueFamily;
+	m_queueFamilies = queueFamilies;
 	return Error::NONE;
 }
 

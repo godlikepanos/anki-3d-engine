@@ -189,7 +189,7 @@ Error TextureResource::load(LoadingContext& ctx)
 		const U32 end = min(copyCount, b + MAX_COPIES_BEFORE_FLUSH);
 
 		CommandBufferInitInfo ci;
-		ci.m_flags = CommandBufferFlag::TRANSFER_WORK | CommandBufferFlag::SMALL_BATCH;
+		ci.m_flags = CommandBufferFlag::GENERAL_WORK | CommandBufferFlag::SMALL_BATCH;
 		CommandBufferPtr cmdb = ctx.m_gr->newCommandBuffer(ci);
 
 		// Set the barriers of the batch

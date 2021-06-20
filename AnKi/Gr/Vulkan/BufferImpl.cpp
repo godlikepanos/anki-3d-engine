@@ -49,10 +49,9 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	{
 		ci.usage |= VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
 	}
-	ci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-	ci.queueFamilyIndexCount = 1;
-	const U32 queueIdx = getGrManagerImpl().getGraphicsQueueFamily();
-	ci.pQueueFamilyIndices = &queueIdx;
+	ci.sharingMode = VK_SHARING_MODE_CONCURRENT;
+	ci.queueFamilyIndexCount = getGrManagerImpl().getQueueFamilies().getSize();
+	ci.pQueueFamilyIndices = &getGrManagerImpl().getQueueFamilies()[0];
 	ANKI_VK_CHECK(vkCreateBuffer(getDevice(), &ci, nullptr, &m_handle));
 	getGrManagerImpl().trySetVulkanHandleName(inf.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, m_handle);
 

@@ -94,14 +94,11 @@ enum class CommandBufferFlag : U8
 	/// It will contain a handfull of commands.
 	SMALL_BATCH = 1 << 3,
 
-	/// Will contain graphics work.
-	GRAPHICS_WORK = 1 << 4,
+	/// Will contain graphics, compute and transfer work.
+	GENERAL_WORK = 1 << 4,
 
-	/// Will contain transfer commands.
-	TRANSFER_WORK = 1 << 5,
-
-	/// Will contain compute work.
-	COMPUTE_WORK = 1 << 6,
+	/// Will contain only compute work. It binds to async compute queues.
+	COMPUTE_WORK = 1 << 5,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(CommandBufferFlag)
 

@@ -29,11 +29,14 @@ GrManagerImpl::~GrManagerImpl()
 	}
 
 	// 2nd THING: wait for the GPU
-	if(m_queue)
+	for(VkQueue& queue : m_queues)
 	{
 		LockGuard<Mutex> lock(m_globalMtx);
-		vkQueueWaitIdle(m_queue);
-		m_queue = VK_NULL_HANDLE;
+		if(queue)
+		{
+			vkQueueWaitIdle(queue);
+			queue = VK_NULL_HANDLE;
+		}
 	}
 
 	m_cmdbFactory.destroy();
@@ -111,7 +114,11 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	ANKI_CHECK(initInstance(init));
 	ANKI_CHECK(initSurface(init));
 	ANKI_CHECK(initDevice(init));
-	vkGetDeviceQueue(m_device, m_queueIdx, 0, &m_queue);
+
+	for(QueueType qtype : EnumIterable<QueueType>())
+	{
+		vkGetDeviceQueue(m_device, m_queueFamilyIndices[qtype], 0, &m_queues[qtype]);
+	}
 
 	m_swapchainFactory.init(this, init.m_config->getBool("gr_vsync"));
 
@@ -121,7 +128,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 
 	ANKI_CHECK(initMemory(*init.m_config));
 
-	ANKI_CHECK(m_cmdbFactory.init(getAllocator(), m_device, m_queueIdx));
+	ANKI_CHECK(m_cmdbFactory.init(getAllocator(), m_device, m_queueFamilyIndices));
 
 	for(PerFrame& f : m_perFrame)
 	{
@@ -476,43 +483,54 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	queueInfos.create(count);
 	vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &count, &queueInfos[0]);
 
-	uint32_t desiredFamilyIdx = MAX_U32;
-	const VkQueueFlags DESITED_QUEUE_FLAGS = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT;
+	const VkQueueFlags GENERAL_QUEUE_FLAGS = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT;
 	for(U32 i = 0; i < count; ++i)
 	{
-		if((queueInfos[i].queueFlags & DESITED_QUEUE_FLAGS) == DESITED_QUEUE_FLAGS)
-		{
-			VkBool32 supportsPresent = false;
-			ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(m_physicalDevice, i, m_surface, &supportsPresent));
+		VkBool32 supportsPresent = false;
+		ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(m_physicalDevice, i, m_surface, &supportsPresent));
 
-			if(supportsPresent)
+		if(supportsPresent)
+		{
+			if((queueInfos[i].queueFlags & GENERAL_QUEUE_FLAGS) == GENERAL_QUEUE_FLAGS)
 			{
-				desiredFamilyIdx = i;
-				break;
+				m_queueFamilyIndices[QueueType::GENERAL] = i;
+			}
+			else if((queueInfos[i].queueFlags & VK_QUEUE_COMPUTE_BIT)
+					&& !(queueInfos[i].queueFlags & VK_QUEUE_GRAPHICS_BIT))
+			{
+				// This must be the async compute
+				m_queueFamilyIndices[QueueType::COMPUTE] = i;
 			}
 		}
 	}
 
-	if(desiredFamilyIdx == MAX_U32)
+	if(m_queueFamilyIndices[QueueType::GENERAL] == MAX_U32)
 	{
-		ANKI_VK_LOGE("Couldn't find a queue family with graphics+compute+transfer+present."
-					 "The assumption was wrong. The code needs to be reworked");
+		ANKI_VK_LOGE("Couldn't find a queue family with graphics+compute+transfer+present. "
+					 "Something is wrong");
 		return Error::FUNCTION_FAILED;
 	}
 
-	m_queueIdx = desiredFamilyIdx;
+	if(m_queueFamilyIndices[QueueType::COMPUTE] == MAX_U32)
+	{
+		ANKI_VK_LOGE("Couldn't find an async compute queue");
+		return Error::FUNCTION_FAILED;
+	}
 
-	F32 priority = 1.0;
-	VkDeviceQueueCreateInfo q = {};
-	q.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-	q.queueFamilyIndex = desiredFamilyIdx;
-	q.queueCount = 1;
-	q.pQueuePriorities = &priority;
+	const F32 priority = 1.0;
+	Array<VkDeviceQueueCreateInfo, U32(QueueType::COUNT)> q = {};
+	for(QueueType qtype : EnumIterable<QueueType>())
+	{
+		q[qtype].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+		q[qtype].queueFamilyIndex = m_queueFamilyIndices[qtype];
+		q[qtype].queueCount = 1;
+		q[qtype].pQueuePriorities = &priority;
+	}
 
 	VkDeviceCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-	ci.queueCreateInfoCount = 1;
-	ci.pQueueCreateInfos = &q;
+	ci.queueCreateInfoCount = q.getSize();
+	ci.pQueueCreateInfos = &q[0];
 
 	// Extensions
 	U32 extCount = 0;
@@ -907,7 +925,10 @@ TexturePtr GrManagerImpl::acquireNextPresentableTexture()
 	if(res == VK_ERROR_OUT_OF_DATE_KHR)
 	{
 		ANKI_VK_LOGW("Swapchain is out of date. Will wait for the queue and create a new one");
-		vkQueueWaitIdle(m_queue);
+		for(VkQueue queue : m_queues)
+		{
+			vkQueueWaitIdle(queue);
+		}
 		m_crntSwapchain = m_swapchainFactory.newInstance();
 
 		// Can't fail a second time
@@ -933,7 +954,7 @@ void GrManagerImpl::endFrame()
 	PerFrame& frame = m_perFrame[m_frame % MAX_FRAMES_IN_FLIGHT];
 
 	// Wait for the fence of N-2 frame
-	U waitFrameIdx = (m_frame + 1) % MAX_FRAMES_IN_FLIGHT;
+	const U waitFrameIdx = (m_frame + 1) % MAX_FRAMES_IN_FLIGHT;
 	PerFrame& waitFrame = m_perFrame[waitFrameIdx];
 	if(waitFrame.m_presentFence)
 	{
@@ -955,15 +976,18 @@ void GrManagerImpl::endFrame()
 	present.pWaitSemaphores = (frame.m_renderSemaphore) ? &frame.m_renderSemaphore->getHandle() : nullptr;
 	present.swapchainCount = 1;
 	present.pSwapchains = &m_crntSwapchain->m_swapchain;
-	U32 idx = m_acquiredImageIdx;
+	const U32 idx = m_acquiredImageIdx;
 	present.pImageIndices = &idx;
 	present.pResults = &res;
 
-	VkResult res1 = vkQueuePresentKHR(m_queue, &present);
+	const VkResult res1 = vkQueuePresentKHR(m_queues[frame.m_queueWroteToSwapchainImage], &present);
 	if(res1 == VK_ERROR_OUT_OF_DATE_KHR)
 	{
 		ANKI_VK_LOGW("Swapchain is out of date. Will wait for the queue and create a new one");
-		vkQueueWaitIdle(m_queue);
+		for(VkQueue queue : m_queues)
+		{
+			vkQueueWaitIdle(queue);
+		}
 		m_crntSwapchain = m_swapchainFactory.newInstance();
 	}
 	else
@@ -1075,23 +1099,29 @@ void GrManagerImpl::flushCommandBuffer(MicroCommandBufferPtr cmdb, Bool cmdbRend
 
 		// Update the swapchain's fence
 		m_crntSwapchain->setFence(fence);
+
+		frame.m_queueWroteToSwapchainImage = getQueueTypeFromCommandBufferFlags(cmdb->getFlags());
 	}
 
 	{
 		ANKI_TRACE_SCOPED_EVENT(VK_QUEUE_SUBMIT);
-		ANKI_VK_CHECKF(vkQueueSubmit(m_queue, 1, &submit, fence->getHandle()));
+		ANKI_VK_CHECKF(vkQueueSubmit(m_queues[getQueueTypeFromCommandBufferFlags(cmdb->getFlags())], 1, &submit,
+									 fence->getHandle()));
 	}
 
 	if(wait)
 	{
-		vkQueueWaitIdle(m_queue);
+		vkQueueWaitIdle(m_queues[getQueueTypeFromCommandBufferFlags(cmdb->getFlags())]);
 	}
 }
 
 void GrManagerImpl::finish()
 {
 	LockGuard<Mutex> lock(m_globalMtx);
-	vkQueueWaitIdle(m_queue);
+	for(VkQueue queue : m_queues)
+	{
+		vkQueueWaitIdle(queue);
+	}
 }
 
 void GrManagerImpl::trySetVulkanHandleName(CString name, VkDebugReportObjectTypeEXT type, U64 handle) const

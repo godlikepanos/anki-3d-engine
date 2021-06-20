@@ -164,7 +164,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	if(async)
 	{
 		CommandBufferInitInfo cmdbinit;
-		cmdbinit.m_flags = CommandBufferFlag::SMALL_BATCH;
+		cmdbinit.m_flags = CommandBufferFlag::SMALL_BATCH | CommandBufferFlag::GENERAL_WORK;
 		CommandBufferPtr cmdb = getManager().getGrManager().newCommandBuffer(cmdbinit);
 
 		cmdb->fillBuffer(m_vertexBuffer, 0, MAX_PTR_SIZE, 0);
@@ -261,7 +261,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 	Array<TransferGpuAllocatorHandle, 2> handles;
 
 	CommandBufferInitInfo cmdbinit;
-	cmdbinit.m_flags = CommandBufferFlag::SMALL_BATCH | CommandBufferFlag::TRANSFER_WORK;
+	cmdbinit.m_flags = CommandBufferFlag::SMALL_BATCH | CommandBufferFlag::GENERAL_WORK;
 	CommandBufferPtr cmdb = gr.newCommandBuffer(cmdbinit);
 
 	// Set barriers

@@ -47,9 +47,9 @@ public:
 
 	ANKI_USE_RESULT Error init(const GrManagerInitInfo& cfg);
 
-	U32 getGraphicsQueueFamily() const
+	const Array<U32, U(QueueType::COUNT)> getQueueFamilies() const
 	{
-		return m_queueIdx;
+		return m_queueFamilyIndices;
 	}
 
 	const VkPhysicalDeviceProperties& getPhysicalDeviceProperties() const
@@ -178,11 +178,6 @@ public:
 		return m_surface;
 	}
 
-	U32 getGraphicsQueueIndex() const
-	{
-		return m_queueIdx;
-	}
-
 	/// @name Debug report
 	/// @{
 	void beginMarker(VkCommandBuffer cmdb, CString name) const
@@ -244,8 +239,8 @@ private:
 	VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
 	VulkanExtensions m_extensions = VulkanExtensions::NONE;
 	VkDevice m_device = VK_NULL_HANDLE;
-	U32 m_queueIdx = MAX_U32;
-	VkQueue m_queue = VK_NULL_HANDLE;
+	Array<U32, U32(QueueType::COUNT)> m_queueFamilyIndices = {MAX_U32, MAX_U32};
+	Array<VkQueue, U32(QueueType::COUNT)> m_queues = {};
 	Mutex m_globalMtx;
 
 	VkPhysicalDeviceProperties2 m_devProps = {};
@@ -276,6 +271,8 @@ private:
 
 		/// Signaled by the submit that renders to the default FB. Present waits for it.
 		MicroSemaphorePtr m_renderSemaphore;
+
+		QueueType m_queueWroteToSwapchainImage = QueueType::COUNT;
 	};
 
 	VkSurfaceKHR m_surface = VK_NULL_HANDLE;
