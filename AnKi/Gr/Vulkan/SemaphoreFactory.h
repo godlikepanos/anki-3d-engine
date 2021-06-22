@@ -56,6 +56,22 @@ public:
 		return m_isTimeline;
 	}
 
+	/// Get the value of the semaphore after a signal.
+	/// @note It's thread safe.
+	U64 getNextSemaphoreValue()
+	{
+		ANKI_ASSERT(m_isTimeline);
+		return m_timelineValue.fetchAdd(1) + 1;
+	}
+
+	/// Get the value of the semaphore to wait on.
+	/// @note It's thread safe.
+	U64 getSemaphoreValue() const
+	{
+		ANKI_ASSERT(m_isTimeline);
+		return m_timelineValue.load();
+	}
+
 private:
 	VkSemaphore m_handle = VK_NULL_HANDLE;
 	Atomic<U32> m_refcount = {0};
@@ -64,6 +80,7 @@ private:
 	/// Fence to find out when it's safe to reuse this semaphore.
 	MicroFencePtr m_fence;
 
+	Atomic<U64> m_timelineValue = {0};
 	Bool m_isTimeline = false;
 
 	MicroSemaphore(SemaphoreFactory* f, MicroFencePtr fence, Bool isTimeline);

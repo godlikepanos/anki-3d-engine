@@ -88,6 +88,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 		// Fallback: host & coherent and not cached
 		if(memIdx == MAX_U32)
 		{
+			ANKI_VK_LOGW("Using a fallback mode for write-only buffer");
 			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(
 				req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 				VK_MEMORY_PROPERTY_HOST_CACHED_BIT | avoidDeviceLocal);
@@ -115,6 +116,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 		// Fallback: Just cached
 		if(memIdx == MAX_U32)
 		{
+			ANKI_VK_LOGW("Using a fallback mode for read/write buffer");
 			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(
 				req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT, 0);
 		}

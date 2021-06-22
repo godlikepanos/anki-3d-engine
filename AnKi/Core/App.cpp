@@ -344,9 +344,14 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 		"NO dbg symbols, "
 #endif
 #if ANKI_EXTRA_CHECKS
-		"extra checks";
+		"extra checks, "
 #else
-		"NO extra checks";
+		"NO extra checks, "
+#endif
+#if ANKI_ENABLE_TRACE
+		"built with tracing";
+#else
+		"NOT built with tracing";
 #endif
 
 	ANKI_CORE_LOGI("Initializing application ("

@@ -1034,17 +1034,15 @@ void GrManagerImpl::flushCommandBuffer(MicroCommandBufferPtr cmdb, Bool cmdbRend
 	submit.pCommandBuffers = &handle;
 
 	// Handle user semaphores
-	Array<U64, maxSemaphores> timelineSignalValues;
-	for(U64& i : timelineSignalValues)
-	{
-		i = 1;
-	}
+	Array<U64, maxSemaphores> waitTimelineValues;
+	Array<U64, maxSemaphores> signalTimelineValues;
+
 	VkTimelineSemaphoreSubmitInfo timelineInfo = {};
 	timelineInfo.sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
 	timelineInfo.waitSemaphoreValueCount = userWaitSemaphores.getSize();
-	timelineInfo.pWaitSemaphoreValues = &timelineSignalValues[0];
+	timelineInfo.pWaitSemaphoreValues = &waitTimelineValues[0];
 	timelineInfo.signalSemaphoreValueCount = (userSignalSemaphore != nullptr);
-	timelineInfo.pSignalSemaphoreValues = &timelineSignalValues[0];
+	timelineInfo.pSignalSemaphoreValues = &signalTimelineValues[0];
 	submit.pNext = &timelineInfo;
 
 	for(MicroSemaphorePtr& userWaitSemaphore : userWaitSemaphores)
@@ -1052,6 +1050,8 @@ void GrManagerImpl::flushCommandBuffer(MicroCommandBufferPtr cmdb, Bool cmdbRend
 		ANKI_ASSERT(userWaitSemaphore.isCreated());
 		ANKI_ASSERT(userWaitSemaphore->isTimeline());
 		waitSemaphores[submit.waitSemaphoreCount] = userWaitSemaphore->getHandle();
+
+		waitTimelineValues[submit.waitSemaphoreCount] = userWaitSemaphore->getSemaphoreValue();
 
 		// Be a bit conservative
 		waitStages[submit.waitSemaphoreCount] = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
@@ -1066,15 +1066,18 @@ void GrManagerImpl::flushCommandBuffer(MicroCommandBufferPtr cmdb, Bool cmdbRend
 	{
 		*userSignalSemaphore = m_semaphoreFactory.newInstance(fence, true);
 
-		signalSemaphores[submit.signalSemaphoreCount++] = (*userSignalSemaphore)->getHandle();
+		signalSemaphores[submit.signalSemaphoreCount] = (*userSignalSemaphore)->getHandle();
+
+		signalTimelineValues[submit.signalSemaphoreCount] = (*userSignalSemaphore)->getNextSemaphoreValue();
+
+		++submit.signalSemaphoreCount;
 	}
 
-	// Protect the class and the queue
+	// Protect the class, the queue and other stuff
 	LockGuard<Mutex> lock(m_globalMtx);
 
-	PerFrame& frame = m_perFrame[m_frame % MAX_FRAMES_IN_FLIGHT];
-
 	// Do some special stuff for the last command buffer
+	PerFrame& frame = m_perFrame[m_frame % MAX_FRAMES_IN_FLIGHT];
 	if(cmdbRenderedToSwapchain)
 	{
 		// Wait semaphore
@@ -1103,6 +1106,7 @@ void GrManagerImpl::flushCommandBuffer(MicroCommandBufferPtr cmdb, Bool cmdbRend
 		frame.m_queueWroteToSwapchainImage = getQueueTypeFromCommandBufferFlags(cmdb->getFlags());
 	}
 
+	// Submit
 	{
 		ANKI_TRACE_SCOPED_EVENT(VK_QUEUE_SUBMIT);
 		ANKI_VK_CHECKF(vkQueueSubmit(m_queues[getQueueTypeFromCommandBufferFlags(cmdb->getFlags())], 1, &submit,

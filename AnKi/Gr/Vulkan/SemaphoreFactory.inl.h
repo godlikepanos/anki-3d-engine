@@ -51,8 +51,8 @@ inline Bool MicroSemaphore::clientWait(Second seconds)
 	waitInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO;
 	waitInfo.semaphoreCount = 1;
 	waitInfo.pSemaphores = &m_handle;
-	const U64 waitValue = 1;
-	waitInfo.pValues = &waitValue;
+	const U64 crntTimelineValue = m_timelineValue.load();
+	waitInfo.pValues = &crntTimelineValue;
 
 	const F64 nsf = 1e+9 * seconds;
 	const U64 ns = U64(nsf);
@@ -91,6 +91,10 @@ inline MicroSemaphorePtr SemaphoreFactory::newInstance(MicroFencePtr fence, Bool
 	{
 		out->m_fence = fence;
 		ANKI_ASSERT(out->m_isTimeline == isTimeline);
+		if(out->m_isTimeline)
+		{
+			ANKI_ASSERT(out->m_timelineValue.getNonAtomically() > 0 && "Recycled without being signaled?");
+		}
 	}
 
 	ANKI_ASSERT(out->m_refcount.getNonAtomically() == 0);

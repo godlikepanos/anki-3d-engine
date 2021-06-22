@@ -47,7 +47,7 @@ public:
 
 	ANKI_USE_RESULT Error init(const GrManagerInitInfo& cfg);
 
-	const Array<U32, U(QueueType::COUNT)> getQueueFamilies() const
+	const Array<U32, U(QueueType::COUNT)>& getQueueFamilies() const
 	{
 		return m_queueFamilyIndices;
 	}

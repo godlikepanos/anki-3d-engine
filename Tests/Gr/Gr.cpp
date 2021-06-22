@@ -3511,4 +3511,142 @@ void main()
 	COMMON_END();
 }
 
+ANKI_TEST(Gr, AsyncCompute)
+{
+	COMMON_BEGIN()
+
+	constexpr U32 ARRAY_SIZE = 1000 * 1024 * 8;
+
+	// Create the counting program
+	static const char* PROG_SRC = R"(
+layout(local_size_x = 8) in;
+
+layout(binding = 0, std430) buffer b_buff
+{
+	U32 u_counters[];
+};
+
+void main()
+{
+	for(U32 i = 0u; i < gl_LocalInvocationID.x * 20u; ++i)
+	{
+		atomicAdd(u_counters[gl_GlobalInvocationID.x], i + 1u);
+	}
+})";
+
+	ShaderPtr shader = createShader(PROG_SRC, ShaderType::COMPUTE, *gr);
+	ShaderProgramInitInfo sprogInit;
+	sprogInit.m_computeShader = shader;
+	ShaderProgramPtr incrementProg = gr->newShaderProgram(sprogInit);
+
+	// Create the check program
+	static const char* CHECK_SRC = R"(
+layout(local_size_x = 8) in;
+
+layout(binding = 0, std430) buffer b_buff
+{
+	U32 u_counters[];
+};
+
+void main()
+{
+	// Walk the atomics in reverse to make sure that this dispatch won't overlap with the previous one
+	const U32 newGlobalInvocationID = gl_NumWorkGroups.x * gl_WorkGroupSize.x - gl_GlobalInvocationID.x - 1u;
+
+	U32 expectedVal = 0u;
+	for(U32 i = 0u; i < (newGlobalInvocationID % gl_WorkGroupSize.x) * 20u; ++i)
+	{
+		expectedVal += i + 1u;
+	}
+
+	atomicCompSwap(u_counters[newGlobalInvocationID], expectedVal, 4u);
+})";
+
+	shader = createShader(CHECK_SRC, ShaderType::COMPUTE, *gr);
+	sprogInit.m_computeShader = shader;
+	ShaderProgramPtr checkProg = gr->newShaderProgram(sprogInit);
+
+	// Create buffers
+	BufferInitInfo info;
+	info.m_size = sizeof(U32) * ARRAY_SIZE;
+	info.m_usage = BufferUsageBit::ALL_COMPUTE;
+	info.m_mapAccess = BufferMapAccessBit::WRITE | BufferMapAccessBit::READ;
+	BufferPtr atomicsBuffer = gr->newBuffer(info);
+	U32* values =
+		static_cast<U32*>(atomicsBuffer->map(0, MAX_PTR_SIZE, BufferMapAccessBit::READ | BufferMapAccessBit::WRITE));
+	memset(values, 0, info.m_size);
+
+	// Pre-create some CPU result buffers
+	DynamicArrayAuto<U32> atomicsBufferCpu(HeapAllocator<U8>(allocAligned, nullptr));
+	atomicsBufferCpu.create(ARRAY_SIZE);
+	DynamicArrayAuto<U32> expectedResultsBufferCpu(HeapAllocator<U8>(allocAligned, nullptr));
+	expectedResultsBufferCpu.create(ARRAY_SIZE);
+	for(U32 i = 0; i < ARRAY_SIZE; ++i)
+	{
+		const U32 localInvocation = i % 8;
+		U32 expectedVal = 4;
+		for(U32 j = 0; j < localInvocation * 20; ++j)
+		{
+			expectedVal += j + 1;
+		}
+
+		expectedResultsBufferCpu[i] = expectedVal;
+	}
+
+	// Create the 1st command buffer
+	CommandBufferInitInfo cinit;
+	cinit.m_flags = CommandBufferFlag::COMPUTE_WORK | CommandBufferFlag::SMALL_BATCH;
+	CommandBufferPtr incrementCmdb = gr->newCommandBuffer(cinit);
+	incrementCmdb->bindShaderProgram(incrementProg);
+	incrementCmdb->bindStorageBuffer(0, 0, atomicsBuffer, 0, MAX_PTR_SIZE);
+	incrementCmdb->dispatchCompute(ARRAY_SIZE / 8, 1, 1);
+
+	// Create the 2nd command buffer
+	cinit.m_flags = CommandBufferFlag::GENERAL_WORK | CommandBufferFlag::SMALL_BATCH;
+	CommandBufferPtr checkCmdb = gr->newCommandBuffer(cinit);
+	checkCmdb->bindShaderProgram(checkProg);
+	checkCmdb->bindStorageBuffer(0, 0, atomicsBuffer, 0, MAX_PTR_SIZE);
+	checkCmdb->dispatchCompute(ARRAY_SIZE / 8, 1, 1);
+
+	// Create the 3rd command buffer
+	cinit.m_flags = CommandBufferFlag::COMPUTE_WORK | CommandBufferFlag::SMALL_BATCH;
+	CommandBufferPtr incrementCmdb2 = gr->newCommandBuffer(cinit);
+	incrementCmdb2->bindShaderProgram(incrementProg);
+	incrementCmdb2->bindStorageBuffer(0, 0, atomicsBuffer, 0, MAX_PTR_SIZE);
+	incrementCmdb2->dispatchCompute(ARRAY_SIZE / 8, 1, 1);
+
+	// Submit
+#if 1
+	FencePtr fence;
+	incrementCmdb->flush({}, &fence);
+	checkCmdb->flush(Array<FencePtr, 1>{fence}, &fence);
+	incrementCmdb2->flush(Array<FencePtr, 1>{fence}, &fence);
+	fence->clientWait(MAX_SECOND);
+#else
+	incrementCmdb->flush();
+	gr->finish();
+	checkCmdb->flush();
+	gr->finish();
+	incrementCmdb2->flush();
+	gr->finish();
+#endif
+
+	// Verify
+	memcpy(atomicsBufferCpu.getBegin(), values, atomicsBufferCpu.getSizeInBytes());
+	Bool correct = true;
+	for(U32 i = 0; i < ARRAY_SIZE; ++i)
+	{
+		correct = correct && atomicsBufferCpu[i] == expectedResultsBufferCpu[i];
+		if(!correct)
+		{
+			printf("%u!=%u %u\n", atomicsBufferCpu[i], expectedResultsBufferCpu[i], i);
+			break;
+		}
+	}
+	atomicsBuffer->unmap();
+	ANKI_TEST_EXPECT_EQ(correct, true);
+
+	COMMON_END()
+}
+
 } // end namespace anki

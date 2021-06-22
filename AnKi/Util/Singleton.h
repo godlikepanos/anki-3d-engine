@@ -91,6 +91,11 @@ public:
 		}
 	}
 
+	static Bool isInitialized()
+	{
+		return m_instance != nullptr;
+	}
+
 private:
 	static Value* m_instance;
 };

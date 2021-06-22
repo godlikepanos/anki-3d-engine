@@ -125,7 +125,7 @@ ClassGpuAllocator::Class* ClassGpuAllocator::findClass(PtrSize size, U alignment
 		++it;
 	}
 
-	ANKI_ASSERT(!"No class found");
+	ANKI_GR_LOGF("Memory class not found");
 	return nullptr;
 }
 
