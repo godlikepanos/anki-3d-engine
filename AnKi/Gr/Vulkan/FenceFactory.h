@@ -42,9 +42,7 @@ public:
 
 	void wait()
 	{
-		// This is supposed to wait forever. Don't do that. If someone has to wait for more than 5 seconds then
-		// something is wrong
-		const Bool timeout = !clientWait(5.0);
+		const Bool timeout = !clientWait(MAX_SECOND);
 		if(ANKI_UNLIKELY(timeout))
 		{
 			ANKI_VK_LOGF("Waiting for a fence timed out");

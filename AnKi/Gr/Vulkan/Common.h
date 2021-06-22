@@ -84,9 +84,13 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(QueueType)
 
 /// @name Constants
 /// @{
-const U DESCRIPTOR_POOL_INITIAL_SIZE = 64;
-const F32 DESCRIPTOR_POOL_SIZE_SCALE = 2.0;
-const U DESCRIPTOR_FRAME_BUFFERING = 60 * 5; ///< How many frames worth of descriptors to buffer.
+constexpr U DESCRIPTOR_POOL_INITIAL_SIZE = 64;
+constexpr F32 DESCRIPTOR_POOL_SIZE_SCALE = 2.0f;
+constexpr U DESCRIPTOR_FRAME_BUFFERING = 60 * 5; ///< How many frames worth of descriptors to buffer.
+
+/// There is no need to ask for a fence or a semaphore to be waited for more than 10 seconds. The GPU will timeout
+/// anyway.
+constexpr Second MAX_FENCE_OR_SEMAPHORE_WAIT_TIME = 10.0;
 /// @}
 
 /// Some internal buffer usage flags.
