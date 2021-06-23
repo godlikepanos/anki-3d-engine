@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <AnKi/Importer/Common.h>
 #include <AnKi/Util/String.h>
 #include <AnKi/Util/StringList.h>
 #include <AnKi/Util/File.h>
@@ -19,11 +20,7 @@ namespace anki
 /// @addtogroup importer
 /// @{
 
-#define ANKI_GLTF_LOGI(...) ANKI_LOG("GLTF", NORMAL, __VA_ARGS__)
-#define ANKI_GLTF_LOGE(...) ANKI_LOG("GLTF", ERROR, __VA_ARGS__)
-#define ANKI_GLTF_LOGW(...) ANKI_LOG("GLTF", WARNING, __VA_ARGS__)
-#define ANKI_GLTF_LOGF(...) ANKI_LOG("GLTF", FATAL, __VA_ARGS__)
-
+/// @memberof GltfImporter
 class GltfImporterInitInfo
 {
 public:

@@ -41,7 +41,7 @@ static ANKI_USE_RESULT Error getUniformScale(const Mat4& m, F32& out)
 	const F32 scale = xAxis.getLength();
 	if(absolute(scale - yAxis.getLength()) > SCALE_THRESHOLD || absolute(scale - zAxis.getLength()) > SCALE_THRESHOLD)
 	{
-		ANKI_GLTF_LOGE("No uniform scale in the matrix");
+		ANKI_IMPORTER_LOGE("No uniform scale in the matrix");
 		return Error::USER_DATA;
 	}
 
@@ -125,7 +125,7 @@ static ANKI_USE_RESULT Error getNodeTransform(const cgltf_node& node, Transform&
 	const F32 scaleEpsilon = 0.01f;
 	if(absolute(scale[0] - scale[1]) > scaleEpsilon || absolute(scale[0] - scale[2]) > scaleEpsilon)
 	{
-		ANKI_GLTF_LOGE("Expecting uniform scale");
+		ANKI_IMPORTER_LOGE("Expecting uniform scale");
 		return Error::USER_DATA;
 	}
 
@@ -169,7 +169,7 @@ Error GltfImporter::init(const GltfImporterInitInfo& initInfo)
 	m_lodFactor = clamp(initInfo.m_lodFactor, 0.0f, 1.0f);
 	if(m_lodFactor * F32(m_lodCount - 1) > 0.7f)
 	{
-		ANKI_GLTF_LOGE("LOD factor is too high %f", m_lodFactor);
+		ANKI_IMPORTER_LOGE("LOD factor is too high %f", m_lodFactor);
 		return Error::USER_DATA;
 	}
 
@@ -179,20 +179,20 @@ Error GltfImporter::init(const GltfImporterInitInfo& initInfo)
 		m_lodFactor = 0.0f;
 	}
 
-	ANKI_GLTF_LOGI("Having %u LODs with LOD factor %f", m_lodCount, m_lodFactor);
+	ANKI_IMPORTER_LOGI("Having %u LODs with LOD factor %f", m_lodCount, m_lodFactor);
 
 	cgltf_options options = {};
 	cgltf_result res = cgltf_parse_file(&options, m_inputFname.cstr(), &m_gltf);
 	if(res != cgltf_result_success)
 	{
-		ANKI_GLTF_LOGE("Failed to open the GLTF file. Code: %d", res);
+		ANKI_IMPORTER_LOGE("Failed to open the GLTF file. Code: %d", res);
 		return Error::FUNCTION_FAILED;
 	}
 
 	res = cgltf_load_buffers(&options, m_gltf, m_inputFname.cstr());
 	if(res != cgltf_result_success)
 	{
-		ANKI_GLTF_LOGE("Failed to load GLTF data. Code: %d", res);
+		ANKI_IMPORTER_LOGE("Failed to load GLTF data. Code: %d", res);
 		return Error::FUNCTION_FAILED;
 	}
 
@@ -238,14 +238,14 @@ Error GltfImporter::writeAll()
 	// Check error
 	if(err)
 	{
-		ANKI_GLTF_LOGE("Error happened in main thread");
+		ANKI_IMPORTER_LOGE("Error happened in main thread");
 		return err;
 	}
 
 	const Error threadErr = m_errorInThread.load();
 	if(threadErr)
 	{
-		ANKI_GLTF_LOGE("Error happened in a thread");
+		ANKI_IMPORTER_LOGE("Error happened in a thread");
 		return threadErr;
 	}
 
@@ -266,7 +266,7 @@ Error GltfImporter::getExtras(const cgltf_extras& extras, HashMapAuto<CString, S
 	cgltf_result res = cgltf_copy_extras_json(m_gltf, &extras, &json[0], &extrasSize);
 	if(res != cgltf_result_success)
 	{
-		ANKI_GLTF_LOGE("cgltf_copy_extras_json failed: %d", res);
+		ANKI_IMPORTER_LOGE("cgltf_copy_extras_json failed: %d", res);
 		return Error::FUNCTION_FAILED;
 	}
 
@@ -304,7 +304,7 @@ Error GltfImporter::getExtras(const cgltf_extras& extras, HashMapAuto<CString, S
 
 	if((tokenStrings.getSize() % 2) != 0)
 	{
-		ANKI_GLTF_LOGE("Unable to parse: %s", jsonTxt.cstr());
+		ANKI_IMPORTER_LOGE("Unable to parse: %s", jsonTxt.cstr());
 		return Error::FUNCTION_FAILED;
 	}
 
@@ -383,13 +383,13 @@ Error GltfImporter::parseArrayOfNumbers(CString str, DynamicArrayAuto<F64>& out,
 
 	if(err)
 	{
-		ANKI_GLTF_LOGE("Failed to parse floats: %s", str.cstr());
+		ANKI_IMPORTER_LOGE("Failed to parse floats: %s", str.cstr());
 	}
 
 	if(expectedArraySize && *expectedArraySize != out.getSize())
 	{
-		ANKI_GLTF_LOGE("Failed to parse floats. Expecting %u floats got %u: %s", *expectedArraySize, out.getSize(),
-					   str.cstr());
+		ANKI_IMPORTER_LOGE("Failed to parse floats. Expecting %u floats got %u: %s", *expectedArraySize, out.getSize(),
+						   str.cstr());
 	}
 
 	return Error::NONE;
@@ -402,7 +402,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 	const Error threadErr = m_errorInThread.load();
 	if(threadErr)
 	{
-		ANKI_GLTF_LOGE("Error happened in a thread");
+		ANKI_IMPORTER_LOGE("Error happened in a thread");
 		return threadErr;
 	}
 
@@ -709,7 +709,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 	}
 	else
 	{
-		ANKI_GLTF_LOGW("Ignoring node %s. Assuming transform node", getNodeName(node).cstr());
+		ANKI_IMPORTER_LOGW("Ignoring node %s. Assuming transform node", getNodeName(node).cstr());
 		ANKI_CHECK(getExtras(node.extras, outExtras));
 	}
 
@@ -754,7 +754,7 @@ Error GltfImporter::writeTransform(const Transform& trf)
 Error GltfImporter::writeModel(const cgltf_mesh& mesh)
 {
 	const StringAuto modelFname = computeModelResourceFilename(mesh);
-	ANKI_GLTF_LOGI("Importing model %s", modelFname.cstr());
+	ANKI_IMPORTER_LOGI("Importing model %s", modelFname.cstr());
 
 	HashMapAuto<CString, StringAuto> extras(m_alloc);
 	ANKI_CHECK(getExtras(mesh.extras, extras));
@@ -896,7 +896,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 	StringAuto fname(m_alloc);
 	fname.sprintf("%s%s.ankianim", m_outDir.cstr(), anim.name);
 	fname = fixFilename(fname);
-	ANKI_GLTF_LOGI("Importing animation %s", fname.cstr());
+	ANKI_IMPORTER_LOGI("Importing animation %s", fname.cstr());
 
 	// Gather the channels
 	HashMapAuto<CString, Array<const cgltf_animation_channel*, 3>> channelMap(m_alloc);
@@ -958,7 +958,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 			readAccessor(*channel.sampler->output, positions);
 			if(keys.getSize() != positions.getSize())
 			{
-				ANKI_GLTF_LOGE("Position count should match they keyframes");
+				ANKI_IMPORTER_LOGE("Position count should match they keyframes");
 				return Error::USER_DATA;
 			}
 
@@ -982,7 +982,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 			readAccessor(*channel.sampler->output, rotations);
 			if(keys.getSize() != rotations.getSize())
 			{
-				ANKI_GLTF_LOGE("Rotation count should match they keyframes");
+				ANKI_IMPORTER_LOGE("Rotation count should match they keyframes");
 				return Error::USER_DATA;
 			}
 
@@ -1006,7 +1006,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 			readAccessor(*channel.sampler->output, scales);
 			if(keys.getSize() != scales.getSize())
 			{
-				ANKI_GLTF_LOGE("Scale count should match they keyframes");
+				ANKI_IMPORTER_LOGE("Scale count should match they keyframes");
 				return Error::USER_DATA;
 			}
 
@@ -1016,7 +1016,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 				if(absolute(scales[i][0] - scales[i][1]) > scaleEpsilon
 				   || absolute(scales[i][0] - scales[i][2]) > scaleEpsilon)
 				{
-					ANKI_GLTF_LOGE("Expecting uniform scale");
+					ANKI_IMPORTER_LOGE("Expecting uniform scale");
 					return Error::USER_DATA;
 				}
 
@@ -1111,14 +1111,14 @@ Error GltfImporter::writeSkeleton(const cgltf_skin& skin)
 {
 	StringAuto fname(m_alloc);
 	fname.sprintf("%s%s.ankiskel", m_outDir.cstr(), skin.name);
-	ANKI_GLTF_LOGI("Importing skeleton %s", fname.cstr());
+	ANKI_IMPORTER_LOGI("Importing skeleton %s", fname.cstr());
 
 	// Get matrices
 	DynamicArrayAuto<Mat4> boneMats(m_alloc);
 	readAccessor(*skin.inverse_bind_matrices, boneMats);
 	if(boneMats.getSize() != skin.joints_count)
 	{
-		ANKI_GLTF_LOGE("Bone matrices should match the joint count");
+		ANKI_IMPORTER_LOGE("Bone matrices should match the joint count");
 		return Error::USER_DATA;
 	}
 
@@ -1176,7 +1176,7 @@ Error GltfImporter::writeLight(const cgltf_node& node, const HashMapAuto<CString
 {
 	const cgltf_light& light = *node.light;
 	StringAuto nodeName = getNodeName(node);
-	ANKI_GLTF_LOGI("Importing light %s", nodeName.cstr());
+	ANKI_IMPORTER_LOGI("Importing light %s", nodeName.cstr());
 
 	HashMapAuto<CString, StringAuto> extras(parentExtras);
 	ANKI_CHECK(getExtras(light.extras, extras));
@@ -1194,7 +1194,7 @@ Error GltfImporter::writeLight(const cgltf_node& node, const HashMapAuto<CString
 		lightTypeStr = "Directional";
 		break;
 	default:
-		ANKI_GLTF_LOGE("Unsupporter light type %d", light.type);
+		ANKI_IMPORTER_LOGE("Unsupporter light type %d", light.type);
 		return Error::USER_DATA;
 	}
 
@@ -1314,12 +1314,12 @@ Error GltfImporter::writeCamera(const cgltf_node& node, const HashMapAuto<CStrin
 {
 	if(node.camera->type != cgltf_camera_type_perspective)
 	{
-		ANKI_GLTF_LOGW("Unsupported camera type: %s", getNodeName(node).cstr());
+		ANKI_IMPORTER_LOGW("Unsupported camera type: %s", getNodeName(node).cstr());
 		return Error::NONE;
 	}
 
 	const cgltf_camera_perspective& cam = node.camera->perspective;
-	ANKI_GLTF_LOGI("Importing camera %s", getNodeName(node).cstr());
+	ANKI_IMPORTER_LOGI("Importing camera %s", getNodeName(node).cstr());
 
 	ANKI_CHECK(m_sceneFile.writeText("\nnode = scene:newPerspectiveCameraNode(\"%s\")\n", getNodeName(node).cstr()));
 	ANKI_CHECK(m_sceneFile.writeText("scene:setActiveCameraNode(node:getSceneNodeBase())\n"));
@@ -1335,7 +1335,7 @@ Error GltfImporter::writeCamera(const cgltf_node& node, const HashMapAuto<CStrin
 
 Error GltfImporter::writeModelNode(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras)
 {
-	ANKI_GLTF_LOGI("Importing model node %s", getNodeName(node).cstr());
+	ANKI_IMPORTER_LOGI("Importing model node %s", getNodeName(node).cstr());
 
 	HashMapAuto<CString, StringAuto> extras(parentExtras);
 	ANKI_CHECK(getExtras(node.extras, extras));

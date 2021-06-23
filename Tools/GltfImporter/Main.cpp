@@ -184,7 +184,7 @@ int main(int argc, char** argv)
 	CmdLineArgs cmdArgs;
 	if(parseCommandLineArgs(argc, argv, cmdArgs))
 	{
-		ANKI_GLTF_LOGE(USAGE, argv[0]);
+		ANKI_IMPORTER_LOGE(USAGE, argv[0]);
 		return 1;
 	}
 

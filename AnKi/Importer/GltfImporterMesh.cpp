@@ -70,13 +70,13 @@ static Error checkAttribute(const cgltf_attribute& attrib)
 {
 	if(cgltfComponentCount(attrib.data->type) != T::COMPONENT_COUNT)
 	{
-		ANKI_GLTF_LOGE("Wrong component count for attribute: %s", attrib.name);
+		ANKI_IMPORTER_LOGE("Wrong component count for attribute: %s", attrib.name);
 		return Error::USER_DATA;
 	}
 
 	if(cgltfComponentSize(attrib.data->component_type) != sizeof(typename T::Scalar))
 	{
-		ANKI_GLTF_LOGE("Incompatible type: %s", attrib.name);
+		ANKI_IMPORTER_LOGE("Incompatible type: %s", attrib.name);
 		return Error::USER_DATA;
 	}
 
@@ -84,7 +84,7 @@ static Error checkAttribute(const cgltf_attribute& attrib)
 	const U count = attrib.data->count;
 	if(count == 0)
 	{
-		ANKI_GLTF_LOGE("Zero vertex count");
+		ANKI_IMPORTER_LOGE("Zero vertex count");
 		return Error::USER_DATA;
 	}
 
@@ -276,8 +276,8 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 {
 	StringAuto fname(m_alloc);
 	fname.sprintf("%s%s.ankimesh", m_outDir.cstr(), (nameOverride.isEmpty()) ? mesh.name : nameOverride.cstr());
-	ANKI_GLTF_LOGI("Importing mesh (%s, decimate factor %f): %s", (m_optimizeMeshes) ? "optimze" : "WON'T optimize",
-				   decimateFactor, fname.cstr());
+	ANKI_IMPORTER_LOGI("Importing mesh (%s, decimate factor %f): %s", (m_optimizeMeshes) ? "optimze" : "WON'T optimize",
+					   decimateFactor, fname.cstr());
 
 	ListAuto<SubMesh> submeshes(m_alloc);
 	U32 totalIndexCount = 0;
@@ -294,7 +294,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 	{
 		if(primitive->type != cgltf_primitive_type_triangles)
 		{
-			ANKI_GLTF_LOGE("Expecting triangles got %d", primitive->type);
+			ANKI_IMPORTER_LOGE("Expecting triangles got %d", primitive->type);
 			return Error::USER_DATA;
 		}
 
@@ -311,7 +311,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 
 		if(maxVertCount == 0 || minVertCount != maxVertCount)
 		{
-			ANKI_GLTF_LOGE("Wrong number of vertices");
+			ANKI_IMPORTER_LOGE("Wrong number of vertices");
 			return Error::USER_DATA;
 		}
 
@@ -368,7 +368,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 			}
 			else
 			{
-				ANKI_GLTF_LOGW("Ignoring attribute: %s", attrib->name);
+				ANKI_IMPORTER_LOGW("Ignoring attribute: %s", attrib->name);
 			}
 		}
 
@@ -418,7 +418,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 			ANKI_ASSERT(primitive->indices);
 			if(primitive->indices->count == 0 || (primitive->indices->count % 3) != 0)
 			{
-				ANKI_GLTF_LOGE("Incorect index count: %lu", primitive->indices->count);
+				ANKI_IMPORTER_LOGE("Incorect index count: %lu", primitive->indices->count);
 				return Error::USER_DATA;
 			}
 			submesh.m_indices.create(U32(primitive->indices->count));
@@ -568,7 +568,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 
 	if(submeshes.getSize() == 0)
 	{
-		ANKI_GLTF_LOGE("Mesh contains degenerate geometry");
+		ANKI_IMPORTER_LOGE("Mesh contains degenerate geometry");
 		return Error::USER_DATA;
 	}
 
@@ -732,7 +732,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 			const U32 idx = submesh.m_indices[i] + vertCount;
 			if(idx > MAX_U16)
 			{
-				ANKI_GLTF_LOGE("Only supports 16bit indices for now");
+				ANKI_IMPORTER_LOGE("Only supports 16bit indices for now");
 				return Error::USER_DATA;
 			}
 
@@ -797,7 +797,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 				{
 					if(submesh.m_verts[i].m_boneIds[c] > 0XFF)
 					{
-						ANKI_GLTF_LOGE("Only 256 bones are supported");
+						ANKI_IMPORTER_LOGE("Only 256 bones are supported");
 						return Error::USER_DATA;
 					}
 

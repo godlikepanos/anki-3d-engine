@@ -101,11 +101,11 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, RayTypeBit usedRayT
 {
 	StringAuto fname(m_alloc);
 	fname.sprintf("%s%s.ankimtl", m_outDir.cstr(), mtl.name);
-	ANKI_GLTF_LOGI("Importing material %s", fname.cstr());
+	ANKI_IMPORTER_LOGI("Importing material %s", fname.cstr());
 
 	if(!mtl.has_pbr_metallic_roughness)
 	{
-		ANKI_GLTF_LOGE("Expecting PBR metallic roughness");
+		ANKI_IMPORTER_LOGE("Expecting PBR metallic roughness");
 		return Error::USER_DATA;
 	}
 
@@ -152,7 +152,7 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, RayTypeBit usedRayT
 			tokens.splitString(it->toCString(), ' ');
 			if(tokens.getSize() != 3)
 			{
-				ANKI_GLTF_LOGE("Wrong specular: %s", it->cstr());
+				ANKI_IMPORTER_LOGE("Wrong specular: %s", it->cstr());
 				return Error::USER_DATA;
 			}
 
