@@ -59,8 +59,8 @@ static Error identifyMetallicRoughnessTexture(CString fname, F32& constantMetali
 {
 	ImageLoader iloader(alloc);
 	ANKI_CHECK(iloader.load(fname));
-	ANKI_ASSERT(iloader.getColorFormat() == ImageLoaderColorFormat::RGBA8);
-	ANKI_ASSERT(iloader.getCompression() == ImageLoaderDataCompression::RAW);
+	ANKI_ASSERT(iloader.getColorFormat() == ImageBinaryColorFormat::RGBA8);
+	ANKI_ASSERT(iloader.getCompression() == ImageBinaryDataCompression::RAW);
 
 	const U8Vec4* data = reinterpret_cast<const U8Vec4*>(&iloader.getSurface(0, 0, 0).m_data[0]);
 

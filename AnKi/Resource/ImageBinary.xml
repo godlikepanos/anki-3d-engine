@@ -1,0 +1,60 @@
+<serializer>
+	<includes>
+		<include file="&lt;AnKi/Resource/Common.h&gt;"/>
+	</includes>
+
+	<doxygen_group name="resource"/>
+
+	<prefix_code><![CDATA[
+static constexpr const char* IMAGE_MAGIC = "ANKITEX1";
+
+/// Image type.
+/// @memberof ImageBinaryHeader
+enum class ImageBinaryType : U32
+{
+	NONE,
+	_2D,
+	CUBE,
+	_3D,
+	_2D_ARRAY
+};
+
+/// The acceptable color types.
+/// @memberof ImageBinaryHeader
+enum class ImageBinaryColorFormat : U32
+{
+	NONE,
+	RGB8,
+	RGBA8,
+	SRGB8,
+};
+
+/// The available data compressions.
+/// @memberof ImageBinaryHeader
+enum class ImageBinaryDataCompression : U32
+{
+	NONE,
+	RAW = 1 << 0,
+	S3TC = 1 << 1,
+	ETC = 1 << 2
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ImageBinaryDataCompression)
+]]></prefix_code>
+
+	<classes>
+		<class name="ImageBinaryHeader" comment="The 1st things that appears in a texture binary.">
+			<members>
+				<member name="m_magic" type="U8" array_size="8"/>
+				<member name="m_width" type="U32"/>
+				<member name="m_height" type="U32"/>
+				<member name="m_depthOrLayerCount" type="U32"/>
+				<member name="m_type" type="ImageBinaryType"/>
+				<member name="m_colorFormat" type="ImageBinaryColorFormat"/>
+				<member name="m_compressionFormats" type="ImageBinaryDataCompression"/>
+				<member name="m_isNormal" type="U32"/>
+				<member name="m_mipmapCount" type="U32"/>
+				<member name="m_padding" type="U8" array_size="88"/>
+			</members>
+		</class>
+	</classes>
+</serializer>

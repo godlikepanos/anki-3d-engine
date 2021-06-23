@@ -83,25 +83,25 @@ Error TextureResource::load(const ResourceFilename& filename, Bool async)
 
 	switch(loader.getTextureType())
 	{
-	case ImageLoaderTextureType::_2D:
+	case ImageBinaryType::_2D:
 		init.m_type = TextureType::_2D;
 		init.m_depth = 1;
 		faces = 1;
 		init.m_layerCount = 1;
 		break;
-	case ImageLoaderTextureType::CUBE:
+	case ImageBinaryType::CUBE:
 		init.m_type = TextureType::CUBE;
 		init.m_depth = 1;
 		faces = 6;
 		init.m_layerCount = 1;
 		break;
-	case ImageLoaderTextureType::_2D_ARRAY:
+	case ImageBinaryType::_2D_ARRAY:
 		init.m_type = TextureType::_2D_ARRAY;
 		init.m_layerCount = loader.getLayerCount();
 		init.m_depth = 1;
 		faces = 1;
 		break;
-	case ImageLoaderTextureType::_3D:
+	case ImageBinaryType::_3D:
 		init.m_type = TextureType::_3D;
 		init.m_depth = loader.getDepth();
 		init.m_layerCount = 1;
@@ -112,28 +112,28 @@ Error TextureResource::load(const ResourceFilename& filename, Bool async)
 	}
 
 	// Internal format
-	if(loader.getColorFormat() == ImageLoaderColorFormat::RGB8)
+	if(loader.getColorFormat() == ImageBinaryColorFormat::RGB8)
 	{
 		switch(loader.getCompression())
 		{
-		case ImageLoaderDataCompression::RAW:
+		case ImageBinaryDataCompression::RAW:
 			init.m_format = Format::R8G8B8_UNORM;
 			break;
-		case ImageLoaderDataCompression::S3TC:
+		case ImageBinaryDataCompression::S3TC:
 			init.m_format = Format::BC1_RGB_UNORM_BLOCK;
 			break;
 		default:
 			ANKI_ASSERT(0);
 		}
 	}
-	else if(loader.getColorFormat() == ImageLoaderColorFormat::RGBA8)
+	else if(loader.getColorFormat() == ImageBinaryColorFormat::RGBA8)
 	{
 		switch(loader.getCompression())
 		{
-		case ImageLoaderDataCompression::RAW:
+		case ImageBinaryDataCompression::RAW:
 			init.m_format = Format::R8G8B8A8_UNORM;
 			break;
-		case ImageLoaderDataCompression::S3TC:
+		case ImageBinaryDataCompression::S3TC:
 			init.m_format = Format::BC3_UNORM_BLOCK;
 			break;
 		default:

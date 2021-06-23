@@ -6,7 +6,6 @@
 #include <AnKi/Resource/ImageLoader.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/Filesystem.h>
-#include <AnKi/Util/Array.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_ASSERT(x) ANKI_ASSERT(x)
@@ -27,25 +26,9 @@ namespace anki
 static const U8 tgaHeaderUncompressed[12] = {0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 static const U8 tgaHeaderCompressed[12] = {0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-class AnkiTextureHeader
-{
-public:
-	Array<U8, 8> m_magic;
-	U32 m_width;
-	U32 m_height;
-	U32 m_depthOrLayerCount;
-	ImageLoaderTextureType m_type;
-	ImageLoaderColorFormat m_colorFormat;
-	ImageLoaderDataCompression m_compressionFormats;
-	U32 m_normal;
-	U32 m_mipCount;
-	U8 m_padding[88];
-};
-static_assert(sizeof(AnkiTextureHeader) == 128, "Check sizeof AnkiTextureHeader");
-
 /// Get the size in bytes of a single surface
-static PtrSize calcSurfaceSize(const U32 width32, const U32 height32, const ImageLoaderDataCompression comp,
-							   const ImageLoaderColorFormat cf)
+static PtrSize calcSurfaceSize(const U32 width32, const U32 height32, const ImageBinaryDataCompression comp,
+							   const ImageBinaryColorFormat cf)
 {
 	const PtrSize width = width32;
 	const PtrSize height = height32;
@@ -55,13 +38,13 @@ static PtrSize calcSurfaceSize(const U32 width32, const U32 height32, const Imag
 
 	switch(comp)
 	{
-	case ImageLoaderDataCompression::RAW:
-		out = width * height * ((cf == ImageLoaderColorFormat::RGB8) ? 3 : 4);
+	case ImageBinaryDataCompression::RAW:
+		out = width * height * ((cf == ImageBinaryColorFormat::RGB8) ? 3 : 4);
 		break;
-	case ImageLoaderDataCompression::S3TC:
-		out = (width / 4) * (height / 4) * ((cf == ImageLoaderColorFormat::RGB8) ? 8 : 16); // block size
+	case ImageBinaryDataCompression::S3TC:
+		out = (width / 4) * (height / 4) * ((cf == ImageBinaryColorFormat::RGB8) ? 8 : 16); // block size
 		break;
-	case ImageLoaderDataCompression::ETC:
+	case ImageBinaryDataCompression::ETC:
 		out = (width / 4) * (height / 4) * 8;
 		break;
 	default:
@@ -74,8 +57,8 @@ static PtrSize calcSurfaceSize(const U32 width32, const U32 height32, const Imag
 }
 
 /// Get the size in bytes of a single volume
-static PtrSize calcVolumeSize(const U width, const U height, const U depth, const ImageLoaderDataCompression comp,
-							  const ImageLoaderColorFormat cf)
+static PtrSize calcVolumeSize(const U width, const U height, const U depth, const ImageBinaryDataCompression comp,
+							  const ImageBinaryColorFormat cf)
 {
 	PtrSize out = 0;
 
@@ -83,8 +66,8 @@ static PtrSize calcVolumeSize(const U width, const U height, const U depth, cons
 
 	switch(comp)
 	{
-	case ImageLoaderDataCompression::RAW:
-		out = width * height * depth * ((cf == ImageLoaderColorFormat::RGB8) ? 3 : 4);
+	case ImageBinaryDataCompression::RAW:
+		out = width * height * depth * ((cf == ImageBinaryColorFormat::RGB8) ? 3 : 4);
 		break;
 	default:
 		ANKI_ASSERT(0);
@@ -96,27 +79,27 @@ static PtrSize calcVolumeSize(const U width, const U height, const U depth, cons
 }
 
 /// Calculate the size of a compressed or uncomressed color data
-static PtrSize calcSizeOfSegment(const AnkiTextureHeader& header, ImageLoaderDataCompression comp)
+static PtrSize calcSizeOfSegment(const ImageBinaryHeader& header, ImageBinaryDataCompression comp)
 {
 	PtrSize out = 0;
 	U32 width = header.m_width;
 	U32 height = header.m_height;
-	U32 mips = header.m_mipCount;
+	U32 mips = header.m_mipmapCount;
 	ANKI_ASSERT(mips > 0);
 
-	if(header.m_type != ImageLoaderTextureType::_3D)
+	if(header.m_type != ImageBinaryType::_3D)
 	{
 		U32 surfCountPerMip = 0;
 
 		switch(header.m_type)
 		{
-		case ImageLoaderTextureType::_2D:
+		case ImageBinaryType::_2D:
 			surfCountPerMip = 1;
 			break;
-		case ImageLoaderTextureType::CUBE:
+		case ImageBinaryType::CUBE:
 			surfCountPerMip = 6;
 			break;
-		case ImageLoaderTextureType::_2D_ARRAY:
+		case ImageBinaryType::_2D_ARRAY:
 			surfCountPerMip = header.m_depthOrLayerCount;
 			break;
 		default:
@@ -361,19 +344,19 @@ Error ImageLoader::loadTga(FileInterface& fs, U32& width, U32& height, U32& bpp,
 }
 
 Error ImageLoader::loadAnkiTexture(FileInterface& file, U32 maxTextureSize,
-								   ImageLoaderDataCompression& preferredCompression,
+								   ImageBinaryDataCompression& preferredCompression,
 								   DynamicArray<ImageLoaderSurface>& surfaces, DynamicArray<ImageLoaderVolume>& volumes,
 								   GenericMemoryPoolAllocator<U8>& alloc, U32& width, U32& height, U32& depth,
-								   U32& layerCount, U32& mipCount, ImageLoaderTextureType& textureType,
-								   ImageLoaderColorFormat& colorFormat)
+								   U32& layerCount, U32& mipCount, ImageBinaryType& textureType,
+								   ImageBinaryColorFormat& colorFormat)
 {
 	//
 	// Read and check the header
 	//
-	AnkiTextureHeader header;
-	ANKI_CHECK(file.read(&header, sizeof(AnkiTextureHeader)));
+	ImageBinaryHeader header;
+	ANKI_CHECK(file.read(&header, sizeof(ImageBinaryHeader)));
 
-	if(std::memcmp(&header.m_magic[0], "ANKITEX1", 8) != 0)
+	if(std::memcmp(&header.m_magic[0], IMAGE_MAGIC, sizeof(IMAGE_MAGIC - 1)) != 0)
 	{
 		ANKI_RESOURCE_LOGE("Wrong magic word");
 		return Error::USER_DATA;
@@ -392,31 +375,31 @@ Error ImageLoader::loadAnkiTexture(FileInterface& file, U32 maxTextureSize,
 		return Error::USER_DATA;
 	}
 
-	if(header.m_type < ImageLoaderTextureType::_2D || header.m_type > ImageLoaderTextureType::_2D_ARRAY)
+	if(header.m_type < ImageBinaryType::_2D || header.m_type > ImageBinaryType::_2D_ARRAY)
 	{
 		ANKI_RESOURCE_LOGE("Incorrect header: texture type");
 		return Error::USER_DATA;
 	}
 
-	if(header.m_colorFormat < ImageLoaderColorFormat::RGB8 || header.m_colorFormat > ImageLoaderColorFormat::RGBA8)
+	if(header.m_colorFormat < ImageBinaryColorFormat::RGB8 || header.m_colorFormat > ImageBinaryColorFormat::RGBA8)
 	{
 		ANKI_RESOURCE_LOGE("Incorrect header: color format");
 		return Error::USER_DATA;
 	}
 
-	if((header.m_compressionFormats & preferredCompression) == ImageLoaderDataCompression::NONE)
+	if((header.m_compressionFormats & preferredCompression) == ImageBinaryDataCompression::NONE)
 	{
 		// Fallback
-		preferredCompression = ImageLoaderDataCompression::RAW;
+		preferredCompression = ImageBinaryDataCompression::RAW;
 
-		if((header.m_compressionFormats & preferredCompression) == ImageLoaderDataCompression::NONE)
+		if((header.m_compressionFormats & preferredCompression) == ImageBinaryDataCompression::NONE)
 		{
 			ANKI_RESOURCE_LOGE("File does not contain raw compression");
 			return Error::USER_DATA;
 		}
 	}
 
-	if(header.m_normal != 0 && header.m_normal != 1)
+	if(header.m_isNormal != 0 && header.m_isNormal != 1)
 	{
 		ANKI_RESOURCE_LOGE("Incorrect header: normal");
 		return Error::USER_DATA;
@@ -429,20 +412,20 @@ Error ImageLoader::loadAnkiTexture(FileInterface& file, U32 maxTextureSize,
 	U32 faceCount = 1;
 	switch(header.m_type)
 	{
-	case ImageLoaderTextureType::_2D:
+	case ImageBinaryType::_2D:
 		depth = 1;
 		layerCount = 1;
 		break;
-	case ImageLoaderTextureType::CUBE:
+	case ImageBinaryType::CUBE:
 		depth = 1;
 		layerCount = 1;
 		faceCount = 6;
 		break;
-	case ImageLoaderTextureType::_3D:
+	case ImageBinaryType::_3D:
 		depth = header.m_depthOrLayerCount;
 		layerCount = 1;
 		break;
-	case ImageLoaderTextureType::_2D_ARRAY:
+	case ImageBinaryType::_2D_ARRAY:
 		depth = 1;
 		layerCount = header.m_depthOrLayerCount;
 		break;
@@ -454,30 +437,30 @@ Error ImageLoader::loadAnkiTexture(FileInterface& file, U32 maxTextureSize,
 	// Move file pointer
 	//
 
-	if(preferredCompression == ImageLoaderDataCompression::RAW)
+	if(preferredCompression == ImageBinaryDataCompression::RAW)
 	{
 		// Do nothing
 	}
-	else if(preferredCompression == ImageLoaderDataCompression::S3TC)
+	else if(preferredCompression == ImageBinaryDataCompression::S3TC)
 	{
-		if((header.m_compressionFormats & ImageLoaderDataCompression::RAW) != ImageLoaderDataCompression::NONE)
+		if((header.m_compressionFormats & ImageBinaryDataCompression::RAW) != ImageBinaryDataCompression::NONE)
 		{
 			// If raw compression is present then skip it
-			ANKI_CHECK(file.seek(calcSizeOfSegment(header, ImageLoaderDataCompression::RAW), FileSeekOrigin::CURRENT));
+			ANKI_CHECK(file.seek(calcSizeOfSegment(header, ImageBinaryDataCompression::RAW), FileSeekOrigin::CURRENT));
 		}
 	}
-	else if(preferredCompression == ImageLoaderDataCompression::ETC)
+	else if(preferredCompression == ImageBinaryDataCompression::ETC)
 	{
-		if((header.m_compressionFormats & ImageLoaderDataCompression::RAW) != ImageLoaderDataCompression::NONE)
+		if((header.m_compressionFormats & ImageBinaryDataCompression::RAW) != ImageBinaryDataCompression::NONE)
 		{
 			// If raw compression is present then skip it
-			ANKI_CHECK(file.seek(calcSizeOfSegment(header, ImageLoaderDataCompression::RAW), FileSeekOrigin::CURRENT));
+			ANKI_CHECK(file.seek(calcSizeOfSegment(header, ImageBinaryDataCompression::RAW), FileSeekOrigin::CURRENT));
 		}
 
-		if((header.m_compressionFormats & ImageLoaderDataCompression::S3TC) != ImageLoaderDataCompression::NONE)
+		if((header.m_compressionFormats & ImageBinaryDataCompression::S3TC) != ImageBinaryDataCompression::NONE)
 		{
 			// If s3tc compression is present then skip it
-			ANKI_CHECK(file.seek(calcSizeOfSegment(header, ImageLoaderDataCompression::S3TC), FileSeekOrigin::CURRENT));
+			ANKI_CHECK(file.seek(calcSizeOfSegment(header, ImageBinaryDataCompression::S3TC), FileSeekOrigin::CURRENT));
 		}
 	}
 
@@ -487,12 +470,12 @@ Error ImageLoader::loadAnkiTexture(FileInterface& file, U32 maxTextureSize,
 
 	// Allocate the surfaces
 	mipCount = 0;
-	if(header.m_type != ImageLoaderTextureType::_3D)
+	if(header.m_type != ImageBinaryType::_3D)
 	{
 		// Read all surfaces
 		U32 mipWidth = header.m_width;
 		U32 mipHeight = header.m_height;
-		for(U32 mip = 0; mip < header.m_mipCount; mip++)
+		for(U32 mip = 0; mip < header.m_mipmapCount; mip++)
 		{
 			for(U32 l = 0; l < layerCount; l++)
 			{
@@ -502,7 +485,7 @@ Error ImageLoader::loadAnkiTexture(FileInterface& file, U32 maxTextureSize,
 						U32(calcSurfaceSize(mipWidth, mipHeight, preferredCompression, header.m_colorFormat));
 
 					// Check if this mipmap can be skipped because of size
-					if(max(mipWidth, mipHeight) <= maxTextureSize || mip == header.m_mipCount - 1)
+					if(max(mipWidth, mipHeight) <= maxTextureSize || mip == header.m_mipmapCount - 1)
 					{
 						ImageLoaderSurface& surf = *surfaces.emplaceBack(alloc);
 						surf.m_width = mipWidth;
@@ -511,7 +494,7 @@ Error ImageLoader::loadAnkiTexture(FileInterface& file, U32 maxTextureSize,
 						surf.m_data.create(alloc, dataSize);
 						ANKI_CHECK(file.read(&surf.m_data[0], dataSize));
 
-						mipCount = max(header.m_mipCount - mip, mipCount);
+						mipCount = max(header.m_mipmapCount - mip, mipCount);
 					}
 					else
 					{
@@ -533,13 +516,13 @@ Error ImageLoader::loadAnkiTexture(FileInterface& file, U32 maxTextureSize,
 		U32 mipWidth = header.m_width;
 		U32 mipHeight = header.m_height;
 		U32 mipDepth = header.m_depthOrLayerCount;
-		for(U32 mip = 0; mip < header.m_mipCount; mip++)
+		for(U32 mip = 0; mip < header.m_mipmapCount; mip++)
 		{
 			const U32 dataSize =
 				U32(calcVolumeSize(mipWidth, mipHeight, mipDepth, preferredCompression, header.m_colorFormat));
 
 			// Check if this mipmap can be skipped because of size
-			if(max(max(mipWidth, mipHeight), mipDepth) <= maxTextureSize || mip == header.m_mipCount - 1)
+			if(max(max(mipWidth, mipHeight), mipDepth) <= maxTextureSize || mip == header.m_mipmapCount - 1)
 			{
 				ImageLoaderVolume& vol = *volumes.emplaceBack(alloc);
 				vol.m_width = mipWidth;
@@ -549,7 +532,7 @@ Error ImageLoader::loadAnkiTexture(FileInterface& file, U32 maxTextureSize,
 				vol.m_data.create(alloc, dataSize);
 				ANKI_CHECK(file.read(&vol.m_data[0], dataSize));
 
-				mipCount = max(header.m_mipCount - mip, mipCount);
+				mipCount = max(header.m_mipmapCount - mip, mipCount);
 			}
 			else
 			{
@@ -640,14 +623,14 @@ Error ImageLoader::loadInternal(FileInterface& file, const CString& filename, U3
 	}
 
 	// load from this extension
-	m_textureType = ImageLoaderTextureType::_2D;
-	m_compression = ImageLoaderDataCompression::RAW;
+	m_textureType = ImageBinaryType::_2D;
+	m_compression = ImageBinaryDataCompression::RAW;
 
 	if(ext == "tga")
 	{
 		m_surfaces.create(m_alloc, 1);
 
-		m_mipCount = 1;
+		m_mipmapCount = 1;
 		m_depth = 1;
 		m_layerCount = 1;
 		U32 bpp = 0;
@@ -658,11 +641,11 @@ Error ImageLoader::loadInternal(FileInterface& file, const CString& filename, U3
 
 		if(bpp == 32)
 		{
-			m_colorFormat = ImageLoaderColorFormat::RGBA8;
+			m_colorFormat = ImageBinaryColorFormat::RGBA8;
 		}
 		else if(bpp == 24)
 		{
-			m_colorFormat = ImageLoaderColorFormat::RGB8;
+			m_colorFormat = ImageBinaryColorFormat::RGB8;
 		}
 		else
 		{
@@ -672,22 +655,22 @@ Error ImageLoader::loadInternal(FileInterface& file, const CString& filename, U3
 	else if(ext == "ankitex")
 	{
 #if 0
-		compression = ImageLoaderDataCompression::RAW;
+		compression = ImageBinaryDataCompression::RAW;
 #else
-		m_compression = ImageLoaderDataCompression::S3TC;
+		m_compression = ImageBinaryDataCompression::S3TC;
 #endif
 
 		ANKI_CHECK(loadAnkiTexture(file, maxTextureSize, m_compression, m_surfaces, m_volumes, m_alloc, m_width,
-								   m_height, m_depth, m_layerCount, m_mipCount, m_textureType, m_colorFormat));
+								   m_height, m_depth, m_layerCount, m_mipmapCount, m_textureType, m_colorFormat));
 	}
 	else if(ext == "png" || ext == "jpg")
 	{
 		m_surfaces.create(m_alloc, 1);
 
-		m_mipCount = 1;
+		m_mipmapCount = 1;
 		m_depth = 1;
 		m_layerCount = 1;
-		m_colorFormat = ImageLoaderColorFormat::RGBA8;
+		m_colorFormat = ImageBinaryColorFormat::RGBA8;
 
 		ANKI_CHECK(loadStb(file, m_surfaces[0].m_width, m_surfaces[0].m_height, m_surfaces[0].m_data, m_alloc));
 
@@ -705,23 +688,23 @@ Error ImageLoader::loadInternal(FileInterface& file, const CString& filename, U3
 
 const ImageLoaderSurface& ImageLoader::getSurface(U32 level, U32 face, U32 layer) const
 {
-	ANKI_ASSERT(level < m_mipCount);
+	ANKI_ASSERT(level < m_mipmapCount);
 
 	U32 idx = 0;
 
 	switch(m_textureType)
 	{
-	case ImageLoaderTextureType::_2D:
+	case ImageBinaryType::_2D:
 		idx = level;
 		break;
-	case ImageLoaderTextureType::CUBE:
+	case ImageBinaryType::CUBE:
 		ANKI_ASSERT(face < 6);
 		idx = level * 6 + face;
 		break;
-	case ImageLoaderTextureType::_3D:
+	case ImageBinaryType::_3D:
 		ANKI_ASSERT(0 && "Can't use that for 3D textures");
 		break;
-	case ImageLoaderTextureType::_2D_ARRAY:
+	case ImageBinaryType::_2D_ARRAY:
 		idx = level * m_layerCount + layer;
 		break;
 	default:
@@ -733,7 +716,7 @@ const ImageLoaderSurface& ImageLoader::getSurface(U32 level, U32 face, U32 layer
 
 const ImageLoaderVolume& ImageLoader::getVolume(U32 level) const
 {
-	ANKI_ASSERT(m_textureType == ImageLoaderTextureType::_3D);
+	ANKI_ASSERT(m_textureType == ImageBinaryType::_3D);
 	return m_volumes[level];
 }
 
