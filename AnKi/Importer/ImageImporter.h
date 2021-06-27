@@ -14,6 +14,8 @@ namespace anki
 /// @addtogroup importer
 /// @{
 
+/// Config for importImage().
+/// @relates importImage.
 class ImageImporterConfig
 {
 public:
@@ -25,6 +27,7 @@ public:
 	U32 m_minMipmapDimension = 4;
 	U32 m_mipmapCount = MAX_U32;
 	Bool m_noAlpha = true;
+	CString m_tempDirectory;
 };
 
 /// Converts images to AnKi's specific format.

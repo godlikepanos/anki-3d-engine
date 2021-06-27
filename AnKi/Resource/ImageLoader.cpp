@@ -4,21 +4,9 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Resource/ImageLoader.h>
+#include <AnKi/Resource/Stb.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/Filesystem.h>
-
-#define STB_IMAGE_IMPLEMENTATION
-#define STBI_ASSERT(x) ANKI_ASSERT(x)
-#if ANKI_COMPILER_GCC_COMPATIBLE
-#	pragma GCC diagnostic push
-#	pragma GCC diagnostic ignored "-Wfloat-conversion"
-#	pragma GCC diagnostic ignored "-Wconversion"
-#	pragma GCC diagnostic ignored "-Wtype-limits"
-#endif
-#include <Stb/stb_image.h>
-#if ANKI_COMPILER_GCC_COMPATIBLE
-#	pragma GCC diagnostic pop
-#endif
 
 namespace anki
 {

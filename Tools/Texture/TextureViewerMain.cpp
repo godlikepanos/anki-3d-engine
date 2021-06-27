@@ -108,7 +108,8 @@ private:
 			StringListAuto mipLabels(getFrameAllocator());
 			for(U32 mip = 0; mip < grTex.getMipmapCount(); ++mip)
 			{
-				mipLabels.pushBackSprintf("Mip %u (%llux%llu)", mip, grTex.getWidth() >> mip, grTex.getHeight() >> mip);
+				mipLabels.pushBackSprintf("Mip %u (%llu x %llu)", mip, grTex.getWidth() >> mip,
+										  grTex.getHeight() >> mip);
 			}
 
 			const U32 lastCrntMip = m_crntMip;
@@ -235,7 +236,7 @@ public:
 
 		// Change window name
 		StringAuto title(alloc);
-		title.sprintf("%s %llux%llu Mips %u", argv[1], tex->getWidth(), tex->getHeight(),
+		title.sprintf("%s %llu x %llu Mips %u", argv[1], tex->getWidth(), tex->getHeight(),
 					  tex->getGrTexture()->getMipmapCount());
 		getWindow().setWindowTitle(title);
 

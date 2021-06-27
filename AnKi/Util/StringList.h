@@ -55,10 +55,10 @@ public:
 
 	/// Push at the end of the list a formated string.
 	template<typename... TArgs>
-	void pushBackSprintf(Allocator alloc, const TArgs&... args)
+	void pushBackSprintf(Allocator alloc, CString fmt, TArgs... args)
 	{
 		String str;
-		str.sprintf(alloc, args...);
+		str.sprintf(alloc, fmt, args...);
 
 		Base::emplaceBack(alloc);
 		Base::getBack() = std::move(str);
@@ -66,10 +66,10 @@ public:
 
 	/// Push at the beginning of the list a formated string.
 	template<typename... TArgs>
-	void pushFrontSprintf(Allocator alloc, const TArgs&... args)
+	void pushFrontSprintf(Allocator alloc, CString fmt, TArgs... args)
 	{
 		String str;
-		str.sprintf(alloc, args...);
+		str.sprintf(alloc, fmt, args...);
 
 		Base::emplaceFront(alloc);
 		Base::getFront() = std::move(str);
@@ -140,16 +140,16 @@ public:
 
 	/// Push at the end of the list a formated string
 	template<typename... TArgs>
-	void pushBackSprintf(const TArgs&... args)
+	void pushBackSprintf(CString fmt, TArgs... args)
 	{
-		Base::pushBackSprintf(m_alloc, args...);
+		Base::pushBackSprintf(m_alloc, fmt, args...);
 	}
 
 	/// Push at the beginning of the list a formated string
 	template<typename... TArgs>
-	void pushFrontSprintf(const TArgs&... args)
+	void pushFrontSprintf(CString fmt, TArgs... args)
 	{
-		Base::pushFrontSprintf(m_alloc, args...);
+		Base::pushFrontSprintf(m_alloc, fmt, args...);
 	}
 
 	/// Push back plain CString.

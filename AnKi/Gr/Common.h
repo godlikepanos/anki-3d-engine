@@ -400,12 +400,12 @@ inline U32 computeMaxMipmapCount2d(U32 w, U32 h, U32 minSizeOfLastMip = 1)
 }
 
 /// Compute max number of mipmaps for a 3D texture.
-inline U32 computeMaxMipmapCount3d(U32 w, U32 h, U32 d)
+inline U32 computeMaxMipmapCount3d(U32 w, U32 h, U32 d, U32 minSizeOfLastMip = 1)
 {
 	U32 s = (w < h) ? w : h;
 	s = (s < d) ? s : d;
 	U32 count = 0;
-	while(s)
+	while(s >= minSizeOfLastMip)
 	{
 		s /= 2;
 		++count;

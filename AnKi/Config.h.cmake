@@ -157,7 +157,7 @@
 #	define ANKI_HOT __attribute__ ((hot))
 #	define ANKI_UNREACHABLE() __builtin_unreachable()
 #	define ANKI_PREFETCH_MEMORY(addr) __builtin_prefetch(addr)
-#	define ANKI_CHECK_FORMAT(fmtArgIdx, firstArgIdx) __attribute__ ((format (printf, fmtArgIdx + 1, firstArgIdx + 1)))
+#	define ANKI_CHECK_FORMAT(fmtArgIdx, firstArgIdx) __attribute__((format(printf, fmtArgIdx + 1, firstArgIdx + 1))) // On methods need to include "this"
 #else
 #	define ANKI_LIKELY(x) ((x) == 1)
 #	define ANKI_UNLIKELY(x) ((x) == 1)
