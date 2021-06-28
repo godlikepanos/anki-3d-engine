@@ -6,6 +6,8 @@
 #include <AnKi/Importer/ImageImporter.h>
 #include <AnKi/Gr/Common.h>
 #include <AnKi/Resource/Stb.h>
+#include <AnKi/Util/Process.h>
+#include <AnKi/Util/File.h>
 
 namespace anki
 {
@@ -57,6 +59,39 @@ public:
 	{
 		return m_mipmaps.getAllocator();
 	}
+};
+
+class DdsPixelFormat
+{
+public:
+	U32 m_dwSize;
+	U32 m_dwFlags;
+	Array<char, 4> m_dwFourCC;
+	U32 m_dwRGBBitCount;
+	U32 m_dwRBitMask;
+	U32 m_dwGBitMask;
+	U32 m_dwBBitMask;
+	U32 m_dwABitMask;
+};
+
+class DdsHeader
+{
+public:
+	Array<U8, 4> m_magic;
+	U32 m_dwSize;
+	U32 m_dwFlags;
+	U32 m_dwHeight;
+	U32 m_dwWidth;
+	U32 m_dwPitchOrLinearSize;
+	U32 m_dwDepth;
+	U32 m_dwMipMapCount;
+	Array<U32, 11> m_dwReserved1;
+	DdsPixelFormat m_ddspf;
+	U32 m_dwCaps;
+	U32 m_dwCaps2;
+	U32 m_dwCaps3;
+	U32 m_dwCaps4;
+	U32 m_dwReserved2;
 };
 
 } // namespace
@@ -294,7 +329,55 @@ static ANKI_USE_RESULT Error compressS3tc(GenericMemoryPoolAllocator<U8> alloc, 
 	}
 	CleanupFile bmpCleanup(alloc, bmpFilename);
 
-	// TODO
+	// Invoke the compressor process
+	StringAuto ddsFilename(alloc);
+	ddsFilename.sprintf("%s/%u_.dds", tempDirectory.cstr(), U32(std::rand()));
+	Process proc;
+	Array<CString, 5> args;
+	U32 argCount = 0;
+	args[argCount++] = "-nomipmap";
+	args[argCount++] = "-fd";
+	args[argCount++] = (componentCount == 3) ? "BC1" : "BC3";
+	args[argCount++] = bmpFilename;
+	args[argCount++] = ddsFilename;
+
+	ANKI_CHECK(proc.start("CompressonatorCLI", args, {}));
+	CleanupFile ddsCleanup(alloc, ddsFilename);
+	ProcessStatus status;
+	I32 exitCode;
+	ANKI_CHECK(proc.wait(60.0, &status, &exitCode));
+
+	if(status != ProcessStatus::NORMAL_EXIT || exitCode != 0)
+	{
+		ANKI_IMPORTER_LOGE("Invoking compressor process failed");
+		return Error::FUNCTION_FAILED;
+	}
+
+	// Read the DDS file
+	File ddsFile;
+	ANKI_CHECK(ddsFile.open(ddsFilename, FileOpenFlag::READ | FileOpenFlag::BINARY));
+	DdsHeader ddsHeader;
+	ANKI_CHECK(ddsFile.read(&ddsHeader, sizeof(DdsHeader)));
+
+	if(componentCount == 3 && memcmp(&ddsHeader.m_ddspf.m_dwFourCC[0], "DXT1", 4) != 0)
+	{
+		ANKI_IMPORTER_LOGE("Incorrect format. Expecting DXT1");
+		return Error::FUNCTION_FAILED;
+	}
+
+	if(componentCount == 4 && memcmp(&ddsHeader.m_ddspf.m_dwFourCC[0], "DXT5", 4) != 0)
+	{
+		ANKI_IMPORTER_LOGE("Incorrect format. Expecting DXT5");
+		return Error::FUNCTION_FAILED;
+	}
+
+	if(ddsHeader.m_dwWidth != inWidth || ddsHeader.m_dwHeight != inHeight)
+	{
+		ANKI_IMPORTER_LOGE("Incorrect DDS image size");
+		return Error::FUNCTION_FAILED;
+	}
+
+	ANKI_CHECK(ddsFile.read(outPixels, outPixelsBufferSize));
 
 	return Error::NONE;
 }
