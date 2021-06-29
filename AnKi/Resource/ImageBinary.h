@@ -59,7 +59,7 @@ public:
 	U32 m_depthOrLayerCount;
 	ImageBinaryType m_type;
 	ImageBinaryColorFormat m_colorFormat;
-	ImageBinaryDataCompression m_compressionFormats;
+	ImageBinaryDataCompression m_compressionMask;
 	U32 m_isNormal;
 	U32 m_mipmapCount;
 	Array<U8, 88> m_padding;
@@ -73,7 +73,7 @@ public:
 		s.doValue("m_depthOrLayerCount", offsetof(ImageBinaryHeader, m_depthOrLayerCount), self.m_depthOrLayerCount);
 		s.doValue("m_type", offsetof(ImageBinaryHeader, m_type), self.m_type);
 		s.doValue("m_colorFormat", offsetof(ImageBinaryHeader, m_colorFormat), self.m_colorFormat);
-		s.doValue("m_compressionFormats", offsetof(ImageBinaryHeader, m_compressionFormats), self.m_compressionFormats);
+		s.doValue("m_compressionMask", offsetof(ImageBinaryHeader, m_compressionMask), self.m_compressionMask);
 		s.doValue("m_isNormal", offsetof(ImageBinaryHeader, m_isNormal), self.m_isNormal);
 		s.doValue("m_mipmapCount", offsetof(ImageBinaryHeader, m_mipmapCount), self.m_mipmapCount);
 		s.doArray("m_padding", offsetof(ImageBinaryHeader, m_padding), &self.m_padding[0], self.m_padding.getSize());

@@ -375,12 +375,12 @@ Error ImageLoader::loadAnkiTexture(FileInterface& file, U32 maxTextureSize,
 		return Error::USER_DATA;
 	}
 
-	if((header.m_compressionFormats & preferredCompression) == ImageBinaryDataCompression::NONE)
+	if((header.m_compressionMask & preferredCompression) == ImageBinaryDataCompression::NONE)
 	{
 		// Fallback
 		preferredCompression = ImageBinaryDataCompression::RAW;
 
-		if((header.m_compressionFormats & preferredCompression) == ImageBinaryDataCompression::NONE)
+		if((header.m_compressionMask & preferredCompression) == ImageBinaryDataCompression::NONE)
 		{
 			ANKI_RESOURCE_LOGE("File does not contain raw compression");
 			return Error::USER_DATA;
@@ -431,7 +431,7 @@ Error ImageLoader::loadAnkiTexture(FileInterface& file, U32 maxTextureSize,
 	}
 	else if(preferredCompression == ImageBinaryDataCompression::S3TC)
 	{
-		if((header.m_compressionFormats & ImageBinaryDataCompression::RAW) != ImageBinaryDataCompression::NONE)
+		if((header.m_compressionMask & ImageBinaryDataCompression::RAW) != ImageBinaryDataCompression::NONE)
 		{
 			// If raw compression is present then skip it
 			ANKI_CHECK(file.seek(calcSizeOfSegment(header, ImageBinaryDataCompression::RAW), FileSeekOrigin::CURRENT));
@@ -439,13 +439,13 @@ Error ImageLoader::loadAnkiTexture(FileInterface& file, U32 maxTextureSize,
 	}
 	else if(preferredCompression == ImageBinaryDataCompression::ETC)
 	{
-		if((header.m_compressionFormats & ImageBinaryDataCompression::RAW) != ImageBinaryDataCompression::NONE)
+		if((header.m_compressionMask & ImageBinaryDataCompression::RAW) != ImageBinaryDataCompression::NONE)
 		{
 			// If raw compression is present then skip it
 			ANKI_CHECK(file.seek(calcSizeOfSegment(header, ImageBinaryDataCompression::RAW), FileSeekOrigin::CURRENT));
 		}
 
-		if((header.m_compressionFormats & ImageBinaryDataCompression::S3TC) != ImageBinaryDataCompression::NONE)
+		if((header.m_compressionMask & ImageBinaryDataCompression::S3TC) != ImageBinaryDataCompression::NONE)
 		{
 			// If s3tc compression is present then skip it
 			ANKI_CHECK(file.seek(calcSizeOfSegment(header, ImageBinaryDataCompression::S3TC), FileSeekOrigin::CURRENT));

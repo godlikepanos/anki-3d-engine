@@ -47,7 +47,7 @@ public:
 	{
 	}
 
-	explicit WeakArray(DynamicArray<T>& arr)
+	explicit WeakArray(DynamicArray<T, TSize>& arr)
 		: WeakArray()
 	{
 		if(arr.getSize())
@@ -57,7 +57,7 @@ public:
 		}
 	}
 
-	explicit WeakArray(DynamicArrayAuto<T>& arr)
+	explicit WeakArray(DynamicArrayAuto<T, TSize>& arr)
 		: WeakArray()
 	{
 		if(arr.getSize())
@@ -106,14 +106,14 @@ public:
 		return *this;
 	}
 
-	WeakArray& operator=(DynamicArray<T>& arr)
+	WeakArray& operator=(DynamicArray<T, TSize>& arr)
 	{
 		m_data = (arr.getSize()) ? &arr[0] : nullptr;
 		m_size = arr.getSize();
 		return *this;
 	}
 
-	WeakArray& operator=(DynamicArrayAuto<T>& arr)
+	WeakArray& operator=(DynamicArrayAuto<T, TSize>& arr)
 	{
 		m_data = (arr.getSize()) ? &arr[0] : nullptr;
 		m_size = arr.getSize();
@@ -271,7 +271,7 @@ public:
 	}
 
 	/// Construct from DynamicArray.
-	ConstWeakArray(const DynamicArray<T>& arr)
+	ConstWeakArray(const DynamicArray<T, TSize>& arr)
 		: ConstWeakArray()
 	{
 		if(arr.getSize())
@@ -282,7 +282,7 @@ public:
 	}
 
 	/// Construct from DynamicArrayAuto.
-	ConstWeakArray(const DynamicArrayAuto<T>& arr)
+	ConstWeakArray(const DynamicArrayAuto<T, TSize>& arr)
 		: ConstWeakArray()
 	{
 		if(arr.getSize())
@@ -340,14 +340,14 @@ public:
 		return *this;
 	}
 
-	ConstWeakArray& operator=(const DynamicArray<T>& arr)
+	ConstWeakArray& operator=(const DynamicArray<T, TSize>& arr)
 	{
 		m_data = (arr.getSize()) ? &arr[0] : nullptr;
 		m_size = arr.getSize();
 		return *this;
 	}
 
-	ConstWeakArray& operator=(const DynamicArrayAuto<T>& arr)
+	ConstWeakArray& operator=(const DynamicArrayAuto<T, TSize>& arr)
 	{
 		m_data = (arr.getSize()) ? &arr[0] : nullptr;
 		m_size = arr.getSize();
