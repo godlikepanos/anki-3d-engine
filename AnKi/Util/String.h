@@ -12,6 +12,7 @@
 #include <AnKi/Util/Forward.h>
 #include <cstring>
 #include <cstdio>
+#include <cctype>
 #include <cinttypes> // For PRId8 etc
 
 namespace anki
@@ -624,7 +625,7 @@ public:
 
 	/// @brief  Execute a functor for all characters of the string.
 	template<typename TFunc>
-	void transform(TFunc func)
+	String& transform(TFunc func)
 	{
 		U i = 0;
 		while(i < m_data.getSize() && m_data[i] != '\0')
@@ -632,6 +633,12 @@ public:
 			func(m_data[i]);
 			++i;
 		}
+		return *this;
+	}
+
+	String& toLower()
+	{
+		return transform([](Char& c) { c = Char(tolower(c)); });
 	}
 
 protected:

@@ -45,7 +45,7 @@ public:
 	{
 		const U8* first = reinterpret_cast<const U8*>(&m_width);
 		const U8* last = reinterpret_cast<const U8*>(&m_samples) + sizeof(m_samples);
-		const U size = last - first;
+		const U size = U(last - first);
 		ANKI_ASSERT(size
 					== sizeof(m_width) + sizeof(m_height) + sizeof(m_depth) + sizeof(m_layerCount) + sizeof(m_format)
 						   + sizeof(m_usage) + sizeof(m_initialUsage) + sizeof(m_type) + sizeof(m_mipmapCount)

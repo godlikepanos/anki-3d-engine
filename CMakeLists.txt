@@ -356,7 +356,7 @@ if(NOT MSVC)
 		"-Wconversion -Wno-sign-conversion -Wno-keyword-macro -Wno-string-conversion -Wno-class-memaccess "
 		"-Wunused-variable -std=c++14")
 else()
-	add_definitions("/wd4996 /wd4244 /wd4262 /wd4267 /wd26495 /wd26439")
+	#add_definitions("/wd4996 /wd4244 /wd4262 /wd4267 /wd26495 /wd26439")
 endif()
 
 # Set platform specific

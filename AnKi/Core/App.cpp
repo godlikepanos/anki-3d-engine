@@ -162,7 +162,7 @@ public:
 
 	void labelBytes(PtrSize val, CString name)
 	{
-		U gb, mb, kb, b;
+		PtrSize gb, mb, kb, b;
 
 		gb = val / 1_GB;
 		val -= gb * 1_GB;
