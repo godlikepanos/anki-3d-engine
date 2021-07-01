@@ -12,8 +12,8 @@
 #include <AnKi/Resource/MeshResource.h>
 #include <AnKi/Resource/CpuMeshResource.h>
 #include <AnKi/Resource/MaterialResource.h>
-#include <AnKi/Resource/TextureAtlasResource.h>
-#include <AnKi/Resource/TextureResource.h>
+#include <AnKi/Resource/ImageAtlasResource.h>
+#include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Resource/GenericResource.h>
 #include <AnKi/Resource/SkeletonResource.h>
 #include <AnKi/Resource/DummyResource.h>

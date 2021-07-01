@@ -8,7 +8,7 @@
 #include <AnKi/Resource/ResourceObject.h>
 #include <AnKi/Resource/RenderingKey.h>
 #include <AnKi/Resource/ShaderProgramResource.h>
-#include <AnKi/Resource/TextureResource.h>
+#include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Math.h>
 #include <AnKi/Util/Enum.h>
 #include <AnKi/Shaders/Include/ModelTypes.h>
@@ -88,7 +88,7 @@ public:
 		m_dataType = b.m_dataType;
 		m_builtin = b.m_builtin;
 		m_Mat4 = b.m_Mat4;
-		m_tex = std::move(b.m_tex);
+		m_image = std::move(b.m_image);
 		return *this;
 	}
 
@@ -171,12 +171,12 @@ protected:
 #undef ANKI_SVDT_MACRO
 	};
 
-	TextureResourcePtr m_tex;
+	ImageResourcePtr m_image;
 	/// @}
 
 	Bool valueSetByMaterial() const
 	{
-		return m_tex.isCreated() || m_numericValueIsSet;
+		return m_image.isCreated() || m_numericValueIsSet;
 	}
 };
 
@@ -198,11 +198,11 @@ protected:
 #undef ANKI_SPECIALIZE_GET_VALUE
 
 template<>
-inline const TextureResourcePtr& MaterialVariable::getValue() const
+inline const ImageResourcePtr& MaterialVariable::getValue() const
 {
 	ANKI_ASSERT(isTexture());
 	ANKI_ASSERT(m_builtin == BuiltinMaterialVariableId::NONE);
-	return m_tex;
+	return m_image;
 }
 
 /// Material variant.
@@ -439,7 +439,7 @@ private:
 
 	MaterialGpuDescriptor m_materialGpuDescriptor;
 
-	Array<TextureResourcePtr, U(TextureChannelId::COUNT)> m_textureResources; ///< Keep the resources alive.
+	Array<ImageResourcePtr, U(TextureChannelId::COUNT)> m_images; ///< Keep the resources alive.
 	Array<TextureViewPtr, U(TextureChannelId::COUNT)> m_textureViews; ///< Cache the GPU objects.
 	U8 m_textureViewCount = 0;
 

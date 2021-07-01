@@ -7,7 +7,7 @@
 #include <AnKi/Renderer/ShadowMapping.h>
 #include <AnKi/Renderer/GlobalIllumination.h>
 #include <AnKi/Renderer/Renderer.h>
-#include <AnKi/Resource/TextureResource.h>
+#include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Core/ConfigSet.h>
 
 namespace anki
@@ -42,7 +42,7 @@ Error VolumetricLightingAccumulation::init(const ConfigSet& config)
 		return Error::USER_DATA;
 	}
 
-	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoiseRgb864x64.png", m_noiseTex));
+	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoiseRgb864x64.png", m_noiseImage));
 
 	// Shaders
 	ANKI_CHECK(getResourceManager().loadResource("Shaders/VolumetricLightingAccumulation.ankiprog", m_prog));
@@ -116,7 +116,7 @@ void VolumetricLightingAccumulation::run(RenderPassWorkContext& rgraphCtx)
 
 	rgraphCtx.bindImage(0, 2, m_runCtx.m_rts[1], TextureSubresourceInfo());
 
-	cmdb->bindTexture(0, 3, m_noiseTex->getGrTextureView(), TextureUsageBit::SAMPLED_COMPUTE);
+	cmdb->bindTexture(0, 3, m_noiseImage->getTextureView(), TextureUsageBit::SAMPLED_COMPUTE);
 
 	rgraphCtx.bindColorTexture(0, 4, m_runCtx.m_rts[0]);
 

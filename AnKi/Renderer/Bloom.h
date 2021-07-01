@@ -7,7 +7,7 @@
 
 #include <AnKi/Renderer/RendererObject.h>
 #include <AnKi/Gr.h>
-#include <AnKi/Resource/TextureResource.h>
+#include <AnKi/Resource/ImageResource.h>
 
 namespace anki
 {
@@ -84,7 +84,7 @@ private:
 	class
 	{
 	public:
-		TextureResourcePtr m_lensDirtTex;
+		ImageResourcePtr m_lensDirtImage;
 		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
 

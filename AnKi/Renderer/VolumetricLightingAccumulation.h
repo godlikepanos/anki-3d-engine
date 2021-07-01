@@ -41,7 +41,7 @@ private:
 	ShaderProgramPtr m_grProg;
 
 	Array<TexturePtr, 2> m_rtTextures;
-	TextureResourcePtr m_noiseTex;
+	ImageResourcePtr m_noiseImage;
 
 	U32 m_finalZSplit = 0;
 

@@ -7,7 +7,7 @@
 
 #include <AnKi/Scene/SceneNode.h>
 #include <AnKi/Gr.h>
-#include <AnKi/Resource/TextureResource.h>
+#include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Renderer/RenderQueue.h>
 
 namespace anki
@@ -26,16 +26,16 @@ public:
 
 	~LensFlareComponent();
 
-	ANKI_USE_RESULT Error loadTextureResource(CString textureFilename);
+	ANKI_USE_RESULT Error loadImageResource(CString filename);
 
 	Bool isLoaded() const
 	{
-		return m_tex.isCreated();
+		return m_image.isCreated();
 	}
 
-	CString getTextureResourceFilename() const
+	CString getImageResourceFilename() const
 	{
-		return (m_tex) ? m_tex->getFilename() : CString();
+		return (m_image) ? m_image->getFilename() : CString();
 	}
 
 	void setWorldPosition(const Vec3& worldPosition)
@@ -80,7 +80,7 @@ public:
 
 	TexturePtr getTexture() const
 	{
-		return m_tex->getGrTexture();
+		return m_image->getTexture();
 	}
 
 	void setupLensFlareQueueElement(LensFlareQueueElement& el) const
@@ -88,7 +88,7 @@ public:
 		el.m_worldPosition = m_worldPosition;
 		el.m_firstFlareSize = m_firstFlareSize;
 		el.m_colorMultiplier = m_colorMul;
-		el.m_textureView = m_tex->getGrTextureView().get();
+		el.m_textureView = m_image->getTextureView().get();
 		el.m_userData = this;
 		el.m_drawCallback = debugDrawCallback;
 	}
@@ -97,7 +97,7 @@ private:
 	Vec4 m_colorMul = Vec4(1.0f); ///< Color multiplier.
 
 	SceneNode* m_node;
-	TextureResourcePtr m_tex; ///< Array of textures.
+	ImageResourcePtr m_image; ///< Array of textures.
 
 	Vec2 m_firstFlareSize = Vec2(1.0f);
 	Vec2 m_otherFlareSize = Vec2(1.0f);

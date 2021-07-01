@@ -210,7 +210,7 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 
 		<class name="LensFlareComponent">
 			<methods>
-				<method name="loadTextureResource">
+				<method name="loadImageResource">
 					<args>
 						<arg>CString</arg>
 					</args>

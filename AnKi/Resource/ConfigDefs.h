@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-ANKI_CONFIG_OPTION(rsrc_maxTextureSize, 1024u * 1024u, 4u, MAX_U32)
+ANKI_CONFIG_OPTION(rsrc_maxImageSize, 1024u * 1024u, 4u, MAX_U32)
 ANKI_CONFIG_OPTION(rsrc_dumpShaderSources, 0, 0, 1)
 ANKI_CONFIG_OPTION(
 	rsrc_dataPaths, ".",

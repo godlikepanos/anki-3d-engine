@@ -129,9 +129,9 @@ public:
 
 	// Internals:
 
-	ANKI_INTERNAL U32 getMaxTextureSize() const
+	ANKI_INTERNAL U32 getMaxImageSize() const
 	{
-		return m_maxTextureSize;
+		return m_maxImageSize;
 	}
 
 	ANKI_INTERNAL Bool getDumpShaderSource() const
@@ -222,7 +222,7 @@ private:
 	ResourceAllocator<U8> m_alloc;
 	TempResourceAllocator<U8> m_tmpAlloc;
 	String m_cacheDir;
-	U32 m_maxTextureSize;
+	U32 m_maxImageSize;
 	AsyncLoader* m_asyncLoader = nullptr; ///< Async loading thread
 	ShaderProgramResourceSystem* m_shaderProgramSystem = nullptr;
 	U64 m_uuid = 0;

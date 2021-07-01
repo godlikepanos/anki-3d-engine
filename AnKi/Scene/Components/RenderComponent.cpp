@@ -5,7 +5,7 @@
 
 #include <AnKi/Scene/Components/RenderComponent.h>
 #include <AnKi/Scene/SceneNode.h>
-#include <AnKi/Resource/TextureResource.h>
+#include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Util/Logger.h>
 
@@ -243,7 +243,7 @@ void RenderComponent::allocateAndSetupUniforms(const MaterialResourcePtr& mtl, c
 		case ShaderVariableDataType::TEXTURE_CUBE:
 		{
 			ctx.m_commandBuffer->bindTexture(set, mvar.getOpaqueBinding(),
-											 mvar.getValue<TextureResourcePtr>()->getGrTextureView(),
+											 mvar.getValue<ImageResourcePtr>()->getTextureView(),
 											 TextureUsageBit::SAMPLED_FRAGMENT);
 			break;
 		}

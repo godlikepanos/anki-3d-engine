@@ -77,20 +77,20 @@ public:
 
 	U32 getDepth() const
 	{
-		ANKI_ASSERT(m_textureType == ImageBinaryType::_3D);
+		ANKI_ASSERT(m_imageType == ImageBinaryType::_3D);
 		return m_depth;
 	}
 
 	U32 getLayerCount() const
 	{
-		ANKI_ASSERT(m_textureType == ImageBinaryType::_2D_ARRAY);
+		ANKI_ASSERT(m_imageType == ImageBinaryType::_2D_ARRAY);
 		return m_layerCount;
 	}
 
-	ImageBinaryType getTextureType() const
+	ImageBinaryType getImageType() const
 	{
-		ANKI_ASSERT(m_textureType != ImageBinaryType::NONE);
-		return m_textureType;
+		ANKI_ASSERT(m_imageType != ImageBinaryType::NONE);
+		return m_imageType;
 	}
 
 	const ImageLoaderSurface& getSurface(U32 level, U32 face, U32 layer) const;
@@ -98,10 +98,10 @@ public:
 	const ImageLoaderVolume& getVolume(U32 level) const;
 
 	/// Load a resource image file.
-	ANKI_USE_RESULT Error load(ResourceFilePtr file, const CString& filename, U32 maxTextureSize = MAX_U32);
+	ANKI_USE_RESULT Error load(ResourceFilePtr file, const CString& filename, U32 maxImageSize = MAX_U32);
 
 	/// Load a system image file.
-	ANKI_USE_RESULT Error load(const CString& filename, U32 maxTextureSize = MAX_U32);
+	ANKI_USE_RESULT Error load(const CString& filename, U32 maxImageSize = MAX_U32);
 
 private:
 	class FileInterface;
@@ -123,7 +123,7 @@ private:
 	U32 m_layerCount = 0;
 	ImageBinaryDataCompression m_compression = ImageBinaryDataCompression::NONE;
 	ImageBinaryColorFormat m_colorFormat = ImageBinaryColorFormat::NONE;
-	ImageBinaryType m_textureType = ImageBinaryType::NONE;
+	ImageBinaryType m_imageType = ImageBinaryType::NONE;
 
 	void destroy();
 
@@ -139,15 +139,15 @@ private:
 	static ANKI_USE_RESULT Error loadStb(FileInterface& fs, U32& width, U32& height, DynamicArray<U8>& data,
 										 GenericMemoryPoolAllocator<U8>& alloc);
 
-	static ANKI_USE_RESULT Error loadAnkiTexture(FileInterface& file, U32 maxTextureSize,
-												 ImageBinaryDataCompression& preferredCompression,
-												 DynamicArray<ImageLoaderSurface>& surfaces,
-												 DynamicArray<ImageLoaderVolume>& volumes,
-												 GenericMemoryPoolAllocator<U8>& alloc, U32& width, U32& height,
-												 U32& depth, U32& layerCount, U32& mipCount,
-												 ImageBinaryType& textureType, ImageBinaryColorFormat& colorFormat);
+	static ANKI_USE_RESULT Error loadAnkiImage(FileInterface& file, U32 maxImageSize,
+											   ImageBinaryDataCompression& preferredCompression,
+											   DynamicArray<ImageLoaderSurface>& surfaces,
+											   DynamicArray<ImageLoaderVolume>& volumes,
+											   GenericMemoryPoolAllocator<U8>& alloc, U32& width, U32& height,
+											   U32& depth, U32& layerCount, U32& mipCount, ImageBinaryType& imageType,
+											   ImageBinaryColorFormat& colorFormat);
 
-	ANKI_USE_RESULT Error loadInternal(FileInterface& file, const CString& filename, U32 maxTextureSize);
+	ANKI_USE_RESULT Error loadInternal(FileInterface& file, const CString& filename, U32 maxImageSize);
 };
 
 } // end namespace anki

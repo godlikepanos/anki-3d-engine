@@ -76,7 +76,7 @@ Error Bloom::initUpscale(const ConfigSet& config)
 				&& variant->getWorkgroupSizes()[2] == m_workgroupSize[2]);
 
 	// Textures
-	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/LensDirt.ankitex", m_upscale.m_lensDirtTex));
+	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/LensDirt.ankitex", m_upscale.m_lensDirtImage));
 
 	return Error::NONE;
 }
@@ -150,7 +150,7 @@ void Bloom::runUpscaleAndSslf(RenderPassWorkContext& rgraphCtx)
 
 	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
 	rgraphCtx.bindColorTexture(0, 1, m_runCtx.m_exposureRt);
-	cmdb->bindTexture(0, 2, m_upscale.m_lensDirtTex->getGrTextureView(), TextureUsageBit::SAMPLED_COMPUTE);
+	cmdb->bindTexture(0, 2, m_upscale.m_lensDirtImage->getTextureView(), TextureUsageBit::SAMPLED_COMPUTE);
 
 	rgraphCtx.bindImage(0, 3, m_runCtx.m_upscaleRt, TextureSubresourceInfo());
 

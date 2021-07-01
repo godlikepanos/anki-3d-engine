@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Resource/ResourceObject.h>
-#include <AnKi/Resource/TextureResource.h>
+#include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Gr.h>
 
 namespace anki
@@ -15,41 +15,41 @@ namespace anki
 /// @addtogroup resource
 /// @{
 
-/// Texture atlas resource class.
+/// Image atlas resource class.
 ///
 /// XML format:
 /// @code
-/// <textureAtlas>
-/// 	<texture>path/to/tex.ankitex</texture>
-/// 	<subTextureMargin>N</subTextureMargin>
-/// 	<subTextures>
-/// 		<subTexture>
+/// <imageAtlas>
+/// 	<image>path/to/tex.ankitex</image>
+/// 	<subImageMargin>N</subImageMargin>
+/// 	<subImages>
+/// 		<subImage>
 /// 			<name>name</name>
 /// 			<uv>0.1 0.2 0.5 0.6</uv>
-/// 		</subTexture>
-/// 		<subTexture>...</subTexture>
+/// 		</subImage>
+/// 		<subImage>...</subImage>
 /// 		...
-/// 	</subTextures>
-/// </textureAtlas>
+/// 	</subImages>
+/// </imageAtlas>
 /// @endcode
-class TextureAtlasResource : public ResourceObject
+class ImageAtlasResource : public ResourceObject
 {
 public:
-	TextureAtlasResource(ResourceManager* manager);
+	ImageAtlasResource(ResourceManager* manager);
 
-	~TextureAtlasResource();
+	~ImageAtlasResource();
 
-	/// Load a texture atlas.
+	/// Load the atlas.
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
 
-	TexturePtr getGrTexture() const
+	TexturePtr getTexture() const
 	{
-		return m_tex->getGrTexture();
+		return m_image->getTexture();
 	}
 
-	TextureViewPtr getGrTextureView() const
+	TextureViewPtr getTextureView() const
 	{
-		return m_tex->getGrTextureView();
+		return m_image->getTextureView();
 	}
 
 	U32 getWidth() const
@@ -62,23 +62,23 @@ public:
 		return m_size[1];
 	}
 
-	U32 getSubTextureMargin() const
+	U32 getSubImageMargin() const
 	{
 		return m_margin;
 	}
 
-	/// Get the UV coordinates of a sub texture.
-	ANKI_USE_RESULT Error getSubTextureInfo(CString name, F32 uv[4]) const;
+	/// Get the UV coordinates of a sub image.
+	ANKI_USE_RESULT Error getSubImageInfo(CString name, F32 uv[4]) const;
 
 private:
 	class SubTex
 	{
 	public:
-		CString m_name; ///< Points to TextureAtlas::m_subTexNames.
+		CString m_name; ///< Points to ImageAtlas::m_subTexNames.
 		Array<F32, 4> m_uv;
 	};
 
-	TextureResourcePtr m_tex;
+	ImageResourcePtr m_image;
 	DynamicArray<char> m_subTexNames;
 	DynamicArray<SubTex> m_subTexes;
 	Array<U32, 2> m_size;

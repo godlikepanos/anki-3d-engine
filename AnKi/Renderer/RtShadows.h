@@ -7,7 +7,7 @@
 
 #include <AnKi/Gr.h>
 #include <AnKi/Renderer/RendererObject.h>
-#include <AnKi/Resource/TextureResource.h>
+#include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Util/BitSet.h>
 #include <AnKi/Shaders/Include/RtShadows.h>
 
@@ -89,7 +89,7 @@ public:
 	ShaderProgramResourcePtr m_visualizeRenderTargetsProg;
 	/// @}
 
-	TextureResourcePtr m_blueNoiseTex;
+	ImageResourcePtr m_blueNoiseImage;
 
 	Array<ShadowLayer, MAX_RT_SHADOW_LAYERS> m_shadowLayers;
 

@@ -8,7 +8,7 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/RendererObject.h>
 #include <AnKi/Renderer/TraditionalDeferredShading.h>
-#include <AnKi/Resource/TextureResource.h>
+#include <AnKi/Resource/ImageResource.h>
 
 namespace anki
 {
@@ -38,7 +38,7 @@ public:
 
 	TextureViewPtr getIntegrationLut() const
 	{
-		return m_integrationLut->getGrTextureView();
+		return m_integrationLut->getTextureView();
 	}
 
 	SamplerPtr getIntegrationLutSampler() const
@@ -113,7 +113,7 @@ private:
 	HashMap<U64, U32> m_probeUuidToCacheEntryIdx;
 
 	// Other
-	TextureResourcePtr m_integrationLut;
+	ImageResourcePtr m_integrationLut;
 	SamplerPtr m_integrationLutSampler;
 
 	class

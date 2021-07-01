@@ -90,7 +90,7 @@ private:
 	U32 m_vertBuffSize = 0;
 	void* m_verts = nullptr;
 
-	TextureResourcePtr m_dbgTex;
+	ImageResourcePtr m_dbgImage;
 
 	SimulationType m_simulationType = SimulationType::UNDEFINED;
 

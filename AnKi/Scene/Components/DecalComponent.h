@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Scene/Components/SceneComponent.h>
-#include <AnKi/Resource/TextureAtlasResource.h>
+#include <AnKi/Resource/ImageAtlasResource.h>
 #include <AnKi/Collision/Obb.h>
 #include <AnKi/Renderer/RenderQueue.h>
 
@@ -22,7 +22,7 @@ class DecalComponent : public SceneComponent
 	ANKI_SCENE_COMPONENT(DecalComponent)
 
 public:
-	static constexpr U32 ATLAS_SUB_TEXTURE_MARGIN = 16;
+	static constexpr U32 ATLAS_SUB_IMAGE_MARGIN = 16;
 
 	DecalComponent(SceneNode* node);
 
@@ -83,7 +83,7 @@ public:
 	void getDiffuseAtlasInfo(Vec4& uv, TexturePtr& tex, F32& blendFactor) const
 	{
 		uv = m_layers[LayerType::DIFFUSE].m_uv;
-		tex = m_layers[LayerType::DIFFUSE].m_atlas->getGrTexture();
+		tex = m_layers[LayerType::DIFFUSE].m_atlas->getTexture();
 		blendFactor = m_layers[LayerType::DIFFUSE].m_blendFactor;
 	}
 
@@ -92,7 +92,7 @@ public:
 		uv = m_layers[LayerType::SPECULAR_ROUGHNESS].m_uv;
 		if(m_layers[LayerType::SPECULAR_ROUGHNESS].m_atlas)
 		{
-			tex = m_layers[LayerType::SPECULAR_ROUGHNESS].m_atlas->getGrTexture();
+			tex = m_layers[LayerType::SPECULAR_ROUGHNESS].m_atlas->getTexture();
 		}
 		else
 		{
@@ -104,10 +104,10 @@ public:
 	void setupDecalQueueElement(DecalQueueElement& el)
 	{
 		el.m_diffuseAtlas = (m_layers[LayerType::DIFFUSE].m_atlas)
-								? m_layers[LayerType::DIFFUSE].m_atlas->getGrTextureView().get()
+								? m_layers[LayerType::DIFFUSE].m_atlas->getTextureView().get()
 								: nullptr;
 		el.m_specularRoughnessAtlas = (m_layers[LayerType::SPECULAR_ROUGHNESS].m_atlas)
-										  ? m_layers[LayerType::SPECULAR_ROUGHNESS].m_atlas->getGrTextureView().get()
+										  ? m_layers[LayerType::SPECULAR_ROUGHNESS].m_atlas->getTextureView().get()
 										  : nullptr;
 		el.m_diffuseAtlasUv = m_layers[LayerType::DIFFUSE].m_uv;
 		el.m_specularRoughnessAtlasUv = m_layers[LayerType::SPECULAR_ROUGHNESS].m_uv;
@@ -135,7 +135,7 @@ private:
 	class Layer
 	{
 	public:
-		TextureAtlasResourcePtr m_atlas;
+		ImageAtlasResourcePtr m_atlas;
 		Vec4 m_uv = Vec4(0.0f);
 		F32 m_blendFactor = 0.0f;
 	};
@@ -146,7 +146,7 @@ private:
 	Vec3 m_boxSize = Vec3(1.0f);
 	Transform m_trf = Transform::getIdentity();
 	Obb m_obb = Obb(Vec4(0.0f), Mat3x4::getIdentity(), Vec4(0.5f, 0.5f, 0.5f, 0.0f));
-	TextureResourcePtr m_debugTex;
+	ImageResourcePtr m_debugImage;
 	Bool m_markedForUpdate = true;
 
 	ANKI_USE_RESULT Error setLayer(CString texAtlasFname, CString texAtlasSubtexName, F32 blendFactor, LayerType type);

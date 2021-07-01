@@ -5,7 +5,7 @@
 
 #include <AnKi/Resource/MaterialResource.h>
 #include <AnKi/Resource/ResourceManager.h>
-#include <AnKi/Resource/TextureResource.h>
+#include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Util/Xml.h>
 
 namespace anki
@@ -840,7 +840,7 @@ Error MaterialResource::parseInputs(XmlElement inputsEl, Bool async)
 			{
 				CString texfname;
 				ANKI_CHECK(inputEl.getAttributeText("value", texfname));
-				ANKI_CHECK(getManager().loadResource(texfname, foundVar->m_tex, async));
+				ANKI_CHECK(getManager().loadResource(texfname, foundVar->m_image, async));
 				break;
 			}
 
@@ -1235,9 +1235,9 @@ Error MaterialResource::parseRtMaterial(XmlElement rtMaterialEl)
 					ANKI_CHECK(inputEl.getAttributeText("value", fname));
 
 					const TextureChannelId textureIdx = GPU_MATERIAL_TEXTURES[i].m_textureSlot;
-					ANKI_CHECK(getManager().loadResource(fname, m_textureResources[textureIdx], false));
+					ANKI_CHECK(getManager().loadResource(fname, m_images[textureIdx], false));
 
-					m_textureViews[m_textureViewCount] = m_textureResources[textureIdx]->getGrTextureView();
+					m_textureViews[m_textureViewCount] = m_images[textureIdx]->getTextureView();
 
 					m_materialGpuDescriptor.m_bindlessTextureIndices[textureIdx] =
 						U16(m_textureViews[m_textureViewCount]->getOrCreateBindlessTextureIndex());

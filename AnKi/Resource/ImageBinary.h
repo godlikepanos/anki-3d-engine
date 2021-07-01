@@ -49,7 +49,7 @@ enum class ImageBinaryDataCompression : U32
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ImageBinaryDataCompression)
 
-/// The 1st things that appears in a texture binary..
+/// The 1st things that appears in a image binary.
 class ImageBinaryHeader
 {
 public:

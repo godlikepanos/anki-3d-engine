@@ -38,7 +38,7 @@ Error Ssr::initInternal(const ConfigSet& cfg)
 	m_depthLod = cfg.getNumberU32("r_ssrDepthLod");
 	m_firstStepPixels = 32;
 
-	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoiseRgb816x16.png", m_noiseTex));
+	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoiseRgb816x16.png", m_noiseImage));
 
 	// Create RTs
 	TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
@@ -127,7 +127,7 @@ void Ssr::run(RenderPassWorkContext& rgraphCtx)
 	rgraphCtx.bindColorTexture(0, 6, m_r->getDownscaleBlur().getRt());
 
 	cmdb->bindSampler(0, 7, m_r->getSamplers().m_trilinearRepeat);
-	cmdb->bindTexture(0, 8, m_noiseTex->getGrTextureView(), TextureUsageBit::ALL_SAMPLED);
+	cmdb->bindTexture(0, 8, m_noiseImage->getTextureView(), TextureUsageBit::ALL_SAMPLED);
 
 	// Dispatch
 	dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_r->getWidth() / 2, m_r->getHeight());

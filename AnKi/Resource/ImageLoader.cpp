@@ -224,7 +224,7 @@ Error ImageLoader::loadCompressedTga(FileInterface& fs, U32& width, U32& height,
 
 	if((width <= 0) || (height <= 0) || ((bpp != 24) && (bpp != 32)))
 	{
-		ANKI_RESOURCE_LOGE("Invalid texture information");
+		ANKI_RESOURCE_LOGE("Invalid image information");
 		return Error::USER_DATA;
 	}
 
@@ -331,12 +331,12 @@ Error ImageLoader::loadTga(FileInterface& fs, U32& width, U32& height, U32& bpp,
 	return Error::NONE;
 }
 
-Error ImageLoader::loadAnkiTexture(FileInterface& file, U32 maxTextureSize,
-								   ImageBinaryDataCompression& preferredCompression,
-								   DynamicArray<ImageLoaderSurface>& surfaces, DynamicArray<ImageLoaderVolume>& volumes,
-								   GenericMemoryPoolAllocator<U8>& alloc, U32& width, U32& height, U32& depth,
-								   U32& layerCount, U32& mipCount, ImageBinaryType& textureType,
-								   ImageBinaryColorFormat& colorFormat)
+Error ImageLoader::loadAnkiImage(FileInterface& file, U32 maxImageSize,
+								 ImageBinaryDataCompression& preferredCompression,
+								 DynamicArray<ImageLoaderSurface>& surfaces, DynamicArray<ImageLoaderVolume>& volumes,
+								 GenericMemoryPoolAllocator<U8>& alloc, U32& width, U32& height, U32& depth,
+								 U32& layerCount, U32& mipCount, ImageBinaryType& imageType,
+								 ImageBinaryColorFormat& colorFormat)
 {
 	//
 	// Read and check the header
@@ -365,7 +365,7 @@ Error ImageLoader::loadAnkiTexture(FileInterface& file, U32 maxTextureSize,
 
 	if(header.m_type < ImageBinaryType::_2D || header.m_type > ImageBinaryType::_2D_ARRAY)
 	{
-		ANKI_RESOURCE_LOGE("Incorrect header: texture type");
+		ANKI_RESOURCE_LOGE("Incorrect header: image type");
 		return Error::USER_DATA;
 	}
 
@@ -395,7 +395,7 @@ Error ImageLoader::loadAnkiTexture(FileInterface& file, U32 maxTextureSize,
 
 	// Set a few things
 	colorFormat = header.m_colorFormat;
-	textureType = header.m_type;
+	imageType = header.m_type;
 
 	U32 faceCount = 1;
 	switch(header.m_type)
@@ -473,7 +473,7 @@ Error ImageLoader::loadAnkiTexture(FileInterface& file, U32 maxTextureSize,
 						U32(calcSurfaceSize(mipWidth, mipHeight, preferredCompression, header.m_colorFormat));
 
 					// Check if this mipmap can be skipped because of size
-					if(max(mipWidth, mipHeight) <= maxTextureSize || mip == header.m_mipmapCount - 1)
+					if(max(mipWidth, mipHeight) <= maxImageSize || mip == header.m_mipmapCount - 1)
 					{
 						ImageLoaderSurface& surf = *surfaces.emplaceBack(alloc);
 						surf.m_width = mipWidth;
@@ -510,7 +510,7 @@ Error ImageLoader::loadAnkiTexture(FileInterface& file, U32 maxTextureSize,
 				U32(calcVolumeSize(mipWidth, mipHeight, mipDepth, preferredCompression, header.m_colorFormat));
 
 			// Check if this mipmap can be skipped because of size
-			if(max(max(mipWidth, mipHeight), mipDepth) <= maxTextureSize || mip == header.m_mipmapCount - 1)
+			if(max(max(mipWidth, mipHeight), mipDepth) <= maxImageSize || mip == header.m_mipmapCount - 1)
 			{
 				ImageLoaderVolume& vol = *volumes.emplaceBack(alloc);
 				vol.m_width = mipWidth;
@@ -570,12 +570,12 @@ Error ImageLoader::loadStb(FileInterface& fs, U32& width, U32& height, DynamicAr
 	return Error::NONE;
 }
 
-Error ImageLoader::load(ResourceFilePtr rfile, const CString& filename, U32 maxTextureSize)
+Error ImageLoader::load(ResourceFilePtr rfile, const CString& filename, U32 maxImageSize)
 {
 	RsrcFile file;
 	file.m_rfile = rfile;
 
-	const Error err = loadInternal(file, filename, maxTextureSize);
+	const Error err = loadInternal(file, filename, maxImageSize);
 	if(err)
 	{
 		ANKI_RESOURCE_LOGE("Failed to read image: %s", filename.cstr());
@@ -584,12 +584,12 @@ Error ImageLoader::load(ResourceFilePtr rfile, const CString& filename, U32 maxT
 	return err;
 }
 
-Error ImageLoader::load(const CString& filename, U32 maxTextureSize)
+Error ImageLoader::load(const CString& filename, U32 maxImageSize)
 {
 	SystemFile file;
 	ANKI_CHECK(file.m_file.open(filename, FileOpenFlag::READ | FileOpenFlag::BINARY));
 
-	const Error err = loadInternal(file, filename, maxTextureSize);
+	const Error err = loadInternal(file, filename, maxImageSize);
 	if(err)
 	{
 		ANKI_RESOURCE_LOGE("Failed to read image: %s", filename.cstr());
@@ -598,7 +598,7 @@ Error ImageLoader::load(const CString& filename, U32 maxTextureSize)
 	return err;
 }
 
-Error ImageLoader::loadInternal(FileInterface& file, const CString& filename, U32 maxTextureSize)
+Error ImageLoader::loadInternal(FileInterface& file, const CString& filename, U32 maxImageSize)
 {
 	// get the extension
 	StringAuto ext(m_alloc);
@@ -611,7 +611,7 @@ Error ImageLoader::loadInternal(FileInterface& file, const CString& filename, U3
 	}
 
 	// load from this extension
-	m_textureType = ImageBinaryType::_2D;
+	m_imageType = ImageBinaryType::_2D;
 	m_compression = ImageBinaryDataCompression::RAW;
 
 	if(ext == "tga")
@@ -648,8 +648,8 @@ Error ImageLoader::loadInternal(FileInterface& file, const CString& filename, U3
 		m_compression = ImageBinaryDataCompression::S3TC;
 #endif
 
-		ANKI_CHECK(loadAnkiTexture(file, maxTextureSize, m_compression, m_surfaces, m_volumes, m_alloc, m_width,
-								   m_height, m_depth, m_layerCount, m_mipmapCount, m_textureType, m_colorFormat));
+		ANKI_CHECK(loadAnkiImage(file, maxImageSize, m_compression, m_surfaces, m_volumes, m_alloc, m_width, m_height,
+								 m_depth, m_layerCount, m_mipmapCount, m_imageType, m_colorFormat));
 	}
 	else if(ext == "png" || ext == "jpg")
 	{
@@ -680,7 +680,7 @@ const ImageLoaderSurface& ImageLoader::getSurface(U32 level, U32 face, U32 layer
 
 	U32 idx = 0;
 
-	switch(m_textureType)
+	switch(m_imageType)
 	{
 	case ImageBinaryType::_2D:
 		idx = level;
@@ -690,7 +690,7 @@ const ImageLoaderSurface& ImageLoader::getSurface(U32 level, U32 face, U32 layer
 		idx = level * 6 + face;
 		break;
 	case ImageBinaryType::_3D:
-		ANKI_ASSERT(0 && "Can't use that for 3D textures");
+		ANKI_ASSERT(0 && "Can't use that for 3D images");
 		break;
 	case ImageBinaryType::_2D_ARRAY:
 		idx = level * m_layerCount + layer;
@@ -704,7 +704,7 @@ const ImageLoaderSurface& ImageLoader::getSurface(U32 level, U32 face, U32 layer
 
 const ImageLoaderVolume& ImageLoader::getVolume(U32 level) const
 {
-	ANKI_ASSERT(m_textureType == ImageBinaryType::_3D);
+	ANKI_ASSERT(m_imageType == ImageBinaryType::_3D);
 	return m_volumes[level];
 }
 

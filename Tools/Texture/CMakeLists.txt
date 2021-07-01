@@ -1,7 +1,0 @@
-add_executable(TextureViewer TextureViewerMain.cpp)
-target_link_libraries(TextureViewer AnKi)
-installExecutable(TextureViewer)
-
-add_executable(TextureImporter TextureImporterMain.cpp)
-target_link_libraries(TextureImporter AnKi)
-installExecutable(TextureImporter)

@@ -14,31 +14,31 @@ namespace anki
 /// @addtogroup resource
 /// @{
 
-/// Texture resource class.
+/// Image resource class.
 ///
-/// It loads or creates an image and then loads it in the GPU. It supports compressed and uncompressed TGAs and AnKi's
-/// texture format.
-class TextureResource : public ResourceObject
+/// It loads or creates an image and then loads it in the GPU. It supports compressed and uncompressed TGAs, PNGs, JPEG
+/// and AnKi's image format.
+class ImageResource : public ResourceObject
 {
 public:
-	TextureResource(ResourceManager* manager)
+	ImageResource(ResourceManager* manager)
 		: ResourceObject(manager)
 	{
 	}
 
-	~TextureResource();
+	~ImageResource();
 
-	/// Load a texture
+	/// Load an image.
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
 
 	/// Get the texture.
-	const TexturePtr& getGrTexture() const
+	const TexturePtr& getTexture() const
 	{
 		return m_tex;
 	}
 
 	/// Get the texture view.
-	const TextureViewPtr& getGrTextureView() const
+	const TextureViewPtr& getTextureView() const
 	{
 		return m_texView;
 	}

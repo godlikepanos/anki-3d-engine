@@ -7,7 +7,7 @@
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Scene/SceneNode.h>
 #include <AnKi/Resource/ResourceManager.h>
-#include <AnKi/Resource/TextureResource.h>
+#include <AnKi/Resource/ImageResource.h>
 
 namespace anki
 {
@@ -21,7 +21,7 @@ ReflectionProbeComponent::ReflectionProbeComponent(SceneNode* node)
 	, m_markedForRendering(false)
 	, m_markedForUpdate(true)
 {
-	if(node->getSceneGraph().getResourceManager().loadResource("EngineAssets/Mirror.ankitex", m_debugTex))
+	if(node->getSceneGraph().getResourceManager().loadResource("EngineAssets/Mirror.ankitex", m_debugImage))
 	{
 		ANKI_SCENE_LOGF("Failed to load resources");
 	}
@@ -61,7 +61,7 @@ void ReflectionProbeComponent::draw(RenderQueueDrawContext& ctx) const
 
 	m_node->getSceneGraph().getDebugDrawer().drawBillboardTextures(
 		ctx.m_projectionMatrix, ctx.m_viewMatrix, ConstWeakArray<Vec3>(&m_worldPos, 1), Vec4(1.0f),
-		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), m_debugTex->getGrTextureView(),
+		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), m_debugImage->getTextureView(),
 		ctx.m_sampler, Vec2(0.75f), *ctx.m_stagingGpuAllocator, ctx.m_commandBuffer);
 
 	// Restore state

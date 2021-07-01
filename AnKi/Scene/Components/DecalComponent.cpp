@@ -18,7 +18,7 @@ DecalComponent::DecalComponent(SceneNode* node)
 	, m_node(node)
 {
 	ANKI_ASSERT(node);
-	if(node->getSceneGraph().getResourceManager().loadResource("EngineAssets/GreenDecal.ankitex", m_debugTex))
+	if(node->getSceneGraph().getResourceManager().loadResource("EngineAssets/GreenDecal.ankitex", m_debugImage))
 	{
 		ANKI_SCENE_LOGF("Failed to load resources");
 	}
@@ -34,17 +34,17 @@ Error DecalComponent::setLayer(CString texAtlasFname, CString texAtlasSubtexName
 
 	ANKI_CHECK(m_node->getSceneGraph().getResourceManager().loadResource(texAtlasFname, l.m_atlas));
 
-	ANKI_CHECK(l.m_atlas->getSubTextureInfo(texAtlasSubtexName, &l.m_uv[0]));
+	ANKI_CHECK(l.m_atlas->getSubImageInfo(texAtlasSubtexName, &l.m_uv[0]));
 
 	// Add a border to the UVs to avoid complex shader logic
-	if(l.m_atlas->getSubTextureMargin() < ATLAS_SUB_TEXTURE_MARGIN)
+	if(l.m_atlas->getSubImageMargin() < ATLAS_SUB_IMAGE_MARGIN)
 	{
-		ANKI_SCENE_LOGE("Need texture atlas with margin at least %u", ATLAS_SUB_TEXTURE_MARGIN);
+		ANKI_SCENE_LOGE("Need image atlas with margin at least %u", ATLAS_SUB_IMAGE_MARGIN);
 		return Error::USER_DATA;
 	}
 
 	const Vec2 marginf =
-		F32(ATLAS_SUB_TEXTURE_MARGIN / 2) / Vec2(F32(l.m_atlas->getWidth()), F32(l.m_atlas->getHeight()));
+		F32(ATLAS_SUB_IMAGE_MARGIN / 2) / Vec2(F32(l.m_atlas->getWidth()), F32(l.m_atlas->getHeight()));
 	const Vec2 minUv = l.m_uv.xy() - marginf;
 	const Vec2 sizeUv = (l.m_uv.zw() - l.m_uv.xy()) + 2.0f * marginf;
 	l.m_uv = Vec4(minUv.x(), minUv.y(), minUv.x() + sizeUv.x(), minUv.y() + sizeUv.y());
@@ -109,7 +109,7 @@ void DecalComponent::draw(RenderQueueDrawContext& ctx) const
 	const Vec3 pos = m_obb.getCenter().xyz();
 	m_node->getSceneGraph().getDebugDrawer().drawBillboardTextures(
 		ctx.m_projectionMatrix, ctx.m_viewMatrix, ConstWeakArray<Vec3>(&pos, 1), Vec4(1.0f),
-		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), m_debugTex->getGrTextureView(),
+		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), m_debugImage->getTextureView(),
 		ctx.m_sampler, Vec2(0.75f), *ctx.m_stagingGpuAllocator, ctx.m_commandBuffer);
 
 	// Restore state

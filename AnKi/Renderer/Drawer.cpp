@@ -5,7 +5,7 @@
 
 #include <AnKi/Renderer/Drawer.h>
 #include <AnKi/Renderer/RenderQueue.h>
-#include <AnKi/Resource/TextureResource.h>
+#include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Util/Logger.h>

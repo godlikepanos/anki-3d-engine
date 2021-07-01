@@ -212,10 +212,10 @@ ParticleEmitterComponent::~ParticleEmitterComponent()
 Error ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 {
 	// Create the debug drawer
-	if(!m_dbgTex.isCreated())
+	if(!m_dbgImage.isCreated())
 	{
 		ANKI_CHECK(m_node->getSceneGraph().getResourceManager().loadResource("EngineAssets/ParticleEmitter.ankitex",
-																			 m_dbgTex));
+																			 m_dbgImage));
 	}
 
 	// Load
@@ -450,7 +450,7 @@ void ParticleEmitterComponent::draw(RenderQueueDrawContext& ctx) const
 		const Vec3 pos = m_transform.getOrigin().xyz();
 		m_node->getSceneGraph().getDebugDrawer().drawBillboardTextures(
 			ctx.m_projectionMatrix, ctx.m_viewMatrix, ConstWeakArray<Vec3>(&pos, 1), Vec4(1.0f),
-			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), m_dbgTex->getGrTextureView(),
+			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), m_dbgImage->getTextureView(),
 			ctx.m_sampler, Vec2(0.75f), *ctx.m_stagingGpuAllocator, ctx.m_commandBuffer);
 
 		// Restore state

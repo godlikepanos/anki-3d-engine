@@ -35,7 +35,7 @@ Error FinalComposite::initInternal(const ConfigSet& config)
 {
 	ANKI_ASSERT("Initializing PPS");
 
-	ANKI_CHECK(loadColorGradingTexture("EngineAssets/DefaultLut.ankitex"));
+	ANKI_CHECK(loadColorGradingTextureImage("EngineAssets/DefaultLut.ankitex"));
 
 	m_fbDescr.m_colorAttachmentCount = 1;
 	m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
@@ -82,7 +82,7 @@ Error FinalComposite::init(const ConfigSet& config)
 	return err;
 }
 
-Error FinalComposite::loadColorGradingTexture(CString filename)
+Error FinalComposite::loadColorGradingTextureImage(CString filename)
 {
 	m_lut.reset(nullptr);
 	ANKI_CHECK(getResourceManager().loadResource(filename, m_lut));
@@ -128,8 +128,8 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 		rgraphCtx.bindColorTexture(0, 4, m_r->getTemporalAA().getRt());
 
 		rgraphCtx.bindColorTexture(0, 5, m_r->getBloom().getRt());
-		cmdb->bindTexture(0, 6, m_lut->getGrTextureView(), TextureUsageBit::SAMPLED_FRAGMENT);
-		cmdb->bindTexture(0, 7, m_blueNoise->getGrTextureView(), TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->bindTexture(0, 6, m_lut->getTextureView(), TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->bindTexture(0, 7, m_blueNoise->getTextureView(), TextureUsageBit::SAMPLED_FRAGMENT);
 		rgraphCtx.bindColorTexture(0, 8, m_r->getMotionVectors().getMotionVectorsRt());
 		rgraphCtx.bindTexture(0, 9, m_r->getGBuffer().getDepthRt(),
 							  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));

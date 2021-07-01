@@ -40,7 +40,7 @@ private:
 	Array<ShaderProgramPtr, 2> m_grProg;
 
 	TexturePtr m_rt;
-	TextureResourcePtr m_noiseTex;
+	ImageResourcePtr m_noiseImage;
 
 	Array<U32, 2> m_workgroupSize = {};
 	U32 m_maxSteps = 32;

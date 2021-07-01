@@ -84,7 +84,7 @@ private:
 	Mat3x4 m_worldRotation = Mat3x4::getIdentity();
 	Aabb m_worldAabb = Aabb(Vec3(0.0f), Vec3(1.0f));
 
-	TextureResourcePtr m_dbgTex;
+	ImageResourcePtr m_dbgImage;
 
 	Bool m_markedForUpdate = true;
 

@@ -10,7 +10,7 @@ using namespace anki;
 class TextureViewerUiNode : public SceneNode
 {
 public:
-	TextureResourcePtr m_textureResource;
+	ImageResourcePtr m_imageResource;
 
 	TextureViewerUiNode(SceneGraph* scene, CString name)
 		: SceneNode(scene, name)
@@ -35,7 +35,7 @@ public:
 	{
 		if(!m_textureView.isCreated())
 		{
-			m_textureView = m_textureResource->getGrTextureView();
+			m_textureView = m_imageResource->getTextureView();
 		}
 
 		return Error::NONE;
@@ -53,7 +53,7 @@ private:
 
 	void draw(CanvasPtr& canvas)
 	{
-		const Texture& grTex = *m_textureResource->getGrTexture().get();
+		const Texture& grTex = *m_imageResource->getTexture().get();
 		const U32 colorComponentCount = getFormatInfo(grTex.getFormat()).m_componentCount;
 
 		ImGui::Begin("Console", nullptr,
@@ -134,7 +134,7 @@ private:
 			if(lastCrntMip != m_crntMip)
 			{
 				// Re-create the image view
-				TextureViewInitInfo viewInitInf(m_textureResource->getGrTexture());
+				TextureViewInitInfo viewInitInf(m_imageResource->getTexture());
 				viewInitInf.m_firstMipmap = m_crntMip;
 				viewInitInf.m_mipmapCount = 1;
 				m_textureView = getSceneGraph().getGrManager().newTextureView(viewInitInf);
@@ -231,20 +231,20 @@ public:
 		ANKI_CHECK(App::init(config, allocAligned, nullptr));
 
 		// Load the texture
-		TextureResourcePtr tex;
-		ANKI_CHECK(getResourceManager().loadResource(argv[1], tex, false));
+		ImageResourcePtr image;
+		ANKI_CHECK(getResourceManager().loadResource(argv[1], image, false));
 
 		// Change window name
 		StringAuto title(alloc);
-		title.sprintf("%s %llu x %llu Mips %u", argv[1], tex->getWidth(), tex->getHeight(),
-					  tex->getGrTexture()->getMipmapCount());
+		title.sprintf("%s %llu x %llu Mips %u", argv[1], image->getWidth(), image->getHeight(),
+					  image->getTexture()->getMipmapCount());
 		getWindow().setWindowTitle(title);
 
 		// Create the node
 		SceneGraph& scene = getSceneGraph();
 		TextureViewerUiNode* node;
 		ANKI_CHECK(scene.newSceneNode("TextureViewer", node));
-		node->m_textureResource = tex;
+		node->m_imageResource = image;
 
 		return Error::NONE;
 	}

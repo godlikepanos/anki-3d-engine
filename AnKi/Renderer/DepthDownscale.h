@@ -7,7 +7,7 @@
 
 #include <AnKi/Renderer/RendererObject.h>
 #include <AnKi/Gr.h>
-#include <AnKi/Resource/TextureResource.h>
+#include <AnKi/Resource/ImageResource.h>
 
 namespace anki
 {

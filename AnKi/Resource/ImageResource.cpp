@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Resource/TextureResource.h>
+#include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Resource/ImageLoader.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Resource/AsyncLoader.h>
@@ -11,7 +11,7 @@
 namespace anki
 {
 
-class TextureResource::LoadingContext
+class ImageResource::LoadingContext
 {
 public:
 	ImageLoader m_loader;
@@ -28,11 +28,11 @@ public:
 	}
 };
 
-/// Texture upload async task.
-class TextureResource::TexUploadTask : public AsyncLoaderTask
+/// Image upload async task.
+class ImageResource::TexUploadTask : public AsyncLoaderTask
 {
 public:
-	TextureResource::LoadingContext m_ctx;
+	ImageResource::LoadingContext m_ctx;
 
 	TexUploadTask(GenericMemoryPoolAllocator<U8> alloc)
 		: m_ctx(alloc)
@@ -41,15 +41,15 @@ public:
 
 	Error operator()(AsyncLoaderTaskContext& ctx) final
 	{
-		return TextureResource::load(m_ctx);
+		return ImageResource::load(m_ctx);
 	}
 };
 
-TextureResource::~TextureResource()
+ImageResource::~ImageResource()
 {
 }
 
-Error TextureResource::load(const ResourceFilename& filename, Bool async)
+Error ImageResource::load(const ResourceFilename& filename, Bool async)
 {
 	TexUploadTask* task;
 	LoadingContext* ctx;
@@ -75,13 +75,13 @@ Error TextureResource::load(const ResourceFilename& filename, Bool async)
 	ResourceFilePtr file;
 	ANKI_CHECK(openFile(filename, file));
 
-	ANKI_CHECK(loader.load(file, filename, getManager().getMaxTextureSize()));
+	ANKI_CHECK(loader.load(file, filename, getManager().getMaxImageSize()));
 
 	// Various sizes
 	init.m_width = loader.getWidth();
 	init.m_height = loader.getHeight();
 
-	switch(loader.getTextureType())
+	switch(loader.getImageType())
 	{
 	case ImageBinaryType::_2D:
 		init.m_type = TextureType::_2D;
@@ -179,7 +179,7 @@ Error TextureResource::load(const ResourceFilename& filename, Bool async)
 	return Error::NONE;
 }
 
-Error TextureResource::load(LoadingContext& ctx)
+Error ImageResource::load(LoadingContext& ctx)
 {
 	const U32 copyCount = ctx.m_layerCount * ctx.m_faces * ctx.m_loader.getMipmapCount();
 

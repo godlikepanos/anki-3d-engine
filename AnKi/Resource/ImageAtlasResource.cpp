@@ -3,25 +3,25 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Resource/TextureAtlasResource.h>
+#include <AnKi/Resource/ImageAtlasResource.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Util/Xml.h>
 
 namespace anki
 {
 
-TextureAtlasResource::TextureAtlasResource(ResourceManager* manager)
+ImageAtlasResource::ImageAtlasResource(ResourceManager* manager)
 	: ResourceObject(manager)
 {
 }
 
-TextureAtlasResource::~TextureAtlasResource()
+ImageAtlasResource::~ImageAtlasResource()
 {
 	m_subTexes.destroy(getAllocator());
 	m_subTexNames.destroy(getAllocator());
 }
 
-Error TextureAtlasResource::load(const ResourceFilename& filename, Bool async)
+Error ImageAtlasResource::load(const ResourceFilename& filename, Bool async)
 {
 	XmlDocument doc;
 	ANKI_CHECK(openFileParseXml(filename, doc));
@@ -29,28 +29,28 @@ Error TextureAtlasResource::load(const ResourceFilename& filename, Bool async)
 	XmlElement rootel, el;
 
 	//
-	// <textureAtlas>
+	// <imageAtlas>
 	//
-	ANKI_CHECK(doc.getChildElement("textureAtlas", rootel));
+	ANKI_CHECK(doc.getChildElement("imageAtlas", rootel));
 
 	//
-	// <texture>
+	// <image>
 	//
-	ANKI_CHECK(rootel.getChildElement("texture", el));
+	ANKI_CHECK(rootel.getChildElement("image", el));
 	CString texFname;
 	ANKI_CHECK(el.getText(texFname));
-	ANKI_CHECK(getManager().loadResource<TextureResource>(texFname, m_tex, async));
+	ANKI_CHECK(getManager().loadResource<ImageResource>(texFname, m_image, async));
 
-	m_size[0] = m_tex->getWidth();
-	m_size[1] = m_tex->getHeight();
+	m_size[0] = m_image->getWidth();
+	m_size[1] = m_image->getHeight();
 
 	//
-	// <subTextureMargin>
+	// <subImageMargin>
 	//
-	ANKI_CHECK(rootel.getChildElement("subTextureMargin", el));
+	ANKI_CHECK(rootel.getChildElement("subImageMargin", el));
 	I64 margin = 0;
 	ANKI_CHECK(el.getNumber(margin));
-	if(margin >= I(m_tex->getWidth()) || margin >= I(m_tex->getHeight()) || margin < 0)
+	if(margin >= I(m_image->getWidth()) || margin >= I(m_image->getHeight()) || margin < 0)
 	{
 		ANKI_RESOURCE_LOGE("Too big margin %d", I32(margin));
 		return Error::USER_DATA;
@@ -58,15 +58,15 @@ Error TextureAtlasResource::load(const ResourceFilename& filename, Bool async)
 	m_margin = U32(margin);
 
 	//
-	// <subTextures>
+	// <subImages>
 	//
 
 	// Get counts
 	U32 namesSize = 0;
 	U32 subTexesCount = 0;
 	XmlElement subTexesEl, subTexEl;
-	ANKI_CHECK(rootel.getChildElement("subTextures", subTexesEl));
-	ANKI_CHECK(subTexesEl.getChildElement("subTexture", subTexEl));
+	ANKI_CHECK(rootel.getChildElement("subImages", subTexesEl));
+	ANKI_CHECK(subTexesEl.getChildElement("subImage", subTexEl));
 	do
 	{
 		ANKI_CHECK(subTexEl.getChildElement("name", el));
@@ -82,7 +82,7 @@ Error TextureAtlasResource::load(const ResourceFilename& filename, Bool async)
 		namesSize += U32(name.getLength()) + 1;
 		++subTexesCount;
 
-		ANKI_CHECK(subTexEl.getNextSiblingElement("subTexture", subTexEl));
+		ANKI_CHECK(subTexEl.getNextSiblingElement("subImage", subTexEl));
 	} while(subTexEl);
 
 	// Allocate
@@ -92,7 +92,7 @@ Error TextureAtlasResource::load(const ResourceFilename& filename, Bool async)
 	// Iterate again and populate
 	subTexesCount = 0;
 	char* names = &m_subTexNames[0];
-	ANKI_CHECK(subTexesEl.getChildElement("subTexture", subTexEl));
+	ANKI_CHECK(subTexesEl.getChildElement("subImage", subTexEl));
 	do
 	{
 		ANKI_CHECK(subTexEl.getChildElement("name", el));
@@ -111,13 +111,13 @@ Error TextureAtlasResource::load(const ResourceFilename& filename, Bool async)
 		names += name.getLength() + 1;
 		++subTexesCount;
 
-		ANKI_CHECK(subTexEl.getNextSiblingElement("subTexture", subTexEl));
+		ANKI_CHECK(subTexEl.getNextSiblingElement("subImage", subTexEl));
 	} while(subTexEl);
 
 	return Error::NONE;
 }
 
-Error TextureAtlasResource::getSubTextureInfo(CString name, F32 uv[4]) const
+Error ImageAtlasResource::getSubImageInfo(CString name, F32 uv[4]) const
 {
 	for(const SubTex& st : m_subTexes)
 	{
@@ -131,7 +131,7 @@ Error TextureAtlasResource::getSubTextureInfo(CString name, F32 uv[4]) const
 		}
 	}
 
-	ANKI_RESOURCE_LOGE("Texture atlas %s doesn't have sub texture named: %s", &getFilename()[0], &name[0]);
+	ANKI_RESOURCE_LOGE("Image atlas %s doesn't have sub image named: %s", &getFilename()[0], &name[0]);
 	return Error::USER_DATA;
 }
 

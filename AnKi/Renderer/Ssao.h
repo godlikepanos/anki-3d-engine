@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Renderer/RendererObject.h>
-#include <AnKi/Resource/TextureResource.h>
+#include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Gr.h>
 
 namespace anki
@@ -50,7 +50,7 @@ private:
 	public:
 		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
-		TextureResourcePtr m_noiseTex;
+		ImageResourcePtr m_noiseImage;
 		Array<U32, 2> m_workgroupSize = {};
 	} m_main; ///< Main noisy pass.
 

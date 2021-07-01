@@ -124,7 +124,7 @@ private:
 	Bool m_markedForRendering : 1;
 	Bool m_shapeDirty : 1;
 
-	TextureResourcePtr m_debugTex;
+	ImageResourcePtr m_debugImage;
 
 	static void giProbeQueueElementFeedbackCallback(Bool fillRenderQueuesOnNextFrame, void* userData,
 													const Vec4& eyeWorldPosition)

@@ -38,7 +38,7 @@ Error RtShadows::initInternal(const ConfigSet& cfg)
 	m_useSvgf = cfg.getNumberU8("r_rtShadowsSvgf") != 0;
 	m_atrousPassCount = cfg.getNumberU8("r_rtShadowsSvgfAtrousPassCount");
 
-	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoiseRgb864x64.png", m_blueNoiseTex));
+	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoiseRgb864x64.png", m_blueNoiseImage));
 
 	// Ray gen program
 	{
@@ -508,7 +508,7 @@ void RtShadows::run(RenderPassWorkContext& rgraphCtx)
 	rgraphCtx.bindImage(0, 16, m_runCtx.m_currentHistoryLengthRt);
 	rgraphCtx.bindColorTexture(0, 17, m_runCtx.m_prevMomentsRt);
 	rgraphCtx.bindImage(0, 18, m_runCtx.m_currentMomentsRt);
-	cmdb->bindTexture(0, 19, m_blueNoiseTex->getGrTextureView(), TextureUsageBit::SAMPLED_TRACE_RAYS);
+	cmdb->bindTexture(0, 19, m_blueNoiseImage->getTextureView(), TextureUsageBit::SAMPLED_TRACE_RAYS);
 
 	cmdb->bindAllBindless(1);
 

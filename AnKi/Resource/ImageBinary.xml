@@ -42,7 +42,7 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ImageBinaryDataCompression)
 ]]></prefix_code>
 
 	<classes>
-		<class name="ImageBinaryHeader" comment="The 1st things that appears in a texture binary.">
+		<class name="ImageBinaryHeader" comment="The 1st things that appears in a image binary">
 			<members>
 				<member name="m_magic" type="U8" array_size="8"/>
 				<member name="m_width" type="U32"/>

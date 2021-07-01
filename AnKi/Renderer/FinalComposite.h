@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Renderer/RendererObject.h>
-#include <AnKi/Resource/TextureResource.h>
+#include <AnKi/Resource/ImageResource.h>
 
 namespace anki
 {
@@ -27,7 +27,7 @@ public:
 	void populateRenderGraph(RenderingContext& ctx);
 
 	/// Load the color grading texture.
-	Error loadColorGradingTexture(CString filename);
+	Error loadColorGradingTextureImage(CString filename);
 
 private:
 	static const U LUT_SIZE = 16;
@@ -40,8 +40,8 @@ private:
 	ShaderProgramResourcePtr m_defaultVisualizeRenderTargetProg;
 	ShaderProgramPtr m_defaultVisualizeRenderTargetGrProg;
 
-	TextureResourcePtr m_lut; ///< Color grading lookup texture.
-	TextureResourcePtr m_blueNoise;
+	ImageResourcePtr m_lut; ///< Color grading lookup texture.
+	ImageResourcePtr m_blueNoise;
 
 	class
 	{

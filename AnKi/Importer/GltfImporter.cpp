@@ -1258,7 +1258,7 @@ Error GltfImporter::writeLight(const cgltf_node& node, const HashMapAuto<CString
 	if(lensFlaresFname != extras.getEnd())
 	{
 		ANKI_CHECK(m_sceneFile.writeText("lfcomp = node:getSceneNodeBase():getLensFlareComponent()\n"));
-		ANKI_CHECK(m_sceneFile.writeText("lfcomp:loadTextureResource(\"%s\")\n", lensFlaresFname->cstr()));
+		ANKI_CHECK(m_sceneFile.writeText("lfcomp:loadImageResource(\"%s\")\n", lensFlaresFname->cstr()));
 
 		auto lsSpriteSize = extras.find("lens_flare_first_sprite_size");
 		auto lsColor = extras.find("lens_flare_color");

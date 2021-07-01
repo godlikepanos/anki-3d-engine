@@ -89,7 +89,7 @@ private:
 	Bool m_markedForRendering : 1;
 	Bool m_markedForUpdate : 1;
 
-	TextureResourcePtr m_debugTex;
+	ImageResourcePtr m_debugImage;
 
 	static void reflectionProbeQueueElementFeedbackCallback(Bool fillRenderQueuesOnNextFrame, void* userData)
 	{

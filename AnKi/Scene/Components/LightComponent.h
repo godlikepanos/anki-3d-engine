@@ -215,8 +215,8 @@ private:
 	Spot m_spot;
 	Dir m_dir;
 
-	TextureResourcePtr m_pointDebugTex;
-	TextureResourcePtr m_spotDebugTex;
+	ImageResourcePtr m_pointDebugImage;
+	ImageResourcePtr m_spotDebugImage;
 
 	LightComponentType m_type;
 

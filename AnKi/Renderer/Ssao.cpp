@@ -21,7 +21,7 @@ Ssao::~Ssao()
 Error Ssao::initMain(const ConfigSet& config)
 {
 	// Noise
-	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoiseLdrRgb64x64.ankitex", m_main.m_noiseTex));
+	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoiseLdrRgb64x64.ankitex", m_main.m_noiseImage));
 
 	// Shader
 	if(m_useCompute)
@@ -36,7 +36,7 @@ Error Ssao::initMain(const ConfigSet& config)
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_main.m_prog);
 	variantInitInfo.addMutation("USE_NORMAL", (m_useNormal) ? 1u : 0u);
 	variantInitInfo.addMutation("SOFT_BLUR", (m_useSoftBlur) ? 1u : 0u);
-	variantInitInfo.addConstant("NOISE_MAP_SIZE", U32(m_main.m_noiseTex->getWidth()));
+	variantInitInfo.addConstant("NOISE_MAP_SIZE", U32(m_main.m_noiseImage->getWidth()));
 	variantInitInfo.addConstant("FB_SIZE", UVec2(m_width, m_height));
 	variantInitInfo.addConstant("RADIUS", 2.5f);
 	variantInitInfo.addConstant("BIAS", 0.0f);
@@ -136,7 +136,7 @@ void Ssao::runMain(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 	cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearRepeat);
 
 	rgraphCtx.bindTexture(0, 2, m_r->getDepthDownscale().getHiZRt(), HIZ_HALF_DEPTH);
-	cmdb->bindTexture(0, 3, m_main.m_noiseTex->getGrTextureView(), TextureUsageBit::SAMPLED_FRAGMENT);
+	cmdb->bindTexture(0, 3, m_main.m_noiseImage->getTextureView(), TextureUsageBit::SAMPLED_FRAGMENT);
 
 	if(m_useNormal)
 	{

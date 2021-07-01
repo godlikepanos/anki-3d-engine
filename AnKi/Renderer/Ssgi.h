@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Renderer/RendererObject.h>
-#include <AnKi/Resource/TextureResource.h>
+#include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Gr.h>
 
 namespace anki
@@ -51,7 +51,7 @@ private:
 		ShaderProgramResourcePtr m_prog;
 		Array<ShaderProgramPtr, 4> m_grProg;
 		RenderTargetDescription m_rtDescr;
-		TextureResourcePtr m_noiseTex;
+		ImageResourcePtr m_noiseImage;
 		U32 m_maxSteps = 32;
 		U32 m_firstStepPixels = 16;
 		U32 m_depthLod = 0;

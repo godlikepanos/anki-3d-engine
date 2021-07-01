@@ -10,7 +10,7 @@
 #include <AnKi/Scene/Octree.h>
 #include <AnKi/Collision.h>
 #include <AnKi/Resource/ResourceManager.h>
-#include <AnKi/Resource/TextureResource.h>
+#include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 
 namespace anki
@@ -29,8 +29,8 @@ LightComponent::LightComponent(SceneNode* node)
 	ANKI_ASSERT(m_uuid > 0);
 	m_point.m_radius = 1.0f;
 
-	if(node->getSceneGraph().getResourceManager().loadResource("EngineAssets/LightBulb.ankitex", m_pointDebugTex)
-	   || node->getSceneGraph().getResourceManager().loadResource("EngineAssets/SpotLight.ankitex", m_spotDebugTex))
+	if(node->getSceneGraph().getResourceManager().loadResource("EngineAssets/LightBulb.ankitex", m_pointDebugImage)
+	   || node->getSceneGraph().getResourceManager().loadResource("EngineAssets/SpotLight.ankitex", m_spotDebugImage))
 	{
 		ANKI_SCENE_LOGF("Failed to load resources");
 	}
@@ -238,10 +238,10 @@ void LightComponent::draw(RenderQueueDrawContext& ctx) const
 	Vec3 color = m_diffColor.xyz();
 	color /= max(max(color.x(), color.y()), color.z());
 
-	TextureResourcePtr texResource = (m_type == LightComponentType::POINT) ? m_pointDebugTex : m_spotDebugTex;
+	ImageResourcePtr imageResource = (m_type == LightComponentType::POINT) ? m_pointDebugImage : m_spotDebugImage;
 	m_node->getSceneGraph().getDebugDrawer().drawBillboardTexture(
 		ctx.m_projectionMatrix, ctx.m_viewMatrix, m_worldtransform.getOrigin().xyz(), color.xyz1(),
-		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), texResource->getGrTextureView(),
+		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), imageResource->getTextureView(),
 		ctx.m_sampler, Vec2(0.75f), *ctx.m_stagingGpuAllocator, ctx.m_commandBuffer);
 
 	// Restore state

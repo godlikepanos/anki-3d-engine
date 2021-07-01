@@ -17,9 +17,9 @@
 #include <AnKi/Resource/ScriptResource.h>
 #include <AnKi/Resource/DummyResource.h>
 #include <AnKi/Resource/ParticleEmitterResource.h>
-#include <AnKi/Resource/TextureResource.h>
+#include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Resource/GenericResource.h>
-#include <AnKi/Resource/TextureAtlasResource.h>
+#include <AnKi/Resource/ImageAtlasResource.h>
 #include <AnKi/Resource/ShaderProgramResource.h>
 #include <AnKi/Resource/SkeletonResource.h>
 
@@ -50,7 +50,7 @@ Error ResourceManager::init(ResourceManagerInitInfo& init)
 	m_cacheDir.create(m_alloc, init.m_cacheDir);
 
 	// Init some constants
-	m_maxTextureSize = init.m_config->getNumberU32("rsrc_maxTextureSize");
+	m_maxImageSize = init.m_config->getNumberU32("rsrc_maxImageSize");
 	m_dumpShaderSource = init.m_config->getBool("rsrc_dumpShaderSources");
 
 	// Init type resource managers

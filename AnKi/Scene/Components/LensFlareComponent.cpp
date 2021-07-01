@@ -5,7 +5,7 @@
 
 #include <AnKi/Scene/Components/LensFlareComponent.h>
 #include <AnKi/Scene/SceneGraph.h>
-#include <AnKi/Resource/TextureResource.h>
+#include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Resource/ResourceManager.h>
 
 namespace anki
@@ -24,9 +24,9 @@ LensFlareComponent::~LensFlareComponent()
 {
 }
 
-Error LensFlareComponent::loadTextureResource(CString textureFilename)
+Error LensFlareComponent::loadImageResource(CString filename)
 {
-	return m_node->getSceneGraph().getResourceManager().loadResource(textureFilename, m_tex);
+	return m_node->getSceneGraph().getResourceManager().loadResource(filename, m_image);
 }
 
 } // end namespace anki
