@@ -135,7 +135,7 @@ static ANKI_USE_RESULT Error checkConfig(const ImageImporterConfig& config)
 					"Can't compress 3D textures");
 
 	// Mip size
-	ANKI_CFG_ASSERT(config.m_minMipmapDimension > 4, "Mimpap min dimension can be less than 4");
+	ANKI_CFG_ASSERT(config.m_minMipmapDimension >= 4, "Mimpap min dimension can be less than 4");
 
 #undef ANKI_CFG_ASSERT
 	return Error::NONE;
@@ -322,7 +322,7 @@ static ANKI_USE_RESULT Error compressS3tc(GenericMemoryPoolAllocator<U8> alloc, 
 
 	// Create a BMP image to feed to the compressor
 	StringAuto bmpFilename(alloc);
-	bmpFilename.sprintf("%s/%u_.bmp", tempDirectory.cstr(), U32(std::rand()));
+	bmpFilename.sprintf("%s/AnKiImageImporter_%u.bmp", tempDirectory.cstr(), U32(std::rand()));
 	if(!stbi_write_bmp(bmpFilename.cstr(), inWidth, inHeight, channelCount, inPixels.getBegin()))
 	{
 		ANKI_IMPORTER_LOGE("STB failed to create: %s", bmpFilename.cstr());
@@ -332,7 +332,7 @@ static ANKI_USE_RESULT Error compressS3tc(GenericMemoryPoolAllocator<U8> alloc, 
 
 	// Invoke the compressor process
 	StringAuto ddsFilename(alloc);
-	ddsFilename.sprintf("%s/%u_.dds", tempDirectory.cstr(), U32(std::rand()));
+	ddsFilename.sprintf("%s/AnKiImageImporter_%u.dds", tempDirectory.cstr(), U32(std::rand()));
 	Process proc;
 	Array<CString, 5> args;
 	U32 argCount = 0;
@@ -478,9 +478,10 @@ static ANKI_USE_RESULT Error importImageInternal(const ImageImporterConfig& conf
 	ANKI_CHECK(loadFirstMipmap(config, ctx));
 
 	// Generate mipmaps
-	const U32 mipCount = (config.m_type == ImageBinaryType::_3D)
-							 ? computeMaxMipmapCount3d(width, height, ctx.m_depth, config.m_minMipmapDimension)
-							 : computeMaxMipmapCount2d(width, height, config.m_minMipmapDimension);
+	const U32 mipCount =
+		min(config.m_mipmapCount, (config.m_type == ImageBinaryType::_3D)
+									  ? computeMaxMipmapCount3d(width, height, ctx.m_depth, config.m_minMipmapDimension)
+									  : computeMaxMipmapCount2d(width, height, config.m_minMipmapDimension));
 	for(U32 mip = 1; mip < mipCount; ++mip)
 	{
 		ctx.m_mipmaps.emplaceBack(alloc);

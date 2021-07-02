@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Importer/ImageImporter.h>
+#include <AnKi/Util/Filesystem.h>
 
 using namespace anki;
 
@@ -17,9 +18,9 @@ Options:
 )";
 
 static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& config,
-								  DynamicArrayAuto<StringAuto>& filenames)
+								  DynamicArrayAuto<StringAuto>& filenames, DynamicArrayAuto<CString>& cfilenames)
 {
-	config.m_compressions = ImageBinaryDataCompression::NONE;
+	config.m_compressions = ImageBinaryDataCompression::S3TC;
 	config.m_noAlpha = false;
 
 	// Parse config
@@ -113,13 +114,12 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 		}
 	}
 
-	const PtrSize listSize = filenames.getSize();
-	if(listSize < 3)
+	if(filenames.getSize() < 2)
 	{
 		return Error::USER_DATA;
 	}
 
-	DynamicArrayAuto<CString> cfilenames(filenames.getAllocator(), filenames.getSize());
+	cfilenames.create(filenames.getSize());
 	for(U32 i = 0; i < filenames.getSize(); ++i)
 	{
 		cfilenames[i] = filenames[i];
@@ -138,11 +138,20 @@ int main(int argc, char** argv)
 	ImageImporterConfig config;
 	config.m_allocator = alloc;
 	DynamicArrayAuto<StringAuto> filenames(alloc);
-	if(parseCommandLineArgs(argc, argv, config, filenames))
+	DynamicArrayAuto<CString> cfilenames(alloc);
+	if(parseCommandLineArgs(argc, argv, config, filenames, cfilenames))
 	{
 		ANKI_IMPORTER_LOGE(USAGE, argv[0]);
 		return 1;
 	}
+
+	StringAuto tmp(alloc);
+	if(getTempDirectory(tmp))
+	{
+		ANKI_IMPORTER_LOGE("getTempDirectory() failed");
+		return 1;
+	}
+	config.m_tempDirectory = tmp;
 
 	if(importImage(config))
 	{
