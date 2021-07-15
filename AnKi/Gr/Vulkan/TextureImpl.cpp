@@ -525,32 +525,29 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 	{
 		out = VK_IMAGE_LAYOUT_UNDEFINED;
 	}
-	else if(!(usage & ~TextureUsageBit::ALL_SAMPLED))
+	else if(depthStencil)
 	{
-		// Only sampling
-		out = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		if(!(usage & ~(TextureUsageBit::ALL_SAMPLED | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ)))
+		{
+			// Only depth tests and sampled
+			out = VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL;
+		}
+		else
+		{
+			// Only attachment write, the rest (eg transfer) are not supported for now
+			ANKI_ASSERT(usage == TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE);
+			out = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		}
+	}
+	else if(!(usage & ~TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT))
+	{
+		// Color attachment
+		out = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	}
 	else if(!(usage & ~TextureUsageBit::ALL_IMAGE))
 	{
 		// Only image load/store
 		out = VK_IMAGE_LAYOUT_GENERAL;
-	}
-	else if(!(usage & ~TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT))
-	{
-		// Only FB access
-		if(depthStencil)
-		{
-			out = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-		}
-		else
-		{
-			out = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		}
-	}
-	else if(depthStencil && !(usage & ~(TextureUsageBit::ALL_SAMPLED | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ)))
-	{
-		// FB read & shader read
-		out = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 	}
 	else if(usage == TextureUsageBit::GENERATE_MIPMAPS)
 	{
@@ -563,7 +560,7 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 			out = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 		}
 	}
-	else if(!depthStencil && usage == TextureUsageBit::TRANSFER_DESTINATION)
+	else if(usage == TextureUsageBit::TRANSFER_DESTINATION)
 	{
 		out = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 	}

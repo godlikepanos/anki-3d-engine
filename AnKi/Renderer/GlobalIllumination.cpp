@@ -91,8 +91,7 @@ void GlobalIllumination::bindVolumeTextures(const RenderingContext& ctx, RenderP
 		}
 		else
 		{
-			rgraphCtx.m_commandBuffer->bindTexture(set, binding, m_r->getDummyTextureView3d(),
-												   TextureUsageBit::ALL_SAMPLED, idx);
+			rgraphCtx.m_commandBuffer->bindTexture(set, binding, m_r->getDummyTextureView3d(), idx);
 		}
 	}
 }

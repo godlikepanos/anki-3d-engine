@@ -706,7 +706,7 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 		cmdb->bindShaderProgram(blitProg);
 		cmdb->setTextureSurfaceBarrier(rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 									   TextureUsageBit::SAMPLED_FRAGMENT, TextureSurfaceInfo(0, 0, 0, 0));
-		cmdb->bindTextureAndSampler(0, 0, texView, sampler, TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->bindTextureAndSampler(0, 0, texView, sampler);
 		presentBarrierA(cmdb, presentTex);
 		cmdb->beginRenderPass(dfb, {TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}, {});
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
@@ -1062,8 +1062,8 @@ ANKI_TEST(Gr, DrawWithTexture)
 		presentBarrierA(cmdb, presentTex);
 		cmdb->beginRenderPass(fb, {TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}, {});
 
-		cmdb->bindTextureAndSampler(0, 0, aView, sampler, TextureUsageBit::SAMPLED_FRAGMENT);
-		cmdb->bindTextureAndSampler(0, 1, bView, sampler, TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->bindTextureAndSampler(0, 0, aView, sampler);
+		cmdb->bindTextureAndSampler(0, 1, bView, sampler);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
 		cmdb->endRenderPass();
 		presentBarrierB(cmdb, presentTex);
@@ -1240,8 +1240,8 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 		cmdb->beginRenderPass(dfb, {TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}, {});
 		cmdb->bindShaderProgram(resolveProg);
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
-		cmdb->bindTextureAndSampler(0, 0, col0View, sampler, TextureUsageBit::SAMPLED_FRAGMENT);
-		cmdb->bindTextureAndSampler(0, 2, col1View, sampler, TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->bindTextureAndSampler(0, 0, col0View, sampler);
+		cmdb->bindTextureAndSampler(0, 2, col1View, sampler);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
 		cmdb->endRenderPass();
 		presentBarrierB(cmdb, presentTex);
@@ -1370,8 +1370,7 @@ ANKI_TEST(Gr, ImageLoadStore)
 		FramebufferPtr dfb = createColorFb(*gr, presentTex);
 		presentBarrierA(cmdb, presentTex);
 		cmdb->beginRenderPass(dfb, {TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}, {});
-		cmdb->bindTextureAndSampler(0, 0, gr->newTextureView(TextureViewInitInfo(tex)), sampler,
-									TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->bindTextureAndSampler(0, 0, gr->newTextureView(TextureViewInitInfo(tex)), sampler);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
 		cmdb->endRenderPass();
 		presentBarrierB(cmdb, presentTex);
@@ -1487,8 +1486,7 @@ ANKI_TEST(Gr, 3DTextures)
 		U32 idx = U32((F32(ITERATION_COUNT - iterations - 1) / F32(ITERATION_COUNT)) * F32(TEX_COORDS_LOD.getSize()));
 		*uv = TEX_COORDS_LOD[idx];
 
-		cmdb->bindTextureAndSampler(0, 1, gr->newTextureView(TextureViewInitInfo(a)), sampler,
-									TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->bindTextureAndSampler(0, 1, gr->newTextureView(TextureViewInitInfo(a)), sampler);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
 
 		cmdb->endRenderPass();
@@ -1820,7 +1818,7 @@ void main()
 
 	cmdb->setTextureBarrier(tex, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::SAMPLED_COMPUTE, subresource);
 	cmdb->bindShaderProgram(prog);
-	cmdb->bindTextureAndSampler(0, 0, texView, sampler, TextureUsageBit::SAMPLED_COMPUTE);
+	cmdb->bindTextureAndSampler(0, 0, texView, sampler);
 	cmdb->bindStorageBuffer(0, 1, resultBuff, 0, resultBuff->getSize());
 	cmdb->dispatchCompute(1, 1, 1);
 

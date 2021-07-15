@@ -126,7 +126,7 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 
 		bindUniforms(cmdb, 0, 4, binning.m_reflectionProbesToken);
 		rgraphCtx.bindColorTexture(0, 5, m_r->getProbeReflections().getReflectionRt());
-		cmdb->bindTexture(0, 6, m_r->getProbeReflections().getIntegrationLut(), TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->bindTexture(0, 6, m_r->getProbeReflections().getIntegrationLut());
 
 		m_r->getGlobalIllumination().bindVolumeTextures(ctx, rgraphCtx, 0, 7);
 		bindUniforms(cmdb, 0, 8, binning.m_globalIlluminationProbesToken);

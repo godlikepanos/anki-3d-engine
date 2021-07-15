@@ -508,7 +508,7 @@ void RtShadows::run(RenderPassWorkContext& rgraphCtx)
 	rgraphCtx.bindImage(0, 16, m_runCtx.m_currentHistoryLengthRt);
 	rgraphCtx.bindColorTexture(0, 17, m_runCtx.m_prevMomentsRt);
 	rgraphCtx.bindImage(0, 18, m_runCtx.m_currentMomentsRt);
-	cmdb->bindTexture(0, 19, m_blueNoiseImage->getTextureView(), TextureUsageBit::SAMPLED_TRACE_RAYS);
+	cmdb->bindTexture(0, 19, m_blueNoiseImage->getTextureView());
 
 	cmdb->bindAllBindless(1);
 

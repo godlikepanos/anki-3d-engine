@@ -186,8 +186,7 @@ void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBufferPtr& cmd
 		// Render
 		ANKI_ASSERT(flareEl.m_textureView);
 		cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearRepeat);
-		cmdb->bindTexture(0, 2, TextureViewPtr(const_cast<TextureView*>(flareEl.m_textureView)),
-						  TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->bindTexture(0, 2, TextureViewPtr(const_cast<TextureView*>(flareEl.m_textureView)));
 
 		cmdb->drawArraysIndirect(PrimitiveTopology::TRIANGLE_STRIP, 1, i * sizeof(DrawArraysIndirectInfo),
 								 m_indirectBuff);

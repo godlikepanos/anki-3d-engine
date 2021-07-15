@@ -150,7 +150,7 @@ void Bloom::runUpscaleAndSslf(RenderPassWorkContext& rgraphCtx)
 
 	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
 	rgraphCtx.bindColorTexture(0, 1, m_runCtx.m_exposureRt);
-	cmdb->bindTexture(0, 2, m_upscale.m_lensDirtImage->getTextureView(), TextureUsageBit::SAMPLED_COMPUTE);
+	cmdb->bindTexture(0, 2, m_upscale.m_lensDirtImage->getTextureView());
 
 	rgraphCtx.bindImage(0, 3, m_runCtx.m_upscaleRt, TextureSubresourceInfo());
 

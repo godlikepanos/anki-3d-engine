@@ -125,30 +125,28 @@ public:
 
 	void getBufferState(BufferHandle handle, BufferPtr& buff) const;
 
-	void getRenderTargetState(RenderTargetHandle handle, const TextureSubresourceInfo& subresource, TexturePtr& tex,
-							  TextureUsageBit& usage) const;
+	void getRenderTargetState(RenderTargetHandle handle, const TextureSubresourceInfo& subresource,
+							  TexturePtr& tex) const;
 
 	/// Convenience method.
 	void bindTextureAndSampler(U32 set, U32 binding, RenderTargetHandle handle,
 							   const TextureSubresourceInfo& subresource, const SamplerPtr& sampler)
 	{
 		TexturePtr tex;
-		TextureUsageBit usage;
-		getRenderTargetState(handle, subresource, tex, usage);
+		getRenderTargetState(handle, subresource, tex);
 		TextureViewInitInfo viewInit(tex, subresource, "TmpRenderGraph");
 		TextureViewPtr view = m_commandBuffer->getManager().newTextureView(viewInit);
-		m_commandBuffer->bindTextureAndSampler(set, binding, view, sampler, usage);
+		m_commandBuffer->bindTextureAndSampler(set, binding, view, sampler);
 	}
 
 	/// Convenience method.
 	void bindTexture(U32 set, U32 binding, RenderTargetHandle handle, const TextureSubresourceInfo& subresource)
 	{
 		TexturePtr tex;
-		TextureUsageBit usage;
-		getRenderTargetState(handle, subresource, tex, usage);
+		getRenderTargetState(handle, subresource, tex);
 		TextureViewInitInfo viewInit(tex, subresource, "TmpRenderGraph");
 		TextureViewPtr view = m_commandBuffer->getManager().newTextureView(viewInit);
-		m_commandBuffer->bindTexture(set, binding, view, usage);
+		m_commandBuffer->bindTexture(set, binding, view);
 	}
 
 	/// Convenience method to bind the whole texture as color.
@@ -156,10 +154,9 @@ public:
 	{
 		TexturePtr tex = getTexture(handle);
 		TextureViewInitInfo viewInit(tex); // Use the whole texture
-		TextureUsageBit usage;
-		getRenderTargetState(handle, viewInit, tex, usage);
+		getRenderTargetState(handle, viewInit, tex);
 		TextureViewPtr view = m_commandBuffer->getManager().newTextureView(viewInit);
-		m_commandBuffer->bindTextureAndSampler(set, binding, view, sampler, usage);
+		m_commandBuffer->bindTextureAndSampler(set, binding, view, sampler);
 	}
 
 	/// Convenience method to bind the whole texture as color.
@@ -167,10 +164,9 @@ public:
 	{
 		TexturePtr tex = getTexture(handle);
 		TextureViewInitInfo viewInit(tex); // Use the whole texture
-		TextureUsageBit usage;
-		getRenderTargetState(handle, viewInit, tex, usage);
+		getRenderTargetState(handle, viewInit, tex);
 		TextureViewPtr view = m_commandBuffer->getManager().newTextureView(viewInit);
-		m_commandBuffer->bindTexture(set, binding, view, usage, arrayIdx);
+		m_commandBuffer->bindTexture(set, binding, view, arrayIdx);
 	}
 
 	/// Convenience method.
@@ -178,8 +174,7 @@ public:
 				   U32 arrayIdx = 0)
 	{
 		TexturePtr tex;
-		TextureUsageBit usage;
-		getRenderTargetState(handle, subresource, tex, usage);
+		getRenderTargetState(handle, subresource, tex);
 		TextureViewInitInfo viewInit(tex, subresource, "TmpRenderGraph");
 		TextureViewPtr view = m_commandBuffer->getManager().newTextureView(viewInit);
 		m_commandBuffer->bindImage(set, binding, view, arrayIdx);
@@ -195,8 +190,7 @@ public:
 					&& tex->getDepthStencilAspect() == DepthStencilAspectBit::NONE);
 #endif
 		const TextureSubresourceInfo subresource;
-		TextureUsageBit usage;
-		getRenderTargetState(handle, subresource, tex, usage);
+		getRenderTargetState(handle, subresource, tex);
 		TextureViewInitInfo viewInit(tex, subresource, "TmpRenderGraph");
 		TextureViewPtr view = m_commandBuffer->getManager().newTextureView(viewInit);
 		m_commandBuffer->bindImage(set, binding, view, arrayIdx);

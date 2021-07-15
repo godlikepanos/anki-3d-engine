@@ -127,7 +127,7 @@ void Ssr::run(RenderPassWorkContext& rgraphCtx)
 	rgraphCtx.bindColorTexture(0, 6, m_r->getDownscaleBlur().getRt());
 
 	cmdb->bindSampler(0, 7, m_r->getSamplers().m_trilinearRepeat);
-	cmdb->bindTexture(0, 8, m_noiseImage->getTextureView(), TextureUsageBit::ALL_SAMPLED);
+	cmdb->bindTexture(0, 8, m_noiseImage->getTextureView());
 
 	// Dispatch
 	dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_r->getWidth() / 2, m_r->getHeight());

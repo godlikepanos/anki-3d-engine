@@ -438,8 +438,7 @@ void ProbeReflections::runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkCo
 	subresource.m_mipmapCount = m_lightShading.m_mipCount;
 
 	TexturePtr texToBind;
-	TextureUsageBit usage;
-	rgraphCtx.getRenderTargetState(m_ctx.m_lightShadingRt, subresource, texToBind, usage);
+	rgraphCtx.getRenderTargetState(m_ctx.m_lightShadingRt, subresource, texToBind);
 
 	TextureViewInitInfo viewInit(texToBind, subresource);
 	rgraphCtx.m_commandBuffer->generateMipmaps2d(getGrManager().newTextureView(viewInit));
