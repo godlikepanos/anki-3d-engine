@@ -38,4 +38,7 @@ class StringAuto;
 
 class ThreadHive;
 
+template<typename T, PtrSize T_PREALLOCATED_STORAGE = ANKI_SAFE_ALIGNMENT>
+class Function;
+
 } // end namespace anki

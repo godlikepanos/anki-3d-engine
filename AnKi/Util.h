@@ -41,6 +41,7 @@
 #include <AnKi/Util/Serializer.h>
 #include <AnKi/Util/Xml.h>
 #include <AnKi/Util/F16.h>
+#include <AnKi/Util/Function.h>
 
 /// @defgroup util Utilities (like STL)
 
