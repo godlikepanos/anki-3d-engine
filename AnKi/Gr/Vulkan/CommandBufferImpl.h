@@ -233,7 +233,7 @@ public:
 		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
 		const TextureImpl& tex = view.getTextureImpl();
 		ANKI_ASSERT(tex.isSubresourceGoodForSampling(view.getSubresource()));
-		const VkImageLayout lay = tex.computeLayout(TextureUsageBit::ALL_SAMPLED, 0);
+		const VkImageLayout lay = tex.computeLayout(TextureUsageBit::ALL_SAMPLED & tex.getTextureUsage(), 0);
 
 		m_dsetState[set].bindTextureAndSampler(binding, arrayIdx, &view, sampler.get(), lay);
 
@@ -247,7 +247,7 @@ public:
 		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
 		const TextureImpl& tex = view.getTextureImpl();
 		ANKI_ASSERT(tex.isSubresourceGoodForSampling(view.getSubresource()));
-		const VkImageLayout lay = tex.computeLayout(TextureUsageBit::ALL_SAMPLED, 0);
+		const VkImageLayout lay = tex.computeLayout(TextureUsageBit::ALL_SAMPLED & tex.getTextureUsage(), 0);
 
 		m_dsetState[set].bindTexture(binding, arrayIdx, &view, lay);
 

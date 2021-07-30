@@ -530,12 +530,13 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 		if(!(usage & ~(TextureUsageBit::ALL_SAMPLED | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ)))
 		{
 			// Only depth tests and sampled
-			out = VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL;
+			out = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 		}
 		else
 		{
 			// Only attachment write, the rest (eg transfer) are not supported for now
-			ANKI_ASSERT(usage == TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE);
+			ANKI_ASSERT(usage == TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
+						|| usage == TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT);
 			out = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 		}
 	}
@@ -548,6 +549,11 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 	{
 		// Only image load/store
 		out = VK_IMAGE_LAYOUT_GENERAL;
+	}
+	else if(!(usage & ~TextureUsageBit::ALL_SAMPLED))
+	{
+		// Only sampled
+		out = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	}
 	else if(usage == TextureUsageBit::GENERATE_MIPMAPS)
 	{
