@@ -128,8 +128,8 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 		rgraphCtx.bindColorTexture(0, 4, m_r->getTemporalAA().getRt());
 
 		rgraphCtx.bindColorTexture(0, 5, m_r->getBloom().getRt());
-		cmdb->bindTexture(0, 6, m_lut->getTextureView(), TextureUsageBit::SAMPLED_FRAGMENT);
-		cmdb->bindTexture(0, 7, m_blueNoise->getTextureView(), TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->bindTexture(0, 6, m_lut->getTextureView());
+		cmdb->bindTexture(0, 7, m_blueNoise->getTextureView());
 		rgraphCtx.bindColorTexture(0, 8, m_r->getMotionVectors().getMotionVectorsRt());
 		rgraphCtx.bindTexture(0, 9, m_r->getGBuffer().getDepthRt(),
 							  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));

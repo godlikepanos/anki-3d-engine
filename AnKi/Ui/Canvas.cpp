@@ -335,7 +335,7 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 						cmdb->bindSampler(0, 0,
 										  (id.m_bits.m_pointSampling) ? m_nearestNearestRepeatSampler
 																	  : m_linearLinearRepeatSampler);
-						cmdb->bindTexture(0, 1, view, TextureUsageBit::SAMPLED_FRAGMENT);
+						cmdb->bindTexture(0, 1, view);
 					}
 
 					// Push constants

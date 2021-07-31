@@ -227,14 +227,13 @@ public:
 		m_state.setBlendOperation(attachment, funcRgb, funcA);
 	}
 
-	void bindTextureAndSamplerInternal(U32 set, U32 binding, TextureViewPtr& texView, SamplerPtr sampler,
-									   TextureUsageBit usage, U32 arrayIdx)
+	void bindTextureAndSamplerInternal(U32 set, U32 binding, TextureViewPtr& texView, SamplerPtr sampler, U32 arrayIdx)
 	{
 		commandCommon();
 		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
 		const TextureImpl& tex = view.getTextureImpl();
 		ANKI_ASSERT(tex.isSubresourceGoodForSampling(view.getSubresource()));
-		const VkImageLayout lay = tex.computeLayout(usage, 0);
+		const VkImageLayout lay = tex.computeLayout(TextureUsageBit::ALL_SAMPLED & tex.getTextureUsage(), 0);
 
 		m_dsetState[set].bindTextureAndSampler(binding, arrayIdx, &view, sampler.get(), lay);
 
@@ -242,13 +241,13 @@ public:
 		m_microCmdb->pushObjectRef(sampler);
 	}
 
-	void bindTextureInternal(U32 set, U32 binding, TextureViewPtr& texView, TextureUsageBit usage, U32 arrayIdx)
+	void bindTextureInternal(U32 set, U32 binding, TextureViewPtr& texView, U32 arrayIdx)
 	{
 		commandCommon();
 		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
 		const TextureImpl& tex = view.getTextureImpl();
 		ANKI_ASSERT(tex.isSubresourceGoodForSampling(view.getSubresource()));
-		const VkImageLayout lay = tex.computeLayout(usage, 0);
+		const VkImageLayout lay = tex.computeLayout(TextureUsageBit::ALL_SAMPLED & tex.getTextureUsage(), 0);
 
 		m_dsetState[set].bindTexture(binding, arrayIdx, &view, lay);
 

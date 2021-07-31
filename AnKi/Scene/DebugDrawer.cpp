@@ -283,7 +283,7 @@ void DebugDrawer2::drawBillboardTextures(const Mat4& projMat, const Mat4& viewMa
 
 	cmdb->bindUniformBuffer(1, 0, unisToken.m_buffer, unisToken.m_offset, unisToken.m_range);
 	cmdb->bindSampler(1, 1, sampler);
-	cmdb->bindTexture(1, 2, tex, TextureUsageBit::SAMPLED_FRAGMENT);
+	cmdb->bindTexture(1, 2, tex);
 
 	cmdb->drawArrays(PrimitiveTopology::TRIANGLE_STRIP, 4, positions.getSize());
 }

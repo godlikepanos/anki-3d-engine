@@ -243,8 +243,7 @@ void RenderComponent::allocateAndSetupUniforms(const MaterialResourcePtr& mtl, c
 		case ShaderVariableDataType::TEXTURE_CUBE:
 		{
 			ctx.m_commandBuffer->bindTexture(set, mvar.getOpaqueBinding(),
-											 mvar.getValue<ImageResourcePtr>()->getTextureView(),
-											 TextureUsageBit::SAMPLED_FRAGMENT);
+											 mvar.getValue<ImageResourcePtr>()->getTextureView());
 			break;
 		}
 		case ShaderVariableDataType::SAMPLER:

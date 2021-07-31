@@ -116,7 +116,7 @@ void VolumetricLightingAccumulation::run(RenderPassWorkContext& rgraphCtx)
 
 	rgraphCtx.bindImage(0, 2, m_runCtx.m_rts[1], TextureSubresourceInfo());
 
-	cmdb->bindTexture(0, 3, m_noiseImage->getTextureView(), TextureUsageBit::SAMPLED_COMPUTE);
+	cmdb->bindTexture(0, 3, m_noiseImage->getTextureView());
 
 	rgraphCtx.bindColorTexture(0, 4, m_runCtx.m_rts[0]);
 

@@ -183,16 +183,16 @@ void CommandBuffer::setBlendOperation(U32 attachment, BlendOperation funcRgb, Bl
 }
 
 void CommandBuffer::bindTextureAndSampler(U32 set, U32 binding, TextureViewPtr texView, SamplerPtr sampler,
-										  TextureUsageBit usage, U32 arrayIdx)
+										  U32 arrayIdx)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.bindTextureAndSamplerInternal(set, binding, texView, sampler, usage, arrayIdx);
+	self.bindTextureAndSamplerInternal(set, binding, texView, sampler, arrayIdx);
 }
 
-void CommandBuffer::bindTexture(U32 set, U32 binding, TextureViewPtr texView, TextureUsageBit usage, U32 arrayIdx)
+void CommandBuffer::bindTexture(U32 set, U32 binding, TextureViewPtr texView, U32 arrayIdx)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.bindTextureInternal(set, binding, texView, usage, arrayIdx);
+	self.bindTextureInternal(set, binding, texView, arrayIdx);
 }
 
 void CommandBuffer::bindSampler(U32 set, U32 binding, SamplerPtr sampler, U32 arrayIdx)

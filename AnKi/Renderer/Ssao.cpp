@@ -136,7 +136,7 @@ void Ssao::runMain(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 	cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearRepeat);
 
 	rgraphCtx.bindTexture(0, 2, m_r->getDepthDownscale().getHiZRt(), HIZ_HALF_DEPTH);
-	cmdb->bindTexture(0, 3, m_main.m_noiseImage->getTextureView(), TextureUsageBit::SAMPLED_FRAGMENT);
+	cmdb->bindTexture(0, 3, m_main.m_noiseImage->getTextureView());
 
 	if(m_useNormal)
 	{
