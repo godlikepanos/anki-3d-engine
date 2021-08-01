@@ -23,6 +23,10 @@ void getFilepathExtension(const CString& filename, StringAuto& out);
 /// On path/to/file.ext return file.ext
 void getFilepathFilename(const CString& filename, StringAuto& out);
 
+/// Get base path.
+/// On path/to/file.ext return path/to
+void getParentFilepath(const CString& filename, StringAuto& out);
+
 /// Return true if directory exists?
 Bool directoryExists(const CString& dir);
 

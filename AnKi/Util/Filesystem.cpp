@@ -44,4 +44,18 @@ void getFilepathFilename(const CString& filename, StringAuto& out)
 	}
 }
 
+void getParentFilepath(const CString& filename, StringAuto& out)
+{
+	const char* pc = std::strrchr(filename.cstr(), '/');
+
+	if(pc == nullptr)
+	{
+		out.create("");
+	}
+	else
+	{
+		out.create(filename.cstr(), pc);
+	}
+}
+
 } // end namespace anki

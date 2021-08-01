@@ -153,6 +153,12 @@ int main(int argc, char** argv)
 	}
 	config.m_tempDirectory = tmp;
 
+	StringAuto p(alloc);
+	getParentFilepath(argv[0], p);
+	StringAuto compressonatorPath(alloc);
+	compressonatorPath.sprintf("%s/../../ThirdParty/Bin/Compressonator:%s", p.cstr(), getenv("PATH"));
+	config.m_compressonatorPath = compressonatorPath;
+
 	if(importImage(config))
 	{
 		ANKI_IMPORTER_LOGE("Importing failed");

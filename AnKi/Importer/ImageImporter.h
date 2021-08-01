@@ -28,6 +28,7 @@ public:
 	U32 m_mipmapCount = MAX_U32;
 	Bool m_noAlpha = true;
 	CString m_tempDirectory;
+	CString m_compressonatorPath; ///< Optional.
 };
 
 /// Converts images to AnKi's specific format.

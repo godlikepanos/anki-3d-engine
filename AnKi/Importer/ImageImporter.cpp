@@ -290,8 +290,8 @@ static void generateSurfaceMipmap(ConstWeakArray<U8, PtrSize> inBuffer, U32 inWi
 }
 
 static ANKI_USE_RESULT Error compressS3tc(GenericMemoryPoolAllocator<U8> alloc, CString tempDirectory,
-										  ConstWeakArray<U8, PtrSize> inPixels, U32 inWidth, U32 inHeight,
-										  U32 channelCount, WeakArray<U8, PtrSize> outPixels)
+										  CString compressonatorPath, ConstWeakArray<U8, PtrSize> inPixels, U32 inWidth,
+										  U32 inHeight, U32 channelCount, WeakArray<U8, PtrSize> outPixels)
 {
 	ANKI_ASSERT(inPixels.getSizeInBytes() == PtrSize(inWidth) * inHeight * channelCount);
 	ANKI_ASSERT(inWidth > 0 && isPowerOfTwo(inWidth) && inHeight > 0 && isPowerOfTwo(inHeight));
@@ -311,8 +311,8 @@ static ANKI_USE_RESULT Error compressS3tc(GenericMemoryPoolAllocator<U8> alloc, 
 		{
 			if(!m_fileToDelete.isEmpty())
 			{
-				const int ret = std::remove(m_fileToDelete.cstr());
-				if(ret == 0)
+				const int err = std::remove(m_fileToDelete.cstr());
+				if(err)
 				{
 					ANKI_IMPORTER_LOGE("Couldn't delete file: %s", m_fileToDelete.cstr());
 				}
@@ -342,7 +342,9 @@ static ANKI_USE_RESULT Error compressS3tc(GenericMemoryPoolAllocator<U8> alloc, 
 	args[argCount++] = bmpFilename;
 	args[argCount++] = ddsFilename;
 
-	ANKI_CHECK(proc.start("CompressonatorCLI", args, {}));
+	ANKI_CHECK(proc.start("CompressonatorCLI", args,
+						  (compressonatorPath.isEmpty()) ? ConstWeakArray<CString>()
+														 : Array<CString, 2>{{"PATH", compressonatorPath}}));
 	CleanupFile ddsCleanup(alloc, ddsFilename);
 	ProcessStatus status;
 	I32 exitCode;
@@ -350,7 +352,18 @@ static ANKI_USE_RESULT Error compressS3tc(GenericMemoryPoolAllocator<U8> alloc, 
 
 	if(status != ProcessStatus::NORMAL_EXIT || exitCode != 0)
 	{
-		ANKI_IMPORTER_LOGE("Invoking compressor process failed");
+		StringAuto errStr(alloc);
+		if(exitCode != 0)
+		{
+			ANKI_CHECK(proc.readFromStdout(errStr));
+		}
+
+		if(errStr.isEmpty())
+		{
+			errStr = "Unknown error";
+		}
+
+		ANKI_IMPORTER_LOGE("Invoking compressor process failed: %s", errStr.cstr());
 		return Error::FUNCTION_FAILED;
 	}
 
@@ -404,7 +417,8 @@ static ANKI_USE_RESULT Error storeAnkiImage(const ImageImporterConfig& config, c
 	// Write RAW
 	if(!!(config.m_compressions & ImageBinaryDataCompression::RAW))
 	{
-		for(I32 mip = I32(ctx.m_mipmaps.getSize()) - 1; mip >= 0; --mip)
+		// for(I32 mip = I32(ctx.m_mipmaps.getSize()) - 1; mip >= 0; --mip)
+		for(U32 mip = 0; mip < ctx.m_mipmaps.getSize(); ++mip)
 		{
 			for(U32 l = 0; l < ctx.m_layerCount; ++l)
 			{
@@ -421,7 +435,8 @@ static ANKI_USE_RESULT Error storeAnkiImage(const ImageImporterConfig& config, c
 	// Write S3TC
 	if(!!(config.m_compressions & ImageBinaryDataCompression::S3TC))
 	{
-		for(I32 mip = I32(ctx.m_mipmaps.getSize()) - 1; mip >= 0; --mip)
+		// for(I32 mip = I32(ctx.m_mipmaps.getSize()) - 1; mip >= 0; --mip)
+		for(U32 mip = 0; mip < ctx.m_mipmaps.getSize(); ++mip)
 		{
 			for(U32 l = 0; l < ctx.m_layerCount; ++l)
 			{
@@ -539,7 +554,7 @@ static ANKI_USE_RESULT Error importImageInternal(const ImageImporterConfig& conf
 
 					surface.m_s3tcPixels.create(s3tcImageSize);
 
-					ANKI_CHECK(compressS3tc(alloc, config.m_tempDirectory,
+					ANKI_CHECK(compressS3tc(alloc, config.m_tempDirectory, config.m_compressonatorPath,
 											ConstWeakArray<U8, PtrSize>(surface.m_pixels), width, height,
 											ctx.m_channelCount, WeakArray<U8, PtrSize>(surface.m_s3tcPixels)));
 				}

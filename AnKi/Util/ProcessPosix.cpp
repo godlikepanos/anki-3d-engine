@@ -102,20 +102,16 @@ Error Process::start(CString executable, ConstWeakArray<CString> arguments, Cons
 		cargs[i + 1] = nullptr;
 
 		// Set the env
-		char** newenv = static_cast<char**>(malloc((environment.getSize() + 1) * sizeof(char*)));
-		i = 0;
-		for(; i < environment.getSize(); ++i)
+		for(U32 i = 0; i < environment.getSize(); i += 2)
 		{
-			newenv[i] = static_cast<char*>(malloc(environment[i].getLength() + 1));
-			strcpy(newenv[i], environment[i].cstr());
+			setenv(environment[i].cstr(), environment[i + 1].cstr(), 1);
 		}
-		newenv[i] = nullptr;
 
 		// Execute file
-		const int execerror = execvpe(executable.cstr(), cargs, newenv);
+		const int execerror = execvp(executable.cstr(), cargs);
 		if(execerror)
 		{
-			printf("execvpe() failed: %s", strerror(errno));
+			printf("execvp() failed: %s", strerror(errno));
 			exit(1);
 		}
 	}
