@@ -20,18 +20,15 @@ GrObject::GrObject(GrManager* manager, GrObjectType type, CString name)
 		name = "N/A";
 	}
 
-	char* pname =
-		static_cast<char*>(manager->getAllocator().getMemoryPool().allocate(name.getLength() + 1, alignof(char)));
-	memcpy(pname, &name[0], name.getLength() + 1);
-	m_name = pname;
+	m_name = static_cast<Char*>(manager->getAllocator().getMemoryPool().allocate(name.getLength() + 1, alignof(Char)));
+	memcpy(m_name, &name[0], name.getLength() + 1);
 }
 
 GrObject::~GrObject()
 {
 	if(m_name)
 	{
-		char* ptr = const_cast<char*>(&m_name[0]);
-		m_manager->getAllocator().getMemoryPool().free(ptr);
+		m_manager->getAllocator().getMemoryPool().free(m_name);
 	}
 }
 

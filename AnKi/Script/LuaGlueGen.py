@@ -19,8 +19,11 @@ def parse_commandline():
 
     parser = optparse.OptionParser(usage="usage: %prog [options]", description="Create LUA bindings using XML")
 
-    parser.add_option(
-        "-i", "--input", dest="inp", type="string", help="specify the XML files to parse. Seperate with :")
+    parser.add_option("-i",
+                      "--input",
+                      dest="inp",
+                      type="string",
+                      help="specify the XML files to parse. Seperate with :")
 
     (options, args) = parser.parse_args()
 
@@ -147,9 +150,9 @@ def ret(ret_el):
 
             wglue("extern LuaUserDataTypeInfo luaUserDataTypeInfo%s;" % type)
             if is_ptr:
-                wglue("ud->initPointed(&luaUserDataTypeInfo%s, const_cast<%s*>(ret));" % (type, type))
+                wglue("ud->initPointed(&luaUserDataTypeInfo%s, ret);" % type)
             elif is_ref:
-                wglue("ud->initPointed(&luaUserDataTypeInfo%s, const_cast<%s*>(&ret));" % (type, type))
+                wglue("ud->initPointed(&luaUserDataTypeInfo%s, &ret);" % type)
         else:
             wglue("size = LuaUserData::computeSizeForGarbageCollected<%s>();" % type)
             wglue("voidp = lua_newuserdata(l, size);")

@@ -63,7 +63,7 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 
 LuaUserDataTypeInfo luaUserDataTypeInfoWeakArraySceneNodePtr = {
-	-3650588055232078616, "WeakArraySceneNodePtr", LuaUserData::computeSizeForGarbageCollected<WeakArraySceneNodePtr>(),
+	2351667301613603684, "WeakArraySceneNodePtr", LuaUserData::computeSizeForGarbageCollected<WeakArraySceneNodePtr>(),
 	nullptr, nullptr};
 
 template<>
@@ -161,7 +161,7 @@ static inline int pwrapWeakArraySceneNodePtrgetAt(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	ud->initPointed(&luaUserDataTypeInfoSceneNode, const_cast<SceneNode*>(ret));
+	ud->initPointed(&luaUserDataTypeInfoSceneNode, ret);
 
 	return 1;
 }
@@ -189,7 +189,7 @@ static inline void wrapWeakArraySceneNodePtr(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoWeakArrayBodyComponentPtr = {
-	-7580294434043141548, "WeakArrayBodyComponentPtr",
+	-3630482463244456607, "WeakArrayBodyComponentPtr",
 	LuaUserData::computeSizeForGarbageCollected<WeakArrayBodyComponentPtr>(), nullptr, nullptr};
 
 template<>
@@ -287,7 +287,7 @@ static inline int pwrapWeakArrayBodyComponentPtrgetAt(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "BodyComponent");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoBodyComponent;
-	ud->initPointed(&luaUserDataTypeInfoBodyComponent, const_cast<BodyComponent*>(ret));
+	ud->initPointed(&luaUserDataTypeInfoBodyComponent, ret);
 
 	return 1;
 }
@@ -314,7 +314,7 @@ static inline void wrapWeakArrayBodyComponentPtr(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoMoveComponent = {2039593201479231235, "MoveComponent",
+LuaUserDataTypeInfo luaUserDataTypeInfoMoveComponent = {4540189628197406596, "MoveComponent",
 														LuaUserData::computeSizeForGarbageCollected<MoveComponent>(),
 														nullptr, nullptr};
 
@@ -407,7 +407,7 @@ static inline int pwrapMoveComponentgetLocalOrigin(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "Vec4");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
-	ud->initPointed(&luaUserDataTypeInfoVec4, const_cast<Vec4*>(&ret));
+	ud->initPointed(&luaUserDataTypeInfoVec4, &ret);
 
 	return 1;
 }
@@ -508,7 +508,7 @@ static inline int pwrapMoveComponentgetLocalRotation(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "Mat3x4");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoMat3x4;
-	ud->initPointed(&luaUserDataTypeInfoMat3x4, const_cast<Mat3x4*>(&ret));
+	ud->initPointed(&luaUserDataTypeInfoMat3x4, &ret);
 
 	return 1;
 }
@@ -703,7 +703,7 @@ static inline int pwrapMoveComponentgetLocalTransform(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "Transform");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoTransform;
-	ud->initPointed(&luaUserDataTypeInfoTransform, const_cast<Transform*>(&ret));
+	ud->initPointed(&luaUserDataTypeInfoTransform, &ret);
 
 	return 1;
 }
@@ -736,7 +736,7 @@ static inline void wrapMoveComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoLightComponent = {3179556689482799040, "LightComponent",
+LuaUserDataTypeInfo luaUserDataTypeInfoLightComponent = {-2846874425570615482, "LightComponent",
 														 LuaUserData::computeSizeForGarbageCollected<LightComponent>(),
 														 nullptr, nullptr};
 
@@ -829,7 +829,7 @@ static inline int pwrapLightComponentgetDiffuseColor(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "Vec4");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
-	ud->initPointed(&luaUserDataTypeInfoVec4, const_cast<Vec4*>(&ret));
+	ud->initPointed(&luaUserDataTypeInfoVec4, &ret);
 
 	return 1;
 }
@@ -1336,7 +1336,7 @@ static inline void wrapLightComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoDecalComponent = {8271624451872560749, "DecalComponent",
+LuaUserDataTypeInfo luaUserDataTypeInfoDecalComponent = {1790847611831966011, "DecalComponent",
 														 LuaUserData::computeSizeForGarbageCollected<DecalComponent>(),
 														 nullptr, nullptr};
 
@@ -1549,7 +1549,7 @@ static inline void wrapDecalComponent(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoLensFlareComponent = {
-	-2476208308393286891, "LensFlareComponent", LuaUserData::computeSizeForGarbageCollected<LensFlareComponent>(),
+	-4932754067185999175, "LensFlareComponent", LuaUserData::computeSizeForGarbageCollected<LensFlareComponent>(),
 	nullptr, nullptr};
 
 template<>
@@ -1730,7 +1730,7 @@ static inline void wrapLensFlareComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoBodyComponent = {154937307550545885, "BodyComponent",
+LuaUserDataTypeInfo luaUserDataTypeInfoBodyComponent = {-4078780863448717406, "BodyComponent",
 														LuaUserData::computeSizeForGarbageCollected<BodyComponent>(),
 														nullptr, nullptr};
 
@@ -1912,7 +1912,7 @@ static inline void wrapBodyComponent(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoTriggerComponent = {
-	-7657646622837619665, "TriggerComponent", LuaUserData::computeSizeForGarbageCollected<TriggerComponent>(), nullptr,
+	8945215392314198141, "TriggerComponent", LuaUserData::computeSizeForGarbageCollected<TriggerComponent>(), nullptr,
 	nullptr};
 
 template<>
@@ -2085,7 +2085,7 @@ static inline void wrapTriggerComponent(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoFogDensityComponent = {
-	-7940037986078247470, "FogDensityComponent", LuaUserData::computeSizeForGarbageCollected<FogDensityComponent>(),
+	1588849359385747618, "FogDensityComponent", LuaUserData::computeSizeForGarbageCollected<FogDensityComponent>(),
 	nullptr, nullptr};
 
 template<>
@@ -2301,7 +2301,7 @@ static inline void wrapFogDensityComponent(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoFrustumComponent = {
-	-6657872823488647939, "FrustumComponent", LuaUserData::computeSizeForGarbageCollected<FrustumComponent>(), nullptr,
+	2245939730482123129, "FrustumComponent", LuaUserData::computeSizeForGarbageCollected<FrustumComponent>(), nullptr,
 	nullptr};
 
 template<>
@@ -2487,7 +2487,7 @@ static inline void wrapFrustumComponent(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoGlobalIlluminationProbeComponent = {
-	-3388167713742520037, "GlobalIlluminationProbeComponent",
+	-3450656669276806140, "GlobalIlluminationProbeComponent",
 	LuaUserData::computeSizeForGarbageCollected<GlobalIlluminationProbeComponent>(), nullptr, nullptr};
 
 template<>
@@ -2749,7 +2749,7 @@ static inline void wrapGlobalIlluminationProbeComponent(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoReflectionProbeComponent = {
-	858764927345348885, "ReflectionProbeComponent",
+	5217657237947033905, "ReflectionProbeComponent",
 	LuaUserData::computeSizeForGarbageCollected<ReflectionProbeComponent>(), nullptr, nullptr};
 
 template<>
@@ -2871,7 +2871,7 @@ static inline void wrapReflectionProbeComponent(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoParticleEmitterComponent = {
-	-7137777058789215555, "ParticleEmitterComponent",
+	-5684173658226073395, "ParticleEmitterComponent",
 	LuaUserData::computeSizeForGarbageCollected<ParticleEmitterComponent>(), nullptr, nullptr};
 
 template<>
@@ -2948,7 +2948,7 @@ static inline void wrapParticleEmitterComponent(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoGpuParticleEmitterComponent = {
-	-6456898868368078429, "GpuParticleEmitterComponent",
+	-6030130683538446433, "GpuParticleEmitterComponent",
 	LuaUserData::computeSizeForGarbageCollected<GpuParticleEmitterComponent>(), nullptr, nullptr};
 
 template<>
@@ -3024,7 +3024,7 @@ static inline void wrapGpuParticleEmitterComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoModelComponent = {2086284032202559852, "ModelComponent",
+LuaUserDataTypeInfo luaUserDataTypeInfoModelComponent = {-8180446221504822757, "ModelComponent",
 														 LuaUserData::computeSizeForGarbageCollected<ModelComponent>(),
 														 nullptr, nullptr};
 
@@ -3100,7 +3100,7 @@ static inline void wrapModelComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoSkinComponent = {-518282143757246989, "SkinComponent",
+LuaUserDataTypeInfo luaUserDataTypeInfoSkinComponent = {4319432554872664725, "SkinComponent",
 														LuaUserData::computeSizeForGarbageCollected<SkinComponent>(),
 														nullptr, nullptr};
 
@@ -3177,7 +3177,7 @@ static inline void wrapSkinComponent(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode = {
-	-6335486079252217101, "SceneNode", LuaUserData::computeSizeForGarbageCollected<SceneNode>(), nullptr, nullptr};
+	7330223484305934319, "SceneNode", LuaUserData::computeSizeForGarbageCollected<SceneNode>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<SceneNode>()
@@ -3361,7 +3361,7 @@ static inline int pwrapSceneNodegetMoveComponent(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "MoveComponent");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoMoveComponent;
-	ud->initPointed(&luaUserDataTypeInfoMoveComponent, const_cast<MoveComponent*>(ret));
+	ud->initPointed(&luaUserDataTypeInfoMoveComponent, ret);
 
 	return 1;
 }
@@ -3416,7 +3416,7 @@ static inline int pwrapSceneNodegetLightComponent(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "LightComponent");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoLightComponent;
-	ud->initPointed(&luaUserDataTypeInfoLightComponent, const_cast<LightComponent*>(ret));
+	ud->initPointed(&luaUserDataTypeInfoLightComponent, ret);
 
 	return 1;
 }
@@ -3471,7 +3471,7 @@ static inline int pwrapSceneNodegetLensFlareComponent(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "LensFlareComponent");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoLensFlareComponent;
-	ud->initPointed(&luaUserDataTypeInfoLensFlareComponent, const_cast<LensFlareComponent*>(ret));
+	ud->initPointed(&luaUserDataTypeInfoLensFlareComponent, ret);
 
 	return 1;
 }
@@ -3526,7 +3526,7 @@ static inline int pwrapSceneNodegetDecalComponent(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "DecalComponent");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoDecalComponent;
-	ud->initPointed(&luaUserDataTypeInfoDecalComponent, const_cast<DecalComponent*>(ret));
+	ud->initPointed(&luaUserDataTypeInfoDecalComponent, ret);
 
 	return 1;
 }
@@ -3581,7 +3581,7 @@ static inline int pwrapSceneNodegetTriggerComponent(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "TriggerComponent");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoTriggerComponent;
-	ud->initPointed(&luaUserDataTypeInfoTriggerComponent, const_cast<TriggerComponent*>(ret));
+	ud->initPointed(&luaUserDataTypeInfoTriggerComponent, ret);
 
 	return 1;
 }
@@ -3636,7 +3636,7 @@ static inline int pwrapSceneNodegetFogDensityComponent(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "FogDensityComponent");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoFogDensityComponent;
-	ud->initPointed(&luaUserDataTypeInfoFogDensityComponent, const_cast<FogDensityComponent*>(ret));
+	ud->initPointed(&luaUserDataTypeInfoFogDensityComponent, ret);
 
 	return 1;
 }
@@ -3691,7 +3691,7 @@ static inline int pwrapSceneNodegetFrustumComponent(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "FrustumComponent");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoFrustumComponent;
-	ud->initPointed(&luaUserDataTypeInfoFrustumComponent, const_cast<FrustumComponent*>(ret));
+	ud->initPointed(&luaUserDataTypeInfoFrustumComponent, ret);
 
 	return 1;
 }
@@ -3746,8 +3746,7 @@ static inline int pwrapSceneNodegetGlobalIlluminationProbeComponent(lua_State* l
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "GlobalIlluminationProbeComponent");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoGlobalIlluminationProbeComponent;
-	ud->initPointed(&luaUserDataTypeInfoGlobalIlluminationProbeComponent,
-					const_cast<GlobalIlluminationProbeComponent*>(ret));
+	ud->initPointed(&luaUserDataTypeInfoGlobalIlluminationProbeComponent, ret);
 
 	return 1;
 }
@@ -3802,7 +3801,7 @@ static inline int pwrapSceneNodegetReflectionProbeComponent(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "ReflectionProbeComponent");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoReflectionProbeComponent;
-	ud->initPointed(&luaUserDataTypeInfoReflectionProbeComponent, const_cast<ReflectionProbeComponent*>(ret));
+	ud->initPointed(&luaUserDataTypeInfoReflectionProbeComponent, ret);
 
 	return 1;
 }
@@ -3857,7 +3856,7 @@ static inline int pwrapSceneNodegetBodyComponent(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "BodyComponent");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoBodyComponent;
-	ud->initPointed(&luaUserDataTypeInfoBodyComponent, const_cast<BodyComponent*>(ret));
+	ud->initPointed(&luaUserDataTypeInfoBodyComponent, ret);
 
 	return 1;
 }
@@ -3912,7 +3911,7 @@ static inline int pwrapSceneNodegetParticleEmitterComponent(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "ParticleEmitterComponent");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoParticleEmitterComponent;
-	ud->initPointed(&luaUserDataTypeInfoParticleEmitterComponent, const_cast<ParticleEmitterComponent*>(ret));
+	ud->initPointed(&luaUserDataTypeInfoParticleEmitterComponent, ret);
 
 	return 1;
 }
@@ -3967,7 +3966,7 @@ static inline int pwrapSceneNodegetGpuParticleEmitterComponent(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "GpuParticleEmitterComponent");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoGpuParticleEmitterComponent;
-	ud->initPointed(&luaUserDataTypeInfoGpuParticleEmitterComponent, const_cast<GpuParticleEmitterComponent*>(ret));
+	ud->initPointed(&luaUserDataTypeInfoGpuParticleEmitterComponent, ret);
 
 	return 1;
 }
@@ -4022,7 +4021,7 @@ static inline int pwrapSceneNodegetModelComponent(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "ModelComponent");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoModelComponent;
-	ud->initPointed(&luaUserDataTypeInfoModelComponent, const_cast<ModelComponent*>(ret));
+	ud->initPointed(&luaUserDataTypeInfoModelComponent, ret);
 
 	return 1;
 }
@@ -4077,7 +4076,7 @@ static inline int pwrapSceneNodegetSkinComponent(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "SkinComponent");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoSkinComponent;
-	ud->initPointed(&luaUserDataTypeInfoSkinComponent, const_cast<SkinComponent*>(ret));
+	ud->initPointed(&luaUserDataTypeInfoSkinComponent, ret);
 
 	return 1;
 }
@@ -4121,7 +4120,7 @@ static inline void wrapSceneNode(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoModelNode = {
-	-5697552120556254351, "ModelNode", LuaUserData::computeSizeForGarbageCollected<ModelNode>(), nullptr, nullptr};
+	7759505651022336171, "ModelNode", LuaUserData::computeSizeForGarbageCollected<ModelNode>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<ModelNode>()
@@ -4160,7 +4159,7 @@ static inline int pwrapModelNodegetSceneNodeBase(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	ud->initPointed(&luaUserDataTypeInfoSceneNode, const_cast<SceneNode*>(&ret));
+	ud->initPointed(&luaUserDataTypeInfoSceneNode, &ret);
 
 	return 1;
 }
@@ -4187,7 +4186,7 @@ static inline void wrapModelNode(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoPerspectiveCameraNode = {
-	8713576863036804173, "PerspectiveCameraNode", LuaUserData::computeSizeForGarbageCollected<PerspectiveCameraNode>(),
+	-4750834444661094313, "PerspectiveCameraNode", LuaUserData::computeSizeForGarbageCollected<PerspectiveCameraNode>(),
 	nullptr, nullptr};
 
 template<>
@@ -4227,7 +4226,7 @@ static inline int pwrapPerspectiveCameraNodegetSceneNodeBase(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	ud->initPointed(&luaUserDataTypeInfoSceneNode, const_cast<SceneNode*>(&ret));
+	ud->initPointed(&luaUserDataTypeInfoSceneNode, &ret);
 
 	return 1;
 }
@@ -4253,7 +4252,7 @@ static inline void wrapPerspectiveCameraNode(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoPointLightNode = {5334838824945854787, "PointLightNode",
+LuaUserDataTypeInfo luaUserDataTypeInfoPointLightNode = {-9052881819364383869, "PointLightNode",
 														 LuaUserData::computeSizeForGarbageCollected<PointLightNode>(),
 														 nullptr, nullptr};
 
@@ -4294,7 +4293,7 @@ static inline int pwrapPointLightNodegetSceneNodeBase(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	ud->initPointed(&luaUserDataTypeInfoSceneNode, const_cast<SceneNode*>(&ret));
+	ud->initPointed(&luaUserDataTypeInfoSceneNode, &ret);
 
 	return 1;
 }
@@ -4320,7 +4319,7 @@ static inline void wrapPointLightNode(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoSpotLightNode = {1111579855048427605, "SpotLightNode",
+LuaUserDataTypeInfo luaUserDataTypeInfoSpotLightNode = {-5190519391664792637, "SpotLightNode",
 														LuaUserData::computeSizeForGarbageCollected<SpotLightNode>(),
 														nullptr, nullptr};
 
@@ -4361,7 +4360,7 @@ static inline int pwrapSpotLightNodegetSceneNodeBase(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	ud->initPointed(&luaUserDataTypeInfoSceneNode, const_cast<SceneNode*>(&ret));
+	ud->initPointed(&luaUserDataTypeInfoSceneNode, &ret);
 
 	return 1;
 }
@@ -4388,7 +4387,7 @@ static inline void wrapSpotLightNode(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoDirectionalLightNode = {
-	4106068051476431799, "DirectionalLightNode", LuaUserData::computeSizeForGarbageCollected<DirectionalLightNode>(),
+	967350785406479586, "DirectionalLightNode", LuaUserData::computeSizeForGarbageCollected<DirectionalLightNode>(),
 	nullptr, nullptr};
 
 template<>
@@ -4428,7 +4427,7 @@ static inline int pwrapDirectionalLightNodegetSceneNodeBase(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	ud->initPointed(&luaUserDataTypeInfoSceneNode, const_cast<SceneNode*>(&ret));
+	ud->initPointed(&luaUserDataTypeInfoSceneNode, &ret);
 
 	return 1;
 }
@@ -4455,7 +4454,7 @@ static inline void wrapDirectionalLightNode(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoStaticCollisionNode = {
-	-5852280982450969717, "StaticCollisionNode", LuaUserData::computeSizeForGarbageCollected<StaticCollisionNode>(),
+	-3769019416290992160, "StaticCollisionNode", LuaUserData::computeSizeForGarbageCollected<StaticCollisionNode>(),
 	nullptr, nullptr};
 
 template<>
@@ -4495,7 +4494,7 @@ static inline int pwrapStaticCollisionNodegetSceneNodeBase(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	ud->initPointed(&luaUserDataTypeInfoSceneNode, const_cast<SceneNode*>(&ret));
+	ud->initPointed(&luaUserDataTypeInfoSceneNode, &ret);
 
 	return 1;
 }
@@ -4522,7 +4521,7 @@ static inline void wrapStaticCollisionNode(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoParticleEmitterNode = {
-	1168635594748949161, "ParticleEmitterNode", LuaUserData::computeSizeForGarbageCollected<ParticleEmitterNode>(),
+	-7832077130322380437, "ParticleEmitterNode", LuaUserData::computeSizeForGarbageCollected<ParticleEmitterNode>(),
 	nullptr, nullptr};
 
 template<>
@@ -4562,7 +4561,7 @@ static inline int pwrapParticleEmitterNodegetSceneNodeBase(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	ud->initPointed(&luaUserDataTypeInfoSceneNode, const_cast<SceneNode*>(&ret));
+	ud->initPointed(&luaUserDataTypeInfoSceneNode, &ret);
 
 	return 1;
 }
@@ -4589,7 +4588,7 @@ static inline void wrapParticleEmitterNode(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoGpuParticleEmitterNode = {
-	6996471464684421249, "GpuParticleEmitterNode",
+	7188701931955667667, "GpuParticleEmitterNode",
 	LuaUserData::computeSizeForGarbageCollected<GpuParticleEmitterNode>(), nullptr, nullptr};
 
 template<>
@@ -4629,7 +4628,7 @@ static inline int pwrapGpuParticleEmitterNodegetSceneNodeBase(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	ud->initPointed(&luaUserDataTypeInfoSceneNode, const_cast<SceneNode*>(&ret));
+	ud->initPointed(&luaUserDataTypeInfoSceneNode, &ret);
 
 	return 1;
 }
@@ -4656,7 +4655,7 @@ static inline void wrapGpuParticleEmitterNode(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoReflectionProbeNode = {
-	-2536813390622684483, "ReflectionProbeNode", LuaUserData::computeSizeForGarbageCollected<ReflectionProbeNode>(),
+	-4352910198797970054, "ReflectionProbeNode", LuaUserData::computeSizeForGarbageCollected<ReflectionProbeNode>(),
 	nullptr, nullptr};
 
 template<>
@@ -4696,7 +4695,7 @@ static inline int pwrapReflectionProbeNodegetSceneNodeBase(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	ud->initPointed(&luaUserDataTypeInfoSceneNode, const_cast<SceneNode*>(&ret));
+	ud->initPointed(&luaUserDataTypeInfoSceneNode, &ret);
 
 	return 1;
 }
@@ -4723,7 +4722,7 @@ static inline void wrapReflectionProbeNode(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoDecalNode = {
-	-5087851201782551304, "DecalNode", LuaUserData::computeSizeForGarbageCollected<DecalNode>(), nullptr, nullptr};
+	-596520280203323521, "DecalNode", LuaUserData::computeSizeForGarbageCollected<DecalNode>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<DecalNode>()
@@ -4762,7 +4761,7 @@ static inline int pwrapDecalNodegetSceneNodeBase(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	ud->initPointed(&luaUserDataTypeInfoSceneNode, const_cast<SceneNode*>(&ret));
+	ud->initPointed(&luaUserDataTypeInfoSceneNode, &ret);
 
 	return 1;
 }
@@ -4789,7 +4788,7 @@ static inline void wrapDecalNode(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoTriggerNode = {
-	-7647306451368817691, "TriggerNode", LuaUserData::computeSizeForGarbageCollected<TriggerNode>(), nullptr, nullptr};
+	1979962709761779906, "TriggerNode", LuaUserData::computeSizeForGarbageCollected<TriggerNode>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<TriggerNode>()
@@ -4828,7 +4827,7 @@ static inline int pwrapTriggerNodegetSceneNodeBase(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	ud->initPointed(&luaUserDataTypeInfoSceneNode, const_cast<SceneNode*>(&ret));
+	ud->initPointed(&luaUserDataTypeInfoSceneNode, &ret);
 
 	return 1;
 }
@@ -4854,7 +4853,7 @@ static inline void wrapTriggerNode(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoFogDensityNode = {7042619830118244604, "FogDensityNode",
+LuaUserDataTypeInfo luaUserDataTypeInfoFogDensityNode = {-2136218656159763269, "FogDensityNode",
 														 LuaUserData::computeSizeForGarbageCollected<FogDensityNode>(),
 														 nullptr, nullptr};
 
@@ -4895,7 +4894,7 @@ static inline int pwrapFogDensityNodegetSceneNodeBase(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	ud->initPointed(&luaUserDataTypeInfoSceneNode, const_cast<SceneNode*>(&ret));
+	ud->initPointed(&luaUserDataTypeInfoSceneNode, &ret);
 
 	return 1;
 }
@@ -4922,7 +4921,7 @@ static inline void wrapFogDensityNode(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoGlobalIlluminationProbeNode = {
-	1885907464997344114, "GlobalIlluminationProbeNode",
+	-477879862886821299, "GlobalIlluminationProbeNode",
 	LuaUserData::computeSizeForGarbageCollected<GlobalIlluminationProbeNode>(), nullptr, nullptr};
 
 template<>
@@ -4962,7 +4961,7 @@ static inline int pwrapGlobalIlluminationProbeNodegetSceneNodeBase(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	ud->initPointed(&luaUserDataTypeInfoSceneNode, const_cast<SceneNode*>(&ret));
+	ud->initPointed(&luaUserDataTypeInfoSceneNode, &ret);
 
 	return 1;
 }
@@ -4989,7 +4988,7 @@ static inline void wrapGlobalIlluminationProbeNode(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoSceneGraph = {
-	23634668838832189, "SceneGraph", LuaUserData::computeSizeForGarbageCollected<SceneGraph>(), nullptr, nullptr};
+	5428275829540691555, "SceneGraph", LuaUserData::computeSizeForGarbageCollected<SceneGraph>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<SceneGraph>()
@@ -5041,7 +5040,7 @@ static inline int pwrapSceneGraphnewPerspectiveCameraNode(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "PerspectiveCameraNode");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoPerspectiveCameraNode;
-	ud->initPointed(&luaUserDataTypeInfoPerspectiveCameraNode, const_cast<PerspectiveCameraNode*>(ret));
+	ud->initPointed(&luaUserDataTypeInfoPerspectiveCameraNode, ret);
 
 	return 1;
 }
@@ -5103,7 +5102,7 @@ static inline int pwrapSceneGraphnewModelNode(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "ModelNode");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoModelNode;
-	ud->initPointed(&luaUserDataTypeInfoModelNode, const_cast<ModelNode*>(ret));
+	ud->initPointed(&luaUserDataTypeInfoModelNode, ret);
 
 	return 1;
 }
@@ -5165,7 +5164,7 @@ static inline int pwrapSceneGraphnewPointLightNode(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "PointLightNode");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoPointLightNode;
-	ud->initPointed(&luaUserDataTypeInfoPointLightNode, const_cast<PointLightNode*>(ret));
+	ud->initPointed(&luaUserDataTypeInfoPointLightNode, ret);
 
 	return 1;
 }
@@ -5227,7 +5226,7 @@ static inline int pwrapSceneGraphnewSpotLightNode(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "SpotLightNode");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoSpotLightNode;
-	ud->initPointed(&luaUserDataTypeInfoSpotLightNode, const_cast<SpotLightNode*>(ret));
+	ud->initPointed(&luaUserDataTypeInfoSpotLightNode, ret);
 
 	return 1;
 }
@@ -5289,7 +5288,7 @@ static inline int pwrapSceneGraphnewDirectionalLightNode(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "DirectionalLightNode");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoDirectionalLightNode;
-	ud->initPointed(&luaUserDataTypeInfoDirectionalLightNode, const_cast<DirectionalLightNode*>(ret));
+	ud->initPointed(&luaUserDataTypeInfoDirectionalLightNode, ret);
 
 	return 1;
 }
@@ -5351,7 +5350,7 @@ static inline int pwrapSceneGraphnewStaticCollisionNode(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "StaticCollisionNode");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoStaticCollisionNode;
-	ud->initPointed(&luaUserDataTypeInfoStaticCollisionNode, const_cast<StaticCollisionNode*>(ret));
+	ud->initPointed(&luaUserDataTypeInfoStaticCollisionNode, ret);
 
 	return 1;
 }
@@ -5413,7 +5412,7 @@ static inline int pwrapSceneGraphnewParticleEmitterNode(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "ParticleEmitterNode");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoParticleEmitterNode;
-	ud->initPointed(&luaUserDataTypeInfoParticleEmitterNode, const_cast<ParticleEmitterNode*>(ret));
+	ud->initPointed(&luaUserDataTypeInfoParticleEmitterNode, ret);
 
 	return 1;
 }
@@ -5475,7 +5474,7 @@ static inline int pwrapSceneGraphnewGpuParticleEmitterNode(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "GpuParticleEmitterNode");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoGpuParticleEmitterNode;
-	ud->initPointed(&luaUserDataTypeInfoGpuParticleEmitterNode, const_cast<GpuParticleEmitterNode*>(ret));
+	ud->initPointed(&luaUserDataTypeInfoGpuParticleEmitterNode, ret);
 
 	return 1;
 }
@@ -5537,7 +5536,7 @@ static inline int pwrapSceneGraphnewReflectionProbeNode(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "ReflectionProbeNode");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoReflectionProbeNode;
-	ud->initPointed(&luaUserDataTypeInfoReflectionProbeNode, const_cast<ReflectionProbeNode*>(ret));
+	ud->initPointed(&luaUserDataTypeInfoReflectionProbeNode, ret);
 
 	return 1;
 }
@@ -5599,7 +5598,7 @@ static inline int pwrapSceneGraphnewDecalNode(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "DecalNode");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoDecalNode;
-	ud->initPointed(&luaUserDataTypeInfoDecalNode, const_cast<DecalNode*>(ret));
+	ud->initPointed(&luaUserDataTypeInfoDecalNode, ret);
 
 	return 1;
 }
@@ -5661,7 +5660,7 @@ static inline int pwrapSceneGraphnewTriggerNode(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "TriggerNode");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoTriggerNode;
-	ud->initPointed(&luaUserDataTypeInfoTriggerNode, const_cast<TriggerNode*>(ret));
+	ud->initPointed(&luaUserDataTypeInfoTriggerNode, ret);
 
 	return 1;
 }
@@ -5723,7 +5722,7 @@ static inline int pwrapSceneGraphnewGlobalIlluminationProbeNode(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "GlobalIlluminationProbeNode");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoGlobalIlluminationProbeNode;
-	ud->initPointed(&luaUserDataTypeInfoGlobalIlluminationProbeNode, const_cast<GlobalIlluminationProbeNode*>(ret));
+	ud->initPointed(&luaUserDataTypeInfoGlobalIlluminationProbeNode, ret);
 
 	return 1;
 }
@@ -5813,7 +5812,7 @@ static inline void wrapSceneGraph(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoEvent = {5938471189504663942, "Event",
+LuaUserDataTypeInfo luaUserDataTypeInfoEvent = {-3284921734691291656, "Event",
 												LuaUserData::computeSizeForGarbageCollected<Event>(), nullptr, nullptr};
 
 template<>
@@ -5882,7 +5881,7 @@ static inline void wrapEvent(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoLightEvent = {
-	2864282551783308985, "LightEvent", LuaUserData::computeSizeForGarbageCollected<LightEvent>(), nullptr, nullptr};
+	3220512595391780791, "LightEvent", LuaUserData::computeSizeForGarbageCollected<LightEvent>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<LightEvent>()
@@ -6006,9 +6005,8 @@ static inline void wrapLightEvent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoEventManager = {-9018362873037443259, "EventManager",
-													   LuaUserData::computeSizeForGarbageCollected<EventManager>(),
-													   nullptr, nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoEventManager = {
+	-244155948158452549, "EventManager", LuaUserData::computeSizeForGarbageCollected<EventManager>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<EventManager>()
@@ -6075,7 +6073,7 @@ static inline int pwrapEventManagernewLightEvent(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "LightEvent");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoLightEvent;
-	ud->initPointed(&luaUserDataTypeInfoLightEvent, const_cast<LightEvent*>(ret));
+	ud->initPointed(&luaUserDataTypeInfoLightEvent, ret);
 
 	return 1;
 }
@@ -6130,7 +6128,7 @@ static inline int pwrapgetSceneGraph(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "SceneGraph");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneGraph;
-	ud->initPointed(&luaUserDataTypeInfoSceneGraph, const_cast<SceneGraph*>(ret));
+	ud->initPointed(&luaUserDataTypeInfoSceneGraph, ret);
 
 	return 1;
 }
@@ -6177,7 +6175,7 @@ static inline int pwrapgetEventManager(lua_State* l)
 	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "EventManager");
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoEventManager;
-	ud->initPointed(&luaUserDataTypeInfoEventManager, const_cast<EventManager*>(ret));
+	ud->initPointed(&luaUserDataTypeInfoEventManager, ret);
 
 	return 1;
 }

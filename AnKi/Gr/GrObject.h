@@ -80,7 +80,7 @@ public:
 
 private:
 	GrManager* m_manager;
-	CString m_name;
+	Char* m_name = nullptr;
 	U64 m_uuid;
 	Atomic<I32> m_refcount;
 	GrObjectType m_type;

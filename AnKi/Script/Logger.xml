@@ -11,19 +11,19 @@
 namespace anki {]]></head>
 	<functions>
 		<function name="logi">
-			<overrideCall>ANKI_SCRIPT_LOGI(arg0);</overrideCall>
+			<overrideCall>ANKI_SCRIPT_LOGI("%s", arg0);</overrideCall>
 			<args>
 				<arg>const char*</arg>
 			</args>
 		</function>
 		<function name="loge">
-			<overrideCall>ANKI_SCRIPT_LOGE(arg0);</overrideCall>
+			<overrideCall>ANKI_SCRIPT_LOGE("%s", arg0);</overrideCall>
 			<args>
 				<arg>const char*</arg>
 			</args>
 		</function>
 		<function name="logw">
-			<overrideCall>ANKI_SCRIPT_LOGW(arg0);</overrideCall>
+			<overrideCall>ANKI_SCRIPT_LOGW("%s", arg0);</overrideCall>
 			<args>
 				<arg>const char*</arg>
 			</args>

@@ -65,12 +65,13 @@ public:
 		m_addressOrGarbageCollect = GC_MASK;
 	}
 
-	void initPointed(const LuaUserDataTypeInfo* info, void* ptrToObject)
+	/// @note Accepting const void* is wrong because getData returns a mutable pointer. Fix that.
+	void initPointed(const LuaUserDataTypeInfo* info, const void* ptrToObject)
 	{
 		ANKI_ASSERT(info);
 		m_sig = info->m_signature;
 		m_info = info;
-		U64 addr = ptrToNumber(ptrToObject);
+		const U64 addr = ptrToNumber(ptrToObject);
 		ANKI_ASSERT((addr & GC_MASK) == 0 && "Address too high, cannot encode a flag");
 		m_addressOrGarbageCollect = addr;
 	}
