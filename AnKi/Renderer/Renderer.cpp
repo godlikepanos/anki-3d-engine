@@ -130,11 +130,11 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_genericCompute.reset(m_alloc.newInstance<GenericCompute>(this));
 	ANKI_CHECK(m_genericCompute->init(config));
 
-	m_volLighting.reset(m_alloc.newInstance<VolumetricLightingAccumulation>(this));
-	ANKI_CHECK(m_volLighting->init(config));
+	m_volumetricLightingAccumulation.reset(m_alloc.newInstance<VolumetricLightingAccumulation>(this));
+	ANKI_CHECK(m_volumetricLightingAccumulation->init(config));
 
-	m_gi.reset(m_alloc.newInstance<GlobalIllumination>(this));
-	ANKI_CHECK(m_gi->init(config));
+	m_globalIllumination.reset(m_alloc.newInstance<GlobalIllumination>(this));
+	ANKI_CHECK(m_globalIllumination->init(config));
 
 	m_probeReflections.reset(m_alloc.newInstance<ProbeReflections>(this));
 	ANKI_CHECK(m_probeReflections->init(config));
@@ -148,14 +148,14 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_shadowMapping.reset(m_alloc.newInstance<ShadowMapping>(this));
 	ANKI_CHECK(m_shadowMapping->init(config));
 
-	m_volFog.reset(m_alloc.newInstance<VolumetricFog>(this));
-	ANKI_CHECK(m_volFog->init(config));
+	m_volumetricFog.reset(m_alloc.newInstance<VolumetricFog>(this));
+	ANKI_CHECK(m_volumetricFog->init(config));
 
 	m_lightShading.reset(m_alloc.newInstance<LightShading>(this));
 	ANKI_CHECK(m_lightShading->init(config));
 
-	m_depth.reset(m_alloc.newInstance<DepthDownscale>(this));
-	ANKI_CHECK(m_depth->init(config));
+	m_depthDownscale.reset(m_alloc.newInstance<DepthDownscale>(this));
+	ANKI_CHECK(m_depthDownscale->init(config));
 
 	m_forwardShading.reset(m_alloc.newInstance<ForwardShading>(this));
 	ANKI_CHECK(m_forwardShading->init(config));
@@ -166,8 +166,8 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_ssao.reset(m_alloc.newInstance<Ssao>(this));
 	ANKI_CHECK(m_ssao->init(config));
 
-	m_downscale.reset(getAllocator().newInstance<DownscaleBlur>(this));
-	ANKI_CHECK(m_downscale->init(config));
+	m_downscaleBlur.reset(getAllocator().newInstance<DownscaleBlur>(this));
+	ANKI_CHECK(m_downscaleBlur->init(config));
 
 	m_ssr.reset(m_alloc.newInstance<Ssr>(this));
 	ANKI_CHECK(m_ssr->init(config));
@@ -203,8 +203,8 @@ Error Renderer::initInternal(const ConfigSet& config)
 	}
 	else
 	{
-		m_smResolve.reset(m_alloc.newInstance<ShadowmapsResolve>(this));
-		ANKI_CHECK(m_smResolve->init(config));
+		m_shadowmapsResolve.reset(m_alloc.newInstance<ShadowmapsResolve>(this));
+		ANKI_CHECK(m_shadowmapsResolve->init(config));
 	}
 
 	m_motionVectors.reset(m_alloc.newInstance<MotionVectors>(this));
@@ -309,9 +309,9 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	}
 
 	// Import RTs first
-	m_downscale->importRenderTargets(ctx);
+	m_downscaleBlur->importRenderTargets(ctx);
 	m_tonemapping->importRenderTargets(ctx);
-	m_depth->importRenderTargets(ctx);
+	m_depthDownscale->importRenderTargets(ctx);
 
 	// Populate render graph. WARNING Watch the order
 	m_genericCompute->populateRenderGraph(ctx);
@@ -321,29 +321,29 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 		m_accelerationStructureBuilder->populateRenderGraph(ctx);
 	}
 	m_shadowMapping->populateRenderGraph(ctx);
-	m_gi->populateRenderGraph(ctx);
+	m_globalIllumination->populateRenderGraph(ctx);
 	m_probeReflections->populateRenderGraph(ctx);
-	m_volLighting->populateRenderGraph(ctx);
+	m_volumetricLightingAccumulation->populateRenderGraph(ctx);
 	m_gbuffer->populateRenderGraph(ctx);
 	m_motionVectors->populateRenderGraph(ctx);
 	m_gbufferPost->populateRenderGraph(ctx);
-	m_depth->populateRenderGraph(ctx);
+	m_depthDownscale->populateRenderGraph(ctx);
 	if(m_rtShadows)
 	{
 		m_rtShadows->populateRenderGraph(ctx);
 	}
 	else
 	{
-		m_smResolve->populateRenderGraph(ctx);
+		m_shadowmapsResolve->populateRenderGraph(ctx);
 	}
-	m_volFog->populateRenderGraph(ctx);
+	m_volumetricFog->populateRenderGraph(ctx);
 	m_ssao->populateRenderGraph(ctx);
 	m_lensFlare->populateRenderGraph(ctx);
 	m_ssr->populateRenderGraph(ctx);
 	m_ssgi->populateRenderGraph(ctx);
 	m_lightShading->populateRenderGraph(ctx);
 	m_temporalAA->populateRenderGraph(ctx);
-	m_downscale->populateRenderGraph(ctx);
+	m_downscaleBlur->populateRenderGraph(ctx);
 	m_tonemapping->populateRenderGraph(ctx);
 	m_bloom->populateRenderGraph(ctx);
 
@@ -372,7 +372,7 @@ void Renderer::finalize(const RenderingContext& ctx)
 		F32* depthValues;
 		U32 width;
 		U32 height;
-		m_depth->getClientDepthMapInfo(depthValues, width, height);
+		m_depthDownscale->getClientDepthMapInfo(depthValues, width, height);
 		ctx.m_renderQueue->m_fillCoverageBufferCallback(ctx.m_renderQueue->m_fillCoverageBufferCallbackUserData,
 														depthValues, width, height);
 	}

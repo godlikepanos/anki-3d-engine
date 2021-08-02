@@ -43,134 +43,17 @@ public:
 
 	~Renderer();
 
-	ProbeReflections& getProbeReflections()
-	{
-		return *m_probeReflections;
+#define ANKI_RENDERER_OBJECT_DEF(a, b) \
+	a& get##a() \
+	{ \
+		return *m_##b; \
 	}
-
-	VolumetricLightingAccumulation& getVolumetricLightingAccumulation()
-	{
-		return *m_volLighting;
-	}
-
-	ShadowMapping& getShadowMapping()
-	{
-		return *m_shadowMapping;
-	}
-
-	GBuffer& getGBuffer()
-	{
-		return *m_gbuffer;
-	}
-
-	LightShading& getLightShading()
-	{
-		return *m_lightShading;
-	}
-
-	DepthDownscale& getDepthDownscale()
-	{
-		return *m_depth;
-	}
-
-	ForwardShading& getForwardShading()
-	{
-		return *m_forwardShading;
-	}
-
-	VolumetricFog& getVolumetricFog()
-	{
-		return *m_volFog;
-	}
-
-	Tonemapping& getTonemapping()
-	{
-		return *m_tonemapping;
-	}
-
-	Ssao& getSsao()
-	{
-		return *m_ssao;
-	}
-
-	Bloom& getBloom()
-	{
-		return *m_bloom;
-	}
-
-	FinalComposite& getFinalComposite()
-	{
-		return *m_finalComposite;
-	}
-
-	Dbg& getDbg()
-	{
-		return *m_dbg;
-	}
-
-	TemporalAA& getTemporalAA()
-	{
-		return *m_temporalAA;
-	}
-
-	DownscaleBlur& getDownscaleBlur()
-	{
-		return *m_downscale;
-	}
-
-	LensFlare& getLensFlare()
-	{
-		return *m_lensFlare;
-	}
-
-	const LensFlare& getLensFlare() const
-	{
-		return *m_lensFlare;
-	}
-
-	const GlobalIllumination& getGlobalIllumination() const
-	{
-		return *m_gi;
-	}
-
-	UiStage& getUiStage()
-	{
-		return *m_uiStage;
-	}
-
-	ShadowmapsResolve& getShadowmapsResolve()
-	{
-		return *m_smResolve;
-	}
-
-	AccelerationStructureBuilder& getAccelerationStructureBuilder()
-	{
-		return *m_accelerationStructureBuilder;
-	}
-
-	RtShadows& getRtShadows()
-	{
-		return *m_rtShadows;
-	}
-
-	MotionVectors& getMotionVectors()
-	{
-		return *m_motionVectors;
-	}
+#include <AnKi/Renderer/RendererObjectDefs.h>
+#undef ANKI_RENDERER_OBJECT_DEF
 
 	Bool getRtShadowsEnabled() const
 	{
 		return m_rtShadows.isCreated();
-	}
-
-	Ssr& getSsr()
-	{
-		return *m_ssr;
-	}
-
-	Ssgi& getSsgi()
-	{
-		return *m_ssgi;
 	}
 
 	U32 getWidth() const
@@ -345,33 +228,9 @@ private:
 
 	/// @name Rendering stages
 	/// @{
-	UniquePtr<VolumetricLightingAccumulation> m_volLighting;
-	UniquePtr<GlobalIllumination> m_gi;
-	UniquePtr<ProbeReflections> m_probeReflections;
-	UniquePtr<ShadowMapping> m_shadowMapping; ///< Shadow mapping.
-	UniquePtr<GBuffer> m_gbuffer; ///< Material rendering stage
-	UniquePtr<GBufferPost> m_gbufferPost;
-	UniquePtr<Ssr> m_ssr;
-	UniquePtr<Ssgi> m_ssgi;
-	UniquePtr<LightShading> m_lightShading; ///< Illumination rendering stage
-	UniquePtr<DepthDownscale> m_depth;
-	UniquePtr<ForwardShading> m_forwardShading; ///< Forward shading.
-	UniquePtr<VolumetricFog> m_volFog; ///< Volumetric fog.
-	UniquePtr<LensFlare> m_lensFlare; ///< Forward shading lens flares.
-	UniquePtr<DownscaleBlur> m_downscale;
-	UniquePtr<TemporalAA> m_temporalAA;
-	UniquePtr<Tonemapping> m_tonemapping;
-	UniquePtr<Ssao> m_ssao;
-	UniquePtr<Bloom> m_bloom;
-	UniquePtr<FinalComposite> m_finalComposite; ///< Postprocessing rendering stage
-	UniquePtr<Dbg> m_dbg; ///< Debug stage.
-	UniquePtr<UiStage> m_uiStage;
-	UniquePtr<GenericCompute> m_genericCompute;
-	UniquePtr<ShadowmapsResolve> m_smResolve;
-	UniquePtr<AccelerationStructureBuilder> m_accelerationStructureBuilder;
-	UniquePtr<RtShadows> m_rtShadows;
-	UniquePtr<MotionVectors> m_motionVectors;
-	UniquePtr<ClusterBinning> m_clusterBinning;
+#define ANKI_RENDERER_OBJECT_DEF(a, b) UniquePtr<a> m_##b;
+#include <AnKi/Renderer/RendererObjectDefs.h>
+#undef ANKI_RENDERER_OBJECT_DEF
 	/// @}
 
 	U32 m_tileSize = 0;
@@ -414,7 +273,7 @@ private:
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
 	void initJitteredMats();
-};
+}; // namespace anki
 /// @}
 
 } // end namespace anki
