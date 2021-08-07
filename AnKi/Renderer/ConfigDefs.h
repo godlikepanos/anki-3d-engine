@@ -7,7 +7,10 @@ ANKI_CONFIG_OPTION(r_textureAnisotropy, 8, 1, 16)
 ANKI_CONFIG_OPTION(r_tileSize, 64, 8, 256, "Tile lighting tile size")
 ANKI_CONFIG_OPTION(r_zSplitCount, 64, 8, 1024, "Clusterer number of Z splits")
 
-ANKI_CONFIG_OPTION(r_renderingQuality, 1.0, 0.5, 1.0, "A factor over the requested renderingresolution")
+ANKI_CONFIG_OPTION(r_internalRenderScaling, 1.0, 0.5, 1.0,
+				   "A factor over the requested swapchain resolution. Applies to all passes up to TAA")
+ANKI_CONFIG_OPTION(r_renderScaling, 1.0, 0.5, 1.0,
+				   "A factor over the requested swapchain resolution. Applies to post-processing and UI")
 
 ANKI_CONFIG_OPTION(r_volumetricLightingAccumulationQualityXY, 4.0, 1.0, 16.0)
 ANKI_CONFIG_OPTION(r_volumetricLightingAccumulationQualityZ, 4.0, 1.0, 16.0)

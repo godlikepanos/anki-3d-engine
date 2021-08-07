@@ -39,19 +39,14 @@ Error MainRenderer::init(ThreadHive* hive, ResourceManager* resources, GrManager
 	m_frameAlloc = StackAllocator<U8>(allocCb, allocCbUserData, 1024 * 1024 * 10, 1.0f);
 
 	// Init renderer and manipulate the width/height
-	m_width = config.getNumberU32("width");
-	m_height = config.getNumberU32("height");
-	ConfigSet config2 = config;
-	m_renderingQuality = config.getNumberF32("r_renderingQuality");
-	UVec2 size(U32(m_renderingQuality * F32(m_width)), U32(m_renderingQuality * F32(m_height)));
+	m_swapchainResolution.x() = config.getNumberU32("width");
+	m_swapchainResolution.y() = config.getNumberU32("height");
+	m_renderScaling = config.getNumberF32("r_renderScaling");
 
-	config2.set("width", size.x());
-	config2.set("height", size.y());
-
-	m_rDrawToDefaultFb = m_renderingQuality == 1.0;
+	m_rDrawToDefaultFb = m_renderScaling == 1.0f;
 
 	m_r.reset(m_alloc.newInstance<Renderer>());
-	ANKI_CHECK(m_r->init(hive, resources, gr, stagingMem, ui, m_alloc, config2, globTimestamp));
+	ANKI_CHECK(m_r->init(hive, resources, gr, stagingMem, ui, m_alloc, config, globTimestamp));
 
 	// Init other
 	if(!m_rDrawToDefaultFb)
@@ -62,7 +57,9 @@ Error MainRenderer::init(ThreadHive* hive, ResourceManager* resources, GrManager
 		m_blitGrProg = variant->getProgram();
 
 		// The RT desc
-		m_tmpRtDesc = m_r->create2DRenderTargetDescription(m_width, m_height, Format::R8G8B8_UNORM, "Final Composite");
+		m_tmpRtDesc = m_r->create2DRenderTargetDescription(U32(F32(m_swapchainResolution.x()) * m_renderScaling),
+														   U32(F32(m_swapchainResolution.y()) * m_renderScaling),
+														   Format::R8G8B8_UNORM, "Final Composite");
 		m_tmpRtDesc.bake();
 
 		ANKI_R_LOGI("The main renderer will have to blit the offscreen renderer's result");
@@ -70,7 +67,8 @@ Error MainRenderer::init(ThreadHive* hive, ResourceManager* resources, GrManager
 
 	m_rgraph = gr->newRenderGraph();
 
-	ANKI_R_LOGI("Main renderer initialized. Rendering size %ux%u", m_width, m_height);
+	ANKI_R_LOGI("Main renderer initialized. Rendering size %ux%u", m_swapchainResolution.x(),
+				m_swapchainResolution.x());
 
 	return Error::NONE;
 }
@@ -105,8 +103,8 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 		// m_r will draw to a temp tex
 
 		ctx.m_outRenderTarget = ctx.m_renderGraphDescr.newRenderTarget(m_tmpRtDesc);
-		ctx.m_outRenderTargetWidth = m_width;
-		ctx.m_outRenderTargetHeight = m_height;
+		ctx.m_outRenderTargetWidth = U32(F32(m_swapchainResolution.x()) * m_renderScaling);
+		ctx.m_outRenderTargetHeight = U32(F32(m_swapchainResolution.y()) * m_renderScaling);
 	}
 
 	ctx.m_renderQueue = &rqueue;
@@ -191,7 +189,7 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 void MainRenderer::runBlit(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	cmdb->setViewport(0, 0, m_width, m_height);
+	cmdb->setViewport(0, 0, m_swapchainResolution.x(), m_swapchainResolution.y());
 
 	cmdb->bindShaderProgram(m_blitGrProg);
 	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);

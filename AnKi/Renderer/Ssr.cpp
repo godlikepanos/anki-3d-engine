@@ -31,8 +31,8 @@ Error Ssr::init(const ConfigSet& cfg)
 
 Error Ssr::initInternal(const ConfigSet& cfg)
 {
-	const U32 width = m_r->getWidth();
-	const U32 height = m_r->getHeight();
+	const U32 width = m_r->getResolution().x();
+	const U32 height = m_r->getResolution().y();
 	ANKI_R_LOGI("Initializing SSR pass (%ux%u)", width, height);
 	m_maxSteps = cfg.getNumberU32("r_ssrMaxSteps");
 	m_depthLod = cfg.getNumberU32("r_ssrDepthLod");
@@ -85,7 +85,7 @@ void Ssr::populateRenderGraph(RenderingContext& ctx)
 	rpass.newDependency({m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_COMPUTE});
 
 	TextureSubresourceInfo hizSubresource;
-	hizSubresource.m_firstMipmap = m_depthLod;
+	hizSubresource.m_firstMipmap = min(m_depthLod, m_r->getDepthDownscale().getMipmapCount() - 1);
 	rpass.newDependency({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_COMPUTE, hizSubresource});
 
 	rpass.newDependency({m_r->getDownscaleBlur().getRt(), TextureUsageBit::SAMPLED_COMPUTE});
@@ -98,11 +98,12 @@ void Ssr::run(RenderPassWorkContext& rgraphCtx)
 	cmdb->bindShaderProgram(m_grProg[m_r->getFrameCount() & 1u]);
 
 	rgraphCtx.bindImage(0, 0, m_runCtx.m_rt, TextureSubresourceInfo());
+	const U32 depthLod = min(m_depthLod, m_r->getDepthDownscale().getMipmapCount() - 1);
 
 	// Bind uniforms
 	SsrUniforms* unis = allocateAndBindUniforms<SsrUniforms*>(sizeof(SsrUniforms), cmdb, 0, 1);
-	unis->m_depthBufferSize = UVec2(m_r->getWidth(), m_r->getHeight()) >> (m_depthLod + 1);
-	unis->m_framebufferSize = UVec2(m_r->getWidth(), m_r->getHeight());
+	unis->m_depthBufferSize = UVec2(m_r->getResolution().x(), m_r->getResolution().y()) >> (depthLod + 1);
+	unis->m_framebufferSize = UVec2(m_r->getResolution().x(), m_r->getResolution().y());
 	unis->m_frameCount = m_r->getFrameCount() & MAX_U32;
 	unis->m_depthMipCount = m_r->getDepthDownscale().getMipmapCount();
 	unis->m_maxSteps = m_maxSteps;
@@ -121,7 +122,7 @@ void Ssr::run(RenderPassWorkContext& rgraphCtx)
 	rgraphCtx.bindColorTexture(0, 4, m_r->getGBuffer().getColorRt(2));
 
 	TextureSubresourceInfo hizSubresource;
-	hizSubresource.m_firstMipmap = m_depthLod;
+	hizSubresource.m_firstMipmap = depthLod;
 	rgraphCtx.bindTexture(0, 5, m_r->getDepthDownscale().getHiZRt(), hizSubresource);
 
 	rgraphCtx.bindColorTexture(0, 6, m_r->getDownscaleBlur().getRt());
@@ -130,7 +131,8 @@ void Ssr::run(RenderPassWorkContext& rgraphCtx)
 	cmdb->bindTexture(0, 8, m_noiseImage->getTextureView());
 
 	// Dispatch
-	dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_r->getWidth() / 2, m_r->getHeight());
+	dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_r->getResolution().x() / 2,
+					  m_r->getResolution().y());
 }
 
 } // end namespace anki

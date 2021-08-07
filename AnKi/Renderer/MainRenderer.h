@@ -78,10 +78,8 @@ private:
 	ShaderProgramResourcePtr m_blitProg;
 	ShaderProgramPtr m_blitGrProg;
 
-	U32 m_width = 0; ///< Default FB size.
-	U32 m_height = 0; ///< Default FB size.
-
-	F32 m_renderingQuality = 1.0;
+	UVec2 m_swapchainResolution = UVec2(0u);
+	F32 m_renderScaling = 1.0f;
 
 	RenderGraphPtr m_rgraph;
 	RenderTargetDescription m_tmpRtDesc;

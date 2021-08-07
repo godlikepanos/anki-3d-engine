@@ -20,8 +20,8 @@ DepthDownscale::~DepthDownscale()
 
 Error DepthDownscale::initInternal(const ConfigSet&)
 {
-	const U32 width = m_r->getWidth() >> 1;
-	const U32 height = m_r->getHeight() >> 1;
+	const U32 width = m_r->getResolution().x() >> 1;
+	const U32 height = m_r->getResolution().y() >> 1;
 
 	m_mipCount = computeMaxMipmapCount2d(width, height, HIERARCHICAL_Z_MIN_HEIGHT);
 
@@ -154,8 +154,8 @@ void DepthDownscale::run(RenderPassWorkContext& rgraphCtx)
 	const U32 mipsToFill = (level + 1 < m_mipCount) ? MIPS_WRITTEN_PER_PASS : 1;
 	const U32 copyToClientLevel = (level + mipsToFill == m_mipCount) ? mipsToFill - 1 : MAX_U32;
 
-	const U32 level0Width = m_r->getWidth() >> (level + 1);
-	const U32 level0Height = m_r->getHeight() >> (level + 1);
+	const U32 level0Width = m_r->getResolution().x() >> (level + 1);
+	const U32 level0Height = m_r->getResolution().y() >> (level + 1);
 	const U32 level1Width = level0Width >> 1;
 	const U32 level1Height = level0Height >> 1;
 

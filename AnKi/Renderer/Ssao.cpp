@@ -93,8 +93,8 @@ Error Ssao::initBlur(const ConfigSet& config)
 
 Error Ssao::init(const ConfigSet& config)
 {
-	m_width = m_r->getWidth() / SSAO_FRACTION;
-	m_height = m_r->getHeight() / SSAO_FRACTION;
+	m_width = m_r->getResolution().x() / SSAO_FRACTION;
+	m_height = m_r->getResolution().y() / SSAO_FRACTION;
 
 	ANKI_R_LOGI("Initializing SSAO. Size %ux%u", m_width, m_height);
 

@@ -87,17 +87,17 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_frameCount = 0;
 
 	// Set from the config
-	m_width = config.getNumberU32("width");
-	m_height = config.getNumberU32("height");
-	ANKI_R_LOGI("Initializing offscreen renderer. Size %ux%u", m_width, m_height);
+	m_resolution.x() = U32(F32(config.getNumberU32("width")) * config.getNumberF32("r_renderScaling"));
+	m_resolution.y() = U32(F32(config.getNumberU32("height")) * config.getNumberF32("r_renderScaling"));
+	ANKI_R_LOGI("Initializing offscreen renderer. Size %ux%u", m_resolution.x(), m_resolution.y());
 
 	m_tileSize = config.getNumberU32("r_tileSize");
-	m_tileCounts.x() = (m_width + m_tileSize - 1) / m_tileSize;
-	m_tileCounts.y() = (m_height + m_tileSize - 1) / m_tileSize;
+	m_tileCounts.x() = (m_resolution.x() + m_tileSize - 1) / m_tileSize;
+	m_tileCounts.y() = (m_resolution.y() + m_tileSize - 1) / m_tileSize;
 	m_zSplitCount = config.getNumberU32("r_zSplitCount");
 
 	// A few sanity checks
-	if(m_width < 10 || m_height < 10)
+	if(m_resolution.x() < 64 || m_resolution.y() < 64)
 	{
 		ANKI_R_LOGE("Incorrect sizes");
 		return Error::USER_DATA;
@@ -246,7 +246,7 @@ void Renderer::initJitteredMats()
 
 	for(U i = 0; i < 16; ++i)
 	{
-		Vec2 texSize(1.0f / Vec2(F32(m_width), F32(m_height))); // Texel size
+		Vec2 texSize(1.0f / Vec2(F32(m_resolution.x()), F32(m_resolution.y()))); // Texel size
 		texSize *= 2.0f; // Move it to NDC
 
 		Vec2 S = SAMPLE_LOCS_16[i] / 8.0f; // In [-1, 1]
@@ -263,7 +263,7 @@ void Renderer::initJitteredMats()
 
 	for(U i = 0; i < 8; ++i)
 	{
-		Vec2 texSize(1.0f / Vec2(F32(m_width), F32(m_height))); // Texel size
+		Vec2 texSize(1.0f / Vec2(F32(m_resolution.x()), F32(m_resolution.y()))); // Texel size
 		texSize *= 2.0f; // Move it to NDC
 
 		Vec2 S = SAMPLE_LOCS_8[i] / 8.0f; // In [-1, 1]

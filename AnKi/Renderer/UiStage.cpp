@@ -25,7 +25,8 @@ UiStage::~UiStage()
 Error UiStage::init(const ConfigSet&)
 {
 	ANKI_CHECK(m_r->getUiManager().newInstance(m_font, "EngineAssets/UbuntuRegular.ttf", Array<U32, 3>{12, 16, 20}));
-	ANKI_CHECK(m_r->getUiManager().newInstance(m_canvas, m_font, 12, m_r->getWidth(), m_r->getHeight()));
+	ANKI_CHECK(
+		m_r->getUiManager().newInstance(m_canvas, m_font, 12, m_r->getResolution().x(), m_r->getResolution().y()));
 
 	return Error::NONE;
 }

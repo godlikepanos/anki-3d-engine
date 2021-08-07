@@ -38,13 +38,13 @@ inline void RenderPassDescriptionBase::fixSubresource(RenderPassDependency& dep)
 
 	TextureSubresourceInfo& subresource = dep.m_texture.m_subresource;
 	const Bool wholeTexture = subresource.m_mipmapCount == MAX_U32;
+	const RenderGraphDescription::RT& rt = m_descr->m_renderTargets[dep.m_texture.m_handle.m_idx];
 	if(wholeTexture)
 	{
 		ANKI_ASSERT(subresource.m_firstFace == 0);
 		ANKI_ASSERT(subresource.m_firstMipmap == 0);
 		ANKI_ASSERT(subresource.m_firstLayer == 0);
 
-		const RenderGraphDescription::RT& rt = m_descr->m_renderTargets[dep.m_texture.m_handle.m_idx];
 		if(rt.m_importedTex)
 		{
 			subresource.m_faceCount = textureTypeIsCube(rt.m_importedTex->getTextureType()) ? 6 : 1;
@@ -58,6 +58,9 @@ inline void RenderPassDescriptionBase::fixSubresource(RenderPassDependency& dep)
 			subresource.m_layerCount = rt.m_initInfo.m_layerCount;
 		}
 	}
+
+	ANKI_ASSERT(dep.m_texture.m_subresource.m_firstMipmap + dep.m_texture.m_subresource.m_mipmapCount
+				<= ((rt.m_importedTex) ? rt.m_importedTex->getMipmapCount() : rt.m_initInfo.m_mipmapCount));
 }
 
 inline void RenderPassDescriptionBase::validateDep(const RenderPassDependency& dep)

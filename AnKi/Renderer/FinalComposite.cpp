@@ -51,7 +51,7 @@ Error FinalComposite::initInternal(const ConfigSet& config)
 	variantInitInfo.addMutation("BLOOM_ENABLED", 1);
 	variantInitInfo.addConstant("LUT_SIZE", U32(LUT_SIZE));
 	variantInitInfo.addConstant("LUT_SIZE", U32(LUT_SIZE));
-	variantInitInfo.addConstant("FB_SIZE", UVec2(m_r->getWidth(), m_r->getHeight()));
+	variantInitInfo.addConstant("FB_SIZE", UVec2(m_r->getResolution().x(), m_r->getResolution().y()));
 	variantInitInfo.addConstant("MOTION_BLUR_SAMPLES", config.getNumberU32("r_motionBlurSamples"));
 
 	for(U32 dbg = 0; dbg < 2; ++dbg)

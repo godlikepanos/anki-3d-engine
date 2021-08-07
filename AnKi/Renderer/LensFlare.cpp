@@ -73,7 +73,8 @@ Error LensFlare::initOcclusion(const ConfigSet& config)
 		getResourceManager().loadResource("Shaders/LensFlareUpdateIndirectInfo.ankiprog", m_updateIndirectBuffProg));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_updateIndirectBuffProg);
-	variantInitInfo.addConstant("IN_DEPTH_MAP_SIZE", UVec2(m_r->getWidth() / 2 / 2, m_r->getHeight() / 2 / 2));
+	variantInitInfo.addConstant("IN_DEPTH_MAP_SIZE",
+								UVec2(m_r->getResolution().x() / 2 / 2, m_r->getResolution().y() / 2 / 2));
 	const ShaderProgramResourceVariant* variant;
 	m_updateIndirectBuffProg->getOrCreateVariant(variantInitInfo, variant);
 	m_updateIndirectBuffGrProg = variant->getProgram();

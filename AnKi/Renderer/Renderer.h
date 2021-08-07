@@ -56,19 +56,14 @@ public:
 		return m_rtShadows.isCreated();
 	}
 
-	U32 getWidth() const
+	const UVec2& getResolution() const
 	{
-		return m_width;
-	}
-
-	U32 getHeight() const
-	{
-		return m_height;
+		return m_resolution;
 	}
 
 	F32 getAspectRatio() const
 	{
-		return F32(m_width) / F32(m_height);
+		return F32(m_resolution.x()) / F32(m_resolution.y());
 	}
 
 	/// Init the renderer.
@@ -237,8 +232,7 @@ private:
 	UVec2 m_tileCounts = UVec2(0u);
 	U32 m_zSplitCount = 0;
 
-	U32 m_width;
-	U32 m_height;
+	UVec2 m_resolution = UVec2(0u);
 
 	RenderableDrawer m_sceneDrawer;
 

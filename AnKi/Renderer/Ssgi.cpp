@@ -34,8 +34,8 @@ Error Ssgi::init(const ConfigSet& cfg)
 
 Error Ssgi::initInternal(const ConfigSet& cfg)
 {
-	const U32 width = m_r->getWidth();
-	const U32 height = m_r->getHeight();
+	const U32 width = m_r->getResolution().x();
+	const U32 height = m_r->getResolution().y();
 	ANKI_ASSERT((width % 2) == 0 && (height % 2) == 0 && "The algorithms won't work");
 	ANKI_R_LOGI("Initializing SSGI pass");
 	m_main.m_maxSteps = cfg.getNumberU32("r_ssgiMaxSteps");
@@ -92,7 +92,7 @@ Error Ssgi::initInternal(const ConfigSet& cfg)
 	{
 		ANKI_CHECK(getResourceManager().loadResource("Shaders/SsgiReconstruct.ankiprog", m_recontruction.m_prog));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_recontruction.m_prog);
-		variantInitInfo.addConstant("FB_SIZE", UVec2(m_r->getWidth(), m_r->getHeight()));
+		variantInitInfo.addConstant("FB_SIZE", UVec2(m_r->getResolution().x(), m_r->getResolution().y()));
 		const ShaderProgramResourceVariant* variant;
 
 		for(U32 i = 0; i < 4; ++i)
@@ -205,8 +205,8 @@ void Ssgi::run(RenderPassWorkContext& rgraphCtx)
 
 	// Bind uniforms
 	SsgiUniforms* unis = allocateAndBindUniforms<SsgiUniforms*>(sizeof(SsgiUniforms), cmdb, 0, 1);
-	unis->m_depthBufferSize = UVec2(m_r->getWidth(), m_r->getHeight()) >> (m_main.m_depthLod + 1);
-	unis->m_framebufferSize = UVec2(m_r->getWidth(), m_r->getHeight());
+	unis->m_depthBufferSize = UVec2(m_r->getResolution().x(), m_r->getResolution().y()) >> (m_main.m_depthLod + 1);
+	unis->m_framebufferSize = UVec2(m_r->getResolution().x(), m_r->getResolution().y());
 	unis->m_invProjMat = ctx.m_matrices.m_projectionJitter.getInverse();
 	unis->m_projMat = ctx.m_matrices.m_projectionJitter;
 	unis->m_prevViewProjMatMulInvViewProjMat =
@@ -230,7 +230,7 @@ void Ssgi::run(RenderPassWorkContext& rgraphCtx)
 	rgraphCtx.bindColorTexture(0, 8, m_r->getMotionVectors().getRejectionFactorRt());
 
 	// Dispatch
-	dispatchPPCompute(cmdb, 16, 16, m_r->getWidth() / 2, m_r->getHeight() / 2);
+	dispatchPPCompute(cmdb, 16, 16, m_r->getResolution().x() / 2, m_r->getResolution().y() / 2);
 }
 
 void Ssgi::runVBlur(RenderPassWorkContext& rgraphCtx)
@@ -248,7 +248,7 @@ void Ssgi::runVBlur(RenderPassWorkContext& rgraphCtx)
 	const Mat4 mat = m_runCtx.m_ctx->m_matrices.m_viewProjectionJitter.getInverse();
 	cmdb->setPushConstants(&mat, sizeof(mat));
 
-	dispatchPPCompute(cmdb, 8, 8, m_r->getWidth() / 2, m_r->getHeight() / 2);
+	dispatchPPCompute(cmdb, 8, 8, m_r->getResolution().x() / 2, m_r->getResolution().y() / 2);
 }
 
 void Ssgi::runHBlur(RenderPassWorkContext& rgraphCtx)
@@ -266,7 +266,7 @@ void Ssgi::runHBlur(RenderPassWorkContext& rgraphCtx)
 	const Mat4 mat = m_runCtx.m_ctx->m_matrices.m_viewProjectionJitter.getInverse();
 	cmdb->setPushConstants(&mat, sizeof(mat));
 
-	dispatchPPCompute(cmdb, 8, 8, m_r->getWidth() / 2, m_r->getHeight() / 2);
+	dispatchPPCompute(cmdb, 8, 8, m_r->getResolution().x() / 2, m_r->getResolution().y() / 2);
 }
 
 void Ssgi::runRecontruct(RenderPassWorkContext& rgraphCtx)
@@ -280,7 +280,7 @@ void Ssgi::runRecontruct(RenderPassWorkContext& rgraphCtx)
 
 	rgraphCtx.bindImage(0, 3, m_runCtx.m_finalRt, TextureSubresourceInfo());
 
-	dispatchPPCompute(cmdb, 16, 16, m_r->getWidth(), m_r->getHeight());
+	dispatchPPCompute(cmdb, 16, 16, m_r->getResolution().x(), m_r->getResolution().y());
 }
 
 } // end namespace anki
