@@ -38,7 +38,7 @@ Error GBuffer::initInternal(const ConfigSet& initializer)
 	for(U32 i = 0; i < 2; ++i)
 	{
 		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
-			m_r->getResolution().x(), m_r->getResolution().y(), GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT,
+			m_r->getInternalResolution().x(), m_r->getInternalResolution().y(), GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT,
 			TextureUsageBit::ALL_SAMPLED | TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT, depthRtNames[i]);
 
 		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
@@ -50,8 +50,9 @@ Error GBuffer::initInternal(const ConfigSet& initializer)
 		{"GBuffer rt0", "GBuffer rt1", "GBuffer rt2", "GBuffer rt3"}};
 	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 	{
-		m_colorRtDescrs[i] = m_r->create2DRenderTargetDescription(
-			m_r->getResolution().x(), m_r->getResolution().y(), GBUFFER_COLOR_ATTACHMENT_PIXEL_FORMATS[i], rtNames[i]);
+		m_colorRtDescrs[i] =
+			m_r->create2DRenderTargetDescription(m_r->getInternalResolution().x(), m_r->getInternalResolution().y(),
+												 GBUFFER_COLOR_ATTACHMENT_PIXEL_FORMATS[i], rtNames[i]);
 		m_colorRtDescrs[i].bake();
 	}
 
@@ -95,7 +96,7 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 	ANKI_ASSERT(end != start);
 
 	// Set some state, leave the rest to default
-	cmdb->setViewport(0, 0, m_r->getResolution().x(), m_r->getResolution().y());
+	cmdb->setViewport(0, 0, m_r->getInternalResolution().x(), m_r->getInternalResolution().y());
 
 	const I32 earlyZStart = max(I32(start), 0);
 	const I32 earlyZEnd = min(I32(end), I32(earlyZCount));

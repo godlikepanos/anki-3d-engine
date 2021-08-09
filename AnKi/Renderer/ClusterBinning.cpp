@@ -37,7 +37,8 @@ Error ClusterBinning::init(const ConfigSet& config)
 	variantInitInfo.addConstant("TILE_COUNT_X", m_r->getTileCounts().x());
 	variantInitInfo.addConstant("TILE_COUNT_Y", m_r->getTileCounts().y());
 	variantInitInfo.addConstant("Z_SPLIT_COUNT", m_r->getZSplitCount());
-	variantInitInfo.addConstant("RENDERING_SIZE", UVec2(m_r->getResolution().x(), m_r->getResolution().y()));
+	variantInitInfo.addConstant("RENDERING_SIZE",
+								UVec2(m_r->getInternalResolution().x(), m_r->getInternalResolution().y()));
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
@@ -417,7 +418,7 @@ void ClusterBinning::writeClustererBuffersTask()
 	{
 		ClusteredShadingUniforms& unis = *static_cast<ClusteredShadingUniforms*>(cs.m_clusteredShadingUniformsAddress);
 
-		unis.m_renderingSize = Vec2(F32(m_r->getResolution().x()), F32(m_r->getResolution().y()));
+		unis.m_renderingSize = Vec2(F32(m_r->getInternalResolution().x()), F32(m_r->getInternalResolution().y()));
 
 		unis.m_time = F32(HighRezTimer::getCurrentTime());
 		unis.m_frame = m_r->getFrameCount() & MAX_U32;

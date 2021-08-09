@@ -73,7 +73,7 @@ Error LightShading::initLightShading(const ConfigSet& config)
 
 	// Create RT descr
 	m_lightShading.m_rtDescr =
-		m_r->create2DRenderTargetDescription(m_r->getResolution().x(), m_r->getResolution().y(),
+		m_r->create2DRenderTargetDescription(m_r->getInternalResolution().x(), m_r->getInternalResolution().y(),
 											 LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT, "Light Shading");
 	m_lightShading.m_rtDescr.bake();
 
@@ -109,7 +109,7 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 	const RenderingContext& ctx = *m_runCtx.m_ctx;
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-	cmdb->setViewport(0, 0, m_r->getResolution().x(), m_r->getResolution().y());
+	cmdb->setViewport(0, 0, m_r->getInternalResolution().x(), m_r->getInternalResolution().y());
 
 	// Do light shading first
 	if(rgraphCtx.m_currentSecondLevelCommandBufferIndex == 0)

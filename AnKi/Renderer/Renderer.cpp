@@ -41,6 +41,7 @@
 #include <AnKi/Renderer/AccelerationStructureBuilder.h>
 #include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Renderer/ClusterBinning.h>
+#include <AnKi/Renderer/Scale.h>
 
 namespace anki
 {
@@ -87,17 +88,22 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_frameCount = 0;
 
 	// Set from the config
-	m_resolution.x() = U32(F32(config.getNumberU32("width")) * config.getNumberF32("r_renderScaling"));
-	m_resolution.y() = U32(F32(config.getNumberU32("height")) * config.getNumberF32("r_renderScaling"));
-	ANKI_R_LOGI("Initializing offscreen renderer. Size %ux%u", m_resolution.x(), m_resolution.y());
+	const F32 renderScaling = config.getNumberF32("r_renderScaling");
+	const F32 internalRenderScaling = min(config.getNumberF32("r_internalRenderScaling"), renderScaling);
+
+	const Vec2 fresolution = Vec2(F32(config.getNumberU32("width")), F32(config.getNumberU32("height")));
+	m_postProcessResolution = UVec2(fresolution * renderScaling);
+	m_internalResolution = UVec2(fresolution * internalRenderScaling);
+	ANKI_R_LOGI("Initializing offscreen renderer. Size %ux%u. Internal size %ux%u", m_postProcessResolution.x(),
+				m_postProcessResolution.y(), m_internalResolution.x(), m_internalResolution.y());
 
 	m_tileSize = config.getNumberU32("r_tileSize");
-	m_tileCounts.x() = (m_resolution.x() + m_tileSize - 1) / m_tileSize;
-	m_tileCounts.y() = (m_resolution.y() + m_tileSize - 1) / m_tileSize;
+	m_tileCounts.x() = (m_internalResolution.x() + m_tileSize - 1) / m_tileSize;
+	m_tileCounts.y() = (m_internalResolution.y() + m_tileSize - 1) / m_tileSize;
 	m_zSplitCount = config.getNumberU32("r_zSplitCount");
 
 	// A few sanity checks
-	if(m_resolution.x() < 64 || m_resolution.y() < 64)
+	if(m_internalResolution.x() < 64 || m_internalResolution.y() < 64)
 	{
 		ANKI_R_LOGE("Incorrect sizes");
 		return Error::USER_DATA;
@@ -193,6 +199,9 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_uiStage.reset(m_alloc.newInstance<UiStage>(this));
 	ANKI_CHECK(m_uiStage->init(config));
 
+	m_scale.reset(m_alloc.newInstance<Scale>(this));
+	ANKI_CHECK(m_scale->init(config));
+
 	if(getGrManager().getDeviceCapabilities().m_rayTracingEnabled && config.getBool("scene_rayTracedShadows"))
 	{
 		m_accelerationStructureBuilder.reset(m_alloc.newInstance<AccelerationStructureBuilder>(this));
@@ -246,7 +255,7 @@ void Renderer::initJitteredMats()
 
 	for(U i = 0; i < 16; ++i)
 	{
-		Vec2 texSize(1.0f / Vec2(F32(m_resolution.x()), F32(m_resolution.y()))); // Texel size
+		Vec2 texSize(1.0f / Vec2(F32(m_internalResolution.x()), F32(m_internalResolution.y()))); // Texel size
 		texSize *= 2.0f; // Move it to NDC
 
 		Vec2 S = SAMPLE_LOCS_16[i] / 8.0f; // In [-1, 1]
@@ -263,7 +272,7 @@ void Renderer::initJitteredMats()
 
 	for(U i = 0; i < 8; ++i)
 	{
-		Vec2 texSize(1.0f / Vec2(F32(m_resolution.x()), F32(m_resolution.y()))); // Texel size
+		Vec2 texSize(1.0f / Vec2(F32(m_internalResolution.x()), F32(m_internalResolution.y()))); // Texel size
 		texSize *= 2.0f; // Move it to NDC
 
 		Vec2 S = SAMPLE_LOCS_8[i] / 8.0f; // In [-1, 1]
@@ -343,6 +352,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_ssgi->populateRenderGraph(ctx);
 	m_lightShading->populateRenderGraph(ctx);
 	m_temporalAA->populateRenderGraph(ctx);
+	m_scale->populateRenderGraph(ctx);
 	m_downscaleBlur->populateRenderGraph(ctx);
 	m_tonemapping->populateRenderGraph(ctx);
 	m_bloom->populateRenderGraph(ctx);

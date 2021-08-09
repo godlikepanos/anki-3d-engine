@@ -44,7 +44,8 @@ Error TemporalAA::initInternal(const ConfigSet& config)
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 		variantInitInfo.addConstant("VARIANCE_CLIPPING_GAMMA", 2.7f);
 		variantInitInfo.addConstant("BLEND_FACTOR", 1.0f / 16.0f);
-		variantInitInfo.addConstant("FB_SIZE", UVec2(m_r->getResolution().x(), m_r->getResolution().y()));
+		variantInitInfo.addConstant("FB_SIZE",
+									UVec2(m_r->getInternalResolution().x(), m_r->getInternalResolution().y()));
 		variantInitInfo.addMutation("SHARPEN", i + 1);
 		variantInitInfo.addMutation("VARIANCE_CLIPPING", 1);
 		variantInitInfo.addMutation("TONEMAP_FIX", 1);
@@ -58,7 +59,8 @@ Error TemporalAA::initInternal(const ConfigSet& config)
 	for(U i = 0; i < 2; ++i)
 	{
 		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
-			m_r->getResolution().x(), m_r->getResolution().y(), LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
+			m_r->getInternalResolution().x(), m_r->getInternalResolution().y(),
+			LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE | TextureUsageBit::IMAGE_COMPUTE_WRITE,
 			"TemporalAA");
 
@@ -84,7 +86,7 @@ void TemporalAA::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphC
 	rgraphCtx.bindImage(0, 5, m_runCtx.m_renderRt, TextureSubresourceInfo());
 	rgraphCtx.bindUniformBuffer(0, 6, m_r->getTonemapping().getAverageLuminanceBuffer());
 
-	dispatchPPCompute(cmdb, 8, 8, m_r->getResolution().x(), m_r->getResolution().y());
+	dispatchPPCompute(cmdb, 8, 8, m_r->getInternalResolution().x(), m_r->getInternalResolution().y());
 }
 
 void TemporalAA::populateRenderGraph(RenderingContext& ctx)

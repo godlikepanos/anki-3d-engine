@@ -20,36 +20,12 @@ namespace anki
 #define ANKI_R_LOGF(...) ANKI_LOG("R   ", FATAL, __VA_ARGS__)
 
 // Forward
+#define ANKI_RENDERER_OBJECT_DEF(a, b) class a;
+#include <AnKi/Renderer/RendererObjectDefs.h>
+#undef ANKI_RENDERER_OBJECT_DEF
+
 class Renderer;
 class RendererObject;
-class GBuffer;
-class GBufferPost;
-class ShadowMapping;
-class LightShading;
-class ForwardShading;
-class LensFlare;
-class Ssao;
-class Tonemapping;
-class Bloom;
-class FinalComposite;
-class Dbg;
-class ProbeReflections;
-class DownscaleBlur;
-class VolumetricFog;
-class DepthDownscale;
-class TemporalAA;
-class UiStage;
-class Ssr;
-class Ssgi;
-class VolumetricLightingAccumulation;
-class GlobalIllumination;
-class GenericCompute;
-class ShadowmapsResolve;
-class RtShadows;
-class AccelerationStructureBuilder;
-class MotionVectors;
-class ClusterBinning;
-
 class DebugDrawer;
 
 class RenderQueue;

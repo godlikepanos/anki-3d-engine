@@ -22,18 +22,18 @@ Error MotionVectors::init(const ConfigSet& config)
 	// Prog
 	ANKI_CHECK(getResourceManager().loadResource("Shaders/MotionVectors.ankiprog", m_prog));
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-	variantInitInfo.addConstant("FB_SIZE", UVec2(m_r->getResolution().x(), m_r->getResolution().y()));
+	variantInitInfo.addConstant("FB_SIZE", UVec2(m_r->getInternalResolution().x(), m_r->getInternalResolution().y()));
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProg = variant->getProgram();
 
 	// RTs
-	m_motionVectorsRtDescr = m_r->create2DRenderTargetDescription(m_r->getResolution().x(), m_r->getResolution().y(),
-																  Format::R16G16_SFLOAT, "Motion vectors");
+	m_motionVectorsRtDescr = m_r->create2DRenderTargetDescription(
+		m_r->getInternalResolution().x(), m_r->getInternalResolution().y(), Format::R16G16_SFLOAT, "Motion vectors");
 	m_motionVectorsRtDescr.bake();
 
-	m_rejectionFactorRtDescr = m_r->create2DRenderTargetDescription(m_r->getResolution().x(), m_r->getResolution().y(),
-																	Format::R8_UNORM, "Motion vectors rej");
+	m_rejectionFactorRtDescr = m_r->create2DRenderTargetDescription(
+		m_r->getInternalResolution().x(), m_r->getInternalResolution().y(), Format::R8_UNORM, "Motion vectors rej");
 	m_rejectionFactorRtDescr.bake();
 
 	return Error::NONE;
@@ -92,7 +92,7 @@ void MotionVectors::run(RenderPassWorkContext& rgraphCtx)
 	pc.m_prevViewProjectionInvMat = ctx.m_prevMatrices.m_viewProjectionJitter.getInverse();
 	cmdb->setPushConstants(&pc, sizeof(pc));
 
-	dispatchPPCompute(cmdb, 8, 8, m_r->getResolution().x(), m_r->getResolution().y());
+	dispatchPPCompute(cmdb, 8, 8, m_r->getInternalResolution().x(), m_r->getInternalResolution().y());
 }
 
 } // end namespace anki

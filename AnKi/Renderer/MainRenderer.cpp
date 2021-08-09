@@ -62,6 +62,11 @@ Error MainRenderer::init(ThreadHive* hive, ResourceManager* resources, GrManager
 														   Format::R8G8B8_UNORM, "Final Composite");
 		m_tmpRtDesc.bake();
 
+		// FB descr
+		m_fbDescr.m_colorAttachmentCount = 1;
+		m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
+		m_fbDescr.bake();
+
 		ANKI_R_LOGI("The main renderer will have to blit the offscreen renderer's result");
 	}
 
@@ -115,12 +120,7 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 	{
 		GraphicsRenderPassDescription& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Final Blit");
 
-		FramebufferDescription fbDescr;
-		fbDescr.m_colorAttachmentCount = 1;
-		fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-		fbDescr.bake();
-
-		pass.setFramebufferInfo(fbDescr, {{presentRt}}, {});
+		pass.setFramebufferInfo(m_fbDescr, {{presentRt}}, {});
 		pass.setWork(
 			[](RenderPassWorkContext& rgraphCtx) {
 				MainRenderer* const self = static_cast<MainRenderer*>(rgraphCtx.m_userData);

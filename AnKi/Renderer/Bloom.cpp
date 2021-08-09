@@ -53,8 +53,8 @@ Error Bloom::initExposure(const ConfigSet& config)
 
 Error Bloom::initUpscale(const ConfigSet& config)
 {
-	m_upscale.m_width = m_r->getResolution().x() / BLOOM_FRACTION;
-	m_upscale.m_height = m_r->getResolution().y() / BLOOM_FRACTION;
+	m_upscale.m_width = m_r->getPostProcessResolution().x() / BLOOM_FRACTION;
+	m_upscale.m_height = m_r->getPostProcessResolution().y() / BLOOM_FRACTION;
 
 	// Create RT descr
 	m_upscale.m_rtDescr =

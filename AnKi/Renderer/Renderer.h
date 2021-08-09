@@ -56,14 +56,19 @@ public:
 		return m_rtShadows.isCreated();
 	}
 
-	const UVec2& getResolution() const
+	const UVec2& getInternalResolution() const
 	{
-		return m_resolution;
+		return m_internalResolution;
+	}
+
+	const UVec2& getPostProcessResolution() const
+	{
+		return m_postProcessResolution;
 	}
 
 	F32 getAspectRatio() const
 	{
-		return F32(m_resolution.x()) / F32(m_resolution.y());
+		return F32(m_internalResolution.x()) / F32(m_internalResolution.y());
 	}
 
 	/// Init the renderer.
@@ -232,7 +237,8 @@ private:
 	UVec2 m_tileCounts = UVec2(0u);
 	U32 m_zSplitCount = 0;
 
-	UVec2 m_resolution = UVec2(0u);
+	UVec2 m_internalResolution = UVec2(0u); ///< The resolution of all passes up until TAA.
+	UVec2 m_postProcessResolution = UVec2(0u); ///< The resolution of post processing and following passes.
 
 	RenderableDrawer m_sceneDrawer;
 

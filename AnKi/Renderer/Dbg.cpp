@@ -38,7 +38,7 @@ Error Dbg::lazyInit()
 	ANKI_ASSERT(!m_initialized);
 
 	// RT descr
-	m_rtDescr = m_r->create2DRenderTargetDescription(m_r->getResolution().x(), m_r->getResolution().y(),
+	m_rtDescr = m_r->create2DRenderTargetDescription(m_r->getInternalResolution().x(), m_r->getInternalResolution().y(),
 													 DBG_COLOR_ATTACHMENT_PIXEL_FORMAT, "Dbg");
 	m_rtDescr.bake();
 
@@ -60,7 +60,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
 	// Set common state
-	cmdb->setViewport(0, 0, m_r->getResolution().x(), m_r->getResolution().y());
+	cmdb->setViewport(0, 0, m_r->getInternalResolution().x(), m_r->getInternalResolution().y());
 	cmdb->setDepthWrite(false);
 
 	cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);

@@ -81,7 +81,7 @@ void GBufferPost::run(RenderPassWorkContext& rgraphCtx)
 	const ClusteredShadingContext& rsrc = ctx.m_clusteredShading;
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-	cmdb->setViewport(0, 0, m_r->getResolution().x(), m_r->getResolution().y());
+	cmdb->setViewport(0, 0, m_r->getInternalResolution().x(), m_r->getInternalResolution().y());
 	cmdb->bindShaderProgram(m_grProg);
 
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::SRC_ALPHA, BlendFactor::ZERO, BlendFactor::ONE);

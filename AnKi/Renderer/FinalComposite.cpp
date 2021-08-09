@@ -6,7 +6,7 @@
 #include <AnKi/Renderer/FinalComposite.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/Bloom.h>
-#include <AnKi/Renderer/TemporalAA.h>
+#include <AnKi/Renderer/Scale.h>
 #include <AnKi/Renderer/Tonemapping.h>
 #include <AnKi/Renderer/LightShading.h>
 #include <AnKi/Renderer/GBuffer.h>
@@ -50,8 +50,7 @@ Error FinalComposite::initInternal(const ConfigSet& config)
 	variantInitInfo.addMutation("BLUE_NOISE", 1);
 	variantInitInfo.addMutation("BLOOM_ENABLED", 1);
 	variantInitInfo.addConstant("LUT_SIZE", U32(LUT_SIZE));
-	variantInitInfo.addConstant("LUT_SIZE", U32(LUT_SIZE));
-	variantInitInfo.addConstant("FB_SIZE", UVec2(m_r->getResolution().x(), m_r->getResolution().y()));
+	variantInitInfo.addConstant("FB_SIZE", m_r->getPostProcessResolution());
 	variantInitInfo.addConstant("MOTION_BLUR_SAMPLES", config.getNumberU32("r_motionBlurSamples"));
 
 	for(U32 dbg = 0; dbg < 2; ++dbg)
@@ -125,7 +124,7 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 		cmdb->bindSampler(0, 2, m_r->getSamplers().m_trilinearClamp);
 		cmdb->bindSampler(0, 3, m_r->getSamplers().m_trilinearRepeat);
 
-		rgraphCtx.bindColorTexture(0, 4, m_r->getTemporalAA().getRt());
+		rgraphCtx.bindColorTexture(0, 4, m_r->getScale().getRt());
 
 		rgraphCtx.bindColorTexture(0, 5, m_r->getBloom().getRt());
 		cmdb->bindTexture(0, 6, m_lut->getTextureView());
@@ -186,7 +185,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 		pass.newDependency({m_r->getDbg().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	}
 
-	pass.newDependency({m_r->getTemporalAA().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+	pass.newDependency({m_r->getScale().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newDependency({m_r->getBloom().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newDependency({m_r->getMotionVectors().getMotionVectorsRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newDependency({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_FRAGMENT});

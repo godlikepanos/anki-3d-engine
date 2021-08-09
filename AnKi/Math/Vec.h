@@ -50,7 +50,7 @@ public:
 		m_simd = b.m_simd;
 	}
 
-	/// Convert from another type.
+	/// Convert from another type. From int to float vectors and the opposite.
 	template<typename Y, ANKI_ENABLE(!std::is_same<Y, T>::value)>
 	explicit TVec(const TVec<Y, N>& b)
 	{

@@ -67,7 +67,7 @@ Error RtShadows::initInternal(const ConfigSet& cfg)
 		ANKI_CHECK(getResourceManager().loadResource("Shaders/RtShadowsDenoise.ankiprog", m_denoiseProg));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_denoiseProg);
 		variantInitInfo.addConstant("OUT_IMAGE_SIZE",
-									UVec2(m_r->getResolution().x() / 2, m_r->getResolution().y() / 2));
+									UVec2(m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2));
 		variantInitInfo.addConstant("MIN_SAMPLE_COUNT", 8u);
 		variantInitInfo.addConstant("MAX_SAMPLE_COUNT", 32u);
 		variantInitInfo.addMutation("BLUR_ORIENTATION", 0);
@@ -86,7 +86,8 @@ Error RtShadows::initInternal(const ConfigSet& cfg)
 	{
 		ANKI_CHECK(getResourceManager().loadResource("Shaders/RtShadowsSvgfVariance.ankiprog", m_svgfVarianceProg));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_svgfVarianceProg);
-		variantInitInfo.addConstant("FB_SIZE", UVec2(m_r->getResolution().x() / 2, m_r->getResolution().y() / 2));
+		variantInitInfo.addConstant("FB_SIZE",
+									UVec2(m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2));
 
 		const ShaderProgramResourceVariant* variant;
 		m_svgfVarianceProg->getOrCreateVariant(variantInitInfo, variant);
@@ -98,7 +99,8 @@ Error RtShadows::initInternal(const ConfigSet& cfg)
 	{
 		ANKI_CHECK(getResourceManager().loadResource("Shaders/RtShadowsSvgfAtrous.ankiprog", m_svgfAtrousProg));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_svgfAtrousProg);
-		variantInitInfo.addConstant("FB_SIZE", UVec2(m_r->getResolution().x() / 2, m_r->getResolution().y() / 2));
+		variantInitInfo.addConstant("FB_SIZE",
+									UVec2(m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2));
 		variantInitInfo.addMutation("LAST_PASS", 0);
 
 		const ShaderProgramResourceVariant* variant;
@@ -114,7 +116,8 @@ Error RtShadows::initInternal(const ConfigSet& cfg)
 	{
 		ANKI_CHECK(getResourceManager().loadResource("Shaders/RtShadowsUpscale.ankiprog", m_upscaleProg));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_upscaleProg);
-		variantInitInfo.addConstant("OUT_IMAGE_SIZE", UVec2(m_r->getResolution().x(), m_r->getResolution().y()));
+		variantInitInfo.addConstant("OUT_IMAGE_SIZE",
+									UVec2(m_r->getInternalResolution().x(), m_r->getInternalResolution().y()));
 
 		const ShaderProgramResourceVariant* variant;
 		m_upscaleProg->getOrCreateVariant(variantInitInfo, variant);
@@ -128,7 +131,7 @@ Error RtShadows::initInternal(const ConfigSet& cfg)
 	// Quarter rez shadow RT
 	{
 		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
-			m_r->getResolution().x() / 2, m_r->getResolution().y() / 2, Format::R32G32_UINT,
+			m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2, Format::R32G32_UINT,
 			TextureUsageBit::ALL_SAMPLED | TextureUsageBit::IMAGE_TRACE_RAYS_WRITE
 				| TextureUsageBit::IMAGE_COMPUTE_WRITE,
 			"RtShadows History");
@@ -138,15 +141,16 @@ Error RtShadows::initInternal(const ConfigSet& cfg)
 
 	// Temp shadow RT
 	{
-		m_intermediateShadowsRtDescr = m_r->create2DRenderTargetDescription(
-			m_r->getResolution().x() / 2, m_r->getResolution().y() / 2, Format::R32G32_UINT, "RtShadows Tmp");
+		m_intermediateShadowsRtDescr = m_r->create2DRenderTargetDescription(m_r->getInternalResolution().x() / 2,
+																			m_r->getInternalResolution().y() / 2,
+																			Format::R32G32_UINT, "RtShadows Tmp");
 		m_intermediateShadowsRtDescr.bake();
 	}
 
 	// Moments RT
 	{
 		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
-			m_r->getResolution().x() / 2, m_r->getResolution().y() / 2, Format::R32G32_SFLOAT,
+			m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2, Format::R32G32_SFLOAT,
 			TextureUsageBit::ALL_SAMPLED | TextureUsageBit::IMAGE_TRACE_RAYS_WRITE
 				| TextureUsageBit::IMAGE_COMPUTE_WRITE,
 			"RtShadows Moments #1");
@@ -160,7 +164,7 @@ Error RtShadows::initInternal(const ConfigSet& cfg)
 	// History len RT
 	{
 		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
-			m_r->getResolution().x() / 2, m_r->getResolution().y() / 2, Format::R8_UNORM,
+			m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2, Format::R8_UNORM,
 			TextureUsageBit::ALL_SAMPLED | TextureUsageBit::IMAGE_TRACE_RAYS_WRITE
 				| TextureUsageBit::IMAGE_COMPUTE_WRITE,
 			"RtShadows History Length #1");
@@ -174,15 +178,17 @@ Error RtShadows::initInternal(const ConfigSet& cfg)
 	// Variance RT
 	if(m_useSvgf)
 	{
-		m_varianceRtDescr = m_r->create2DRenderTargetDescription(
-			m_r->getResolution().x() / 2, m_r->getResolution().y() / 2, Format::R32_SFLOAT, "RtShadows Variance");
+		m_varianceRtDescr = m_r->create2DRenderTargetDescription(m_r->getInternalResolution().x() / 2,
+																 m_r->getInternalResolution().y() / 2,
+																 Format::R32_SFLOAT, "RtShadows Variance");
 		m_varianceRtDescr.bake();
 	}
 
 	// Final RT
 	{
-		m_upscaledRtDescr = m_r->create2DRenderTargetDescription(m_r->getResolution().x(), m_r->getResolution().y(),
-																 Format::R32G32_UINT, "RtShadows Upscaled");
+		m_upscaledRtDescr =
+			m_r->create2DRenderTargetDescription(m_r->getInternalResolution().x(), m_r->getInternalResolution().y(),
+												 Format::R32G32_UINT, "RtShadows Upscaled");
 		m_upscaledRtDescr.bake();
 	}
 
@@ -521,7 +527,7 @@ void RtShadows::run(RenderPassWorkContext& rgraphCtx)
 	cmdb->setPushConstants(&unis, sizeof(unis));
 
 	cmdb->traceRays(m_runCtx.m_sbtBuffer, m_runCtx.m_sbtOffset, m_sbtRecordSize, m_runCtx.m_hitGroupCount, 1,
-					m_r->getResolution().x() / 2, m_r->getResolution().y() / 2, 1);
+					m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2, 1);
 }
 
 void RtShadows::runDenoise(RenderPassWorkContext& rgraphCtx)
@@ -546,7 +552,7 @@ void RtShadows::runDenoise(RenderPassWorkContext& rgraphCtx)
 	unis.time = F32(m_r->getGlobalTimestamp());
 	cmdb->setPushConstants(&unis, sizeof(unis));
 
-	dispatchPPCompute(cmdb, 8, 8, m_r->getResolution().x() / 2, m_r->getResolution().y() / 2);
+	dispatchPPCompute(cmdb, 8, 8, m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2);
 
 	m_runCtx.m_denoiseOrientation = !m_runCtx.m_denoiseOrientation;
 }
@@ -571,7 +577,7 @@ void RtShadows::runSvgfVariance(RenderPassWorkContext& rgraphCtx)
 	const Mat4& invProjMat = m_runCtx.m_ctx->m_matrices.m_projectionJitter.getInverse();
 	cmdb->setPushConstants(&invProjMat, sizeof(invProjMat));
 
-	dispatchPPCompute(cmdb, 8, 8, m_r->getResolution().x() / 2, m_r->getResolution().y() / 2);
+	dispatchPPCompute(cmdb, 8, 8, m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2);
 }
 
 void RtShadows::runSvgfAtrous(RenderPassWorkContext& rgraphCtx)
@@ -610,7 +616,7 @@ void RtShadows::runSvgfAtrous(RenderPassWorkContext& rgraphCtx)
 	const Mat4& invProjMat = m_runCtx.m_ctx->m_matrices.m_projectionJitter.getInverse();
 	cmdb->setPushConstants(&invProjMat, sizeof(invProjMat));
 
-	dispatchPPCompute(cmdb, 8, 8, m_r->getResolution().x() / 2, m_r->getResolution().y() / 2);
+	dispatchPPCompute(cmdb, 8, 8, m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2);
 
 	++m_runCtx.m_atrousPassIdx;
 }
@@ -629,7 +635,7 @@ void RtShadows::runUpscale(RenderPassWorkContext& rgraphCtx)
 	rgraphCtx.bindTexture(0, 4, m_r->getDepthDownscale().getHiZRt(), HIZ_HALF_DEPTH);
 	rgraphCtx.bindTexture(0, 5, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
 
-	dispatchPPCompute(cmdb, 8, 8, m_r->getResolution().x(), m_r->getResolution().y());
+	dispatchPPCompute(cmdb, 8, 8, m_r->getInternalResolution().x(), m_r->getInternalResolution().y());
 }
 
 void RtShadows::buildSbt()

@@ -5,7 +5,7 @@
 
 #include <AnKi/Renderer/DownscaleBlur.h>
 #include <AnKi/Renderer/Renderer.h>
-#include <AnKi/Renderer/TemporalAA.h>
+#include <AnKi/Renderer/Scale.h>
 
 namespace anki
 {
@@ -28,14 +28,15 @@ Error DownscaleBlur::init(const ConfigSet& cfg)
 
 Error DownscaleBlur::initInternal(const ConfigSet&)
 {
-	m_passCount =
-		computeMaxMipmapCount2d(m_r->getResolution().x(), m_r->getResolution().y(), DOWNSCALE_BLUR_DOWN_TO) - 1;
+	m_passCount = computeMaxMipmapCount2d(m_r->getPostProcessResolution().x(), m_r->getPostProcessResolution().y(),
+										  DOWNSCALE_BLUR_DOWN_TO)
+				  - 1;
 	ANKI_R_LOGI("Initializing dowscale blur (passCount: %u)", m_passCount);
 
 	// Create the miped texture
-	TextureInitInfo texinit =
-		m_r->create2DRenderTargetDescription(m_r->getResolution().x() / 2, m_r->getResolution().y() / 2,
-											 LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT, "DownscaleBlur");
+	TextureInitInfo texinit = m_r->create2DRenderTargetDescription(
+		m_r->getPostProcessResolution().x() / 2, m_r->getPostProcessResolution().y() / 2,
+		LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT, "DownscaleBlur");
 	texinit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE;
 	if(m_useCompute)
 	{
@@ -123,7 +124,7 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 				TextureSubresourceInfo renderSubresource;
 
 				pass.newDependency({m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE, renderSubresource});
-				pass.newDependency({m_r->getTemporalAA().getRt(), TextureUsageBit::SAMPLED_COMPUTE});
+				pass.newDependency({m_r->getScale().getRt(), TextureUsageBit::SAMPLED_COMPUTE});
 			}
 		}
 	}
@@ -155,7 +156,7 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 				TextureSubresourceInfo renderSubresource;
 
 				pass.newDependency({m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, renderSubresource});
-				pass.newDependency({m_r->getTemporalAA().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+				pass.newDependency({m_r->getScale().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 			}
 		}
 	}
@@ -181,7 +182,7 @@ void DownscaleBlur::run(RenderPassWorkContext& rgraphCtx)
 	}
 	else
 	{
-		rgraphCtx.bindColorTexture(0, 1, m_r->getTemporalAA().getRt());
+		rgraphCtx.bindColorTexture(0, 1, m_r->getScale().getRt());
 	}
 
 	if(m_useCompute)

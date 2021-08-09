@@ -29,10 +29,10 @@ Error ShadowmapsResolve::init(const ConfigSet& cfg)
 
 Error ShadowmapsResolve::initInternal(const ConfigSet& cfg)
 {
-	U32 width = U32(cfg.getNumberF32("r_smResolveFactor") * F32(m_r->getResolution().x()));
-	width = min(m_r->getResolution().x(), getAlignedRoundUp(4, width));
-	U32 height = U32(cfg.getNumberF32("r_smResolveFactor") * F32(m_r->getResolution().y()));
-	height = min(m_r->getResolution().y(), getAlignedRoundUp(4, height));
+	U32 width = U32(cfg.getNumberF32("r_smResolveFactor") * F32(m_r->getInternalResolution().x()));
+	width = min(m_r->getInternalResolution().x(), getAlignedRoundUp(4, width));
+	U32 height = U32(cfg.getNumberF32("r_smResolveFactor") * F32(m_r->getInternalResolution().y()));
+	height = min(m_r->getInternalResolution().y(), getAlignedRoundUp(4, height));
 	ANKI_R_LOGI("Initializing shadow resolve pass. Size %ux%u", width, height);
 
 	m_rtDescr = m_r->create2DRenderTargetDescription(width, height, Format::R8G8B8A8_UNORM, "SM resolve");

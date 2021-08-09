@@ -31,8 +31,8 @@ Error Ssr::init(const ConfigSet& cfg)
 
 Error Ssr::initInternal(const ConfigSet& cfg)
 {
-	const U32 width = m_r->getResolution().x();
-	const U32 height = m_r->getResolution().y();
+	const U32 width = m_r->getInternalResolution().x();
+	const U32 height = m_r->getInternalResolution().y();
 	ANKI_R_LOGI("Initializing SSR pass (%ux%u)", width, height);
 	m_maxSteps = cfg.getNumberU32("r_ssrMaxSteps");
 	m_depthLod = cfg.getNumberU32("r_ssrDepthLod");
@@ -102,8 +102,9 @@ void Ssr::run(RenderPassWorkContext& rgraphCtx)
 
 	// Bind uniforms
 	SsrUniforms* unis = allocateAndBindUniforms<SsrUniforms*>(sizeof(SsrUniforms), cmdb, 0, 1);
-	unis->m_depthBufferSize = UVec2(m_r->getResolution().x(), m_r->getResolution().y()) >> (depthLod + 1);
-	unis->m_framebufferSize = UVec2(m_r->getResolution().x(), m_r->getResolution().y());
+	unis->m_depthBufferSize =
+		UVec2(m_r->getInternalResolution().x(), m_r->getInternalResolution().y()) >> (depthLod + 1);
+	unis->m_framebufferSize = UVec2(m_r->getInternalResolution().x(), m_r->getInternalResolution().y());
 	unis->m_frameCount = m_r->getFrameCount() & MAX_U32;
 	unis->m_depthMipCount = m_r->getDepthDownscale().getMipmapCount();
 	unis->m_maxSteps = m_maxSteps;
@@ -131,8 +132,8 @@ void Ssr::run(RenderPassWorkContext& rgraphCtx)
 	cmdb->bindTexture(0, 8, m_noiseImage->getTextureView());
 
 	// Dispatch
-	dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_r->getResolution().x() / 2,
-					  m_r->getResolution().y());
+	dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_r->getInternalResolution().x() / 2,
+					  m_r->getInternalResolution().y());
 }
 
 } // end namespace anki
