@@ -433,29 +433,29 @@ Mat3 rotationFromDirection(Vec3 zAxis)
 
 #if defined(ANKI_COMPUTE_SHADER)
 // See getOptimalGlobalInvocationId8x8Amd
-U32 ABfiM(U32 src, U32 ins, U32 bits)
+U32 _ABfiM(U32 src, U32 ins, U32 bits)
 {
 	const U32 mask = (1u << bits) - 1u;
 	return (ins & mask) | (src & (~mask));
 }
 
 // See getOptimalGlobalInvocationId8x8Amd
-U32 ABfe(U32 src, U32 off, U32 bits)
+U32 _ABfe(U32 src, U32 off, U32 bits)
 {
 	const U32 mask = (1u << bits) - 1u;
 	return (src >> off) & mask;
 }
 
 // See getOptimalGlobalInvocationId8x8Amd
-UVec2 ARmpRed8x8(U32 a)
+UVec2 _ARmpRed8x8(U32 a)
 {
-	return UVec2(ABfiM(ABfe(a, 2u, 3u), a, 1u), ABfiM(ABfe(a, 3u, 3u), ABfe(a, 1u, 2u), 2u));
+	return UVec2(_ABfiM(_ABfe(a, 2u, 3u), a, 1u), _ABfiM(_ABfe(a, 3u, 3u), _ABfe(a, 1u, 2u), 2u));
 }
 
 // https://github.com/GPUOpen-Effects/FidelityFX-CAS/blob/master/ffx-cas/ffx_a.h
 UVec2 getOptimalGlobalInvocationId8x8Amd()
 {
-	const UVec2 localInvocationId = ARmpRed8x8(gl_LocalInvocationIndex);
+	const UVec2 localInvocationId = _ARmpRed8x8(gl_LocalInvocationIndex);
 	return gl_WorkGroupID.xy * UVec2(8u) + localInvocationId;
 }
 
