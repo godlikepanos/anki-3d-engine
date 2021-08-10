@@ -12,7 +12,7 @@ ANKI_SPECIALIZATION_CONSTANT_U32(TILE_SIZE, 3u);
 #pragma anki end
 
 #pragma anki start frag
-#include <AnKi/Shaders/Pack.glsl>
+#include <AnKi/Shaders/PackFunctions.glsl>
 #include <AnKi/Shaders/Functions.glsl>
 
 layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;

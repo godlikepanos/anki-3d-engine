@@ -357,6 +357,7 @@ if(NOT MSVC)
 		"-Wunused-variable -std=c++14")
 else()
 	#add_definitions("/wd4996 /wd4244 /wd4262 /wd4267 /wd26495 /wd26439")
+	add_compile_definitions("_CRT_SECURE_NO_WARNINGS=1") # Disable some string function warnings
 endif()
 
 # Set platform specific

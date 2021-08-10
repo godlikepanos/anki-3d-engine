@@ -14,9 +14,9 @@
 
 #pragma anki start comp
 #include <AnKi/Shaders/Functions.glsl>
-#include <AnKi/Shaders/Pack.glsl>
+#include <AnKi/Shaders/PackFunctions.glsl>
 #include <AnKi/Shaders/Include/SsrTypes.h>
-#include <AnKi/Shaders/Tonemapping.glsl>
+#include <AnKi/Shaders/TonemappingFunctions.glsl>
 #include <AnKi/Shaders/SsRaymarching.glsl>
 
 const UVec2 WORKGROUP_SIZE = UVec2(16, 16);

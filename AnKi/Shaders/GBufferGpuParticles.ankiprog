@@ -62,7 +62,7 @@ void main()
 
 #pragma anki start frag
 #define MAX_EMISSION 1024.0
-#include <AnKi/Shaders/Pack.glsl>
+#include <AnKi/Shaders/PackFunctions.glsl>
 
 layout(location = 0) out Vec4 out_gbuffer0;
 layout(location = 1) out Vec4 out_gbuffer1;

@@ -18,7 +18,7 @@ ANKI_SPECIALIZATION_CONSTANT_U32(SAMPLE_COUNT, 6u);
 #pragma once
 
 #include <AnKi/Shaders/Common.glsl>
-#include <AnKi/Shaders/Pack.glsl>
+#include <AnKi/Shaders/PackFunctions.glsl>
 #include <AnKi/Shaders/Functions.glsl>
 #define KERNEL_SIZE 3
 #include <AnKi/Shaders/GaussianBlurCommon.glsl>

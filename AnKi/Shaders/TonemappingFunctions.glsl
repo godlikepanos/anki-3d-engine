@@ -81,3 +81,16 @@ Vec3 tonemap(Vec3 color, F32 avgLum, F32 threshold)
 	const F32 exposure = computeExposure(avgLum, threshold);
 	return tonemap(color, exposure);
 }
+
+// https://graphicrants.blogspot.com/2013/12/tone-mapping.html
+Vec3 invertibleTonemap(Vec3 colour)
+{
+	// 1 / (1 + max(rgb))
+	return colour / (1.0 + max(max(colour.r, colour.g), colour.b));
+}
+
+Vec3 invertInvertibleTonemap(Vec3 colour)
+{
+	// 1 / (1 - max(rgb))
+	return colour / (1.0 - max(max(colour.r, colour.g), colour.b));
+}

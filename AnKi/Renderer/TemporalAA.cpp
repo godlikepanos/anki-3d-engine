@@ -48,7 +48,6 @@ Error TemporalAA::initInternal(const ConfigSet& config)
 									UVec2(m_r->getInternalResolution().x(), m_r->getInternalResolution().y()));
 		variantInitInfo.addMutation("SHARPEN", i + 1);
 		variantInitInfo.addMutation("VARIANCE_CLIPPING", 1);
-		variantInitInfo.addMutation("TONEMAP_FIX", 1);
 		variantInitInfo.addMutation("YCBCR", 0);
 
 		const ShaderProgramResourceVariant* variant;
@@ -84,7 +83,6 @@ void TemporalAA::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphC
 	rgraphCtx.bindColorTexture(0, 3, m_runCtx.m_historyRt);
 	rgraphCtx.bindColorTexture(0, 4, m_r->getMotionVectors().getMotionVectorsRt());
 	rgraphCtx.bindImage(0, 5, m_runCtx.m_renderRt, TextureSubresourceInfo());
-	rgraphCtx.bindUniformBuffer(0, 6, m_r->getTonemapping().getAverageLuminanceBuffer());
 
 	dispatchPPCompute(cmdb, 8, 8, m_r->getInternalResolution().x(), m_r->getInternalResolution().y());
 }

@@ -14,7 +14,7 @@
 #pragma anki start comp
 #include <AnKi/Shaders/SsRaymarching.glsl>
 #include <AnKi/Shaders/Functions.glsl>
-#include <AnKi/Shaders/Pack.glsl>
+#include <AnKi/Shaders/PackFunctions.glsl>
 #include <AnKi/Shaders/ImportanceSampling.glsl>
 #include <AnKi/Shaders/Include/SsgiTypes.h>
 

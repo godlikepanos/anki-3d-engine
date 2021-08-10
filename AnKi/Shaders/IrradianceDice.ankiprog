@@ -13,7 +13,7 @@
 #pragma anki start comp
 
 #include <AnKi/Shaders/Functions.glsl>
-#include <AnKi/Shaders/Pack.glsl>
+#include <AnKi/Shaders/PackFunctions.glsl>
 #include <AnKi/Shaders/LightFunctions.glsl>
 
 #define DEBUG_MODE 0 // 0: disable, 1: different color per dice face, 2: different color per cell

@@ -8,7 +8,7 @@ const UVec2 WORKGROUP_SIZE = UVec2(16, 16);
 
 #pragma anki start comp
 #include <AnKi/Shaders/Common.glsl>
-#include <AnKi/Shaders/Tonemapping.glsl>
+#include <AnKi/Shaders/TonemappingFunctions.glsl>
 
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
 

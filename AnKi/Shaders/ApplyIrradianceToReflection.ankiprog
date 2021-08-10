@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki start comp
-#include <AnKi/Shaders/Pack.glsl>
+#include <AnKi/Shaders/PackFunctions.glsl>
 #include <AnKi/Shaders/LightFunctions.glsl>
 
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 6) in;

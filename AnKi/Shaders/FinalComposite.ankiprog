@@ -17,7 +17,7 @@ ANKI_SPECIALIZATION_CONSTANT_U32(MOTION_BLUR_SAMPLES, 3u);
 
 #pragma anki start frag
 #include <AnKi/Shaders/Common.glsl>
-#include <AnKi/Shaders/Tonemapping.glsl>
+#include <AnKi/Shaders/TonemappingFunctions.glsl>
 #include <AnKi/Shaders/Functions.glsl>
 #include <AnKi/Shaders/MotionBlur.glsl>
 

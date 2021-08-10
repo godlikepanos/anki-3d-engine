@@ -9,7 +9,7 @@
 
 #include <AnKi/Shaders/Functions.glsl>
 #include <AnKi/Shaders/CollisionFunctions.glsl>
-#include <AnKi/Shaders/Pack.glsl>
+#include <AnKi/Shaders/PackFunctions.glsl>
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 #include <AnKi/Shaders/Include/Evsm.h>
 

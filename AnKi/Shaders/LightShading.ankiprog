@@ -15,7 +15,7 @@ ANKI_SPECIALIZATION_CONSTANT_U32(IR_MIPMAP_COUNT, 4u);
 #pragma anki end
 
 #pragma anki start frag
-#include <AnKi/Shaders/Pack.glsl>
+#include <AnKi/Shaders/PackFunctions.glsl>
 #include <AnKi/Shaders/Functions.glsl>
 #include <AnKi/Shaders/RtShadows.glsl>
 

@@ -45,7 +45,7 @@ void main()
 
 // FRAG
 #pragma anki start frag
-#include <AnKi/Shaders/Pack.glsl>
+#include <AnKi/Shaders/PackFunctions.glsl>
 #include <AnKi/Shaders/LightFunctions.glsl>
 #include <AnKi/Shaders/Include/TraditionalDeferredShadingTypes.h>
 

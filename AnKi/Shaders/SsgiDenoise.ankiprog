@@ -12,7 +12,7 @@ ANKI_SPECIALIZATION_CONSTANT_UVEC2(IN_TEXTURE_SIZE, 0u);
 #pragma anki start comp
 
 #include <AnKi/Shaders/BilateralFilter.glsl>
-#include <AnKi/Shaders/Pack.glsl>
+#include <AnKi/Shaders/PackFunctions.glsl>
 
 #if SAMPLE_COUNT < 3
 #	error See file

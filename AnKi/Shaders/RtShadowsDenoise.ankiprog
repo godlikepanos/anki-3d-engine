@@ -12,7 +12,7 @@ ANKI_SPECIALIZATION_CONSTANT_U32(MIN_SAMPLE_COUNT, 2u);
 ANKI_SPECIALIZATION_CONSTANT_U32(MAX_SAMPLE_COUNT, 3u);
 
 #include <AnKi/Shaders/BilateralFilter.glsl>
-#include <AnKi/Shaders/Pack.glsl>
+#include <AnKi/Shaders/PackFunctions.glsl>
 #include <AnKi/Shaders/RtShadows.glsl>
 #include <AnKi/Shaders/Functions.glsl>
 

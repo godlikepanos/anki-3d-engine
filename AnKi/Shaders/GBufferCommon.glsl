@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <AnKi/Shaders/Pack.glsl>
+#include <AnKi/Shaders/PackFunctions.glsl>
 #include <AnKi/Shaders/Include/ModelTypes.h>
 
 //

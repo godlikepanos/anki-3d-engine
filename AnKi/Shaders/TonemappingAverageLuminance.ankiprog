@@ -9,7 +9,7 @@ ANKI_SPECIALIZATION_CONSTANT_UVEC2(INPUT_TEX_SIZE, 0u);
 #define LOG_AVG 0
 
 #include <AnKi/Shaders/Common.glsl>
-#include <AnKi/Shaders/Tonemapping.glsl>
+#include <AnKi/Shaders/TonemappingFunctions.glsl>
 
 const UVec2 WORKGROUP_SIZE = UVec2(32u, 32u);
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
