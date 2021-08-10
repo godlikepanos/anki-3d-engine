@@ -34,11 +34,12 @@ public:
 	}
 
 private:
-	ShaderProgramResourcePtr m_blitProg;
-	ShaderProgramPtr m_blitGrProg;
+	ShaderProgramResourcePtr m_prog;
+	ShaderProgramPtr m_grProg;
 
 	RenderTargetDescription m_rtDesc;
-	FramebufferDescription m_fbDescr;
+
+	Bool m_fsr = false;
 
 	class
 	{

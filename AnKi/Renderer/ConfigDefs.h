@@ -55,3 +55,5 @@ ANKI_CONFIG_OPTION(r_smResolveFactor, 0.5, 0.25, 1.0)
 ANKI_CONFIG_OPTION(r_rtShadowsSvgf, 0, 0, 1)
 ANKI_CONFIG_OPTION(r_rtShadowsSvgfAtrousPassCount, 3, 1, 20)
 ANKI_CONFIG_OPTION(r_rtShadowsRaysPerPixel, 1, 1, 8)
+
+ANKI_CONFIG_OPTION(r_fsr, 1, 0, 1)
