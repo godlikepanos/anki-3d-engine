@@ -97,7 +97,7 @@ inline void MicroObjectRecycler<T>::trimCache()
 
 	releaseFences();
 
-	DynamicArray<T*> newObjects;
+	DynamicArray<T*> aliveObjects;
 
 	for(U32 i = 0; i < m_objects.getSize(); ++i)
 	{
@@ -108,19 +108,28 @@ inline void MicroObjectRecycler<T>::trimCache()
 		if(obj->getFence())
 		{
 			// Can't delete it
-			newObjects.emplaceBack(m_alloc, obj);
+			aliveObjects.emplaceBack(m_alloc, obj);
 		}
 		else
 		{
 			auto alloc = obj->getAllocator();
 			alloc.deleteInstance(obj);
+#if ANKI_EXTRA_CHECKS
+			--m_createdAndNotRecycled;
+#endif
 		}
 	}
 
-	if(newObjects.getSize() > 0)
+	if(aliveObjects.getSize() > 0)
 	{
+		// Some alive, store the alive
 		m_objects.destroy(m_alloc);
-		m_objects = std::move(newObjects);
+		m_objects = std::move(aliveObjects);
+	}
+	else if(aliveObjects.getSize() == 0 && m_objects.getSize() >= 0)
+	{
+		// All dead, destroy the array
+		m_objects.destroy(m_alloc);
 	}
 }
 

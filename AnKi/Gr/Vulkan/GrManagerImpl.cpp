@@ -929,6 +929,7 @@ TexturePtr GrManagerImpl::acquireNextPresentableTexture()
 		{
 			vkQueueWaitIdle(queue);
 		}
+		m_crntSwapchain.reset(nullptr);
 		m_crntSwapchain = m_swapchainFactory.newInstance();
 
 		// Can't fail a second time
@@ -983,11 +984,13 @@ void GrManagerImpl::endFrame()
 	const VkResult res1 = vkQueuePresentKHR(m_queues[frame.m_queueWroteToSwapchainImage], &present);
 	if(res1 == VK_ERROR_OUT_OF_DATE_KHR)
 	{
-		ANKI_VK_LOGW("Swapchain is out of date. Will wait for the queue and create a new one");
+		ANKI_VK_LOGW("Swapchain is out of date. Will wait for the queues and create a new one");
 		for(VkQueue queue : m_queues)
 		{
 			vkQueueWaitIdle(queue);
 		}
+		vkDeviceWaitIdle(m_device);
+		m_crntSwapchain.reset(nullptr);
 		m_crntSwapchain = m_swapchainFactory.newInstance();
 	}
 	else
