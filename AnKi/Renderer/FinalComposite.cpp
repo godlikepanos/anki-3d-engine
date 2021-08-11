@@ -92,76 +92,6 @@ Error FinalComposite::loadColorGradingTextureImage(CString filename)
 	return Error::NONE;
 }
 
-void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
-{
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	const Bool dbgEnabled = m_r->getDbg().getEnabled();
-	RenderTargetHandle dbgRt;
-	Bool dbgRtValid;
-	ShaderProgramPtr optionalDebugProgram;
-	m_r->getCurrentDebugRenderTarget(dbgRt, dbgRtValid, optionalDebugProgram);
-
-	// Bind program
-	if(dbgRtValid && optionalDebugProgram.isCreated())
-	{
-		cmdb->bindShaderProgram(optionalDebugProgram);
-	}
-	else if(dbgRtValid)
-	{
-		cmdb->bindShaderProgram(m_defaultVisualizeRenderTargetGrProg);
-	}
-	else
-	{
-		cmdb->bindShaderProgram(m_grProgs[dbgEnabled]);
-	}
-
-	// Bind stuff
-	if(!dbgRtValid)
-	{
-		rgraphCtx.bindUniformBuffer(0, 0, m_r->getTonemapping().getAverageLuminanceBuffer());
-
-		cmdb->bindSampler(0, 1, m_r->getSamplers().m_nearestNearestClamp);
-		cmdb->bindSampler(0, 2, m_r->getSamplers().m_trilinearClamp);
-		cmdb->bindSampler(0, 3, m_r->getSamplers().m_trilinearRepeat);
-
-		rgraphCtx.bindColorTexture(0, 4, m_r->getScale().getRt());
-
-		rgraphCtx.bindColorTexture(0, 5, m_r->getBloom().getRt());
-		cmdb->bindTexture(0, 6, m_lut->getTextureView());
-		cmdb->bindTexture(0, 7, m_blueNoise->getTextureView());
-		rgraphCtx.bindColorTexture(0, 8, m_r->getMotionVectors().getMotionVectorsRt());
-		rgraphCtx.bindTexture(0, 9, m_r->getGBuffer().getDepthRt(),
-							  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
-
-		if(dbgEnabled)
-		{
-			rgraphCtx.bindColorTexture(0, 10, m_r->getDbg().getRt());
-		}
-
-		class PushConsts
-		{
-		public:
-			UVec4 m_frameCountPad3;
-			Mat4 m_prevViewProjMatMulInvViewProjMat;
-		} pconsts;
-		pconsts.m_frameCountPad3.x() = m_r->getFrameCount() & MAX_U32;
-		pconsts.m_prevViewProjMatMulInvViewProjMat = ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection
-													 * ctx.m_matrices.m_viewProjectionJitter.getInverse();
-		cmdb->setPushConstants(&pconsts, sizeof(pconsts));
-	}
-	else
-	{
-		rgraphCtx.bindColorTexture(0, 0, dbgRt);
-		cmdb->bindSampler(0, 1, m_r->getSamplers().m_nearestNearestClamp);
-	}
-
-	cmdb->setViewport(0, 0, ctx.m_outRenderTargetWidth, ctx.m_outRenderTargetHeight);
-	drawQuad(cmdb);
-
-	// Draw UI
-	m_r->getUiStage().draw(ctx.m_outRenderTargetWidth, ctx.m_outRenderTargetHeight, ctx, cmdb);
-}
-
 void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
@@ -198,6 +128,67 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 	{
 		pass.newDependency({dbgRt, TextureUsageBit::SAMPLED_FRAGMENT});
 	}
+}
+
+void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
+{
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	const Bool dbgEnabled = m_r->getDbg().getEnabled();
+	RenderTargetHandle dbgRt;
+	Bool dbgRtValid;
+	ShaderProgramPtr optionalDebugProgram;
+	m_r->getCurrentDebugRenderTarget(dbgRt, dbgRtValid, optionalDebugProgram);
+
+	// Bind program
+	if(dbgRtValid && optionalDebugProgram.isCreated())
+	{
+		cmdb->bindShaderProgram(optionalDebugProgram);
+	}
+	else if(dbgRtValid)
+	{
+		cmdb->bindShaderProgram(m_defaultVisualizeRenderTargetGrProg);
+	}
+	else
+	{
+		cmdb->bindShaderProgram(m_grProgs[dbgEnabled]);
+	}
+
+	// Bind stuff
+	if(!dbgRtValid)
+	{
+		cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
+		cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);
+		cmdb->bindSampler(0, 2, m_r->getSamplers().m_trilinearRepeat);
+
+		rgraphCtx.bindColorTexture(0, 3, m_r->getScale().getRt());
+
+		rgraphCtx.bindColorTexture(0, 4, m_r->getBloom().getRt());
+		cmdb->bindTexture(0, 5, m_lut->getTextureView());
+		cmdb->bindTexture(0, 6, m_blueNoise->getTextureView());
+		rgraphCtx.bindColorTexture(0, 7, m_r->getMotionVectors().getMotionVectorsRt());
+		rgraphCtx.bindTexture(0, 8, m_r->getGBuffer().getDepthRt(),
+							  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+
+		if(dbgEnabled)
+		{
+			rgraphCtx.bindColorTexture(0, 9, m_r->getDbg().getRt());
+		}
+
+		UVec4 frameCountPad3;
+		frameCountPad3.x() = m_r->getFrameCount() & MAX_U32;
+		cmdb->setPushConstants(&frameCountPad3, sizeof(frameCountPad3));
+	}
+	else
+	{
+		rgraphCtx.bindColorTexture(0, 0, dbgRt);
+		cmdb->bindSampler(0, 1, m_r->getSamplers().m_nearestNearestClamp);
+	}
+
+	cmdb->setViewport(0, 0, ctx.m_outRenderTargetWidth, ctx.m_outRenderTargetHeight);
+	drawQuad(cmdb);
+
+	// Draw UI
+	m_r->getUiStage().draw(ctx.m_outRenderTargetWidth, ctx.m_outRenderTargetHeight, ctx, cmdb);
 }
 
 } // end namespace anki

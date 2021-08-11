@@ -60,7 +60,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 	const Bool needsScale = m_grProg.isCreated();
 	if(!needsScale)
 	{
-		m_runCtx.m_upscaledRt = m_r->getTemporalAA().getRt();
+		m_runCtx.m_upscaledRt = m_r->getTemporalAA().getTonemappedRt();
 	}
 	else
 	{
@@ -69,7 +69,8 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		m_runCtx.m_upscaledRt = rgraph.newRenderTarget(m_rtDesc);
 
 		ComputeRenderPassDescription& pass = ctx.m_renderGraphDescr.newComputeRenderPass("Scale");
-		pass.newDependency(RenderPassDependency(m_r->getTemporalAA().getRt(), TextureUsageBit::SAMPLED_COMPUTE));
+		pass.newDependency(
+			RenderPassDependency(m_r->getTemporalAA().getTonemappedRt(), TextureUsageBit::SAMPLED_COMPUTE));
 		pass.newDependency(RenderPassDependency(m_runCtx.m_upscaledRt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
 
 		pass.setWork(
@@ -88,7 +89,7 @@ void Scale::run(RenderPassWorkContext& rgraphCtx)
 	cmdb->bindShaderProgram(m_grProg);
 
 	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
-	rgraphCtx.bindColorTexture(0, 1, m_r->getTemporalAA().getRt());
+	rgraphCtx.bindColorTexture(0, 1, m_r->getTemporalAA().getTonemappedRt());
 	rgraphCtx.bindImage(0, 2, m_runCtx.m_upscaledRt);
 
 	if(m_fsr)

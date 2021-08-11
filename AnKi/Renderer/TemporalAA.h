@@ -25,9 +25,14 @@ public:
 
 	void populateRenderGraph(RenderingContext& ctx);
 
-	RenderTargetHandle getRt() const
+	RenderTargetHandle getHdrRt() const
 	{
 		return m_runCtx.m_renderRt;
+	}
+
+	RenderTargetHandle getTonemappedRt() const
+	{
+		return m_runCtx.m_tonemappedRt;
 	}
 
 private:
@@ -37,12 +42,15 @@ private:
 	ShaderProgramResourcePtr m_prog;
 	Array<ShaderProgramPtr, 2> m_grProgs;
 
+	RenderTargetDescription m_tonemappedRtDescr;
+
 	class
 	{
 	public:
 		RenderingContext* m_ctx = nullptr;
 		RenderTargetHandle m_renderRt;
 		RenderTargetHandle m_historyRt;
+		RenderTargetHandle m_tonemappedRt;
 	} m_runCtx;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);

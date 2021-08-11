@@ -3,7 +3,6 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki mutator SHARPEN 0 1 2 // 0: disabled, 1: vertical, 2: horizontal
 #pragma anki mutator VARIANCE_CLIPPING 0 1
 #pragma anki mutator YCBCR 0 1
 
@@ -25,6 +24,11 @@ layout(set = 0, binding = 2) uniform texture2D u_inputRt;
 layout(set = 0, binding = 3) uniform texture2D u_historyRt;
 layout(set = 0, binding = 4) uniform texture2D u_motionVectorsTex;
 layout(set = 0, binding = 5) writeonly uniform image2D u_outImg;
+layout(set = 0, binding = 6) writeonly uniform image2D u_tonemappedImg;
+
+const U32 TONEMAPPING_SET = 0u;
+const U32 TONEMAPPING_BINDING = 7u;
+#include <AnKi/Shaders/TonemappingResources.glsl>
 
 #if YCBCR
 #	define sample(s, uv) rgbToYCbCr(textureLod(s, u_linearAnyClampSampler, uv, 0.0).rgb)
@@ -34,21 +38,6 @@ layout(set = 0, binding = 5) writeonly uniform image2D u_outImg;
 #	define sample(s, uv) textureLod(s, u_linearAnyClampSampler, uv, 0.0).rgb
 #	define sampleOffset(s, uv, x, y) textureLodOffset(sampler2D(s, u_linearAnyClampSampler), uv, 0.0, IVec2(x, y)).rgb
 #endif
-
-#define VELOCITY 0
-
-Vec3 sharpen(Vec2 uv)
-{
-	const Vec3 center = sample(u_inputRt, uv);
-#if SHARPEN == 1
-	Vec3 near = sampleOffset(u_inputRt, uv, 1, 0) + sampleOffset(u_inputRt, uv, -1, 0);
-#else
-	Vec3 near = sampleOffset(u_inputRt, uv, 0, 1) + sampleOffset(u_inputRt, uv, 0, -1);
-#endif
-	near *= 0.5;
-	const F32 sharpness = 1.0;
-	return center + max(Vec3(0.0), center - near) * sharpness;
-}
 
 void main()
 {
@@ -65,11 +54,7 @@ void main()
 
 	// Read textures
 	Vec3 historyCol = sample(u_historyRt, oldUv);
-#if SHARPEN > 0
-	const Vec3 crntCol = sharpen(uv);
-#else
 	const Vec3 crntCol = sample(u_inputRt, uv);
-#endif
 
 	// Remove ghosting by clamping the history color to neighbour's AABB
 	const Vec3 near0 = sampleOffset(u_inputRt, uv, 1, 0);
@@ -115,6 +100,8 @@ void main()
 	outColor = yCbCrToRgb(outColor);
 #endif
 	imageStore(u_outImg, IVec2(gl_GlobalInvocationID.xy), Vec4(outColor, 0.0));
+
+	imageStore(u_tonemappedImg, IVec2(gl_GlobalInvocationID.xy), Vec4(tonemap(outColor, u_exposureThreshold0), 0.0));
 }
 
 #pragma anki end

@@ -17,32 +17,26 @@ ANKI_SPECIALIZATION_CONSTANT_U32(MOTION_BLUR_SAMPLES, 3u);
 
 #pragma anki start frag
 #include <AnKi/Shaders/Common.glsl>
-#include <AnKi/Shaders/TonemappingFunctions.glsl>
 #include <AnKi/Shaders/Functions.glsl>
 #include <AnKi/Shaders/MotionBlur.glsl>
 
-#define TONEMAPPING_BINDING 0
-#define TONEMAPPING_SET 0
-#include <AnKi/Shaders/TonemappingResources.glsl>
+layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
+layout(set = 0, binding = 1) uniform sampler u_linearAnyClampSampler;
+layout(set = 0, binding = 2) uniform sampler u_trilinearRepeatSampler;
 
-layout(set = 0, binding = 1) uniform sampler u_nearestAnyClampSampler;
-layout(set = 0, binding = 2) uniform sampler u_linearAnyClampSampler;
-layout(set = 0, binding = 3) uniform sampler u_trilinearRepeatSampler;
-
-layout(set = 0, binding = 4) uniform texture2D u_lightShadingRt;
-layout(set = 0, binding = 5) uniform texture2D u_ppsBloomLfRt;
-layout(set = 0, binding = 6) uniform texture3D u_lut;
-layout(set = 0, binding = 7) uniform texture2D u_blueNoise;
-layout(set = 0, binding = 8) uniform texture2D u_motionVectorsRt;
-layout(set = 0, binding = 9) uniform texture2D u_depthRt;
+layout(set = 0, binding = 3) uniform texture2D u_lightShadingRt;
+layout(set = 0, binding = 4) uniform texture2D u_ppsBloomLfRt;
+layout(set = 0, binding = 5) uniform texture3D u_lut;
+layout(set = 0, binding = 6) uniform texture2D u_blueNoise;
+layout(set = 0, binding = 7) uniform texture2D u_motionVectorsRt;
+layout(set = 0, binding = 8) uniform texture2D u_depthRt;
 #if DBG_ENABLED
-layout(set = 0, binding = 10) uniform texture2D u_dbgOutlineRt;
+layout(set = 0, binding = 9) uniform texture2D u_dbgOutlineRt;
 #endif
 
 layout(push_constant, row_major, std430) uniform pc_
 {
 	UVec4 u_frameCountPad3;
-	Mat4 u_prevViewProjMatMulInvViewProjMat;
 };
 
 layout(location = 0) in Vec2 in_uv;
@@ -71,8 +65,6 @@ void main()
 	{
 		out_color = textureLod(u_lightShadingRt, u_linearAnyClampSampler, uv, 0.0).rgb;
 	}
-
-	out_color = tonemap(out_color, u_exposureThreshold0);
 
 #if BLOOM_ENABLED
 	const Vec3 bloom = textureLod(u_ppsBloomLfRt, u_linearAnyClampSampler, uv, 0.0).rgb;

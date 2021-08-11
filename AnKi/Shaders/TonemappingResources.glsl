@@ -14,9 +14,9 @@
 #endif
 
 #if TONEMAPPING_RESOURCE_AS_BUFFER
-layout(std140, set = TONEMAPPING_SET, binding = TONEMAPPING_BINDING) buffer tmss0_
+layout(std140, set = TONEMAPPING_SET, binding = TONEMAPPING_BINDING) buffer b_tonemapping
 #else
-layout(std140, set = TONEMAPPING_SET, binding = TONEMAPPING_BINDING) uniform tmu0_
+layout(std140, set = TONEMAPPING_SET, binding = TONEMAPPING_BINDING) uniform b_tonemapping
 #endif
 {
 	Vec4 u_averageLuminanceExposurePad2;

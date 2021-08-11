@@ -5,7 +5,7 @@
 
 #include <AnKi/Renderer/DownscaleBlur.h>
 #include <AnKi/Renderer/Renderer.h>
-#include <AnKi/Renderer/Scale.h>
+#include <AnKi/Renderer/TemporalAA.h>
 
 namespace anki
 {
@@ -124,7 +124,7 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 				TextureSubresourceInfo renderSubresource;
 
 				pass.newDependency({m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE, renderSubresource});
-				pass.newDependency({m_r->getScale().getRt(), TextureUsageBit::SAMPLED_COMPUTE});
+				pass.newDependency({m_r->getTemporalAA().getHdrRt(), TextureUsageBit::SAMPLED_COMPUTE});
 			}
 		}
 	}
@@ -156,7 +156,7 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 				TextureSubresourceInfo renderSubresource;
 
 				pass.newDependency({m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, renderSubresource});
-				pass.newDependency({m_r->getScale().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+				pass.newDependency({m_r->getTemporalAA().getHdrRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 			}
 		}
 	}
@@ -182,7 +182,7 @@ void DownscaleBlur::run(RenderPassWorkContext& rgraphCtx)
 	}
 	else
 	{
-		rgraphCtx.bindColorTexture(0, 1, m_r->getScale().getRt());
+		rgraphCtx.bindColorTexture(0, 1, m_r->getTemporalAA().getHdrRt());
 	}
 
 	if(m_useCompute)
