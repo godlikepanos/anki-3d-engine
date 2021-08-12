@@ -55,7 +55,7 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 		// Start drawing
 		m_r->getSceneDrawer().drawRange(Pass::FS, ctx.m_matrices.m_view, ctx.m_matrices.m_viewProjectionJitter,
 										ctx.m_prevMatrices.m_viewProjectionJitter, cmdb,
-										m_r->getSamplers().m_trilinearRepeatAniso,
+										m_r->getSamplers().m_trilinearRepeatAnisoResolutionScalingBias,
 										ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + start,
 										ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + end);
 

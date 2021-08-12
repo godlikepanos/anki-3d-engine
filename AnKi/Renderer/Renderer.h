@@ -33,6 +33,7 @@ public:
 	SamplerPtr m_trilinearClamp;
 	SamplerPtr m_trilinearRepeat;
 	SamplerPtr m_trilinearRepeatAniso;
+	SamplerPtr m_trilinearRepeatAnisoResolutionScalingBias;
 };
 
 /// Offscreen renderer.

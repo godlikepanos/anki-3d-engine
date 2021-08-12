@@ -62,7 +62,7 @@ Error MicroSampler::init(const SamplerInitInfo& inf)
 		ANKI_ASSERT(0);
 	}
 
-	ci.mipLodBias = 0.0;
+	ci.mipLodBias = inf.m_lodBias;
 
 	if(inf.m_anisotropyLevel > 0)
 	{

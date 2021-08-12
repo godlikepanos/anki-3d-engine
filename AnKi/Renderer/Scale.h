@@ -30,12 +30,14 @@ public:
 
 	RenderTargetHandle getRt() const
 	{
-		return m_runCtx.m_upscaledRt;
+		return (doSharpening()) ? m_runCtx.m_sharpenedRt : m_runCtx.m_scaledRt;
 	}
 
 private:
-	ShaderProgramResourcePtr m_prog;
-	ShaderProgramPtr m_grProg;
+	ShaderProgramResourcePtr m_scaleProg;
+	ShaderProgramPtr m_scaleGrProg;
+	ShaderProgramResourcePtr m_sharpenProg;
+	ShaderProgramPtr m_sharpenGrProg;
 
 	RenderTargetDescription m_rtDesc;
 
@@ -44,10 +46,22 @@ private:
 	class
 	{
 	public:
-		RenderTargetHandle m_upscaledRt;
+		RenderTargetHandle m_scaledRt;
+		RenderTargetHandle m_sharpenedRt;
 	} m_runCtx;
 
-	void run(RenderPassWorkContext& rgraphCtx);
+	void runScaling(RenderPassWorkContext& rgraphCtx);
+	void runSharpening(RenderPassWorkContext& rgraphCtx);
+
+	Bool doSharpening() const
+	{
+		return m_sharpenProg.isCreated();
+	}
+
+	Bool doScaling() const
+	{
+		return m_scaleProg.isCreated();
+	}
 };
 /// @}
 

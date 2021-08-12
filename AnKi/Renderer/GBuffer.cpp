@@ -116,7 +116,7 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 		ANKI_ASSERT(earlyZStart < earlyZEnd && earlyZEnd <= I32(earlyZCount));
 		m_r->getSceneDrawer().drawRange(Pass::EZ, ctx.m_matrices.m_view, ctx.m_matrices.m_viewProjectionJitter,
 										ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection, cmdb,
-										m_r->getSamplers().m_trilinearRepeatAniso,
+										m_r->getSamplers().m_trilinearRepeatAnisoResolutionScalingBias,
 										ctx.m_renderQueue->m_earlyZRenderables.getBegin() + earlyZStart,
 										ctx.m_renderQueue->m_earlyZRenderables.getBegin() + earlyZEnd);
 
@@ -138,7 +138,7 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 		ANKI_ASSERT(colorStart < colorEnd && colorEnd <= I32(ctx.m_renderQueue->m_renderables.getSize()));
 		m_r->getSceneDrawer().drawRange(Pass::GB, ctx.m_matrices.m_view, ctx.m_matrices.m_viewProjectionJitter,
 										ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection, cmdb,
-										m_r->getSamplers().m_trilinearRepeatAniso,
+										m_r->getSamplers().m_trilinearRepeatAnisoResolutionScalingBias,
 										ctx.m_renderQueue->m_renderables.getBegin() + colorStart,
 										ctx.m_renderQueue->m_renderables.getBegin() + colorEnd);
 	}

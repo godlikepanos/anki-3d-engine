@@ -57,3 +57,4 @@ ANKI_CONFIG_OPTION(r_rtShadowsSvgfAtrousPassCount, 3, 1, 20)
 ANKI_CONFIG_OPTION(r_rtShadowsRaysPerPixel, 1, 1, 8)
 
 ANKI_CONFIG_OPTION(r_fsr, 1, 0, 1)
+ANKI_CONFIG_OPTION(r_sharpen, 1, 0, 1)

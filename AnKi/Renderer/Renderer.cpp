@@ -239,6 +239,10 @@ Error Renderer::initInternal(const ConfigSet& config)
 
 		sinit.m_anisotropyLevel = U8(config.getNumberU32("r_textureAnisotropy"));
 		m_samplers.m_trilinearRepeatAniso = m_gr->newSampler(sinit);
+
+		const F32 scalingMipBias = log2(F32(m_internalResolution.x()) / F32(m_postProcessResolution.x()));
+		sinit.m_lodBias = scalingMipBias;
+		m_samplers.m_trilinearRepeatAnisoResolutionScalingBias = m_gr->newSampler(sinit);
 	}
 
 	initJitteredMats();

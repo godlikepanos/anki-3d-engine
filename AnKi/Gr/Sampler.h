@@ -17,8 +17,9 @@ namespace anki
 class alignas(4) SamplerInitInfo : public GrBaseInitInfo
 {
 public:
-	F32 m_minLod = -1000.0;
-	F32 m_maxLod = 1000.0;
+	F32 m_minLod = -1000.0f;
+	F32 m_maxLod = 1000.0f;
+	F32 m_lodBias = 0.0f;
 	SamplingFilter m_minMagFilter = SamplingFilter::NEAREST;
 	SamplingFilter m_mipmapFilter = SamplingFilter::BASE;
 	CompareOperation m_compareOperation = CompareOperation::ALWAYS;
@@ -39,7 +40,7 @@ public:
 		const U8* last = reinterpret_cast<const U8*>(&m_addressing) + sizeof(m_addressing);
 		const U32 size = U32(last - first);
 		ANKI_ASSERT(size
-					== sizeof(F32) * 2 + sizeof(SamplingFilter) * 2 + sizeof(CompareOperation) + sizeof(I8)
+					== sizeof(F32) * 3 + sizeof(SamplingFilter) * 2 + sizeof(CompareOperation) + sizeof(I8)
 						   + sizeof(SamplingAddressing));
 		return anki::computeHash(first, size);
 	}
