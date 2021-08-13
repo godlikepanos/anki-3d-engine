@@ -59,4 +59,24 @@ ANKI_TEST(Util, Function)
 		ANKI_TEST_EXPECT_EQ(Foo::constructorCallCount, Foo::destructorCallCount);
 		Foo::reset();
 	}
+
+	// Copy
+	{
+		{
+			Foo foo, bar;
+			Function<void(Foo&)> f(alloc, [foo](Foo& r) { r.x += foo.x; });
+
+			Function<void(Foo&)> ff;
+			ff.copy(f, alloc);
+
+			ff(bar);
+
+			ANKI_TEST_EXPECT_EQ(bar.x, 666 * 2);
+			ff.destroy(alloc);
+			f.destroy(alloc);
+		}
+
+		ANKI_TEST_EXPECT_EQ(Foo::constructorCallCount, Foo::destructorCallCount);
+		Foo::reset();
+	}
 }

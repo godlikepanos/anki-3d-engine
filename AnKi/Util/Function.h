@@ -61,8 +61,6 @@ public:
 		m_state = b.m_state;
 		b.m_state = STATE_UNINITIALIZED;
 		memcpy(&m_callableInlineStorage[0], &b.m_callableInlineStorage[0], sizeof(m_callableInlineStorage));
-		m_destroyCallback = b.m_destroyCallback;
-		b.m_destroyCallback = nullptr;
 		return *this;
 	}
 
@@ -75,7 +73,8 @@ public:
 		ANKI_ASSERT(getState() == STATE_UNINITIALIZED);
 
 		// Init storage
-		const Bool useInlineStorage = sizeof(T) <= INLINE_STORAGE_SIZE && std::is_trivially_copyable<T>::value;
+		constexpr Bool useInlineStorage = sizeof(T) <= INLINE_STORAGE_SIZE && std::is_trivially_copyable<T>::value
+										  && std::is_trivially_destructible<T>::value;
 		if(useInlineStorage)
 		{
 			setState(STATE_INLINE_STORAGE);
@@ -84,35 +83,26 @@ public:
 			setFunctionCallback([](Function& self, TArgs... args) -> TReturn {
 				return (*reinterpret_cast<T*>(&self.m_callableInlineStorage[0]))(args...);
 			});
-
-			if(!std::is_trivially_destructible<T>::value)
-			{
-				m_destroyCallback = [](Function& self) {
-					reinterpret_cast<T*>(&self.m_callableInlineStorage[0])->~T();
-				};
-			}
-			else
-			{
-				m_destroyCallback = nullptr;
-			}
 		}
 		else
 		{
 			setState(STATE_ALLOCATED);
-			m_callablePtr = alloc.template newInstance<T>(func);
+			using CallableT = Callable<T>;
+			CallableT* callable = alloc.template newInstance<CallableT>(func);
+			m_callablePtr = callable;
+
+			callable->m_size = sizeof(CallableT);
+			callable->m_alignment = alignof(CallableT);
 
 			setFunctionCallback([](Function& self, TArgs... args) -> TReturn {
-				return (*static_cast<T*>(self.m_callablePtr))(args...);
+				return static_cast<CallableT*>(self.m_callablePtr)->m_func(args...);
 			});
 
-			if(!std::is_trivially_destructible<T>::value)
-			{
-				m_destroyCallback = [](Function& self) { static_cast<T*>(self.m_callablePtr)->~T(); };
-			}
-			else
-			{
-				m_destroyCallback = nullptr;
-			}
+			callable->m_destroyCallback = [](CallableBase& c) { static_cast<CallableT&>(c).~CallableT(); };
+
+			callable->m_copyCallback = [](const CallableBase& otherC, CallableBase& c) {
+				::new(&static_cast<CallableT&>(c)) CallableT(static_cast<const CallableT&>(otherC));
+			};
 		}
 	}
 
@@ -120,18 +110,14 @@ public:
 	template<typename TAlloc>
 	void destroy(TAlloc alloc)
 	{
-		if(m_destroyCallback)
-		{
-			m_destroyCallback(*this);
-		}
-
 		if(getState() == STATE_ALLOCATED)
 		{
-			alloc.deallocate(m_callablePtr, 1);
+			ANKI_ASSERT(m_callablePtr && m_callablePtr->m_destroyCallback);
+			m_callablePtr->m_destroyCallback(*m_callablePtr);
+			alloc.getMemoryPool().free(m_callablePtr);
 		}
 
 		m_state = STATE_UNINITIALIZED;
-		m_destroyCallback = nullptr;
 	}
 
 	/// Call the Function with some arguments.
@@ -146,9 +132,80 @@ public:
 		return getFunctionCallback()(*this, args...);
 	}
 
+	/// Copy from another.
+	template<typename TAlloc>
+	Function& copy(const Function& other, TAlloc alloc)
+	{
+		ANKI_ASSERT(getState() == STATE_UNINITIALIZED && "Need to destroy it first");
+
+		if(other.getState() == STATE_UNINITIALIZED)
+		{
+			// Nothing to do
+		}
+		else if(other.getState() == STATE_INLINE_STORAGE)
+		{
+			// It should be trivially copyable, can use memcpy then
+			m_state = other.m_state;
+			memcpy(&m_callableInlineStorage[0], &other.m_callableInlineStorage[0], sizeof(m_callableInlineStorage));
+		}
+		else
+		{
+			ANKI_ASSERT(other.getState() == STATE_ALLOCATED);
+			m_state = other.m_state;
+
+			// Allocate callable
+			ANKI_ASSERT(other.m_callablePtr && other.m_callablePtr->m_alignment > 0 && other.m_callablePtr->m_size > 0);
+			m_callablePtr = static_cast<CallableBase*>(
+				alloc.getMemoryPool().allocate(other.m_callablePtr->m_size, other.m_callablePtr->m_alignment));
+
+			// Copy
+			other.m_callablePtr->m_copyCallback(*other.m_callablePtr, *m_callablePtr);
+		}
+
+		return *this;
+	}
+
 private:
+	class CallableBase;
+
 	using FunctionCallback = TReturn (*)(Function&, TArgs...);
-	using DestroyCallback = void (*)(Function&);
+	using DestroyCallback = void (*)(CallableBase&);
+	using CopyCallback = void (*)(const CallableBase&, CallableBase&);
+
+	class CallableBase
+	{
+	public:
+		DestroyCallback m_destroyCallback = nullptr;
+		CopyCallback m_copyCallback = nullptr;
+		U32 m_size = 0;
+		U32 m_alignment = 0;
+
+		CallableBase() = default;
+
+		CallableBase(const CallableBase&) = default;
+
+		CallableBase& operator=(const CallableBase&) = delete; // You won't need it
+	};
+
+	template<typename T>
+	class Callable : public CallableBase
+	{
+	public:
+		T m_func;
+
+		Callable(const T& t)
+			: m_func(t)
+		{
+		}
+
+		Callable(const Callable& b)
+			: CallableBase(b)
+			, m_func(b.m_func)
+		{
+		}
+
+		Callable& operator=(const Callable&) = delete; // You won't need it
+	};
 
 	static constexpr PtrSize STATE_UNINITIALIZED = PtrSize(0b1001) << PtrSize(60);
 	static constexpr PtrSize STATE_ALLOCATED = PtrSize(0b1101) << PtrSize(60);
@@ -166,7 +223,7 @@ private:
 
 	union
 	{
-		void* m_callablePtr;
+		CallableBase* m_callablePtr;
 		alignas(ANKI_SAFE_ALIGNMENT) Array<U8, INLINE_STORAGE_SIZE> m_callableInlineStorage;
 	};
 
@@ -177,8 +234,6 @@ private:
 
 		FunctionCallback m_functionCallback;
 	};
-
-	DestroyCallback m_destroyCallback = nullptr;
 
 	PtrSize getState() const
 	{
