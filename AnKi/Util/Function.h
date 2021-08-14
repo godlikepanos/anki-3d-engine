@@ -80,8 +80,12 @@ public:
 			setState(STATE_INLINE_STORAGE);
 			memcpy(&m_callableInlineStorage[0], &func, sizeof(func));
 
-			setFunctionCallback([](Function& self, TArgs... args) -> TReturn {
-				return (*reinterpret_cast<T*>(&self.m_callableInlineStorage[0]))(args...);
+			setFunctionCallback([](const Function& self, TArgs... args) -> TReturn {
+				// Yes I know, a const_cast hack follows. If the T was in some pointer then all would be fine. Look at
+				// the setFunctionCallback() of the STATE_ALLOCATED. Only a static_cast there. It's unfair.
+				const T* t0 = reinterpret_cast<const T*>(&self.m_callableInlineStorage[0]);
+				T* t1 = const_cast<T*>(t0);
+				return (*t1)(args...);
 			});
 		}
 		else
@@ -94,7 +98,7 @@ public:
 			callable->m_size = sizeof(CallableT);
 			callable->m_alignment = alignof(CallableT);
 
-			setFunctionCallback([](Function& self, TArgs... args) -> TReturn {
+			setFunctionCallback([](const Function& self, TArgs... args) -> TReturn {
 				return static_cast<CallableT*>(self.m_callablePtr)->m_func(args...);
 			});
 
@@ -121,13 +125,13 @@ public:
 	}
 
 	/// Call the Function with some arguments.
-	TReturn call(TArgs... args)
+	TReturn call(TArgs... args) const
 	{
 		return getFunctionCallback()(*this, args...);
 	}
 
 	/// Same as call().
-	TReturn operator()(TArgs... args)
+	TReturn operator()(TArgs... args) const
 	{
 		return getFunctionCallback()(*this, args...);
 	}
@@ -168,7 +172,7 @@ public:
 private:
 	class CallableBase;
 
-	using FunctionCallback = TReturn (*)(Function&, TArgs...);
+	using FunctionCallback = TReturn (*)(const Function&, TArgs...);
 	using DestroyCallback = void (*)(CallableBase&);
 	using CopyCallback = void (*)(const CallableBase&, CallableBase&);
 
