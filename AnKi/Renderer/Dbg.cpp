@@ -177,7 +177,6 @@ void Dbg::populateRenderGraph(RenderingContext& ctx)
 		m_initialized = true;
 	}
 
-	m_runCtx.m_ctx = &ctx;
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	// Create RT
@@ -186,12 +185,8 @@ void Dbg::populateRenderGraph(RenderingContext& ctx)
 	// Create pass
 	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("DBG");
 
-	pass.setWork(
-		[](RenderPassWorkContext& rgraphCtx) {
-			Dbg* self = static_cast<Dbg*>(rgraphCtx.m_userData);
-			self->run(rgraphCtx, *self->m_runCtx.m_ctx);
-		},
-		this, computeNumberOfSecondLevelCommandBuffers(ctx.m_renderQueue->m_renderables.getSize()));
+	pass.setWork(computeNumberOfSecondLevelCommandBuffers(ctx.m_renderQueue->m_renderables.getSize()),
+				 [this, &ctx](RenderPassWorkContext& rgraphCtx) { run(rgraphCtx, ctx); });
 
 	pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_rt}, m_r->getGBuffer().getDepthRt());
 

@@ -43,12 +43,6 @@ private:
 	ImageResourcePtr m_lut; ///< Color grading lookup texture.
 	ImageResourcePtr m_blueNoise;
 
-	class
-	{
-	public:
-		RenderingContext* m_ctx = nullptr;
-	} m_runCtx;
-
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& config);
 
 	void run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);

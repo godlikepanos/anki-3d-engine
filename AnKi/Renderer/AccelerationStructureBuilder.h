@@ -45,8 +45,6 @@ public:
 		AccelerationStructurePtr m_tlas;
 		AccelerationStructureHandle m_tlasHandle;
 	} m_runCtx;
-
-	void run(RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 

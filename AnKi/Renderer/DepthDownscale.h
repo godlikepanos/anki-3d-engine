@@ -66,7 +66,6 @@ private:
 	{
 	public:
 		RenderTargetHandle m_hizRt;
-		U32 m_mip;
 	} m_runCtx; ///< Run context.
 
 	class
@@ -79,7 +78,7 @@ private:
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 
-	void run(RenderPassWorkContext& rgraphCtx);
+	void run(U32 mipToWrite, RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 

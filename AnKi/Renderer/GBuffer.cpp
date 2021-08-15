@@ -148,7 +148,6 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(R_MS);
 
-	m_runCtx.m_ctx = &ctx;
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	// Create RTs
@@ -179,14 +178,9 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 
 	pass.setFramebufferInfo(m_fbDescr, ConstWeakArray<RenderTargetHandle>(&rts[0], GBUFFER_COLOR_ATTACHMENT_COUNT),
 							m_runCtx.m_crntFrameDepthRt);
-	pass.setWork(
-		[](RenderPassWorkContext& rgraphCtx) {
-			GBuffer* self = static_cast<GBuffer*>(rgraphCtx.m_userData);
-			self->runInThread(*self->m_runCtx.m_ctx, rgraphCtx);
-		},
-		this,
-		computeNumberOfSecondLevelCommandBuffers(ctx.m_renderQueue->m_earlyZRenderables.getSize()
-												 + ctx.m_renderQueue->m_renderables.getSize()));
+	pass.setWork(computeNumberOfSecondLevelCommandBuffers(ctx.m_renderQueue->m_earlyZRenderables.getSize()
+														  + ctx.m_renderQueue->m_renderables.getSize()),
+				 [this, &ctx](RenderPassWorkContext& rgraphCtx) { runInThread(ctx, rgraphCtx); });
 
 	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 	{

@@ -70,15 +70,13 @@ Error Ssr::initInternal(const ConfigSet& cfg)
 void Ssr::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
-	m_runCtx.m_ctx = &ctx;
 
 	// Create RTs
 	m_runCtx.m_rt = rgraph.importRenderTarget(m_rt, TextureUsageBit::SAMPLED_FRAGMENT);
 
 	// Create pass
 	ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("SSR");
-	rpass.setWork([](RenderPassWorkContext& rgraphCtx) { static_cast<Ssr*>(rgraphCtx.m_userData)->run(rgraphCtx); },
-				  this, 0);
+	rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) { run(ctx, rgraphCtx); });
 
 	rpass.newDependency({m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_READ | TextureUsageBit::IMAGE_COMPUTE_WRITE});
 	rpass.newDependency({m_r->getGBuffer().getColorRt(1), TextureUsageBit::SAMPLED_COMPUTE});
@@ -91,9 +89,8 @@ void Ssr::populateRenderGraph(RenderingContext& ctx)
 	rpass.newDependency({m_r->getDownscaleBlur().getRt(), TextureUsageBit::SAMPLED_COMPUTE});
 }
 
-void Ssr::run(RenderPassWorkContext& rgraphCtx)
+void Ssr::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
-	RenderingContext& ctx = *m_runCtx.m_ctx;
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	cmdb->bindShaderProgram(m_grProg[m_r->getFrameCount() & 1u]);
 

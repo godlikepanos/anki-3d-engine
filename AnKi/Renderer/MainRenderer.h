@@ -94,9 +94,6 @@ private:
 		const RenderingContext* m_ctx = nullptr;
 		Atomic<U32> m_secondaryTaskId = {0};
 	} m_runCtx;
-
-	void runBlit(RenderPassWorkContext& rgraphCtx);
-	void present(RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 

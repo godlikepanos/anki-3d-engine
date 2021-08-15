@@ -92,14 +92,32 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 
 		// Set the render pass
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("Bloom Main");
-		rpass.setWork(
-			[](RenderPassWorkContext& rgraphCtx) { static_cast<Bloom*>(rgraphCtx.m_userData)->runExposure(rgraphCtx); },
-			this, 0);
 
 		TextureSubresourceInfo inputTexSubresource;
 		inputTexSubresource.m_firstMipmap = m_r->getDownscaleBlur().getMipmapCount() - 1;
 		rpass.newDependency({m_r->getDownscaleBlur().getRt(), TextureUsageBit::SAMPLED_COMPUTE, inputTexSubresource});
 		rpass.newDependency({m_runCtx.m_exposureRt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
+
+		rpass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+
+			cmdb->bindShaderProgram(m_exposure.m_grProg);
+
+			TextureSubresourceInfo inputTexSubresource;
+			inputTexSubresource.m_firstMipmap = m_r->getDownscaleBlur().getMipmapCount() - 1;
+
+			cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
+			rgraphCtx.bindTexture(0, 1, m_r->getDownscaleBlur().getRt(), inputTexSubresource);
+
+			Vec4 uniforms(m_exposure.m_threshold, m_exposure.m_scale, 0.0f, 0.0f);
+			cmdb->setPushConstants(&uniforms, sizeof(uniforms));
+
+			rgraphCtx.bindStorageBuffer(0, 2, m_r->getTonemapping().getAverageLuminanceBuffer());
+
+			rgraphCtx.bindImage(0, 3, m_runCtx.m_exposureRt, TextureSubresourceInfo());
+
+			dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_exposure.m_width, m_exposure.m_height);
+		});
 	}
 
 	// Upscale & SSLF pass
@@ -109,52 +127,24 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 
 		// Set the render pass
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("Bloom Upscale");
-		rpass.setWork(
-			[](RenderPassWorkContext& rgraphCtx) {
-				static_cast<Bloom*>(rgraphCtx.m_userData)->runUpscaleAndSslf(rgraphCtx);
-			},
-			this, 0);
 
 		rpass.newDependency({m_runCtx.m_exposureRt, TextureUsageBit::SAMPLED_COMPUTE});
 		rpass.newDependency({m_runCtx.m_upscaleRt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
+
+		rpass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+
+			cmdb->bindShaderProgram(m_upscale.m_grProg);
+
+			cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
+			rgraphCtx.bindColorTexture(0, 1, m_runCtx.m_exposureRt);
+			cmdb->bindTexture(0, 2, m_upscale.m_lensDirtImage->getTextureView());
+
+			rgraphCtx.bindImage(0, 3, m_runCtx.m_upscaleRt, TextureSubresourceInfo());
+
+			dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_upscale.m_width, m_upscale.m_height);
+		});
 	}
-}
-
-void Bloom::runExposure(RenderPassWorkContext& rgraphCtx)
-{
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-
-	cmdb->bindShaderProgram(m_exposure.m_grProg);
-
-	TextureSubresourceInfo inputTexSubresource;
-	inputTexSubresource.m_firstMipmap = m_r->getDownscaleBlur().getMipmapCount() - 1;
-
-	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
-	rgraphCtx.bindTexture(0, 1, m_r->getDownscaleBlur().getRt(), inputTexSubresource);
-
-	Vec4 uniforms(m_exposure.m_threshold, m_exposure.m_scale, 0.0f, 0.0f);
-	cmdb->setPushConstants(&uniforms, sizeof(uniforms));
-
-	rgraphCtx.bindStorageBuffer(0, 2, m_r->getTonemapping().getAverageLuminanceBuffer());
-
-	rgraphCtx.bindImage(0, 3, m_runCtx.m_exposureRt, TextureSubresourceInfo());
-
-	dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_exposure.m_width, m_exposure.m_height);
-}
-
-void Bloom::runUpscaleAndSslf(RenderPassWorkContext& rgraphCtx)
-{
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-
-	cmdb->bindShaderProgram(m_upscale.m_grProg);
-
-	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
-	rgraphCtx.bindColorTexture(0, 1, m_runCtx.m_exposureRt);
-	cmdb->bindTexture(0, 2, m_upscale.m_lensDirtImage->getTextureView());
-
-	rgraphCtx.bindImage(0, 3, m_runCtx.m_upscaleRt, TextureSubresourceInfo());
-
-	dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_upscale.m_width, m_upscale.m_height);
 }
 
 } // end namespace anki

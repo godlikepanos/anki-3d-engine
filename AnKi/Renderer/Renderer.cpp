@@ -93,7 +93,13 @@ Error Renderer::initInternal(const ConfigSet& config)
 
 	const Vec2 fresolution = Vec2(F32(config.getNumberU32("width")), F32(config.getNumberU32("height")));
 	m_postProcessResolution = UVec2(fresolution * renderScaling);
+	alignRoundDown(2, m_postProcessResolution.x());
+	alignRoundDown(2, m_postProcessResolution.y());
+
 	m_internalResolution = UVec2(fresolution * internalRenderScaling);
+	alignRoundDown(2, m_internalResolution.x());
+	alignRoundDown(2, m_internalResolution.y());
+
 	ANKI_R_LOGI("Initializing offscreen renderer. Size %ux%u. Internal size %ux%u", m_postProcessResolution.x(),
 				m_postProcessResolution.y(), m_internalResolution.x(), m_internalResolution.y());
 

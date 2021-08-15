@@ -77,8 +77,6 @@ private:
 	class
 	{
 	public:
-		RenderingContext* m_ctx = nullptr;
-
 		Array<RenderTargetHandle, GBUFFER_COLOR_ATTACHMENT_COUNT> m_colorRts;
 		RenderTargetHandle m_crntFrameDepthRt;
 		RenderTargetHandle m_prevFrameDepthRt;

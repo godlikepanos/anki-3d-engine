@@ -69,13 +69,12 @@ private:
 	{
 	public:
 		RenderTargetHandle m_rt;
-		U32 m_crntPassIdx = MAX_U32;
 	} m_runCtx;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 	ANKI_USE_RESULT Error initSubpass(U idx, const UVec2& inputTexSize);
 
-	void run(RenderPassWorkContext& rgraphCtx);
+	void run(U32 passIdx, RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 

@@ -22,37 +22,30 @@ void GenericCompute::populateRenderGraph(RenderingContext& ctx)
 		return;
 	}
 
-	m_runCtx.m_ctx = &ctx;
-
 	ComputeRenderPassDescription& pass = ctx.m_renderGraphDescr.newComputeRenderPass("Generic compute");
 
-	pass.setWork(
-		[](RenderPassWorkContext& rgraphCtx) {
-			GenericCompute* const self = static_cast<GenericCompute*>(rgraphCtx.m_userData);
-			self->run(rgraphCtx);
-		},
-		this, 0);
+	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) { run(ctx, rgraphCtx); });
 
 	pass.newDependency({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_COMPUTE});
 }
 
-void GenericCompute::run(RenderPassWorkContext& rgraphCtx)
+void GenericCompute::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
-	ANKI_ASSERT(m_runCtx.m_ctx->m_renderQueue->m_genericGpuComputeJobs.getSize() > 0);
+	ANKI_ASSERT(ctx.m_renderQueue->m_genericGpuComputeJobs.getSize() > 0);
 
 	GenericGpuComputeJobQueueElementContext elementCtx;
 	elementCtx.m_commandBuffer = rgraphCtx.m_commandBuffer;
 	elementCtx.m_stagingGpuAllocator = &m_r->getStagingGpuMemoryManager();
-	elementCtx.m_viewMatrix = m_runCtx.m_ctx->m_matrices.m_view;
-	elementCtx.m_viewProjectionMatrix = m_runCtx.m_ctx->m_matrices.m_viewProjection;
-	elementCtx.m_projectionMatrix = m_runCtx.m_ctx->m_matrices.m_projection;
-	elementCtx.m_previousViewProjectionMatrix = m_runCtx.m_ctx->m_prevMatrices.m_viewProjection;
-	elementCtx.m_cameraTransform = m_runCtx.m_ctx->m_matrices.m_cameraTransform;
+	elementCtx.m_viewMatrix = ctx.m_matrices.m_view;
+	elementCtx.m_viewProjectionMatrix = ctx.m_matrices.m_viewProjection;
+	elementCtx.m_projectionMatrix = ctx.m_matrices.m_projection;
+	elementCtx.m_previousViewProjectionMatrix = ctx.m_prevMatrices.m_viewProjection;
+	elementCtx.m_cameraTransform = ctx.m_matrices.m_cameraTransform;
 
 	// Bind some state
 	rgraphCtx.bindTexture(0, 0, m_r->getDepthDownscale().getHiZRt(), TextureSubresourceInfo());
 
-	for(const GenericGpuComputeJobQueueElement& element : m_runCtx.m_ctx->m_renderQueue->m_genericGpuComputeJobs)
+	for(const GenericGpuComputeJobQueueElement& element : ctx.m_renderQueue->m_genericGpuComputeJobs)
 	{
 		ANKI_ASSERT(element.m_callback);
 		element.m_callback(elementCtx, element.m_userData);

@@ -142,6 +142,10 @@ public:
 		, m_renderGraphDescr(alloc)
 	{
 	}
+
+	RenderingContext(const RenderingContext&) = delete;
+
+	RenderingContext& operator=(const RenderingContext&) = delete;
 };
 
 /// A convenience function to find empty cache entries. Used for various probes.

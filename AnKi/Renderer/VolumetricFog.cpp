@@ -51,10 +51,9 @@ Error VolumetricFog::init(const ConfigSet& config)
 	return Error::NONE;
 }
 
-void VolumetricFog::run(RenderPassWorkContext& rgraphCtx)
+void VolumetricFog::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	const RenderingContext& ctx = *m_runCtx.m_ctx;
 
 	cmdb->bindShaderProgram(m_grProg);
 
@@ -87,17 +86,13 @@ void VolumetricFog::run(RenderPassWorkContext& rgraphCtx)
 
 void VolumetricFog::populateRenderGraph(RenderingContext& ctx)
 {
-	m_runCtx.m_ctx = &ctx;
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
 
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Vol fog");
 
-	auto callback = [](RenderPassWorkContext& rgraphCtx) -> void {
-		static_cast<VolumetricFog*>(rgraphCtx.m_userData)->run(rgraphCtx);
-	};
-	pass.setWork(callback, this, 0);
+	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) -> void { run(ctx, rgraphCtx); });
 
 	pass.newDependency({m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
 	pass.newDependency({m_r->getVolumetricLightingAccumulation().getRt(), TextureUsageBit::SAMPLED_COMPUTE});

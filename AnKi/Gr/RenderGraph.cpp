@@ -111,8 +111,7 @@ public:
 
 	DynamicArray<RenderPassDependency::TextureInfo> m_consumedTextures;
 
-	RenderPassWorkCallback m_callback;
-	void* m_userData;
+	Function<void(RenderPassWorkContext&)> m_callback;
 
 	DynamicArray<CommandBufferPtr> m_secondLevelCmdbs;
 	/// Will reuse the m_secondLevelCmdbInitInfo.m_framebuffer to get the framebuffer.
@@ -341,6 +340,7 @@ void RenderGraph::reset()
 	{
 		p.fb().reset(nullptr);
 		p.m_secondLevelCmdbs.destroy(m_ctx->m_alloc);
+		p.m_callback.destroy(m_ctx->m_alloc);
 	}
 
 	m_ctx->m_graphicsCmdbs.destroy(m_ctx->m_alloc);
@@ -756,8 +756,7 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 		const RenderPassDescriptionBase& inPass = *descr.m_passes[passIdx];
 		Pass& outPass = ctx.m_passes[passIdx];
 
-		outPass.m_callback = inPass.m_callback;
-		outPass.m_userData = inPass.m_userData;
+		outPass.m_callback.copy(inPass.m_callback, alloc);
 
 		// Create consumer info
 		outPass.m_consumedTextures.resize(alloc, inPass.m_rtDeps.getSize());
@@ -1233,7 +1232,6 @@ void RenderGraph::runSecondLevel(U32 threadIdx)
 			ctx.m_secondLevelCommandBufferCount = size;
 			ctx.m_passIdx = U32(&p - &m_ctx->m_passes[0]);
 			ctx.m_batchIdx = p.m_batchIdx;
-			ctx.m_userData = p.m_userData;
 
 			ANKI_ASSERT(ctx.m_commandBuffer.isCreated());
 
@@ -1293,7 +1291,6 @@ void RenderGraph::run() const
 			const U size = pass.m_secondLevelCmdbs.getSize();
 			if(size == 0)
 			{
-				ctx.m_userData = pass.m_userData;
 				ctx.m_passIdx = passIdx;
 				ctx.m_batchIdx = pass.m_batchIdx;
 

@@ -66,7 +66,6 @@ private:
 	{
 	public:
 		Array<RenderTargetHandle, 2> m_rts;
-		const RenderingContext* m_ctx = nullptr;
 	} m_runCtx; ///< Runtime context.
 
 	Array<RenderTargetDescription, 2> m_rtDescrs;

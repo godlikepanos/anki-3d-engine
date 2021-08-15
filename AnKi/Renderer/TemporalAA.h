@@ -47,15 +47,12 @@ private:
 	class
 	{
 	public:
-		RenderingContext* m_ctx = nullptr;
 		RenderTargetHandle m_renderRt;
 		RenderTargetHandle m_historyRt;
 		RenderTargetHandle m_tonemappedRt;
 	} m_runCtx;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
-
-	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 

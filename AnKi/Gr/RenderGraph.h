@@ -17,6 +17,7 @@
 #include <AnKi/Util/HashMap.h>
 #include <AnKi/Util/BitSet.h>
 #include <AnKi/Util/WeakArray.h>
+#include <AnKi/Util/Function.h>
 
 namespace anki
 {
@@ -118,7 +119,6 @@ class RenderPassWorkContext
 	friend class RenderGraph;
 
 public:
-	void* m_userData ANKI_DEBUG_CODE(= nullptr); ///< The userData passed in RenderPassDescriptionBase::setWork
 	CommandBufferPtr m_commandBuffer;
 	U32 m_currentSecondLevelCommandBufferIndex ANKI_DEBUG_CODE(= 0);
 	U32 m_secondLevelCommandBufferCount ANKI_DEBUG_CODE(= 0);
@@ -223,10 +223,6 @@ private:
 	TexturePtr getTexture(RenderTargetHandle handle) const;
 };
 
-/// Work callback for a RenderGraph pass.
-/// @memberof RenderGraphDescription
-using RenderPassWorkCallback = void (*)(RenderPassWorkContext& ctx);
-
 /// RenderGraph pass dependency.
 /// @memberof RenderGraphDescription
 class RenderPassDependency
@@ -322,15 +318,21 @@ public:
 		m_rtDeps.destroy(m_alloc);
 		m_buffDeps.destroy(m_alloc);
 		m_asDeps.destroy(m_alloc);
+		m_callback.destroy(m_alloc);
 	}
 
-	void setWork(RenderPassWorkCallback callback, void* userData, U32 secondLeveCmdbCount)
+	template<typename TFunc>
+	void setWork(U32 secondLeveCmdbCount, TFunc func)
 	{
-		ANKI_ASSERT(callback);
 		ANKI_ASSERT(m_type == Type::GRAPHICS || secondLeveCmdbCount == 0);
-		m_callback = callback;
-		m_userData = userData;
+		m_callback.init(m_alloc, func);
 		m_secondLevelCmdbsCount = secondLeveCmdbCount;
+	}
+
+	template<typename TFunc>
+	void setWork(TFunc func)
+	{
+		setWork(0, func);
 	}
 
 	/// Add a new consumer or producer dependency.
@@ -348,8 +350,7 @@ protected:
 	StackAllocator<U8> m_alloc;
 	RenderGraphDescription* m_descr;
 
-	RenderPassWorkCallback m_callback = nullptr;
-	void* m_userData = nullptr;
+	Function<void(RenderPassWorkContext&)> m_callback;
 	U32 m_secondLevelCmdbsCount = 0;
 
 	DynamicArray<RenderPassDependency> m_rtDeps;

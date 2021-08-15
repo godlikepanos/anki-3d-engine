@@ -77,7 +77,6 @@ Error TemporalAA::initInternal(const ConfigSet& config)
 
 void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 {
-	m_runCtx.m_ctx = &ctx;
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	const U32 historyRtIdx = (m_r->getFrameCount() + 1) & 1;
@@ -100,12 +99,23 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 	// Create pass
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("TemporalAA");
 
-	pass.setWork(
-		[](RenderPassWorkContext& rgraphCtx) {
-			TemporalAA* const self = static_cast<TemporalAA*>(rgraphCtx.m_userData);
-			self->run(*self->m_runCtx.m_ctx, rgraphCtx);
-		},
-		this, 0);
+	pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+		CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+
+		cmdb->bindShaderProgram(m_grProgs[m_r->getFrameCount() & 1]);
+
+		cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
+		rgraphCtx.bindTexture(0, 1, m_r->getGBuffer().getDepthRt(),
+							  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+		rgraphCtx.bindColorTexture(0, 2, m_r->getLightShading().getRt());
+		rgraphCtx.bindColorTexture(0, 3, m_runCtx.m_historyRt);
+		rgraphCtx.bindColorTexture(0, 4, m_r->getMotionVectors().getMotionVectorsRt());
+		rgraphCtx.bindImage(0, 5, m_runCtx.m_renderRt, TextureSubresourceInfo());
+		rgraphCtx.bindImage(0, 6, m_runCtx.m_tonemappedRt, TextureSubresourceInfo());
+		rgraphCtx.bindUniformBuffer(0, 7, m_r->getTonemapping().getAverageLuminanceBuffer());
+
+		dispatchPPCompute(cmdb, 8, 8, m_r->getInternalResolution().x(), m_r->getInternalResolution().y());
+	});
 
 	pass.newDependency({m_runCtx.m_renderRt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
 	pass.newDependency({m_runCtx.m_tonemappedRt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
@@ -114,24 +124,6 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 	pass.newDependency({m_r->getLightShading().getRt(), TextureUsageBit::SAMPLED_COMPUTE});
 	pass.newDependency({m_runCtx.m_historyRt, TextureUsageBit::SAMPLED_COMPUTE});
 	pass.newDependency({m_r->getMotionVectors().getMotionVectorsRt(), TextureUsageBit::SAMPLED_COMPUTE});
-}
-
-void TemporalAA::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
-{
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-
-	cmdb->bindShaderProgram(m_grProgs[m_r->getFrameCount() & 1]);
-
-	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
-	rgraphCtx.bindTexture(0, 1, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
-	rgraphCtx.bindColorTexture(0, 2, m_r->getLightShading().getRt());
-	rgraphCtx.bindColorTexture(0, 3, m_runCtx.m_historyRt);
-	rgraphCtx.bindColorTexture(0, 4, m_r->getMotionVectors().getMotionVectorsRt());
-	rgraphCtx.bindImage(0, 5, m_runCtx.m_renderRt, TextureSubresourceInfo());
-	rgraphCtx.bindImage(0, 6, m_runCtx.m_tonemappedRt, TextureSubresourceInfo());
-	rgraphCtx.bindUniformBuffer(0, 7, m_r->getTonemapping().getAverageLuminanceBuffer());
-
-	dispatchPPCompute(cmdb, 8, 8, m_r->getInternalResolution().x(), m_r->getInternalResolution().y());
 }
 
 } // end namespace anki

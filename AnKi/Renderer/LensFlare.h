@@ -54,7 +54,6 @@ private:
 	class
 	{
 	public:
-		RenderingContext* m_ctx = nullptr;
 		BufferHandle m_indirectBuffHandle;
 	} m_runCtx;
 

@@ -77,12 +77,18 @@ void Tonemapping::populateRenderGraph(RenderingContext& ctx)
 	// Create the pass
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Avg lum");
 
-	pass.setWork(
-		[](RenderPassWorkContext& rgraphCtx) {
-			Tonemapping* const self = static_cast<Tonemapping*>(rgraphCtx.m_userData);
-			self->run(rgraphCtx);
-		},
-		this, 0);
+	pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+		CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+
+		cmdb->bindShaderProgram(m_grProg);
+		rgraphCtx.bindStorageBuffer(0, 1, m_runCtx.m_buffHandle);
+
+		TextureSubresourceInfo inputTexSubresource;
+		inputTexSubresource.m_firstMipmap = m_inputTexMip;
+		rgraphCtx.bindTexture(0, 0, m_r->getDownscaleBlur().getRt(), inputTexSubresource);
+
+		cmdb->dispatchCompute(1, 1, 1);
+	});
 
 	pass.newDependency(
 		{m_runCtx.m_buffHandle, BufferUsageBit::STORAGE_COMPUTE_READ | BufferUsageBit::STORAGE_COMPUTE_WRITE});
@@ -90,20 +96,6 @@ void Tonemapping::populateRenderGraph(RenderingContext& ctx)
 	TextureSubresourceInfo inputTexSubresource;
 	inputTexSubresource.m_firstMipmap = m_inputTexMip;
 	pass.newDependency({m_r->getDownscaleBlur().getRt(), TextureUsageBit::SAMPLED_COMPUTE, inputTexSubresource});
-}
-
-void Tonemapping::run(RenderPassWorkContext& rgraphCtx)
-{
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-
-	cmdb->bindShaderProgram(m_grProg);
-	rgraphCtx.bindStorageBuffer(0, 1, m_runCtx.m_buffHandle);
-
-	TextureSubresourceInfo inputTexSubresource;
-	inputTexSubresource.m_firstMipmap = m_inputTexMip;
-	rgraphCtx.bindTexture(0, 0, m_r->getDownscaleBlur().getRt(), inputTexSubresource);
-
-	cmdb->dispatchCompute(1, 1, 1);
 }
 
 } // end namespace anki

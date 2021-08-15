@@ -41,7 +41,6 @@ Error MotionVectors::init(const ConfigSet& config)
 
 void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 {
-	m_runCtx.m_ctx = &ctx;
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	m_runCtx.m_motionVectorsRtHandle = rgraph.newRenderTarget(m_motionVectorsRtDescr);
@@ -49,10 +48,7 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Motion vectors");
 
-	auto callback = [](RenderPassWorkContext& rgraphCtx) -> void {
-		static_cast<MotionVectors*>(rgraphCtx.m_userData)->run(rgraphCtx);
-	};
-	pass.setWork(callback, this, 0);
+	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) -> void { run(ctx, rgraphCtx); });
 
 	pass.newDependency({m_runCtx.m_motionVectorsRtHandle, TextureUsageBit::IMAGE_COMPUTE_WRITE});
 	pass.newDependency({m_runCtx.m_rejectionFactorRtHandle, TextureUsageBit::IMAGE_COMPUTE_WRITE});
@@ -61,9 +57,8 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 	pass.newDependency({m_r->getGBuffer().getPreviousFrameDepthRt(), TextureUsageBit::SAMPLED_COMPUTE});
 }
 
-void MotionVectors::run(RenderPassWorkContext& rgraphCtx)
+void MotionVectors::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
-	RenderingContext& ctx = *m_runCtx.m_ctx;
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
 	cmdb->bindShaderProgram(m_grProg);

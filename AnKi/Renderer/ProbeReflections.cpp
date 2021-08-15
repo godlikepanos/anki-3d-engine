@@ -552,11 +552,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		// Pass
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("CubeRefl gbuff");
 		pass.setFramebufferInfo(m_gbuffer.m_fbDescr, rts, m_ctx.m_gbufferDepthRt);
-		pass.setWork(
-			[](RenderPassWorkContext& rgraphCtx) {
-				static_cast<ProbeReflections*>(rgraphCtx.m_userData)->runGBuffer(rgraphCtx);
-			},
-			this, taskCount);
+		pass.setWork(taskCount, [this](RenderPassWorkContext& rgraphCtx) { runGBuffer(rgraphCtx); });
 
 		for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 		{
@@ -603,11 +599,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		// Pass
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("CubeRefl SM");
 		pass.setFramebufferInfo(m_shadowMapping.m_fbDescr, {}, m_ctx.m_shadowMapRt);
-		pass.setWork(
-			[](RenderPassWorkContext& rgraphCtx) {
-				static_cast<ProbeReflections*>(rgraphCtx.m_userData)->runShadowMapping(rgraphCtx);
-			},
-			this, taskCount);
+		pass.setWork(taskCount, [this](RenderPassWorkContext& rgraphCtx) { runShadowMapping(rgraphCtx); });
 
 		TextureSubresourceInfo subresource(DepthStencilAspectBit::DEPTH);
 		pass.newDependency({m_ctx.m_shadowMapRt, TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT, subresource});
@@ -619,10 +611,6 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 	// Light shading passes
 	{
-		Array<RenderPassWorkCallback, 6> callbacks = {runLightShadingCallback<0>, runLightShadingCallback<1>,
-													  runLightShadingCallback<2>, runLightShadingCallback<3>,
-													  runLightShadingCallback<4>, runLightShadingCallback<5>};
-
 		// RT
 		m_ctx.m_lightShadingRt = rgraph.importRenderTarget(m_lightShading.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
 
@@ -635,7 +623,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
 			pass.setFramebufferInfo(m_cacheEntries[probeToUpdateCacheEntryIdx].m_lightShadingFbDescrs[faceIdx],
 									{{m_ctx.m_lightShadingRt}}, {});
-			pass.setWork(callbacks[faceIdx], this, 0);
+			pass.setWork([this, faceIdx](RenderPassWorkContext& rgraphCtx) { runLightShading(faceIdx, rgraphCtx); });
 
 			TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
 			pass.newDependency({m_ctx.m_lightShadingRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, subresource});
@@ -661,11 +649,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("CubeRefl Irradiance");
 
-		pass.setWork(
-			[](RenderPassWorkContext& rgraphCtx) {
-				static_cast<ProbeReflections*>(rgraphCtx.m_userData)->runIrradiance(rgraphCtx);
-			},
-			this, 0);
+		pass.setWork([this](RenderPassWorkContext& rgraphCtx) { runIrradiance(rgraphCtx); });
 
 		// Read a cube but only one layer and level
 		TextureSubresourceInfo readSubresource;
@@ -680,11 +664,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 	{
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("CubeRefl apply indirect");
 
-		pass.setWork(
-			[](RenderPassWorkContext& rgraphCtx) {
-				static_cast<ProbeReflections*>(rgraphCtx.m_userData)->runIrradianceToRefl(rgraphCtx);
-			},
-			this, 0);
+		pass.setWork([this](RenderPassWorkContext& rgraphCtx) { runIrradianceToRefl(rgraphCtx); });
 
 		for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT - 1; ++i)
 		{
@@ -702,17 +682,13 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 	// Mipmapping "passes"
 	{
-		static const Array<RenderPassWorkCallback, 6> callbacks = {
-			{runMipmappingOfLightShadingCallback<0>, runMipmappingOfLightShadingCallback<1>,
-			 runMipmappingOfLightShadingCallback<2>, runMipmappingOfLightShadingCallback<3>,
-			 runMipmappingOfLightShadingCallback<4>, runMipmappingOfLightShadingCallback<5>}};
-
 		static const Array<CString, 6> passNames = {"CubeRefl Mip #0", "CubeRefl Mip #1", "CubeRefl Mip #2",
 													"CubeRefl Mip #3", "CubeRefl Mip #4", "CubeRefl Mip #5"};
 		for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
-			pass.setWork(callbacks[faceIdx], this, 0);
+			pass.setWork(
+				[this, faceIdx](RenderPassWorkContext& rgraphCtx) { runMipmappingOfLightShading(faceIdx, rgraphCtx); });
 
 			TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
 			subresource.m_mipmapCount = m_lightShading.m_mipCount;

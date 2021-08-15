@@ -57,9 +57,12 @@ Error MainRenderer::init(ThreadHive* hive, ResourceManager* resources, GrManager
 		m_blitGrProg = variant->getProgram();
 
 		// The RT desc
-		m_tmpRtDesc = m_r->create2DRenderTargetDescription(U32(F32(m_swapchainResolution.x()) * m_renderScaling),
-														   U32(F32(m_swapchainResolution.y()) * m_renderScaling),
-														   Format::R8G8B8_UNORM, "Final Composite");
+		const Vec2 fresolution = Vec2(F32(config.getNumberU32("width")), F32(config.getNumberU32("height")));
+		UVec2 resolution = UVec2(fresolution * m_renderScaling);
+		alignRoundDown(2, resolution.x());
+		alignRoundDown(2, resolution.y());
+		m_tmpRtDesc = m_r->create2DRenderTargetDescription(resolution.x(), resolution.y(), Format::R8G8B8_UNORM,
+														   "Final Composite");
 		m_tmpRtDesc.bake();
 
 		// FB descr
@@ -121,12 +124,16 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 		GraphicsRenderPassDescription& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Final Blit");
 
 		pass.setFramebufferInfo(m_fbDescr, {{presentRt}}, {});
-		pass.setWork(
-			[](RenderPassWorkContext& rgraphCtx) {
-				MainRenderer* const self = static_cast<MainRenderer*>(rgraphCtx.m_userData);
-				self->runBlit(rgraphCtx);
-			},
-			this, 0);
+		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+			cmdb->setViewport(0, 0, m_swapchainResolution.x(), m_swapchainResolution.y());
+
+			cmdb->bindShaderProgram(m_blitGrProg);
+			cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
+			rgraphCtx.bindColorTexture(0, 1, m_runCtx.m_ctx->m_outRenderTarget);
+
+			cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3, 1);
+		});
 
 		pass.newDependency({presentRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass.newDependency({ctx.m_outRenderTarget, TextureUsageBit::SAMPLED_FRAGMENT});
@@ -136,11 +143,9 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 	{
 		ComputeRenderPassDescription& pass = ctx.m_renderGraphDescr.newComputeRenderPass("Present");
 
-		pass.setWork(
-			[](RenderPassWorkContext& rgraphCtx) {
-				// Do nothing. This pass is dummy
-			},
-			nullptr, 0);
+		pass.setWork([](RenderPassWorkContext& rgraphCtx) {
+			// Do nothing. This pass is dummy
+		});
 		pass.newDependency({presentRt, TextureUsageBit::PRESENT});
 	}
 
@@ -184,18 +189,6 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 	}
 
 	return Error::NONE;
-}
-
-void MainRenderer::runBlit(RenderPassWorkContext& rgraphCtx)
-{
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	cmdb->setViewport(0, 0, m_swapchainResolution.x(), m_swapchainResolution.y());
-
-	cmdb->bindShaderProgram(m_blitGrProg);
-	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
-	rgraphCtx.bindColorTexture(0, 1, m_runCtx.m_ctx->m_outRenderTarget);
-
-	cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3, 1);
 }
 
 Dbg& MainRenderer::getDbg()

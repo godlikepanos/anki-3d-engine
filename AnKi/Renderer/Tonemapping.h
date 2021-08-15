@@ -48,8 +48,6 @@ private:
 	} m_runCtx;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
-
-	void run(RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 

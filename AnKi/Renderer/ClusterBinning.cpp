@@ -53,14 +53,13 @@ Error ClusterBinning::init(const ConfigSet& config)
 void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 {
 	m_runCtx.m_ctx = &ctx;
-
 	writeClustererBuffers(ctx);
 
 	ctx.m_clusteredShading.m_clustersBufferHandle = ctx.m_renderGraphDescr.importBuffer(
 		ctx.m_clusteredShading.m_clustersToken.m_buffer, BufferUsageBit::NONE,
 		ctx.m_clusteredShading.m_clustersToken.m_offset, ctx.m_clusteredShading.m_clustersToken.m_range);
 
-	const RenderQueue& rqueue = *m_runCtx.m_ctx->m_renderQueue;
+	const RenderQueue& rqueue = *ctx.m_renderQueue;
 	if(ANKI_LIKELY(rqueue.m_pointLights.getSize() || rqueue.m_spotLights.getSize() || rqueue.m_decals.getSize()
 				   || rqueue.m_reflectionProbes.getSize() || rqueue.m_fogDensityVolumes.getSize()
 				   || rqueue.m_giProbes.getSize()))
@@ -68,43 +67,36 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 		RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Cluster Binning");
 
-		pass.setWork(
-			[](RenderPassWorkContext& rgraphCtx) {
-				static_cast<ClusterBinning*>(rgraphCtx.m_userData)->run(rgraphCtx);
-			},
-			this, 0);
-
 		pass.newDependency(
 			RenderPassDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::STORAGE_COMPUTE_WRITE));
+
+		pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+
+			const ClusteredShadingContext& tokens = ctx.m_clusteredShading;
+
+			cmdb->bindShaderProgram(m_grProg);
+			bindUniforms(cmdb, 0, 0, tokens.m_clusteredShadingUniformsToken);
+			bindStorage(cmdb, 0, 1, tokens.m_clustersToken);
+			bindUniforms(cmdb, 0, 2, tokens.m_pointLightsToken);
+			bindUniforms(cmdb, 0, 3, tokens.m_spotLightsToken);
+			bindUniforms(cmdb, 0, 4, tokens.m_reflectionProbesToken);
+			bindUniforms(cmdb, 0, 5, tokens.m_globalIlluminationProbesToken);
+			bindUniforms(cmdb, 0, 6, tokens.m_fogDensityVolumesToken);
+			bindUniforms(cmdb, 0, 7, tokens.m_decalsToken);
+
+			const U32 sampleCount = 4;
+			const U32 sizex = m_tileCount * sampleCount;
+			const RenderQueue& rqueue = *ctx.m_renderQueue;
+			U32 clusterObjectCounts = rqueue.m_pointLights.getSize();
+			clusterObjectCounts += rqueue.m_spotLights.getSize();
+			clusterObjectCounts += rqueue.m_reflectionProbes.getSize();
+			clusterObjectCounts += rqueue.m_giProbes.getSize();
+			clusterObjectCounts += rqueue.m_fogDensityVolumes.getSize();
+			clusterObjectCounts += rqueue.m_decals.getSize();
+			cmdb->dispatchCompute((sizex + 64 - 1) / 64, clusterObjectCounts, 1);
+		});
 	}
-}
-
-void ClusterBinning::run(RenderPassWorkContext& rgraphCtx)
-{
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-
-	const ClusteredShadingContext& tokens = m_runCtx.m_ctx->m_clusteredShading;
-
-	cmdb->bindShaderProgram(m_grProg);
-	bindUniforms(cmdb, 0, 0, tokens.m_clusteredShadingUniformsToken);
-	bindStorage(cmdb, 0, 1, tokens.m_clustersToken);
-	bindUniforms(cmdb, 0, 2, tokens.m_pointLightsToken);
-	bindUniforms(cmdb, 0, 3, tokens.m_spotLightsToken);
-	bindUniforms(cmdb, 0, 4, tokens.m_reflectionProbesToken);
-	bindUniforms(cmdb, 0, 5, tokens.m_globalIlluminationProbesToken);
-	bindUniforms(cmdb, 0, 6, tokens.m_fogDensityVolumesToken);
-	bindUniforms(cmdb, 0, 7, tokens.m_decalsToken);
-
-	const U32 sampleCount = 4;
-	const U32 sizex = m_tileCount * sampleCount;
-	const RenderQueue& rqueue = *m_runCtx.m_ctx->m_renderQueue;
-	U32 clusterObjectCounts = rqueue.m_pointLights.getSize();
-	clusterObjectCounts += rqueue.m_spotLights.getSize();
-	clusterObjectCounts += rqueue.m_reflectionProbes.getSize();
-	clusterObjectCounts += rqueue.m_giProbes.getSize();
-	clusterObjectCounts += rqueue.m_fogDensityVolumes.getSize();
-	clusterObjectCounts += rqueue.m_decals.getSize();
-	cmdb->dispatchCompute((sizex + 64 - 1) / 64, clusterObjectCounts, 1);
 }
 
 void ClusterBinning::writeClustererBuffers(RenderingContext& ctx)

@@ -39,7 +39,7 @@ public:
 	const RenderTargetHandle& getVolumeRenderTarget(const GlobalIlluminationProbeQueueElement& probe) const;
 
 	/// Set the render graph dependencies.
-	void setRenderGraphDependencies(RenderingContext& ctx, RenderPassDescriptionBase& pass,
+	void setRenderGraphDependencies(const RenderingContext& ctx, RenderPassDescriptionBase& pass,
 									TextureUsageBit usage) const;
 
 	/// Bind the volume textures to a command buffer.

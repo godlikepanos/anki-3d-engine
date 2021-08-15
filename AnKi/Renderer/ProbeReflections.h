@@ -151,22 +151,6 @@ private:
 	void runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
 	void runIrradiance(RenderPassWorkContext& rgraphCtx);
 	void runIrradianceToRefl(RenderPassWorkContext& rgraphCtx);
-
-	// A RenderPassWorkCallback for the light shading pass into a single face.
-	template<U faceIdx>
-	static void runLightShadingCallback(RenderPassWorkContext& rgraphCtx)
-	{
-		ProbeReflections* const self = static_cast<ProbeReflections*>(rgraphCtx.m_userData);
-		self->runLightShading(faceIdx, rgraphCtx);
-	}
-
-	// A RenderPassWorkCallback for the mipmapping of light shading result.
-	template<U faceIdx>
-	static void runMipmappingOfLightShadingCallback(RenderPassWorkContext& rgraphCtx)
-	{
-		ProbeReflections* const self = static_cast<ProbeReflections*>(rgraphCtx.m_userData);
-		self->runMipmappingOfLightShading(faceIdx, rgraphCtx);
-	}
 };
 /// @}
 

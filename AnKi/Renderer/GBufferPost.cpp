@@ -54,14 +54,11 @@ Error GBufferPost::initInternal(const ConfigSet& cfg)
 void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
-	m_runCtx.m_ctx = &ctx;
 
 	// Create pass
 	GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("GBuffPost");
 
-	rpass.setWork(
-		[](RenderPassWorkContext& rgraphCtx) { static_cast<GBufferPost*>(rgraphCtx.m_userData)->run(rgraphCtx); }, this,
-		0);
+	rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) { run(ctx, rgraphCtx); });
 
 	rpass.setFramebufferInfo(m_fbDescr, {m_r->getGBuffer().getColorRt(0), m_r->getGBuffer().getColorRt(1)}, {});
 
@@ -75,9 +72,8 @@ void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 		RenderPassDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::STORAGE_FRAGMENT_READ));
 }
 
-void GBufferPost::run(RenderPassWorkContext& rgraphCtx)
+void GBufferPost::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
-	const RenderingContext& ctx = *m_runCtx.m_ctx;
 	const ClusteredShadingContext& rsrc = ctx.m_clusteredShading;
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 

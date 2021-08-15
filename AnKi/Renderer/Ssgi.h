@@ -83,7 +83,7 @@ private:
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 
-	void run(RenderPassWorkContext& rgraphCtx);
+	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 	void runVBlur(RenderPassWorkContext& rgraphCtx);
 	void runHBlur(RenderPassWorkContext& rgraphCtx);
 	void runRecontruct(RenderPassWorkContext& rgraphCtx);

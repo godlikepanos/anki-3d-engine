@@ -51,11 +51,10 @@ private:
 	class
 	{
 	public:
-		RenderingContext* m_ctx = nullptr;
 		Array<RenderTargetHandle, 2> m_rts;
 	} m_runCtx; ///< Runtime context.
 
-	void run(RenderPassWorkContext& rgraphCtx);
+	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 

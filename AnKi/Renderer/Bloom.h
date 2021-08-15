@@ -110,9 +110,6 @@ private:
 		ANKI_CHECK(initUpscale(cfg));
 		return Error::NONE;
 	}
-
-	void runExposure(RenderPassWorkContext& rgraphCtx);
-	void runUpscaleAndSslf(RenderPassWorkContext& rgraphCtx);
 };
 
 /// @}

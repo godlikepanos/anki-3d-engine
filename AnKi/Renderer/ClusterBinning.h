@@ -43,7 +43,6 @@ private:
 		RenderingContext* m_ctx = nullptr;
 	} m_runCtx;
 
-	void run(RenderPassWorkContext& rgraphCtx);
 	void writeClustererBuffers(RenderingContext& ctx);
 	void writeClustererBuffersTask();
 };

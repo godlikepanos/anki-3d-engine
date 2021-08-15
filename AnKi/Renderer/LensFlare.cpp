@@ -115,7 +115,6 @@ void LensFlare::populateRenderGraph(RenderingContext& ctx)
 		return;
 	}
 
-	m_runCtx.m_ctx = &ctx;
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	// Import buffer
@@ -125,12 +124,7 @@ void LensFlare::populateRenderGraph(RenderingContext& ctx)
 	{
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("LF Upd Ind/ct");
 
-		rpass.setWork(
-			[](RenderPassWorkContext& rgraphCtx) {
-				LensFlare* const self = static_cast<LensFlare*>(rgraphCtx.m_userData);
-				self->updateIndirectInfo(*self->m_runCtx.m_ctx, rgraphCtx);
-			},
-			this, 0);
+		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) { updateIndirectInfo(ctx, rgraphCtx); });
 
 		rpass.newDependency({m_runCtx.m_indirectBuffHandle, BufferUsageBit::STORAGE_COMPUTE_WRITE});
 		rpass.newDependency({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_COMPUTE, HIZ_QUARTER_DEPTH});

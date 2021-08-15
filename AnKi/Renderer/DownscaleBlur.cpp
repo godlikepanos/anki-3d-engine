@@ -92,7 +92,6 @@ void DownscaleBlur::importRenderTargets(RenderingContext& ctx)
 void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
-	m_runCtx.m_crntPassIdx = 0;
 
 	// Create passes
 	static const Array<CString, 8> passNames = {"DownBlur #0",  "Down/Blur #1", "Down/Blur #2", "Down/Blur #3",
@@ -102,11 +101,7 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 		for(U32 i = 0; i < m_passCount; ++i)
 		{
 			ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(passNames[i]);
-			pass.setWork(
-				[](RenderPassWorkContext& rgraphCtx) {
-					static_cast<DownscaleBlur*>(rgraphCtx.m_userData)->run(rgraphCtx);
-				},
-				this, 0);
+			pass.setWork([this, i](RenderPassWorkContext& rgraphCtx) { run(i, rgraphCtx); });
 
 			if(i > 0)
 			{
@@ -133,11 +128,7 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 		for(U32 i = 0; i < m_passCount; ++i)
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[i]);
-			pass.setWork(
-				[](RenderPassWorkContext& rgraphCtx) {
-					static_cast<DownscaleBlur*>(rgraphCtx.m_userData)->run(rgraphCtx);
-				},
-				this, 0);
+			pass.setWork([this, i](RenderPassWorkContext& rgraphCtx) { run(i, rgraphCtx); });
 			pass.setFramebufferInfo(m_fbDescrs[i], {m_runCtx.m_rt}, {});
 
 			if(i > 0)
@@ -162,13 +153,12 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 	}
 }
 
-void DownscaleBlur::run(RenderPassWorkContext& rgraphCtx)
+void DownscaleBlur::run(U32 passIdx, RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
 	cmdb->bindShaderProgram(m_grProg);
 
-	const U32 passIdx = m_runCtx.m_crntPassIdx++;
 	const U32 vpWidth = m_rtTex->getWidth() >> passIdx;
 	const U32 vpHeight = m_rtTex->getHeight() >> passIdx;
 

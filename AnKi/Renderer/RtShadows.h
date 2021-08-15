@@ -102,8 +102,6 @@ public:
 	class
 	{
 	public:
-		RenderingContext* m_ctx = nullptr;
-
 		Array<RenderTargetHandle, 2> m_intermediateShadowsRts;
 		RenderTargetHandle m_historyRt;
 		RenderTargetHandle m_upscaledRt;
@@ -128,13 +126,13 @@ public:
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 
-	void run(RenderPassWorkContext& rgraphCtx);
-	void runDenoise(RenderPassWorkContext& rgraphCtx);
-	void runSvgfVariance(RenderPassWorkContext& rgraphCtx);
-	void runSvgfAtrous(RenderPassWorkContext& rgraphCtx);
-	void runUpscale(RenderPassWorkContext& rgraphCtx);
+	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
+	void runDenoise(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
+	void runSvgfVariance(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
+	void runSvgfAtrous(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
+	void runUpscale(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 
-	void buildSbt();
+	void buildSbt(RenderingContext& ctx);
 
 	Bool findShadowLayer(U64 lightUuid, U32& layerIdx, Bool& rejectHistoryBuffer);
 

@@ -103,11 +103,11 @@ void DepthDownscale::importRenderTargets(RenderingContext& ctx)
 void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
-	m_runCtx.m_mip = 0;
 
 	static const Array<CString, 5> passNames = {"HiZ #0", "HiZ #1", "HiZ #2", "HiZ #3", "HiZ #4"};
 
 	// Every pass can do MIPS_WRITTEN_PER_PASS mips
+	U32 firstMipToWrite = 0;
 	for(U32 i = 0; i < m_mipCount; i += MIPS_WRITTEN_PER_PASS)
 	{
 		const U mipsToFill = (i + 1 < m_mipCount) ? MIPS_WRITTEN_PER_PASS : 1;
@@ -137,20 +137,16 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 			pass.newDependency({m_runCtx.m_hizRt, TextureUsageBit::IMAGE_COMPUTE_WRITE, subresource});
 		}
 
-		auto callback = [](RenderPassWorkContext& rgraphCtx) {
-			DepthDownscale* const self = static_cast<DepthDownscale*>(rgraphCtx.m_userData);
-			self->run(rgraphCtx);
-		};
-		pass.setWork(callback, this, 0);
+		pass.setWork([this, firstMipToWrite](RenderPassWorkContext& rgraphCtx) { run(firstMipToWrite, rgraphCtx); });
+		firstMipToWrite += MIPS_WRITTEN_PER_PASS;
 	}
 }
 
-void DepthDownscale::run(RenderPassWorkContext& rgraphCtx)
+void DepthDownscale::run(U32 mipToWrite, RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-	const U32 level = m_runCtx.m_mip;
-	m_runCtx.m_mip += MIPS_WRITTEN_PER_PASS;
+	const U32 level = mipToWrite;
 	const U32 mipsToFill = (level + 1 < m_mipCount) ? MIPS_WRITTEN_PER_PASS : 1;
 	const U32 copyToClientLevel = (level + mipsToFill == m_mipCount) ? mipsToFill - 1 : MAX_U32;
 

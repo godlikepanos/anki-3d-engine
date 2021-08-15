@@ -76,7 +76,6 @@ Error VolumetricLightingAccumulation::init(const ConfigSet& config)
 
 void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 {
-	m_runCtx.m_ctx = &ctx;
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	const U readRtIdx = m_r->getFrameCount() & 1;
@@ -86,10 +85,7 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Vol light");
 
-	auto callback = [](RenderPassWorkContext& rgraphCtx) -> void {
-		static_cast<VolumetricLightingAccumulation*>(rgraphCtx.m_userData)->run(rgraphCtx);
-	};
-	pass.setWork(callback, this, 0);
+	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) { run(ctx, rgraphCtx); });
 
 	pass.newDependency(RenderPassDependency(m_runCtx.m_rts[0], TextureUsageBit::SAMPLED_COMPUTE));
 	pass.newDependency(RenderPassDependency(m_runCtx.m_rts[1], TextureUsageBit::IMAGE_COMPUTE_WRITE));
@@ -102,10 +98,9 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 	m_r->getGlobalIllumination().setRenderGraphDependencies(ctx, pass, TextureUsageBit::SAMPLED_COMPUTE);
 }
 
-void VolumetricLightingAccumulation::run(RenderPassWorkContext& rgraphCtx)
+void VolumetricLightingAccumulation::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	RenderingContext& ctx = *m_runCtx.m_ctx;
 	const ClusteredShadingContext& rsrc = ctx.m_clusteredShading;
 
 	cmdb->bindShaderProgram(m_grProg);

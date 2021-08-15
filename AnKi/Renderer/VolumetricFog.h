@@ -87,10 +87,9 @@ private:
 	{
 	public:
 		RenderTargetHandle m_rt;
-		const RenderingContext* m_ctx = nullptr;
 	} m_runCtx; ///< Runtime context.
 
-	void run(RenderPassWorkContext& rgraphCtx);
+	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 

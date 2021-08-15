@@ -71,7 +71,7 @@ GlobalIllumination::getVolumeRenderTarget(const GlobalIlluminationProbeQueueElem
 	return m_giCtx->m_irradianceProbeRts[idx];
 }
 
-void GlobalIllumination::setRenderGraphDependencies(RenderingContext& ctx, RenderPassDescriptionBase& pass,
+void GlobalIllumination::setRenderGraphDependencies(const RenderingContext& ctx, RenderPassDescriptionBase& pass,
 													TextureUsageBit usage) const
 {
 	for(U32 idx = 0; idx < ctx.m_renderQueue->m_giProbes.getSize(); ++idx)
@@ -241,10 +241,10 @@ void GlobalIllumination::populateRenderGraph(RenderingContext& rctx)
 	ANKI_TRACE_SCOPED_EVENT(R_GI);
 
 	InternalContext* giCtx = rctx.m_tempAllocator.newInstance<InternalContext>();
+	m_giCtx = giCtx;
 	giCtx->m_gi = this;
 	giCtx->m_ctx = &rctx;
 	RenderGraphDescription& rgraph = rctx.m_renderGraphDescr;
-	m_giCtx = giCtx;
 
 	// Prepare the probes
 	prepareProbes(*giCtx);
@@ -287,12 +287,8 @@ void GlobalIllumination::populateRenderGraph(RenderingContext& rctx)
 		// Pass
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI gbuff");
 		pass.setFramebufferInfo(m_gbuffer.m_fbDescr, giCtx->m_gbufferColorRts, giCtx->m_gbufferDepthRt);
-		pass.setWork(
-			[](RenderPassWorkContext& rgraphCtx) {
-				InternalContext* giCtx = static_cast<InternalContext*>(rgraphCtx.m_userData);
-				giCtx->m_gi->runGBufferInThread(rgraphCtx, *giCtx);
-			},
-			giCtx, gbufferTaskCount);
+		pass.setWork(gbufferTaskCount,
+					 [this, giCtx](RenderPassWorkContext& rgraphCtx) { runGBufferInThread(rgraphCtx, *giCtx); });
 
 		for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 		{
@@ -332,12 +328,8 @@ void GlobalIllumination::populateRenderGraph(RenderingContext& rctx)
 		// Pass
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI SM");
 		pass.setFramebufferInfo(m_shadowMapping.m_fbDescr, {}, giCtx->m_shadowsRt);
-		pass.setWork(
-			[](RenderPassWorkContext& rgraphCtx) {
-				InternalContext* giCtx = static_cast<InternalContext*>(rgraphCtx.m_userData);
-				giCtx->m_gi->runShadowmappingInThread(rgraphCtx, *giCtx);
-			},
-			giCtx, smTaskCount);
+		pass.setWork(smTaskCount,
+					 [this, giCtx](RenderPassWorkContext& rgraphCtx) { runShadowmappingInThread(rgraphCtx, *giCtx); });
 
 		TextureSubresourceInfo subresource(DepthStencilAspectBit::DEPTH);
 		pass.newDependency({giCtx->m_shadowsRt, TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT, subresource});
@@ -355,12 +347,7 @@ void GlobalIllumination::populateRenderGraph(RenderingContext& rctx)
 		// Pass
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI LS");
 		pass.setFramebufferInfo(m_lightShading.m_fbDescr, {{giCtx->m_lightShadingRt}}, {});
-		pass.setWork(
-			[](RenderPassWorkContext& rgraphCtx) {
-				InternalContext* giCtx = static_cast<InternalContext*>(rgraphCtx.m_userData);
-				giCtx->m_gi->runLightShading(rgraphCtx, *giCtx);
-			},
-			giCtx, 1);
+		pass.setWork(1, [this, giCtx](RenderPassWorkContext& rgraphCtx) { runLightShading(rgraphCtx, *giCtx); });
 
 		pass.newDependency({giCtx->m_lightShadingRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 
@@ -381,12 +368,7 @@ void GlobalIllumination::populateRenderGraph(RenderingContext& rctx)
 	{
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("GI IR");
 
-		pass.setWork(
-			[](RenderPassWorkContext& rgraphCtx) {
-				InternalContext* giCtx = static_cast<InternalContext*>(rgraphCtx.m_userData);
-				giCtx->m_gi->runIrradiance(rgraphCtx, *giCtx);
-			},
-			giCtx, 0);
+		pass.setWork([this, giCtx](RenderPassWorkContext& rgraphCtx) { runIrradiance(rgraphCtx, *giCtx); });
 
 		pass.newDependency({giCtx->m_lightShadingRt, TextureUsageBit::SAMPLED_COMPUTE});
 

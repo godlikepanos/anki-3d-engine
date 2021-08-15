@@ -85,7 +85,6 @@ private:
 	{
 	public:
 		RenderTargetHandle m_rt;
-		RenderingContext* m_ctx = nullptr;
 	} m_runCtx;
 
 	ANKI_USE_RESULT Error lazyInit();

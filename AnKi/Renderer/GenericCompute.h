@@ -34,13 +34,7 @@ public:
 	void populateRenderGraph(RenderingContext& ctx);
 
 private:
-	class
-	{
-	public:
-		const RenderingContext* m_ctx = nullptr;
-	} m_runCtx;
-
-	void run(RenderPassWorkContext& rgraphCtx);
+	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 

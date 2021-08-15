@@ -135,9 +135,7 @@ void Ssgi::populateRenderGraph(RenderingContext& ctx)
 
 		// Create pass
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("SSGI");
-		rpass.setWork(
-			[](RenderPassWorkContext& rgraphCtx) { static_cast<Ssgi*>(rgraphCtx.m_userData)->run(rgraphCtx); }, this,
-			0);
+		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) { run(ctx, rgraphCtx); });
 
 		rpass.newDependency({m_runCtx.m_intermediateRts[WRITE], TextureUsageBit::IMAGE_COMPUTE_WRITE});
 		rpass.newDependency({m_runCtx.m_finalRt, TextureUsageBit::SAMPLED_COMPUTE});
@@ -160,9 +158,7 @@ void Ssgi::populateRenderGraph(RenderingContext& ctx)
 		rpass.newDependency({m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_COMPUTE});
 		rpass.newDependency({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_COMPUTE});
 
-		rpass.setWork(
-			[](RenderPassWorkContext& rgraphCtx) { static_cast<Ssgi*>(rgraphCtx.m_userData)->runVBlur(rgraphCtx); },
-			this, 0);
+		rpass.setWork([this](RenderPassWorkContext& rgraphCtx) { runVBlur(rgraphCtx); });
 	}
 
 	// Blur horizontal
@@ -174,9 +170,7 @@ void Ssgi::populateRenderGraph(RenderingContext& ctx)
 		rpass.newDependency({m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_COMPUTE});
 		rpass.newDependency({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_COMPUTE});
 
-		rpass.setWork(
-			[](RenderPassWorkContext& rgraphCtx) { static_cast<Ssgi*>(rgraphCtx.m_userData)->runHBlur(rgraphCtx); },
-			this, 0);
+		rpass.setWork([this](RenderPassWorkContext& rgraphCtx) { runHBlur(rgraphCtx); });
 	}
 
 	// Reconstruction
@@ -188,17 +182,12 @@ void Ssgi::populateRenderGraph(RenderingContext& ctx)
 		rpass.newDependency({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_COMPUTE});
 		rpass.newDependency({m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_COMPUTE});
 
-		rpass.setWork(
-			[](RenderPassWorkContext& rgraphCtx) {
-				static_cast<Ssgi*>(rgraphCtx.m_userData)->runRecontruct(rgraphCtx);
-			},
-			this, 0);
+		rpass.setWork([this](RenderPassWorkContext& rgraphCtx) { runRecontruct(rgraphCtx); });
 	}
 }
 
-void Ssgi::run(RenderPassWorkContext& rgraphCtx)
+void Ssgi::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
-	RenderingContext& ctx = *m_runCtx.m_ctx;
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	cmdb->bindShaderProgram(m_main.m_grProg[m_r->getFrameCount() % 4]);
 

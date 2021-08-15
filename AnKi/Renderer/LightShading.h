@@ -54,13 +54,12 @@ private:
 	{
 	public:
 		RenderTargetHandle m_rt;
-		RenderingContext* m_ctx;
 	} m_runCtx; ///< Run context.
 
 	ANKI_USE_RESULT Error initLightShading(const ConfigSet& config);
 	ANKI_USE_RESULT Error initApplyFog(const ConfigSet& config);
 
-	void run(RenderPassWorkContext& rgraphCtx);
+	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 

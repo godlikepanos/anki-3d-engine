@@ -64,12 +64,11 @@ private:
 	class
 	{
 	public:
-		RenderingContext* m_ctx = nullptr;
 		RenderTargetHandle m_motionVectorsRtHandle;
 		RenderTargetHandle m_rejectionFactorRtHandle;
 	} m_runCtx;
 
-	void run(RenderPassWorkContext& rgraphCtx);
+	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 

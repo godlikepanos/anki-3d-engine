@@ -104,9 +104,8 @@ Error LightShading::initApplyFog(const ConfigSet& config)
 	return Error::NONE;
 }
 
-void LightShading::run(RenderPassWorkContext& rgraphCtx)
+void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
-	const RenderingContext& ctx = *m_runCtx.m_ctx;
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
 	cmdb->setViewport(0, 0, m_r->getInternalResolution().x(), m_r->getInternalResolution().y());
@@ -198,7 +197,6 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 
 void LightShading::populateRenderGraph(RenderingContext& ctx)
 {
-	m_runCtx.m_ctx = &ctx;
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	// Create RT
@@ -207,9 +205,8 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	// Create pass
 	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Light&FW Shad.");
 
-	pass.setWork(
-		[](RenderPassWorkContext& rgraphCtx) { static_cast<LightShading*>(rgraphCtx.m_userData)->run(rgraphCtx); },
-		this, computeNumberOfSecondLevelCommandBuffers(ctx.m_renderQueue->m_forwardShadingRenderables.getSize()));
+	pass.setWork(computeNumberOfSecondLevelCommandBuffers(ctx.m_renderQueue->m_forwardShadingRenderables.getSize()),
+				 [this, &ctx](RenderPassWorkContext& rgraphCtx) { run(ctx, rgraphCtx); });
 	pass.setFramebufferInfo(m_lightShading.m_fbDescr, {{m_runCtx.m_rt}}, {m_r->getGBuffer().getDepthRt()});
 
 	// Light shading

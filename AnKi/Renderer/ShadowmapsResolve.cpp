@@ -54,13 +54,10 @@ Error ShadowmapsResolve::initInternal(const ConfigSet& cfg)
 void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
-	m_runCtx.m_ctx = &ctx;
 	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
 
 	ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("SM resolve");
-	rpass.setWork(
-		[](RenderPassWorkContext& rgraphCtx) { static_cast<ShadowmapsResolve*>(rgraphCtx.m_userData)->run(rgraphCtx); },
-		this, 0);
+	rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) { run(ctx, rgraphCtx); });
 
 	rpass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
 	rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_COMPUTE));
@@ -71,9 +68,8 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 		RenderPassDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::STORAGE_COMPUTE_READ));
 }
 
-void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx)
+void ShadowmapsResolve::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
-	const RenderingContext& ctx = *m_runCtx.m_ctx;
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	const ClusteredShadingContext& rsrc = ctx.m_clusteredShading;
 

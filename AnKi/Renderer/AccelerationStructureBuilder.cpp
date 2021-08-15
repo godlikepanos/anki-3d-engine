@@ -57,19 +57,12 @@ void AccelerationStructureBuilder::populateRenderGraph(RenderingContext& ctx)
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 	m_runCtx.m_tlasHandle = rgraph.importAccelerationStructure(m_runCtx.m_tlas, AccelerationStructureUsageBit::NONE);
 	ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("BuildTlas");
-	rpass.setWork(
-		[](RenderPassWorkContext& rgraphCtx) {
-			static_cast<AccelerationStructureBuilder*>(rgraphCtx.m_userData)->run(rgraphCtx);
-		},
-		this, 0);
+	rpass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+		ANKI_TRACE_SCOPED_EVENT(R_TLAS);
+		rgraphCtx.m_commandBuffer->buildAccelerationStructure(m_runCtx.m_tlas);
+	});
 
 	rpass.newDependency(RenderPassDependency(m_runCtx.m_tlasHandle, AccelerationStructureUsageBit::BUILD));
-}
-
-void AccelerationStructureBuilder::run(RenderPassWorkContext& rgraphCtx)
-{
-	ANKI_TRACE_SCOPED_EVENT(R_TLAS);
-	rgraphCtx.m_commandBuffer->buildAccelerationStructure(m_runCtx.m_tlas);
 }
 
 } // end namespace anki

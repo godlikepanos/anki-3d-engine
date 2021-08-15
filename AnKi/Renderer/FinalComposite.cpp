@@ -95,17 +95,11 @@ Error FinalComposite::loadColorGradingTextureImage(CString filename)
 void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
-	m_runCtx.m_ctx = &ctx;
 
 	// Create the pass
 	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Final Composite");
 
-	pass.setWork(
-		[](RenderPassWorkContext& rgraphCtx) {
-			FinalComposite* self = static_cast<FinalComposite*>(rgraphCtx.m_userData);
-			self->run(*self->m_runCtx.m_ctx, rgraphCtx);
-		},
-		this, 0);
+	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) { run(ctx, rgraphCtx); });
 	pass.setFramebufferInfo(m_fbDescr, {ctx.m_outRenderTarget}, {});
 
 	pass.newDependency({ctx.m_outRenderTarget, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});

@@ -203,9 +203,8 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	ANKI_TRACE_SCOPED_EVENT(R_RT_SHADOWS);
 
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
-	m_runCtx.m_ctx = &ctx;
 
-	buildSbt();
+	buildSbt(ctx);
 	const U32 prevRtIdx = m_r->getFrameCount() & 1;
 
 	// Import RTs
@@ -264,9 +263,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	// RT shadows pass
 	{
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("RtShadows");
-		rpass.setWork(
-			[](RenderPassWorkContext& rgraphCtx) { static_cast<RtShadows*>(rgraphCtx.m_userData)->run(rgraphCtx); },
-			this, 0);
+		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) { run(ctx, rgraphCtx); });
 
 		rpass.newDependency(RenderPassDependency(m_runCtx.m_historyRt, TextureUsageBit::SAMPLED_TRACE_RAYS));
 		rpass.newDependency(
@@ -296,11 +293,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	if(!m_useSvgf)
 	{
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("RtShadows Denoise Horizontal");
-		rpass.setWork(
-			[](RenderPassWorkContext& rgraphCtx) {
-				static_cast<RtShadows*>(rgraphCtx.m_userData)->runDenoise(rgraphCtx);
-			},
-			this, 0);
+		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) { runDenoise(ctx, rgraphCtx); });
 
 		rpass.newDependency(
 			RenderPassDependency(m_runCtx.m_intermediateShadowsRts[0], TextureUsageBit::SAMPLED_COMPUTE));
@@ -317,11 +310,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	if(!m_useSvgf)
 	{
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("RtShadows Denoise Vertical");
-		rpass.setWork(
-			[](RenderPassWorkContext& rgraphCtx) {
-				static_cast<RtShadows*>(rgraphCtx.m_userData)->runDenoise(rgraphCtx);
-			},
-			this, 0);
+		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) { runDenoise(ctx, rgraphCtx); });
 
 		rpass.newDependency(
 			RenderPassDependency(m_runCtx.m_intermediateShadowsRts[1], TextureUsageBit::SAMPLED_COMPUTE));
@@ -337,11 +326,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	if(m_useSvgf)
 	{
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("RtShadows SVGF Variance");
-		rpass.setWork(
-			[](RenderPassWorkContext& rgraphCtx) {
-				static_cast<RtShadows*>(rgraphCtx.m_userData)->runSvgfVariance(rgraphCtx);
-			},
-			this, 0);
+		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) { runSvgfVariance(ctx, rgraphCtx); });
 
 		rpass.newDependency(
 			RenderPassDependency(m_runCtx.m_intermediateShadowsRts[0], TextureUsageBit::SAMPLED_COMPUTE));
@@ -370,11 +355,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 			atrousWriteRtIdx = !readRtIdx;
 
 			ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("RtShadows SVGF Atrous");
-			rpass.setWork(
-				[](RenderPassWorkContext& rgraphCtx) {
-					static_cast<RtShadows*>(rgraphCtx.m_userData)->runSvgfAtrous(rgraphCtx);
-				},
-				this, 0);
+			rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) { runSvgfAtrous(ctx, rgraphCtx); });
 
 			rpass.newDependency(depthDependency);
 			rpass.newDependency(
@@ -402,11 +383,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	// Upscale
 	{
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("RtShadows Upscale");
-		rpass.setWork(
-			[](RenderPassWorkContext& rgraphCtx) {
-				static_cast<RtShadows*>(rgraphCtx.m_userData)->runUpscale(rgraphCtx);
-			},
-			this, 0);
+		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) { runUpscale(ctx, rgraphCtx); });
 
 		rpass.newDependency(RenderPassDependency(m_runCtx.m_historyRt, TextureUsageBit::SAMPLED_COMPUTE));
 		rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_COMPUTE));
@@ -417,7 +394,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 
 	// Find out the lights that will take part in RT pass
 	{
-		RenderQueue& rqueue = *m_runCtx.m_ctx->m_renderQueue;
+		RenderQueue& rqueue = *ctx.m_renderQueue;
 		m_runCtx.m_layersWithRejectedHistory.unsetAll();
 
 		if(rqueue.m_directionalLight.hasShadow())
@@ -483,9 +460,8 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	}
 }
 
-void RtShadows::run(RenderPassWorkContext& rgraphCtx)
+void RtShadows::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
-	const RenderingContext& ctx = *m_runCtx.m_ctx;
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	const ClusteredShadingContext& rsrc = ctx.m_clusteredShading;
 
@@ -530,7 +506,7 @@ void RtShadows::run(RenderPassWorkContext& rgraphCtx)
 					m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2, 1);
 }
 
-void RtShadows::runDenoise(RenderPassWorkContext& rgraphCtx)
+void RtShadows::runDenoise(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
@@ -548,7 +524,7 @@ void RtShadows::runDenoise(RenderPassWorkContext& rgraphCtx)
 		0, 7, (m_runCtx.m_denoiseOrientation == 0) ? m_runCtx.m_intermediateShadowsRts[1] : m_runCtx.m_historyRt);
 
 	RtShadowsDenoiseUniforms unis;
-	unis.invViewProjMat = m_runCtx.m_ctx->m_matrices.m_invertedViewProjectionJitter;
+	unis.invViewProjMat = ctx.m_matrices.m_invertedViewProjectionJitter;
 	unis.time = F32(m_r->getGlobalTimestamp());
 	cmdb->setPushConstants(&unis, sizeof(unis));
 
@@ -557,7 +533,7 @@ void RtShadows::runDenoise(RenderPassWorkContext& rgraphCtx)
 	m_runCtx.m_denoiseOrientation = !m_runCtx.m_denoiseOrientation;
 }
 
-void RtShadows::runSvgfVariance(RenderPassWorkContext& rgraphCtx)
+void RtShadows::runSvgfVariance(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
@@ -574,13 +550,13 @@ void RtShadows::runSvgfVariance(RenderPassWorkContext& rgraphCtx)
 	rgraphCtx.bindImage(0, 6, m_runCtx.m_intermediateShadowsRts[1]);
 	rgraphCtx.bindImage(0, 7, m_runCtx.m_varianceRts[1]);
 
-	const Mat4& invProjMat = m_runCtx.m_ctx->m_matrices.m_projectionJitter.getInverse();
+	const Mat4& invProjMat = ctx.m_matrices.m_projectionJitter.getInverse();
 	cmdb->setPushConstants(&invProjMat, sizeof(invProjMat));
 
 	dispatchPPCompute(cmdb, 8, 8, m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2);
 }
 
-void RtShadows::runSvgfAtrous(RenderPassWorkContext& rgraphCtx)
+void RtShadows::runSvgfAtrous(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
@@ -613,7 +589,7 @@ void RtShadows::runSvgfAtrous(RenderPassWorkContext& rgraphCtx)
 		rgraphCtx.bindImage(0, 5, m_runCtx.m_historyRt);
 	}
 
-	const Mat4& invProjMat = m_runCtx.m_ctx->m_matrices.m_projectionJitter.getInverse();
+	const Mat4& invProjMat = ctx.m_matrices.m_projectionJitter.getInverse();
 	cmdb->setPushConstants(&invProjMat, sizeof(invProjMat));
 
 	dispatchPPCompute(cmdb, 8, 8, m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2);
@@ -621,7 +597,7 @@ void RtShadows::runSvgfAtrous(RenderPassWorkContext& rgraphCtx)
 	++m_runCtx.m_atrousPassIdx;
 }
 
-void RtShadows::runUpscale(RenderPassWorkContext& rgraphCtx)
+void RtShadows::runUpscale(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
@@ -638,11 +614,9 @@ void RtShadows::runUpscale(RenderPassWorkContext& rgraphCtx)
 	dispatchPPCompute(cmdb, 8, 8, m_r->getInternalResolution().x(), m_r->getInternalResolution().y());
 }
 
-void RtShadows::buildSbt()
+void RtShadows::buildSbt(RenderingContext& ctx)
 {
 	// Get some things
-	RenderingContext& ctx = *m_runCtx.m_ctx;
-
 	ANKI_ASSERT(ctx.m_renderQueue->m_rayTracingQueue);
 	ConstWeakArray<RayTracingInstanceQueueElement> instanceElements =
 		ctx.m_renderQueue->m_rayTracingQueue->m_rayTracingInstances;

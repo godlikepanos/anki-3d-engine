@@ -191,7 +191,6 @@ void Ssao::runBlur(RenderPassWorkContext& rgraphCtx)
 
 void Ssao::populateRenderGraph(RenderingContext& ctx)
 {
-	m_runCtx.m_ctx = &ctx;
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	// Create RTs
@@ -212,12 +211,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 			pass.newDependency({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_COMPUTE, HIZ_HALF_DEPTH});
 			pass.newDependency({m_runCtx.m_rts[0], TextureUsageBit::IMAGE_COMPUTE_WRITE});
 
-			pass.setWork(
-				[](RenderPassWorkContext& rgraphCtx) {
-					Ssao* const self = static_cast<Ssao*>(rgraphCtx.m_userData);
-					self->runMain(*self->m_runCtx.m_ctx, rgraphCtx);
-				},
-				this, 0);
+			pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) { runMain(ctx, rgraphCtx); });
 		}
 		else
 		{
@@ -234,12 +228,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 				{m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_FRAGMENT, HIZ_HALF_DEPTH});
 			pass.newDependency({m_runCtx.m_rts[0], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 
-			pass.setWork(
-				[](RenderPassWorkContext& rgraphCtx) {
-					Ssao* const self = static_cast<Ssao*>(rgraphCtx.m_userData);
-					self->runMain(*self->m_runCtx.m_ctx, rgraphCtx);
-				},
-				this, 0);
+			pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) { runMain(ctx, rgraphCtx); });
 		}
 	}
 
@@ -249,12 +238,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 		{
 			ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("SSAO blur");
 
-			pass.setWork(
-				[](RenderPassWorkContext& rgraphCtx) {
-					Ssao* const self = static_cast<Ssao*>(rgraphCtx.m_userData);
-					self->runBlur(rgraphCtx);
-				},
-				this, 0);
+			pass.setWork([this](RenderPassWorkContext& rgraphCtx) { runBlur(rgraphCtx); });
 
 			pass.newDependency({m_runCtx.m_rts[1], TextureUsageBit::IMAGE_COMPUTE_WRITE});
 			pass.newDependency({m_runCtx.m_rts[0], TextureUsageBit::SAMPLED_COMPUTE});
@@ -263,12 +247,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("SSAO blur");
 
-			pass.setWork(
-				[](RenderPassWorkContext& rgraphCtx) {
-					Ssao* const self = static_cast<Ssao*>(rgraphCtx.m_userData);
-					self->runBlur(rgraphCtx);
-				},
-				this, 0);
+			pass.setWork([this](RenderPassWorkContext& rgraphCtx) { runBlur(rgraphCtx); });
 			pass.setFramebufferInfo(m_fbDescr, {{m_runCtx.m_rts[1]}}, {});
 
 			pass.newDependency({m_runCtx.m_rts[1], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});

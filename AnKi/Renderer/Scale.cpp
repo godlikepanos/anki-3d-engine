@@ -98,12 +98,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 			RenderPassDependency(m_r->getTemporalAA().getTonemappedRt(), TextureUsageBit::SAMPLED_COMPUTE));
 		pass.newDependency(RenderPassDependency(m_runCtx.m_scaledRt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
 
-		pass.setWork(
-			[](RenderPassWorkContext& rgraphCtx) {
-				Scale* const self = static_cast<Scale*>(rgraphCtx.m_userData);
-				self->runScaling(rgraphCtx);
-			},
-			this, 0);
+		pass.setWork([this](RenderPassWorkContext& rgraphCtx) { runScaling(rgraphCtx); });
 	}
 
 	if(doSharpening())
@@ -118,12 +113,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 								 TextureUsageBit::SAMPLED_COMPUTE));
 		pass.newDependency(RenderPassDependency(m_runCtx.m_sharpenedRt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
 
-		pass.setWork(
-			[](RenderPassWorkContext& rgraphCtx) {
-				Scale* const self = static_cast<Scale*>(rgraphCtx.m_userData);
-				self->runSharpening(rgraphCtx);
-			},
-			this, 0);
+		pass.setWork([this](RenderPassWorkContext& rgraphCtx) { runSharpening(rgraphCtx); });
 	}
 }
 

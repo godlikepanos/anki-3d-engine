@@ -35,15 +35,9 @@ private:
 
 	FramebufferDescription m_fbDescr;
 
-	class
-	{
-	public:
-		RenderingContext* m_ctx ANKI_DEBUG_CODE(= nullptr);
-	} m_runCtx;
-
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 
-	void run(RenderPassWorkContext& rgraphCtx);
+	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 
