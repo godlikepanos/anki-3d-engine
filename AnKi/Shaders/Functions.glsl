@@ -80,6 +80,48 @@ Vec4 textureCatmullRom4Samples(texture2D tex, sampler sampl, Vec2 uv, Vec2 texSi
 }
 #endif
 
+// Stolen from shadertoy.com/view/4df3Dn
+Vec4 textureBicubic(texture2D tex, sampler sampl, Vec2 uv, F32 lod, Vec2 texSize)
+{
+#define w0(a) ((1.0 / 6.0) * ((a) * ((a) * (-(a) + 3.0) - 3.0) + 1.0))
+#define w1(a) ((1.0 / 6.0) * ((a) * (a) * (3.0 * (a)-6.0) + 4.0))
+#define w2(a) ((1.0 / 6.0) * ((a) * ((a) * (-3.0 * (a) + 3.0) + 3.0) + 1.0))
+#define w3(a) ((1.0 / 6.0) * ((a) * (a) * (a)))
+#define g0(a) (w0(a) + w1(a))
+#define g1(a) (w2(a) + w3(a))
+#define h0(a) (-1.0 + w1(a) / (w0(a) + w1(a)))
+#define h1(a) (1.0 + w3(a) / (w2(a) + w3(a)))
+#define texSample(uv) textureLod(tex, sampl, uv, lod)
+
+	uv = uv * texSize + 0.5;
+	const Vec2 iuv = floor(uv);
+	const Vec2 fuv = fract(uv);
+
+	const F32 g0x = g0(fuv.x);
+	const F32 g1x = g1(fuv.x);
+	const F32 h0x = h0(fuv.x);
+	const F32 h1x = h1(fuv.x);
+	const F32 h0y = h0(fuv.y);
+	const F32 h1y = h1(fuv.y);
+
+	const Vec2 p0 = (Vec2(iuv.x + h0x, iuv.y + h0y) - 0.5) / texSize;
+	const Vec2 p1 = (Vec2(iuv.x + h1x, iuv.y + h0y) - 0.5) / texSize;
+	const Vec2 p2 = (Vec2(iuv.x + h0x, iuv.y + h1y) - 0.5) / texSize;
+	const Vec2 p3 = (Vec2(iuv.x + h1x, iuv.y + h1y) - 0.5) / texSize;
+
+	return g0(fuv.y) * (g0x * texSample(p0) + g1x * texSample(p1))
+		   + g1(fuv.y) * (g0x * texSample(p2) + g1x * texSample(p3));
+
+#undef w0
+#undef w1
+#undef w2
+#undef g0
+#undef g1
+#undef h0
+#undef h1
+#undef texSample
+}
+
 F32 rand(Vec2 n)
 {
 	return 0.5 + 0.5 * fract(sin(dot(n, Vec2(12.9898, 78.233))) * 43758.5453);

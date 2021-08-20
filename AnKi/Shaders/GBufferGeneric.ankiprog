@@ -208,11 +208,7 @@ void parallax()
 #if(ANKI_VELOCITY || ANKI_BONES) && ANKI_PASS == PASS_GB
 void velocity()
 {
-#	if ANKI_BONES
 	const Vec3 prevLocalPos = g_prevPosition;
-#	else
-	const Vec3 prevLocalPos = g_position;
-#	endif
 
 #	if ANKI_VELOCITY
 	const Mat4 mvp = u_ankiPerInstance[INSTANCE_ID].m_ankiPreviousMvp;
