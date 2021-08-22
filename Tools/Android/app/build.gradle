@@ -1,0 +1,25 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 30
+    ndkVersion '22.1.7171670'
+    defaultConfig {
+        applicationId  "com.anki.sponza"
+        minSdkVersion    24
+        targetSdkVersion 30
+        versionCode 1
+        versionName "0.0.1"
+
+        externalNativeBuild {
+            cmake {
+                version "3.12+"
+                // armeabi is not supported, not building for mips in samples
+                abiFilters 'arm64-v8a', 'x86_64'
+                arguments '-DANDROID_TOOLCHAIN=clang', '-DANDROID_STL=c++_static'
+            }
+        }
+    }
+    externalNativeBuild.cmake.path '../../../CMakeLists.txt'
+    buildTypes.release.minifyEnabled = false
+}
+
