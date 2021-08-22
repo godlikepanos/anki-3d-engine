@@ -14,19 +14,8 @@ namespace anki
 {
 
 /// Native window implementation for Android
-struct NativeWindowImpl
+class NativeWindowImpl
 {
-	EGLDisplay display = EGL_NO_DISPLAY;
-	EGLSurface surface = EGL_NO_SURFACE;
-	EGLContext context = EGL_NO_CONTEXT;
-
-	~NativeWindowImpl()
-	{
-		destroy();
-	}
-
-	void create(NativeWindowInitInfo& init);
-	void destroy();
 };
 
 } // end namespace anki

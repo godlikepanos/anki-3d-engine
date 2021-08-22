@@ -3,6 +3,8 @@ file(GLOB HEADERS *.h)
 
 if(SDL)
 	set(SOURCES ${SOURCES} NativeWindowSdl.cpp)
+elseif(ANDROID)
+set(SOURCES ${SOURCES} NativeWindowAndroid.cpp)
 else()
 	message(FATAL_ERROR "Not implemented")
 endif()

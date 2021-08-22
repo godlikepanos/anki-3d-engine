@@ -1,4 +1,4 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.12)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.10)
 
 include(ProcessorCount)
 
@@ -33,12 +33,10 @@ if(WIN32)
 	endif()
 elseif(UNIX AND NOT APPLE)
 	if(CMAKE_SYSTEM_NAME MATCHES ".*Linux")
-		if(NOT ANDROID)
-			set(LINUX TRUE)
-			message("++ Building for Linux")
-		else()
-			message("++ Building for Android")
-		endif()
+		set(LINUX TRUE)
+		message("++ Building for Linux")
+	elseif(ANDROID)
+		message("++ Building for Android")
 	else()
 		message(FATAL_ERROR "Unknown unix")
 	endif()
@@ -246,8 +244,6 @@ if(SDL)
 	# Include first the build directory.
 	set(SDL2_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/ThirdParty/Sdl2/include"
 		"${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/Sdl2/include")
-else()
-	set(SDL2_INCLUDE_DIRS "")
 endif()
 
 # glslang
@@ -331,13 +327,16 @@ configure_file("AnKi/Config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/AnKi/Config.h"
 
 # Include & lib directories
 include_directories(
-	"${SDL2_INCLUDE_DIRS}"
 	"ThirdParty/Khronos"
 	"${CMAKE_CURRENT_BINARY_DIR}"
 	"${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/Bullet/src"
 	"ThirdParty"
 	"ThirdParty/ZLib"
 	${CMAKE_CURRENT_SOURCE_DIR})
+
+if(SDL2_INCLUDE_DIRS)
+	include_directories("${SDL2_INCLUDE_DIRS}")
+endif()
 
 if(LINUX OR MACOS OR WINDOWS)
 	include_directories("ThirdParty/GLEW/include")

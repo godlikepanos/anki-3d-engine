@@ -98,7 +98,7 @@
 
 // CPU architecture
 #if ANKI_COMPILER_GCC_COMPATIBLE
-#	if defined(__arm__)
+#	if defined(__arm__) || defined(__aarch64__)
 #		define ANKI_CPU_ARCH_X86 0
 #		define ANKI_CPU_ARCH_ARM 1
 #	elif defined(__i386__) || defined(__amd64__)
@@ -124,7 +124,7 @@
 #endif
 
 // SIMD
-#define ANKI_ENABLE_SIMD ${_ANKI_ENABLE_SIMD}
+#define ANKI_ENABLE_SIMD (${_ANKI_ENABLE_SIMD} && ANKI_CPU_ARCH_X86)
 
 #if !ANKI_ENABLE_SIMD
 #	define ANKI_SIMD_NONE 1
