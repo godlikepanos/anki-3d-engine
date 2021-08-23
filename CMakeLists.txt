@@ -156,8 +156,6 @@ if(NOT MSVC)
 
 	if(LINUX OR MACOS OR WINDOWS)
 		add_definitions("-msse4")
-	else()
-		add_definitions("-mfpu=neon")
 	endif()
 
 	if(ANKI_LTO)

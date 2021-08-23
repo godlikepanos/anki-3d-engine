@@ -25,7 +25,7 @@ public:
 	using Simd = typename MathSimd<T, N>::Type;
 	static constexpr U COMPONENT_COUNT = N;
 	static constexpr Bool IS_INTEGER = std::is_integral<T>::value;
-	static constexpr Bool HAS_VEC4_SIMD = N == 4 && std::is_same<T, F32>::value && ANKI_SIMD_SSE;
+	static constexpr Bool HAS_VEC4_SIMD = N == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
 
 	/// @name Constructors
 	/// @{
@@ -72,7 +72,11 @@ public:
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	explicit TVec(const T f)
 	{
+#if ANKI_SIMD_SSE
 		m_simd = _mm_set1_ps(f);
+#else
+		m_simd = vdupq_n_f32(f);
+#endif
 	}
 
 	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
@@ -142,7 +146,11 @@ public:
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	TVec(const T x_, const T y_, const T z_, const T w_)
 	{
+#if ANKI_SIMD_SSE
 		m_simd = _mm_set_ps(w_, z_, y_, x_);
+#else
+		m_simd = {w_, z_, y_, x_};
+#endif
 	}
 
 	ANKI_ENABLE_METHOD(N == 4)
@@ -2331,7 +2339,11 @@ public:
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	TVec operator+(const TVec& b) const
 	{
+#if ANKI_SIMD_SSE
 		return TVec(_mm_add_ps(m_simd, b.m_simd));
+#else
+		return TVec(m_simd + b.m_simd);
+#endif
 	}
 
 	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
@@ -2347,7 +2359,11 @@ public:
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	TVec& operator+=(const TVec& b)
 	{
+#if ANKI_SIMD_SSE
 		m_simd = _mm_add_ps(m_simd, b.m_simd);
+#else
+		m_simd += b.m_simd;
+#endif
 		return *this;
 	}
 
@@ -2365,7 +2381,11 @@ public:
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	TVec operator-(const TVec& b) const
 	{
+#if ANKI_SIMD_SSE
 		return TVec(_mm_sub_ps(m_simd, b.m_simd));
+#else
+		return TVec(m_simd - b.m_simd);
+#endif
 	}
 
 	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
@@ -2381,7 +2401,11 @@ public:
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	TVec& operator-=(const TVec& b)
 	{
+#if ANKI_SIMD_SSE
 		m_simd = _mm_sub_ps(m_simd, b.m_simd);
+#else
+		m_simd -= b.m_simd;
+#endif
 		return *this;
 	}
 
@@ -2399,7 +2423,11 @@ public:
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	TVec operator*(const TVec& b) const
 	{
+#if ANKI_SIMD_SSE
 		return TVec(_mm_mul_ps(m_simd, b.m_simd));
+#else
+		return TVec(m_simd * b.m_simd);
+#endif
 	}
 
 	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
@@ -2415,7 +2443,11 @@ public:
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	TVec& operator*=(const TVec& b)
 	{
+#if ANKI_SIMD_SSE
 		m_simd = _mm_mul_ps(m_simd, b.m_simd);
+#else
+		m_simd *= b.m_simd;
+#endif
 		return *this;
 	}
 
@@ -2434,7 +2466,11 @@ public:
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	TVec operator/(const TVec& b) const
 	{
+#if ANKI_SIMD_SSE
 		return TVec(_mm_div_ps(m_simd, b.m_simd));
+#else
+		return TVec(m_simd / b.m_simd);
+#endif
 	}
 
 	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
@@ -2451,7 +2487,11 @@ public:
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	TVec& operator/=(const TVec& b)
 	{
+#if ANKI_SIMD_SSE
 		m_simd = _mm_div_ps(m_simd, b.m_simd);
+#else
+		m_simd /= b.m_simd;
+#endif
 		return *this;
 	}
 
@@ -2469,7 +2509,11 @@ public:
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	TVec operator-() const
 	{
+#if ANKI_SIMD_SSE
 		return TVec(_mm_xor_ps(m_simd, _mm_set1_ps(-0.0)));
+#else
+		return TVec(-m_simd);
+#endif
 	}
 
 	ANKI_ENABLE_METHOD(IS_INTEGER)
@@ -2816,7 +2860,11 @@ public:
 	T dot(const TVec& b) const
 	{
 		T o;
+#if ANKI_SIMD_SSE
 		_mm_store_ss(&o, _mm_dp_ps(m_simd, b.m_simd, 0xF1));
+#else
+		ANKI_ASSERT(!"TODO");
+#endif
 		return o;
 	}
 
@@ -2841,6 +2889,7 @@ public:
 	{
 		ANKI_ASSERT(w() == T(0));
 		ANKI_ASSERT(b.w() == T(0));
+#if ANKI_SIMD_SSE
 		const auto& a = *this;
 		constexpr unsigned int mask0 = _MM_SHUFFLE(3, 0, 2, 1);
 		constexpr unsigned int mask1 = _MM_SHUFFLE(3, 1, 0, 2);
@@ -2851,6 +2900,18 @@ public:
 			_mm_mul_ps(_mm_shuffle_ps(a.m_simd, a.m_simd, U8(mask1)), _mm_shuffle_ps(b.m_simd, b.m_simd, U8(mask0)));
 
 		return TVec(_mm_sub_ps(tmp0, tmp1));
+#else
+		TVec out;
+		float32x4_t& c = out.m_simd;
+		const float32x4_t& v0 = m_simd;
+		const float32x4_t& v1 = b.m_simd;
+
+		c = vmulq_f32(v0, __builtin_shufflevector(v1, v1, 1, 2, 0, 3));
+		c = vfmsq_f32(__builtin_shufflevector(v0, v0, 1, 2, 0, 3), v1, c);
+		c = __builtin_shufflevector(c, c, 1, 2, 0, 3);
+
+		return out;
+#endif
 	}
 
 	ANKI_ENABLE_METHOD(N == 3)
@@ -2908,7 +2969,11 @@ public:
 	T getLengthSquared() const
 	{
 		T o;
+#if ANKI_SIMD_SSE
 		_mm_store_ss(&o, _mm_dp_ps(m_simd, m_simd, 0xF1));
+#else
+		ANKI_ASSERT(!"TODO");
+#endif
 		return o;
 	}
 
@@ -2936,8 +3001,22 @@ public:
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	void normalize()
 	{
-		__m128 inverseNorm = _mm_rsqrt_ps(_mm_dp_ps(m_simd, m_simd, 0xFF));
+#if ANKI_SIMD_SSE
+		const __m128 inverseNorm = _mm_rsqrt_ps(_mm_dp_ps(m_simd, m_simd, 0xFF));
 		m_simd = _mm_mul_ps(m_simd, inverseNorm);
+#else
+		// Dot (len squared)
+		float32x4_t tmp = m_simd * m_simd;
+		float32x2_t sum = vpadd_f32(vget_low_f32(tmp), vget_high_f32(tmp));
+		sum = vpadd_f32(sum, sum);
+		float32x4_t lensq = vdupq_lane_f32(sum, 0);
+
+		// 1/sqrt(lensq)
+		float32x4_t mul = vrsqrteq_f32(lensq);
+
+		// Multiply
+		m_simd *= mul;
+#endif
 	}
 
 	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
@@ -2949,8 +3028,13 @@ public:
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	TVec getNormalized() const
 	{
-		__m128 inverse_norm = _mm_rsqrt_ps(_mm_dp_ps(m_simd, m_simd, 0xFF));
+#if ANKI_SIMD_SSE
+		const __m128 inverse_norm = _mm_rsqrt_ps(_mm_dp_ps(m_simd, m_simd, 0xFF));
 		return TVec(_mm_mul_ps(m_simd, inverse_norm));
+#else
+		ANKI_ASSERT(!"TODO");
+		return TVec(T(0));
+#endif
 	}
 
 	/// Return lerp(this, v1, t)
@@ -2973,8 +3057,13 @@ public:
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	TVec abs() const
 	{
+#if ANKI_SIMD_SSE
 		const __m128 signMask = _mm_set1_ps(-0.0f);
 		return TVec(_mm_andnot_ps(signMask, m_simd));
+#else
+		ANKI_ASSERT(!"TODO");
+		return TVec(T(0));
+#endif
 	}
 
 	/// Get clamped between two values.
@@ -3005,7 +3094,12 @@ public:
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	TVec min(const TVec& b) const
 	{
+#if ANKI_SIMD_SSE
 		return TVec(_mm_min_ps(m_simd, b.m_simd));
+#else
+		ANKI_ASSERT(!"TODO");
+		return TVec(T(0));
+#endif
 	}
 
 	/// Get the min of all components.
@@ -3030,7 +3124,12 @@ public:
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	TVec max(const TVec& b) const
 	{
+#if ANKI_SIMD_SSE
 		return TVec(_mm_max_ps(m_simd, b.m_simd));
+#else
+		ANKI_ASSERT(!"TODO");
+		return TVec(T(0));
+#endif
 	}
 
 	/// Get the max of all components.

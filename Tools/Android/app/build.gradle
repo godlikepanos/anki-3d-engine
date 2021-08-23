@@ -12,10 +12,11 @@ android {
 
         externalNativeBuild {
             cmake {
-                version "3.12+"
                 // armeabi is not supported, not building for mips in samples
                 abiFilters 'arm64-v8a', 'x86_64'
-                arguments '-DANDROID_TOOLCHAIN=clang', '-DANDROID_STL=c++_static'
+                arguments '-DANDROID_TOOLCHAIN=clang', '-DANDROID_STL=c++_static'//, "-DPYTHON_EXECUTABLE:FILEPATH=C:\\Users\\pancha01\\AppData\\Local\\Programs\\Python\\Python39\\python.exe"
+                version "3.12+"
+                targets "Sponza"
             }
         }
     }

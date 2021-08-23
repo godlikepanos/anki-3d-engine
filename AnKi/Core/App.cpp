@@ -38,7 +38,7 @@ namespace anki
 
 #if ANKI_OS_ANDROID
 /// The one and only android hack
-android_app* gAndroidApp = nullptr;
+android_app* g_androidApp = nullptr;
 #endif
 
 class App::StatsUi
@@ -504,12 +504,15 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 
 Error App::initDirs(const ConfigSet& cfg)
 {
-#if !ANKI_OS_ANDROID
 	// Settings path
+#if !ANKI_OS_ANDROID
 	StringAuto home(m_heapAlloc);
 	ANKI_CHECK(getHomeDirectory(home));
 
 	m_settingsDir.sprintf(m_heapAlloc, "%s/.anki", &home[0]);
+#else
+	m_settingsDir.sprintf(m_heapAlloc, "%s/.anki", "/sdcard");
+#endif
 
 	if(!directoryExists(m_settingsDir.toCString()))
 	{
@@ -536,28 +539,6 @@ Error App::initDirs(const ConfigSet& cfg)
 		ANKI_CORE_LOGI("Will create cache dir: %s", &m_cacheDir[0]);
 		ANKI_CHECK(createDirectory(m_cacheDir.toCString()));
 	}
-
-#else
-	// ANKI_ASSERT(gAndroidApp);
-	// ANativeActivity* activity = gAndroidApp->activity;
-
-	// Settings path
-	// settingsDir = String(activity->internalDataDir, alloc);
-	settingsDir = String("/sdcard/.anki/");
-	if(!directoryExists(settingsDir.c_str()))
-	{
-		createDirectory(settingsDir.c_str());
-	}
-
-	// Cache
-	cacheDir = settingsDir + "/cache";
-	if(directoryExists(cacheDir.c_str()))
-	{
-		removeDirectory(cacheDir.c_str());
-	}
-
-	createDirectory(cacheDir.c_str());
-#endif
 
 	return Error::NONE;
 }

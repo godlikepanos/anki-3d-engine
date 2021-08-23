@@ -145,8 +145,8 @@ ANKI_TEST(Gr, ClassGpuAllocator)
 
 			std::shuffle(handles.begin(), handles.end(), gen);
 
-			U halfSize = (handles.size() * 3) / 4;
-			for(U i = halfSize; i < handles.size(); ++i)
+			PtrSize halfSize = (handles.size() * 3) / 4;
+			for(PtrSize i = halfSize; i < handles.size(); ++i)
 			{
 				calloc.free(handles[i]);
 			}

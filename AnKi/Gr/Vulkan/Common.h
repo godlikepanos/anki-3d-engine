@@ -12,8 +12,10 @@
 #	define VK_USE_PLATFORM_XLIB_KHR 1
 #elif ANKI_OS_WINDOWS
 #	define VK_USE_PLATFORM_WIN32_KHR 1
+#elif ANKI_OS_ANDROID
+#	define VK_USE_PLATFORM_ANDROID_KHR 1
 #else
-#	error TODO
+#	error Not implemented
 #endif
 #include <Volk/volk.h>
 

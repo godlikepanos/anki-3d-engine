@@ -31,9 +31,9 @@ public:
 	static constexpr U ROW_SIZE = J; ///< Number of rows
 	static constexpr U COLUMN_SIZE = I; ///< Number of columns
 	static constexpr U SIZE = J * I; ///< Number of total elements
-	static constexpr Bool HAS_SIMD = I == 4 && std::is_same<T, F32>::value && ANKI_SIMD_SSE;
-	static constexpr Bool HAS_MAT4_SIMD = J == 4 && I == 4 && std::is_same<T, F32>::value && ANKI_SIMD_SSE;
-	static constexpr Bool HAS_MAT3X4_SIMD = J == 3 && I == 4 && std::is_same<T, F32>::value && ANKI_SIMD_SSE;
+	static constexpr Bool HAS_SIMD = I == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
+	static constexpr Bool HAS_MAT4_SIMD = J == 4 && I == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
+	static constexpr Bool HAS_MAT3X4_SIMD = J == 3 && I == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
 
 	/// @name Constructors
 	/// @{
@@ -73,7 +73,11 @@ public:
 	{
 		for(U i = 0; i < J; i++)
 		{
+#if ANKI_SIMD_SSE
 			m_simd[i] = _mm_set1_ps(f);
+#else
+			m_simd[i] = {f, f, f, f};
+#endif
 		}
 	}
 
@@ -399,6 +403,7 @@ public:
 	TMat operator*(const TMat& b) const
 	{
 		TMat out;
+#if ANKI_SIMD_SSE
 		const auto& m = *this;
 
 		for(U i = 0; i < 4; i++)
@@ -416,6 +421,9 @@ public:
 
 			out.m_simd[i] = t2;
 		}
+#else
+		ANKI_ASSERT(!"TODO");
+#endif
 
 		return out;
 	}
@@ -555,10 +563,14 @@ public:
 	ColumnVec operator*(const RowVec& v) const
 	{
 		ColumnVec out;
+#if ANKI_SIMD_SSE
 		for(U i = 0; i < J; i++)
 		{
 			_mm_store_ss(&out[i], _mm_dp_ps(m_simd[i], v.getSimd(), 0xF1));
 		}
+#else
+		ANKI_ASSERT(!"TODO");
+#endif
 		return out;
 	}
 	/// @}
@@ -991,7 +1003,11 @@ public:
 	ANKI_ENABLE_METHOD(J == I && HAS_SIMD)
 	void transpose()
 	{
+#if ANKI_SIMD_SSE
 		_MM_TRANSPOSE4_PS(m_simd[0], m_simd[1], m_simd[2], m_simd[3]);
+#else
+		ANKI_ASSERT(!"TODO");
+#endif
 	}
 
 	void transposeRotationPart()
@@ -1227,6 +1243,7 @@ public:
 	TMat combineTransformations(const TMat& b) const
 	{
 		TMat c;
+#if ANKI_SIMD_SSE
 		const auto& a = *this;
 
 		for(U i = 0; i < 3; i++)
@@ -1245,6 +1262,9 @@ public:
 
 			c.m_simd[i] = t2;
 		}
+#else
+		ANKI_ASSERT(!"TODO");
+#endif
 
 		return c;
 	}
