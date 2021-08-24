@@ -341,8 +341,14 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 				m_extensions |= VulkanExtensions::KHR_WIN32_SURFACE;
 				instExtensions[instExtensionCount++] = VK_KHR_WIN32_SURFACE_EXTENSION_NAME;
 			}
+#elif ANKI_OS_ANDROID
+			if(CString(instExtensionInf[i].extensionName) == VK_KHR_ANDROID_SURFACE_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::KHR_ANDROID_SURFACE;
+				instExtensions[instExtensionCount++] = VK_KHR_ANDROID_SURFACE_EXTENSION_NAME;
+			}
 #else
-#	error TODO
+#	error Not implemented
 #endif
 			else if(CString(instExtensionInf[i].extensionName) == VK_KHR_SURFACE_EXTENSION_NAME)
 			{

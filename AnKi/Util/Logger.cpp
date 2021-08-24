@@ -159,9 +159,9 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 		endTerminalColor = "";
 	}
 
-	fprintf(out, fmt, terminalColorBg, MSG_TEXT[static_cast<U>(info.m_type)],
-			info.m_subsystem ? info.m_subsystem : "N/A ", info.m_tid, endTerminalColor, terminalColor, info.m_msg,
-			info.m_file, info.m_line, info.m_func, endTerminalColor);
+	fprintf(out, fmt, terminalColorBg, MSG_TEXT[U(info.m_type)], info.m_subsystem ? info.m_subsystem : "N/A ",
+			info.m_tid, endTerminalColor, terminalColor, info.m_msg, info.m_file, info.m_line, info.m_func,
+			endTerminalColor);
 #elif ANKI_OS_WINDOWS
 	WORD attribs = BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_RED;
 	FILE* out = NULL;
@@ -201,14 +201,14 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 		SetConsoleTextAttribute(consoleHandle, attribs);
 
 		// Print
-		fprintf(out, "[%s][%s] %s (%s:%d %s)\n", MSG_TEXT[static_cast<U>(info.m_type)],
-				info.m_subsystem ? info.m_subsystem : "N/A ", info.m_msg, info.m_file, info.m_line, info.m_func);
+		fprintf(out, "[%s][%s] %s (%s:%d %s)\n", MSG_TEXT[U(info.m_type)], info.m_subsystem ? info.m_subsystem : "N/A ",
+				info.m_msg, info.m_file, info.m_line, info.m_func);
 
 		// Restore state
 		SetConsoleTextAttribute(consoleHandle, savedAttribs);
 	}
 #elif ANKI_OS_ANDROID
-	U32 andMsgType = ANDROID_LOG_INFO;
+	I32 andMsgType = ANDROID_LOG_INFO;
 
 	switch(info.m_type)
 	{
@@ -228,9 +228,9 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 		ANKI_ASSERT(0);
 	}
 
-	std::stringstream ss;
-
-	__android_log_print(andMsgType, "AnKi", "%s (%s:%d %s)", info.m_msg, info.m_file, info.m_line, info.m_func);
+	__android_log_print(andMsgType, "AnKi", "[%s][%s] %s (%s:%d %s)\n", MSG_TEXT[U(info.m_type)],
+						info.m_subsystem ? info.m_subsystem : "N/A ", info.m_msg, info.m_file, info.m_line,
+						info.m_func);
 #else
 	FILE* out = NULL;
 

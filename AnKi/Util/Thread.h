@@ -8,6 +8,7 @@
 #include <AnKi/Util/StdTypes.h>
 #include <AnKi/Util/Array.h>
 #include <AnKi/Util/Atomic.h>
+#include <AnKi/Util/BitSet.h>
 #include <thread>
 #if ANKI_SIMD_SSE
 #	include <xmmintrin.h>
@@ -28,6 +29,10 @@ namespace anki
 /// The thread ID.
 /// @memberof Thread
 using ThreadId = U64;
+
+/// Core affinity mask.
+/// @memberof Thread
+using ThreadCoreAffinityMask = BitSet<256, U64>;
 
 /// It holds some information to be passed to the thread's callback.
 /// @memberof Thread
@@ -76,8 +81,9 @@ public:
 	/// Start the thread.
 	/// @param userData The user data of the thread callback
 	/// @param callback The thread callback that will be executed
-	/// @param pinToCore Pin the thread to a core.
-	void start(void* userData, ThreadCallback callback, I32 pinToCore = -1);
+	/// @param coreAffintyMask Pin the thread to a number of cores.
+	void start(void* userData, ThreadCallback callback,
+			   const ThreadCoreAffinityMask& coreAffinityMask = ThreadCoreAffinityMask(false));
 
 	/// Wait for the thread to finish
 	/// @return The error code of the thread's callback
@@ -92,6 +98,10 @@ public:
 		return GetCurrentThreadId();
 #endif
 	}
+
+	/// Pin to some core.
+	/// @param coreAffintyMask Pin the thread to a number of cores.
+	void pinToCores(const ThreadCoreAffinityMask& coreAffintyMask);
 
 private:
 	/// The system native type.

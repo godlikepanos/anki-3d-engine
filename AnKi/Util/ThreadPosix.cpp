@@ -9,7 +9,7 @@
 namespace anki
 {
 
-void Thread::start(void* userData, ThreadCallback callback, I32 pinToCore)
+void Thread::start(void* userData, ThreadCallback callback, const ThreadCoreAffinityMask& coreAffintyMask)
 {
 	ANKI_ASSERT(!m_started);
 	ANKI_ASSERT(callback != nullptr);
@@ -20,15 +20,7 @@ void Thread::start(void* userData, ThreadCallback callback, I32 pinToCore)
 #endif
 
 	pthread_attr_t attr;
-	cpu_set_t cpus;
 	pthread_attr_init(&attr);
-
-	if(pinToCore >= 0)
-	{
-		CPU_ZERO(&cpus);
-		CPU_SET(pinToCore, &cpus);
-		pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
-	}
 
 	auto pthreadCallback = [](void* ud) -> void* {
 		ANKI_ASSERT(ud != nullptr);
@@ -55,6 +47,11 @@ void Thread::start(void* userData, ThreadCallback callback, I32 pinToCore)
 	}
 
 	pthread_attr_destroy(&attr);
+
+	if(coreAffintyMask.getEnabledBitCount())
+	{
+		pinToCores(coreAffintyMask);
+	}
 }
 
 Error Thread::join()
@@ -71,6 +68,32 @@ Error Thread::join()
 
 	// Set return error code
 	return Error(I32(ptrToNumber(out)));
+}
+
+void Thread::pinToCores(const ThreadCoreAffinityMask& coreAffintyMask)
+{
+	ANKI_ASSERT(m_started);
+
+	cpu_set_t cpus;
+	CPU_ZERO(&cpus);
+
+	ThreadCoreAffinityMask affinity = coreAffintyMask;
+	while(affinity.getEnabledBitCount() > 0)
+	{
+		const U32 msb = affinity.getMostSignificantBit();
+		ANKI_ASSERT(msb != MAX_U32);
+		affinity.unset(msb);
+		CPU_SET(msb, &cpus);
+	}
+
+#if ANKI_OS_ANDROID
+	if(sched_setaffinity(pthread_gettid_np(m_handle), sizeof(cpu_set_t), &cpus))
+#else
+	if(pthread_setaffinity_np(m_handle, sizeof(cpu_set_t), &cpus))
+#endif
+	{
+		ANKI_UTIL_LOGF("pthread_setaffinity_np() failed");
+	}
 }
 
 } // end namespace anki

@@ -26,7 +26,8 @@ enum class FileOpenFlag : U8
 	APPEND = WRITE | (1 << 3),
 	BINARY = 1 << 4,
 	ENDIAN_LITTLE = 1 << 5, ///< The default
-	ENDIAN_BIG = 1 << 6
+	ENDIAN_BIG = 1 << 6,
+	SPECIAL = 1 << 7, ///< Android package file.
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FileOpenFlag)
 
@@ -113,25 +114,12 @@ public:
 	PtrSize getSize() const;
 
 private:
-	/// Internal filetype
-	enum class Type : U8
-	{
-		NONE = 0,
-		C, ///< C file
-		SPECIAL ///< For example file is located in the android apk
-	};
-
 	void* m_file = nullptr; ///< A native file type
-	Type m_type = Type::NONE;
 	FileOpenFlag m_flags = FileOpenFlag::NONE; ///< All the flags. Set on open
 	U32 m_size = 0;
 
 	/// Get the current machine's endianness
 	static FileOpenFlag getMachineEndianness();
-
-	/// Get the type of the file
-	ANKI_USE_RESULT Error identifyFile(const CString& filename, char* archiveFilename, PtrSize archiveFilenameSize,
-									   CString& filenameInArchive, Type& type);
 
 	/// Open a C file
 	ANKI_USE_RESULT Error openCFile(const CString& filename, FileOpenFlag flags);
@@ -144,7 +132,6 @@ private:
 	void zero()
 	{
 		m_file = nullptr;
-		m_type = Type::NONE;
 		m_flags = FileOpenFlag::NONE;
 		m_size = 0;
 	}
