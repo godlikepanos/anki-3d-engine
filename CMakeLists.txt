@@ -8,18 +8,38 @@ PROJECT(AnKi)
 # Funcs                                                                        #
 ################################################################################
 
-macro(installExecutable exe)
-	add_custom_command(TARGET ${exe} POST_BUILD
-		COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/Bin
-		COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${exe}> ${CMAKE_BINARY_DIR}/Bin)
-endmacro()
+function(anki_install_executable EXE)
+	if(NOT ANDROID)
+		add_custom_command(TARGET ${EXE} POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/Bin
+			COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${EXE}> ${CMAKE_BINARY_DIR}/Bin)
+	endif()
+endfunction()
 
-macro(addAnkiSourceFiles)
+macro(anki_add_source_files)
 	foreach(f ${ARGV})
 		set(AK_SOURCES "${AK_SOURCES} ${f}")
 	endforeach()
 
 	set(AK_SOURCES ${AK_SOURCES} PARENT_SCOPE)
+endmacro()
+
+macro(anki_new_executable)
+	if(NOT ANDROID)
+		add_executable(${ARGV})
+		anki_install_executable(${ARGV0})
+	else()
+		set(_SKIP TRUE)
+		foreach(ARG ${ARGV})
+			if(_SKIP)
+				set(_SKIP FALSE)
+			else()
+				list(APPEND _TMP_LIST ${ARG})
+			endif()
+		endforeach()
+
+		add_library(${ARGV0} SHARED ${_TMP_LIST})
+	endif()
 endmacro()
 
 ################################################################################
@@ -229,10 +249,6 @@ if((LINUX OR MACOS OR WINDOWS) AND GL)
 	set(ANKI_EXTERN_SUB_DIRS ${ANKI_EXTERN_SUB_DIRS} GLEW)
 endif()
 
-if(VULKAN)
-	set(ANKI_EXTERN_SUB_DIRS ${ANKI_EXTERN_SUB_DIRS} Volk)
-endif()
-
 # SDL
 if(SDL)
 	message("++ Configuring SDL2")
@@ -362,7 +378,6 @@ if(LINUX)
 	if(GL)
 		set(THIRD_PARTY_LIBS ${ANKI_GR_BACKEND} AnKiGlew)
 	else()
-		set(THIRD_PARTY_LIBS AnKiVolk)
 		if(SDL)
 			set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} X11-xcb)
 		else()
@@ -375,14 +390,14 @@ elseif(MACOS)
 	find_package(OpenGL REQUIRED)
 	set(THIRD_PARTY_LIBS ${OPENGL_LIBRARIES} AnKiGlew pthread)
 elseif(ANDROID)
-	set(THIRD_PARTY_LIBS GLESv3 EGL log android)
-	include_directories("${ANDROID_NDK}/sources/android/native_app_glue")
-	set(_SYS_SRC "${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c")
+	set(THIRD_PARTY_LIBS log android)
+	#include_directories("${ANDROID_NDK}/sources/android/native_app_glue")
+	#set(_SYS_SRC "${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c")
 elseif(WINDOWS)
 	if(GL)
 		set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} AnKiGlew opengl32)
 	else()
-		set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} AnKiVolk)
+		set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS})
 	endif()
 
 	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} version Imm32 Winmm DbgHelp)

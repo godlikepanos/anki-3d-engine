@@ -344,7 +344,7 @@ Error ImageLoader::loadAnkiImage(FileInterface& file, U32 maxImageSize,
 	ImageBinaryHeader header;
 	ANKI_CHECK(file.read(&header, sizeof(ImageBinaryHeader)));
 
-	if(std::memcmp(&header.m_magic[0], IMAGE_MAGIC, sizeof(IMAGE_MAGIC - 1)) != 0)
+	if(std::memcmp(&header.m_magic[0], IMAGE_MAGIC, sizeof(IMAGE_MAGIC) - 1) != 0)
 	{
 		ANKI_RESOURCE_LOGE("Wrong magic word");
 		return Error::USER_DATA;

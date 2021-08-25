@@ -16,6 +16,8 @@ namespace anki
 /// Native window implementation for Android
 class NativeWindowImpl
 {
+public:
+	ANativeWindow* m_nativeWindow = nullptr;
 };
 
 } // end namespace anki

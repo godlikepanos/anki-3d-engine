@@ -24,7 +24,16 @@ class alignas(MathSimd<T, I>::ALIGNMENT) TMat
 public:
 	using Scalar = T;
 	using Simd = typename MathSimd<T, I>::Type;
+
+#if ANKI_COMPILER_GCC_COMPATIBLE
+#	pragma GCC diagnostic push
+#	pragma GCC diagnostic ignored "-Wignored-attributes"
+#endif
 	using SimdArray = Array<Simd, J>;
+#if ANKI_COMPILER_GCC_COMPATIBLE
+#	pragma GCC diagnostic pop
+#endif
+
 	using RowVec = TVec<T, I>;
 	using ColumnVec = TVec<T, J>;
 

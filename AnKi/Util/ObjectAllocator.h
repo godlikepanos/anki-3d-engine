@@ -70,10 +70,10 @@ private:
 
 /// Convenience wrapper for ObjectAllocator.
 template<typename T, U32 T_OBJECTS_PER_CHUNK = 64, typename TIndexType = U8>
-class ObjectAllocatorSameType : public ObjectAllocator<sizeof(T), alignof(T), T_OBJECTS_PER_CHUNK, TIndexType>
+class ObjectAllocatorSameType : public ObjectAllocator<sizeof(T), U32(alignof(T)), T_OBJECTS_PER_CHUNK, TIndexType>
 {
 public:
-	using Base = ObjectAllocator<sizeof(T), alignof(T), T_OBJECTS_PER_CHUNK, TIndexType>;
+	using Base = ObjectAllocator<sizeof(T), U32(alignof(T)), T_OBJECTS_PER_CHUNK, TIndexType>;
 
 	/// Allocate and construct a new object instance.
 	/// @note Not thread-safe.

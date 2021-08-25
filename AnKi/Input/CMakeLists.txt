@@ -7,5 +7,5 @@ else()
 endif()
 
 foreach(F ${SOURCES})
-	addAnkiSourceFiles("${CMAKE_CURRENT_SOURCE_DIR}/${F}")
+	anki_add_source_files("${CMAKE_CURRENT_SOURCE_DIR}/${F}")
 endforeach()

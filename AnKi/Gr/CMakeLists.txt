@@ -9,7 +9,7 @@ set(COMMON
 	"Utils/StackGpuAllocator.cpp")
 
 foreach(S ${COMMON})
-	addAnkiSourceFiles("${CMAKE_CURRENT_SOURCE_DIR}/${S}")
+	anki_add_source_files("${CMAKE_CURRENT_SOURCE_DIR}/${S}")
 endforeach()
 
 if(VULKAN)
@@ -56,7 +56,11 @@ if(VULKAN)
 		set(VKCPP ${VKCPP} "Vulkan/GrManagerImplSdl.cpp")
 	endif()
 
+	if(ANDROID)
+	set(VKCPP ${VKCPP} "Vulkan/GrManagerImplAndroid.cpp")
+	endif()
+
 	foreach(S ${VKCPP})
-		addAnkiSourceFiles("${CMAKE_CURRENT_SOURCE_DIR}/${S}")
+		anki_add_source_files("${CMAKE_CURRENT_SOURCE_DIR}/${S}")
 	endforeach()
 endif()

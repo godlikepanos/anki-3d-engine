@@ -1,2 +1,2 @@
 file(GLOB_RECURSE SOURCES *.cpp)
-addAnkiSourceFiles(${SOURCES})
+anki_add_source_files(${SOURCES})
