@@ -216,7 +216,7 @@ else()
 	add_compile_options("/FC")
 endif()
 
-# Use gold linker
+# Use LLD or gold linker
 if(UNIX AND NOT APPLE)
 	execute_process(COMMAND ${CMAKE_C_COMPILER} -fuse-ld=lld -Wl,--version ERROR_QUIET OUTPUT_VARIABLE ld_version)
 	if("${ld_version}" MATCHES "compatible with GNU linkers" AND "${ld_version}" MATCHES "LLD")
@@ -268,6 +268,11 @@ message("++ End configuring glslang")
 foreach(TMP ${ANKI_EXTERN_SUB_DIRS})
 	add_subdirectory(ThirdParty/${TMP})
 endforeach()
+
+if(ANDROID)
+	add_library(AnKiAndroidNativeGlue ${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c)
+	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -u ANativeActivity_onCreate")
+endif()
 
 ################################################################################
 # AnKi                                                                         #
@@ -367,7 +372,9 @@ if(NOT MSVC)
 	add_definitions("-pedantic -Wno-unknown-warning-option -Wall -W -Wextra -Wstrict-aliasing -Wwrite-strings -Wunused "
 		"-Wno-unused-parameter -Wundef -Wno-ignored-attributes -Wno-implicit-fallthrough -Wunused-result "
 		"-Wconversion -Wno-sign-conversion -Wno-keyword-macro -Wno-string-conversion -Wno-class-memaccess "
-		"-Wunused-variable -std=c++14")
+		"-Wunused-variable")
+
+	set(CMAKE_CXX_STANDARD 14)
 else()
 	#add_definitions("/wd4996 /wd4244 /wd4262 /wd4267 /wd26495 /wd26439")
 	add_compile_definitions("_CRT_SECURE_NO_WARNINGS=1") # Disable some string function warnings
@@ -393,6 +400,8 @@ elseif(ANDROID)
 	set(THIRD_PARTY_LIBS log android)
 	#include_directories("${ANDROID_NDK}/sources/android/native_app_glue")
 	#set(_SYS_SRC "${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c")
+
+	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} AnKiAndroidNativeGlue)
 elseif(WINDOWS)
 	if(GL)
 		set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} AnKiGlew opengl32)

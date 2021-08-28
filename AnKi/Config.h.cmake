@@ -204,4 +204,22 @@
 #else
 #	define ANKI_INTERNAL [[deprecated("This is an AnKi internal interface. Don't use it")]]
 #endif
+
+// Define the main() function.
+#if ANKI_OS_ANDROID
+#	define ANKI_MAIN_FUNCTION(myMain) \
+	int myMain(int argc, char* argv[]); \
+	void android_main(struct android_app* app) \
+	{ \
+		char* argv[] = {"androidapp"}; \
+		myMain(1, argv); \
+	}
+#else
+#	define ANKI_MAIN_FUNCTION(myMain) \
+	int myMain(int argc, char* argv[]); \
+	int main(int argc, char* argv[]) \
+	{ \
+		return myMain(argc, argv); \
+	}
+#endif
 /// @}

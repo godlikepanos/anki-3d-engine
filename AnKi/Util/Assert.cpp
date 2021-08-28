@@ -20,17 +20,17 @@ namespace anki
 void akassert(const char* exprTxt, const char* file, int line, const char* func)
 {
 #	if ANKI_OS_ANDROID
-	__android_log_print(ANDROID_LOG_ERROR, "AnKi", "(%s:%d %s) Assertion failed: %s", file, line, func, exprTxt);
+	__android_log_print(ANDROID_LOG_ERROR, "AnKi", "Assertion failed: %s (%s:%d %s)", exprTxt, file, line, func);
 #	else
 #		if ANKI_OS_LINUX
 	if(runningFromATerminal())
 	{
-		fprintf(stderr, "\033[1;31m(%s:%d %s) Assertion failed: %s\033[0m\n", file, line, func, exprTxt);
+		fprintf(stderr, "\033[1;31mAssertion failed: %s (%s:%d %s)\033[0m\n", exprTxt, file, line, func);
 	}
 	else
 #		endif
 	{
-		fprintf(stderr, "(%s:%d %s) Assertion failed: %s\n", file, line, func, exprTxt);
+		fprintf(stderr, "Assertion failed: %s (%s:%d %s)\n", exprTxt, file, line, func);
 	}
 #	endif
 

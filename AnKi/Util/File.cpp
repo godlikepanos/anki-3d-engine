@@ -144,7 +144,7 @@ Error File::openCFile(const CString& filename, FileOpenFlag flags)
 #if ANKI_OS_ANDROID
 Error File::openAndroidFile(const CString& filename, FileOpenFlag flags)
 {
-	ANKI_ASSERT(!!(flags & FileOpenFlags::SPECIAL));
+	ANKI_ASSERT(!!(flags & FileOpenFlag::SPECIAL));
 
 	if(!!(flags & FileOpenFlag::WRITE))
 	{

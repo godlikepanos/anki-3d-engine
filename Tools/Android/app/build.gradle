@@ -4,23 +4,54 @@ android {
     compileSdkVersion 30
     ndkVersion "22.1.7171670"
     defaultConfig {
-        applicationId "org.anki.sponza"
+        applicationId "org.anki.%TARGET%"
         minSdkVersion 24
         targetSdkVersion 30
-        versionCode 1
-        versionName "0.0.1"
+        archivesBaseName = "$applicationId"
+    }
 
-        externalNativeBuild {
-            cmake {
-                // armeabi is not supported, not building for mips in samples
-                abiFilters "arm64-v8a"
-                arguments "-DANDROID_TOOLCHAIN=clang", "-DANDROID_STL=c++_static"//, "-DPYTHON_EXECUTABLE:FILEPATH=C:\\Users\\pancha01\\AppData\\Local\\Programs\\Python\\Python39\\python.exe"
-                version "3.12+"
-                targets "Sponza"
+    buildTypes {
+        debug {
+            externalNativeBuild {
+                cmake {
+                    abiFilters "arm64-v8a"
+                    arguments "-DANDROID_TOOLCHAIN=clang",
+                            "-DANDROID_STL=c++_static",
+                            "-DCMAKE_BUILD_TYPE=Debug",
+                            "-DANKI_EXTRA_CHECKS=ON",
+                            "-DPYTHON_EXECUTABLE:FILEPATH=%PYTHON%"
+                    version "3.12+"
+                    targets "%TARGET%"
+                }
+            }
+
+            debuggable true
+            jniDebuggable true
+        }
+
+        release {
+            externalNativeBuild {
+                cmake {
+                    abiFilters "arm64-v8a"
+                    arguments "-DANDROID_TOOLCHAIN=clang",
+                            "-DANDROID_STL=c++_static",
+                            "-DCMAKE_BUILD_TYPE=Release",
+                            "-DANKI_EXTRA_CHECKS=OFF",
+                            "-DPYTHON_EXECUTABLE:FILEPATH=%PYTHON%"
+                    version "3.12+"
+                    targets "%TARGET%"
+                }
             }
         }
     }
-    externalNativeBuild.cmake.path '../../../CMakeLists.txt'
+
+    externalNativeBuild.cmake.path "%CMAKE%"
     buildTypes.release.minifyEnabled = false
+
+    sourceSets {
+        main {
+            assets.srcDirs = ["../assets"]
+        }
+    }
 }
 
