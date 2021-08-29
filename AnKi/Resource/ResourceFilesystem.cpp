@@ -241,6 +241,11 @@ Error ResourceFilesystem::init(const ConfigSet& config, const CString& cacheDir)
 		return Error::USER_DATA;
 	}
 
+#if ANKI_OS_ANDROID
+	// Add the files of the .apk
+	ANKI_CHECK(addNewPath("*special*"));
+#endif
+
 	for(auto& path : paths)
 	{
 		ANKI_CHECK(addNewPath(path.toCString()));
@@ -263,7 +268,7 @@ void ResourceFilesystem::addCachePath(const CString& path)
 Error ResourceFilesystem::addNewPath(const CString& path)
 {
 	U32 fileCount = 0;
-	static const CString extension(".AnKiZLibip");
+	static const CString extension(".ankizip");
 
 	auto pos = path.find(extension);
 	if(pos != CString::NPOS && pos == path.getLength() - extension.getLength())
@@ -312,6 +317,30 @@ Error ResourceFilesystem::addNewPath(const CString& path)
 
 		m_paths.emplaceFront(m_alloc, std::move(p));
 		unzClose(zfile);
+	}
+	else if(path == "*special*")
+	{
+		// Android apk, read the file that contains the directory structure
+
+		File dirStructure;
+		ANKI_CHECK(dirStructure.open("DirStructure.txt", FileOpenFlag::READ | FileOpenFlag::SPECIAL));
+
+		StringAuto txt(m_alloc);
+		ANKI_CHECK(dirStructure.readAllText(txt));
+
+		m_paths.emplaceFront(m_alloc, Path());
+		Path& p = m_paths.getFront();
+		p.m_path.sprintf(m_alloc, "%s", &path[0]);
+		p.m_isArchive = false;
+		p.m_isSpecial = true;
+
+		p.m_files.splitString(m_alloc, txt, '\n');
+
+		if(p.m_files.getSize() < 1)
+		{
+			ANKI_RESOURCE_LOGE("DirStructure.txt is empty");
+			return Error::USER_DATA;
+		}
 	}
 	else
 	{
@@ -406,7 +435,13 @@ Error ResourceFilesystem::openFile(const ResourceFilename& filename, ResourceFil
 					CResourceFile* file = m_alloc.newInstance<CResourceFile>(m_alloc);
 					rfile = file;
 
-					err = file->m_file.open(&newFname[0], FileOpenFlag::READ);
+					FileOpenFlag fopenFlags = FileOpenFlag::READ;
+					if(p.m_isSpecial)
+					{
+						fopenFlags |= FileOpenFlag::SPECIAL;
+					}
+
+					err = file->m_file.open(&newFname[0], fopenFlags);
 
 #if 0
 					printf("Opening asset %s\n", &newFname[0]);

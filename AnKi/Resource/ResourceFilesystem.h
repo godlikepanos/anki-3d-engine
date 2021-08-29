@@ -111,6 +111,7 @@ private:
 		String m_path; ///< A directory or an archive.
 		Bool m_isArchive = false;
 		Bool m_isCache = false;
+		Bool m_isSpecial = false;
 
 		Path() = default;
 

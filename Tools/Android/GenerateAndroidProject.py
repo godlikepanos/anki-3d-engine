@@ -73,6 +73,15 @@ def main():
     os.symlink(os.path.join(this_script_dir, "../../EngineAssets"), os.path.join(project_dir, "assets/EngineAssets"))
     os.symlink(ctx.asserts_dir, os.path.join(project_dir, "assets/Assets"))
 
+    # Write the asset directory structure to a file
+    dir_structure_file = open(os.path.join(assets_dir, "DirStructure.txt"), "w")
+    for root, dirs, files in os.walk(assets_dir, followlinks=True):
+        for f in files:
+            filename = os.path.join(root, f)
+            filename = filename.replace(assets_dir + "/", "")
+            dir_structure_file.write("%s\n" % filename)
+    dir_structure_file.close()
+
     # strings.xml
     replace_in_file(os.path.join(project_dir, "app/src/main/res/values/strings.xml"), "%APP_NAME%", ctx.target)
 
