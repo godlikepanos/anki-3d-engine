@@ -609,12 +609,42 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 			else if(extensionName == VK_KHR_PIPELINE_EXECUTABLE_PROPERTIES_EXTENSION_NAME
 					&& init.m_config->getBool("core_displayStats"))
 			{
-				m_extensions |= VulkanExtensions::PIPELINE_EXECUTABLE_PROPERTIES;
+				m_extensions |= VulkanExtensions::KHR_PIPELINE_EXECUTABLE_PROPERTIES;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
 			else if(extensionName == VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME
 					&& init.m_config->getBool("gr_debugPrintf"))
 			{
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
+			}
+			else if(extensionName == VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::EXT_DESCRIPTOR_INDEXING;
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
+			}
+			else if(extensionName == VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::KHR_BUFFER_DEVICE_ADDRESS;
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
+			}
+			else if(extensionName == VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::EXT_SCALAR_BLOCK_LAYOUT;
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
+			}
+			else if(extensionName == VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::KHR_TIMELINE_SEMAPHORE;
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
+			}
+			else if(extensionName == VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::KHR_SHADER_FLOAT16_INT8;
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
+			}
+			else if(extensionName == VK_KHR_SHADER_ATOMIC_INT64_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::KHR_SHADER_ATOMIC_INT64;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
 		}
@@ -642,100 +672,116 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 		ci.pEnabledFeatures = &m_devFeatures;
 	}
 
-	// Enable 1.1 features
+	// Descriptor indexing
+	if(!(m_extensions & VulkanExtensions::EXT_DESCRIPTOR_INDEXING))
 	{
-		m_11Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
-
-		VkPhysicalDeviceFeatures2 features = {};
-		features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-		features.pNext = &m_11Features;
-		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
-
-		if(!m_11Features.storageBuffer16BitAccess || !m_11Features.uniformAndStorageBuffer16BitAccess)
-		{
-			ANKI_VK_LOGE("16bit buffer access is not supported");
-			return Error::FUNCTION_FAILED;
-		}
-
-		// Disable a few things
-		m_11Features.storagePushConstant16 = false; // Because AMD doesn't support it
-		m_11Features.protectedMemory = false;
-		m_11Features.multiview = false;
-		m_11Features.multiviewGeometryShader = false;
-		m_11Features.multiviewTessellationShader = false;
-		m_11Features.samplerYcbcrConversion = false;
-
-		m_11Features.pNext = const_cast<void*>(ci.pNext);
-		ci.pNext = &m_11Features;
+		ANKI_VK_LOGE("Descriptor indexing is not supported");
+		return Error::FUNCTION_FAILED;
 	}
-
-	// Enable a few 1.2 features
+	else
 	{
-		m_12Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+		m_descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
 
 		VkPhysicalDeviceFeatures2 features = {};
 		features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-		features.pNext = &m_12Features;
-
+		features.pNext = &m_descriptorIndexingFeatures;
 		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
 
-		// Descriptor indexing
-		if(!m_12Features.shaderSampledImageArrayNonUniformIndexing
-		   || !m_12Features.shaderStorageImageArrayNonUniformIndexing)
+		if(!m_descriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing
+		   || !m_descriptorIndexingFeatures.shaderStorageImageArrayNonUniformIndexing)
 		{
 			ANKI_VK_LOGE("Non uniform indexing is not supported by the device");
 			return Error::FUNCTION_FAILED;
 		}
 
-		if(!m_12Features.descriptorBindingSampledImageUpdateAfterBind
-		   || !m_12Features.descriptorBindingStorageImageUpdateAfterBind)
+		if(!m_descriptorIndexingFeatures.descriptorBindingSampledImageUpdateAfterBind
+		   || !m_descriptorIndexingFeatures.descriptorBindingStorageImageUpdateAfterBind)
 		{
 			ANKI_VK_LOGE("Update descriptors after bind is not supported by the device");
 			return Error::FUNCTION_FAILED;
 		}
 
-		if(!m_12Features.descriptorBindingUpdateUnusedWhilePending)
+		if(!m_descriptorIndexingFeatures.descriptorBindingUpdateUnusedWhilePending)
 		{
 			ANKI_VK_LOGE("Update descriptors while cmd buffer is pending is not supported by the device");
 			return Error::FUNCTION_FAILED;
 		}
 
-		// Buffer address
-		if(!!(m_extensions & VulkanExtensions::KHR_RAY_TRACING))
-		{
-			if(!m_12Features.bufferDeviceAddress)
-			{
-				ANKI_VK_LOGE("Buffer device address is not supported by the device");
-				return Error::FUNCTION_FAILED;
-			}
+		m_descriptorIndexingFeatures.pNext = const_cast<void*>(ci.pNext);
+		ci.pNext = &m_descriptorIndexingFeatures;
+	}
 
-			m_12Features.bufferDeviceAddressCaptureReplay =
-				m_12Features.bufferDeviceAddressCaptureReplay && init.m_config->getBool("gr_debugMarkers");
-			m_12Features.bufferDeviceAddressMultiDevice = false;
-		}
-		else
-		{
-			m_12Features.bufferDeviceAddress = false;
-			m_12Features.bufferDeviceAddressCaptureReplay = false;
-			m_12Features.bufferDeviceAddressMultiDevice = false;
-		}
+	// Buffer address
+	if(!(m_extensions & VulkanExtensions::KHR_BUFFER_DEVICE_ADDRESS))
+	{
+		ANKI_VK_LOGE("Device buffer access extension is not supported");
+		return Error::FUNCTION_FAILED;
+	}
+	else
+	{
+		m_deviceBufferFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_KHR;
 
-		// Scalar block layout
-		if(!m_12Features.scalarBlockLayout)
+		VkPhysicalDeviceFeatures2 features = {};
+		features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+		features.pNext = &m_deviceBufferFeatures;
+		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
+
+		m_deviceBufferFeatures.bufferDeviceAddressCaptureReplay =
+			m_deviceBufferFeatures.bufferDeviceAddressCaptureReplay && init.m_config->getBool("gr_debugMarkers");
+		m_deviceBufferFeatures.bufferDeviceAddressMultiDevice = false;
+
+		m_deviceBufferFeatures.pNext = const_cast<void*>(ci.pNext);
+		ci.pNext = &m_deviceBufferFeatures;
+	}
+
+	// Scalar block layout
+	if(!(m_extensions & VulkanExtensions::EXT_SCALAR_BLOCK_LAYOUT))
+	{
+		ANKI_VK_LOGE("Scalar block layout extension is not supported");
+		return Error::FUNCTION_FAILED;
+	}
+	else
+	{
+		m_scalarBlockLayout.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES_EXT;
+
+		VkPhysicalDeviceFeatures2 features = {};
+		features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+		features.pNext = &m_scalarBlockLayout;
+		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
+
+		if(!m_scalarBlockLayout.scalarBlockLayout)
 		{
 			ANKI_VK_LOGE("Scalar block layout is not supported by the device");
 			return Error::FUNCTION_FAILED;
 		}
 
-		// Timeline semaphores
-		if(!m_12Features.timelineSemaphore)
+		m_scalarBlockLayout.pNext = const_cast<void*>(ci.pNext);
+		ci.pNext = &m_scalarBlockLayout;
+	}
+
+	// Timeline semaphore
+	if(!(m_extensions & VulkanExtensions::KHR_TIMELINE_SEMAPHORE))
+	{
+		ANKI_VK_LOGE("Timeline semaphore extension is not supported");
+		return Error::FUNCTION_FAILED;
+	}
+	else
+	{
+		m_timelineSemaphoreFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES_KHR;
+
+		VkPhysicalDeviceFeatures2 features = {};
+		features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+		features.pNext = &m_timelineSemaphoreFeatures;
+		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
+
+		if(!m_timelineSemaphoreFeatures.timelineSemaphore)
 		{
 			ANKI_VK_LOGE("Timeline semaphores are not supported by the device");
 			return Error::FUNCTION_FAILED;
 		}
 
-		m_12Features.pNext = const_cast<void*>(ci.pNext);
-		ci.pNext = &m_12Features;
+		m_timelineSemaphoreFeatures.pNext = const_cast<void*>(ci.pNext);
+		ci.pNext = &m_timelineSemaphoreFeatures;
 	}
 
 	// Set RT features
@@ -773,7 +819,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	}
 
 	// Pipeline features
-	if(!!(m_extensions & VulkanExtensions::PIPELINE_EXECUTABLE_PROPERTIES))
+	if(!!(m_extensions & VulkanExtensions::KHR_PIPELINE_EXECUTABLE_PROPERTIES))
 	{
 		m_pplineExecutablePropertiesFeatures.sType =
 			VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_EXECUTABLE_PROPERTIES_FEATURES_KHR;
@@ -781,6 +827,44 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 
 		m_pplineExecutablePropertiesFeatures.pNext = const_cast<void*>(ci.pNext);
 		ci.pNext = &m_pplineExecutablePropertiesFeatures;
+	}
+
+	// F16 I8
+	if(!(m_extensions & VulkanExtensions::KHR_SHADER_FLOAT16_INT8))
+	{
+		ANKI_VK_LOGE("FP16/Int8 extension is not supported");
+		return Error::FUNCTION_FAILED;
+	}
+	else
+	{
+		m_float16Int8Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR;
+
+		VkPhysicalDeviceFeatures2 features = {};
+		features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+		features.pNext = &m_float16Int8Features;
+		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
+
+		m_float16Int8Features.pNext = const_cast<void*>(ci.pNext);
+		ci.pNext = &m_float16Int8Features;
+	}
+
+	// 64bit atomics
+	if(!(m_extensions & VulkanExtensions::KHR_SHADER_ATOMIC_INT64))
+	{
+		ANKI_VK_LOGE("64bit atomics are not supported");
+		return Error::FUNCTION_FAILED;
+	}
+	else
+	{
+		m_atomicInt64Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_INT64_FEATURES_KHR;
+
+		VkPhysicalDeviceFeatures2 features = {};
+		features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+		features.pNext = &m_atomicInt64Features;
+		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
+
+		m_atomicInt64Features.pNext = const_cast<void*>(ci.pNext);
+		ci.pNext = &m_atomicInt64Features;
 	}
 
 	ANKI_VK_CHECK(vkCreateDevice(m_physicalDevice, &ci, nullptr, &m_device));
@@ -842,7 +926,7 @@ Error GrManagerImpl::initMemory(const ConfigSet& cfg)
 	}
 
 	m_gpuMemManager.init(m_physicalDevice, m_device, getAllocator(),
-						 !!(m_extensions & VulkanExtensions::KHR_RAY_TRACING));
+						 !!(m_extensions & VulkanExtensions::KHR_BUFFER_DEVICE_ADDRESS));
 
 	return Error::NONE;
 }
@@ -1269,7 +1353,7 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 		ANKI_CHECK(m_shaderStatsFile.flush());
 	}
 
-	if(!!(m_extensions & VulkanExtensions::PIPELINE_EXECUTABLE_PROPERTIES))
+	if(!!(m_extensions & VulkanExtensions::KHR_PIPELINE_EXECUTABLE_PROPERTIES))
 	{
 		StringListAuto log(m_alloc);
 

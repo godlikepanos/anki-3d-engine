@@ -250,9 +250,13 @@ private:
 	VkPhysicalDeviceAccelerationStructureFeaturesKHR m_accelerationStructureFeatures = {};
 	VkPhysicalDeviceRayTracingPipelineFeaturesKHR m_rtPipelineFeatures = {};
 	VkPhysicalDeviceRayQueryFeaturesKHR m_rayQueryFeatures = {};
-	VkPhysicalDeviceVulkan11Features m_11Features = {};
-	VkPhysicalDeviceVulkan12Features m_12Features = {};
 	VkPhysicalDevicePipelineExecutablePropertiesFeaturesKHR m_pplineExecutablePropertiesFeatures = {};
+	VkPhysicalDeviceDescriptorIndexingFeatures m_descriptorIndexingFeatures = {};
+	VkPhysicalDeviceBufferDeviceAddressFeaturesKHR m_deviceBufferFeatures = {};
+	VkPhysicalDeviceScalarBlockLayoutFeaturesEXT m_scalarBlockLayout = {};
+	VkPhysicalDeviceTimelineSemaphoreFeaturesKHR m_timelineSemaphoreFeatures = {};
+	VkPhysicalDeviceShaderFloat16Int8FeaturesKHR m_float16Int8Features = {};
+	VkPhysicalDeviceShaderAtomicInt64FeaturesKHR m_atomicInt64Features = {};
 
 	PFN_vkDebugMarkerSetObjectNameEXT m_pfnDebugMarkerSetObjectNameEXT = nullptr;
 	PFN_vkCmdDebugMarkerBeginEXT m_pfnCmdDebugMarkerBeginEXT = nullptr;
