@@ -12,10 +12,10 @@ Error NativeWindow::init(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 {
 	ANKI_CORE_LOGI("Initializing Android window");
 
+	m_alloc = alloc;
 	m_impl = m_alloc.newInstance<NativeWindowImpl>();
 
 	// Loop until the window is ready
-	extern android_app* g_androidApp;
 	while(g_androidApp->window == nullptr)
 	{
 		int ident;
@@ -33,6 +33,10 @@ Error NativeWindow::init(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 	}
 
 	m_impl->m_nativeWindow = g_androidApp->window;
+
+	// Set some stuff
+	m_width = ANativeWindow_getWidth(g_androidApp->window);
+	m_height = ANativeWindow_getHeight(g_androidApp->window);
 
 	return Error::NONE;
 }

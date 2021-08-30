@@ -18,8 +18,6 @@ namespace anki
 {
 
 #if ANKI_OS_ANDROID
-extern android_app* g_androidApp;
-
 #	define ANKI_AFILE static_cast<AAsset*>(m_file)
 #endif
 

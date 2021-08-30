@@ -511,7 +511,7 @@ Error App::initDirs(const ConfigSet& cfg)
 
 	m_settingsDir.sprintf(m_heapAlloc, "%s/.anki", &home[0]);
 #else
-	m_settingsDir.sprintf(m_heapAlloc, "%s/.anki", "/sdcard");
+	m_settingsDir.sprintf(m_heapAlloc, "%s/.anki", g_androidApp->activity->internalDataPath);
 #endif
 
 	if(!directoryExists(m_settingsDir.toCString()))

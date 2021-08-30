@@ -91,6 +91,9 @@ def main():
     replace_in_file(build_gradle, "%PYTHON%", sys.executable)
     replace_in_file(build_gradle, "%CMAKE%", os.path.join(this_script_dir, "../../CMakeLists.txt"))
 
+    # Manifest
+    replace_in_file(os.path.join(project_dir, "app/src/main/AndroidManifest.xml"), "%TARGET%", ctx.target)
+
     # Done
     print("Generated project: %s" % project_dir)
 
