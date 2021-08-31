@@ -45,7 +45,8 @@ enum class ImageBinaryDataCompression : U32
 	NONE,
 	RAW = 1 << 0,
 	S3TC = 1 << 1,
-	ETC = 1 << 2
+	ETC = 1 << 2,
+	ASTC = 1 << 3
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ImageBinaryDataCompression)
 

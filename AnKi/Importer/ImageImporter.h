@@ -29,6 +29,8 @@ public:
 	Bool m_noAlpha = true;
 	CString m_tempDirectory;
 	CString m_compressonatorPath; ///< Optional.
+	CString m_astcencPath; ///< Optional.
+	UVec2 m_astcBlockSize = UVec2(8u);
 };
 
 /// Converts images to AnKi's specific format.

@@ -20,10 +20,12 @@ class SurfaceOrVolumeData
 public:
 	DynamicArrayAuto<U8, PtrSize> m_pixels;
 	DynamicArrayAuto<U8, PtrSize> m_s3tcPixels;
+	DynamicArrayAuto<U8, PtrSize> m_astcPixels;
 
 	SurfaceOrVolumeData(GenericMemoryPoolAllocator<U8> alloc)
 		: m_pixels(alloc)
 		, m_s3tcPixels(alloc)
+		, m_astcPixels(alloc)
 	{
 	}
 };
@@ -94,6 +96,42 @@ public:
 	U32 m_dwCaps3;
 	U32 m_dwCaps4;
 	U32 m_dwReserved2;
+};
+
+class AstcHeader
+{
+public:
+	Array<U8, 4> m_magic;
+	U8 m_blockX;
+	U8 m_blockY;
+	U8 m_blockZ;
+	Array<U8, 3> m_dimX;
+	Array<U8, 3> m_dimY;
+	Array<U8, 3> m_dimZ;
+};
+
+/// Simple class to delete a file when it goes out of scope.
+class CleanupFile
+{
+public:
+	StringAuto m_fileToDelete;
+
+	CleanupFile(GenericMemoryPoolAllocator<U8> alloc, CString filename)
+		: m_fileToDelete(alloc, filename)
+	{
+	}
+
+	~CleanupFile()
+	{
+		if(!m_fileToDelete.isEmpty())
+		{
+			const int err = std::remove(m_fileToDelete.cstr());
+			if(err)
+			{
+				ANKI_IMPORTER_LOGE("Couldn't delete file: %s", m_fileToDelete.cstr());
+			}
+		}
+	}
 };
 
 } // namespace
@@ -297,29 +335,6 @@ static ANKI_USE_RESULT Error compressS3tc(GenericMemoryPoolAllocator<U8> alloc, 
 	ANKI_ASSERT(inWidth > 0 && isPowerOfTwo(inWidth) && inHeight > 0 && isPowerOfTwo(inHeight));
 	ANKI_ASSERT(outPixels.getSizeInBytes() == PtrSize((channelCount == 3) ? 8 : 16) * (inWidth / 4) * (inHeight / 4));
 
-	class CleanupFile
-	{
-	public:
-		StringAuto m_fileToDelete;
-
-		CleanupFile(GenericMemoryPoolAllocator<U8> alloc, CString filename)
-			: m_fileToDelete(alloc, filename)
-		{
-		}
-
-		~CleanupFile()
-		{
-			if(!m_fileToDelete.isEmpty())
-			{
-				const int err = std::remove(m_fileToDelete.cstr());
-				if(err)
-				{
-					ANKI_IMPORTER_LOGE("Couldn't delete file: %s", m_fileToDelete.cstr());
-				}
-			}
-		}
-	};
-
 	// Create a BMP image to feed to the compressor
 	StringAuto bmpFilename(alloc);
 	bmpFilename.sprintf("%s/AnKiImageImporter_%u.bmp", tempDirectory.cstr(), U32(std::rand()));
@@ -396,6 +411,106 @@ static ANKI_USE_RESULT Error compressS3tc(GenericMemoryPoolAllocator<U8> alloc, 
 	return Error::NONE;
 }
 
+static ANKI_USE_RESULT Error compressAstc(GenericMemoryPoolAllocator<U8> alloc, CString tempDirectory,
+										  CString astcencPath, ConstWeakArray<U8, PtrSize> inPixels, U32 inWidth,
+										  U32 inHeight, UVec2 blockSize, WeakArray<U8, PtrSize> outPixels)
+{
+	const PtrSize blockBytes = 16;
+	const PtrSize channelCount = 4;
+	ANKI_ASSERT(inPixels.getSizeInBytes() == PtrSize(inWidth) * inHeight * channelCount);
+	ANKI_ASSERT(inWidth > 0 && isPowerOfTwo(inWidth) && inHeight > 0 && isPowerOfTwo(inHeight));
+	ANKI_ASSERT(outPixels.getSizeInBytes() == blockBytes * (inWidth / blockSize.x()) * (inHeight / blockSize.y()));
+
+	// Create a BMP image to feed to the astcebc
+	StringAuto bmpFilename(alloc);
+	bmpFilename.sprintf("%s/AnKiImageImporter_%u.bmp", tempDirectory.cstr(), U32(std::rand()));
+	if(!stbi_write_bmp(bmpFilename.cstr(), inWidth, inHeight, channelCount, inPixels.getBegin()))
+	{
+		ANKI_IMPORTER_LOGE("STB failed to create: %s", bmpFilename.cstr());
+		return Error::FUNCTION_FAILED;
+	}
+	CleanupFile bmpCleanup(alloc, bmpFilename);
+
+	// Invoke the compressor process
+	StringAuto astcFilename(alloc);
+	astcFilename.sprintf("%s/AnKiImageImporter_%u.astc", tempDirectory.cstr(), U32(std::rand()));
+	StringAuto blockStr(alloc);
+	blockStr.sprintf("%ux%u", blockSize.x(), blockSize.y());
+	Process proc;
+	Array<CString, 5> args;
+	U32 argCount = 0;
+	args[argCount++] = "-cl";
+	args[argCount++] = bmpFilename;
+	args[argCount++] = astcFilename;
+	args[argCount++] = blockStr;
+	args[argCount++] = "-fast";
+
+	ANKI_CHECK(
+		proc.start("astcenc-avx2", args,
+				   (astcencPath.isEmpty()) ? ConstWeakArray<CString>() : Array<CString, 2>{{"PATH", astcencPath}}));
+
+	CleanupFile astcCleanup(alloc, astcFilename);
+	ProcessStatus status;
+	I32 exitCode;
+	ANKI_CHECK(proc.wait(60.0, &status, &exitCode));
+
+	if(status != ProcessStatus::NORMAL_EXIT || exitCode != 0)
+	{
+		StringAuto errStr(alloc);
+		if(exitCode != 0)
+		{
+			ANKI_CHECK(proc.readFromStdout(errStr));
+		}
+
+		if(errStr.isEmpty())
+		{
+			errStr = "Unknown error";
+		}
+
+		ANKI_IMPORTER_LOGE("Invoking astcenc-avx2 process failed: %s", errStr.cstr());
+		return Error::FUNCTION_FAILED;
+	}
+
+	// Read the astc file
+	File astcFile;
+	ANKI_CHECK(astcFile.open(astcFilename, FileOpenFlag::READ | FileOpenFlag::BINARY));
+	AstcHeader header;
+	ANKI_CHECK(astcFile.read(&header, sizeof(header)));
+
+	auto unpackBytes = [](U8 a, U8 b, U8 c, U8 d) -> U32 {
+		return (U32(a)) + (U32(b) << 8) + (U32(c) << 16) + (U32(d) << 24);
+	};
+
+	const U32 magicval = unpackBytes(header.m_magic[0], header.m_magic[1], header.m_magic[2], header.m_magic[3]);
+	if(magicval != 0x5CA1AB13)
+	{
+		ANKI_IMPORTER_LOGE("astcenc-avx2 produced a file with wrong magic");
+		return Error::FUNCTION_FAILED;
+	}
+
+	const U32 blockx = max<U32>(header.m_blockX, 1u);
+	const U32 blocky = max<U32>(header.m_blockY, 1u);
+	const U32 blockz = max<U32>(header.m_blockZ, 1u);
+	if(blockx != blockSize.x() || blocky != blockSize.y() || blockz != 1)
+	{
+		ANKI_IMPORTER_LOGE("astcenc-avx2 with wrong block size");
+		return Error::FUNCTION_FAILED;
+	}
+
+	const U32 dimx = unpackBytes(header.m_dimX[0], header.m_dimX[1], header.m_dimX[2], 0);
+	const U32 dimy = unpackBytes(header.m_dimY[0], header.m_dimY[1], header.m_dimY[2], 0);
+	const U32 dimz = unpackBytes(header.m_dimZ[0], header.m_dimZ[1], header.m_dimZ[2], 0);
+	if(dimx != inWidth || dimy != inHeight || dimz != 1)
+	{
+		ANKI_IMPORTER_LOGE("astcenc-avx2 with wrong image size");
+		return Error::FUNCTION_FAILED;
+	}
+
+	ANKI_CHECK(astcFile.read(outPixels.getBegin(), outPixels.getSizeInBytes()));
+
+	return Error::NONE;
+}
+
 static ANKI_USE_RESULT Error storeAnkiImage(const ImageImporterConfig& config, const ImageImporterContext& ctx)
 {
 	File outFile;
@@ -444,6 +559,24 @@ static ANKI_USE_RESULT Error storeAnkiImage(const ImageImporterConfig& config, c
 				{
 					const U32 idx = l * ctx.m_faceCount + f;
 					const ConstWeakArray<U8, PtrSize> pixels = ctx.m_mipmaps[mip].m_surfacesOrVolume[idx].m_s3tcPixels;
+					ANKI_CHECK(outFile.write(&pixels[0], pixels.getSizeInBytes()));
+				}
+			}
+		}
+	}
+
+	// Write ASTC
+	if(!!(config.m_compressions & ImageBinaryDataCompression::ASTC))
+	{
+		// for(I32 mip = I32(ctx.m_mipmaps.getSize()) - 1; mip >= 0; --mip)
+		for(U32 mip = 0; mip < ctx.m_mipmaps.getSize(); ++mip)
+		{
+			for(U32 l = 0; l < ctx.m_layerCount; ++l)
+			{
+				for(U32 f = 0; f < ctx.m_faceCount; ++f)
+				{
+					const U32 idx = l * ctx.m_faceCount + f;
+					const ConstWeakArray<U8, PtrSize> pixels = ctx.m_mipmaps[mip].m_surfacesOrVolume[idx].m_astcPixels;
 					ANKI_CHECK(outFile.write(&pixels[0], pixels.getSizeInBytes()));
 				}
 			}
@@ -557,6 +690,33 @@ static ANKI_USE_RESULT Error importImageInternal(const ImageImporterConfig& conf
 					ANKI_CHECK(compressS3tc(alloc, config.m_tempDirectory, config.m_compressonatorPath,
 											ConstWeakArray<U8, PtrSize>(surface.m_pixels), width, height,
 											ctx.m_channelCount, WeakArray<U8, PtrSize>(surface.m_s3tcPixels)));
+				}
+			}
+		}
+	}
+
+	if(!!(config.m_compressions & ImageBinaryDataCompression::ASTC))
+	{
+		for(U32 mip = 0; mip < mipCount; ++mip)
+		{
+			for(U32 l = 0; l < ctx.m_layerCount; ++l)
+			{
+				for(U32 f = 0; f < ctx.m_faceCount; ++f)
+				{
+					const U32 idx = l * ctx.m_faceCount + f;
+					SurfaceOrVolumeData& surface = ctx.m_mipmaps[mip].m_surfacesOrVolume[idx];
+
+					const U32 width = ctx.m_width >> mip;
+					const U32 height = ctx.m_height >> mip;
+					const PtrSize blockSize = 16;
+					const PtrSize astcImageSize =
+						blockSize * (width / config.m_astcBlockSize.x()) * (height / config.m_astcBlockSize.y());
+
+					surface.m_astcPixels.create(astcImageSize);
+
+					ANKI_CHECK(compressAstc(alloc, config.m_tempDirectory, config.m_astcencPath,
+											ConstWeakArray<U8, PtrSize>(surface.m_pixels), width, height,
+											config.m_astcBlockSize, WeakArray<U8, PtrSize>(surface.m_astcPixels)));
 				}
 			}
 		}
