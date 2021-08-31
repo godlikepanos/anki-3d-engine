@@ -44,6 +44,7 @@ def parse_commandline():
 
 
 def replace_in_file(filename, to_replace, to_replace_with):
+    to_replace_with = to_replace_with.replace("\\", "\\\\")
     with fileinput.FileInput(filename, inplace=True) as file:
         for line in file:
             print(line.replace(to_replace, to_replace_with), end="")
