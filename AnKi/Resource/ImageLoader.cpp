@@ -16,7 +16,7 @@ static const U8 tgaHeaderCompressed[12] = {0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 /// Get the size in bytes of a single surface
 static PtrSize calcSurfaceSize(const U32 width32, const U32 height32, const ImageBinaryDataCompression comp,
-							   const ImageBinaryColorFormat cf)
+							   const ImageBinaryColorFormat cf, UVec2 astcBlockSize)
 {
 	const PtrSize width = width32;
 	const PtrSize height = height32;
@@ -34,6 +34,9 @@ static PtrSize calcSurfaceSize(const U32 width32, const U32 height32, const Imag
 		break;
 	case ImageBinaryDataCompression::ETC:
 		out = (width / 4) * (height / 4) * 8;
+		break;
+	case ImageBinaryDataCompression::ASTC:
+		out = (width / astcBlockSize.x()) * (height / astcBlockSize.y()) * 16;
 		break;
 	default:
 		ANKI_ASSERT(0);
@@ -97,7 +100,9 @@ static PtrSize calcSizeOfSegment(const ImageBinaryHeader& header, ImageBinaryDat
 
 		while(mips-- != 0)
 		{
-			out += calcSurfaceSize(width, height, comp, header.m_colorFormat) * surfCountPerMip;
+			out += calcSurfaceSize(width, height, comp, header.m_colorFormat,
+								   UVec2(header.m_astcBlockSizeX, header.m_astcBlockSizeY))
+				   * surfCountPerMip;
 
 			width /= 2;
 			height /= 2;
@@ -375,12 +380,22 @@ Error ImageLoader::loadAnkiImage(FileInterface& file, U32 maxImageSize,
 		return Error::USER_DATA;
 	}
 
-	if((header.m_compressionMask & preferredCompression) == ImageBinaryDataCompression::NONE)
+	if(!!(header.m_compressionMask & ImageBinaryDataCompression::ASTC))
+	{
+		if((header.m_astcBlockSizeX != 8 && header.m_astcBlockSizeX != 4)
+		   || (header.m_astcBlockSizeY != 8 && header.m_astcBlockSizeY != 4))
+		{
+			ANKI_RESOURCE_LOGE("Incorrect header: ASTC block size");
+			return Error::USER_DATA;
+		}
+	}
+
+	if(!(header.m_compressionMask & preferredCompression))
 	{
 		// Fallback
 		preferredCompression = ImageBinaryDataCompression::RAW;
 
-		if((header.m_compressionMask & preferredCompression) == ImageBinaryDataCompression::NONE)
+		if(!(header.m_compressionMask & preferredCompression))
 		{
 			ANKI_RESOURCE_LOGE("File does not contain raw compression");
 			return Error::USER_DATA;
@@ -424,6 +439,7 @@ Error ImageLoader::loadAnkiImage(FileInterface& file, U32 maxImageSize,
 	//
 	// Move file pointer
 	//
+	PtrSize skipSize = 0;
 
 	if(preferredCompression == ImageBinaryDataCompression::RAW)
 	{
@@ -431,25 +447,50 @@ Error ImageLoader::loadAnkiImage(FileInterface& file, U32 maxImageSize,
 	}
 	else if(preferredCompression == ImageBinaryDataCompression::S3TC)
 	{
-		if((header.m_compressionMask & ImageBinaryDataCompression::RAW) != ImageBinaryDataCompression::NONE)
+		if(!!(header.m_compressionMask & ImageBinaryDataCompression::RAW))
 		{
 			// If raw compression is present then skip it
-			ANKI_CHECK(file.seek(calcSizeOfSegment(header, ImageBinaryDataCompression::RAW), FileSeekOrigin::CURRENT));
+			skipSize += calcSizeOfSegment(header, ImageBinaryDataCompression::RAW);
 		}
 	}
 	else if(preferredCompression == ImageBinaryDataCompression::ETC)
 	{
-		if((header.m_compressionMask & ImageBinaryDataCompression::RAW) != ImageBinaryDataCompression::NONE)
+		if(!!(header.m_compressionMask & ImageBinaryDataCompression::RAW))
 		{
 			// If raw compression is present then skip it
-			ANKI_CHECK(file.seek(calcSizeOfSegment(header, ImageBinaryDataCompression::RAW), FileSeekOrigin::CURRENT));
+			skipSize += calcSizeOfSegment(header, ImageBinaryDataCompression::RAW);
 		}
 
-		if((header.m_compressionMask & ImageBinaryDataCompression::S3TC) != ImageBinaryDataCompression::NONE)
+		if(!!(header.m_compressionMask & ImageBinaryDataCompression::S3TC))
 		{
 			// If s3tc compression is present then skip it
-			ANKI_CHECK(file.seek(calcSizeOfSegment(header, ImageBinaryDataCompression::S3TC), FileSeekOrigin::CURRENT));
+			skipSize += calcSizeOfSegment(header, ImageBinaryDataCompression::S3TC);
 		}
+	}
+	else if(preferredCompression == ImageBinaryDataCompression::ASTC)
+	{
+		if(!!(header.m_compressionMask & ImageBinaryDataCompression::RAW))
+		{
+			// If raw compression is present then skip it
+			skipSize += calcSizeOfSegment(header, ImageBinaryDataCompression::RAW);
+		}
+
+		if(!!(header.m_compressionMask & ImageBinaryDataCompression::S3TC))
+		{
+			// If s3tc compression is present then skip it
+			skipSize += calcSizeOfSegment(header, ImageBinaryDataCompression::S3TC);
+		}
+
+		if(!!(header.m_compressionMask & ImageBinaryDataCompression::ETC))
+		{
+			// If ETC compression is present then skip it
+			skipSize += calcSizeOfSegment(header, ImageBinaryDataCompression::ETC);
+		}
+	}
+
+	if(skipSize)
+	{
+		ANKI_CHECK(file.seek(skipSize, FileSeekOrigin::CURRENT));
 	}
 
 	//
@@ -470,7 +511,8 @@ Error ImageLoader::loadAnkiImage(FileInterface& file, U32 maxImageSize,
 				for(U32 f = 0; f < faceCount; ++f)
 				{
 					const U32 dataSize =
-						U32(calcSurfaceSize(mipWidth, mipHeight, preferredCompression, header.m_colorFormat));
+						U32(calcSurfaceSize(mipWidth, mipHeight, preferredCompression, header.m_colorFormat,
+											UVec2(header.m_astcBlockSizeX, header.m_astcBlockSizeY)));
 
 					// Check if this mipmap can be skipped because of size
 					if(max(mipWidth, mipHeight) <= maxImageSize || mip == header.m_mipmapCount - 1)
@@ -642,8 +684,8 @@ Error ImageLoader::loadInternal(FileInterface& file, const CString& filename, U3
 	}
 	else if(ext == "ankitex")
 	{
-#if 0
-		compression = ImageBinaryDataCompression::RAW;
+#if ANKI_OS_ANDROID
+		m_compression = ImageBinaryDataCompression::ASTC;
 #else
 		m_compression = ImageBinaryDataCompression::S3TC;
 #endif

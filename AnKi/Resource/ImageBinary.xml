@@ -54,7 +54,9 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ImageBinaryDataCompression)
 				<member name="m_compressionMask" type="ImageBinaryDataCompression"/>
 				<member name="m_isNormal" type="U32"/>
 				<member name="m_mipmapCount" type="U32"/>
-				<member name="m_padding" type="U8" array_size="88"/>
+				<member name="m_astcBlockSizeX" type="U32"/>
+				<member name="m_astcBlockSizeY" type="U32"/>
+				<member name="m_padding" type="U8" array_size="80"/>
 			</members>
 		</class>
 	</classes>

@@ -527,6 +527,8 @@ static ANKI_USE_RESULT Error storeAnkiImage(const ImageImporterConfig& config, c
 	header.m_compressionMask = config.m_compressions;
 	header.m_isNormal = false;
 	header.m_mipmapCount = ctx.m_mipmaps.getSize();
+	header.m_astcBlockSizeX = config.m_astcBlockSize.x();
+	header.m_astcBlockSizeY = config.m_astcBlockSize.y();
 	ANKI_CHECK(outFile.write(&header, sizeof(header)));
 
 	// Write RAW
