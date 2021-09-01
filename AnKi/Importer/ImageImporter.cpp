@@ -172,6 +172,13 @@ static ANKI_USE_RESULT Error checkConfig(const ImageImporterConfig& config)
 	ANKI_CFG_ASSERT(config.m_compressions == ImageBinaryDataCompression::RAW || config.m_type != ImageBinaryType::_3D,
 					"Can't compress 3D textures");
 
+	// ASTC
+	if(!!(config.m_compressions & ImageBinaryDataCompression::ASTC))
+	{
+		ANKI_CFG_ASSERT(config.m_astcBlockSize == UVec2(4u) || config.m_astcBlockSize == UVec2(8u),
+						"Incorrect ASTC block sizes");
+	}
+
 	// Mip size
 	ANKI_CFG_ASSERT(config.m_minMipmapDimension >= 4, "Mimpap min dimension can be less than 4");
 
@@ -335,15 +342,16 @@ static ANKI_USE_RESULT Error compressS3tc(GenericMemoryPoolAllocator<U8> alloc, 
 	ANKI_ASSERT(inWidth > 0 && isPowerOfTwo(inWidth) && inHeight > 0 && isPowerOfTwo(inHeight));
 	ANKI_ASSERT(outPixels.getSizeInBytes() == PtrSize((channelCount == 3) ? 8 : 16) * (inWidth / 4) * (inHeight / 4));
 
-	// Create a BMP image to feed to the compressor
-	StringAuto bmpFilename(alloc);
-	bmpFilename.sprintf("%s/AnKiImageImporter_%u.bmp", tempDirectory.cstr(), U32(std::rand()));
-	if(!stbi_write_bmp(bmpFilename.cstr(), inWidth, inHeight, channelCount, inPixels.getBegin()))
+	// Create a PNG image to feed to the compressor
+	StringAuto pngFilename(alloc);
+	pngFilename.sprintf("%s/AnKiImageImporter_%u.png", tempDirectory.cstr(), U32(std::rand()));
+	ANKI_IMPORTER_LOGV("Will store: %s", pngFilename.cstr());
+	if(!stbi_write_png(pngFilename.cstr(), inWidth, inHeight, channelCount, inPixels.getBegin(), 0))
 	{
-		ANKI_IMPORTER_LOGE("STB failed to create: %s", bmpFilename.cstr());
+		ANKI_IMPORTER_LOGE("STB failed to create: %s", pngFilename.cstr());
 		return Error::FUNCTION_FAILED;
 	}
-	CleanupFile bmpCleanup(alloc, bmpFilename);
+	CleanupFile pngCleanup(alloc, pngFilename);
 
 	// Invoke the compressor process
 	StringAuto ddsFilename(alloc);
@@ -354,9 +362,11 @@ static ANKI_USE_RESULT Error compressS3tc(GenericMemoryPoolAllocator<U8> alloc, 
 	args[argCount++] = "-nomipmap";
 	args[argCount++] = "-fd";
 	args[argCount++] = (channelCount == 3) ? "BC1" : "BC3";
-	args[argCount++] = bmpFilename;
+	args[argCount++] = pngFilename;
 	args[argCount++] = ddsFilename;
 
+	ANKI_IMPORTER_LOGV("Will invoke process: CompressonatorCLI %s %s %s %s %s", args[0].cstr(), args[1].cstr(),
+					   args[2].cstr(), args[3].cstr(), args[4].cstr());
 	ANKI_CHECK(proc.start("CompressonatorCLI", args,
 						  (compressonatorPath.isEmpty()) ? ConstWeakArray<CString>()
 														 : Array<CString, 2>{{"PATH", compressonatorPath}}));
@@ -422,14 +432,15 @@ static ANKI_USE_RESULT Error compressAstc(GenericMemoryPoolAllocator<U8> alloc, 
 	ANKI_ASSERT(outPixels.getSizeInBytes() == blockBytes * (inWidth / blockSize.x()) * (inHeight / blockSize.y()));
 
 	// Create a BMP image to feed to the astcebc
-	StringAuto bmpFilename(alloc);
-	bmpFilename.sprintf("%s/AnKiImageImporter_%u.bmp", tempDirectory.cstr(), U32(std::rand()));
-	if(!stbi_write_bmp(bmpFilename.cstr(), inWidth, inHeight, channelCount, inPixels.getBegin()))
+	StringAuto pngFilename(alloc);
+	pngFilename.sprintf("%s/AnKiImageImporter_%u.png", tempDirectory.cstr(), U32(std::rand()));
+	ANKI_IMPORTER_LOGV("Will store: %s", pngFilename.cstr());
+	if(!stbi_write_png(pngFilename.cstr(), inWidth, inHeight, channelCount, inPixels.getBegin(), 0))
 	{
-		ANKI_IMPORTER_LOGE("STB failed to create: %s", bmpFilename.cstr());
+		ANKI_IMPORTER_LOGE("STB failed to create: %s", pngFilename.cstr());
 		return Error::FUNCTION_FAILED;
 	}
-	CleanupFile bmpCleanup(alloc, bmpFilename);
+	CleanupFile pngCleanup(alloc, pngFilename);
 
 	// Invoke the compressor process
 	StringAuto astcFilename(alloc);
@@ -440,11 +451,13 @@ static ANKI_USE_RESULT Error compressAstc(GenericMemoryPoolAllocator<U8> alloc, 
 	Array<CString, 5> args;
 	U32 argCount = 0;
 	args[argCount++] = "-cl";
-	args[argCount++] = bmpFilename;
+	args[argCount++] = pngFilename;
 	args[argCount++] = astcFilename;
 	args[argCount++] = blockStr;
 	args[argCount++] = "-fast";
 
+	ANKI_IMPORTER_LOGV("Will invoke process: astcenc-avx2 %s %s %s %s %s", args[0].cstr(), args[1].cstr(),
+					   args[2].cstr(), args[3].cstr(), args[4].cstr());
 	ANKI_CHECK(
 		proc.start("astcenc-avx2", args,
 				   (astcencPath.isEmpty()) ? ConstWeakArray<CString>() : Array<CString, 2>{{"PATH", astcencPath}}));
@@ -628,10 +641,17 @@ static ANKI_USE_RESULT Error importImageInternal(const ImageImporterConfig& conf
 	ANKI_CHECK(loadFirstMipmap(config, ctx));
 
 	// Generate mipmaps
+	U32 minMipDimension = max(config.m_minMipmapDimension, 4u);
+	if(!!(config.m_compressions & ImageBinaryDataCompression::ASTC))
+	{
+		minMipDimension = max(minMipDimension, config.m_astcBlockSize.x());
+		minMipDimension = max(minMipDimension, config.m_astcBlockSize.y());
+	}
+
 	const U32 mipCount =
 		min(config.m_mipmapCount, (config.m_type == ImageBinaryType::_3D)
-									  ? computeMaxMipmapCount3d(width, height, ctx.m_depth, config.m_minMipmapDimension)
-									  : computeMaxMipmapCount2d(width, height, config.m_minMipmapDimension));
+									  ? computeMaxMipmapCount3d(width, height, ctx.m_depth, minMipDimension)
+									  : computeMaxMipmapCount2d(width, height, minMipDimension));
 	for(U32 mip = 1; mip < mipCount; ++mip)
 	{
 		ctx.m_mipmaps.emplaceBack(alloc);

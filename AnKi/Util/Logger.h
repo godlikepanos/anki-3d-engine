@@ -23,6 +23,7 @@ class File;
 enum class LoggerMessageType : U8
 {
 	NORMAL,
+	VERBOSE,
 	ERROR,
 	WARNING,
 	FATAL,
@@ -59,7 +60,7 @@ public:
 
 	~Logger();
 
-	/// Add a new message handler
+	/// Add a new message handler.
 	void addMessageHandler(void* data, LoggerMessageHandlerCallback callback);
 
 	/// Remove a message handler.
@@ -68,14 +69,20 @@ public:
 	/// Add file message handler.
 	void addFileMessageHandler(File* file);
 
-	/// Send a message
+	/// Send a message.
 	void write(const char* file, int line, const char* func, const char* subsystem, LoggerMessageType type,
 			   ThreadId tid, const char* msg);
 
-	/// Send a formated message
+	/// Send a formated message.
 	ANKI_CHECK_FORMAT(7, 8)
 	void writeFormated(const char* file, int line, const char* func, const char* subsystem, LoggerMessageType type,
 					   ThreadId tid, const char* fmt, ...);
+
+	/// Enable or disable logger verbosity.
+	void enableVerbosity(Bool enable)
+	{
+		m_verbosityEnabled = enable;
+	}
 
 private:
 	class Handler
@@ -98,6 +105,7 @@ private:
 	Mutex m_mutex; ///< For thread safety
 	Array<Handler, 4> m_handlers;
 	U32 m_handlersCount = 0;
+	Bool m_verbosityEnabled = false;
 
 	static void defaultSystemMessageHandler(void*, const LoggerMessageInfo& info);
 	static void fileMessageHandler(void* file, const LoggerMessageInfo& info);
@@ -118,6 +126,9 @@ using LoggerSingleton = Singleton<Logger>;
 
 /// Log information message.
 #define ANKI_LOGI(...) ANKI_LOG(nullptr, NORMAL, __VA_ARGS__)
+
+/// Log verbose information message.
+#define ANKI_LOGV(...) ANKI_LOG(nullptr, VERBOSE, __VA_ARGS__)
 
 /// Log warning message.
 #define ANKI_LOGW(...) ANKI_LOG(nullptr, WARNING, __VA_ARGS__)
