@@ -319,7 +319,7 @@ Error compilerGlslToSpirv(CString src, ShaderType shaderType, GenericMemoryPoolA
 	Array<const char*, 1> csrc = {&src[0]};
 	shader.setStrings(&csrc[0], 1);
 	shader.setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_1);
-	shader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_3);
+	shader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_4);
 	if(!shader.parse(&GLSLANG_LIMITS, 100, false, messages))
 	{
 		ANKI_CHECK(logShaderErrorCode(shader.getInfoLog(), src, tmpAlloc));

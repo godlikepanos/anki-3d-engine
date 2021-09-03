@@ -647,6 +647,11 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 				m_extensions |= VulkanExtensions::KHR_SHADER_ATOMIC_INT64;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
+			else if(extensionName == VK_KHR_SPIRV_1_4_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::KHR_SPIRV_1_4;
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
+			}
 		}
 
 		ANKI_VK_LOGI("Will enable the following device extensions:");
@@ -903,6 +908,12 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 		{
 			ANKI_VK_LOGW("VK_AMD_shader_info is present but vkGetShaderInfoAMD is not there");
 		}
+	}
+
+	if(!(m_extensions & VulkanExtensions::KHR_SPIRV_1_4))
+	{
+		ANKI_VK_LOGE("Spir-V 1.4 is not supported");
+		return Error::FUNCTION_FAILED;
 	}
 
 	return Error::NONE;
