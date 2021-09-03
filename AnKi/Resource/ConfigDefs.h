@@ -9,4 +9,6 @@ ANKI_CONFIG_OPTION(
 	rsrc_dataPaths, ".",
 	"The engine loads assets only in from these paths. Separate them with : (it's smart enough to identify drive "
 	"letters in Windows)")
+ANKI_CONFIG_OPTION(rsrc_dataPathExcludedStrings, "build",
+				   "A list of string separated by : that will be used to exclude paths from rsrc_dataPaths")
 ANKI_CONFIG_OPTION(rsrc_transferScratchMemorySize, 256_MB, 1_MB, 4_GB)

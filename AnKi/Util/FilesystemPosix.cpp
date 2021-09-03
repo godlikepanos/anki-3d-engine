@@ -61,8 +61,7 @@ Bool directoryExists(const CString& filename)
 class WalkDirectoryTreeCallbackContext
 {
 public:
-	WalkDirectoryTreeCallback m_callback = nullptr;
-	void* m_userData = nullptr;
+	const Function<Error(const CString&, Bool)>* m_callback = nullptr;
 	U32 m_prefixLen;
 	Error m_err = {Error::NONE};
 };
@@ -95,15 +94,14 @@ static int walkDirectoryTreeCallback(const char* filepath, const struct stat* in
 			return 0;
 		}
 
-		ctx.m_err = ctx.m_callback(filepath + ctx.m_prefixLen, ctx.m_userData, isDir);
+		ctx.m_err = (*ctx.m_callback)(filepath + ctx.m_prefixLen, isDir);
 	}
 
 	return 0;
 }
 
-Error walkDirectoryTree(const CString& dir, void* userData, WalkDirectoryTreeCallback callback)
+Error walkDirectoryTreeInternal(const CString& dir, const Function<Error(const CString&, Bool)>& callback)
 {
-	ANKI_ASSERT(callback != nullptr);
 	ANKI_ASSERT(dir.getLength() > 0);
 	Error err = Error::NONE;
 
@@ -115,8 +113,7 @@ Error walkDirectoryTree(const CString& dir, void* userData, WalkDirectoryTreeCal
 	}
 
 	WalkDirectoryTreeCallbackContext& ctx = g_walkDirectoryTreeContext;
-	ctx.m_callback = callback;
-	ctx.m_userData = userData;
+	ctx.m_callback = &callback;
 	ctx.m_prefixLen = prefixLen;
 	ctx.m_err = Error::NONE;
 

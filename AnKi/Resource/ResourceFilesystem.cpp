@@ -210,6 +210,9 @@ Error ResourceFilesystem::init(const ConfigSet& config, const CString& cacheDir)
 	StringListAuto paths(m_alloc);
 	paths.splitString(config.getString("rsrc_dataPaths"), ':');
 
+	StringListAuto excludedStrings(m_alloc);
+	excludedStrings.splitString(config.getString("rsrc_dataPathExcludedStrings"), ':');
+
 	// Workaround the fact that : is used in drives in Windows
 #if ANKI_OS_WINDOWS
 	StringListAuto paths2(m_alloc);
@@ -243,12 +246,12 @@ Error ResourceFilesystem::init(const ConfigSet& config, const CString& cacheDir)
 
 #if ANKI_OS_ANDROID
 	// Add the files of the .apk
-	ANKI_CHECK(addNewPath("*special*"));
+	ANKI_CHECK(addNewPath("*special*", excludedStrings));
 #endif
 
 	for(auto& path : paths)
 	{
-		ANKI_CHECK(addNewPath(path.toCString()));
+		ANKI_CHECK(addNewPath(path.toCString(), excludedStrings));
 	}
 
 	addCachePath(cacheDir);
@@ -265,10 +268,22 @@ void ResourceFilesystem::addCachePath(const CString& path)
 	m_paths.emplaceBack(m_alloc, std::move(p));
 }
 
-Error ResourceFilesystem::addNewPath(const CString& path)
+Error ResourceFilesystem::addNewPath(const CString& path, const StringListAuto& excludedStrings)
 {
 	U32 fileCount = 0;
 	static const CString extension(".ankizip");
+
+	auto rejectPath = [&](CString p) -> Bool {
+		for(const String& s : excludedStrings)
+		{
+			if(p.find(s) != CString::NPOS)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	};
 
 	auto pos = path.find(extension);
 	if(pos != CString::NPOS && pos == path.getLength() - extension.getLength())
@@ -307,8 +322,8 @@ Error ResourceFilesystem::addNewPath(const CString& path)
 				return Error::FILE_ACCESS;
 			}
 
-			// If compressed size is zero then it's a dir
-			if(info.uncompressed_size > 0)
+			const Bool itsADir = info.uncompressed_size == 0;
+			if(!itsADir && !rejectPath(&filename[0]))
 			{
 				p.m_files.pushBackSprintf(m_alloc, "%s", &filename[0]);
 				++fileCount;
@@ -322,25 +337,37 @@ Error ResourceFilesystem::addNewPath(const CString& path)
 	{
 		// Android apk, read the file that contains the directory structure
 
+		// Read the file
 		File dirStructure;
 		ANKI_CHECK(dirStructure.open("DirStructure.txt", FileOpenFlag::READ | FileOpenFlag::SPECIAL));
-
 		StringAuto txt(m_alloc);
 		ANKI_CHECK(dirStructure.readAllText(txt));
 
-		m_paths.emplaceFront(m_alloc, Path());
-		Path& p = m_paths.getFront();
-		p.m_path.sprintf(m_alloc, "%s", &path[0]);
-		p.m_isArchive = false;
-		p.m_isSpecial = true;
+		StringListAuto filenames(m_alloc);
+		filenames.splitString(txt, '\n');
 
-		p.m_files.splitString(m_alloc, txt, '\n');
-
-		if(p.m_files.getSize() < 1)
+		if(filenames.isEmpty())
 		{
 			ANKI_RESOURCE_LOGE("DirStructure.txt is empty");
 			return Error::USER_DATA;
 		}
+
+		// Create the Path
+		m_paths.emplaceFront(m_alloc, Path());
+		Path& p = m_paths.getFront();
+		while(!filenames.isEmpty())
+		{
+			const String& filename = filenames.getFront();
+			if(!rejectPath(filename))
+			{
+				p.m_files.pushBack(m_alloc, filename);
+				++fileCount;
+			}
+		}
+
+		p.m_path.sprintf(m_alloc, "%s", &path[0]);
+		p.m_isArchive = false;
+		p.m_isSpecial = true;
 	}
 	else
 	{
@@ -351,25 +378,21 @@ Error ResourceFilesystem::addNewPath(const CString& path)
 		p.m_path.sprintf(m_alloc, "%s", &path[0]);
 		p.m_isArchive = false;
 
-		struct UserData
-		{
-			ResourceFilesystem* m_sys;
-			U32* m_fileCount;
-		} ud{this, &fileCount};
-
-		ANKI_CHECK(walkDirectoryTree(path, &ud, [](const CString& fname, void* ud, Bool isDir) -> Error {
+		ANKI_CHECK(walkDirectoryTree(path, m_alloc, [&, this](const CString& fname, Bool isDir) -> Error {
 			if(isDir)
 			{
 				return Error::NONE;
 			}
 
-			UserData* udd = static_cast<UserData*>(ud);
-			ResourceFilesystem* self = udd->m_sys;
+			if(rejectPath(fname))
+			{
+				return Error::NONE;
+			}
 
-			Path& p = self->m_paths.getFront();
-			p.m_files.pushBackSprintf(self->m_alloc, "%s", fname.cstr());
+			Path& p = m_paths.getFront();
+			p.m_files.pushBackSprintf(m_alloc, "%s", fname.cstr());
 
-			++(*udd->m_fileCount);
+			++fileCount;
 			return Error::NONE;
 		}));
 

@@ -138,7 +138,7 @@ private:
 	String m_cacheDir;
 
 	/// Add a filesystem path or an archive. The path is read-only.
-	ANKI_USE_RESULT Error addNewPath(const CString& path);
+	ANKI_USE_RESULT Error addNewPath(const CString& path, const StringListAuto& excludedStrings);
 
 	void addCachePath(const CString& path);
 };
