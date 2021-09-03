@@ -56,5 +56,5 @@ ANKI_CONFIG_OPTION(r_rtShadowsSvgf, 0, 0, 1)
 ANKI_CONFIG_OPTION(r_rtShadowsSvgfAtrousPassCount, 3, 1, 20)
 ANKI_CONFIG_OPTION(r_rtShadowsRaysPerPixel, 1, 1, 8)
 
-ANKI_CONFIG_OPTION(r_fsr, 1, 0, 1)
+ANKI_CONFIG_OPTION(r_fsr, 1, 0, 2, "0: Use bilinear, 1: FSR low quality, 2: FSR high quality")
 ANKI_CONFIG_OPTION(r_sharpen, 1, 0, 1)
