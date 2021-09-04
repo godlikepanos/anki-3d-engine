@@ -9,7 +9,6 @@
 #include <AnKi/Util/List.h>
 #include <AnKi/Util/StdTypes.h>
 #include <AnKi/Util/Allocator.h>
-#include <AnKi/Util/NonCopyable.h>
 #include <algorithm>
 
 namespace anki
@@ -20,7 +19,7 @@ namespace anki
 
 /// A hierarchical object
 template<typename T>
-class Hierarchy : public NonCopyable
+class Hierarchy
 {
 public:
 	using Value = T;
@@ -31,11 +30,15 @@ public:
 	{
 	}
 
+	Hierarchy(const Hierarchy&) = delete; // Non-copyable
+
 	/// Delete children from the last entered to the first and update parent
 	virtual ~Hierarchy()
 	{
 		ANKI_ASSERT(m_parent == nullptr && m_children.isEmpty() && "Requires manual desruction");
 	}
+
+	Hierarchy& operator=(const Hierarchy&) = delete; // Non-copyable
 
 	template<typename TAllocator>
 	void destroy(TAllocator alloc);

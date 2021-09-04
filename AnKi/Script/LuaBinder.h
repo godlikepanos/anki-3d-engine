@@ -149,11 +149,16 @@ public:
 };
 
 /// Lua binder class. A wrapper on top of LUA
-class LuaBinder : public NonCopyable
+class LuaBinder
 {
 public:
 	LuaBinder();
+
+	LuaBinder(const LuaBinder&) = delete; // Non-copyable
+
 	~LuaBinder();
+
+	LuaBinder& operator=(const LuaBinder&) = delete; // Non-copyable
 
 	ANKI_USE_RESULT Error init(ScriptAllocator alloc, LuaBinderOtherSystems* otherSystems);
 

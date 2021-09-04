@@ -26,11 +26,17 @@ class ShaderProgramResourceVariantInitInfo;
 
 /// The means to mutate a shader program.
 /// @memberof ShaderProgramResource
-class ShaderProgramResourceMutator : public NonCopyable
+class ShaderProgramResourceMutator
 {
 public:
 	CString m_name;
 	ConstWeakArray<MutatorValue> m_values;
+
+	ShaderProgramResourceMutator() = default;
+
+	ShaderProgramResourceMutator(const ShaderProgramResourceMutator&) = delete; // Non-copyable
+
+	ShaderProgramResourceMutator& operator=(const ShaderProgramResourceMutator&) = delete; // Non-copyable
 
 	Bool valueExists(MutatorValue v) const
 	{

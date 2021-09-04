@@ -14,7 +14,7 @@ namespace anki
 /// @{
 
 /// Manages pre-allocated GPU memory for per frame usage.
-class FrameGpuAllocator : public NonCopyable
+class FrameGpuAllocator
 {
 	friend class DynamicMemorySerializeCommand;
 
@@ -23,9 +23,13 @@ public:
 	{
 	}
 
+	FrameGpuAllocator(const FrameGpuAllocator&) = delete; // Non-copyable
+
 	~FrameGpuAllocator()
 	{
 	}
+
+	FrameGpuAllocator& operator=(const FrameGpuAllocator&) = delete; // Non-copyable
 
 	/// Initialize with pre-allocated always mapped memory.
 	/// @param size The size of the GPU buffer.

@@ -21,7 +21,7 @@ class ConfigSet;
 /// @{
 
 /// Resource filesystem file. An interface that abstracts the resource file.
-class ResourceFile : public NonCopyable
+class ResourceFile
 {
 public:
 	ResourceFile(GenericMemoryPoolAllocator<U8> alloc)
@@ -29,9 +29,13 @@ public:
 	{
 	}
 
+	ResourceFile(const ResourceFile&) = delete; // Non-copyable
+
 	virtual ~ResourceFile()
 	{
 	}
+
+	ResourceFile& operator=(const ResourceFile&) = delete; // Non-copyable
 
 	/// Read data from the file
 	virtual ANKI_USE_RESULT Error read(void* buff, PtrSize size) = 0;
@@ -72,7 +76,7 @@ private:
 using ResourceFilePtr = IntrusivePtr<ResourceFile>;
 
 /// Resource filesystem.
-class ResourceFilesystem : public NonCopyable
+class ResourceFilesystem
 {
 public:
 	ResourceFilesystem(GenericMemoryPoolAllocator<U8> alloc)
@@ -80,7 +84,11 @@ public:
 	{
 	}
 
+	ResourceFilesystem(const ResourceFilesystem&) = delete; // Non-copyable
+
 	~ResourceFilesystem();
+
+	ResourceFilesystem& operator=(const ResourceFilesystem&) = delete; // Non-copyable
 
 	ANKI_USE_RESULT Error init(const ConfigSet& config, const CString& cacheDir);
 
@@ -104,7 +112,7 @@ public:
 #if !ANKI_TESTS
 private:
 #endif
-	class Path : public NonCopyable
+	class Path
 	{
 	public:
 		StringList m_files; ///< Files inside the directory.
@@ -115,6 +123,8 @@ private:
 
 		Path() = default;
 
+		Path(const Path&) = delete; // Non-copyable
+
 		Path(Path&& b)
 			: m_files(std::move(b.m_files))
 			, m_path(std::move(b.m_path))
@@ -122,6 +132,8 @@ private:
 			, m_isCache(std::move(b.m_isCache))
 		{
 		}
+
+		Path& operator=(const Path&) = delete; // Non-copyable
 
 		Path& operator=(Path&& b)
 		{

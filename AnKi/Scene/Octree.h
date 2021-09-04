@@ -36,7 +36,7 @@ public:
 };
 
 /// Octree for visibility tests.
-class Octree : public NonCopyable
+class Octree
 {
 	friend class OctreePlaceable;
 
@@ -46,7 +46,11 @@ public:
 	{
 	}
 
+	Octree(const Octree&) = delete; // Non-copyable
+
 	~Octree();
+
+	Octree& operator=(const Octree&) = delete; // Non-copyable
 
 	void init(const Vec3& sceneAabbMin, const Vec3& sceneAabbMax, U32 maxDepth);
 
@@ -281,12 +285,18 @@ private:
 };
 
 /// An entity that can be placed in octrees.
-class OctreePlaceable : public NonCopyable
+class OctreePlaceable
 {
 	friend class Octree;
 
 public:
 	void* m_userData = nullptr;
+
+	OctreePlaceable() = default;
+
+	OctreePlaceable(const OctreePlaceable&) = delete; // Non-copyable
+
+	OctreePlaceable& operator=(const OctreePlaceable&) = delete; // Non-copyable
 
 	void reset()
 	{

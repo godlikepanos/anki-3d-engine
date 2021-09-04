@@ -58,12 +58,16 @@ public:
 };
 
 /// Manages staging GPU memory.
-class StagingGpuMemoryManager : public NonCopyable
+class StagingGpuMemoryManager
 {
 public:
 	StagingGpuMemoryManager() = default;
 
+	StagingGpuMemoryManager(const StagingGpuMemoryManager&) = delete; // Non-copyable
+
 	~StagingGpuMemoryManager();
+
+	StagingGpuMemoryManager& operator=(const StagingGpuMemoryManager&) = delete; // Non-copyable
 
 	ANKI_USE_RESULT Error init(GrManager* gr, const ConfigSet& cfg);
 

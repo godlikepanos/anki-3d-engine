@@ -7,7 +7,6 @@
 
 #include <AnKi/Util/DynamicArray.h>
 #include <AnKi/Util/Array.h>
-#include <AnKi/Util/NonCopyable.h>
 #include <AnKi/Util/Hash.h>
 #include <AnKi/Util/Forward.h>
 #include <cstring>
@@ -279,7 +278,7 @@ public:
 };
 
 /// The base class for strings.
-class String : public NonCopyable
+class String
 {
 public:
 	using Char = char; ///< Character type
@@ -311,10 +310,14 @@ public:
 		create(alloc, str);
 	}
 
+	String(const String&) = delete; // Non-copyable
+
 	/// Requires manual destruction.
 	~String()
 	{
 	}
+
+	String& operator=(const String&) = delete; // Non-copyable
 
 	/// Move one string to this one.
 	String& operator=(String&& b)

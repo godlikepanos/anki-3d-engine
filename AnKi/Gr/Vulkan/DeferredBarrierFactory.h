@@ -71,12 +71,18 @@ public:
 using MicroDeferredBarrierPtr = IntrusivePtr<MicroDeferredBarrier, MicroDeferredBarrierPtrDeleter>;
 
 /// MicroDeferredBarrier factory.
-class DeferredBarrierFactory : public NonCopyable
+class DeferredBarrierFactory
 {
 	friend class MicroDeferredBarrierPtrDeleter;
 	friend class MicroDeferredBarrier;
 
 public:
+	DeferredBarrierFactory() = default;
+
+	DeferredBarrierFactory(const DeferredBarrierFactory&) = delete; // Non-copyable
+
+	DeferredBarrierFactory& operator=(const DeferredBarrierFactory&) = delete; // Non-copyable
+
 	void init(GrAllocator<U8> alloc, VkDevice dev)
 	{
 		ANKI_ASSERT(dev);

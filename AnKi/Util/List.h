@@ -6,7 +6,6 @@
 #pragma once
 
 #include <AnKi/Util/Allocator.h>
-#include <AnKi/Util/NonCopyable.h>
 #include <AnKi/Util/Forward.h>
 #include <functional>
 
@@ -187,7 +186,7 @@ private:
 /// Double linked list base.
 /// @internal
 template<typename T, typename TNode>
-class ListBase : public NonCopyable
+class ListBase
 {
 	template<typename, typename, typename, typename>
 	friend class ListIterator;
@@ -202,6 +201,10 @@ public:
 	using ConstIterator = ListIterator<const TNode*, ConstPointer, ConstReference, const ListBase*>;
 
 	ListBase() = default;
+
+	ListBase(const ListBase&) = delete; // Non-copyable
+
+	ListBase& operator=(const ListBase&) = delete; // Non-copyable
 
 	/// Compare with another list.
 	Bool operator==(const ListBase& b) const;

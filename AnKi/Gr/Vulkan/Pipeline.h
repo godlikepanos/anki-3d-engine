@@ -19,7 +19,7 @@ namespace anki
 /// @{
 
 /// @note Non copyable because that complicates the hashing.
-class PPVertexBufferBinding : public NonCopyable
+class PPVertexBufferBinding
 {
 public:
 	U32 m_stride = MAX_U32; ///< Vertex stride.
@@ -36,7 +36,7 @@ public:
 	}
 };
 
-class PPVertexAttributeBinding : public NonCopyable
+class PPVertexAttributeBinding
 {
 public:
 	PtrSize m_offset = 0;
@@ -54,33 +54,33 @@ public:
 	}
 };
 
-class PPVertexStateInfo : public NonCopyable
+class PPVertexStateInfo
 {
 public:
 	Array<PPVertexBufferBinding, MAX_VERTEX_ATTRIBUTES> m_bindings;
 	Array<PPVertexAttributeBinding, MAX_VERTEX_ATTRIBUTES> m_attributes;
 };
 
-class PPInputAssemblerStateInfo : public NonCopyable
+class PPInputAssemblerStateInfo
 {
 public:
 	PrimitiveTopology m_topology = PrimitiveTopology::TRIANGLES;
 	Bool m_primitiveRestartEnabled = false;
 };
 
-class PPTessellationStateInfo : public NonCopyable
+class PPTessellationStateInfo
 {
 public:
 	U32 m_patchControlPointCount = 3;
 };
 
-class PPViewportStateInfo : public NonCopyable
+class PPViewportStateInfo
 {
 public:
 	Bool m_scissorEnabled = false;
 };
 
-class PPRasterizerStateInfo : public NonCopyable
+class PPRasterizerStateInfo
 {
 public:
 	FillMode m_fillMode = FillMode::SOLID;
@@ -90,17 +90,17 @@ public:
 	F32 m_depthBiasSlopeFactor = 0.0f;
 };
 
-class PPDepthStateInfo : public NonCopyable
+class PPDepthStateInfo
 {
 public:
 	Bool m_depthWriteEnabled = true;
 	CompareOperation m_depthCompareFunction = CompareOperation::LESS;
 };
 
-class PPStencilStateInfo : public NonCopyable
+class PPStencilStateInfo
 {
 public:
-	class S : public NonCopyable
+	class S
 	{
 	public:
 		StencilOperation m_stencilFailOperation = StencilOperation::KEEP;
@@ -112,7 +112,7 @@ public:
 	Array<S, 2> m_face;
 };
 
-class PPColorAttachmentStateInfo : public NonCopyable
+class PPColorAttachmentStateInfo
 {
 public:
 	BlendFactor m_srcBlendFactorRgb = BlendFactor::ONE;
@@ -124,14 +124,14 @@ public:
 	ColorBit m_channelWriteMask = ColorBit::ALL;
 };
 
-class PPColorStateInfo : public NonCopyable
+class PPColorStateInfo
 {
 public:
 	Bool m_alphaToCoverageEnabled = false;
 	Array<PPColorAttachmentStateInfo, MAX_COLOR_ATTACHMENTS> m_attachments;
 };
 
-class PipelineInfoState : public NonCopyable
+class PipelineInfoState
 {
 public:
 	PipelineInfoState()
@@ -174,7 +174,7 @@ public:
 };
 
 /// Track changes in the static state.
-class PipelineStateTracker : public NonCopyable
+class PipelineStateTracker
 {
 	friend class PipelineFactory;
 
@@ -182,6 +182,10 @@ public:
 	PipelineStateTracker()
 	{
 	}
+
+	PipelineStateTracker(const PipelineStateTracker&) = delete; // Non-copyable
+
+	PipelineStateTracker& operator=(const PipelineStateTracker&) = delete; // Non-copyable
 
 	void bindVertexBuffer(U32 binding, PtrSize stride, VertexStepRate stepRate)
 	{

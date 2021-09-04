@@ -46,7 +46,7 @@ private:
 	}
 };
 
-class ThreadHive::Task : public NonCopyable
+class ThreadHive::Task
 {
 public:
 	Task* m_next; ///< Next in the list.

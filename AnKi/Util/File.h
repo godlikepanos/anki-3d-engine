@@ -7,7 +7,6 @@
 
 #include <AnKi/Util/String.h>
 #include <AnKi/Util/Enum.h>
-#include <AnKi/Util/NonCopyable.h>
 #include <cstdio>
 
 namespace anki
@@ -45,11 +44,15 @@ enum class FileSeekOrigin
 /// To identify the file:
 /// - If the filename starts with '$' it will try to load a system specific file. For Android this is a file in the .apk
 /// - If the above are false then try to load a regular C file
-class File : public NonCopyable
+class File
 {
 public:
 	/// Default constructor
 	File() = default;
+
+	File(const File&) = delete; // Non-copyable
+
+	File& operator=(const File&) = delete; // Non-copyable
 
 	/// Move
 	File(File&& b)

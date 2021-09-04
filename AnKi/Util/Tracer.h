@@ -59,7 +59,7 @@ using TracerFlushCallback = void (*)(void* userData, ThreadId tid, ConstWeakArra
 									 ConstWeakArray<TracerCounter> counters);
 
 /// Tracer.
-class Tracer : public NonCopyable
+class Tracer
 {
 public:
 	Tracer(GenericMemoryPoolAllocator<U8> alloc)
@@ -67,7 +67,11 @@ public:
 	{
 	}
 
+	Tracer(const Tracer&) = delete; // Non-copyable
+
 	~Tracer();
+
+	Tracer& operator=(const Tracer&) = delete; // Non-copyable
 
 	/// Begin a new event.
 	/// @note It's thread-safe.

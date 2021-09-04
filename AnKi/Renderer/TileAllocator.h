@@ -22,10 +22,16 @@ enum class TileAllocatorResult : U32
 };
 
 /// Allocates tiles out of a tilemap suitable for shadow mapping.
-class TileAllocator : public NonCopyable
+class TileAllocator
 {
 public:
+	TileAllocator() = default;
+
+	TileAllocator(const TileAllocator&) = delete; // Non-copyable
+
 	~TileAllocator();
+
+	TileAllocator& operator=(const TileAllocator&) = delete; // Non-copyable
 
 	/// Initialize the allocator.
 	void init(HeapAllocator<U8> alloc, U32 tileCountX, U32 tileCountY, U32 lodCount, Bool enableCaching);

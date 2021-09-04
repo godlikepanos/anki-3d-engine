@@ -87,13 +87,17 @@ private:
 /// #pragma anki ray_type NUMBER
 ///
 /// Only the "anki input" should be in an ifdef-like guard. For everything else it's ignored.
-class ShaderProgramParser : public NonCopyable
+class ShaderProgramParser
 {
 public:
 	ShaderProgramParser(CString fname, ShaderProgramFilesystemInterface* fsystem, GenericMemoryPoolAllocator<U8> alloc,
 						const ShaderCompilerOptions& compilerOptions);
 
+	ShaderProgramParser(const ShaderProgramParser&) = delete; // Non-copyable
+
 	~ShaderProgramParser();
+
+	ShaderProgramParser& operator=(const ShaderProgramParser&) = delete; // Non-copyable
 
 	/// Parse the file and its includes.
 	ANKI_USE_RESULT Error parse();

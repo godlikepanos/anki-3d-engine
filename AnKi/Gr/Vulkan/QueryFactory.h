@@ -62,14 +62,18 @@ private:
 };
 
 /// Batch allocator of queries.
-class QueryFactory : public NonCopyable
+class QueryFactory
 {
 public:
 	QueryFactory()
 	{
 	}
 
+	QueryFactory(const QueryFactory&) = delete; // Non-copyable
+
 	~QueryFactory();
+
+	QueryFactory& operator=(const QueryFactory&) = delete; // Non-copyable
 
 	void init(GrAllocator<U8> alloc, VkDevice dev, VkQueryType poolType)
 	{

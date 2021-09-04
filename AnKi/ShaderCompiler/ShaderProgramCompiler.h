@@ -19,7 +19,7 @@ extern const U32 SHADER_BINARY_VERSION;
 
 /// A wrapper over the POD ShaderProgramBinary class.
 /// @memberof ShaderProgramCompiler
-class ShaderProgramBinaryWrapper : public NonCopyable
+class ShaderProgramBinaryWrapper
 {
 	friend Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterface& fsystem,
 											  ShaderProgramPostParseInterface* postParseCallback,
@@ -34,10 +34,14 @@ public:
 	{
 	}
 
+	ShaderProgramBinaryWrapper(const ShaderProgramBinaryWrapper&) = delete; // Non-copyable
+
 	~ShaderProgramBinaryWrapper()
 	{
 		cleanup();
 	}
+
+	ShaderProgramBinaryWrapper& operator=(const ShaderProgramBinaryWrapper&) = delete; // Non-copyable
 
 	ANKI_USE_RESULT Error serializeToFile(CString fname) const;
 

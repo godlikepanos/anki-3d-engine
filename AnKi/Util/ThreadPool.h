@@ -33,7 +33,7 @@ public:
 
 /// Parallel task dispatcher. You feed it with tasks and sends them for execution in parallel and then waits for all to
 /// finish.
-class ThreadPool : public NonCopyable
+class ThreadPool
 {
 	friend class detail::ThreadPoolThread;
 
@@ -43,7 +43,11 @@ public:
 	/// Constructor.
 	ThreadPool(U32 threadCount, Bool pinToCores = false);
 
+	ThreadPool(const ThreadPool&) = delete; // Non-copyable
+
 	~ThreadPool();
+
+	ThreadPool& operator=(const ThreadPool&) = delete; // Non-copyable
 
 	/// Assign a task to a working thread
 	/// @param slot The slot of the task

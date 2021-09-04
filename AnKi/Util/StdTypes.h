@@ -297,10 +297,10 @@ static constexpr F32 operator""_mm(long double x)
 /// @}
 
 /// Convenience macro that defines the type of a class.
-#define ANKI_DEFINE_CLASS_SELF \
-	typedef auto _selfFn()->decltype(*this); \
-	using _SelfRef = decltype(((_selfFn*)0)()); \
-	using Self = std::remove_reference<_SelfRef>::type;
+#define ANKI_DEFINE_CLASS_SELF(selfType) \
+	typedef auto _selfFn##selfType()->decltype(*this); \
+	using _SelfRef##selfType = decltype(((_selfFn##selfType*)0)()); \
+	using selfType = std::remove_reference<_SelfRef##selfType>::type;
 /// @}
 
 } // end namespace anki

@@ -184,7 +184,7 @@ private:
 };
 
 /// Command bufffer object recycler.
-class CommandBufferFactory : public NonCopyable
+class CommandBufferFactory
 {
 	friend class CommandBufferThreadAllocator;
 	friend class MicroCommandBuffer;
@@ -192,7 +192,11 @@ class CommandBufferFactory : public NonCopyable
 public:
 	CommandBufferFactory() = default;
 
+	CommandBufferFactory(const CommandBufferFactory&) = delete; // Non-copyable
+
 	~CommandBufferFactory() = default;
+
+	CommandBufferFactory& operator=(const CommandBufferFactory&) = delete; // Non-copyable
 
 	ANKI_USE_RESULT Error init(GrAllocator<U8> alloc, VkDevice dev, Array<U32, U(QueueType::COUNT)> queueFamilies);
 

@@ -6,7 +6,6 @@
 #pragma once
 
 #include <AnKi/Util/StdTypes.h>
-#include <AnKi/Util/NonCopyable.h>
 #include <AnKi/Util/Atomic.h>
 #include <AnKi/Util/Assert.h>
 #include <AnKi/Util/Array.h>
@@ -47,10 +46,14 @@ using PoolSignature = U32;
 void* allocAligned(void* userData, void* ptr, PtrSize size, PtrSize alignment);
 
 /// Generic memory pool. The base of HeapMemoryPool or StackMemoryPool or ChainMemoryPool.
-class BaseMemoryPool : public NonCopyable
+class BaseMemoryPool
 {
 public:
+	BaseMemoryPool(const BaseMemoryPool&) = delete; // Non-copyable
+
 	virtual ~BaseMemoryPool();
+
+	BaseMemoryPool& operator=(const BaseMemoryPool&) = delete; // Non-copyable
 
 	/// Allocate memory. This operation MAY be thread safe
 	/// @param size The size to allocate

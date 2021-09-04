@@ -68,14 +68,18 @@ private:
 };
 
 /// Class based allocator.
-class ClassGpuAllocator : public NonCopyable
+class ClassGpuAllocator
 {
 public:
 	ClassGpuAllocator()
 	{
 	}
 
+	ClassGpuAllocator(const ClassGpuAllocator&) = delete; // Non-copyable
+
 	~ClassGpuAllocator();
+
+	ClassGpuAllocator& operator=(const ClassGpuAllocator&) = delete; // Non-copyable
 
 	void init(GenericMemoryPoolAllocator<U8> alloc, ClassGpuAllocatorInterface* iface);
 
