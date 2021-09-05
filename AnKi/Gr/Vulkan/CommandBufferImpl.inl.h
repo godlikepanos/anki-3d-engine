@@ -631,7 +631,7 @@ inline void CommandBufferImpl::drawcallCommon()
 	// Get or create ppline
 	Pipeline ppline;
 	Bool stateDirty;
-	m_graphicsProg->getPipelineFactory().newPipeline(m_state, ppline, stateDirty);
+	m_graphicsProg->getPipelineFactory().getOrCreatePipeline(m_state, ppline, stateDirty);
 
 	if(stateDirty)
 	{
@@ -840,7 +840,7 @@ inline void CommandBufferImpl::bindShaderProgram(ShaderProgramPtr& prog)
 		m_graphicsProg = &impl;
 		m_computeProg = nullptr; // Unbind the compute prog. Doesn't work like vulkan
 		m_rtProg = nullptr; // See above
-		m_state.bindShaderProgram(prog);
+		m_state.bindShaderProgram(&impl);
 	}
 	else if(!!(impl.getStages() & ShaderTypeBit::COMPUTE))
 	{

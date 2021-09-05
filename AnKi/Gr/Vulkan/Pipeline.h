@@ -18,86 +18,85 @@ namespace anki
 /// @addtogroup vulkan
 /// @{
 
-/// @note Non copyable because that complicates the hashing.
-class PPVertexBufferBinding
+class VertexBufferBindingPipelineState
 {
 public:
 	U32 m_stride = MAX_U32; ///< Vertex stride.
 	VertexStepRate m_stepRate = VertexStepRate::VERTEX;
+	Array<U8, 3> m_padding = {};
 
-	Bool operator==(const PPVertexBufferBinding& b) const
+	Bool operator==(const VertexBufferBindingPipelineState& b) const
 	{
 		return m_stride == b.m_stride && m_stepRate == b.m_stepRate;
 	}
 
-	Bool operator!=(const PPVertexBufferBinding& b) const
+	Bool operator!=(const VertexBufferBindingPipelineState& b) const
 	{
 		return !(*this == b);
 	}
 };
+static_assert(sizeof(VertexBufferBindingPipelineState) == 2 * sizeof(U32), "Packed because it will be hashed");
 
-class PPVertexAttributeBinding
+class VertexAttributeBindingPipelineState
 {
 public:
 	PtrSize m_offset = 0;
 	Format m_format = Format::NONE;
 	U8 m_binding = 0;
+	Array<U8, 3> m_padding = {};
 
-	Bool operator==(const PPVertexAttributeBinding& b) const
+	Bool operator==(const VertexAttributeBindingPipelineState& b) const
 	{
 		return m_format == b.m_format && m_offset == b.m_offset && m_binding == b.m_binding;
 	}
 
-	Bool operator!=(const PPVertexAttributeBinding& b) const
+	Bool operator!=(const VertexAttributeBindingPipelineState& b) const
 	{
 		return !(*this == b);
 	}
 };
+static_assert(sizeof(VertexAttributeBindingPipelineState) == 2 * sizeof(PtrSize), "Packed because it will be hashed");
 
-class PPVertexStateInfo
+class VertexPipelineState
 {
 public:
-	Array<PPVertexBufferBinding, MAX_VERTEX_ATTRIBUTES> m_bindings;
-	Array<PPVertexAttributeBinding, MAX_VERTEX_ATTRIBUTES> m_attributes;
+	Array<VertexBufferBindingPipelineState, MAX_VERTEX_ATTRIBUTES> m_bindings;
+	Array<VertexAttributeBindingPipelineState, MAX_VERTEX_ATTRIBUTES> m_attributes;
 };
+static_assert(sizeof(VertexPipelineState)
+				  == sizeof(VertexBufferBindingPipelineState) * MAX_VERTEX_ATTRIBUTES
+						 + sizeof(VertexAttributeBindingPipelineState) * MAX_VERTEX_ATTRIBUTES,
+			  "Packed because it will be hashed");
 
-class PPInputAssemblerStateInfo
+class InputAssemblerPipelineState
 {
 public:
 	PrimitiveTopology m_topology = PrimitiveTopology::TRIANGLES;
 	Bool m_primitiveRestartEnabled = false;
 };
+static_assert(sizeof(InputAssemblerPipelineState) == sizeof(U8) * 2, "Packed because it will be hashed");
 
-class PPTessellationStateInfo
-{
-public:
-	U32 m_patchControlPointCount = 3;
-};
-
-class PPViewportStateInfo
-{
-public:
-	Bool m_scissorEnabled = false;
-};
-
-class PPRasterizerStateInfo
+class RasterizerPipelineState
 {
 public:
 	FillMode m_fillMode = FillMode::SOLID;
 	FaceSelectionBit m_cullMode = FaceSelectionBit::BACK;
 	RasterizationOrder m_rasterizationOrder = RasterizationOrder::ORDERED;
+	U8 m_padding = 0;
 	F32 m_depthBiasConstantFactor = 0.0f;
 	F32 m_depthBiasSlopeFactor = 0.0f;
 };
+static_assert(sizeof(RasterizerPipelineState) == sizeof(U32) * 3, "Packed because it will be hashed");
 
-class PPDepthStateInfo
+class DepthPipelineState
 {
 public:
 	Bool m_depthWriteEnabled = true;
 	CompareOperation m_depthCompareFunction = CompareOperation::LESS;
 };
+static_assert(sizeof(DepthPipelineState) == sizeof(U8) * 2, "Packed because it will be hashed");
 
-class PPStencilStateInfo
+class StencilPipelineState
 {
 public:
 	class S
@@ -111,8 +110,9 @@ public:
 
 	Array<S, 2> m_face;
 };
+static_assert(sizeof(StencilPipelineState) == sizeof(U32) * 2, "Packed because it will be hashed");
 
-class PPColorAttachmentStateInfo
+class ColorAttachmentState
 {
 public:
 	BlendFactor m_srcBlendFactorRgb = BlendFactor::ONE;
@@ -123,53 +123,33 @@ public:
 	BlendOperation m_blendFunctionA = BlendOperation::ADD;
 	ColorBit m_channelWriteMask = ColorBit::ALL;
 };
+static_assert(sizeof(ColorAttachmentState) == sizeof(U8) * 7, "Packed because it will be hashed");
 
-class PPColorStateInfo
+class ColorPipelineState
 {
 public:
 	Bool m_alphaToCoverageEnabled = false;
-	Array<PPColorAttachmentStateInfo, MAX_COLOR_ATTACHMENTS> m_attachments;
+	Array<ColorAttachmentState, MAX_COLOR_ATTACHMENTS> m_attachments;
 };
+static_assert(sizeof(ColorPipelineState) == sizeof(ColorAttachmentState) * MAX_COLOR_ATTACHMENTS + sizeof(U8),
+			  "Packed because it will be hashed");
 
-class PipelineInfoState
+class AllPipelineState
 {
 public:
-	PipelineInfoState()
-	{
-		reset();
-	}
+	const ShaderProgramImpl* m_prog = nullptr;
+	VkRenderPass m_rpass = VK_NULL_HANDLE;
 
-	ShaderProgramPtr m_prog;
-	PPVertexStateInfo m_vertex;
-	PPInputAssemblerStateInfo m_inputAssembler;
-	PPTessellationStateInfo m_tessellation;
-	PPViewportStateInfo m_viewport;
-	PPRasterizerStateInfo m_rasterizer;
-	PPDepthStateInfo m_depth;
-	PPStencilStateInfo m_stencil;
-	PPColorStateInfo m_color;
+	VertexPipelineState m_vertex;
+	InputAssemblerPipelineState m_inputAssembler;
+	RasterizerPipelineState m_rasterizer;
+	DepthPipelineState m_depth;
+	StencilPipelineState m_stencil;
+	ColorPipelineState m_color;
 
 	void reset()
 	{
-		m_prog.reset(nullptr);
-
-		// Do a special construction. The state will be hashed and the padding may contain garbage. With this trick
-		// zero the padding
-		zeroMemory(*this);
-
-#define ANKI_CONSTRUCT_AND_ZERO_PADDING(memb_) new(&memb_) decltype(memb_)()
-
-		ANKI_CONSTRUCT_AND_ZERO_PADDING(m_prog);
-		ANKI_CONSTRUCT_AND_ZERO_PADDING(m_vertex);
-		ANKI_CONSTRUCT_AND_ZERO_PADDING(m_inputAssembler);
-		ANKI_CONSTRUCT_AND_ZERO_PADDING(m_tessellation);
-		ANKI_CONSTRUCT_AND_ZERO_PADDING(m_viewport);
-		ANKI_CONSTRUCT_AND_ZERO_PADDING(m_rasterizer);
-		ANKI_CONSTRUCT_AND_ZERO_PADDING(m_depth);
-		ANKI_CONSTRUCT_AND_ZERO_PADDING(m_stencil);
-		ANKI_CONSTRUCT_AND_ZERO_PADDING(m_color);
-
-#undef ANKI_CONSTRUCT_AND_ZERO_PADDING
+		::new(this) AllPipelineState();
 	}
 };
 
@@ -189,13 +169,12 @@ public:
 
 	void bindVertexBuffer(U32 binding, PtrSize stride, VertexStepRate stepRate)
 	{
-		PPVertexBufferBinding b;
+		VertexBufferBindingPipelineState b;
 		b.m_stride = U32(stride);
 		b.m_stepRate = stepRate;
 		if(m_state.m_vertex.m_bindings[binding] != b)
 		{
-			m_state.m_vertex.m_bindings[binding].m_stride = b.m_stride;
-			m_state.m_vertex.m_bindings[binding].m_stepRate = b.m_stepRate;
+			m_state.m_vertex.m_bindings[binding] = b;
 			m_dirty.m_vertBindings.set(binding);
 		}
 		m_set.m_vertBindings.set(binding);
@@ -203,15 +182,13 @@ public:
 
 	void setVertexAttribute(U32 location, U32 buffBinding, const Format fmt, PtrSize relativeOffset)
 	{
-		PPVertexAttributeBinding b;
+		VertexAttributeBindingPipelineState b;
 		b.m_binding = U8(buffBinding);
 		b.m_format = fmt;
 		b.m_offset = relativeOffset;
 		if(m_state.m_vertex.m_attributes[location] != b)
 		{
-			m_state.m_vertex.m_attributes[location].m_binding = U8(buffBinding);
-			m_state.m_vertex.m_attributes[location].m_format = fmt;
-			m_state.m_vertex.m_attributes[location].m_offset = relativeOffset;
+			m_state.m_vertex.m_attributes[location] = b;
 			m_dirty.m_attribs.set(location);
 		}
 		m_set.m_attribs.set(location);
@@ -222,7 +199,7 @@ public:
 		if(m_state.m_inputAssembler.m_primitiveRestartEnabled != enable)
 		{
 			m_state.m_inputAssembler.m_primitiveRestartEnabled = enable;
-			m_dirty.m_other |= DirtyBit::IA;
+			m_dirty.m_inputAssembler = true;
 		}
 	}
 
@@ -231,7 +208,7 @@ public:
 		if(m_state.m_rasterizer.m_fillMode != mode)
 		{
 			m_state.m_rasterizer.m_fillMode = mode;
-			m_dirty.m_other |= DirtyBit::RASTER;
+			m_dirty.m_rasterizer = true;
 		}
 	}
 
@@ -240,7 +217,7 @@ public:
 		if(m_state.m_rasterizer.m_cullMode != mode)
 		{
 			m_state.m_rasterizer.m_cullMode = mode;
-			m_dirty.m_other |= DirtyBit::RASTER;
+			m_dirty.m_rasterizer = true;
 		}
 	}
 
@@ -251,7 +228,7 @@ public:
 		{
 			m_state.m_rasterizer.m_depthBiasConstantFactor = factor;
 			m_state.m_rasterizer.m_depthBiasSlopeFactor = units;
-			m_dirty.m_other |= DirtyBit::RASTER;
+			m_dirty.m_rasterizer = true;
 		}
 	}
 
@@ -260,7 +237,7 @@ public:
 		if(m_state.m_rasterizer.m_rasterizationOrder != order)
 		{
 			m_state.m_rasterizer.m_rasterizationOrder = order;
-			m_dirty.m_other |= DirtyBit::RASTER;
+			m_dirty.m_rasterizer = true;
 		}
 	}
 
@@ -275,7 +252,7 @@ public:
 			m_state.m_stencil.m_face[0].m_stencilFailOperation = stencilFail;
 			m_state.m_stencil.m_face[0].m_stencilPassDepthFailOperation = stencilPassDepthFail;
 			m_state.m_stencil.m_face[0].m_stencilPassDepthPassOperation = stencilPassDepthPass;
-			m_dirty.m_other |= DirtyBit::STENCIL;
+			m_dirty.m_stencil = true;
 		}
 
 		if(!!(face & FaceSelectionBit::BACK)
@@ -286,7 +263,7 @@ public:
 			m_state.m_stencil.m_face[1].m_stencilFailOperation = stencilFail;
 			m_state.m_stencil.m_face[1].m_stencilPassDepthFailOperation = stencilPassDepthFail;
 			m_state.m_stencil.m_face[1].m_stencilPassDepthPassOperation = stencilPassDepthPass;
-			m_dirty.m_other |= DirtyBit::STENCIL;
+			m_dirty.m_stencil = true;
 		}
 	}
 
@@ -295,13 +272,13 @@ public:
 		if(!!(face & FaceSelectionBit::FRONT) && m_state.m_stencil.m_face[0].m_compareFunction != comp)
 		{
 			m_state.m_stencil.m_face[0].m_compareFunction = comp;
-			m_dirty.m_other |= DirtyBit::STENCIL;
+			m_dirty.m_stencil = true;
 		}
 
 		if(!!(face & FaceSelectionBit::BACK) && m_state.m_stencil.m_face[1].m_compareFunction != comp)
 		{
 			m_state.m_stencil.m_face[1].m_compareFunction = comp;
-			m_dirty.m_other |= DirtyBit::STENCIL;
+			m_dirty.m_stencil = true;
 		}
 	}
 
@@ -310,7 +287,7 @@ public:
 		if(m_state.m_depth.m_depthWriteEnabled != enable)
 		{
 			m_state.m_depth.m_depthWriteEnabled = enable;
-			m_dirty.m_other |= DirtyBit::DEPTH;
+			m_dirty.m_depth = true;
 		}
 	}
 
@@ -319,7 +296,7 @@ public:
 		if(m_state.m_depth.m_depthCompareFunction != op)
 		{
 			m_state.m_depth.m_depthCompareFunction = op;
-			m_dirty.m_other |= DirtyBit::DEPTH;
+			m_dirty.m_depth = true;
 		}
 	}
 
@@ -328,7 +305,7 @@ public:
 		if(m_state.m_color.m_alphaToCoverageEnabled != enable)
 		{
 			m_state.m_color.m_alphaToCoverageEnabled = enable;
-			m_dirty.m_other |= DirtyBit::COLOR;
+			m_dirty.m_color = true;
 		}
 	}
 
@@ -343,7 +320,7 @@ public:
 
 	void setBlendFactors(U32 attachment, BlendFactor srcRgb, BlendFactor dstRgb, BlendFactor srcA, BlendFactor dstA)
 	{
-		PPColorAttachmentStateInfo& c = m_state.m_color.m_attachments[attachment];
+		ColorAttachmentState& c = m_state.m_color.m_attachments[attachment];
 		if(c.m_srcBlendFactorRgb != srcRgb || c.m_dstBlendFactorRgb != dstRgb || c.m_srcBlendFactorA != srcA
 		   || c.m_dstBlendFactorA != dstA)
 		{
@@ -357,7 +334,7 @@ public:
 
 	void setBlendOperation(U32 attachment, BlendOperation funcRgb, BlendOperation funcA)
 	{
-		PPColorAttachmentStateInfo& c = m_state.m_color.m_attachments[attachment];
+		ColorAttachmentState& c = m_state.m_color.m_attachments[attachment];
 		if(c.m_blendFunctionRgb != funcRgb || c.m_blendFunctionA != funcA)
 		{
 			c.m_blendFunctionRgb = funcRgb;
@@ -366,36 +343,34 @@ public:
 		}
 	}
 
-	void bindShaderProgram(const ShaderProgramPtr& prog)
+	void bindShaderProgram(const ShaderProgramImpl* prog)
 	{
 		if(prog != m_state.m_prog)
 		{
-			const ShaderProgramImpl& impl = static_cast<const ShaderProgramImpl&>(*prog);
-			m_shaderColorAttachmentWritemask = impl.getReflectionInfo().m_colorAttachmentWritemask;
-			m_shaderAttributeMask = impl.getReflectionInfo().m_attributeMask;
+			m_shaderColorAttachmentWritemask = prog->getReflectionInfo().m_colorAttachmentWritemask;
+			m_shaderAttributeMask = prog->getReflectionInfo().m_attributeMask;
 			m_state.m_prog = prog;
-			m_dirty.m_other |= DirtyBit::PROG;
+			m_dirty.m_prog = true;
 		}
 	}
 
-	void beginRenderPass(const FramebufferPtr& fb)
+	void beginRenderPass(const FramebufferImpl* fb)
 	{
-		ANKI_ASSERT(m_rpass == VK_NULL_HANDLE);
+		ANKI_ASSERT(m_state.m_rpass == VK_NULL_HANDLE);
 		Bool d, s;
-		const FramebufferImpl& fbimpl = static_cast<const FramebufferImpl&>(*fb);
-		fbimpl.getAttachmentInfo(m_fbColorAttachmentMask, d, s);
+		fb->getAttachmentInfo(m_fbColorAttachmentMask, d, s);
 		m_fbDepth = d;
 		m_fbStencil = s;
-		m_rpass = fbimpl.getCompatibleRenderPass();
-		m_defaultFb = fbimpl.hasPresentableTexture();
-		m_fb = fb;
+		m_defaultFb = fb->hasPresentableTexture();
+
+		m_state.m_rpass = fb->getCompatibleRenderPass();
+		m_dirty.m_rpass = true;
 	}
 
 	void endRenderPass()
 	{
-		ANKI_ASSERT(m_rpass);
-		m_rpass = VK_NULL_HANDLE;
-		m_fb.reset(nullptr);
+		ANKI_ASSERT(m_state.m_rpass);
+		m_state.m_rpass = VK_NULL_HANDLE;
 	}
 
 	void setPrimitiveTopology(PrimitiveTopology topology)
@@ -403,7 +378,7 @@ public:
 		if(m_state.m_inputAssembler.m_topology != topology)
 		{
 			m_state.m_inputAssembler.m_topology = topology;
-			m_dirty.m_other |= DirtyBit::IA;
+			m_dirty.m_inputAssembler = true;
 		}
 	}
 
@@ -415,7 +390,7 @@ public:
 	/// Flush state
 	void flush(U64& pipelineHash, Bool& stateDirty)
 	{
-		Bool dirtyHashes = updateHashes();
+		const Bool dirtyHashes = updateHashes();
 		if(dirtyHashes)
 		{
 			updateSuperHash();
@@ -438,40 +413,38 @@ public:
 	/// Populate the internal pipeline create info structure.
 	const VkGraphicsPipelineCreateInfo& updatePipelineCreateInfo();
 
-	FramebufferPtr getFb() const
-	{
-		ANKI_ASSERT(m_fb.isCreated());
-		return m_fb;
-	}
-
 	void reset();
 
 private:
-	PipelineInfoState m_state;
-
-	enum class DirtyBit : U8
-	{
-		PROG = 1 << 0,
-		IA = 1 << 1,
-		RASTER = 1 << 2,
-		STENCIL = 1 << 3,
-		DEPTH = 1 << 4,
-		COLOR = 1 << 5,
-
-		NONE = 0,
-		ALL = PROG | IA | RASTER | STENCIL | DEPTH | COLOR
-	};
-	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS_FRIEND(DirtyBit)
+	AllPipelineState m_state;
 
 	class DirtyBits
 	{
 	public:
-		DirtyBit m_other = DirtyBit::ALL;
+		Bool m_prog : 1;
+		Bool m_rpass : 1;
+		Bool m_inputAssembler : 1;
+		Bool m_rasterizer : 1;
+		Bool m_depth : 1;
+		Bool m_stencil : 1;
+		Bool m_color : 1;
 
+		// Vertex
 		BitSet<MAX_VERTEX_ATTRIBUTES, U8> m_attribs = {true};
 		BitSet<MAX_VERTEX_ATTRIBUTES, U8> m_vertBindings = {true};
 
 		BitSet<MAX_COLOR_ATTACHMENTS, U8> m_colAttachments = {true};
+
+		DirtyBits()
+			: m_prog(true)
+			, m_rpass(true)
+			, m_inputAssembler(true)
+			, m_rasterizer(true)
+			, m_depth(true)
+			, m_stencil(true)
+			, m_color(true)
+		{
+		}
 	} m_dirty;
 
 	class SetBits
@@ -486,8 +459,6 @@ private:
 	BitSet<MAX_COLOR_ATTACHMENTS, U8> m_shaderColorAttachmentWritemask = {false};
 
 	// Renderpass info
-	VkRenderPass m_rpass = VK_NULL_HANDLE;
-	FramebufferPtr m_fb; ///< Hold the reference.
 	Bool m_fbDepth = false;
 	Bool m_fbStencil = false;
 	Bool m_defaultFb = false;
@@ -497,6 +468,7 @@ private:
 	{
 	public:
 		U64 m_prog;
+		U64 m_rpass;
 		Array<U64, MAX_VERTEX_ATTRIBUTES> m_vertexAttribs;
 		U64 m_ia;
 		U64 m_raster;
@@ -576,7 +548,7 @@ public:
 	void destroy();
 
 	/// @note Thread-safe.
-	void newPipeline(PipelineStateTracker& state, Pipeline& ppline, Bool& stateDirty);
+	void getOrCreatePipeline(PipelineStateTracker& state, Pipeline& ppline, Bool& stateDirty);
 
 private:
 	class PipelineInternal;
@@ -587,7 +559,7 @@ private:
 	VkPipelineCache m_pplineCache = VK_NULL_HANDLE;
 
 	HashMap<U64, PipelineInternal, Hasher> m_pplines;
-	SpinLock m_pplinesMtx;
+	RWMutex m_pplinesMtx;
 };
 /// @}
 

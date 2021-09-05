@@ -23,8 +23,6 @@ void PipelineStateTracker::reset()
 	m_fbStencil = false;
 	m_defaultFb = false;
 	m_fbColorAttachmentMask.unsetAll();
-	m_rpass = VK_NULL_HANDLE;
-	m_fb.reset(nullptr);
 }
 
 Bool PipelineStateTracker::updateHashes()
@@ -32,11 +30,19 @@ Bool PipelineStateTracker::updateHashes()
 	Bool stateDirty = false;
 
 	// Prog
-	if(!!(m_dirty.m_other & DirtyBit::PROG))
+	if(m_dirty.m_prog)
 	{
-		m_dirty.m_other &= ~DirtyBit::PROG;
+		m_dirty.m_prog = false;
 		stateDirty = true;
 		m_hashes.m_prog = m_state.m_prog->getUuid();
+	}
+
+	// Rpass
+	if(m_dirty.m_rpass)
+	{
+		m_dirty.m_rpass = false;
+		stateDirty = true;
+		m_hashes.m_rpass = ptrToNumber(m_state.m_rpass);
 	}
 
 	// Vertex
@@ -56,6 +62,8 @@ Bool PipelineStateTracker::updateHashes()
 				}
 
 				const U binding = m_state.m_vertex.m_attributes[i].m_binding;
+				ANKI_ASSERT(m_set.m_vertBindings.get(binding) && "Forgot to set a vertex binding");
+
 				if(m_dirty.m_vertBindings.get(binding))
 				{
 					m_dirty.m_vertBindings.unset(binding);
@@ -77,33 +85,33 @@ Bool PipelineStateTracker::updateHashes()
 	}
 
 	// IA
-	if(!!(m_dirty.m_other & DirtyBit::IA))
+	if(m_dirty.m_inputAssembler)
 	{
-		m_dirty.m_other &= ~DirtyBit::IA;
-		m_hashes.m_ia = computeHash(&m_state.m_inputAssembler, sizeof(m_state.m_inputAssembler));
+		m_dirty.m_inputAssembler = false;
 		stateDirty = true;
+		m_hashes.m_ia = computeHash(&m_state.m_inputAssembler, sizeof(m_state.m_inputAssembler));
 	}
 
 	// Rasterizer
-	if(!!(m_dirty.m_other & DirtyBit::RASTER))
+	if(m_dirty.m_rasterizer)
 	{
-		m_dirty.m_other &= ~DirtyBit::RASTER;
+		m_dirty.m_rasterizer = false;
 		stateDirty = true;
 		m_hashes.m_raster = computeHash(&m_state.m_rasterizer, sizeof(m_state.m_rasterizer));
 	}
 
 	// Depth
-	if(m_fbDepth && !!(m_dirty.m_other & DirtyBit::DEPTH))
+	if(m_fbDepth && m_dirty.m_depth)
 	{
-		m_dirty.m_other &= ~DirtyBit::DEPTH;
+		m_dirty.m_depth = false;
 		stateDirty = true;
 		m_hashes.m_depth = computeHash(&m_state.m_depth, sizeof(m_state.m_depth));
 	}
 
 	// Stencil
-	if(m_fbStencil && !!(m_dirty.m_other & DirtyBit::STENCIL))
+	if(m_fbStencil && m_dirty.m_stencil)
 	{
-		m_dirty.m_other &= ~DirtyBit::STENCIL;
+		m_dirty.m_stencil = false;
 		stateDirty = true;
 		m_hashes.m_stencil = computeHash(&m_state.m_stencil, sizeof(m_state.m_stencil));
 	}
@@ -114,9 +122,9 @@ Bool PipelineStateTracker::updateHashes()
 		ANKI_ASSERT(m_fbColorAttachmentMask == m_shaderColorAttachmentWritemask
 					&& "Shader and fb should have same attachment mask");
 
-		if(!!(m_dirty.m_other & DirtyBit::COLOR))
+		if(m_dirty.m_color)
 		{
-			m_dirty.m_other &= ~DirtyBit::COLOR;
+			m_dirty.m_color = false;
 			m_hashes.m_color = m_state.m_color.m_alphaToCoverageEnabled ? 1 : 2;
 			stateDirty = true;
 		}
@@ -146,6 +154,9 @@ void PipelineStateTracker::updateSuperHash()
 
 	// Prog
 	buff[count++] = m_hashes.m_prog;
+
+	// Rpass
+	buff[count++] = m_hashes.m_rpass;
 
 	// Vertex
 	if(!!m_shaderAttributeMask)
@@ -343,7 +354,7 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 		{
 			ANKI_ASSERT(m_shaderColorAttachmentWritemask.get(i) && "No gaps are allowed");
 			VkPipelineColorBlendAttachmentState& out = m_ci.m_colAttachments[i];
-			const PPColorAttachmentStateInfo& in = m_state.m_color.m_attachments[i];
+			const ColorAttachmentState& in = m_state.m_color.m_attachments[i];
 
 			out.blendEnable = !blendingDisabled(in.m_srcBlendFactorRgb, in.m_dstBlendFactorRgb, in.m_srcBlendFactorA,
 												in.m_dstBlendFactorA, in.m_blendFunctionRgb, in.m_blendFunctionA);
@@ -377,7 +388,7 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 
 	// The rest
 	ci.layout = static_cast<const ShaderProgramImpl&>(*m_state.m_prog).getPipelineLayout().getHandle();
-	ci.renderPass = m_rpass;
+	ci.renderPass = m_state.m_rpass;
 	ci.subpass = 0;
 
 	return ci;
@@ -387,10 +398,6 @@ class PipelineFactory::PipelineInternal
 {
 public:
 	VkPipeline m_handle = VK_NULL_HANDLE;
-
-	/// The pipeline needs a render pass and the framebuffers are the owners of that. So the internal pipeline will
-	/// hold a ref to the FB in order to hold a ref to the render pass.
-	FramebufferPtr m_fb;
 };
 
 class PipelineFactory::Hasher
@@ -409,15 +416,16 @@ void PipelineFactory::destroy()
 		if(it.m_handle)
 		{
 			vkDestroyPipeline(m_dev, it.m_handle, nullptr);
-			it.m_fb.reset(nullptr);
 		}
 	}
 
 	m_pplines.destroy(m_alloc);
 }
 
-void PipelineFactory::newPipeline(PipelineStateTracker& state, Pipeline& ppline, Bool& stateDirty)
+void PipelineFactory::getOrCreatePipeline(PipelineStateTracker& state, Pipeline& ppline, Bool& stateDirty)
 {
+	ANKI_TRACE_SCOPED_EVENT(VK_PIPELINE_GET_OR_CREATE);
+
 	U64 hash;
 	state.flush(hash, stateDirty);
 
@@ -427,34 +435,47 @@ void PipelineFactory::newPipeline(PipelineStateTracker& state, Pipeline& ppline,
 		return;
 	}
 
-	LockGuard<SpinLock> lock(m_pplinesMtx);
+	// Check if ppline exists
+	{
+		RLockGuard<RWMutex> lock(m_pplinesMtx);
+		auto it = m_pplines.find(hash);
+		if(it != m_pplines.getEnd())
+		{
+			ppline.m_handle = (*it).m_handle;
+			ANKI_TRACE_INC_COUNTER(VK_PIPELINES_CACHE_HIT, 1);
+			return;
+		}
+	}
 
+	// Doesnt exist. Need to create it
+
+	WLockGuard<RWMutex> lock(m_pplinesMtx);
+
+	// Check again
 	auto it = m_pplines.find(hash);
 	if(it != m_pplines.getEnd())
 	{
 		ppline.m_handle = (*it).m_handle;
+		return;
 	}
-	else
+
+	// Create it for real
+	PipelineInternal pp;
+	const VkGraphicsPipelineCreateInfo& ci = state.updatePipelineCreateInfo();
+
 	{
-		PipelineInternal pp;
-		const VkGraphicsPipelineCreateInfo& ci = state.updatePipelineCreateInfo();
-		pp.m_fb = state.getFb();
-
-		{
-			ANKI_TRACE_SCOPED_EVENT(VK_PIPELINE_CREATE);
-			ANKI_VK_CHECKF(vkCreateGraphicsPipelines(m_dev, m_pplineCache, 1, &ci, nullptr, &pp.m_handle));
-		}
-
-		ANKI_TRACE_INC_COUNTER(VK_PIPELINE_CREATE, 1);
-
-		m_pplines.emplace(m_alloc, hash, pp);
-		ppline.m_handle = pp.m_handle;
-
-		// Print shader info
-		const ShaderProgramImpl& shaderImpl = static_cast<const ShaderProgramImpl&>(*state.m_state.m_prog);
-		shaderImpl.getGrManagerImpl().printPipelineShaderInfo(pp.m_handle, shaderImpl.getName(), shaderImpl.getStages(),
-															  hash);
+		ANKI_TRACE_SCOPED_EVENT(VK_PIPELINE_CREATE);
+		ANKI_VK_CHECKF(vkCreateGraphicsPipelines(m_dev, m_pplineCache, 1, &ci, nullptr, &pp.m_handle));
 	}
+
+	ANKI_TRACE_INC_COUNTER(VK_PIPELINES_CACHE_MISS, 1);
+
+	m_pplines.emplace(m_alloc, hash, pp);
+	ppline.m_handle = pp.m_handle;
+
+	// Print shader info
+	state.m_state.m_prog->getGrManagerImpl().printPipelineShaderInfo(pp.m_handle, state.m_state.m_prog->getName(),
+																	 state.m_state.m_prog->getStages(), hash);
 }
 
 } // end namespace anki

@@ -652,6 +652,11 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 				m_extensions |= VulkanExtensions::KHR_SPIRV_1_4;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
+			else if(extensionName == VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::KHR_SHADER_FLOAT_CONTROLS;
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
+			}
 		}
 
 		ANKI_VK_LOGI("Will enable the following device extensions:");
@@ -913,6 +918,12 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	if(!(m_extensions & VulkanExtensions::KHR_SPIRV_1_4))
 	{
 		ANKI_VK_LOGE("Spir-V 1.4 is not supported");
+		return Error::FUNCTION_FAILED;
+	}
+
+	if(!(m_extensions & VulkanExtensions::KHR_SHADER_FLOAT_CONTROLS))
+	{
+		ANKI_VK_LOGE(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME " is not supported");
 		return Error::FUNCTION_FAILED;
 	}
 
