@@ -146,9 +146,9 @@ Error MicroSwapchain::initInternal()
 		ci.imageExtent = surfaceProperties.currentExtent;
 		ci.imageArrayLayers = 1;
 		ci.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
-		ci.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
 		ci.queueFamilyIndexCount = m_factory->m_gr->getQueueFamilies().getSize();
 		ci.pQueueFamilyIndices = &m_factory->m_gr->getQueueFamilies()[0];
+		ci.imageSharingMode = (ci.queueFamilyIndexCount > 1) ? VK_SHARING_MODE_CONCURRENT : VK_SHARING_MODE_EXCLUSIVE;
 		ci.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
 		ci.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 		ci.presentMode = presentMode;

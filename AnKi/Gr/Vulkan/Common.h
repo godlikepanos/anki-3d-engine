@@ -83,7 +83,7 @@ enum class VulkanExtensions : U32
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VulkanExtensions)
 
-enum class QueueType : U8
+enum class VulkanQueueType : U8
 {
 	GENERAL,
 	COMPUTE,
@@ -91,7 +91,9 @@ enum class QueueType : U8
 	COUNT,
 	FIRST = 0
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(QueueType)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VulkanQueueType)
+
+using VulkanQueueFamilies = Array<U32, U32(VulkanQueueType::COUNT)>;
 
 /// @name Constants
 /// @{

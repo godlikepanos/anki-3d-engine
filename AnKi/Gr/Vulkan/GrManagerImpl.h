@@ -47,9 +47,10 @@ public:
 
 	ANKI_USE_RESULT Error init(const GrManagerInitInfo& cfg);
 
-	const Array<U32, U(QueueType::COUNT)>& getQueueFamilies() const
+	ConstWeakArray<U32> getQueueFamilies() const
 	{
-		return m_queueFamilyIndices;
+		const Bool hasAsyncCompute = m_queueFamilyIndices[VulkanQueueType::COMPUTE] != MAX_U32;
+		return (hasAsyncCompute) ? m_queueFamilyIndices : ConstWeakArray<U32>(&m_queueFamilyIndices[0], 1);
 	}
 
 	const VkPhysicalDeviceProperties& getPhysicalDeviceProperties() const
@@ -239,8 +240,8 @@ private:
 	VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
 	VulkanExtensions m_extensions = VulkanExtensions::NONE;
 	VkDevice m_device = VK_NULL_HANDLE;
-	Array<U32, U32(QueueType::COUNT)> m_queueFamilyIndices = {MAX_U32, MAX_U32};
-	Array<VkQueue, U32(QueueType::COUNT)> m_queues = {};
+	VulkanQueueFamilies m_queueFamilyIndices = {MAX_U32, MAX_U32};
+	Array<VkQueue, U32(VulkanQueueType::COUNT)> m_queues = {};
 	Mutex m_globalMtx;
 
 	VkPhysicalDeviceProperties2 m_devProps = {};
@@ -276,7 +277,7 @@ private:
 		/// Signaled by the submit that renders to the default FB. Present waits for it.
 		MicroSemaphorePtr m_renderSemaphore;
 
-		QueueType m_queueWroteToSwapchainImage = QueueType::COUNT;
+		VulkanQueueType m_queueWroteToSwapchainImage = VulkanQueueType::COUNT;
 	};
 
 	VkSurfaceKHR m_surface = VK_NULL_HANDLE;
