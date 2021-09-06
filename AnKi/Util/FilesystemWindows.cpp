@@ -94,8 +94,8 @@ Error getTempDirectory(StringAuto& out)
 	return Error::NONE;
 }
 
-static Error walkDirectoryTreeInternal(const CString& dir, void* userData, WalkDirectoryTreeCallback callback,
-									   U baseDirLen)
+static Error walkDirectoryTreeRecursive(const CString& dir, const Function<Error(const CString&, Bool)>& callback,
+										U baseDirLen)
 {
 	// Append something to the path
 	if(dir.getLength() > MAX_PATH_LEN - 2)
@@ -141,7 +141,7 @@ static Error walkDirectoryTreeInternal(const CString& dir, void* userData, WalkD
 			Bool isDir = find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
 
 			// Compute new path
-			U oldLen = strlen(&dir2[0]);
+			const PtrSize oldLen = strlen(&dir2[0]);
 			if(oldLen + filename.getLength() > MAX_PATH_LEN)
 			{
 				ANKI_UTIL_LOGE("Path too long");
@@ -149,7 +149,7 @@ static Error walkDirectoryTreeInternal(const CString& dir, void* userData, WalkD
 			}
 
 			strcat(&dir2[0], &filename[0]);
-			Error err = callback(&dir2[0] + baseDirLen, userData, isDir);
+			const Error err = callback(&dir2[0] + baseDirLen, isDir);
 			if(err)
 			{
 				FindClose(handle);
@@ -159,7 +159,7 @@ static Error walkDirectoryTreeInternal(const CString& dir, void* userData, WalkD
 			// Move to next dir
 			if(isDir)
 			{
-				Error err = walkDirectoryTreeInternal(&dir2[0], userData, callback, baseDirLen);
+				const Error err = walkDirectoryTreeRecursive(&dir2[0], callback, baseDirLen);
 				if(err)
 				{
 					FindClose(handle);
@@ -182,10 +182,10 @@ static Error walkDirectoryTreeInternal(const CString& dir, void* userData, WalkD
 	return Error::NONE;
 }
 
-Error walkDirectoryTree(const CString& dir, void* userData, WalkDirectoryTreeCallback callback)
+Error walkDirectoryTreeInternal(const CString& dir, const Function<Error(const CString&, Bool)>& callback)
 {
 	U baseDirLen = 0;
-	U len = dir.getLength();
+	const U len = dir.getLength();
 	if(dir[len - 1] == '/')
 	{
 		baseDirLen = len;
@@ -195,7 +195,7 @@ Error walkDirectoryTree(const CString& dir, void* userData, WalkDirectoryTreeCal
 		baseDirLen = len + 1;
 	}
 
-	return walkDirectoryTreeInternal(dir, userData, callback, baseDirLen);
+	return walkDirectoryTreeRecursive(dir, callback, baseDirLen);
 }
 
 } // end namespace anki

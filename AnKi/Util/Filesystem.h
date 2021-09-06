@@ -31,6 +31,10 @@ void getParentFilepath(const CString& filename, StringAuto& out);
 /// Return true if directory exists?
 Bool directoryExists(const CString& dir);
 
+/// @internal
+ANKI_USE_RESULT Error walkDirectoryTreeInternal(const CString& dir,
+												const Function<Error(const CString&, Bool)>& callback);
+
 /// Walk a directory tree.
 /// @param dir The dir to walk.
 /// @param alloc An allocator for temp allocations.
@@ -45,8 +49,6 @@ Bool directoryExists(const CString& dir);
 template<typename TFunc>
 ANKI_USE_RESULT Error walkDirectoryTree(const CString& dir, GenericMemoryPoolAllocator<U8> alloc, TFunc func)
 {
-	Error walkDirectoryTreeInternal(const CString& dir, const Function<Error(const CString&, Bool)>& callback);
-
 	Function<Error(const CString&, Bool)> f(alloc, func);
 	const Error err = walkDirectoryTreeInternal(dir, f);
 	f.destroy(alloc);
