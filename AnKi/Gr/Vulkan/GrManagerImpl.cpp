@@ -685,7 +685,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	// Descriptor indexing
 	if(!(m_extensions & VulkanExtensions::EXT_DESCRIPTOR_INDEXING))
 	{
-		ANKI_VK_LOGE("Descriptor indexing is not supported");
+		ANKI_VK_LOGE(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME " is not supported");
 		return Error::FUNCTION_FAILED;
 	}
 	else
@@ -724,7 +724,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	// Buffer address
 	if(!(m_extensions & VulkanExtensions::KHR_BUFFER_DEVICE_ADDRESS))
 	{
-		ANKI_VK_LOGE("Device buffer access extension is not supported");
+		ANKI_VK_LOGE(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME " is not supported");
 		return Error::FUNCTION_FAILED;
 	}
 	else
@@ -747,7 +747,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	// Scalar block layout
 	if(!(m_extensions & VulkanExtensions::EXT_SCALAR_BLOCK_LAYOUT))
 	{
-		ANKI_VK_LOGE("Scalar block layout extension is not supported");
+		ANKI_VK_LOGE(VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME " is not supported");
 		return Error::FUNCTION_FAILED;
 	}
 	else
@@ -772,7 +772,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	// Timeline semaphore
 	if(!(m_extensions & VulkanExtensions::KHR_TIMELINE_SEMAPHORE))
 	{
-		ANKI_VK_LOGE("Timeline semaphore extension is not supported");
+		ANKI_VK_LOGE(VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME " is not supported");
 		return Error::FUNCTION_FAILED;
 	}
 	else
@@ -842,7 +842,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	// F16 I8
 	if(!(m_extensions & VulkanExtensions::KHR_SHADER_FLOAT16_INT8))
 	{
-		ANKI_VK_LOGE("FP16/Int8 extension is not supported");
+		ANKI_VK_LOGE(VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME " is not supported");
 		return Error::FUNCTION_FAILED;
 	}
 	else
@@ -861,7 +861,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	// 64bit atomics
 	if(!(m_extensions & VulkanExtensions::KHR_SHADER_ATOMIC_INT64))
 	{
-		ANKI_VK_LOGE("64bit atomics are not supported");
+		ANKI_VK_LOGE(VK_KHR_SHADER_ATOMIC_INT64_EXTENSION_NAME " is not supported");
 		return Error::FUNCTION_FAILED;
 	}
 	else
@@ -917,7 +917,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 
 	if(!(m_extensions & VulkanExtensions::KHR_SPIRV_1_4))
 	{
-		ANKI_VK_LOGE("Spir-V 1.4 is not supported");
+		ANKI_VK_LOGE(VK_KHR_SPIRV_1_4_EXTENSION_NAME " is not supported");
 		return Error::FUNCTION_FAILED;
 	}
 

@@ -57,8 +57,8 @@ static const char* SHADER_HEADER = R"(#version 460 core
 #extension GL_EXT_nonuniform_qualifier : enable
 #extension GL_EXT_scalar_block_layout : enable
 
-#define ANKI_MAX_BINDLESS_TEXTURES %u
-#define ANKI_MAX_BINDLESS_IMAGES %u
+#define ANKI_MAX_BINDLESS_TEXTURES %uu
+#define ANKI_MAX_BINDLESS_IMAGES %uu
 
 #if defined(ANKI_RAY_GEN_SHADER) || defined(ANKI_ANY_HIT_SHADER) || defined(ANKI_CLOSEST_HIT_SHADER) || defined(ANKI_MISS_SHADER) || defined(ANKI_INTERSECTION_SHADER) || defined(ANKI_CALLABLE_SHADER)
 #	extension GL_EXT_ray_tracing : enable

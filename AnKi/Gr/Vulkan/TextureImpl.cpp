@@ -14,6 +14,38 @@
 namespace anki
 {
 
+U32 MicroImageView::getOrCreateBindlessIndex(VkImageLayout layout, GrManagerImpl& gr) const
+{
+	ANKI_ASSERT(layout == VK_IMAGE_LAYOUT_GENERAL || layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+	const U32 arrayIdx = (layout == VK_IMAGE_LAYOUT_GENERAL) ? 1 : 0;
+
+	LockGuard<SpinLock> lock(m_lock);
+
+	U32 outIdx;
+	if(m_bindlessIndices[arrayIdx] != MAX_U32)
+	{
+		outIdx = m_bindlessIndices[arrayIdx];
+	}
+	else
+	{
+		// Needs binding to the bindless descriptor set
+
+		if(layout == VK_IMAGE_LAYOUT_GENERAL)
+		{
+			outIdx = gr.getDescriptorSetFactory().bindBindlessImage(m_handle);
+		}
+		else
+		{
+			outIdx = gr.getDescriptorSetFactory().bindBindlessTexture(m_handle, layout);
+		}
+
+		m_bindlessIndices[arrayIdx] = outIdx;
+	}
+
+	return outIdx;
+}
+
 TextureImpl::~TextureImpl()
 {
 #if ANKI_ENABLE_ASSERTIONS
@@ -23,7 +55,7 @@ TextureImpl::~TextureImpl()
 	}
 #endif
 
-	for(auto it : m_viewsMap)
+	for(MicroImageView& it : m_viewsMap)
 	{
 		destroyMicroImageView(it);
 	}

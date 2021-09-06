@@ -269,12 +269,12 @@ static constexpr unsigned long long int operator""_GB(unsigned long long int x)
 /// @{
 static constexpr Second operator""_ms(long double x)
 {
-	return x / 1000.0;
+	return Second(x) / 1000.0;
 }
 
 static constexpr Second operator""_ns(long double x)
 {
-	return x / 1000000000.0;
+	return Second(x) / 1000000000.0;
 }
 /// @}
 
