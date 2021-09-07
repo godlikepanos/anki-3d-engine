@@ -662,7 +662,8 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 				m_extensions |= VulkanExtensions::KHR_SHADER_FLOAT16_INT8;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
-			else if(extensionName == VK_KHR_SHADER_ATOMIC_INT64_EXTENSION_NAME)
+			else if(extensionName == VK_KHR_SHADER_ATOMIC_INT64_EXTENSION_NAME
+					&& init.m_config->getBool("gr_64bitAtomics"))
 			{
 				m_extensions |= VulkanExtensions::KHR_SHADER_ATOMIC_INT64;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
@@ -744,8 +745,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	// Buffer address
 	if(!(m_extensions & VulkanExtensions::KHR_BUFFER_DEVICE_ADDRESS))
 	{
-		ANKI_VK_LOGE(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME " is not supported");
-		return Error::FUNCTION_FAILED;
+		ANKI_VK_LOGW(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME " is not supported");
 	}
 	else
 	{
@@ -881,11 +881,13 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	// 64bit atomics
 	if(!(m_extensions & VulkanExtensions::KHR_SHADER_ATOMIC_INT64))
 	{
-		ANKI_VK_LOGE(VK_KHR_SHADER_ATOMIC_INT64_EXTENSION_NAME " is not supported");
-		return Error::FUNCTION_FAILED;
+		ANKI_VK_LOGW(VK_KHR_SHADER_ATOMIC_INT64_EXTENSION_NAME " is not supported or disabled");
+		m_capabilities.m_64bitAtomics = false;
 	}
 	else
 	{
+		m_capabilities.m_64bitAtomics = true;
+
 		m_atomicInt64Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_INT64_FEATURES_KHR;
 
 		VkPhysicalDeviceFeatures2 features = {};

@@ -218,4 +218,19 @@ struct Cluster
 const U32 _ANKI_SIZEOF_Cluster = 5u * ANKI_SIZEOF(U64);
 ANKI_SHADER_STATIC_ASSERT(sizeof(Cluster) == _ANKI_SIZEOF_Cluster);
 
+/// An alternative representation of Cluster that doesn't contain 64bit values
+struct Cluster32
+{
+	U32 m_pointLightsMask[2u];
+	U32 m_spotLightsMask[2u];
+	U32 m_decalsMask[2u];
+	U32 m_fogDensityVolumesMask;
+	U32 m_reflectionProbesMask;
+	U32 m_giProbesMask;
+	U32 m_padding; ///< Add some padding to be 100% sure nothing will break.
+};
+
+const U32 _ANKI_SIZEOF_Cluster32 = _ANKI_SIZEOF_Cluster;
+ANKI_SHADER_STATIC_ASSERT(sizeof(Cluster32) == _ANKI_SIZEOF_Cluster32);
+
 ANKI_END_NAMESPACE

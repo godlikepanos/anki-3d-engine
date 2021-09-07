@@ -40,6 +40,8 @@ Error ClusterBinning::init(const ConfigSet& config)
 	variantInitInfo.addConstant("RENDERING_SIZE",
 								UVec2(m_r->getInternalResolution().x(), m_r->getInternalResolution().y()));
 
+	variantInitInfo.addMutation("SUPPORTS_64BIT_ATOMICS", m_r->getGrManager().getDeviceCapabilities().m_64bitAtomics);
+
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProg = variant->getProgram();

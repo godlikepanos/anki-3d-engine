@@ -220,7 +220,8 @@ namespace anki {
 	extern "C" void android_main(android_app* app) \
 	{ \
 		anki::g_androidApp = app; \
-		char* argv[] = {"androidapp"}; \
+		char arr[] = "androidapp"; \
+		char* argv[] = {arr}; \
 		myMain(1, argv); \
 	}
 #else

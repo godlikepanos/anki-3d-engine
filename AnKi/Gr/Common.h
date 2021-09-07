@@ -153,9 +153,13 @@ public:
 
 	/// RT.
 	Bool m_rayTracingEnabled = false;
+
+	/// 64 bit atomics.
+	Bool m_64bitAtomics = false;
 };
 ANKI_END_PACKED_STRUCT
-static_assert(sizeof(GpuDeviceCapabilities) == sizeof(PtrSize) * 4 + sizeof(U32) * 5 + sizeof(U8) * 3 + sizeof(Bool),
+static_assert(sizeof(GpuDeviceCapabilities)
+				  == sizeof(PtrSize) * 4 + sizeof(U32) * 5 + sizeof(U8) * 3 + sizeof(Bool) * 2,
 			  "Should be packed");
 
 /// Bindless related info.
