@@ -94,10 +94,11 @@ public:
 	}
 
 	/// Return char at the specified position.
-	const Char& operator[](U pos) const
+	template<typename T>
+	const Char& operator[](T pos) const
 	{
 		checkInit();
-		ANKI_ASSERT(pos <= getLength());
+		ANKI_ASSERT(pos >= 0 && U32(pos) <= getLength());
 		return m_ptr[pos];
 	}
 
@@ -330,14 +331,16 @@ public:
 	String& operator=(StringAuto&& b);
 
 	/// Return char at the specified position.
-	const Char& operator[](U pos) const
+	template<typename TInt>
+	const Char& operator[](TInt pos) const
 	{
 		checkInit();
 		return m_data[pos];
 	}
 
 	/// Return char at the specified position as a modifiable reference.
-	Char& operator[](U pos)
+	template<typename TInt>
+	Char& operator[](TInt pos)
 	{
 		checkInit();
 		return m_data[pos];
