@@ -216,11 +216,15 @@ int main(int argc, char** argv)
 	astcencPath.sprintf("%s/../../ThirdParty/Bin:%s", p.cstr(), getenv("PATH"));
 	config.m_astcencPath = astcencPath;
 
+	ANKI_IMPORTER_LOGI("Image importing started: %s", config.m_outFilename.cstr());
+
 	if(importImage(config))
 	{
 		ANKI_IMPORTER_LOGE("Importing failed");
 		return 1;
 	}
+
+	ANKI_IMPORTER_LOGI("Image importing completed: %s", config.m_outFilename.cstr());
 
 	return 0;
 }

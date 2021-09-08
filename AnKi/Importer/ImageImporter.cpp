@@ -130,6 +130,7 @@ public:
 			{
 				ANKI_IMPORTER_LOGE("Couldn't delete file: %s", m_fileToDelete.cstr());
 			}
+			ANKI_IMPORTER_LOGV("Deleted %s", m_fileToDelete.cstr());
 		}
 	}
 };
@@ -423,12 +424,12 @@ static ANKI_USE_RESULT Error compressS3tc(GenericMemoryPoolAllocator<U8> alloc, 
 
 static ANKI_USE_RESULT Error compressAstc(GenericMemoryPoolAllocator<U8> alloc, CString tempDirectory,
 										  CString astcencPath, ConstWeakArray<U8, PtrSize> inPixels, U32 inWidth,
-										  U32 inHeight, UVec2 blockSize, WeakArray<U8, PtrSize> outPixels)
+										  U32 inHeight, U32 inChannelCount, UVec2 blockSize,
+										  WeakArray<U8, PtrSize> outPixels)
 {
 	const PtrSize blockBytes = 16;
 	(void)blockBytes;
-	const PtrSize channelCount = 4;
-	ANKI_ASSERT(inPixels.getSizeInBytes() == PtrSize(inWidth) * inHeight * channelCount);
+	ANKI_ASSERT(inPixels.getSizeInBytes() == PtrSize(inWidth) * inHeight * inChannelCount);
 	ANKI_ASSERT(inWidth > 0 && isPowerOfTwo(inWidth) && inHeight > 0 && isPowerOfTwo(inHeight));
 	ANKI_ASSERT(outPixels.getSizeInBytes() == blockBytes * (inWidth / blockSize.x()) * (inHeight / blockSize.y()));
 
@@ -436,7 +437,7 @@ static ANKI_USE_RESULT Error compressAstc(GenericMemoryPoolAllocator<U8> alloc, 
 	StringAuto pngFilename(alloc);
 	pngFilename.sprintf("%s/AnKiImageImporter_%u.png", tempDirectory.cstr(), U32(std::rand()));
 	ANKI_IMPORTER_LOGV("Will store: %s", pngFilename.cstr());
-	if(!stbi_write_png(pngFilename.cstr(), inWidth, inHeight, channelCount, inPixels.getBegin(), 0))
+	if(!stbi_write_png(pngFilename.cstr(), inWidth, inHeight, inChannelCount, inPixels.getBegin(), 0))
 	{
 		ANKI_IMPORTER_LOGE("STB failed to create: %s", pngFilename.cstr());
 		return Error::FUNCTION_FAILED;
@@ -527,6 +528,8 @@ static ANKI_USE_RESULT Error compressAstc(GenericMemoryPoolAllocator<U8> alloc, 
 
 static ANKI_USE_RESULT Error storeAnkiImage(const ImageImporterConfig& config, const ImageImporterContext& ctx)
 {
+	ANKI_IMPORTER_LOGV("Storing to %s", config.m_outFilename.cstr());
+
 	File outFile;
 	ANKI_CHECK(outFile.open(config.m_outFilename, FileOpenFlag::BINARY | FileOpenFlag::WRITE));
 
@@ -694,6 +697,8 @@ static ANKI_USE_RESULT Error importImageInternal(const ImageImporterConfig& conf
 	// Compress
 	if(!!(config.m_compressions & ImageBinaryDataCompression::S3TC))
 	{
+		ANKI_IMPORTER_LOGV("Will compress in S3TC");
+
 		for(U32 mip = 0; mip < mipCount; ++mip)
 		{
 			for(U32 l = 0; l < ctx.m_layerCount; ++l)
@@ -720,6 +725,8 @@ static ANKI_USE_RESULT Error importImageInternal(const ImageImporterConfig& conf
 
 	if(!!(config.m_compressions & ImageBinaryDataCompression::ASTC))
 	{
+		ANKI_IMPORTER_LOGV("Will compress in ASTC");
+
 		for(U32 mip = 0; mip < mipCount; ++mip)
 		{
 			for(U32 l = 0; l < ctx.m_layerCount; ++l)
@@ -739,7 +746,8 @@ static ANKI_USE_RESULT Error importImageInternal(const ImageImporterConfig& conf
 
 					ANKI_CHECK(compressAstc(alloc, config.m_tempDirectory, config.m_astcencPath,
 											ConstWeakArray<U8, PtrSize>(surface.m_pixels), width, height,
-											config.m_astcBlockSize, WeakArray<U8, PtrSize>(surface.m_astcPixels)));
+											ctx.m_channelCount, config.m_astcBlockSize,
+											WeakArray<U8, PtrSize>(surface.m_astcPixels)));
 				}
 			}
 		}
