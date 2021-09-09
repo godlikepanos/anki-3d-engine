@@ -38,7 +38,7 @@ U32 getCpuCoresCount()
 #endif
 }
 
-void getBacktrace(BackTraceWalker& walker)
+void backtraceInternal(const Function<void(CString)>& lambda)
 {
 #if ANKI_POSIX && !ANKI_OS_ANDROID
 	// Get addresses's for all entries on the stack
@@ -46,7 +46,7 @@ void getBacktrace(BackTraceWalker& walker)
 	void** array = static_cast<void**>(malloc(maxStackSize * sizeof(void*)));
 	if(array)
 	{
-		const I32 size = backtrace(array, I32(maxStackSize));
+		const I32 size = ::backtrace(array, I32(maxStackSize));
 
 		// Get symbols
 		char** strings = backtrace_symbols(array, size);
@@ -55,7 +55,7 @@ void getBacktrace(BackTraceWalker& walker)
 		{
 			for(I32 i = 0; i < size; ++i)
 			{
-				walker(strings[i]);
+				lambda(strings[i]);
 			}
 
 			free(strings);
@@ -64,7 +64,7 @@ void getBacktrace(BackTraceWalker& walker)
 		free(array);
 	}
 #else
-	walker("getBacktrace() not supported in " ANKI_OS_STR);
+	lambda("backtrace() not supported in " ANKI_OS_STR);
 #endif
 }
 

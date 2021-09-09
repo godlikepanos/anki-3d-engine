@@ -6,6 +6,8 @@
 #pragma once
 
 #include <AnKi/Util/StdTypes.h>
+#include <AnKi/Util/Function.h>
+#include <AnKi/Util/String.h>
 #include <ctime>
 
 namespace anki
@@ -17,18 +19,17 @@ namespace anki
 /// Get the number of CPU cores
 U32 getCpuCoresCount();
 
-/// Backtrace walker.
-class BackTraceWalker
+/// @internal
+void backtraceInternal(const Function<void(CString)>& lambda);
+
+/// Get a backtrace.
+template<typename TFunc>
+void backtrace(GenericMemoryPoolAllocator<U8> alloc, TFunc func)
 {
-public:
-	virtual ~BackTraceWalker()
-	{
-	}
-
-	virtual void operator()(const char* symbol) = 0;
-};
-
-void getBacktrace(BackTraceWalker& walker);
+	Function<void(CString)> f(alloc, func);
+	backtraceInternal(f);
+	f.destroy(alloc);
+}
 
 /// Return true if the engine is running from a terminal emulator.
 Bool runningFromATerminal();

@@ -731,20 +731,10 @@ void App::setSignalHandlers()
 		else
 			printf("Caught signal %d\n", signum);
 
-		class BW : public BackTraceWalker
-		{
-		public:
-			U32 m_c = 0;
-
-			void operator()(const char* symbol)
-			{
-				printf("%.2u: %s\n", m_c++, symbol);
-			}
-		};
-
-		BW bw;
+		U32 count = 0;
 		printf("Backtrace:\n");
-		getBacktrace(bw);
+		backtrace(HeapAllocator<U8>(allocAligned, nullptr),
+				  [&count](CString symbol) { printf("%.2u: %s\n", count++, symbol.cstr()); });
 
 		ANKI_DEBUG_BREAK();
 	};
