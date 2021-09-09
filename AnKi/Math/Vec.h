@@ -149,7 +149,7 @@ public:
 #if ANKI_SIMD_SSE
 		m_simd = _mm_set_ps(w_, z_, y_, x_);
 #else
-		m_simd = {w_, z_, y_, x_};
+		m_simd = {x_, y_, z_, w_};
 #endif
 	}
 
@@ -2863,7 +2863,10 @@ public:
 #if ANKI_SIMD_SSE
 		_mm_store_ss(&o, _mm_dp_ps(m_simd, b.m_simd, 0xF1));
 #else
-		ANKI_ASSERT(!"TODO");
+		const float32x4_t tmp = m_simd * b.m_simd;
+		float32x2_t sum = vpadd_f32(vget_low_f32(tmp), vget_high_f32(tmp));
+		sum = vpadd_f32(sum, sum);
+		o = sum[0];
 #endif
 		return o;
 	}
@@ -2906,8 +2909,8 @@ public:
 		const float32x4_t& v0 = m_simd;
 		const float32x4_t& v1 = b.m_simd;
 
-		c = vmulq_f32(v0, __builtin_shufflevector(v1, v1, 1, 2, 0, 3));
-		c = vfmsq_f32(__builtin_shufflevector(v0, v0, 1, 2, 0, 3), v1, c);
+		c = v0 * __builtin_shufflevector(v1, v1, 1, 2, 0, 3);
+		c = vfmsq_f32(c, __builtin_shufflevector(v0, v0, 1, 2, 0, 3), v1);
 		c = __builtin_shufflevector(c, c, 1, 2, 0, 3);
 
 		return out;
@@ -2968,13 +2971,7 @@ public:
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	T getLengthSquared() const
 	{
-		T o;
-#if ANKI_SIMD_SSE
-		_mm_store_ss(&o, _mm_dp_ps(m_simd, m_simd, 0xF1));
-#else
-		ANKI_ASSERT(!"TODO");
-#endif
-		return o;
+		return dot(*this);
 	}
 
 	T getLength() const
@@ -3032,8 +3029,17 @@ public:
 		const __m128 inverse_norm = _mm_rsqrt_ps(_mm_dp_ps(m_simd, m_simd, 0xFF));
 		return TVec(_mm_mul_ps(m_simd, inverse_norm));
 #else
-		ANKI_ASSERT(!"TODO");
-		return TVec(T(0));
+		// Dot (len squared)
+		float32x4_t tmp = m_simd * m_simd;
+		float32x2_t sum = vpadd_f32(vget_low_f32(tmp), vget_high_f32(tmp));
+		sum = vpadd_f32(sum, sum);
+		float32x4_t lensq = vdupq_lane_f32(sum, 0);
+
+		// 1/sqrt(lensq)
+		float32x4_t mul = vrsqrteq_f32(lensq);
+
+		// Multiply
+		return TVec(m_simd * mul);
 #endif
 	}
 
@@ -3061,8 +3067,7 @@ public:
 		const __m128 signMask = _mm_set1_ps(-0.0f);
 		return TVec(_mm_andnot_ps(signMask, m_simd));
 #else
-		ANKI_ASSERT(!"TODO");
-		return TVec(T(0));
+		return TVec(vabsq_f32(m_simd));
 #endif
 	}
 
@@ -3097,8 +3102,7 @@ public:
 #if ANKI_SIMD_SSE
 		return TVec(_mm_min_ps(m_simd, b.m_simd));
 #else
-		ANKI_ASSERT(!"TODO");
-		return TVec(T(0));
+		return TVec(vminq_f32(m_simd, b.m_simd));
 #endif
 	}
 
@@ -3127,8 +3131,7 @@ public:
 #if ANKI_SIMD_SSE
 		return TVec(_mm_max_ps(m_simd, b.m_simd));
 #else
-		ANKI_ASSERT(!"TODO");
-		return TVec(T(0));
+		return TVec(vmaxq_f32(m_simd, b.m_simd));
 #endif
 	}
 
