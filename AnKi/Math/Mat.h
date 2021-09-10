@@ -584,7 +584,7 @@ public:
 		ColumnVec out;
 		for(U j = 0; j < J; j++)
 		{
-			T sum = 0.0;
+			T sum = T(0);
 			for(U i = 0; i < I; i++)
 			{
 				sum += m(j, i) * v[i];
@@ -756,13 +756,13 @@ public:
 		T sintheta, costheta;
 		sinCos(rad, sintheta, costheta);
 
-		m(0, 0) = 1.0;
-		m(0, 1) = 0.0;
-		m(0, 2) = 0.0;
-		m(1, 0) = 0.0;
+		m(0, 0) = T(1);
+		m(0, 1) = T(0);
+		m(0, 2) = T(0);
+		m(1, 0) = T(0);
 		m(1, 1) = costheta;
 		m(1, 2) = -sintheta;
-		m(2, 0) = 0.0;
+		m(2, 0) = T(0);
 		m(2, 1) = sintheta;
 		m(2, 2) = costheta;
 	}
@@ -774,13 +774,13 @@ public:
 		sinCos(rad, sintheta, costheta);
 
 		m(0, 0) = costheta;
-		m(0, 1) = 0.0;
+		m(0, 1) = T(0);
 		m(0, 2) = sintheta;
-		m(1, 0) = 0.0;
-		m(1, 1) = 1.0;
-		m(1, 2) = 0.0;
+		m(1, 0) = T(0);
+		m(1, 1) = T(1);
+		m(1, 2) = T(0);
 		m(2, 0) = -sintheta;
-		m(2, 1) = 0.0;
+		m(2, 1) = T(0);
 		m(2, 2) = costheta;
 	}
 
@@ -792,13 +792,13 @@ public:
 
 		m(0, 0) = costheta;
 		m(0, 1) = -sintheta;
-		m(0, 2) = 0.0;
+		m(0, 2) = T(0);
 		m(1, 0) = sintheta;
 		m(1, 1) = costheta;
-		m(1, 2) = 0.0;
-		m(2, 0) = 0.0;
-		m(2, 1) = 0.0;
-		m(2, 2) = 1.0;
+		m(1, 2) = T(0);
+		m(2, 0) = T(0);
+		m(2, 1) = T(0);
+		m(2, 2) = T(1);
 	}
 
 	/// It rotates "this" in the axis defined by the rotation AND not the
@@ -899,7 +899,7 @@ public:
 	{
 		TMat& m = *this;
 		// If length is > 1 + 0.002 or < 1 - 0.002 then not normalized quat
-		ANKI_ASSERT(absolute(1.0 - q.getLength()) <= 0.002);
+		ANKI_ASSERT(absolute(T(1) - q.getLength()) <= 0.002);
 
 		T xs, ys, zs, wx, wy, wz, xx, xy, xz, yy, yz, zz;
 
@@ -1044,7 +1044,12 @@ public:
 #if ANKI_SIMD_SSE
 		_MM_TRANSPOSE4_PS(m_simd[0], m_simd[1], m_simd[2], m_simd[3]);
 #else
-		ANKI_ASSERT(!"TODO");
+		const float32x4x2_t row01 = vtrnq_f32(m_simd[0], m_simd[1]);
+		const float32x4x2_t row23 = vtrnq_f32(m_simd[2], m_simd[3]);
+		m_simd[0] = vcombine_f32(vget_low_f32(row01.val[0]), vget_low_f32(row23.val[0]));
+		m_simd[1] = vcombine_f32(vget_low_f32(row01.val[1]), vget_low_f32(row23.val[1]));
+		m_simd[2] = vcombine_f32(vget_high_f32(row01.val[0]), vget_high_f32(row23.val[0]));
+		m_simd[3] = vcombine_f32(vget_high_f32(row01.val[1]), vget_high_f32(row23.val[1]));
 #endif
 	}
 
@@ -1054,7 +1059,7 @@ public:
 		{
 			for(U i = j + 1; i < 3; i++)
 			{
-				T tmp = m_arr2[j][i];
+				const T tmp = m_arr2[j][i];
 				m_arr2[j][i] = m_arr2[i][j];
 				m_arr2[i][j] = tmp;
 			}
@@ -1118,7 +1123,7 @@ public:
 		ANKI_ASSERT(!isZero<T>(det)); // Cannot invert det == 0
 
 		// create adjoint matrix and multiply by 1/det to get inverse
-		const T invDet = 1.0 / det;
+		const T invDet = T(1) / det;
 		r(0, 0) = invDet * cofactor0;
 		r(0, 1) = invDet * cofactor3;
 		r(0, 2) = invDet * cofactor6;
@@ -1224,8 +1229,8 @@ public:
 		// See the clean code in < r664
 
 		// one of the 2 mat4 doesnt represent transformation
-		ANKI_ASSERT(isZero<T>(m0(3, 0) + m0(3, 1) + m0(3, 2) + m0(3, 3) - 1.0)
-					&& isZero<T>(m1(3, 0) + m1(3, 1) + m1(3, 2) + m1(3, 3) - 1.0));
+		ANKI_ASSERT(isZero<T>(m0(3, 0) + m0(3, 1) + m0(3, 2) + m0(3, 3) - T(1))
+					&& isZero<T>(m1(3, 0) + m1(3, 1) + m1(3, 2) + m1(3, 3) - T(1)));
 
 		TMat m4;
 
@@ -1245,8 +1250,8 @@ public:
 
 		m4(2, 3) = m0(2, 0) * m1(0, 3) + m0(2, 1) * m1(1, 3) + m0(2, 2) * m1(2, 3) + m0(2, 3);
 
-		m4(3, 0) = m4(3, 1) = m4(3, 2) = 0.0;
-		m4(3, 3) = 1.0;
+		m4(3, 0) = m4(3, 1) = m4(3, 2) = T(0);
+		m4(3, 3) = T(1);
 
 		return m4;
 	}
@@ -1281,9 +1286,8 @@ public:
 	TMat combineTransformations(const TMat& b) const
 	{
 		TMat c;
-#if ANKI_SIMD_SSE
 		const auto& a = *this;
-
+#if ANKI_SIMD_SSE
 		for(U i = 0; i < 3; i++)
 		{
 			__m128 t1, t2;
@@ -1295,13 +1299,28 @@ public:
 			t1 = _mm_set1_ps(a(i, 2));
 			t2 = _mm_add_ps(_mm_mul_ps(b.m_simd[2], t1), t2);
 
-			TVec<T, 4> v4(0.0, 0.0, 0.0, a(i, 3));
+			TVec<T, 4> v4(T(0), T(0), T(0), a(i, 3));
 			t2 = _mm_add_ps(v4.getSimd(), t2);
 
 			c.m_simd[i] = t2;
 		}
 #else
-		ANKI_ASSERT(!"TODO");
+		for(U i = 0; i < 3; i++)
+		{
+			float32x4_t t1, t2;
+
+			t1 = vdupq_n_f32(a(i, 0));
+			t2 = b.m_simd[0] * t1;
+			t1 = vdupq_n_f32(a(i, 1));
+			t2 = b.m_simd[1] * t1 + t2;
+			t1 = vdupq_n_f32(a(i, 2));
+			t2 = b.m_simd[2] * t1 + t2;
+
+			TVec<T, 4> v4(T(0), T(0), T(0), a(i, 3));
+			t2 += v4.getSimd();
+
+			c.m_simd[i] = t2;
+		}
 #endif
 
 		return c;
@@ -1400,10 +1419,10 @@ public:
 
 		// Using the same logic the Pv.x = x' * w / m00
 		// so Pv.x = x' * Pv.z * (-1 / m00)
-		out.x() = -T(1.0) / m00;
+		out.x() = -T(T(1)) / m00;
 
 		// Same for y
-		out.y() = -T(1.0) / m11;
+		out.y() = -T(T(1)) / m11;
 
 		return out;
 	}
@@ -1417,8 +1436,8 @@ public:
 		const auto& m = *this;
 		out.z() = -m(2, 3);
 		out.w() = m(2, 2);
-		out.x() = -T(1.0) / m(0, 0);
-		out.y() = -T(1.0) / m(1, 1);
+		out.x() = -T(T(1)) / m(0, 0);
+		out.y() = -T(T(1)) / m(1, 1);
 		return out;
 	}
 
@@ -1468,12 +1487,12 @@ public:
 
 	TMat lerp(const TMat& b, T t) const
 	{
-		return ((*this) * (1.0 - t)) + (b * t);
+		return ((*this) * (T(1) - t)) + (b * t);
 	}
 
 	static TMat getZero()
 	{
-		return TMat(0.0);
+		return TMat(T(0));
 	}
 
 	void setZero()
@@ -1484,19 +1503,19 @@ public:
 	ANKI_ENABLE_METHOD(I == 3 && J == 3)
 	static TMat getIdentity()
 	{
-		return TMat(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+		return TMat(T(1), T(0), T(0), T(0), T(1), T(0), T(0), T(0), T(1));
 	}
 
 	ANKI_ENABLE_METHOD(I == 4 && J == 4)
 	static TMat getIdentity()
 	{
-		return TMat(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+		return TMat(T(1), T(0), T(0), T(0), T(0), T(1), T(0), T(0), T(0), T(0), T(1), T(0), T(0), T(0), T(0), T(1));
 	}
 
 	ANKI_ENABLE_METHOD(I == 4 && J == 3)
 	static TMat getIdentity()
 	{
-		return TMat(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+		return TMat(T(1), T(0), T(0), T(0), T(0), T(1), T(0), T(0), T(0), T(0), T(1), T(0));
 	}
 
 	void setIdentity()
