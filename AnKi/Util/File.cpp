@@ -13,6 +13,9 @@
 #	include <android_native_app_glue.h>
 #	include <android/asset_manager.h>
 #endif
+#if ANKI_POSIX
+#	include <sys/stat.h>
+#endif
 
 namespace anki
 {
@@ -120,8 +123,22 @@ Error File::openCFile(const CString& filename, FileOpenFlag flags)
 	}
 
 	// Get file size
-	if(((flags & FileOpenFlag::READ) != FileOpenFlag::NONE) && !err)
+	if(!!(flags & FileOpenFlag::READ) && !err)
 	{
+#if ANKI_POSIX
+		const int fd = fileno(ANKI_CFILE);
+		struct stat stbuf;
+
+		if((fstat(fd, &stbuf) != 0) || (!S_ISREG(stbuf.st_mode)))
+		{
+			ANKI_UTIL_LOGE("fstat() failed");
+			err = Error::FUNCTION_FAILED;
+		}
+		else
+		{
+			m_size = stbuf.st_size;
+		}
+#else
 		fseek(ANKI_CFILE, 0, SEEK_END);
 		I64 size = ftell(ANKI_CFILE);
 		if(size < 1)
@@ -131,9 +148,10 @@ Error File::openCFile(const CString& filename, FileOpenFlag flags)
 		}
 		else
 		{
-			m_size = U32(size);
+			m_size = PtrSize(size);
 			rewind(ANKI_CFILE);
 		}
+#endif
 	}
 
 	return err;
@@ -168,6 +186,9 @@ Error File::openAndroidFile(const CString& filename, FileOpenFlag flags)
 	}
 
 	m_flags = flags;
+
+	// Get size
+	m_size = AAsset_getLength(ANKI_AFILE);
 
 	return Error::NONE;
 }
@@ -247,27 +268,6 @@ Error File::read(void* buff, PtrSize size)
 	}
 
 	return err;
-}
-
-PtrSize File::getSize() const
-{
-	ANKI_ASSERT(m_file);
-	ANKI_ASSERT(m_flags != FileOpenFlag::NONE);
-	PtrSize out = 0;
-
-#if ANKI_OS_ANDROID
-	if(!!(m_flags & FileOpenFlag::SPECIAL))
-	{
-		out = AAsset_getLength(ANKI_AFILE);
-	}
-	else
-#endif
-	{
-		ANKI_ASSERT(m_size != 0);
-		out = m_size;
-	}
-
-	return out;
 }
 
 Error File::readU32(U32& out)

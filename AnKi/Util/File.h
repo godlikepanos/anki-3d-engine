@@ -114,12 +114,16 @@ public:
 	PtrSize tell();
 
 	/// The the size of the file.
-	PtrSize getSize() const;
+	PtrSize getSize() const
+	{
+		ANKI_ASSERT(!(m_flags & FileOpenFlag::WRITE));
+		return m_size;
+	}
 
 private:
 	void* m_file = nullptr; ///< A native file type
 	FileOpenFlag m_flags = FileOpenFlag::NONE; ///< All the flags. Set on open
-	U32 m_size = 0;
+	PtrSize m_size = 0;
 
 	/// Get the current machine's endianness
 	static FileOpenFlag getMachineEndianness();

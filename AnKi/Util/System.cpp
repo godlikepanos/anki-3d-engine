@@ -5,6 +5,7 @@
 
 #include <AnKi/Util/System.h>
 #include <AnKi/Util/Logger.h>
+#include <AnKi/Util/StringList.h>
 #include <cstdio>
 
 #if ANKI_POSIX
@@ -20,6 +21,11 @@
 #if ANKI_POSIX && !ANKI_OS_ANDROID
 #	include <execinfo.h>
 #	include <cstdlib>
+#endif
+
+#if ANKI_OS_ANDROID
+#	include <android_native_app_glue.h>
+#	include <fcntl.h>
 #endif
 
 namespace anki
@@ -92,5 +98,118 @@ std::tm getLocalTime()
 
 	return tm;
 }
+
+#if ANKI_OS_ANDROID
+/// Get the name of the apk. Doesn't use File to open files because /proc files are a bit special.
+static Error getAndroidApkName(StringAuto& name)
+{
+	const pid_t pid = getpid();
+
+	StringAuto path(name.getAllocator());
+	path.sprintf("/proc/%d/cmdline", pid);
+
+	const int fd = open(path.cstr(), O_RDONLY);
+	if(fd < 0)
+	{
+		ANKI_UTIL_LOGE("open() failed for: %s", path.cstr());
+		return Error::FUNCTION_FAILED;
+	}
+
+	Array<char, 128> tmp;
+	const ssize_t readBytes = read(fd, &tmp[0], sizeof(tmp));
+	if(readBytes < 0 || readBytes == 0)
+	{
+		close(fd);
+		ANKI_UTIL_LOGE("read() failed for: %s", path.cstr());
+		return Error::FUNCTION_FAILED;
+	}
+
+	name.create('?', readBytes);
+	memcpy(&name[0], &tmp[0], readBytes);
+
+	close(fd);
+	return Error::NONE;
+}
+
+void* getAndroidCommandLineArguments(int& argc, char**& argv)
+{
+	argc = 0;
+	argv = 0;
+
+	ANKI_ASSERT(g_androidApp);
+	JNIEnv* env;
+	g_androidApp->activity->vm->AttachCurrentThread(&env, NULL);
+
+	// Call getIntent().getStringExtra()
+	jobject me = g_androidApp->activity->clazz;
+
+	jclass acl = env->GetObjectClass(me); // class pointer of NativeActivity;
+	jmethodID giid = env->GetMethodID(acl, "getIntent", "()Landroid/content/Intent;");
+	jobject intent = env->CallObjectMethod(me, giid); // Got our intent
+
+	jclass icl = env->GetObjectClass(intent); // class pointer of Intent
+	jmethodID gseid = env->GetMethodID(icl, "getStringExtra", "(Ljava/lang/String;)Ljava/lang/String;");
+
+	jstring jsParam1 = static_cast<jstring>(env->CallObjectMethod(intent, gseid, env->NewStringUTF("cmd")));
+
+	// Parse the command line args
+	HeapAllocator<U8> alloc(allocAligned, nullptr);
+	StringListAuto args(alloc);
+
+	if(jsParam1)
+	{
+		const char* param1 = env->GetStringUTFChars(jsParam1, 0);
+		args.splitString(param1, ' ');
+		env->ReleaseStringUTFChars(jsParam1, param1);
+	}
+
+	// Add the apk name
+	StringAuto apkName(alloc);
+	if(!getAndroidApkName(apkName))
+	{
+		args.pushFront(apkName);
+	}
+	else
+	{
+		args.pushFront("unknown_apk");
+	}
+
+	// Allocate memory for all
+	U32 allStringsSize = 0;
+	for(const String& s : args)
+	{
+		allStringsSize += s.getLength() + 1;
+		++argc;
+	}
+
+	const PtrSize bufferSize = allStringsSize + sizeof(char*) * argc;
+	void* buffer = mallocAligned(bufferSize, ANKI_SAFE_ALIGNMENT);
+
+	// Set argv
+	argv = static_cast<char**>(buffer);
+
+	char* cbuffer = static_cast<char*>(buffer);
+	cbuffer += sizeof(char*) * argc;
+
+	U32 count = 0;
+	for(const String& s : args)
+	{
+		memcpy(cbuffer, &s[0], s.getLength() + 1);
+
+		argv[count++] = &cbuffer[0];
+
+		cbuffer += s.getLength() + 1;
+	}
+	ANKI_ASSERT(ptrToNumber(cbuffer) == ptrToNumber(buffer) + bufferSize);
+
+	return buffer;
+}
+
+void cleanupGetAndroidCommandLineArguments(void* ptr)
+{
+	ANKI_ASSERT(ptr);
+	freeAligned(ptr);
+}
+#endif
 
 } // end namespace anki

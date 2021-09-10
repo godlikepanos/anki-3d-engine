@@ -36,6 +36,20 @@ Bool runningFromATerminal();
 
 /// Return the local time in a thread safe way.
 std::tm getLocalTime();
+
+#if ANKI_OS_ANDROID
+/// This function reads what is passed to "am" and interprets them as command line arguments. Should be called by
+/// android_main(). It's not thread safe. Don't call it more than once.
+/// Executing an apk using:
+/// @code
+/// adb shell am start XXX -e cmd "arg0 arg1 arg2"
+/// @endcode
+/// Whatever follows "cmd" will be a command line argument.
+ANKI_USE_RESULT void* getAndroidCommandLineArguments(int& argc, char**& argv);
+
+/// Takes the return value of getAndroidCommandLineArguments() for cleanup.
+void cleanupGetAndroidCommandLineArguments(void* ptr);
+#endif
 /// @}
 
 } // end namespace anki

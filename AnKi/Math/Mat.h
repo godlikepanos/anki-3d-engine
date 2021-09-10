@@ -322,7 +322,11 @@ public:
 		TMat c;
 		for(U i = 0; i < J; i++)
 		{
+#if ANKI_SIMD_SSE
 			c.m_simd[i] = _mm_add_ps(m_simd[i], b.m_simd[i]);
+#else
+			c.m_simd[i] = m_simd[i] + b.m_simd[i];
+#endif
 		}
 		return c;
 	}
@@ -342,7 +346,11 @@ public:
 	{
 		for(U i = 0; i < J; i++)
 		{
+#if ANKI_SIMD_SSE
 			m_simd[i] = _mm_add_ps(m_simd[i], b.m_simd[i]);
+#else
+			m_simd[i] += b.m_simd[i];
+#endif
 		}
 		return *this;
 	}
@@ -364,7 +372,11 @@ public:
 		TMat c;
 		for(U i = 0; i < J; i++)
 		{
+#if ANKI_SIMD_SSE
 			c.m_simd[i] = _mm_sub_ps(m_simd[i], b.m_simd[i]);
+#else
+			c.m_simd[i] = m_simd[i] - b.m_simd[i];
+#endif
 		}
 		return c;
 	}
@@ -384,7 +396,11 @@ public:
 	{
 		for(U i = 0; i < J; i++)
 		{
+#if ANKI_SIMD_SSE
 			m_simd[i] = _mm_sub_ps(m_simd[i], b.m_simd[i]);
+#else
+			m_simd[i] -= b.m_simd[i];
+#endif
 		}
 		return *this;
 	}
@@ -412,11 +428,10 @@ public:
 	TMat operator*(const TMat& b) const
 	{
 		TMat out;
-#if ANKI_SIMD_SSE
 		const auto& m = *this;
-
 		for(U i = 0; i < 4; i++)
 		{
+#if ANKI_SIMD_SSE
 			__m128 t1, t2;
 
 			t1 = _mm_set1_ps(m(i, 0));
@@ -429,10 +444,21 @@ public:
 			t2 = _mm_add_ps(_mm_mul_ps(b.m_simd[3], t1), t2);
 
 			out.m_simd[i] = t2;
-		}
 #else
-		ANKI_ASSERT(!"TODO");
+			float32x4_t t1, t2;
+
+			t1 = vmovq_n_f32(m(i, 0));
+			t2 = b.m_simd[0] * t1;
+			t1 = vmovq_n_f32(m(i, 1));
+			t2 = b.m_simd[1] * t1 + t2;
+			t1 = vmovq_n_f32(m(i, 2));
+			t2 = b.m_simd[2] * t1 + t2;
+			t1 = vmovq_n_f32(m(i, 3));
+			t2 = b.m_simd[3] * t1 + t2;
+
+			out.m_simd[i] = t2;
 #endif
+		}
 
 		return out;
 	}
@@ -578,7 +604,10 @@ public:
 			_mm_store_ss(&out[i], _mm_dp_ps(m_simd[i], v.getSimd(), 0xF1));
 		}
 #else
-		ANKI_ASSERT(!"TODO");
+		for(U i = 0; i < J; i++)
+		{
+			out[i] = RowVec(m_simd[i]).dot(v);
+		}
 #endif
 		return out;
 	}

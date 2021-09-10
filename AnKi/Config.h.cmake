@@ -208,11 +208,14 @@
 // Define the main() function.
 #if ANKI_OS_ANDROID
 extern "C" {
-	struct android_app;
+struct android_app;
 }
 
 namespace anki {
-	extern android_app* g_androidApp;
+extern android_app* g_androidApp;
+
+void* getAndroidCommandLineArguments(int& argc, char**& argv);
+void cleanupGetAndroidCommandLineArguments(void* ptr);
 }
 
 #	define ANKI_MAIN_FUNCTION(myMain) \
@@ -220,9 +223,11 @@ namespace anki {
 	extern "C" void android_main(android_app* app) \
 	{ \
 		anki::g_androidApp = app; \
-		char arr[] = "androidapp"; \
-		char* argv[] = {arr}; \
-		myMain(1, argv); \
+		char** argv; \
+		int argc; \
+		void* cleanupToken = anki::getAndroidCommandLineArguments(argc, argv); \
+		myMain(argc, argv); \
+		anki::cleanupGetAndroidCommandLineArguments(cleanupToken); \
 	}
 #else
 #	define ANKI_MAIN_FUNCTION(myMain) \
