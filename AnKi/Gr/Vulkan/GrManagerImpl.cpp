@@ -98,7 +98,7 @@ GrManagerImpl::~GrManagerImpl()
 
 Error GrManagerImpl::init(const GrManagerInitInfo& init)
 {
-	Error err = initInternal(init);
+	const Error err = initInternal(init);
 	if(err)
 	{
 		ANKI_VK_LOGE("Vulkan initialization failed");

@@ -69,12 +69,13 @@ Error MicroSwapchain::initInternal()
 		ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(m_factory->m_gr->getPhysicalDevice(),
 														   m_factory->m_gr->getSurface(), &formatCount, &formats[0]));
 
-		while(formatCount--)
+		for(U32 i = 0; i < formatCount; ++i)
 		{
-			if(formats[formatCount].format == VK_FORMAT_B8G8R8A8_UNORM)
+			if(formats[i].format == VK_FORMAT_R8G8B8A8_UNORM || formats[i].format == VK_FORMAT_B8G8R8A8_UNORM
+			   || formats[i].format == VK_FORMAT_A8B8G8R8_UNORM_PACK32)
 			{
-				surfaceFormat = formats[formatCount].format;
-				colorspace = formats[formatCount].colorSpace;
+				surfaceFormat = formats[i].format;
+				colorspace = formats[i].colorSpace;
 				break;
 			}
 		}
