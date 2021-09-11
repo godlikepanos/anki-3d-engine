@@ -153,7 +153,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	// Set m_r8g8b8ImagesSupported
 	{
 		VkImageFormatProperties props = {};
-		VkResult res = vkGetPhysicalDeviceImageFormatProperties(
+		const VkResult res = vkGetPhysicalDeviceImageFormatProperties(
 			m_physicalDevice, VK_FORMAT_R8G8B8_UNORM, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL,
 			VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, 0, &props);
 
@@ -173,7 +173,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	// Set m_s8ImagesSupported
 	{
 		VkImageFormatProperties props = {};
-		VkResult res = vkGetPhysicalDeviceImageFormatProperties(
+		const VkResult res = vkGetPhysicalDeviceImageFormatProperties(
 			m_physicalDevice, VK_FORMAT_S8_UINT, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL,
 			VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, 0, &props);
 
@@ -1078,7 +1078,6 @@ TexturePtr GrManagerImpl::acquireNextPresentableTexture()
 		ANKI_VK_CHECKF(res);
 	}
 
-	ANKI_ASSERT(imageIdx < MAX_FRAMES_IN_FLIGHT);
 	m_acquiredImageIdx = U8(imageIdx);
 	return m_crntSwapchain->m_textures[imageIdx];
 }

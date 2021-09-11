@@ -24,10 +24,7 @@ MicroSwapchain::~MicroSwapchain()
 {
 	const VkDevice dev = m_factory->m_gr->getDevice();
 
-	for(TexturePtr& tex : m_textures)
-	{
-		tex.reset(nullptr);
-	}
+	m_textures.destroy(getAllocator());
 
 	if(m_swapchain)
 	{
@@ -161,26 +158,27 @@ Error MicroSwapchain::initInternal()
 
 	// Get images
 	{
-		uint32_t count = 0;
+		U32 count = 0;
 		ANKI_VK_CHECK(vkGetSwapchainImagesKHR(dev, m_swapchain, &count, nullptr));
 		if(count != MAX_FRAMES_IN_FLIGHT)
 		{
-			ANKI_VK_LOGE("Requested a swapchain with %u images but got one with %u", MAX_FRAMES_IN_FLIGHT, count);
-			return Error::FUNCTION_FAILED;
+			ANKI_VK_LOGI("Requested a swapchain with %u images but got one with %u", MAX_FRAMES_IN_FLIGHT, count);
 		}
+
+		m_textures.create(getAllocator(), count);
 
 		ANKI_VK_LOGI("Created a swapchain. Image count: %u, present mode: %u, size: %ux%u, vsync: %u", count,
 					 presentMode, surfaceWidth, surfaceHeight, U32(m_factory->m_vsync));
 
-		Array<VkImage, MAX_FRAMES_IN_FLIGHT> images;
+		Array<VkImage, 64> images;
+		ANKI_ASSERT(count <= 64);
 		ANKI_VK_CHECK(vkGetSwapchainImagesKHR(dev, m_swapchain, &count, &images[0]));
-		for(U i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
+		for(U32 i = 0; i < count; ++i)
 		{
 			TextureInitInfo init("SwapchainImg");
 			init.m_width = surfaceWidth;
 			init.m_height = surfaceHeight;
-			init.m_format = Format::B8G8R8A8_UNORM;
-			ANKI_ASSERT(surfaceFormat == VK_FORMAT_B8G8R8A8_UNORM);
+			init.m_format = Format(surfaceFormat); // anki::Format is compatible with VkFormat
 			init.m_usage = TextureUsageBit::IMAGE_COMPUTE_WRITE | TextureUsageBit::IMAGE_TRACE_RAYS_WRITE
 						   | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ
 						   | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::PRESENT;
