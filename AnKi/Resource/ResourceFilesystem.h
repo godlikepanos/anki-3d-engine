@@ -126,11 +126,8 @@ private:
 		Path(const Path&) = delete; // Non-copyable
 
 		Path(Path&& b)
-			: m_files(std::move(b.m_files))
-			, m_path(std::move(b.m_path))
-			, m_isArchive(std::move(b.m_isArchive))
-			, m_isCache(std::move(b.m_isCache))
 		{
+			*this = std::move(b);
 		}
 
 		Path& operator=(const Path&) = delete; // Non-copyable
@@ -139,8 +136,9 @@ private:
 		{
 			m_files = std::move(b.m_files);
 			m_path = std::move(b.m_path);
-			m_isArchive = std::move(b.m_isArchive);
-			m_isCache = std::move(b.m_isCache);
+			m_isArchive = b.m_isArchive;
+			m_isCache = b.m_isCache;
+			m_isSpecial = b.m_isSpecial;
 			return *this;
 		}
 	};

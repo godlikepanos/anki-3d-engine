@@ -72,6 +72,9 @@ def main():
     os.mkdir(os.path.join(project_dir, "assets/AnKi/"))
     os.symlink(os.path.join(this_script_dir, "../../AnKi/Shaders"), os.path.join(project_dir, "assets/AnKi/Shaders"))
     os.symlink(os.path.join(this_script_dir, "../../EngineAssets"), os.path.join(project_dir, "assets/EngineAssets"))
+    os.mkdir(os.path.join(project_dir, "assets/ThirdParty/"))
+    os.symlink(os.path.join(this_script_dir, "../../ThirdParty/Fsr"), os.path.join(project_dir,
+                                                                                   "assets/ThirdParty/Fsr"))
     os.symlink(ctx.asserts_dir, os.path.join(project_dir, "assets/Assets"))
 
     # Write the asset directory structure to a file
