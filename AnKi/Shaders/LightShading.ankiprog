@@ -186,12 +186,12 @@ void main()
 		{
 			// Only one probe, do a fast path without blend weight
 
-			const ReflectionProbe probe = u_reflectionProbes2[findLSB(cluster.m_reflectionProbesMask)];
+			const ReflectionProbe probe = u_reflectionProbes[findLSB(cluster.m_reflectionProbesMask)];
 
 			// Sample
 			const Vec3 cubeUv = intersectProbe(worldPos, reflDir, probe.m_aabbMin, probe.m_aabbMax, probe.m_position);
 			const Vec4 cubeArrUv = Vec4(cubeUv, probe.m_cubemapIndex);
-			specIndirect = textureLod(u_reflectionsTex2, u_trilinearClampSampler, cubeArrUv, reflLod).rgb;
+			specIndirect = textureLod(u_reflectionsTex, u_trilinearClampSampler, cubeArrUv, reflLod).rgb;
 		}
 		else
 		{
@@ -204,7 +204,7 @@ void main()
 			{
 				const U32 idx = U32(findLSB(cluster.m_reflectionProbesMask));
 				cluster.m_reflectionProbesMask &= ~(1u << idx);
-				const ReflectionProbe probe = u_reflectionProbes2[idx];
+				const ReflectionProbe probe = u_reflectionProbes[idx];
 
 				// Compute blend weight
 				const F32 blendWeight = computeProbeBlendWeight(worldPos, probe.m_aabbMin, probe.m_aabbMax, 0.2);
@@ -214,7 +214,7 @@ void main()
 				const Vec3 cubeUv =
 					intersectProbe(worldPos, reflDir, probe.m_aabbMin, probe.m_aabbMax, probe.m_position);
 				const Vec4 cubeArrUv = Vec4(cubeUv, probe.m_cubemapIndex);
-				const Vec3 c = textureLod(u_reflectionsTex2, u_trilinearClampSampler, cubeArrUv, reflLod).rgb;
+				const Vec3 c = textureLod(u_reflectionsTex, u_trilinearClampSampler, cubeArrUv, reflLod).rgb;
 				specIndirect += c * blendWeight;
 			}
 
@@ -231,7 +231,7 @@ void main()
 		// Compute env BRDF
 		const F32 NoV = max(EPSILON, dot(gbuffer.m_normal, viewDir));
 		const Vec3 env =
-			envBRDF(gbuffer.m_specular, gbuffer.m_roughness, u_integrationLut2, u_trilinearClampSampler, NoV);
+			envBRDF(gbuffer.m_specular, gbuffer.m_roughness, u_integrationLut, u_trilinearClampSampler, NoV);
 
 		out_color += finalSpecIndirect * env;
 	}

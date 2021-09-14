@@ -593,6 +593,7 @@ Error ImageLoader::loadStb(FileInterface& fs, U32& width, U32& height, DynamicAr
 
 	// Use STB to read the image
 	int stbw, stbh, comp;
+	stbi_set_flip_vertically_on_load_thread(true);
 	U8* stbdata = reinterpret_cast<U8*>(stbi_load_from_memory(&fileData[0], I32(fileSize), &stbw, &stbh, &comp, 4));
 	if(!stbdata)
 	{

@@ -257,6 +257,7 @@ static ANKI_USE_RESULT Error loadFirstMipmap(const ImageImporterConfig& config, 
 	for(U32 i = 0; i < config.m_inputFilenames.getSize(); ++i)
 	{
 		I32 width, height, c;
+		stbi_set_flip_vertically_on_load_thread(true);
 		void* data = stbi_load(config.m_inputFilenames[i].cstr(), &width, &height, &c, ctx.m_channelCount);
 		ANKI_ASSERT(U32(c) == ctx.m_channelCount);
 		if(!data)
@@ -551,6 +552,8 @@ static ANKI_USE_RESULT Error storeAnkiImage(const ImageImporterConfig& config, c
 	// Write RAW
 	if(!!(config.m_compressions & ImageBinaryDataCompression::RAW))
 	{
+		ANKI_IMPORTER_LOGV("Storing RAW");
+
 		// for(I32 mip = I32(ctx.m_mipmaps.getSize()) - 1; mip >= 0; --mip)
 		for(U32 mip = 0; mip < ctx.m_mipmaps.getSize(); ++mip)
 		{
@@ -569,6 +572,8 @@ static ANKI_USE_RESULT Error storeAnkiImage(const ImageImporterConfig& config, c
 	// Write S3TC
 	if(!!(config.m_compressions & ImageBinaryDataCompression::S3TC))
 	{
+		ANKI_IMPORTER_LOGV("Storing S3TC");
+
 		// for(I32 mip = I32(ctx.m_mipmaps.getSize()) - 1; mip >= 0; --mip)
 		for(U32 mip = 0; mip < ctx.m_mipmaps.getSize(); ++mip)
 		{
@@ -587,6 +592,8 @@ static ANKI_USE_RESULT Error storeAnkiImage(const ImageImporterConfig& config, c
 	// Write ASTC
 	if(!!(config.m_compressions & ImageBinaryDataCompression::ASTC))
 	{
+		ANKI_IMPORTER_LOGV("Storing ASTC");
+
 		// for(I32 mip = I32(ctx.m_mipmaps.getSize()) - 1; mip >= 0; --mip)
 		for(U32 mip = 0; mip < ctx.m_mipmaps.getSize(); ++mip)
 		{

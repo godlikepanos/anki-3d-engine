@@ -155,6 +155,7 @@ public:
 	U8 m_blockSize; ///< The size of the block of a compressed format. Zero otherwise.
 	U8 m_shaderType; ///< It's 0 if the shader sees it as float, 1 if uint and 2 if signed int.
 	DepthStencilAspectBit m_depthStencil; ///< Depth/stencil mask.
+	const char* m_name;
 };
 
 /// Get info for a specific Format.
@@ -174,6 +175,7 @@ inline FormatInfo getFormatInfo(Format fmt)
 		out.m_blockSize = blockSize; \
 		out.m_shaderType = shaderType; \
 		out.m_depthStencil = DepthStencilAspectBit::depthStencil; \
+		out.m_name = #type; \
 		break;
 #include <AnKi/Gr/FormatDefs.h>
 #undef ANKI_FORMAT_DEF

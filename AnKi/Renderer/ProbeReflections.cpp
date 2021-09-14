@@ -53,7 +53,7 @@ Error ProbeReflections::initInternal(const ConfigSet& config)
 	ANKI_CHECK(initShadowMapping(config));
 
 	// Load split sum integration LUT
-	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/SplitSumIntegration.ankitex", m_integrationLut));
+	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/SplitSumIntegration.png", m_integrationLut));
 
 	SamplerInitInfo sinit;
 	sinit.m_minMagFilter = SamplingFilter::LINEAR;
