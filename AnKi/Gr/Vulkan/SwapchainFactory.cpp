@@ -135,6 +135,29 @@ Error MicroSwapchain::initInternal()
 
 	// Create swapchain
 	{
+		VkCompositeAlphaFlagBitsKHR compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+		if(surfaceProperties.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)
+		{
+			compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+		}
+		else if(surfaceProperties.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR)
+		{
+			compositeAlpha = VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR;
+		}
+		else if(surfaceProperties.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR)
+		{
+			compositeAlpha = VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR;
+		}
+		else if(surfaceProperties.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR)
+		{
+			compositeAlpha = VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR;
+		}
+		else
+		{
+			ANKI_VK_LOGE("Failed to set compositeAlpha");
+			return Error::FUNCTION_FAILED;
+		}
+
 		VkSwapchainCreateInfoKHR ci = {};
 		ci.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 		ci.surface = m_factory->m_gr->getSurface();
@@ -148,7 +171,7 @@ Error MicroSwapchain::initInternal()
 		ci.pQueueFamilyIndices = &m_factory->m_gr->getQueueFamilies()[0];
 		ci.imageSharingMode = (ci.queueFamilyIndexCount > 1) ? VK_SHARING_MODE_CONCURRENT : VK_SHARING_MODE_EXCLUSIVE;
 		ci.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
-		ci.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+		ci.compositeAlpha = compositeAlpha;
 		ci.presentMode = presentMode;
 		ci.clipped = false;
 		ci.oldSwapchain = VK_NULL_HANDLE;
