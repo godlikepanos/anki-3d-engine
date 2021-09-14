@@ -122,6 +122,17 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 		case ImageBinaryDataCompression::S3TC:
 			init.m_format = Format::BC1_RGB_UNORM_BLOCK;
 			break;
+		case ImageBinaryDataCompression::ASTC:
+			if(loader.getAstcBlockSize() == UVec2(4u))
+			{
+				init.m_format = Format::ASTC_4x4_UNORM_BLOCK;
+			}
+			else
+			{
+				ANKI_ASSERT(loader.getAstcBlockSize() == UVec2(8u));
+				init.m_format = Format::ASTC_8x8_UNORM_BLOCK;
+			}
+			break;
 		default:
 			ANKI_ASSERT(0);
 		}
@@ -135,6 +146,17 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 			break;
 		case ImageBinaryDataCompression::S3TC:
 			init.m_format = Format::BC3_UNORM_BLOCK;
+			break;
+		case ImageBinaryDataCompression::ASTC:
+			if(loader.getAstcBlockSize() == UVec2(4u))
+			{
+				init.m_format = Format::ASTC_4x4_UNORM_BLOCK;
+			}
+			else
+			{
+				ANKI_ASSERT(loader.getAstcBlockSize() == UVec2(8u));
+				init.m_format = Format::ASTC_8x8_UNORM_BLOCK;
+			}
 			break;
 		default:
 			ANKI_ASSERT(0);

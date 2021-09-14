@@ -341,7 +341,7 @@ Error ImageLoader::loadAnkiImage(FileInterface& file, U32 maxImageSize,
 								 DynamicArray<ImageLoaderSurface>& surfaces, DynamicArray<ImageLoaderVolume>& volumes,
 								 GenericMemoryPoolAllocator<U8>& alloc, U32& width, U32& height, U32& depth,
 								 U32& layerCount, U32& mipCount, ImageBinaryType& imageType,
-								 ImageBinaryColorFormat& colorFormat)
+								 ImageBinaryColorFormat& colorFormat, UVec2& astcBlockSize)
 {
 	//
 	// Read and check the header
@@ -411,6 +411,7 @@ Error ImageLoader::loadAnkiImage(FileInterface& file, U32 maxImageSize,
 	// Set a few things
 	colorFormat = header.m_colorFormat;
 	imageType = header.m_type;
+	astcBlockSize = UVec2(header.m_astcBlockSizeX, header.m_astcBlockSizeY);
 
 	U32 faceCount = 1;
 	switch(header.m_type)
@@ -692,7 +693,7 @@ Error ImageLoader::loadInternal(FileInterface& file, const CString& filename, U3
 #endif
 
 		ANKI_CHECK(loadAnkiImage(file, maxImageSize, m_compression, m_surfaces, m_volumes, m_alloc, m_width, m_height,
-								 m_depth, m_layerCount, m_mipmapCount, m_imageType, m_colorFormat));
+								 m_depth, m_layerCount, m_mipmapCount, m_imageType, m_colorFormat, m_astcBlockSize));
 	}
 	else if(ext == "png" || ext == "jpg")
 	{

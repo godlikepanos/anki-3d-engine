@@ -93,6 +93,13 @@ public:
 		return m_imageType;
 	}
 
+	UVec2 getAstcBlockSize() const
+	{
+		ANKI_ASSERT(!!(m_compression & ImageBinaryDataCompression::ASTC));
+		ANKI_ASSERT(m_astcBlockSize != UVec2(0u));
+		return m_astcBlockSize;
+	}
+
 	const ImageLoaderSurface& getSurface(U32 level, U32 face, U32 layer) const;
 
 	const ImageLoaderVolume& getVolume(U32 level) const;
@@ -121,6 +128,7 @@ private:
 	U32 m_height = 0;
 	U32 m_depth = 0;
 	U32 m_layerCount = 0;
+	UVec2 m_astcBlockSize = UVec2(0u);
 	ImageBinaryDataCompression m_compression = ImageBinaryDataCompression::NONE;
 	ImageBinaryColorFormat m_colorFormat = ImageBinaryColorFormat::NONE;
 	ImageBinaryType m_imageType = ImageBinaryType::NONE;
@@ -145,7 +153,7 @@ private:
 											   DynamicArray<ImageLoaderVolume>& volumes,
 											   GenericMemoryPoolAllocator<U8>& alloc, U32& width, U32& height,
 											   U32& depth, U32& layerCount, U32& mipCount, ImageBinaryType& imageType,
-											   ImageBinaryColorFormat& colorFormat);
+											   ImageBinaryColorFormat& colorFormat, UVec2& astcBlockSize);
 
 	ANKI_USE_RESULT Error loadInternal(FileInterface& file, const CString& filename, U32 maxImageSize);
 };
