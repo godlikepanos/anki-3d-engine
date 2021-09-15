@@ -24,6 +24,7 @@ public:
 	Ssao(Renderer* r)
 		: RendererObject(r)
 	{
+		registerDebugRenderTarget("SsaoFinal");
 	}
 
 	~Ssao();
@@ -36,6 +37,13 @@ public:
 	RenderTargetHandle getRt() const
 	{
 		return m_runCtx.m_rts[1];
+	}
+
+	void getDebugRenderTarget(CString rtName, RenderTargetHandle& handle,
+							  ShaderProgramPtr& optionalShaderProgram) const override
+	{
+		ANKI_ASSERT(rtName == "SsaoFinal");
+		handle = getRt();
 	}
 
 private:

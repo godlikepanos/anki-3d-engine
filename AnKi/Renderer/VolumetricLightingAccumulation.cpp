@@ -42,7 +42,7 @@ Error VolumetricLightingAccumulation::init(const ConfigSet& config)
 		return Error::USER_DATA;
 	}
 
-	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoiseRgb864x64.png", m_noiseImage));
+	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_noiseImage));
 
 	// Shaders
 	ANKI_CHECK(getResourceManager().loadResource("Shaders/VolumetricLightingAccumulation.ankiprog", m_prog));

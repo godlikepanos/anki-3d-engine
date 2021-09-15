@@ -42,7 +42,7 @@ layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_s
 layout(set = 0, binding = 5) writeonly uniform image2D out_img;
 #endif
 
-layout(push_constant, std140, row_major) uniform _pc
+layout(push_constant, std140, row_major) uniform b_pc
 {
 	Vec4 u_unprojectionParams;
 	Vec4 u_projectionMat;
@@ -53,7 +53,7 @@ layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 1) uniform sampler u_trilinearRepeatSampler;
 
 layout(set = 0, binding = 2) uniform texture2D u_depthRt;
-layout(set = 0, binding = 3) uniform texture2DArray u_noiseMap;
+layout(set = 0, binding = 3) uniform texture2D u_noiseMap;
 #if USE_NORMAL
 layout(set = 0, binding = 4) uniform texture2D u_msRt;
 #endif
@@ -78,7 +78,7 @@ Vec3 readNormal(Vec2 uv)
 Vec3 readRandom(Vec2 uv, F32 layer)
 {
 	const Vec2 tmp = Vec2(F32(FB_SIZE.x) / F32(NOISE_MAP_SIZE), F32(FB_SIZE.y) / F32(NOISE_MAP_SIZE));
-	const Vec3 r = textureLod(u_noiseMap, u_trilinearRepeatSampler, Vec3(tmp * uv, layer), 0.0).rgb;
+	const Vec3 r = textureLod(u_noiseMap, u_trilinearRepeatSampler, tmp * uv, 0.0).rgb;
 	return r;
 }
 

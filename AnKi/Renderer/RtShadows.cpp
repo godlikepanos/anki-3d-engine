@@ -38,7 +38,7 @@ Error RtShadows::initInternal(const ConfigSet& cfg)
 	m_useSvgf = cfg.getNumberU8("r_rtShadowsSvgf") != 0;
 	m_atrousPassCount = cfg.getNumberU8("r_rtShadowsSvgfAtrousPassCount");
 
-	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoiseRgb864x64.png", m_blueNoiseImage));
+	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_blueNoiseImage));
 
 	// Ray gen program
 	{

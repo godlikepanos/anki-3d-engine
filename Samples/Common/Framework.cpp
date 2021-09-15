@@ -94,6 +94,12 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 			(renderer.getCurrentDebugRenderTarget() == "GBuffer_normals") ? "" : "GBuffer_normals");
 	}
 
+	if(in.getKey(KeyCode::L) == 1)
+	{
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "SsaoFinal") ? ""
+																									 : "SsaoFinal");
+	}
+
 	if(in.getKey(KeyCode::H) == 1)
 	{
 		static U32 pressCount = 0;

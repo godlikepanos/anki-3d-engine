@@ -42,7 +42,7 @@ Error Ssgi::initInternal(const ConfigSet& cfg)
 	m_main.m_depthLod = min(cfg.getNumberU32("r_ssgiDepthLod"), m_r->getDepthDownscale().getMipmapCount() - 1);
 	m_main.m_firstStepPixels = 32;
 
-	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoiseRgb816x16.png", m_main.m_noiseImage));
+	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoise_Rgba8_16x16.png", m_main.m_noiseImage));
 
 	// Init main
 	{
