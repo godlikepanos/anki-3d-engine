@@ -587,11 +587,19 @@ F32 computeMipLevel(Vec2 normalizedUvs)
 }
 #endif
 
+#if defined(U64)
 /// The regular findLSB in glslang has some issues since it invokes a builtin that is only supposed to be used with
 /// 32bit input. This is an alternative implementation but it expects that the input is not zero.
-I32 findLSB64(U64 v)
+I32 findLSB2(U64 v)
 {
 	const I32 lsb1 = findLSB(U32(v));
 	const I32 lsb2 = findLSB(U32(v >> 32ul));
 	return (lsb1 >= 0) ? lsb1 : lsb2 + 32;
+}
+#endif
+
+/// Define an alternative findLSB to go in pair with the 64bit version.
+I32 findLSB2(U32 v)
+{
+	return findLSB(v);
 }

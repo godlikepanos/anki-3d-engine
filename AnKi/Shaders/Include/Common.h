@@ -32,6 +32,8 @@ inline F32 dot(const T& a, const T& b)
 {
 	return a.dot(b);
 }
+
+using Address = U64;
 ANKI_END_NAMESPACE
 
 #	define ANKI_CPP_CODE(x) x

@@ -22,6 +22,11 @@ static const Array<CString, U32(ShaderType::COUNT)> SHADER_STAGE_NAMES = {
 
 static const char* SHADER_HEADER = R"(#version 460 core
 #define ANKI_%s_SHADER 1
+#define ANKI_OS_ANDROID %d
+#define ANKI_OS_WINDOWS %d
+#define ANKI_OS_LINUX %d
+
+#define _ANKI_SUPPORTS_64BIT !ANKI_OS_ANDROID
 
 #define gl_VertexID gl_VertexIndex
 
@@ -47,12 +52,15 @@ static const char* SHADER_HEADER = R"(#version 460 core
 #extension GL_EXT_shader_explicit_arithmetic_types_int8 : enable
 #extension GL_EXT_shader_explicit_arithmetic_types_int16 : enable
 #extension GL_EXT_shader_explicit_arithmetic_types_int32 : enable
-#extension GL_EXT_shader_explicit_arithmetic_types_int64 : enable
 #extension GL_EXT_shader_explicit_arithmetic_types_float16 : enable
 #extension GL_EXT_shader_explicit_arithmetic_types_float32 : enable
+
+#if _ANKI_SUPPORTS_64BIT
+#extension GL_EXT_shader_explicit_arithmetic_types_int64 : enable
 #extension GL_EXT_shader_explicit_arithmetic_types_float64 : enable
 #extension GL_EXT_shader_atomic_int64 : enable
 #extension GL_EXT_shader_subgroup_extended_types_int64 : enable
+#endif
 
 #extension GL_EXT_nonuniform_qualifier : enable
 #extension GL_EXT_scalar_block_layout : enable
@@ -144,23 +152,25 @@ static const char* SHADER_HEADER = R"(#version 460 core
 #define IVec4 ivec4
 #define _ANKI_SIZEOF_ivec4 16u
 
-#define U64 uint64_t
-#define _ANKI_SIZEOF_uint64_t 8u
-#define U64Vec2 u64vec2
-#define _ANKI_SIZEOF_u64vec2 16u
-#define U64Vec3 u64vec3
-#define _ANKI_SIZEOF_u64vec3 24u
-#define U64Vec4 u64vec4
-#define _ANKI_SIZEOF_u64vec4 32u
+#if _ANKI_SUPPORTS_64BIT
+#	define U64 uint64_t
+#	define _ANKI_SIZEOF_uint64_t 8u
+#	define U64Vec2 u64vec2
+#	define _ANKI_SIZEOF_u64vec2 16u
+#	define U64Vec3 u64vec3
+#	define _ANKI_SIZEOF_u64vec3 24u
+#	define U64Vec4 u64vec4
+#	define _ANKI_SIZEOF_u64vec4 32u
 
-#define I64 int64_t
-#define _ANKI_SIZEOF_int64_t 8u
-#define I64Vec2 i64vec2
-#define _ANKI_SIZEOF_i64vec2 16u
-#define I64Vec3 i64vec3
-#define _ANKI_SIZEOF_i64vec3 24u
-#define I64Vec4 i64vec4
-#define _ANKI_SIZEOF_i64vec4 32u
+#	define I64 int64_t
+#	define _ANKI_SIZEOF_int64_t 8u
+#	define I64Vec2 i64vec2
+#	define _ANKI_SIZEOF_i64vec2 16u
+#	define I64Vec3 i64vec3
+#	define _ANKI_SIZEOF_i64vec3 24u
+#	define I64Vec4 i64vec4
+#	define _ANKI_SIZEOF_i64vec4 32u
+#endif
 
 #define Mat3 mat3
 
@@ -171,6 +181,13 @@ static const char* SHADER_HEADER = R"(#version 460 core
 #define _ANKI_SIZEOF_mat3x4 48u
 
 #define Bool bool
+
+#if _ANKI_SUPPORTS_64BIT
+#	define Address U64
+#else
+#	define Address UVec2
+#endif
+#define _ANKI_SIZEOF_Address 8u
 
 #define _ANKI_CONCATENATE(a, b) a##b
 #define ANKI_CONCATENATE(a, b) _ANKI_CONCATENATE(a, b)
@@ -912,8 +929,8 @@ Error ShaderProgramParser::parse()
 void ShaderProgramParser::generateAnkiShaderHeader(ShaderType shaderType, const ShaderCompilerOptions& compilerOptions,
 												   StringAuto& header)
 {
-	header.sprintf(SHADER_HEADER, SHADER_STAGE_NAMES[shaderType].cstr(),
-				   compilerOptions.m_bindlessLimits.m_bindlessTextureCount,
+	header.sprintf(SHADER_HEADER, SHADER_STAGE_NAMES[shaderType].cstr(), ANKI_OS_ANDROID, ANKI_OS_WINDOWS,
+				   ANKI_OS_LINUX, compilerOptions.m_bindlessLimits.m_bindlessTextureCount,
 				   compilerOptions.m_bindlessLimits.m_bindlessImageCount);
 }
 

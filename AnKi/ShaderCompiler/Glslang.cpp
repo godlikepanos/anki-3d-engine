@@ -235,6 +235,7 @@ static ANKI_USE_RESULT Error logShaderErrorCode(CString error, CString source, G
 
 	StringAuto prettySrc(alloc);
 	StringListAuto lines(alloc);
+	StringAuto errorLineTxt(alloc);
 
 	static const char* padding = "==============================================================================";
 
@@ -249,6 +250,7 @@ static ANKI_USE_RESULT Error logShaderErrorCode(CString error, CString source, G
 		if(!it->isEmpty() && lineno == errorLineNumber)
 		{
 			tmp.sprintf(">>%8u: %s\n", lineno, &(*it)[0]);
+			errorLineTxt.sprintf("%s", &(*it)[0]);
 		}
 		else if(!it->isEmpty())
 		{
@@ -262,8 +264,9 @@ static ANKI_USE_RESULT Error logShaderErrorCode(CString error, CString source, G
 		prettySrc.append(tmp);
 	}
 
-	ANKI_SHADER_COMPILER_LOGE("Shader compilation failed:\n%s\n%s\n%s\n%s\n%s\n%s", padding, &error[0], padding,
-							  &prettySrc[0], padding, &error[0]);
+	ANKI_SHADER_COMPILER_LOGE("Shader compilation failed:\n%s\n%s\nIn: %s\n%s\n%s\n%s\n%s\nIn: %s\n", padding,
+							  &error[0], errorLineTxt.cstr(), padding, &prettySrc[0], padding, &error[0],
+							  errorLineTxt.cstr());
 
 	return Error::NONE;
 }

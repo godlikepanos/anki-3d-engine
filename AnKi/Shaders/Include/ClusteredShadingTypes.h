@@ -7,6 +7,8 @@
 
 #include <AnKi/Shaders/Include/Common.h>
 
+#define ANKI_CLUSTERED_SHADING_USE_64BIT !ANKI_OS_ANDROID
+
 ANKI_BEGIN_NAMESPACE
 
 // Enum of clusterer object types
@@ -204,33 +206,41 @@ const U32 _ANKI_SIZEOF_ClusteredShadingUniforms =
 	28u * ANKI_SIZEOF(U32) + 2u * ANKI_SIZEOF(CommonMatrices) + ANKI_SIZEOF(DirectionalLight);
 ANKI_SHADER_STATIC_ASSERT(sizeof(ClusteredShadingUniforms) == _ANKI_SIZEOF_ClusteredShadingUniforms);
 
+// Define the type of some cluster object masks
+#if !defined(__cplusplus)
+#	if ANKI_CLUSTERED_SHADING_USE_64BIT
+#		define ExtendedClusterObjectMask U64
+#	else
+#		define ExtendedClusterObjectMask U32
+#	endif
+#else
+#	if ANKI_CLUSTERED_SHADING_USE_64BIT
+using ExtendedClusterObjectMask = U64;
+#	else
+using ExtendedClusterObjectMask = U32;
+#	endif
+#endif
+
 /// Information that a tile or a Z-split will contain.
 struct Cluster
 {
-	U64 m_pointLightsMask;
-	U64 m_spotLightsMask;
-	U64 m_decalsMask;
+	ExtendedClusterObjectMask m_pointLightsMask;
+	ExtendedClusterObjectMask m_spotLightsMask;
+	ExtendedClusterObjectMask m_decalsMask;
 	U32 m_fogDensityVolumesMask;
 	U32 m_reflectionProbesMask;
 	U32 m_giProbesMask;
+#if ANKI_CLUSTERED_SHADING_USE_64BIT
 	U32 m_padding; ///< Add some padding to be 100% sure nothing will break.
+#endif
 };
+
+#if ANKI_CLUSTERED_SHADING_USE_64BIT
 const U32 _ANKI_SIZEOF_Cluster = 5u * ANKI_SIZEOF(U64);
 ANKI_SHADER_STATIC_ASSERT(sizeof(Cluster) == _ANKI_SIZEOF_Cluster);
-
-/// An alternative representation of Cluster that doesn't contain 64bit values
-struct Cluster32
-{
-	U32 m_pointLightsMask[2u];
-	U32 m_spotLightsMask[2u];
-	U32 m_decalsMask[2u];
-	U32 m_fogDensityVolumesMask;
-	U32 m_reflectionProbesMask;
-	U32 m_giProbesMask;
-	U32 m_padding; ///< Add some padding to be 100% sure nothing will break.
-};
-
-const U32 _ANKI_SIZEOF_Cluster32 = _ANKI_SIZEOF_Cluster;
-ANKI_SHADER_STATIC_ASSERT(sizeof(Cluster32) == _ANKI_SIZEOF_Cluster32);
+#else
+const U32 _ANKI_SIZEOF_Cluster = 6u * ANKI_SIZEOF(U32);
+ANKI_SHADER_STATIC_ASSERT(sizeof(Cluster) == _ANKI_SIZEOF_Cluster);
+#endif
 
 ANKI_END_NAMESPACE

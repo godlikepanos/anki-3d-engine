@@ -129,10 +129,10 @@ void main()
 	}
 
 	// Point lights
-	ANKI_LOOP while(cluster.m_pointLightsMask != 0ul)
+	ANKI_LOOP while(cluster.m_pointLightsMask != ExtendedClusterObjectMask(0))
 	{
-		const I32 idx = findLSB64(cluster.m_pointLightsMask);
-		cluster.m_pointLightsMask &= ~(1ul << U64(idx));
+		const I32 idx = findLSB2(cluster.m_pointLightsMask);
+		cluster.m_pointLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
 		const PointLight light = u_pointLights2[idx];
 
 		LIGHTING_COMMON_BRDF();
@@ -151,10 +151,10 @@ void main()
 	}
 
 	// Spot lights
-	ANKI_LOOP while(cluster.m_spotLightsMask != 0ul)
+	ANKI_LOOP while(cluster.m_spotLightsMask != ExtendedClusterObjectMask(0))
 	{
-		const I32 idx = findLSB64(cluster.m_spotLightsMask);
-		cluster.m_spotLightsMask &= ~(1ul << U64(idx));
+		const I32 idx = findLSB2(cluster.m_spotLightsMask);
+		cluster.m_spotLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
 		const SpotLight light = u_spotLights2[idx];
 
 		LIGHTING_COMMON_BRDF();
@@ -186,7 +186,7 @@ void main()
 		{
 			// Only one probe, do a fast path without blend weight
 
-			const ReflectionProbe probe = u_reflectionProbes[findLSB(cluster.m_reflectionProbesMask)];
+			const ReflectionProbe probe = u_reflectionProbes[findLSB2(cluster.m_reflectionProbesMask)];
 
 			// Sample
 			const Vec3 cubeUv = intersectProbe(worldPos, reflDir, probe.m_aabbMin, probe.m_aabbMax, probe.m_position);
@@ -202,7 +202,7 @@ void main()
 			// Loop probes
 			ANKI_LOOP while(cluster.m_reflectionProbesMask != 0u)
 			{
-				const U32 idx = U32(findLSB(cluster.m_reflectionProbesMask));
+				const U32 idx = U32(findLSB2(cluster.m_reflectionProbesMask));
 				cluster.m_reflectionProbesMask &= ~(1u << idx);
 				const ReflectionProbe probe = u_reflectionProbes[idx];
 
@@ -244,7 +244,7 @@ void main()
 		{
 			// All subgroups point to the same probe and there is only one probe, do a fast path without blend weight
 
-			const GlobalIlluminationProbe probe = u_giProbes[findLSB(cluster.m_giProbesMask)];
+			const GlobalIlluminationProbe probe = u_giProbes[findLSB2(cluster.m_giProbesMask)];
 
 			// Sample
 			diffIndirect = sampleGlobalIllumination(worldPos, gbuffer.m_normal, probe, u_globalIlluminationTextures,
@@ -260,7 +260,7 @@ void main()
 			// Loop probes
 			ANKI_LOOP while(cluster.m_giProbesMask != 0u)
 			{
-				const U32 idx = U32(findLSB(cluster.m_giProbesMask));
+				const U32 idx = U32(findLSB2(cluster.m_giProbesMask));
 				cluster.m_giProbesMask &= ~(1u << idx);
 				const GlobalIlluminationProbe probe = u_giProbes[idx];
 

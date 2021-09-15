@@ -36,7 +36,7 @@ ANKI_CONFIG_OPTION(r_probeReflectionShadowMapResolution, 64, 4, 2048)
 ANKI_CONFIG_OPTION(r_lensFlareMaxSpritesPerFlare, 8, 4, 256)
 ANKI_CONFIG_OPTION(r_lensFlareMaxFlares, 16, 8, 256)
 
-ANKI_CONFIG_OPTION(r_giTileResolution, 32, 4, 2048)
+ANKI_CONFIG_OPTION(r_giTileResolution, (ANKI_OS_ANDROID) ? 16 : 32, 4, 2048)
 ANKI_CONFIG_OPTION(r_giShadowMapResolution, 128, 4, 2048)
 ANKI_CONFIG_OPTION(r_giMaxCachedProbes, 16, 4, 2048)
 ANKI_CONFIG_OPTION(r_giMaxVisibleProbes, 8, 1, 256)

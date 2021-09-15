@@ -88,11 +88,11 @@ ANKI_SHADER_STATIC_ASSERT(_ANKI_SIZEOF_BoneInfoVertex == sizeof(BoneInfoVertex))
 /// A structure that contains all the info of a geometry.
 struct MeshGpuDescriptor
 {
-	U64 m_indexBufferPtr; ///< Points to a buffer of U16 indices.
+	Address m_indexBufferPtr; ///< Points to a buffer of U16 indices.
 #if defined(__cplusplus)
-	Array<U64, U(VertexAttributeBufferId::COUNT)> m_vertexBufferPtrs;
+	Array<Address, U(VertexAttributeBufferId::COUNT)> m_vertexBufferPtrs;
 #else
-	U64 m_vertexBufferPtrs[VERTEX_ATTRIBUTE_BUFFER_ID_COUNT];
+	Address m_vertexBufferPtrs[VERTEX_ATTRIBUTE_BUFFER_ID_COUNT];
 #endif
 	U32 m_indexCount;
 	U32 m_vertexCount;
@@ -100,7 +100,7 @@ struct MeshGpuDescriptor
 	Vec3 m_aabbMax;
 };
 
-const U32 _ANKI_SIZEOF_MeshGpuDescriptor = 4u * ANKI_SIZEOF(U64) + 8u * ANKI_SIZEOF(F32);
+const U32 _ANKI_SIZEOF_MeshGpuDescriptor = 4u * ANKI_SIZEOF(UVec2) + 8u * ANKI_SIZEOF(F32);
 const U32 _ANKI_ALIGNOF_MeshGpuDescriptor = 8u;
 ANKI_SHADER_STATIC_ASSERT(_ANKI_SIZEOF_MeshGpuDescriptor == sizeof(MeshGpuDescriptor));
 
