@@ -7,6 +7,7 @@
 #include <AnKi/Resource/ImageLoader.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Resource/AsyncLoader.h>
+#include <AnKi/Util/Filesystem.h>
 
 namespace anki
 {
@@ -67,7 +68,10 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 	}
 	ImageLoader& loader = ctx->m_loader;
 
-	TextureInitInfo init("RsrcTex");
+	StringAuto filenameExt(getTempAllocator());
+	getFilepathFilename(filename, filenameExt);
+
+	TextureInitInfo init(filenameExt);
 	init.m_usage = TextureUsageBit::ALL_SAMPLED | TextureUsageBit::TRANSFER_DESTINATION;
 	init.m_initialUsage = TextureUsageBit::ALL_SAMPLED;
 	U32 faces = 0;

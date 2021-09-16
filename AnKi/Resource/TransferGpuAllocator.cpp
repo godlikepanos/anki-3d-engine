@@ -63,7 +63,7 @@ public:
 
 	U32 getMaxAlignment() final
 	{
-		return 16;
+		return TransferGpuAllocator::GPU_BUFFER_ALIGNMENT;
 	}
 };
 
