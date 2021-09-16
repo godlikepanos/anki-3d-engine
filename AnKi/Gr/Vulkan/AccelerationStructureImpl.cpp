@@ -120,6 +120,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 			m_topLevelInfo.m_blas.emplaceBack(getAllocator(), inf.m_topLevel.m_instances[i].m_bottomLevel);
 		}
 
+		m_topLevelInfo.m_instancesBuffer->flush(0, MAX_PTR_SIZE);
 		m_topLevelInfo.m_instancesBuffer->unmap();
 
 		// Geom

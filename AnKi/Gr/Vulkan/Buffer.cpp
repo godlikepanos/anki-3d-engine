@@ -34,4 +34,16 @@ void Buffer::unmap()
 	self.unmap();
 }
 
+void Buffer::flush(PtrSize offset, PtrSize range) const
+{
+	ANKI_VK_SELF_CONST(BufferImpl);
+	self.flush(offset, range);
+}
+
+void Buffer::invalidate(PtrSize offset, PtrSize range) const
+{
+	ANKI_VK_SELF_CONST(BufferImpl);
+	self.invalidate(offset, range);
+}
+
 } // end namespace anki

@@ -21,6 +21,8 @@ class BufferImpl final : public Buffer, public VulkanObject<Buffer, BufferImpl>
 public:
 	BufferImpl(GrManager* manager, CString name)
 		: Buffer(manager, name)
+		, m_needsFlush(false)
+		, m_needsInvalidate(false)
 	{
 	}
 
@@ -38,7 +40,6 @@ public:
 #if ANKI_EXTRA_CHECKS
 		m_mapped = false;
 #endif
-		// TODO Flush or invalidate caches
 	}
 
 	VkBuffer getHandle() const
@@ -62,14 +63,58 @@ public:
 							VkAccessFlags& srcAccesses, VkPipelineStageFlags& dstStages,
 							VkAccessFlags& dstAccesses) const;
 
+	ANKI_FORCE_INLINE void flush(PtrSize offset, PtrSize range) const
+	{
+		ANKI_ASSERT(!!(m_access & BufferMapAccessBit::WRITE) && "No need to flush when the CPU doesn't write");
+		ANKI_ASSERT(offset < m_size);
+		range = (range == MAX_PTR_SIZE) ? m_size - offset : range;
+		ANKI_ASSERT(offset + range <= m_size);
+		if(m_needsFlush)
+		{
+			VkMappedMemoryRange vkrange = {};
+			vkrange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+			vkrange.memory = m_memHandle.m_memory;
+			vkrange.offset = offset;
+			vkrange.size = range;
+			ANKI_VK_CHECKF(vkFlushMappedMemoryRanges(getDevice(), 1, &vkrange));
+#if ANKI_EXTRA_CHECKS
+			m_flushCount.fetchAdd(1);
+#endif
+		}
+	}
+
+	ANKI_FORCE_INLINE void invalidate(PtrSize offset, PtrSize range) const
+	{
+		ANKI_ASSERT(!!(m_access & BufferMapAccessBit::READ) && "No need to invalidate when the CPU doesn't read");
+		ANKI_ASSERT(offset < m_size);
+		range = (range == MAX_PTR_SIZE) ? m_size - offset : range;
+		ANKI_ASSERT(offset + range <= m_size);
+		if(m_needsInvalidate)
+		{
+			VkMappedMemoryRange vkrange = {};
+			vkrange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+			vkrange.memory = m_memHandle.m_memory;
+			vkrange.offset = offset;
+			vkrange.size = range;
+			ANKI_VK_CHECKF(vkInvalidateMappedMemoryRanges(getDevice(), 1, &vkrange));
+#if ANKI_EXTRA_CHECKS
+			m_invalidateCount.fetchAdd(1);
+#endif
+		}
+	}
+
 private:
 	VkBuffer m_handle = VK_NULL_HANDLE;
 	GpuMemoryHandle m_memHandle;
 	VkMemoryPropertyFlags m_memoryFlags = 0;
 	PtrSize m_actualSize = 0;
+	Bool m_needsFlush : 1;
+	Bool m_needsInvalidate : 1;
 
 #if ANKI_EXTRA_CHECKS
 	Bool m_mapped = false;
+	mutable Atomic<U32> m_flushCount = {0};
+	mutable Atomic<U32> m_invalidateCount = {0};
 #endif
 
 	Bool isCreated() const

@@ -89,6 +89,9 @@
 #	error Unknown OS
 #endif
 
+// Mobile or not
+#define ANKI_PLATFORM_MOBILE (ANKI_OS_ANDROID || ANKI_OS_IOS)
+
 // POSIX system or not
 #if ANKI_OS_LINUX || ANKI_OS_ANDROID || ANKI_OS_MACOS || ANKI_OS_IOS
 #	define ANKI_POSIX 1

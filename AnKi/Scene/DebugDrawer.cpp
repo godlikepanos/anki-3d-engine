@@ -89,6 +89,7 @@ Error DebugDrawer2::init(ResourceManager* rsrcManager)
 		verts[6] = Vec3(-size, -size, -size); // back bottom left
 		verts[7] = Vec3(size, -size, -size); // back bottom right
 
+		m_cubePositionsBuffer->flush(0, MAX_PTR_SIZE);
 		m_cubePositionsBuffer->unmap();
 	}
 
@@ -131,6 +132,7 @@ Error DebugDrawer2::init(ResourceManager* rsrcManager)
 		indices[indexCount++] = 3;
 		indices[indexCount++] = 7;
 
+		m_cubeIndicesBuffer->flush(0, MAX_PTR_SIZE);
 		m_cubeIndicesBuffer->unmap();
 	}
 

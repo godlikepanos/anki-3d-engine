@@ -76,6 +76,16 @@ public:
 	/// @param access The access to the buffer.
 	void* map(PtrSize offset, PtrSize range, BufferMapAccessBit access);
 
+	/// Flush the buffer from the CPU caches. Call it to make the buffer memory available to the GPU.
+	/// @param offset The starting offset.
+	/// @param range The range to map or MAX_PTR_SIZE to map until the end.
+	void flush(PtrSize offset, PtrSize range) const;
+
+	/// Invalidate the buffer from the CPU caches. Call it to ready the buffer to see GPU updates.
+	/// @param offset The starting offset.
+	/// @param range The range to map or MAX_PTR_SIZE to map until the end.
+	void invalidate(PtrSize offset, PtrSize range) const;
+
 	/// Convenience map method.
 	/// @param offset The starting offset.
 	/// @param elementCount The number of T element sto map.

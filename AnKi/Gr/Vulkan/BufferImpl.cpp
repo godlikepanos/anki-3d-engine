@@ -22,6 +22,18 @@ BufferImpl::~BufferImpl()
 	{
 		getGrManagerImpl().getGpuMemoryManager().freeMemory(m_memHandle);
 	}
+
+#if ANKI_EXTRA_CHECKS
+	if(m_needsFlush && m_flushCount.load() == 0)
+	{
+		ANKI_VK_LOGW("Buffer needed flushing but you never flushed");
+	}
+
+	if(m_needsInvalidate && m_invalidateCount.load() == 0)
+	{
+		ANKI_VK_LOGW("Buffer needed invalidation but you never invalidated");
+	}
+#endif
 }
 
 Error BufferImpl::init(const BufferInitInfo& inf)
@@ -64,8 +76,9 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	{
 		// Only write, probably for uploads
 
-		VkMemoryPropertyFlags preferDeviceLocal;
-		VkMemoryPropertyFlags avoidDeviceLocal;
+		VkMemoryPropertyFlags preferDeviceLocal = 0;
+		VkMemoryPropertyFlags avoidDeviceLocal = 0;
+#if !ANKI_PLATFORM_MOBILE
 		if((usage & (~BufferUsageBit::ALL_TRANSFER)) != BufferUsageBit::NONE)
 		{
 			// Will be used for something other than transfer, try to put it in the device
@@ -78,6 +91,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 			preferDeviceLocal = 0;
 			avoidDeviceLocal = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 		}
+#endif
 
 		// Device & host & coherent but not cached
 		memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(
@@ -88,18 +102,12 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 		// Fallback: host & coherent and not cached
 		if(memIdx == MAX_U32)
 		{
+#if !ANKI_PLATFORM_MOBILE
 			ANKI_VK_LOGW("Using a fallback mode for write-only buffer");
+#endif
 			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(
 				req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 				VK_MEMORY_PROPERTY_HOST_CACHED_BIT | avoidDeviceLocal);
-		}
-
-		// Fallback: just host
-		if(memIdx == MAX_U32)
-		{
-			ANKI_VK_LOGW("Using a fallback mode for write-only buffer");
-			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(req.memoryTypeBits,
-																			 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, 0);
 		}
 	}
 	else if(!!(access & BufferMapAccessBit::READ))
@@ -116,17 +124,11 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 		// Fallback: Just cached
 		if(memIdx == MAX_U32)
 		{
+#if !ANKI_PLATFORM_MOBILE
 			ANKI_VK_LOGW("Using a fallback mode for read/write buffer");
+#endif
 			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(
 				req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT, 0);
-		}
-
-		// Fallback: Just host
-		if(memIdx == MAX_U32)
-		{
-			ANKI_VK_LOGW("Using a fallback mode for read/write buffer");
-			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(req.memoryTypeBits,
-																			 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, 0);
 		}
 	}
 	else
@@ -151,6 +153,16 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 
 	const VkPhysicalDeviceMemoryProperties& props = getGrManagerImpl().getMemoryProperties();
 	m_memoryFlags = props.memoryTypes[memIdx].propertyFlags;
+
+	if(!!(m_access & BufferMapAccessBit::READ) && !(m_memoryFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
+	{
+		m_needsInvalidate = true;
+	}
+
+	if(!!(m_access & BufferMapAccessBit::WRITE) && !(m_memoryFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
+	{
+		m_needsFlush = true;
+	}
 
 	// Allocate
 	getGrManagerImpl().getGpuMemoryManager().allocateMemory(memIdx, req.size, U32(req.alignment), true, m_memHandle);
@@ -202,8 +214,6 @@ void* BufferImpl::map(PtrSize offset, PtrSize range, BufferMapAccessBit access)
 #if ANKI_EXTRA_CHECKS
 	m_mapped = true;
 #endif
-
-	// TODO Flush or invalidate caches
 
 	return static_cast<void*>(static_cast<U8*>(ptr) + offset);
 }
