@@ -19,6 +19,7 @@ android {
                             "-DANDROID_STL=c++_static",
                             "-DCMAKE_BUILD_TYPE=Debug",
                             "-DANKI_EXTRA_CHECKS=ON",
+                            "-DANKI_BUILD_TESTS=ON",
                             "-DPYTHON_EXECUTABLE:FILEPATH=%PYTHON%"
                     version "3.12+"
                     targets "%TARGET%"
@@ -37,6 +38,7 @@ android {
                             "-DANDROID_STL=c++_static",
                             "-DCMAKE_BUILD_TYPE=Release",
                             "-DANKI_EXTRA_CHECKS=OFF",
+                            "-DANKI_BUILD_TESTS=ON",
                             "-DPYTHON_EXECUTABLE:FILEPATH=%PYTHON%"
                     version "3.12+"
                     targets "%TARGET%"

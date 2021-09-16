@@ -8,7 +8,8 @@
 
 using namespace anki;
 
-int main(int argc, char** argv)
+ANKI_MAIN_FUNCTION(myMain)
+int myMain(int argc, char** argv)
 {
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 
