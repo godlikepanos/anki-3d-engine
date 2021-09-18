@@ -66,16 +66,9 @@ public:
 	ANKI_FORCE_INLINE void flush(PtrSize offset, PtrSize range) const
 	{
 		ANKI_ASSERT(!!(m_access & BufferMapAccessBit::WRITE) && "No need to flush when the CPU doesn't write");
-		ANKI_ASSERT(offset < m_size);
-		range = (range == MAX_PTR_SIZE) ? m_size - offset : range;
-		ANKI_ASSERT(offset + range <= m_size);
 		if(m_needsFlush)
 		{
-			VkMappedMemoryRange vkrange = {};
-			vkrange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-			vkrange.memory = m_memHandle.m_memory;
-			vkrange.offset = offset;
-			vkrange.size = range;
+			VkMappedMemoryRange vkrange = setVkMappedMemoryRange(offset, range);
 			ANKI_VK_CHECKF(vkFlushMappedMemoryRanges(getDevice(), 1, &vkrange));
 #if ANKI_EXTRA_CHECKS
 			m_flushCount.fetchAdd(1);
@@ -86,16 +79,9 @@ public:
 	ANKI_FORCE_INLINE void invalidate(PtrSize offset, PtrSize range) const
 	{
 		ANKI_ASSERT(!!(m_access & BufferMapAccessBit::READ) && "No need to invalidate when the CPU doesn't read");
-		ANKI_ASSERT(offset < m_size);
-		range = (range == MAX_PTR_SIZE) ? m_size - offset : range;
-		ANKI_ASSERT(offset + range <= m_size);
 		if(m_needsInvalidate)
 		{
-			VkMappedMemoryRange vkrange = {};
-			vkrange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-			vkrange.memory = m_memHandle.m_memory;
-			vkrange.offset = offset;
-			vkrange.size = range;
+			VkMappedMemoryRange vkrange = setVkMappedMemoryRange(offset, range);
 			ANKI_VK_CHECKF(vkInvalidateMappedMemoryRanges(getDevice(), 1, &vkrange));
 #if ANKI_EXTRA_CHECKS
 			m_invalidateCount.fetchAdd(1);
@@ -108,6 +94,7 @@ private:
 	GpuMemoryHandle m_memHandle;
 	VkMemoryPropertyFlags m_memoryFlags = 0;
 	PtrSize m_actualSize = 0;
+	PtrSize m_mappedMemoryRangeAlignment = 0; ///< Cache this value.
 	Bool m_needsFlush : 1;
 	Bool m_needsInvalidate : 1;
 
@@ -124,6 +111,27 @@ private:
 
 	static VkPipelineStageFlags computePplineStage(BufferUsageBit usage);
 	static VkAccessFlags computeAccessMask(BufferUsageBit usage);
+
+	ANKI_FORCE_INLINE VkMappedMemoryRange setVkMappedMemoryRange(PtrSize offset, PtrSize range) const
+	{
+		// First the offset
+		ANKI_ASSERT(offset < m_size);
+		offset += m_memHandle.m_offset; // Move from buffer offset to memory offset
+		alignRoundDown(m_mappedMemoryRangeAlignment, offset);
+
+		// And the range
+		range = (range == MAX_PTR_SIZE) ? m_actualSize : range;
+		alignRoundUp(m_mappedMemoryRangeAlignment, range);
+		ANKI_ASSERT(offset + range <= m_memHandle.m_offset + m_actualSize);
+
+		VkMappedMemoryRange vkrange = {};
+		vkrange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+		vkrange.memory = m_memHandle.m_memory;
+		vkrange.offset = offset;
+		vkrange.size = range;
+
+		return vkrange;
+	}
 };
 /// @}
 

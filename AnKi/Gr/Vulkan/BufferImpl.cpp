@@ -49,8 +49,13 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	ANKI_ASSERT(size > 0);
 	ANKI_ASSERT(usage != BufferUsageBit::NONE);
 
+	m_mappedMemoryRangeAlignment = getGrManagerImpl().getPhysicalDeviceProperties().limits.nonCoherentAtomSize;
+
 	// Align the size to satisfy fill buffer
 	alignRoundUp(4, size);
+
+	// Align to satisfy the flush and invalidate
+	alignRoundUp(m_mappedMemoryRangeAlignment, size);
 
 	// Create the buffer
 	VkBufferCreateInfo ci = {};
@@ -165,7 +170,8 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	}
 
 	// Allocate
-	getGrManagerImpl().getGpuMemoryManager().allocateMemory(memIdx, req.size, U32(req.alignment), true, m_memHandle);
+	const U32 alignment = U32(max(m_mappedMemoryRangeAlignment, req.alignment));
+	getGrManagerImpl().getGpuMemoryManager().allocateMemory(memIdx, req.size, alignment, true, m_memHandle);
 
 	// Bind mem to buffer
 	{
