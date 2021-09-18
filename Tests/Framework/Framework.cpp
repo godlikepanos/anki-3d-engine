@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
+#include <AnKi/Util/Filesystem.h>
 #include <iostream>
 #include <cstring>
 #include <malloc.h>
@@ -233,7 +234,7 @@ void initConfig(ConfigSet& cfg)
 	cfg.set("rsrc_dataPaths", ".:..");
 }
 
-NativeWindow* createWindow(const ConfigSet& cfg)
+NativeWindow* createWindow(ConfigSet& cfg)
 {
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 
@@ -245,6 +246,9 @@ NativeWindow* createWindow(const ConfigSet& cfg)
 
 	ANKI_TEST_EXPECT_NO_ERR(win->init(inf, alloc));
 
+	cfg.set("width", win->getWidth());
+	cfg.set("height", win->getHeight());
+
 	return win;
 }
 
@@ -252,7 +256,13 @@ GrManager* createGrManager(const ConfigSet& cfg, NativeWindow* win)
 {
 	GrManagerInitInfo inf;
 	inf.m_allocCallback = allocAligned;
-	inf.m_cacheDirectory = "./";
+	StringAuto home(HeapAllocator<U8>(allocAligned, nullptr));
+	const Error err = getTempDirectory(home);
+	if(err)
+	{
+		return nullptr;
+	}
+	inf.m_cacheDirectory = home;
 	inf.m_config = &cfg;
 	inf.m_window = win;
 	GrManager* gr;

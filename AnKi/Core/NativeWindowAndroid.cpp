@@ -23,9 +23,9 @@ Error NativeWindow::init(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 		android_poll_source* source;
 
 		const int timeoutMs = 5;
-		while((ident = ALooper_pollAll(timeoutMs, NULL, &events, reinterpret_cast<void**>(&source))) >= 0)
+		while((ident = ALooper_pollAll(timeoutMs, nullptr, &events, reinterpret_cast<void**>(&source))) >= 0)
 		{
-			if(source != NULL)
+			if(source != nullptr)
 			{
 				source->process(g_androidApp, source);
 			}
@@ -43,7 +43,26 @@ Error NativeWindow::init(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 
 void NativeWindow::destroy()
 {
-	// Nothing
+	ANKI_CORE_LOGI("Destroying Android window");
+	ANativeActivity_finish(g_androidApp->activity);
+
+	// Loop until destroyRequested is set
+	while(!g_androidApp->destroyRequested)
+	{
+		int ident;
+		int events;
+		android_poll_source* source;
+
+		while((ident = ALooper_pollAll(0, nullptr, &events, reinterpret_cast<void**>(&source))) >= 0)
+		{
+			if(source != nullptr)
+			{
+				source->process(g_androidApp, source);
+			}
+		}
+	}
+
+	m_alloc.deleteInstance(m_impl);
 }
 
 void NativeWindow::setWindowTitle(CString title)

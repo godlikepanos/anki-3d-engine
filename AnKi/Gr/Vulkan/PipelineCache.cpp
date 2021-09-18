@@ -72,11 +72,13 @@ Error PipelineCache::init(VkDevice dev, VkPhysicalDevice pdev, CString cacheDir,
 
 void PipelineCache::destroy(VkDevice dev, VkPhysicalDevice pdev, GrAllocator<U8> alloc)
 {
-	Error err = destroyInternal(dev, pdev, alloc);
+	const Error err = destroyInternal(dev, pdev, alloc);
 	if(err)
 	{
 		ANKI_VK_LOGE("An error occurred while storing the pipeline cache to disk. Will ignore");
 	}
+
+	m_dumpFilename.destroy(alloc);
 }
 
 Error PipelineCache::destroyInternal(VkDevice dev, VkPhysicalDevice pdev, GrAllocator<U8> alloc)
@@ -114,8 +116,6 @@ Error PipelineCache::destroyInternal(VkDevice dev, VkPhysicalDevice pdev, GrAllo
 		vkDestroyPipelineCache(dev, m_cacheHandle, nullptr);
 		m_cacheHandle = VK_NULL_HANDLE;
 	}
-
-	m_dumpFilename.destroy(alloc);
 
 	return Error::NONE;
 }

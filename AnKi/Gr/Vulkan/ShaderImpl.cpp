@@ -8,7 +8,7 @@
 #include <AnKi/Gr/Utils/Functions.h>
 #include <SprivCross/spirv_cross.hpp>
 
-#define ANKI_DUMP_SHADERS ANKI_EXTRA_CHECKS
+#define ANKI_DUMP_SHADERS 0
 
 #if ANKI_DUMP_SHADERS
 #	include <AnKi/Util/File.h>
@@ -61,7 +61,8 @@ Error ShaderImpl::init(const ShaderInitInfo& inf)
 		fnameSpirv.sprintf("%s/%05u.spv", getManager().getCacheDirectory().cstr(), getUuid());
 
 		File fileSpirv;
-		ANKI_CHECK(fileSpirv.open(fnameSpirv.toCString(), FileOpenFlag::BINARY | FileOpenFlag::WRITE));
+		ANKI_CHECK(
+			fileSpirv.open(fnameSpirv.toCString(), FileOpenFlag::BINARY | FileOpenFlag::WRITE | FileOpenFlag::SPECIAL));
 		ANKI_CHECK(fileSpirv.write(&inf.m_binary[0], inf.m_binary.getSize()));
 	}
 #endif

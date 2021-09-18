@@ -19,6 +19,9 @@
 #include <ftw.h> // For walkDirectoryTree
 #include <cstdlib>
 #include <time.h>
+#if ANKI_OS_ANDROID
+#	include <android_native_app_glue.h>
+#endif
 
 #ifndef USE_FDS
 #	define USE_FDS 15
@@ -195,6 +198,7 @@ Error createDirectory(const CString& dir)
 
 Error getHomeDirectory(StringAuto& out)
 {
+#if ANKI_OS_LINUX
 	const char* home = getenv("HOME");
 	if(home == nullptr)
 	{
@@ -203,12 +207,20 @@ Error getHomeDirectory(StringAuto& out)
 	}
 
 	out.create(home);
+#else
+	out.create(g_androidApp->activity->internalDataPath);
+#endif
+
 	return Error::NONE;
 }
 
 Error getTempDirectory(StringAuto& out)
 {
+#if ANKI_OS_LINUX
 	out.create("/tmp/");
+#else
+	out.create(g_androidApp->activity->internalDataPath);
+#endif
 	return Error::NONE;
 }
 

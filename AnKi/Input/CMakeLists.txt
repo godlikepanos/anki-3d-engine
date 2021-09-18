@@ -2,6 +2,8 @@ set(SOURCES Input.cpp)
 
 if(SDL)
 	set(SOURCES ${SOURCES} InputSdl.cpp)
+elseif(ANDROID)
+set(SOURCES ${SOURCES} InputAndroid.cpp)
 else()
 	set(SOURCES ${SOURCES} InputDummy.cpp)
 endif()

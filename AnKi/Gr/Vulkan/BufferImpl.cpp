@@ -26,12 +26,12 @@ BufferImpl::~BufferImpl()
 #if ANKI_EXTRA_CHECKS
 	if(m_needsFlush && m_flushCount.load() == 0)
 	{
-		ANKI_VK_LOGW("Buffer needed flushing but you never flushed");
+		ANKI_VK_LOGW("Buffer needed flushing but you never flushed: %s", getName().cstr());
 	}
 
 	if(m_needsInvalidate && m_invalidateCount.load() == 0)
 	{
-		ANKI_VK_LOGW("Buffer needed invalidation but you never invalidated");
+		ANKI_VK_LOGW("Buffer needed invalidation but you never invalidated: %s", getName().cstr());
 	}
 #endif
 }
@@ -154,12 +154,12 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	const VkPhysicalDeviceMemoryProperties& props = getGrManagerImpl().getMemoryProperties();
 	m_memoryFlags = props.memoryTypes[memIdx].propertyFlags;
 
-	if(!!(m_access & BufferMapAccessBit::READ) && !(m_memoryFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
+	if(!!(access & BufferMapAccessBit::READ) && !(m_memoryFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
 	{
 		m_needsInvalidate = true;
 	}
 
-	if(!!(m_access & BufferMapAccessBit::WRITE) && !(m_memoryFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
+	if(!!(access & BufferMapAccessBit::WRITE) && !(m_memoryFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
 	{
 		m_needsFlush = true;
 	}
