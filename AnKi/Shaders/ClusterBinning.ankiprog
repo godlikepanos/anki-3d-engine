@@ -105,15 +105,11 @@ Bool isGiProbe()
 
 void main()
 {
-	const U32 tileIdx = gl_GlobalInvocationID.x / SAMPLE_COUNT;
+	const U32 globalInvocationIDX = min(gl_GlobalInvocationID.x, TILE_COUNT * SAMPLE_COUNT);
+	const U32 tileIdx = globalInvocationIDX / SAMPLE_COUNT;
+	const U32 sampleIdx = globalInvocationIDX % SAMPLE_COUNT;
 	const U32 localTileIdx = gl_LocalInvocationIndex / SAMPLE_COUNT;
-	const U32 sampleIdx = gl_GlobalInvocationID.x % SAMPLE_COUNT;
 	const U32 clustererObjectIdx = gl_GlobalInvocationID.y;
-	if(tileIdx >= TILE_COUNT)
-	{
-		// Early exit
-		return;
-	}
 
 	const UVec2 tileXY = UVec2(tileIdx % TILE_COUNT_X, tileIdx / TILE_COUNT_X);
 
