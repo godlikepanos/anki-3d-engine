@@ -94,30 +94,24 @@ void main()
 {
 	const UVec2 IN_TEXTURE_SIZE = FB_SIZE / 2u;
 
-	// Initialize the storage for all threads, including helpers. The check should be a constexpr
-	if((WORKGROUP_SIZE.x % IN_TEXTURE_SIZE.x) != 0u || (WORKGROUP_SIZE.y % IN_TEXTURE_SIZE.y) != 0u)
+	Vec3 color;
+	Vec4 depthRefs;
+	ANKI_BRANCH if(gl_GlobalInvocationID.x < IN_TEXTURE_SIZE.x && gl_GlobalInvocationID.y < IN_TEXTURE_SIZE.y)
 	{
-		s_colors[gl_LocalInvocationID.y][gl_LocalInvocationID.x] = Vec3(0.0);
-		s_depths[gl_LocalInvocationID.y][gl_LocalInvocationID.x] = Vec4(1000.0); // High value so it has low weight
+		const Vec2 inTexelSize = 1.0 / Vec2(IN_TEXTURE_SIZE);
+		const Vec2 fbTexelSize = 1.0 / Vec2(FB_SIZE);
 
-		memoryBarrierShared();
-		barrier();
+		const Vec2 inUv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(IN_TEXTURE_SIZE);
+		const Vec2 fbUv = (Vec2(gl_GlobalInvocationID.xy) * 2.0 + 1.0) / Vec2(FB_SIZE);
+
+		color = textureLod(u_inTex, u_linearAnyClampSampler, inUv, 0.0).rgb;
+		depthRefs = textureGather(sampler2D(u_depthTex, u_linearAnyClampSampler), fbUv, 0);
 	}
-
-	ANKI_BRANCH if(gl_GlobalInvocationID.x >= IN_TEXTURE_SIZE.x || gl_GlobalInvocationID.y >= IN_TEXTURE_SIZE.y)
+	else
 	{
-		// Out of bounds
-		return;
+		color = Vec3(0.0);
+		depthRefs = Vec4(1000.0);
 	}
-
-	const Vec2 inTexelSize = 1.0 / Vec2(IN_TEXTURE_SIZE);
-	const Vec2 fbTexelSize = 1.0 / Vec2(FB_SIZE);
-
-	const Vec2 inUv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(IN_TEXTURE_SIZE);
-	const Vec2 fbUv = (Vec2(gl_GlobalInvocationID.xy) * 2.0 + 1.0) / Vec2(FB_SIZE);
-
-	const Vec3 color = textureLod(u_inTex, u_linearAnyClampSampler, inUv, 0.0).rgb;
-	const Vec4 depthRefs = textureGather(sampler2D(u_depthTex, u_linearAnyClampSampler), fbUv, 0);
 
 	s_colors[gl_LocalInvocationID.y][gl_LocalInvocationID.x] = color;
 	s_depths[gl_LocalInvocationID.y][gl_LocalInvocationID.x] = depthRefs;

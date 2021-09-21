@@ -134,18 +134,8 @@ Vec3 computeNormal(Vec2 uv, Vec3 origin, F32 depth)
 void main(void)
 {
 #if USE_COMPUTE
-	if(gl_GlobalInvocationID.x >= FB_SIZE.x || gl_GlobalInvocationID.y >= FB_SIZE.y)
-	{
-#	if DO_SOFT_BLUR
-		// Store something anyway because alive threads might read it when SOFT_BLUR is enabled
-		s_scratch[gl_LocalInvocationID.y][gl_LocalInvocationID.x] = Vec3(1.0);
-#	endif
-
-		// Skip if it's out of bounds
-		return;
-	}
-
-	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(FB_SIZE);
+	const UVec2 globalInvocationID = min(gl_GlobalInvocationID.xy, FB_SIZE - 1u);
+	const Vec2 uv = (Vec2(globalInvocationID) + 0.5) / Vec2(FB_SIZE);
 #else
 	const Vec2 uv = in_uv;
 #endif
@@ -229,7 +219,7 @@ void main(void)
 
 	// Store the result
 #if USE_COMPUTE
-	imageStore(out_img, IVec2(gl_GlobalInvocationID.xy), Vec4(ssao));
+	imageStore(out_img, IVec2(globalInvocationID), Vec4(ssao));
 #else
 	out_color = ssao;
 #endif

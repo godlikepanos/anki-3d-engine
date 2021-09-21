@@ -45,10 +45,12 @@ Error Input::handleEvents()
 	return Error::NONE;
 }
 
-Error Input::initInternal(NativeWindow*)
+Error Input::initInternal(NativeWindow* window)
 {
+	ANKI_ASSERT(window);
 	g_androidApp->userData = this;
 	g_androidApp->onAppCmd = handleAndroidEvents;
+	m_nativeWindow = window;
 
 	return Error::NONE;
 }
@@ -59,7 +61,9 @@ void Input::destroy()
 
 void Input::moveCursor(const Vec2& posNdc)
 {
-	// do nothing
+	m_mousePosNdc = posNdc;
+	m_mousePosWin =
+		UVec2((posNdc * 0.5f + 0.5f) * Vec2(F32(m_nativeWindow->getWidth()), F32(m_nativeWindow->getHeight())));
 }
 
 void Input::hideCursor(Bool hide)

@@ -69,15 +69,17 @@ public:
 		}
 	}
 
+#if ANKI_ENABLE_SIMD
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	explicit TVec(const T f)
 	{
-#if ANKI_SIMD_SSE
+#	if ANKI_SIMD_SSE
 		m_simd = _mm_set1_ps(f);
-#else
+#	else
 		m_simd = vdupq_n_f32(f);
-#endif
+#	endif
 	}
+#endif
 
 	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
 	explicit TVec(const T arr[])
@@ -143,15 +145,17 @@ public:
 		w() = w_;
 	}
 
+#if ANKI_ENABLE_SIMD
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	TVec(const T x_, const T y_, const T z_, const T w_)
 	{
-#if ANKI_SIMD_SSE
+#	if ANKI_SIMD_SSE
 		m_simd = _mm_set_ps(w_, z_, y_, x_);
-#else
+#	else
 		m_simd = {x_, y_, z_, w_};
-#endif
+#	endif
 	}
+#endif
 
 	ANKI_ENABLE_METHOD(N == 4)
 	TVec(const TVec<T, 3>& a, const T w_)
@@ -2336,15 +2340,17 @@ public:
 		return out;
 	}
 
+#if ANKI_ENABLE_SIMD
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	TVec operator+(const TVec& b) const
 	{
-#if ANKI_SIMD_SSE
+#	if ANKI_SIMD_SSE
 		return TVec(_mm_add_ps(m_simd, b.m_simd));
-#else
+#	else
 		return TVec(m_simd + b.m_simd);
-#endif
+#	endif
 	}
+#endif
 
 	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
 	TVec& operator+=(const TVec& b)
@@ -2356,16 +2362,18 @@ public:
 		return *this;
 	}
 
+#if ANKI_ENABLE_SIMD
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	TVec& operator+=(const TVec& b)
 	{
-#if ANKI_SIMD_SSE
+#	if ANKI_SIMD_SSE
 		m_simd = _mm_add_ps(m_simd, b.m_simd);
-#else
+#	else
 		m_simd += b.m_simd;
-#endif
+#	endif
 		return *this;
 	}
+#endif
 
 	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
 	TVec operator-(const TVec& b) const
@@ -2378,15 +2386,17 @@ public:
 		return out;
 	}
 
+#if ANKI_ENABLE_SIMD
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	TVec operator-(const TVec& b) const
 	{
-#if ANKI_SIMD_SSE
+#	if ANKI_SIMD_SSE
 		return TVec(_mm_sub_ps(m_simd, b.m_simd));
-#else
+#	else
 		return TVec(m_simd - b.m_simd);
-#endif
+#	endif
 	}
+#endif
 
 	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
 	TVec& operator-=(const TVec& b)
@@ -2398,16 +2408,18 @@ public:
 		return *this;
 	}
 
+#if ANKI_ENABLE_SIMD
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	TVec& operator-=(const TVec& b)
 	{
-#if ANKI_SIMD_SSE
+#	if ANKI_SIMD_SSE
 		m_simd = _mm_sub_ps(m_simd, b.m_simd);
-#else
+#	else
 		m_simd -= b.m_simd;
-#endif
+#	endif
 		return *this;
 	}
+#endif
 
 	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
 	TVec operator*(const TVec& b) const
@@ -2420,15 +2432,17 @@ public:
 		return out;
 	}
 
+#if ANKI_ENABLE_SIMD
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	TVec operator*(const TVec& b) const
 	{
-#if ANKI_SIMD_SSE
+#	if ANKI_SIMD_SSE
 		return TVec(_mm_mul_ps(m_simd, b.m_simd));
-#else
+#	else
 		return TVec(m_simd * b.m_simd);
-#endif
+#	endif
 	}
+#endif
 
 	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
 	TVec& operator*=(const TVec& b)
@@ -2440,16 +2454,18 @@ public:
 		return *this;
 	}
 
+#if ANKI_ENABLE_SIMD
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	TVec& operator*=(const TVec& b)
 	{
-#if ANKI_SIMD_SSE
+#	if ANKI_SIMD_SSE
 		m_simd = _mm_mul_ps(m_simd, b.m_simd);
-#else
+#	else
 		m_simd *= b.m_simd;
-#endif
+#	endif
 		return *this;
 	}
+#endif
 
 	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
 	TVec operator/(const TVec& b) const
@@ -2463,15 +2479,17 @@ public:
 		return out;
 	}
 
+#if ANKI_ENABLE_SIMD
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	TVec operator/(const TVec& b) const
 	{
-#if ANKI_SIMD_SSE
+#	if ANKI_SIMD_SSE
 		return TVec(_mm_div_ps(m_simd, b.m_simd));
-#else
+#	else
 		return TVec(m_simd / b.m_simd);
-#endif
+#	endif
 	}
+#endif
 
 	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
 	TVec& operator/=(const TVec& b)
@@ -2484,16 +2502,18 @@ public:
 		return *this;
 	}
 
+#if ANKI_ENABLE_SIMD
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	TVec& operator/=(const TVec& b)
 	{
-#if ANKI_SIMD_SSE
+#	if ANKI_SIMD_SSE
 		m_simd = _mm_div_ps(m_simd, b.m_simd);
-#else
+#	else
 		m_simd /= b.m_simd;
-#endif
+#	endif
 		return *this;
 	}
+#endif
 
 	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
 	TVec operator-() const
@@ -2506,15 +2526,17 @@ public:
 		return out;
 	}
 
+#if ANKI_ENABLE_SIMD
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	TVec operator-() const
 	{
-#if ANKI_SIMD_SSE
+#	if ANKI_SIMD_SSE
 		return TVec(_mm_xor_ps(m_simd, _mm_set1_ps(-0.0)));
-#else
+#	else
 		return TVec(-m_simd);
-#endif
+#	endif
 	}
+#endif
 
 	ANKI_ENABLE_METHOD(IS_INTEGER)
 	TVec operator<<(const TVec& b) const
@@ -2856,20 +2878,22 @@ public:
 		return out;
 	}
 
+#if ANKI_ENABLE_SIMD
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	T dot(const TVec& b) const
 	{
 		T o;
-#if ANKI_SIMD_SSE
+#	if ANKI_SIMD_SSE
 		_mm_store_ss(&o, _mm_dp_ps(m_simd, b.m_simd, 0xF1));
-#else
+#	else
 		const float32x4_t tmp = m_simd * b.m_simd;
 		float32x2_t sum = vpadd_f32(vget_low_f32(tmp), vget_high_f32(tmp));
 		sum = vpadd_f32(sum, sum);
 		o = sum[0];
-#endif
+#	endif
 		return o;
 	}
+#endif
 
 	/// 6 muls, 3 adds
 	ANKI_ENABLE_METHOD(N == 3)
@@ -2887,12 +2911,13 @@ public:
 		return TVec(xyz().cross(b.xyz()), T(0));
 	}
 
+#if ANKI_ENABLE_SIMD
 	ANKI_ENABLE_METHOD(N == 4 && HAS_VEC4_SIMD)
 	TVec cross(const TVec& b) const
 	{
 		ANKI_ASSERT(w() == T(0));
 		ANKI_ASSERT(b.w() == T(0));
-#if ANKI_SIMD_SSE
+#	if ANKI_SIMD_SSE
 		const auto& a = *this;
 		constexpr unsigned int mask0 = _MM_SHUFFLE(3, 0, 2, 1);
 		constexpr unsigned int mask1 = _MM_SHUFFLE(3, 1, 0, 2);
@@ -2903,7 +2928,7 @@ public:
 			_mm_mul_ps(_mm_shuffle_ps(a.m_simd, a.m_simd, U8(mask1)), _mm_shuffle_ps(b.m_simd, b.m_simd, U8(mask0)));
 
 		return TVec(_mm_sub_ps(tmp0, tmp1));
-#else
+#	else
 		TVec out;
 		float32x4_t& c = out.m_simd;
 		const float32x4_t& v0 = m_simd;
@@ -2914,8 +2939,9 @@ public:
 		c = __builtin_shufflevector(c, c, 1, 2, 0, 3);
 
 		return out;
-#endif
+#	endif
 	}
+#endif
 
 	ANKI_ENABLE_METHOD(N == 3)
 	TVec projectTo(const TVec& toThis) const
@@ -2995,13 +3021,14 @@ public:
 		(*this) /= getLength();
 	}
 
+#if ANKI_ENABLE_SIMD
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	void normalize()
 	{
-#if ANKI_SIMD_SSE
+#	if ANKI_SIMD_SSE
 		const __m128 inverseNorm = _mm_rsqrt_ps(_mm_dp_ps(m_simd, m_simd, 0xFF));
 		m_simd = _mm_mul_ps(m_simd, inverseNorm);
-#else
+#	else
 		// Dot (len squared)
 		float32x4_t tmp = m_simd * m_simd;
 		float32x2_t sum = vpadd_f32(vget_low_f32(tmp), vget_high_f32(tmp));
@@ -3013,8 +3040,9 @@ public:
 
 		// Multiply
 		m_simd *= mul;
-#endif
+#	endif
 	}
+#endif
 
 	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
 	TVec getNormalized() const
@@ -3022,13 +3050,14 @@ public:
 		return (*this) / getLength();
 	}
 
+#if ANKI_ENABLE_SIMD
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	TVec getNormalized() const
 	{
-#if ANKI_SIMD_SSE
+#	if ANKI_SIMD_SSE
 		const __m128 inverse_norm = _mm_rsqrt_ps(_mm_dp_ps(m_simd, m_simd, 0xFF));
 		return TVec(_mm_mul_ps(m_simd, inverse_norm));
-#else
+#	else
 		// Dot (len squared)
 		float32x4_t tmp = m_simd * m_simd;
 		float32x2_t sum = vpadd_f32(vget_low_f32(tmp), vget_high_f32(tmp));
@@ -3040,8 +3069,9 @@ public:
 
 		// Multiply
 		return TVec(m_simd * mul);
-#endif
+#	endif
 	}
+#endif
 
 	/// Return lerp(this, v1, t)
 	TVec lerp(const TVec& v1, T t) const
@@ -3060,16 +3090,18 @@ public:
 		return out;
 	}
 
+#if ANKI_ENABLE_SIMD
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	TVec abs() const
 	{
-#if ANKI_SIMD_SSE
+#	if ANKI_SIMD_SSE
 		const __m128 signMask = _mm_set1_ps(-0.0f);
 		return TVec(_mm_andnot_ps(signMask, m_simd));
-#else
+#	else
 		return TVec(vabsq_f32(m_simd));
-#endif
+#	endif
 	}
+#endif
 
 	/// Get clamped between two values.
 	TVec clamp(const T minv, const T maxv) const
@@ -3095,16 +3127,18 @@ public:
 		return out;
 	}
 
+#if ANKI_ENABLE_SIMD
 	/// Get the min of all components.
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	TVec min(const TVec& b) const
 	{
-#if ANKI_SIMD_SSE
+#	if ANKI_SIMD_SSE
 		return TVec(_mm_min_ps(m_simd, b.m_simd));
-#else
+#	else
 		return TVec(vminq_f32(m_simd, b.m_simd));
-#endif
+#	endif
 	}
+#endif
 
 	/// Get the min of all components.
 	TVec min(const T b) const
@@ -3124,16 +3158,18 @@ public:
 		return out;
 	}
 
+#if ANKI_ENABLE_SIMD
 	/// Get the max of all components.
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	TVec max(const TVec& b) const
 	{
-#if ANKI_SIMD_SSE
+#	if ANKI_SIMD_SSE
 		return TVec(_mm_max_ps(m_simd, b.m_simd));
-#else
+#	else
 		return TVec(vmaxq_f32(m_simd, b.m_simd));
-#endif
+#	endif
 	}
+#endif
 
 	/// Get the max of all components.
 	TVec max(const T b) const

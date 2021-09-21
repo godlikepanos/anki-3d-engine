@@ -23,15 +23,12 @@ void main()
 {
 	const UVec2 cubeSizeu = UVec2(imageSize(u_cubeTex));
 	const Vec2 cubeSize = Vec2(cubeSizeu);
-	if(gl_GlobalInvocationID.x >= cubeSizeu.x || gl_GlobalInvocationID.y >= cubeSizeu.y)
-	{
-		return;
-	}
+	const UVec2 globalInvocationID = min(gl_GlobalInvocationID.xy, cubeSizeu - 1u);
 
 	const U32 faceIdx = gl_LocalInvocationID.z;
 
 	// Compute the UVs to read the gbuffer from
-	Vec2 sampleUv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(cubeSize);
+	Vec2 sampleUv = (Vec2(globalInvocationID) + 0.5) / Vec2(cubeSize);
 	sampleUv.x *= (1.0 / 6.0);
 	sampleUv.x += (1.0 / 6.0) * F32(faceIdx);
 
@@ -48,7 +45,7 @@ void main()
 	const Vec3 indirect = gbuffer.m_diffuse * irradiance;
 
 	// Read the prev color and apply indirect
-	const IVec3 coords = IVec3(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y, faceIdx);
+	const IVec3 coords = IVec3(globalInvocationID, faceIdx);
 	const Vec3 prevColor = imageLoad(u_cubeTex, coords).xyz;
 	const Vec3 prevColorWithIndirectDiffuse = prevColor + gbuffer.m_diffuse * indirect;
 
