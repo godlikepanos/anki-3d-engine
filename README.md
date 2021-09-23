@@ -1,6 +1,6 @@
 [![AnKi logo](http://anki3d.org/wp-content/uploads/2015/11/logo_248.png)](http://anki3d.org)
 
-AnKi 3D engine is a Linux and Windows opensource game engine that runs on Vulkan 1.2.
+AnKi 3D engine is a Linux, Windows and Android opensource game engine that runs on Vulkan 1.1 (with a few extensions).
 
 [![Video](http://img.youtube.com/vi/va7nZ2EFR4c/0.jpg)](http://www.youtube.com/watch?v=va7nZ2EFR4c)
 
@@ -30,7 +30,7 @@ external dependencies are almost none.
 
 Prerequisites:
 
-- Cmake 3.0 and up
+- Cmake 3.10 and up
 - GCC 5.0 and up or Clang 6.0 and up
 - libx11-dev installed
 - libxrandr-dev installed
@@ -57,9 +57,7 @@ This will open an interface with all the available options.
 
 Prerequisites:
 
-- Cmake 3.0 and up
-- VulkanSDK version 1.1.x and up
-	- Add an environment variable named `VULKAN_SDK` that points to the installation path of VulkanSDK
+- Cmake 3.10 and up
 - Python 3.0 and up
 	- Make sure that the python executable's location is in `PATH` environment variable
 - Microsoft Visual Studio 2017 and up
@@ -79,6 +77,30 @@ Alternatively, recent Visual Studio versions support building CMake projects fro
 - Choose the "open a local folder" option and open AnKi's root directory (where this README.md is located)
 - Visual Studio will automatically understand that AnKi is a CMake project and it will populate the CMake cache
 - Press "build all"
+
+2.3 On Android
+--------------
+
+Prerequisites:
+
+- Android Studio
+- From Android Studio's package manager you need to install `NDK` and `CMake`
+
+Android builds work a bit differently from Linux and Windows. You are required to generate a gradle project per build
+target. For example, if you want to generate a project for the `Sponza` sample just type from a Linux terminal:
+
+	$cd path/to/anki
+	$./Samples/Sponza/GenerateAndroidProject.sh
+
+or from a PowerShell terminal on Windows:
+
+	$cd path/to/anki
+	$./Samples/Sponza/GenerateAndroidProject.bat
+
+The `GenerateAndroidProject` scripts will generate a project in the root directory of AnKi. So for the `Sponza` sample
+the script will create a directory named `AndroidProject_Sponza`.
+
+Then you can open the `AndroidProject_Sponza` project from `Android Studio` and build it, debug it, run it etc.
 
 3 Next steps
 ============
@@ -103,5 +125,5 @@ prints some information, including possible errors.
 4 Contributing
 ==============
 
-There are no special rules if you want to contribute. Just create a PR. Read the [code style guide](Docs/CodeStyle.md)
-before that though.
+There are no special rules if you want to contribute. Just create a PR. But before you do that, carefully read the
+[code style guide](Docs/CodeStyle.md).
