@@ -23,6 +23,9 @@
 namespace anki
 {
 
+// Forward
+class CString;
+
 /// @addtogroup util_thread
 /// @{
 
@@ -102,6 +105,9 @@ public:
 	/// Pin to some core.
 	/// @param coreAffintyMask Pin the thread to a number of cores.
 	void pinToCores(const ThreadCoreAffinityMask& coreAffintyMask);
+
+	/// Name the current thread.
+	static void setNameOfCurrentThread(const CString& name);
 
 private:
 	/// The system native type.

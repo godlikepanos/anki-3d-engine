@@ -323,6 +323,8 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 {
 	setSignalHandlers();
 
+	Thread::setNameOfCurrentThread("anki_main");
+
 	ConfigSet config = config_;
 	m_displayStats = config.getNumberU32("core_displayStats");
 

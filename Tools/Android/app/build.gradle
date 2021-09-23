@@ -44,6 +44,10 @@ android {
                     targets "%TARGET%"
                 }
             }
+
+            debuggable true
+            jniDebuggable true
+            signingConfig signingConfigs.debug
         }
     }
 

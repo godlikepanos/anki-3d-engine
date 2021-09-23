@@ -5,6 +5,7 @@
 
 #include <AnKi/Util/Thread.h>
 #include <AnKi/Util/Logger.h>
+#include <AnKi/Util/String.h>
 
 namespace anki
 {
@@ -29,7 +30,7 @@ void Thread::start(void* userData, ThreadCallback callback, const ThreadCoreAffi
 		// Set thread name
 		if(thread->m_name[0] != '\0')
 		{
-			pthread_setname_np(pthread_self(), &thread->m_name[0]);
+			setNameOfCurrentThread(&thread->m_name[0]);
 		}
 
 		// Call the callback
@@ -94,6 +95,11 @@ void Thread::pinToCores(const ThreadCoreAffinityMask& coreAffintyMask)
 	{
 		ANKI_UTIL_LOGF("pthread_setaffinity_np() failed");
 	}
+}
+
+void Thread::setNameOfCurrentThread(const CString& name)
+{
+	pthread_setname_np(pthread_self(), name.cstr());
 }
 
 } // end namespace anki

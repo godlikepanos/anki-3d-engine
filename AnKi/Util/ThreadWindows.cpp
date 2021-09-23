@@ -105,4 +105,9 @@ void Thread::pinToCores(const ThreadCoreAffinityMask& coreAffintyMask)
 	}
 }
 
+void Thread::setNameOfCurrentThread(const CString& name)
+{
+	// TODO
+}
+
 } // end namespace anki
