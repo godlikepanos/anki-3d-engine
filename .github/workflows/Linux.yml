@@ -1,4 +1,4 @@
-name: CMake
+name: Linux
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ master ]
 
 jobs:
-  Linux_debug_gcc:
+  Debug_GCC:
     runs-on: ubuntu-latest
 
     steps:
@@ -22,3 +22,52 @@ jobs:
 
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config Debug
+      
+  Release_GCC:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Install dependencies
+      run: sudo apt install libx11-dev libx11-xcb-dev clang gcc
+      
+    - name: Clone
+      uses: actions/checkout@v2
+
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=ON -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCMAKE_BUILD_TYPE=Release -DANKI_EXTRA_CHECKS=OFF
+
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config Release
+
+
+  Debug_Clang:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Install dependencies
+      run: sudo apt install libx11-dev libx11-xcb-dev clang gcc
+      
+    - name: Clone
+      uses: actions/checkout@v2
+
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=ON -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Debug -DANKI_EXTRA_CHECKS=ON
+
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config Debug
+      
+  Release_Clang:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Install dependencies
+      run: sudo apt install libx11-dev libx11-xcb-dev clang gcc
+      
+    - name: Clone
+      uses: actions/checkout@v2
+
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=ON -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Release -DANKI_EXTRA_CHECKS=OFF
+
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config Release
