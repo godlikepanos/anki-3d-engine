@@ -15,8 +15,10 @@ See the [LICENSE](LICENSE) file for more info.
 2 Building AnKi
 ===============
 
-Build Status, Linux and Windows
-[![Build Status](https://travis-ci.org/godlikepanos/anki-3d-engine.svg?branch=master)](https://travis-ci.org/godlikepanos/anki-3d-engine)
+| Build Status |
+| :----------- |
+| ![Build Status Linux](https://github.com/godlikepanos/anki-3d-engine/actions/workflows/Linux.yml/badge.svg)     |
+| ![Build Status Windows](https://github.com/godlikepanos/anki-3d-engine/actions/workflows/Windows.yml/badge.svg) |
 
 To checkout the source type:
 
