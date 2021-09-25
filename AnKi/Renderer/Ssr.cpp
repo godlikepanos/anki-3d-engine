@@ -38,7 +38,7 @@ Error Ssr::initInternal(const ConfigSet& cfg)
 	m_depthLod = cfg.getNumberU32("r_ssrDepthLod");
 	m_firstStepPixels = 32;
 
-	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoiseRgb816x16.png", m_noiseImage));
+	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoise_Rgba8_16x16.png", m_noiseImage));
 
 	// Create RTs
 	TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(

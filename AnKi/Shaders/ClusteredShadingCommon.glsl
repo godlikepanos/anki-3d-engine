@@ -40,13 +40,13 @@ layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_LIGHTS_BINDING +
 #if defined(CLUSTERED_SHADING_REFLECTIONS_BINDING)
 layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_REFLECTIONS_BINDING, scalar) uniform b_reflectionProbes
 {
-	ReflectionProbe u_reflectionProbes2[MAX_VISIBLE_REFLECTION_PROBES];
+	ReflectionProbe u_reflectionProbes[MAX_VISIBLE_REFLECTION_PROBES];
 };
 
 layout(set = CLUSTERED_SHADING_SET,
-	   binding = CLUSTERED_SHADING_REFLECTIONS_BINDING + 1) uniform textureCubeArray u_reflectionsTex2;
+	   binding = CLUSTERED_SHADING_REFLECTIONS_BINDING + 1) uniform textureCubeArray u_reflectionsTex;
 layout(set = CLUSTERED_SHADING_SET,
-	   binding = CLUSTERED_SHADING_REFLECTIONS_BINDING + 2) uniform texture2D u_integrationLut2;
+	   binding = CLUSTERED_SHADING_REFLECTIONS_BINDING + 2) uniform texture2D u_integrationLut;
 #endif
 
 //

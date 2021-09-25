@@ -42,7 +42,7 @@ layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_s
 layout(set = 0, binding = 5) writeonly uniform image2D out_img;
 #endif
 
-layout(push_constant, std140, row_major) uniform _pc
+layout(push_constant, std140, row_major) uniform b_pc
 {
 	Vec4 u_unprojectionParams;
 	Vec4 u_projectionMat;
@@ -53,7 +53,7 @@ layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 1) uniform sampler u_trilinearRepeatSampler;
 
 layout(set = 0, binding = 2) uniform texture2D u_depthRt;
-layout(set = 0, binding = 3) uniform texture2DArray u_noiseMap;
+layout(set = 0, binding = 3) uniform texture2D u_noiseMap;
 #if USE_NORMAL
 layout(set = 0, binding = 4) uniform texture2D u_msRt;
 #endif
@@ -78,7 +78,7 @@ Vec3 readNormal(Vec2 uv)
 Vec3 readRandom(Vec2 uv, F32 layer)
 {
 	const Vec2 tmp = Vec2(F32(FB_SIZE.x) / F32(NOISE_MAP_SIZE), F32(FB_SIZE.y) / F32(NOISE_MAP_SIZE));
-	const Vec3 r = textureLod(u_noiseMap, u_trilinearRepeatSampler, Vec3(tmp * uv, layer), 0.0).rgb;
+	const Vec3 r = textureLod(u_noiseMap, u_trilinearRepeatSampler, tmp * uv, 0.0).rgb;
 	return r;
 }
 
@@ -134,18 +134,8 @@ Vec3 computeNormal(Vec2 uv, Vec3 origin, F32 depth)
 void main(void)
 {
 #if USE_COMPUTE
-	if(gl_GlobalInvocationID.x >= FB_SIZE.x || gl_GlobalInvocationID.y >= FB_SIZE.y)
-	{
-#	if DO_SOFT_BLUR
-		// Store something anyway because alive threads might read it when SOFT_BLUR is enabled
-		s_scratch[gl_LocalInvocationID.y][gl_LocalInvocationID.x] = Vec3(1.0);
-#	endif
-
-		// Skip if it's out of bounds
-		return;
-	}
-
-	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(FB_SIZE);
+	const UVec2 globalInvocationID = min(gl_GlobalInvocationID.xy, FB_SIZE - 1u);
+	const Vec2 uv = (Vec2(globalInvocationID) + 0.5) / Vec2(FB_SIZE);
 #else
 	const Vec2 uv = in_uv;
 #endif
@@ -229,7 +219,7 @@ void main(void)
 
 	// Store the result
 #if USE_COMPUTE
-	imageStore(out_img, IVec2(gl_GlobalInvocationID.xy), Vec4(ssao));
+	imageStore(out_img, IVec2(globalInvocationID), Vec4(ssao));
 #else
 	out_color = ssao;
 #endif

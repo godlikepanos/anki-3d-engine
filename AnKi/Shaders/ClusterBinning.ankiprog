@@ -68,10 +68,10 @@ UVec2 SAMPLE_LOCATIONS[SAMPLE_COUNT] = UVec2[](LOCATION(-2, -6), LOCATION(6, -2)
 
 // A mask per tile of this workgroup for the clusterer object being processed by this workgroup
 const U32 TILES_PER_WORKGROUP = WORKGROUP_SIZE / SAMPLE_COUNT;
-shared U64 s_tileMasks[TILES_PER_WORKGROUP];
+shared ExtendedClusterObjectMask s_tileMasks[TILES_PER_WORKGROUP];
 
 // A mask for each Z split for a specific clusterer object
-shared U64 s_zSplitMasks[Z_SPLIT_COUNT];
+shared ExtendedClusterObjectMask s_zSplitMasks[Z_SPLIT_COUNT];
 
 Bool isPointLight()
 {
@@ -105,15 +105,11 @@ Bool isGiProbe()
 
 void main()
 {
-	const U32 tileIdx = gl_GlobalInvocationID.x / SAMPLE_COUNT;
+	const U32 globalInvocationIDX = min(gl_GlobalInvocationID.x, TILE_COUNT * SAMPLE_COUNT);
+	const U32 tileIdx = globalInvocationIDX / SAMPLE_COUNT;
+	const U32 sampleIdx = globalInvocationIDX % SAMPLE_COUNT;
 	const U32 localTileIdx = gl_LocalInvocationIndex / SAMPLE_COUNT;
-	const U32 sampleIdx = gl_GlobalInvocationID.x % SAMPLE_COUNT;
 	const U32 clustererObjectIdx = gl_GlobalInvocationID.y;
-	if(tileIdx >= TILE_COUNT)
-	{
-		// Early exit
-		return;
-	}
 
 	const UVec2 tileXY = UVec2(tileIdx % TILE_COUNT_X, tileIdx / TILE_COUNT_X);
 
@@ -132,12 +128,12 @@ void main()
 	const Vec3 rayDir = normalize(farWorldPos - rayOrigin);
 
 	// Zero shared memory
-	s_tileMasks[localTileIdx] = 0ul;
+	s_tileMasks[localTileIdx] = ExtendedClusterObjectMask(0);
 	const U32 splitsPerInvocation = max(1u, Z_SPLIT_COUNT / WORKGROUP_SIZE);
 	for(U32 i = gl_LocalInvocationIndex * splitsPerInvocation;
 		i < (gl_LocalInvocationIndex + 1u) * splitsPerInvocation && i < Z_SPLIT_COUNT; ++i)
 	{
-		s_zSplitMasks[i] = 0ul;
+		s_zSplitMasks[i] = ExtendedClusterObjectMask(0);
 	}
 	memoryBarrierShared();
 	barrier();
@@ -238,7 +234,8 @@ void main()
 	if(collides)
 	{
 		// Set the tile
-		const U64 mask = 1ul << U64(objectArrayIdx);
+		const ExtendedClusterObjectMask mask = ExtendedClusterObjectMask(1)
+											   << ExtendedClusterObjectMask(objectArrayIdx);
 		atomicOr(s_tileMasks[localTileIdx], mask);
 
 		// Compute and set the Z splits
@@ -276,7 +273,7 @@ void main()
 	barrier();
 
 	// First sample writes the tile
-	if(sampleIdx == 0u && s_tileMasks[localTileIdx] != 0ul)
+	if(sampleIdx == 0u && s_tileMasks[localTileIdx] != ExtendedClusterObjectMask(0))
 	{
 		if(isPointLight())
 		{
@@ -308,7 +305,7 @@ void main()
 	for(U32 i = gl_LocalInvocationIndex * splitsPerInvocation;
 		i < (gl_LocalInvocationIndex + 1u) * splitsPerInvocation && i < Z_SPLIT_COUNT; ++i)
 	{
-		if(s_zSplitMasks[i] != 0ul)
+		if(s_zSplitMasks[i] != ExtendedClusterObjectMask(0))
 		{
 			if(isPointLight())
 			{

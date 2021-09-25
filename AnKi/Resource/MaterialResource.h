@@ -60,7 +60,7 @@ enum class BuiltinMutatorId : U8
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BuiltinMutatorId)
 
 /// Holds the shader variables. It's a container for shader program variables that share the same name.
-class MaterialVariable : public NonCopyable
+class MaterialVariable
 {
 	friend class MaterialVariant;
 	friend class MaterialResource;
@@ -68,12 +68,16 @@ class MaterialVariable : public NonCopyable
 public:
 	MaterialVariable();
 
+	MaterialVariable(const MaterialVariable&) = delete; // Non-copyable
+
 	MaterialVariable(MaterialVariable&& b)
 	{
 		*this = std::move(b);
 	}
 
 	~MaterialVariable();
+
+	MaterialVariable& operator=(const MaterialVariable&) = delete; // Non-copyable
 
 	MaterialVariable& operator=(MaterialVariable&& b)
 	{
@@ -206,11 +210,17 @@ inline const ImageResourcePtr& MaterialVariable::getValue() const
 }
 
 /// Material variant.
-class MaterialVariant : public NonCopyable
+class MaterialVariant
 {
 	friend class MaterialResource;
 
 public:
+	MaterialVariant() = default;
+
+	MaterialVariant(const MaterialVariant&) = delete; // Non-copyable
+
+	MaterialVariant& operator=(const MaterialVariant&) = delete; // Non-copyable
+
 	/// Return true of the the variable is active.
 	Bool isVariableActive(const MaterialVariable& var) const
 	{

@@ -267,14 +267,14 @@ static constexpr unsigned long long int operator""_GB(unsigned long long int x)
 
 /// @name Time user literals
 /// @{
-static constexpr long double operator""_ms(long double x)
+static constexpr Second operator""_ms(long double x)
 {
-	return x / 1000.0;
+	return Second(x) / 1000.0;
 }
 
-static constexpr long double operator""_ns(long double x)
+static constexpr Second operator""_ns(long double x)
 {
-	return x / 1000000000.0;
+	return Second(x) / 1000000000.0;
 }
 /// @}
 
@@ -297,21 +297,10 @@ static constexpr F32 operator""_mm(long double x)
 /// @}
 
 /// Convenience macro that defines the type of a class.
-#define ANKI_DEFINE_CLASS_SELF \
-	typedef auto _selfFn()->decltype(*this); \
-	using _SelfRef = decltype(((_selfFn*)0)()); \
-	using Self = std::remove_reference<_SelfRef>::type;
-
-#if ANKI_COMPILER_GCC_COMPATIBLE
-/// Redefine the sizeof because the default returns size_t and that will require casting when used with U32 for example.
-#	define _ANKI_SIZEOF(type) ((anki::U32)(sizeof(type)))
-#	define sizeof(type) _ANKI_SIZEOF(type)
-
-/// Redefine the alignof because the default returns size_t and that will require casting when used with U32 for
-/// example.
-#	define _ANKI_ALIGNOF(type) ((anki::U32)(alignof(type)))
-#	define alignof(type) _ANKI_ALIGNOF(type)
-#endif
+#define ANKI_DEFINE_CLASS_SELF(selfType) \
+	typedef auto _selfFn##selfType()->decltype(*this); \
+	using _SelfRef##selfType = decltype(((_selfFn##selfType*)0)()); \
+	using selfType = std::remove_reference<_SelfRef##selfType>::type;
 /// @}
 
 } // end namespace anki

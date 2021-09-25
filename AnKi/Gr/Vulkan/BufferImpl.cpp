@@ -22,12 +22,24 @@ BufferImpl::~BufferImpl()
 	{
 		getGrManagerImpl().getGpuMemoryManager().freeMemory(m_memHandle);
 	}
+
+#if ANKI_EXTRA_CHECKS
+	if(m_needsFlush && m_flushCount.load() == 0)
+	{
+		ANKI_VK_LOGW("Buffer needed flushing but you never flushed: %s", getName().cstr());
+	}
+
+	if(m_needsInvalidate && m_invalidateCount.load() == 0)
+	{
+		ANKI_VK_LOGW("Buffer needed invalidation but you never invalidated: %s", getName().cstr());
+	}
+#endif
 }
 
 Error BufferImpl::init(const BufferInitInfo& inf)
 {
 	ANKI_ASSERT(!isCreated());
-	const Bool exposeGpuAddress = !!(getGrManagerImpl().getExtensions() & VulkanExtensions::KHR_RAY_TRACING)
+	const Bool exposeGpuAddress = !!(getGrManagerImpl().getExtensions() & VulkanExtensions::KHR_BUFFER_DEVICE_ADDRESS)
 								  && !!(inf.m_usage & ~BufferUsageBit::ALL_TRANSFER);
 
 	PtrSize size = inf.m_size;
@@ -37,8 +49,13 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	ANKI_ASSERT(size > 0);
 	ANKI_ASSERT(usage != BufferUsageBit::NONE);
 
+	m_mappedMemoryRangeAlignment = getGrManagerImpl().getPhysicalDeviceProperties().limits.nonCoherentAtomSize;
+
 	// Align the size to satisfy fill buffer
 	alignRoundUp(4, size);
+
+	// Align to satisfy the flush and invalidate
+	alignRoundUp(m_mappedMemoryRangeAlignment, size);
 
 	// Create the buffer
 	VkBufferCreateInfo ci = {};
@@ -47,11 +64,11 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	ci.usage = convertBufferUsageBit(usage);
 	if(exposeGpuAddress)
 	{
-		ci.usage |= VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+		ci.usage |= VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_KHR;
 	}
-	ci.sharingMode = VK_SHARING_MODE_CONCURRENT;
 	ci.queueFamilyIndexCount = getGrManagerImpl().getQueueFamilies().getSize();
 	ci.pQueueFamilyIndices = &getGrManagerImpl().getQueueFamilies()[0];
+	ci.sharingMode = (ci.queueFamilyIndexCount > 1) ? VK_SHARING_MODE_CONCURRENT : VK_SHARING_MODE_EXCLUSIVE;
 	ANKI_VK_CHECK(vkCreateBuffer(getDevice(), &ci, nullptr, &m_handle));
 	getGrManagerImpl().trySetVulkanHandleName(inf.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, m_handle);
 
@@ -64,8 +81,9 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	{
 		// Only write, probably for uploads
 
-		VkMemoryPropertyFlags preferDeviceLocal;
-		VkMemoryPropertyFlags avoidDeviceLocal;
+		VkMemoryPropertyFlags preferDeviceLocal = 0;
+		VkMemoryPropertyFlags avoidDeviceLocal = 0;
+#if !ANKI_PLATFORM_MOBILE
 		if((usage & (~BufferUsageBit::ALL_TRANSFER)) != BufferUsageBit::NONE)
 		{
 			// Will be used for something other than transfer, try to put it in the device
@@ -78,6 +96,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 			preferDeviceLocal = 0;
 			avoidDeviceLocal = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 		}
+#endif
 
 		// Device & host & coherent but not cached
 		memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(
@@ -88,18 +107,12 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 		// Fallback: host & coherent and not cached
 		if(memIdx == MAX_U32)
 		{
+#if !ANKI_PLATFORM_MOBILE
 			ANKI_VK_LOGW("Using a fallback mode for write-only buffer");
+#endif
 			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(
 				req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 				VK_MEMORY_PROPERTY_HOST_CACHED_BIT | avoidDeviceLocal);
-		}
-
-		// Fallback: just host
-		if(memIdx == MAX_U32)
-		{
-			ANKI_VK_LOGW("Using a fallback mode for write-only buffer");
-			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(req.memoryTypeBits,
-																			 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, 0);
 		}
 	}
 	else if(!!(access & BufferMapAccessBit::READ))
@@ -116,17 +129,11 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 		// Fallback: Just cached
 		if(memIdx == MAX_U32)
 		{
+#if !ANKI_PLATFORM_MOBILE
 			ANKI_VK_LOGW("Using a fallback mode for read/write buffer");
+#endif
 			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(
 				req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT, 0);
-		}
-
-		// Fallback: Just host
-		if(memIdx == MAX_U32)
-		{
-			ANKI_VK_LOGW("Using a fallback mode for read/write buffer");
-			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(req.memoryTypeBits,
-																			 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, 0);
 		}
 	}
 	else
@@ -152,8 +159,19 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	const VkPhysicalDeviceMemoryProperties& props = getGrManagerImpl().getMemoryProperties();
 	m_memoryFlags = props.memoryTypes[memIdx].propertyFlags;
 
+	if(!!(access & BufferMapAccessBit::READ) && !(m_memoryFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
+	{
+		m_needsInvalidate = true;
+	}
+
+	if(!!(access & BufferMapAccessBit::WRITE) && !(m_memoryFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
+	{
+		m_needsFlush = true;
+	}
+
 	// Allocate
-	getGrManagerImpl().getGpuMemoryManager().allocateMemory(memIdx, req.size, U32(req.alignment), true, m_memHandle);
+	const U32 alignment = U32(max(m_mappedMemoryRangeAlignment, req.alignment));
+	getGrManagerImpl().getGpuMemoryManager().allocateMemory(memIdx, req.size, alignment, true, m_memHandle);
 
 	// Bind mem to buffer
 	{
@@ -164,14 +182,14 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	// Get GPU buffer address
 	if(exposeGpuAddress)
 	{
-		VkBufferDeviceAddressInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
+		VkBufferDeviceAddressInfoKHR info = {};
+		info.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO_KHR;
 		info.buffer = m_handle;
-		m_gpuAddress = vkGetBufferDeviceAddress(getDevice(), &info);
+		m_gpuAddress = vkGetBufferDeviceAddressKHR(getDevice(), &info);
 
 		if(m_gpuAddress == 0)
 		{
-			ANKI_VK_LOGE("vkGetBufferDeviceAddress() failed");
+			ANKI_VK_LOGE("vkGetBufferDeviceAddressKHR() failed");
 			return Error::FUNCTION_FAILED;
 		}
 	}
@@ -202,8 +220,6 @@ void* BufferImpl::map(PtrSize offset, PtrSize range, BufferMapAccessBit access)
 #if ANKI_EXTRA_CHECKS
 	m_mapped = true;
 #endif
-
-	// TODO Flush or invalidate caches
 
 	return static_cast<void*>(static_cast<U8*>(ptr) + offset);
 }

@@ -6,7 +6,6 @@
 #include <AnKi/Util/Memory.h>
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/Assert.h>
-#include <AnKi/Util/NonCopyable.h>
 #include <AnKi/Util/Thread.h>
 #include <AnKi/Util/Atomic.h>
 #include <AnKi/Util/Logger.h>

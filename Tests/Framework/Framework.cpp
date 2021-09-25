@@ -4,12 +4,22 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
+#include <AnKi/Util/Filesystem.h>
 #include <iostream>
 #include <cstring>
 #include <malloc.h>
+#if ANKI_OS_ANDROID
+#	include <android/log.h>
+#endif
 
 namespace anki
 {
+
+#if !ANKI_OS_ANDROID
+#	define ANKI_TEST_LOG(fmt, ...) printf(fmt "\n", __VA_ARGS__)
+#else
+#	define ANKI_TEST_LOG(fmt, ...) __android_log_print(ANDROID_LOG_INFO, "AnKi Tests", fmt, __VA_ARGS__)
+#endif
 
 TestSuite::~TestSuite()
 {
@@ -21,7 +31,7 @@ TestSuite::~TestSuite()
 
 void Test::run()
 {
-	std::cout << "========\nRunning " << suite->name << " " << name << "\n========" << std::endl;
+	ANKI_TEST_LOG("========\nRunning %s %s\n========", suite->name.c_str(), name.c_str());
 
 #if ANKI_OS_LINUX
 	struct mallinfo a = mallinfo();
@@ -35,11 +45,9 @@ void Test::run()
 	int diff = b.uordblks - a.uordblks;
 	if(diff > 0)
 	{
-		std::cerr << "Test leaks memory: " << diff << std::endl;
+		ANKI_TEST_LOG("Test leaks memory: %d", diff);
 	}
 #endif
-
-	std::cout << std::endl;
 }
 
 void Tester::addTest(const char* name, const char* suiteName, TestCallback callback)
@@ -72,7 +80,7 @@ void Tester::addTest(const char* name, const char* suiteName, TestCallback callb
 	{
 		if((*it)->name == name)
 		{
-			std::cerr << "Test already exists: " << name << std::endl;
+			ANKI_TEST_LOG("Test already exists: %s", name);
 			return;
 		}
 	}
@@ -111,7 +119,7 @@ Options:
 		}
 		else if(strcmp(arg, "--help") == 0)
 		{
-			std::cout << helpMessage << std::endl;
+			ANKI_TEST_LOG("%s", helpMessage.c_str());
 			return 0;
 		}
 		else if(strcmp(arg, "--suite") == 0)
@@ -119,7 +127,7 @@ Options:
 			++i;
 			if(i >= argc)
 			{
-				std::cerr << "<name> is missing after --suite" << std::endl;
+				ANKI_TEST_LOG("%s", "<name> is missing after --suite");
 				return 1;
 			}
 			suiteName = argv[i];
@@ -129,7 +137,7 @@ Options:
 			++i;
 			if(i >= argc)
 			{
-				std::cerr << "<name> is missing after --test" << std::endl;
+				ANKI_TEST_LOG("%s", "<name> is missing after --test");
 				return 1;
 			}
 			testName = argv[i];
@@ -139,7 +147,7 @@ Options:
 	// Sanity check
 	if(testName.length() > 0 && suiteName.length() == 0)
 	{
-		std::cout << "Specify --suite as well" << std::endl;
+		ANKI_TEST_LOG("%s", "Specify --suite as well");
 		return 1;
 	}
 
@@ -180,15 +188,15 @@ Options:
 	}
 
 	int failed = run - passed;
-	std::cout << "========\nRun " << run << " tests, failed " << failed << std::endl;
+	ANKI_TEST_LOG("========\nRun %d tests, failed %d", run, failed);
 
 	if(failed == 0)
 	{
-		std::cout << "SUCCESS!" << std::endl;
+		ANKI_TEST_LOG("%s", "SUCCESS!");
 	}
 	else
 	{
-		std::cout << "FAILURE" << std::endl;
+		ANKI_TEST_LOG("%s", "FAILURE");
 	}
 
 	return run - passed;
@@ -200,8 +208,7 @@ int Tester::listTests()
 	{
 		for(Test* test : suite->tests)
 		{
-			std::cout << programName << " --suite \"" << suite->name << "\" --test \"" << test->name << "\""
-					  << std::endl;
+			ANKI_TEST_LOG("%s --suite %s --test %s", programName.c_str(), suite->name.c_str(), test->name.c_str());
 		}
 	}
 
@@ -227,7 +234,7 @@ void initConfig(ConfigSet& cfg)
 	cfg.set("rsrc_dataPaths", ".:..");
 }
 
-NativeWindow* createWindow(const ConfigSet& cfg)
+NativeWindow* createWindow(ConfigSet& cfg)
 {
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 
@@ -239,6 +246,9 @@ NativeWindow* createWindow(const ConfigSet& cfg)
 
 	ANKI_TEST_EXPECT_NO_ERR(win->init(inf, alloc));
 
+	cfg.set("width", win->getWidth());
+	cfg.set("height", win->getHeight());
+
 	return win;
 }
 
@@ -246,7 +256,13 @@ GrManager* createGrManager(const ConfigSet& cfg, NativeWindow* win)
 {
 	GrManagerInitInfo inf;
 	inf.m_allocCallback = allocAligned;
-	inf.m_cacheDirectory = "./";
+	StringAuto home(HeapAllocator<U8>(allocAligned, nullptr));
+	const Error err = getTempDirectory(home);
+	if(err)
+	{
+		return nullptr;
+	}
+	inf.m_cacheDirectory = home;
 	inf.m_config = &cfg;
 	inf.m_window = win;
 	GrManager* gr;

@@ -38,7 +38,8 @@ Error Scale::init(const ConfigSet& cfg)
 
 	ANKI_R_LOGI("Initializing (up|down)scale pass");
 
-	m_fsr = cfg.getBool("r_fsr");
+	const U32 fsrQuality = cfg.getNumberU8("r_fsr");
+	m_fsr = fsrQuality != 0;
 
 	// Program
 	if(needsScaling)
@@ -50,6 +51,7 @@ Error Scale::init(const ConfigSet& cfg)
 		{
 			ShaderProgramResourceVariantInitInfo variantInitInfo(m_scaleProg);
 			variantInitInfo.addMutation("SHARPEN", 0);
+			variantInitInfo.addMutation("FSR_QUALITY", fsrQuality - 1);
 			m_scaleProg->getOrCreateVariant(variantInitInfo, variant);
 		}
 		else
@@ -64,6 +66,7 @@ Error Scale::init(const ConfigSet& cfg)
 		ANKI_CHECK(getResourceManager().loadResource("Shaders/Fsr.ankiprog", m_sharpenProg));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_sharpenProg);
 		variantInitInfo.addMutation("SHARPEN", 1);
+		variantInitInfo.addMutation("FSR_QUALITY", 0);
 		const ShaderProgramResourceVariant* variant;
 		m_sharpenProg->getOrCreateVariant(variantInitInfo, variant);
 		m_sharpenGrProg = variant->getProgram();

@@ -12,8 +12,10 @@
 #	define VK_USE_PLATFORM_XLIB_KHR 1
 #elif ANKI_OS_WINDOWS
 #	define VK_USE_PLATFORM_WIN32_KHR 1
+#elif ANKI_OS_ANDROID
+#	define VK_USE_PLATFORM_ANDROID_KHR 1
 #else
-#	error TODO
+#	error Not implemented
 #endif
 #include <Volk/volk.h>
 
@@ -55,24 +57,33 @@ enum class DescriptorType : U8
 	COUNT
 };
 
-enum class VulkanExtensions : U16
+enum class VulkanExtensions : U32
 {
 	NONE = 0,
 	KHR_XCB_SURFACE = 1 << 1,
 	KHR_XLIB_SURFACE = 1 << 2,
 	KHR_WIN32_SURFACE = 1 << 3,
-	KHR_SWAPCHAIN = 1 << 4,
-	KHR_SURFACE = 1 << 5,
-	EXT_DEBUG_MARKER = 1 << 6,
-	EXT_DEBUG_REPORT = 1 << 9,
-	AMD_SHADER_INFO = 1 << 10,
-	AMD_RASTERIZATION_ORDER = 1 << 11,
-	KHR_RAY_TRACING = 1 << 12,
-	PIPELINE_EXECUTABLE_PROPERTIES = 1 << 13,
+	KHR_ANDROID_SURFACE = 1 << 4,
+	KHR_SWAPCHAIN = 1 << 5,
+	KHR_SURFACE = 1 << 6,
+	EXT_DEBUG_MARKER = 1 << 7,
+	EXT_DEBUG_REPORT = 1 << 8,
+	AMD_SHADER_INFO = 1 << 9,
+	AMD_RASTERIZATION_ORDER = 1 << 10,
+	KHR_RAY_TRACING = 1 << 11,
+	KHR_PIPELINE_EXECUTABLE_PROPERTIES = 1 << 12,
+	EXT_DESCRIPTOR_INDEXING = 1 << 13,
+	KHR_BUFFER_DEVICE_ADDRESS = 1 << 14,
+	EXT_SCALAR_BLOCK_LAYOUT = 1 << 15,
+	KHR_TIMELINE_SEMAPHORE = 1 << 16,
+	KHR_SHADER_FLOAT16_INT8 = 1 << 17,
+	KHR_SHADER_ATOMIC_INT64 = 1 << 18,
+	KHR_SPIRV_1_4 = 1 << 19,
+	KHR_SHADER_FLOAT_CONTROLS = 1 << 20,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VulkanExtensions)
 
-enum class QueueType : U8
+enum class VulkanQueueType : U8
 {
 	GENERAL,
 	COMPUTE,
@@ -80,7 +91,9 @@ enum class QueueType : U8
 	COUNT,
 	FIRST = 0
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(QueueType)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VulkanQueueType)
+
+using VulkanQueueFamilies = Array<U32, U32(VulkanQueueType::COUNT)>;
 
 /// @name Constants
 /// @{

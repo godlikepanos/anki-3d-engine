@@ -26,9 +26,6 @@ public:
 
 		ANKI_CHECK_AND_IGNORE(getSceneGraph().getResourceManager().loadResource(
 			"AnKi/Shaders/UiVisualizeImage.ankiprog", m_imageProgram));
-		const ShaderProgramResourceVariant* variant;
-		m_imageProgram->getOrCreateVariant(variant);
-		m_imageGrProgram = variant->getProgram();
 	}
 
 	Error frameUpdate(Second prevUpdateTime, Second crntTime)
@@ -48,6 +45,7 @@ private:
 	TextureViewPtr m_textureView;
 	U32 m_crntMip = 0;
 	F32 m_zoom = 1.0f;
+	F32 m_depth = 0.0f;
 	Bool m_pointSampling = true;
 	Array<Bool, 4> m_colorChannel = {true, true, true, true};
 
@@ -55,6 +53,17 @@ private:
 	{
 		const Texture& grTex = *m_imageResource->getTexture().get();
 		const U32 colorComponentCount = getFormatInfo(grTex.getFormat()).m_componentCount;
+		ANKI_ASSERT(grTex.getTextureType() == TextureType::_2D || grTex.getTextureType() == TextureType::_3D);
+
+		if(!m_imageGrProgram.isCreated())
+		{
+			ShaderProgramResourceVariantInitInfo variantInit(m_imageProgram);
+			variantInit.addMutation("TEXTURE_TYPE", (grTex.getTextureType() == TextureType::_2D) ? 0 : 1);
+
+			const ShaderProgramResourceVariant* variant;
+			m_imageProgram->getOrCreateVariant(variantInit, variant);
+			m_imageGrProgram = variant->getProgram();
+		}
 
 		ImGui::Begin("Console", nullptr,
 					 ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
@@ -139,6 +148,38 @@ private:
 				viewInitInf.m_mipmapCount = 1;
 				m_textureView = getSceneGraph().getGrManager().newTextureView(viewInitInf);
 			}
+
+			ImGui::SameLine();
+		}
+
+		// Depth
+		if(grTex.getTextureType() == TextureType::_3D)
+		{
+			StringListAuto labels(getFrameAllocator());
+			for(U32 d = 0; d < grTex.getDepth(); ++d)
+			{
+				labels.pushBackSprintf("Depth %u", d);
+			}
+
+			if(ImGui::BeginCombo("##Depth", (labels.getBegin() + U32(m_depth))->cstr(), ImGuiComboFlags_HeightLarge))
+			{
+				for(U32 d = 0; d < grTex.getDepth(); ++d)
+				{
+					const Bool isSelected = (m_depth == F32(d));
+					if(ImGui::Selectable((labels.getBegin() + d)->cstr(), isSelected))
+					{
+						m_depth = F32(d);
+					}
+
+					if(isSelected)
+					{
+						ImGui::SetItemDefaultFocus();
+					}
+				}
+				ImGui::EndCombo();
+			}
+
+			ImGui::SameLine();
 		}
 
 		ImGui::EndChild();
@@ -154,16 +195,19 @@ private:
 			{
 			public:
 				Vec4 m_colorScale;
+				Vec4 m_depth;
 			} pc;
 			pc.m_colorScale.x() = F32(m_colorChannel[0]);
 			pc.m_colorScale.y() = F32(m_colorChannel[1]);
 			pc.m_colorScale.z() = F32(m_colorChannel[2]);
 			pc.m_colorScale.w() = F32(m_colorChannel[3]);
 
+			pc.m_depth = Vec4((m_depth + 0.5f) / F32(grTex.getDepth()));
+
 			canvas->setShaderProgram(m_imageGrProgram, &pc, sizeof(pc));
 
-			ImGui::Image(UiImageId(m_textureView, m_pointSampling), imageSize, Vec2(0.0f), Vec2(1.0f), Vec4(1.0f),
-						 Vec4(0.0f, 0.0f, 0.0f, 1.0f));
+			ImGui::Image(UiImageId(m_textureView, m_pointSampling), imageSize, Vec2(0.0f, 1.0f), Vec2(1.0f, 0.0f),
+						 Vec4(1.0f), Vec4(0.0f, 0.0f, 0.0f, 1.0f));
 
 			canvas->clearShaderProgram();
 
@@ -236,8 +280,8 @@ public:
 
 		// Change window name
 		StringAuto title(alloc);
-		title.sprintf("%s %llu x %llu Mips %u", argv[1], image->getWidth(), image->getHeight(),
-					  image->getTexture()->getMipmapCount());
+		title.sprintf("%s %llu x %llu Mips %u Format %s", argv[1], image->getWidth(), image->getHeight(),
+					  image->getTexture()->getMipmapCount(), getFormatInfo(image->getTexture()->getFormat()).m_name);
 		getWindow().setWindowTitle(title);
 
 		// Create the node

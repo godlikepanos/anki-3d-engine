@@ -5,6 +5,9 @@
 
 #include <AnKi/Gr/Vulkan/Common.h>
 
+#define VOLK_IMPLEMENTATION
+#include <Volk/volk.h>
+
 namespace anki
 {
 

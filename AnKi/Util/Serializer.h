@@ -74,9 +74,15 @@ public:
 };
 
 /// Serializes to binary files.
-class BinarySerializer : public NonCopyable
+class BinarySerializer
 {
 public:
+	BinarySerializer() = default;
+
+	BinarySerializer(const BinarySerializer&) = delete; // Non-copyable
+
+	BinarySerializer& operator=(const BinarySerializer&) = delete; // Non-copyable
+
 	/// Serialize a class.
 	/// @param x What to serialize.
 	/// @param tmpAllocator A temp allocator for some memory needed.
@@ -185,9 +191,15 @@ private:
 };
 
 /// Deserializes binary files.
-class BinaryDeserializer : public NonCopyable
+class BinaryDeserializer
 {
 public:
+	BinaryDeserializer() = default;
+
+	BinaryDeserializer(const BinaryDeserializer&) = delete; // Non-copyable
+
+	BinaryDeserializer& operator=(const BinaryDeserializer&) = delete; // Non-copyable
+
 	/// Serialize a class.
 	/// @param x The struct to read.
 	/// @param allocator The allocator to use to allocate the new structures.

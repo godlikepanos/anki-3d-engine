@@ -88,6 +88,10 @@ class TransferGpuAllocator
 	friend class TransferGpuAllocatorHandle;
 
 public:
+	/// Choose an alignment that satisfies 16 bytes and 3 bytes. RGB8 formats require 3 bytes alignment for the source
+	/// of the buffer to image copies.
+	static constexpr U32 GPU_BUFFER_ALIGNMENT = 16 * 3;
+
 	static const U32 FRAME_COUNT = 3;
 	static const PtrSize CHUNK_INITIAL_SIZE = 64_MB;
 	static constexpr Second MAX_FENCE_WAIT_TIME = 500.0_ms;

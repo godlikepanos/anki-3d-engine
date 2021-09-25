@@ -7,6 +7,7 @@
 #include <AnKi/Resource/ImageLoader.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Resource/AsyncLoader.h>
+#include <AnKi/Util/Filesystem.h>
 
 namespace anki
 {
@@ -67,7 +68,10 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 	}
 	ImageLoader& loader = ctx->m_loader;
 
-	TextureInitInfo init("RsrcTex");
+	StringAuto filenameExt(getTempAllocator());
+	getFilepathFilename(filename, filenameExt);
+
+	TextureInitInfo init(filenameExt);
 	init.m_usage = TextureUsageBit::ALL_SAMPLED | TextureUsageBit::TRANSFER_DESTINATION;
 	init.m_initialUsage = TextureUsageBit::ALL_SAMPLED;
 	U32 faces = 0;
@@ -122,6 +126,17 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 		case ImageBinaryDataCompression::S3TC:
 			init.m_format = Format::BC1_RGB_UNORM_BLOCK;
 			break;
+		case ImageBinaryDataCompression::ASTC:
+			if(loader.getAstcBlockSize() == UVec2(4u))
+			{
+				init.m_format = Format::ASTC_4x4_UNORM_BLOCK;
+			}
+			else
+			{
+				ANKI_ASSERT(loader.getAstcBlockSize() == UVec2(8u));
+				init.m_format = Format::ASTC_8x8_UNORM_BLOCK;
+			}
+			break;
 		default:
 			ANKI_ASSERT(0);
 		}
@@ -135,6 +150,17 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 			break;
 		case ImageBinaryDataCompression::S3TC:
 			init.m_format = Format::BC3_UNORM_BLOCK;
+			break;
+		case ImageBinaryDataCompression::ASTC:
+			if(loader.getAstcBlockSize() == UVec2(4u))
+			{
+				init.m_format = Format::ASTC_4x4_UNORM_BLOCK;
+			}
+			else
+			{
+				ANKI_ASSERT(loader.getAstcBlockSize() == UVec2(8u));
+				init.m_format = Format::ASTC_8x8_UNORM_BLOCK;
+			}
 			break;
 		default:
 			ANKI_ASSERT(0);

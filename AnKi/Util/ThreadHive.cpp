@@ -26,13 +26,13 @@ public:
 	ThreadHive* m_hive;
 
 	/// Constructor
-	Thread(U32 id, ThreadHive* hive, Bool pinToCores)
+	Thread(U32 id, ThreadHive* hive, Bool pinToCore)
 		: m_id(id)
 		, m_thread("anki_threadhive")
 		, m_hive(hive)
 	{
 		ANKI_ASSERT(hive);
-		m_thread.start(this, threadCallback, (pinToCores) ? I32(m_id) : -1);
+		m_thread.start(this, threadCallback, ThreadCoreAffinityMask(false).set(m_id, pinToCore));
 	}
 
 private:
@@ -46,7 +46,7 @@ private:
 	}
 };
 
-class ThreadHive::Task : public NonCopyable
+class ThreadHive::Task
 {
 public:
 	Task* m_next; ///< Next in the list.

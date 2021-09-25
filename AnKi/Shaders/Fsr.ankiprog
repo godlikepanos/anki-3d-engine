@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki mutator SHARPEN 0 1
+#pragma anki mutator FSR_QUALITY 0 1
 
 #pragma anki start comp
 
@@ -58,6 +59,11 @@ AH4 FsrEasuBH(AF2 p)
 {
 	return AH4(textureGather(sampler2D(u_tex, u_linearAnyClampSampler), p, 2));
 }
+
+AH3 FsrEasuSampleH(AF2 p)
+{
+	return AH3(textureLod(u_tex, u_linearAnyClampSampler, p, 0.0).xyz);
+}
 #endif
 
 #include <ThirdParty/Fsr/ffx_fsr1.h>
@@ -75,6 +81,8 @@ void main()
 	HVec3 color;
 #if SHARPEN
 	FsrRcasH(color.r, color.g, color.b, gl_GlobalInvocationID.xy, u_fsrConsts0);
+#elif FSR_QUALITY == 0
+	FsrEasuL(color, gl_GlobalInvocationID.xy, u_fsrConsts0, u_fsrConsts1, u_fsrConsts2, u_fsrConsts3);
 #else
 	FsrEasuH(color, gl_GlobalInvocationID.xy, u_fsrConsts0, u_fsrConsts1, u_fsrConsts2, u_fsrConsts3);
 #endif

@@ -21,7 +21,7 @@ namespace anki
 template<U32 N, typename TChunkType = U8>
 class BitSet
 {
-protected:
+private:
 	using ChunkType = TChunkType;
 
 	/// Number of bits a chunk holds.
@@ -34,6 +34,7 @@ public:
 	/// Constructor. It will set all the bits or unset them.
 	BitSet(Bool set)
 	{
+		ANKI_ASSERT(set == 0 || set == 1);
 		if(!set)
 		{
 			unsetAll();
@@ -42,6 +43,19 @@ public:
 		{
 			setAll();
 		}
+	}
+
+	/// Copy.
+	BitSet(const BitSet& b)
+		: m_chunks(b.m_chunks)
+	{
+	}
+
+	/// Copy.
+	BitSet& operator=(const BitSet& b)
+	{
+		m_chunks = b.m_chunks;
+		return *this;
 	}
 
 	/// Bitwise or between this and @a b sets.
@@ -146,59 +160,64 @@ public:
 
 	/// Set or unset a bit at the given position.
 	template<typename TInt>
-	void set(TInt pos, Bool setBits = true)
+	BitSet& set(TInt pos, Bool setBits = true)
 	{
 		U32 high, low;
 		position(U32(pos), high, low);
 		const ChunkType mask = ChunkType(ChunkType(1) << ChunkType(low));
 		m_chunks[high] = (setBits) ? ChunkType(m_chunks[high] | mask) : ChunkType(m_chunks[high] & ~mask);
+		return *this;
 	}
 
 	/// Set multiple bits.
 	template<typename TInt>
-	void set(std::initializer_list<TInt> list, Bool setBits = true)
+	BitSet& set(std::initializer_list<TInt> list, Bool setBits = true)
 	{
 		for(auto it : list)
 		{
 			set(it, setBits);
 		}
+		return *this;
 	}
 
 	/// Set all bits.
-	void setAll()
+	BitSet& setAll()
 	{
 		memset(&m_chunks[0], 0xFF, sizeof(m_chunks));
 		zeroUnusedBits();
+		return *this;
 	}
 
 	/// Unset a bit (set to zero) at the given position.
 	template<typename TInt>
-	void unset(TInt pos)
+	BitSet& unset(TInt pos)
 	{
-		set(pos, false);
+		return set(pos, false);
 	}
 
 	/// Unset multiple bits.
 	template<typename TInt>
-	void unset(std::initializer_list<TInt> list)
+	BitSet& unset(std::initializer_list<TInt> list)
 	{
-		set(list, false);
+		return set(list, false);
 	}
 
 	/// Unset all bits.
-	void unsetAll()
+	BitSet& unsetAll()
 	{
 		memset(&m_chunks[0], 0, sizeof(m_chunks));
+		return *this;
 	}
 
 	/// Flip the bits at the given position. It will go from 1 to 0 or from 0 to 1.
 	template<typename TInt>
-	void flip(TInt pos)
+	BitSet& flip(TInt pos)
 	{
 		U32 high, low;
 		position(U32(pos), high, low);
 		const ChunkType mask = ChunkType(ChunkType(1) << ChunkType(low));
 		m_chunks[high] ^= mask;
+		return *this;
 	}
 
 	/// Return true if the bit is set or false if it's not.
@@ -224,7 +243,7 @@ public:
 		U32 count = 0;
 		for(U i = 0; i < CHUNK_COUNT; ++i)
 		{
-			count += __builtin_popcount(m_chunks[i]);
+			count += __builtin_popcountl(m_chunks[i]);
 		}
 		return count;
 	}
@@ -251,7 +270,7 @@ public:
 		return m_chunks;
 	}
 
-protected:
+private:
 	Array<ChunkType, CHUNK_COUNT> m_chunks;
 
 	BitSet()

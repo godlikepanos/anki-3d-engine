@@ -10,6 +10,12 @@ using namespace anki;
 Error SampleApp::init(int argc, char** argv, CString sampleName)
 {
 	HeapAllocator<U32> alloc(allocAligned, nullptr);
+
+	// Init the super class
+	ConfigSet config = DefaultConfigSet::get();
+	config.set("window_fullscreen", true);
+
+#if !ANKI_OS_ANDROID
 	StringAuto mainDataPath(alloc, ANKI_SOURCE_DIRECTORY);
 	StringAuto assetsDataPath(alloc);
 	assetsDataPath.sprintf("%s/Samples/%s", ANKI_SOURCE_DIRECTORY, sampleName.cstr());
@@ -19,11 +25,9 @@ Error SampleApp::init(int argc, char** argv, CString sampleName)
 		ANKI_LOGE("Cannot find directory \"%s\". Have you moved the clone of the repository?", assetsDataPath.cstr());
 		return Error::USER_DATA;
 	}
-
-	// Init the super class
-	ConfigSet config = DefaultConfigSet::get();
-	config.set("window_fullscreen", true);
 	config.set("rsrc_dataPaths", StringAuto(alloc).sprintf("%s:%s", mainDataPath.cstr(), assetsDataPath.cstr()));
+#endif
+
 	config.set("gr_validation", 0);
 	ANKI_CHECK(config.setFromCommandLineArguments(argc - 1, argv + 1));
 	ANKI_CHECK(App::init(config, allocAligned, nullptr));
@@ -88,6 +92,12 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 	{
 		renderer.setCurrentDebugRenderTarget(
 			(renderer.getCurrentDebugRenderTarget() == "GBuffer_normals") ? "" : "GBuffer_normals");
+	}
+
+	if(in.getKey(KeyCode::L) == 1)
+	{
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "SsaoFinal") ? ""
+																									 : "SsaoFinal");
 	}
 
 	if(in.getKey(KeyCode::H) == 1)

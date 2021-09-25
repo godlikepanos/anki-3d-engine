@@ -35,12 +35,16 @@ private:
 };
 
 /// Dynamic GPU memory allocator for all types.
-class GpuMemoryManager : public NonCopyable
+class GpuMemoryManager
 {
 public:
 	GpuMemoryManager() = default;
 
+	GpuMemoryManager(const GpuMemoryManager&) = delete; // Non-copyable
+
 	~GpuMemoryManager();
+
+	GpuMemoryManager& operator=(const GpuMemoryManager&) = delete; // Non-copyable
 
 	void init(VkPhysicalDevice pdev, VkDevice dev, GrAllocator<U8> alloc, Bool exposeBufferGpuAddress);
 

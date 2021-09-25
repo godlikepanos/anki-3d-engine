@@ -57,12 +57,16 @@ public:
 };
 
 /// Linear based allocator.
-class StackGpuAllocator : public NonCopyable
+class StackGpuAllocator
 {
 public:
 	StackGpuAllocator() = default;
 
+	StackGpuAllocator(const StackGpuAllocator&) = delete; // Non-copyable
+
 	~StackGpuAllocator();
+
+	StackGpuAllocator& operator=(const StackGpuAllocator&) = delete; // Non-copyable
 
 	void init(GenericMemoryPoolAllocator<U8> alloc, StackGpuAllocatorInterface* iface);
 

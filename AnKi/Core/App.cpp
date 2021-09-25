@@ -38,7 +38,7 @@ namespace anki
 
 #if ANKI_OS_ANDROID
 /// The one and only android hack
-android_app* gAndroidApp = nullptr;
+android_app* g_androidApp = nullptr;
 #endif
 
 class App::StatsUi
@@ -323,6 +323,8 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 {
 	setSignalHandlers();
 
+	Thread::setNameOfCurrentThread("anki_main");
+
 	ConfigSet config = config_;
 	m_displayStats = config.getNumberU32("core_displayStats");
 
@@ -504,12 +506,15 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 
 Error App::initDirs(const ConfigSet& cfg)
 {
-#if !ANKI_OS_ANDROID
 	// Settings path
+#if !ANKI_OS_ANDROID
 	StringAuto home(m_heapAlloc);
 	ANKI_CHECK(getHomeDirectory(home));
 
 	m_settingsDir.sprintf(m_heapAlloc, "%s/.anki", &home[0]);
+#else
+	m_settingsDir.sprintf(m_heapAlloc, "%s/.anki", g_androidApp->activity->internalDataPath);
+#endif
 
 	if(!directoryExists(m_settingsDir.toCString()))
 	{
@@ -536,28 +541,6 @@ Error App::initDirs(const ConfigSet& cfg)
 		ANKI_CORE_LOGI("Will create cache dir: %s", &m_cacheDir[0]);
 		ANKI_CHECK(createDirectory(m_cacheDir.toCString()));
 	}
-
-#else
-	// ANKI_ASSERT(gAndroidApp);
-	// ANativeActivity* activity = gAndroidApp->activity;
-
-	// Settings path
-	// settingsDir = String(activity->internalDataDir, alloc);
-	settingsDir = String("/sdcard/.anki/");
-	if(!directoryExists(settingsDir.c_str()))
-	{
-		createDirectory(settingsDir.c_str());
-	}
-
-	// Cache
-	cacheDir = settingsDir + "/cache";
-	if(directoryExists(cacheDir.c_str()))
-	{
-		removeDirectory(cacheDir.c_str());
-	}
-
-	createDirectory(cacheDir.c_str());
-#endif
 
 	return Error::NONE;
 }
@@ -750,20 +733,10 @@ void App::setSignalHandlers()
 		else
 			printf("Caught signal %d\n", signum);
 
-		class BW : public BackTraceWalker
-		{
-		public:
-			U32 m_c = 0;
-
-			void operator()(const char* symbol)
-			{
-				printf("%.2u: %s\n", m_c++, symbol);
-			}
-		};
-
-		BW bw;
+		U32 count = 0;
 		printf("Backtrace:\n");
-		getBacktrace(bw);
+		backtrace(HeapAllocator<U8>(allocAligned, nullptr),
+				  [&count](CString symbol) { printf("%.2u: %s\n", count++, symbol.cstr()); });
 
 		ANKI_DEBUG_BREAK();
 	};

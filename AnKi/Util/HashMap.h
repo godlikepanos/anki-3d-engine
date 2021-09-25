@@ -7,7 +7,6 @@
 
 #include <AnKi/Util/Allocator.h>
 #include <AnKi/Util/Functions.h>
-#include <AnKi/Util/NonCopyable.h>
 #include <AnKi/Util/SparseArray.h>
 
 namespace anki

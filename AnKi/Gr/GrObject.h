@@ -7,7 +7,6 @@
 
 #include <AnKi/Gr/Common.h>
 #include <AnKi/Util/Atomic.h>
-#include <AnKi/Util/NonCopyable.h>
 
 namespace anki
 {
@@ -37,12 +36,16 @@ enum class GrObjectType : U8
 };
 
 /// Base of all graphics objects.
-class GrObject : public NonCopyable
+class GrObject
 {
 public:
 	GrObject(GrManager* manager, GrObjectType type, CString name);
 
+	GrObject(const GrObject&) = delete; // Non-copyable
+
 	virtual ~GrObject();
+
+	GrObject& operator=(const GrObject&) = delete; // Non-copyable
 
 	GrObjectType getType() const
 	{

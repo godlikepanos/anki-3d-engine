@@ -33,7 +33,7 @@ DWORD ANKI_WINAPI Thread::threadCallback(LPVOID ud)
 	return thread->m_returnCode._getCode();
 }
 
-void Thread::start(void* userData, ThreadCallback callback, I32 pinToCore)
+void Thread::start(void* userData, ThreadCallback callback, const ThreadCoreAffinityMask& coreAffintyMask)
 {
 	ANKI_ASSERT(!m_started);
 	ANKI_ASSERT(callback != nullptr);
@@ -50,12 +50,9 @@ void Thread::start(void* userData, ThreadCallback callback, I32 pinToCore)
 		ANKI_UTIL_LOGF("CreateThread() failed");
 	}
 
-	if(pinToCore >= 0)
+	if(coreAffintyMask.getAny())
 	{
-		if(SetThreadAffinityMask(m_handle, DWORD_PTR(1) << DWORD_PTR(pinToCore)) == 0)
-		{
-			ANKI_UTIL_LOGF("SetThreadAffinityMask() failed");
-		}
+		pinToCores(coreAffintyMask);
 	}
 }
 
@@ -80,6 +77,37 @@ Error Thread::join()
 #endif
 
 	return m_returnCode;
+}
+
+void Thread::pinToCores(const ThreadCoreAffinityMask& coreAffintyMask)
+{
+	static_assert(std::is_same<DWORD_PTR, U64>::value, "See file");
+
+	ThreadCoreAffinityMask affinityTest = coreAffintyMask;
+	DWORD_PTR affinity = 0;
+	for(DWORD_PTR bit = 0; bit < 64; ++bit)
+	{
+		if(coreAffintyMask.get(bit))
+		{
+			affinity |= 1ull << bit;
+			affinityTest.unset(bit);
+		}
+	}
+
+	if(SetThreadAffinityMask(m_handle, affinity) == 0)
+	{
+		ANKI_UTIL_LOGF("SetThreadAffinityMask() failed");
+	}
+
+	if(affinityTest.getEnabledBitCount() > 0)
+	{
+		ANKI_UTIL_LOGE("Couldn't set affinity for all cores. Need to refactor the code");
+	}
+}
+
+void Thread::setNameOfCurrentThread(const CString& name)
+{
+	// TODO
 }
 
 } // end namespace anki

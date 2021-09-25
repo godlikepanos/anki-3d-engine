@@ -75,7 +75,7 @@ public:
 
 /// A scheduler of small tasks. It takes a number of tasks and schedules them in one of the threads. The tasks can
 /// depend on previously submitted tasks or be completely independent.
-class ThreadHive : public NonCopyable
+class ThreadHive
 {
 public:
 	static const U32 MAX_THREADS = 32;
@@ -83,7 +83,11 @@ public:
 	/// Create the hive.
 	ThreadHive(U32 threadCount, GenericMemoryPoolAllocator<U8> alloc, Bool pinToCores = false);
 
+	ThreadHive(const ThreadHive&) = delete; // Non-copyable
+
 	~ThreadHive();
+
+	ThreadHive& operator=(const ThreadHive&) = delete; // Non-copyable
 
 	U32 getThreadCount() const
 	{

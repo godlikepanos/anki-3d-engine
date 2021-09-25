@@ -53,15 +53,15 @@ void main()
 										  u_clusteredShading.m_zSplitMagic.x, u_clusteredShading.m_zSplitMagic.y);
 
 	// Process decals
-	if(cluster.m_decalsMask == 0ul)
+	if(cluster.m_decalsMask == ExtendedClusterObjectMask(0))
 	{
 		discard;
 	}
 
-	ANKI_LOOP while(cluster.m_decalsMask != 0ul)
+	ANKI_LOOP while(cluster.m_decalsMask != ExtendedClusterObjectMask(0))
 	{
-		const I32 idx = findLSB64(cluster.m_decalsMask);
-		cluster.m_decalsMask &= ~(1ul << U64(idx));
+		const I32 idx = findLSB2(cluster.m_decalsMask);
+		cluster.m_decalsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
 		const Decal decal = u_decals2[idx];
 
 		// Project pos to decal space

@@ -44,8 +44,8 @@ void StackGpuAllocator::init(GenericMemoryPoolAllocator<U8> alloc, StackGpuAlloc
 
 	m_alignment = iface->getMaxAlignment();
 	ANKI_ASSERT(m_alignment > 0);
-	ANKI_ASSERT(m_initialSize >= m_alignment);
-	ANKI_ASSERT((m_initialSize % m_alignment) == 0);
+
+	alignRoundUp(m_alignment, m_initialSize);
 }
 
 Error StackGpuAllocator::allocate(PtrSize size, StackGpuAllocatorHandle& handle)

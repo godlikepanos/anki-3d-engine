@@ -27,7 +27,7 @@ class MicroSwapchain
 public:
 	VkSwapchainKHR m_swapchain = {};
 
-	Array<TexturePtr, MAX_FRAMES_IN_FLIGHT> m_textures;
+	DynamicArray<TexturePtr> m_textures;
 
 	MicroSwapchain(SwapchainFactory* factory);
 

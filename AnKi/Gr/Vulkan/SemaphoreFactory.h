@@ -18,7 +18,7 @@ class SemaphoreFactory;
 /// @{
 
 /// Simple semaphore wrapper.
-class MicroSemaphore : public NonCopyable
+class MicroSemaphore
 {
 	friend class SemaphoreFactory;
 	friend class MicroSemaphorePtrDeleter;
@@ -26,6 +26,10 @@ class MicroSemaphore : public NonCopyable
 	friend class GenericPoolAllocator;
 
 public:
+	MicroSemaphore(const MicroSemaphore&) = delete; // Non-copyable
+
+	MicroSemaphore& operator=(const MicroSemaphore&) = delete; // Non-copyable
+
 	const VkSemaphore& getHandle() const
 	{
 		ANKI_ASSERT(m_handle);

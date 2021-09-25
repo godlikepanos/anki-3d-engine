@@ -6,7 +6,6 @@
 #pragma once
 
 #include <AnKi/Util/StdTypes.h>
-#include <AnKi/Util/NonCopyable.h>
 #include <atomic>
 
 namespace anki
@@ -27,7 +26,7 @@ enum class AtomicMemoryOrder
 
 /// Atomic template. At the moment it doesn't work well with pointers.
 template<typename T, AtomicMemoryOrder tmemOrd = AtomicMemoryOrder::RELAXED>
-class Atomic : public NonCopyable
+class Atomic
 {
 public:
 	using Value = T;
@@ -42,6 +41,10 @@ public:
 		: m_val(a)
 	{
 	}
+
+	Atomic(const Atomic&) = delete; // Non-copyable
+
+	Atomic& operator=(const Atomic&) = delete; // Non-copyable
 
 	/// Set the value without protection.
 	void setNonAtomically(Value a)

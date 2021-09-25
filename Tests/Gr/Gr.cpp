@@ -1,3 +1,4 @@
+
 // Copyright (C) 2009-2021, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
@@ -6,6 +7,7 @@
 #include <Tests/Framework/Framework.h>
 #include <AnKi/Gr.h>
 #include <AnKi/Core/NativeWindow.h>
+#include <AnKi/Input/Input.h>
 #include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Util/HighRezTimer.h>
 #include <AnKi/Core/StagingGpuMemoryManager.h>
@@ -174,43 +176,6 @@ void main()
 	out_color = texture(u_tex0, in_uv);
 })";
 
-static const char* FRAG_2TEX_SRC = R"(layout (location = 0) out vec4 out_color;
-
-layout(location = 0) in vec2 in_uv;
-
-layout(set = 0, binding = 0) uniform sampler2D u_tex0;
-layout(set = 0, binding = 1) uniform sampler2D u_tex1;
-
-void main()
-{
-	if(gl_FragCoord.x < 1024 / 2)
-	{
-		if(gl_FragCoord.y < 768 / 2)
-		{
-			vec2 uv = in_uv * 2.0;
-			out_color = textureLod(u_tex0, uv, 0.0);
-		}
-		else
-		{
-			vec2 uv = in_uv * 2.0 - vec2(0.0, 1.0);
-			out_color = textureLod(u_tex0, uv, 1.0);
-		}
-	}
-	else
-	{
-		if(gl_FragCoord.y < 768 / 2)
-		{
-			vec2 uv = in_uv * 2.0 - vec2(1.0, 0.0);
-			out_color = textureLod(u_tex1, uv, 0.0);
-		}
-		else
-		{
-			vec2 uv = in_uv * 2.0 - vec2(1.0, 1.0);
-			out_color = textureLod(u_tex1, uv, 1.0);
-		}
-	}
-})";
-
 static const char* FRAG_TEX3D_SRC = R"(layout (location = 0) out vec4 out_color;
 
 layout(set = 0, binding = 0) uniform u0_
@@ -288,6 +253,7 @@ void main()
 static NativeWindow* win = nullptr;
 static GrManager* gr = nullptr;
 static StagingGpuMemoryManager* stagingMem = nullptr;
+static Input* input = nullptr;
 
 #define COMMON_BEGIN() \
 	stagingMem = new StagingGpuMemoryManager(); \
@@ -299,6 +265,8 @@ static StagingGpuMemoryManager* stagingMem = nullptr;
 	cfg.set("gr_rayTracing", true); \
 	cfg.set("gr_debugMarkers", true); \
 	win = createWindow(cfg); \
+	input = new Input(); \
+	ANKI_TEST_EXPECT_NO_ERR(input->init(win)); \
 	gr = createGrManager(cfg, win); \
 	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(gr, cfg)); \
 	TransferGpuAllocator* transfAlloc = new TransferGpuAllocator(); \
@@ -313,6 +281,7 @@ static StagingGpuMemoryManager* stagingMem = nullptr;
 	delete transfAlloc; \
 	delete stagingMem; \
 	GrManager::deleteInstance(gr); \
+	delete input; \
 	delete win; \
 	win = nullptr; \
 	gr = nullptr; \
@@ -364,7 +333,9 @@ static ShaderPtr createShader(CString src, ShaderType type, GrManager& gr,
 {
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 	StringAuto header(alloc);
-	ShaderProgramParser::generateAnkiShaderHeader(type, ShaderCompilerOptions(), header);
+	ShaderCompilerOptions compilerOptions;
+	compilerOptions.m_bindlessLimits = gr.getBindlessLimits();
+	ShaderProgramParser::generateAnkiShaderHeader(type, compilerOptions, header);
 	header.append(src);
 	DynamicArrayAuto<U8> spirv(alloc);
 	ANKI_TEST_EXPECT_NO_ERR(compilerGlslToSpirv(header, type, alloc, spirv));
@@ -508,7 +479,7 @@ ANKI_TEST(Gr, SimpleDrawcall)
 		cinit.m_flags = CommandBufferFlag::GENERAL_WORK;
 		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
-		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
+		cmdb->setViewport(0, 0, win->getWidth(), win->getHeight());
 		cmdb->bindShaderProgram(prog);
 		presentBarrierA(cmdb, presentTex);
 		cmdb->beginRenderPass(fb, {{TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}}, {});
@@ -701,8 +672,8 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 		cmdb->endRenderPass();
 
 		// Draw onscreen
-		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
-		cmdb->setScissor(0, 0, WIDTH, HEIGHT);
+		cmdb->setViewport(0, 0, win->getWidth(), win->getHeight());
+		cmdb->setScissor(0, 0, win->getWidth(), win->getHeight());
 		cmdb->bindShaderProgram(blitProg);
 		cmdb->setTextureSurfaceBarrier(rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 									   TextureUsageBit::SAMPLED_FRAGMENT, TextureSurfaceInfo(0, 0, 0, 0));
@@ -732,10 +703,17 @@ ANKI_TEST(Gr, Buffer)
 {
 	COMMON_BEGIN()
 
-	BufferPtr a = gr->newBuffer(BufferInitInfo(512, BufferUsageBit::ALL_UNIFORM, BufferMapAccessBit::NONE));
+	BufferInitInfo buffInit("a");
+	buffInit.m_size = 512;
+	buffInit.m_usage = BufferUsageBit::ALL_UNIFORM;
+	buffInit.m_mapAccess = BufferMapAccessBit::NONE;
+	BufferPtr a = gr->newBuffer(buffInit);
 
-	BufferPtr b = gr->newBuffer(
-		BufferInitInfo(64, BufferUsageBit::ALL_STORAGE, BufferMapAccessBit::WRITE | BufferMapAccessBit::READ));
+	buffInit.setName("b");
+	buffInit.m_size = 64;
+	buffInit.m_usage = BufferUsageBit::ALL_STORAGE;
+	buffInit.m_mapAccess = BufferMapAccessBit::WRITE | BufferMapAccessBit::READ;
+	BufferPtr b = gr->newBuffer(buffInit);
 
 	void* ptr = b->map(0, 64, BufferMapAccessBit::WRITE);
 	ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
@@ -783,7 +761,7 @@ ANKI_TEST(Gr, DrawWithUniforms)
 		cinit.m_flags = CommandBufferFlag::GENERAL_WORK;
 		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
-		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
+		cmdb->setViewport(0, 0, win->getWidth(), win->getHeight());
 		cmdb->bindShaderProgram(prog);
 		presentBarrierA(cmdb, presentTex);
 		cmdb->beginRenderPass(fb, {TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}, {});
@@ -873,7 +851,7 @@ ANKI_TEST(Gr, DrawWithVertex)
 		cmdb->setVertexAttribute(1, 0, Format::R8G8B8_UNORM, sizeof(Vec3));
 		cmdb->setVertexAttribute(2, 1, Format::R32G32B32_SFLOAT, 0);
 
-		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
+		cmdb->setViewport(0, 0, win->getWidth(), win->getHeight());
 		cmdb->setPolygonOffset(0.0, 0.0);
 		cmdb->bindShaderProgram(prog);
 		presentBarrierA(cmdb, presentTex);
@@ -1038,6 +1016,47 @@ ANKI_TEST(Gr, DrawWithTexture)
 	//
 	// Create prog
 	//
+	static const char* FRAG_2TEX_SRC = R"(layout (location = 0) out vec4 out_color;
+
+layout(location = 0) in vec2 in_uv;
+
+layout(set = 0, binding = 0) uniform sampler2D u_tex0;
+layout(set = 0, binding = 1) uniform sampler2D u_tex1;
+
+layout(push_constant) uniform b_pc
+{
+	Vec4 u_viewport;
+};
+
+void main()
+{
+	if(gl_FragCoord.x < u_viewport.x / 2.0)
+	{
+		if(gl_FragCoord.y < u_viewport.y / 2.0)
+		{
+			vec2 uv = in_uv * 2.0;
+			out_color = textureLod(u_tex0, uv, 0.0);
+		}
+		else
+		{
+			vec2 uv = in_uv * 2.0 - vec2(0.0, 1.0);
+			out_color = textureLod(u_tex0, uv, 1.0);
+		}
+	}
+	else
+	{
+		if(gl_FragCoord.y < u_viewport.y / 2.0)
+		{
+			vec2 uv = in_uv * 2.0 - vec2(1.0, 0.0);
+			out_color = textureLod(u_tex1, uv, 0.0);
+		}
+		else
+		{
+			vec2 uv = in_uv * 2.0 - vec2(1.0, 1.0);
+			out_color = textureLod(u_tex1, uv, 1.0);
+		}
+	}
+})";
 	ShaderProgramPtr prog = createProgram(VERT_QUAD_SRC, FRAG_2TEX_SRC, *gr);
 
 	//
@@ -1057,10 +1076,13 @@ ANKI_TEST(Gr, DrawWithTexture)
 		cinit.m_flags = CommandBufferFlag::GENERAL_WORK | CommandBufferFlag::SMALL_BATCH;
 		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
-		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
+		cmdb->setViewport(0, 0, win->getWidth(), win->getHeight());
 		cmdb->bindShaderProgram(prog);
 		presentBarrierA(cmdb, presentTex);
 		cmdb->beginRenderPass(fb, {TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}, {});
+
+		Vec4 pc(F32(win->getWidth()), F32(win->getHeight()), 0.0f, 0.0f);
+		cmdb->setPushConstants(&pc, sizeof(pc));
 
 		cmdb->bindTextureAndSampler(0, 0, aView, sampler);
 		cmdb->bindTextureAndSampler(0, 1, bView, sampler);
@@ -2188,7 +2210,7 @@ ANKI_TEST(Gr, Bindless)
 	static const char* PROG_SRC = R"(
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
-ANKI_BINDLESS_SET(0);
+ANKI_BINDLESS_SET(0u);
 
 layout(set = 1, binding = 0) writeonly buffer ss_
 {
@@ -2535,7 +2557,7 @@ void main()
 }
 		)";
 
-		StringAuto fragSrc(HeapAllocator<U8>{allocAligned, nullptr});
+		StringAuto fragSrc(HeapAllocator<U8>(allocAligned, nullptr));
 		if(useRayTracing)
 		{
 			fragSrc.append("#define USE_RAY_TRACING 1\n");

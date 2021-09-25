@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Util/String.h>
+#include <AnKi/Util/Function.h>
 
 namespace anki
 {
@@ -30,14 +31,29 @@ void getParentFilepath(const CString& filename, StringAuto& out);
 /// Return true if directory exists?
 Bool directoryExists(const CString& dir);
 
-/// Callback for the @ref walkDirectoryTree.
-/// @param filename The file or directory name.
-/// @param userData User data passed to walkDirectoryTree.
-/// @param isDirectory True if it's directory, false if it's regular file.
-using WalkDirectoryTreeCallback = Error (*)(const CString& filename, void* userData, Bool isDirectory);
+/// @internal
+ANKI_USE_RESULT Error walkDirectoryTreeInternal(const CString& dir,
+												const Function<Error(const CString&, Bool)>& callback);
 
-/// Walk a directory and it's subdirectories. Will walk and list all directories and files of a directory.
-ANKI_USE_RESULT Error walkDirectoryTree(const CString& dir, void* userData, WalkDirectoryTreeCallback callback);
+/// Walk a directory tree.
+/// @param dir The dir to walk.
+/// @param alloc An allocator for temp allocations.
+/// @param func A lambda. See code example on how to use it.
+/// Example:
+/// @code
+/// walkDirectoryTree("./path/to", alloc, [&, this](CString path, Bool isDir) {
+/// 	...
+/// 	return Error::NONE;
+/// });
+/// @endcode
+template<typename TFunc>
+ANKI_USE_RESULT Error walkDirectoryTree(const CString& dir, GenericMemoryPoolAllocator<U8> alloc, TFunc func)
+{
+	Function<Error(const CString&, Bool)> f(alloc, func);
+	const Error err = walkDirectoryTreeInternal(dir, f);
+	f.destroy(alloc);
+	return err;
+}
 
 /// Equivalent to: rm -rf dir
 /// @param dir The directory to remove.

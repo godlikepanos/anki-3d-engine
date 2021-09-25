@@ -52,12 +52,12 @@ public:
 		return static_cast<const TextureImpl&>(*m_tex);
 	}
 
-	/// @param resourceType Texture or image.
-	/// @note It's thread-safe.
-	U32 getOrCreateBindlessIndex(VkImageLayout layout, DescriptorType resourceType);
+	U32 getOrCreateBindlessIndex(VkImageLayout layout);
 
 private:
-	VkImageView m_handle = {}; /// Cache the handle.
+	VkImageView m_handle = {}; ///< Cache the handle.
+
+	Array<U32, 2> m_bindlessIndices = {MAX_U32, MAX_U32}; ///< Cache it.
 
 	/// This is a hash that depends on the Texture and the VkImageView. It's used as a replacement of
 	/// TextureView::m_uuid since it creates less unique IDs.

@@ -235,6 +235,7 @@ static ANKI_USE_RESULT Error logShaderErrorCode(CString error, CString source, G
 
 	StringAuto prettySrc(alloc);
 	StringListAuto lines(alloc);
+	StringAuto errorLineTxt(alloc);
 
 	static const char* padding = "==============================================================================";
 
@@ -249,6 +250,7 @@ static ANKI_USE_RESULT Error logShaderErrorCode(CString error, CString source, G
 		if(!it->isEmpty() && lineno == errorLineNumber)
 		{
 			tmp.sprintf(">>%8u: %s\n", lineno, &(*it)[0]);
+			errorLineTxt.sprintf("%s", &(*it)[0]);
 		}
 		else if(!it->isEmpty())
 		{
@@ -262,8 +264,9 @@ static ANKI_USE_RESULT Error logShaderErrorCode(CString error, CString source, G
 		prettySrc.append(tmp);
 	}
 
-	ANKI_SHADER_COMPILER_LOGE("Shader compilation failed:\n%s\n%s\n%s\n%s\n%s\n%s", padding, &error[0], padding,
-							  &prettySrc[0], padding, &error[0]);
+	ANKI_SHADER_COMPILER_LOGE("Shader compilation failed:\n%s\n%s\nIn: %s\n%s\n%s\n%s\n%s\nIn: %s\n", padding,
+							  &error[0], errorLineTxt.cstr(), padding, &prettySrc[0], padding, &error[0],
+							  errorLineTxt.cstr());
 
 	return Error::NONE;
 }
@@ -318,8 +321,8 @@ Error compilerGlslToSpirv(CString src, ShaderType shaderType, GenericMemoryPoolA
 	glslang::TShader shader(stage);
 	Array<const char*, 1> csrc = {&src[0]};
 	shader.setStrings(&csrc[0], 1);
-	shader.setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_2);
-	shader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_5);
+	shader.setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_1);
+	shader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_4);
 	if(!shader.parse(&GLSLANG_LIMITS, 100, false, messages))
 	{
 		ANKI_CHECK(logShaderErrorCode(shader.getInfoLog(), src, tmpAlloc));

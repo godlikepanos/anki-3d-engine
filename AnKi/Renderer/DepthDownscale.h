@@ -50,6 +50,7 @@ public:
 		width = m_copyToBuff.m_lastMipWidth;
 		height = m_copyToBuff.m_lastMipHeight;
 		ANKI_ASSERT(m_copyToBuff.m_buffAddr);
+		m_copyToBuff.m_buff->invalidate(0, MAX_PTR_SIZE);
 		depthValues = static_cast<F32*>(m_copyToBuff.m_buffAddr);
 	}
 

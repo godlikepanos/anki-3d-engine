@@ -223,7 +223,7 @@ extern void deleteTesterSingleton();
 
 void initConfig(ConfigSet& cfg);
 
-NativeWindow* createWindow(const ConfigSet& cfg);
+NativeWindow* createWindow(ConfigSet& cfg);
 
 GrManager* createGrManager(const ConfigSet& cfg, NativeWindow* win);
 

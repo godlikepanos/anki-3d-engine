@@ -165,7 +165,7 @@ void SparseArray<T, TIndex>::grow(TAlloc& alloc)
 	ANKI_ASSERT(startPos != ~Index(0));
 
 	// Start re-inserting
-	U count = oldCapacity;
+	Index count = oldCapacity;
 	Index pos = startPos;
 	while(count--)
 	{

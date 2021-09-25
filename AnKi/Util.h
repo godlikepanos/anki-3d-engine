@@ -22,7 +22,6 @@
 #include <AnKi/Util/List.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/Memory.h>
-#include <AnKi/Util/NonCopyable.h>
 #include <AnKi/Util/Hierarchy.h>
 #include <AnKi/Util/Ptr.h>
 #include <AnKi/Util/Singleton.h>

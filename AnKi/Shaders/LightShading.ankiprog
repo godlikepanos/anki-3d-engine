@@ -129,10 +129,10 @@ void main()
 	}
 
 	// Point lights
-	ANKI_LOOP while(cluster.m_pointLightsMask != 0ul)
+	ANKI_LOOP while(cluster.m_pointLightsMask != ExtendedClusterObjectMask(0))
 	{
-		const I32 idx = findLSB64(cluster.m_pointLightsMask);
-		cluster.m_pointLightsMask &= ~(1ul << U64(idx));
+		const I32 idx = findLSB2(cluster.m_pointLightsMask);
+		cluster.m_pointLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
 		const PointLight light = u_pointLights2[idx];
 
 		LIGHTING_COMMON_BRDF();
@@ -151,10 +151,10 @@ void main()
 	}
 
 	// Spot lights
-	ANKI_LOOP while(cluster.m_spotLightsMask != 0ul)
+	ANKI_LOOP while(cluster.m_spotLightsMask != ExtendedClusterObjectMask(0))
 	{
-		const I32 idx = findLSB64(cluster.m_spotLightsMask);
-		cluster.m_spotLightsMask &= ~(1ul << U64(idx));
+		const I32 idx = findLSB2(cluster.m_spotLightsMask);
+		cluster.m_spotLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
 		const SpotLight light = u_spotLights2[idx];
 
 		LIGHTING_COMMON_BRDF();
@@ -186,12 +186,12 @@ void main()
 		{
 			// Only one probe, do a fast path without blend weight
 
-			const ReflectionProbe probe = u_reflectionProbes2[findLSB(cluster.m_reflectionProbesMask)];
+			const ReflectionProbe probe = u_reflectionProbes[findLSB2(cluster.m_reflectionProbesMask)];
 
 			// Sample
 			const Vec3 cubeUv = intersectProbe(worldPos, reflDir, probe.m_aabbMin, probe.m_aabbMax, probe.m_position);
 			const Vec4 cubeArrUv = Vec4(cubeUv, probe.m_cubemapIndex);
-			specIndirect = textureLod(u_reflectionsTex2, u_trilinearClampSampler, cubeArrUv, reflLod).rgb;
+			specIndirect = textureLod(u_reflectionsTex, u_trilinearClampSampler, cubeArrUv, reflLod).rgb;
 		}
 		else
 		{
@@ -202,9 +202,9 @@ void main()
 			// Loop probes
 			ANKI_LOOP while(cluster.m_reflectionProbesMask != 0u)
 			{
-				const U32 idx = U32(findLSB(cluster.m_reflectionProbesMask));
+				const U32 idx = U32(findLSB2(cluster.m_reflectionProbesMask));
 				cluster.m_reflectionProbesMask &= ~(1u << idx);
-				const ReflectionProbe probe = u_reflectionProbes2[idx];
+				const ReflectionProbe probe = u_reflectionProbes[idx];
 
 				// Compute blend weight
 				const F32 blendWeight = computeProbeBlendWeight(worldPos, probe.m_aabbMin, probe.m_aabbMax, 0.2);
@@ -214,7 +214,7 @@ void main()
 				const Vec3 cubeUv =
 					intersectProbe(worldPos, reflDir, probe.m_aabbMin, probe.m_aabbMax, probe.m_position);
 				const Vec4 cubeArrUv = Vec4(cubeUv, probe.m_cubemapIndex);
-				const Vec3 c = textureLod(u_reflectionsTex2, u_trilinearClampSampler, cubeArrUv, reflLod).rgb;
+				const Vec3 c = textureLod(u_reflectionsTex, u_trilinearClampSampler, cubeArrUv, reflLod).rgb;
 				specIndirect += c * blendWeight;
 			}
 
@@ -231,7 +231,7 @@ void main()
 		// Compute env BRDF
 		const F32 NoV = max(EPSILON, dot(gbuffer.m_normal, viewDir));
 		const Vec3 env =
-			envBRDF(gbuffer.m_specular, gbuffer.m_roughness, u_integrationLut2, u_trilinearClampSampler, NoV);
+			envBRDF(gbuffer.m_specular, gbuffer.m_roughness, u_integrationLut, u_trilinearClampSampler, NoV);
 
 		out_color += finalSpecIndirect * env;
 	}
@@ -244,7 +244,7 @@ void main()
 		{
 			// All subgroups point to the same probe and there is only one probe, do a fast path without blend weight
 
-			const GlobalIlluminationProbe probe = u_giProbes[findLSB(cluster.m_giProbesMask)];
+			const GlobalIlluminationProbe probe = u_giProbes[findLSB2(cluster.m_giProbesMask)];
 
 			// Sample
 			diffIndirect = sampleGlobalIllumination(worldPos, gbuffer.m_normal, probe, u_globalIlluminationTextures,
@@ -260,7 +260,7 @@ void main()
 			// Loop probes
 			ANKI_LOOP while(cluster.m_giProbesMask != 0u)
 			{
-				const U32 idx = U32(findLSB(cluster.m_giProbesMask));
+				const U32 idx = U32(findLSB2(cluster.m_giProbesMask));
 				cluster.m_giProbesMask &= ~(1u << idx);
 				const GlobalIlluminationProbe probe = u_giProbes[idx];
 

@@ -33,7 +33,53 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(TextureImplWorkaround)
 /// A Vulkan image view with some extra data.
 class MicroImageView
 {
+	friend class TextureImpl;
+
 public:
+	MicroImageView() = default;
+
+	MicroImageView(MicroImageView&& b)
+	{
+		*this = std::move(b);
+	}
+
+	~MicroImageView()
+	{
+		for(U32 idx : m_bindlessIndices)
+		{
+			ANKI_ASSERT(idx == MAX_U32 && "Forgot to unbind the bindless");
+			(void)idx;
+		}
+		ANKI_ASSERT(m_handle == VK_NULL_HANDLE);
+	}
+
+	MicroImageView& operator=(MicroImageView&& b)
+	{
+		m_handle = b.m_handle;
+		b.m_handle = VK_NULL_HANDLE;
+		m_bindlessIndices = b.m_bindlessIndices;
+		b.m_bindlessIndices = {MAX_U32, MAX_U32};
+		m_derivedTextureType = b.m_derivedTextureType;
+		b.m_derivedTextureType = TextureType::COUNT;
+		return *this;
+	}
+
+	VkImageView getHandle() const
+	{
+		ANKI_ASSERT(m_handle);
+		return m_handle;
+	}
+
+	/// @note It's thread-safe.
+	U32 getOrCreateBindlessIndex(VkImageLayout layout, GrManagerImpl& gr) const;
+
+	TextureType getDerivedTextureType() const
+	{
+		ANKI_ASSERT(m_derivedTextureType != TextureType::COUNT);
+		return m_derivedTextureType;
+	}
+
+private:
 	VkImageView m_handle = VK_NULL_HANDLE;
 
 	/// Index 0: Sampled image with SHADER_READ_ONLY layout.
@@ -45,29 +91,6 @@ public:
 
 	/// Because for example a single surface view of a cube texture will be a 2D view.
 	TextureType m_derivedTextureType = TextureType::COUNT;
-
-	MicroImageView()
-	{
-		for(U32 idx : m_bindlessIndices)
-		{
-			ANKI_ASSERT(idx == MAX_U32 && "Forgot to unbind the bindless");
-			(void)idx;
-		}
-		ANKI_ASSERT(m_handle == VK_NULL_HANDLE);
-	}
-
-	MicroImageView(const MicroImageView& b)
-	{
-		*this = std::move(b);
-	}
-
-	MicroImageView& operator=(const MicroImageView& b)
-	{
-		m_handle = b.m_handle;
-		m_bindlessIndices = b.m_bindlessIndices;
-		m_derivedTextureType = b.m_derivedTextureType;
-		return *this;
-	}
 };
 
 /// Texture container.

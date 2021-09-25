@@ -9,14 +9,19 @@
 #include <AnKi/Util/Assert.h>
 #include <cstring>
 #include <cstdarg>
+#if ANKI_OS_ANDROID
+#	include <android_native_app_glue.h>
+#	include <android/asset_manager.h>
+#endif
+#if ANKI_POSIX
+#	include <sys/stat.h>
+#endif
 
 namespace anki
 {
 
 #if ANKI_OS_ANDROID
-extern android_app* gAndroidApp;
-
-#	define ANKI_AFILE reinterpret_cast<AAsset*>(m_file)
+#	define ANKI_AFILE static_cast<AAsset*>(m_file)
 #endif
 
 #define ANKI_CFILE reinterpret_cast<FILE*>(m_file)
@@ -28,7 +33,6 @@ File& File::operator=(File&& b)
 	if(b.m_file != nullptr)
 	{
 		m_file = b.m_file;
-		m_type = b.m_type;
 		m_flags = b.m_flags;
 		m_size = b.m_size;
 	}
@@ -45,62 +49,42 @@ File::~File()
 
 Error File::open(const CString& filename, FileOpenFlag flags)
 {
-	ANKI_ASSERT(m_file == nullptr && m_flags == FileOpenFlag::NONE && m_type == Type::NONE);
+	ANKI_ASSERT(m_file == nullptr && m_flags == FileOpenFlag::NONE);
 
 	// Only these flags are accepted
 	ANKI_ASSERT((flags
 				 & (FileOpenFlag::READ | FileOpenFlag::WRITE | FileOpenFlag::APPEND | FileOpenFlag::BINARY
-					| FileOpenFlag::ENDIAN_LITTLE | FileOpenFlag::ENDIAN_BIG))
+					| FileOpenFlag::ENDIAN_LITTLE | FileOpenFlag::ENDIAN_BIG | FileOpenFlag::SPECIAL))
 				!= FileOpenFlag::NONE);
 
 	// Cannot be both
 	ANKI_ASSERT((flags & FileOpenFlag::READ) != (flags & FileOpenFlag::WRITE));
 
-	//
-	// Determine the file type and open it
-	//
-
-	Array<char, 512> archive;
-	CString filenameInArchive;
-	Type ft;
-	Error err = identifyFile(filename, &archive[0], archive.getSize(), filenameInArchive, ft);
-
-	if(!err)
-	{
-		switch(ft)
-		{
+	// Open it
 #if ANKI_OS_ANDROID
-		case Type::SPECIAL:
-			err = openAndroidFile(filename.get(), flags);
-			break;
-#endif
-		case Type::C:
-			err = openCFile(filename, flags);
-			break;
-		default:
-			ANKI_ASSERT(0);
-		}
-	}
-
-	//
-	// Set endianess
-	//
-	if(!err)
+	if(!!(flags & FileOpenFlag::SPECIAL))
 	{
-		// If the open() DIDN'T provided us the file endianess
-		if((flags & (FileOpenFlag::ENDIAN_BIG | FileOpenFlag::ENDIAN_LITTLE)) == FileOpenFlag::NONE)
-		{
-			// Set the machine's endianness
-			m_flags = m_flags | getMachineEndianness();
-		}
-		else
-		{
-			// Else just make sure that only one of the flags is set
-			ANKI_ASSERT((flags & FileOpenFlag::ENDIAN_BIG) != (flags & FileOpenFlag::ENDIAN_LITTLE));
-		}
+		ANKI_CHECK(openAndroidFile(filename, flags));
+	}
+	else
+#endif
+	{
+		ANKI_CHECK(openCFile(filename, flags));
 	}
 
-	return err;
+	// Set endianess
+	if((flags & (FileOpenFlag::ENDIAN_BIG | FileOpenFlag::ENDIAN_LITTLE)) == FileOpenFlag::NONE)
+	{
+		// If the open() DIDN'T provided us the file endianess Set the machine's endianness
+		m_flags = m_flags | getMachineEndianness();
+	}
+	else
+	{
+		// Else just make sure that only one of the flags is set
+		ANKI_ASSERT((flags & FileOpenFlag::ENDIAN_BIG) != (flags & FileOpenFlag::ENDIAN_LITTLE));
+	}
+
+	return Error::NONE;
 }
 
 Error File::openCFile(const CString& filename, FileOpenFlag flags)
@@ -136,12 +120,25 @@ Error File::openCFile(const CString& filename, FileOpenFlag flags)
 	else
 	{
 		m_flags = flags;
-		m_type = Type::C;
 	}
 
 	// Get file size
-	if(((flags & FileOpenFlag::READ) != FileOpenFlag::NONE) && !err)
+	if(!!(flags & FileOpenFlag::READ) && !err)
 	{
+#if ANKI_POSIX
+		const int fd = fileno(ANKI_CFILE);
+		struct stat stbuf;
+
+		if((fstat(fd, &stbuf) != 0) || (!S_ISREG(stbuf.st_mode)))
+		{
+			ANKI_UTIL_LOGE("fstat() failed");
+			err = Error::FUNCTION_FAILED;
+		}
+		else
+		{
+			m_size = stbuf.st_size;
+		}
+#else
 		fseek(ANKI_CFILE, 0, SEEK_END);
 		I64 size = ftell(ANKI_CFILE);
 		if(size < 1)
@@ -151,9 +148,10 @@ Error File::openCFile(const CString& filename, FileOpenFlag flags)
 		}
 		else
 		{
-			m_size = U32(size);
+			m_size = PtrSize(size);
 			rewind(ANKI_CFILE);
 		}
+#endif
 	}
 
 	return err;
@@ -162,22 +160,24 @@ Error File::openCFile(const CString& filename, FileOpenFlag flags)
 #if ANKI_OS_ANDROID
 Error File::openAndroidFile(const CString& filename, FileOpenFlag flags)
 {
-	if((flags & FileOpenFlag::WRITE) != FileOpenFlag::NONE)
+	ANKI_ASSERT(!!(flags & FileOpenFlag::SPECIAL));
+
+	if(!!(flags & FileOpenFlag::WRITE))
 	{
 		ANKI_UTIL_LOGE("Cannot write inside archives");
 		return Error::FILE_ACCESS;
 	}
 
-	if((flags & FileOpenFlag::READ) != FileOpenFlag::NONE)
+	if(!(flags & FileOpenFlag::READ))
 	{
 		ANKI_UTIL_LOGE("Missing FileOpenFlag::READ flag");
 		return Error::FILE_ACCESS;
 	}
 
 	// Open file
-	ANKI_ASSERT(gAndroidApp != nullptr && gAndroidApp->activity && gAndroidApp->activity->assetManager);
+	ANKI_ASSERT(g_androidApp != nullptr && g_androidApp->activity && g_androidApp->activity->assetManager);
 
-	m_file = AAssetManager_open(gAndroidApp->activity->assetManager, &filename[0] + 1, AASSET_MODE_STREAMING);
+	m_file = AAssetManager_open(g_androidApp->activity->assetManager, filename.cstr(), AASSET_MODE_STREAMING);
 
 	if(m_file == nullptr)
 	{
@@ -186,7 +186,9 @@ Error File::openAndroidFile(const CString& filename, FileOpenFlag flags)
 	}
 
 	m_flags = flags;
-	m_type = Type::SPECIAL;
+
+	// Get size
+	m_size = AAsset_getLength(ANKI_AFILE);
 
 	return Error::NONE;
 }
@@ -196,19 +198,15 @@ void File::close()
 {
 	if(m_file)
 	{
-		if(m_type == Type::C)
-		{
-			fclose(ANKI_CFILE);
-		}
 #if ANKI_OS_ANDROID
-		else if(m_type == Type::SPECIAL)
+		if(!!(m_flags & FileOpenFlag::SPECIAL))
 		{
 			AAsset_close(ANKI_AFILE);
 		}
-#endif
 		else
+#endif
 		{
-			ANKI_ASSERT(0);
+			fclose(ANKI_CFILE);
 		}
 	}
 
@@ -222,24 +220,20 @@ Error File::flush()
 
 	if((m_flags & FileOpenFlag::WRITE) != FileOpenFlag::NONE)
 	{
-		if(m_type == Type::C)
+#if ANKI_OS_ANDROID
+		if(!!(m_flags & FileOpenFlag::SPECIAL))
 		{
-			I ierr = fflush(ANKI_CFILE);
+			ANKI_ASSERT(0 && "Cannot have write these file types");
+		}
+		else
+#endif
+		{
+			const I ierr = fflush(ANKI_CFILE);
 			if(ierr)
 			{
 				ANKI_UTIL_LOGE("fflush() failed");
 				err = Error::FUNCTION_FAILED;
 			}
-		}
-#if ANKI_OS_ANDROID
-		else if(m_type == Type::SPECIAL)
-		{
-			ANKI_ASSERT(0 && "Cannot have write these file types");
-		}
-#endif
-		else
-		{
-			ANKI_ASSERT(0);
 		}
 	}
 
@@ -255,19 +249,15 @@ Error File::read(void* buff, PtrSize size)
 
 	I64 readSize = 0;
 
-	if(m_type == Type::C)
-	{
-		readSize = fread(buff, 1, size, ANKI_CFILE);
-	}
 #if ANKI_OS_ANDROID
-	else if(m_type == Type::SPECIAL)
+	if(!!(m_flags & FileOpenFlag::SPECIAL))
 	{
 		readSize = AAsset_read(ANKI_AFILE, buff, size);
 	}
-#endif
 	else
+#endif
 	{
-		ANKI_ASSERT(0);
+		readSize = fread(buff, 1, size, ANKI_CFILE);
 	}
 
 	Error err = Error::NONE;
@@ -278,31 +268,6 @@ Error File::read(void* buff, PtrSize size)
 	}
 
 	return err;
-}
-
-PtrSize File::getSize() const
-{
-	ANKI_ASSERT(m_file);
-	ANKI_ASSERT(m_flags != FileOpenFlag::NONE);
-	PtrSize out = 0;
-
-	if(m_type == Type::C)
-	{
-		ANKI_ASSERT(m_size != 0);
-		out = m_size;
-	}
-#if ANKI_OS_ANDROID
-	else if(m_type == Type::SPECIAL)
-	{
-		out = AAsset_getLength(ANKI_AFILE);
-	}
-#endif
-	else
-	{
-		ANKI_ASSERT(0);
-	}
-
-	return out;
 }
 
 Error File::readU32(U32& out)
@@ -363,7 +328,14 @@ Error File::write(const void* buff, PtrSize size)
 
 	Error err = Error::NONE;
 
-	if(m_type == Type::C)
+#if ANKI_OS_ANDROID
+	if(!!(m_flags & FileOpenFlag::SPECIAL))
+	{
+		ANKI_UTIL_LOGE("Writting to special files is not supported");
+		err = Error::FILE_ACCESS;
+	}
+	else
+#endif
 	{
 		PtrSize writeSize = 0;
 		writeSize = std::fwrite(buff, 1, size, ANKI_CFILE);
@@ -373,17 +345,6 @@ Error File::write(const void* buff, PtrSize size)
 			ANKI_UTIL_LOGE("std::fwrite() failed");
 			err = Error::FILE_ACCESS;
 		}
-	}
-#if ANKI_OS_ANDROID
-	else if(m_type == Type::SPECIAL)
-	{
-		ANKI_UTIL_LOGE("Writting to special files is not supported");
-		err = Error::FILE_ACCESS;
-	}
-#endif
-	else
-	{
-		ANKI_ASSERT(0);
 	}
 
 	return err;
@@ -400,20 +361,16 @@ Error File::writeText(CString format, ...)
 	va_list args;
 	va_start(args, format);
 
-	if(m_type == Type::C)
-	{
-		std::vfprintf(ANKI_CFILE, &format[0], args);
-	}
 #if ANKI_OS_ANDROID
-	else if(m_type == Type::SPECIAL)
+	if(!!(m_flags & FileOpenFlag::SPECIAL))
 	{
 		ANKI_UTIL_LOGE("Writting to special files is not supported");
 		err = Error::FILE_ACCESS;
 	}
-#endif
 	else
+#endif
 	{
-		ANKI_ASSERT(0);
+		std::vfprintf(ANKI_CFILE, &format[0], args);
 	}
 
 	va_end(args);
@@ -426,27 +383,23 @@ Error File::seek(PtrSize offset, FileSeekOrigin origin)
 	ANKI_ASSERT(m_flags != FileOpenFlag::NONE);
 	Error err = Error::NONE;
 
-	if(m_type == Type::C)
-	{
-		if(fseek(ANKI_CFILE, offset, I32(origin)) != 0)
-		{
-			ANKI_UTIL_LOGE("fseek() failed");
-			err = Error::FUNCTION_FAILED;
-		}
-	}
 #if ANKI_OS_ANDROID
-	else if(m_type == Type::SPECIAL)
+	if(!!(m_flags & FileOpenFlag::SPECIAL))
 	{
-		if(AAsset_seek(ANKI_AFILE, offset, origin) == (off_t)-1)
+		if(AAsset_seek(ANKI_AFILE, offset, I32(origin)) == off_t(-1))
 		{
 			ANKI_UTIL_LOGE("AAsset_seek() failed");
 			err = Error::FUNCTION_FAILED;
 		}
 	}
-#endif
 	else
+#endif
 	{
-		ANKI_ASSERT(0);
+		if(fseek(ANKI_CFILE, (long int)(offset), I32(origin)) != 0)
+		{
+			ANKI_UTIL_LOGE("fseek() failed");
+			err = Error::FUNCTION_FAILED;
+		}
 	}
 
 	return err;
@@ -457,42 +410,18 @@ PtrSize File::tell()
 	ANKI_ASSERT(m_file);
 	ANKI_ASSERT(m_flags != FileOpenFlag::NONE);
 
-	if(m_type == Type::C)
+#if ANKI_OS_ANDROID
+	if(!!(m_flags & FileOpenFlag::SPECIAL))
+	{
+		ANKI_ASSERT(0);
+	}
+	else
+#endif
 	{
 		return ftell(ANKI_CFILE);
 	}
-#if ANKI_OS_ANDROID
-	else if(m_type == Type::SPECIAL)
-	{
-		ANKI_ASSERT(0);
-	}
-#endif
-	else
-	{
-		ANKI_ASSERT(0);
-	}
 
 	return 0;
-}
-
-Error File::identifyFile(const CString& filename, char* archiveFilename, PtrSize archiveFilenameLength,
-						 CString& filenameInArchive, Type& type)
-{
-	Error err = Error::NONE;
-
-#if ANKI_OS_ANDROID
-	if(filename[0] == '$')
-	{
-		type = Type::SPECIAL;
-	}
-	else
-#endif
-	{
-		// It's a C file
-		type = Type::C;
-	}
-
-	return err;
 }
 
 FileOpenFlag File::getMachineEndianness()

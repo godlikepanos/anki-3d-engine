@@ -12,7 +12,7 @@ namespace anki
 
 Error Tonemapping::init(const ConfigSet& cfg)
 {
-	Error err = initInternal(cfg);
+	const Error err = initInternal(cfg);
 	if(err)
 	{
 		ANKI_R_LOGE("Failed to initialize tonemapping");

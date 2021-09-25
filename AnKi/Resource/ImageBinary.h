@@ -45,7 +45,8 @@ enum class ImageBinaryDataCompression : U32
 	NONE,
 	RAW = 1 << 0,
 	S3TC = 1 << 1,
-	ETC = 1 << 2
+	ETC = 1 << 2,
+	ASTC = 1 << 3
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ImageBinaryDataCompression)
 
@@ -62,7 +63,9 @@ public:
 	ImageBinaryDataCompression m_compressionMask;
 	U32 m_isNormal;
 	U32 m_mipmapCount;
-	Array<U8, 88> m_padding;
+	U32 m_astcBlockSizeX;
+	U32 m_astcBlockSizeY;
+	Array<U8, 80> m_padding;
 
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& s, TClass self)
@@ -76,6 +79,8 @@ public:
 		s.doValue("m_compressionMask", offsetof(ImageBinaryHeader, m_compressionMask), self.m_compressionMask);
 		s.doValue("m_isNormal", offsetof(ImageBinaryHeader, m_isNormal), self.m_isNormal);
 		s.doValue("m_mipmapCount", offsetof(ImageBinaryHeader, m_mipmapCount), self.m_mipmapCount);
+		s.doValue("m_astcBlockSizeX", offsetof(ImageBinaryHeader, m_astcBlockSizeX), self.m_astcBlockSizeX);
+		s.doValue("m_astcBlockSizeY", offsetof(ImageBinaryHeader, m_astcBlockSizeY), self.m_astcBlockSizeY);
 		s.doArray("m_padding", offsetof(ImageBinaryHeader, m_padding), &self.m_padding[0], self.m_padding.getSize());
 	}
 

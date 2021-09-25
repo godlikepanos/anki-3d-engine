@@ -6,6 +6,8 @@
 #pragma once
 
 #include <AnKi/Util/StdTypes.h>
+#include <AnKi/Util/Function.h>
+#include <AnKi/Util/String.h>
 #include <ctime>
 
 namespace anki
@@ -17,24 +19,37 @@ namespace anki
 /// Get the number of CPU cores
 U32 getCpuCoresCount();
 
-/// Backtrace walker.
-class BackTraceWalker
+/// @internal
+void backtraceInternal(const Function<void(CString)>& lambda);
+
+/// Get a backtrace.
+template<typename TFunc>
+void backtrace(GenericMemoryPoolAllocator<U8> alloc, TFunc func)
 {
-public:
-	virtual ~BackTraceWalker()
-	{
-	}
-
-	virtual void operator()(const char* symbol) = 0;
-};
-
-void getBacktrace(BackTraceWalker& walker);
+	Function<void(CString)> f(alloc, func);
+	backtraceInternal(f);
+	f.destroy(alloc);
+}
 
 /// Return true if the engine is running from a terminal emulator.
 Bool runningFromATerminal();
 
 /// Return the local time in a thread safe way.
 std::tm getLocalTime();
+
+#if ANKI_OS_ANDROID
+/// This function reads what is passed to "am" and interprets them as command line arguments. Should be called by
+/// android_main(). It's not thread safe. Don't call it more than once.
+/// Executing an apk using:
+/// @code
+/// adb shell am start XXX -e cmd "arg0 arg1 arg2"
+/// @endcode
+/// Whatever follows "cmd" will be a command line argument.
+ANKI_USE_RESULT void* getAndroidCommandLineArguments(int& argc, char**& argv);
+
+/// Takes the return value of getAndroidCommandLineArguments() for cleanup.
+void cleanupGetAndroidCommandLineArguments(void* ptr);
+#endif
 /// @}
 
 } // end namespace anki

@@ -89,6 +89,9 @@
 #	error Unknown OS
 #endif
 
+// Mobile or not
+#define ANKI_PLATFORM_MOBILE (ANKI_OS_ANDROID || ANKI_OS_IOS)
+
 // POSIX system or not
 #if ANKI_OS_LINUX || ANKI_OS_ANDROID || ANKI_OS_MACOS || ANKI_OS_IOS
 #	define ANKI_POSIX 1
@@ -124,7 +127,7 @@
 #endif
 
 // SIMD
-#define ANKI_ENABLE_SIMD (${_ANKI_ENABLE_SIMD} && ANKI_CPU_ARCH_X86)
+#define ANKI_ENABLE_SIMD ${_ANKI_ENABLE_SIMD}
 
 #if !ANKI_ENABLE_SIMD
 #	define ANKI_SIMD_NONE 1
@@ -186,8 +189,8 @@
 #if ANKI_COMPILER_MSVC
 #	include <intrin.h>
 #	define __builtin_popcount __popcnt
-#	define __builtin_popcountl __popcnt64
-#	define __builtin_clzll(x) ((int)__lzcnt64(x))
+#	define __builtin_popcountl(x) int(__popcnt64(x))
+#	define __builtin_clzll(x) int(__lzcnt64(x))
 #endif
 
 // Constants
@@ -203,5 +206,38 @@
 #	define ANKI_INTERNAL
 #else
 #	define ANKI_INTERNAL [[deprecated("This is an AnKi internal interface. Don't use it")]]
+#endif
+
+// Define the main() function.
+#if ANKI_OS_ANDROID
+extern "C" {
+struct android_app;
+}
+
+namespace anki {
+extern android_app* g_androidApp;
+
+void* getAndroidCommandLineArguments(int& argc, char**& argv);
+void cleanupGetAndroidCommandLineArguments(void* ptr);
+}
+
+#	define ANKI_MAIN_FUNCTION(myMain) \
+	int myMain(int argc, char* argv[]); \
+	extern "C" void android_main(android_app* app) \
+	{ \
+		anki::g_androidApp = app; \
+		char** argv; \
+		int argc; \
+		void* cleanupToken = anki::getAndroidCommandLineArguments(argc, argv); \
+		myMain(argc, argv); \
+		anki::cleanupGetAndroidCommandLineArguments(cleanupToken); \
+	}
+#else
+#	define ANKI_MAIN_FUNCTION(myMain) \
+	int myMain(int argc, char* argv[]); \
+	int main(int argc, char* argv[]) \
+	{ \
+		return myMain(argc, argv); \
+	}
 #endif
 /// @}

@@ -9,14 +9,28 @@
 namespace anki
 {
 
+static VulkanQueueType getQueueTypeFromCommandBufferFlags(CommandBufferFlag flags,
+														  const VulkanQueueFamilies& queueFamilies)
+{
+	ANKI_ASSERT(!!(flags & CommandBufferFlag::GENERAL_WORK) ^ !!(flags & CommandBufferFlag::COMPUTE_WORK));
+	if(!(flags & CommandBufferFlag::GENERAL_WORK) && queueFamilies[VulkanQueueType::COMPUTE] != MAX_U32)
+	{
+		return VulkanQueueType::COMPUTE;
+	}
+	else
+	{
+		ANKI_ASSERT(queueFamilies[VulkanQueueType::GENERAL] != MAX_U32);
+		return VulkanQueueType::GENERAL;
+	}
+}
+
 void MicroCommandBuffer::destroy()
 {
 	reset();
 
 	if(m_handle)
 	{
-		vkFreeCommandBuffers(m_threadAlloc->m_factory->m_dev,
-							 m_threadAlloc->m_pools[getQueueTypeFromCommandBufferFlags(m_flags)], 1, &m_handle);
+		vkFreeCommandBuffers(m_threadAlloc->m_factory->m_dev, m_threadAlloc->m_pools[m_queue], 1, &m_handle);
 		m_handle = {};
 	}
 }
@@ -40,8 +54,13 @@ void MicroCommandBuffer::reset()
 
 Error CommandBufferThreadAllocator::init()
 {
-	for(QueueType qtype : EnumIterable<QueueType>())
+	for(VulkanQueueType qtype : EnumIterable<VulkanQueueType>())
 	{
+		if(m_factory->m_queueFamilies[qtype] == MAX_U32)
+		{
+			continue;
+		}
+
 		VkCommandPoolCreateInfo ci = {};
 		ci.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		ci.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
@@ -72,7 +91,7 @@ void CommandBufferThreadAllocator::destroyLists()
 	{
 		for(U j = 0; j < 2; ++j)
 		{
-			for(QueueType qtype : EnumIterable<QueueType>())
+			for(VulkanQueueType qtype : EnumIterable<VulkanQueueType>())
 			{
 				CmdbType& type = m_types[i][j][qtype];
 
@@ -86,12 +105,12 @@ void CommandBufferThreadAllocator::destroyLists()
 
 void CommandBufferThreadAllocator::destroy()
 {
-	for(VkCommandPool pool : m_pools)
+	for(VkCommandPool& pool : m_pools)
 	{
 		if(pool)
 		{
 			vkDestroyCommandPool(m_factory->m_dev, pool, nullptr);
-			pool = {};
+			pool = VK_NULL_HANDLE;
 		}
 	}
 
@@ -106,7 +125,9 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 
 	const Bool secondLevel = !!(cmdbFlags & CommandBufferFlag::SECOND_LEVEL);
 	const Bool smallBatch = !!(cmdbFlags & CommandBufferFlag::SMALL_BATCH);
-	CmdbType& type = m_types[secondLevel][smallBatch][getQueueTypeFromCommandBufferFlags(cmdbFlags)];
+	const VulkanQueueType queue = getQueueTypeFromCommandBufferFlags(cmdbFlags, m_factory->m_queueFamilies);
+
+	CmdbType& type = m_types[secondLevel][smallBatch][queue];
 
 	// Move the deleted to (possibly) in-use or ready
 	{
@@ -187,7 +208,7 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 
 		VkCommandBufferAllocateInfo ci = {};
 		ci.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		ci.commandPool = m_pools[getQueueTypeFromCommandBufferFlags(cmdbFlags)];
+		ci.commandPool = m_pools[queue];
 		ci.level = (secondLevel) ? VK_COMMAND_BUFFER_LEVEL_SECONDARY : VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 		ci.commandBufferCount = 1;
 
@@ -207,6 +228,7 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 
 		newCmdb->m_handle = cmdb;
 		newCmdb->m_flags = cmdbFlags;
+		newCmdb->m_queue = queue;
 
 		out = newCmdb;
 
@@ -230,13 +252,13 @@ void CommandBufferThreadAllocator::deleteCommandBuffer(MicroCommandBuffer* ptr)
 	const Bool secondLevel = !!(ptr->m_flags & CommandBufferFlag::SECOND_LEVEL);
 	const Bool smallBatch = !!(ptr->m_flags & CommandBufferFlag::SMALL_BATCH);
 
-	CmdbType& type = m_types[secondLevel][smallBatch][getQueueTypeFromCommandBufferFlags(ptr->m_flags)];
+	CmdbType& type = m_types[secondLevel][smallBatch][ptr->m_queue];
 
 	LockGuard<Mutex> lock(type.m_deletedMtx);
 	type.m_deletedCmdbs.pushBack(ptr);
 }
 
-Error CommandBufferFactory::init(GrAllocator<U8> alloc, VkDevice dev, Array<U32, U(QueueType::COUNT)> queueFamilies)
+Error CommandBufferFactory::init(GrAllocator<U8> alloc, VkDevice dev, const VulkanQueueFamilies& queueFamilies)
 {
 	ANKI_ASSERT(dev);
 

@@ -16,7 +16,7 @@
 namespace anki
 {
 
-class ConfigSet::Option : public NonCopyable
+class ConfigSet::Option
 {
 public:
 	enum Type
@@ -42,6 +42,8 @@ public:
 
 	Option() = default;
 
+	Option(const Option&) = delete; // Non-copyable
+
 	Option(Option&& b)
 		: m_name(std::move(b.m_name))
 		, m_helpMsg(std::move(b.m_helpMsg))
@@ -57,6 +59,8 @@ public:
 	}
 
 	~Option() = default;
+
+	Option& operator=(const Option&) = delete; // Non-copyable
 
 	Option& operator=(Option&& b) = delete;
 };

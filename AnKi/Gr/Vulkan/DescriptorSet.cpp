@@ -283,9 +283,13 @@ public:
 };
 
 /// Per thread allocator.
-class alignas(ANKI_CACHE_LINE_SIZE) DSThreadAllocator : public NonCopyable
+class alignas(ANKI_CACHE_LINE_SIZE) DSThreadAllocator
 {
 public:
+	DSThreadAllocator(const DSThreadAllocator&) = delete; // Non-copyable
+
+	DSThreadAllocator& operator=(const DSThreadAllocator&) = delete; // Non-copyable
+
 	const DSLayoutCacheEntry* m_layoutEntry; ///< Know your father.
 
 	ThreadId m_tid;

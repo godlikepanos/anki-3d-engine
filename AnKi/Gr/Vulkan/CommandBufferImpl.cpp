@@ -52,7 +52,8 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 		m_activeFb = init.m_framebuffer;
 		m_colorAttachmentUsages = init.m_colorAttachmentUsages;
 		m_depthStencilAttachmentUsage = init.m_depthStencilAttachmentUsage;
-		m_state.beginRenderPass(m_activeFb);
+		m_state.beginRenderPass(static_cast<FramebufferImpl*>(m_activeFb.get()));
+		m_microCmdb->pushObjectRef(m_activeFb);
 	}
 
 	for(DescriptorSetState& state : m_dsetState)
@@ -148,9 +149,9 @@ void CommandBufferImpl::beginRenderPass(FramebufferPtr fb,
 
 void CommandBufferImpl::beginRenderPassInternal()
 {
-	m_state.beginRenderPass(m_activeFb);
-
 	FramebufferImpl& impl = static_cast<FramebufferImpl&>(*m_activeFb);
+
+	m_state.beginRenderPass(&impl);
 
 	VkRenderPassBeginInfo bi = {};
 	bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;

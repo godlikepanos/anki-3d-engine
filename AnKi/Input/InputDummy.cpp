@@ -8,24 +8,26 @@
 namespace anki
 {
 
-void Input::handleEvents()
+Error Input::initInternal(NativeWindow* nativeWindow)
 {
-	// You are dummy... do nothing
+	return Error::NONE;
 }
 
-void Input::init(NativeWindow* nativeWindow)
+void Input::destroy()
 {
-	// You are dummy... do nothing
 }
 
-void Input::moveCursor(const Vec2& posNdc)
+Error Input::handleEvents()
 {
-	// You are dummy... do nothing
+	return Error::NONE;
+}
+
+void Input::moveCursor(const Vec2& pos)
+{
 }
 
 void Input::hideCursor(Bool hide)
 {
-	// You are dummy... do nothing
 }
 
 } // end namespace anki

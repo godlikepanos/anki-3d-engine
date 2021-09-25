@@ -33,6 +33,7 @@ class ListAuto;
 template<typename T, typename TIndex>
 class SparseArray;
 
+class CString;
 class String;
 class StringAuto;
 

@@ -10,16 +10,9 @@
 #include <AnKi/Util/String.h>
 #include <AnKi/Util/Ptr.h>
 #include <AnKi/Ui/UiImmediateModeBuilder.h>
-#if ANKI_OS_ANDROID
-#	include <android_native_app_glue.h>
-#endif
 
 namespace anki
 {
-
-#if ANKI_OS_ANDROID
-extern android_app* gAndroidApp;
-#endif
 
 // Forward
 class CoreTracer;

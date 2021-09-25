@@ -7,7 +7,6 @@
 
 #include <AnKi/Util/String.h>
 #include <AnKi/Util/Enum.h>
-#include <AnKi/Util/NonCopyable.h>
 #include <cstdio>
 
 namespace anki
@@ -26,7 +25,8 @@ enum class FileOpenFlag : U8
 	APPEND = WRITE | (1 << 3),
 	BINARY = 1 << 4,
 	ENDIAN_LITTLE = 1 << 5, ///< The default
-	ENDIAN_BIG = 1 << 6
+	ENDIAN_BIG = 1 << 6,
+	SPECIAL = 1 << 7, ///< Android package file.
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FileOpenFlag)
 
@@ -44,11 +44,15 @@ enum class FileSeekOrigin
 /// To identify the file:
 /// - If the filename starts with '$' it will try to load a system specific file. For Android this is a file in the .apk
 /// - If the above are false then try to load a regular C file
-class File : public NonCopyable
+class File
 {
 public:
 	/// Default constructor
 	File() = default;
+
+	File(const File&) = delete; // Non-copyable
+
+	File& operator=(const File&) = delete; // Non-copyable
 
 	/// Move
 	File(File&& b)
@@ -110,28 +114,19 @@ public:
 	PtrSize tell();
 
 	/// The the size of the file.
-	PtrSize getSize() const;
+	PtrSize getSize() const
+	{
+		ANKI_ASSERT(!(m_flags & FileOpenFlag::WRITE));
+		return m_size;
+	}
 
 private:
-	/// Internal filetype
-	enum class Type : U8
-	{
-		NONE = 0,
-		C, ///< C file
-		SPECIAL ///< For example file is located in the android apk
-	};
-
 	void* m_file = nullptr; ///< A native file type
-	Type m_type = Type::NONE;
 	FileOpenFlag m_flags = FileOpenFlag::NONE; ///< All the flags. Set on open
-	U32 m_size = 0;
+	PtrSize m_size = 0;
 
 	/// Get the current machine's endianness
 	static FileOpenFlag getMachineEndianness();
-
-	/// Get the type of the file
-	ANKI_USE_RESULT Error identifyFile(const CString& filename, char* archiveFilename, PtrSize archiveFilenameSize,
-									   CString& filenameInArchive, Type& type);
 
 	/// Open a C file
 	ANKI_USE_RESULT Error openCFile(const CString& filename, FileOpenFlag flags);
@@ -144,7 +139,6 @@ private:
 	void zero()
 	{
 		m_file = nullptr;
-		m_type = Type::NONE;
 		m_flags = FileOpenFlag::NONE;
 		m_size = 0;
 	}

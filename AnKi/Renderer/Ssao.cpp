@@ -21,7 +21,7 @@ Ssao::~Ssao()
 Error Ssao::initMain(const ConfigSet& config)
 {
 	// Noise
-	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoiseLdrRgb64x64.ankitex", m_main.m_noiseImage));
+	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_main.m_noiseImage));
 
 	// Shader
 	if(m_useCompute)

@@ -21,7 +21,7 @@ class ConfigSet;
 /// @{
 
 /// Resource filesystem file. An interface that abstracts the resource file.
-class ResourceFile : public NonCopyable
+class ResourceFile
 {
 public:
 	ResourceFile(GenericMemoryPoolAllocator<U8> alloc)
@@ -29,9 +29,13 @@ public:
 	{
 	}
 
+	ResourceFile(const ResourceFile&) = delete; // Non-copyable
+
 	virtual ~ResourceFile()
 	{
 	}
+
+	ResourceFile& operator=(const ResourceFile&) = delete; // Non-copyable
 
 	/// Read data from the file
 	virtual ANKI_USE_RESULT Error read(void* buff, PtrSize size) = 0;
@@ -72,7 +76,7 @@ private:
 using ResourceFilePtr = IntrusivePtr<ResourceFile>;
 
 /// Resource filesystem.
-class ResourceFilesystem : public NonCopyable
+class ResourceFilesystem
 {
 public:
 	ResourceFilesystem(GenericMemoryPoolAllocator<U8> alloc)
@@ -80,7 +84,11 @@ public:
 	{
 	}
 
+	ResourceFilesystem(const ResourceFilesystem&) = delete; // Non-copyable
+
 	~ResourceFilesystem();
+
+	ResourceFilesystem& operator=(const ResourceFilesystem&) = delete; // Non-copyable
 
 	ANKI_USE_RESULT Error init(const ConfigSet& config, const CString& cacheDir);
 
@@ -104,30 +112,33 @@ public:
 #if !ANKI_TESTS
 private:
 #endif
-	class Path : public NonCopyable
+	class Path
 	{
 	public:
 		StringList m_files; ///< Files inside the directory.
 		String m_path; ///< A directory or an archive.
 		Bool m_isArchive = false;
 		Bool m_isCache = false;
+		Bool m_isSpecial = false;
 
 		Path() = default;
 
+		Path(const Path&) = delete; // Non-copyable
+
 		Path(Path&& b)
-			: m_files(std::move(b.m_files))
-			, m_path(std::move(b.m_path))
-			, m_isArchive(std::move(b.m_isArchive))
-			, m_isCache(std::move(b.m_isCache))
 		{
+			*this = std::move(b);
 		}
+
+		Path& operator=(const Path&) = delete; // Non-copyable
 
 		Path& operator=(Path&& b)
 		{
 			m_files = std::move(b.m_files);
 			m_path = std::move(b.m_path);
-			m_isArchive = std::move(b.m_isArchive);
-			m_isCache = std::move(b.m_isCache);
+			m_isArchive = b.m_isArchive;
+			m_isCache = b.m_isCache;
+			m_isSpecial = b.m_isSpecial;
 			return *this;
 		}
 	};
@@ -137,7 +148,7 @@ private:
 	String m_cacheDir;
 
 	/// Add a filesystem path or an archive. The path is read-only.
-	ANKI_USE_RESULT Error addNewPath(const CString& path);
+	ANKI_USE_RESULT Error addNewPath(const CString& path, const StringListAuto& excludedStrings, Bool special = false);
 
 	void addCachePath(const CString& path);
 };

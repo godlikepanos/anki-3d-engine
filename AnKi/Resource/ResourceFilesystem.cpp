@@ -210,6 +210,9 @@ Error ResourceFilesystem::init(const ConfigSet& config, const CString& cacheDir)
 	StringListAuto paths(m_alloc);
 	paths.splitString(config.getString("rsrc_dataPaths"), ':');
 
+	StringListAuto excludedStrings(m_alloc);
+	excludedStrings.splitString(config.getString("rsrc_dataPathExcludedStrings"), ':');
+
 	// Workaround the fact that : is used in drives in Windows
 #if ANKI_OS_WINDOWS
 	StringListAuto paths2(m_alloc);
@@ -241,9 +244,14 @@ Error ResourceFilesystem::init(const ConfigSet& config, const CString& cacheDir)
 		return Error::USER_DATA;
 	}
 
+#if ANKI_OS_ANDROID
+	// Add the files of the .apk
+	ANKI_CHECK(addNewPath("APK package", excludedStrings, true));
+#endif
+
 	for(auto& path : paths)
 	{
-		ANKI_CHECK(addNewPath(path.toCString()));
+		ANKI_CHECK(addNewPath(path.toCString(), excludedStrings));
 	}
 
 	addCachePath(cacheDir);
@@ -260,18 +268,56 @@ void ResourceFilesystem::addCachePath(const CString& path)
 	m_paths.emplaceBack(m_alloc, std::move(p));
 }
 
-Error ResourceFilesystem::addNewPath(const CString& path)
+Error ResourceFilesystem::addNewPath(const CString& filepath, const StringListAuto& excludedStrings, Bool special)
 {
-	U32 fileCount = 0;
-	static const CString extension(".AnKiZLibip");
+	U32 fileCount = 0; // Count files manually because it's slower to get that number from the list
+	static const CString extension(".ankizip");
 
-	auto pos = path.find(extension);
-	if(pos != CString::NPOS && pos == path.getLength() - extension.getLength())
+	auto rejectPath = [&](CString p) -> Bool {
+		for(const String& s : excludedStrings)
+		{
+			if(p.find(s) != CString::NPOS)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	};
+
+	PtrSize pos;
+	Path path;
+	if(special)
+	{
+		// Android apk, read the file that contains the directory structure
+
+		// Read the file
+		File dirStructure;
+		ANKI_CHECK(dirStructure.open("DirStructure.txt", FileOpenFlag::READ | FileOpenFlag::SPECIAL));
+		StringAuto txt(m_alloc);
+		ANKI_CHECK(dirStructure.readAllText(txt));
+
+		StringListAuto filenames(m_alloc);
+		filenames.splitString(txt, '\n');
+
+		// Create the Path
+		for(const String& filename : filenames)
+		{
+			if(!rejectPath(filename))
+			{
+				path.m_files.pushBack(m_alloc, filename);
+				++fileCount;
+			}
+		}
+
+		path.m_isSpecial = true;
+	}
+	else if((pos = filepath.find(extension)) != CString::NPOS && pos == filepath.getLength() - extension.getLength())
 	{
 		// It's an archive
 
 		// Open
-		unzFile zfile = unzOpen(&path[0]);
+		unzFile zfile = unzOpen(&filepath[0]);
 		if(!zfile)
 		{
 			ANKI_RESOURCE_LOGE("Failed to open archive");
@@ -286,10 +332,6 @@ Error ResourceFilesystem::addNewPath(const CString& path)
 			return Error::FILE_ACCESS;
 		}
 
-		Path p;
-		p.m_isArchive = true;
-		p.m_path.sprintf(m_alloc, "%s", &path[0]);
-
 		do
 		{
 			Array<char, 1024> filename;
@@ -302,56 +344,46 @@ Error ResourceFilesystem::addNewPath(const CString& path)
 				return Error::FILE_ACCESS;
 			}
 
-			// If compressed size is zero then it's a dir
-			if(info.uncompressed_size > 0)
+			const Bool itsADir = info.uncompressed_size == 0;
+			if(!itsADir && !rejectPath(&filename[0]))
 			{
-				p.m_files.pushBackSprintf(m_alloc, "%s", &filename[0]);
+				path.m_files.pushBackSprintf(m_alloc, "%s", &filename[0]);
 				++fileCount;
 			}
 		} while(unzGoToNextFile(zfile) == UNZ_OK);
 
-		m_paths.emplaceFront(m_alloc, std::move(p));
 		unzClose(zfile);
+
+		path.m_isArchive = true;
 	}
 	else
 	{
 		// It's simple directory
 
-		m_paths.emplaceFront(m_alloc, Path());
-		Path& p = m_paths.getFront();
-		p.m_path.sprintf(m_alloc, "%s", &path[0]);
-		p.m_isArchive = false;
-
-		struct UserData
-		{
-			ResourceFilesystem* m_sys;
-			U32* m_fileCount;
-		} ud{this, &fileCount};
-
-		ANKI_CHECK(walkDirectoryTree(path, &ud, [](const CString& fname, void* ud, Bool isDir) -> Error {
-			if(isDir)
+		ANKI_CHECK(walkDirectoryTree(filepath, m_alloc, [&, this](const CString& fname, Bool isDir) -> Error {
+			if(!isDir && !rejectPath(fname))
 			{
-				return Error::NONE;
+				path.m_files.pushBackSprintf(m_alloc, "%s", fname.cstr());
+				++fileCount;
 			}
 
-			UserData* udd = static_cast<UserData*>(ud);
-			ResourceFilesystem* self = udd->m_sys;
-
-			Path& p = self->m_paths.getFront();
-			p.m_files.pushBackSprintf(self->m_alloc, "%s", fname.cstr());
-
-			++(*udd->m_fileCount);
 			return Error::NONE;
 		}));
-
-		if(p.m_files.getSize() < 1)
-		{
-			ANKI_RESOURCE_LOGE("Directory is empty: %s", &path[0]);
-			return Error::USER_DATA;
-		}
 	}
 
-	ANKI_RESOURCE_LOGI("Added new data path \"%s\" that contains %u files", &path[0], fileCount);
+	ANKI_ASSERT(path.m_files.getSize() == fileCount);
+	if(fileCount == 0)
+	{
+		ANKI_RESOURCE_LOGW("Ignoring empty resource path: %s", &filepath[0]);
+	}
+	else
+	{
+		path.m_path.sprintf(m_alloc, "%s", &filepath[0]);
+		m_paths.emplaceFront(m_alloc, std::move(path));
+
+		ANKI_RESOURCE_LOGI("Added new data path \"%s\" that contains %u files", &filepath[0], fileCount);
+	}
+
 	return Error::NONE;
 }
 
@@ -401,12 +433,25 @@ Error ResourceFilesystem::openFile(const ResourceFilename& filename, ResourceFil
 				else
 				{
 					StringAuto newFname(m_alloc);
-					newFname.sprintf("%s/%s", &p.m_path[0], &filename[0]);
+					if(!p.m_isSpecial)
+					{
+						newFname.sprintf("%s/%s", &p.m_path[0], &filename[0]);
+					}
+					else
+					{
+						newFname.sprintf("%s", &filename[0]);
+					}
 
 					CResourceFile* file = m_alloc.newInstance<CResourceFile>(m_alloc);
 					rfile = file;
 
-					err = file->m_file.open(&newFname[0], FileOpenFlag::READ);
+					FileOpenFlag fopenFlags = FileOpenFlag::READ;
+					if(p.m_isSpecial)
+					{
+						fopenFlags |= FileOpenFlag::SPECIAL;
+					}
+
+					err = file->m_file.open(&newFname[0], fopenFlags);
 
 #if 0
 					printf("Opening asset %s\n", &newFname[0]);

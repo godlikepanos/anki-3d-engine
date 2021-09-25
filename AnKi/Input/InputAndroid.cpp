@@ -7,56 +7,63 @@
 #include <AnKi/Core/NativeWindowAndroid.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Core/App.h>
+#if ANKI_OS_ANDROID
+#	include <android_native_app_glue.h>
+#endif
 
 namespace anki
 {
 
 static void handleAndroidEvents(android_app* app, int32_t cmd)
 {
-	Input* input = (Input*)app->userData;
+	Input* input = static_cast<Input*>(app->userData);
 	ANKI_ASSERT(input != nullptr);
 
 	switch(cmd)
 	{
 	case APP_CMD_TERM_WINDOW:
 	case APP_CMD_LOST_FOCUS:
-		ANKI_LOGI("New event 0x%x", cmd);
-		input->addEvent(Input::WINDOW_CLOSED_EVENT);
+		input->addEvent(InputEvent::WINDOW_CLOSED);
 		break;
 	}
 }
 
-Input::~Input()
-{
-}
-
-void Input::handleEvents()
+Error Input::handleEvents()
 {
 	int ident;
-	int outEvents;
+	int events;
 	android_poll_source* source;
 
-	zeroMemory(events);
-
-	while((ident = ALooper_pollAll(0, NULL, &outEvents, (void**)&source)) >= 0)
+	while((ident = ALooper_pollAll(0, nullptr, &events, reinterpret_cast<void**>(&source))) >= 0)
 	{
-		if(source != NULL)
+		if(source != nullptr)
 		{
-			source->process(gAndroidApp, source);
+			source->process(g_androidApp, source);
 		}
 	}
+
+	return Error::NONE;
 }
 
-void Input::init(NativeWindow* /*nativeWindow*/)
+Error Input::initInternal(NativeWindow* window)
 {
-	ANKI_ASSERT(gAndroidApp);
-	gAndroidApp->userData = this;
-	gAndroidApp->onAppCmd = handleAndroidEvents;
+	ANKI_ASSERT(window);
+	g_androidApp->userData = this;
+	g_androidApp->onAppCmd = handleAndroidEvents;
+	m_nativeWindow = window;
+
+	return Error::NONE;
+}
+
+void Input::destroy()
+{
 }
 
 void Input::moveCursor(const Vec2& posNdc)
 {
-	// do nothing
+	m_mousePosNdc = posNdc;
+	m_mousePosWin =
+		UVec2((posNdc * 0.5f + 0.5f) * Vec2(F32(m_nativeWindow->getWidth()), F32(m_nativeWindow->getHeight())));
 }
 
 void Input::hideCursor(Bool hide)

@@ -71,6 +71,7 @@ Error GpuParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 		props->m_maxStartingPosition = inProps.m_particle.m_maxStartingPosition;
 		props->m_particleCount = inProps.m_maxNumOfParticles;
 
+		m_propsBuff->flush(0, MAX_PTR_SIZE);
 		m_propsBuff->unmap();
 	}
 
@@ -90,6 +91,7 @@ Error GpuParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 			particle->m_life = -1.0f; // Force GPU to init the particle
 		}
 
+		m_particlesBuff->flush(0, MAX_PTR_SIZE);
 		m_particlesBuff->unmap();
 	}
 
@@ -112,6 +114,7 @@ Error GpuParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 			*randFactors = getRandomRange(0.0f, 1.0f);
 		}
 
+		m_randFactorsBuff->flush(0, MAX_PTR_SIZE);
 		m_randFactorsBuff->unmap();
 	}
 

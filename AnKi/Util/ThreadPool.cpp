@@ -32,7 +32,7 @@ public:
 		, m_threadpool(threadpool)
 	{
 		ANKI_ASSERT(threadpool);
-		m_thread.start(this, threadCallback, (pinToCore) ? I32(m_id) : -1);
+		m_thread.start(this, threadCallback, ThreadCoreAffinityMask(false).set(m_id, pinToCore));
 	}
 
 private:

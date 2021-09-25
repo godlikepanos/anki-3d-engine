@@ -3,10 +3,13 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki mutator TEXTURE_TYPE 0 1
+
 layout(push_constant) uniform b_pc
 {
 	Vec4 u_transform; // x: x scale, y: y scale, z: x transl, w: y transl
 	Vec4 u_colorScale;
+	Vec4 u_depth; // Used in 3D textures.
 };
 
 #pragma anki start vert
@@ -43,11 +46,19 @@ layout(location = 1) in Vec4 in_col;
 layout(location = 0) out Vec4 out_col;
 
 layout(set = 0, binding = 0) uniform sampler u_trilinearRepeatSampler;
-layout(set = 0, binding = 1) uniform texture2D u_tex;
+#if TEXTURE_TYPE == 0
+layout(set = 0, binding = 1) uniform texture2D u_tex2d;
+#else
+layout(set = 0, binding = 1) uniform texture3D u_tex3d;
+#endif
 
 void main()
 {
-	const Vec4 rgba = texture(u_tex, u_trilinearRepeatSampler, in_uv);
+#if TEXTURE_TYPE == 0
+	const Vec4 rgba = texture(u_tex2d, u_trilinearRepeatSampler, in_uv);
+#else
+	const Vec4 rgba = texture(u_tex3d, u_trilinearRepeatSampler, Vec3(in_uv, u_depth.x));
+#endif
 	out_col.rgb = in_col.rgb * rgba.rgb * u_colorScale.rgb;
 
 	if(u_colorScale.a == 1.0)

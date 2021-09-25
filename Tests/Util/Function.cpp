@@ -7,6 +7,16 @@
 #include <Tests/Util/Foo.h>
 #include <AnKi/Util/Function.h>
 
+namespace anki
+{
+
+static I32 functionAcceptingFunction(const Function<I32(F32)>& f)
+{
+	return f(1.0f) + f(2.0f);
+}
+
+} // end namespace anki
+
 ANKI_TEST(Util, Function)
 {
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
@@ -27,6 +37,21 @@ ANKI_TEST(Util, Function)
 		ANKI_TEST_EXPECT_EQ(i, 13);
 
 		f.destroy(alloc);
+	}
+
+	// No templates
+	{
+		F32 f = 1.1f;
+
+		Function<I32(F32)> func(alloc, [&f](F32 ff) {
+			f += 2.0f;
+			return I32(f) + I32(ff);
+		});
+
+		const I32 o = functionAcceptingFunction(func);
+		func.destroy(alloc);
+
+		ANKI_TEST_EXPECT_EQ(o, 11);
 	}
 
 	// Allocated

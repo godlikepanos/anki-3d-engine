@@ -24,10 +24,7 @@ MicroSwapchain::~MicroSwapchain()
 {
 	const VkDevice dev = m_factory->m_gr->getDevice();
 
-	for(TexturePtr& tex : m_textures)
-	{
-		tex.reset(nullptr);
-	}
+	m_textures.destroy(getAllocator());
 
 	if(m_swapchain)
 	{
@@ -69,12 +66,13 @@ Error MicroSwapchain::initInternal()
 		ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(m_factory->m_gr->getPhysicalDevice(),
 														   m_factory->m_gr->getSurface(), &formatCount, &formats[0]));
 
-		while(formatCount--)
+		for(U32 i = 0; i < formatCount; ++i)
 		{
-			if(formats[formatCount].format == VK_FORMAT_B8G8R8A8_UNORM)
+			if(formats[i].format == VK_FORMAT_R8G8B8A8_UNORM || formats[i].format == VK_FORMAT_B8G8R8A8_UNORM
+			   || formats[i].format == VK_FORMAT_A8B8G8R8_UNORM_PACK32)
 			{
-				surfaceFormat = formats[formatCount].format;
-				colorspace = formats[formatCount].colorSpace;
+				surfaceFormat = formats[i].format;
+				colorspace = formats[i].colorSpace;
 				break;
 			}
 		}
@@ -137,6 +135,29 @@ Error MicroSwapchain::initInternal()
 
 	// Create swapchain
 	{
+		VkCompositeAlphaFlagBitsKHR compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+		if(surfaceProperties.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)
+		{
+			compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+		}
+		else if(surfaceProperties.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR)
+		{
+			compositeAlpha = VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR;
+		}
+		else if(surfaceProperties.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR)
+		{
+			compositeAlpha = VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR;
+		}
+		else if(surfaceProperties.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR)
+		{
+			compositeAlpha = VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR;
+		}
+		else
+		{
+			ANKI_VK_LOGE("Failed to set compositeAlpha");
+			return Error::FUNCTION_FAILED;
+		}
+
 		VkSwapchainCreateInfoKHR ci = {};
 		ci.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 		ci.surface = m_factory->m_gr->getSurface();
@@ -146,11 +167,11 @@ Error MicroSwapchain::initInternal()
 		ci.imageExtent = surfaceProperties.currentExtent;
 		ci.imageArrayLayers = 1;
 		ci.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
-		ci.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
 		ci.queueFamilyIndexCount = m_factory->m_gr->getQueueFamilies().getSize();
 		ci.pQueueFamilyIndices = &m_factory->m_gr->getQueueFamilies()[0];
+		ci.imageSharingMode = (ci.queueFamilyIndexCount > 1) ? VK_SHARING_MODE_CONCURRENT : VK_SHARING_MODE_EXCLUSIVE;
 		ci.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
-		ci.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+		ci.compositeAlpha = compositeAlpha;
 		ci.presentMode = presentMode;
 		ci.clipped = false;
 		ci.oldSwapchain = VK_NULL_HANDLE;
@@ -160,26 +181,27 @@ Error MicroSwapchain::initInternal()
 
 	// Get images
 	{
-		uint32_t count = 0;
+		U32 count = 0;
 		ANKI_VK_CHECK(vkGetSwapchainImagesKHR(dev, m_swapchain, &count, nullptr));
 		if(count != MAX_FRAMES_IN_FLIGHT)
 		{
-			ANKI_VK_LOGE("Requested a swapchain with %u images but got one with %u", MAX_FRAMES_IN_FLIGHT, count);
-			return Error::FUNCTION_FAILED;
+			ANKI_VK_LOGI("Requested a swapchain with %u images but got one with %u", MAX_FRAMES_IN_FLIGHT, count);
 		}
+
+		m_textures.create(getAllocator(), count);
 
 		ANKI_VK_LOGI("Created a swapchain. Image count: %u, present mode: %u, size: %ux%u, vsync: %u", count,
 					 presentMode, surfaceWidth, surfaceHeight, U32(m_factory->m_vsync));
 
-		Array<VkImage, MAX_FRAMES_IN_FLIGHT> images;
+		Array<VkImage, 64> images;
+		ANKI_ASSERT(count <= 64);
 		ANKI_VK_CHECK(vkGetSwapchainImagesKHR(dev, m_swapchain, &count, &images[0]));
-		for(U i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
+		for(U32 i = 0; i < count; ++i)
 		{
 			TextureInitInfo init("SwapchainImg");
 			init.m_width = surfaceWidth;
 			init.m_height = surfaceHeight;
-			init.m_format = Format::B8G8R8A8_UNORM;
-			ANKI_ASSERT(surfaceFormat == VK_FORMAT_B8G8R8A8_UNORM);
+			init.m_format = Format(surfaceFormat); // anki::Format is compatible with VkFormat
 			init.m_usage = TextureUsageBit::IMAGE_COMPUTE_WRITE | TextureUsageBit::IMAGE_TRACE_RAYS_WRITE
 						   | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ
 						   | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::PRESENT;

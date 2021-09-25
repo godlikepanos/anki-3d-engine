@@ -17,7 +17,7 @@ class FenceFactory;
 /// @{
 
 /// Fence wrapper over VkFence.
-class MicroFence : public NonCopyable
+class MicroFence
 {
 	friend class FenceFactory;
 	friend class MicroFencePtrDeleter;
@@ -25,7 +25,11 @@ class MicroFence : public NonCopyable
 public:
 	MicroFence(FenceFactory* f);
 
+	MicroFence(const MicroFence&) = delete; // Non-copyable
+
 	~MicroFence();
+
+	MicroFence& operator=(const MicroFence&) = delete; // Non-copyable
 
 	const VkFence& getHandle() const
 	{

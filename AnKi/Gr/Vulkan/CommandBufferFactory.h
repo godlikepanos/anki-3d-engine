@@ -19,12 +19,6 @@ class CommandBufferThreadAllocator;
 /// @addtogroup vulkan
 /// @{
 
-inline QueueType getQueueTypeFromCommandBufferFlags(CommandBufferFlag flags)
-{
-	ANKI_ASSERT(!!(flags & CommandBufferFlag::GENERAL_WORK) ^ !!(flags & CommandBufferFlag::COMPUTE_WORK));
-	return !!(flags & CommandBufferFlag::GENERAL_WORK) ? QueueType::GENERAL : QueueType::COMPUTE;
-}
-
 class MicroCommandBuffer : public IntrusiveListEnabled<MicroCommandBuffer>
 {
 	friend class CommandBufferThreadAllocator;
@@ -73,6 +67,12 @@ public:
 		return m_flags;
 	}
 
+	VulkanQueueType getVulkanQueueType() const
+	{
+		ANKI_ASSERT(m_queue != VulkanQueueType::COUNT);
+		return m_queue;
+	}
+
 private:
 	static constexpr U32 MAX_REF_OBJECT_SEARCH = 16;
 
@@ -87,6 +87,7 @@ private:
 	CommandBufferThreadAllocator* m_threadAlloc;
 	Atomic<I32> m_refcount = {0};
 	CommandBufferFlag m_flags = CommandBufferFlag::NONE;
+	VulkanQueueType m_queue = VulkanQueueType::COUNT;
 
 	void destroy();
 	void reset();
@@ -161,7 +162,7 @@ public:
 private:
 	CommandBufferFactory* m_factory;
 	ThreadId m_tid;
-	Array<VkCommandPool, U(QueueType::COUNT)> m_pools = {};
+	Array<VkCommandPool, U(VulkanQueueType::COUNT)> m_pools = {};
 
 	class CmdbType
 	{
@@ -177,14 +178,14 @@ private:
 	Atomic<U32> m_createdCmdbs = {0};
 #endif
 
-	Array3d<CmdbType, 2, 2, U(QueueType::COUNT)> m_types;
+	Array3d<CmdbType, 2, 2, U(VulkanQueueType::COUNT)> m_types;
 
 	void destroyList(IntrusiveList<MicroCommandBuffer>& list);
 	void destroyLists();
 };
 
 /// Command bufffer object recycler.
-class CommandBufferFactory : public NonCopyable
+class CommandBufferFactory
 {
 	friend class CommandBufferThreadAllocator;
 	friend class MicroCommandBuffer;
@@ -192,9 +193,13 @@ class CommandBufferFactory : public NonCopyable
 public:
 	CommandBufferFactory() = default;
 
+	CommandBufferFactory(const CommandBufferFactory&) = delete; // Non-copyable
+
 	~CommandBufferFactory() = default;
 
-	ANKI_USE_RESULT Error init(GrAllocator<U8> alloc, VkDevice dev, Array<U32, U(QueueType::COUNT)> queueFamilies);
+	CommandBufferFactory& operator=(const CommandBufferFactory&) = delete; // Non-copyable
+
+	ANKI_USE_RESULT Error init(GrAllocator<U8> alloc, VkDevice dev, const VulkanQueueFamilies& queueFamilies);
 
 	void destroy();
 
@@ -210,7 +215,7 @@ public:
 private:
 	GrAllocator<U8> m_alloc;
 	VkDevice m_dev = VK_NULL_HANDLE;
-	Array<U32, U(QueueType::COUNT)> m_queueFamilies;
+	VulkanQueueFamilies m_queueFamilies;
 
 	DynamicArray<CommandBufferThreadAllocator*> m_threadAllocs;
 	RWMutex m_threadAllocMtx;

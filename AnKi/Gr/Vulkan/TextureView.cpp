@@ -27,14 +27,14 @@ U32 TextureView::getOrCreateBindlessTextureIndex()
 	ANKI_VK_SELF(TextureViewImpl);
 	ANKI_ASSERT(self.getTextureImpl().computeLayout(TextureUsageBit::ALL_SAMPLED, 0)
 				== VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-	return self.getOrCreateBindlessIndex(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, DescriptorType::TEXTURE);
+	return self.getOrCreateBindlessIndex(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
 U32 TextureView::getOrCreateBindlessImageIndex()
 {
 	ANKI_VK_SELF(TextureViewImpl);
 	ANKI_ASSERT(self.getTextureImpl().computeLayout(TextureUsageBit::ALL_IMAGE, 0) == VK_IMAGE_LAYOUT_GENERAL);
-	return self.getOrCreateBindlessIndex(VK_IMAGE_LAYOUT_GENERAL, DescriptorType::IMAGE);
+	return self.getOrCreateBindlessIndex(VK_IMAGE_LAYOUT_GENERAL);
 }
 
 } // end namespace anki
