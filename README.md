@@ -1,6 +1,10 @@
 [![AnKi logo](http://anki3d.org/wp-content/uploads/2015/11/logo_248.png)](http://anki3d.org)
 
-AnKi 3D engine is a Linux, Windows and Android opensource game engine that runs on Vulkan 1.1 (with a few extensions).
+[**Official website:** anki3d.org](https://www.anki3d.org)
+
+[**Twitter development news feed:** twitter.com/anki3d](https://twitter.com/anki3d)
+
+**AnKi 3D engine** is a Linux, Windows and Android opensource game engine that runs on Vulkan.
 
 [![Video](http://img.youtube.com/vi/va7nZ2EFR4c/0.jpg)](http://www.youtube.com/watch?v=va7nZ2EFR4c)
 
