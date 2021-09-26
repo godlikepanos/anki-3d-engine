@@ -42,6 +42,7 @@
 #include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Renderer/Scale.h>
+#include <AnKi/Renderer/IndirectDiffuse.h>
 
 namespace anki
 {
@@ -208,6 +209,9 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_scale.reset(m_alloc.newInstance<Scale>(this));
 	ANKI_CHECK(m_scale->init(config));
 
+	m_indirectDiffuse.reset(m_alloc.newInstance<IndirectDiffuse>(this));
+	ANKI_CHECK(m_indirectDiffuse->init(config));
+
 	if(getGrManager().getDeviceCapabilities().m_rayTracingEnabled && config.getBool("scene_rayTracedShadows"))
 	{
 		m_accelerationStructureBuilder.reset(m_alloc.newInstance<AccelerationStructureBuilder>(this));
@@ -360,6 +364,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_lensFlare->populateRenderGraph(ctx);
 	m_ssr->populateRenderGraph(ctx);
 	m_ssgi->populateRenderGraph(ctx);
+	m_indirectDiffuse->populateRenderGraph(ctx);
 	m_lightShading->populateRenderGraph(ctx);
 	m_temporalAA->populateRenderGraph(ctx);
 	m_scale->populateRenderGraph(ctx);

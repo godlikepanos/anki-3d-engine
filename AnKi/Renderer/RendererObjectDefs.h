@@ -31,3 +31,4 @@ ANKI_RENDERER_OBJECT_DEF(AccelerationStructureBuilder, accelerationStructureBuil
 ANKI_RENDERER_OBJECT_DEF(MotionVectors, motionVectors)
 ANKI_RENDERER_OBJECT_DEF(ClusterBinning, clusterBinning)
 ANKI_RENDERER_OBJECT_DEF(Scale, scale)
+ANKI_RENDERER_OBJECT_DEF(IndirectDiffuse, indirectDiffuse)
