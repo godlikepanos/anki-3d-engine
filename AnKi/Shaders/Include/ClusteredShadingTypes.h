@@ -163,6 +163,9 @@ struct CommonMatrices
 	Mat4 m_view ANKI_CPP_CODE(= Mat4::getIdentity());
 	Mat4 m_projection ANKI_CPP_CODE(= Mat4::getIdentity());
 	Mat4 m_viewProjection ANKI_CPP_CODE(= Mat4::getIdentity());
+	Mat3 m_viewRotation ANKI_CPP_CODE(= Mat3::getIdentity());
+
+	F32 m_padding[3u]; // Because of the alignment requirements of some of the following members (in C++)
 
 	Mat4 m_jitter ANKI_CPP_CODE(= Mat4::getIdentity());
 	Mat4 m_projectionJitter ANKI_CPP_CODE(= Mat4::getIdentity());
@@ -173,9 +176,16 @@ struct CommonMatrices
 	Mat4 m_invertedProjectionJitter ANKI_CPP_CODE(= Mat4::getIdentity()); ///< To unproject in view space.
 	Mat4 m_invertedView ANKI_CPP_CODE(= Mat4::getIdentity());
 
+	/// It's being used to reproject a clip space position of the current frame to the previous frame. Its value should
+	/// be m_jitter * m_prevFrame.m_viewProjection * m_invertedViewProjectionJitter. At first it unprojects the current
+	/// position to world space, all fine here. Then it projects to the previous frame as if the previous frame was
+	/// using the current frame's jitter matrix.
+	Mat4 m_reprojection ANKI_CPP_CODE(= Mat4::getIdentity());
+
 	Vec4 m_unprojectionParameters ANKI_CPP_CODE(= Vec4(0.0f)); ///< To unproject to view space. Jitter not considered.
 };
-const U32 _ANKI_SIZEOF_CommonMatrices = 11u * ANKI_SIZEOF(Mat4) + ANKI_SIZEOF(Vec4);
+const U32 _ANKI_SIZEOF_CommonMatrices =
+	12u * ANKI_SIZEOF(Mat4) + ANKI_SIZEOF(Vec4) + ANKI_SIZEOF(Mat3) + ANKI_SIZEOF(F32) * 3u;
 ANKI_SHADER_STATIC_ASSERT(sizeof(CommonMatrices) == _ANKI_SIZEOF_CommonMatrices);
 
 /// Common uniforms for light shading passes.

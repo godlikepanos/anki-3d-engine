@@ -21,6 +21,7 @@ ANKI_CONFIG_OPTION(r_ssrDepthLod, 2, 0, 1000)
 
 ANKI_CONFIG_OPTION(r_ssgiMaxSteps, 32, 1, 2048)
 ANKI_CONFIG_OPTION(r_ssgiDepthLod, 2, 0, 1000)
+ANKI_CONFIG_OPTION(r_ssgiStepIncrement, 32, 1, 512)
 
 ANKI_CONFIG_OPTION(r_shadowMappingTileResolution, 128, 16, 2048)
 ANKI_CONFIG_OPTION(r_shadowMappingTileCountPerRowOrColumn, 16, 1, 256)

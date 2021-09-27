@@ -47,7 +47,7 @@ private:
 		RenderTargetDescription m_rtDescr;
 		ImageResourcePtr m_noiseImage;
 		U32 m_maxSteps = 32;
-		U32 m_firstStepPixels = 16;
+		U32 m_stepIncrement = 16;
 		U32 m_depthLod = 0;
 	} m_main;
 
@@ -58,8 +58,6 @@ private:
 	} m_runCtx;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
-
-	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 

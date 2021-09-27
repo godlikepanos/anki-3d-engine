@@ -173,6 +173,7 @@ static const char* SHADER_HEADER = R"(#version 460 core
 #endif
 
 #define Mat3 mat3
+#define _ANKI_SIZEOF_mat3 36u
 
 #define Mat4 mat4
 #define _ANKI_SIZEOF_mat4 64u

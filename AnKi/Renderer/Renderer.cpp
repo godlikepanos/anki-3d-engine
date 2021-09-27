@@ -301,10 +301,13 @@ void Renderer::initJitteredMats()
 
 Error Renderer::populateRenderGraph(RenderingContext& ctx)
 {
+	ctx.m_prevMatrices = m_prevMatrices;
+
 	ctx.m_matrices.m_cameraTransform = ctx.m_renderQueue->m_cameraTransform;
 	ctx.m_matrices.m_view = ctx.m_renderQueue->m_viewMatrix;
 	ctx.m_matrices.m_projection = ctx.m_renderQueue->m_projectionMatrix;
 	ctx.m_matrices.m_viewProjection = ctx.m_renderQueue->m_viewProjectionMatrix;
+	ctx.m_matrices.m_viewRotation = ctx.m_renderQueue->m_viewMatrix.getRotationPart();
 
 	ctx.m_matrices.m_jitter = m_jitteredMats8x[m_frameCount & (m_jitteredMats8x.getSize() - 1)];
 	ctx.m_matrices.m_projectionJitter = ctx.m_matrices.m_jitter * ctx.m_matrices.m_projection;
@@ -314,9 +317,10 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	ctx.m_matrices.m_invertedProjectionJitter = ctx.m_matrices.m_projectionJitter.getInverse();
 	ctx.m_matrices.m_invertedView = ctx.m_matrices.m_view.getInverse();
 
-	ctx.m_matrices.m_unprojectionParameters = ctx.m_matrices.m_projection.extractPerspectiveUnprojectionParams();
+	ctx.m_matrices.m_reprojection =
+		ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection * ctx.m_matrices.m_invertedViewProjectionJitter;
 
-	ctx.m_prevMatrices = m_prevMatrices;
+	ctx.m_matrices.m_unprojectionParameters = ctx.m_matrices.m_projection.extractPerspectiveUnprojectionParams();
 
 	// Check if resources got loaded
 	if(m_prevLoadRequestCount != m_resources->getLoadingRequestCount()
