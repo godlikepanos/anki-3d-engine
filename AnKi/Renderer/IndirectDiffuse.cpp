@@ -43,9 +43,14 @@ Error IndirectDiffuse::initInternal(const ConfigSet& cfg)
 
 	// Init SSGI+probes pass
 	{
-		m_main.m_rtDescr = m_r->create2DRenderTargetDescription(size.x(), size.y(), Format::B10G11R11_UFLOAT_PACK32,
-																"IndirectDiffuse");
-		m_main.m_rtDescr.bake();
+		TextureInitInfo texInit = m_r->create2DRenderTargetInitInfo(
+			size.x(), size.y(), Format::B10G11R11_UFLOAT_PACK32,
+			TextureUsageBit::IMAGE_COMPUTE_WRITE | TextureUsageBit::ALL_SAMPLED, "IndirectDiffuse #1");
+		texInit.m_initialUsage = TextureUsageBit::ALL_SAMPLED;
+
+		m_rts[0] = m_r->getGrManager().newTexture(texInit);
+		texInit.setName("IndirectDiffuse #2");
+		m_rts[1] = m_r->getGrManager().newTexture(texInit);
 
 		ANKI_CHECK(getResourceManager().loadResource("Shaders/IndirectDiffuse.ankiprog", m_main.m_prog));
 
@@ -64,7 +69,20 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 	// SSGI+probes
 	{
 		// Create RTs
-		m_runCtx.m_ssgiRtHandle = rgraph.newRenderTarget(m_main.m_rtDescr);
+		if(m_rtsImportedOnce)
+		{
+			m_runCtx.m_finalRtHandle = rgraph.importRenderTarget(m_rts[m_r->getFrameCount() & 1]);
+			m_runCtx.m_historyRtHandle = rgraph.importRenderTarget(m_rts[!(m_r->getFrameCount() & 1)]);
+		}
+		else
+		{
+			m_runCtx.m_finalRtHandle =
+				rgraph.importRenderTarget(m_rts[m_r->getFrameCount() & 1], TextureUsageBit::ALL_SAMPLED);
+			m_runCtx.m_historyRtHandle =
+				rgraph.importRenderTarget(m_rts[!(m_r->getFrameCount() & 1)], TextureUsageBit::ALL_SAMPLED);
+
+			m_rtsImportedOnce = true;
+		}
 
 		// Create pass
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("IndirectDiffuse");
@@ -75,7 +93,12 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 												 hizSubresource));
 		rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_COMPUTE));
 		rpass.newDependency(RenderPassDependency(m_r->getDownscaleBlur().getRt(), TextureUsageBit::SAMPLED_COMPUTE));
-		rpass.newDependency(RenderPassDependency(m_runCtx.m_ssgiRtHandle, TextureUsageBit::IMAGE_COMPUTE_WRITE));
+		rpass.newDependency(RenderPassDependency(m_runCtx.m_finalRtHandle, TextureUsageBit::IMAGE_COMPUTE_WRITE));
+		rpass.newDependency(
+			RenderPassDependency(m_r->getMotionVectors().getMotionVectorsRt(), TextureUsageBit::SAMPLED_COMPUTE));
+		rpass.newDependency(
+			RenderPassDependency(m_r->getMotionVectors().getRejectionFactorRt(), TextureUsageBit::SAMPLED_COMPUTE));
+		rpass.newDependency(RenderPassDependency(m_runCtx.m_historyRtHandle, TextureUsageBit::SAMPLED_COMPUTE));
 
 		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
@@ -87,7 +110,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			bindUniforms(cmdb, 0, 2, binning.m_globalIlluminationProbesToken);
 			bindStorage(cmdb, 0, 3, binning.m_clustersToken);
 
-			rgraphCtx.bindImage(0, 4, m_runCtx.m_ssgiRtHandle, TextureSubresourceInfo());
+			rgraphCtx.bindImage(0, 4, m_runCtx.m_finalRtHandle, TextureSubresourceInfo());
 
 			cmdb->bindSampler(0, 5, m_r->getSamplers().m_trilinearClamp);
 			rgraphCtx.bindColorTexture(0, 6, m_r->getGBuffer().getColorRt(2));
@@ -96,6 +119,9 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			hizSubresource.m_firstMipmap = m_main.m_depthLod;
 			rgraphCtx.bindTexture(0, 7, m_r->getDepthDownscale().getHiZRt(), hizSubresource);
 			rgraphCtx.bindColorTexture(0, 8, m_r->getDownscaleBlur().getRt());
+			rgraphCtx.bindColorTexture(0, 9, m_runCtx.m_historyRtHandle);
+			rgraphCtx.bindColorTexture(0, 10, m_r->getMotionVectors().getMotionVectorsRt());
+			rgraphCtx.bindColorTexture(0, 11, m_r->getMotionVectors().getRejectionFactorRt());
 
 			// Bind uniforms
 			IndirectDiffuseUniforms unis;

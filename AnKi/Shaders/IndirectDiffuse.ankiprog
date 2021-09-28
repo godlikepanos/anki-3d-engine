@@ -5,6 +5,9 @@
 
 // Does SSGI and GI probe sampling
 
+#define REMOVE_FIREFLIES true
+#define RECALCULATE_NORMAL false
+
 #pragma anki start comp
 #include <AnKi/Shaders/SsRaymarching.glsl>
 #include <AnKi/Shaders/Functions.glsl>
@@ -28,6 +31,9 @@ layout(set = 0, binding = 5) uniform sampler u_trilinearClampSampler;
 layout(set = 0, binding = 6) uniform texture2D u_gbufferRt2;
 layout(set = 0, binding = 7) uniform texture2D u_depthRt;
 layout(set = 0, binding = 8) uniform texture2D u_lightBufferRt;
+layout(set = 0, binding = 9) uniform texture2D u_historyTex;
+layout(set = 0, binding = 10) uniform texture2D u_motionVectorsTex;
+layout(set = 0, binding = 11) uniform texture2D u_motionVectorRejectionTex;
 
 layout(push_constant, std430) uniform b_pc
 {
@@ -94,15 +100,20 @@ void main()
 		outColor = clamp(outColor, 0.0, FLT_MAX); // Fix the value just in case
 		outColor *= hitAttenuation;
 
-#if 0
 		// Compute a new normal based on the new hit point
-		const F32 depth = textureLod(u_depthRt, u_trilinearClampSampler, hitPoint.xy, 0.0).r;
-		const Vec4 viewPos4 = u_clusteredShading.m_matrices.m_invertedProjection * Vec4(UV_TO_NDC(hitPoint.xy), depth, 1.0);
-		const Vec3 hitViewPos = viewPos4.xyz / viewPos4.w;
-		const Vec3 newViewNormal = normalize(hitViewPos - viewPos);
-#else
-		const Vec3 newViewNormal = viewNormal;
-#endif
+		Vec3 newViewNormal;
+		if(RECALCULATE_NORMAL)
+		{
+			const F32 depth = textureLod(u_depthRt, u_trilinearClampSampler, hitPoint.xy, 0.0).r;
+			const Vec4 viewPos4 =
+				u_clusteredShading.m_matrices.m_invertedProjectionJitter * Vec4(UV_TO_NDC(hitPoint.xy), depth, 1.0);
+			const Vec3 hitViewPos = viewPos4.xyz / viewPos4.w;
+			newViewNormal = normalize(hitViewPos - viewPos);
+		}
+		else
+		{
+			newViewNormal = viewNormal;
+		}
 
 		// Modulate
 		const F32 NoL = max(0.0, dot(randomHemisphere, newViewNormal));
@@ -161,12 +172,23 @@ void main()
 	}
 
 	// Remove fireflies
-	if(false)
+	if(REMOVE_FIREFLIES)
 	{
 		const F32 lum = computeLuminance(outColor) + 0.001;
 		const F32 averageLum = (subgroupAdd(lum) / F32(gl_SubgroupSize)) * 2.0;
 		const F32 newLum = min(lum, averageLum);
 		outColor *= newLum / lum;
+	}
+
+	// Blend with history
+	{
+		const Vec2 historyUv = uv + textureLod(u_motionVectorsTex, u_trilinearClampSampler, uv, 0.0).rg;
+		const F32 rejection = textureLod(u_motionVectorRejectionTex, u_trilinearClampSampler, uv, 0.0).r;
+		const Vec3 history = textureLod(u_historyTex, u_trilinearClampSampler, historyUv, 0.0).rgb;
+
+		const F32 MAX_BLEND = 0.1;
+		const F32 blend = mix(MAX_BLEND, 1.0, rejection);
+		outColor = mix(history, outColor, blend);
 	}
 
 	// Store
