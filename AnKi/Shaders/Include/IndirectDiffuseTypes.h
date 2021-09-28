@@ -18,4 +18,14 @@ struct IndirectDiffuseUniforms
 	U32 m_stepIncrement;
 };
 
+struct IndirectDiffuseDenoiseUniforms
+{
+	Mat4 m_invertedViewProjectionJitterMat;
+	UVec2 m_viewportSize;
+	Vec2 m_viewportSizef;
+	U32 m_minSampleCount;
+	U32 m_maxSampleCount;
+	U32 m_padding[2u];
+};
+
 ANKI_END_NAMESPACE

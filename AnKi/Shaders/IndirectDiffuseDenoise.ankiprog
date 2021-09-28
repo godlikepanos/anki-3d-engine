@@ -1,0 +1,31 @@
+// Copyright (C) 2009-2021, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki mutator BLUR_ORIENTATION 0 1
+
+#pragma anki start comp
+
+#include <AnKi/Shaders/Include/IndirectDiffuseTypes.h>
+
+const UVec2 WORKGROUP_SIZE = UVec2(8u, 8u);
+layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y) in;
+
+layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
+layout(set = 0, binding = 1) uniform texture2D u_toDenoiseTex;
+layout(set = 0, binding = 2) uniform texture2D u_depthTex;
+layout(set = 0, binding = 3) uniform texture2D u_gbuffer2Tex;
+layout(set = 0, binding = 4) uniform texture2D u_momentsAndHistoryLengthTex;
+layout(set = 0, binding = 5) writeonly uniform uimage2D u_outImg;
+
+layout(push_constant, std140, row_major) uniform b_pc
+{
+	IndirectDiffuseDenoiseUniforms m_unis;
+};
+
+void main()
+{
+}
+
+#pragma anki end
