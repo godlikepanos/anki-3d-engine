@@ -35,19 +35,22 @@ public:
 							  ShaderProgramPtr& optionalShaderProgram) const override
 	{
 		ANKI_ASSERT(rtName == "IndirectDiffuse");
-		handle = m_runCtx.m_finalRtHandle;
+		handle = m_runCtx.m_mainRtHandles[WRITE];
 	}
 
 private:
 	Array<TexturePtr, 2> m_rts;
+	Array<TexturePtr, 2> m_momentsAndHistoryLengthRts;
 	Bool m_rtsImportedOnce = false;
+
+	static constexpr U32 READ = 0;
+	static constexpr U32 WRITE = 1;
 
 	class
 	{
 	public:
 		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
-		ImageResourcePtr m_noiseImage;
 		U32 m_maxSteps = 32;
 		U32 m_stepIncrement = 16;
 		U32 m_depthLod = 0;
@@ -56,8 +59,15 @@ private:
 	class
 	{
 	public:
-		RenderTargetHandle m_historyRtHandle;
-		RenderTargetHandle m_finalRtHandle;
+		ShaderProgramResourcePtr m_prog;
+		Array<ShaderProgramPtr, 2> m_grProgs;
+	} m_denoise;
+
+	class
+	{
+	public:
+		Array<RenderTargetHandle, 2> m_mainRtHandles;
+		Array<RenderTargetHandle, 2> m_momentsAndHistoryLengthHandles;
 	} m_runCtx;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
