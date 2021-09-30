@@ -54,9 +54,10 @@ Error IndirectDiffuse::initInternal(const ConfigSet& cfg)
 
 	// Init SSGI+probes pass
 	{
-		m_main.m_maxSteps = cfg.getNumberU32("r_ssgiMaxSteps");
-		m_main.m_depthLod = min(cfg.getNumberU32("r_ssgiDepthLod"), m_r->getDepthDownscale().getMipmapCount() - 1);
-		m_main.m_stepIncrement = cfg.getNumberU32("r_ssgiStepIncrement");
+		m_main.m_maxSteps = cfg.getNumberU32("r_indirectDiffuseSsgiMaxSteps");
+		m_main.m_depthLod =
+			min(cfg.getNumberU32("r_indirectDiffuseSsgiDepthLod"), m_r->getDepthDownscale().getMipmapCount() - 1);
+		m_main.m_stepIncrement = cfg.getNumberU32("r_indirectDiffuseSsgiStepIncrement");
 
 		ANKI_CHECK(getResourceManager().loadResource("Shaders/IndirectDiffuse.ankiprog", m_main.m_prog));
 
@@ -67,9 +68,13 @@ Error IndirectDiffuse::initInternal(const ConfigSet& cfg)
 
 	// Init denoise
 	{
+		m_denoise.m_minSampleCount = F32(cfg.getNumberU32("r_indirectDiffuseDenoiseMinSampleCount"));
+		m_denoise.m_maxSampleCount =
+			max(F32(cfg.getNumberU32("r_indirectDiffuseDenoiseMaxSampleCount")), m_denoise.m_minSampleCount);
+
 		ANKI_CHECK(getResourceManager().loadResource("Shaders/IndirectDiffuseDenoise.ankiprog", m_denoise.m_prog));
 
-		ShaderProgramResourceVariantInitInfo variantInit;
+		ShaderProgramResourceVariantInitInfo variantInit(m_denoise.m_prog);
 		variantInit.addMutation("BLUR_ORIENTATION", 0);
 		const ShaderProgramResourceVariant* variant;
 		m_denoise.m_prog->getOrCreateVariant(variantInit, variant);
@@ -163,6 +168,54 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			unis.m_stepIncrement = m_main.m_stepIncrement;
 			unis.m_viewportSize = m_r->getInternalResolution() / 2u;
 			unis.m_viewportSizef = Vec2(unis.m_viewportSize);
+			cmdb->setPushConstants(&unis, sizeof(unis));
+
+			// Dispatch
+			dispatchPPCompute(cmdb, 8, 8, m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2);
+		});
+	}
+
+	// Denoise
+	for(U32 dir = 0; dir < 2; ++dir)
+	{
+		ComputeRenderPassDescription& rpass =
+			rgraph.newComputeRenderPass((dir == 0) ? "IndirectDiffuseDenoiseH" : "IndirectDiffuseDenoiseV");
+
+		const TextureUsageBit readUsage = TextureUsageBit::SAMPLED_COMPUTE;
+		const U32 readIdx = (dir == 0) ? WRITE : READ;
+
+		rpass.newDependency(RenderPassDependency(m_runCtx.m_mainRtHandles[readIdx], readUsage));
+
+		TextureSubresourceInfo hizSubresource;
+		hizSubresource.m_firstMipmap = 0;
+		rpass.newDependency(RenderPassDependency(m_r->getDepthDownscale().getHiZRt(), readUsage, hizSubresource));
+
+		rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(2), readUsage));
+		rpass.newDependency(RenderPassDependency(m_runCtx.m_momentsAndHistoryLengthHandles[readIdx], readUsage));
+
+		rpass.newDependency(
+			RenderPassDependency(m_runCtx.m_mainRtHandles[!readIdx], TextureUsageBit::IMAGE_COMPUTE_WRITE));
+
+		rpass.setWork([this, &ctx, dir, readIdx](RenderPassWorkContext& rgraphCtx) {
+			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+			cmdb->bindShaderProgram(m_denoise.m_grProgs[dir]);
+
+			cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
+			rgraphCtx.bindColorTexture(0, 1, m_runCtx.m_mainRtHandles[readIdx]);
+			TextureSubresourceInfo hizSubresource;
+			hizSubresource.m_firstMipmap = 0;
+			rgraphCtx.bindTexture(0, 2, m_r->getDepthDownscale().getHiZRt(), hizSubresource);
+			rgraphCtx.bindColorTexture(0, 3, m_r->getGBuffer().getColorRt(2));
+			rgraphCtx.bindColorTexture(0, 4, m_runCtx.m_momentsAndHistoryLengthHandles[readIdx]);
+			rgraphCtx.bindImage(0, 5, m_runCtx.m_mainRtHandles[!readIdx]);
+
+			IndirectDiffuseDenoiseUniforms unis;
+			unis.m_invertedViewProjectionJitterMat = ctx.m_matrices.m_invertedViewProjectionJitter;
+			unis.m_viewportSize = m_r->getInternalResolution() / 2u;
+			unis.m_viewportSizef = Vec2(unis.m_viewportSize);
+			unis.m_minSampleCount = m_denoise.m_minSampleCount;
+			unis.m_maxSampleCount = m_denoise.m_maxSampleCount;
+
 			cmdb->setPushConstants(&unis, sizeof(unis));
 
 			// Dispatch

@@ -61,6 +61,8 @@ private:
 	public:
 		ShaderProgramResourcePtr m_prog;
 		Array<ShaderProgramPtr, 2> m_grProgs;
+		F32 m_minSampleCount = 1.0f;
+		F32 m_maxSampleCount = 1.0f;
 	} m_denoise;
 
 	class

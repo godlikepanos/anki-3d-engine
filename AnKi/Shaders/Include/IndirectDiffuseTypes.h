@@ -23,9 +23,9 @@ struct IndirectDiffuseDenoiseUniforms
 	Mat4 m_invertedViewProjectionJitterMat;
 	UVec2 m_viewportSize;
 	Vec2 m_viewportSizef;
-	U32 m_minSampleCount;
-	U32 m_maxSampleCount;
-	U32 m_padding[2u];
+	F32 m_minSampleCount;
+	F32 m_maxSampleCount;
+	F32 m_padding[2u];
 };
 
 ANKI_END_NAMESPACE
