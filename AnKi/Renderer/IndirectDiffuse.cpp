@@ -10,6 +10,7 @@
 #include <AnKi/Renderer/DownscaleBlur.h>
 #include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Renderer/GlobalIllumination.h>
+#include <AnKi/Renderer/Ssao.h>
 #include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Shaders/Include/IndirectDiffuseTypes.h>
 
@@ -135,6 +136,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 		rpass.newDependency(RenderPassDependency(m_r->getMotionVectors().getRejectionFactorRt(), readUsage));
 		rpass.newDependency(RenderPassDependency(m_runCtx.m_mainRtHandles[READ], readUsage));
 		rpass.newDependency(RenderPassDependency(m_runCtx.m_momentsAndHistoryLengthHandles[READ], readUsage));
+		rpass.newDependency(RenderPassDependency(m_r->getSsao().getRt(), readUsage));
 
 		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
@@ -160,6 +162,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindColorTexture(0, 11, m_r->getMotionVectors().getMotionVectorsRt());
 			rgraphCtx.bindColorTexture(0, 12, m_r->getMotionVectors().getRejectionFactorRt());
 			rgraphCtx.bindColorTexture(0, 13, m_runCtx.m_momentsAndHistoryLengthHandles[READ]);
+			rgraphCtx.bindColorTexture(0, 14, m_r->getSsao().getRt());
 
 			// Bind uniforms
 			IndirectDiffuseUniforms unis;

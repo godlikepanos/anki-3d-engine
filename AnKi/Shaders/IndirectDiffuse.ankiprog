@@ -36,6 +36,7 @@ layout(set = 0, binding = 10) uniform texture2D u_historyTex;
 layout(set = 0, binding = 11) uniform texture2D u_motionVectorsTex;
 layout(set = 0, binding = 12) uniform texture2D u_motionVectorsRejectionTex;
 layout(set = 0, binding = 13) uniform texture2D u_prevMomentsAndHistoryLengthTex;
+layout(set = 0, binding = 14) uniform texture2D u_ssaoTex;
 
 layout(push_constant, std430) uniform b_pc
 {
@@ -182,6 +183,9 @@ void main()
 		outColor *= newLum / lum;
 	}
 
+	// Apply SSAO
+	outColor *= textureLod(u_ssaoTex, u_trilinearClampSampler, uv, 0.0).x;
+
 	// Compute history length
 	const Vec2 historyUv = uv + textureLod(u_motionVectorsTex, u_trilinearClampSampler, uv, 0.0).xy;
 	const F32 historyRejectionFactor = textureLod(u_motionVectorsRejectionTex, u_trilinearClampSampler, uv, 0.0).x;
@@ -191,7 +195,7 @@ void main()
 	if(historyRejectionFactor >= 0.5)
 	{
 		// Rejection factor too high, reset the temporal history
-		historyLength = 1.0;
+		historyLength = 0.0;
 	}
 	else
 	{
@@ -204,7 +208,7 @@ void main()
 		// Compute blend fractor. Use nearest sampler because it's an integer texture
 		const F32 lowestBlendFactor = 0.1;
 		const F32 stableFrames = 4.0;
-		const F32 lerp = min(1.0, historyLength / stableFrames);
+		const F32 lerp = min(1.0, (historyLength + 1.0) / stableFrames);
 		const F32 blendFactor = mix(1.0, lowestBlendFactor, lerp);
 
 		// Blend with history
