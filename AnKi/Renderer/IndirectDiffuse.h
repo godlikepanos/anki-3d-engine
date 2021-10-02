@@ -38,6 +38,11 @@ public:
 		handle = m_runCtx.m_mainRtHandles[WRITE];
 	}
 
+	RenderTargetHandle getRt() const
+	{
+		return m_runCtx.m_mainRtHandles[WRITE];
+	}
+
 private:
 	Array<TexturePtr, 2> m_rts;
 	Array<TexturePtr, 2> m_momentsAndHistoryLengthRts;

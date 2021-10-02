@@ -5,8 +5,13 @@
 
 // Does SSGI and GI probe sampling
 
-#define REMOVE_FIREFLIES true
 #define RECALCULATE_NORMAL false
+#define REJECT_FAR_FROM_HITPOINT true
+#define REJECT_BACKFACING false
+#define ENABLE_SSGI true
+#define ENABLE_PROBES true
+#define REMOVE_FIREFLIES true
+#define SSGI_PROBE_COMBINE(ssgiColor, probeColor) max((ssgiColor), (probeColor))
 
 #pragma anki start comp
 #include <AnKi/Shaders/SsRaymarching.glsl>
@@ -71,16 +76,23 @@ void main()
 	// Trace
 	Vec3 hitPoint;
 	F32 hitAttenuation;
-	const U32 lod = 0u;
-	const F32 minStepf = 4.0;
-	const F32 noise = F32(random.x) * (1.0 / 65536.0);
-	const U32 initialStep = U32(mix(minStepf, F32(u_unis.m_stepIncrement), noise));
-	raymarchGroundTruth(viewPos, randomHemisphere, uv, depth, u_clusteredShading.m_matrices.m_projectionJitter,
-						u_unis.m_maxSteps, u_depthRt, u_trilinearClampSampler, F32(lod), u_unis.m_depthBufferSize,
-						u_unis.m_stepIncrement, initialStep, hitPoint, hitAttenuation);
+	if(ENABLE_SSGI)
+	{
+		const U32 lod = 0u;
+		const F32 minStepf = 4.0;
+		const F32 noise = F32(random.x) * (1.0 / 65536.0);
+		const U32 initialStep = U32(mix(minStepf, F32(u_unis.m_stepIncrement), noise));
+		raymarchGroundTruth(viewPos, randomHemisphere, uv, depth, u_clusteredShading.m_matrices.m_projectionJitter,
+							u_unis.m_maxSteps, u_depthRt, u_trilinearClampSampler, F32(lod), u_unis.m_depthBufferSize,
+							u_unis.m_stepIncrement, initialStep, hitPoint, hitAttenuation);
+	}
+	else
+	{
+		hitAttenuation = 0.0;
+	}
 
 	// Reject backfacing
-	ANKI_BRANCH if(hitAttenuation > 0.0)
+	ANKI_BRANCH if(REJECT_BACKFACING && hitAttenuation > 0.0)
 	{
 		const Vec3 hitNormal = u_clusteredShading.m_matrices.m_viewRotation
 							   * readNormalFromGBuffer(u_gbufferRt2, u_trilinearClampSampler, hitPoint.xy);
@@ -90,8 +102,26 @@ void main()
 		hitAttenuation *= backFaceAttenuation;
 	}
 
+	// Reject far from hit point
+	ANKI_BRANCH if(REJECT_FAR_FROM_HITPOINT && hitAttenuation > 0.0)
+	{
+		const F32 depth = textureLod(u_depthRt, u_trilinearClampSampler, hitPoint.xy, 0.0).r;
+		Vec4 viewPos4 =
+			u_clusteredShading.m_matrices.m_invertedProjectionJitter * Vec4(UV_TO_NDC(hitPoint.xy), depth, 1.0);
+		const F32 actualZ = viewPos4.z / viewPos4.w;
+
+		viewPos4 =
+			u_clusteredShading.m_matrices.m_invertedProjectionJitter * Vec4(UV_TO_NDC(hitPoint.xy), hitPoint.z, 1.0);
+		const F32 hitZ = viewPos4.z / viewPos4.w;
+
+		const F32 rejectionMeters = 1.0;
+		const F32 diff = abs(actualZ - hitZ);
+		const F32 distAttenuation = (diff < rejectionMeters) ? 1.0 : 0.0;
+		hitAttenuation *= distAttenuation;
+	}
+
 	// Read the light buffer
-	Vec3 outColor;
+	Vec3 outColor = Vec3(0.0);
 	ANKI_BRANCH if(hitAttenuation > 0.0)
 	{
 		// Reproject the UV because you are reading the previous frame
@@ -99,7 +129,7 @@ void main()
 		hitPoint.xy = NDC_TO_UV(v4.xy / v4.w);
 
 		// Read the light buffer
-		outColor = textureLod(u_lightBufferRt, u_trilinearClampSampler, hitPoint.xy, 100.0).rgb;
+		outColor = textureLod(u_lightBufferRt, u_trilinearClampSampler, hitPoint.xy, 2.0).rgb;
 		outColor = clamp(outColor, 0.0, FLT_MAX); // Fix the value just in case
 		outColor *= hitAttenuation;
 
@@ -123,9 +153,12 @@ void main()
 		outColor *= NoL;
 		outColor *= 2.0 * PI;
 	}
-	else
+
+	if(ENABLE_PROBES)
 	{
-		// Fallback to probes
+		// Sample probes
+
+		Vec3 probeColor = Vec3(0.0);
 
 		// Get the cluster
 		Cluster cluster = getClusterFragCoord(Vec3(fragCoord, depth));
@@ -141,15 +174,15 @@ void main()
 			const GlobalIlluminationProbe probe = u_giProbes[findLSB2(cluster.m_giProbesMask)];
 
 			// Sample
-			outColor = sampleGlobalIllumination(worldPos, worldNormal, probe, u_globalIlluminationTextures,
-												u_trilinearClampSampler);
+			probeColor = sampleGlobalIllumination(worldPos, worldNormal, probe, u_globalIlluminationTextures,
+												  u_trilinearClampSampler);
 		}
 		else
 		{
 			// Zero or more than one probes, do a slow path that blends them together
 
 			F32 totalBlendWeight = EPSILON;
-			outColor = Vec3(0.0);
+			Vec3 probeColor = Vec3(0.0);
 
 			// Loop probes
 			ANKI_LOOP while(cluster.m_giProbesMask != 0u)
@@ -166,12 +199,14 @@ void main()
 				// Sample
 				const Vec3 c = sampleGlobalIllumination(worldPos, worldNormal, probe, u_globalIlluminationTextures,
 														u_trilinearClampSampler);
-				outColor += c * blendWeight;
+				probeColor += c * blendWeight;
 			}
 
 			// Normalize
-			outColor /= totalBlendWeight;
+			probeColor /= totalBlendWeight;
 		}
+
+		outColor = SSGI_PROBE_COMBINE(outColor, probeColor);
 	}
 
 	// Remove fireflies

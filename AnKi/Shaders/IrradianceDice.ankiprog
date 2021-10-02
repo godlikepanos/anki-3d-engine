@@ -194,7 +194,7 @@ void main()
 #	else
 		Vec3 irradiance = s_diceIrradiance[f];
 #	endif
-		const Vec3 toStoreValue = irradiance;
+		const Vec3 toStoreValue = irradiance * PI;
 #elif DEBUG_MODE == 1
 		const Vec3 toStoreValue = colorPerCubeFace(f);
 #else

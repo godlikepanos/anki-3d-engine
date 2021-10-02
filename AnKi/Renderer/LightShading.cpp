@@ -18,6 +18,7 @@
 #include <AnKi/Renderer/GlobalIllumination.h>
 #include <AnKi/Renderer/ShadowmapsResolve.h>
 #include <AnKi/Renderer/RtShadows.h>
+#include <AnKi/Renderer/IndirectDiffuse.h>
 #include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Util/HighRezTimer.h>
 
@@ -41,6 +42,11 @@ Error LightShading::init(const ConfigSet& config)
 	if(!err)
 	{
 		err = initApplyFog(config);
+	}
+
+	if(!err)
+	{
+		err = initApplyIndirect(config);
 	}
 
 	if(err)
@@ -104,6 +110,15 @@ Error LightShading::initApplyFog(const ConfigSet& config)
 	return Error::NONE;
 }
 
+Error LightShading::initApplyIndirect(const ConfigSet& config)
+{
+	ANKI_CHECK(getResourceManager().loadResource("Shaders/LightShadingApplyIndirect.ankiprog", m_applyIndirect.m_prog));
+	const ShaderProgramResourceVariant* variant;
+	m_applyIndirect.m_prog->getOrCreateVariant(variant);
+	m_applyIndirect.m_grProg = variant->getProgram();
+	return Error::NONE;
+}
+
 void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
@@ -155,6 +170,31 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 		// Draw
 		drawQuad(cmdb);
+	}
+
+	// Apply indirect
+	if(rgraphCtx.m_currentSecondLevelCommandBufferIndex == 0)
+	{
+		cmdb->setDepthWrite(false);
+		cmdb->bindShaderProgram(m_applyIndirect.m_grProg);
+
+		cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
+		cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);
+		rgraphCtx.bindColorTexture(0, 2, m_r->getIndirectDiffuse().getRt());
+		rgraphCtx.bindColorTexture(0, 3, m_r->getDepthDownscale().getHiZRt());
+		rgraphCtx.bindTexture(0, 4, m_r->getGBuffer().getDepthRt(),
+							  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+		rgraphCtx.bindColorTexture(0, 5, m_r->getGBuffer().getColorRt(0));
+
+		const Vec4 pc(2.0f / Vec2(m_r->getInternalResolution()), 0.0f, 0.0f);
+		cmdb->setPushConstants(&pc, sizeof(pc));
+
+		cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);
+
+		drawQuad(cmdb);
+
+		// Restore state
+		cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
 	}
 
 	// Do the fog apply
@@ -240,6 +280,11 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 		RenderPassDependency(m_r->getProbeReflections().getReflectionRt(), TextureUsageBit::SAMPLED_FRAGMENT));
 
 	m_r->getGlobalIllumination().setRenderGraphDependencies(ctx, pass, TextureUsageBit::SAMPLED_FRAGMENT);
+
+	// Apply indirect
+	pass.newDependency(RenderPassDependency(m_r->getIndirectDiffuse().getRt(), TextureUsageBit::SAMPLED_FRAGMENT));
+	pass.newDependency(
+		RenderPassDependency(m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_FRAGMENT, HIZ_HALF_DEPTH));
 
 	// Fog
 	pass.newDependency(RenderPassDependency(m_r->getVolumetricFog().getRt(), TextureUsageBit::SAMPLED_FRAGMENT));

@@ -93,7 +93,7 @@ void main()
 
 	// SSAO
 	const F32 ssao = textureLod(u_ssaoRt, u_trilinearClampSampler, in_uv, 0.0).r;
-	gbuffer.m_diffuse *= ssao;
+	// gbuffer.m_diffuse *= ssao;
 
 	// Ambient and emissive color
 	out_color = gbuffer.m_diffuse * gbuffer.m_emission;
@@ -281,7 +281,7 @@ void main()
 
 		const Vec3 ssgi = textureLod(u_ssgiRt, u_trilinearClampSampler, in_uv, 0.0).rgb;
 		diffIndirect += ssgi;
-		out_color += diffIndirect * gbuffer.m_diffuse;
+		// out_color += diffIndirect * gbuffer.m_diffuse;
 	}
 }
 #pragma anki end

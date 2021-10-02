@@ -48,6 +48,13 @@ private:
 	public:
 		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
+	} m_applyIndirect;
+
+	class
+	{
+	public:
+		ShaderProgramResourcePtr m_prog;
+		ShaderProgramPtr m_grProg;
 	} m_applyFog;
 
 	class
@@ -58,6 +65,7 @@ private:
 
 	ANKI_USE_RESULT Error initLightShading(const ConfigSet& config);
 	ANKI_USE_RESULT Error initApplyFog(const ConfigSet& config);
+	ANKI_USE_RESULT Error initApplyIndirect(const ConfigSet& config);
 
 	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 };

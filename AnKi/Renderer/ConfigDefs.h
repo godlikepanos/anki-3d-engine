@@ -22,9 +22,9 @@ ANKI_CONFIG_OPTION(r_ssrDepthLod, 2, 0, 1000)
 ANKI_CONFIG_OPTION(r_ssgiMaxSteps, 32, 1, 2048)
 ANKI_CONFIG_OPTION(r_ssgiDepthLod, 2, 0, 1000)
 
-ANKI_CONFIG_OPTION(r_indirectDiffuseSsgiMaxSteps, 32, 1, 2048)
-ANKI_CONFIG_OPTION(r_indirectDiffuseSsgiDepthLod, 2, 0, 1000)
-ANKI_CONFIG_OPTION(r_indirectDiffuseSsgiStepIncrement, 32, 1, 512)
+ANKI_CONFIG_OPTION(r_indirectDiffuseSsgiMaxSteps, 16, 1, 2048)
+ANKI_CONFIG_OPTION(r_indirectDiffuseSsgiDepthLod, 1, 0, 1000)
+ANKI_CONFIG_OPTION(r_indirectDiffuseSsgiStepIncrement, 8, 1, 512)
 ANKI_CONFIG_OPTION(r_indirectDiffuseDenoiseMinSampleCount, 8, 1, 128)
 ANKI_CONFIG_OPTION(r_indirectDiffuseDenoiseMaxSampleCount, 32, 1, 128)
 

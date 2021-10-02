@@ -37,10 +37,11 @@ Vec3 unproject(Vec2 ndc, F32 depth)
 F32 computeSpatialVariance(Vec2 uv)
 {
 	const F32 radius = 2.0;
+	const F32 step = 1.5;
 	const Vec2 texelSize = 1.0 / u_unis.m_viewportSizef;
 	Vec2 sumMoments = Vec2(0.0);
 
-	for(F32 i = -radius; i <= radius; i += 1.0)
+	for(F32 i = -radius * step; i <= radius * step; i += step)
 	{
 		Vec2 newUv = uv;
 #if BLUR_ORIENTATION == 0
