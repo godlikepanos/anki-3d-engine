@@ -20,11 +20,9 @@
 #include <AnKi/Renderer/TemporalAA.h>
 #include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Renderer/Ssr.h>
-#include <AnKi/Renderer/Ssgi.h>
 #include <AnKi/Renderer/ProbeReflections.h>
 #include <AnKi/Renderer/Dbg.h>
 #include <AnKi/Renderer/Ssao.h>
-#include <AnKi/Renderer/Ssgi.h>
 #include <AnKi/Renderer/Drawer.h>
 #include <AnKi/Renderer/UiStage.h>
 #include <AnKi/Renderer/Tonemapping.h>
@@ -34,5 +32,6 @@
 #include <AnKi/Renderer/GlobalIllumination.h>
 #include <AnKi/Renderer/GenericCompute.h>
 #include <AnKi/Renderer/ShadowmapsResolve.h>
+#include <AnKi/Renderer/IndirectDiffuse.h>
 
 /// @defgroup renderer Renderering system

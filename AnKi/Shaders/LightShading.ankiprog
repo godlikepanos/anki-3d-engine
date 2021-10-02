@@ -35,12 +35,10 @@ layout(set = 0, binding = 13) uniform texture2D u_msRt1;
 layout(set = 0, binding = 14) uniform texture2D u_msRt2;
 layout(set = 0, binding = 15) uniform texture2D u_msDepthRt;
 layout(set = 0, binding = 16) uniform texture2D u_ssrRt;
-layout(set = 0, binding = 17) uniform texture2D u_ssaoRt;
-layout(set = 0, binding = 18) uniform texture2D u_ssgiRt;
 #if USE_SHADOW_LAYERS
-layout(set = 0, binding = 19) uniform utexture2D u_shadowLayersTex;
+layout(set = 0, binding = 17) uniform utexture2D u_shadowLayersTex;
 #else
-layout(set = 0, binding = 20) uniform texture2D u_resolvedSm;
+layout(set = 0, binding = 18) uniform texture2D u_resolvedSm;
 #endif
 
 layout(location = 0) in Vec2 in_uv;
@@ -90,10 +88,6 @@ void main()
 	Vec4 resolvedSm = textureLod(u_resolvedSm, u_trilinearClampSampler, in_uv, 0.0);
 	U32 resolvedSmIdx = 0u;
 #endif
-
-	// SSAO
-	const F32 ssao = textureLod(u_ssaoRt, u_trilinearClampSampler, in_uv, 0.0).r;
-	// gbuffer.m_diffuse *= ssao;
 
 	// Ambient and emissive color
 	out_color = gbuffer.m_diffuse * gbuffer.m_emission;
@@ -234,54 +228,6 @@ void main()
 			envBRDF(gbuffer.m_specular, gbuffer.m_roughness, u_integrationLut, u_trilinearClampSampler, NoV);
 
 		out_color += finalSpecIndirect * env;
-	}
-
-	// Indirect diffuse
-	{
-		Vec3 diffIndirect;
-
-		if(bitCount(cluster.m_giProbesMask) == 1)
-		{
-			// All subgroups point to the same probe and there is only one probe, do a fast path without blend weight
-
-			const GlobalIlluminationProbe probe = u_giProbes[findLSB2(cluster.m_giProbesMask)];
-
-			// Sample
-			diffIndirect = sampleGlobalIllumination(worldPos, gbuffer.m_normal, probe, u_globalIlluminationTextures,
-													u_trilinearClampSampler);
-		}
-		else
-		{
-			// Zero or more than one probes, do a slow path that blends them together
-
-			F32 totalBlendWeight = EPSILON;
-			diffIndirect = Vec3(0.0);
-
-			// Loop probes
-			ANKI_LOOP while(cluster.m_giProbesMask != 0u)
-			{
-				const U32 idx = U32(findLSB2(cluster.m_giProbesMask));
-				cluster.m_giProbesMask &= ~(1u << idx);
-				const GlobalIlluminationProbe probe = u_giProbes[idx];
-
-				// Compute blend weight
-				const F32 blendWeight =
-					computeProbeBlendWeight(worldPos, probe.m_aabbMin, probe.m_aabbMax, probe.m_fadeDistance);
-				totalBlendWeight += blendWeight;
-
-				// Sample
-				const Vec3 c = sampleGlobalIllumination(worldPos, gbuffer.m_normal, probe, u_globalIlluminationTextures,
-														u_trilinearClampSampler);
-				diffIndirect += c * blendWeight;
-			}
-
-			// Normalize
-			diffIndirect /= totalBlendWeight;
-		}
-
-		const Vec3 ssgi = textureLod(u_ssgiRt, u_trilinearClampSampler, in_uv, 0.0).rgb;
-		diffIndirect += ssgi;
-		// out_color += diffIndirect * gbuffer.m_diffuse;
 	}
 }
 #pragma anki end

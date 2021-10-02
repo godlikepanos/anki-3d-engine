@@ -32,7 +32,6 @@
 #include <AnKi/Renderer/TemporalAA.h>
 #include <AnKi/Renderer/UiStage.h>
 #include <AnKi/Renderer/Ssr.h>
-#include <AnKi/Renderer/Ssgi.h>
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
 #include <AnKi/Renderer/GlobalIllumination.h>
 #include <AnKi/Renderer/GenericCompute.h>
@@ -184,9 +183,6 @@ Error Renderer::initInternal(const ConfigSet& config)
 
 	m_ssr.reset(m_alloc.newInstance<Ssr>(this));
 	ANKI_CHECK(m_ssr->init(config));
-
-	m_ssgi.reset(m_alloc.newInstance<Ssgi>(this));
-	ANKI_CHECK(m_ssgi->init(config));
 
 	m_tonemapping.reset(getAllocator().newInstance<Tonemapping>(this));
 	ANKI_CHECK(m_tonemapping->init(config));
@@ -367,7 +363,6 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_ssao->populateRenderGraph(ctx);
 	m_lensFlare->populateRenderGraph(ctx);
 	m_ssr->populateRenderGraph(ctx);
-	m_ssgi->populateRenderGraph(ctx);
 	m_indirectDiffuse->populateRenderGraph(ctx);
 	m_lightShading->populateRenderGraph(ctx);
 	m_temporalAA->populateRenderGraph(ctx);
