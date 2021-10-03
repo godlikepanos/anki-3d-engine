@@ -1,0 +1,58 @@
+// Copyright (C) 2009-2021, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki start vert
+#include <AnKi/Shaders/QuadVert.glsl>
+#pragma anki end
+
+#pragma anki start frag
+#include <AnKi/Shaders/BilateralFilter.glsl>
+
+layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
+layout(set = 0, binding = 1) uniform sampler u_linearAnyClampSampler;
+layout(set = 0, binding = 2) uniform texture2D u_quarterDiffuseIndirectTex;
+layout(set = 0, binding = 3) uniform texture2D u_quarterDepthTex;
+layout(set = 0, binding = 4) uniform texture2D u_fullDepthTex;
+layout(set = 0, binding = 5) uniform texture2D u_gbuffer0Tex;
+
+layout(push_constant, std430) uniform b_pc
+{
+	Vec2 u_quadTexelSize;
+	Vec2 u_padding;
+};
+
+layout(location = 0) in Vec2 in_uv;
+layout(location = 0) out Vec3 out_color;
+
+void main()
+{
+	// Reference
+	const F32 depthCenter = textureLod(u_fullDepthTex, u_linearAnyClampSampler, in_uv, 0.0).x;
+
+	// Do a bilateral upscale
+	out_color = Vec3(0.0);
+	const F32 radius = 1.0;
+	F32 sumWeight = EPSILON;
+	for(F32 x = -radius; x <= radius; x += 1.0)
+	{
+		for(F32 y = -radius; y <= radius; y += 1.0)
+		{
+			const Vec2 sampleUv = in_uv + Vec2(x, y) * u_quadTexelSize;
+			const F32 depthTap = textureLod(u_quarterDepthTex, u_linearAnyClampSampler, sampleUv, 0.0).x;
+
+			const F32 w = calculateBilateralWeightDepth(depthCenter, depthTap, 1.0);
+			sumWeight += w;
+
+			const Vec3 colorTap = textureLod(u_quarterDiffuseIndirectTex, u_nearestAnyClampSampler, sampleUv, 0.0).xyz;
+			out_color += colorTap * w;
+		}
+	}
+
+	// Modulate
+	out_color /= sumWeight;
+	const Vec3 albedo = textureLod(u_gbuffer0Tex, u_linearAnyClampSampler, in_uv, 0.0).xyz;
+	out_color *= albedo;
+}
+#pragma anki end
