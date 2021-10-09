@@ -182,7 +182,13 @@ struct CommonMatrices
 	/// using the current frame's jitter matrix.
 	Mat4 m_reprojection ANKI_CPP_CODE(= Mat4::getIdentity());
 
-	Vec4 m_unprojectionParameters ANKI_CPP_CODE(= Vec4(0.0f)); ///< To unproject to view space. Jitter not considered.
+	/// To unproject to view space. Jitter not considered.
+	/// @code
+	/// const F32 z = m_unprojectionParameters.z / (m_unprojectionParameters.w + depth);
+	/// const Vec2 xy = ndc * m_unprojectionParameters.xy * z;
+	/// pos = Vec3(xy, z);
+	/// @endcode
+	Vec4 m_unprojectionParameters ANKI_CPP_CODE(= Vec4(0.0f));
 };
 const U32 _ANKI_SIZEOF_CommonMatrices =
 	12u * ANKI_SIZEOF(Mat4) + ANKI_SIZEOF(Vec4) + ANKI_SIZEOF(Mat3) + ANKI_SIZEOF(F32) * 3u;

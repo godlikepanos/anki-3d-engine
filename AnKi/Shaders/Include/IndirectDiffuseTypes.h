@@ -11,11 +11,15 @@ ANKI_BEGIN_NAMESPACE
 
 struct IndirectDiffuseUniforms
 {
-	UVec2 m_depthBufferSize;
 	UVec2 m_viewportSize;
 	Vec2 m_viewportSizef;
-	U32 m_maxSteps;
-	U32 m_stepIncrement;
+	Vec4 m_projectionMat;
+	F32 m_radius; ///< In meters.
+	U32 m_sampleCount;
+	F32 m_sampleCountf;
+	F32 m_ssaoBias;
+	F32 m_ssaoStrength;
+	F32 m_padding[3u];
 };
 
 struct IndirectDiffuseDenoiseUniforms
@@ -23,9 +27,8 @@ struct IndirectDiffuseDenoiseUniforms
 	Mat4 m_invertedViewProjectionJitterMat;
 	UVec2 m_viewportSize;
 	Vec2 m_viewportSizef;
-	F32 m_minSampleCount;
-	F32 m_maxSampleCount;
-	F32 m_padding[2u];
+	F32 m_sampleCountDiv2;
+	F32 m_padding[3u];
 };
 
 ANKI_END_NAMESPACE

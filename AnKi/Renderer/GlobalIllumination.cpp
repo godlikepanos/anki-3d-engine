@@ -484,7 +484,7 @@ void GlobalIllumination::prepareProbes(InternalContext& giCtx)
 		const Bool shouldInitTextures = !entry.m_volumeTex.isCreated() || entry.m_volumeSize != probe.m_cellCounts;
 		if(shouldInitTextures)
 		{
-			TextureInitInfo texInit;
+			TextureInitInfo texInit("GiProbeVolume");
 			texInit.m_type = TextureType::_3D;
 			texInit.m_format = Format::B10G11R11_UFLOAT_PACK32;
 			texInit.m_width = probe.m_cellCounts.x() * 6;

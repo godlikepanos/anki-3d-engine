@@ -45,7 +45,6 @@ public:
 
 private:
 	Array<TexturePtr, 2> m_rts;
-	Array<TexturePtr, 2> m_momentsAndHistoryLengthRts;
 	Bool m_rtsImportedOnce = false;
 
 	static constexpr U32 READ = 0;
@@ -56,9 +55,10 @@ private:
 	public:
 		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
-		U32 m_maxSteps = 32;
-		U32 m_stepIncrement = 16;
-		U32 m_depthLod = 0;
+		F32 m_radius;
+		U32 m_sampleCount = 8.0f;
+		F32 m_ssaoStrength = 2.5f;
+		F32 m_ssaoBias = -0.1f;
 	} m_main;
 
 	class
@@ -66,15 +66,13 @@ private:
 	public:
 		ShaderProgramResourcePtr m_prog;
 		Array<ShaderProgramPtr, 2> m_grProgs;
-		F32 m_minSampleCount = 1.0f;
-		F32 m_maxSampleCount = 1.0f;
+		F32 m_sampleCount = 1.0f;
 	} m_denoise;
 
 	class
 	{
 	public:
 		Array<RenderTargetHandle, 2> m_mainRtHandles;
-		Array<RenderTargetHandle, 2> m_momentsAndHistoryLengthHandles;
 	} m_runCtx;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);

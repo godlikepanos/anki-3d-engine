@@ -20,7 +20,6 @@
 #include <AnKi/Renderer/LightShading.h>
 #include <AnKi/Renderer/ShadowMapping.h>
 #include <AnKi/Renderer/FinalComposite.h>
-#include <AnKi/Renderer/Ssao.h>
 #include <AnKi/Renderer/Bloom.h>
 #include <AnKi/Renderer/Tonemapping.h>
 #include <AnKi/Renderer/ForwardShading.h>
@@ -116,7 +115,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 	}
 
 	{
-		TextureInitInfo texinit;
+		TextureInitInfo texinit("RendererDummy");
 		texinit.m_width = texinit.m_height = 4;
 		texinit.m_usage = TextureUsageBit::ALL_SAMPLED;
 		texinit.m_format = Format::R8G8B8A8_UNORM;
@@ -174,9 +173,6 @@ Error Renderer::initInternal(const ConfigSet& config)
 
 	m_lensFlare.reset(m_alloc.newInstance<LensFlare>(this));
 	ANKI_CHECK(m_lensFlare->init(config));
-
-	m_ssao.reset(m_alloc.newInstance<Ssao>(this));
-	ANKI_CHECK(m_ssao->init(config));
 
 	m_downscaleBlur.reset(getAllocator().newInstance<DownscaleBlur>(this));
 	ANKI_CHECK(m_downscaleBlur->init(config));
@@ -360,7 +356,6 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 		m_shadowmapsResolve->populateRenderGraph(ctx);
 	}
 	m_volumetricFog->populateRenderGraph(ctx);
-	m_ssao->populateRenderGraph(ctx);
 	m_lensFlare->populateRenderGraph(ctx);
 	m_ssr->populateRenderGraph(ctx);
 	m_indirectDiffuse->populateRenderGraph(ctx);

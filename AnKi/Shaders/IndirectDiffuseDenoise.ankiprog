@@ -19,8 +19,7 @@ layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 1) uniform texture2D u_toDenoiseTex;
 layout(set = 0, binding = 2) uniform texture2D u_depthTex;
 layout(set = 0, binding = 3) uniform texture2D u_gbuffer2Tex;
-layout(set = 0, binding = 4) uniform texture2D u_momentsAndHistoryLengthTex;
-layout(set = 0, binding = 5) writeonly uniform image2D u_outImg;
+layout(set = 0, binding = 4) writeonly uniform image2D u_outImg;
 
 layout(push_constant, std430, row_major) uniform b_pc
 {
@@ -32,29 +31,6 @@ Vec3 unproject(Vec2 ndc, F32 depth)
 	const Vec4 worldPos4 = u_unis.m_invertedViewProjectionJitterMat * Vec4(ndc, depth, 1.0);
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 	return worldPos;
-}
-
-F32 computeSpatialVariance(Vec2 uv)
-{
-	const F32 radius = 2.0;
-	const F32 step = 1.5;
-	const Vec2 texelSize = 1.0 / u_unis.m_viewportSizef;
-	Vec2 sumMoments = Vec2(0.0);
-
-	for(F32 i = -radius * step; i <= radius * step; i += step)
-	{
-		Vec2 newUv = uv;
-#if BLUR_ORIENTATION == 0
-		newUv.x += i * texelSize.x;
-#else
-		newUv.y += i * texelSize.y;
-#endif
-		sumMoments += textureLod(u_momentsAndHistoryLengthTex, u_linearAnyClampSampler, newUv, 0.0).xy;
-	}
-
-	sumMoments *= 1.0 / (radius * 2.0 + 1.0);
-
-	return abs(sumMoments.y - sumMoments.x * sumMoments.x);
 }
 
 void main()
@@ -77,44 +53,11 @@ void main()
 	const Vec3 positionCenter = unproject(UV_TO_NDC(uv), depthCenter);
 	const Vec3 normalCenter = readNormalFromGBuffer(u_gbuffer2Tex, u_linearAnyClampSampler, uv);
 
-	// Decide the amount of blurring
-	const F32 historyLength = textureLod(u_momentsAndHistoryLengthTex, u_linearAnyClampSampler, uv, 0.0).z;
-
-	const F32 stableFrameCount = 4.0;
-	F32 sampleCount;
-	if(historyLength < stableFrameCount)
-	{
-		// Worst case
-		sampleCount = u_unis.m_maxSampleCount;
-	}
-	else
-	{
-		const F32 varianceCenter = computeSpatialVariance(uv);
-
-		if(historyLength > stableFrameCount && varianceCenter < 0.01)
-		{
-			// Best case
-			sampleCount = u_unis.m_minSampleCount;
-		}
-		else
-		{
-			// Every other case
-
-			F32 blur = varianceCenter * 10.0;
-			blur = min(1.0, blur);
-
-			sampleCount = mix(u_unis.m_minSampleCount, u_unis.m_maxSampleCount, blur);
-		}
-	}
-
-	sampleCount = sampleCount / 2.0;
-	sampleCount = floor(sampleCount);
-
 	// Sample
 	F32 weight = EPSILON;
 	Vec3 color = Vec3(0.0);
 
-	for(F32 i = -sampleCount; i <= sampleCount; i += 1.0)
+	for(F32 i = -u_unis.m_sampleCountDiv2; i <= u_unis.m_sampleCountDiv2; i += 1.0)
 	{
 		const Vec2 texelSize = 1.0 / u_unis.m_viewportSizef;
 #if BLUR_ORIENTATION == 0
@@ -138,6 +81,8 @@ void main()
 	// Normalize and store
 	color /= weight;
 	imageStore(u_outImg, IVec2(gl_GlobalInvocationID.xy), Vec4(color, 0.0));
+	// imageStore(u_outImg, IVec2(gl_GlobalInvocationID.xy), textureLod(u_toDenoiseTex, u_linearAnyClampSampler, uv,
+	// 0.0));
 }
 
 #pragma anki end

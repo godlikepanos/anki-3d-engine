@@ -22,7 +22,6 @@
 #include <AnKi/Renderer/Ssr.h>
 #include <AnKi/Renderer/ProbeReflections.h>
 #include <AnKi/Renderer/Dbg.h>
-#include <AnKi/Renderer/Ssao.h>
 #include <AnKi/Renderer/Drawer.h>
 #include <AnKi/Renderer/UiStage.h>
 #include <AnKi/Renderer/Tonemapping.h>
