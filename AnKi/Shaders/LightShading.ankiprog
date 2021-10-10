@@ -23,22 +23,21 @@ ANKI_SPECIALIZATION_CONSTANT_U32(IR_MIPMAP_COUNT, 4u);
 #define CLUSTERED_SHADING_UNIFORMS_BINDING 0
 #define CLUSTERED_SHADING_LIGHTS_BINDING 1
 #define CLUSTERED_SHADING_REFLECTIONS_BINDING 4
-#define CLUSTERED_SHADING_GI_BINDING 7
-#define CLUSTERED_SHADING_CLUSTERS_BINDING 9
+#define CLUSTERED_SHADING_CLUSTERS_BINDING 7
 #include <AnKi/Shaders/ClusteredShadingCommon.glsl>
 
-layout(set = 0, binding = 10) uniform sampler u_nearestAnyClampSampler;
-layout(set = 0, binding = 11) uniform sampler u_trilinearClampSampler;
+layout(set = 0, binding = 8) uniform sampler u_nearestAnyClampSampler;
+layout(set = 0, binding = 9) uniform sampler u_trilinearClampSampler;
 
-layout(set = 0, binding = 12) uniform texture2D u_msRt0;
-layout(set = 0, binding = 13) uniform texture2D u_msRt1;
-layout(set = 0, binding = 14) uniform texture2D u_msRt2;
-layout(set = 0, binding = 15) uniform texture2D u_msDepthRt;
-layout(set = 0, binding = 16) uniform texture2D u_ssrRt;
+layout(set = 0, binding = 10) uniform texture2D u_msRt0;
+layout(set = 0, binding = 11) uniform texture2D u_msRt1;
+layout(set = 0, binding = 12) uniform texture2D u_msRt2;
+layout(set = 0, binding = 13) uniform texture2D u_msDepthRt;
+layout(set = 0, binding = 14) uniform texture2D u_ssrRt;
 #if USE_SHADOW_LAYERS
-layout(set = 0, binding = 17) uniform utexture2D u_shadowLayersTex;
+layout(set = 0, binding = 15) uniform utexture2D u_shadowLayersTex;
 #else
-layout(set = 0, binding = 18) uniform texture2D u_resolvedSm;
+layout(set = 0, binding = 16) uniform texture2D u_resolvedSm;
 #endif
 
 layout(location = 0) in Vec2 in_uv;

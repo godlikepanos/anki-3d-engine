@@ -13,7 +13,6 @@
 #include <AnKi/Renderer/VolumetricFog.h>
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/Ssr.h>
-#include <AnKi/Renderer/GlobalIllumination.h>
 #include <AnKi/Renderer/ShadowmapsResolve.h>
 #include <AnKi/Renderer/RtShadows.h>
 #include <AnKi/Renderer/IndirectDiffuse.h>
@@ -141,27 +140,24 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		rgraphCtx.bindColorTexture(0, 5, m_r->getProbeReflections().getReflectionRt());
 		cmdb->bindTexture(0, 6, m_r->getProbeReflections().getIntegrationLut());
 
-		m_r->getGlobalIllumination().bindVolumeTextures(ctx, rgraphCtx, 0, 7);
-		bindUniforms(cmdb, 0, 8, binning.m_globalIlluminationProbesToken);
+		bindStorage(cmdb, 0, 7, binning.m_clustersToken);
 
-		bindStorage(cmdb, 0, 9, binning.m_clustersToken);
-
-		cmdb->bindSampler(0, 10, m_r->getSamplers().m_nearestNearestClamp);
-		cmdb->bindSampler(0, 11, m_r->getSamplers().m_trilinearClamp);
-		rgraphCtx.bindColorTexture(0, 12, m_r->getGBuffer().getColorRt(0));
-		rgraphCtx.bindColorTexture(0, 13, m_r->getGBuffer().getColorRt(1));
-		rgraphCtx.bindColorTexture(0, 14, m_r->getGBuffer().getColorRt(2));
-		rgraphCtx.bindTexture(0, 15, m_r->getGBuffer().getDepthRt(),
+		cmdb->bindSampler(0, 8, m_r->getSamplers().m_nearestNearestClamp);
+		cmdb->bindSampler(0, 9, m_r->getSamplers().m_trilinearClamp);
+		rgraphCtx.bindColorTexture(0, 10, m_r->getGBuffer().getColorRt(0));
+		rgraphCtx.bindColorTexture(0, 11, m_r->getGBuffer().getColorRt(1));
+		rgraphCtx.bindColorTexture(0, 12, m_r->getGBuffer().getColorRt(2));
+		rgraphCtx.bindTexture(0, 13, m_r->getGBuffer().getDepthRt(),
 							  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
-		rgraphCtx.bindColorTexture(0, 16, m_r->getSsr().getRt());
+		rgraphCtx.bindColorTexture(0, 14, m_r->getSsr().getRt());
 
 		if(m_r->getRtShadowsEnabled())
 		{
-			rgraphCtx.bindColorTexture(0, 17, m_r->getRtShadows().getRt());
+			rgraphCtx.bindColorTexture(0, 15, m_r->getRtShadows().getRt());
 		}
 		else
 		{
-			rgraphCtx.bindColorTexture(0, 18, m_r->getShadowmapsResolve().getRt());
+			rgraphCtx.bindColorTexture(0, 16, m_r->getShadowmapsResolve().getRt());
 		}
 
 		// Draw
@@ -271,8 +267,6 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	// Refl & indirect
 	pass.newDependency(RenderPassDependency(m_r->getSsr().getRt(), readUsage));
 	pass.newDependency(RenderPassDependency(m_r->getProbeReflections().getReflectionRt(), readUsage));
-
-	m_r->getGlobalIllumination().setRenderGraphDependencies(ctx, pass, readUsage);
 
 	// Apply indirect
 	pass.newDependency(RenderPassDependency(m_r->getIndirectDiffuse().getRt(), readUsage));

@@ -32,7 +32,7 @@
 #include <AnKi/Renderer/UiStage.h>
 #include <AnKi/Renderer/Ssr.h>
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
-#include <AnKi/Renderer/GlobalIllumination.h>
+#include <AnKi/Renderer/IndirectDiffuseProbes.h>
 #include <AnKi/Renderer/GenericCompute.h>
 #include <AnKi/Renderer/ShadowmapsResolve.h>
 #include <AnKi/Renderer/RtShadows.h>
@@ -144,8 +144,8 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_volumetricLightingAccumulation.reset(m_alloc.newInstance<VolumetricLightingAccumulation>(this));
 	ANKI_CHECK(m_volumetricLightingAccumulation->init(config));
 
-	m_globalIllumination.reset(m_alloc.newInstance<GlobalIllumination>(this));
-	ANKI_CHECK(m_globalIllumination->init(config));
+	m_indirectDiffuseProbes.reset(m_alloc.newInstance<IndirectDiffuseProbes>(this));
+	ANKI_CHECK(m_indirectDiffuseProbes->init(config));
 
 	m_probeReflections.reset(m_alloc.newInstance<ProbeReflections>(this));
 	ANKI_CHECK(m_probeReflections->init(config));
@@ -340,7 +340,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 		m_accelerationStructureBuilder->populateRenderGraph(ctx);
 	}
 	m_shadowMapping->populateRenderGraph(ctx);
-	m_globalIllumination->populateRenderGraph(ctx);
+	m_indirectDiffuseProbes->populateRenderGraph(ctx);
 	m_probeReflections->populateRenderGraph(ctx);
 	m_volumetricLightingAccumulation->populateRenderGraph(ctx);
 	m_gbuffer->populateRenderGraph(ctx);

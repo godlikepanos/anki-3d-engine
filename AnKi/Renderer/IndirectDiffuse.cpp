@@ -9,7 +9,7 @@
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/DownscaleBlur.h>
 #include <AnKi/Renderer/MotionVectors.h>
-#include <AnKi/Renderer/GlobalIllumination.h>
+#include <AnKi/Renderer/IndirectDiffuseProbes.h>
 #include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Shaders/Include/IndirectDiffuseTypes.h>
 
@@ -105,7 +105,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			RenderPassDependency(m_runCtx.m_mainRtHandles[WRITE], TextureUsageBit::IMAGE_COMPUTE_WRITE));
 
 		const TextureUsageBit readUsage = TextureUsageBit::SAMPLED_COMPUTE;
-		m_r->getGlobalIllumination().setRenderGraphDependencies(ctx, rpass, readUsage);
+		m_r->getIndirectDiffuseProbes().setRenderGraphDependencies(ctx, rpass, readUsage);
 		rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(2), readUsage));
 		TextureSubresourceInfo hizSubresource;
 		hizSubresource.m_mipmapCount = 1;
@@ -121,7 +121,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 
 			const ClusteredShadingContext& binning = ctx.m_clusteredShading;
 			bindUniforms(cmdb, 0, 0, binning.m_clusteredShadingUniformsToken);
-			m_r->getGlobalIllumination().bindVolumeTextures(ctx, rgraphCtx, 0, 1);
+			m_r->getIndirectDiffuseProbes().bindVolumeTextures(ctx, rgraphCtx, 0, 1);
 			bindUniforms(cmdb, 0, 2, binning.m_globalIlluminationProbesToken);
 			bindStorage(cmdb, 0, 3, binning.m_clustersToken);
 

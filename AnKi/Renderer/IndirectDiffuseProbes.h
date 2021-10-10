@@ -19,16 +19,16 @@ namespace anki
 /// Ambient global illumination passes.
 ///
 /// It builds a volume clipmap with ambient GI information.
-class GlobalIllumination : public RendererObject
+class IndirectDiffuseProbes : public RendererObject
 {
 public:
-	GlobalIllumination(Renderer* r)
+	IndirectDiffuseProbes(Renderer* r)
 		: RendererObject(r)
 		, m_lightShading(r)
 	{
 	}
 
-	~GlobalIllumination();
+	~IndirectDiffuseProbes();
 
 	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
 

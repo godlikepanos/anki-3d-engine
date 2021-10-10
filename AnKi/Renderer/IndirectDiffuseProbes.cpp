@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Renderer/GlobalIllumination.h>
+#include <AnKi/Renderer/IndirectDiffuseProbes.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Core/ConfigSet.h>
@@ -30,10 +30,10 @@ static Vec3 computeProbeCellPosition(U32 cellIdx, const GlobalIlluminationProbeQ
 	return cellPos;
 }
 
-class GlobalIllumination::InternalContext
+class IndirectDiffuseProbes::InternalContext
 {
 public:
-	GlobalIllumination* m_gi ANKI_DEBUG_CODE(= numberToPtr<GlobalIllumination*>(1));
+	IndirectDiffuseProbes* m_gi ANKI_DEBUG_CODE(= numberToPtr<IndirectDiffuseProbes*>(1));
 	RenderingContext* m_ctx ANKI_DEBUG_CODE(= numberToPtr<RenderingContext*>(1));
 
 	GlobalIlluminationProbeQueueElement*
@@ -55,14 +55,14 @@ public:
 	}
 };
 
-GlobalIllumination::~GlobalIllumination()
+IndirectDiffuseProbes::~IndirectDiffuseProbes()
 {
 	m_cacheEntries.destroy(getAllocator());
 	m_probeUuidToCacheEntryIdx.destroy(getAllocator());
 }
 
 const RenderTargetHandle&
-GlobalIllumination::getVolumeRenderTarget(const GlobalIlluminationProbeQueueElement& probe) const
+IndirectDiffuseProbes::getVolumeRenderTarget(const GlobalIlluminationProbeQueueElement& probe) const
 {
 	ANKI_ASSERT(m_giCtx);
 	ANKI_ASSERT(&probe >= &m_giCtx->m_ctx->m_renderQueue->m_giProbes.getFront()
@@ -71,8 +71,8 @@ GlobalIllumination::getVolumeRenderTarget(const GlobalIlluminationProbeQueueElem
 	return m_giCtx->m_irradianceProbeRts[idx];
 }
 
-void GlobalIllumination::setRenderGraphDependencies(const RenderingContext& ctx, RenderPassDescriptionBase& pass,
-													TextureUsageBit usage) const
+void IndirectDiffuseProbes::setRenderGraphDependencies(const RenderingContext& ctx, RenderPassDescriptionBase& pass,
+													   TextureUsageBit usage) const
 {
 	for(U32 idx = 0; idx < ctx.m_renderQueue->m_giProbes.getSize(); ++idx)
 	{
@@ -80,8 +80,8 @@ void GlobalIllumination::setRenderGraphDependencies(const RenderingContext& ctx,
 	}
 }
 
-void GlobalIllumination::bindVolumeTextures(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx, U32 set,
-											U32 binding) const
+void IndirectDiffuseProbes::bindVolumeTextures(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx, U32 set,
+											   U32 binding) const
 {
 	for(U32 idx = 0; idx < MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES; ++idx)
 	{
@@ -96,7 +96,7 @@ void GlobalIllumination::bindVolumeTextures(const RenderingContext& ctx, RenderP
 	}
 }
 
-Error GlobalIllumination::init(const ConfigSet& cfg)
+Error IndirectDiffuseProbes::init(const ConfigSet& cfg)
 {
 	ANKI_R_LOGI("Initializing global illumination");
 
@@ -109,7 +109,7 @@ Error GlobalIllumination::init(const ConfigSet& cfg)
 	return err;
 }
 
-Error GlobalIllumination::initInternal(const ConfigSet& cfg)
+Error IndirectDiffuseProbes::initInternal(const ConfigSet& cfg)
 {
 	m_tileSize = cfg.getNumberU32("r_giTileResolution");
 	m_cacheEntries.create(getAllocator(), cfg.getNumberU32("r_giMaxCachedProbes"));
@@ -125,7 +125,7 @@ Error GlobalIllumination::initInternal(const ConfigSet& cfg)
 	return Error::NONE;
 }
 
-Error GlobalIllumination::initGBuffer(const ConfigSet& cfg)
+Error IndirectDiffuseProbes::initGBuffer(const ConfigSet& cfg)
 {
 	// Create RT descriptions
 	{
@@ -167,7 +167,7 @@ Error GlobalIllumination::initGBuffer(const ConfigSet& cfg)
 	return Error::NONE;
 }
 
-Error GlobalIllumination::initShadowMapping(const ConfigSet& cfg)
+Error IndirectDiffuseProbes::initShadowMapping(const ConfigSet& cfg)
 {
 	const U32 resolution = cfg.getNumberU32("r_giShadowMapResolution");
 	ANKI_ASSERT(resolution > 8);
@@ -197,7 +197,7 @@ Error GlobalIllumination::initShadowMapping(const ConfigSet& cfg)
 	return Error::NONE;
 }
 
-Error GlobalIllumination::initLightShading(const ConfigSet& cfg)
+Error IndirectDiffuseProbes::initLightShading(const ConfigSet& cfg)
 {
 	// Init RT descr
 	{
@@ -219,7 +219,7 @@ Error GlobalIllumination::initLightShading(const ConfigSet& cfg)
 	return Error::NONE;
 }
 
-Error GlobalIllumination::initIrradiance(const ConfigSet& cfg)
+Error IndirectDiffuseProbes::initIrradiance(const ConfigSet& cfg)
 {
 	ANKI_CHECK(m_r->getResourceManager().loadResource("Shaders/IrradianceDice.ankiprog", m_irradiance.m_prog));
 
@@ -236,7 +236,7 @@ Error GlobalIllumination::initIrradiance(const ConfigSet& cfg)
 	return Error::NONE;
 }
 
-void GlobalIllumination::populateRenderGraph(RenderingContext& rctx)
+void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(R_GI);
 
@@ -382,7 +382,7 @@ void GlobalIllumination::populateRenderGraph(RenderingContext& rctx)
 	}
 }
 
-void GlobalIllumination::prepareProbes(InternalContext& giCtx)
+void IndirectDiffuseProbes::prepareProbes(InternalContext& giCtx)
 {
 	RenderingContext& ctx = *giCtx.m_ctx;
 	giCtx.m_probeToUpdateThisFrame = nullptr;
@@ -545,7 +545,7 @@ void GlobalIllumination::prepareProbes(InternalContext& giCtx)
 	}
 }
 
-void GlobalIllumination::runGBufferInThread(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx) const
+void IndirectDiffuseProbes::runGBufferInThread(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx) const
 {
 	ANKI_ASSERT(giCtx.m_probeToUpdateThisFrame);
 	ANKI_TRACE_SCOPED_EVENT(R_GI);
@@ -590,7 +590,7 @@ void GlobalIllumination::runGBufferInThread(RenderPassWorkContext& rgraphCtx, In
 	// It's secondary, no need to restore the state
 }
 
-void GlobalIllumination::runShadowmappingInThread(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx) const
+void IndirectDiffuseProbes::runShadowmappingInThread(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx) const
 {
 	ANKI_ASSERT(giCtx.m_probeToUpdateThisFrame);
 	ANKI_TRACE_SCOPED_EVENT(R_GI);
@@ -639,7 +639,7 @@ void GlobalIllumination::runShadowmappingInThread(RenderPassWorkContext& rgraphC
 	// It's secondary, no need to restore the state
 }
 
-void GlobalIllumination::runLightShading(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx)
+void IndirectDiffuseProbes::runLightShading(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx)
 {
 	ANKI_TRACE_SCOPED_EVENT(R_GI);
 
@@ -699,7 +699,7 @@ void GlobalIllumination::runLightShading(RenderPassWorkContext& rgraphCtx, Inter
 	}
 }
 
-void GlobalIllumination::runIrradiance(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx)
+void IndirectDiffuseProbes::runIrradiance(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx)
 {
 	ANKI_TRACE_SCOPED_EVENT(R_GI);
 
