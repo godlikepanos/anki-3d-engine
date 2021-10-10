@@ -158,7 +158,6 @@ void main()
 			// Zero or more than one probes, do a slow path that blends them together
 
 			F32 totalBlendWeight = EPSILON;
-			Vec3 probeColor = Vec3(0.0);
 
 			// Loop probes
 			ANKI_LOOP while(cluster.m_giProbesMask != 0u)
