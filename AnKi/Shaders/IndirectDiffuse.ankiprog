@@ -137,7 +137,7 @@ void main()
 		Vec3 probeColor = Vec3(0.0);
 
 		// Get the cluster
-		Cluster cluster = getClusterFragCoord(Vec3(fragCoord, depth));
+		Cluster cluster = getClusterFragCoord(Vec3(fragCoord * 2.0, depth));
 
 		// Get world position
 		const Vec4 worldPos4 = u_clusteredShading.m_matrices.m_invertedViewProjectionJitter * Vec4(ndc, depth, 1.0);
