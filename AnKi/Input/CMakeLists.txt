@@ -1,4 +1,4 @@
-set(SOURCES Input.cpp)
+set(SOURCES "")
 
 if(SDL)
 	set(SOURCES ${SOURCES} InputSdl.cpp)

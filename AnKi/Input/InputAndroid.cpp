@@ -3,28 +3,49 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Input/Input.h>
+#include <AnKi/Input/InputAndroid.h>
 #include <AnKi/Core/NativeWindowAndroid.h>
 #include <AnKi/Util/Logger.h>
-#include <AnKi/Core/App.h>
-#if ANKI_OS_ANDROID
-#	include <android_native_app_glue.h>
-#endif
 
 namespace anki
 {
 
-static void handleAndroidEvents(android_app* app, int32_t cmd)
+Error Input::newInstance(AllocAlignedCallback allocCallback, void* allocCallbackUserData, NativeWindow* nativeWindow,
+						 Input*& input)
 {
-	Input* input = static_cast<Input*>(app->userData);
-	ANKI_ASSERT(input != nullptr);
+	ANKI_ASSERT(allocCallback && nativeWindow);
 
-	switch(cmd)
+	HeapAllocator<U8> alloc(allocCallback, allocCallbackUserData);
+	InputAndroid* ainput =
+		static_cast<InputAndroid*>(alloc.getMemoryPool().allocate(sizeof(InputAndroid), alignof(InputAndroid)));
+	::new(ainput) InputAndroid();
+
+	ainput->m_alloc = alloc;
+	ainput->m_nativeWindow = nativeWindow;
+
+	const Error err = ainput->init();
+	if(err)
 	{
-	case APP_CMD_TERM_WINDOW:
-	case APP_CMD_LOST_FOCUS:
-		input->addEvent(InputEvent::WINDOW_CLOSED);
-		break;
+		ainput->~InputAndroid();
+		alloc.getMemoryPool().free(ainput);
+		input = nullptr;
+		return err;
+	}
+	else
+	{
+		input = ainput;
+		return Error::NONE;
+	}
+}
+
+void Input::deleteInstance(Input* input)
+{
+	if(input)
+	{
+		InputAndroid* self = static_cast<InputAndroid*>(input);
+		HeapAllocator<U8> alloc = self->m_alloc;
+		self->~InputAndroid();
+		alloc.getMemoryPool().free(self);
 	}
 }
 
@@ -45,20 +66,6 @@ Error Input::handleEvents()
 	return Error::NONE;
 }
 
-Error Input::initInternal(NativeWindow* window)
-{
-	ANKI_ASSERT(window);
-	g_androidApp->userData = this;
-	g_androidApp->onAppCmd = handleAndroidEvents;
-	m_nativeWindow = window;
-
-	return Error::NONE;
-}
-
-void Input::destroy()
-{
-}
-
 void Input::moveCursor(const Vec2& posNdc)
 {
 	m_mousePosNdc = posNdc;
@@ -69,6 +76,98 @@ void Input::moveCursor(const Vec2& posNdc)
 void Input::hideCursor(Bool hide)
 {
 	// do nothing
+}
+
+Error InputAndroid::init()
+{
+	ANKI_ASSERT(m_nativeWindow);
+	g_androidApp->userData = this;
+
+	g_androidApp->onAppCmd = [](android_app* app, int32_t cmd) {
+		InputAndroid* self = static_cast<InputAndroid*>(app->userData);
+		self->handleAndroidEvents(app, cmd);
+	};
+
+	g_androidApp->onInputEvent = [](android_app* app, AInputEvent* event) -> int {
+		InputAndroid* self = static_cast<InputAndroid*>(app->userData);
+		return self->handleAndroidInput(app, event);
+	};
+
+	return Error::NONE;
+}
+
+void InputAndroid::handleAndroidEvents(android_app* app, int32_t cmd)
+{
+	switch(cmd)
+	{
+	case APP_CMD_TERM_WINDOW:
+	case APP_CMD_LOST_FOCUS:
+		addEvent(InputEvent::WINDOW_CLOSED);
+		break;
+	}
+}
+
+int InputAndroid::handleAndroidInput(android_app* app, AInputEvent* event)
+{
+	const I32 type = AInputEvent_getType(event);
+	const I32 source = AInputEvent_getSource(event);
+	I32 handled = 0;
+
+	switch(type)
+	{
+	case AINPUT_EVENT_TYPE_KEY:
+		// TODO
+		break;
+
+	case AINPUT_EVENT_TYPE_MOTION:
+	{
+		const I32 pointer = AMotionEvent_getAction(event);
+		const I32 action = pointer & AMOTION_EVENT_ACTION_MASK;
+		const I32 index =
+			(pointer & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
+
+		if(source & AINPUT_SOURCE_JOYSTICK)
+		{
+			// TODO
+		}
+		else if(source & AINPUT_SOURCE_TOUCHSCREEN)
+		{
+			switch(action)
+			{
+			case AMOTION_EVENT_ACTION_DOWN:
+			case AMOTION_EVENT_ACTION_POINTER_DOWN:
+			{
+				F32 x = AMotionEvent_getX(event, index);
+				F32 y = AMotionEvent_getY(event, index);
+				int id = AMotionEvent_getPointerId(event, index);
+
+				ANKI_LOGI("Pointer down %f %f %d", x, y, id);
+				break;
+			}
+
+			case AMOTION_EVENT_ACTION_MOVE:
+			{
+				break;
+			}
+
+			case AMOTION_EVENT_ACTION_UP:
+			case AMOTION_EVENT_ACTION_POINTER_UP:
+			{
+				break;
+			}
+
+			default:
+				break;
+			}
+		}
+		break;
+	}
+
+	default:
+		break;
+	}
+
+	return handled;
 }
 
 } // end namespace anki

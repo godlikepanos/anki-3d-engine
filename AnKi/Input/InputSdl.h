@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <AnKi/Input.h>
 #include <AnKi/Input/KeyCode.h>
 #include <SDL_keycode.h>
 #include <unordered_map>
@@ -13,17 +14,20 @@ namespace anki
 {
 
 /// SDL input implementation
-class InputImpl
+class InputSdl : public Input
 {
 public:
 	std::unordered_map<SDL_Keycode, KeyCode, std::hash<SDL_Keycode>, std::equal_to<SDL_Keycode>,
 					   HeapAllocator<std::pair<const SDL_Keycode, KeyCode>>>
 		m_sdlToAnki;
 
-	InputImpl(HeapAllocator<std::pair<const SDL_Keycode, KeyCode>>& alloc)
+	InputSdl(HeapAllocator<std::pair<const SDL_Keycode, KeyCode>> alloc)
 		: m_sdlToAnki(10, std::hash<SDL_Keycode>(), std::equal_to<SDL_Keycode>(), alloc)
 	{
 	}
+
+	Error init();
+	Error handleEventsInternal();
 };
 
 } // end namespace anki

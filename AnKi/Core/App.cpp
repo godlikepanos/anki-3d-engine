@@ -293,7 +293,7 @@ void App::cleanup()
 	m_threadHive = nullptr;
 	GrManager::deleteInstance(m_gr);
 	m_gr = nullptr;
-	m_heapAlloc.deleteInstance(m_input);
+	Input::deleteInstance(m_input);
 	m_input = nullptr;
 	m_heapAlloc.deleteInstance(m_window);
 	m_window = nullptr;
@@ -401,8 +401,7 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	//
 	// Input
 	//
-	m_input = m_heapAlloc.newInstance<Input>();
-	ANKI_CHECK(m_input->init(m_window));
+	ANKI_CHECK(Input::newInstance(m_allocCb, m_allocCbData, m_window, m_input));
 
 	//
 	// ThreadPool

@@ -265,8 +265,7 @@ static Input* input = nullptr;
 	cfg.set("gr_rayTracing", true); \
 	cfg.set("gr_debugMarkers", true); \
 	win = createWindow(cfg); \
-	input = new Input(); \
-	ANKI_TEST_EXPECT_NO_ERR(input->init(win)); \
+	ANKI_TEST_EXPECT_NO_ERR(Input::newInstance(allocAligned, nullptr, win, input)); \
 	gr = createGrManager(cfg, win); \
 	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(gr, cfg)); \
 	TransferGpuAllocator* transfAlloc = new TransferGpuAllocator(); \
@@ -281,7 +280,7 @@ static Input* input = nullptr;
 	delete transfAlloc; \
 	delete stagingMem; \
 	GrManager::deleteInstance(gr); \
-	delete input; \
+	Input::deleteInstance(input); \
 	delete win; \
 	win = nullptr; \
 	gr = nullptr; \

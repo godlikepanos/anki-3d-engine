@@ -31,22 +31,10 @@ enum class InputEvent : U8
 class Input
 {
 public:
-	Input()
-	{
-	}
+	static ANKI_USE_RESULT Error newInstance(AllocAlignedCallback allocCallback, void* allocCallbackUserData,
+											 NativeWindow* nativeWindow, Input*& input);
 
-	~Input()
-	{
-		destroy();
-		ANKI_ASSERT(m_impl == nullptr);
-		ANKI_ASSERT(m_nativeWindow == nullptr);
-	}
-
-	ANKI_USE_RESULT Error init(NativeWindow* nativeWindow)
-	{
-		reset();
-		return initInternal(nativeWindow);
-	}
+	static void deleteInstance(Input* input);
 
 	U32 getKey(KeyCode i) const
 	{
@@ -69,13 +57,24 @@ public:
 	}
 
 	/// Get the times an event was triggered and resets the counter
-	U getEvent(InputEvent eventId) const
+	U32 getEvent(InputEvent eventId) const
 	{
-		return m_events[static_cast<U>(eventId)];
+		return m_events[eventId];
 	}
 
 	/// Reset the keys and mouse buttons
-	void reset();
+	void reset()
+	{
+		zeroMemory(m_keys);
+		zeroMemory(m_mouseBtns);
+		m_mousePosNdc = Vec2(-1.0f);
+		m_mousePosWin = UVec2(0u);
+		zeroMemory(m_events);
+		zeroMemory(m_textInput);
+		zeroMemory(m_touchPointers);
+		zeroMemory(m_touchPointerPosNdc);
+		zeroMemory(m_touchPointerPosWin);
+	}
 
 	/// Populate the key and button with the new state
 	ANKI_USE_RESULT Error handleEvents();
@@ -96,7 +95,7 @@ public:
 	/// Add a new event
 	void addEvent(InputEvent eventId)
 	{
-		++m_events[static_cast<U>(eventId)];
+		++m_events[eventId];
 	}
 
 	template<typename TFunc>
@@ -117,38 +116,55 @@ public:
 		return &m_textInput[0];
 	}
 
-private:
-	InputImpl* m_impl = nullptr;
-	NativeWindow* m_nativeWindow = nullptr;
+	U32 getTouchPointer(TouchPointer p) const
+	{
+		return m_touchPointers[p];
+	}
 
-	/// @name Keys and btns
-	/// @{
+	Vec2 getTouchPointerNdcPosition(TouchPointer p) const
+	{
+		return m_touchPointerPosNdc[p];
+	}
+
+	UVec2 getTouchPointerWindowPosition(TouchPointer p) const
+	{
+		return m_touchPointerPosWin[p];
+	}
+
+protected:
+	NativeWindow* m_nativeWindow = nullptr;
+	HeapAllocator<U8> m_alloc;
 
 	/// Shows the current key state
 	/// - 0 times: unpressed
 	/// - 1 times: pressed once
 	/// - >1 times: Kept pressed 'n' times continuously
-	Array<U32, static_cast<U>(KeyCode::COUNT)> m_keys;
+	Array<U32, U(KeyCode::COUNT)> m_keys;
 
 	/// Mouse btns. Supporting 3 btns & wheel. @see keys
 	Array<U32, U(MouseButton::COUNT)> m_mouseBtns;
-	/// @}
+	Vec2 m_mousePosNdc;
+	UVec2 m_mousePosWin;
 
-	Vec2 m_mousePosNdc = Vec2(2.0); ///< The coords are in the NDC space
-	UVec2 m_mousePosWin = UVec2(0u);
+	Array<U32, U(TouchPointer::COUNT)> m_touchPointers;
+	Array<Vec2, U(TouchPointer::COUNT)> m_touchPointerPosNdc;
+	Array<UVec2, U(TouchPointer::COUNT)> m_touchPointerPosWin;
 
-	Array<U8, static_cast<U>(InputEvent::COUNT)> m_events;
+	Array<U8, U(InputEvent::COUNT)> m_events;
 
 	/// The keybord input as ascii.
-	Array<char, static_cast<U>(KeyCode::COUNT)> m_textInput;
+	Array<char, U(KeyCode::COUNT)> m_textInput;
 
 	Bool m_lockCurs = false;
 
-	/// Initialize the platform's input system
-	ANKI_USE_RESULT Error initInternal(NativeWindow* nativeWindow);
+	Input()
+	{
+		reset();
+	}
 
-	/// Destroy the platform specific input system
-	void destroy();
+	~Input()
+	{
+	}
 };
 
 } // end namespace anki

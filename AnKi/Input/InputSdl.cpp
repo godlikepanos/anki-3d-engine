@@ -32,18 +32,80 @@ static MouseButton sdlMouseButtonToAnKi(const U32 sdl)
 	return out;
 }
 
-Error Input::initInternal(NativeWindow* nativeWindow)
+Error Input::newInstance(AllocAlignedCallback allocCallback, void* allocCallbackUserData, NativeWindow* nativeWindow,
+						 Input*& input)
 {
-	ANKI_ASSERT(nativeWindow);
-	m_nativeWindow = nativeWindow;
+	ANKI_ASSERT(allocCallback && nativeWindow);
 
-	// Init native
-	HeapAllocator<std::pair<const SDL_Keycode, KeyCode>> alloc = m_nativeWindow->getAllocator();
+	HeapAllocator<U8> alloc(allocCallback, allocCallbackUserData);
+	InputSdl* sdlinput = static_cast<InputSdl*>(alloc.getMemoryPool().allocate(sizeof(InputSdl), alignof(InputSdl)));
+	::new(sdlinput) InputSdl(alloc);
 
-	m_impl = m_nativeWindow->getAllocator().newInstance<InputImpl>(alloc);
+	sdlinput->m_alloc = alloc;
+	sdlinput->m_nativeWindow = nativeWindow;
+
+	const Error err = sdlinput->init();
+	if(err)
+	{
+		sdlinput->~InputSdl();
+		alloc.getMemoryPool().free(sdlinput);
+		input = nullptr;
+		return err;
+	}
+	else
+	{
+		input = sdlinput;
+		return Error::NONE;
+	}
+}
+
+void Input::deleteInstance(Input* input)
+{
+	if(input)
+	{
+		InputSdl* self = static_cast<InputSdl*>(input);
+		HeapAllocator<U8> alloc = self->m_alloc;
+		self->~InputSdl();
+		alloc.getMemoryPool().free(self);
+	}
+}
+
+Error Input::handleEvents()
+{
+	InputSdl* self = static_cast<InputSdl*>(this);
+	return self->handleEventsInternal();
+}
+
+void Input::moveCursor(const Vec2& pos)
+{
+	if(pos != m_mousePosNdc)
+	{
+		const I32 x = I32(F32(m_nativeWindow->getWidth()) * (pos.x() * 0.5f + 0.5f));
+		const I32 y = I32(F32(m_nativeWindow->getHeight()) * (-pos.y() * 0.5f + 0.5f));
+
+		SDL_WarpMouseInWindow(m_nativeWindow->getNative().m_window, x, y);
+
+		// SDL doesn't generate a SDL_MOUSEMOTION event if the cursor is outside the window. Push that event
+		SDL_Event event;
+		event.type = SDL_MOUSEMOTION;
+		event.button.x = x;
+		event.button.y = y;
+
+		SDL_PushEvent(&event);
+	}
+}
+
+void Input::hideCursor(Bool hide)
+{
+	SDL_ShowCursor(!hide);
+}
+
+Error InputSdl::init()
+{
+	ANKI_ASSERT(m_nativeWindow);
 
 // impl
-#define MAP(sdl, ak) m_impl->m_sdlToAnki[sdl] = KeyCode::ak
+#define MAP(sdl, ak) m_sdlToAnki[sdl] = KeyCode::ak
 
 	MAP(SDLK_RETURN, RETURN);
 	MAP(SDLK_ESCAPE, ESCAPE);
@@ -287,17 +349,7 @@ Error Input::initInternal(NativeWindow* nativeWindow)
 	return handleEvents();
 }
 
-void Input::destroy()
-{
-	if(m_impl != nullptr)
-	{
-		m_nativeWindow->getAllocator().deleteInstance(m_impl);
-		m_impl = nullptr;
-	}
-	m_nativeWindow = nullptr;
-}
-
-Error Input::handleEvents()
+Error InputSdl::handleEventsInternal()
 {
 	ANKI_ASSERT(m_nativeWindow != nullptr);
 
@@ -327,11 +379,11 @@ Error Input::handleEvents()
 		switch(event.type)
 		{
 		case SDL_KEYDOWN:
-			akkey = m_impl->m_sdlToAnki[event.key.keysym.sym];
+			akkey = m_sdlToAnki[event.key.keysym.sym];
 			m_keys[akkey] = 1;
 			break;
 		case SDL_KEYUP:
-			akkey = m_impl->m_sdlToAnki[event.key.keysym.sym];
+			akkey = m_sdlToAnki[event.key.keysym.sym];
 			m_keys[akkey] = 0;
 			break;
 		case SDL_MOUSEBUTTONDOWN:
@@ -378,30 +430,6 @@ Error Input::handleEvents()
 	}
 
 	return Error::NONE;
-}
-
-void Input::moveCursor(const Vec2& pos)
-{
-	if(pos != m_mousePosNdc)
-	{
-		const I32 x = I32(F32(m_nativeWindow->getWidth()) * (pos.x() * 0.5f + 0.5f));
-		const I32 y = I32(F32(m_nativeWindow->getHeight()) * (-pos.y() * 0.5f + 0.5f));
-
-		SDL_WarpMouseInWindow(m_nativeWindow->getNative().m_window, x, y);
-
-		// SDL doesn't generate a SDL_MOUSEMOTION event if the cursor is outside the window. Push that event
-		SDL_Event event;
-		event.type = SDL_MOUSEMOTION;
-		event.button.x = x;
-		event.button.y = y;
-
-		SDL_PushEvent(&event);
-	}
-}
-
-void Input::hideCursor(Bool hide)
-{
-	SDL_ShowCursor(!hide);
 }
 
 } // end namespace anki

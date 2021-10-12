@@ -63,14 +63,13 @@ ANKI_TEST(Ui, Ui)
 	cfg.set("rsrc_dataPaths", "EngineAssets");
 
 	NativeWindow* win = createWindow(cfg);
-	Input* in = new Input();
+	Input* in;
+	ANKI_TEST_EXPECT_NO_ERR(Input::newInstance(allocAligned, nullptr, win, in));
 	GrManager* gr = createGrManager(cfg, win);
 	PhysicsWorld* physics;
 	ResourceFilesystem* fs;
 	ResourceManager* resource = createResourceManager(cfg, gr, physics, fs);
 	UiManager* ui = new UiManager();
-
-	ANKI_TEST_EXPECT_NO_ERR(in->init(win));
 
 	StagingGpuMemoryManager* stagingMem = new StagingGpuMemoryManager();
 	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(gr, cfg));
@@ -153,7 +152,7 @@ ANKI_TEST(Ui, Ui)
 	delete physics;
 	delete fs;
 	GrManager::deleteInstance(gr);
-	delete in;
+	Input::deleteInstance(in);
 	delete win;
 }
 

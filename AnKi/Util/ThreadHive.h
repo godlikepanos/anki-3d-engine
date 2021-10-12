@@ -95,7 +95,7 @@ public:
 	}
 
 	/// Create a new semaphore with some initial value.
-	/// @param initialValue  Can't be zero.
+	/// @param initialValue Can't be zero.
 	ThreadHiveSemaphore* newSemaphore(const U32 initialValue)
 	{
 		ANKI_ASSERT(initialValue > 0);
@@ -159,9 +159,6 @@ private:
 
 	/// Get new work from the queue.
 	Task* getNewTask();
-
-	/// Complete a task.
-	void completeTask(U32 taskId);
 };
 /// @}
 

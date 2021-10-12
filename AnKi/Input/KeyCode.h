@@ -268,7 +268,7 @@ enum class KeyCode
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(KeyCode)
 
-enum class MouseButton
+enum class MouseButton : U8
 {
 	LEFT,
 	MIDDLE,
@@ -279,5 +279,28 @@ enum class MouseButton
 	COUNT
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(MouseButton)
+
+enum class TouchPointer : U8
+{
+	_0,
+	_1,
+	_2,
+	_3,
+	_4,
+	_5,
+	_6,
+	_7,
+	_8,
+	_9,
+	_10,
+	_11,
+	_12,
+	_13,
+	_14,
+	_15,
+
+	COUNT
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(TouchPointer)
 
 } // end namespace anki
