@@ -22,6 +22,10 @@ ANKI_CONFIG_OPTION(r_ssrDepthLod, 2, 0, 1000)
 ANKI_CONFIG_OPTION(r_ssgiMaxSteps, 32, 1, 2048)
 ANKI_CONFIG_OPTION(r_ssgiDepthLod, 2, 0, 1000)
 
+ANKI_CONFIG_OPTION(r_indirectDiffuseSsgiSamples, 8, 1, 1024)
+ANKI_CONFIG_OPTION(r_indirectDiffuseSsgiRadius, 2.0, 0.1, 100.0)
+ANKI_CONFIG_OPTION(r_indirectDiffuseDenoiseSampleCount, 4, 1, 128)
+
 ANKI_CONFIG_OPTION(r_shadowMappingTileResolution, 128, 16, 2048)
 ANKI_CONFIG_OPTION(r_shadowMappingTileCountPerRowOrColumn, 16, 1, 256)
 ANKI_CONFIG_OPTION(r_shadowMappingScratchTileCountX, 4 * (MAX_SHADOW_CASCADES2 + 2), 1u, 256u,

@@ -147,8 +147,15 @@ void raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
 						 Vec2 uv, // UV the ray starts
 						 F32 depthRef, // Depth the ray starts
 						 Mat4 projMat, // Projection matrix
-						 U32 maxIterations, texture2D depthTex, sampler depthSampler, F32 depthLod, UVec2 depthTexSize,
-						 U32 bigStep, U32 randInitialStep, out Vec3 hitPoint, out F32 attenuation)
+						 U32 maxSteps, // The max iterations of the base algorithm
+						 texture2D depthTex, // Depth tex
+						 sampler depthSampler, // Sampler for depthTex
+						 F32 depthLod, // LOD to pass to the textureLod
+						 UVec2 depthTexSize, // Size of the depthTex
+						 U32 initialStepIncrement, // Initial step increment
+						 U32 randInitialStep, // The initial step
+						 out Vec3 hitPoint, // Hit point in UV coordinates
+						 out F32 attenuation)
 {
 	attenuation = 0.0;
 
@@ -177,14 +184,14 @@ void raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
 	dir = normalize(dir);
 
 	// Compute step
-	I32 stepSkip = I32(bigStep);
-	I32 step = I32(randInitialStep);
+	I32 stepIncrement = I32(initialStepIncrement);
+	I32 crntStep = I32(randInitialStep);
 
-	// Iterate
+	// Search
 	Vec3 origin;
-	ANKI_LOOP while(maxIterations-- != 0u)
+	ANKI_LOOP while(maxSteps-- != 0u)
 	{
-		origin = start + dir * (F32(step) * stepSize);
+		origin = start + dir * (F32(crntStep) * stepSize);
 
 		// Check if it's out of the view
 		if(origin.x <= 0.0 || origin.y <= 0.0 || origin.x >= 1.0 || origin.y >= 1.0)
@@ -196,12 +203,14 @@ void raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
 		const Bool hit = origin.z - depth >= 0.0;
 		if(!hit)
 		{
-			step += stepSkip;
+			crntStep += stepIncrement;
 		}
-		else if(stepSkip > 1)
+		else if(stepIncrement > 1)
 		{
-			step = max(1, step - stepSkip + 1);
-			stepSkip = stepSkip / 2;
+			// There is a hit but the step increment is a bit high, need a more fine-grained search
+
+			crntStep = max(1, crntStep - stepIncrement + 1);
+			stepIncrement = stepIncrement / 2;
 		}
 		else
 		{

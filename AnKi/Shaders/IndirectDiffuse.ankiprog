@@ -1,0 +1,216 @@
+// Copyright (C) 2009-2021, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+// Does SSGI and GI probe sampling
+
+ANKI_SPECIALIZATION_CONSTANT_U32(SAMPLE_COUNT, 6u);
+
+#define ENABLE_SSGI true
+#define ENABLE_PROBES true
+#define REMOVE_FIREFLIES false
+#define REPROJECT_LIGHTBUFFER false
+#define SSGI_PROBE_COMBINE(ssgiColor, probeColor) ((ssgiColor) + (probeColor))
+
+#pragma anki start comp
+#include <AnKi/Shaders/Functions.glsl>
+#include <AnKi/Shaders/PackFunctions.glsl>
+#include <AnKi/Shaders/ImportanceSampling.glsl>
+#include <AnKi/Shaders/TonemappingFunctions.glsl>
+#include <AnKi/Shaders/Include/IndirectDiffuseTypes.h>
+
+const UVec2 WORKGROUP_SIZE = UVec2(8, 8);
+layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y) in;
+
+#define CLUSTERED_SHADING_SET 0
+#define CLUSTERED_SHADING_UNIFORMS_BINDING 0
+#define CLUSTERED_SHADING_GI_BINDING 1
+#define CLUSTERED_SHADING_CLUSTERS_BINDING 3
+#include <AnKi/Shaders/ClusteredShadingCommon.glsl>
+
+layout(set = 0, binding = 4) writeonly uniform image2D u_outImage;
+
+layout(set = 0, binding = 5) uniform sampler u_linearAnyClampSampler;
+layout(set = 0, binding = 6) uniform texture2D u_gbufferRt2;
+layout(set = 0, binding = 7) uniform texture2D u_depthRt;
+layout(set = 0, binding = 8) uniform texture2D u_lightBufferRt;
+layout(set = 0, binding = 9) uniform texture2D u_historyTex;
+layout(set = 0, binding = 10) uniform texture2D u_motionVectorsTex;
+layout(set = 0, binding = 11) uniform texture2D u_motionVectorsRejectionTex;
+
+layout(push_constant, std430) uniform b_pc
+{
+	IndirectDiffuseUniforms u_unis;
+};
+
+Vec4 cheapProject(Vec4 point)
+{
+	return projectPerspective(point, u_unis.m_projectionMat.x, u_unis.m_projectionMat.y, u_unis.m_projectionMat.z,
+							  u_unis.m_projectionMat.w);
+}
+
+void main()
+{
+	const UVec2 fixedGlobalInvocationId = min(gl_GlobalInvocationID.xy, u_unis.m_viewportSize);
+	const Vec2 fragCoord = Vec2(fixedGlobalInvocationId.xy) + 0.5;
+	const Vec2 uv = fragCoord / u_unis.m_viewportSizef;
+	const Vec2 ndc = UV_TO_NDC(uv);
+
+	// Get normal
+	const Vec3 worldNormal = readNormalFromGBuffer(u_gbufferRt2, u_linearAnyClampSampler, uv);
+	const Vec3 viewNormal = u_clusteredShading.m_matrices.m_viewRotation * worldNormal;
+
+	// Get origin
+	const F32 depth = textureLod(u_depthRt, u_linearAnyClampSampler, uv, 0.0).r;
+	Vec4 v4 = u_clusteredShading.m_matrices.m_invertedViewProjectionJitter * Vec4(ndc, depth, 1.0);
+	const Vec3 worldPos = v4.xyz / v4.w;
+	v4 = u_clusteredShading.m_matrices.m_invertedProjectionJitter * Vec4(ndc, depth, 1.0);
+	const Vec3 viewPos = v4.xyz / v4.w;
+
+	// SSGI
+	Vec3 outColor = Vec3(0.0);
+	F32 ssao = 0.0;
+	if(ENABLE_SSGI)
+	{
+		// Find the projected radius
+		const Vec3 sphereLimit = viewPos + Vec3(u_unis.m_radius, 0.0, 0.0);
+		const Vec4 projSphereLimit = cheapProject(Vec4(sphereLimit, 1.0));
+		const Vec2 projSphereLimit2 = projSphereLimit.xy / projSphereLimit.w;
+		const F32 projRadius = length(projSphereLimit2 - ndc);
+
+		// Loop to compute
+		const UVec2 random = rand3DPCG16(UVec3(gl_GlobalInvocationID.xy, u_clusteredShading.m_frame)).xy;
+		for(U32 i = 0u; i < u_unis.m_sampleCount; ++i)
+		{
+			const Vec2 point = UV_TO_NDC(hammersleyRandom16(i, u_unis.m_sampleCount, random));
+			const Vec2 finalDiskPoint = ndc + point * projRadius;
+
+			// Do a cheap unproject in view space
+			const F32 d = textureLod(u_depthRt, u_linearAnyClampSampler, NDC_TO_UV(finalDiskPoint), 0.0).r;
+			const F32 z = u_clusteredShading.m_matrices.m_unprojectionParameters.z
+						  / (u_clusteredShading.m_matrices.m_unprojectionParameters.w + d);
+			const Vec2 xy = finalDiskPoint * u_clusteredShading.m_matrices.m_unprojectionParameters.xy * z;
+			const Vec3 s = Vec3(xy, z);
+
+			// Compute factor
+			const Vec3 dir = s - viewPos;
+			const F32 len = length(dir);
+			const Vec3 n = dir / len;
+			const F32 NoL = max(0.0, dot(viewNormal, n));
+			// const F32 distFactor = 1.0 - sin(min(1.0, len / u_unis.m_radius) * PI / 2.0);
+			const F32 distFactor = 1.0 - min(1.0, len / u_unis.m_radius);
+
+			// Compute the UV for sampling the pyramid
+			const Vec2 crntFrameUv = NDC_TO_UV(finalDiskPoint);
+			Vec2 lastFrameUv;
+			if(REPROJECT_LIGHTBUFFER)
+			{
+				lastFrameUv =
+					crntFrameUv + textureLod(u_motionVectorsTex, u_linearAnyClampSampler, crntFrameUv, 0.0).xy;
+			}
+			else
+			{
+				lastFrameUv = crntFrameUv;
+			}
+
+			// Append color
+			const F32 w = distFactor * NoL;
+			const Vec3 c = textureLod(u_lightBufferRt, u_linearAnyClampSampler, lastFrameUv, 100.0).xyz;
+			outColor += c * w;
+
+			// Compute SSAO as well
+			ssao += max(dot(viewNormal, dir) + u_unis.m_ssaoBias, EPSILON) / max(len * len, EPSILON);
+		}
+
+		const F32 scount = 1.0 / u_unis.m_sampleCountf;
+		outColor *= scount * 2.0 * PI;
+		ssao *= scount;
+	}
+
+	ssao = min(1.0, 1.0 - ssao * u_unis.m_ssaoStrength);
+
+	if(ENABLE_PROBES)
+	{
+		// Sample probes
+
+		Vec3 probeColor = Vec3(0.0);
+
+		// Get the cluster
+		Cluster cluster = getClusterFragCoord(Vec3(fragCoord * 2.0, depth));
+
+		// Get world position
+		const Vec4 worldPos4 = u_clusteredShading.m_matrices.m_invertedViewProjectionJitter * Vec4(ndc, depth, 1.0);
+		const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
+
+		if(bitCount(cluster.m_giProbesMask) == 1)
+		{
+			// All subgroups point to the same probe and there is only one probe, do a fast path without blend weight
+
+			const GlobalIlluminationProbe probe = u_giProbes[findLSB2(cluster.m_giProbesMask)];
+
+			// Sample
+			probeColor = sampleGlobalIllumination(worldPos, worldNormal, probe, u_globalIlluminationTextures,
+												  u_linearAnyClampSampler);
+		}
+		else
+		{
+			// Zero or more than one probes, do a slow path that blends them together
+
+			F32 totalBlendWeight = EPSILON;
+
+			// Loop probes
+			ANKI_LOOP while(cluster.m_giProbesMask != 0u)
+			{
+				const U32 idx = U32(findLSB2(cluster.m_giProbesMask));
+				cluster.m_giProbesMask &= ~(1u << idx);
+				const GlobalIlluminationProbe probe = u_giProbes[idx];
+
+				// Compute blend weight
+				const F32 blendWeight =
+					computeProbeBlendWeight(worldPos, probe.m_aabbMin, probe.m_aabbMax, probe.m_fadeDistance);
+				totalBlendWeight += blendWeight;
+
+				// Sample
+				const Vec3 c = sampleGlobalIllumination(worldPos, worldNormal, probe, u_globalIlluminationTextures,
+														u_linearAnyClampSampler);
+				probeColor += c * blendWeight;
+			}
+
+			// Normalize
+			probeColor /= totalBlendWeight;
+		}
+
+		outColor = SSGI_PROBE_COMBINE(outColor, probeColor);
+	}
+
+	// Remove fireflies
+	if(REMOVE_FIREFLIES)
+	{
+		const F32 lum = computeLuminance(outColor) + 0.001;
+		const F32 averageLum = (subgroupAdd(lum) / F32(gl_SubgroupSize)) * 2.0;
+		const F32 newLum = min(lum, averageLum);
+		outColor *= newLum / lum;
+	}
+
+	// Apply SSAO
+	outColor *= ssao;
+
+	// Blend color with history
+	{
+		const Vec2 historyUv = uv + textureLod(u_motionVectorsTex, u_linearAnyClampSampler, uv, 0.0).xy;
+		const F32 historyRejectionFactor = textureLod(u_motionVectorsRejectionTex, u_linearAnyClampSampler, uv, 0.0).x;
+
+		const F32 lowestBlendFactor = 0.1;
+		const F32 blendFactor = mix(lowestBlendFactor, 1.0, historyRejectionFactor);
+
+		// Blend with history
+		const Vec3 history = textureLod(u_historyTex, u_linearAnyClampSampler, historyUv, 0.0).rgb;
+		outColor = mix(history, outColor, blendFactor);
+	}
+
+	// Store color
+	imageStore(u_outImage, IVec2(fixedGlobalInvocationId), Vec4(outColor, 1.0));
+}
+
+#pragma anki end

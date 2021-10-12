@@ -20,7 +20,6 @@
 #include <AnKi/Renderer/LightShading.h>
 #include <AnKi/Renderer/ShadowMapping.h>
 #include <AnKi/Renderer/FinalComposite.h>
-#include <AnKi/Renderer/Ssao.h>
 #include <AnKi/Renderer/Bloom.h>
 #include <AnKi/Renderer/Tonemapping.h>
 #include <AnKi/Renderer/ForwardShading.h>
@@ -32,9 +31,8 @@
 #include <AnKi/Renderer/TemporalAA.h>
 #include <AnKi/Renderer/UiStage.h>
 #include <AnKi/Renderer/Ssr.h>
-#include <AnKi/Renderer/Ssgi.h>
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
-#include <AnKi/Renderer/GlobalIllumination.h>
+#include <AnKi/Renderer/IndirectDiffuseProbes.h>
 #include <AnKi/Renderer/GenericCompute.h>
 #include <AnKi/Renderer/ShadowmapsResolve.h>
 #include <AnKi/Renderer/RtShadows.h>
@@ -42,6 +40,7 @@
 #include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Renderer/Scale.h>
+#include <AnKi/Renderer/IndirectDiffuse.h>
 
 namespace anki
 {
@@ -116,7 +115,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 	}
 
 	{
-		TextureInitInfo texinit;
+		TextureInitInfo texinit("RendererDummy");
 		texinit.m_width = texinit.m_height = 4;
 		texinit.m_usage = TextureUsageBit::ALL_SAMPLED;
 		texinit.m_format = Format::R8G8B8A8_UNORM;
@@ -145,8 +144,8 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_volumetricLightingAccumulation.reset(m_alloc.newInstance<VolumetricLightingAccumulation>(this));
 	ANKI_CHECK(m_volumetricLightingAccumulation->init(config));
 
-	m_globalIllumination.reset(m_alloc.newInstance<GlobalIllumination>(this));
-	ANKI_CHECK(m_globalIllumination->init(config));
+	m_indirectDiffuseProbes.reset(m_alloc.newInstance<IndirectDiffuseProbes>(this));
+	ANKI_CHECK(m_indirectDiffuseProbes->init(config));
 
 	m_probeReflections.reset(m_alloc.newInstance<ProbeReflections>(this));
 	ANKI_CHECK(m_probeReflections->init(config));
@@ -175,17 +174,11 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_lensFlare.reset(m_alloc.newInstance<LensFlare>(this));
 	ANKI_CHECK(m_lensFlare->init(config));
 
-	m_ssao.reset(m_alloc.newInstance<Ssao>(this));
-	ANKI_CHECK(m_ssao->init(config));
-
 	m_downscaleBlur.reset(getAllocator().newInstance<DownscaleBlur>(this));
 	ANKI_CHECK(m_downscaleBlur->init(config));
 
 	m_ssr.reset(m_alloc.newInstance<Ssr>(this));
 	ANKI_CHECK(m_ssr->init(config));
-
-	m_ssgi.reset(m_alloc.newInstance<Ssgi>(this));
-	ANKI_CHECK(m_ssgi->init(config));
 
 	m_tonemapping.reset(getAllocator().newInstance<Tonemapping>(this));
 	ANKI_CHECK(m_tonemapping->init(config));
@@ -207,6 +200,9 @@ Error Renderer::initInternal(const ConfigSet& config)
 
 	m_scale.reset(m_alloc.newInstance<Scale>(this));
 	ANKI_CHECK(m_scale->init(config));
+
+	m_indirectDiffuse.reset(m_alloc.newInstance<IndirectDiffuse>(this));
+	ANKI_CHECK(m_indirectDiffuse->init(config));
 
 	if(getGrManager().getDeviceCapabilities().m_rayTracingEnabled && config.getBool("scene_rayTracedShadows"))
 	{
@@ -297,10 +293,13 @@ void Renderer::initJitteredMats()
 
 Error Renderer::populateRenderGraph(RenderingContext& ctx)
 {
+	ctx.m_prevMatrices = m_prevMatrices;
+
 	ctx.m_matrices.m_cameraTransform = ctx.m_renderQueue->m_cameraTransform;
 	ctx.m_matrices.m_view = ctx.m_renderQueue->m_viewMatrix;
 	ctx.m_matrices.m_projection = ctx.m_renderQueue->m_projectionMatrix;
 	ctx.m_matrices.m_viewProjection = ctx.m_renderQueue->m_viewProjectionMatrix;
+	ctx.m_matrices.m_viewRotation = ctx.m_renderQueue->m_viewMatrix.getRotationPart();
 
 	ctx.m_matrices.m_jitter = m_jitteredMats8x[m_frameCount & (m_jitteredMats8x.getSize() - 1)];
 	ctx.m_matrices.m_projectionJitter = ctx.m_matrices.m_jitter * ctx.m_matrices.m_projection;
@@ -310,9 +309,10 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	ctx.m_matrices.m_invertedProjectionJitter = ctx.m_matrices.m_projectionJitter.getInverse();
 	ctx.m_matrices.m_invertedView = ctx.m_matrices.m_view.getInverse();
 
-	ctx.m_matrices.m_unprojectionParameters = ctx.m_matrices.m_projection.extractPerspectiveUnprojectionParams();
+	ctx.m_matrices.m_reprojection =
+		ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection * ctx.m_matrices.m_invertedViewProjectionJitter;
 
-	ctx.m_prevMatrices = m_prevMatrices;
+	ctx.m_matrices.m_unprojectionParameters = ctx.m_matrices.m_projection.extractPerspectiveUnprojectionParams();
 
 	// Check if resources got loaded
 	if(m_prevLoadRequestCount != m_resources->getLoadingRequestCount()
@@ -340,7 +340,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 		m_accelerationStructureBuilder->populateRenderGraph(ctx);
 	}
 	m_shadowMapping->populateRenderGraph(ctx);
-	m_globalIllumination->populateRenderGraph(ctx);
+	m_indirectDiffuseProbes->populateRenderGraph(ctx);
 	m_probeReflections->populateRenderGraph(ctx);
 	m_volumetricLightingAccumulation->populateRenderGraph(ctx);
 	m_gbuffer->populateRenderGraph(ctx);
@@ -356,10 +356,9 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 		m_shadowmapsResolve->populateRenderGraph(ctx);
 	}
 	m_volumetricFog->populateRenderGraph(ctx);
-	m_ssao->populateRenderGraph(ctx);
 	m_lensFlare->populateRenderGraph(ctx);
 	m_ssr->populateRenderGraph(ctx);
-	m_ssgi->populateRenderGraph(ctx);
+	m_indirectDiffuse->populateRenderGraph(ctx);
 	m_lightShading->populateRenderGraph(ctx);
 	m_temporalAA->populateRenderGraph(ctx);
 	m_scale->populateRenderGraph(ctx);

@@ -11,7 +11,6 @@
 #include <AnKi/Renderer/LightShading.h>
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/Dbg.h>
-#include <AnKi/Renderer/Ssao.h>
 #include <AnKi/Renderer/Ssr.h>
 #include <AnKi/Renderer/DownscaleBlur.h>
 #include <AnKi/Renderer/UiStage.h>

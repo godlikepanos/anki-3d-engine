@@ -12,12 +12,10 @@
 #include <AnKi/Renderer/ForwardShading.h>
 #include <AnKi/Renderer/VolumetricFog.h>
 #include <AnKi/Renderer/DepthDownscale.h>
-#include <AnKi/Renderer/Ssao.h>
 #include <AnKi/Renderer/Ssr.h>
-#include <AnKi/Renderer/Ssgi.h>
-#include <AnKi/Renderer/GlobalIllumination.h>
 #include <AnKi/Renderer/ShadowmapsResolve.h>
 #include <AnKi/Renderer/RtShadows.h>
+#include <AnKi/Renderer/IndirectDiffuse.h>
 #include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Util/HighRezTimer.h>
 
@@ -41,6 +39,11 @@ Error LightShading::init(const ConfigSet& config)
 	if(!err)
 	{
 		err = initApplyFog(config);
+	}
+
+	if(!err)
+	{
+		err = initApplyIndirect(config);
 	}
 
 	if(err)
@@ -104,6 +107,15 @@ Error LightShading::initApplyFog(const ConfigSet& config)
 	return Error::NONE;
 }
 
+Error LightShading::initApplyIndirect(const ConfigSet& config)
+{
+	ANKI_CHECK(getResourceManager().loadResource("Shaders/LightShadingApplyIndirect.ankiprog", m_applyIndirect.m_prog));
+	const ShaderProgramResourceVariant* variant;
+	m_applyIndirect.m_prog->getOrCreateVariant(variant);
+	m_applyIndirect.m_grProg = variant->getProgram();
+	return Error::NONE;
+}
+
 void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
@@ -128,33 +140,53 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		rgraphCtx.bindColorTexture(0, 5, m_r->getProbeReflections().getReflectionRt());
 		cmdb->bindTexture(0, 6, m_r->getProbeReflections().getIntegrationLut());
 
-		m_r->getGlobalIllumination().bindVolumeTextures(ctx, rgraphCtx, 0, 7);
-		bindUniforms(cmdb, 0, 8, binning.m_globalIlluminationProbesToken);
+		bindStorage(cmdb, 0, 7, binning.m_clustersToken);
 
-		bindStorage(cmdb, 0, 9, binning.m_clustersToken);
-
-		cmdb->bindSampler(0, 10, m_r->getSamplers().m_nearestNearestClamp);
-		cmdb->bindSampler(0, 11, m_r->getSamplers().m_trilinearClamp);
-		rgraphCtx.bindColorTexture(0, 12, m_r->getGBuffer().getColorRt(0));
-		rgraphCtx.bindColorTexture(0, 13, m_r->getGBuffer().getColorRt(1));
-		rgraphCtx.bindColorTexture(0, 14, m_r->getGBuffer().getColorRt(2));
-		rgraphCtx.bindTexture(0, 15, m_r->getGBuffer().getDepthRt(),
+		cmdb->bindSampler(0, 8, m_r->getSamplers().m_nearestNearestClamp);
+		cmdb->bindSampler(0, 9, m_r->getSamplers().m_trilinearClamp);
+		rgraphCtx.bindColorTexture(0, 10, m_r->getGBuffer().getColorRt(0));
+		rgraphCtx.bindColorTexture(0, 11, m_r->getGBuffer().getColorRt(1));
+		rgraphCtx.bindColorTexture(0, 12, m_r->getGBuffer().getColorRt(2));
+		rgraphCtx.bindTexture(0, 13, m_r->getGBuffer().getDepthRt(),
 							  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
-		rgraphCtx.bindColorTexture(0, 16, m_r->getSsr().getRt());
-		rgraphCtx.bindColorTexture(0, 17, m_r->getSsao().getRt());
-		rgraphCtx.bindColorTexture(0, 18, m_r->getSsgi().getRt());
+		rgraphCtx.bindColorTexture(0, 14, m_r->getSsr().getRt());
 
 		if(m_r->getRtShadowsEnabled())
 		{
-			rgraphCtx.bindColorTexture(0, 19, m_r->getRtShadows().getRt());
+			rgraphCtx.bindColorTexture(0, 15, m_r->getRtShadows().getRt());
 		}
 		else
 		{
-			rgraphCtx.bindColorTexture(0, 20, m_r->getShadowmapsResolve().getRt());
+			rgraphCtx.bindColorTexture(0, 16, m_r->getShadowmapsResolve().getRt());
 		}
 
 		// Draw
 		drawQuad(cmdb);
+	}
+
+	// Apply indirect
+	if(rgraphCtx.m_currentSecondLevelCommandBufferIndex == 0)
+	{
+		cmdb->setDepthWrite(false);
+		cmdb->bindShaderProgram(m_applyIndirect.m_grProg);
+
+		cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
+		cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);
+		rgraphCtx.bindColorTexture(0, 2, m_r->getIndirectDiffuse().getRt());
+		rgraphCtx.bindColorTexture(0, 3, m_r->getDepthDownscale().getHiZRt());
+		rgraphCtx.bindTexture(0, 4, m_r->getGBuffer().getDepthRt(),
+							  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+		rgraphCtx.bindColorTexture(0, 5, m_r->getGBuffer().getColorRt(0));
+
+		const Vec4 pc(2.0f / Vec2(m_r->getInternalResolution()), 0.0f, 0.0f);
+		cmdb->setPushConstants(&pc, sizeof(pc));
+
+		cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);
+
+		drawQuad(cmdb);
+
+		// Restore state
+		cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
 	}
 
 	// Do the fog apply
@@ -209,40 +241,39 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 				 [this, &ctx](RenderPassWorkContext& rgraphCtx) { run(ctx, rgraphCtx); });
 	pass.setFramebufferInfo(m_lightShading.m_fbDescr, {{m_runCtx.m_rt}}, {m_r->getGBuffer().getDepthRt()});
 
+	const TextureUsageBit readUsage = TextureUsageBit::SAMPLED_FRAGMENT;
+
 	// Light shading
 	pass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
-	pass.newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(0), TextureUsageBit::SAMPLED_FRAGMENT));
-	pass.newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(1), TextureUsageBit::SAMPLED_FRAGMENT));
-	pass.newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_FRAGMENT));
+	pass.newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(0), readUsage));
+	pass.newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(1), readUsage));
+	pass.newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(2), readUsage));
 	pass.newDependency(
 		RenderPassDependency(m_r->getGBuffer().getDepthRt(),
 							 TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ,
 							 TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)));
-	pass.newDependency(
-		RenderPassDependency(m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::SAMPLED_FRAGMENT));
-	pass.newDependency(RenderPassDependency(m_r->getSsao().getRt(), TextureUsageBit::SAMPLED_FRAGMENT));
-	pass.newDependency(RenderPassDependency(m_r->getSsgi().getRt(), TextureUsageBit::SAMPLED_FRAGMENT));
+	pass.newDependency(RenderPassDependency(m_r->getShadowMapping().getShadowmapRt(), readUsage));
 	if(m_r->getRtShadowsEnabled())
 	{
-		pass.newDependency(RenderPassDependency(m_r->getRtShadows().getRt(), TextureUsageBit::SAMPLED_FRAGMENT));
+		pass.newDependency(RenderPassDependency(m_r->getRtShadows().getRt(), readUsage));
 	}
 	else
 	{
-		pass.newDependency(
-			RenderPassDependency(m_r->getShadowmapsResolve().getRt(), TextureUsageBit::SAMPLED_FRAGMENT));
+		pass.newDependency(RenderPassDependency(m_r->getShadowmapsResolve().getRt(), readUsage));
 	}
 	pass.newDependency(
 		RenderPassDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::STORAGE_FRAGMENT_READ));
 
 	// Refl & indirect
-	pass.newDependency(RenderPassDependency(m_r->getSsr().getRt(), TextureUsageBit::SAMPLED_FRAGMENT));
-	pass.newDependency(
-		RenderPassDependency(m_r->getProbeReflections().getReflectionRt(), TextureUsageBit::SAMPLED_FRAGMENT));
+	pass.newDependency(RenderPassDependency(m_r->getSsr().getRt(), readUsage));
+	pass.newDependency(RenderPassDependency(m_r->getProbeReflections().getReflectionRt(), readUsage));
 
-	m_r->getGlobalIllumination().setRenderGraphDependencies(ctx, pass, TextureUsageBit::SAMPLED_FRAGMENT);
+	// Apply indirect
+	pass.newDependency(RenderPassDependency(m_r->getIndirectDiffuse().getRt(), readUsage));
+	pass.newDependency(RenderPassDependency(m_r->getDepthDownscale().getHiZRt(), readUsage, HIZ_HALF_DEPTH));
 
 	// Fog
-	pass.newDependency(RenderPassDependency(m_r->getVolumetricFog().getRt(), TextureUsageBit::SAMPLED_FRAGMENT));
+	pass.newDependency(RenderPassDependency(m_r->getVolumetricFog().getRt(), readUsage));
 
 	// For forward shading
 	m_r->getForwardShading().setDependencies(ctx, pass);

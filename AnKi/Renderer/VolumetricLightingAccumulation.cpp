@@ -5,7 +5,7 @@
 
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
 #include <AnKi/Renderer/ShadowMapping.h>
-#include <AnKi/Renderer/GlobalIllumination.h>
+#include <AnKi/Renderer/IndirectDiffuseProbes.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Core/ConfigSet.h>
@@ -95,7 +95,7 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 	pass.newDependency(
 		RenderPassDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::STORAGE_COMPUTE_READ));
 
-	m_r->getGlobalIllumination().setRenderGraphDependencies(ctx, pass, TextureUsageBit::SAMPLED_COMPUTE);
+	m_r->getIndirectDiffuseProbes().setRenderGraphDependencies(ctx, pass, TextureUsageBit::SAMPLED_COMPUTE);
 }
 
 void VolumetricLightingAccumulation::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
@@ -120,7 +120,7 @@ void VolumetricLightingAccumulation::run(const RenderingContext& ctx, RenderPass
 	bindUniforms(cmdb, 0, 7, rsrc.m_spotLightsToken);
 	rgraphCtx.bindColorTexture(0, 8, m_r->getShadowMapping().getShadowmapRt());
 
-	m_r->getGlobalIllumination().bindVolumeTextures(ctx, rgraphCtx, 0, 9);
+	m_r->getIndirectDiffuseProbes().bindVolumeTextures(ctx, rgraphCtx, 0, 9);
 	bindUniforms(cmdb, 0, 10, rsrc.m_globalIlluminationProbesToken);
 
 	bindUniforms(cmdb, 0, 11, rsrc.m_fogDensityVolumesToken);

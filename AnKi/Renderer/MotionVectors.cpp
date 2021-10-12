@@ -78,13 +78,8 @@ void MotionVectors::run(const RenderingContext& ctx, RenderPassWorkContext& rgra
 		Mat4 m_prevViewProjectionInvMat;
 	} pc;
 
-	// This reprojection is not enterely correct. It first unprojects the current depth to world space, all fine here.
-	// Then it projects it to the previous frame but assumes identity jitter. Then it jitters using current frame's
-	// jitter. The last multiplication I don't get but it works perfectly for sampling the TAA history buffer.
-	pc.m_reprojectionMat = ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection
-						   * ctx.m_matrices.m_viewProjectionJitter.getInverse();
-
-	pc.m_prevViewProjectionInvMat = ctx.m_prevMatrices.m_viewProjectionJitter.getInverse();
+	pc.m_reprojectionMat = ctx.m_matrices.m_reprojection;
+	pc.m_prevViewProjectionInvMat = ctx.m_prevMatrices.m_invertedProjectionJitter;
 	cmdb->setPushConstants(&pc, sizeof(pc));
 
 	dispatchPPCompute(cmdb, 8, 8, m_r->getInternalResolution().x(), m_r->getInternalResolution().y());
