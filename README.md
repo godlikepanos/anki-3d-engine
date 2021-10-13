@@ -84,8 +84,8 @@ Alternatively, recent Visual Studio versions support building CMake projects fro
 - Visual Studio will automatically understand that AnKi is a CMake project and it will populate the CMake cache
 - Press "build all"
 
-2.3 On Android
---------------
+2.3 For Android
+---------------
 
 Prerequisites:
 

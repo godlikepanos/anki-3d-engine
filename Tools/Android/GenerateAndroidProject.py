@@ -78,11 +78,17 @@ def main():
     os.symlink(ctx.asserts_dir, os.path.join(project_dir, "assets/Assets"))
 
     # Write the asset directory structure to a file
-    dir_structure_file = open(os.path.join(assets_dir, "DirStructure.txt"), "w")
+    dir_structure_file = open(os.path.join(assets_dir, "DirStructure.txt"), "w", newline="\n")
     for root, dirs, files in os.walk(assets_dir, followlinks=True):
         for f in files:
+            if f.find("DirStructure.txt") >= 0:
+                continue
+
             filename = os.path.join(root, f)
-            filename = filename.replace(assets_dir + "/", "")
+            filename = filename.replace(assets_dir, "")
+            filename = filename.replace("\\", "/")
+            if filename[0] == '/':
+                filename = filename[1:]
             dir_structure_file.write("%s\n" % filename)
     dir_structure_file.close()
 

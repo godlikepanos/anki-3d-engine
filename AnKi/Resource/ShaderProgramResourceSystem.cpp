@@ -61,6 +61,7 @@ Error ShaderProgramResourceSystem::compileAllShaders(CString cacheDir, GrManager
 
 	ANKI_RESOURCE_LOGI("Compiling shader programs");
 	U32 shadersCompileCount = 0;
+	U32 shadersTotalCount = 0;
 
 	ThreadHive threadHive(getCpuCoresCount(), alloc, false);
 
@@ -78,6 +79,8 @@ Error ShaderProgramResourceSystem::compileAllShaders(CString cacheDir, GrManager
 		{
 			return Error::NONE;
 		}
+
+		++shadersTotalCount;
 
 		if(fname.find("/Rt") != CString::NPOS && !gr.getDeviceCapabilities().m_rayTracingEnabled)
 		{
@@ -238,7 +241,7 @@ Error ShaderProgramResourceSystem::compileAllShaders(CString cacheDir, GrManager
 		return Error::NONE;
 	}));
 
-	ANKI_RESOURCE_LOGI("Compiled %u shader programs", shadersCompileCount);
+	ANKI_RESOURCE_LOGI("Compiled %u shader programs out of %u", shadersCompileCount, shadersTotalCount);
 	return Error::NONE;
 }
 

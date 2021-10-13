@@ -51,6 +51,14 @@ void Input::deleteInstance(Input* input)
 
 Error Input::handleEvents()
 {
+	for(U32& k : m_touchPointers)
+	{
+		if(k)
+		{
+			++k;
+		}
+	}
+
 	int ident;
 	int events;
 	android_poll_source* source;
@@ -132,29 +140,41 @@ int InputAndroid::handleAndroidInput(android_app* app, AInputEvent* event)
 		}
 		else if(source & AINPUT_SOURCE_TOUCHSCREEN)
 		{
+			auto update = [event, this](U32 index, U32 pressValue) {
+				const F32 x = AMotionEvent_getX(event, index);
+				const F32 y = AMotionEvent_getY(event, index);
+				const I32 id = AMotionEvent_getPointerId(event, index);
+
+				m_touchPointerPosWin[id] = UVec2(U32(x), U32(y));
+
+				m_touchPointerPosNdc[id].x() = F32(x) / F32(m_nativeWindow->getWidth()) * 2.0f - 1.0f;
+				m_touchPointerPosNdc[id].y() = -(F32(y) / F32(m_nativeWindow->getHeight()) * 2.0f - 1.0f);
+
+				if(pressValue == 0 || pressValue == 1)
+				{
+					m_touchPointers[id] = pressValue;
+				}
+			};
+
 			switch(action)
 			{
 			case AMOTION_EVENT_ACTION_DOWN:
 			case AMOTION_EVENT_ACTION_POINTER_DOWN:
-			{
-				F32 x = AMotionEvent_getX(event, index);
-				F32 y = AMotionEvent_getY(event, index);
-				int id = AMotionEvent_getPointerId(event, index);
-
-				ANKI_LOGI("Pointer down %f %f %d", x, y, id);
+				update(index, 1);
 				break;
-			}
-
 			case AMOTION_EVENT_ACTION_MOVE:
 			{
+				const U32 count = U32(AMotionEvent_getPointerCount(event));
+				for(U32 i = 0; i < count; i++)
+				{
+					update(i, 2);
+				}
 				break;
 			}
-
 			case AMOTION_EVENT_ACTION_UP:
 			case AMOTION_EVENT_ACTION_POINTER_UP:
-			{
+				update(index, 0);
 				break;
-			}
 
 			default:
 				break;

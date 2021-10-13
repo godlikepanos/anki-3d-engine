@@ -58,6 +58,11 @@ public:
 		return m_height;
 	}
 
+	F32 getAspectRatio() const
+	{
+		return F32(m_width) / F32(m_height);
+	}
+
 	void setWindowTitle(CString title);
 
 	ANKI_INTERNAL HeapAllocator<U8> getAllocator() const

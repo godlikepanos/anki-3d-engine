@@ -56,7 +56,7 @@ private:
 		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
 		F32 m_radius;
-		U32 m_sampleCount = 8.0f;
+		U32 m_sampleCount = 8;
 		F32 m_ssaoStrength = 2.5f;
 		F32 m_ssaoBias = -0.1f;
 	} m_main;
