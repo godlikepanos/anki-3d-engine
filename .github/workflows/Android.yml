@@ -1,0 +1,27 @@
+name: Android
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  Build:
+    name: "Build Android"
+    runs-on: ubuntu-latest
+    container: ghcr.io/khronosgroup/vulkan-samples
+
+    steps:
+    - name: Install dependencies
+      run: sudo apt install ninja-build
+      
+    - name: Clone
+      uses: actions/checkout@v2
+
+    - name: Generate project
+      run: ./Samples/Sponza/GenerateAndroidProject.sh
+
+    - name: Build
+      working-directory: AndroidProject_Sponza
+      run: ./gradlew build
