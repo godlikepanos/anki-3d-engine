@@ -14,13 +14,18 @@ jobs:
 
     steps:
     - name: Install dependencies
-      run: sudo apt install ninja-build
+      run: apt install ninja-build
       
     - name: Clone
       uses: actions/checkout@v2
 
     - name: Generate project
       run: ./Samples/Sponza/GenerateAndroidProject.sh
+    
+    - name: local.properties
+      run: |
+        echo "sdk.dir=/usr/local/android-sdk" > AndroidProject_Sponza/local.properties
+        echo "ndk.dir=/usr/local/android-ndk" >> AndroidProject_Sponza/local.properties
 
     - name: Build
       working-directory: AndroidProject_Sponza
