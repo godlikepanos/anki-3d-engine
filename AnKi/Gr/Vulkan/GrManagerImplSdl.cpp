@@ -20,7 +20,7 @@ namespace anki
 
 Error GrManagerImpl::initSurface(const GrManagerInitInfo& init)
 {
-	if(!SDL_Vulkan_CreateSurface(init.m_window->getNative().m_window, m_instance, &m_surface))
+	if(!SDL_Vulkan_CreateSurface(static_cast<NativeWindowSdl*>(init.m_window)->m_window, m_instance, &m_surface))
 	{
 		ANKI_VK_LOGE("SDL_Vulkan_CreateSurface() failed: %s", SDL_GetError());
 		return Error::FUNCTION_FAILED;

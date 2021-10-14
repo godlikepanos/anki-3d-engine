@@ -153,7 +153,7 @@ ANKI_TEST(Ui, Ui)
 	delete fs;
 	GrManager::deleteInstance(gr);
 	Input::deleteInstance(in);
-	delete win;
+	NativeWindow::deleteInstance(win);
 }
 
 } // end namespace anki

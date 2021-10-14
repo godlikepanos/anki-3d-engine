@@ -83,7 +83,7 @@ void Input::moveCursor(const Vec2& pos)
 		const I32 x = I32(F32(m_nativeWindow->getWidth()) * (pos.x() * 0.5f + 0.5f));
 		const I32 y = I32(F32(m_nativeWindow->getHeight()) * (-pos.y() * 0.5f + 0.5f));
 
-		SDL_WarpMouseInWindow(m_nativeWindow->getNative().m_window, x, y);
+		SDL_WarpMouseInWindow(static_cast<NativeWindowSdl*>(m_nativeWindow)->m_window, x, y);
 
 		// SDL doesn't generate a SDL_MOUSEMOTION event if the cursor is outside the window. Push that event
 		SDL_Event event;

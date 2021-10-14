@@ -12,13 +12,57 @@
 namespace anki
 {
 
-const U32 INIT_SUBSYSTEMS = SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER;
-
-Error NativeWindow::init(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
+Error NativeWindow::newInstance(const NativeWindowInitInfo& initInfo, NativeWindow*& nativeWindow)
 {
-	m_alloc = alloc;
-	m_impl = m_alloc.newInstance<NativeWindowImpl>();
+	HeapAllocator<U8> alloc(initInfo.m_allocCallback, initInfo.m_allocCallbackUserData);
+	NativeWindowSdl* sdlwin = alloc.newInstance<NativeWindowSdl>();
 
+	sdlwin->m_alloc = alloc;
+
+	const Error err = sdlwin->init(initInfo);
+	if(err)
+	{
+		alloc.deleteInstance(sdlwin);
+		nativeWindow = nullptr;
+		return err;
+	}
+	else
+	{
+		nativeWindow = sdlwin;
+		return Error::NONE;
+	}
+}
+
+void NativeWindow::deleteInstance(NativeWindow* window)
+{
+	if(window)
+	{
+		NativeWindowSdl* self = static_cast<NativeWindowSdl*>(window);
+		HeapAllocator<U8> alloc = self->m_alloc;
+		self->~NativeWindowSdl();
+		alloc.getMemoryPool().free(self);
+	}
+}
+
+void NativeWindow::setWindowTitle(CString title)
+{
+	NativeWindowSdl* self = static_cast<NativeWindowSdl*>(this);
+	SDL_SetWindowTitle(self->m_window, title.cstr());
+}
+
+NativeWindowSdl::~NativeWindowSdl()
+{
+	if(m_window)
+	{
+		SDL_DestroyWindow(m_window);
+	}
+
+	SDL_QuitSubSystem(INIT_SUBSYSTEMS);
+	SDL_Quit();
+}
+
+Error NativeWindowSdl::init(const NativeWindowInitInfo& init)
+{
 	if(SDL_Init(INIT_SUBSYSTEMS) != 0)
 	{
 		ANKI_CORE_LOGE("SDL_Init() failed: %s", SDL_GetError());
@@ -74,14 +118,14 @@ Error NativeWindow::init(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 			return Error::FUNCTION_FAILED;
 		}
 
-		init.m_width = mode.w;
-		init.m_height = mode.h;
+		m_width = mode.w;
+		m_height = mode.h;
 	}
 
-	m_impl->m_window = SDL_CreateWindow(&init.m_title[0], SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-										init.m_width, init.m_height, flags);
+	m_window =
+		SDL_CreateWindow(&init.m_title[0], SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, m_width, m_height, flags);
 
-	if(m_impl->m_window == nullptr)
+	if(m_window == nullptr)
 	{
 		ANKI_CORE_LOGE("SDL_CreateWindow() failed");
 		return Error::FUNCTION_FAILED;
@@ -91,7 +135,7 @@ Error NativeWindow::init(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 	if(init.m_fullscreenDesktopRez)
 	{
 		int w, h;
-		SDL_GetWindowSize(m_impl->m_window, &w, &h);
+		SDL_GetWindowSize(m_window, &w, &h);
 
 		m_width = w;
 		m_height = h;
@@ -104,27 +148,6 @@ Error NativeWindow::init(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 
 	ANKI_CORE_LOGI("SDL window created");
 	return Error::NONE;
-}
-
-void NativeWindow::destroy()
-{
-	if(m_impl != nullptr)
-	{
-		if(m_impl->m_window)
-		{
-			SDL_DestroyWindow(m_impl->m_window);
-		}
-
-		SDL_QuitSubSystem(INIT_SUBSYSTEMS);
-		SDL_Quit();
-	}
-
-	m_alloc.deleteInstance(m_impl);
-}
-
-void NativeWindow::setWindowTitle(CString title)
-{
-	SDL_SetWindowTitle(m_impl->m_window, title.cstr());
 }
 
 } // end namespace anki

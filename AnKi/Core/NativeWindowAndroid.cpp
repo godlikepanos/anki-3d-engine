@@ -8,40 +8,39 @@
 namespace anki
 {
 
-Error NativeWindow::init(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
+Error NativeWindow::newInstance(const NativeWindowInitInfo& initInfo, NativeWindow*& nativeWindow)
 {
-	ANKI_CORE_LOGI("Initializing Android window");
+	HeapAllocator<U8> alloc(initInfo.m_allocCallback, initInfo.m_allocCallbackUserData);
+	NativeWindowAndroid* sdlwin = alloc.newInstance<NativeWindowAndroid>();
 
-	m_alloc = alloc;
-	m_impl = m_alloc.newInstance<NativeWindowImpl>();
+	sdlwin->m_alloc = alloc;
 
-	// Loop until the window is ready
-	while(g_androidApp->window == nullptr)
+	const Error err = sdlwin->init(initInfo);
+	if(err)
 	{
-		int ident;
-		int events;
-		android_poll_source* source;
-
-		const int timeoutMs = 5;
-		while((ident = ALooper_pollAll(timeoutMs, nullptr, &events, reinterpret_cast<void**>(&source))) >= 0)
-		{
-			if(source != nullptr)
-			{
-				source->process(g_androidApp, source);
-			}
-		}
+		alloc.deleteInstance(sdlwin);
+		nativeWindow = nullptr;
+		return err;
 	}
-
-	m_impl->m_nativeWindow = g_androidApp->window;
-
-	// Set some stuff
-	m_width = ANativeWindow_getWidth(g_androidApp->window);
-	m_height = ANativeWindow_getHeight(g_androidApp->window);
-
-	return Error::NONE;
+	else
+	{
+		nativeWindow = sdlwin;
+		return Error::NONE;
+	}
 }
 
-void NativeWindow::destroy()
+void NativeWindow::deleteInstance(NativeWindow* window)
+{
+	if(window)
+	{
+		NativeWindowAndroid* self = static_cast<NativeWindowAndroid*>(window);
+		HeapAllocator<U8> alloc = self->m_alloc;
+		self->~NativeWindowAndroid();
+		alloc.getMemoryPool().free(self);
+	}
+}
+
+NativeWindowAndroid::~NativeWindowAndroid()
 {
 	ANKI_CORE_LOGI("Destroying Android window");
 	ANativeActivity_finish(g_androidApp->activity);
@@ -62,7 +61,37 @@ void NativeWindow::destroy()
 		}
 	}
 
-	m_alloc.deleteInstance(m_impl);
+	m_nativeWindow = nullptr;
+}
+
+Error NativeWindowAndroid::init(const NativeWindowInitInfo& init)
+{
+	ANKI_CORE_LOGI("Initializing Android window");
+
+	// Loop until the window is ready
+	while(g_androidApp->window == nullptr)
+	{
+		int ident;
+		int events;
+		android_poll_source* source;
+
+		const int timeoutMs = 5;
+		while((ident = ALooper_pollAll(timeoutMs, nullptr, &events, reinterpret_cast<void**>(&source))) >= 0)
+		{
+			if(source != nullptr)
+			{
+				source->process(g_androidApp, source);
+			}
+		}
+	}
+
+	m_nativeWindow = g_androidApp->window;
+
+	// Set some stuff
+	m_width = ANativeWindow_getWidth(g_androidApp->window);
+	m_height = ANativeWindow_getHeight(g_androidApp->window);
+
+	return Error::NONE;
 }
 
 void NativeWindow::setWindowTitle(CString title)

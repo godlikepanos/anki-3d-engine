@@ -236,15 +236,17 @@ void initConfig(ConfigSet& cfg)
 
 NativeWindow* createWindow(ConfigSet& cfg)
 {
-	HeapAllocator<U8> alloc(allocAligned, nullptr);
-
 	NativeWindowInitInfo inf;
+	inf.m_allocCallback = allocAligned;
 	inf.m_width = cfg.getNumberU32("width");
 	inf.m_height = cfg.getNumberU32("height");
 	inf.m_title = "AnKi unit tests";
-	NativeWindow* win = new NativeWindow();
-
-	ANKI_TEST_EXPECT_NO_ERR(win->init(inf, alloc));
+	NativeWindow* win;
+	const Error err = NativeWindow::newInstance(inf, win);
+	if(err)
+	{
+		return nullptr;
+	}
 
 	cfg.set("width", win->getWidth());
 	cfg.set("height", win->getHeight());

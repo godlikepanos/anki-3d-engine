@@ -14,13 +14,13 @@
 namespace anki
 {
 
-class NativeWindowImpl;
-using Context = void*;
-
 /// Window initializer
 class NativeWindowInitInfo
 {
 public:
+	AllocAlignedCallback m_allocCallback = nullptr;
+	void* m_allocCallbackUserData = nullptr;
+
 	U32 m_width = 1920;
 	U32 m_height = 1080;
 	Array<U32, 4> m_rgbaBits = {8, 8, 8, 0};
@@ -38,21 +38,15 @@ public:
 class NativeWindow
 {
 public:
-	NativeWindow()
-	{
-	}
+	static ANKI_USE_RESULT Error newInstance(const NativeWindowInitInfo& initInfo, NativeWindow*& nativeWindow);
 
-	~NativeWindow()
-	{
-		destroy();
-	}
-
-	ANKI_USE_RESULT Error init(NativeWindowInitInfo& initializer, HeapAllocator<U8>& alloc);
+	static void deleteInstance(NativeWindow* nativeWindow);
 
 	U32 getWidth() const
 	{
 		return m_width;
 	}
+
 	U32 getHeight() const
 	{
 		return m_height;
@@ -65,30 +59,19 @@ public:
 
 	void setWindowTitle(CString title);
 
-	ANKI_INTERNAL HeapAllocator<U8> getAllocator() const
-	{
-		return m_alloc;
-	}
-
-	ANKI_INTERNAL NativeWindowImpl& getNative()
-	{
-		ANKI_ASSERT(isCreated());
-		return *m_impl;
-	}
-
-private:
+protected:
 	U32 m_width = 0;
 	U32 m_height = 0;
 
-	NativeWindowImpl* m_impl = nullptr;
 	HeapAllocator<U8> m_alloc;
 
-	Bool isCreated() const
+	NativeWindow()
 	{
-		return m_impl != nullptr;
 	}
 
-	void destroy();
+	~NativeWindow()
+	{
+	}
 };
 
 } // end namespace anki

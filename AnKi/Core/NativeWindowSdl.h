@@ -12,10 +12,18 @@ namespace anki
 {
 
 /// Native window implementation for SDL
-class NativeWindowImpl
+class NativeWindowSdl : public NativeWindow
 {
 public:
 	SDL_Window* m_window = nullptr;
+
+	~NativeWindowSdl();
+
+	ANKI_USE_RESULT Error init(const NativeWindowInitInfo& init);
+
+private:
+	static constexpr U32 INIT_SUBSYSTEMS =
+		SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER;
 };
 
 } // end namespace anki

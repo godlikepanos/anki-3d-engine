@@ -295,7 +295,7 @@ void App::cleanup()
 	m_gr = nullptr;
 	Input::deleteInstance(m_input);
 	m_input = nullptr;
-	m_heapAlloc.deleteInstance(m_window);
+	NativeWindow::deleteInstance(m_window);
 	m_window = nullptr;
 
 #if ANKI_ENABLE_TRACE
@@ -389,14 +389,14 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	// Window
 	//
 	NativeWindowInitInfo nwinit;
+	nwinit.m_allocCallback = m_allocCb;
+	nwinit.m_allocCallbackUserData = m_allocCbData;
 	nwinit.m_width = config.getNumberU32("width");
 	nwinit.m_height = config.getNumberU32("height");
 	nwinit.m_depthBits = 0;
 	nwinit.m_stencilBits = 0;
 	nwinit.m_fullscreenDesktopRez = config.getBool("window_fullscreen");
-	m_window = m_heapAlloc.newInstance<NativeWindow>();
-
-	ANKI_CHECK(m_window->init(nwinit, m_heapAlloc));
+	ANKI_CHECK(NativeWindow::newInstance(nwinit, m_window));
 
 	//
 	// Input

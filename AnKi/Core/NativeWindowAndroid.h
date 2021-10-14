@@ -6,18 +6,20 @@
 #pragma once
 
 #include <AnKi/Core/NativeWindow.h>
-#include <EGL/egl.h>
-#include <GLES3/gl3.h>
 #include <android_native_app_glue.h>
 
 namespace anki
 {
 
 /// Native window implementation for Android
-class NativeWindowImpl
+class NativeWindowAndroid : public NativeWindow
 {
 public:
 	ANativeWindow* m_nativeWindow = nullptr;
+
+	~NativeWindowAndroid();
+
+	ANKI_USE_RESULT Error init(const NativeWindowInitInfo& init);
 };
 
 } // end namespace anki

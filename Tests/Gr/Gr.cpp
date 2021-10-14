@@ -281,7 +281,7 @@ static Input* input = nullptr;
 	delete stagingMem; \
 	GrManager::deleteInstance(gr); \
 	Input::deleteInstance(input); \
-	delete win; \
+	NativeWindow::deleteInstance(win); \
 	win = nullptr; \
 	gr = nullptr; \
 	stagingMem = nullptr;

@@ -5,7 +5,6 @@
 
 #include <AnKi/Gr/Vulkan/GrManagerImpl.h>
 #include <AnKi/Gr/GrManager.h>
-#include <AnKi/Core/NativeWindow.h>
 #include <AnKi/Core/NativeWindowAndroid.h>
 
 namespace anki
@@ -15,7 +14,7 @@ Error GrManagerImpl::initSurface(const GrManagerInitInfo& init)
 {
 	VkAndroidSurfaceCreateInfoKHR createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR;
-	createInfo.window = init.m_window->getNative().m_nativeWindow;
+	createInfo.window = static_cast<NativeWindowAndroid*>(init.m_window)->m_nativeWindow;
 
 	ANKI_VK_CHECK(vkCreateAndroidSurfaceKHR(m_instance, &createInfo, nullptr, &m_surface));
 
