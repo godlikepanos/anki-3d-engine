@@ -23,6 +23,7 @@ See the [LICENSE](LICENSE) file for more info.
 | :----------- |
 | ![Build Status Linux](https://github.com/godlikepanos/anki-3d-engine/actions/workflows/Linux.yml/badge.svg)     |
 | ![Build Status Windows](https://github.com/godlikepanos/anki-3d-engine/actions/workflows/Windows.yml/badge.svg) |
+| ![Build Status Android](https://github.com/godlikepanos/anki-3d-engine/actions/workflows/Android.yml/badge.svg) |
 
 To checkout the source type:
 
