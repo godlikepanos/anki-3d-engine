@@ -8,6 +8,7 @@ on:
 
 jobs:
   Debug:
+    name: "Debug"
     runs-on: windows-latest
 
     steps:
@@ -21,6 +22,7 @@ jobs:
       run: cmake --build ${{github.workspace}}/build --config Debug
       
   Release:
+    name: "Release"
     runs-on: windows-latest
 
     steps:
