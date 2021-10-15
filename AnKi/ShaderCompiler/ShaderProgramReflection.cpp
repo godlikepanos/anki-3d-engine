@@ -310,7 +310,7 @@ Error SpirvReflector::blockVariableReflection(const spirv_cross::SPIRType& type,
 	}
 
 	return Error::NONE;
-} // namespace anki
+}
 
 Error SpirvReflector::blockReflection(const spirv_cross::Resource& res, Bool isStorage,
 									  DynamicArrayAuto<Block>& blocks) const
