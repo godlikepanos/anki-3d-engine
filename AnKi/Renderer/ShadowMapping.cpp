@@ -9,6 +9,7 @@
 #include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Util/ThreadHive.h>
 #include <AnKi/Util/Tracer.h>
+#include <AnKi/Shaders/Include/ShadowMappingTypes.h>
 
 namespace anki
 {
@@ -16,7 +17,7 @@ namespace anki
 class ShadowMapping::Scratch::WorkItem
 {
 public:
-	Array<U32, 4> m_viewport;
+	UVec4 m_viewport;
 	RenderQueue* m_renderQueue;
 	U32 m_firstRenderableElement;
 	U32 m_renderableElementCount;
@@ -27,7 +28,7 @@ public:
 class ShadowMapping::Scratch::LightToRenderToScratchInfo
 {
 public:
-	Array<U32, 4> m_viewport;
+	UVec4 m_viewport;
 	RenderQueue* m_renderQueue;
 	U32 m_drawcallCount;
 	U32 m_renderQueueElementsLod;
@@ -36,8 +37,9 @@ public:
 class ShadowMapping::Atlas::ResolveWorkItem
 {
 public:
+	Vec4 m_uvInBounds; ///< Bounds used to avoid blurring neighbour tiles.
 	Vec4 m_uvIn; ///< UV + size that point to the scratch buffer.
-	Array<U32, 4> m_viewportOut; ///< Viewport in the atlas RT.
+	UVec4 m_viewportOut; ///< Viewport in the atlas RT.
 	Bool m_blur;
 };
 
@@ -147,36 +149,38 @@ void ShadowMapping::runAtlas(RenderPassWorkContext& rgraphCtx)
 
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
+	// Allocate and populate uniforms
+	ShadowMappingUniforms* uniforms = allocateAndBindStorage<ShadowMappingUniforms*>(
+		m_atlas.m_resolveWorkItems.getSize() * sizeof(ShadowMappingUniforms), cmdb, 0, 0);
+	for(U32 i = 0; i < m_atlas.m_resolveWorkItems.getSize(); ++i)
+	{
+		ShadowMappingUniforms& uni = uniforms[i];
+		const Atlas::ResolveWorkItem& workItem = m_atlas.m_resolveWorkItems[i];
+
+		uni.m_viewportXY = IVec2(workItem.m_viewportOut.xy());
+		uni.m_viewportZW = Vec2(workItem.m_viewportOut.zw());
+
+		uni.m_uvScale = workItem.m_uvIn.zw();
+		uni.m_uvTranslation = workItem.m_uvIn.xy();
+
+		uni.m_uvMin = workItem.m_uvInBounds.xy();
+		uni.m_uvMax = workItem.m_uvInBounds.xy() + workItem.m_uvInBounds.zw();
+
+		uni.m_blur = workItem.m_blur;
+	}
+
 	cmdb->bindShaderProgram(m_atlas.m_resolveGrProg);
 
-	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
-	rgraphCtx.bindTexture(0, 1, m_scratch.m_rt, TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
-	rgraphCtx.bindImage(0, 2, m_atlas.m_rt, {});
+	// Continue
+	cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);
+	rgraphCtx.bindTexture(0, 2, m_scratch.m_rt, TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+	rgraphCtx.bindImage(0, 3, m_atlas.m_rt);
 
-	for(const Atlas::ResolveWorkItem& workItem : m_atlas.m_resolveWorkItems)
-	{
-		ANKI_TRACE_INC_COUNTER(R_SHADOW_PASSES, 1);
+	constexpr U32 workgroupSize = 8;
+	ANKI_ASSERT(m_atlas.m_tileResolution >= workgroupSize && (m_atlas.m_tileResolution % workgroupSize) == 0);
 
-		struct Uniforms
-		{
-			UVec4 m_viewport;
-			Vec2 m_uvScale;
-			Vec2 m_uvTranslation;
-			U32 m_blur;
-			U32 m_padding0;
-			U32 m_padding1;
-			U32 m_padding2;
-		} unis;
-		unis.m_uvScale = workItem.m_uvIn.zw();
-		unis.m_uvTranslation = workItem.m_uvIn.xy();
-		unis.m_viewport = UVec4(workItem.m_viewportOut[0], workItem.m_viewportOut[1], workItem.m_viewportOut[2],
-								workItem.m_viewportOut[3]);
-		unis.m_blur = workItem.m_blur;
-
-		cmdb->setPushConstants(&unis, sizeof(unis));
-
-		dispatchPPCompute(cmdb, 8, 8, workItem.m_viewportOut[2], workItem.m_viewportOut[3]);
-	}
+	cmdb->dispatchCompute(m_atlas.m_tileResolution / workgroupSize, m_atlas.m_tileResolution / workgroupSize,
+						  m_atlas.m_resolveWorkItems.getSize());
 }
 
 void ShadowMapping::runShadowMapping(RenderPassWorkContext& rgraphCtx)
@@ -262,7 +266,7 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 	}
 }
 
-Mat4 ShadowMapping::createSpotLightTextureMatrix(const Viewport& viewport) const
+Mat4 ShadowMapping::createSpotLightTextureMatrix(const UVec4& viewport) const
 {
 	const F32 atlasSize = F32(m_atlas.m_tileResolution * m_atlas.m_tileCountBothAxis);
 #if ANKI_COMPILER_GCC_COMPATIBLE
@@ -337,8 +341,8 @@ void ShadowMapping::chooseLod(const Vec4& cameraOrigin, const SpotLightQueueElem
 
 TileAllocatorResult ShadowMapping::allocateTilesAndScratchTiles(U64 lightUuid, U32 faceCount, const U64* faceTimestamps,
 																const U32* faceIndices, const U32* drawcallsCount,
-																const U32* lods, Viewport* atlasTileViewports,
-																Viewport* scratchTileViewports,
+																const U32* lods, UVec4* atlasTileViewports,
+																UVec4* scratchTileViewports,
 																TileAllocatorResult* subResults)
 {
 	ANKI_ASSERT(lightUuid > 0);
@@ -353,8 +357,9 @@ TileAllocatorResult ShadowMapping::allocateTilesAndScratchTiles(U64 lightUuid, U
 	// Allocate atlas tiles first. They may be cached and that will affect how many scratch tiles we'll need
 	for(U i = 0; i < faceCount; ++i)
 	{
+		Array<U32, 4> tileRanges;
 		res = m_atlas.m_tileAlloc.allocate(m_r->getGlobalTimestamp(), faceTimestamps[i], lightUuid, faceIndices[i],
-										   drawcallsCount[i], lods[i], atlasTileViewports[i]);
+										   drawcallsCount[i], lods[i], tileRanges);
 
 		if(res == TileAllocatorResult::ALLOCATION_FAILED)
 		{
@@ -372,11 +377,8 @@ TileAllocatorResult ShadowMapping::allocateTilesAndScratchTiles(U64 lightUuid, U
 
 		subResults[i] = res;
 
-		// Fix viewport
-		atlasTileViewports[i][0] *= m_atlas.m_tileResolution;
-		atlasTileViewports[i][1] *= m_atlas.m_tileResolution;
-		atlasTileViewports[i][2] *= m_atlas.m_tileResolution;
-		atlasTileViewports[i][3] *= m_atlas.m_tileResolution;
+		// Set viewport
+		atlasTileViewports[i] = UVec4(tileRanges) * m_atlas.m_tileResolution;
 	}
 
 	// Allocate scratch tiles
@@ -389,8 +391,9 @@ TileAllocatorResult ShadowMapping::allocateTilesAndScratchTiles(U64 lightUuid, U
 
 		ANKI_ASSERT(subResults[i] == TileAllocatorResult::ALLOCATION_SUCCEEDED);
 
+		Array<U32, 4> tileRanges;
 		res = m_scratch.m_tileAlloc.allocate(m_r->getGlobalTimestamp(), faceTimestamps[i], lightUuid, faceIndices[i],
-											 drawcallsCount[i], lods[i], scratchTileViewports[i]);
+											 drawcallsCount[i], lods[i], tileRanges);
 
 		if(res == TileAllocatorResult::ALLOCATION_FAILED)
 		{
@@ -407,10 +410,7 @@ TileAllocatorResult ShadowMapping::allocateTilesAndScratchTiles(U64 lightUuid, U
 		}
 
 		// Fix viewport
-		scratchTileViewports[i][0] *= m_scratch.m_tileResolution;
-		scratchTileViewports[i][1] *= m_scratch.m_tileResolution;
-		scratchTileViewports[i][2] *= m_scratch.m_tileResolution;
-		scratchTileViewports[i][3] *= m_scratch.m_tileResolution;
+		scratchTileViewports[i] = UVec4(tileRanges) * m_scratch.m_tileResolution;
 
 		// Update the max view width
 		m_scratch.m_maxViewportWidth =
@@ -435,10 +435,13 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 	DynamicArrayAuto<Atlas::ResolveWorkItem> atlasWorkItems(ctx.m_tempAllocator);
 
 	// First thing, allocate an empty tile for empty faces of point lights
-	Viewport emptyTileViewport;
+	UVec4 emptyTileViewport;
 	{
-		const TileAllocatorResult res = m_atlas.m_tileAlloc.allocate(m_r->getGlobalTimestamp(), 1, MAX_U64, 0, 1,
-																	 m_pointLightsMaxLod, emptyTileViewport);
+		Array<U32, 4> tileRange;
+		const TileAllocatorResult res =
+			m_atlas.m_tileAlloc.allocate(m_r->getGlobalTimestamp(), 1, MAX_U64, 0, 1, m_pointLightsMaxLod, tileRange);
+
+		emptyTileViewport = UVec4(tileRange);
 
 		(void)res;
 #if ANKI_ENABLE_ASSERTIONS
@@ -463,8 +466,8 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 		Array<U64, MAX_SHADOW_CASCADES2> timestamps;
 		Array<U32, MAX_SHADOW_CASCADES2> cascadeIndices;
 		Array<U32, MAX_SHADOW_CASCADES2> drawcallCounts;
-		Array<Viewport, MAX_SHADOW_CASCADES2> atlasViewports;
-		Array<Viewport, MAX_SHADOW_CASCADES2> scratchViewports;
+		Array<UVec4, MAX_SHADOW_CASCADES2> atlasViewports;
+		Array<UVec4, MAX_SHADOW_CASCADES2> scratchViewports;
 		Array<TileAllocatorResult, MAX_SHADOW_CASCADES2> subResults;
 		Array<U32, MAX_SHADOW_CASCADES2> lods;
 		Array<U32, MAX_SHADOW_CASCADES2> renderQueueElementsLods;
@@ -550,8 +553,8 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 		Array<U64, 6> timestamps;
 		Array<U32, 6> faceIndices;
 		Array<U32, 6> drawcallCounts;
-		Array<Viewport, 6> atlasViewports;
-		Array<Viewport, 6> scratchViewports;
+		Array<UVec4, 6> atlasViewports;
+		Array<UVec4, 6> scratchViewports;
 		Array<TileAllocatorResult, 6> subResults;
 		Array<U32, 6> lods;
 		U32 numOfFacesThatHaveDrawcalls = 0;
@@ -603,8 +606,8 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 				{
 					// Has drawcalls, asigned it to a tile
 
-					const Viewport& atlasViewport = atlasViewports[numOfFacesThatHaveDrawcalls];
-					const Viewport& scratchViewport = scratchViewports[numOfFacesThatHaveDrawcalls];
+					const UVec4& atlasViewport = atlasViewports[numOfFacesThatHaveDrawcalls];
+					const UVec4& scratchViewport = scratchViewports[numOfFacesThatHaveDrawcalls];
 
 					// Add a half texel to the viewport's start to avoid bilinear filtering bleeding
 					light.m_shadowAtlasTileOffsets[face].x() = (F32(atlasViewport[0]) + 0.5f) / atlasResolution;
@@ -622,7 +625,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 				else
 				{
 					// Doesn't have renderables, point the face to the empty tile
-					Viewport atlasViewport = emptyTileViewport;
+					UVec4 atlasViewport = emptyTileViewport;
 					ANKI_ASSERT(F32(atlasViewport[2]) <= superTileSize && F32(atlasViewport[3]) <= superTileSize);
 					atlasViewport[2] = U32(superTileSize);
 					atlasViewport[3] = U32(superTileSize);
@@ -650,8 +653,8 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 		// Allocate tiles
 		U32 faceIdx = 0;
 		TileAllocatorResult subResult;
-		Viewport atlasViewport;
-		Viewport scratchViewport;
+		UVec4 atlasViewport;
+		UVec4 scratchViewport;
 		const U32 localDrawcallCount = light.m_shadowRenderQueue->m_renderables.getSize();
 
 		Bool blurAtlas;
@@ -762,7 +765,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 }
 
 void ShadowMapping::newScratchAndAtlasResloveRenderWorkItems(
-	const Viewport& atlasViewport, const Viewport& scratchVewport, Bool blurAtlas, RenderQueue* lightRenderQueue,
+	const UVec4& atlasViewport, const UVec4& scratchVewport, Bool blurAtlas, RenderQueue* lightRenderQueue,
 	U32 renderQueueElementsLod, DynamicArrayAuto<Scratch::LightToRenderToScratchInfo>& scratchWorkItem,
 	DynamicArrayAuto<Atlas::ResolveWorkItem>& atlasResolveWorkItem, U32& drawcallCount) const
 {
@@ -778,21 +781,37 @@ void ShadowMapping::newScratchAndAtlasResloveRenderWorkItems(
 		drawcallCount += lightRenderQueue->m_renderables.getSize();
 	}
 
-	// Atlas resolve work item
+	// Atlas resolve work items
+	const U32 tilesX = scratchVewport[2] / m_scratch.m_tileResolution;
+	const U32 tilesY = scratchVewport[3] / m_scratch.m_tileResolution;
+	for(U32 x = 0; x < tilesX; ++x)
 	{
-		const F32 scratchAtlasWidth = F32(m_scratch.m_tileCountX * m_scratch.m_tileResolution);
-		const F32 scratchAtlasHeight = F32(m_scratch.m_tileCountY * m_scratch.m_tileResolution);
+		for(U32 y = 0; y < tilesY; ++y)
+		{
+			const F32 scratchAtlasWidth = F32(m_scratch.m_tileCountX * m_scratch.m_tileResolution);
+			const F32 scratchAtlasHeight = F32(m_scratch.m_tileCountY * m_scratch.m_tileResolution);
 
-		Atlas::ResolveWorkItem atlasItem;
-		atlasItem.m_uvIn[0] = F32(scratchVewport[0]) / scratchAtlasWidth;
-		atlasItem.m_uvIn[1] = F32(scratchVewport[1]) / scratchAtlasHeight;
-		atlasItem.m_uvIn[2] = F32(scratchVewport[2]) / scratchAtlasWidth;
-		atlasItem.m_uvIn[3] = F32(scratchVewport[3]) / scratchAtlasHeight;
+			Atlas::ResolveWorkItem atlasItem;
 
-		atlasItem.m_viewportOut = atlasViewport;
-		atlasItem.m_blur = blurAtlas;
+			atlasItem.m_uvInBounds[0] = F32(scratchVewport[0]) / scratchAtlasWidth;
+			atlasItem.m_uvInBounds[1] = F32(scratchVewport[1]) / scratchAtlasHeight;
+			atlasItem.m_uvInBounds[2] = F32(scratchVewport[2]) / scratchAtlasWidth;
+			atlasItem.m_uvInBounds[3] = F32(scratchVewport[3]) / scratchAtlasHeight;
 
-		atlasResolveWorkItem.emplaceBack(atlasItem);
+			atlasItem.m_uvIn[0] = F32(scratchVewport[0] + scratchVewport[2] / tilesX * x) / scratchAtlasWidth;
+			atlasItem.m_uvIn[1] = F32(scratchVewport[1] + scratchVewport[3] / tilesY * y) / scratchAtlasHeight;
+			atlasItem.m_uvIn[2] = F32(scratchVewport[2] / tilesX) / scratchAtlasWidth;
+			atlasItem.m_uvIn[3] = F32(scratchVewport[3] / tilesY) / scratchAtlasHeight;
+
+			atlasItem.m_viewportOut[0] = atlasViewport[0] + atlasViewport[2] / tilesX * x;
+			atlasItem.m_viewportOut[1] = atlasViewport[1] + atlasViewport[3] / tilesY * y;
+			atlasItem.m_viewportOut[2] = atlasViewport[2] / tilesX;
+			atlasItem.m_viewportOut[3] = atlasViewport[3] / tilesY;
+
+			atlasItem.m_blur = blurAtlas;
+
+			atlasResolveWorkItem.emplaceBack(atlasItem);
+		}
 	}
 }
 

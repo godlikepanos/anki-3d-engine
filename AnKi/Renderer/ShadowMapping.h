@@ -38,8 +38,6 @@ public:
 	}
 
 private:
-	using Viewport = Array<U32, 4>;
-
 	/// @name Atlas stuff
 	/// @{
 
@@ -64,7 +62,7 @@ private:
 
 	ANKI_USE_RESULT Error initAtlas(const ConfigSet& cfg);
 
-	inline Mat4 createSpotLightTextureMatrix(const Viewport& viewport) const;
+	inline Mat4 createSpotLightTextureMatrix(const UVec4& viewport) const;
 
 	void runAtlas(RenderPassWorkContext& rgraphCtx);
 	/// @}
@@ -114,12 +112,12 @@ private:
 	/// Try to allocate a number of scratch tiles and regular tiles.
 	TileAllocatorResult allocateTilesAndScratchTiles(U64 lightUuid, U32 faceCount, const U64* faceTimestamps,
 													 const U32* faceIndices, const U32* drawcallsCount, const U32* lods,
-													 Viewport* atlasTileViewports, Viewport* scratchTileViewports,
+													 UVec4* atlasTileViewports, UVec4* scratchTileViewports,
 													 TileAllocatorResult* subResults);
 
 	/// Add new work to render to scratch buffer and atlas buffer.
 	void newScratchAndAtlasResloveRenderWorkItems(
-		const Viewport& atlasViewport, const Viewport& scratchVewport, Bool blurAtlas, RenderQueue* lightRenderQueue,
+		const UVec4& atlasViewport, const UVec4& scratchVewport, Bool blurAtlas, RenderQueue* lightRenderQueue,
 		U32 renderQueueElementsLod, DynamicArrayAuto<Scratch::LightToRenderToScratchInfo>& scratchWorkItem,
 		DynamicArrayAuto<Atlas::ResolveWorkItem>& atlasResolveWorkItem, U32& drawcallCount) const;
 

@@ -96,6 +96,14 @@ public:
 		m_simd = _mm_load_ps(arr);
 	}
 
+	explicit TVec(const Array<T, N>& arr)
+	{
+		for(U i = 0; i < N; ++i)
+		{
+			m_arr[i] = arr[i];
+		}
+	}
+
 	explicit TVec(const Simd& simd)
 	{
 		m_simd = simd;

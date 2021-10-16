@@ -54,28 +54,32 @@ def main():
     """ The main """
 
     ctx = parse_commandline()
+    this_script_dir = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
 
     # Copy dir
     project_dir = os.path.join(ctx.out_dir, "AndroidProject_%s" % ctx.target)
-    if os.path.isdir(project_dir):
-        raise Exception("Directory already exists: %s" % project_dir)
-
-    this_script_dir = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
-    shutil.copytree(this_script_dir, project_dir)
+    if not os.path.isdir(project_dir):
+        shutil.copytree(this_script_dir, project_dir)
 
     # RM the script
-    os.remove(os.path.join(project_dir, "GenerateAndroidProject.py"))
+    try:
+        os.remove(os.path.join(project_dir, "GenerateAndroidProject.py"))
+    except OSError:
+        pass
 
     # Create the assets dir structure
     assets_dir = os.path.join(project_dir, "assets")
-    os.mkdir(assets_dir)
-    os.mkdir(os.path.join(project_dir, "assets/AnKi/"))
-    os.symlink(os.path.join(this_script_dir, "../../AnKi/Shaders"), os.path.join(project_dir, "assets/AnKi/Shaders"))
-    os.symlink(os.path.join(this_script_dir, "../../EngineAssets"), os.path.join(project_dir, "assets/EngineAssets"))
-    os.mkdir(os.path.join(project_dir, "assets/ThirdParty/"))
-    os.symlink(os.path.join(this_script_dir, "../../ThirdParty/Fsr"), os.path.join(project_dir,
-                                                                                   "assets/ThirdParty/Fsr"))
-    os.symlink(ctx.asserts_dir, os.path.join(project_dir, "assets/Assets"))
+    if not os.path.isdir(assets_dir):
+        os.mkdir(assets_dir)
+        os.mkdir(os.path.join(project_dir, "assets/AnKi/"))
+        os.symlink(os.path.join(this_script_dir, "../../AnKi/Shaders"),
+                   os.path.join(project_dir, "assets/AnKi/Shaders"))
+        os.symlink(os.path.join(this_script_dir, "../../EngineAssets"),
+                   os.path.join(project_dir, "assets/EngineAssets"))
+        os.mkdir(os.path.join(project_dir, "assets/ThirdParty/"))
+        os.symlink(os.path.join(this_script_dir, "../../ThirdParty/Fsr"),
+                   os.path.join(project_dir, "assets/ThirdParty/Fsr"))
+        os.symlink(ctx.asserts_dir, os.path.join(project_dir, "assets/Assets"))
 
     # Write the asset directory structure to a file
     dir_structure_file = open(os.path.join(assets_dir, "DirStructure.txt"), "w", newline="\n")
