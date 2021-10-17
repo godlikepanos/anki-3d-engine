@@ -14,8 +14,8 @@
 #	pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #endif
 #define A_CPU
-#include <ThirdParty/Fsr/ffx_a.h>
-#include <ThirdParty/Fsr/ffx_fsr1.h>
+#include <ThirdParty/FidelityFX/ffx_a.h>
+#include <ThirdParty/FidelityFX/ffx_fsr1.h>
 #if ANKI_COMPILER_GCC_COMPATIBLE
 #	pragma GCC diagnostic pop
 #endif
