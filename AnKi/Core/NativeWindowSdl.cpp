@@ -121,6 +121,11 @@ Error NativeWindowSdl::init(const NativeWindowInitInfo& init)
 		m_width = mode.w;
 		m_height = mode.h;
 	}
+	else
+	{
+		m_width = init.m_width;
+		m_height = init.m_height;
+	}
 
 	m_window =
 		SDL_CreateWindow(&init.m_title[0], SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, m_width, m_height, flags);
@@ -131,19 +136,11 @@ Error NativeWindowSdl::init(const NativeWindowInitInfo& init)
 		return Error::FUNCTION_FAILED;
 	}
 
-	// Set the size after loading a fullscreen window
-	if(init.m_fullscreenDesktopRez)
+	// Final check
 	{
 		int w, h;
 		SDL_GetWindowSize(m_window, &w, &h);
-
-		m_width = w;
-		m_height = h;
-	}
-	else
-	{
-		m_width = init.m_width;
-		m_height = init.m_height;
+		ANKI_ASSERT(m_width == U32(w) && m_height == U32(h));
 	}
 
 	ANKI_CORE_LOGI("SDL window created");
