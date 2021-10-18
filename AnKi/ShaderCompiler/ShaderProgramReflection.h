@@ -46,6 +46,8 @@ public:
 											  U32 arraySize) = 0;
 
 	virtual ANKI_USE_RESULT Error visitConstant(U32 idx, CString name, ShaderVariableDataType type, U32 constantId) = 0;
+
+	virtual ANKI_USE_RESULT Bool skipSymbol(CString symbol) const = 0;
 };
 
 /// Does reflection using SPIR-V.

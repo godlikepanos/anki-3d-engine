@@ -57,9 +57,11 @@ static ShaderVariableDataType spirvcrossBaseTypeToAnki(spirv_cross::SPIRType::Ba
 class SpirvReflector : public spirv_cross::Compiler
 {
 public:
-	SpirvReflector(const U32* ir, PtrSize wordCount, const GenericMemoryPoolAllocator<U8>& tmpAlloc)
+	SpirvReflector(const U32* ir, PtrSize wordCount, const GenericMemoryPoolAllocator<U8>& tmpAlloc,
+				   ShaderReflectionVisitorInterface* interface)
 		: spirv_cross::Compiler(ir, wordCount)
 		, m_alloc(tmpAlloc)
+		, m_interface(interface)
 	{
 	}
 
@@ -126,6 +128,7 @@ private:
 	};
 
 	GenericMemoryPoolAllocator<U8> m_alloc;
+	ShaderReflectionVisitorInterface* m_interface = nullptr;
 
 	ANKI_USE_RESULT Error spirvTypeToAnki(const spirv_cross::SPIRType& type, ShaderVariableDataType& out) const;
 
@@ -329,6 +332,12 @@ Error SpirvReflector::blockReflection(const spirv_cross::Resource& res, Bool isS
 			ANKI_SHADER_COMPILER_LOGE("Can't accept zero name length");
 			return Error::USER_DATA;
 		}
+
+		if(m_interface->skipSymbol(name.c_str()))
+		{
+			return Error::NONE;
+		}
+
 		newBlock.m_name.create(name.c_str());
 	}
 
@@ -450,6 +459,12 @@ Error SpirvReflector::opaqueReflection(const spirv_cross::Resource& res, Dynamic
 		ANKI_SHADER_COMPILER_LOGE("Can't accept zero length name");
 		return Error::USER_DATA;
 	}
+
+	if(m_interface->skipSymbol(name.c_str()))
+	{
+		return Error::NONE;
+	}
+
 	newOpaque.m_name.create(name.c_str());
 
 	// Type
@@ -652,7 +667,7 @@ Error SpirvReflector::performSpirvReflection(Array<ConstWeakArray<U8>, U32(Shade
 
 		// Parse SPIR-V
 		const unsigned int* spvb = reinterpret_cast<const unsigned int*>(spirv[type].getBegin());
-		SpirvReflector compiler(spvb, spirv[type].getSizeInBytes() / sizeof(unsigned int), tmpAlloc);
+		SpirvReflector compiler(spvb, spirv[type].getSizeInBytes() / sizeof(unsigned int), tmpAlloc, &interface);
 
 		// Uniform blocks
 		for(const spirv_cross::Resource& res : compiler.get_shader_resources().uniform_buffers)

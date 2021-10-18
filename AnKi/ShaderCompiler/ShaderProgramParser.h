@@ -85,6 +85,7 @@ private:
 /// #pragma anki end
 /// #pragma anki library "name"
 /// #pragma anki ray_type NUMBER
+/// #pragma anki reflect NAME
 ///
 /// Only the "anki input" should be in an ifdef-like guard. For everything else it's ignored.
 class ShaderProgramParser
@@ -134,6 +135,11 @@ public:
 	U32 getRayType() const
 	{
 		return m_rayType;
+	}
+
+	const StringListAuto& getSymbolsToReflect() const
+	{
+		return m_symbolsToReflect;
 	}
 
 	/// Generates the common header that will be used by all AnKi shaders.
@@ -188,6 +194,8 @@ private:
 	StringAuto m_libName = {m_alloc};
 	U32 m_rayType = MAX_U32;
 
+	StringListAuto m_symbolsToReflect = {m_alloc};
+
 	ANKI_USE_RESULT Error parseFile(CString fname, U32 depth);
 	ANKI_USE_RESULT Error parseLine(CString line, CString fname, Bool& foundPragmaOnce, U32 depth);
 	ANKI_USE_RESULT Error parseInclude(const StringAuto* begin, const StringAuto* end, CString line, CString fname,
@@ -201,6 +209,8 @@ private:
 	ANKI_USE_RESULT Error parsePragmaLibraryName(const StringAuto* begin, const StringAuto* end, CString line,
 												 CString fname);
 	ANKI_USE_RESULT Error parsePragmaRayType(const StringAuto* begin, const StringAuto* end, CString line,
+											 CString fname);
+	ANKI_USE_RESULT Error parsePragmaReflect(const StringAuto* begin, const StringAuto* end, CString line,
 											 CString fname);
 
 	void tokenizeLine(CString line, DynamicArrayAuto<StringAuto>& tokens) const;

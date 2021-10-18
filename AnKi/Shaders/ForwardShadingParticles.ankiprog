@@ -17,16 +17,20 @@ struct PerDraw
 	Vec4 m_colorBias;
 };
 
+#pragma anki reflect b_ankiPerDraw
 layout(set = 1, binding = 0, row_major) uniform b_ankiPerDraw
 {
 	PerDraw u_ankiPerDraw;
 };
 
+#pragma anki reflect u_ankiGlobalSampler
 layout(set = 1, binding = 1) uniform sampler u_ankiGlobalSampler;
 #if ANIMATED_TEXTURE == 0
+#	pragma anki reflect u_diffuseMap
 layout(set = 1, binding = 2) uniform texture2D u_diffuseMap;
 #endif
 #if ANIMATED_TEXTURE == 1
+#	pragma anki reflect u_diffuseMapArr
 layout(set = 1, binding = 2) uniform texture2DArray u_diffuseMapArr;
 #endif
 

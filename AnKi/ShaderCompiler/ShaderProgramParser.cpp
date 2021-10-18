@@ -526,6 +526,21 @@ Error ShaderProgramParser::parsePragmaRayType(const StringAuto* begin, const Str
 	return Error::NONE;
 }
 
+Error ShaderProgramParser::parsePragmaReflect(const StringAuto* begin, const StringAuto* end, CString line,
+											  CString fname)
+{
+	ANKI_ASSERT(begin && end);
+
+	if(begin >= end)
+	{
+		ANKI_PP_ERROR_MALFORMED();
+	}
+
+	m_symbolsToReflect.pushBack(*begin);
+
+	return Error::NONE;
+}
+
 Error ShaderProgramParser::parsePragmaRewriteMutation(const StringAuto* begin, const StringAuto* end, CString line,
 													  CString fname)
 {
@@ -790,6 +805,10 @@ Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPra
 			else if(*token == "ray_type")
 			{
 				ANKI_CHECK(parsePragmaRayType(token + 1, end, line, fname));
+			}
+			else if(*token == "reflect")
+			{
+				ANKI_CHECK(parsePragmaReflect(token + 1, end, line, fname));
 			}
 			else
 			{

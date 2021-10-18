@@ -19,6 +19,7 @@ struct PerDraw
 	Vec3 m_finalEmission;
 };
 
+#pragma anki reflect b_ankiPerDraw
 layout(set = 0, binding = 0, std140, row_major) uniform b_ankiPerDraw
 {
 	PerDraw u_ankiPerDraw;

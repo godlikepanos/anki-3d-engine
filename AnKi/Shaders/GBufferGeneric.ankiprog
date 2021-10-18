@@ -41,31 +41,39 @@
 
 #include <AnKi/Shaders/GBufferCommon.glsl>
 
+#pragma anki reflect u_ankiGlobalSampler
 layout(set = 0, binding = 2) uniform sampler u_ankiGlobalSampler;
 #if DIFFUSE_TEX == 1 && ANKI_PASS == PASS_GB
+#	pragma anki reflect u_diffTex
 layout(set = 0, binding = 3) uniform texture2D u_diffTex;
 #	define USING_DIFF_TEX 1
 #endif
 #if SPECULAR_TEX == 1 && ANKI_PASS == PASS_GB
+#	pragma anki reflect u_specTex
 layout(set = 0, binding = 4) uniform texture2D u_specTex;
 #	define USING_SPECULAR_TEX 1
 #endif
 #if ROUGHNESS_TEX == 1 && ANKI_PASS == PASS_GB
+#	pragma anki reflect u_roughnessTex
 layout(set = 0, binding = 5) uniform texture2D u_roughnessTex;
 #	define USING_ROUGHNESS_TEX 1
 #endif
 #if NORMAL_TEX == 1 && ANKI_PASS == PASS_GB && ANKI_LOD < 2
+#	pragma anki reflect u_normalTex
 layout(set = 0, binding = 6) uniform texture2D u_normalTex;
 #	define USING_NORMAL_TEX 1
 #endif
 #if METAL_TEX == 1 && ANKI_PASS == PASS_GB
+#	pragma anki reflect u_metallicTex
 layout(set = 0, binding = 7) uniform texture2D u_metallicTex;
 #	define USING_METALLIC_TEX 1
 #endif
 #if REALLY_USING_PARALLAX
+#	pragma anki reflect u_heightTex
 layout(set = 0, binding = 8) uniform texture2D u_heightTex;
 #endif
 #if EMISSIVE_TEX == 1 && ANKI_PASS == PASS_GB
+#	pragma anki reflect u_emissiveTex
 layout(set = 0, binding = 9) uniform texture2D u_emissiveTex;
 #	define USING_EMISSIVE_TEX 1
 #endif
@@ -112,23 +120,27 @@ struct PerInstance
 };
 
 #if ANKI_PASS == PASS_GB
+#	pragma anki reflect b_ankiPerDraw
 layout(set = 0, binding = 0, row_major, std140) uniform b_ankiPerDraw
 {
 	PerDraw u_ankiPerDraw;
 };
 #endif
 
+#pragma anki reflect b_ankiPerInstance
 layout(set = 0, binding = 1, row_major, std140) uniform b_ankiPerInstance
 {
 	PerInstance u_ankiPerInstance[MAX_INSTANCE_COUNT];
 };
 
 #if ANKI_BONES
+#	pragma anki reflect b_ankiBoneTransforms
 layout(set = 0, binding = 10, row_major, std140) readonly buffer b_ankiBoneTransforms
 {
 	Mat4 u_ankiBoneTransforms[];
 };
 
+#	pragma anki reflect b_ankiPrevFrameBoneTransforms
 layout(set = 0, binding = 11, row_major, std140) readonly buffer b_ankiPrevFrameBoneTransforms
 {
 	Mat4 u_ankiPrevFrameBoneTransforms[];

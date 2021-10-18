@@ -320,6 +320,7 @@ class Refl final : public ShaderReflectionVisitorInterface
 {
 public:
 	GenericMemoryPoolAllocator<U8> m_alloc;
+	const StringList* m_symbolsToReflect = nullptr;
 
 	/// Will be stored in the binary
 	/// @{
@@ -348,8 +349,9 @@ public:
 	Array<U32, 3> m_workgroupSizesConstants = {MAX_U32, MAX_U32, MAX_U32};
 	/// @}
 
-	Refl(const GenericMemoryPoolAllocator<U8>& alloc)
+	Refl(const GenericMemoryPoolAllocator<U8>& alloc, const StringList* symbolsToReflect)
 		: m_alloc(alloc)
+		, m_symbolsToReflect(symbolsToReflect)
 	{
 	}
 
@@ -475,6 +477,20 @@ public:
 		instance.m_arraySize = arraySize;
 
 		return Error::NONE;
+	}
+
+	Bool skipSymbol(CString symbol) const final
+	{
+		Bool skip = true;
+		for(const String& s : *m_symbolsToReflect)
+		{
+			if(symbol == s)
+			{
+				skip = false;
+				break;
+			}
+		}
+		return skip;
 	}
 
 	Error visitConstant(U32 instanceIdx, CString name, ShaderVariableDataType type, U32 constantId) final
@@ -632,12 +648,12 @@ public:
 	}
 };
 
-static Error doReflection(ShaderProgramBinary& binary, GenericMemoryPoolAllocator<U8>& tmpAlloc,
-						  GenericMemoryPoolAllocator<U8>& binaryAlloc)
+static Error doReflection(const StringList& symbolsToReflect, ShaderProgramBinary& binary,
+						  GenericMemoryPoolAllocator<U8>& tmpAlloc, GenericMemoryPoolAllocator<U8>& binaryAlloc)
 {
 	ANKI_ASSERT(binary.m_variants.getSize() > 0);
 
-	Refl refl(binaryAlloc);
+	Refl refl(binaryAlloc, &symbolsToReflect);
 
 	for(ShaderProgramBinaryVariant& variant : binary.m_variants)
 	{
@@ -999,7 +1015,7 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 	binary.m_presentShaderTypes = parser.getShaderTypes();
 
 	// Reflection
-	ANKI_CHECK(doReflection(binary, tempAllocator, binaryAllocator));
+	ANKI_CHECK(doReflection(parser.getSymbolsToReflect(), binary, tempAllocator, binaryAllocator));
 
 	return Error::NONE;
 }
