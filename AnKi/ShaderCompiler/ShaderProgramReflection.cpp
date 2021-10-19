@@ -127,6 +127,32 @@ private:
 		}
 	};
 
+	class StructMember
+	{
+	public:
+		StringAuto m_name;
+		ShaderVariableDataType m_type = ShaderVariableDataType::NONE;
+		U32 m_structIndex = MAX_U32; ///< The member is actually a struct.
+
+		StructMember(const GenericMemoryPoolAllocator<U8>& alloc)
+			: m_name(alloc)
+		{
+		}
+	};
+
+	class Struct
+	{
+	public:
+		StringAuto m_name;
+		DynamicArrayAuto<StructMember> m_members;
+
+		Struct(const GenericMemoryPoolAllocator<U8>& alloc)
+			: m_name(alloc)
+			, m_members(alloc)
+		{
+		}
+	};
+
 	GenericMemoryPoolAllocator<U8> m_alloc;
 	ShaderReflectionVisitorInterface* m_interface = nullptr;
 
@@ -145,7 +171,123 @@ private:
 												  U32 baseOffset, DynamicArrayAuto<Var>& vars) const;
 
 	ANKI_USE_RESULT Error workgroupSizes(U32& sizex, U32& sizey, U32& sizez, U32& specConstMask);
+
+	ANKI_USE_RESULT Error structsReflection(DynamicArrayAuto<Struct>& structs) const;
+
+	ANKI_USE_RESULT Error structReflection(uint32_t id, const spirv_cross::SPIRType& type, Bool trySkipType,
+										   DynamicArrayAuto<Struct>& structs, U32& structIndexInStructsArr) const;
 };
+
+Error SpirvReflector::structsReflection(DynamicArrayAuto<Struct>& structs) const
+{
+	Error err = Error::NONE;
+
+	ir.for_each_typed_id<spirv_cross::SPIRType>([&err, &structs, this](uint32_t id, const spirv_cross::SPIRType& type) {
+		if(err)
+		{
+			return;
+		}
+
+		if(!(type.basetype == spirv_cross::SPIRType::Struct && !type.pointer && type.array.empty()))
+		{
+			return;
+		}
+
+		U32 idx;
+		err = structReflection(id, type, true, structs, idx);
+	});
+
+	return err;
+}
+
+Error SpirvReflector::structReflection(uint32_t id, const spirv_cross::SPIRType& type, Bool trySkipType,
+									   DynamicArrayAuto<Struct>& structs, U32& structIndexInStructsArr) const
+{
+	// Name
+	std::string name = to_name(id);
+
+	if(trySkipType && m_interface->skipSymbol(name.c_str()))
+	{
+		// return Error::NONE;
+	}
+
+	// Check if the struct is already there
+	structIndexInStructsArr = 0;
+	for(const Struct& s : structs)
+	{
+		if(s.m_name == name.c_str())
+		{
+			return Error::NONE;
+		}
+
+		++structIndexInStructsArr;
+	}
+
+	// Create new struct
+	structIndexInStructsArr = structs.getSize();
+	GenericMemoryPoolAllocator<U8> alloc = structs.getAllocator();
+	structs.emplaceBack(alloc);
+	structs[structIndexInStructsArr].m_name = name.c_str();
+
+	// printf("%s\n", s.m_name.cstr());
+
+	// Members
+	for(U32 i = 0; i < type.member_types.size(); ++i)
+	{
+		StructMember& member = *structs[structIndexInStructsArr].m_members.emplaceBack(alloc);
+
+		// Get name
+		const spirv_cross::Meta* meta = ir.find_meta(type.self);
+		ANKI_ASSERT(meta);
+		ANKI_ASSERT(i < meta->members.size());
+		ANKI_ASSERT(!meta->members[i].alias.empty());
+		member.m_name = meta->members[i].alias.c_str();
+
+		// Type
+		const spirv_cross::SPIRType& memberType = get<spirv_cross::SPIRType>(type.member_types[i]);
+		const ShaderVariableDataType baseType = spirvcrossBaseTypeToAnki(memberType.basetype);
+		const Bool isNumeric = baseType != ShaderVariableDataType::NONE;
+
+		ShaderVariableDataType actualType = ShaderVariableDataType::NONE;
+		if(isNumeric)
+		{
+			const Bool isMatrix = memberType.columns > 1;
+
+			if(0)
+			{
+			}
+#define ANKI_SVDT_MACRO(capital, type, baseType_, rowCount, columnCount) \
+	else if(ShaderVariableDataType::baseType_ == baseType && isMatrix && memberType.vecsize == columnCount \
+			&& memberType.columns == rowCount) \
+	{ \
+		actualType = ShaderVariableDataType::capital; \
+	} \
+	else if(ShaderVariableDataType::baseType_ == baseType && !isMatrix && memberType.vecsize == rowCount) \
+	{ \
+		actualType = ShaderVariableDataType::capital; \
+	}
+#include <AnKi/Gr/ShaderVariableDataTypeDefs.h>
+#undef ANKI_SVDT_MACRO
+
+			member.m_type = actualType;
+		}
+		else if(memberType.basetype == spirv_cross::SPIRType::Struct)
+		{
+			U32 idx = MAX_U32;
+			ANKI_CHECK(structReflection(type.member_types[i], memberType, false, structs, idx));
+
+			ANKI_ASSERT(idx < structs.getSize());
+			member.m_structIndex = idx;
+		}
+		else
+		{
+			ANKI_SHADER_COMPILER_LOGE("Unhandled base type for member: %s", name.c_str());
+			return Error::FUNCTION_FAILED;
+		}
+	}
+
+	return Error::NONE;
+}
 
 Error SpirvReflector::blockVariablesReflection(spirv_cross::TypeID resourceId, DynamicArrayAuto<Var>& vars) const
 {
@@ -656,6 +798,7 @@ Error SpirvReflector::performSpirvReflection(Array<ConstWeakArray<U8>, U32(Shade
 	DynamicArrayAuto<Const> specializationConstants(tmpAlloc);
 	Array<U32, 3> workgroupSizes = {};
 	U32 workgroupSizeSpecConstMask = 0;
+	DynamicArrayAuto<Struct> structs(tmpAlloc);
 
 	// Perform reflection for each stage
 	for(const ShaderType type : EnumIterable<ShaderType>())
@@ -710,16 +853,21 @@ Error SpirvReflector::performSpirvReflection(Array<ConstWeakArray<U8>, U32(Shade
 		// Spec consts
 		ANKI_CHECK(compiler.constsReflection(specializationConstants, type));
 
+		// Workgroup sizes
 		if(type == ShaderType::COMPUTE)
 		{
 			ANKI_CHECK(compiler.workgroupSizes(workgroupSizes[0], workgroupSizes[1], workgroupSizes[2],
 											   workgroupSizeSpecConstMask));
 		}
+
+		// Structs
+		ANKI_CHECK(compiler.structsReflection(structs));
 	}
 
 	// Inform through the interface
 	ANKI_CHECK(interface.setCounts(uniformBlocks.getSize(), storageBlocks.getSize(), opaques.getSize(),
-								   pushConstantBlock.getSize() == 1, specializationConstants.getSize()));
+								   pushConstantBlock.getSize() == 1, specializationConstants.getSize(),
+								   structs.getSize()));
 
 	for(U32 i = 0; i < uniformBlocks.getSize(); ++i)
 	{
@@ -775,6 +923,18 @@ Error SpirvReflector::performSpirvReflection(Array<ConstWeakArray<U8>, U32(Shade
 	{
 		ANKI_CHECK(interface.setWorkgroupSizes(workgroupSizes[0], workgroupSizes[1], workgroupSizes[2],
 											   workgroupSizeSpecConstMask));
+	}
+
+	for(U32 i = 0; i < structs.getSize(); ++i)
+	{
+		const Struct& s = structs[i];
+		ANKI_CHECK(interface.visitStruct(i, s.m_name, s.m_members.getSize()));
+
+		for(U32 j = 0; j < s.m_members.getSize(); ++j)
+		{
+			const StructMember& sm = s.m_members[j];
+			ANKI_CHECK(interface.visitStructMember(j, sm.m_name, sm.m_type));
+		}
 	}
 
 	return Error::NONE;

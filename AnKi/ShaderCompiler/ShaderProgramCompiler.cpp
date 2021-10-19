@@ -392,7 +392,7 @@ public:
 	}
 
 	Error setCounts(U32 uniformBlockCount, U32 storageBlockCount, U32 opaqueCount, Bool pushConstantBlock,
-					U32 constCount) final
+					U32 constCount, U32 structCount) final
 	{
 		m_blockInstances[0].create(uniformBlockCount);
 		m_blockInstances[1].create(storageBlockCount);
@@ -529,6 +529,18 @@ public:
 		ShaderProgramBinaryConstantInstance& instance = m_constInstances[instanceIdx];
 		instance.m_index = constIdx;
 
+		return Error::NONE;
+	}
+
+	Error visitStruct(U32 idx, CString name, U32 memberCount) final
+	{
+		// TODO
+		return Error::NONE;
+	}
+
+	Error visitStructMember(U32 memberIdx, CString name, ShaderVariableDataType type) final
+	{
+		// TODO
 		return Error::NONE;
 	}
 
