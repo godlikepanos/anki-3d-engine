@@ -142,6 +142,28 @@ void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& huma
 		lines.pushBack(ANKI_TAB "N/A\n");
 	}
 
+	lines.pushBack("\n**STRUCTS**\n");
+	if(binary.m_structs.getSize() > 0)
+	{
+		for(const ShaderProgramBinaryStruct& s : binary.m_structs)
+		{
+			lines.pushBackSprintf(ANKI_TAB "%-32s size %4u\n", s.m_name.getBegin(), s.m_size);
+
+			for(const ShaderProgramBinaryStructMember& member : s.m_members)
+			{
+				CString typeStr = (member.m_type == ShaderVariableDataType::NONE)
+									  ? &binary.m_structs[member.m_structIndex].m_name[0]
+									  : shaderVariableDataTypeToString(member.m_type);
+				lines.pushBackSprintf(ANKI_TAB ANKI_TAB "%-32s type %24s offset %4u arraySize %4u\n",
+									  member.m_name.getBegin(), typeStr.cstr(), member.m_offset, member.m_arraySize);
+			}
+		}
+	}
+	else
+	{
+		lines.pushBack(ANKI_TAB "N/A\n");
+	}
+
 	lines.pushBack("\n**BINARIES**\n");
 	U32 count = 0;
 	for(const ShaderProgramBinaryCodeBlock& code : binary.m_codeBlocks)

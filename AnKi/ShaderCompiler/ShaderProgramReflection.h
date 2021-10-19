@@ -47,9 +47,11 @@ public:
 
 	virtual ANKI_USE_RESULT Error visitConstant(U32 idx, CString name, ShaderVariableDataType type, U32 constantId) = 0;
 
-	virtual ANKI_USE_RESULT Error visitStruct(U32 idx, CString name, U32 memberCount) = 0;
+	virtual ANKI_USE_RESULT Error visitStruct(U32 idx, CString name, U32 memberCount, U32 size) = 0;
 
-	virtual ANKI_USE_RESULT Error visitStructMember(U32 memberIdx, CString name, ShaderVariableDataType type) = 0;
+	virtual ANKI_USE_RESULT Error visitStructMember(U32 structIdx, CString structName, U32 memberIdx,
+													CString memberName, ShaderVariableDataType type,
+													CString typeStructName, U32 offset, U32 arraySize) = 0;
 
 	virtual ANKI_USE_RESULT Bool skipSymbol(CString symbol) const = 0;
 };

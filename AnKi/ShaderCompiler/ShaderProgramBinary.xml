@@ -67,6 +67,24 @@
 			</members>
 		</class>
 
+		<class name="ShaderProgramBinaryStructMember" comment="A member of a ShaderProgramBinaryStruct">
+			<members>
+				<member name="m_name" type="char" array_size="MAX_SHADER_BINARY_NAME_LENGTH + 1" constructor="= {}" />
+				<member name="m_type" type="ShaderVariableDataType" constructor="= ShaderVariableDataType::NONE" comment="If the value is ShaderVariableDataType::NONE then it's a struct" />
+				<member name="m_structIndex" type="U32" constructor="= MAX_U32" />
+				<member name="m_offset" type="U32" constructor="= MAX_U32" />
+				<member name="m_arraySize" type="U32" constructor="= MAX_U32" />
+			</members>
+		</class>
+
+		<class name="ShaderProgramBinaryStruct" comment="Structures">
+			<members>
+				<member name="m_name" type="char" array_size="MAX_SHADER_BINARY_NAME_LENGTH + 1" />
+				<member name="m_members" type="WeakArray&lt;ShaderProgramBinaryStructMember&gt;" />
+				<member name="m_size" type="U32" constructor="= MAX_U32" />
+			</members>
+		</class>
+
 		<class name="ShaderProgramBinaryVariant">
 			<members>
 				<member name="m_codeBlockIndices" type="U32" array_size="U32(ShaderType::COUNT)" comment="Index in ShaderProgramBinary::m_codeBlocks. MAX_U32 means no shader" constructor="= {}" />
@@ -114,6 +132,7 @@
 				<member name="m_pushConstantBlock" type="ShaderProgramBinaryBlock" pointer="true" constructor="= nullptr" />
 				<member name="m_opaques" type="WeakArray&lt;ShaderProgramBinaryOpaque&gt;" />
 				<member name="m_constants" type="WeakArray&lt;ShaderProgramBinaryConstant&gt;" />
+				<member name="m_structs" type="WeakArray&lt;ShaderProgramBinaryStruct&gt;" />
 				<member name="m_presentShaderTypes" type="ShaderTypeBit" constructor="= ShaderTypeBit::NONE" />
 				<member name="m_libraryName" type="char" array_size="64" constructor="= {}" comment="The name of the shader library. Mainly for RT shaders" />
 				<member name="m_rayType" type="U32" constructor="= MAX_U32" comment="An arbitary number indicating the type of the ray" />

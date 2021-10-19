@@ -13,9 +13,6 @@
 namespace anki
 {
 
-static const char* SHADER_BINARY_MAGIC = "ANKISDR5"; ///< @warning If changed change SHADER_BINARY_VERSION
-const U32 SHADER_BINARY_VERSION = 5;
-
 Error ShaderProgramBinaryWrapper::serializeToFile(CString fname) const
 {
 	ANKI_ASSERT(m_binary);
@@ -60,74 +57,83 @@ void ShaderProgramBinaryWrapper::cleanup()
 		return;
 	}
 
+	BaseMemoryPool& mempool = m_alloc.getMemoryPool();
+
 	if(!m_singleAllocation)
 	{
 		for(ShaderProgramBinaryMutator& mutator : m_binary->m_mutators)
 		{
-			m_alloc.getMemoryPool().free(mutator.m_values.getBegin());
+			mempool.free(mutator.m_values.getBegin());
 		}
-		m_alloc.getMemoryPool().free(m_binary->m_mutators.getBegin());
+		mempool.free(m_binary->m_mutators.getBegin());
 
 		for(ShaderProgramBinaryCodeBlock& code : m_binary->m_codeBlocks)
 		{
-			m_alloc.getMemoryPool().free(code.m_binary.getBegin());
+			mempool.free(code.m_binary.getBegin());
 		}
-		m_alloc.getMemoryPool().free(m_binary->m_codeBlocks.getBegin());
+		mempool.free(m_binary->m_codeBlocks.getBegin());
 
 		for(ShaderProgramBinaryMutation& m : m_binary->m_mutations)
 		{
-			m_alloc.getMemoryPool().free(m.m_values.getBegin());
+			mempool.free(m.m_values.getBegin());
 		}
-		m_alloc.getMemoryPool().free(m_binary->m_mutations.getBegin());
+		mempool.free(m_binary->m_mutations.getBegin());
 
 		for(ShaderProgramBinaryBlock& block : m_binary->m_uniformBlocks)
 		{
-			m_alloc.getMemoryPool().free(block.m_variables.getBegin());
+			mempool.free(block.m_variables.getBegin());
 		}
-		m_alloc.getMemoryPool().free(m_binary->m_uniformBlocks.getBegin());
+		mempool.free(m_binary->m_uniformBlocks.getBegin());
 
 		for(ShaderProgramBinaryBlock& block : m_binary->m_storageBlocks)
 		{
-			m_alloc.getMemoryPool().free(block.m_variables.getBegin());
+			mempool.free(block.m_variables.getBegin());
 		}
-		m_alloc.getMemoryPool().free(m_binary->m_storageBlocks.getBegin());
+		mempool.free(m_binary->m_storageBlocks.getBegin());
 
 		if(m_binary->m_pushConstantBlock)
 		{
-			m_alloc.getMemoryPool().free(m_binary->m_pushConstantBlock->m_variables.getBegin());
-			m_alloc.getMemoryPool().free(m_binary->m_pushConstantBlock);
+			mempool.free(m_binary->m_pushConstantBlock->m_variables.getBegin());
+			mempool.free(m_binary->m_pushConstantBlock);
 		}
 
-		m_alloc.getMemoryPool().free(m_binary->m_opaques.getBegin());
-		m_alloc.getMemoryPool().free(m_binary->m_constants.getBegin());
+		mempool.free(m_binary->m_opaques.getBegin());
+		mempool.free(m_binary->m_constants.getBegin());
+
+		for(ShaderProgramBinaryStruct& s : m_binary->m_structs)
+		{
+			mempool.free(s.m_members.getBegin());
+		}
+
+		mempool.free(m_binary->m_structs.getBegin());
 
 		for(ShaderProgramBinaryVariant& variant : m_binary->m_variants)
 		{
 			for(ShaderProgramBinaryBlockInstance& block : variant.m_uniformBlocks)
 			{
-				m_alloc.getMemoryPool().free(block.m_variables.getBegin());
+				mempool.free(block.m_variables.getBegin());
 			}
 
 			for(ShaderProgramBinaryBlockInstance& block : variant.m_storageBlocks)
 			{
-				m_alloc.getMemoryPool().free(block.m_variables.getBegin());
+				mempool.free(block.m_variables.getBegin());
 			}
 
 			if(variant.m_pushConstantBlock)
 			{
-				m_alloc.getMemoryPool().free(variant.m_pushConstantBlock->m_variables.getBegin());
+				mempool.free(variant.m_pushConstantBlock->m_variables.getBegin());
 			}
 
-			m_alloc.getMemoryPool().free(variant.m_uniformBlocks.getBegin());
-			m_alloc.getMemoryPool().free(variant.m_storageBlocks.getBegin());
-			m_alloc.getMemoryPool().free(variant.m_pushConstantBlock);
-			m_alloc.getMemoryPool().free(variant.m_constants.getBegin());
-			m_alloc.getMemoryPool().free(variant.m_opaques.getBegin());
+			mempool.free(variant.m_uniformBlocks.getBegin());
+			mempool.free(variant.m_storageBlocks.getBegin());
+			mempool.free(variant.m_pushConstantBlock);
+			mempool.free(variant.m_constants.getBegin());
+			mempool.free(variant.m_opaques.getBegin());
 		}
-		m_alloc.getMemoryPool().free(m_binary->m_variants.getBegin());
+		mempool.free(m_binary->m_variants.getBegin());
 	}
 
-	m_alloc.getMemoryPool().free(m_binary);
+	mempool.free(m_binary);
 	m_binary = nullptr;
 	m_singleAllocation = false;
 }
@@ -334,6 +340,10 @@ public:
 
 	DynamicArrayAuto<ShaderProgramBinaryOpaque> m_opaque = {m_alloc};
 	DynamicArrayAuto<ShaderProgramBinaryConstant> m_consts = {m_alloc};
+
+	DynamicArrayAuto<ShaderProgramBinaryStruct> m_structs = {m_alloc};
+	/// [structIndex][memberIndex]
+	DynamicArrayAuto<DynamicArrayAuto<ShaderProgramBinaryStructMember>> m_structMembers = {m_alloc};
 	/// @}
 
 	/// Will be stored in a variant
@@ -532,15 +542,126 @@ public:
 		return Error::NONE;
 	}
 
-	Error visitStruct(U32 idx, CString name, U32 memberCount) final
+	ANKI_USE_RESULT Bool findStruct(CString name, U32& idx) const
 	{
-		// TODO
+		idx = MAX_U32;
+
+		for(U32 i = 0; i < m_structs.getSize(); ++i)
+		{
+			const ShaderProgramBinaryStruct& s = m_structs[i];
+			if(s.m_name.getBegin() == name)
+			{
+				idx = i;
+				break;
+			}
+		}
+
+		return idx != MAX_U32;
+	}
+
+	Error visitStruct(U32 idx, CString name, U32 memberCount, U32 size) final
+	{
+		// Init the block
+		U32 structIdx;
+		const Bool structFound = findStruct(name, structIdx);
+		if(structFound)
+		{
+			if(memberCount != m_structMembers[structIdx].getSize())
+			{
+				ANKI_SHADER_COMPILER_LOGE("The number of members can't differ between shader variants for struct: %s",
+										  name.cstr());
+				return Error::USER_DATA;
+			}
+
+			if(size != m_structs[structIdx].m_size)
+			{
+				ANKI_SHADER_COMPILER_LOGE("The size can't differ between shader variants for struct: %s", name.cstr());
+				return Error::USER_DATA;
+			}
+		}
+		else
+		{
+			// Create a new struct
+			ShaderProgramBinaryStruct& s = *m_structs.emplaceBack();
+			ANKI_CHECK(setName(name, s.m_name));
+			s.m_size = size;
+
+			// Allocate members
+			m_structMembers.emplaceBack(m_alloc);
+			m_structMembers.getBack().create(memberCount);
+		}
+
 		return Error::NONE;
 	}
 
-	Error visitStructMember(U32 memberIdx, CString name, ShaderVariableDataType type) final
+	Error visitStructMember(U32 structIdx, CString structName, U32 memberIdx, CString memberName,
+							ShaderVariableDataType type, CString typeStructName, U32 offset, U32 arraySize) final
 	{
-		// TODO
+		// Refresh the structIdx because we have a different global mapping
+		const Bool structFound = findStruct(structName, structIdx);
+		ANKI_ASSERT(structFound);
+		(void)structFound;
+		const ShaderProgramBinaryStruct& s = m_structs[structIdx];
+		DynamicArrayAuto<ShaderProgramBinaryStructMember>& members = m_structMembers[structIdx];
+
+		// Find member
+		Bool found = false;
+		for(U32 i = 0; i < members.getSize(); ++i)
+		{
+			if(memberName == &members[i].m_name[0])
+			{
+				if(members[i].m_type != type)
+				{
+					ANKI_SHADER_COMPILER_LOGE("Member %s of struct %s has different type between variants",
+											  memberName.cstr(), &s.m_name[0]);
+					return Error::USER_DATA;
+				}
+
+				if(i != memberIdx)
+				{
+					ANKI_SHADER_COMPILER_LOGE("Member %s of struct %s is in different place between variants",
+											  memberName.cstr(), &s.m_name[0]);
+					return Error::USER_DATA;
+				}
+
+				if(members[i].m_offset != offset)
+				{
+					ANKI_SHADER_COMPILER_LOGE("Member %s of struct %s has different offset between variants",
+											  memberName.cstr(), &s.m_name[0]);
+					return Error::USER_DATA;
+				}
+
+				if(members[i].m_arraySize != arraySize)
+				{
+					ANKI_SHADER_COMPILER_LOGE("Member %s of struct %s has different array size between variants",
+											  memberName.cstr(), &s.m_name[0]);
+					return Error::USER_DATA;
+				}
+
+				found = true;
+				break;
+			}
+		}
+
+		// Create if not found
+		if(!found)
+		{
+			ShaderProgramBinaryStructMember& member = members[memberIdx];
+			ANKI_CHECK(setName(memberName, member.m_name));
+			member.m_type = type;
+			member.m_offset = offset;
+			member.m_arraySize = arraySize;
+
+			if(type == ShaderVariableDataType::NONE)
+			{
+				// Type is a struct, find the right index
+
+				const Bool structFound = findStruct(typeStructName, member.m_structIndex);
+				ANKI_ASSERT(structFound);
+				(void)structFound;
+			}
+		}
+
 		return Error::NONE;
 	}
 
@@ -786,6 +907,22 @@ static Error doReflection(const StringList& symbolsToReflect, ShaderProgramBinar
 		U32 size, storageSize;
 		refl.m_consts.moveAndReset(consts, size, storageSize);
 		binary.m_constants.setArray(consts, size);
+	}
+
+	if(refl.m_structs.getSize())
+	{
+		ShaderProgramBinaryStruct* storage;
+		U32 size, storageSize;
+		refl.m_structs.moveAndReset(storage, size, storageSize);
+		binary.m_structs.setArray(storage, size);
+
+		for(U32 i = 0; i < size; ++i)
+		{
+			ShaderProgramBinaryStructMember* memberStorage;
+			U32 memberSize, memberStorageSize;
+			refl.m_structMembers[i].moveAndReset(memberStorage, memberSize, memberStorageSize);
+			binary.m_structs[i].m_members.setArray(memberStorage, memberSize);
+		}
 	}
 
 	return Error::NONE;

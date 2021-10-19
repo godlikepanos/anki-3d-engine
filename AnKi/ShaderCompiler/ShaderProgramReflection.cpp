@@ -133,6 +133,8 @@ private:
 		StringAuto m_name;
 		ShaderVariableDataType m_type = ShaderVariableDataType::NONE;
 		U32 m_structIndex = MAX_U32; ///< The member is actually a struct.
+		U32 m_offset = MAX_U32;
+		U32 m_arraySize = MAX_U32;
 
 		StructMember(const GenericMemoryPoolAllocator<U8>& alloc)
 			: m_name(alloc)
@@ -145,6 +147,8 @@ private:
 	public:
 		StringAuto m_name;
 		DynamicArrayAuto<StructMember> m_members;
+		U32 m_size = 0;
+		U32 m_alignment = 0;
 
 		Struct(const GenericMemoryPoolAllocator<U8>& alloc)
 			: m_name(alloc)
@@ -174,7 +178,7 @@ private:
 
 	ANKI_USE_RESULT Error structsReflection(DynamicArrayAuto<Struct>& structs) const;
 
-	ANKI_USE_RESULT Error structReflection(uint32_t id, const spirv_cross::SPIRType& type, Bool trySkipType,
+	ANKI_USE_RESULT Error structReflection(uint32_t id, const spirv_cross::SPIRType& type, U32 depth, Bool& skipped,
 										   DynamicArrayAuto<Struct>& structs, U32& structIndexInStructsArr) const;
 };
 
@@ -188,27 +192,34 @@ Error SpirvReflector::structsReflection(DynamicArrayAuto<Struct>& structs) const
 			return;
 		}
 
-		if(!(type.basetype == spirv_cross::SPIRType::Struct && !type.pointer && type.array.empty()))
+		if(type.basetype != spirv_cross::SPIRType::Struct || type.pointer || !type.array.empty()
+		   || has_decoration(type.self, spv::DecorationBlock))
 		{
 			return;
 		}
 
 		U32 idx;
-		err = structReflection(id, type, true, structs, idx);
+		Bool skipped;
+		err = structReflection(id, type, 0, skipped, structs, idx);
 	});
 
 	return err;
 }
 
-Error SpirvReflector::structReflection(uint32_t id, const spirv_cross::SPIRType& type, Bool trySkipType,
+Error SpirvReflector::structReflection(uint32_t id, const spirv_cross::SPIRType& type, U32 depth, Bool& skipped,
 									   DynamicArrayAuto<Struct>& structs, U32& structIndexInStructsArr) const
 {
+	skipped = false;
+
 	// Name
 	std::string name = to_name(id);
 
-	if(trySkipType && m_interface->skipSymbol(name.c_str()))
+	// Skip GL builtins, SPIRV-Cross things and symbols that should be skipped
+	if(CString(name.c_str()).find("gl_") == 0 || CString(name.c_str()).find("_") == 0
+	   || (depth == 0 && m_interface->skipSymbol(name.c_str())))
 	{
-		// return Error::NONE;
+		skipped = true;
+		return Error::NONE;
 	}
 
 	// Check if the struct is already there
@@ -224,17 +235,17 @@ Error SpirvReflector::structReflection(uint32_t id, const spirv_cross::SPIRType&
 	}
 
 	// Create new struct
-	structIndexInStructsArr = structs.getSize();
 	GenericMemoryPoolAllocator<U8> alloc = structs.getAllocator();
-	structs.emplaceBack(alloc);
-	structs[structIndexInStructsArr].m_name = name.c_str();
-
-	// printf("%s\n", s.m_name.cstr());
+	Struct cstruct(alloc);
+	cstruct.m_name = name.c_str();
+	U32 membersOffset = 0;
+	Bool aMemberWasSkipped = false;
 
 	// Members
 	for(U32 i = 0; i < type.member_types.size(); ++i)
 	{
-		StructMember& member = *structs[structIndexInStructsArr].m_members.emplaceBack(alloc);
+		StructMember& member = *cstruct.m_members.emplaceBack(alloc);
+		const spirv_cross::SPIRType& memberType = get<spirv_cross::SPIRType>(type.member_types[i]);
 
 		// Get name
 		const spirv_cross::Meta* meta = ir.find_meta(type.self);
@@ -243,12 +254,39 @@ Error SpirvReflector::structReflection(uint32_t id, const spirv_cross::SPIRType&
 		ANKI_ASSERT(!meta->members[i].alias.empty());
 		member.m_name = meta->members[i].alias.c_str();
 
+		// Array size
+		if(!memberType.array.empty())
+		{
+			if(memberType.array.size() > 1)
+			{
+				ANKI_SHADER_COMPILER_LOGE("Can't support multi-dimentional arrays at the moment");
+				return Error::USER_DATA;
+			}
+
+			const Bool notSpecConstantArraySize = memberType.array_size_literal[0];
+			if(notSpecConstantArraySize)
+			{
+				// Have a min to acount for unsized arrays of SSBOs
+				member.m_arraySize = max(memberType.array[0], 1u);
+			}
+			else
+			{
+				ANKI_SHADER_COMPILER_LOGE("Arrays with spec constant size are not allowed: %s", member.m_name.cstr());
+				return Error::FUNCTION_FAILED;
+			}
+		}
+		else
+		{
+			member.m_arraySize = 1;
+		}
+
 		// Type
-		const spirv_cross::SPIRType& memberType = get<spirv_cross::SPIRType>(type.member_types[i]);
 		const ShaderVariableDataType baseType = spirvcrossBaseTypeToAnki(memberType.basetype);
 		const Bool isNumeric = baseType != ShaderVariableDataType::NONE;
-
 		ShaderVariableDataType actualType = ShaderVariableDataType::NONE;
+		U32 memberSize = 0;
+		U32 memberAlignment = 0;
+
 		if(isNumeric)
 		{
 			const Bool isMatrix = memberType.columns > 1;
@@ -261,10 +299,14 @@ Error SpirvReflector::structReflection(uint32_t id, const spirv_cross::SPIRType&
 			&& memberType.columns == rowCount) \
 	{ \
 		actualType = ShaderVariableDataType::capital; \
+		memberSize = sizeof(type); \
+		memberAlignment = alignof(baseType_); \
 	} \
 	else if(ShaderVariableDataType::baseType_ == baseType && !isMatrix && memberType.vecsize == rowCount) \
 	{ \
 		actualType = ShaderVariableDataType::capital; \
+		memberSize = sizeof(type); \
+		memberAlignment = alignof(baseType_); \
 	}
 #include <AnKi/Gr/ShaderVariableDataTypeDefs.h>
 #undef ANKI_SVDT_MACRO
@@ -274,16 +316,50 @@ Error SpirvReflector::structReflection(uint32_t id, const spirv_cross::SPIRType&
 		else if(memberType.basetype == spirv_cross::SPIRType::Struct)
 		{
 			U32 idx = MAX_U32;
-			ANKI_CHECK(structReflection(type.member_types[i], memberType, false, structs, idx));
+			Bool memberSkipped = false;
+			ANKI_CHECK(structReflection(type.member_types[i], memberType, depth + 1, memberSkipped, structs, idx));
 
-			ANKI_ASSERT(idx < structs.getSize());
-			member.m_structIndex = idx;
+			if(memberSkipped)
+			{
+				aMemberWasSkipped = true;
+				break;
+			}
+			else
+			{
+				ANKI_ASSERT(idx < structs.getSize());
+				member.m_structIndex = idx;
+				memberSize = structs[idx].m_size;
+				memberAlignment = structs[idx].m_alignment;
+			}
 		}
 		else
 		{
 			ANKI_SHADER_COMPILER_LOGE("Unhandled base type for member: %s", name.c_str());
 			return Error::FUNCTION_FAILED;
 		}
+
+		// Update offsets and alignments
+		memberSize *= member.m_arraySize;
+		member.m_offset = getAlignedRoundUp(memberAlignment, membersOffset);
+
+		cstruct.m_alignment = max(cstruct.m_alignment, memberAlignment);
+		cstruct.m_size = member.m_offset + memberSize;
+
+		membersOffset = member.m_offset + memberSize;
+	}
+
+	if(!aMemberWasSkipped)
+	{
+		// Now you can create the struct
+
+		alignRoundUp(cstruct.m_alignment, cstruct.m_size);
+
+		Struct& newStruct = *structs.emplaceBack(alloc);
+		newStruct = std::move(cstruct);
+	}
+	else
+	{
+		skipped = true;
 	}
 
 	return Error::NONE;
@@ -928,12 +1004,15 @@ Error SpirvReflector::performSpirvReflection(Array<ConstWeakArray<U8>, U32(Shade
 	for(U32 i = 0; i < structs.getSize(); ++i)
 	{
 		const Struct& s = structs[i];
-		ANKI_CHECK(interface.visitStruct(i, s.m_name, s.m_members.getSize()));
+		ANKI_CHECK(interface.visitStruct(i, s.m_name, s.m_members.getSize(), s.m_size));
 
 		for(U32 j = 0; j < s.m_members.getSize(); ++j)
 		{
 			const StructMember& sm = s.m_members[j];
-			ANKI_CHECK(interface.visitStructMember(j, sm.m_name, sm.m_type));
+			ANKI_CHECK(interface.visitStructMember(i, s.m_name, j, sm.m_name, sm.m_type,
+												   (sm.m_structIndex != MAX_U32) ? structs[sm.m_structIndex].m_name
+																				 : CString(),
+												   sm.m_offset, sm.m_arraySize));
 		}
 	}
 
