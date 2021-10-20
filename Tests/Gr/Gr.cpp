@@ -2310,22 +2310,22 @@ ANKI_TEST(Gr, BufferAddress)
 	static const char* PROG_SRC = R"(
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
-ANKI_REF(Vec4);
+ANKI_DEFINE_LOAD_STORE(Vec4, 4)
 
 layout(push_constant) uniform u_
 {
-	U64 u_bufferAddress;
-	U64 u_padding0;
-};
-
-layout(set = 0, binding = 0) writeonly buffer ss_
-{
-	Vec4 u_result;
+	U64 u_bufferAddressRead;
+	U64 u_bufferAddressWrite;
 };
 
 void main()
 {
-	u_result = Vec4Ref(u_bufferAddress).m_value + Vec4Ref(u_bufferAddress + 16u).m_value;
+	Vec4 a;
+	load(u_bufferAddressRead, a);
+	Vec4 b;
+	load(u_bufferAddressRead + 16ul, b);
+
+	store(u_bufferAddressWrite, a + b);
 })";
 
 	ShaderPtr shader = createShader(PROG_SRC, ShaderType::COMPUTE, *gr);
@@ -2359,13 +2359,12 @@ void main()
 
 	struct Address
 	{
-		PtrSize m_address;
-		PtrSize m_padding;
+		PtrSize m_addressRead;
+		PtrSize m_addressWrite;
 	} address;
-	address.m_address = ptrBuff->getGpuAddress();
+	address.m_addressRead = ptrBuff->getGpuAddress();
+	address.m_addressWrite = resBuff->getGpuAddress();
 	cmdb->setPushConstants(&address, sizeof(address));
-
-	cmdb->bindStorageBuffer(0, 0, resBuff, 0, MAX_PTR_SIZE);
 
 	cmdb->dispatchCompute(1, 1, 1);
 

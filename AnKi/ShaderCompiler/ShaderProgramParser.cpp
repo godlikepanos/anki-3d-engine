@@ -235,10 +235,18 @@ static const char* SHADER_HEADER = R"(#version 460 core
 #define ANKI_SPECIALIZATION_CONSTANT_VEC3(n, id) _ANKI_SCONST_X3(Vec3, F32, n, id,)
 #define ANKI_SPECIALIZATION_CONSTANT_VEC4(n, id) _ANKI_SCONST_X4(Vec4, F32, n, id,)
 
-#define ANKI_REF(type, alignment) \
-	layout(buffer_reference, scalar, buffer_reference_align = (alignment)) buffer type##Ref \
+#define ANKI_DEFINE_LOAD_STORE(type, alignment) \
+	layout(buffer_reference, scalar, buffer_reference_align = (alignment)) buffer _Ref##type \
 	{ \
 		type m_value; \
+	}; \
+	void load(U64 address, out type o) \
+	{ \
+		o = _Ref##type(address).m_value; \
+	} \
+	void store(U64 address, type i) \
+	{ \
+		_Ref##type(address).m_value = i; \
 	}
 
 #define ANKI_PADDING(bytes) U8 _padding_ ## __LINE__[bytes]
