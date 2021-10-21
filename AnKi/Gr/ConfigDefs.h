@@ -11,6 +11,7 @@ ANKI_CONFIG_OPTION(gr_maxBindlessTextures, 256, 8, 1024)
 ANKI_CONFIG_OPTION(gr_maxBindlessImages, 32, 8, 1024)
 ANKI_CONFIG_OPTION(gr_rayTracing, 0, 0, 1, "Try enabling ray tracing")
 ANKI_CONFIG_OPTION(gr_64bitAtomics, 1, 0, 1)
+ANKI_CONFIG_OPTION(gr_samplerFilterMinMax, 1, 0, 1)
 
 // Vulkan
 ANKI_CONFIG_OPTION(gr_diskShaderCacheMaxSize, 128_MB, 1_MB, 1_GB)

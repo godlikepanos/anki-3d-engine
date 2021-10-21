@@ -280,7 +280,9 @@ enum class SamplingFilter : U8
 {
 	NEAREST,
 	LINEAR,
-	BASE ///< Only for mipmaps
+	MIN, ///< It calculates the min of a 2x2 quad. Only if GpuDeviceCapabilities::m_samplingFilterMinMax is supported.
+	MAX, ///< It calculates the max of a 2x2 quad. Only if GpuDeviceCapabilities::m_samplingFilterMinMax is supported.
+	BASE ///< Only for mipmaps.
 };
 
 enum class SamplingAddressing : U8

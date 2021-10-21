@@ -25,13 +25,20 @@ Error MicroSampler::init(const SamplerInitInfo& inf)
 
 	if(inf.m_minMagFilter == SamplingFilter::NEAREST)
 	{
-		ci.magFilter = ci.minFilter = VK_FILTER_NEAREST;
+		ci.minFilter = VK_FILTER_NEAREST;
+	}
+	else if(inf.m_minMagFilter == SamplingFilter::LINEAR)
+	{
+		ci.minFilter = VK_FILTER_LINEAR;
 	}
 	else
 	{
-		ANKI_ASSERT(inf.m_minMagFilter == SamplingFilter::LINEAR);
-		ci.magFilter = ci.minFilter = VK_FILTER_LINEAR;
+		ANKI_ASSERT(inf.m_minMagFilter == SamplingFilter::MAX || inf.m_minMagFilter == SamplingFilter::MIN);
+		ANKI_ASSERT(m_factory->m_gr->getDeviceCapabilities().m_samplingFilterMinMax);
+		ci.minFilter = VK_FILTER_LINEAR;
 	}
+
+	ci.magFilter = ci.minFilter;
 
 	if(inf.m_mipmapFilter == SamplingFilter::BASE || inf.m_mipmapFilter == SamplingFilter::NEAREST)
 	{
@@ -80,6 +87,24 @@ Error MicroSampler::init(const SamplerInitInfo& inf)
 	ci.maxLod = inf.m_maxLod;
 
 	ci.unnormalizedCoordinates = VK_FALSE;
+
+	// min/max
+	VkSamplerReductionModeCreateInfoEXT reductionCi = {};
+	if(inf.m_minMagFilter == SamplingFilter::MAX || inf.m_minMagFilter == SamplingFilter::MIN)
+	{
+		reductionCi.sType = VK_STRUCTURE_TYPE_SAMPLER_REDUCTION_MODE_CREATE_INFO_EXT;
+		if(inf.m_minMagFilter == SamplingFilter::MAX)
+		{
+			reductionCi.reductionMode = VK_SAMPLER_REDUCTION_MODE_MAX_EXT;
+		}
+		else
+		{
+			ANKI_ASSERT(inf.m_minMagFilter == SamplingFilter::MIN);
+			reductionCi.reductionMode = VK_SAMPLER_REDUCTION_MODE_MIN_EXT;
+		}
+
+		ci.pNext = &reductionCi;
+	}
 
 	// Create
 	ANKI_VK_CHECK(vkCreateSampler(m_factory->m_gr->getDevice(), &ci, nullptr, &m_handle));
