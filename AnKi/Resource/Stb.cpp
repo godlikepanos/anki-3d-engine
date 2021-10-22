@@ -15,6 +15,7 @@
 #	pragma GCC diagnostic ignored "-Wtype-limits"
 #	pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 #	pragma GCC diagnostic ignored "-Wsign-compare"
+#	pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #endif
 
 #include <AnKi/Resource/Stb.h>
