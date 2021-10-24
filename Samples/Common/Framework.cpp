@@ -97,8 +97,8 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::L) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "SsaoFinal") ? ""
-																									 : "SsaoFinal");
+		renderer.setCurrentDebugRenderTarget(
+			(renderer.getCurrentDebugRenderTarget() == "MotionVectorsRejection") ? "" : "MotionVectorsRejection");
 	}
 
 	if(in.getKey(KeyCode::H) == 1)

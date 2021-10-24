@@ -45,18 +45,6 @@ void main()
 
 	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(FB_SIZE);
 	const F32 depth = readDepth(u_currentDepthTex, uv, 0, 0);
-	const Vec2 velocity = textureLod(u_velocityTex, u_linearClampSampler, uv, 0.0).rg;
-
-	Vec2 historyUv;
-	if(velocity.x != 1.0)
-	{
-		historyUv = uv + velocity;
-	}
-	else
-	{
-		const Vec4 v4 = u_reprojectionMat * Vec4(UV_TO_NDC(uv), depth, 1.0);
-		historyUv = NDC_TO_UV(v4.xy / v4.w);
-	}
 
 	//
 	// Compute rejection factor
@@ -83,6 +71,19 @@ void main()
 	const F32 boxMax = max(depth, max(near0, max(near1, max(near2, near3))));
 #endif
 
+	const Vec2 velocity = textureLod(u_velocityTex, u_linearClampSampler, uv, 0.0).rg;
+
+	Vec2 historyUv;
+	if(velocity.x != 1.0)
+	{
+		historyUv = uv + velocity;
+	}
+	else
+	{
+		const Vec4 v4 = u_reprojectionMat * Vec4(UV_TO_NDC(uv), depth, 1.0);
+		historyUv = NDC_TO_UV(v4.xy / v4.w);
+	}
+
 	const F32 historyDepth = readDepth(u_historyDepthTex, historyUv, 0, 0);
 	const F32 clampedHistoryDepth = clamp(historyDepth, boxMin, boxMax);
 
@@ -108,8 +109,8 @@ void main()
 	}
 
 	// Write out
-	imageStore(u_motionVectorsImage, IVec2(gl_GlobalInvocationID.xy), Vec4(historyUv - uv, rejection, 0.0));
-	imageStore(u_rejectionFactorImage, IVec2(gl_GlobalInvocationID.xy), Vec4(rejection));
+	imageStore(u_motionVectorsImage, IVec2(gl_GlobalInvocationID.xy), Vec4(historyUv - uv, 0.0, 0.0));
+	imageStore(u_rejectionFactorImage, IVec2(gl_GlobalInvocationID.xy), Vec4(rejection, 0.0, 0.0, 0.0));
 }
 
 #pragma anki end
