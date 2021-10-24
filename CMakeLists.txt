@@ -97,7 +97,7 @@ option(ANKI_BUILD_TESTS "Build unit tests" OFF)
 option(ANKI_BUILD_SANDBOX "Build sandbox application" ON)
 option(ANKI_BUILD_SAMPLES "Build sample applications" ON)
 
-option(ANKI_STRIP "Srip the symbols from the executables" OFF)
+option(ANKI_STRIP "Strip the symbols from the executables" OFF)
 
 option(ANKI_TRACE "Enable performance tracing. Small overhead" OFF)
 if(ANKI_TRACE)
@@ -106,9 +106,9 @@ else()
 	set(_ANKI_ENABLE_TRACE 0)
 endif()
 
-set(ANKI_CPU_ADDR_SPACE "0" CACHE STRING "The CPU architecture (0 or 32 or 64). If zero go native")
+set(ANKI_CPU_ADDR_SPACE "0" CACHE STRING "The CPU architecture (0 or 32 or 64). Zero means native.")
 
-option(ANKI_SIMD "Enable or not SIMD optimizations" ON)
+option(ANKI_SIMD "Enable SIMD optimizations" ON)
 option(ANKI_ADDRESS_SANITIZER "Enable address sanitizer (-fsanitize=address)" OFF)
 
 # Take a wild guess on the windowing system
@@ -124,10 +124,10 @@ elseif(MACOS)
 	set(_WIN_BACKEND "SDL")
 	set(SDL TRUE)
 else()
-	message(FATAL_ERROR "Couldn't determine the window backend. You need to specify it manually")
+	message(FATAL_ERROR "Couldn't determine the window backend. You need to specify it manually.")
 endif()
 
-set(ANKI_GR_BACKEND "VULKAN" CACHE STRING "The graphics API (VULKAN or GL)")
+set(ANKI_GR_BACKEND "VULKAN" CACHE STRING "The graphics API to use (VULKAN or GL)")
 
 if(${ANKI_GR_BACKEND} STREQUAL "GL")
 	set(GL TRUE)
