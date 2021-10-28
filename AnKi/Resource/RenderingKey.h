@@ -23,6 +23,15 @@ enum class RenderingTechnique : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RenderingTechnique)
 
+enum class RenderingTechniqueBit : U8
+{
+	NONE = 0,
+	GBUFFER = 1 << 0,
+	FORWARD_SHADING = 1 << 1,
+	RT_SHADOWS = 1 << 2
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RenderingTechniqueBit)
+
 enum class RenderingSubTechnique : U8
 {
 	MAIN,

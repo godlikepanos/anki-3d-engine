@@ -80,21 +80,7 @@ public:
 	U32 m_prevFrameBoneTransformsBinding;
 };
 
-/// Part of the information required to create a TLAS and a SBT.
-/// @memberof ModelResource
-class ModelRayTracingInfo
-{
-public:
-	ModelGpuDescriptor m_descriptor;
-	AccelerationStructurePtr m_bottomLevelAccelerationStructure;
-	Array<U32, U(RayType::COUNT)> m_shaderGroupHandleIndices;
-
-	/// Get some pointers that the m_descriptor is pointing to. Use these pointers for life tracking.
-	Array<GrObjectPtr, U(TextureChannelId::COUNT) + 2> m_grObjectReferences;
-	U32 m_grObjectReferenceCount;
-};
-
-/// Model patch class. Its very important class and it binds a material with a few mesh (one for each LOD).
+/// Model patch class. Its very important class and it binds a material with a few meshes (one for each LOD).
 class ModelPatch
 {
 	friend class ModelResource;
@@ -117,9 +103,6 @@ public:
 
 	/// Get information for rendering.
 	void getRenderingInfo(const RenderingKey& key, ModelRenderingInfo& inf) const;
-
-	/// Get the ray tracing info.
-	void getRayTracingInfo(U32 lod, ModelRayTracingInfo& info) const;
 
 	RayTypeBit getSupportedRayTracingTypes() const
 	{

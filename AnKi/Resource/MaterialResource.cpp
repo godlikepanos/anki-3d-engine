@@ -19,15 +19,19 @@ class BuiltinVarInfo
 public:
 	const char* m_name;
 	ShaderVariableDataType m_type;
+	U32 m_arraySize;
 };
 
 static const Array<BuiltinVarInfo, U(BuiltinMaterialVariableId::COUNT)> BUILTIN_INFOS = {
-	{{"NONE", ShaderVariableDataType::NONE},
-	 {"m_ankiModelMatrix", ShaderVariableDataType::MAT3X4},
-	 {"m_ankiBoneTransformsAddress", ShaderVariableDataType::UVEC2},
-	 {"m_ankiPrevBoneTransformsAddress", ShaderVariableDataType::UVEC2}}};
+	{{"NONE", ShaderVariableDataType::NONE, 0},
+	 {"m_ankiModelMatrix", ShaderVariableDataType::MAT3X4, 1},
+	 {"m_ankiBoneTransformsAddress", ShaderVariableDataType::UVEC2, 1},
+	 {"m_ankiPrevBoneTransformsAddress", ShaderVariableDataType::UVEC2, 1},
+	 {"m_ankiPositionsVertexBufferAddresses", ShaderVariableDataType::UVEC2, MAX_LOD_COUNT},
+	 {"m_ankiOthersVertexBufferAddresses", ShaderVariableDataType::UVEC2, MAX_LOD_COUNT},
+	 {"m_ankiBoneWeightsVertexBufferAddresses", ShaderVariableDataType::UVEC2, MAX_LOD_COUNT}}};
 
-static ANKI_USE_RESULT Error checkBuiltin(CString name, ShaderVariableDataType dataType,
+static ANKI_USE_RESULT Error checkBuiltin(CString name, ShaderVariableDataType dataType, U32 arraySize,
 										  BuiltinMaterialVariableId& outId)
 {
 	outId = BuiltinMaterialVariableId::NONE;
@@ -43,7 +47,7 @@ static ANKI_USE_RESULT Error checkBuiltin(CString name, ShaderVariableDataType d
 		{
 			outId = id;
 
-			if(BUILTIN_INFOS[id].m_type != dataType)
+			if(BUILTIN_INFOS[id].m_type != dataType || BUILTIN_INFOS[id].m_arraySize != arraySize)
 			{
 				ANKI_RESOURCE_LOGE("Incorect type for builtin: %s", name.cstr());
 				return Error::USER_DATA;
@@ -179,14 +183,17 @@ Error MaterialResource::parseTechnique(XmlElement techniqueEl, Bool async)
 	if(name == "GBuffer")
 	{
 		techniqueId = RenderingTechnique::GBUFFER;
+		m_presentTechniques |= RenderingTechniqueBit::GBUFFER;
 	}
 	else if(name == "ForwardShading")
 	{
 		techniqueId = RenderingTechnique::FORWARD_SHADING;
+		m_presentTechniques |= RenderingTechniqueBit::FORWARD_SHADING;
 	}
 	else if(name == "RtShadows")
 	{
 		techniqueId = RenderingTechnique::RT_SHADOWS;
+		m_presentTechniques |= RenderingTechniqueBit::RT_SHADOWS;
 	}
 	else
 	{
@@ -488,7 +495,7 @@ Error MaterialResource::createVars(const ShaderProgramBinary& binary)
 		}
 
 		BuiltinMaterialVariableId builtinId;
-		ANKI_CHECK(checkBuiltin(name, member.m_type, builtinId));
+		ANKI_CHECK(checkBuiltin(name, member.m_type, member.m_arraySize, builtinId));
 
 		MaterialVariable* var = tryFindVariable(name);
 		if(var)

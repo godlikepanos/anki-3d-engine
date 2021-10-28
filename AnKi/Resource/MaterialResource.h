@@ -28,6 +28,9 @@ enum class BuiltinMaterialVariableId : U8
 	MODEL_MATRIX,
 	BONE_TRANSFORMS_ADDRESS,
 	PREVIOUS_BONE_TRANSFORMS_ADDRESS,
+	POSITIONS_VERTEX_BUFFER_ADDRESSES,
+	OTHERS_VERTEX_BUFFER_ADDRESSES,
+	BONE_WEIGHTS_VERTEX_BUFFER_ADDRESSES,
 
 	COUNT,
 	FIRST = 0,
@@ -238,6 +241,12 @@ public:
 
 	const MaterialVariant& getOrCreateVariant(const RenderingKey& key) const;
 
+	RenderingTechniqueBit getPresentRenderingTechniques() const
+	{
+		ANKI_ASSERT(m_presentTechniques != RenderingTechniqueBit::NONE);
+		return m_presentTechniques;
+	}
+
 private:
 	class SubMutation
 	{
@@ -274,6 +283,7 @@ private:
 	U32 m_gpuSceneDescriptionStructSize = 0;
 	Bool m_shadow = true;
 	Bool m_supportSkinning = false;
+	RenderingTechniqueBit m_presentTechniques = RenderingTechniqueBit::NONE;
 
 	/// Parse whatever is inside the <inputs> tag.
 	ANKI_USE_RESULT Error parseInputs(XmlElement inputsEl, Bool async);
