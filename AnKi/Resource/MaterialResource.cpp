@@ -25,6 +25,7 @@ public:
 static const Array<BuiltinVarInfo, U(BuiltinMaterialVariableId::COUNT)> BUILTIN_INFOS = {
 	{{"NONE", ShaderVariableDataType::NONE, 0},
 	 {"m_ankiModelMatrix", ShaderVariableDataType::MAT3X4, 1},
+	 {"m_ankiPreviousModelMatrix", ShaderVariableDataType::MAT3X4, 1},
 	 {"m_ankiBoneTransformsAddress", ShaderVariableDataType::UVEC2, 1},
 	 {"m_ankiPrevBoneTransformsAddress", ShaderVariableDataType::UVEC2, 1},
 	 {"m_ankiPositionsVertexBufferAddresses", ShaderVariableDataType::UVEC2, MAX_LOD_COUNT},
