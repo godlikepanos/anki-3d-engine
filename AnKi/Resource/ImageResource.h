@@ -8,8 +8,7 @@
 #include <AnKi/Resource/ResourceObject.h>
 #include <AnKi/Gr.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup resource
 /// @{

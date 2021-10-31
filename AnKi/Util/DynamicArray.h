@@ -8,8 +8,7 @@
 #include <AnKi/Util/Allocator.h>
 #include <AnKi/Util/Functions.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 template<typename T, typename TSize>

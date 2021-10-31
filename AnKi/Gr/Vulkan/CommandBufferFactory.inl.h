@@ -5,8 +5,7 @@
 
 #include <AnKi/Gr/Vulkan/CommandBufferFactory.h>
 
-namespace anki
-{
+namespace anki {
 
 inline GrAllocator<U8>& MicroCommandBuffer::getAllocator()
 {

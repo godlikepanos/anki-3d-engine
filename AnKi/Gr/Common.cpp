@@ -5,8 +5,7 @@
 
 #include <AnKi/Gr/Common.h>
 
-namespace anki
-{
+namespace anki {
 
 Array<CString, U(GpuVendor::COUNT)> GPU_VENDOR_STR = {"UNKNOWN", "ARM", "NVIDIA", "AMD", "INTEL"};
 

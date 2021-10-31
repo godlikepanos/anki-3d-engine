@@ -9,8 +9,7 @@
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Gr/Shader.h>
 
-namespace anki
-{
+namespace anki {
 
 ShaderProgram* ShaderProgram::newInstance(GrManager* manager, const ShaderProgramInitInfo& init)
 {

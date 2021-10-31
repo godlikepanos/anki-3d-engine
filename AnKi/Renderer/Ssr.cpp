@@ -12,8 +12,7 @@
 #include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Shaders/Include/SsrTypes.h>
 
-namespace anki
-{
+namespace anki {
 
 Ssr::~Ssr()
 {
@@ -76,7 +75,9 @@ void Ssr::populateRenderGraph(RenderingContext& ctx)
 
 	// Create pass
 	ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("SSR");
-	rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) { run(ctx, rgraphCtx); });
+	rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+		run(ctx, rgraphCtx);
+	});
 
 	rpass.newDependency({m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_READ | TextureUsageBit::IMAGE_COMPUTE_WRITE});
 	rpass.newDependency({m_r->getGBuffer().getColorRt(1), TextureUsageBit::SAMPLED_COMPUTE});

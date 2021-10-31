@@ -9,8 +9,7 @@
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/BitMask.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup scene
 /// @{

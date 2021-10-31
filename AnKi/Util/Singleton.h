@@ -9,8 +9,7 @@
 #include <AnKi/Util/Thread.h>
 #include <utility>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup util_patterns
 /// @{

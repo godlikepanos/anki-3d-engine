@@ -6,8 +6,7 @@
 #include <AnKi/Resource/AnimationResource.h>
 #include <AnKi/Util/Xml.h>
 
-namespace anki
-{
+namespace anki {
 
 AnimationResource::AnimationResource(ResourceManager* manager)
 	: ResourceObject(manager)

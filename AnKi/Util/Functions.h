@@ -17,8 +17,7 @@
 #include <algorithm>
 #include <functional>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup util_other
 /// @{

@@ -10,8 +10,7 @@
 #include <AnKi/Collision/Ray.h>
 #include <AnKi/Collision/Aabb.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup collision
 /// @{

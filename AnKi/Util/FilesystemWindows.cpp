@@ -8,8 +8,7 @@
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/Win32Minimal.h>
 
-namespace anki
-{
+namespace anki {
 
 static const U MAX_PATH_LEN = MAX_PATH - 1;
 

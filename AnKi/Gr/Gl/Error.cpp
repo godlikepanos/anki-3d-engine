@@ -7,8 +7,7 @@
 #include <AnKi/Util/Logger.h>
 #include <cstring>
 
-namespace anki
-{
+namespace anki {
 
 void glConditionalCheckError(const char* file, int line, const char* func)
 {

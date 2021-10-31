@@ -11,8 +11,7 @@
 #include <AnKi/Collision/Aabb.h>
 #include <AnKi/Collision/Functions.h>
 
-namespace anki
-{
+namespace anki {
 
 /// Given a cell index compute its world position.
 static Vec3 computeProbeCellPosition(U32 cellIdx, const GlobalIlluminationProbeQueueElement& probe)
@@ -287,8 +286,9 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 		// Pass
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI gbuff");
 		pass.setFramebufferInfo(m_gbuffer.m_fbDescr, giCtx->m_gbufferColorRts, giCtx->m_gbufferDepthRt);
-		pass.setWork(gbufferTaskCount,
-					 [this, giCtx](RenderPassWorkContext& rgraphCtx) { runGBufferInThread(rgraphCtx, *giCtx); });
+		pass.setWork(gbufferTaskCount, [this, giCtx](RenderPassWorkContext& rgraphCtx) {
+			runGBufferInThread(rgraphCtx, *giCtx);
+		});
 
 		for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 		{
@@ -328,8 +328,9 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 		// Pass
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI SM");
 		pass.setFramebufferInfo(m_shadowMapping.m_fbDescr, {}, giCtx->m_shadowsRt);
-		pass.setWork(smTaskCount,
-					 [this, giCtx](RenderPassWorkContext& rgraphCtx) { runShadowmappingInThread(rgraphCtx, *giCtx); });
+		pass.setWork(smTaskCount, [this, giCtx](RenderPassWorkContext& rgraphCtx) {
+			runShadowmappingInThread(rgraphCtx, *giCtx);
+		});
 
 		TextureSubresourceInfo subresource(DepthStencilAspectBit::DEPTH);
 		pass.newDependency({giCtx->m_shadowsRt, TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT, subresource});
@@ -347,7 +348,9 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 		// Pass
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI LS");
 		pass.setFramebufferInfo(m_lightShading.m_fbDescr, {{giCtx->m_lightShadingRt}}, {});
-		pass.setWork(1, [this, giCtx](RenderPassWorkContext& rgraphCtx) { runLightShading(rgraphCtx, *giCtx); });
+		pass.setWork(1, [this, giCtx](RenderPassWorkContext& rgraphCtx) {
+			runLightShading(rgraphCtx, *giCtx);
+		});
 
 		pass.newDependency({giCtx->m_lightShadingRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 
@@ -368,7 +371,9 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 	{
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("GI IR");
 
-		pass.setWork([this, giCtx](RenderPassWorkContext& rgraphCtx) { runIrradiance(rgraphCtx, *giCtx); });
+		pass.setWork([this, giCtx](RenderPassWorkContext& rgraphCtx) {
+			runIrradiance(rgraphCtx, *giCtx);
+		});
 
 		pass.newDependency({giCtx->m_lightShadingRt, TextureUsageBit::SAMPLED_COMPUTE});
 

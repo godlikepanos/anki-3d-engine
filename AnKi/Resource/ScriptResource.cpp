@@ -6,8 +6,7 @@
 #include <AnKi/Resource/ScriptResource.h>
 #include <AnKi/Util/File.h>
 
-namespace anki
-{
+namespace anki {
 
 ScriptResource::~ScriptResource()
 {

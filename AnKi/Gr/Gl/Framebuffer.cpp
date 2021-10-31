@@ -8,8 +8,7 @@
 #include <AnKi/Gr/gl/CommandBufferImpl.h>
 #include <AnKi/Gr/GrManager.h>
 
-namespace anki
-{
+namespace anki {
 
 Framebuffer* Framebuffer::newInstance(GrManager* manager, const FramebufferInitInfo& init)
 {

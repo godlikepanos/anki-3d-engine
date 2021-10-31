@@ -11,8 +11,7 @@
 #include <AnKi/Util/Rtti.h>
 #include <BulletCollision/Gimpact/btGImpactCollisionAlgorithm.h>
 
-namespace anki
-{
+namespace anki {
 
 // Ugly but there is no other way
 static HeapAllocator<U8>* g_alloc = nullptr;

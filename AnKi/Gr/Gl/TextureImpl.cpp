@@ -13,8 +13,7 @@
 #include <AnKi/Gr/gl/RenderingThread.h>
 #include <AnKi/Gr/gl/CommandBufferImpl.h>
 
-namespace anki
-{
+namespace anki {
 
 static GLenum convertTextureType(TextureType type)
 {

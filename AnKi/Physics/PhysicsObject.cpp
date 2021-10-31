@@ -6,8 +6,7 @@
 #include <AnKi/Physics/PhysicsObject.h>
 #include <AnKi/Physics/PhysicsWorld.h>
 
-namespace anki
-{
+namespace anki {
 
 PhysicsFilteredObject::~PhysicsFilteredObject()
 {

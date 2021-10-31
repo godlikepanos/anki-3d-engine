@@ -7,8 +7,7 @@
 
 #include <AnKi/Resource/Common.h>
 
-namespace anki
-{
+namespace anki {
 
 template<typename T>
 class AnimationKeyframe;

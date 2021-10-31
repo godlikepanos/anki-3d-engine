@@ -5,8 +5,7 @@
 
 #include <AnKi/Input/Input.h>
 
-namespace anki
-{
+namespace anki {
 
 Error Input::initInternal(NativeWindow* nativeWindow)
 {

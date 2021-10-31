@@ -12,8 +12,7 @@
 #include <AnKi/Resource/ShaderProgramResource.h>
 #include <AnKi/Core/StagingGpuMemoryManager.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class Renderer;

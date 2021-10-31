@@ -12,8 +12,7 @@
 #	include <android/log.h>
 #endif
 
-namespace anki
-{
+namespace anki {
 
 #if !ANKI_OS_ANDROID
 #	define ANKI_TEST_LOG(fmt, ...) printf(fmt "\n", __VA_ARGS__)

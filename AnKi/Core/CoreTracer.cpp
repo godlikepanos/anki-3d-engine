@@ -9,8 +9,7 @@
 #include <AnKi/Util/System.h>
 #include <AnKi/Math/Functions.h>
 
-namespace anki
-{
+namespace anki {
 
 static void getSpreadsheetColumnName(U32 column, Array<char, 3>& arr)
 {
@@ -207,8 +206,9 @@ Error CoreTracer::writeEvents(ThreadWorkItem& item)
 void CoreTracer::gatherCounters(ThreadWorkItem& item)
 {
 	// Sort
-	std::sort(item.m_counters.getBegin(), item.m_counters.getEnd(),
-			  [](const TracerCounter& a, const TracerCounter& b) { return a.m_name < b.m_name; });
+	std::sort(item.m_counters.getBegin(), item.m_counters.getEnd(), [](const TracerCounter& a, const TracerCounter& b) {
+		return a.m_name < b.m_name;
+	});
 
 	// Merge same
 	DynamicArrayAuto<TracerCounter> mergedCounters(m_alloc);

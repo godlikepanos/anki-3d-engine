@@ -9,8 +9,7 @@
 #include <AnKi/Scene/Components/ParticleEmitterComponent.h>
 #include <AnKi/Scene/Components/RenderComponent.h>
 
-namespace anki
-{
+namespace anki {
 
 /// Feedback component
 class ParticleEmitterNode::MoveFeedbackComponent : public SceneComponent

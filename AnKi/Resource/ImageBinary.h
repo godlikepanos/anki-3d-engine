@@ -9,8 +9,7 @@
 
 #include <AnKi/Resource/Common.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup resource
 /// @{

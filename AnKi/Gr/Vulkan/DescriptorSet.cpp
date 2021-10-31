@@ -11,8 +11,7 @@
 #include <AnKi/Util/Tracer.h>
 #include <algorithm>
 
-namespace anki
-{
+namespace anki {
 
 /// Wraps a global descriptor set that is used to store bindless textures.
 class DescriptorSetFactory::BindlessDescriptorSet
@@ -789,7 +788,9 @@ Error DSLayoutCacheEntry::getOrCreateThreadAllocator(ThreadId tid, DSThreadAlloc
 
 			// Sort for fast find
 			std::sort(m_threadAllocs.getBegin(), m_threadAllocs.getEnd(),
-					  [](const DSThreadAllocator* a, const DSThreadAllocator* b) { return a->m_tid < b->m_tid; });
+					  [](const DSThreadAllocator* a, const DSThreadAllocator* b) {
+						  return a->m_tid < b->m_tid;
+					  });
 		}
 	}
 
@@ -966,7 +967,9 @@ Error DescriptorSetFactory::newDescriptorSetLayout(const DescriptorSetLayoutInit
 	{
 		memcpy(bindings.getBegin(), init.m_bindings.getBegin(), init.m_bindings.getSizeInBytes());
 		std::sort(bindings.getBegin(), bindings.getBegin() + bindingCount,
-				  [](const DescriptorBinding& a, const DescriptorBinding& b) { return a.m_binding < b.m_binding; });
+				  [](const DescriptorBinding& a, const DescriptorBinding& b) {
+					  return a.m_binding < b.m_binding;
+				  });
 
 		hash = computeHash(&bindings[0], init.m_bindings.getSizeInBytes());
 		ANKI_ASSERT(hash != 1);

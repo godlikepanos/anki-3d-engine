@@ -7,8 +7,7 @@
 
 #include <AnKi/Ui/Common.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup ui
 /// @{

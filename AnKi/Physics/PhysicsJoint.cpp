@@ -7,8 +7,7 @@
 #include <AnKi/Physics/PhysicsBody.h>
 #include <AnKi/Physics/PhysicsWorld.h>
 
-namespace anki
-{
+namespace anki {
 
 PhysicsJoint::PhysicsJoint(PhysicsWorld* world, JointType type)
 	: PhysicsObject(CLASS_TYPE, world)

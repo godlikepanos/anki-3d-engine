@@ -8,8 +8,7 @@
 #include <AnKi/Scene/Components/SceneComponent.h>
 #include <AnKi/Physics/PhysicsTrigger.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class BodyComponent;

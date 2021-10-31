@@ -28,8 +28,7 @@
 #	include <fcntl.h>
 #endif
 
-namespace anki
-{
+namespace anki {
 
 U32 getCpuCoresCount()
 {

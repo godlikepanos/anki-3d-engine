@@ -7,8 +7,7 @@
 
 #include <AnKi/Util/Functions.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup util_containers
 /// @{

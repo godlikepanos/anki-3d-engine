@@ -5,8 +5,7 @@
 
 #include <AnKi/Gr/gl/Common.h>
 
-namespace anki
-{
+namespace anki {
 
 GLenum convertCompareOperation(CompareOperation in)
 {

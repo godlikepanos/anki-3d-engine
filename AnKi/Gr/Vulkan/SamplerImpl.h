@@ -9,8 +9,7 @@
 #include <AnKi/Gr/Vulkan/VulkanObject.h>
 #include <AnKi/Gr/Vulkan/SamplerFactory.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup vulkan
 /// @{

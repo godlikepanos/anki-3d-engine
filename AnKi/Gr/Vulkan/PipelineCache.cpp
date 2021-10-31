@@ -8,8 +8,7 @@
 #include <AnKi/Util/Filesystem.h>
 #include <AnKi/Util/File.h>
 
-namespace anki
-{
+namespace anki {
 
 Error PipelineCache::init(VkDevice dev, VkPhysicalDevice pdev, CString cacheDir, const ConfigSet& cfg,
 						  GrAllocator<U8> alloc)

@@ -5,8 +5,7 @@
 
 #include <AnKi/Util/INotify.h>
 
-namespace anki
-{
+namespace anki {
 
 Error INotify::initInternal()
 {

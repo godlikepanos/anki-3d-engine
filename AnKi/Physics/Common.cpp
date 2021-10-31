@@ -7,8 +7,7 @@
 #include <AnKi/Physics/PhysicsObject.h>
 #include <AnKi/Physics/PhysicsWorld.h>
 
-namespace anki
-{
+namespace anki {
 
 void PhysicsPtrDeleter::operator()(PhysicsObject* ptr)
 {

@@ -6,8 +6,7 @@
 #include <AnKi/Ui/UiObject.h>
 #include <AnKi/Ui/UiManager.h>
 
-namespace anki
-{
+namespace anki {
 
 UiAllocator UiObject::getAllocator() const
 {

@@ -10,8 +10,7 @@
 #include <AnKi/Resource/Common.h>
 #include <AnKi/Math.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup resource
 /// @{

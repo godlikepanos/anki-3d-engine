@@ -5,8 +5,7 @@
 
 #include <AnKi/Util/ObjectAllocator.h>
 
-namespace anki
-{
+namespace anki {
 
 template<PtrSize T_OBJECT_SIZE, U32 T_OBJECT_ALIGNMENT, U32 T_OBJECTS_PER_CHUNK, typename TIndexType>
 template<typename T, typename TAlloc, typename... TArgs>

@@ -8,8 +8,7 @@
 #include <AnKi/Gr/Utils/ClassGpuAllocator.h>
 #include <AnKi/Gr/Vulkan/Common.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtorgoup vulkan
 /// @{

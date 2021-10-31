@@ -8,8 +8,7 @@
 #include <AnKi/Util/WeakArray.h>
 #include <AnKi/Resource/ImageBinary.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup importer
 /// @{

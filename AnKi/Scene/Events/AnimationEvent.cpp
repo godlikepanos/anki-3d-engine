@@ -8,8 +8,7 @@
 #include <AnKi/Scene/Components/MoveComponent.h>
 #include <AnKi/Resource/ResourceManager.h>
 
-namespace anki
-{
+namespace anki {
 
 AnimationEvent::AnimationEvent(EventManager* manager)
 	: Event(manager)

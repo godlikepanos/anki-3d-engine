@@ -7,8 +7,7 @@
 
 #include <AnKi/Config.h>
 
-namespace anki
-{
+namespace anki {
 
 #define ANKI_CORE_LOGI(...) ANKI_LOG("CORE", NORMAL, __VA_ARGS__)
 #define ANKI_CORE_LOGE(...) ANKI_LOG("CORE", ERROR, __VA_ARGS__)

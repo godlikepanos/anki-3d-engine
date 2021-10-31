@@ -11,8 +11,7 @@
 #include <AnKi/Physics/PhysicsWorld.h>
 #include <AnKi/Resource/ResourceManager.h>
 
-namespace anki
-{
+namespace anki {
 
 /// Body feedback component.
 class BodyNode::FeedbackComponent : public SceneComponent

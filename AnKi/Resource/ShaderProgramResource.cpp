@@ -11,8 +11,7 @@
 #include <AnKi/Util/Filesystem.h>
 #include <AnKi/Util/Functions.h>
 
-namespace anki
-{
+namespace anki {
 
 ShaderProgramResourceVariant::ShaderProgramResourceVariant()
 {

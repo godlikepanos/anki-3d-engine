@@ -23,8 +23,7 @@
 
 #define ANKI_GLSLANG_DUMP 0
 
-namespace anki
-{
+namespace anki {
 
 #if ANKI_GLSLANG_DUMP
 static Atomic<U32> g_dumpFileCount;

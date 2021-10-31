@@ -5,8 +5,7 @@
 
 #include <AnKi/Gr/Vulkan/DeferredBarrierFactory.h>
 
-namespace anki
-{
+namespace anki {
 
 inline MicroDeferredBarrier::MicroDeferredBarrier(DeferredBarrierFactory* factory)
 	: m_factory(factory)

@@ -10,8 +10,7 @@
 #include <AnKi/Collision/Aabb.h>
 #include <AnKi/Collision/Sphere.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup scene
 /// @{

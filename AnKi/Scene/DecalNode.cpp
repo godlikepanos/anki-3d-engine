@@ -8,8 +8,7 @@
 #include <AnKi/Scene/Components/MoveComponent.h>
 #include <AnKi/Scene/Components/SpatialComponent.h>
 
-namespace anki
-{
+namespace anki {
 
 /// Decal feedback component.
 class DecalNode::MoveFeedbackComponent : public SceneComponent

@@ -13,8 +13,7 @@
 #include <new> // For placement new
 #include <type_traits> // For some checks
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup util_memory
 /// @{

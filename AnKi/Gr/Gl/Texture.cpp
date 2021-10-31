@@ -8,8 +8,7 @@
 #include <AnKi/Gr/gl/CommandBufferImpl.h>
 #include <AnKi/Gr/GrManager.h>
 
-namespace anki
-{
+namespace anki {
 
 Texture* Texture::newInstance(GrManager* manager, const TextureInitInfo& init)
 {

@@ -8,8 +8,7 @@
 #include <AnKi/Scene/Events/Event.h>
 #include <AnKi/Math.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup scene
 /// @{

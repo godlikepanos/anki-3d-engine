@@ -11,8 +11,7 @@
 #include <AnKi/Physics/PhysicsCollisionShape.h>
 #include <AnKi/Physics/PhysicsTrigger.h>
 
-namespace anki
-{
+namespace anki {
 
 class TriggerNode::MoveFeedbackComponent : public SceneComponent
 {

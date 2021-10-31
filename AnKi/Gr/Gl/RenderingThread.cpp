@@ -14,8 +14,7 @@
 #include <AnKi/Core/Trace.h>
 #include <cstdlib>
 
-namespace anki
-{
+namespace anki {
 
 /// Sync rendering thread command.
 class SyncCommand final : public GlCommand

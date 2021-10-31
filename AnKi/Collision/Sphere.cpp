@@ -5,8 +5,7 @@
 
 #include <AnKi/Collision/Sphere.h>
 
-namespace anki
-{
+namespace anki {
 
 Sphere Sphere::getCompoundShape(const Sphere& b) const
 {

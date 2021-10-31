@@ -10,8 +10,7 @@
 
 using namespace anki;
 
-namespace
-{
+namespace {
 
 const U ALLOCATION_COUNT = 1024;
 const U THREAD_COUNT = 4;

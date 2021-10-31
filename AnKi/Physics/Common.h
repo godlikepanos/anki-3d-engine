@@ -37,8 +37,7 @@
 #	pragma warning(pop)
 #endif
 
-namespace anki
-{
+namespace anki {
 
 #define ANKI_PHYS_LOGI(...) ANKI_LOG("PHYS", NORMAL, __VA_ARGS__)
 #define ANKI_PHYS_LOGE(...) ANKI_LOG("PHYS", ERROR, __VA_ARGS__)

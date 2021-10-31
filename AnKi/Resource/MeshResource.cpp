@@ -10,8 +10,7 @@
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/Filesystem.h>
 
-namespace anki
-{
+namespace anki {
 
 class MeshResource::LoadContext
 {

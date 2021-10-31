@@ -9,8 +9,7 @@
 #include <AnKi/Resource/MeshResource.h>
 #include <AnKi/Shaders/Include/TraditionalDeferredShadingTypes.h>
 
-namespace anki
-{
+namespace anki {
 
 TraditionalDeferredLightShading::TraditionalDeferredLightShading(Renderer* r)
 	: RendererObject(r)

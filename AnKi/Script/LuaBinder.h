@@ -17,8 +17,7 @@
 #	error "Wrong LUA header included"
 #endif
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class LuaUserData;

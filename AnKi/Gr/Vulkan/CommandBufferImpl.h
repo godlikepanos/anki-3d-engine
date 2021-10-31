@@ -18,8 +18,7 @@
 #include <AnKi/Gr/Vulkan/GrManagerImpl.h>
 #include <AnKi/Util/List.h>
 
-namespace anki
-{
+namespace anki {
 
 #define ANKI_BATCH_COMMANDS 1
 

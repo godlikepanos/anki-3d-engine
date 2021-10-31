@@ -10,8 +10,7 @@
 #include <AnKi/Core/StagingGpuMemoryManager.h>
 #include <AnKi/Renderer/RenderQueue.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup scene
 /// @{

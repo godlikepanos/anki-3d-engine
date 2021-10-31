@@ -5,8 +5,7 @@
 
 #include <AnKi/Util/Logger.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup importer
 /// @{

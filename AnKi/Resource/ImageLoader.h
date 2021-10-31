@@ -9,8 +9,7 @@
 #include <AnKi/Resource/ResourceFilesystem.h>
 #include <AnKi/Resource/ImageBinary.h>
 
-namespace anki
-{
+namespace anki {
 
 /// An image surface
 /// @memberof ImageLoader

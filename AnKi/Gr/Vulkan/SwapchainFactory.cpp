@@ -6,8 +6,7 @@
 #include <AnKi/Gr/Vulkan/SwapchainFactory.h>
 #include <AnKi/Gr/Vulkan/GrManagerImpl.h>
 
-namespace anki
-{
+namespace anki {
 
 MicroSwapchain::MicroSwapchain(SwapchainFactory* factory)
 	: m_factory(factory)

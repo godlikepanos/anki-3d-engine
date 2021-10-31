@@ -8,8 +8,7 @@
 #include <AnKi/Util/HashMap.h>
 #include <AnKi/Util/List.h>
 
-namespace anki
-{
+namespace anki {
 
 class Tracer::Chunk : public IntrusiveListEnabled<Chunk>
 {

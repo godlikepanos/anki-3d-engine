@@ -7,8 +7,7 @@
 #include <Tests/Util/Foo.h>
 #include <AnKi/Util/Function.h>
 
-namespace anki
-{
+namespace anki {
 
 static I32 functionAcceptingFunction(const Function<I32(F32)>& f)
 {
@@ -58,7 +57,9 @@ ANKI_TEST(Util, Function)
 	{
 		const Vec4 a(1.9f);
 		const Vec4 b(2.2f);
-		Function<Vec4(Vec4, Vec4), 8> f(alloc, [a, b](Vec4 c, Vec4 d) mutable -> Vec4 { return a + c * 2.0f + b * d; });
+		Function<Vec4(Vec4, Vec4), 8> f(alloc, [a, b](Vec4 c, Vec4 d) mutable -> Vec4 {
+			return a + c * 2.0f + b * d;
+		});
 
 		const Vec4 r = f(Vec4(10.0f), Vec4(20.8f));
 		ANKI_TEST_EXPECT_EQ(r, a + Vec4(10.0f) * 2.0f + b * Vec4(20.8f));
@@ -70,7 +71,9 @@ ANKI_TEST(Util, Function)
 	{
 		{
 			Foo foo, bar;
-			Function<void(Foo&)> f(alloc, [foo](Foo& r) { r.x += foo.x; });
+			Function<void(Foo&)> f(alloc, [foo](Foo& r) {
+				r.x += foo.x;
+			});
 
 			Function<void(Foo&)> ff;
 			ff = std::move(f);
@@ -89,7 +92,9 @@ ANKI_TEST(Util, Function)
 	{
 		{
 			Foo foo, bar;
-			Function<void(Foo&)> f(alloc, [foo](Foo& r) { r.x += foo.x; });
+			Function<void(Foo&)> f(alloc, [foo](Foo& r) {
+				r.x += foo.x;
+			});
 
 			Function<void(Foo&)> ff;
 			ff.copy(f, alloc);

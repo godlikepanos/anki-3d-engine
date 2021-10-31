@@ -19,8 +19,7 @@
 #include <AnKi/Util/WeakArray.h>
 #include <AnKi/Util/Function.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class RenderGraph;

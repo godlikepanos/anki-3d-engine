@@ -5,8 +5,7 @@
 
 #include <AnKi/Collision/Aabb.h>
 
-namespace anki
-{
+namespace anki {
 
 Aabb Aabb::getTransformed(const Transform& trf) const
 {

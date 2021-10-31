@@ -11,8 +11,7 @@
 #include <AnKi/Util/File.h>
 #include <AnKi/Util/Ptr.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class ConfigSet;

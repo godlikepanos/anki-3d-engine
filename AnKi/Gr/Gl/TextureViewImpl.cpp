@@ -5,8 +5,7 @@
 
 #include <AnKi/Gr/gl/TextureViewImpl.h>
 
-namespace anki
-{
+namespace anki {
 
 void TextureViewImpl::preInit(const TextureViewInitInfo& inf)
 {

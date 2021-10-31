@@ -8,8 +8,7 @@
 #include <AnKi/Gr/Vulkan/GrManagerImpl.h>
 #include <AnKi/Gr/Vulkan/TextureImpl.h>
 
-namespace anki
-{
+namespace anki {
 
 FramebufferImpl::~FramebufferImpl()
 {

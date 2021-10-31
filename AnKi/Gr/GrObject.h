@@ -8,8 +8,7 @@
 #include <AnKi/Gr/Common.h>
 #include <AnKi/Util/Atomic.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup graphics
 /// @{

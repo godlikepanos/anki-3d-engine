@@ -8,8 +8,7 @@
 #include <AnKi/Collision/Functions.h>
 #include <AnKi/Util/Tracer.h>
 
-namespace anki
-{
+namespace anki {
 
 void SoftwareRasterizer::prepare(const Mat4& mv, const Mat4& p, U32 width, U32 height)
 {

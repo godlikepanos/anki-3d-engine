@@ -12,8 +12,7 @@
 #include <AnKi/Util/Thread.h>
 #include <utility> // For forward
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup util_memory
 /// @{

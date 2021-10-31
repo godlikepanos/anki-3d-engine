@@ -8,8 +8,7 @@
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/RenderQueue.h>
 
-namespace anki
-{
+namespace anki {
 
 MotionVectors::~MotionVectors()
 {
@@ -48,7 +47,9 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Motion vectors");
 
-	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) -> void { run(ctx, rgraphCtx); });
+	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) -> void {
+		run(ctx, rgraphCtx);
+	});
 
 	pass.newDependency({m_runCtx.m_motionVectorsRtHandle, TextureUsageBit::IMAGE_COMPUTE_WRITE});
 	pass.newDependency({m_runCtx.m_rejectionFactorRtHandle, TextureUsageBit::IMAGE_COMPUTE_WRITE});

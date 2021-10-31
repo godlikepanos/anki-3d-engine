@@ -8,8 +8,7 @@
 #include <AnKi/Scene/Components/FogDensityComponent.h>
 #include <AnKi/Scene/Components/SpatialComponent.h>
 
-namespace anki
-{
+namespace anki {
 
 class FogDensityNode::MoveFeedbackComponent : public SceneComponent
 {

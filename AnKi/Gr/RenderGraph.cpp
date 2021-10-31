@@ -15,8 +15,7 @@
 #include <AnKi/Util/StringList.h>
 #include <AnKi/Util/HighRezTimer.h>
 
-namespace anki
-{
+namespace anki {
 
 #define ANKI_DBG_RENDER_GRAPH 0
 
@@ -1157,10 +1156,14 @@ void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr)
 				  });
 
 		std::sort(batch.m_bufferBarriersBefore.getBegin(), batch.m_bufferBarriersBefore.getEnd(),
-				  [&](const BufferBarrier& a, const BufferBarrier& b) { return a.m_idx < b.m_idx; });
+				  [&](const BufferBarrier& a, const BufferBarrier& b) {
+					  return a.m_idx < b.m_idx;
+				  });
 
 		std::sort(batch.m_asBarriersBefore.getBegin(), batch.m_asBarriersBefore.getEnd(),
-				  [&](const ASBarrier& a, const ASBarrier& b) { return a.m_idx < b.m_idx; });
+				  [&](const ASBarrier& a, const ASBarrier& b) {
+					  return a.m_idx < b.m_idx;
+				  });
 #endif
 	} // For all batches
 }

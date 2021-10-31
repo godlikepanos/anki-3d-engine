@@ -9,8 +9,7 @@
 #include <AnKi/Gr/gl/GlObject.h>
 #include <AnKi/Gr/gl/TextureImpl.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup opengl
 /// @{

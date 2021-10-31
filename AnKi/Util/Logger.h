@@ -9,8 +9,7 @@
 #include <AnKi/Util/Singleton.h>
 #include <AnKi/Util/Thread.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class File;

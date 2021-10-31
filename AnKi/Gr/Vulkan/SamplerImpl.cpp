@@ -7,8 +7,7 @@
 #include <AnKi/Gr/Texture.h>
 #include <AnKi/Gr/Vulkan/GrManagerImpl.h>
 
-namespace anki
-{
+namespace anki {
 
 Error SamplerImpl::init(const SamplerInitInfo& inf)
 {

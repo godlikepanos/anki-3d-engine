@@ -19,8 +19,7 @@
 #include <AnKi/Gr/Vulkan/FenceImpl.h>
 #include <AnKi/Gr/Vulkan/AccelerationStructureImpl.h>
 
-namespace anki
-{
+namespace anki {
 
 #define ANKI_INSTANTIATE_GR_OBJECT(type_) \
 	template<> \

@@ -10,8 +10,7 @@
 #include <AnKi/Gr/CommandBuffer.h>
 #include <AnKi/Gr/gl/CommandBufferImpl.h>
 
-namespace anki
-{
+namespace anki {
 
 GlObject::GlObject()
 	: m_glName(0)

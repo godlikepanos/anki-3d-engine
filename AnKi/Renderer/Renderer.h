@@ -13,8 +13,7 @@
 #include <AnKi/Core/StagingGpuMemoryManager.h>
 #include <AnKi/Collision/Forward.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class ConfigSet;

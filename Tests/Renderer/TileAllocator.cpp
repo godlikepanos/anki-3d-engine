@@ -6,8 +6,7 @@
 #include <Tests/Framework/Framework.h>
 #include <AnKi/Renderer/TileAllocator.h>
 
-namespace anki
-{
+namespace anki {
 
 ANKI_TEST(Renderer, TileAllocator)
 {

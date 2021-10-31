@@ -9,8 +9,7 @@
 #include <AnKi/Util/String.h>
 #include <AnKi/Scene/Forward.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup scene
 /// @{

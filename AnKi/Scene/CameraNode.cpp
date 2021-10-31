@@ -9,8 +9,7 @@
 #include <AnKi/Scene/Components/SpatialComponent.h>
 #include <AnKi/Scene/SceneGraph.h>
 
-namespace anki
-{
+namespace anki {
 
 /// Feedback component.
 class CameraNode::MoveFeedbackComponent : public SceneComponent

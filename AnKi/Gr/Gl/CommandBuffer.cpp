@@ -20,8 +20,7 @@
 
 #include <AnKi/Core/Trace.h>
 
-namespace anki
-{
+namespace anki {
 
 CommandBuffer* CommandBuffer::newInstance(GrManager* manager, const CommandBufferInitInfo& inf)
 {

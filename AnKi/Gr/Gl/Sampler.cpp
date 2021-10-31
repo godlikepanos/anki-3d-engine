@@ -8,8 +8,7 @@
 #include <AnKi/Gr/gl/CommandBufferImpl.h>
 #include <AnKi/Gr/GrManager.h>
 
-namespace anki
-{
+namespace anki {
 
 Sampler* Sampler::newInstance(GrManager* manager, const SamplerInitInfo& init)
 {

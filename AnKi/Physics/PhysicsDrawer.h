@@ -7,8 +7,7 @@
 
 #include <AnKi/Physics/Common.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup physics
 /// @{

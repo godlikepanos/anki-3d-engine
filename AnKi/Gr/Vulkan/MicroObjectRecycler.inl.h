@@ -5,8 +5,7 @@
 
 #include <AnKi/Gr/Vulkan/MicroObjectRecycler.h>
 
-namespace anki
-{
+namespace anki {
 
 template<typename T>
 inline void MicroObjectRecycler<T>::destroy()

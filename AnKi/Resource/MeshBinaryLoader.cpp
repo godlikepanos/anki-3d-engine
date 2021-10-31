@@ -6,8 +6,7 @@
 #include <AnKi/Resource/MeshBinaryLoader.h>
 #include <AnKi/Resource/ResourceManager.h>
 
-namespace anki
-{
+namespace anki {
 
 MeshBinaryLoader::MeshBinaryLoader(ResourceManager* manager)
 	: MeshBinaryLoader(manager, manager->getTempAllocator())

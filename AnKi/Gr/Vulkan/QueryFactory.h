@@ -9,8 +9,7 @@
 #include <AnKi/Util/BitSet.h>
 #include <AnKi/Util/List.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class QueryFactoryChunk;

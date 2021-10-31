@@ -7,8 +7,7 @@
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/Tracer.h>
 
-namespace anki
-{
+namespace anki {
 
 AsyncLoader::AsyncLoader()
 	: m_thread("anki_asyload")

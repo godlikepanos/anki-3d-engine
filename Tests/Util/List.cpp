@@ -62,7 +62,9 @@ ANKI_TEST(Util, List)
 
 		ANKI_TEST_EXPECT_EQ(err, Error::NONE);
 
-		a.sort([](I& a, I& b) -> Bool { return a > b; });
+		a.sort([](I& a, I& b) -> Bool {
+			return a > b;
+		});
 
 		Array<I, 4> arr2 = {{11, 10, 9, 2}};
 		u = 0;
@@ -99,9 +101,13 @@ ANKI_TEST(Util, List)
 		}
 
 		// auto ta = HighRezTimer::getCurrentTime();
-		b.sort([](const Foo& a, const Foo& b) { return a.x < b.x; });
+		b.sort([](const Foo& a, const Foo& b) {
+			return a.x < b.x;
+		});
 		// auto tb = HighRezTimer::getCurrentTime();
-		a.sort([](const Foo& a, const Foo& b) { return a.x < b.x; });
+		a.sort([](const Foo& a, const Foo& b) {
+			return a.x < b.x;
+		});
 		// auto tc = HighRezTimer::getCurrentTime();
 
 		// printf("%f %f\n", tb - ta, tc - tb);

@@ -6,8 +6,7 @@
 #include <Tests/Framework/Framework.h>
 #include <AnKi/Resource/ResourceFilesystem.h>
 
-namespace anki
-{
+namespace anki {
 
 ANKI_TEST(Resource, ResourceFilesystem)
 {

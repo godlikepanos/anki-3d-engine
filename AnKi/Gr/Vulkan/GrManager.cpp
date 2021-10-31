@@ -19,8 +19,7 @@
 #include <AnKi/Gr/RenderGraph.h>
 #include <AnKi/Gr/AccelerationStructure.h>
 
-namespace anki
-{
+namespace anki {
 
 GrManager::GrManager()
 {

@@ -9,14 +9,12 @@
 #include <AnKi/Util/Forward.h>
 #include <functional>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup util_containers
 /// @{
 
-namespace detail
-{
+namespace detail {
 
 /// List node.
 /// @internal

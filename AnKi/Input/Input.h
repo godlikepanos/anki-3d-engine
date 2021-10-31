@@ -11,8 +11,7 @@
 #include <AnKi/Util/String.h>
 #include <AnKi/Input/KeyCode.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class InputImpl;

@@ -9,8 +9,7 @@
 #include <AnKi/Physics/PhysicsCollisionShape.h>
 #include <AnKi/Physics/PhysicsWorld.h>
 
-namespace anki
-{
+namespace anki {
 
 ANKI_SCENE_COMPONENT_STATICS(TriggerComponent)
 

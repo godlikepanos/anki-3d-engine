@@ -9,8 +9,7 @@
 #include <AnKi/Input/KeyCode.h>
 #include <android_native_app_glue.h>
 
-namespace anki
-{
+namespace anki {
 
 /// Android input implementation
 class InputAndroid : public Input

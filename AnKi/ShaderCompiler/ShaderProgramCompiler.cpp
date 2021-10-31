@@ -10,8 +10,7 @@
 #include <AnKi/Util/Serializer.h>
 #include <AnKi/Util/HashMap.h>
 
-namespace anki
-{
+namespace anki {
 
 Error ShaderProgramBinaryWrapper::serializeToFile(CString fname) const
 {
@@ -1151,9 +1150,10 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 	}
 
 	// Sort the mutations
-	std::sort(
-		binary.m_mutations.getBegin(), binary.m_mutations.getEnd(),
-		[](const ShaderProgramBinaryMutation& a, const ShaderProgramBinaryMutation& b) { return a.m_hash < b.m_hash; });
+	std::sort(binary.m_mutations.getBegin(), binary.m_mutations.getEnd(),
+			  [](const ShaderProgramBinaryMutation& a, const ShaderProgramBinaryMutation& b) {
+				  return a.m_hash < b.m_hash;
+			  });
 
 	// Lib name
 	if(parser.getLibraryName().getLength() > 0)

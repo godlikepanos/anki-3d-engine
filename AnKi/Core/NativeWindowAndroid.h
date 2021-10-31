@@ -8,8 +8,7 @@
 #include <AnKi/Core/NativeWindow.h>
 #include <android_native_app_glue.h>
 
-namespace anki
-{
+namespace anki {
 
 /// Native window implementation for Android
 class NativeWindowAndroid : public NativeWindow

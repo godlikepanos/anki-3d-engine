@@ -6,8 +6,7 @@
 #include <AnKi/Gr/Vulkan/SamplerFactory.h>
 #include <AnKi/Gr/Vulkan/GrManagerImpl.h>
 
-namespace anki
-{
+namespace anki {
 
 MicroSampler::~MicroSampler()
 {

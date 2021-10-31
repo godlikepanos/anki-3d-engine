@@ -6,8 +6,7 @@
 #include <AnKi/Util/Hash.h>
 #include <AnKi/Util/Assert.h>
 
-namespace anki
-{
+namespace anki {
 
 constexpr U64 HASH_M = 0xc6a4a7935bd1e995;
 constexpr U64 HASH_R = 47;

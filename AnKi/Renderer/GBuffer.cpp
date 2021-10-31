@@ -11,8 +11,7 @@
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Core/ConfigSet.h>
 
-namespace anki
-{
+namespace anki {
 
 GBuffer::~GBuffer()
 {
@@ -180,7 +179,9 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 							m_runCtx.m_crntFrameDepthRt);
 	pass.setWork(computeNumberOfSecondLevelCommandBuffers(ctx.m_renderQueue->m_earlyZRenderables.getSize()
 														  + ctx.m_renderQueue->m_renderables.getSize()),
-				 [this, &ctx](RenderPassWorkContext& rgraphCtx) { runInThread(ctx, rgraphCtx); });
+				 [this, &ctx](RenderPassWorkContext& rgraphCtx) {
+					 runInThread(ctx, rgraphCtx);
+				 });
 
 	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 	{

@@ -10,8 +10,7 @@
 #include <AnKi/Gr/Common.h>
 #include <AnKi/Util/WeakArray.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup shader_compiler
 /// @{

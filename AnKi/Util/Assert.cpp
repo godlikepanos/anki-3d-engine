@@ -12,8 +12,7 @@
 #	include <android/log.h>
 #endif
 
-namespace anki
-{
+namespace anki {
 
 #if ANKI_EXTRA_CHECKS
 
@@ -36,8 +35,9 @@ void akassert(const char* exprTxt, const char* file, int line, const char* func)
 
 	printf("Backtrace:\n");
 	U32 count = 0;
-	backtrace(HeapAllocator<U8>(allocAligned, nullptr),
-			  [&count](CString symbol) { printf("%.2u: %s\n", count++, symbol.cstr()); });
+	backtrace(HeapAllocator<U8>(allocAligned, nullptr), [&count](CString symbol) {
+		printf("%.2u: %s\n", count++, symbol.cstr());
+	});
 
 	ANKI_DEBUG_BREAK();
 }

@@ -17,8 +17,7 @@
 #include <string>
 #include <sstream>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class TestSuite;

@@ -20,8 +20,7 @@
 #	pragma GCC diagnostic pop
 #endif
 
-namespace anki
-{
+namespace anki {
 
 Scale::~Scale()
 {
@@ -101,7 +100,9 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 			RenderPassDependency(m_r->getTemporalAA().getTonemappedRt(), TextureUsageBit::SAMPLED_COMPUTE));
 		pass.newDependency(RenderPassDependency(m_runCtx.m_scaledRt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
 
-		pass.setWork([this](RenderPassWorkContext& rgraphCtx) { runScaling(rgraphCtx); });
+		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+			runScaling(rgraphCtx);
+		});
 	}
 
 	if(doSharpening())
@@ -116,7 +117,9 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 								 TextureUsageBit::SAMPLED_COMPUTE));
 		pass.newDependency(RenderPassDependency(m_runCtx.m_sharpenedRt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
 
-		pass.setWork([this](RenderPassWorkContext& rgraphCtx) { runSharpening(rgraphCtx); });
+		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+			runSharpening(rgraphCtx);
+		});
 	}
 }
 

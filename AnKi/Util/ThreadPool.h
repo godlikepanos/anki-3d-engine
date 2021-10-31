@@ -7,12 +7,10 @@
 
 #include <AnKi/Util/Thread.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
-namespace detail
-{
+namespace detail {
 class ThreadPoolThread;
 }
 

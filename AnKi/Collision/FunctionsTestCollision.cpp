@@ -11,8 +11,7 @@
 #include <AnKi/Collision/Sphere.h>
 #include <AnKi/Collision/GjkEpa.h>
 
-namespace anki
-{
+namespace anki {
 
 template<typename T, typename Y>
 static Bool testCollisionGjk(const T& a, const Y& b)

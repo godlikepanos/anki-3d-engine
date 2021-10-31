@@ -9,8 +9,7 @@
 #include <AnKi/Script/ScriptManager.h>
 #include <AnKi/Renderer.h>
 
-namespace anki
-{
+namespace anki {
 
 static MainRenderer* getMainRenderer(lua_State* l)
 {

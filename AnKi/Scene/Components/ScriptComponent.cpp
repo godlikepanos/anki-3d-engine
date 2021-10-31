@@ -10,8 +10,7 @@
 #include <AnKi/Script/ScriptManager.h>
 #include <AnKi/Script/ScriptEnvironment.h>
 
-namespace anki
-{
+namespace anki {
 
 ANKI_SCENE_COMPONENT_STATICS(ScriptComponent)
 

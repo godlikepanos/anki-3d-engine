@@ -7,8 +7,7 @@
 #include <AnKi/Gr/Vulkan/TextureViewImpl.h>
 #include <AnKi/Gr/GrManager.h>
 
-namespace anki
-{
+namespace anki {
 
 TextureView* TextureView::newInstance(GrManager* manager, const TextureViewInitInfo& init)
 {

@@ -11,8 +11,7 @@
 #include <AnKi/Util/Singleton.h>
 #include <AnKi/Util/String.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup util_other
 /// @{

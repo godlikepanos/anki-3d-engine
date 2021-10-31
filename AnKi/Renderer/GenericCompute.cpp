@@ -8,8 +8,7 @@
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/RenderQueue.h>
 
-namespace anki
-{
+namespace anki {
 
 GenericCompute::~GenericCompute()
 {
@@ -24,7 +23,9 @@ void GenericCompute::populateRenderGraph(RenderingContext& ctx)
 
 	ComputeRenderPassDescription& pass = ctx.m_renderGraphDescr.newComputeRenderPass("Generic compute");
 
-	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) { run(ctx, rgraphCtx); });
+	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+		run(ctx, rgraphCtx);
+	});
 
 	pass.newDependency({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_COMPUTE});
 }

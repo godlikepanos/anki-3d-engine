@@ -13,8 +13,7 @@
 #include <cstring>
 #include <cstdio>
 
-namespace anki
-{
+namespace anki {
 
 #if ANKI_MEM_EXTRA_CHECKS
 static PoolSignature computePoolSignature(void* ptr)

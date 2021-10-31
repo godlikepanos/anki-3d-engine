@@ -8,8 +8,7 @@
 #include <AnKi/Util/StringList.h>
 #include <SprivCross/spirv_glsl.hpp>
 
-namespace anki
-{
+namespace anki {
 
 #define ANKI_TAB "    "
 

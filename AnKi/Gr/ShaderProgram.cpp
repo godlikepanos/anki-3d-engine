@@ -5,8 +5,7 @@
 
 #include <AnKi/Gr/ShaderProgram.h>
 
-namespace anki
-{
+namespace anki {
 
 Bool ShaderProgramInitInfo::isValid() const
 {

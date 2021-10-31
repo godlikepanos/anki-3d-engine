@@ -10,8 +10,7 @@
 #include <AnKi/Renderer/Tonemapping.h>
 #include <AnKi/Renderer/MotionVectors.h>
 
-namespace anki
-{
+namespace anki {
 
 TemporalAA::TemporalAA(Renderer* r)
 	: RendererObject(r)

@@ -8,8 +8,7 @@
 
 #pragma once
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup util_file
 /// @{

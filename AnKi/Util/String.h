@@ -14,8 +14,7 @@
 #include <cctype>
 #include <cinttypes> // For PRId8 etc
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class F16;
@@ -23,8 +22,7 @@ class F16;
 /// @addtogroup util_private
 /// @{
 
-namespace detail
-{
+namespace detail {
 
 template<typename TNumber>
 constexpr const char* toStringFormat()
@@ -644,7 +642,9 @@ public:
 
 	String& toLower()
 	{
-		return transform([](Char& c) { c = Char(tolower(c)); });
+		return transform([](Char& c) {
+			c = Char(tolower(c));
+		});
 	}
 
 protected:

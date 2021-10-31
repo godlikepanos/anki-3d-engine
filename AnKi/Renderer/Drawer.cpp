@@ -10,8 +10,7 @@
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Util/Logger.h>
 
-namespace anki
-{
+namespace anki {
 
 /// Drawer's context
 class DrawContext

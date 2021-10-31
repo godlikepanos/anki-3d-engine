@@ -9,8 +9,7 @@
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Util/Tracer.h>
 
-namespace anki
-{
+namespace anki {
 
 class TransferGpuAllocator::Memory : public StackGpuAllocatorMemory
 {

@@ -10,8 +10,7 @@
 #include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Collision/Forward.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup renderer
 /// @{

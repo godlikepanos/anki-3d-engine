@@ -5,8 +5,7 @@
 
 #include <AnKi/Gr/RenderGraph.h>
 
-namespace anki
-{
+namespace anki {
 
 inline void RenderPassWorkContext::bindAccelerationStructure(U32 set, U32 binding, AccelerationStructureHandle handle)
 {

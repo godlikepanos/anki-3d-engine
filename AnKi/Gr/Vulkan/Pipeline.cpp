@@ -8,8 +8,7 @@
 #include <AnKi/Gr/Utils/Functions.h>
 #include <AnKi/Util/Tracer.h>
 
-namespace anki
-{
+namespace anki {
 
 void PipelineStateTracker::reset()
 {

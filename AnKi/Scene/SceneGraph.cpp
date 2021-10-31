@@ -17,8 +17,7 @@
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Util/HighRezTimer.h>
 
-namespace anki
-{
+namespace anki {
 
 const U NODE_UPDATE_BATCH = 10;
 
@@ -291,8 +290,9 @@ Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 	// Update children
 	if(!err)
 	{
-		err = node.visitChildrenMaxDepth(
-			0, [&](SceneNode& child) -> Error { return updateNode(prevTime, crntTime, child); });
+		err = node.visitChildrenMaxDepth(0, [&](SceneNode& child) -> Error {
+			return updateNode(prevTime, crntTime, child);
+		});
 	}
 
 	// Frame update

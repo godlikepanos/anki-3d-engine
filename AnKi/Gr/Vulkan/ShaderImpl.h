@@ -10,8 +10,7 @@
 #include <AnKi/Gr/Vulkan/DescriptorSet.h>
 #include <AnKi/Util/BitSet.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup vulkan
 /// @{

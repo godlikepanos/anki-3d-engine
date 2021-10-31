@@ -5,8 +5,7 @@
 
 #include <AnKi/Util/DynamicArray.h>
 
-namespace anki
-{
+namespace anki {
 
 template<typename T, typename TSize>
 DynamicArray<T, TSize>& DynamicArray<T, TSize>::operator=(DynamicArrayAuto<T, TSize>&& b)

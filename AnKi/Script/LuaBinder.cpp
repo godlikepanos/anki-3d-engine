@@ -7,8 +7,7 @@
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/Tracer.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 #define ANKI_SCRIPT_CALL_WRAP(x_) void wrapModule##x_(lua_State*)

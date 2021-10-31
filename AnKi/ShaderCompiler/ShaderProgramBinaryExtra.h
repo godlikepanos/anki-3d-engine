@@ -7,8 +7,7 @@
 #include <AnKi/Gr/Utils/Functions.h>
 #include <AnKi/Util/Serializer.h>
 
-namespace anki
-{
+namespace anki {
 
 /// Serialize/deserialize ShaderVariableBlockInfo
 template<typename TSerializer, typename TShaderVariableBlockInfo>

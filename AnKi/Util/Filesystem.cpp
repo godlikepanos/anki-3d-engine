@@ -5,8 +5,7 @@
 
 #include <AnKi/Util/Filesystem.h>
 
-namespace anki
-{
+namespace anki {
 
 void getFilepathExtension(const CString& filename, StringAuto& out)
 {

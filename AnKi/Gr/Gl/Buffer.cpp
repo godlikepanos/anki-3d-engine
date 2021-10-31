@@ -8,8 +8,7 @@
 #include <AnKi/Gr/gl/BufferImpl.h>
 #include <AnKi/Gr/gl/CommandBufferImpl.h>
 
-namespace anki
-{
+namespace anki {
 
 Buffer* Buffer::newInstance(GrManager* manager, const BufferInitInfo& inf)
 {

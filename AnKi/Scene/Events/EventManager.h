@@ -9,8 +9,7 @@
 #include <AnKi/Util/List.h>
 #include <AnKi/Math.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup scene
 /// @{

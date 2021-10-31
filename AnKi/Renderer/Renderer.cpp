@@ -42,8 +42,7 @@
 #include <AnKi/Renderer/Scale.h>
 #include <AnKi/Renderer/IndirectDiffuse.h>
 
-namespace anki
-{
+namespace anki {
 
 Renderer::Renderer()
 	: m_sceneDrawer(this)

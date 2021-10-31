@@ -5,8 +5,7 @@
 
 #include <AnKi/Gr/Utils/StackGpuAllocator.h>
 
-namespace anki
-{
+namespace anki {
 
 class StackGpuAllocatorChunk
 {

@@ -7,8 +7,7 @@
 #include <AnKi/Scene/SceneNode.h>
 #include <AnKi/Collision/Functions.h>
 
-namespace anki
-{
+namespace anki {
 
 ANKI_SCENE_COMPONENT_STATICS(FrustumComponent)
 

@@ -6,8 +6,7 @@
 #include <AnKi/Gr/GrObject.h>
 #include <AnKi/Gr/GrManager.h>
 
-namespace anki
-{
+namespace anki {
 
 GrObject::GrObject(GrManager* manager, GrObjectType type, CString name)
 	: m_manager(manager)

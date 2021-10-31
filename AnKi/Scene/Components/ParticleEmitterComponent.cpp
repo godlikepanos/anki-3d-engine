@@ -15,8 +15,7 @@
 #include <AnKi/Math.h>
 #include <AnKi/Renderer/RenderQueue.h>
 
-namespace anki
-{
+namespace anki {
 
 ANKI_SCENE_COMPONENT_STATICS(ParticleEmitterComponent)
 

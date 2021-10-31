@@ -9,8 +9,7 @@
 #	include <SDL_vulkan.h>
 #endif
 
-namespace anki
-{
+namespace anki {
 
 Error NativeWindow::newInstance(const NativeWindowInitInfo& initInfo, NativeWindow*& nativeWindow)
 {

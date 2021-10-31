@@ -6,8 +6,7 @@
 #include <AnKi/ShaderCompiler/ShaderProgramBinary.h>
 #include <AnKi/Util/String.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup shader_compiler
 /// @{

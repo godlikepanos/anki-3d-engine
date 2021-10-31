@@ -6,8 +6,7 @@
 #include <AnKi/Scene/StaticCollisionNode.h>
 #include <AnKi/Scene/Components/BodyComponent.h>
 
-namespace anki
-{
+namespace anki {
 
 StaticCollisionNode::StaticCollisionNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)

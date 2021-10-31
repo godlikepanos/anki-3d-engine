@@ -9,8 +9,7 @@
 #include <AnKi/Script/ScriptManager.h>
 #include <AnKi/Scene.h>
 
-namespace anki
-{
+namespace anki {
 
 template<typename T, typename... TArgs>
 static T* newSceneNode(SceneGraph* scene, CString name, TArgs... args)

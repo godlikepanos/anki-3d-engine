@@ -11,8 +11,7 @@
 #include <AnKi/Util/DynamicArray.h>
 #include <AnKi/Gr/Utils/Functions.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class ShaderProgramParser;

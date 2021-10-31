@@ -10,8 +10,7 @@
 #include <AnKi/Collision/Aabb.h>
 #include <AnKi/Util/WeakArray.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class RenderQueueDrawContext;

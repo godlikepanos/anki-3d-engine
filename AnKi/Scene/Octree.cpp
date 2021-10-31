@@ -9,8 +9,7 @@
 #include <AnKi/Collision/Functions.h>
 #include <AnKi/Util/ThreadHive.h>
 
-namespace anki
-{
+namespace anki {
 
 /// Return a heatmap color.
 static Vec3 heatmap(F32 factor)

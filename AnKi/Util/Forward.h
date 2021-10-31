@@ -9,8 +9,7 @@
 
 #include <AnKi/Util/StdTypes.h>
 
-namespace anki
-{
+namespace anki {
 
 template<U32 N, typename TChunkType>
 class BitSet;

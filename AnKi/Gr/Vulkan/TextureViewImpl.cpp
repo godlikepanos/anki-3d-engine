@@ -7,8 +7,7 @@
 #include <AnKi/Gr/Vulkan/TextureImpl.h>
 #include <AnKi/Gr/Vulkan/GrManagerImpl.h>
 
-namespace anki
-{
+namespace anki {
 
 TextureViewImpl::~TextureViewImpl()
 {

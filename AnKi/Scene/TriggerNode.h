@@ -8,8 +8,7 @@
 #include <AnKi/Scene/SceneNode.h>
 #include <AnKi/Physics/Forward.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup scene
 /// @{

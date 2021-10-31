@@ -8,8 +8,7 @@
 #include <AnKi/Gr/CommandBuffer.h>
 #include <AnKi/Util/Thread.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup opengl
 /// @{

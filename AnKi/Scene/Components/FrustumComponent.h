@@ -14,8 +14,7 @@
 #include <AnKi/Resource/Common.h>
 #include <AnKi/Shaders/Include/ClusteredShadingFunctions.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup scene
 /// @{

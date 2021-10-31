@@ -8,8 +8,7 @@
 #include <AnKi/Core/NativeWindow.h>
 #include <SDL.h>
 
-namespace anki
-{
+namespace anki {
 
 /// Native window implementation for SDL
 class NativeWindowSdl : public NativeWindow

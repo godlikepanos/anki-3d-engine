@@ -9,8 +9,7 @@
 #include <AnKi/Resource/Forward.h>
 #include <AnKi/Script/ScriptEnvironment.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup scene
 /// @{

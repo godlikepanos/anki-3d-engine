@@ -12,8 +12,7 @@
 #include <AnKi/Resource/MeshResource.h>
 #include <AnKi/Resource/MaterialResource.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup resource
 /// @{

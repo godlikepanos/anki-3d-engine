@@ -9,8 +9,7 @@
 #include <AnKi/Gr/GrObject.h>
 #include <AnKi/Util/String.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class ConfigSet;

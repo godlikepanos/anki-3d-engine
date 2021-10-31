@@ -10,8 +10,7 @@
 #include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Resource/ParticleEmitterResource.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup scene
 /// @{

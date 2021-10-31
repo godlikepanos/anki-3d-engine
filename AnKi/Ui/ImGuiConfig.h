@@ -39,8 +39,7 @@
 
 // TLS context.
 struct ImGuiContext;
-namespace anki
-{
+namespace anki {
 extern thread_local ImGuiContext* g_imguiTlsCtx;
 } // end namespace anki
 #define GImGui anki::g_imguiTlsCtx

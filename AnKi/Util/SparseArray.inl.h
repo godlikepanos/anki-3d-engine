@@ -5,8 +5,7 @@
 
 #include <AnKi/Util/SparseArray.h>
 
-namespace anki
-{
+namespace anki {
 
 template<typename T, typename TIndex>
 template<typename TAlloc>

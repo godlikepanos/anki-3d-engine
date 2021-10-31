@@ -10,8 +10,7 @@
 #include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Core/ConfigSet.h>
 
-namespace anki
-{
+namespace anki {
 
 VolumetricLightingAccumulation::VolumetricLightingAccumulation(Renderer* r)
 	: RendererObject(r)
@@ -85,7 +84,9 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Vol light");
 
-	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) { run(ctx, rgraphCtx); });
+	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+		run(ctx, rgraphCtx);
+	});
 
 	pass.newDependency(RenderPassDependency(m_runCtx.m_rts[0], TextureUsageBit::SAMPLED_COMPUTE));
 	pass.newDependency(RenderPassDependency(m_runCtx.m_rts[1], TextureUsageBit::IMAGE_COMPUTE_WRITE));

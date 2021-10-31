@@ -7,8 +7,7 @@
 
 #include <AnKi/Util/StdTypes.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup util_other
 /// @{

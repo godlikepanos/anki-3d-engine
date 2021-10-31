@@ -12,8 +12,7 @@
 #include <AnKi/Gr/Enums.h>
 #include <AnKi/Shaders/Include/ModelTypes.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class GrManager;

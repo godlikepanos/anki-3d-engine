@@ -7,8 +7,7 @@
 #include <AnKi/Util/List.h>
 #include <AnKi/Util/BitSet.h>
 
-namespace anki
-{
+namespace anki {
 
 /// Max number of sub allocations (aka slots) per chunk.
 const U32 MAX_SLOTS_PER_CHUNK = 128;

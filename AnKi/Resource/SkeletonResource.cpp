@@ -7,8 +7,7 @@
 #include <AnKi/Util/Xml.h>
 #include <AnKi/Util/StringList.h>
 
-namespace anki
-{
+namespace anki {
 
 SkeletonResource::~SkeletonResource()
 {

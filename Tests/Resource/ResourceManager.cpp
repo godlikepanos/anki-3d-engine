@@ -8,8 +8,7 @@
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Core/ConfigSet.h>
 
-namespace anki
-{
+namespace anki {
 
 ANKI_TEST(Resource, ResourceManager)
 {

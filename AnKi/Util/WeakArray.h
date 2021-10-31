@@ -8,8 +8,7 @@
 #include <AnKi/Util/Array.h>
 #include <AnKi/Util/DynamicArray.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup util_containers
 /// @{

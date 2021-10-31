@@ -9,8 +9,7 @@
 #include <AnKi/Resource/RenderingKey.h>
 #include <AnKi/Gr.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class Renderer;

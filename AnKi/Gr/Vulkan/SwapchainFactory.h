@@ -9,8 +9,7 @@
 #include <AnKi/Gr/Vulkan/MicroObjectRecycler.h>
 #include <AnKi/Util/Ptr.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class SwapchainFactory;

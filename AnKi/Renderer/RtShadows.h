@@ -11,8 +11,7 @@
 #include <AnKi/Util/BitSet.h>
 #include <AnKi/Shaders/Include/RtShadows.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup renderer
 /// @{

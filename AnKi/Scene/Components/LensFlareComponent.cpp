@@ -8,8 +8,7 @@
 #include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Resource/ResourceManager.h>
 
-namespace anki
-{
+namespace anki {
 
 ANKI_SCENE_COMPONENT_STATICS(LensFlareComponent)
 

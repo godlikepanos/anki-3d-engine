@@ -12,8 +12,7 @@
 #include <AnKi/Util/List.h>
 #include <AnKi/Util/Enum.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class ResourceManager;
@@ -272,7 +271,9 @@ public:
 	U32 countComponentsOfType() const
 	{
 		U32 count = 0;
-		iterateComponentsOfType<TComponent>([&](const TComponent& c) { ++count; });
+		iterateComponentsOfType<TComponent>([&](const TComponent& c) {
+			++count;
+		});
 		return count;
 	}
 

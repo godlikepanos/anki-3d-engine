@@ -10,8 +10,7 @@
 #include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Renderer/TileAllocator.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup renderer
 /// @{

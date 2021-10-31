@@ -11,8 +11,7 @@
 #include <AnKi/Shaders/Include/ModelTypes.h>
 #include <MeshOptimizer/meshoptimizer.h>
 
-namespace anki
-{
+namespace anki {
 
 static U cgltfComponentCount(cgltf_type type)
 {
@@ -338,8 +337,9 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 			{
 				U32 count = 0;
 				ANKI_CHECK(checkAttribute<Vec3>(*attrib));
-				visitAccessor<Vec3>(*attrib->data,
-									[&](const Vec3& normal) { submesh.m_verts[count++].m_normal = normal; });
+				visitAccessor<Vec3>(*attrib->data, [&](const Vec3& normal) {
+					submesh.m_verts[count++].m_normal = normal;
+				});
 			}
 			else if(attrib->type == cgltf_attribute_type_texcoord && CString(attrib->name) == "TEXCOORD_0")
 			{
@@ -355,16 +355,18 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 			{
 				U32 count = 0;
 				ANKI_CHECK(checkAttribute<U16Vec4>(*attrib));
-				visitAccessor<U16Vec4>(*attrib->data,
-									   [&](const U16Vec4& x) { submesh.m_verts[count++].m_boneIds = x; });
+				visitAccessor<U16Vec4>(*attrib->data, [&](const U16Vec4& x) {
+					submesh.m_verts[count++].m_boneIds = x;
+				});
 				hasBoneWeights = true;
 			}
 			else if(attrib->type == cgltf_attribute_type_weights)
 			{
 				U32 count = 0;
 				ANKI_CHECK(checkAttribute<Vec4>(*attrib));
-				visitAccessor<Vec4>(*attrib->data,
-									[&](const Vec4& bw) { submesh.m_verts[count++].m_boneWeights = bw; });
+				visitAccessor<Vec4>(*attrib->data, [&](const Vec4& bw) {
+					submesh.m_verts[count++].m_boneWeights = bw;
+				});
 			}
 			else
 			{

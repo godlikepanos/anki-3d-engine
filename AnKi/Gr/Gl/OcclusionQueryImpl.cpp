@@ -5,8 +5,7 @@
 
 #include <AnKi/Gr/gl/OcclusionQueryImpl.h>
 
-namespace anki
-{
+namespace anki {
 
 void OcclusionQueryImpl::init()
 {

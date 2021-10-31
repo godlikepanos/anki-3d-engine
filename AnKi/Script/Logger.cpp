@@ -7,8 +7,7 @@
 
 #include <AnKi/Script/LuaBinder.h>
 
-namespace anki
-{
+namespace anki {
 
 /// Pre-wrap function logi.
 static inline int pwraplogi(lua_State* l)

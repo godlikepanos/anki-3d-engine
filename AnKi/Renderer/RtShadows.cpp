@@ -15,8 +15,7 @@
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Core/ConfigSet.h>
 
-namespace anki
-{
+namespace anki {
 
 RtShadows::~RtShadows()
 {
@@ -263,7 +262,9 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	// RT shadows pass
 	{
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("RtShadows");
-		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) { run(ctx, rgraphCtx); });
+		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+			run(ctx, rgraphCtx);
+		});
 
 		rpass.newDependency(RenderPassDependency(m_runCtx.m_historyRt, TextureUsageBit::SAMPLED_TRACE_RAYS));
 		rpass.newDependency(
@@ -293,7 +294,9 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	if(!m_useSvgf)
 	{
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("RtShadows Denoise Horizontal");
-		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) { runDenoise(ctx, rgraphCtx); });
+		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+			runDenoise(ctx, rgraphCtx);
+		});
 
 		rpass.newDependency(
 			RenderPassDependency(m_runCtx.m_intermediateShadowsRts[0], TextureUsageBit::SAMPLED_COMPUTE));
@@ -310,7 +313,9 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	if(!m_useSvgf)
 	{
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("RtShadows Denoise Vertical");
-		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) { runDenoise(ctx, rgraphCtx); });
+		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+			runDenoise(ctx, rgraphCtx);
+		});
 
 		rpass.newDependency(
 			RenderPassDependency(m_runCtx.m_intermediateShadowsRts[1], TextureUsageBit::SAMPLED_COMPUTE));
@@ -326,7 +331,9 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	if(m_useSvgf)
 	{
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("RtShadows SVGF Variance");
-		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) { runSvgfVariance(ctx, rgraphCtx); });
+		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+			runSvgfVariance(ctx, rgraphCtx);
+		});
 
 		rpass.newDependency(
 			RenderPassDependency(m_runCtx.m_intermediateShadowsRts[0], TextureUsageBit::SAMPLED_COMPUTE));
@@ -355,7 +362,9 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 			atrousWriteRtIdx = !readRtIdx;
 
 			ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("RtShadows SVGF Atrous");
-			rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) { runSvgfAtrous(ctx, rgraphCtx); });
+			rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+				runSvgfAtrous(ctx, rgraphCtx);
+			});
 
 			rpass.newDependency(depthDependency);
 			rpass.newDependency(
@@ -383,7 +392,9 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	// Upscale
 	{
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("RtShadows Upscale");
-		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) { runUpscale(ctx, rgraphCtx); });
+		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+			runUpscale(ctx, rgraphCtx);
+		});
 
 		rpass.newDependency(RenderPassDependency(m_runCtx.m_historyRt, TextureUsageBit::SAMPLED_COMPUTE));
 		rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_COMPUTE));

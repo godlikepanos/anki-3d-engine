@@ -6,8 +6,7 @@
 #include <AnKi/Script/ScriptEnvironment.h>
 #include <AnKi/Script/ScriptManager.h>
 
-namespace anki
-{
+namespace anki {
 
 Error ScriptEnvironment::init(ScriptManager* manager)
 {

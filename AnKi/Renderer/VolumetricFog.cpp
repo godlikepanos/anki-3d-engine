@@ -12,8 +12,7 @@
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
 #include <AnKi/Core/ConfigSet.h>
 
-namespace anki
-{
+namespace anki {
 
 Error VolumetricFog::init(const ConfigSet& config)
 {
@@ -92,7 +91,9 @@ void VolumetricFog::populateRenderGraph(RenderingContext& ctx)
 
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Vol fog");
 
-	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) -> void { run(ctx, rgraphCtx); });
+	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) -> void {
+		run(ctx, rgraphCtx);
+	});
 
 	pass.newDependency({m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
 	pass.newDependency({m_r->getVolumetricLightingAccumulation().getRt(), TextureUsageBit::SAMPLED_COMPUTE});

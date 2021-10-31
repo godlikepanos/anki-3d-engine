@@ -8,8 +8,7 @@
 #include <AnKi/Scene/Components/SceneComponent.h>
 #include <AnKi/Physics/PhysicsPlayerController.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup scene
 /// @{

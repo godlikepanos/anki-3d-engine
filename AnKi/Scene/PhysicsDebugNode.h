@@ -8,8 +8,7 @@
 #include <AnKi/Scene/SceneNode.h>
 #include <AnKi/Scene/DebugDrawer.h>
 
-namespace anki
-{
+namespace anki {
 
 /// An always visible node that debug draws primitives of the physics world.
 class PhysicsDebugNode : public SceneNode

@@ -6,8 +6,7 @@
 #include <AnKi/Physics/PhysicsCollisionShape.h>
 #include <AnKi/Physics/PhysicsWorld.h>
 
-namespace anki
-{
+namespace anki {
 
 PhysicsSphere::PhysicsSphere(PhysicsWorld* world, F32 radius)
 	: PhysicsCollisionShape(world, ShapeType::SPHERE)

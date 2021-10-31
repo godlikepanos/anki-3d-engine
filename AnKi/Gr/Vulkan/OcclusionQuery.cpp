@@ -7,8 +7,7 @@
 #include <AnKi/Gr/Vulkan/OcclusionQueryImpl.h>
 #include <AnKi/Gr/GrManager.h>
 
-namespace anki
-{
+namespace anki {
 
 OcclusionQuery* OcclusionQuery::newInstance(GrManager* manager)
 {

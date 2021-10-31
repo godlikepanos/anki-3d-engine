@@ -6,8 +6,7 @@
 #include <AnKi/Gr/Vulkan/BufferImpl.h>
 #include <AnKi/Gr/Vulkan/GrManagerImpl.h>
 
-namespace anki
-{
+namespace anki {
 
 BufferImpl::~BufferImpl()
 {

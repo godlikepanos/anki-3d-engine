@@ -10,8 +10,7 @@
 #include <AnKi/Util/Xml.h>
 #include <cstring>
 
-namespace anki
-{
+namespace anki {
 
 template<typename T>
 static ANKI_USE_RESULT Error getXmlVal(const XmlElement& el, const CString& tag, T& out, Bool& found)

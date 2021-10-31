@@ -11,8 +11,7 @@
 #include <AnKi/Util/String.h>
 #include <AnKi/Util/Allocator.h>
 
-namespace anki
-{
+namespace anki {
 
 /// Window initializer
 class NativeWindowInitInfo

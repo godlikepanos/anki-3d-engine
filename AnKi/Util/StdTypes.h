@@ -11,8 +11,7 @@
 #include <limits>
 #include <type_traits>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup util_other
 /// @{

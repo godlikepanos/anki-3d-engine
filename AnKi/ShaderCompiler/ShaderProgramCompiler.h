@@ -9,8 +9,7 @@
 #include <AnKi/Util/String.h>
 #include <AnKi/Gr/Common.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup shader_compiler
 /// @{

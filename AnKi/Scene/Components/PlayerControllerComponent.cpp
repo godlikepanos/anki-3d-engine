@@ -8,8 +8,7 @@
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Physics/PhysicsWorld.h>
 
-namespace anki
-{
+namespace anki {
 
 ANKI_SCENE_COMPONENT_STATICS(PlayerControllerComponent)
 

@@ -11,8 +11,7 @@
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Util/BitSet.h>
 
-namespace anki
-{
+namespace anki {
 
 ANKI_SCENE_COMPONENT_STATICS(SkinComponent)
 

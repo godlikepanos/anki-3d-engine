@@ -11,8 +11,7 @@
 #include <AnKi/Gr/Vulkan/TimestampQueryImpl.h>
 #include <AnKi/Util/Tracer.h>
 
-namespace anki
-{
+namespace anki {
 
 inline void CommandBufferImpl::setStencilCompareMask(FaceSelectionBit face, U32 mask)
 {

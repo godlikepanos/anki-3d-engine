@@ -5,8 +5,7 @@
 
 #include <AnKi/Collision/Functions.h>
 
-namespace anki
-{
+namespace anki {
 
 void extractClipPlane(const Mat4& mvp, FrustumPlaneType id, Plane& plane)
 {

@@ -7,8 +7,7 @@
 
 #include <AnKi/Util/Assert.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup util_private
 /// @{

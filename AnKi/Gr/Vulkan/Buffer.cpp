@@ -7,8 +7,7 @@
 #include <AnKi/Gr/Vulkan/BufferImpl.h>
 #include <AnKi/Gr/GrManager.h>
 
-namespace anki
-{
+namespace anki {
 
 Buffer* Buffer::newInstance(GrManager* manager, const BufferInitInfo& init)
 {

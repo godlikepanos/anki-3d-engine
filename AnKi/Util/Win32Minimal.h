@@ -120,8 +120,7 @@ ANKI_WINBASEAPI VOID ANKI_WINAPI GetSystemInfo(LPSYSTEM_INFO lpSystemInfo);
 
 // AnKi's wrappers for various Windows.h structs. Required because we can't declare those structs in the global
 // namespace since there are files that might include this header and Windows.h at the same time.
-namespace anki
-{
+namespace anki {
 
 // Consts
 constexpr DWORD INVALID_FILE_ATTRIBUTES = (DWORD)-1;

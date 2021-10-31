@@ -8,8 +8,7 @@
 #include <AnKi/Gr/GrObject.h>
 #include <AnKi/Gr/TextureView.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup graphics
 /// @{

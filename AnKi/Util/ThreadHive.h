@@ -9,8 +9,7 @@
 #include <AnKi/Util/WeakArray.h>
 #include <AnKi/Util/Allocator.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class ThreadHive;

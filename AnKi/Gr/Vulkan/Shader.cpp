@@ -7,8 +7,7 @@
 #include <AnKi/Gr/Vulkan/ShaderImpl.h>
 #include <AnKi/Gr/GrManager.h>
 
-namespace anki
-{
+namespace anki {
 
 Shader* Shader::newInstance(GrManager* manager, const ShaderInitInfo& init)
 {

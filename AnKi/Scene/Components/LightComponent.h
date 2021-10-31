@@ -9,8 +9,7 @@
 #include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Scene/Components/SceneComponent.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup scene
 /// @{

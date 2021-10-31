@@ -12,8 +12,7 @@
 #include <AnKi/Gr/Texture.h>
 #include <AnKi/Gr/CommandBuffer.h>
 
-namespace anki
-{
+namespace anki {
 
 Font::~Font()
 {

@@ -9,8 +9,7 @@
 #include <AnKi/Renderer/ShadowMapping.h>
 #include <AnKi/Core/ConfigSet.h>
 
-namespace anki
-{
+namespace anki {
 
 ShadowmapsResolve::~ShadowmapsResolve()
 {
@@ -57,7 +56,9 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
 
 	ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("SM resolve");
-	rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) { run(ctx, rgraphCtx); });
+	rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+		run(ctx, rgraphCtx);
+	});
 
 	rpass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
 	rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_COMPUTE));

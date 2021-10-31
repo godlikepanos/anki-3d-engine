@@ -7,8 +7,7 @@
 #include <AnKi/Util/String.h>
 #include <string>
 
-namespace anki
-{
+namespace anki {
 
 ANKI_TEST(Util, String)
 {

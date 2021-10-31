@@ -10,8 +10,7 @@
 #include <AnKi/Gr/gl/GrManagerImpl.h>
 #include <AnKi/Gr/gl/RenderingThread.h>
 
-namespace anki
-{
+namespace anki {
 
 FenceImpl::~FenceImpl()
 {

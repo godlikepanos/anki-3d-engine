@@ -6,8 +6,7 @@
 #include <AnKi/Physics/PhysicsPlayerController.h>
 #include <AnKi/Physics/PhysicsWorld.h>
 
-namespace anki
-{
+namespace anki {
 
 PhysicsPlayerController::PhysicsPlayerController(PhysicsWorld* world, const PhysicsPlayerControllerInitInfo& init)
 	: PhysicsFilteredObject(CLASS_TYPE, world)

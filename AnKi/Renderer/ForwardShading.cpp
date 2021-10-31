@@ -13,8 +13,7 @@
 #include <AnKi/Renderer/LensFlare.h>
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
 
-namespace anki
-{
+namespace anki {
 
 ForwardShading::~ForwardShading()
 {

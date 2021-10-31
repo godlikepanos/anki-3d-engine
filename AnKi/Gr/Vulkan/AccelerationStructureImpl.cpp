@@ -6,8 +6,7 @@
 #include <AnKi/Gr/Vulkan/AccelerationStructureImpl.h>
 #include <AnKi/Gr/Vulkan/GrManagerImpl.h>
 
-namespace anki
-{
+namespace anki {
 
 AccelerationStructureImpl::~AccelerationStructureImpl()
 {

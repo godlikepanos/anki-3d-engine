@@ -15,8 +15,7 @@
 #include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Collision/ConvexHullShape.h>
 
-namespace anki
-{
+namespace anki {
 
 Dbg::Dbg(Renderer* r)
 	: RendererObject(r)
@@ -186,7 +185,9 @@ void Dbg::populateRenderGraph(RenderingContext& ctx)
 	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("DBG");
 
 	pass.setWork(computeNumberOfSecondLevelCommandBuffers(ctx.m_renderQueue->m_renderables.getSize()),
-				 [this, &ctx](RenderPassWorkContext& rgraphCtx) { run(rgraphCtx, ctx); });
+				 [this, &ctx](RenderPassWorkContext& rgraphCtx) {
+					 run(rgraphCtx, ctx);
+				 });
 
 	pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_rt}, m_r->getGBuffer().getDepthRt());
 

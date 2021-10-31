@@ -10,8 +10,7 @@
 #include <AnKi/Util/ClassWrapper.h>
 #include <AnKi/Util/WeakArray.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup ui
 /// @{

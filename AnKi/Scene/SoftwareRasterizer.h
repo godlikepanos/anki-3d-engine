@@ -10,8 +10,7 @@
 #include <AnKi/Collision/Plane.h>
 #include <AnKi/Util/WeakArray.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup scene
 /// @{

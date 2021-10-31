@@ -13,8 +13,7 @@
 #include <SDL.h>
 #include <GL/glew.h>
 
-namespace anki
-{
+namespace anki {
 
 /// SDL implementation of WindowingBackend
 class WindowingBackend

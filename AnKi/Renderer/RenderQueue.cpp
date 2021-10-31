@@ -5,8 +5,7 @@
 
 #include <AnKi/Renderer/RenderQueue.h>
 
-namespace anki
-{
+namespace anki {
 
 PtrSize RenderQueue::countAllRenderables() const
 {

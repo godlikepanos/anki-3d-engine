@@ -15,8 +15,7 @@
 #	undef ERROR
 #endif
 
-namespace anki
-{
+namespace anki {
 
 Error GrManagerImpl::initSurface(const GrManagerInitInfo& init)
 {

@@ -9,8 +9,7 @@
 #include <AnKi/Util/List.h>
 #include <AnKi/Util/String.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup core
 /// @{

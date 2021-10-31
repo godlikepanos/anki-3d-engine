@@ -8,8 +8,7 @@
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Gr/gl/Common.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class RenderingThread;

@@ -12,8 +12,7 @@
 #include <AnKi/Resource/ShaderProgramResource.h>
 #include <AnKi/Util/Array.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class RenderQueueDrawContext;

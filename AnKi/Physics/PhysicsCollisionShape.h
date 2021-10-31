@@ -9,8 +9,7 @@
 #include <AnKi/Util/WeakArray.h>
 #include <AnKi/Util/ClassWrapper.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup physics
 /// @{

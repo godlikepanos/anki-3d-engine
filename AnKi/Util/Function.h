@@ -9,8 +9,7 @@
 #include <AnKi/Util/Forward.h>
 #include <AnKi/Util/Array.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup util_containers
 /// @{
@@ -81,8 +80,8 @@ public:
 			memcpy(&m_callableInlineStorage[0], &func, sizeof(func));
 
 			setFunctionCallback([](const Function& self, TArgs... args) -> TReturn {
-				// Yes I know, a const_cast hack follows. If the T was in some pointer then all would be fine. Look at
-				// the setFunctionCallback() of the STATE_ALLOCATED. Only a static_cast there. It's unfair.
+				// Yes I know, a const_cast hack follows. If the T was in some pointer then all would be fine. Look
+				// at the setFunctionCallback() of the STATE_ALLOCATED. Only a static_cast there. It's unfair.
 				const T* t0 = reinterpret_cast<const T*>(&self.m_callableInlineStorage[0]);
 				T* t1 = const_cast<T*>(t0);
 				return (*t1)(args...);
@@ -102,7 +101,9 @@ public:
 				return static_cast<CallableT*>(self.m_callablePtr)->m_func(args...);
 			});
 
-			callable->m_destroyCallback = [](CallableBase& c) { static_cast<CallableT&>(c).~CallableT(); };
+			callable->m_destroyCallback = [](CallableBase& c) {
+				static_cast<CallableT&>(c).~CallableT();
+			};
 
 			callable->m_copyCallback = [](const CallableBase& otherC, CallableBase& c) {
 				::new(&static_cast<CallableT&>(c)) CallableT(static_cast<const CallableT&>(otherC));

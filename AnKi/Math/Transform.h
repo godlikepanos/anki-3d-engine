@@ -7,8 +7,7 @@
 
 #include <AnKi/Math/Common.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup math
 /// @{

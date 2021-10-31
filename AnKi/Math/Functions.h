@@ -9,8 +9,7 @@
 #include <cmath>
 #include <cstdlib>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup math
 /// @{

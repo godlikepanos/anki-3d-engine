@@ -6,8 +6,7 @@
 #include <AnKi/Resource/Common.h>
 #include <AnKi/Resource.h>
 
-namespace anki
-{
+namespace anki {
 
 // Instan
 

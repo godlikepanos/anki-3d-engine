@@ -10,8 +10,7 @@
 #include <AnKi/Ui/UiManager.h>
 #include <AnKi/Util/Tracer.h>
 
-namespace anki
-{
+namespace anki {
 
 UiStage::UiStage(Renderer* r)
 	: RendererObject(r)

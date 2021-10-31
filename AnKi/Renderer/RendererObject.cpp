@@ -8,8 +8,7 @@
 #include <AnKi/Util/Enum.h>
 #include <AnKi/Util/ThreadHive.h>
 
-namespace anki
-{
+namespace anki {
 
 GrManager& RendererObject::getGrManager()
 {

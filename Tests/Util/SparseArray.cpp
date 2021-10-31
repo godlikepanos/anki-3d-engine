@@ -11,10 +11,8 @@
 #include <algorithm>
 #include <malloc.h>
 
-namespace anki
-{
-namespace
-{
+namespace anki {
+namespace {
 
 static I64 constructor0Count = 0;
 static I64 constructor1Count = 0;

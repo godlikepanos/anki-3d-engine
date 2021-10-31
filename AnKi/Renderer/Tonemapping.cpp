@@ -7,8 +7,7 @@
 #include <AnKi/Renderer/DownscaleBlur.h>
 #include <AnKi/Renderer/Renderer.h>
 
-namespace anki
-{
+namespace anki {
 
 Error Tonemapping::init(const ConfigSet& cfg)
 {

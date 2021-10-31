@@ -7,8 +7,7 @@
 #include <AnKi/Gr/Shader.h>
 #include <AnKi/Gr/gl/ShaderImpl.h>
 
-namespace anki
-{
+namespace anki {
 
 static void deletePrograms(GLsizei n, const GLuint* progs)
 {

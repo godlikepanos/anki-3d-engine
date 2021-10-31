@@ -5,8 +5,7 @@
 
 #include <AnKi/Core/NativeWindowAndroid.h>
 
-namespace anki
-{
+namespace anki {
 
 Error NativeWindow::newInstance(const NativeWindowInitInfo& initInfo, NativeWindow*& nativeWindow)
 {

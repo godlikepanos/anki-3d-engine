@@ -6,8 +6,7 @@
 #include <Tests/Framework/Framework.h>
 #include <AnKi/Util/StringList.h>
 
-namespace anki
-{
+namespace anki {
 
 ANKI_TEST(Util, StringList)
 {

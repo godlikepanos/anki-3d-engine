@@ -7,8 +7,7 @@
 
 #include <AnKi/Gr/gl/Common.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup opengl
 /// @{

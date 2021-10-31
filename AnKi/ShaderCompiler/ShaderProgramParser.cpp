@@ -5,8 +5,7 @@
 
 #include <AnKi/ShaderCompiler/ShaderProgramParser.h>
 
-namespace anki
-{
+namespace anki {
 
 #define ANKI_PP_ERROR_MALFORMED() \
 	ANKI_SHADER_COMPILER_LOGE("%s: Malformed expression: %s", fname.cstr(), line.cstr()); \

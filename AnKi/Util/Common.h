@@ -7,8 +7,7 @@
 
 #include <AnKi/Config.h>
 
-namespace anki
-{
+namespace anki {
 
 #define ANKI_UTIL_LOGI(...) ANKI_LOG("UTIL", NORMAL, __VA_ARGS__)
 #define ANKI_UTIL_LOGE(...) ANKI_LOG("UTIL", ERROR, __VA_ARGS__)

@@ -7,8 +7,7 @@
 
 #include <AnKi/Util/Allocator.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup util_memory
 /// @{

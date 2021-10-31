@@ -12,9 +12,7 @@
 
 #	include <AnKi/Math.h>
 
-#	define ANKI_BEGIN_NAMESPACE \
-		namespace anki \
-		{
+#	define ANKI_BEGIN_NAMESPACE namespace anki {
 #	define ANKI_END_NAMESPACE }
 #	define ANKI_SHADER_FUNC_INLINE inline
 

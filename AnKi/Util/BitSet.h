@@ -9,8 +9,7 @@
 #include <initializer_list>
 #include <cstring>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup util_containers
 /// @{

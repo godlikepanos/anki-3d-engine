@@ -17,8 +17,7 @@
 #	include <AnKi/Util/Win32Minimal.h>
 #endif
 
-namespace anki
-{
+namespace anki {
 
 static const Array<const char*, static_cast<U>(LoggerMessageType::COUNT)> MSG_TEXT = {"I", "V", "E", "W", "F"};
 

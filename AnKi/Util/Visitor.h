@@ -16,15 +16,13 @@
 #include <AnKi/Util/Array.h>
 #include <AnKi/Util/StdTypes.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup util_patterns
 /// @{
 
 /// Namespace for visitor internal classes
-namespace visitor_detail
-{
+namespace visitor_detail {
 
 /// A smart struct that given a type and a list of types finds a const integer indicating the type's position from the
 /// back of the list.

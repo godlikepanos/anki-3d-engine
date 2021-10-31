@@ -5,8 +5,7 @@
 
 #pragma once
 
-namespace anki
-{
+namespace anki {
 
 // Components
 class SceneComponent;

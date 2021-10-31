@@ -8,11 +8,9 @@
 #include <cstdlib>
 #include <new>
 
-namespace anki
-{
+namespace anki {
 
-namespace detail
-{
+namespace detail {
 
 /// The thread that executes a ThreadPoolTask
 class ThreadPoolThread

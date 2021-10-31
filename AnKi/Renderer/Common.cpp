@@ -5,8 +5,7 @@
 
 #include <AnKi/Renderer/Common.h>
 
-namespace anki
-{
+namespace anki {
 
 const Array<Format, GBUFFER_COLOR_ATTACHMENT_COUNT> GBUFFER_COLOR_ATTACHMENT_PIXEL_FORMATS = {
 	{Format::R8G8B8A8_UNORM, Format::R8G8B8A8_UNORM, Format::A2B10G10R10_UNORM_PACK32, Format::R16G16_SNORM}};

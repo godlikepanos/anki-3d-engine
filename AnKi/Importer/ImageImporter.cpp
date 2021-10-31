@@ -9,11 +9,9 @@
 #include <AnKi/Util/Process.h>
 #include <AnKi/Util/File.h>
 
-namespace anki
-{
+namespace anki {
 
-namespace
-{
+namespace {
 
 class SurfaceOrVolumeData
 {

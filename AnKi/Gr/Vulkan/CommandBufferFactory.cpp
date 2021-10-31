@@ -6,8 +6,7 @@
 #include <AnKi/Gr/Vulkan/CommandBufferFactory.h>
 #include <AnKi/Util/Tracer.h>
 
-namespace anki
-{
+namespace anki {
 
 static VulkanQueueType getQueueTypeFromCommandBufferFlags(CommandBufferFlag flags,
 														  const VulkanQueueFamilies& queueFamilies)

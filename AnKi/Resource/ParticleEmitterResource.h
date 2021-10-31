@@ -11,8 +11,7 @@
 #include <AnKi/Math.h>
 #include <AnKi/Gr.h>
 
-namespace anki
-{
+namespace anki {
 
 class XmlElement;
 

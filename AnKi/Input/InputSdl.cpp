@@ -9,8 +9,7 @@
 #include <AnKi/Util/Logger.h>
 #include <SDL.h>
 
-namespace anki
-{
+namespace anki {
 
 static MouseButton sdlMouseButtonToAnKi(const U32 sdl)
 {

@@ -15,8 +15,7 @@
 #	error "See file"
 #endif
 
-namespace anki
-{
+namespace anki {
 
 /// Template class that holds SIMD info for the math classes.
 template<typename T, U N>

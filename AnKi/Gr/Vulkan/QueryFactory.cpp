@@ -5,8 +5,7 @@
 
 #include <AnKi/Gr/Vulkan/QueryFactory.h>
 
-namespace anki
-{
+namespace anki {
 
 QueryFactory::~QueryFactory()
 {

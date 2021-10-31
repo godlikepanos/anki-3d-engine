@@ -17,8 +17,7 @@
 #	include <sys/stat.h>
 #endif
 
-namespace anki
-{
+namespace anki {
 
 #if ANKI_OS_ANDROID
 #	define ANKI_AFILE static_cast<AAsset*>(m_file)

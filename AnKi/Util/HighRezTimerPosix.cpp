@@ -10,11 +10,9 @@
 #include <errno.h>
 #include <time.h>
 
-namespace anki
-{
+namespace anki {
 
-namespace
-{
+namespace {
 
 /// A dummy struct that inits the timer
 class StartTime

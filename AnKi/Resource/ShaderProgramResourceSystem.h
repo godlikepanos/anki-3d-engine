@@ -11,8 +11,7 @@
 #include <AnKi/Util/StringList.h>
 #include <AnKi/ShaderCompiler/ShaderProgramBinary.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup resource
 /// @{

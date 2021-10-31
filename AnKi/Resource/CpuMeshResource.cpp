@@ -8,8 +8,7 @@
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Physics/PhysicsWorld.h>
 
-namespace anki
-{
+namespace anki {
 
 CpuMeshResource::CpuMeshResource(ResourceManager* manager)
 	: ResourceObject(manager)

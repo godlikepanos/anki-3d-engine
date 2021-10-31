@@ -7,8 +7,7 @@
 #include <AnKi/Scene/Components/LightComponent.h>
 #include <AnKi/Scene/Components/LensFlareComponent.h>
 
-namespace anki
-{
+namespace anki {
 
 Error LightEvent::init(Second startTime, Second duration, SceneNode* light)
 {

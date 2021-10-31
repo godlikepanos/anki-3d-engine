@@ -12,8 +12,7 @@
 #include <AnKi/Gr/Vulkan/SamplerFactory.h>
 #include <AnKi/Util/HashMap.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class TextureUsageState;

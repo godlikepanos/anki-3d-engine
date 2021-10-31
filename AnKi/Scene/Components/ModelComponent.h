@@ -9,8 +9,7 @@
 #include <AnKi/Resource/Forward.h>
 #include <AnKi/Util/WeakArray.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup scene
 /// @{

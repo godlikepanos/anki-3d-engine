@@ -9,8 +9,7 @@
 #include <AnKi/Gr/Utils/StackGpuAllocator.h>
 #include <AnKi/Util/List.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup resource
 /// @{

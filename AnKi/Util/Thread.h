@@ -20,8 +20,7 @@
 #	include <AnKi/Util/Win32Minimal.h>
 #endif
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class CString;

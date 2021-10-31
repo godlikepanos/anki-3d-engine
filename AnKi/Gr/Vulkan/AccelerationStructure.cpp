@@ -7,8 +7,7 @@
 #include <AnKi/Gr/Vulkan/AccelerationStructureImpl.h>
 #include <AnKi/Gr/GrManager.h>
 
-namespace anki
-{
+namespace anki {
 
 AccelerationStructure* AccelerationStructure::newInstance(GrManager* manager, const AccelerationStructureInitInfo& init)
 {

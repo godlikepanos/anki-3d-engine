@@ -11,8 +11,7 @@
 #include <AnKi/Util/Ptr.h>
 #include <AnKi/Ui/UiImmediateModeBuilder.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class CoreTracer;

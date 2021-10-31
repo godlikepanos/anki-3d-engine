@@ -7,8 +7,7 @@
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Core/NativeWindowAndroid.h>
 
-namespace anki
-{
+namespace anki {
 
 Error GrManagerImpl::initSurface(const GrManagerInitInfo& init)
 {

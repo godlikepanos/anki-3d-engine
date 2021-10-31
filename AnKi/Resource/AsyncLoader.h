@@ -9,8 +9,7 @@
 #include <AnKi/Util/Thread.h>
 #include <AnKi/Util/List.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class AsyncLoader;

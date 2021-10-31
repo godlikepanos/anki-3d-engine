@@ -9,8 +9,7 @@
 #include <AnKi/Util/Enum.h>
 #include <AnKi/Util/Array.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup graphics
 /// @{

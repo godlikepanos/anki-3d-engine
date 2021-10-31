@@ -17,8 +17,7 @@
 #include <AnKi/Collision/Aabb.h>
 #include <ctime>
 
-namespace anki
-{
+namespace anki {
 
 const U WIDTH = 1024;
 const U HEIGHT = 768;

@@ -6,8 +6,7 @@
 #include <AnKi/Util/F16.h>
 #include <AnKi/Util/Assert.h>
 
-namespace anki
-{
+namespace anki {
 
 union Val32
 {

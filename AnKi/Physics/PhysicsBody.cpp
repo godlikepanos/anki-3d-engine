@@ -7,8 +7,7 @@
 #include <AnKi/Physics/PhysicsWorld.h>
 #include <AnKi/Physics/PhysicsCollisionShape.h>
 
-namespace anki
-{
+namespace anki {
 
 PhysicsBody::PhysicsBody(PhysicsWorld* world, const PhysicsBodyInitInfo& init)
 	: PhysicsFilteredObject(CLASS_TYPE, world)

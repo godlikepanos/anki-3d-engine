@@ -11,8 +11,7 @@
 #include <AnKi/Gr/Vulkan/CommandBufferImpl.h>
 #include <AnKi/Gr/Utils/Functions.h>
 
-namespace anki
-{
+namespace anki {
 
 U32 MicroImageView::getOrCreateBindlessIndex(VkImageLayout layout, GrManagerImpl& gr) const
 {

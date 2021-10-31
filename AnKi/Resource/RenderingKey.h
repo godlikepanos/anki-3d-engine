@@ -8,8 +8,7 @@
 #include <AnKi/Resource/Common.h>
 #include <AnKi/Util/Hash.h>
 
-namespace anki
-{
+namespace anki {
 
 /// The AnKi passes visible to materials.
 enum class Pass : U8

@@ -11,8 +11,7 @@
 #include <AnKi/Scene/Components/FrustumComponent.h>
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 
-namespace anki
-{
+namespace anki {
 
 /// Feedback component.
 class LightNode::OnMovedFeedbackComponent : public SceneComponent
@@ -147,7 +146,9 @@ void PointLightNode::onMoved(const MoveComponent& move)
 
 void PointLightNode::onLightShapeUpdated(LightComponent& light)
 {
-	iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& fr) { fr.setFar(light.getRadius()); });
+	iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& fr) {
+		fr.setFar(light.getRadius());
+	});
 
 	SpatialComponent& spatialc = getFirstComponentOfType<SpatialComponent>();
 	spatialc.setSphereWorldSpace(Sphere(light.getWorldTransform().getOrigin(), light.getRadius()));
@@ -250,8 +251,9 @@ SpotLightNode::SpotLightNode(SceneGraph* scene, CString name)
 void SpotLightNode::onMoved(const MoveComponent& move)
 {
 	// Update the frustums
-	iterateComponentsOfType<FrustumComponent>(
-		[&](FrustumComponent& fr) { fr.setWorldTransform(move.getWorldTransform()); });
+	iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& fr) {
+		fr.setWorldTransform(move.getWorldTransform());
+	});
 
 	onMoveUpdateCommon(move);
 }

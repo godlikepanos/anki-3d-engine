@@ -26,8 +26,7 @@
 #	include <AnKi/Util/CleanupWindows.h>
 #endif
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class GrManagerImpl;

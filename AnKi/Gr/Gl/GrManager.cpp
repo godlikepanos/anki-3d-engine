@@ -21,8 +21,7 @@
 
 #include <cstring>
 
-namespace anki
-{
+namespace anki {
 
 GrManager::GrManager()
 {

@@ -9,8 +9,7 @@
 #include <AnKi/Gr/Vulkan/VulkanObject.h>
 #include <AnKi/Gr/Vulkan/PipelineLayout.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class PipelineFactory;

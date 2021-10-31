@@ -9,8 +9,7 @@
 #include <AnKi/Gr/Buffer.h>
 #include <AnKi/Gr/Utils/FrameGpuAllocator.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class ConfigSet;

@@ -9,8 +9,7 @@
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/SparseArray.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup util_containers
 /// @{

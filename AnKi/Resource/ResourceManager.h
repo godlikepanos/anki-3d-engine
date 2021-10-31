@@ -10,8 +10,7 @@
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/String.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class ConfigSet;

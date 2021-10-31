@@ -7,8 +7,7 @@
 #include <cstring>
 #include <cstdio>
 
-namespace anki
-{
+namespace anki {
 
 #define ANKI_ENABLE_HIVE_DEBUG_PRINT 0
 

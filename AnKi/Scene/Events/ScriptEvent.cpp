@@ -11,8 +11,7 @@
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Resource/ResourceManager.h>
 
-namespace anki
-{
+namespace anki {
 
 ScriptEvent::ScriptEvent(EventManager* manager)
 	: Event(manager)

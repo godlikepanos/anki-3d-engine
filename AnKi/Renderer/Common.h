@@ -11,8 +11,7 @@
 #include <AnKi/Shaders/Include/Evsm.h>
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 
-namespace anki
-{
+namespace anki {
 
 #define ANKI_R_LOGI(...) ANKI_LOG("R   ", NORMAL, __VA_ARGS__)
 #define ANKI_R_LOGE(...) ANKI_LOG("R   ", ERROR, __VA_ARGS__)

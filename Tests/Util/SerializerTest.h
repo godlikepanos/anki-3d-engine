@@ -9,8 +9,7 @@
 
 #include <AnKi/Util/Array.h>
 
-namespace anki
-{
+namespace anki {
 
 /// ClassB class.
 class ClassB

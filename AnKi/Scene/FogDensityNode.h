@@ -8,8 +8,7 @@
 #include <AnKi/Scene/SceneNode.h>
 #include <AnKi/Collision/Aabb.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup scene
 /// @{

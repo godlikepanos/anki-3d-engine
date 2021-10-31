@@ -7,8 +7,7 @@
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Util/Xml.h>
 
-namespace anki
-{
+namespace anki {
 
 ImageAtlasResource::ImageAtlasResource(ResourceManager* manager)
 	: ResourceObject(manager)

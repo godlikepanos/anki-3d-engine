@@ -8,8 +8,7 @@
 #include <AnKi/Gr/Vulkan/FenceFactory.h>
 #include <AnKi/Gr/Vulkan/MicroObjectRecycler.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class SemaphoreFactory;

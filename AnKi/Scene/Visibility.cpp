@@ -21,8 +21,7 @@
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/ThreadHive.h>
 
-namespace anki
-{
+namespace anki {
 
 static U8 computeLod(const FrustumComponent& frc, F32 distanceFromTheNearPlane)
 {

@@ -9,8 +9,7 @@
 #include <poll.h>
 #include <unistd.h>
 
-namespace anki
-{
+namespace anki {
 
 Error INotify::initInternal()
 {

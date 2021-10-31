@@ -9,8 +9,7 @@
 #include <AnKi/Util/List.h>
 #include <algorithm>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup util_containers
 /// @{

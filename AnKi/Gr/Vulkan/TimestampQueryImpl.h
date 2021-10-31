@@ -9,8 +9,7 @@
 #include <AnKi/Gr/Vulkan/VulkanObject.h>
 #include <AnKi/Gr/Vulkan/QueryFactory.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup vulkan
 /// @{

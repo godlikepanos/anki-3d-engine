@@ -6,8 +6,7 @@
 #include <AnKi/Scene/Events/Event.h>
 #include <AnKi/Resource/AnimationResource.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup scene
 /// @{

@@ -8,8 +8,7 @@
 #include <vector>
 #include <ctime>
 
-namespace anki
-{
+namespace anki {
 
 static I64 constructor0Count = 0;
 static I64 constructor1Count = 0;

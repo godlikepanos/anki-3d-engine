@@ -6,8 +6,7 @@
 #include <AnKi/Math/Functions.h>
 #include <AnKi/Config.h>
 
-namespace anki
-{
+namespace anki {
 
 template<typename Scalar>
 static Scalar polynomialSinQuadrant(const Scalar a)

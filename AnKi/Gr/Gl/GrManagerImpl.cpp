@@ -10,8 +10,7 @@
 #include <AnKi/Core/Config.h>
 #include <AnKi/Core/NativeWindow.h>
 
-namespace anki
-{
+namespace anki {
 
 GrManagerImpl::GrManagerImpl()
 {

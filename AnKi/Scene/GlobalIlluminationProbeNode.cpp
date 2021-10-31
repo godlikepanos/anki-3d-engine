@@ -10,8 +10,7 @@
 #include <AnKi/Scene/Components/SpatialComponent.h>
 #include <AnKi/Scene/Components/GlobalIlluminationProbeComponent.h>
 
-namespace anki
-{
+namespace anki {
 
 constexpr FrustumComponentVisibilityTestFlag FRUSTUM_TEST_FLAGS =
 	FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS | FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS
@@ -187,8 +186,9 @@ Error GlobalIlluminationProbeNode::frameUpdate(Second prevUpdateTime, Second crn
 	const FrustumComponentVisibilityTestFlag testFlags =
 		(gic.getMarkedForRendering()) ? FRUSTUM_TEST_FLAGS : FrustumComponentVisibilityTestFlag::NONE;
 
-	iterateComponentsOfType<FrustumComponent>(
-		[testFlags](FrustumComponent& frc) { frc.setEnabledVisibilityTests(testFlags); });
+	iterateComponentsOfType<FrustumComponent>([testFlags](FrustumComponent& frc) {
+		frc.setEnabledVisibilityTests(testFlags);
+	});
 
 	return Error::NONE;
 }

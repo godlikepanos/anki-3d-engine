@@ -10,8 +10,7 @@
 #include <cstdarg> // For var args
 #include <cstdlib> // For stdtod and strtol
 
-namespace anki
-{
+namespace anki {
 
 Error CString::toNumber(F64& out) const
 {

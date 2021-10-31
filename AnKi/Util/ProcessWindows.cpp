@@ -5,8 +5,7 @@
 
 #include <AnKi/Util/Process.h>
 
-namespace anki
-{
+namespace anki {
 
 Process::~Process()
 {

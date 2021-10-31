@@ -7,8 +7,7 @@
 
 #include <AnKi/Collision/Common.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup collision
 /// @{

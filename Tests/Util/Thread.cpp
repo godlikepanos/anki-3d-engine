@@ -10,8 +10,7 @@
 #include <AnKi/Util/ThreadPool.h>
 #include <cstring>
 
-namespace anki
-{
+namespace anki {
 
 ANKI_TEST(Util, Thread)
 {

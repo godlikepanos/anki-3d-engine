@@ -5,8 +5,7 @@
 
 #include <AnKi/Gr/Vulkan/FenceFactory.h>
 
-namespace anki
-{
+namespace anki {
 
 void FenceFactory::destroy()
 {

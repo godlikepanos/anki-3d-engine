@@ -6,8 +6,7 @@
 #include <AnKi/Gr/Vulkan/SemaphoreFactory.h>
 #include <AnKi/Util/Tracer.h>
 
-namespace anki
-{
+namespace anki {
 
 inline MicroSemaphore::MicroSemaphore(SemaphoreFactory* f, MicroFencePtr fence, Bool isTimeline)
 	: m_factory(f)

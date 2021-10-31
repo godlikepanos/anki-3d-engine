@@ -8,8 +8,7 @@
 #include <AnKi/Util/HighRezTimer.h>
 #include <AnKi/Util/System.h>
 
-namespace anki
-{
+namespace anki {
 
 class ThreadHiveTestContext
 {

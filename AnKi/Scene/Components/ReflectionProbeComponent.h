@@ -9,8 +9,7 @@
 #include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Collision/Aabb.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup scene
 /// @{

@@ -9,8 +9,7 @@
 #include <AnKi/Util/Atomic.h>
 #include <AnKi/Util/Functions.h>
 
-namespace anki
-{
+namespace anki {
 
 class Task : public AsyncLoaderTask
 {

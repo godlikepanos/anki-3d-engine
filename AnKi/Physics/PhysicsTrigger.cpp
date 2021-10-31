@@ -8,8 +8,7 @@
 #include <AnKi/Physics/PhysicsWorld.h>
 #include <AnKi/Util/Rtti.h>
 
-namespace anki
-{
+namespace anki {
 
 PhysicsTrigger::PhysicsTrigger(PhysicsWorld* world, PhysicsCollisionShapePtr shape)
 	: PhysicsFilteredObject(CLASS_TYPE, world)

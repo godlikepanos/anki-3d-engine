@@ -13,8 +13,7 @@
 #	define ANKI_ENABLE_ASSERTIONS 0
 #else
 
-namespace anki
-{
+namespace anki {
 
 void akassert(const char* exprTxt, const char* file, int line, const char* func);
 

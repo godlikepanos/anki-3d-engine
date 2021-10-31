@@ -14,8 +14,7 @@
 #include <AnKi/Collision/Plane.h>
 #include <AnKi/Collision/Functions.h>
 
-namespace anki
-{
+namespace anki {
 
 ClusterBinning::ClusterBinning(Renderer* r)
 	: RendererObject(r)

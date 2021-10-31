@@ -9,8 +9,7 @@
 #include <AnKi/Util/Xml.h>
 #include <AnKi/Util/Logger.h>
 
-namespace anki
-{
+namespace anki {
 
 static Bool attributeIsRequired(VertexAttributeId loc, Pass pass, Bool hasSkin)
 {

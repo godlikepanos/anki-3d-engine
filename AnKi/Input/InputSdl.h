@@ -10,8 +10,7 @@
 #include <SDL_keycode.h>
 #include <unordered_map>
 
-namespace anki
-{
+namespace anki {
 
 /// SDL input implementation
 class InputSdl : public Input

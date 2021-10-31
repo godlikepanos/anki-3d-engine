@@ -12,8 +12,7 @@
 #include <algorithm>
 #include <cstring>
 
-namespace anki
-{
+namespace anki {
 
 #if ANKI_GL == ANKI_GL_DESKTOP
 struct GlDbg

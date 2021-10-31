@@ -9,8 +9,7 @@
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Resource/ImageResource.h>
 
-namespace anki
-{
+namespace anki {
 
 ANKI_SCENE_COMPONENT_STATICS(ReflectionProbeComponent)
 

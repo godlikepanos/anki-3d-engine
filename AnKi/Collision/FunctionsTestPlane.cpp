@@ -5,8 +5,7 @@
 #include <AnKi/Collision/Cone.h>
 #include <AnKi/Collision/Sphere.h>
 
-namespace anki
-{
+namespace anki {
 
 F32 testPlane(const Plane& plane, const Aabb& aabb)
 {

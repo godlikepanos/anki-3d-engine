@@ -19,7 +19,11 @@ public:
 		spatialc->setAlwaysVisible(true);
 
 		UiComponent* uic = newComponent<UiComponent>();
-		uic->init([](CanvasPtr& canvas, void* ud) { static_cast<TextureViewerUiNode*>(ud)->draw(canvas); }, this);
+		uic->init(
+			[](CanvasPtr& canvas, void* ud) {
+				static_cast<TextureViewerUiNode*>(ud)->draw(canvas);
+			},
+			this);
 
 		ANKI_CHECK_AND_IGNORE(getSceneGraph().getUiManager().newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf",
 																		 Array<U32, 1>{16}));

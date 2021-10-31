@@ -9,8 +9,7 @@
 #include <AnKi/Gr/Vulkan/GrManagerImpl.h>
 #include <AnKi/Gr/Vulkan/Pipeline.h>
 
-namespace anki
-{
+namespace anki {
 
 ShaderProgramImpl::~ShaderProgramImpl()
 {

@@ -12,8 +12,7 @@
 #include <AnKi/Renderer/LightShading.h>
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 
-namespace anki
-{
+namespace anki {
 
 const FrustumComponentVisibilityTestFlag FRUSTUM_TEST_FLAGS =
 	FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS | FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS
@@ -162,7 +161,9 @@ void ReflectionProbeNode::onShapeUpdate(ReflectionProbeComponent& reflc)
 	effectiveDistance = max(effectiveDistance, getSceneGraph().getConfig().m_reflectionProbeEffectiveDistance);
 
 	// Update frustum components
-	iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) { frc.setFar(effectiveDistance); });
+	iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) {
+		frc.setFar(effectiveDistance);
+	});
 
 	// Update the spatial comp
 	SpatialComponent& sp = getFirstComponentOfType<SpatialComponent>();
@@ -177,8 +178,9 @@ Error ReflectionProbeNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 	const FrustumComponentVisibilityTestFlag testFlags =
 		reflc.getMarkedForRendering() ? FRUSTUM_TEST_FLAGS : FrustumComponentVisibilityTestFlag::NONE;
 
-	iterateComponentsOfType<FrustumComponent>(
-		[testFlags](FrustumComponent& frc) { frc.setEnabledVisibilityTests(testFlags); });
+	iterateComponentsOfType<FrustumComponent>([testFlags](FrustumComponent& frc) {
+		frc.setEnabledVisibilityTests(testFlags);
+	});
 
 	return Error::NONE;
 }

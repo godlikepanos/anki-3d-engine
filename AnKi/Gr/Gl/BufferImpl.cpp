@@ -7,8 +7,7 @@
 #include <AnKi/Util/Logger.h>
 #include <cmath>
 
-namespace anki
-{
+namespace anki {
 
 void BufferImpl::init()
 {

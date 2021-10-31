@@ -6,8 +6,7 @@
 #include <AnKi/Scene/Components/MoveComponent.h>
 #include <AnKi/Scene/SceneNode.h>
 
-namespace anki
-{
+namespace anki {
 
 ANKI_SCENE_COMPONENT_STATICS(MoveComponent)
 
@@ -76,7 +75,9 @@ Bool MoveComponent::updateWorldTransform(SceneNode& node)
 	if(dirty)
 	{
 		const Error err = node.visitChildrenMaxDepth(1, [](SceneNode& childNode) -> Error {
-			childNode.iterateComponentsOfType<MoveComponent>([](MoveComponent& mov) { mov.markForUpdate(); });
+			childNode.iterateComponentsOfType<MoveComponent>([](MoveComponent& mov) {
+				mov.markForUpdate();
+			});
 			return Error::NONE;
 		});
 		(void)err;

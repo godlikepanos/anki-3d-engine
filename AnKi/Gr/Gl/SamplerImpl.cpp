@@ -6,8 +6,7 @@
 #include <AnKi/Gr/gl/SamplerImpl.h>
 #include <AnKi/Gr/Texture.h>
 
-namespace anki
-{
+namespace anki {
 
 void SamplerImpl::init(const SamplerInitInfo& sinit)
 {

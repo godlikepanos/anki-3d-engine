@@ -6,8 +6,7 @@
 
 #include <AnKi/Collision/GjkEpa.h>
 
-namespace anki
-{
+namespace anki {
 
 /// GJK support
 class GjkSupport

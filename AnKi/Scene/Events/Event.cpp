@@ -8,8 +8,7 @@
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Util/HighRezTimer.h>
 
-namespace anki
-{
+namespace anki {
 
 Event::Event(EventManager* manager)
 	: m_manager(manager)

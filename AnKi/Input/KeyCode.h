@@ -7,8 +7,7 @@
 
 #include <AnKi/Util/Enum.h>
 
-namespace anki
-{
+namespace anki {
 
 /// Keyboard scancodes taken from SDL
 enum class KeyCode

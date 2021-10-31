@@ -10,8 +10,7 @@
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Shaders/Include/ParticleTypes.h>
 
-namespace anki
-{
+namespace anki {
 
 ANKI_SCENE_COMPONENT_STATICS(GpuParticleEmitterComponent)
 

@@ -9,8 +9,7 @@
 #include <AnKi/Gr/CommandBuffer.h>
 #include <AnKi/Util/List.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class CommandBufferFactory;

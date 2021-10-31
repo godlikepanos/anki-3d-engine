@@ -9,8 +9,7 @@
 #include <AnKi/Util/Thread.h>
 #include <AnKi/Util/Logger.h>
 
-namespace anki
-{
+namespace anki {
 
 DWORD ANKI_WINAPI Thread::threadCallback(LPVOID ud)
 {

@@ -11,8 +11,7 @@
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Shaders/Include/ShadowMappingTypes.h>
 
-namespace anki
-{
+namespace anki {
 
 class ShadowMapping::Scratch::WorkItem
 {
@@ -240,8 +239,9 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 			pass.setFramebufferInfo(m_scratch.m_fbDescr, {}, m_scratch.m_rt, minx, miny, width, height);
 			ANKI_ASSERT(threadCountForScratchPass
 						&& threadCountForScratchPass <= m_r->getThreadHive().getThreadCount());
-			pass.setWork(threadCountForScratchPass,
-						 [this](RenderPassWorkContext& rgraphCtx) { runShadowMapping(rgraphCtx); });
+			pass.setWork(threadCountForScratchPass, [this](RenderPassWorkContext& rgraphCtx) {
+				runShadowMapping(rgraphCtx);
+			});
 
 			TextureSubresourceInfo subresource = TextureSubresourceInfo(DepthStencilAspectBit::DEPTH);
 			pass.newDependency({m_scratch.m_rt, TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT, subresource});
@@ -252,7 +252,9 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 			ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("SM atlas");
 
 			m_atlas.m_rt = rgraph.importRenderTarget(m_atlas.m_tex, TextureUsageBit::SAMPLED_FRAGMENT);
-			pass.setWork([this](RenderPassWorkContext& rgraphCtx) { runAtlas(rgraphCtx); });
+			pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+				runAtlas(rgraphCtx);
+			});
 
 			pass.newDependency({m_scratch.m_rt, TextureUsageBit::SAMPLED_COMPUTE,
 								TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});

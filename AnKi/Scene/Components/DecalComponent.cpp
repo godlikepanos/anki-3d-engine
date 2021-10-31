@@ -8,8 +8,7 @@
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 
-namespace anki
-{
+namespace anki {
 
 ANKI_SCENE_COMPONENT_STATICS(DecalComponent)
 

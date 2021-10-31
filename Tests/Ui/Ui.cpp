@@ -10,8 +10,7 @@
 #include <AnKi/Input.h>
 #include <AnKi/Core/StagingGpuMemoryManager.h>
 
-namespace anki
-{
+namespace anki {
 
 class Label : public UiImmediateModeBuilder
 {

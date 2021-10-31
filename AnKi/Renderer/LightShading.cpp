@@ -19,8 +19,7 @@
 #include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Util/HighRezTimer.h>
 
-namespace anki
-{
+namespace anki {
 
 LightShading::LightShading(Renderer* r)
 	: RendererObject(r)
@@ -238,7 +237,9 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Light&FW Shad.");
 
 	pass.setWork(computeNumberOfSecondLevelCommandBuffers(ctx.m_renderQueue->m_forwardShadingRenderables.getSize()),
-				 [this, &ctx](RenderPassWorkContext& rgraphCtx) { run(ctx, rgraphCtx); });
+				 [this, &ctx](RenderPassWorkContext& rgraphCtx) {
+					 run(ctx, rgraphCtx);
+				 });
 	pass.setFramebufferInfo(m_lightShading.m_fbDescr, {{m_runCtx.m_rt}}, {m_r->getGBuffer().getDepthRt()});
 
 	const TextureUsageBit readUsage = TextureUsageBit::SAMPLED_FRAGMENT;

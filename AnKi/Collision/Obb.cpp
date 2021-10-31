@@ -5,8 +5,7 @@
 
 #include <AnKi/Collision/Obb.h>
 
-namespace anki
-{
+namespace anki {
 
 Obb Obb::getCompoundShape(const Obb& b) const
 {

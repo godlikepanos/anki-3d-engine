@@ -9,8 +9,7 @@
 #include <AnKi/Gr/CommandBuffer.h>
 #include <AnKi/Resource/ShaderProgramResource.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup ui
 /// @{

@@ -13,8 +13,7 @@
 
 #include <algorithm>
 
-namespace anki
-{
+namespace anki {
 
 CommandBufferImpl::~CommandBufferImpl()
 {

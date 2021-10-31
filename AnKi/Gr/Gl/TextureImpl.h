@@ -10,8 +10,7 @@
 #include <AnKi/Gr/Utils/Functions.h>
 #include <AnKi/Util/HashMap.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup opengl
 /// @{

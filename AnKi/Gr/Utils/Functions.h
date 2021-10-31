@@ -8,8 +8,7 @@
 #include <AnKi/Gr/Common.h>
 #include <AnKi/Math.h>
 
-namespace anki
-{
+namespace anki {
 
 inline Bool stencilTestDisabled(StencilOperation stencilFail, StencilOperation stencilPassDepthFail,
 								StencilOperation stencilPassDepthPass, CompareOperation compare)

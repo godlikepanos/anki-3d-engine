@@ -10,8 +10,7 @@
 #include <AnKi/Util/Atomic.h>
 #include <AnKi/Util/String.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class XmlDocument;

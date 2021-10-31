@@ -7,8 +7,7 @@
 
 #include <AnKi/Script/LuaBinder.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class SceneGraph;

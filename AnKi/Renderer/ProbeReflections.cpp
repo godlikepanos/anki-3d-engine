@@ -13,8 +13,7 @@
 #include <AnKi/Resource/MeshResource.h>
 #include <AnKi/Shaders/Include/TraditionalDeferredShadingTypes.h>
 
-namespace anki
-{
+namespace anki {
 
 ProbeReflections::ProbeReflections(Renderer* r)
 	: RendererObject(r)
@@ -552,7 +551,9 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		// Pass
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("CubeRefl gbuff");
 		pass.setFramebufferInfo(m_gbuffer.m_fbDescr, rts, m_ctx.m_gbufferDepthRt);
-		pass.setWork(taskCount, [this](RenderPassWorkContext& rgraphCtx) { runGBuffer(rgraphCtx); });
+		pass.setWork(taskCount, [this](RenderPassWorkContext& rgraphCtx) {
+			runGBuffer(rgraphCtx);
+		});
 
 		for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 		{
@@ -599,7 +600,9 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		// Pass
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("CubeRefl SM");
 		pass.setFramebufferInfo(m_shadowMapping.m_fbDescr, {}, m_ctx.m_shadowMapRt);
-		pass.setWork(taskCount, [this](RenderPassWorkContext& rgraphCtx) { runShadowMapping(rgraphCtx); });
+		pass.setWork(taskCount, [this](RenderPassWorkContext& rgraphCtx) {
+			runShadowMapping(rgraphCtx);
+		});
 
 		TextureSubresourceInfo subresource(DepthStencilAspectBit::DEPTH);
 		pass.newDependency({m_ctx.m_shadowMapRt, TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT, subresource});
@@ -623,7 +626,9 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
 			pass.setFramebufferInfo(m_cacheEntries[probeToUpdateCacheEntryIdx].m_lightShadingFbDescrs[faceIdx],
 									{{m_ctx.m_lightShadingRt}}, {});
-			pass.setWork([this, faceIdx](RenderPassWorkContext& rgraphCtx) { runLightShading(faceIdx, rgraphCtx); });
+			pass.setWork([this, faceIdx](RenderPassWorkContext& rgraphCtx) {
+				runLightShading(faceIdx, rgraphCtx);
+			});
 
 			TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
 			pass.newDependency({m_ctx.m_lightShadingRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, subresource});
@@ -649,7 +654,9 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("CubeRefl Irradiance");
 
-		pass.setWork([this](RenderPassWorkContext& rgraphCtx) { runIrradiance(rgraphCtx); });
+		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+			runIrradiance(rgraphCtx);
+		});
 
 		// Read a cube but only one layer and level
 		TextureSubresourceInfo readSubresource;
@@ -664,7 +671,9 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 	{
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("CubeRefl apply indirect");
 
-		pass.setWork([this](RenderPassWorkContext& rgraphCtx) { runIrradianceToRefl(rgraphCtx); });
+		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+			runIrradianceToRefl(rgraphCtx);
+		});
 
 		for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT - 1; ++i)
 		{
@@ -687,8 +696,9 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
-			pass.setWork(
-				[this, faceIdx](RenderPassWorkContext& rgraphCtx) { runMipmappingOfLightShading(faceIdx, rgraphCtx); });
+			pass.setWork([this, faceIdx](RenderPassWorkContext& rgraphCtx) {
+				runMipmappingOfLightShading(faceIdx, rgraphCtx);
+			});
 
 			TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
 			subresource.m_mipmapCount = m_lightShading.m_mipCount;

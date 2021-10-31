@@ -12,8 +12,7 @@
 #include <AnKi/Util/WeakArray.h>
 #include <AnKi/Math.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup scene
 /// @{

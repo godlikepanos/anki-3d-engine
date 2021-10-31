@@ -10,8 +10,7 @@
 #include <AnKi/Gr/Enums.h>
 #include <AnKi/Gr/Utils/Functions.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup shader_compiler
 /// @{

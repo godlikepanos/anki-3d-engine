@@ -18,8 +18,7 @@
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Core/ConfigSet.h>
 
-namespace anki
-{
+namespace anki {
 
 FinalComposite::FinalComposite(Renderer* r)
 	: RendererObject(r)
@@ -98,7 +97,9 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 	// Create the pass
 	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Final Composite");
 
-	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) { run(ctx, rgraphCtx); });
+	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+		run(ctx, rgraphCtx);
+	});
 	pass.setFramebufferInfo(m_fbDescr, {ctx.m_outRenderTarget}, {});
 
 	pass.newDependency({ctx.m_outRenderTarget, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});

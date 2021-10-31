@@ -11,8 +11,7 @@
 #include <AnKi/Util/Allocator.h>
 #include <utility>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup util_containers
 /// @{

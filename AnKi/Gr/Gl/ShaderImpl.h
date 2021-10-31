@@ -8,8 +8,7 @@
 #include <AnKi/Gr/Shader.h>
 #include <AnKi/Gr/gl/GlObject.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class CString;

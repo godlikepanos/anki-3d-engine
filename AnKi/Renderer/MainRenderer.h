@@ -9,8 +9,7 @@
 #include <AnKi/Resource/Forward.h>
 #include <AnKi/Renderer/Renderer.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class ResourceManager;

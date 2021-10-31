@@ -5,8 +5,7 @@
 
 #include <AnKi/Gr/Utils/FrameGpuAllocator.h>
 
-namespace anki
-{
+namespace anki {
 
 void FrameGpuAllocator::init(PtrSize size, U32 alignment, PtrSize maxAllocationSize)
 {

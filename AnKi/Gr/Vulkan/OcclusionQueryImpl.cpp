@@ -6,8 +6,7 @@
 #include <AnKi/Gr/Vulkan/OcclusionQueryImpl.h>
 #include <AnKi/Gr/Vulkan/GrManagerImpl.h>
 
-namespace anki
-{
+namespace anki {
 
 OcclusionQueryImpl::~OcclusionQueryImpl()
 {

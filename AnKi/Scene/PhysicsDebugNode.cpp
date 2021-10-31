@@ -9,8 +9,7 @@
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Resource/ResourceManager.h>
 
-namespace anki
-{
+namespace anki {
 
 PhysicsDebugNode::PhysicsDebugNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
@@ -18,9 +17,11 @@ PhysicsDebugNode::PhysicsDebugNode(SceneGraph* scene, CString name)
 {
 	RenderComponent* rcomp = newComponent<RenderComponent>();
 	rcomp->setFlags(RenderComponentFlag::NONE);
-	rcomp->initRaster([](RenderQueueDrawContext& ctx,
-						 ConstWeakArray<void*> userData) { static_cast<PhysicsDebugNode*>(userData[0])->draw(ctx); },
-					  this, 0);
+	rcomp->initRaster(
+		[](RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) {
+			static_cast<PhysicsDebugNode*>(userData[0])->draw(ctx);
+		},
+		this, 0);
 
 	SpatialComponent* scomp = newComponent<SpatialComponent>();
 	scomp->setUpdateOctreeBounds(false); // Don't mess with the bounds

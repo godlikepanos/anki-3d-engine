@@ -5,8 +5,7 @@
 
 #include <AnKi/Resource/GenericResource.h>
 
-namespace anki
-{
+namespace anki {
 
 GenericResource::GenericResource(ResourceManager* manager)
 	: ResourceObject(manager)

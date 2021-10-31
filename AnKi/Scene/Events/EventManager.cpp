@@ -7,8 +7,7 @@
 #include <AnKi/Scene/Events/Event.h>
 #include <AnKi/Scene/SceneGraph.h>
 
-namespace anki
-{
+namespace anki {
 
 EventManager::EventManager()
 {

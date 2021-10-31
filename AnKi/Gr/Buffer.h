@@ -8,8 +8,7 @@
 #include <AnKi/Gr/GrObject.h>
 #include <AnKi/Util/WeakArray.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup graphics
 /// @{

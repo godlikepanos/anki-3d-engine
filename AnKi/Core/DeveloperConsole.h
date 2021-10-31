@@ -10,8 +10,7 @@
 #include <AnKi/Util/List.h>
 #include <AnKi/Script/ScriptEnvironment.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup core
 /// @{

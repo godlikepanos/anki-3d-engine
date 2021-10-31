@@ -8,8 +8,7 @@
 #include <AnKi/Script/LuaBinder.h>
 #include <AnKi/Math.h>
 
-namespace anki
-{
+namespace anki {
 
 /// Serialize Vec2
 static void serializeVec2(LuaUserData& self, void* data, PtrSize& size)

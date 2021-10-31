@@ -21,8 +21,7 @@
 #	error "See file"
 #endif
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class GlState;

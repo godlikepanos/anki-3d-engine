@@ -10,8 +10,7 @@
 #include <AnKi/Collision/Cone.h>
 #include <AnKi/Collision/Sphere.h>
 
-namespace anki
-{
+namespace anki {
 
 Aabb computeAabb(const Sphere& sphere)
 {

@@ -13,8 +13,7 @@
 #include <AnKi/Util/System.h>
 #include <AnKi/Util/BitSet.h>
 
-namespace anki
-{
+namespace anki {
 
 U64 ShaderProgramRaytracingLibrary::generateShaderGroupGroupHash(CString resourceFilename, U64 mutationHash,
 																 GenericMemoryPoolAllocator<U8> alloc)

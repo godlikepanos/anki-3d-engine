@@ -8,8 +8,7 @@
 #include <random>
 #include <algorithm>
 
-namespace anki
-{
+namespace anki {
 
 class Mem : public ClassGpuAllocatorMemory
 {
@@ -114,7 +113,9 @@ ANKI_TEST(Gr, ClassGpuAllocator)
 	std::mt19937 gen(0);
 
 	const U SHIFT = 15;
-	std::discrete_distribution<U> dis(16 * SHIFT, 0.0, F32(SHIFT), [](F32 c) { return exp2(-0.5 * c); });
+	std::discrete_distribution<U> dis(16 * SHIFT, 0.0, F32(SHIFT), [](F32 c) {
+		return exp2(-0.5 * c);
+	});
 
 	auto nextAllocSize = [&]() -> U {
 		U size = U(256.0 * exp2(F64(dis(gen)) / 16.0));

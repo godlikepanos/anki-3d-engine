@@ -18,8 +18,7 @@
 #include <AnKi/Core/Trace.h>
 #include <cstring>
 
-namespace anki
-{
+namespace anki {
 
 void CommandBufferImpl::init(const CommandBufferInitInfo& init)
 {

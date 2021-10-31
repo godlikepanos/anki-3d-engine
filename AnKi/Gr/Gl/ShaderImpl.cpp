@@ -17,8 +17,7 @@
 #	include <anki/util/File.h>
 #endif
 
-namespace anki
-{
+namespace anki {
 
 /// Fake glDeleteShaders because some jenius created a conflicting interface
 static void deleteShaders(GLsizei n, const GLuint* names)

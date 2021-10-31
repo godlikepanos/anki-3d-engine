@@ -14,8 +14,7 @@
 #include <AnKi/Scene/Events/EventManager.h>
 #include <AnKi/Resource/Common.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class ResourceManager;

@@ -6,8 +6,7 @@
 #include <Tests/Framework/Framework.h>
 #include <AnKi/Scene/Octree.h>
 
-namespace anki
-{
+namespace anki {
 
 ANKI_TEST(Scene, Octree)
 {

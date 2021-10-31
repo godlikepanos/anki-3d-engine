@@ -9,8 +9,7 @@
 #include <AnKi/Physics/PhysicsBody.h>
 #include <AnKi/Resource/Forward.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup scene
 /// @{

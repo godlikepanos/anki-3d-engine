@@ -9,8 +9,7 @@
 #include <AnKi/Resource/ModelResource.h>
 #include <AnKi/Resource/ResourceManager.h>
 
-namespace anki
-{
+namespace anki {
 
 ANKI_SCENE_COMPONENT_STATICS(ModelComponent)
 

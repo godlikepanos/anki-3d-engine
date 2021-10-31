@@ -7,8 +7,7 @@
 
 #include <AnKi/Gr/Common.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class StackGpuAllocatorChunk;

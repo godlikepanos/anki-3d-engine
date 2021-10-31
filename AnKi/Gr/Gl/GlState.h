@@ -11,8 +11,7 @@
 #include <AnKi/Gr/Texture.h>
 #include <AnKi/Gr/Framebuffer.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class ConfigSet;

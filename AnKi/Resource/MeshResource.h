@@ -11,8 +11,7 @@
 #include <AnKi/Collision/Aabb.h>
 #include <AnKi/Shaders/Include/ModelTypes.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class MeshBinaryLoader;

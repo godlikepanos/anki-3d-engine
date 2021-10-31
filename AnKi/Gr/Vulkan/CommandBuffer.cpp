@@ -9,8 +9,7 @@
 #include <AnKi/Gr/AccelerationStructure.h>
 #include <AnKi/Gr/Vulkan/FenceImpl.h>
 
-namespace anki
-{
+namespace anki {
 
 CommandBuffer* CommandBuffer::newInstance(GrManager* manager, const CommandBufferInitInfo& init)
 {

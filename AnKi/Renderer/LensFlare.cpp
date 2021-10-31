@@ -11,8 +11,7 @@
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Shaders/Include/LensFlareTypes.h>
 
-namespace anki
-{
+namespace anki {
 
 LensFlare::~LensFlare()
 {
@@ -124,7 +123,9 @@ void LensFlare::populateRenderGraph(RenderingContext& ctx)
 	{
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("LF Upd Ind/ct");
 
-		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) { updateIndirectInfo(ctx, rgraphCtx); });
+		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+			updateIndirectInfo(ctx, rgraphCtx);
+		});
 
 		rpass.newDependency({m_runCtx.m_indirectBuffHandle, BufferUsageBit::STORAGE_COMPUTE_WRITE});
 		rpass.newDependency({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_COMPUTE, HIZ_QUARTER_DEPTH});

@@ -9,8 +9,7 @@
 #include <AnKi/Math.h>
 #include <AnKi/Util/Enum.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup collision
 /// @{

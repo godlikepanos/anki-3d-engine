@@ -5,11 +5,9 @@
 
 #include <AnKi/Util/Serializer.h>
 
-namespace anki
-{
+namespace anki {
 
-namespace detail
-{
+namespace detail {
 
 class alignas(ANKI_SAFE_ALIGNMENT) BinarySerializerHeader
 {

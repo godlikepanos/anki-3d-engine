@@ -15,8 +15,7 @@
 #	include <AnKi/Gr/GrManager.h>
 #endif
 
-namespace anki
-{
+namespace anki {
 
 class ShaderImpl::SpecConstsVector
 {

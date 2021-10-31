@@ -8,8 +8,7 @@
 #include <AnKi/Gr/Vulkan/DescriptorSet.h>
 #include <AnKi/Util/HashMap.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup vulkan
 /// @{

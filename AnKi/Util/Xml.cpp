@@ -7,8 +7,7 @@
 #include <AnKi/Util/File.h>
 #include <AnKi/Util/Logger.h>
 
-namespace anki
-{
+namespace anki {
 
 Error XmlElement::check() const
 {

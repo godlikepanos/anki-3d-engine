@@ -5,8 +5,7 @@
 
 #include <AnKi/Scene/Components/SceneComponent.h>
 
-namespace anki
-{
+namespace anki {
 
 constexpr U32 MAX_SCENE_COMPONENT_CLASSES = 64;
 static_assert(MAX_SCENE_COMPONENT_CLASSES < 128, "It can oly be 7 bits because of SceneComponent::m_classId");

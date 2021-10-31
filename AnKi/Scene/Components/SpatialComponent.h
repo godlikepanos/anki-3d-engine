@@ -12,8 +12,7 @@
 #include <AnKi/Util/Enum.h>
 #include <AnKi/Util/List.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup scene
 /// @{

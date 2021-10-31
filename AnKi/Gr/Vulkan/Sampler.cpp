@@ -7,8 +7,7 @@
 #include <AnKi/Gr/Vulkan/SamplerImpl.h>
 #include <AnKi/Gr/GrManager.h>
 
-namespace anki
-{
+namespace anki {
 
 Sampler* Sampler::newInstance(GrManager* manager, const SamplerInitInfo& init)
 {

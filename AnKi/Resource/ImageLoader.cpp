@@ -8,8 +8,7 @@
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/Filesystem.h>
 
-namespace anki
-{
+namespace anki {
 
 static const U8 tgaHeaderUncompressed[12] = {0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 static const U8 tgaHeaderCompressed[12] = {0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0};

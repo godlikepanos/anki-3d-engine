@@ -17,8 +17,7 @@
 #include <AnKi/Util/HighRezTimer.h>
 #include <AnKi/Util/ThreadHive.h>
 
-namespace anki
-{
+namespace anki {
 
 MainRenderer::MainRenderer()
 {

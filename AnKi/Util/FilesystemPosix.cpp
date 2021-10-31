@@ -32,8 +32,7 @@
 #	define PATH_MAX 4096
 #endif
 
-namespace anki
-{
+namespace anki {
 
 Bool fileExists(const CString& filename)
 {

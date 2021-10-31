@@ -9,8 +9,7 @@
 #include <AnKi/Math.h>
 #include <AnKi/Util/String.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class XmlElement;

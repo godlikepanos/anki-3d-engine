@@ -8,8 +8,7 @@
 #include <AnKi/Util/Thread.h>
 #include <unistd.h>
 
-namespace anki
-{
+namespace anki {
 
 StdinListener::~StdinListener()
 {

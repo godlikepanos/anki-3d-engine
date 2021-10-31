@@ -12,8 +12,7 @@
 #include <AnKi/Gr/gl/RenderingThread.h>
 #include <AnKi/Util/Logger.h>
 
-namespace anki
-{
+namespace anki {
 
 Error FramebufferImpl::init(const FramebufferInitInfo& init)
 {

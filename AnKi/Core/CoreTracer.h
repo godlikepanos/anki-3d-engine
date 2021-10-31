@@ -11,8 +11,7 @@
 #include <AnKi/Util/List.h>
 #include <AnKi/Util/File.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup core
 /// @{

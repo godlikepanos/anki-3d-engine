@@ -10,8 +10,7 @@
 #include <AnKi/Util/Enum.h>
 #include <AnKi/Math.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup scene
 /// @{

@@ -8,8 +8,7 @@
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Util/Tracer.h>
 
-namespace anki
-{
+namespace anki {
 
 StagingGpuMemoryManager::~StagingGpuMemoryManager()
 {

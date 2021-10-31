@@ -6,8 +6,7 @@
 #include <AnKi/Collision/ConvexHullShape.h>
 #include <AnKi/Util/Functions.h>
 
-namespace anki
-{
+namespace anki {
 
 ConvexHullShape ConvexHullShape::getTransformed(const Transform& trf) const
 {

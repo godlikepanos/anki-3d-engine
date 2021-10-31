@@ -14,8 +14,7 @@
 #include <AnKi/Util/WeakArray.h>
 #include <AnKi/Util/BitSet.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class DSThreadAllocator;

@@ -11,8 +11,7 @@
 #include <AnKi/Physics/PhysicsWorld.h>
 #include <AnKi/Input/Input.h>
 
-namespace anki
-{
+namespace anki {
 
 /// Feedback component.
 class PlayerNode::FeedbackComponent final : public SceneComponent

@@ -8,8 +8,7 @@
 #include <AnKi/Gr/Sampler.h>
 #include <AnKi/Gr/gl/GlObject.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup opengl
 /// @{

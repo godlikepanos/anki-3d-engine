@@ -8,8 +8,7 @@
 #include <AnKi/Gr/Vulkan/Common.h>
 #include <AnKi/Util/DynamicArray.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup vulkan
 /// @{

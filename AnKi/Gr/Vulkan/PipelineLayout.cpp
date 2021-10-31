@@ -5,8 +5,7 @@
 
 #include <AnKi/Gr/Vulkan/PipelineLayout.h>
 
-namespace anki
-{
+namespace anki {
 
 void PipelineLayoutFactory::destroy()
 {

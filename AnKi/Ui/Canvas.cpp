@@ -12,8 +12,7 @@
 #include <AnKi/Gr/Sampler.h>
 #include <AnKi/Gr/GrManager.h>
 
-namespace anki
-{
+namespace anki {
 
 class Canvas::DrawingState
 {

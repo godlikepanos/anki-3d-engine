@@ -6,8 +6,7 @@
 #include <AnKi/Physics/PhysicsDrawer.h>
 #include <AnKi/Physics/PhysicsWorld.h>
 
-namespace anki
-{
+namespace anki {
 
 void PhysicsDrawer::drawWorld(const PhysicsWorld& world)
 {

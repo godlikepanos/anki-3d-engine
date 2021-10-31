@@ -7,8 +7,7 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/TemporalAA.h>
 
-namespace anki
-{
+namespace anki {
 
 DownscaleBlur::~DownscaleBlur()
 {
@@ -101,7 +100,9 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 		for(U32 i = 0; i < m_passCount; ++i)
 		{
 			ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(passNames[i]);
-			pass.setWork([this, i](RenderPassWorkContext& rgraphCtx) { run(i, rgraphCtx); });
+			pass.setWork([this, i](RenderPassWorkContext& rgraphCtx) {
+				run(i, rgraphCtx);
+			});
 
 			if(i > 0)
 			{
@@ -128,7 +129,9 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 		for(U32 i = 0; i < m_passCount; ++i)
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[i]);
-			pass.setWork([this, i](RenderPassWorkContext& rgraphCtx) { run(i, rgraphCtx); });
+			pass.setWork([this, i](RenderPassWorkContext& rgraphCtx) {
+				run(i, rgraphCtx);
+			});
 			pass.setFramebufferInfo(m_fbDescrs[i], {m_runCtx.m_rt}, {});
 
 			if(i > 0)

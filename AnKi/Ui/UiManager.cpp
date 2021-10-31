@@ -5,8 +5,7 @@
 
 #include <AnKi/Ui/UiManager.h>
 
-namespace anki
-{
+namespace anki {
 
 thread_local ImGuiContext* g_imguiTlsCtx = nullptr;
 

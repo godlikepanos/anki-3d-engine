@@ -230,8 +230,9 @@ Vec3 getCubemapDirection(const Vec2 norm, const U32 faceIdx)
 {
 	Vec3 zDir = Vec3((faceIdx <= 1u) ? 1 : 0, (faceIdx & 2u) >> 1u, (faceIdx & 4u) >> 2u);
 	zDir *= (((faceIdx & 1u) == 1u) ? -1.0 : 1.0);
-	const Vec3 yDir =
-		(faceIdx == 2u) ? Vec3(0.0, 0.0, 1.0) : (faceIdx == 3u) ? Vec3(0.0, 0.0, -1.0) : Vec3(0.0, -1.0, 0.0);
+	const Vec3 yDir = (faceIdx == 2u)   ? Vec3(0.0, 0.0, 1.0)
+					  : (faceIdx == 3u) ? Vec3(0.0, 0.0, -1.0)
+										: Vec3(0.0, -1.0, 0.0);
 	const Vec3 xDir = cross(zDir, yDir);
 	return normalize(norm.x * xDir + norm.y * yDir + zDir);
 }

@@ -14,8 +14,7 @@
 #include <AnKi/Util/List.h>
 #include <AnKi/Util/Tracer.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class OctreePlaceable;

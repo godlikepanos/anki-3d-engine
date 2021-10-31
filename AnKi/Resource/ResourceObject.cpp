@@ -7,8 +7,7 @@
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Util/Xml.h>
 
-namespace anki
-{
+namespace anki {
 
 ResourceObject::ResourceObject(ResourceManager* manager)
 	: m_manager(manager)

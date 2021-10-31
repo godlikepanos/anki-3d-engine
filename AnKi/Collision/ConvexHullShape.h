@@ -8,8 +8,7 @@
 #include <AnKi/Collision/Common.h>
 #include <AnKi/Util/WeakArray.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup collision
 /// @{

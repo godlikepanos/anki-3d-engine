@@ -9,8 +9,7 @@
 #include <AnKi/Util/Enum.h>
 #include <cstdio>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup util_file
 /// @{

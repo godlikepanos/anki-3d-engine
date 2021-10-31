@@ -5,8 +5,7 @@
 
 #include <AnKi/Core/DeveloperConsole.h>
 
-namespace anki
-{
+namespace anki {
 
 DeveloperConsole::~DeveloperConsole()
 {

@@ -7,8 +7,7 @@
 #include <AnKi/Gr/Vulkan/FenceImpl.h>
 #include <AnKi/Gr/GrManager.h>
 
-namespace anki
-{
+namespace anki {
 
 Fence* Fence::newInstance(GrManager* manager)
 {

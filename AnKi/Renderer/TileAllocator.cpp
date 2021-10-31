@@ -5,8 +5,7 @@
 
 #include <AnKi/Renderer/TileAllocator.h>
 
-namespace anki
-{
+namespace anki {
 
 class TileAllocator::Tile
 {

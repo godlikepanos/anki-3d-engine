@@ -21,8 +21,7 @@
 #include <AnKi/Gr/gl/FramebufferImpl.h>
 #include <AnKi/Gr/Utils/Functions.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup opengl
 /// @{

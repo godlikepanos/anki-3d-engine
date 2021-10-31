@@ -23,8 +23,7 @@
 #include <AnKi/Resource/ShaderProgramResource.h>
 #include <AnKi/Resource/SkeletonResource.h>
 
-namespace anki
-{
+namespace anki {
 
 ResourceManager::ResourceManager()
 {

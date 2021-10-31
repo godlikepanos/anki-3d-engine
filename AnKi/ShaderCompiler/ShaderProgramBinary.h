@@ -11,8 +11,7 @@
 #include <AnKi/ShaderCompiler/ShaderProgramBinaryExtra.h>
 #include <AnKi/Gr/Enums.h>
 
-namespace anki
-{
+namespace anki {
 
 /// Storage or uniform variable.
 class ShaderProgramBinaryVariable

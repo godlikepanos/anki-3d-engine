@@ -5,8 +5,7 @@
 
 #include <AnKi/Collision/Plane.h>
 
-namespace anki
-{
+namespace anki {
 
 void Plane::setFrom3Points(const Vec4& p0, const Vec4& p1, const Vec4& p2)
 {

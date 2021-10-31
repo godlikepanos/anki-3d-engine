@@ -9,8 +9,7 @@
 #include <AnKi/Gr.h>
 #include <AnKi/Resource/ImageResource.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup renderer
 /// @{

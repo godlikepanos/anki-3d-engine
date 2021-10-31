@@ -7,8 +7,7 @@
 
 #include <AnKi/Renderer/Common.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup renderer
 /// @{

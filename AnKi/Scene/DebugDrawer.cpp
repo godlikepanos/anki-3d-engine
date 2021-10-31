@@ -11,8 +11,7 @@
 #include <AnKi/Gr/Buffer.h>
 #include <AnKi/Collision.h>
 
-namespace anki
-{
+namespace anki {
 
 void allocateAndPopulateDebugBox(StagingGpuMemoryManager& stagingGpuAllocator, StagingGpuMemoryToken& vertsToken,
 								 StagingGpuMemoryToken& indicesToken, U32& indexCount)

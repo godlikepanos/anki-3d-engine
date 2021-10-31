@@ -5,8 +5,7 @@
 
 #include <AnKi/Scene/Components/UiComponent.h>
 
-namespace anki
-{
+namespace anki {
 
 ANKI_SCENE_COMPONENT_STATICS(UiComponent)
 

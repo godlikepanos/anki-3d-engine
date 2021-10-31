@@ -9,8 +9,7 @@
 #include <AnKi/Util/Tracer.h>
 #include <ZLib/contrib/minizip/unzip.h>
 
-namespace anki
-{
+namespace anki {
 
 /// C resource file
 class CResourceFile final : public ResourceFile

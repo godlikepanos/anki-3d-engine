@@ -5,8 +5,7 @@
 
 #pragma once
 
-namespace anki
-{
+namespace anki {
 
 class LineSegment;
 class Obb;

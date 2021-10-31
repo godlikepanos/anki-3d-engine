@@ -10,8 +10,7 @@
 #include <AnKi/Util/Enum.h>
 #include <AnKi/Renderer/RenderQueue.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup renderer
 /// @{

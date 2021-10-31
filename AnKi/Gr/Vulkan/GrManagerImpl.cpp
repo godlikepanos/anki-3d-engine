@@ -14,8 +14,7 @@
 #include <AnKi/Core/ConfigSet.h>
 #include <glslang/Public/ShaderLang.h>
 
-namespace anki
-{
+namespace anki {
 
 GrManagerImpl::~GrManagerImpl()
 {

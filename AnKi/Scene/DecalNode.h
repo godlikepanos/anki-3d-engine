@@ -7,8 +7,7 @@
 
 #include <AnKi/Scene/SceneNode.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup scene
 /// @{

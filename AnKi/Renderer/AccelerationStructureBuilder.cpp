@@ -8,8 +8,7 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Util/Tracer.h>
 
-namespace anki
-{
+namespace anki {
 
 void AccelerationStructureBuilder::populateRenderGraph(RenderingContext& ctx)
 {

@@ -10,8 +10,7 @@
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Util/HighRezTimer.h>
 
-namespace anki
-{
+namespace anki {
 
 Bool Fence::clientWait(Second seconds)
 {

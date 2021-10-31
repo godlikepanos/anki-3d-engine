@@ -22,8 +22,7 @@
 #include <AnKi/Util/HashMap.h>
 #include <AnKi/Util/File.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @note Disable that because it crashes Intel drivers
 #define ANKI_GR_MANAGER_DEBUG_MEMMORY ANKI_EXTRA_CHECKS && 0

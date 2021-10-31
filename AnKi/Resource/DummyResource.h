@@ -7,8 +7,7 @@
 
 #include <AnKi/Resource/ResourceObject.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup resource_private
 /// @{

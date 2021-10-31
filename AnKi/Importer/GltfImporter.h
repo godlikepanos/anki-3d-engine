@@ -14,8 +14,7 @@
 #include <AnKi/Math.h>
 #include <Cgltf/cgltf.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup importer
 /// @{
@@ -103,7 +102,9 @@ private:
 	template<typename T>
 	static void readAccessor(const cgltf_accessor& accessor, DynamicArrayAuto<T>& out)
 	{
-		visitAccessor<T>(accessor, [&](const T& val) { out.emplaceBack(val); });
+		visitAccessor<T>(accessor, [&](const T& val) {
+			out.emplaceBack(val);
+		});
 	}
 
 	StringAuto fixFilename(CString in) const

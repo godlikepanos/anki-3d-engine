@@ -8,11 +8,9 @@
 #include <AnKi/Util/Win32Minimal.h>
 #include <cstdio>
 
-namespace anki
-{
+namespace anki {
 
-namespace
-{
+namespace {
 
 /// A dummy struct that inits the timer
 class DummyInitTimer

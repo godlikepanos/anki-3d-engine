@@ -13,8 +13,7 @@
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Renderer/RenderQueue.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup scene
 /// @{

@@ -19,8 +19,7 @@
 #	pragma GCC diagnostic pop
 #endif
 
-namespace anki
-{
+namespace anki {
 
 DepthDownscale::~DepthDownscale()
 {

@@ -5,8 +5,7 @@
 
 #include <AnKi/Gr/Utils/Functions.h>
 
-namespace anki
-{
+namespace anki {
 
 template<typename T>
 static void writeShaderBlockMemorySanityChecks(const ShaderVariableBlockInfo& varBlkInfo, const void* elements,
@@ -81,8 +80,7 @@ static void writeShaderBlockMemoryMatrix(const ShaderVariableBlockInfo& varBlkIn
 }
 
 // This is some trickery to select calling between writeShaderBlockMemoryMatrix and writeShaderBlockMemorySimple
-namespace
-{
+namespace {
 
 template<typename T>
 class IsShaderVarDataTypeAMatrix

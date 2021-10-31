@@ -9,8 +9,7 @@
 #include <AnKi/Resource/AsyncLoader.h>
 #include <AnKi/Util/Filesystem.h>
 
-namespace anki
-{
+namespace anki {
 
 class ImageResource::LoadingContext
 {

@@ -5,8 +5,7 @@
 
 #include <AnKi/Util/StringList.h>
 
-namespace anki
-{
+namespace anki {
 
 void StringList::destroy(Allocator alloc)
 {
@@ -118,12 +117,16 @@ void StringList::sortAll(const Sort method)
 {
 	if(method == Sort::ASCENDING)
 	{
-		Base::sort([](const String& a, const String& b) { return a < b; });
+		Base::sort([](const String& a, const String& b) {
+			return a < b;
+		});
 	}
 	else
 	{
 		ANKI_ASSERT(method == Sort::DESCENDING);
-		Base::sort([](const String& a, const String& b) { return a < b; });
+		Base::sort([](const String& a, const String& b) {
+			return a < b;
+		});
 	}
 }
 

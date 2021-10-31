@@ -7,8 +7,7 @@
 #include <AnKi/Gr/Utils/Functions.h>
 #include <SprivCross/spirv_glsl.hpp>
 
-namespace anki
-{
+namespace anki {
 
 static ShaderVariableDataType spirvcrossBaseTypeToAnki(spirv_cross::SPIRType::BaseType cross)
 {

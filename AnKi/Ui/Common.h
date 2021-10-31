@@ -13,8 +13,7 @@
 #include <AnKi/Util/Ptr.h>
 #include <AnKi/Gr/TextureView.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class UiManager;

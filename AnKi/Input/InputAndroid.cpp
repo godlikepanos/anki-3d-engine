@@ -7,8 +7,7 @@
 #include <AnKi/Core/NativeWindowAndroid.h>
 #include <AnKi/Util/Logger.h>
 
-namespace anki
-{
+namespace anki {
 
 Error Input::newInstance(AllocAlignedCallback allocCallback, void* allocCallbackUserData, NativeWindow* nativeWindow,
 						 Input*& input)

@@ -8,8 +8,7 @@
 #include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Util/Xml.h>
 
-namespace anki
-{
+namespace anki {
 
 static const Array<CString, U32(BuiltinMutatorId::COUNT)> BUILTIN_MUTATOR_NAMES = {
 	{"NONE", "ANKI_INSTANCED", "ANKI_PASS", "ANKI_LOD", "ANKI_BONES", "ANKI_VELOCITY"}};
@@ -80,8 +79,7 @@ static ANKI_USE_RESULT Error checkBuiltin(CString name, ShaderVariableDataType d
 }
 
 // This is some trickery to select calling between XmlElement::getAttributeNumber and XmlElement::getAttributeNumbers
-namespace
-{
+namespace {
 
 template<typename T>
 class IsShaderVarDataTypeAnArray

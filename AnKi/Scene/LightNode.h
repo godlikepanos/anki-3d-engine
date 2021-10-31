@@ -8,8 +8,7 @@
 #include <AnKi/Scene/SceneNode.h>
 #include <AnKi/Scene/Components/LightComponent.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup scene
 /// @{

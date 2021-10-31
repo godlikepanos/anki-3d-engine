@@ -8,8 +8,7 @@
 #define VOLK_IMPLEMENTATION
 #include <Volk/volk.h>
 
-namespace anki
-{
+namespace anki {
 
 VkCompareOp convertCompareOp(CompareOperation ak)
 {

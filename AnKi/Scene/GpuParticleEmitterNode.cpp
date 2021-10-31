@@ -10,8 +10,7 @@
 #include <AnKi/Scene/Components/RenderComponent.h>
 #include <AnKi/Scene/Components/GpuParticleEmitterComponent.h>
 
-namespace anki
-{
+namespace anki {
 
 /// Feedback component
 class GpuParticleEmitterNode::MoveFeedbackComponent : public SceneComponent

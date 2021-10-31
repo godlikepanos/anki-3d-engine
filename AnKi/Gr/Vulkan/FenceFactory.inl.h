@@ -6,8 +6,7 @@
 #include <AnKi/Gr/Vulkan/FenceFactory.h>
 #include <AnKi/Util/Tracer.h>
 
-namespace anki
-{
+namespace anki {
 
 inline MicroFence::MicroFence(FenceFactory* f)
 	: m_factory(f)

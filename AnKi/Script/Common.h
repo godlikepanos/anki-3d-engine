@@ -8,8 +8,7 @@
 #include <AnKi/Util/Allocator.h>
 #include <AnKi/Util/Ptr.h>
 
-namespace anki
-{
+namespace anki {
 
 // Forward
 class LuaBinder;

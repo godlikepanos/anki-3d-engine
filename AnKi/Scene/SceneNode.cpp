@@ -6,8 +6,7 @@
 #include <AnKi/Scene/SceneNode.h>
 #include <AnKi/Scene/SceneGraph.h>
 
-namespace anki
-{
+namespace anki {
 
 SceneNode::SceneNode(SceneGraph* scene, CString name)
 	: m_scene(scene)

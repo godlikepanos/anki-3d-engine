@@ -6,8 +6,7 @@
 #include <AnKi/Gr/Vulkan/GpuMemoryManager.h>
 #include <AnKi/Util/List.h>
 
-namespace anki
-{
+namespace anki {
 
 class ClassInf
 {

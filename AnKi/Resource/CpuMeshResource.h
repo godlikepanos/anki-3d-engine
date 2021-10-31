@@ -10,8 +10,7 @@
 #include <AnKi/Util/WeakArray.h>
 #include <AnKi/Physics/PhysicsCollisionShape.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup resource
 /// @{

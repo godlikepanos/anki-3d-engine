@@ -12,8 +12,7 @@
 #	error "Wrong tinyxml2 included"
 #endif
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup util_file
 /// @{

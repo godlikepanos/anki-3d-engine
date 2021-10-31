@@ -5,8 +5,7 @@
 
 #include <AnKi/Util/Serializer.h>
 
-namespace anki
-{
+namespace anki {
 
 Error BinarySerializer::doDynamicArrayBasicType(const void* arr, PtrSize size, U32 alignment, PtrSize memberOffset)
 {

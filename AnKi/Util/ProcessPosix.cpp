@@ -10,8 +10,7 @@
 #include <errno.h>
 #include <unistd.h>
 
-namespace anki
-{
+namespace anki {
 
 Process::~Process()
 {

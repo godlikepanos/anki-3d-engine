@@ -10,8 +10,7 @@
 #include <AnKi/Util/String.h>
 #include <ctime>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup util_system
 /// @{

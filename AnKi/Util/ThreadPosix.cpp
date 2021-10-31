@@ -7,8 +7,7 @@
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/String.h>
 
-namespace anki
-{
+namespace anki {
 
 void Thread::start(void* userData, ThreadCallback callback, const ThreadCoreAffinityMask& coreAffintyMask)
 {

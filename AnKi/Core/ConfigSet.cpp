@@ -13,8 +13,7 @@
 #include <AnKi/Math.h>
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 
-namespace anki
-{
+namespace anki {
 
 class ConfigSet::Option
 {

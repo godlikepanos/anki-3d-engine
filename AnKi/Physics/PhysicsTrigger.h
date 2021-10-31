@@ -10,8 +10,7 @@
 #include <AnKi/Util/ClassWrapper.h>
 #include <AnKi/Util/HashMap.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup physics
 /// @{

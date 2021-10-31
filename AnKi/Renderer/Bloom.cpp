@@ -10,8 +10,7 @@
 #include <AnKi/Renderer/Tonemapping.h>
 #include <AnKi/Core/ConfigSet.h>
 
-namespace anki
-{
+namespace anki {
 
 Bloom::Bloom(Renderer* r)
 	: RendererObject(r)

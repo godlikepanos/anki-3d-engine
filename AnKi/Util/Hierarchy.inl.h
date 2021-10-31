@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-namespace anki
-{
+namespace anki {
 
 template<typename T>
 template<typename TAllocator>

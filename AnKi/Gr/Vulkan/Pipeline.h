@@ -12,8 +12,7 @@
 #include <AnKi/Gr/Vulkan/FramebufferImpl.h>
 #include <AnKi/Util/HashMap.h>
 
-namespace anki
-{
+namespace anki {
 
 /// @addtogroup vulkan
 /// @{

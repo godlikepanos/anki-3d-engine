@@ -7,8 +7,7 @@
 #include <AnKi/Script/ScriptEnvironment.h>
 #include <AnKi/Util/Logger.h>
 
-namespace anki
-{
+namespace anki {
 
 ScriptManager::ScriptManager()
 {
