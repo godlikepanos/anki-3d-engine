@@ -35,7 +35,8 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(MeshBinaryFlag)
 class MeshBinaryVertexBuffer
 {
 public:
-	U32 m_vertexStride; ///< The size of the vertex.
+	/// The size of the vertex.
+	U32 m_vertexStride;
 
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& s, TClass self)
@@ -61,7 +62,10 @@ class MeshBinaryVertexAttribute
 {
 public:
 	U32 m_bufferBinding;
-	Format m_format; ///< If the format is NONE then the attribute is not present.
+
+	/// If the format is NONE then the attribute is not present.
+	Format m_format;
+
 	U32 m_relativeOffset;
 	F32 m_scale;
 
@@ -93,8 +97,12 @@ class MeshBinarySubMesh
 public:
 	U32 m_firstIndex;
 	U32 m_indexCount;
-	Vec3 m_aabbMin; ///< Bounding box min.
-	Vec3 m_aabbMax; ///< Bounding box max.
+
+	/// Bounding box min.
+	Vec3 m_aabbMin;
+
+	/// Bounding box max.
+	Vec3 m_aabbMax;
 
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& s, TClass self)
@@ -133,8 +141,12 @@ public:
 	U32 m_totalIndexCount;
 	U32 m_totalVertexCount;
 	U32 m_subMeshCount;
-	Vec3 m_aabbMin; ///< Bounding box min.
-	Vec3 m_aabbMax; ///< Bounding box max.
+
+	/// Bounding box min.
+	Vec3 m_aabbMin;
+
+	/// Bounding box max.
+	Vec3 m_aabbMax;
 
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& s, TClass self)

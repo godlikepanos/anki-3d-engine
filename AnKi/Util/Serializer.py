@@ -130,9 +130,8 @@ def gen_class(root_el):
     ident(1)
     for member in member_arr:
         if member.comment:
-            comment = "///< %s." % member.comment
-        else:
-            comment = ""
+            writeln("")
+            writeln("/// %s." % member.comment)
 
         if member.constructor:
             constructor = " %s" % member.constructor
@@ -140,11 +139,14 @@ def gen_class(root_el):
             constructor = ""
 
         if member.pointer:
-            writeln("%s* %s%s; %s" % (member.base_type, member.name, constructor, comment))
+            writeln("%s* %s%s;" % (member.base_type, member.name, constructor))
         elif member.array_size != "1":
-            writeln("Array<%s, %s> %s%s; %s" % (member.base_type, member.array_size, member.name, constructor, comment))
+            writeln("Array<%s, %s> %s%s;" % (member.base_type, member.array_size, member.name, constructor))
         else:
-            writeln("%s %s%s; %s" % (member.base_type, member.name, constructor, comment))
+            writeln("%s %s%s;" % (member.base_type, member.name, constructor))
+
+        if member.comment:
+            writeln("")
     ident(-1)
 
     # Before serialize make sure the dynamic arrays are last

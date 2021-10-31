@@ -1004,7 +1004,7 @@ void MaterialResource::initVariant(const ShaderProgramResourceVariant& progVaria
 				continue;
 			}
 
-			for(const ShaderProgramBinaryVariableInstance& instance : perDrawBinaryBlockInstance->m_variables)
+			for(const ShaderProgramBinaryVariableInstance& instance : perDrawBinaryBlockInstance->m_variableInstances)
 			{
 				if(instance.m_index == var.m_indexInBinary)
 				{
@@ -1020,7 +1020,8 @@ void MaterialResource::initVariant(const ShaderProgramResourceVariant& progVaria
 				continue;
 			}
 
-			for(const ShaderProgramBinaryVariableInstance& instance : perInstanceBinaryBlockInstance->m_variables)
+			for(const ShaderProgramBinaryVariableInstance& instance :
+				perInstanceBinaryBlockInstance->m_variableInstances)
 			{
 				if(instance.m_index == var.m_indexInBinary)
 				{

@@ -19,9 +19,9 @@ static void disassembleBlockInstance(const ShaderProgramBinaryBlockInstance& ins
 	lines.pushBackSprintf(ANKI_TAB ANKI_TAB ANKI_TAB "%-32s set %4u binding %4u size %4u\n", block.m_name.getBegin(),
 						  block.m_set, block.m_binding, instance.m_size);
 
-	for(U32 i = 0; i < instance.m_variables.getSize(); ++i)
+	for(U32 i = 0; i < instance.m_variableInstances.getSize(); ++i)
 	{
-		const ShaderProgramBinaryVariableInstance& varInstance = instance.m_variables[i];
+		const ShaderProgramBinaryVariableInstance& varInstance = instance.m_variableInstances[i];
 		const ShaderProgramBinaryVariable& var = block.m_variables[varInstance.m_index];
 
 		lines.pushBackSprintf(ANKI_TAB ANKI_TAB ANKI_TAB ANKI_TAB "%-48s type %8s blockInfo %d,%d,%d,%d\n",
@@ -147,15 +147,14 @@ void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& huma
 	{
 		for(const ShaderProgramBinaryStruct& s : binary.m_structs)
 		{
-			lines.pushBackSprintf(ANKI_TAB "%-32s size %4u\n", s.m_name.getBegin(), s.m_size);
+			lines.pushBackSprintf(ANKI_TAB "%-32s\n", s.m_name.getBegin());
 
 			for(const ShaderProgramBinaryStructMember& member : s.m_members)
 			{
-				CString typeStr = (member.m_type == ShaderVariableDataType::NONE)
-									  ? &binary.m_structs[member.m_structIndex].m_name[0]
-									  : shaderVariableDataTypeToString(member.m_type);
-				lines.pushBackSprintf(ANKI_TAB ANKI_TAB "%-32s type %24s offset %4u arraySize %4u\n",
-									  member.m_name.getBegin(), typeStr.cstr(), member.m_offset, member.m_arraySize);
+				const CString typeStr = (member.m_type == ShaderVariableDataType::NONE)
+											? &binary.m_structs[member.m_structIndex].m_name[0]
+											: shaderVariableDataTypeToString(member.m_type);
+				lines.pushBackSprintf(ANKI_TAB ANKI_TAB "%-32s type %24s\n", member.m_name.getBegin(), typeStr.cstr());
 			}
 		}
 	}
@@ -242,6 +241,26 @@ void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& huma
 				const ShaderProgramBinaryConstant& c = binary.m_constants[instance.m_index];
 				lines.pushBackSprintf(ANKI_TAB ANKI_TAB ANKI_TAB "%-32s type %8s id %4u\n", c.m_name.getBegin(),
 									  shaderVariableDataTypeToString(c.m_type).cstr(), c.m_constantId);
+			}
+		}
+
+		// Structs
+		if(variant.m_structs.getSize() > 0)
+		{
+			lines.pushBackSprintf(ANKI_TAB ANKI_TAB "Structs\n");
+			for(const ShaderProgramBinaryStructInstance& instance : variant.m_structs)
+			{
+				const ShaderProgramBinaryStruct& s = binary.m_structs[instance.m_index];
+				lines.pushBackSprintf(ANKI_TAB ANKI_TAB ANKI_TAB "%-32s size %4u\n", s.m_name.getBegin(),
+									  instance.m_size);
+
+				for(const ShaderProgramBinaryStructMemberInstance& memberInstance : instance.m_memberInstances)
+				{
+					const ShaderProgramBinaryStructMember& member = s.m_members[memberInstance.m_index];
+					lines.pushBackSprintf(ANKI_TAB ANKI_TAB ANKI_TAB ANKI_TAB "%-32s offset %4u arraySize %4u\n",
+										  member.m_name.getBegin(), memberInstance.m_offset,
+										  memberInstance.m_arraySize);
+				}
 			}
 		}
 

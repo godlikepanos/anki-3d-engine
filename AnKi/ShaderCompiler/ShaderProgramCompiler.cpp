@@ -111,17 +111,22 @@ void ShaderProgramBinaryWrapper::cleanup()
 		{
 			for(ShaderProgramBinaryBlockInstance& block : variant.m_uniformBlocks)
 			{
-				mempool.free(block.m_variables.getBegin());
+				mempool.free(block.m_variableInstances.getBegin());
 			}
 
 			for(ShaderProgramBinaryBlockInstance& block : variant.m_storageBlocks)
 			{
-				mempool.free(block.m_variables.getBegin());
+				mempool.free(block.m_variableInstances.getBegin());
 			}
 
 			if(variant.m_pushConstantBlock)
 			{
-				mempool.free(variant.m_pushConstantBlock->m_variables.getBegin());
+				mempool.free(variant.m_pushConstantBlock->m_variableInstances.getBegin());
+			}
+
+			for(ShaderProgramBinaryStructInstance& struct_ : variant.m_structs)
+			{
+				mempool.free(struct_.m_memberInstances.getBegin());
 			}
 
 			mempool.free(variant.m_uniformBlocks.getBegin());
@@ -129,6 +134,7 @@ void ShaderProgramBinaryWrapper::cleanup()
 			mempool.free(variant.m_pushConstantBlock);
 			mempool.free(variant.m_constants.getBegin());
 			mempool.free(variant.m_opaques.getBegin());
+			mempool.free(variant.m_structs.getBegin());
 		}
 		mempool.free(m_binary->m_variants.getBegin());
 	}
@@ -355,6 +361,10 @@ public:
 	DynamicArrayAuto<ShaderProgramBinaryOpaqueInstance> m_opaqueInstances = {m_alloc};
 	DynamicArrayAuto<ShaderProgramBinaryConstantInstance> m_constInstances = {m_alloc};
 
+	DynamicArrayAuto<ShaderProgramBinaryStructInstance> m_structInstances = {m_alloc};
+	/// [structInstance][memberInstance]
+	DynamicArrayAuto<DynamicArrayAuto<ShaderProgramBinaryStructMemberInstance>> m_structMemberInstances = {m_alloc};
+
 	Array<U32, 3> m_workgroupSizes = {MAX_U32, MAX_U32, MAX_U32};
 	Array<U32, 3> m_workgroupSizesConstants = {MAX_U32, MAX_U32, MAX_U32};
 	/// @}
@@ -412,6 +422,8 @@ public:
 		}
 		m_opaqueInstances.create(opaqueCount);
 		m_constInstances.create(constCount);
+		m_structInstances.create(structCount);
+		m_structMemberInstances.create(structCount, m_alloc);
 		return Error::NONE;
 	}
 
@@ -559,53 +571,48 @@ public:
 		return idx != MAX_U32;
 	}
 
-	Error visitStruct(U32 idx, CString name, U32 memberCount, U32 size) final
+	Error visitStruct(U32 instanceIdx, CString name, U32 memberCount, U32 size) final
 	{
-		// Init the block
+		ANKI_ASSERT(size && memberCount);
+
+		// Init the struct
 		U32 structIdx;
 		const Bool structFound = findStruct(name, structIdx);
-		if(structFound)
-		{
-			if(memberCount != m_structMembers[structIdx].getSize())
-			{
-				ANKI_SHADER_COMPILER_LOGE("The number of members can't differ between shader variants for struct: %s",
-										  name.cstr());
-				return Error::USER_DATA;
-			}
-
-			if(size != m_structs[structIdx].m_size)
-			{
-				ANKI_SHADER_COMPILER_LOGE("The size can't differ between shader variants for struct: %s", name.cstr());
-				return Error::USER_DATA;
-			}
-		}
-		else
+		if(!structFound)
 		{
 			// Create a new struct
+			structIdx = m_structs.getSize();
 			ShaderProgramBinaryStruct& s = *m_structs.emplaceBack();
 			ANKI_CHECK(setName(name, s.m_name));
-			s.m_size = size;
 
 			// Allocate members
 			m_structMembers.emplaceBack(m_alloc);
-			m_structMembers.getBack().create(memberCount);
+			ANKI_ASSERT(m_structs.getSize() == m_structMembers.getSize());
 		}
+
+		// Create the instance
+		ShaderProgramBinaryStructInstance& instance = m_structInstances[instanceIdx];
+		instance.m_index = structIdx;
+		instance.m_size = size;
+
+		m_structMemberInstances[instanceIdx].create(memberCount);
 
 		return Error::NONE;
 	}
 
-	Error visitStructMember(U32 structIdx, CString structName, U32 memberIdx, CString memberName,
+	Error visitStructMember(U32 structInstanceIdx, CString structName, U32 memberInstanceIdx, CString memberName,
 							ShaderVariableDataType type, CString typeStructName, U32 offset, U32 arraySize) final
 	{
 		// Refresh the structIdx because we have a different global mapping
-		const Bool structFound = findStruct(structName, structIdx);
+		U32 realStructIdx;
+		const Bool structFound = findStruct(structName, realStructIdx);
 		ANKI_ASSERT(structFound);
 		(void)structFound;
-		const ShaderProgramBinaryStruct& s = m_structs[structIdx];
-		DynamicArrayAuto<ShaderProgramBinaryStructMember>& members = m_structMembers[structIdx];
+		const ShaderProgramBinaryStruct& s = m_structs[realStructIdx];
+		DynamicArrayAuto<ShaderProgramBinaryStructMember>& members = m_structMembers[realStructIdx];
 
 		// Find member
-		Bool found = false;
+		U32 realMemberIdx = MAX_U32;
 		for(U32 i = 0; i < members.getSize(); ++i)
 		{
 			if(memberName == &members[i].m_name[0])
@@ -617,40 +624,18 @@ public:
 					return Error::USER_DATA;
 				}
 
-				if(i != memberIdx)
-				{
-					ANKI_SHADER_COMPILER_LOGE("Member %s of struct %s is in different place between variants",
-											  memberName.cstr(), &s.m_name[0]);
-					return Error::USER_DATA;
-				}
-
-				if(members[i].m_offset != offset)
-				{
-					ANKI_SHADER_COMPILER_LOGE("Member %s of struct %s has different offset between variants",
-											  memberName.cstr(), &s.m_name[0]);
-					return Error::USER_DATA;
-				}
-
-				if(members[i].m_arraySize != arraySize)
-				{
-					ANKI_SHADER_COMPILER_LOGE("Member %s of struct %s has different array size between variants",
-											  memberName.cstr(), &s.m_name[0]);
-					return Error::USER_DATA;
-				}
-
-				found = true;
+				realMemberIdx = i;
 				break;
 			}
 		}
 
-		// Create if not found
-		if(!found)
+		// If member not found in some previous variant create it
+		if(realMemberIdx == MAX_U32)
 		{
-			ShaderProgramBinaryStructMember& member = members[memberIdx];
+			realMemberIdx = members.getSize();
+			ShaderProgramBinaryStructMember& member = *members.emplaceBack();
 			ANKI_CHECK(setName(memberName, member.m_name));
 			member.m_type = type;
-			member.m_offset = offset;
-			member.m_arraySize = arraySize;
 
 			if(type == ShaderVariableDataType::NONE)
 			{
@@ -661,6 +646,13 @@ public:
 				(void)structFound;
 			}
 		}
+
+		// Update the instance
+		ShaderProgramBinaryStructMemberInstance& memberInstance =
+			m_structMemberInstances[structInstanceIdx][memberInstanceIdx];
+		memberInstance.m_index = realMemberIdx;
+		memberInstance.m_arraySize = arraySize;
+		memberInstance.m_offset = offset;
 
 		return Error::NONE;
 	}
@@ -733,7 +725,7 @@ public:
 		ShaderProgramBinaryBlockInstance& instance = m_blockInstances[blockType][blockInstanceIdx];
 		instance.m_index = blockIdx;
 		instance.m_size = size;
-		instance.m_variables.setArray(m_alloc.newArray<ShaderProgramBinaryVariableInstance>(varSize), varSize);
+		instance.m_variableInstances.setArray(m_alloc.newArray<ShaderProgramBinaryVariableInstance>(varSize), varSize);
 
 		return Error::NONE;
 	}
@@ -773,7 +765,7 @@ public:
 
 		// Init the instance
 		ShaderProgramBinaryVariableInstance& instance =
-			m_blockInstances[blockType][blockInstanceIdx].m_variables[varInstanceIdx];
+			m_blockInstances[blockType][blockInstanceIdx].m_variableInstances[varInstanceIdx];
 		instance.m_blockInfo = blockInfo;
 		instance.m_index = varIdx;
 
@@ -842,6 +834,23 @@ static Error doReflection(const StringList& symbolsToReflect, ShaderProgramBinar
 			refl.m_constInstances.moveAndReset(instances, size, storageSize);
 			variant.m_constants.setArray(instances, size);
 		}
+
+		if(refl.m_structInstances.getSize())
+		{
+			ShaderProgramBinaryStructInstance* instances;
+			U32 size, storageSize;
+			refl.m_structInstances.moveAndReset(instances, size, storageSize);
+			variant.m_structs.setArray(instances, size);
+
+			for(U32 structIdx = 0; structIdx < refl.m_structMemberInstances.getSize(); ++structIdx)
+			{
+				ShaderProgramBinaryStructMemberInstance* memberInstances;
+				refl.m_structMemberInstances[structIdx].moveAndReset(memberInstances, size, storageSize);
+
+				variant.m_structs[structIdx].m_memberInstances.setArray(memberInstances, size);
+			}
+		}
+		refl.m_structMemberInstances.destroy();
 
 		variant.m_workgroupSizes = refl.m_workgroupSizes;
 		variant.m_workgroupSizesConstants = refl.m_workgroupSizesConstants;
