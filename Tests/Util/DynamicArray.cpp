@@ -10,61 +10,75 @@
 
 namespace anki {
 
-static I64 constructor0Count = 0;
-static I64 constructor1Count = 0;
-static I64 constructor2Count = 0;
-static I64 constructor3Count = 0;
-static I64 destructorCount = 0;
-static I64 copyCount = 0;
-static I64 moveCount = 0;
+static I64 g_constructor0Count = 0;
+static I64 g_constructor1Count = 0;
+static I64 g_constructor2Count = 0;
+static I64 g_constructor3Count = 0;
+static I64 g_destructorCount = 0;
+static I64 g_copyCount = 0;
+static I64 g_moveCount = 0;
 
 class DynamicArrayFoo
 {
 public:
+	static constexpr I32 WRONG_NUMBER = -1234;
+
 	int m_x;
 
 	DynamicArrayFoo()
 		: m_x(0)
 	{
-		++constructor0Count;
+		++g_constructor0Count;
 	}
 
 	DynamicArrayFoo(int x)
 		: m_x(x)
 	{
-		++constructor1Count;
+		++g_constructor1Count;
+		if(m_x == WRONG_NUMBER)
+		{
+			++m_x;
+		}
 	}
 
 	DynamicArrayFoo(const DynamicArrayFoo& b)
 		: m_x(b.m_x)
 	{
-		++constructor2Count;
+		ANKI_TEST_EXPECT_NEQ(b.m_x, WRONG_NUMBER);
+		++g_constructor2Count;
 	}
 
 	DynamicArrayFoo(DynamicArrayFoo&& b)
 		: m_x(b.m_x)
 	{
+		ANKI_TEST_EXPECT_NEQ(b.m_x, WRONG_NUMBER);
 		b.m_x = 0;
-		++constructor3Count;
+		++g_constructor3Count;
 	}
 
 	~DynamicArrayFoo()
 	{
-		++destructorCount;
+		ANKI_TEST_EXPECT_NEQ(m_x, WRONG_NUMBER);
+		m_x = WRONG_NUMBER;
+		++g_destructorCount;
 	}
 
 	DynamicArrayFoo& operator=(const DynamicArrayFoo& b)
 	{
+		ANKI_TEST_EXPECT_NEQ(m_x, WRONG_NUMBER);
+		ANKI_TEST_EXPECT_NEQ(b.m_x, WRONG_NUMBER);
 		m_x = b.m_x;
-		++copyCount;
+		++g_copyCount;
 		return *this;
 	}
 
 	DynamicArrayFoo& operator=(DynamicArrayFoo&& b)
 	{
+		ANKI_TEST_EXPECT_NEQ(m_x, WRONG_NUMBER);
+		ANKI_TEST_EXPECT_NEQ(b.m_x, WRONG_NUMBER);
 		m_x = b.m_x;
 		b.m_x = 0;
-		++moveCount;
+		++g_moveCount;
 		return *this;
 	}
 };
@@ -135,9 +149,9 @@ ANKI_TEST(Util, DynamicArray)
 
 		arr = DynamicArrayAuto<DynamicArrayFoo>(alloc);
 		vec = std::vector<DynamicArrayFoo>();
-		ANKI_TEST_EXPECT_GT(destructorCount, 0);
-		ANKI_TEST_EXPECT_EQ(constructor0Count + constructor1Count + constructor2Count + constructor3Count,
-							destructorCount);
+		ANKI_TEST_EXPECT_GT(g_destructorCount, 0);
+		ANKI_TEST_EXPECT_EQ(g_constructor0Count + g_constructor1Count + g_constructor2Count + g_constructor3Count,
+							g_destructorCount);
 	}
 }
 
@@ -250,7 +264,59 @@ ANKI_TEST(Util, DynamicArrayEmplaceAt)
 		arr.destroy();
 		vec.resize(0);
 
-		ANKI_TEST_EXPECT_EQ(constructor0Count + constructor1Count + constructor2Count + constructor3Count,
-							destructorCount);
+		ANKI_TEST_EXPECT_EQ(g_constructor0Count + g_constructor1Count + g_constructor2Count + g_constructor3Count,
+							g_destructorCount);
+	}
+}
+
+ANKI_TEST(Util, DynamicArrayErase)
+{
+	HeapAllocator<U8> alloc(allocAligned, nullptr);
+
+	// Fuzzy
+	{
+		srand(U32(time(nullptr)));
+
+		DynamicArrayAuto<DynamicArrayFoo> arr(alloc);
+		std::vector<DynamicArrayFoo> vec;
+
+		const I ITERATIONS = 10000;
+		for(I i = 0; i < ITERATIONS; ++i)
+		{
+			if(getRandom() % 2)
+			{
+				const I32 r = rand();
+				arr.emplaceBack(r);
+				vec.push_back(r);
+			}
+			else if(arr.getSize() > 0)
+			{
+				PtrSize eraseFrom = getRandom() % arr.getSize();
+				PtrSize eraseTo = getRandom() % (arr.getSize() + 1);
+				if(eraseTo < eraseFrom)
+				{
+					swapValues(eraseTo, eraseFrom);
+				}
+
+				if(eraseTo != eraseFrom)
+				{
+					vec.erase(vec.begin() + eraseFrom, vec.begin() + eraseTo);
+					arr.erase(arr.getBegin() + eraseFrom, arr.getBegin() + eraseTo);
+				}
+			}
+		}
+
+		// Check
+		ANKI_TEST_EXPECT_EQ(arr.getSize(), vec.size());
+		for(U32 i = 0; i < arr.getSize(); ++i)
+		{
+			ANKI_TEST_EXPECT_EQ(arr[i].m_x, vec[i].m_x);
+		}
+
+		arr.destroy();
+		vec.resize(0);
+
+		ANKI_TEST_EXPECT_EQ(g_constructor0Count + g_constructor1Count + g_constructor2Count + g_constructor3Count,
+							g_destructorCount);
 	}
 }

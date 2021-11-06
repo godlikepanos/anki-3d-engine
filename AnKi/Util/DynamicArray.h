@@ -201,6 +201,24 @@ public:
 		}
 	}
 
+	/// Destroy the array.
+	template<typename TAllocator>
+	void destroy(TAllocator alloc)
+	{
+		if(m_data)
+		{
+			ANKI_ASSERT(m_size > 0);
+			ANKI_ASSERT(m_capacity > 0);
+			alloc.deleteArray(m_data, m_size);
+
+			m_data = nullptr;
+			m_size = 0;
+			m_capacity = 0;
+		}
+
+		ANKI_ASSERT(m_data == nullptr && m_size == 0 && m_capacity == 0);
+	}
+
 	/// Grow or create the array. @a T needs to be copyable and moveable.
 	template<typename TAllocator>
 	void resize(TAllocator alloc, Size size, const Value& v);
@@ -236,22 +254,20 @@ public:
 	template<typename TAllocator, typename... TArgs>
 	Iterator emplaceAt(TAllocator alloc, ConstIterator where, TArgs&&... args);
 
-	/// Destroy the array.
+	/// Removes the (first, last] elements.
+	/// @param alloc The allocator.
+	/// @param first Points to the position of the first element to remove.
+	/// @param last Points to the position of the last element to remove minus one.
 	template<typename TAllocator>
-	void destroy(TAllocator alloc)
+	void erase(TAllocator alloc, ConstIterator first, ConstIterator last);
+
+	/// Removes one element.
+	/// @param alloc The allocator.
+	/// @param at Points to the position of the element to remove.
+	template<typename TAllocator>
+	void erase(TAllocator alloc, ConstIterator at)
 	{
-		if(m_data)
-		{
-			ANKI_ASSERT(m_size > 0);
-			ANKI_ASSERT(m_capacity > 0);
-			alloc.deleteArray(m_data, m_size);
-
-			m_data = nullptr;
-			m_size = 0;
-			m_capacity = 0;
-		}
-
-		ANKI_ASSERT(m_data == nullptr && m_size == 0 && m_capacity == 0);
+		erase(alloc, at, at + 1);
 	}
 
 	/// Validate it. Will only work when assertions are enabled.
@@ -412,11 +428,23 @@ public:
 		Base::resize(m_alloc, size, v);
 	}
 
+	/// @copydoc DynamicArray::resize
+	void resize(Size size)
+	{
+		Base::resize(m_alloc, size);
+	}
+
 	/// @copydoc DynamicArray::emplaceBack
 	template<typename... TArgs>
 	Iterator emplaceBack(TArgs&&... args)
 	{
 		return Base::emplaceBack(m_alloc, std::forward<TArgs>(args)...);
+	}
+
+	/// @copydoc DynamicArray::popBack
+	void popBack()
+	{
+		Base::popBack(m_alloc);
 	}
 
 	/// @copydoc DynamicArray::emplaceAt
@@ -426,10 +454,16 @@ public:
 		return Base::emplaceAt(m_alloc, where, std::forward<TArgs>(args)...);
 	}
 
-	/// @copydoc DynamicArray::resize
-	void resize(Size size)
+	/// @copydoc DynamicArray::erase
+	void erase(ConstIterator first, ConstIterator last)
 	{
-		Base::resize(m_alloc, size);
+		return Base::erase(m_alloc, first, last);
+	}
+
+	/// @copydoc DynamicArray::erase
+	void erase(ConstIterator at)
+	{
+		return Base::erase(m_alloc, at);
 	}
 
 	/// @copydoc DynamicArray::moveAndReset

@@ -113,9 +113,9 @@ inline constexpr T absolute(const T f)
 }
 
 template<typename T>
-inline constexpr T pow(const T x, const T power)
+inline constexpr T pow(const T x, const T exp)
 {
-	return T(std::pow(x, power));
+	return T(std::pow(x, exp));
 }
 
 template<typename T>

@@ -191,6 +191,14 @@
 #	define __builtin_popcount __popcnt
 #	define __builtin_popcountl(x) int(__popcnt64(x))
 #	define __builtin_clzll(x) int(__lzcnt64(x))
+
+#pragma intrinsic(_BitScanForward)
+inline int __builtin_ctzll(unsigned long long x)
+{
+	unsigned long o;
+    _BitScanForward64(&o, x);
+    return o;
+}
 #endif
 
 // Constants

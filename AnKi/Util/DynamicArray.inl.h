@@ -28,7 +28,7 @@ void DynamicArray<T, TSize>::resizeStorage(TAllocator alloc, Size newSize)
 	{
 		// Need to grow
 
-		m_capacity = (newSize > Size(F32(m_capacity) * GROW_SCALE)) ? newSize : Size(F32(m_capacity) * GROW_SCALE);
+		m_capacity = (newSize > Size(F64(m_capacity) * GROW_SCALE)) ? newSize : Size(F64(m_capacity) * GROW_SCALE);
 		Value* newStorage =
 			static_cast<Value*>(alloc.getMemoryPool().allocate(m_capacity * sizeof(Value), alignof(Value)));
 
@@ -60,7 +60,7 @@ void DynamicArray<T, TSize>::resizeStorage(TAllocator alloc, Size newSize)
 
 		m_size = newSize;
 
-		if(newSize < Size(F32(m_capacity) / SHRINK_SCALE) || newSize == 0)
+		if(newSize < Size(F64(m_capacity) / SHRINK_SCALE) || newSize == 0)
 		{
 			// Need to shrink
 
@@ -202,6 +202,29 @@ typename DynamicArray<T, TSize>::Iterator DynamicArray<T, TSize>::emplaceAt(TAll
 	++m_size;
 
 	return &m_data[outIdx];
+}
+
+template<typename T, typename TSize>
+template<typename TAllocator>
+void DynamicArray<T, TSize>::erase(TAllocator alloc, ConstIterator first, ConstIterator last)
+{
+	ANKI_ASSERT(first != last);
+	ANKI_ASSERT(m_data);
+	ANKI_ASSERT(first >= m_data && first < m_data + m_size);
+	ANKI_ASSERT(last > m_data && last <= m_data + m_size);
+
+	// Move from the back to close the gap
+	const Size firsti = Size(first - m_data);
+	const Size lasti = Size(last - m_data);
+	const Size toMove = m_size - lasti;
+	for(Size i = 0; i < toMove; ++i)
+	{
+		m_data[firsti + i] = std::move(m_data[lasti + i]);
+	}
+
+	// Resize storage
+	const Size newSize = m_size - Size(last - first);
+	resizeStorage(alloc, newSize);
 }
 
 } // end namespace anki
