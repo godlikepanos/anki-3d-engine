@@ -99,6 +99,8 @@ private:
 			, m_callback(callback)
 		{
 		}
+
+		Handler& operator=(const Handler&) = default;
 	};
 
 	Mutex m_mutex; ///< For thread safety

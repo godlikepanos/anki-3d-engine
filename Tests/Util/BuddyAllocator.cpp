@@ -19,6 +19,7 @@ ANKI_TEST(Util, BuddyAllocator)
 		Array<U32, 2> addr;
 		Bool success = buddy.allocate(alloc, 1, addr[0]);
 		success = buddy.allocate(alloc, 3, addr[1]);
+		(void)success;
 
 		// buddy.debugPrint();
 
