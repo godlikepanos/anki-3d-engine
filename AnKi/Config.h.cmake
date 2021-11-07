@@ -196,8 +196,8 @@
 inline int __builtin_ctzll(unsigned long long x)
 {
 	unsigned long o;
-    _BitScanForward64(&o, x);
-    return o;
+	_BitScanForward64(&o, x);
+	return o;
 }
 #endif
 

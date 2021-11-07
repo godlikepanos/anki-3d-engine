@@ -274,7 +274,7 @@ void SparseArray<T, TIndex>::validate() const
 
 	// Start iterating
 	U elementCount = 0;
-	U count = m_capacity;
+	Index count = m_capacity;
 	Index pos = startPos;
 	Index prevPos = ~Index(0);
 	while(count--)

@@ -53,7 +53,7 @@ void DynamicArray<T, TSize>::resizeStorage(TAllocator alloc, Size newSize)
 		ANKI_ASSERT(m_data);
 
 		// Delete remaining stuff
-		for(U i = newSize; i < m_size; ++i)
+		for(Size i = newSize; i < m_size; ++i)
 		{
 			m_data[i].~T();
 		}
