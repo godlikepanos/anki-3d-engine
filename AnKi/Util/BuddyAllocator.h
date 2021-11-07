@@ -23,7 +23,7 @@ public:
 
 	~BuddyAllocator()
 	{
-		ANKI_ASSERT(m_allocationCount == 0 && "Forgot to deallocate");
+		ANKI_ASSERT(m_userAllocatedSize == 0 && "Forgot to deallocate");
 	}
 
 	/// Allocate memory.
@@ -42,7 +42,14 @@ public:
 	void free(TAllocator alloc, Address address, PtrSize size);
 
 	/// Print a debug representation of the internal structures.
-	void debugPrint();
+	void debugPrint() const;
+
+	/// Get some info.
+	void getInfo(PtrSize& userAllocatedSize, PtrSize& realAllocatedSize) const
+	{
+		userAllocatedSize = m_userAllocatedSize;
+		realAllocatedSize = m_realAllocatedSize;
+	}
 
 private:
 	/// Because we need a constexpr version of pow.
@@ -63,7 +70,8 @@ private:
 
 	using FreeList = DynamicArray<Address, PtrSize>;
 	Array<FreeList, ORDER_COUNT> m_freeLists;
-	U32 m_allocationCount = 0;
+	PtrSize m_userAllocatedSize = 0;
+	PtrSize m_realAllocatedSize = 0;
 
 	template<typename TAllocator>
 	PtrSize popFree(TAllocator& alloc, U32 order)

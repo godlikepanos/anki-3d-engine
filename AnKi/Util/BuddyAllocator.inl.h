@@ -14,7 +14,7 @@ Bool BuddyAllocator<T_MAX_MEMORY_RANGE_LOG2>::allocate(TAllocator alloc, PtrSize
 	ANKI_ASSERT(size > 0 && size <= MAX_MEMORY_RANGE);
 
 	// Lazy initialize
-	if(m_allocationCount == 0)
+	if(m_userAllocatedSize == 0)
 	{
 		const Address startingAddress = 0;
 		m_freeLists[ORDER_COUNT - 1].create(alloc, 1, startingAddress);
@@ -55,7 +55,8 @@ Bool BuddyAllocator<T_MAX_MEMORY_RANGE_LOG2>::allocate(TAllocator alloc, PtrSize
 	}
 
 	ANKI_ASSERT(address + alignedSize <= MAX_MEMORY_RANGE);
-	++m_allocationCount;
+	m_userAllocatedSize += size;
+	m_realAllocatedSize += alignedSize;
 	ANKI_ASSERT(address <= getMaxNumericLimit<Address>());
 	outAddress = Address(address);
 	return true;
@@ -65,13 +66,18 @@ template<U32 T_MAX_MEMORY_RANGE_LOG2>
 template<typename TAllocator>
 void BuddyAllocator<T_MAX_MEMORY_RANGE_LOG2>::free(TAllocator alloc, Address address, PtrSize size)
 {
-	freeInternal(alloc, address, nextPowerOfTwo(size));
+	const PtrSize alignedSize = nextPowerOfTwo(size);
+	freeInternal(alloc, address, alignedSize);
 
-	--m_allocationCount;
+	ANKI_ASSERT(m_userAllocatedSize >= size);
+	m_userAllocatedSize -= size;
+	ANKI_ASSERT(m_realAllocatedSize >= alignedSize);
+	m_realAllocatedSize -= alignedSize;
 
 	// Some checks
-	if(m_allocationCount == 0)
+	if(m_userAllocatedSize == 0)
 	{
+		ANKI_ASSERT(m_realAllocatedSize == 0);
 		for(const FreeList& freeList : m_freeLists)
 		{
 			ANKI_ASSERT(freeList.getSize() == 0);
@@ -129,7 +135,7 @@ void BuddyAllocator<T_MAX_MEMORY_RANGE_LOG2>::freeInternal(TAllocator& alloc, Pt
 }
 
 template<U32 T_MAX_MEMORY_RANGE_LOG2>
-void BuddyAllocator<T_MAX_MEMORY_RANGE_LOG2>::debugPrint()
+void BuddyAllocator<T_MAX_MEMORY_RANGE_LOG2>::debugPrint() const
 {
 	BitSet<MAX_MEMORY_RANGE>* freeBytes = new BitSet<MAX_MEMORY_RANGE>(false);
 	for(I32 order = ORDER_COUNT - 1; order >= 0; --order)
