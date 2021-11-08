@@ -14,17 +14,17 @@ ANKI_TEST(Util, BuddyAllocator)
 
 	// Simple
 	{
-		BuddyAllocator<4> buddy;
+		BuddyAllocator<4> buddy(alloc, 4);
 
 		Array<U32, 2> addr;
-		Bool success = buddy.allocate(alloc, 1, addr[0]);
-		success = buddy.allocate(alloc, 3, addr[1]);
+		Bool success = buddy.allocate(1, addr[0]);
+		success = buddy.allocate(3, addr[1]);
 		(void)success;
 
 		// buddy.debugPrint();
 
-		buddy.free(alloc, addr[0], 1);
-		buddy.free(alloc, addr[1], 3);
+		buddy.free(addr[0], 1);
+		buddy.free(addr[1], 3);
 
 		// printf("\n");
 		// buddy.debugPrint();
@@ -32,7 +32,7 @@ ANKI_TEST(Util, BuddyAllocator)
 
 	// Fuzzy
 	{
-		BuddyAllocator<32> buddy;
+		BuddyAllocator<32> buddy(alloc, 32);
 		std::vector<std::pair<U32, U32>> allocations;
 		for(U32 it = 0; it < 1000; ++it)
 		{
@@ -41,7 +41,7 @@ ANKI_TEST(Util, BuddyAllocator)
 				// Do an allocation
 				U32 addr;
 				const U32 size = max<U32>(getRandom() % 512, 1);
-				const Bool success = buddy.allocate(alloc, size, addr);
+				const Bool success = buddy.allocate(size, addr);
 				if(success)
 				{
 					allocations.push_back({addr, size});
@@ -53,7 +53,7 @@ ANKI_TEST(Util, BuddyAllocator)
 				if(allocations.size())
 				{
 					const PtrSize randPos = getRandom() % allocations.size();
-					buddy.free(alloc, allocations[randPos].first, allocations[randPos].second);
+					buddy.free(allocations[randPos].first, allocations[randPos].second);
 
 					allocations.erase(allocations.begin() + randPos);
 				}
@@ -63,7 +63,7 @@ ANKI_TEST(Util, BuddyAllocator)
 		// Remove the remaining
 		for(const auto& pair : allocations)
 		{
-			buddy.free(alloc, pair.first, pair.second);
+			buddy.free(pair.first, pair.second);
 		}
 	}
 }

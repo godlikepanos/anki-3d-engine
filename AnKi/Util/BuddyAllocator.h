@@ -14,32 +14,50 @@ namespace anki {
 
 /// This is a generic implementation of a buddy allocator.
 /// @tparam T_MAX_MEMORY_RANGE_LOG2 The max memory to allocate.
-template<U32 T_MAX_MEMORY_RANGE_LOG2>
+template<U32 T_MAX_MEMORY_RANGE_LOG2 = 32>
 class BuddyAllocator
 {
 public:
 	/// The type of the address.
 	using Address = std::conditional_t<(T_MAX_MEMORY_RANGE_LOG2 > 32), PtrSize, U32>;
 
-	~BuddyAllocator()
+	BuddyAllocator()
 	{
-		ANKI_ASSERT(m_userAllocatedSize == 0 && "Forgot to deallocate");
 	}
 
-	/// Allocate memory.
+	/// @copydoc init
+	BuddyAllocator(GenericMemoryPoolAllocator<U8> alloc, U32 maxMemoryRangeLog2)
+	{
+		init(alloc, maxMemoryRangeLog2);
+	}
+
+	BuddyAllocator(const BuddyAllocator&) = delete; // Non-copyable
+
+	~BuddyAllocator()
+	{
+		destroy();
+	}
+
+	BuddyAllocator& operator=(const BuddyAllocator&) = delete; // Non-copyable
+
+	/// Init the allocator.
 	/// @param alloc The allocator used for internal structures of the BuddyAllocator.
+	/// @param maxMemoryRangeLog2 The max memory to allocate.
+	void init(GenericMemoryPoolAllocator<U8> alloc, U32 maxMemoryRangeLog2);
+
+	/// Destroy the allocator.
+	void destroy();
+
+	/// Allocate memory.
 	/// @param size The size of the allocation.
 	/// @param[out] address The returned address if the allocation didn't fail.
 	/// @return True if the allocation succeeded.
-	template<typename TAllocator>
-	ANKI_USE_RESULT Bool allocate(TAllocator alloc, PtrSize size, Address& address);
+	ANKI_USE_RESULT Bool allocate(PtrSize size, Address& address);
 
 	/// Free memory.
-	/// @param alloc The allocator used for internal structures of the BuddyAllocator.
 	/// @param address The address to free.
 	/// @param size The size of the allocation.
-	template<typename TAllocator>
-	void free(TAllocator alloc, Address address, PtrSize size);
+	void free(Address address, PtrSize size);
 
 	/// Print a debug representation of the internal structures.
 	void debugPrint() const;
@@ -52,7 +70,6 @@ public:
 	}
 
 private:
-	/// Because we need a constexpr version of pow.
 	template<typename T>
 	static constexpr T pow2(T exp)
 	{
@@ -65,26 +82,28 @@ private:
 		return U32(__builtin_ctzll(v));
 	}
 
-	static constexpr U32 ORDER_COUNT = T_MAX_MEMORY_RANGE_LOG2 + 1;
-	static constexpr PtrSize MAX_MEMORY_RANGE = pow2<PtrSize>(T_MAX_MEMORY_RANGE_LOG2);
-
 	using FreeList = DynamicArray<Address, PtrSize>;
-	Array<FreeList, ORDER_COUNT> m_freeLists;
+	GenericMemoryPoolAllocator<U8> m_alloc;
+	DynamicArray<FreeList> m_freeLists;
+	PtrSize m_maxMemoryRange = 0;
 	PtrSize m_userAllocatedSize = 0;
 	PtrSize m_realAllocatedSize = 0;
 
-	template<typename TAllocator>
-	PtrSize popFree(TAllocator& alloc, U32 order)
+	U32 orderCount() const
+	{
+		return m_freeLists.getSize();
+	}
+
+	PtrSize popFree(U32 order)
 	{
 		ANKI_ASSERT(m_freeLists[order].getSize() > 0);
 		const PtrSize address = m_freeLists[order].getBack();
-		m_freeLists[order].popBack(alloc);
-		ANKI_ASSERT(address < MAX_MEMORY_RANGE);
+		m_freeLists[order].popBack(m_alloc);
+		ANKI_ASSERT(address < m_maxMemoryRange);
 		return address;
 	}
 
-	template<typename TAllocator>
-	void freeInternal(TAllocator& alloc, PtrSize address, PtrSize size);
+	void freeInternal(PtrSize address, PtrSize size);
 };
 /// @}
 
