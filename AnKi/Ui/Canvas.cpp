@@ -7,7 +7,7 @@
 #include <AnKi/Ui/Font.h>
 #include <AnKi/Ui/UiManager.h>
 #include <AnKi/Resource/ResourceManager.h>
-#include <AnKi/Core/StagingGpuMemoryManager.h>
+#include <AnKi/Core/GpuMemoryManager.h>
 #include <AnKi/Input/Input.h>
 #include <AnKi/Gr/Sampler.h>
 #include <AnKi/Gr/GrManager.h>

@@ -24,7 +24,7 @@
 #include <AnKi/Script/ScriptManager.h>
 #include <AnKi/Resource/ResourceFilesystem.h>
 #include <AnKi/Resource/AsyncLoader.h>
-#include <AnKi/Core/StagingGpuMemoryManager.h>
+#include <AnKi/Core/GpuMemoryManager.h>
 #include <AnKi/Ui/UiManager.h>
 #include <AnKi/Ui/Canvas.h>
 #include <csignal>

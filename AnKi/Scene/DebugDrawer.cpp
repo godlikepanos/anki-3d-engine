@@ -6,7 +6,7 @@
 #include <AnKi/Scene/DebugDrawer.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Renderer/RenderQueue.h>
-#include <AnKi/Core/StagingGpuMemoryManager.h>
+#include <AnKi/Core/GpuMemoryManager.h>
 #include <AnKi/Physics/PhysicsWorld.h>
 #include <AnKi/Gr/Buffer.h>
 #include <AnKi/Collision.h>

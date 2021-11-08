@@ -3,12 +3,53 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Core/StagingGpuMemoryManager.h>
+#include <AnKi/Core/GpuMemoryManager.h>
 #include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Util/Tracer.h>
 
 namespace anki {
+
+VertexGpuMemoryManager::~VertexGpuMemoryManager()
+{
+	// Do nothing
+}
+
+Error VertexGpuMemoryManager::init(GenericMemoryPoolAllocator<U8> alloc, GrManager* gr, const ConfigSet& cfg)
+{
+	m_gr = gr;
+
+	// Create the GPU buffer.
+	BufferInitInfo bufferInit("Global vertex & index");
+	bufferInit.m_size = cfg.getNumberU64("core_globalVertexMemorySize");
+	if(!isPowerOfTwo(bufferInit.m_size))
+	{
+		ANKI_CORE_LOGE("core_globalVertexMemorySize should be a power of two (because of the buddy allocator");
+		return Error::USER_DATA;
+	}
+	bufferInit.m_usage = BufferUsageBit::VERTEX | BufferUsageBit::INDEX;
+	m_vertBuffer = gr->newBuffer(bufferInit);
+
+	// Init the rest
+	m_buddyAllocator.init(alloc, __builtin_ctzll(bufferInit.m_size));
+
+	return Error::NONE;
+}
+
+ANKI_USE_RESULT Error VertexGpuMemoryManager::allocate(PtrSize size, PtrSize& offset)
+{
+	U32 offset32;
+	ANKI_CHECK(m_buddyAllocator.allocate(size, offset32));
+
+	offset = offset32;
+
+	return Error::NONE;
+}
+
+void VertexGpuMemoryManager::free(PtrSize size, PtrSize offset)
+{
+	m_buddyAllocator.free(U32(offset), size);
+}
 
 StagingGpuMemoryManager::~StagingGpuMemoryManager()
 {

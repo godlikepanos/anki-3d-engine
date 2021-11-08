@@ -10,7 +10,7 @@
 #include <AnKi/Input/Input.h>
 #include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Util/HighRezTimer.h>
-#include <AnKi/Core/StagingGpuMemoryManager.h>
+#include <AnKi/Core/GpuMemoryManager.h>
 #include <AnKi/Resource/TransferGpuAllocator.h>
 #include <AnKi/ShaderCompiler/Glslang.h>
 #include <AnKi/ShaderCompiler/ShaderProgramParser.h>

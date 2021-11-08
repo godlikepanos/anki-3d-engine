@@ -8,6 +8,7 @@
 #include <AnKi/Core/Common.h>
 #include <AnKi/Gr/Buffer.h>
 #include <AnKi/Gr/Utils/FrameGpuAllocator.h>
+#include <AnKi/Util/BuddyAllocator.h>
 
 namespace anki {
 
@@ -16,6 +17,35 @@ class ConfigSet;
 
 /// @addtogroup core
 /// @{
+
+/// Manages vertex and index memory for the whole application.
+class VertexGpuMemoryManager
+{
+public:
+	VertexGpuMemoryManager() = default;
+
+	VertexGpuMemoryManager(const VertexGpuMemoryManager&) = delete; // Non-copyable
+
+	~VertexGpuMemoryManager();
+
+	VertexGpuMemoryManager& operator=(const VertexGpuMemoryManager&) = delete; // Non-copyable
+
+	ANKI_USE_RESULT Error init(GenericMemoryPoolAllocator<U8> alloc, GrManager* gr, const ConfigSet& cfg);
+
+	ANKI_USE_RESULT Error allocate(PtrSize size, PtrSize& offset);
+
+	void free(PtrSize size, PtrSize offset);
+
+	BufferPtr getVertexBuffer() const
+	{
+		return m_vertBuffer;
+	}
+
+private:
+	GrManager* m_gr = nullptr;
+	BufferPtr m_vertBuffer;
+	BuddyAllocator<> m_buddyAllocator;
+};
 
 enum class StagingGpuMemoryType : U8
 {

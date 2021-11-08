@@ -7,7 +7,7 @@
 
 #include <AnKi/Scene/Components/SceneComponent.h>
 #include <AnKi/Resource/MaterialResource.h>
-#include <AnKi/Core/StagingGpuMemoryManager.h>
+#include <AnKi/Core/GpuMemoryManager.h>
 #include <AnKi/Renderer/RenderQueue.h>
 
 namespace anki {

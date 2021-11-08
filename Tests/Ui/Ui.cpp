@@ -8,7 +8,7 @@
 #include <AnKi/Util/HighRezTimer.h>
 #include <AnKi/Ui.h>
 #include <AnKi/Input.h>
-#include <AnKi/Core/StagingGpuMemoryManager.h>
+#include <AnKi/Core/GpuMemoryManager.h>
 
 namespace anki {
 
