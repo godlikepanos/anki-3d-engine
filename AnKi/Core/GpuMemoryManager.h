@@ -8,7 +8,7 @@
 #include <AnKi/Core/Common.h>
 #include <AnKi/Gr/Buffer.h>
 #include <AnKi/Gr/Utils/FrameGpuAllocator.h>
-#include <AnKi/Util/BuddyAllocator.h>
+#include <AnKi/Util/BuddyAllocatorBuilder.h>
 
 namespace anki {
 
@@ -44,7 +44,7 @@ public:
 private:
 	GrManager* m_gr = nullptr;
 	BufferPtr m_vertBuffer;
-	BuddyAllocator<> m_buddyAllocator;
+	BuddyAllocatorBuilder<> m_buddyAllocator;
 };
 
 enum class StagingGpuMemoryType : U8

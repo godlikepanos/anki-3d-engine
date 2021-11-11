@@ -106,7 +106,7 @@ Error ResourceManager::loadResource(const CString& filename, ResourcePtr<T>& out
 		auto& pool = m_tmpAlloc.getMemoryPool();
 
 		{
-			U allocsCountBefore = pool.getAllocationsCount();
+			U allocsCountBefore = pool.getAllocationCount();
 			(void)allocsCountBefore;
 
 			err = ptr->load(filename, async);
@@ -117,7 +117,7 @@ Error ResourceManager::loadResource(const CString& filename, ResourcePtr<T>& out
 				return err;
 			}
 
-			ANKI_ASSERT(pool.getAllocationsCount() == allocsCountBefore && "Forgot to deallocate");
+			ANKI_ASSERT(pool.getAllocationCount() == allocsCountBefore && "Forgot to deallocate");
 		}
 
 		ptr->setFilename(filename);
@@ -125,7 +125,7 @@ Error ResourceManager::loadResource(const CString& filename, ResourcePtr<T>& out
 
 		// Reset the memory pool if no-one is using it.
 		// NOTE: Check because resources load other resources
-		if(pool.getAllocationsCount() == 0)
+		if(pool.getAllocationCount() == 0)
 		{
 			pool.reset();
 		}

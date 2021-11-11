@@ -57,10 +57,10 @@ ANKI_TEST(Util, StackMemoryPool)
 
 		void* a = pool.allocate(25, 1);
 		ANKI_TEST_EXPECT_NEQ(a, nullptr);
-		ANKI_TEST_EXPECT_EQ(pool.getAllocationsCount(), 1);
+		ANKI_TEST_EXPECT_EQ(pool.getAllocationCount(), 1);
 
 		pool.free(a);
-		ANKI_TEST_EXPECT_EQ(pool.getAllocationsCount(), 0);
+		ANKI_TEST_EXPECT_EQ(pool.getAllocationCount(), 0);
 
 		// Allocate a few
 		const U SIZE = 75;
@@ -72,11 +72,11 @@ ANKI_TEST(Util, StackMemoryPool)
 		ANKI_TEST_EXPECT_NEQ(a, nullptr);
 		a = pool.allocate(SIZE, 1);
 		ANKI_TEST_EXPECT_NEQ(a, nullptr);
-		ANKI_TEST_EXPECT_EQ(pool.getAllocationsCount(), 4);
+		ANKI_TEST_EXPECT_EQ(pool.getAllocationCount(), 4);
 
 		// Reset
 		pool.reset();
-		ANKI_TEST_EXPECT_EQ(pool.getAllocationsCount(), 0);
+		ANKI_TEST_EXPECT_EQ(pool.getAllocationCount(), 0);
 
 		// Allocate again
 		a = pool.allocate(SIZE, 1);
@@ -87,7 +87,7 @@ ANKI_TEST(Util, StackMemoryPool)
 		ANKI_TEST_EXPECT_NEQ(a, nullptr);
 		a = pool.allocate(SIZE, 1);
 		ANKI_TEST_EXPECT_NEQ(a, nullptr);
-		ANKI_TEST_EXPECT_EQ(pool.getAllocationsCount(), 4);
+		ANKI_TEST_EXPECT_EQ(pool.getAllocationCount(), 4);
 	}
 
 	// Parallel

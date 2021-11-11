@@ -4,17 +4,17 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
-#include <AnKi/Util/BuddyAllocator.h>
+#include <AnKi/Util/BuddyAllocatorBuilder.h>
 
 namespace anki {
 
-ANKI_TEST(Util, BuddyAllocator)
+ANKI_TEST(Util, BuddyAllocatorBuilder)
 {
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 
 	// Simple
 	{
-		BuddyAllocator<4> buddy(alloc, 4);
+		BuddyAllocatorBuilder<4> buddy(alloc, 4);
 
 		Array<U32, 2> addr;
 		Bool success = buddy.allocate(1, addr[0]);
@@ -32,7 +32,7 @@ ANKI_TEST(Util, BuddyAllocator)
 
 	// Fuzzy
 	{
-		BuddyAllocator<32> buddy(alloc, 32);
+		BuddyAllocatorBuilder<32> buddy(alloc, 32);
 		std::vector<std::pair<U32, U32>> allocations;
 		for(U32 it = 0; it < 1000; ++it)
 		{

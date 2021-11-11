@@ -15,33 +15,33 @@ namespace anki {
 /// This is a generic implementation of a buddy allocator.
 /// @tparam T_MAX_MEMORY_RANGE_LOG2 The max memory to allocate.
 template<U32 T_MAX_MEMORY_RANGE_LOG2 = 32>
-class BuddyAllocator
+class BuddyAllocatorBuilder
 {
 public:
 	/// The type of the address.
 	using Address = std::conditional_t<(T_MAX_MEMORY_RANGE_LOG2 > 32), PtrSize, U32>;
 
-	BuddyAllocator()
+	BuddyAllocatorBuilder()
 	{
 	}
 
 	/// @copydoc init
-	BuddyAllocator(GenericMemoryPoolAllocator<U8> alloc, U32 maxMemoryRangeLog2)
+	BuddyAllocatorBuilder(GenericMemoryPoolAllocator<U8> alloc, U32 maxMemoryRangeLog2)
 	{
 		init(alloc, maxMemoryRangeLog2);
 	}
 
-	BuddyAllocator(const BuddyAllocator&) = delete; // Non-copyable
+	BuddyAllocatorBuilder(const BuddyAllocatorBuilder&) = delete; // Non-copyable
 
-	~BuddyAllocator()
+	~BuddyAllocatorBuilder()
 	{
 		destroy();
 	}
 
-	BuddyAllocator& operator=(const BuddyAllocator&) = delete; // Non-copyable
+	BuddyAllocatorBuilder& operator=(const BuddyAllocatorBuilder&) = delete; // Non-copyable
 
 	/// Init the allocator.
-	/// @param alloc The allocator used for internal structures of the BuddyAllocator.
+	/// @param alloc The allocator used for internal structures of the BuddyAllocatorBuilder.
 	/// @param maxMemoryRangeLog2 The max memory to allocate.
 	void init(GenericMemoryPoolAllocator<U8> alloc, U32 maxMemoryRangeLog2);
 
@@ -109,4 +109,4 @@ private:
 
 } // end namespace anki
 
-#include <AnKi/Util/BuddyAllocator.inl.h>
+#include <AnKi/Util/BuddyAllocatorBuilder.inl.h>

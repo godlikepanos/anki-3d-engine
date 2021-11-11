@@ -3,12 +3,12 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Util/BuddyAllocator.h>
+#include <AnKi/Util/BuddyAllocatorBuilder.h>
 
 namespace anki {
 
 template<U32 T_MAX_MEMORY_RANGE_LOG2>
-void BuddyAllocator<T_MAX_MEMORY_RANGE_LOG2>::init(GenericMemoryPoolAllocator<U8> alloc, U32 maxMemoryRangeLog2)
+void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2>::init(GenericMemoryPoolAllocator<U8> alloc, U32 maxMemoryRangeLog2)
 {
 	ANKI_ASSERT(maxMemoryRangeLog2 >= 1 && maxMemoryRangeLog2 <= T_MAX_MEMORY_RANGE_LOG2);
 	ANKI_ASSERT(m_freeLists.getSize() == 0 && m_userAllocatedSize == 0 && m_realAllocatedSize == 0);
@@ -21,7 +21,7 @@ void BuddyAllocator<T_MAX_MEMORY_RANGE_LOG2>::init(GenericMemoryPoolAllocator<U8
 }
 
 template<U32 T_MAX_MEMORY_RANGE_LOG2>
-void BuddyAllocator<T_MAX_MEMORY_RANGE_LOG2>::destroy()
+void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2>::destroy()
 {
 	ANKI_ASSERT(m_userAllocatedSize == 0 && "Forgot to free all memory");
 	m_freeLists.destroy(m_alloc);
@@ -31,7 +31,7 @@ void BuddyAllocator<T_MAX_MEMORY_RANGE_LOG2>::destroy()
 }
 
 template<U32 T_MAX_MEMORY_RANGE_LOG2>
-Bool BuddyAllocator<T_MAX_MEMORY_RANGE_LOG2>::allocate(PtrSize size, Address& outAddress)
+Bool BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2>::allocate(PtrSize size, Address& outAddress)
 {
 	ANKI_ASSERT(size > 0 && size <= m_maxMemoryRange);
 
@@ -85,7 +85,7 @@ Bool BuddyAllocator<T_MAX_MEMORY_RANGE_LOG2>::allocate(PtrSize size, Address& ou
 }
 
 template<U32 T_MAX_MEMORY_RANGE_LOG2>
-void BuddyAllocator<T_MAX_MEMORY_RANGE_LOG2>::free(Address address, PtrSize size)
+void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2>::free(Address address, PtrSize size)
 {
 	const PtrSize alignedSize = nextPowerOfTwo(size);
 	freeInternal(address, alignedSize);
@@ -107,7 +107,7 @@ void BuddyAllocator<T_MAX_MEMORY_RANGE_LOG2>::free(Address address, PtrSize size
 }
 
 template<U32 T_MAX_MEMORY_RANGE_LOG2>
-void BuddyAllocator<T_MAX_MEMORY_RANGE_LOG2>::freeInternal(PtrSize address, PtrSize size)
+void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2>::freeInternal(PtrSize address, PtrSize size)
 {
 	ANKI_ASSERT(isPowerOfTwo(size));
 	ANKI_ASSERT(address + size <= m_maxMemoryRange);
@@ -155,7 +155,7 @@ void BuddyAllocator<T_MAX_MEMORY_RANGE_LOG2>::freeInternal(PtrSize address, PtrS
 }
 
 template<U32 T_MAX_MEMORY_RANGE_LOG2>
-void BuddyAllocator<T_MAX_MEMORY_RANGE_LOG2>::debugPrint() const
+void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2>::debugPrint() const
 {
 	constexpr PtrSize MAX_MEMORY_RANGE = pow2<PtrSize>(T_MAX_MEMORY_RANGE_LOG2);
 

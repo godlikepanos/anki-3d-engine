@@ -10,6 +10,7 @@
 #include <AnKi/Util/Assert.h>
 #include <AnKi/Util/Array.h>
 #include <AnKi/Util/Thread.h>
+#include <AnKi/Util/StackAllocatorBuilder.h>
 #include <utility> // For forward
 
 namespace anki {
@@ -89,9 +90,9 @@ public:
 	}
 
 	/// Return number of allocations
-	U32 getAllocationsCount() const
+	U32 getAllocationCount() const
 	{
-		return m_allocationsCount.load();
+		return m_allocationCount.load();
 	}
 
 protected:
@@ -111,7 +112,7 @@ protected:
 	void* m_allocCbUserData = nullptr;
 
 	/// Allocations count.
-	Atomic<U32> m_allocationsCount = {0};
+	Atomic<U32> m_allocationCount = {0};
 
 	BaseMemoryPool(Type type)
 		: m_type(type)
@@ -181,9 +182,9 @@ public:
 	/// @param ignoreDeallocationErrors Method free() may fail if the ptr is not in the top of the stack. Set that to
 	///        true to suppress such errors.
 	/// @param alignmentBytes The maximum supported alignment for returned memory.
-	void init(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize, F32 nextChunkScale = 2.0,
+	void init(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize, F64 nextChunkScale = 2.0,
 			  PtrSize nextChunkBias = 0, Bool ignoreDeallocationErrors = true,
-			  PtrSize alignmentBytes = ANKI_SAFE_ALIGNMENT);
+			  U32 alignmentBytes = ANKI_SAFE_ALIGNMENT);
 
 	/// Allocate aligned memory.
 	/// @param size The size to allocate.
@@ -205,69 +206,90 @@ public:
 	/// @note It's not thread safe with other methods.
 	PtrSize getMemoryCapacity() const
 	{
-		return m_allocatedMemory;
+		return m_builder.getMemoryCapacity();
 	}
 
 private:
-	/// The memory chunk.
-	class Chunk
+	/// This is the absolute max alignment.
+	static constexpr U32 MAX_ALIGNMENT = ANKI_SAFE_ALIGNMENT;
+
+	/// This is the chunk the StackAllocatorBuilder will be allocating.
+	class alignas(MAX_ALIGNMENT) Chunk
 	{
 	public:
-		/// The base memory of the chunk.
-		U8* m_baseMem = nullptr;
+		/// Required by StackAllocatorBuilder.
+		Chunk* m_nextChunk;
 
-		/// The moving ptr for the next allocation.
-		Atomic<U8*> m_mem = {nullptr};
+		/// Required by StackAllocatorBuilder.
+		Atomic<PtrSize> m_offsetInChunk;
 
-		/// The chunk size.
-		PtrSize m_size = 0;
+		/// Required by StackAllocatorBuilder.
+		PtrSize m_chunkSize;
 
-		/// Check that it's initialized.
-		void check() const
+		/// The start of the actual CPU memory.
+		alignas(MAX_ALIGNMENT) U8 m_memoryStart[1];
+	};
+
+	/// Implements the StackAllocatorBuilder TInterface
+	class StackAllocatorBuilderInterface
+	{
+	public:
+		StackMemoryPool* m_parent = nullptr;
+
+		PtrSize m_alignmentBytes = 0;
+
+		Bool m_ignoreDeallocationErrors = false;
+
+		PtrSize m_initialChunkSize = 0;
+
+		F64 m_nextChunkScale = 0.0;
+
+		PtrSize m_nextChunkBias = 0;
+
+		// The rest of the functions implement the StackAllocatorBuilder TInterface.
+
+		PtrSize getMaxAlignment() const
 		{
-			ANKI_ASSERT(m_baseMem != nullptr);
-			ANKI_ASSERT(m_mem.load() >= m_baseMem);
-			ANKI_ASSERT(m_size > 0);
+			ANKI_ASSERT(m_alignmentBytes > 0);
+			return m_alignmentBytes;
 		}
 
-		// Check that it's in reset state.
-		void checkReset() const
+		PtrSize getInitialChunkSize() const
 		{
-			ANKI_ASSERT(m_baseMem != nullptr);
-			ANKI_ASSERT(m_mem.load() == m_baseMem);
-			ANKI_ASSERT(m_size > 0);
+			ANKI_ASSERT(m_initialChunkSize > 0);
+			return m_initialChunkSize;
+		}
+
+		F64 getNextChunkGrowScale() const
+		{
+			ANKI_ASSERT(m_nextChunkScale >= 1.0);
+			return m_nextChunkScale;
+		}
+
+		PtrSize getNextChunkGrowBias() const
+		{
+			return m_nextChunkBias;
+		}
+
+		Bool ignoreDeallocationErrors() const
+		{
+			return m_ignoreDeallocationErrors;
+		}
+
+		Error allocateChunk(PtrSize size, Chunk*& out);
+
+		void freeChunk(Chunk* chunk);
+
+		void recycleChunk(Chunk& chunk);
+
+		Atomic<U32>* getAllocationCount()
+		{
+			return &m_parent->m_allocationCount;
 		}
 	};
 
-	/// Alignment of allocations
-	PtrSize m_alignmentBytes = 0;
-
-	/// The size of the first chunk.
-	PtrSize m_initialChunkSize = 0;
-
-	/// Chunk scale.
-	F32 m_nextChunkScale = 0.0;
-
-	/// Chunk bias.
-	PtrSize m_nextChunkBias = 0;
-
-	/// Allocated memory.
-	PtrSize m_allocatedMemory = 0;
-
-	/// Ignore deallocation errors.
-	Bool m_ignoreDeallocationErrors = false;
-
-	/// The current chunk. Chose the more strict memory order to avoid compiler re-ordering of instructions
-	Atomic<I32, AtomicMemoryOrder::SEQ_CST> m_crntChunkIdx = {-1};
-
-	/// The max number of chunks.
-	static const U MAX_CHUNKS = 256;
-
-	/// The chunks.
-	Array<Chunk, MAX_CHUNKS> m_chunks;
-
-	/// Protect the m_crntChunkIdx.
-	Mutex m_lock;
+	/// The allocator helper.
+	StackAllocatorBuilder<Chunk, StackAllocatorBuilderInterface, Mutex> m_builder;
 };
 
 /// Chain memory pool. Almost similar to StackMemoryPool but more flexible and at the same time a bit slower.
@@ -323,7 +345,7 @@ private:
 		U8* m_top = nullptr;
 
 		/// Used to identify if the chunk can be deleted
-		PtrSize m_allocationsCount = 0;
+		PtrSize m_allocationCount = 0;
 
 		/// Previous chunk in the list
 		Chunk* m_prev = nullptr;
