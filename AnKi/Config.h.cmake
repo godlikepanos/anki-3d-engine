@@ -162,8 +162,8 @@
 #	define ANKI_PREFETCH_MEMORY(addr) __builtin_prefetch(addr)
 #	define ANKI_CHECK_FORMAT(fmtArgIdx, firstArgIdx) __attribute__((format(printf, fmtArgIdx + 1, firstArgIdx + 1))) // On methods need to include "this"
 #else
-#	define ANKI_LIKELY(x) ((x) == 1)
-#	define ANKI_UNLIKELY(x) ((x) == 1)
+#	define ANKI_LIKELY(x) (x)
+#	define ANKI_UNLIKELY(x) (x)
 #	define ANKI_RESTRICT
 #	define ANKI_USE_RESULT
 #	define ANKI_FORCE_INLINE
