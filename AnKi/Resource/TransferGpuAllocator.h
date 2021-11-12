@@ -6,8 +6,9 @@
 #pragma once
 
 #include <AnKi/Resource/Common.h>
-#include <AnKi/Gr/Utils/StackGpuAllocator.h>
+#include <AnKi/Util/StackAllocatorBuilder.h>
 #include <AnKi/Util/List.h>
+#include <AnKi/Gr/Buffer.h>
 
 namespace anki {
 
@@ -38,46 +39,57 @@ public:
 
 	TransferGpuAllocatorHandle& operator=(TransferGpuAllocatorHandle&& b)
 	{
-		m_handle = b.m_handle;
+		m_buffer = b.m_buffer;
+		m_mappedMemory = b.m_mappedMemory;
+		m_offsetInBuffer = b.m_offsetInBuffer;
 		m_range = b.m_range;
-		m_frame = b.m_frame;
+		m_pool = b.m_pool;
 		b.invalidate();
 		return *this;
 	}
 
-	BufferPtr getBuffer() const;
+	const BufferPtr& getBuffer() const
+	{
+		return m_buffer;
+	}
 
-	void* getMappedMemory() const;
+	void* getMappedMemory() const
+	{
+		ANKI_ASSERT(m_mappedMemory);
+		return m_mappedMemory;
+	}
 
 	PtrSize getOffset() const
 	{
-		ANKI_ASSERT(m_handle);
-		return m_handle.m_offset;
+		ANKI_ASSERT(m_offsetInBuffer != MAX_PTR_SIZE);
+		return m_offsetInBuffer;
 	}
 
 	PtrSize getRange() const
 	{
-		ANKI_ASSERT(m_handle);
 		ANKI_ASSERT(m_range != 0);
 		return m_range;
 	}
 
 private:
-	StackGpuAllocatorHandle m_handle;
+	BufferPtr m_buffer;
+	void* m_mappedMemory = nullptr;
+	PtrSize m_offsetInBuffer = MAX_PTR_SIZE;
 	PtrSize m_range = 0;
-	U8 m_frame = MAX_U8;
+	U8 m_pool = MAX_U8;
 
 	Bool valid() const
 	{
-		return m_range != 0 && m_frame < MAX_U8;
+		return m_range != 0 && m_pool < MAX_U8;
 	}
 
 	void invalidate()
 	{
-		m_handle.m_memory = nullptr;
-		m_handle.m_offset = 0;
+		m_buffer.reset(nullptr);
+		m_mappedMemory = nullptr;
+		m_offsetInBuffer = MAX_PTR_SIZE;
 		m_range = 0;
-		m_frame = MAX_U8;
+		m_pool = MAX_U8;
 	}
 };
 
@@ -91,8 +103,8 @@ public:
 	/// of the buffer to image copies.
 	static constexpr U32 GPU_BUFFER_ALIGNMENT = 16 * 3;
 
-	static const U32 FRAME_COUNT = 3;
-	static const PtrSize CHUNK_INITIAL_SIZE = 64_MB;
+	static constexpr U32 POOL_COUNT = 3;
+	static constexpr PtrSize CHUNK_INITIAL_SIZE = 64_MB;
 	static constexpr Second MAX_FENCE_WAIT_TIME = 500.0_ms;
 
 	TransferGpuAllocator();
@@ -109,28 +121,104 @@ public:
 	void release(TransferGpuAllocatorHandle& handle, FencePtr fence);
 
 private:
-	class Interface;
-	class Memory;
+	/// This is the chunk the StackAllocatorBuilder will be allocating.
+	class Chunk
+	{
+	public:
+		/// Required by StackAllocatorBuilder.
+		Chunk* m_nextChunk;
+
+		/// Required by StackAllocatorBuilder.
+		Atomic<PtrSize> m_offsetInChunk;
+
+		/// Required by StackAllocatorBuilder.
+		PtrSize m_chunkSize;
+
+		/// The GPU memory.
+		BufferPtr m_buffer;
+
+		/// Points to the mapped m_buffer.
+		void* m_mappedBuffer;
+	};
+
+	/// Implements the StackAllocatorBuilder TInterface
+	class StackAllocatorBuilderInterface
+	{
+	public:
+		TransferGpuAllocator* m_parent = nullptr;
+
+		// The rest of the functions implement the StackAllocatorBuilder TInterface.
+
+		constexpr PtrSize getMaxAlignment()
+		{
+			return GPU_BUFFER_ALIGNMENT;
+		}
+
+		constexpr PtrSize getInitialChunkSize() const
+		{
+			return CHUNK_INITIAL_SIZE;
+		}
+
+		constexpr F64 getNextChunkGrowScale() const
+		{
+			return 1.5;
+		}
+
+		constexpr PtrSize getNextChunkGrowBias() const
+		{
+			return 0;
+		}
+
+		constexpr Bool ignoreDeallocationErrors() const
+		{
+			return false;
+		}
+
+		Error allocateChunk(PtrSize size, Chunk*& out);
+
+		void freeChunk(Chunk* chunk);
+
+		void recycleChunk(Chunk& chunk)
+		{
+			// Do nothing
+		}
+
+		constexpr Atomic<U32>* getAllocationCount()
+		{
+			return nullptr;
+		}
+	};
+
+	/// StackAllocatorBuilder doesn't need a lock. There is another lock.
+	class DummyMutex
+	{
+	public:
+		void lock()
+		{
+		}
+
+		void unlock()
+		{
+		}
+	};
+
+	class Pool
+	{
+	public:
+		StackAllocatorBuilder<Chunk, StackAllocatorBuilderInterface, DummyMutex> m_stackAlloc;
+		List<FencePtr> m_fences;
+		U32 m_pendingReleases = 0;
+	};
 
 	ResourceAllocator<U8> m_alloc;
 	GrManager* m_gr = nullptr;
 	PtrSize m_maxAllocSize = 0;
 
-	UniquePtr<Interface> m_interface;
-
-	class Frame
-	{
-	public:
-		StackGpuAllocator m_stackAlloc;
-		List<FencePtr> m_fences;
-		U32 m_pendingReleases = 0;
-	};
-
 	Mutex m_mtx; ///< Protect all members bellow.
 	ConditionVariable m_condVar;
-	Array<Frame, FRAME_COUNT> m_frames;
-	U8 m_frameCount = 0;
-	PtrSize m_crntFrameAllocatedSize = 0;
+	Array<Pool, POOL_COUNT> m_pools;
+	U8 m_crntPool = 0;
+	PtrSize m_crntPoolAllocatedSize = 0;
 };
 /// @}
 

@@ -5,8 +5,7 @@ set(COMMON
 	"ShaderProgram.cpp"
 	"Utils/ClassGpuAllocator.cpp"
 	"Utils/FrameGpuAllocator.cpp"
-	"Utils/Functions.cpp"
-	"Utils/StackGpuAllocator.cpp")
+	"Utils/Functions.cpp")
 
 foreach(S ${COMMON})
 	anki_add_source_files("${CMAKE_CURRENT_SOURCE_DIR}/${S}")

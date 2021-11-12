@@ -11,75 +11,25 @@
 
 namespace anki {
 
-class TransferGpuAllocator::Memory : public StackGpuAllocatorMemory
+Error TransferGpuAllocator::StackAllocatorBuilderInterface::allocateChunk(PtrSize size, Chunk*& out)
 {
-public:
-	BufferPtr m_buffer;
-	void* m_mappedMemory;
-};
+	out = m_parent->m_alloc.newInstance<Chunk>();
 
-class TransferGpuAllocator::Interface : public StackGpuAllocatorInterface
-{
-public:
-	GrManager* m_gr;
-	ResourceAllocator<U8> m_alloc;
+	BufferInitInfo bufferInit(size, BufferUsageBit::TRANSFER_SOURCE, BufferMapAccessBit::WRITE, "Transfer");
+	out->m_buffer = m_parent->m_gr->newBuffer(bufferInit);
 
-	ResourceAllocator<U8> getAllocator() const
-	{
-		return m_alloc;
-	}
+	out->m_mappedBuffer = out->m_buffer->map(0, MAX_PTR_SIZE, BufferMapAccessBit::WRITE);
 
-	ANKI_USE_RESULT Error allocate(PtrSize size, StackGpuAllocatorMemory*& mem) final
-	{
-		TransferGpuAllocator::Memory* mm = m_alloc.newInstance<TransferGpuAllocator::Memory>();
-
-		mm->m_buffer = m_gr->newBuffer(
-			BufferInitInfo(size, BufferUsageBit::TRANSFER_SOURCE, BufferMapAccessBit::WRITE, "Transfer"));
-		mm->m_mappedMemory = mm->m_buffer->map(0, size, BufferMapAccessBit::WRITE);
-
-		mem = mm;
-		return Error::NONE;
-	}
-
-	void free(StackGpuAllocatorMemory* mem) final
-	{
-		ANKI_ASSERT(mem);
-
-		TransferGpuAllocator::Memory* mm = static_cast<TransferGpuAllocator::Memory*>(mem);
-		if(mm->m_mappedMemory)
-		{
-			mm->m_buffer->unmap();
-		}
-		m_alloc.deleteInstance(mm);
-	}
-
-	void getChunkGrowInfo(F32& scale, PtrSize& bias, PtrSize& initialSize) final
-	{
-		scale = 1.5;
-		bias = 0;
-		initialSize = TransferGpuAllocator::CHUNK_INITIAL_SIZE;
-	}
-
-	U32 getMaxAlignment() final
-	{
-		return TransferGpuAllocator::GPU_BUFFER_ALIGNMENT;
-	}
-};
-
-BufferPtr TransferGpuAllocatorHandle::getBuffer() const
-{
-	ANKI_ASSERT(m_handle.m_memory);
-	const TransferGpuAllocator::Memory* mm = static_cast<const TransferGpuAllocator::Memory*>(m_handle.m_memory);
-	ANKI_ASSERT(mm->m_buffer);
-	return mm->m_buffer;
+	return Error::NONE;
 }
 
-void* TransferGpuAllocatorHandle::getMappedMemory() const
+void TransferGpuAllocator::StackAllocatorBuilderInterface::freeChunk(Chunk* chunk)
 {
-	ANKI_ASSERT(m_handle.m_memory);
-	const TransferGpuAllocator::Memory* mm = static_cast<const TransferGpuAllocator::Memory*>(m_handle.m_memory);
-	ANKI_ASSERT(mm->m_mappedMemory);
-	return static_cast<U8*>(mm->m_mappedMemory) + m_handle.m_offset;
+	ANKI_ASSERT(chunk);
+
+	chunk->m_buffer->unmap();
+
+	m_parent->m_alloc.deleteInstance(chunk);
 }
 
 TransferGpuAllocator::TransferGpuAllocator()
@@ -88,10 +38,10 @@ TransferGpuAllocator::TransferGpuAllocator()
 
 TransferGpuAllocator::~TransferGpuAllocator()
 {
-	for(Frame& frame : m_frames)
+	for(Pool& pool : m_pools)
 	{
-		ANKI_ASSERT(frame.m_pendingReleases == 0);
-		frame.m_fences.destroy(m_alloc);
+		ANKI_ASSERT(pool.m_pendingReleases == 0);
+		pool.m_fences.destroy(m_alloc);
 	}
 }
 
@@ -100,16 +50,12 @@ Error TransferGpuAllocator::init(PtrSize maxSize, GrManager* gr, ResourceAllocat
 	m_alloc = alloc;
 	m_gr = gr;
 
-	m_maxAllocSize = getAlignedRoundUp(CHUNK_INITIAL_SIZE * FRAME_COUNT, maxSize);
+	m_maxAllocSize = getAlignedRoundUp(CHUNK_INITIAL_SIZE * POOL_COUNT, maxSize);
 	ANKI_RESOURCE_LOGI("Will use %luMB of memory for transfer scratch", m_maxAllocSize / 1024 / 1024);
 
-	m_interface.reset(m_alloc.newInstance<Interface>());
-	m_interface->m_gr = gr;
-	m_interface->m_alloc = alloc;
-
-	for(Frame& frame : m_frames)
+	for(Pool& pool : m_pools)
 	{
-		frame.m_stackAlloc.init(m_alloc, m_interface.get());
+		pool.m_stackAlloc.getInterface().m_parent = this;
 	}
 
 	return Error::NONE;
@@ -119,52 +65,60 @@ Error TransferGpuAllocator::allocate(PtrSize size, TransferGpuAllocatorHandle& h
 {
 	ANKI_TRACE_SCOPED_EVENT(RSRC_ALLOCATE_TRANSFER);
 
-	const PtrSize frameSize = m_maxAllocSize / FRAME_COUNT;
+	const PtrSize poolSize = m_maxAllocSize / POOL_COUNT;
 
 	LockGuard<Mutex> lock(m_mtx);
 
-	Frame* frame;
-	if(m_crntFrameAllocatedSize + size <= frameSize)
+	Pool* pool;
+	if(m_crntPoolAllocatedSize + size <= poolSize)
 	{
-		// Have enough space in the frame
+		// Have enough space in the pool
 
-		frame = &m_frames[m_frameCount];
+		pool = &m_pools[m_crntPool];
 	}
 	else
 	{
-		// Don't have enough space. Wait for next frame
+		// Don't have enough space. Wait for one pool used in the past
 
-		m_frameCount = U8((m_frameCount + 1) % FRAME_COUNT);
-		Frame& nextFrame = m_frames[m_frameCount];
+		m_crntPool = U8((m_crntPool + 1) % POOL_COUNT);
+		pool = &m_pools[m_crntPool];
 
 		// Wait for all memory to be released
-		while(nextFrame.m_pendingReleases != 0)
+		while(pool->m_pendingReleases != 0)
 		{
 			m_condVar.wait(m_mtx);
 		}
 
-		// Wait all fences
-		while(!nextFrame.m_fences.isEmpty())
+		// All memory is released, loop until all fences are triggered
+		while(!pool->m_fences.isEmpty())
 		{
-			FencePtr fence = nextFrame.m_fences.getFront();
+			FencePtr fence = pool->m_fences.getFront();
 
 			const Bool done = fence->clientWait(MAX_FENCE_WAIT_TIME);
 			if(done)
 			{
-				nextFrame.m_fences.popFront(m_alloc);
+				pool->m_fences.popFront(m_alloc);
 			}
 		}
 
-		nextFrame.m_stackAlloc.reset();
-		m_crntFrameAllocatedSize = 0;
-		frame = &nextFrame;
+		pool->m_stackAlloc.reset();
+		m_crntPoolAllocatedSize = 0;
 	}
 
-	ANKI_CHECK(frame->m_stackAlloc.allocate(size, handle.m_handle));
+	Chunk* chunk;
+	PtrSize offset;
+	const Error err = pool->m_stackAlloc.allocate(size, GPU_BUFFER_ALIGNMENT, chunk, offset);
+	ANKI_ASSERT(!err);
+	(void)err;
+
+	handle.m_buffer = chunk->m_buffer;
+	handle.m_mappedMemory = static_cast<U8*>(chunk->m_mappedBuffer) + offset;
+	handle.m_offsetInBuffer = offset;
 	handle.m_range = size;
-	handle.m_frame = U8(frame - &m_frames[0]);
-	m_crntFrameAllocatedSize += size;
-	++frame->m_pendingReleases;
+	handle.m_pool = U8(pool - &m_pools[0]);
+
+	m_crntPoolAllocatedSize += size;
+	++pool->m_pendingReleases;
 
 	return Error::NONE;
 }
@@ -174,15 +128,15 @@ void TransferGpuAllocator::release(TransferGpuAllocatorHandle& handle, FencePtr 
 	ANKI_ASSERT(fence);
 	ANKI_ASSERT(handle.valid());
 
-	Frame& frame = m_frames[handle.m_frame];
+	Pool& pool = m_pools[handle.m_pool];
 
 	{
 		LockGuard<Mutex> lock(m_mtx);
 
-		frame.m_fences.pushBack(m_alloc, fence);
+		pool.m_fences.pushBack(m_alloc, fence);
 
-		ANKI_ASSERT(frame.m_pendingReleases > 0);
-		--frame.m_pendingReleases;
+		ANKI_ASSERT(pool.m_pendingReleases > 0);
+		--pool.m_pendingReleases;
 
 		m_condVar.notifyOne();
 	}
