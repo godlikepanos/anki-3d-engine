@@ -43,6 +43,7 @@
 #include <AnKi/Util/Function.h>
 #include <AnKi/Util/BuddyAllocatorBuilder.h>
 #include <AnKi/Util/StackAllocatorBuilder.h>
+#include <AnKi/Util/ClassAllocatorBuilder.h>
 
 /// @defgroup util Utilities (like STL)
 
