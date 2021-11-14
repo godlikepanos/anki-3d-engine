@@ -3,7 +3,6 @@ set(COMMON
 	"GrObject.cpp"
 	"RenderGraph.cpp"
 	"ShaderProgram.cpp"
-	"Utils/ClassGpuAllocator.cpp"
 	"Utils/FrameGpuAllocator.cpp"
 	"Utils/Functions.cpp")
 

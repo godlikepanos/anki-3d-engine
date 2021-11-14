@@ -20,7 +20,6 @@
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Gr/RenderGraph.h>
 
-#include <AnKi/Gr/Utils/ClassGpuAllocator.h>
 #include <AnKi/Gr/Utils/FrameGpuAllocator.h>
 #include <AnKi/Gr/Utils/Functions.h>
 
