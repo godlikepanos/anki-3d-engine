@@ -28,9 +28,9 @@ MainRenderer::~MainRenderer()
 	ANKI_R_LOGI("Destroying main renderer");
 }
 
-Error MainRenderer::init(ThreadHive* hive, ResourceManager* resources, GrManager* gr,
-						 StagingGpuMemoryManager* stagingMem, UiManager* ui, AllocAlignedCallback allocCb,
-						 void* allocCbUserData, const ConfigSet& config, Timestamp* globTimestamp)
+Error MainRenderer::init(ThreadHive* hive, ResourceManager* resources, GrManager* gr, StagingGpuMemoryPool* stagingMem,
+						 UiManager* ui, AllocAlignedCallback allocCb, void* allocCbUserData, const ConfigSet& config,
+						 Timestamp* globTimestamp)
 {
 	ANKI_R_LOGI("Initializing main renderer");
 

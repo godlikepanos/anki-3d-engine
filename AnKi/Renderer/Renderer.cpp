@@ -59,7 +59,7 @@ Renderer::~Renderer()
 	m_currentDebugRtName.destroy(getAllocator());
 }
 
-Error Renderer::init(ThreadHive* hive, ResourceManager* resources, GrManager* gl, StagingGpuMemoryManager* stagingMem,
+Error Renderer::init(ThreadHive* hive, ResourceManager* resources, GrManager* gl, StagingGpuMemoryPool* stagingMem,
 					 UiManager* ui, HeapAllocator<U8> alloc, const ConfigSet& config, Timestamp* globTimestamp)
 {
 	ANKI_TRACE_SCOPED_EVENT(R_INIT);

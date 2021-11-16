@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Gr.h>
-#include <AnKi/Core/GpuMemoryManager.h>
+#include <AnKi/Core/GpuMemoryPools.h>
 #include <AnKi/Util/Ptr.h>
 #include <AnKi/Shaders/Include/Evsm.h>
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>

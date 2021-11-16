@@ -14,7 +14,8 @@ namespace anki {
 
 /// This is a generic implementation of a buddy allocator.
 /// @tparam T_MAX_MEMORY_RANGE_LOG2 The max memory to allocate.
-template<U32 T_MAX_MEMORY_RANGE_LOG2 = 32>
+/// @tparam TLock This an optional lock. Can be a Mutex or SpinLock or some dummy class.
+template<U32 T_MAX_MEMORY_RANGE_LOG2, typename TLock>
 class BuddyAllocatorBuilder
 {
 public:
@@ -50,7 +51,7 @@ public:
 
 	/// Allocate memory.
 	/// @param size The size of the allocation.
-	/// @param[out] address The returned address if the allocation didn't fail.
+	/// @param[out] address The returned address if the allocation didn't fail. It will stay untouched if it failed.
 	/// @return True if the allocation succeeded.
 	ANKI_USE_RESULT Bool allocate(PtrSize size, Address& address);
 
@@ -63,11 +64,8 @@ public:
 	void debugPrint() const;
 
 	/// Get some info.
-	void getInfo(PtrSize& userAllocatedSize, PtrSize& realAllocatedSize) const
-	{
-		userAllocatedSize = m_userAllocatedSize;
-		realAllocatedSize = m_realAllocatedSize;
-	}
+	void getInfo(PtrSize& userAllocatedSize, PtrSize& realAllocatedSize, F64& externalFragmentation,
+				 F64& internalFragmentation) const;
 
 private:
 	template<typename T>
@@ -86,8 +84,9 @@ private:
 	GenericMemoryPoolAllocator<U8> m_alloc;
 	DynamicArray<FreeList> m_freeLists;
 	PtrSize m_maxMemoryRange = 0;
-	PtrSize m_userAllocatedSize = 0;
-	PtrSize m_realAllocatedSize = 0;
+	PtrSize m_userAllocatedSize = 0; ///< The total ammount of memory requested by the user.
+	PtrSize m_realAllocatedSize = 0; ///< The total ammount of memory actually allocated.
+	mutable TLock m_mutex;
 
 	U32 orderCount() const
 	{

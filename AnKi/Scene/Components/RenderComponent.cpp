@@ -15,7 +15,7 @@ ANKI_SCENE_COMPONENT_STATICS(RenderComponent)
 
 void RenderComponent::allocateAndSetupUniforms(const MaterialResourcePtr& mtl, const RenderQueueDrawContext& ctx,
 											   ConstWeakArray<Mat4> transforms, ConstWeakArray<Mat4> prevTransforms,
-											   StagingGpuMemoryManager& alloc)
+											   StagingGpuMemoryPool& alloc)
 {
 	ANKI_ASSERT(transforms.getSize() <= MAX_INSTANCE_COUNT);
 	ANKI_ASSERT(prevTransforms.getSize() == transforms.getSize());

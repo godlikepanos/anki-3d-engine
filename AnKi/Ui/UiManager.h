@@ -12,7 +12,7 @@ namespace anki {
 // Forward
 class ResourceManager;
 class GrManager;
-class StagingGpuMemoryManager;
+class StagingGpuMemoryPool;
 class Input;
 
 /// @addtogroup ui
@@ -27,8 +27,7 @@ public:
 	~UiManager();
 
 	ANKI_USE_RESULT Error init(AllocAlignedCallback allocCallback, void* allocCallbackUserData,
-							   ResourceManager* resources, GrManager* gr, StagingGpuMemoryManager* gpuMem,
-							   Input* input);
+							   ResourceManager* resources, GrManager* gr, StagingGpuMemoryPool* gpuMem, Input* input);
 
 	UiAllocator getAllocator() const
 	{
@@ -47,7 +46,7 @@ public:
 		return *m_gr;
 	}
 
-	StagingGpuMemoryManager& getStagingGpuMemoryManager()
+	StagingGpuMemoryPool& getStagingGpuMemory()
 	{
 		ANKI_ASSERT(m_gpuMem);
 		return *m_gpuMem;
@@ -80,7 +79,7 @@ private:
 	UiAllocator m_alloc;
 	ResourceManager* m_resources = nullptr;
 	GrManager* m_gr = nullptr;
-	StagingGpuMemoryManager* m_gpuMem = nullptr;
+	StagingGpuMemoryPool* m_gpuMem = nullptr;
 	Input* m_input = nullptr;
 };
 /// @}

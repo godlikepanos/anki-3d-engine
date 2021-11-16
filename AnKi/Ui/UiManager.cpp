@@ -18,7 +18,7 @@ UiManager::~UiManager()
 }
 
 Error UiManager::init(AllocAlignedCallback allocCallback, void* allocCallbackUserData, ResourceManager* resources,
-					  GrManager* gr, StagingGpuMemoryManager* gpuMem, Input* input)
+					  GrManager* gr, StagingGpuMemoryPool* gpuMem, Input* input)
 {
 	ANKI_ASSERT(resources);
 	ANKI_ASSERT(gr);

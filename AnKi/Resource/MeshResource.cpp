@@ -7,6 +7,7 @@
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Resource/MeshBinaryLoader.h>
 #include <AnKi/Resource/AsyncLoader.h>
+#include <AnKi/Core/GpuMemoryPools.h>
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/Filesystem.h>
 
@@ -57,6 +58,17 @@ MeshResource::~MeshResource()
 {
 	m_subMeshes.destroy(getAllocator());
 	m_vertexBufferInfos.destroy(getAllocator());
+
+	if(m_vertexBuffersOffset != MAX_PTR_SIZE)
+	{
+		getManager().getVertexGpuMemory().free(m_vertexBuffersSize, m_vertexBuffersOffset);
+	}
+
+	if(m_indexBufferOffset != MAX_PTR_SIZE)
+	{
+		const PtrSize indexBufferSize = PtrSize(m_indexCount) * ((m_indexType == IndexType::U32) ? 4 : 2);
+		getManager().getVertexGpuMemory().free(indexBufferSize, m_indexBufferOffset);
+	}
 }
 
 Bool MeshResource::isCompatible(const MeshResource& other) const
@@ -91,7 +103,9 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	ANKI_CHECK(loader.load(filename));
 	const MeshBinaryHeader& header = loader.getHeader();
 
-	// Get submeshes
+	//
+	// Submeshes
+	//
 	m_subMeshes.create(getAllocator(), header.m_subMeshCount);
 	for(U32 i = 0; i < m_subMeshes.getSize(); ++i)
 	{
@@ -101,45 +115,40 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		m_subMeshes[i].m_aabb.setMax(loader.getSubMeshes()[i].m_aabbMax);
 	}
 
+	//
 	// Index stuff
+	//
 	m_indexCount = header.m_totalIndexCount;
 	ANKI_ASSERT((m_indexCount % 3) == 0 && "Expecting triangles");
 	m_indexType = header.m_indexType;
 
-	const PtrSize indexBuffSize = PtrSize(m_indexCount) * ((m_indexType == IndexType::U32) ? 4 : 2);
+	const PtrSize indexBufferSize = PtrSize(m_indexCount) * ((m_indexType == IndexType::U32) ? 4 : 2);
+	ANKI_CHECK(getManager().getVertexGpuMemory().allocate(indexBufferSize, m_indexBufferOffset));
 
-	BufferUsageBit indexBufferUsage = BufferUsageBit::INDEX | BufferUsageBit::TRANSFER_DESTINATION;
-	if(rayTracingEnabled)
-	{
-		indexBufferUsage |= BufferUsageBit::ACCELERATION_STRUCTURE_BUILD;
-	}
-	m_indexBuffer = getManager().getGrManager().newBuffer(
-		BufferInitInfo(indexBuffSize, indexBufferUsage, BufferMapAccessBit::NONE,
-					   StringAuto(getTempAllocator()).sprintf("%s_%s", "Idx", basename.cstr())));
-
+	//
 	// Vertex stuff
+	//
 	m_vertexCount = header.m_totalVertexCount;
 	m_vertexBufferInfos.create(getAllocator(), header.m_vertexBufferCount);
 
-	U32 totalVertexBuffSize = 0;
+	m_vertexBuffersSize = 0;
 	for(U32 i = 0; i < header.m_vertexBufferCount; ++i)
 	{
-		alignRoundUp(MESH_BINARY_BUFFER_ALIGNMENT, totalVertexBuffSize);
+		alignRoundUp(MESH_BINARY_BUFFER_ALIGNMENT, m_vertexBuffersSize);
 
-		m_vertexBufferInfos[i].m_offset = totalVertexBuffSize;
+		m_vertexBufferInfos[i].m_offset = m_vertexBuffersSize;
 		m_vertexBufferInfos[i].m_stride = header.m_vertexBuffers[i].m_vertexStride;
 
-		totalVertexBuffSize += m_vertexCount * m_vertexBufferInfos[i].m_stride;
+		m_vertexBuffersSize += m_vertexCount * m_vertexBufferInfos[i].m_stride;
 	}
 
-	BufferUsageBit vertexBufferUsage = BufferUsageBit::VERTEX | BufferUsageBit::TRANSFER_DESTINATION;
-	if(rayTracingEnabled)
+	ANKI_CHECK(getManager().getVertexGpuMemory().allocate(m_vertexBuffersSize, m_vertexBuffersOffset));
+
+	// Readjust the individual offset now that we have a global offset
+	for(U32 i = 0; i < header.m_vertexBufferCount; ++i)
 	{
-		vertexBufferUsage |= BufferUsageBit::ACCELERATION_STRUCTURE_BUILD;
+		m_vertexBufferInfos[i].m_offset += m_vertexBuffersOffset;
 	}
-	m_vertexBuffer = getManager().getGrManager().newBuffer(
-		BufferInitInfo(totalVertexBuffSize, vertexBufferUsage, BufferMapAccessBit::NONE,
-					   StringAuto(getTempAllocator()).sprintf("%s_%s", "Vert", basename.cstr())));
 
 	for(VertexAttributeId attrib = VertexAttributeId::FIRST; attrib < VertexAttributeId::COUNT; ++attrib)
 	{
@@ -158,33 +167,36 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	// Other
 	m_aabb.setMin(header.m_aabbMin);
 	m_aabb.setMax(header.m_aabbMax);
+	m_vertexBuffer = getManager().getVertexGpuMemory().getVertexBuffer();
 
+	//
 	// Clear the buffers
+	//
 	if(async)
 	{
 		CommandBufferInitInfo cmdbinit;
 		cmdbinit.m_flags = CommandBufferFlag::SMALL_BATCH | CommandBufferFlag::GENERAL_WORK;
 		CommandBufferPtr cmdb = getManager().getGrManager().newCommandBuffer(cmdbinit);
 
-		cmdb->fillBuffer(m_vertexBuffer, 0, MAX_PTR_SIZE, 0);
-		cmdb->fillBuffer(m_indexBuffer, 0, MAX_PTR_SIZE, 0);
+		cmdb->fillBuffer(m_vertexBuffer, m_vertexBuffersOffset, m_vertexBuffersSize, 0);
+		cmdb->fillBuffer(m_vertexBuffer, m_indexBufferOffset, indexBufferSize, 0);
 
 		cmdb->setBufferBarrier(m_vertexBuffer, BufferUsageBit::TRANSFER_DESTINATION, BufferUsageBit::VERTEX, 0,
-							   MAX_PTR_SIZE);
-		cmdb->setBufferBarrier(m_indexBuffer, BufferUsageBit::TRANSFER_DESTINATION, BufferUsageBit::INDEX, 0,
 							   MAX_PTR_SIZE);
 
 		cmdb->flush();
 	}
 
+	//
 	// Create the BLAS
+	//
 	if(rayTracingEnabled)
 	{
 		AccelerationStructureInitInfo inf(StringAuto(getTempAllocator()).sprintf("%s_%s", "Blas", basename.cstr()));
 		inf.m_type = AccelerationStructureType::BOTTOM_LEVEL;
 
-		inf.m_bottomLevel.m_indexBuffer = m_indexBuffer;
-		inf.m_bottomLevel.m_indexBufferOffset = 0;
+		inf.m_bottomLevel.m_indexBuffer = m_vertexBuffer;
+		inf.m_bottomLevel.m_indexBufferOffset = m_indexBufferOffset;
 		inf.m_bottomLevel.m_indexCount = m_indexCount;
 		inf.m_bottomLevel.m_indexType = m_indexType;
 
@@ -210,6 +222,8 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	// Fill the GPU descriptor
 	if(rayTracingEnabled)
 	{
+		m_meshGpuDescriptor.m_indexBufferPtr = m_vertexBuffer->getGpuAddress() + m_indexBufferOffset;
+
 		U32 bufferIdx;
 		Format format;
 		U32 relativeOffset;
@@ -218,18 +232,18 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		PtrSize offset;
 		PtrSize stride;
 		getVertexBufferInfo(bufferIdx, buffer, offset, stride);
-		m_meshGpuDescriptor.m_indexBufferPtr = m_indexBuffer->getGpuAddress();
-		m_meshGpuDescriptor.m_vertexBufferPtrs[VertexAttributeBufferId::POSITION] = buffer->getGpuAddress();
+		m_meshGpuDescriptor.m_vertexBufferPtrs[VertexAttributeBufferId::POSITION] = buffer->getGpuAddress() + offset;
 
 		getVertexAttributeInfo(VertexAttributeId::NORMAL, bufferIdx, format, relativeOffset);
 		getVertexBufferInfo(bufferIdx, buffer, offset, stride);
-		m_meshGpuDescriptor.m_vertexBufferPtrs[VertexAttributeBufferId::NORMAL_TANGENT_UV0] = buffer->getGpuAddress();
+		m_meshGpuDescriptor.m_vertexBufferPtrs[VertexAttributeBufferId::NORMAL_TANGENT_UV0] =
+			buffer->getGpuAddress() + offset;
 
 		if(hasBoneWeights())
 		{
 			getVertexAttributeInfo(VertexAttributeId::BONE_WEIGHTS, bufferIdx, format, relativeOffset);
 			getVertexBufferInfo(bufferIdx, buffer, offset, stride);
-			m_meshGpuDescriptor.m_vertexBufferPtrs[VertexAttributeBufferId::BONE] = buffer->getGpuAddress();
+			m_meshGpuDescriptor.m_vertexBufferPtrs[VertexAttributeBufferId::BONE] = buffer->getGpuAddress() + offset;
 		}
 
 		m_meshGpuDescriptor.m_indexCount = m_indexCount;
@@ -266,23 +280,24 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 	// Set barriers
 	cmdb->setBufferBarrier(m_vertexBuffer, BufferUsageBit::VERTEX, BufferUsageBit::TRANSFER_DESTINATION, 0,
 						   MAX_PTR_SIZE);
-	cmdb->setBufferBarrier(m_indexBuffer, BufferUsageBit::INDEX, BufferUsageBit::TRANSFER_DESTINATION, 0, MAX_PTR_SIZE);
 
 	// Write index buffer
 	{
-		ANKI_CHECK(transferAlloc.allocate(m_indexBuffer->getSize(), handles[1]));
+		const PtrSize indexBufferSize = PtrSize(m_indexCount) * ((m_indexType == IndexType::U32) ? 4 : 2);
+
+		ANKI_CHECK(transferAlloc.allocate(indexBufferSize, handles[1]));
 		void* data = handles[1].getMappedMemory();
 		ANKI_ASSERT(data);
 
-		ANKI_CHECK(loader.storeIndexBuffer(data, m_indexBuffer->getSize()));
+		ANKI_CHECK(loader.storeIndexBuffer(data, indexBufferSize));
 
-		cmdb->copyBufferToBuffer(handles[1].getBuffer(), handles[1].getOffset(), m_indexBuffer, 0,
+		cmdb->copyBufferToBuffer(handles[1].getBuffer(), handles[1].getOffset(), m_vertexBuffer, m_indexBufferOffset,
 								 handles[1].getRange());
 	}
 
 	// Write vert buff
 	{
-		ANKI_CHECK(transferAlloc.allocate(m_vertexBuffer->getSize(), handles[0]));
+		ANKI_CHECK(transferAlloc.allocate(m_vertexBuffersSize, handles[0]));
 		U8* data = static_cast<U8*>(handles[0].getMappedMemory());
 		ANKI_ASSERT(data);
 
@@ -297,10 +312,10 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 			offset += PtrSize(m_vertexBufferInfos[i].m_stride) * m_vertexCount;
 		}
 
-		ANKI_ASSERT(offset == m_vertexBuffer->getSize());
+		ANKI_ASSERT(offset == m_vertexBuffersSize);
 
 		// Copy
-		cmdb->copyBufferToBuffer(handles[0].getBuffer(), handles[0].getOffset(), m_vertexBuffer, 0,
+		cmdb->copyBufferToBuffer(handles[0].getBuffer(), handles[0].getOffset(), m_vertexBuffer, m_vertexBuffersOffset,
 								 handles[0].getRange());
 	}
 
@@ -308,9 +323,9 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 	if(gr.getDeviceCapabilities().m_rayTracingEnabled)
 	{
 		cmdb->setBufferBarrier(m_vertexBuffer, BufferUsageBit::TRANSFER_DESTINATION,
-							   BufferUsageBit::ACCELERATION_STRUCTURE_BUILD | BufferUsageBit::VERTEX, 0, MAX_PTR_SIZE);
-		cmdb->setBufferBarrier(m_indexBuffer, BufferUsageBit::TRANSFER_DESTINATION,
-							   BufferUsageBit::ACCELERATION_STRUCTURE_BUILD | BufferUsageBit::INDEX, 0, MAX_PTR_SIZE);
+							   BufferUsageBit::ACCELERATION_STRUCTURE_BUILD | BufferUsageBit::VERTEX
+								   | BufferUsageBit::INDEX,
+							   0, MAX_PTR_SIZE);
 
 		cmdb->setAccelerationStructureBarrier(m_blas, AccelerationStructureUsageBit::NONE,
 											  AccelerationStructureUsageBit::BUILD);
@@ -322,10 +337,8 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 	}
 	else
 	{
-		cmdb->setBufferBarrier(m_vertexBuffer, BufferUsageBit::TRANSFER_DESTINATION, BufferUsageBit::VERTEX, 0,
-							   MAX_PTR_SIZE);
-		cmdb->setBufferBarrier(m_indexBuffer, BufferUsageBit::TRANSFER_DESTINATION, BufferUsageBit::INDEX, 0,
-							   MAX_PTR_SIZE);
+		cmdb->setBufferBarrier(m_vertexBuffer, BufferUsageBit::TRANSFER_DESTINATION,
+							   BufferUsageBit::VERTEX | BufferUsageBit::INDEX, 0, MAX_PTR_SIZE);
 	}
 
 	// Finalize

@@ -6,14 +6,14 @@
 #include <AnKi/Scene/DebugDrawer.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Renderer/RenderQueue.h>
-#include <AnKi/Core/GpuMemoryManager.h>
+#include <AnKi/Core/GpuMemoryPools.h>
 #include <AnKi/Physics/PhysicsWorld.h>
 #include <AnKi/Gr/Buffer.h>
 #include <AnKi/Collision.h>
 
 namespace anki {
 
-void allocateAndPopulateDebugBox(StagingGpuMemoryManager& stagingGpuAllocator, StagingGpuMemoryToken& vertsToken,
+void allocateAndPopulateDebugBox(StagingGpuMemoryPool& stagingGpuAllocator, StagingGpuMemoryToken& vertsToken,
 								 StagingGpuMemoryToken& indicesToken, U32& indexCount)
 {
 	Vec3* verts = static_cast<Vec3*>(
@@ -139,8 +139,7 @@ Error DebugDrawer2::init(ResourceManager* rsrcManager)
 }
 
 void DebugDrawer2::drawCubes(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 lineSize, Bool ditherFailedDepth,
-							 F32 cubeSideSize, StagingGpuMemoryManager& stagingGpuAllocator,
-							 CommandBufferPtr& cmdb) const
+							 F32 cubeSideSize, StagingGpuMemoryPool& stagingGpuAllocator, CommandBufferPtr& cmdb) const
 {
 	// Set the uniforms
 	StagingGpuMemoryToken unisToken;
@@ -180,7 +179,7 @@ void DebugDrawer2::drawCubes(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 l
 }
 
 void DebugDrawer2::drawLines(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 lineSize, Bool ditherFailedDepth,
-							 ConstWeakArray<Vec3> linePositions, StagingGpuMemoryManager& stagingGpuAllocator,
+							 ConstWeakArray<Vec3> linePositions, StagingGpuMemoryPool& stagingGpuAllocator,
 							 CommandBufferPtr& cmdb) const
 {
 	ANKI_ASSERT(mvps.getSize() > 0);
@@ -222,7 +221,7 @@ void DebugDrawer2::drawLines(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 l
 void DebugDrawer2::drawBillboardTextures(const Mat4& projMat, const Mat4& viewMat, ConstWeakArray<Vec3> positions,
 										 const Vec4& color, Bool ditherFailedDepth, TextureViewPtr tex,
 										 SamplerPtr sampler, Vec2 billboardSize,
-										 StagingGpuMemoryManager& stagingGpuAllocator, CommandBufferPtr& cmdb) const
+										 StagingGpuMemoryPool& stagingGpuAllocator, CommandBufferPtr& cmdb) const
 {
 	StagingGpuMemoryToken positionsToken;
 	Vec3* verts = static_cast<Vec3*>(

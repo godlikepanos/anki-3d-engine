@@ -14,7 +14,7 @@ ANKI_TEST(Util, BuddyAllocatorBuilder)
 
 	// Simple
 	{
-		BuddyAllocatorBuilder<4> buddy(alloc, 4);
+		BuddyAllocatorBuilder<4, Mutex> buddy(alloc, 4);
 
 		Array<U32, 2> addr;
 		Bool success = buddy.allocate(1, addr[0]);
@@ -32,15 +32,15 @@ ANKI_TEST(Util, BuddyAllocatorBuilder)
 
 	// Fuzzy
 	{
-		BuddyAllocatorBuilder<32> buddy(alloc, 32);
+		BuddyAllocatorBuilder<32, Mutex> buddy(alloc, 32);
 		std::vector<std::pair<U32, U32>> allocations;
-		for(U32 it = 0; it < 1000; ++it)
+		for(U32 it = 0; it < 10000; ++it)
 		{
 			if((getRandom() % 2) == 0)
 			{
 				// Do an allocation
 				U32 addr;
-				const U32 size = max<U32>(getRandom() % 512, 1);
+				const U32 size = max<U32>(getRandom() % 256_MB, 1);
 				const Bool success = buddy.allocate(size, addr);
 				if(success)
 				{
@@ -59,6 +59,14 @@ ANKI_TEST(Util, BuddyAllocatorBuilder)
 				}
 			}
 		}
+
+		// Get the fragmentation
+		PtrSize userAllocatedSize, realAllocatedSize;
+		F64 externalFragmentation, internalFragmentation;
+		buddy.getInfo(userAllocatedSize, realAllocatedSize, externalFragmentation, internalFragmentation);
+		ANKI_TEST_LOGI("Memory info: userAllocatedSize %zu, realAllocatedSize %zu, externalFragmentation %f, "
+					   "internalFragmentation %f",
+					   userAllocatedSize, realAllocatedSize, externalFragmentation, internalFragmentation);
 
 		// Remove the remaining
 		for(const auto& pair : allocations)

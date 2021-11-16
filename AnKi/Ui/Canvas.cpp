@@ -7,7 +7,7 @@
 #include <AnKi/Ui/Font.h>
 #include <AnKi/Ui/UiManager.h>
 #include <AnKi/Resource/ResourceManager.h>
-#include <AnKi/Core/GpuMemoryManager.h>
+#include <AnKi/Core/GpuMemoryPools.h>
 #include <AnKi/Input/Input.h>
 #include <AnKi/Gr/Sampler.h>
 #include <AnKi/Gr/GrManager.h>
@@ -236,10 +236,10 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 			return;
 		}
 
-		ImDrawVert* verts = static_cast<ImDrawVert*>(m_manager->getStagingGpuMemoryManager().allocateFrame(
-			verticesSize, StagingGpuMemoryType::VERTEX, vertsToken));
-		ImDrawIdx* indices = static_cast<ImDrawIdx*>(m_manager->getStagingGpuMemoryManager().allocateFrame(
-			indicesSize, StagingGpuMemoryType::VERTEX, indicesToken));
+		ImDrawVert* verts = static_cast<ImDrawVert*>(
+			m_manager->getStagingGpuMemory().allocateFrame(verticesSize, StagingGpuMemoryType::VERTEX, vertsToken));
+		ImDrawIdx* indices = static_cast<ImDrawIdx*>(
+			m_manager->getStagingGpuMemory().allocateFrame(indicesSize, StagingGpuMemoryType::VERTEX, indicesToken));
 
 		for(I n = 0; n < drawData.CmdListsCount; ++n)
 		{

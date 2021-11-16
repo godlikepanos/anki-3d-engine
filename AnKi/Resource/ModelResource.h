@@ -157,6 +157,7 @@ private:
 	{
 	public:
 		BufferPtr m_buffer;
+		PtrSize m_offset;
 		U32 m_firstIndex = MAX_U32;
 		U32 m_indexCount = MAX_U32;
 	};

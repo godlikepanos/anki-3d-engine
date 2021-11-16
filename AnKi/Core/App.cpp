@@ -24,7 +24,7 @@
 #include <AnKi/Script/ScriptManager.h>
 #include <AnKi/Resource/ResourceFilesystem.h>
 #include <AnKi/Resource/AsyncLoader.h>
-#include <AnKi/Core/GpuMemoryManager.h>
+#include <AnKi/Core/GpuMemoryPools.h>
 #include <AnKi/Ui/UiManager.h>
 #include <AnKi/Ui/Canvas.h>
 #include <csignal>
@@ -288,6 +288,8 @@ void App::cleanup()
 	m_physics = nullptr;
 	m_heapAlloc.deleteInstance(m_stagingMem);
 	m_stagingMem = nullptr;
+	m_heapAlloc.deleteInstance(m_vertexMem);
+	m_vertexMem = nullptr;
 	m_heapAlloc.deleteInstance(m_threadHive);
 	m_threadHive = nullptr;
 	GrManager::deleteInstance(m_gr);
@@ -420,9 +422,12 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	ANKI_CHECK(GrManager::newInstance(grInit, m_gr));
 
 	//
-	// Staging mem
+	// GPU mem
 	//
-	m_stagingMem = m_heapAlloc.newInstance<StagingGpuMemoryManager>();
+	m_vertexMem = m_heapAlloc.newInstance<VertexGpuMemoryPool>();
+	ANKI_CHECK(m_vertexMem->init(m_heapAlloc, m_gr, config));
+
+	m_stagingMem = m_heapAlloc.newInstance<StagingGpuMemoryPool>();
 	ANKI_CHECK(m_stagingMem->init(m_gr, config));
 
 	//
@@ -445,6 +450,7 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	rinit.m_gr = m_gr;
 	rinit.m_physics = m_physics;
 	rinit.m_resourceFs = m_resourceFs;
+	rinit.m_vertexMemory = m_vertexMem;
 	rinit.m_config = &config;
 	rinit.m_cacheDir = m_cacheDir.toCString();
 	rinit.m_allocCallback = m_allocCb;

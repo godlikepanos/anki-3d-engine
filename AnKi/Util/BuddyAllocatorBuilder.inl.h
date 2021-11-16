@@ -7,8 +7,9 @@
 
 namespace anki {
 
-template<U32 T_MAX_MEMORY_RANGE_LOG2>
-void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2>::init(GenericMemoryPoolAllocator<U8> alloc, U32 maxMemoryRangeLog2)
+template<U32 T_MAX_MEMORY_RANGE_LOG2, typename TLock>
+void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::init(GenericMemoryPoolAllocator<U8> alloc,
+																 U32 maxMemoryRangeLog2)
 {
 	ANKI_ASSERT(maxMemoryRangeLog2 >= 1 && maxMemoryRangeLog2 <= T_MAX_MEMORY_RANGE_LOG2);
 	ANKI_ASSERT(m_freeLists.getSize() == 0 && m_userAllocatedSize == 0 && m_realAllocatedSize == 0);
@@ -20,8 +21,8 @@ void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2>::init(GenericMemoryPoolAlloc
 	m_freeLists.create(m_alloc, orderCount);
 }
 
-template<U32 T_MAX_MEMORY_RANGE_LOG2>
-void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2>::destroy()
+template<U32 T_MAX_MEMORY_RANGE_LOG2, typename TLock>
+void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::destroy()
 {
 	ANKI_ASSERT(m_userAllocatedSize == 0 && "Forgot to free all memory");
 	m_freeLists.destroy(m_alloc);
@@ -30,10 +31,12 @@ void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2>::destroy()
 	m_realAllocatedSize = 0;
 }
 
-template<U32 T_MAX_MEMORY_RANGE_LOG2>
-Bool BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2>::allocate(PtrSize size, Address& outAddress)
+template<U32 T_MAX_MEMORY_RANGE_LOG2, typename TLock>
+Bool BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::allocate(PtrSize size, Address& outAddress)
 {
 	ANKI_ASSERT(size > 0 && size <= m_maxMemoryRange);
+
+	LockGuard<TLock> lock(m_mutex);
 
 	// Lazy initialize
 	if(m_userAllocatedSize == 0)
@@ -84,10 +87,13 @@ Bool BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2>::allocate(PtrSize size, Addr
 	return true;
 }
 
-template<U32 T_MAX_MEMORY_RANGE_LOG2>
-void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2>::free(Address address, PtrSize size)
+template<U32 T_MAX_MEMORY_RANGE_LOG2, typename TLock>
+void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::free(Address address, PtrSize size)
 {
 	const PtrSize alignedSize = nextPowerOfTwo(size);
+
+	LockGuard<TLock> lock(m_mutex);
+
 	freeInternal(address, alignedSize);
 
 	ANKI_ASSERT(m_userAllocatedSize >= size);
@@ -106,9 +112,10 @@ void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2>::free(Address address, PtrSi
 	}
 }
 
-template<U32 T_MAX_MEMORY_RANGE_LOG2>
-void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2>::freeInternal(PtrSize address, PtrSize size)
+template<U32 T_MAX_MEMORY_RANGE_LOG2, typename TLock>
+void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::freeInternal(PtrSize address, PtrSize size)
 {
+	ANKI_ASSERT(size);
 	ANKI_ASSERT(isPowerOfTwo(size));
 	ANKI_ASSERT(address + size <= m_maxMemoryRange);
 
@@ -154,13 +161,15 @@ void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2>::freeInternal(PtrSize addres
 	}
 }
 
-template<U32 T_MAX_MEMORY_RANGE_LOG2>
-void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2>::debugPrint() const
+template<U32 T_MAX_MEMORY_RANGE_LOG2, typename TLock>
+void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::debugPrint() const
 {
 	constexpr PtrSize MAX_MEMORY_RANGE = pow2<PtrSize>(T_MAX_MEMORY_RANGE_LOG2);
 
 	// Allocate because we can't possibly have that in the stack
 	BitSet<MAX_MEMORY_RANGE>* freeBytes = m_alloc.newInstance<BitSet<MAX_MEMORY_RANGE>>(false);
+
+	LockGuard<TLock> lock(m_mutex);
 
 	for(I32 order = orderCount() - 1; order >= 0; --order)
 	{
@@ -184,6 +193,37 @@ void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2>::debugPrint() const
 		printf("\n");
 	}
 	m_alloc.deleteInstance(freeBytes);
+}
+
+template<U32 T_MAX_MEMORY_RANGE_LOG2, typename TLock>
+void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::getInfo(PtrSize& userAllocatedSize,
+																	PtrSize& realAllocatedSize,
+																	F64& externalFragmentation,
+																	F64& internalFragmentation) const
+{
+	LockGuard<TLock> lock(m_mutex);
+
+	userAllocatedSize = m_userAllocatedSize;
+	realAllocatedSize = m_realAllocatedSize;
+
+	// Compute external fragmetation (wikipedia has the definition)
+	U32 order = 0;
+	U32 orderWithTheBiggestBlock = MAX_U32;
+	for(const FreeList& list : m_freeLists)
+	{
+		if(list.getSize())
+		{
+			orderWithTheBiggestBlock = order;
+		}
+		++order;
+	}
+	const PtrSize biggestBlockSize =
+		(orderWithTheBiggestBlock == MAX_U32) ? m_maxMemoryRange : pow2<PtrSize>(orderWithTheBiggestBlock);
+	const PtrSize realFreeMemory = m_maxMemoryRange - m_realAllocatedSize;
+	externalFragmentation = 1.0 - F64(biggestBlockSize) / F64(realFreeMemory);
+
+	// Internal fragmentation
+	internalFragmentation = 1.0 - F64(m_userAllocatedSize) / F64(m_realAllocatedSize);
 }
 
 } // end namespace anki

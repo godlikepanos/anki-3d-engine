@@ -10,7 +10,7 @@
 #include <AnKi/Math.h>
 #include <AnKi/Gr.h>
 #include <AnKi/Resource/Forward.h>
-#include <AnKi/Core/GpuMemoryManager.h>
+#include <AnKi/Core/GpuMemoryPools.h>
 #include <AnKi/Collision/Forward.h>
 
 namespace anki {
@@ -18,7 +18,7 @@ namespace anki {
 // Forward
 class ConfigSet;
 class ResourceManager;
-class StagingGpuMemoryManager;
+class StagingGpuMemoryPool;
 class UiManager;
 
 /// @addtogroup renderer
@@ -73,7 +73,7 @@ public:
 
 	/// Init the renderer.
 	ANKI_USE_RESULT Error init(ThreadHive* hive, ResourceManager* resources, GrManager* gr,
-							   StagingGpuMemoryManager* stagingMem, UiManager* ui, HeapAllocator<U8> alloc,
+							   StagingGpuMemoryPool* stagingMem, UiManager* ui, HeapAllocator<U8> alloc,
 							   const ConfigSet& config, Timestamp* globTimestamp);
 
 	/// This function does all the rendering stages and produces a final result.
@@ -164,7 +164,7 @@ public:
 		return m_samplers;
 	}
 
-	StagingGpuMemoryManager& getStagingGpuMemoryManager()
+	StagingGpuMemoryPool& getStagingGpuMemory()
 	{
 		ANKI_ASSERT(m_stagingMem);
 		return *m_stagingMem;
@@ -220,7 +220,7 @@ public:
 private:
 	ResourceManager* m_resources = nullptr;
 	ThreadHive* m_threadHive = nullptr;
-	StagingGpuMemoryManager* m_stagingMem = nullptr;
+	StagingGpuMemoryPool* m_stagingMem = nullptr;
 	GrManager* m_gr = nullptr;
 	UiManager* m_ui = nullptr;
 	Timestamp* m_globTimestamp;

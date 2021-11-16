@@ -21,6 +21,7 @@ class AsyncLoader;
 class ResourceManagerModel;
 class ShaderCompilerCache;
 class ShaderProgramResourceSystem;
+class VertexGpuMemoryPool;
 
 /// @addtogroup resource
 /// @{
@@ -94,6 +95,7 @@ public:
 	ResourceFilesystem* m_resourceFs = nullptr;
 	const ConfigSet* m_config = nullptr;
 	CString m_cacheDir;
+	VertexGpuMemoryPool* m_vertexMemory = nullptr;
 	AllocAlignedCallback m_allocCallback = 0;
 	void* m_allocCallbackData = nullptr;
 };
@@ -214,6 +216,12 @@ public:
 		return *m_shaderProgramSystem;
 	}
 
+	VertexGpuMemoryPool& getVertexGpuMemory()
+	{
+		ANKI_ASSERT(m_vertexMem);
+		return *m_vertexMem;
+	}
+
 private:
 	GrManager* m_gr = nullptr;
 	PhysicsWorld* m_physics = nullptr;
@@ -224,6 +232,7 @@ private:
 	U32 m_maxImageSize;
 	AsyncLoader* m_asyncLoader = nullptr; ///< Async loading thread
 	ShaderProgramResourceSystem* m_shaderProgramSystem = nullptr;
+	VertexGpuMemoryPool* m_vertexMem = nullptr;
 	U64 m_uuid = 0;
 	U64 m_loadRequestCount = 0;
 	TransferGpuAllocator* m_transferGpuAlloc = nullptr;

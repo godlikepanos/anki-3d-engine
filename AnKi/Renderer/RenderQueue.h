@@ -41,7 +41,7 @@ public:
 	RenderingKey m_key;
 	CommandBufferPtr m_commandBuffer;
 	SamplerPtr m_sampler; ///< A trilinear sampler with anisotropy.
-	StagingGpuMemoryManager* m_stagingGpuAllocator ANKI_DEBUG_CODE(= nullptr);
+	StagingGpuMemoryPool* m_stagingGpuAllocator ANKI_DEBUG_CODE(= nullptr);
 	StackAllocator<U8> m_frameAllocator;
 	Bool m_debugDraw; ///< If true the drawcall should be drawing some kind of debug mesh.
 	BitSet<U(RenderQueueDebugDrawFlag::COUNT), U32> m_debugDrawFlags = {false};
@@ -78,7 +78,7 @@ class GenericGpuComputeJobQueueElementContext final : public RenderingMatrices
 {
 public:
 	CommandBufferPtr m_commandBuffer;
-	StagingGpuMemoryManager* m_stagingGpuAllocator ANKI_DEBUG_CODE(= nullptr);
+	StagingGpuMemoryPool* m_stagingGpuAllocator ANKI_DEBUG_CODE(= nullptr);
 };
 
 /// Callback for GenericGpuComputeJobQueueElement.

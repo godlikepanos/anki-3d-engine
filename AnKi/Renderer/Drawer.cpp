@@ -50,7 +50,7 @@ void RenderableDrawer::drawRange(Pass pass, const Mat4& viewMat, const Mat4& vie
 	ctx.m_queueCtx.m_projectionMatrix = Mat4::getIdentity(); // TODO
 	ctx.m_queueCtx.m_previousViewProjectionMatrix = prevViewProjMat;
 	ctx.m_queueCtx.m_cameraTransform = ctx.m_queueCtx.m_viewMatrix.getInverse();
-	ctx.m_queueCtx.m_stagingGpuAllocator = &m_r->getStagingGpuMemoryManager();
+	ctx.m_queueCtx.m_stagingGpuAllocator = &m_r->getStagingGpuMemory();
 	ctx.m_queueCtx.m_commandBuffer = cmdb;
 	ctx.m_queueCtx.m_sampler = sampler;
 	ctx.m_queueCtx.m_key = RenderingKey(pass, 0, 1, false, false);

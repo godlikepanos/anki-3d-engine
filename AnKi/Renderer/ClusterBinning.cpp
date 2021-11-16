@@ -147,7 +147,7 @@ void ClusterBinning::writeClustererBuffers(RenderingContext& ctx)
 
 	// Allocate buffers
 	ClusteredShadingContext& cs = ctx.m_clusteredShading;
-	StagingGpuMemoryManager& stagingMem = m_r->getStagingGpuMemoryManager();
+	StagingGpuMemoryPool& stagingMem = m_r->getStagingGpuMemory();
 
 	cs.m_clusteredShadingUniformsAddress = stagingMem.allocateFrame(
 		sizeof(ClusteredShadingUniforms), StagingGpuMemoryType::UNIFORM, cs.m_clusteredShadingUniformsToken);

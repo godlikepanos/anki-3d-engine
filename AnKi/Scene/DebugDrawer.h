@@ -16,14 +16,14 @@ namespace anki {
 
 // Forward
 class RenderQueueDrawContext;
-class StagingGpuMemoryManager;
+class StagingGpuMemoryPool;
 class StagingGpuMemoryToken;
 
 /// @addtogroup renderer
 /// @{
 
 /// Allocate memory for a line cube and populate it.
-void allocateAndPopulateDebugBox(StagingGpuMemoryManager& stagingGpuAllocator, StagingGpuMemoryToken& vertsToken,
+void allocateAndPopulateDebugBox(StagingGpuMemoryPool& stagingGpuAllocator, StagingGpuMemoryToken& vertsToken,
 								 StagingGpuMemoryToken& indicesToken, U32& indexCount);
 
 /// Debug drawer.
@@ -38,21 +38,21 @@ public:
 	}
 
 	void drawCubes(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 lineSize, Bool ditherFailedDepth, F32 cubeSideSize,
-				   StagingGpuMemoryManager& stagingGpuAllocator, CommandBufferPtr& cmdb) const;
+				   StagingGpuMemoryPool& stagingGpuAllocator, CommandBufferPtr& cmdb) const;
 
 	void drawCube(const Mat4& mvp, const Vec4& color, F32 lineSize, Bool ditherFailedDepth, F32 cubeSideSize,
-				  StagingGpuMemoryManager& stagingGpuAllocator, CommandBufferPtr& cmdb) const
+				  StagingGpuMemoryPool& stagingGpuAllocator, CommandBufferPtr& cmdb) const
 	{
 		drawCubes(ConstWeakArray<Mat4>(&mvp, 1), color, lineSize, ditherFailedDepth, cubeSideSize, stagingGpuAllocator,
 				  cmdb);
 	}
 
 	void drawLines(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 lineSize, Bool ditherFailedDepth,
-				   ConstWeakArray<Vec3> linePositions, StagingGpuMemoryManager& stagingGpuAllocator,
+				   ConstWeakArray<Vec3> linePositions, StagingGpuMemoryPool& stagingGpuAllocator,
 				   CommandBufferPtr& cmdb) const;
 
 	void drawLine(const Mat4& mvp, const Vec4& color, F32 lineSize, Bool ditherFailedDepth, const Vec3& a,
-				  const Vec3& b, StagingGpuMemoryManager& stagingGpuAllocator, CommandBufferPtr& cmdb) const
+				  const Vec3& b, StagingGpuMemoryPool& stagingGpuAllocator, CommandBufferPtr& cmdb) const
 	{
 		Array<Vec3, 2> points = {a, b};
 		drawLines(ConstWeakArray<Mat4>(&mvp, 1), color, lineSize, ditherFailedDepth, points, stagingGpuAllocator, cmdb);
@@ -60,12 +60,12 @@ public:
 
 	void drawBillboardTextures(const Mat4& projMat, const Mat4& viewMat, ConstWeakArray<Vec3> positions,
 							   const Vec4& color, Bool ditherFailedDepth, TextureViewPtr tex, SamplerPtr sampler,
-							   Vec2 billboardSize, StagingGpuMemoryManager& stagingGpuAllocator,
+							   Vec2 billboardSize, StagingGpuMemoryPool& stagingGpuAllocator,
 							   CommandBufferPtr& cmdb) const;
 
 	void drawBillboardTexture(const Mat4& projMat, const Mat4& viewMat, Vec3 position, const Vec4& color,
 							  Bool ditherFailedDepth, TextureViewPtr tex, SamplerPtr sampler, Vec2 billboardSize,
-							  StagingGpuMemoryManager& stagingGpuAllocator, CommandBufferPtr& cmdb) const
+							  StagingGpuMemoryPool& stagingGpuAllocator, CommandBufferPtr& cmdb) const
 	{
 		drawBillboardTextures(projMat, viewMat, ConstWeakArray<Vec3>(&position, 1), color, ditherFailedDepth, tex,
 							  sampler, billboardSize, stagingGpuAllocator, cmdb);
@@ -86,7 +86,7 @@ public:
 	{
 	}
 
-	void start(const Mat4& mvp, CommandBufferPtr& cmdb, StagingGpuMemoryManager* stagingGpuAllocator)
+	void start(const Mat4& mvp, CommandBufferPtr& cmdb, StagingGpuMemoryPool* stagingGpuAllocator)
 	{
 		ANKI_ASSERT(stagingGpuAllocator);
 		ANKI_ASSERT(m_vertCount == 0);
@@ -108,7 +108,7 @@ private:
 	const DebugDrawer2* m_dbg; ///< The debug drawer
 	Mat4 m_mvp = Mat4::getIdentity();
 	CommandBufferPtr m_cmdb;
-	StagingGpuMemoryManager* m_stagingGpuAllocator = nullptr;
+	StagingGpuMemoryPool* m_stagingGpuAllocator = nullptr;
 
 	// Use a vertex cache because drawLines() is practically called for every line
 	Array<Vec3, 32> m_vertCache;

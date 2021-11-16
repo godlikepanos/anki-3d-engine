@@ -7,7 +7,7 @@
 
 #include <AnKi/Scene/Components/SceneComponent.h>
 #include <AnKi/Resource/MaterialResource.h>
-#include <AnKi/Core/GpuMemoryManager.h>
+#include <AnKi/Core/GpuMemoryPools.h>
 #include <AnKi/Renderer/RenderQueue.h>
 
 namespace anki {
@@ -103,7 +103,7 @@ public:
 	/// Helper function.
 	static void allocateAndSetupUniforms(const MaterialResourcePtr& mtl, const RenderQueueDrawContext& ctx,
 										 ConstWeakArray<Mat4> transforms, ConstWeakArray<Mat4> prevTransforms,
-										 StagingGpuMemoryManager& alloc);
+										 StagingGpuMemoryPool& alloc);
 
 private:
 	RenderQueueDrawCallback m_callback = nullptr;

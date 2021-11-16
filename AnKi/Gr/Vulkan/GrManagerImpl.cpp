@@ -431,8 +431,44 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 		return Error::FUNCTION_FAILED;
 	}
 
-	count = 1;
-	ANKI_VK_CHECK(vkEnumeratePhysicalDevices(m_instance, &count, &m_physicalDevice));
+	// Find the correct physical device
+	{
+		DynamicArrayAuto<VkPhysicalDevice> physicalDevices(m_alloc, count);
+		ANKI_VK_CHECK(vkEnumeratePhysicalDevices(m_instance, &count, &physicalDevices[0]));
+
+		VkPhysicalDevice firstChoice = VK_NULL_HANDLE;
+		VkPhysicalDevice secondChoice = VK_NULL_HANDLE;
+		for(U32 devIdx = 0; devIdx < count; ++devIdx)
+		{
+			VkPhysicalDeviceProperties2 props = {};
+			props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+			vkGetPhysicalDeviceProperties2(physicalDevices[devIdx], &props);
+
+			if(props.properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+			{
+				// Found it
+				firstChoice = physicalDevices[devIdx];
+			}
+			else if(props.properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU)
+			{
+				secondChoice = physicalDevices[devIdx];
+			}
+		}
+
+		if(firstChoice != VK_NULL_HANDLE)
+		{
+			m_physicalDevice = firstChoice;
+		}
+		else if(secondChoice != VK_NULL_HANDLE)
+		{
+			m_physicalDevice = secondChoice;
+		}
+		else
+		{
+			ANKI_VK_LOGE("Couldn't find a suitable descrete or integrated physical device");
+			return Error::FUNCTION_FAILED;
+		}
+	}
 
 	m_rtPipelineProps.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
 	m_accelerationStructureProps.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR;

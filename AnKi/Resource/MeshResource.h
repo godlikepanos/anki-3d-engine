@@ -57,8 +57,8 @@ public:
 	/// Get all info around vertex indices.
 	void getIndexBufferInfo(BufferPtr& buff, PtrSize& buffOffset, U32& indexCount, IndexType& indexType) const
 	{
-		buff = m_indexBuffer;
-		buffOffset = 0;
+		buff = m_vertexBuffer;
+		buffOffset = m_indexBufferOffset;
 		indexCount = m_indexCount;
 		indexType = m_indexType;
 	}
@@ -113,7 +113,7 @@ public:
 	/// Get the buffer that contains all the indices of all submesses.
 	BufferPtr getIndexBuffer() const
 	{
-		return m_indexBuffer;
+		return m_vertexBuffer;
 	}
 
 	/// Get the buffer that contains all the vertices of all submesses.
@@ -137,7 +137,7 @@ private:
 	class VertBuffInfo
 	{
 	public:
-		PtrSize m_offset; ///< Offset from the base of m_vertBuff.
+		PtrSize m_offset; ///< Offset from the base of m_vertexBuffer.
 		U32 m_stride;
 	};
 
@@ -153,12 +153,17 @@ private:
 	DynamicArray<VertBuffInfo> m_vertexBufferInfos;
 	Array<AttribInfo, U(VertexAttributeId::COUNT)> m_attributes;
 
-	BufferPtr m_indexBuffer;
-	BufferPtr m_vertexBuffer;
-	U32 m_indexCount = 0;
+	BufferPtr m_vertexBuffer; ///< Contains all data (vertices and indices).
+
+	PtrSize m_vertexBuffersOffset = MAX_PTR_SIZE; ///< Used for deallocation.
+	PtrSize m_vertexBuffersSize = 0; ///< Used for deallocation.
 	U32 m_vertexCount = 0;
-	Aabb m_aabb;
+
+	PtrSize m_indexBufferOffset = MAX_PTR_SIZE; ///< The offset from the base of m_vertexBuffer.
+	U32 m_indexCount = 0; ///< Total index count as if all submeshes are a single submesh.
 	IndexType m_indexType;
+
+	Aabb m_aabb;
 
 	// RT
 	AccelerationStructurePtr m_blas;

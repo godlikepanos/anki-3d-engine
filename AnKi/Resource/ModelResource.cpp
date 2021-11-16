@@ -82,7 +82,7 @@ void ModelPatch::getRenderingInfo(const RenderingKey& key, ModelRenderingInfo& i
 
 	// Index buff
 	inf.m_indexBuffer = m_indexBufferInfos[meshLod].m_buffer;
-	inf.m_indexBufferOffset = 0;
+	inf.m_indexBufferOffset = m_indexBufferInfos[meshLod].m_offset;
 	inf.m_indexCount = m_indexBufferInfos[meshLod].m_indexCount;
 	inf.m_firstIndex = m_indexBufferInfos[meshLod].m_firstIndex;
 	inf.m_indexType = m_indexType;
@@ -236,9 +236,9 @@ Error ModelPatch::init(ModelResource* model, ConstWeakArray<CString> meshFNames,
 				PtrSize offset;
 				mesh.getIndexBufferInfo(outIndexBufferInfo.m_buffer, offset, outIndexBufferInfo.m_indexCount,
 										indexType);
-				ANKI_ASSERT(offset == 0);
-				m_indexType = indexType;
+				outIndexBufferInfo.m_offset = offset;
 				outIndexBufferInfo.m_firstIndex = 0;
+				m_indexType = indexType;
 			}
 			else
 			{
@@ -246,7 +246,7 @@ Error ModelPatch::init(ModelResource* model, ConstWeakArray<CString> meshFNames,
 				PtrSize offset;
 				mesh.getIndexBufferInfo(outIndexBufferInfo.m_buffer, offset, outIndexBufferInfo.m_indexCount,
 										indexType);
-				ANKI_ASSERT(offset == 0);
+				outIndexBufferInfo.m_offset = offset;
 				m_indexType = indexType;
 
 				Aabb aabb;

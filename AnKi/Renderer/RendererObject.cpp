@@ -32,7 +32,7 @@ ResourceManager& RendererObject::getResourceManager()
 
 void* RendererObject::allocateFrameStagingMemory(PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token)
 {
-	return m_r->getStagingGpuMemoryManager().allocateFrame(size, usage, token);
+	return m_r->getStagingGpuMemory().allocateFrame(size, usage, token);
 }
 
 void RendererObject::bindUniforms(CommandBufferPtr& cmdb, U32 set, U32 binding,

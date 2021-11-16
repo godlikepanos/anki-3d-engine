@@ -19,16 +19,16 @@ class ConfigSet;
 /// @{
 
 /// Manages vertex and index memory for the whole application.
-class VertexGpuMemoryManager
+class VertexGpuMemoryPool
 {
 public:
-	VertexGpuMemoryManager() = default;
+	VertexGpuMemoryPool() = default;
 
-	VertexGpuMemoryManager(const VertexGpuMemoryManager&) = delete; // Non-copyable
+	VertexGpuMemoryPool(const VertexGpuMemoryPool&) = delete; // Non-copyable
 
-	~VertexGpuMemoryManager();
+	~VertexGpuMemoryPool();
 
-	VertexGpuMemoryManager& operator=(const VertexGpuMemoryManager&) = delete; // Non-copyable
+	VertexGpuMemoryPool& operator=(const VertexGpuMemoryPool&) = delete; // Non-copyable
 
 	ANKI_USE_RESULT Error init(GenericMemoryPoolAllocator<U8> alloc, GrManager* gr, const ConfigSet& cfg);
 
@@ -44,7 +44,7 @@ public:
 private:
 	GrManager* m_gr = nullptr;
 	BufferPtr m_vertBuffer;
-	BuddyAllocatorBuilder<> m_buddyAllocator;
+	BuddyAllocatorBuilder<32, Mutex> m_buddyAllocator;
 };
 
 enum class StagingGpuMemoryType : U8
@@ -87,16 +87,16 @@ public:
 };
 
 /// Manages staging GPU memory.
-class StagingGpuMemoryManager
+class StagingGpuMemoryPool
 {
 public:
-	StagingGpuMemoryManager() = default;
+	StagingGpuMemoryPool() = default;
 
-	StagingGpuMemoryManager(const StagingGpuMemoryManager&) = delete; // Non-copyable
+	StagingGpuMemoryPool(const StagingGpuMemoryPool&) = delete; // Non-copyable
 
-	~StagingGpuMemoryManager();
+	~StagingGpuMemoryPool();
 
-	StagingGpuMemoryManager& operator=(const StagingGpuMemoryManager&) = delete; // Non-copyable
+	StagingGpuMemoryPool& operator=(const StagingGpuMemoryPool&) = delete; // Non-copyable
 
 	ANKI_USE_RESULT Error init(GrManager* gr, const ConfigSet& cfg);
 

@@ -1,4 +1,4 @@
-set(SOURCES App.cpp ConfigSet.cpp GpuMemoryManager.cpp DeveloperConsole.cpp CoreTracer.cpp)
+set(SOURCES App.cpp ConfigSet.cpp GpuMemoryPools.cpp DeveloperConsole.cpp CoreTracer.cpp)
 file(GLOB HEADERS *.h)
 
 if(SDL)

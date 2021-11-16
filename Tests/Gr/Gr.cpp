@@ -10,7 +10,7 @@
 #include <AnKi/Input/Input.h>
 #include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Util/HighRezTimer.h>
-#include <AnKi/Core/GpuMemoryManager.h>
+#include <AnKi/Core/GpuMemoryPools.h>
 #include <AnKi/Resource/TransferGpuAllocator.h>
 #include <AnKi/ShaderCompiler/Glslang.h>
 #include <AnKi/ShaderCompiler/ShaderProgramParser.h>
@@ -251,11 +251,11 @@ void main()
 
 static NativeWindow* win = nullptr;
 static GrManager* gr = nullptr;
-static StagingGpuMemoryManager* stagingMem = nullptr;
+static StagingGpuMemoryPool* stagingMem = nullptr;
 static Input* input = nullptr;
 
 #define COMMON_BEGIN() \
-	stagingMem = new StagingGpuMemoryManager(); \
+	stagingMem = new StagingGpuMemoryPool(); \
 	ConfigSet cfg = DefaultConfigSet::get(); \
 	cfg.set("width", WIDTH); \
 	cfg.set("height", HEIGHT); \

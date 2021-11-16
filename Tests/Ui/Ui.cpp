@@ -8,7 +8,7 @@
 #include <AnKi/Util/HighRezTimer.h>
 #include <AnKi/Ui.h>
 #include <AnKi/Input.h>
-#include <AnKi/Core/GpuMemoryManager.h>
+#include <AnKi/Core/GpuMemoryPools.h>
 
 namespace anki {
 
@@ -70,7 +70,7 @@ ANKI_TEST(Ui, Ui)
 	ResourceManager* resource = createResourceManager(cfg, gr, physics, fs);
 	UiManager* ui = new UiManager();
 
-	StagingGpuMemoryManager* stagingMem = new StagingGpuMemoryManager();
+	StagingGpuMemoryPool* stagingMem = new StagingGpuMemoryPool();
 	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(gr, cfg));
 
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
