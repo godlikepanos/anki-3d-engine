@@ -152,7 +152,7 @@ void* getAndroidCommandLineArguments(int& argc, char**& argv)
 	jstring jsParam1 = static_cast<jstring>(env->CallObjectMethod(intent, gseid, env->NewStringUTF("cmd")));
 
 	// Parse the command line args
-	HeapAllocator<U8> alloc(allocAligned, nullptr);
+	HeapAllocator<U8> alloc(allocAligned, nullptr, "getAndroidCommandLineArguments temp");
 	StringListAuto args(alloc);
 
 	if(jsParam1)

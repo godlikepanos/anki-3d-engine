@@ -63,6 +63,8 @@ void GpuMemoryManagerInterface::freeChunk(GpuMemoryManagerChunk* chunk)
 
 	ANKI_ASSERT(m_allocatedMemory >= chunk->m_size);
 	m_allocatedMemory -= chunk->m_size;
+
+	m_parent->m_alloc.deleteInstance(chunk);
 }
 
 GpuMemoryManager::~GpuMemoryManager()

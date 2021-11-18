@@ -95,6 +95,12 @@ public:
 		return m_allocationCount.load();
 	}
 
+	/// Get the name of the pool.
+	const char* getName() const
+	{
+		return (m_name) ? m_name : "Unamed";
+	}
+
 protected:
 	/// Pool type.
 	enum class Type : U8
@@ -114,17 +120,15 @@ protected:
 	/// Allocations count.
 	Atomic<U32> m_allocationCount = {0};
 
-	BaseMemoryPool(Type type)
-		: m_type(type)
-	{
-	}
-
-	/// Check if already created.
-	Bool isInitialized() const;
+	/// Construct it.
+	BaseMemoryPool(Type type, AllocAlignedCallback allocCb, void* allocCbUserData, const char* name);
 
 private:
 	/// Refcount.
 	Atomic<U32> m_refcount = {0};
+
+	/// Optional name.
+	char* m_name = nullptr;
 
 	/// Type.
 	Type m_type = Type::NONE;
@@ -135,8 +139,11 @@ private:
 class HeapMemoryPool final : public BaseMemoryPool
 {
 public:
-	/// Default constructor.
-	HeapMemoryPool();
+	/// Construct it.
+	/// @param allocCb The allocation function callback.
+	/// @param allocCbUserData The user data to pass to the allocation function.
+	/// @param name An optional name.
+	HeapMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserDataconst, const char* name = nullptr);
 
 	/// Destroy
 	~HeapMemoryPool();
@@ -164,15 +171,6 @@ private:
 class StackMemoryPool final : public BaseMemoryPool
 {
 public:
-	/// The type of the pool's snapshot
-	using Snapshot = void*;
-
-	/// Default constructor
-	StackMemoryPool();
-
-	/// Destroy
-	~StackMemoryPool();
-
 	/// Init with parameters.
 	/// @param allocCb The allocation function callback.
 	/// @param allocCbUserData The user data to pass to the allocation function.
@@ -182,9 +180,13 @@ public:
 	/// @param ignoreDeallocationErrors Method free() may fail if the ptr is not in the top of the stack. Set that to
 	///        true to suppress such errors.
 	/// @param alignmentBytes The maximum supported alignment for returned memory.
-	void init(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize, F64 nextChunkScale = 2.0,
-			  PtrSize nextChunkBias = 0, Bool ignoreDeallocationErrors = true,
-			  U32 alignmentBytes = ANKI_SAFE_ALIGNMENT);
+	/// @param name An optional name.
+	StackMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize,
+					F64 nextChunkScale = 2.0, PtrSize nextChunkBias = 0, Bool ignoreDeallocationErrors = true,
+					U32 alignmentBytes = ANKI_SAFE_ALIGNMENT, const char* name = nullptr);
+
+	/// Destroy
+	~StackMemoryPool();
 
 	/// Allocate aligned memory.
 	/// @param size The size to allocate.
@@ -296,12 +298,6 @@ private:
 class ChainMemoryPool final : public BaseMemoryPool
 {
 public:
-	/// Default constructor
-	ChainMemoryPool();
-
-	/// Destroy
-	~ChainMemoryPool();
-
 	/// Init the pool.
 	/// @param allocCb The allocation function callback.
 	/// @param allocCbUserData The user data to pass to the allocation function.
@@ -309,8 +305,13 @@ public:
 	/// @param nextChunkScale Value that controls the next chunk.
 	/// @param nextChunkBias Value that controls the next chunk.
 	/// @param alignmentBytes The maximum supported alignment for returned memory.
-	void init(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize, F32 nextChunkScale = 2.0,
-			  PtrSize nextChunkBias = 0, PtrSize alignmentBytes = ANKI_SAFE_ALIGNMENT);
+	/// @param name An optional name.
+	ChainMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize,
+					F32 nextChunkScale = 2.0, PtrSize nextChunkBias = 0, PtrSize alignmentBytes = ANKI_SAFE_ALIGNMENT,
+					const char* name = nullptr);
+
+	/// Destroy
+	~ChainMemoryPool();
 
 	/// Allocate memory. This operation is thread safe
 	/// @param size The size to allocate

@@ -22,7 +22,7 @@ DeveloperConsole::~DeveloperConsole()
 
 Error DeveloperConsole::init(AllocAlignedCallback allocCb, void* allocCbUserData, ScriptManager* scriptManager)
 {
-	m_alloc = HeapAllocator<U8>(allocCb, allocCbUserData);
+	m_alloc = HeapAllocator<U8>(allocCb, allocCbUserData, "DeveloperConsole");
 	zeroMemory(m_inputText);
 
 	ANKI_CHECK(m_manager->newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{16}));

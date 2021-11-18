@@ -21,7 +21,8 @@ Error ShaderProgramBinaryWrapper::serializeToFile(CString fname) const
 
 	BinarySerializer serializer;
 	HeapAllocator<U8> tmpAlloc(m_alloc.getMemoryPool().getAllocationCallback(),
-							   m_alloc.getMemoryPool().getAllocationCallbackUserData());
+							   m_alloc.getMemoryPool().getAllocationCallbackUserData(),
+							   "ShaderProgramBinaryWrapper temp");
 	ANKI_CHECK(serializer.serialize(*m_binary, tmpAlloc, file));
 
 	return Error::NONE;

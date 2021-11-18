@@ -108,6 +108,7 @@ void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::free(Address address
 		for(const FreeList& freeList : m_freeLists)
 		{
 			ANKI_ASSERT(freeList.getSize() == 0);
+			(void)freeList;
 		}
 	}
 }

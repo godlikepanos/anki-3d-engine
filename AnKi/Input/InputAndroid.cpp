@@ -14,7 +14,7 @@ Error Input::newInstance(AllocAlignedCallback allocCallback, void* allocCallback
 {
 	ANKI_ASSERT(allocCallback && nativeWindow);
 
-	HeapAllocator<U8> alloc(allocCallback, allocCallbackUserData);
+	HeapAllocator<U8> alloc(allocCallback, allocCallbackUserData, "Input");
 	InputAndroid* ainput =
 		static_cast<InputAndroid*>(alloc.getMemoryPool().allocate(sizeof(InputAndroid), alignof(InputAndroid)));
 	::new(ainput) InputAndroid();

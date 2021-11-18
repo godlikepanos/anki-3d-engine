@@ -34,7 +34,7 @@ Error MainRenderer::init(ThreadHive* hive, ResourceManager* resources, GrManager
 {
 	ANKI_R_LOGI("Initializing main renderer");
 
-	m_alloc = HeapAllocator<U8>(allocCb, allocCbUserData);
+	m_alloc = HeapAllocator<U8>(allocCb, allocCbUserData, "MainRenderer");
 	m_frameAlloc = StackAllocator<U8>(allocCb, allocCbUserData, 1024 * 1024 * 10, 1.0f);
 
 	// Init renderer and manipulate the width/height

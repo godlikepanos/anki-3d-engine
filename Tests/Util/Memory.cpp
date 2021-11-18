@@ -14,8 +14,7 @@ ANKI_TEST(Util, HeapMemoryPool)
 {
 	// Simple
 	{
-		HeapMemoryPool pool;
-		pool.init(allocAligned, nullptr);
+		HeapMemoryPool pool(allocAligned, nullptr);
 
 		void* ptr = pool.allocate(123, 1);
 		ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
@@ -25,8 +24,7 @@ ANKI_TEST(Util, HeapMemoryPool)
 
 	// Simple array
 	{
-		HeapMemoryPool pool;
-		pool.init(allocAligned, nullptr);
+		HeapMemoryPool pool(allocAligned, nullptr);
 
 		void* ptr = pool.allocate(2, 1);
 		ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
@@ -39,21 +37,12 @@ ANKI_TEST(Util, StackMemoryPool)
 {
 	// Create/destroy test
 	{
-		StackMemoryPool pool;
-	}
-
-	// Create/destroy test #2
-	{
-		StackMemoryPool pool;
-
-		pool.init(allocAligned, nullptr, 10);
+		StackMemoryPool pool(allocAligned, nullptr, 10);
 	}
 
 	// Allocate
 	{
-		StackMemoryPool pool;
-
-		pool.init(allocAligned, nullptr, 100, 1.0, 0, true);
+		StackMemoryPool pool(allocAligned, nullptr, 100, 1.0, 0, true);
 
 		void* a = pool.allocate(25, 1);
 		ANKI_TEST_EXPECT_NEQ(a, nullptr);
@@ -92,7 +81,7 @@ ANKI_TEST(Util, StackMemoryPool)
 
 	// Parallel
 	{
-		StackMemoryPool pool;
+		StackMemoryPool pool(allocAligned, nullptr, 100, 1.0, 0, true);
 		const U THREAD_COUNT = 32;
 		const U ALLOC_SIZE = 25;
 		ThreadPool threadPool(THREAD_COUNT);
@@ -116,7 +105,6 @@ ANKI_TEST(Util, StackMemoryPool)
 			}
 		};
 
-		pool.init(allocAligned, nullptr, 100, 1.0, 0, true);
 		Array<AllocateTask, THREAD_COUNT> tasks;
 
 		for(U32 i = 0; i < THREAD_COUNT; ++i)
@@ -175,9 +163,7 @@ ANKI_TEST(Util, ChainMemoryPool)
 	// Basic test
 	{
 		const U size = 8;
-		ChainMemoryPool pool;
-
-		pool.init(allocAligned, nullptr, size, 2.0, 0, 1);
+		ChainMemoryPool pool(allocAligned, nullptr, size, 2.0, 0, 1);
 
 		void* mem = pool.allocate(5, 1);
 		ANKI_TEST_EXPECT_NEQ(mem, nullptr);
@@ -193,9 +179,7 @@ ANKI_TEST(Util, ChainMemoryPool)
 	// Basic test 2
 	{
 		const U size = sizeof(PtrSize) + 10;
-		ChainMemoryPool pool;
-
-		pool.init(allocAligned, nullptr, size, 2.0, 0, 1);
+		ChainMemoryPool pool(allocAligned, nullptr, size, 2.0, 0, 1);
 
 		void* mem = pool.allocate(size, 1);
 		ANKI_TEST_EXPECT_NEQ(mem, nullptr);

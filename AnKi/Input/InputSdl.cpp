@@ -36,7 +36,7 @@ Error Input::newInstance(AllocAlignedCallback allocCallback, void* allocCallback
 {
 	ANKI_ASSERT(allocCallback && nativeWindow);
 
-	HeapAllocator<U8> alloc(allocCallback, allocCallbackUserData);
+	HeapAllocator<U8> alloc(allocCallback, allocCallbackUserData, "Input");
 	InputSdl* sdlinput = static_cast<InputSdl*>(alloc.getMemoryPool().allocate(sizeof(InputSdl), alignof(InputSdl)));
 	::new(sdlinput) InputSdl(alloc);
 

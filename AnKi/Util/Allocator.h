@@ -89,9 +89,8 @@ public:
 			ANKI_UTIL_LOGF("Out of memory");
 		}
 
-		::new(m_pool) TPool();
+		::new(m_pool) TPool(allocCb, allocCbUserData, std::forward<TArgs>(args)...);
 
-		m_pool->init(allocCb, allocCbUserData, std::forward<TArgs>(args)...);
 		m_pool->getRefcount().store(1);
 	}
 

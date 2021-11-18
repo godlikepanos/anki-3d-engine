@@ -33,7 +33,7 @@ GrManager::~GrManager()
 
 Error GrManager::newInstance(GrManagerInitInfo& init, GrManager*& gr)
 {
-	auto alloc = HeapAllocator<U8>(init.m_allocCallback, init.m_allocCallbackUserData);
+	auto alloc = HeapAllocator<U8>(init.m_allocCallback, init.m_allocCallbackUserData, "Gr");
 
 	GrManagerImpl* impl = alloc.newInstance<GrManagerImpl>();
 

@@ -13,7 +13,7 @@ namespace anki {
 
 Error NativeWindow::newInstance(const NativeWindowInitInfo& initInfo, NativeWindow*& nativeWindow)
 {
-	HeapAllocator<U8> alloc(initInfo.m_allocCallback, initInfo.m_allocCallbackUserData);
+	HeapAllocator<U8> alloc(initInfo.m_allocCallback, initInfo.m_allocCallbackUserData, "NativeWindow");
 	NativeWindowSdl* sdlwin = alloc.newInstance<NativeWindowSdl>();
 
 	sdlwin->m_alloc = alloc;

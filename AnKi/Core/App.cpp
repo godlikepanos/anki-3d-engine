@@ -330,7 +330,7 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	m_displayStats = config.getNumberU32("core_displayStats");
 
 	initMemoryCallbacks(allocCb, allocCbUserData);
-	m_heapAlloc = HeapAllocator<U8>(m_allocCb, m_allocCbData);
+	m_heapAlloc = HeapAllocator<U8>(m_allocCb, m_allocCbData, "Core");
 
 	ANKI_CHECK(initDirs(config));
 

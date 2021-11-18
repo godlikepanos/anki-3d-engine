@@ -66,7 +66,7 @@ public:
 
 ConfigSet::ConfigSet()
 {
-	m_alloc = HeapAllocator<U8>(allocAligned, nullptr);
+	m_alloc = HeapAllocator<U8>(allocAligned, nullptr, "ConfigSet");
 
 #define ANKI_CONFIG_OPTION(name, ...) newOption(ANKI_STRINGIZE(name), __VA_ARGS__);
 #include <AnKi/Core/ConfigDefs.h>
