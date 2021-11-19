@@ -52,8 +52,12 @@ Vec4 cheapProject(Vec4 point)
 
 void main()
 {
-	const UVec2 fixedGlobalInvocationId = min(gl_GlobalInvocationID.xy, u_unis.m_viewportSize);
-	const Vec2 fragCoord = Vec2(fixedGlobalInvocationId.xy) + 0.5;
+	if(gl_GlobalInvocationID.x >= u_unis.m_viewportSize.x || gl_GlobalInvocationID.y >= u_unis.m_viewportSize.y)
+	{
+		return;
+	}
+
+	const Vec2 fragCoord = Vec2(gl_GlobalInvocationID.xy) + 0.5;
 	const Vec2 uv = fragCoord / u_unis.m_viewportSizef;
 	const Vec2 ndc = UV_TO_NDC(uv);
 
@@ -210,7 +214,7 @@ void main()
 	}
 
 	// Store color
-	imageStore(u_outImage, IVec2(fixedGlobalInvocationId), Vec4(outColor, 1.0));
+	imageStore(u_outImage, IVec2(gl_GlobalInvocationID.xy), Vec4(outColor, 1.0));
 }
 
 #pragma anki end
