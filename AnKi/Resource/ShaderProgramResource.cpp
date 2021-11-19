@@ -10,6 +10,7 @@
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Util/Filesystem.h>
 #include <AnKi/Util/Functions.h>
+#include <AnKi/ShaderCompiler/MaliOfflineCompiler.h>
 
 namespace anki {
 
@@ -385,6 +386,22 @@ void ShaderProgramResource::initVariant(const ShaderProgramResourceVariantInitIn
 			inf.m_binary = binary.m_codeBlocks[binaryVariant->m_codeBlockIndices[shaderType]].m_binary;
 			inf.m_constValues.setArray((constValueCount) ? constValues.getBegin() : nullptr, constValueCount);
 			ShaderPtr shader = getManager().getGrManager().newShader(inf);
+
+			if(false)
+			{
+				MaliOfflineCompilerOut maliocOut;
+				const Error err =
+					runMaliOfflineCompiler(ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/MaliOfflineCompiler/malioc",
+										   binary.m_codeBlocks[binaryVariant->m_codeBlockIndices[shaderType]].m_binary,
+										   inf.m_shaderType, getAllocator(), maliocOut);
+
+				if(!err)
+				{
+					StringAuto maliocOutStr(getAllocator());
+					maliocOut.toString(maliocOutStr);
+					ANKI_RESOURCE_LOGI("Mali offline compiler: %s: %s", cprogName, maliocOutStr.cstr());
+				}
+			}
 
 			const ShaderTypeBit shaderBit = ShaderTypeBit(1 << shaderType);
 			if(!!(shaderBit & ShaderTypeBit::ALL_GRAPHICS))

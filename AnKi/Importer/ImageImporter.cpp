@@ -8,6 +8,7 @@
 #include <AnKi/Resource/Stb.h>
 #include <AnKi/Util/Process.h>
 #include <AnKi/Util/File.h>
+#include <AnKi/Util/Filesystem.h>
 
 namespace anki {
 
@@ -123,12 +124,11 @@ public:
 	{
 		if(!m_fileToDelete.isEmpty())
 		{
-			const int err = std::remove(m_fileToDelete.cstr());
-			if(err)
+			const Error err = removeFile(m_fileToDelete);
+			if(!err)
 			{
-				ANKI_IMPORTER_LOGE("Couldn't delete file: %s", m_fileToDelete.cstr());
+				ANKI_IMPORTER_LOGV("Deleted %s", m_fileToDelete.cstr());
 			}
-			ANKI_IMPORTER_LOGV("Deleted %s", m_fileToDelete.cstr());
 		}
 	}
 };

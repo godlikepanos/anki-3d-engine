@@ -57,7 +57,8 @@ Error ShaderImpl::init(const ShaderInitInfo& inf)
 #if ANKI_DUMP_SHADERS
 	{
 		StringAuto fnameSpirv(getAllocator());
-		fnameSpirv.sprintf("%s/%05u.spv", getManager().getCacheDirectory().cstr(), getUuid());
+		fnameSpirv.sprintf("%s/%s_t%u_%05u.spv", getManager().getCacheDirectory().cstr(), getName().cstr(),
+						   U(m_shaderType), getUuid());
 
 		File fileSpirv;
 		ANKI_CHECK(

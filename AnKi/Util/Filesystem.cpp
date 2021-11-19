@@ -57,4 +57,15 @@ void getParentFilepath(const CString& filename, StringAuto& out)
 	}
 }
 
+Error removeFile(const CString& filename)
+{
+	const int err = std::remove(filename.cstr());
+	if(err)
+	{
+		ANKI_UTIL_LOGE("Couldn't delete file: %s", filename.cstr());
+	}
+
+	return Error::NONE;
+}
+
 } // end namespace anki

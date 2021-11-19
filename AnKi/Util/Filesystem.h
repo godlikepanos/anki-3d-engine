@@ -59,6 +59,9 @@ ANKI_USE_RESULT Error walkDirectoryTree(const CString& dir, GenericMemoryPoolAll
 /// @param alloc A temp allocator that this function requires.
 ANKI_USE_RESULT Error removeDirectory(const CString& dir, GenericMemoryPoolAllocator<U8> alloc);
 
+/// Remove a file.
+ANKI_USE_RESULT Error removeFile(const CString& filename);
+
 /// Equivalent to: mkdir dir
 ANKI_USE_RESULT Error createDirectory(const CString& dir);
 

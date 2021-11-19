@@ -146,7 +146,7 @@ BaseMemoryPool::BaseMemoryPool(Type type, AllocAlignedCallback allocCb, void* al
 	, m_allocCbUserData(allocCbUserData)
 	, m_type(type)
 {
-	ANKI_ASSERT(allocCb == nullptr);
+	ANKI_ASSERT(allocCb != nullptr);
 
 	I64 len;
 	if(name && (len = strlen(name)) > 0)

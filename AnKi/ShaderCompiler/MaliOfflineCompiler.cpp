@@ -1,0 +1,237 @@
+// Copyright (C) 2009-2021, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#include <AnKi/ShaderCompiler/MaliOfflineCompiler.h>
+#include <AnKi/Util/Process.h>
+#include <AnKi/Util/Filesystem.h>
+#include <AnKi/Util/File.h>
+#include <regex>
+
+namespace anki {
+
+void MaliOfflineCompilerOut::toString(StringAuto& str) const
+{
+	str.destroy();
+	str.sprintf("Regs: %u, Spilling: %u, "
+				"FMA %f, CVT %f, SFU %f, LS %f, VAR %f, TEX %f, "
+				"FP16: %f%%",
+				m_workRegisters, m_spilling, m_fma, m_cvt, m_sfu, m_loadStore, m_varying, m_texture,
+				m_fp16ArithmeticPercentage);
+}
+
+static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString spirvFilename, ShaderType shaderType,
+											GenericMemoryPoolAllocator<U8> tmpAlloc, MaliOfflineCompilerOut& out)
+{
+	out = {};
+
+	// Set the arguments
+	Array<CString, 3> args;
+
+	switch(shaderType)
+	{
+	case ShaderType::VERTEX:
+		args[0] = "-v";
+		break;
+	case ShaderType::FRAGMENT:
+		args[0] = "-f";
+		break;
+	case ShaderType::COMPUTE:
+		args[0] = "-C";
+		break;
+	default:
+		ANKI_ASSERT(0 && "Unhandled case");
+	}
+
+	args[1] = "--vulkan";
+	args[2] = spirvFilename;
+
+	// Execute
+	Process proc;
+	ANKI_CHECK(proc.start(maliocExecutable, args, {}));
+	ProcessStatus status;
+	I32 exitCode;
+	ANKI_CHECK(proc.wait(10.0_sec, &status, &exitCode));
+	if(status == ProcessStatus::CRASH_EXIT || exitCode != 0)
+	{
+		StringAuto stderre(tmpAlloc);
+		const Error err = proc.readFromStderr(stderre);
+		ANKI_SHADER_COMPILER_LOGE("Mali offline compiler failed with exit code %d. Stderr: %s", exitCode,
+								  (err || stderre.isEmpty()) ? "<no text>" : stderre.cstr());
+		return Error::FUNCTION_FAILED;
+	}
+
+	// Get stdout
+	StringAuto stdouts(tmpAlloc);
+	ANKI_CHECK(proc.readFromStdout(stdouts));
+	const std::string stdoutstl(stdouts.cstr());
+
+	// Work registers
+	std::smatch match;
+	if(std::regex_search(stdoutstl, match, std::regex("Work registers: ([0-9]+)")))
+	{
+		ANKI_CHECK(CString(match[1].str().c_str()).toNumber(out.m_workRegisters));
+	}
+	else
+	{
+		ANKI_SHADER_COMPILER_LOGE("Error parsing work registers");
+		return Error::FUNCTION_FAILED;
+	}
+
+#define ANKI_FLOAT_REGEX "([0-9]+[.]?[0-9]*)"
+
+	// Instructions
+	if(shaderType == ShaderType::VERTEX)
+	{
+		// Add the instructions in position and varying variants
+
+		std::string stdoutstl2(stdouts.cstr());
+
+		out.m_fma = 0.0;
+		out.m_cvt = 0.0;
+		out.m_sfu = 0.0;
+		out.m_loadStore = 0.0;
+		out.m_texture = 0.0;
+
+		U32 count = 0;
+		while(std::regex_search(stdoutstl2, match,
+								std::regex("Total instruction cycles:\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
+										   "\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX)))
+		{
+			ANKI_ASSERT(match.size() == 6);
+			Array<F32, 5> floats;
+			for(U32 i = 0; i < floats.getSize(); ++i)
+			{
+				ANKI_CHECK(CString(match[i + 1].str().c_str()).toNumber(floats[i]));
+			}
+
+			out.m_fma += floats[0];
+			out.m_cvt += floats[1];
+			out.m_sfu += floats[2];
+			out.m_loadStore += floats[3];
+			out.m_texture += floats[4];
+
+			// Advance
+			++count;
+			stdoutstl2 = match.suffix();
+		}
+
+		if(count == 0)
+		{
+			ANKI_SHADER_COMPILER_LOGE("Error parsing instruction cycles");
+			return Error::FUNCTION_FAILED;
+		}
+	}
+	else
+	{
+		if(std::regex_search(stdoutstl, match,
+							 std::regex("Total instruction cycles:\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
+										"\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
+										"\\s*" ANKI_FLOAT_REGEX)))
+		{
+			ANKI_ASSERT(match.size() == 7);
+
+			U32 count = 1;
+			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_fma));
+			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_cvt));
+			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_sfu));
+			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_loadStore));
+			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_varying));
+			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_texture));
+		}
+		else
+		{
+			ANKI_SHADER_COMPILER_LOGE("Error parsing instruction cycles");
+			return Error::FUNCTION_FAILED;
+		}
+	}
+
+#undef ANKI_FLOAT_REGEX
+
+	// Spilling
+	{
+		std::string stdoutstl2(stdouts.cstr());
+
+		while(std::regex_search(stdoutstl2, match, std::regex("Stack spilling:\\s([0-9]+)")))
+		{
+			U32 spill;
+			ANKI_CHECK(CString(match[1].str().c_str()).toNumber(spill));
+			out.m_spilling += spill;
+
+			// Advance
+			stdoutstl2 = match.suffix();
+		}
+	}
+
+	// FP16
+	{
+		std::string stdoutstl2(stdouts.cstr());
+
+		U32 count = 0;
+		while(std::regex_search(stdoutstl2, match, std::regex("16-bit arithmetic:\\s(?:([0-9]+|N\\/A))")))
+		{
+			if(CString(match[1].str().c_str()) == "N/A")
+			{
+				// Do nothing
+			}
+			else
+			{
+				U32 percentage;
+				ANKI_CHECK(CString(match[1].str().c_str()).toNumber(percentage));
+				out.m_fp16ArithmeticPercentage += F32(percentage);
+			}
+
+			// Advance
+			stdoutstl2 = match.suffix();
+			++count;
+		}
+
+		if(count == 0)
+		{
+			ANKI_SHADER_COMPILER_LOGE("Error parsing 16-bit arithmetic");
+			return Error::FUNCTION_FAILED;
+		}
+	}
+
+	// Debug
+	if(false)
+	{
+		printf("%s\n", stdouts.cstr());
+		StringAuto str(tmpAlloc);
+		out.toString(str);
+		printf("%s\n", str.cstr());
+	}
+
+	return Error::NONE;
+}
+
+Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv, ShaderType shaderType,
+							 GenericMemoryPoolAllocator<U8> tmpAlloc, MaliOfflineCompilerOut& out)
+{
+	ANKI_ASSERT(spirv.getSize() > 0);
+
+	// Create temp file to dump the spirv
+	StringAuto tmpDir(tmpAlloc);
+	ANKI_CHECK(getTempDirectory(tmpDir));
+	StringAuto spirvFilename(tmpAlloc);
+	spirvFilename.sprintf("%s/AnKiMaliocTmpSpirv_%llu.spv", tmpDir.cstr(), getRandom());
+
+	File spirvFile;
+	ANKI_CHECK(spirvFile.open(spirvFilename, FileOpenFlag::WRITE | FileOpenFlag::BINARY));
+	Error err = spirvFile.write(spirv.getBegin(), spirv.getSizeInBytes());
+	spirvFile.close();
+
+	// Call malioc
+	if(!err)
+	{
+		err = runMaliOfflineCompilerInternal(maliocExecutable, spirvFilename, shaderType, tmpAlloc, out);
+	}
+
+	// Cleanup
+	const Error err2 = removeFile(spirvFilename);
+
+	return (err) ? err : err2;
+}
+
+} // end namespace anki
