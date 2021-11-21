@@ -238,7 +238,7 @@ endif()
 ################################################################################
 # Thirdparty                                                                   #
 ################################################################################
-set(ANKI_EXTERN_SUB_DIRS TinyXml2 Lua ZLib Bullet ImGui MeshOptimizer SprivCross)
+set(ANKI_EXTERN_SUB_DIRS TinyXml2 Lua ZLib Bullet ImGui MeshOptimizer SprivCross HwcPipe)
 
 # Bullet config
 option(BUILD_BULLET2_DEMOS OFF)
@@ -418,6 +418,10 @@ endif()
 
 if(SDL)
 	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} SDL2-static)
+endif()
+
+if(ANDROID)
+	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} AnKiHwcPipe)
 endif()
 
 set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} BulletSoftBody BulletDynamics BulletCollision LinearMath

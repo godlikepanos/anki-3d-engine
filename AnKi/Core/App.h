@@ -31,6 +31,7 @@ class VertexGpuMemoryPool;
 class UiManager;
 class UiQueueElement;
 class RenderQueue;
+class MaliHwCounters;
 
 /// The core class of the engine.
 class App
@@ -157,8 +158,6 @@ public:
 	}
 
 private:
-	class StatsUi;
-
 	// Allocation
 	AllocAlignedCallback m_allocCb;
 	void* m_allocCbData;
@@ -171,6 +170,7 @@ private:
 	NativeWindow* m_window = nullptr;
 	Input* m_input = nullptr;
 	GrManager* m_gr = nullptr;
+	MaliHwCounters* m_maliHwCounters = nullptr;
 	VertexGpuMemoryPool* m_vertexMem = nullptr;
 	StagingGpuMemoryPool* m_stagingMem = nullptr;
 	PhysicsWorld* m_physics = nullptr;
@@ -182,7 +182,7 @@ private:
 	ScriptManager* m_script = nullptr;
 
 	// Misc
-	StatsUi* m_statsUi = nullptr;
+	UiImmediateModeBuilderPtr m_statsUi;
 	Bool m_displayStats = false;
 	UiImmediateModeBuilderPtr m_console;
 	Bool m_consoleEnabled = false;

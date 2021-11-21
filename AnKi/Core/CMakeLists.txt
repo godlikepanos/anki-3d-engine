@@ -1,4 +1,5 @@
-set(SOURCES App.cpp ConfigSet.cpp GpuMemoryPools.cpp DeveloperConsole.cpp CoreTracer.cpp)
+set(SOURCES App.cpp ConfigSet.cpp GpuMemoryPools.cpp DeveloperConsole.cpp CoreTracer.cpp MaliHwCounters.cpp
+	StatsUi.cpp)
 file(GLOB HEADERS *.h)
 
 if(SDL)

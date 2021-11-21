@@ -14,7 +14,9 @@
 #include <AnKi/Util/HighRezTimer.h>
 #include <AnKi/Core/CoreTracer.h>
 #include <AnKi/Core/DeveloperConsole.h>
+#include <AnKi/Core/StatsUi.h>
 #include <AnKi/Core/NativeWindow.h>
+#include <AnKi/Core/MaliHwCounters.h>
 #include <AnKi/Input/Input.h>
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Renderer/RenderQueue.h>
@@ -39,166 +41,6 @@ namespace anki {
 /// The one and only android hack
 android_app* g_androidApp = nullptr;
 #endif
-
-class App::StatsUi
-{
-public:
-	template<typename T>
-	class BufferedValue
-	{
-	public:
-		void set(T x)
-		{
-			m_total += x;
-			++m_count;
-		}
-
-		F64 get(Bool flush)
-		{
-			if(flush)
-			{
-				m_avg = F64(m_total) / m_count;
-				m_count = 0;
-				m_total = 0.0;
-			}
-
-			return m_avg;
-		}
-
-	private:
-		T m_total = T(0);
-		F64 m_avg = 0.0;
-		U32 m_count = 0;
-	};
-
-	GenericMemoryPoolAllocator<U8> m_alloc;
-
-	BufferedValue<Second> m_frameTime;
-	BufferedValue<Second> m_renderTime;
-	BufferedValue<Second> m_sceneUpdateTime;
-	BufferedValue<Second> m_visTestsTime;
-	BufferedValue<Second> m_physicsTime;
-	BufferedValue<Second> m_gpuTime;
-
-	PtrSize m_allocatedCpuMem = 0;
-	U64 m_allocCount = 0;
-	U64 m_freeCount = 0;
-
-	U64 m_vkCpuMem = 0;
-	U64 m_vkGpuMem = 0;
-	U32 m_vkCmdbCount = 0;
-
-	PtrSize m_drawableCount = 0;
-
-	static const U32 BUFFERED_FRAMES = 16;
-	U32 m_bufferedFrames = 0;
-
-	StatsUi(const GenericMemoryPoolAllocator<U8>& alloc)
-		: m_alloc(alloc)
-	{
-	}
-
-	void build(CanvasPtr canvas)
-	{
-		// Misc
-		++m_bufferedFrames;
-		Bool flush = false;
-		if(m_bufferedFrames == BUFFERED_FRAMES)
-		{
-			flush = true;
-			m_bufferedFrames = 0;
-		}
-
-		// Start drawing the UI
-		canvas->pushFont(canvas->getDefaultFont(), 16);
-
-		const Vec4 oldWindowColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
-		ImGui::GetStyle().Colors[ImGuiCol_WindowBg].w = 0.3f;
-
-		if(ImGui::Begin("Stats", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize))
-		{
-			ImGui::SetWindowPos(Vec2(5.0f, 5.0f));
-			ImGui::SetWindowSize(Vec2(230.0f, 450.0f));
-
-			ImGui::Text("CPU Time:");
-			labelTime(m_frameTime.get(flush), "Total frame");
-			labelTime(m_renderTime.get(flush), "Renderer");
-			labelTime(m_sceneUpdateTime.get(flush), "Scene update");
-			labelTime(m_visTestsTime.get(flush), "Visibility");
-			labelTime(m_physicsTime.get(flush), "Physics");
-
-			ImGui::Text("----");
-			ImGui::Text("GPU Time:");
-			labelTime(m_gpuTime.get(flush), "Total frame");
-
-			ImGui::Text("----");
-			ImGui::Text("Memory:");
-			labelBytes(m_allocatedCpuMem, "Total CPU");
-			labelUint(m_allocCount, "Total allocations");
-			labelUint(m_freeCount, "Total frees");
-			labelBytes(m_vkCpuMem, "Vulkan CPU");
-			labelBytes(m_vkGpuMem, "Vulkan GPU");
-
-			ImGui::Text("----");
-			ImGui::Text("Vulkan:");
-			labelUint(m_vkCmdbCount, "Cmd buffers");
-
-			ImGui::Text("----");
-			ImGui::Text("Other:");
-			labelUint(m_drawableCount, "Drawbles");
-		}
-
-		ImGui::End();
-		ImGui::GetStyle().Colors[ImGuiCol_WindowBg] = oldWindowColor;
-
-		canvas->popFont();
-	}
-
-	void labelTime(Second val, CString name)
-	{
-		ImGui::Text("%s: %fms", name.cstr(), val * 1000.0);
-	}
-
-	void labelBytes(PtrSize val, CString name)
-	{
-		PtrSize gb, mb, kb, b;
-
-		gb = val / 1_GB;
-		val -= gb * 1_GB;
-
-		mb = val / 1_MB;
-		val -= mb * 1_MB;
-
-		kb = val / 1_KB;
-		val -= kb * 1_KB;
-
-		b = val;
-
-		StringAuto timestamp(m_alloc);
-		if(gb)
-		{
-			timestamp.sprintf("%s: %4u,%04u,%04u,%04u", name.cstr(), gb, mb, kb, b);
-		}
-		else if(mb)
-		{
-			timestamp.sprintf("%s: %4u,%04u,%04u", name.cstr(), mb, kb, b);
-		}
-		else if(kb)
-		{
-			timestamp.sprintf("%s: %4u,%04u", name.cstr(), kb, b);
-		}
-		else
-		{
-			timestamp.sprintf("%s: %4u", name.cstr(), b);
-		}
-		ImGui::TextUnformatted(timestamp.cstr());
-	}
-
-	void labelUint(U64 val, CString name)
-	{
-		ImGui::Text("%s: %lu", name.cstr(), val);
-	}
-};
 
 void* App::MemStats::allocCallback(void* userData, void* ptr, PtrSize size, PtrSize alignment)
 {
@@ -269,7 +111,7 @@ App::~App()
 
 void App::cleanup()
 {
-	m_heapAlloc.deleteInstance(m_statsUi);
+	m_statsUi.reset(nullptr);
 	m_console.reset(nullptr);
 
 	m_heapAlloc.deleteInstance(m_scene);
@@ -292,6 +134,8 @@ void App::cleanup()
 	m_vertexMem = nullptr;
 	m_heapAlloc.deleteInstance(m_threadHive);
 	m_threadHive = nullptr;
+	m_heapAlloc.deleteInstance(m_maliHwCounters);
+	m_maliHwCounters = nullptr;
 	GrManager::deleteInstance(m_gr);
 	m_gr = nullptr;
 	Input::deleteInstance(m_input);
@@ -422,6 +266,14 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	ANKI_CHECK(GrManager::newInstance(grInit, m_gr));
 
 	//
+	// Mali HW counters
+	//
+	if(m_gr->getDeviceCapabilities().m_gpuVendor == GpuVendor::ARM)
+	{
+		m_maliHwCounters = m_heapAlloc.newInstance<MaliHwCounters>(m_heapAlloc);
+	}
+
+	//
 	// GPU mem
 	//
 	m_vertexMem = m_heapAlloc.newInstance<VertexGpuMemoryPool>();
@@ -500,7 +352,7 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	//
 	// Misc
 	//
-	m_statsUi = m_heapAlloc.newInstance<StatsUi>(m_heapAlloc);
+	ANKI_CHECK(m_ui->newInstance<StatsUi>(m_statsUi));
 	ANKI_CHECK(m_ui->newInstance<DeveloperConsole>(m_console, m_allocCb, m_allocCbData, m_script));
 
 	ANKI_CORE_LOGI("Application initialized");
@@ -616,22 +468,35 @@ Error App::mainLoop()
 			// Stats
 			if(m_displayStats)
 			{
-				m_statsUi->m_frameTime.set(frameTime);
-				m_statsUi->m_renderTime.set(m_renderer->getStats().m_renderingCpuTime);
-				m_statsUi->m_sceneUpdateTime.set(m_scene->getStats().m_updateTime);
-				m_statsUi->m_visTestsTime.set(m_scene->getStats().m_visibilityTestsTime);
-				m_statsUi->m_physicsTime.set(m_scene->getStats().m_physicsUpdate);
-				m_statsUi->m_gpuTime.set(m_renderer->getStats().m_renderingGpuTime);
-				m_statsUi->m_allocatedCpuMem = m_memStats.m_allocatedMem.load();
-				m_statsUi->m_allocCount = m_memStats.m_allocCount.load();
-				m_statsUi->m_freeCount = m_memStats.m_freeCount.load();
+				StatsUi& statsUi = *static_cast<StatsUi*>(m_statsUi.get());
 
+				statsUi.setFrameTime(frameTime);
+				statsUi.setRenderTime(m_renderer->getStats().m_renderingCpuTime);
+				statsUi.setSceneUpdateTime(m_scene->getStats().m_updateTime);
+				statsUi.setVisibilityTestsTime(m_scene->getStats().m_visibilityTestsTime);
+				statsUi.setPhysicsTime(m_scene->getStats().m_physicsUpdate);
+
+				statsUi.setGpuTime(m_renderer->getStats().m_renderingGpuTime);
+				if(m_maliHwCounters)
+				{
+					MaliHwCountersOut out;
+					m_maliHwCounters->sample(out);
+
+					statsUi.setGpuActiveCycles(out.m_gpuActive);
+					statsUi.setGpuReadBandwidth(out.m_readBandwidth);
+					statsUi.setGpuWriteBandwidth(out.m_writeBandwidth);
+				}
+
+				statsUi.setAllocatedCpuMemory(m_memStats.m_allocatedMem.load());
+				statsUi.setCpuAllocationCount(m_memStats.m_allocCount.load());
+				statsUi.setCpuFreeCount(m_memStats.m_freeCount.load());
 				GrManagerStats grStats = m_gr->getStats();
-				m_statsUi->m_vkCpuMem = grStats.m_cpuMemory;
-				m_statsUi->m_vkGpuMem = grStats.m_gpuMemory;
-				m_statsUi->m_vkCmdbCount = grStats.m_commandBufferCount;
+				statsUi.setVkCpuMemory(grStats.m_cpuMemory);
+				statsUi.setVkGpuMemory(grStats.m_gpuMemory);
 
-				m_statsUi->m_drawableCount = rqueue.countAllRenderables();
+				statsUi.setVkCommandBufferCount(grStats.m_commandBufferCount);
+
+				statsUi.setDrawableCount(rqueue.countAllRenderables());
 			}
 
 #if ANKI_ENABLE_TRACE
@@ -673,7 +538,7 @@ void App::injectUiElements(DynamicArrayAuto<UiQueueElement>& newUiElementArr, Re
 	U32 count = originalCount;
 	if(m_displayStats)
 	{
-		newUiElementArr[count].m_userData = m_statsUi;
+		newUiElementArr[count].m_userData = m_statsUi.get();
 		newUiElementArr[count].m_drawCallback = [](CanvasPtr& canvas, void* userData) -> void {
 			static_cast<StatsUi*>(userData)->build(canvas);
 		};
