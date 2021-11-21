@@ -238,7 +238,7 @@ endif()
 ################################################################################
 # Thirdparty                                                                   #
 ################################################################################
-set(ANKI_EXTERN_SUB_DIRS TinyXml2 Lua ZLib Bullet ImGui MeshOptimizer SprivCross HwcPipe)
+set(ANKI_EXTERN_SUB_DIRS TinyXml2 Lua ZLib Bullet ImGui MeshOptimizer SprivCross)
 
 # Bullet config
 option(BUILD_BULLET2_DEMOS OFF)
@@ -274,6 +274,8 @@ endforeach()
 if(ANDROID)
 	add_library(AnKiAndroidNativeGlue ${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c)
 	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -u ANativeActivity_onCreate")
+
+	add_subdirectory(ThirdParty/HwcPipe)
 endif()
 
 ################################################################################
