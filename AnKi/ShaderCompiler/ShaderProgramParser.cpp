@@ -252,6 +252,8 @@ static const char* SHADER_HEADER = R"(#version 460 core
 
 layout(std140, row_major) uniform;
 layout(std140, row_major) buffer;
+
+#define ANKI_RP mediump
 )";
 
 static const U64 SHADER_HEADER_HASH = computeHash(SHADER_HEADER, sizeof(SHADER_HEADER));

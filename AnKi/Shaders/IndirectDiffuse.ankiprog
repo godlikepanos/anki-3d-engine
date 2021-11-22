@@ -32,10 +32,10 @@ layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y) in;
 layout(set = 0, binding = 4) writeonly uniform image2D u_outImage;
 
 layout(set = 0, binding = 5) uniform sampler u_linearAnyClampSampler;
-layout(set = 0, binding = 6) uniform texture2D u_gbufferRt2;
+layout(set = 0, binding = 6) ANKI_RP uniform texture2D u_gbufferRt2;
 layout(set = 0, binding = 7) uniform texture2D u_depthRt;
-layout(set = 0, binding = 8) uniform texture2D u_lightBufferRt;
-layout(set = 0, binding = 9) uniform texture2D u_historyTex;
+layout(set = 0, binding = 8) ANKI_RP uniform texture2D u_lightBufferRt;
+layout(set = 0, binding = 9) ANKI_RP uniform texture2D u_historyTex;
 layout(set = 0, binding = 10) uniform texture2D u_motionVectorsTex;
 layout(set = 0, binding = 11) uniform texture2D u_motionVectorsRejectionTex;
 
@@ -73,15 +73,15 @@ void main()
 	const Vec3 viewPos = v4.xyz / v4.w;
 
 	// SSGI
-	Vec3 outColor = Vec3(0.0);
-	F32 ssao = 0.0;
+	ANKI_RP Vec3 outColor = Vec3(0.0);
+	ANKI_RP F32 ssao = 0.0;
 	if(ENABLE_SSGI)
 	{
 		// Find the projected radius
-		const Vec3 sphereLimit = viewPos + Vec3(u_unis.m_radius, 0.0, 0.0);
-		const Vec4 projSphereLimit = cheapProject(Vec4(sphereLimit, 1.0));
-		const Vec2 projSphereLimit2 = projSphereLimit.xy / projSphereLimit.w;
-		const F32 projRadius = length(projSphereLimit2 - ndc);
+		const ANKI_RP Vec3 sphereLimit = viewPos + Vec3(u_unis.m_radius, 0.0, 0.0);
+		const ANKI_RP Vec4 projSphereLimit = cheapProject(Vec4(sphereLimit, 1.0));
+		const ANKI_RP Vec2 projSphereLimit2 = projSphereLimit.xy / projSphereLimit.w;
+		const ANKI_RP F32 projRadius = length(projSphereLimit2 - ndc);
 
 		// Loop to compute
 		const UVec2 random = rand3DPCG16(UVec3(gl_GlobalInvocationID.xy, u_clusteredShading.m_frame)).xy;
@@ -100,7 +100,7 @@ void main()
 			// Compute factor
 			const Vec3 dir = s - viewPos;
 			const F32 len = length(dir);
-			const Vec3 n = dir / len;
+			const Vec3 n = normalize(dir);
 			const F32 NoL = max(0.0, dot(viewNormal, n));
 			// const F32 distFactor = 1.0 - sin(min(1.0, len / u_unis.m_radius) * PI / 2.0);
 			const F32 distFactor = 1.0 - min(1.0, len / u_unis.m_radius);
@@ -120,14 +120,14 @@ void main()
 
 			// Append color
 			const F32 w = distFactor * NoL;
-			const Vec3 c = textureLod(u_lightBufferRt, u_linearAnyClampSampler, lastFrameUv, 100.0).xyz;
+			const ANKI_RP Vec3 c = textureLod(u_lightBufferRt, u_linearAnyClampSampler, lastFrameUv, 100.0).xyz;
 			outColor += c * w;
 
 			// Compute SSAO as well
 			ssao += max(dot(viewNormal, dir) + u_unis.m_ssaoBias, EPSILON) / max(len * len, EPSILON);
 		}
 
-		const F32 scount = 1.0 / u_unis.m_sampleCountf;
+		const ANKI_RP F32 scount = 1.0 / u_unis.m_sampleCountf;
 		outColor *= scount * 2.0 * PI;
 		ssao *= scount;
 	}
@@ -138,7 +138,7 @@ void main()
 	{
 		// Sample probes
 
-		Vec3 probeColor = Vec3(0.0);
+		ANKI_RP Vec3 probeColor = Vec3(0.0);
 
 		// Get the cluster
 		Cluster cluster = getClusterFragCoord(Vec3(fragCoord * 2.0, depth));
@@ -176,8 +176,8 @@ void main()
 				totalBlendWeight += blendWeight;
 
 				// Sample
-				const Vec3 c = sampleGlobalIllumination(worldPos, worldNormal, probe, u_globalIlluminationTextures,
-														u_linearAnyClampSampler);
+				const ANKI_RP Vec3 c = sampleGlobalIllumination(worldPos, worldNormal, probe,
+																u_globalIlluminationTextures, u_linearAnyClampSampler);
 				probeColor += c * blendWeight;
 			}
 
@@ -209,7 +209,7 @@ void main()
 		const F32 blendFactor = mix(lowestBlendFactor, 1.0, historyRejectionFactor);
 
 		// Blend with history
-		const Vec3 history = textureLod(u_historyTex, u_linearAnyClampSampler, historyUv, 0.0).rgb;
+		const ANKI_RP Vec3 history = textureLod(u_historyTex, u_linearAnyClampSampler, historyUv, 0.0).rgb;
 		outColor = mix(history, outColor, blendFactor);
 	}
 

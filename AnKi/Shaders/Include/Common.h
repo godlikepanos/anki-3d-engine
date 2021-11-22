@@ -36,6 +36,8 @@ ANKI_END_NAMESPACE
 
 #	define ANKI_CPP_CODE(x) x
 
+#	define ANKI_RP
+
 //
 // Macros & functions GLSL
 //

@@ -44,7 +44,7 @@ layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_REFLECTIONS_BIND
 };
 
 layout(set = CLUSTERED_SHADING_SET,
-	   binding = CLUSTERED_SHADING_REFLECTIONS_BINDING + 1) uniform textureCubeArray u_reflectionsTex;
+	   binding = CLUSTERED_SHADING_REFLECTIONS_BINDING + 1) uniform ANKI_RP textureCubeArray u_reflectionsTex;
 layout(set = CLUSTERED_SHADING_SET,
 	   binding = CLUSTERED_SHADING_REFLECTIONS_BINDING + 2) uniform texture2D u_integrationLut;
 #endif
@@ -77,7 +77,7 @@ layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_FOG_BINDING, sca
 // GI (2)
 //
 #if defined(CLUSTERED_SHADING_GI_BINDING)
-layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_GI_BINDING) uniform texture3D
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_GI_BINDING) uniform ANKI_RP texture3D
 	u_globalIlluminationTextures[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES];
 
 layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_GI_BINDING + 1, scalar) uniform b_giProbes

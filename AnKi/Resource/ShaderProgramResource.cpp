@@ -387,7 +387,7 @@ void ShaderProgramResource::initVariant(const ShaderProgramResourceVariantInitIn
 			inf.m_constValues.setArray((constValueCount) ? constValues.getBegin() : nullptr, constValueCount);
 			ShaderPtr shader = getManager().getGrManager().newShader(inf);
 
-			if(false)
+			if(true && (ANKI_OS_LINUX || ANKI_OS_WINDOWS))
 			{
 				MaliOfflineCompilerOut maliocOut;
 				const Error err =

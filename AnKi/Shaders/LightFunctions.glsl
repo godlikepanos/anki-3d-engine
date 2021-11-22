@@ -327,24 +327,26 @@ F32 computeProbeBlendWeight(Vec3 fragPos, // Doesn't need to be inside the AABB
 
 // Given the value of the 6 faces of the dice and a normal, sample the correct weighted value.
 // https://www.shadertoy.com/view/XtcBDB
-Vec3 sampleAmbientDice(Vec3 posx, Vec3 negx, Vec3 posy, Vec3 negy, Vec3 posz, Vec3 negz, Vec3 normal)
+ANKI_RP Vec3 sampleAmbientDice(ANKI_RP Vec3 posx, ANKI_RP Vec3 negx, ANKI_RP Vec3 posy, ANKI_RP Vec3 negy,
+							   ANKI_RP Vec3 posz, ANKI_RP Vec3 negz, ANKI_RP Vec3 normal)
 {
-	const Vec3 axisWeights = abs(normal);
-	const Vec3 uv = NDC_TO_UV(normal);
+	const ANKI_RP Vec3 axisWeights = abs(normal);
+	const ANKI_RP Vec3 uv = NDC_TO_UV(normal);
 
-	Vec3 col = mix(negx, posx, uv.x) * axisWeights.x;
+	ANKI_RP Vec3 col = mix(negx, posx, uv.x) * axisWeights.x;
 	col += mix(negy, posy, uv.y) * axisWeights.y;
 	col += mix(negz, posz, uv.z) * axisWeights.z;
 
 	// Divide by weight
-	col /= axisWeights.x + axisWeights.y + axisWeights.z + EPSILON;
+	col /= axisWeights.x + axisWeights.y + axisWeights.z + EPSILON_RP;
 
 	return col;
 }
 
 // Sample the irradiance term from the clipmap
-Vec3 sampleGlobalIllumination(const Vec3 worldPos, const Vec3 normal, const GlobalIlluminationProbe probe,
-							  texture3D textures[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES], sampler linearAnyClampSampler)
+ANKI_RP Vec3 sampleGlobalIllumination(const Vec3 worldPos, const Vec3 normal, const GlobalIlluminationProbe probe,
+									  ANKI_RP texture3D textures[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES],
+									  sampler linearAnyClampSampler)
 {
 	// Find the UVW
 	Vec3 uvw = (worldPos - probe.m_aabbMin) / (probe.m_aabbMax - probe.m_aabbMin);
@@ -356,7 +358,7 @@ Vec3 sampleGlobalIllumination(const Vec3 worldPos, const Vec3 normal, const Glob
 	uvw.x = clamp(uvw.x, probe.m_halfTexelSizeU, (1.0 / 6.0) - probe.m_halfTexelSizeU);
 
 	// Read the irradiance
-	Vec3 irradiancePerDir[6u];
+	ANKI_RP Vec3 irradiancePerDir[6u];
 	ANKI_UNROLL for(U32 dir = 0u; dir < 6u; ++dir)
 	{
 		// Point to the correct UV
@@ -368,8 +370,9 @@ Vec3 sampleGlobalIllumination(const Vec3 worldPos, const Vec3 normal, const Glob
 	}
 
 	// Sample the irradiance
-	const Vec3 irradiance = sampleAmbientDice(irradiancePerDir[0], irradiancePerDir[1], irradiancePerDir[2],
-											  irradiancePerDir[3], irradiancePerDir[4], irradiancePerDir[5], normal);
+	const ANKI_RP Vec3 irradiance =
+		sampleAmbientDice(irradiancePerDir[0], irradiancePerDir[1], irradiancePerDir[2], irradiancePerDir[3],
+						  irradiancePerDir[4], irradiancePerDir[5], normal);
 
 	return irradiance;
 }

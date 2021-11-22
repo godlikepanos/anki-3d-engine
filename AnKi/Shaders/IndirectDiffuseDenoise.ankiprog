@@ -16,10 +16,10 @@ const UVec2 WORKGROUP_SIZE = UVec2(8u, 8u);
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y) in;
 
 layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
-layout(set = 0, binding = 1) uniform texture2D u_toDenoiseTex;
+layout(set = 0, binding = 1) uniform ANKI_RP texture2D u_toDenoiseTex;
 layout(set = 0, binding = 2) uniform texture2D u_depthTex;
-layout(set = 0, binding = 3) uniform texture2D u_gbuffer2Tex;
-layout(set = 0, binding = 4) writeonly uniform image2D u_outImg;
+layout(set = 0, binding = 3) uniform ANKI_RP texture2D u_gbuffer2Tex;
+layout(set = 0, binding = 4) writeonly uniform ANKI_RP image2D u_outImg;
 
 layout(push_constant, std430, row_major) uniform b_pc
 {
@@ -51,11 +51,11 @@ void main()
 	}
 
 	const Vec3 positionCenter = unproject(UV_TO_NDC(uv), depthCenter);
-	const Vec3 normalCenter = readNormalFromGBuffer(u_gbuffer2Tex, u_linearAnyClampSampler, uv);
+	const ANKI_RP Vec3 normalCenter = readNormalFromGBuffer(u_gbuffer2Tex, u_linearAnyClampSampler, uv);
 
 	// Sample
-	F32 weight = EPSILON;
-	Vec3 color = Vec3(0.0);
+	ANKI_RP F32 weight = EPSILON_RP;
+	ANKI_RP Vec3 color = Vec3(0.0);
 
 	for(F32 i = -u_unis.m_sampleCountDiv2; i <= u_unis.m_sampleCountDiv2; i += 1.0)
 	{
@@ -71,7 +71,7 @@ void main()
 		const Vec3 normalTap =
 			unpackNormalFromGBuffer(textureLod(u_gbuffer2Tex, u_linearAnyClampSampler, sampleUv, 0.0));
 
-		F32 w = calculateBilateralWeightPlane(positionCenter, normalCenter, positionTap, normalTap, 1.0);
+		ANKI_RP F32 w = calculateBilateralWeightPlane(positionCenter, normalCenter, positionTap, normalTap, 1.0);
 		// w *= gaussianWeight(0.4, abs(F32(i)) / (sampleCount + 1.0));
 		weight += w;
 

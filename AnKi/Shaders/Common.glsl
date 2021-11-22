@@ -12,6 +12,7 @@
 
 // Constants
 const F32 EPSILON = 0.000001;
+const ANKI_RP F32 EPSILON_RP = 0.0001; // Divisions by this should be OK according to http://weitz.de/ieee/
 const F32 FLT_MAX = 3.402823e+38;
 const U32 MAX_U32 = 0xFFFFFFFFu;
 
