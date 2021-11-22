@@ -11,14 +11,80 @@
 
 namespace anki {
 
+static MaliOfflineCompilerHwUnit strToHwUnit(CString str)
+{
+	MaliOfflineCompilerHwUnit out = MaliOfflineCompilerHwUnit::NONE;
+
+	if(str.find("FMA") == 0)
+	{
+		out = MaliOfflineCompilerHwUnit::FMA;
+	}
+	else if(str.find("CVT") == 0)
+	{
+		out = MaliOfflineCompilerHwUnit::CVT;
+	}
+	else if(str.find("SFU") == 0)
+	{
+		out = MaliOfflineCompilerHwUnit::SFU;
+	}
+	else if(str.find("LS") == 0)
+	{
+		out = MaliOfflineCompilerHwUnit::LOAD_STORE;
+	}
+	else if(str.find("V") == 0)
+	{
+		out = MaliOfflineCompilerHwUnit::VARYING;
+	}
+	else if(str.find("T") == 0)
+	{
+		out = MaliOfflineCompilerHwUnit::TEXTURE;
+	}
+	else
+	{
+		ANKI_ASSERT(0);
+	}
+
+	return out;
+}
+
+static CString hwUnitToStr(MaliOfflineCompilerHwUnit u)
+{
+	CString out;
+	switch(u)
+	{
+	case MaliOfflineCompilerHwUnit::FMA:
+		out = "FMA";
+		break;
+	case MaliOfflineCompilerHwUnit::CVT:
+		out = "CVT";
+		break;
+	case MaliOfflineCompilerHwUnit::SFU:
+		out = "SFU";
+		break;
+	case MaliOfflineCompilerHwUnit::LOAD_STORE:
+		out = "LS";
+		break;
+	case MaliOfflineCompilerHwUnit::VARYING:
+		out = "VAR";
+		break;
+	case MaliOfflineCompilerHwUnit::TEXTURE:
+		out = "TEX";
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	return out;
+}
+
 void MaliOfflineCompilerOut::toString(StringAuto& str) const
 {
 	str.destroy();
-	str.sprintf("Regs: %u, Spilling: %u, "
-				"FMA %f, CVT %f, SFU %f, LS %f, VAR %f, TEX %f, "
-				"FP16: %f%%",
+	str.sprintf("Regs %u Spilling %u "
+				"FMA %f CVT %f SFU %f LS %f VAR %f TEX %f Bound %s "
+				"FP16 %f%%",
 				m_workRegisters, m_spilling, m_fma, m_cvt, m_sfu, m_loadStore, m_varying, m_texture,
-				m_fp16ArithmeticPercentage);
+				hwUnitToStr(m_boundUnit).cstr(), m_fp16ArithmeticPercentage);
 }
 
 static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString spirvFilename, ShaderType shaderType,
@@ -97,9 +163,10 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 		U32 count = 0;
 		while(std::regex_search(stdoutstl2, match,
 								std::regex("Total instruction cycles:\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
-										   "\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX)))
+										   "\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
+										   "\\s*([A-Z]+)")))
 		{
-			ANKI_ASSERT(match.size() == 6);
+			ANKI_ASSERT(match.size() == 7);
 			Array<F32, 5> floats;
 			for(U32 i = 0; i < floats.getSize(); ++i)
 			{
@@ -111,6 +178,8 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 			out.m_sfu += floats[2];
 			out.m_loadStore += floats[3];
 			out.m_texture += floats[4];
+
+			out.m_boundUnit = strToHwUnit(match[6].str().c_str());
 
 			// Advance
 			++count;
@@ -128,9 +197,9 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 		if(std::regex_search(stdoutstl, match,
 							 std::regex("Total instruction cycles:\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
 										"\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
-										"\\s*" ANKI_FLOAT_REGEX)))
+										"\\s*" ANKI_FLOAT_REGEX "\\s*([A-Z]+)")))
 		{
-			ANKI_ASSERT(match.size() == 7);
+			ANKI_ASSERT(match.size() == 8);
 
 			U32 count = 1;
 			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_fma));
@@ -139,6 +208,8 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_loadStore));
 			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_varying));
 			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_texture));
+
+			out.m_boundUnit = strToHwUnit(match[count++].str().c_str());
 		}
 		else
 		{

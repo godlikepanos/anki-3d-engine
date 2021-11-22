@@ -13,6 +13,17 @@ namespace anki {
 /// @addtogroup shader_compiler
 /// @{
 
+enum class MaliOfflineCompilerHwUnit : U8
+{
+	NONE,
+	FMA,
+	CVT,
+	SFU,
+	LOAD_STORE,
+	VARYING,
+	TEXTURE
+};
+
 /// Mali offline compiler output.
 class MaliOfflineCompilerOut
 {
@@ -24,6 +35,7 @@ public:
 	F32 m_loadStore = -1.0f;
 	F32 m_varying = -1.0f;
 	F32 m_texture = -1.0f;
+	MaliOfflineCompilerHwUnit m_boundUnit = MaliOfflineCompilerHwUnit::NONE;
 
 	U32 m_workRegisters = MAX_U32;
 	U32 m_spilling = 0;
