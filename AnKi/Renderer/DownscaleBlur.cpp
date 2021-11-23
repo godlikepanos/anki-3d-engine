@@ -74,7 +74,7 @@ Error DownscaleBlur::initInternal(const ConfigSet&)
 	}
 	else
 	{
-		ANKI_CHECK(getResourceManager().loadResource("Shaders/DownscaleBlur.ankiprog", m_prog));
+		ANKI_CHECK(getResourceManager().loadResource("Shaders/DownscaleBlurRaster.ankiprog", m_prog));
 		m_prog->getOrCreateVariant(variant);
 	}
 	m_grProg = variant->getProgram();

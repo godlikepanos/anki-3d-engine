@@ -8,8 +8,8 @@
 #include <AnKi/Shaders/Common.glsl>
 
 // Perform motion blur.
-Vec3 motionBlur(texture2D motionVectorsRt, sampler motionVectorsRtSampler, texture2D toBlurRt, Vec2 toBlurRtSize,
-				sampler toBlurRtSampler, Vec2 uv, U32 maxSamples)
+Vec3 motionBlur(texture2D motionVectorsRt, sampler motionVectorsRtSampler, ANKI_RP texture2D toBlurRt,
+				Vec2 toBlurRtSize, sampler toBlurRtSampler, Vec2 uv, U32 maxSamples)
 {
 	// Compute velocity. Get the max velocity around the curent sample to avoid outlines. TAA's result and the motion
 	// vectors RT do not quite overlap
@@ -44,7 +44,7 @@ Vec3 motionBlur(texture2D motionVectorsRt, sampler motionVectorsRtSampler, textu
 	sampleCountf = round(sampleCountf);
 
 	// Sample
-	Vec3 outColor = textureLod(toBlurRt, toBlurRtSampler, uv, 0.0).rgb;
+	ANKI_RP Vec3 outColor = textureLod(toBlurRt, toBlurRtSampler, uv, 0.0).rgb;
 	ANKI_LOOP for(F32 s = 1.0; s < sampleCountf; s += 1.0)
 	{
 		const F32 f = s / sampleCountf;

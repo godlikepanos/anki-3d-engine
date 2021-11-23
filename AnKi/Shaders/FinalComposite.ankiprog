@@ -24,31 +24,31 @@ layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
 layout(set = 0, binding = 1) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 2) uniform sampler u_trilinearRepeatSampler;
 
-layout(set = 0, binding = 3) uniform texture2D u_lightShadingRt;
-layout(set = 0, binding = 4) uniform texture2D u_ppsBloomLfRt;
-layout(set = 0, binding = 5) uniform texture3D u_lut;
-layout(set = 0, binding = 6) uniform texture2D u_blueNoise;
+layout(set = 0, binding = 3) uniform ANKI_RP texture2D u_lightShadingRt;
+layout(set = 0, binding = 4) uniform ANKI_RP texture2D u_ppsBloomLfRt;
+layout(set = 0, binding = 5) uniform ANKI_RP texture3D u_lut;
+layout(set = 0, binding = 6) uniform ANKI_RP texture2D u_blueNoise;
 layout(set = 0, binding = 7) uniform texture2D u_motionVectorsRt;
 layout(set = 0, binding = 8) uniform texture2D u_depthRt;
 #if DBG_ENABLED
-layout(set = 0, binding = 9) uniform texture2D u_dbgOutlineRt;
+layout(set = 0, binding = 9) uniform ANKI_RP texture2D u_dbgOutlineRt;
 #endif
 
-layout(push_constant, row_major, std430) uniform pc_
+layout(push_constant, row_major, std430) uniform b_pc
 {
 	UVec4 u_frameCountPad3;
 };
 
 layout(location = 0) in Vec2 in_uv;
-layout(location = 0) out Vec3 out_color;
+layout(location = 0) out ANKI_RP Vec3 out_color;
 
-Vec3 colorGrading(Vec3 color)
+ANKI_RP Vec3 colorGrading(ANKI_RP Vec3 color)
 {
-	const Vec3 LUT_SCALE = Vec3((F32(LUT_SIZE) - 1.0) / F32(LUT_SIZE));
-	const Vec3 LUT_OFFSET = Vec3(1.0 / (2.0 * F32(LUT_SIZE)));
+	const ANKI_RP Vec3 LUT_SCALE = Vec3((F32(LUT_SIZE) - 1.0) / F32(LUT_SIZE));
+	const ANKI_RP Vec3 LUT_OFFSET = Vec3(1.0 / (2.0 * F32(LUT_SIZE)));
 
 	color = min(color, Vec3(1.0));
-	const Vec3 lutCoords = color * LUT_SCALE + LUT_OFFSET;
+	const ANKI_RP Vec3 lutCoords = color * LUT_SCALE + LUT_OFFSET;
 	return textureLod(u_lut, u_trilinearRepeatSampler, lutCoords, 0.0).rgb;
 }
 
@@ -67,7 +67,7 @@ void main()
 	}
 
 #if BLOOM_ENABLED
-	const Vec3 bloom = textureLod(u_ppsBloomLfRt, u_linearAnyClampSampler, uv, 0.0).rgb;
+	const ANKI_RP Vec3 bloom = textureLod(u_ppsBloomLfRt, u_linearAnyClampSampler, uv, 0.0).rgb;
 	out_color += bloom;
 #endif
 
@@ -75,7 +75,7 @@ void main()
 
 #if BLUE_NOISE
 	const Vec2 bnUvw = Vec2(FB_SIZE) / Vec2(64.0) * uv;
-	Vec3 blueNoise = textureLod(u_blueNoise, u_trilinearRepeatSampler, bnUvw, 0.0).rgb;
+	ANKI_RP Vec3 blueNoise = textureLod(u_blueNoise, u_trilinearRepeatSampler, bnUvw, 0.0).rgb;
 	blueNoise = animateBlueNoise(blueNoise, u_frameCountPad3.x);
 	blueNoise = blueNoise * 2.0 - 1.0;
 	blueNoise = sign(blueNoise) * (1.0 - sqrt(1.0 - abs(blueNoise)));
@@ -84,7 +84,7 @@ void main()
 #endif
 
 #if DBG_ENABLED
-	const Vec4 dbg = textureLod(u_dbgOutlineRt, u_linearAnyClampSampler, uv, 0.0);
+	const ANKI_RP Vec4 dbg = textureLod(u_dbgOutlineRt, u_linearAnyClampSampler, uv, 0.0);
 	out_color = mix(out_color, dbg.rgb, dbg.a);
 #endif
 }
