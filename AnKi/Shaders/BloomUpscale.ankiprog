@@ -81,13 +81,13 @@ ANKI_RP Vec3 ssLensFlare(Vec2 uv)
 
 ANKI_RP Vec3 upscale(Vec2 uv)
 {
-	ANKI_RP Vec3 result = textureLod(u_tex, u_linearAnyClampSampler, uv, 0.0).rgb;
-	result += textureLodOffset(sampler2D(u_tex, u_linearAnyClampSampler), uv, 0.0, ivec2(+1, +1)).rgb;
-	result += textureLodOffset(sampler2D(u_tex, u_linearAnyClampSampler), uv, 0.0, ivec2(+1, -1)).rgb;
-	result += textureLodOffset(sampler2D(u_tex, u_linearAnyClampSampler), uv, 0.0, ivec2(-1, -1)).rgb;
-	result += textureLodOffset(sampler2D(u_tex, u_linearAnyClampSampler), uv, 0.0, ivec2(-1, +1)).rgb;
+	const ANKI_RP F32 weight = 1.0 / 5.0;
+	ANKI_RP Vec3 result = textureLod(u_tex, u_linearAnyClampSampler, uv, 0.0).rgb * weight;
+	result += textureLodOffset(sampler2D(u_tex, u_linearAnyClampSampler), uv, 0.0, ivec2(+1, +1)).rgb * weight;
+	result += textureLodOffset(sampler2D(u_tex, u_linearAnyClampSampler), uv, 0.0, ivec2(+1, -1)).rgb * weight;
+	result += textureLodOffset(sampler2D(u_tex, u_linearAnyClampSampler), uv, 0.0, ivec2(-1, -1)).rgb * weight;
+	result += textureLodOffset(sampler2D(u_tex, u_linearAnyClampSampler), uv, 0.0, ivec2(-1, +1)).rgb * weight;
 
-	result *= (1.0 / 5.0);
 	return result;
 }
 

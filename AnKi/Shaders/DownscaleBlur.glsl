@@ -22,7 +22,7 @@ layout(push_constant, row_major, std430) uniform pc_
 };
 
 Vec2 in_uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(u_fbSize);
-layout(set = 0, binding = 2) writeonly uniform image2D out_img;
+layout(set = 0, binding = 2) writeonly uniform ANKI_RP image2D out_img;
 ANKI_RP Vec3 out_color;
 #else
 layout(location = 0) in Vec2 in_uv;
@@ -39,13 +39,12 @@ void main()
 	}
 #endif
 
-	out_color = textureLod(u_tex, u_linearAnyClampSampler, in_uv, 0.0).rgb;
-	out_color += textureLodOffset(sampler2D(u_tex, u_linearAnyClampSampler), in_uv, 0.0, IVec2(+1, +1)).rgb;
-	out_color += textureLodOffset(sampler2D(u_tex, u_linearAnyClampSampler), in_uv, 0.0, IVec2(-1, -1)).rgb;
-	out_color += textureLodOffset(sampler2D(u_tex, u_linearAnyClampSampler), in_uv, 0.0, IVec2(+1, -1)).rgb;
-	out_color += textureLodOffset(sampler2D(u_tex, u_linearAnyClampSampler), in_uv, 0.0, IVec2(-1, +1)).rgb;
-
-	out_color *= (1.0 / 5.0);
+	const ANKI_RP F32 weight = 1.0 / 5.0;
+	out_color = textureLod(u_tex, u_linearAnyClampSampler, in_uv, 0.0).rgb * weight;
+	out_color += textureLodOffset(sampler2D(u_tex, u_linearAnyClampSampler), in_uv, 0.0, IVec2(+1, +1)).rgb * weight;
+	out_color += textureLodOffset(sampler2D(u_tex, u_linearAnyClampSampler), in_uv, 0.0, IVec2(-1, -1)).rgb * weight;
+	out_color += textureLodOffset(sampler2D(u_tex, u_linearAnyClampSampler), in_uv, 0.0, IVec2(+1, -1)).rgb * weight;
+	out_color += textureLodOffset(sampler2D(u_tex, u_linearAnyClampSampler), in_uv, 0.0, IVec2(-1, +1)).rgb * weight;
 
 #if defined(ANKI_COMPUTE_SHADER)
 	imageStore(out_img, IVec2(gl_GlobalInvocationID.xy), Vec4(out_color, 0.0));
