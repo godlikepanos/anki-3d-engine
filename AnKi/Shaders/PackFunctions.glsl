@@ -41,7 +41,7 @@ Vec3 signedOctEncode(Vec3 n)
 	outn.x = n.x * 0.5 + outn.y;
 	outn.y = n.x * -0.5 + outn.y;
 
-	outn.z = saturate(n.z * FLT_MAX);
+	outn.z = saturate(n.z * MAX_F32);
 	return outn;
 }
 
@@ -192,7 +192,7 @@ void readGBuffer(texture2D rt0, texture2D rt1, texture2D rt2, sampler sampl, Vec
 	g.m_normal = signedOctDecode(comp.yzw);
 	g.m_emission = comp.x * maxEmission;
 
-	g.m_velocity = Vec2(FLT_MAX); // Put something random
+	g.m_velocity = Vec2(MAX_F32); // Put something random
 
 	// Fix roughness
 	g.m_roughness = g.m_roughness * (1.0 - MIN_ROUGHNESS) + MIN_ROUGHNESS;

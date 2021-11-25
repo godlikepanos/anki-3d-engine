@@ -133,7 +133,7 @@ void main()
 
 		// Read the light buffer
 		outColor.rgb = textureLod(u_lightBufferRt, u_trilinearClampSampler, hitPoint.xy, lod).rgb;
-		outColor.rgb = clamp(outColor.rgb, 0.0, FLT_MAX); // Fix the value just in case
+		outColor.rgb = clamp(outColor.rgb, 0.0, MAX_F32); // Fix the value just in case
 		outColor.rgb *= hitAttenuation;
 		outColor.a = 1.0 - hitAttenuation;
 	}

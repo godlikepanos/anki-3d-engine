@@ -87,8 +87,6 @@ private:
 	public:
 		RenderTargetHandle m_rt;
 	} m_runCtx; ///< Runtime context.
-
-	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 
