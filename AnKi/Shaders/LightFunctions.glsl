@@ -78,69 +78,82 @@ Vec3 F_Unreal(Vec3 specular, F32 VoH)
 
 // Fresnel Schlick: "An Inexpensive BRDF Model for Physically-Based Rendering"
 // It has lower VGRPs than F_Unreal
-// specular: The specular color aka F0
-Vec3 F_Schlick(Vec3 specular, F32 VoH)
+ANKI_RP Vec3 F_Schlick(ANKI_RP Vec3 f0, ANKI_RP F32 VoH)
 {
-	const F32 a = 1.0 - VoH;
-	const F32 a2 = a * a;
-	const F32 a5 = a2 * a2 * a; // a5 = a^5
-	return /*saturate(50.0 * specular.g) */ a5 + (1.0 - a5) * specular;
+	const ANKI_RP F32 f = pow(1.0 - VoH, 5.0);
+	return f + f0 * (1.0 - f);
 }
 
 // D(n,h) aka NDF: GGX Trowbridge-Reitz
-F32 D_GGX(F32 roughness, F32 NoH)
+ANKI_RP F32 D_GGX(ANKI_RP F32 roughness, ANKI_RP F32 NoH, ANKI_RP Vec3 h, ANKI_RP Vec3 worldNormal)
 {
-	const F32 a = roughness * roughness;
-	const F32 a2 = a * a;
+#if ANKI_OS_ANDROID
+	const ANKI_RP Vec3 NxH = cross(worldNormal, h);
+	const ANKI_RP F32 oneMinusNoHSquared = dot(NxH, NxH);
+#else
+	const ANKI_RP F32 oneMinusNoHSquared = 1.0 - NoH * NoH;
+#endif
 
-	const F32 D = (NoH * a2 - NoH) * NoH + 1.0;
-	return a2 / (PI * D * D);
+	const ANKI_RP F32 a = roughness * roughness;
+	const ANKI_RP F32 v = NoH * a;
+	const ANKI_RP F32 k = a / (oneMinusNoHSquared + v * v);
+	const ANKI_RP F32 d = k * k * (1.0 / PI);
+	return saturateRp(d);
 }
 
 // Visibility term: Geometric shadowing divided by BRDF denominator
-F32 V_Schlick(F32 roughness, F32 NoV, F32 NoL)
+ANKI_RP F32 V_Schlick(ANKI_RP F32 roughness, ANKI_RP F32 NoV, ANKI_RP F32 NoL)
 {
-	const F32 k = (roughness * roughness) * 0.5;
-	const F32 Vis_SchlickV = NoV * (1.0 - k) + k;
-	const F32 Vis_SchlickL = NoL * (1.0 - k) + k;
+	const ANKI_RP F32 k = (roughness * roughness) * 0.5;
+	const ANKI_RP F32 Vis_SchlickV = NoV * (1.0 - k) + k;
+	const ANKI_RP F32 Vis_SchlickL = NoL * (1.0 - k) + k;
 	return 0.25 / (Vis_SchlickV * Vis_SchlickL);
+}
+
+// Visibility term: Hammon 2017, "PBR Diffuse Lighting for GGX+Smith Microsurfaces"
+ANKI_RP F32 V_SmithGGXCorrelatedFast(ANKI_RP F32 roughness, ANKI_RP F32 NoV, ANKI_RP F32 NoL)
+{
+	const ANKI_RP F32 a = roughness * roughness;
+	const ANKI_RP F32 v = 0.5 / mix(2.0 * NoL * NoV, NoL + NoV, a);
+	return saturateRp(v);
+}
+
+ANKI_RP F32 Fd_Lambert()
+{
+	return 1.0 / PI;
+}
+
+ANKI_RP Vec3 diffuseLobe(ANKI_RP Vec3 diffuse)
+{
+	return diffuse * Fd_Lambert();
+}
+
+// Performs BRDF specular lighting
+ANKI_RP Vec3 specularIsotropicLobe(GbufferInfo gbuffer, Vec3 viewDir, Vec3 frag2Light)
+{
+	const ANKI_RP Vec3 H = normalize(frag2Light + viewDir);
+
+	const ANKI_RP F32 NoL = max(0.0, dot(gbuffer.m_normal, frag2Light));
+	const ANKI_RP F32 VoH = max(0.0, dot(viewDir, H));
+	const ANKI_RP F32 NoH = max(0.0, dot(gbuffer.m_normal, H));
+	const ANKI_RP F32 NoV = max(0.05, dot(gbuffer.m_normal, viewDir));
+
+	// F
+	const ANKI_RP Vec3 F = F_Schlick(gbuffer.m_specular, VoH);
+
+	// D
+	const ANKI_RP F32 D = D_GGX(gbuffer.m_roughness, NoH, H, gbuffer.m_normal);
+
+	// Vis
+	const ANKI_RP F32 V = V_SmithGGXCorrelatedFast(gbuffer.m_roughness, NoV, NoL);
+
+	return F * (V * D);
 }
 
 Vec3 envBRDF(Vec3 specular, F32 roughness, texture2D integrationLut, sampler integrationLutSampler, F32 NoV)
 {
 	const Vec2 envBRDF = textureLod(integrationLut, integrationLutSampler, Vec2(roughness, NoV), 0.0).xy;
 	return specular * envBRDF.x + min(1.0, 50.0 * specular.g) * envBRDF.y;
-}
-
-Vec3 diffuseLambert(Vec3 diffuse)
-{
-	return diffuse * (1.0 / PI);
-}
-
-// Performs BRDF specular lighting
-Vec3 computeSpecularColorBrdf(GbufferInfo gbuffer, Vec3 viewDir, Vec3 frag2Light)
-{
-	const Vec3 H = normalize(frag2Light + viewDir);
-
-	const F32 NoL = max(EPSILON, dot(gbuffer.m_normal, frag2Light));
-	const F32 VoH = max(EPSILON, dot(viewDir, H));
-	const F32 NoH = max(EPSILON, dot(gbuffer.m_normal, H));
-	const F32 NoV = max(EPSILON, dot(gbuffer.m_normal, viewDir));
-
-	// F
-#if 0
-	const Vec3 F = F_Unreal(gbuffer.m_specular, VoH);
-#else
-	const Vec3 F = F_Schlick(gbuffer.m_specular, VoH);
-#endif
-
-	// D
-	const F32 D = D_GGX(gbuffer.m_roughness, NoH);
-
-	// Vis
-	const F32 V = V_Schlick(gbuffer.m_roughness, NoV, NoL);
-
-	return F * (V * D);
 }
 
 F32 computeSpotFactor(Vec3 l, F32 outerCos, F32 innerCos, Vec3 spotDir)

@@ -100,7 +100,7 @@ void main()
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
 	// Compute diff
-	const Vec3 diffC = diffuseLambert(gbuffer.m_diffuse);
+	const Vec3 diffC = diffuseLobe(gbuffer.m_diffuse);
 
 	// Compute spec
 	const Vec3 viewDir = normalize(u_unis.m_camPos - worldPos);
@@ -113,7 +113,7 @@ void main()
 #endif
 
 #if SPECULAR == 1
-	const Vec3 specC = computeSpecularColorBrdf(gbuffer, viewDir, l);
+	const Vec3 specC = specularIsotropicLobe(gbuffer, viewDir, l);
 #else
 	const Vec3 specC = Vec3(0.0);
 #endif

@@ -37,7 +37,7 @@ Vec4 readAnimatedTextureRgba(texture2DArray tex, sampler sampl, F32 period, Vec2
 // Iterate the clusters to compute the light color
 Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos)
 {
-	diffCol = diffuseLambert(diffCol);
+	diffCol = diffuseLobe(diffCol);
 	Vec3 outColor = Vec3(0.0);
 
 	// Find the cluster and then the light counts
@@ -110,7 +110,7 @@ Vec3 computeLightColorLow(Vec3 diffCol, Vec3 worldPos)
 					 * (F32(u_clusteredShading.m_zSplitCount) / F32(u_clusteredShading.m_lightVolumeLastZSplit + 1u)));
 
 	const Vec3 light = textureLod(u_lightVol, u_linearAnyClampSampler, uvw, 0.0).rgb;
-	return diffuseLambert(diffCol) * light;
+	return diffuseLobe(diffCol) * light;
 }
 
 void particleAlpha(Vec4 color, Vec4 scaleColor, Vec4 biasColor)

@@ -48,8 +48,8 @@ layout(location = 0) out Vec3 out_color;
 #define LIGHTING_COMMON_BRDF() \
 	const Vec3 frag2Light = light.m_position - worldPos; \
 	const Vec3 l = normalize(frag2Light); \
-	const Vec3 specC = computeSpecularColorBrdf(gbuffer, viewDir, l); \
-	const Vec3 diffC = diffuseLambert(gbuffer.m_diffuse); \
+	const Vec3 specC = specularIsotropicLobe(gbuffer, viewDir, l); \
+	const Vec3 diffC = diffuseLobe(gbuffer.m_diffuse); \
 	const F32 att = computeAttenuationFactor(light.m_squareRadiusOverOne, frag2Light); \
 	F32 lambert = max(0.0, dot(gbuffer.m_normal, l));
 
@@ -115,8 +115,8 @@ void main()
 
 		const F32 lambert = max(gbuffer.m_subsurface, dot(l, gbuffer.m_normal));
 
-		const Vec3 diffC = diffuseLambert(gbuffer.m_diffuse);
-		const Vec3 specC = computeSpecularColorBrdf(gbuffer, viewDir, l);
+		const Vec3 diffC = diffuseLobe(gbuffer.m_diffuse);
+		const Vec3 specC = specularIsotropicLobe(gbuffer, viewDir, l);
 
 		out_color += (diffC + specC) * dirLight.m_diffuseColor * (shadowFactor * lambert);
 	}
