@@ -134,13 +134,13 @@ const F32 MIN_ROUGHNESS = 0.05;
 // G-Buffer structure
 struct GbufferInfo
 {
-	Vec3 m_diffuse;
-	Vec3 m_specular;
-	Vec3 m_normal;
-	F32 m_roughness;
-	F32 m_metallic;
-	F32 m_subsurface;
-	F32 m_emission;
+	ANKI_RP Vec3 m_diffuse;
+	ANKI_RP Vec3 m_specular;
+	ANKI_RP Vec3 m_normal;
+	ANKI_RP F32 m_roughness;
+	ANKI_RP F32 m_metallic;
+	ANKI_RP F32 m_subsurface;
+	ANKI_RP F32 m_emission;
 	Vec2 m_velocity;
 };
 
@@ -156,29 +156,29 @@ void writeGBuffer(GbufferInfo g, out Vec4 rt0, out Vec4 rt1, out Vec4 rt2, out V
 	rt3 = g.m_velocity;
 }
 
-Vec3 unpackNormalFromGBuffer(Vec4 gbuffer)
+ANKI_RP Vec3 unpackNormalFromGBuffer(Vec4 gbuffer)
 {
 	return signedOctDecode(gbuffer.gba);
 }
 
 // Read from G-buffer
-Vec3 readNormalFromGBuffer(texture2D rt2, sampler sampl, Vec2 uv)
+ANKI_RP Vec3 readNormalFromGBuffer(texture2D rt2, sampler sampl, Vec2 uv)
 {
 	return unpackNormalFromGBuffer(textureLod(rt2, sampl, uv, 0.0));
 }
 
 // Read the roughness from G-buffer
-F32 readRoughnessFromGBuffer(texture2D rt1, sampler sampl, Vec2 uv)
+ANKI_RP F32 readRoughnessFromGBuffer(texture2D rt1, sampler sampl, Vec2 uv)
 {
-	F32 r = textureLod(rt1, sampl, uv, 0.0).r;
+	ANKI_RP F32 r = textureLod(rt1, sampl, uv, 0.0).r;
 	r = r * (1.0 - MIN_ROUGHNESS) + MIN_ROUGHNESS;
 	return r;
 }
 
 // Read part of the G-buffer
-void readGBuffer(texture2D rt0, texture2D rt1, texture2D rt2, sampler sampl, Vec2 uv, F32 lod, out GbufferInfo g)
+void readGBuffer(texture2D rt0, texture2D rt1, texture2D rt2, sampler sampl, Vec2 uv, out GbufferInfo g)
 {
-	Vec4 comp = textureLod(rt0, sampl, uv, 0.0);
+	ANKI_RP Vec4 comp = textureLod(rt0, sampl, uv, 0.0);
 	g.m_diffuse = comp.xyz;
 	g.m_subsurface = comp.w;
 

@@ -35,17 +35,17 @@ const U32 MAX_VISIBLE_REFLECTION_PROBES = 16u;
 const U32 MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES = 8u;
 
 // Other consts
-const F32 CLUSTER_OBJECT_FRUSTUM_NEAR_PLANE = 0.1f / 4.0f; ///< The near plane of various clusterer object frustums.
+const ANKI_RP F32 CLUSTER_OBJECT_FRUSTUM_NEAR_PLANE = 0.1f / 4.0f; ///< Near plane of various clusterer object frustums.
 const U32 MAX_SHADOW_CASCADES2 = 4u;
-const F32 SUBSURFACE_MIN = 0.01f;
+const ANKI_RP F32 SUBSURFACE_MIN = 0.01f;
 
 /// Point light.
 struct PointLight
 {
 	Vec3 m_position; ///< Position in world space.
-	Vec3 m_diffuseColor;
-	F32 m_radius; ///< Radius
-	F32 m_squareRadiusOverOne; ///< 1/(radius^2).
+	ANKI_RP Vec3 m_diffuseColor;
+	ANKI_RP F32 m_radius; ///< Radius
+	ANKI_RP F32 m_squareRadiusOverOne; ///< 1/(radius^2).
 	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
 	F32 m_shadowAtlasTileScale; ///< UV scale for all tiles.
 	Vec2 m_shadowAtlasTileOffsets[6u];
@@ -58,13 +58,13 @@ struct SpotLight
 {
 	Vec3 m_position; ///< Position in world space.
 	Vec3 m_edgePoints[4u]; ///< Edge points in world space.
-	Vec3 m_diffuseColor;
-	F32 m_radius; ///< Max distance.
-	F32 m_squareRadiusOverOne; ///< 1/(radius^2).
+	ANKI_RP Vec3 m_diffuseColor;
+	ANKI_RP F32 m_radius; ///< Max distance.
+	ANKI_RP F32 m_squareRadiusOverOne; ///< 1/(radius^2).
 	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
-	Vec3 m_direction; ///< Light direction.
-	F32 m_outerCos;
-	F32 m_innerCos;
+	ANKI_RP Vec3 m_direction; ///< Light direction.
+	ANKI_RP F32 m_outerCos;
+	ANKI_RP F32 m_innerCos;
 	Vec2 m_padding;
 	Mat4 m_textureMatrix;
 };
@@ -92,12 +92,12 @@ ANKI_SHADER_STATIC_ASSERT(alignof(SpotLightBinning) == alignof(SpotLight));
 /// Directional light (sun).
 struct DirectionalLight
 {
-	Vec3 m_diffuseColor;
+	ANKI_RP Vec3 m_diffuseColor;
 	U32 m_cascadeCount; ///< If it's zero then it doesn't cast shadow.
-	Vec3 m_direction;
+	ANKI_RP Vec3 m_direction;
 	U32 m_active;
-	F32 m_effectiveShadowDistance;
-	F32 m_shadowCascadesDistancePower;
+	ANKI_RP F32 m_effectiveShadowDistance;
+	ANKI_RP F32 m_shadowCascadesDistancePower;
 	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
 	U32 m_padding;
 	Mat4 m_textureMatrices[MAX_SHADOW_CASCADES2];

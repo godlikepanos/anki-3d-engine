@@ -34,7 +34,7 @@ void main()
 
 	// Read the gbuffer
 	GbufferInfo gbuffer;
-	readGBuffer(u_gbufferTex[0u], u_gbufferTex[1u], u_gbufferTex[2u], u_nearestAnyClampSampler, sampleUv, 0.0, gbuffer);
+	readGBuffer(u_gbufferTex[0u], u_gbufferTex[1u], u_gbufferTex[2u], u_nearestAnyClampSampler, sampleUv, gbuffer);
 
 	// Sample
 	const Vec3 irradiance = sampleAmbientDice(u_irradianceDice[0u].xyz, u_irradianceDice[1u].xyz,

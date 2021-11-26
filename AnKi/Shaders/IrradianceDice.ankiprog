@@ -144,8 +144,7 @@ void main()
 		gbufferUv.x *= 1.0 / 6.0;
 		gbufferUv.x += (1.0 / 6.0) * F32(f);
 		GbufferInfo gbuffer;
-		readGBuffer(u_gbufferTex[0u], u_gbufferTex[1u], u_gbufferTex[2u], u_nearestAnyClampSampler, gbufferUv, 0.0,
-					gbuffer);
+		readGBuffer(u_gbufferTex[0u], u_gbufferTex[1u], u_gbufferTex[2u], u_nearestAnyClampSampler, gbufferUv, gbuffer);
 
 		// Sample irradiance
 		Vec3 firstBounceIrradiance =

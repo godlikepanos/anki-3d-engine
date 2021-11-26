@@ -156,10 +156,10 @@ Vec3 envBRDF(Vec3 specular, F32 roughness, texture2D integrationLut, sampler int
 	return specular * envBRDF.x + min(1.0, 50.0 * specular.g) * envBRDF.y;
 }
 
-F32 computeSpotFactor(Vec3 l, F32 outerCos, F32 innerCos, Vec3 spotDir)
+ANKI_RP F32 computeSpotFactor(ANKI_RP Vec3 l, ANKI_RP F32 outerCos, ANKI_RP F32 innerCos, ANKI_RP Vec3 spotDir)
 {
-	const F32 costheta = -dot(l, spotDir);
-	const F32 spotFactor = smoothstep(outerCos, innerCos, costheta);
+	const ANKI_RP F32 costheta = -dot(l, spotDir);
+	const ANKI_RP F32 spotFactor = smoothstep(outerCos, innerCos, costheta);
 	return spotFactor;
 }
 
@@ -300,10 +300,10 @@ Vec3 computeCubemapVecCheap(Vec3 r, F32 R2, Vec3 f)
 	return r;
 }
 
-F32 computeAttenuationFactor(F32 squareRadiusOverOne, Vec3 frag2Light)
+ANKI_RP F32 computeAttenuationFactor(ANKI_RP F32 squareRadiusOverOne, ANKI_RP Vec3 frag2Light)
 {
-	const F32 fragLightDist = dot(frag2Light, frag2Light);
-	F32 att = 1.0 - fragLightDist * squareRadiusOverOne;
+	const ANKI_RP F32 fragLightDist = dot(frag2Light, frag2Light);
+	ANKI_RP F32 att = 1.0 - fragLightDist * squareRadiusOverOne;
 	att = max(0.0, att);
 	return att * att;
 }
