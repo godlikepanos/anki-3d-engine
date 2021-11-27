@@ -90,8 +90,8 @@ layout(location = 3) out Vec2 out_gbuffer3;
 
 // Write the data to RTs
 #if defined(ANKI_FRAGMENT_SHADER) && ANKI_PASS == PASS_GB
-void writeGBuffer(Vec3 diffColor, Vec3 normal, Vec3 specularColor, F32 roughness, F32 subsurface, Vec3 emission,
-				  F32 metallic, Vec2 velocity)
+void writeGBuffer(ANKI_RP Vec3 diffColor, ANKI_RP Vec3 normal, ANKI_RP Vec3 specularColor, ANKI_RP F32 roughness,
+				  ANKI_RP F32 subsurface, ANKI_RP Vec3 emission, ANKI_RP F32 metallic, Vec2 velocity)
 {
 	GbufferInfo g;
 	g.m_diffuse = diffColor;

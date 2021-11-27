@@ -15,7 +15,7 @@ ANKI_SPECIALIZATION_CONSTANT_U32(FINAL_Z_SPLIT, 1u);
 #include <AnKi/Shaders/Functions.glsl>
 
 layout(location = 0) in Vec2 in_uv;
-layout(location = 0) out Vec4 out_color;
+layout(location = 0) out ANKI_RP Vec4 out_color;
 
 layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
 layout(set = 0, binding = 1) uniform sampler u_linearAnyClampSampler;
@@ -42,9 +42,9 @@ void main()
 	uvw.xy = in_uv;
 
 	// Read the volume
-	const Vec4 fogVals = textureLod(u_fogVolume, u_linearAnyClampSampler, uvw, 0.0);
-	const Vec3 inScattering = fogVals.rgb;
-	const F32 transmittance = fogVals.a;
+	const ANKI_RP Vec4 fogVals = textureLod(u_fogVolume, u_linearAnyClampSampler, uvw, 0.0);
+	const ANKI_RP Vec3 inScattering = fogVals.rgb;
+	const ANKI_RP F32 transmittance = fogVals.a;
 
 	// Apply the fog
 	out_color = Vec4(inScattering, transmittance);

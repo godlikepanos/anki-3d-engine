@@ -175,7 +175,7 @@ U32 computeShadowSampleCount(const U32 COUNT, F32 zVSpace)
 	return sampleCount;
 }
 
-F32 computeShadowFactorSpotLight(SpotLight light, Vec3 worldPos, texture2D spotMap, sampler spotMapSampler)
+ANKI_RP F32 computeShadowFactorSpotLight(SpotLight light, Vec3 worldPos, texture2D spotMap, sampler spotMapSampler)
 {
 	const Vec4 texCoords4 = light.m_textureMatrix * Vec4(worldPos, 1.0);
 	const Vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
@@ -186,21 +186,22 @@ F32 computeShadowFactorSpotLight(SpotLight light, Vec3 worldPos, texture2D spotM
 }
 
 // Compute the shadow factor of point (omni) lights.
-F32 computeShadowFactorPointLight(PointLight light, Vec3 frag2Light, texture2D shadowMap, sampler shadowMapSampler)
+ANKI_RP F32 computeShadowFactorPointLight(PointLight light, ANKI_RP Vec3 frag2Light, texture2D shadowMap,
+										  sampler shadowMapSampler)
 {
-	const Vec3 dir = -frag2Light;
-	const Vec3 dirabs = abs(dir);
-	const F32 dist = max(dirabs.x, max(dirabs.y, dirabs.z));
+	const ANKI_RP Vec3 dir = -frag2Light;
+	const ANKI_RP Vec3 dirabs = abs(dir);
+	const ANKI_RP F32 dist = max(dirabs.x, max(dirabs.y, dirabs.z));
 
 	// 1) Project the dist to light's proj mat
 	//
-	const F32 near = CLUSTER_OBJECT_FRUSTUM_NEAR_PLANE;
-	const F32 far = light.m_radius;
-	const F32 g = near - far;
+	const ANKI_RP F32 near = CLUSTER_OBJECT_FRUSTUM_NEAR_PLANE;
+	const ANKI_RP F32 far = light.m_radius;
+	const ANKI_RP F32 g = near - far;
 
-	const F32 zVSpace = -dist;
-	const F32 w = -zVSpace;
-	F32 z = (far * zVSpace + far * near) / g;
+	const ANKI_RP F32 zVSpace = -dist;
+	const ANKI_RP F32 w = -zVSpace;
+	ANKI_RP F32 z = (far * zVSpace + far * near) / g;
 	z /= w;
 
 	// 2) Read shadow tex
@@ -221,14 +222,14 @@ F32 computeShadowFactorPointLight(PointLight light, Vec3 frag2Light, texture2D s
 
 	// 3) Compare
 	//
-	const F32 shadowFactor = evsmComputeShadowFactor(z, shadowMoments);
+	const ANKI_RP F32 shadowFactor = evsmComputeShadowFactor(z, shadowMoments);
 
 	return shadowFactor;
 }
 
 // Compute the shadow factor of a directional light
-F32 computeShadowFactorDirLight(DirectionalLight light, U32 cascadeIdx, Vec3 worldPos, texture2D shadowMap,
-								sampler shadowMapSampler)
+ANKI_RP F32 computeShadowFactorDirLight(DirectionalLight light, U32 cascadeIdx, Vec3 worldPos, texture2D shadowMap,
+										sampler shadowMapSampler)
 {
 #define ANKI_FAST_CASCADES_WORKAROUND 1 // Doesn't make sense but it's super fast
 
@@ -262,13 +263,13 @@ F32 computeShadowFactorDirLight(DirectionalLight light, U32 cascadeIdx, Vec3 wor
 }
 
 // Compute the shadow factor of a directional light
-F32 computeShadowFactorDirLight(Mat4 lightProjectionMat, Vec3 worldPos, texture2D shadowMap,
-								samplerShadow shadowMapSampler)
+ANKI_RP F32 computeShadowFactorDirLight(Mat4 lightProjectionMat, Vec3 worldPos, texture2D shadowMap,
+										samplerShadow shadowMapSampler)
 {
 	const Vec4 texCoords4 = lightProjectionMat * Vec4(worldPos, 1.0);
 	const Vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
 
-	const F32 shadowFactor = textureLod(shadowMap, shadowMapSampler, texCoords3, 0.0);
+	const ANKI_RP F32 shadowFactor = textureLod(shadowMap, shadowMapSampler, texCoords3, 0.0);
 	return shadowFactor;
 }
 

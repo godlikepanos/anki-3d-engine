@@ -45,36 +45,36 @@
 layout(set = 0, binding = 2) uniform sampler u_ankiGlobalSampler;
 #if DIFFUSE_TEX == 1 && ANKI_PASS == PASS_GB
 #	pragma anki reflect u_diffTex
-layout(set = 0, binding = 3) uniform texture2D u_diffTex;
+layout(set = 0, binding = 3) uniform ANKI_RP texture2D u_diffTex;
 #	define USING_DIFF_TEX 1
 #endif
 #if SPECULAR_TEX == 1 && ANKI_PASS == PASS_GB
 #	pragma anki reflect u_specTex
-layout(set = 0, binding = 4) uniform texture2D u_specTex;
+layout(set = 0, binding = 4) uniform ANKI_RP texture2D u_specTex;
 #	define USING_SPECULAR_TEX 1
 #endif
 #if ROUGHNESS_TEX == 1 && ANKI_PASS == PASS_GB
 #	pragma anki reflect u_roughnessTex
-layout(set = 0, binding = 5) uniform texture2D u_roughnessTex;
+layout(set = 0, binding = 5) uniform ANKI_RP texture2D u_roughnessTex;
 #	define USING_ROUGHNESS_TEX 1
 #endif
 #if NORMAL_TEX == 1 && ANKI_PASS == PASS_GB && ANKI_LOD < 2
 #	pragma anki reflect u_normalTex
-layout(set = 0, binding = 6) uniform texture2D u_normalTex;
+layout(set = 0, binding = 6) uniform ANKI_RP texture2D u_normalTex;
 #	define USING_NORMAL_TEX 1
 #endif
 #if METAL_TEX == 1 && ANKI_PASS == PASS_GB
 #	pragma anki reflect u_metallicTex
-layout(set = 0, binding = 7) uniform texture2D u_metallicTex;
+layout(set = 0, binding = 7) uniform ANKI_RP texture2D u_metallicTex;
 #	define USING_METALLIC_TEX 1
 #endif
 #if REALLY_USING_PARALLAX
 #	pragma anki reflect u_heightTex
-layout(set = 0, binding = 8) uniform texture2D u_heightTex;
+layout(set = 0, binding = 8) uniform ANKI_RP texture2D u_heightTex;
 #endif
 #if EMISSIVE_TEX == 1 && ANKI_PASS == PASS_GB
 #	pragma anki reflect u_emissiveTex
-layout(set = 0, binding = 9) uniform texture2D u_emissiveTex;
+layout(set = 0, binding = 9) uniform ANKI_RP texture2D u_emissiveTex;
 #	define USING_EMISSIVE_TEX 1
 #endif
 
@@ -160,16 +160,16 @@ Vec3 g_position = in_position;
 #if ANKI_PASS == PASS_GB
 Vec3 g_prevPosition = in_position;
 Vec2 g_uv = in_uv;
-Vec3 g_normal = in_normal;
-Vec4 g_tangent = in_tangent;
+ANKI_RP Vec3 g_normal = in_normal;
+ANKI_RP Vec4 g_tangent = in_tangent;
 #endif
 
 // Perform skinning
 #if ANKI_BONES
 void skinning()
 {
-	Mat4 skinMat = u_ankiBoneTransforms[in_boneIndices[0]] * in_boneWeights[0];
-	Mat4 prevSkinMat = u_ankiPrevFrameBoneTransforms[in_boneIndices[0]] * in_boneWeights[0];
+	ANKI_RP Mat4 skinMat = u_ankiBoneTransforms[in_boneIndices[0]] * in_boneWeights[0];
+	ANKI_RP Mat4 prevSkinMat = u_ankiPrevFrameBoneTransforms[in_boneIndices[0]] * in_boneWeights[0];
 	ANKI_UNROLL for(U32 i = 1u; i < 4u; ++i)
 	{
 		skinMat += u_ankiBoneTransforms[in_boneIndices[i]] * in_boneWeights[i];
@@ -335,16 +335,16 @@ Vec2 computeTextureCoordParallax(texture2D heightMap, sampler sampl, Vec2 uv, F3
 
 // Do normal mapping
 #if ANKI_PASS == PASS_GB
-Vec3 readNormalFromTexture(texture2D map, sampler sampl, highp Vec2 texCoords)
+ANKI_RP Vec3 readNormalFromTexture(ANKI_RP texture2D map, sampler sampl, highp Vec2 texCoords)
 {
 	// First read the texture
-	const Vec3 nAtTangentspace = normalize((texture(map, sampl, texCoords).rgb - 0.5) * 2.0);
+	const ANKI_RP Vec3 nAtTangentspace = normalize((texture(map, sampl, texCoords).rgb - 0.5) * 2.0);
 
-	const Vec3 n = normalize(in_normal);
-	const Vec3 t = normalize(in_tangent);
-	const Vec3 b = normalize(in_bitangent);
+	const ANKI_RP Vec3 n = normalize(in_normal);
+	const ANKI_RP Vec3 t = normalize(in_tangent);
+	const ANKI_RP Vec3 b = normalize(in_bitangent);
 
-	const Mat3 tbnMat = Mat3(t, b, n);
+	const ANKI_RP Mat3 tbnMat = Mat3(t, b, n);
 
 	return tbnMat * nAtTangentspace;
 }
@@ -361,39 +361,39 @@ void main()
 #	endif
 
 #	if defined(USING_DIFF_TEX)
-	const Vec3 diffColor = texture(u_diffTex, u_ankiGlobalSampler, uv).rgb;
+	const ANKI_RP Vec3 diffColor = texture(u_diffTex, u_ankiGlobalSampler, uv).rgb;
 #	else
-	const Vec3 diffColor = u_ankiPerDraw.m_diffColor;
+	const ANKI_RP Vec3 diffColor = u_ankiPerDraw.m_diffColor;
 #	endif
 
 #	if defined(USING_SPECULAR_TEX)
-	const Vec3 specColor = texture(u_specTex, u_ankiGlobalSampler, uv).rgb;
+	const ANKI_RP Vec3 specColor = texture(u_specTex, u_ankiGlobalSampler, uv).rgb;
 #	else
-	const Vec3 specColor = u_ankiPerDraw.m_specColor;
+	const ANKI_RP Vec3 specColor = u_ankiPerDraw.m_specColor;
 #	endif
 
 #	if defined(USING_ROUGHNESS_TEX)
-	const F32 roughness = texture(u_roughnessTex, u_ankiGlobalSampler, uv).g;
+	const ANKI_RP F32 roughness = texture(u_roughnessTex, u_ankiGlobalSampler, uv).g;
 #	else
-	const F32 roughness = u_ankiPerDraw.m_roughness;
+	const ANKI_RP F32 roughness = u_ankiPerDraw.m_roughness;
 #	endif
 
 #	if defined(USING_METALLIC_TEX)
-	const F32 metallic = texture(u_metallicTex, u_ankiGlobalSampler, uv).b;
+	const ANKI_RP F32 metallic = texture(u_metallicTex, u_ankiGlobalSampler, uv).b;
 #	else
-	const F32 metallic = u_ankiPerDraw.m_metallic;
+	const ANKI_RP F32 metallic = u_ankiPerDraw.m_metallic;
 #	endif
 
 #	if defined(USING_NORMAL_TEX)
-	const Vec3 normal = readNormalFromTexture(u_normalTex, u_ankiGlobalSampler, uv);
+	const ANKI_RP Vec3 normal = readNormalFromTexture(u_normalTex, u_ankiGlobalSampler, uv);
 #	else
-	const Vec3 normal = normalize(in_normal);
+	const ANKI_RP Vec3 normal = normalize(in_normal);
 #	endif
 
 #	if defined(USING_EMISSIVE_TEX)
-	const Vec3 emission = texture(u_emissiveTex, u_ankiGlobalSampler, uv).rgb;
+	const ANKI_RP Vec3 emission = texture(u_emissiveTex, u_ankiGlobalSampler, uv).rgb;
 #	else
-	const Vec3 emission = u_ankiPerDraw.m_emission;
+	const ANKI_RP Vec3 emission = u_ankiPerDraw.m_emission;
 #	endif
 
 #	if ANKI_VELOCITY || ANKI_BONES
