@@ -76,7 +76,9 @@ void main()
 
 	// Decode GBuffer
 	GbufferInfo gbuffer;
-	readGBuffer(u_msRt0, u_msRt1, u_msRt2, u_nearestAnyClampSampler, in_uv, gbuffer);
+	unpackGBufferNoVelocity(textureLod(u_msRt0, u_nearestAnyClampSampler, in_uv, 0.0),
+							textureLod(u_msRt1, u_nearestAnyClampSampler, in_uv, 0.0),
+							textureLod(u_msRt2, u_nearestAnyClampSampler, in_uv, 0.0), gbuffer);
 	gbuffer.m_subsurface = max(gbuffer.m_subsurface, SUBSURFACE_MIN);
 
 	// SM
@@ -223,8 +225,7 @@ void main()
 
 		// Compute env BRDF
 		const F32 NoV = max(EPSILON, dot(gbuffer.m_normal, viewDir));
-		const Vec3 env =
-			envBRDF(gbuffer.m_specular, gbuffer.m_roughness, u_integrationLut, u_trilinearClampSampler, NoV);
+		const Vec3 env = envBRDF(gbuffer.m_f0, gbuffer.m_roughness, u_integrationLut, u_trilinearClampSampler, NoV);
 
 		out_color += finalSpecIndirect * env;
 	}

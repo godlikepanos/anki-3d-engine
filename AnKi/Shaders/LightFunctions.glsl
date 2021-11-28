@@ -139,7 +139,7 @@ ANKI_RP Vec3 specularIsotropicLobe(GbufferInfo gbuffer, Vec3 viewDir, Vec3 frag2
 	const ANKI_RP F32 NoV = max(0.05, dot(gbuffer.m_normal, viewDir));
 
 	// F
-	const ANKI_RP Vec3 F = F_Schlick(gbuffer.m_specular, VoH);
+	const ANKI_RP Vec3 F = F_Schlick(gbuffer.m_f0, VoH);
 
 	// D
 	const ANKI_RP F32 D = D_GGX(gbuffer.m_roughness, NoH, H, gbuffer.m_normal);

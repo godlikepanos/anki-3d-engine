@@ -62,7 +62,7 @@ void main()
 	const Vec2 ndc = UV_TO_NDC(uv);
 
 	// Get normal
-	const Vec3 worldNormal = readNormalFromGBuffer(u_gbufferRt2, u_linearAnyClampSampler, uv);
+	const Vec3 worldNormal = unpackNormalFromGBuffer(textureLod(u_gbufferRt2, u_linearAnyClampSampler, uv, 0.0));
 	const Vec3 viewNormal = u_clusteredShading.m_matrices.m_viewRotation * worldNormal;
 
 	// Get origin

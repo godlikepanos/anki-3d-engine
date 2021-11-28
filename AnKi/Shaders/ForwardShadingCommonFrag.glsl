@@ -22,7 +22,7 @@ layout(set = 0, binding = 2) uniform texture3D u_lightVol;
 
 layout(location = 0) out Vec4 out_color;
 
-void writeGBuffer(Vec4 color)
+void packGBuffer(Vec4 color)
 {
 	out_color = Vec4(color.rgb, color.a);
 }
@@ -115,7 +115,7 @@ Vec3 computeLightColorLow(Vec3 diffCol, Vec3 worldPos)
 
 void particleAlpha(Vec4 color, Vec4 scaleColor, Vec4 biasColor)
 {
-	writeGBuffer(color * scaleColor + biasColor);
+	packGBuffer(color * scaleColor + biasColor);
 }
 
 void fog(Vec3 color, F32 fogAlphaScale, F32 fogDistanceOfMaxThikness, F32 zVSpace)
@@ -134,5 +134,5 @@ void fog(Vec3 color, F32 fogAlphaScale, F32 fogDistanceOfMaxThikness, F32 zVSpac
 
 	zFeatherFactor = min(1.0, diff / fogDistanceOfMaxThikness);
 
-	writeGBuffer(Vec4(color, zFeatherFactor * fogAlphaScale));
+	packGBuffer(Vec4(color, zFeatherFactor * fogAlphaScale));
 }

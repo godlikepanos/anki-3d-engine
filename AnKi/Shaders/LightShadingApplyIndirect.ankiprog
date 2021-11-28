@@ -9,6 +9,7 @@
 
 #pragma anki start frag
 #include <AnKi/Shaders/BilateralFilter.glsl>
+#include <AnKi/Shaders/PackFunctions.glsl>
 
 layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
 layout(set = 0, binding = 1) uniform sampler u_linearAnyClampSampler;
@@ -53,7 +54,9 @@ void main()
 
 	// Modulate
 	out_color /= sumWeight;
-	const ANKI_RP Vec3 albedo = textureLod(u_gbuffer0Tex, u_linearAnyClampSampler, in_uv, 0.0).xyz;
+	const ANKI_RP F32 metallic = 0.0;
+	const ANKI_RP Vec3 albedo =
+		unpackDiffuseFromGBuffer(textureLod(u_gbuffer0Tex, u_linearAnyClampSampler, in_uv, 0.0), metallic);
 	out_color *= albedo;
 }
 #pragma anki end

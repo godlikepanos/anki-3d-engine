@@ -78,7 +78,7 @@ void main()
 	}
 
 	const Vec3 positionCenter = unproject(UV_TO_NDC(uv), depthCenter);
-	const Vec3 normalCenter = readNormalFromGBuffer(u_gbuffer2Tex, u_linearAnyClampSampler, uv);
+	const Vec3 normalCenter = unpackNormalFromGBuffer(textureLod(u_gbuffer2Tex, u_linearAnyClampSampler, uv, 0.0));
 
 	F32 shadowFactors[MAX_RT_SHADOW_LAYERS];
 	unpackRtShadows(textureLod(u_inTex, u_nearestAnyClampSampler, uv, 0.0), shadowFactors);

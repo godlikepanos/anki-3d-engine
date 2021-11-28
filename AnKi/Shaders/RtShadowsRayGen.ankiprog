@@ -84,7 +84,7 @@ void main()
 	}
 
 	// World normal
-	const Vec3 normal = readNormalFromGBuffer(u_normalRt, u_linearAnyClampSampler, uv);
+	const Vec3 normal = unpackNormalFromGBuffer(textureLod(u_normalRt, u_linearAnyClampSampler, uv, 0.0));
 
 	// Cluster
 	Cluster cluster = getClusterFragCoord(Vec3(uv * u_clusteredShading.m_renderingSize, depth));

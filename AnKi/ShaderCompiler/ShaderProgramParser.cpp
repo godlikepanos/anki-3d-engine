@@ -254,6 +254,7 @@ layout(std140, row_major) uniform;
 layout(std140, row_major) buffer;
 
 #define ANKI_RP mediump
+#define ANKI_FP highp
 )";
 
 static const U64 SHADER_HEADER_HASH = computeHash(SHADER_HEADER, sizeof(SHADER_HEADER));

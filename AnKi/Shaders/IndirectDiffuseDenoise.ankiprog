@@ -51,7 +51,8 @@ void main()
 	}
 
 	const Vec3 positionCenter = unproject(UV_TO_NDC(uv), depthCenter);
-	const ANKI_RP Vec3 normalCenter = readNormalFromGBuffer(u_gbuffer2Tex, u_linearAnyClampSampler, uv);
+	const ANKI_RP Vec3 normalCenter =
+		unpackNormalFromGBuffer(textureLod(u_gbuffer2Tex, u_linearAnyClampSampler, uv, 0.0));
 
 	// Sample
 	ANKI_RP F32 weight = EPSILON_RP;
