@@ -114,22 +114,22 @@ private:
 	Array<TextureViewPtr, MAX_COLOR_ATTACHMENTS + 1> m_refs; ///< @note The pos of every attachment is fixed.
 
 	// RenderPass create info
-	VkRenderPassCreateInfo m_rpassCi = {};
-	Array<VkAttachmentDescription, MAX_COLOR_ATTACHMENTS + 1> m_attachmentDescriptions = {};
-	Array<VkAttachmentReference, MAX_COLOR_ATTACHMENTS + 1> m_references = {};
-	VkSubpassDescription m_subpassDescr = {};
+	VkRenderPassCreateInfo2 m_rpassCi = {};
+	Array<VkAttachmentDescription2, MAX_COLOR_ATTACHMENTS + 1> m_attachmentDescriptions = {};
+	Array<VkAttachmentReference2, MAX_COLOR_ATTACHMENTS + 1> m_references = {};
+	VkSubpassDescription2 m_subpassDescr = {};
 
 	// VK objects
 	VkRenderPass m_compatibleRpass = {}; ///< Compatible renderpass.
 	HashMap<U64, VkRenderPass> m_rpasses;
-	Mutex m_rpassesMtx;
+	RWMutex m_rpassesMtx;
 	VkFramebuffer m_fb = VK_NULL_HANDLE;
 
 	// Methods
 	ANKI_USE_RESULT Error initFbs(const FramebufferInitInfo& init);
 	void initRpassCreateInfo(const FramebufferInitInfo& init);
 	void initClearValues(const FramebufferInitInfo& init);
-	void setupAttachmentDescriptor(const FramebufferAttachmentInfo& att, VkAttachmentDescription& desc,
+	void setupAttachmentDescriptor(const FramebufferAttachmentInfo& att, VkAttachmentDescription2& desc,
 								   VkImageLayout layout) const;
 };
 /// @}

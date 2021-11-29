@@ -52,7 +52,7 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 
 	// Create a renderpass.
 	initRpassCreateInfo(init);
-	ANKI_VK_CHECK(vkCreateRenderPass(getDevice(), &m_rpassCi, nullptr, &m_compatibleRpass));
+	ANKI_VK_CHECK(vkCreateRenderPass2KHR(getDevice(), &m_rpassCi, nullptr, &m_compatibleRpass));
 	getGrManagerImpl().trySetVulkanHandleName(init.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT,
 											  m_compatibleRpass);
 
@@ -162,10 +162,11 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 	return Error::NONE;
 }
 
-void FramebufferImpl::setupAttachmentDescriptor(const FramebufferAttachmentInfo& att, VkAttachmentDescription& desc,
+void FramebufferImpl::setupAttachmentDescriptor(const FramebufferAttachmentInfo& att, VkAttachmentDescription2& desc,
 												VkImageLayout layout) const
 {
 	desc = {};
+	desc.sType = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2;
 	desc.format = convertFormat(static_cast<const TextureViewImpl&>(*att.m_textureView).getTextureImpl().getFormat());
 	desc.samples = VK_SAMPLE_COUNT_1_BIT;
 	desc.loadOp = convertLoadOp(att.m_loadOperation);
@@ -184,6 +185,7 @@ void FramebufferImpl::initRpassCreateInfo(const FramebufferInitInfo& init)
 		setupAttachmentDescriptor(init.m_colorAttachments[i], m_attachmentDescriptions[i],
 								  VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
+		m_references[i].sType = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2;
 		m_references[i].attachment = i;
 		m_references[i].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	}
@@ -193,17 +195,19 @@ void FramebufferImpl::initRpassCreateInfo(const FramebufferInitInfo& init)
 		setupAttachmentDescriptor(init.m_depthStencilAttachment, m_attachmentDescriptions[init.m_colorAttachmentCount],
 								  VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
-		VkAttachmentReference& dsReference = m_references[init.m_colorAttachmentCount];
+		VkAttachmentReference2& dsReference = m_references[init.m_colorAttachmentCount];
+		dsReference.sType = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2;
 		dsReference.attachment = init.m_colorAttachmentCount;
 		dsReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 	}
 
 	// Setup the render pass
-	m_rpassCi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	m_rpassCi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2;
 	m_rpassCi.pAttachments = &m_attachmentDescriptions[0];
 	m_rpassCi.attachmentCount = init.m_colorAttachmentCount + ((hasDepthStencil()) ? 1 : 0);
 
 	// Subpass
+	m_subpassDescr.sType = VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2;
 	m_subpassDescr.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 	m_subpassDescr.colorAttachmentCount = init.m_colorAttachmentCount;
 	m_subpassDescr.pColorAttachments = (init.m_colorAttachmentCount) ? &m_references[0] : nullptr;
@@ -216,7 +220,7 @@ void FramebufferImpl::initRpassCreateInfo(const FramebufferInitInfo& init)
 VkRenderPass FramebufferImpl::getRenderPassHandle(const Array<VkImageLayout, MAX_COLOR_ATTACHMENTS>& colorLayouts,
 												  VkImageLayout dsLayout)
 {
-	VkRenderPass out = {};
+	VkRenderPass out = VK_NULL_HANDLE;
 
 	// Create hash
 	Array<VkImageLayout, MAX_COLOR_ATTACHMENTS + 1> allLayouts;
@@ -233,57 +237,72 @@ VkRenderPass FramebufferImpl::getRenderPassHandle(const Array<VkImageLayout, MAX
 		allLayouts[allLayoutCount++] = dsLayout;
 	}
 
-	U64 hash = computeHash(&allLayouts[0], allLayoutCount * sizeof(allLayouts[0]));
+	const U64 hash = computeHash(&allLayouts[0], allLayoutCount * sizeof(allLayouts[0]));
 
-	// Get or create
-	LockGuard<Mutex> lock(m_rpassesMtx);
-	auto it = m_rpasses.find(hash);
-	if(it != m_rpasses.getEnd())
+	// Try get it
 	{
-		out = *it;
+		RLockGuard<RWMutex> lock(m_rpassesMtx);
+		auto it = m_rpasses.find(hash);
+		if(it != m_rpasses.getEnd())
+		{
+			out = *it;
+		}
 	}
-	else
+
+	if(out == VK_NULL_HANDLE)
 	{
-		// Create
+		// Create it
 
-		VkRenderPassCreateInfo ci = m_rpassCi;
-		Array<VkAttachmentDescription, MAX_COLOR_ATTACHMENTS + 1> attachmentDescriptions = m_attachmentDescriptions;
-		Array<VkAttachmentReference, MAX_COLOR_ATTACHMENTS + 1> references = m_references;
-		VkSubpassDescription subpassDescr = m_subpassDescr;
+		WLockGuard<RWMutex> lock(m_rpassesMtx);
 
-		// Fix pointers
-		subpassDescr.pColorAttachments = &references[0];
-		ci.pAttachments = &attachmentDescriptions[0];
-		ci.pSubpasses = &subpassDescr;
-
-		for(U i = 0; i < subpassDescr.colorAttachmentCount; ++i)
+		// Check again
+		auto it = m_rpasses.find(hash);
+		if(it != m_rpasses.getEnd())
 		{
-			const VkImageLayout lay = colorLayouts[i];
-			ANKI_ASSERT(lay != VK_IMAGE_LAYOUT_UNDEFINED);
-
-			attachmentDescriptions[i].initialLayout = lay;
-			attachmentDescriptions[i].finalLayout = lay;
-
-			references[i].layout = lay;
+			out = *it;
 		}
-
-		if(hasDepthStencil())
+		else
 		{
-			const U i = subpassDescr.colorAttachmentCount;
-			const VkImageLayout lay = dsLayout;
-			ANKI_ASSERT(lay != VK_IMAGE_LAYOUT_UNDEFINED);
+			VkRenderPassCreateInfo2 ci = m_rpassCi;
+			Array<VkAttachmentDescription2, MAX_COLOR_ATTACHMENTS + 1> attachmentDescriptions =
+				m_attachmentDescriptions;
+			Array<VkAttachmentReference2, MAX_COLOR_ATTACHMENTS + 1> references = m_references;
+			VkSubpassDescription2 subpassDescr = m_subpassDescr;
 
-			attachmentDescriptions[i].initialLayout = lay;
-			attachmentDescriptions[i].finalLayout = lay;
+			// Fix pointers
+			subpassDescr.pColorAttachments = &references[0];
+			ci.pAttachments = &attachmentDescriptions[0];
+			ci.pSubpasses = &subpassDescr;
 
-			references[subpassDescr.colorAttachmentCount].layout = lay;
-			subpassDescr.pDepthStencilAttachment = &references[subpassDescr.colorAttachmentCount];
+			for(U i = 0; i < subpassDescr.colorAttachmentCount; ++i)
+			{
+				const VkImageLayout lay = colorLayouts[i];
+				ANKI_ASSERT(lay != VK_IMAGE_LAYOUT_UNDEFINED);
+
+				attachmentDescriptions[i].initialLayout = lay;
+				attachmentDescriptions[i].finalLayout = lay;
+
+				references[i].layout = lay;
+			}
+
+			if(hasDepthStencil())
+			{
+				const U i = subpassDescr.colorAttachmentCount;
+				const VkImageLayout lay = dsLayout;
+				ANKI_ASSERT(lay != VK_IMAGE_LAYOUT_UNDEFINED);
+
+				attachmentDescriptions[i].initialLayout = lay;
+				attachmentDescriptions[i].finalLayout = lay;
+
+				references[subpassDescr.colorAttachmentCount].layout = lay;
+				subpassDescr.pDepthStencilAttachment = &references[subpassDescr.colorAttachmentCount];
+			}
+
+			ANKI_VK_CHECKF(vkCreateRenderPass2KHR(getDevice(), &ci, nullptr, &out));
+			getGrManagerImpl().trySetVulkanHandleName(getName(), VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, out);
+
+			m_rpasses.emplace(getAllocator(), hash, out);
 		}
-
-		ANKI_VK_CHECKF(vkCreateRenderPass(getDevice(), &ci, nullptr, &out));
-		getGrManagerImpl().trySetVulkanHandleName(getName(), VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, out);
-
-		m_rpasses.emplace(getAllocator(), hash, out);
 	}
 
 	ANKI_ASSERT(out);

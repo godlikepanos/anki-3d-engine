@@ -186,7 +186,12 @@ void CommandBufferImpl::beginRenderPassInternal()
 	bi.renderArea.extent.height = m_renderArea[3];
 
 	getGrManagerImpl().beginMarker(m_handle, impl.getName());
-	ANKI_CMD(vkCmdBeginRenderPass(m_handle, &bi, m_subpassContents), ANY_OTHER_COMMAND);
+
+	VkSubpassBeginInfo subpassBeginInfo = {};
+	subpassBeginInfo.sType = VK_STRUCTURE_TYPE_SUBPASS_BEGIN_INFO;
+	subpassBeginInfo.contents = m_subpassContents;
+
+	ANKI_CMD(vkCmdBeginRenderPass2KHR(m_handle, &bi, &subpassBeginInfo), ANY_OTHER_COMMAND);
 
 	if(impl.hasPresentableTexture())
 	{
@@ -204,7 +209,10 @@ void CommandBufferImpl::endRenderPass()
 		beginRenderPassInternal();
 	}
 
-	ANKI_CMD(vkCmdEndRenderPass(m_handle), ANY_OTHER_COMMAND);
+	VkSubpassEndInfo subpassEndInfo = {};
+	subpassEndInfo.sType = VK_STRUCTURE_TYPE_SUBPASS_END_INFO;
+
+	ANKI_CMD(vkCmdEndRenderPass2KHR(m_handle, &subpassEndInfo), ANY_OTHER_COMMAND);
 	getGrManagerImpl().endMarker(m_handle);
 
 	m_activeFb.reset(nullptr);

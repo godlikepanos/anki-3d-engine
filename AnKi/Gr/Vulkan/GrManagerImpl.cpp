@@ -719,6 +719,11 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 				m_extensions |= VulkanExtensions::EXT_SAMPLER_FILTER_MIN_MAX;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
+			else if(extensionName == VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::KHR_CREATE_RENDERPASS_2;
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
+			}
 		}
 
 		ANKI_VK_LOGI("Will enable the following device extensions:");
@@ -742,6 +747,12 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 		ANKI_VK_LOGI("Robust buffer access is %s", (m_devFeatures.robustBufferAccess) ? "enabled" : "disabled");
 
 		ci.pEnabledFeatures = &m_devFeatures;
+	}
+
+	if(!(m_extensions & VulkanExtensions::KHR_CREATE_RENDERPASS_2))
+	{
+		ANKI_VK_LOGE(VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME " is not supported");
+		return Error::FUNCTION_FAILED;
 	}
 
 	if(!!(m_extensions & VulkanExtensions::EXT_SAMPLER_FILTER_MIN_MAX))
