@@ -304,6 +304,9 @@ public:
 
 	/// End renderpass.
 	void endRenderPass();
+
+	/// Set VRS rate of the following drawcalls. By default it's 1x1.
+	void setVrsRate(VrsRate rate);
 	/// @}
 
 	/// @name Jobs

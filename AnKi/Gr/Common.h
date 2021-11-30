@@ -156,12 +156,15 @@ public:
 	/// 64 bit atomics.
 	Bool m_64bitAtomics = false;
 
+	/// VRS.
+	Bool m_vrs = false;
+
 	/// Supports min/max texture filtering.
 	Bool m_samplingFilterMinMax = false;
 };
 ANKI_END_PACKED_STRUCT
 static_assert(sizeof(GpuDeviceCapabilities)
-				  == sizeof(PtrSize) * 4 + sizeof(U32) * 5 + sizeof(U8) * 3 + sizeof(Bool) * 3,
+				  == sizeof(PtrSize) * 4 + sizeof(U32) * 5 + sizeof(U8) * 3 + sizeof(Bool) * 4,
 			  "Should be packed");
 
 /// Bindless related info.

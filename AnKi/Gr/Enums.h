@@ -543,6 +543,22 @@ enum class AccelerationStructureUsageBit : U8
 	ALL_WRITE = BUILD
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(AccelerationStructureUsageBit)
+
+/// VRS rates.
+enum class VrsRate : U8
+{
+	_1x1, ///< Disable VRS. Always supported.
+	_2x1, ///< Always supported.
+	_1x2,
+	_2x2, ///< Always supported.
+	_4x2,
+	_2x4,
+	_4x4,
+
+	COUNT,
+	FIRST = 0
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VrsRate)
 /// @}
 
 } // end namespace anki

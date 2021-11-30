@@ -257,6 +257,12 @@ void CommandBuffer::endRenderPass()
 	self.endRenderPass();
 }
 
+void CommandBuffer::setVrsRate(VrsRate rate)
+{
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.setVrsRateInternal(rate);
+}
+
 void CommandBuffer::drawElements(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 firstIndex,
 								 U32 baseVertex, U32 baseInstance)
 {

@@ -950,4 +950,18 @@ inline void CommandBufferImpl::setLineWidth(F32 width)
 #endif
 }
 
+inline void CommandBufferImpl::setVrsRateInternal(VrsRate rate)
+{
+	ANKI_ASSERT(getGrManagerImpl().getDeviceCapabilities().m_vrs);
+	ANKI_ASSERT(rate < VrsRate::COUNT);
+
+	commandCommon();
+
+	const VkExtent2D extend = convertVrsShadingRate(rate);
+	Array<VkFragmentShadingRateCombinerOpKHR, 2> combiner;
+	combiner[0] = VK_FRAGMENT_SHADING_RATE_COMBINER_OP_KEEP_KHR; // Keep pipeline rating over primitive
+	combiner[1] = VK_FRAGMENT_SHADING_RATE_COMBINER_OP_KEEP_KHR; // Keep pipeline rating over attachment
+	vkCmdSetFragmentShadingRateKHR(m_handle, &extend, &combiner[0]);
+}
+
 } // end namespace anki

@@ -293,6 +293,8 @@ public:
 
 	void endRenderPass();
 
+	void setVrsRateInternal(VrsRate rate);
+
 	void drawArrays(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 first, U32 baseInstance);
 
 	void drawElements(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex,

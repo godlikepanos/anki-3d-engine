@@ -257,6 +257,7 @@ private:
 	VkPhysicalDeviceTimelineSemaphoreFeaturesKHR m_timelineSemaphoreFeatures = {};
 	VkPhysicalDeviceShaderFloat16Int8FeaturesKHR m_float16Int8Features = {};
 	VkPhysicalDeviceShaderAtomicInt64FeaturesKHR m_atomicInt64Features = {};
+	VkPhysicalDeviceFragmentShadingRateFeaturesKHR m_fragmentShadingRateFeatures = {};
 
 	PFN_vkDebugMarkerSetObjectNameEXT m_pfnDebugMarkerSetObjectNameEXT = nullptr;
 	PFN_vkCmdDebugMarkerBeginEXT m_pfnCmdDebugMarkerBeginEXT = nullptr;

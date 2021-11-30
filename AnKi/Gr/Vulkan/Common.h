@@ -81,6 +81,7 @@ enum class VulkanExtensions : U32
 	KHR_SHADER_FLOAT_CONTROLS = 1 << 20,
 	EXT_SAMPLER_FILTER_MIN_MAX = 1 << 21,
 	KHR_CREATE_RENDERPASS_2 = 1 << 22,
+	KHR_FRAGMENT_SHADING_RATE = 1 << 23,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VulkanExtensions)
 
@@ -341,6 +342,39 @@ ANKI_USE_RESULT inline VkAccelerationStructureTypeKHR convertAccelerationStructu
 }
 
 ANKI_USE_RESULT const char* vkResultToString(VkResult res);
+
+ANKI_USE_RESULT inline VkExtent2D convertVrsShadingRate(VrsRate rate)
+{
+	VkExtent2D out = {};
+	switch(rate)
+	{
+	case VrsRate::_1x1:
+		out = {1, 1};
+		break;
+	case VrsRate::_2x1:
+		out = {2, 1};
+		break;
+	case VrsRate::_1x2:
+		out = {1, 2};
+		break;
+	case VrsRate::_2x2:
+		out = {2, 2};
+		break;
+	case VrsRate::_4x2:
+		out = {4, 2};
+		break;
+	case VrsRate::_2x4:
+		out = {2, 4};
+		break;
+	case VrsRate::_4x4:
+		out = {4, 4};
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	return out;
+}
 /// @}
 
 } // end namespace anki

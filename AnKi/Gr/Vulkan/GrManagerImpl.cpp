@@ -724,6 +724,11 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 				m_extensions |= VulkanExtensions::KHR_CREATE_RENDERPASS_2;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
+			else if(extensionName == VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME && init.m_config->getBool("gr_vrs"))
+			{
+				m_extensions |= VulkanExtensions::KHR_FRAGMENT_SHADING_RATE;
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
+			}
 		}
 
 		ANKI_VK_LOGI("Will enable the following device extensions:");
@@ -959,6 +964,39 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 
 		m_atomicInt64Features.pNext = const_cast<void*>(ci.pNext);
 		ci.pNext = &m_atomicInt64Features;
+	}
+
+	// VRS
+	if(!(m_extensions & VulkanExtensions::KHR_FRAGMENT_SHADING_RATE))
+	{
+		ANKI_VK_LOGI(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME " is not supported or disabled");
+		m_capabilities.m_vrs = false;
+	}
+	else
+	{
+		m_capabilities.m_vrs = true;
+
+		m_fragmentShadingRateFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR;
+
+		VkPhysicalDeviceFeatures2 features = {};
+		features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+		features.pNext = &m_fragmentShadingRateFeatures;
+		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
+
+		// Some checks
+		if(!m_fragmentShadingRateFeatures.attachmentFragmentShadingRate
+		   || !m_fragmentShadingRateFeatures.pipelineFragmentShadingRate)
+		{
+			ANKI_VK_LOGE(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME
+						 " doesn't support attachment and/or pipeline rates");
+			return Error::FUNCTION_FAILED;
+		}
+
+		// Disable some things
+		m_fragmentShadingRateFeatures.primitiveFragmentShadingRate = false;
+
+		m_fragmentShadingRateFeatures.pNext = const_cast<void*>(ci.pNext);
+		ci.pNext = &m_fragmentShadingRateFeatures;
 	}
 
 	ANKI_VK_CHECK(vkCreateDevice(m_physicalDevice, &ci, nullptr, &m_device));
