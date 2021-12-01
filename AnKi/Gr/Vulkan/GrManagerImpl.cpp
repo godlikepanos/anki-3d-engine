@@ -729,6 +729,11 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 				m_extensions |= VulkanExtensions::KHR_FRAGMENT_SHADING_RATE;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
+			else if(extensionName == VK_EXT_ASTC_DECODE_MODE_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::EXT_ASTC_DECODE_MODE;
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
+			}
 		}
 
 		ANKI_VK_LOGI("Will enable the following device extensions:");
@@ -1514,6 +1519,11 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 		U32 executableCount = 0;
 		ANKI_VK_CHECK(vkGetPipelineExecutablePropertiesKHR(m_device, &pplineInf, &executableCount, nullptr));
 		DynamicArrayAuto<VkPipelineExecutablePropertiesKHR> executableProps(m_alloc, executableCount);
+		for(VkPipelineExecutablePropertiesKHR& prop : executableProps)
+		{
+			prop = {};
+			prop.sType = VK_STRUCTURE_TYPE_PIPELINE_EXECUTABLE_PROPERTIES_KHR;
+		}
 		ANKI_VK_CHECK(
 			vkGetPipelineExecutablePropertiesKHR(m_device, &pplineInf, &executableCount, &executableProps[0]));
 
@@ -1531,6 +1541,11 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 			U32 statCount = 0;
 			vkGetPipelineExecutableStatisticsKHR(m_device, &exeInf, &statCount, nullptr);
 			DynamicArrayAuto<VkPipelineExecutableStatisticKHR> stats(m_alloc, statCount);
+			for(VkPipelineExecutableStatisticKHR& s : stats)
+			{
+				s = {};
+				s.sType = VK_STRUCTURE_TYPE_PIPELINE_EXECUTABLE_STATISTIC_KHR;
+			}
 			vkGetPipelineExecutableStatisticsKHR(m_device, &exeInf, &statCount, &stats[0]);
 
 			for(U32 s = 0; s < statCount; ++s)

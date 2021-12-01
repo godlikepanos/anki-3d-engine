@@ -101,6 +101,12 @@ void CommandBufferImpl::beginRecording()
 	}
 
 	vkBeginCommandBuffer(m_handle, &begin);
+
+	// Stats
+	if(!!(getGrManagerImpl().getExtensions() & VulkanExtensions::KHR_PIPELINE_EXECUTABLE_PROPERTIES))
+	{
+		m_state.setEnablePipelineStatistics(true);
+	}
 }
 
 void CommandBufferImpl::beginRenderPass(FramebufferPtr fb,
@@ -802,6 +808,16 @@ void CommandBufferImpl::rebindDynamicState()
 				 ANY_OTHER_COMMAND);
 		ANKI_CMD(vkCmdSetStencilReference(m_handle, VK_STENCIL_FACE_BACK_BIT, m_stencilReferenceMasks[1]),
 				 ANY_OTHER_COMMAND);
+	}
+
+	// Rebind VRS
+	if(m_vrsRate != VrsRate::COUNT)
+	{
+		const VkExtent2D extend = convertVrsShadingRate(m_vrsRate);
+		Array<VkFragmentShadingRateCombinerOpKHR, 2> combiner;
+		combiner[0] = VK_FRAGMENT_SHADING_RATE_COMBINER_OP_KEEP_KHR; // Keep pipeline rating over primitive
+		combiner[1] = VK_FRAGMENT_SHADING_RATE_COMBINER_OP_KEEP_KHR; // Keep pipeline rating over attachment
+		vkCmdSetFragmentShadingRateKHR(m_handle, &extend, &combiner[0]);
 	}
 }
 

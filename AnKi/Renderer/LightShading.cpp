@@ -271,7 +271,7 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 
 	// Apply indirect
 	pass.newDependency(RenderPassDependency(m_r->getIndirectDiffuse().getRt(), readUsage));
-	pass.newDependency(RenderPassDependency(m_r->getDepthDownscale().getHiZRt(), readUsage, HIZ_HALF_DEPTH));
+	pass.newDependency(RenderPassDependency(m_r->getDepthDownscale().getHiZRt(), readUsage));
 
 	// Fog
 	pass.newDependency(RenderPassDependency(m_r->getVolumetricFog().getRt(), readUsage));

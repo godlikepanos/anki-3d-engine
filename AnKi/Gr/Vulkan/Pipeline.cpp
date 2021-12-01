@@ -212,6 +212,11 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 	ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 
+	if(m_pipelineStatisticsEnabled)
+	{
+		ci.flags |= VK_PIPELINE_CREATE_CAPTURE_STATISTICS_BIT_KHR;
+	}
+
 	// Prog
 	ci.pStages = static_cast<const ShaderProgramImpl&>(*m_state.m_prog).getShaderCreateInfos(ci.stageCount);
 

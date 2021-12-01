@@ -386,6 +386,16 @@ public:
 		return m_state.m_inputAssembler.m_topology;
 	}
 
+	Bool getEnablePipelineStatistics() const
+	{
+		return m_pipelineStatisticsEnabled;
+	}
+
+	void setEnablePipelineStatistics(Bool enable)
+	{
+		m_pipelineStatisticsEnabled = enable;
+	}
+
 	/// Flush state
 	void flush(U64& pipelineHash, Bool& stateDirty)
 	{
@@ -504,6 +514,8 @@ private:
 		VkGraphicsPipelineCreateInfo m_ppline;
 		VkPipelineRasterizationStateRasterizationOrderAMD m_rasterOrder;
 	} m_ci;
+
+	Bool m_pipelineStatisticsEnabled = false;
 
 	Bool updateHashes();
 	void updateSuperHash();

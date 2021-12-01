@@ -105,6 +105,7 @@ public:
 	TextureImplWorkaround m_workarounds = TextureImplWorkaround::NONE;
 
 	VkImageViewCreateInfo m_viewCreateInfoTemplate;
+	VkImageViewASTCDecodeModeEXT m_astcDecodeMode;
 
 	TextureImpl(GrManager* manager, CString name)
 		: Texture(manager, name)

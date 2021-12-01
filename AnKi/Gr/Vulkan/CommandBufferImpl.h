@@ -423,8 +423,8 @@ private:
 	/// @{
 	Array<U32, 4> m_viewport = {0, 0, 0, 0};
 	Array<U32, 4> m_scissor = {0, 0, MAX_U32, MAX_U32};
-	Bool m_viewportDirty = true;
 	VkViewport m_lastViewport = {};
+	Bool m_viewportDirty = true;
 	Bool m_scissorDirty = true;
 	VkRect2D m_lastScissor = {{-1, -1}, {MAX_U32, MAX_U32}};
 	Array<U32, 2> m_stencilCompareMasks = {0x5A5A5A5A, 0x5A5A5A5A}; ///< Use a stupid number to initialize.
@@ -433,6 +433,7 @@ private:
 #if ANKI_ENABLE_ASSERTIONS
 	Bool m_lineWidthSet = false;
 #endif
+	VrsRate m_vrsRate = VrsRate::COUNT;
 
 	/// Rebind the above dynamic state. Needed after pushing secondary command buffers (they dirty the state).
 	void rebindDynamicState();

@@ -13,6 +13,35 @@
 
 namespace anki {
 
+static Bool isAstcLdrFormat(const VkFormat format)
+{
+	return format >= VK_FORMAT_ASTC_4x4_UNORM_BLOCK && format <= VK_FORMAT_ASTC_12x12_SRGB_BLOCK;
+}
+
+static Bool isAstcSrgbFormat(const VkFormat format)
+{
+	switch(format)
+	{
+	case VK_FORMAT_ASTC_4x4_SRGB_BLOCK:
+	case VK_FORMAT_ASTC_5x4_SRGB_BLOCK:
+	case VK_FORMAT_ASTC_5x5_SRGB_BLOCK:
+	case VK_FORMAT_ASTC_6x5_SRGB_BLOCK:
+	case VK_FORMAT_ASTC_6x6_SRGB_BLOCK:
+	case VK_FORMAT_ASTC_8x5_SRGB_BLOCK:
+	case VK_FORMAT_ASTC_8x6_SRGB_BLOCK:
+	case VK_FORMAT_ASTC_8x8_SRGB_BLOCK:
+	case VK_FORMAT_ASTC_10x5_SRGB_BLOCK:
+	case VK_FORMAT_ASTC_10x6_SRGB_BLOCK:
+	case VK_FORMAT_ASTC_10x8_SRGB_BLOCK:
+	case VK_FORMAT_ASTC_10x10_SRGB_BLOCK:
+	case VK_FORMAT_ASTC_12x10_SRGB_BLOCK:
+	case VK_FORMAT_ASTC_12x12_SRGB_BLOCK:
+		return true;
+	default:
+		return false;
+	}
+}
+
 U32 MicroImageView::getOrCreateBindlessIndex(VkImageLayout layout, GrManagerImpl& gr) const
 {
 	ANKI_ASSERT(layout == VK_IMAGE_LAYOUT_GENERAL || layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
@@ -138,6 +167,16 @@ Error TextureImpl::initInternal(VkImage externalImage, const TextureInitInfo& in
 	m_viewCreateInfoTemplate.subresourceRange.baseMipLevel = 0;
 	m_viewCreateInfoTemplate.subresourceRange.layerCount = VK_REMAINING_ARRAY_LAYERS;
 	m_viewCreateInfoTemplate.subresourceRange.levelCount = VK_REMAINING_MIP_LEVELS;
+
+	if(!!(getGrManagerImpl().getExtensions() & VulkanExtensions::EXT_ASTC_DECODE_MODE) && isAstcLdrFormat(m_vkFormat)
+	   && !isAstcSrgbFormat(m_vkFormat))
+	{
+		m_astcDecodeMode = {};
+		m_astcDecodeMode.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_ASTC_DECODE_MODE_EXT;
+		m_astcDecodeMode.decodeMode = VK_FORMAT_R8G8B8A8_UNORM;
+
+		m_viewCreateInfoTemplate.pNext = &m_astcDecodeMode;
+	}
 
 	// Transition the image layout from undefined to something relevant
 	if(!!init.m_initialUsage)

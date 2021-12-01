@@ -232,6 +232,12 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		const ShaderImpl& shaderImpl = static_cast<const ShaderImpl&>(*m_shaders[0]);
 
 		VkComputePipelineCreateInfo ci = {};
+
+		if(!!(getGrManagerImpl().getExtensions() & VulkanExtensions::KHR_PIPELINE_EXECUTABLE_PROPERTIES))
+		{
+			ci.flags |= VK_PIPELINE_CREATE_CAPTURE_STATISTICS_BIT_KHR;
+		}
+
 		ci.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
 		ci.layout = m_pplineLayout.getHandle();
 

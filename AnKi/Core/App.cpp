@@ -268,7 +268,7 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	//
 	// Mali HW counters
 	//
-	if(m_gr->getDeviceCapabilities().m_gpuVendor == GpuVendor::ARM)
+	if(m_gr->getDeviceCapabilities().m_gpuVendor == GpuVendor::ARM && config.getBool("core_maliHwCounters"))
 	{
 		m_maliHwCounters = m_heapAlloc.newInstance<MaliHwCounters>(m_heapAlloc);
 	}
