@@ -54,7 +54,7 @@ ANKI_RP Vec3 colorGrading(ANKI_RP Vec3 color)
 
 void main()
 {
-	const Vec2 uv = in_uv.xy;
+	const Vec2 uv = in_uv;
 
 	if(MOTION_BLUR_SAMPLES > 0u)
 	{

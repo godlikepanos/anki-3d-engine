@@ -75,13 +75,13 @@ ANKI_SHADER_STATIC_ASSERT(sizeof(SpotLight) == _ANKI_SIZEOF_SpotLight);
 struct SpotLightBinning
 {
 	Vec3 m_edgePoints[5u]; ///< Edge points in world space.
-	Vec3 m_diffuseColor;
-	F32 m_radius; ///< Max distance.
-	F32 m_squareRadiusOverOne; ///< 1/(radius^2).
+	ANKI_RP Vec3 m_diffuseColor;
+	ANKI_RP F32 m_radius; ///< Max distance.
+	ANKI_RP F32 m_squareRadiusOverOne; ///< 1/(radius^2).
 	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
-	Vec3 m_direction; ///< Light direction.
-	F32 m_outerCos;
-	F32 m_innerCos;
+	ANKI_RP Vec3 m_direction; ///< Light direction.
+	ANKI_RP F32 m_outerCos;
+	ANKI_RP F32 m_innerCos;
 	Vec2 m_padding;
 	Mat4 m_textureMatrix;
 };
@@ -121,7 +121,7 @@ struct Decal
 {
 	Vec4 m_diffuseUv;
 	Vec4 m_normRoughnessUv;
-	Vec4 m_blendFactors;
+	ANKI_RP Vec4 m_blendFactors;
 	Mat4 m_textureMatrix;
 	Mat4 m_invertedTransform;
 	Vec3 m_obbExtend;
@@ -136,7 +136,7 @@ struct FogDensityVolume
 	Vec3 m_aabbMinOrSphereCenter;
 	U32 m_isBox;
 	Vec3 m_aabbMaxOrSphereRadiusSquared;
-	F32 m_density;
+	ANKI_RP F32 m_density;
 };
 const U32 _ANKI_SIZEOF_FogDensityVolume = 2u * ANKI_SIZEOF(Vec4);
 ANKI_SHADER_STATIC_ASSERT(sizeof(FogDensityVolume) == _ANKI_SIZEOF_FogDensityVolume);
@@ -151,7 +151,7 @@ struct GlobalIlluminationProbe
 	F32 m_halfTexelSizeU; ///< (1.0 / textureSize(texArr[textureIndex]).x) / 2.0
 
 	/// Used to calculate a factor that is zero when fragPos is close to AABB bounds and 1.0 at fadeDistance and less.
-	F32 m_fadeDistance;
+	ANKI_RP F32 m_fadeDistance;
 };
 const U32 _ANKI_SIZEOF_GlobalIlluminationProbe = 9u * ANKI_SIZEOF(U32);
 ANKI_SHADER_STATIC_ASSERT(sizeof(GlobalIlluminationProbe) == _ANKI_SIZEOF_GlobalIlluminationProbe);

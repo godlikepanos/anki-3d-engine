@@ -11,8 +11,3 @@
 
 // In/out
 layout(location = VERTEX_ATTRIBUTE_ID_POSITION) in Vec3 in_position;
-
-out gl_PerVertex
-{
-	Vec4 gl_Position;
-};

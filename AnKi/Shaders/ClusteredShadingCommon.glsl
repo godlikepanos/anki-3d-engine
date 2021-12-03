@@ -58,9 +58,10 @@ layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_DECALS_BINDING, 
 	Decal u_decals2[MAX_VISIBLE_DECALS];
 };
 
-layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_DECALS_BINDING + 1) uniform texture2D u_diffuseDecalTex;
 layout(set = CLUSTERED_SHADING_SET,
-	   binding = CLUSTERED_SHADING_DECALS_BINDING + 2) uniform texture2D u_specularRoughnessDecalTex;
+	   binding = CLUSTERED_SHADING_DECALS_BINDING + 1) uniform ANKI_RP texture2D u_diffuseDecalTex;
+layout(set = CLUSTERED_SHADING_SET,
+	   binding = CLUSTERED_SHADING_DECALS_BINDING + 2) uniform ANKI_RP texture2D u_specularRoughnessDecalTex;
 #endif
 
 //

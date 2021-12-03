@@ -14,12 +14,7 @@ layout(std140, set = 0, binding = 0) readonly buffer ssbo00
 };
 
 layout(location = 0) out Vec3 out_uv;
-layout(location = 1) flat out Vec4 out_color;
-
-out gl_PerVertex
-{
-	Vec4 gl_Position;
-};
+layout(location = 1) flat out ANKI_RP Vec4 out_color;
 
 void main()
 {
@@ -41,16 +36,16 @@ void main()
 #include <AnKi/Shaders/Common.glsl>
 
 layout(set = 0, binding = 1) uniform sampler u_trilinearRepeatSampler;
-layout(set = 0, binding = 2) uniform texture2DArray u_tex;
+layout(set = 0, binding = 2) uniform ANKI_RP texture2DArray u_tex;
 
 layout(location = 0) in Vec3 in_uv;
-layout(location = 1) flat in Vec4 in_color;
+layout(location = 1) flat in ANKI_RP Vec4 in_color;
 
-layout(location = 0) out Vec4 out_color;
+layout(location = 0) out ANKI_RP Vec4 out_color;
 
 void main()
 {
-	const Vec4 col = texture(u_tex, u_trilinearRepeatSampler, in_uv);
+	const ANKI_RP Vec4 col = texture(u_tex, u_trilinearRepeatSampler, in_uv);
 	out_color = col * in_color;
 }
 #pragma anki end

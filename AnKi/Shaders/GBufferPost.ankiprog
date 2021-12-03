@@ -16,7 +16,7 @@ ANKI_SPECIALIZATION_CONSTANT_U32(TILE_SIZE, 3u);
 #include <AnKi/Shaders/Functions.glsl>
 
 layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
-layout(set = 0, binding = 1) uniform texture2D u_msDepthRt;
+layout(set = 0, binding = 1) uniform texture2D u_depthTex;
 layout(set = 0, binding = 2) uniform sampler u_trilinearRepeatSampler;
 
 #define CLUSTERED_SHADING_SET 0
@@ -27,8 +27,8 @@ layout(set = 0, binding = 2) uniform sampler u_trilinearRepeatSampler;
 
 layout(location = 0) in Vec2 in_uv;
 
-layout(location = 0) out Vec4 out_color0;
-layout(location = 1) out Vec4 out_color1;
+layout(location = 0) out ANKI_RP Vec4 out_diffuse;
+layout(location = 1) out ANKI_RP Vec4 out_roughnessMetallicF0;
 
 void main()
 {
@@ -39,11 +39,11 @@ void main()
 	// 2nd decal: d''=d'*(1-f')+D'*f' <=> d''=d*(1-f)*(1-f')+D*f*(1-f')+D'*f'
 	// By looking at the trend we will have to multiply the gbuffer.diff with: (1-f)*(1-f') ... (1-f'''')
 
-	Vec4 outDiffuse = Vec4(0.0, 0.0, 0.0, 1.0);
-	Vec4 outSpecular = Vec4(0.0, 0.0, 0.0, 1.0);
+	ANKI_RP Vec4 diffuse = Vec4(0.0, 0.0, 0.0, 1.0);
+	ANKI_RP Vec4 roughnessMetallicF0 = Vec4(0.0, 0.0, 0.0, 1.0);
 
 	// Get worldPos
-	const F32 depth = textureLod(u_msDepthRt, u_nearestAnyClampSampler, in_uv, 0.0).r;
+	const F32 depth = textureLod(u_depthTex, u_nearestAnyClampSampler, in_uv, 0.0).r;
 	const Vec2 ndc = UV_TO_NDC(in_uv);
 	const Vec4 worldPos4 = u_clusteredShading.m_matrices.m_invertedViewProjectionJitter * Vec4(ndc, depth, 1.0);
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
@@ -79,24 +79,24 @@ void main()
 
 		// Read diffuse
 		const Vec2 diffUv = mad(texCoords2, decal.m_diffuseUv.zw, decal.m_diffuseUv.xy);
-		const Vec4 decalDiff = texture(u_diffuseDecalTex, u_trilinearRepeatSampler, diffUv);
+		const ANKI_RP Vec4 decalDiff = texture(u_diffuseDecalTex, u_trilinearRepeatSampler, diffUv);
 
 		// Read roughness
 		const Vec2 specUv = mad(texCoords2, decal.m_normRoughnessUv.zw, decal.m_normRoughnessUv.xy);
-		const Vec3 spec = texture(u_specularRoughnessDecalTex, u_trilinearRepeatSampler, specUv).rgb;
+		const ANKI_RP Vec3 spec = texture(u_specularRoughnessDecalTex, u_trilinearRepeatSampler, specUv).rgb;
 
 		// Update diffuse
-		F32 f = decalDiff.a * decal.m_blendFactors[0];
-		outDiffuse.rgb = outDiffuse.rgb * (1.0 - f) + decalDiff.rgb * f;
-		outDiffuse.a *= (1.0 - f);
+		ANKI_RP F32 f = decalDiff.a * decal.m_blendFactors[0];
+		diffuse.rgb = diffuse.rgb * (1.0 - f) + decalDiff.rgb * f;
+		diffuse.a *= (1.0 - f);
 
 		// Update specular
 		f = decalDiff.a * decal.m_blendFactors[1];
-		outSpecular.rgb = outSpecular.rgb * (1.0 - f) + spec.rgb * f;
-		outSpecular.a *= (1.0 - f);
+		roughnessMetallicF0.rgb = roughnessMetallicF0.rgb * (1.0 - f) + spec.rgb * f;
+		roughnessMetallicF0.a *= (1.0 - f);
 	}
 
-	out_color0 = outDiffuse;
-	out_color1 = outSpecular;
+	out_diffuse = diffuse;
+	out_roughnessMetallicF0 = roughnessMetallicF0;
 }
 #pragma anki end

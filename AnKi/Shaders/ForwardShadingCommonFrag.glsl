@@ -13,7 +13,7 @@
 // Global resources
 layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 1) uniform texture2D u_gbufferDepthRt;
-layout(set = 0, binding = 2) uniform texture3D u_lightVol;
+layout(set = 0, binding = 2) uniform ANKI_RP texture3D u_lightVol;
 #define CLUSTERED_SHADING_SET 0
 #define CLUSTERED_SHADING_UNIFORMS_BINDING 3
 #define CLUSTERED_SHADING_LIGHTS_BINDING 4
@@ -27,7 +27,7 @@ void packGBuffer(Vec4 color)
 	out_color = Vec4(color.rgb, color.a);
 }
 
-Vec4 readAnimatedTextureRgba(texture2DArray tex, sampler sampl, F32 period, Vec2 uv, F32 time)
+ANKI_RP Vec4 readAnimatedTextureRgba(ANKI_RP texture2DArray tex, sampler sampl, F32 period, Vec2 uv, F32 time)
 {
 	const F32 layerCount = F32(textureSize(tex, 0).z);
 	const F32 layer = mod(time * layerCount / period, layerCount);
@@ -101,7 +101,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos)
 }
 
 // Just read the light color from the vol texture
-Vec3 computeLightColorLow(Vec3 diffCol, Vec3 worldPos)
+ANKI_RP Vec3 computeLightColorLow(ANKI_RP Vec3 diffCol, ANKI_RP Vec3 worldPos)
 {
 	const Vec2 uv = gl_FragCoord.xy / u_clusteredShading.m_renderingSize;
 	const F32 linearDepth = linearizeDepth(gl_FragCoord.z, u_clusteredShading.m_near, u_clusteredShading.m_far);
@@ -109,16 +109,16 @@ Vec3 computeLightColorLow(Vec3 diffCol, Vec3 worldPos)
 		Vec3(uv, linearDepth
 					 * (F32(u_clusteredShading.m_zSplitCount) / F32(u_clusteredShading.m_lightVolumeLastZSplit + 1u)));
 
-	const Vec3 light = textureLod(u_lightVol, u_linearAnyClampSampler, uvw, 0.0).rgb;
+	const ANKI_RP Vec3 light = textureLod(u_lightVol, u_linearAnyClampSampler, uvw, 0.0).rgb;
 	return diffuseLobe(diffCol) * light;
 }
 
-void particleAlpha(Vec4 color, Vec4 scaleColor, Vec4 biasColor)
+void particleAlpha(ANKI_RP Vec4 color, ANKI_RP Vec4 scaleColor, ANKI_RP Vec4 biasColor)
 {
 	packGBuffer(color * scaleColor + biasColor);
 }
 
-void fog(Vec3 color, F32 fogAlphaScale, F32 fogDistanceOfMaxThikness, F32 zVSpace)
+void fog(ANKI_RP Vec3 color, ANKI_RP F32 fogAlphaScale, ANKI_RP F32 fogDistanceOfMaxThikness, F32 zVSpace)
 {
 	const Vec2 screenSize = 1.0 / u_clusteredShading.m_renderingSize;
 
