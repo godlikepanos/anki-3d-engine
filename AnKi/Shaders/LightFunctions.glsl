@@ -186,22 +186,22 @@ ANKI_RP F32 computeShadowFactorSpotLight(SpotLight light, Vec3 worldPos, texture
 }
 
 // Compute the shadow factor of point (omni) lights.
-ANKI_RP F32 computeShadowFactorPointLight(PointLight light, ANKI_RP Vec3 frag2Light, texture2D shadowMap,
+ANKI_RP F32 computeShadowFactorPointLight(PointLight light, Vec3 frag2Light, texture2D shadowMap,
 										  sampler shadowMapSampler)
 {
-	const ANKI_RP Vec3 dir = -frag2Light;
-	const ANKI_RP Vec3 dirabs = abs(dir);
-	const ANKI_RP F32 dist = max(dirabs.x, max(dirabs.y, dirabs.z));
+	const Vec3 dir = -frag2Light;
+	const Vec3 dirabs = abs(dir);
+	const F32 dist = max(dirabs.x, max(dirabs.y, dirabs.z));
 
 	// 1) Project the dist to light's proj mat
 	//
-	const ANKI_RP F32 near = CLUSTER_OBJECT_FRUSTUM_NEAR_PLANE;
-	const ANKI_RP F32 far = light.m_radius;
-	const ANKI_RP F32 g = near - far;
+	const F32 near = CLUSTER_OBJECT_FRUSTUM_NEAR_PLANE;
+	const F32 far = light.m_radius;
+	const F32 g = near - far;
 
-	const ANKI_RP F32 zVSpace = -dist;
-	const ANKI_RP F32 w = -zVSpace;
-	ANKI_RP F32 z = (far * zVSpace + far * near) / g;
+	const F32 zVSpace = -dist;
+	const F32 w = -zVSpace;
+	F32 z = (far * zVSpace + far * near) / g;
 	z /= w;
 
 	// 2) Read shadow tex
@@ -215,7 +215,8 @@ ANKI_RP F32 computeShadowFactorPointLight(PointLight light, ANKI_RP Vec3 frag2Li
 	const Vec2 atlasOffset = light.m_shadowAtlasTileOffsets[faceIdxu];
 
 	// Compute UV
-	uv = fma(uv, Vec2(light.m_shadowAtlasTileScale), atlasOffset);
+	uv *= Vec2(light.m_shadowAtlasTileScale);
+	uv += atlasOffset;
 
 	// Sample
 	const Vec4 shadowMoments = textureLod(shadowMap, shadowMapSampler, uv, 0.0);
