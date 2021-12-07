@@ -229,5 +229,7 @@ void main()
 
 		out_color += finalSpecIndirect * env;
 	}
+
+	out_color = saturateRp(out_color);
 }
 #pragma anki end
