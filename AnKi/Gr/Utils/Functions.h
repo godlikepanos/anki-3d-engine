@@ -38,7 +38,7 @@ ShaderVariableDataType getShaderVariableTypeFromTypename();
 		return ShaderVariableDataType::capital; \
 	}
 
-#include <AnKi/Gr/ShaderVariableDataTypeDefs.h>
+#include <AnKi/Gr/ShaderVariableDataType.defs.h>
 #undef ANKI_SVDT_MACRO
 
 /// Populate the memory of a variable that is inside a shader block.

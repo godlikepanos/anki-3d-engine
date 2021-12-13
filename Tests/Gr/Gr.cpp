@@ -256,16 +256,16 @@ static Input* input = nullptr;
 
 #define COMMON_BEGIN() \
 	stagingMem = new StagingGpuMemoryPool(); \
-	ConfigSet cfg = DefaultConfigSet::get(); \
-	cfg.set("width", WIDTH); \
-	cfg.set("height", HEIGHT); \
-	cfg.set("gr_validation", true); \
-	cfg.set("gr_vsync", false); \
-	cfg.set("gr_rayTracing", true); \
-	cfg.set("gr_debugMarkers", true); \
+	ConfigSet cfg; \
+	cfg.setWidth(WIDTH); \
+	cfg.setHeight(HEIGHT); \
+	cfg.setGrValidation(true); \
+	cfg.setGrVsync(false); \
+	cfg.setGrRayTracing(true); \
+	cfg.setGrDebugMarkers(true); \
 	win = createWindow(cfg); \
 	ANKI_TEST_EXPECT_NO_ERR(Input::newInstance(allocAligned, nullptr, win, input)); \
-	gr = createGrManager(cfg, win); \
+	gr = createGrManager(&cfg, win); \
 	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(gr, cfg)); \
 	TransferGpuAllocator* transfAlloc = new TransferGpuAllocator(); \
 	ANKI_TEST_EXPECT_NO_ERR(transfAlloc->init(128_MB, gr, gr->getAllocator())); \
@@ -332,7 +332,8 @@ static ShaderPtr createShader(CString src, ShaderType type, GrManager& gr,
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 	StringAuto header(alloc);
 	ShaderCompilerOptions compilerOptions;
-	compilerOptions.m_bindlessLimits = gr.getBindlessLimits();
+	compilerOptions.m_bindlessLimits.m_bindlessTextureCount = gr.getConfig().getGrMaxBindlessTextures();
+	compilerOptions.m_bindlessLimits.m_bindlessImageCount = gr.getConfig().getGrMaxBindlessImages();
 	ShaderProgramParser::generateAnkiShaderHeader(type, compilerOptions, header);
 	header.append(src);
 	DynamicArrayAuto<U8> spirv(alloc);

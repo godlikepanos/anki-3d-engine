@@ -23,7 +23,7 @@ public:
 
 	~Dbg();
 
-	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
+	ANKI_USE_RESULT Error init();
 
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
@@ -31,16 +31,6 @@ public:
 	RenderTargetHandle getRt() const
 	{
 		return m_runCtx.m_rt;
-	}
-
-	Bool getEnabled() const
-	{
-		return m_enabled;
-	}
-
-	void setEnabled(Bool e)
-	{
-		m_enabled = e;
 	}
 
 	Bool getDepthTestEnabled() const
@@ -74,8 +64,6 @@ public:
 	}
 
 private:
-	Bool m_enabled = false;
-	Bool m_initialized = false; ///< Lazily initialize.
 	RenderTargetDescription m_rtDescr;
 	FramebufferDescription m_fbDescr;
 	BitSet<U(RenderQueueDebugDrawFlag::COUNT), U32> m_debugDrawFlags = {false};
@@ -85,8 +73,6 @@ private:
 	public:
 		RenderTargetHandle m_rt;
 	} m_runCtx;
-
-	ANKI_USE_RESULT Error lazyInit();
 
 	void run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx);
 };

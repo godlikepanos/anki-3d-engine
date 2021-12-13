@@ -96,7 +96,7 @@ public:
 	public: \
 		static constexpr Bool VALUE = rowCount * columnCount > 4; \
 	};
-#include <AnKi/Gr/ShaderVariableDataTypeDefs.h>
+#include <AnKi/Gr/ShaderVariableDataType.defs.h>
 #undef ANKI_SVDT_MACRO
 
 template<typename T, Bool isMatrix = IsShaderVarDataTypeAMatrix<T>::VALUE>
@@ -133,7 +133,7 @@ void writeShaderBlockMemory(ShaderVariableDataType type, const ShaderVariableBlo
 	case ShaderVariableDataType::capital: \
 		WriteShaderBlockMemory<type>()(varBlkInfo, elements, elementsCount, buffBegin, buffEnd); \
 		break;
-#include <AnKi/Gr/ShaderVariableDataTypeDefs.h>
+#include <AnKi/Gr/ShaderVariableDataType.defs.h>
 #undef ANKI_SVDT_MACRO
 
 	default:
@@ -152,7 +152,7 @@ const CString shaderVariableDataTypeToString(ShaderVariableDataType t)
 	case ShaderVariableDataType::capital: \
 		return ANKI_STRINGIZE(type);
 #define ANKI_SVDT_MACRO_OPAQUE(capital, type) ANKI_SVDT_MACRO(capital, type, 0, 0, 0)
-#include <AnKi/Gr/ShaderVariableDataTypeDefs.h>
+#include <AnKi/Gr/ShaderVariableDataType.defs.h>
 #undef ANKI_SVDT_MACRO
 #undef ANKI_SVDT_MACRO_OPAQUE
 

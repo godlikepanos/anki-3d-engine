@@ -15,9 +15,9 @@ ShadowmapsResolve::~ShadowmapsResolve()
 {
 }
 
-Error ShadowmapsResolve::init(const ConfigSet& cfg)
+Error ShadowmapsResolve::init()
 {
-	const Error err = initInternal(cfg);
+	const Error err = initInternal();
 	if(err)
 	{
 		ANKI_R_LOGE("Failed to initialize shadow resolve pass");
@@ -26,11 +26,11 @@ Error ShadowmapsResolve::init(const ConfigSet& cfg)
 	return Error::NONE;
 }
 
-Error ShadowmapsResolve::initInternal(const ConfigSet& cfg)
+Error ShadowmapsResolve::initInternal()
 {
-	U32 width = U32(cfg.getNumberF32("r_smResolveFactor") * F32(m_r->getInternalResolution().x()));
+	U32 width = U32(getConfig().getRSmResolveFactor() * F32(m_r->getInternalResolution().x()));
 	width = min(m_r->getInternalResolution().x(), getAlignedRoundUp(4, width));
-	U32 height = U32(cfg.getNumberF32("r_smResolveFactor") * F32(m_r->getInternalResolution().y()));
+	U32 height = U32(getConfig().getRSmResolveFactor() * F32(m_r->getInternalResolution().y()));
 	height = min(m_r->getInternalResolution().y(), getAlignedRoundUp(4, height));
 	ANKI_R_LOGI("Initializing shadow resolve pass. Size %ux%u", width, height);
 

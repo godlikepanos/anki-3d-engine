@@ -229,17 +229,17 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		mode = (mode + 1) % 3;
 		if(mode == 0)
 		{
-			getMainRenderer().getDbg().setEnabled(false);
+			getConfig().setRDbgEnabled(false);
 		}
 		else if(mode == 1)
 		{
-			getMainRenderer().getDbg().setEnabled(true);
+			getConfig().setRDbgEnabled(true);
 			getMainRenderer().getDbg().setDepthTestEnabled(true);
 			getMainRenderer().getDbg().setDitheredDepthTestEnabled(false);
 		}
 		else
 		{
-			getMainRenderer().getDbg().setEnabled(true);
+			getConfig().setRDbgEnabled(true);
 			getMainRenderer().getDbg().setDepthTestEnabled(false);
 			getMainRenderer().getDbg().setDitheredDepthTestEnabled(true);
 		}

@@ -19,7 +19,7 @@ public:
 	VolumetricLightingAccumulation(Renderer* r);
 	~VolumetricLightingAccumulation();
 
-	ANKI_USE_RESULT Error init(const ConfigSet& config);
+	ANKI_USE_RESULT Error init();
 
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);

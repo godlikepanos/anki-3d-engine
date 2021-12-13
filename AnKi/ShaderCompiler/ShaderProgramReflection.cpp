@@ -307,7 +307,7 @@ Error SpirvReflector::structReflection(uint32_t id, const spirv_cross::SPIRType&
 		memberSize = sizeof(type); \
 		memberAlignment = alignof(baseType_); \
 	}
-#include <AnKi/Gr/ShaderVariableDataTypeDefs.h>
+#include <AnKi/Gr/ShaderVariableDataType.defs.h>
 #undef ANKI_SVDT_MACRO
 
 			member.m_type = actualType;
@@ -507,7 +507,7 @@ Error SpirvReflector::blockVariableReflection(const spirv_cross::SPIRType& type,
 	{ \
 		var.m_type = ShaderVariableDataType::capital; \
 	}
-#include <AnKi/Gr/ShaderVariableDataTypeDefs.h>
+#include <AnKi/Gr/ShaderVariableDataType.defs.h>
 #undef ANKI_SVDT_MACRO
 
 			if(var.m_type == ShaderVariableDataType::NONE)

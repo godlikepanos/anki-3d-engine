@@ -7,7 +7,6 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/LightShading.h>
-#include <AnKi/Core/ConfigSet.h>
 
 namespace anki {
 
@@ -15,9 +14,9 @@ GBufferPost::~GBufferPost()
 {
 }
 
-Error GBufferPost::init(const ConfigSet& cfg)
+Error GBufferPost::init()
 {
-	const Error err = initInternal(cfg);
+	const Error err = initInternal();
 	if(err)
 	{
 		ANKI_R_LOGE("Failed to initialize GBufferPost pass");
@@ -25,7 +24,7 @@ Error GBufferPost::init(const ConfigSet& cfg)
 	return err;
 }
 
-Error GBufferPost::initInternal(const ConfigSet& cfg)
+Error GBufferPost::initInternal()
 {
 	ANKI_R_LOGI("Initializing GBufferPost pass");
 

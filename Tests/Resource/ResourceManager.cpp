@@ -13,7 +13,7 @@ namespace anki {
 ANKI_TEST(Resource, ResourceManager)
 {
 	// Create
-	ConfigSet config = DefaultConfigSet::get();
+	ConfigSet config;
 
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 

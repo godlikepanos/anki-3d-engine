@@ -207,10 +207,10 @@ ResourceFilesystem::~ResourceFilesystem()
 Error ResourceFilesystem::init(const ConfigSet& config, const CString& cacheDir)
 {
 	StringListAuto paths(m_alloc);
-	paths.splitString(config.getString("rsrc_dataPaths"), ':');
+	paths.splitString(config.getRsrcDataPaths(), ':');
 
 	StringListAuto excludedStrings(m_alloc);
-	excludedStrings.splitString(config.getString("rsrc_dataPathExcludedStrings"), ':');
+	excludedStrings.splitString(config.getRsrcDataPathExcludedStrings(), ':');
 
 	// Workaround the fact that : is used in drives in Windows
 #if ANKI_OS_WINDOWS

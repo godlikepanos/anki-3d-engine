@@ -9,9 +9,9 @@
 
 namespace anki {
 
-Error Tonemapping::init(const ConfigSet& cfg)
+Error Tonemapping::init()
 {
-	const Error err = initInternal(cfg);
+	const Error err = initInternal();
 	if(err)
 	{
 		ANKI_R_LOGE("Failed to initialize tonemapping");
@@ -20,12 +20,11 @@ Error Tonemapping::init(const ConfigSet& cfg)
 	return err;
 }
 
-Error Tonemapping::initInternal(const ConfigSet& initializer)
+Error Tonemapping::initInternal()
 {
 	m_inputTexMip = m_r->getDownscaleBlur().getMipmapCount() - 2;
 	const U32 width = m_r->getDownscaleBlur().getPassWidth(m_inputTexMip);
 	const U32 height = m_r->getDownscaleBlur().getPassHeight(m_inputTexMip);
-	ANKI_R_LOGI("Initializing tonemapping (input %ux%u)", width, height);
 
 	// Create program
 	ANKI_CHECK(getResourceManager().loadResource("Shaders/TonemappingAverageLuminance.ankiprog", m_prog));

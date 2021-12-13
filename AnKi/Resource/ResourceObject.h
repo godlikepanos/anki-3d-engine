@@ -55,6 +55,8 @@ public:
 
 	// Internals:
 
+	ANKI_INTERNAL const ConfigSet& getConfig() const;
+
 	ANKI_INTERNAL void setFilename(const CString& fname)
 	{
 		ANKI_ASSERT(m_fname.isEmpty());

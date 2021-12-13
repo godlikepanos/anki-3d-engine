@@ -37,18 +37,6 @@ public:
 	Second m_physicsUpdate ANKI_DEBUG_CODE(= 0.0);
 };
 
-/// SceneGraph limits.
-class SceneGraphConfig
-{
-public:
-	F32 m_earlyZDistance = -1.0f; ///< Objects with distance lower than that will be used in early Z.
-	F32 m_reflectionProbeEffectiveDistance = -1.0f; ///< How far reflection probes can look.
-	F32 m_reflectionProbeShadowEffectiveDistance = -1.0f; ///< How far to render shadows for reflection probes.
-	Bool m_rayTracedShadows = false;
-	F32 m_rayTracingExtendedFrustumDistance = 100.0f; ///< The frustum distance from the eye to every direction.
-	Array<F32, MAX_LOD_COUNT - 1> m_maxLodDistances = {};
-};
-
 /// The scene graph that  all the scene entities
 class SceneGraph
 {
@@ -62,7 +50,7 @@ public:
 
 	ANKI_USE_RESULT Error init(AllocAlignedCallback allocCb, void* allocCbData, ThreadHive* threadHive,
 							   ResourceManager* resources, Input* input, ScriptManager* scriptManager,
-							   UiManager* uiManager, const Timestamp* globalTimestamp, const ConfigSet& config);
+							   UiManager* uiManager, ConfigSet* config, const Timestamp* globalTimestamp);
 
 	Timestamp getGlobalTimestamp() const
 	{
@@ -166,11 +154,6 @@ public:
 		return m_stats;
 	}
 
-	const SceneGraphConfig& getConfig() const
-	{
-		return m_config;
-	}
-
 	const Vec3& getSceneMin() const
 	{
 		return m_sceneMin;
@@ -234,6 +217,12 @@ public:
 		return m_debugDrawer;
 	}
 
+	ANKI_INTERNAL const ConfigSet& getConfig()
+	{
+		ANKI_ASSERT(m_config);
+		return *m_config;
+	}
+
 private:
 	class UpdateSceneNodesCtx;
 
@@ -248,6 +237,7 @@ private:
 	Input* m_input = nullptr;
 	ScriptManager* m_scriptManager = nullptr;
 	UiManager* m_uiManager = nullptr;
+	ConfigSet* m_config = nullptr;
 
 	SceneAllocator<U8> m_alloc;
 	SceneFrameAllocator<U8> m_frameAlloc;
@@ -271,7 +261,6 @@ private:
 
 	Atomic<U64> m_nodesUuid = {1};
 
-	SceneGraphConfig m_config;
 	SceneGraphStats m_stats;
 
 	DebugDrawer2 m_debugDrawer;

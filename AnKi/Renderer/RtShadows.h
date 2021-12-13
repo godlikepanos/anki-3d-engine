@@ -30,7 +30,7 @@ public:
 
 	~RtShadows();
 
-	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
+	ANKI_USE_RESULT Error init();
 
 	void populateRenderGraph(RenderingContext& ctx);
 
@@ -123,7 +123,7 @@ public:
 		U8 m_denoiseOrientation = 0;
 	} m_runCtx;
 
-	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
+	ANKI_USE_RESULT Error initInternal();
 
 	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 	void runDenoise(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);

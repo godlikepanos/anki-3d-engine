@@ -21,7 +21,7 @@ Error VertexGpuMemoryPool::init(GenericMemoryPoolAllocator<U8> alloc, GrManager*
 
 	// Create the GPU buffer.
 	BufferInitInfo bufferInit("Global vertex & index");
-	bufferInit.m_size = cfg.getNumberU64("core_globalVertexMemorySize");
+	bufferInit.m_size = cfg.getCoreGlobalVertexMemorySize();
 	if(!isPowerOfTwo(bufferInit.m_size))
 	{
 		ANKI_CORE_LOGE("core_globalVertexMemorySize should be a power of two (because of the buddy allocator");
@@ -77,10 +77,10 @@ Error StagingGpuMemoryPool::init(GrManager* gr, const ConfigSet& cfg)
 {
 	m_gr = gr;
 
-	m_perFrameBuffers[StagingGpuMemoryType::UNIFORM].m_size = cfg.getNumberU32("core_uniformPerFrameMemorySize");
-	m_perFrameBuffers[StagingGpuMemoryType::STORAGE].m_size = cfg.getNumberU32("core_storagePerFrameMemorySize");
-	m_perFrameBuffers[StagingGpuMemoryType::VERTEX].m_size = cfg.getNumberU32("core_vertexPerFrameMemorySize");
-	m_perFrameBuffers[StagingGpuMemoryType::TEXTURE].m_size = cfg.getNumberU32("core_textureBufferPerFrameMemorySize");
+	m_perFrameBuffers[StagingGpuMemoryType::UNIFORM].m_size = cfg.getCoreUniformPerFrameMemorySize();
+	m_perFrameBuffers[StagingGpuMemoryType::STORAGE].m_size = cfg.getCoreStoragePerFrameMemorySize();
+	m_perFrameBuffers[StagingGpuMemoryType::VERTEX].m_size = cfg.getCoreVertexPerFrameMemorySize();
+	m_perFrameBuffers[StagingGpuMemoryType::TEXTURE].m_size = cfg.getCoreTextureBufferPerFrameMemorySize();
 
 	initBuffer(StagingGpuMemoryType::UNIFORM, gr->getDeviceCapabilities().m_uniformBufferBindOffsetAlignment,
 			   gr->getDeviceCapabilities().m_uniformBufferMaxRange, BufferUsageBit::ALL_UNIFORM, *gr);

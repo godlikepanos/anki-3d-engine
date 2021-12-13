@@ -25,7 +25,7 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error init(const ConfigSet& cfg)
+	ANKI_USE_RESULT Error init()
 	{
 		return Error::NONE;
 	}

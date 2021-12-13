@@ -53,21 +53,21 @@ public:
 
 ANKI_TEST(Ui, Ui)
 {
-	ConfigSet cfg = DefaultConfigSet::get();
+	ConfigSet cfg;
 	initConfig(cfg);
-	cfg.set("gr_vsync", 1);
-	cfg.set("gr_validation", 0);
-	cfg.set("width", 1024);
-	cfg.set("height", 760);
-	cfg.set("rsrc_dataPaths", "EngineAssets");
+	cfg.setGrVsync(true);
+	cfg.setGrValidation(false);
+	cfg.setWidth(1024);
+	cfg.setHeight(760);
+	cfg.setRsrcDataPaths("EngineAssets");
 
 	NativeWindow* win = createWindow(cfg);
 	Input* in;
 	ANKI_TEST_EXPECT_NO_ERR(Input::newInstance(allocAligned, nullptr, win, in));
-	GrManager* gr = createGrManager(cfg, win);
+	GrManager* gr = createGrManager(&cfg, win);
 	PhysicsWorld* physics;
 	ResourceFilesystem* fs;
-	ResourceManager* resource = createResourceManager(cfg, gr, physics, fs);
+	ResourceManager* resource = createResourceManager(&cfg, gr, physics, fs);
 	UiManager* ui = new UiManager();
 
 	StagingGpuMemoryPool* stagingMem = new StagingGpuMemoryPool();

@@ -27,7 +27,7 @@ public:
 
 	CString m_cacheDirectory;
 
-	const ConfigSet* m_config = nullptr;
+	ConfigSet* m_config = nullptr;
 	NativeWindow* m_window = nullptr;
 };
 
@@ -53,11 +53,6 @@ public:
 	const GpuDeviceCapabilities& getDeviceCapabilities() const
 	{
 		return m_capabilities;
-	}
-
-	const BindlessLimits& getBindlessLimits() const
-	{
-		return m_bindlessLimits;
 	}
 
 	/// Get next presentable image. The returned Texture is valid until the following swapBuffers. After that it might
@@ -108,12 +103,22 @@ public:
 		return m_uuidIndex.fetchAdd(1);
 	}
 
+	ANKI_INTERNAL const ConfigSet& getConfig() const
+	{
+		return *m_config;
+	}
+
+	ANKI_INTERNAL ConfigSet& getConfig()
+	{
+		return *m_config;
+	}
+
 protected:
 	GrAllocator<U8> m_alloc; ///< Keep it first to get deleted last
+	ConfigSet* m_config = nullptr;
 	String m_cacheDir;
 	Atomic<U64> m_uuidIndex = {1};
 	GpuDeviceCapabilities m_capabilities;
-	BindlessLimits m_bindlessLimits;
 
 	GrManager();
 

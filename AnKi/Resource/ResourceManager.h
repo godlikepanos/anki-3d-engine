@@ -93,7 +93,7 @@ public:
 	GrManager* m_gr = nullptr;
 	PhysicsWorld* m_physics = nullptr;
 	ResourceFilesystem* m_resourceFs = nullptr;
-	const ConfigSet* m_config = nullptr;
+	ConfigSet* m_config = nullptr;
 	CString m_cacheDir;
 	VertexGpuMemoryPool* m_vertexMemory = nullptr;
 	AllocAlignedCallback m_allocCallback = 0;
@@ -129,16 +129,6 @@ public:
 	ANKI_USE_RESULT Error loadResource(const CString& filename, ResourcePtr<T>& out, Bool async = true);
 
 	// Internals:
-
-	ANKI_INTERNAL U32 getMaxImageSize() const
-	{
-		return m_maxImageSize;
-	}
-
-	ANKI_INTERNAL Bool getDumpShaderSource() const
-	{
-		return m_dumpShaderSource;
-	}
 
 	ANKI_INTERNAL ResourceAllocator<U8>& getAllocator()
 	{
@@ -222,21 +212,26 @@ public:
 		return *m_vertexMem;
 	}
 
+	const ConfigSet& getConfig() const
+	{
+		ANKI_ASSERT(m_config);
+		return *m_config;
+	}
+
 private:
 	GrManager* m_gr = nullptr;
 	PhysicsWorld* m_physics = nullptr;
 	ResourceFilesystem* m_fs = nullptr;
+	ConfigSet* m_config = nullptr;
 	ResourceAllocator<U8> m_alloc;
 	TempResourceAllocator<U8> m_tmpAlloc;
 	String m_cacheDir;
-	U32 m_maxImageSize;
 	AsyncLoader* m_asyncLoader = nullptr; ///< Async loading thread
 	ShaderProgramResourceSystem* m_shaderProgramSystem = nullptr;
 	VertexGpuMemoryPool* m_vertexMem = nullptr;
 	U64 m_uuid = 0;
 	U64 m_loadRequestCount = 0;
 	TransferGpuAllocator* m_transferGpuAlloc = nullptr;
-	Bool m_dumpShaderSource = false;
 };
 /// @}
 

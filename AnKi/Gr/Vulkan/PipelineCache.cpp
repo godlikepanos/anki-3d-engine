@@ -14,7 +14,7 @@ Error PipelineCache::init(VkDevice dev, VkPhysicalDevice pdev, CString cacheDir,
 						  GrAllocator<U8> alloc)
 {
 	ANKI_ASSERT(cacheDir && dev && pdev);
-	m_dumpSize = cfg.getNumberU32("gr_diskShaderCacheMaxSize");
+	m_dumpSize = cfg.getGrDiskShaderCacheMaxSize();
 	m_dumpFilename.sprintf(alloc, "%s/vk_pipeline_cache", &cacheDir[0]);
 
 	// Try read the pipeline cache file.
@@ -24,7 +24,7 @@ Error PipelineCache::init(VkDevice dev, VkPhysicalDevice pdev, CString cacheDir,
 		File file;
 		ANKI_CHECK(file.open(m_dumpFilename.toCString(), FileOpenFlag::BINARY | FileOpenFlag::READ));
 
-		PtrSize diskDumpSize = file.getSize();
+		const PtrSize diskDumpSize = file.getSize();
 		if(diskDumpSize <= sizeof(U8) * VK_UUID_SIZE)
 		{
 			ANKI_VK_LOGI("Pipeline cache dump appears to be empty: %s", &m_dumpFilename[0]);

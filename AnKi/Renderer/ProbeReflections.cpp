@@ -27,11 +27,9 @@ ProbeReflections::~ProbeReflections()
 	m_probeUuidToCacheEntryIdx.destroy(getAllocator());
 }
 
-Error ProbeReflections::init(const ConfigSet& config)
+Error ProbeReflections::init()
 {
-	ANKI_R_LOGI("Initializing image reflections");
-
-	const Error err = initInternal(config);
+	const Error err = initInternal();
 	if(err)
 	{
 		ANKI_R_LOGE("Failed to initialize image reflections");
@@ -40,16 +38,16 @@ Error ProbeReflections::init(const ConfigSet& config)
 	return err;
 }
 
-Error ProbeReflections::initInternal(const ConfigSet& config)
+Error ProbeReflections::initInternal()
 {
 	// Init cache entries
-	m_cacheEntries.create(getAllocator(), config.getNumberU32("r_probeRefectionlMaxSimultaneousProbeCount"));
+	m_cacheEntries.create(getAllocator(), getConfig().getRProbeRefectionMaxCachedProbes());
 
-	ANKI_CHECK(initGBuffer(config));
-	ANKI_CHECK(initLightShading(config));
-	ANKI_CHECK(initIrradiance(config));
-	ANKI_CHECK(initIrradianceToRefl(config));
-	ANKI_CHECK(initShadowMapping(config));
+	ANKI_CHECK(initGBuffer());
+	ANKI_CHECK(initLightShading());
+	ANKI_CHECK(initIrradiance());
+	ANKI_CHECK(initIrradianceToRefl());
+	ANKI_CHECK(initShadowMapping());
 
 	// Load split sum integration LUT
 	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/SplitSumIntegration.png", m_integrationLut));
@@ -65,9 +63,9 @@ Error ProbeReflections::initInternal(const ConfigSet& config)
 	return Error::NONE;
 }
 
-Error ProbeReflections::initGBuffer(const ConfigSet& config)
+Error ProbeReflections::initGBuffer()
 {
-	m_gbuffer.m_tileSize = config.getNumberU32("r_probeReflectionResolution");
+	m_gbuffer.m_tileSize = getConfig().getRProbeReflectionResolution();
 
 	// Create RT descriptions
 	{
@@ -111,9 +109,9 @@ Error ProbeReflections::initGBuffer(const ConfigSet& config)
 	return Error::NONE;
 }
 
-Error ProbeReflections::initLightShading(const ConfigSet& config)
+Error ProbeReflections::initLightShading()
 {
-	m_lightShading.m_tileSize = config.getNumberU32("r_probeReflectionResolution");
+	m_lightShading.m_tileSize = getConfig().getRProbeReflectionResolution();
 	m_lightShading.m_mipCount = computeMaxMipmapCount2d(m_lightShading.m_tileSize, m_lightShading.m_tileSize, 8);
 
 	// Init cube arr
@@ -138,9 +136,9 @@ Error ProbeReflections::initLightShading(const ConfigSet& config)
 	return Error::NONE;
 }
 
-Error ProbeReflections::initIrradiance(const ConfigSet& config)
+Error ProbeReflections::initIrradiance()
 {
-	m_irradiance.m_workgroupSize = config.getNumberU32("r_probeReflectionIrradianceResolution");
+	m_irradiance.m_workgroupSize = getConfig().getRProbeReflectionIrradianceResolution();
 
 	// Create prog
 	{
@@ -169,7 +167,7 @@ Error ProbeReflections::initIrradiance(const ConfigSet& config)
 	return Error::NONE;
 }
 
-Error ProbeReflections::initIrradianceToRefl(const ConfigSet& cfg)
+Error ProbeReflections::initIrradianceToRefl()
 {
 	// Create program
 	ANKI_CHECK(m_r->getResourceManager().loadResource("Shaders/ApplyIrradianceToReflection.ankiprog",
@@ -183,9 +181,9 @@ Error ProbeReflections::initIrradianceToRefl(const ConfigSet& cfg)
 	return Error::NONE;
 }
 
-Error ProbeReflections::initShadowMapping(const ConfigSet& cfg)
+Error ProbeReflections::initShadowMapping()
 {
-	const U32 resolution = cfg.getNumberU32("r_probeReflectionShadowMapResolution");
+	const U32 resolution = getConfig().getRProbeReflectionShadowMapResolution();
 	ANKI_ASSERT(resolution > 8);
 
 	// RT descr

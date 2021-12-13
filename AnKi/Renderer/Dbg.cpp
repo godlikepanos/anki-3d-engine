@@ -26,16 +26,8 @@ Dbg::~Dbg()
 {
 }
 
-Error Dbg::init(const ConfigSet& initializer)
+Error Dbg::init()
 {
-	m_enabled = initializer.getBool("r_dbgEnabled");
-	return Error::NONE;
-}
-
-Error Dbg::lazyInit()
-{
-	ANKI_ASSERT(!m_initialized);
-
 	// RT descr
 	m_rtDescr = m_r->create2DRenderTargetDescription(m_r->getInternalResolution().x(), m_r->getInternalResolution().y(),
 													 DBG_COLOR_ATTACHMENT_PIXEL_FORMAT, "Dbg");
@@ -54,7 +46,10 @@ Error Dbg::lazyInit()
 
 void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 {
-	ANKI_ASSERT(m_enabled);
+	if(ANKI_LIKELY(!getConfig().getRDbgEnabled()))
+	{
+		return;
+	}
 
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
@@ -167,15 +162,6 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 
 void Dbg::populateRenderGraph(RenderingContext& ctx)
 {
-	if(!m_initialized)
-	{
-		if(lazyInit())
-		{
-			return;
-		}
-		m_initialized = true;
-	}
-
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	// Create RT

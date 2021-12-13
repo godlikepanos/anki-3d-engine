@@ -46,31 +46,31 @@ ShadowMapping::~ShadowMapping()
 {
 }
 
-Error ShadowMapping::init(const ConfigSet& config)
+Error ShadowMapping::init()
 {
-	ANKI_R_LOGI("Initializing shadowmapping");
-
-	const Error err = initInternal(config);
+	const Error err = initInternal();
 	if(err)
 	{
 		ANKI_R_LOGE("Failed to initialize shadowmapping");
 	}
-
-	ANKI_R_LOGI("\tScratch size %ux%u. atlas size %ux%u", m_scratch.m_tileCountX * m_scratch.m_tileResolution,
-				m_scratch.m_tileCountY * m_scratch.m_tileResolution,
-				m_atlas.m_tileCountBothAxis * m_atlas.m_tileResolution,
-				m_atlas.m_tileCountBothAxis * m_atlas.m_tileResolution);
+	else
+	{
+		ANKI_R_LOGI(
+			"Shadowmapping scratch size %ux%u. atlas size %ux%u", m_scratch.m_tileCountX * m_scratch.m_tileResolution,
+			m_scratch.m_tileCountY * m_scratch.m_tileResolution, m_atlas.m_tileCountBothAxis * m_atlas.m_tileResolution,
+			m_atlas.m_tileCountBothAxis * m_atlas.m_tileResolution);
+	}
 
 	return err;
 }
 
-Error ShadowMapping::initScratch(const ConfigSet& cfg)
+Error ShadowMapping::initScratch()
 {
 	// Init the shadowmaps and FBs
 	{
-		m_scratch.m_tileCountX = cfg.getNumberU32("r_shadowMappingScratchTileCountX");
-		m_scratch.m_tileCountY = cfg.getNumberU32("r_shadowMappingScratchTileCountY");
-		m_scratch.m_tileResolution = cfg.getNumberU32("r_shadowMappingTileResolution");
+		m_scratch.m_tileCountX = getConfig().getRShadowMappingScratchTileCountX();
+		m_scratch.m_tileCountY = getConfig().getRShadowMappingScratchTileCountY();
+		m_scratch.m_tileResolution = getConfig().getRShadowMappingTileResolution();
 
 		// RT
 		m_scratch.m_rtDescr = m_r->create2DRenderTargetDescription(m_scratch.m_tileResolution * m_scratch.m_tileCountX,
@@ -90,12 +90,12 @@ Error ShadowMapping::initScratch(const ConfigSet& cfg)
 	return Error::NONE;
 }
 
-Error ShadowMapping::initAtlas(const ConfigSet& cfg)
+Error ShadowMapping::initAtlas()
 {
 	// Init RT
 	{
-		m_atlas.m_tileResolution = cfg.getNumberU32("r_shadowMappingTileResolution");
-		m_atlas.m_tileCountBothAxis = cfg.getNumberU32("r_shadowMappingTileCountPerRowOrColumn");
+		m_atlas.m_tileResolution = getConfig().getRShadowMappingTileResolution();
+		m_atlas.m_tileCountBothAxis = getConfig().getRShadowMappingTileCountPerRowOrColumn();
 
 		// RT
 		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
@@ -130,14 +130,10 @@ Error ShadowMapping::initAtlas(const ConfigSet& cfg)
 	return Error::NONE;
 }
 
-Error ShadowMapping::initInternal(const ConfigSet& cfg)
+Error ShadowMapping::initInternal()
 {
-	ANKI_CHECK(initScratch(cfg));
-	ANKI_CHECK(initAtlas(cfg));
-
-	m_lodDistances[0] = cfg.getNumberF32("lod0MaxDistance");
-	m_lodDistances[1] = cfg.getNumberF32("lod1MaxDistance");
-
+	ANKI_CHECK(initScratch());
+	ANKI_CHECK(initAtlas());
 	return Error::NONE;
 }
 
@@ -292,7 +288,7 @@ void ShadowMapping::chooseLod(const Vec4& cameraOrigin, const PointLightQueueEle
 							  U32& tileBufferLod, U32& renderQueueElementsLod) const
 {
 	const F32 distFromTheCamera = (cameraOrigin - light.m_worldPosition.xyz0()).getLength() - light.m_radius;
-	if(distFromTheCamera < m_lodDistances[0])
+	if(distFromTheCamera < getConfig().getLod0MaxDistance())
 	{
 		ANKI_ASSERT(m_pointLightsMaxLod == 1);
 		blurAtlas = true;
@@ -321,13 +317,13 @@ void ShadowMapping::chooseLod(const Vec4& cameraOrigin, const SpotLightQueueElem
 	const F32 V1len = V.dot(coneDir);
 	const F32 distFromTheCamera = cos(coneAngle) * sqrt(VlenSq - V1len * V1len) - V1len * sin(coneAngle);
 
-	if(distFromTheCamera < m_lodDistances[0])
+	if(distFromTheCamera < getConfig().getLod0MaxDistance())
 	{
 		blurAtlas = true;
 		tileBufferLod = 2;
 		renderQueueElementsLod = 0;
 	}
-	else if(distFromTheCamera < m_lodDistances[1])
+	else if(distFromTheCamera < getConfig().getLod1MaxDistance())
 	{
 		blurAtlas = false;
 		tileBufferLod = 1;

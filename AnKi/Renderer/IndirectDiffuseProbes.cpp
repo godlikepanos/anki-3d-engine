@@ -95,11 +95,9 @@ void IndirectDiffuseProbes::bindVolumeTextures(const RenderingContext& ctx, Rend
 	}
 }
 
-Error IndirectDiffuseProbes::init(const ConfigSet& cfg)
+Error IndirectDiffuseProbes::init()
 {
-	ANKI_R_LOGI("Initializing global illumination");
-
-	const Error err = initInternal(cfg);
+	const Error err = initInternal();
 	if(err)
 	{
 		ANKI_R_LOGE("Failed to initialize global illumination");
@@ -108,23 +106,23 @@ Error IndirectDiffuseProbes::init(const ConfigSet& cfg)
 	return err;
 }
 
-Error IndirectDiffuseProbes::initInternal(const ConfigSet& cfg)
+Error IndirectDiffuseProbes::initInternal()
 {
-	m_tileSize = cfg.getNumberU32("r_giTileResolution");
-	m_cacheEntries.create(getAllocator(), cfg.getNumberU32("r_giMaxCachedProbes"));
-	m_maxVisibleProbes = cfg.getNumberU32("r_giMaxVisibleProbes");
+	m_tileSize = getConfig().getRGiTileResolution();
+	m_cacheEntries.create(getAllocator(), getConfig().getRGiMaxCachedProbes());
+	m_maxVisibleProbes = getConfig().getRGiMaxVisibleProbes();
 	ANKI_ASSERT(m_maxVisibleProbes <= MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES);
 	ANKI_ASSERT(m_cacheEntries.getSize() >= m_maxVisibleProbes);
 
-	ANKI_CHECK(initGBuffer(cfg));
-	ANKI_CHECK(initLightShading(cfg));
-	ANKI_CHECK(initShadowMapping(cfg));
-	ANKI_CHECK(initIrradiance(cfg));
+	ANKI_CHECK(initGBuffer());
+	ANKI_CHECK(initLightShading());
+	ANKI_CHECK(initShadowMapping());
+	ANKI_CHECK(initIrradiance());
 
 	return Error::NONE;
 }
 
-Error IndirectDiffuseProbes::initGBuffer(const ConfigSet& cfg)
+Error IndirectDiffuseProbes::initGBuffer()
 {
 	// Create RT descriptions
 	{
@@ -166,9 +164,9 @@ Error IndirectDiffuseProbes::initGBuffer(const ConfigSet& cfg)
 	return Error::NONE;
 }
 
-Error IndirectDiffuseProbes::initShadowMapping(const ConfigSet& cfg)
+Error IndirectDiffuseProbes::initShadowMapping()
 {
-	const U32 resolution = cfg.getNumberU32("r_giShadowMapResolution");
+	const U32 resolution = getConfig().getRGiShadowMapResolution();
 	ANKI_ASSERT(resolution > 8);
 
 	// RT descr
@@ -196,7 +194,7 @@ Error IndirectDiffuseProbes::initShadowMapping(const ConfigSet& cfg)
 	return Error::NONE;
 }
 
-Error IndirectDiffuseProbes::initLightShading(const ConfigSet& cfg)
+Error IndirectDiffuseProbes::initLightShading()
 {
 	// Init RT descr
 	{
@@ -218,7 +216,7 @@ Error IndirectDiffuseProbes::initLightShading(const ConfigSet& cfg)
 	return Error::NONE;
 }
 
-Error IndirectDiffuseProbes::initIrradiance(const ConfigSet& cfg)
+Error IndirectDiffuseProbes::initIrradiance()
 {
 	ANKI_CHECK(m_r->getResourceManager().loadResource("Shaders/IrradianceDice.ankiprog", m_irradiance.m_prog));
 

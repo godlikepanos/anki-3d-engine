@@ -58,4 +58,9 @@ Error ResourceObject::openFileParseXml(const CString& filename, XmlDocument& xml
 	return Error::NONE;
 }
 
+const ConfigSet& ResourceObject::getConfig() const
+{
+	return m_manager->getConfig();
+}
+
 } // end namespace anki

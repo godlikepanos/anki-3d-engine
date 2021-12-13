@@ -26,7 +26,7 @@ public:
 
 	~ShadowmapsResolve();
 
-	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
+	ANKI_USE_RESULT Error init();
 
 	void populateRenderGraph(RenderingContext& ctx);
 
@@ -53,7 +53,7 @@ public:
 		RenderTargetHandle m_rt;
 	} m_runCtx;
 
-	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
+	ANKI_USE_RESULT Error initInternal();
 
 	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 };

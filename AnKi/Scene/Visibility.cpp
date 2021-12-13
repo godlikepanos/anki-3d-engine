@@ -20,6 +20,7 @@
 #include <AnKi/Renderer/MainRenderer.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/ThreadHive.h>
+#include <AnKi/Core/ConfigSet.h>
 
 namespace anki {
 
@@ -826,7 +827,7 @@ void SceneGraph::doVisibilityTests(SceneNode& fsn, SceneGraph& scene, RenderQueu
 
 	VisibilityContext ctx;
 	ctx.m_scene = &scene;
-	ctx.m_earlyZDist = scene.getConfig().m_earlyZDistance;
+	ctx.m_earlyZDist = scene.getConfig().getSceneEarlyZDistance();
 	const FrustumComponent& mainFrustum = fsn.getFirstComponentOfType<FrustumComponent>();
 	ctx.submitNewWork(mainFrustum, mainFrustum, rqueue, hive);
 

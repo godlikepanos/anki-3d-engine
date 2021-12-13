@@ -389,7 +389,8 @@ public:
 	DescriptorSetFactory() = default;
 	~DescriptorSetFactory();
 
-	ANKI_USE_RESULT Error init(const GrAllocator<U8>& alloc, VkDevice dev, const BindlessLimits& bindlessLimits);
+	ANKI_USE_RESULT Error init(const GrAllocator<U8>& alloc, VkDevice dev, U32 bindlessTextureCount,
+							   U32 bindlessImageCount);
 
 	void destroy();
 
@@ -432,7 +433,8 @@ private:
 	SpinLock m_cachesMtx; ///< Not a mutex because after a while there will be no reason to lock
 
 	BindlessDescriptorSet* m_bindless = nullptr;
-	BindlessLimits m_bindlessLimits;
+	U32 m_bindlessTextureCount = MAX_U32;
+	U32 m_bindlessImageCount = MAX_U32;
 };
 /// @}
 

@@ -14,9 +14,9 @@ DownscaleBlur::~DownscaleBlur()
 	m_fbDescrs.destroy(getAllocator());
 }
 
-Error DownscaleBlur::init(const ConfigSet& cfg)
+Error DownscaleBlur::init()
 {
-	Error err = initInternal(cfg);
+	const Error err = initInternal();
 	if(err)
 	{
 		ANKI_R_LOGE("Failed to initialize downscale blur");
@@ -25,7 +25,7 @@ Error DownscaleBlur::init(const ConfigSet& cfg)
 	return err;
 }
 
-Error DownscaleBlur::initInternal(const ConfigSet&)
+Error DownscaleBlur::initInternal()
 {
 	m_passCount = computeMaxMipmapCount2d(m_r->getPostProcessResolution().x(), m_r->getPostProcessResolution().y(),
 										  DOWNSCALE_BLUR_DOWN_TO)

@@ -7,7 +7,7 @@
 #include <AnKi/Scene/Components/FrustumComponent.h>
 #include <AnKi/Scene/Components/MoveComponent.h>
 #include <AnKi/Scene/Components/SpatialComponent.h>
-#include <AnKi/Scene/SceneGraph.h>
+#include <AnKi/Core/ConfigSet.h>
 
 namespace anki {
 
@@ -70,21 +70,21 @@ void CameraNode::initCommon(FrustumType frustumType)
 		| FrustumComponentVisibilityTestFlag::GENERIC_COMPUTE_JOB_COMPONENTS
 		| FrustumComponentVisibilityTestFlag::UI_COMPONENTS;
 	frc->setEnabledVisibilityTests(visibilityFlags);
-	frc->setLodDistance(0, getSceneGraph().getConfig().m_maxLodDistances[0]);
-	frc->setLodDistance(1, getSceneGraph().getConfig().m_maxLodDistances[1]);
+	frc->setLodDistance(0, getConfig().getLod0MaxDistance());
+	frc->setLodDistance(1, getConfig().getLod1MaxDistance());
 
 	// Extended frustum for RT
-	if(getSceneGraph().getConfig().m_rayTracedShadows)
+	if(getConfig().getSceneRayTracedShadows())
 	{
 		FrustumComponent* rtFrustumComponent = newComponent<FrustumComponent>();
 		rtFrustumComponent->setFrustumType(FrustumType::ORTHOGRAPHIC);
 		rtFrustumComponent->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::RAY_TRACING_SHADOWS);
 
-		const F32 dist = getSceneGraph().getConfig().m_rayTracingExtendedFrustumDistance;
+		const F32 dist = getConfig().getSceneRayTracingExtendedFrustumDistance();
 
 		rtFrustumComponent->setOrthographic(0.1f, dist * 2.0f, dist, -dist, dist, -dist);
-		rtFrustumComponent->setLodDistance(0, getSceneGraph().getConfig().m_maxLodDistances[0]);
-		rtFrustumComponent->setLodDistance(1, getSceneGraph().getConfig().m_maxLodDistances[1]);
+		rtFrustumComponent->setLodDistance(0, getConfig().getLod0MaxDistance());
+		rtFrustumComponent->setLodDistance(1, getConfig().getLod1MaxDistance());
 	}
 }
 

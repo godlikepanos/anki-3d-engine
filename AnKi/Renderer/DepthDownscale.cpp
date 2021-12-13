@@ -29,7 +29,7 @@ DepthDownscale::~DepthDownscale()
 	}
 }
 
-Error DepthDownscale::initInternal(const ConfigSet&)
+Error DepthDownscale::initInternal()
 {
 	const U32 width = m_r->getInternalResolution().x() >> 1;
 	const U32 height = m_r->getInternalResolution().y() >> 1;
@@ -107,11 +107,9 @@ Error DepthDownscale::initInternal(const ConfigSet&)
 	return Error::NONE;
 }
 
-Error DepthDownscale::init(const ConfigSet& cfg)
+Error DepthDownscale::init()
 {
-	ANKI_R_LOGI("Initializing depth downscale passes");
-
-	const Error err = initInternal(cfg);
+	const Error err = initInternal();
 	if(err)
 	{
 		ANKI_R_LOGE("Failed to initialize depth downscale passes");

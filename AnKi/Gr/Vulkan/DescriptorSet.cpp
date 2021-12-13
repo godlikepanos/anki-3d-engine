@@ -19,7 +19,7 @@ class DescriptorSetFactory::BindlessDescriptorSet
 public:
 	~BindlessDescriptorSet();
 
-	Error init(const GrAllocator<U8>& alloc, VkDevice dev, const BindlessLimits& bindlessLimits);
+	Error init(const GrAllocator<U8>& alloc, VkDevice dev, const U32 bindlessTextureCount, U32 bindlessImageCount);
 
 	/// Bind a sampled image.
 	/// @note It's thread-safe.
@@ -95,11 +95,9 @@ DescriptorSetFactory::BindlessDescriptorSet::~BindlessDescriptorSet()
 }
 
 Error DescriptorSetFactory::BindlessDescriptorSet::init(const GrAllocator<U8>& alloc, VkDevice dev,
-														const BindlessLimits& bindlessLimits)
+														U32 bindlessTextureCount, U32 bindlessImageCount)
 {
 	ANKI_ASSERT(dev);
-	ANKI_ASSERT(bindlessLimits.m_bindlessTextureCount <= MAX_U16);
-	ANKI_ASSERT(bindlessLimits.m_bindlessImageCount <= MAX_U16);
 	m_alloc = alloc;
 	m_dev = dev;
 
@@ -108,11 +106,11 @@ Error DescriptorSetFactory::BindlessDescriptorSet::init(const GrAllocator<U8>& a
 		Array<VkDescriptorSetLayoutBinding, 2> bindings = {};
 		bindings[0].binding = 0;
 		bindings[0].stageFlags = VK_SHADER_STAGE_ALL;
-		bindings[0].descriptorCount = bindlessLimits.m_bindlessTextureCount;
+		bindings[0].descriptorCount = bindlessTextureCount;
 		bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 		bindings[1].binding = 1;
 		bindings[1].stageFlags = VK_SHADER_STAGE_ALL;
-		bindings[1].descriptorCount = bindlessLimits.m_bindlessImageCount;
+		bindings[1].descriptorCount = bindlessImageCount;
 		bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 
 		Array<VkDescriptorBindingFlagsEXT, 2> bindingFlags = {};
@@ -140,9 +138,9 @@ Error DescriptorSetFactory::BindlessDescriptorSet::init(const GrAllocator<U8>& a
 	{
 		Array<VkDescriptorPoolSize, 2> sizes = {};
 		sizes[0].type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-		sizes[0].descriptorCount = bindlessLimits.m_bindlessTextureCount;
+		sizes[0].descriptorCount = bindlessTextureCount;
 		sizes[1].type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-		sizes[1].descriptorCount = bindlessLimits.m_bindlessImageCount;
+		sizes[1].descriptorCount = bindlessImageCount;
 
 		VkDescriptorPoolCreateInfo ci = {};
 		ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -167,7 +165,7 @@ Error DescriptorSetFactory::BindlessDescriptorSet::init(const GrAllocator<U8>& a
 
 	// Init the free arrays
 	{
-		m_freeTexIndices.create(m_alloc, bindlessLimits.m_bindlessTextureCount);
+		m_freeTexIndices.create(m_alloc, bindlessTextureCount);
 		m_freeTexIndexCount = U16(m_freeTexIndices.getSize());
 
 		for(U32 i = 0; i < m_freeTexIndices.getSize(); ++i)
@@ -175,7 +173,7 @@ Error DescriptorSetFactory::BindlessDescriptorSet::init(const GrAllocator<U8>& a
 			m_freeTexIndices[i] = U16(m_freeTexIndices.getSize() - i - 1);
 		}
 
-		m_freeImgIndices.create(m_alloc, bindlessLimits.m_bindlessImageCount);
+		m_freeImgIndices.create(m_alloc, bindlessImageCount);
 		m_freeImgIndexCount = U16(m_freeImgIndices.getSize());
 
 		for(U32 i = 0; i < m_freeImgIndices.getSize(); ++i)
@@ -929,14 +927,16 @@ DescriptorSetFactory::~DescriptorSetFactory()
 {
 }
 
-Error DescriptorSetFactory::init(const GrAllocator<U8>& alloc, VkDevice dev, const BindlessLimits& bindlessLimits)
+Error DescriptorSetFactory::init(const GrAllocator<U8>& alloc, VkDevice dev, U32 bindlessTextureCount,
+								 U32 bindlessImageCount)
 {
 	m_alloc = alloc;
 	m_dev = dev;
 
 	m_bindless = m_alloc.newInstance<BindlessDescriptorSet>();
-	ANKI_CHECK(m_bindless->init(alloc, dev, bindlessLimits));
-	m_bindlessLimits = bindlessLimits;
+	ANKI_CHECK(m_bindless->init(alloc, dev, bindlessTextureCount, bindlessImageCount));
+	m_bindlessTextureCount = bindlessTextureCount;
+	m_bindlessImageCount = bindlessImageCount;
 
 	return Error::NONE;
 }
@@ -988,12 +988,12 @@ Error DescriptorSetFactory::newDescriptorSetLayout(const DescriptorSetLayoutInit
 		{
 			const DescriptorBinding& binding = bindings[i];
 			if(binding.m_binding == 0 && binding.m_type == DescriptorType::TEXTURE
-			   && binding.m_arraySizeMinusOne == m_bindlessLimits.m_bindlessTextureCount - 1)
+			   && binding.m_arraySizeMinusOne == m_bindlessTextureCount - 1)
 			{
 				// All good
 			}
 			else if(binding.m_binding == 1 && binding.m_type == DescriptorType::IMAGE
-					&& binding.m_arraySizeMinusOne == m_bindlessLimits.m_bindlessImageCount - 1)
+					&& binding.m_arraySizeMinusOne == m_bindlessImageCount - 1)
 			{
 				// All good
 			}

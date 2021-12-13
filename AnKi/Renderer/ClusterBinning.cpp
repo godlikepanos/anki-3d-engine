@@ -25,7 +25,7 @@ ClusterBinning::~ClusterBinning()
 {
 }
 
-Error ClusterBinning::init(const ConfigSet& config)
+Error ClusterBinning::init()
 {
 	ANKI_R_LOGI("Initializing clusterer binning");
 

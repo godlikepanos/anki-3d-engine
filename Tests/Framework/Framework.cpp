@@ -228,17 +228,17 @@ void deleteTesterSingleton()
 
 void initConfig(ConfigSet& cfg)
 {
-	cfg.set("width", 1920);
-	cfg.set("height", 1080);
-	cfg.set("rsrc_dataPaths", ".:..");
+	cfg.setWidth(1920);
+	cfg.setHeight(1080);
+	cfg.setRsrcDataPaths(".:..");
 }
 
 NativeWindow* createWindow(ConfigSet& cfg)
 {
 	NativeWindowInitInfo inf;
 	inf.m_allocCallback = allocAligned;
-	inf.m_width = cfg.getNumberU32("width");
-	inf.m_height = cfg.getNumberU32("height");
+	inf.m_width = cfg.getWidth();
+	inf.m_height = cfg.getHeight();
 	inf.m_title = "AnKi unit tests";
 	NativeWindow* win;
 	const Error err = NativeWindow::newInstance(inf, win);
@@ -247,13 +247,10 @@ NativeWindow* createWindow(ConfigSet& cfg)
 		return nullptr;
 	}
 
-	cfg.set("width", win->getWidth());
-	cfg.set("height", win->getHeight());
-
 	return win;
 }
 
-GrManager* createGrManager(const ConfigSet& cfg, NativeWindow* win)
+GrManager* createGrManager(ConfigSet* cfg, NativeWindow* win)
 {
 	GrManagerInitInfo inf;
 	inf.m_allocCallback = allocAligned;
@@ -264,7 +261,7 @@ GrManager* createGrManager(const ConfigSet& cfg, NativeWindow* win)
 		return nullptr;
 	}
 	inf.m_cacheDirectory = home;
-	inf.m_config = &cfg;
+	inf.m_config = cfg;
 	inf.m_window = win;
 	GrManager* gr;
 	ANKI_TEST_EXPECT_NO_ERR(GrManager::newInstance(inf, gr));
@@ -272,7 +269,7 @@ GrManager* createGrManager(const ConfigSet& cfg, NativeWindow* win)
 	return gr;
 }
 
-ResourceManager* createResourceManager(const ConfigSet& cfg, GrManager* gr, PhysicsWorld*& physics,
+ResourceManager* createResourceManager(ConfigSet* cfg, GrManager* gr, PhysicsWorld*& physics,
 									   ResourceFilesystem*& resourceFs)
 {
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
@@ -282,13 +279,13 @@ ResourceManager* createResourceManager(const ConfigSet& cfg, GrManager* gr, Phys
 	ANKI_TEST_EXPECT_NO_ERR(physics->init(allocAligned, nullptr));
 
 	resourceFs = new ResourceFilesystem(alloc);
-	ANKI_TEST_EXPECT_NO_ERR(resourceFs->init(cfg, "./"));
+	ANKI_TEST_EXPECT_NO_ERR(resourceFs->init(*cfg, "./"));
 
 	ResourceManagerInitInfo rinit;
 	rinit.m_gr = gr;
 	rinit.m_physics = physics;
 	rinit.m_resourceFs = resourceFs;
-	rinit.m_config = &cfg;
+	rinit.m_config = cfg;
 	rinit.m_cacheDir = "./";
 	rinit.m_allocCallback = allocAligned;
 	rinit.m_allocCallbackData = nullptr;

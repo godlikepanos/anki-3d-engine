@@ -20,7 +20,7 @@ public:
 	FinalComposite(Renderer* r);
 	~FinalComposite();
 
-	ANKI_USE_RESULT Error init(const ConfigSet& config);
+	ANKI_USE_RESULT Error init();
 
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
@@ -42,7 +42,7 @@ private:
 	ImageResourcePtr m_lut; ///< Color grading lookup texture.
 	ImageResourcePtr m_blueNoise;
 
-	ANKI_USE_RESULT Error initInternal(const ConfigSet& config);
+	ANKI_USE_RESULT Error initInternal();
 
 	void run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 };

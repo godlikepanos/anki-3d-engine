@@ -23,7 +23,10 @@ public:
 
 	~ForwardShading();
 
-	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
+	ANKI_USE_RESULT Error init()
+	{
+		return Error::NONE;
+	}
 
 	void setDependencies(const RenderingContext& ctx, GraphicsRenderPassDescription& pass);
 

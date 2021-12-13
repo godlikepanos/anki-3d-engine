@@ -21,7 +21,7 @@ public:
 
 	~LightShading();
 
-	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
+	ANKI_USE_RESULT Error init();
 
 	void populateRenderGraph(RenderingContext& ctx);
 
@@ -62,9 +62,9 @@ private:
 		RenderTargetHandle m_rt;
 	} m_runCtx; ///< Run context.
 
-	ANKI_USE_RESULT Error initLightShading(const ConfigSet& config);
-	ANKI_USE_RESULT Error initApplyFog(const ConfigSet& config);
-	ANKI_USE_RESULT Error initApplyIndirect(const ConfigSet& config);
+	ANKI_USE_RESULT Error initLightShading();
+	ANKI_USE_RESULT Error initApplyFog();
+	ANKI_USE_RESULT Error initApplyIndirect();
 
 	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 };

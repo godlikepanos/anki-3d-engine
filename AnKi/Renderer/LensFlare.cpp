@@ -17,11 +17,9 @@ LensFlare::~LensFlare()
 {
 }
 
-Error LensFlare::init(const ConfigSet& config)
+Error LensFlare::init()
 {
-	ANKI_R_LOGI("Initializing lens flare pass");
-
-	Error err = initInternal(config);
+	const Error err = initInternal();
 	if(err)
 	{
 		ANKI_R_LOGE("Failed to initialize lens flare pass");
@@ -30,18 +28,18 @@ Error LensFlare::init(const ConfigSet& config)
 	return err;
 }
 
-Error LensFlare::initInternal(const ConfigSet& config)
+Error LensFlare::initInternal()
 {
-	ANKI_CHECK(initSprite(config));
-	ANKI_CHECK(initOcclusion(config));
+	ANKI_CHECK(initSprite());
+	ANKI_CHECK(initOcclusion());
 
 	return Error::NONE;
 }
 
-Error LensFlare::initSprite(const ConfigSet& config)
+Error LensFlare::initSprite()
 {
-	m_maxSpritesPerFlare = config.getNumberU8("r_lensFlareMaxSpritesPerFlare");
-	m_maxFlares = config.getNumberU8("r_lensFlareMaxFlares");
+	m_maxSpritesPerFlare = getConfig().getRLensFlareMaxSpritesPerFlare();
+	m_maxFlares = getConfig().getRLensFlareMaxFlares();
 
 	if(m_maxSpritesPerFlare < 1 || m_maxFlares < 1)
 	{
@@ -60,7 +58,7 @@ Error LensFlare::initSprite(const ConfigSet& config)
 	return Error::NONE;
 }
 
-Error LensFlare::initOcclusion(const ConfigSet& config)
+Error LensFlare::initOcclusion()
 {
 	GrManager& gr = getGrManager();
 

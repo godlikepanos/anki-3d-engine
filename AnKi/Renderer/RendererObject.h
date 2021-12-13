@@ -114,6 +114,8 @@ protected:
 	}
 
 	void registerDebugRenderTarget(CString rtName);
+
+	const ConfigSet& getConfig() const;
 };
 /// @}
 

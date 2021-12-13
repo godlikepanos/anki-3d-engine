@@ -21,12 +21,12 @@ VolumetricLightingAccumulation::~VolumetricLightingAccumulation()
 {
 }
 
-Error VolumetricLightingAccumulation::init(const ConfigSet& config)
+Error VolumetricLightingAccumulation::init()
 {
 	// Misc
-	const F32 qualityXY = config.getNumberF32("r_volumetricLightingAccumulationQualityXY");
-	const F32 qualityZ = config.getNumberF32("r_volumetricLightingAccumulationQualityZ");
-	m_finalZSplit = min(m_r->getZSplitCount(), config.getNumberU32("r_volumetricLightingAccumulationFinalZSplit"));
+	const F32 qualityXY = getConfig().getRVolumetricLightingAccumulationQualityXY();
+	const F32 qualityZ = getConfig().getRVolumetricLightingAccumulationQualityZ();
+	m_finalZSplit = min(m_r->getZSplitCount() - 1, getConfig().getRVolumetricLightingAccumulationFinalZSplit());
 
 	m_volumeSize[0] = U32(F32(m_r->getTileCounts().x()) * qualityXY);
 	m_volumeSize[1] = U32(F32(m_r->getTileCounts().y()) * qualityXY);

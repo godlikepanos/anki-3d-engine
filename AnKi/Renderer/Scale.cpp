@@ -26,10 +26,10 @@ Scale::~Scale()
 {
 }
 
-Error Scale::init(const ConfigSet& cfg)
+Error Scale::init()
 {
 	const Bool needsScaling = m_r->getPostProcessResolution() != m_r->getInternalResolution();
-	const Bool needsSharpening = cfg.getBool("r_sharpen");
+	const Bool needsSharpening = getConfig().getRSharpen();
 	if(!needsScaling && !needsSharpening)
 	{
 		return Error::NONE;
@@ -37,7 +37,7 @@ Error Scale::init(const ConfigSet& cfg)
 
 	ANKI_R_LOGI("Initializing (up|down)scale pass");
 
-	const U32 fsrQuality = cfg.getNumberU8("r_fsr");
+	const U32 fsrQuality = getConfig().getRFsr();
 	m_fsr = fsrQuality != 0;
 
 	// Program

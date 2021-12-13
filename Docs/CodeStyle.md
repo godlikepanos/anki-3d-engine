@@ -103,6 +103,10 @@ Naming conventions for files and directories
 
 	Some/Path/Script.py
 
+Header files that **contain inline methods/functions** (for template classes for example) should have the `.inl.h` extension.
+
+Header files that **contain definitions** (are included multiple types with different permutations) should have the `.def.h` extension.
+
 C++ rules
 =========
 

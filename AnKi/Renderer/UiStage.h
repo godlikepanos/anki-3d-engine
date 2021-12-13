@@ -20,7 +20,7 @@ public:
 	UiStage(Renderer* r);
 	~UiStage();
 
-	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
+	ANKI_USE_RESULT Error init();
 
 	void draw(U32 width, U32 height, RenderingContext& ctx, CommandBufferPtr& cmdb);
 

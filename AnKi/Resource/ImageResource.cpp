@@ -7,6 +7,7 @@
 #include <AnKi/Resource/ImageLoader.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Resource/AsyncLoader.h>
+#include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Util/Filesystem.h>
 
 namespace anki {
@@ -78,7 +79,7 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 	ResourceFilePtr file;
 	ANKI_CHECK(openFile(filename, file));
 
-	ANKI_CHECK(loader.load(file, filename, getManager().getMaxImageSize()));
+	ANKI_CHECK(loader.load(file, filename, getConfig().getRsrcMaxImageSize()));
 
 	// Various sizes
 	init.m_width = loader.getWidth();

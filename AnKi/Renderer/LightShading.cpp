@@ -16,8 +16,6 @@
 #include <AnKi/Renderer/ShadowmapsResolve.h>
 #include <AnKi/Renderer/RtShadows.h>
 #include <AnKi/Renderer/IndirectDiffuse.h>
-#include <AnKi/Core/ConfigSet.h>
-#include <AnKi/Util/HighRezTimer.h>
 
 namespace anki {
 
@@ -30,19 +28,18 @@ LightShading::~LightShading()
 {
 }
 
-Error LightShading::init(const ConfigSet& config)
+Error LightShading::init()
 {
-	ANKI_R_LOGI("Initializing light stage");
-	Error err = initLightShading(config);
+	Error err = initLightShading();
 
 	if(!err)
 	{
-		err = initApplyFog(config);
+		err = initApplyFog();
 	}
 
 	if(!err)
 	{
-		err = initApplyIndirect(config);
+		err = initApplyIndirect();
 	}
 
 	if(err)
@@ -53,7 +50,7 @@ Error LightShading::init(const ConfigSet& config)
 	return err;
 }
 
-Error LightShading::initLightShading(const ConfigSet& config)
+Error LightShading::initLightShading()
 {
 	// Load shaders and programs
 	ANKI_CHECK(getResourceManager().loadResource("Shaders/LightShading.ankiprog", m_lightShading.m_prog));
@@ -90,7 +87,7 @@ Error LightShading::initLightShading(const ConfigSet& config)
 	return Error::NONE;
 }
 
-Error LightShading::initApplyFog(const ConfigSet& config)
+Error LightShading::initApplyFog()
 {
 	// Load shaders and programs
 	ANKI_CHECK(getResourceManager().loadResource("Shaders/LightShadingApplyFog.ankiprog", m_applyFog.m_prog));
@@ -106,7 +103,7 @@ Error LightShading::initApplyFog(const ConfigSet& config)
 	return Error::NONE;
 }
 
-Error LightShading::initApplyIndirect(const ConfigSet& config)
+Error LightShading::initApplyIndirect()
 {
 	ANKI_CHECK(getResourceManager().loadResource("Shaders/LightShadingApplyIndirect.ankiprog", m_applyIndirect.m_prog));
 	const ShaderProgramResourceVariant* variant;

@@ -23,7 +23,7 @@ public:
 
 	~DownscaleBlur();
 
-	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
+	ANKI_USE_RESULT Error init();
 
 	/// Import render targets
 	void importRenderTargets(RenderingContext& ctx);
@@ -70,8 +70,7 @@ private:
 		RenderTargetHandle m_rt;
 	} m_runCtx;
 
-	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
-	ANKI_USE_RESULT Error initSubpass(U idx, const UVec2& inputTexSize);
+	ANKI_USE_RESULT Error initInternal();
 
 	void run(U32 passIdx, RenderPassWorkContext& rgraphCtx);
 };

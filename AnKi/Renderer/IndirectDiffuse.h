@@ -26,7 +26,7 @@ public:
 
 	~IndirectDiffuse();
 
-	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
+	ANKI_USE_RESULT Error init();
 
 	void populateRenderGraph(RenderingContext& ctx);
 
@@ -54,10 +54,6 @@ private:
 	public:
 		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
-		F32 m_radius;
-		U32 m_sampleCount = 8;
-		F32 m_ssaoStrength = 2.5f;
-		F32 m_ssaoBias = -0.1f;
 	} m_main;
 
 	class
@@ -65,7 +61,6 @@ private:
 	public:
 		ShaderProgramResourcePtr m_prog;
 		Array<ShaderProgramPtr, 2> m_grProgs;
-		F32 m_sampleCount = 1.0f;
 	} m_denoise;
 
 	class
@@ -74,7 +69,7 @@ private:
 		Array<RenderTargetHandle, 2> m_mainRtHandles;
 	} m_runCtx;
 
-	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
+	ANKI_USE_RESULT Error initInternal();
 };
 /// @}
 

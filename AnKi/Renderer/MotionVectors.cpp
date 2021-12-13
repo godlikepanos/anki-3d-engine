@@ -14,10 +14,8 @@ MotionVectors::~MotionVectors()
 {
 }
 
-Error MotionVectors::init(const ConfigSet& config)
+Error MotionVectors::init()
 {
-	ANKI_R_LOGI("Initializing motion vectors");
-
 	// Prog
 	ANKI_CHECK(getResourceManager().loadResource("Shaders/MotionVectors.ankiprog", m_prog));
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);

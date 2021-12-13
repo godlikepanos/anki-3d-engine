@@ -4,11 +4,11 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Scene/GlobalIlluminationProbeNode.h>
-#include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Scene/Components/FrustumComponent.h>
 #include <AnKi/Scene/Components/MoveComponent.h>
 #include <AnKi/Scene/Components/SpatialComponent.h>
 #include <AnKi/Scene/Components/GlobalIlluminationProbeComponent.h>
+#include <AnKi/Core/ConfigSet.h>
 
 namespace anki {
 
@@ -120,7 +120,7 @@ GlobalIlluminationProbeNode::GlobalIlluminationProbeNode(SceneGraph* scene, CStr
 		frc->setPerspective(zNear, tempEffectiveDistance, ang, ang);
 		frc->setWorldTransform(m_cubeFaceTransforms[i]);
 		frc->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
-		frc->setEffectiveShadowDistance(getSceneGraph().getConfig().m_reflectionProbeShadowEffectiveDistance);
+		frc->setEffectiveShadowDistance(getConfig().getSceneReflectionProbeShadowEffectiveDistance());
 	}
 
 	// Spatial component
@@ -151,7 +151,7 @@ void GlobalIlluminationProbeNode::onShapeUpdateOrProbeNeedsRendering()
 		// Compute effective distance
 		F32 effectiveDistance = max(gic.getBoxVolumeSize().x(), gic.getBoxVolumeSize().y());
 		effectiveDistance = max(effectiveDistance, gic.getBoxVolumeSize().z());
-		effectiveDistance = max(effectiveDistance, getSceneGraph().getConfig().m_reflectionProbeEffectiveDistance);
+		effectiveDistance = max(effectiveDistance, getConfig().getSceneReflectionProbeEffectiveDistance());
 
 		// Update frustum components
 		U count = 0;

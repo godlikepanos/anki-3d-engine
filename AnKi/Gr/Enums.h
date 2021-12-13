@@ -138,7 +138,7 @@ enum class Format : U32
 #define ANKI_FORMAT_DEF(type, id, componentCount, texelSize, blockWidth, blockHeight, blockSize, shaderType, \
 						depthStencil) \
 	type = id,
-#include <AnKi/Gr/FormatDefs.h>
+#include <AnKi/Gr/Format.defs.h>
 #undef ANKI_FORMAT_DEF
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Format)
@@ -176,7 +176,7 @@ inline FormatInfo getFormatInfo(Format fmt)
 		out.m_depthStencil = DepthStencilAspectBit::depthStencil; \
 		out.m_name = #type; \
 		break;
-#include <AnKi/Gr/FormatDefs.h>
+#include <AnKi/Gr/Format.defs.h>
 #undef ANKI_FORMAT_DEF
 
 	default:
@@ -349,7 +349,7 @@ enum class ShaderVariableDataType : U8
 
 #define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount) capital,
 #define ANKI_SVDT_MACRO_OPAQUE(capital, type) capital,
-#include <AnKi/Gr/ShaderVariableDataTypeDefs.h>
+#include <AnKi/Gr/ShaderVariableDataType.defs.h>
 #undef ANKI_SVDT_MACRO
 #undef ANKI_SVDT_MACRO_OPAQUE
 

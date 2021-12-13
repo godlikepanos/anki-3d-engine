@@ -326,7 +326,7 @@ private:
 	ANKI_USE_RESULT Error initSurface(const GrManagerInitInfo& init);
 	ANKI_USE_RESULT Error initDevice(const GrManagerInitInfo& init);
 	ANKI_USE_RESULT Error initFramebuffers(const GrManagerInitInfo& init);
-	ANKI_USE_RESULT Error initMemory(const ConfigSet& cfg);
+	ANKI_USE_RESULT Error initMemory();
 
 #if ANKI_GR_MANAGER_DEBUG_MEMMORY
 	static void* allocateCallback(void* userData, size_t size, size_t alignment,

@@ -26,7 +26,7 @@ public:
 
 	~ShadowMapping();
 
-	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
+	ANKI_USE_RESULT Error init();
 
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
@@ -59,7 +59,7 @@ private:
 		WeakArray<ResolveWorkItem> m_resolveWorkItems;
 	} m_atlas;
 
-	ANKI_USE_RESULT Error initAtlas(const ConfigSet& cfg);
+	ANKI_USE_RESULT Error initAtlas();
 
 	inline Mat4 createSpotLightTextureMatrix(const UVec4& viewport) const;
 
@@ -90,7 +90,7 @@ private:
 		U32 m_maxViewportHeight = 0;
 	} m_scratch;
 
-	ANKI_USE_RESULT Error initScratch(const ConfigSet& cfg);
+	ANKI_USE_RESULT Error initScratch();
 
 	void runShadowMapping(RenderPassWorkContext& rgraphCtx);
 	/// @}
@@ -99,7 +99,6 @@ private:
 	/// @{
 
 	static constexpr U32 m_pointLightsMaxLod = 1;
-	Array<F32, MAX_LOD_COUNT - 1> m_lodDistances;
 
 	/// Find the lod of the light
 	void chooseLod(const Vec4& cameraOrigin, const PointLightQueueElement& light, Bool& blurAtlas, U32& tileBufferLod,
@@ -123,7 +122,7 @@ private:
 	/// Iterate lights and create work items.
 	void processLights(RenderingContext& ctx, U32& threadCountForScratchPass);
 
-	ANKI_USE_RESULT Error initInternal(const ConfigSet& config);
+	ANKI_USE_RESULT Error initInternal();
 	/// @}
 };
 /// @}

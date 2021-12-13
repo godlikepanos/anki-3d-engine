@@ -170,7 +170,7 @@ protected:
 	union
 	{
 #define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount) type ANKI_CONCATENATE(m_, type);
-#include <AnKi/Gr/ShaderVariableDataTypeDefs.h>
+#include <AnKi/Gr/ShaderVariableDataType.defs.h>
 #undef ANKI_SVDT_MACRO
 	};
 
@@ -195,7 +195,7 @@ protected:
 
 #define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount) \
 	ANKI_SPECIALIZE_GET_VALUE(type, ANKI_CONCATENATE(m_, type), capital)
-#include <AnKi/Gr/ShaderVariableDataTypeDefs.h>
+#include <AnKi/Gr/ShaderVariableDataType.defs.h>
 #undef ANKI_SVDT_MACRO
 
 #undef ANKI_SPECIALIZE_GET_VALUE

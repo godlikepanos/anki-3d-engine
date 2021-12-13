@@ -18,9 +18,9 @@ Ssr::~Ssr()
 {
 }
 
-Error Ssr::init(const ConfigSet& cfg)
+Error Ssr::init()
 {
-	const Error err = initInternal(cfg);
+	const Error err = initInternal();
 	if(err)
 	{
 		ANKI_R_LOGE("Failed to initialize SSR pass");
@@ -28,13 +28,10 @@ Error Ssr::init(const ConfigSet& cfg)
 	return err;
 }
 
-Error Ssr::initInternal(const ConfigSet& cfg)
+Error Ssr::initInternal()
 {
 	const U32 width = m_r->getInternalResolution().x();
 	const U32 height = m_r->getInternalResolution().y();
-	ANKI_R_LOGI("Initializing SSR pass (%ux%u)", width, height);
-	m_maxSteps = cfg.getNumberU32("r_ssrMaxSteps");
-	m_depthLod = cfg.getNumberU32("r_ssrDepthLod");
 	m_firstStepPixels = 32;
 
 	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoise_Rgba8_16x16.png", m_noiseImage));
@@ -84,7 +81,7 @@ void Ssr::populateRenderGraph(RenderingContext& ctx)
 	rpass.newDependency({m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_COMPUTE});
 
 	TextureSubresourceInfo hizSubresource;
-	hizSubresource.m_firstMipmap = min(m_depthLod, m_r->getDepthDownscale().getMipmapCount() - 1);
+	hizSubresource.m_firstMipmap = min(getConfig().getRSsrDepthLod(), m_r->getDepthDownscale().getMipmapCount() - 1);
 	rpass.newDependency({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_COMPUTE, hizSubresource});
 
 	rpass.newDependency({m_r->getDownscaleBlur().getRt(), TextureUsageBit::SAMPLED_COMPUTE});
@@ -96,7 +93,7 @@ void Ssr::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 	cmdb->bindShaderProgram(m_grProg[m_r->getFrameCount() & 1u]);
 
 	rgraphCtx.bindImage(0, 0, m_runCtx.m_rt, TextureSubresourceInfo());
-	const U32 depthLod = min(m_depthLod, m_r->getDepthDownscale().getMipmapCount() - 1);
+	const U32 depthLod = min(getConfig().getRSsrDepthLod(), m_r->getDepthDownscale().getMipmapCount() - 1);
 
 	// Bind uniforms
 	SsrUniforms* unis = allocateAndBindUniforms<SsrUniforms*>(sizeof(SsrUniforms), cmdb, 0, 1);
@@ -105,7 +102,7 @@ void Ssr::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 	unis->m_framebufferSize = UVec2(m_r->getInternalResolution().x(), m_r->getInternalResolution().y());
 	unis->m_frameCount = m_r->getFrameCount() & MAX_U32;
 	unis->m_depthMipCount = m_r->getDepthDownscale().getMipmapCount();
-	unis->m_maxSteps = m_maxSteps;
+	unis->m_maxSteps = getConfig().getRSsrMaxSteps();
 	unis->m_lightBufferMipCount = m_r->getDownscaleBlur().getMipmapCount();
 	unis->m_firstStepPixels = m_firstStepPixels;
 	unis->m_prevViewProjMatMulInvViewProjMat =

@@ -21,7 +21,7 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
+	ANKI_USE_RESULT Error init();
 
 	void importRenderTargets(RenderingContext& ctx);
 
@@ -46,7 +46,7 @@ private:
 		BufferHandle m_buffHandle;
 	} m_runCtx;
 
-	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
+	ANKI_USE_RESULT Error initInternal();
 };
 /// @}
 

@@ -21,13 +21,10 @@ Bloom::~Bloom()
 {
 }
 
-Error Bloom::initExposure(const ConfigSet& config)
+Error Bloom::initExposure()
 {
 	m_exposure.m_width = m_r->getDownscaleBlur().getPassWidth(MAX_U32) * 2;
 	m_exposure.m_height = m_r->getDownscaleBlur().getPassHeight(MAX_U32) * 2;
-
-	m_exposure.m_threshold = config.getNumberF32("r_bloomThreshold");
-	m_exposure.m_scale = config.getNumberF32("r_bloomScale");
 
 	// Create RT info
 	m_exposure.m_rtDescr =
@@ -50,7 +47,7 @@ Error Bloom::initExposure(const ConfigSet& config)
 	return Error::NONE;
 }
 
-Error Bloom::initUpscale(const ConfigSet& config)
+Error Bloom::initUpscale()
 {
 	m_upscale.m_width = m_r->getPostProcessResolution().x() / BLOOM_FRACTION;
 	m_upscale.m_height = m_r->getPostProcessResolution().y() / BLOOM_FRACTION;
@@ -108,7 +105,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
 			rgraphCtx.bindTexture(0, 1, m_r->getDownscaleBlur().getRt(), inputTexSubresource);
 
-			Vec4 uniforms(m_exposure.m_threshold, m_exposure.m_scale, 0.0f, 0.0f);
+			const Vec4 uniforms(getConfig().getRBloomThreshold(), getConfig().getRBloomScale(), 0.0f, 0.0f);
 			cmdb->setPushConstants(&uniforms, sizeof(uniforms));
 
 			rgraphCtx.bindStorageBuffer(0, 2, m_r->getTonemapping().getAverageLuminanceBuffer());

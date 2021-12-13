@@ -8,6 +8,7 @@
 #include <AnKi/Core/Common.h>
 #include <AnKi/Util/List.h>
 #include <AnKi/Util/String.h>
+#include <AnKi/Math/Functions.h>
 
 namespace anki {
 
@@ -18,64 +19,23 @@ namespace anki {
 class ConfigSet
 {
 public:
-	ConfigSet();
-
-	/// Copy.
-	ConfigSet(const ConfigSet& b)
+	/// @note Need to call init() if using this constructor.
+	ConfigSet()
 	{
-		operator=(b);
 	}
+
+	ConfigSet(AllocAlignedCallback allocCb, void* allocCbUserData)
+	{
+		init(allocCb, allocCbUserData);
+	}
+
+	ConfigSet(const ConfigSet& b) = delete; // Non-copyable
 
 	~ConfigSet();
 
-	/// Copy.
-	ConfigSet& operator=(const ConfigSet& b);
+	ConfigSet& operator=(const ConfigSet& b) = delete; // Non-copyable
 
-	/// @name Set the value of an option.
-	/// @{
-	void set(CString option, CString value);
-
-	template<typename T, ANKI_ENABLE(std::is_integral<T>::value)>
-	void set(CString option, T value)
-	{
-		setInternal(option, U64(value));
-	}
-
-	template<typename T, ANKI_ENABLE(std::is_floating_point<T>::value)>
-	void set(CString option, T value)
-	{
-		setInternal(option, F64(value));
-	}
-	/// @}
-
-	/// @name Find an option and return its value.
-	/// @{
-	F64 getNumberF64(CString option) const;
-	F32 getNumberF32(CString option) const;
-	U64 getNumberU64(CString option) const;
-	U32 getNumberU32(CString option) const;
-	U16 getNumberU16(CString option) const;
-	U8 getNumberU8(CString option) const;
-	Bool getBool(CString option) const;
-	CString getString(CString option) const;
-	/// @}
-
-	/// @name Create new options.
-	/// @{
-	void newOption(CString optionName, CString value, CString helpMsg);
-
-	template<typename T, ANKI_ENABLE(std::is_integral<T>::value)>
-	void newOption(CString optionName, T value, T minValue, T maxValue, CString helpMsg = "")
-	{
-		newOptionInternal(optionName, U64(value), U64(minValue), U64(maxValue), helpMsg);
-	}
-
-	template<typename T, ANKI_ENABLE(std::is_floating_point<T>::value)>
-	void newOption(CString optionName, T value, T minValue, T maxValue, CString helpMsg = "")
-	{
-		newOptionInternal(optionName, F64(value), F64(minValue), F64(maxValue), helpMsg);
-	}
-	/// @}
+	void init(AllocAlignedCallback allocCb, void* allocCbUserData);
 
 	ANKI_USE_RESULT Error loadFromFile(CString filename);
 
@@ -83,38 +43,137 @@ public:
 
 	ANKI_USE_RESULT Error setFromCommandLineArguments(U32 cmdLineArgsCount, char* cmdLineArgs[]);
 
+	// Define getters and setters
+#if ANKI_EXTRA_CHECKS
+#	define ANKI_CONFIG_VAR_GET(type, name, defaultValue, minValue, maxValue, description) \
+		type get##name() const \
+		{ \
+			ANKI_ASSERT(isInitialized()); \
+			m_##name.m_timesAccessed.fetchAdd(1); \
+			return m_##name.m_value; \
+		}
+#else
+#	define ANKI_CONFIG_VAR_GET(type, name, defaultValue, minValue, maxValue, description) \
+		type get##name() const \
+		{ \
+			ANKI_ASSERT(isInitialized()); \
+			return m_##name.m_value; \
+		}
+#endif
+#define ANKI_CONFIG_VAR_SET(type, name, defaultValue, minValue, maxValue, description) \
+	void set##name(type value) \
+	{ \
+		ANKI_ASSERT(isInitialized()); \
+		const type newValue = clamp(value, m_##name.m_min, m_##name.m_max); \
+		if(newValue != value) \
+		{ \
+			ANKI_CORE_LOGW("Out of range value set for config var: %s", m_##name.m_name.cstr()); \
+		} \
+		m_##name.m_value = newValue; \
+	}
+#define ANKI_CONFIG_VAR_U8(name, defaultValue, minValue, maxValue, description) \
+	ANKI_CONFIG_VAR_GET(U8, name, defaultValue, minValue, maxValue, description) \
+	ANKI_CONFIG_VAR_SET(U8, name, defaultValue, minValue, maxValue, description)
+#define ANKI_CONFIG_VAR_U32(name, defaultValue, minValue, maxValue, description) \
+	ANKI_CONFIG_VAR_GET(U32, name, defaultValue, minValue, maxValue, description) \
+	ANKI_CONFIG_VAR_SET(U32, name, defaultValue, minValue, maxValue, description)
+#define ANKI_CONFIG_VAR_PTR_SIZE(name, defaultValue, minValue, maxValue, description) \
+	ANKI_CONFIG_VAR_GET(PtrSize, name, defaultValue, minValue, maxValue, description) \
+	ANKI_CONFIG_VAR_SET(PtrSize, name, defaultValue, minValue, maxValue, description)
+#define ANKI_CONFIG_VAR_F32(name, defaultValue, minValue, maxValue, description) \
+	ANKI_CONFIG_VAR_GET(F32, name, defaultValue, minValue, maxValue, description) \
+	ANKI_CONFIG_VAR_SET(F32, name, defaultValue, minValue, maxValue, description)
+#define ANKI_CONFIG_VAR_BOOL(name, defaultValue, description) \
+	ANKI_CONFIG_VAR_GET(Bool, name, defaultValue, minValue, maxValue, description) \
+	void set##name(Bool value) \
+	{ \
+		ANKI_ASSERT(isInitialized()); \
+		m_##name.m_value = value; \
+	}
+#define ANKI_CONFIG_VAR_STRING(name, defaultValue, description) \
+	ANKI_CONFIG_VAR_GET(CString, name, defaultValue, minValue, maxValue, description) \
+	void set##name(CString value) \
+	{ \
+		ANKI_ASSERT(isInitialized()); \
+		setStringVar(value, m_##name); \
+	}
+#include <AnKi/Core/AllConfigVars.defs.h>
+#undef ANKI_CONFIG_VAR_GET
+#undef ANKI_CONFIG_VAR_SET
+
 private:
-	class Option;
+	class Var : public IntrusiveListEnabled<Var>
+	{
+	public:
+		CString m_name;
+		CString m_description;
+#if ANKI_EXTRA_CHECKS
+		mutable Atomic<U32> m_timesAccessed = {0};
+#endif
+	};
+
+	template<typename T>
+	class NumberVar : public Var
+	{
+	public:
+		T m_value;
+		T m_min;
+		T m_max;
+	};
+
+	class StringVar : public Var
+	{
+	public:
+		Char* m_value = nullptr;
+	};
+
+	class BoolVar : public Var
+	{
+	public:
+		Bool m_value;
+	};
 
 	HeapAllocator<U8> m_alloc;
-	List<Option> m_options;
+	IntrusiveList<Var> m_vars;
 
-	Option* tryFind(CString name);
-	const Option* tryFind(CString name) const;
+#define ANKI_CONFIG_VAR_U8(name, defaultValue, minValue, maxValue, description) NumberVar<U8> m_##name;
+#define ANKI_CONFIG_VAR_U32(name, defaultValue, minValue, maxValue, description) NumberVar<U32> m_##name;
+#define ANKI_CONFIG_VAR_PTR_SIZE(name, defaultValue, minValue, maxValue, description) NumberVar<PtrSize> m_##name;
+#define ANKI_CONFIG_VAR_F32(name, defaultValue, minValue, maxValue, description) NumberVar<F32> m_##name;
+#define ANKI_CONFIG_VAR_BOOL(name, defaultValue, description) BoolVar m_##name;
+#define ANKI_CONFIG_VAR_STRING(name, defaultValue, description) StringVar m_##name;
+#include <AnKi/Core/AllConfigVars.defs.h>
 
-	Option& find(CString name)
+	Bool isInitialized() const
 	{
-		Option* o = tryFind(name);
+		return !m_vars.isEmpty();
+	}
+
+	Var* tryFind(CString name);
+	const Var* tryFind(CString name) const;
+
+	Var& find(CString name)
+	{
+		Var* o = tryFind(name);
 		ANKI_ASSERT(o && "Couldn't find config option");
 		return *o;
 	}
 
-	const Option& find(CString name) const
+	const Var& find(CString name) const
 	{
-		const Option* o = tryFind(name);
+		const Var* o = tryFind(name);
 		ANKI_ASSERT(o && "Couldn't find config option");
 		return *o;
 	}
 
-	void setInternal(CString option, F64 value);
-	void setInternal(CString option, U64 value);
-
-	void newOptionInternal(CString optionName, U64 value, U64 minValue, U64 maxValue, CString helpMsg);
-	void newOptionInternal(CString optionName, F64 value, F64 minValue, F64 maxValue, CString helpMsg);
+	void setStringVar(CString val, StringVar& var)
+	{
+		m_alloc.getMemoryPool().free(var.m_value);
+		const U32 len = val.getLength();
+		var.m_value = static_cast<Char*>(m_alloc.getMemoryPool().allocate(len + 1, alignof(Char)));
+		memcpy(var.m_value, val.getBegin(), len + 1);
+	}
 };
-
-/// The default config set. Copy that to your own to override.
-using DefaultConfigSet = Singleton<ConfigSet>;
 /// @}
 
 } // end namespace anki

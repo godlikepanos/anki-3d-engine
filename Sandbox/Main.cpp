@@ -17,6 +17,7 @@ class MyApp : public App
 {
 public:
 	Bool m_profile = false;
+	ConfigSet m_config;
 
 	Error init(int argc, char* argv[]);
 	Error userMainLoop(Bool& quit, Second elapsedTime) override;
@@ -33,11 +34,11 @@ Error MyApp::init(int argc, char* argv[])
 	}
 
 	// Config
-	ConfigSet config = DefaultConfigSet::get();
-	ANKI_CHECK(config.setFromCommandLineArguments(argc - 2, argv + 2));
+	m_config.init(allocAligned, nullptr);
+	ANKI_CHECK(m_config.setFromCommandLineArguments(argc - 2, argv + 2));
 
 	// Init super class
-	ANKI_CHECK(App::init(config, allocAligned, nullptr));
+	ANKI_CHECK(App::init(&m_config, allocAligned, nullptr));
 
 	// Other init
 	Renderer& renderer = getMainRenderer().getOffscreenRenderer();
@@ -49,7 +50,7 @@ Error MyApp::init(int argc, char* argv[])
 	if(getenv("PROFILE"))
 	{
 		m_profile = true;
-		setTimerTick(0.0);
+		m_config.setCoreTargetFps(240);
 		TracerSingleton::get().setEnabled(true);
 	}
 
@@ -128,17 +129,17 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		mode = (mode + 1) % 3;
 		if(mode == 0)
 		{
-			renderer.getDbg().setEnabled(false);
+			getConfig().setRDbgEnabled(false);
 		}
 		else if(mode == 1)
 		{
-			renderer.getDbg().setEnabled(true);
+			getConfig().setRDbgEnabled(true);
 			renderer.getDbg().setDepthTestEnabled(true);
 			renderer.getDbg().setDitheredDepthTestEnabled(false);
 		}
 		else
 		{
-			renderer.getDbg().setEnabled(true);
+			getConfig().setRDbgEnabled(true);
 			renderer.getDbg().setDepthTestEnabled(false);
 			renderer.getDbg().setDitheredDepthTestEnabled(true);
 		}

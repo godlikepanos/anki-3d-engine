@@ -20,9 +20,9 @@ RtShadows::~RtShadows()
 {
 }
 
-Error RtShadows::init(const ConfigSet& cfg)
+Error RtShadows::init()
 {
-	const Error err = initInternal(cfg);
+	const Error err = initInternal();
 	if(err)
 	{
 		ANKI_R_LOGE("Failed to initialize ray traced shadows");
@@ -31,10 +31,10 @@ Error RtShadows::init(const ConfigSet& cfg)
 	return err;
 }
 
-Error RtShadows::initInternal(const ConfigSet& cfg)
+Error RtShadows::initInternal()
 {
-	m_useSvgf = cfg.getNumberU8("r_rtShadowsSvgf") != 0;
-	m_atrousPassCount = cfg.getNumberU8("r_rtShadowsSvgfAtrousPassCount");
+	m_useSvgf = getConfig().getRRtShadowsSvgf();
+	m_atrousPassCount = getConfig().getRRtShadowsSvgfAtrousPassCount();
 
 	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_blueNoiseImage));
 
@@ -43,7 +43,7 @@ Error RtShadows::initInternal(const ConfigSet& cfg)
 		ANKI_CHECK(getResourceManager().loadResource("Shaders/RtShadowsRayGen.ankiprog", m_rayGenProg));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_rayGenProg);
-		variantInitInfo.addMutation("RAYS_PER_PIXEL", cfg.getNumberU8("r_rtShadowsRaysPerPixel"));
+		variantInitInfo.addMutation("RAYS_PER_PIXEL", getConfig().getRRtShadowsRaysPerPixel());
 
 		const ShaderProgramResourceVariant* variant;
 		m_rayGenProg->getOrCreateVariant(variantInitInfo, variant);

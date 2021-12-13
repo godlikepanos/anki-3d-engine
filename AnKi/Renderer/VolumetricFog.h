@@ -25,7 +25,7 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error init(const ConfigSet& config);
+	ANKI_USE_RESULT Error init();
 
 	void setFogParticleColor(const Vec3& col)
 	{

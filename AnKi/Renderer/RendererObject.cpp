@@ -81,4 +81,9 @@ void RendererObject::registerDebugRenderTarget(CString rtName)
 	m_r->registerDebugRenderTarget(this, rtName);
 }
 
+const ConfigSet& RendererObject::getConfig() const
+{
+	return m_r->getConfig();
+}
+
 } // end namespace anki

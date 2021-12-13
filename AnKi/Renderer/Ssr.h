@@ -24,7 +24,7 @@ public:
 
 	~Ssr();
 
-	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
+	ANKI_USE_RESULT Error init();
 
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
@@ -42,8 +42,6 @@ private:
 	ImageResourcePtr m_noiseImage;
 
 	Array<U32, 2> m_workgroupSize = {};
-	U32 m_maxSteps = 32;
-	U32 m_depthLod = 0;
 	U32 m_firstStepPixels = 16;
 
 	class
@@ -52,7 +50,7 @@ private:
 		RenderTargetHandle m_rt;
 	} m_runCtx;
 
-	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
+	ANKI_USE_RESULT Error initInternal();
 
 	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 

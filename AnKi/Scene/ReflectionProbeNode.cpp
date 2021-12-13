@@ -8,8 +8,7 @@
 #include <AnKi/Scene/Components/MoveComponent.h>
 #include <AnKi/Scene/Components/FrustumComponent.h>
 #include <AnKi/Scene/Components/SpatialComponent.h>
-#include <AnKi/Scene/SceneGraph.h>
-#include <AnKi/Renderer/LightShading.h>
+#include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 
 namespace anki {
@@ -112,7 +111,7 @@ ReflectionProbeNode::ReflectionProbeNode(SceneGraph* scene, CString name)
 		frc->setPerspective(CLUSTER_OBJECT_FRUSTUM_NEAR_PLANE, 10.0f, ang, ang);
 		frc->setWorldTransform(m_frustumTransforms[i]);
 		frc->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
-		frc->setEffectiveShadowDistance(getSceneGraph().getConfig().m_reflectionProbeShadowEffectiveDistance);
+		frc->setEffectiveShadowDistance(getConfig().getSceneReflectionProbeShadowEffectiveDistance());
 	}
 
 	// Reflection probe comp
@@ -158,7 +157,7 @@ void ReflectionProbeNode::onShapeUpdate(ReflectionProbeComponent& reflc)
 	const Vec3 halfProbeSize = reflc.getBoxVolumeSize() / 2.0f;
 	F32 effectiveDistance = max(halfProbeSize.x(), halfProbeSize.y());
 	effectiveDistance = max(effectiveDistance, halfProbeSize.z());
-	effectiveDistance = max(effectiveDistance, getSceneGraph().getConfig().m_reflectionProbeEffectiveDistance);
+	effectiveDistance = max(effectiveDistance, getConfig().getSceneReflectionProbeEffectiveDistance());
 
 	// Update frustum components
 	iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) {

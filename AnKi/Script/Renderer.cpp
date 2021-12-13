@@ -21,119 +21,7 @@ static MainRenderer* getMainRenderer(lua_State* l)
 	return r;
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoDbg = {-100952987011959913, "Dbg",
-											  LuaUserData::computeSizeForGarbageCollected<Dbg>(), nullptr, nullptr};
-
-template<>
-const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Dbg>()
-{
-	return luaUserDataTypeInfoDbg;
-}
-
-/// Pre-wrap method Dbg::getEnabled.
-static inline int pwrapDbggetEnabled(lua_State* l)
-{
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoDbg, ud))
-	{
-		return -1;
-	}
-
-	Dbg* self = ud->getData<Dbg>();
-
-	// Call the method
-	Bool ret = self->getEnabled();
-
-	// Push return value
-	lua_pushboolean(l, ret);
-
-	return 1;
-}
-
-/// Wrap method Dbg::getEnabled.
-static int wrapDbggetEnabled(lua_State* l)
-{
-	int res = pwrapDbggetEnabled(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Pre-wrap method Dbg::setEnabled.
-static inline int pwrapDbgsetEnabled(lua_State* l)
-{
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoDbg, ud))
-	{
-		return -1;
-	}
-
-	Dbg* self = ud->getData<Dbg>();
-
-	// Pop arguments
-	Bool arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
-	{
-		return -1;
-	}
-
-	// Call the method
-	self->setEnabled(arg0);
-
-	return 0;
-}
-
-/// Wrap method Dbg::setEnabled.
-static int wrapDbgsetEnabled(lua_State* l)
-{
-	int res = pwrapDbgsetEnabled(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Wrap class Dbg.
-static inline void wrapDbg(lua_State* l)
-{
-	LuaBinder::createClass(l, &luaUserDataTypeInfoDbg);
-	LuaBinder::pushLuaCFuncMethod(l, "getEnabled", wrapDbggetEnabled);
-	LuaBinder::pushLuaCFuncMethod(l, "setEnabled", wrapDbgsetEnabled);
-	lua_settop(l, 0);
-}
-
-LuaUserDataTypeInfo luaUserDataTypeInfoMainRenderer = {-4669156293220173081, "MainRenderer",
+LuaUserDataTypeInfo luaUserDataTypeInfoMainRenderer = {-5029754327692985701, "MainRenderer",
 													   LuaUserData::computeSizeForGarbageCollected<MainRenderer>(),
 													   nullptr, nullptr};
 
@@ -296,7 +184,6 @@ static int wrapgetMainRenderer(lua_State* l)
 /// Wrap the module.
 void wrapModuleRenderer(lua_State* l)
 {
-	wrapDbg(l);
 	wrapMainRenderer(l);
 	LuaBinder::pushLuaCFunc(l, "getMainRenderer", wrapgetMainRenderer);
 }

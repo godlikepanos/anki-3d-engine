@@ -9,7 +9,6 @@
 #include <AnKi/Renderer/LensFlare.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/Tracer.h>
-#include <AnKi/Core/ConfigSet.h>
 
 namespace anki {
 
@@ -17,11 +16,9 @@ GBuffer::~GBuffer()
 {
 }
 
-Error GBuffer::init(const ConfigSet& initializer)
+Error GBuffer::init()
 {
-	ANKI_R_LOGI("Initializing g-buffer pass");
-
-	const Error err = initInternal(initializer);
+	const Error err = initInternal();
 	if(err)
 	{
 		ANKI_R_LOGE("Failed to initialize g-buffer pass");
@@ -30,7 +27,7 @@ Error GBuffer::init(const ConfigSet& initializer)
 	return err;
 }
 
-Error GBuffer::initInternal(const ConfigSet& initializer)
+Error GBuffer::initInternal()
 {
 	// RTs
 	static const Array<const char*, 2> depthRtNames = {{"GBuffer depth #0", "GBuffer depth #1"}};

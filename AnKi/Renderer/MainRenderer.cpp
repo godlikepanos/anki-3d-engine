@@ -28,35 +28,33 @@ MainRenderer::~MainRenderer()
 	ANKI_R_LOGI("Destroying main renderer");
 }
 
-Error MainRenderer::init(ThreadHive* hive, ResourceManager* resources, GrManager* gr, StagingGpuMemoryPool* stagingMem,
-						 UiManager* ui, AllocAlignedCallback allocCb, void* allocCbUserData, const ConfigSet& config,
-						 Timestamp* globTimestamp)
+Error MainRenderer::init(const MainRendererInitInfo& inf)
 {
 	ANKI_R_LOGI("Initializing main renderer");
 
-	m_alloc = HeapAllocator<U8>(allocCb, allocCbUserData, "MainRenderer");
-	m_frameAlloc = StackAllocator<U8>(allocCb, allocCbUserData, 1024 * 1024 * 10, 1.0f);
+	m_alloc = HeapAllocator<U8>(inf.m_allocCallback, inf.m_allocCallbackUserData, "MainRenderer");
+	m_frameAlloc = StackAllocator<U8>(inf.m_allocCallback, inf.m_allocCallbackUserData, 10_MB, 1.0f);
 
 	// Init renderer and manipulate the width/height
-	m_swapchainResolution.x() = config.getNumberU32("width");
-	m_swapchainResolution.y() = config.getNumberU32("height");
-	m_renderScaling = config.getNumberF32("r_renderScaling");
+	m_swapchainResolution = inf.m_swapchainSize;
+	m_renderScaling = inf.m_config->getRRenderScaling();
 
 	m_rDrawToDefaultFb = m_renderScaling == 1.0f;
 
 	m_r.reset(m_alloc.newInstance<Renderer>());
-	ANKI_CHECK(m_r->init(hive, resources, gr, stagingMem, ui, m_alloc, config, globTimestamp));
+	ANKI_CHECK(m_r->init(inf.m_threadHive, inf.m_resourceManager, inf.m_gr, inf.m_stagingMemory, inf.m_ui, m_alloc,
+						 inf.m_config, inf.m_globTimestamp, m_swapchainResolution));
 
 	// Init other
 	if(!m_rDrawToDefaultFb)
 	{
-		ANKI_CHECK(resources->loadResource("Shaders/BlitGraphics.ankiprog", m_blitProg));
+		ANKI_CHECK(inf.m_resourceManager->loadResource("Shaders/BlitGraphics.ankiprog", m_blitProg));
 		const ShaderProgramResourceVariant* variant;
 		m_blitProg->getOrCreateVariant(variant);
 		m_blitGrProg = variant->getProgram();
 
 		// The RT desc
-		const Vec2 fresolution = Vec2(F32(config.getNumberU32("width")), F32(config.getNumberU32("height")));
+		const Vec2 fresolution = Vec2(m_swapchainResolution);
 		UVec2 resolution = UVec2(fresolution * m_renderScaling);
 		alignRoundDown(2, resolution.x());
 		alignRoundDown(2, resolution.y());
@@ -72,7 +70,7 @@ Error MainRenderer::init(ThreadHive* hive, ResourceManager* resources, GrManager
 		ANKI_R_LOGI("The main renderer will have to blit the offscreen renderer's result");
 	}
 
-	m_rgraph = gr->newRenderGraph();
+	m_rgraph = inf.m_gr->newRenderGraph();
 
 	ANKI_R_LOGI("Main renderer initialized. Rendering size %ux%u", m_swapchainResolution.x(),
 				m_swapchainResolution.x());

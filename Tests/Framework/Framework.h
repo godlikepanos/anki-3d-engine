@@ -224,9 +224,9 @@ void initConfig(ConfigSet& cfg);
 
 NativeWindow* createWindow(ConfigSet& cfg);
 
-GrManager* createGrManager(const ConfigSet& cfg, NativeWindow* win);
+GrManager* createGrManager(ConfigSet* cfg, NativeWindow* win);
 
-ResourceManager* createResourceManager(const ConfigSet& cfg, GrManager* gr, PhysicsWorld*& physics,
+ResourceManager* createResourceManager(ConfigSet* cfg, GrManager* gr, PhysicsWorld*& physics,
 									   ResourceFilesystem*& resourceFs);
 
 } // end namespace anki

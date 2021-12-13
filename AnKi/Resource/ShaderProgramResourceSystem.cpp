@@ -12,6 +12,7 @@
 #include <AnKi/Util/ThreadHive.h>
 #include <AnKi/Util/System.h>
 #include <AnKi/Util/BitSet.h>
+#include <AnKi/Core/ConfigSet.h>
 
 namespace anki {
 
@@ -66,7 +67,8 @@ Error ShaderProgramResourceSystem::compileAllShaders(CString cacheDir, GrManager
 
 	// Compute hash for both
 	ShaderCompilerOptions compilerOptions;
-	compilerOptions.m_bindlessLimits = gr.getBindlessLimits();
+	compilerOptions.m_bindlessLimits.m_bindlessTextureCount = gr.getConfig().getGrMaxBindlessTextures();
+	compilerOptions.m_bindlessLimits.m_bindlessImageCount = gr.getConfig().getGrMaxBindlessImages();
 	U64 gpuHash = computeHash(&compilerOptions, sizeof(compilerOptions));
 	gpuHash = appendHash(&SHADER_BINARY_VERSION, sizeof(SHADER_BINARY_VERSION), gpuHash);
 

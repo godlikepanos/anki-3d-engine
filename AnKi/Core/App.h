@@ -40,17 +40,9 @@ public:
 	App();
 	virtual ~App();
 
-	ANKI_USE_RESULT Error init(const ConfigSet& config, AllocAlignedCallback allocCb, void* allocCbUserData);
-
-	Second getTimerTick() const
-	{
-		return m_timerTick;
-	}
-
-	void setTimerTick(const F32 x)
-	{
-		m_timerTick = x;
-	}
+	/// Initialize the application.
+	/// @param[in,out] config The config. Needs to be alive as long as the app is alive.
+	ANKI_USE_RESULT Error init(ConfigSet* config, AllocAlignedCallback allocCb, void* allocCbUserData);
 
 	const String& getSettingsDirectory() const
 	{
@@ -97,6 +89,16 @@ public:
 		return Error::NONE;
 	}
 
+	const ConfigSet& getConfig() const
+	{
+		return *m_config;
+	}
+
+	ConfigSet& getConfig()
+	{
+		return *m_config;
+	}
+
 	Input& getInput()
 	{
 		return *m_input;
@@ -137,16 +139,6 @@ public:
 		return m_heapAlloc;
 	}
 
-	void setDisplayStats(Bool enable)
-	{
-		m_displayStats = enable;
-	}
-
-	Bool getDisplayStats() const
-	{
-		return m_displayStats;
-	}
-
 	void setDisplayDeveloperConsole(Bool display)
 	{
 		m_consoleEnabled = display;
@@ -164,11 +156,13 @@ private:
 	HeapAllocator<U8> m_heapAlloc;
 
 	// Sybsystems
+	ConfigSet* m_config = nullptr;
 #if ANKI_ENABLE_TRACE
 	CoreTracer* m_coreTracer = nullptr;
 #endif
 	NativeWindow* m_window = nullptr;
 	Input* m_input = nullptr;
+	ThreadHive* m_threadHive = nullptr;
 	GrManager* m_gr = nullptr;
 	MaliHwCounters* m_maliHwCounters = nullptr;
 	VertexGpuMemoryPool* m_vertexMem = nullptr;
@@ -183,14 +177,11 @@ private:
 
 	// Misc
 	UiImmediateModeBuilderPtr m_statsUi;
-	Bool m_displayStats = false;
 	UiImmediateModeBuilderPtr m_console;
 	Bool m_consoleEnabled = false;
 	Timestamp m_globalTimestamp = 1;
-	ThreadHive* m_threadHive = nullptr;
 	String m_settingsDir; ///< The path that holds the configuration
 	String m_cacheDir; ///< This is used as a cache
-	Second m_timerTick;
 	U64 m_resourceCompletedAsyncTaskCount = 0;
 
 	class MemStats
@@ -208,9 +199,9 @@ private:
 
 	void initMemoryCallbacks(AllocAlignedCallback allocCb, void* allocCbUserData);
 
-	ANKI_USE_RESULT Error initInternal(const ConfigSet& config, AllocAlignedCallback allocCb, void* allocCbUserData);
+	ANKI_USE_RESULT Error initInternal(AllocAlignedCallback allocCb, void* allocCbUserData);
 
-	ANKI_USE_RESULT Error initDirs(const ConfigSet& cfg);
+	ANKI_USE_RESULT Error initDirs();
 	void cleanup();
 
 	/// Inject a new UI element in the render queue for displaying various stuff.

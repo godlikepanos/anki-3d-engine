@@ -42,16 +42,13 @@ Error ResourceManager::init(ResourceManagerInitInfo& init)
 	m_gr = init.m_gr;
 	m_physics = init.m_physics;
 	m_fs = init.m_resourceFs;
+	m_config = init.m_config;
 	m_vertexMem = init.m_vertexMemory;
 	m_alloc = ResourceAllocator<U8>(init.m_allocCallback, init.m_allocCallbackData);
 
 	m_tmpAlloc = TempResourceAllocator<U8>(init.m_allocCallback, init.m_allocCallbackData, 10_MB);
 
 	m_cacheDir.create(m_alloc, init.m_cacheDir);
-
-	// Init some constants
-	m_maxImageSize = init.m_config->getNumberU32("rsrc_maxImageSize");
-	m_dumpShaderSource = init.m_config->getBool("rsrc_dumpShaderSources");
 
 	// Init type resource managers
 #define ANKI_INSTANTIATE_RESOURCE(rsrc_, ptr_) TypeResourceManager<rsrc_>::init(m_alloc);
@@ -65,7 +62,7 @@ Error ResourceManager::init(ResourceManagerInitInfo& init)
 	m_asyncLoader->init(m_alloc);
 
 	m_transferGpuAlloc = m_alloc.newInstance<TransferGpuAllocator>();
-	ANKI_CHECK(m_transferGpuAlloc->init(init.m_config->getNumberU32("rsrc_transferScratchMemorySize"), m_gr, m_alloc));
+	ANKI_CHECK(m_transferGpuAlloc->init(m_config->getRsrcTransferScratchMemorySize(), m_gr, m_alloc));
 
 	// Init the programs
 	m_shaderProgramSystem = m_alloc.newInstance<ShaderProgramResourceSystem>(m_cacheDir, m_gr, m_fs, m_alloc);

@@ -16,6 +16,7 @@ namespace anki {
 
 // Forward
 class ResourceManager;
+class ConfigSet;
 
 /// @addtogroup scene
 /// @{
@@ -49,6 +50,8 @@ public:
 	{
 		return *m_scene;
 	}
+
+	const ConfigSet& getConfig() const;
 
 	/// Return the name. It may be empty for nodes that we don't want to track
 	CString getName() const

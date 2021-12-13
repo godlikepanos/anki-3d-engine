@@ -47,6 +47,14 @@ public:
 	virtual ANKI_USE_RESULT Error joinTasks() = 0;
 };
 
+/// Bindless related info.
+class BindlessLimits
+{
+public:
+	U32 m_bindlessTextureCount = 0;
+	U32 m_bindlessImageCount = 0;
+};
+
 /// Options to be passed to the compiler.
 class ShaderCompilerOptions
 {

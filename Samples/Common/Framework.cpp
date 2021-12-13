@@ -12,8 +12,8 @@ Error SampleApp::init(int argc, char** argv, CString sampleName)
 	HeapAllocator<U32> alloc(allocAligned, nullptr);
 
 	// Init the super class
-	ConfigSet config = DefaultConfigSet::get();
-	config.set("window_fullscreen", true);
+	m_config.init(allocAligned, nullptr);
+	m_config.setWindowFullscreen(true);
 
 #if !ANKI_OS_ANDROID
 	StringAuto mainDataPath(alloc, ANKI_SOURCE_DIRECTORY);
@@ -25,12 +25,11 @@ Error SampleApp::init(int argc, char** argv, CString sampleName)
 		ANKI_LOGE("Cannot find directory \"%s\". Have you moved the clone of the repository?", assetsDataPath.cstr());
 		return Error::USER_DATA;
 	}
-	config.set("rsrc_dataPaths", StringAuto(alloc).sprintf("%s:%s", mainDataPath.cstr(), assetsDataPath.cstr()));
+	m_config.setRsrcDataPaths(StringAuto(alloc).sprintf("%s:%s", mainDataPath.cstr(), assetsDataPath.cstr()));
 #endif
 
-	config.set("gr_validation", 0);
-	ANKI_CHECK(config.setFromCommandLineArguments(argc - 1, argv + 1));
-	ANKI_CHECK(App::init(config, allocAligned, nullptr));
+	ANKI_CHECK(m_config.setFromCommandLineArguments(argc - 1, argv + 1));
+	ANKI_CHECK(App::init(&m_config, allocAligned, nullptr));
 
 	// Input
 	getInput().lockCursor(true);
@@ -149,17 +148,17 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 			mode = (mode + 1) % 3;
 			if(mode == 0)
 			{
-				renderer.getDbg().setEnabled(false);
+				getConfig().setRDbgEnabled(false);
 			}
 			else if(mode == 1)
 			{
-				renderer.getDbg().setEnabled(true);
+				getConfig().setRDbgEnabled(true);
 				renderer.getDbg().setDepthTestEnabled(true);
 				renderer.getDbg().setDitheredDepthTestEnabled(false);
 			}
 			else
 			{
-				renderer.getDbg().setEnabled(true);
+				getConfig().setRDbgEnabled(true);
 				renderer.getDbg().setDepthTestEnabled(false);
 				renderer.getDbg().setDitheredDepthTestEnabled(true);
 			}

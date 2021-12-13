@@ -23,7 +23,7 @@ public:
 
 	~GBufferPost();
 
-	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
+	ANKI_USE_RESULT Error init();
 
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
@@ -34,7 +34,7 @@ private:
 
 	FramebufferDescription m_fbDescr;
 
-	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
+	ANKI_USE_RESULT Error initInternal();
 
 	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 };

@@ -25,7 +25,7 @@ public:
 
 	~DepthDownscale();
 
-	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
+	ANKI_USE_RESULT Error init();
 
 	/// Import render targets
 	void importRenderTargets(RenderingContext& ctx);
@@ -77,7 +77,7 @@ private:
 		RenderTargetHandle m_hizRt;
 	} m_runCtx; ///< Run context.
 
-	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
+	ANKI_USE_RESULT Error initInternal();
 
 	Bool doesSamplerReduction() const
 	{

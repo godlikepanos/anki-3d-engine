@@ -259,7 +259,7 @@ private:
 class MyApp : public App
 {
 public:
-	Error init(int argc, char** argv, CString appName)
+	Error init(ConfigSet* config, int argc, char** argv, CString appName)
 	{
 		if(argc < 2)
 		{
@@ -270,11 +270,10 @@ public:
 		HeapAllocator<U32> alloc(allocAligned, nullptr);
 		StringAuto mainDataPath(alloc, ANKI_SOURCE_DIRECTORY);
 
-		ConfigSet config = DefaultConfigSet::get();
-		config.set("window_fullscreen", false);
-		config.set("rsrc_dataPaths", mainDataPath);
-		config.set("gr_validation", 0);
-		ANKI_CHECK(config.setFromCommandLineArguments(argc - 2, argv + 2));
+		config->setWindowFullscreen(false);
+		config->setRsrcDataPaths(mainDataPath);
+		config->setGrValidation(false);
+		ANKI_CHECK(config->setFromCommandLineArguments(argc - 2, argv + 2));
 
 		ANKI_CHECK(App::init(config, allocAligned, nullptr));
 
@@ -313,8 +312,9 @@ int main(int argc, char* argv[])
 {
 	Error err = Error::NONE;
 
+	ConfigSet config(allocAligned, nullptr);
 	MyApp* app = new MyApp;
-	err = app->init(argc, argv, "Texture Viewer");
+	err = app->init(&config, argc, argv, "Texture Viewer");
 	if(!err)
 	{
 		err = app->mainLoop();

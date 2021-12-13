@@ -22,10 +22,9 @@ public:
 
 	~Bloom();
 
-	ANKI_USE_RESULT Error init(const ConfigSet& cfg)
+	ANKI_USE_RESULT Error init()
 	{
-		ANKI_R_LOGI("Initializing bloom passes");
-		Error err = initInternal(cfg);
+		const Error err = initInternal();
 		if(err)
 		{
 			ANKI_R_LOGE("Failed to initialize bloom passes");
@@ -41,26 +40,6 @@ public:
 		return m_runCtx.m_upscaleRt;
 	}
 
-	F32 getThreshold() const
-	{
-		return m_exposure.m_threshold;
-	}
-
-	void setThreshold(F32 t)
-	{
-		m_exposure.m_threshold = t;
-	}
-
-	F32 getScale() const
-	{
-		return m_exposure.m_scale;
-	}
-
-	void setScale(F32 t)
-	{
-		m_exposure.m_scale = t;
-	}
-
 private:
 	static constexpr Format RT_PIXEL_FORMAT = Format::A2B10G10R10_UNORM_PACK32;
 
@@ -72,8 +51,6 @@ private:
 		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
 
-		F32 m_threshold = 10.0f; ///< How bright it is
-		F32 m_scale = 1.0f;
 		U32 m_width = 0;
 		U32 m_height = 0;
 
@@ -100,13 +77,13 @@ private:
 		RenderTargetHandle m_upscaleRt;
 	} m_runCtx;
 
-	ANKI_USE_RESULT Error initExposure(const ConfigSet& cfg);
-	ANKI_USE_RESULT Error initUpscale(const ConfigSet& cfg);
+	ANKI_USE_RESULT Error initExposure();
+	ANKI_USE_RESULT Error initUpscale();
 
-	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg)
+	ANKI_USE_RESULT Error initInternal()
 	{
-		ANKI_CHECK(initExposure(cfg));
-		ANKI_CHECK(initUpscale(cfg));
+		ANKI_CHECK(initExposure());
+		ANKI_CHECK(initUpscale());
 		return Error::NONE;
 	}
 };

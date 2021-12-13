@@ -19,12 +19,6 @@ ForwardShading::~ForwardShading()
 {
 }
 
-Error ForwardShading::init(const ConfigSet& cfg)
-{
-	ANKI_R_LOGI("Initializing forward shading");
-	return Error::NONE;
-}
-
 void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;

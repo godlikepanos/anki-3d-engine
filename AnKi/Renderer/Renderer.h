@@ -48,7 +48,7 @@ public:
 	{ \
 		return *m_##b; \
 	}
-#include <AnKi/Renderer/RendererObjectDefs.h>
+#include <AnKi/Renderer/RendererObject.defs.h>
 #undef ANKI_RENDERER_OBJECT_DEF
 
 	Bool getRtShadowsEnabled() const
@@ -74,7 +74,7 @@ public:
 	/// Init the renderer.
 	ANKI_USE_RESULT Error init(ThreadHive* hive, ResourceManager* resources, GrManager* gr,
 							   StagingGpuMemoryPool* stagingMem, UiManager* ui, HeapAllocator<U8> alloc,
-							   const ConfigSet& config, Timestamp* globTimestamp);
+							   ConfigSet* config, Timestamp* globTimestamp, UVec2 swapchainSize);
 
 	/// This function does all the rendering stages and produces a final result.
 	ANKI_USE_RESULT Error populateRenderGraph(RenderingContext& ctx);
@@ -126,6 +126,12 @@ public:
 	ResourceManager& getResourceManager()
 	{
 		return *m_resources;
+	}
+
+	const ConfigSet& getConfig() const
+	{
+		ANKI_ASSERT(m_config);
+		return *m_config;
 	}
 
 	Timestamp getGlobalTimestamp() const
@@ -223,13 +229,14 @@ private:
 	StagingGpuMemoryPool* m_stagingMem = nullptr;
 	GrManager* m_gr = nullptr;
 	UiManager* m_ui = nullptr;
-	Timestamp* m_globTimestamp;
+	Timestamp* m_globTimestamp = nullptr;
+	ConfigSet* m_config = nullptr;
 	HeapAllocator<U8> m_alloc;
 
 	/// @name Rendering stages
 	/// @{
 #define ANKI_RENDERER_OBJECT_DEF(a, b) UniquePtr<a> m_##b;
-#include <AnKi/Renderer/RendererObjectDefs.h>
+#include <AnKi/Renderer/RendererObject.defs.h>
 #undef ANKI_RENDERER_OBJECT_DEF
 	/// @}
 
@@ -270,7 +277,7 @@ private:
 	DynamicArray<DebugRtInfo> m_debugRts;
 	String m_currentDebugRtName;
 
-	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
+	ANKI_USE_RESULT Error initInternal(UVec2 swapchainSize);
 
 	void initJitteredMats();
 }; // namespace anki

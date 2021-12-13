@@ -60,7 +60,8 @@ Renderer::~Renderer()
 }
 
 Error Renderer::init(ThreadHive* hive, ResourceManager* resources, GrManager* gl, StagingGpuMemoryPool* stagingMem,
-					 UiManager* ui, HeapAllocator<U8> alloc, const ConfigSet& config, Timestamp* globTimestamp)
+					 UiManager* ui, HeapAllocator<U8> alloc, ConfigSet* config, Timestamp* globTimestamp,
+					 UVec2 swapchainSize)
 {
 	ANKI_TRACE_SCOPED_EVENT(R_INIT);
 
@@ -71,8 +72,9 @@ Error Renderer::init(ThreadHive* hive, ResourceManager* resources, GrManager* gl
 	m_stagingMem = stagingMem;
 	m_ui = ui;
 	m_alloc = alloc;
+	m_config = config;
 
-	Error err = initInternal(config);
+	const Error err = initInternal(swapchainSize);
 	if(err)
 	{
 		ANKI_R_LOGE("Failed to initialize the renderer");
@@ -81,15 +83,15 @@ Error Renderer::init(ThreadHive* hive, ResourceManager* resources, GrManager* gl
 	return err;
 }
 
-Error Renderer::initInternal(const ConfigSet& config)
+Error Renderer::initInternal(UVec2 swapchainSize)
 {
 	m_frameCount = 0;
 
 	// Set from the config
-	const F32 renderScaling = config.getNumberF32("r_renderScaling");
-	const F32 internalRenderScaling = min(config.getNumberF32("r_internalRenderScaling"), renderScaling);
+	const F32 renderScaling = m_config->getRRenderScaling();
+	const F32 internalRenderScaling = min(m_config->getRInternalRenderScaling(), renderScaling);
 
-	const Vec2 fresolution = Vec2(F32(config.getNumberU32("width")), F32(config.getNumberU32("height")));
+	const Vec2 fresolution = Vec2(swapchainSize);
 	m_postProcessResolution = UVec2(fresolution * renderScaling);
 	alignRoundDown(2, m_postProcessResolution.x());
 	alignRoundDown(2, m_postProcessResolution.y());
@@ -101,10 +103,10 @@ Error Renderer::initInternal(const ConfigSet& config)
 	ANKI_R_LOGI("Initializing offscreen renderer. Size %ux%u. Internal size %ux%u", m_postProcessResolution.x(),
 				m_postProcessResolution.y(), m_internalResolution.x(), m_internalResolution.y());
 
-	m_tileSize = config.getNumberU32("r_tileSize");
+	m_tileSize = m_config->getRTileSize();
 	m_tileCounts.x() = (m_internalResolution.x() + m_tileSize - 1) / m_tileSize;
 	m_tileCounts.y() = (m_internalResolution.y() + m_tileSize - 1) / m_tileSize;
-	m_zSplitCount = config.getNumberU32("r_zSplitCount");
+	m_zSplitCount = m_config->getRZSplitCount();
 
 	// A few sanity checks
 	if(m_internalResolution.x() < 64 || m_internalResolution.y() < 64)
@@ -138,90 +140,90 @@ Error Renderer::initInternal(const ConfigSet& config)
 
 	// Init the stages. Careful with the order!!!!!!!!!!
 	m_genericCompute.reset(m_alloc.newInstance<GenericCompute>(this));
-	ANKI_CHECK(m_genericCompute->init(config));
+	ANKI_CHECK(m_genericCompute->init());
 
 	m_volumetricLightingAccumulation.reset(m_alloc.newInstance<VolumetricLightingAccumulation>(this));
-	ANKI_CHECK(m_volumetricLightingAccumulation->init(config));
+	ANKI_CHECK(m_volumetricLightingAccumulation->init());
 
 	m_indirectDiffuseProbes.reset(m_alloc.newInstance<IndirectDiffuseProbes>(this));
-	ANKI_CHECK(m_indirectDiffuseProbes->init(config));
+	ANKI_CHECK(m_indirectDiffuseProbes->init());
 
 	m_probeReflections.reset(m_alloc.newInstance<ProbeReflections>(this));
-	ANKI_CHECK(m_probeReflections->init(config));
+	ANKI_CHECK(m_probeReflections->init());
 
 	m_gbuffer.reset(m_alloc.newInstance<GBuffer>(this));
-	ANKI_CHECK(m_gbuffer->init(config));
+	ANKI_CHECK(m_gbuffer->init());
 
 	m_gbufferPost.reset(m_alloc.newInstance<GBufferPost>(this));
-	ANKI_CHECK(m_gbufferPost->init(config));
+	ANKI_CHECK(m_gbufferPost->init());
 
 	m_shadowMapping.reset(m_alloc.newInstance<ShadowMapping>(this));
-	ANKI_CHECK(m_shadowMapping->init(config));
+	ANKI_CHECK(m_shadowMapping->init());
 
 	m_volumetricFog.reset(m_alloc.newInstance<VolumetricFog>(this));
-	ANKI_CHECK(m_volumetricFog->init(config));
+	ANKI_CHECK(m_volumetricFog->init());
 
 	m_lightShading.reset(m_alloc.newInstance<LightShading>(this));
-	ANKI_CHECK(m_lightShading->init(config));
+	ANKI_CHECK(m_lightShading->init());
 
 	m_depthDownscale.reset(m_alloc.newInstance<DepthDownscale>(this));
-	ANKI_CHECK(m_depthDownscale->init(config));
+	ANKI_CHECK(m_depthDownscale->init());
 
 	m_forwardShading.reset(m_alloc.newInstance<ForwardShading>(this));
-	ANKI_CHECK(m_forwardShading->init(config));
+	ANKI_CHECK(m_forwardShading->init());
 
 	m_lensFlare.reset(m_alloc.newInstance<LensFlare>(this));
-	ANKI_CHECK(m_lensFlare->init(config));
+	ANKI_CHECK(m_lensFlare->init());
 
 	m_downscaleBlur.reset(getAllocator().newInstance<DownscaleBlur>(this));
-	ANKI_CHECK(m_downscaleBlur->init(config));
+	ANKI_CHECK(m_downscaleBlur->init());
 
 	m_ssr.reset(m_alloc.newInstance<Ssr>(this));
-	ANKI_CHECK(m_ssr->init(config));
+	ANKI_CHECK(m_ssr->init());
 
 	m_tonemapping.reset(getAllocator().newInstance<Tonemapping>(this));
-	ANKI_CHECK(m_tonemapping->init(config));
+	ANKI_CHECK(m_tonemapping->init());
 
 	m_temporalAA.reset(getAllocator().newInstance<TemporalAA>(this));
-	ANKI_CHECK(m_temporalAA->init(config));
+	ANKI_CHECK(m_temporalAA->init());
 
 	m_bloom.reset(m_alloc.newInstance<Bloom>(this));
-	ANKI_CHECK(m_bloom->init(config));
+	ANKI_CHECK(m_bloom->init());
 
 	m_finalComposite.reset(m_alloc.newInstance<FinalComposite>(this));
-	ANKI_CHECK(m_finalComposite->init(config));
+	ANKI_CHECK(m_finalComposite->init());
 
 	m_dbg.reset(m_alloc.newInstance<Dbg>(this));
-	ANKI_CHECK(m_dbg->init(config));
+	ANKI_CHECK(m_dbg->init());
 
 	m_uiStage.reset(m_alloc.newInstance<UiStage>(this));
-	ANKI_CHECK(m_uiStage->init(config));
+	ANKI_CHECK(m_uiStage->init());
 
 	m_scale.reset(m_alloc.newInstance<Scale>(this));
-	ANKI_CHECK(m_scale->init(config));
+	ANKI_CHECK(m_scale->init());
 
 	m_indirectDiffuse.reset(m_alloc.newInstance<IndirectDiffuse>(this));
-	ANKI_CHECK(m_indirectDiffuse->init(config));
+	ANKI_CHECK(m_indirectDiffuse->init());
 
-	if(getGrManager().getDeviceCapabilities().m_rayTracingEnabled && config.getBool("scene_rayTracedShadows"))
+	if(getGrManager().getDeviceCapabilities().m_rayTracingEnabled && getConfig().getSceneRayTracedShadows())
 	{
 		m_accelerationStructureBuilder.reset(m_alloc.newInstance<AccelerationStructureBuilder>(this));
-		ANKI_CHECK(m_accelerationStructureBuilder->init(config));
+		ANKI_CHECK(m_accelerationStructureBuilder->init());
 
 		m_rtShadows.reset(m_alloc.newInstance<RtShadows>(this));
-		ANKI_CHECK(m_rtShadows->init(config));
+		ANKI_CHECK(m_rtShadows->init());
 	}
 	else
 	{
 		m_shadowmapsResolve.reset(m_alloc.newInstance<ShadowmapsResolve>(this));
-		ANKI_CHECK(m_shadowmapsResolve->init(config));
+		ANKI_CHECK(m_shadowmapsResolve->init());
 	}
 
 	m_motionVectors.reset(m_alloc.newInstance<MotionVectors>(this));
-	ANKI_CHECK(m_motionVectors->init(config));
+	ANKI_CHECK(m_motionVectors->init());
 
 	m_clusterBinning.reset(m_alloc.newInstance<ClusterBinning>(this));
-	ANKI_CHECK(m_clusterBinning->init(config));
+	ANKI_CHECK(m_clusterBinning->init());
 
 	// Init samplers
 	{
@@ -238,7 +240,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 		sinit.m_addressing = SamplingAddressing::REPEAT;
 		m_samplers.m_trilinearRepeat = m_gr->newSampler(sinit);
 
-		sinit.m_anisotropyLevel = U8(config.getNumberU32("r_textureAnisotropy"));
+		sinit.m_anisotropyLevel = m_config->getRTextureAnisotropy();
 		m_samplers.m_trilinearRepeatAniso = m_gr->newSampler(sinit);
 
 		const F32 scalingMipBias = log2(F32(m_internalResolution.x()) / F32(m_postProcessResolution.x()));
@@ -364,11 +366,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_downscaleBlur->populateRenderGraph(ctx);
 	m_tonemapping->populateRenderGraph(ctx);
 	m_bloom->populateRenderGraph(ctx);
-
-	if(m_dbg->getEnabled())
-	{
-		m_dbg->populateRenderGraph(ctx);
-	}
+	m_dbg->populateRenderGraph(ctx);
 
 	m_finalComposite->populateRenderGraph(ctx);
 

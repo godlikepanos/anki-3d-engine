@@ -21,11 +21,9 @@ TemporalAA::~TemporalAA()
 {
 }
 
-Error TemporalAA::init(const ConfigSet& config)
+Error TemporalAA::init()
 {
-	ANKI_R_LOGI("Initializing TAA");
-	Error err = initInternal(config);
-
+	const Error err = initInternal();
 	if(err)
 	{
 		ANKI_R_LOGE("Failed to init TAA");
@@ -34,7 +32,7 @@ Error TemporalAA::init(const ConfigSet& config)
 	return Error::NONE;
 }
 
-Error TemporalAA::initInternal(const ConfigSet& config)
+Error TemporalAA::initInternal()
 {
 	ANKI_CHECK(m_r->getResourceManager().loadResource("Shaders/TemporalAAResolve.ankiprog", m_prog));
 

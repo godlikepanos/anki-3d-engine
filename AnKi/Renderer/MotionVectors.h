@@ -26,7 +26,7 @@ public:
 
 	~MotionVectors();
 
-	ANKI_USE_RESULT Error init(const ConfigSet& config);
+	ANKI_USE_RESULT Error init();
 
 	void populateRenderGraph(RenderingContext& ctx);
 

@@ -24,18 +24,6 @@ static MainRenderer* getMainRenderer(lua_State* l)
 ]]></head>
 
 	<classes>
-		<class name="Dbg">
-			<methods>
-				<method name="getEnabled">
-					<return>Bool</return>
-				</method>
-				<method name="setEnabled">
-					<args>
-						<arg>Bool</arg>
-					</args>
-				</method>
-			</methods>
-		</class>
 		<class name="MainRenderer">
 			<methods>
 				<method name="getAspectRatio">

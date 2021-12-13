@@ -19,9 +19,9 @@ IndirectDiffuse::~IndirectDiffuse()
 {
 }
 
-Error IndirectDiffuse::init(const ConfigSet& cfg)
+Error IndirectDiffuse::init()
 {
-	const Error err = initInternal(cfg);
+	const Error err = initInternal();
 	if(err)
 	{
 		ANKI_R_LOGE("Failed to initialize indirect diffuse pass");
@@ -29,7 +29,7 @@ Error IndirectDiffuse::init(const ConfigSet& cfg)
 	return err;
 }
 
-Error IndirectDiffuse::initInternal(const ConfigSet& cfg)
+Error IndirectDiffuse::initInternal()
 {
 	const UVec2 size = m_r->getInternalResolution() / 2;
 	ANKI_ASSERT((m_r->getInternalResolution() % 2) == UVec2(0u) && "Needs to be dividable for proper upscaling");
@@ -45,9 +45,6 @@ Error IndirectDiffuse::initInternal(const ConfigSet& cfg)
 
 	// Init SSGI+probes pass
 	{
-		m_main.m_radius = cfg.getNumberF32("r_indirectDiffuseSsgiRadius");
-		m_main.m_sampleCount = cfg.getNumberU32("r_indirectDiffuseSsgiSamples");
-
 		ANKI_CHECK(getResourceManager().loadResource("Shaders/IndirectDiffuse.ankiprog", m_main.m_prog));
 
 		const ShaderProgramResourceVariant* variant;
@@ -57,9 +54,6 @@ Error IndirectDiffuse::initInternal(const ConfigSet& cfg)
 
 	// Init denoise
 	{
-		m_denoise.m_sampleCount = F32(cfg.getNumberU32("r_indirectDiffuseDenoiseSampleCount"));
-		m_denoise.m_sampleCount = max(1.0f, std::round(m_denoise.m_sampleCount / 2.0f));
-
 		ANKI_CHECK(getResourceManager().loadResource("Shaders/IndirectDiffuseDenoise.ankiprog", m_denoise.m_prog));
 
 		ShaderProgramResourceVariantInitInfo variantInit(m_denoise.m_prog);
@@ -143,11 +137,11 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			unis.m_viewportSizef = Vec2(unis.m_viewportSize);
 			const Mat4& pmat = ctx.m_matrices.m_projection;
 			unis.m_projectionMat = Vec4(pmat(0, 0), pmat(1, 1), pmat(2, 2), pmat(2, 3));
-			unis.m_radius = m_main.m_radius;
-			unis.m_sampleCount = m_main.m_sampleCount;
-			unis.m_sampleCountf = F32(m_main.m_sampleCount);
-			unis.m_ssaoBias = m_main.m_ssaoBias;
-			unis.m_ssaoStrength = m_main.m_ssaoStrength;
+			unis.m_radius = getConfig().getRIndirectDiffuseSsgiRadius();
+			unis.m_sampleCount = getConfig().getRIndirectDiffuseSsgiSampleCount();
+			unis.m_sampleCountf = F32(unis.m_sampleCount);
+			unis.m_ssaoBias = getConfig().getRIndirectDiffuseSsaoBias();
+			unis.m_ssaoStrength = getConfig().getRIndirectDiffuseSsaoStrength();
 			cmdb->setPushConstants(&unis, sizeof(unis));
 
 			// Dispatch
@@ -191,7 +185,8 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			unis.m_invertedViewProjectionJitterMat = ctx.m_matrices.m_invertedViewProjectionJitter;
 			unis.m_viewportSize = m_r->getInternalResolution() / 2u;
 			unis.m_viewportSizef = Vec2(unis.m_viewportSize);
-			unis.m_sampleCountDiv2 = m_denoise.m_sampleCount;
+			unis.m_sampleCountDiv2 = F32(getConfig().getRIndirectDiffuseDenoiseSampleCount());
+			unis.m_sampleCountDiv2 = max(1.0f, std::round(unis.m_sampleCountDiv2 / 2.0f));
 
 			cmdb->setPushConstants(&unis, sizeof(unis));
 

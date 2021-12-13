@@ -95,7 +95,7 @@ public:
 	public: \
 		static constexpr Bool VALUE = rowCount * columnCount > 1; \
 	};
-#include <AnKi/Gr/ShaderVariableDataTypeDefs.h>
+#include <AnKi/Gr/ShaderVariableDataType.defs.h>
 #undef ANKI_SVDT_MACRO
 
 template<typename T, Bool isArray = IsShaderVarDataTypeAnArray<T>::VALUE>
@@ -804,7 +804,7 @@ Error MaterialResource::parseInputs(XmlElement inputsEl, Bool async)
 	case ShaderVariableDataType::capital: \
 		ANKI_CHECK(GetAttribute<type>()(inputEl, foundVar->ANKI_CONCATENATE(m_, type))); \
 		break;
-#include <AnKi/Gr/ShaderVariableDataTypeDefs.h>
+#include <AnKi/Gr/ShaderVariableDataType.defs.h>
 #undef ANKI_SVDT_MACRO
 
 			default:
@@ -828,7 +828,7 @@ Error MaterialResource::parseInputs(XmlElement inputsEl, Bool async)
 	case ShaderVariableDataType::capital: \
 		ANKI_CHECK(GetAttribute<type>()(inputEl, foundVar->ANKI_CONCATENATE(m_, type))); \
 		break;
-#include <AnKi/Gr/ShaderVariableDataTypeDefs.h>
+#include <AnKi/Gr/ShaderVariableDataType.defs.h>
 #undef ANKI_SVDT_MACRO
 
 			case ShaderVariableDataType::TEXTURE_2D:
@@ -937,7 +937,7 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 	case ShaderVariableDataType::capital: \
 		initInfo.addConstant(var.getName(), var.getValue<type>()); \
 		break;
-#include <AnKi/Gr/ShaderVariableDataTypeDefs.h>
+#include <AnKi/Gr/ShaderVariableDataType.defs.h>
 #undef ANKI_SVDT_MACRO
 
 		default:

@@ -11,7 +11,6 @@
 #include <AnKi/Renderer/LightShading.h>
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/Dbg.h>
-#include <AnKi/Renderer/Ssr.h>
 #include <AnKi/Renderer/DownscaleBlur.h>
 #include <AnKi/Renderer/UiStage.h>
 #include <AnKi/Renderer/MotionVectors.h>
@@ -29,10 +28,8 @@ FinalComposite::~FinalComposite()
 {
 }
 
-Error FinalComposite::initInternal(const ConfigSet& config)
+Error FinalComposite::initInternal()
 {
-	ANKI_ASSERT("Initializing PPS");
-
 	ANKI_CHECK(loadColorGradingTextureImage("EngineAssets/DefaultLut.ankitex"));
 
 	m_fbDescr.m_colorAttachmentCount = 1;
@@ -49,7 +46,7 @@ Error FinalComposite::initInternal(const ConfigSet& config)
 	variantInitInfo.addMutation("BLOOM_ENABLED", 1);
 	variantInitInfo.addConstant("LUT_SIZE", U32(LUT_SIZE));
 	variantInitInfo.addConstant("FB_SIZE", m_r->getPostProcessResolution());
-	variantInitInfo.addConstant("MOTION_BLUR_SAMPLES", config.getNumberU32("r_motionBlurSamples"));
+	variantInitInfo.addConstant("MOTION_BLUR_SAMPLES", getConfig().getRMotionBlurSamples());
 
 	for(U32 dbg = 0; dbg < 2; ++dbg)
 	{
@@ -68,12 +65,12 @@ Error FinalComposite::initInternal(const ConfigSet& config)
 	return Error::NONE;
 }
 
-Error FinalComposite::init(const ConfigSet& config)
+Error FinalComposite::init()
 {
-	Error err = initInternal(config);
+	const Error err = initInternal();
 	if(err)
 	{
-		ANKI_R_LOGE("Failed to init PPS");
+		ANKI_R_LOGE("Failed to init final composite");
 	}
 
 	return err;
@@ -104,7 +101,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 
 	pass.newDependency({ctx.m_outRenderTarget, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 
-	if(m_r->getDbg().getEnabled())
+	if(getConfig().getRDbgEnabled())
 	{
 		pass.newDependency({m_r->getDbg().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	}
@@ -127,7 +124,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	const Bool dbgEnabled = m_r->getDbg().getEnabled();
+	const Bool dbgEnabled = getConfig().getRDbgEnabled();
 	RenderTargetHandle dbgRt;
 	Bool dbgRtValid;
 	ShaderProgramPtr optionalDebugProgram;

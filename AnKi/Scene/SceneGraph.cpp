@@ -55,7 +55,7 @@ SceneGraph::~SceneGraph()
 
 Error SceneGraph::init(AllocAlignedCallback allocCb, void* allocCbData, ThreadHive* threadHive,
 					   ResourceManager* resources, Input* input, ScriptManager* scriptManager, UiManager* uiManager,
-					   const Timestamp* globalTimestamp, const ConfigSet& config)
+					   ConfigSet* config, const Timestamp* globalTimestamp)
 {
 	m_globalTimestamp = globalTimestamp;
 	m_threadHive = threadHive;
@@ -65,25 +65,15 @@ Error SceneGraph::init(AllocAlignedCallback allocCb, void* allocCbData, ThreadHi
 	m_input = input;
 	m_scriptManager = scriptManager;
 	m_uiManager = uiManager;
+	m_config = config;
 
 	m_alloc = SceneAllocator<U8>(allocCb, allocCbData);
 	m_frameAlloc = SceneFrameAllocator<U8>(allocCb, allocCbData, 1 * 1024 * 1024);
 
-	// Limits & stuff
-	m_config.m_earlyZDistance = config.getNumberF32("scene_earlyZDistance");
-	m_config.m_reflectionProbeEffectiveDistance = config.getNumberF32("scene_reflectionProbeEffectiveDistance");
-	m_config.m_reflectionProbeShadowEffectiveDistance =
-		config.getNumberF32("scene_reflectionProbeShadowEffectiveDistance");
-	m_config.m_rayTracedShadows =
-		config.getBool("scene_rayTracedShadows") && m_gr->getDeviceCapabilities().m_rayTracingEnabled;
-	m_config.m_rayTracingExtendedFrustumDistance = config.getNumberF32("scene_rayTracingExtendedFrustumDistance");
-	m_config.m_maxLodDistances[0] = config.getNumberF32("lod0MaxDistance");
-	m_config.m_maxLodDistances[1] = config.getNumberF32("lod1MaxDistance");
-
 	ANKI_CHECK(m_events.init(this));
 
 	m_octree = m_alloc.newInstance<Octree>(m_alloc);
-	m_octree->init(m_sceneMin, m_sceneMax, config.getNumberU32("scene_octreeMaxDepth"));
+	m_octree->init(m_sceneMin, m_sceneMax, m_config->getSceneOctreeMaxDepth());
 
 	// Init the default main camera
 	ANKI_CHECK(newSceneNode<PerspectiveCameraNode>("mainCamera", m_defaultMainCam));

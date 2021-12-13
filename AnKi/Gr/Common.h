@@ -167,14 +167,6 @@ static_assert(sizeof(GpuDeviceCapabilities)
 				  == sizeof(PtrSize) * 4 + sizeof(U32) * 5 + sizeof(U8) * 3 + sizeof(Bool) * 4,
 			  "Should be packed");
 
-/// Bindless related info.
-class BindlessLimits
-{
-public:
-	U32 m_bindlessTextureCount = 0;
-	U32 m_bindlessImageCount = 0;
-};
-
 /// The type of the allocator for heap allocations
 template<typename T>
 using GrAllocator = HeapAllocator<T>;
