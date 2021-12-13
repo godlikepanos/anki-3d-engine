@@ -36,7 +36,6 @@ Error TemporalAA::initInternal()
 {
 	ANKI_CHECK(m_r->getResourceManager().loadResource("Shaders/TemporalAAResolve.ankiprog", m_prog));
 
-	for(U32 i = 0; i < 2; ++i)
 	{
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 		variantInitInfo.addConstant("VARIANCE_CLIPPING_GAMMA", 2.7f);
@@ -48,7 +47,7 @@ Error TemporalAA::initInternal()
 
 		const ShaderProgramResourceVariant* variant;
 		m_prog->getOrCreateVariant(variantInitInfo, variant);
-		m_grProgs[i] = variant->getProgram();
+		m_grProg = variant->getProgram();
 	}
 
 	for(U i = 0; i < 2; ++i)
@@ -99,7 +98,7 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 	pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 		CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-		cmdb->bindShaderProgram(m_grProgs[m_r->getFrameCount() & 1]);
+		cmdb->bindShaderProgram(m_grProg);
 
 		cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
 		rgraphCtx.bindTexture(0, 1, m_r->getGBuffer().getDepthRt(),

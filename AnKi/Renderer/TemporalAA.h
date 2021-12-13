@@ -39,7 +39,7 @@ private:
 	Array<Bool, 2> m_rtTexturesImportedOnce = {};
 
 	ShaderProgramResourcePtr m_prog;
-	Array<ShaderProgramPtr, 2> m_grProgs;
+	ShaderProgramPtr m_grProg;
 
 	RenderTargetDescription m_tonemappedRtDescr;
 
