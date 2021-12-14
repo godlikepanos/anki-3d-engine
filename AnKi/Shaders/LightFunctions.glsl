@@ -87,7 +87,7 @@ ANKI_RP Vec3 F_Schlick(ANKI_RP Vec3 f0, ANKI_RP F32 VoH)
 // D(n,h) aka NDF: GGX Trowbridge-Reitz
 ANKI_RP F32 D_GGX(ANKI_RP F32 roughness, ANKI_RP F32 NoH, ANKI_RP Vec3 h, ANKI_RP Vec3 worldNormal)
 {
-#if ANKI_OS_ANDROID
+#if 0 && ANKI_OS_ANDROID
 	const ANKI_RP Vec3 NxH = cross(worldNormal, h);
 	const ANKI_RP F32 oneMinusNoHSquared = dot(NxH, NxH);
 #else
