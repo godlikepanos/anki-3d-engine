@@ -26,7 +26,7 @@ layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
 #if LIGHT_SHADING_TEX == 0
 layout(set = 0, binding = 1) uniform texture2D u_lightShadingTex2d;
 #else
-layout(set = 0, binding = 1) uniform textureCube u_lightShadingTexCube;
+layout(set = 0, binding = 1) uniform ANKI_RP textureCube u_lightShadingTexCube;
 #endif
 
 #if SECOND_BOUNCE == 1
@@ -50,13 +50,13 @@ layout(push_constant, std430) uniform pc_
 #else
 layout(set = 0, binding = 4, std430) writeonly buffer ssbo1_
 {
-	Vec4 u_irradianceDisceResults[6u];
+	ANKI_RP Vec4 u_irradianceDisceResults[6u];
 };
 #endif
 
-shared Vec3 s_diceIrradiance[6u];
+shared ANKI_RP Vec3 s_diceIrradiance[6u];
 
-Vec3 sampleLightShadingTexture(const U32 face)
+ANKI_RP Vec3 sampleLightShadingTexture(const U32 face)
 {
 #if LIGHT_SHADING_TEX == 0
 	const Vec2 INPUT_TEXTURES_SIZE = Vec2(U32(WORKGROUP_SIZE_XY) * 6u, U32(WORKGROUP_SIZE_XY));
@@ -90,9 +90,9 @@ void main()
 		const Vec3 r = getCubemapDirection(ndc, f);
 
 		// Compute integral part
-		const F32 lambert = max(0.0, dot(r, diceDir));
-		const Vec3 lightShading = sampleLightShadingTexture(f);
-		const Vec3 irradiance = lightShading * lambert * cubeCoordSolidAngle(ndc, WORKGROUP_SIZE_XY_F);
+		const ANKI_RP F32 lambert = max(0.0, dot(r, diceDir));
+		const ANKI_RP Vec3 lightShading = sampleLightShadingTexture(f);
+		const ANKI_RP Vec3 irradiance = lightShading * lambert * cubeCoordSolidAngle(ndc, WORKGROUP_SIZE_XY_F);
 
 		// Store
 		u_integrationResults[f * WORKGROUP_SIZE + gl_LocalInvocationID.y * U32(WORKGROUP_SIZE_XY)
@@ -137,25 +137,26 @@ void main()
 		const Vec3 r = getCubemapDirection(ndc, f);
 
 		// Compute integral part
-		const F32 lambert = max(0.0, dot(r, diceDir));
+		const ANKI_RP F32 lambert = max(0.0, dot(r, diceDir));
 
 		// Read the gbuffer
 		Vec2 gbufferUv = (Vec2(gl_LocalInvocationID.xy) + 0.5) / WORKGROUP_SIZE_XY_F;
 		gbufferUv.x *= 1.0 / 6.0;
 		gbufferUv.x += (1.0 / 6.0) * F32(f);
 		GbufferInfo gbuffer;
-		readGBuffer(u_gbufferTex[0u], u_gbufferTex[1u], u_gbufferTex[2u], u_nearestAnyClampSampler, gbufferUv, 0.0,
-					gbuffer);
+		unpackGBufferNoVelocity(textureLod(u_gbufferTex[0u], u_nearestAnyClampSampler, gbufferUv, 0.0),
+								textureLod(u_gbufferTex[1u], u_nearestAnyClampSampler, gbufferUv, 0.0),
+								textureLod(u_gbufferTex[2u], u_nearestAnyClampSampler, gbufferUv, 0.0), gbuffer);
 
 		// Sample irradiance
-		Vec3 firstBounceIrradiance =
+		ANKI_RP Vec3 firstBounceIrradiance =
 			sampleAmbientDice(s_diceIrradiance[0], s_diceIrradiance[1], s_diceIrradiance[2], s_diceIrradiance[3],
 							  s_diceIrradiance[4], s_diceIrradiance[5], gbuffer.m_normal);
 		firstBounceIrradiance = gbuffer.m_diffuse * firstBounceIrradiance;
 
 		// Compute 2nd bounce
-		const Vec3 lightShading = sampleLightShadingTexture(f);
-		const Vec3 irradiance =
+		const ANKI_RP Vec3 lightShading = sampleLightShadingTexture(f);
+		const ANKI_RP Vec3 irradiance =
 			(firstBounceIrradiance + lightShading * lambert) * cubeCoordSolidAngle(ndc, WORKGROUP_SIZE_XY_F);
 
 		// Store
@@ -190,20 +191,20 @@ void main()
 
 #if DEBUG_MODE == 0
 #	if SECOND_BOUNCE == 1
-		Vec3 irradiance = u_integrationResults[f * WORKGROUP_SIZE + 0u].xyz;
+		ANKI_RP Vec3 irradiance = u_integrationResults[f * WORKGROUP_SIZE + 0u].xyz;
 #	else
-		Vec3 irradiance = s_diceIrradiance[f];
+		ANKI_RP Vec3 irradiance = s_diceIrradiance[f];
 #	endif
-		const Vec3 toStoreValue = irradiance * PI;
+		const ANKI_RP Vec3 toStoreValue = irradiance * PI;
 #elif DEBUG_MODE == 1
-		const Vec3 toStoreValue = colorPerCubeFace(f);
+		const ANKI_RP Vec3 toStoreValue = colorPerCubeFace(f);
 #else
 		const UVec3 volumeSize = UVec3(imageSize(u_irradianceVolume));
 		const UVec3 subvolumeSize = UVec3(volumeSize.x / 6u, volumeSize.y, volumeSize.z);
 		const U32 cellIdx =
 			u_volumeTexel.z * subvolumeSize.x * subvolumeSize.y + u_volumeTexel.y * subvolumeSize.x + u_volumeTexel.x;
-		const F32 headmapFactor = F32(cellIdx) / F32(subvolumeSize.x * subvolumeSize.y * subvolumeSize.z);
-		const Vec3 toStoreValue = heatmap(headmapFactor);
+		const ANKI_RP F32 headmapFactor = F32(cellIdx) / F32(subvolumeSize.x * subvolumeSize.y * subvolumeSize.z);
+		const ANKI_RP Vec3 toStoreValue = heatmap(headmapFactor);
 #endif
 
 #if STORE_LOCATION == 0

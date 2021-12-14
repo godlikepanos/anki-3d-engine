@@ -19,7 +19,7 @@ ANKI_SPECIALIZATION_CONSTANT_U32(TILE_SIZE, 5u);
 const UVec2 WORKGROUP_SIZE = UVec2(8, 8);
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
 
-layout(set = 0, binding = 5, rgba8) writeonly uniform image2D u_outImg;
+layout(set = 0, binding = 5, rgba8) writeonly uniform ANKI_RP image2D u_outImg;
 layout(set = 0, binding = 6) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 7) uniform texture2D u_depthRt;
 
@@ -45,17 +45,17 @@ void main()
 	// Layers
 	U32 shadowCasterCountPerFragment = 0u;
 	const U32 maxShadowCastersPerFragment = 4u;
-	F32 shadowFactors[maxShadowCastersPerFragment] = F32[](0.0, 0.0, 0.0, 0.0);
+	ANKI_RP F32 shadowFactors[maxShadowCastersPerFragment] = F32[](0.0, 0.0, 0.0, 0.0);
 
 	// Dir light
 	const DirectionalLight dirLight = u_clusteredShading.m_directionalLight;
 	if(dirLight.m_active != 0u && dirLight.m_cascadeCount > 0u)
 	{
-		const F32 positiveZViewSpace =
+		const ANKI_RP F32 positiveZViewSpace =
 			testPlanePoint(u_clusteredShading.m_nearPlaneWSpace.xyz, u_clusteredShading.m_nearPlaneWSpace.w, worldPos)
 			+ u_clusteredShading.m_near;
 
-		F32 shadowFactor;
+		ANKI_RP F32 shadowFactor;
 		if(positiveZViewSpace < dirLight.m_effectiveShadowDistance)
 		{
 			const U32 cascadeIdx =
@@ -65,7 +65,7 @@ void main()
 			shadowFactor =
 				computeShadowFactorDirLight(dirLight, cascadeIdx, worldPos, u_shadowAtlasTex, u_linearAnyClampSampler);
 
-			F32 distanceFadeFactor = saturate(positiveZViewSpace / dirLight.m_effectiveShadowDistance);
+			ANKI_RP F32 distanceFadeFactor = saturate(positiveZViewSpace / dirLight.m_effectiveShadowDistance);
 			distanceFadeFactor = pow(distanceFadeFactor, 8.0);
 			shadowFactor += distanceFadeFactor;
 		}
@@ -89,7 +89,7 @@ void main()
 		{
 			const Vec3 frag2Light = light.m_position - worldPos;
 
-			const F32 shadowFactor =
+			const ANKI_RP F32 shadowFactor =
 				computeShadowFactorPointLight(light, frag2Light, u_shadowAtlasTex, u_linearAnyClampSampler);
 			shadowFactors[min(maxShadowCastersPerFragment - 1u, shadowCasterCountPerFragment++)] = shadowFactor;
 		}
@@ -104,7 +104,7 @@ void main()
 
 		ANKI_BRANCH if(light.m_shadowLayer != MAX_U32)
 		{
-			const F32 shadowFactor =
+			const ANKI_RP F32 shadowFactor =
 				computeShadowFactorSpotLight(light, worldPos, u_shadowAtlasTex, u_linearAnyClampSampler);
 			shadowFactors[min(maxShadowCastersPerFragment - 1u, shadowCasterCountPerFragment++)] = shadowFactor;
 		}

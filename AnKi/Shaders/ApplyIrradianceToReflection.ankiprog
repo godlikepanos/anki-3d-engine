@@ -12,12 +12,12 @@ layout(local_size_x = 8, local_size_y = 8, local_size_z = 6) in;
 layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
 layout(set = 0, binding = 1) uniform texture2D u_gbufferTex[3u];
 
-layout(set = 0, binding = 2) buffer readonly ssbo_
+layout(set = 0, binding = 2) buffer readonly b_ssbo
 {
-	Vec4 u_irradianceDice[6u];
+	ANKI_RP Vec4 u_irradianceDice[6u];
 };
 
-layout(set = 0, binding = 3, r11f_g11f_b10f) uniform imageCube u_cubeTex;
+layout(set = 0, binding = 3, r11f_g11f_b10f) uniform ANKI_RP imageCube u_cubeTex;
 
 void main()
 {
@@ -34,20 +34,22 @@ void main()
 
 	// Read the gbuffer
 	GbufferInfo gbuffer;
-	readGBuffer(u_gbufferTex[0u], u_gbufferTex[1u], u_gbufferTex[2u], u_nearestAnyClampSampler, sampleUv, 0.0, gbuffer);
+	unpackGBufferNoVelocity(textureLod(u_gbufferTex[0u], u_nearestAnyClampSampler, sampleUv, 0.0),
+							textureLod(u_gbufferTex[1u], u_nearestAnyClampSampler, sampleUv, 0.0),
+							textureLod(u_gbufferTex[2u], u_nearestAnyClampSampler, sampleUv, 0.0), gbuffer);
 
 	// Sample
-	const Vec3 irradiance = sampleAmbientDice(u_irradianceDice[0u].xyz, u_irradianceDice[1u].xyz,
-											  u_irradianceDice[2u].xyz, u_irradianceDice[3u].xyz,
-											  u_irradianceDice[4u].xyz, u_irradianceDice[5u].xyz, gbuffer.m_normal);
+	const ANKI_RP Vec3 irradiance = sampleAmbientDice(
+		u_irradianceDice[0u].xyz, u_irradianceDice[1u].xyz, u_irradianceDice[2u].xyz, u_irradianceDice[3u].xyz,
+		u_irradianceDice[4u].xyz, u_irradianceDice[5u].xyz, gbuffer.m_normal);
 
 	// Compute the indirect term
-	const Vec3 indirect = gbuffer.m_diffuse * irradiance;
+	const ANKI_RP Vec3 indirect = gbuffer.m_diffuse * irradiance;
 
 	// Read the prev color and apply indirect
 	const IVec3 coords = IVec3(globalInvocationID, faceIdx);
-	const Vec3 prevColor = imageLoad(u_cubeTex, coords).xyz;
-	const Vec3 prevColorWithIndirectDiffuse = prevColor + gbuffer.m_diffuse * indirect;
+	const ANKI_RP Vec3 prevColor = imageLoad(u_cubeTex, coords).xyz;
+	const ANKI_RP Vec3 prevColorWithIndirectDiffuse = prevColor + gbuffer.m_diffuse * indirect;
 
 	// Barrier just in case
 	memoryBarrierImage();

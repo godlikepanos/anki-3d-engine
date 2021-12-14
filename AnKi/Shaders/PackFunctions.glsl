@@ -41,7 +41,7 @@ Vec3 signedOctEncode(Vec3 n)
 	outn.x = n.x * 0.5 + outn.y;
 	outn.y = n.x * -0.5 + outn.y;
 
-	outn.z = saturate(n.z * FLT_MAX);
+	outn.z = saturate(n.z * MAX_F32);
 	return outn;
 }
 
@@ -122,33 +122,34 @@ Vec2 unpackUnorm1ToUnorm2(F32 c)
 #endif
 }
 
-const F32 ABSOLUTE_MAX_EMISSION = 1024.0;
+const ANKI_RP F32 ABSOLUTE_MAX_EMISSION = 1024.0;
 #if !defined(MAX_EMISSION)
-const F32 MAX_EMISSION = 30.0; // Max emission. Keep as low as possible and less than ABSOLUTE_MAX_EMISSION
+const ANKI_RP F32 MAX_EMISSION = 30.0; // Max emission. Keep as low as possible and less than ABSOLUTE_MAX_EMISSION
 #endif
 // Round the MAX_EMISSION to fit a U8_UNORM
-const F32 FIXED_MAX_EMISSION = F32(U32(MAX_EMISSION / ABSOLUTE_MAX_EMISSION * 255.0)) / 255.0 * ABSOLUTE_MAX_EMISSION;
+const ANKI_RP F32 FIXED_MAX_EMISSION =
+	F32(U32(MAX_EMISSION / ABSOLUTE_MAX_EMISSION * 255.0)) / 255.0 * ABSOLUTE_MAX_EMISSION;
 
-const F32 MIN_ROUGHNESS = 0.05;
+const ANKI_RP F32 MIN_ROUGHNESS = 0.05;
 
 // G-Buffer structure
 struct GbufferInfo
 {
-	Vec3 m_diffuse;
-	Vec3 m_specular;
-	Vec3 m_normal;
-	F32 m_roughness;
-	F32 m_metallic;
-	F32 m_subsurface;
-	F32 m_emission;
+	ANKI_RP Vec3 m_diffuse;
+	ANKI_RP Vec3 m_f0; ///< Freshnel at zero angles.
+	ANKI_RP Vec3 m_normal;
+	ANKI_RP F32 m_roughness;
+	ANKI_RP F32 m_metallic;
+	ANKI_RP F32 m_subsurface;
+	ANKI_RP F32 m_emission;
 	Vec2 m_velocity;
 };
 
 // Populate the G buffer
-void writeGBuffer(GbufferInfo g, out Vec4 rt0, out Vec4 rt1, out Vec4 rt2, out Vec2 rt3)
+void packGBuffer(GbufferInfo g, out Vec4 rt0, out Vec4 rt1, out Vec4 rt2, out Vec2 rt3)
 {
 	rt0 = Vec4(g.m_diffuse, g.m_subsurface);
-	rt1 = Vec4(g.m_roughness, g.m_metallic, g.m_specular.x, FIXED_MAX_EMISSION / ABSOLUTE_MAX_EMISSION);
+	rt1 = Vec4(g.m_roughness, g.m_metallic, g.m_f0.x, FIXED_MAX_EMISSION / ABSOLUTE_MAX_EMISSION);
 
 	const Vec3 encNorm = signedOctEncode(g.m_normal);
 	rt2 = Vec4(g.m_emission / FIXED_MAX_EMISSION, encNorm);
@@ -156,49 +157,41 @@ void writeGBuffer(GbufferInfo g, out Vec4 rt0, out Vec4 rt1, out Vec4 rt2, out V
 	rt3 = g.m_velocity;
 }
 
-Vec3 unpackNormalFromGBuffer(Vec4 gbuffer)
+ANKI_RP Vec3 unpackDiffuseFromGBuffer(ANKI_RP Vec4 rt0, ANKI_RP F32 metallic)
 {
-	return signedOctDecode(gbuffer.gba);
+	return rt0.xyz *= 1.0 - metallic;
 }
 
-// Read from G-buffer
-Vec3 readNormalFromGBuffer(texture2D rt2, sampler sampl, Vec2 uv)
+ANKI_RP Vec3 unpackNormalFromGBuffer(ANKI_RP Vec4 rt2)
 {
-	return unpackNormalFromGBuffer(textureLod(rt2, sampl, uv, 0.0));
+	return signedOctDecode(rt2.gba);
 }
 
-// Read the roughness from G-buffer
-F32 readRoughnessFromGBuffer(texture2D rt1, sampler sampl, Vec2 uv)
+ANKI_RP F32 unpackRoughnessFromGBuffer(ANKI_RP Vec4 rt1)
 {
-	F32 r = textureLod(rt1, sampl, uv, 0.0).r;
+	ANKI_RP F32 r = rt1.x;
 	r = r * (1.0 - MIN_ROUGHNESS) + MIN_ROUGHNESS;
 	return r;
 }
 
 // Read part of the G-buffer
-void readGBuffer(texture2D rt0, texture2D rt1, texture2D rt2, sampler sampl, Vec2 uv, F32 lod, out GbufferInfo g)
+void unpackGBufferNoVelocity(ANKI_RP Vec4 rt0, ANKI_RP Vec4 rt1, ANKI_RP Vec4 rt2, out GbufferInfo g)
 {
-	Vec4 comp = textureLod(rt0, sampl, uv, 0.0);
-	g.m_diffuse = comp.xyz;
-	g.m_subsurface = comp.w;
+	g.m_diffuse = rt0.xyz;
+	g.m_subsurface = rt0.w;
 
-	comp = textureLod(rt1, sampl, uv, 0.0);
-	g.m_roughness = comp.x;
-	g.m_metallic = comp.y;
-	g.m_specular = Vec3(comp.z);
-	const F32 maxEmission = comp.w * ABSOLUTE_MAX_EMISSION;
+	g.m_roughness = unpackRoughnessFromGBuffer(rt1);
+	g.m_metallic = rt1.y;
+	g.m_f0 = Vec3(rt1.z);
+	const ANKI_RP F32 maxEmission = rt1.w * ABSOLUTE_MAX_EMISSION;
 
-	comp = textureLod(rt2, sampl, uv, 0.0);
-	g.m_normal = signedOctDecode(comp.yzw);
-	g.m_emission = comp.x * maxEmission;
+	g.m_normal = signedOctDecode(rt2.yzw);
+	g.m_emission = rt2.x * maxEmission;
 
-	g.m_velocity = Vec2(FLT_MAX); // Put something random
-
-	// Fix roughness
-	g.m_roughness = g.m_roughness * (1.0 - MIN_ROUGHNESS) + MIN_ROUGHNESS;
+	g.m_velocity = Vec2(MAX_F32); // Put something random
 
 	// Compute reflectance
-	g.m_specular = mix(g.m_specular, g.m_diffuse, g.m_metallic);
+	g.m_f0 = mix(g.m_f0, g.m_diffuse, g.m_metallic);
 
 	// Compute diffuse
 	g.m_diffuse *= 1.0 - g.m_metallic;

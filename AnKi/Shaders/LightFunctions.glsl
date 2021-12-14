@@ -78,32 +78,76 @@ Vec3 F_Unreal(Vec3 specular, F32 VoH)
 
 // Fresnel Schlick: "An Inexpensive BRDF Model for Physically-Based Rendering"
 // It has lower VGRPs than F_Unreal
-// specular: The specular color aka F0
-Vec3 F_Schlick(Vec3 specular, F32 VoH)
+ANKI_RP Vec3 F_Schlick(ANKI_RP Vec3 f0, ANKI_RP F32 VoH)
 {
-	const F32 a = 1.0 - VoH;
-	const F32 a2 = a * a;
-	const F32 a5 = a2 * a2 * a; // a5 = a^5
-	return /*saturate(50.0 * specular.g) */ a5 + (1.0 - a5) * specular;
+	const ANKI_RP F32 f = pow(1.0 - VoH, 5.0);
+	return f + f0 * (1.0 - f);
 }
 
 // D(n,h) aka NDF: GGX Trowbridge-Reitz
-F32 D_GGX(F32 roughness, F32 NoH)
+ANKI_RP F32 D_GGX(ANKI_RP F32 roughness, ANKI_RP F32 NoH, ANKI_RP Vec3 h, ANKI_RP Vec3 worldNormal)
 {
-	const F32 a = roughness * roughness;
-	const F32 a2 = a * a;
+#if 0 && ANKI_OS_ANDROID
+	const ANKI_RP Vec3 NxH = cross(worldNormal, h);
+	const ANKI_RP F32 oneMinusNoHSquared = dot(NxH, NxH);
+#else
+	const ANKI_RP F32 oneMinusNoHSquared = 1.0 - NoH * NoH;
+#endif
 
-	const F32 D = (NoH * a2 - NoH) * NoH + 1.0;
-	return a2 / (PI * D * D);
+	const ANKI_RP F32 a = roughness * roughness;
+	const ANKI_RP F32 v = NoH * a;
+	const ANKI_RP F32 k = a / (oneMinusNoHSquared + v * v);
+	const ANKI_RP F32 d = k * k * (1.0 / PI);
+	return saturateRp(d);
 }
 
 // Visibility term: Geometric shadowing divided by BRDF denominator
-F32 V_Schlick(F32 roughness, F32 NoV, F32 NoL)
+ANKI_RP F32 V_Schlick(ANKI_RP F32 roughness, ANKI_RP F32 NoV, ANKI_RP F32 NoL)
 {
-	const F32 k = (roughness * roughness) * 0.5;
-	const F32 Vis_SchlickV = NoV * (1.0 - k) + k;
-	const F32 Vis_SchlickL = NoL * (1.0 - k) + k;
+	const ANKI_RP F32 k = (roughness * roughness) * 0.5;
+	const ANKI_RP F32 Vis_SchlickV = NoV * (1.0 - k) + k;
+	const ANKI_RP F32 Vis_SchlickL = NoL * (1.0 - k) + k;
 	return 0.25 / (Vis_SchlickV * Vis_SchlickL);
+}
+
+// Visibility term: Hammon 2017, "PBR Diffuse Lighting for GGX+Smith Microsurfaces"
+ANKI_RP F32 V_SmithGGXCorrelatedFast(ANKI_RP F32 roughness, ANKI_RP F32 NoV, ANKI_RP F32 NoL)
+{
+	const ANKI_RP F32 a = roughness * roughness;
+	const ANKI_RP F32 v = 0.5 / mix(2.0 * NoL * NoV, NoL + NoV, a);
+	return saturateRp(v);
+}
+
+ANKI_RP F32 Fd_Lambert()
+{
+	return 1.0 / PI;
+}
+
+ANKI_RP Vec3 diffuseLobe(ANKI_RP Vec3 diffuse)
+{
+	return diffuse * Fd_Lambert();
+}
+
+// Performs BRDF specular lighting
+ANKI_RP Vec3 specularIsotropicLobe(GbufferInfo gbuffer, Vec3 viewDir, Vec3 frag2Light)
+{
+	const ANKI_RP Vec3 H = normalize(frag2Light + viewDir);
+
+	const ANKI_RP F32 NoL = max(0.0, dot(gbuffer.m_normal, frag2Light));
+	const ANKI_RP F32 VoH = max(0.0, dot(viewDir, H));
+	const ANKI_RP F32 NoH = max(0.0, dot(gbuffer.m_normal, H));
+	const ANKI_RP F32 NoV = max(0.05, dot(gbuffer.m_normal, viewDir));
+
+	// F
+	const ANKI_RP Vec3 F = F_Schlick(gbuffer.m_f0, VoH);
+
+	// D
+	const ANKI_RP F32 D = D_GGX(gbuffer.m_roughness, NoH, H, gbuffer.m_normal);
+
+	// Vis
+	const ANKI_RP F32 V = V_SmithGGXCorrelatedFast(gbuffer.m_roughness, NoV, NoL);
+
+	return F * (V * D);
 }
 
 Vec3 envBRDF(Vec3 specular, F32 roughness, texture2D integrationLut, sampler integrationLutSampler, F32 NoV)
@@ -112,41 +156,10 @@ Vec3 envBRDF(Vec3 specular, F32 roughness, texture2D integrationLut, sampler int
 	return specular * envBRDF.x + min(1.0, 50.0 * specular.g) * envBRDF.y;
 }
 
-Vec3 diffuseLambert(Vec3 diffuse)
+ANKI_RP F32 computeSpotFactor(ANKI_RP Vec3 l, ANKI_RP F32 outerCos, ANKI_RP F32 innerCos, ANKI_RP Vec3 spotDir)
 {
-	return diffuse * (1.0 / PI);
-}
-
-// Performs BRDF specular lighting
-Vec3 computeSpecularColorBrdf(GbufferInfo gbuffer, Vec3 viewDir, Vec3 frag2Light)
-{
-	const Vec3 H = normalize(frag2Light + viewDir);
-
-	const F32 NoL = max(EPSILON, dot(gbuffer.m_normal, frag2Light));
-	const F32 VoH = max(EPSILON, dot(viewDir, H));
-	const F32 NoH = max(EPSILON, dot(gbuffer.m_normal, H));
-	const F32 NoV = max(EPSILON, dot(gbuffer.m_normal, viewDir));
-
-	// F
-#if 0
-	const Vec3 F = F_Unreal(gbuffer.m_specular, VoH);
-#else
-	const Vec3 F = F_Schlick(gbuffer.m_specular, VoH);
-#endif
-
-	// D
-	const F32 D = D_GGX(gbuffer.m_roughness, NoH);
-
-	// Vis
-	const F32 V = V_Schlick(gbuffer.m_roughness, NoV, NoL);
-
-	return F * (V * D);
-}
-
-F32 computeSpotFactor(Vec3 l, F32 outerCos, F32 innerCos, Vec3 spotDir)
-{
-	const F32 costheta = -dot(l, spotDir);
-	const F32 spotFactor = smoothstep(outerCos, innerCos, costheta);
+	const ANKI_RP F32 costheta = -dot(l, spotDir);
+	const ANKI_RP F32 spotFactor = smoothstep(outerCos, innerCos, costheta);
 	return spotFactor;
 }
 
@@ -162,7 +175,7 @@ U32 computeShadowSampleCount(const U32 COUNT, F32 zVSpace)
 	return sampleCount;
 }
 
-F32 computeShadowFactorSpotLight(SpotLight light, Vec3 worldPos, texture2D spotMap, sampler spotMapSampler)
+ANKI_RP F32 computeShadowFactorSpotLight(SpotLight light, Vec3 worldPos, texture2D spotMap, sampler spotMapSampler)
 {
 	const Vec4 texCoords4 = light.m_textureMatrix * Vec4(worldPos, 1.0);
 	const Vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
@@ -173,7 +186,8 @@ F32 computeShadowFactorSpotLight(SpotLight light, Vec3 worldPos, texture2D spotM
 }
 
 // Compute the shadow factor of point (omni) lights.
-F32 computeShadowFactorPointLight(PointLight light, Vec3 frag2Light, texture2D shadowMap, sampler shadowMapSampler)
+ANKI_RP F32 computeShadowFactorPointLight(PointLight light, Vec3 frag2Light, texture2D shadowMap,
+										  sampler shadowMapSampler)
 {
 	const Vec3 dir = -frag2Light;
 	const Vec3 dirabs = abs(dir);
@@ -201,21 +215,22 @@ F32 computeShadowFactorPointLight(PointLight light, Vec3 frag2Light, texture2D s
 	const Vec2 atlasOffset = light.m_shadowAtlasTileOffsets[faceIdxu];
 
 	// Compute UV
-	uv = fma(uv, Vec2(light.m_shadowAtlasTileScale), atlasOffset);
+	uv *= Vec2(light.m_shadowAtlasTileScale);
+	uv += atlasOffset;
 
 	// Sample
 	const Vec4 shadowMoments = textureLod(shadowMap, shadowMapSampler, uv, 0.0);
 
 	// 3) Compare
 	//
-	const F32 shadowFactor = evsmComputeShadowFactor(z, shadowMoments);
+	const ANKI_RP F32 shadowFactor = evsmComputeShadowFactor(z, shadowMoments);
 
 	return shadowFactor;
 }
 
 // Compute the shadow factor of a directional light
-F32 computeShadowFactorDirLight(DirectionalLight light, U32 cascadeIdx, Vec3 worldPos, texture2D shadowMap,
-								sampler shadowMapSampler)
+ANKI_RP F32 computeShadowFactorDirLight(DirectionalLight light, U32 cascadeIdx, Vec3 worldPos, texture2D shadowMap,
+										sampler shadowMapSampler)
 {
 #define ANKI_FAST_CASCADES_WORKAROUND 1 // Doesn't make sense but it's super fast
 
@@ -249,13 +264,13 @@ F32 computeShadowFactorDirLight(DirectionalLight light, U32 cascadeIdx, Vec3 wor
 }
 
 // Compute the shadow factor of a directional light
-F32 computeShadowFactorDirLight(Mat4 lightProjectionMat, Vec3 worldPos, texture2D shadowMap,
-								samplerShadow shadowMapSampler)
+ANKI_RP F32 computeShadowFactorDirLight(Mat4 lightProjectionMat, Vec3 worldPos, texture2D shadowMap,
+										samplerShadow shadowMapSampler)
 {
 	const Vec4 texCoords4 = lightProjectionMat * Vec4(worldPos, 1.0);
 	const Vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
 
-	const F32 shadowFactor = textureLod(shadowMap, shadowMapSampler, texCoords3, 0.0);
+	const ANKI_RP F32 shadowFactor = textureLod(shadowMap, shadowMapSampler, texCoords3, 0.0);
 	return shadowFactor;
 }
 
@@ -287,10 +302,10 @@ Vec3 computeCubemapVecCheap(Vec3 r, F32 R2, Vec3 f)
 	return r;
 }
 
-F32 computeAttenuationFactor(F32 squareRadiusOverOne, Vec3 frag2Light)
+ANKI_RP F32 computeAttenuationFactor(ANKI_RP F32 squareRadiusOverOne, ANKI_RP Vec3 frag2Light)
 {
-	const F32 fragLightDist = dot(frag2Light, frag2Light);
-	F32 att = 1.0 - fragLightDist * squareRadiusOverOne;
+	const ANKI_RP F32 fragLightDist = dot(frag2Light, frag2Light);
+	ANKI_RP F32 att = 1.0 - fragLightDist * squareRadiusOverOne;
 	att = max(0.0, att);
 	return att * att;
 }
@@ -327,24 +342,26 @@ F32 computeProbeBlendWeight(Vec3 fragPos, // Doesn't need to be inside the AABB
 
 // Given the value of the 6 faces of the dice and a normal, sample the correct weighted value.
 // https://www.shadertoy.com/view/XtcBDB
-Vec3 sampleAmbientDice(Vec3 posx, Vec3 negx, Vec3 posy, Vec3 negy, Vec3 posz, Vec3 negz, Vec3 normal)
+ANKI_RP Vec3 sampleAmbientDice(ANKI_RP Vec3 posx, ANKI_RP Vec3 negx, ANKI_RP Vec3 posy, ANKI_RP Vec3 negy,
+							   ANKI_RP Vec3 posz, ANKI_RP Vec3 negz, ANKI_RP Vec3 normal)
 {
-	const Vec3 axisWeights = abs(normal);
-	const Vec3 uv = NDC_TO_UV(normal);
+	const ANKI_RP Vec3 axisWeights = abs(normal);
+	const ANKI_RP Vec3 uv = NDC_TO_UV(normal);
 
-	Vec3 col = mix(negx, posx, uv.x) * axisWeights.x;
+	ANKI_RP Vec3 col = mix(negx, posx, uv.x) * axisWeights.x;
 	col += mix(negy, posy, uv.y) * axisWeights.y;
 	col += mix(negz, posz, uv.z) * axisWeights.z;
 
 	// Divide by weight
-	col /= axisWeights.x + axisWeights.y + axisWeights.z + EPSILON;
+	col /= axisWeights.x + axisWeights.y + axisWeights.z + EPSILON_RP;
 
 	return col;
 }
 
 // Sample the irradiance term from the clipmap
-Vec3 sampleGlobalIllumination(const Vec3 worldPos, const Vec3 normal, const GlobalIlluminationProbe probe,
-							  texture3D textures[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES], sampler linearAnyClampSampler)
+ANKI_RP Vec3 sampleGlobalIllumination(const Vec3 worldPos, const Vec3 normal, const GlobalIlluminationProbe probe,
+									  ANKI_RP texture3D textures[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES],
+									  sampler linearAnyClampSampler)
 {
 	// Find the UVW
 	Vec3 uvw = (worldPos - probe.m_aabbMin) / (probe.m_aabbMax - probe.m_aabbMin);
@@ -356,7 +373,7 @@ Vec3 sampleGlobalIllumination(const Vec3 worldPos, const Vec3 normal, const Glob
 	uvw.x = clamp(uvw.x, probe.m_halfTexelSizeU, (1.0 / 6.0) - probe.m_halfTexelSizeU);
 
 	// Read the irradiance
-	Vec3 irradiancePerDir[6u];
+	ANKI_RP Vec3 irradiancePerDir[6u];
 	ANKI_UNROLL for(U32 dir = 0u; dir < 6u; ++dir)
 	{
 		// Point to the correct UV
@@ -368,8 +385,9 @@ Vec3 sampleGlobalIllumination(const Vec3 worldPos, const Vec3 normal, const Glob
 	}
 
 	// Sample the irradiance
-	const Vec3 irradiance = sampleAmbientDice(irradiancePerDir[0], irradiancePerDir[1], irradiancePerDir[2],
-											  irradiancePerDir[3], irradiancePerDir[4], irradiancePerDir[5], normal);
+	const ANKI_RP Vec3 irradiance =
+		sampleAmbientDice(irradiancePerDir[0], irradiancePerDir[1], irradiancePerDir[2], irradiancePerDir[3],
+						  irradiancePerDir[4], irradiancePerDir[5], normal);
 
 	return irradiance;
 }

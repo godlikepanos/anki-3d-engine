@@ -8,41 +8,41 @@
 #include <AnKi/Shaders/Common.glsl>
 
 // A tick to compute log of base 10
-F32 log10(F32 x)
+ANKI_RP F32 log10(ANKI_RP F32 x)
 {
 	return log(x) / log(10.0);
 }
 
-F32 computeLuminance(Vec3 color)
+ANKI_RP F32 computeLuminance(ANKI_RP Vec3 color)
 {
-	return max(dot(Vec3(0.30, 0.59, 0.11), color), EPSILON);
+	return max(dot(Vec3(0.30, 0.59, 0.11), color), EPSILON_RP);
 }
 
-F32 computeExposure(F32 avgLum, F32 threshold)
+ANKI_RP F32 computeExposure(ANKI_RP F32 avgLum, ANKI_RP F32 threshold)
 {
-	const F32 keyValue = 1.03 - (2.0 / (2.0 + log10(avgLum + 1.0)));
-	const F32 linearExposure = (keyValue / avgLum);
-	F32 exposure = log2(linearExposure);
+	const ANKI_RP F32 keyValue = 1.03 - (2.0 / (2.0 + log10(avgLum + 1.0)));
+	const ANKI_RP F32 linearExposure = (keyValue / avgLum);
+	ANKI_RP F32 exposure = log2(linearExposure);
 
 	exposure -= threshold;
 	return exp2(exposure);
 }
 
-Vec3 computeExposedColor(Vec3 color, F32 avgLum, F32 threshold)
+ANKI_RP Vec3 computeExposedColor(ANKI_RP Vec3 color, ANKI_RP F32 avgLum, ANKI_RP F32 threshold)
 {
 	return computeExposure(avgLum, threshold) * color;
 }
 
 // Reinhard operator
-Vec3 tonemapReinhard(Vec3 color, F32 saturation)
+ANKI_RP Vec3 tonemapReinhard(ANKI_RP Vec3 color, ANKI_RP F32 saturation)
 {
-	const F32 lum = computeLuminance(color);
-	const F32 toneMappedLuminance = lum / (lum + 1.0);
+	const ANKI_RP F32 lum = computeLuminance(color);
+	const ANKI_RP F32 toneMappedLuminance = lum / (lum + 1.0);
 	return toneMappedLuminance * pow(color / lum, Vec3(saturation));
 }
 
 // Uncharted 2 operator
-Vec3 tonemapUncharted2(Vec3 color)
+ANKI_RP Vec3 tonemapUncharted2(ANKI_RP Vec3 color)
 {
 	const F32 A = 0.15;
 	const F32 B = 0.50;
@@ -54,42 +54,42 @@ Vec3 tonemapUncharted2(Vec3 color)
 	return ((color * (A * color + C * B) + D * E) / (color * (A * color + B) + D * F)) - E / F;
 }
 
-Vec3 tonemapACESFilm(Vec3 x)
+ANKI_RP Vec3 tonemapACESFilm(ANKI_RP Vec3 x)
 {
-	const F32 a = 2.51;
-	const F32 b = 0.03;
-	const F32 c = 2.43;
-	const F32 d = 0.59;
-	const F32 e = 0.14;
+	const ANKI_RP F32 a = 2.51;
+	const ANKI_RP F32 b = 0.03;
+	const ANKI_RP F32 c = 2.43;
+	const ANKI_RP F32 d = 0.59;
+	const ANKI_RP F32 e = 0.14;
 
 	return saturate((x * (a * x + b)) / (x * (c * x + d) + e));
 }
 
-Vec3 tonemap(Vec3 color, F32 exposure)
+ANKI_RP Vec3 tonemap(ANKI_RP Vec3 color, ANKI_RP F32 exposure)
 {
 	color *= exposure;
 #if 0
-	const F32 saturation = 1.0;
+	const ANKI_RP F32 saturation = 1.0;
 	return tonemapReinhard(color, saturation);
 #else
 	return tonemapACESFilm(color);
 #endif
 }
 
-Vec3 tonemap(Vec3 color, F32 avgLum, F32 threshold)
+ANKI_RP Vec3 tonemap(ANKI_RP Vec3 color, ANKI_RP F32 avgLum, ANKI_RP F32 threshold)
 {
-	const F32 exposure = computeExposure(avgLum, threshold);
+	const ANKI_RP F32 exposure = computeExposure(avgLum, threshold);
 	return tonemap(color, exposure);
 }
 
 // https://graphicrants.blogspot.com/2013/12/tone-mapping.html
-Vec3 invertibleTonemap(Vec3 colour)
+ANKI_RP Vec3 invertibleTonemap(ANKI_RP Vec3 colour)
 {
 	// 1 / (1 + max(rgb))
 	return colour / (1.0 + max(max(colour.r, colour.g), colour.b));
 }
 
-Vec3 invertInvertibleTonemap(Vec3 colour)
+ANKI_RP Vec3 invertInvertibleTonemap(ANKI_RP Vec3 colour)
 {
 	// 1 / (1 - max(rgb))
 	return colour / (1.0 - max(max(colour.r, colour.g), colour.b));

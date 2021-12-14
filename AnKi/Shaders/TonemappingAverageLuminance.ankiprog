@@ -90,7 +90,7 @@ void main()
 #endif
 
 		// This is a workaround because sometimes the avg lum becomes nan
-		finalAvgLum = clamp(finalAvgLum, EPSILON, FLT_MAX);
+		finalAvgLum = clamp(finalAvgLum, EPSILON, MAX_F32);
 
 		u_averageLuminance = finalAvgLum;
 		u_exposureThreshold0 = computeExposure(u_averageLuminance, 0.0);

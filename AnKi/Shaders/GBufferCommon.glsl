@@ -38,9 +38,9 @@ out gl_PerVertex
 
 #	if ANKI_PASS == PASS_GB
 layout(location = 0) out Vec2 out_uv;
-layout(location = 1) out Vec3 out_normal;
-layout(location = 2) out Vec3 out_tangent;
-layout(location = 3) out Vec3 out_bitangent;
+layout(location = 1) out ANKI_RP Vec3 out_normal;
+layout(location = 2) out ANKI_RP Vec3 out_tangent;
+layout(location = 3) out ANKI_RP Vec3 out_bitangent;
 
 #		if REALLY_USING_PARALLAX
 layout(location = 4) out F32 out_distFromTheCamera;
@@ -59,9 +59,9 @@ layout(location = 7) out Vec2 out_velocity;
 //
 #if defined(ANKI_FRAGMENT_SHADER) && ANKI_PASS == PASS_GB
 layout(location = 0) in Vec2 in_uv;
-layout(location = 1) in Vec3 in_normal;
-layout(location = 2) in Vec3 in_tangent;
-layout(location = 3) in Vec3 in_bitangent;
+layout(location = 1) in ANKI_RP Vec3 in_normal;
+layout(location = 2) in ANKI_RP Vec3 in_tangent;
+layout(location = 3) in ANKI_RP Vec3 in_bitangent;
 
 #	if REALLY_USING_PARALLAX
 layout(location = 4) in F32 in_distFromTheCamera;
@@ -90,18 +90,18 @@ layout(location = 3) out Vec2 out_gbuffer3;
 
 // Write the data to RTs
 #if defined(ANKI_FRAGMENT_SHADER) && ANKI_PASS == PASS_GB
-void writeGBuffer(Vec3 diffColor, Vec3 normal, Vec3 specularColor, F32 roughness, F32 subsurface, Vec3 emission,
-				  F32 metallic, Vec2 velocity)
+void packGBuffer(ANKI_RP Vec3 diffColor, ANKI_RP Vec3 normal, ANKI_RP Vec3 specularColor, ANKI_RP F32 roughness,
+				 ANKI_RP F32 subsurface, ANKI_RP Vec3 emission, ANKI_RP F32 metallic, Vec2 velocity)
 {
 	GbufferInfo g;
 	g.m_diffuse = diffColor;
 	g.m_normal = normal;
-	g.m_specular = specularColor;
+	g.m_f0 = specularColor;
 	g.m_roughness = roughness;
 	g.m_subsurface = subsurface;
 	g.m_emission = (emission.r + emission.g + emission.b) / 3.0;
 	g.m_metallic = metallic;
 	g.m_velocity = velocity;
-	writeGBuffer(g, out_gbuffer0, out_gbuffer1, out_gbuffer2, out_gbuffer3);
+	packGBuffer(g, out_gbuffer0, out_gbuffer1, out_gbuffer2, out_gbuffer3);
 }
 #endif

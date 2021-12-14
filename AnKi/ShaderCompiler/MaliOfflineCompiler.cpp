@@ -192,7 +192,7 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 			return Error::FUNCTION_FAILED;
 		}
 	}
-	else
+	else if(shaderType == ShaderType::FRAGMENT)
 	{
 		if(std::regex_search(stdoutstl, match,
 							 std::regex("Total instruction cycles:\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
@@ -207,6 +207,32 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_sfu));
 			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_loadStore));
 			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_varying));
+			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_texture));
+
+			out.m_boundUnit = strToHwUnit(match[count++].str().c_str());
+		}
+		else
+		{
+			ANKI_SHADER_COMPILER_LOGE("Error parsing instruction cycles");
+			return Error::FUNCTION_FAILED;
+		}
+	}
+	else
+	{
+		ANKI_ASSERT(shaderType == ShaderType::COMPUTE);
+
+		if(std::regex_search(stdoutstl, match,
+							 std::regex("Total instruction cycles:\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
+										"\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
+										"\\s*([A-Z]+)")))
+		{
+			ANKI_ASSERT(match.size() == 7);
+
+			U32 count = 1;
+			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_fma));
+			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_cvt));
+			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_sfu));
+			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_loadStore));
 			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_texture));
 
 			out.m_boundUnit = strToHwUnit(match[count++].str().c_str());

@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 31
     ndkVersion "23.0.7599858"
     defaultConfig {
         applicationId "org.anki.%TARGET%"

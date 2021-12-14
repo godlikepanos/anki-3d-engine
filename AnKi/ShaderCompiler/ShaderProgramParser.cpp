@@ -19,7 +19,7 @@ static const Array<CString, U32(ShaderType::COUNT)> SHADER_STAGE_NAMES = {
 	{"VERTEX", "TESSELLATION_CONTROL", "TESSELLATION_EVALUATION", "GEOMETRY", "FRAGMENT", "COMPUTE", "RAY_GEN",
 	 "ANY_HIT", "CLOSEST_HIT", "MISS", "INTERSECTION", "CALLABLE"}};
 
-static const char* SHADER_HEADER = R"(#version 460 core
+static const char SHADER_HEADER[] = R"(#version 460 core
 #define ANKI_%s_SHADER 1
 #define ANKI_OS_ANDROID %d
 #define ANKI_OS_WINDOWS %d
@@ -252,6 +252,9 @@ static const char* SHADER_HEADER = R"(#version 460 core
 
 layout(std140, row_major) uniform;
 layout(std140, row_major) buffer;
+
+#define ANKI_RP mediump
+#define ANKI_FP highp
 )";
 
 static const U64 SHADER_HEADER_HASH = computeHash(SHADER_HEADER, sizeof(SHADER_HEADER));

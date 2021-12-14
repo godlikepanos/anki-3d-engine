@@ -13,8 +13,8 @@ struct PerDraw
 #if ANIMATED_TEXTURE == 1
 	F32 m_animationPeriod;
 #endif
-	Vec4 m_colorScale;
-	Vec4 m_colorBias;
+	ANKI_RP Vec4 m_colorScale;
+	ANKI_RP Vec4 m_colorBias;
 };
 
 #pragma anki reflect b_ankiPerDraw
@@ -27,11 +27,11 @@ layout(set = 1, binding = 0, row_major) uniform b_ankiPerDraw
 layout(set = 1, binding = 1) uniform sampler u_ankiGlobalSampler;
 #if ANIMATED_TEXTURE == 0
 #	pragma anki reflect u_diffuseMap
-layout(set = 1, binding = 2) uniform texture2D u_diffuseMap;
+layout(set = 1, binding = 2) uniform ANKI_RP texture2D u_diffuseMap;
 #endif
 #if ANIMATED_TEXTURE == 1
 #	pragma anki reflect u_diffuseMapArr
-layout(set = 1, binding = 2) uniform texture2DArray u_diffuseMapArr;
+layout(set = 1, binding = 2) uniform ANKI_RP texture2DArray u_diffuseMapArr;
 #endif
 
 #pragma anki start vert
@@ -40,7 +40,7 @@ layout(set = 1, binding = 2) uniform texture2DArray u_diffuseMapArr;
 layout(location = VERTEX_ATTRIBUTE_ID_SCALE) in F32 in_scale;
 layout(location = VERTEX_ATTRIBUTE_ID_ALPHA) in F32 in_alpha;
 
-layout(location = 0) flat out F32 out_alpha;
+layout(location = 0) flat out ANKI_RP F32 out_alpha;
 layout(location = 1) out Vec2 out_uv;
 layout(location = 2) out Vec3 out_worldPos;
 
@@ -58,24 +58,24 @@ void main()
 #pragma anki start frag
 #include <AnKi/Shaders/ForwardShadingCommonFrag.glsl>
 
-layout(location = 0) flat in F32 in_alpha;
+layout(location = 0) flat in ANKI_RP F32 in_alpha;
 layout(location = 1) in Vec2 in_uv;
 layout(location = 2) in Vec3 in_worldPos;
 
 void main()
 {
 #if ANIMATED_TEXTURE == 1
-	Vec4 texCol = readAnimatedTextureRgba(u_diffuseMapArr, u_ankiGlobalSampler, u_ankiPerDraw.m_animationPeriod, in_uv,
-										  u_clusteredShading.m_time);
+	ANKI_RP Vec4 texCol = readAnimatedTextureRgba(u_diffuseMapArr, u_ankiGlobalSampler, u_ankiPerDraw.m_animationPeriod,
+												  in_uv, u_clusteredShading.m_time);
 #else
-	Vec4 texCol = texture(u_diffuseMap, u_ankiGlobalSampler, in_uv);
+	ANKI_RP Vec4 texCol = texture(u_diffuseMap, u_ankiGlobalSampler, in_uv);
 #endif
 
 #if LIGHT
 	texCol.rgb = computeLightColorLow(texCol.rgb, in_worldPos);
 #endif
 
-	Vec4 colScale = u_ankiPerDraw.m_colorScale;
+	ANKI_RP Vec4 colScale = u_ankiPerDraw.m_colorScale;
 	colScale.a *= in_alpha;
 	particleAlpha(texCol, colScale, u_ankiPerDraw.m_colorBias);
 }

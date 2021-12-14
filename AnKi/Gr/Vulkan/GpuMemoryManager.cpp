@@ -34,7 +34,7 @@ Error GpuMemoryManagerInterface::allocateChunk(U32 classIdx, GpuMemoryManagerChu
 	}
 
 	VkDeviceMemory memHandle;
-	if(ANKI_UNLIKELY(vkAllocateMemory(m_parent->m_dev, &ci, nullptr, &memHandle) < 0))
+	if(ANKI_UNLIKELY(vkAllocateMemory(m_parent->m_dev, &ci, nullptr, &memHandle) != VK_SUCCESS))
 	{
 		ANKI_VK_LOGF("Out of GPU memory. Mem type index %u, size %zu", m_memTypeIdx,
 					 m_classInfos[classIdx].m_suballocationSize);

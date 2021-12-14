@@ -9,13 +9,14 @@
 
 #pragma anki start frag
 #include <AnKi/Shaders/BilateralFilter.glsl>
+#include <AnKi/Shaders/PackFunctions.glsl>
 
 layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
 layout(set = 0, binding = 1) uniform sampler u_linearAnyClampSampler;
-layout(set = 0, binding = 2) uniform texture2D u_quarterDiffuseIndirectTex;
+layout(set = 0, binding = 2) uniform ANKI_RP texture2D u_quarterDiffuseIndirectTex;
 layout(set = 0, binding = 3) uniform texture2D u_quarterDepthTex;
 layout(set = 0, binding = 4) uniform texture2D u_fullDepthTex;
-layout(set = 0, binding = 5) uniform texture2D u_gbuffer0Tex;
+layout(set = 0, binding = 5) uniform ANKI_RP texture2D u_gbuffer0Tex;
 
 layout(push_constant, std430) uniform b_pc
 {
@@ -24,7 +25,7 @@ layout(push_constant, std430) uniform b_pc
 };
 
 layout(location = 0) in Vec2 in_uv;
-layout(location = 0) out Vec3 out_color;
+layout(location = 0) out ANKI_RP Vec3 out_color;
 
 void main()
 {
@@ -45,14 +46,17 @@ void main()
 			const F32 w = calculateBilateralWeightDepth(depthCenter, depthTap, 1.0);
 			sumWeight += w;
 
-			const Vec3 colorTap = textureLod(u_quarterDiffuseIndirectTex, u_nearestAnyClampSampler, sampleUv, 0.0).xyz;
+			const ANKI_RP Vec3 colorTap =
+				textureLod(u_quarterDiffuseIndirectTex, u_nearestAnyClampSampler, sampleUv, 0.0).xyz;
 			out_color += colorTap * w;
 		}
 	}
 
 	// Modulate
 	out_color /= sumWeight;
-	const Vec3 albedo = textureLod(u_gbuffer0Tex, u_linearAnyClampSampler, in_uv, 0.0).xyz;
+	const ANKI_RP F32 metallic = 0.0;
+	const ANKI_RP Vec3 albedo =
+		unpackDiffuseFromGBuffer(textureLod(u_gbuffer0Tex, u_linearAnyClampSampler, in_uv, 0.0), metallic);
 	out_color *= albedo;
 }
 #pragma anki end

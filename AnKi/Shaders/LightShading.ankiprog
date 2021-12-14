@@ -42,16 +42,16 @@ layout(set = 0, binding = 16) uniform texture2D u_resolvedSm;
 
 layout(location = 0) in Vec2 in_uv;
 
-layout(location = 0) out Vec3 out_color;
+layout(location = 0) out ANKI_RP Vec3 out_color;
 
 // Common code for lighting
 #define LIGHTING_COMMON_BRDF() \
-	const Vec3 frag2Light = light.m_position - worldPos; \
-	const Vec3 l = normalize(frag2Light); \
-	const Vec3 specC = computeSpecularColorBrdf(gbuffer, viewDir, l); \
-	const Vec3 diffC = diffuseLambert(gbuffer.m_diffuse); \
-	const F32 att = computeAttenuationFactor(light.m_squareRadiusOverOne, frag2Light); \
-	F32 lambert = max(0.0, dot(gbuffer.m_normal, l));
+	const ANKI_RP Vec3 frag2Light = light.m_position - worldPos; \
+	const ANKI_RP Vec3 l = normalize(frag2Light); \
+	const ANKI_RP Vec3 specC = specularIsotropicLobe(gbuffer, viewDir, l); \
+	const ANKI_RP Vec3 diffC = diffuseLobe(gbuffer.m_diffuse); \
+	const ANKI_RP F32 att = computeAttenuationFactor(light.m_squareRadiusOverOne, frag2Light); \
+	ANKI_RP F32 lambert = max(0.0, dot(gbuffer.m_normal, l));
 
 void main()
 {
@@ -76,15 +76,17 @@ void main()
 
 	// Decode GBuffer
 	GbufferInfo gbuffer;
-	readGBuffer(u_msRt0, u_msRt1, u_msRt2, u_nearestAnyClampSampler, in_uv, 0.0, gbuffer);
+	unpackGBufferNoVelocity(textureLod(u_msRt0, u_nearestAnyClampSampler, in_uv, 0.0),
+							textureLod(u_msRt1, u_nearestAnyClampSampler, in_uv, 0.0),
+							textureLod(u_msRt2, u_nearestAnyClampSampler, in_uv, 0.0), gbuffer);
 	gbuffer.m_subsurface = max(gbuffer.m_subsurface, SUBSURFACE_MIN);
 
 	// SM
 #if USE_SHADOW_LAYERS
-	F32 resolvedSm[MAX_RT_SHADOW_LAYERS];
+	ANKI_RP F32 resolvedSm[MAX_RT_SHADOW_LAYERS];
 	unpackRtShadows(textureLod(u_shadowLayersTex, u_nearestAnyClampSampler, in_uv, 0.0), resolvedSm);
 #else
-	Vec4 resolvedSm = textureLod(u_resolvedSm, u_trilinearClampSampler, in_uv, 0.0);
+	ANKI_RP Vec4 resolvedSm = textureLod(u_resolvedSm, u_trilinearClampSampler, in_uv, 0.0);
 	U32 resolvedSmIdx = 0u;
 #endif
 
@@ -92,11 +94,11 @@ void main()
 	out_color = gbuffer.m_diffuse * gbuffer.m_emission;
 
 	// Dir light
-	const Vec3 viewDir = normalize(u_clusteredShading.m_cameraPosition - worldPos);
+	const ANKI_RP Vec3 viewDir = normalize(u_clusteredShading.m_cameraPosition - worldPos);
 	const DirectionalLight dirLight = u_clusteredShading.m_directionalLight;
 	if(dirLight.m_active != 0u)
 	{
-		F32 shadowFactor;
+		ANKI_RP F32 shadowFactor;
 		if(dirLight.m_cascadeCount > 0u)
 		{
 #if USE_SHADOW_LAYERS
@@ -111,12 +113,12 @@ void main()
 			shadowFactor = 1.0;
 		}
 
-		const Vec3 l = -dirLight.m_direction;
+		const ANKI_RP Vec3 l = -dirLight.m_direction;
 
-		const F32 lambert = max(gbuffer.m_subsurface, dot(l, gbuffer.m_normal));
+		const ANKI_RP F32 lambert = max(gbuffer.m_subsurface, dot(l, gbuffer.m_normal));
 
-		const Vec3 diffC = diffuseLambert(gbuffer.m_diffuse);
-		const Vec3 specC = computeSpecularColorBrdf(gbuffer, viewDir, l);
+		const ANKI_RP Vec3 diffC = diffuseLobe(gbuffer.m_diffuse);
+		const ANKI_RP Vec3 specC = specularIsotropicLobe(gbuffer, viewDir, l);
 
 		out_color += (diffC + specC) * dirLight.m_diffuseColor * (shadowFactor * lambert);
 	}
@@ -133,9 +135,9 @@ void main()
 		ANKI_BRANCH if(light.m_shadowAtlasTileScale >= 0.0)
 		{
 #if USE_SHADOW_LAYERS
-			const F32 shadow = resolvedSm[light.m_shadowLayer];
+			const ANKI_RP F32 shadow = resolvedSm[light.m_shadowLayer];
 #else
-			const F32 shadow = resolvedSm[resolvedSmIdx++];
+			const ANKI_RP F32 shadow = resolvedSm[resolvedSmIdx++];
 #endif
 			lambert *= shadow;
 		}
@@ -157,9 +159,9 @@ void main()
 		ANKI_BRANCH if(light.m_shadowLayer != MAX_U32)
 		{
 #if USE_SHADOW_LAYERS
-			const F32 shadow = resolvedSm[light.m_shadowLayer];
+			const ANKI_RP F32 shadow = resolvedSm[light.m_shadowLayer];
 #else
-			const F32 shadow = resolvedSm[resolvedSmIdx++];
+			const ANKI_RP F32 shadow = resolvedSm[resolvedSmIdx++];
 #endif
 			lambert *= shadow;
 		}
@@ -223,10 +225,11 @@ void main()
 
 		// Compute env BRDF
 		const F32 NoV = max(EPSILON, dot(gbuffer.m_normal, viewDir));
-		const Vec3 env =
-			envBRDF(gbuffer.m_specular, gbuffer.m_roughness, u_integrationLut, u_trilinearClampSampler, NoV);
+		const Vec3 env = envBRDF(gbuffer.m_f0, gbuffer.m_roughness, u_integrationLut, u_trilinearClampSampler, NoV);
 
 		out_color += finalSpecIndirect * env;
 	}
+
+	out_color = saturateRp(out_color);
 }
 #pragma anki end

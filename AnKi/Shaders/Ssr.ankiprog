@@ -60,8 +60,8 @@ void main()
 	const Vec2 uv = (Vec2(fixedGlobalInvocationId.xy) + 0.5) / Vec2(u_unis.m_framebufferSize);
 
 	// Read part of the G-buffer
-	const F32 roughness = readRoughnessFromGBuffer(u_gbufferRt1, u_trilinearClampSampler, uv);
-	const Vec3 worldNormal = readNormalFromGBuffer(u_gbufferRt2, u_trilinearClampSampler, uv);
+	const F32 roughness = unpackRoughnessFromGBuffer(textureLod(u_gbufferRt1, u_trilinearClampSampler, uv, 0.0));
+	const Vec3 worldNormal = unpackNormalFromGBuffer(textureLod(u_gbufferRt2, u_trilinearClampSampler, uv, 0.0));
 
 	// Get depth
 	const F32 depth = textureLod(u_depthRt, u_trilinearClampSampler, uv, 0.0).r;
@@ -96,7 +96,8 @@ void main()
 	ANKI_BRANCH if(hitAttenuation > 0.0)
 	{
 		const Vec3 hitNormal =
-			u_unis.m_normalMat * readNormalFromGBuffer(u_gbufferRt2, u_trilinearClampSampler, hitPoint.xy);
+			u_unis.m_normalMat
+			* unpackNormalFromGBuffer(textureLod(u_gbufferRt2, u_trilinearClampSampler, hitPoint.xy, 0.0));
 		F32 backFaceAttenuation;
 		rejectBackFaces(reflVec, hitNormal, backFaceAttenuation);
 
@@ -133,7 +134,7 @@ void main()
 
 		// Read the light buffer
 		outColor.rgb = textureLod(u_lightBufferRt, u_trilinearClampSampler, hitPoint.xy, lod).rgb;
-		outColor.rgb = clamp(outColor.rgb, 0.0, FLT_MAX); // Fix the value just in case
+		outColor.rgb = clamp(outColor.rgb, 0.0, MAX_F32); // Fix the value just in case
 		outColor.rgb *= hitAttenuation;
 		outColor.a = 1.0 - hitAttenuation;
 	}

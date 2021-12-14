@@ -14,11 +14,11 @@ struct IndirectDiffuseUniforms
 	UVec2 m_viewportSize;
 	Vec2 m_viewportSizef;
 	Vec4 m_projectionMat;
-	F32 m_radius; ///< In meters.
+	ANKI_RP F32 m_radius; ///< In meters.
 	U32 m_sampleCount;
-	F32 m_sampleCountf;
-	F32 m_ssaoBias;
-	F32 m_ssaoStrength;
+	ANKI_RP F32 m_sampleCountf;
+	ANKI_RP F32 m_ssaoBias;
+	ANKI_RP F32 m_ssaoStrength;
 	F32 m_padding[3u];
 };
 

@@ -13,7 +13,7 @@ ANKI_BEGIN_NAMESPACE
 struct LensFlareSprite
 {
 	Vec4 m_posScale; // xy: Position, zw: Scale
-	Vec4 m_color;
+	ANKI_RP Vec4 m_color;
 	Vec4 m_depthPad3;
 };
 

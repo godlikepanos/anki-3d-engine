@@ -11,12 +11,12 @@
 struct PerDraw
 {
 	Mat4 m_ankiMvp;
-	Vec3 m_diffColor;
-	F32 m_roughness;
-	Vec3 m_specColor;
-	F32 m_metallic;
-	Vec3 m_initialEmission;
-	Vec3 m_finalEmission;
+	ANKI_RP Vec3 m_diffColor;
+	ANKI_RP F32 m_roughness;
+	ANKI_RP Vec3 m_specColor;
+	ANKI_RP F32 m_metallic;
+	ANKI_RP Vec3 m_initialEmission;
+	ANKI_RP Vec3 m_finalEmission;
 };
 
 #pragma anki reflect b_ankiPerDraw
@@ -78,13 +78,13 @@ void main()
 	GbufferInfo g;
 	g.m_diffuse = u_ankiPerDraw.m_diffColor;
 	g.m_normal = u_minusCameraZ;
-	g.m_specular = u_ankiPerDraw.m_specColor;
+	g.m_f0 = u_ankiPerDraw.m_specColor;
 	g.m_roughness = u_ankiPerDraw.m_roughness;
 	g.m_subsurface = 0.0;
-	const Vec3 emission = mix(u_ankiPerDraw.m_initialEmission, u_ankiPerDraw.m_finalEmission, in_lifeFactor);
+	const ANKI_RP Vec3 emission = mix(u_ankiPerDraw.m_initialEmission, u_ankiPerDraw.m_finalEmission, in_lifeFactor);
 	g.m_emission = (emission.r + emission.g + emission.b) / 3.0;
 	g.m_metallic = u_ankiPerDraw.m_metallic;
 	g.m_velocity = in_velocity;
-	writeGBuffer(g, out_gbuffer0, out_gbuffer1, out_gbuffer2, out_gbuffer3);
+	packGBuffer(g, out_gbuffer0, out_gbuffer1, out_gbuffer2, out_gbuffer3);
 }
 #pragma anki end

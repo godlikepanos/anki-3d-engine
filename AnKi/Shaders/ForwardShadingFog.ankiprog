@@ -7,9 +7,9 @@ struct PerDraw
 {
 	Mat4 m_ankiMvp;
 	Mat4 m_ankiModelViewMatrix;
-	Vec3 m_fogColor;
-	F32 m_fogAlphaScale;
-	F32 m_fogDistanceOfMaxThikness;
+	ANKI_RP Vec3 m_fogColor;
+	ANKI_RP F32 m_fogAlphaScale;
+	ANKI_RP F32 m_fogDistanceOfMaxThikness;
 };
 
 #pragma anki reflect b_ankiPerDraw

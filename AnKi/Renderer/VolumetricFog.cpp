@@ -49,39 +49,6 @@ Error VolumetricFog::init()
 	return Error::NONE;
 }
 
-void VolumetricFog::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
-{
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-
-	cmdb->bindShaderProgram(m_grProg);
-
-	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
-	rgraphCtx.bindColorTexture(0, 1, m_r->getVolumetricLightingAccumulation().getRt());
-
-	rgraphCtx.bindImage(0, 2, m_runCtx.m_rt, TextureSubresourceInfo());
-
-	struct PushConsts
-	{
-		F32 m_fogScatteringCoeff;
-		F32 m_fogAbsorptionCoeff;
-		F32 m_density;
-		F32 m_near;
-		Vec3 m_fogDiffuse;
-		F32 m_far;
-	} regs;
-
-	regs.m_fogScatteringCoeff = m_fogScatteringCoeff;
-	regs.m_fogAbsorptionCoeff = m_fogAbsorptionCoeff;
-	regs.m_density = m_fogDensity;
-	regs.m_fogDiffuse = m_fogDiffuseColor;
-	regs.m_near = ctx.m_renderQueue->m_cameraNear;
-	regs.m_far = ctx.m_renderQueue->m_cameraFar;
-
-	cmdb->setPushConstants(&regs, sizeof(regs));
-
-	dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_volumeSize[0], m_volumeSize[1]);
-}
-
 void VolumetricFog::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
@@ -90,12 +57,40 @@ void VolumetricFog::populateRenderGraph(RenderingContext& ctx)
 
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Vol fog");
 
-	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) -> void {
-		run(ctx, rgraphCtx);
-	});
-
 	pass.newDependency({m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
 	pass.newDependency({m_r->getVolumetricLightingAccumulation().getRt(), TextureUsageBit::SAMPLED_COMPUTE});
+
+	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) -> void {
+		CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+
+		cmdb->bindShaderProgram(m_grProg);
+
+		cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
+		rgraphCtx.bindColorTexture(0, 1, m_r->getVolumetricLightingAccumulation().getRt());
+
+		rgraphCtx.bindImage(0, 2, m_runCtx.m_rt, TextureSubresourceInfo());
+
+		struct PushConsts
+		{
+			F32 m_fogScatteringCoeff;
+			F32 m_fogAbsorptionCoeff;
+			F32 m_density;
+			F32 m_near;
+			Vec3 m_fogDiffuse;
+			F32 m_far;
+		} regs;
+
+		regs.m_fogScatteringCoeff = m_fogScatteringCoeff;
+		regs.m_fogAbsorptionCoeff = m_fogAbsorptionCoeff;
+		regs.m_density = m_fogDensity;
+		regs.m_fogDiffuse = m_fogDiffuseColor;
+		regs.m_near = ctx.m_renderQueue->m_cameraNear;
+		regs.m_far = ctx.m_renderQueue->m_cameraFar;
+
+		cmdb->setPushConstants(&regs, sizeof(regs));
+
+		dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_volumeSize[0], m_volumeSize[1]);
+	});
 }
 
 } // end namespace anki
