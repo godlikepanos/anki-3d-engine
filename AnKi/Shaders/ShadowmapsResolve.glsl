@@ -3,8 +3,6 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki start comp
-
 ANKI_SPECIALIZATION_CONSTANT_UVEC2(FB_SIZE, 0u);
 ANKI_SPECIALIZATION_CONSTANT_UVEC2(TILE_COUNTS, 2u);
 ANKI_SPECIALIZATION_CONSTANT_U32(Z_SPLIT_COUNT, 4u);
@@ -16,29 +14,42 @@ ANKI_SPECIALIZATION_CONSTANT_U32(TILE_SIZE, 5u);
 #define CLUSTERED_SHADING_CLUSTERS_BINDING 4
 #include <AnKi/Shaders/ClusteredShadingCommon.glsl>
 
+layout(set = 0, binding = 5) uniform sampler u_linearAnyClampSampler;
+layout(set = 0, binding = 6) uniform texture2D u_depthRt;
+
+#if defined(ANKI_COMPUTE_SHADER)
 const UVec2 WORKGROUP_SIZE = UVec2(8, 8);
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
-
-layout(set = 0, binding = 5, rgba8) writeonly uniform ANKI_RP image2D u_outImg;
-layout(set = 0, binding = 6) uniform sampler u_linearAnyClampSampler;
-layout(set = 0, binding = 7) uniform texture2D u_depthRt;
+layout(set = 0, binding = 7, rgba8) writeonly uniform ANKI_RP image2D u_outImg;
+#else
+layout(location = 0) in Vec2 in_uv;
+layout(location = 0) out Vec4 out_color;
+#endif
 
 void main()
 {
+#if defined(ANKI_COMPUTE_SHADER)
 	if(skipOutOfBoundsInvocations(WORKGROUP_SIZE, FB_SIZE))
 	{
 		return;
 	}
+	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(FB_SIZE);
+#else
+	const Vec2 uv = in_uv;
+#endif
 
 	// World position
-	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(FB_SIZE);
 	const Vec2 ndc = UV_TO_NDC(uv);
 	const F32 depth = textureLod(u_depthRt, u_linearAnyClampSampler, uv, 0.0).r;
 	const Vec4 worldPos4 = u_clusteredShading.m_matrices.m_invertedViewProjectionJitter * Vec4(ndc, depth, 1.0);
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
 	// Cluster
+#if defined(ANKI_COMPUTE_SHADER)
 	const Vec2 fragCoord = uv * u_clusteredShading.m_renderingSize;
+#else
+	const Vec2 fragCoord = gl_FragCoord.xy;
+#endif
 	Cluster cluster = getClusterFragCoord(Vec3(fragCoord, depth), TILE_SIZE, TILE_COUNTS, Z_SPLIT_COUNT,
 										  u_clusteredShading.m_zSplitMagic.x, u_clusteredShading.m_zSplitMagic.y);
 
@@ -111,8 +122,10 @@ void main()
 	}
 
 	// Store
+#if defined(ANKI_COMPUTE_SHADER)
 	imageStore(u_outImg, IVec2(gl_GlobalInvocationID.xy),
 			   Vec4(shadowFactors[0], shadowFactors[1], shadowFactors[2], shadowFactors[3]));
+#else
+	out_color = Vec4(shadowFactors[0], shadowFactors[1], shadowFactors[2], shadowFactors[3]);
+#endif
 }
-
-#pragma anki end

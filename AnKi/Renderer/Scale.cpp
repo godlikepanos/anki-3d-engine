@@ -35,16 +35,32 @@ Error Scale::init()
 		return Error::NONE;
 	}
 
-	ANKI_R_LOGI("Initializing (up|down)scale pass");
-
+	const Bool preferCompute = getConfig().getRPreferCompute();
 	const U32 fsrQuality = getConfig().getRFsr();
 	m_fsr = fsrQuality != 0;
 
 	// Program
 	if(needsScaling)
 	{
-		ANKI_CHECK(getResourceManager().loadResource((m_fsr) ? "Shaders/Fsr.ankiprog" : "Shaders/BlitCompute.ankiprog",
-													 m_scaleProg));
+		CString shaderFname;
+		if(m_fsr && preferCompute)
+		{
+			shaderFname = "Shaders/FsrCompute.ankiprog";
+		}
+		else if(m_fsr)
+		{
+			shaderFname = "Shaders/FsrRaster.ankiprog";
+		}
+		else if(preferCompute)
+		{
+			shaderFname = "Shaders/BlitCompute.ankiprog";
+		}
+		else
+		{
+			shaderFname = "Shaders/BlitRaster.ankiprog";
+		}
+
+		ANKI_CHECK(getResourceManager().loadResource(shaderFname, m_scaleProg));
 		const ShaderProgramResourceVariant* variant;
 		if(m_fsr)
 		{
@@ -62,7 +78,8 @@ Error Scale::init()
 
 	if(needsSharpening)
 	{
-		ANKI_CHECK(getResourceManager().loadResource("Shaders/Fsr.ankiprog", m_sharpenProg));
+		ANKI_CHECK(getResourceManager().loadResource(
+			(preferCompute) ? "Shaders/FsrCompute.ankiprog" : "Shaders/FsrRaster.ankiprog", m_sharpenProg));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_sharpenProg);
 		variantInitInfo.addMutation("SHARPEN", 1);
 		variantInitInfo.addMutation("FSR_QUALITY", 0);
@@ -71,11 +88,14 @@ Error Scale::init()
 		m_sharpenGrProg = variant->getProgram();
 	}
 
-	// The RT desc
+	// Descriptors
 	m_rtDesc =
 		m_r->create2DRenderTargetDescription(m_r->getPostProcessResolution().x(), m_r->getPostProcessResolution().y(),
 											 LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT, "Scaled");
 	m_rtDesc.bake();
+
+	m_fbDescr.m_colorAttachmentCount = 1;
+	m_fbDescr.bake();
 
 	return Error::NONE;
 }
@@ -89,49 +109,88 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		return;
 	}
 
+	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	const Bool preferCompute = getConfig().getRPreferCompute();
+
 	if(doScaling())
 	{
-		RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
-
 		m_runCtx.m_scaledRt = rgraph.newRenderTarget(m_rtDesc);
 
-		ComputeRenderPassDescription& pass = ctx.m_renderGraphDescr.newComputeRenderPass("Scale");
-		pass.newDependency(
-			RenderPassDependency(m_r->getTemporalAA().getTonemappedRt(), TextureUsageBit::SAMPLED_COMPUTE));
-		pass.newDependency(RenderPassDependency(m_runCtx.m_scaledRt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
+		if(preferCompute)
+		{
+			ComputeRenderPassDescription& pass = ctx.m_renderGraphDescr.newComputeRenderPass("Scale");
+			pass.newDependency(
+				RenderPassDependency(m_r->getTemporalAA().getTonemappedRt(), TextureUsageBit::SAMPLED_COMPUTE));
+			pass.newDependency(RenderPassDependency(m_runCtx.m_scaledRt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
 
-		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
-			runScaling(rgraphCtx);
-		});
+			pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+				runScaling(rgraphCtx);
+			});
+		}
+		else
+		{
+			GraphicsRenderPassDescription& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Scale");
+			pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_scaledRt}, {});
+
+			pass.newDependency(
+				RenderPassDependency(m_r->getTemporalAA().getTonemappedRt(), TextureUsageBit::SAMPLED_FRAGMENT));
+			pass.newDependency(
+				RenderPassDependency(m_runCtx.m_scaledRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
+
+			pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+				runScaling(rgraphCtx);
+			});
+		}
 	}
 
 	if(doSharpening())
 	{
-		RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
-
 		m_runCtx.m_sharpenedRt = rgraph.newRenderTarget(m_rtDesc);
 
-		ComputeRenderPassDescription& pass = ctx.m_renderGraphDescr.newComputeRenderPass("Sharpen");
-		pass.newDependency(
-			RenderPassDependency((!doScaling()) ? m_r->getTemporalAA().getTonemappedRt() : m_runCtx.m_scaledRt,
-								 TextureUsageBit::SAMPLED_COMPUTE));
-		pass.newDependency(RenderPassDependency(m_runCtx.m_sharpenedRt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
+		if(preferCompute)
+		{
+			ComputeRenderPassDescription& pass = ctx.m_renderGraphDescr.newComputeRenderPass("Sharpen");
+			pass.newDependency(
+				RenderPassDependency((!doScaling()) ? m_r->getTemporalAA().getTonemappedRt() : m_runCtx.m_scaledRt,
+									 TextureUsageBit::SAMPLED_COMPUTE));
+			pass.newDependency(RenderPassDependency(m_runCtx.m_sharpenedRt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
 
-		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
-			runSharpening(rgraphCtx);
-		});
+			pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+				runSharpening(rgraphCtx);
+			});
+		}
+		else
+		{
+			GraphicsRenderPassDescription& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Sharpen");
+			pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_sharpenedRt}, {});
+
+			pass.newDependency(
+				RenderPassDependency((!doScaling()) ? m_r->getTemporalAA().getTonemappedRt() : m_runCtx.m_scaledRt,
+									 TextureUsageBit::SAMPLED_FRAGMENT));
+			pass.newDependency(
+				RenderPassDependency(m_runCtx.m_sharpenedRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
+
+			pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+				runSharpening(rgraphCtx);
+			});
+		}
 	}
 }
 
 void Scale::runScaling(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	const Bool preferCompute = getConfig().getRPreferCompute();
 
 	cmdb->bindShaderProgram(m_scaleGrProg);
 
 	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
 	rgraphCtx.bindColorTexture(0, 1, m_r->getTemporalAA().getTonemappedRt());
-	rgraphCtx.bindImage(0, 2, m_runCtx.m_scaledRt);
+
+	if(preferCompute)
+	{
+		rgraphCtx.bindImage(0, 2, m_runCtx.m_scaledRt);
+	}
 
 	if(m_fsr)
 	{
@@ -155,7 +214,7 @@ void Scale::runScaling(RenderPassWorkContext& rgraphCtx)
 
 		cmdb->setPushConstants(&pc, sizeof(pc));
 	}
-	else
+	else if(preferCompute)
 	{
 		class
 		{
@@ -169,18 +228,31 @@ void Scale::runScaling(RenderPassWorkContext& rgraphCtx)
 		cmdb->setPushConstants(&pc, sizeof(pc));
 	}
 
-	dispatchPPCompute(cmdb, 8, 8, m_r->getPostProcessResolution().x(), m_r->getPostProcessResolution().y());
+	if(preferCompute)
+	{
+		dispatchPPCompute(cmdb, 8, 8, m_r->getPostProcessResolution().x(), m_r->getPostProcessResolution().y());
+	}
+	else
+	{
+		cmdb->setViewport(0, 0, m_r->getPostProcessResolution().x(), m_r->getPostProcessResolution().y());
+		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
+	}
 }
 
 void Scale::runSharpening(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	const Bool preferCompute = getConfig().getRPreferCompute();
 
 	cmdb->bindShaderProgram(m_sharpenGrProg);
 
 	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
 	rgraphCtx.bindColorTexture(0, 1, (!doScaling()) ? m_r->getTemporalAA().getTonemappedRt() : m_runCtx.m_scaledRt);
-	rgraphCtx.bindImage(0, 2, m_runCtx.m_sharpenedRt);
+
+	if(preferCompute)
+	{
+		rgraphCtx.bindImage(0, 2, m_runCtx.m_sharpenedRt);
+	}
 
 	class
 	{
@@ -199,7 +271,15 @@ void Scale::runSharpening(RenderPassWorkContext& rgraphCtx)
 
 	cmdb->setPushConstants(&pc, sizeof(pc));
 
-	dispatchPPCompute(cmdb, 8, 8, m_r->getPostProcessResolution().x(), m_r->getPostProcessResolution().y());
+	if(preferCompute)
+	{
+		dispatchPPCompute(cmdb, 8, 8, m_r->getPostProcessResolution().x(), m_r->getPostProcessResolution().y());
+	}
+	else
+	{
+		cmdb->setViewport(0, 0, m_r->getPostProcessResolution().x(), m_r->getPostProcessResolution().y());
+		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
+	}
 }
 
 } // end namespace anki

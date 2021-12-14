@@ -6,13 +6,16 @@
 #pragma anki mutator SHARPEN 0 1
 #pragma anki mutator FSR_QUALITY 0 1
 
-#pragma anki start comp
-
 #include <AnKi/Shaders/Functions.glsl>
 
 layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 1) uniform ANKI_RP texture2D u_tex;
+#if defined(ANKI_COMPUTE_SHADER)
 layout(set = 0, binding = 2) writeonly uniform ANKI_RP image2D u_outImg;
+layout(local_size_x = 8, local_size_y = 8) in;
+#else
+layout(location = 0) out Vec3 out_color;
+#endif
 
 layout(push_constant, std430) uniform b_pc
 {
@@ -69,25 +72,31 @@ AH3 FsrEasuSampleH(AF2 p)
 #include <ThirdParty/FidelityFX/ffx_fsr1.h>
 // FSR end
 
-layout(local_size_x = 8, local_size_y = 8) in;
-
 void main()
 {
+#if defined(ANKI_COMPUTE_SHADER)
 	if(skipOutOfBoundsInvocations(UVec2(8u), u_viewportSize))
 	{
 		return;
 	}
 
-	HVec3 color;
-#if SHARPEN
-	FsrRcasH(color.r, color.g, color.b, gl_GlobalInvocationID.xy, u_fsrConsts0);
-#elif FSR_QUALITY == 0
-	FsrEasuL(color, gl_GlobalInvocationID.xy, u_fsrConsts0, u_fsrConsts1, u_fsrConsts2, u_fsrConsts3);
+	const UVec2 uv = gl_GlobalInvocationID.xy;
 #else
-	FsrEasuH(color, gl_GlobalInvocationID.xy, u_fsrConsts0, u_fsrConsts1, u_fsrConsts2, u_fsrConsts3);
+	const UVec2 uv = UVec2(gl_FragCoord.xy);
 #endif
 
-	imageStore(u_outImg, IVec2(gl_GlobalInvocationID.xy), Vec4(color, 0.0));
-}
+	HVec3 color;
+#if SHARPEN
+	FsrRcasH(color.r, color.g, color.b, uv, u_fsrConsts0);
+#elif FSR_QUALITY == 0
+	FsrEasuL(color, uv, u_fsrConsts0, u_fsrConsts1, u_fsrConsts2, u_fsrConsts3);
+#else
+	FsrEasuH(color, uv, u_fsrConsts0, u_fsrConsts1, u_fsrConsts2, u_fsrConsts3);
+#endif
 
-#pragma anki end
+#if defined(ANKI_COMPUTE_SHADER)
+	imageStore(u_outImg, IVec2(gl_GlobalInvocationID.xy), Vec4(color, 0.0));
+#else
+	out_color = Vec3(color);
+#endif
+}

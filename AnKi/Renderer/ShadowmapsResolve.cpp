@@ -32,14 +32,25 @@ Error ShadowmapsResolve::initInternal()
 	width = min(m_r->getInternalResolution().x(), getAlignedRoundUp(4, width));
 	U32 height = U32(getConfig().getRSmResolveFactor() * F32(m_r->getInternalResolution().y()));
 	height = min(m_r->getInternalResolution().y(), getAlignedRoundUp(4, height));
-	ANKI_R_LOGI("Initializing shadow resolve pass. Size %ux%u", width, height);
 
 	m_rtDescr = m_r->create2DRenderTargetDescription(width, height, Format::R8G8B8A8_UNORM, "SM resolve");
 	m_rtDescr.bake();
 
-	ANKI_CHECK(getResourceManager().loadResource("Shaders/ShadowmapsResolve.ankiprog", m_prog));
+	// Create FB descr
+	m_fbDescr.m_colorAttachmentCount = 1;
+	m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
+	m_fbDescr.bake();
+
+	// Prog
+	ANKI_CHECK(getResourceManager().loadResource((getConfig().getRPreferCompute())
+													 ? "Shaders/ShadowmapsResolveCompute.ankiprog"
+													 : "Shaders/ShadowmapsResolveRaster.ankiprog",
+												 m_prog));
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-	variantInitInfo.addConstant("FB_SIZE", UVec2(width, height));
+	if(getConfig().getRPreferCompute())
+	{
+		variantInitInfo.addConstant("FB_SIZE", UVec2(width, height));
+	}
 	variantInitInfo.addConstant("TILE_COUNTS", m_r->getTileCounts());
 	variantInitInfo.addConstant("Z_SPLIT_COUNT", m_r->getZSplitCount());
 	variantInitInfo.addConstant("TILE_SIZE", m_r->getTileSize());
@@ -55,18 +66,39 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
 
-	ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("SM resolve");
-	rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
-		run(ctx, rgraphCtx);
-	});
+	if(getConfig().getRPreferCompute())
+	{
+		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("SM resolve");
 
-	rpass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
-	rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_COMPUTE));
-	rpass.newDependency(
-		RenderPassDependency(m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::SAMPLED_COMPUTE));
+		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+			run(ctx, rgraphCtx);
+		});
 
-	rpass.newDependency(
-		RenderPassDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::STORAGE_COMPUTE_READ));
+		rpass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
+		rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_COMPUTE));
+		rpass.newDependency(
+			RenderPassDependency(m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::SAMPLED_COMPUTE));
+
+		rpass.newDependency(
+			RenderPassDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::STORAGE_COMPUTE_READ));
+	}
+	else
+	{
+		GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("SM resolve");
+		rpass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_rt}, {});
+
+		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+			run(ctx, rgraphCtx);
+		});
+
+		rpass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
+		rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_FRAGMENT));
+		rpass.newDependency(
+			RenderPassDependency(m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::SAMPLED_FRAGMENT));
+
+		rpass.newDependency(
+			RenderPassDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::STORAGE_FRAGMENT_READ));
+	}
 }
 
 void ShadowmapsResolve::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
@@ -82,11 +114,19 @@ void ShadowmapsResolve::run(const RenderingContext& ctx, RenderPassWorkContext& 
 	rgraphCtx.bindColorTexture(0, 3, m_r->getShadowMapping().getShadowmapRt());
 	bindStorage(cmdb, 0, 4, rsrc.m_clustersToken);
 
-	rgraphCtx.bindImage(0, 5, m_runCtx.m_rt, TextureSubresourceInfo());
-	cmdb->bindSampler(0, 6, m_r->getSamplers().m_trilinearClamp);
-	rgraphCtx.bindTexture(0, 7, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+	cmdb->bindSampler(0, 5, m_r->getSamplers().m_trilinearClamp);
+	rgraphCtx.bindTexture(0, 6, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
 
-	dispatchPPCompute(cmdb, 8, 8, m_rtDescr.m_width, m_rtDescr.m_height);
+	if(getConfig().getRPreferCompute())
+	{
+		rgraphCtx.bindImage(0, 7, m_runCtx.m_rt, TextureSubresourceInfo());
+		dispatchPPCompute(cmdb, 8, 8, m_rtDescr.m_width, m_rtDescr.m_height);
+	}
+	else
+	{
+		cmdb->setViewport(0, 0, m_rtDescr.m_width, m_rtDescr.m_height);
+		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
+	}
 }
 
 } // end namespace anki
