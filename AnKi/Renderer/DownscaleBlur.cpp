@@ -6,6 +6,7 @@
 #include <AnKi/Renderer/DownscaleBlur.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/TemporalAA.h>
+#include <AnKi/Core/ConfigSet.h>
 
 namespace anki {
 
@@ -30,14 +31,15 @@ Error DownscaleBlur::initInternal()
 	m_passCount = computeMaxMipmapCount2d(m_r->getPostProcessResolution().x(), m_r->getPostProcessResolution().y(),
 										  DOWNSCALE_BLUR_DOWN_TO)
 				  - 1;
-	ANKI_R_LOGI("Initializing dowscale blur (passCount: %u)", m_passCount);
+
+	const Bool preferCompute = getConfig().getRPreferCompute();
 
 	// Create the miped texture
 	TextureInitInfo texinit = m_r->create2DRenderTargetDescription(
 		m_r->getPostProcessResolution().x() / 2, m_r->getPostProcessResolution().y() / 2,
 		LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT, "DownscaleBlur");
 	texinit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE;
-	if(m_useCompute)
+	if(preferCompute)
 	{
 		texinit.m_usage |= TextureUsageBit::SAMPLED_COMPUTE | TextureUsageBit::IMAGE_COMPUTE_WRITE;
 	}
@@ -50,7 +52,7 @@ Error DownscaleBlur::initInternal()
 	m_rtTex = m_r->createAndClearRenderTarget(texinit);
 
 	// FB descr
-	if(!m_useCompute)
+	if(!preferCompute)
 	{
 		m_fbDescrs.create(getAllocator(), m_passCount);
 		for(U32 pass = 0; pass < m_passCount; ++pass)
@@ -63,20 +65,10 @@ Error DownscaleBlur::initInternal()
 	}
 
 	// Shader programs
+	ANKI_CHECK(getResourceManager().loadResource(
+		(preferCompute) ? "Shaders/DownscaleBlurCompute.ankiprog" : "Shaders/DownscaleBlurRaster.ankiprog", m_prog));
 	const ShaderProgramResourceVariant* variant = nullptr;
-	if(m_useCompute)
-	{
-		ANKI_CHECK(getResourceManager().loadResource("Shaders/DownscaleBlurCompute.ankiprog", m_prog));
-		m_prog->getOrCreateVariant(variant);
-		m_workgroupSize[0] = variant->getWorkgroupSizes()[0];
-		m_workgroupSize[1] = variant->getWorkgroupSizes()[1];
-		ANKI_ASSERT(variant->getWorkgroupSizes()[2] == 1);
-	}
-	else
-	{
-		ANKI_CHECK(getResourceManager().loadResource("Shaders/DownscaleBlurRaster.ankiprog", m_prog));
-		m_prog->getOrCreateVariant(variant);
-	}
+	m_prog->getOrCreateVariant(variant);
 	m_grProg = variant->getProgram();
 
 	return Error::NONE;
@@ -95,7 +87,7 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 	// Create passes
 	static const Array<CString, 8> passNames = {"DownBlur #0",  "Down/Blur #1", "Down/Blur #2", "Down/Blur #3",
 												"Down/Blur #4", "Down/Blur #5", "Down/Blur #6", "Down/Blur #7"};
-	if(m_useCompute)
+	if(getConfig().getRPreferCompute())
 	{
 		for(U32 i = 0; i < m_passCount; ++i)
 		{
@@ -178,7 +170,7 @@ void DownscaleBlur::run(U32 passIdx, RenderPassWorkContext& rgraphCtx)
 		rgraphCtx.bindColorTexture(0, 1, m_r->getTemporalAA().getHdrRt());
 	}
 
-	if(m_useCompute)
+	if(getConfig().getRPreferCompute())
 	{
 		TextureSubresourceInfo sampleSubresource;
 		sampleSubresource.m_firstMipmap = passIdx;
@@ -186,16 +178,14 @@ void DownscaleBlur::run(U32 passIdx, RenderPassWorkContext& rgraphCtx)
 
 		UVec4 fbSize(vpWidth, vpHeight, 0, 0);
 		cmdb->setPushConstants(&fbSize, sizeof(fbSize));
-	}
 
-	if(m_useCompute)
-	{
 		dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], vpWidth, vpHeight);
 	}
 	else
 	{
 		cmdb->setViewport(0, 0, vpWidth, vpHeight);
-		drawQuad(cmdb);
+
+		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
 	}
 }
 
