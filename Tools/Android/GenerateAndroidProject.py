@@ -56,10 +56,12 @@ def main():
     ctx = parse_commandline()
     this_script_dir = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
 
-    # Copy dir
+    # Copy template
     project_dir = os.path.join(ctx.out_dir, "AndroidProject_%s" % ctx.target)
     if not os.path.isdir(project_dir):
         shutil.copytree(this_script_dir, project_dir)
+    else:
+        print("Project directory (%s) already exists. Won't copy template" % project_dir)
 
     # RM the script
     try:
@@ -80,6 +82,8 @@ def main():
         os.symlink(os.path.join(this_script_dir, "../../ThirdParty/FidelityFX"),
                    os.path.join(project_dir, "assets/ThirdParty/FidelityFX"))
         os.symlink(ctx.asserts_dir, os.path.join(project_dir, "assets/Assets"))
+    else:
+        print("Asset directory (%s) already exists. Skipping" % assets_dir)
 
     # Write the asset directory structure to a file
     dir_structure_file = open(os.path.join(assets_dir, "DirStructure.txt"), "w", newline="\n")
