@@ -44,6 +44,7 @@ public:
 
 private:
 	Array<TexturePtr, 2> m_rts;
+	FramebufferDescription m_fbDescr;
 	Bool m_rtsImportedOnce = false;
 
 	static constexpr U32 READ = 0;

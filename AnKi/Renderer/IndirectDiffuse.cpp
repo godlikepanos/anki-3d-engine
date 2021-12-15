@@ -33,19 +33,27 @@ Error IndirectDiffuse::initInternal()
 {
 	const UVec2 size = m_r->getInternalResolution() / 2;
 	ANKI_ASSERT((m_r->getInternalResolution() % 2) == UVec2(0u) && "Needs to be dividable for proper upscaling");
+	const Bool preferCompute = getConfig().getRPreferCompute();
 
 	// Init textures
-	TextureInitInfo texInit = m_r->create2DRenderTargetInitInfo(
-		size.x(), size.y(), Format::B10G11R11_UFLOAT_PACK32,
-		TextureUsageBit::IMAGE_COMPUTE_WRITE | TextureUsageBit::ALL_SAMPLED, "IndirectDiffuse #1");
+	TextureUsageBit usage = TextureUsageBit::ALL_SAMPLED;
+
+	usage |= (preferCompute) ? TextureUsageBit::IMAGE_COMPUTE_WRITE : TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
+	TextureInitInfo texInit = m_r->create2DRenderTargetInitInfo(size.x(), size.y(), Format::B10G11R11_UFLOAT_PACK32,
+																usage, "IndirectDiffuse #1");
 	texInit.m_initialUsage = TextureUsageBit::ALL_SAMPLED;
 	m_rts[0] = m_r->createAndClearRenderTarget(texInit);
 	texInit.setName("IndirectDiffuse #2");
 	m_rts[1] = m_r->createAndClearRenderTarget(texInit);
 
+	m_fbDescr.m_colorAttachmentCount = 1;
+	m_fbDescr.bake();
+
 	// Init SSGI+probes pass
 	{
-		ANKI_CHECK(getResourceManager().loadResource("Shaders/IndirectDiffuse.ankiprog", m_main.m_prog));
+		ANKI_CHECK(getResourceManager().loadResource((preferCompute) ? "Shaders/IndirectDiffuseCompute.ankiprog"
+																	 : "Shaders/IndirectDiffuseRaster.ankiprog",
+													 m_main.m_prog));
 
 		const ShaderProgramResourceVariant* variant;
 		m_main.m_prog->getOrCreateVariant(variant);
@@ -54,7 +62,9 @@ Error IndirectDiffuse::initInternal()
 
 	// Init denoise
 	{
-		ANKI_CHECK(getResourceManager().loadResource("Shaders/IndirectDiffuseDenoise.ankiprog", m_denoise.m_prog));
+		ANKI_CHECK(getResourceManager().loadResource((preferCompute) ? "Shaders/IndirectDiffuseDenoiseCompute.ankiprog"
+																	 : "Shaders/IndirectDiffuseDenoiseRaster.ankiprog",
+													 m_denoise.m_prog));
 
 		ShaderProgramResourceVariantInitInfo variantInit(m_denoise.m_prog);
 		variantInit.addMutation("BLUR_ORIENTATION", 0);
@@ -73,6 +83,7 @@ Error IndirectDiffuse::initInternal()
 void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	const Bool preferCompute = getConfig().getRPreferCompute();
 
 	// SSGI+probes
 	{
@@ -92,23 +103,38 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 		}
 
 		// Create main pass
-		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("IndirectDiffuse");
+		TextureUsageBit readUsage;
+		TextureUsageBit writeUsage;
+		RenderPassDescriptionBase* prpass;
+		if(preferCompute)
+		{
+			ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("IndirectDiffuse");
+			readUsage = TextureUsageBit::SAMPLED_COMPUTE;
+			writeUsage = TextureUsageBit::IMAGE_COMPUTE_WRITE;
+			prpass = &rpass;
+		}
+		else
+		{
+			GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("IndirectDiffuse");
+			rpass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_mainRtHandles[WRITE]}, {});
+			readUsage = TextureUsageBit::SAMPLED_FRAGMENT;
+			writeUsage = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
+			prpass = &rpass;
+		}
 
-		rpass.newDependency(
-			RenderPassDependency(m_runCtx.m_mainRtHandles[WRITE], TextureUsageBit::IMAGE_COMPUTE_WRITE));
+		prpass->newDependency(RenderPassDependency(m_runCtx.m_mainRtHandles[WRITE], writeUsage));
 
-		const TextureUsageBit readUsage = TextureUsageBit::SAMPLED_COMPUTE;
-		m_r->getIndirectDiffuseProbes().setRenderGraphDependencies(ctx, rpass, readUsage);
-		rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(2), readUsage));
+		m_r->getIndirectDiffuseProbes().setRenderGraphDependencies(ctx, *prpass, readUsage);
+		prpass->newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(2), readUsage));
 		TextureSubresourceInfo hizSubresource;
 		hizSubresource.m_mipmapCount = 1;
-		rpass.newDependency(RenderPassDependency(m_r->getDepthDownscale().getHiZRt(), readUsage, hizSubresource));
-		rpass.newDependency(RenderPassDependency(m_r->getDownscaleBlur().getRt(), readUsage));
-		rpass.newDependency(RenderPassDependency(m_r->getMotionVectors().getMotionVectorsRt(), readUsage));
-		rpass.newDependency(RenderPassDependency(m_r->getMotionVectors().getRejectionFactorRt(), readUsage));
-		rpass.newDependency(RenderPassDependency(m_runCtx.m_mainRtHandles[READ], readUsage));
+		prpass->newDependency(RenderPassDependency(m_r->getDepthDownscale().getHiZRt(), readUsage, hizSubresource));
+		prpass->newDependency(RenderPassDependency(m_r->getDownscaleBlur().getRt(), readUsage));
+		prpass->newDependency(RenderPassDependency(m_r->getMotionVectors().getMotionVectorsRt(), readUsage));
+		prpass->newDependency(RenderPassDependency(m_r->getMotionVectors().getRejectionFactorRt(), readUsage));
+		prpass->newDependency(RenderPassDependency(m_runCtx.m_mainRtHandles[READ], readUsage));
 
-		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+		prpass->setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 			cmdb->bindShaderProgram(m_main.m_grProg);
 
@@ -118,18 +144,21 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			bindUniforms(cmdb, 0, 2, binning.m_globalIlluminationProbesToken);
 			bindStorage(cmdb, 0, 3, binning.m_clustersToken);
 
-			rgraphCtx.bindImage(0, 4, m_runCtx.m_mainRtHandles[WRITE]);
-
-			cmdb->bindSampler(0, 5, m_r->getSamplers().m_trilinearClamp);
-			rgraphCtx.bindColorTexture(0, 6, m_r->getGBuffer().getColorRt(2));
+			cmdb->bindSampler(0, 4, m_r->getSamplers().m_trilinearClamp);
+			rgraphCtx.bindColorTexture(0, 5, m_r->getGBuffer().getColorRt(2));
 
 			TextureSubresourceInfo hizSubresource;
 			hizSubresource.m_mipmapCount = 1;
-			rgraphCtx.bindTexture(0, 7, m_r->getDepthDownscale().getHiZRt(), hizSubresource);
-			rgraphCtx.bindColorTexture(0, 8, m_r->getDownscaleBlur().getRt());
-			rgraphCtx.bindColorTexture(0, 9, m_runCtx.m_mainRtHandles[READ]);
-			rgraphCtx.bindColorTexture(0, 10, m_r->getMotionVectors().getMotionVectorsRt());
-			rgraphCtx.bindColorTexture(0, 11, m_r->getMotionVectors().getRejectionFactorRt());
+			rgraphCtx.bindTexture(0, 6, m_r->getDepthDownscale().getHiZRt(), hizSubresource);
+			rgraphCtx.bindColorTexture(0, 7, m_r->getDownscaleBlur().getRt());
+			rgraphCtx.bindColorTexture(0, 8, m_runCtx.m_mainRtHandles[READ]);
+			rgraphCtx.bindColorTexture(0, 9, m_r->getMotionVectors().getMotionVectorsRt());
+			rgraphCtx.bindColorTexture(0, 10, m_r->getMotionVectors().getRejectionFactorRt());
+
+			if(getConfig().getRPreferCompute())
+			{
+				rgraphCtx.bindImage(0, 11, m_runCtx.m_mainRtHandles[WRITE]);
+			}
 
 			// Bind uniforms
 			IndirectDiffuseUniforms unis;
@@ -144,32 +173,54 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			unis.m_ssaoStrength = getConfig().getRIndirectDiffuseSsaoStrength();
 			cmdb->setPushConstants(&unis, sizeof(unis));
 
-			// Dispatch
-			dispatchPPCompute(cmdb, 8, 8, unis.m_viewportSize.x(), unis.m_viewportSize.y());
+			if(getConfig().getRPreferCompute())
+			{
+				dispatchPPCompute(cmdb, 8, 8, unis.m_viewportSize.x(), unis.m_viewportSize.y());
+			}
+			else
+			{
+				cmdb->setViewport(0, 0, unis.m_viewportSize.x(), unis.m_viewportSize.y());
+
+				cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
+			}
 		});
 	}
 
 	// Denoise
 	for(U32 dir = 0; dir < 2; ++dir)
 	{
-		ComputeRenderPassDescription& rpass =
-			rgraph.newComputeRenderPass((dir == 0) ? "IndirectDiffuseDenoiseH" : "IndirectDiffuseDenoiseV");
-
-		const TextureUsageBit readUsage = TextureUsageBit::SAMPLED_COMPUTE;
 		const U32 readIdx = (dir == 0) ? WRITE : READ;
 
-		rpass.newDependency(RenderPassDependency(m_runCtx.m_mainRtHandles[readIdx], readUsage));
+		TextureUsageBit readUsage;
+		TextureUsageBit writeUsage;
+		RenderPassDescriptionBase* prpass;
+		if(preferCompute)
+		{
+			ComputeRenderPassDescription& rpass =
+				rgraph.newComputeRenderPass((dir == 0) ? "IndirectDiffuseDenoiseH" : "IndirectDiffuseDenoiseV");
+			readUsage = TextureUsageBit::SAMPLED_COMPUTE;
+			writeUsage = TextureUsageBit::IMAGE_COMPUTE_WRITE;
+			prpass = &rpass;
+		}
+		else
+		{
+			GraphicsRenderPassDescription& rpass =
+				rgraph.newGraphicsRenderPass((dir == 0) ? "IndirectDiffuseDenoiseH" : "IndirectDiffuseDenoiseV");
+			rpass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_mainRtHandles[!readIdx]}, {});
+			readUsage = TextureUsageBit::SAMPLED_FRAGMENT;
+			writeUsage = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
+			prpass = &rpass;
+		}
+
+		prpass->newDependency(RenderPassDependency(m_runCtx.m_mainRtHandles[readIdx], readUsage));
 
 		TextureSubresourceInfo hizSubresource;
 		hizSubresource.m_mipmapCount = 1;
-		rpass.newDependency(RenderPassDependency(m_r->getDepthDownscale().getHiZRt(), readUsage, hizSubresource));
+		prpass->newDependency(RenderPassDependency(m_r->getDepthDownscale().getHiZRt(), readUsage, hizSubresource));
+		prpass->newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(2), readUsage));
+		prpass->newDependency(RenderPassDependency(m_runCtx.m_mainRtHandles[!readIdx], writeUsage));
 
-		rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(2), readUsage));
-
-		rpass.newDependency(
-			RenderPassDependency(m_runCtx.m_mainRtHandles[!readIdx], TextureUsageBit::IMAGE_COMPUTE_WRITE));
-
-		rpass.setWork([this, &ctx, dir, readIdx](RenderPassWorkContext& rgraphCtx) {
+		prpass->setWork([this, &ctx, dir, readIdx](RenderPassWorkContext& rgraphCtx) {
 			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 			cmdb->bindShaderProgram(m_denoise.m_grProgs[dir]);
 
@@ -179,7 +230,11 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			hizSubresource.m_mipmapCount = 1;
 			rgraphCtx.bindTexture(0, 2, m_r->getDepthDownscale().getHiZRt(), hizSubresource);
 			rgraphCtx.bindColorTexture(0, 3, m_r->getGBuffer().getColorRt(2));
-			rgraphCtx.bindImage(0, 4, m_runCtx.m_mainRtHandles[!readIdx]);
+
+			if(getConfig().getRPreferCompute())
+			{
+				rgraphCtx.bindImage(0, 4, m_runCtx.m_mainRtHandles[!readIdx]);
+			}
 
 			IndirectDiffuseDenoiseUniforms unis;
 			unis.m_invertedViewProjectionJitterMat = ctx.m_matrices.m_invertedViewProjectionJitter;
@@ -190,8 +245,16 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb->setPushConstants(&unis, sizeof(unis));
 
-			// Dispatch
-			dispatchPPCompute(cmdb, 8, 8, unis.m_viewportSize.x(), unis.m_viewportSize.y());
+			if(getConfig().getRPreferCompute())
+			{
+				dispatchPPCompute(cmdb, 8, 8, unis.m_viewportSize.x(), unis.m_viewportSize.y());
+			}
+			else
+			{
+				cmdb->setViewport(0, 0, unis.m_viewportSize.x(), unis.m_viewportSize.y());
+
+				cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
+			}
 		});
 	}
 }

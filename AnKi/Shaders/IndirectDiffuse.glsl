@@ -13,15 +13,11 @@ ANKI_SPECIALIZATION_CONSTANT_U32(SAMPLE_COUNT, 6u);
 #define REPROJECT_LIGHTBUFFER false
 #define SSGI_PROBE_COMBINE(ssgiColor, probeColor) ((ssgiColor) + (probeColor))
 
-#pragma anki start comp
 #include <AnKi/Shaders/Functions.glsl>
 #include <AnKi/Shaders/PackFunctions.glsl>
 #include <AnKi/Shaders/ImportanceSampling.glsl>
 #include <AnKi/Shaders/TonemappingFunctions.glsl>
 #include <AnKi/Shaders/Include/IndirectDiffuseTypes.h>
-
-const UVec2 WORKGROUP_SIZE = UVec2(8, 8);
-layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y) in;
 
 #define CLUSTERED_SHADING_SET 0
 #define CLUSTERED_SHADING_UNIFORMS_BINDING 0
@@ -29,15 +25,23 @@ layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y) in;
 #define CLUSTERED_SHADING_CLUSTERS_BINDING 3
 #include <AnKi/Shaders/ClusteredShadingCommon.glsl>
 
-layout(set = 0, binding = 4) writeonly uniform image2D u_outImage;
+layout(set = 0, binding = 4) uniform sampler u_linearAnyClampSampler;
+layout(set = 0, binding = 5) ANKI_RP uniform texture2D u_gbufferRt2;
+layout(set = 0, binding = 6) uniform texture2D u_depthRt;
+layout(set = 0, binding = 7) ANKI_RP uniform texture2D u_lightBufferRt;
+layout(set = 0, binding = 8) ANKI_RP uniform texture2D u_historyTex;
+layout(set = 0, binding = 9) uniform texture2D u_motionVectorsTex;
+layout(set = 0, binding = 10) uniform texture2D u_motionVectorsRejectionTex;
 
-layout(set = 0, binding = 5) uniform sampler u_linearAnyClampSampler;
-layout(set = 0, binding = 6) ANKI_RP uniform texture2D u_gbufferRt2;
-layout(set = 0, binding = 7) uniform texture2D u_depthRt;
-layout(set = 0, binding = 8) ANKI_RP uniform texture2D u_lightBufferRt;
-layout(set = 0, binding = 9) ANKI_RP uniform texture2D u_historyTex;
-layout(set = 0, binding = 10) uniform texture2D u_motionVectorsTex;
-layout(set = 0, binding = 11) uniform texture2D u_motionVectorsRejectionTex;
+#if defined(ANKI_COMPUTE_SHADER)
+const UVec2 WORKGROUP_SIZE = UVec2(8, 8);
+layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y) in;
+
+layout(set = 0, binding = 11) writeonly uniform image2D u_outImage;
+#else
+layout(location = 0) in Vec2 in_uv;
+layout(location = 0) out Vec3 out_color;
+#endif
 
 layout(push_constant, std430) uniform b_pc
 {
@@ -52,6 +56,7 @@ Vec4 cheapProject(Vec4 point)
 
 void main()
 {
+#if defined(ANKI_COMPUTE_SHADER)
 	if(gl_GlobalInvocationID.x >= u_unis.m_viewportSize.x || gl_GlobalInvocationID.y >= u_unis.m_viewportSize.y)
 	{
 		return;
@@ -59,6 +64,11 @@ void main()
 
 	const Vec2 fragCoord = Vec2(gl_GlobalInvocationID.xy) + 0.5;
 	const Vec2 uv = fragCoord / u_unis.m_viewportSizef;
+#else
+	const Vec2 fragCoord = gl_FragCoord.xy;
+	const Vec2 uv = in_uv;
+#endif
+
 	const Vec2 ndc = UV_TO_NDC(uv);
 
 	// Get normal
@@ -84,7 +94,12 @@ void main()
 		const ANKI_RP F32 projRadius = length(projSphereLimit2 - ndc);
 
 		// Loop to compute
-		const UVec2 random = rand3DPCG16(UVec3(gl_GlobalInvocationID.xy, u_clusteredShading.m_frame)).xy;
+#if defined(ANKI_COMPUTE_SHADER)
+		const UVec2 globalInvocation = gl_GlobalInvocationID.xy;
+#else
+		const UVec2 globalInvocation = UVec2(gl_FragCoord.xy);
+#endif
+		const UVec2 random = rand3DPCG16(UVec3(globalInvocation, u_clusteredShading.m_frame)).xy;
 		for(U32 i = 0u; i < u_unis.m_sampleCount; ++i)
 		{
 			const Vec2 point = UV_TO_NDC(hammersleyRandom16(i, u_unis.m_sampleCount, random));
@@ -214,7 +229,9 @@ void main()
 	}
 
 	// Store color
+#if defined(ANKI_COMPUTE_SHADER)
 	imageStore(u_outImage, IVec2(gl_GlobalInvocationID.xy), Vec4(outColor, 1.0));
+#else
+	out_color = outColor;
+#endif
 }
-
-#pragma anki end
