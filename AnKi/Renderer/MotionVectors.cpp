@@ -7,6 +7,7 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/RenderQueue.h>
+#include <AnKi/Core/ConfigSet.h>
 
 namespace anki {
 
@@ -16,8 +17,21 @@ MotionVectors::~MotionVectors()
 
 Error MotionVectors::init()
 {
+	const Error err = initInternal();
+	if(err)
+	{
+		ANKI_R_LOGE("Failed to initialize motion vectors");
+	}
+	return err;
+}
+
+Error MotionVectors::initInternal()
+{
 	// Prog
-	ANKI_CHECK(getResourceManager().loadResource("Shaders/MotionVectors.ankiprog", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource((getConfig().getRPreferCompute())
+													 ? "Shaders/MotionVectorsCompute.ankiprog"
+													 : "Shaders/MotionVectorsRaster.ankiprog",
+												 m_prog));
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addConstant("FB_SIZE", UVec2(m_r->getInternalResolution().x(), m_r->getInternalResolution().y()));
 	const ShaderProgramResourceVariant* variant;
@@ -33,6 +47,9 @@ Error MotionVectors::init()
 		m_r->getInternalResolution().x(), m_r->getInternalResolution().y(), Format::R8_UNORM, "Motion vectors rej");
 	m_rejectionFactorRtDescr.bake();
 
+	m_fbDescr.m_colorAttachmentCount = 2;
+	m_fbDescr.bake();
+
 	return Error::NONE;
 }
 
@@ -43,17 +60,36 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 	m_runCtx.m_motionVectorsRtHandle = rgraph.newRenderTarget(m_motionVectorsRtDescr);
 	m_runCtx.m_rejectionFactorRtHandle = rgraph.newRenderTarget(m_rejectionFactorRtDescr);
 
-	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Motion vectors");
+	RenderPassDescriptionBase* ppass;
+	TextureUsageBit readUsage;
+	TextureUsageBit writeUsage;
+	if(getConfig().getRPreferCompute())
+	{
+		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Motion vectors");
 
-	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) -> void {
+		readUsage = TextureUsageBit::SAMPLED_COMPUTE;
+		writeUsage = TextureUsageBit::IMAGE_COMPUTE_WRITE;
+		ppass = &pass;
+	}
+	else
+	{
+		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Motion vectors");
+		pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_motionVectorsRtHandle, m_runCtx.m_rejectionFactorRtHandle}, {});
+
+		readUsage = TextureUsageBit::SAMPLED_FRAGMENT;
+		writeUsage = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
+		ppass = &pass;
+	}
+
+	ppass->setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) -> void {
 		run(ctx, rgraphCtx);
 	});
 
-	pass.newDependency({m_runCtx.m_motionVectorsRtHandle, TextureUsageBit::IMAGE_COMPUTE_WRITE});
-	pass.newDependency({m_runCtx.m_rejectionFactorRtHandle, TextureUsageBit::IMAGE_COMPUTE_WRITE});
-	pass.newDependency({m_r->getGBuffer().getColorRt(3), TextureUsageBit::SAMPLED_COMPUTE});
-	pass.newDependency({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_COMPUTE});
-	pass.newDependency({m_r->getGBuffer().getPreviousFrameDepthRt(), TextureUsageBit::SAMPLED_COMPUTE});
+	ppass->newDependency(RenderPassDependency(m_runCtx.m_motionVectorsRtHandle, writeUsage));
+	ppass->newDependency(RenderPassDependency(m_runCtx.m_rejectionFactorRtHandle, writeUsage));
+	ppass->newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(3), readUsage));
+	ppass->newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), readUsage));
+	ppass->newDependency(RenderPassDependency(m_r->getGBuffer().getPreviousFrameDepthRt(), readUsage));
 }
 
 void MotionVectors::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
@@ -67,8 +103,12 @@ void MotionVectors::run(const RenderingContext& ctx, RenderPassWorkContext& rgra
 	rgraphCtx.bindTexture(0, 2, m_r->getGBuffer().getPreviousFrameDepthRt(),
 						  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
 	rgraphCtx.bindColorTexture(0, 3, m_r->getGBuffer().getColorRt(3));
-	rgraphCtx.bindImage(0, 4, m_runCtx.m_motionVectorsRtHandle, TextureSubresourceInfo());
-	rgraphCtx.bindImage(0, 5, m_runCtx.m_rejectionFactorRtHandle, TextureSubresourceInfo());
+
+	if(getConfig().getRPreferCompute())
+	{
+		rgraphCtx.bindImage(0, 4, m_runCtx.m_motionVectorsRtHandle, TextureSubresourceInfo());
+		rgraphCtx.bindImage(0, 5, m_runCtx.m_rejectionFactorRtHandle, TextureSubresourceInfo());
+	}
 
 	class PC
 	{
@@ -81,7 +121,16 @@ void MotionVectors::run(const RenderingContext& ctx, RenderPassWorkContext& rgra
 	pc.m_prevViewProjectionInvMat = ctx.m_prevMatrices.m_invertedProjectionJitter;
 	cmdb->setPushConstants(&pc, sizeof(pc));
 
-	dispatchPPCompute(cmdb, 8, 8, m_r->getInternalResolution().x(), m_r->getInternalResolution().y());
+	if(getConfig().getRPreferCompute())
+	{
+		dispatchPPCompute(cmdb, 8, 8, m_r->getInternalResolution().x(), m_r->getInternalResolution().y());
+	}
+	else
+	{
+		cmdb->setViewport(0, 0, m_r->getInternalResolution().x(), m_r->getInternalResolution().y());
+
+		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
+	}
 }
 
 } // end namespace anki

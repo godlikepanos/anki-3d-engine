@@ -5,11 +5,6 @@
 
 #include <AnKi/Shaders/Common.glsl>
 
-out gl_PerVertex
-{
-	Vec4 gl_Position;
-};
-
 layout(location = 0) out Vec2 out_uv;
 
 void main()

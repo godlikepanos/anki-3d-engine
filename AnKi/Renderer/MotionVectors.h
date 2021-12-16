@@ -59,6 +59,7 @@ private:
 	ShaderProgramPtr m_grProg;
 	RenderTargetDescription m_motionVectorsRtDescr;
 	RenderTargetDescription m_rejectionFactorRtDescr;
+	FramebufferDescription m_fbDescr;
 
 	class
 	{
@@ -68,6 +69,8 @@ private:
 	} m_runCtx;
 
 	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
+
+	ANKI_USE_RESULT Error initInternal();
 };
 /// @}
 

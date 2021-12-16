@@ -92,17 +92,19 @@ Error ShadowMapping::initScratch()
 
 Error ShadowMapping::initAtlas()
 {
+	const Bool preferCompute = getConfig().getRPreferCompute();
+
 	// Init RT
 	{
 		m_atlas.m_tileResolution = getConfig().getRShadowMappingTileResolution();
 		m_atlas.m_tileCountBothAxis = getConfig().getRShadowMappingTileCountPerRowOrColumn();
 
 		// RT
+		TextureUsageBit usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE;
+		usage |= (preferCompute) ? TextureUsageBit::IMAGE_COMPUTE_WRITE : TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT;
 		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
 			m_atlas.m_tileResolution * m_atlas.m_tileCountBothAxis,
-			m_atlas.m_tileResolution * m_atlas.m_tileCountBothAxis, SHADOW_COLOR_PIXEL_FORMAT,
-			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::IMAGE_COMPUTE_WRITE | TextureUsageBit::SAMPLED_COMPUTE,
-			"SM atlas");
+			m_atlas.m_tileResolution * m_atlas.m_tileCountBothAxis, SHADOW_COLOR_PIXEL_FORMAT, usage, "SM atlas");
 		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 		ClearValue clearVal;
 		clearVal.m_colorf[0] = 1.0f;
@@ -115,17 +117,26 @@ Error ShadowMapping::initAtlas()
 
 	// Programs and shaders
 	{
-		ANKI_CHECK(getResourceManager().loadResource("Shaders/ExponentialShadowmappingResolve.ankiprog",
-													 m_atlas.m_resolveProg));
+		ANKI_CHECK(getResourceManager().loadResource(
+			(preferCompute) ? "Shaders/EvsmCompute.ankiprog" : "Shaders/EvsmRaster.ankiprog", m_atlas.m_resolveProg));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_atlas.m_resolveProg);
 		variantInitInfo.addConstant("INPUT_TEXTURE_SIZE", UVec2(m_scratch.m_tileCountX * m_scratch.m_tileResolution,
 																m_scratch.m_tileCountY * m_scratch.m_tileResolution));
 
+		if(!preferCompute)
+		{
+			variantInitInfo.addConstant("FB_SIZE", UVec2(m_atlas.m_tileCountBothAxis * m_atlas.m_tileResolution));
+		}
+
 		const ShaderProgramResourceVariant* variant;
 		m_atlas.m_resolveProg->getOrCreateVariant(variantInitInfo, variant);
 		m_atlas.m_resolveGrProg = variant->getProgram();
 	}
+
+	m_atlas.m_fbDescr.m_colorAttachmentCount = 1;
+	m_atlas.m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::LOAD;
+	m_atlas.m_fbDescr.bake();
 
 	return Error::NONE;
 }
@@ -169,13 +180,23 @@ void ShadowMapping::runAtlas(RenderPassWorkContext& rgraphCtx)
 	// Continue
 	cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);
 	rgraphCtx.bindTexture(0, 2, m_scratch.m_rt, TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
-	rgraphCtx.bindImage(0, 3, m_atlas.m_rt);
 
-	constexpr U32 workgroupSize = 8;
-	ANKI_ASSERT(m_atlas.m_tileResolution >= workgroupSize && (m_atlas.m_tileResolution % workgroupSize) == 0);
+	if(getConfig().getRPreferCompute())
+	{
+		rgraphCtx.bindImage(0, 3, m_atlas.m_rt);
 
-	cmdb->dispatchCompute(m_atlas.m_tileResolution / workgroupSize, m_atlas.m_tileResolution / workgroupSize,
-						  m_atlas.m_resolveWorkItems.getSize());
+		constexpr U32 workgroupSize = 8;
+		ANKI_ASSERT(m_atlas.m_tileResolution >= workgroupSize && (m_atlas.m_tileResolution % workgroupSize) == 0);
+
+		cmdb->dispatchCompute(m_atlas.m_tileResolution / workgroupSize, m_atlas.m_tileResolution / workgroupSize,
+							  m_atlas.m_resolveWorkItems.getSize());
+	}
+	else
+	{
+		cmdb->setViewport(0, 0, m_atlas.m_tex->getWidth(), m_atlas.m_tex->getHeight());
+
+		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6, m_atlas.m_resolveWorkItems.getSize());
+	}
 }
 
 void ShadowMapping::runShadowMapping(RenderPassWorkContext& rgraphCtx)
@@ -245,22 +266,57 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 
 		// Atlas pass
 		{
-			ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("SM atlas");
+			if(ANKI_LIKELY(m_atlas.m_rtImportedOnce))
+			{
+				m_atlas.m_rt = rgraph.importRenderTarget(m_atlas.m_tex);
+			}
+			else
+			{
+				m_atlas.m_rt = rgraph.importRenderTarget(m_atlas.m_tex, TextureUsageBit::SAMPLED_FRAGMENT);
+				m_atlas.m_rtImportedOnce = true;
+			}
 
-			m_atlas.m_rt = rgraph.importRenderTarget(m_atlas.m_tex, TextureUsageBit::SAMPLED_FRAGMENT);
-			pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
-				runAtlas(rgraphCtx);
-			});
+			if(getConfig().getRPreferCompute())
+			{
+				ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("SM atlas");
 
-			pass.newDependency({m_scratch.m_rt, TextureUsageBit::SAMPLED_COMPUTE,
-								TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
-			pass.newDependency({m_atlas.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
+				pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+					runAtlas(rgraphCtx);
+				});
+
+				pass.newDependency(RenderPassDependency(m_scratch.m_rt, TextureUsageBit::SAMPLED_COMPUTE,
+														TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)));
+				pass.newDependency(RenderPassDependency(m_atlas.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
+			}
+			else
+			{
+				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("SM atlas");
+				pass.setFramebufferInfo(m_atlas.m_fbDescr, {m_atlas.m_rt}, {});
+
+				pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+					runAtlas(rgraphCtx);
+				});
+
+				pass.newDependency(RenderPassDependency(m_scratch.m_rt, TextureUsageBit::SAMPLED_FRAGMENT,
+														TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)));
+				pass.newDependency(
+					RenderPassDependency(m_atlas.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ
+														   | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
+			}
 		}
 	}
 	else
 	{
 		// No need for shadowmapping passes, just import the atlas
-		m_atlas.m_rt = rgraph.importRenderTarget(m_atlas.m_tex, TextureUsageBit::SAMPLED_FRAGMENT);
+		if(ANKI_LIKELY(m_atlas.m_rtImportedOnce))
+		{
+			m_atlas.m_rt = rgraph.importRenderTarget(m_atlas.m_tex);
+		}
+		else
+		{
+			m_atlas.m_rt = rgraph.importRenderTarget(m_atlas.m_tex, TextureUsageBit::SAMPLED_FRAGMENT);
+			m_atlas.m_rtImportedOnce = true;
+		}
 	}
 }
 

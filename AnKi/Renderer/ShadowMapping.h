@@ -49,12 +49,15 @@ private:
 
 		TexturePtr m_tex; ///<  Size (m_tileResolution*m_tileCountBothAxis)^2
 		RenderTargetHandle m_rt;
+		Bool m_rtImportedOnce = false;
 
 		U32 m_tileResolution = 0; ///< Tile resolution.
 		U32 m_tileCountBothAxis = 0;
 
 		ShaderProgramResourcePtr m_resolveProg;
 		ShaderProgramPtr m_resolveGrProg;
+
+		FramebufferDescription m_fbDescr;
 
 		WeakArray<ResolveWorkItem> m_resolveWorkItems;
 	} m_atlas;

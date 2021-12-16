@@ -42,6 +42,7 @@ private:
 	ShaderProgramPtr m_grProg;
 
 	RenderTargetDescription m_tonemappedRtDescr;
+	FramebufferDescription m_fbDescr;
 
 	class
 	{

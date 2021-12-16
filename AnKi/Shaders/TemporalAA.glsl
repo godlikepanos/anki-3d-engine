@@ -10,25 +10,31 @@ ANKI_SPECIALIZATION_CONSTANT_F32(VARIANCE_CLIPPING_GAMMA, 0u);
 ANKI_SPECIALIZATION_CONSTANT_F32(BLEND_FACTOR, 1u);
 ANKI_SPECIALIZATION_CONSTANT_UVEC2(FB_SIZE, 2u);
 
-#pragma anki start comp
 #include <AnKi/Shaders/Functions.glsl>
 #include <AnKi/Shaders/PackFunctions.glsl>
 #include <AnKi/Shaders/TonemappingFunctions.glsl>
-
-const UVec2 WORKGROUP_SIZE = UVec2(8, 8);
-layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
 
 layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 1) uniform texture2D u_depthRt;
 layout(set = 0, binding = 2) uniform texture2D u_inputRt;
 layout(set = 0, binding = 3) uniform texture2D u_historyRt;
 layout(set = 0, binding = 4) uniform texture2D u_motionVectorsTex;
-layout(set = 0, binding = 5) writeonly uniform image2D u_outImg;
-layout(set = 0, binding = 6) writeonly uniform image2D u_tonemappedImg;
 
 const U32 TONEMAPPING_SET = 0u;
-const U32 TONEMAPPING_BINDING = 7u;
+const U32 TONEMAPPING_BINDING = 5u;
 #include <AnKi/Shaders/TonemappingResources.glsl>
+
+#if defined(ANKI_COMPUTE_SHADER)
+layout(set = 0, binding = 6) writeonly uniform image2D u_outImg;
+layout(set = 0, binding = 7) writeonly uniform image2D u_tonemappedImg;
+
+const UVec2 WORKGROUP_SIZE = UVec2(8, 8);
+layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
+#else
+layout(location = 0) in Vec2 in_uv;
+layout(location = 0) out Vec3 out_color;
+layout(location = 1) out Vec3 out_tonemappedColor;
+#endif
 
 #if YCBCR
 #	define sample(s, uv) rgbToYCbCr(textureLod(s, u_linearAnyClampSampler, uv, 0.0).rgb)
@@ -41,12 +47,17 @@ const U32 TONEMAPPING_BINDING = 7u;
 
 void main()
 {
+#if defined(ANKI_COMPUTE_SHADER)
 	if(skipOutOfBoundsInvocations(WORKGROUP_SIZE, FB_SIZE))
 	{
 		return;
 	}
 
 	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(FB_SIZE);
+#else
+	const Vec2 uv = in_uv;
+#endif
+
 	const F32 depth = textureLod(u_depthRt, u_linearAnyClampSampler, uv, 0.0).r;
 
 	// Get prev uv coords
@@ -99,9 +110,12 @@ void main()
 #if YCBCR
 	outColor = yCbCrToRgb(outColor);
 #endif
+
+#if defined(ANKI_COMPUTE_SHADER)
 	imageStore(u_outImg, IVec2(gl_GlobalInvocationID.xy), Vec4(outColor, 0.0));
-
 	imageStore(u_tonemappedImg, IVec2(gl_GlobalInvocationID.xy), Vec4(tonemap(outColor, u_exposureThreshold0), 0.0));
+#else
+	out_color = outColor;
+	out_tonemappedColor = tonemap(outColor, u_exposureThreshold0);
+#endif
 }
-
-#pragma anki end
