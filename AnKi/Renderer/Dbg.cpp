@@ -46,10 +46,7 @@ Error Dbg::init()
 
 void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 {
-	if(ANKI_LIKELY(!getConfig().getRDbgEnabled()))
-	{
-		return;
-	}
+	ANKI_ASSERT(getConfig().getRDbgEnabled());
 
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
@@ -162,6 +159,11 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 
 void Dbg::populateRenderGraph(RenderingContext& ctx)
 {
+	if(!getConfig().getRDbgEnabled())
+	{
+		return;
+	}
+
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	// Create RT

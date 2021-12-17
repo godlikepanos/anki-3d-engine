@@ -45,11 +45,7 @@ void main()
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
 	// Cluster
-#if defined(ANKI_COMPUTE_SHADER)
 	const Vec2 fragCoord = uv * u_clusteredShading.m_renderingSize;
-#else
-	const Vec2 fragCoord = gl_FragCoord.xy;
-#endif
 	Cluster cluster = getClusterFragCoord(Vec3(fragCoord, depth), TILE_SIZE, TILE_COUNTS, Z_SPLIT_COUNT,
 										  u_clusteredShading.m_zSplitMagic.x, u_clusteredShading.m_zSplitMagic.y);
 

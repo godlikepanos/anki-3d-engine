@@ -3,61 +3,50 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-// if VARIANT==0 then the checkerboard pattern is (render on 'v'):
-// -----
-// |v| |
-// | |v|
-// -----
-
-#pragma anki mutator VARIANT 0 1
 #define EXTRA_REJECTION 0
 
-#pragma anki start comp
 #include <AnKi/Shaders/Functions.glsl>
 #include <AnKi/Shaders/PackFunctions.glsl>
 #include <AnKi/Shaders/Include/SsrTypes.h>
 #include <AnKi/Shaders/TonemappingFunctions.glsl>
 #include <AnKi/Shaders/SsRaymarching.glsl>
 
-const UVec2 WORKGROUP_SIZE = UVec2(16, 16);
-layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
-
-layout(set = 0, binding = 0, rgba16f) uniform image2D out_img;
-
-layout(set = 0, binding = 1, row_major) uniform u_
+layout(set = 0, binding = 0, row_major) uniform b_unis
 {
 	SsrUniforms u_unis;
 };
 
-layout(set = 0, binding = 2) uniform sampler u_trilinearClampSampler;
-layout(set = 0, binding = 3) uniform texture2D u_gbufferRt1;
-layout(set = 0, binding = 4) uniform texture2D u_gbufferRt2;
-layout(set = 0, binding = 5) uniform texture2D u_depthRt;
-layout(set = 0, binding = 6) uniform texture2D u_lightBufferRt;
+layout(set = 0, binding = 1) uniform sampler u_trilinearClampSampler;
+layout(set = 0, binding = 2) uniform texture2D u_gbufferRt1;
+layout(set = 0, binding = 3) uniform texture2D u_gbufferRt2;
+layout(set = 0, binding = 4) uniform texture2D u_depthRt;
+layout(set = 0, binding = 5) uniform texture2D u_lightBufferRt;
 
-layout(set = 0, binding = 7) uniform sampler u_trilinearRepeatSampler;
-layout(set = 0, binding = 8) uniform texture2D u_noiseTex;
+layout(set = 0, binding = 6) uniform sampler u_trilinearRepeatSampler;
+layout(set = 0, binding = 7) uniform texture2D u_noiseTex;
 const Vec2 NOISE_TEX_SIZE = Vec2(16.0);
+
+#if defined(ANKI_COMPUTE_SHADER)
+const UVec2 WORKGROUP_SIZE = UVec2(8, 8);
+layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
+
+layout(set = 0, binding = 8) uniform writeonly image2D out_img;
+#else
+layout(location = 0) in Vec2 in_uv;
+layout(location = 0) out Vec4 out_color;
+#endif
 
 void main()
 {
-	// Compute a global invocation ID that takes the checkerboard pattern into account
-	IVec2 fixedGlobalInvocationId = IVec2(gl_GlobalInvocationID.xy);
-	fixedGlobalInvocationId.x *= 2;
-#if VARIANT == 0
-	fixedGlobalInvocationId.x += ((fixedGlobalInvocationId.y + 1) & 1);
-#else
-	fixedGlobalInvocationId.x += ((fixedGlobalInvocationId.y + 0) & 1);
-#endif
-
-	if(fixedGlobalInvocationId.x >= I32(u_unis.m_framebufferSize.x)
-	   || fixedGlobalInvocationId.y >= I32(u_unis.m_framebufferSize.y))
+#if defined(ANKI_COMPUTE_SHADER)
+	if(skipOutOfBoundsInvocations(WORKGROUP_SIZE, u_unis.m_framebufferSize))
 	{
-		// Skip threads outside the writable image
 		return;
 	}
-
-	const Vec2 uv = (Vec2(fixedGlobalInvocationId.xy) + 0.5) / Vec2(u_unis.m_framebufferSize);
+	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(u_unis.m_framebufferSize);
+#else
+	const Vec2 uv = in_uv;
+#endif
 
 	// Read part of the G-buffer
 	const F32 roughness = unpackRoughnessFromGBuffer(textureLod(u_gbufferRt1, u_trilinearClampSampler, uv, 0.0));
@@ -144,6 +133,9 @@ void main()
 	}
 
 	// Store
-	imageStore(out_img, fixedGlobalInvocationId, outColor);
+#if defined(ANKI_COMPUTE_SHADER)
+	imageStore(out_img, IVec2(gl_GlobalInvocationID.xy), outColor);
+#else
+	out_color = outColor;
+#endif
 }
-#pragma anki end

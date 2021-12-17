@@ -36,12 +36,13 @@ public:
 
 private:
 	ShaderProgramResourcePtr m_prog;
-	Array<ShaderProgramPtr, 2> m_grProg;
+	ShaderProgramPtr m_grProg;
 
-	TexturePtr m_rt;
+	RenderTargetDescription m_rtDescr;
+	FramebufferDescription m_fbDescr;
+
 	ImageResourcePtr m_noiseImage;
 
-	Array<U32, 2> m_workgroupSize = {};
 	U32 m_firstStepPixels = 16;
 
 	class
