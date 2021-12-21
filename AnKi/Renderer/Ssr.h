@@ -43,8 +43,6 @@ private:
 
 	ImageResourcePtr m_noiseImage;
 
-	U32 m_firstStepPixels = 16;
-
 	class
 	{
 	public:

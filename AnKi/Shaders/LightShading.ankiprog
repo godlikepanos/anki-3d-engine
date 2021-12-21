@@ -224,8 +224,8 @@ void main()
 		const Vec3 finalSpecIndirect = specIndirect * ssr.a + ssr.rgb;
 
 		// Compute env BRDF
-		const F32 NoV = max(EPSILON, dot(gbuffer.m_normal, viewDir));
-		const Vec3 env = envBRDF(gbuffer.m_f0, gbuffer.m_roughness, u_integrationLut, u_trilinearClampSampler, NoV);
+		const F32 NoV = max(0.0, dot(gbuffer.m_normal, viewDir));
+		const Vec3 env = specularDFG(gbuffer.m_f0, gbuffer.m_roughness, u_integrationLut, u_trilinearClampSampler, NoV);
 
 		out_color += finalSpecIndirect * env;
 	}

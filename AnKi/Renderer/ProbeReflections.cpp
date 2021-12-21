@@ -50,7 +50,7 @@ Error ProbeReflections::initInternal()
 	ANKI_CHECK(initShadowMapping());
 
 	// Load split sum integration LUT
-	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/SplitSumIntegration.png", m_integrationLut));
+	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/IblDfg.png", m_integrationLut));
 
 	SamplerInitInfo sinit;
 	sinit.m_minMagFilter = SamplingFilter::LINEAR;

@@ -22,8 +22,11 @@ ANKI_CONFIG_VAR_F32(RVolumetricLightingAccumulationQualityZ, 4.0f, 1.0f, 16.0f,
 ANKI_CONFIG_VAR_U32(RVolumetricLightingAccumulationFinalZSplit, 26, 1, 256,
 					"Final cluster split that will recieve volumetric lights")
 
-ANKI_CONFIG_VAR_U32(RSsrMaxSteps, 64, 1, 256, "Max SSR raymarching steps")
+// SSR
+ANKI_CONFIG_VAR_U32(RSsrFirstStepPixels, 32, 1, 256, "The 1st step in ray marching")
 ANKI_CONFIG_VAR_U32(RSsrDepthLod, 2, 0, 1000, "Texture LOD of the depth texture that will be raymarched")
+ANKI_CONFIG_VAR_U32(RSsrMaxSteps, 64, 1, 256, "Max SSR raymarching steps")
+ANKI_CONFIG_VAR_BOOL(RSsrStochastic, false, "Stochastic reflections")
 
 ANKI_CONFIG_VAR_U32(RIndirectDiffuseSsgiSampleCount, 8, 1, 1024, "SSGI sample count")
 ANKI_CONFIG_VAR_F32(RIndirectDiffuseSsgiRadius, 2.0f, 0.1f, 100.0f, "SSGI radius in meters")

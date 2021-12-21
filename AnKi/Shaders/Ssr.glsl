@@ -3,9 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#define EXTRA_REJECTION 0
+#pragma anki mutator STOCHASTIC 0 1
+#pragma anki mutator EXTRA_REJECTION 0 1
 
-#include <AnKi/Shaders/Functions.glsl>
+#include <AnKi/Shaders/LightFunctions.glsl>
 #include <AnKi/Shaders/PackFunctions.glsl>
 #include <AnKi/Shaders/Include/SsrTypes.h>
 #include <AnKi/Shaders/TonemappingFunctions.glsl>
@@ -24,7 +25,7 @@ layout(set = 0, binding = 5) uniform texture2D u_lightBufferRt;
 
 layout(set = 0, binding = 6) uniform sampler u_trilinearRepeatSampler;
 layout(set = 0, binding = 7) uniform texture2D u_noiseTex;
-const Vec2 NOISE_TEX_SIZE = Vec2(16.0);
+const Vec2 NOISE_TEX_SIZE = Vec2(64.0);
 
 #if defined(ANKI_COMPUTE_SHADER)
 const UVec2 WORKGROUP_SIZE = UVec2(8, 8);
@@ -55,6 +56,11 @@ void main()
 	// Get depth
 	const F32 depth = textureLod(u_depthRt, u_trilinearClampSampler, uv, 0.0).r;
 
+	// Rand idx
+	const Vec2 noiseUv = Vec2(u_unis.m_framebufferSize) / NOISE_TEX_SIZE * uv;
+	const Vec3 noise =
+		animateBlueNoise(textureLod(u_noiseTex, u_trilinearRepeatSampler, noiseUv, 0.0).rgb, u_unis.m_frameCount % 8u);
+
 	// Get view pos
 	const Vec4 viewPos4 = u_unis.m_invProjMat * Vec4(UV_TO_NDC(uv), depth, 1.0);
 	const Vec3 viewPos = viewPos4.xyz / viewPos4.w;
@@ -62,12 +68,11 @@ void main()
 	// Compute refl vector
 	const Vec3 viewDir = normalize(viewPos);
 	const Vec3 viewNormal = u_unis.m_normalMat * worldNormal;
+#if STOCHASTIC
+	const Vec3 reflVec = sampleReflectionVector(viewDir, viewNormal, roughness, noise.xy);
+#else
 	const Vec3 reflVec = reflect(viewDir, viewNormal);
-
-	// Rand idx
-	const Vec2 noiseUv = Vec2(u_unis.m_framebufferSize) / NOISE_TEX_SIZE * uv;
-	const Vec2 noiseShift = 1.0 / NOISE_TEX_SIZE * F32(u_unis.m_frameCount % 4u);
-	const F32 noise = textureLod(u_noiseTex, u_trilinearRepeatSampler, noiseUv + noiseShift, 0.0).r;
+#endif
 
 	// Do the heavy work
 	Vec3 hitPoint;
@@ -78,7 +83,7 @@ void main()
 	const F32 minStepf = stepf / 4.0;
 	raymarchGroundTruth(viewPos, reflVec, uv, depth, u_unis.m_projMat, u_unis.m_maxSteps, u_depthRt,
 						u_trilinearClampSampler, F32(lod), u_unis.m_depthBufferSize, step,
-						U32((stepf - minStepf) * noise + minStepf), hitPoint, hitAttenuation);
+						U32((stepf - minStepf) * noise.x + minStepf), hitPoint, hitAttenuation);
 
 #if EXTRA_REJECTION
 	// Reject backfacing
@@ -118,8 +123,13 @@ void main()
 		const Vec4 v4 = u_unis.m_prevViewProjMatMulInvViewProjMat * Vec4(UV_TO_NDC(hitPoint.xy), hitPoint.z, 1.0);
 		hitPoint.xy = NDC_TO_UV(v4.xy / v4.w);
 
+#if STOCHASTIC
+		// LOD stays 0
+		const F32 lod = 0.0;
+#else
 		// Compute the LOD based on the roughness
 		const F32 lod = F32(u_unis.m_lightBufferMipCount - 1u) * roughness;
+#endif
 
 		// Read the light buffer
 		outColor.rgb = textureLod(u_lightBufferRt, u_trilinearClampSampler, hitPoint.xy, lod).rgb;

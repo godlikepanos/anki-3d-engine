@@ -150,10 +150,10 @@ ANKI_RP Vec3 specularIsotropicLobe(GbufferInfo gbuffer, Vec3 viewDir, Vec3 frag2
 	return F * (V * D);
 }
 
-Vec3 envBRDF(Vec3 specular, F32 roughness, texture2D integrationLut, sampler integrationLutSampler, F32 NoV)
+Vec3 specularDFG(Vec3 F0, F32 roughness, texture2D integrationLut, sampler integrationLutSampler, F32 NoV)
 {
 	const Vec2 envBRDF = textureLod(integrationLut, integrationLutSampler, Vec2(roughness, NoV), 0.0).xy;
-	return specular * envBRDF.x + min(1.0, 50.0 * specular.g) * envBRDF.y;
+	return mix(envBRDF.xxx, envBRDF.yyy, F0);
 }
 
 ANKI_RP F32 computeSpotFactor(ANKI_RP Vec3 l, ANKI_RP F32 outerCos, ANKI_RP F32 innerCos, ANKI_RP Vec3 spotDir)
@@ -398,4 +398,57 @@ U32 computeShadowCascadeIndex(F32 distance, F32 p, F32 effectiveShadowDistance, 
 	F32 idx = pow(distance / effectiveShadowDistance, 1.0f / p) * shadowCascadeCountf;
 	idx = min(idx, shadowCascadeCountf - 1.0f);
 	return U32(idx);
+}
+
+/// To play with it use https://www.shadertoy.com/view/sttSDf
+/// http://jcgt.org/published/0007/04/01/paper.pdf by Eric Heitz
+/// Input v: view direction
+/// Input alphaX, alphaY: roughness parameters
+/// Input u1, u2: uniform random numbers
+/// Output: normal sampled with PDF D_Ve(nE) = G1(v) * max(0, dot(v, nE)) * D(nE) / v.z
+Vec3 sampleGgxVndf(Vec3 v, F32 alphaX, F32 alphaY, F32 u1, F32 u2)
+{
+	// Section 3.2: transforming the view direction to the hemisphere configuration
+	const Vec3 vH = normalize(Vec3(alphaX * v.x, alphaY * v.y, v.z));
+
+	// Section 4.1: orthonormal basis (with special case if cross product is zero)
+	const F32 lensq = vH.x * vH.x + vH.y * vH.y;
+	const Vec3 tangent1 = (lensq > 0.0) ? Vec3(-vH.y, vH.x, 0) * inversesqrt(lensq) : Vec3(1.0, 0.0, 0.0);
+	const Vec3 tangent2 = cross(vH, tangent1);
+
+	// Section 4.2: parameterization of the projected area
+	const F32 r = sqrt(u1);
+	const F32 phi = 2.0 * PI * u2;
+	const F32 t1 = r * cos(phi);
+	F32 t2 = r * sin(phi);
+	const F32 s = 0.5 * (1.0 + vH.z);
+	t2 = (1.0 - s) * sqrt(1.0 - t1 * t1) + s * t2;
+
+	// Section 4.3: reprojection onto hemisphere
+	const Vec3 nH = t1 * tangent1 + t2 * tangent2 + sqrt(max(0.0, 1.0 - t1 * t1 - t2 * t2)) * vH;
+
+	// Section 3.4: transforming the normal back to the ellipsoid configuration
+	const Vec3 nE = normalize(Vec3(alphaX * nH.x, alphaY * nH.y, max(0.0, nH.z)));
+
+	return nE;
+}
+
+/// Calculate the reflection vector based on roughness.
+Vec3 sampleReflectionVector(Vec3 viewDir, Vec3 normal, F32 roughness, Vec2 uniformRandom)
+{
+	const Mat3 tbn = rotationFromDirection(normal);
+	const Mat3 tbnT = transpose(tbn);
+	const Vec3 viewDirTbn = tbnT * (-viewDir);
+
+	Vec3 sampledNormalTbn = sampleGgxVndf(viewDirTbn, roughness, roughness, uniformRandom.x, uniformRandom.y);
+	const Bool perfectReflection = false; // For debugging
+	if(perfectReflection)
+	{
+		sampledNormalTbn = Vec3(0.0, 0.0, 1.0);
+	}
+
+	const Vec3 reflectedDirTbn = reflect(-viewDirTbn, sampledNormalTbn);
+
+	// Transform reflected_direction back to the initial space.
+	return tbn * reflectedDirTbn;
 }

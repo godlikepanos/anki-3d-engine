@@ -32,9 +32,8 @@ Error Ssr::initInternal()
 {
 	const U32 width = m_r->getInternalResolution().x() / 2;
 	const U32 height = m_r->getInternalResolution().y() / 2;
-	m_firstStepPixels = 32;
 
-	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoise_Rgba8_16x16.png", m_noiseImage));
+	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_noiseImage));
 
 	// Create RT
 	m_rtDescr = m_r->create2DRenderTargetDescription(width, height, Format::R16G16B16A16_SFLOAT, "SSR");
@@ -47,8 +46,11 @@ Error Ssr::initInternal()
 	ANKI_CHECK(getResourceManager().loadResource(
 		(getConfig().getRPreferCompute()) ? "Shaders/SsrCompute.ankiprog" : "Shaders/SsrRaster.ankiprog", m_prog));
 
+	ShaderProgramResourceVariantInitInfo variantInit(m_prog);
+	variantInit.addMutation("EXTRA_REJECTION", false);
+	variantInit.addMutation("STOCHASTIC", getConfig().getRSsrStochastic());
 	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(variant);
+	m_prog->getOrCreateVariant(variantInit, variant);
 	m_grProg = variant->getProgram();
 
 	return Error::NONE;
@@ -115,7 +117,7 @@ void Ssr::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 	unis->m_depthMipCount = m_r->getDepthDownscale().getMipmapCount();
 	unis->m_maxSteps = getConfig().getRSsrMaxSteps();
 	unis->m_lightBufferMipCount = m_r->getDownscaleBlur().getMipmapCount();
-	unis->m_firstStepPixels = m_firstStepPixels;
+	unis->m_firstStepPixels = getConfig().getRSsrFirstStepPixels();
 	unis->m_prevViewProjMatMulInvViewProjMat =
 		ctx.m_prevMatrices.m_viewProjection * ctx.m_matrices.m_viewProjectionJitter.getInverse();
 	unis->m_projMat = ctx.m_matrices.m_projectionJitter;
