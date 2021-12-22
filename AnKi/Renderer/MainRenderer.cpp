@@ -120,7 +120,7 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 	{
 		GraphicsRenderPassDescription& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Final Blit");
 
-		pass.setFramebufferInfo(m_fbDescr, {{presentRt}}, {});
+		pass.setFramebufferInfo(m_fbDescr, {presentRt});
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 			cmdb->setViewport(0, 0, m_swapchainResolution.x(), m_swapchainResolution.y());

@@ -164,7 +164,8 @@ inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency&
 
 inline void GraphicsRenderPassDescription::setFramebufferInfo(
 	const FramebufferDescription& fbInfo, std::initializer_list<RenderTargetHandle> colorRenderTargetHandles,
-	RenderTargetHandle depthStencilRenderTargetHandle, U32 minx, U32 miny, U32 maxx, U32 maxy)
+	RenderTargetHandle depthStencilRenderTargetHandle, RenderTargetHandle shadingRateRenderTargetHandle, U32 minx,
+	U32 miny, U32 maxx, U32 maxy)
 {
 	Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS> rts;
 	U32 count = 0;
@@ -172,13 +173,14 @@ inline void GraphicsRenderPassDescription::setFramebufferInfo(
 	{
 		rts[count++] = h;
 	}
-	setFramebufferInfo(fbInfo, ConstWeakArray<RenderTargetHandle>(&rts[0], count), depthStencilRenderTargetHandle, minx,
-					   miny, maxx, maxy);
+	setFramebufferInfo(fbInfo, ConstWeakArray<RenderTargetHandle>(&rts[0], count), depthStencilRenderTargetHandle,
+					   shadingRateRenderTargetHandle, minx, miny, maxx, maxy);
 }
 
 inline void GraphicsRenderPassDescription::setFramebufferInfo(
 	const FramebufferDescription& fbInfo, ConstWeakArray<RenderTargetHandle> colorRenderTargetHandles,
-	RenderTargetHandle depthStencilRenderTargetHandle, U32 minx, U32 miny, U32 maxx, U32 maxy)
+	RenderTargetHandle depthStencilRenderTargetHandle, RenderTargetHandle shadingRateRenderTargetHandle, U32 minx,
+	U32 miny, U32 maxx, U32 maxy)
 {
 #if ANKI_ENABLE_ASSERTIONS
 	ANKI_ASSERT(fbInfo.isBacked() && "Forgot call GraphicsRenderPassFramebufferInfo::bake");
@@ -202,11 +204,21 @@ inline void GraphicsRenderPassDescription::setFramebufferInfo(
 	{
 		ANKI_ASSERT(depthStencilRenderTargetHandle.isValid());
 	}
+
+	if(fbInfo.m_shadingRateAttachmentTexelWidth > 0 && fbInfo.m_shadingRateAttachmentTexelHeight > 0)
+	{
+		ANKI_ASSERT(shadingRateRenderTargetHandle.isValid());
+	}
+	else
+	{
+		ANKI_ASSERT(!shadingRateRenderTargetHandle.isValid());
+	}
 #endif
 
 	m_fbDescr = fbInfo;
 	memcpy(m_rtHandles.getBegin(), colorRenderTargetHandles.getBegin(), colorRenderTargetHandles.getSizeInBytes());
 	m_rtHandles[MAX_COLOR_ATTACHMENTS] = depthStencilRenderTargetHandle;
+	m_rtHandles[MAX_COLOR_ATTACHMENTS + 1] = shadingRateRenderTargetHandle;
 	m_fbRenderArea = {minx, miny, maxx, maxy};
 }
 

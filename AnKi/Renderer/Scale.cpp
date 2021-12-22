@@ -130,7 +130,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		else
 		{
 			GraphicsRenderPassDescription& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Scale");
-			pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_scaledRt}, {});
+			pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_scaledRt});
 
 			pass.newDependency(
 				RenderPassDependency(m_r->getTemporalAA().getTonemappedRt(), TextureUsageBit::SAMPLED_FRAGMENT));
@@ -162,7 +162,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		else
 		{
 			GraphicsRenderPassDescription& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Sharpen");
-			pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_sharpenedRt}, {});
+			pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_sharpenedRt});
 
 			pass.newDependency(
 				RenderPassDependency((!doScaling()) ? m_r->getTemporalAA().getTonemappedRt() : m_runCtx.m_scaledRt,

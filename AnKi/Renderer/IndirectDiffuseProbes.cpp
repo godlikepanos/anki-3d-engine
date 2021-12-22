@@ -345,7 +345,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 
 		// Pass
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI LS");
-		pass.setFramebufferInfo(m_lightShading.m_fbDescr, {{giCtx->m_lightShadingRt}}, {});
+		pass.setFramebufferInfo(m_lightShading.m_fbDescr, {giCtx->m_lightShadingRt});
 		pass.setWork(1, [this, giCtx](RenderPassWorkContext& rgraphCtx) {
 			runLightShading(rgraphCtx, *giCtx);
 		});

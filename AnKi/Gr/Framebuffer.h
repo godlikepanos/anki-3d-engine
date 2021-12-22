@@ -36,6 +36,14 @@ public:
 	U32 m_colorAttachmentCount = 0;
 	FramebufferAttachmentInfo m_depthStencilAttachment;
 
+	class
+	{
+	public:
+		TextureViewPtr m_textureView;
+		U32 m_texelWidth = 0;
+		U32 m_texelHeight = 0;
+	} m_shadingRateImage;
+
 	FramebufferInitInfo()
 		: GrBaseInitInfo()
 	{
@@ -65,6 +73,7 @@ public:
 
 		m_colorAttachmentCount = b.m_colorAttachmentCount;
 		m_depthStencilAttachment = b.m_depthStencilAttachment;
+		m_shadingRateImage = b.m_shadingRateImage;
 		return *this;
 	}
 
@@ -79,6 +88,12 @@ public:
 		}
 
 		if(m_colorAttachmentCount == 0 && !m_depthStencilAttachment.m_textureView.isCreated())
+		{
+			return false;
+		}
+
+		if(m_shadingRateImage.m_textureView
+		   && (m_shadingRateImage.m_texelHeight == 0 || m_shadingRateImage.m_texelWidth))
 		{
 			return false;
 		}

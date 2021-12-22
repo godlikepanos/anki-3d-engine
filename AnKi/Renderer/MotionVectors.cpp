@@ -74,7 +74,7 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 	else
 	{
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Motion vectors");
-		pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_motionVectorsRtHandle, m_runCtx.m_rejectionFactorRtHandle}, {});
+		pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_motionVectorsRtHandle, m_runCtx.m_rejectionFactorRtHandle});
 
 		readUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 		writeUsage = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;

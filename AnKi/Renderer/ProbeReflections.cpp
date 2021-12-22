@@ -623,7 +623,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
 			pass.setFramebufferInfo(m_cacheEntries[probeToUpdateCacheEntryIdx].m_lightShadingFbDescrs[faceIdx],
-									{{m_ctx.m_lightShadingRt}}, {});
+									{m_ctx.m_lightShadingRt});
 			pass.setWork([this, faceIdx](RenderPassWorkContext& rgraphCtx) {
 				runLightShading(faceIdx, rgraphCtx);
 			});

@@ -116,7 +116,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 		else
 		{
 			GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("IndirectDiffuse");
-			rpass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_mainRtHandles[WRITE]}, {});
+			rpass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_mainRtHandles[WRITE]});
 			readUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 			writeUsage = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 			prpass = &rpass;
@@ -206,7 +206,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 		{
 			GraphicsRenderPassDescription& rpass =
 				rgraph.newGraphicsRenderPass((dir == 0) ? "IndirectDiffuseDenoiseH" : "IndirectDiffuseDenoiseV");
-			rpass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_mainRtHandles[!readIdx]}, {});
+			rpass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_mainRtHandles[!readIdx]});
 			readUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 			writeUsage = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 			prpass = &rpass;

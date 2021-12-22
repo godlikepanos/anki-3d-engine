@@ -104,7 +104,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 		else
 		{
 			GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("Bloom Main");
-			rpass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_exposureRt}, {});
+			rpass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_exposureRt});
 
 			rpass.newDependency(RenderPassDependency(m_r->getDownscaleBlur().getRt(), TextureUsageBit::SAMPLED_FRAGMENT,
 													 inputTexSubresource));
@@ -165,7 +165,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 		else
 		{
 			GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("Bloom Upscale");
-			rpass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_upscaleRt}, {});
+			rpass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_upscaleRt});
 
 			rpass.newDependency({m_runCtx.m_exposureRt, TextureUsageBit::SAMPLED_FRAGMENT});
 			rpass.newDependency({m_runCtx.m_upscaleRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});

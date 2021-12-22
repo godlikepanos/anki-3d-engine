@@ -60,7 +60,7 @@ void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 		run(ctx, rgraphCtx);
 	});
 
-	rpass.setFramebufferInfo(m_fbDescr, {m_r->getGBuffer().getColorRt(0), m_r->getGBuffer().getColorRt(1)}, {});
+	rpass.setFramebufferInfo(m_fbDescr, {m_r->getGBuffer().getColorRt(0), m_r->getGBuffer().getColorRt(1)});
 
 	rpass.newDependency(
 		RenderPassDependency(m_r->getGBuffer().getColorRt(0), TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT));

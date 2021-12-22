@@ -408,6 +408,9 @@ public:
 	Array<FramebufferDescriptionAttachment, MAX_COLOR_ATTACHMENTS> m_colorAttachments;
 	U32 m_colorAttachmentCount = 0;
 	FramebufferDescriptionAttachment m_depthStencilAttachment;
+	U32 m_shadingRateAttachmentTexelWidth = 0;
+	U32 m_shadingRateAttachmentTexelHeight = 0;
+	TextureSurfaceInfo m_shadingRateAttachmentSurface;
 
 	/// Calculate the hash for the framebuffer.
 	void bake();
@@ -433,16 +436,18 @@ class GraphicsRenderPassDescription : public RenderPassDescriptionBase
 public:
 	void setFramebufferInfo(const FramebufferDescription& fbInfo,
 							ConstWeakArray<RenderTargetHandle> colorRenderTargetHandles,
-							RenderTargetHandle depthStencilRenderTargetHandle, U32 minx = 0, U32 miny = 0,
+							RenderTargetHandle depthStencilRenderTargetHandle = {},
+							RenderTargetHandle shadingRateRenderTargetHandle = {}, U32 minx = 0, U32 miny = 0,
 							U32 maxx = MAX_U32, U32 maxy = MAX_U32);
 
 	void setFramebufferInfo(const FramebufferDescription& fbInfo,
 							std::initializer_list<RenderTargetHandle> colorRenderTargetHandles,
-							RenderTargetHandle depthStencilRenderTargetHandle, U32 minx = 0, U32 miny = 0,
+							RenderTargetHandle depthStencilRenderTargetHandle = {},
+							RenderTargetHandle shadingRateRenderTargetHandle = {}, U32 minx = 0, U32 miny = 0,
 							U32 maxx = MAX_U32, U32 maxy = MAX_U32);
 
 private:
-	Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS + 1> m_rtHandles;
+	Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS + 2> m_rtHandles;
 	FramebufferDescription m_fbDescr;
 	Array<U32, 4> m_fbRenderArea = {};
 

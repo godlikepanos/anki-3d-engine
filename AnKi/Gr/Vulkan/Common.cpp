@@ -413,6 +413,11 @@ VkImageUsageFlags convertTextureUsage(const TextureUsageBit ak, const Format for
 		}
 	}
 
+	if(!!(ak & TextureUsageBit::FRAMEBUFFER_SHADING_RATE))
+	{
+		out |= VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR;
+	}
+
 	if(!!(ak & TextureUsageBit::TRANSFER_DESTINATION))
 	{
 		out |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;

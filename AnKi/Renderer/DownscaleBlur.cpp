@@ -124,7 +124,7 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 			pass.setWork([this, i](RenderPassWorkContext& rgraphCtx) {
 				run(i, rgraphCtx);
 			});
-			pass.setFramebufferInfo(m_fbDescrs[i], {m_runCtx.m_rt}, {});
+			pass.setFramebufferInfo(m_fbDescrs[i], {m_runCtx.m_rt});
 
 			if(i > 0)
 			{

@@ -93,7 +93,14 @@ void CommandBufferImpl::beginRecording()
 			dsAttLayout = view.getTextureImpl().computeLayout(m_depthStencilAttachmentUsage, 0);
 		}
 
-		inheritance.renderPass = impl.getRenderPassHandle(colAttLayouts, dsAttLayout);
+		VkImageLayout sriAttachmentLayout = VK_IMAGE_LAYOUT_MAX_ENUM;
+		if(impl.hasSri())
+		{
+			// Technically it's possible for SRI to be in other layout. Don't bother though
+			sriAttachmentLayout = VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
+		}
+
+		inheritance.renderPass = impl.getRenderPassHandle(colAttLayouts, dsAttLayout, sriAttachmentLayout);
 		inheritance.subpass = 0;
 		inheritance.framebuffer = impl.getFramebufferHandle();
 
@@ -179,7 +186,14 @@ void CommandBufferImpl::beginRenderPassInternal()
 		dsAttLayout = view.getTextureImpl().computeLayout(m_depthStencilAttachmentUsage, 0);
 	}
 
-	bi.renderPass = impl.getRenderPassHandle(colAttLayouts, dsAttLayout);
+	VkImageLayout sriAttachmentLayout = VK_IMAGE_LAYOUT_MAX_ENUM;
+	if(impl.hasSri())
+	{
+		// Technically it's possible for SRI to be in other layout. Don't bother though
+		sriAttachmentLayout = VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
+	}
+
+	bi.renderPass = impl.getRenderPassHandle(colAttLayouts, dsAttLayout, sriAttachmentLayout);
 
 	const Bool flipvp = flipViewport();
 	bi.renderArea.offset.x = m_renderArea[0];

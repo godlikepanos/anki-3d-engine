@@ -106,7 +106,7 @@ class CommandBufferInitInfo : public GrBaseInitInfo
 {
 public:
 	FramebufferPtr m_framebuffer; ///< For second level command buffers.
-	Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> m_colorAttachmentUsages{};
+	Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> m_colorAttachmentUsages = {};
 	TextureUsageBit m_depthStencilAttachmentUsage = TextureUsageBit::NONE;
 
 	CommandBufferFlag m_flags = CommandBufferFlag::NONE;

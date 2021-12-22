@@ -253,7 +253,7 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("SM scratch");
 
 			m_scratch.m_rt = rgraph.newRenderTarget(m_scratch.m_rtDescr);
-			pass.setFramebufferInfo(m_scratch.m_fbDescr, {}, m_scratch.m_rt, minx, miny, width, height);
+			pass.setFramebufferInfo(m_scratch.m_fbDescr, {}, m_scratch.m_rt, {}, minx, miny, width, height);
 			ANKI_ASSERT(threadCountForScratchPass
 						&& threadCountForScratchPass <= m_r->getThreadHive().getThreadCount());
 			pass.setWork(threadCountForScratchPass, [this](RenderPassWorkContext& rgraphCtx) {
@@ -278,7 +278,7 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 
 			if(getConfig().getRPreferCompute())
 			{
-				ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("SM atlas");
+				ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("EVSM resolve");
 
 				pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 					runAtlas(rgraphCtx);
@@ -290,8 +290,8 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 			}
 			else
 			{
-				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("SM atlas");
-				pass.setFramebufferInfo(m_atlas.m_fbDescr, {m_atlas.m_rt}, {});
+				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("EVSM resolve");
+				pass.setFramebufferInfo(m_atlas.m_fbDescr, {m_atlas.m_rt});
 
 				pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 					runAtlas(rgraphCtx);

@@ -12,23 +12,23 @@ namespace anki {
 
 FramebufferImpl::~FramebufferImpl()
 {
-	if(m_fb)
+	if(m_fbHandle)
 	{
-		vkDestroyFramebuffer(getDevice(), m_fb, nullptr);
+		vkDestroyFramebuffer(getDevice(), m_fbHandle, nullptr);
 	}
 
-	for(auto it : m_rpasses)
+	for(auto it : m_renderpassHandles)
 	{
 		VkRenderPass rpass = it;
 		ANKI_ASSERT(rpass);
 		vkDestroyRenderPass(getDevice(), rpass, nullptr);
 	}
 
-	m_rpasses.destroy(getAllocator());
+	m_renderpassHandles.destroy(getAllocator());
 
-	if(m_compatibleRpass)
+	if(m_compatibleRenderpassHandle)
 	{
-		vkDestroyRenderPass(getDevice(), m_compatibleRpass, nullptr);
+		vkDestroyRenderPass(getDevice(), m_compatibleRenderpassHandle, nullptr);
 	}
 }
 
@@ -48,13 +48,15 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 		m_aspect = init.m_depthStencilAttachment.m_textureView->getSubresource().m_depthStencilAspect;
 	}
 
+	m_hasSri = init.m_shadingRateImage.m_textureView.isCreated();
+
 	initClearValues(init);
 
 	// Create a renderpass.
 	initRpassCreateInfo(init);
-	ANKI_VK_CHECK(vkCreateRenderPass2KHR(getDevice(), &m_rpassCi, nullptr, &m_compatibleRpass));
+	ANKI_VK_CHECK(vkCreateRenderPass2KHR(getDevice(), &m_rpassCi, nullptr, &m_compatibleRenderpassHandle));
 	getGrManagerImpl().trySetVulkanHandleName(init.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT,
-											  m_compatibleRpass);
+											  m_compatibleRenderpassHandle);
 
 	// Create the FB
 	ANKI_CHECK(initFbs(init));
@@ -96,17 +98,23 @@ void FramebufferImpl::initClearValues(const FramebufferInitInfo& init)
 			m_clearVals[m_colorAttCount] = {};
 		}
 	}
+
+	// Put something for SRI. Value doesn't matter
+	if(hasSri())
+	{
+		m_clearVals[m_colorAttCount + hasDepthStencil()] = {};
+	}
 }
 
 Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 {
 	VkFramebufferCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-	ci.renderPass = m_compatibleRpass;
-	ci.attachmentCount = init.m_colorAttachmentCount + ((hasDepthStencil()) ? 1 : 0);
+	ci.renderPass = m_compatibleRenderpassHandle;
+	ci.attachmentCount = getTotalAttachmentCount();
 	ci.layers = 1;
 
-	Array<VkImageView, MAX_COLOR_ATTACHMENTS + 1> imgViews;
+	Array<VkImageView, MAX_ATTACHMENTS> imgViews;
 	U count = 0;
 
 	for(U i = 0; i < init.m_colorAttachmentCount; ++i)
@@ -116,7 +124,7 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 		const TextureImpl& tex = view.getTextureImpl();
 		ANKI_ASSERT(tex.isSubresourceGoodForFramebufferAttachment(view.getSubresource()));
 
-		imgViews[count++] = view.getHandle();
+		imgViews[count] = view.getHandle();
 
 		if(m_width == 0)
 		{
@@ -124,12 +132,14 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 			m_height = tex.getHeight() >> view.getSubresource().m_firstMipmap;
 		}
 
-		m_refs[i] = att.m_textureView;
+		m_viewRefs.m_color[i] = att.m_textureView;
 
 		if(!!(tex.getTextureUsage() & TextureUsageBit::PRESENT))
 		{
 			m_presentableTex = true;
 		}
+
+		++count;
 	}
 
 	if(hasDepthStencil())
@@ -139,7 +149,7 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 		const TextureImpl& tex = view.getTextureImpl();
 		ANKI_ASSERT(tex.isSubresourceGoodForFramebufferAttachment(view.getSubresource()));
 
-		imgViews[count++] = view.getHandle();
+		imgViews[count] = view.getHandle();
 
 		if(m_width == 0)
 		{
@@ -147,7 +157,17 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 			m_height = tex.getHeight() >> view.getSubresource().m_firstMipmap;
 		}
 
-		m_refs[MAX_COLOR_ATTACHMENTS] = att.m_textureView;
+		m_viewRefs.m_depthStencil = att.m_textureView;
+		++count;
+	}
+
+	if(hasSri())
+	{
+		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*init.m_shadingRateImage.m_textureView);
+		ANKI_ASSERT(view.getTextureImpl().usageValid(TextureUsageBit::FRAMEBUFFER_SHADING_RATE));
+		imgViews[count] = view.getHandle();
+		m_viewRefs.m_sri = init.m_shadingRateImage.m_textureView;
+		++count;
 	}
 
 	ci.width = m_width;
@@ -156,8 +176,8 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 	ci.pAttachments = &imgViews[0];
 	ANKI_ASSERT(count == ci.attachmentCount);
 
-	ANKI_VK_CHECK(vkCreateFramebuffer(getDevice(), &ci, nullptr, &m_fb));
-	getGrManagerImpl().trySetVulkanHandleName(init.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, m_fb);
+	ANKI_VK_CHECK(vkCreateFramebuffer(getDevice(), &ci, nullptr, &m_fbHandle));
+	getGrManagerImpl().trySetVulkanHandleName(init.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, m_fbHandle);
 
 	return Error::NONE;
 }
@@ -185,9 +205,10 @@ void FramebufferImpl::initRpassCreateInfo(const FramebufferInitInfo& init)
 		setupAttachmentDescriptor(init.m_colorAttachments[i], m_attachmentDescriptions[i],
 								  VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
-		m_references[i].sType = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2;
-		m_references[i].attachment = i;
-		m_references[i].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		VkAttachmentReference2& ref = m_references[i];
+		ref.sType = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2;
+		ref.attachment = i;
+		ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	}
 
 	if(hasDepthStencil())
@@ -195,16 +216,37 @@ void FramebufferImpl::initRpassCreateInfo(const FramebufferInitInfo& init)
 		setupAttachmentDescriptor(init.m_depthStencilAttachment, m_attachmentDescriptions[init.m_colorAttachmentCount],
 								  VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
-		VkAttachmentReference2& dsReference = m_references[init.m_colorAttachmentCount];
-		dsReference.sType = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2;
-		dsReference.attachment = init.m_colorAttachmentCount;
-		dsReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		VkAttachmentReference2& ref = m_references[init.m_colorAttachmentCount];
+		ref.sType = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2;
+		ref.attachment = init.m_colorAttachmentCount;
+		ref.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 	}
 
-	// Setup the render pass
-	m_rpassCi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2;
-	m_rpassCi.pAttachments = &m_attachmentDescriptions[0];
-	m_rpassCi.attachmentCount = init.m_colorAttachmentCount + ((hasDepthStencil()) ? 1 : 0);
+	U32 sriAttachmentIdx = MAX_U32;
+	if(init.m_shadingRateImage.m_textureView)
+	{
+		ANKI_ASSERT(getGrManagerImpl().getDeviceCapabilities().m_vrs && "This requires VRS to be enabled");
+
+		sriAttachmentIdx = init.m_colorAttachmentCount + hasDepthStencil();
+
+		VkAttachmentDescription2& desc = m_attachmentDescriptions[sriAttachmentIdx];
+		desc = {};
+		desc.sType = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2;
+		desc.format = convertFormat(
+			static_cast<const TextureViewImpl&>(*init.m_shadingRateImage.m_textureView).getTextureImpl().getFormat());
+		desc.samples = VK_SAMPLE_COUNT_1_BIT;
+		desc.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		desc.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		desc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		desc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		desc.initialLayout = VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
+		desc.finalLayout = VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
+
+		VkAttachmentReference2& ref = m_references[sriAttachmentIdx];
+		ref.sType = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2;
+		ref.attachment = sriAttachmentIdx;
+		ref.layout = VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
+	}
 
 	// Subpass
 	m_subpassDescr.sType = VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2;
@@ -213,17 +255,31 @@ void FramebufferImpl::initRpassCreateInfo(const FramebufferInitInfo& init)
 	m_subpassDescr.pColorAttachments = (init.m_colorAttachmentCount) ? &m_references[0] : nullptr;
 	m_subpassDescr.pDepthStencilAttachment = (hasDepthStencil()) ? &m_references[init.m_colorAttachmentCount] : nullptr;
 
+	if(init.m_shadingRateImage.m_textureView)
+	{
+		m_sriAttachmentInfo.sType = VK_STRUCTURE_TYPE_FRAGMENT_SHADING_RATE_ATTACHMENT_INFO_KHR;
+		m_sriAttachmentInfo.shadingRateAttachmentTexelSize.width = init.m_shadingRateImage.m_texelWidth;
+		m_sriAttachmentInfo.shadingRateAttachmentTexelSize.height = init.m_shadingRateImage.m_texelHeight;
+		m_sriAttachmentInfo.pFragmentShadingRateAttachment = &m_references[sriAttachmentIdx];
+
+		m_subpassDescr.pNext = &m_sriAttachmentInfo;
+	}
+
+	// Setup the render pass
+	m_rpassCi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2;
+	m_rpassCi.pAttachments = &m_attachmentDescriptions[0];
+	m_rpassCi.attachmentCount = getTotalAttachmentCount();
 	m_rpassCi.subpassCount = 1;
 	m_rpassCi.pSubpasses = &m_subpassDescr;
 }
 
 VkRenderPass FramebufferImpl::getRenderPassHandle(const Array<VkImageLayout, MAX_COLOR_ATTACHMENTS>& colorLayouts,
-												  VkImageLayout dsLayout)
+												  VkImageLayout dsLayout, VkImageLayout shadingRateImageLayout)
 {
 	VkRenderPass out = VK_NULL_HANDLE;
 
 	// Create hash
-	Array<VkImageLayout, MAX_COLOR_ATTACHMENTS + 1> allLayouts;
+	Array<VkImageLayout, MAX_ATTACHMENTS> allLayouts;
 	U allLayoutCount = 0;
 	for(U i = 0; i < m_colorAttCount; ++i)
 	{
@@ -237,13 +293,19 @@ VkRenderPass FramebufferImpl::getRenderPassHandle(const Array<VkImageLayout, MAX
 		allLayouts[allLayoutCount++] = dsLayout;
 	}
 
+	if(hasSri())
+	{
+		ANKI_ASSERT(shadingRateImageLayout != VK_IMAGE_LAYOUT_UNDEFINED);
+		allLayouts[allLayoutCount++] = shadingRateImageLayout;
+	}
+
 	const U64 hash = computeHash(&allLayouts[0], allLayoutCount * sizeof(allLayouts[0]));
 
 	// Try get it
 	{
-		RLockGuard<RWMutex> lock(m_rpassesMtx);
-		auto it = m_rpasses.find(hash);
-		if(it != m_rpasses.getEnd())
+		RLockGuard<RWMutex> lock(m_renderpassHandlesMtx);
+		auto it = m_renderpassHandles.find(hash);
+		if(it != m_renderpassHandles.getEnd())
 		{
 			out = *it;
 		}
@@ -253,21 +315,21 @@ VkRenderPass FramebufferImpl::getRenderPassHandle(const Array<VkImageLayout, MAX
 	{
 		// Create it
 
-		WLockGuard<RWMutex> lock(m_rpassesMtx);
+		WLockGuard<RWMutex> lock(m_renderpassHandlesMtx);
 
 		// Check again
-		auto it = m_rpasses.find(hash);
-		if(it != m_rpasses.getEnd())
+		auto it = m_renderpassHandles.find(hash);
+		if(it != m_renderpassHandles.getEnd())
 		{
 			out = *it;
 		}
 		else
 		{
 			VkRenderPassCreateInfo2 ci = m_rpassCi;
-			Array<VkAttachmentDescription2, MAX_COLOR_ATTACHMENTS + 1> attachmentDescriptions =
-				m_attachmentDescriptions;
-			Array<VkAttachmentReference2, MAX_COLOR_ATTACHMENTS + 1> references = m_references;
+			Array<VkAttachmentDescription2, MAX_ATTACHMENTS> attachmentDescriptions = m_attachmentDescriptions;
+			Array<VkAttachmentReference2, MAX_ATTACHMENTS> references = m_references;
 			VkSubpassDescription2 subpassDescr = m_subpassDescr;
+			VkFragmentShadingRateAttachmentInfoKHR sriAttachmentInfo = m_sriAttachmentInfo;
 
 			// Fix pointers
 			subpassDescr.pColorAttachments = &references[0];
@@ -294,14 +356,28 @@ VkRenderPass FramebufferImpl::getRenderPassHandle(const Array<VkImageLayout, MAX
 				attachmentDescriptions[i].initialLayout = lay;
 				attachmentDescriptions[i].finalLayout = lay;
 
-				references[subpassDescr.colorAttachmentCount].layout = lay;
-				subpassDescr.pDepthStencilAttachment = &references[subpassDescr.colorAttachmentCount];
+				references[i].layout = lay;
+				subpassDescr.pDepthStencilAttachment = &references[i];
+			}
+
+			if(hasSri())
+			{
+				const U i = subpassDescr.colorAttachmentCount + hasDepthStencil();
+				const VkImageLayout lay = shadingRateImageLayout;
+
+				attachmentDescriptions[i].initialLayout = lay;
+				attachmentDescriptions[i].finalLayout = lay;
+
+				references[i].layout = lay;
+
+				sriAttachmentInfo.pFragmentShadingRateAttachment = &references[i];
+				subpassDescr.pNext = &sriAttachmentInfo;
 			}
 
 			ANKI_VK_CHECKF(vkCreateRenderPass2KHR(getDevice(), &ci, nullptr, &out));
 			getGrManagerImpl().trySetVulkanHandleName(getName(), VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, out);
 
-			m_rpasses.emplace(getAllocator(), hash, out);
+			m_renderpassHandles.emplace(getAllocator(), hash, out);
 		}
 	}
 

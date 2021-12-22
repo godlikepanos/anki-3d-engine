@@ -218,37 +218,6 @@ Error TextureImpl::initInternal(VkImage externalImage, const TextureInitInfo& in
 	return Error::NONE;
 }
 
-VkFormatFeatureFlags TextureImpl::calcFeatures(const TextureInitInfo& init)
-{
-	VkFormatFeatureFlags flags = 0;
-
-	if(init.m_mipmapCount > 1 && !!(init.m_usage & TextureUsageBit::GENERATE_MIPMAPS))
-	{
-		// May be used for mip gen.
-		flags |= VK_FORMAT_FEATURE_BLIT_DST_BIT | VK_FORMAT_FEATURE_BLIT_SRC_BIT;
-	}
-
-	if(!!(init.m_usage & TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT))
-	{
-		if(formatIsDepthStencil(init.m_format))
-		{
-			flags |= VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
-		}
-		else
-		{
-			flags |= VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT | VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BLEND_BIT;
-		}
-	}
-
-	if(!!(init.m_usage & TextureUsageBit::ALL_SAMPLED))
-	{
-		flags |= VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT;
-	}
-
-	ANKI_ASSERT(flags);
-	return flags;
-}
-
 VkImageCreateFlags TextureImpl::calcCreateFlags(const TextureInitInfo& init)
 {
 	VkImageCreateFlags flags = 0;
@@ -264,7 +233,7 @@ Bool TextureImpl::imageSupported(const TextureInitInfo& init)
 {
 	VkImageFormatProperties props = {};
 
-	VkResult res = vkGetPhysicalDeviceImageFormatProperties(
+	const VkResult res = vkGetPhysicalDeviceImageFormatProperties(
 		getGrManagerImpl().getPhysicalDevice(), m_vkFormat, convertTextureType(init.m_type), VK_IMAGE_TILING_OPTIMAL,
 		convertTextureUsage(init.m_usage, init.m_format), calcCreateFlags(init), &props);
 
@@ -530,6 +499,12 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit usage, Bool src, U32 level,
 		}
 	}
 
+	if(!!(usage & TextureUsageBit::FRAMEBUFFER_SHADING_RATE))
+	{
+		stages |= VK_PIPELINE_STAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR;
+		accesses |= VK_ACCESS_FRAGMENT_SHADING_RATE_ATTACHMENT_READ_BIT_KHR;
+	}
+
 	if(!!(usage & TextureUsageBit::GENERATE_MIPMAPS))
 	{
 		stages |= VK_PIPELINE_STAGE_TRANSFER_BIT;
@@ -614,6 +589,11 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 	{
 		// Color attachment
 		out = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	}
+	else if(!(usage & ~TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT))
+	{
+		// SRI
+		out = VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
 	}
 	else if(!(usage & ~TextureUsageBit::ALL_IMAGE))
 	{

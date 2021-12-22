@@ -220,19 +220,11 @@ private:
 	mutable SpinLock m_usedForMtx;
 #endif
 
-	ANKI_USE_RESULT static VkFormatFeatureFlags calcFeatures(const TextureInitInfo& init);
-
 	ANKI_USE_RESULT static VkImageCreateFlags calcCreateFlags(const TextureInitInfo& init);
 
 	ANKI_USE_RESULT Bool imageSupported(const TextureInitInfo& init);
 
 	ANKI_USE_RESULT Error initImage(const TextureInitInfo& init);
-
-	template<typename TextureInfo>
-	void updateUsageState(const TextureInfo& surfOrVol, TextureUsageBit usage, StackAllocator<U8>& alloc,
-						  TextureUsageState& state) const;
-
-	void updateUsageState(TextureUsageBit usage, StackAllocator<U8>& alloc, TextureUsageState& state) const;
 
 	/// Compute the new type of a texture view.
 	TextureType computeNewTexTypeOfSubresource(const TextureSubresourceInfo& subresource) const;

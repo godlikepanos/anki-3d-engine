@@ -122,7 +122,7 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 	else
 	{
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("TemporalAA");
-		pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_renderRt, m_runCtx.m_tonemappedRt}, {});
+		pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_renderRt, m_runCtx.m_tonemappedRt});
 
 		pass.newDependency(RenderPassDependency(m_runCtx.m_renderRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
 		pass.newDependency(

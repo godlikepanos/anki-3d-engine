@@ -35,18 +35,18 @@ public:
 	/// Good for pipeline creation.
 	VkRenderPass getCompatibleRenderPass() const
 	{
-		ANKI_ASSERT(m_compatibleRpass);
-		return m_compatibleRpass;
+		ANKI_ASSERT(m_compatibleRenderpassHandle);
+		return m_compatibleRenderpassHandle;
 	}
 
 	/// Use it for binding. It's thread-safe
 	VkRenderPass getRenderPassHandle(const Array<VkImageLayout, MAX_COLOR_ATTACHMENTS>& colorLayouts,
-									 VkImageLayout dsLayout);
+									 VkImageLayout dsLayout, VkImageLayout shadingRateImageLayout);
 
 	VkFramebuffer getFramebufferHandle() const
 	{
-		ANKI_ASSERT(m_fb);
-		return m_fb;
+		ANKI_ASSERT(m_fbHandle);
+		return m_fbHandle;
 	}
 
 	void getAttachmentInfo(BitSet<MAX_COLOR_ATTACHMENTS, U8>& colorAttachments, Bool& depth, Bool& stencil) const
@@ -68,19 +68,22 @@ public:
 
 	U32 getAttachmentCount() const
 	{
-		return m_colorAttCount + (hasDepthStencil() ? 1 : 0);
+		return getTotalAttachmentCount();
 	}
 
 	const TextureViewPtr& getColorAttachment(U att) const
 	{
-		ANKI_ASSERT(m_refs[att].get());
-		return m_refs[att];
+		return m_viewRefs.m_color[att];
 	}
 
 	const TextureViewPtr& getDepthStencilAttachment() const
 	{
-		ANKI_ASSERT(m_refs[MAX_COLOR_ATTACHMENTS].get());
-		return m_refs[MAX_COLOR_ATTACHMENTS];
+		return m_viewRefs.m_depthStencil;
+	}
+
+	const TextureViewPtr& getSriAttachment() const
+	{
+		return m_viewRefs.m_sri;
 	}
 
 	const VkClearValue* getClearValues() const
@@ -100,30 +103,45 @@ public:
 		return m_presentableTex;
 	}
 
+	Bool hasSri() const
+	{
+		return m_hasSri;
+	}
+
 private:
+	static constexpr U32 MAX_ATTACHMENTS = MAX_COLOR_ATTACHMENTS + 2; ///< Color + depth/stencil + SRI
+
 	BitSet<MAX_COLOR_ATTACHMENTS, U8> m_colorAttachmentMask = {false};
 	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::NONE;
 
 	U8 m_colorAttCount = 0;
-	Array<VkClearValue, MAX_COLOR_ATTACHMENTS + 1> m_clearVals;
+	Array<VkClearValue, MAX_ATTACHMENTS> m_clearVals;
 
 	U32 m_width = 0;
 	U32 m_height = 0;
 	Bool m_presentableTex = false;
+	Bool m_hasSri = false;
 
-	Array<TextureViewPtr, MAX_COLOR_ATTACHMENTS + 1> m_refs; ///< @note The pos of every attachment is fixed.
+	class
+	{
+	public:
+		Array<TextureViewPtr, MAX_COLOR_ATTACHMENTS> m_color;
+		TextureViewPtr m_depthStencil;
+		TextureViewPtr m_sri;
+	} m_viewRefs;
+
+	// VK objects
+	VkRenderPass m_compatibleRenderpassHandle = VK_NULL_HANDLE; ///< Compatible renderpass. Good for pipeline creation.
+	HashMap<U64, VkRenderPass> m_renderpassHandles;
+	RWMutex m_renderpassHandlesMtx;
+	VkFramebuffer m_fbHandle = VK_NULL_HANDLE;
 
 	// RenderPass create info
 	VkRenderPassCreateInfo2 m_rpassCi = {};
-	Array<VkAttachmentDescription2, MAX_COLOR_ATTACHMENTS + 1> m_attachmentDescriptions = {};
-	Array<VkAttachmentReference2, MAX_COLOR_ATTACHMENTS + 1> m_references = {};
+	Array<VkAttachmentDescription2, MAX_ATTACHMENTS> m_attachmentDescriptions = {};
+	Array<VkAttachmentReference2, MAX_ATTACHMENTS> m_references = {};
 	VkSubpassDescription2 m_subpassDescr = {};
-
-	// VK objects
-	VkRenderPass m_compatibleRpass = {}; ///< Compatible renderpass.
-	HashMap<U64, VkRenderPass> m_rpasses;
-	RWMutex m_rpassesMtx;
-	VkFramebuffer m_fb = VK_NULL_HANDLE;
+	VkFragmentShadingRateAttachmentInfoKHR m_sriAttachmentInfo = {};
 
 	// Methods
 	ANKI_USE_RESULT Error initFbs(const FramebufferInitInfo& init);
@@ -131,6 +149,11 @@ private:
 	void initClearValues(const FramebufferInitInfo& init);
 	void setupAttachmentDescriptor(const FramebufferAttachmentInfo& att, VkAttachmentDescription2& desc,
 								   VkImageLayout layout) const;
+
+	U32 getTotalAttachmentCount() const
+	{
+		return m_colorAttCount + hasDepthStencil() + hasSri();
+	}
 };
 /// @}
 

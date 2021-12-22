@@ -79,7 +79,7 @@ void Ssr::populateRenderGraph(RenderingContext& ctx)
 	else
 	{
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("SSR");
-		pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_rt}, {});
+		pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_rt});
 
 		ppass = &pass;
 		readUsage = TextureUsageBit::SAMPLED_FRAGMENT;

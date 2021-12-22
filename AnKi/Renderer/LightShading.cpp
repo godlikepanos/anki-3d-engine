@@ -237,7 +237,7 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 				 [this, &ctx](RenderPassWorkContext& rgraphCtx) {
 					 run(ctx, rgraphCtx);
 				 });
-	pass.setFramebufferInfo(m_lightShading.m_fbDescr, {{m_runCtx.m_rt}}, {m_r->getGBuffer().getDepthRt()});
+	pass.setFramebufferInfo(m_lightShading.m_fbDescr, {m_runCtx.m_rt}, m_r->getGBuffer().getDepthRt());
 
 	const TextureUsageBit readUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 

@@ -85,7 +85,7 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 	else
 	{
 		GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("SM resolve");
-		rpass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_rt}, {});
+		rpass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_rt});
 
 		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 			run(ctx, rgraphCtx);

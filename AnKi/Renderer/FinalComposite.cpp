@@ -97,7 +97,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 		run(ctx, rgraphCtx);
 	});
-	pass.setFramebufferInfo(m_fbDescr, {ctx.m_outRenderTarget}, {});
+	pass.setFramebufferInfo(m_fbDescr, {ctx.m_outRenderTarget});
 
 	pass.newDependency({ctx.m_outRenderTarget, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 

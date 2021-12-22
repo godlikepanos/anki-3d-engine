@@ -205,8 +205,9 @@ void FramebufferDescription::bake()
 	if(!!m_depthStencilAttachment.m_aspect)
 	{
 		ANKI_BEGIN_PACKED_STRUCT
-		struct DSAttachment
+		class DSAttachment
 		{
+		public:
 			TextureSurfaceInfo m_surf;
 			U32 m_loadOp;
 			U32 m_storeOp;
@@ -232,6 +233,27 @@ void FramebufferDescription::bake()
 		outAtt.m_stencilClear = (hasStencil) ? inAtt.m_clearValue.m_depthStencil.m_stencil : 0;
 
 		m_hash = (m_hash != 0) ? appendHash(&outAtt, sizeof(outAtt), m_hash) : computeHash(&outAtt, sizeof(outAtt));
+	}
+
+	// SRI
+	if(m_shadingRateAttachmentTexelWidth > 0 && m_shadingRateAttachmentTexelHeight > 0)
+	{
+		ANKI_BEGIN_PACKED_STRUCT
+		class SriToHash
+		{
+		public:
+			U32 m_sriTexelWidth;
+			U32 m_sriTexelHeight;
+			TextureSurfaceInfo m_surface;
+		} sriToHash;
+		ANKI_END_PACKED_STRUCT
+
+		sriToHash.m_sriTexelWidth = m_shadingRateAttachmentTexelWidth;
+		sriToHash.m_sriTexelHeight = m_shadingRateAttachmentTexelHeight;
+		sriToHash.m_surface = m_shadingRateAttachmentSurface;
+
+		m_hash = (m_hash != 0) ? appendHash(&sriToHash, sizeof(sriToHash), m_hash)
+							   : computeHash(&sriToHash, sizeof(sriToHash));
 	}
 
 	ANKI_ASSERT(m_hash != 0 && m_hash != 1);
@@ -405,7 +427,7 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(const FramebufferDescription&
 	drawsToPresentable = false;
 
 	// Create a hash that includes the render targets
-	Array<U64, MAX_COLOR_ATTACHMENTS + 1> uuids;
+	Array<U64, MAX_COLOR_ATTACHMENTS + 2> uuids;
 	U count = 0;
 	for(U i = 0; i < fbDescr.m_colorAttachmentCount; ++i)
 	{
@@ -420,6 +442,11 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(const FramebufferDescription&
 	if(!!fbDescr.m_depthStencilAttachment.m_aspect)
 	{
 		uuids[count++] = m_ctx->m_rts[rtHandles[MAX_COLOR_ATTACHMENTS].m_idx].m_texture->getUuid();
+	}
+
+	if(fbDescr.m_shadingRateAttachmentTexelWidth > 0)
+	{
+		uuids[count++] = m_ctx->m_rts[rtHandles[MAX_COLOR_ATTACHMENTS + 1].m_idx].m_texture->getUuid();
 	}
 
 	hash = appendHash(&uuids[0], sizeof(U64) * count, hash);
@@ -469,6 +496,17 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(const FramebufferDescription&
 			TextureViewPtr view = getManager().newTextureView(viewInit);
 
 			outAtt.m_textureView = view;
+		}
+
+		if(fbDescr.m_shadingRateAttachmentTexelWidth > 0)
+		{
+			TextureViewInitInfo viewInit(m_ctx->m_rts[rtHandles[MAX_COLOR_ATTACHMENTS + 1].m_idx].m_texture,
+										 fbDescr.m_shadingRateAttachmentSurface, "RenderGraph SRI");
+			TextureViewPtr view = getManager().newTextureView(viewInit);
+
+			fbInit.m_shadingRateImage.m_texelWidth = fbDescr.m_shadingRateAttachmentTexelWidth;
+			fbInit.m_shadingRateImage.m_texelHeight = fbDescr.m_shadingRateAttachmentTexelHeight;
+			fbInit.m_shadingRateImage.m_textureView = view;
 		}
 
 		// Set FB name
