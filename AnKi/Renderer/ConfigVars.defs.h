@@ -12,7 +12,7 @@ ANKI_CONFIG_VAR_BOOL(RPreferCompute, !ANKI_OS_ANDROID, "Prefer compute shaders")
 
 ANKI_CONFIG_VAR_F32(RInternalRenderScaling, 1.0f, 0.5f, 1.0f,
 					"A factor over the requested swapchain resolution. Applies to all passes up to TAA")
-ANKI_CONFIG_VAR_F32(RRenderScaling, 1.0f, 0.5f, 1.0f,
+ANKI_CONFIG_VAR_F32(RRenderScaling, 1.0f, 0.5f, 8.0f,
 					"A factor over the requested swapchain resolution. Applies to post-processing and UI")
 
 ANKI_CONFIG_VAR_F32(RVolumetricLightingAccumulationQualityXY, 4.0f, 1.0f, 16.0f,
@@ -47,7 +47,7 @@ ANKI_CONFIG_VAR_U32(RProbeRefectionMaxCachedProbes, 32, 4, 256, "Max cached numb
 ANKI_CONFIG_VAR_U32(RProbeReflectionShadowMapResolution, 64, 4, 2048, "Reflection probe shadow resolution")
 
 ANKI_CONFIG_VAR_U8(RLensFlareMaxSpritesPerFlare, 8, 4, 255, "Max sprites per lens flare")
-ANKI_CONFIG_VAR_U8(RLensFlareMaxFlares, 16, 8, 256, "Max flare count")
+ANKI_CONFIG_VAR_U8(RLensFlareMaxFlares, 16, 8, 255, "Max flare count")
 
 ANKI_CONFIG_VAR_U32(RGiTileResolution, (ANKI_OS_ANDROID) ? 16 : 32, 4, 2048, "GI tile resolution")
 ANKI_CONFIG_VAR_U32(RGiShadowMapResolution, 128, 4, 2048, "GI shadowmap resolution")

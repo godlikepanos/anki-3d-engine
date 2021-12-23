@@ -83,25 +83,22 @@ Error Renderer::init(ThreadHive* hive, ResourceManager* resources, GrManager* gl
 	return err;
 }
 
-Error Renderer::initInternal(UVec2 swapchainSize)
+Error Renderer::initInternal(UVec2 swapchainResolution)
 {
 	m_frameCount = 0;
 
 	// Set from the config
-	const F32 renderScaling = m_config->getRRenderScaling();
-	const F32 internalRenderScaling = min(m_config->getRInternalRenderScaling(), renderScaling);
-
-	const Vec2 fresolution = Vec2(swapchainSize);
-	m_postProcessResolution = UVec2(fresolution * renderScaling);
+	m_postProcessResolution = UVec2(Vec2(swapchainResolution) * m_config->getRRenderScaling());
 	alignRoundDown(2, m_postProcessResolution.x());
 	alignRoundDown(2, m_postProcessResolution.y());
 
-	m_internalResolution = UVec2(fresolution * internalRenderScaling);
+	m_internalResolution = UVec2(Vec2(m_postProcessResolution) * m_config->getRInternalRenderScaling());
 	alignRoundDown(2, m_internalResolution.x());
 	alignRoundDown(2, m_internalResolution.y());
 
-	ANKI_R_LOGI("Initializing offscreen renderer. Size %ux%u. Internal size %ux%u", m_postProcessResolution.x(),
-				m_postProcessResolution.y(), m_internalResolution.x(), m_internalResolution.y());
+	ANKI_R_LOGI("Initializing offscreen renderer. Resolution %ux%u. Internal resolution %ux%u",
+				m_postProcessResolution.x(), m_postProcessResolution.y(), m_internalResolution.x(),
+				m_internalResolution.y());
 
 	m_tileSize = m_config->getRTileSize();
 	m_tileCounts.x() = (m_internalResolution.x() + m_tileSize - 1) / m_tileSize;

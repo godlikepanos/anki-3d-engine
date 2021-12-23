@@ -93,7 +93,6 @@ private:
 	ShaderProgramPtr m_blitGrProg;
 
 	UVec2 m_swapchainResolution = UVec2(0u);
-	F32 m_renderScaling = 1.0f;
 
 	RenderGraphPtr m_rgraph;
 	RenderTargetDescription m_tmpRtDesc;

@@ -48,6 +48,8 @@ ShadowMapping::~ShadowMapping()
 
 Error ShadowMapping::init()
 {
+	ANKI_R_LOGV("Initializing shadowmapping")
+
 	const Error err = initInternal();
 	if(err)
 	{
@@ -55,10 +57,11 @@ Error ShadowMapping::init()
 	}
 	else
 	{
-		ANKI_R_LOGI(
-			"Shadowmapping scratch size %ux%u. atlas size %ux%u", m_scratch.m_tileCountX * m_scratch.m_tileResolution,
-			m_scratch.m_tileCountY * m_scratch.m_tileResolution, m_atlas.m_tileCountBothAxis * m_atlas.m_tileResolution,
-			m_atlas.m_tileCountBothAxis * m_atlas.m_tileResolution);
+		ANKI_R_LOGV("Shadowmapping initialized. Scratch size %ux%u, atlas size %ux%u",
+					m_scratch.m_tileCountX * m_scratch.m_tileResolution,
+					m_scratch.m_tileCountY * m_scratch.m_tileResolution,
+					m_atlas.m_tileCountBothAxis * m_atlas.m_tileResolution,
+					m_atlas.m_tileCountBothAxis * m_atlas.m_tileResolution);
 	}
 
 	return err;

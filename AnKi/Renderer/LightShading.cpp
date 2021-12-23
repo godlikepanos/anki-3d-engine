@@ -30,6 +30,8 @@ LightShading::~LightShading()
 
 Error LightShading::init()
 {
+	ANKI_R_LOGV("Initializing light shading");
+
 	Error err = initLightShading();
 
 	if(!err)

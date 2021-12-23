@@ -168,6 +168,8 @@ Error App::init(ConfigSet* config, AllocAlignedCallback allocCb, void* allocCbUs
 
 Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 {
+	LoggerSingleton::get().enableVerbosity(m_config->getCoreVerboseLog());
+
 	setSignalHandlers();
 
 	Thread::setNameOfCurrentThread("anki_main");

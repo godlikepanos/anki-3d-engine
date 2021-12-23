@@ -25,7 +25,7 @@ Logger::Logger()
 {
 	addMessageHandler(this, &defaultSystemMessageHandler);
 
-	if(getenv("ANKI_LOGGER_VERBOSE") && getenv("ANKI_LOGGER_VERBOSE") == CString("1"))
+	if(getenv("ANKI_LOG_VERBOSE") && getenv("ANKI_LOG_VERBOSE") == CString("1"))
 	{
 		m_verbosityEnabled = true;
 	}
@@ -130,6 +130,8 @@ void Logger::writeFormated(const char* file, int line, const char* func, const c
 void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 {
 #if ANKI_OS_LINUX
+	// More info about terminal colors:
+	// https://stackoverflow.com/questions/4842424/list-of-ansi-color-escape-sequences
 	FILE* out = nullptr;
 	const char* terminalColor = nullptr;
 	const char* terminalColorBg = nullptr;
@@ -138,10 +140,14 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 	switch(info.m_type)
 	{
 	case LoggerMessageType::NORMAL:
-	case LoggerMessageType::VERBOSE:
 		out = stdout;
 		terminalColor = "\033[0;32m";
 		terminalColorBg = "\033[1;42;37m";
+		break;
+	case LoggerMessageType::VERBOSE:
+		out = stdout;
+		terminalColor = "\033[0;34m";
+		terminalColorBg = "\033[1;44;37m";
 		break;
 	case LoggerMessageType::ERROR:
 		out = stderr;

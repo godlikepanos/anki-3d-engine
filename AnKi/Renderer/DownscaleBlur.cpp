@@ -32,12 +32,14 @@ Error DownscaleBlur::initInternal()
 										  DOWNSCALE_BLUR_DOWN_TO)
 				  - 1;
 
+	const UVec2 rez = m_r->getPostProcessResolution() / 2;
+	ANKI_R_LOGV("Initializing downscale pyramid. Resolution %ux%u, mip count %u", rez.x(), rez.y(), m_passCount);
+
 	const Bool preferCompute = getConfig().getRPreferCompute();
 
 	// Create the miped texture
 	TextureInitInfo texinit = m_r->create2DRenderTargetDescription(
-		m_r->getPostProcessResolution().x() / 2, m_r->getPostProcessResolution().y() / 2,
-		LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT, "DownscaleBlur");
+		rez.x(), rez.y(), LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT, "DownscaleBlur");
 	texinit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE;
 	if(preferCompute)
 	{

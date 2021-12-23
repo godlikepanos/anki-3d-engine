@@ -33,6 +33,9 @@ Error IndirectDiffuse::initInternal()
 {
 	const UVec2 size = m_r->getInternalResolution() / 2;
 	ANKI_ASSERT((m_r->getInternalResolution() % 2) == UVec2(0u) && "Needs to be dividable for proper upscaling");
+
+	ANKI_R_LOGV("Initializing indirect diffuse. Resolution %ux%u", size.x(), size.y());
+
 	const Bool preferCompute = getConfig().getRPreferCompute();
 
 	// Init textures

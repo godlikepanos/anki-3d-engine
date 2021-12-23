@@ -17,6 +17,7 @@ namespace anki {
 #define ANKI_R_LOGE(...) ANKI_LOG("R   ", ERROR, __VA_ARGS__)
 #define ANKI_R_LOGW(...) ANKI_LOG("R   ", WARNING, __VA_ARGS__)
 #define ANKI_R_LOGF(...) ANKI_LOG("R   ", FATAL, __VA_ARGS__)
+#define ANKI_R_LOGV(...) ANKI_LOG("R   ", VERBOSE, __VA_ARGS__)
 
 // Forward
 #define ANKI_RENDERER_OBJECT_DEF(a, b) class a;

@@ -27,7 +27,7 @@ ClusterBinning::~ClusterBinning()
 
 Error ClusterBinning::init()
 {
-	ANKI_R_LOGI("Initializing clusterer binning");
+	ANKI_R_LOGV("Initializing clusterer binning");
 
 	ANKI_CHECK(getResourceManager().loadResource("Shaders/ClusterBinning.ankiprog", m_prog));
 

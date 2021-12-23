@@ -37,9 +37,7 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 
 	// Init renderer and manipulate the width/height
 	m_swapchainResolution = inf.m_swapchainSize;
-	m_renderScaling = inf.m_config->getRRenderScaling();
-
-	m_rDrawToDefaultFb = m_renderScaling == 1.0f;
+	m_rDrawToDefaultFb = inf.m_config->getRRenderScaling() == 1.0f;
 
 	m_r.reset(m_alloc.newInstance<Renderer>());
 	ANKI_CHECK(m_r->init(inf.m_threadHive, inf.m_resourceManager, inf.m_gr, inf.m_stagingMemory, inf.m_ui, m_alloc,
@@ -54,8 +52,7 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 		m_blitGrProg = variant->getProgram();
 
 		// The RT desc
-		const Vec2 fresolution = Vec2(m_swapchainResolution);
-		UVec2 resolution = UVec2(fresolution * m_renderScaling);
+		UVec2 resolution = UVec2(Vec2(m_swapchainResolution) * inf.m_config->getRRenderScaling());
 		alignRoundDown(2, resolution.x());
 		alignRoundDown(2, resolution.y());
 		m_tmpRtDesc = m_r->create2DRenderTargetDescription(resolution.x(), resolution.y(), Format::R8G8B8_UNORM,
@@ -67,12 +64,12 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 		m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
 		m_fbDescr.bake();
 
-		ANKI_R_LOGI("The main renderer will have to blit the offscreen renderer's result");
+		ANKI_R_LOGI("There will be a blit pass to the swapchain because render scaling is not 1.0");
 	}
 
 	m_rgraph = inf.m_gr->newRenderGraph();
 
-	ANKI_R_LOGI("Main renderer initialized. Rendering size %ux%u", m_swapchainResolution.x(),
+	ANKI_R_LOGI("Main renderer initialized. Swapchain resolution %ux%u", m_swapchainResolution.x(),
 				m_swapchainResolution.x());
 
 	return Error::NONE;
@@ -108,8 +105,8 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 		// m_r will draw to a temp tex
 
 		ctx.m_outRenderTarget = ctx.m_renderGraphDescr.newRenderTarget(m_tmpRtDesc);
-		ctx.m_outRenderTargetWidth = U32(F32(m_swapchainResolution.x()) * m_renderScaling);
-		ctx.m_outRenderTargetHeight = U32(F32(m_swapchainResolution.y()) * m_renderScaling);
+		ctx.m_outRenderTargetWidth = m_tmpRtDesc.m_width;
+		ctx.m_outRenderTargetHeight = m_tmpRtDesc.m_height;
 	}
 
 	ctx.m_renderQueue = &rqueue;
@@ -129,11 +126,11 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 			cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
 			rgraphCtx.bindColorTexture(0, 1, m_runCtx.m_ctx->m_outRenderTarget);
 
-			cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3, 1);
+			cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
 		});
 
-		pass.newDependency({presentRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-		pass.newDependency({ctx.m_outRenderTarget, TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newDependency(RenderPassDependency(presentRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
+		pass.newDependency(RenderPassDependency(ctx.m_outRenderTarget, TextureUsageBit::SAMPLED_FRAGMENT));
 	}
 
 	// Create a dummy pass to transition the presentable image to present

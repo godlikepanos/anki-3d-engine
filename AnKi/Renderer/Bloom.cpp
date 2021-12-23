@@ -21,6 +21,17 @@ Bloom::~Bloom()
 {
 }
 
+Error Bloom::initInternal()
+{
+	ANKI_R_LOGV("Initializing bloom");
+
+	ANKI_CHECK(initExposure());
+	ANKI_CHECK(initUpscale());
+	m_fbDescr.m_colorAttachmentCount = 1;
+	m_fbDescr.bake();
+	return Error::NONE;
+}
+
 Error Bloom::initExposure()
 {
 	m_exposure.m_width = m_r->getDownscaleBlur().getPassWidth(MAX_U32) * 2;

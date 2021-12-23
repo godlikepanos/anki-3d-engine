@@ -24,6 +24,7 @@ static const char SHADER_HEADER[] = R"(#version 460 core
 #define ANKI_OS_ANDROID %d
 #define ANKI_OS_WINDOWS %d
 #define ANKI_OS_LINUX %d
+#define ANKI_FORCE_FULL_FP_PRECISION %d
 
 #define _ANKI_SUPPORTS_64BIT !ANKI_OS_ANDROID
 
@@ -253,7 +254,12 @@ static const char SHADER_HEADER[] = R"(#version 460 core
 layout(std140, row_major) uniform;
 layout(std140, row_major) buffer;
 
-#define ANKI_RP mediump
+#if ANKI_FORCE_FULL_FP_PRECISION
+#	define ANKI_RP mediump
+#else
+#	define ANKI_RP highp
+#endif
+
 #define ANKI_FP highp
 
 precision highp int;
@@ -963,7 +969,8 @@ void ShaderProgramParser::generateAnkiShaderHeader(ShaderType shaderType, const 
 												   StringAuto& header)
 {
 	header.sprintf(SHADER_HEADER, SHADER_STAGE_NAMES[shaderType].cstr(), ANKI_OS_ANDROID, ANKI_OS_WINDOWS,
-				   ANKI_OS_LINUX, compilerOptions.m_bindlessLimits.m_bindlessTextureCount,
+				   ANKI_OS_LINUX, compilerOptions.m_forceFullFloatingPointPrecision,
+				   compilerOptions.m_bindlessLimits.m_bindlessTextureCount,
 				   compilerOptions.m_bindlessLimits.m_bindlessImageCount);
 }
 

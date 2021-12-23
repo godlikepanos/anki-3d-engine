@@ -48,19 +48,24 @@ public:
 };
 
 /// Bindless related info.
+ANKI_BEGIN_PACKED_STRUCT
 class BindlessLimits
 {
 public:
 	U32 m_bindlessTextureCount = 0;
 	U32 m_bindlessImageCount = 0;
 };
+ANKI_END_PACKED_STRUCT
 
 /// Options to be passed to the compiler.
+ANKI_BEGIN_PACKED_STRUCT
 class ShaderCompilerOptions
 {
 public:
 	BindlessLimits m_bindlessLimits;
+	Bool m_forceFullFloatingPointPrecision = false;
 };
+ANKI_END_PACKED_STRUCT
 /// @}
 
 } // end namespace anki

@@ -41,7 +41,7 @@ void ConfigSet::init(AllocAlignedCallback allocCb, void* allocCbUserData)
 	m_##name.m_description = description; \
 	m_##name.m_value = defaultValue; \
 	m_##name.m_min = minValue; \
-	m_##name.m_max = minValue; \
+	m_##name.m_max = maxValue; \
 	m_vars.pushBack(&m_##name);
 
 #define ANKI_CONFIG_VAR_U8(name, defaultValue, minValue, maxValue, description) \
@@ -215,16 +215,18 @@ Error ConfigSet::setFromCommandLineArguments(U32 cmdLineArgsCount, char* cmdLine
 		{
 		}
 
-#define ANKI_NUMERIC(name) \
+#define ANKI_NUMERIC(type, name) \
 	else if(varName == m_##name.m_name) \
 	{ \
-		ANKI_CHECK(value.toNumber(m_##name.m_value)); \
+		type v; \
+		ANKI_CHECK(value.toNumber(v)); \
+		set##name(v); \
 	}
 
-#define ANKI_CONFIG_VAR_U8(name, defaultValue, minValue, maxValue, description) ANKI_NUMERIC(name)
-#define ANKI_CONFIG_VAR_U32(name, defaultValue, minValue, maxValue, description) ANKI_NUMERIC(name)
-#define ANKI_CONFIG_VAR_PTR_SIZE(name, defaultValue, minValue, maxValue, description) ANKI_NUMERIC(name)
-#define ANKI_CONFIG_VAR_F32(name, defaultValue, minValue, maxValue, description) ANKI_NUMERIC(name)
+#define ANKI_CONFIG_VAR_U8(name, defaultValue, minValue, maxValue, description) ANKI_NUMERIC(U8, name)
+#define ANKI_CONFIG_VAR_U32(name, defaultValue, minValue, maxValue, description) ANKI_NUMERIC(U32, name)
+#define ANKI_CONFIG_VAR_PTR_SIZE(name, defaultValue, minValue, maxValue, description) ANKI_NUMERIC(PtrSize, name)
+#define ANKI_CONFIG_VAR_F32(name, defaultValue, minValue, maxValue, description) ANKI_NUMERIC(F32, name)
 
 #define ANKI_CONFIG_VAR_BOOL(name, defaultValue, description) \
 	else if(varName == m_##name.m_name) \

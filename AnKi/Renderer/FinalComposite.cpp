@@ -30,6 +30,8 @@ FinalComposite::~FinalComposite()
 
 Error FinalComposite::initInternal()
 {
+	ANKI_R_LOGV("Initializing final composite");
+
 	ANKI_CHECK(loadColorGradingTextureImage("EngineAssets/DefaultLut.ankitex"));
 
 	m_fbDescr.m_colorAttachmentCount = 1;
@@ -99,17 +101,18 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 	});
 	pass.setFramebufferInfo(m_fbDescr, {ctx.m_outRenderTarget});
 
-	pass.newDependency({ctx.m_outRenderTarget, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+	pass.newDependency(RenderPassDependency(ctx.m_outRenderTarget, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
 
 	if(getConfig().getRDbgEnabled())
 	{
-		pass.newDependency({m_r->getDbg().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newDependency(RenderPassDependency(m_r->getDbg().getRt(), TextureUsageBit::SAMPLED_FRAGMENT));
 	}
 
-	pass.newDependency({m_r->getScale().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
-	pass.newDependency({m_r->getBloom().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
-	pass.newDependency({m_r->getMotionVectors().getMotionVectorsRt(), TextureUsageBit::SAMPLED_FRAGMENT});
-	pass.newDependency({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+	pass.newDependency(RenderPassDependency(m_r->getScale().getRt(), TextureUsageBit::SAMPLED_FRAGMENT));
+	pass.newDependency(RenderPassDependency(m_r->getBloom().getRt(), TextureUsageBit::SAMPLED_FRAGMENT));
+	pass.newDependency(
+		RenderPassDependency(m_r->getMotionVectors().getMotionVectorsRt(), TextureUsageBit::SAMPLED_FRAGMENT));
+	pass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_FRAGMENT));
 
 	RenderTargetHandle dbgRt;
 	Bool dbgRtValid;
@@ -117,7 +120,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 	m_r->getCurrentDebugRenderTarget(dbgRt, dbgRtValid, debugProgram);
 	if(dbgRtValid)
 	{
-		pass.newDependency({dbgRt, TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newDependency(RenderPassDependency(dbgRt, TextureUsageBit::SAMPLED_FRAGMENT));
 	}
 }
 

@@ -26,7 +26,7 @@ Error GBufferPost::init()
 
 Error GBufferPost::initInternal()
 {
-	ANKI_R_LOGI("Initializing GBufferPost pass");
+	ANKI_R_LOGV("Initializing GBufferPost pass");
 
 	// Load shaders
 	ANKI_CHECK(getResourceManager().loadResource("Shaders/GBufferPost.ankiprog", m_prog));

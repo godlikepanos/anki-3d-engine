@@ -30,6 +30,8 @@ Error LensFlare::init()
 
 Error LensFlare::initInternal()
 {
+	ANKI_R_LOGV("Initializing lens flare");
+
 	ANKI_CHECK(initSprite());
 	ANKI_CHECK(initOcclusion());
 

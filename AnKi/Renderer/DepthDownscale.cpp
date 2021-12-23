@@ -39,7 +39,7 @@ Error DepthDownscale::initInternal()
 	m_lastMipSize.x() = width >> (m_mipCount - 1);
 	m_lastMipSize.y() = height >> (m_mipCount - 1);
 
-	ANKI_R_LOGI("Initializing HiZ. Mip count %u, last mip size %ux%u", m_mipCount, m_lastMipSize.x(),
+	ANKI_R_LOGV("Initializing HiZ. Mip count %u, last mip size %ux%u", m_mipCount, m_lastMipSize.x(),
 				m_lastMipSize.y());
 
 	const Bool supportsReductionSampler = getGrManager().getDeviceCapabilities().m_samplingFilterMinMax;

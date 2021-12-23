@@ -33,6 +33,8 @@ Error Ssr::initInternal()
 	const U32 width = m_r->getInternalResolution().x() / 2;
 	const U32 height = m_r->getInternalResolution().y() / 2;
 
+	ANKI_R_LOGV("Initializing SSR. Resolution %ux%u", width, height);
+
 	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_noiseImage));
 
 	// Create RT

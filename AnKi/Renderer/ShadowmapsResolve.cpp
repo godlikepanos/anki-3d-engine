@@ -33,6 +33,8 @@ Error ShadowmapsResolve::initInternal()
 	U32 height = U32(getConfig().getRSmResolveFactor() * F32(m_r->getInternalResolution().y()));
 	height = min(m_r->getInternalResolution().y(), getAlignedRoundUp(4, height));
 
+	ANKI_R_LOGV("Initializing shadowmaps resolve. Resolution %ux%u", width, height);
+
 	m_rtDescr = m_r->create2DRenderTargetDescription(width, height, Format::R8G8B8A8_UNORM, "SM resolve");
 	m_rtDescr.bake();
 

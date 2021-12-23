@@ -323,10 +323,10 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 		instExtensionInf.create(extCount);
 		vkEnumerateInstanceExtensionProperties(nullptr, &extCount, &instExtensionInf[0]);
 
-		ANKI_VK_LOGI("Found the following instance extensions:");
+		ANKI_VK_LOGV("Found the following instance extensions:");
 		for(U32 i = 0; i < extCount; ++i)
 		{
-			ANKI_VK_LOGI("\t%s", instExtensionInf[i].extensionName);
+			ANKI_VK_LOGV("\t%s", instExtensionInf[i].extensionName);
 		}
 
 		U32 instExtensionCount = 0;
@@ -609,10 +609,10 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 		U32 extensionsToEnableCount = 0;
 		vkEnumerateDeviceExtensionProperties(m_physicalDevice, nullptr, &extCount, &extensionInfos[0]);
 
-		ANKI_VK_LOGI("Found the following device extensions:");
+		ANKI_VK_LOGV("Found the following device extensions:");
 		for(U32 i = 0; i < extCount; ++i)
 		{
-			ANKI_VK_LOGI("\t%s", extensionInfos[i].extensionName);
+			ANKI_VK_LOGV("\t%s", extensionInfos[i].extensionName);
 		}
 
 		while(extCount-- != 0)

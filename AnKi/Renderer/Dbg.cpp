@@ -28,6 +28,8 @@ Dbg::~Dbg()
 
 Error Dbg::init()
 {
+	ANKI_R_LOGV("Initializing DBG");
+
 	// RT descr
 	m_rtDescr = m_r->create2DRenderTargetDescription(m_r->getInternalResolution().x(), m_r->getInternalResolution().y(),
 													 DBG_COLOR_ATTACHMENT_PIXEL_FORMAT, "Dbg");

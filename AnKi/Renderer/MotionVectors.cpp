@@ -27,6 +27,8 @@ Error MotionVectors::init()
 
 Error MotionVectors::initInternal()
 {
+	ANKI_R_LOGV("Initializing motion vectors");
+
 	// Prog
 	ANKI_CHECK(getResourceManager().loadResource((getConfig().getRPreferCompute())
 													 ? "Shaders/MotionVectorsCompute.ankiprog"

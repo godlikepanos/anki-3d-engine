@@ -31,7 +31,7 @@ Error VolumetricLightingAccumulation::init()
 	m_volumeSize[0] = U32(F32(m_r->getTileCounts().x()) * qualityXY);
 	m_volumeSize[1] = U32(F32(m_r->getTileCounts().y()) * qualityXY);
 	m_volumeSize[2] = U32(F32(m_finalZSplit + 1) * qualityZ);
-	ANKI_R_LOGI("Initializing volumetric lighting accumulation. Size %ux%ux%u", m_volumeSize[0], m_volumeSize[1],
+	ANKI_R_LOGV("Initializing volumetric lighting accumulation. Size %ux%ux%u", m_volumeSize[0], m_volumeSize[1],
 				m_volumeSize[2]);
 
 	if(!isAligned(m_r->getTileCounts().x(), m_volumeSize[0]) || !isAligned(m_r->getTileCounts().y(), m_volumeSize[1])

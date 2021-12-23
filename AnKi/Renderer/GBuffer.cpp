@@ -29,6 +29,9 @@ Error GBuffer::init()
 
 Error GBuffer::initInternal()
 {
+	ANKI_R_LOGV("Initializing GBuffer. Resolution %ux%u", m_r->getInternalResolution().x(),
+				m_r->getInternalResolution().y());
+
 	// RTs
 	static const Array<const char*, 2> depthRtNames = {{"GBuffer depth #0", "GBuffer depth #1"}};
 	for(U32 i = 0; i < 2; ++i)

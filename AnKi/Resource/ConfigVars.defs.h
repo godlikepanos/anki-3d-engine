@@ -14,3 +14,4 @@ ANKI_CONFIG_VAR_STRING(RsrcDataPathExcludedStrings, "build",
 					   "A list of string separated by : that will be used to exclude paths from rsrc_dataPaths")
 ANKI_CONFIG_VAR_PTR_SIZE(RsrcTransferScratchMemorySize, 256_MB, 1_MB, 4_GB,
 						 "Memory that is used fot texture and buffer uploads")
+ANKI_CONFIG_VAR_BOOL(RsrcForceFullFpPrecision, false, "Force full floating point precision")

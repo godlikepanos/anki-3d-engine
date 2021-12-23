@@ -33,6 +33,8 @@ Error RtShadows::init()
 
 Error RtShadows::initInternal()
 {
+	ANKI_R_LOGV("Initializing RT shadows");
+
 	m_useSvgf = getConfig().getRRtShadowsSvgf();
 	m_atrousPassCount = getConfig().getRRtShadowsSvgfAtrousPassCount();
 

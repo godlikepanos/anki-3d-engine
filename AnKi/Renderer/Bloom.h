@@ -82,14 +82,7 @@ private:
 	ANKI_USE_RESULT Error initExposure();
 	ANKI_USE_RESULT Error initUpscale();
 
-	ANKI_USE_RESULT Error initInternal()
-	{
-		ANKI_CHECK(initExposure());
-		ANKI_CHECK(initUpscale());
-		m_fbDescr.m_colorAttachmentCount = 1;
-		m_fbDescr.bake();
-		return Error::NONE;
-	}
+	ANKI_USE_RESULT Error initInternal();
 };
 
 /// @}

@@ -28,6 +28,8 @@ Scale::~Scale()
 
 Error Scale::init()
 {
+	ANKI_R_LOGV("Initializing scale");
+
 	const Bool needsScaling = m_r->getPostProcessResolution() != m_r->getInternalResolution();
 	const Bool needsSharpening = getConfig().getRSharpen();
 	if(!needsScaling && !needsSharpening)

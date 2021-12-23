@@ -69,6 +69,7 @@ Error ShaderProgramResourceSystem::compileAllShaders(CString cacheDir, GrManager
 	ShaderCompilerOptions compilerOptions;
 	compilerOptions.m_bindlessLimits.m_bindlessTextureCount = gr.getConfig().getGrMaxBindlessTextures();
 	compilerOptions.m_bindlessLimits.m_bindlessImageCount = gr.getConfig().getGrMaxBindlessImages();
+	compilerOptions.m_forceFullFloatingPointPrecision = gr.getConfig().getRsrcForceFullFpPrecision();
 	U64 gpuHash = computeHash(&compilerOptions, sizeof(compilerOptions));
 	gpuHash = appendHash(&SHADER_BINARY_VERSION, sizeof(SHADER_BINARY_VERSION), gpuHash);
 

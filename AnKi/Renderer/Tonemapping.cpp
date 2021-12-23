@@ -26,6 +26,8 @@ Error Tonemapping::initInternal()
 	const U32 width = m_r->getDownscaleBlur().getPassWidth(m_inputTexMip);
 	const U32 height = m_r->getDownscaleBlur().getPassHeight(m_inputTexMip);
 
+	ANKI_R_LOGV("Initializing tonemapping. Resolution %ux%u", width, height);
+
 	// Create program
 	ANKI_CHECK(getResourceManager().loadResource("Shaders/TonemappingAverageLuminance.ankiprog", m_prog));
 

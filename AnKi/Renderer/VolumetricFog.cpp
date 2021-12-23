@@ -25,6 +25,8 @@ Error VolumetricFog::init()
 	m_volumeSize[1] = U32(F32(m_r->getTileCounts().y()) * qualityXY);
 	m_volumeSize[2] = U32(F32(m_finalZSplit + 1) * qualityZ);
 
+	ANKI_R_LOGV("Initializing volumetric fog. Resolution %ux%ux%u", m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]);
+
 	// Shaders
 	ANKI_CHECK(getResourceManager().loadResource("Shaders/VolumetricFogAccumulation.ankiprog", m_prog));
 
