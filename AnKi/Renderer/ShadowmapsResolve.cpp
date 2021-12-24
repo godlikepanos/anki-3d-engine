@@ -40,7 +40,6 @@ Error ShadowmapsResolve::initInternal()
 
 	// Create FB descr
 	m_fbDescr.m_colorAttachmentCount = 1;
-	m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
 	m_fbDescr.bake();
 
 	// Prog

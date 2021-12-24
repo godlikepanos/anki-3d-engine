@@ -61,7 +61,6 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 
 		// FB descr
 		m_fbDescr.m_colorAttachmentCount = 1;
-		m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
 		m_fbDescr.bake();
 
 		ANKI_R_LOGI("There will be a blit pass to the swapchain because render scaling is not 1.0");
@@ -95,18 +94,12 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 	if(m_rDrawToDefaultFb)
 	{
 		// m_r will draw to a presentable texture
-
 		ctx.m_outRenderTarget = presentRt;
-		ctx.m_outRenderTargetWidth = presentTex->getWidth();
-		ctx.m_outRenderTargetHeight = presentTex->getHeight();
 	}
 	else
 	{
 		// m_r will draw to a temp tex
-
 		ctx.m_outRenderTarget = ctx.m_renderGraphDescr.newRenderTarget(m_tmpRtDesc);
-		ctx.m_outRenderTargetWidth = m_tmpRtDesc.m_width;
-		ctx.m_outRenderTargetHeight = m_tmpRtDesc.m_height;
 	}
 
 	ctx.m_renderQueue = &rqueue;

@@ -60,7 +60,6 @@ Error DownscaleBlur::initInternal()
 		for(U32 pass = 0; pass < m_passCount; ++pass)
 		{
 			m_fbDescrs[pass].m_colorAttachmentCount = 1;
-			m_fbDescrs[pass].m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
 			m_fbDescrs[pass].m_colorAttachments[0].m_surface.m_level = pass;
 			m_fbDescrs[pass].bake();
 		}

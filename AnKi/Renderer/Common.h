@@ -132,8 +132,6 @@ public:
 
 	/// The render target that the Renderer will populate.
 	RenderTargetHandle m_outRenderTarget;
-	U32 m_outRenderTargetWidth = 0;
-	U32 m_outRenderTargetHeight = 0;
 
 	ClusteredShadingContext m_clusteredShading;
 

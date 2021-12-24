@@ -31,7 +31,7 @@ const Vec2 NOISE_TEX_SIZE = Vec2(64.0);
 const UVec2 WORKGROUP_SIZE = UVec2(8, 8);
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
 
-layout(set = 0, binding = 8) uniform writeonly image2D out_img;
+layout(set = 0, binding = 8) uniform writeonly image2D u_outImg;
 #else
 layout(location = 0) in Vec2 in_uv;
 layout(location = 0) out Vec4 out_color;
@@ -144,7 +144,7 @@ void main()
 
 	// Store
 #if defined(ANKI_COMPUTE_SHADER)
-	imageStore(out_img, IVec2(gl_GlobalInvocationID.xy), outColor);
+	imageStore(u_outImg, IVec2(gl_GlobalInvocationID.xy), outColor);
 #else
 	out_color = outColor;
 #endif

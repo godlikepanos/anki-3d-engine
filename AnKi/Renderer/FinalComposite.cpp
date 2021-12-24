@@ -35,7 +35,6 @@ Error FinalComposite::initInternal()
 	ANKI_CHECK(loadColorGradingTextureImage("EngineAssets/DefaultLut.ankitex"));
 
 	m_fbDescr.m_colorAttachmentCount = 1;
-	m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
 	m_fbDescr.bake();
 
 	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_blueNoise));
@@ -178,11 +177,11 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 		cmdb->bindSampler(0, 1, m_r->getSamplers().m_nearestNearestClamp);
 	}
 
-	cmdb->setViewport(0, 0, ctx.m_outRenderTargetWidth, ctx.m_outRenderTargetHeight);
+	cmdb->setViewport(0, 0, m_r->getPostProcessResolution().x(), m_r->getPostProcessResolution().y());
 	drawQuad(cmdb);
 
 	// Draw UI
-	m_r->getUiStage().draw(ctx.m_outRenderTargetWidth, ctx.m_outRenderTargetHeight, ctx, cmdb);
+	m_r->getUiStage().draw(m_r->getPostProcessResolution().x(), m_r->getPostProcessResolution().y(), ctx, cmdb);
 }
 
 } // end namespace anki
