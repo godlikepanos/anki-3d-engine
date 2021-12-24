@@ -6,7 +6,7 @@
 #include <AnKi/Renderer/GBufferPost.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/GBuffer.h>
-#include <AnKi/Renderer/LightShading.h>
+#include <AnKi/Renderer/RenderQueue.h>
 
 namespace anki {
 
@@ -51,6 +51,12 @@ Error GBufferPost::initInternal()
 
 void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 {
+	if(ctx.m_renderQueue->m_decals.getSize() == 0)
+	{
+		// If there are no decals don't bother
+		return;
+	}
+
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	// Create pass
