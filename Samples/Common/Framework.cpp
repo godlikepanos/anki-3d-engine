@@ -90,8 +90,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::P) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget(
-			(renderer.getCurrentDebugRenderTarget() == "GBuffer_normals") ? "" : "GBuffer_normals");
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "VRS") ? "" : "VRS");
 	}
 
 	if(in.getKey(KeyCode::L) == 1)

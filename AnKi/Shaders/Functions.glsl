@@ -604,3 +604,19 @@ I32 findLSB2(U32 v)
 {
 	return findLSB(v);
 }
+
+/// Encode the shading rate to be stored in an SRI. The rates should be power of two, can't be zero and can't exceed 4.
+/// So the possible values are 1,2,4
+U32 encodeVrsRate(UVec2 rateXY)
+{
+	return (rateXY.y >> 1u) | ((rateXY.x << 1u) & 12u);
+}
+
+/// Decodes a number produced by encodeVrsRate(). Returns the shading rates.
+UVec2 decodeVrsRate(U32 texel)
+{
+	UVec2 rateXY;
+	rateXY.x = 1u << ((texel >> 2u) & 3u);
+	rateXY.y = 1u << (texel & 3u);
+	return rateXY;
+}

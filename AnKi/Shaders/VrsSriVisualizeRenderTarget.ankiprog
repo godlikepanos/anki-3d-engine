@@ -1,0 +1,41 @@
+// Copyright (C) 2009-2021, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki start vert
+#include <AnKi/Shaders/QuadVert.glsl>
+#pragma anki end
+
+#pragma anki start frag
+#include <AnKi/Shaders/Functions.glsl>
+
+layout(set = 0, binding = 0) uniform utexture2D u_inTex;
+layout(set = 0, binding = 1) uniform sampler u_nearestAnyClampSampler;
+
+layout(location = 0) in Vec2 in_uv;
+layout(location = 0) out Vec3 out_color;
+
+void main()
+{
+	const U32 texel = textureLod(u_inTex, u_nearestAnyClampSampler, in_uv, 0.0).x;
+	const UVec2 rate = decodeVrsRate(texel);
+
+	if(rate == UVec2(1u))
+	{
+		out_color = Vec3(0.0, 0.0, 1.0);
+	}
+	else if(rate == UVec2(2u))
+	{
+		out_color = Vec3(0.0, 1.0, 0.0);
+	}
+	else if(rate == UVec2(4u))
+	{
+		out_color = Vec3(1.0, 0.0, 0.0);
+	}
+	else
+	{
+		out_color = Vec3(0.0, 0.0, 0.0);
+	}
+}
+#pragma anki end

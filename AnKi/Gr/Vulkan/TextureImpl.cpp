@@ -590,7 +590,7 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 		// Color attachment
 		out = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	}
-	else if(!(usage & ~TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT))
+	else if(!(usage & ~TextureUsageBit::FRAMEBUFFER_SHADING_RATE))
 	{
 		// SRI
 		out = VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;

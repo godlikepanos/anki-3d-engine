@@ -41,6 +41,7 @@
 #include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Renderer/Scale.h>
 #include <AnKi/Renderer/IndirectDiffuse.h>
+#include <AnKi/Renderer/VrsSriGeneration.h>
 
 namespace anki {
 
@@ -147,6 +148,9 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 
 	m_probeReflections.reset(m_alloc.newInstance<ProbeReflections>(this));
 	ANKI_CHECK(m_probeReflections->init());
+
+	m_vrsSriGeneration.reset(m_alloc.newInstance<VrsSriGeneration>(this));
+	ANKI_CHECK(m_vrsSriGeneration->init());
 
 	m_gbuffer.reset(m_alloc.newInstance<GBuffer>(this));
 	ANKI_CHECK(m_gbuffer->init());
@@ -337,6 +341,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	{
 		m_accelerationStructureBuilder->populateRenderGraph(ctx);
 	}
+	m_vrsSriGeneration->populateRenderGraph(ctx);
 	m_shadowMapping->populateRenderGraph(ctx);
 	m_indirectDiffuseProbes->populateRenderGraph(ctx);
 	m_probeReflections->populateRenderGraph(ctx);

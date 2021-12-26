@@ -92,10 +92,17 @@ public:
 			return false;
 		}
 
-		if(m_shadingRateImage.m_textureView
-		   && (m_shadingRateImage.m_texelHeight == 0 || m_shadingRateImage.m_texelWidth))
+		if(m_shadingRateImage.m_textureView)
 		{
-			return false;
+			if(m_shadingRateImage.m_texelHeight == 0 || m_shadingRateImage.m_texelWidth == 0)
+			{
+				return false;
+			}
+
+			if(!isPowerOfTwo(m_shadingRateImage.m_texelHeight) || !isPowerOfTwo(m_shadingRateImage.m_texelWidth))
+			{
+				return false;
+			}
 		}
 
 		return true;

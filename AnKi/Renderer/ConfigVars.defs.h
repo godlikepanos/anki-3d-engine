@@ -9,6 +9,7 @@ ANKI_CONFIG_VAR_U8(RTextureAnisotropy, 8, 1, 16, "Texture anisotropy for the mai
 ANKI_CONFIG_VAR_U32(RTileSize, 64, 8, 256, "Tile lighting tile size")
 ANKI_CONFIG_VAR_U32(RZSplitCount, 64, 8, 1024, "Clusterer number of Z splits")
 ANKI_CONFIG_VAR_BOOL(RPreferCompute, !ANKI_OS_ANDROID, "Prefer compute shaders")
+ANKI_CONFIG_VAR_BOOL(RVrs, true, "Enable VRS in multiple passes")
 
 ANKI_CONFIG_VAR_F32(RInternalRenderScaling, 1.0f, 0.5f, 1.0f,
 					"A factor over the requested swapchain resolution. Applies to all passes up to TAA")

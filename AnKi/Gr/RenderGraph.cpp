@@ -169,8 +169,6 @@ public:
 
 void FramebufferDescription::bake()
 {
-	ANKI_ASSERT(m_hash == 0 && "Already baked");
-
 	m_hash = 0;
 	ANKI_ASSERT(m_colorAttachmentCount > 0 || !!m_depthStencilAttachment.m_aspect);
 

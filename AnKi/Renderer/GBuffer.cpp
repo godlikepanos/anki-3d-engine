@@ -6,9 +6,10 @@
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/RenderQueue.h>
-#include <AnKi/Renderer/LensFlare.h>
+#include <AnKi/Renderer/VrsSriGeneration.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/Tracer.h>
+#include <AnKi/Core/ConfigSet.h>
 
 namespace anki {
 
@@ -74,6 +75,13 @@ Error GBuffer::initInternal()
 	m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
 	m_fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0f;
 	m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
+
+	if(getGrManager().getDeviceCapabilities().m_vrs && getConfig().getRVrs())
+	{
+		m_fbDescr.m_shadingRateAttachmentTexelWidth = m_r->getVrsSriGeneration().getSriTexelDimension();
+		m_fbDescr.m_shadingRateAttachmentTexelHeight = m_r->getVrsSriGeneration().getSriTexelDimension();
+	}
+
 	m_fbDescr.bake();
 
 	return Error::NONE;
@@ -149,6 +157,27 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
+	const Bool enableVrs = getGrManager().getDeviceCapabilities().m_vrs && getConfig().getRVrs();
+	const Bool fbDescrHasVrs = m_fbDescr.m_shadingRateAttachmentTexelWidth > 0;
+
+	if(enableVrs != fbDescrHasVrs)
+	{
+		// Re-bake the FB descriptor if the VRS state has changed
+
+		if(enableVrs)
+		{
+			m_fbDescr.m_shadingRateAttachmentTexelWidth = m_r->getVrsSriGeneration().getSriTexelDimension();
+			m_fbDescr.m_shadingRateAttachmentTexelHeight = m_r->getVrsSriGeneration().getSriTexelDimension();
+		}
+		else
+		{
+			m_fbDescr.m_shadingRateAttachmentTexelWidth = 0;
+			m_fbDescr.m_shadingRateAttachmentTexelHeight = 0;
+		}
+
+		m_fbDescr.bake();
+	}
+
 	// Create RTs
 	Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS> rts;
 	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
@@ -172,11 +201,17 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 			rgraph.importRenderTarget(m_depthRts[(m_r->getFrameCount() + 1) & 1], TextureUsageBit::SAMPLED_FRAGMENT);
 	}
 
+	RenderTargetHandle sriRt;
+	if(enableVrs)
+	{
+		sriRt = m_r->getVrsSriGeneration().getSriRt();
+	}
+
 	// Create pass
 	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GBuffer");
 
 	pass.setFramebufferInfo(m_fbDescr, ConstWeakArray<RenderTargetHandle>(&rts[0], GBUFFER_COLOR_ATTACHMENT_COUNT),
-							m_runCtx.m_crntFrameDepthRt);
+							m_runCtx.m_crntFrameDepthRt, sriRt);
 	pass.setWork(computeNumberOfSecondLevelCommandBuffers(ctx.m_renderQueue->m_earlyZRenderables.getSize()
 														  + ctx.m_renderQueue->m_renderables.getSize()),
 				 [this, &ctx](RenderPassWorkContext& rgraphCtx) {
@@ -185,11 +220,17 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 
 	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 	{
-		pass.newDependency({m_runCtx.m_colorRts[i], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass.newDependency(RenderPassDependency(m_runCtx.m_colorRts[i], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
 	}
 
 	TextureSubresourceInfo subresource(DepthStencilAspectBit::DEPTH);
-	pass.newDependency({m_runCtx.m_crntFrameDepthRt, TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT, subresource});
+	pass.newDependency(
+		RenderPassDependency(m_runCtx.m_crntFrameDepthRt, TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT, subresource));
+
+	if(enableVrs)
+	{
+		pass.newDependency(RenderPassDependency(sriRt, TextureUsageBit::FRAMEBUFFER_SHADING_RATE));
+	}
 }
 
 } // end namespace anki
