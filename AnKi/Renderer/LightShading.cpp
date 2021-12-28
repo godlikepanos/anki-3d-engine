@@ -16,6 +16,8 @@
 #include <AnKi/Renderer/ShadowmapsResolve.h>
 #include <AnKi/Renderer/RtShadows.h>
 #include <AnKi/Renderer/IndirectDiffuse.h>
+#include <AnKi/Renderer/VrsSriGeneration.h>
+#include <AnKi/Core/ConfigSet.h>
 
 namespace anki {
 
@@ -83,6 +85,13 @@ Error LightShading::initLightShading()
 	m_lightShading.m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::LOAD;
 	m_lightShading.m_fbDescr.m_depthStencilAttachment.m_stencilLoadOperation = AttachmentLoadOperation::DONT_CARE;
 	m_lightShading.m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
+
+	if(getGrManager().getDeviceCapabilities().m_vrs && getConfig().getRVrs())
+	{
+		m_lightShading.m_fbDescr.m_shadingRateAttachmentTexelWidth = m_r->getVrsSriGeneration().getSriTexelDimension();
+		m_lightShading.m_fbDescr.m_shadingRateAttachmentTexelHeight = m_r->getVrsSriGeneration().getSriTexelDimension();
+	}
+
 	m_lightShading.m_fbDescr.bake();
 
 	return Error::NONE;
@@ -118,6 +127,13 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
 	cmdb->setViewport(0, 0, m_r->getInternalResolution().x(), m_r->getInternalResolution().y());
+
+	const Bool enableVrs = getGrManager().getDeviceCapabilities().m_vrs && getConfig().getRVrs();
+	if(enableVrs)
+	{
+		// Just set some low value, the attachment will take over
+		cmdb->setVrsRate(VrsRate::_1x1);
+	}
 
 	// Do light shading first
 	if(rgraphCtx.m_currentSecondLevelCommandBufferIndex == 0)
@@ -228,19 +244,54 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
+	const Bool enableVrs = getGrManager().getDeviceCapabilities().m_vrs && getConfig().getRVrs();
+	const Bool fbDescrHasVrs = m_lightShading.m_fbDescr.m_shadingRateAttachmentTexelWidth > 0;
+
+	if(enableVrs != fbDescrHasVrs)
+	{
+		// Re-bake the FB descriptor if the VRS state has changed
+
+		if(enableVrs)
+		{
+			m_lightShading.m_fbDescr.m_shadingRateAttachmentTexelWidth =
+				m_r->getVrsSriGeneration().getSriTexelDimension();
+			m_lightShading.m_fbDescr.m_shadingRateAttachmentTexelHeight =
+				m_r->getVrsSriGeneration().getSriTexelDimension();
+		}
+		else
+		{
+			m_lightShading.m_fbDescr.m_shadingRateAttachmentTexelWidth = 0;
+			m_lightShading.m_fbDescr.m_shadingRateAttachmentTexelHeight = 0;
+		}
+
+		m_lightShading.m_fbDescr.bake();
+	}
+
 	// Create RT
 	m_runCtx.m_rt = rgraph.newRenderTarget(m_lightShading.m_rtDescr);
 
+	RenderTargetHandle sriRt;
+	if(enableVrs)
+	{
+		sriRt = m_r->getVrsSriGeneration().getSriRt();
+	}
+
 	// Create pass
-	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Light&FW Shad.");
+	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Light&FW Shad");
 
 	pass.setWork(computeNumberOfSecondLevelCommandBuffers(ctx.m_renderQueue->m_forwardShadingRenderables.getSize()),
 				 [this, &ctx](RenderPassWorkContext& rgraphCtx) {
 					 run(ctx, rgraphCtx);
 				 });
-	pass.setFramebufferInfo(m_lightShading.m_fbDescr, {m_runCtx.m_rt}, m_r->getGBuffer().getDepthRt());
+	pass.setFramebufferInfo(m_lightShading.m_fbDescr, {m_runCtx.m_rt}, m_r->getGBuffer().getDepthRt(), sriRt);
 
 	const TextureUsageBit readUsage = TextureUsageBit::SAMPLED_FRAGMENT;
+
+	// All
+	if(enableVrs)
+	{
+		pass.newDependency(RenderPassDependency(sriRt, TextureUsageBit::FRAMEBUFFER_SHADING_RATE));
+	}
 
 	// Light shading
 	pass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
