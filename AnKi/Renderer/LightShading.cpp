@@ -237,7 +237,17 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 	}
 
 	// Forward shading last
+	if(enableVrs)
+	{
+		cmdb->setVrsRate(VrsRate::_2x2);
+	}
+
 	m_r->getForwardShading().run(ctx, rgraphCtx);
+
+	if(enableVrs)
+	{
+		cmdb->setVrsRate(VrsRate::_1x1);
+	}
 }
 
 void LightShading::populateRenderGraph(RenderingContext& ctx)
