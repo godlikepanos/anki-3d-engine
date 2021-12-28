@@ -112,6 +112,13 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 
 	cmdb->setRasterizationOrder(RasterizationOrder::RELAXED);
 
+	const Bool enableVrs = getGrManager().getDeviceCapabilities().m_vrs && getConfig().getRVrs();
+	if(enableVrs)
+	{
+		// Just set some low value, the attachment will take over
+		cmdb->setVrsRate(VrsRate::_1x1);
+	}
+
 	// First do early Z (if needed)
 	if(earlyZStart < earlyZEnd)
 	{

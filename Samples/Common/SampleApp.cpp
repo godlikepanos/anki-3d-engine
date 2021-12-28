@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <Samples/Common/Framework.h>
+#include <Samples/Common/SampleApp.h>
 
 using namespace anki;
 
@@ -68,7 +68,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 	if(in.getKey(KeyCode::Y) == 1)
 	{
 		renderer.setCurrentDebugRenderTarget(
-			(renderer.getCurrentDebugRenderTarget() == "GBuffer_velocity") ? "" : "GBuffer_velocity");
+			(renderer.getCurrentDebugRenderTarget() == "GBuffer_albedo") ? "" : "GBuffer_albedo");
 	}
 
 	if(in.getKey(KeyCode::U) == 1)
@@ -124,8 +124,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::J) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget(
-			(renderer.getCurrentDebugRenderTarget() == "MotionVectorsRejection") ? "" : "MotionVectorsRejection");
+		m_config.setRVrs(!m_config.getRVrs());
 	}
 
 	if(!getDisplayDeveloperConsole())

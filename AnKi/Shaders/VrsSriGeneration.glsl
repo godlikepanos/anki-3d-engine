@@ -19,17 +19,18 @@ layout(set = 0, binding = 1) uniform writeonly uimage2D u_sriImg;
 layout(location = 0) out U32 out_shadingRate;
 #endif
 
-shared Vec2 s_lumas[WORKGROUP_SIZE.y * WORKGROUP_SIZE.x];
+shared F32 s_lumaMin[WORKGROUP_SIZE.y * WORKGROUP_SIZE.x];
+shared F32 s_lumaMax[WORKGROUP_SIZE.y * WORKGROUP_SIZE.x];
 
 void main()
 {
 	// Get luminance
 	const Vec3 color = invertibleTonemap(texelFetch(u_inputTex, IVec2(gl_GlobalInvocationID.xy), 0).xyz);
 	const F32 luma = computeLuminance(color);
-	const F32 lumaSquared = luma * luma;
 
 	// Store luminance
-	s_lumas[gl_LocalInvocationIndex] = Vec2(luma, lumaSquared);
+	s_lumaMin[gl_LocalInvocationIndex] = luma;
+	s_lumaMax[gl_LocalInvocationIndex] = luma;
 	memoryBarrierShared();
 	barrier();
 
@@ -38,7 +39,10 @@ void main()
 	{
 		if(gl_LocalInvocationIndex < s)
 		{
-			s_lumas[gl_LocalInvocationIndex] += s_lumas[gl_LocalInvocationIndex + s];
+			s_lumaMin[gl_LocalInvocationIndex] =
+				min(s_lumaMin[gl_LocalInvocationIndex], s_lumaMin[gl_LocalInvocationIndex + s]);
+			s_lumaMax[gl_LocalInvocationIndex] =
+				max(s_lumaMax[gl_LocalInvocationIndex], s_lumaMax[gl_LocalInvocationIndex + s]);
 		}
 
 		memoryBarrierShared();
@@ -48,11 +52,11 @@ void main()
 	// Write the result
 	ANKI_BRANCH if(gl_LocalInvocationIndex == 0u)
 	{
-		const F32 variance = abs(s_lumas[0].y - s_lumas[0].x * s_lumas[0].x);
-		const F32 maxVariance = 100.0;
+		const F32 diff = s_lumaMax[0] - s_lumaMin[0];
+		const F32 maxLumaDiff = 1.0 / 32.0;
 
-		const F32 factor = 1.0 - min(1.0, variance / maxVariance);
-		const U32 rate = 1u << U32(factor * 2.0);
+		const F32 factor = min(1.0, diff / maxLumaDiff);
+		const U32 rate = 1u << (2u - U32(factor * 2.0));
 
 		const UVec2 inputTexelCoord = gl_WorkGroupID.xy;
 		imageStore(u_sriImg, IVec2(inputTexelCoord), UVec4(encodeVrsRate(UVec2(rate))));

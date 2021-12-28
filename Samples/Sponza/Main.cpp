@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <cstdio>
-#include <Samples/Common/Framework.h>
+#include <Samples/Common/SampleApp.h>
 
 using namespace anki;
 

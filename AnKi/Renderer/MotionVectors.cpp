@@ -35,7 +35,11 @@ Error MotionVectors::initInternal()
 													 : "Shaders/MotionVectorsRaster.ankiprog",
 												 m_prog));
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-	variantInitInfo.addConstant("FB_SIZE", UVec2(m_r->getInternalResolution().x(), m_r->getInternalResolution().y()));
+	if(getConfig().getRPreferCompute())
+	{
+		variantInitInfo.addConstant("FB_SIZE",
+									UVec2(m_r->getInternalResolution().x(), m_r->getInternalResolution().y()));
+	}
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProg = variant->getProgram();

@@ -48,7 +48,10 @@ Error Bloom::initExposure()
 												 m_exposure.m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_exposure.m_prog);
-	variantInitInfo.addConstant("FB_SIZE", UVec2(m_exposure.m_width, m_exposure.m_height));
+	if(getConfig().getRPreferCompute())
+	{
+		variantInitInfo.addConstant("FB_SIZE", UVec2(m_exposure.m_width, m_exposure.m_height));
+	}
 
 	const ShaderProgramResourceVariant* variant;
 	m_exposure.m_prog->getOrCreateVariant(variantInitInfo, variant);
@@ -74,8 +77,11 @@ Error Bloom::initUpscale()
 												 m_upscale.m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_upscale.m_prog);
-	variantInitInfo.addConstant("FB_SIZE", UVec2(m_upscale.m_width, m_upscale.m_height));
 	variantInitInfo.addConstant("INPUT_TEX_SIZE", UVec2(m_exposure.m_width, m_exposure.m_height));
+	if(getConfig().getRPreferCompute())
+	{
+		variantInitInfo.addConstant("FB_SIZE", UVec2(m_upscale.m_width, m_upscale.m_height));
+	}
 
 	const ShaderProgramResourceVariant* variant;
 	m_upscale.m_prog->getOrCreateVariant(variantInitInfo, variant);
