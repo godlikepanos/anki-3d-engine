@@ -1,0 +1,48 @@
+// Copyright (C) 2009-2021, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki mutator REDUCTION_SAMPLER 0 1
+
+#pragma anki start vert
+#include <AnKi/Shaders/QuadVert.glsl>
+#pragma anki end
+
+#pragma anki start frag
+#include <AnKi/Shaders/Common.glsl>
+
+layout(location = 0) in Vec2 in_uv;
+layout(location = 0) out F32 out_depth;
+
+layout(set = 0, binding = 0) uniform texture2D u_inputTex;
+layout(set = 0, binding = 1) uniform sampler u_sampler;
+
+layout(std430, set = 0, binding = 2) writeonly buffer b_cb
+{
+	F32 u_clientBuf[];
+};
+
+layout(push_constant, scalar) uniform b_pc
+{
+	U32 u_lastMipWidth;
+	UVec3 u_padding;
+};
+
+void main()
+{
+#if !REDUCTION_SAMPLER
+	out_depth = textureLod(u_inputTex, u_sampler, in_uv, 0.0).x;
+#else
+	const Vec4 depths = textureGather(sampler2D(u_inputTex, u_sampler), in_uv, 0);
+	out_depth = max(depths.x, max(depths.y, max(depths.z, depths.w)));
+#endif
+
+	if(u_lastMipWidth != 0u)
+	{
+		const UVec2 p = UVec2(gl_FragCoord.xy);
+		const U32 idx = p.y * u_lastMipWidth + p.x;
+		u_clientBuf[idx] = out_depth;
+	}
+}
+#pragma anki end

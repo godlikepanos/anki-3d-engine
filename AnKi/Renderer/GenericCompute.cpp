@@ -44,7 +44,7 @@ void GenericCompute::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 	elementCtx.m_cameraTransform = ctx.m_matrices.m_cameraTransform;
 
 	// Bind some state
-	rgraphCtx.bindTexture(0, 0, m_r->getDepthDownscale().getHiZRt(), TextureSubresourceInfo());
+	rgraphCtx.bindColorTexture(0, 0, m_r->getDepthDownscale().getHiZRt());
 
 	for(const GenericGpuComputeJobQueueElement& element : ctx.m_renderQueue->m_genericGpuComputeJobs)
 	{

@@ -3,12 +3,9 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki mutator SAMPLE_RESOLVE_TYPE 0 1 2 // 0: average, 1: min, 2: max
+// The 1st reduction is average depth. The next reductions are max depth
+
 #pragma anki mutator WAVE_OPERATIONS 0 1
-#pragma anki mutator REDUCTION_SAMPLER 0 1
-#define AVG 0
-#define MIN 1
-#define MAX 2
 
 #pragma anki start comp
 #include <AnKi/Shaders/Common.glsl>
@@ -37,7 +34,7 @@ layout(std430, set = 0, binding = 3) writeonly buffer b_cb
 	F32 u_clientBuf[];
 };
 
-layout(set = 0, binding = 4) uniform sampler u_reductionSampler; ///< Special sampler that can do min/max reduction.
+layout(set = 0, binding = 4) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 5) uniform texture2D u_srcTex;
 
 // Include SPD
@@ -48,28 +45,10 @@ layout(set = 0, binding = 5) uniform texture2D u_srcTex;
 shared AU1 s_spdCounter;
 shared AF1 s_spdIntermediateR[16][16];
 
-F32 reduce(Vec4 depths)
-{
-#if SAMPLE_RESOLVE_TYPE == MIN
-	return min(depths.x, min(depths.y, min(depths.z, depths.w)));
-#elif SAMPLE_RESOLVE_TYPE == MAX
-	return max(depths.x, max(depths.y, max(depths.z, depths.w)));
-#elif SAMPLE_RESOLVE_TYPE == AVG
-	return (depths.x + depths.y + depths.z + depths.w) * 0.25;
-#else
-#	error See file
-#endif
-}
-
 AF4 SpdLoadSourceImage(AU2 p, AU1 slice)
 {
 	const AF2 textureCoord = Vec2(p) * u_srcTexSizeOverOne + u_srcTexSizeOverOne;
-#if REDUCTION_SAMPLER == 1
-	return AF4(textureLod(u_srcTex, u_reductionSampler, textureCoord, 0.0).r, 0.0, 0.0, 0.0);
-#else
-	const Vec4 depths = textureGather(sampler2D(u_srcTex, u_reductionSampler), textureCoord, 0);
-	return AF4(reduce(depths), 0.0, 0.0, 0.0);
-#endif
+	return AF4(textureLod(u_srcTex, u_linearAnyClampSampler, textureCoord, 0.0).r, 0.0, 0.0, 0.0);
 }
 
 AF4 SpdLoad(AU2 p, AU1 slice)
@@ -123,7 +102,8 @@ void SpdStoreIntermediate(AU1 x, AU1 y, AF4 value)
 
 AF4 SpdReduce4(AF4 v0, AF4 v1, AF4 v2, AF4 v3)
 {
-	return AF4(reduce(Vec4(v0.x, v1.x, v2.x, v3.x)), 0.0, 0.0, 0.0);
+	const F32 maxDepth = max(v0.x, max(v1.x, max(v2.x, v3.x)));
+	return AF4(maxDepth, 0.0, 0.0, 0.0);
 }
 
 #define SPD_LINEAR_SAMPLER 1

@@ -59,14 +59,17 @@ private:
 
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
+	ShaderProgramPtr m_firstMipGrProg;
 
 	BufferPtr m_counterBuffer;
 	Bool m_counterBufferZeroed = false;
 
-	SamplerPtr m_reductionSampler;
-
 	BufferPtr m_clientBuffer;
 	void* m_clientBufferAddr = nullptr;
+
+	SamplerPtr m_reductionSampler;
+
+	DynamicArray<FramebufferDescription> m_fbDescrs;
 
 	UVec2 m_lastMipSize;
 	U32 m_mipCount = 0;
@@ -79,10 +82,8 @@ private:
 
 	ANKI_USE_RESULT Error initInternal();
 
-	Bool doesSamplerReduction() const
-	{
-		return m_reductionSampler.isCreated();
-	}
+	void runCompute(RenderPassWorkContext& rgraphCtx);
+	void runGraphics(U32 mip, RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 
