@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-# Copyright (C) 2009-2021, Panagiotis Christopoulos Charitos and contributors.
+# Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
 # All rights reserved.
 # Code licensed under the BSD License.
 # http://www.anki3d.org/LICENSE
@@ -244,7 +244,7 @@ def main():
     parse_commandline()
 
     ctx.output_file = open(ctx.output_filename, "w")
-    ctx.output_file.write("""// Copyright (C) 2009-2021, Panagiotis Christopoulos Charitos and contributors.
+    ctx.output_file.write("""// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
