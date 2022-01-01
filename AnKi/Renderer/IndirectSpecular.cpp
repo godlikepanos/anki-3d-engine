@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Renderer/Ssr.h>
+#include <AnKi/Renderer/IndirectSpecular.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/DepthDownscale.h>
@@ -15,26 +15,26 @@
 
 namespace anki {
 
-Ssr::~Ssr()
+IndirectSpecular::~IndirectSpecular()
 {
 }
 
-Error Ssr::init()
+Error IndirectSpecular::init()
 {
 	const Error err = initInternal();
 	if(err)
 	{
-		ANKI_R_LOGE("Failed to initialize SSR pass");
+		ANKI_R_LOGE("Failed to initialize indirect specular pass");
 	}
 	return err;
 }
 
-Error Ssr::initInternal()
+Error IndirectSpecular::initInternal()
 {
 	const U32 width = m_r->getInternalResolution().x() / 2;
 	const U32 height = m_r->getInternalResolution().y() / 2;
 
-	ANKI_R_LOGV("Initializing SSR. Resolution %ux%u", width, height);
+	ANKI_R_LOGV("Initializing indirect specular. Resolution %ux%u", width, height);
 
 	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_noiseImage));
 
@@ -46,8 +46,10 @@ Error Ssr::initInternal()
 	m_fbDescr.bake();
 
 	// Create shader
-	ANKI_CHECK(getResourceManager().loadResource(
-		(getConfig().getRPreferCompute()) ? "Shaders/SsrCompute.ankiprog" : "Shaders/SsrRaster.ankiprog", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource((getConfig().getRPreferCompute())
+													 ? "Shaders/IndirectSpecularCompute.ankiprog"
+													 : "Shaders/IndirectSpecularRaster.ankiprog",
+												 m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInit(m_prog);
 	variantInit.addMutation("EXTRA_REJECTION", false);
@@ -59,7 +61,7 @@ Error Ssr::initInternal()
 	return Error::NONE;
 }
 
-void Ssr::populateRenderGraph(RenderingContext& ctx)
+void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 	const Bool preferCompute = getConfig().getRPreferCompute();
@@ -104,7 +106,7 @@ void Ssr::populateRenderGraph(RenderingContext& ctx)
 	});
 }
 
-void Ssr::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
+void IndirectSpecular::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	cmdb->bindShaderProgram(m_grProg);

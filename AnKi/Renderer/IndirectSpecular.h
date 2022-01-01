@@ -12,17 +12,17 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-/// Screen space reflections.
-class Ssr : public RendererObject
+/// Screen space reflections and probe sampling.
+class IndirectSpecular : public RendererObject
 {
 public:
-	Ssr(Renderer* r)
+	IndirectSpecular(Renderer* r)
 		: RendererObject(r)
 	{
 		registerDebugRenderTarget("SSR");
 	}
 
-	~Ssr();
+	~IndirectSpecular();
 
 	ANKI_USE_RESULT Error init();
 

@@ -30,7 +30,7 @@
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/TemporalAA.h>
 #include <AnKi/Renderer/UiStage.h>
-#include <AnKi/Renderer/Ssr.h>
+#include <AnKi/Renderer/IndirectSpecular.h>
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
 #include <AnKi/Renderer/IndirectDiffuseProbes.h>
 #include <AnKi/Renderer/GenericCompute.h>
@@ -179,8 +179,8 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 	m_downscaleBlur.reset(getAllocator().newInstance<DownscaleBlur>(this));
 	ANKI_CHECK(m_downscaleBlur->init());
 
-	m_ssr.reset(m_alloc.newInstance<Ssr>(this));
-	ANKI_CHECK(m_ssr->init());
+	m_indirectSpecular.reset(m_alloc.newInstance<IndirectSpecular>(this));
+	ANKI_CHECK(m_indirectSpecular->init());
 
 	m_tonemapping.reset(getAllocator().newInstance<Tonemapping>(this));
 	ANKI_CHECK(m_tonemapping->init());
@@ -360,7 +360,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	}
 	m_volumetricFog->populateRenderGraph(ctx);
 	m_lensFlare->populateRenderGraph(ctx);
-	m_ssr->populateRenderGraph(ctx);
+	m_indirectSpecular->populateRenderGraph(ctx);
 	m_indirectDiffuse->populateRenderGraph(ctx);
 	m_lightShading->populateRenderGraph(ctx);
 	m_temporalAA->populateRenderGraph(ctx);

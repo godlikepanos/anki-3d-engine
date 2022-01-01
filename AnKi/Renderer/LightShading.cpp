@@ -12,7 +12,7 @@
 #include <AnKi/Renderer/ForwardShading.h>
 #include <AnKi/Renderer/VolumetricFog.h>
 #include <AnKi/Renderer/DepthDownscale.h>
-#include <AnKi/Renderer/Ssr.h>
+#include <AnKi/Renderer/IndirectSpecular.h>
 #include <AnKi/Renderer/ShadowmapsResolve.h>
 #include <AnKi/Renderer/RtShadows.h>
 #include <AnKi/Renderer/IndirectDiffuse.h>
@@ -181,7 +181,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
 		cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);
 		rgraphCtx.bindColorTexture(0, 2, m_r->getIndirectDiffuse().getRt());
-		rgraphCtx.bindColorTexture(0, 3, m_r->getSsr().getRt());
+		rgraphCtx.bindColorTexture(0, 3, m_r->getIndirectSpecular().getRt());
 		rgraphCtx.bindColorTexture(0, 4, m_r->getDepthDownscale().getHiZRt());
 		rgraphCtx.bindTexture(0, 5, m_r->getGBuffer().getDepthRt(),
 							  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
@@ -329,7 +329,7 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	// Apply indirect
 	pass.newDependency(RenderPassDependency(m_r->getIndirectDiffuse().getRt(), readUsage));
 	pass.newDependency(RenderPassDependency(m_r->getDepthDownscale().getHiZRt(), readUsage));
-	pass.newDependency(RenderPassDependency(m_r->getSsr().getRt(), readUsage));
+	pass.newDependency(RenderPassDependency(m_r->getIndirectSpecular().getRt(), readUsage));
 
 	// Fog
 	pass.newDependency(RenderPassDependency(m_r->getVolumetricFog().getRt(), readUsage));
