@@ -14,9 +14,17 @@
 layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
 layout(set = 0, binding = 1) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 2) uniform ANKI_RP texture2D u_quarterDiffuseIndirectTex;
-layout(set = 0, binding = 3) uniform texture2D u_quarterDepthTex;
-layout(set = 0, binding = 4) uniform texture2D u_fullDepthTex;
-layout(set = 0, binding = 5) uniform ANKI_RP texture2D u_gbuffer0Tex;
+layout(set = 0, binding = 3) uniform ANKI_RP texture2D u_quarterSpecularIndirectTex;
+layout(set = 0, binding = 4) uniform texture2D u_quarterDepthTex;
+layout(set = 0, binding = 5) uniform texture2D u_fullDepthTex;
+layout(set = 0, binding = 6) uniform ANKI_RP texture2D u_gbuffer0Tex;
+layout(set = 0, binding = 7) uniform ANKI_RP texture2D u_gbuffer1Tex;
+layout(set = 0, binding = 8) uniform ANKI_RP texture2D u_gbuffer2Tex;
+layout(set = 0, binding = 9) uniform ANKI_RP texture2D u_integrationLut;
+
+#define CLUSTERED_SHADING_SET 0
+#define CLUSTERED_SHADING_UNIFORMS_BINDING 10
+#include <AnKi/Shaders/ClusteredShadingCommon.glsl>
 
 layout(push_constant, std430) uniform b_pc
 {
@@ -29,11 +37,18 @@ layout(location = 0) out ANKI_RP Vec3 out_color;
 
 void main()
 {
+	// GBuffer
+	GbufferInfo gbuffer;
+	unpackGBufferNoVelocity(textureLod(u_gbuffer0Tex, u_nearestAnyClampSampler, in_uv, 0.0),
+							textureLod(u_gbuffer1Tex, u_nearestAnyClampSampler, in_uv, 0.0),
+							textureLod(u_gbuffer2Tex, u_nearestAnyClampSampler, in_uv, 0.0), gbuffer);
+
 	// Reference
 	const F32 depthCenter = textureLod(u_fullDepthTex, u_linearAnyClampSampler, in_uv, 0.0).x;
 
 	// Do a bilateral upscale
-	out_color = Vec3(0.0);
+	ANKI_RP Vec3 diffuse = Vec3(0.0);
+	ANKI_RP Vec3 specular = Vec3(0.0);
 	const F32 radius = 1.0;
 	F32 sumWeight = EPSILON;
 	for(F32 x = -radius; x <= radius; x += 1.0)
@@ -46,17 +61,32 @@ void main()
 			const F32 w = calculateBilateralWeightDepth(depthCenter, depthTap, 1.0);
 			sumWeight += w;
 
-			const ANKI_RP Vec3 colorTap =
+			// Diffuse
+			ANKI_RP Vec3 colorTap =
 				textureLod(u_quarterDiffuseIndirectTex, u_nearestAnyClampSampler, sampleUv, 0.0).xyz;
-			out_color += colorTap * w;
+			diffuse += colorTap * w;
+
+			// Specular
+			colorTap = textureLod(u_quarterSpecularIndirectTex, u_nearestAnyClampSampler, sampleUv, 0.0).xyz;
+			specular += colorTap * w;
 		}
 	}
 
-	// Modulate
-	out_color /= sumWeight;
-	const ANKI_RP F32 metallic = 0.0;
-	const ANKI_RP Vec3 albedo =
-		unpackDiffuseFromGBuffer(textureLod(u_gbuffer0Tex, u_linearAnyClampSampler, in_uv, 0.0), metallic);
-	out_color *= albedo;
+	// Do diffuse
+	diffuse /= sumWeight;
+	diffuse *= gbuffer.m_diffuse;
+
+	// Do specular
+	const Vec2 ndc = UV_TO_NDC(in_uv);
+	const Vec4 viewPos4 = u_clusteredShading.m_matrices.m_invertedProjectionJitter * Vec4(ndc, depthCenter, 1.0);
+	const Vec3 viewPos = viewPos4.xyz / viewPos4.w;
+	const ANKI_RP Vec3 viewDir = normalize(-viewPos);
+	const F32 NoV = max(0.0, dot(gbuffer.m_normal, viewDir));
+	const Vec3 env = specularDFG(gbuffer.m_f0, gbuffer.m_roughness, u_integrationLut, u_linearAnyClampSampler, NoV);
+	specular /= sumWeight;
+	specular *= env;
+
+	// Writeout
+	out_color = saturateRp(diffuse + specular);
 }
 #pragma anki end

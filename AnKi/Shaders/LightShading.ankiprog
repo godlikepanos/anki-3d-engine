@@ -8,7 +8,6 @@
 ANKI_SPECIALIZATION_CONSTANT_UVEC2(TILE_COUNTS, 0u);
 ANKI_SPECIALIZATION_CONSTANT_U32(Z_SPLIT_COUNT, 2u);
 ANKI_SPECIALIZATION_CONSTANT_U32(TILE_SIZE, 3u);
-ANKI_SPECIALIZATION_CONSTANT_U32(IR_MIPMAP_COUNT, 4u);
 
 #pragma anki start vert
 #include <AnKi/Shaders/QuadVert.glsl>
@@ -22,22 +21,20 @@ ANKI_SPECIALIZATION_CONSTANT_U32(IR_MIPMAP_COUNT, 4u);
 #define CLUSTERED_SHADING_SET 0
 #define CLUSTERED_SHADING_UNIFORMS_BINDING 0
 #define CLUSTERED_SHADING_LIGHTS_BINDING 1
-#define CLUSTERED_SHADING_REFLECTIONS_BINDING 4
-#define CLUSTERED_SHADING_CLUSTERS_BINDING 7
+#define CLUSTERED_SHADING_CLUSTERS_BINDING 4
 #include <AnKi/Shaders/ClusteredShadingCommon.glsl>
 
-layout(set = 0, binding = 8) uniform sampler u_nearestAnyClampSampler;
-layout(set = 0, binding = 9) uniform sampler u_trilinearClampSampler;
+layout(set = 0, binding = 5) uniform sampler u_nearestAnyClampSampler;
+layout(set = 0, binding = 6) uniform sampler u_trilinearClampSampler;
 
-layout(set = 0, binding = 10) uniform texture2D u_msRt0;
-layout(set = 0, binding = 11) uniform texture2D u_msRt1;
-layout(set = 0, binding = 12) uniform texture2D u_msRt2;
-layout(set = 0, binding = 13) uniform texture2D u_msDepthRt;
-layout(set = 0, binding = 14) uniform texture2D u_ssrRt;
+layout(set = 0, binding = 7) uniform texture2D u_gbuffer0Tex;
+layout(set = 0, binding = 8) uniform texture2D u_gbuffer1Tex;
+layout(set = 0, binding = 9) uniform texture2D u_gbuffer2Tex;
+layout(set = 0, binding = 10) uniform texture2D u_msDepthRt;
 #if USE_SHADOW_LAYERS
-layout(set = 0, binding = 15) uniform utexture2D u_shadowLayersTex;
+layout(set = 0, binding = 11) uniform utexture2D u_shadowLayersTex;
 #else
-layout(set = 0, binding = 16) uniform texture2D u_resolvedSm;
+layout(set = 0, binding = 12) uniform texture2D u_resolvedSm;
 #endif
 
 layout(location = 0) in Vec2 in_uv;
@@ -76,9 +73,9 @@ void main()
 
 	// Decode GBuffer
 	GbufferInfo gbuffer;
-	unpackGBufferNoVelocity(textureLod(u_msRt0, u_nearestAnyClampSampler, in_uv, 0.0),
-							textureLod(u_msRt1, u_nearestAnyClampSampler, in_uv, 0.0),
-							textureLod(u_msRt2, u_nearestAnyClampSampler, in_uv, 0.0), gbuffer);
+	unpackGBufferNoVelocity(textureLod(u_gbuffer0Tex, u_nearestAnyClampSampler, in_uv, 0.0),
+							textureLod(u_gbuffer1Tex, u_nearestAnyClampSampler, in_uv, 0.0),
+							textureLod(u_gbuffer2Tex, u_nearestAnyClampSampler, in_uv, 0.0), gbuffer);
 	gbuffer.m_subsurface = max(gbuffer.m_subsurface, SUBSURFACE_MIN);
 
 	// SM
@@ -167,67 +164,6 @@ void main()
 		}
 
 		out_color += (diffC + specC) * light.m_diffuseColor * (att * spot * max(gbuffer.m_subsurface, lambert));
-	}
-
-	// Indirect specular
-	{
-		// Do the probe read
-		Vec3 specIndirect = Vec3(0.0);
-
-		const Vec3 reflDir = reflect(-viewDir, gbuffer.m_normal);
-		const F32 reflLod = F32(IR_MIPMAP_COUNT - 1u) * gbuffer.m_roughness;
-
-		if(bitCount(cluster.m_reflectionProbesMask) == 1)
-		{
-			// Only one probe, do a fast path without blend weight
-
-			const ReflectionProbe probe = u_reflectionProbes[findLSB2(cluster.m_reflectionProbesMask)];
-
-			// Sample
-			const Vec3 cubeUv = intersectProbe(worldPos, reflDir, probe.m_aabbMin, probe.m_aabbMax, probe.m_position);
-			const Vec4 cubeArrUv = Vec4(cubeUv, probe.m_cubemapIndex);
-			specIndirect = textureLod(u_reflectionsTex, u_trilinearClampSampler, cubeArrUv, reflLod).rgb;
-		}
-		else
-		{
-			// Zero or more than one probes, do a slow path that blends them together
-
-			F32 totalBlendWeight = EPSILON;
-
-			// Loop probes
-			ANKI_LOOP while(cluster.m_reflectionProbesMask != 0u)
-			{
-				const U32 idx = U32(findLSB2(cluster.m_reflectionProbesMask));
-				cluster.m_reflectionProbesMask &= ~(1u << idx);
-				const ReflectionProbe probe = u_reflectionProbes[idx];
-
-				// Compute blend weight
-				const F32 blendWeight = computeProbeBlendWeight(worldPos, probe.m_aabbMin, probe.m_aabbMax, 0.2);
-				totalBlendWeight += blendWeight;
-
-				// Sample reflections
-				const Vec3 cubeUv =
-					intersectProbe(worldPos, reflDir, probe.m_aabbMin, probe.m_aabbMax, probe.m_position);
-				const Vec4 cubeArrUv = Vec4(cubeUv, probe.m_cubemapIndex);
-				const Vec3 c = textureLod(u_reflectionsTex, u_trilinearClampSampler, cubeArrUv, reflLod).rgb;
-				specIndirect += c * blendWeight;
-			}
-
-			// Normalize the colors
-			specIndirect /= totalBlendWeight;
-		}
-
-		// Read the SSL result
-		const Vec4 ssr = textureLod(u_ssrRt, u_trilinearClampSampler, in_uv, 0.0);
-
-		// Combine the SSR and probe reflections and write the result
-		const Vec3 finalSpecIndirect = specIndirect * ssr.a + ssr.rgb;
-
-		// Compute env BRDF
-		const F32 NoV = max(0.0, dot(gbuffer.m_normal, viewDir));
-		const Vec3 env = specularDFG(gbuffer.m_f0, gbuffer.m_roughness, u_integrationLut, u_trilinearClampSampler, NoV);
-
-		out_color += finalSpecIndirect * env;
 	}
 
 	out_color = saturateRp(out_color);

@@ -149,28 +149,23 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		bindUniforms(cmdb, 0, 2, binning.m_spotLightsToken);
 		rgraphCtx.bindColorTexture(0, 3, m_r->getShadowMapping().getShadowmapRt());
 
-		bindUniforms(cmdb, 0, 4, binning.m_reflectionProbesToken);
-		rgraphCtx.bindColorTexture(0, 5, m_r->getProbeReflections().getReflectionRt());
-		cmdb->bindTexture(0, 6, m_r->getProbeReflections().getIntegrationLut());
+		bindStorage(cmdb, 0, 4, binning.m_clustersToken);
 
-		bindStorage(cmdb, 0, 7, binning.m_clustersToken);
-
-		cmdb->bindSampler(0, 8, m_r->getSamplers().m_nearestNearestClamp);
-		cmdb->bindSampler(0, 9, m_r->getSamplers().m_trilinearClamp);
-		rgraphCtx.bindColorTexture(0, 10, m_r->getGBuffer().getColorRt(0));
-		rgraphCtx.bindColorTexture(0, 11, m_r->getGBuffer().getColorRt(1));
-		rgraphCtx.bindColorTexture(0, 12, m_r->getGBuffer().getColorRt(2));
-		rgraphCtx.bindTexture(0, 13, m_r->getGBuffer().getDepthRt(),
+		cmdb->bindSampler(0, 5, m_r->getSamplers().m_nearestNearestClamp);
+		cmdb->bindSampler(0, 6, m_r->getSamplers().m_trilinearClamp);
+		rgraphCtx.bindColorTexture(0, 7, m_r->getGBuffer().getColorRt(0));
+		rgraphCtx.bindColorTexture(0, 8, m_r->getGBuffer().getColorRt(1));
+		rgraphCtx.bindColorTexture(0, 9, m_r->getGBuffer().getColorRt(2));
+		rgraphCtx.bindTexture(0, 10, m_r->getGBuffer().getDepthRt(),
 							  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
-		rgraphCtx.bindColorTexture(0, 14, m_r->getSsr().getRt());
 
 		if(m_r->getRtShadowsEnabled())
 		{
-			rgraphCtx.bindColorTexture(0, 15, m_r->getRtShadows().getRt());
+			rgraphCtx.bindColorTexture(0, 11, m_r->getRtShadows().getRt());
 		}
 		else
 		{
-			rgraphCtx.bindColorTexture(0, 16, m_r->getShadowmapsResolve().getRt());
+			rgraphCtx.bindColorTexture(0, 12, m_r->getShadowmapsResolve().getRt());
 		}
 
 		// Draw
@@ -186,10 +181,17 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
 		cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);
 		rgraphCtx.bindColorTexture(0, 2, m_r->getIndirectDiffuse().getRt());
-		rgraphCtx.bindColorTexture(0, 3, m_r->getDepthDownscale().getHiZRt());
-		rgraphCtx.bindTexture(0, 4, m_r->getGBuffer().getDepthRt(),
+		rgraphCtx.bindColorTexture(0, 3, m_r->getSsr().getRt());
+		rgraphCtx.bindColorTexture(0, 4, m_r->getDepthDownscale().getHiZRt());
+		rgraphCtx.bindTexture(0, 5, m_r->getGBuffer().getDepthRt(),
 							  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
-		rgraphCtx.bindColorTexture(0, 5, m_r->getGBuffer().getColorRt(0));
+		rgraphCtx.bindColorTexture(0, 6, m_r->getGBuffer().getColorRt(0));
+		rgraphCtx.bindColorTexture(0, 7, m_r->getGBuffer().getColorRt(1));
+		rgraphCtx.bindColorTexture(0, 8, m_r->getGBuffer().getColorRt(2));
+		cmdb->bindTexture(0, 9, m_r->getProbeReflections().getIntegrationLut());
+
+		const ClusteredShadingContext& binning = ctx.m_clusteredShading;
+		bindUniforms(cmdb, 0, 10, binning.m_clusteredShadingUniformsToken);
 
 		const Vec4 pc(2.0f / Vec2(m_r->getInternalResolution()), 0.0f, 0.0f);
 		cmdb->setPushConstants(&pc, sizeof(pc));
@@ -324,13 +326,10 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	pass.newDependency(
 		RenderPassDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::STORAGE_FRAGMENT_READ));
 
-	// Refl & indirect
-	pass.newDependency(RenderPassDependency(m_r->getSsr().getRt(), readUsage));
-	pass.newDependency(RenderPassDependency(m_r->getProbeReflections().getReflectionRt(), readUsage));
-
 	// Apply indirect
 	pass.newDependency(RenderPassDependency(m_r->getIndirectDiffuse().getRt(), readUsage));
 	pass.newDependency(RenderPassDependency(m_r->getDepthDownscale().getHiZRt(), readUsage));
+	pass.newDependency(RenderPassDependency(m_r->getSsr().getRt(), readUsage));
 
 	// Fog
 	pass.newDependency(RenderPassDependency(m_r->getVolumetricFog().getRt(), readUsage));

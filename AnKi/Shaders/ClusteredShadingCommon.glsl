@@ -45,8 +45,6 @@ layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_REFLECTIONS_BIND
 
 layout(set = CLUSTERED_SHADING_SET,
 	   binding = CLUSTERED_SHADING_REFLECTIONS_BINDING + 1) uniform ANKI_RP textureCubeArray u_reflectionsTex;
-layout(set = CLUSTERED_SHADING_SET,
-	   binding = CLUSTERED_SHADING_REFLECTIONS_BINDING + 2) uniform texture2D u_integrationLut;
 #endif
 
 //

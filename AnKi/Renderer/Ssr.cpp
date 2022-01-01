@@ -9,6 +9,7 @@
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/DownscaleBlur.h>
 #include <AnKi/Renderer/RenderQueue.h>
+#include <AnKi/Renderer/ProbeReflections.h>
 #include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Shaders/Include/SsrTypes.h>
 
@@ -38,7 +39,7 @@ Error Ssr::initInternal()
 	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_noiseImage));
 
 	// Create RT
-	m_rtDescr = m_r->create2DRenderTargetDescription(width, height, Format::R16G16B16A16_SFLOAT, "SSR");
+	m_rtDescr = m_r->create2DRenderTargetDescription(width, height, Format::B10G11R11_UFLOAT_PACK32, "SSR");
 	m_rtDescr.bake();
 
 	m_fbDescr.m_colorAttachmentCount = 1;
@@ -93,10 +94,10 @@ void Ssr::populateRenderGraph(RenderingContext& ctx)
 	ppass->newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(2), readUsage));
 
 	TextureSubresourceInfo hizSubresource;
-	hizSubresource.m_firstMipmap = min(getConfig().getRSsrDepthLod(), m_r->getDepthDownscale().getMipmapCount() - 1);
+	hizSubresource.m_mipmapCount = min(getConfig().getRSsrDepthLod() + 1, m_r->getDepthDownscale().getMipmapCount());
 	ppass->newDependency(RenderPassDependency(m_r->getDepthDownscale().getHiZRt(), readUsage, hizSubresource));
 
-	ppass->newDependency(RenderPassDependency(m_r->getDownscaleBlur().getRt(), readUsage));
+	ppass->newDependency(RenderPassDependency(m_r->getProbeReflections().getReflectionRt(), readUsage));
 
 	ppass->setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 		run(ctx, rgraphCtx);
@@ -112,8 +113,7 @@ void Ssr::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 
 	// Bind uniforms
 	SsrUniforms* unis = allocateAndBindUniforms<SsrUniforms*>(sizeof(SsrUniforms), cmdb, 0, 0);
-	unis->m_depthBufferSize =
-		UVec2(m_r->getInternalResolution().x(), m_r->getInternalResolution().y()) >> (depthLod + 1);
+	unis->m_depthBufferSize = m_r->getInternalResolution() >> (depthLod + 1);
 	unis->m_framebufferSize = UVec2(m_r->getInternalResolution().x(), m_r->getInternalResolution().y()) / 2;
 	unis->m_frameCount = m_r->getFrameCount() & MAX_U32;
 	unis->m_depthMipCount = m_r->getDepthDownscale().getMipmapCount();
@@ -133,7 +133,7 @@ void Ssr::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 	rgraphCtx.bindColorTexture(0, 3, m_r->getGBuffer().getColorRt(2));
 
 	TextureSubresourceInfo hizSubresource;
-	hizSubresource.m_firstMipmap = depthLod;
+	hizSubresource.m_mipmapCount = depthLod + 1;
 	rgraphCtx.bindTexture(0, 4, m_r->getDepthDownscale().getHiZRt(), hizSubresource);
 
 	rgraphCtx.bindColorTexture(0, 5, m_r->getDownscaleBlur().getRt());
@@ -141,9 +141,15 @@ void Ssr::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 	cmdb->bindSampler(0, 6, m_r->getSamplers().m_trilinearRepeat);
 	cmdb->bindTexture(0, 7, m_noiseImage->getTextureView());
 
+	const ClusteredShadingContext& binning = ctx.m_clusteredShading;
+	bindUniforms(cmdb, 0, 8, binning.m_clusteredShadingUniformsToken);
+	bindUniforms(cmdb, 0, 9, binning.m_reflectionProbesToken);
+	rgraphCtx.bindColorTexture(0, 10, m_r->getProbeReflections().getReflectionRt());
+	bindStorage(cmdb, 0, 11, binning.m_clustersToken);
+
 	if(getConfig().getRPreferCompute())
 	{
-		rgraphCtx.bindImage(0, 8, m_runCtx.m_rt, TextureSubresourceInfo());
+		rgraphCtx.bindImage(0, 12, m_runCtx.m_rt, TextureSubresourceInfo());
 
 		dispatchPPCompute(cmdb, 8, 8, m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2);
 	}

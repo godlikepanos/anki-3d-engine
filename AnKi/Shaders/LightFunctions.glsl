@@ -438,7 +438,7 @@ Vec3 sampleReflectionVector(Vec3 viewDir, Vec3 normal, F32 roughness, Vec2 unifo
 {
 	const Mat3 tbn = rotationFromDirection(normal);
 	const Mat3 tbnT = transpose(tbn);
-	const Vec3 viewDirTbn = tbnT * (-viewDir);
+	const Vec3 viewDirTbn = tbnT * viewDir;
 
 	Vec3 sampledNormalTbn = sampleGgxVndf(viewDirTbn, roughness, roughness, uniformRandom.x, uniformRandom.y);
 	const Bool perfectReflection = false; // For debugging

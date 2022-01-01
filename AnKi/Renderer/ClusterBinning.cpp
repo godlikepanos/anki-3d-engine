@@ -7,6 +7,7 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
+#include <AnKi/Renderer/ProbeReflections.h>
 #include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Util/ThreadHive.h>
@@ -441,6 +442,8 @@ void ClusterBinning::writeClustererBuffersTask()
 			unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_REFLECTION_PROBE - 1] + rqueue.m_reflectionProbes.getSize();
 		unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE] =
 			unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE - 1] + rqueue.m_giProbes.getSize();
+
+		unis.m_reflectionProbesMipCount = F32(m_r->getProbeReflections().getReflectionTextureMipmapCount());
 
 		unis.m_matrices = ctx.m_matrices;
 		unis.m_previousMatrices = ctx.m_prevMatrices;

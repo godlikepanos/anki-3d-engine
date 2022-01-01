@@ -217,7 +217,7 @@ struct ClusteredShadingUniforms
 	/// This are some additive counts used to map a flat index to the index of the specific object.
 	U32 m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_COUNT];
 
-	U32 m_padding;
+	F32 m_reflectionProbesMipCount;
 
 	CommonMatrices m_matrices;
 	CommonMatrices m_previousMatrices;

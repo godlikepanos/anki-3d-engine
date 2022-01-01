@@ -174,6 +174,11 @@ ANKI_RP F32 unpackRoughnessFromGBuffer(ANKI_RP Vec4 rt1)
 	return r;
 }
 
+ANKI_RP Vec3 unpackF0FromGBuffer(ANKI_RP Vec4 rt1)
+{
+	return Vec3(rt1.z);
+}
+
 // Read part of the G-buffer
 void unpackGBufferNoVelocity(ANKI_RP Vec4 rt0, ANKI_RP Vec4 rt1, ANKI_RP Vec4 rt2, out GbufferInfo g)
 {
@@ -182,7 +187,7 @@ void unpackGBufferNoVelocity(ANKI_RP Vec4 rt0, ANKI_RP Vec4 rt1, ANKI_RP Vec4 rt
 
 	g.m_roughness = unpackRoughnessFromGBuffer(rt1);
 	g.m_metallic = rt1.y;
-	g.m_f0 = Vec3(rt1.z);
+	g.m_f0 = unpackF0FromGBuffer(rt1);
 	const ANKI_RP F32 maxEmission = rt1.w * ABSOLUTE_MAX_EMISSION;
 
 	g.m_normal = signedOctDecode(rt2.yzw);

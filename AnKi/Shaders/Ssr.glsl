@@ -27,14 +27,20 @@ layout(set = 0, binding = 6) uniform sampler u_trilinearRepeatSampler;
 layout(set = 0, binding = 7) uniform texture2D u_noiseTex;
 const Vec2 NOISE_TEX_SIZE = Vec2(64.0);
 
+#define CLUSTERED_SHADING_SET 0
+#define CLUSTERED_SHADING_UNIFORMS_BINDING 8
+#define CLUSTERED_SHADING_REFLECTIONS_BINDING 9
+#define CLUSTERED_SHADING_CLUSTERS_BINDING 11
+#include <AnKi/Shaders/ClusteredShadingCommon.glsl>
+
 #if defined(ANKI_COMPUTE_SHADER)
 const UVec2 WORKGROUP_SIZE = UVec2(8, 8);
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
 
-layout(set = 0, binding = 8) uniform writeonly image2D u_outImg;
+layout(set = 0, binding = 12) uniform writeonly image2D u_outImg;
 #else
 layout(location = 0) in Vec2 in_uv;
-layout(location = 0) out Vec4 out_color;
+layout(location = 0) out Vec3 out_color;
 #endif
 
 void main()
@@ -66,22 +72,22 @@ void main()
 	const Vec3 viewPos = viewPos4.xyz / viewPos4.w;
 
 	// Compute refl vector
-	const Vec3 viewDir = normalize(viewPos);
+	const Vec3 viewDir = -normalize(viewPos);
 	const Vec3 viewNormal = u_unis.m_normalMat * worldNormal;
 #if STOCHASTIC
-	const Vec3 reflVec = sampleReflectionVector(viewDir, viewNormal, roughness, noise.xy);
+	const Vec3 reflDir = sampleReflectionVector(viewDir, viewNormal, roughness, noise.xy);
 #else
-	const Vec3 reflVec = reflect(viewDir, viewNormal);
+	const Vec3 reflDir = reflect(-viewDir, viewNormal);
 #endif
 
 	// Do the heavy work
 	Vec3 hitPoint;
 	F32 hitAttenuation;
-	const U32 lod = 0u;
+	const U32 lod = 8u; // Use the max LOD for ray marching
 	const U32 step = u_unis.m_firstStepPixels;
 	const F32 stepf = F32(step);
 	const F32 minStepf = stepf / 4.0;
-	raymarchGroundTruth(viewPos, reflVec, uv, depth, u_unis.m_projMat, u_unis.m_maxSteps, u_depthRt,
+	raymarchGroundTruth(viewPos, reflDir, uv, depth, u_unis.m_projMat, u_unis.m_maxSteps, u_depthRt,
 						u_trilinearClampSampler, F32(lod), u_unis.m_depthBufferSize, step,
 						U32((stepf - minStepf) * noise.x + minStepf), hitPoint, hitAttenuation);
 
@@ -93,7 +99,7 @@ void main()
 			u_unis.m_normalMat
 			* unpackNormalFromGBuffer(textureLod(u_gbufferRt2, u_trilinearClampSampler, hitPoint.xy, 0.0));
 		F32 backFaceAttenuation;
-		rejectBackFaces(reflVec, hitNormal, backFaceAttenuation);
+		rejectBackFaces(reflDir, hitNormal, backFaceAttenuation);
 
 		hitAttenuation *= backFaceAttenuation;
 	}
@@ -116,7 +122,7 @@ void main()
 #endif
 
 	// Read the reflection
-	Vec4 outColor;
+	Vec3 ssrColor = Vec3(0.0);
 	ANKI_BRANCH if(hitAttenuation > 0.0)
 	{
 		// Reproject the UV because you are reading the previous frame
@@ -132,19 +138,87 @@ void main()
 #endif
 
 		// Read the light buffer
-		outColor.rgb = textureLod(u_lightBufferRt, u_trilinearClampSampler, hitPoint.xy, lod).rgb;
-		outColor.rgb = clamp(outColor.rgb, 0.0, MAX_F32); // Fix the value just in case
-		outColor.rgb *= hitAttenuation;
-		outColor.a = 1.0 - hitAttenuation;
+		ssrColor = textureLod(u_lightBufferRt, u_trilinearClampSampler, hitPoint.xy, lod).rgb;
+		ssrColor = clamp(ssrColor, 0.0, MAX_F32); // Fix the value just in case
 	}
-	else
+
+	// Read probes
+	Vec3 probeColor = Vec3(0.0);
+	ANKI_BRANCH if(hitAttenuation < 1.0)
 	{
-		outColor = Vec4(0.0, 0.0, 0.0, 1.0);
+#if defined(ANKI_COMPUTE_SHADER)
+		const Vec2 fragCoord = Vec2(gl_GlobalInvocationID.xy) + 0.5;
+#else
+		const Vec2 fragCoord = gl_FragCoord.xy;
+#endif
+
+#if STOCHASTIC
+		const F32 reflLod = 0.0;
+#else
+		const F32 reflLod = (u_clusteredShading.m_reflectionProbesMipCount - 1.0) * roughness;
+#endif
+
+		// Get cluster
+		const Vec2 ndc = UV_TO_NDC(uv);
+		const Vec4 worldPos4 = u_clusteredShading.m_matrices.m_invertedViewProjectionJitter * Vec4(ndc, depth, 1.0);
+		const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
+		Cluster cluster = getClusterFragCoord(Vec3(fragCoord * 2.0, depth));
+
+		// Compute the refl dir in word space this time
+		const ANKI_RP Vec3 viewDir = normalize(u_clusteredShading.m_cameraPosition - worldPos);
+#if STOCHASTIC
+		const Vec3 reflDir = sampleReflectionVector(viewDir, worldNormal, roughness, noise.xy);
+#else
+		const Vec3 reflDir = reflect(-viewDir, worldNormal);
+#endif
+
+		if(bitCount(cluster.m_reflectionProbesMask) == 1)
+		{
+			// Only one probe, do a fast path without blend weight
+
+			const ReflectionProbe probe = u_reflectionProbes[findLSB2(cluster.m_reflectionProbesMask)];
+
+			// Sample
+			const Vec3 cubeUv = intersectProbe(worldPos, reflDir, probe.m_aabbMin, probe.m_aabbMax, probe.m_position);
+			const Vec4 cubeArrUv = Vec4(cubeUv, probe.m_cubemapIndex);
+			probeColor = textureLod(u_reflectionsTex, u_trilinearClampSampler, cubeArrUv, reflLod).rgb;
+		}
+		else
+		{
+			// Zero or more than one probes, do a slow path that blends them together
+
+			F32 totalBlendWeight = EPSILON;
+
+			// Loop probes
+			ANKI_LOOP while(cluster.m_reflectionProbesMask != 0u)
+			{
+				const U32 idx = U32(findLSB2(cluster.m_reflectionProbesMask));
+				cluster.m_reflectionProbesMask &= ~(1u << idx);
+				const ReflectionProbe probe = u_reflectionProbes[idx];
+
+				// Compute blend weight
+				const F32 blendWeight = computeProbeBlendWeight(worldPos, probe.m_aabbMin, probe.m_aabbMax, 0.2);
+				totalBlendWeight += blendWeight;
+
+				// Sample reflections
+				const Vec3 cubeUv =
+					intersectProbe(worldPos, reflDir, probe.m_aabbMin, probe.m_aabbMax, probe.m_position);
+				const Vec4 cubeArrUv = Vec4(cubeUv, probe.m_cubemapIndex);
+				const Vec3 c = textureLod(u_reflectionsTex, u_trilinearClampSampler, cubeArrUv, reflLod).rgb;
+				probeColor += c * blendWeight;
+			}
+
+			// Normalize the colors
+			probeColor /= totalBlendWeight;
+		}
 	}
+
+	// Compute final value
+	const Vec3 outColor = mix(probeColor, ssrColor, hitAttenuation);
 
 	// Store
 #if defined(ANKI_COMPUTE_SHADER)
-	imageStore(u_outImg, IVec2(gl_GlobalInvocationID.xy), outColor);
+	imageStore(u_outImg, IVec2(gl_GlobalInvocationID.xy), Vec4(outColor, 0.0));
 #else
 	out_color = outColor;
 #endif
