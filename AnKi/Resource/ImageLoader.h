@@ -143,8 +143,8 @@ private:
 	static ANKI_USE_RESULT Error loadTga(FileInterface& fs, U32& width, U32& height, U32& bpp, DynamicArray<U8>& data,
 										 GenericMemoryPoolAllocator<U8>& alloc);
 
-	static ANKI_USE_RESULT Error loadStb(FileInterface& fs, U32& width, U32& height, DynamicArray<U8>& data,
-										 GenericMemoryPoolAllocator<U8>& alloc);
+	static ANKI_USE_RESULT Error loadStb(Bool isFloat, FileInterface& fs, U32& width, U32& height,
+										 DynamicArray<U8>& data, GenericMemoryPoolAllocator<U8>& alloc);
 
 	static ANKI_USE_RESULT Error loadAnkiImage(FileInterface& file, U32 maxImageSize,
 											   ImageBinaryDataCompression& preferredCompression,

@@ -13,6 +13,18 @@ namespace anki {
 static const U8 tgaHeaderUncompressed[12] = {0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 static const U8 tgaHeaderCompressed[12] = {0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
+static PtrSize calcComponentSize(const ImageBinaryColorFormat cf)
+{
+	if(cf == ImageBinaryColorFormat::RGBAF32)
+	{
+		return sizeof(F32);
+	}
+	else
+	{
+		return sizeof(U8);
+	}
+}
+
 /// Get the size in bytes of a single surface
 static PtrSize calcSurfaceSize(const U32 width32, const U32 height32, const ImageBinaryDataCompression comp,
 							   const ImageBinaryColorFormat cf, UVec2 astcBlockSize)
@@ -26,7 +38,7 @@ static PtrSize calcSurfaceSize(const U32 width32, const U32 height32, const Imag
 	switch(comp)
 	{
 	case ImageBinaryDataCompression::RAW:
-		out = width * height * ((cf == ImageBinaryColorFormat::RGB8) ? 3 : 4);
+		out = width * height * ((cf == ImageBinaryColorFormat::RGB8) ? 3 : 4) * calcComponentSize(cf);
 		break;
 	case ImageBinaryDataCompression::S3TC:
 		out = (width / 4) * (height / 4) * ((cf == ImageBinaryColorFormat::RGB8) ? 8 : 16); // block size
@@ -582,7 +594,7 @@ Error ImageLoader::loadAnkiImage(FileInterface& file, U32 maxImageSize,
 	return Error::NONE;
 }
 
-Error ImageLoader::loadStb(FileInterface& fs, U32& width, U32& height, DynamicArray<U8>& data,
+Error ImageLoader::loadStb(Bool isFloat, FileInterface& fs, U32& width, U32& height, DynamicArray<U8>& data,
 						   GenericMemoryPoolAllocator<U8>& alloc)
 {
 	// Read the file
@@ -594,7 +606,16 @@ Error ImageLoader::loadStb(FileInterface& fs, U32& width, U32& height, DynamicAr
 	// Use STB to read the image
 	int stbw, stbh, comp;
 	stbi_set_flip_vertically_on_load_thread(true);
-	U8* stbdata = reinterpret_cast<U8*>(stbi_load_from_memory(&fileData[0], I32(fileSize), &stbw, &stbh, &comp, 4));
+	U8* stbdata;
+	if(isFloat)
+	{
+		stbdata = reinterpret_cast<U8*>(stbi_loadf_from_memory(&fileData[0], I32(fileSize), &stbw, &stbh, &comp, 4));
+	}
+	else
+	{
+		stbdata = reinterpret_cast<U8*>(stbi_load_from_memory(&fileData[0], I32(fileSize), &stbw, &stbh, &comp, 4));
+	}
+
 	if(!stbdata)
 	{
 		ANKI_RESOURCE_LOGE("STB failed to read image");
@@ -604,7 +625,8 @@ Error ImageLoader::loadStb(FileInterface& fs, U32& width, U32& height, DynamicAr
 	// Store it
 	width = U32(stbw);
 	height = U32(stbh);
-	data.create(alloc, width * height * 4);
+	const U32 componentSize = (isFloat) ? sizeof(F32) : sizeof(U8);
+	data.create(alloc, width * height * 4 * componentSize);
 	memcpy(&data[0], stbdata, data.getSize());
 
 	// Cleanup
@@ -703,7 +725,21 @@ Error ImageLoader::loadInternal(FileInterface& file, const CString& filename, U3
 		m_layerCount = 1;
 		m_colorFormat = ImageBinaryColorFormat::RGBA8;
 
-		ANKI_CHECK(loadStb(file, m_surfaces[0].m_width, m_surfaces[0].m_height, m_surfaces[0].m_data, m_alloc));
+		ANKI_CHECK(loadStb(false, file, m_surfaces[0].m_width, m_surfaces[0].m_height, m_surfaces[0].m_data, m_alloc));
+
+		m_width = m_surfaces[0].m_width;
+		m_height = m_surfaces[0].m_height;
+	}
+	else if(ext == "hdr")
+	{
+		m_surfaces.create(m_alloc, 1);
+
+		m_mipmapCount = 1;
+		m_depth = 1;
+		m_layerCount = 1;
+		m_colorFormat = ImageBinaryColorFormat::RGBAF32;
+
+		ANKI_CHECK(loadStb(true, file, m_surfaces[0].m_width, m_surfaces[0].m_height, m_surfaces[0].m_data, m_alloc));
 
 		m_width = m_surfaces[0].m_width;
 		m_height = m_surfaces[0].m_height;
