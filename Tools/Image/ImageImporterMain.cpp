@@ -17,6 +17,7 @@ Options:
 -store-raw <0|1>       : Store RAW images. Default is 0
 -mip-count <number>    : Max number of mipmaps. By default store until 4x4
 -astc-block-size <XxY> : The size of the ASTC block size. eg 4x4. Default is 8x8
+-verbose               : Verbose log
 )";
 
 static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& config,
@@ -160,6 +161,10 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 			}
 
 			ANKI_CHECK(CString(argv[i]).toNumber(config.m_mipmapCount));
+		}
+		else if(CString(argv[i]) == "-verbose")
+		{
+			LoggerSingleton::get().enableVerbosity(true);
 		}
 		else
 		{
