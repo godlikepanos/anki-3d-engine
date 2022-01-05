@@ -100,6 +100,26 @@ public:
 	U32 m_dwReserved2;
 };
 
+enum D3D10ResourceDimension
+{
+	D3D10_RESOURCE_DIMENSION_UNKNOWN = 0,
+	D3D10_RESOURCE_DIMENSION_BUFFER = 1,
+	D3D10_RESOURCE_DIMENSION_TEXTURE1D = 2,
+	D3D10_RESOURCE_DIMENSION_TEXTURE2D = 3,
+	D3D10_RESOURCE_DIMENSION_TEXTURE3D = 4
+};
+
+/// Extra header for some DDS formats.
+class DdsHeaderDxt10
+{
+public:
+	U32 m_dxgiFormat;
+	D3D10ResourceDimension m_resourceDimension;
+	U32 m_miscFlag;
+	U32 m_arraySize;
+	U32 m_reserved;
+};
+
 class AstcHeader
 {
 public:
@@ -457,6 +477,12 @@ static ANKI_USE_RESULT Error compressS3tc(GenericMemoryPoolAllocator<U8> alloc, 
 	{
 		ANKI_IMPORTER_LOGE("Incorrect DDS image size");
 		return Error::FUNCTION_FAILED;
+	}
+
+	if(hdr)
+	{
+		DdsHeaderDxt10 dxt10Header;
+		ANKI_CHECK(ddsFile.read(&dxt10Header, sizeof(dxt10Header)));
 	}
 
 	ANKI_CHECK(ddsFile.read(outPixels.getBegin(), outPixels.getSizeInBytes()));
