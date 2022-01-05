@@ -21,6 +21,7 @@
 #include <AnKi/Scene/TriggerNode.h>
 #include <AnKi/Scene/FogDensityNode.h>
 #include <AnKi/Scene/GlobalIlluminationProbeNode.h>
+#include <AnKi/Scene/SkyboxNode.h>
 
 #include <AnKi/Scene/Components/MoveComponent.h>
 #include <AnKi/Scene/Components/RenderComponent.h>
@@ -43,6 +44,7 @@
 #include <AnKi/Scene/Components/GpuParticleEmitterComponent.h>
 #include <AnKi/Scene/Components/ModelComponent.h>
 #include <AnKi/Scene/Components/UiComponent.h>
+#include <AnKi/Scene/Components/SkyboxComponent.h>
 
 #include <AnKi/Scene/Events/EventManager.h>
 #include <AnKi/Scene/Events/Event.h>

@@ -391,6 +391,21 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 			</methods>
 		</class>
 
+		<class name="SkyboxComponent">
+			<methods>
+				<method name="setSolidColor">
+					<args>
+						<arg>Vec3</arg>
+					</args>
+				</method>
+				<method name="setImage">
+					<args>
+						<arg>CString</arg>
+					</args>
+				</method>
+			</methods>
+		</class>
+
 		<!-- Nodes -->
 		<class name="SceneNode">
 			<methods>
@@ -444,6 +459,9 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 				</method>
 				<method name="tryGetFirstComponentOfType&lt;SkinComponent&gt;" alias="getSkinComponent">
 					<return>SkinComponent*</return>
+				</method>
+				<method name="tryGetFirstComponentOfType&lt;SkyboxComponent&gt;" alias="getSkyboxComponent">
+					<return>SkyboxComponent*</return>
 				</method>
 			</methods>
 		</class>
@@ -544,6 +562,14 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 			</methods>
 		</class>
 		<class name="GlobalIlluminationProbeNode">
+			<methods>
+				<method name="getSceneNodeBase">
+					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
+					<return>SceneNode&amp;</return>
+				</method>
+			</methods>
+		</class>
+		<class name="SkyboxNode">
 			<methods>
 				<method name="getSceneNodeBase">
 					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
