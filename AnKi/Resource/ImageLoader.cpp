@@ -13,16 +13,57 @@ namespace anki {
 static const U8 tgaHeaderUncompressed[12] = {0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 static const U8 tgaHeaderCompressed[12] = {0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-static PtrSize calcComponentSize(const ImageBinaryColorFormat cf)
+static PtrSize calcRawTexelSize(const ImageBinaryColorFormat cf)
 {
-	if(cf == ImageBinaryColorFormat::RGBAF32)
+	PtrSize out;
+	switch(cf)
 	{
-		return sizeof(F32);
+	case ImageBinaryColorFormat::RGB8:
+		out = 3;
+		break;
+	case ImageBinaryColorFormat::RGBA8:
+		out = 4;
+		break;
+	case ImageBinaryColorFormat::SRGB8:
+		out = 3;
+		break;
+	case ImageBinaryColorFormat::RGBF32:
+		out = 3 * sizeof(F32);
+		break;
+	case ImageBinaryColorFormat::RGBAF32:
+		out = 4 * sizeof(F32);
+		break;
+	default:
+		ANKI_ASSERT(0);
+		out = 0;
 	}
-	else
+
+	return out;
+}
+
+static PtrSize calcS3tcBlockSize(const ImageBinaryColorFormat cf)
+{
+	PtrSize out;
+	switch(cf)
 	{
-		return sizeof(U8);
+	case ImageBinaryColorFormat::RGB8:
+		out = 8;
+		break;
+	case ImageBinaryColorFormat::RGBA8:
+		out = 16;
+		break;
+	case ImageBinaryColorFormat::SRGB8:
+		out = 8;
+		break;
+	case ImageBinaryColorFormat::RGBF32:
+		out = 16;
+		break;
+	default:
+		ANKI_ASSERT(0);
+		out = 0;
 	}
+
+	return out;
 }
 
 /// Get the size in bytes of a single surface
@@ -38,10 +79,10 @@ static PtrSize calcSurfaceSize(const U32 width32, const U32 height32, const Imag
 	switch(comp)
 	{
 	case ImageBinaryDataCompression::RAW:
-		out = width * height * ((cf == ImageBinaryColorFormat::RGB8) ? 3 : 4) * calcComponentSize(cf);
+		out = width * height * calcRawTexelSize(cf);
 		break;
 	case ImageBinaryDataCompression::S3TC:
-		out = (width / 4) * (height / 4) * ((cf == ImageBinaryColorFormat::RGB8) ? 8 : 16); // block size
+		out = (width / 4) * (height / 4) * calcS3tcBlockSize(cf);
 		break;
 	case ImageBinaryDataCompression::ETC:
 		out = (width / 4) * (height / 4) * 8;
@@ -69,7 +110,7 @@ static PtrSize calcVolumeSize(const U width, const U height, const U depth, cons
 	switch(comp)
 	{
 	case ImageBinaryDataCompression::RAW:
-		out = width * height * depth * ((cf == ImageBinaryColorFormat::RGB8) ? 3 : 4);
+		out = width * height * depth * calcRawTexelSize(cf);
 		break;
 	default:
 		ANKI_ASSERT(0);
@@ -192,13 +233,13 @@ public:
 	}
 };
 
-Error ImageLoader::loadUncompressedTga(FileInterface& fs, U32& width, U32& height, U32& bpp, DynamicArray<U8>& data,
-									   GenericMemoryPoolAllocator<U8>& alloc)
+Error ImageLoader::loadUncompressedTga(FileInterface& fs, U32& width, U32& height, U32& bpp,
+									   DynamicArray<U8, PtrSize>& data, GenericMemoryPoolAllocator<U8>& alloc)
 {
 	Array<U8, 6> header6;
 
-	// read the info from header
-	ANKI_CHECK(fs.read((char*)&header6[0], sizeof(header6)));
+	// Read the info from header
+	ANKI_CHECK(fs.read(&header6[0], sizeof(header6)));
 
 	width = header6[1] * 256 + header6[0];
 	height = header6[3] * 256 + header6[2];
@@ -210,17 +251,17 @@ Error ImageLoader::loadUncompressedTga(FileInterface& fs, U32& width, U32& heigh
 		return Error::USER_DATA;
 	}
 
-	// read the data
-	U32 bytesPerPxl = (bpp / 8);
-	U32 imageSize = bytesPerPxl * width * height;
+	// Read the data
+	const PtrSize bytesPerPxl = (bpp / 8);
+	const PtrSize imageSize = bytesPerPxl * width * height;
 	data.create(alloc, imageSize);
 
 	ANKI_CHECK(fs.read(reinterpret_cast<char*>(&data[0]), imageSize));
 
-	// swap red with blue
-	for(U32 i = 0; i < imageSize; i += bytesPerPxl)
+	// Swap red with blue
+	for(PtrSize i = 0; i < imageSize; i += bytesPerPxl)
 	{
-		U8 temp = data[i];
+		const U8 temp = data[i];
 		data[i] = data[i + 2];
 		data[i + 2] = temp;
 	}
@@ -228,11 +269,11 @@ Error ImageLoader::loadUncompressedTga(FileInterface& fs, U32& width, U32& heigh
 	return Error::NONE;
 }
 
-Error ImageLoader::loadCompressedTga(FileInterface& fs, U32& width, U32& height, U32& bpp, DynamicArray<U8>& data,
-									 GenericMemoryPoolAllocator<U8>& alloc)
+Error ImageLoader::loadCompressedTga(FileInterface& fs, U32& width, U32& height, U32& bpp,
+									 DynamicArray<U8, PtrSize>& data, GenericMemoryPoolAllocator<U8>& alloc)
 {
 	Array<U8, 6> header6;
-	ANKI_CHECK(fs.read(reinterpret_cast<char*>(&header6[0]), sizeof(header6)));
+	ANKI_CHECK(fs.read(&header6[0], sizeof(header6)));
 
 	width = header6[1] * 256 + header6[0];
 	height = header6[3] * 256 + header6[2];
@@ -244,14 +285,14 @@ Error ImageLoader::loadCompressedTga(FileInterface& fs, U32& width, U32& height,
 		return Error::USER_DATA;
 	}
 
-	U32 bytesPerPxl = (bpp / 8);
-	U32 imageSize = bytesPerPxl * width * height;
+	const PtrSize bytesPerPxl = (bpp / 8);
+	const PtrSize imageSize = bytesPerPxl * width * height;
 	data.create(alloc, imageSize);
 
-	U32 pixelcount = height * width;
-	U32 currentpixel = 0;
-	U32 currentbyte = 0;
-	U8 colorbuffer[4];
+	const PtrSize pixelCount = height * width;
+	PtrSize currentPixel = 0;
+	PtrSize currentByte = 0;
+	Array<U8, 4> colorbuffer;
 
 	do
 	{
@@ -262,23 +303,23 @@ Error ImageLoader::loadCompressedTga(FileInterface& fs, U32& width, U32& height,
 		if(chunkheader < 128)
 		{
 			chunkheader++;
-			for(int counter = 0; counter < chunkheader; counter++)
+			for(U8 counter = 0; counter < chunkheader; counter++)
 			{
-				ANKI_CHECK(fs.read((char*)&colorbuffer[0], bytesPerPxl));
+				ANKI_CHECK(fs.read(&colorbuffer[0], bytesPerPxl));
 
-				data[currentbyte] = colorbuffer[2];
-				data[currentbyte + 1] = colorbuffer[1];
-				data[currentbyte + 2] = colorbuffer[0];
+				data[currentByte] = colorbuffer[2];
+				data[currentByte + 1] = colorbuffer[1];
+				data[currentByte + 2] = colorbuffer[0];
 
 				if(bytesPerPxl == 4)
 				{
-					data[currentbyte + 3] = colorbuffer[3];
+					data[currentByte + 3] = colorbuffer[3];
 				}
 
-				currentbyte += bytesPerPxl;
-				currentpixel++;
+				currentByte += bytesPerPxl;
+				currentPixel++;
 
-				if(currentpixel > pixelcount)
+				if(currentPixel > pixelCount)
 				{
 					ANKI_RESOURCE_LOGE("Too many pixels read");
 					return Error::USER_DATA;
@@ -290,21 +331,21 @@ Error ImageLoader::loadCompressedTga(FileInterface& fs, U32& width, U32& height,
 			chunkheader = U8(chunkheader - 127);
 			ANKI_CHECK(fs.read(&colorbuffer[0], bytesPerPxl));
 
-			for(U32 counter = 0; counter < chunkheader; counter++)
+			for(U8 counter = 0; counter < chunkheader; counter++)
 			{
-				data[currentbyte] = colorbuffer[2];
-				data[currentbyte + 1] = colorbuffer[1];
-				data[currentbyte + 2] = colorbuffer[0];
+				data[currentByte] = colorbuffer[2];
+				data[currentByte + 1] = colorbuffer[1];
+				data[currentByte + 2] = colorbuffer[0];
 
 				if(bytesPerPxl == 4)
 				{
-					data[currentbyte + 3] = colorbuffer[3];
+					data[currentByte + 3] = colorbuffer[3];
 				}
 
-				currentbyte += bytesPerPxl;
-				currentpixel++;
+				currentByte += bytesPerPxl;
+				currentPixel++;
 
-				if(currentpixel > pixelcount)
+				if(currentPixel > pixelCount)
 				{
 					ANKI_RESOURCE_LOGE("Too many pixels read");
 					data.destroy(alloc);
@@ -312,15 +353,15 @@ Error ImageLoader::loadCompressedTga(FileInterface& fs, U32& width, U32& height,
 				}
 			}
 		}
-	} while(currentpixel < pixelcount);
+	} while(currentPixel < pixelCount);
 
 	return Error::NONE;
 }
 
-Error ImageLoader::loadTga(FileInterface& fs, U32& width, U32& height, U32& bpp, DynamicArray<U8>& data,
+Error ImageLoader::loadTga(FileInterface& fs, U32& width, U32& height, U32& bpp, DynamicArray<U8, PtrSize>& data,
 						   GenericMemoryPoolAllocator<U8>& alloc)
 {
-	char myTgaHeader[12];
+	Array<Char, 12> myTgaHeader;
 
 	ANKI_CHECK(fs.read(&myTgaHeader[0], sizeof(myTgaHeader)));
 
@@ -385,7 +426,7 @@ Error ImageLoader::loadAnkiImage(FileInterface& file, U32 maxImageSize,
 		return Error::USER_DATA;
 	}
 
-	if(header.m_colorFormat < ImageBinaryColorFormat::RGB8 || header.m_colorFormat > ImageBinaryColorFormat::RGBA8)
+	if(header.m_colorFormat < ImageBinaryColorFormat::RGB8 || header.m_colorFormat > ImageBinaryColorFormat::RGBAF32)
 	{
 		ANKI_RESOURCE_LOGE("Incorrect header: color format");
 		return Error::USER_DATA;
@@ -522,9 +563,9 @@ Error ImageLoader::loadAnkiImage(FileInterface& file, U32 maxImageSize,
 			{
 				for(U32 f = 0; f < faceCount; ++f)
 				{
-					const U32 dataSize =
-						U32(calcSurfaceSize(mipWidth, mipHeight, preferredCompression, header.m_colorFormat,
-											UVec2(header.m_astcBlockSizeX, header.m_astcBlockSizeY)));
+					const PtrSize dataSize =
+						calcSurfaceSize(mipWidth, mipHeight, preferredCompression, header.m_colorFormat,
+										UVec2(header.m_astcBlockSizeX, header.m_astcBlockSizeY));
 
 					// Check if this mipmap can be skipped because of size
 					if(max(mipWidth, mipHeight) <= maxImageSize || mip == header.m_mipmapCount - 1)
@@ -594,13 +635,13 @@ Error ImageLoader::loadAnkiImage(FileInterface& file, U32 maxImageSize,
 	return Error::NONE;
 }
 
-Error ImageLoader::loadStb(Bool isFloat, FileInterface& fs, U32& width, U32& height, DynamicArray<U8>& data,
+Error ImageLoader::loadStb(Bool isFloat, FileInterface& fs, U32& width, U32& height, DynamicArray<U8, PtrSize>& data,
 						   GenericMemoryPoolAllocator<U8>& alloc)
 {
 	// Read the file
-	DynamicArrayAuto<U8> fileData = {alloc};
+	DynamicArrayAuto<U8, PtrSize> fileData(alloc);
 	const PtrSize fileSize = fs.getSize();
-	fileData.create(U32(fileSize));
+	fileData.create(fileSize);
 	ANKI_CHECK(fs.read(&fileData[0], fileSize));
 
 	// Use STB to read the image

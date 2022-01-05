@@ -18,7 +18,7 @@ class ImageLoaderSurface
 public:
 	U32 m_width;
 	U32 m_height;
-	DynamicArray<U8> m_data;
+	DynamicArray<U8, PtrSize> m_data;
 };
 
 /// An image volume
@@ -29,7 +29,7 @@ public:
 	U32 m_width;
 	U32 m_height;
 	U32 m_depth;
-	DynamicArray<U8> m_data;
+	DynamicArray<U8, PtrSize> m_data;
 };
 
 /// Loads bitmaps from regular system files or resource files. Supported formats are .tga and .ankitex.
@@ -135,16 +135,18 @@ private:
 	void destroy();
 
 	static ANKI_USE_RESULT Error loadUncompressedTga(FileInterface& fs, U32& width, U32& height, U32& bpp,
-													 DynamicArray<U8>& data, GenericMemoryPoolAllocator<U8>& alloc);
+													 DynamicArray<U8, PtrSize>& data,
+													 GenericMemoryPoolAllocator<U8>& alloc);
 
 	static ANKI_USE_RESULT Error loadCompressedTga(FileInterface& fs, U32& width, U32& height, U32& bpp,
-												   DynamicArray<U8>& data, GenericMemoryPoolAllocator<U8>& alloc);
+												   DynamicArray<U8, PtrSize>& data,
+												   GenericMemoryPoolAllocator<U8>& alloc);
 
-	static ANKI_USE_RESULT Error loadTga(FileInterface& fs, U32& width, U32& height, U32& bpp, DynamicArray<U8>& data,
-										 GenericMemoryPoolAllocator<U8>& alloc);
+	static ANKI_USE_RESULT Error loadTga(FileInterface& fs, U32& width, U32& height, U32& bpp,
+										 DynamicArray<U8, PtrSize>& data, GenericMemoryPoolAllocator<U8>& alloc);
 
 	static ANKI_USE_RESULT Error loadStb(Bool isFloat, FileInterface& fs, U32& width, U32& height,
-										 DynamicArray<U8>& data, GenericMemoryPoolAllocator<U8>& alloc);
+										 DynamicArray<U8, PtrSize>& data, GenericMemoryPoolAllocator<U8>& alloc);
 
 	static ANKI_USE_RESULT Error loadAnkiImage(FileInterface& file, U32 maxImageSize,
 											   ImageBinaryDataCompression& preferredCompression,

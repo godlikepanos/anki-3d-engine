@@ -1,0 +1,16 @@
+
+Boat.png (renamed from kodim11.png)
+
+	Image #11:           Ref#JN0189
+	Description:         Sailboat at pier
+	Photographer:        Don Cochran
+	Usage Restrictions:  As stated on Photo CD
+	Location:            Bahamas
+	Film:                KODAK EKTAR 25 (35mm)
+
+	Image was obtained from http://r0k.us/graphics/kodak/index.html
+
+Balls.exr
+
+	Image was obtained from https://github.com/openexr/openexr-images
+

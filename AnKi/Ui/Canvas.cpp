@@ -14,25 +14,6 @@
 
 namespace anki {
 
-class Canvas::DrawingState
-{
-public:
-	ShaderProgramPtr m_program;
-	Array<U8, 128 - sizeof(Vec4)> m_extraPushConstants;
-	U32 m_extraPushConstantSize = 0;
-};
-
-/// Custom command that can manipulate the drawing state.
-class Canvas::CustomCommand
-{
-public:
-	virtual ~CustomCommand()
-	{
-	}
-
-	virtual void operator()(DrawingState& state) = 0;
-};
-
 Canvas::Canvas(UiManager* manager)
 	: UiObject(manager)
 {
@@ -272,7 +253,6 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 	// Render
 	U32 vertOffset = 0;
 	U32 idxOffset = 0;
-	DrawingState state;
 	for(I32 n = 0; n < drawData.CmdListsCount; n++)
 	{
 		const ImDrawList& cmdList = *drawData.CmdLists[n];
@@ -281,10 +261,8 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 			const ImDrawCmd& pcmd = cmdList.CmdBuffer[i];
 			if(pcmd.UserCallback)
 			{
-				// User callback (registered via ImDrawList::AddCallback)
-				CustomCommand* userCmd = static_cast<CustomCommand*>(pcmd.UserCallbackData);
-				(*userCmd)(state);
-				m_stackAlloc.deleteInstance(userCmd);
+				// User callback (registered via ImDrawList::AddCallback), ignore
+				ANKI_UI_LOGW("Got user callback. Will ignore");
 			}
 			else
 			{
@@ -311,12 +289,25 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 					cmdb->setScissor(U32(clipRect.x()), U32(clipRect.y()), U32(clipRect.z() - clipRect.x()),
 									 U32(clipRect.w() - clipRect.y()));
 
-					// Program
-					if(state.m_program.isCreated())
+					UiImageId id(pcmd.TextureId);
+					const UiImageIdExtra* idExtra = nullptr;
+					TextureViewPtr textureView;
+					if(id.m_bits.m_extra)
 					{
-						cmdb->bindShaderProgram(state.m_program);
+						idExtra = numberToPtr<const UiImageIdExtra*>(id.m_bits.m_textureViewPtrOrComplex);
+						textureView = idExtra->m_textureView;
 					}
-					else if(pcmd.TextureId)
+					else
+					{
+						textureView.reset(numberToPtr<TextureView*>(id.m_bits.m_textureViewPtrOrComplex));
+					}
+
+					// Bind program
+					if(idExtra && idExtra->m_customProgram.isCreated())
+					{
+						cmdb->bindShaderProgram(idExtra->m_customProgram);
+					}
+					else if(textureView.isCreated())
 					{
 						cmdb->bindShaderProgram(m_grProgs[RGBA_TEX]);
 					}
@@ -326,15 +317,12 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 					}
 
 					// Bindings
-					if(pcmd.TextureId)
+					if(textureView.isCreated())
 					{
-						UiImageId id(pcmd.TextureId);
-						TextureViewPtr view(numberToPtr<TextureView*>(id.m_bits.m_textureViewPtr));
-
 						cmdb->bindSampler(0, 0,
 										  (id.m_bits.m_pointSampling) ? m_nearestNearestRepeatSampler
 																	  : m_linearLinearRepeatSampler);
-						cmdb->bindTexture(0, 1, view);
+						cmdb->bindTexture(0, 1, textureView);
 					}
 
 					// Push constants
@@ -342,17 +330,22 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 					{
 					public:
 						Vec4 m_transform;
-						Array<U8, sizeof(DrawingState::m_extraPushConstants)> m_extra;
+						Array<U8, sizeof(UiImageIdExtra::m_extraPushConstants)> m_extra;
 					} pc;
 					pc.m_transform.x() = 2.0f / drawData.DisplaySize.x;
 					pc.m_transform.y() = -2.0f / drawData.DisplaySize.y;
 					pc.m_transform.z() = (drawData.DisplayPos.x / drawData.DisplaySize.x) * 2.0f - 1.0f;
 					pc.m_transform.w() = -((drawData.DisplayPos.y / drawData.DisplaySize.y) * 2.0f - 1.0f);
-					if(state.m_extraPushConstantSize)
+					U32 extraPushConstantsSize = 0;
+					if(idExtra && idExtra->m_extraPushConstantsSize)
 					{
-						memcpy(&pc.m_extra[0], &state.m_extraPushConstants[0], state.m_extraPushConstantSize);
+						ANKI_ASSERT(idExtra->m_extraPushConstantsSize <= sizeof(idExtra->m_extraPushConstants));
+						memcpy(&pc.m_extra[0], idExtra->m_extraPushConstants.getBegin(),
+							   idExtra->m_extraPushConstantsSize);
+
+						extraPushConstantsSize = idExtra->m_extraPushConstantsSize;
 					}
-					cmdb->setPushConstants(&pc, sizeof(Vec4) + state.m_extraPushConstantSize);
+					cmdb->setPushConstants(&pc, sizeof(Vec4) + extraPushConstantsSize);
 
 					// Draw
 					cmdb->drawElements(PrimitiveTopology::TRIANGLES, pcmd.ElemCount, 1, idxOffset, vertOffset);
@@ -366,47 +359,6 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 	// Restore state
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
 	cmdb->setCullMode(FaceSelectionBit::BACK);
-}
-
-void Canvas::setShaderProgram(ShaderProgramPtr program, const void* extraPushConstants, U32 extraPushConstantSize)
-{
-	class Command : public CustomCommand
-	{
-	public:
-		ShaderProgramPtr m_prog;
-		Array<U8, sizeof(DrawingState::m_extraPushConstants)> m_extraPushConstants;
-		U32 m_extraPushConstantSize;
-
-		void operator()(DrawingState& state) override
-		{
-			state.m_program = m_prog;
-			if(m_extraPushConstantSize)
-			{
-				ANKI_ASSERT(m_extraPushConstantSize <= sizeof(m_extraPushConstants));
-				memcpy(&state.m_extraPushConstants[0], &m_extraPushConstants[0], m_extraPushConstantSize);
-			}
-			state.m_extraPushConstantSize = m_extraPushConstantSize;
-		}
-	};
-
-	Command* newcmd = m_stackAlloc.newInstance<Command>();
-	newcmd->m_prog = program;
-	if(extraPushConstantSize)
-	{
-		ANKI_ASSERT(extraPushConstants);
-		memcpy(&newcmd->m_extraPushConstants[0], extraPushConstants, extraPushConstantSize);
-		newcmd->m_extraPushConstantSize = extraPushConstantSize;
-	}
-	else
-	{
-		newcmd->m_extraPushConstantSize = 0;
-	}
-
-	ImGui::GetWindowDrawList()->AddCallback(
-		[](const ImDrawList* list, const ImDrawCmd* cmd) {
-			// Do nothing, only care about the user data
-		},
-		newcmd);
 }
 
 } // end namespace anki

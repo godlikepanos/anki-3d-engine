@@ -402,9 +402,9 @@ static ANKI_USE_RESULT Error compressS3tc(GenericMemoryPoolAllocator<U8> alloc, 
 	args[argCount++] = tmpFilename;
 	args[argCount++] = ddsFilename;
 
-	ANKI_IMPORTER_LOGV("Will invoke process: CompressonatorCLI %s %s %s %s %s", args[0].cstr(), args[1].cstr(),
+	ANKI_IMPORTER_LOGV("Will invoke process: compressonatorcli %s %s %s %s %s", args[0].cstr(), args[1].cstr(),
 					   args[2].cstr(), args[3].cstr(), args[4].cstr());
-	ANKI_CHECK(proc.start("CompressonatorCLI", args,
+	ANKI_CHECK(proc.start("compressonatorcli", args,
 						  (compressonatorPath.isEmpty()) ? ConstWeakArray<CString>()
 														 : Array<CString, 2>{{"PATH", compressonatorPath}}));
 	CleanupFile ddsCleanup(alloc, ddsFilename);
@@ -582,7 +582,15 @@ static ANKI_USE_RESULT Error storeAnkiImage(const ImageImporterConfig& config, c
 	header.m_height = ctx.m_height;
 	header.m_depthOrLayerCount = max(ctx.m_layerCount, ctx.m_depth);
 	header.m_type = config.m_type;
-	header.m_colorFormat = (ctx.m_channelCount == 3) ? ImageBinaryColorFormat::RGB8 : ImageBinaryColorFormat::RGBA8;
+	if(ctx.m_hdr)
+	{
+		header.m_colorFormat =
+			(ctx.m_channelCount == 3) ? ImageBinaryColorFormat::RGBF32 : ImageBinaryColorFormat::RGBAF32;
+	}
+	else
+	{
+		header.m_colorFormat = (ctx.m_channelCount == 3) ? ImageBinaryColorFormat::RGB8 : ImageBinaryColorFormat::RGBA8;
+	}
 	header.m_compressionMask = config.m_compressions;
 	header.m_isNormal = false;
 	header.m_mipmapCount = ctx.m_mipmaps.getSize();

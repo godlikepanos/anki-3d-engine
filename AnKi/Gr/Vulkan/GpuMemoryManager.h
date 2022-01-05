@@ -15,7 +15,7 @@ namespace anki {
 // Forward
 class GpuMemoryManager;
 
-/// @addtorgoup vulkan
+/// @addtogroup vulkan
 /// @{
 
 class GpuMemoryManagerClassInfo

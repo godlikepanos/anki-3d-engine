@@ -35,6 +35,7 @@ enum class ImageBinaryColorFormat : U32
 	RGB8,
 	RGBA8,
 	SRGB8,
+	RGBF32,
 	RGBAF32
 };
 

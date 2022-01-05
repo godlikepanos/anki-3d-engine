@@ -22,11 +22,6 @@ layout(location = 2) in Vec2 in_uv;
 layout(location = 0) out Vec2 out_uv;
 layout(location = 1) out Vec4 out_col;
 
-out gl_PerVertex
-{
-	Vec4 gl_Position;
-};
-
 void main()
 {
 	out_uv = in_uv;

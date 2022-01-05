@@ -1,0 +1,46 @@
+
+#!/bin/bash
+
+# ----------------------------------------------------------------------------------------------------------------------------------
+# This script launches the compressonatorcli executable after configuring the environment.
+# (c) 2017 Advanced Micro Devices Inc. All Rights Reserved.
+# ----------------------------------------------------------------------------------------------------------------------------------
+
+if echo "$0" | grep '^/' ; then
+	thisScriptFullPath="$0"
+else
+	thisScriptFullPath=`pwd`/$0
+fi
+
+# Enable the use of symbolic links to the script
+if [ -h ${thisScriptFullPath} ]
+then
+    LINKTARGET=`readlink -f "$thisScriptFullPath"`
+    thisScriptFullPath=${LINKTARGET}
+fi
+
+CMPCLI_BIN_PATH=`dirname "$thisScriptFullPath"`
+
+# Add compressonatorcli's binaries directory to PATH:
+export PATH="${CMPCLI_BIN_PATH}:$PATH"
+
+# Add compressonatorcli's binaries directory to LD_LIBRARY_PATH:
+if [ -z "$LD_LIBRARY_PATH" ]; then
+    export LD_LIBRARY_PATH="${CMPCLI_BIN_PATH}"
+else
+    export LD_LIBRARY_PATH="${CMPCLI_BIN_PATH}:$LD_LIBRARY_PATH"
+fi
+
+# Add Qt lib directory to LD_LIBRARY_PATH:
+export LD_LIBRARY_PATH="${CMPCLI_BIN_PATH}/qt:$LD_LIBRARY_PATH"
+
+# Add pkg libs directory to LD_LIBRARY_PATH:
+export LD_LIBRARY_PATH="${CMPCLI_BIN_PATH}/pkglibs:$LD_LIBRARY_PATH"
+
+
+# Call compressonatorcli executable
+if [ -e $CMPCLI_BIN_PATH/compressonatorcli-bin ]; then
+	$CMPCLI_BIN_PATH/compressonatorcli-bin "$@"
+else
+    echo "Error:Cannot find compressonatorcli-bin"
+fi

@@ -47,6 +47,8 @@ private:
 	ShaderProgramResourcePtr m_imageProgram;
 	ShaderProgramPtr m_imageGrProgram;
 	TextureViewPtr m_textureView;
+	UiImageIdExtra m_imageIdExtra;
+
 	U32 m_crntMip = 0;
 	F32 m_zoom = 1.0f;
 	F32 m_depth = 0.0f;
@@ -208,12 +210,13 @@ private:
 
 			pc.m_depth = Vec4((m_depth + 0.5f) / F32(grTex.getDepth()));
 
-			canvas->setShaderProgram(m_imageGrProgram, &pc, sizeof(pc));
+			m_imageIdExtra.m_customProgram = m_imageGrProgram;
+			m_imageIdExtra.m_textureView = m_textureView;
+			m_imageIdExtra.m_extraPushConstantsSize = U8(sizeof(pc));
+			m_imageIdExtra.setExtraPushConstants(&pc, sizeof(pc));
 
-			ImGui::Image(UiImageId(m_textureView, m_pointSampling), imageSize, Vec2(0.0f, 1.0f), Vec2(1.0f, 0.0f),
+			ImGui::Image(UiImageId(&m_imageIdExtra, m_pointSampling), imageSize, Vec2(0.0f, 1.0f), Vec2(1.0f, 0.0f),
 						 Vec4(1.0f), Vec4(0.0f, 0.0f, 0.0f, 1.0f));
-
-			canvas->clearShaderProgram();
 
 			if(ImGui::IsItemHovered())
 			{
@@ -273,6 +276,7 @@ public:
 		config->setWindowFullscreen(false);
 		config->setRsrcDataPaths(mainDataPath);
 		config->setGrValidation(false);
+		config->setGrDebugMarkers(false);
 		ANKI_CHECK(config->setFromCommandLineArguments(argc - 2, argv + 2));
 
 		ANKI_CHECK(App::init(config, allocAligned, nullptr));

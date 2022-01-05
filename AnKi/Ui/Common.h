@@ -42,16 +42,46 @@ inline Vec2 toAnki(const ImVec2& v)
 	return Vec2(v.x, v.y);
 }
 
+/// This is extra data required by UiImageId.
+/// Since UiImageId needs to map to ImTextureID, UiImageId can only be a single pointer. Thus extra data required for
+/// custom drawing of that image need a different structure.
+class UiImageIdExtra
+{
+public:
+	TextureViewPtr m_textureView;
+	ShaderProgramPtr m_customProgram;
+	U8 m_extraPushConstantsSize = 0;
+	Array<U8, 64> m_extraPushConstants;
+
+	void setExtraPushConstants(const void* ptr, PtrSize pushConstantSize)
+	{
+		ANKI_ASSERT(ptr);
+		ANKI_ASSERT(pushConstantSize > 0 && pushConstantSize < sizeof(m_extraPushConstants));
+		m_extraPushConstantsSize = U8(pushConstantSize);
+		memcpy(m_extraPushConstants.getBegin(), ptr, pushConstantSize);
+	}
+};
+
 /// This is what someone should push to ImGui::Image() function.
 class UiImageId
 {
 	friend class Canvas;
 
 public:
+	/// Construct a simple UiImageId that only points to a texture view.
 	UiImageId(TextureViewPtr textureView, Bool pointSampling = false)
 	{
-		m_bits.m_textureViewPtr = ptrToNumber(textureView.get()) & 0x7FFFFFFFFFFFFFFFllu;
+		m_bits.m_textureViewPtrOrComplex = ptrToNumber(textureView.get()) & 0x3FFFFFFFFFFFFFFFllu;
 		m_bits.m_pointSampling = pointSampling;
+		m_bits.m_extra = false;
+	}
+
+	/// Construct a complex UiImageId that points to an UiImageIdExtra structure.
+	UiImageId(const UiImageIdExtra* extra, Bool pointSampling = false)
+	{
+		m_bits.m_textureViewPtrOrComplex = ptrToNumber(extra) & 0x3FFFFFFFFFFFFFFFllu;
+		m_bits.m_pointSampling = pointSampling;
+		m_bits.m_extra = true;
 	}
 
 	operator void*() const
@@ -63,8 +93,9 @@ private:
 	class Bits
 	{
 	public:
-		U64 m_textureViewPtr : 63;
+		U64 m_textureViewPtrOrComplex : 62;
 		U64 m_pointSampling : 1;
+		U64 m_extra : 1;
 	};
 
 	union

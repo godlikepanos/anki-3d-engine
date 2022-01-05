@@ -166,6 +166,17 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 			ANKI_ASSERT(0);
 		}
 	}
+	else if(loader.getColorFormat() == ImageBinaryColorFormat::RGBF32)
+	{
+		switch(loader.getCompression())
+		{
+		case ImageBinaryDataCompression::S3TC:
+			init.m_format = Format::BC6H_UFLOAT_BLOCK;
+			break;
+		default:
+			ANKI_ASSERT(0);
+		}
+	}
 	else if(loader.getColorFormat() == ImageBinaryColorFormat::RGBAF32)
 	{
 		switch(loader.getCompression())

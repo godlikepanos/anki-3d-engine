@@ -19,12 +19,7 @@ layout(location = 0) out Vec2 out_uv;
 #endif
 layout(location = 1) out Vec4 out_col;
 
-out gl_PerVertex
-{
-	Vec4 gl_Position;
-};
-
-layout(push_constant) uniform u_
+layout(push_constant) uniform b_pc
 {
 	Vec4 u_transform; // x: x scale, y: y scale, z: x transl, w: y transl
 };

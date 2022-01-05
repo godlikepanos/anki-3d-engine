@@ -63,22 +63,10 @@ public:
 		ImGui::PopFont();
 	}
 
-	/// Override the default program with a user defined one.
-	void setShaderProgram(ShaderProgramPtr program, const void* extraPushConstants, U32 extraPushConstantSize);
-
-	/// Undo what setShaderProgram() did.
-	void clearShaderProgram()
-	{
-		setShaderProgram(ShaderProgramPtr(), nullptr, 0);
-	}
-
 	void appendToCommandBuffer(CommandBufferPtr cmdb);
 	/// @}
 
 private:
-	class CustomCommand;
-	class DrawingState;
-
 	FontPtr m_font;
 	U32 m_dfltFontHeight = 0;
 	ImGuiContext* m_imCtx = nullptr;

@@ -85,7 +85,7 @@ void Font::createTexture(const void* data, U32 width, U32 height)
 	texInit.m_format = Format::R8G8B8A8_UNORM;
 	texInit.m_usage =
 		TextureUsageBit::TRANSFER_DESTINATION | TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::GENERATE_MIPMAPS;
-	texInit.m_mipmapCount = 1; // No mips because it creates will appear blurry with trilinear filtering
+	texInit.m_mipmapCount = 1; // No mips because it will appear blurry with trilinear filtering
 
 	m_tex = m_manager->getGrManager().newTexture(texInit);
 
