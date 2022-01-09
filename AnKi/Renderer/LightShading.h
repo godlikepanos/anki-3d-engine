@@ -47,6 +47,13 @@ private:
 	public:
 		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
+	} m_skybox;
+
+	class
+	{
+	public:
+		ShaderProgramResourcePtr m_prog;
+		ShaderProgramPtr m_grProg;
 	} m_applyIndirect;
 
 	class
@@ -63,6 +70,7 @@ private:
 	} m_runCtx; ///< Run context.
 
 	ANKI_USE_RESULT Error initLightShading();
+	ANKI_USE_RESULT Error initSkybox();
 	ANKI_USE_RESULT Error initApplyFog();
 	ANKI_USE_RESULT Error initApplyIndirect();
 

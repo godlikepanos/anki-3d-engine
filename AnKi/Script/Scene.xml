@@ -663,6 +663,13 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 					</args>
 					<return>GlobalIlluminationProbeNode*</return>
 				</method>
+				<method name="newSkyboxNode">
+					<overrideCall><![CDATA[SkyboxNode* ret = newSceneNode<SkyboxNode>(self, arg0);]]></overrideCall>
+					<args>
+						<arg>CString</arg>
+					</args>
+					<return>SkyboxNode*</return>
+				</method>
 				<method name="setActiveCameraNode">
 					<args>
 						<arg>SceneNode*</arg>

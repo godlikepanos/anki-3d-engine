@@ -11,6 +11,9 @@
 
 namespace anki {
 
+// Forward
+class SkyboxQueueElement;
+
 /// @addtogroup scene
 /// @{
 
@@ -38,6 +41,8 @@ public:
 	}
 
 	void setImage(CString filename);
+
+	void setupSkyboxQueueElement(SkyboxQueueElement& queueElement) const;
 
 private:
 	SceneNode* m_node;

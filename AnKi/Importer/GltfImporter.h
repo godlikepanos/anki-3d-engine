@@ -132,7 +132,7 @@ private:
 	{
 		StringListAuto list(m_alloc);
 
-		list.pushBackSprintf("%s%s", m_rpath.cstr(), mesh.name);
+		list.pushBack(mesh.name);
 
 		for(U i = 0; i < mesh.primitives_count; ++i)
 		{

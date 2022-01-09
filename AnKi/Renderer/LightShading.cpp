@@ -38,6 +38,11 @@ Error LightShading::init()
 
 	if(!err)
 	{
+		err = initSkybox();
+	}
+
+	if(!err)
+	{
 		err = initApplyFog();
 	}
 
@@ -93,6 +98,20 @@ Error LightShading::initLightShading()
 	}
 
 	m_lightShading.m_fbDescr.bake();
+
+	return Error::NONE;
+}
+
+Error LightShading::initSkybox()
+{
+	ANKI_CHECK(getResourceManager().loadResource("Shaders/LightShadingSkybox.ankiprog", m_skybox.m_prog));
+
+	ShaderProgramResourceVariantInitInfo variantInitInfo(m_skybox.m_prog);
+	variantInitInfo.addMutation("METHOD", 0);
+	const ShaderProgramResourceVariant* variant;
+	m_skybox.m_prog->getOrCreateVariant(variantInitInfo, variant);
+
+	m_skybox.m_grProg = variant->getProgram();
 
 	return Error::NONE;
 }
@@ -202,6 +221,22 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 		// Restore state
 		cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
+	}
+
+	// Skybox
+	if(rgraphCtx.m_currentSecondLevelCommandBufferIndex == 0)
+	{
+		cmdb->setDepthCompareOperation(CompareOperation::EQUAL);
+
+		cmdb->bindShaderProgram(m_skybox.m_grProg);
+
+		const Vec4 color(ctx.m_renderQueue->m_skybox.m_solidColor, 0.0);
+		cmdb->setPushConstants(&color, sizeof(color));
+
+		drawQuad(cmdb);
+
+		// Restore state
+		cmdb->setDepthCompareOperation(CompareOperation::LESS);
 	}
 
 	// Do the fog apply

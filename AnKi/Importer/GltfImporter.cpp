@@ -456,6 +456,40 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			ANKI_CHECK(getNodeTransform(node, localTrf));
 			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 		}
+		else if((it = extras.find("skybox_solid_color")) != extras.getEnd())
+		{
+			StringListAuto tokens(m_alloc);
+			tokens.splitString(*it, ' ');
+			if(tokens.getSize() != 3)
+			{
+				ANKI_IMPORTER_LOGE("Error parsing \"skybox_solid_color\" of node %s", getNodeName(node).cstr());
+				return Error::USER_DATA;
+			}
+
+			U count = 0;
+			Vec3 solidColor(0.0f);
+			for(auto& it : tokens)
+			{
+				F32 f;
+				const Error err = it.toNumber(f);
+				if(err)
+				{
+					ANKI_IMPORTER_LOGE("Error parsing \"skybox_solid_color\" of node %s", getNodeName(node).cstr());
+					return Error::USER_DATA;
+				}
+
+				solidColor[count++] = f;
+			}
+
+			ANKI_CHECK(m_sceneFile.writeText("\nnode = scene:newSkyboxNode(\"%s\")\n", getNodeName(node).cstr()));
+			ANKI_CHECK(m_sceneFile.writeText("comp = node:getSceneNodeBase():getSkyboxComponent()\n"));
+			ANKI_CHECK(m_sceneFile.writeText("comp:setSolidColor(Vec3.new(%f, %f, %f))\n", solidColor.x(),
+											 solidColor.y(), solidColor.z()));
+
+			Transform localTrf;
+			ANKI_CHECK(getNodeTransform(node, localTrf));
+			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
+		}
 		else if((it = extras.find("collision")) != extras.getEnd() && *it == "true")
 		{
 			ANKI_CHECK(
@@ -759,7 +793,9 @@ Error GltfImporter::writeModel(const cgltf_mesh& mesh)
 	ANKI_CHECK(getExtras(mesh.extras, extras));
 
 	File file;
-	ANKI_CHECK(file.open(modelFname.toCString(), FileOpenFlag::WRITE));
+	StringAuto modelFullFname(m_alloc);
+	modelFullFname.sprintf("%s/%s", m_outDir.cstr(), modelFname.cstr());
+	ANKI_CHECK(file.open(modelFullFname, FileOpenFlag::WRITE));
 
 	ANKI_CHECK(file.writeText("<model>\n"));
 	ANKI_CHECK(file.writeText("\t<modelPatches>\n"));
@@ -1356,8 +1392,8 @@ Error GltfImporter::writeModelNode(const cgltf_node& node, const HashMapAuto<CSt
 	const StringAuto modelFname = computeModelResourceFilename(*node.mesh);
 
 	ANKI_CHECK(m_sceneFile.writeText("\nnode = scene:newModelNode(\"%s\")\n", getNodeName(node).cstr()));
-	ANKI_CHECK(m_sceneFile.writeText("node:getSceneNodeBase():getModelComponent():loadModelResource(\"%s\")\n",
-									 modelFname.cstr()));
+	ANKI_CHECK(m_sceneFile.writeText("node:getSceneNodeBase():getModelComponent():loadModelResource(\"%s%s\")\n",
+									 m_rpath.cstr(), modelFname.cstr()));
 
 	if(node.skin)
 	{

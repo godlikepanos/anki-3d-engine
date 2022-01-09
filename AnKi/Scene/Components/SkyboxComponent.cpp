@@ -8,6 +8,7 @@
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Resource/ResourceManager.h>
+#include <AnKi/Renderer/RenderQueue.h>
 
 namespace anki {
 
@@ -33,6 +34,19 @@ void SkyboxComponent::setImage(CString filename)
 	else
 	{
 		m_type = SkyboxType::IMAGE_2D;
+	}
+}
+
+void SkyboxComponent::setupSkyboxQueueElement(SkyboxQueueElement& queueElement) const
+{
+	if(m_type == SkyboxType::IMAGE_2D)
+	{
+		queueElement.m_skyboxTexture = m_image->getTextureView().get();
+	}
+	else
+	{
+		queueElement.m_skyboxTexture = nullptr;
+		queueElement.m_solidColor = m_color;
 	}
 }
 

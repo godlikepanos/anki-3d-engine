@@ -1,0 +1,40 @@
+// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki mutator METHOD 0 1 // 0: solid colod, 1: 2D image
+
+#pragma anki start vert
+
+layout(location = 0) out Vec2 out_uv;
+
+void main()
+{
+	out_uv = Vec2(gl_VertexID & 1, gl_VertexID >> 1) * 2.0;
+	const Vec2 pos = out_uv * 2.0 - 1.0;
+
+	gl_Position = Vec4(pos, 1.0, 1.0);
+}
+
+#pragma anki end
+
+#pragma anki start frag
+
+#include <AnKi/Shaders/Functions.glsl>
+
+layout(location = 0) in Vec2 in_uv;
+layout(location = 0) out ANKI_RP Vec3 out_color;
+
+layout(push_constant, scalar) uniform b_pc
+{
+	ANKI_RP Vec3 u_solidColor;
+	F32 u_padding;
+};
+
+void main()
+{
+	out_color = u_solidColor;
+}
+
+#pragma anki end

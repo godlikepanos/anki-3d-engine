@@ -105,12 +105,15 @@ public:
 	TRenderQueueElementStorage<GenericGpuComputeJobQueueElement> m_genericGpuComputeJobs;
 	TRenderQueueElementStorage<RayTracingInstanceQueueElement> m_rayTracingInstances;
 	TRenderQueueElementStorage<UiQueueElement> m_uis;
+	SkyboxQueueElement m_skybox;
+	Bool m_skyboxSet = false;
 
 	Timestamp m_timestamp = 0;
 
 	RenderQueueView()
 	{
 		zeroMemory(m_directionalLight);
+		zeroMemory(m_skybox);
 	}
 };
 

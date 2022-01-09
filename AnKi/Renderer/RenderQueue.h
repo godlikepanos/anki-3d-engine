@@ -371,6 +371,16 @@ public:
 static_assert(std::is_trivially_destructible<RayTracingInstanceQueueElement>::value == true,
 			  "Should be trivially destructible");
 
+/// Skybox info.
+class SkyboxQueueElement final
+{
+public:
+	const TextureView* m_skyboxTexture;
+	Vec3 m_solidColor;
+};
+
+static_assert(std::is_trivially_destructible<SkyboxQueueElement>::value == true, "Should be trivially destructible");
+
 /// The render queue. This is what the renderer is fed to render.
 class RenderQueue : public RenderingMatrices
 {
@@ -393,6 +403,8 @@ public:
 	/// Contains the ray tracing elements. The rest of the members are unused. It's separate to avoid multithreading
 	/// bugs.
 	RenderQueue* m_rayTracingQueue = nullptr;
+
+	SkyboxQueueElement m_skybox = {};
 
 	/// Applies only if the RenderQueue holds shadow casters. It's the max timesamp of all shadow casters
 	Timestamp m_shadowRenderablesLastUpdateTimestamp = 0;

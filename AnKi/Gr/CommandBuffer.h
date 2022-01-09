@@ -182,7 +182,7 @@ public:
 	/// always.
 	void setDepthWrite(Bool enable);
 
-	/// Set depth compare operation.
+	/// Set depth compare operation. By default it's less.
 	void setDepthCompareOperation(CompareOperation op);
 
 	/// Enable/disable alpha to coverage.

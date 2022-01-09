@@ -10,6 +10,10 @@
 
 namespace anki {
 
+SkyboxNode::~SkyboxNode()
+{
+}
+
 SkyboxNode::SkyboxNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
 {

@@ -17,6 +17,7 @@
 #include <AnKi/Scene/Components/GlobalIlluminationProbeComponent.h>
 #include <AnKi/Scene/Components/GenericGpuComputeJobComponent.h>
 #include <AnKi/Scene/Components/UiComponent.h>
+#include <AnKi/Scene/Components/SkyboxComponent.h>
 #include <AnKi/Renderer/MainRenderer.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/ThreadHive.h>
@@ -330,6 +331,10 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::UI_COMPONENTS)
 					&& (uic = node.tryGetFirstComponentOfType<UiComponent>());
 
+		SkyboxComponent* skyboxc = nullptr;
+		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::SKYBOX)
+					&& (skyboxc = node.tryGetFirstComponentOfType<SkyboxComponent>());
+
 		if(ANKI_UNLIKELY(!wantNode))
 		{
 			// Skip node
@@ -598,6 +603,12 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			uic->setupUiQueueElement(*el);
 		}
 
+		if(skyboxc)
+		{
+			skyboxc->setupSkyboxQueueElement(result.m_skybox);
+			result.m_skyboxSet = true;
+		}
+
 		// Add more frustums to the list
 		if(nextQueues.getSize() > 0)
 		{
@@ -670,6 +681,11 @@ void CombineResultsTask::combine()
 		if(m_frcCtx->m_queueViews[i].m_directionalLight.m_uuid != 0)
 		{
 			results.m_directionalLight = m_frcCtx->m_queueViews[i].m_directionalLight;
+		}
+
+		if(m_frcCtx->m_queueViews[i].m_skyboxSet)
+		{
+			results.m_skybox = m_frcCtx->m_queueViews[i].m_skybox;
 		}
 	}
 
