@@ -22,10 +22,14 @@ Error SampleApp::init(int argc, char** argv, CString sampleName)
 
 	if(!directoryExists(assetsDataPath))
 	{
-		ANKI_LOGE("Cannot find directory \"%s\". Have you moved the clone of the repository?", assetsDataPath.cstr());
-		return Error::USER_DATA;
+		ANKI_LOGE("Cannot find directory \"%s\". Have you moved the clone of the repository? "
+				  "I'll continue but expect issues",
+				  assetsDataPath.cstr());
 	}
-	m_config.setRsrcDataPaths(StringAuto(alloc).sprintf("%s:%s", mainDataPath.cstr(), assetsDataPath.cstr()));
+	else
+	{
+		m_config.setRsrcDataPaths(StringAuto(alloc).sprintf("%s:%s", mainDataPath.cstr(), assetsDataPath.cstr()));
+	}
 #endif
 
 	ANKI_CHECK(m_config.setFromCommandLineArguments(argc - 1, argv + 1));

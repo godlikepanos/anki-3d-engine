@@ -404,6 +404,10 @@ using StackAllocator = GenericPoolAllocator<T, StackMemoryPool>;
 /// Allocator that uses a ChainMemoryPool
 template<typename T>
 using ChainAllocator = GenericPoolAllocator<T, ChainMemoryPool>;
+
+#define ANKI_FRIEND_ALLOCATOR \
+	template<typename, typename> \
+	friend class GenericPoolAllocator;
 /// @}
 
 } // end namespace anki

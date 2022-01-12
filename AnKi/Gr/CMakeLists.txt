@@ -50,12 +50,12 @@ if(VULKAN)
 		"Vulkan/TimestampQueryImpl.cpp"
 		"Vulkan/VulkanObject.cpp")
 
-	if(SDL)
+	if(ANKI_HEADLESS)
+		set(VKCPP ${VKCPP} "Vulkan/GrManagerImplHeadless.cpp")
+	elseif(SDL)
 		set(VKCPP ${VKCPP} "Vulkan/GrManagerImplSdl.cpp")
-	endif()
-
-	if(ANDROID)
-	set(VKCPP ${VKCPP} "Vulkan/GrManagerImplAndroid.cpp")
+	elseif(ANDROID)
+		set(VKCPP ${VKCPP} "Vulkan/GrManagerImplAndroid.cpp")
 	endif()
 
 	foreach(S ${VKCPP})

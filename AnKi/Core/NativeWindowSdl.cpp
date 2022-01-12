@@ -38,8 +38,7 @@ void NativeWindow::deleteInstance(NativeWindow* window)
 	{
 		NativeWindowSdl* self = static_cast<NativeWindowSdl*>(window);
 		HeapAllocator<U8> alloc = self->m_alloc;
-		self->~NativeWindowSdl();
-		alloc.getMemoryPool().free(self);
+		alloc.deleteInstance(self);
 	}
 }
 

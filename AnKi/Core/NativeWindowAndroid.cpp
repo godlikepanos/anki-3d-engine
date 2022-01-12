@@ -10,20 +10,20 @@ namespace anki {
 Error NativeWindow::newInstance(const NativeWindowInitInfo& initInfo, NativeWindow*& nativeWindow)
 {
 	HeapAllocator<U8> alloc(initInfo.m_allocCallback, initInfo.m_allocCallbackUserData, "NativeWindow");
-	NativeWindowAndroid* sdlwin = alloc.newInstance<NativeWindowAndroid>();
+	NativeWindowAndroid* andwin = alloc.newInstance<NativeWindowAndroid>();
 
-	sdlwin->m_alloc = alloc;
+	andwin->m_alloc = alloc;
 
-	const Error err = sdlwin->init(initInfo);
+	const Error err = andwin->init(initInfo);
 	if(err)
 	{
-		alloc.deleteInstance(sdlwin);
+		alloc.deleteInstance(andwin);
 		nativeWindow = nullptr;
 		return err;
 	}
 	else
 	{
-		nativeWindow = sdlwin;
+		nativeWindow = andwin;
 		return Error::NONE;
 	}
 }
@@ -34,9 +34,13 @@ void NativeWindow::deleteInstance(NativeWindow* window)
 	{
 		NativeWindowAndroid* self = static_cast<NativeWindowAndroid*>(window);
 		HeapAllocator<U8> alloc = self->m_alloc;
-		self->~NativeWindowAndroid();
-		alloc.getMemoryPool().free(self);
+		alloc.deleteInstance(self);
 	}
+}
+
+void NativeWindow::setWindowTitle(CString title)
+{
+	// Nothing
 }
 
 NativeWindowAndroid::~NativeWindowAndroid()
@@ -91,11 +95,6 @@ Error NativeWindowAndroid::init(const NativeWindowInitInfo& init)
 	m_height = ANativeWindow_getHeight(g_androidApp->window);
 
 	return Error::NONE;
-}
-
-void NativeWindow::setWindowTitle(CString title)
-{
-	// Nothing
 }
 
 } // end namespace anki

@@ -2,7 +2,9 @@ set(SOURCES App.cpp ConfigSet.cpp GpuMemoryPools.cpp DeveloperConsole.cpp CoreTr
 	StatsUi.cpp)
 file(GLOB HEADERS *.h)
 
-if(SDL)
+if(ANKI_HEADLESS)
+	set(SOURCES ${SOURCES} NativeWindowHeadless.cpp)
+elseif(SDL)
 	set(SOURCES ${SOURCES} NativeWindowSdl.cpp)
 elseif(ANDROID)
 	set(SOURCES ${SOURCES} NativeWindowAndroid.cpp)

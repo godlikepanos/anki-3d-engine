@@ -43,6 +43,15 @@ Error MicroSwapchain::initInternal()
 		ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_factory->m_gr->getPhysicalDevice(),
 																m_factory->m_gr->getSurface(), &surfaceProperties));
 
+#if ANKI_WINDOWING_SYSTEM_HEADLESS
+		if(surfaceProperties.currentExtent.width != MAX_U32 || surfaceProperties.currentExtent.height != MAX_U32)
+		{
+			ANKI_VK_LOGE("Was expecting an indication that the surface size will be determined by the extent of a "
+						 "swapchain targeting the surface");
+			return Error::FUNCTION_FAILED;
+		}
+		m_factory->m_gr->getNativeWindowSize(surfaceWidth, surfaceHeight);
+#else
 		if(surfaceProperties.currentExtent.width == MAX_U32 || surfaceProperties.currentExtent.height == MAX_U32)
 		{
 			ANKI_VK_LOGE("Wrong surface size");
@@ -50,6 +59,7 @@ Error MicroSwapchain::initInternal()
 		}
 		surfaceWidth = surfaceProperties.currentExtent.width;
 		surfaceHeight = surfaceProperties.currentExtent.height;
+#endif
 	}
 
 	// Get the surface format
@@ -163,7 +173,8 @@ Error MicroSwapchain::initInternal()
 		ci.minImageCount = MAX_FRAMES_IN_FLIGHT;
 		ci.imageFormat = surfaceFormat;
 		ci.imageColorSpace = colorspace;
-		ci.imageExtent = surfaceProperties.currentExtent;
+		ci.imageExtent.width = surfaceWidth;
+		ci.imageExtent.height = surfaceHeight;
 		ci.imageArrayLayers = 1;
 		ci.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
 		ci.queueFamilyIndexCount = m_factory->m_gr->getQueueFamilies().getSize();

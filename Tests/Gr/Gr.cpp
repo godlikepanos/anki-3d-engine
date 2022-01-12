@@ -256,7 +256,7 @@ static Input* input = nullptr;
 
 #define COMMON_BEGIN() \
 	stagingMem = new StagingGpuMemoryPool(); \
-	ConfigSet cfg; \
+	ConfigSet cfg(allocAligned, nullptr); \
 	cfg.setWidth(WIDTH); \
 	cfg.setHeight(HEIGHT); \
 	cfg.setGrValidation(true); \

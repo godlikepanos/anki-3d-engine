@@ -748,7 +748,7 @@ Error ImageLoader::loadInternal(FileInterface& file, const CString& filename, U3
 	}
 	else if(ext == "ankitex")
 	{
-#if ANKI_OS_ANDROID
+#if ANKI_PLATFORM_MOBILE
 		m_compression = ImageBinaryDataCompression::ASTC;
 #else
 		m_compression = ImageBinaryDataCompression::S3TC;

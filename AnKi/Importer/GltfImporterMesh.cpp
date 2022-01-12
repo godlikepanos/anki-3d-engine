@@ -80,7 +80,7 @@ static Error checkAttribute(const cgltf_attribute& attrib)
 	}
 
 	ANKI_ASSERT(attrib.data);
-	const U count = attrib.data->count;
+	const U count = U(attrib.data->count);
 	if(count == 0)
 	{
 		ANKI_IMPORTER_LOGE("Zero vertex count");

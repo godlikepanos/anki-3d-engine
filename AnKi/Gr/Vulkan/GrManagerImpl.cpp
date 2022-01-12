@@ -333,7 +333,13 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 
 		for(U32 i = 0; i < extCount; ++i)
 		{
-#if ANKI_OS_LINUX
+#if ANKI_WINDOWING_SYSTEM_HEADLESS
+			if(CString(instExtensionInf[i].extensionName) == VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::EXT_HEADLESS_SURFACE;
+				instExtensions[instExtensionCount++] = VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME;
+			}
+#elif ANKI_OS_LINUX
 			if(CString(instExtensionInf[i].extensionName) == VK_KHR_XCB_SURFACE_EXTENSION_NAME)
 			{
 				m_extensions |= VulkanExtensions::KHR_XCB_SURFACE;
@@ -370,6 +376,15 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 				m_extensions |= VulkanExtensions::EXT_DEBUG_REPORT;
 				instExtensions[instExtensionCount++] = VK_EXT_DEBUG_REPORT_EXTENSION_NAME;
 			}
+		}
+
+		if(!(m_extensions
+			 & (VulkanExtensions::EXT_HEADLESS_SURFACE | VulkanExtensions::KHR_XCB_SURFACE
+				| VulkanExtensions::KHR_XLIB_SURFACE | VulkanExtensions::KHR_WIN32_SURFACE
+				| VulkanExtensions::KHR_ANDROID_SURFACE)))
+		{
+			ANKI_VK_LOGE("Couldn't find suitable surface extension");
+			return Error::FUNCTION_FAILED;
 		}
 
 		if(instExtensionCount)

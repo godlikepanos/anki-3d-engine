@@ -8,7 +8,7 @@ ANKI_CONFIG_VAR_GROUP(R)
 ANKI_CONFIG_VAR_U8(RTextureAnisotropy, 8, 1, 16, "Texture anisotropy for the main passes")
 ANKI_CONFIG_VAR_U32(RTileSize, 64, 8, 256, "Tile lighting tile size")
 ANKI_CONFIG_VAR_U32(RZSplitCount, 64, 8, 1024, "Clusterer number of Z splits")
-ANKI_CONFIG_VAR_BOOL(RPreferCompute, !ANKI_OS_ANDROID, "Prefer compute shaders")
+ANKI_CONFIG_VAR_BOOL(RPreferCompute, !ANKI_PLATFORM_MOBILE, "Prefer compute shaders")
 ANKI_CONFIG_VAR_BOOL(RVrs, true, "Enable VRS in multiple passes")
 
 ANKI_CONFIG_VAR_F32(RInternalRenderScaling, 1.0f, 0.5f, 1.0f,
@@ -50,7 +50,7 @@ ANKI_CONFIG_VAR_U32(RProbeReflectionShadowMapResolution, 64, 4, 2048, "Reflectio
 ANKI_CONFIG_VAR_U8(RLensFlareMaxSpritesPerFlare, 8, 4, 255, "Max sprites per lens flare")
 ANKI_CONFIG_VAR_U8(RLensFlareMaxFlares, 16, 8, 255, "Max flare count")
 
-ANKI_CONFIG_VAR_U32(RGiTileResolution, (ANKI_OS_ANDROID) ? 16 : 32, 4, 2048, "GI tile resolution")
+ANKI_CONFIG_VAR_U32(RGiTileResolution, (ANKI_PLATFORM_MOBILE) ? 16 : 32, 4, 2048, "GI tile resolution")
 ANKI_CONFIG_VAR_U32(RGiShadowMapResolution, 128, 4, 2048, "GI shadowmap resolution")
 ANKI_CONFIG_VAR_U32(RGiMaxCachedProbes, 16, 4, 2048, "Max cached probes")
 ANKI_CONFIG_VAR_U32(RGiMaxVisibleProbes, 8, 1, 256, "Max visible GI probes")

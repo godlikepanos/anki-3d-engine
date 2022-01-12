@@ -178,7 +178,7 @@ void GltfImporter::visitAccessor(const cgltf_accessor& accessor, TFunc func)
 	ANKI_ASSERT(stride);
 	ANKI_ASSERT(stride >= sizeof(T));
 
-	const U count = accessor.count;
+	const U count = U(accessor.count);
 
 	for(U i = 0; i < count; ++i)
 	{

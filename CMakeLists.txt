@@ -83,6 +83,29 @@ else()
 	set(CLANG FALSE)
 endif()
 
+set(X86 FALSE)
+set(ARM FALSE)
+if(GCC OR CLANG)
+	execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpmachine OUTPUT_VARIABLE target_arch)
+	if(target_arch MATCHES "x86")
+		set(X86 TRUE)
+	elseif(target_arch MATCHES "aarch")
+		set(ARM TRUE)
+	else()
+		message(FATAL_ERROR "Couldn't find the target architecture from: ${target_arch}")
+	endif()
+elseif(MSVC)
+	set(X86 TRUE)
+else()
+	message(FATAL_ERROR "Couldn't find the target architecture")
+endif()
+
+if(X86)
+	message("++ Target architecture is X86")
+elseif(ARM)
+	message("++ Target architecture is ARM")
+endif()
+
 ################################################################################
 # Configuration                                                                #
 ################################################################################
@@ -106,22 +129,20 @@ else()
 	set(_ANKI_ENABLE_TRACE 0)
 endif()
 
-set(ANKI_CPU_ADDR_SPACE "0" CACHE STRING "The CPU architecture (0 or 32 or 64). Zero means native.")
-
 option(ANKI_SIMD "Enable SIMD optimizations" ON)
 option(ANKI_ADDRESS_SANITIZER "Enable address sanitizer (-fsanitize=address)" OFF)
+option(ANKI_HEADLESS "Build a headless application" OFF)
 
 # Take a wild guess on the windowing system
-if(LINUX)
-	set(_WIN_BACKEND "SDL")
+if(ANKI_HEADLESS)
+	set(SDL FALSE)
+elseif(LINUX)
 	set(SDL TRUE)
 elseif(WINDOWS)
-	set(_WIN_BACKEND "SDL")
 	set(SDL TRUE)
 elseif(ANDROID)
-	set(_WIN_BACKEND "ANDROID")
+	set(SDL FALSE)
 elseif(MACOS)
-	set(_WIN_BACKEND "SDL")
 	set(SDL TRUE)
 else()
 	message(FATAL_ERROR "Couldn't determine the window backend. You need to specify it manually.")
@@ -140,14 +161,6 @@ endif()
 
 if(NOT DEFINED CMAKE_BUILD_TYPE)
 	message(FATAL_ERROR "You need to define CMAKE_BUILD_TYPE")
-endif()
-
-if(${ANKI_CPU_ADDR_SPACE} STREQUAL "0" OR ${ANKI_CPU_ADDR_SPACE} STREQUAL "64")
-	set(ARCH_64 TRUE)
-	set(ARCH_32 FALSE)
-else()
-	set(ARCH_64 FALSE)
-	set(ARCH_32 TRUE)
 endif()
 
 ################################################################################
@@ -174,7 +187,7 @@ if(NOT MSVC)
 		add_definitions("-static-libstdc++")
 	endif()
 
-	if(LINUX OR MACOS OR WINDOWS)
+	if(X86)
 		add_definitions("-msse4")
 	endif()
 
@@ -346,6 +359,14 @@ else()
 	set(ANKI_TESTS 0)
 endif()
 
+if(ANKI_HEADLESS)
+	set(_ANKI_WINDOWING_SYSTEM 0)
+elseif(SDL)
+	set(_ANKI_WINDOWING_SYSTEM 1)
+else()
+	set(_ANKI_WINDOWING_SYSTEM 2)
+endif()
+
 configure_file("AnKi/Config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/AnKi/Config.h")
 
 # Include & lib directories
@@ -391,8 +412,6 @@ if(LINUX)
 	else()
 		if(SDL)
 			set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} X11-xcb)
-		else()
-			message(FATAL_ERROR "Unhandled case")
 		endif()
 	endif()
 

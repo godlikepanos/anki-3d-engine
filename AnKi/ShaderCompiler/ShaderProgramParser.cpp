@@ -21,12 +21,10 @@ static const Array<CString, U32(ShaderType::COUNT)> SHADER_STAGE_NAMES = {
 
 static const char SHADER_HEADER[] = R"(#version 460 core
 #define ANKI_%s_SHADER 1
-#define ANKI_OS_ANDROID %d
-#define ANKI_OS_WINDOWS %d
-#define ANKI_OS_LINUX %d
+#define ANKI_PLATFORM_MOBILE %d
 #define ANKI_FORCE_FULL_FP_PRECISION %d
 
-#define _ANKI_SUPPORTS_64BIT !ANKI_OS_ANDROID
+#define _ANKI_SUPPORTS_64BIT !ANKI_PLATFORM_MOBILE
 
 #define gl_VertexID gl_VertexIndex
 
@@ -566,7 +564,7 @@ Error ShaderProgramParser::parsePragmaRewriteMutation(const StringAuto* begin, c
 	ANKI_ASSERT(begin && end);
 
 	// Some basic sanity checks
-	const U tokenCount = end - begin;
+	const U tokenCount = U(end - begin);
 	constexpr U minTokenCount = 2 + 1 + 2; // Mutator + value + "to" + mutator + value
 	if(tokenCount < minTokenCount)
 	{
@@ -968,8 +966,8 @@ Error ShaderProgramParser::parse()
 void ShaderProgramParser::generateAnkiShaderHeader(ShaderType shaderType, const ShaderCompilerOptions& compilerOptions,
 												   StringAuto& header)
 {
-	header.sprintf(SHADER_HEADER, SHADER_STAGE_NAMES[shaderType].cstr(), ANKI_OS_ANDROID, ANKI_OS_WINDOWS,
-				   ANKI_OS_LINUX, compilerOptions.m_forceFullFloatingPointPrecision,
+	header.sprintf(SHADER_HEADER, SHADER_STAGE_NAMES[shaderType].cstr(), ANKI_PLATFORM_MOBILE,
+				   compilerOptions.m_forceFullFloatingPointPrecision,
 				   compilerOptions.m_bindlessLimits.m_bindlessTextureCount,
 				   compilerOptions.m_bindlessLimits.m_bindlessImageCount);
 }

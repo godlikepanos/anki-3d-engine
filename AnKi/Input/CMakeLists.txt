@@ -1,11 +1,11 @@
 set(SOURCES "")
 
-if(SDL)
+if(ANKI_HEADLESS)
+	set(SOURCES ${SOURCES} InputDummy.cpp)
+elseif(SDL)
 	set(SOURCES ${SOURCES} InputSdl.cpp)
 elseif(ANDROID)
-set(SOURCES ${SOURCES} InputAndroid.cpp)
-else()
-	set(SOURCES ${SOURCES} InputDummy.cpp)
+	set(SOURCES ${SOURCES} InputAndroid.cpp)
 endif()
 
 foreach(F ${SOURCES})
