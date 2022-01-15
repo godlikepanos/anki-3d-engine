@@ -4,7 +4,7 @@ local events = getEventManager()
 
 node = scene:newSkyboxNode("Cube.017")
 comp = node:getSceneNodeBase():getSkyboxComponent()
-comp:setSolidColor(Vec3.new(0.000000, 0.000000, 10.000000))
+comp:setSolidColor(Vec3.new(1.67, 2.588, 4))
 trf = Transform.new()
 trf:setOrigin(Vec4.new(0.000000, 28.856024, 24.232458, 0))
 rot = Mat3x4.new()

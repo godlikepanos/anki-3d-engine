@@ -85,4 +85,12 @@ struct DeferredVertexUniforms
 	Mat4 m_mvp;
 };
 
+struct DeferredSkyboxUniforms
+{
+	ANKI_RP Vec3 m_solidColor;
+	F32 m_padding;
+	Vec2 m_inputTexUvScale;
+	Vec2 m_inputTexUvBias;
+};
+
 ANKI_END_NAMESPACE

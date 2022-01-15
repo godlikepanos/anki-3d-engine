@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Renderer/TraditionalDeferredShading.h>
+#include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Resource/MeshResource.h>
@@ -50,6 +51,31 @@ Error TraditionalDeferredLightShading::init()
 	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/Plight.ankimesh", m_plightMesh, false));
 	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/Slight.ankimesh", m_slightMesh, false));
 
+	// Shadow sampler
+	{
+		SamplerInitInfo inf;
+		inf.m_compareOperation = CompareOperation::LESS_EQUAL;
+		inf.m_addressing = SamplingAddressing::CLAMP;
+		inf.m_mipmapFilter = SamplingFilter::BASE;
+		inf.m_minMagFilter = SamplingFilter::LINEAR;
+		m_shadowSampler = getGrManager().newSampler(inf);
+	}
+
+	// Skybox
+	{
+		ANKI_CHECK(
+			getResourceManager().loadResource("Shaders/TraditionalDeferredShadingSkybox.ankiprog", m_skyboxProg));
+
+		for(U32 i = 0; i < m_skyboxGrProgs.getSize(); ++i)
+		{
+			ShaderProgramResourceVariantInitInfo variantInitInfo(m_skyboxProg);
+			variantInitInfo.addMutation("METHOD", i);
+			const ShaderProgramResourceVariant* variant;
+			m_skyboxProg->getOrCreateVariant(variantInitInfo, variant);
+			m_skyboxGrProgs[i] = variant->getProgram();
+		}
+	}
+
 	return Error::NONE;
 }
 
@@ -80,10 +106,59 @@ void TraditionalDeferredLightShading::bindVertexIndexBuffers(MeshResourcePtr& me
 
 void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShadingDrawInfo& info)
 {
-	// Set common state for all lights
 	CommandBufferPtr& cmdb = info.m_commandBuffer;
-	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);
+	RenderPassWorkContext& rgraphCtx = *info.m_renderpassContext;
+
+	// Set common state for all
 	cmdb->setViewport(info.m_viewport.x(), info.m_viewport.y(), info.m_viewport.z(), info.m_viewport.w());
+
+	// Skybox first
+	{
+		cmdb->bindShaderProgram(m_skyboxGrProgs[0]);
+
+		cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
+		rgraphCtx.bindTexture(0, 1, info.m_gbufferDepthRenderTarget,
+							  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+
+		DeferredSkyboxUniforms unis;
+		unis.m_solidColor = info.m_skybox->m_solidColor;
+		unis.m_inputTexUvBias = info.m_gbufferTexCoordsBias;
+		unis.m_inputTexUvScale = info.m_gbufferTexCoordsScale;
+		cmdb->setPushConstants(&unis, sizeof(unis));
+
+		drawQuad(cmdb);
+	}
+
+	// Set common state for all light drawcalls
+	{
+		cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);
+
+		// NOTE: Use nearest sampler because we don't want the result to sample the near tiles
+		cmdb->bindSampler(0, 2, m_r->getSamplers().m_nearestNearestClamp);
+
+		rgraphCtx.bindColorTexture(0, 3, info.m_gbufferRenderTargets[0]);
+		rgraphCtx.bindColorTexture(0, 4, info.m_gbufferRenderTargets[1]);
+		rgraphCtx.bindColorTexture(0, 5, info.m_gbufferRenderTargets[2]);
+
+		rgraphCtx.bindTexture(0, 6, info.m_gbufferDepthRenderTarget,
+							  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+
+		// Set shadowmap resources
+		cmdb->bindSampler(0, 7, m_shadowSampler);
+
+		if(info.m_directionalLight && info.m_directionalLight->hasShadow())
+		{
+			ANKI_ASSERT(info.m_directionalLightShadowmapRenderTarget.isValid());
+
+			rgraphCtx.bindTexture(0, 8, info.m_directionalLightShadowmapRenderTarget,
+								  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+		}
+		else
+		{
+			// No shadows for the dir light, bind something random
+			rgraphCtx.bindColorTexture(0, 8, info.m_gbufferRenderTargets[0]);
+		}
+	}
 
 	// Dir light
 	if(info.m_directionalLight)

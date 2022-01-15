@@ -198,16 +198,6 @@ Error ProbeReflections::initShadowMapping()
 	m_shadowMapping.m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
 	m_shadowMapping.m_fbDescr.bake();
 
-	// Shadow sampler
-	{
-		SamplerInitInfo inf;
-		inf.m_compareOperation = CompareOperation::LESS_EQUAL;
-		inf.m_addressing = SamplingAddressing::CLAMP;
-		inf.m_mipmapFilter = SamplingFilter::BASE;
-		inf.m_minMagFilter = SamplingFilter::LINEAR;
-		m_shadowMapping.m_shadowSampler = getGrManager().newSampler(inf);
-	}
-
 	return Error::NONE;
 }
 
@@ -372,7 +362,7 @@ void ProbeReflections::runGBuffer(RenderPassWorkContext& rgraphCtx)
 	cmdb->setScissor(0, 0, MAX_U32, MAX_U32);
 }
 
-void ProbeReflections::runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
+void ProbeReflections::runLightShading(U32 faceIdx, const RenderingContext& rctx, RenderPassWorkContext& rgraphCtx)
 {
 	ANKI_ASSERT(faceIdx <= 6);
 	ANKI_TRACE_SCOPED_EVENT(R_CUBE_REFL);
@@ -382,27 +372,7 @@ void ProbeReflections::runLightShading(U32 faceIdx, RenderPassWorkContext& rgrap
 	ANKI_ASSERT(m_ctx.m_probe);
 	const ReflectionProbeQueueElement& probe = *m_ctx.m_probe;
 	const RenderQueue& rqueue = *probe.m_renderQueues[faceIdx];
-
-	// Set common state for all lights
-	// NOTE: Use nearest sampler because we don't want the result to sample the near tiles
-	cmdb->bindSampler(0, 2, m_r->getSamplers().m_nearestNearestClamp);
-
-	rgraphCtx.bindColorTexture(0, 3, m_ctx.m_gbufferColorRts[0]);
-	rgraphCtx.bindColorTexture(0, 4, m_ctx.m_gbufferColorRts[1]);
-	rgraphCtx.bindColorTexture(0, 5, m_ctx.m_gbufferColorRts[2]);
-
-	rgraphCtx.bindTexture(0, 6, m_ctx.m_gbufferDepthRt, TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
-
-	// Get shadowmap info
 	const Bool hasDirLight = probe.m_renderQueues[0]->m_directionalLight.m_uuid;
-	if(hasDirLight)
-	{
-		ANKI_ASSERT(m_ctx.m_shadowMapRt.isValid());
-
-		cmdb->bindSampler(0, 7, m_shadowMapping.m_shadowSampler);
-
-		rgraphCtx.bindTexture(0, 8, m_ctx.m_shadowMapRt, TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
-	}
 
 	TraditionalDeferredLightShadingDrawInfo dsInfo;
 	dsInfo.m_viewProjectionMatrix = rqueue.m_viewProjectionMatrix;
@@ -421,6 +391,17 @@ void ProbeReflections::runLightShading(U32 faceIdx, RenderPassWorkContext& rgrap
 	dsInfo.m_pointLights = rqueue.m_pointLights;
 	dsInfo.m_spotLights = rqueue.m_spotLights;
 	dsInfo.m_commandBuffer = cmdb;
+	dsInfo.m_gbufferRenderTargets[0] = m_ctx.m_gbufferColorRts[0];
+	dsInfo.m_gbufferRenderTargets[1] = m_ctx.m_gbufferColorRts[1];
+	dsInfo.m_gbufferRenderTargets[2] = m_ctx.m_gbufferColorRts[2];
+	dsInfo.m_gbufferDepthRenderTarget = m_ctx.m_gbufferDepthRt;
+	if(hasDirLight && dsInfo.m_directionalLight->hasShadow())
+	{
+		dsInfo.m_directionalLightShadowmapRenderTarget = m_ctx.m_shadowMapRt;
+	}
+	dsInfo.m_renderpassContext = &rgraphCtx;
+	dsInfo.m_skybox = &rctx.m_renderQueue->m_skybox;
+
 	m_lightShading.m_deferred.drawLights(dsInfo);
 }
 
@@ -624,8 +605,8 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
 			pass.setFramebufferInfo(m_cacheEntries[probeToUpdateCacheEntryIdx].m_lightShadingFbDescrs[faceIdx],
 									{m_ctx.m_lightShadingRt});
-			pass.setWork([this, faceIdx](RenderPassWorkContext& rgraphCtx) {
-				runLightShading(faceIdx, rgraphCtx);
+			pass.setWork([this, faceIdx, &rctx](RenderPassWorkContext& rgraphCtx) {
+				runLightShading(faceIdx, rctx, rgraphCtx);
 			});
 
 			TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));

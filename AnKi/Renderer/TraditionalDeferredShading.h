@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Renderer/RendererObject.h>
+#include <AnKi/Renderer/RenderQueue.h>
 
 namespace anki {
 
@@ -26,11 +27,19 @@ public:
 	Vec2 m_lightbufferTexCoordsBias;
 	F32 m_cameraNear;
 	F32 m_cameraFar;
-	DirectionalLightQueueElement* m_directionalLight ANKI_DEBUG_CODE(= numberToPtr<DirectionalLightQueueElement*>(1));
+	const DirectionalLightQueueElement* m_directionalLight = nullptr;
 	ConstWeakArray<PointLightQueueElement> m_pointLights;
 	ConstWeakArray<SpotLightQueueElement> m_spotLights;
+	const SkyboxQueueElement* m_skybox = nullptr;
 	CommandBufferPtr m_commandBuffer;
 	Bool m_computeSpecular = false;
+
+	// Render targets
+	Array<RenderTargetHandle, GBUFFER_COLOR_ATTACHMENT_COUNT - 1> m_gbufferRenderTargets;
+	RenderTargetHandle m_gbufferDepthRenderTarget;
+	RenderTargetHandle m_directionalLightShadowmapRenderTarget;
+
+	RenderPassWorkContext* m_renderpassContext = nullptr;
 };
 
 /// Helper for drawing using traditional deferred shading.
@@ -53,11 +62,16 @@ private:
 	Array<ShaderProgramPtr, 2> m_slightGrProg;
 	Array<ShaderProgramPtr, 2> m_dirLightGrProg;
 
+	ShaderProgramResourcePtr m_skyboxProg;
+	Array<ShaderProgramPtr, 2> m_skyboxGrProgs;
+
 	/// @name Meshes of light volumes.
 	/// @{
 	MeshResourcePtr m_plightMesh;
 	MeshResourcePtr m_slightMesh;
 	/// @}
+
+	SamplerPtr m_shadowSampler;
 
 	static void bindVertexIndexBuffers(MeshResourcePtr& mesh, CommandBufferPtr& cmdb, U32& indexCount);
 };

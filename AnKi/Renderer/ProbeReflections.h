@@ -96,7 +96,6 @@ private:
 	public:
 		RenderTargetDescription m_rtDescr;
 		FramebufferDescription m_fbDescr;
-		SamplerPtr m_shadowSampler;
 	} m_shadowMapping;
 
 	class CacheEntry
@@ -146,7 +145,7 @@ private:
 
 	void runGBuffer(RenderPassWorkContext& rgraphCtx);
 	void runShadowMapping(RenderPassWorkContext& rgraphCtx);
-	void runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
+	void runLightShading(U32 faceIdx, const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 	void runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
 	void runIrradiance(RenderPassWorkContext& rgraphCtx);
 	void runIrradianceToRefl(RenderPassWorkContext& rgraphCtx);

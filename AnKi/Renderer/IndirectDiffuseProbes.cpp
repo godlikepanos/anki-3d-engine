@@ -181,16 +181,6 @@ Error IndirectDiffuseProbes::initShadowMapping()
 	m_shadowMapping.m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
 	m_shadowMapping.m_fbDescr.bake();
 
-	// Shadow sampler
-	{
-		SamplerInitInfo inf;
-		inf.m_compareOperation = CompareOperation::LESS_EQUAL;
-		inf.m_addressing = SamplingAddressing::CLAMP;
-		inf.m_mipmapFilter = SamplingFilter::BASE;
-		inf.m_minMagFilter = SamplingFilter::LINEAR;
-		m_shadowMapping.m_shadowSampler = getGrManager().newSampler(inf);
-	}
-
 	return Error::NONE;
 }
 
@@ -650,27 +640,6 @@ void IndirectDiffuseProbes::runLightShading(RenderPassWorkContext& rgraphCtx, In
 	const GlobalIlluminationProbeQueueElement& probe = *giCtx.m_probeToUpdateThisFrame;
 
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	// Set common state for all lights
-	{
-		// NOTE: Use nearest sampler because we don't want the result to sample the near tiles
-		cmdb->bindSampler(0, 2, m_r->getSamplers().m_nearestNearestClamp);
-
-		rgraphCtx.bindColorTexture(0, 3, giCtx.m_gbufferColorRts[0]);
-		rgraphCtx.bindColorTexture(0, 4, giCtx.m_gbufferColorRts[1]);
-		rgraphCtx.bindColorTexture(0, 5, giCtx.m_gbufferColorRts[2]);
-
-		rgraphCtx.bindTexture(0, 6, giCtx.m_gbufferDepthRt, TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
-
-		// Get shadowmap info
-		if(probe.m_renderQueues[0]->m_directionalLight.isEnabled())
-		{
-			ANKI_ASSERT(giCtx.m_shadowsRt.isValid());
-
-			cmdb->bindSampler(0, 7, m_shadowMapping.m_shadowSampler);
-
-			rgraphCtx.bindTexture(0, 8, giCtx.m_shadowsRt, TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
-		}
-	}
 
 	for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
 	{
@@ -681,6 +650,7 @@ void IndirectDiffuseProbes::runLightShading(RenderPassWorkContext& rgraphCtx, In
 		cmdb->setScissor(rez * faceIdx, 0, rez, rez);
 		cmdb->setViewport(rez * faceIdx, 0, rez, rez);
 
+		// Draw light shading
 		TraditionalDeferredLightShadingDrawInfo dsInfo;
 		dsInfo.m_viewProjectionMatrix = rqueue.m_viewProjectionMatrix;
 		dsInfo.m_invViewProjectionMatrix = rqueue.m_viewProjectionMatrix.getInverse();
@@ -688,16 +658,25 @@ void IndirectDiffuseProbes::runLightShading(RenderPassWorkContext& rgraphCtx, In
 		dsInfo.m_viewport = UVec4(faceIdx * m_tileSize, 0, m_tileSize, m_tileSize);
 		dsInfo.m_gbufferTexCoordsScale = Vec2(1.0f / F32(m_tileSize * 6), 1.0f / F32(m_tileSize));
 		dsInfo.m_gbufferTexCoordsBias = Vec2(0.0f, 0.0f);
-		dsInfo.m_lightbufferTexCoordsScale = Vec2(1.0f / F32(m_tileSize), 1.0f / F32(m_tileSize));
 		dsInfo.m_lightbufferTexCoordsBias = Vec2(-F32(faceIdx), 0.0f);
-		dsInfo.m_cameraNear = probe.m_renderQueues[faceIdx]->m_cameraNear;
-		dsInfo.m_cameraFar = probe.m_renderQueues[faceIdx]->m_cameraFar;
-		dsInfo.m_directionalLight = (probe.m_renderQueues[faceIdx]->m_directionalLight.isEnabled())
-										? &probe.m_renderQueues[faceIdx]->m_directionalLight
-										: nullptr;
+		dsInfo.m_lightbufferTexCoordsScale = Vec2(1.0f / F32(m_tileSize), 1.0f / F32(m_tileSize));
+		dsInfo.m_cameraNear = rqueue.m_cameraNear;
+		dsInfo.m_cameraFar = rqueue.m_cameraFar;
+		dsInfo.m_directionalLight = (rqueue.m_directionalLight.isEnabled()) ? &rqueue.m_directionalLight : nullptr;
 		dsInfo.m_pointLights = rqueue.m_pointLights;
 		dsInfo.m_spotLights = rqueue.m_spotLights;
 		dsInfo.m_commandBuffer = cmdb;
+		dsInfo.m_gbufferRenderTargets[0] = giCtx.m_gbufferColorRts[0];
+		dsInfo.m_gbufferRenderTargets[1] = giCtx.m_gbufferColorRts[1];
+		dsInfo.m_gbufferRenderTargets[2] = giCtx.m_gbufferColorRts[2];
+		dsInfo.m_gbufferDepthRenderTarget = giCtx.m_gbufferDepthRt;
+		if(dsInfo.m_directionalLight && dsInfo.m_directionalLight->hasShadow())
+		{
+			dsInfo.m_directionalLightShadowmapRenderTarget = giCtx.m_shadowsRt;
+		}
+		dsInfo.m_renderpassContext = &rgraphCtx;
+		dsInfo.m_skybox = &giCtx.m_ctx->m_renderQueue->m_skybox;
+
 		m_lightShading.m_deferred.drawLights(dsInfo);
 	}
 }

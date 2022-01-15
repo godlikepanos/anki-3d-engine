@@ -1,0 +1,41 @@
+// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki mutator METHOD 0 1 // 0: solid colod, 1: 2D image
+
+#pragma anki start vert
+#include <AnKi/Shaders/QuadVert.glsl>
+#pragma anki end
+
+#pragma anki start frag
+
+#include <AnKi/Shaders/Functions.glsl>
+#include <AnKi/Shaders/Include/TraditionalDeferredShadingTypes.h>
+
+layout(location = 0) in Vec2 in_uv;
+layout(location = 0) out ANKI_RP Vec3 out_color;
+
+layout(push_constant, scalar) uniform b_pc
+{
+	DeferredSkyboxUniforms u_unis;
+};
+
+layout(binding = 0) uniform sampler u_nearestAnyClampSampler;
+layout(binding = 1) uniform texture2D u_depthTex;
+
+void main()
+{
+	const Vec2 uvToRead = fma(Vec2(gl_FragCoord.xy), u_unis.m_inputTexUvScale, u_unis.m_inputTexUvBias);
+
+	const F32 depth = textureLod(u_depthTex, u_nearestAnyClampSampler, uvToRead, 0.0).r;
+	if(depth != 1.0)
+	{
+		discard;
+	}
+
+	out_color = u_unis.m_solidColor;
+}
+
+#pragma anki end
