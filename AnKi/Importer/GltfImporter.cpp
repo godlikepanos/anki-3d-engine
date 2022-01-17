@@ -490,6 +490,16 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			ANKI_CHECK(getNodeTransform(node, localTrf));
 			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 		}
+		else if((it = extras.find("skybox_image")) != extras.getEnd())
+		{
+			ANKI_CHECK(m_sceneFile.writeText("\nnode = scene:newSkyboxNode(\"%s\")\n", getNodeName(node).cstr()));
+			ANKI_CHECK(m_sceneFile.writeText("comp = node:getSceneNodeBase():getSkyboxComponent()\n"));
+			ANKI_CHECK(m_sceneFile.writeText("comp:setImage(\"%s\")\n", it->cstr()));
+
+			Transform localTrf;
+			ANKI_CHECK(getNodeTransform(node, localTrf));
+			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
+		}
 		else if((it = extras.find("collision")) != extras.getEnd() && *it == "true")
 		{
 			ANKI_CHECK(

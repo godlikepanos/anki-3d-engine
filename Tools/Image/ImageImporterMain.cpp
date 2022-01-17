@@ -18,6 +18,8 @@ Options:
 -mip-count <number>    : Max number of mipmaps. By default store until 4x4
 -astc-block-size <XxY> : The size of the ASTC block size. eg 4x4. Default is 8x8
 -verbose               : Verbose log
+-to-linear             : Convert sRGB to linear
+-to-srgb               : Convert linear to sRGB
 )";
 
 static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& config,
@@ -165,6 +167,14 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 		else if(CString(argv[i]) == "-verbose")
 		{
 			LoggerSingleton::get().enableVerbosity(true);
+		}
+		else if(CString(argv[i]) == "-to-linear")
+		{
+			config.m_sRgbToLinear = true;
+		}
+		else if(CString(argv[i]) == "-to-srgb")
+		{
+			config.m_linearToSRgb = true;
 		}
 		else
 		{

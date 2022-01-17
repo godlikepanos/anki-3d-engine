@@ -30,6 +30,8 @@ public:
 	CString m_compressonatorPath; ///< Optional.
 	CString m_astcencPath; ///< Optional.
 	UVec2 m_astcBlockSize = UVec2(8u);
+	Bool m_sRgbToLinear = false;
+	Bool m_linearToSRgb = false;
 };
 
 /// Converts images to AnKi's specific format.

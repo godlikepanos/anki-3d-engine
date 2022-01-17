@@ -3115,9 +3115,20 @@ public:
 #endif
 
 	/// Return lerp(this, v1, t)
+	TVec lerp(const TVec& v1, const TVec& t) const
+	{
+		TVec out;
+		for(U i = 0; i < N; ++i)
+		{
+			out[i] = m_arr[i] * (T(1) - t.m_arr[i]) + v1.m_arr[i] * t.m_arr[i];
+		}
+		return out;
+	}
+
+	/// Return lerp(this, v1, t)
 	TVec lerp(const TVec& v1, T t) const
 	{
-		return ((*this) * (1.0 - t)) + (v1 * t);
+		return ((*this) * (T(1) - t)) + (v1 * t);
 	}
 
 	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
@@ -3227,6 +3238,23 @@ public:
 			out[i] = T(1) / m_arr[i];
 		}
 		return out;
+	}
+
+	/// Power
+	TVec pow(const TVec& b) const
+	{
+		TVec out;
+		for(U i = 0; i < N; ++i)
+		{
+			out[i] = anki::pow(m_arr[i], b.m_arr[i]);
+		}
+		return out;
+	}
+
+	/// Power
+	TVec pow(T b) const
+	{
+		return pow(TVec(b));
 	}
 
 	/// Serialize the structure.

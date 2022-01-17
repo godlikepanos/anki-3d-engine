@@ -106,12 +106,15 @@ Error LightShading::initSkybox()
 {
 	ANKI_CHECK(getResourceManager().loadResource("Shaders/LightShadingSkybox.ankiprog", m_skybox.m_prog));
 
-	ShaderProgramResourceVariantInitInfo variantInitInfo(m_skybox.m_prog);
-	variantInitInfo.addMutation("METHOD", 0);
-	const ShaderProgramResourceVariant* variant;
-	m_skybox.m_prog->getOrCreateVariant(variantInitInfo, variant);
+	for(U32 method = 0; method < 2; ++method)
+	{
+		ShaderProgramResourceVariantInitInfo variantInitInfo(m_skybox.m_prog);
+		variantInitInfo.addMutation("METHOD", method);
+		const ShaderProgramResourceVariant* variant;
+		m_skybox.m_prog->getOrCreateVariant(variantInitInfo, variant);
 
-	m_skybox.m_grProg = variant->getProgram();
+		m_skybox.m_grProgs[method] = variant->getProgram();
+	}
 
 	return Error::NONE;
 }
@@ -228,10 +231,36 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 	{
 		cmdb->setDepthCompareOperation(CompareOperation::EQUAL);
 
-		cmdb->bindShaderProgram(m_skybox.m_grProg);
+		const Bool isSolidColor = ctx.m_renderQueue->m_skybox.m_skyboxTexture == nullptr;
 
-		const Vec4 color(ctx.m_renderQueue->m_skybox.m_solidColor, 0.0);
-		cmdb->setPushConstants(&color, sizeof(color));
+		if(isSolidColor)
+		{
+			cmdb->bindShaderProgram(m_skybox.m_grProgs[0]);
+
+			const Vec4 color(ctx.m_renderQueue->m_skybox.m_solidColor, 0.0);
+			cmdb->setPushConstants(&color, sizeof(color));
+		}
+		else
+		{
+			cmdb->bindShaderProgram(m_skybox.m_grProgs[1]);
+
+			class
+			{
+			public:
+				Mat4 m_invertedViewProjectionJitter;
+				Vec3 m_cameraPos;
+				F32 m_padding = 0.0;
+			} pc;
+
+			pc.m_invertedViewProjectionJitter = ctx.m_matrices.m_invertedViewProjectionJitter;
+			pc.m_cameraPos = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+
+			cmdb->setPushConstants(&pc, sizeof(pc));
+
+			cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearRepeat);
+			cmdb->bindTexture(0, 1,
+							  TextureViewPtr(const_cast<TextureView*>(ctx.m_renderQueue->m_skybox.m_skyboxTexture)));
+		}
 
 		drawQuad(cmdb);
 
@@ -246,7 +275,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 		// Bind all
 		cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
-		cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);
+		cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearRepeatAnisoResolutionScalingBias);
 
 		rgraphCtx.bindTexture(0, 2, m_r->getGBuffer().getDepthRt(),
 							  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));

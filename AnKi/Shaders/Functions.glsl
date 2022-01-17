@@ -620,3 +620,28 @@ UVec2 decodeVrsRate(U32 texel)
 	rateXY.y = 1u << (texel & 3u);
 	return rateXY;
 }
+
+/// 3D coordinates to equirectangular 2D coordinates.
+Vec2 equirectangularMapping(Vec3 v)
+{
+	Vec2 uv = Vec2(atan(v.z, v.x), asin(v.y));
+	uv *= vec2(0.1591, 0.3183);
+	uv += 0.5;
+	return uv;
+}
+
+Vec3 linearToSRgb(Vec3 linearRgb)
+{
+	const bvec3 cutoff = lessThan(linearRgb, Vec3(0.0031308));
+	const Vec3 higher = 1.055 * pow(linearRgb, Vec3(1.0 / 2.4)) - 0.055;
+	const Vec3 lower = linearRgb * 12.92;
+	return mix(higher, lower, cutoff);
+}
+
+Vec3 sRgbToLinear(Vec3 sRgb)
+{
+	const bvec3 cutoff = lessThan(sRgb, Vec3(0.04045));
+	const Vec3 higher = pow((sRgb + 0.055) / 1.055, Vec3(2.4));
+	const Vec3 lower = sRgb / 12.92;
+	return mix(higher, lower, cutoff);
+}

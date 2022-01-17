@@ -45,6 +45,10 @@ void main()
 
 	// Reference
 	const F32 depthCenter = textureLod(u_fullDepthTex, u_linearAnyClampSampler, in_uv, 0.0).x;
+	if(depthCenter == 1.0)
+	{
+		discard;
+	}
 
 	// Do a bilateral upscale
 	ANKI_RP Vec3 diffuse = Vec3(0.0);

@@ -204,6 +204,10 @@ static ANKI_USE_RESULT Error checkConfig(const ImageImporterConfig& config)
 	// Mip size
 	ANKI_CFG_ASSERT(config.m_minMipmapDimension >= 4, "Mimpap min dimension can be less than 4");
 
+	// Color conversions
+	ANKI_CFG_ASSERT(!(config.m_linearToSRgb && config.m_sRgbToLinear),
+					"Can't have a conversion to sRGB and to linear at the same time");
+
 #undef ANKI_CFG_ASSERT
 	return Error::NONE;
 }
@@ -264,6 +268,71 @@ static ANKI_USE_RESULT Error checkInputImages(const ImageImporterConfig& config,
 	return Error::NONE;
 }
 
+static Vec3 linearToSRgb(Vec3 p)
+{
+	Vec3 cutoff;
+	cutoff.x() = (p.x() < 0.0031308f) ? 1.0f : 0.0f;
+	cutoff.y() = (p.y() < 0.0031308f) ? 1.0f : 0.0f;
+	cutoff.z() = (p.z() < 0.0031308f) ? 1.0f : 0.0f;
+
+	const Vec3 higher = 1.055f * p.pow(1.0f / 2.4f) - 0.055f;
+	const Vec3 lower = p * 12.92f;
+	p = higher.lerp(lower, cutoff);
+
+	return p;
+}
+
+static Vec3 sRgbToLinear(Vec3 p)
+{
+	Vec3 cutoff;
+	cutoff.x() = (p.x() < 0.04045f) ? 1.0f : 0.0f;
+	cutoff.y() = (p.y() < 0.04045f) ? 1.0f : 0.0f;
+	cutoff.z() = (p.z() < 0.04045f) ? 1.0f : 0.0f;
+
+	const Vec3 higher = ((p + 0.055f) / 1.055f).pow(2.4f);
+	const Vec3 lower = p / 12.92f;
+	return higher.lerp(lower, cutoff);
+}
+
+template<typename TVec, typename TFunc>
+static void linearToSRgbBatch(WeakArray<TVec> pixels, TFunc func)
+{
+	using S = typename TVec::Scalar;
+
+	for(TVec& pixel : pixels)
+	{
+		Vec3 p;
+		if(std::is_same<S, U8>::value)
+		{
+			p.x() = F32(pixel.x()) / 255.0f;
+			p.y() = F32(pixel.y()) / 255.0f;
+			p.z() = F32(pixel.z()) / 255.0f;
+		}
+		else
+		{
+			ANKI_ASSERT((std::is_same<S, F32>::value));
+			p.x() = F32(pixel.x());
+			p.y() = F32(pixel.y());
+			p.z() = F32(pixel.z());
+		}
+
+		p = func(p);
+
+		if(std::is_same<S, U8>::value)
+		{
+			pixel.x() = S(p.x() / 255.0f);
+			pixel.y() = S(p.y() / 255.0f);
+			pixel.z() = S(p.z() / 255.0f);
+		}
+		else
+		{
+			pixel.x() = p.x();
+			pixel.y() = p.y();
+			pixel.z() = p.z();
+		}
+	}
+}
+
 static ANKI_USE_RESULT Error loadFirstMipmap(const ImageImporterConfig& config, ImageImporterContext& ctx)
 {
 	GenericMemoryPoolAllocator<U8> alloc = ctx.getAllocator();
@@ -313,6 +382,72 @@ static ANKI_USE_RESULT Error loadFirstMipmap(const ImageImporterConfig& config, 
 		}
 
 		const PtrSize dataSize = PtrSize(ctx.m_width) * ctx.m_height * ctx.m_pixelSize;
+
+		// To conversions in place
+		if(config.m_linearToSRgb)
+		{
+			ANKI_IMPORTER_LOGV("Will convert linear to sRGB");
+
+			if(ctx.m_channelCount == 3)
+			{
+				if(!ctx.m_hdr)
+				{
+					linearToSRgbBatch(WeakArray<U8Vec3>(static_cast<U8Vec3*>(data), ctx.m_width * ctx.m_height),
+									  linearToSRgb);
+				}
+				else
+				{
+					linearToSRgbBatch(WeakArray<Vec3>(static_cast<Vec3*>(data), ctx.m_width * ctx.m_height),
+									  linearToSRgb);
+				}
+			}
+			else
+			{
+				ANKI_ASSERT(ctx.m_channelCount == 4);
+				if(!ctx.m_hdr)
+				{
+					linearToSRgbBatch(WeakArray<U8Vec4>(static_cast<U8Vec4*>(data), ctx.m_width * ctx.m_height),
+									  linearToSRgb);
+				}
+				else
+				{
+					linearToSRgbBatch(WeakArray<Vec4>(static_cast<Vec4*>(data), ctx.m_width * ctx.m_height),
+									  linearToSRgb);
+				}
+			}
+		}
+		else if(config.m_sRgbToLinear)
+		{
+			ANKI_IMPORTER_LOGV("Will convert sRGB to linear");
+
+			if(ctx.m_channelCount == 3)
+			{
+				if(!ctx.m_hdr)
+				{
+					linearToSRgbBatch(WeakArray<U8Vec3>(static_cast<U8Vec3*>(data), ctx.m_width * ctx.m_height),
+									  sRgbToLinear);
+				}
+				else
+				{
+					linearToSRgbBatch(WeakArray<Vec3>(static_cast<Vec3*>(data), ctx.m_width * ctx.m_height),
+									  sRgbToLinear);
+				}
+			}
+			else
+			{
+				ANKI_ASSERT(ctx.m_channelCount == 4);
+				if(!ctx.m_hdr)
+				{
+					linearToSRgbBatch(WeakArray<U8Vec4>(static_cast<U8Vec4*>(data), ctx.m_width * ctx.m_height),
+									  sRgbToLinear);
+				}
+				else
+				{
+					linearToSRgbBatch(WeakArray<Vec4>(static_cast<Vec4*>(data), ctx.m_width * ctx.m_height),
+									  sRgbToLinear);
+				}
+			}
+		}
 
 		if(ctx.m_depth > 1)
 		{
@@ -492,7 +627,7 @@ static ANKI_USE_RESULT Error compressS3tc(GenericMemoryPoolAllocator<U8> alloc, 
 
 static ANKI_USE_RESULT Error compressAstc(GenericMemoryPoolAllocator<U8> alloc, CString tempDirectory,
 										  CString astcencPath, ConstWeakArray<U8, PtrSize> inPixels, U32 inWidth,
-										  U32 inHeight, U32 inChannelCount, UVec2 blockSize,
+										  U32 inHeight, U32 inChannelCount, UVec2 blockSize, Bool hdr,
 										  WeakArray<U8, PtrSize> outPixels)
 {
 	const PtrSize blockBytes = 16;
@@ -502,15 +637,28 @@ static ANKI_USE_RESULT Error compressAstc(GenericMemoryPoolAllocator<U8> alloc, 
 	ANKI_ASSERT(outPixels.getSizeInBytes() == blockBytes * (inWidth / blockSize.x()) * (inHeight / blockSize.y()));
 
 	// Create a BMP image to feed to the astcebc
-	StringAuto pngFilename(alloc);
-	pngFilename.sprintf("%s/AnKiImageImporter_%u.png", tempDirectory.cstr(), U32(std::rand()));
-	ANKI_IMPORTER_LOGV("Will store: %s", pngFilename.cstr());
-	if(!stbi_write_png(pngFilename.cstr(), inWidth, inHeight, inChannelCount, inPixels.getBegin(), 0))
+	StringAuto tmpFilename(alloc);
+	tmpFilename.sprintf("%s/AnKiImageImporter_%u.%s", tempDirectory.cstr(), U32(std::rand()), (hdr) ? "exr" : "png");
+	ANKI_IMPORTER_LOGV("Will store: %s", tmpFilename.cstr());
+	Bool saveTmpImageOk = false;
+	if(!hdr)
 	{
-		ANKI_IMPORTER_LOGE("STB failed to create: %s", pngFilename.cstr());
+		const I ok = stbi_write_png(tmpFilename.cstr(), inWidth, inHeight, inChannelCount, inPixels.getBegin(), 0);
+		saveTmpImageOk = !!ok;
+	}
+	else
+	{
+		const I ret = SaveEXR(reinterpret_cast<const F32*>(inPixels.getBegin()), inWidth, inHeight, inChannelCount, 0,
+							  tmpFilename.cstr(), nullptr);
+		saveTmpImageOk = ret >= 0;
+	}
+
+	if(!saveTmpImageOk)
+	{
+		ANKI_IMPORTER_LOGE("Failed to create: %s", tmpFilename.cstr());
 		return Error::FUNCTION_FAILED;
 	}
-	CleanupFile pngCleanup(alloc, pngFilename);
+	CleanupFile pngCleanup(alloc, tmpFilename);
 
 	// Invoke the compressor process
 	StringAuto astcFilename(alloc);
@@ -520,8 +668,8 @@ static ANKI_USE_RESULT Error compressAstc(GenericMemoryPoolAllocator<U8> alloc, 
 	Process proc;
 	Array<CString, 5> args;
 	U32 argCount = 0;
-	args[argCount++] = "-cl";
-	args[argCount++] = pngFilename;
+	args[argCount++] = (!hdr) ? "-cl" : "-ch";
+	args[argCount++] = tmpFilename;
 	args[argCount++] = astcFilename;
 	args[argCount++] = blockStr;
 	args[argCount++] = "-fast";
@@ -839,7 +987,6 @@ static ANKI_USE_RESULT Error importImageInternal(const ImageImporterConfig& conf
 
 	if(!!(config.m_compressions & ImageBinaryDataCompression::ASTC))
 	{
-		ANKI_ASSERT(!ctx.m_hdr && "TODO");
 		ANKI_IMPORTER_LOGV("Will compress in ASTC");
 
 		for(U32 mip = 0; mip < mipCount; ++mip)
@@ -861,7 +1008,7 @@ static ANKI_USE_RESULT Error importImageInternal(const ImageImporterConfig& conf
 
 					ANKI_CHECK(compressAstc(alloc, config.m_tempDirectory, config.m_astcencPath,
 											ConstWeakArray<U8, PtrSize>(surface.m_pixels), width, height,
-											ctx.m_channelCount, config.m_astcBlockSize,
+											ctx.m_channelCount, config.m_astcBlockSize, ctx.m_hdr,
 											WeakArray<U8, PtrSize>(surface.m_astcPixels)));
 				}
 			}
