@@ -69,7 +69,7 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 	m_rgraph = inf.m_gr->newRenderGraph();
 
 	ANKI_R_LOGI("Main renderer initialized. Swapchain resolution %ux%u", m_swapchainResolution.x(),
-				m_swapchainResolution.x());
+				m_swapchainResolution.y());
 
 	return Error::NONE;
 }

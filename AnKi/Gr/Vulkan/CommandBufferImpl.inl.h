@@ -711,6 +711,18 @@ inline void CommandBufferImpl::drawcallCommon()
 		m_scissorDirty = false;
 	}
 
+	// VRS
+	if(getGrManagerImpl().getDeviceCapabilities().m_vrs && m_vrsRateDirty)
+	{
+		const VkExtent2D extend = convertVrsShadingRate(m_vrsRate);
+		Array<VkFragmentShadingRateCombinerOpKHR, 2> combiner;
+		combiner[0] = VK_FRAGMENT_SHADING_RATE_COMBINER_OP_KEEP_KHR; // Keep pipeline rating over primitive
+		combiner[1] = VK_FRAGMENT_SHADING_RATE_COMBINER_OP_MAX_KHR; // Max of attachment and pipeline rates
+		vkCmdSetFragmentShadingRateKHR(m_handle, &extend, &combiner[0]);
+
+		m_vrsRateDirty = false;
+	}
+
 	// Some checks
 #if ANKI_ENABLE_ASSERTIONS
 	if(m_state.getPrimitiveTopology() == PrimitiveTopology::LINES
@@ -959,13 +971,8 @@ inline void CommandBufferImpl::setVrsRateInternal(VrsRate rate)
 
 	if(m_vrsRate != rate)
 	{
-		const VkExtent2D extend = convertVrsShadingRate(rate);
-		Array<VkFragmentShadingRateCombinerOpKHR, 2> combiner;
-		combiner[0] = VK_FRAGMENT_SHADING_RATE_COMBINER_OP_KEEP_KHR; // Keep pipeline rating over primitive
-		combiner[1] = VK_FRAGMENT_SHADING_RATE_COMBINER_OP_MAX_KHR; // Max of attachment and pipeline rates
-		vkCmdSetFragmentShadingRateKHR(m_handle, &extend, &combiner[0]);
-
 		m_vrsRate = rate;
+		m_vrsRateDirty = true;
 	}
 }
 

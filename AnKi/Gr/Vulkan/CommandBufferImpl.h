@@ -433,7 +433,8 @@ private:
 #if ANKI_ENABLE_ASSERTIONS
 	Bool m_lineWidthSet = false;
 #endif
-	VrsRate m_vrsRate = VrsRate::COUNT;
+	Bool m_vrsRateDirty = true;
+	VrsRate m_vrsRate = VrsRate::_1x1;
 
 	/// Rebind the above dynamic state. Needed after pushing secondary command buffers (they dirty the state).
 	void rebindDynamicState();

@@ -778,6 +778,8 @@ void CommandBufferImpl::rebindDynamicState()
 	m_lastViewport = {};
 	m_scissorDirty = true;
 	m_lastScissor = {};
+	m_vrsRateDirty = true;
+	m_vrsRate = VrsRate::_1x1;
 
 	// Rebind the stencil compare mask
 	if(m_stencilCompareMasks[0] == m_stencilCompareMasks[1])
@@ -822,16 +824,6 @@ void CommandBufferImpl::rebindDynamicState()
 				 ANY_OTHER_COMMAND);
 		ANKI_CMD(vkCmdSetStencilReference(m_handle, VK_STENCIL_FACE_BACK_BIT, m_stencilReferenceMasks[1]),
 				 ANY_OTHER_COMMAND);
-	}
-
-	// Rebind VRS
-	if(m_vrsRate != VrsRate::COUNT)
-	{
-		const VkExtent2D extend = convertVrsShadingRate(m_vrsRate);
-		Array<VkFragmentShadingRateCombinerOpKHR, 2> combiner;
-		combiner[0] = VK_FRAGMENT_SHADING_RATE_COMBINER_OP_KEEP_KHR; // Keep pipeline rating over primitive
-		combiner[1] = VK_FRAGMENT_SHADING_RATE_COMBINER_OP_MAX_KHR; // Max of attachment and pipeline rates
-		vkCmdSetFragmentShadingRateKHR(m_handle, &extend, &combiner[0]);
 	}
 }
 
