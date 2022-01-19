@@ -17,13 +17,18 @@
 layout(location = 0) in Vec2 in_uv;
 layout(location = 0) out ANKI_RP Vec3 out_color;
 
-layout(push_constant, scalar) uniform b_pc
+layout(push_constant, scalar, row_major) uniform b_pc
 {
 	DeferredSkyboxUniforms u_unis;
 };
 
 layout(binding = 0) uniform sampler u_nearestAnyClampSampler;
 layout(binding = 1) uniform texture2D u_depthTex;
+
+#if METHOD == 1
+layout(binding = 2) uniform sampler u_trilinearAnySampler;
+layout(binding = 3) uniform ANKI_RP texture2D u_envMapTex;
+#endif
 
 void main()
 {
@@ -35,7 +40,19 @@ void main()
 		discard;
 	}
 
+#if METHOD == 0
 	out_color = u_unis.m_solidColor;
+#else
+	const F32 depthFar = 1.0;
+	const Vec2 ndc = UV_TO_NDC(in_uv);
+	const Vec4 worldPos4 = u_unis.m_invertedViewProjectionMat * Vec4(ndc, depthFar, 1.0);
+	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
+
+	const Vec3 eyeToFrag = normalize(worldPos - u_unis.m_cameraPos);
+
+	const Vec2 uv = equirectangularMapping(eyeToFrag);
+	out_color = texture(u_envMapTex, u_trilinearAnySampler, uv).rgb;
+#endif
 }
 
 #pragma anki end

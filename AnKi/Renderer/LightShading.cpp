@@ -257,7 +257,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 			cmdb->setPushConstants(&pc, sizeof(pc));
 
-			cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearRepeat);
+			cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearRepeatAnisoResolutionScalingBias);
 			cmdb->bindTexture(0, 1,
 							  TextureViewPtr(const_cast<TextureView*>(ctx.m_renderQueue->m_skybox.m_skyboxTexture)));
 		}
@@ -275,7 +275,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 		// Bind all
 		cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
-		cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearRepeatAnisoResolutionScalingBias);
+		cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);
 
 		rgraphCtx.bindTexture(0, 2, m_r->getGBuffer().getDepthRt(),
 							  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));

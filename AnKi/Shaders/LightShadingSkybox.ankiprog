@@ -38,7 +38,7 @@ layout(binding = 1) uniform ANKI_RP texture2D u_envMapTex;
 
 layout(push_constant, scalar, row_major) uniform b_pc
 {
-	Mat4 u_invertedViewProjectionJitter;
+	Mat4 u_invertedViewProjectionJitterMat;
 	Vec3 u_cameraPos;
 	F32 u_padding;
 };
@@ -51,7 +51,7 @@ void main()
 #else
 	const F32 depth = 1.0;
 	const Vec2 ndc = UV_TO_NDC(in_uv);
-	const Vec4 worldPos4 = u_invertedViewProjectionJitter * Vec4(ndc, depth, 1.0);
+	const Vec4 worldPos4 = u_invertedViewProjectionJitterMat * Vec4(ndc, depth, 1.0);
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
 	const Vec3 eyeToFrag = normalize(worldPos - u_cameraPos);

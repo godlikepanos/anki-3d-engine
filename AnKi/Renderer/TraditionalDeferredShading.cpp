@@ -114,16 +114,26 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 
 	// Skybox first
 	{
-		cmdb->bindShaderProgram(m_skyboxGrProgs[0]);
+		const Bool isSolidColor = info.m_skybox->m_skyboxTexture == nullptr;
+
+		cmdb->bindShaderProgram(m_skyboxGrProgs[!isSolidColor]);
 
 		cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
 		rgraphCtx.bindTexture(0, 1, info.m_gbufferDepthRenderTarget,
 							  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
 
+		if(!isSolidColor)
+		{
+			cmdb->bindSampler(0, 2, m_r->getSamplers().m_trilinearRepeatAniso);
+			cmdb->bindTexture(0, 3, TextureViewPtr(const_cast<TextureView*>(info.m_skybox->m_skyboxTexture)));
+		}
+
 		DeferredSkyboxUniforms unis;
 		unis.m_solidColor = info.m_skybox->m_solidColor;
 		unis.m_inputTexUvBias = info.m_gbufferTexCoordsBias;
 		unis.m_inputTexUvScale = info.m_gbufferTexCoordsScale;
+		unis.m_invertedViewProjectionMat = info.m_invViewProjectionMatrix;
+		unis.m_cameraPos = info.m_cameraPosWSpace.xyz();
 		cmdb->setPushConstants(&unis, sizeof(unis));
 
 		drawQuad(cmdb);
