@@ -632,7 +632,8 @@ static ANKI_USE_RESULT Error compressAstc(GenericMemoryPoolAllocator<U8> alloc, 
 {
 	const PtrSize blockBytes = 16;
 	(void)blockBytes;
-	ANKI_ASSERT(inPixels.getSizeInBytes() == PtrSize(inWidth) * inHeight * inChannelCount);
+	ANKI_ASSERT(inPixels.getSizeInBytes()
+				== PtrSize(inWidth) * inHeight * inChannelCount * ((hdr) ? sizeof(F32) : sizeof(U8)));
 	ANKI_ASSERT(inWidth > 0 && isPowerOfTwo(inWidth) && inHeight > 0 && isPowerOfTwo(inHeight));
 	ANKI_ASSERT(outPixels.getSizeInBytes() == blockBytes * (inWidth / blockSize.x()) * (inHeight / blockSize.y()));
 
