@@ -54,6 +54,7 @@ private:
 	F32 m_depth = 0.0f;
 	Bool m_pointSampling = true;
 	Array<Bool, 4> m_colorChannel = {true, true, true, true};
+	F32 m_maxColorValue = 1.0f;
 
 	void draw(CanvasPtr& canvas)
 	{
@@ -87,7 +88,7 @@ private:
 			m_zoom -= 0.1f;
 		}
 		ImGui::SameLine();
-		ImGui::DragFloat("", &m_zoom, 0.01f, 0.1f, 20.0f, "Zoom %.3f");
+		ImGui::DragFloat("##Zoom", &m_zoom, 0.01f, 0.1f, 20.0f, "Zoom %.3f");
 		ImGui::SameLine();
 		if(ImGui::Button("+"))
 		{
@@ -188,6 +189,11 @@ private:
 			ImGui::SameLine();
 		}
 
+		// Max color slider
+		ImGui::SliderFloat("##Max color", &m_maxColorValue, 0.0f, 5.0f, "Max color = %.3f");
+		ImGui::SameLine();
+
+		// Next
 		ImGui::EndChild();
 		ImGui::BeginChild("Image", Vec2(-1.0f, -1.0f), false,
 						  ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar);
@@ -203,9 +209,9 @@ private:
 				Vec4 m_colorScale;
 				Vec4 m_depth;
 			} pc;
-			pc.m_colorScale.x() = F32(m_colorChannel[0]);
-			pc.m_colorScale.y() = F32(m_colorChannel[1]);
-			pc.m_colorScale.z() = F32(m_colorChannel[2]);
+			pc.m_colorScale.x() = F32(m_colorChannel[0]) / m_maxColorValue;
+			pc.m_colorScale.y() = F32(m_colorChannel[1]) / m_maxColorValue;
+			pc.m_colorScale.z() = F32(m_colorChannel[2]) / m_maxColorValue;
 			pc.m_colorScale.w() = F32(m_colorChannel[3]);
 
 			pc.m_depth = Vec4((m_depth + 0.5f) / F32(grTex.getDepth()));
