@@ -173,6 +173,10 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 		case ImageBinaryDataCompression::S3TC:
 			init.m_format = Format::BC6H_UFLOAT_BLOCK;
 			break;
+		case ImageBinaryDataCompression::ASTC:
+			ANKI_ASSERT(loader.getAstcBlockSize() == UVec2(8u));
+			init.m_format = Format::ASTC_8x8_SFLOAT_BLOCK_EXT;
+			break;
 		default:
 			ANKI_ASSERT(0);
 		}
@@ -183,6 +187,10 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 		{
 		case ImageBinaryDataCompression::RAW:
 			init.m_format = Format::R32G32B32A32_SFLOAT;
+			break;
+		case ImageBinaryDataCompression::ASTC:
+			ANKI_ASSERT(loader.getAstcBlockSize() == UVec2(8u));
+			init.m_format = Format::ASTC_8x8_SFLOAT_BLOCK_EXT;
 			break;
 		default:
 			ANKI_ASSERT(0);

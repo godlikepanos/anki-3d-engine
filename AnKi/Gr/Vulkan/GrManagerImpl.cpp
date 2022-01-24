@@ -747,6 +747,11 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 				m_extensions |= VulkanExtensions::EXT_ASTC_DECODE_MODE;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
+			else if(extensionName == VK_EXT_TEXTURE_COMPRESSION_ASTC_HDR_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::EXT_TEXTURE_COMPRESSION_ASTC_HDR;
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
+			}
 		}
 
 		ANKI_VK_LOGI("Will enable the following device extensions:");
@@ -771,6 +776,14 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 
 		ci.pEnabledFeatures = &m_devFeatures;
 	}
+
+#if ANKI_PLATFORM_MOBILE
+	if(!(m_extensions & VulkanExtensions::EXT_TEXTURE_COMPRESSION_ASTC_HDR))
+	{
+		ANKI_VK_LOGE(VK_EXT_TEXTURE_COMPRESSION_ASTC_HDR_EXTENSION_NAME " is not supported");
+		return Error::FUNCTION_FAILED;
+	}
+#endif
 
 	if(!(m_extensions & VulkanExtensions::KHR_CREATE_RENDERPASS_2))
 	{
