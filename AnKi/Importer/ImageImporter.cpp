@@ -451,7 +451,7 @@ static ANKI_USE_RESULT Error loadFirstMipmap(const ImageImporterConfig& config, 
 
 		if(ctx.m_depth > 1)
 		{
-			memcpy(mip0.m_surfacesOrVolume.getBegin() + i * dataSize, data, dataSize);
+			memcpy(mip0.m_surfacesOrVolume[0].m_pixels.getBegin() + i * dataSize, data, dataSize);
 		}
 		else
 		{
@@ -864,7 +864,18 @@ static ANKI_USE_RESULT Error importImageInternal(const ImageImporterConfig& conf
 			ANKI_IMPORTER_LOGW("Input images have alpha but that can't be supported with BC6H");
 		}
 
+		if(!!(config.m_compressions & ImageBinaryDataCompression::RAW))
+		{
+			ANKI_IMPORTER_LOGE("Can't support both BC6H (which is 3 component) and RAW which requires 4 compoments");
+			return Error::USER_DATA;
+		}
+
 		desiredChannelCount = 3;
+	}
+	else if(!!(config.m_compressions & ImageBinaryDataCompression::RAW))
+	{
+		// Always ask for 4 components because desktop GPUs don't always like 3
+		desiredChannelCount = 4;
 	}
 	else if(config.m_noAlpha || channelCount == 1)
 	{

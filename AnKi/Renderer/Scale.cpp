@@ -92,7 +92,10 @@ Error Scale::init()
 
 	// Descriptors
 	m_rtDesc = m_r->create2DRenderTargetDescription(
-		m_r->getPostProcessResolution().x(), m_r->getPostProcessResolution().y(), Format::R8G8B8A8_UNORM, "Scaled");
+		m_r->getPostProcessResolution().x(), m_r->getPostProcessResolution().y(),
+		(getGrManager().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::R8G8B8_UNORM
+																			  : Format::R8G8B8A8_UNORM,
+		"Scaled");
 	m_rtDesc.bake();
 
 	m_fbDescr.m_colorAttachmentCount = 1;

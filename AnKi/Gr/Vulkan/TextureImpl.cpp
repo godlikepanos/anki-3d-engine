@@ -248,52 +248,14 @@ Bool TextureImpl::imageSupported(const TextureInitInfo& init)
 	}
 }
 
-Error TextureImpl::initImage(const TextureInitInfo& init_)
+Error TextureImpl::initImage(const TextureInitInfo& init)
 {
-	TextureInitInfo init = init_;
-
 	// Check if format is supported
-	Bool supported;
-	while(!(supported = imageSupported(init)))
+	if(!imageSupported(init))
 	{
-		// Try to find a fallback
-		if(init.m_format >= Format::R8G8B8_UNORM && init.m_format <= Format::R8G8B8_SRGB)
-		{
-			ANKI_ASSERT(!(init.m_usage & TextureUsageBit::ALL_IMAGE) && "Can't do that ATM");
-			const U idx = U(init.m_format) - U(Format::R8G8B8_UNORM);
-			init.m_format = Format(U(Format::R8G8B8A8_UNORM) + idx);
-			ANKI_ASSERT(init.m_format >= Format::R8G8B8A8_UNORM && init.m_format <= Format::R8G8B8A8_SRGB);
-			m_format = init.m_format;
-			m_vkFormat = convertFormat(m_format);
-			m_workarounds = TextureImplWorkaround::R8G8B8_TO_R8G8B8A8;
-		}
-		else if(init.m_format == Format::S8_UINT)
-		{
-			ANKI_ASSERT(!(init.m_usage & (TextureUsageBit::ALL_IMAGE | TextureUsageBit::ALL_TRANSFER))
-						&& "Can't do that ATM");
-			init.m_format = Format::D24_UNORM_S8_UINT;
-			m_format = init.m_format;
-			m_vkFormat = convertFormat(m_format);
-			m_workarounds = TextureImplWorkaround::S8_TO_D24S8;
-		}
-		else if(init.m_format == Format::D24_UNORM_S8_UINT)
-		{
-			ANKI_ASSERT(!(init.m_usage & (TextureUsageBit::ALL_IMAGE | TextureUsageBit::ALL_TRANSFER))
-						&& "Can't do that ATM");
-			init.m_format = Format::D32_SFLOAT_S8_UINT;
-			m_format = init.m_format;
-			m_vkFormat = convertFormat(m_format);
-			m_workarounds = TextureImplWorkaround::D24S8_TO_D32S8;
-		}
-		else
-		{
-			break;
-		}
-	}
-
-	if(!supported)
-	{
-		ANKI_VK_LOGE("Unsupported texture format: %u", U32(init.m_format));
+		ANKI_VK_LOGE("TextureInitInfo contains a combination of parameters that it's not supported by the device. "
+					 "Texture format is %s",
+					 getFormatInfo(init.m_format).m_name);
 		return Error::FUNCTION_FAILED;
 	}
 

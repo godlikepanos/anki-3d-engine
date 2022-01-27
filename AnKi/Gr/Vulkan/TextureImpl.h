@@ -20,15 +20,6 @@ class TextureUsageState;
 /// @addtogroup vulkan
 /// @{
 
-enum class TextureImplWorkaround : U8
-{
-	NONE,
-	R8G8B8_TO_R8G8B8A8 = 1 << 0,
-	S8_TO_D24S8 = 1 << 1,
-	D24S8_TO_D32S8 = 1 << 2,
-};
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(TextureImplWorkaround)
-
 /// A Vulkan image view with some extra data.
 class MicroImageView
 {
@@ -101,8 +92,6 @@ public:
 	GpuMemoryHandle m_memHandle;
 
 	VkFormat m_vkFormat = VK_FORMAT_UNDEFINED;
-
-	TextureImplWorkaround m_workarounds = TextureImplWorkaround::NONE;
 
 	VkImageViewCreateInfo m_viewCreateInfoTemplate;
 	VkImageViewASTCDecodeModeEXT m_astcDecodeMode;

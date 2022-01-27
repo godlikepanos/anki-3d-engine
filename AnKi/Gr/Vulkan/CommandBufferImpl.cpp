@@ -659,114 +659,32 @@ void CommandBufferImpl::copyBufferToTextureViewInternal(BufferPtr buff, PtrSize 
 	ANKI_ASSERT(width && height);
 	const U32 depth = (is3D) ? (tex.getDepth() >> surf.m_level) : 1u;
 
-	if(!tex.m_workarounds)
+	if(!is3D)
 	{
-		if(!is3D)
-		{
-			ANKI_ASSERT(range == computeSurfaceSize(width, height, tex.getFormat()));
-		}
-		else
-		{
-			ANKI_ASSERT(range == computeVolumeSize(width, height, depth, tex.getFormat()));
-		}
-
-		// Copy
-		VkBufferImageCopy region;
-		region.imageSubresource.aspectMask = aspect;
-		region.imageSubresource.baseArrayLayer = (is3D) ? tex.computeVkArrayLayer(vol) : tex.computeVkArrayLayer(surf);
-		region.imageSubresource.layerCount = 1;
-		region.imageSubresource.mipLevel = surf.m_level;
-		region.imageOffset = {0, 0, 0};
-		region.imageExtent.width = width;
-		region.imageExtent.height = height;
-		region.imageExtent.depth = depth;
-		region.bufferOffset = offset;
-		region.bufferImageHeight = 0;
-		region.bufferRowLength = 0;
-
-		ANKI_CMD(vkCmdCopyBufferToImage(m_handle, static_cast<const BufferImpl&>(*buff).getHandle(), tex.m_imageHandle,
-										layout, 1, &region),
-				 ANY_OTHER_COMMAND);
-	}
-	else if(!!(tex.m_workarounds & TextureImplWorkaround::R8G8B8_TO_R8G8B8A8))
-	{
-		// Create a new shadow buffer
-		const PtrSize shadowSize = (is3D) ? computeVolumeSize(width, height, depth, Format::R8G8B8A8_UNORM)
-										  : computeSurfaceSize(width, height, Format::R8G8B8A8_UNORM);
-		BufferPtr shadow = getManager().newBuffer(
-			BufferInitInfo(shadowSize, BufferUsageBit::ALL_TRANSFER, BufferMapAccessBit::NONE, "Workaround"));
-		const VkBuffer shadowHandle = static_cast<const BufferImpl&>(*shadow).getHandle();
-		m_microCmdb->pushObjectRef(shadow);
-
-		// Copy to shadow buffer in batches. If the number of pixels is high and we do a single vkCmdCopyBuffer we will
-		// need many regions. That allocation will be huge so do the copies in batches.
-		const U32 regionCount = width * height * depth;
-		const U32 REGIONS_PER_CMD_COPY_BUFFER = 32;
-		const U32 cmdCopyBufferCount = (regionCount + REGIONS_PER_CMD_COPY_BUFFER - 1) / REGIONS_PER_CMD_COPY_BUFFER;
-		for(U32 cmdCopyBuffer = 0; cmdCopyBuffer < cmdCopyBufferCount; ++cmdCopyBuffer)
-		{
-			const U32 beginRegion = cmdCopyBuffer * REGIONS_PER_CMD_COPY_BUFFER;
-			const U32 endRegion = min(regionCount, (cmdCopyBuffer + 1) * REGIONS_PER_CMD_COPY_BUFFER);
-			ANKI_ASSERT(beginRegion < regionCount);
-			ANKI_ASSERT(endRegion <= regionCount);
-
-			const U32 crntRegionCount = endRegion - beginRegion;
-			DynamicArrayAuto<VkBufferCopy> regions(m_alloc);
-			regions.create(crntRegionCount);
-
-			// Populate regions
-			U32 count = 0;
-			for(U32 regionIdx = beginRegion; regionIdx < endRegion; ++regionIdx)
-			{
-				U32 x, y, d;
-				unflatten3dArrayIndex(width, height, depth, regionIdx, x, y, d);
-
-				VkBufferCopy& c = regions[count++];
-
-				if(is3D)
-				{
-					c.srcOffset = (d * height * width + y * width + x) * 3 + offset;
-					c.dstOffset = (d * height * width + y * width + x) * 4 + 0;
-				}
-				else
-				{
-					c.srcOffset = (y * width + x) * 3 + offset;
-					c.dstOffset = (y * width + x) * 4 + 0;
-				}
-				c.size = 3;
-			}
-
-			// Do the copy to the shadow buffer
-			ANKI_CMD(vkCmdCopyBuffer(m_handle, static_cast<const BufferImpl&>(*buff).getHandle(), shadowHandle,
-									 regions.getSize(), &regions[0]),
-					 ANY_OTHER_COMMAND);
-		}
-
-		// Set barrier
-		setBufferBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
-						 VK_ACCESS_TRANSFER_READ_BIT, 0, shadowSize, shadowHandle);
-
-		// Do the copy to the image
-		VkBufferImageCopy region;
-		region.imageSubresource.aspectMask = aspect;
-		region.imageSubresource.baseArrayLayer = (is3D) ? tex.computeVkArrayLayer(vol) : tex.computeVkArrayLayer(surf);
-		region.imageSubresource.layerCount = 1;
-		region.imageSubresource.mipLevel = surf.m_level;
-		region.imageOffset = {0, 0, 0};
-		region.imageExtent.width = width;
-		region.imageExtent.height = height;
-		region.imageExtent.depth = depth;
-		region.bufferOffset = 0;
-		region.bufferImageHeight = 0;
-		region.bufferRowLength = 0;
-
-		ANKI_CMD(vkCmdCopyBufferToImage(m_handle, shadowHandle, tex.m_imageHandle, layout, 1, &region),
-				 ANY_OTHER_COMMAND);
+		ANKI_ASSERT(range == computeSurfaceSize(width, height, tex.getFormat()));
 	}
 	else
 	{
-		ANKI_ASSERT(0);
+		ANKI_ASSERT(range == computeVolumeSize(width, height, depth, tex.getFormat()));
 	}
+
+	// Copy
+	VkBufferImageCopy region;
+	region.imageSubresource.aspectMask = aspect;
+	region.imageSubresource.baseArrayLayer = (is3D) ? tex.computeVkArrayLayer(vol) : tex.computeVkArrayLayer(surf);
+	region.imageSubresource.layerCount = 1;
+	region.imageSubresource.mipLevel = surf.m_level;
+	region.imageOffset = {0, 0, 0};
+	region.imageExtent.width = width;
+	region.imageExtent.height = height;
+	region.imageExtent.depth = depth;
+	region.bufferOffset = offset;
+	region.bufferImageHeight = 0;
+	region.bufferRowLength = 0;
+
+	ANKI_CMD(vkCmdCopyBufferToImage(m_handle, static_cast<const BufferImpl&>(*buff).getHandle(), tex.m_imageHandle,
+									layout, 1, &region),
+			 ANY_OTHER_COMMAND);
 
 	m_microCmdb->pushObjectRef(texView);
 	m_microCmdb->pushObjectRef(buff);

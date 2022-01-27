@@ -5881,7 +5881,10 @@ static void *stbi__tga_load(stbi__context *s, int *x, int *y, int *comp, int req
 
    // convert to target component count
    if (req_comp && req_comp != tga_comp)
+   {
       tga_data = stbi__convert_format(tga_data, tga_comp, req_comp, tga_width, tga_height);
+      if (comp) *comp = req_comp;
+   }
 
    //   the things I do to get rid of an error message, and yet keep
    //   Microsoft's C compilers happy... [8^(

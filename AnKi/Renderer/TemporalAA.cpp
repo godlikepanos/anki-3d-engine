@@ -74,9 +74,11 @@ Error TemporalAA::initInternal()
 		m_rtTextures[i] = m_r->createAndClearRenderTarget(texinit);
 	}
 
-	m_tonemappedRtDescr =
-		m_r->create2DRenderTargetDescription(m_r->getInternalResolution().x(), m_r->getInternalResolution().y(),
-											 Format::R8G8B8A8_UNORM, "TemporalAA Tonemapped");
+	m_tonemappedRtDescr = m_r->create2DRenderTargetDescription(
+		m_r->getInternalResolution().x(), m_r->getInternalResolution().y(),
+		(getGrManager().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::R8G8B8_UNORM
+																			  : Format::R8G8B8A8_UNORM,
+		"TemporalAA Tonemapped");
 	m_tonemappedRtDescr.bake();
 
 	m_fbDescr.m_colorAttachmentCount = 2;

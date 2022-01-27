@@ -131,21 +131,6 @@ public:
 		return m_timestampQueryFactory;
 	}
 
-	Bool getR8g8b8ImagesSupported() const
-	{
-		return m_r8g8b8ImagesSupported;
-	}
-
-	Bool getS8ImagesSupported() const
-	{
-		return m_s8ImagesSupported;
-	}
-
-	Bool getD24S8ImagesSupported() const
-	{
-		return m_d24S8ImagesSupported;
-	}
-
 	DescriptorSetFactory& getDescriptorSetFactory()
 	{
 		return m_descrFactory;
@@ -326,10 +311,6 @@ private:
 	QueryFactory m_timestampQueryFactory;
 
 	PipelineCache m_pplineCache;
-
-	Bool m_r8g8b8ImagesSupported = false;
-	Bool m_s8ImagesSupported = false;
-	Bool m_d24S8ImagesSupported = false;
 
 	mutable HashMap<U64, StringAuto> m_vkHandleToName;
 	mutable SpinLock m_vkHandleToNameLock;

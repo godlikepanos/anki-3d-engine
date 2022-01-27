@@ -161,10 +161,13 @@ public:
 
 	/// Supports min/max texture filtering.
 	Bool m_samplingFilterMinMax = false;
+
+	/// Supports or not 24bit, 48bit or 96bit texture formats.
+	Bool m_unalignedBbpTextureFormats = false;
 };
 ANKI_END_PACKED_STRUCT
 static_assert(sizeof(GpuDeviceCapabilities)
-				  == sizeof(PtrSize) * 4 + sizeof(U32) * 5 + sizeof(U8) * 3 + sizeof(Bool) * 4,
+				  == sizeof(PtrSize) * 4 + sizeof(U32) * 5 + sizeof(U8) * 3 + sizeof(Bool) * 5,
 			  "Should be packed");
 
 /// The type of the allocator for heap allocations
