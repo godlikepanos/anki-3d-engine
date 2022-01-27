@@ -75,6 +75,12 @@ Error MicroSwapchain::initInternal()
 		ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(m_factory->m_gr->getPhysicalDevice(),
 														   m_factory->m_gr->getSurface(), &formatCount, &formats[0]));
 
+		ANKI_VK_LOGV("Supported surface formats");
+		for(U32 i = 0; i < formatCount; ++i)
+		{
+			ANKI_VK_LOGV("\t%s", getFormatInfo(Format(formats[i].format)).m_name);
+		}
+
 		for(U32 i = 0; i < formatCount; ++i)
 		{
 			if(formats[i].format == VK_FORMAT_R8G8B8A8_UNORM || formats[i].format == VK_FORMAT_B8G8R8A8_UNORM
@@ -90,6 +96,10 @@ Error MicroSwapchain::initInternal()
 		{
 			ANKI_VK_LOGE("Surface format not found");
 			return Error::FUNCTION_FAILED;
+		}
+		else
+		{
+			ANKI_VK_LOGV("Selecting surface format %s", getFormatInfo(Format(surfaceFormat)).m_name);
 		}
 	}
 

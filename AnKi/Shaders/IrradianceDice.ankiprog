@@ -195,7 +195,7 @@ void main()
 #	else
 		ANKI_RP Vec3 irradiance = s_diceIrradiance[f];
 #	endif
-		const ANKI_RP Vec3 toStoreValue = irradiance * PI / 2.0;
+		const ANKI_RP Vec3 toStoreValue = irradiance;
 #elif DEBUG_MODE == 1
 		const ANKI_RP Vec3 toStoreValue = colorPerCubeFace(f);
 #else

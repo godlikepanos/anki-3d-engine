@@ -262,6 +262,21 @@ layout(std140, row_major) buffer;
 
 precision highp int;
 precision highp float;
+
+Vec2 pow(Vec2 a, F32 b)
+{
+	return pow(a, Vec2(b));
+}
+
+Vec3 pow(Vec3 a, F32 b)
+{
+	return pow(a, Vec3(b));
+}
+
+Vec4 pow(Vec4 a, F32 b)
+{
+	return pow(a, Vec4(b));
+}
 )";
 
 static const U64 SHADER_HEADER_HASH = computeHash(SHADER_HEADER, sizeof(SHADER_HEADER));

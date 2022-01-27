@@ -632,10 +632,8 @@ Vec2 equirectangularMapping(Vec3 v)
 
 Vec3 linearToSRgb(Vec3 linearRgb)
 {
-	const bvec3 cutoff = lessThan(linearRgb, Vec3(0.0031308));
-	const Vec3 higher = 1.055 * pow(linearRgb, Vec3(1.0 / 2.4)) - 0.055;
-	const Vec3 lower = linearRgb * 12.92;
-	return mix(higher, lower, cutoff);
+	linearRgb = max(Vec3(6.10352e-5), linearRgb);
+	return min(linearRgb * 12.92, pow(max(linearRgb, 0.00313067), Vec3(1.0 / 2.4)) * 1.055 - 0.055);
 }
 
 Vec3 sRgbToLinear(Vec3 sRgb)
