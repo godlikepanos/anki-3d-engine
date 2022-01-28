@@ -199,6 +199,10 @@ Error MyApp::sampleExtraInit()
 			Transform(Vec4(1.0f, 0.5f, 0.0f, 0.0f), Mat3x4::getIdentity(), 1.0f));
 	}
 
+	getInput().lockCursor(true);
+	getInput().hideCursor(true);
+	getInput().moveCursor(Vec2(0.0f));
+
 	return Error::NONE;
 }
 

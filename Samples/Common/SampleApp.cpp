@@ -35,11 +35,6 @@ Error SampleApp::init(int argc, char** argv, CString sampleName)
 	ANKI_CHECK(m_config.setFromCommandLineArguments(argc - 1, argv + 1));
 	ANKI_CHECK(App::init(&m_config, allocAligned, nullptr));
 
-	// Input
-	getInput().lockCursor(true);
-	getInput().hideCursor(true);
-	getInput().moveCursor(Vec2(0.0f));
-
 	// Some renderer stuff
 	getMainRenderer().getOffscreenRenderer().getVolumetricFog().setFogParticleColor(Vec3(1.0f, 0.9f, 0.9f));
 
@@ -131,10 +126,16 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		m_config.setRVrs(!m_config.getRVrs());
 	}
 
-	if(!getDisplayDeveloperConsole())
+	static Vec2 mousePosOn1stClick = in.getMousePosition();
+	if(in.getMouseButton(MouseButton::RIGHT) == 1)
+	{
+		// Re-init mouse pos
+		mousePosOn1stClick = in.getMousePosition();
+	}
+
+	if(in.getMouseButton(MouseButton::RIGHT))
 	{
 		in.hideCursor(true);
-		in.lockCursor(true);
 
 		// move the camera
 		static MoveComponent* mover = &scene.getActiveCameraNode().getFirstComponentOfType<MoveComponent>();
@@ -248,9 +249,10 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 			TracerSingleton::get().setEnabled(!TracerSingleton::get().getEnabled());
 		}
 
-		if(in.getMousePosition() != Vec2(0.0))
+		const Vec2 velocity = in.getMousePosition() - mousePosOn1stClick;
+		in.moveCursor(mousePosOn1stClick);
+		if(velocity != Vec2(0.0))
 		{
-			Vec2 velocity = in.getMousePosition();
 			Euler angles(mover->getLocalRotation().getRotationPart());
 			angles.x() += velocity.y() * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
 			angles.x() = clamp(angles.x(), toRad(-90.0f), toRad(90.0f)); // Avoid cycle in Y axis
@@ -322,7 +324,6 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 	else
 	{
 		in.hideCursor(false);
-		in.lockCursor(false);
 	}
 
 	return Error::NONE;
