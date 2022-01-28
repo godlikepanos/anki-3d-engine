@@ -96,64 +96,42 @@ GrManagerStats GrManager::getStats() const
 	return out;
 }
 
-BufferPtr GrManager::newBuffer(const BufferInitInfo& init)
-{
-	return BufferPtr(Buffer::newInstance(this, init));
-}
+#define ANKI_NEW_GR_OBJECT(type) \
+	type##Ptr GrManager::new##type(const type##InitInfo& init) \
+	{ \
+		type##Ptr ptr(type::newInstance(this, init)); \
+		if(ANKI_UNLIKELY(!ptr.isCreated())) \
+		{ \
+			ANKI_VK_LOGF("Failed to create a " ANKI_STRINGIZE(type) " object"); \
+		} \
+		return ptr; \
+	}
 
-TexturePtr GrManager::newTexture(const TextureInitInfo& init)
-{
-	return TexturePtr(Texture::newInstance(this, init));
-}
+#define ANKI_NEW_GR_OBJECT_NO_INIT_INFO(type) \
+	type##Ptr GrManager::new##type() \
+	{ \
+		type##Ptr ptr(type::newInstance(this)); \
+		if(ANKI_UNLIKELY(!ptr.isCreated())) \
+		{ \
+			ANKI_VK_LOGF("Failed to create a " ANKI_STRINGIZE(type) " object"); \
+		} \
+		return ptr; \
+	}
 
-TextureViewPtr GrManager::newTextureView(const TextureViewInitInfo& init)
-{
-	return TextureViewPtr(TextureView::newInstance(this, init));
-}
+ANKI_NEW_GR_OBJECT(Buffer)
+ANKI_NEW_GR_OBJECT(Texture)
+ANKI_NEW_GR_OBJECT(TextureView)
+ANKI_NEW_GR_OBJECT(Sampler)
+ANKI_NEW_GR_OBJECT(Shader)
+ANKI_NEW_GR_OBJECT(ShaderProgram)
+ANKI_NEW_GR_OBJECT(CommandBuffer)
+ANKI_NEW_GR_OBJECT(Framebuffer)
+ANKI_NEW_GR_OBJECT_NO_INIT_INFO(OcclusionQuery)
+ANKI_NEW_GR_OBJECT_NO_INIT_INFO(TimestampQuery)
+ANKI_NEW_GR_OBJECT_NO_INIT_INFO(RenderGraph)
+ANKI_NEW_GR_OBJECT(AccelerationStructure)
 
-SamplerPtr GrManager::newSampler(const SamplerInitInfo& init)
-{
-	return SamplerPtr(Sampler::newInstance(this, init));
-}
-
-ShaderPtr GrManager::newShader(const ShaderInitInfo& init)
-{
-	return ShaderPtr(Shader::newInstance(this, init));
-}
-
-ShaderProgramPtr GrManager::newShaderProgram(const ShaderProgramInitInfo& init)
-{
-	return ShaderProgramPtr(ShaderProgram::newInstance(this, init));
-}
-
-CommandBufferPtr GrManager::newCommandBuffer(const CommandBufferInitInfo& init)
-{
-	return CommandBufferPtr(CommandBuffer::newInstance(this, init));
-}
-
-FramebufferPtr GrManager::newFramebuffer(const FramebufferInitInfo& init)
-{
-	return FramebufferPtr(Framebuffer::newInstance(this, init));
-}
-
-OcclusionQueryPtr GrManager::newOcclusionQuery()
-{
-	return OcclusionQueryPtr(OcclusionQuery::newInstance(this));
-}
-
-TimestampQueryPtr GrManager::newTimestampQuery()
-{
-	return TimestampQueryPtr(TimestampQuery::newInstance(this));
-}
-
-RenderGraphPtr GrManager::newRenderGraph()
-{
-	return RenderGraphPtr(RenderGraph::newInstance(this));
-}
-
-AccelerationStructurePtr GrManager::newAccelerationStructure(const AccelerationStructureInitInfo& init)
-{
-	return AccelerationStructurePtr(AccelerationStructure::newInstance(this, init));
-}
+#undef ANKI_NEW_GR_OBJECT
+#undef ANKI_NEW_GR_OBJECT_NO_INIT_INFO
 
 } // end namespace anki

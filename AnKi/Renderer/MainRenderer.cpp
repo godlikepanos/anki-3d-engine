@@ -46,7 +46,7 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 	// Init other
 	if(!m_rDrawToDefaultFb)
 	{
-		ANKI_CHECK(inf.m_resourceManager->loadResource("Shaders/BlitGraphics.ankiprog", m_blitProg));
+		ANKI_CHECK(inf.m_resourceManager->loadResource("Shaders/BlitRaster.ankiprog", m_blitProg));
 		const ShaderProgramResourceVariant* variant;
 		m_blitProg->getOrCreateVariant(variant);
 		m_blitGrProg = variant->getProgram();
@@ -55,8 +55,11 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 		UVec2 resolution = UVec2(Vec2(m_swapchainResolution) * inf.m_config->getRRenderScaling());
 		alignRoundDown(2, resolution.x());
 		alignRoundDown(2, resolution.y());
-		m_tmpRtDesc = m_r->create2DRenderTargetDescription(resolution.x(), resolution.y(), Format::R8G8B8_UNORM,
-														   "Final Composite");
+		m_tmpRtDesc = m_r->create2DRenderTargetDescription(
+			resolution.x(), resolution.y(),
+			(m_r->getGrManager().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::R8G8B8_UNORM
+																					   : Format::R8G8B8A8_UNORM,
+			"Final Composite");
 		m_tmpRtDesc.bake();
 
 		// FB descr
