@@ -68,7 +68,6 @@ Error LightShading::initLightShading()
 	variantInitInfo.addConstant("TILE_COUNTS", m_r->getTileCounts());
 	variantInitInfo.addConstant("Z_SPLIT_COUNT", m_r->getZSplitCount());
 	variantInitInfo.addConstant("TILE_SIZE", m_r->getTileSize());
-	variantInitInfo.addConstant("IR_MIPMAP_COUNT", U32(m_r->getProbeReflections().getReflectionTextureMipmapCount()));
 	const ShaderProgramResourceVariant* variant;
 
 	variantInitInfo.addMutation("USE_SHADOW_LAYERS", 0);

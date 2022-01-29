@@ -332,8 +332,6 @@ static ShaderPtr createShader(CString src, ShaderType type, GrManager& gr,
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 	StringAuto header(alloc);
 	ShaderCompilerOptions compilerOptions;
-	compilerOptions.m_bindlessLimits.m_bindlessTextureCount = gr.getConfig().getGrMaxBindlessTextures();
-	compilerOptions.m_bindlessLimits.m_bindlessImageCount = gr.getConfig().getGrMaxBindlessImages();
 	ShaderProgramParser::generateAnkiShaderHeader(type, compilerOptions, header);
 	header.append(src);
 	DynamicArrayAuto<U8> spirv(alloc);

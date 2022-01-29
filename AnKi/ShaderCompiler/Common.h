@@ -47,23 +47,13 @@ public:
 	virtual ANKI_USE_RESULT Error joinTasks() = 0;
 };
 
-/// Bindless related info.
-ANKI_BEGIN_PACKED_STRUCT
-class BindlessLimits
-{
-public:
-	U32 m_bindlessTextureCount = 0;
-	U32 m_bindlessImageCount = 0;
-};
-ANKI_END_PACKED_STRUCT
-
 /// Options to be passed to the compiler.
 ANKI_BEGIN_PACKED_STRUCT
 class ShaderCompilerOptions
 {
 public:
-	BindlessLimits m_bindlessLimits;
 	Bool m_forceFullFloatingPointPrecision = false;
+	Bool m_mobilePlatform = false;
 };
 ANKI_END_PACKED_STRUCT
 /// @}

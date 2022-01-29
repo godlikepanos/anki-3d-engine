@@ -188,8 +188,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		}
 	}
 
-	ANKI_CHECK(m_descrFactory.init(getAllocator(), m_device, m_config->getGrMaxBindlessTextures(),
-								   m_config->getGrMaxBindlessImages()));
+	ANKI_CHECK(m_descrFactory.init(getAllocator(), m_device, MAX_BINDLESS_TEXTURES, MAX_BINDLESS_IMAGES));
 	m_pplineLayoutFactory.init(getAllocator(), m_device);
 
 	return Error::NONE;

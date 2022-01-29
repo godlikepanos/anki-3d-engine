@@ -9,19 +9,23 @@ using namespace anki;
 
 static const char* USAGE = R"(Usage: %s input_shader_program_file [options]
 Options:
--o <name of output>    : The name of the output binary
--j <thread count>      : Number of threads. Defaults to system's max
--I <include path>      : The path of the #include files
+-o <name of output>  : The name of the output binary
+-j <thread count>    : Number of threads. Defaults to system's max
+-I <include path>    : The path of the #include files
+-force-full-fp       : Force full floating point precision
+-mobile-platform     : Build for mobile
 )";
 
 class CmdLineArgs
 {
 public:
-	HeapAllocator<U8> m_alloc{allocAligned, nullptr};
+	HeapAllocator<U8> m_alloc = {allocAligned, nullptr};
 	StringAuto m_inputFname = {m_alloc};
 	StringAuto m_outFname = {m_alloc};
 	StringAuto m_includePath = {m_alloc};
 	U32 m_threadCount = getCpuCoresCount();
+	Bool m_fullFpPrecision = false;
+	Bool m_mobilePlatform = false;
 };
 
 static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
@@ -88,6 +92,14 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 			{
 				return Error::USER_DATA;
 			}
+		}
+		else if(strcmp(argv[i], "-force-full-fp") == 0)
+		{
+			info.m_fullFpPrecision = true;
+		}
+		else if(strcmp(argv[i], "-mobile-platform") == 0)
+		{
+			info.m_mobilePlatform = true;
 		}
 		else
 		{
@@ -185,8 +197,8 @@ static Error work(const CmdLineArgs& info)
 
 	// Compiler options
 	ShaderCompilerOptions compilerOptions;
-	compilerOptions.m_bindlessLimits.m_bindlessImageCount = 16;
-	compilerOptions.m_bindlessLimits.m_bindlessTextureCount = 16;
+	compilerOptions.m_forceFullFloatingPointPrecision = info.m_fullFpPrecision;
+	compilerOptions.m_mobilePlatform = info.m_mobilePlatform;
 
 	// Compile
 	ShaderProgramBinaryWrapper binary(alloc);

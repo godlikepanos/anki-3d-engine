@@ -10,8 +10,6 @@ ANKI_CONFIG_VAR_BOOL(GrDebugPrintf, false, "Enable or not debug printf")
 ANKI_CONFIG_VAR_BOOL(GrDebugMarkers, false, "Enable or not debug markers")
 ANKI_CONFIG_VAR_BOOL(GrVsync, false, "Enable or not vsync")
 
-ANKI_CONFIG_VAR_U32(GrMaxBindlessTextures, 256, 8, 1024, "Max number of bindless textures")
-ANKI_CONFIG_VAR_U32(GrMaxBindlessImages, 32, 8, 1024, "Max number of bindless images")
 ANKI_CONFIG_VAR_PTR_SIZE(GrDiskShaderCacheMaxSize, 128_MB, 1_MB, 1_GB, "Max size of the pipeline cache file")
 
 ANKI_CONFIG_VAR_BOOL(GrRayTracing, false, "Try enabling ray tracing")

@@ -981,10 +981,8 @@ Error ShaderProgramParser::parse()
 void ShaderProgramParser::generateAnkiShaderHeader(ShaderType shaderType, const ShaderCompilerOptions& compilerOptions,
 												   StringAuto& header)
 {
-	header.sprintf(SHADER_HEADER, SHADER_STAGE_NAMES[shaderType].cstr(), ANKI_PLATFORM_MOBILE,
-				   compilerOptions.m_forceFullFloatingPointPrecision,
-				   compilerOptions.m_bindlessLimits.m_bindlessTextureCount,
-				   compilerOptions.m_bindlessLimits.m_bindlessImageCount);
+	header.sprintf(SHADER_HEADER, SHADER_STAGE_NAMES[shaderType].cstr(), compilerOptions.m_mobilePlatform,
+				   compilerOptions.m_forceFullFloatingPointPrecision, MAX_BINDLESS_TEXTURES, MAX_BINDLESS_IMAGES);
 }
 
 Error ShaderProgramParser::generateVariant(ConstWeakArray<MutatorValue> mutation,
