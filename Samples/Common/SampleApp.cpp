@@ -214,12 +214,12 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 			mover->moveLocalX(moveDistance);
 		}
 
-		if(in.getKey(KeyCode::C))
+		if(in.getKey(KeyCode::Q))
 		{
 			mover->moveLocalY(-moveDistance);
 		}
 
-		if(in.getKey(KeyCode::SPACE))
+		if(in.getKey(KeyCode::E))
 		{
 			mover->moveLocalY(moveDistance);
 		}
@@ -232,16 +232,6 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		if(in.getKey(KeyCode::S))
 		{
 			mover->moveLocalZ(moveDistance);
-		}
-
-		if(in.getKey(KeyCode::Q))
-		{
-			mover->rotateLocalZ(ROTATE_ANGLE);
-		}
-
-		if(in.getKey(KeyCode::E))
-		{
-			mover->rotateLocalZ(-ROTATE_ANGLE);
 		}
 
 		if(in.getKey(KeyCode::F12) == 1 && ANKI_ENABLE_TRACE)
