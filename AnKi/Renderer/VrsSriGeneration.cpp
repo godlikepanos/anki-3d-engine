@@ -5,7 +5,7 @@
 
 #include <AnKi/Renderer/VrsSriGeneration.h>
 #include <AnKi/Renderer/Renderer.h>
-#include <AnKi/Renderer/DownscaleBlur.h>
+#include <AnKi/Renderer/TemporalAA.h>
 #include <AnKi/Core/ConfigSet.h>
 
 namespace anki {
@@ -36,18 +36,22 @@ Error VrsSriGeneration::initInternal()
 
 	ANKI_R_LOGV("Intializing VRS SRI generation. SRI resolution %ux%u", rez.x(), rez.y());
 
-	// Bake descriptors
-	m_rtDescr = m_r->create2DRenderTargetDescription(rez.x(), rez.y(), Format::R8_UINT, "VRS SRI");
-	m_rtDescr.bake();
+	// SRI
+	const TextureUsageBit texUsage = TextureUsageBit::FRAMEBUFFER_SHADING_RATE | TextureUsageBit::IMAGE_COMPUTE_WRITE
+									 | TextureUsageBit::SAMPLED_FRAGMENT;
+	TextureInitInfo sriInitInfo =
+		m_r->create2DRenderTargetInitInfo(rez.x(), rez.y(), Format::R8_UINT, texUsage, "VRS SRI");
+	sriInitInfo.m_initialUsage = TextureUsageBit::FRAMEBUFFER_SHADING_RATE;
+	m_sriTex = m_r->createAndClearRenderTarget(sriInitInfo);
 
+	// Descr
 	m_fbDescr.m_colorAttachmentCount = 1;
 	m_fbDescr.bake();
 
 	// Load programs
 	ANKI_CHECK(getResourceManager().loadResource("AnKi/Shaders/VrsSriGenerationCompute.ankiprog", m_prog));
 	ShaderProgramResourceVariantInitInfo variantInit(m_prog);
-	// SRI_TEXEL_DIMENSION is half because the input image is quarter resolution
-	variantInit.addMutation("SRI_TEXEL_DIMENSION", m_sriTexelDimension / 2u);
+	variantInit.addMutation("SRI_TEXEL_DIMENSION", m_sriTexelDimension);
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInit, variant);
 	m_grProg = variant->getProgram();
@@ -67,6 +71,25 @@ void VrsSriGeneration::getDebugRenderTarget(CString rtName, RenderTargetHandle& 
 	optionalShaderProgram = m_visualizeGrProg;
 }
 
+void VrsSriGeneration::importRenderTargets(RenderingContext& ctx)
+{
+	const Bool enableVrs = getGrManager().getDeviceCapabilities().m_vrs && getConfig().getRVrs();
+	if(!enableVrs)
+	{
+		return;
+	}
+
+	if(m_sriTexImportedOnce)
+	{
+		m_runCtx.m_rt = ctx.m_renderGraphDescr.importRenderTarget(m_sriTex);
+	}
+	else
+	{
+		m_runCtx.m_rt = ctx.m_renderGraphDescr.importRenderTarget(m_sriTex, TextureUsageBit::FRAMEBUFFER_SHADING_RATE);
+		m_sriTexImportedOnce = true;
+	}
+}
+
 void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 {
 	const Bool enableVrs = getGrManager().getDeviceCapabilities().m_vrs && getConfig().getRVrs();
@@ -76,24 +99,23 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 	}
 
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
-	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
 
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("VRS SRI generation");
 
 	pass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
-	pass.newDependency(RenderPassDependency(m_r->getDownscaleBlur().getRt(), TextureUsageBit::SAMPLED_COMPUTE));
+	pass.newDependency(RenderPassDependency(m_r->getTemporalAA().getTonemappedRt(), TextureUsageBit::SAMPLED_COMPUTE));
 
 	pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 		CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
 		cmdb->bindShaderProgram(m_grProg);
 
-		rgraphCtx.bindColorTexture(0, 0, m_r->getDownscaleBlur().getRt());
+		rgraphCtx.bindColorTexture(0, 0, m_r->getTemporalAA().getTonemappedRt());
 		rgraphCtx.bindImage(0, 1, m_runCtx.m_rt);
 
-		const U32 workgroupSize = m_sriTexelDimension / 2u;
-		dispatchPPCompute(cmdb, workgroupSize, workgroupSize, m_r->getInternalResolution().x() / 2,
-						  m_r->getInternalResolution().y() / 2);
+		const U32 workgroupSize = m_sriTexelDimension;
+		dispatchPPCompute(cmdb, workgroupSize, workgroupSize, m_r->getInternalResolution().x(),
+						  m_r->getInternalResolution().y());
 	});
 }
 

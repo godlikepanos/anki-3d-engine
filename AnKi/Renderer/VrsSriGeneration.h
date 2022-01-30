@@ -21,6 +21,8 @@ public:
 
 	ANKI_USE_RESULT Error init();
 
+	void importRenderTargets(RenderingContext& ctx);
+
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
@@ -41,7 +43,8 @@ public:
 	ShaderProgramResourcePtr m_visualizeProg;
 	ShaderProgramPtr m_visualizeGrProg;
 
-	RenderTargetDescription m_rtDescr;
+	TexturePtr m_sriTex;
+	Bool m_sriTexImportedOnce = false;
 	FramebufferDescription m_fbDescr;
 
 	static constexpr U32 m_sriTexelDimension = 16;

@@ -333,6 +333,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_downscaleBlur->importRenderTargets(ctx);
 	m_tonemapping->importRenderTargets(ctx);
 	m_depthDownscale->importRenderTargets(ctx);
+	m_vrsSriGeneration->importRenderTargets(ctx);
 
 	// Populate render graph. WARNING Watch the order
 	m_genericCompute->populateRenderGraph(ctx);
@@ -341,7 +342,6 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	{
 		m_accelerationStructureBuilder->populateRenderGraph(ctx);
 	}
-	m_vrsSriGeneration->populateRenderGraph(ctx);
 	m_shadowMapping->populateRenderGraph(ctx);
 	m_indirectDiffuseProbes->populateRenderGraph(ctx);
 	m_probeReflections->populateRenderGraph(ctx);
@@ -364,6 +364,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_indirectDiffuse->populateRenderGraph(ctx);
 	m_lightShading->populateRenderGraph(ctx);
 	m_temporalAA->populateRenderGraph(ctx);
+	m_vrsSriGeneration->populateRenderGraph(ctx);
 	m_scale->populateRenderGraph(ctx);
 	m_downscaleBlur->populateRenderGraph(ctx);
 	m_tonemapping->populateRenderGraph(ctx);

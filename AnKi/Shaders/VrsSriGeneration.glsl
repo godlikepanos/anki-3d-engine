@@ -25,7 +25,7 @@ shared F32 s_lumaMax[WORKGROUP_SIZE.y * WORKGROUP_SIZE.x];
 void main()
 {
 	// Get luminance
-	const Vec3 color = invertibleTonemap(texelFetch(u_inputTex, IVec2(gl_GlobalInvocationID.xy), 0).xyz);
+	const Vec3 color = texelFetch(u_inputTex, IVec2(gl_GlobalInvocationID.xy), 0).xyz;
 	const F32 luma = computeLuminance(color);
 
 	// Store luminance
