@@ -39,19 +39,19 @@ void StatsUi::labelBytes(PtrSize val, CString name) const
 	StringAuto timestamp(getAllocator());
 	if(gb)
 	{
-		timestamp.sprintf("%s: %4u,%04u,%04u,%04u", name.cstr(), gb, mb, kb, b);
+		timestamp.sprintf("%s: %u,%04u,%04u,%04u", name.cstr(), gb, mb, kb, b);
 	}
 	else if(mb)
 	{
-		timestamp.sprintf("%s: %4u,%04u,%04u", name.cstr(), mb, kb, b);
+		timestamp.sprintf("%s: %u,%04u,%04u", name.cstr(), mb, kb, b);
 	}
 	else if(kb)
 	{
-		timestamp.sprintf("%s: %4u,%04u", name.cstr(), kb, b);
+		timestamp.sprintf("%s: %u,%04u", name.cstr(), kb, b);
 	}
 	else
 	{
-		timestamp.sprintf("%s: %4u", name.cstr(), b);
+		timestamp.sprintf("%s: %u", name.cstr(), b);
 	}
 	ImGui::TextUnformatted(timestamp.cstr());
 }
@@ -103,6 +103,8 @@ void StatsUi::build(CanvasPtr canvas)
 		labelUint(m_freeCount, "Total frees");
 		labelBytes(m_vkCpuMem, "Vulkan CPU");
 		labelBytes(m_vkGpuMem, "Vulkan GPU");
+		labelBytes(m_globalVertexPool.m_userAllocatedSize, "Vertex/Index GPU memory");
+		labelBytes(m_globalVertexPool.m_realAllocatedSize, "Actual Vertex/Index GPU memory");
 
 		ImGui::Text("----");
 		ImGui::Text("Vulkan:");

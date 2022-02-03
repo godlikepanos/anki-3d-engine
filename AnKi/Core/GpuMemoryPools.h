@@ -41,6 +41,12 @@ public:
 		return m_vertBuffer;
 	}
 
+	void getMemoryInfo(PtrSize& userAllocatedSize, PtrSize& realAllocatedSize, F64& externalFragmentation,
+					   F64& internalFragmentation) const
+	{
+		m_buddyAllocator.getInfo(userAllocatedSize, realAllocatedSize, externalFragmentation, internalFragmentation);
+	}
+
 private:
 	GrManager* m_gr = nullptr;
 	BufferPtr m_vertBuffer;

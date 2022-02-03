@@ -173,6 +173,14 @@ inline constexpr Int nextPowerOfTwo(Int x)
 	return Int(res);
 }
 
+/// Get the previous power of two number. For example if x is 130 this will return 128.
+template<typename Int, ANKI_ENABLE(std::is_integral<Int>::value)>
+inline constexpr Int previousPowerOfTwo(Int x)
+{
+	const U64 out = (x != 0) ? (1_U64 << ((sizeof(U64) * 8 - 1) - __builtin_clzll(x))) : 0;
+	return Int(out);
+}
+
 /// Get the aligned number rounded up.
 /// @param alignment The bytes of alignment
 /// @param value The value to align

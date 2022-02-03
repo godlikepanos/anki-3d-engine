@@ -45,7 +45,7 @@ Error VertexGpuMemoryPool::init(GenericMemoryPoolAllocator<U8> alloc, GrManager*
 ANKI_USE_RESULT Error VertexGpuMemoryPool::allocate(PtrSize size, PtrSize& offset)
 {
 	U32 offset32;
-	const Bool success = m_buddyAllocator.allocate(size, offset32);
+	const Bool success = m_buddyAllocator.allocate(size, 4, offset32);
 	if(ANKI_UNLIKELY(!success))
 	{
 		ANKI_CORE_LOGE("Failed to allocate vertex memory of size: %zu", size);
@@ -59,7 +59,7 @@ ANKI_USE_RESULT Error VertexGpuMemoryPool::allocate(PtrSize size, PtrSize& offse
 
 void VertexGpuMemoryPool::free(PtrSize size, PtrSize offset)
 {
-	m_buddyAllocator.free(U32(offset), size);
+	m_buddyAllocator.free(U32(offset), size, 4);
 }
 
 StagingGpuMemoryPool::~StagingGpuMemoryPool()

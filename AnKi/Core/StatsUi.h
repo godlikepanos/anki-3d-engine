@@ -108,6 +108,15 @@ public:
 		m_drawableCount = v;
 	}
 
+	void setGlobalVertexMemoryPoolInfo(PtrSize userAllocatedSize, PtrSize realAllocatedSize, F64 externalFragmentation,
+									   F64 internalFragmentation)
+	{
+		m_globalVertexPool.m_userAllocatedSize = userAllocatedSize;
+		m_globalVertexPool.m_realAllocatedSize = realAllocatedSize;
+		m_globalVertexPool.m_externalFragmentation = F32(externalFragmentation);
+		m_globalVertexPool.m_internalFragmentation = F32(internalFragmentation);
+	}
+
 private:
 	static constexpr U32 BUFFERED_FRAMES = 16;
 
@@ -158,6 +167,14 @@ private:
 	U64 m_freeCount = 0;
 	PtrSize m_vkCpuMem = 0;
 	PtrSize m_vkGpuMem = 0;
+	class
+	{
+	public:
+		PtrSize m_userAllocatedSize = 0;
+		PtrSize m_realAllocatedSize = 0;
+		F32 m_externalFragmentation = 0;
+		F64 m_internalFragmentation = 0;
+	} m_globalVertexPool;
 
 	// Vulkan
 	U32 m_vkCmdbCount = 0;

@@ -51,14 +51,16 @@ public:
 
 	/// Allocate memory.
 	/// @param size The size of the allocation.
+	/// @param alignment The returned address should have this alignment.
 	/// @param[out] address The returned address if the allocation didn't fail. It will stay untouched if it failed.
 	/// @return True if the allocation succeeded.
-	ANKI_USE_RESULT Bool allocate(PtrSize size, Address& address);
+	ANKI_USE_RESULT Bool allocate(PtrSize size, PtrSize alignment, Address& address);
 
 	/// Free memory.
 	/// @param address The address to free.
+	/// @param alignment The alignment of the original allocation.
 	/// @param size The size of the allocation.
-	void free(Address address, PtrSize size);
+	void free(Address address, PtrSize size, PtrSize alignment);
 
 	/// Print a debug representation of the internal structures.
 	void debugPrint() const;

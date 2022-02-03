@@ -32,9 +32,27 @@ void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::destroy()
 }
 
 template<U32 T_MAX_MEMORY_RANGE_LOG2, typename TLock>
-Bool BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::allocate(PtrSize size, Address& outAddress)
+Bool BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::allocate(PtrSize size, PtrSize alignment,
+																	 Address& outAddress)
 {
 	ANKI_ASSERT(size > 0 && size <= m_maxMemoryRange);
+
+	PtrSize alignedSize = nextPowerOfTwo(size);
+	U32 order = log2(alignedSize);
+	const PtrSize orderSize = pow2<PtrSize>(order);
+
+	// The alignment for the requested "size" is the "orderSize". If the "orderSize" doesn't satisfy the "alignment"
+	// parameter then we need to align the allocation address
+	const Bool needsPadding = !isAligned(alignment, orderSize);
+
+	if(needsPadding)
+	{
+		// We need more space to accommodate possible unaligned allocation address
+		alignedSize = nextPowerOfTwo(size + alignment);
+
+		// Re-calcuate the order as well
+		order = log2(alignedSize);
+	}
 
 	LockGuard<TLock> lock(m_mutex);
 
@@ -46,9 +64,6 @@ Bool BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::allocate(PtrSize siz
 	}
 
 	// Find the order to start the search
-	const PtrSize alignedSize = nextPowerOfTwo(size);
-	U32 order = log2(alignedSize);
-
 	while(m_freeLists[order].getSize() == 0)
 	{
 		++order;
@@ -79,7 +94,14 @@ Bool BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::allocate(PtrSize siz
 		--order;
 	}
 
-	ANKI_ASSERT(address + alignedSize <= m_maxMemoryRange);
+	// Align the returned address if needed
+	if(needsPadding)
+	{
+		alignRoundUp(alignment, address);
+	}
+
+	ANKI_ASSERT(address + size <= m_maxMemoryRange);
+	ANKI_ASSERT(isAligned(alignment, address));
 	m_userAllocatedSize += size;
 	m_realAllocatedSize += alignedSize;
 	ANKI_ASSERT(address <= getMaxNumericLimit<Address>());
@@ -88,9 +110,22 @@ Bool BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::allocate(PtrSize siz
 }
 
 template<U32 T_MAX_MEMORY_RANGE_LOG2, typename TLock>
-void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::free(Address address, PtrSize size)
+void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::free(Address address, PtrSize size, PtrSize alignment)
 {
-	const PtrSize alignedSize = nextPowerOfTwo(size);
+	PtrSize alignedSize = nextPowerOfTwo(size);
+	U32 order = log2(alignedSize);
+	const PtrSize orderSize = pow2<PtrSize>(order);
+
+	// See allocate()
+	const Bool needsPadding = !isAligned(alignment, orderSize);
+
+	if(needsPadding)
+	{
+		alignedSize = nextPowerOfTwo(size + alignment);
+
+		// Address was rounded up on allocate(), do the opposite
+		alignRoundDown(orderSize, address);
+	}
 
 	LockGuard<TLock> lock(m_mutex);
 
