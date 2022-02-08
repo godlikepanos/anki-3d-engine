@@ -18,6 +18,8 @@ namespace anki {
 
 GrManagerImpl::~GrManagerImpl()
 {
+	ANKI_VK_LOGI("Destroying Vulkan backend");
+
 	// 1st THING: wait for the present fences because I don't know if waiting on queue will cover this
 	for(PerFrame& frame : m_perFrame)
 	{

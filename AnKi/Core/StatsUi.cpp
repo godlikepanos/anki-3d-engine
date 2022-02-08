@@ -103,8 +103,8 @@ void StatsUi::build(CanvasPtr canvas)
 		labelUint(m_freeCount, "Total frees");
 		labelBytes(m_vkCpuMem, "Vulkan CPU");
 		labelBytes(m_vkGpuMem, "Vulkan GPU");
-		labelBytes(m_globalVertexPool.m_userAllocatedSize, "Vertex/Index GPU memory");
-		labelBytes(m_globalVertexPool.m_realAllocatedSize, "Actual Vertex/Index GPU memory");
+		labelBytes(m_globalVertexPoolStats.m_userAllocatedSize, "Vertex/Index GPU memory");
+		labelBytes(m_globalVertexPoolStats.m_realAllocatedSize, "Actual Vertex/Index GPU memory");
 
 		ImGui::Text("----");
 		ImGui::Text("Vulkan:");

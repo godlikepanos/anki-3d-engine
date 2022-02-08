@@ -93,12 +93,12 @@ ANKI_TEST(Util, BuddyAllocatorBuilder)
 		free(backingMemory);
 
 		// Get the fragmentation
-		PtrSize userAllocatedSize, realAllocatedSize;
-		F64 externalFragmentation, internalFragmentation;
-		buddy.getInfo(userAllocatedSize, realAllocatedSize, externalFragmentation, internalFragmentation);
+		BuddyAllocatorBuilderStats stats;
+		buddy.getStats(stats);
 		ANKI_TEST_LOGI("Memory info: userAllocatedSize %zu, realAllocatedSize %zu, externalFragmentation %f, "
 					   "internalFragmentation %f",
-					   userAllocatedSize, realAllocatedSize, externalFragmentation, internalFragmentation);
+					   stats.m_userAllocatedSize, stats.m_realAllocatedSize, stats.m_externalFragmentation,
+					   stats.m_internalFragmentation);
 
 		// Remove the remaining
 		for(const auto& pair : allocations)

@@ -10,7 +10,7 @@ ANKI_CONFIG_VAR_STRING(
 	RsrcDataPaths, ".",
 	"The engine loads assets only in from these paths. Separate them with : (it's smart enough to identify drive "
 	"letters in Windows)")
-ANKI_CONFIG_VAR_STRING(RsrcDataPathExcludedStrings, "build",
+ANKI_CONFIG_VAR_STRING(RsrcDataPathExcludedStrings, "AndroidProject",
 					   "A list of string separated by : that will be used to exclude paths from rsrc_dataPaths")
 ANKI_CONFIG_VAR_PTR_SIZE(RsrcTransferScratchMemorySize, 256_MB, 1_MB, 4_GB,
 						 "Memory that is used fot texture and buffer uploads")

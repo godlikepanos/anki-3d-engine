@@ -172,6 +172,11 @@ void StackAllocatorBuilder<TChunk, TInterface, TLock>::reset()
 {
 	m_crntChunk.setNonAtomically(m_chunksListHead);
 
+	if(m_chunksListHead)
+	{
+		m_chunksListHead->m_offsetInChunk.setNonAtomically(0);
+	}
+
 	// Reset allocation count and do some error checks
 	Atomic<U32>* allocationCount = m_interface.getAllocationCount();
 	if(allocationCount)

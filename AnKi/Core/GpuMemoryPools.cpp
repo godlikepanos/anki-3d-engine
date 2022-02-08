@@ -48,7 +48,11 @@ ANKI_USE_RESULT Error VertexGpuMemoryPool::allocate(PtrSize size, PtrSize& offse
 	const Bool success = m_buddyAllocator.allocate(size, 4, offset32);
 	if(ANKI_UNLIKELY(!success))
 	{
-		ANKI_CORE_LOGE("Failed to allocate vertex memory of size: %zu", size);
+		BuddyAllocatorBuilderStats stats;
+		m_buddyAllocator.getStats(stats);
+		ANKI_CORE_LOGE("Failed to allocate vertex memory of size %zu. The allocator has %zu (user requested %zu) out "
+					   "%zu allocated",
+					   size, stats.m_realAllocatedSize, stats.m_userAllocatedSize, m_vertBuffer->getSize());
 		return Error::OUT_OF_MEMORY;
 	}
 

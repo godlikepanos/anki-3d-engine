@@ -383,6 +383,14 @@ Error ResourceFilesystem::addNewPath(const CString& filepath, const StringListAu
 		ANKI_RESOURCE_LOGI("Added new data path \"%s\" that contains %u files", &filepath[0], fileCount);
 	}
 
+	if(false)
+	{
+		for(const String& s : m_paths.getFront().m_files)
+		{
+			printf("%s\n", s.cstr());
+		}
+	}
+
 	return Error::NONE;
 }
 

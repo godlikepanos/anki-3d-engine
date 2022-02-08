@@ -41,10 +41,9 @@ public:
 		return m_vertBuffer;
 	}
 
-	void getMemoryInfo(PtrSize& userAllocatedSize, PtrSize& realAllocatedSize, F64& externalFragmentation,
-					   F64& internalFragmentation) const
+	void getMemoryStats(BuddyAllocatorBuilderStats& stats) const
 	{
-		m_buddyAllocator.getInfo(userAllocatedSize, realAllocatedSize, externalFragmentation, internalFragmentation);
+		m_buddyAllocator.getStats(stats);
 	}
 
 private:

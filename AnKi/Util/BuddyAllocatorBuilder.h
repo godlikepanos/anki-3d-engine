@@ -12,6 +12,16 @@ namespace anki {
 /// @addtogroup util_memory
 /// @{
 
+/// @memberof BuddyAllocatorBuilder
+class BuddyAllocatorBuilderStats
+{
+public:
+	PtrSize m_userAllocatedSize;
+	PtrSize m_realAllocatedSize;
+	F32 m_externalFragmentation;
+	F32 m_internalFragmentation;
+};
+
 /// This is a generic implementation of a buddy allocator.
 /// @tparam T_MAX_MEMORY_RANGE_LOG2 The max memory to allocate.
 /// @tparam TLock This an optional lock. Can be a Mutex or SpinLock or some dummy class.
@@ -66,8 +76,7 @@ public:
 	void debugPrint() const;
 
 	/// Get some info.
-	void getInfo(PtrSize& userAllocatedSize, PtrSize& realAllocatedSize, F64& externalFragmentation,
-				 F64& internalFragmentation) const;
+	void getStats(BuddyAllocatorBuilderStats& stats) const;
 
 private:
 	template<typename T>

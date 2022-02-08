@@ -31,6 +31,8 @@ ResourceManager::ResourceManager()
 
 ResourceManager::~ResourceManager()
 {
+	ANKI_RESOURCE_LOGI("Destroying resource manager");
+
 	m_cacheDir.destroy(m_alloc);
 	m_alloc.deleteInstance(m_asyncLoader);
 	m_alloc.deleteInstance(m_shaderProgramSystem);
@@ -39,6 +41,8 @@ ResourceManager::~ResourceManager()
 
 Error ResourceManager::init(ResourceManagerInitInfo& init)
 {
+	ANKI_RESOURCE_LOGI("Initializing resource manager");
+
 	m_gr = init.m_gr;
 	m_physics = init.m_physics;
 	m_fs = init.m_resourceFs;

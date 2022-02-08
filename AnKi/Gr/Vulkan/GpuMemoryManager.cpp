@@ -73,6 +73,7 @@ GpuMemoryManager::~GpuMemoryManager()
 
 void GpuMemoryManager::destroy()
 {
+	ANKI_VK_LOGV("Destroying memory manager");
 	m_callocs.destroy(m_alloc);
 }
 
@@ -82,10 +83,10 @@ void GpuMemoryManager::init(VkPhysicalDevice pdev, VkDevice dev, GrAllocator<U8>
 	ANKI_ASSERT(dev);
 
 	// Print some info
-	ANKI_VK_LOGI("Initializing memory manager");
+	ANKI_VK_LOGV("Initializing memory manager");
 	for(const GpuMemoryManagerClassInfo& c : CLASSES)
 	{
-		ANKI_VK_LOGI("\tGPU mem class. Chunk size: %lu, suballocationSize: %lu, allocsPerChunk %lu", c.m_chunkSize,
+		ANKI_VK_LOGV("\tGPU mem class. Chunk size: %lu, suballocationSize: %lu, allocsPerChunk %lu", c.m_chunkSize,
 					 c.m_suballocationSize, c.m_chunkSize / c.m_suballocationSize);
 	}
 
@@ -119,7 +120,7 @@ void GpuMemoryManager::init(VkPhysicalDevice pdev, VkDevice dev, GrAllocator<U8>
 
 			if(isReBar)
 			{
-				ANKI_VK_LOGI("Memory type %u is ReBAR", memTypeIdx);
+				ANKI_VK_LOGV("Memory type %u is ReBAR", memTypeIdx);
 			}
 
 			// Choose different classes

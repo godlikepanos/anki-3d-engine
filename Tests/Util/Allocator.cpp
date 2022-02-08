@@ -66,6 +66,21 @@ ANKI_TEST(Util, StackAllocator)
 		ANKI_TEST_EXPECT_EQ(a.getMemoryPool().getUsersCount(), 2);
 	}
 
+	// Reset
+	{
+		using Alloc = StackAllocator<U8>;
+
+		Alloc a(allocAligned, nullptr, 64_MB);
+
+		a.allocate(32_MB);
+		a.allocate(32_MB);
+		a.allocate(32_MB);
+
+		a.getMemoryPool().reset();
+
+		a.allocate(32_MB);
+	}
+
 	ANKI_TEST_EXPECT_EQ(Foo::constructorCallCount, Foo::destructorCallCount);
 
 	// End

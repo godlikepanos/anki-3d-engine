@@ -232,15 +232,12 @@ void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::debugPrint() const
 }
 
 template<U32 T_MAX_MEMORY_RANGE_LOG2, typename TLock>
-void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::getInfo(PtrSize& userAllocatedSize,
-																	PtrSize& realAllocatedSize,
-																	F64& externalFragmentation,
-																	F64& internalFragmentation) const
+void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::getStats(BuddyAllocatorBuilderStats& stats) const
 {
 	LockGuard<TLock> lock(m_mutex);
 
-	userAllocatedSize = m_userAllocatedSize;
-	realAllocatedSize = m_realAllocatedSize;
+	stats.m_userAllocatedSize = m_userAllocatedSize;
+	stats.m_realAllocatedSize = m_realAllocatedSize;
 
 	// Compute external fragmetation (wikipedia has the definition)
 	U32 order = 0;
@@ -256,10 +253,10 @@ void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::getInfo(PtrSize& use
 	const PtrSize biggestBlockSize =
 		(orderWithTheBiggestBlock == MAX_U32) ? m_maxMemoryRange : pow2<PtrSize>(orderWithTheBiggestBlock);
 	const PtrSize realFreeMemory = m_maxMemoryRange - m_realAllocatedSize;
-	externalFragmentation = 1.0 - F64(biggestBlockSize) / F64(realFreeMemory);
+	stats.m_externalFragmentation = F32(1.0 - F64(biggestBlockSize) / F64(realFreeMemory));
 
 	// Internal fragmentation
-	internalFragmentation = 1.0 - F64(m_userAllocatedSize) / F64(m_realAllocatedSize);
+	stats.m_internalFragmentation = F32(1.0 - F64(m_userAllocatedSize) / F64(m_realAllocatedSize));
 }
 
 } // end namespace anki

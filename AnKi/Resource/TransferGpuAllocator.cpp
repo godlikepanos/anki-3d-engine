@@ -51,7 +51,7 @@ Error TransferGpuAllocator::init(PtrSize maxSize, GrManager* gr, ResourceAllocat
 	m_gr = gr;
 
 	m_maxAllocSize = getAlignedRoundUp(CHUNK_INITIAL_SIZE * POOL_COUNT, maxSize);
-	ANKI_RESOURCE_LOGI("Will use %luMB of memory for transfer scratch", m_maxAllocSize / 1024 / 1024);
+	ANKI_RESOURCE_LOGI("Will use %zuMB of memory for transfer scratch", m_maxAllocSize / PtrSize(1_MB));
 
 	for(Pool& pool : m_pools)
 	{
@@ -83,21 +83,25 @@ Error TransferGpuAllocator::allocate(PtrSize size, TransferGpuAllocatorHandle& h
 		m_crntPool = U8((m_crntPool + 1) % POOL_COUNT);
 		pool = &m_pools[m_crntPool];
 
-		// Wait for all memory to be released
-		while(pool->m_pendingReleases != 0)
 		{
-			m_condVar.wait(m_mtx);
-		}
+			ANKI_TRACE_SCOPED_EVENT(RSRC_WAIT_TRANSFER);
 
-		// All memory is released, loop until all fences are triggered
-		while(!pool->m_fences.isEmpty())
-		{
-			FencePtr fence = pool->m_fences.getFront();
-
-			const Bool done = fence->clientWait(MAX_FENCE_WAIT_TIME);
-			if(done)
+			// Wait for all memory to be released
+			while(pool->m_pendingReleases != 0)
 			{
-				pool->m_fences.popFront(m_alloc);
+				m_condVar.wait(m_mtx);
+			}
+
+			// All memory is released, loop until all fences are triggered
+			while(!pool->m_fences.isEmpty())
+			{
+				FencePtr fence = pool->m_fences.getFront();
+
+				const Bool done = fence->clientWait(MAX_FENCE_WAIT_TIME);
+				if(done)
+				{
+					pool->m_fences.popFront(m_alloc);
+				}
 			}
 		}
 

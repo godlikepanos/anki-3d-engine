@@ -103,7 +103,7 @@ public:
 	/// of the buffer to image copies.
 	static constexpr U32 GPU_BUFFER_ALIGNMENT = 16 * 3;
 
-	static constexpr U32 POOL_COUNT = 3;
+	static constexpr U32 POOL_COUNT = 2;
 	static constexpr PtrSize CHUNK_INITIAL_SIZE = 64_MB;
 	static constexpr Second MAX_FENCE_WAIT_TIME = 500.0_ms;
 
@@ -161,7 +161,7 @@ private:
 
 		constexpr F64 getNextChunkGrowScale() const
 		{
-			return 1.5;
+			return 1.0;
 		}
 
 		constexpr PtrSize getNextChunkGrowBias() const

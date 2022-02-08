@@ -7,13 +7,14 @@
 
 #include <AnKi/Core/Common.h>
 #include <AnKi/Ui/UiImmediateModeBuilder.h>
+#include <AnKi/Util/BuddyAllocatorBuilder.h>
 
 namespace anki {
 
 /// @addtogroup core
 /// @{
 
-/// XXX
+/// UI for displaying on-screen stats.
 class StatsUi : public UiImmediateModeBuilder
 {
 public:
@@ -108,13 +109,9 @@ public:
 		m_drawableCount = v;
 	}
 
-	void setGlobalVertexMemoryPoolInfo(PtrSize userAllocatedSize, PtrSize realAllocatedSize, F64 externalFragmentation,
-									   F64 internalFragmentation)
+	void setGlobalVertexMemoryPoolStats(const BuddyAllocatorBuilderStats& stats)
 	{
-		m_globalVertexPool.m_userAllocatedSize = userAllocatedSize;
-		m_globalVertexPool.m_realAllocatedSize = realAllocatedSize;
-		m_globalVertexPool.m_externalFragmentation = F32(externalFragmentation);
-		m_globalVertexPool.m_internalFragmentation = F32(internalFragmentation);
+		m_globalVertexPoolStats = stats;
 	}
 
 private:
@@ -167,14 +164,7 @@ private:
 	U64 m_freeCount = 0;
 	PtrSize m_vkCpuMem = 0;
 	PtrSize m_vkGpuMem = 0;
-	class
-	{
-	public:
-		PtrSize m_userAllocatedSize = 0;
-		PtrSize m_realAllocatedSize = 0;
-		F32 m_externalFragmentation = 0;
-		F64 m_internalFragmentation = 0;
-	} m_globalVertexPool;
+	BuddyAllocatorBuilderStats m_globalVertexPoolStats = {};
 
 	// Vulkan
 	U32 m_vkCmdbCount = 0;

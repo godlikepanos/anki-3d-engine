@@ -106,6 +106,7 @@ App::App()
 
 App::~App()
 {
+	ANKI_CORE_LOGI("Destroying application");
 	cleanup();
 }
 
@@ -496,14 +497,9 @@ Error App::mainLoop()
 				GrManagerStats grStats = m_gr->getStats();
 				statsUi.setVkCpuMemory(grStats.m_cpuMemory);
 				statsUi.setVkGpuMemory(grStats.m_gpuMemory);
-				PtrSize userAllocatedSize;
-				PtrSize realAllocatedSize;
-				F64 externalFragmentation;
-				F64 internalFragmentation;
-				m_vertexMem->getMemoryInfo(userAllocatedSize, realAllocatedSize, externalFragmentation,
-										   internalFragmentation);
-				statsUi.setGlobalVertexMemoryPoolInfo(userAllocatedSize, realAllocatedSize, externalFragmentation,
-													  internalFragmentation);
+				BuddyAllocatorBuilderStats vertMemStats;
+				m_vertexMem->getMemoryStats(vertMemStats);
+				statsUi.setGlobalVertexMemoryPoolStats(vertMemStats);
 
 				statsUi.setVkCommandBufferCount(grStats.m_commandBufferCount);
 
