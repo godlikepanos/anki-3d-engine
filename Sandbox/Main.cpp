@@ -161,10 +161,10 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		renderer.getDbg().switchDepthTestEnabled();
 	}
 
-	if(in.getKey(KeyCode::F12) == 1)
+	/*if(in.getKey(KeyCode::F12) == 1)
 	{
 		TracerSingleton::get().setEnabled(!TracerSingleton::get().getEnabled());
-	}
+	}*/
 
 #if !PLAYER
 	static F32 dist = 0.1f;
@@ -229,7 +229,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 	if(in.getKey(KeyCode::U) == 1)
 	{
 		renderer.setCurrentDebugRenderTarget(
-			(renderer.getCurrentDebugRenderTarget() == "IndirectDiffuse") ? "" : "IndirectDiffuse");
+			(renderer.getCurrentDebugRenderTarget() == "GBuffer_albedo") ? "" : "GBuffer_albedo");
 	}
 
 	if(in.getKey(KeyCode::I) == 1)

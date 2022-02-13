@@ -79,11 +79,11 @@ public:
 
 	void setupRenderableQueueElement(RenderableQueueElement& el) const
 	{
-		ANKI_ASSERT(el.m_callback != nullptr);
+		ANKI_ASSERT(m_callback != nullptr);
 		el.m_callback = m_callback;
-		ANKI_ASSERT(el.m_userData != nullptr);
+		ANKI_ASSERT(m_userData != nullptr);
 		el.m_userData = m_userData;
-		ANKI_ASSERT(el.m_mergeKey != MAX_U64);
+		ANKI_ASSERT(m_mergeKey != MAX_U64);
 		el.m_mergeKey = m_mergeKey;
 		el.m_distanceFromCamera = -1.0f;
 		el.m_lod = MAX_U8;
