@@ -20,6 +20,7 @@ Options:
 -verbose               : Verbose log
 -to-linear             : Convert sRGB to linear
 -to-srgb               : Convert linear to sRGB
+-flip-image <0|1>      : Flip the image. Default is 1
 )";
 
 static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& config,
@@ -175,6 +176,27 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 		else if(CString(argv[i]) == "-to-srgb")
 		{
 			config.m_linearToSRgb = true;
+		}
+		else if(CString(argv[i]) == "-flip-image")
+		{
+			++i;
+			if(i >= argc)
+			{
+				return Error::USER_DATA;
+			}
+
+			if(CString(argv[i]) == "1")
+			{
+				config.m_flipImage = true;
+			}
+			else if(CString(argv[i]) == "0")
+			{
+				config.m_flipImage = false;
+			}
+			else
+			{
+				return Error::USER_DATA;
+			}
 		}
 		else
 		{

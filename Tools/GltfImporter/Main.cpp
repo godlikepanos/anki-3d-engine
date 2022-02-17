@@ -173,7 +173,7 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 
 	if(!texrpathFound)
 	{
-		info.m_texRpath = info.m_outDir;
+		info.m_texRpath = info.m_rpath;
 	}
 
 	return Error::NONE;

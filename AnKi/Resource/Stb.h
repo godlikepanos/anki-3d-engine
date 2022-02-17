@@ -9,3 +9,4 @@
 #define STBI_NO_FAILURE_STRINGS 1 // No need
 #include <Stb/stb_image.h>
 #include <Stb/stb_image_write.h>
+#include <Stb/stb_image_resize.h>

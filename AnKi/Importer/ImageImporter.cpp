@@ -212,6 +212,26 @@ static ANKI_USE_RESULT Error checkConfig(const ImageImporterConfig& config)
 	return Error::NONE;
 }
 
+static ANKI_USE_RESULT Error identifyImage(CString filename, U32& width, U32& height, U32& channelCount, Bool& hdr)
+{
+	I32 iwidth, iheight, ichannelCount;
+	const I ok = stbi_info(filename.cstr(), &iwidth, &iheight, &ichannelCount);
+	if(!ok)
+	{
+		ANKI_IMPORTER_LOGE("STB failed to load file: %s", filename.cstr());
+		return Error::FUNCTION_FAILED;
+	}
+
+	const I ihdr = stbi_is_hdr(filename.cstr());
+
+	width = U32(iwidth);
+	height = U32(iheight);
+	channelCount = U32(ichannelCount);
+	hdr = U32(ihdr);
+
+	return Error::NONE;
+}
+
 static ANKI_USE_RESULT Error checkInputImages(const ImageImporterConfig& config, U32& width, U32& height,
 											  U32& channelCount, Bool& isHdr)
 {
@@ -219,40 +239,23 @@ static ANKI_USE_RESULT Error checkInputImages(const ImageImporterConfig& config,
 	height = 0;
 	channelCount = 0;
 	isHdr = false;
-	I isHdr2 = -1;
 
 	for(U32 i = 0; i < config.m_inputFilenames.getSize(); ++i)
 	{
-		I32 iwidth, iheight, ichannelCount;
-		const I ok = stbi_info(config.m_inputFilenames[i].cstr(), &iwidth, &iheight, &ichannelCount);
-		if(!ok)
-		{
-			ANKI_IMPORTER_LOGE("STB failed to load file: %s", config.m_inputFilenames[i].cstr());
-			return Error::FUNCTION_FAILED;
-		}
+		U32 nwidth, nheight, nchannelCount;
+		Bool nhdr;
+		ANKI_CHECK(identifyImage(config.m_inputFilenames[i], nwidth, nheight, nchannelCount, nhdr));
 
-		if(width == 0)
+		if(i == 0)
 		{
-			width = U32(iwidth);
-			height = U32(iheight);
-			channelCount = U32(ichannelCount);
+			width = nwidth;
+			height = nheight;
+			channelCount = nchannelCount;
+			isHdr = nhdr;
 		}
-		else if(width != U32(iwidth) || height != U32(iheight) || channelCount != U32(ichannelCount))
+		else if(width != nwidth || height != nheight || channelCount != nchannelCount || isHdr != nhdr)
 		{
 			ANKI_IMPORTER_LOGE("Input image doesn't match previous input images: %s",
-							   config.m_inputFilenames[i].cstr());
-			return Error::USER_DATA;
-		}
-
-		const I hdr = stbi_is_hdr(config.m_inputFilenames[i].cstr());
-		if(isHdr2 < 0)
-		{
-			isHdr2 = hdr;
-			isHdr = hdr != 0;
-		}
-		else if(hdr != isHdr2)
-		{
-			ANKI_IMPORTER_LOGE("Input image doesn't match previous HDR parameters: %s",
 							   config.m_inputFilenames[i].cstr());
 			return Error::USER_DATA;
 		}
@@ -263,6 +266,80 @@ static ANKI_USE_RESULT Error checkInputImages(const ImageImporterConfig& config,
 	{
 		ANKI_IMPORTER_LOGE("Only power of two images are accepted");
 		return Error::USER_DATA;
+	}
+
+	return Error::NONE;
+}
+
+static ANKI_USE_RESULT Error resizeImage(CString inImageFilename, U32 outWidth, U32 outHeight, CString tempDirectory,
+										 GenericMemoryPoolAllocator<U8> alloc, StringAuto& tmpFilename)
+{
+	U32 inWidth, inHeight, channelCount;
+	Bool hdr;
+	ANKI_CHECK(identifyImage(inImageFilename, inWidth, inHeight, channelCount, hdr));
+
+	// Load
+	void* inPixels;
+	if(!hdr)
+	{
+		I32 width, height;
+		inPixels = stbi_load(inImageFilename.cstr(), &width, &height, nullptr, channelCount);
+	}
+	else
+	{
+		I32 width, height;
+		inPixels = stbi_loadf(inImageFilename.cstr(), &width, &height, nullptr, channelCount);
+	}
+
+	if(!inPixels)
+	{
+		ANKI_IMPORTER_LOGE("STB load failed: %s", inImageFilename.cstr());
+		return Error::FUNCTION_FAILED;
+	}
+
+	// Resize
+	I ok;
+	DynamicArrayAuto<U8> outPixels(alloc);
+	if(!hdr)
+	{
+		outPixels.resize(outWidth * outHeight * channelCount);
+		ok = stbir_resize_uint8(static_cast<const U8*>(inPixels), inWidth, inHeight, 0, outPixels.getBegin(), outWidth,
+								outHeight, 0, channelCount);
+	}
+	else
+	{
+		outPixels.resize(outWidth * outHeight * channelCount * sizeof(F32));
+		ok = stbir_resize_float(static_cast<const F32*>(inPixels), inWidth, inHeight, 0,
+								reinterpret_cast<F32*>(outPixels.getBegin()), outWidth, outHeight, 0, channelCount);
+	}
+
+	stbi_image_free(inPixels);
+
+	if(!ok)
+	{
+		ANKI_IMPORTER_LOGE("stbir_resize_xxx() failed to resize the image: %s", inImageFilename.cstr());
+		return Error::FUNCTION_FAILED;
+	}
+
+	// Store
+	tmpFilename.sprintf("%s/AnKiImageImporter_%u.%s", tempDirectory.cstr(), U32(std::rand()), (hdr) ? "exr" : "png");
+	ANKI_IMPORTER_LOGV("Will store: %s", tmpFilename.cstr());
+
+	if(!hdr)
+	{
+		ok = stbi_write_png(tmpFilename.cstr(), outWidth, outHeight, channelCount, outPixels.getBegin(), 0);
+	}
+	else
+	{
+		const I ret = SaveEXR(reinterpret_cast<const F32*>(outPixels.getBegin()), outWidth, outHeight, channelCount, 0,
+							  tmpFilename.cstr(), nullptr);
+		ok = ret >= 0;
+	}
+
+	if(!ok)
+	{
+		ANKI_IMPORTER_LOGE("Failed to create: %s", tmpFilename.cstr());
+		return Error::FUNCTION_FAILED;
 	}
 
 	return Error::NONE;
@@ -362,18 +439,17 @@ static ANKI_USE_RESULT Error loadFirstMipmap(const ImageImporterConfig& config, 
 
 	for(U32 i = 0; i < config.m_inputFilenames.getSize(); ++i)
 	{
-		I32 width, height, c;
-		stbi_set_flip_vertically_on_load_thread(true);
+		I32 width, height;
+		stbi_set_flip_vertically_on_load_thread(config.m_flipImage);
 		void* data;
 		if(!ctx.m_hdr)
 		{
-			data = stbi_load(config.m_inputFilenames[i].cstr(), &width, &height, &c, ctx.m_channelCount);
+			data = stbi_load(config.m_inputFilenames[i].cstr(), &width, &height, nullptr, ctx.m_channelCount);
 		}
 		else
 		{
-			data = stbi_loadf(config.m_inputFilenames[i].cstr(), &width, &height, &c, ctx.m_channelCount);
+			data = stbi_loadf(config.m_inputFilenames[i].cstr(), &width, &height, nullptr, ctx.m_channelCount);
 		}
-		ANKI_ASSERT(U32(c) == ctx.m_channelCount);
 
 		if(!data)
 		{
@@ -836,16 +912,55 @@ static ANKI_USE_RESULT Error storeAnkiImage(const ImageImporterConfig& config, c
 	return Error::NONE;
 }
 
-static ANKI_USE_RESULT Error importImageInternal(const ImageImporterConfig& config)
+static ANKI_USE_RESULT Error importImageInternal(const ImageImporterConfig& configOriginal)
 {
+	GenericMemoryPoolAllocator<U8> alloc = configOriginal.m_allocator;
+	ImageImporterConfig config = configOriginal;
+
+	config.m_minMipmapDimension = max(config.m_minMipmapDimension, 4u);
+	if(!!(config.m_compressions & ImageBinaryDataCompression::ASTC))
+	{
+		config.m_minMipmapDimension = max(config.m_minMipmapDimension, config.m_astcBlockSize.x());
+		config.m_minMipmapDimension = max(config.m_minMipmapDimension, config.m_astcBlockSize.y());
+	}
+
 	// Checks
 	ANKI_CHECK(checkConfig(config));
 	U32 width, height, channelCount;
 	Bool isHdr;
 	ANKI_CHECK(checkInputImages(config, width, height, channelCount, isHdr));
 
+	// Resize
+	DynamicArrayAuto<StringAuto> newFilenames(alloc);
+	DynamicArrayAuto<CString> newFilenamesCString(alloc);
+	DynamicArrayAuto<CleanupFile> resizedImagesCleanup(alloc);
+	if(width < config.m_minMipmapDimension || height < config.m_minMipmapDimension)
+	{
+		const U32 newWidth = max(width, config.m_minMipmapDimension);
+		const U32 newHeight = max(height, config.m_minMipmapDimension);
+
+		ANKI_IMPORTER_LOGV("Image is smaller than the min mipmap dimension. Will resize it to %ux%u", newWidth,
+						   newHeight);
+
+		newFilenames.resize(config.m_inputFilenames.getSize(), StringAuto(alloc));
+		newFilenamesCString.resize(config.m_inputFilenames.getSize());
+
+		for(U32 i = 0; i < config.m_inputFilenames.getSize(); ++i)
+		{
+			ANKI_CHECK(resizeImage(config.m_inputFilenames[i], newWidth, newHeight, config.m_tempDirectory, alloc,
+								   newFilenames[i]));
+
+			newFilenamesCString[i] = newFilenames[i];
+			resizedImagesCleanup.emplaceBack(alloc, newFilenames[i]);
+		}
+
+		// Override config
+		config.m_inputFilenames = newFilenamesCString;
+		width = newWidth;
+		height = newHeight;
+	}
+
 	// Init image
-	GenericMemoryPoolAllocator<U8> alloc = config.m_allocator;
 	ImageImporterContext ctx(alloc);
 
 	ctx.m_width = width;
@@ -899,17 +1014,10 @@ static ANKI_USE_RESULT Error importImageInternal(const ImageImporterConfig& conf
 	ANKI_CHECK(loadFirstMipmap(config, ctx));
 
 	// Generate mipmaps
-	U32 minMipDimension = max(config.m_minMipmapDimension, 4u);
-	if(!!(config.m_compressions & ImageBinaryDataCompression::ASTC))
-	{
-		minMipDimension = max(minMipDimension, config.m_astcBlockSize.x());
-		minMipDimension = max(minMipDimension, config.m_astcBlockSize.y());
-	}
-
 	const U32 mipCount =
 		min(config.m_mipmapCount, (config.m_type == ImageBinaryType::_3D)
-									  ? computeMaxMipmapCount3d(width, height, ctx.m_depth, minMipDimension)
-									  : computeMaxMipmapCount2d(width, height, minMipDimension));
+									  ? computeMaxMipmapCount3d(width, height, ctx.m_depth, config.m_minMipmapDimension)
+									  : computeMaxMipmapCount2d(width, height, config.m_minMipmapDimension));
 	for(U32 mip = 1; mip < mipCount; ++mip)
 	{
 		ctx.m_mipmaps.emplaceBack(alloc);

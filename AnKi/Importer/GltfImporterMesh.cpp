@@ -734,7 +734,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 			const U32 idx = submesh.m_indices[i] + vertCount;
 			if(idx > MAX_U16)
 			{
-				ANKI_IMPORTER_LOGE("Only supports 16bit indices for now");
+				ANKI_IMPORTER_LOGE("Only supports 16bit indices for now (%u): %s", idx, fname.cstr());
 				return Error::USER_DATA;
 			}
 

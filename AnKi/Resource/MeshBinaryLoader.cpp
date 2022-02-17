@@ -46,7 +46,7 @@ Error MeshBinaryLoader::load(const ResourceFilename& filename)
 
 			for(U d = 0; d < 3; ++d)
 			{
-				if(sm.m_aabbMin[i] >= sm.m_aabbMax[i])
+				if(sm.m_aabbMin[d] >= sm.m_aabbMax[d])
 				{
 					ANKI_RESOURCE_LOGE("Wrong bounding box");
 					return Error::USER_DATA;

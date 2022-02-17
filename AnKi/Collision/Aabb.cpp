@@ -21,7 +21,7 @@ Aabb Aabb::getTransformed(const Transform& trf) const
 	Vec4 newC = trf.transform(center);
 	Vec4 newE = Vec4(absM * (extend * trf.getScale()), 0.0f);
 
-	return Aabb(newC - newE, newC + newE);
+	return Aabb(newC - newE, newC + newE + Vec4(EPSILON, EPSILON, EPSILON, 0.0f));
 }
 
 Aabb Aabb::getCompoundShape(const Aabb& b) const

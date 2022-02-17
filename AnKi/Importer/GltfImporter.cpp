@@ -1269,7 +1269,7 @@ Error GltfImporter::writeLight(const cgltf_node& node, const HashMapAuto<CString
 	auto shadow = extras.find("shadow");
 	if(shadow != extras.getEnd())
 	{
-		if(*shadow == "true")
+		if(*shadow == "true" || *shadow == "1")
 		{
 			ANKI_CHECK(m_sceneFile.writeText("lcomp:setShadowEnabled(1)\n"));
 		}
@@ -1377,7 +1377,7 @@ Error GltfImporter::writeCamera(const cgltf_node& node, const HashMapAuto<CStrin
 		return Error::NONE;
 	}
 
-	const cgltf_camera_perspective& cam = node.camera->perspective;
+	const cgltf_camera_perspective& cam = node.camera->data.perspective;
 	ANKI_IMPORTER_LOGI("Importing camera %s", getNodeName(node).cstr());
 
 	ANKI_CHECK(m_sceneFile.writeText("\nnode = scene:newPerspectiveCameraNode(\"%s\")\n", getNodeName(node).cstr()));
