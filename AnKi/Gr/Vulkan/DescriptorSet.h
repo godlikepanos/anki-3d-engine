@@ -26,11 +26,10 @@ class DSLayoutCacheEntry;
 class alignas(8) DescriptorBinding
 {
 public:
+	U32 m_arraySize = 0;
 	ShaderTypeBit m_stageMask = ShaderTypeBit::NONE;
 	DescriptorType m_type = DescriptorType::COUNT;
 	U8 m_binding = MAX_U8;
-	U8 m_arraySizeMinusOne = 0;
-	Array<U8, 3> m_padding = {};
 };
 static_assert(sizeof(DescriptorBinding) == 8, "Should be packed because it will be hashed");
 

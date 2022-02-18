@@ -143,7 +143,7 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 			{
 				ANKI_ASSERT(typeInfo.array.size() == 1 && "Only 1D arrays are supported");
 				arraySize = typeInfo.array[0];
-				ANKI_ASSERT(arraySize > 0 && (arraySize - 1) <= MAX_U8);
+				ANKI_ASSERT(arraySize > 0);
 			}
 
 			m_descriptorSetMask.set(set);
@@ -167,14 +167,13 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 				descriptor.m_binding = U8(binding);
 				descriptor.m_type = type;
 				descriptor.m_stageMask = ShaderTypeBit(1 << m_shaderType);
-				descriptor.m_arraySizeMinusOne = U8(arraySize - 1);
+				descriptor.m_arraySize = arraySize;
 			}
 			else
 			{
 				// Same binding, make sure the type is compatible
 				ANKI_ASSERT(type == descriptors[set][foundIdx].m_type && "Same binding different type");
-				ANKI_ASSERT(arraySize - 1 == descriptors[set][foundIdx].m_arraySizeMinusOne
-							&& "Same binding different array size");
+				ANKI_ASSERT(arraySize == descriptors[set][foundIdx].m_arraySize && "Same binding different array size");
 			}
 		}
 	};

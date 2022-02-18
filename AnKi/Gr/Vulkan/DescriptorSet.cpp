@@ -683,7 +683,7 @@ Error DSLayoutCacheEntry::init(const DescriptorBinding* bindings, U32 bindingCou
 		const DescriptorBinding& ak = bindings[i];
 
 		vk.binding = ak.m_binding;
-		vk.descriptorCount = ak.m_arraySizeMinusOne + 1;
+		vk.descriptorCount = ak.m_arraySize;
 		vk.descriptorType = convertDescriptorType(ak.m_type);
 		vk.pImmutableSamplers = nullptr;
 		vk.stageFlags = convertShaderTypeBit(ak.m_stageMask);
@@ -691,7 +691,7 @@ Error DSLayoutCacheEntry::init(const DescriptorBinding* bindings, U32 bindingCou
 		ANKI_ASSERT(m_activeBindings.get(ak.m_binding) == false);
 		m_activeBindings.set(ak.m_binding);
 		m_bindingType[ak.m_binding] = ak.m_type;
-		m_bindingArraySize[ak.m_binding] = ak.m_arraySizeMinusOne + 1;
+		m_bindingArraySize[ak.m_binding] = ak.m_arraySize;
 		m_minBinding = min<U32>(m_minBinding, ak.m_binding);
 		m_maxBinding = max<U32>(m_maxBinding, ak.m_binding);
 	}
@@ -710,7 +710,7 @@ Error DSLayoutCacheEntry::init(const DescriptorBinding* bindings, U32 bindingCou
 		{
 			if(m_poolSizesCreateInf[j].type == convertDescriptorType(bindings[i].m_type))
 			{
-				m_poolSizesCreateInf[j].descriptorCount += bindings[i].m_arraySizeMinusOne + 1;
+				m_poolSizesCreateInf[j].descriptorCount += bindings[i].m_arraySize;
 				break;
 			}
 		}
@@ -718,7 +718,7 @@ Error DSLayoutCacheEntry::init(const DescriptorBinding* bindings, U32 bindingCou
 		if(j == poolSizeCount)
 		{
 			m_poolSizesCreateInf[poolSizeCount].type = convertDescriptorType(bindings[i].m_type);
-			m_poolSizesCreateInf[poolSizeCount].descriptorCount = bindings[i].m_arraySizeMinusOne + 1;
+			m_poolSizesCreateInf[poolSizeCount].descriptorCount = bindings[i].m_arraySize;
 			++poolSizeCount;
 		}
 	}
@@ -988,12 +988,12 @@ Error DescriptorSetFactory::newDescriptorSetLayout(const DescriptorSetLayoutInit
 		{
 			const DescriptorBinding& binding = bindings[i];
 			if(binding.m_binding == 0 && binding.m_type == DescriptorType::TEXTURE
-			   && binding.m_arraySizeMinusOne == m_bindlessTextureCount - 1)
+			   && binding.m_arraySize == m_bindlessTextureCount)
 			{
 				// All good
 			}
 			else if(binding.m_binding == 1 && binding.m_type == DescriptorType::IMAGE
-					&& binding.m_arraySizeMinusOne == m_bindlessImageCount - 1)
+					&& binding.m_arraySize == m_bindlessImageCount)
 			{
 				// All good
 			}
