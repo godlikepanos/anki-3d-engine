@@ -32,6 +32,11 @@ Error VrsSriGeneration::init()
 
 Error VrsSriGeneration::initInternal()
 {
+	if(!getGrManager().getDeviceCapabilities().m_vrs)
+	{
+		return Error::NONE;
+	}
+
 	const UVec2 rez = (m_r->getInternalResolution() + m_sriTexelDimension - 1) / m_sriTexelDimension;
 
 	ANKI_R_LOGV("Intializing VRS SRI generation. SRI resolution %ux%u", rez.x(), rez.y());

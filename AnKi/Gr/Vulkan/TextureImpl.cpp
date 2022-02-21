@@ -120,6 +120,9 @@ Error TextureImpl::initInternal(VkImage externalImage, const TextureInitInfo& in
 		ANKI_ASSERT(!!(init.m_usage & TextureUsageBit::PRESENT));
 	}
 
+	ANKI_ASSERT(getGrManagerImpl().getDeviceCapabilities().m_vrs
+				|| !(init.m_usage & TextureUsageBit::FRAMEBUFFER_SHADING_RATE));
+
 	// Set some stuff
 	m_width = init.m_width;
 	m_height = init.m_height;

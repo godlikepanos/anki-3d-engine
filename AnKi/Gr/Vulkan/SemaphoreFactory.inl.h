@@ -59,7 +59,7 @@ inline Bool MicroSemaphore::clientWait(Second seconds)
 	const U64 ns = U64(nsf);
 
 	VkResult res;
-	ANKI_VK_CHECKF(res = vkWaitSemaphores(m_factory->m_dev, &waitInfo, ns));
+	ANKI_VK_CHECKF(res = vkWaitSemaphoresKHR(m_factory->m_dev, &waitInfo, ns));
 
 	return res != VK_TIMEOUT;
 }

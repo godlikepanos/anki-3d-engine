@@ -124,6 +124,27 @@ Error TransferGpuAllocator::allocate(PtrSize size, TransferGpuAllocatorHandle& h
 	m_crntPoolAllocatedSize += size;
 	++pool->m_pendingReleases;
 
+	// Do a cleanup of done fences. Do that to avoid having too many fences alive. Fences are implemented with file
+	// decriptors in Linux and we don't want to exceed the process' limit of max open file descriptors
+	for(Pool& p : m_pools)
+	{
+		List<FencePtr>::Iterator it = p.m_fences.getBegin();
+		while(it != p.m_fences.getEnd())
+		{
+			const Bool fenceDone = (*it)->clientWait(0.0);
+			if(fenceDone)
+			{
+				auto nextIt = it + 1;
+				p.m_fences.erase(m_alloc, it);
+				it = nextIt;
+			}
+			else
+			{
+				++it;
+			}
+		}
+	}
+
 	return Error::NONE;
 }
 

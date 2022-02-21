@@ -79,6 +79,9 @@ class FenceFactory
 	friend class MicroFencePtrDeleter;
 
 public:
+	/// Limit the alive fences to avoid having too many file descriptors used in Linux.
+	static constexpr U32 MAX_ALIVE_FENCES = 32;
+
 	FenceFactory()
 	{
 	}
@@ -106,7 +109,7 @@ private:
 	GrAllocator<U8> m_alloc;
 	VkDevice m_dev = VK_NULL_HANDLE;
 	DynamicArray<MicroFence*> m_fences;
-	U32 m_fenceCount = 0;
+	U32 m_aliveFenceCount = 0;
 	Mutex m_mtx;
 
 	MicroFence* newFence();

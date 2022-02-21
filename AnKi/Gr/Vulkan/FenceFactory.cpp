@@ -9,9 +9,9 @@ namespace anki {
 
 void FenceFactory::destroy()
 {
-	for(U32 i = 0; i < m_fenceCount; ++i)
+	for(MicroFence* fence : m_fences)
 	{
-		m_alloc.deleteInstance(m_fences[i]);
+		m_alloc.deleteInstance(fence);
 	}
 
 	m_fences.destroy(m_alloc);
@@ -21,31 +21,41 @@ MicroFence* FenceFactory::newFence()
 {
 	MicroFence* out = nullptr;
 
-	LockGuard<Mutex> lock(m_mtx);
-
-	U32 count = m_fenceCount;
-	while(count--)
 	{
-		VkResult status;
-		ANKI_VK_CHECKF(status = vkGetFenceStatus(m_dev, m_fences[count]->getHandle()));
-		if(status == VK_SUCCESS)
-		{
-			out = m_fences[count];
-			ANKI_VK_CHECKF(vkResetFences(m_dev, 1, &m_fences[count]->getHandle()));
+		LockGuard<Mutex> lock(m_mtx);
 
-			// Pop it
-			for(U32 i = count; i < m_fenceCount - 1; ++i)
+		for(U32 i = 0; i < m_fences.getSize(); ++i)
+		{
+			VkResult status;
+			ANKI_VK_CHECKF(status = vkGetFenceStatus(m_dev, m_fences[i]->getHandle()));
+			if(status == VK_SUCCESS)
 			{
-				m_fences[i] = m_fences[i + 1];
+				out = m_fences[i];
+
+				// Pop it
+				m_fences.erase(m_alloc, m_fences.getBegin() + i);
+				break;
 			}
-
-			--m_fenceCount;
-
-			break;
+			else if(status != VK_NOT_READY)
+			{
+				ANKI_ASSERT(0);
+			}
 		}
-		else if(status != VK_NOT_READY)
+
+		if(out)
 		{
-			ANKI_ASSERT(0);
+			// Recycle
+		}
+		else
+		{
+			// Create new
+
+			++m_aliveFenceCount;
+
+			if(m_aliveFenceCount > MAX_ALIVE_FENCES)
+			{
+				ANKI_VK_LOGW("Too many alive fences (%u). You may run out of file descriptors", m_aliveFenceCount);
+			}
 		}
 	}
 
@@ -53,6 +63,11 @@ MicroFence* FenceFactory::newFence()
 	{
 		// Create a new one
 		out = m_alloc.newInstance<MicroFence>(this);
+	}
+	else
+	{
+		// Recycle
+		ANKI_VK_CHECKF(vkResetFences(m_dev, 1, &out->getHandle()));
 	}
 
 	ANKI_ASSERT(out->m_refcount.getNonAtomically() == 0);
@@ -64,15 +79,7 @@ void FenceFactory::deleteFence(MicroFence* fence)
 	ANKI_ASSERT(fence);
 
 	LockGuard<Mutex> lock(m_mtx);
-
-	if(m_fences.getSize() <= m_fenceCount)
-	{
-		// Grow storage
-		m_fences.resize(m_alloc, max<U32>(1, m_fences.getSize() * 2));
-	}
-
-	m_fences[m_fenceCount] = fence;
-	++m_fenceCount;
+	m_fences.emplaceBack(m_alloc, fence);
 }
 
 } // end namespace anki
