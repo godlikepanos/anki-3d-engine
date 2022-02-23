@@ -532,7 +532,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			const Transform localTrf = Transform(tsl.xyz0(), Mat3x4(Vec3(0.0f), rot), 1.0f);
 			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 		}
-		else if((it = extras.find("gi_probe")) != extras.getEnd() && *it == "true")
+		else if((it = extras.find("gi_probe")) != extras.getEnd() && (*it == "true" || *it == "1"))
 		{
 			Vec3 tsl;
 			Mat3 rot;

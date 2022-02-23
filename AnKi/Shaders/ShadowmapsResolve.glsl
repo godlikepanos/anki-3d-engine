@@ -65,12 +65,27 @@ void main()
 		ANKI_RP F32 shadowFactor;
 		if(positiveZViewSpace < dirLight.m_effectiveShadowDistance)
 		{
-			const U32 cascadeIdx =
-				computeShadowCascadeIndex(positiveZViewSpace, dirLight.m_shadowCascadesDistancePower,
-										  dirLight.m_effectiveShadowDistance, dirLight.m_cascadeCount);
+			F32 cascadeBlendFactor;
+			const UVec2 cascadeIndices = computeShadowCascadeIndex2(
+				positiveZViewSpace, dirLight.m_shadowCascadesDistancePower, dirLight.m_effectiveShadowDistance,
+				dirLight.m_cascadeCount, cascadeBlendFactor);
 
-			shadowFactor =
-				computeShadowFactorDirLight(dirLight, cascadeIdx, worldPos, u_shadowAtlasTex, u_linearAnyClampSampler);
+			const F32 shadowFactorCascadeA = computeShadowFactorDirLight(dirLight, cascadeIndices.x, worldPos,
+																		 u_shadowAtlasTex, u_linearAnyClampSampler);
+
+			if(cascadeBlendFactor < 0.01 || cascadeIndices.x == cascadeIndices.y)
+			{
+				// Don't blend cascades
+				shadowFactor = shadowFactorCascadeA;
+			}
+			else
+			{
+				// Blend cascades
+				const F32 shadowFactorCascadeB = computeShadowFactorDirLight(dirLight, cascadeIndices.y, worldPos,
+																			 u_shadowAtlasTex, u_linearAnyClampSampler);
+
+				shadowFactor = mix(shadowFactorCascadeA, shadowFactorCascadeB, cascadeBlendFactor);
+			}
 
 			ANKI_RP F32 distanceFadeFactor = saturate(positiveZViewSpace / dirLight.m_effectiveShadowDistance);
 			distanceFadeFactor = pow(distanceFadeFactor, 8.0);

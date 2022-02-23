@@ -400,6 +400,22 @@ U32 computeShadowCascadeIndex(F32 distance, F32 p, F32 effectiveShadowDistance, 
 	return U32(idx);
 }
 
+/// Bring the indices of the closest cascades and a factor to blend them. To visualize what's going on go to
+/// https://www.desmos.com/calculator/dwlbq2j55i
+UVec2 computeShadowCascadeIndex2(F32 distance, F32 p, F32 effectiveShadowDistance, U32 shadowCascadeCount,
+								 out F32 blendFactor)
+{
+	const F32 shadowCascadeCountf = F32(shadowCascadeCount);
+	const F32 idx = pow(distance / effectiveShadowDistance, 1.0f / p) * shadowCascadeCountf;
+
+	const U32 cascadeA = min(U32(idx), shadowCascadeCount - 1u);
+	const U32 cascadeB = min(cascadeA + 1u, shadowCascadeCount - 1u);
+
+	blendFactor = pow(fract(idx), 24.0);
+
+	return UVec2(cascadeA, cascadeB);
+}
+
 /// To play with it use https://www.shadertoy.com/view/sttSDf
 /// http://jcgt.org/published/0007/04/01/paper.pdf by Eric Heitz
 /// Input v: view direction

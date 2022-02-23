@@ -1583,7 +1583,7 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 
 		StringAuto finalLog(m_alloc);
 		log.join("", finalLog);
-		ANKI_VK_LOGI("%s", finalLog.cstr());
+		ANKI_VK_LOGV("%s", finalLog.cstr());
 	}
 
 	return Error::NONE;
