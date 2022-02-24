@@ -229,7 +229,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 	if(in.getKey(KeyCode::U) == 1)
 	{
 		renderer.setCurrentDebugRenderTarget(
-			(renderer.getCurrentDebugRenderTarget() == "GBuffer_albedo") ? "" : "GBuffer_albedo");
+			(renderer.getCurrentDebugRenderTarget() == "IndirectDiffuse") ? "" : "IndirectDiffuse");
 	}
 
 	if(in.getKey(KeyCode::I) == 1)

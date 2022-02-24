@@ -253,9 +253,9 @@ layout(std140, row_major) uniform;
 layout(std140, row_major) buffer;
 
 #if ANKI_FORCE_FULL_FP_PRECISION
-#	define ANKI_RP mediump
+#	define ANKI_RP
 #else
-#	define ANKI_RP highp
+#	define ANKI_RP mediump
 #endif
 
 #define ANKI_FP highp

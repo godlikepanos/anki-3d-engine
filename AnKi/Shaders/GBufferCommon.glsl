@@ -40,7 +40,7 @@ out gl_PerVertex
 layout(location = 0) out Vec2 out_uv;
 layout(location = 1) out ANKI_RP Vec3 out_normal;
 layout(location = 2) out ANKI_RP Vec3 out_tangent;
-layout(location = 3) out ANKI_RP Vec3 out_bitangent;
+layout(location = 3) out Vec3 out_bitangent;
 
 #		if REALLY_USING_PARALLAX
 layout(location = 4) out F32 out_distFromTheCamera;
@@ -61,7 +61,7 @@ layout(location = 7) out Vec2 out_velocity;
 layout(location = 0) in Vec2 in_uv;
 layout(location = 1) in ANKI_RP Vec3 in_normal;
 layout(location = 2) in ANKI_RP Vec3 in_tangent;
-layout(location = 3) in ANKI_RP Vec3 in_bitangent;
+layout(location = 3) in Vec3 in_bitangent;
 
 #	if REALLY_USING_PARALLAX
 layout(location = 4) in F32 in_distFromTheCamera;

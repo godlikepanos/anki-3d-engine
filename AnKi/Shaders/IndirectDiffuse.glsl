@@ -100,9 +100,10 @@ void main()
 		const UVec2 globalInvocation = UVec2(gl_FragCoord.xy);
 #endif
 		const UVec2 random = rand3DPCG16(UVec3(globalInvocation, u_clusteredShading.m_frame)).xy;
+		const F32 aspectRatio = u_unis.m_viewportSizef.x / u_unis.m_viewportSizef.y;
 		for(U32 i = 0u; i < u_unis.m_sampleCount; ++i)
 		{
-			const Vec2 point = UV_TO_NDC(hammersleyRandom16(i, u_unis.m_sampleCount, random));
+			const Vec2 point = UV_TO_NDC(hammersleyRandom16(i, u_unis.m_sampleCount, random)) * Vec2(1.0, aspectRatio);
 			const Vec2 finalDiskPoint = ndc + point * projRadius;
 
 			// Do a cheap unproject in view space
