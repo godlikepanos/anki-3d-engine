@@ -67,7 +67,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 	if(in.getKey(KeyCode::Y) == 1)
 	{
 		renderer.setCurrentDebugRenderTarget(
-			(renderer.getCurrentDebugRenderTarget() == "GBuffer_albedo") ? "" : "GBuffer_albedo");
+			(renderer.getCurrentDebugRenderTarget() == "GBuffer_normals") ? "" : "GBuffer_normals");
 	}
 
 	if(in.getKey(KeyCode::U) == 1)

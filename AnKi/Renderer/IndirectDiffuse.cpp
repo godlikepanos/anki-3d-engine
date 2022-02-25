@@ -220,7 +220,6 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 		TextureSubresourceInfo hizSubresource;
 		hizSubresource.m_mipmapCount = 1;
 		prpass->newDependency(RenderPassDependency(m_r->getDepthDownscale().getHiZRt(), readUsage, hizSubresource));
-		prpass->newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(2), readUsage));
 		prpass->newDependency(RenderPassDependency(m_runCtx.m_mainRtHandles[!readIdx], writeUsage));
 
 		prpass->setWork([this, &ctx, dir, readIdx](RenderPassWorkContext& rgraphCtx) {
@@ -232,11 +231,10 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			TextureSubresourceInfo hizSubresource;
 			hizSubresource.m_mipmapCount = 1;
 			rgraphCtx.bindTexture(0, 2, m_r->getDepthDownscale().getHiZRt(), hizSubresource);
-			rgraphCtx.bindColorTexture(0, 3, m_r->getGBuffer().getColorRt(2));
 
 			if(getConfig().getRPreferCompute())
 			{
-				rgraphCtx.bindImage(0, 4, m_runCtx.m_mainRtHandles[!readIdx]);
+				rgraphCtx.bindImage(0, 3, m_runCtx.m_mainRtHandles[!readIdx]);
 			}
 
 			IndirectDiffuseDenoiseUniforms unis;
