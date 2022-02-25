@@ -79,9 +79,8 @@ Error LightShading::initLightShading()
 	m_lightShading.m_grProg[1] = variant->getProgram();
 
 	// Create RT descr
-	m_lightShading.m_rtDescr =
-		m_r->create2DRenderTargetDescription(m_r->getInternalResolution().x(), m_r->getInternalResolution().y(),
-											 LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT, "Light Shading");
+	m_lightShading.m_rtDescr = m_r->create2DRenderTargetDescription(
+		m_r->getInternalResolution().x(), m_r->getInternalResolution().y(), m_r->getHdrFormat(), "Light Shading");
 	m_lightShading.m_rtDescr.bake();
 
 	// Create FB descr

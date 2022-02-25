@@ -38,8 +38,8 @@ Error DownscaleBlur::initInternal()
 	const Bool preferCompute = getConfig().getRPreferCompute();
 
 	// Create the miped texture
-	TextureInitInfo texinit = m_r->create2DRenderTargetDescription(
-		rez.x(), rez.y(), LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT, "DownscaleBlur");
+	TextureInitInfo texinit =
+		m_r->create2DRenderTargetDescription(rez.x(), rez.y(), m_r->getHdrFormat(), "DownscaleBlur");
 	texinit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE;
 	if(preferCompute)
 	{

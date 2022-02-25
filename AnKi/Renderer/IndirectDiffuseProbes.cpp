@@ -188,8 +188,8 @@ Error IndirectDiffuseProbes::initLightShading()
 {
 	// Init RT descr
 	{
-		m_lightShading.m_rtDescr = m_r->create2DRenderTargetDescription(
-			m_tileSize * 6, m_tileSize, LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT, "GI LS");
+		m_lightShading.m_rtDescr =
+			m_r->create2DRenderTargetDescription(m_tileSize * 6, m_tileSize, m_r->getHdrFormat(), "GI LS");
 		m_lightShading.m_rtDescr.bake();
 	}
 
@@ -479,7 +479,7 @@ void IndirectDiffuseProbes::prepareProbes(InternalContext& giCtx)
 		{
 			TextureInitInfo texInit("GiProbeVolume");
 			texInit.m_type = TextureType::_3D;
-			texInit.m_format = Format::B10G11R11_UFLOAT_PACK32;
+			texInit.m_format = m_r->getHdrFormat();
 			texInit.m_width = probe.m_cellCounts.x() * 6;
 			texInit.m_height = probe.m_cellCounts.y();
 			texInit.m_depth = probe.m_cellCounts.z();

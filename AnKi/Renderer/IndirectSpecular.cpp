@@ -39,7 +39,7 @@ Error IndirectSpecular::initInternal()
 	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_noiseImage));
 
 	// Create RT
-	m_rtDescr = m_r->create2DRenderTargetDescription(width, height, Format::B10G11R11_UFLOAT_PACK32, "SSR");
+	m_rtDescr = m_r->create2DRenderTargetDescription(width, height, m_r->getHdrFormat(), "SSR");
 	m_rtDescr.bake();
 
 	m_fbDescr.m_colorAttachmentCount = 1;

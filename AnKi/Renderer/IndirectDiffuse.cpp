@@ -42,8 +42,8 @@ Error IndirectDiffuse::initInternal()
 	TextureUsageBit usage = TextureUsageBit::ALL_SAMPLED;
 
 	usage |= (preferCompute) ? TextureUsageBit::IMAGE_COMPUTE_WRITE : TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
-	TextureInitInfo texInit = m_r->create2DRenderTargetInitInfo(size.x(), size.y(), Format::B10G11R11_UFLOAT_PACK32,
-																usage, "IndirectDiffuse #1");
+	TextureInitInfo texInit =
+		m_r->create2DRenderTargetInitInfo(size.x(), size.y(), m_r->getHdrFormat(), usage, "IndirectDiffuse #1");
 	texInit.m_initialUsage = TextureUsageBit::ALL_SAMPLED;
 	m_rts[0] = m_r->createAndClearRenderTarget(texInit);
 	texInit.setName("IndirectDiffuse #2");

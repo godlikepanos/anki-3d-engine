@@ -634,4 +634,22 @@ void Renderer::setCurrentDebugRenderTarget(CString rtName)
 	}
 }
 
+Format Renderer::getHdrFormat() const
+{
+	Format out;
+	if(!m_config->getRHighQualityHdr())
+	{
+		out = Format::B10G11R11_UFLOAT_PACK32;
+	}
+	else if(m_gr->getDeviceCapabilities().m_unalignedBbpTextureFormats)
+	{
+		out = Format::R16G16B16_SFLOAT;
+	}
+	else
+	{
+		out = Format::R16G16B16A16_SFLOAT;
+	}
+	return out;
+}
+
 } // end namespace anki

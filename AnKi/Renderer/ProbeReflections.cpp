@@ -117,7 +117,7 @@ Error ProbeReflections::initLightShading()
 	// Init cube arr
 	{
 		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
-			m_lightShading.m_tileSize, m_lightShading.m_tileSize, LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
+			m_lightShading.m_tileSize, m_lightShading.m_tileSize, m_r->getHdrFormat(),
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE | TextureUsageBit::IMAGE_COMPUTE_READ
 				| TextureUsageBit::IMAGE_COMPUTE_WRITE | TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT
 				| TextureUsageBit::GENERATE_MIPMAPS,

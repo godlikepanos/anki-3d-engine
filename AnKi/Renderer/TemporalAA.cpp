@@ -67,7 +67,7 @@ Error TemporalAA::initInternal()
 
 		TextureInitInfo texinit =
 			m_r->create2DRenderTargetInitInfo(m_r->getInternalResolution().x(), m_r->getInternalResolution().y(),
-											  LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT, usage, "TemporalAA");
+											  m_r->getHdrFormat(), usage, "TemporalAA");
 
 		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 

@@ -203,6 +203,8 @@ public:
 		return m_zSplitCount;
 	}
 
+	Format getHdrFormat() const;
+
 	/// @name Debug render targets
 	/// @{
 
