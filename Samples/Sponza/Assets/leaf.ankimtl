@@ -9,6 +9,7 @@
 		<mutator name="NORMAL_TEX" value="1"/>
 		<mutator name="PARALLAX" value="0"/>
 		<mutator name="EMISSIVE_TEX" value="0"/>
+		<mutator name="ALPHA_TEST" value="1"/>
 	</mutation>
 
 	<inputs>

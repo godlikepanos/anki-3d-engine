@@ -88,7 +88,7 @@ void main()
 #endif
 
 	// Ambient and emissive color
-	out_color = gbuffer.m_diffuse * gbuffer.m_emission;
+	out_color = gbuffer.m_emission;
 
 	// Dir light
 	const ANKI_RP Vec3 viewDir = normalize(u_clusteredShading.m_cameraPosition - worldPos);

@@ -15,9 +15,10 @@
 #pragma anki mutator NORMAL_TEX 0 1
 #pragma anki mutator PARALLAX 0 1
 #pragma anki mutator EMISSIVE_TEX 0 1
+#pragma anki mutator ALPHA_TEST 0 1
 
-#pragma anki rewrite_mutation ANKI_PASS 2 DIFFUSE_TEX 1 to ANKI_PASS 2 DIFFUSE_TEX 0
-#pragma anki rewrite_mutation ANKI_PASS 3 DIFFUSE_TEX 1 to ANKI_PASS 3 DIFFUSE_TEX 0
+#pragma anki rewrite_mutation ANKI_PASS 2 DIFFUSE_TEX 1 ALPHA_TEST 0 to ANKI_PASS 2 DIFFUSE_TEX 0 ALPHA_TEST 0
+#pragma anki rewrite_mutation ANKI_PASS 3 DIFFUSE_TEX 1 ALPHA_TEST 0 to ANKI_PASS 3 DIFFUSE_TEX 0 ALPHA_TEST 0
 
 #pragma anki rewrite_mutation ANKI_PASS 2 SPECULAR_TEX 1 to ANKI_PASS 2 SPECULAR_TEX 0
 #pragma anki rewrite_mutation ANKI_PASS 3 SPECULAR_TEX 1 to ANKI_PASS 3 SPECULAR_TEX 0
@@ -37,13 +38,15 @@
 #pragma anki rewrite_mutation ANKI_PASS 2 PARALLAX 1 to ANKI_PASS 2 PARALLAX 0
 #pragma anki rewrite_mutation ANKI_PASS 3 PARALLAX 1 to ANKI_PASS 3 PARALLAX 0
 
-#define REALLY_USING_PARALLAX (PARALLAX == 1 && ANKI_PASS == 0 && ANKI_LOD == 0)
+#pragma anki rewrite_mutation ALPHA_TEST 1 DIFFUSE_TEX 0 to ALPHA_TEST 0 DIFFUSE_TEX 0
+
+#define REALLY_USING_PARALLAX (PARALLAX == 1 && ANKI_PASS == 0 && ANKI_LOD == 0 && ALPHA_TEST == 0)
 
 #include <AnKi/Shaders/GBufferCommon.glsl>
 
 #pragma anki reflect u_ankiGlobalSampler
 layout(set = 0, binding = 2) uniform sampler u_ankiGlobalSampler;
-#if DIFFUSE_TEX == 1 && ANKI_PASS == PASS_GB
+#if DIFFUSE_TEX == 1 && (ANKI_PASS == PASS_GB || ALPHA_TEST)
 #	pragma anki reflect u_diffTex
 layout(set = 0, binding = 3) uniform ANKI_RP texture2D u_diffTex;
 #	define USING_DIFF_TEX 1
@@ -159,9 +162,12 @@ layout(set = 0, binding = 11, row_major, std140) readonly buffer b_ankiPrevFrame
 Vec3 g_position = in_position;
 #if ANKI_PASS == PASS_GB
 Vec3 g_prevPosition = in_position;
-Vec2 g_uv = in_uv;
 ANKI_RP Vec3 g_normal = in_normal;
 ANKI_RP Vec4 g_tangent = in_tangent;
+#endif
+
+#if ANKI_PASS == PASS_GB || ALPHA_TEST
+Vec2 g_uv = in_uv;
 #endif
 
 // Perform skinning
@@ -257,6 +263,10 @@ void main()
 #	endif
 #else
 	gl_Position = u_ankiPerInstance[INSTANCE_ID].m_ankiMvp * Vec4(g_position, 1.0);
+
+#	if ALPHA_TEST
+	out_uv = g_uv;
+#	endif
 #endif
 }
 #pragma anki end
@@ -350,6 +360,14 @@ ANKI_RP Vec3 readNormalFromTexture(ANKI_RP texture2D map, sampler sampl, highp V
 }
 #endif
 
+void doAlphaText(F32 alpha)
+{
+	if(alpha == 0.0)
+	{
+		discard;
+	}
+}
+
 void main()
 {
 #if ANKI_PASS == PASS_GB
@@ -361,7 +379,13 @@ void main()
 #	endif
 
 #	if defined(USING_DIFF_TEX)
+#		if ALPHA_TEST
+	const ANKI_RP Vec4 diffColorA = texture(u_diffTex, u_ankiGlobalSampler, uv);
+	doAlphaText(diffColorA.a);
+	const ANKI_RP Vec3 diffColor = diffColorA.rgb;
+#		else
 	const ANKI_RP Vec3 diffColor = texture(u_diffTex, u_ankiGlobalSampler, uv).rgb;
+#		endif
 #	else
 	const ANKI_RP Vec3 diffColor = u_ankiPerDraw.m_diffColor;
 #	endif
@@ -408,6 +432,10 @@ void main()
 	out_gbuffer1 = Vec4(0.0);
 	out_gbuffer2 = Vec4(0.0);
 	out_gbuffer3 = Vec2(0.0);
+#endif
+
+#if ANKI_PASS != PASS_GB && ALPHA_TEST
+	doAlphaText(texture(u_diffTex, u_ankiGlobalSampler, in_uv).a);
 #endif
 }
 

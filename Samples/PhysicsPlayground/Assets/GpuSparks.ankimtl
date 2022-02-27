@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <material shaderProgram="Anki/Shaders/GBufferGpuParticles.ankiprog" shadow="0">
 	<inputs>
-		<input shaderVar="m_diffColor" value="1.0 0.1 0.1"/>
+		<input shaderVar="m_diffColor" value="0.0 0.0 0.0"/>
 		<input shaderVar="m_specColor" value="0.04 0.04 0.04"/>
-		<input shaderVar="m_roughness" value="9.0"/>
+		<input shaderVar="m_roughness" value="1.0"/>
 		<input shaderVar="m_metallic" value="0.0"/>
-		<input shaderVar="m_initialEmission" value="1024 1024 1024"/>
-		<input shaderVar="m_finalEmission" value="10 10 10"/>
+		<input shaderVar="m_initialEmission" value="200 0 0"/>
+		<input shaderVar="m_finalEmission" value="1 0 0"/>
 	</inputs>
 </material>
 

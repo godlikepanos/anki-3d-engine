@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Shaders/Common.glsl>
+#include <AnKi/Shaders/TonemappingFunctions.glsl>
 
 /// Pack 3D normal to 2D vector
 /// See the clean code in comments in revision < r467
@@ -141,18 +142,22 @@ struct GbufferInfo
 	ANKI_RP F32 m_roughness;
 	ANKI_RP F32 m_metallic;
 	ANKI_RP F32 m_subsurface;
-	ANKI_RP F32 m_emission;
+	ANKI_RP Vec3 m_emission;
 	Vec2 m_velocity;
 };
 
 // Populate the G buffer
 void packGBuffer(GbufferInfo g, out Vec4 rt0, out Vec4 rt1, out Vec4 rt2, out Vec2 rt3)
 {
-	rt0 = Vec4(g.m_diffuse, g.m_subsurface);
-	rt1 = Vec4(g.m_roughness, g.m_metallic, g.m_f0.x, FIXED_MAX_EMISSION / ABSOLUTE_MAX_EMISSION);
+	const F32 packedSubsurfaceMetallic = packUnorm2ToUnorm1(Vec2(g.m_subsurface, g.m_metallic));
+
+	const Vec3 tonemappedEmission = invertibleTonemap(g.m_emission);
+
+	rt0 = Vec4(g.m_diffuse, packedSubsurfaceMetallic);
+	rt1 = Vec4(g.m_roughness, g.m_f0.x, tonemappedEmission.rb);
 
 	const Vec3 encNorm = signedOctEncode(g.m_normal);
-	rt2 = Vec4(g.m_emission / FIXED_MAX_EMISSION, encNorm);
+	rt2 = Vec4(tonemappedEmission.g, encNorm);
 
 	rt3 = g.m_velocity;
 }
@@ -164,7 +169,7 @@ ANKI_RP Vec3 unpackDiffuseFromGBuffer(ANKI_RP Vec4 rt0, ANKI_RP F32 metallic)
 
 ANKI_RP Vec3 unpackNormalFromGBuffer(ANKI_RP Vec4 rt2)
 {
-	return signedOctDecode(rt2.gba);
+	return signedOctDecode(rt2.yzw);
 }
 
 ANKI_RP F32 unpackRoughnessFromGBuffer(ANKI_RP Vec4 rt1)
@@ -174,24 +179,19 @@ ANKI_RP F32 unpackRoughnessFromGBuffer(ANKI_RP Vec4 rt1)
 	return r;
 }
 
-ANKI_RP Vec3 unpackF0FromGBuffer(ANKI_RP Vec4 rt1)
-{
-	return Vec3(rt1.z);
-}
-
 // Read part of the G-buffer
 void unpackGBufferNoVelocity(ANKI_RP Vec4 rt0, ANKI_RP Vec4 rt1, ANKI_RP Vec4 rt2, out GbufferInfo g)
 {
 	g.m_diffuse = rt0.xyz;
-	g.m_subsurface = rt0.w;
+	const Vec2 unpackedSubsurfaceMetallic = unpackUnorm1ToUnorm2(rt0.w);
+	g.m_subsurface = unpackedSubsurfaceMetallic.x;
+	g.m_metallic = unpackedSubsurfaceMetallic.y;
 
 	g.m_roughness = unpackRoughnessFromGBuffer(rt1);
-	g.m_metallic = rt1.y;
-	g.m_f0 = unpackF0FromGBuffer(rt1);
-	const ANKI_RP F32 maxEmission = rt1.w * ABSOLUTE_MAX_EMISSION;
+	g.m_f0 = Vec3(rt1.y);
+	g.m_emission = invertInvertibleTonemap(Vec3(rt1.z, rt2.x, rt1.w));
 
 	g.m_normal = signedOctDecode(rt2.yzw);
-	g.m_emission = rt2.x * maxEmission;
 
 	g.m_velocity = Vec2(MAX_F32); // Put something random
 

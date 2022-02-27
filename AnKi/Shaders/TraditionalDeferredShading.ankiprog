@@ -148,7 +148,7 @@ void main()
 	const F32 factor = shadowFactor * max(gbuffer.m_subsurface, lambert);
 #endif
 
-	out_color = gbuffer.m_diffuse * gbuffer.m_emission;
+	out_color = gbuffer.m_emission;
 	out_color += (specC + diffC) * u_unis.m_diffuseColor * factor;
 }
 

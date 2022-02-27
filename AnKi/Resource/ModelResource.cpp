@@ -19,12 +19,12 @@ static Bool attributeIsRequired(VertexAttributeId loc, Pass pass, Bool hasSkin)
 	}
 	else if(!hasSkin)
 	{
-		return loc == VertexAttributeId::POSITION;
+		return loc == VertexAttributeId::POSITION || loc == VertexAttributeId::UV0;
 	}
 	else
 	{
 		return loc == VertexAttributeId::POSITION || loc == VertexAttributeId::BONE_INDICES
-			   || loc == VertexAttributeId::BONE_WEIGHTS;
+			   || loc == VertexAttributeId::BONE_WEIGHTS || loc == VertexAttributeId::UV0;
 	}
 }
 

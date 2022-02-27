@@ -1,8 +1,0 @@
-<model>
-	<modelPatches>
-		<modelPatch>
-			<mesh>Assets/skybox.ankimesh</mesh>
-			<material>Assets/16___Default.ankimtl</material>
-		</modelPatch>
-	</modelPatches>
-</model>
