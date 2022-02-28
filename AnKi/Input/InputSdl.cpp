@@ -97,6 +97,11 @@ void Input::hideCursor(Bool hide)
 	SDL_ShowCursor(!hide);
 }
 
+Bool Input::hasTouchDevice() const
+{
+	return false;
+}
+
 Error InputSdl::init()
 {
 	ANKI_ASSERT(m_nativeWindow);

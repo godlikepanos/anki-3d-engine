@@ -54,4 +54,9 @@ void Input::hideCursor(Bool hide)
 	// Nothing
 }
 
+Bool Input::hasTouchDevice() const
+{
+	return false;
+}
+
 } // end namespace anki

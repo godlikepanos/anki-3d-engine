@@ -130,7 +130,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		mousePosOn1stClick = in.getMousePosition();
 	}
 
-	if(in.getMouseButton(MouseButton::RIGHT))
+	if(in.getMouseButton(MouseButton::RIGHT) || in.hasTouchDevice())
 	{
 		in.hideCursor(true);
 

@@ -132,6 +132,8 @@ public:
 		return m_touchPointerPosWin[p];
 	}
 
+	Bool hasTouchDevice() const;
+
 protected:
 	NativeWindow* m_nativeWindow = nullptr;
 	HeapAllocator<U8> m_alloc;

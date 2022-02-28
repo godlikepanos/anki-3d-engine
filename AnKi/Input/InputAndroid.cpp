@@ -85,6 +85,11 @@ void Input::hideCursor(Bool hide)
 	// do nothing
 }
 
+Bool Input::hasTouchDevice() const
+{
+	return true;
+}
+
 Error InputAndroid::init()
 {
 	ANKI_ASSERT(m_nativeWindow);
