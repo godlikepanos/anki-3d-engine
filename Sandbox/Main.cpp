@@ -41,11 +41,7 @@ Error MyApp::init(int argc, char* argv[])
 	ANKI_CHECK(App::init(&m_config, allocAligned, nullptr));
 
 	// Other init
-	Renderer& renderer = getMainRenderer().getOffscreenRenderer();
 	ResourceManager& resources = getResourceManager();
-
-	renderer.getVolumetricFog().setFogParticleColor(Vec3(1.0f, 0.9f, 0.9f));
-	renderer.getVolumetricFog().setParticleDensity(1.0f);
 
 	if(getenv("PROFILE"))
 	{

@@ -35,9 +35,6 @@ Error SampleApp::init(int argc, char** argv, CString sampleName)
 	ANKI_CHECK(m_config.setFromCommandLineArguments(argc - 1, argv + 1));
 	ANKI_CHECK(App::init(&m_config, allocAligned, nullptr));
 
-	// Some renderer stuff
-	getMainRenderer().getOffscreenRenderer().getVolumetricFog().setFogParticleColor(Vec3(1.0f, 0.9f, 0.9f));
-
 	ANKI_CHECK(sampleExtraInit());
 
 	return Error::NONE;

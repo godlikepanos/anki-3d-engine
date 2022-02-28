@@ -19,14 +19,19 @@ layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 1) uniform ANKI_RP texture3D u_lightVolume;
 layout(set = 0, binding = 2) writeonly uniform ANKI_RP image3D u_fogVolume;
 
-layout(push_constant, std430) uniform b_pc
+struct Uniforms
 {
-	ANKI_RP F32 u_fogScatteringCoeff;
-	ANKI_RP F32 u_fogAbsorptionCoeff;
-	ANKI_RP F32 u_density;
-	ANKI_RP F32 u_near;
-	ANKI_RP Vec3 u_fogDiffuse;
-	ANKI_RP F32 u_far;
+	ANKI_RP Vec3 m_fogDiffuse;
+	ANKI_RP F32 m_fogScatteringCoeff;
+	ANKI_RP F32 m_fogAbsorptionCoeff;
+	ANKI_RP F32 m_near;
+	ANKI_RP F32 m_far;
+	F32 m_padding;
+};
+
+layout(push_constant, scalar) uniform b_pc
+{
+	Uniforms u_unis;
 };
 
 void main()
@@ -50,8 +55,8 @@ void main()
 		const ANKI_RP F32 linearDepthFar = (fi + 1.0) * linearDepthFraction;
 
 		// Compute the min and max Z in view space if this cluster fragment
-		const ANKI_RP F32 zVSpaceNear = -linearDepthNear * (u_far - u_near) + u_near;
-		const ANKI_RP F32 zVSpaceFar = -linearDepthFar * (u_far - u_near) + u_near;
+		const ANKI_RP F32 zVSpaceNear = -linearDepthNear * (u_unis.m_far - u_unis.m_near) + u_unis.m_near;
+		const ANKI_RP F32 zVSpaceFar = -linearDepthFar * (u_unis.m_far - u_unis.m_near) + u_unis.m_near;
 
 		// Compute the thikness of this fragment
 		const ANKI_RP F32 layerThinkness = abs(zVSpaceNear - zVSpaceFar);
@@ -59,12 +64,11 @@ void main()
 		// Read the light value and the fog density from the fog volumes
 		const ANKI_RP F32 w = (fi + 0.5) / F32(VOLUME_SIZE.z);
 		ANKI_RP Vec4 lightAndFogDensity = textureLod(u_lightVolume, u_linearAnyClampSampler, Vec3(uv, w), 0.0);
-		lightAndFogDensity.xyz *= u_fogDiffuse / PI;
-		lightAndFogDensity.w += u_density; // Apply the default density
+		lightAndFogDensity.xyz *= u_unis.m_fogDiffuse / PI;
 
 		// Scattering & absorption
-		const ANKI_RP F32 scattering = lightAndFogDensity.w * u_fogScatteringCoeff * layerThinkness;
-		const ANKI_RP F32 absorption = lightAndFogDensity.w * u_fogAbsorptionCoeff * layerThinkness;
+		const ANKI_RP F32 scattering = lightAndFogDensity.w * u_unis.m_fogScatteringCoeff * layerThinkness;
+		const ANKI_RP F32 absorption = lightAndFogDensity.w * u_unis.m_fogAbsorptionCoeff * layerThinkness;
 
 		// Integrate
 		const ANKI_RP Vec4 colorAndDensityBack = Vec4(lightAndFogDensity.xyz * scattering, scattering + absorption);

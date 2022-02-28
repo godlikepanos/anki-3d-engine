@@ -34,6 +34,19 @@ layout(set = 0, binding = 4) uniform texture3D u_prevVolume;
 #define CLUSTERED_SHADING_CLUSTERS_BINDING 12
 #include <AnKi/Shaders/ClusteredShadingCommon.glsl>
 
+struct FogUniforms
+{
+	ANKI_RP F32 m_densityAtMinHeight;
+	ANKI_RP F32 m_densityAtMaxHeight;
+	F32 m_minHeight;
+	F32 m_oneOverMaxMinusMinHeight; // 1 / (maxHeight / minHeight)
+};
+
+layout(push_constant, scalar) uniform b_pc
+{
+	FogUniforms u_fogUnis;
+};
+
 Vec3 g_globalInvocationID = Vec3(gl_GlobalInvocationID);
 
 Vec3 readRand()
@@ -216,6 +229,10 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 	// Fog density
 	F32 fogDensity = 0.0;
 	{
+		// Calculate the constant density
+		const F32 fogFactor = saturate((worldPos.y - u_fogUnis.m_minHeight) * u_fogUnis.m_oneOverMaxMinusMinHeight);
+		fogDensity = mix(u_fogUnis.m_densityAtMinHeight, u_fogUnis.m_densityAtMaxHeight, fogFactor);
+
 		ANKI_LOOP while(cluster.m_fogDensityVolumesMask != 0u)
 		{
 			const U32 idx = U32(findLSB2(cluster.m_fogDensityVolumesMask));

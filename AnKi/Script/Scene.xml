@@ -403,6 +403,26 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 						<arg>CString</arg>
 					</args>
 				</method>
+				<method name="setMinFogDensity">
+					<args>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="setMaxFogDensity">
+					<args>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="setHeightOfMinFogDensity">
+					<args>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="setHeightOfMaxFogDensity">
+					<args>
+						<arg>F32</arg>
+					</args>
+				</method>
 			</methods>
 		</class>
 

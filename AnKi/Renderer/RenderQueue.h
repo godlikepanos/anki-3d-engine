@@ -377,6 +377,18 @@ class SkyboxQueueElement final
 public:
 	const TextureView* m_skyboxTexture;
 	Vec3 m_solidColor;
+
+	class
+	{
+	public:
+		F32 m_minDensity;
+		F32 m_maxDensity;
+		F32 m_heightOfMinDensity; ///< The height (meters) where fog density is max.
+		F32 m_heightOfMaxDensity; ///< The height (meters) where fog density is the min value.
+		F32 m_scatteringCoeff;
+		F32 m_absorptionCoeff;
+		Vec3 m_diffuseColor;
+	} m_fog;
 };
 
 static_assert(std::is_trivially_destructible<SkyboxQueueElement>::value == true, "Should be trivially destructible");

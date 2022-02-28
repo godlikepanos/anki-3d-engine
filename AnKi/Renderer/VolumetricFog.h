@@ -27,26 +27,6 @@ public:
 
 	ANKI_USE_RESULT Error init();
 
-	void setFogParticleColor(const Vec3& col)
-	{
-		m_fogDiffuseColor = col;
-	}
-
-	const Vec3& getFogParticleColor() const
-	{
-		return m_fogDiffuseColor;
-	}
-
-	void setParticleDensity(F32 d)
-	{
-		m_fogDensity = d;
-	}
-
-	F32 getParticleDensity() const
-	{
-		return m_fogDensity;
-	}
-
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
@@ -76,11 +56,6 @@ private:
 
 	Array<U32, 2> m_workgroupSize = {};
 	Array<U32, 3> m_volumeSize;
-
-	Vec3 m_fogDiffuseColor = Vec3(1.0f);
-	F32 m_fogDensity = 0.9f;
-	F32 m_fogScatteringCoeff = 0.01f;
-	F32 m_fogAbsorptionCoeff = 0.02f;
 
 	class
 	{

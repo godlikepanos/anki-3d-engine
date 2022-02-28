@@ -135,6 +135,19 @@ static ANKI_USE_RESULT Error getNodeTransform(const cgltf_node& node, Transform&
 	return Error::NONE;
 }
 
+static Bool stringsExist(const HashMapAuto<CString, StringAuto>& map, const std::initializer_list<CString>& list)
+{
+	for(CString item : list)
+	{
+		if(map.find(item) != map.getEnd())
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 const char* GltfImporter::XML_HEADER = R"(<?xml version="1.0" encoding="UTF-8" ?>)";
 
 GltfImporter::GltfImporter(GenericMemoryPoolAllocator<U8> alloc)
@@ -456,51 +469,80 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			ANKI_CHECK(getNodeTransform(node, localTrf));
 			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 		}
-		else if((it = extras.find("skybox_solid_color")) != extras.getEnd())
+		else if(stringsExist(extras, {"skybox_solid_color", "skybox_image", "fog_min_density", "fog_max_density",
+									  "fog_height_of_min_density", "fog_height_of_max_density"}))
 		{
-			StringListAuto tokens(m_alloc);
-			tokens.splitString(*it, ' ');
-			if(tokens.getSize() != 3)
-			{
-				ANKI_IMPORTER_LOGE("Error parsing \"skybox_solid_color\" of node %s", getNodeName(node).cstr());
-				return Error::USER_DATA;
-			}
+			// Atmosphere
 
-			U count = 0;
-			Vec3 solidColor(0.0f);
-			for(auto& it : tokens)
+			ANKI_CHECK(m_sceneFile.writeText("\nnode = scene:newSkyboxNode(\"%s\")\n", getNodeName(node).cstr()));
+			ANKI_CHECK(m_sceneFile.writeText("comp = node:getSceneNodeBase():getSkyboxComponent()\n"));
+
+			if((it = extras.find("skybox_solid_color")) != extras.getEnd())
 			{
-				F32 f;
-				const Error err = it.toNumber(f);
-				if(err)
+				StringListAuto tokens(m_alloc);
+				tokens.splitString(*it, ' ');
+				if(tokens.getSize() != 3)
 				{
 					ANKI_IMPORTER_LOGE("Error parsing \"skybox_solid_color\" of node %s", getNodeName(node).cstr());
 					return Error::USER_DATA;
 				}
 
-				solidColor[count++] = f;
+				U count = 0;
+				Vec3 solidColor(0.0f);
+				for(auto& it : tokens)
+				{
+					F32 f;
+					const Error err = it.toNumber(f);
+					if(err)
+					{
+						ANKI_IMPORTER_LOGE("Error parsing \"skybox_solid_color\" of node %s", getNodeName(node).cstr());
+						return Error::USER_DATA;
+					}
+
+					solidColor[count++] = f;
+				}
+
+				ANKI_CHECK(m_sceneFile.writeText("comp:setSolidColor(Vec3.new(%f, %f, %f))\n", solidColor.x(),
+												 solidColor.y(), solidColor.z()));
+			}
+			else if((it = extras.find("skybox_image")) != extras.getEnd())
+			{
+				ANKI_CHECK(m_sceneFile.writeText("comp:setImage(\"%s\")\n", it->cstr()));
 			}
 
-			ANKI_CHECK(m_sceneFile.writeText("\nnode = scene:newSkyboxNode(\"%s\")\n", getNodeName(node).cstr()));
-			ANKI_CHECK(m_sceneFile.writeText("comp = node:getSceneNodeBase():getSkyboxComponent()\n"));
-			ANKI_CHECK(m_sceneFile.writeText("comp:setSolidColor(Vec3.new(%f, %f, %f))\n", solidColor.x(),
-											 solidColor.y(), solidColor.z()));
+			if((it = extras.find("fog_min_density")) != extras.getEnd())
+			{
+				F32 val;
+				ANKI_CHECK(it->toNumber(val));
+				ANKI_CHECK(m_sceneFile.writeText("comp:setMinFogDensity(\"%f\")\n", val));
+			}
+
+			if((it = extras.find("fog_max_density")) != extras.getEnd())
+			{
+				F32 val;
+				ANKI_CHECK(it->toNumber(val));
+				ANKI_CHECK(m_sceneFile.writeText("comp:setMaxFogDensity(\"%f\")\n", val));
+			}
+
+			if((it = extras.find("fog_height_of_min_density")) != extras.getEnd())
+			{
+				F32 val;
+				ANKI_CHECK(it->toNumber(val));
+				ANKI_CHECK(m_sceneFile.writeText("comp:setHeightOfMinFogDensity(\"%f\")\n", val));
+			}
+
+			if((it = extras.find("fog_height_of_max_density")) != extras.getEnd())
+			{
+				F32 val;
+				ANKI_CHECK(it->toNumber(val));
+				ANKI_CHECK(m_sceneFile.writeText("comp:setHeightOfMaxFogDensity(\"%f\")\n", val));
+			}
 
 			Transform localTrf;
 			ANKI_CHECK(getNodeTransform(node, localTrf));
 			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 		}
-		else if((it = extras.find("skybox_image")) != extras.getEnd())
-		{
-			ANKI_CHECK(m_sceneFile.writeText("\nnode = scene:newSkyboxNode(\"%s\")\n", getNodeName(node).cstr()));
-			ANKI_CHECK(m_sceneFile.writeText("comp = node:getSceneNodeBase():getSkyboxComponent()\n"));
-			ANKI_CHECK(m_sceneFile.writeText("comp:setImage(\"%s\")\n", it->cstr()));
-
-			Transform localTrf;
-			ANKI_CHECK(getNodeTransform(node, localTrf));
-			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
-		}
-		else if((it = extras.find("collision")) != extras.getEnd() && *it == "true")
+		else if((it = extras.find("collision")) != extras.getEnd() && (*it == "true" || *it == "1"))
 		{
 			ANKI_CHECK(
 				m_sceneFile.writeText("\nnode = scene:newStaticCollisionNode(\"%s\")\n", getNodeName(node).cstr()));
@@ -513,7 +555,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			ANKI_CHECK(getNodeTransform(node, localTrf));
 			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 		}
-		else if((it = extras.find("reflection_probe")) != extras.getEnd() && *it == "true")
+		else if((it = extras.find("reflection_probe")) != extras.getEnd() && (*it == "true" || *it == "1"))
 		{
 			Vec3 tsl;
 			Mat3 rot;
@@ -572,7 +614,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			const Transform localTrf = Transform(tsl.xyz0(), Mat3x4(Vec3(0.0f), rot), 1.0f);
 			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 		}
-		else if((it = extras.find("decal")) != extras.getEnd() && *it == "true")
+		else if((it = extras.find("decal")) != extras.getEnd() && (*it == "true" || *it == "1"))
 		{
 			StringAuto diffuseAtlas(m_alloc);
 			if((it = extras.find("decal_diffuse_atlas")) != extras.getEnd())

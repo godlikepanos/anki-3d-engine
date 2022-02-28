@@ -42,6 +42,78 @@ public:
 
 	void setImage(CString filename);
 
+	void setMinFogDensity(F32 density)
+	{
+		m_fog.m_minDensity = clamp(0.0f, 100.0f, density);
+	}
+
+	F32 getMinFogDensity() const
+	{
+		return m_fog.m_minDensity;
+	}
+
+	void setMaxFogDensity(F32 density)
+	{
+		m_fog.m_maxDensity = clamp(0.0f, 100.0f, density);
+	}
+
+	F32 getMaxFogDensity() const
+	{
+		return m_fog.m_maxDensity;
+	}
+
+	/// The height (units) where fog density is getMinFogDensity().
+	void setHeightOfMinFogDensity(F32 height)
+	{
+		m_fog.m_heightOfMinDensity = height;
+	}
+
+	F32 getHeightOfMinFogDensity() const
+	{
+		return m_fog.m_heightOfMinDensity;
+	}
+
+	/// The height (units) where fog density is getMaxFogDensity().
+	void setHeightOfMaxFogDensity(F32 height)
+	{
+		m_fog.m_heightOfMaxDensity = height;
+	}
+
+	F32 getHeightOfMaxFogDensity() const
+	{
+		return m_fog.m_heightOfMaxDensity;
+	}
+
+	void setFogScatteringCoefficient(F32 coeff)
+	{
+		m_fog.m_scatteringCoeff = coeff;
+	}
+
+	F32 getFogScatteringCoefficient() const
+	{
+		return m_fog.m_scatteringCoeff;
+	}
+
+	void setFogAbsorptionCoefficient(F32 coeff)
+	{
+		m_fog.m_absorptionCoeff = coeff;
+	}
+
+	F32 getFogAbsorptionCoefficient() const
+	{
+		return m_fog.m_absorptionCoeff;
+	}
+
+	void setFogDiffuseColor(const Vec3& color)
+	{
+		m_fog.m_diffuseColor = color;
+	}
+
+	const Vec3& getFogDiffuseColor() const
+	{
+		return m_fog.m_diffuseColor;
+	}
+
 	void setupSkyboxQueueElement(SkyboxQueueElement& queueElement) const;
 
 private:
@@ -49,6 +121,19 @@ private:
 	SkyboxType m_type = SkyboxType::SOLID_COLOR;
 	Vec3 m_color = Vec3(0.0f, 0.0f, 0.5f);
 	ImageResourcePtr m_image;
+
+	// Fog
+	class
+	{
+	public:
+		F32 m_minDensity = 0.0f;
+		F32 m_maxDensity = 0.9f;
+		F32 m_heightOfMinDensity = 20.0f; ///< The height (meters) where fog density is max.
+		F32 m_heightOfMaxDensity = 0.0f; ///< The height (meters) where fog density is the min value.
+		F32 m_scatteringCoeff = 0.01f;
+		F32 m_absorptionCoeff = 0.02f;
+		Vec3 m_diffuseColor = Vec3(1.0f);
+	} m_fog;
 };
 /// @}
 

@@ -127,6 +127,31 @@ void VolumetricLightingAccumulation::run(const RenderingContext& ctx, RenderPass
 	bindUniforms(cmdb, 0, 11, rsrc.m_fogDensityVolumesToken);
 	bindStorage(cmdb, 0, 12, rsrc.m_clustersToken);
 
+	class FogUniforms
+	{
+	public:
+		F32 m_densityAtMinHeight;
+		F32 m_densityAtMaxHeight;
+		F32 m_minHeight;
+		F32 m_oneOverMaxMinusMinHeight; // 1 / (maxHeight / minHeight)
+	} unis;
+	const SkyboxQueueElement& queueEl = ctx.m_renderQueue->m_skybox;
+	if(queueEl.m_fog.m_heightOfMaxDensity > queueEl.m_fog.m_heightOfMinDensity)
+	{
+		unis.m_minHeight = queueEl.m_fog.m_heightOfMinDensity;
+		unis.m_oneOverMaxMinusMinHeight = 1.0f / (queueEl.m_fog.m_heightOfMaxDensity - unis.m_minHeight + EPSILON);
+		unis.m_densityAtMinHeight = queueEl.m_fog.m_minDensity;
+		unis.m_densityAtMaxHeight = queueEl.m_fog.m_maxDensity;
+	}
+	else
+	{
+		unis.m_minHeight = queueEl.m_fog.m_heightOfMaxDensity;
+		unis.m_oneOverMaxMinusMinHeight = 1.0f / (queueEl.m_fog.m_heightOfMinDensity - unis.m_minHeight + EPSILON);
+		unis.m_densityAtMinHeight = queueEl.m_fog.m_maxDensity;
+		unis.m_densityAtMaxHeight = queueEl.m_fog.m_minDensity;
+	}
+	cmdb->setPushConstants(&unis, sizeof(unis));
+
 	dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_workgroupSize[2], m_volumeSize[0],
 					  m_volumeSize[1], m_volumeSize[2]);
 }

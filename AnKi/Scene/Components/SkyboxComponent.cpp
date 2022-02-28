@@ -48,6 +48,14 @@ void SkyboxComponent::setupSkyboxQueueElement(SkyboxQueueElement& queueElement) 
 		queueElement.m_skyboxTexture = nullptr;
 		queueElement.m_solidColor = m_color;
 	}
+
+	queueElement.m_fog.m_minDensity = m_fog.m_minDensity;
+	queueElement.m_fog.m_maxDensity = m_fog.m_maxDensity;
+	queueElement.m_fog.m_heightOfMinDensity = m_fog.m_heightOfMinDensity;
+	queueElement.m_fog.m_heightOfMaxDensity = m_fog.m_heightOfMaxDensity;
+	queueElement.m_fog.m_scatteringCoeff = m_fog.m_scatteringCoeff;
+	queueElement.m_fog.m_absorptionCoeff = m_fog.m_absorptionCoeff;
+	queueElement.m_fog.m_diffuseColor = m_fog.m_diffuseColor;
 }
 
 } // end namespace anki
