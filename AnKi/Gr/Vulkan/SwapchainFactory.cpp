@@ -75,31 +75,45 @@ Error MicroSwapchain::initInternal()
 		ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(m_factory->m_gr->getPhysicalDevice(),
 														   m_factory->m_gr->getSurface(), &formatCount, &formats[0]));
 
-		ANKI_VK_LOGV("Supported surface formats");
+		ANKI_VK_LOGV("Supported surface formats:");
+		Format akSurfaceFormat = Format::NONE;
 		for(U32 i = 0; i < formatCount; ++i)
 		{
-			ANKI_VK_LOGV("\t%s", getFormatInfo(Format(formats[i].format)).m_name);
-		}
-
-		for(U32 i = 0; i < formatCount; ++i)
-		{
-			if(formats[i].format == VK_FORMAT_R8G8B8A8_UNORM || formats[i].format == VK_FORMAT_B8G8R8A8_UNORM
-			   || formats[i].format == VK_FORMAT_A8B8G8R8_UNORM_PACK32)
+			const VkFormat vkFormat = formats[i].format;
+			Format akFormat;
+			switch(formats[i].format)
 			{
-				surfaceFormat = formats[i].format;
+#define ANKI_FORMAT_DEF(type, id, componentCount, texelSize, blockWidth, blockHeight, blockSize, shaderType, \
+						depthStencil) \
+	case id: \
+		akFormat = Format::type; \
+		break;
+#include <AnKi/Gr/Format.defs.h>
+#undef ANKI_FORMAT_DEF
+			default:
+				akFormat = Format::NONE;
+			}
+
+			ANKI_VK_LOGV("\t%s", (akFormat != Format::NONE) ? getFormatInfo(akFormat).m_name : "Unknown format");
+
+			if(surfaceFormat == VK_FORMAT_UNDEFINED
+			   && (vkFormat == VK_FORMAT_R8G8B8A8_UNORM || vkFormat == VK_FORMAT_B8G8R8A8_UNORM
+				   || vkFormat == VK_FORMAT_A8B8G8R8_UNORM_PACK32))
+			{
+				surfaceFormat = vkFormat;
 				colorspace = formats[i].colorSpace;
-				break;
+				akSurfaceFormat = akFormat;
 			}
 		}
 
 		if(surfaceFormat == VK_FORMAT_UNDEFINED)
 		{
-			ANKI_VK_LOGE("Surface format not found");
+			ANKI_VK_LOGE("Suitable surface format not found");
 			return Error::FUNCTION_FAILED;
 		}
 		else
 		{
-			ANKI_VK_LOGV("Selecting surface format %s", getFormatInfo(Format(surfaceFormat)).m_name);
+			ANKI_VK_LOGV("Selecting surface format %s", getFormatInfo(akSurfaceFormat).m_name);
 		}
 	}
 

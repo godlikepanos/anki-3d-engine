@@ -44,7 +44,7 @@ public:
 
 	void setMinFogDensity(F32 density)
 	{
-		m_fog.m_minDensity = clamp(0.0f, 100.0f, density);
+		m_fog.m_minDensity = clamp(density, 0.0f, 100.0f);
 	}
 
 	F32 getMinFogDensity() const
@@ -54,7 +54,7 @@ public:
 
 	void setMaxFogDensity(F32 density)
 	{
-		m_fog.m_maxDensity = clamp(0.0f, 100.0f, density);
+		m_fog.m_maxDensity = clamp(density, 0.0f, 100.0f);
 	}
 
 	F32 getMaxFogDensity() const
