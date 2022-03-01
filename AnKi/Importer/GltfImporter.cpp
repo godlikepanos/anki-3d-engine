@@ -1457,4 +1457,33 @@ Error GltfImporter::writeModelNode(const cgltf_node& node, const HashMapAuto<CSt
 	return Error::NONE;
 }
 
+StringAuto GltfImporter::computeModelResourceFilename(const cgltf_mesh& mesh) const
+{
+	StringListAuto list(m_alloc);
+
+	list.pushBack(mesh.name);
+
+	for(U i = 0; i < mesh.primitives_count; ++i)
+	{
+		list.pushBackSprintf("_%s", mesh.primitives[i].material->name);
+	}
+
+	StringAuto out(m_alloc);
+	list.join("", out);
+
+	// If the name is too big then we need to trimm it
+	if(out.getLength() > 64)
+	{
+		const U64 hash = computeHash(out.getBegin(), out.getLength());
+		StringAuto out2(m_alloc);
+		out2.sprintf("%.64s_%" PRIu64, out.cstr(), hash);
+
+		out = std::move(out2);
+	}
+
+	out.append(".ankimdl");
+
+	return out;
+}
+
 } // end namespace anki

@@ -128,24 +128,7 @@ private:
 
 	static U32 getMeshTotalVertexCount(const cgltf_mesh& mesh);
 
-	StringAuto computeModelResourceFilename(const cgltf_mesh& mesh) const
-	{
-		StringListAuto list(m_alloc);
-
-		list.pushBack(mesh.name);
-
-		for(U i = 0; i < mesh.primitives_count; ++i)
-		{
-			list.pushBackSprintf("_%s", mesh.primitives[i].material->name);
-		}
-
-		list.pushBack(".ankimdl");
-
-		StringAuto out(m_alloc);
-		list.join("", out);
-
-		return out;
-	}
+	StringAuto computeModelResourceFilename(const cgltf_mesh& mesh) const;
 
 	// Resources
 	ANKI_USE_RESULT Error writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 decimateFactor);
