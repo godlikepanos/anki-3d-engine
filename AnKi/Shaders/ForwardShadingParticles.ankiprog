@@ -6,10 +6,11 @@
 #pragma anki mutator ANIMATED_TEXTURE 0 1
 #pragma anki mutator LIGHT 0 1
 
+#include <AnKi/Shaders/ForwardShadingCommon.glsl>
+
 struct PerDraw
 {
-	Mat4 m_ankiMvp;
-	Mat3 m_ankiCameraRotationMatrix;
+	Mat3x4 m_ankiTransform;
 #if ANIMATED_TEXTURE == 1
 	F32 m_animationPeriod;
 #endif
@@ -18,24 +19,29 @@ struct PerDraw
 };
 
 #pragma anki reflect b_ankiPerDraw
-layout(set = 1, binding = 0, row_major) uniform b_ankiPerDraw
+layout(set = 1, binding = 0, row_major, scalar) uniform b_ankiPerDraw
 {
 	PerDraw u_ankiPerDraw;
 };
 
+#pragma anki reflect b_ankiGlobalUniforms
+layout(set = 1, binding = 1, row_major, scalar) uniform b_ankiGlobalUniforms
+{
+	MaterialGlobalUniforms u_ankiGlobals;
+};
+
 #pragma anki reflect u_ankiGlobalSampler
-layout(set = 1, binding = 1) uniform sampler u_ankiGlobalSampler;
+layout(set = 1, binding = 2) uniform sampler u_ankiGlobalSampler;
 #if ANIMATED_TEXTURE == 0
 #	pragma anki reflect u_diffuseMap
-layout(set = 1, binding = 2) uniform ANKI_RP texture2D u_diffuseMap;
+layout(set = 1, binding = 3) uniform ANKI_RP texture2D u_diffuseMap;
 #endif
 #if ANIMATED_TEXTURE == 1
 #	pragma anki reflect u_diffuseMapArr
-layout(set = 1, binding = 2) uniform ANKI_RP texture2DArray u_diffuseMapArr;
+layout(set = 1, binding = 3) uniform ANKI_RP texture2DArray u_diffuseMapArr;
 #endif
 
 #pragma anki start vert
-#include <AnKi/Shaders/ForwardShadingCommonVert.glsl>
 
 layout(location = VERTEX_ATTRIBUTE_ID_SCALE) in F32 in_scale;
 layout(location = VERTEX_ATTRIBUTE_ID_ALPHA) in F32 in_alpha;
@@ -48,15 +54,15 @@ void main()
 {
 	out_uv = Vec2(gl_VertexID & 1, gl_VertexID >> 1);
 
-	out_worldPos = u_ankiPerDraw.m_ankiCameraRotationMatrix * Vec3((out_uv - 0.5) * in_scale, 0.0) + in_position;
-	gl_Position = u_ankiPerDraw.m_ankiMvp * Vec4(out_worldPos, 1.0);
+	out_worldPos = u_ankiGlobals.m_cameraRotationMatrix * Vec3((out_uv - 0.5) * in_scale, 0.0) + in_position;
+	gl_Position =
+		u_ankiGlobals.m_viewProjectionMatrix * Vec4(u_ankiPerDraw.m_ankiTransform * Vec4(out_worldPos, 1.0), 1.0);
 
 	out_alpha = in_alpha;
 }
 #pragma anki end
 
 #pragma anki start frag
-#include <AnKi/Shaders/ForwardShadingCommonFrag.glsl>
 
 layout(location = 0) flat in ANKI_RP F32 in_alpha;
 layout(location = 1) in Vec2 in_uv;

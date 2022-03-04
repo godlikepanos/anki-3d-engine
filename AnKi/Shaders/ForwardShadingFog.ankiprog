@@ -3,36 +3,45 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#include <AnKi/Shaders/ForwardShadingCommon.glsl>
+
 struct PerDraw
 {
-	Mat4 m_ankiMvp;
-	Mat4 m_ankiModelViewMatrix;
+	Mat3x4 m_ankiTransform;
 	ANKI_RP Vec3 m_fogColor;
 	ANKI_RP F32 m_fogAlphaScale;
 	ANKI_RP F32 m_fogDistanceOfMaxThikness;
 };
 
 #pragma anki reflect b_ankiPerDraw
-layout(set = 1, binding = 0, row_major) uniform b_ankiPerDraw
+layout(set = 1, binding = 0, row_major, scalar) uniform b_ankiPerDraw
 {
 	PerDraw u_ankiPerDraw;
 };
 
+#pragma anki reflect b_ankiGlobalUniforms
+layout(set = 1, binding = 1, row_major, scalar) uniform b_ankiGlobalUniforms
+{
+	MaterialGlobalUniforms u_ankiGlobals;
+};
+
 #pragma anki start vert
-#include <AnKi/Shaders/ForwardShadingCommonVert.glsl>
 
 layout(location = 0) out F32 out_zVSpace;
 
 void main()
 {
-	gl_Position = u_ankiPerDraw.m_ankiMvp * Vec4(in_position, 1.0);
-	out_zVSpace = (u_ankiPerDraw.m_ankiModelViewMatrix * Vec4(in_position, 1.0)).z;
+	const Vec3 worldPos = u_ankiPerDraw.m_ankiTransform * Vec4(in_position, 1.0);
+
+	gl_Position = u_ankiGlobals.m_viewProjectionMatrix * Vec4(worldPos, 1.0);
+
+	const Vec3 viewPos = u_ankiGlobals.m_viewMatrix * Vec4(worldPos, 1.0);
+	out_zVSpace = viewPos.z;
 }
 
 #pragma anki end
 
 #pragma anki start frag
-#include <AnKi/Shaders/ForwardShadingCommonFrag.glsl>
 
 layout(location = 0) in F32 in_zVSpace;
 

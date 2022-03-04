@@ -224,7 +224,8 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(getInput().getKey(KeyCode::U) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "SSGI") ? "" : "SSGI");
+		renderer.setCurrentDebugRenderTarget(
+			(renderer.getCurrentDebugRenderTarget() == "IndirectDiffuse") ? "" : "IndirectDiffuse");
 	}
 
 	if(getInput().getKey(KeyCode::F1) == 1)

@@ -157,10 +157,10 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		renderer.getDbg().switchDepthTestEnabled();
 	}
 
-	/*if(in.getKey(KeyCode::F12) == 1)
+	if(in.getKey(KeyCode::F11) == 1)
 	{
 		TracerSingleton::get().setEnabled(!TracerSingleton::get().getEnabled());
-	}*/
+	}
 
 #if !PLAYER
 	static F32 dist = 0.1f;

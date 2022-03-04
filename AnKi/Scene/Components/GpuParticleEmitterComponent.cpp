@@ -208,19 +208,18 @@ void GpuParticleEmitterComponent::draw(RenderQueueDrawContext& ctx) const
 		cmdb->bindShaderProgram(prog);
 
 		// Resources
-		static const Mat4 identity = Mat4::getIdentity();
+		static const Array<Mat3x4, 1> identity = {Mat3x4::getIdentity()};
 
-		RenderComponent::allocateAndSetupUniforms(m_particleEmitterResource->getMaterial(), ctx,
-												  ConstWeakArray<Mat4>(&identity, 1),
-												  ConstWeakArray<Mat4>(&identity, 1), *ctx.m_stagingGpuAllocator);
+		RenderComponent::allocateAndSetupUniforms(m_particleEmitterResource->getMaterial(), ctx, identity, identity,
+												  *ctx.m_stagingGpuAllocator);
 
-		cmdb->bindStorageBuffer(0, 1, m_particlesBuff, 0, MAX_PTR_SIZE);
+		cmdb->bindStorageBuffer(0, 2, m_particlesBuff, 0, MAX_PTR_SIZE);
 
 		StagingGpuMemoryToken token;
 		Vec4* extraUniforms = static_cast<Vec4*>(
 			ctx.m_stagingGpuAllocator->allocateFrame(sizeof(Vec4), StagingGpuMemoryType::UNIFORM, token));
 		*extraUniforms = ctx.m_cameraTransform.getColumn(2);
-		cmdb->bindUniformBuffer(0, 2, token.m_buffer, token.m_offset, token.m_range);
+		cmdb->bindUniformBuffer(0, 3, token.m_buffer, token.m_offset, token.m_range);
 
 		// Draw
 		cmdb->setLineWidth(8.0f);

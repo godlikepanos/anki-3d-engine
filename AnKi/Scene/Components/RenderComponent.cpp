@@ -14,7 +14,7 @@ namespace anki {
 ANKI_SCENE_COMPONENT_STATICS(RenderComponent)
 
 void RenderComponent::allocateAndSetupUniforms(const MaterialResourcePtr& mtl, const RenderQueueDrawContext& ctx,
-											   ConstWeakArray<Mat4> transforms, ConstWeakArray<Mat4> prevTransforms,
+											   ConstWeakArray<Mat3x4> transforms, ConstWeakArray<Mat3x4> prevTransforms,
 											   StagingGpuMemoryPool& alloc)
 {
 	ANKI_ASSERT(transforms.getSize() <= MAX_INSTANCE_COUNT);
@@ -50,6 +50,10 @@ void RenderComponent::allocateAndSetupUniforms(const MaterialResourcePtr& mtl, c
 											   token1.m_offset, token1.m_range);
 	}
 
+	ctx.m_commandBuffer->bindUniformBuffer(set, mtl->getGlobalUniformsUniformBlockBinding(),
+										   ctx.m_globalUniforms.m_buffer, ctx.m_globalUniforms.m_offset,
+										   ctx.m_globalUniforms.m_range);
+
 	// Iterate variables
 	for(const MaterialVariable& mvar : mtl->getVariables())
 	{
@@ -82,12 +86,6 @@ void RenderComponent::allocateAndSetupUniforms(const MaterialResourcePtr& mtl, c
 				variant.writeShaderBlockMemory(mvar, &val, 1, perDrawUniformsBegin, perDrawUniformsEnd);
 				break;
 			}
-			case BuiltinMaterialVariableId::CAMERA_POSITION:
-			{
-				const Vec3 val = ctx.m_cameraTransform.getTranslationPart().xyz();
-				variant.writeShaderBlockMemory(mvar, &val, 1, perDrawUniformsBegin, perDrawUniformsEnd);
-				break;
-			}
 			default:
 				ANKI_ASSERT(0);
 			}
@@ -110,24 +108,7 @@ void RenderComponent::allocateAndSetupUniforms(const MaterialResourcePtr& mtl, c
 				variant.writeShaderBlockMemory(mvar, &val, 1, perDrawUniformsBegin, perDrawUniformsEnd);
 				break;
 			}
-			case BuiltinMaterialVariableId::NORMAL_MATRIX:
-			{
-				ANKI_ASSERT(transforms.getSize() > 0);
-
-				Array<Mat3, MAX_INSTANCE_COUNT> normMats;
-				for(U32 i = 0; i < transforms.getSize(); i++)
-				{
-					const Mat4 mv = ctx.m_viewMatrix * transforms[i];
-					normMats[i] = mv.getRotationPart();
-					normMats[i].reorthogonalize();
-				}
-
-				variant.writeShaderBlockMemory(mvar, &normMats[0], transforms.getSize(),
-											   (mvar.isInstanced()) ? perInstanceUniformsBegin : perDrawUniformsBegin,
-											   (mvar.isInstanced()) ? perInstanceUniformsEnd : perDrawUniformsEnd);
-				break;
-			}
-			case BuiltinMaterialVariableId::ROTATION_MATRIX:
+			case BuiltinMaterialVariableId::ROTATION:
 			{
 				ANKI_ASSERT(transforms.getSize() > 0);
 
@@ -140,12 +121,6 @@ void RenderComponent::allocateAndSetupUniforms(const MaterialResourcePtr& mtl, c
 				variant.writeShaderBlockMemory(mvar, &rots[0], transforms.getSize(),
 											   (mvar.isInstanced()) ? perInstanceUniformsBegin : perDrawUniformsBegin,
 											   (mvar.isInstanced()) ? perInstanceUniformsEnd : perDrawUniformsEnd);
-				break;
-			}
-			case BuiltinMaterialVariableId::CAMERA_ROTATION_MATRIX:
-			{
-				const Mat3 rot = ctx.m_cameraTransform.getRotationPart();
-				variant.writeShaderBlockMemory(mvar, &rot, 1, perDrawUniformsBegin, perDrawUniformsEnd);
 				break;
 			}
 			default:
@@ -164,70 +139,36 @@ void RenderComponent::allocateAndSetupUniforms(const MaterialResourcePtr& mtl, c
 				variant.writeShaderBlockMemory(mvar, &val, 1, perDrawUniformsBegin, perDrawUniformsEnd);
 				break;
 			}
-			case BuiltinMaterialVariableId::MODEL_VIEW_PROJECTION_MATRIX:
+			default:
+				ANKI_ASSERT(0);
+			}
+
+			break;
+		}
+		case ShaderVariableDataType::MAT3X4:
+		{
+			switch(mvar.getBuiltin())
 			{
-				ANKI_ASSERT(transforms.getSize() > 0);
-
-				Array<Mat4, MAX_INSTANCE_COUNT> mvp;
-				for(U32 i = 0; i < transforms.getSize(); i++)
-				{
-					mvp[i] = ctx.m_viewProjectionMatrix * transforms[i];
-				}
-
-				variant.writeShaderBlockMemory(mvar, &mvp[0], transforms.getSize(),
-											   (mvar.isInstanced()) ? perInstanceUniformsBegin : perDrawUniformsBegin,
-											   (mvar.isInstanced()) ? perInstanceUniformsEnd : perDrawUniformsEnd);
+			case BuiltinMaterialVariableId::NONE:
+			{
+				const Mat3x4 val = mvar.getValue<Mat3x4>();
+				variant.writeShaderBlockMemory(mvar, &val, 1, perDrawUniformsBegin, perDrawUniformsEnd);
 				break;
 			}
-			case BuiltinMaterialVariableId::PREVIOUS_MODEL_VIEW_PROJECTION_MATRIX:
-			{
-				ANKI_ASSERT(prevTransforms.getSize() > 0);
-
-				Array<Mat4, MAX_INSTANCE_COUNT> mvp;
-				for(U32 i = 0; i < prevTransforms.getSize(); i++)
-				{
-					mvp[i] = ctx.m_previousViewProjectionMatrix * prevTransforms[i];
-				}
-
-				variant.writeShaderBlockMemory(mvar, &mvp[0], prevTransforms.getSize(),
-											   (mvar.isInstanced()) ? perInstanceUniformsBegin : perDrawUniformsBegin,
-											   (mvar.isInstanced()) ? perInstanceUniformsEnd : perDrawUniformsEnd);
-				break;
-			}
-			case BuiltinMaterialVariableId::MODEL_VIEW_MATRIX:
+			case BuiltinMaterialVariableId::TRANSFORM:
 			{
 				ANKI_ASSERT(transforms.getSize() > 0);
-
-				Array<Mat4, MAX_INSTANCE_COUNT> mv;
-				for(U32 i = 0; i < transforms.getSize(); i++)
-				{
-					mv[i] = ctx.m_viewMatrix * transforms[i];
-				}
-
-				variant.writeShaderBlockMemory(mvar, &mv[0], transforms.getSize(),
-											   (mvar.isInstanced()) ? perInstanceUniformsBegin : perDrawUniformsBegin,
-											   (mvar.isInstanced()) ? perInstanceUniformsEnd : perDrawUniformsEnd);
-				break;
-			}
-			case BuiltinMaterialVariableId::MODEL_MATRIX:
-			{
-				ANKI_ASSERT(transforms.getSize() > 0);
-
 				variant.writeShaderBlockMemory(mvar, &transforms[0], transforms.getSize(),
 											   (mvar.isInstanced()) ? perInstanceUniformsBegin : perDrawUniformsBegin,
 											   (mvar.isInstanced()) ? perInstanceUniformsEnd : perDrawUniformsEnd);
 				break;
 			}
-			case BuiltinMaterialVariableId::VIEW_PROJECTION_MATRIX:
+			case BuiltinMaterialVariableId::PREVIOUS_TRANSFORM:
 			{
-				ANKI_ASSERT(transforms.getSize() == 0 && "Cannot have transform");
-				variant.writeShaderBlockMemory(mvar, &ctx.m_viewProjectionMatrix, 1, perDrawUniformsBegin,
-											   perDrawUniformsEnd);
-				break;
-			}
-			case BuiltinMaterialVariableId::VIEW_MATRIX:
-			{
-				variant.writeShaderBlockMemory(mvar, &ctx.m_viewMatrix, 1, perDrawUniformsBegin, perDrawUniformsEnd);
+				ANKI_ASSERT(prevTransforms.getSize() > 0);
+				variant.writeShaderBlockMemory(mvar, &prevTransforms[0], prevTransforms.getSize(),
+											   (mvar.isInstanced()) ? perInstanceUniformsBegin : perDrawUniformsBegin,
+											   (mvar.isInstanced()) ? perInstanceUniformsEnd : perDrawUniformsEnd);
 				break;
 			}
 			default:

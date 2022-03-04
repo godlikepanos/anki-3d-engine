@@ -45,39 +45,39 @@
 #include <AnKi/Shaders/GBufferCommon.glsl>
 
 #pragma anki reflect u_ankiGlobalSampler
-layout(set = 0, binding = 2) uniform sampler u_ankiGlobalSampler;
+layout(set = 0, binding = 3) uniform sampler u_ankiGlobalSampler;
 #if DIFFUSE_TEX == 1 && (ANKI_PASS == PASS_GB || ALPHA_TEST)
 #	pragma anki reflect u_diffTex
-layout(set = 0, binding = 3) uniform ANKI_RP texture2D u_diffTex;
+layout(set = 0, binding = 4) uniform ANKI_RP texture2D u_diffTex;
 #	define USING_DIFF_TEX 1
 #endif
 #if SPECULAR_TEX == 1 && ANKI_PASS == PASS_GB
 #	pragma anki reflect u_specTex
-layout(set = 0, binding = 4) uniform ANKI_RP texture2D u_specTex;
+layout(set = 0, binding = 5) uniform ANKI_RP texture2D u_specTex;
 #	define USING_SPECULAR_TEX 1
 #endif
 #if ROUGHNESS_TEX == 1 && ANKI_PASS == PASS_GB
 #	pragma anki reflect u_roughnessTex
-layout(set = 0, binding = 5) uniform ANKI_RP texture2D u_roughnessTex;
+layout(set = 0, binding = 6) uniform ANKI_RP texture2D u_roughnessTex;
 #	define USING_ROUGHNESS_TEX 1
 #endif
 #if NORMAL_TEX == 1 && ANKI_PASS == PASS_GB && ANKI_LOD < 2
 #	pragma anki reflect u_normalTex
-layout(set = 0, binding = 6) uniform ANKI_RP texture2D u_normalTex;
+layout(set = 0, binding = 7) uniform ANKI_RP texture2D u_normalTex;
 #	define USING_NORMAL_TEX 1
 #endif
 #if METAL_TEX == 1 && ANKI_PASS == PASS_GB
 #	pragma anki reflect u_metallicTex
-layout(set = 0, binding = 7) uniform ANKI_RP texture2D u_metallicTex;
+layout(set = 0, binding = 8) uniform ANKI_RP texture2D u_metallicTex;
 #	define USING_METALLIC_TEX 1
 #endif
 #if REALLY_USING_PARALLAX
 #	pragma anki reflect u_heightTex
-layout(set = 0, binding = 8) uniform ANKI_RP texture2D u_heightTex;
+layout(set = 0, binding = 9) uniform ANKI_RP texture2D u_heightTex;
 #endif
 #if EMISSIVE_TEX == 1 && ANKI_PASS == PASS_GB
 #	pragma anki reflect u_emissiveTex
-layout(set = 0, binding = 9) uniform ANKI_RP texture2D u_emissiveTex;
+layout(set = 0, binding = 10) uniform ANKI_RP texture2D u_emissiveTex;
 #	define USING_EMISSIVE_TEX 1
 #endif
 
@@ -110,41 +110,44 @@ struct PerDraw
 
 struct PerInstance
 {
-	Mat4 m_ankiMvp;
+	Mat3x4 m_ankiTransform;
 #if ANKI_PASS == PASS_GB
-	Mat3 m_ankiRotationMatrix;
-#endif
-#if REALLY_USING_PARALLAX
-	Mat4 m_ankiModelViewMatrix;
+	Mat3 m_ankiRotation;
 #endif
 #if ANKI_PASS == PASS_GB && ANKI_VELOCITY == 1
-	Mat4 m_ankiPreviousMvp;
+	Mat3x4 m_ankiPreviousTransform;
 #endif
 };
 
 #if ANKI_PASS == PASS_GB
 #	pragma anki reflect b_ankiPerDraw
-layout(set = 0, binding = 0, row_major, std140) uniform b_ankiPerDraw
+layout(set = 0, binding = 0, row_major, scalar) uniform b_ankiPerDraw
 {
 	PerDraw u_ankiPerDraw;
 };
 #endif
 
 #pragma anki reflect b_ankiPerInstance
-layout(set = 0, binding = 1, row_major, std140) uniform b_ankiPerInstance
+layout(set = 0, binding = 1, row_major, scalar) uniform b_ankiPerInstance
 {
 	PerInstance u_ankiPerInstance[MAX_INSTANCE_COUNT];
 };
 
+#pragma anki reflect b_ankiGlobalUniforms
+layout(set = 0, binding = 2, row_major, scalar) uniform b_ankiGlobalUniforms
+{
+	MaterialGlobalUniforms u_ankiGlobals;
+};
+
 #if ANKI_BONES
 #	pragma anki reflect b_ankiBoneTransforms
-layout(set = 0, binding = 10, row_major, std140) readonly buffer b_ankiBoneTransforms
+layout(set = 0, binding = 11, row_major, std140) readonly buffer b_ankiBoneTransforms
 {
 	Mat4 u_ankiBoneTransforms[];
 };
 
 #	pragma anki reflect b_ankiPrevFrameBoneTransforms
-layout(set = 0, binding = 11, row_major, std140) readonly buffer b_ankiPrevFrameBoneTransforms
+layout(set = 0, binding = 12, row_major, std140) readonly buffer b_ankiPrevFrameBoneTransforms
 {
 	Mat4 u_ankiPrevFrameBoneTransforms[];
 };
@@ -195,9 +198,10 @@ void skinning()
 #if ANKI_PASS == PASS_GB
 void positionUvNormalTangent()
 {
-	gl_Position = u_ankiPerInstance[INSTANCE_ID].m_ankiMvp * Vec4(g_position, 1.0);
-	out_normal = u_ankiPerInstance[INSTANCE_ID].m_ankiRotationMatrix * g_normal.xyz;
-	out_tangent = u_ankiPerInstance[INSTANCE_ID].m_ankiRotationMatrix * g_tangent.xyz;
+	gl_Position = u_ankiGlobals.m_viewProjectionMatrix
+				  * Vec4(u_ankiPerInstance[INSTANCE_ID].m_ankiTransform * Vec4(g_position, 1.0), 1.0);
+	out_normal = u_ankiPerInstance[INSTANCE_ID].m_ankiRotation * g_normal;
+	out_tangent = u_ankiPerInstance[INSTANCE_ID].m_ankiRotation * g_tangent.xyz;
 	out_bitangent = cross(out_normal, out_tangent) * g_tangent.w;
 	out_uv = g_uv;
 }
@@ -207,15 +211,16 @@ void positionUvNormalTangent()
 #if REALLY_USING_PARALLAX
 void parallax()
 {
-	const Mat4 modelViewMat = u_ankiPerInstance[INSTANCE_ID].m_ankiModelViewMatrix;
 	const Vec3 n = in_normal;
 	const Vec3 t = in_tangent.xyz;
 	const Vec3 b = cross(n, t) * in_tangent.w;
 
-	const Mat3 normalMat = Mat3(modelViewMat);
-	const Mat3 invTbn = transpose(normalMat * Mat3(t, b, n));
+	const Mat3 invTbn =
+		transpose(u_ankiGlobals.m_viewRotationMatrix * u_ankiPerInstance[INSTANCE_ID].m_ankiRotation * Mat3(t, b, n));
 
-	const Vec3 viewPos = (modelViewMat * Vec4(g_position, 1.0)).xyz;
+	const Vec3 viewPos =
+		(u_ankiGlobals.m_viewMatrix * Vec4(u_ankiPerInstance[INSTANCE_ID].m_ankiTransform * Vec4(g_position, 1.0), 1.0))
+			.xyz;
 	out_distFromTheCamera = viewPos.z;
 
 	out_eyeTangentSpace = invTbn * viewPos;
@@ -229,12 +234,12 @@ void velocity()
 	const Vec3 prevLocalPos = g_prevPosition;
 
 #	if ANKI_VELOCITY
-	const Mat4 mvp = u_ankiPerInstance[INSTANCE_ID].m_ankiPreviousMvp;
+	const Mat3x4 trf = u_ankiPerInstance[INSTANCE_ID].m_ankiPreviousTransform;
 #	else
-	const Mat4 mvp = u_ankiPerInstance[INSTANCE_ID].m_ankiMvp;
+	const Mat3x4 trf = u_ankiPerInstance[INSTANCE_ID].m_ankiTransform;
 #	endif
 
-	const Vec4 v4 = mvp * Vec4(prevLocalPos, 1.0);
+	const Vec4 v4 = u_ankiGlobals.m_viewProjectionMatrix * Vec4(trf * Vec4(prevLocalPos, 1.0), 1.0);
 
 	const Vec2 prevNdc = v4.xy / v4.w;
 
@@ -262,7 +267,8 @@ void main()
 	velocity();
 #	endif
 #else
-	gl_Position = u_ankiPerInstance[INSTANCE_ID].m_ankiMvp * Vec4(g_position, 1.0);
+	gl_Position = u_ankiGlobals.m_viewProjectionMatrix
+				  * Vec4(u_ankiPerInstance[INSTANCE_ID].m_ankiTransform * Vec4(g_position, 1.0), 1.0);
 
 #	if ALPHA_TEST
 	out_uv = g_uv;

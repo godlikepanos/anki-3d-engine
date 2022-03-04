@@ -18,10 +18,6 @@ static void writeShaderBlockMemorySanityChecks(const ShaderVariableBlockInfo& va
 	ANKI_ASSERT(buffEnd != nullptr);
 	ANKI_ASSERT(buffBegin < buffEnd);
 
-	ANKI_ASSERT(isAligned(alignof(T), ptrToNumber(elements)) && "Breaking strict aliasing rules");
-	ANKI_ASSERT(isAligned(alignof(T), ptrToNumber(static_cast<U8*>(buffBegin) + varBlkInfo.m_offset))
-				&& "Breaking strict aliasing rules");
-
 	// Check varBlkInfo
 	ANKI_ASSERT(varBlkInfo.m_offset != -1);
 	ANKI_ASSERT(varBlkInfo.m_arraySize > 0);
@@ -41,16 +37,16 @@ static void writeShaderBlockMemorySimple(const ShaderVariableBlockInfo& varBlkIn
 {
 	writeShaderBlockMemorySanityChecks<T>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
 
-	U8* buff = static_cast<U8*>(buffBegin) + varBlkInfo.m_offset;
+	U8* outBuff = static_cast<U8*>(buffBegin) + varBlkInfo.m_offset;
+	const U8* inBuff = static_cast<const U8*>(elements);
 	for(U i = 0; i < elementsCount; i++)
 	{
-		ANKI_ASSERT(buff + sizeof(T) <= static_cast<const U8*>(buffEnd));
+		ANKI_ASSERT(outBuff + sizeof(T) <= static_cast<const U8*>(buffEnd));
 
-		T* out = reinterpret_cast<T*>(buff);
-		const T* in = reinterpret_cast<const T*>(elements) + i;
-		*out = *in;
+		// Memcpy because Vec might have SIMD alignment but not the output buffer
+		memcpy(outBuff, inBuff + i * sizeof(T), sizeof(T));
 
-		buff += varBlkInfo.m_arrayStride;
+		outBuff += varBlkInfo.m_arrayStride;
 	}
 }
 
@@ -71,10 +67,11 @@ static void writeShaderBlockMemoryMatrix(const ShaderVariableBlockInfo& varBlkIn
 		{
 			ANKI_ASSERT((subbuff + sizeof(Vec)) <= static_cast<const U8*>(buffEnd));
 
-			Vec* out = reinterpret_cast<Vec*>(subbuff);
-			*out = matrix.getRow(j);
+			const Vec in = matrix.getRow(j);
+			memcpy(subbuff, &in, sizeof(Vec)); // Memcpy because Vec might have SIMD alignment but not the output buffer
 			subbuff += varBlkInfo.m_matrixStride;
 		}
+
 		buff += varBlkInfo.m_arrayStride;
 	}
 }

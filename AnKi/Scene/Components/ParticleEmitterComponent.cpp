@@ -411,7 +411,7 @@ void ParticleEmitterComponent::draw(RenderQueueDrawContext& ctx) const
 		cmdb->bindVertexBuffer(0, token.m_buffer, token.m_offset, VERTEX_SIZE, VertexStepRate::INSTANCE);
 
 		// Uniforms
-		Array<Mat4, 1> trf = {Mat4::getIdentity()};
+		Array<Mat3x4, 1> trf = {Mat3x4::getIdentity()};
 		RenderComponent::allocateAndSetupUniforms(m_particleEmitterResource->getMaterial(), ctx, trf, trf,
 												  *ctx.m_stagingGpuAllocator);
 

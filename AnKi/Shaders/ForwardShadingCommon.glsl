@@ -5,20 +5,31 @@
 
 #pragma once
 
-// Common code for all fragment shaders of FS
 #include <AnKi/Shaders/Common.glsl>
 #include <AnKi/Shaders/Functions.glsl>
 #include <AnKi/Shaders/Include/ModelTypes.h>
+#include <AnKi/Shaders/Include/MaterialTypes.h>
 
+//
+// Vert
+//
+#if defined(ANKI_VERTEX_SHADER)
+layout(location = VERTEX_ATTRIBUTE_ID_POSITION) in Vec3 in_position;
+#endif
+
+//
+// Frag
+//
+#if defined(ANKI_FRAGMENT_SHADER)
 // Global resources
 layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 1) uniform texture2D u_gbufferDepthRt;
 layout(set = 0, binding = 2) uniform ANKI_RP texture3D u_lightVol;
-#define CLUSTERED_SHADING_SET 0
-#define CLUSTERED_SHADING_UNIFORMS_BINDING 3
-#define CLUSTERED_SHADING_LIGHTS_BINDING 4
-#define CLUSTERED_SHADING_CLUSTERS_BINDING 7
-#include <AnKi/Shaders/ClusteredShadingCommon.glsl>
+#	define CLUSTERED_SHADING_SET 0
+#	define CLUSTERED_SHADING_UNIFORMS_BINDING 3
+#	define CLUSTERED_SHADING_LIGHTS_BINDING 4
+#	define CLUSTERED_SHADING_CLUSTERS_BINDING 7
+#	include <AnKi/Shaders/ClusteredShadingCommon.glsl>
 
 layout(location = 0) out Vec4 out_color;
 
@@ -55,15 +66,15 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos)
 		const Vec3 frag2Light = light.m_position - worldPos;
 		const F32 att = computeAttenuationFactor(light.m_squareRadiusOverOne, frag2Light);
 
-#if LOD > 1
+#	if LOD > 1
 		const F32 shadow = 1.0;
-#else
+#	else
 		F32 shadow = 1.0;
 		if(light.m_shadowAtlasTileScale >= 0.0)
 		{
 			shadow = computeShadowFactorPointLight(light, frag2Light, u_shadowAtlasTex, u_linearAnyClampSampler);
 		}
-#endif
+#	endif
 
 		outColor += diffC * (att * shadow);
 	}
@@ -84,15 +95,15 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos)
 
 		const F32 spot = computeSpotFactor(l, light.m_outerCos, light.m_innerCos, light.m_direction);
 
-#if LOD > 1
+#	if LOD > 1
 		const F32 shadow = 1.0;
-#else
+#	else
 		F32 shadow = 1.0;
 		ANKI_BRANCH if(light.m_shadowLayer != MAX_U32)
 		{
 			shadow = computeShadowFactorSpotLight(light, worldPos, u_shadowAtlasTex, u_linearAnyClampSampler);
 		}
-#endif
+#	endif
 
 		outColor += diffC * (att * spot * shadow);
 	}
@@ -136,3 +147,5 @@ void fog(ANKI_RP Vec3 color, ANKI_RP F32 fogAlphaScale, ANKI_RP F32 fogDistanceO
 
 	packGBuffer(Vec4(color, zFeatherFactor * fogAlphaScale));
 }
+
+#endif // defined(ANKI_FRAGMENT_SHADER)

@@ -9,6 +9,7 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Util/Logger.h>
+#include <AnKi/Shaders/Include/MaterialTypes.h>
 
 namespace anki {
 
@@ -44,6 +45,19 @@ void RenderableDrawer::drawRange(Pass pass, const Mat4& viewMat, const Mat4& vie
 {
 	ANKI_ASSERT(begin && end && begin < end);
 
+	// Allocate and set global uniforms
+	StagingGpuMemoryToken globalUniformsToken;
+	MaterialGlobalUniforms* globalIniforms =
+		static_cast<MaterialGlobalUniforms*>(m_r->getStagingGpuMemory().allocateFrame(
+			sizeof(MaterialGlobalUniforms), StagingGpuMemoryType::UNIFORM, globalUniformsToken));
+	memcpy(&globalIniforms->m_viewProjectionMatrix[0], &viewProjMat, sizeof(viewProjMat));
+	const Mat3x4 viewMat3x4(viewMat);
+	memcpy(&globalIniforms->m_viewMatrix[0], &viewMat3x4, sizeof(viewMat3x4));
+	globalIniforms->m_viewRotationMatrix = viewMat.getRotationPart();
+	const Mat3 camRotationMatrix = viewMat.getInverse().getRotationPart();
+	globalIniforms->m_cameraRotationMatrix = camRotationMatrix;
+
+	// Set a few things
 	DrawContext ctx;
 	ctx.m_queueCtx.m_viewMatrix = viewMat;
 	ctx.m_queueCtx.m_viewProjectionMatrix = viewProjMat;
@@ -55,6 +69,9 @@ void RenderableDrawer::drawRange(Pass pass, const Mat4& viewMat, const Mat4& vie
 	ctx.m_queueCtx.m_sampler = sampler;
 	ctx.m_queueCtx.m_key = RenderingKey(pass, 0, 1, false, false);
 	ctx.m_queueCtx.m_debugDraw = false;
+	ctx.m_queueCtx.m_globalUniforms.m_buffer = globalUniformsToken.m_buffer;
+	ctx.m_queueCtx.m_globalUniforms.m_offset = globalUniformsToken.m_offset;
+	ctx.m_queueCtx.m_globalUniforms.m_range = globalUniformsToken.m_range;
 
 	ANKI_ASSERT(minLod < MAX_LOD_COUNT && maxLod < MAX_LOD_COUNT);
 	ctx.m_minLod = U8(minLod);

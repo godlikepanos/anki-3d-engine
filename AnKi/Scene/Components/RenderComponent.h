@@ -102,7 +102,7 @@ public:
 
 	/// Helper function.
 	static void allocateAndSetupUniforms(const MaterialResourcePtr& mtl, const RenderQueueDrawContext& ctx,
-										 ConstWeakArray<Mat4> transforms, ConstWeakArray<Mat4> prevTransforms,
+										 ConstWeakArray<Mat3x4> transforms, ConstWeakArray<Mat3x4> prevTransforms,
 										 StagingGpuMemoryPool& alloc);
 
 private:

@@ -445,14 +445,11 @@ public:
 	/// Set a new pointer. Will destroy the previous.
 	void reset(T* ptr)
 	{
-		if(ptr != m_ptr)
+		destroy();
+		if(ptr)
 		{
-			destroy();
-			if(ptr)
-			{
-				ptr->getRefcount().fetchAdd(1);
-				m_ptr = ptr;
-			}
+			ptr->getRefcount().fetchAdd(1);
+			m_ptr = ptr;
 		}
 	}
 

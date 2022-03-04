@@ -9,6 +9,7 @@
 
 #include <AnKi/Shaders/PackFunctions.glsl>
 #include <AnKi/Shaders/Include/ModelTypes.h>
+#include <AnKi/Shaders/Include/MaterialTypes.h>
 
 //
 // Vert input

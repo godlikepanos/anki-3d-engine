@@ -294,8 +294,8 @@ Error SpirvReflector::structReflection(uint32_t id, const spirv_cross::SPIRType&
 			{
 			}
 #define ANKI_SVDT_MACRO(capital, type, baseType_, rowCount, columnCount) \
-	else if(ShaderVariableDataType::baseType_ == baseType && isMatrix && memberType.vecsize == columnCount \
-			&& memberType.columns == rowCount) \
+	else if(ShaderVariableDataType::baseType_ == baseType && isMatrix && memberType.vecsize == rowCount \
+			&& memberType.columns == columnCount) \
 	{ \
 		actualType = ShaderVariableDataType::capital; \
 		memberSize = sizeof(type); \
@@ -496,12 +496,16 @@ Error SpirvReflector::blockVariableReflection(const spirv_cross::SPIRType& type,
 			if(0)
 			{
 			}
-#define ANKI_SVDT_MACRO(capital, type, baseType_, rowCount, columnCount) \
-	else if(ShaderVariableDataType::baseType_ == baseType && isMatrix && memberType.vecsize == columnCount \
-			&& memberType.columns == rowCount) \
+#define ANKI_SVDT_MACRO(capital, type_, baseType_, rowCount, columnCount) \
+	else if(ShaderVariableDataType::baseType_ == baseType && isMatrix && memberType.vecsize == rowCount \
+			&& memberType.columns == columnCount) \
 	{ \
 		var.m_type = ShaderVariableDataType::capital; \
-		var.m_blockInfo.m_matrixStride = 16; \
+		auto it = ir.meta.find(type.self); \
+		ANKI_ASSERT(it != ir.meta.end()); \
+		const spirv_cross::Vector<spirv_cross::Meta::Decoration>& memberDecorations = it->second.members; \
+		ANKI_ASSERT(i < memberDecorations.size()); \
+		var.m_blockInfo.m_matrixStride = I16(memberDecorations[i].matrix_stride); \
 	} \
 	else if(ShaderVariableDataType::baseType_ == baseType && !isMatrix && memberType.vecsize == rowCount) \
 	{ \

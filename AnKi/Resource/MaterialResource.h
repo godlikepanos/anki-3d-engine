@@ -25,17 +25,9 @@ class XmlElement;
 enum class BuiltinMaterialVariableId : U8
 {
 	NONE = 0,
-	MODEL_VIEW_PROJECTION_MATRIX,
-	PREVIOUS_MODEL_VIEW_PROJECTION_MATRIX,
-	MODEL_MATRIX,
-	VIEW_MATRIX,
-	PROJECTION_MATRIX,
-	MODEL_VIEW_MATRIX,
-	VIEW_PROJECTION_MATRIX,
-	NORMAL_MATRIX,
-	ROTATION_MATRIX,
-	CAMERA_ROTATION_MATRIX,
-	CAMERA_POSITION,
+	TRANSFORM,
+	PREVIOUS_TRANSFORM,
+	ROTATION,
 	GLOBAL_SAMPLER,
 
 	COUNT,
@@ -386,6 +378,12 @@ public:
 		return m_perInstanceUboBinding;
 	}
 
+	U32 getGlobalUniformsUniformBlockBinding() const
+	{
+		ANKI_ASSERT(m_globalUniformsUboBinding != MAX_U32);
+		return m_globalUniformsUboBinding;
+	}
+
 	const MaterialVariant& getOrCreateVariant(const RenderingKey& key) const;
 
 	U32 getShaderGroupHandleIndex(RayType type) const
@@ -434,6 +432,7 @@ private:
 	U32 m_perInstanceUboBinding = MAX_U32;
 	U32 m_boneTrfsBinding = MAX_U32;
 	U32 m_prevFrameBoneTrfsBinding = MAX_U32;
+	U32 m_globalUniformsUboBinding = MAX_U32;
 
 	/// Matrix of variants.
 	mutable Array5d<MaterialVariant, U(Pass::COUNT), MAX_LOD_COUNT, 2, 2, 2> m_variantMatrix;
@@ -489,7 +488,9 @@ private:
 		return const_cast<MaterialVariable*>(tryFindVariableInternal(name));
 	}
 
-	Error parseRtMaterial(XmlElement rootEl);
+	ANKI_USE_RESULT Error parseRtMaterial(XmlElement rootEl);
+
+	ANKI_USE_RESULT Error findGlobalUniformsUbo();
 };
 /// @}
 

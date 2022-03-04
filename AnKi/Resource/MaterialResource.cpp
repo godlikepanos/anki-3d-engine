@@ -23,17 +23,9 @@ public:
 
 static const Array<BuiltinVarInfo, U(BuiltinMaterialVariableId::COUNT)> BUILTIN_INFOS = {
 	{{"NONE", ShaderVariableDataType::NONE, false},
-	 {"m_ankiMvp", ShaderVariableDataType::MAT4, true},
-	 {"m_ankiPreviousMvp", ShaderVariableDataType::MAT4, true},
-	 {"m_ankiModelMatrix", ShaderVariableDataType::MAT4, true},
-	 {"m_ankiViewMatrix", ShaderVariableDataType::MAT4, false},
-	 {"m_ankiProjectionMatrix", ShaderVariableDataType::MAT4, false},
-	 {"m_ankiModelViewMatrix", ShaderVariableDataType::MAT4, true},
-	 {"m_ankiViewProjectionMatrix", ShaderVariableDataType::MAT4, false},
-	 {"m_ankiNormalMatrix", ShaderVariableDataType::MAT3, true},
-	 {"m_ankiRotationMatrix", ShaderVariableDataType::MAT3, true},
-	 {"m_ankiCameraRotationMatrix", ShaderVariableDataType::MAT3, false},
-	 {"m_ankiCameraPosition", ShaderVariableDataType::VEC3, false},
+	 {"m_ankiTransform", ShaderVariableDataType::MAT3X4, true},
+	 {"m_ankiPreviousTransform", ShaderVariableDataType::MAT3X4, true},
+	 {"m_ankiRotation", ShaderVariableDataType::MAT3, true},
 	 {"u_ankiGlobalSampler", ShaderVariableDataType::SAMPLER, false}}};
 
 static ANKI_USE_RESULT Error checkBuiltin(CString name, ShaderVariableDataType dataType, Bool instanced,
@@ -249,6 +241,8 @@ Error MaterialResource::load(const ResourceFilename& filename, Bool async)
 	{
 		ANKI_CHECK(parseRtMaterial(rtMaterialEl));
 	}
+
+	ANKI_CHECK(findGlobalUniformsUbo());
 
 	return Error::NONE;
 }
@@ -1287,6 +1281,26 @@ Error MaterialResource::parseRtMaterial(XmlElement rtMaterialEl)
 			// Advance
 			ANKI_CHECK(inputEl.getNextSiblingElement("input", inputEl));
 		} while(inputEl);
+	}
+
+	return Error::NONE;
+}
+
+Error MaterialResource::findGlobalUniformsUbo()
+{
+	const ShaderProgramBinary& binary = m_prog->getBinary();
+	for(const ShaderProgramBinaryBlock& block : binary.m_uniformBlocks)
+	{
+		if(block.m_name.getBegin() == CString("b_ankiGlobalUniforms"))
+		{
+			m_globalUniformsUboBinding = block.m_binding;
+		}
+	}
+
+	if(m_globalUniformsUboBinding == MAX_U32)
+	{
+		ANKI_RESOURCE_LOGE("Couldn't find a UBO named b_ankiGlobalUniforms");
+		return Error::USER_DATA;
 	}
 
 	return Error::NONE;

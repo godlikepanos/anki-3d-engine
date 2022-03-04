@@ -206,11 +206,11 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		const SkinComponent& skinc = getFirstComponentOfType<SkinComponent>();
 
 		// Transforms
-		Array<Mat4, MAX_INSTANCE_COUNT> trfs;
-		Array<Mat4, MAX_INSTANCE_COUNT> prevTrfs;
+		Array<Mat3x4, MAX_INSTANCE_COUNT> trfs;
+		Array<Mat3x4, MAX_INSTANCE_COUNT> prevTrfs;
 		const MoveComponent& movec = getFirstComponentOfType<MoveComponent>();
-		trfs[0] = Mat4(movec.getWorldTransform());
-		prevTrfs[0] = Mat4(movec.getPreviousWorldTransform());
+		trfs[0] = Mat3x4(movec.getWorldTransform());
+		prevTrfs[0] = Mat3x4(movec.getPreviousWorldTransform());
 		Bool moved = trfs[0] != prevTrfs[0];
 		for(U32 i = 1; i < instanceCount; ++i)
 		{
@@ -222,8 +222,8 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 			ANKI_ASSERT(otherNodeModelPatchIdx == modelPatchIdx);
 
 			const MoveComponent& otherNodeMovec = otherNode.getFirstComponentOfType<MoveComponent>();
-			trfs[i] = Mat4(otherNodeMovec.getWorldTransform());
-			prevTrfs[i] = Mat4(otherNodeMovec.getPreviousWorldTransform());
+			trfs[i] = Mat3x4(otherNodeMovec.getWorldTransform());
+			prevTrfs[i] = Mat3x4(otherNodeMovec.getPreviousWorldTransform());
 
 			moved = moved || (trfs[i] != prevTrfs[i]);
 		}
@@ -262,7 +262,7 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		// Uniforms
 		RenderComponent::allocateAndSetupUniforms(
 			modelc.getModelResource()->getModelPatches()[modelPatchIdx].getMaterial(), ctx,
-			ConstWeakArray<Mat4>(&trfs[0], instanceCount), ConstWeakArray<Mat4>(&prevTrfs[0], instanceCount),
+			ConstWeakArray<Mat3x4>(&trfs[0], instanceCount), ConstWeakArray<Mat3x4>(&prevTrfs[0], instanceCount),
 			*ctx.m_stagingGpuAllocator);
 
 		// Set attributes

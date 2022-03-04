@@ -7,10 +7,12 @@
 #pragma anki mutator ANKI_VELOCITY 0 1
 
 #include <AnKi/Shaders/Include/ParticleTypes.h>
+#include <AnKi/Shaders/Include/MaterialTypes.h>
+#include <AnKi/Shaders/Common.glsl>
 
 struct PerDraw
 {
-	Mat4 m_ankiMvp;
+	Mat3x4 m_ankiTransform;
 	ANKI_RP Vec3 m_diffColor;
 	ANKI_RP F32 m_roughness;
 	ANKI_RP Vec3 m_specColor;
@@ -20,24 +22,28 @@ struct PerDraw
 };
 
 #pragma anki reflect b_ankiPerDraw
-layout(set = 0, binding = 0, std140, row_major) uniform b_ankiPerDraw
+layout(set = 0, binding = 0, scalar, row_major) uniform b_ankiPerDraw
 {
 	PerDraw u_ankiPerDraw;
 };
 
-layout(set = 0, binding = 1) buffer b_particles
+#pragma anki reflect b_ankiGlobalUniforms
+layout(set = 0, binding = 1, row_major, scalar) uniform b_ankiGlobalUniforms
+{
+	MaterialGlobalUniforms u_ankiGlobals;
+};
+
+layout(set = 0, binding = 2) buffer b_particles
 {
 	GpuParticle u_particles[];
 };
 
-layout(set = 0, binding = 2) uniform b_extra
+layout(set = 0, binding = 3) uniform b_extra
 {
 	Vec3 u_minusCameraZ;
 };
 
 #pragma anki start vert
-
-#include <AnKi/Shaders/Common.glsl>
 
 layout(location = 0) out Vec2 out_velocity;
 layout(location = 1) flat out F32 out_lifeFactor;
@@ -46,8 +52,10 @@ void main()
 {
 	const GpuParticle part = u_particles[gl_VertexID / 2];
 
-	const Vec4 crntClipPos = u_ankiPerDraw.m_ankiMvp * Vec4(part.m_newWorldPosition, 1.0);
-	const Vec4 prevClipPos = u_ankiPerDraw.m_ankiMvp * Vec4(part.m_oldWorldPosition, 1.0);
+	const Vec4 crntClipPos = u_ankiGlobals.m_viewProjectionMatrix
+							 * Vec4(u_ankiPerDraw.m_ankiTransform * Vec4(part.m_newWorldPosition, 1.0), 1.0);
+	const Vec4 prevClipPos = u_ankiGlobals.m_viewProjectionMatrix
+							 * Vec4(u_ankiPerDraw.m_ankiTransform * Vec4(part.m_oldWorldPosition, 1.0), 1.0);
 
 	gl_Position = ((gl_VertexID & 1) == 0) ? crntClipPos : prevClipPos;
 

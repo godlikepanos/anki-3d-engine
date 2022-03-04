@@ -50,9 +50,9 @@ Error FrameGpuAllocator::allocate(PtrSize originalSize, PtrSize& outOffset)
 	PtrSize size = getAlignedRoundUp(m_alignment, originalSize);
 	ANKI_ASSERT(size <= m_maxAllocationSize && "Too high!");
 
-	PtrSize offset = m_offset.fetchAdd(size);
-	PtrSize perFrameSize = m_size / MAX_FRAMES_IN_FLIGHT;
-	PtrSize crntFrameStartOffset = perFrameSize * (m_frame % MAX_FRAMES_IN_FLIGHT);
+	const PtrSize offset = m_offset.fetchAdd(size);
+	const PtrSize perFrameSize = m_size / MAX_FRAMES_IN_FLIGHT;
+	const PtrSize crntFrameStartOffset = perFrameSize * (m_frame % MAX_FRAMES_IN_FLIGHT);
 
 	if(offset - crntFrameStartOffset + size <= perFrameSize)
 	{

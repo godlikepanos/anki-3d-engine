@@ -176,7 +176,7 @@ static const char SHADER_HEADER[] = R"(#version 460 core
 #define Mat4 mat4
 #define _ANKI_SIZEOF_mat4 64u
 
-#define Mat3x4 mat3x4
+#define Mat3x4 mat4x3 // GLSL has the column number first and then the rows
 #define _ANKI_SIZEOF_mat3x4 48u
 
 #define Bool bool
