@@ -47,6 +47,7 @@ public:
 	ShaderProgramPtr m_grProg;
 	RenderTargetDescription m_rtDescr;
 	FramebufferDescription m_fbDescr;
+	Bool m_quarterRez = false;
 
 	class
 	{

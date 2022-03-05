@@ -7,6 +7,7 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/ShadowMapping.h>
+#include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Core/ConfigSet.h>
 
 namespace anki {
@@ -28,10 +29,9 @@ Error ShadowmapsResolve::init()
 
 Error ShadowmapsResolve::initInternal()
 {
-	U32 width = U32(getConfig().getRSmResolveFactor() * F32(m_r->getInternalResolution().x()));
-	width = min(m_r->getInternalResolution().x(), getAlignedRoundUp(4, width));
-	U32 height = U32(getConfig().getRSmResolveFactor() * F32(m_r->getInternalResolution().y()));
-	height = min(m_r->getInternalResolution().y(), getAlignedRoundUp(4, height));
+	m_quarterRez = getConfig().getRSmResolveQuarterRez();
+	const U32 width = m_r->getInternalResolution().x() / (m_quarterRez + 1);
+	const U32 height = m_r->getInternalResolution().y() / (m_quarterRez + 1);
 
 	ANKI_R_LOGV("Initializing shadowmaps resolve. Resolution %ux%u", width, height);
 
@@ -76,7 +76,9 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 		});
 
 		rpass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
-		rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_COMPUTE));
+		rpass.newDependency(
+			RenderPassDependency((m_quarterRez) ? m_r->getDepthDownscale().getHiZRt() : m_r->getGBuffer().getDepthRt(),
+								 TextureUsageBit::SAMPLED_COMPUTE, TextureSurfaceInfo(0, 0, 0, 0)));
 		rpass.newDependency(
 			RenderPassDependency(m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::SAMPLED_COMPUTE));
 
@@ -93,7 +95,9 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 		});
 
 		rpass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
-		rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_FRAGMENT));
+		rpass.newDependency(
+			RenderPassDependency((m_quarterRez) ? m_r->getDepthDownscale().getHiZRt() : m_r->getGBuffer().getDepthRt(),
+								 TextureUsageBit::SAMPLED_FRAGMENT, TextureSurfaceInfo(0, 0, 0, 0)));
 		rpass.newDependency(
 			RenderPassDependency(m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::SAMPLED_FRAGMENT));
 
@@ -116,7 +120,16 @@ void ShadowmapsResolve::run(const RenderingContext& ctx, RenderPassWorkContext& 
 	bindStorage(cmdb, 0, 4, rsrc.m_clustersToken);
 
 	cmdb->bindSampler(0, 5, m_r->getSamplers().m_trilinearClamp);
-	rgraphCtx.bindTexture(0, 6, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+	if(m_quarterRez)
+	{
+		rgraphCtx.bindTexture(0, 6, m_r->getDepthDownscale().getHiZRt(),
+							  TextureSubresourceInfo(TextureSurfaceInfo(0, 0, 0, 0)));
+	}
+	else
+	{
+		rgraphCtx.bindTexture(0, 6, m_r->getGBuffer().getDepthRt(),
+							  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+	}
 
 	if(getConfig().getRPreferCompute())
 	{

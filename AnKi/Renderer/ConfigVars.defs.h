@@ -37,7 +37,8 @@ ANKI_CONFIG_VAR_U32(RIndirectDiffuseDenoiseSampleCount, 4, 1, 128, "Indirect dif
 ANKI_CONFIG_VAR_F32(RIndirectDiffuseSsaoStrength, 2.5f, 0.1f, 10.0f, "SSAO strength")
 ANKI_CONFIG_VAR_F32(RIndirectDiffuseSsaoBias, -0.1f, -10.0f, 10.0f, "SSAO bias")
 
-ANKI_CONFIG_VAR_U32(RShadowMappingTileResolution, 128, 16, 2048, "Shadowmapping tile resolution")
+ANKI_CONFIG_VAR_U32(RShadowMappingTileResolution, (ANKI_PLATFORM_MOBILE) ? 128 : 512, 16, 2048,
+					"Shadowmapping tile resolution")
 ANKI_CONFIG_VAR_U32(RShadowMappingTileCountPerRowOrColumn, 16, 1, 256,
 					"Shadowmapping atlas will have this number squared number of tiles")
 ANKI_CONFIG_VAR_U32(RShadowMappingScratchTileCountX, 4 * (MAX_SHADOW_CASCADES2 + 2), 1, 256,
@@ -64,7 +65,7 @@ ANKI_CONFIG_VAR_BOOL(RDbgEnabled, false, "Enable or not debugging")
 ANKI_CONFIG_VAR_F32(RBloomThreshold, 2.5f, 0.0f, 256.0f, "Bloom threshold")
 ANKI_CONFIG_VAR_F32(RBloomScale, 2.5f, 0.0f, 256.0f, "Bloom scale")
 
-ANKI_CONFIG_VAR_F32(RSmResolveFactor, 0.5f, 0.25f, 1.0f, "Shadowmapping resolve quality")
+ANKI_CONFIG_VAR_BOOL(RSmResolveQuarterRez, ANKI_PLATFORM_MOBILE, "Shadowmapping resolve quality")
 
 ANKI_CONFIG_VAR_BOOL(RRtShadowsSvgf, false, "Enable or not RT shadows SVGF")
 ANKI_CONFIG_VAR_U8(RRtShadowsSvgfAtrousPassCount, 3, 1, 20, "Number of atrous passes of SVGF")
