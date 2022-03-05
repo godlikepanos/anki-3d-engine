@@ -213,7 +213,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		const ClusteredShadingContext& binning = ctx.m_clusteredShading;
 		bindUniforms(cmdb, 0, 10, binning.m_clusteredShadingUniformsToken);
 
-		const Vec4 pc(2.0f / Vec2(m_r->getInternalResolution()), 0.0f, 0.0f);
+		const Vec4 pc(ctx.m_renderQueue->m_cameraNear, ctx.m_renderQueue->m_cameraFar, 0.0f, 0.0f);
 		cmdb->setPushConstants(&pc, sizeof(pc));
 
 		cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);

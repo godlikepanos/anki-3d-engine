@@ -66,8 +66,13 @@ void main()
 			s_avgLum[gl_LocalInvocationIndex] += s_avgLum[gl_LocalInvocationIndex + s];
 		}
 
-		memoryBarrierShared();
-		barrier();
+#if ANKI_PLATFORM_MOBILE
+		if(s > 16u)
+		{
+			memoryBarrierShared();
+			barrier();
+		}
+#endif
 	}
 
 	// Write the result

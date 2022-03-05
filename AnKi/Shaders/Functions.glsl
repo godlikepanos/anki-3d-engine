@@ -39,6 +39,12 @@ F32 linearizeDepth(F32 depth, F32 zNear, F32 zFar)
 	return zNear / ((zNear - zFar) + zFar / depth);
 }
 
+// Convert to linear depth
+Vec4 linearizeDepth(Vec4 depth, F32 zNear, F32 zFar)
+{
+	return zNear / ((zNear - zFar) + zFar / depth);
+}
+
 // This is the optimal linearizeDepth where a=(n-f)/n and b=f/n
 F32 linearizeDepthOptimal(F32 depth, F32 a, F32 b)
 {

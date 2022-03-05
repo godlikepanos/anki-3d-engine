@@ -245,6 +245,12 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 																									 : "RtShadows");
 	}
 
+	if(in.getKey(KeyCode::J) == 1)
+	{
+		renderer.setCurrentDebugRenderTarget(
+			(renderer.getCurrentDebugRenderTarget() == "GBuffer_albedo") ? "" : "GBuffer_albedo");
+	}
+
 	if(in.getEvent(InputEvent::WINDOW_CLOSED))
 	{
 		quit = true;

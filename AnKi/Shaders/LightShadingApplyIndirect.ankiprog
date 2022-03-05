@@ -28,7 +28,8 @@ layout(set = 0, binding = 9) uniform ANKI_RP texture2D u_integrationLut;
 
 layout(push_constant, std430) uniform b_pc
 {
-	Vec2 u_quadTexelSize;
+	F32 u_near;
+	F32 u_far;
 	Vec2 u_padding;
 };
 
@@ -44,40 +45,70 @@ void main()
 							textureLod(u_gbuffer2Tex, u_nearestAnyClampSampler, in_uv, 0.0), gbuffer);
 
 	// Reference
-	const F32 depthCenter = textureLod(u_fullDepthTex, u_linearAnyClampSampler, in_uv, 0.0).x;
+	const F32 depthCenter = textureLod(u_fullDepthTex, u_nearestAnyClampSampler, in_uv, 0.0).x;
 	if(depthCenter == 1.0)
 	{
 		discard;
 	}
 
-	// Do a bilateral upscale
+	const F32 linearDepthCenter = linearizeDepth(depthCenter, u_near, u_far);
+
+	// Quad depths
+	Vec4 quarterDepths = textureGather(sampler2D(u_quarterDepthTex, u_nearestAnyClampSampler), in_uv, 0);
+	quarterDepths = linearizeDepth(quarterDepths, u_near, u_far);
+
+	// Diff
+	const Vec4 diffs = abs(quarterDepths - linearDepthCenter);
+	const F32 maxDiff = max(diffs.x, max(diffs.y, max(diffs.z, diffs.w)));
+
+	const F32 depthThreshold = 0.2 / (u_far - u_near);
+
+	// Do a neareset depth upscale
 	ANKI_RP Vec3 diffuse = Vec3(0.0);
 	ANKI_RP Vec3 specular = Vec3(0.0);
-	const F32 radius = 1.0;
-	F32 sumWeight = EPSILON;
-	for(F32 x = -radius; x <= radius; x += 1.0)
+	if(maxDiff <= depthThreshold)
 	{
-		for(F32 y = -radius; y <= radius; y += 1.0)
+		diffuse = textureLod(u_quarterDiffuseIndirectTex, u_linearAnyClampSampler, in_uv, 0.0).xyz;
+		specular = textureLod(u_quarterSpecularIndirectTex, u_linearAnyClampSampler, in_uv, 0.0).xyz;
+	}
+	else
+	{
+		// Some discontinuites, need to pick the one closest to depth reference
+
+		const ANKI_RP Vec4 diffuseR =
+			textureGather(sampler2D(u_quarterDiffuseIndirectTex, u_linearAnyClampSampler), in_uv, 0);
+		const ANKI_RP Vec4 diffuseG =
+			textureGather(sampler2D(u_quarterDiffuseIndirectTex, u_linearAnyClampSampler), in_uv, 1);
+		const ANKI_RP Vec4 diffuseB =
+			textureGather(sampler2D(u_quarterDiffuseIndirectTex, u_linearAnyClampSampler), in_uv, 2);
+
+		const ANKI_RP Vec4 specularR =
+			textureGather(sampler2D(u_quarterSpecularIndirectTex, u_linearAnyClampSampler), in_uv, 0);
+		const ANKI_RP Vec4 specularG =
+			textureGather(sampler2D(u_quarterSpecularIndirectTex, u_linearAnyClampSampler), in_uv, 1);
+		const ANKI_RP Vec4 specularB =
+			textureGather(sampler2D(u_quarterSpecularIndirectTex, u_linearAnyClampSampler), in_uv, 2);
+
+		F32 minDiff = diffs.x;
+		U32 comp = 0u;
+
+		if(diffs.y < minDiff)
 		{
-			const Vec2 sampleUv = in_uv + Vec2(x, y) * u_quadTexelSize;
-			const F32 depthTap = textureLod(u_quarterDepthTex, u_linearAnyClampSampler, sampleUv, 0.0).x;
-
-			const F32 w = calculateBilateralWeightDepth(depthCenter, depthTap, 1.0);
-			sumWeight += w;
-
-			// Diffuse
-			ANKI_RP Vec3 colorTap =
-				textureLod(u_quarterDiffuseIndirectTex, u_nearestAnyClampSampler, sampleUv, 0.0).xyz;
-			diffuse += colorTap * w;
-
-			// Specular
-			colorTap = textureLod(u_quarterSpecularIndirectTex, u_nearestAnyClampSampler, sampleUv, 0.0).xyz;
-			specular += colorTap * w;
+			comp = 1u;
+			minDiff = diffs.y;
 		}
+
+		if(diffs.z < minDiff)
+		{
+			comp = 2u;
+			minDiff = diffs.z;
+		}
+
+		diffuse = Vec3(diffuseR[comp], diffuseG[comp], diffuseB[comp]);
+		specular = Vec3(specularR[comp], specularG[comp], specularB[comp]);
 	}
 
 	// Do diffuse
-	diffuse /= sumWeight;
 	diffuse *= gbuffer.m_diffuse;
 
 	// Do specular
@@ -87,7 +118,6 @@ void main()
 	const ANKI_RP Vec3 viewDir = normalize(-viewPos);
 	const F32 NoV = max(0.0, dot(gbuffer.m_normal, viewDir));
 	const Vec3 env = specularDFG(gbuffer.m_f0, gbuffer.m_roughness, u_integrationLut, u_linearAnyClampSampler, NoV);
-	specular /= sumWeight;
 	specular *= env;
 
 	// Writeout
