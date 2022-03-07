@@ -31,7 +31,7 @@ layout(set = 0, binding = 6) uniform texture2D u_depthRt;
 layout(set = 0, binding = 7) ANKI_RP uniform texture2D u_lightBufferRt;
 layout(set = 0, binding = 8) ANKI_RP uniform texture2D u_historyTex;
 layout(set = 0, binding = 9) uniform texture2D u_motionVectorsTex;
-layout(set = 0, binding = 10) uniform texture2D u_motionVectorsRejectionTex;
+layout(set = 0, binding = 10) uniform texture2D u_historyLengthTex;
 
 #if defined(ANKI_COMPUTE_SHADER)
 const UVec2 WORKGROUP_SIZE = UVec2(8, 8);
@@ -219,14 +219,20 @@ void main()
 	// Blend color with history
 	{
 		const Vec2 historyUv = uv + textureLod(u_motionVectorsTex, u_linearAnyClampSampler, uv, 0.0).xy;
-		const F32 historyRejectionFactor = textureLod(u_motionVectorsRejectionTex, u_linearAnyClampSampler, uv, 0.0).x;
+		const F32 historyLength = textureLod(u_historyLengthTex, u_linearAnyClampSampler, uv, 0.0).x;
 
-		const F32 lowestBlendFactor = 0.1;
-		const F32 blendFactor = mix(lowestBlendFactor, 1.0, historyRejectionFactor);
+		const F32 lowestBlendFactor = 0.05;
+		const F32 maxHistoryLength = 16.0;
+		const F32 stableFrames = 4.0;
+		const F32 lerp = min(1.0, (historyLength * maxHistoryLength - 1.0) / stableFrames);
+		const F32 blendFactor = mix(1.0, lowestBlendFactor, lerp);
 
 		// Blend with history
-		const ANKI_RP Vec3 history = textureLod(u_historyTex, u_linearAnyClampSampler, historyUv, 0.0).rgb;
-		outColor = mix(history, outColor, blendFactor);
+		if(blendFactor < 1.0)
+		{
+			const ANKI_RP Vec3 history = textureLod(u_historyTex, u_linearAnyClampSampler, historyUv, 0.0).rgb;
+			outColor = mix(history, outColor, blendFactor);
+		}
 	}
 
 	// Store color

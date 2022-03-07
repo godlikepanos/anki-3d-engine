@@ -134,7 +134,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 		prpass->newDependency(RenderPassDependency(m_r->getDepthDownscale().getHiZRt(), readUsage, hizSubresource));
 		prpass->newDependency(RenderPassDependency(m_r->getDownscaleBlur().getRt(), readUsage));
 		prpass->newDependency(RenderPassDependency(m_r->getMotionVectors().getMotionVectorsRt(), readUsage));
-		prpass->newDependency(RenderPassDependency(m_r->getMotionVectors().getRejectionFactorRt(), readUsage));
+		prpass->newDependency(RenderPassDependency(m_r->getMotionVectors().getHistoryLengthRt(), readUsage));
 		prpass->newDependency(RenderPassDependency(m_runCtx.m_mainRtHandles[READ], readUsage));
 
 		prpass->setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
@@ -156,7 +156,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindColorTexture(0, 7, m_r->getDownscaleBlur().getRt());
 			rgraphCtx.bindColorTexture(0, 8, m_runCtx.m_mainRtHandles[READ]);
 			rgraphCtx.bindColorTexture(0, 9, m_r->getMotionVectors().getMotionVectorsRt());
-			rgraphCtx.bindColorTexture(0, 10, m_r->getMotionVectors().getRejectionFactorRt());
+			rgraphCtx.bindColorTexture(0, 10, m_r->getMotionVectors().getHistoryLengthRt());
 
 			if(getConfig().getRPreferCompute())
 			{

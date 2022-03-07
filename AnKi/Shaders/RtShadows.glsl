@@ -8,7 +8,7 @@
 #include <AnKi/Shaders/Include/RtShadows.h>
 #include <AnKi/Shaders/PackFunctions.glsl>
 
-const F32 RT_SHADOWS_MAX_HISTORY_LENGTH = 31.0;
+const F32 RT_SHADOWS_MAX_HISTORY_LENGTH = 16.0;
 
 UVec4 packRtShadows(F32 shadowFactors[MAX_RT_SHADOW_LAYERS])
 {

@@ -16,6 +16,6 @@ ANKI_CONFIG_VAR_F32(SceneReflectionProbeEffectiveDistance, 256.0f, 1.0f, MAX_F32
 ANKI_CONFIG_VAR_F32(SceneReflectionProbeShadowEffectiveDistance, 32.0f, 1.0f, MAX_F32,
 					"How far to render shadows for reflection probes")
 
-ANKI_CONFIG_VAR_BOOL(SceneRayTracedShadows, false, "Enable or not ray traced shadows. Ignored if RT is not supported")
+ANKI_CONFIG_VAR_BOOL(SceneRayTracedShadows, true, "Enable or not ray traced shadows. Ignored if RT is not supported")
 ANKI_CONFIG_VAR_F32(SceneRayTracingExtendedFrustumDistance, 100.0f, 10.0f, 10000.0f,
 					"Every object that its distance from the camera is bellow that value will take part in ray tracing")

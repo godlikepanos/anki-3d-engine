@@ -7,6 +7,7 @@
 #include <AnKi/Scene/Components/FrustumComponent.h>
 #include <AnKi/Scene/Components/MoveComponent.h>
 #include <AnKi/Scene/Components/SpatialComponent.h>
+#include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Core/ConfigSet.h>
 
 namespace anki {
@@ -74,7 +75,8 @@ void CameraNode::initCommon(FrustumType frustumType)
 	frc->setLodDistance(1, getConfig().getLod1MaxDistance());
 
 	// Extended frustum for RT
-	if(getConfig().getSceneRayTracedShadows())
+	if(getSceneGraph().getGrManager().getDeviceCapabilities().m_rayTracingEnabled
+	   && getConfig().getSceneRayTracedShadows())
 	{
 		FrustumComponent* rtFrustumComponent = newComponent<FrustumComponent>();
 		rtFrustumComponent->setFrustumType(FrustumType::ORTHOGRAPHIC);

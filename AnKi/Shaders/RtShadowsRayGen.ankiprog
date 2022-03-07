@@ -28,14 +28,12 @@ layout(set = 0, binding = 8) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 9) uniform sampler u_nearestAnyClampSampler;
 layout(set = 0, binding = 10) uniform texture2D u_depthRt;
 layout(set = 0, binding = 11) uniform texture2D u_motionVectorsRt;
-layout(set = 0, binding = 12) uniform texture2D u_motionVectorsRejectionRt;
+layout(set = 0, binding = 12) uniform texture2D u_historyLengthTex;
 layout(set = 0, binding = 13) uniform texture2D u_normalRt;
 layout(set = 0, binding = 14) uniform accelerationStructureEXT u_tlas;
-layout(set = 0, binding = 15) uniform texture2D u_prevHistoryLengthTex;
-layout(set = 0, binding = 16) uniform image2D u_historyLengthImage;
-layout(set = 0, binding = 17) uniform texture2D u_prevMomentsTex;
-layout(set = 0, binding = 18) uniform image2D u_momentsImage;
-layout(set = 0, binding = 19) uniform texture2D u_blueNoiseTex;
+layout(set = 0, binding = 15) uniform texture2D u_prevMomentsTex;
+layout(set = 0, binding = 16) uniform image2D u_momentsImage;
+layout(set = 0, binding = 17) uniform texture2D u_blueNoiseTex;
 
 ANKI_BINDLESS_SET(1); // Used by the hit shaders
 
@@ -75,11 +73,6 @@ void main()
 	{
 		imageStore(u_shadowsImage, IVec2(gl_LaunchIDEXT.xy), UVec4(0));
 		imageStore(u_momentsImage, IVec2(gl_LaunchIDEXT.xy), Vec4(0.0));
-
-		// Set to max history length because this pixel won't need any processing from further compute stages
-		imageStore(u_historyLengthImage, IVec2(gl_LaunchIDEXT.xy),
-				   Vec4(RT_SHADOWS_MAX_HISTORY_LENGTH / RT_SHADOWS_MAX_HISTORY_LENGTH, 0.0, 0.0, 0.0));
-
 		return;
 	}
 
@@ -178,25 +171,9 @@ void main()
 		}
 	}
 
-	// Compute history length
+	// Get history length
 	const Vec2 historyUv = uv + textureLod(u_motionVectorsRt, u_linearAnyClampSampler, uv, 0.0).xy;
-	const F32 historyRejectionFactor = textureLod(u_motionVectorsRejectionRt, u_linearAnyClampSampler, uv, 0.0).x;
-	F32 historyLength;
-	if(historyRejectionFactor >= 0.5)
-	{
-		// Rejection factor too high, reset the temporal history for all layers
-		historyLength = 1.0 / RT_SHADOWS_MAX_HISTORY_LENGTH;
-	}
-	else
-	{
-		// Sample seems stable, increment its temporal history
-
-		historyLength = textureLod(u_prevHistoryLengthTex, u_linearAnyClampSampler, historyUv, 0.0).r;
-		historyLength += 1.0 / RT_SHADOWS_MAX_HISTORY_LENGTH;
-	}
-
-	// Store history length
-	imageStore(u_historyLengthImage, IVec2(gl_LaunchIDEXT.xy), Vec4(historyLength));
+	const F32 historyLength = textureLod(u_historyLengthTex, u_linearAnyClampSampler, uv, 0.0).x;
 
 	// Compute blend fractor. Use nearest sampler because it's an integer texture
 	const F32 lowestBlendFactor = 0.1;
@@ -228,8 +205,8 @@ void main()
 
 	// Blend the moments
 	const Vec2 prevMoments = textureLod(u_prevMomentsTex, u_linearAnyClampSampler, historyUv, 0.0).xy;
-	F32 momentsBlendFactor = 0.2;
-	momentsBlendFactor = mix(momentsBlendFactor, 1.0, historyRejectionFactor);
+	const F32 lowestMomentsBlendFactor = 0.2;
+	const F32 momentsBlendFactor = mix(1.0, lowestMomentsBlendFactor, lerp);
 	moments = mix(prevMoments, moments, momentsBlendFactor);
 
 	// Store the moments

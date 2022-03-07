@@ -21,7 +21,7 @@ public:
 		: RendererObject(renderer)
 	{
 		registerDebugRenderTarget("MotionVectors");
-		registerDebugRenderTarget("MotionVectorsRejection");
+		registerDebugRenderTarget("MotionVectorsHistoryLength");
 	}
 
 	~MotionVectors();
@@ -35,9 +35,9 @@ public:
 		return m_runCtx.m_motionVectorsRtHandle;
 	}
 
-	RenderTargetHandle getRejectionFactorRt() const
+	RenderTargetHandle getHistoryLengthRt() const
 	{
-		return m_runCtx.m_rejectionFactorRtHandle;
+		return m_runCtx.m_historyLengthWriteRtHandle;
 	}
 
 	void getDebugRenderTarget(CString rtName, RenderTargetHandle& handle,
@@ -49,8 +49,8 @@ public:
 		}
 		else
 		{
-			ANKI_ASSERT(rtName == "MotionVectorsRejection");
-			handle = m_runCtx.m_rejectionFactorRtHandle;
+			ANKI_ASSERT(rtName == "MotionVectorsHistoryLength");
+			handle = m_runCtx.m_historyLengthWriteRtHandle;
 		}
 	}
 
@@ -58,14 +58,17 @@ private:
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
 	RenderTargetDescription m_motionVectorsRtDescr;
-	RenderTargetDescription m_rejectionFactorRtDescr;
 	FramebufferDescription m_fbDescr;
+
+	Array<TexturePtr, 2> m_historyLengthTextures;
+	Bool m_historyLengthTexturesImportedOnce = false;
 
 	class
 	{
 	public:
 		RenderTargetHandle m_motionVectorsRtHandle;
-		RenderTargetHandle m_rejectionFactorRtHandle;
+		RenderTargetHandle m_historyLengthReadRtHandle;
+		RenderTargetHandle m_historyLengthWriteRtHandle;
 	} m_runCtx;
 
 	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);

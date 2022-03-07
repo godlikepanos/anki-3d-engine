@@ -57,7 +57,6 @@ public:
 	RenderTargetDescription m_upscaledRtDescr;
 
 	Array<TexturePtr, 2> m_momentsRts;
-	Array<TexturePtr, 2> m_historyLengthRts;
 
 	RenderTargetDescription m_varianceRtDescr;
 	/// @}
@@ -107,9 +106,6 @@ public:
 
 		RenderTargetHandle m_prevMomentsRt;
 		RenderTargetHandle m_currentMomentsRt;
-
-		RenderTargetHandle m_prevHistoryLengthRt;
-		RenderTargetHandle m_currentHistoryLengthRt;
 
 		Array<RenderTargetHandle, 2> m_varianceRts;
 

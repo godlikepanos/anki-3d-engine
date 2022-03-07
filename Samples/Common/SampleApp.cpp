@@ -91,8 +91,9 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::L) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget(
-			(renderer.getCurrentDebugRenderTarget() == "MotionVectorsRejection") ? "" : "MotionVectorsRejection");
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "MotionVectorsHistoryLength")
+												 ? ""
+												 : "MotionVectorsHistoryLength");
 	}
 
 	if(in.getKey(KeyCode::H) == 1)

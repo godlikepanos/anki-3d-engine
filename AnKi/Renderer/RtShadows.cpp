@@ -161,20 +161,6 @@ Error RtShadows::initInternal()
 		m_momentsRts[1] = m_r->createAndClearRenderTarget(texinit);
 	}
 
-	// History len RT
-	{
-		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
-			m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2, Format::R8_UNORM,
-			TextureUsageBit::ALL_SAMPLED | TextureUsageBit::IMAGE_TRACE_RAYS_WRITE
-				| TextureUsageBit::IMAGE_COMPUTE_WRITE,
-			"RtShadows History Length #1");
-		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
-		m_historyLengthRts[0] = m_r->createAndClearRenderTarget(texinit);
-
-		texinit.setName("RtShadows History Length #2");
-		m_historyLengthRts[1] = m_r->createAndClearRenderTarget(texinit);
-	}
-
 	// Variance RT
 	if(m_useSvgf)
 	{
@@ -216,16 +202,12 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 			m_runCtx.m_prevMomentsRt =
 				rgraph.importRenderTarget(m_momentsRts[prevRtIdx], TextureUsageBit::SAMPLED_FRAGMENT);
 
-			m_runCtx.m_prevHistoryLengthRt =
-				rgraph.importRenderTarget(m_historyLengthRts[prevRtIdx], TextureUsageBit::SAMPLED_FRAGMENT);
-
 			m_rtsImportedOnce = true;
 		}
 		else
 		{
 			m_runCtx.m_historyRt = rgraph.importRenderTarget(m_historyRt);
 			m_runCtx.m_prevMomentsRt = rgraph.importRenderTarget(m_momentsRts[prevRtIdx]);
-			m_runCtx.m_prevHistoryLengthRt = rgraph.importRenderTarget(m_historyLengthRts[prevRtIdx]);
 		}
 
 		if((getPassCountWithoutUpscaling() % 2) == 1)
@@ -241,8 +223,6 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 		}
 
 		m_runCtx.m_currentMomentsRt = rgraph.importRenderTarget(m_momentsRts[!prevRtIdx], TextureUsageBit::NONE);
-		m_runCtx.m_currentHistoryLengthRt =
-			rgraph.importRenderTarget(m_historyLengthRts[!prevRtIdx], TextureUsageBit::NONE);
 
 		if(m_useSvgf)
 		{
@@ -277,15 +257,11 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 		rpass.newDependency(
 			RenderPassDependency(m_r->getMotionVectors().getMotionVectorsRt(), TextureUsageBit::SAMPLED_TRACE_RAYS));
 		rpass.newDependency(
-			RenderPassDependency(m_r->getMotionVectors().getRejectionFactorRt(), TextureUsageBit::SAMPLED_TRACE_RAYS));
+			RenderPassDependency(m_r->getMotionVectors().getHistoryLengthRt(), TextureUsageBit::SAMPLED_TRACE_RAYS));
 		rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_TRACE_RAYS));
 
 		rpass.newDependency(RenderPassDependency(m_runCtx.m_prevMomentsRt, TextureUsageBit::SAMPLED_TRACE_RAYS));
 		rpass.newDependency(RenderPassDependency(m_runCtx.m_currentMomentsRt, TextureUsageBit::IMAGE_TRACE_RAYS_WRITE));
-
-		rpass.newDependency(RenderPassDependency(m_runCtx.m_prevHistoryLengthRt, TextureUsageBit::SAMPLED_TRACE_RAYS));
-		rpass.newDependency(
-			RenderPassDependency(m_runCtx.m_currentHistoryLengthRt, TextureUsageBit::IMAGE_TRACE_RAYS_WRITE));
 
 		rpass.newDependency(RenderPassDependency(ctx.m_clusteredShading.m_clustersBufferHandle,
 												 BufferUsageBit::STORAGE_TRACE_RAYS_READ));
@@ -304,7 +280,8 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 		rpass.newDependency(depthDependency);
 		rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_COMPUTE));
 		rpass.newDependency(RenderPassDependency(m_runCtx.m_currentMomentsRt, TextureUsageBit::SAMPLED_COMPUTE));
-		rpass.newDependency(RenderPassDependency(m_runCtx.m_currentHistoryLengthRt, TextureUsageBit::SAMPLED_COMPUTE));
+		rpass.newDependency(
+			RenderPassDependency(m_r->getMotionVectors().getHistoryLengthRt(), TextureUsageBit::SAMPLED_COMPUTE));
 
 		rpass.newDependency(
 			RenderPassDependency(m_runCtx.m_intermediateShadowsRts[1], TextureUsageBit::IMAGE_COMPUTE_WRITE));
@@ -323,7 +300,8 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 		rpass.newDependency(depthDependency);
 		rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_COMPUTE));
 		rpass.newDependency(RenderPassDependency(m_runCtx.m_currentMomentsRt, TextureUsageBit::SAMPLED_COMPUTE));
-		rpass.newDependency(RenderPassDependency(m_runCtx.m_currentHistoryLengthRt, TextureUsageBit::SAMPLED_COMPUTE));
+		rpass.newDependency(
+			RenderPassDependency(m_r->getMotionVectors().getHistoryLengthRt(), TextureUsageBit::SAMPLED_COMPUTE));
 
 		rpass.newDependency(RenderPassDependency(m_runCtx.m_historyRt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
 	}
@@ -339,7 +317,8 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 		rpass.newDependency(
 			RenderPassDependency(m_runCtx.m_intermediateShadowsRts[0], TextureUsageBit::SAMPLED_COMPUTE));
 		rpass.newDependency(RenderPassDependency(m_runCtx.m_currentMomentsRt, TextureUsageBit::SAMPLED_COMPUTE));
-		rpass.newDependency(RenderPassDependency(m_runCtx.m_currentHistoryLengthRt, TextureUsageBit::SAMPLED_COMPUTE));
+		rpass.newDependency(
+			RenderPassDependency(m_r->getMotionVectors().getHistoryLengthRt(), TextureUsageBit::SAMPLED_COMPUTE));
 		rpass.newDependency(depthDependency);
 		rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_COMPUTE));
 
@@ -496,14 +475,12 @@ void RtShadows::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCt
 	cmdb->bindSampler(0, 9, m_r->getSamplers().m_nearestNearestClamp);
 	rgraphCtx.bindTexture(0, 10, m_r->getDepthDownscale().getHiZRt(), HIZ_HALF_DEPTH);
 	rgraphCtx.bindColorTexture(0, 11, m_r->getMotionVectors().getMotionVectorsRt());
-	rgraphCtx.bindColorTexture(0, 12, m_r->getMotionVectors().getRejectionFactorRt());
+	rgraphCtx.bindColorTexture(0, 12, m_r->getMotionVectors().getHistoryLengthRt());
 	rgraphCtx.bindColorTexture(0, 13, m_r->getGBuffer().getColorRt(2));
 	rgraphCtx.bindAccelerationStructure(0, 14, m_r->getAccelerationStructureBuilder().getAccelerationStructureHandle());
-	rgraphCtx.bindColorTexture(0, 15, m_runCtx.m_prevHistoryLengthRt);
-	rgraphCtx.bindImage(0, 16, m_runCtx.m_currentHistoryLengthRt);
-	rgraphCtx.bindColorTexture(0, 17, m_runCtx.m_prevMomentsRt);
-	rgraphCtx.bindImage(0, 18, m_runCtx.m_currentMomentsRt);
-	cmdb->bindTexture(0, 19, m_blueNoiseImage->getTextureView());
+	rgraphCtx.bindColorTexture(0, 15, m_runCtx.m_prevMomentsRt);
+	rgraphCtx.bindImage(0, 16, m_runCtx.m_currentMomentsRt);
+	cmdb->bindTexture(0, 17, m_blueNoiseImage->getTextureView());
 
 	cmdb->bindAllBindless(1);
 
@@ -530,7 +507,7 @@ void RtShadows::runDenoise(const RenderingContext& ctx, RenderPassWorkContext& r
 	rgraphCtx.bindTexture(0, 3, m_r->getDepthDownscale().getHiZRt(), HIZ_HALF_DEPTH);
 	rgraphCtx.bindColorTexture(0, 4, m_r->getGBuffer().getColorRt(2));
 	rgraphCtx.bindColorTexture(0, 5, m_runCtx.m_currentMomentsRt);
-	rgraphCtx.bindColorTexture(0, 6, m_runCtx.m_currentHistoryLengthRt);
+	rgraphCtx.bindColorTexture(0, 6, m_r->getMotionVectors().getHistoryLengthRt());
 
 	rgraphCtx.bindImage(
 		0, 7, (m_runCtx.m_denoiseOrientation == 0) ? m_runCtx.m_intermediateShadowsRts[1] : m_runCtx.m_historyRt);
@@ -556,7 +533,7 @@ void RtShadows::runSvgfVariance(const RenderingContext& ctx, RenderPassWorkConte
 
 	rgraphCtx.bindColorTexture(0, 2, m_runCtx.m_intermediateShadowsRts[0]);
 	rgraphCtx.bindColorTexture(0, 3, m_runCtx.m_currentMomentsRt);
-	rgraphCtx.bindColorTexture(0, 4, m_runCtx.m_currentHistoryLengthRt);
+	rgraphCtx.bindColorTexture(0, 4, m_r->getMotionVectors().getHistoryLengthRt());
 	rgraphCtx.bindTexture(0, 5, m_r->getDepthDownscale().getHiZRt(), HIZ_HALF_DEPTH);
 
 	rgraphCtx.bindImage(0, 6, m_runCtx.m_intermediateShadowsRts[1]);
