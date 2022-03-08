@@ -128,10 +128,15 @@ private:
 
 	static U32 getMeshTotalVertexCount(const cgltf_mesh& mesh);
 
+	// Compute filenames for various resources. Use a hash to solve the casing issue and remove unwanted special chars
 	StringAuto computeModelResourceFilename(const cgltf_mesh& mesh) const;
+	StringAuto computeMeshResourceFilename(const cgltf_mesh& mesh, U32 lod = 0) const;
+	StringAuto computeMaterialResourceFilename(const cgltf_material& mtl) const;
+	StringAuto computeAnimationResourceFilename(const cgltf_animation& anim) const;
+	StringAuto computeSkeletonResourceFilename(const cgltf_skin& skin) const;
 
 	// Resources
-	ANKI_USE_RESULT Error writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 decimateFactor);
+	ANKI_USE_RESULT Error writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFactor);
 	ANKI_USE_RESULT Error writeMaterial(const cgltf_material& mtl, RayTypeBit usedRayTypes);
 	ANKI_USE_RESULT Error writeModel(const cgltf_mesh& mesh);
 	ANKI_USE_RESULT Error writeAnimation(const cgltf_animation& anim);

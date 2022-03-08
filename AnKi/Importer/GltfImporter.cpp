@@ -548,8 +548,8 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 				m_sceneFile.writeText("\nnode = scene:newStaticCollisionNode(\"%s\")\n", getNodeName(node).cstr()));
 
 			ANKI_CHECK(m_sceneFile.writeText("comp = scene:getSceneNodeBase():getBodyComponent()\n"));
-			ANKI_CHECK(
-				m_sceneFile.writeText("comp:loadMeshResource(\"%s%s.ankimesh\")\n", m_rpath.cstr(), node.mesh->name));
+			const StringAuto meshFname = computeMeshResourceFilename(*node.mesh);
+			ANKI_CHECK(m_sceneFile.writeText("comp:loadMeshResource(\"%s%s\")\n", m_rpath.cstr(), meshFname.cstr()));
 
 			Transform localTrf;
 			ANKI_CHECK(getNodeTransform(node, localTrf));
@@ -716,22 +716,18 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 				Ctx& self = *static_cast<Ctx*>(userData);
 
 				// LOD 0
-				Error err = self.m_importer->writeMesh(*self.m_mesh, CString(), self.m_importer->computeLodFactor(0));
+				Error err = self.m_importer->writeMesh(*self.m_mesh, 0, self.m_importer->computeLodFactor(0));
 
 				// LOD 1
 				if(!err && self.m_importer->m_lodCount > 1 && !self.m_importer->skipMeshLod(*self.m_mesh, 1))
 				{
-					StringAuto name(self.m_importer->m_alloc);
-					name.sprintf("%s_lod1", self.m_mesh->name);
-					err = self.m_importer->writeMesh(*self.m_mesh, name, self.m_importer->computeLodFactor(1));
+					err = self.m_importer->writeMesh(*self.m_mesh, 1, self.m_importer->computeLodFactor(1));
 				}
 
 				// LOD 2
 				if(!err && self.m_importer->m_lodCount > 2 && !self.m_importer->skipMeshLod(*self.m_mesh, 2))
 				{
-					StringAuto name(self.m_importer->m_alloc);
-					name.sprintf("%s_lod2", self.m_mesh->name);
-					err = self.m_importer->writeMesh(*self.m_mesh, name, self.m_importer->computeLodFactor(2));
+					err = self.m_importer->writeMesh(*self.m_mesh, 2, self.m_importer->computeLodFactor(2));
 				}
 
 				for(U32 i = 0; i < self.m_materialCount && !err; ++i)
@@ -778,16 +774,11 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 												 getNodeName(node).cstr()));
 
 				ANKI_CHECK(m_sceneFile.writeText("comp = node2:getSceneNodeBase():getBodyComponent()\n"));
-				if(maxLod == 0)
-				{
-					ANKI_CHECK(m_sceneFile.writeText("comp:loadMeshResource(\"%s%s.ankimesh\")\n", m_rpath.cstr(),
-													 node.mesh->name));
-				}
-				else
-				{
-					ANKI_CHECK(m_sceneFile.writeText("comp:loadMeshResource(\"%s%s_lod%u.ankimesh\")\n", m_rpath.cstr(),
-													 node.mesh->name, maxLod));
-				}
+
+				const StringAuto meshFname = computeMeshResourceFilename(*node.mesh, maxLod);
+
+				ANKI_CHECK(
+					m_sceneFile.writeText("comp:loadMeshResource(\"%s%s\")\n", m_rpath.cstr(), meshFname.cstr()));
 				ANKI_CHECK(m_sceneFile.writeText("comp:setWorldTransform(trf)\n"));
 			}
 		}
@@ -863,20 +854,21 @@ Error GltfImporter::writeModel(const cgltf_mesh& mesh)
 			ANKI_CHECK(file.writeText("\t\t<modelPatch subMeshIndex=\"%u\">\n", primIdx));
 		}
 
-		ANKI_CHECK(file.writeText("\t\t\t<mesh>%s%s.ankimesh</mesh>\n", m_rpath.cstr(), mesh.name));
+		{
+			const StringAuto meshFname = computeMeshResourceFilename(mesh);
+			ANKI_CHECK(file.writeText("\t\t\t<mesh>%s%s</mesh>\n", m_rpath.cstr(), meshFname.cstr()));
+		}
 
 		if(m_lodCount > 1 && !skipMeshLod(mesh, 1))
 		{
-			StringAuto name(m_alloc);
-			name.sprintf("%s_lod1", mesh.name);
-			ANKI_CHECK(file.writeText("\t\t\t<mesh1>%s%s.ankimesh</mesh1>\n", m_rpath.cstr(), name.cstr()));
+			const StringAuto meshFname = computeMeshResourceFilename(mesh, 1);
+			ANKI_CHECK(file.writeText("\t\t\t<mesh1>%s%s</mesh1>\n", m_rpath.cstr(), meshFname.cstr()));
 		}
 
 		if(m_lodCount > 2 && !skipMeshLod(mesh, 2))
 		{
-			StringAuto name(m_alloc);
-			name.sprintf("%s_lod2", mesh.name);
-			ANKI_CHECK(file.writeText("\t\t\t<mesh2>%s%s.ankimesh</mesh2>\n", m_rpath.cstr(), name.cstr()));
+			const StringAuto meshFname = computeMeshResourceFilename(mesh, 2);
+			ANKI_CHECK(file.writeText("\t\t\t<mesh2>%s%s</mesh2>\n", m_rpath.cstr(), meshFname.cstr()));
 		}
 
 		HashMapAuto<CString, StringAuto> materialExtras(m_alloc);
@@ -888,8 +880,8 @@ Error GltfImporter::writeModel(const cgltf_mesh& mesh)
 		}
 		else
 		{
-			ANKI_CHECK(file.writeText("\t\t\t<material>%s%s.ankimtl</material>\n", m_rpath.cstr(),
-									  mesh.primitives[primIdx].material->name));
+			const StringAuto mtlFname = computeMaterialResourceFilename(*mesh.primitives[primIdx].material);
+			ANKI_CHECK(file.writeText("\t\t\t<material>%s%s</material>\n", m_rpath.cstr(), mtlFname.cstr()));
 		}
 
 		ANKI_CHECK(file.writeText("\t\t</modelPatch>\n"));
@@ -981,7 +973,7 @@ static void optimizeChannel(DynamicArrayAuto<GltfAnimKey<T>>& arr, const T& iden
 Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 {
 	StringAuto fname(m_alloc);
-	fname.sprintf("%s%s.ankianim", m_outDir.cstr(), anim.name);
+	fname.sprintf("%s%s", m_outDir.cstr(), computeAnimationResourceFilename(anim).cstr());
 	fname = fixFilename(fname);
 	ANKI_IMPORTER_LOGI("Importing animation %s", fname.cstr());
 
@@ -1211,7 +1203,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 Error GltfImporter::writeSkeleton(const cgltf_skin& skin)
 {
 	StringAuto fname(m_alloc);
-	fname.sprintf("%s%s.ankiskel", m_outDir.cstr(), skin.name);
+	fname.sprintf("%s%s", m_outDir.cstr(), computeSkeletonResourceFilename(skin).cstr());
 	ANKI_IMPORTER_LOGI("Importing skeleton %s", fname.cstr());
 
 	// Get matrices
@@ -1449,9 +1441,8 @@ Error GltfImporter::writeModelNode(const cgltf_node& node, const HashMapAuto<CSt
 
 	if(node.skin)
 	{
-		ANKI_CHECK(m_sceneFile.writeText(
-			"node:getSceneNodeBase():getSkinComponent():loadSkeletonResource(\"%s%s.ankiskel\")\n", m_rpath.cstr(),
-			node.skin->name));
+		ANKI_CHECK(m_sceneFile.writeText("node:getSceneNodeBase():getSkinComponent():loadSkeletonResource(\"%s%s\")\n",
+										 m_rpath.cstr(), computeSkeletonResourceFilename(*node.skin).cstr()));
 	}
 
 	return Error::NONE;
@@ -1468,20 +1459,57 @@ StringAuto GltfImporter::computeModelResourceFilename(const cgltf_mesh& mesh) co
 		list.pushBackSprintf("_%s", mesh.primitives[i].material->name);
 	}
 
+	StringAuto joined(m_alloc);
+	list.join("", joined);
+
+	const U64 hash = computeHash(joined.getBegin(), joined.getLength());
+
 	StringAuto out(m_alloc);
-	list.join("", out);
+	out.sprintf("%.64s_%" PRIx64 ".ankimdl", joined.cstr(), hash); // Limit the filename size
 
-	// If the name is too big then we need to trimm it
-	if(out.getLength() > 64)
-	{
-		const U64 hash = computeHash(out.getBegin(), out.getLength());
-		StringAuto out2(m_alloc);
-		out2.sprintf("%.64s_%" PRIu64, out.cstr(), hash);
+	return out;
+}
 
-		out = std::move(out2);
-	}
+StringAuto GltfImporter::computeMeshResourceFilename(const cgltf_mesh& mesh, U32 lod) const
+{
+	const U64 hash = computeHash(mesh.name, strlen(mesh.name));
 
-	out.append(".ankimdl");
+	StringAuto out(m_alloc);
+
+	out.sprintf("%.64s_lod%u_%" PRIx64 ".ankimesh", mesh.name, lod, hash); // Limit the filename size
+
+	return out;
+}
+
+StringAuto GltfImporter::computeMaterialResourceFilename(const cgltf_material& mtl) const
+{
+	const U64 hash = computeHash(mtl.name, strlen(mtl.name));
+
+	StringAuto out(m_alloc);
+
+	out.sprintf("%.64s_%" PRIx64 ".ankimtl", mtl.name, hash); // Limit the filename size
+
+	return out;
+}
+
+StringAuto GltfImporter::computeAnimationResourceFilename(const cgltf_animation& anim) const
+{
+	const U64 hash = computeHash(anim.name, strlen(anim.name));
+
+	StringAuto out(m_alloc);
+
+	out.sprintf("%.64s_%" PRIx64 ".ankianim", anim.name, hash); // Limit the filename size
+
+	return out;
+}
+
+StringAuto GltfImporter::computeSkeletonResourceFilename(const cgltf_skin& skin) const
+{
+	const U64 hash = computeHash(skin.name, strlen(skin.name));
+
+	StringAuto out(m_alloc);
+
+	out.sprintf("%.64s_%" PRIx64 ".ankiskel", skin.name, hash); // Limit the filename size
 
 	return out;
 }

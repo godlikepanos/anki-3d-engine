@@ -1,9 +1,0 @@
-<model>
-	<modelPatches>
-		<modelPatch>
-			<mesh>Assets/sponza_278.ankimesh</mesh>
-			<mesh1>Assets/sponza_278_lod1.ankimesh</mesh1>
-			<material>Assets/leaf.ankimtl</material>
-		</modelPatch>
-	</modelPatches>
-</model>

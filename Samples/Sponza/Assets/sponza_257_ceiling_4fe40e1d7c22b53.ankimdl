@@ -1,0 +1,8 @@
+<model>
+	<modelPatches>
+		<modelPatch>
+			<mesh>Assets/sponza_257_lod0_8ac7b83ec0e64ca0.ankimesh</mesh>
+			<material>Assets/ceiling_3fd94cde277a48e1.ankimtl</material>
+		</modelPatch>
+	</modelPatches>
+</model>

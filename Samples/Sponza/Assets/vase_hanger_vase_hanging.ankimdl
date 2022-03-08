@@ -1,8 +1,0 @@
-<model>
-	<modelPatches>
-		<modelPatch>
-			<mesh>Assets/vase_hanger.ankimesh</mesh>
-			<material>Assets/vase_hanging.ankimtl</material>
-		</modelPatch>
-	</modelPatches>
-</model>

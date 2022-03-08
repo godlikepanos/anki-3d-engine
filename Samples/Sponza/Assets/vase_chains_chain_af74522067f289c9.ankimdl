@@ -1,0 +1,8 @@
+<model>
+	<modelPatches>
+		<modelPatch>
+			<mesh>Assets/vase_chains_lod0_359625e2a6d6ee0a.ankimesh</mesh>
+			<material>Assets/chain_33ef478b87fe7c15.ankimtl</material>
+		</modelPatch>
+	</modelPatches>
+</model>

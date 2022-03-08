@@ -1,8 +1,0 @@
-<model>
-	<modelPatches>
-		<modelPatch>
-			<mesh>Assets/small_window_outter.ankimesh</mesh>
-			<material>Assets/arch.001.ankimtl</material>
-		</modelPatch>
-	</modelPatches>
-</model>

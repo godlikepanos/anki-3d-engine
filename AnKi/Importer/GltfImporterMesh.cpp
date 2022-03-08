@@ -271,12 +271,12 @@ U32 GltfImporter::getMeshTotalVertexCount(const cgltf_mesh& mesh)
 	return totalVertexCount;
 }
 
-Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 decimateFactor)
+Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFactor)
 {
 	StringAuto fname(m_alloc);
-	fname.sprintf("%s%s.ankimesh", m_outDir.cstr(), (nameOverride.isEmpty()) ? mesh.name : nameOverride.cstr());
-	ANKI_IMPORTER_LOGI("Importing mesh (%s, decimate factor %f): %s", (m_optimizeMeshes) ? "optimze" : "WON'T optimize",
-					   decimateFactor, fname.cstr());
+	fname.sprintf("%s%s", m_outDir.cstr(), computeMeshResourceFilename(mesh, lod).cstr());
+	ANKI_IMPORTER_LOGI("Importing mesh (%s, decimate factor %f): %s",
+					   (m_optimizeMeshes) ? "optimize" : "WON'T optimize", decimateFactor, fname.cstr());
 
 	ListAuto<SubMesh> submeshes(m_alloc);
 	U32 totalIndexCount = 0;

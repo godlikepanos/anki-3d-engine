@@ -1,0 +1,9 @@
+<model>
+	<modelPatches>
+		<modelPatch>
+			<mesh>Assets/leaf_lod0_3a245efd17475037.ankimesh</mesh>
+			<mesh1>Assets/leaf_lod1_3a245efd17475037.ankimesh</mesh1>
+			<material>Assets/leaf_3a245efd17475037.ankimtl</material>
+		</modelPatch>
+	</modelPatches>
+</model>

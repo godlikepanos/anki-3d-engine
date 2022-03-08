@@ -1,0 +1,9 @@
+<model>
+	<modelPatches>
+		<modelPatch>
+			<mesh>Assets/column_b_top_lod0_b71e6265349a8db8.ankimesh</mesh>
+			<mesh1>Assets/column_b_top_lod1_b71e6265349a8db8.ankimesh</mesh1>
+			<material>Assets/column_b_c9391d56bff59fc3.ankimtl</material>
+		</modelPatch>
+	</modelPatches>
+</model>

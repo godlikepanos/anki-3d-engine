@@ -97,7 +97,7 @@ static Error findConstantColorsInImage(CString fname, Vec4& constantColor, Gener
 Error GltfImporter::writeMaterial(const cgltf_material& mtl, RayTypeBit usedRayTypes)
 {
 	StringAuto fname(m_alloc);
-	fname.sprintf("%s%s.ankimtl", m_outDir.cstr(), mtl.name);
+	fname.sprintf("%s%s", m_outDir.cstr(), computeMaterialResourceFilename(mtl).cstr());
 	ANKI_IMPORTER_LOGI("Importing material %s", fname.cstr());
 
 	if(!mtl.has_pbr_metallic_roughness)

@@ -1,0 +1,9 @@
+<model>
+	<modelPatches>
+		<modelPatch>
+			<mesh>Assets/carpet_lod0_9773eaac1e11dc54.ankimesh</mesh>
+			<mesh1>Assets/carpet_lod1_9773eaac1e11dc54.ankimesh</mesh1>
+			<material>Assets/fabric_d_8ff4aebb25bf20b0.ankimtl</material>
+		</modelPatch>
+	</modelPatches>
+</model>
