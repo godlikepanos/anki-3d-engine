@@ -106,6 +106,7 @@ enum class GpuVendor : U8
 	NVIDIA,
 	AMD,
 	INTEL,
+	QUALCOMM,
 	COUNT
 };
 
@@ -146,6 +147,9 @@ public:
 	/// GPU vendor.
 	GpuVendor m_gpuVendor = GpuVendor::UNKNOWN;
 
+	/// Descrete or integrated GPU.
+	Bool m_discreteGpu = false;
+
 	/// API version.
 	U8 m_minorApiVersion = 0;
 
@@ -169,7 +173,7 @@ public:
 };
 ANKI_END_PACKED_STRUCT
 static_assert(sizeof(GpuDeviceCapabilities)
-				  == sizeof(PtrSize) * 4 + sizeof(U32) * 5 + sizeof(U8) * 3 + sizeof(Bool) * 5,
+				  == sizeof(PtrSize) * 4 + sizeof(U32) * 5 + sizeof(U8) * 3 + sizeof(Bool) * 6,
 			  "Should be packed");
 
 /// The type of the allocator for heap allocations

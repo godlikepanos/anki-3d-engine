@@ -75,43 +75,50 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	VkMemoryRequirements req;
 	vkGetBufferMemoryRequirements(getDevice(), m_handle, &req);
 	U32 memIdx = MAX_U32;
+	const Bool isDiscreteGpu = getGrManagerImpl().getDeviceCapabilities().m_discreteGpu;
 
 	if(access == BufferMapAccessBit::WRITE)
 	{
 		// Only write, probably for uploads
 
-		VkMemoryPropertyFlags preferDeviceLocal = 0;
-		VkMemoryPropertyFlags avoidDeviceLocal = 0;
-#if !ANKI_PLATFORM_MOBILE
-		if((usage & (~BufferUsageBit::ALL_TRANSFER)) != BufferUsageBit::NONE)
-		{
-			// Will be used for something other than transfer, try to put it in the device
-			preferDeviceLocal = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-			avoidDeviceLocal = 0;
-		}
-		else
-		{
-			// Will be used only for transfers, don't want it in the device
-			preferDeviceLocal = 0;
-			avoidDeviceLocal = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-		}
-#endif
+		// 1st try: Device & host & coherent but not cached
+		VkMemoryPropertyFlags prefer = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+		VkMemoryPropertyFlags avoid = VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
 
-		// Device & host & coherent but not cached
-		memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(
-			req.memoryTypeBits,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | preferDeviceLocal,
-			VK_MEMORY_PROPERTY_HOST_CACHED_BIT | avoidDeviceLocal);
+		if(isDiscreteGpu)
+		{
+			if((usage & (~BufferUsageBit::ALL_TRANSFER)) != BufferUsageBit::NONE)
+			{
+				// Will be used for something other than transfer, try to put it in the device
+				prefer |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+			}
+			else
+			{
+				// Will be used only for transfers, don't want it in the device
+				avoid |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+			}
+		}
 
-		// Fallback: host & coherent and not cached
+		memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(req.memoryTypeBits, prefer, avoid);
+
+		// 2nd try: host & coherent
 		if(memIdx == MAX_U32)
 		{
-#if !ANKI_PLATFORM_MOBILE
-			ANKI_VK_LOGW("Using a fallback mode for write-only buffer");
-#endif
-			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(
-				req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-				VK_MEMORY_PROPERTY_HOST_CACHED_BIT | avoidDeviceLocal);
+			prefer = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+			avoid = 0;
+
+			if(isDiscreteGpu)
+			{
+				ANKI_VK_LOGW("Using a fallback mode for write-only buffer");
+
+				if((usage & (~BufferUsageBit::ALL_TRANSFER)) == BufferUsageBit::NONE)
+				{
+					// Will be used only for transfers, don't want it in the device
+					avoid |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+				}
+			}
+
+			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(req.memoryTypeBits, prefer, avoid);
 		}
 	}
 	else if(!!(access & BufferMapAccessBit::READ))
@@ -128,9 +135,11 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 		// Fallback: Just cached
 		if(memIdx == MAX_U32)
 		{
-#if !ANKI_PLATFORM_MOBILE
-			ANKI_VK_LOGW("Using a fallback mode for read/write buffer");
-#endif
+			if(isDiscreteGpu)
+			{
+				ANKI_VK_LOGW("Using a fallback mode for read/write buffer");
+			}
+
 			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(
 				req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT, 0);
 		}
@@ -153,7 +162,11 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 		}
 	}
 
-	ANKI_ASSERT(memIdx != MAX_U32);
+	if(memIdx == MAX_U32)
+	{
+		ANKI_VK_LOGE("Failed to find appropriate memory type for buffer: %s", getName().cstr());
+		return Error::FUNCTION_FAILED;
+	}
 
 	const VkPhysicalDeviceMemoryProperties& props = getGrManagerImpl().getMemoryProperties();
 	m_memoryFlags = props.memoryTypes[memIdx].propertyFlags;

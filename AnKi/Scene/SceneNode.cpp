@@ -26,13 +26,13 @@ SceneNode::~SceneNode()
 	auto end = m_components.getEnd();
 	for(; it != end; ++it)
 	{
-		SceneComponent* comp = *it;
-		alloc.deleteInstance(comp);
+		alloc.deleteInstance(*it);
 	}
 
 	Base::destroy(alloc);
 	m_name.destroy(alloc);
 	m_components.destroy(alloc);
+	m_componentInfos.destroy(alloc);
 }
 
 void SceneNode::setMarkedForDeletion()

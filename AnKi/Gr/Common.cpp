@@ -7,7 +7,7 @@
 
 namespace anki {
 
-Array<CString, U(GpuVendor::COUNT)> GPU_VENDOR_STR = {"UNKNOWN", "ARM", "NVIDIA", "AMD", "INTEL"};
+Array<CString, U(GpuVendor::COUNT)> GPU_VENDOR_STR = {"UNKNOWN", "ARM", "NVIDIA", "AMD", "INTEL", "QUALCOMM"};
 
 PtrSize computeSurfaceSize(U32 width32, U32 height32, Format fmt)
 {

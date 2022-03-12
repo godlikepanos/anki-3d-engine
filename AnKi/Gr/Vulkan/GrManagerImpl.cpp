@@ -451,10 +451,12 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 
 		if(firstChoice != VK_NULL_HANDLE)
 		{
+			m_capabilities.m_discreteGpu = true;
 			m_physicalDevice = firstChoice;
 		}
 		else if(secondChoice != VK_NULL_HANDLE)
 		{
+			m_capabilities.m_discreteGpu = false;
 			m_physicalDevice = secondChoice;
 		}
 		else
@@ -488,6 +490,9 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 		break;
 	case 0x8086:
 		m_capabilities.m_gpuVendor = GpuVendor::INTEL;
+		break;
+	case 0x5143:
+		m_capabilities.m_gpuVendor = GpuVendor::QUALCOMM;
 		break;
 	default:
 		m_capabilities.m_gpuVendor = GpuVendor::UNKNOWN;
@@ -525,7 +530,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	queueInfos.create(count);
 	vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &count, &queueInfos[0]);
 
-	const VkQueueFlags GENERAL_QUEUE_FLAGS = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT;
+	const VkQueueFlags GENERAL_QUEUE_FLAGS = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT;
 	for(U32 i = 0; i < count; ++i)
 	{
 		VkBool32 supportsPresent = false;

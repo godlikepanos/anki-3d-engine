@@ -253,16 +253,20 @@ Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 	// Components update
 	Timestamp componentTimestamp = 0;
 	Bool atLeastOneComponentUpdated = false;
-	err = node.iterateComponents([&](SceneComponent& comp, Bool isFeedbackComponent) -> Error {
+	node.iterateComponents([&](SceneComponent& comp, Bool isFeedbackComponent) {
+		if(err)
+		{
+			return;
+		}
+
 		Bool updated = false;
-		Error e = Error::NONE;
 		if(!atLeastOneComponentUpdated && isFeedbackComponent)
 		{
 			// Skip feedback component if prior components didn't got updated
 		}
 		else
 		{
-			e = comp.update(node, prevTime, crntTime, updated);
+			err = comp.update(node, prevTime, crntTime, updated);
 		}
 
 		if(updated)
@@ -273,8 +277,6 @@ Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 			ANKI_ASSERT(componentTimestamp > 0);
 			atLeastOneComponentUpdated = true;
 		}
-
-		return e;
 	});
 
 	// Update children

@@ -105,48 +105,35 @@ public:
 
 	/// Iterate all components.
 	template<typename TFunct>
-	ANKI_USE_RESULT Error iterateComponents(TFunct func) const
+	void iterateComponents(TFunct func) const
 	{
-		Error err = Error::NONE;
-		auto it = m_components.getBegin();
-		auto end = m_components.getEnd();
-		for(; !err && it != end; ++it)
+		for(U32 i = 0; i < m_componentInfos.getSize(); ++i)
 		{
-			const SceneComponent* c = *it;
-			err = func(*c, it->isFeedbackComponent());
+			// Use the m_componentInfos to check if it's feedback component for possibly less cache misses
+			func(*m_components[i], m_componentInfos[i].isFeedbackComponent());
 		}
-
-		return err;
 	}
 
 	/// Iterate all components.
 	template<typename TFunct>
-	ANKI_USE_RESULT Error iterateComponents(TFunct func)
+	void iterateComponents(TFunct func)
 	{
-		Error err = Error::NONE;
-		auto it = m_components.getBegin();
-		auto end = m_components.getEnd();
-		for(; !err && it != end; ++it)
+		for(U32 i = 0; i < m_componentInfos.getSize(); ++i)
 		{
-			SceneComponent* c = *it;
-			err = func(*c, it->isFeedbackComponent());
+			// Use the m_componentInfos to check if it's feedback component for possibly less cache misses
+			func(*m_components[i], m_componentInfos[i].isFeedbackComponent());
 		}
-
-		return err;
 	}
 
 	/// Iterate all components of a specific type
 	template<typename TComponent, typename TFunct>
 	void iterateComponentsOfType(TFunct func) const
 	{
-		auto it = m_components.getBegin();
-		auto end = m_components.getEnd();
-		for(; it != end; ++it)
+		for(U32 i = 0; i < m_componentInfos.getSize(); ++i)
 		{
-			if(it->getComponentClassId() == TComponent::getStaticClassId())
+			if(m_componentInfos[i].getComponentClassId() == TComponent::getStaticClassId())
 			{
-				const SceneComponent* comp = *it;
-				func(static_cast<const TComponent&>(*comp));
+				func(static_cast<const TComponent&>(*m_components[i]));
 			}
 		}
 	}
@@ -155,14 +142,11 @@ public:
 	template<typename TComponent, typename TFunct>
 	void iterateComponentsOfType(TFunct func)
 	{
-		auto it = m_components.getBegin();
-		auto end = m_components.getEnd();
-		for(; it != end; ++it)
+		for(U32 i = 0; i < m_componentInfos.getSize(); ++i)
 		{
-			if(it->getComponentClassId() == TComponent::getStaticClassId())
+			if(m_componentInfos[i].getComponentClassId() == TComponent::getStaticClassId())
 			{
-				SceneComponent* comp = *it;
-				func(static_cast<TComponent&>(*comp));
+				func(static_cast<TComponent&>(*m_components[i]));
 			}
 		}
 	}
@@ -171,12 +155,11 @@ public:
 	template<typename TComponent>
 	const TComponent* tryGetFirstComponentOfType() const
 	{
-		for(const ComponentsArrayElement& el : m_components)
+		for(U32 i = 0; i < m_componentInfos.getSize(); ++i)
 		{
-			if(el.getComponentClassId() == TComponent::getStaticClassId())
+			if(m_componentInfos[i].getComponentClassId() == TComponent::getStaticClassId())
 			{
-				const SceneComponent* comp = el;
-				return static_cast<const TComponent*>(comp);
+				return static_cast<const TComponent*>(m_components[i]);
 			}
 		}
 		return nullptr;
@@ -212,12 +195,11 @@ public:
 	const TComponent* tryGetNthComponentOfType(U32 nth) const
 	{
 		I32 inth = I32(nth);
-		for(const ComponentsArrayElement& el : m_components)
+		for(U32 i = 0; i < m_componentInfos.getSize(); ++i)
 		{
-			if(el.getComponentClassId() == TComponent::getStaticClassId() && inth-- == 0)
+			if(m_componentInfos[i].getComponentClassId() == TComponent::getStaticClassId() && inth-- == 0)
 			{
-				const SceneComponent* comp = el;
-				return static_cast<const TComponent*>(comp);
+				return static_cast<const TComponent*>(m_components[i]);
 			}
 		}
 		return nullptr;
@@ -251,7 +233,7 @@ public:
 	template<typename TComponent>
 	TComponent& getComponentAt(U32 idx)
 	{
-		ANKI_ASSERT(m_components[idx].getComponentClassId() == TComponent::getStaticClassId());
+		ANKI_ASSERT(m_componentInfos[idx].getComponentClassId() == TComponent::getStaticClassId());
 		SceneComponent* c = m_components[idx];
 		return *static_cast<TComponent*>(c);
 	}
@@ -260,7 +242,7 @@ public:
 	template<typename TComponent>
 	const TComponent& getComponentAt(U32 idx) const
 	{
-		ANKI_ASSERT(m_components[idx].getComponentClassId() == TComponent::getStaticClassId());
+		ANKI_ASSERT(m_componentInfos[idx].getComponentClassId() == TComponent::getStaticClassId());
 		const SceneComponent* c = m_components[idx];
 		return *static_cast<const TComponent*>(c);
 	}
@@ -287,90 +269,60 @@ protected:
 	{
 		TComponent* comp = getAllocator().newInstance<TComponent>(this);
 		m_components.emplaceBack(getAllocator(), comp);
+		m_componentInfos.emplaceBack(getAllocator(), *comp);
 		return comp;
 	}
 
 	ResourceManager& getResourceManager();
 
 private:
-	/// This class packs a pointer to a SceneComponent and its type at the same 64bit value. Used to avoid cache misses
-	/// when iterating the m_components.
+	/// This class packs a few info used by components.
 	class ComponentsArrayElement
 	{
 	public:
-		/// Encodes the SceneComponent's class ID, the SceneComponent* and if it's feedback component or not.
-		PtrSize m_combo;
-
-		ComponentsArrayElement(SceneComponent* comp)
+		ComponentsArrayElement(const SceneComponent& comp)
 		{
-			set(comp);
+			m_classId = comp.getClassId();
+			ANKI_ASSERT(m_classId == comp.getClassId());
+			m_feedbackComponent = comp.isFeedbackComponent();
 		}
 
 		ComponentsArrayElement(const ComponentsArrayElement& b)
-			: m_combo(b.m_combo)
+			: m_feedbackComponent(b.m_feedbackComponent)
+			, m_classId(b.m_classId)
 		{
 		}
 
 		ComponentsArrayElement& operator=(const ComponentsArrayElement& b)
 		{
-			m_combo = b.m_combo;
+			m_feedbackComponent = b.m_feedbackComponent;
+			m_classId = b.m_classId;
 			return *this;
-		}
-
-		operator SceneComponent*()
-		{
-			return getPtr();
-		}
-
-		operator const SceneComponent*() const
-		{
-			return getPtr();
-		}
-
-		const SceneComponent* operator->() const
-		{
-			return getPtr();
-		}
-
-		SceneComponent* operator->()
-		{
-			return getPtr();
 		}
 
 		U8 getComponentClassId() const
 		{
-			return m_combo & 0x7F;
+			return m_classId;
 		}
 
 		Bool isFeedbackComponent() const
 		{
-			return m_combo & PtrSize(1 << 7);
+			return m_feedbackComponent;
 		}
 
 	private:
-		void set(SceneComponent* comp)
-		{
-			m_combo = ptrToNumber(comp) << 8;
-			m_combo |= PtrSize(comp->isFeedbackComponent()) << 7;
-			m_combo |= PtrSize(comp->getClassId()) & 0x7F;
-			ANKI_ASSERT(getPtr() == comp);
-			ANKI_ASSERT(getComponentClassId() == comp->getClassId());
-			ANKI_ASSERT(isFeedbackComponent() == comp->isFeedbackComponent());
-		}
-
-		SceneComponent* getPtr() const
-		{
-			return numberToPtr<SceneComponent*>(m_combo >> 8);
-		}
+		U8 m_feedbackComponent : 1;
+		U8 m_classId : 7;
 	};
 
-	static_assert(sizeof(ComponentsArrayElement) == sizeof(void*), "Wrong size");
+	static_assert(sizeof(ComponentsArrayElement) == sizeof(U8), "Wrong size");
 
 	SceneGraph* m_scene = nullptr;
 	U64 m_uuid;
 	String m_name; ///< A unique name.
 
-	DynamicArray<ComponentsArrayElement> m_components;
+	DynamicArray<SceneComponent*> m_components;
+	DynamicArray<ComponentsArrayElement> m_componentInfos; ///< Same size as m_components. Used to iterate fast.
 
 	Timestamp m_maxComponentTimestamp = 0;
 
