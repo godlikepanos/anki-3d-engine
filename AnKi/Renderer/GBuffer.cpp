@@ -38,7 +38,7 @@ Error GBuffer::initInternal()
 	for(U32 i = 0; i < 2; ++i)
 	{
 		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
-			m_r->getInternalResolution().x(), m_r->getInternalResolution().y(), GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT,
+			m_r->getInternalResolution().x(), m_r->getInternalResolution().y(), m_r->getDepthNoStencilFormat(),
 			TextureUsageBit::ALL_SAMPLED | TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT, depthRtNames[i]);
 
 		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;

@@ -76,18 +76,9 @@ constexpr U32 AVERAGE_LUMINANCE_RENDER_TARGET_SIZE = 128;
 
 extern const Array<Format, GBUFFER_COLOR_ATTACHMENT_COUNT> GBUFFER_COLOR_ATTACHMENT_PIXEL_FORMATS;
 
-constexpr Format GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT = Format::D32_SFLOAT;
-
 constexpr Format FORWARD_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT = Format::R16G16B16A16_SFLOAT;
 
 constexpr Format DBG_COLOR_ATTACHMENT_PIXEL_FORMAT = Format::R8G8B8A8_UNORM;
-
-constexpr Format SHADOW_DEPTH_PIXEL_FORMAT = Format::D32_SFLOAT;
-#if ANKI_EVSM4
-constexpr Format SHADOW_COLOR_PIXEL_FORMAT = Format::R32G32B32A32_SFLOAT;
-#else
-constexpr Format SHADOW_COLOR_PIXEL_FORMAT = Format::R32G32_SFLOAT;
-#endif
 
 /// GPU buffers and textures that the clusterer refers to.
 class ClusteredShadingContext

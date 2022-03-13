@@ -652,4 +652,16 @@ Format Renderer::getHdrFormat() const
 	return out;
 }
 
+Format Renderer::getDepthNoStencilFormat() const
+{
+	if(ANKI_PLATFORM_MOBILE)
+	{
+		return Format::X8_D24_UNORM_PACK32;
+	}
+	else
+	{
+		return Format::D32_SFLOAT;
+	}
+}
+
 } // end namespace anki

@@ -204,6 +204,7 @@ public:
 	}
 
 	Format getHdrFormat() const;
+	Format getDepthNoStencilFormat() const;
 
 	/// @name Debug render targets
 	/// @{

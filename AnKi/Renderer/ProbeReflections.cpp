@@ -84,7 +84,7 @@ Error ProbeReflections::initGBuffer()
 		}
 
 		// Create depth RT
-		texinit.m_format = GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT;
+		texinit.m_format = m_r->getDepthNoStencilFormat();
 		texinit.setName("CubeRefl GBuff Depth");
 		m_gbuffer.m_depthRtDescr = texinit;
 		m_gbuffer.m_depthRtDescr.bake();
@@ -188,7 +188,7 @@ Error ProbeReflections::initShadowMapping()
 
 	// RT descr
 	m_shadowMapping.m_rtDescr =
-		m_r->create2DRenderTargetDescription(resolution * 6, resolution, Format::D32_SFLOAT, "CubeRefl SM");
+		m_r->create2DRenderTargetDescription(resolution * 6, resolution, m_r->getDepthNoStencilFormat(), "CubeRefl SM");
 	m_shadowMapping.m_rtDescr.bake();
 
 	// FB descr

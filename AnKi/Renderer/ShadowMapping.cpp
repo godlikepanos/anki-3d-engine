@@ -78,7 +78,7 @@ Error ShadowMapping::initScratch()
 		// RT
 		m_scratch.m_rtDescr = m_r->create2DRenderTargetDescription(m_scratch.m_tileResolution * m_scratch.m_tileCountX,
 																   m_scratch.m_tileResolution * m_scratch.m_tileCountY,
-																   SHADOW_DEPTH_PIXEL_FORMAT, "SM scratch");
+																   m_r->getDepthNoStencilFormat(), "SM scratch");
 		m_scratch.m_rtDescr.bake();
 
 		// FB
@@ -103,11 +103,12 @@ Error ShadowMapping::initAtlas()
 		m_atlas.m_tileCountBothAxis = getConfig().getRShadowMappingTileCountPerRowOrColumn();
 
 		// RT
+		const Format texFormat = (ANKI_EVSM4) ? Format::R32G32B32A32_SFLOAT : Format::R32G32_SFLOAT;
 		TextureUsageBit usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE;
 		usage |= (preferCompute) ? TextureUsageBit::IMAGE_COMPUTE_WRITE : TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT;
 		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
 			m_atlas.m_tileResolution * m_atlas.m_tileCountBothAxis,
-			m_atlas.m_tileResolution * m_atlas.m_tileCountBothAxis, SHADOW_COLOR_PIXEL_FORMAT, usage, "SM atlas");
+			m_atlas.m_tileResolution * m_atlas.m_tileCountBothAxis, texFormat, usage, "SM atlas");
 		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 		ClearValue clearVal;
 		clearVal.m_colorf[0] = 1.0f;
