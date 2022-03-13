@@ -16,7 +16,11 @@ namespace anki {
 
 ConfigSet::~ConfigSet()
 {
-#define ANKI_CONFIG_VAR_STRING(name, defaultValue, description) m_alloc.getMemoryPool().free(m_##name.m_value);
+#define ANKI_CONFIG_VAR_STRING(name, defaultValue, description) \
+	if(m_##name.m_value) \
+	{ \
+		m_alloc.getMemoryPool().free(m_##name.m_value); \
+	}
 #include <AnKi/Core/AllConfigVars.defs.h>
 
 #if ANKI_EXTRA_CHECKS

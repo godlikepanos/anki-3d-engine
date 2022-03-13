@@ -50,13 +50,6 @@ Error MyApp::init(int argc, char* argv[])
 		TracerSingleton::get().setEnabled(true);
 	}
 
-// Input
-#if MOUSE
-	getInput().lockCursor(true);
-	getInput().hideCursor(true);
-	getInput().moveCursor(Vec2(0.0));
-#endif
-
 	// Load scene
 	ScriptResourcePtr script;
 	ANKI_CHECK(resources.loadResource(argv[1], script));
@@ -84,9 +77,6 @@ Error MyApp::init(int argc, char* argv[])
 
 Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 {
-	F32 ang = toRad(2.5f);
-	F32 scale = 0.01f;
-	F32 mouseSensivity = 9.0f;
 	quit = false;
 
 	SceneGraph& scene = getSceneGraph();
@@ -163,62 +153,194 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 	}
 
 #if !PLAYER
-	static F32 dist = 0.1f;
-	if(in.getMouseButton(MouseButton::SCROLL_UP) == 1)
+	static Vec2 mousePosOn1stClick = in.getMousePosition();
+	if(in.getMouseButton(MouseButton::RIGHT) == 1)
 	{
-		dist += 0.1f;
-		dist = min(dist, 10.0f);
-	}
-	if(in.getMouseButton(MouseButton::SCROLL_DOWN) == 1)
-	{
-		dist -= 0.1f;
-		dist = max(dist, 0.1f);
+		// Re-init mouse pos
+		mousePosOn1stClick = in.getMousePosition();
 	}
 
-	if(in.getKey(KeyCode::UP))
-		mover->rotateLocalX(ang);
-	if(in.getKey(KeyCode::DOWN))
-		mover->rotateLocalX(-ang);
-	if(in.getKey(KeyCode::LEFT))
-		mover->rotateLocalY(ang);
-	if(in.getKey(KeyCode::RIGHT))
-		mover->rotateLocalY(-ang);
+	if(in.getMouseButton(MouseButton::RIGHT) || in.hasTouchDevice())
+	{
+		constexpr F32 ROTATE_ANGLE = toRad(2.5f);
+		constexpr F32 MOUSE_SENSITIVITY = 5.0f;
 
-	if(in.getKey(KeyCode::A))
-	{
-		mover->moveLocalX(-dist);
-	}
-	if(in.getKey(KeyCode::D))
-		mover->moveLocalX(dist);
-	if(in.getKey(KeyCode::SPACE))
-		mover->moveLocalY(dist);
-	if(in.getKey(KeyCode::C))
-		mover->moveLocalY(-dist);
-	if(in.getKey(KeyCode::W))
-		mover->moveLocalZ(-dist);
-	if(in.getKey(KeyCode::S))
-		mover->moveLocalZ(dist);
-	if(in.getKey(KeyCode::Q))
-		mover->rotateLocalZ(ang);
-	if(in.getKey(KeyCode::E))
-		mover->rotateLocalZ(-ang);
-	if(in.getKey(KeyCode::PAGEUP))
-	{
-		mover->scale(scale);
-	}
-	if(in.getKey(KeyCode::PAGEDOWN))
-	{
-		mover->scale(-scale);
-	}
-#endif
+		in.hideCursor(true);
 
-#if !PLAYER && MOUSE
-	if(in.getMousePosition() != Vec2(0.0) && !m_profile)
-	{
-		F32 angY = -ang * in.getMousePosition().x() * mouseSensivity * renderer.getAspectRatio();
+		if(in.getKey(KeyCode::_1) == 1)
+		{
+			mover = &scene.getActiveCameraNode().getFirstComponentOfType<MoveComponent>();
+		}
 
-		mover->rotateLocalY(angY);
-		mover->rotateLocalX(ang * in.getMousePosition().y() * mouseSensivity);
+		if(in.getKey(KeyCode::F1) == 1)
+		{
+			static U mode = 0;
+			mode = (mode + 1) % 3;
+			if(mode == 0)
+			{
+				getConfig().setRDbgEnabled(false);
+			}
+			else if(mode == 1)
+			{
+				getConfig().setRDbgEnabled(true);
+				renderer.getDbg().setDepthTestEnabled(true);
+				renderer.getDbg().setDitheredDepthTestEnabled(false);
+			}
+			else
+			{
+				getConfig().setRDbgEnabled(true);
+				renderer.getDbg().setDepthTestEnabled(false);
+				renderer.getDbg().setDitheredDepthTestEnabled(true);
+			}
+		}
+		if(in.getKey(KeyCode::F2) == 1)
+		{
+			// renderer.getDbg().flipFlags(DbgFlag::SPATIAL_COMPONENT);
+		}
+
+		if(in.getKey(KeyCode::UP))
+		{
+			mover->rotateLocalX(ROTATE_ANGLE);
+		}
+
+		if(in.getKey(KeyCode::DOWN))
+		{
+			mover->rotateLocalX(-ROTATE_ANGLE);
+		}
+
+		if(in.getKey(KeyCode::LEFT))
+		{
+			mover->rotateLocalY(ROTATE_ANGLE);
+		}
+
+		if(in.getKey(KeyCode::RIGHT))
+		{
+			mover->rotateLocalY(-ROTATE_ANGLE);
+		}
+
+		static F32 moveDistance = 0.1f;
+		if(in.getMouseButton(MouseButton::SCROLL_UP) == 1)
+		{
+			moveDistance += 0.1f;
+			moveDistance = min(moveDistance, 10.0f);
+		}
+
+		if(in.getMouseButton(MouseButton::SCROLL_DOWN) == 1)
+		{
+			moveDistance -= 0.1f;
+			moveDistance = max(moveDistance, 0.1f);
+		}
+
+		if(in.getKey(KeyCode::A))
+		{
+			mover->moveLocalX(-moveDistance);
+		}
+
+		if(in.getKey(KeyCode::D))
+		{
+			mover->moveLocalX(moveDistance);
+		}
+
+		if(in.getKey(KeyCode::Q))
+		{
+			mover->moveLocalY(-moveDistance);
+		}
+
+		if(in.getKey(KeyCode::E))
+		{
+			mover->moveLocalY(moveDistance);
+		}
+
+		if(in.getKey(KeyCode::W))
+		{
+			mover->moveLocalZ(-moveDistance);
+		}
+
+		if(in.getKey(KeyCode::S))
+		{
+			mover->moveLocalZ(moveDistance);
+		}
+
+		if(in.getKey(KeyCode::F12) == 1 && ANKI_ENABLE_TRACE)
+		{
+			TracerSingleton::get().setEnabled(!TracerSingleton::get().getEnabled());
+		}
+
+		const Vec2 velocity = in.getMousePosition() - mousePosOn1stClick;
+		in.moveCursor(mousePosOn1stClick);
+		if(velocity != Vec2(0.0))
+		{
+			Euler angles(mover->getLocalRotation().getRotationPart());
+			angles.x() += velocity.y() * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
+			angles.x() = clamp(angles.x(), toRad(-90.0f), toRad(90.0f)); // Avoid cycle in Y axis
+			angles.y() += -velocity.x() * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
+			angles.z() = 0.0f;
+			mover->setLocalRotation(Mat3x4(Vec3(0.0f), angles));
+		}
+
+		static TouchPointer rotateCameraTouch = TouchPointer::COUNT;
+		static Vec2 rotateEventInitialPos = Vec2(0.0f);
+		for(TouchPointer touch : EnumIterable<TouchPointer>())
+		{
+			if(rotateCameraTouch == TouchPointer::COUNT && in.getTouchPointer(touch) == 1
+			   && in.getTouchPointerNdcPosition(touch).x() > 0.1f)
+			{
+				rotateCameraTouch = touch;
+				rotateEventInitialPos = in.getTouchPointerNdcPosition(touch) * getWindow().getAspectRatio();
+				break;
+			}
+		}
+
+		if(rotateCameraTouch != TouchPointer::COUNT && in.getTouchPointer(rotateCameraTouch) == 0)
+		{
+			rotateCameraTouch = TouchPointer::COUNT;
+		}
+
+		if(rotateCameraTouch != TouchPointer::COUNT && in.getTouchPointer(rotateCameraTouch) > 1)
+		{
+			Vec2 velocity =
+				in.getTouchPointerNdcPosition(rotateCameraTouch) * getWindow().getAspectRatio() - rotateEventInitialPos;
+			velocity *= 0.3f;
+
+			Euler angles(mover->getLocalRotation().getRotationPart());
+			angles.x() += velocity.y() * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
+			angles.x() = clamp(angles.x(), toRad(-90.0f), toRad(90.0f)); // Avoid cycle in Y axis
+			angles.y() += -velocity.x() * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
+			angles.z() = 0.0f;
+			mover->setLocalRotation(Mat3x4(Vec3(0.0f), angles));
+		}
+
+		static TouchPointer moveCameraTouch = TouchPointer::COUNT;
+		static Vec2 moveEventInitialPos = Vec2(0.0f);
+		for(TouchPointer touch : EnumIterable<TouchPointer>())
+		{
+			if(moveCameraTouch == TouchPointer::COUNT && in.getTouchPointer(touch) == 1
+			   && in.getTouchPointerNdcPosition(touch).x() < -0.1f)
+			{
+				moveCameraTouch = touch;
+				moveEventInitialPos = in.getTouchPointerNdcPosition(touch) * getWindow().getAspectRatio();
+				break;
+			}
+		}
+
+		if(moveCameraTouch != TouchPointer::COUNT && in.getTouchPointer(moveCameraTouch) == 0)
+		{
+			moveCameraTouch = TouchPointer::COUNT;
+		}
+
+		if(moveCameraTouch != TouchPointer::COUNT && in.getTouchPointer(moveCameraTouch) > 0)
+		{
+			Vec2 velocity =
+				in.getTouchPointerNdcPosition(moveCameraTouch) * getWindow().getAspectRatio() - moveEventInitialPos;
+			velocity *= 2.0f;
+
+			mover->moveLocalX(moveDistance * velocity.x());
+			mover->moveLocalZ(moveDistance * -velocity.y());
+		}
+	}
+	else
+	{
+		in.hideCursor(false);
 	}
 #endif
 
@@ -266,7 +388,8 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 	return Error::NONE;
 }
 
-int main(int argc, char* argv[])
+ANKI_MAIN_FUNCTION(myMain)
+int myMain(int argc, char* argv[])
 {
 	Error err = Error::NONE;
 

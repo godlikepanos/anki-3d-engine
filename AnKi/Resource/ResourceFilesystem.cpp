@@ -239,7 +239,7 @@ Error ResourceFilesystem::init(const ConfigSet& config, const CString& cacheDir)
 
 	if(paths.getSize() < 1)
 	{
-		ANKI_RESOURCE_LOGE("Config option \"rsrc_dataPaths\" is empty");
+		ANKI_RESOURCE_LOGE("Config option \"RsrcDataPaths\" is empty");
 		return Error::USER_DATA;
 	}
 

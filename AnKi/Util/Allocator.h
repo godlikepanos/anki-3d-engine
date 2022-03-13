@@ -75,8 +75,11 @@ public:
 	GenericPoolAllocator(const GenericPoolAllocator<Y, YPool>& b)
 	{
 		auto balloc = b;
-		m_pool = &balloc.getMemoryPool();
-		m_pool->getRefcount().fetchAdd(1);
+		m_pool = balloc.m_pool;
+		if(m_pool)
+		{
+			m_pool->getRefcount().fetchAdd(1);
+		}
 	}
 
 	/// Constuctor that creates a pool

@@ -14,7 +14,7 @@ import sys
 
 class Context:
     target = ""
-    asserts_dir = ""
+    asserts_dir = None
     out_dir = ""
 
 
@@ -29,7 +29,7 @@ def parse_commandline():
 
     (options, args) = parser.parse_args()
 
-    required = "target assets out_dir".split()
+    required = "target out_dir".split()
     for r in required:
         if options.__dict__[r] is None:
             parser.print_help()
@@ -37,7 +37,8 @@ def parse_commandline():
 
     ctx = Context()
     ctx.target = options.target
-    ctx.asserts_dir = os.path.abspath(options.assets)
+    if options.assets is not None:
+        ctx.asserts_dir = os.path.abspath(options.assets)
     ctx.out_dir = os.path.abspath(options.out_dir)
 
     return ctx
@@ -81,7 +82,8 @@ def main():
         os.mkdir(os.path.join(project_dir, "assets/ThirdParty/"))
         os.symlink(os.path.join(this_script_dir, "../../ThirdParty/FidelityFX"),
                    os.path.join(project_dir, "assets/ThirdParty/FidelityFX"))
-        os.symlink(ctx.asserts_dir, os.path.join(project_dir, "assets/Assets"))
+        if ctx.asserts_dir is not None:
+            os.symlink(ctx.asserts_dir, os.path.join(project_dir, "assets/Assets"))
     else:
         print("Asset directory (%s) already exists. Skipping" % assets_dir)
 
