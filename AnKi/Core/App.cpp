@@ -494,14 +494,10 @@ Error App::mainLoop()
 				statsUi.setAllocatedCpuMemory(m_memStats.m_allocatedMem.load());
 				statsUi.setCpuAllocationCount(m_memStats.m_allocCount.load());
 				statsUi.setCpuFreeCount(m_memStats.m_freeCount.load());
-				GrManagerStats grStats = m_gr->getStats();
-				statsUi.setVkCpuMemory(grStats.m_cpuMemory);
-				statsUi.setVkGpuMemory(grStats.m_gpuMemory);
+				statsUi.setGrStats(m_gr->getStats());
 				BuddyAllocatorBuilderStats vertMemStats;
 				m_vertexMem->getMemoryStats(vertMemStats);
 				statsUi.setGlobalVertexMemoryPoolStats(vertMemStats);
-
-				statsUi.setVkCommandBufferCount(grStats.m_commandBufferCount);
 
 				statsUi.setDrawableCount(rqueue.countAllRenderables());
 			}

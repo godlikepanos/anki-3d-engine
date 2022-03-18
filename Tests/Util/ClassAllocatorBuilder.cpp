@@ -126,6 +126,14 @@ ANKI_TEST(Util, ClassAllocatorBuilder)
 	std::vector<std::pair<Chunk*, PtrSize>> allocations;
 	const U TEST_COUNT = 100;
 	const U ITERATIONS = 20;
+	const U maxAlignment = 256;
+
+	auto getRandAlignment = [&]() -> U {
+		U out = rand() % maxAlignment;
+		out = nextPowerOfTwo(out);
+		out = max<U>(1, out);
+		return out;
+	};
 
 	for(U tests = 0; tests < TEST_COUNT; ++tests)
 	{
@@ -137,12 +145,14 @@ ANKI_TEST(Util, ClassAllocatorBuilder)
 				const PtrSize size = nextAllocSize();
 				Chunk* chunk;
 				PtrSize offset;
+				const U alignment = getRandAlignment();
 
-				if(calloc.allocate(size, 1, chunk, offset))
+				if(calloc.allocate(size, alignment, chunk, offset))
 				{
 					break;
 				}
 
+				ANKI_TEST_EXPECT_EQ(isAligned(alignment, offset), true);
 				allocations.push_back({chunk, offset});
 			}
 
@@ -185,8 +195,10 @@ ANKI_TEST(Util, ClassAllocatorBuilder)
 		{
 			Chunk* chunk;
 			PtrSize offset;
-			while(calloc.allocate(baseFreeSize, 1, chunk, offset) == Error::NONE)
+			const U alignment = getRandAlignment();
+			while(calloc.allocate(baseFreeSize, alignment, chunk, offset) == Error::NONE)
 			{
+				ANKI_TEST_EXPECT_EQ(isAligned(alignment, offset), true);
 				score += (pow(POWER, (log2(F32(baseFreeSize / BASE_SIZE)) + BIAS)) + OFFSET) * F32(baseFreeSize);
 				allocations.push_back({chunk, offset});
 			}

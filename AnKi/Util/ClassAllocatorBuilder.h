@@ -13,6 +13,15 @@ namespace anki {
 /// @addtogroup util_memory
 /// @{
 
+/// @memberof ClassAllocatorBuilder
+class ClassAllocatorBuilderStats
+{
+public:
+	PtrSize m_allocatedSize;
+	PtrSize m_inUseSize;
+	U32 m_chunkCount; ///< Can be assosiated with the number of allocations.
+};
+
 /// This is a convenience class used to build class memory allocators.
 /// @tparam TChunk This is the type of the internally allocated chunks. This should be having the following members:
 ///                @code
@@ -79,6 +88,10 @@ public:
 		return m_interface;
 	}
 
+	/// Get some statistics.
+	/// @note It's thread-safe because it will lock. Don't overuse it.
+	void getStats(ClassAllocatorBuilderStats& stats) const;
+
 private:
 	/// A class of allocations. It's a list of memory chunks. Each chunk is dividied in suballocations.
 	class Class
@@ -94,7 +107,7 @@ private:
 		PtrSize m_suballocationSize = 0;
 
 		/// Lock.
-		TLock m_mtx;
+		mutable TLock m_mtx;
 	};
 
 	GenericMemoryPoolAllocator<U8> m_alloc;

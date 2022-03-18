@@ -8,6 +8,7 @@
 #include <AnKi/Core/Common.h>
 #include <AnKi/Ui/UiImmediateModeBuilder.h>
 #include <AnKi/Util/BuddyAllocatorBuilder.h>
+#include <AnKi/Gr/GrManager.h>
 
 namespace anki {
 
@@ -89,19 +90,9 @@ public:
 		m_freeCount = v;
 	}
 
-	void setVkCpuMemory(PtrSize v)
+	void setGrStats(const GrManagerStats& stats)
 	{
-		m_vkCpuMem = v;
-	}
-
-	void setVkGpuMemory(PtrSize v)
-	{
-		m_vkGpuMem = v;
-	}
-
-	void setVkCommandBufferCount(U32 v)
-	{
-		m_vkCmdbCount = v;
+		m_grStats = stats;
 	}
 
 	void setDrawableCount(U64 v)
@@ -162,12 +153,10 @@ private:
 	PtrSize m_allocatedCpuMem = 0;
 	U64 m_allocCount = 0;
 	U64 m_freeCount = 0;
-	PtrSize m_vkCpuMem = 0;
-	PtrSize m_vkGpuMem = 0;
 	BuddyAllocatorBuilderStats m_globalVertexPoolStats = {};
 
-	// Vulkan
-	U32 m_vkCmdbCount = 0;
+	// GR
+	GrManagerStats m_grStats = {};
 
 	// Other
 	PtrSize m_drawableCount = 0;

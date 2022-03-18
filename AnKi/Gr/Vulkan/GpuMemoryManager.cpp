@@ -7,13 +7,12 @@
 
 namespace anki {
 
-static constexpr Array<GpuMemoryManagerClassInfo, 8> CLASSES{{{256_B, 16_KB},
-															  {4_KB, 256_KB},
+static constexpr Array<GpuMemoryManagerClassInfo, 7> CLASSES{{{4_KB, 256_KB},
 															  {128_KB, 8_MB},
 															  {1_MB, 64_MB},
 															  {16_MB, 128_MB},
-															  {64_MB, 256_MB},
-															  {128_MB, 256_MB},
+															  {64_MB, 128_MB},
+															  {128_MB, 128_MB},
 															  {256_MB, 256_MB}}};
 
 /// Special classes for the ReBAR memory. Have that as a special case because it's so limited and needs special care.
@@ -91,6 +90,32 @@ void GpuMemoryManager::init(VkPhysicalDevice pdev, VkDevice dev, GrAllocator<U8>
 					 c.m_suballocationSize, c.m_chunkSize / c.m_suballocationSize);
 	}
 
+	// Image buffer granularity
+	{
+		VkPhysicalDeviceProperties props;
+		vkGetPhysicalDeviceProperties(pdev, &props);
+		m_bufferImageGranularity = U32(props.limits.bufferImageGranularity);
+		ANKI_ASSERT(m_bufferImageGranularity > 0 && isPowerOfTwo(m_bufferImageGranularity));
+
+		if(m_bufferImageGranularity > 4_KB)
+		{
+			ANKI_VK_LOGW(
+				"Buffer/image mem granularity is too high (%u). It will force high alignments and it will waste memory",
+				m_bufferImageGranularity);
+		}
+
+		for(const GpuMemoryManagerClassInfo& c : CLASSES)
+		{
+			if(!isAligned(m_bufferImageGranularity, c.m_suballocationSize))
+			{
+				ANKI_VK_LOGW("Memory class is not aligned to buffer/image granularity (%u). It won't be used in "
+							 "allocations: Chunk size: %lu, suballocationSize: %lu, allocsPerChunk %lu",
+							 m_bufferImageGranularity, c.m_chunkSize, c.m_suballocationSize,
+							 c.m_chunkSize / c.m_suballocationSize);
+			}
+		}
+	}
+
 	vkGetPhysicalDeviceMemoryProperties(pdev, &m_memoryProperties);
 
 	m_alloc = alloc;
@@ -99,51 +124,49 @@ void GpuMemoryManager::init(VkPhysicalDevice pdev, VkDevice dev, GrAllocator<U8>
 	m_callocs.create(alloc, m_memoryProperties.memoryTypeCount);
 	for(U32 memTypeIdx = 0; memTypeIdx < m_callocs.getSize(); ++memTypeIdx)
 	{
-		for(U32 linear = 0; linear < 2; ++linear)
+		GpuMemoryManagerInterface& iface = m_callocs[memTypeIdx].getInterface();
+		iface.m_parent = this;
+		iface.m_memTypeIdx = U8(memTypeIdx);
+		iface.m_exposesBufferGpuAddress = exposeBufferGpuAddress;
+
+		const U32 heapIdx = m_memoryProperties.memoryTypes[memTypeIdx].heapIndex;
+		iface.m_isDeviceMemory = !!(m_memoryProperties.memoryHeaps[heapIdx].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT);
+
+		// Find if it's ReBAR
+		const VkMemoryPropertyFlags props = m_memoryProperties.memoryTypes[memTypeIdx].propertyFlags;
+		const VkMemoryPropertyFlags reBarProps = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+												 | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+												 | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+		const PtrSize heapSize =
+			m_memoryProperties.memoryHeaps[m_memoryProperties.memoryTypes[memTypeIdx].heapIndex].size;
+		const Bool isReBar = props == reBarProps && heapSize <= 256_MB;
+
+		if(isReBar)
 		{
-			GpuMemoryManagerInterface& iface = m_callocs[memTypeIdx][linear].getInterface();
-			iface.m_parent = this;
-			iface.m_memTypeIdx = U8(memTypeIdx);
-			iface.m_exposesBufferGpuAddress = (linear == 1) && exposeBufferGpuAddress;
-
-			const U32 heapIdx = m_memoryProperties.memoryTypes[memTypeIdx].heapIndex;
-			iface.m_isDeviceMemory =
-				!!(m_memoryProperties.memoryHeaps[heapIdx].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT);
-
-			// Find if it's ReBAR
-			const VkMemoryPropertyFlags props = m_memoryProperties.memoryTypes[memTypeIdx].propertyFlags;
-			const VkMemoryPropertyFlags reBarProps = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
-													 | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-													 | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-			const PtrSize heapSize =
-				m_memoryProperties.memoryHeaps[m_memoryProperties.memoryTypes[memTypeIdx].heapIndex].size;
-			const Bool isReBar = props == reBarProps && heapSize <= 256_MB;
-
-			if(isReBar)
-			{
-				ANKI_VK_LOGV("Memory type %u is ReBAR", memTypeIdx);
-			}
-
-			// Choose different classes
-			if(!isReBar)
-			{
-				iface.m_classInfos = CLASSES;
-			}
-			else
-			{
-				iface.m_classInfos = REBAR_CLASSES;
-			}
-
-			// The interface is initialized, init the builder
-			m_callocs[memTypeIdx][linear].init(m_alloc);
+			ANKI_VK_LOGV("Memory type %u is ReBAR", memTypeIdx);
 		}
+
+		// Choose different classes
+		if(!isReBar)
+		{
+			iface.m_classInfos = CLASSES;
+		}
+		else
+		{
+			iface.m_classInfos = REBAR_CLASSES;
+		}
+
+		// The interface is initialized, init the builder
+		m_callocs[memTypeIdx].init(m_alloc);
 	}
 }
 
 void GpuMemoryManager::allocateMemory(U32 memTypeIdx, PtrSize size, U32 alignment, Bool linearResource,
 									  GpuMemoryHandle& handle)
 {
-	ClassAllocator& calloc = m_callocs[memTypeIdx][linearResource];
+	ClassAllocator& calloc = m_callocs[memTypeIdx];
+
+	alignment = max(alignment, m_bufferImageGranularity);
 
 	GpuMemoryManagerChunk* chunk;
 	PtrSize offset;
@@ -154,15 +177,54 @@ void GpuMemoryManager::allocateMemory(U32 memTypeIdx, PtrSize size, U32 alignmen
 	handle.m_offset = offset;
 	handle.m_chunk = chunk;
 	handle.m_memTypeIdx = U8(memTypeIdx);
-	handle.m_linear = linearResource;
+	handle.m_size = size;
+}
+
+void GpuMemoryManager::allocateMemoryDedicated(U32 memTypeIdx, PtrSize size, VkImage image, GpuMemoryHandle& handle)
+{
+	VkMemoryDedicatedAllocateInfoKHR dedicatedInfo = {};
+	dedicatedInfo.sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO_KHR;
+	dedicatedInfo.image = image;
+
+	VkMemoryAllocateInfo memoryAllocateInfo = {};
+	memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	memoryAllocateInfo.pNext = &dedicatedInfo;
+	memoryAllocateInfo.allocationSize = size;
+	memoryAllocateInfo.memoryTypeIndex = memTypeIdx;
+
+	VkDeviceMemory mem;
+	ANKI_VK_CHECKF(vkAllocateMemory(m_dev, &memoryAllocateInfo, nullptr, &mem));
+
+	handle.m_memory = mem;
+	handle.m_offset = 0;
+	handle.m_chunk = nullptr;
+	handle.m_memTypeIdx = U8(memTypeIdx);
+	handle.m_size = size;
+
+	m_dedicatedAllocatedMemory.fetchAdd(size);
+	m_dedicatedAllocationCount.fetchAdd(1);
 }
 
 void GpuMemoryManager::freeMemory(GpuMemoryHandle& handle)
 {
 	ANKI_ASSERT(handle);
-	ClassAllocator& calloc = m_callocs[handle.m_memTypeIdx][handle.m_linear];
 
-	calloc.free(handle.m_chunk, handle.m_offset);
+	if(handle.isDedicated())
+	{
+		vkFreeMemory(m_dev, handle.m_memory, nullptr);
+		const PtrSize prevSize = m_dedicatedAllocatedMemory.fetchSub(handle.m_size);
+		ANKI_ASSERT(prevSize >= handle.m_size);
+		(void)prevSize;
+
+		const U32 count = m_dedicatedAllocationCount.fetchSub(1);
+		ANKI_ASSERT(count > 0);
+		(void)count;
+	}
+	else
+	{
+		ClassAllocator& calloc = m_callocs[handle.m_memTypeIdx];
+		calloc.free(handle.m_chunk, handle.m_offset);
+	}
 
 	handle = {};
 }
@@ -170,8 +232,9 @@ void GpuMemoryManager::freeMemory(GpuMemoryHandle& handle)
 void* GpuMemoryManager::getMappedAddress(GpuMemoryHandle& handle)
 {
 	ANKI_ASSERT(handle);
+	ANKI_ASSERT(!handle.isDedicated());
 
-	LockGuard<SpinLock> lock(handle.m_chunk->m_m_mappedAddressMtx);
+	LockGuard<SpinLock> lock(handle.m_chunk->m_mappedAddressMtx);
 
 	if(handle.m_chunk->m_mappedAddress == nullptr)
 	{
@@ -224,26 +287,35 @@ U32 GpuMemoryManager::findMemoryType(U32 resourceMemTypeBits, VkMemoryPropertyFl
 	return prefered;
 }
 
-void GpuMemoryManager::getAllocatedMemory(PtrSize& gpuMemory, PtrSize& cpuMemory) const
+void GpuMemoryManager::getStats(GpuMemoryManagerStats& stats) const
 {
-	gpuMemory = 0;
-	cpuMemory = 0;
+	stats = {};
 
 	for(U32 memTypeIdx = 0; memTypeIdx < m_callocs.getSize(); ++memTypeIdx)
 	{
-		for(U32 linear = 0; linear < 2; ++linear)
+		const GpuMemoryManagerInterface& iface = m_callocs[memTypeIdx].getInterface();
+		ClassAllocatorBuilderStats cstats;
+		m_callocs[memTypeIdx].getStats(cstats);
+
+		if(iface.m_isDeviceMemory)
 		{
-			const GpuMemoryManagerInterface& iface = m_callocs[memTypeIdx][linear].getInterface();
-			if(iface.m_isDeviceMemory)
-			{
-				gpuMemory += iface.m_allocatedMemory;
-			}
-			else
-			{
-				cpuMemory += iface.m_allocatedMemory;
-			}
+			stats.m_deviceMemoryAllocated += cstats.m_allocatedSize;
+			stats.m_deviceMemoryInUse += cstats.m_inUseSize;
+			stats.m_deviceMemoryAllocationCount += cstats.m_chunkCount;
+		}
+		else
+		{
+			stats.m_hostMemoryAllocated += cstats.m_allocatedSize;
+			stats.m_hostMemoryInUse += cstats.m_inUseSize;
+			stats.m_hostMemoryAllocationCount += cstats.m_chunkCount;
 		}
 	}
+
+	// Add dedicated stats
+	const PtrSize dedicatedAllocatedMemory = m_dedicatedAllocatedMemory.load();
+	stats.m_deviceMemoryAllocated += dedicatedAllocatedMemory;
+	stats.m_deviceMemoryInUse += dedicatedAllocatedMemory;
+	stats.m_deviceMemoryAllocationCount += m_dedicatedAllocationCount.load();
 }
 
 } // end namespace anki

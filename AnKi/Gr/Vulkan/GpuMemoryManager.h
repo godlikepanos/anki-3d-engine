@@ -33,7 +33,7 @@ public:
 	VkDeviceMemory m_handle = VK_NULL_HANDLE;
 
 	void* m_mappedAddress = nullptr;
-	SpinLock m_m_mappedAddressMtx;
+	SpinLock m_mappedAddressMtx;
 
 	PtrSize m_size = 0;
 
@@ -57,6 +57,7 @@ public:
 	Bool m_isDeviceMemory = false;
 
 	PtrSize m_allocatedMemory = 0;
+	PtrSize m_usedMemory = 0;
 
 	ConstWeakArray<GpuMemoryManagerClassInfo> m_classInfos;
 
@@ -94,8 +95,25 @@ public:
 
 private:
 	GpuMemoryManagerChunk* m_chunk = nullptr;
+	PtrSize m_size = MAX_PTR_SIZE;
 	U8 m_memTypeIdx = MAX_U8;
-	Bool m_linear = false;
+
+	Bool isDedicated() const
+	{
+		return m_chunk == nullptr;
+	}
+};
+
+/// @memberof GpuMemoryManager
+class GpuMemoryManagerStats
+{
+public:
+	PtrSize m_deviceMemoryAllocated;
+	PtrSize m_deviceMemoryInUse;
+	U32 m_deviceMemoryAllocationCount;
+	PtrSize m_hostMemoryAllocated;
+	PtrSize m_hostMemoryInUse;
+	U32 m_hostMemoryAllocationCount;
 };
 
 /// Dynamic GPU memory allocator for all types.
@@ -119,6 +137,8 @@ public:
 	/// Allocate memory.
 	void allocateMemory(U32 memTypeIdx, PtrSize size, U32 alignment, Bool linearResource, GpuMemoryHandle& handle);
 
+	void allocateMemoryDedicated(U32 memTypeIdx, PtrSize size, VkImage image, GpuMemoryHandle& handle);
+
 	/// Free memory.
 	void freeMemory(GpuMemoryHandle& handle);
 
@@ -130,7 +150,7 @@ public:
 					   VkMemoryPropertyFlags avoidFlags) const;
 
 	/// Get some statistics.
-	void getAllocatedMemory(PtrSize& gpuMemory, PtrSize& cpuMemory) const;
+	void getStats(GpuMemoryManagerStats& stats) const;
 
 private:
 	using ClassAllocator = ClassAllocatorBuilder<GpuMemoryManagerChunk, GpuMemoryManagerInterface, Mutex>;
@@ -139,9 +159,14 @@ private:
 
 	VkDevice m_dev = VK_NULL_HANDLE;
 
-	DynamicArray<Array<ClassAllocator, 2>> m_callocs;
+	DynamicArray<ClassAllocator> m_callocs;
 
 	VkPhysicalDeviceMemoryProperties m_memoryProperties;
+	U32 m_bufferImageGranularity = 0;
+
+	// Dedicated allocation stats
+	Atomic<PtrSize> m_dedicatedAllocatedMemory = {0};
+	Atomic<U32> m_dedicatedAllocationCount = {0};
 };
 /// @}
 

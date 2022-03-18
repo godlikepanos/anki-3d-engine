@@ -169,4 +169,22 @@ void ClassAllocatorBuilder<TChunk, TInterface, TLock>::free(TChunk* chunk, PtrSi
 	}
 }
 
+template<typename TChunk, typename TInterface, typename TLock>
+void ClassAllocatorBuilder<TChunk, TInterface, TLock>::getStats(ClassAllocatorBuilderStats& stats) const
+{
+	stats = {};
+
+	for(const Class& c : m_classes)
+	{
+		LockGuard<TLock> lock(c.m_mtx);
+
+		for(const TChunk& chunk : c.m_chunkList)
+		{
+			stats.m_allocatedSize += c.m_chunkSize;
+			stats.m_inUseSize += c.m_suballocationSize * chunk.m_suballocationCount;
+			++stats.m_chunkCount;
+		}
+	}
+}
+
 } // end namespace anki

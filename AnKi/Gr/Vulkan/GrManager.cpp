@@ -90,7 +90,16 @@ GrManagerStats GrManager::getStats() const
 	ANKI_VK_SELF_CONST(GrManagerImpl);
 	GrManagerStats out;
 
-	self.getGpuMemoryManager().getAllocatedMemory(out.m_gpuMemory, out.m_cpuMemory);
+	GpuMemoryManagerStats memStats;
+	self.getGpuMemoryManager().getStats(memStats);
+
+	out.m_deviceMemoryAllocated = memStats.m_deviceMemoryAllocated;
+	out.m_deviceMemoryInUse = memStats.m_deviceMemoryInUse;
+	out.m_deviceMemoryAllocationCount = memStats.m_deviceMemoryAllocationCount;
+	out.m_hostMemoryAllocated = memStats.m_hostMemoryAllocated;
+	out.m_hostMemoryInUse = memStats.m_hostMemoryInUse;
+	out.m_hostMemoryAllocationCount = memStats.m_hostMemoryAllocationCount;
+
 	out.m_commandBufferCount = self.getCommandBufferFactory().getCreatedCommandBufferCount();
 
 	return out;

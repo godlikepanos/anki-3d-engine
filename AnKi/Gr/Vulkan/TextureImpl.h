@@ -202,8 +202,6 @@ private:
 	/// the hashmap above.
 	MicroImageView m_singleSurfaceImageView;
 
-	VkDeviceMemory m_dedicatedMem = VK_NULL_HANDLE;
-
 #if ANKI_ENABLE_ASSERTIONS
 	mutable TextureUsageBit m_usedFor = TextureUsageBit::NONE;
 	mutable SpinLock m_usedForMtx;

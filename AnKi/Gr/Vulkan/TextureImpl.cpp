@@ -104,11 +104,6 @@ TextureImpl::~TextureImpl()
 	{
 		getGrManagerImpl().getGpuMemoryManager().freeMemory(m_memHandle);
 	}
-
-	if(m_dedicatedMem)
-	{
-		vkFreeMemory(getDevice(), m_dedicatedMem, nullptr);
-	}
 }
 
 Error TextureImpl::initInternal(VkImage externalImage, const TextureInitInfo& init_)
@@ -343,36 +338,21 @@ Error TextureImpl::initImage(const TextureInitInfo& init)
 
 	ANKI_ASSERT(memIdx != MAX_U32);
 
+	// Allocate
 	if(!dedicatedRequirements.prefersDedicatedAllocation)
 	{
-		// Allocate
 		getGrManagerImpl().getGpuMemoryManager().allocateMemory(memIdx, requirements.memoryRequirements.size,
 																U32(requirements.memoryRequirements.alignment), false,
 																m_memHandle);
-
-		// Bind mem to image
-		ANKI_TRACE_SCOPED_EVENT(VK_BIND_OBJECT);
-		ANKI_VK_CHECK(vkBindImageMemory(getDevice(), m_imageHandle, m_memHandle.m_memory, m_memHandle.m_offset));
 	}
 	else
 	{
-		VkMemoryDedicatedAllocateInfoKHR dedicatedInfo = {};
-		dedicatedInfo.sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO_KHR;
-		dedicatedInfo.image = m_imageHandle;
-
-		VkMemoryAllocateInfo memoryAllocateInfo = {};
-		memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		memoryAllocateInfo.pNext = &dedicatedInfo;
-		memoryAllocateInfo.allocationSize = requirements.memoryRequirements.size;
-		memoryAllocateInfo.memoryTypeIndex = memIdx;
-
-		ANKI_VK_CHECK(vkAllocateMemory(getDevice(), &memoryAllocateInfo, nullptr, &m_dedicatedMem));
-		getGrManagerImpl().trySetVulkanHandleName(init.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_MEMORY_EXT,
-												  ptrToNumber(m_dedicatedMem));
-
-		ANKI_TRACE_SCOPED_EVENT(VK_BIND_OBJECT);
-		ANKI_VK_CHECK(vkBindImageMemory(getDevice(), m_imageHandle, m_dedicatedMem, 0));
+		getGrManagerImpl().getGpuMemoryManager().allocateMemoryDedicated(memIdx, requirements.memoryRequirements.size,
+																		 m_imageHandle, m_memHandle);
 	}
+
+	// Bind
+	ANKI_VK_CHECK(vkBindImageMemory(getDevice(), m_imageHandle, m_memHandle.m_memory, m_memHandle.m_offset));
 
 	return Error::NONE;
 }

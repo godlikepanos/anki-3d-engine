@@ -97,18 +97,25 @@ void StatsUi::build(CanvasPtr canvas)
 		}
 
 		ImGui::Text("----");
-		ImGui::Text("Memory:");
+		ImGui::Text("CPU Memory:");
 		labelBytes(m_allocatedCpuMem, "Total CPU");
 		labelUint(m_allocCount, "Total allocations");
 		labelUint(m_freeCount, "Total frees");
-		labelBytes(m_vkCpuMem, "Vulkan CPU");
-		labelBytes(m_vkGpuMem, "Vulkan GPU");
+
+		ImGui::Text("----");
+		ImGui::Text("GPU Memory:");
+		labelBytes(m_grStats.m_hostMemoryAllocated, "Host");
+		labelBytes(m_grStats.m_hostMemoryInUse, "Host in use");
+		labelUint(m_grStats.m_hostMemoryAllocationCount, "Host allocations");
+		labelBytes(m_grStats.m_deviceMemoryAllocated, "Device");
+		labelBytes(m_grStats.m_deviceMemoryInUse, "Device in use");
+		labelUint(m_grStats.m_deviceMemoryAllocationCount, "Device allocations");
 		labelBytes(m_globalVertexPoolStats.m_userAllocatedSize, "Vertex/Index GPU memory");
 		labelBytes(m_globalVertexPoolStats.m_realAllocatedSize, "Actual Vertex/Index GPU memory");
 
 		ImGui::Text("----");
 		ImGui::Text("Vulkan:");
-		labelUint(m_vkCmdbCount, "Cmd buffers");
+		labelUint(m_grStats.m_commandBufferCount, "Cmd buffers");
 
 		ImGui::Text("----");
 		ImGui::Text("Other:");
