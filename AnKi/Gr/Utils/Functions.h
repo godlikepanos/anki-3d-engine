@@ -45,7 +45,4 @@ ShaderVariableDataType getShaderVariableTypeFromTypename();
 void writeShaderBlockMemory(ShaderVariableDataType type, const ShaderVariableBlockInfo& varBlkInfo,
 							const void* elements, U32 elementsCount, void* buffBegin, const void* buffEnd);
 
-/// Convert a ShaderVariableDataType to string.
-const CString shaderVariableDataTypeToString(ShaderVariableDataType t);
-
 } // end namespace anki

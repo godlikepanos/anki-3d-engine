@@ -398,7 +398,7 @@ if(NOT MSVC)
 		"-Wconversion -Wno-sign-conversion -Wno-keyword-macro -Wno-string-conversion -Wno-class-memaccess "
 		"-Wunused-variable")
 
-	set(CMAKE_CXX_STANDARD 14)
+	set(CMAKE_CXX_STANDARD 17)
 else()
 	#add_definitions("/wd4996 /wd4244 /wd4262 /wd4267 /wd26495 /wd26439")
 	add_compile_definitions("_CRT_SECURE_NO_WARNINGS=1") # Disable some string function warnings

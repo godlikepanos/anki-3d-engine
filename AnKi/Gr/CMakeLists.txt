@@ -3,6 +3,7 @@ set(COMMON
 	"GrObject.cpp"
 	"RenderGraph.cpp"
 	"ShaderProgram.cpp"
+	"Enums.cpp"
 	"Utils/FrameGpuAllocator.cpp"
 	"Utils/Functions.cpp")
 

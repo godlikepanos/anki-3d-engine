@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki mutator ANKI_PASS 0 2 3
-#pragma anki mutator ANKI_VELOCITY 0 1
 
 #include <AnKi/Shaders/Include/ParticleTypes.h>
 #include <AnKi/Shaders/Include/MaterialTypes.h>
