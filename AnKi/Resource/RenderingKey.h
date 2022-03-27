@@ -31,7 +31,9 @@ enum class RenderingTechniqueBit : U8
 	GBUFFER_EARLY_Z = 1 << 1,
 	SHADOW = 1 << 2,
 	FORWARD = 1 << 3,
-	RT_SHADOW = 1 << 4
+	RT_SHADOW = 1 << 4,
+
+	ANY_RT = RT_SHADOW
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RenderingTechniqueBit)
 

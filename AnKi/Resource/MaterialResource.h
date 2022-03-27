@@ -160,8 +160,15 @@ public:
 		return m_prog;
 	}
 
+	U32 getRtShaderGroupHandleIndex() const
+	{
+		ANKI_ASSERT(m_rtShaderGroupHandleIndex != MAX_U32);
+		return m_rtShaderGroupHandleIndex;
+	}
+
 private:
 	ShaderProgramPtr m_prog;
+	U32 m_rtShaderGroupHandleIndex = MAX_U32;
 };
 
 /// Material resource.
@@ -209,6 +216,11 @@ public:
 	Bool supportsSkinning() const
 	{
 		return m_supportsSkinning;
+	}
+
+	RenderingTechniqueBit getRenderingTechniques() const
+	{
+		return m_techniquesMask;
 	}
 
 	/// Get all GPU resources of this material. Will be used for GPU refcounting.

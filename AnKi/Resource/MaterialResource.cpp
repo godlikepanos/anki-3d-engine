@@ -697,6 +697,11 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 
 	variant.m_prog = progVariant->getProgram();
 
+	if(!!(RenderingTechniqueBit(1 << key.getRenderingTechnique()) & RenderingTechniqueBit::ANY_RT))
+	{
+		variant.m_rtShaderGroupHandleIndex = progVariant->getShaderGroupHandleIndex();
+	}
+
 	return variant;
 }
 

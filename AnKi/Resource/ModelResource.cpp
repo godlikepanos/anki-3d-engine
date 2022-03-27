@@ -11,9 +11,9 @@
 
 namespace anki {
 
-static Bool attributeIsRequired(VertexAttributeId loc, Pass pass, Bool hasSkin)
+static Bool attributeIsRequired(VertexAttributeId loc, RenderingTechnique technique, Bool hasSkin)
 {
-	if(pass == Pass::GB || pass == Pass::FS)
+	if(technique == RenderingTechnique::GBUFFER || technique == RenderingTechnique::FORWARD)
 	{
 		return true;
 	}
@@ -30,7 +30,7 @@ static Bool attributeIsRequired(VertexAttributeId loc, Pass pass, Bool hasSkin)
 
 void ModelPatch::getRenderingInfo(const RenderingKey& key, ModelRenderingInfo& inf) const
 {
-	ANKI_ASSERT(!(!m_model->supportsSkinning() && key.isSkinned()));
+	ANKI_ASSERT(!(!supportsSkinning() && key.getSkinned()));
 	const U32 meshLod = min<U32>(key.getLod(), m_meshLodCount - 1);
 
 	// Vertex attributes & bindings
@@ -43,7 +43,8 @@ void ModelPatch::getRenderingInfo(const RenderingKey& key, ModelRenderingInfo& i
 
 		for(VertexAttributeId loc : EnumIterable<VertexAttributeId>())
 		{
-			if(!m_presentVertexAttributes.get(loc) || !attributeIsRequired(loc, key.getPass(), key.isSkinned()))
+			if(!m_presentVertexAttributes.get(loc)
+			   || !attributeIsRequired(loc, key.getRenderingTechnique(), key.getSkinned()))
 			{
 				continue;
 			}
@@ -88,59 +89,24 @@ void ModelPatch::getRenderingInfo(const RenderingKey& key, ModelRenderingInfo& i
 	inf.m_indexType = m_indexType;
 
 	// Get program
-	{
-		RenderingKey mtlKey = key;
-		mtlKey.setLod(min(key.getLod(), m_mtl->getLodCount() - 1));
-
-		const MaterialVariant& variant = m_mtl->getOrCreateVariant(mtlKey);
-
-		inf.m_program = variant.getShaderProgram();
-
-		if(m_mtl->supportsSkinning())
-		{
-			inf.m_boneTransformsBinding = m_mtl->getBoneTransformsStorageBlockBinding();
-			inf.m_prevFrameBoneTransformsBinding = m_mtl->getPrevFrameBoneTransformsStorageBlockBinding();
-		}
-		else
-		{
-			inf.m_boneTransformsBinding = inf.m_prevFrameBoneTransformsBinding = MAX_U32;
-		}
-	}
+	const MaterialVariant& variant = m_mtl->getOrCreateVariant(key);
+	inf.m_program = variant.getShaderProgram();
 }
 
-void ModelPatch::getRayTracingInfo(U32 lod, ModelRayTracingInfo& info) const
+void ModelPatch::getRayTracingInfo(const RenderingKey& key, ModelRayTracingInfo& info) const
 {
-	ANKI_ASSERT(m_mtl->getSupportedRayTracingTypes() != RayTypeBit::NONE);
-
-	info.m_grObjectReferenceCount = 0;
-	memset(&info.m_descriptor, 0, sizeof(info.m_descriptor));
+	ANKI_ASSERT(!!(m_mtl->getRenderingTechniques() & RenderingTechniqueBit(1 << key.getRenderingTechnique())));
 
 	// Mesh
-	const MeshResourcePtr& mesh = m_meshes[min(U32(m_meshLodCount - 1), lod)];
+	const MeshResourcePtr& mesh = m_meshes[min(U32(m_meshLodCount - 1), key.getLod())];
 	info.m_bottomLevelAccelerationStructure = mesh->getBottomLevelAccelerationStructure();
-	info.m_descriptor.m_mesh = mesh->getMeshGpuDescriptor();
-	info.m_grObjectReferences[info.m_grObjectReferenceCount++] = mesh->getIndexBuffer();
-	info.m_grObjectReferences[info.m_grObjectReferenceCount++] = mesh->getVertexBuffer();
 
 	// Material
-	info.m_descriptor.m_material = m_mtl->getMaterialGpuDescriptor();
-	for(RayType rayType : EnumIterable<RayType>())
-	{
-		if(!!(m_mtl->getSupportedRayTracingTypes() & RayTypeBit(1 << rayType)))
-		{
-			info.m_shaderGroupHandleIndices[rayType] = m_mtl->getShaderGroupHandleIndex(rayType);
-		}
-		else
-		{
-			info.m_shaderGroupHandleIndices[rayType] = MAX_U32;
-		}
-	}
+	const MaterialVariant& variant = m_mtl->getOrCreateVariant(key);
+	info.m_shaderGroupHandleIndex = variant.getRtShaderGroupHandleIndex();
 
-	ConstWeakArray<TextureViewPtr> textureViews = m_mtl->getAllTextureViews();
-	for(U32 i = 0; i < textureViews.getSize(); ++i)
-	{
-		info.m_grObjectReferences[info.m_grObjectReferenceCount++] = textureViews[i];
-	}
+	// Misc
+	info.m_grObjectReferences = m_grObjectRefs;
 }
 
 Error ModelPatch::init(ModelResource* model, ConstWeakArray<CString> meshFNames, const CString& mtlFName,
@@ -153,6 +119,17 @@ Error ModelPatch::init(ModelResource* model, ConstWeakArray<CString> meshFNames,
 
 	// Load material
 	ANKI_CHECK(manager->loadResource(mtlFName, m_mtl, async));
+
+	// Gather the material refs
+	if(m_mtl->getAllTextures().getSize())
+	{
+		m_grObjectRefs.resizeStorage(model->getAllocator(), m_mtl->getAllTextures().getSize());
+
+		for(U32 i = 0; i < m_mtl->getAllTextures().getSize(); ++i)
+		{
+			m_grObjectRefs.emplaceBack(model->getAllocator(), m_mtl->getAllTextures()[i]);
+		}
+	}
 
 	// Load meshes
 	m_meshLodCount = 0;
@@ -360,8 +337,6 @@ Error ModelResource::load(const ResourceFilename& filename, Bool async)
 			ANKI_RESOURCE_LOGE("All model patches should support skinning or all shouldn't support skinning");
 			return Error::USER_DATA;
 		}
-
-		m_skinning = m_modelPatches[count].supportsSkinning();
 
 		// Move to next
 		ANKI_CHECK(modelPatchEl.getNextSiblingElement("modelPatch", modelPatchEl));
