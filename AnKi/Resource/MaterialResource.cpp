@@ -297,7 +297,7 @@ Error MaterialResource::createVars(Technique& technique)
 					// different programs have different signature for AnKiLocalUniforms
 					for(const MaterialVariable& otherVar : m_vars)
 					{
-						if(otherVar.isSampler() || otherVar.isTexture())
+						if(otherVar.isTexture())
 						{
 							continue;
 						}
@@ -331,6 +331,11 @@ Error MaterialResource::createVars(Technique& technique)
 		for(const ShaderProgramBinaryOpaqueInstance& instance : variant->getBinaryVariant().m_opaques)
 		{
 			const ShaderProgramBinaryOpaque& opaque = binary.m_opaques[instance.m_index];
+			if(opaque.m_type == ShaderVariableDataType::SAMPLER)
+			{
+				continue;
+			}
+
 			const CString opaqueName = opaque.m_name.getBegin();
 			MaterialVariable* var = tryFindVariable(opaqueName);
 
@@ -347,7 +352,7 @@ Error MaterialResource::createVars(Technique& technique)
 				// Check that there are no other opaque with the same binding
 				for(const MaterialVariable& otherVar : m_vars)
 				{
-					if(!otherVar.isSampler() && !otherVar.isTexture())
+					if(!otherVar.isTexture())
 					{
 						continue;
 					}
@@ -618,7 +623,7 @@ void MaterialResource::prefillLocalUniforms()
 
 	for(const MaterialVariable& var : m_vars)
 	{
-		if(var.isTexture() || var.isSampler())
+		if(var.isTexture())
 		{
 			continue;
 		}

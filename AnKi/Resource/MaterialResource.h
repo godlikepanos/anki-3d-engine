@@ -78,14 +78,9 @@ public:
 			   && m_dataType <= ShaderVariableDataType::TEXTURE_LAST;
 	}
 
-	Bool isSampler() const
-	{
-		return m_dataType == ShaderVariableDataType::SAMPLER;
-	}
-
 	Bool isUniform() const
 	{
-		return !isTexture() && !isSampler();
+		return !isTexture();
 	}
 
 	ShaderVariableDataType getDataType() const
@@ -95,10 +90,16 @@ public:
 	}
 
 	/// Get the binding of a texture or a sampler type of material variable.
-	U32 getOpaqueBinding() const
+	U32 getTextureBinding() const
 	{
-		ANKI_ASSERT(m_opaqueBinding != MAX_U32 && (isTexture() || isSampler()));
+		ANKI_ASSERT(m_opaqueBinding != MAX_U32 && isTexture());
 		return m_opaqueBinding;
+	}
+
+	U32 getOffsetInLocalUniforms() const
+	{
+		ANKI_ASSERT(m_offsetInLocalUniforms != MAX_U32);
+		return m_offsetInLocalUniforms;
 	}
 
 protected:

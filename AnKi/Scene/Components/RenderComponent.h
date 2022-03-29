@@ -55,8 +55,9 @@ public:
 
 	void setFlagsFromMaterial(const MaterialResourcePtr& mtl)
 	{
-		RenderComponentFlag flags =
-			(mtl->isForwardShading()) ? RenderComponentFlag::FORWARD_SHADING : RenderComponentFlag::NONE;
+		RenderComponentFlag flags = !!(mtl->getRenderingTechniques() & RenderingTechniqueBit::FORWARD)
+										? RenderComponentFlag::FORWARD_SHADING
+										: RenderComponentFlag::NONE;
 		flags |= (mtl->castsShadow()) ? RenderComponentFlag::CASTS_SHADOW : RenderComponentFlag::NONE;
 		setFlags(flags);
 	}
