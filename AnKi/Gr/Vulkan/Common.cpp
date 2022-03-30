@@ -403,7 +403,7 @@ VkImageUsageFlags convertTextureUsage(const TextureUsageBit ak, const Format for
 
 	if(!!(ak & (TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE)))
 	{
-		if(formatIsDepthStencil(format))
+		if(getFormatInfo(format).isDepthStencil())
 		{
 			out |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 		}

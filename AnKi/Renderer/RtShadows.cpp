@@ -640,9 +640,8 @@ void RtShadows::buildSbt(RenderingContext& ctx)
 		const RayTracingInstanceQueueElement& element = instanceElements[instanceIdx];
 
 		// Init SBT record
-		memcpy(sbt, &shaderGroupHandles[element.m_shaderGroupHandleIndices[RayType::SHADOWS] * shaderHandleSize],
-			   shaderHandleSize);
-		memcpy(sbt + shaderHandleSize, &element.m_modelDescriptor, sizeof(element.m_modelDescriptor));
+		memcpy(sbt, &shaderGroupHandles[element.m_shaderGroupHandleIndex * shaderHandleSize], shaderHandleSize);
+		// TODO add some reference to the RenderableGpuView
 		sbt += m_sbtRecordSize;
 	}
 

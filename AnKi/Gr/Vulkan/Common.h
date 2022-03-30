@@ -163,12 +163,12 @@ ANKI_USE_RESULT inline VkFormat convertFormat(const Format ak)
 ANKI_USE_RESULT inline DepthStencilAspectBit getImageAspectFromFormat(const Format ak)
 {
 	DepthStencilAspectBit out = DepthStencilAspectBit::NONE;
-	if(formatIsStencil(ak))
+	if(getFormatInfo(ak).isStencil())
 	{
 		out = DepthStencilAspectBit::STENCIL;
 	}
 
-	if(formatIsDepth(ak))
+	if(getFormatInfo(ak).isDepth())
 	{
 		out |= DepthStencilAspectBit::DEPTH;
 	}

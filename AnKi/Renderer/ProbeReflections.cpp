@@ -351,7 +351,7 @@ void ProbeReflections::runGBuffer(RenderPassWorkContext& rgraphCtx)
 			const RenderQueue& rqueue = *probe.m_renderQueues[faceIdx];
 			ANKI_ASSERT(localStart >= 0 && localEnd <= faceDrawcallCount);
 			m_r->getSceneDrawer().drawRange(
-				Pass::GB, rqueue.m_viewMatrix, rqueue.m_viewProjectionMatrix,
+				RenderingTechnique::GBUFFER, rqueue.m_viewMatrix, rqueue.m_viewProjectionMatrix,
 				Mat4::getIdentity(), // Don't care about prev mats
 				cmdb, m_r->getSamplers().m_trilinearRepeat, rqueue.m_renderables.getBegin() + localStart,
 				rqueue.m_renderables.getBegin() + localEnd, MAX_LOD_COUNT - 1, MAX_LOD_COUNT - 1);
@@ -724,7 +724,7 @@ void ProbeReflections::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 
 			ANKI_ASSERT(localStart >= 0 && localEnd <= faceDrawcallCount);
 			m_r->getSceneDrawer().drawRange(
-				Pass::SM, cascadeRenderQueue.m_viewMatrix, cascadeRenderQueue.m_viewProjectionMatrix,
+				RenderingTechnique::SHADOW, cascadeRenderQueue.m_viewMatrix, cascadeRenderQueue.m_viewProjectionMatrix,
 				Mat4::getIdentity(), // Don't care about prev matrices here
 				cmdb, m_r->getSamplers().m_trilinearRepeatAniso,
 				cascadeRenderQueue.m_renderables.getBegin() + localStart,

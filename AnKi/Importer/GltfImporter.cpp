@@ -686,7 +686,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 				Array<const cgltf_material*, 128> m_materials;
 				U32 m_materialCount = 0;
 				const cgltf_skin* m_skin;
-				RayTypeBit m_rayTypes;
+				Bool m_rayTracing;
 			};
 			Ctx* ctx = m_alloc.newInstance<Ctx>();
 			ctx->m_importer = this;
@@ -696,7 +696,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 				ctx->m_materials[ctx->m_materialCount++] = node.mesh->primitives[i].material;
 			}
 			ctx->m_skin = node.skin;
-			ctx->m_rayTypes = (skipRt) ? RayTypeBit::NONE : RayTypeBit::ALL;
+			ctx->m_rayTracing = !skipRt;
 
 			HashMapAuto<CString, StringAuto>::Iterator it2;
 			const Bool selfCollision = (it2 = extras.find("collision_mesh")) != extras.getEnd() && *it2 == "self";
@@ -732,7 +732,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 
 				for(U32 i = 0; i < self.m_materialCount && !err; ++i)
 				{
-					err = self.m_importer->writeMaterial(*self.m_materials[i], self.m_rayTypes);
+					err = self.m_importer->writeMaterial(*self.m_materials[i], self.m_rayTracing);
 				}
 
 				if(!err)

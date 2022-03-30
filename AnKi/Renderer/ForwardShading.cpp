@@ -46,7 +46,8 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 		bindStorage(cmdb, 0, 7, rsrc.m_clustersToken);
 
 		// Start drawing
-		m_r->getSceneDrawer().drawRange(Pass::FS, ctx.m_matrices.m_view, ctx.m_matrices.m_viewProjectionJitter,
+		m_r->getSceneDrawer().drawRange(RenderingTechnique::FORWARD, ctx.m_matrices.m_view,
+										ctx.m_matrices.m_viewProjectionJitter,
 										ctx.m_prevMatrices.m_viewProjectionJitter, cmdb,
 										m_r->getSamplers().m_trilinearRepeatAnisoResolutionScalingBias,
 										ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + start,

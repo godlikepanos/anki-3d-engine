@@ -367,11 +367,11 @@ class RayTracingInstanceQueueElement final
 {
 public:
 	AccelerationStructure* m_bottomLevelAccelerationStructure;
-	ModelGpuDescriptor m_modelDescriptor;
-	Array<U32, U(RayType::COUNT)> m_shaderGroupHandleIndices;
+	U32 m_shaderGroupHandleIndex;
 
-	/// This points to the GR objects that are m_modelDescriptor is referencing. Use this to add a refcount to avoid
-	/// accidential deletions.
+	Mat3x4 m_transform; // TODO rm when you'll add the RenderableGpuView
+
+	/// This points to the GR objects used by this element. Use this to add a refcount to avoid accidential deletions.
 	Array<GrObject*, 8> m_grObjects;
 	U32 m_grObjectCount;
 };

@@ -176,7 +176,8 @@ void ModelNode::initRenderComponents()
 
 		rc.setFlagsFromMaterial(model->getModelPatches()[patchIdx].getMaterial());
 
-		if(model->getModelPatches()[patchIdx].getSupportedRayTracingTypes() != RayTypeBit::NONE)
+		if(!!(model->getModelPatches()[patchIdx].getMaterial()->getRenderingTechniques()
+			  & RenderingTechniqueBit::ANY_RT))
 		{
 			rc.initRayTracing(
 				[](U32 lod, const void* userData, RayTracingInstanceQueueElement& el) {
@@ -228,7 +229,7 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 			moved = moved || (trfs[i] != prevTrfs[i]);
 		}
 
-		ctx.m_key.setVelocity(moved && ctx.m_key.getPass() == Pass::GB);
+		ctx.m_key.setVelocity(moved && ctx.m_key.getRenderingTechnique() == RenderingTechnique::GBUFFER);
 		ctx.m_key.setSkinned(skinc.isEnabled());
 		ModelRenderingInfo modelInf;
 		patch.getRenderingInfo(ctx.m_key, modelInf);
@@ -246,14 +247,11 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 															tokenPrev);
 			memcpy(trfs, &skinc.getPreviousFrameBoneTransforms()[0], boneCount * sizeof(Mat4));
 
-			ANKI_ASSERT(modelInf.m_boneTransformsBinding < MAX_U32);
-			cmdb->bindStorageBuffer(patch.getMaterial()->getDescriptorSetIndex(), modelInf.m_boneTransformsBinding,
-									token.m_buffer, token.m_offset, token.m_range);
+			cmdb->bindStorageBuffer(MATERIAL_SET_EXTERNAL, MATERIAL_BINDING_BONE_TRANSFORMS, token.m_buffer,
+									token.m_offset, token.m_range);
 
-			ANKI_ASSERT(modelInf.m_prevFrameBoneTransformsBinding < MAX_U32);
-			cmdb->bindStorageBuffer(patch.getMaterial()->getDescriptorSetIndex(),
-									modelInf.m_prevFrameBoneTransformsBinding, tokenPrev.m_buffer, tokenPrev.m_offset,
-									tokenPrev.m_range);
+			cmdb->bindStorageBuffer(MATERIAL_SET_EXTERNAL, MATERIAL_BINDING_PREVIOUS_BONE_TRANSFORMS,
+									tokenPrev.m_buffer, tokenPrev.m_offset, tokenPrev.m_range);
 		}
 
 		// Program
@@ -392,40 +390,27 @@ void ModelNode::setupRayTracingInstanceQueueElement(U32 lod, U32 modelPatchIdx,
 	const ModelComponent& modelc = getFirstComponentOfType<ModelComponent>();
 	const ModelPatch& patch = modelc.getModelResource()->getModelPatches()[modelPatchIdx];
 
+	RenderingKey key(RenderingTechnique::RT_SHADOW, lod, 1, false, false);
+
 	ModelRayTracingInfo info;
-	patch.getRayTracingInfo(lod, info);
+	patch.getRayTracingInfo(key, info);
 
 	memset(&el, 0, sizeof(el));
 
-	// AS
 	el.m_bottomLevelAccelerationStructure = info.m_bottomLevelAccelerationStructure.get();
 
-	// Set the descriptor
-	el.m_modelDescriptor = info.m_descriptor;
 	const MoveComponent& movec = getFirstComponentOfType<MoveComponent>();
-	const Mat3x4 worldTrf(movec.getWorldTransform());
-	memcpy(&el.m_modelDescriptor.m_worldTransform, &worldTrf, sizeof(worldTrf));
-	el.m_modelDescriptor.m_worldRotation = movec.getWorldTransform().getRotation().getRotationPart();
+	el.m_transform = Mat3x4(movec.getWorldTransform());
 
-	// Handles
-	for(RayType type : EnumIterable<RayType>())
-	{
-		if(!!(patch.getMaterial()->getSupportedRayTracingTypes() & RayTypeBit(1 << type)))
-		{
-			el.m_shaderGroupHandleIndices[type] = info.m_shaderGroupHandleIndices[type];
-		}
-		else
-		{
-			el.m_shaderGroupHandleIndices[type] = MAX_U32;
-		}
-	}
+	el.m_shaderGroupHandleIndex = info.m_shaderGroupHandleIndex;
 
 	// References
-	ANKI_ASSERT(info.m_grObjectReferenceCount <= el.m_grObjects.getSize());
-	el.m_grObjectCount = info.m_grObjectReferenceCount;
-	for(U32 i = 0; i < info.m_grObjectReferenceCount; ++i)
+	el.m_grObjectCount = info.m_grObjectReferences.getSize();
+	for(U32 i = 0; i < el.m_grObjectCount; ++i)
 	{
-		el.m_grObjects[i] = info.m_grObjectReferences[i].get();
+		// const_cast hack follows. To avoid the const you could copy m_grObjectReferences[i] to a GrObjectPtr and then
+		// call get() on that. But that will cost 2 atomic operations
+		el.m_grObjects[i] = const_cast<GrObject*>(info.m_grObjectReferences[i].get());
 	}
 }
 

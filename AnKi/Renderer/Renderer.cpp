@@ -480,15 +480,15 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 					Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> colUsage = {};
 					TextureUsageBit dsUsage = TextureUsageBit::NONE;
 
-					if(formatIsDepthStencil(inf.m_format))
+					if(getFormatInfo(inf.m_format).isDepthStencil())
 					{
 						DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE;
-						if(formatIsDepth(inf.m_format))
+						if(getFormatInfo(inf.m_format).isDepth())
 						{
 							aspect |= DepthStencilAspectBit::DEPTH;
 						}
 
-						if(formatIsStencil(inf.m_format))
+						if(getFormatInfo(inf.m_format).isStencil())
 						{
 							aspect |= DepthStencilAspectBit::STENCIL;
 						}

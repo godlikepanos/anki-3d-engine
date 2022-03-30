@@ -222,7 +222,7 @@ void ShadowMapping::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 		cmdb->setViewport(work.m_viewport[0], work.m_viewport[1], work.m_viewport[2], work.m_viewport[3]);
 		cmdb->setScissor(work.m_viewport[0], work.m_viewport[1], work.m_viewport[2], work.m_viewport[3]);
 
-		m_r->getSceneDrawer().drawRange(Pass::SM, work.m_renderQueue->m_viewMatrix,
+		m_r->getSceneDrawer().drawRange(RenderingTechnique::SHADOW, work.m_renderQueue->m_viewMatrix,
 										work.m_renderQueue->m_viewProjectionMatrix,
 										Mat4::getIdentity(), // Don't care about prev matrices here
 										cmdb, m_r->getSamplers().m_trilinearRepeatAniso,
