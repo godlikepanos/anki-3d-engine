@@ -1,0 +1,8 @@
+<model>
+	<modelPatches>
+		<modelPatch>
+			<mesh>Assets/room.002_lod0_9aeac5bb7f16c0a7.ankimesh</mesh>
+			<material>Assets/room.green_c7dc339831ac73a2.ankimtl</material>
+		</modelPatch>
+	</modelPatches>
+</model>
