@@ -33,7 +33,7 @@ enum class RenderingTechniqueBit : U8
 	FORWARD = 1 << 3,
 	RT_SHADOW = 1 << 4,
 
-	ANY_RT = RT_SHADOW
+	ALL_RT = RT_SHADOW
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RenderingTechniqueBit)
 

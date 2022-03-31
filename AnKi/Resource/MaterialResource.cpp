@@ -124,6 +124,7 @@ Error MaterialResource::load(const ResourceFilename& filename, Bool async)
 	} while(techniqueEl);
 
 	// <inputs>
+	BitSet<128> varsSet(false);
 	ANKI_CHECK(rootEl.getChildElementOptional("inputs", el));
 	if(el)
 	{
@@ -131,9 +132,16 @@ Error MaterialResource::load(const ResourceFilename& filename, Bool async)
 		ANKI_CHECK(el.getChildElement("input", inputEl));
 		do
 		{
-			ANKI_CHECK(parseInput(el, async));
+			ANKI_CHECK(parseInput(inputEl, async, varsSet));
 			ANKI_CHECK(inputEl.getNextSiblingElement("input", inputEl));
 		} while(inputEl);
+	}
+
+	if(varsSet.getEnabledBitCount() != m_vars.getSize())
+	{
+		ANKI_RESOURCE_LOGE("Forgot to set a default value in %u input variables",
+						   U32(m_vars.getSize() - varsSet.getEnabledBitCount()));
+		return Error::USER_DATA;
 	}
 
 	prefillLocalUniforms();
@@ -167,6 +175,12 @@ Error MaterialResource::parseTechnique(XmlElement techniqueEl, Bool async)
 	{
 		ANKI_RESOURCE_LOGE("Technique set more than once: %s", name.cstr());
 		return Error::USER_DATA;
+	}
+
+	if(!!(mask & RenderingTechniqueBit::ALL_RT)
+	   && !getManager().getGrManager().getDeviceCapabilities().m_rayTracingEnabled)
+	{
+		return Error::NONE;
 	}
 
 	Technique& technique = m_techniques[techniqueId];
@@ -569,7 +583,7 @@ Error MaterialResource::findBuiltinMutators(Technique& technique)
 	return Error::NONE;
 }
 
-Error MaterialResource::parseInput(XmlElement inputEl, Bool async)
+Error MaterialResource::parseInput(XmlElement inputEl, Bool async, BitSet<128>& varsSet)
 {
 	// Get var name
 	CString varName;
@@ -582,6 +596,15 @@ Error MaterialResource::parseInput(XmlElement inputEl, Bool async)
 		ANKI_RESOURCE_LOGE("Input name is wrong, variable not found: %s", varName.cstr());
 		return Error::USER_DATA;
 	}
+
+	// Set check
+	const U32 idx = U32(foundVar - m_vars.getBegin());
+	if(varsSet.get(idx))
+	{
+		ANKI_RESOURCE_LOGE("Input already has a value: %s", varName.cstr());
+		return Error::USER_DATA;
+	}
+	varsSet.set(idx);
 
 	// Set the value
 	if(foundVar->isTexture())
@@ -702,7 +725,7 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 
 	variant.m_prog = progVariant->getProgram();
 
-	if(!!(RenderingTechniqueBit(1 << key.getRenderingTechnique()) & RenderingTechniqueBit::ANY_RT))
+	if(!!(RenderingTechniqueBit(1 << key.getRenderingTechnique()) & RenderingTechniqueBit::ALL_RT))
 	{
 		variant.m_rtShaderGroupHandleIndex = progVariant->getShaderGroupHandleIndex();
 	}

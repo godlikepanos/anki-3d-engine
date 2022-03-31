@@ -129,12 +129,14 @@ layout(set = MATERIAL_SET_EXTERNAL, binding = MATERIAL_BINDING_GLOBAL_UNIFORMS, 
 };
 
 #if ANKI_BONES
+#pragma anki reflect b_boneTransforms
 layout(set = MATERIAL_SET_EXTERNAL, binding = MATERIAL_BINDING_BONE_TRANSFORMS, row_major,
 	   std140) readonly buffer b_boneTransforms
 {
 	Mat4 u_boneTransforms[];
 };
 
+#pragma anki reflect b_prevFrameBoneTransforms
 layout(set = MATERIAL_SET_EXTERNAL, binding = MATERIAL_BINDING_PREVIOUS_BONE_TRANSFORMS, row_major,
 	   std140) readonly buffer b_prevFrameBoneTransforms
 {

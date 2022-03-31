@@ -15,12 +15,12 @@ static constexpr ShaderVariableDataTypeInfo SVD_INFOS[] = {
 #include <AnKi/Gr/ShaderVariableDataType.defs.h>
 #undef ANKI_SVDT_MACRO
 #undef ANKI_SVDT_MACRO_OPAQUE
-	{"", 0, false}};
+};
 
 const ShaderVariableDataTypeInfo& getShaderVariableDataTypeInfo(ShaderVariableDataType type)
 {
 	ANKI_ASSERT(type > ShaderVariableDataType::NONE && type < ShaderVariableDataType::COUNT);
-	return SVD_INFOS[U32(type)];
+	return SVD_INFOS[U32(type) - 1];
 }
 
 /// @warning Don't use Array because the compilers can't handle it for some reason.
@@ -37,12 +37,12 @@ static constexpr FormatInfo FORMAT_INFOS[] = {
 	 ANKI_STRINGIZE(type)},
 #include <AnKi/Gr/Format.defs.h>
 #undef ANKI_FORMAT_DEF
-	{0, 0, 0, 0, 0, 0, DepthStencilAspectBit::NONE, ""}};
+};
 
 const FormatInfo& getFormatInfo(Format fmt)
 {
 	ANKI_ASSERT(fmt > Format::NONE && fmt < Format::COUNT);
-	return FORMAT_INFOS[U32(fmt)];
+	return FORMAT_INFOS[U32(fmt) - 1];
 }
 
 } // namespace anki

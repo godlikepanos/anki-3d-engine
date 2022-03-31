@@ -57,6 +57,7 @@ public:
 	MaterialVariable& operator=(MaterialVariable&& b)
 	{
 		m_name = std::move(b.m_name);
+		m_offsetInLocalUniforms = b.m_offsetInLocalUniforms;
 		m_opaqueBinding = b.m_opaqueBinding;
 		m_dataType = b.m_dataType;
 		m_Mat4 = b.m_Mat4;
@@ -276,7 +277,7 @@ private:
 
 	ANKI_USE_RESULT Error parseMutators(XmlElement mutatorsEl, Technique& technique);
 	ANKI_USE_RESULT Error parseTechnique(XmlElement techniqueEl, Bool async);
-	ANKI_USE_RESULT Error parseInput(XmlElement inputEl, Bool async);
+	ANKI_USE_RESULT Error parseInput(XmlElement inputEl, Bool async, BitSet<128>& varsSet);
 	ANKI_USE_RESULT Error findBuiltinMutators(Technique& technique);
 	ANKI_USE_RESULT Error createVars(Technique& technique);
 	void prefillLocalUniforms();

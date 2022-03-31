@@ -177,7 +177,7 @@ void ModelNode::initRenderComponents()
 		rc.setFlagsFromMaterial(model->getModelPatches()[patchIdx].getMaterial());
 
 		if(!!(model->getModelPatches()[patchIdx].getMaterial()->getRenderingTechniques()
-			  & RenderingTechniqueBit::ANY_RT))
+			  & RenderingTechniqueBit::ALL_RT))
 		{
 			rc.initRayTracing(
 				[](U32 lod, const void* userData, RayTracingInstanceQueueElement& el) {
