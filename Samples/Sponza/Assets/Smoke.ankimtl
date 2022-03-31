@@ -1,14 +1,18 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<material shaderProgram="Anki/Shaders/ForwardShadingParticles.ankiprog" forwardShading="1" shadow="0">
-	<mutation>
-		<mutator name="ANIMATED_TEXTURE" value="0"/>
-		<mutator name="LIGHT" value="1"/>
-	</mutation>
+<material shadow="0">
+	<techniques>
+		<technique name="Forward" shaderProgram="Anki/Shaders/ForwardShadingParticles.ankiprog">
+			<mutation>
+				<mutator name="ANIMATED_TEXTURE" value="0"/>
+				<mutator name="LIGHT" value="1"/>
+			</mutation>
+		</technique>
+	</techniques>
 
 	<inputs>
-		<input shaderVar="u_diffuseMap" value="Assets/Smoke.ankitex"/>
-		<input shaderVar="m_colorScale" value="1.0 1.0 1.0 1.0"/>
-		<input shaderVar="m_colorBias" value="0 0 0 0"/>
+		<input name="u_diffuseMap" value="Assets/Smoke.ankitex"/>
+		<input name="m_colorScale" value="1.0 1.0 1.0 1.0"/>
+		<input name="m_colorBias" value="0 0 0 0"/>
 	</inputs>
 </material>
 

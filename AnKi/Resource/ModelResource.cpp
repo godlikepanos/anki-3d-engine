@@ -244,6 +244,12 @@ ModelResource::ModelResource(ResourceManager* manager)
 ModelResource::~ModelResource()
 {
 	auto alloc = getAllocator();
+
+	for(ModelPatch& patch : m_modelPatches)
+	{
+		patch.m_grObjectRefs.destroy(alloc);
+	}
+
 	m_modelPatches.destroy(alloc);
 }
 

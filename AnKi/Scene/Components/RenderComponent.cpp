@@ -44,10 +44,12 @@ void RenderComponent::allocateAndSetupUniforms(const MaterialResourcePtr& mtl, c
 
 		for(U32 i = 0; i < transforms.getSize(); ++i)
 		{
-			memcpy(&renderableGpuViews->m_transform, &transforms[i], sizeof(renderableGpuViews->m_transform));
-			memcpy(&renderableGpuViews->m_previousTransform, &prevTransforms[i],
-				   sizeof(renderableGpuViews->m_previousTransform));
-			renderableGpuViews->m_rotation = transforms[i].getRotationPart();
+			memcpy(&renderableGpuViews->m_worldTransform, &transforms[i], sizeof(renderableGpuViews->m_worldTransform));
+			memcpy(&renderableGpuViews->m_previousWorldTransform, &prevTransforms[i],
+				   sizeof(renderableGpuViews->m_previousWorldTransform));
+			renderableGpuViews->m_worldRotation = transforms[i].getRotationPart();
+
+			++renderableGpuViews;
 		}
 	}
 

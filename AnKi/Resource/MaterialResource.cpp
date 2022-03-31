@@ -123,6 +123,8 @@ Error MaterialResource::load(const ResourceFilename& filename, Bool async)
 		ANKI_CHECK(techniqueEl.getNextSiblingElement("technique", techniqueEl));
 	} while(techniqueEl);
 
+	ANKI_ASSERT(!!m_techniquesMask);
+
 	// <inputs>
 	BitSet<128> varsSet(false);
 	ANKI_CHECK(rootEl.getChildElementOptional("inputs", el));
@@ -204,6 +206,7 @@ Error MaterialResource::parseTechnique(XmlElement techniqueEl, Bool async)
 	// Create the vars
 	ANKI_CHECK(createVars(technique));
 
+	m_techniquesMask |= mask;
 	return Error::NONE;
 }
 

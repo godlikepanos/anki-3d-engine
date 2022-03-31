@@ -185,9 +185,9 @@ void skinning()
 void positionUvNormalTangent()
 {
 	gl_Position = u_globalUniforms.m_viewProjectionMatrix
-				  * Vec4(u_renderableGpuViews[gl_InstanceIndex].m_transform * Vec4(g_position, 1.0), 1.0);
-	out_normal = u_renderableGpuViews[gl_InstanceIndex].m_rotation * g_normal;
-	out_tangent = u_renderableGpuViews[gl_InstanceIndex].m_rotation * g_tangent.xyz;
+				  * Vec4(u_renderableGpuViews[gl_InstanceIndex].m_worldTransform * Vec4(g_position, 1.0), 1.0);
+	out_normal = u_renderableGpuViews[gl_InstanceIndex].m_worldRotation * g_normal;
+	out_tangent = u_renderableGpuViews[gl_InstanceIndex].m_worldRotation * g_tangent.xyz;
 	out_bitangent = cross(out_normal, out_tangent) * g_tangent.w;
 	out_uv = g_uv;
 }
@@ -202,10 +202,10 @@ void parallax()
 	const Vec3 b = cross(n, t) * in_tangent.w;
 
 	const Mat3 invTbn = transpose(u_globalUniforms.m_viewRotationMatrix
-								  * u_renderableGpuViews[gl_InstanceIndex].m_rotation * Mat3(t, b, n));
+								  * u_renderableGpuViews[gl_InstanceIndex].m_worldRotation * Mat3(t, b, n));
 
 	const Vec3 viewPos = (u_globalUniforms.m_viewMatrix
-						  * Vec4(u_renderableGpuViews[gl_InstanceIndex].m_transform * Vec4(g_position, 1.0), 1.0))
+						  * Vec4(u_renderableGpuViews[gl_InstanceIndex].m_worldTransform * Vec4(g_position, 1.0), 1.0))
 							 .xyz;
 	out_distFromTheCamera = viewPos.z;
 
@@ -220,9 +220,9 @@ void velocity()
 	const Vec3 prevLocalPos = g_prevPosition;
 
 #	if ANKI_VELOCITY
-	const Mat3x4 trf = u_renderableGpuViews[gl_InstanceIndex].m_previousTransform;
+	const Mat3x4 trf = u_renderableGpuViews[gl_InstanceIndex].m_previousWorldTransform;
 #	else
-	const Mat3x4 trf = u_renderableGpuViews[gl_InstanceIndex].m_transform;
+	const Mat3x4 trf = u_renderableGpuViews[gl_InstanceIndex].m_worldTransform;
 #	endif
 
 	const Vec4 v4 = u_globalUniforms.m_viewProjectionMatrix * Vec4(trf * Vec4(prevLocalPos, 1.0), 1.0);
@@ -254,7 +254,7 @@ void main()
 #	endif
 #else
 	gl_Position = u_globalUniforms.m_viewProjectionMatrix
-				  * Vec4(u_renderableGpuViews[gl_InstanceIndex].m_transform * Vec4(g_position, 1.0), 1.0);
+				  * Vec4(u_renderableGpuViews[gl_InstanceIndex].m_worldTransform * Vec4(g_position, 1.0), 1.0);
 
 #	if ALPHA_TEST
 	out_uv = g_uv;

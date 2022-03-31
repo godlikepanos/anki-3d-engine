@@ -11,9 +11,9 @@ ANKI_BEGIN_NAMESPACE
 
 struct RenderableGpuView
 {
-	ScalarMat3x4 m_transform;
-	ScalarMat3x4 m_previousTransform;
-	Mat3 m_rotation;
+	ScalarMat3x4 m_worldTransform;
+	ScalarMat3x4 m_previousWorldTransform;
+	Mat3 m_worldRotation; ///< The roration part of m_worldTransform.
 };
 
 struct SkinGpuView

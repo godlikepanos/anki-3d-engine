@@ -222,6 +222,7 @@ public:
 
 	RenderingTechniqueBit getRenderingTechniques() const
 	{
+		ANKI_ASSERT(!!m_techniquesMask);
 		return m_techniquesMask;
 	}
 

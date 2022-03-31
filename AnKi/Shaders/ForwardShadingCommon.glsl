@@ -9,6 +9,7 @@
 #include <AnKi/Shaders/Functions.glsl>
 #include <AnKi/Shaders/Include/ModelTypes.h>
 #include <AnKi/Shaders/Include/MaterialTypes.h>
+#include <AnKi/Shaders/Include/GpuSceneTypes.h>
 
 //
 // Vert
@@ -22,10 +23,10 @@ layout(location = VERTEX_ATTRIBUTE_ID_POSITION) in Vec3 in_position;
 //
 #if defined(ANKI_FRAGMENT_SHADER)
 // Global resources
-layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
-layout(set = 0, binding = 1) uniform texture2D u_gbufferDepthRt;
-layout(set = 0, binding = 2) uniform ANKI_RP texture3D u_lightVol;
-#	define CLUSTERED_SHADING_SET 0
+layout(set = MATERIAL_SET_INTERNAL, binding = 0) uniform sampler u_linearAnyClampSampler;
+layout(set = MATERIAL_SET_INTERNAL, binding = 1) uniform texture2D u_gbufferDepthRt;
+layout(set = MATERIAL_SET_INTERNAL, binding = 2) uniform ANKI_RP texture3D u_lightVol;
+#	define CLUSTERED_SHADING_SET MATERIAL_SET_INTERNAL
 #	define CLUSTERED_SHADING_UNIFORMS_BINDING 3
 #	define CLUSTERED_SHADING_LIGHTS_BINDING 4
 #	define CLUSTERED_SHADING_CLUSTERS_BINDING 7
