@@ -178,15 +178,15 @@ private:
 /// Material XML file format:
 /// @code
 ///	<material [shadows="0|1"]>
-///		<technique name="technique_name" shaderProgram="filename">
+///		<shaderProgram filename="filename">
 ///			[<mutation>
 ///				<mutator name="str" value="value"/>
 ///			</mutation>]
-///		</technique>
+///		</shaderProgram>
 ///
-///		[<technique ...>
+///		[<shaderProgram ...>
 ///			...
-///		</technique>]
+///		</shaderProgram>]
 ///
 ///		[<inputs>
 ///			<input name="name in AnKiMaterialUniforms struct or opaque type" value="value(s)"/> (1)

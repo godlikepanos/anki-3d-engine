@@ -5,7 +5,7 @@
 
 #pragma anki mutator ANKI_LOD 0 1 2
 #pragma anki mutator ANKI_VELOCITY 0 1
-#pragma anki mutator TECHNIQUE 0 1 2
+#pragma anki mutator ANKI_TECHNIQUE 0 1 2
 #pragma anki mutator ANKI_BONES 0 1
 #pragma anki mutator DIFFUSE_TEX 0 1
 #pragma anki mutator SPECULAR_TEX 0 1
@@ -16,26 +16,26 @@
 #pragma anki mutator EMISSIVE_TEX 0 1
 #pragma anki mutator ALPHA_TEST 0 1
 
-#pragma anki rewrite_mutation TECHNIQUE 1 DIFFUSE_TEX 1 ALPHA_TEST 0 to TECHNIQUE 1 DIFFUSE_TEX 0 ALPHA_TEST 0
-#pragma anki rewrite_mutation TECHNIQUE 2 DIFFUSE_TEX 1 ALPHA_TEST 0 to TECHNIQUE 2 DIFFUSE_TEX 0 ALPHA_TEST 0
+#pragma anki rewrite_mutation ANKI_TECHNIQUE 1 DIFFUSE_TEX 1 ALPHA_TEST 0 to ANKI_TECHNIQUE 1 DIFFUSE_TEX 0 ALPHA_TEST 0
+#pragma anki rewrite_mutation ANKI_TECHNIQUE 2 DIFFUSE_TEX 1 ALPHA_TEST 0 to ANKI_TECHNIQUE 2 DIFFUSE_TEX 0 ALPHA_TEST 0
 
-#pragma anki rewrite_mutation TECHNIQUE 1 SPECULAR_TEX 1 to TECHNIQUE 1 SPECULAR_TEX 0
-#pragma anki rewrite_mutation TECHNIQUE 2 SPECULAR_TEX 1 to TECHNIQUE 2 SPECULAR_TEX 0
+#pragma anki rewrite_mutation ANKI_TECHNIQUE 1 SPECULAR_TEX 1 to ANKI_TECHNIQUE 1 SPECULAR_TEX 0
+#pragma anki rewrite_mutation ANKI_TECHNIQUE 2 SPECULAR_TEX 1 to ANKI_TECHNIQUE 2 SPECULAR_TEX 0
 
-#pragma anki rewrite_mutation TECHNIQUE 1 NORMAL_TEX 1 to TECHNIQUE 1 NORMAL_TEX 0
-#pragma anki rewrite_mutation TECHNIQUE 2 NORMAL_TEX 1 to TECHNIQUE 2 NORMAL_TEX 0
+#pragma anki rewrite_mutation ANKI_TECHNIQUE 1 NORMAL_TEX 1 to ANKI_TECHNIQUE 1 NORMAL_TEX 0
+#pragma anki rewrite_mutation ANKI_TECHNIQUE 2 NORMAL_TEX 1 to ANKI_TECHNIQUE 2 NORMAL_TEX 0
 
-#pragma anki rewrite_mutation TECHNIQUE 1 ROUGHNESS_TEX 1 to TECHNIQUE 1 ROUGHNESS_TEX 0
-#pragma anki rewrite_mutation TECHNIQUE 2 ROUGHNESS_TEX 1 to TECHNIQUE 2 ROUGHNESS_TEX 0
+#pragma anki rewrite_mutation ANKI_TECHNIQUE 1 ROUGHNESS_TEX 1 to ANKI_TECHNIQUE 1 ROUGHNESS_TEX 0
+#pragma anki rewrite_mutation ANKI_TECHNIQUE 2 ROUGHNESS_TEX 1 to ANKI_TECHNIQUE 2 ROUGHNESS_TEX 0
 
-#pragma anki rewrite_mutation TECHNIQUE 1 METAL_TEX 1 to TECHNIQUE 1 METAL_TEX 0
-#pragma anki rewrite_mutation TECHNIQUE 2 METAL_TEX 1 to TECHNIQUE 2 METAL_TEX 0
+#pragma anki rewrite_mutation ANKI_TECHNIQUE 1 METAL_TEX 1 to ANKI_TECHNIQUE 1 METAL_TEX 0
+#pragma anki rewrite_mutation ANKI_TECHNIQUE 2 METAL_TEX 1 to ANKI_TECHNIQUE 2 METAL_TEX 0
 
-#pragma anki rewrite_mutation TECHNIQUE 1 EMISSIVE_TEX 1 to TECHNIQUE 1 EMISSIVE_TEX 0
-#pragma anki rewrite_mutation TECHNIQUE 2 EMISSIVE_TEX 1 to TECHNIQUE 2 EMISSIVE_TEX 0
+#pragma anki rewrite_mutation ANKI_TECHNIQUE 1 EMISSIVE_TEX 1 to ANKI_TECHNIQUE 1 EMISSIVE_TEX 0
+#pragma anki rewrite_mutation ANKI_TECHNIQUE 2 EMISSIVE_TEX 1 to ANKI_TECHNIQUE 2 EMISSIVE_TEX 0
 
-#pragma anki rewrite_mutation TECHNIQUE 1 PARALLAX 1 to TECHNIQUE 1 PARALLAX 0
-#pragma anki rewrite_mutation TECHNIQUE 2 PARALLAX 1 to TECHNIQUE 2 PARALLAX 0
+#pragma anki rewrite_mutation ANKI_TECHNIQUE 1 PARALLAX 1 to ANKI_TECHNIQUE 1 PARALLAX 0
+#pragma anki rewrite_mutation ANKI_TECHNIQUE 2 PARALLAX 1 to ANKI_TECHNIQUE 2 PARALLAX 0
 
 #pragma anki rewrite_mutation ALPHA_TEST 1 DIFFUSE_TEX 0 to ALPHA_TEST 0 DIFFUSE_TEX 0
 
@@ -129,14 +129,14 @@ layout(set = MATERIAL_SET_EXTERNAL, binding = MATERIAL_BINDING_GLOBAL_UNIFORMS, 
 };
 
 #if ANKI_BONES
-#pragma anki reflect b_boneTransforms
+#	pragma anki reflect b_boneTransforms
 layout(set = MATERIAL_SET_EXTERNAL, binding = MATERIAL_BINDING_BONE_TRANSFORMS, row_major,
 	   std140) readonly buffer b_boneTransforms
 {
 	Mat4 u_boneTransforms[];
 };
 
-#pragma anki reflect b_prevFrameBoneTransforms
+#	pragma anki reflect b_prevFrameBoneTransforms
 layout(set = MATERIAL_SET_EXTERNAL, binding = MATERIAL_BINDING_PREVIOUS_BONE_TRANSFORMS, row_major,
 	   std140) readonly buffer b_prevFrameBoneTransforms
 {
@@ -148,13 +148,13 @@ layout(set = MATERIAL_SET_EXTERNAL, binding = MATERIAL_BINDING_PREVIOUS_BONE_TRA
 
 // Globals (always in local space)
 Vec3 g_position = in_position;
-#if TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER
+#if ANKI_TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER
 Vec3 g_prevPosition = in_position;
 ANKI_RP Vec3 g_normal = in_normal;
 ANKI_RP Vec4 g_tangent = in_tangent;
 #endif
 
-#if TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER || ALPHA_TEST
+#if ANKI_TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER || ALPHA_TEST
 Vec2 g_uv = in_uv;
 #endif
 
@@ -170,7 +170,7 @@ void skinning()
 		prevSkinMat += u_prevFrameBoneTransforms[in_boneIndices[i]] * in_boneWeights[i];
 	}
 
-#	if TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER
+#	if ANKI_TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER
 	g_prevPosition = (prevSkinMat * Vec4(g_position, 1.0)).xyz;
 	g_tangent.xyz = (skinMat * Vec4(g_tangent.xyz, 0.0)).xyz;
 	g_normal = (skinMat * Vec4(g_normal, 0.0)).xyz;
@@ -181,7 +181,7 @@ void skinning()
 #endif
 
 // Common store function
-#if TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER
+#if ANKI_TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER
 void positionUvNormalTangent()
 {
 	gl_Position = u_globalUniforms.m_viewProjectionMatrix
@@ -214,7 +214,7 @@ void parallax()
 }
 #endif
 
-#if(ANKI_VELOCITY || ANKI_BONES) && TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER
+#if(ANKI_VELOCITY || ANKI_BONES) && ANKI_TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER
 void velocity()
 {
 	const Vec3 prevLocalPos = g_prevPosition;
@@ -242,7 +242,7 @@ void main()
 	skinning();
 #endif
 
-#if TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER
+#if ANKI_TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER
 	positionUvNormalTangent();
 
 #	if REALLY_USING_PARALLAX
@@ -336,7 +336,7 @@ Vec2 computeTextureCoordParallax(texture2D heightMap, sampler sampl, Vec2 uv, F3
 #endif
 
 // Do normal mapping
-#if TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER
+#if ANKI_TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER
 ANKI_RP Vec3 readNormalFromTexture(ANKI_RP texture2D map, sampler sampl, highp Vec2 texCoords)
 {
 	// First read the texture
@@ -362,7 +362,7 @@ void doAlphaText(F32 alpha)
 
 void main()
 {
-#if TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER
+#if ANKI_TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER
 #	if REALLY_USING_PARALLAX
 	const Vec2 uv = computeTextureCoordParallax(u_heightTex, u_globalSampler, in_uv, u_localUniforms.m_heightmapScale);
 #	else
@@ -418,14 +418,14 @@ void main()
 #	endif
 
 	packGBuffer(diffColor, normal, specColor, roughness, u_localUniforms.m_subsurface, emission, metallic, velocity);
-#elif TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER_EZ
+#elif ANKI_TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER_EZ
 	out_gbuffer0 = Vec4(0.0);
 	out_gbuffer1 = Vec4(0.0);
 	out_gbuffer2 = Vec4(0.0);
 	out_gbuffer3 = Vec2(0.0);
 #endif
 
-#if TECHNIQUE != RENDERING_TECHNIQUE_GBUFFER && ALPHA_TEST
+#if ANKI_TECHNIQUE != RENDERING_TECHNIQUE_GBUFFER && ALPHA_TEST
 	doAlphaText(texture(u_diffTex, u_globalSampler, in_uv).a);
 #endif
 }

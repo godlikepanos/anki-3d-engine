@@ -18,17 +18,20 @@ struct AnKiLocalUniforms
 	ANKI_RP Vec4 m_colorBias;
 };
 
-layout(set = MATERIAL_SET_EXTERNAL, binding = MATERIAL_BINDING_RENDERABLE_GPU_VIEW, row_major, scalar) uniform b_renderableGpuViews
+layout(set = MATERIAL_SET_EXTERNAL, binding = MATERIAL_BINDING_RENDERABLE_GPU_VIEW, row_major,
+	   scalar) uniform b_renderableGpuViews
 {
 	RenderableGpuView u_renderableGpuViews[1];
 };
 
-layout(set = MATERIAL_SET_EXTERNAL, binding = MATERIAL_BINDING_LOCAL_UNIFORMS, row_major, scalar) uniform b_localUniforms
+layout(set = MATERIAL_SET_EXTERNAL, binding = MATERIAL_BINDING_LOCAL_UNIFORMS, row_major,
+	   scalar) uniform b_localUniforms
 {
 	AnKiLocalUniforms u_localUniforms;
 };
 
-layout(set = MATERIAL_SET_EXTERNAL, binding = MATERIAL_BINDING_GLOBAL_UNIFORMS, row_major, scalar) uniform b_ankiGlobalUniforms
+layout(set = MATERIAL_SET_EXTERNAL, binding = MATERIAL_BINDING_GLOBAL_UNIFORMS, row_major,
+	   scalar) uniform b_ankiGlobalUniforms
 {
 	MaterialGlobalUniforms u_ankiGlobals;
 };
@@ -36,11 +39,13 @@ layout(set = MATERIAL_SET_EXTERNAL, binding = MATERIAL_BINDING_GLOBAL_UNIFORMS, 
 layout(set = MATERIAL_SET_EXTERNAL, binding = MATERIAL_BINDING_GLOBAL_SAMPLER) uniform sampler u_ankiGlobalSampler;
 #if ANIMATED_TEXTURE == 0
 #	pragma anki reflect u_diffuseMap
-layout(set = MATERIAL_SET_EXTERNAL, binding = MATERIAL_BINDING_FIRST_NON_STANDARD) uniform ANKI_RP texture2D u_diffuseMap;
+layout(set = MATERIAL_SET_EXTERNAL,
+	   binding = MATERIAL_BINDING_FIRST_NON_STANDARD) uniform ANKI_RP texture2D u_diffuseMap;
 #endif
 #if ANIMATED_TEXTURE == 1
 #	pragma anki reflect u_diffuseMapArr
-layout(set = MATERIAL_SET_EXTERNAL, binding = MATERIAL_BINDING_FIRST_NON_STANDARD) uniform ANKI_RP texture2DArray u_diffuseMapArr;
+layout(set = MATERIAL_SET_EXTERNAL,
+	   binding = MATERIAL_BINDING_FIRST_NON_STANDARD) uniform ANKI_RP texture2DArray u_diffuseMapArr;
 #endif
 
 #pragma anki start vert
@@ -57,8 +62,8 @@ void main()
 	out_uv = Vec2(gl_VertexID & 1, gl_VertexID >> 1);
 
 	out_worldPos = u_ankiGlobals.m_cameraRotationMatrix * Vec3((out_uv - 0.5) * in_scale, 0.0) + in_position;
-	gl_Position =
-		u_ankiGlobals.m_viewProjectionMatrix * Vec4(u_renderableGpuViews[0].m_worldTransform * Vec4(out_worldPos, 1.0), 1.0);
+	gl_Position = u_ankiGlobals.m_viewProjectionMatrix
+				  * Vec4(u_renderableGpuViews[0].m_worldTransform * Vec4(out_worldPos, 1.0), 1.0);
 
 	out_alpha = in_alpha;
 }
@@ -73,8 +78,8 @@ layout(location = 2) in Vec3 in_worldPos;
 void main()
 {
 #if ANIMATED_TEXTURE == 1
-	ANKI_RP Vec4 texCol = readAnimatedTextureRgba(u_diffuseMapArr, u_ankiGlobalSampler, u_localUniforms.m_animationPeriod,
-												  in_uv, u_clusteredShading.m_time);
+	ANKI_RP Vec4 texCol = readAnimatedTextureRgba(u_diffuseMapArr, u_ankiGlobalSampler,
+												  u_localUniforms.m_animationPeriod, in_uv, u_clusteredShading.m_time);
 #else
 	ANKI_RP Vec4 texCol = texture(u_diffuseMap, u_ankiGlobalSampler, in_uv);
 #endif

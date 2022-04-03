@@ -13,11 +13,11 @@ namespace anki {
 /// The AnKi passes visible to materials.
 enum class RenderingTechnique : U8
 {
-	GBUFFER,
-	GBUFFER_EARLY_Z,
-	SHADOW,
-	FORWARD,
-	RT_SHADOW,
+	GBUFFER = 0,
+	GBUFFER_EARLY_Z = 1,
+	SHADOW = 2,
+	FORWARD = 3,
+	RT_SHADOW = 4,
 
 	COUNT,
 	FIRST = 0

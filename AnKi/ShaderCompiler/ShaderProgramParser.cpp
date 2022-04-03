@@ -492,12 +492,6 @@ Error ShaderProgramParser::parsePragmaMutator(const StringAuto* begin, const Str
 			mutator.m_values.emplaceBack(value);
 		}
 
-		// Check for correct count
-		if(mutator.m_values.getSize() < 2)
-		{
-			ANKI_PP_ERROR_MALFORMED_MSG("Mutator with less that 2 values doesn't make sense");
-		}
-
 		std::sort(mutator.m_values.getBegin(), mutator.m_values.getEnd());
 
 		// Check for duplicates
