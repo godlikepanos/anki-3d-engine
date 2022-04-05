@@ -810,31 +810,56 @@ Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPra
 
 			if(*token == "mutator")
 			{
+				ANKI_CHECK(checkNoActiveStruct());
 				ANKI_CHECK(parsePragmaMutator(token + 1, end, line, fname));
 			}
 			else if(*token == "start")
 			{
+				ANKI_CHECK(checkNoActiveStruct());
 				ANKI_CHECK(parsePragmaStart(token + 1, end, line, fname));
 			}
 			else if(*token == "end")
 			{
+				ANKI_CHECK(checkNoActiveStruct());
 				ANKI_CHECK(parsePragmaEnd(token + 1, end, line, fname));
 			}
 			else if(*token == "rewrite_mutation")
 			{
+				ANKI_CHECK(checkNoActiveStruct());
 				ANKI_CHECK(parsePragmaRewriteMutation(token + 1, end, line, fname));
 			}
 			else if(*token == "library")
 			{
+				ANKI_CHECK(checkNoActiveStruct());
 				ANKI_CHECK(parsePragmaLibraryName(token + 1, end, line, fname));
 			}
 			else if(*token == "ray_type")
 			{
+				ANKI_CHECK(checkNoActiveStruct());
 				ANKI_CHECK(parsePragmaRayType(token + 1, end, line, fname));
 			}
 			else if(*token == "reflect")
 			{
+				ANKI_CHECK(checkNoActiveStruct());
 				ANKI_CHECK(parsePragmaReflect(token + 1, end, line, fname));
+			}
+			else if(*token == "struct")
+			{
+				if(*(token + 1) == "end")
+				{
+					ANKI_CHECK(checkActiveStruct());
+					ANKI_CHECK(parsePragmaStructEnd(token + 1, end, line, fname));
+				}
+				else
+				{
+					ANKI_CHECK(checkNoActiveStruct());
+					ANKI_CHECK(parsePragmaStructBegin(token + 1, end, line, fname));
+				}
+			}
+			else if(*token == "member")
+			{
+				ANKI_CHECK(checkActiveStruct());
+				ANKI_CHECK(parsePragmaMember(token + 1, end, line, fname));
 			}
 			else
 			{
@@ -856,6 +881,168 @@ Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPra
 		// Ignore
 		m_codeLines.pushBack(line);
 	}
+
+	return Error::NONE;
+}
+
+Error ShaderProgramParser::parsePragmaStructBegin(const StringAuto* begin, const StringAuto* end, CString line,
+												  CString fname)
+{
+	const U tokenCount = U(end - begin);
+	if(tokenCount != 1)
+	{
+		ANKI_PP_ERROR_MALFORMED();
+	}
+
+	m_activeStruct.create(*begin);
+	m_codeLines.pushBackSprintf("struct %s {", begin->cstr());
+
+	return Error::NONE;
+}
+
+Error ShaderProgramParser::parsePragmaMember(const StringAuto* begin, const StringAuto* end, CString line,
+											 CString fname)
+{
+	const U tokenCount = U(end - begin);
+	if(tokenCount != 2 && tokenCount != 3)
+	{
+		ANKI_PP_ERROR_MALFORMED();
+	}
+
+	Bool relaxed = false;
+	if(*begin == "ANKI_RP")
+	{
+		if(tokenCount != 3)
+		{
+			ANKI_PP_ERROR_MALFORMED();
+		}
+
+		relaxed = true;
+		++begin;
+	}
+
+	const CString typeStr = *begin;
+	ShaderVariableDataType type = ShaderVariableDataType::NONE;
+	if(typeStr == "F32")
+	{
+		type = ShaderVariableDataType::F32;
+	}
+	else if(typeStr == "Vec2")
+	{
+		type = ShaderVariableDataType::VEC2;
+	}
+	else if(typeStr == "Vec3")
+	{
+		type = ShaderVariableDataType::VEC3;
+	}
+	else if(typeStr == "Vec4")
+	{
+		type = ShaderVariableDataType::VEC4;
+	}
+
+	if(type == ShaderVariableDataType::NONE)
+	{
+		ANKI_PP_ERROR_MALFORMED_MSG("Unrecognized type");
+	}
+
+	const CString memberName = begin[1];
+
+	// Code
+	m_codeLines.pushBackSprintf("#define %s_%s_DEFINED 1", m_activeStruct.cstr(), memberName.cstr());
+	m_codeLines.pushBackSprintf("\t%s %s %s;", (relaxed) ? "ANKI_RP" : "", typeStr.cstr(), memberName.cstr());
+
+	// Add it
+	Member& m = *m_members.emplaceBack(m_alloc);
+	m.m_name.create(memberName);
+	m.m_type = type;
+
+	return Error::NONE;
+}
+
+Error ShaderProgramParser::parsePragmaStructEnd(const StringAuto* begin, const StringAuto* end, CString line,
+												CString fname)
+{
+	ANKI_ASSERT(!m_activeStruct.isEmpty());
+
+	const U tokenCount = U(end - begin);
+	if(tokenCount != 1)
+	{
+		ANKI_PP_ERROR_MALFORMED();
+	}
+
+	if(m_members.isEmpty())
+	{
+		ANKI_PP_ERROR_MALFORMED_MSG("The struct doesn't have any members");
+	}
+
+	m_codeLines.pushBack("};");
+
+	for(U32 i = 0; i < m_members.getSize(); ++i)
+	{
+		const Member& m = m_members[i];
+
+		// #define XXX_OFFSETOF
+		if(i == 0)
+		{
+			m_codeLines.pushBackSprintf("#define %s_%s_OFFSETOF 0u", m_activeStruct.cstr(), m.m_name.cstr());
+		}
+		else
+		{
+			const Member& prev = m_members[i - 1];
+			m_codeLines.pushBackSprintf("#define %s_%s_OFFSETOF (%s_%s_OFFSETOF + %s_%s_SIZEOF)", m_activeStruct.cstr(),
+										m.m_name.cstr(), m_activeStruct.cstr(), prev.m_name.cstr(),
+										m_activeStruct.cstr(), prev.m_name.cstr());
+		}
+
+		// #if XXX_DEFINED
+		m_codeLines.pushBackSprintf("#if defined(%s_%s_DEFINED)", m_activeStruct.cstr(), m.m_name.cstr());
+
+		// #	define XXX_SIZEOF
+		m_codeLines.pushBackSprintf("#\tdefine %s_%s_SIZEOF %uu", m_activeStruct.cstr(), m.m_name.cstr(),
+									getShaderVariableDataTypeInfo(m.m_type).m_size / 4);
+
+		// #	define XXX_LOAD()
+		const Bool isIntegral = getShaderVariableDataTypeInfo(m.m_type).m_isIntegral;
+		const U32 componentCount = getShaderVariableDataTypeInfo(m.m_type).m_size / sizeof(U32);
+		StringAuto values(m_alloc);
+		for(U32 j = 0; j < componentCount; ++j)
+		{
+			StringAuto tmp(m_alloc);
+			tmp.sprintf("%s(ssbo[%s_%s_OFFSETOF + offset + %uu])%s", (isIntegral) ? "" : "uintBitsToFloat",
+						m_activeStruct.cstr(), m.m_name.cstr(), j, (j != componentCount - 1) ? "," : "");
+
+			values.append(tmp);
+		}
+
+		m_codeLines.pushBackSprintf("#\tdefine %s_%s_LOAD(ssbo, offset) %s(%s)%s", m_activeStruct.cstr(),
+									m.m_name.cstr(), getShaderVariableDataTypeInfo(m.m_type).m_name, values.cstr(),
+									(i != m_members.getSize() - 1) ? "," : "");
+
+		// #else
+		m_codeLines.pushBack("#else");
+
+		// #	define XXX_SIZEOF 0
+		m_codeLines.pushBackSprintf("#\tdefine %s_%s_SIZEOF 0u", m_activeStruct.cstr(), m.m_name.cstr());
+
+		// #	define XXX_LOAD()
+		m_codeLines.pushBackSprintf("#\tdefine %s_%s_LOAD(ssbo, offset)", m_activeStruct.cstr(), m.m_name.cstr());
+
+		// #endif
+		m_codeLines.pushBack("#endif");
+	}
+
+	// Now define the structure LOAD
+	m_codeLines.pushBackSprintf("#define load%s(ssbo, offset) %s( \\", m_activeStruct.cstr(), m_activeStruct.cstr());
+	for(U32 i = 0; i < m_members.getSize(); ++i)
+	{
+		const Member& m = m_members[i];
+		m_codeLines.pushBackSprintf("\t%s_%s_LOAD(ssbo, offset) \\", m_activeStruct.cstr(), m.m_name.cstr());
+	}
+	m_codeLines.pushBack(")");
+
+	// Cleanup
+	m_activeStruct.destroy();
+	m_members.destroy();
 
 	return Error::NONE;
 }

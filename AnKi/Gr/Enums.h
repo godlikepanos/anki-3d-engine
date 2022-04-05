@@ -318,7 +318,7 @@ enum class ShaderVariableDataType : U8
 {
 	NONE,
 
-#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount) capital,
+#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount, isIntagralType) capital,
 #define ANKI_SVDT_MACRO_OPAQUE(capital, type) capital,
 #include <AnKi/Gr/ShaderVariableDataType.defs.h>
 #undef ANKI_SVDT_MACRO
@@ -356,6 +356,7 @@ public:
 	const Char* m_name;
 	U32 m_size; ///< Size of the type.
 	Bool m_opaque;
+	Bool m_isIntegral; ///< If true is integral type. Else it's float.
 };
 
 ANKI_PURE const ShaderVariableDataTypeInfo& getShaderVariableDataTypeInfo(ShaderVariableDataType type);

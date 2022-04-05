@@ -86,7 +86,7 @@ public:
 	static constexpr Bool VALUE = false;
 };
 
-#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount) \
+#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount, isIntagralType) \
 	template<> \
 	class IsShaderVarDataTypeAMatrix<type> \
 	{ \
@@ -126,7 +126,7 @@ void writeShaderBlockMemory(ShaderVariableDataType type, const ShaderVariableBlo
 {
 	switch(type)
 	{
-#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount) \
+#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount, isIntagralType) \
 	case ShaderVariableDataType::capital: \
 		WriteShaderBlockMemory<type>()(varBlkInfo, elements, elementsCount, buffBegin, buffEnd); \
 		break;

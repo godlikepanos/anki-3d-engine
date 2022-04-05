@@ -86,34 +86,38 @@ layout(set = MATERIAL_SET_EXTERNAL,
 #endif
 
 #pragma anki reflect AnKiLocalUniforms
-struct AnKiLocalUniforms
-{
+#pragma anki struct AnKiLocalUniforms
 #if !DIFFUSE_TEX
-	Vec3 m_diffColor;
+#	pragma anki member Vec3 m_diffColor
 #endif
 #if !ROUGHNESS_TEX
-	F32 m_roughness;
+#	pragma anki member F32 m_roughness
 #endif
 #if !SPECULAR_TEX
-	Vec3 m_specColor;
+#	pragma anki member Vec3 m_specColor
 #endif
 #if !METAL_TEX
-	F32 m_metallic;
+#	pragma anki member F32 m_metallic
 #endif
 #if !EMISSIVE_TEX
-	Vec3 m_emission;
+#	pragma anki member Vec3 m_emission
 #endif
 #if PARALLAX
-	F32 m_heightmapScale;
+#	pragma anki member F32 m_heightmapScale
 #endif
+#pragma anki member F32 m_subsurface
+#pragma anki struct end
 
-	F32 m_subsurface;
+layout(set = MATERIAL_SET_EXTERNAL, binding = MATERIAL_BINDING_LOCAL_UNIFORMS, row_major, scalar) buffer b_localUniforms
+{
+	U32 u_localUniforms[];
 };
 
+// A trick to avoid spirv-opt optimizing away the AnKiLocalUniforms
 layout(set = MATERIAL_SET_EXTERNAL, binding = MATERIAL_BINDING_LOCAL_UNIFORMS, row_major,
-	   scalar) uniform b_localUniforms
+	   scalar) buffer b_localUniformsFake
 {
-	AnKiLocalUniforms u_localUniforms;
+	AnKiLocalUniforms u_localUniformsFake[];
 };
 
 layout(set = MATERIAL_SET_EXTERNAL, binding = MATERIAL_BINDING_RENDERABLE_GPU_VIEW, row_major,
@@ -362,9 +366,11 @@ void doAlphaText(F32 alpha)
 
 void main()
 {
+	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(u_localUniforms, 0u);
+
 #if ANKI_TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER
 #	if REALLY_USING_PARALLAX
-	const Vec2 uv = computeTextureCoordParallax(u_heightTex, u_globalSampler, in_uv, u_localUniforms.m_heightmapScale);
+	const Vec2 uv = computeTextureCoordParallax(u_heightTex, u_globalSampler, in_uv, localUniforms.m_heightmapScale);
 #	else
 	const Vec2 uv = in_uv;
 #	endif
@@ -378,25 +384,25 @@ void main()
 	const ANKI_RP Vec3 diffColor = texture(u_diffTex, u_globalSampler, uv).rgb;
 #		endif
 #	else
-	const ANKI_RP Vec3 diffColor = u_localUniforms.m_diffColor;
+	const ANKI_RP Vec3 diffColor = localUniforms.m_diffColor;
 #	endif
 
 #	if SPECULAR_TEX
 	const ANKI_RP Vec3 specColor = texture(u_specTex, u_globalSampler, uv).rgb;
 #	else
-	const ANKI_RP Vec3 specColor = u_localUniforms.m_specColor;
+	const ANKI_RP Vec3 specColor = localUniforms.m_specColor;
 #	endif
 
 #	if ROUGHNESS_TEX
 	const ANKI_RP F32 roughness = texture(u_roughnessTex, u_globalSampler, uv).g;
 #	else
-	const ANKI_RP F32 roughness = u_localUniforms.m_roughness;
+	const ANKI_RP F32 roughness = localUniforms.m_roughness;
 #	endif
 
 #	if METAL_TEX
 	const ANKI_RP F32 metallic = texture(u_metallicTex, u_globalSampler, uv).b;
 #	else
-	const ANKI_RP F32 metallic = u_localUniforms.m_metallic;
+	const ANKI_RP F32 metallic = localUniforms.m_metallic;
 #	endif
 
 #	if NORMAL_TEX
@@ -408,7 +414,7 @@ void main()
 #	if EMISSIVE_TEX
 	const ANKI_RP Vec3 emission = texture(u_emissiveTex, u_globalSampler, uv).rgb;
 #	else
-	const ANKI_RP Vec3 emission = u_localUniforms.m_emission;
+	const ANKI_RP Vec3 emission = localUniforms.m_emission;
 #	endif
 
 #	if ANKI_VELOCITY || ANKI_BONES
@@ -417,7 +423,7 @@ void main()
 	const Vec2 velocity = Vec2(1.0);
 #	endif
 
-	packGBuffer(diffColor, normal, specColor, roughness, u_localUniforms.m_subsurface, emission, metallic, velocity);
+	packGBuffer(diffColor, normal, specColor, roughness, localUniforms.m_subsurface, emission, metallic, velocity);
 #elif ANKI_TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER_EZ
 	out_gbuffer0 = Vec4(0.0);
 	out_gbuffer1 = Vec4(0.0);

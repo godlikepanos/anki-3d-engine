@@ -21,7 +21,7 @@
 #	pragma GCC diagnostic pop
 #endif
 
-#define ANKI_GLSLANG_DUMP 1
+#define ANKI_GLSLANG_DUMP 0
 
 namespace anki {
 

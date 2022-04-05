@@ -25,6 +25,7 @@ class XmlElement;
 enum class BuiltinMutatorId : U8
 {
 	NONE = 0,
+	TECHNIQUE,
 	LOD,
 	BONES,
 	VELOCITY,
@@ -113,7 +114,7 @@ protected:
 	/// @{
 	union
 	{
-#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount) type ANKI_CONCATENATE(m_, type);
+#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount, isIntagralType) type ANKI_CONCATENATE(m_, type);
 #include <AnKi/Gr/ShaderVariableDataType.defs.h>
 #undef ANKI_SVDT_MACRO
 	};
@@ -131,7 +132,7 @@ protected:
 		return var_; \
 	}
 
-#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount) \
+#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount, isIntagralType) \
 	ANKI_SPECIALIZE_GET_VALUE(type, ANKI_CONCATENATE(m_, type), capital)
 #include <AnKi/Gr/ShaderVariableDataType.defs.h>
 #undef ANKI_SVDT_MACRO
@@ -171,6 +172,18 @@ public:
 private:
 	ShaderProgramPtr m_prog;
 	U32 m_rtShaderGroupHandleIndex = MAX_U32;
+
+	MaterialVariant(MaterialVariant&& b)
+	{
+		*this = std::move(b);
+	}
+
+	MaterialVariant& operator=(MaterialVariant&& b)
+	{
+		m_prog = std::move(b.m_prog);
+		m_rtShaderGroupHandleIndex = b.m_rtShaderGroupHandleIndex;
+		return *this;
+	}
 };
 
 /// Material resource.
@@ -178,15 +191,17 @@ private:
 /// Material XML file format:
 /// @code
 ///	<material [shadows="0|1"]>
-///		<shaderProgram filename="filename">
-///			[<mutation>
-///				<mutator name="str" value="value"/>
-///			</mutation>]
-///		</shaderProgram>
+/// 	<shaderPrograms>
+///			<shaderProgram filename="filename">
+///				[<mutation>
+///					<mutator name="str" value="value"/>
+///				</mutation>]
+///			</shaderProgram>
 ///
-///		[<shaderProgram ...>
-///			...
-///		</shaderProgram>]
+///			[<shaderProgram ...>
+///				...
+///			</shaderProgram>]
+/// 	</shaderPrograms>
 ///
 ///		[<inputs>
 ///			<input name="name in AnKiMaterialUniforms struct or opaque type" value="value(s)"/> (1)
@@ -249,22 +264,59 @@ private:
 		MutatorValue m_value;
 	};
 
-	class Technique
+	class Program
 	{
 	public:
 		ShaderProgramResourcePtr m_prog;
-		U8 m_lodCount = 1;
 
-		mutable Array3d<MaterialVariant, MAX_LOD_COUNT, 2, 2> m_variantMatrix; ///< Matrix of variants.
+		mutable Array4d<MaterialVariant, U(RenderingTechnique::COUNT), MAX_LOD_COUNT, 2, 2> m_variantMatrix;
 		mutable RWMutex m_variantMatrixMtx;
 
 		DynamicArray<PartialMutation> m_partialMutation; ///< Only with the non-builtins.
 
 		U32 m_presentBuildinMutators = 0;
 		U32 m_localUniformsStructIdx = 0; ///< Struct index in the program binary.
+
+		U8 m_lodCount = 1;
+
+		Program() = default;
+
+		Program(const Program&) = delete; // Non-copyable
+
+		Program(Program&& b)
+		{
+			*this = std::move(b);
+		}
+
+		Program& operator=(const Program& b) = delete; // Non-copyable
+
+		Program& operator=(Program&& b)
+		{
+			m_prog = std::move(b.m_prog);
+			for(RenderingTechnique t : EnumIterable<RenderingTechnique>())
+			{
+				for(U32 l = 0; l < MAX_LOD_COUNT; ++l)
+				{
+					for(U32 skin = 0; skin < 2; ++skin)
+					{
+						for(U32 vel = 0; vel < 2; ++vel)
+						{
+							m_variantMatrix[t][skin][skin][vel] = std::move(b.m_variantMatrix[t][skin][skin][vel]);
+						}
+					}
+				}
+			}
+			m_partialMutation = std::move(b.m_partialMutation);
+			m_presentBuildinMutators = b.m_presentBuildinMutators;
+			m_localUniformsStructIdx = b.m_localUniformsStructIdx;
+			m_lodCount = b.m_lodCount;
+			return *this;
+		}
 	};
 
-	Array<Technique, U(RenderingTechnique::COUNT)> m_techniques;
+	DynamicArray<Program> m_programs;
+
+	Array<U8, U(RenderingTechnique::COUNT)> m_techniqueToProgram;
 	RenderingTechniqueBit m_techniquesMask = RenderingTechniqueBit::NONE;
 
 	DynamicArray<MaterialVariable> m_vars;
@@ -276,11 +328,11 @@ private:
 	void* m_prefilledLocalUniforms = nullptr;
 	U32 m_localUniformsSize = 0;
 
-	ANKI_USE_RESULT Error parseMutators(XmlElement mutatorsEl, Technique& technique);
-	ANKI_USE_RESULT Error parseTechnique(XmlElement techniqueEl, Bool async);
+	ANKI_USE_RESULT Error parseMutators(XmlElement mutatorsEl, Program& prog);
+	ANKI_USE_RESULT Error parseShaderProgram(XmlElement techniqueEl, Bool async);
 	ANKI_USE_RESULT Error parseInput(XmlElement inputEl, Bool async, BitSet<128>& varsSet);
-	ANKI_USE_RESULT Error findBuiltinMutators(Technique& technique);
-	ANKI_USE_RESULT Error createVars(Technique& technique);
+	ANKI_USE_RESULT Error findBuiltinMutators(Program& prog);
+	ANKI_USE_RESULT Error createVars(Program& prog);
 	void prefillLocalUniforms();
 
 	const MaterialVariable* tryFindVariableInternal(CString name) const;

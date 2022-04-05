@@ -86,7 +86,12 @@ private:
 /// #pragma anki ray_type NUMBER
 /// #pragma anki reflect NAME
 ///
-/// Only the "anki input" should be in an ifdef-like guard. For everything else it's ignored.
+/// #pragma anki struct NAME
+/// #	pragma anki member [ANKI_RP] TYPE NAME [if MUTATOR_NAME is MUTATOR_VALUE]
+/// 	...
+/// #pragma anki struct end
+///
+/// None of the pragmas should be in an ifdef-like guard. It's ignored.
 class ShaderProgramParser
 {
 public:
@@ -173,6 +178,18 @@ private:
 		}
 	};
 
+	class Member
+	{
+	public:
+		StringAuto m_name;
+		ShaderVariableDataType m_type;
+
+		Member(GenericMemoryPoolAllocator<U8> alloc)
+			: m_name(alloc)
+		{
+		}
+	};
+
 	static const U32 MAX_INCLUDE_DEPTH = 8;
 
 	GenericMemoryPoolAllocator<U8> m_alloc;
@@ -195,6 +212,9 @@ private:
 
 	StringListAuto m_symbolsToReflect = {m_alloc};
 
+	StringAuto m_activeStruct = {m_alloc};
+	DynamicArrayAuto<Member> m_members = {m_alloc};
+
 	ANKI_USE_RESULT Error parseFile(CString fname, U32 depth);
 	ANKI_USE_RESULT Error parseLine(CString line, CString fname, Bool& foundPragmaOnce, U32 depth);
 	ANKI_USE_RESULT Error parseInclude(const StringAuto* begin, const StringAuto* end, CString line, CString fname,
@@ -211,6 +231,12 @@ private:
 											 CString fname);
 	ANKI_USE_RESULT Error parsePragmaReflect(const StringAuto* begin, const StringAuto* end, CString line,
 											 CString fname);
+	ANKI_USE_RESULT Error parsePragmaStructBegin(const StringAuto* begin, const StringAuto* end, CString line,
+												 CString fname);
+	ANKI_USE_RESULT Error parsePragmaStructEnd(const StringAuto* begin, const StringAuto* end, CString line,
+											   CString fname);
+	ANKI_USE_RESULT Error parsePragmaMember(const StringAuto* begin, const StringAuto* end, CString line,
+											CString fname);
 
 	void tokenizeLine(CString line, DynamicArrayAuto<StringAuto>& tokens) const;
 
@@ -220,6 +246,26 @@ private:
 	}
 
 	static Bool mutatorHasValue(const ShaderProgramParserMutator& mutator, MutatorValue value);
+
+	ANKI_USE_RESULT Error checkNoActiveStruct() const
+	{
+		if(!m_activeStruct.isEmpty())
+		{
+			ANKI_SHADER_COMPILER_LOGE("Unsupported \"pragma anki\" inside \"pragma anki struct\"");
+			return Error::USER_DATA;
+		}
+		return Error::NONE;
+	}
+
+	ANKI_USE_RESULT Error checkActiveStruct() const
+	{
+		if(m_activeStruct.isEmpty())
+		{
+			ANKI_SHADER_COMPILER_LOGE("Expected a \"pragma anki struct\" to open");
+			return Error::USER_DATA;
+		}
+		return Error::NONE;
+	}
 };
 /// @}
 

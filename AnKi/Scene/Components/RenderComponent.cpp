@@ -59,12 +59,12 @@ void RenderComponent::allocateAndSetupUniforms(const MaterialResourcePtr& mtl, c
 	StagingGpuMemoryToken token;
 	U8* const localUniformsBegin =
 		(localUniformsUboSize != 0)
-			? static_cast<U8*>(alloc.allocateFrame(localUniformsUboSize, StagingGpuMemoryType::UNIFORM, token))
+			? static_cast<U8*>(alloc.allocateFrame(localUniformsUboSize, StagingGpuMemoryType::STORAGE, token))
 			: nullptr;
 
 	if(localUniformsUboSize)
 	{
-		cmdb->bindUniformBuffer(set, MATERIAL_BINDING_LOCAL_UNIFORMS, token.m_buffer, token.m_offset, token.m_range);
+		cmdb->bindStorageBuffer(set, MATERIAL_BINDING_LOCAL_UNIFORMS, token.m_buffer, token.m_offset, token.m_range);
 	}
 
 	// Iterate variables
