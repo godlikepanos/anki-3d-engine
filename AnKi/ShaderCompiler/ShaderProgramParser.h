@@ -48,6 +48,35 @@ private:
 };
 
 /// @memberof ShaderProgramParser
+class ShaderProgramParserMember
+{
+public:
+	StringAuto m_name;
+	ShaderVariableDataType m_type;
+	U32 m_dependentMutator = MAX_U32;
+	MutatorValue m_mutatorValue = 0;
+
+	ShaderProgramParserMember(GenericMemoryPoolAllocator<U8> alloc)
+		: m_name(alloc)
+	{
+	}
+};
+
+/// @memberof ShaderProgramParser
+class ShaderProgramParserGhostStruct
+{
+public:
+	DynamicArrayAuto<ShaderProgramParserMember> m_members;
+	StringAuto m_name;
+
+	ShaderProgramParserGhostStruct(GenericMemoryPoolAllocator<U8> alloc)
+		: m_members(alloc)
+		, m_name(alloc)
+	{
+	}
+};
+
+/// @memberof ShaderProgramParser
 class ShaderProgramParserVariant
 {
 	friend class ShaderProgramParser;
@@ -146,12 +175,19 @@ public:
 		return m_symbolsToReflect;
 	}
 
+	ConstWeakArray<ShaderProgramParserGhostStruct> getGhostStructs() const
+	{
+		return m_ghostStructs;
+	}
+
 	/// Generates the common header that will be used by all AnKi shaders.
 	static void generateAnkiShaderHeader(ShaderType shaderType, const ShaderCompilerOptions& compilerOptions,
 										 StringAuto& header);
 
 private:
 	using Mutator = ShaderProgramParserMutator;
+	using Member = ShaderProgramParserMember;
+	using GhostStruct = ShaderProgramParserGhostStruct;
 
 	class MutationRewrite
 	{
@@ -178,19 +214,7 @@ private:
 		}
 	};
 
-	class Member
-	{
-	public:
-		StringAuto m_name;
-		ShaderVariableDataType m_type;
-
-		Member(GenericMemoryPoolAllocator<U8> alloc)
-			: m_name(alloc)
-		{
-		}
-	};
-
-	static const U32 MAX_INCLUDE_DEPTH = 8;
+	static constexpr U32 MAX_INCLUDE_DEPTH = 8;
 
 	GenericMemoryPoolAllocator<U8> m_alloc;
 	StringAuto m_fname;
@@ -212,8 +236,8 @@ private:
 
 	StringListAuto m_symbolsToReflect = {m_alloc};
 
-	StringAuto m_activeStruct = {m_alloc};
-	DynamicArrayAuto<Member> m_members = {m_alloc};
+	DynamicArrayAuto<GhostStruct> m_ghostStructs = {m_alloc};
+	Bool m_insideStruct = false;
 
 	ANKI_USE_RESULT Error parseFile(CString fname, U32 depth);
 	ANKI_USE_RESULT Error parseLine(CString line, CString fname, Bool& foundPragmaOnce, U32 depth);
@@ -249,7 +273,7 @@ private:
 
 	ANKI_USE_RESULT Error checkNoActiveStruct() const
 	{
-		if(!m_activeStruct.isEmpty())
+		if(m_insideStruct)
 		{
 			ANKI_SHADER_COMPILER_LOGE("Unsupported \"pragma anki\" inside \"pragma anki struct\"");
 			return Error::USER_DATA;
@@ -259,7 +283,7 @@ private:
 
 	ANKI_USE_RESULT Error checkActiveStruct() const
 	{
-		if(m_activeStruct.isEmpty())
+		if(!m_insideStruct)
 		{
 			ANKI_SHADER_COMPILER_LOGE("Expected a \"pragma anki struct\" to open");
 			return Error::USER_DATA;

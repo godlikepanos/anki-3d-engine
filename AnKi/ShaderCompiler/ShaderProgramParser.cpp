@@ -894,8 +894,12 @@ Error ShaderProgramParser::parsePragmaStructBegin(const StringAuto* begin, const
 		ANKI_PP_ERROR_MALFORMED();
 	}
 
-	m_activeStruct.create(*begin);
+	GhostStruct& gstruct = *m_ghostStructs.emplaceBack(m_alloc);
+	gstruct.m_name.create(*begin);
 	m_codeLines.pushBackSprintf("struct %s {", begin->cstr());
+
+	ANKI_ASSERT(!m_insideStruct);
+	m_insideStruct = true;
 
 	return Error::NONE;
 }
@@ -903,58 +907,146 @@ Error ShaderProgramParser::parsePragmaStructBegin(const StringAuto* begin, const
 Error ShaderProgramParser::parsePragmaMember(const StringAuto* begin, const StringAuto* end, CString line,
 											 CString fname)
 {
+	ANKI_ASSERT(m_insideStruct);
 	const U tokenCount = U(end - begin);
-	if(tokenCount != 2 && tokenCount != 3)
+	if(tokenCount == 0)
 	{
 		ANKI_PP_ERROR_MALFORMED();
 	}
 
+	Member& member = *m_ghostStructs.getBack().m_members.emplaceBack(m_alloc);
+
+	// Relaxed
 	Bool relaxed = false;
 	if(*begin == "ANKI_RP")
 	{
-		if(tokenCount != 3)
-		{
-			ANKI_PP_ERROR_MALFORMED();
-		}
-
 		relaxed = true;
 		++begin;
 	}
 
+	// Type
+	if(begin == end)
+	{
+		ANKI_PP_ERROR_MALFORMED();
+	}
+
 	const CString typeStr = *begin;
-	ShaderVariableDataType type = ShaderVariableDataType::NONE;
+	member.m_type = ShaderVariableDataType::NONE;
 	if(typeStr == "F32")
 	{
-		type = ShaderVariableDataType::F32;
+		member.m_type = ShaderVariableDataType::F32;
 	}
 	else if(typeStr == "Vec2")
 	{
-		type = ShaderVariableDataType::VEC2;
+		member.m_type = ShaderVariableDataType::VEC2;
 	}
 	else if(typeStr == "Vec3")
 	{
-		type = ShaderVariableDataType::VEC3;
+		member.m_type = ShaderVariableDataType::VEC3;
 	}
 	else if(typeStr == "Vec4")
 	{
-		type = ShaderVariableDataType::VEC4;
+		member.m_type = ShaderVariableDataType::VEC4;
 	}
 
-	if(type == ShaderVariableDataType::NONE)
+	if(member.m_type == ShaderVariableDataType::NONE)
 	{
 		ANKI_PP_ERROR_MALFORMED_MSG("Unrecognized type");
 	}
 
-	const CString memberName = begin[1];
+	++begin;
+
+	// Name
+	if(begin == end)
+	{
+		ANKI_PP_ERROR_MALFORMED();
+	}
+
+	member.m_name.create(*begin);
+	++begin;
+
+	// if MUTATOR_NAME is MUTATOR_VALUE
+	if(begin != end)
+	{
+		// "if"
+		if(*begin != "if")
+		{
+			ANKI_PP_ERROR_MALFORMED();
+		}
+		++begin;
+
+		// MUTATOR_NAME
+		if(begin == end)
+		{
+			ANKI_PP_ERROR_MALFORMED();
+		}
+
+		const CString mutatorName = *begin;
+		for(U32 i = 0; i < m_mutators.getSize(); ++i)
+		{
+			if(m_mutators[i].m_name == mutatorName)
+			{
+				member.m_dependentMutator = i;
+				break;
+			}
+		}
+
+		if(member.m_dependentMutator == MAX_U32)
+		{
+			ANKI_PP_ERROR_MALFORMED_MSG("Mutator not found");
+		}
+
+		++begin;
+
+		// "is"
+		if(begin == end)
+		{
+			ANKI_PP_ERROR_MALFORMED();
+		}
+
+		if(*begin != "is")
+		{
+			ANKI_PP_ERROR_MALFORMED();
+		}
+
+		++begin;
+
+		// MUTATOR_VALUE
+		if(begin == end)
+		{
+			ANKI_PP_ERROR_MALFORMED();
+		}
+
+		ANKI_CHECK(begin->toNumber(member.m_mutatorValue));
+
+		if(!mutatorHasValue(m_mutators[member.m_dependentMutator], member.m_mutatorValue))
+		{
+			ANKI_PP_ERROR_MALFORMED_MSG("Wrong mutator value");
+		}
+
+		++begin;
+	}
+
+	if(begin != end)
+	{
+		ANKI_PP_ERROR_MALFORMED();
+	}
 
 	// Code
-	m_codeLines.pushBackSprintf("#define %s_%s_DEFINED 1", m_activeStruct.cstr(), memberName.cstr());
-	m_codeLines.pushBackSprintf("\t%s %s %s;", (relaxed) ? "ANKI_RP" : "", typeStr.cstr(), memberName.cstr());
+	if(member.m_dependentMutator != MAX_U32)
+	{
+		m_codeLines.pushBackSprintf("#if %s == %d", m_mutators[member.m_dependentMutator].m_name.cstr(),
+									member.m_mutatorValue);
+	}
 
-	// Add it
-	Member& m = *m_members.emplaceBack(m_alloc);
-	m.m_name.create(memberName);
-	m.m_type = type;
+	m_codeLines.pushBackSprintf("#\tdefine %s_%s_DEFINED 1", m_ghostStructs.getBack().m_name.cstr(),
+								member.m_name.cstr());
+	m_codeLines.pushBackSprintf("\t%s %s %s;", (relaxed) ? "ANKI_RP" : "", typeStr.cstr(), member.m_name.cstr());
+
+	if(member.m_dependentMutator != MAX_U32)
+	{
+		m_codeLines.pushBack("#endif");
+	}
 
 	return Error::NONE;
 }
@@ -962,7 +1054,7 @@ Error ShaderProgramParser::parsePragmaMember(const StringAuto* begin, const Stri
 Error ShaderProgramParser::parsePragmaStructEnd(const StringAuto* begin, const StringAuto* end, CString line,
 												CString fname)
 {
-	ANKI_ASSERT(!m_activeStruct.isEmpty());
+	ANKI_ASSERT(m_insideStruct);
 
 	const U tokenCount = U(end - begin);
 	if(tokenCount != 1)
@@ -970,35 +1062,38 @@ Error ShaderProgramParser::parsePragmaStructEnd(const StringAuto* begin, const S
 		ANKI_PP_ERROR_MALFORMED();
 	}
 
-	if(m_members.isEmpty())
+	GhostStruct& gstruct = m_ghostStructs.getBack();
+	const CString structName = gstruct.m_name;
+
+	if(gstruct.m_members.isEmpty())
 	{
 		ANKI_PP_ERROR_MALFORMED_MSG("The struct doesn't have any members");
 	}
 
 	m_codeLines.pushBack("};");
 
-	for(U32 i = 0; i < m_members.getSize(); ++i)
+	for(U32 i = 0; i < gstruct.m_members.getSize(); ++i)
 	{
-		const Member& m = m_members[i];
+		const Member& m = gstruct.m_members[i];
 
 		// #define XXX_OFFSETOF
 		if(i == 0)
 		{
-			m_codeLines.pushBackSprintf("#define %s_%s_OFFSETOF 0u", m_activeStruct.cstr(), m.m_name.cstr());
+			m_codeLines.pushBackSprintf("#define %s_%s_OFFSETOF 0u", gstruct.m_name.cstr(), m.m_name.cstr());
 		}
 		else
 		{
-			const Member& prev = m_members[i - 1];
-			m_codeLines.pushBackSprintf("#define %s_%s_OFFSETOF (%s_%s_OFFSETOF + %s_%s_SIZEOF)", m_activeStruct.cstr(),
-										m.m_name.cstr(), m_activeStruct.cstr(), prev.m_name.cstr(),
-										m_activeStruct.cstr(), prev.m_name.cstr());
+			const Member& prev = gstruct.m_members[i - 1];
+			m_codeLines.pushBackSprintf("#define %s_%s_OFFSETOF (%s_%s_OFFSETOF + %s_%s_SIZEOF)", structName.cstr(),
+										m.m_name.cstr(), structName.cstr(), prev.m_name.cstr(), structName.cstr(),
+										prev.m_name.cstr());
 		}
 
 		// #if XXX_DEFINED
-		m_codeLines.pushBackSprintf("#if defined(%s_%s_DEFINED)", m_activeStruct.cstr(), m.m_name.cstr());
+		m_codeLines.pushBackSprintf("#if defined(%s_%s_DEFINED)", structName.cstr(), m.m_name.cstr());
 
 		// #	define XXX_SIZEOF
-		m_codeLines.pushBackSprintf("#\tdefine %s_%s_SIZEOF %uu", m_activeStruct.cstr(), m.m_name.cstr(),
+		m_codeLines.pushBackSprintf("#\tdefine %s_%s_SIZEOF %uu", structName.cstr(), m.m_name.cstr(),
 									getShaderVariableDataTypeInfo(m.m_type).m_size / 4);
 
 		// #	define XXX_LOAD()
@@ -1009,41 +1104,38 @@ Error ShaderProgramParser::parsePragmaStructEnd(const StringAuto* begin, const S
 		{
 			StringAuto tmp(m_alloc);
 			tmp.sprintf("%s(ssbo[%s_%s_OFFSETOF + offset + %uu])%s", (isIntegral) ? "" : "uintBitsToFloat",
-						m_activeStruct.cstr(), m.m_name.cstr(), j, (j != componentCount - 1) ? "," : "");
+						structName.cstr(), m.m_name.cstr(), j, (j != componentCount - 1) ? "," : "");
 
 			values.append(tmp);
 		}
 
-		m_codeLines.pushBackSprintf("#\tdefine %s_%s_LOAD(ssbo, offset) %s(%s)%s", m_activeStruct.cstr(),
-									m.m_name.cstr(), getShaderVariableDataTypeInfo(m.m_type).m_name, values.cstr(),
-									(i != m_members.getSize() - 1) ? "," : "");
+		m_codeLines.pushBackSprintf("#\tdefine %s_%s_LOAD(ssbo, offset) %s(%s)%s", structName.cstr(), m.m_name.cstr(),
+									getShaderVariableDataTypeInfo(m.m_type).m_name, values.cstr(),
+									(i != gstruct.m_members.getSize() - 1) ? "," : "");
 
 		// #else
 		m_codeLines.pushBack("#else");
 
 		// #	define XXX_SIZEOF 0
-		m_codeLines.pushBackSprintf("#\tdefine %s_%s_SIZEOF 0u", m_activeStruct.cstr(), m.m_name.cstr());
+		m_codeLines.pushBackSprintf("#\tdefine %s_%s_SIZEOF 0u", structName.cstr(), m.m_name.cstr());
 
 		// #	define XXX_LOAD()
-		m_codeLines.pushBackSprintf("#\tdefine %s_%s_LOAD(ssbo, offset)", m_activeStruct.cstr(), m.m_name.cstr());
+		m_codeLines.pushBackSprintf("#\tdefine %s_%s_LOAD(ssbo, offset)", structName.cstr(), m.m_name.cstr());
 
 		// #endif
 		m_codeLines.pushBack("#endif");
 	}
 
 	// Now define the structure LOAD
-	m_codeLines.pushBackSprintf("#define load%s(ssbo, offset) %s( \\", m_activeStruct.cstr(), m_activeStruct.cstr());
-	for(U32 i = 0; i < m_members.getSize(); ++i)
+	m_codeLines.pushBackSprintf("#define load%s(ssbo, offset) %s( \\", structName.cstr(), structName.cstr());
+	for(U32 i = 0; i < gstruct.m_members.getSize(); ++i)
 	{
-		const Member& m = m_members[i];
-		m_codeLines.pushBackSprintf("\t%s_%s_LOAD(ssbo, offset) \\", m_activeStruct.cstr(), m.m_name.cstr());
+		const Member& m = gstruct.m_members[i];
+		m_codeLines.pushBackSprintf("\t%s_%s_LOAD(ssbo, offset) \\", structName.cstr(), m.m_name.cstr());
 	}
 	m_codeLines.pushBack(")");
 
-	// Cleanup
-	m_activeStruct.destroy();
-	m_members.destroy();
-
+	m_insideStruct = false;
 	return Error::NONE;
 }
 
