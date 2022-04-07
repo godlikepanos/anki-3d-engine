@@ -87,37 +87,18 @@ layout(set = MATERIAL_SET_EXTERNAL,
 
 #pragma anki reflect AnKiLocalUniforms
 #pragma anki struct AnKiLocalUniforms
-#if !DIFFUSE_TEX
-#	pragma anki member Vec3 m_diffColor
-#endif
-#if !ROUGHNESS_TEX
-#	pragma anki member F32 m_roughness
-#endif
-#if !SPECULAR_TEX
-#	pragma anki member Vec3 m_specColor
-#endif
-#if !METAL_TEX
-#	pragma anki member F32 m_metallic
-#endif
-#if !EMISSIVE_TEX
-#	pragma anki member Vec3 m_emission
-#endif
-#if PARALLAX
-#	pragma anki member F32 m_heightmapScale
-#endif
-#pragma anki member F32 m_subsurface
+#pragma anki member ANKI_RP Vec3 m_diffColor if DIFFUSE_TEX is 0
+#pragma anki member ANKI_RP F32 m_roughness if ROUGHNESS_TEX is 0
+#pragma anki member ANKI_RP Vec3 m_specColor if SPECULAR_TEX is 0
+#pragma anki member ANKI_RP F32 m_metallic if METAL_TEX is 0
+#pragma anki member ANKI_RP Vec3 m_emission if EMISSIVE_TEX is 0
+#pragma anki member ANKI_RP F32 m_heightmapScale if PARALLAX is 1
+#pragma anki member ANKI_RP F32 m_subsurface
 #pragma anki struct end
 
 layout(set = MATERIAL_SET_EXTERNAL, binding = MATERIAL_BINDING_LOCAL_UNIFORMS, row_major, scalar) buffer b_localUniforms
 {
 	U32 u_localUniforms[];
-};
-
-// A trick to avoid spirv-opt optimizing away the AnKiLocalUniforms
-layout(set = MATERIAL_SET_EXTERNAL, binding = MATERIAL_BINDING_LOCAL_UNIFORMS, row_major,
-	   scalar) buffer b_localUniformsFake
-{
-	AnKiLocalUniforms u_localUniformsFake[];
 };
 
 layout(set = MATERIAL_SET_EXTERNAL, binding = MATERIAL_BINDING_RENDERABLE_GPU_VIEW, row_major,

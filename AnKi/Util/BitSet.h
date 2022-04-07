@@ -159,12 +159,12 @@ public:
 
 	/// Set or unset a bit at the given position.
 	template<typename TInt>
-	BitSet& set(TInt pos, Bool setBits = true)
+	BitSet& set(TInt pos, Bool setBit = true)
 	{
 		U32 high, low;
 		position(U32(pos), high, low);
 		const ChunkType mask = ChunkType(ChunkType(1) << ChunkType(low));
-		m_chunks[high] = (setBits) ? ChunkType(m_chunks[high] | mask) : ChunkType(m_chunks[high] & ~mask);
+		m_chunks[high] = (setBit) ? ChunkType(m_chunks[high] | mask) : ChunkType(m_chunks[high] & ~mask);
 		return *this;
 	}
 

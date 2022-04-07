@@ -896,7 +896,19 @@ Error ShaderProgramParser::parsePragmaStructBegin(const StringAuto* begin, const
 
 	GhostStruct& gstruct = *m_ghostStructs.emplaceBack(m_alloc);
 	gstruct.m_name.create(*begin);
-	m_codeLines.pushBackSprintf("struct %s {", begin->cstr());
+
+	// Add a '_' to the struct name.
+	//
+	// Scenario:
+	// - The shader may have a "pragma reflect" of the struct
+	// - The SPIRV also contains the struct
+	//
+	// What happens:
+	// - The struct is in SPIRV and it will be reflected
+	// - The struct is also in ghost structs and it will be reflected
+	//
+	// This is undesirable because it will complicates reflection. So eliminate the struct from SPIRV by renaming it
+	m_codeLines.pushBackSprintf("struct %s_ {", begin->cstr());
 
 	ANKI_ASSERT(!m_insideStruct);
 	m_insideStruct = true;
@@ -1134,6 +1146,9 @@ Error ShaderProgramParser::parsePragmaStructEnd(const StringAuto* begin, const S
 		m_codeLines.pushBackSprintf("\t%s_%s_LOAD(ssbo, offset) \\", structName.cstr(), m.m_name.cstr());
 	}
 	m_codeLines.pushBack(")");
+
+	// Define the actual struct
+	m_codeLines.pushBackSprintf("#define %s %s_", structName.cstr(), structName.cstr());
 
 	m_insideStruct = false;
 	return Error::NONE;

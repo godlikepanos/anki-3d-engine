@@ -181,6 +181,7 @@ HeapMemoryPool::~HeapMemoryPool()
 
 void* HeapMemoryPool::allocate(PtrSize size, PtrSize alignment)
 {
+	ANKI_ASSERT(size > 0);
 #if ANKI_MEM_EXTRA_CHECKS
 	ANKI_ASSERT(alignment <= MAX_ALIGNMENT && "Wrong assumption");
 	size += ALLOCATION_HEADER_SIZE;
@@ -288,6 +289,8 @@ StackMemoryPool::~StackMemoryPool()
 
 void* StackMemoryPool::allocate(PtrSize size, PtrSize alignment)
 {
+	ANKI_ASSERT(size > 0);
+
 	Chunk* chunk;
 	PtrSize offset;
 	if(m_builder.allocate(size, alignment, chunk, offset))
@@ -362,6 +365,8 @@ ChainMemoryPool::~ChainMemoryPool()
 
 void* ChainMemoryPool::allocate(PtrSize size, PtrSize alignment)
 {
+	ANKI_ASSERT(size > 0);
+
 	Chunk* ch;
 	void* mem = nullptr;
 
