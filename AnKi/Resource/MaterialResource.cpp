@@ -207,7 +207,93 @@ Error MaterialResource::createVars(Program& prog)
 		prog.m_localUniformsStructIdx = MAX_U32;
 	}
 
-	// Iterate all variants of builtin mutators to gather the vars
+	// Iterate all members of the local uniforms struct to add its members
+	U32 offsetof = 0;
+	for(U32 i = 0; localUniformsStruct && i < localUniformsStruct->m_members.getSize(); ++i)
+	{
+		const ShaderProgramBinaryStructMember& member = localUniformsStruct->m_members[i];
+		const CString memberName = member.m_name.getBegin();
+
+		// Check if it needs to be added
+		Bool addIt = false;
+		if(member.m_dependentMutator == MAX_U32)
+		{
+			addIt = true;
+		}
+		else
+		{
+			Bool found = false;
+			for(const PartialMutation& m : prog.m_partialMutation)
+			{
+				if(m.m_mutator->m_name == binary.m_mutators[member.m_dependentMutator].m_name.getBegin())
+				{
+					if(m.m_value == member.m_dependentMutatorValue)
+					{
+						addIt = true;
+					}
+					found = true;
+					break;
+				}
+			}
+
+			if(!found)
+			{
+				ANKI_RESOURCE_LOGE("Incorrect combination of member variable %s and dependent mutator %s",
+								   memberName.cstr(), binary.m_mutators[member.m_dependentMutator].m_name.getBegin());
+				return Error::USER_DATA;
+			}
+		}
+
+		if(addIt)
+		{
+			MaterialVariable* var = tryFindVariable(memberName);
+			if(var)
+			{
+				if(var->m_dataType != member.m_type || var->m_offsetInLocalUniforms != offsetof)
+				{
+					ANKI_RESOURCE_LOGE("Member variable doesn't match between techniques: %s", memberName.cstr());
+					return Error::USER_DATA;
+				}
+			}
+			else
+			{
+				// Check that there are no other vars that overlap with the current var. This could happen if
+				// different programs have different signature for AnKiLocalUniforms
+				for(const MaterialVariable& otherVar : m_vars)
+				{
+					if(otherVar.isTexture())
+					{
+						continue;
+					}
+
+					const U32 aVarOffset = otherVar.m_offsetInLocalUniforms;
+					const U32 aVarEnd = aVarOffset + getShaderVariableDataTypeInfo(otherVar.m_dataType).m_size;
+					const U32 bVarOffset = offsetof;
+					const U32 bVarEnd = bVarOffset + getShaderVariableDataTypeInfo(member.m_type).m_size;
+
+					if((aVarOffset <= bVarOffset && aVarEnd > bVarOffset)
+					   || (bVarOffset <= aVarOffset && bVarEnd > aVarOffset))
+					{
+						ANKI_RESOURCE_LOGE("Member %s in AnKiLocalUniforms overlaps with %s. Check your shaders",
+										   memberName.cstr(), otherVar.m_name.cstr());
+						return Error::USER_DATA;
+					}
+				}
+
+				// All good, add it
+				var = m_vars.emplaceBack(getAllocator());
+				var->m_name.create(getAllocator(), memberName);
+				var->m_offsetInLocalUniforms = offsetof;
+				var->m_dataType = member.m_type;
+
+				offsetof += getShaderVariableDataTypeInfo(member.m_type).m_size;
+			}
+		}
+	}
+
+	m_localUniformsSize = max(offsetof, m_localUniformsSize);
+
+	// Iterate all variants of builtin mutators to gather the opaques
 	ShaderProgramResourceVariantInitInfo initInfo(prog.m_prog);
 
 	for(const PartialMutation& m : prog.m_partialMutation)
@@ -242,74 +328,6 @@ Error MaterialResource::createVars(Program& prog)
 	{
 		const ShaderProgramResourceVariant* variant;
 		prog.m_prog->getOrCreateVariant(initInfo, variant);
-		for(const ShaderProgramBinaryStructInstance& instance : variant->getBinaryVariant().m_structs)
-		{
-			if(prog.m_localUniformsStructIdx != instance.m_index)
-			{
-				continue;
-			}
-
-			// Update the size
-			m_localUniformsSize = max(instance.m_size, m_localUniformsSize);
-
-			// Update the variables
-			for(const ShaderProgramBinaryStructMemberInstance& mInstance : instance.m_memberInstances)
-			{
-				const ShaderProgramBinaryStructMember& member =
-					binary.m_structs[instance.m_index].m_members[mInstance.m_index];
-
-				const CString memberName = member.m_name.getBegin();
-
-				if(member.m_type == ShaderVariableDataType::NONE)
-				{
-					ANKI_RESOURCE_LOGE("Non fundamental type was found in AnKiLocalUniforms: %s", memberName.cstr());
-					return Error::USER_DATA;
-				}
-
-				MaterialVariable* var = tryFindVariable(memberName);
-				if(var)
-				{
-					if(var->m_dataType != member.m_type || var->m_offsetInLocalUniforms != mInstance.m_offset)
-					{
-						ANKI_RESOURCE_LOGE("Member variable doesn't match between techniques: %s", memberName.cstr());
-						return Error::USER_DATA;
-					}
-				}
-				else
-				{
-					// Check that there are no other vars that overlap with the current var. This could happen if
-					// different programs have different signature for AnKiLocalUniforms
-					for(const MaterialVariable& otherVar : m_vars)
-					{
-						if(otherVar.isTexture())
-						{
-							continue;
-						}
-
-						const U32 aVarOffset = otherVar.m_offsetInLocalUniforms;
-						const U32 aVarEnd = aVarOffset + getShaderVariableDataTypeInfo(otherVar.m_dataType).m_size;
-						const U32 bVarOffset = mInstance.m_offset;
-						const U32 bVarEnd = bVarOffset + getShaderVariableDataTypeInfo(member.m_type).m_size;
-
-						if((aVarOffset <= bVarOffset && aVarEnd > bVarOffset)
-						   || (bVarOffset <= aVarOffset && bVarEnd > aVarOffset))
-						{
-							ANKI_RESOURCE_LOGE("Member %s in AnKiLocalUniforms overlaps with %s. Check your shaders",
-											   memberName.cstr(), otherVar.m_name.cstr());
-							return Error::USER_DATA;
-						}
-					}
-
-					// All good, add it
-					var = m_vars.emplaceBack(getAllocator());
-					var->m_name.create(getAllocator(), memberName);
-					var->m_offsetInLocalUniforms = mInstance.m_offset;
-					var->m_dataType = member.m_type;
-				}
-			}
-
-			break;
-		}
 
 		// Add opaque vars
 		for(const ShaderProgramBinaryOpaqueInstance& instance : variant->getBinaryVariant().m_opaques)

@@ -838,6 +838,8 @@ static Error doGhostStructReflection(const StringList& symbolsToReflect,
 
 			ANKI_CHECK(Refl::setName(inMember.m_name, outMember.m_name));
 			outMember.m_type = inMember.m_type;
+			outMember.m_dependentMutator = inMember.m_dependentMutator;
+			outMember.m_dependentMutatorValue = inMember.m_mutatorValue;
 		}
 
 		members.moveAndReset(out.m_members);
@@ -845,74 +847,6 @@ static Error doGhostStructReflection(const StringList& symbolsToReflect,
 
 	binaryAlloc.deleteArray(binary.m_structs);
 	structs.moveAndReset(binary.m_structs);
-
-	// For all mutations update the instances
-	DynamicArrayAuto<Bool> variantVisited(tmpAlloc, binary.m_variants.getSize(), false);
-	for(U32 mutationIdx = 0; mutationIdx < binary.m_mutations.getSize(); ++mutationIdx)
-	{
-		const ShaderProgramBinaryMutation& mutation = binary.m_mutations[mutationIdx];
-		if(variantVisited[mutation.m_variantIndex])
-		{
-			continue;
-		}
-		variantVisited[mutation.m_variantIndex] = true;
-
-		ShaderProgramBinaryVariant& variant = binary.m_variants[mutation.m_variantIndex];
-
-		DynamicArrayAuto<ShaderProgramBinaryStructInstance> structInstances(binaryAlloc);
-
-		// Copy the existing struct instances
-		for(U32 i = 0; i < variant.m_structs.getSize(); ++i)
-		{
-			structInstances.emplaceBack(variant.m_structs[i]);
-		}
-
-		// For each ghost struct add member intances
-		for(U32 i = 0; i < ghostStructIndices.getSize(); ++i)
-		{
-			const ShaderProgramParserGhostStruct& inStruct = ghostStructs[ghostStructIndices[i]];
-
-			// Find which members are active in this mutation
-			BitSet<128, U64> activeMembers(false);
-			ANKI_ASSERT(inStruct.m_members.getSize() <= 128);
-			for(U32 j = 0; j < inStruct.m_members.getSize(); ++j)
-			{
-				activeMembers.set(j, ghostMemberActive(inStruct.m_members[j], mutation));
-			}
-
-			if(activeMembers.getEnabledBitCount() == 0)
-			{
-				continue;
-			}
-
-			// Add the active members
-			U32 offsetof = 0;
-			DynamicArrayAuto<ShaderProgramBinaryStructMemberInstance> memberInstances(binaryAlloc);
-			for(U32 j = 0; j < inStruct.m_members.getSize(); ++j)
-			{
-				if(!activeMembers.get(j))
-				{
-					continue;
-				}
-
-				ShaderProgramBinaryStructMemberInstance& outMember = *memberInstances.emplaceBack();
-				outMember.m_arraySize = 1;
-				outMember.m_index = j;
-				outMember.m_offset = offsetof;
-
-				offsetof += getShaderVariableDataTypeInfo(inStruct.m_members[j].m_type).m_size;
-			}
-
-			ShaderProgramBinaryStructInstance& outStructInstance = *structInstances.emplaceBack();
-			outStructInstance.m_index = nonGhostStructCount + i;
-			outStructInstance.m_size = offsetof;
-			memberInstances.moveAndReset(outStructInstance.m_memberInstances);
-		}
-
-		// Replace data
-		binaryAlloc.deleteArray(variant.m_structs);
-		structInstances.moveAndReset(variant.m_structs);
-	}
 
 	return Error::NONE;
 }

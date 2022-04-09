@@ -14,8 +14,8 @@ namespace anki {
 /// @addtogroup shader_compiler
 /// @{
 
-constexpr const char* SHADER_BINARY_MAGIC = "ANKISDR7"; ///< WARNING: If changed change SHADER_BINARY_VERSION
-constexpr U32 SHADER_BINARY_VERSION = 7;
+constexpr const char* SHADER_BINARY_MAGIC = "ANKISDR8"; ///< WARNING: If changed change SHADER_BINARY_VERSION
+constexpr U32 SHADER_BINARY_VERSION = 8;
 
 /// A wrapper over the POD ShaderProgramBinary class.
 /// @memberof ShaderProgramCompiler

@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <material shadow="0">
-	<techniques>
-		<technique name="Forward" shaderProgram="Anki/Shaders/ForwardShadingParticles.ankiprog">
+	<shaderPrograms>
+		<shaderProgram filename="Anki/Shaders/ForwardShadingParticles.ankiprog">
 			<mutation>
 				<mutator name="ANIMATED_TEXTURE" value="0"/>
 				<mutator name="LIGHT" value="0"/>
 			</mutation>
-		</technique>
-	</techniques>
+		</shaderProgram>
+	</shaderPrograms>
 
 	<inputs>
 		<input name="u_diffuseMap" value="Assets/ember_mid.ankitex"/>

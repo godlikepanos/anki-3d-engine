@@ -259,12 +259,22 @@ public:
 	/// If the type is another struct then this points to ShaderProgramBinary::m_structs.
 	U32 m_structIndex = MAX_U32;
 
+	/// It points to a ShaderProgramBinary::m_mutators. This mutator will turn on or off this member.
+	U32 m_dependentMutator = MAX_U32;
+
+	/// The value of the m_dependentMutator.
+	MutatorValue m_dependentMutatorValue = 0;
+
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& s, TClass self)
 	{
 		s.doArray("m_name", offsetof(ShaderProgramBinaryStructMember, m_name), &self.m_name[0], self.m_name.getSize());
 		s.doValue("m_type", offsetof(ShaderProgramBinaryStructMember, m_type), self.m_type);
 		s.doValue("m_structIndex", offsetof(ShaderProgramBinaryStructMember, m_structIndex), self.m_structIndex);
+		s.doValue("m_dependentMutator", offsetof(ShaderProgramBinaryStructMember, m_dependentMutator),
+				  self.m_dependentMutator);
+		s.doValue("m_dependentMutatorValue", offsetof(ShaderProgramBinaryStructMember, m_dependentMutatorValue),
+				  self.m_dependentMutatorValue);
 	}
 
 	template<typename TDeserializer>

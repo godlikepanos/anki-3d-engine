@@ -153,7 +153,12 @@ void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& huma
 				const CString typeStr = (member.m_type == ShaderVariableDataType::NONE)
 											? &binary.m_structs[member.m_structIndex].m_name[0]
 											: getShaderVariableDataTypeInfo(member.m_type).m_name;
-				lines.pushBackSprintf(ANKI_TAB ANKI_TAB "%-32s type %24s\n", member.m_name.getBegin(), typeStr.cstr());
+				const CString dependentMutator = (member.m_dependentMutator != MAX_U32)
+													 ? binary.m_mutators[member.m_dependentMutator].m_name.getBegin()
+													 : "None";
+				lines.pushBackSprintf(
+					ANKI_TAB ANKI_TAB "%-32s type %24s dependentMutator %-32s dependentMutatorValue %4d\n",
+					member.m_name.getBegin(), typeStr.cstr(), dependentMutator.cstr(), member.m_dependentMutatorValue);
 			}
 		}
 	}
