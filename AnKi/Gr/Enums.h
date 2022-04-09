@@ -140,8 +140,6 @@ enum class Format : U32
 	type = id,
 #include <AnKi/Gr/Format.defs.h>
 #undef ANKI_FORMAT_DEF
-
-	COUNT
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Format)
 
@@ -180,7 +178,7 @@ public:
 };
 
 /// Get info for a specific Format.
-ANKI_PURE const FormatInfo& getFormatInfo(Format fmt);
+ANKI_PURE FormatInfo getFormatInfo(Format fmt);
 
 /// Texture type.
 enum class TextureType : U8

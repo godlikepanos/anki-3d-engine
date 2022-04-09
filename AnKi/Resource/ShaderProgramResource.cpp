@@ -10,6 +10,7 @@
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Util/Filesystem.h>
 #include <AnKi/Util/Functions.h>
+#include <AnKi/Core/ConfigSet.h>
 #include <AnKi/ShaderCompiler/MaliOfflineCompiler.h>
 
 namespace anki {
@@ -387,7 +388,7 @@ void ShaderProgramResource::initVariant(const ShaderProgramResourceVariantInitIn
 			inf.m_constValues.setArray((constValueCount) ? constValues.getBegin() : nullptr, constValueCount);
 			ShaderPtr shader = getManager().getGrManager().newShader(inf);
 
-			if(false && (ANKI_OS_LINUX || ANKI_OS_WINDOWS))
+			if(getConfig().getRsrcRunMaliOfflineCompiler() && (ANKI_OS_LINUX || ANKI_OS_WINDOWS))
 			{
 				MaliOfflineCompilerOut maliocOut;
 				const Error err =

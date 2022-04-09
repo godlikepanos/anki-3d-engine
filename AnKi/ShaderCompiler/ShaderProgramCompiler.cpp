@@ -773,22 +773,6 @@ public:
 	}
 };
 
-static Bool ghostMemberActive(const ShaderProgramParserMember& member, const ShaderProgramBinaryMutation& mutation)
-{
-	Bool active = false;
-	if(member.m_dependentMutator == MAX_U32)
-	{
-		active = true;
-	}
-	else
-	{
-		ANKI_ASSERT(member.m_dependentMutator < mutation.m_values.getSize());
-		active = mutation.m_values[member.m_dependentMutator] == member.m_mutatorValue;
-	}
-
-	return active;
-}
-
 static Error doGhostStructReflection(const StringList& symbolsToReflect,
 									 ConstWeakArray<ShaderProgramParserGhostStruct> ghostStructs,
 									 ShaderProgramBinary& binary, GenericMemoryPoolAllocator<U8>& tmpAlloc,

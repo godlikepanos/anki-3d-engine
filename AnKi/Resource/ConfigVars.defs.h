@@ -15,3 +15,4 @@ ANKI_CONFIG_VAR_STRING(RsrcDataPathExcludedStrings, "AndroidProject",
 ANKI_CONFIG_VAR_PTR_SIZE(RsrcTransferScratchMemorySize, 256_MB, 1_MB, 4_GB,
 						 "Memory that is used fot texture and buffer uploads")
 ANKI_CONFIG_VAR_BOOL(RsrcForceFullFpPrecision, false, "Force full floating point precision")
+ANKI_CONFIG_VAR_BOOL(RsrcRunMaliOfflineCompiler, false, "Will run the Mali offline compiler to gather some stats")

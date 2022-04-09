@@ -24,26 +24,31 @@ const ShaderVariableDataTypeInfo& getShaderVariableDataTypeInfo(ShaderVariableDa
 	return SVD_INFOS[U32(type) - 1];
 }
 
-/// @warning Don't use Array because the compilers can't handle it for some reason.
-static constexpr FormatInfo FORMAT_INFOS[] = {
+FormatInfo getFormatInfo(Format fmt)
+{
+	FormatInfo out = {};
+	switch(fmt)
+	{
 #define ANKI_FORMAT_DEF(type, id, componentCount, texelSize, blockWidth, blockHeight, blockSize, shaderType, \
 						depthStencil) \
-	{componentCount, \
-	 texelSize, \
-	 blockWidth, \
-	 blockHeight, \
-	 blockSize, \
-	 shaderType, \
-	 DepthStencilAspectBit::depthStencil, \
-	 ANKI_STRINGIZE(type)},
+	case Format::type: \
+		out = {componentCount, \
+			   texelSize, \
+			   blockWidth, \
+			   blockHeight, \
+			   blockSize, \
+			   shaderType, \
+			   DepthStencilAspectBit::depthStencil, \
+			   ANKI_STRINGIZE(type)}; \
+		break;
 #include <AnKi/Gr/Format.defs.h>
 #undef ANKI_FORMAT_DEF
-};
 
-const FormatInfo& getFormatInfo(Format fmt)
-{
-	ANKI_ASSERT(fmt > Format::NONE && fmt < Format::COUNT);
-	return FORMAT_INFOS[U32(fmt) - 1];
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	return out;
 }
 
 } // namespace anki
