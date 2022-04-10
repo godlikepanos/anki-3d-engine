@@ -47,7 +47,8 @@ public:
 	void recycle(T* s);
 
 	/// Destroy those objects that their fence is done. It's thread-safe.
-	void trimCache();
+	/// @param objectsToNotDestroy The number of objects to keep alive for future recycling.
+	void trimCache(U32 objectsToNotDestroy = 0);
 
 private:
 	GrAllocator<U8> m_alloc;
@@ -57,7 +58,8 @@ private:
 	U32 m_createdAndNotRecycled = 0;
 #endif
 
-	void releaseFences();
+	/// @return The number of objects that could be deleted.
+	U32 releaseFences();
 };
 /// @}
 

@@ -48,7 +48,7 @@ Error ResourceManager::init(ResourceManagerInitInfo& init)
 	m_fs = init.m_resourceFs;
 	m_config = init.m_config;
 	m_vertexMem = init.m_vertexMemory;
-	m_alloc = ResourceAllocator<U8>(init.m_allocCallback, init.m_allocCallbackData);
+	m_alloc = ResourceAllocator<U8>(init.m_allocCallback, init.m_allocCallbackData, "Resources");
 
 	m_tmpAlloc = TempResourceAllocator<U8>(init.m_allocCallback, init.m_allocCallbackData, 10_MB);
 

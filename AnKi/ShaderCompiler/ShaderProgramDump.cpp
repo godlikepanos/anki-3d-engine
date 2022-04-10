@@ -187,14 +187,14 @@ void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& huma
 		StringAuto newGlsl(alloc);
 		sourceLines.join("\n" ANKI_TAB ANKI_TAB, newGlsl);
 
-		lines.pushBackSprintf(ANKI_TAB "#%u \n" ANKI_TAB ANKI_TAB "%s\n", count++, newGlsl.cstr());
+		lines.pushBackSprintf(ANKI_TAB "#bin%05u \n" ANKI_TAB ANKI_TAB "%s\n", count++, newGlsl.cstr());
 	}
 
 	lines.pushBack("\n**SHADER VARIANTS**\n");
 	count = 0;
 	for(const ShaderProgramBinaryVariant& variant : binary.m_variants)
 	{
-		lines.pushBackSprintf(ANKI_TAB "#%u\n", count++);
+		lines.pushBackSprintf(ANKI_TAB "#var%05u\n", count++);
 
 		// Uniform blocks
 		if(variant.m_uniformBlocks.getSize() > 0)
@@ -274,7 +274,7 @@ void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& huma
 		{
 			if(variant.m_codeBlockIndices[shaderType] < MAX_U32)
 			{
-				lines.pushBackSprintf("%u", variant.m_codeBlockIndices[shaderType]);
+				lines.pushBackSprintf("#bin%05u", variant.m_codeBlockIndices[shaderType]);
 			}
 			else
 			{
@@ -294,7 +294,7 @@ void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& huma
 	count = 0;
 	for(const ShaderProgramBinaryMutation& mutation : binary.m_mutations)
 	{
-		lines.pushBackSprintf(ANKI_TAB "#%-4u variantIndex %5u values (", count++, mutation.m_variantIndex);
+		lines.pushBackSprintf(ANKI_TAB "#mut%-4u variantIndex #var%05u values (", count++, mutation.m_variantIndex);
 		if(mutation.m_values.getSize() > 0)
 		{
 			for(U32 i = 0; i < mutation.m_values.getSize(); ++i)

@@ -174,7 +174,7 @@ HeapMemoryPool::~HeapMemoryPool()
 	const U32 count = m_allocationCount.load();
 	if(count != 0)
 	{
-		ANKI_UTIL_LOGW("Memory pool destroyed before all memory being released (%u deallocations missed): %s", count,
+		ANKI_UTIL_LOGE("Memory pool destroyed before all memory being released (%u deallocations missed): %s", count,
 					   getName());
 	}
 }
@@ -351,7 +351,7 @@ ChainMemoryPool::~ChainMemoryPool()
 {
 	if(m_allocationCount.load() != 0)
 	{
-		ANKI_UTIL_LOGW("Memory pool destroyed before all memory being released");
+		ANKI_UTIL_LOGE("Memory pool destroyed before all memory being released");
 	}
 
 	Chunk* ch = m_headChunk;

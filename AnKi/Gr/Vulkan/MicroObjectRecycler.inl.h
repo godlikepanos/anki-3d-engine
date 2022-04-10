@@ -30,16 +30,20 @@ inline void MicroObjectRecycler<T>::destroy()
 }
 
 template<typename T>
-inline void MicroObjectRecycler<T>::releaseFences()
+inline U32 MicroObjectRecycler<T>::releaseFences()
 {
+	U32 objectsThatCanBeDestroyed = 0;
 	for(U32 i = 0; i < m_objects.getSize(); ++i)
 	{
 		T& obj = *m_objects[i];
 		if(obj.getFence() && obj.getFence()->done())
 		{
 			obj.getFence().reset(nullptr);
+			++objectsThatCanBeDestroyed;
 		}
 	}
+
+	return objectsThatCanBeDestroyed;
 }
 
 template<typename T>
@@ -90,11 +94,11 @@ inline void MicroObjectRecycler<T>::recycle(T* s)
 }
 
 template<typename T>
-inline void MicroObjectRecycler<T>::trimCache()
+inline void MicroObjectRecycler<T>::trimCache(U32 objectsToNotDestroy)
 {
 	LockGuard<Mutex> lock(m_mtx);
 
-	releaseFences();
+	U32 objectsThatCoultBeDeletedCount = releaseFences();
 
 	DynamicArray<T*> aliveObjects;
 
@@ -104,7 +108,7 @@ inline void MicroObjectRecycler<T>::trimCache()
 		ANKI_ASSERT(obj);
 		ANKI_ASSERT(obj->getRefcount().getNonAtomically() == 0);
 
-		if(obj->getFence())
+		if(obj->getFence() || objectsThatCoultBeDeletedCount <= objectsToNotDestroy)
 		{
 			// Can't delete it
 			aliveObjects.emplaceBack(m_alloc, obj);
@@ -113,6 +117,7 @@ inline void MicroObjectRecycler<T>::trimCache()
 		{
 			auto alloc = obj->getAllocator();
 			alloc.deleteInstance(obj);
+			--objectsThatCoultBeDeletedCount;
 #if ANKI_EXTRA_CHECKS
 			--m_createdAndNotRecycled;
 #endif

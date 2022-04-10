@@ -89,6 +89,8 @@ MaterialResource::~MaterialResource()
 
 	m_vars.destroy(getAllocator());
 	m_programs.destroy(getAllocator());
+
+	getAllocator().deallocate(m_prefilledLocalUniforms, 0);
 }
 
 const MaterialVariable* MaterialResource::tryFindVariableInternal(CString name) const
