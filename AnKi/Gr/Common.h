@@ -39,7 +39,7 @@ class AccelerationStructureInitInfo;
 // Some constants
 constexpr U32 MAX_VERTEX_ATTRIBUTES = 8;
 constexpr U32 MAX_COLOR_ATTACHMENTS = 4;
-constexpr U32 MAX_DESCRIPTOR_SETS = 2; ///< Groups that can be bound at the same time.
+constexpr U32 MAX_DESCRIPTOR_SETS = 3; ///< Groups that can be bound at the same time.
 constexpr U32 MAX_BINDINGS_PER_DESCRIPTOR_SET = 32;
 constexpr U32 MAX_FRAMES_IN_FLIGHT = 3; ///< Triple buffering.
 constexpr U32 MAX_GR_OBJECT_NAME_LENGTH = 31;
