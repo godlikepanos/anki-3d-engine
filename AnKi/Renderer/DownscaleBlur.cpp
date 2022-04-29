@@ -50,8 +50,7 @@ Error DownscaleBlur::initInternal()
 		texinit.m_usage |= TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 	}
 	texinit.m_mipmapCount = U8(m_passCount);
-	texinit.m_initialUsage = TextureUsageBit::SAMPLED_COMPUTE;
-	m_rtTex = m_r->createAndClearRenderTarget(texinit);
+	m_rtTex = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::SAMPLED_COMPUTE);
 
 	// FB descr
 	if(!preferCompute)

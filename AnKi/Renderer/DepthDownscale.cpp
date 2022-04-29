@@ -62,8 +62,7 @@ Error DepthDownscale::initInternal()
 
 		TextureInitInfo texInit = m_r->create2DRenderTargetInitInfo(width, height, Format::R32_SFLOAT, usage, "HiZ");
 		texInit.m_mipmapCount = U8(m_mipCount);
-		texInit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
-		m_hizTex = m_r->createAndClearRenderTarget(texInit);
+		m_hizTex = m_r->createAndClearRenderTarget(texInit, TextureUsageBit::SAMPLED_FRAGMENT);
 	}
 
 	// Progs

@@ -26,12 +26,12 @@ ANKI_SPECIALIZATION_CONSTANT_U32(SAMPLE_COUNT, 6u);
 #include <AnKi/Shaders/ClusteredShadingCommon.glsl>
 
 layout(set = 0, binding = 4) uniform sampler u_linearAnyClampSampler;
-layout(set = 0, binding = 5) ANKI_RP uniform texture2D u_gbufferRt2;
+layout(set = 0, binding = 5) uniform ANKI_RP texture2D u_gbufferRt2;
 layout(set = 0, binding = 6) uniform texture2D u_depthRt;
-layout(set = 0, binding = 7) ANKI_RP uniform texture2D u_lightBufferRt;
-layout(set = 0, binding = 8) ANKI_RP uniform texture2D u_historyTex;
+layout(set = 0, binding = 7) uniform ANKI_RP texture2D u_lightBufferRt;
+layout(set = 0, binding = 8) uniform ANKI_RP texture2D u_historyTex;
 layout(set = 0, binding = 9) uniform texture2D u_motionVectorsTex;
-layout(set = 0, binding = 10) uniform texture2D u_historyLengthTex;
+layout(set = 0, binding = 10) uniform ANKI_RP texture2D u_historyLengthTex;
 
 #if defined(ANKI_COMPUTE_SHADER)
 const UVec2 WORKGROUP_SIZE = UVec2(8, 8);

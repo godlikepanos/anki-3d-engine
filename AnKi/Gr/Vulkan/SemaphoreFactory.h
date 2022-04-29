@@ -47,6 +47,12 @@ public:
 		return m_fence;
 	}
 
+	/// Interface method.
+	void onFenceDone()
+	{
+		// Do nothing
+	}
+
 	void setFence(MicroFencePtr& fence)
 	{
 		m_fence = fence;

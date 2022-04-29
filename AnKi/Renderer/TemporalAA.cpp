@@ -69,9 +69,7 @@ Error TemporalAA::initInternal()
 			m_r->create2DRenderTargetInitInfo(m_r->getInternalResolution().x(), m_r->getInternalResolution().y(),
 											  m_r->getHdrFormat(), usage, "TemporalAA");
 
-		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
-
-		m_rtTextures[i] = m_r->createAndClearRenderTarget(texinit);
+		m_rtTextures[i] = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::SAMPLED_FRAGMENT);
 	}
 
 	m_tonemappedRtDescr = m_r->create2DRenderTargetDescription(

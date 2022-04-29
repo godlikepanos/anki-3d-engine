@@ -50,6 +50,12 @@ public:
 		return m_fence;
 	}
 
+	/// Interface method.
+	void onFenceDone()
+	{
+		// Do nothing
+	}
+
 private:
 	VkEvent m_handle = VK_NULL_HANDLE;
 	Atomic<U32> m_refcount = {0};

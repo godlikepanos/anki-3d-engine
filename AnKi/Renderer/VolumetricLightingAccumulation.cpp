@@ -66,9 +66,8 @@ Error VolumetricLightingAccumulation::init()
 										  "VolLight");
 	texinit.m_depth = m_volumeSize[2];
 	texinit.m_type = TextureType::_3D;
-	texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
-	m_rtTextures[0] = m_r->createAndClearRenderTarget(texinit);
-	m_rtTextures[1] = m_r->createAndClearRenderTarget(texinit);
+	m_rtTextures[0] = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::SAMPLED_FRAGMENT);
+	m_rtTextures[1] = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::SAMPLED_FRAGMENT);
 
 	return Error::NONE;
 }

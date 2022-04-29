@@ -27,14 +27,14 @@ ANKI_SPECIALIZATION_CONSTANT_U32(TILE_SIZE, 3u);
 layout(set = 0, binding = 5) uniform sampler u_nearestAnyClampSampler;
 layout(set = 0, binding = 6) uniform sampler u_trilinearClampSampler;
 
-layout(set = 0, binding = 7) uniform texture2D u_gbuffer0Tex;
-layout(set = 0, binding = 8) uniform texture2D u_gbuffer1Tex;
-layout(set = 0, binding = 9) uniform texture2D u_gbuffer2Tex;
+layout(set = 0, binding = 7) uniform ANKI_RP texture2D u_gbuffer0Tex;
+layout(set = 0, binding = 8) uniform ANKI_RP texture2D u_gbuffer1Tex;
+layout(set = 0, binding = 9) uniform ANKI_RP texture2D u_gbuffer2Tex;
 layout(set = 0, binding = 10) uniform texture2D u_msDepthRt;
 #if USE_SHADOW_LAYERS
 layout(set = 0, binding = 11) uniform utexture2D u_shadowLayersTex;
 #else
-layout(set = 0, binding = 12) uniform texture2D u_resolvedSm;
+layout(set = 0, binding = 12) uniform ANKI_RP texture2D u_resolvedSm;
 #endif
 
 layout(location = 0) in Vec2 in_uv;

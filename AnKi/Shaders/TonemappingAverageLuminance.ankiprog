@@ -17,7 +17,7 @@ layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_s
 const UVec2 ALIGNED_INPUT_TEX_SIZE = WORKGROUP_SIZE * ((INPUT_TEX_SIZE + WORKGROUP_SIZE - 1u) / WORKGROUP_SIZE);
 const UVec2 PIXELS_PER_TILE = ALIGNED_INPUT_TEX_SIZE / WORKGROUP_SIZE;
 
-layout(set = 0, binding = 0) uniform texture2D u_tex;
+layout(set = 0, binding = 0) uniform ANKI_RP texture2D u_tex;
 
 #define TONEMAPPING_RESOURCE_AS_BUFFER 1
 #define TONEMAPPING_SET 0

@@ -484,9 +484,8 @@ void IndirectDiffuseProbes::prepareProbes(InternalContext& giCtx)
 			texInit.m_height = probe.m_cellCounts.y();
 			texInit.m_depth = probe.m_cellCounts.z();
 			texInit.m_usage = TextureUsageBit::ALL_COMPUTE | TextureUsageBit::ALL_SAMPLED;
-			texInit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 
-			entry.m_volumeTex = m_r->createAndClearRenderTarget(texInit);
+			entry.m_volumeTex = m_r->createAndClearRenderTarget(texInit, TextureUsageBit::SAMPLED_FRAGMENT);
 		}
 
 		// Compute the render position

@@ -110,7 +110,7 @@ public:
 	ANKI_USE_RESULT RenderTargetDescription create2DRenderTargetDescription(U32 w, U32 h, Format format,
 																			CString name = {});
 
-	ANKI_USE_RESULT TexturePtr createAndClearRenderTarget(const TextureInitInfo& inf,
+	ANKI_USE_RESULT TexturePtr createAndClearRenderTarget(const TextureInitInfo& inf, TextureUsageBit initialUsage,
 														  const ClearValue& clearVal = ClearValue());
 
 	GrManager& getGrManager()

@@ -24,7 +24,6 @@ public:
 	Format m_format = Format::NONE;
 
 	TextureUsageBit m_usage = TextureUsageBit::NONE; ///< How the texture will be used.
-	TextureUsageBit m_initialUsage = TextureUsageBit::NONE; ///< Its initial usage.
 	TextureType m_type = TextureType::_2D;
 
 	U8 m_mipmapCount = 1;
@@ -47,8 +46,7 @@ public:
 		const U size = U(last - first);
 		ANKI_ASSERT(size
 					== sizeof(m_width) + sizeof(m_height) + sizeof(m_depth) + sizeof(m_layerCount) + sizeof(m_format)
-						   + sizeof(m_usage) + sizeof(m_initialUsage) + sizeof(m_type) + sizeof(m_mipmapCount)
-						   + sizeof(m_samples));
+						   + sizeof(m_usage) + sizeof(m_type) + sizeof(m_mipmapCount) + sizeof(m_samples));
 		return anki::computeHash(first, size);
 	}
 

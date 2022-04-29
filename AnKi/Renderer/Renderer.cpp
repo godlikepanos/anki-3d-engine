@@ -118,7 +118,6 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		texinit.m_width = texinit.m_height = 4;
 		texinit.m_usage = TextureUsageBit::ALL_SAMPLED;
 		texinit.m_format = Format::R8G8B8A8_UNORM;
-		texinit.m_initialUsage = TextureUsageBit::ALL_SAMPLED;
 		TexturePtr tex = getGrManager().newTexture(texinit);
 
 		TextureViewInitInfo viewinit(tex);
@@ -433,7 +432,8 @@ RenderTargetDescription Renderer::create2DRenderTargetDescription(U32 w, U32 h, 
 	return init;
 }
 
-TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, const ClearValue& clearVal)
+TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, TextureUsageBit initialUsage,
+												const ClearValue& clearVal)
 {
 	ANKI_ASSERT(!!(inf.m_usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE)
 				|| !!(inf.m_usage & TextureUsageBit::IMAGE_COMPUTE_WRITE));
@@ -521,10 +521,10 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 					cmdb->beginRenderPass(fb, colUsage, dsUsage);
 					cmdb->endRenderPass();
 
-					if(!!inf.m_initialUsage)
+					if(!!initialUsage)
 					{
-						cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-													   inf.m_initialUsage, surf);
+						cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, initialUsage,
+													   surf);
 					}
 				}
 				else
@@ -569,10 +569,9 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 
 					cmdb->dispatchCompute(wgSize.x(), wgSize.y(), wgSize.z());
 
-					if(!!inf.m_initialUsage)
+					if(!!initialUsage)
 					{
-						cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::IMAGE_COMPUTE_WRITE, inf.m_initialUsage,
-													   surf);
+						cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::IMAGE_COMPUTE_WRITE, initialUsage, surf);
 					}
 				}
 			}

@@ -18,13 +18,13 @@ layout(set = 0, binding = 0, row_major) uniform b_unis
 };
 
 layout(set = 0, binding = 1) uniform sampler u_trilinearClampSampler;
-layout(set = 0, binding = 2) uniform texture2D u_gbufferRt1;
-layout(set = 0, binding = 3) uniform texture2D u_gbufferRt2;
+layout(set = 0, binding = 2) uniform ANKI_RP texture2D u_gbufferRt1;
+layout(set = 0, binding = 3) uniform ANKI_RP texture2D u_gbufferRt2;
 layout(set = 0, binding = 4) uniform texture2D u_depthRt;
-layout(set = 0, binding = 5) uniform texture2D u_lightBufferRt;
+layout(set = 0, binding = 5) uniform ANKI_RP texture2D u_lightBufferRt;
 
 layout(set = 0, binding = 6) uniform sampler u_trilinearRepeatSampler;
-layout(set = 0, binding = 7) uniform texture2D u_noiseTex;
+layout(set = 0, binding = 7) uniform ANKI_RP texture2D u_noiseTex;
 const Vec2 NOISE_TEX_SIZE = Vec2(64.0);
 
 #define CLUSTERED_SHADING_SET 0

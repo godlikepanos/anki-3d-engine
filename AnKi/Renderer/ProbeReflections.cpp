@@ -125,9 +125,8 @@ Error ProbeReflections::initLightShading()
 		texinit.m_mipmapCount = U8(m_lightShading.m_mipCount);
 		texinit.m_type = TextureType::CUBE_ARRAY;
 		texinit.m_layerCount = m_cacheEntries.getSize();
-		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 
-		m_lightShading.m_cubeArr = m_r->createAndClearRenderTarget(texinit);
+		m_lightShading.m_cubeArr = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::SAMPLED_FRAGMENT);
 	}
 
 	// Init deferred

@@ -9,7 +9,6 @@
 #include <AnKi/Util/StringList.h>
 #include <AnKi/Util/WeakArray.h>
 #include <AnKi/Util/DynamicArray.h>
-#include <AnKi/Gr/Utils/Functions.h>
 
 namespace anki {
 

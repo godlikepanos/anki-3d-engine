@@ -109,10 +109,9 @@ Error ShadowMapping::initAtlas()
 		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
 			m_atlas.m_tileResolution * m_atlas.m_tileCountBothAxis,
 			m_atlas.m_tileResolution * m_atlas.m_tileCountBothAxis, texFormat, usage, "SM atlas");
-		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 		ClearValue clearVal;
 		clearVal.m_colorf[0] = 1.0f;
-		m_atlas.m_tex = m_r->createAndClearRenderTarget(texinit, clearVal);
+		m_atlas.m_tex = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::SAMPLED_FRAGMENT, clearVal);
 	}
 
 	// Tiles

@@ -135,8 +135,7 @@ Error RtShadows::initInternal()
 			TextureUsageBit::ALL_SAMPLED | TextureUsageBit::IMAGE_TRACE_RAYS_WRITE
 				| TextureUsageBit::IMAGE_COMPUTE_WRITE,
 			"RtShadows History");
-		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
-		m_historyRt = m_r->createAndClearRenderTarget(texinit);
+		m_historyRt = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::SAMPLED_FRAGMENT);
 	}
 
 	// Temp shadow RT
@@ -154,11 +153,10 @@ Error RtShadows::initInternal()
 			TextureUsageBit::ALL_SAMPLED | TextureUsageBit::IMAGE_TRACE_RAYS_WRITE
 				| TextureUsageBit::IMAGE_COMPUTE_WRITE,
 			"RtShadows Moments #1");
-		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
-		m_momentsRts[0] = m_r->createAndClearRenderTarget(texinit);
+		m_momentsRts[0] = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::SAMPLED_FRAGMENT);
 
 		texinit.setName("RtShadows Moments #2");
-		m_momentsRts[1] = m_r->createAndClearRenderTarget(texinit);
+		m_momentsRts[1] = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::SAMPLED_FRAGMENT);
 	}
 
 	// Variance RT

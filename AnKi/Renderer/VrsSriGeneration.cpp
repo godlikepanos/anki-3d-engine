@@ -46,8 +46,7 @@ Error VrsSriGeneration::initInternal()
 									 | TextureUsageBit::SAMPLED_FRAGMENT;
 	TextureInitInfo sriInitInfo =
 		m_r->create2DRenderTargetInitInfo(rez.x(), rez.y(), Format::R8_UINT, texUsage, "VRS SRI");
-	sriInitInfo.m_initialUsage = TextureUsageBit::FRAMEBUFFER_SHADING_RATE;
-	m_sriTex = m_r->createAndClearRenderTarget(sriInitInfo);
+	m_sriTex = m_r->createAndClearRenderTarget(sriInitInfo, TextureUsageBit::FRAMEBUFFER_SHADING_RATE);
 
 	// Descr
 	m_fbDescr.m_colorAttachmentCount = 1;

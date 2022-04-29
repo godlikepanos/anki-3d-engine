@@ -176,30 +176,6 @@ Error TextureImpl::initInternal(VkImage externalImage, const TextureInitInfo& in
 		m_viewCreateInfoTemplate.pNext = &m_astcDecodeMode;
 	}
 
-	// Transition the image layout from undefined to something relevant
-	if(!!init.m_initialUsage)
-	{
-		ANKI_ASSERT(usageValid(init.m_initialUsage));
-		ANKI_ASSERT(!(init.m_initialUsage & TextureUsageBit::GENERATE_MIPMAPS) && "That doesn't make any sense");
-
-		CommandBufferInitInfo cmdbinit;
-		cmdbinit.m_flags = CommandBufferFlag::GENERAL_WORK | CommandBufferFlag::SMALL_BATCH;
-		CommandBufferPtr cmdb = getManager().newCommandBuffer(cmdbinit);
-
-		VkImageSubresourceRange range;
-		range.aspectMask = convertImageAspect(m_aspect);
-		range.baseArrayLayer = 0;
-		range.baseMipLevel = 0;
-		range.layerCount = m_layerCount;
-		range.levelCount = m_mipCount;
-
-		CommandBufferImpl& cmdbImpl = static_cast<CommandBufferImpl&>(*cmdb);
-		cmdbImpl.setTextureBarrierRange(TexturePtr(this), TextureUsageBit::NONE, init.m_initialUsage, range);
-
-		cmdbImpl.endRecording();
-		getGrManagerImpl().flushCommandBuffer(cmdbImpl.getMicroCommandBuffer(), false, {}, nullptr);
-	}
-
 	// Create a view if the texture is a single surface
 	if(m_texType == TextureType::_2D && m_mipCount == 1 && m_aspect == DepthStencilAspectBit::NONE)
 	{

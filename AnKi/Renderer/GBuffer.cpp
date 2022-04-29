@@ -41,9 +41,7 @@ Error GBuffer::initInternal()
 			m_r->getInternalResolution().x(), m_r->getInternalResolution().y(), m_r->getDepthNoStencilFormat(),
 			TextureUsageBit::ALL_SAMPLED | TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT, depthRtNames[i]);
 
-		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
-
-		m_depthRts[i] = m_r->createAndClearRenderTarget(texinit);
+		m_depthRts[i] = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::SAMPLED_FRAGMENT);
 	}
 
 	static const Array<const char*, GBUFFER_COLOR_ATTACHMENT_COUNT> rtNames = {
