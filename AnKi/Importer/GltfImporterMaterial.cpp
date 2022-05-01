@@ -101,7 +101,7 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 {
 	StringAuto fname(m_alloc);
 	fname.sprintf("%s%s", m_outDir.cstr(), computeMaterialResourceFilename(mtl).cstr());
-	ANKI_IMPORTER_LOGI("Importing material %s", fname.cstr());
+	ANKI_IMPORTER_LOGV("Importing material %s", fname.cstr());
 
 	if(!mtl.has_pbr_metallic_roughness)
 	{

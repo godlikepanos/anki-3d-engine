@@ -16,6 +16,7 @@ Options:
 -lod-count <1|2|3>     : The number of geometry LODs to generate. Default: 1
 -lod-factor <float>    : The decimate factor for each LOD. Default 0.25
 -light-scale <float>   : Multiply the light intensity with this number. Default 1.0
+-v                     : Enable verbose log
 )";
 
 class CmdLineArgs
@@ -69,6 +70,10 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 			{
 				return Error::USER_DATA;
 			}
+		}
+		else if(strcmp(argv[i], "-v") == 0)
+		{
+			LoggerSingleton::get().enableVerbosity(true);
 		}
 		else if(strcmp(argv[i], "-rpath") == 0)
 		{
@@ -197,7 +202,14 @@ int main(int argc, char** argv)
 			comment.append(" ");
 		}
 
-		comment.append(argv[i]);
+		if(CString(argv[i]).getLength())
+		{
+			comment.append(argv[i]);
+		}
+		else
+		{
+			comment.append("\"\"");
+		}
 	}
 
 	GltfImporterInitInfo initInfo;

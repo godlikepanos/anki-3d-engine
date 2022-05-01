@@ -191,7 +191,7 @@ Error GltfImporter::init(const GltfImporterInitInfo& initInfo)
 		m_lodFactor = 0.0f;
 	}
 
-	ANKI_IMPORTER_LOGI("Having %u LODs with LOD factor %f", m_lodCount, m_lodFactor);
+	ANKI_IMPORTER_LOGV("Having %u LODs with LOD factor %f", m_lodCount, m_lodFactor);
 
 	cgltf_options options = {};
 	cgltf_result res = cgltf_parse_file(&options, m_inputFname.cstr(), &m_gltf);
@@ -785,7 +785,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 	}
 	else
 	{
-		ANKI_IMPORTER_LOGW("Ignoring node %s. Assuming transform node", getNodeName(node).cstr());
+		ANKI_IMPORTER_LOGV("Ignoring node %s. Assuming transform node", getNodeName(node).cstr());
 		ANKI_CHECK(getExtras(node.extras, outExtras));
 	}
 
@@ -830,7 +830,7 @@ Error GltfImporter::writeTransform(const Transform& trf)
 Error GltfImporter::writeModel(const cgltf_mesh& mesh)
 {
 	const StringAuto modelFname = computeModelResourceFilename(mesh);
-	ANKI_IMPORTER_LOGI("Importing model %s", modelFname.cstr());
+	ANKI_IMPORTER_LOGV("Importing model %s", modelFname.cstr());
 
 	HashMapAuto<CString, StringAuto> extras(m_alloc);
 	ANKI_CHECK(getExtras(mesh.extras, extras));
@@ -975,7 +975,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 	StringAuto fname(m_alloc);
 	fname.sprintf("%s%s", m_outDir.cstr(), computeAnimationResourceFilename(anim).cstr());
 	fname = fixFilename(fname);
-	ANKI_IMPORTER_LOGI("Importing animation %s", fname.cstr());
+	ANKI_IMPORTER_LOGV("Importing animation %s", fname.cstr());
 
 	// Gather the channels
 	HashMapAuto<CString, Array<const cgltf_animation_channel*, 3>> channelMap(m_alloc);
@@ -1204,7 +1204,7 @@ Error GltfImporter::writeSkeleton(const cgltf_skin& skin)
 {
 	StringAuto fname(m_alloc);
 	fname.sprintf("%s%s", m_outDir.cstr(), computeSkeletonResourceFilename(skin).cstr());
-	ANKI_IMPORTER_LOGI("Importing skeleton %s", fname.cstr());
+	ANKI_IMPORTER_LOGV("Importing skeleton %s", fname.cstr());
 
 	// Get matrices
 	DynamicArrayAuto<Mat4> boneMats(m_alloc);
@@ -1269,7 +1269,7 @@ Error GltfImporter::writeLight(const cgltf_node& node, const HashMapAuto<CString
 {
 	const cgltf_light& light = *node.light;
 	StringAuto nodeName = getNodeName(node);
-	ANKI_IMPORTER_LOGI("Importing light %s", nodeName.cstr());
+	ANKI_IMPORTER_LOGV("Importing light %s", nodeName.cstr());
 
 	HashMapAuto<CString, StringAuto> extras(parentExtras);
 	ANKI_CHECK(getExtras(light.extras, extras));
@@ -1407,12 +1407,12 @@ Error GltfImporter::writeCamera(const cgltf_node& node, const HashMapAuto<CStrin
 {
 	if(node.camera->type != cgltf_camera_type_perspective)
 	{
-		ANKI_IMPORTER_LOGW("Unsupported camera type: %s", getNodeName(node).cstr());
+		ANKI_IMPORTER_LOGV("Unsupported camera type: %s", getNodeName(node).cstr());
 		return Error::NONE;
 	}
 
 	const cgltf_camera_perspective& cam = node.camera->data.perspective;
-	ANKI_IMPORTER_LOGI("Importing camera %s", getNodeName(node).cstr());
+	ANKI_IMPORTER_LOGV("Importing camera %s", getNodeName(node).cstr());
 
 	ANKI_CHECK(m_sceneFile.writeText("\nnode = scene:newPerspectiveCameraNode(\"%s\")\n", getNodeName(node).cstr()));
 	ANKI_CHECK(m_sceneFile.writeText("scene:setActiveCameraNode(node:getSceneNodeBase())\n"));
@@ -1428,7 +1428,7 @@ Error GltfImporter::writeCamera(const cgltf_node& node, const HashMapAuto<CStrin
 
 Error GltfImporter::writeModelNode(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras)
 {
-	ANKI_IMPORTER_LOGI("Importing model node %s", getNodeName(node).cstr());
+	ANKI_IMPORTER_LOGV("Importing model node %s", getNodeName(node).cstr());
 
 	HashMapAuto<CString, StringAuto> extras(parentExtras);
 	ANKI_CHECK(getExtras(node.extras, extras));

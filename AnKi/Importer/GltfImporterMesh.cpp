@@ -278,7 +278,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 {
 	StringAuto fname(m_alloc);
 	fname.sprintf("%s%s", m_outDir.cstr(), computeMeshResourceFilename(mesh, lod).cstr());
-	ANKI_IMPORTER_LOGI("Importing mesh (%s, decimate factor %f): %s",
+	ANKI_IMPORTER_LOGV("Importing mesh (%s, decimate factor %f): %s",
 					   (m_optimizeMeshes) ? "optimize" : "WON'T optimize", decimateFactor, fname.cstr());
 
 	ListAuto<SubMesh> submeshes(m_alloc);
@@ -383,7 +383,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 			}
 			else
 			{
-				ANKI_IMPORTER_LOGW("Ignoring attribute: %s", attrib->name);
+				ANKI_IMPORTER_LOGV("Ignoring attribute: %s", attrib->name);
 			}
 		}
 

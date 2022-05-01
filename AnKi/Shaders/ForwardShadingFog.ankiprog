@@ -3,6 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki mutator ANKI_TECHNIQUE 3
+
 #include <AnKi/Shaders/ForwardShadingCommon.glsl>
 
 struct PerDraw
@@ -13,16 +15,28 @@ struct PerDraw
 	ANKI_RP F32 m_fogDistanceOfMaxThikness;
 };
 
-#pragma anki reflect b_ankiPerDraw
-layout(set = 1, binding = 0, row_major, scalar) uniform b_ankiPerDraw
+#pragma anki reflect AnKiLocalUniforms
+#pragma anki struct AnKiLocalUniforms
+#pragma anki member ANKI_RP Vec3 m_fogColor
+#pragma anki member ANKI_RP F32 m_fogAlphaScale
+#pragma anki member ANKI_RP F32 m_fogDistanceOfMaxThikness
+#pragma anki struct end
+
+layout(set = MATERIAL_SET_EXTERNAL, binding = MATERIAL_BINDING_LOCAL_UNIFORMS, row_major, scalar) buffer b_localUniforms
 {
-	PerDraw u_ankiPerDraw;
+	U32 u_localUniforms[];
 };
 
-#pragma anki reflect b_ankiGlobalUniforms
-layout(set = 1, binding = 1, row_major, scalar) uniform b_ankiGlobalUniforms
+layout(set = MATERIAL_SET_EXTERNAL, binding = MATERIAL_BINDING_GLOBAL_UNIFORMS, row_major,
+	   scalar) uniform b_ankiGlobalUniforms
 {
-	MaterialGlobalUniforms u_ankiGlobals;
+	MaterialGlobalUniforms u_global;
+};
+
+layout(set = MATERIAL_SET_EXTERNAL, binding = MATERIAL_BINDING_RENDERABLE_GPU_VIEW, row_major,
+	   scalar) uniform b_renderableGpuViews
+{
+	RenderableGpuView u_renderableGpuViews[1];
 };
 
 #pragma anki start vert
@@ -31,11 +45,11 @@ layout(location = 0) out F32 out_zVSpace;
 
 void main()
 {
-	const Vec3 worldPos = u_ankiPerDraw.m_ankiTransform * Vec4(in_position, 1.0);
+	const Vec3 worldPos = u_renderableGpuViews[0].m_worldTransform * Vec4(in_position, 1.0);
 
-	gl_Position = u_ankiGlobals.m_viewProjectionMatrix * Vec4(worldPos, 1.0);
+	gl_Position = u_global.m_viewProjectionMatrix * Vec4(worldPos, 1.0);
 
-	const Vec3 viewPos = u_ankiGlobals.m_viewMatrix * Vec4(worldPos, 1.0);
+	const Vec3 viewPos = u_global.m_viewMatrix * Vec4(worldPos, 1.0);
 	out_zVSpace = viewPos.z;
 }
 
@@ -47,6 +61,8 @@ layout(location = 0) in F32 in_zVSpace;
 
 void main()
 {
-	fog(u_ankiPerDraw.m_fogColor, u_ankiPerDraw.m_fogAlphaScale, u_ankiPerDraw.m_fogDistanceOfMaxThikness, in_zVSpace);
+	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(u_localUniforms, 0u);
+
+	fog(localUniforms.m_fogColor, localUniforms.m_fogAlphaScale, localUniforms.m_fogDistanceOfMaxThikness, in_zVSpace);
 }
 #pragma anki end
