@@ -9,6 +9,7 @@
 #pragma anki mutator LIGHT_SHADING_TEX 0 1 // 0: texture2D, 1: textureCubeArray
 #pragma anki mutator STORE_LOCATION 0 1 // 0: in a 3D texture, 1: In an SSBO
 #pragma anki mutator SECOND_BOUNCE 0 1
+#pragma anki mutator SHARED_SSBO 0 1 // 0: in a shared memory, 1: In an SSBO
 
 #pragma anki start comp
 
@@ -34,10 +35,14 @@ layout(set = 0, binding = 2) uniform texture2D u_gbufferTex[3u];
 #endif
 
 // This is a temporary buffer used instead of shared memory because we can't fit it into shared memory
+#if SHARED_SSBO == 1
 layout(set = 0, binding = 3, std430) buffer ssbo_
 {
 	Vec4 u_integrationResults[6u * WORKGROUP_SIZE];
 };
+#else
+shared Vec4 u_integrationResults[6u * WORKGROUP_SIZE];
+#endif
 
 #if STORE_LOCATION == 0
 layout(set = 0, binding = 4) uniform writeonly image3D u_irradianceVolume;

@@ -128,7 +128,7 @@ layout(set = 0, binding = 0, row_major, scalar) uniform b_ankiPerDraw
 #endif
 
 #pragma anki reflect b_ankiPerInstance
-layout(set = 0, binding = 1, row_major, scalar) uniform b_ankiPerInstance
+layout(set = 0, binding = 1, row_major, std430) uniform b_ankiPerInstance
 {
 	PerInstance u_ankiPerInstance[MAX_INSTANCE_COUNT];
 };

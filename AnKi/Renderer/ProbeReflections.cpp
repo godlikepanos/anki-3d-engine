@@ -139,6 +139,9 @@ Error ProbeReflections::initLightShading()
 Error ProbeReflections::initIrradiance()
 {
 	m_irradiance.m_workgroupSize = getConfig().getRProbeReflectionIrradianceResolution();
+	m_irradiance.m_useSharedSsbo =
+		(getGrManager().getDeviceCapabilities().m_computeSharedMemorySize
+		 < sizeof(Vec4) * 6 * U32(m_irradiance.m_workgroupSize) * U32(m_irradiance.m_workgroupSize) + sizeof(Vec4) * 6);
 
 	// Create prog
 	{
@@ -150,6 +153,7 @@ Error ProbeReflections::initIrradiance()
 		variantInitInfo.addMutation("LIGHT_SHADING_TEX", 1);
 		variantInitInfo.addMutation("STORE_LOCATION", 1);
 		variantInitInfo.addMutation("SECOND_BOUNCE", 0);
+		variantInitInfo.addMutation("SHARED_SSBO", m_irradiance.m_useSharedSsbo);
 
 		const ShaderProgramResourceVariant* variant;
 		m_irradiance.m_prog->getOrCreateVariant(variantInitInfo, variant);

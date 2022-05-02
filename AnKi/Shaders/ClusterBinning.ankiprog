@@ -28,7 +28,7 @@ layout(set = 0, binding = 1, scalar) writeonly buffer b_clusters
 	Cluster u_clusters[];
 };
 
-layout(set = 0, binding = 2, scalar) uniform b_pointLights
+layout(set = 0, binding = 2, std430) uniform b_pointLights
 {
 	PointLight u_pointLights[MAX_VISIBLE_POINT_LIGHTS];
 };
@@ -38,12 +38,12 @@ layout(set = 0, binding = 3, scalar) uniform b_spotLights
 	SpotLightBinning u_spotLights[MAX_VISIBLE_SPOT_LIGHTS];
 };
 
-layout(set = 0, binding = 4, scalar) uniform b_reflectionProbes
+layout(set = 0, binding = 4, std430) uniform b_reflectionProbes
 {
 	ReflectionProbe u_reflectionProbes[MAX_VISIBLE_REFLECTION_PROBES];
 };
 
-layout(set = 0, binding = 5, scalar) uniform b_giProbes
+layout(set = 0, binding = 5, std430) uniform b_giProbes
 {
 	GlobalIlluminationProbe u_giProbes[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES];
 };

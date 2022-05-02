@@ -469,6 +469,8 @@ void PipelineFactory::getOrCreatePipeline(PipelineStateTracker& state, Pipeline&
 
 	{
 		ANKI_TRACE_SCOPED_EVENT(VK_PIPELINE_CREATE);
+		static Mutex sync;
+		LockGuard<Mutex> guard(sync);
 		ANKI_VK_CHECKF(vkCreateGraphicsPipelines(m_dev, m_pplineCache, 1, &ci, nullptr, &pp.m_handle));
 	}
 

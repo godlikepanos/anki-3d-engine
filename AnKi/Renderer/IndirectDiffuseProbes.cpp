@@ -209,12 +209,15 @@ Error IndirectDiffuseProbes::initLightShading()
 Error IndirectDiffuseProbes::initIrradiance()
 {
 	ANKI_CHECK(m_r->getResourceManager().loadResource("Shaders/IrradianceDice.ankiprog", m_irradiance.m_prog));
+	m_useSharedSsbo = (getGrManager().getDeviceCapabilities().m_computeSharedMemorySize
+					   < sizeof(Vec4) * 6 * m_tileSize * m_tileSize + sizeof(Vec4) * 6);
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_irradiance.m_prog);
 	variantInitInfo.addMutation("WORKGROUP_SIZE_XY", m_tileSize);
 	variantInitInfo.addMutation("LIGHT_SHADING_TEX", 0);
 	variantInitInfo.addMutation("STORE_LOCATION", 0);
 	variantInitInfo.addMutation("SECOND_BOUNCE", 1);
+	variantInitInfo.addMutation("SHARED_SSBO", m_useSharedSsbo);
 
 	const ShaderProgramResourceVariant* variant;
 	m_irradiance.m_prog->getOrCreateVariant(variantInitInfo, variant);
@@ -702,7 +705,10 @@ void IndirectDiffuseProbes::runIrradiance(RenderPassWorkContext& rgraphCtx, Inte
 	}
 
 	// Bind temporary memory
-	allocateAndBindStorage<void*>(sizeof(Vec4) * 6 * m_tileSize * m_tileSize, cmdb, 0, 3);
+	if(m_useSharedSsbo)
+	{
+		allocateAndBindStorage<void*>(sizeof(Vec4) * 6 * m_tileSize * m_tileSize, cmdb, 0, 3);
+	}
 
 	rgraphCtx.bindImage(0, 4, giCtx.m_irradianceProbeRts[probeIdx], TextureSubresourceInfo());
 

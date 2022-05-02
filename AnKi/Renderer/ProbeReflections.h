@@ -82,6 +82,7 @@ private:
 		ShaderProgramPtr m_grProg;
 		BufferPtr m_diceValuesBuff;
 		U32 m_workgroupSize = 16;
+		Bool m_useSharedSsbo = false;
 	} m_irradiance; ///< Irradiance.
 
 	class

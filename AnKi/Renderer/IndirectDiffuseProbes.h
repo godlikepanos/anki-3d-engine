@@ -99,6 +99,7 @@ private:
 	HashMap<U64, U32> m_probeUuidToCacheEntryIdx;
 	U32 m_tileSize = 0;
 	U32 m_maxVisibleProbes = 0;
+	Bool m_useSharedSsbo = false;
 
 	ANKI_USE_RESULT Error initInternal();
 	ANKI_USE_RESULT Error initGBuffer();

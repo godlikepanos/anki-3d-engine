@@ -43,14 +43,15 @@ const ANKI_RP F32 SUBSURFACE_MIN = 0.01f;
 struct PointLight
 {
 	Vec3 m_position; ///< Position in world space.
-	ANKI_RP Vec3 m_diffuseColor;
 	ANKI_RP F32 m_radius; ///< Radius
+	ANKI_RP Vec3 m_diffuseColor;
 	ANKI_RP F32 m_squareRadiusOverOne; ///< 1/(radius^2).
 	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
 	F32 m_shadowAtlasTileScale; ///< UV scale for all tiles.
+	Vec2 m_padding0;
 	Vec2 m_shadowAtlasTileOffsets[6u];
 };
-const U32 _ANKI_SIZEOF_PointLight = 22u * ANKI_SIZEOF(U32);
+const U32 _ANKI_SIZEOF_PointLight = 24u * ANKI_SIZEOF(U32);
 ANKI_SHADER_STATIC_ASSERT(sizeof(PointLight) == _ANKI_SIZEOF_PointLight);
 
 /// Spot light.
@@ -75,11 +76,11 @@ ANKI_SHADER_STATIC_ASSERT(sizeof(SpotLight) == _ANKI_SIZEOF_SpotLight);
 struct SpotLightBinning
 {
 	Vec3 m_edgePoints[5u]; ///< Edge points in world space.
-	ANKI_RP Vec3 m_diffuseColor;
 	ANKI_RP F32 m_radius; ///< Max distance.
+	ANKI_RP Vec3 m_diffuseColor;
 	ANKI_RP F32 m_squareRadiusOverOne; ///< 1/(radius^2).
-	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
 	ANKI_RP Vec3 m_direction; ///< Light direction.
+	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
 	ANKI_RP F32 m_outerCos;
 	ANKI_RP F32 m_innerCos;
 	Vec2 m_padding;
@@ -111,9 +112,11 @@ struct ReflectionProbe
 	Vec3 m_position; ///< Position of the probe in world space.
 	F32 m_cubemapIndex; ///< Index in the cubemap array texture.
 	Vec3 m_aabbMin;
+	F32 m_padding0;
 	Vec3 m_aabbMax;
+	F32 m_padding1;
 };
-const U32 _ANKI_SIZEOF_ReflectionProbe = 10u * ANKI_SIZEOF(U32);
+const U32 _ANKI_SIZEOF_ReflectionProbe = 12u * ANKI_SIZEOF(U32);
 ANKI_SHADER_STATIC_ASSERT(sizeof(ReflectionProbe) == _ANKI_SIZEOF_ReflectionProbe);
 
 /// Decal.
@@ -145,15 +148,16 @@ ANKI_SHADER_STATIC_ASSERT(sizeof(FogDensityVolume) == _ANKI_SIZEOF_FogDensityVol
 struct GlobalIlluminationProbe
 {
 	Vec3 m_aabbMin;
-	Vec3 m_aabbMax;
-
-	U32 m_textureIndex; ///< Index to the array of volume textures.
 	F32 m_halfTexelSizeU; ///< (1.0 / textureSize(texArr[textureIndex]).x) / 2.0
+
+	Vec3 m_aabbMax;
+	U32 m_textureIndex; ///< Index to the array of volume textures.
 
 	/// Used to calculate a factor that is zero when fragPos is close to AABB bounds and 1.0 at fadeDistance and less.
 	ANKI_RP F32 m_fadeDistance;
+	F32 m_padding0;
 };
-const U32 _ANKI_SIZEOF_GlobalIlluminationProbe = 9u * ANKI_SIZEOF(U32);
+const U32 _ANKI_SIZEOF_GlobalIlluminationProbe = 10u * ANKI_SIZEOF(U32);
 ANKI_SHADER_STATIC_ASSERT(sizeof(GlobalIlluminationProbe) == _ANKI_SIZEOF_GlobalIlluminationProbe);
 
 /// Common matrices.

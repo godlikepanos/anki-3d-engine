@@ -138,6 +138,10 @@ public:
 	/// Max push constant size.
 	PtrSize m_pushConstantsSize = 128;
 
+	/// The max combined size of shared variables (with paddings) in compute
+	/// shaders.
+	PtrSize m_computeSharedMemorySize = 16384;
+
 	/// Each SBT record should be a multiple of this.
 	U32 m_sbtRecordAlignment = MAX_U32;
 
@@ -173,7 +177,7 @@ public:
 };
 ANKI_END_PACKED_STRUCT
 static_assert(sizeof(GpuDeviceCapabilities)
-				  == sizeof(PtrSize) * 4 + sizeof(U32) * 5 + sizeof(U8) * 3 + sizeof(Bool) * 6,
+				  == sizeof(PtrSize) * 5 + sizeof(U32) * 5 + sizeof(U8) * 3 + sizeof(Bool) * 6,
 			  "Should be packed");
 
 /// The type of the allocator for heap allocations

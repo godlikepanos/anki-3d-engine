@@ -21,7 +21,7 @@ layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_UNIFORMS_BINDING
 // Light uniforms (3)
 //
 #if defined(CLUSTERED_SHADING_LIGHTS_BINDING)
-layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_LIGHTS_BINDING, scalar) uniform b_pointLights
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_LIGHTS_BINDING, std430) uniform b_pointLights
 {
 	PointLight u_pointLights2[MAX_VISIBLE_POINT_LIGHTS];
 };
