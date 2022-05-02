@@ -19,6 +19,7 @@
 #include <AnKi/Gr/Vulkan/PipelineLayout.h>
 #include <AnKi/Gr/Vulkan/PipelineCache.h>
 #include <AnKi/Gr/Vulkan/DescriptorSet.h>
+#include <AnKi/Gr/Vulkan/FrameGarbageCollector.h>
 #include <AnKi/Util/HashMap.h>
 #include <AnKi/Util/File.h>
 
@@ -213,6 +214,11 @@ public:
 
 	void printPipelineShaderInfo(VkPipeline ppline, CString name, ShaderTypeBit stages, U64 hash = 0) const;
 
+	FrameGarbageCollector& getFrameGarbageCollector()
+	{
+		return m_frameGarbageCollector;
+	}
+
 private:
 	U64 m_frame = 0;
 
@@ -314,6 +320,8 @@ private:
 
 	mutable HashMap<U64, StringAuto> m_vkHandleToName;
 	mutable SpinLock m_vkHandleToNameLock;
+
+	FrameGarbageCollector m_frameGarbageCollector;
 
 	ANKI_USE_RESULT Error initInternal(const GrManagerInitInfo& init);
 	ANKI_USE_RESULT Error initInstance(const GrManagerInitInfo& init);

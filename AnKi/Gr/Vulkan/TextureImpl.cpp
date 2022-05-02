@@ -83,27 +83,54 @@ TextureImpl::~TextureImpl()
 	}
 #endif
 
+	TextureGarbage* garbage = getAllocator().newInstance<TextureGarbage>();
+
 	for(MicroImageView& it : m_viewsMap)
 	{
-		destroyMicroImageView(it);
+		garbage->m_viewHandles.emplaceBack(getAllocator(), it.m_handle);
+		it.m_handle = VK_NULL_HANDLE;
+
+		if(it.m_bindlessIndices[0] != MAX_U32)
+		{
+			garbage->m_bindlessIndices.emplaceBack(getAllocator(), it.m_bindlessIndices[0]);
+			it.m_bindlessIndices[0] = MAX_U32;
+		}
+
+		if(it.m_bindlessIndices[1] != MAX_U32)
+		{
+			garbage->m_bindlessIndices.emplaceBack(getAllocator(), it.m_bindlessIndices[1]);
+			it.m_bindlessIndices[1] = MAX_U32;
+		}
 	}
 
 	m_viewsMap.destroy(getAllocator());
 
 	if(m_singleSurfaceImageView.m_handle != VK_NULL_HANDLE)
 	{
-		destroyMicroImageView(m_singleSurfaceImageView);
+		garbage->m_viewHandles.emplaceBack(getAllocator(), m_singleSurfaceImageView.m_handle);
+		m_singleSurfaceImageView.m_handle = VK_NULL_HANDLE;
+
+		if(m_singleSurfaceImageView.m_bindlessIndices[0] != MAX_U32)
+		{
+			garbage->m_bindlessIndices.emplaceBack(getAllocator(), m_singleSurfaceImageView.m_bindlessIndices[0]);
+			m_singleSurfaceImageView.m_bindlessIndices[0] = MAX_U32;
+		}
+
+		if(m_singleSurfaceImageView.m_bindlessIndices[1] != MAX_U32)
+		{
+			garbage->m_bindlessIndices.emplaceBack(getAllocator(), m_singleSurfaceImageView.m_bindlessIndices[1]);
+			m_singleSurfaceImageView.m_bindlessIndices[1] = MAX_U32;
+		}
 	}
 
 	if(m_imageHandle && !(m_usage & TextureUsageBit::PRESENT))
 	{
-		vkDestroyImage(getDevice(), m_imageHandle, nullptr);
+		garbage->m_imageHandle = m_imageHandle;
 	}
 
-	if(m_memHandle)
-	{
-		getGrManagerImpl().getGpuMemoryManager().freeMemory(m_memHandle);
-	}
+	garbage->m_memoryHandle = m_memHandle;
+
+	getGrManagerImpl().getFrameGarbageCollector().newTextureGarbage(garbage);
 }
 
 Error TextureImpl::initInternal(VkImage externalImage, const TextureInitInfo& init_)
@@ -620,27 +647,6 @@ TextureType TextureImpl::computeNewTexTypeOfSubresource(const TextureSubresource
 		}
 	}
 	return m_texType;
-}
-
-void TextureImpl::destroyMicroImageView(MicroImageView& view)
-{
-	if(view.m_handle != VK_NULL_HANDLE)
-	{
-		vkDestroyImageView(getDevice(), view.m_handle, nullptr);
-		view.m_handle = VK_NULL_HANDLE;
-	}
-
-	if(view.m_bindlessIndices[0] != MAX_U32)
-	{
-		getGrManagerImpl().getDescriptorSetFactory().unbindBindlessTexture(view.m_bindlessIndices[0]);
-		view.m_bindlessIndices[0] = MAX_U32;
-	}
-
-	if(view.m_bindlessIndices[1] != MAX_U32)
-	{
-		getGrManagerImpl().getDescriptorSetFactory().unbindBindlessImage(view.m_bindlessIndices[1]);
-		view.m_bindlessIndices[1] = MAX_U32;
-	}
 }
 
 } // end namespace anki

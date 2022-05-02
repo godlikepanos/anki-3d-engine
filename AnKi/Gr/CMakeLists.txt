@@ -49,7 +49,8 @@ if(VULKAN)
 		"Vulkan/TextureViewImpl.cpp"
 		"Vulkan/TimestampQuery.cpp"
 		"Vulkan/TimestampQueryImpl.cpp"
-		"Vulkan/VulkanObject.cpp")
+		"Vulkan/VulkanObject.cpp"
+		"Vulkan/FrameGarbageCollector.cpp")
 
 	if(ANKI_HEADLESS)
 		set(VKCPP ${VKCPP} "Vulkan/GrManagerImplHeadless.cpp")

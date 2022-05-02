@@ -40,9 +40,9 @@ GrManagerImpl::~GrManagerImpl()
 		}
 	}
 
+	// 3rd THING: The destroy everything that has a reference to GrObjects.
 	m_cmdbFactory.destroy();
 
-	// 3rd THING: The destroy everything that has a reference to GrObjects.
 	for(PerFrame& frame : m_perFrame)
 	{
 		frame.m_presentFence.reset(nullptr);
@@ -53,11 +53,13 @@ GrManagerImpl::~GrManagerImpl()
 	m_crntSwapchain.reset(nullptr);
 
 	// 4th THING: Continue with the rest
-	m_gpuMemManager.destroy();
 
 	m_barrierFactory.destroy(); // Destroy before fences
 	m_semaphoreFactory.destroy(); // Destroy before fences
 	m_swapchainFactory.destroy(); // Destroy before fences
+	m_frameGarbageCollector.destroy();
+
+	m_gpuMemManager.destroy();
 
 	m_pplineLayoutFactory.destroy();
 	m_descrFactory.destroy();
@@ -192,6 +194,8 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 
 	ANKI_CHECK(m_descrFactory.init(getAllocator(), m_device, MAX_BINDLESS_TEXTURES, MAX_BINDLESS_IMAGES));
 	m_pplineLayoutFactory.init(getAllocator(), m_device);
+
+	m_frameGarbageCollector.init(this);
 
 	return Error::NONE;
 }
@@ -1327,48 +1331,55 @@ void GrManagerImpl::flushCommandBuffer(MicroCommandBufferPtr cmdb, Bool cmdbRend
 		++submit.signalSemaphoreCount;
 	}
 
-	// Protect the class, the queue and other stuff
-	LockGuard<Mutex> lock(m_globalMtx);
-
-	// Do some special stuff for the last command buffer
-	PerFrame& frame = m_perFrame[m_frame % MAX_FRAMES_IN_FLIGHT];
-	if(cmdbRenderedToSwapchain)
-	{
-		// Wait semaphore
-		waitSemaphores[submit.waitSemaphoreCount] = frame.m_acquireSemaphore->getHandle();
-
-		// That depends on how we use the swapchain img. Be a bit conservative
-		waitStages[submit.waitSemaphoreCount] =
-			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-		++submit.waitSemaphoreCount;
-
-		// Refresh the fence because the semaphore can't be recycled until the current submission is done
-		frame.m_acquireSemaphore->setFence(fence);
-
-		// Create the semaphore to signal
-		ANKI_ASSERT(!frame.m_renderSemaphore && "Only one begin/end render pass is allowed with the default fb");
-		frame.m_renderSemaphore = m_semaphoreFactory.newInstance(fence, false);
-
-		signalSemaphores[submit.signalSemaphoreCount++] = frame.m_renderSemaphore->getHandle();
-
-		// Update the frame fence
-		frame.m_presentFence = fence;
-
-		// Update the swapchain's fence
-		m_crntSwapchain->setFence(fence);
-
-		frame.m_queueWroteToSwapchainImage = cmdb->getVulkanQueueType();
-	}
-
 	// Submit
 	{
+		// Protect the class, the queue and other stuff
+		LockGuard<Mutex> lock(m_globalMtx);
+
+		// Do some special stuff for the last command buffer
+		PerFrame& frame = m_perFrame[m_frame % MAX_FRAMES_IN_FLIGHT];
+		if(cmdbRenderedToSwapchain)
+		{
+			// Wait semaphore
+			waitSemaphores[submit.waitSemaphoreCount] = frame.m_acquireSemaphore->getHandle();
+
+			// That depends on how we use the swapchain img. Be a bit conservative
+			waitStages[submit.waitSemaphoreCount] =
+				VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+			++submit.waitSemaphoreCount;
+
+			// Refresh the fence because the semaphore can't be recycled until the current submission is done
+			frame.m_acquireSemaphore->setFence(fence);
+
+			// Create the semaphore to signal
+			ANKI_ASSERT(!frame.m_renderSemaphore && "Only one begin/end render pass is allowed with the default fb");
+			frame.m_renderSemaphore = m_semaphoreFactory.newInstance(fence, false);
+
+			signalSemaphores[submit.signalSemaphoreCount++] = frame.m_renderSemaphore->getHandle();
+
+			// Update the frame fence
+			frame.m_presentFence = fence;
+
+			// Update the swapchain's fence
+			m_crntSwapchain->setFence(fence);
+
+			frame.m_queueWroteToSwapchainImage = cmdb->getVulkanQueueType();
+		}
+
+		// Submit
 		ANKI_TRACE_SCOPED_EVENT(VK_QUEUE_SUBMIT);
 		ANKI_VK_CHECKF(vkQueueSubmit(m_queues[cmdb->getVulkanQueueType()], 1, &submit, fence->getHandle()));
+
+		if(wait)
+		{
+			vkQueueWaitIdle(m_queues[cmdb->getVulkanQueueType()]);
+		}
 	}
 
-	if(wait)
+	// Garbage work
+	if(cmdbRenderedToSwapchain)
 	{
-		vkQueueWaitIdle(m_queues[cmdb->getVulkanQueueType()]);
+		m_frameGarbageCollector.setNewFrame(fence);
 	}
 }
 

@@ -451,10 +451,4 @@ void CommandBuffer::setLineWidth(F32 width)
 	self.setLineWidth(width);
 }
 
-void CommandBuffer::addReference(GrObjectPtr ptr)
-{
-	ANKI_VK_SELF(CommandBufferImpl);
-	self.addReference(ptr);
-}
-
 } // end namespace anki

@@ -2263,9 +2263,6 @@ void main()
 	cmdb->bindSampler(1, 1, sampler);
 	cmdb->bindShaderProgram(prog);
 
-	cmdb->addReference(viewA);
-	cmdb->addReference(viewB);
-	cmdb->addReference(viewC);
 	const U32 idx0 = viewA->getOrCreateBindlessImageIndex();
 	const U32 idx1 = viewB->getOrCreateBindlessTextureIndex();
 	const U32 idx2 = viewC->getOrCreateBindlessTextureIndex();
