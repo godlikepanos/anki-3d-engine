@@ -155,9 +155,9 @@ struct GlobalIlluminationProbe
 
 	/// Used to calculate a factor that is zero when fragPos is close to AABB bounds and 1.0 at fadeDistance and less.
 	ANKI_RP F32 m_fadeDistance;
-	F32 m_padding0;
+	Vec3 m_padding0;
 };
-const U32 _ANKI_SIZEOF_GlobalIlluminationProbe = 10u * ANKI_SIZEOF(U32);
+const U32 _ANKI_SIZEOF_GlobalIlluminationProbe = 12u * ANKI_SIZEOF(U32);
 ANKI_SHADER_STATIC_ASSERT(sizeof(GlobalIlluminationProbe) == _ANKI_SIZEOF_GlobalIlluminationProbe);
 
 /// Common matrices.
