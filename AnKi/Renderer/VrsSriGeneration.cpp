@@ -117,6 +117,8 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 
 		rgraphCtx.bindColorTexture(0, 0, m_r->getTemporalAA().getTonemappedRt());
 		rgraphCtx.bindImage(0, 1, m_runCtx.m_rt);
+		Vec4 pc(getConfig().getRVrsThreshold());
+		cmdb->setPushConstants(&pc, sizeof(pc));
 
 		const U32 workgroupSize = m_sriTexelDimension;
 		dispatchPPCompute(cmdb, workgroupSize, workgroupSize, m_r->getInternalResolution().x(),
