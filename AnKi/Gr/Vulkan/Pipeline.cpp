@@ -413,6 +413,19 @@ public:
 	}
 };
 
+void PipelineFactory::init(GrManagerImpl *gr)
+{
+#if ANKI_PLATFORM_MOBILE
+	if(gr->getDeviceCapabilities().m_gpuVendor == GpuVendor::QUALCOMM)
+	{
+		m_pplinesGlobalMtxPtr = &gr->getPipelineGlobalLock();
+	}
+#endif
+	m_alloc = gr->getAllocator();
+	m_dev = gr->getDevice();
+	m_pplineCache = gr->getPipelineCache();
+}
+
 void PipelineFactory::destroy()
 {
 	for(auto it : m_pplines)
@@ -469,7 +482,17 @@ void PipelineFactory::getOrCreatePipeline(PipelineStateTracker& state, Pipeline&
 
 	{
 		ANKI_TRACE_SCOPED_EVENT(VK_PIPELINE_CREATE);
-		ANKI_VK_CHECKF(vkCreateGraphicsPipelines(m_dev, m_pplineCache, 1, &ci, nullptr, &pp.m_handle));
+#if ANKI_PLATFORM_MOBILE
+		if(m_pplinesGlobalMtxPtr!=nullptr)
+		{
+			LockGuard<Mutex> lock(*m_pplinesGlobalMtxPtr);
+			ANKI_VK_CHECKF(vkCreateGraphicsPipelines(m_dev, m_pplineCache, 1, &ci, nullptr, &pp.m_handle));
+		}
+		else
+#endif
+		{
+			ANKI_VK_CHECKF(vkCreateGraphicsPipelines(m_dev, m_pplineCache, 1, &ci, nullptr, &pp.m_handle));
+		}
 	}
 
 	ANKI_TRACE_INC_COUNTER(VK_PIPELINES_CACHE_MISS, 1);

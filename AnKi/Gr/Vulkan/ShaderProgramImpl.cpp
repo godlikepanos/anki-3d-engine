@@ -221,8 +221,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	if(graphicsProg)
 	{
 		m_graphics.m_pplineFactory = getAllocator().newInstance<PipelineFactory>();
-		m_graphics.m_pplineFactory->init(getGrManagerImpl().getAllocator(), getGrManagerImpl().getDevice(),
-										 getGrManagerImpl().getPipelineCache());
+		m_graphics.m_pplineFactory->init(&getGrManagerImpl());
 	}
 
 	// Create the pipeline if compute

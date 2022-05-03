@@ -172,6 +172,11 @@ public:
 	}
 #endif
 
+	Mutex& getPipelineGlobalLock()
+	{
+		return m_pipelineMtx;
+	}
+
 	/// @name Debug report
 	/// @{
 	void beginMarker(VkCommandBuffer cmdb, CString name) const
@@ -259,6 +264,7 @@ private:
 	PFN_vkGetShaderInfoAMD m_pfnGetShaderInfoAMD = nullptr;
 	mutable File m_shaderStatsFile;
 	mutable SpinLock m_shaderStatsFileMtx;
+	Mutex m_pipelineMtx;
 
 	/// @name Surface_related
 	/// @{
