@@ -45,14 +45,6 @@ public:
 	StackAllocator<U8> m_frameAllocator;
 	Bool m_debugDraw; ///< If true the drawcall should be drawing some kind of debug mesh.
 	BitSet<U(RenderQueueDebugDrawFlag::COUNT), U32> m_debugDrawFlags = {false};
-
-	class
-	{
-	public:
-		BufferPtr m_buffer;
-		PtrSize m_offset;
-		PtrSize m_range;
-	} m_globalUniforms; ///< Points to a MaterialGlobalUniforms structure.
 };
 
 /// Draw callback for drawing.

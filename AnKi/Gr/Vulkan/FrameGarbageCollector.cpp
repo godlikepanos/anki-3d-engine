@@ -51,7 +51,7 @@ void FrameGarbageCollector::collectGarbage()
 
 			for(U32 bindlessIndex : textureGarbage->m_bindlessIndices)
 			{
-				m_gr->getDescriptorSetFactory().unbindBindlessImage(bindlessIndex);
+				m_gr->getDescriptorSetFactory().unbindBindlessTexture(bindlessIndex);
 			}
 			textureGarbage->m_bindlessIndices.destroy(alloc);
 

@@ -193,7 +193,7 @@ U32 DescriptorSetFactory::BindlessDescriptorSet::bindTexture(const VkImageView v
 	LockGuard<Mutex> lock(m_mtx);
 	ANKI_ASSERT(m_freeTexIndexCount > 0 && "Out of indices");
 
-	// Get the index
+	// Pop the index
 	--m_freeTexIndexCount;
 	const U16 idx = m_freeTexIndices[m_freeTexIndexCount];
 	ANKI_ASSERT(idx < m_freeTexIndices.getSize());
@@ -252,9 +252,9 @@ U32 DescriptorSetFactory::BindlessDescriptorSet::bindImage(const VkImageView vie
 void DescriptorSetFactory::BindlessDescriptorSet::unbindCommon(U32 idx, DynamicArray<U16>& freeIndices,
 															   U16& freeIndexCount)
 {
-	ANKI_ASSERT(idx < freeIndices.getSize());
-
 	LockGuard<Mutex> lock(m_mtx);
+
+	ANKI_ASSERT(idx < freeIndices.getSize());
 	ANKI_ASSERT(freeIndexCount < freeIndices.getSize());
 
 	freeIndices[freeIndexCount] = U16(idx);
@@ -805,7 +805,14 @@ void DescriptorSetState::flush(U64& hash, Array<PtrSize, MAX_BINDINGS_PER_DESCRI
 	dynamicOffsetCount = 0;
 	bindlessDSet = false;
 
-	if(!m_bindlessDSetBound)
+	// There is a chance where the bindless set is bound but the actual shaders have an empty DS layout (maybe because
+	// the dead code elimination eliminated the bindless set). In that case we can't bind the bindless DS. We have to
+	// treat it as regular set
+	ANKI_ASSERT(!(m_layout.m_entry == nullptr && !m_bindlessDSetBound)
+				&& "DS layout points to bindless but no bindless is bound");
+	const Bool reallyBindless = m_bindlessDSetBound && m_layout.m_entry == nullptr;
+
+	if(!reallyBindless)
 	{
 		// Get cache entry
 		ANKI_ASSERT(m_layout.m_entry);

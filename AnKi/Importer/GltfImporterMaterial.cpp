@@ -130,7 +130,7 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 		StringAuto uri(m_alloc);
 		uri.sprintf("%s%s", m_texrpath.cstr(), fname.cstr());
 
-		xml.replaceAll("%diff%", StringAuto(m_alloc).sprintf("<input name=\"u_diffTex\" value=\"%s\"/>", uri.cstr()));
+		xml.replaceAll("%diff%", StringAuto(m_alloc).sprintf("<input name=\"m_diffTex\" value=\"%s\"/>", uri.cstr()));
 		xml.replaceAll("%diffTexMutator%", "1");
 
 		Vec4 constantColor;
@@ -202,7 +202,7 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 					getTextureUri(mtl.pbr_metallic_roughness.metallic_roughness_texture).cstr());
 
 		xml.replaceAll("%roughness%",
-					   StringAuto(m_alloc).sprintf("<input name=\"u_roughnessTex\" value=\"%s\"/>", uri.cstr()));
+					   StringAuto(m_alloc).sprintf("<input name=\"m_roughnessTex\" value=\"%s\"/>", uri.cstr()));
 
 		xml.replaceAll("%roughnessTexMutator%", "1");
 	}
@@ -226,7 +226,7 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 					getTextureUri(mtl.pbr_metallic_roughness.metallic_roughness_texture).cstr());
 
 		xml.replaceAll("%metallic%",
-					   StringAuto(m_alloc).sprintf("<input name=\"u_metallicTex\" value=\"%s\"/>", uri.cstr()));
+					   StringAuto(m_alloc).sprintf("<input name=\"m_metallicTex\" value=\"%s\"/>", uri.cstr()));
 
 		xml.replaceAll("%metalTexMutator%", "1");
 	}
@@ -253,7 +253,7 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 			uri.sprintf("%s%s", m_texrpath.cstr(), getTextureUri(mtl.normal_texture).cstr());
 
 			xml.replaceAll("%normal%",
-						   StringAuto(m_alloc).sprintf("<input name=\"u_normalTex\" value=\"%s\"/>", uri.cstr()));
+						   StringAuto(m_alloc).sprintf("<input name=\"m_normalTex\" value=\"%s\"/>", uri.cstr()));
 
 			xml.replaceAll("%normalTexMutator%", "1");
 		}
@@ -276,7 +276,7 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 		uri.sprintf("%s%s", m_texrpath.cstr(), getTextureUri(mtl.emissive_texture).cstr());
 
 		xml.replaceAll("%emission%",
-					   StringAuto(m_alloc).sprintf("<input name=\"u_emissiveTex\" value=\"%s\"/>", uri.cstr()));
+					   StringAuto(m_alloc).sprintf("<input name=\"m_emissiveTex\" value=\"%s\"/>", uri.cstr()));
 
 		xml.replaceAll("%emissiveTexMutator%", "1");
 	}
@@ -314,7 +314,7 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 		StringAuto uri(m_alloc);
 		uri.sprintf("%s%s", m_texrpath.cstr(), it->cstr());
 
-		xml.replaceAll("%height%", StringAuto(m_alloc).sprintf("<input name=\"u_heightTex\" value=\"%s\" \"/>\n"
+		xml.replaceAll("%height%", StringAuto(m_alloc).sprintf("<input name=\"m_heightTex\" value=\"%s\" \"/>\n"
 															   "\t\t<input name=\"m_heightmapScale\" value=\"0.05\"/>",
 															   uri.cstr()));
 

@@ -41,73 +41,45 @@
 
 #include <AnKi/Shaders/GBufferCommon.glsl>
 
-layout(set = MATERIAL_SET_EXTERNAL, binding = MATERIAL_BINDING_GLOBAL_SAMPLER) uniform sampler u_globalSampler;
-
-#if DIFFUSE_TEX
-#	pragma anki reflect u_diffTex
-layout(set = MATERIAL_SET_EXTERNAL,
-	   binding = MATERIAL_BINDING_FIRST_NON_STANDARD + 0u) uniform ANKI_RP texture2D u_diffTex;
-#endif
-
-#if SPECULAR_TEX
-#	pragma anki reflect u_specTex
-layout(set = MATERIAL_SET_EXTERNAL,
-	   binding = MATERIAL_BINDING_FIRST_NON_STANDARD + 1u) uniform ANKI_RP texture2D u_specTex;
-#endif
-
-#if ROUGHNESS_TEX
-#	pragma anki reflect u_roughnessTex
-layout(set = MATERIAL_SET_EXTERNAL,
-	   binding = MATERIAL_BINDING_FIRST_NON_STANDARD + 2u) uniform ANKI_RP texture2D u_roughnessTex;
-#endif
-
-#if NORMAL_TEX
-#	pragma anki reflect u_normalTex
-layout(set = MATERIAL_SET_EXTERNAL,
-	   binding = MATERIAL_BINDING_FIRST_NON_STANDARD + 3u) uniform ANKI_RP texture2D u_normalTex;
-#endif
-
-#if METAL_TEX
-#	pragma anki reflect u_metallicTex
-layout(set = MATERIAL_SET_EXTERNAL,
-	   binding = MATERIAL_BINDING_FIRST_NON_STANDARD + 4u) uniform ANKI_RP texture2D u_metallicTex;
-#endif
-
-#if PARALLAX
-#	pragma anki reflect u_heightTex
-layout(set = MATERIAL_SET_EXTERNAL,
-	   binding = MATERIAL_BINDING_FIRST_NON_STANDARD + 5u) uniform ANKI_RP texture2D u_heightTex;
-#endif
-
-#if EMISSIVE_TEX
-#	pragma anki reflect u_emissiveTex
-layout(set = MATERIAL_SET_EXTERNAL,
-	   binding = MATERIAL_BINDING_FIRST_NON_STANDARD + 6u) uniform ANKI_RP texture2D u_emissiveTex;
-#endif
+layout(set = MATERIAL_SET_GLOBAL, binding = MATERIAL_BINDING_TRILINEAR_REPEAT_SAMPLER) uniform sampler u_globalSampler;
 
 #pragma anki reflect AnKiLocalUniforms
 #pragma anki struct AnKiLocalUniforms
+#pragma anki member U32 m_normalTex if NORMAL_TEX is 1
+
 #pragma anki member ANKI_RP Vec3 m_diffColor if DIFFUSE_TEX is 0
+#pragma anki member U32 m_diffTex if DIFFUSE_TEX is 1
+
 #pragma anki member ANKI_RP F32 m_roughness if ROUGHNESS_TEX is 0
+#pragma anki member U32 m_roughnessTex if ROUGHNESS_TEX is 1
+
 #pragma anki member ANKI_RP Vec3 m_specColor if SPECULAR_TEX is 0
+#pragma anki member U32 m_specTex if SPECULAR_TEX is 1
+
 #pragma anki member ANKI_RP F32 m_metallic if METAL_TEX is 0
+#pragma anki member U32 m_metallicTex if METAL_TEX is 1
+
 #pragma anki member ANKI_RP Vec3 m_emission if EMISSIVE_TEX is 0
+#pragma anki member U32 m_emissiveTex if EMISSIVE_TEX is 1
+
 #pragma anki member ANKI_RP F32 m_heightmapScale if PARALLAX is 1
+#pragma anki member U32 m_heightTex if PARALLAX is 1
+
 #pragma anki member ANKI_RP F32 m_subsurface
 #pragma anki struct end
 
-layout(set = MATERIAL_SET_EXTERNAL, binding = MATERIAL_BINDING_LOCAL_UNIFORMS, row_major, scalar) buffer b_localUniforms
+layout(set = MATERIAL_SET_LOCAL, binding = MATERIAL_BINDING_LOCAL_UNIFORMS, row_major, scalar) buffer b_localUniforms
 {
 	U32 u_localUniforms[];
 };
 
-layout(set = MATERIAL_SET_EXTERNAL, binding = MATERIAL_BINDING_RENDERABLE_GPU_VIEW, row_major,
+layout(set = MATERIAL_SET_LOCAL, binding = MATERIAL_BINDING_RENDERABLE_GPU_VIEW, row_major,
 	   scalar) uniform b_renderableGpuView
 {
 	RenderableGpuView u_renderableGpuViews[MAX_INSTANCE_COUNT];
 };
 
-layout(set = MATERIAL_SET_EXTERNAL, binding = MATERIAL_BINDING_GLOBAL_UNIFORMS, row_major,
+layout(set = MATERIAL_SET_GLOBAL, binding = MATERIAL_BINDING_GLOBAL_UNIFORMS, row_major,
 	   scalar) uniform b_globalUniforms
 {
 	MaterialGlobalUniforms u_globalUniforms;
@@ -115,14 +87,14 @@ layout(set = MATERIAL_SET_EXTERNAL, binding = MATERIAL_BINDING_GLOBAL_UNIFORMS, 
 
 #if ANKI_BONES
 #	pragma anki reflect b_boneTransforms
-layout(set = MATERIAL_SET_EXTERNAL, binding = MATERIAL_BINDING_BONE_TRANSFORMS, row_major,
+layout(set = MATERIAL_SET_LOCAL, binding = MATERIAL_BINDING_BONE_TRANSFORMS, row_major,
 	   std140) readonly buffer b_boneTransforms
 {
 	Mat4 u_boneTransforms[];
 };
 
 #	pragma anki reflect b_prevFrameBoneTransforms
-layout(set = MATERIAL_SET_EXTERNAL, binding = MATERIAL_BINDING_PREVIOUS_BONE_TRANSFORMS, row_major,
+layout(set = MATERIAL_SET_LOCAL, binding = MATERIAL_BINDING_PREVIOUS_BONE_TRANSFORMS, row_major,
 	   std140) readonly buffer b_prevFrameBoneTransforms
 {
 	Mat4 u_prevFrameBoneTransforms[];
@@ -351,49 +323,52 @@ void main()
 
 #if ANKI_TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER
 #	if REALLY_USING_PARALLAX
-	const Vec2 uv = computeTextureCoordParallax(u_heightTex, u_globalSampler, in_uv, localUniforms.m_heightmapScale);
+	const Vec2 uv = computeTextureCoordParallax(u_bindlessTextures2dF32[localUniforms.m_heightTex], u_globalSampler,
+												in_uv, localUniforms.m_heightmapScale);
 #	else
 	const Vec2 uv = in_uv;
 #	endif
 
 #	if DIFFUSE_TEX
 #		if ALPHA_TEST
-	const ANKI_RP Vec4 diffColorA = texture(u_diffTex, u_globalSampler, uv);
+	const ANKI_RP Vec4 diffColorA = texture(u_bindlessTextures2dF32[localUniforms.m_diffTex], u_globalSampler, uv);
 	doAlphaText(diffColorA.a);
 	const ANKI_RP Vec3 diffColor = diffColorA.rgb;
 #		else
-	const ANKI_RP Vec3 diffColor = texture(u_diffTex, u_globalSampler, uv).rgb;
+	const ANKI_RP Vec3 diffColor = texture(u_bindlessTextures2dF32[localUniforms.m_diffTex], u_globalSampler, uv).rgb;
 #		endif
 #	else
 	const ANKI_RP Vec3 diffColor = localUniforms.m_diffColor;
 #	endif
 
 #	if SPECULAR_TEX
-	const ANKI_RP Vec3 specColor = texture(u_specTex, u_globalSampler, uv).rgb;
+	const ANKI_RP Vec3 specColor = texture(u_bindlessTextures2dF32[localUniforms.m_specTex], u_globalSampler, uv).rgb;
 #	else
 	const ANKI_RP Vec3 specColor = localUniforms.m_specColor;
 #	endif
 
 #	if ROUGHNESS_TEX
-	const ANKI_RP F32 roughness = texture(u_roughnessTex, u_globalSampler, uv).g;
+	const ANKI_RP F32 roughness = texture(u_bindlessTextures2dF32[localUniforms.m_roughnessTex], u_globalSampler, uv).g;
 #	else
 	const ANKI_RP F32 roughness = localUniforms.m_roughness;
 #	endif
 
 #	if METAL_TEX
-	const ANKI_RP F32 metallic = texture(u_metallicTex, u_globalSampler, uv).b;
+	const ANKI_RP F32 metallic = texture(u_bindlessTextures2dF32[localUniforms.m_metallicTex], u_globalSampler, uv).b;
 #	else
 	const ANKI_RP F32 metallic = localUniforms.m_metallic;
 #	endif
 
 #	if NORMAL_TEX
-	const ANKI_RP Vec3 normal = readNormalFromTexture(u_normalTex, u_globalSampler, uv);
+	const ANKI_RP Vec3 normal =
+		readNormalFromTexture(u_bindlessTextures2dF32[localUniforms.m_normalTex], u_globalSampler, uv);
 #	else
 	const ANKI_RP Vec3 normal = normalize(in_normal);
 #	endif
 
 #	if EMISSIVE_TEX
-	const ANKI_RP Vec3 emission = texture(u_emissiveTex, u_globalSampler, uv).rgb;
+	const ANKI_RP Vec3 emission =
+		texture(u_bindlessTextures2dF32[localUniforms.m_emissiveTex], u_globalSampler, uv).rgb;
 #	else
 	const ANKI_RP Vec3 emission = localUniforms.m_emission;
 #	endif
@@ -413,7 +388,7 @@ void main()
 #endif
 
 #if ANKI_TECHNIQUE != RENDERING_TECHNIQUE_GBUFFER && ALPHA_TEST
-	doAlphaText(texture(u_diffTex, u_globalSampler, in_uv).a);
+	doAlphaText(texture(u_bindlessTextures2dF32[localUniforms.m_diffTex], u_globalSampler, in_uv).a);
 #endif
 }
 

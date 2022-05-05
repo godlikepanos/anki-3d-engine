@@ -113,27 +113,28 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		return Error::USER_DATA;
 	}
 
+	ANKI_CHECK(m_resources->loadResource("Shaders/ClearTextureCompute.ankiprog", m_clearTexComputeProg));
+
+	// Dummy resources
 	{
 		TextureInitInfo texinit("RendererDummy");
 		texinit.m_width = texinit.m_height = 4;
-		texinit.m_usage = TextureUsageBit::ALL_SAMPLED;
+		texinit.m_usage = TextureUsageBit::ALL_SAMPLED | TextureUsageBit::IMAGE_COMPUTE_WRITE;
 		texinit.m_format = Format::R8G8B8A8_UNORM;
-		TexturePtr tex = getGrManager().newTexture(texinit);
+		TexturePtr tex = createAndClearRenderTarget(texinit, TextureUsageBit::ALL_SAMPLED);
 
 		TextureViewInitInfo viewinit(tex);
 		m_dummyTexView2d = getGrManager().newTextureView(viewinit);
 
 		texinit.m_depth = 4;
 		texinit.m_type = TextureType::_3D;
-		tex = getGrManager().newTexture(texinit);
+		tex = createAndClearRenderTarget(texinit, TextureUsageBit::ALL_SAMPLED);
 		viewinit = TextureViewInitInfo(tex);
 		m_dummyTexView3d = getGrManager().newTextureView(viewinit);
+
+		m_dummyBuff = getGrManager().newBuffer(BufferInitInfo(
+			1024, BufferUsageBit::ALL_UNIFORM | BufferUsageBit::ALL_STORAGE, BufferMapAccessBit::NONE, "Dummy"));
 	}
-
-	m_dummyBuff = getGrManager().newBuffer(BufferInitInfo(
-		1024, BufferUsageBit::ALL_UNIFORM | BufferUsageBit::ALL_STORAGE, BufferMapAccessBit::NONE, "Dummy"));
-
-	ANKI_CHECK(m_resources->loadResource("Shaders/ClearTextureCompute.ankiprog", m_clearTexComputeProg));
 
 	// Init the stages. Careful with the order!!!!!!!!!!
 	m_genericCompute.reset(m_alloc.newInstance<GenericCompute>(this));

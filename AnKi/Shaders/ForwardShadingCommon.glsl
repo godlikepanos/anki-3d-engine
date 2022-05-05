@@ -23,13 +23,14 @@ layout(location = VERTEX_ATTRIBUTE_ID_POSITION) in Vec3 in_position;
 //
 #if defined(ANKI_FRAGMENT_SHADER)
 // Global resources
-layout(set = MATERIAL_SET_INTERNAL, binding = 0) uniform sampler u_linearAnyClampSampler;
-layout(set = MATERIAL_SET_INTERNAL, binding = 1) uniform texture2D u_gbufferDepthRt;
-layout(set = MATERIAL_SET_INTERNAL, binding = 2) uniform ANKI_RP texture3D u_lightVol;
-#	define CLUSTERED_SHADING_SET MATERIAL_SET_INTERNAL
-#	define CLUSTERED_SHADING_UNIFORMS_BINDING 3
-#	define CLUSTERED_SHADING_LIGHTS_BINDING 4
-#	define CLUSTERED_SHADING_CLUSTERS_BINDING 7
+layout(set = MATERIAL_SET_GLOBAL,
+	   binding = MATERIAL_BINDING_LINEAR_CLAMP_SAMPLER) uniform sampler u_linearAnyClampSampler;
+layout(set = MATERIAL_SET_GLOBAL, binding = MATERIAL_BINDING_DEPTH_RT) uniform texture2D u_gbufferDepthRt;
+layout(set = MATERIAL_SET_GLOBAL, binding = MATERIAL_BINDING_LIGHT_VOLUME) uniform ANKI_RP texture3D u_lightVol;
+#	define CLUSTERED_SHADING_SET MATERIAL_SET_GLOBAL
+#	define CLUSTERED_SHADING_UNIFORMS_BINDING MATERIAL_BINDING_CLUSTER_SHADING_UNIFORMS
+#	define CLUSTERED_SHADING_LIGHTS_BINDING MATERIAL_BINDING_CLUSTER_SHADING_LIGHTS
+#	define CLUSTERED_SHADING_CLUSTERS_BINDING MATERIAL_BINDING_CLUSTERS
 #	include <AnKi/Shaders/ClusteredShadingCommon.glsl>
 
 layout(location = 0) out Vec4 out_color;

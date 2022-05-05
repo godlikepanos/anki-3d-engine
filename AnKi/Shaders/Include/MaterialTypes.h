@@ -18,31 +18,29 @@ struct MaterialGlobalUniforms
 	Mat3 m_cameraRotationMatrix;
 };
 
-// Begin standard bindings
-const U32 MATERIAL_BINDING_GLOBAL_SAMPLER = 0u;
+const U32 MATERIAL_SET_BINDLESS = 0u;
+const U32 MATERIAL_SET_GLOBAL = 1u;
+const U32 MATERIAL_SET_LOCAL = 2u;
+
+// Begin global bindings
+const U32 MATERIAL_BINDING_TRILINEAR_REPEAT_SAMPLER = 0u;
+const U32 MATERIAL_BINDING_GLOBAL_UNIFORMS = 1u;
+
+// For forward shading:
+const U32 MATERIAL_BINDING_LINEAR_CLAMP_SAMPLER = 2u;
+const U32 MATERIAL_BINDING_DEPTH_RT = 3u;
+const U32 MATERIAL_BINDING_LIGHT_VOLUME = 4u;
+const U32 MATERIAL_BINDING_CLUSTER_SHADING_UNIFORMS = 5u;
+const U32 MATERIAL_BINDING_CLUSTER_SHADING_LIGHTS = 6u;
+const U32 MATERIAL_BINDING_CLUSTERS = 9u;
+// End global bindings
+
+// Begin local bindings
+const U32 MATERIAL_BINDING_LOCAL_UNIFORMS = 0u;
 const U32 MATERIAL_BINDING_RENDERABLE_GPU_VIEW = 1u;
-const U32 MATERIAL_BINDING_LOCAL_UNIFORMS = 2u;
-const U32 MATERIAL_BINDING_GLOBAL_UNIFORMS = 3u;
-const U32 MATERIAL_BINDING_BONE_TRANSFORMS = 4u;
-const U32 MATERIAL_BINDING_PREVIOUS_BONE_TRANSFORMS = 5u;
-// End standard bindings
-
-const U32 MATERIAL_BINDING_STANDARD_BINDING_COUNT = 6u;
-const U32 MATERIAL_BINDING_FIRST_NON_STANDARD = MATERIAL_BINDING_STANDARD_BINDING_COUNT;
-
-const U32 MATERIAL_SET_INTERNAL = 0u;
-const U32 MATERIAL_SET_EXTERNAL = 1u;
-
-#define ANKI_MATERIAL_UNIFORM_BUFFER(bindingNum, structName, varName) \
-	layout(set = MATERIAL_SET_EXTERNAL, binding = bindingNum, row_major, scalar) uniform b_##varName \
-	{ \
-		structName varName; \
-	};
-
-#define ANKI_MATERIAL_STORAGE_BUFFER(bindingNum, structName, varName) \
-	layout(set = MATERIAL_SET_EXTERNAL, binding = bindingNum, row_major, scalar) buffer b_##varName \
-	{ \
-		structName varName; \
-	};
+const U32 MATERIAL_BINDING_BONE_TRANSFORMS = 2u;
+const U32 MATERIAL_BINDING_PREVIOUS_BONE_TRANSFORMS = 3u;
+const U32 MATERIAL_BINDING_FIRST_NON_STANDARD_LOCAL = 4u;
+// End local bindings
 
 ANKI_END_NAMESPACE

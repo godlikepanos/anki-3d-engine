@@ -263,7 +263,7 @@ Error MaterialResource::createVars(Program& prog)
 				// different programs have different signature for AnKiLocalUniforms
 				for(const MaterialVariable& otherVar : m_vars)
 				{
-					if(otherVar.isTexture())
+					if(!otherVar.isUniform())
 					{
 						continue;
 					}
@@ -356,7 +356,7 @@ Error MaterialResource::createVars(Program& prog)
 				// Check that there are no other opaque with the same binding
 				for(const MaterialVariable& otherVar : m_vars)
 				{
-					if(!otherVar.isTexture())
+					if(!otherVar.isBoundableTexture())
 					{
 						continue;
 					}
@@ -561,7 +561,7 @@ Error MaterialResource::findBuiltinMutators(Program& prog)
 			const U32 binding = storageBlocks[i].m_binding;
 			const U32 set = storageBlocks[i].m_set;
 			if((binding == MATERIAL_BINDING_BONE_TRANSFORMS || binding == MATERIAL_BINDING_PREVIOUS_BONE_TRANSFORMS)
-			   && set == MATERIAL_SET_EXTERNAL)
+			   && set == MATERIAL_SET_LOCAL)
 			{
 				++foundCount;
 			}
@@ -636,13 +636,43 @@ Error MaterialResource::parseInput(XmlElement inputEl, Bool async, BitSet<128>& 
 	varsSet.set(idx);
 
 	// Set the value
-	if(foundVar->isTexture())
+	if(foundVar->isBoundableTexture())
 	{
 		CString texfname;
 		ANKI_CHECK(inputEl.getAttributeText("value", texfname));
 		ANKI_CHECK(getManager().loadResource(texfname, foundVar->m_image, async));
 
 		m_textures.emplaceBack(getAllocator(), foundVar->m_image->getTexture());
+	}
+	else if(foundVar->m_dataType == ShaderVariableDataType::U32)
+	{
+		// U32 is a bit special. It might be a number or a bindless texture
+
+		CString value;
+		ANKI_CHECK(inputEl.getAttributeText("value", value));
+
+		// Check if the value has letters
+		Bool containsAlpharithmetic = false;
+		for(Char c : value)
+		{
+			if((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'a'))
+			{
+				containsAlpharithmetic = true;
+				break;
+			}
+		}
+
+		// If it has letters it's a texture
+		if(containsAlpharithmetic)
+		{
+			ANKI_CHECK(getManager().loadResource(value, foundVar->m_image, async));
+
+			foundVar->m_U32 = foundVar->m_image->getTextureView()->getOrCreateBindlessTextureIndex();
+		}
+		else
+		{
+			ANKI_CHECK(GetAttribute<U32>()(inputEl, foundVar->m_U32));
+		}
 	}
 	else
 	{
@@ -675,7 +705,7 @@ void MaterialResource::prefillLocalUniforms()
 
 	for(const MaterialVariable& var : m_vars)
 	{
-		if(var.isTexture())
+		if(!var.isUniform())
 		{
 			continue;
 		}

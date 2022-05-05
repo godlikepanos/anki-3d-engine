@@ -247,11 +247,11 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 															tokenPrev);
 			memcpy(trfs, &skinc.getPreviousFrameBoneTransforms()[0], boneCount * sizeof(Mat4));
 
-			cmdb->bindStorageBuffer(MATERIAL_SET_EXTERNAL, MATERIAL_BINDING_BONE_TRANSFORMS, token.m_buffer,
+			cmdb->bindStorageBuffer(MATERIAL_SET_LOCAL, MATERIAL_BINDING_BONE_TRANSFORMS, token.m_buffer,
 									token.m_offset, token.m_range);
 
-			cmdb->bindStorageBuffer(MATERIAL_SET_EXTERNAL, MATERIAL_BINDING_PREVIOUS_BONE_TRANSFORMS,
-									tokenPrev.m_buffer, tokenPrev.m_offset, tokenPrev.m_range);
+			cmdb->bindStorageBuffer(MATERIAL_SET_LOCAL, MATERIAL_BINDING_PREVIOUS_BONE_TRANSFORMS, tokenPrev.m_buffer,
+									tokenPrev.m_offset, tokenPrev.m_range);
 		}
 
 		// Program

@@ -19,10 +19,10 @@ layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
 layout(set = 0, binding = 1) uniform texture2D u_depthTex;
 layout(set = 0, binding = 2) uniform sampler u_trilinearRepeatSampler;
 
-#define CLUSTERED_SHADING_SET 0
-#define CLUSTERED_SHADING_UNIFORMS_BINDING 3
-#define CLUSTERED_SHADING_DECALS_BINDING 4
-#define CLUSTERED_SHADING_CLUSTERS_BINDING 7
+#define CLUSTERED_SHADING_SET 0u
+#define CLUSTERED_SHADING_UNIFORMS_BINDING 3u
+#define CLUSTERED_SHADING_DECALS_BINDING 4u
+#define CLUSTERED_SHADING_CLUSTERS_BINDING 7u
 #include <AnKi/Shaders/ClusteredShadingCommon.glsl>
 
 layout(location = 0) in Vec2 in_uv;

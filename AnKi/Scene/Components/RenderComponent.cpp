@@ -23,12 +23,7 @@ void RenderComponent::allocateAndSetupUniforms(const MaterialResourcePtr& mtl, c
 
 	CommandBufferPtr cmdb = ctx.m_commandBuffer;
 
-	const U32 set = MATERIAL_SET_EXTERNAL;
-
-	cmdb->bindSampler(set, MATERIAL_BINDING_GLOBAL_SAMPLER, ctx.m_sampler);
-
-	cmdb->bindUniformBuffer(set, MATERIAL_BINDING_GLOBAL_UNIFORMS, ctx.m_globalUniforms.m_buffer,
-							ctx.m_globalUniforms.m_offset, ctx.m_globalUniforms.m_range);
+	const U32 set = MATERIAL_SET_LOCAL;
 
 	// Fill the RenderableGpuView
 	const U32 renderableGpuViewsUboSize = sizeof(RenderableGpuView) * transforms.getSize();
@@ -72,6 +67,12 @@ void RenderComponent::allocateAndSetupUniforms(const MaterialResourcePtr& mtl, c
 	{
 		switch(mvar.getDataType())
 		{
+		case ShaderVariableDataType::U32:
+		{
+			const U32 val = mvar.getValue<U32>();
+			memcpy(localUniformsBegin + mvar.getOffsetInLocalUniforms(), &val, sizeof(val));
+			break;
+		}
 		case ShaderVariableDataType::F32:
 		{
 			const F32 val = mvar.getValue<F32>();

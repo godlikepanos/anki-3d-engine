@@ -74,15 +74,20 @@ public:
 	template<typename T>
 	const T& getValue() const;
 
-	Bool isTexture() const
+	Bool isBoundableTexture() const
 	{
 		return m_dataType >= ShaderVariableDataType::TEXTURE_FIRST
 			   && m_dataType <= ShaderVariableDataType::TEXTURE_LAST;
 	}
 
+	Bool isBindlessTexture() const
+	{
+		return m_dataType == ShaderVariableDataType::U32 && m_image.get();
+	}
+
 	Bool isUniform() const
 	{
-		return !isTexture();
+		return !isBoundableTexture();
 	}
 
 	ShaderVariableDataType getDataType() const
@@ -94,7 +99,7 @@ public:
 	/// Get the binding of a texture or a sampler type of material variable.
 	U32 getTextureBinding() const
 	{
-		ANKI_ASSERT(m_opaqueBinding != MAX_U32 && isTexture());
+		ANKI_ASSERT(m_opaqueBinding != MAX_U32 && isBoundableTexture());
 		return m_opaqueBinding;
 	}
 
@@ -142,7 +147,7 @@ protected:
 template<>
 inline const ImageResourcePtr& MaterialVariable::getValue() const
 {
-	ANKI_ASSERT(isTexture());
+	ANKI_ASSERT(m_image.get());
 	return m_image;
 }
 

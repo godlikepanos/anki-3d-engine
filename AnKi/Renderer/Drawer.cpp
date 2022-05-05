@@ -46,17 +46,26 @@ void RenderableDrawer::drawRange(RenderingTechnique technique, const Mat4& viewM
 {
 	ANKI_ASSERT(begin && end && begin < end);
 
-	// Allocate and set global uniforms
-	StagingGpuMemoryToken globalUniformsToken;
-	MaterialGlobalUniforms* globalIniforms =
-		static_cast<MaterialGlobalUniforms*>(m_r->getStagingGpuMemory().allocateFrame(
-			sizeof(MaterialGlobalUniforms), StagingGpuMemoryType::UNIFORM, globalUniformsToken));
-	memcpy(&globalIniforms->m_viewProjectionMatrix[0], &viewProjMat, sizeof(viewProjMat));
-	const Mat3x4 viewMat3x4(viewMat);
-	memcpy(&globalIniforms->m_viewMatrix[0], &viewMat3x4, sizeof(viewMat3x4));
-	globalIniforms->m_viewRotationMatrix = viewMat.getRotationPart();
-	const Mat3 camRotationMatrix = viewMat.getInverse().getRotationPart();
-	globalIniforms->m_cameraRotationMatrix = camRotationMatrix;
+	// Allocate, set and bind global uniforms
+	{
+		StagingGpuMemoryToken globalUniformsToken;
+		MaterialGlobalUniforms* globalIniforms =
+			static_cast<MaterialGlobalUniforms*>(m_r->getStagingGpuMemory().allocateFrame(
+				sizeof(MaterialGlobalUniforms), StagingGpuMemoryType::UNIFORM, globalUniformsToken));
+		memcpy(&globalIniforms->m_viewProjectionMatrix[0], &viewProjMat, sizeof(viewProjMat));
+		const Mat3x4 viewMat3x4(viewMat);
+		memcpy(&globalIniforms->m_viewMatrix[0], &viewMat3x4, sizeof(viewMat3x4));
+		globalIniforms->m_viewRotationMatrix = viewMat.getRotationPart();
+		const Mat3 camRotationMatrix = viewMat.getInverse().getRotationPart();
+		globalIniforms->m_cameraRotationMatrix = camRotationMatrix;
+
+		cmdb->bindUniformBuffer(MATERIAL_SET_GLOBAL, MATERIAL_BINDING_GLOBAL_UNIFORMS, globalUniformsToken.m_buffer,
+								globalUniformsToken.m_offset, globalUniformsToken.m_range);
+	}
+
+	// More globals
+	cmdb->bindAllBindless(MATERIAL_SET_BINDLESS);
+	cmdb->bindSampler(MATERIAL_SET_GLOBAL, MATERIAL_BINDING_TRILINEAR_REPEAT_SAMPLER, sampler);
 
 	// Set a few things
 	DrawContext ctx;
@@ -67,12 +76,9 @@ void RenderableDrawer::drawRange(RenderingTechnique technique, const Mat4& viewM
 	ctx.m_queueCtx.m_cameraTransform = ctx.m_queueCtx.m_viewMatrix.getInverse();
 	ctx.m_queueCtx.m_stagingGpuAllocator = &m_r->getStagingGpuMemory();
 	ctx.m_queueCtx.m_commandBuffer = cmdb;
-	ctx.m_queueCtx.m_sampler = sampler;
 	ctx.m_queueCtx.m_key = RenderingKey(technique, 0, 1, false, false);
 	ctx.m_queueCtx.m_debugDraw = false;
-	ctx.m_queueCtx.m_globalUniforms.m_buffer = globalUniformsToken.m_buffer;
-	ctx.m_queueCtx.m_globalUniforms.m_offset = globalUniformsToken.m_offset;
-	ctx.m_queueCtx.m_globalUniforms.m_range = globalUniformsToken.m_range;
+	ctx.m_queueCtx.m_sampler = sampler;
 
 	ANKI_ASSERT(minLod < MAX_LOD_COUNT && maxLod < MAX_LOD_COUNT);
 	ctx.m_minLod = U8(minLod);

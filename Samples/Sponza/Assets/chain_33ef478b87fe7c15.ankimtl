@@ -25,7 +25,7 @@
 
 	<inputs>
 		
-		<input name="u_diffTex" value="Assets/chain_texture_tga.ankitex"/>
+		<input name="m_diffTex" value="Assets/chain_texture_tga.ankitex"/>
 		<input name="m_specColor" value="0.040000 0.040000 0.040000"/>
 		<input name="m_roughness" value="0.500000"/>
 		<input name="m_metallic" value="0.000000"/>

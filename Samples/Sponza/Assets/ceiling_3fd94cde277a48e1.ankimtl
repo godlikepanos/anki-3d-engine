@@ -25,9 +25,9 @@
 
 	<inputs>
 		
-		<input name="u_diffTex" value="Assets/sponza_ceiling_a_diff_tga.ankitex"/>
+		<input name="m_diffTex" value="Assets/sponza_ceiling_a_diff_tga.ankitex"/>
 		<input name="m_specColor" value="0.040000 0.040000 0.040000"/>
-		<input name="u_roughnessTex" value="Assets/Sponza_Ceiling_roughness_tga.ankitex"/>
+		<input name="m_roughnessTex" value="Assets/Sponza_Ceiling_roughness_tga.ankitex"/>
 		<input name="m_metallic" value="0.000000"/>
 		
 		<input name="m_emission" value="0.000000 0.000000 0.000000"/>

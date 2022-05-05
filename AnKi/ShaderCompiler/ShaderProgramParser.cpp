@@ -76,7 +76,7 @@ static const char SHADER_HEADER[] = R"(#version 460 core
 	layout(set = set_, binding = 0) uniform texture2D u_bindlessTextures2dF32[ANKI_MAX_BINDLESS_TEXTURES]; \
 	layout(set = set_, binding = 1) uniform readonly uimage2D u_bindlessImages2dU32[ANKI_MAX_BINDLESS_IMAGES]; \
 	layout(set = set_, binding = 1) uniform readonly iimage2D u_bindlessImages2dI32[ANKI_MAX_BINDLESS_IMAGES]; \
-	layout(set = set_, binding = 1) uniform readonly image2D u_bindlessImages2dF32[ANKI_MAX_BINDLESS_IMAGES]
+	layout(set = set_, binding = 1) uniform readonly image2D u_bindlessImages2dF32[ANKI_MAX_BINDLESS_IMAGES];
 
 #define F32 float
 #define _ANKI_SIZEOF_float 4u
@@ -959,6 +959,10 @@ Error ShaderProgramParser::parsePragmaMember(const StringAuto* begin, const Stri
 	else if(typeStr == "Vec4")
 	{
 		member.m_type = ShaderVariableDataType::VEC4;
+	}
+	else if(typeStr == "U32")
+	{
+		member.m_type = ShaderVariableDataType::U32;
 	}
 
 	if(member.m_type == ShaderVariableDataType::NONE)

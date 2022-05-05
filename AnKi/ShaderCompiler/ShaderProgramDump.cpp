@@ -294,7 +294,8 @@ void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& huma
 	count = 0;
 	for(const ShaderProgramBinaryMutation& mutation : binary.m_mutations)
 	{
-		lines.pushBackSprintf(ANKI_TAB "#mut%-4u variantIndex #var%05u values (", count++, mutation.m_variantIndex);
+		lines.pushBackSprintf(ANKI_TAB "#mut%-4u variantIndex #var%05u hash 0x%016" PRIX64 " values (", count++,
+							  mutation.m_variantIndex, mutation.m_hash);
 		if(mutation.m_values.getSize() > 0)
 		{
 			for(U32 i = 0; i < mutation.m_values.getSize(); ++i)

@@ -19,10 +19,10 @@ ANKI_SPECIALIZATION_CONSTANT_U32(SAMPLE_COUNT, 6u);
 #include <AnKi/Shaders/TonemappingFunctions.glsl>
 #include <AnKi/Shaders/Include/IndirectDiffuseTypes.h>
 
-#define CLUSTERED_SHADING_SET 0
-#define CLUSTERED_SHADING_UNIFORMS_BINDING 0
-#define CLUSTERED_SHADING_GI_BINDING 1
-#define CLUSTERED_SHADING_CLUSTERS_BINDING 3
+#define CLUSTERED_SHADING_SET 0u
+#define CLUSTERED_SHADING_UNIFORMS_BINDING 0u
+#define CLUSTERED_SHADING_GI_BINDING 1u
+#define CLUSTERED_SHADING_CLUSTERS_BINDING 3u
 #include <AnKi/Shaders/ClusteredShadingCommon.glsl>
 
 layout(set = 0, binding = 4) uniform sampler u_linearAnyClampSampler;

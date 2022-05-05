@@ -27,10 +27,10 @@ layout(set = 0, binding = 6) uniform sampler u_trilinearRepeatSampler;
 layout(set = 0, binding = 7) uniform ANKI_RP texture2D u_noiseTex;
 const Vec2 NOISE_TEX_SIZE = Vec2(64.0);
 
-#define CLUSTERED_SHADING_SET 0
-#define CLUSTERED_SHADING_UNIFORMS_BINDING 8
-#define CLUSTERED_SHADING_REFLECTIONS_BINDING 9
-#define CLUSTERED_SHADING_CLUSTERS_BINDING 11
+#define CLUSTERED_SHADING_SET 0u
+#define CLUSTERED_SHADING_UNIFORMS_BINDING 8u
+#define CLUSTERED_SHADING_REFLECTIONS_BINDING 9u
+#define CLUSTERED_SHADING_CLUSTERS_BINDING 11u
 #include <AnKi/Shaders/ClusteredShadingCommon.glsl>
 
 #if defined(ANKI_COMPUTE_SHADER)

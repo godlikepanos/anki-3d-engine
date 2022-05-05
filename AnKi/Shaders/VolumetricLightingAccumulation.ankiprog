@@ -26,12 +26,12 @@ layout(set = 0, binding = 2) writeonly uniform image3D u_volume;
 layout(set = 0, binding = 3) uniform texture2D u_noiseTex;
 layout(set = 0, binding = 4) uniform texture3D u_prevVolume;
 
-#define CLUSTERED_SHADING_SET 0
-#define CLUSTERED_SHADING_UNIFORMS_BINDING 5
-#define CLUSTERED_SHADING_LIGHTS_BINDING 6
-#define CLUSTERED_SHADING_GI_BINDING 9
-#define CLUSTERED_SHADING_FOG_BINDING 11
-#define CLUSTERED_SHADING_CLUSTERS_BINDING 12
+#define CLUSTERED_SHADING_SET 0u
+#define CLUSTERED_SHADING_UNIFORMS_BINDING 5u
+#define CLUSTERED_SHADING_LIGHTS_BINDING 6u
+#define CLUSTERED_SHADING_GI_BINDING 9u
+#define CLUSTERED_SHADING_FOG_BINDING 11u
+#define CLUSTERED_SHADING_CLUSTERS_BINDING 12u
 #include <AnKi/Shaders/ClusteredShadingCommon.glsl>
 
 struct FogUniforms
