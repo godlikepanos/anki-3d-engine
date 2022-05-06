@@ -480,22 +480,35 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 	{
 	case 0x13B5:
 		m_capabilities.m_gpuVendor = GpuVendor::ARM;
+		m_capabilities.m_minSubgroupSize = 16;
+		m_capabilities.m_maxSubgroupSize = 16;
 		break;
 	case 0x10DE:
 		m_capabilities.m_gpuVendor = GpuVendor::NVIDIA;
+		m_capabilities.m_minSubgroupSize = 32;
+		m_capabilities.m_maxSubgroupSize = 32;
 		break;
 	case 0x1002:
 	case 0x1022:
 		m_capabilities.m_gpuVendor = GpuVendor::AMD;
+		m_capabilities.m_minSubgroupSize = 32;
+		m_capabilities.m_maxSubgroupSize = 64;
 		break;
 	case 0x8086:
 		m_capabilities.m_gpuVendor = GpuVendor::INTEL;
+		m_capabilities.m_minSubgroupSize = 8;
+		m_capabilities.m_maxSubgroupSize = 32;
 		break;
 	case 0x5143:
 		m_capabilities.m_gpuVendor = GpuVendor::QUALCOMM;
+		m_capabilities.m_minSubgroupSize = 64;
+		m_capabilities.m_maxSubgroupSize = 128;
 		break;
 	default:
 		m_capabilities.m_gpuVendor = GpuVendor::UNKNOWN;
+		// Choose something really low
+		m_capabilities.m_minSubgroupSize = 8;
+		m_capabilities.m_maxSubgroupSize = 8;
 	}
 	ANKI_VK_LOGI("GPU is %s. Vendor identified as %s", m_devProps.properties.deviceName,
 				 &GPU_VENDOR_STR[m_capabilities.m_gpuVendor][0]);
