@@ -923,6 +923,12 @@ Error ShaderProgramParser::parse()
 
 	// Checks
 	{
+		if(!m_shaderTypes)
+		{
+			ANKI_SHADER_COMPILER_LOGE("Haven't found any shader types");
+			return Error::USER_DATA;
+		}
+
 		if(!!(m_shaderTypes & ShaderTypeBit::COMPUTE))
 		{
 			if(m_shaderTypes != ShaderTypeBit::COMPUTE)

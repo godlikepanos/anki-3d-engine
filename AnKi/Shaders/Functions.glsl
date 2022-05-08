@@ -618,6 +618,21 @@ U32 encodeVrsRate(UVec2 rateXY)
 	return (rateXY.y >> 1u) | ((rateXY.x << 1u) & 12u);
 }
 
+U32 encodeAndSanitizeVrsRate(UVec2 rate)
+{
+	// 1x4 and 4x1 shading rates don't exist.
+	if(rate == UVec2(1u, 4u))
+	{
+		rate = UVec2(1u, 2u);
+	}
+	else if(rate == UVec2(4u, 1u))
+	{
+		rate = UVec2(2u, 1u);
+	}
+
+	return encodeVrsRate(rate);
+}
+
 /// Decodes a number produced by encodeVrsRate(). Returns the shading rates.
 UVec2 decodeVrsRate(U32 texel)
 {

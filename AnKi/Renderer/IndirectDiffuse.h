@@ -22,6 +22,7 @@ public:
 		: RendererObject(r)
 	{
 		registerDebugRenderTarget("IndirectDiffuse");
+		registerDebugRenderTarget("IndirectDiffuseVrsSri");
 	}
 
 	~IndirectDiffuse();
@@ -31,11 +32,7 @@ public:
 	void populateRenderGraph(RenderingContext& ctx);
 
 	void getDebugRenderTarget(CString rtName, RenderTargetHandle& handle,
-							  ShaderProgramPtr& optionalShaderProgram) const override
-	{
-		ANKI_ASSERT(rtName == "IndirectDiffuse");
-		handle = m_runCtx.m_mainRtHandles[WRITE];
-	}
+							  ShaderProgramPtr& optionalShaderProgram) const override;
 
 	RenderTargetHandle getRt() const
 	{
@@ -44,7 +41,6 @@ public:
 
 private:
 	Array<TexturePtr, 2> m_rts;
-	FramebufferDescription m_fbDescr;
 	Bool m_rtsImportedOnce = false;
 
 	static constexpr U32 READ = 0;
@@ -55,6 +51,20 @@ private:
 	public:
 		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
+		RenderTargetDescription m_rtHandle;
+
+		ShaderProgramResourcePtr m_visualizeProg;
+		ShaderProgramPtr m_visualizeGrProg;
+
+		U32 m_sriTexelDimension = 16;
+	} m_vrs;
+
+	class
+	{
+	public:
+		ShaderProgramResourcePtr m_prog;
+		ShaderProgramPtr m_grProg;
+		FramebufferDescription m_fbDescr;
 	} m_main;
 
 	class
@@ -62,11 +72,13 @@ private:
 	public:
 		ShaderProgramResourcePtr m_prog;
 		Array<ShaderProgramPtr, 2> m_grProgs;
+		FramebufferDescription m_fbDescr;
 	} m_denoise;
 
 	class
 	{
 	public:
+		RenderTargetHandle m_sriRt;
 		Array<RenderTargetHandle, 2> m_mainRtHandles;
 	} m_runCtx;
 
