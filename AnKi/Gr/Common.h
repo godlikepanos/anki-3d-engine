@@ -148,6 +148,12 @@ public:
 	/// The size of a shader group handle that will be placed inside an SBT record.
 	U32 m_shaderGroupHandleSize = 0;
 
+	/// Min subgroup size of the GPU.
+	U32 m_minSubgroupSize = 0;
+
+	/// Max subgroup size of the GPU.
+	U32 m_maxSubgroupSize = 0;
+
 	/// GPU vendor.
 	GpuVendor m_gpuVendor = GpuVendor::UNKNOWN;
 
@@ -177,7 +183,7 @@ public:
 };
 ANKI_END_PACKED_STRUCT
 static_assert(sizeof(GpuDeviceCapabilities)
-				  == sizeof(PtrSize) * 5 + sizeof(U32) * 5 + sizeof(U8) * 3 + sizeof(Bool) * 6,
+				  == sizeof(PtrSize) * 5 + sizeof(U32) * 7 + sizeof(U8) * 3 + sizeof(Bool) * 6,
 			  "Should be packed");
 
 /// The type of the allocator for heap allocations
