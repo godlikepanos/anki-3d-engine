@@ -1460,6 +1460,11 @@ void RenderGraph::getStatistics(RenderGraphStatistics& statistics) const
 #if ANKI_DBG_RENDER_GRAPH
 StringAuto RenderGraph::textureUsageToStr(StackAllocator<U8>& alloc, TextureUsageBit usage)
 {
+	if(!usage)
+	{
+		return StringAuto(alloc, "None");
+	}
+
 	StringListAuto slist(alloc);
 
 #	define ANKI_TEX_USAGE(u) \
@@ -1485,10 +1490,11 @@ StringAuto RenderGraph::textureUsageToStr(StackAllocator<U8>& alloc, TextureUsag
 	ANKI_TEX_USAGE(TRANSFER_DESTINATION);
 	ANKI_TEX_USAGE(GENERATE_MIPMAPS);
 	ANKI_TEX_USAGE(PRESENT);
+	ANKI_TEX_USAGE(FRAMEBUFFER_SHADING_RATE);
 
 	if(!usage)
 	{
-		slist.pushBackSprintf("NONE");
+		slist.pushBackSprintf("?");
 	}
 
 #	undef ANKI_TEX_USAGE

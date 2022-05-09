@@ -348,7 +348,7 @@ void DepthDownscale::runGraphics(U32 mip, RenderPassWorkContext& rgraphCtx)
 
 	cmdb->bindStorageBuffer(0, 2, m_clientBuffer, 0, MAX_PTR_SIZE);
 
-	UVec4 pc((mip != m_mipCount - 1) ? 0 : m_lastMipSize.x());
+	const UVec4 pc((mip != m_mipCount - 1) ? 0 : m_lastMipSize.x());
 	cmdb->setPushConstants(&pc, sizeof(pc));
 
 	const UVec2 size = (m_r->getInternalResolution() / 2) >> mip;

@@ -633,6 +633,34 @@ U32 encodeAndSanitizeVrsRate(UVec2 rate)
 	return encodeVrsRate(rate);
 }
 
+Vec3 visualizeVrsRate(UVec2 rate)
+{
+	if(rate == UVec2(1u))
+	{
+		return Vec3(1.0, 0.0, 0.0);
+	}
+	else if(rate == UVec2(2u, 1u) || rate == UVec2(1u, 2u))
+	{
+		return Vec3(1.0, 0.5, 0.0);
+	}
+	else if(rate == UVec2(2u))
+	{
+		return Vec3(1.0, 1.0, 0.0);
+	}
+	else if(rate == UVec2(4u, 2u) || rate == UVec2(2u, 4u))
+	{
+		return Vec3(0.5, 1.0, 0.0);
+	}
+	else if(rate == UVec2(4u))
+	{
+		return Vec3(0.0, 1.0, 0.0);
+	}
+	else
+	{
+		return Vec3(0.0, 0.0, 0.0);
+	}
+}
+
 /// Decodes a number produced by encodeVrsRate(). Returns the shading rates.
 UVec2 decodeVrsRate(U32 texel)
 {
