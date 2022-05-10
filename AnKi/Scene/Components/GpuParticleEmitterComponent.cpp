@@ -213,13 +213,8 @@ void GpuParticleEmitterComponent::draw(RenderQueueDrawContext& ctx) const
 		RenderComponent::allocateAndSetupUniforms(m_particleEmitterResource->getMaterial(), ctx, identity, identity,
 												  *ctx.m_stagingGpuAllocator);
 
-		cmdb->bindStorageBuffer(0, 2, m_particlesBuff, 0, MAX_PTR_SIZE);
-
-		StagingGpuMemoryToken token;
-		Vec4* extraUniforms = static_cast<Vec4*>(
-			ctx.m_stagingGpuAllocator->allocateFrame(sizeof(Vec4), StagingGpuMemoryType::UNIFORM, token));
-		*extraUniforms = ctx.m_cameraTransform.getColumn(2);
-		cmdb->bindUniformBuffer(0, 3, token.m_buffer, token.m_offset, token.m_range);
+		cmdb->bindStorageBuffer(MATERIAL_SET_LOCAL, MATERIAL_BINDING_FIRST_NON_STANDARD_LOCAL, m_particlesBuff, 0,
+								MAX_PTR_SIZE);
 
 		// Draw
 		cmdb->setLineWidth(8.0f);

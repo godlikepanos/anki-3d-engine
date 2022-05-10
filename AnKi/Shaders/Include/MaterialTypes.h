@@ -16,6 +16,7 @@ struct MaterialGlobalUniforms
 	ScalarMat3x4 m_viewMatrix;
 	Mat3 m_viewRotationMatrix; ///< Essentially the rotation part of the view matrix.
 	Mat3 m_cameraRotationMatrix;
+	Vec3 m_cameraPosition; ///< In world space of course.
 };
 
 const U32 MATERIAL_SET_BINDLESS = 0u;

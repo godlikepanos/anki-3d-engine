@@ -67,6 +67,56 @@ MaterialVariable::~MaterialVariable()
 {
 }
 
+class MaterialResource::Program
+{
+public:
+	ShaderProgramResourcePtr m_prog;
+
+	mutable Array4d<MaterialVariant, U(RenderingTechnique::COUNT), MAX_LOD_COUNT, 2, 2> m_variantMatrix;
+	mutable RWMutex m_variantMatrixMtx;
+
+	DynamicArray<PartialMutation> m_partialMutation; ///< Only with the non-builtins.
+
+	U32 m_presentBuildinMutators = 0;
+	U32 m_localUniformsStructIdx = 0; ///< Struct index in the program binary.
+
+	U8 m_lodCount = 1;
+
+	Program() = default;
+
+	Program(const Program&) = delete; // Non-copyable
+
+	Program(Program&& b)
+	{
+		*this = std::move(b);
+	}
+
+	Program& operator=(const Program& b) = delete; // Non-copyable
+
+	Program& operator=(Program&& b)
+	{
+		m_prog = std::move(b.m_prog);
+		for(RenderingTechnique t : EnumIterable<RenderingTechnique>())
+		{
+			for(U32 l = 0; l < MAX_LOD_COUNT; ++l)
+			{
+				for(U32 skin = 0; skin < 2; ++skin)
+				{
+					for(U32 vel = 0; vel < 2; ++vel)
+					{
+						m_variantMatrix[t][skin][skin][vel] = std::move(b.m_variantMatrix[t][skin][skin][vel]);
+					}
+				}
+			}
+		}
+		m_partialMutation = std::move(b.m_partialMutation);
+		m_presentBuildinMutators = b.m_presentBuildinMutators;
+		m_localUniformsStructIdx = b.m_localUniformsStructIdx;
+		m_lodCount = b.m_lodCount;
+		return *this;
+	}
+};
+
 MaterialResource::MaterialResource(ResourceManager* manager)
 	: ResourceObject(manager)
 {

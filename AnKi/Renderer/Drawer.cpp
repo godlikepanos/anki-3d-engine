@@ -58,6 +58,7 @@ void RenderableDrawer::drawRange(RenderingTechnique technique, const Mat4& viewM
 		globalIniforms->m_viewRotationMatrix = viewMat.getRotationPart();
 		const Mat3 camRotationMatrix = viewMat.getInverse().getRotationPart();
 		globalIniforms->m_cameraRotationMatrix = camRotationMatrix;
+		globalIniforms->m_cameraPosition = viewMat.getInverse().getTranslationPart().xyz();
 
 		cmdb->bindUniformBuffer(MATERIAL_SET_GLOBAL, MATERIAL_BINDING_GLOBAL_UNIFORMS, globalUniformsToken.m_buffer,
 								globalUniformsToken.m_offset, globalUniformsToken.m_range);
