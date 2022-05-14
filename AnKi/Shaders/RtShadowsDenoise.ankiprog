@@ -28,7 +28,7 @@ layout(set = 0, binding = 5) uniform texture2D u_momentsTex;
 layout(set = 0, binding = 6) uniform texture2D u_historyLengthTex;
 layout(set = 0, binding = 7) writeonly uniform uimage2D u_outImg;
 
-layout(std430, push_constant, row_major) uniform b_pc
+layout(push_constant, row_major, std140) uniform b_pc
 {
 	RtShadowsDenoiseUniforms u_unis;
 };

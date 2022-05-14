@@ -86,7 +86,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos)
 	{
 		const I32 idx = findLSB2(cluster.m_spotLightsMask);
 		cluster.m_spotLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
-		const SpotLight light = u_spotLights2[idx];
+		const SpotLight light = u_spotLights[idx];
 
 		const Vec3 diffC = diffCol * light.m_diffuseColor;
 

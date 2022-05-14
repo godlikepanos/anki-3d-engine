@@ -27,7 +27,7 @@ layout(set = 0, binding = 5) uniform uimage2D u_shadowsImage;
 layout(set = 0, binding = 6) uniform image2D u_varianceImage;
 #endif
 
-layout(std430, push_constant, row_major) uniform b_pc
+layout(push_constant, row_major, std140) uniform b_pc
 {
 	Mat4 u_invProjMat;
 };

@@ -167,9 +167,8 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 			rgraphCtx.bindColorTexture(0, 9, m_r->getDbg().getRt());
 		}
 
-		UVec4 frameCountPad3;
-		frameCountPad3.x() = m_r->getFrameCount() & MAX_U32;
-		cmdb->setPushConstants(&frameCountPad3, sizeof(frameCountPad3));
+		const UVec4 frameCount(m_r->getFrameCount() & MAX_U32);
+		cmdb->setPushConstants(&frameCount, sizeof(frameCount));
 	}
 	else
 	{

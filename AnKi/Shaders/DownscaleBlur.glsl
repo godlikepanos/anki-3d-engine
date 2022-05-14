@@ -15,7 +15,7 @@ const UVec2 WORKGROUP_SIZE = UVec2(16, 16);
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
 
 // Push constants hold the size of the output image
-layout(push_constant, row_major, std430) uniform pc_
+layout(push_constant, row_major, std140) uniform b_pc
 {
 	UVec2 u_fbSize;
 	UVec2 u_padding;

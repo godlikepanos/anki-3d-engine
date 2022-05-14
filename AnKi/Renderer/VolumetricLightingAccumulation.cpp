@@ -126,14 +126,7 @@ void VolumetricLightingAccumulation::run(const RenderingContext& ctx, RenderPass
 	bindUniforms(cmdb, 0, 11, rsrc.m_fogDensityVolumesToken);
 	bindStorage(cmdb, 0, 12, rsrc.m_clustersToken);
 
-	class FogUniforms
-	{
-	public:
-		F32 m_densityAtMinHeight;
-		F32 m_densityAtMaxHeight;
-		F32 m_minHeight;
-		F32 m_oneOverMaxMinusMinHeight; // 1 / (maxHeight / minHeight)
-	} unis;
+	VolumetricLightingUniforms unis;
 	const SkyboxQueueElement& queueEl = ctx.m_renderQueue->m_skybox;
 	if(queueEl.m_fog.m_heightOfMaxDensity > queueEl.m_fog.m_heightOfMinDensity)
 	{

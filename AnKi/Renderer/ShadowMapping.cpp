@@ -9,7 +9,6 @@
 #include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Util/ThreadHive.h>
 #include <AnKi/Util/Tracer.h>
-#include <AnKi/Shaders/Include/ShadowMappingTypes.h>
 
 namespace anki {
 
@@ -159,11 +158,11 @@ void ShadowMapping::runAtlas(RenderPassWorkContext& rgraphCtx)
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
 	// Allocate and populate uniforms
-	ShadowMappingUniforms* uniforms = allocateAndBindStorage<ShadowMappingUniforms*>(
-		m_atlas.m_resolveWorkItems.getSize() * sizeof(ShadowMappingUniforms), cmdb, 0, 0);
+	EvsmResolveUniforms* uniforms = allocateAndBindStorage<EvsmResolveUniforms*>(
+		m_atlas.m_resolveWorkItems.getSize() * sizeof(EvsmResolveUniforms), cmdb, 0, 0);
 	for(U32 i = 0; i < m_atlas.m_resolveWorkItems.getSize(); ++i)
 	{
-		ShadowMappingUniforms& uni = uniforms[i];
+		EvsmResolveUniforms& uni = uniforms[i];
 		const Atlas::ResolveWorkItem& workItem = m_atlas.m_resolveWorkItems[i];
 
 		uni.m_viewportXY = IVec2(workItem.m_viewportOut.xy());

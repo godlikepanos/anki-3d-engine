@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <AnKi/Shaders/Include/RtShadows.h>
+#include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #include <AnKi/Shaders/PackFunctions.glsl>
 
 const F32 RT_SHADOWS_MAX_HISTORY_LENGTH = 16.0;

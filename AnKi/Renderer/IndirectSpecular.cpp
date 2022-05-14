@@ -11,7 +11,6 @@
 #include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Renderer/ProbeReflections.h>
 #include <AnKi/Core/ConfigSet.h>
-#include <AnKi/Shaders/Include/SsrTypes.h>
 
 namespace anki {
 

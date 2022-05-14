@@ -34,7 +34,7 @@ layout(set = 0, binding = 2) uniform texture2D u_gbufferTex[3u];
 #endif
 
 // This is a temporary buffer used instead of shared memory because we can't fit it into shared memory
-layout(set = 0, binding = 3, std430) buffer ssbo_
+layout(set = 0, binding = 3) buffer b_ssbo
 {
 	Vec4 u_integrationResults[6u * WORKGROUP_SIZE];
 };
@@ -42,13 +42,13 @@ layout(set = 0, binding = 3, std430) buffer ssbo_
 #if STORE_LOCATION == 0
 layout(set = 0, binding = 4) uniform writeonly image3D u_irradianceVolume;
 
-layout(push_constant, std430) uniform pc_
+layout(push_constant, std140) uniform b_pc
 {
 	IVec3 u_volumeTexel;
 	I32 u_nextTexelOffsetInU;
 };
 #else
-layout(set = 0, binding = 4, std430) writeonly buffer ssbo1_
+layout(set = 0, binding = 4) writeonly buffer b_ssbo1
 {
 	ANKI_RP Vec4 u_irradianceDisceResults[6u];
 };

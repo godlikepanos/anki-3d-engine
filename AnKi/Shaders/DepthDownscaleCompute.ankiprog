@@ -9,16 +9,13 @@
 
 #pragma anki start comp
 #include <AnKi/Shaders/Common.glsl>
+#include <AnKi/Shaders/Include/MiscRendererTypes.h>
 
 layout(local_size_x = 256) in;
 
-layout(push_constant, std430) uniform b_pc
+layout(push_constant, std140) uniform b_pc
 {
-	U32 u_workgroupCount;
-	U32 u_mipmapCount;
-	Vec2 u_srcTexSizeOverOne;
-	U32 u_lastMipWidth;
-	U32 u_padding[3u];
+	DepthDownscaleUniforms u_unis;
 };
 
 layout(set = 0, binding = 0) uniform image2D u_dstImages[12u];
@@ -47,7 +44,7 @@ shared AF1 s_spdIntermediateR[16][16];
 
 AF4 SpdLoadSourceImage(AU2 p, AU1 slice)
 {
-	const AF2 textureCoord = Vec2(p) * u_srcTexSizeOverOne + u_srcTexSizeOverOne;
+	const AF2 textureCoord = Vec2(p) * u_unis.m_srcTexSizeOverOne + u_unis.m_srcTexSizeOverOne;
 	return AF4(textureLod(u_srcTex, u_linearAnyClampSampler, textureCoord, 0.0).r, 0.0, 0.0, 0.0);
 }
 
@@ -68,9 +65,9 @@ void SpdStore(AU2 p, AF4 value, AU1 mip, AU1 slice)
 	}
 
 	// Store the last mip to the buffer as well
-	if(mip == u_mipmapCount - 1u)
+	if(mip == u_unis.m_mipmapCount - 1u)
 	{
-		const U32 idx = p.y * u_lastMipWidth + p.x;
+		const U32 idx = p.y * u_unis.m_lastMipWidth + p.x;
 		u_clientBuf[idx] = value.x;
 	}
 }
@@ -118,8 +115,8 @@ void main()
 {
 	const U32 slice = 0u;
 	const UVec2 offset = UVec2(0u);
-	SpdDownsample(AU2(gl_WorkGroupID.xy), AU1(gl_LocalInvocationIndex), AU1(u_mipmapCount), AU1(u_workgroupCount),
-				  slice, offset);
+	SpdDownsample(AU2(gl_WorkGroupID.xy), AU1(gl_LocalInvocationIndex), AU1(u_unis.m_mipmapCount),
+				  AU1(u_unis.m_workgroupCount), slice, offset);
 }
 
 #pragma anki end

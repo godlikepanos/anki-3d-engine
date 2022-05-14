@@ -227,7 +227,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 	if(getInput().getKey(KeyCode::U) == 1)
 	{
 		renderer.setCurrentDebugRenderTarget(
-			(renderer.getCurrentDebugRenderTarget() == "IndirectDiffuse") ? "" : "IndirectDiffuse");
+			(renderer.getCurrentDebugRenderTarget() == "GBufferNormals") ? "" : "GBufferNormals");
 	}
 
 	if(getInput().getKey(KeyCode::F1) == 1)

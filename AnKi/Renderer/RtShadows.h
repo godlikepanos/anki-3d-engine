@@ -9,7 +9,6 @@
 #include <AnKi/Renderer/RendererObject.h>
 #include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Util/BitSet.h>
-#include <AnKi/Shaders/Include/RtShadows.h>
 
 namespace anki {
 

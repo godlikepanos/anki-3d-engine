@@ -8,7 +8,7 @@
 
 #include <AnKi/Shaders/LightFunctions.glsl>
 #include <AnKi/Shaders/PackFunctions.glsl>
-#include <AnKi/Shaders/Include/SsrTypes.h>
+#include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #include <AnKi/Shaders/TonemappingFunctions.glsl>
 #include <AnKi/Shaders/SsRaymarching.glsl>
 
@@ -73,7 +73,7 @@ void main()
 
 	// Compute refl vector
 	const Vec3 viewDir = -normalize(viewPos);
-	const Vec3 viewNormal = u_unis.m_normalMat * worldNormal;
+	const Vec3 viewNormal = u_unis.m_normalMat * Vec4(worldNormal, 0.0);
 #if STOCHASTIC
 	const Vec3 reflDir = sampleReflectionVector(viewDir, viewNormal, roughness, noise.xy);
 #else
@@ -97,7 +97,7 @@ void main()
 	{
 		const Vec3 hitNormal =
 			u_unis.m_normalMat
-			* unpackNormalFromGBuffer(textureLod(u_gbufferRt2, u_trilinearClampSampler, hitPoint.xy, 0.0));
+			* Vec4(unpackNormalFromGBuffer(textureLod(u_gbufferRt2, u_trilinearClampSampler, hitPoint.xy, 0.0)), 0.0);
 		F32 backFaceAttenuation;
 		rejectBackFaces(reflDir, hitNormal, backFaceAttenuation);
 

@@ -259,15 +259,7 @@ void DepthDownscale::runCompute(RenderPassWorkContext& rgraphCtx)
 	SpdSetup(dispatchThreadGroupCountXY, workGroupOffset, numWorkGroupsAndMips, rectInfo);
 	SpdSetup(dispatchThreadGroupCountXY, workGroupOffset, numWorkGroupsAndMips, rectInfo, m_mipCount);
 
-	class PC
-	{
-	public:
-		U32 m_workgroupCount;
-		U32 m_mipmapCount;
-		Vec2 m_srcTexSizeOverOne;
-		U32 m_lastMipWidth;
-		U32 m_padding[3u];
-	} pc;
+	DepthDownscaleUniforms pc;
 	pc.m_workgroupCount = numWorkGroupsAndMips[0];
 	pc.m_mipmapCount = numWorkGroupsAndMips[1];
 	pc.m_srcTexSizeOverOne = 1.0f / Vec2(m_r->getInternalResolution());
@@ -347,7 +339,7 @@ void DepthDownscale::runGraphics(U32 mip, RenderPassWorkContext& rgraphCtx)
 
 	cmdb->bindStorageBuffer(0, 2, m_clientBuffer, 0, MAX_PTR_SIZE);
 
-	UVec4 pc((mip != m_mipCount - 1) ? 0 : m_lastMipSize.x());
+	const UVec4 pc((mip != m_mipCount - 1) ? 0 : m_lastMipSize.x());
 	cmdb->setPushConstants(&pc, sizeof(pc));
 
 	const UVec2 size = (m_r->getInternalResolution() / 2) >> mip;

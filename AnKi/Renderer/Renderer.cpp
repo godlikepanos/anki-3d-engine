@@ -301,7 +301,6 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	ctx.m_matrices.m_view = ctx.m_renderQueue->m_viewMatrix;
 	ctx.m_matrices.m_projection = ctx.m_renderQueue->m_projectionMatrix;
 	ctx.m_matrices.m_viewProjection = ctx.m_renderQueue->m_viewProjectionMatrix;
-	ctx.m_matrices.m_viewRotation = ctx.m_renderQueue->m_viewMatrix.getRotationPart();
 
 	ctx.m_matrices.m_jitter = m_jitteredMats8x[m_frameCount & (m_jitteredMats8x.getSize() - 1)];
 	ctx.m_matrices.m_projectionJitter = ctx.m_matrices.m_jitter * ctx.m_matrices.m_projection;

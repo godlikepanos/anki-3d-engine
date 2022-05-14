@@ -9,7 +9,6 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Util/Functions.h>
-#include <AnKi/Shaders/Include/LensFlareTypes.h>
 
 namespace anki {
 

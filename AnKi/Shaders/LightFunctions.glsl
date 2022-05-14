@@ -11,7 +11,7 @@
 #include <AnKi/Shaders/CollisionFunctions.glsl>
 #include <AnKi/Shaders/PackFunctions.glsl>
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
-#include <AnKi/Shaders/Include/Evsm.h>
+#include <AnKi/Shaders/Include/MiscRendererTypes.h>
 
 // Do some EVSM magic with depth
 Vec2 evsmProcessDepth(F32 depth)
@@ -212,7 +212,7 @@ ANKI_RP F32 computeShadowFactorPointLight(PointLight light, Vec3 frag2Light, tex
 	Vec2 uv = convertCubeUvsu(dir, faceIdxu);
 
 	// Get the atlas offset
-	const Vec2 atlasOffset = light.m_shadowAtlasTileOffsets[faceIdxu];
+	const Vec2 atlasOffset = light.m_shadowAtlasTileOffsets[faceIdxu].xy;
 
 	// Compute UV
 	uv *= Vec2(light.m_shadowAtlasTileScale);

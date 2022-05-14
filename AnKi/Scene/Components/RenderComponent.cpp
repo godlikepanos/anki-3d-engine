@@ -42,7 +42,6 @@ void RenderComponent::allocateAndSetupUniforms(const MaterialResourcePtr& mtl, c
 			memcpy(&renderableGpuViews->m_worldTransform, &transforms[i], sizeof(renderableGpuViews->m_worldTransform));
 			memcpy(&renderableGpuViews->m_previousWorldTransform, &prevTransforms[i],
 				   sizeof(renderableGpuViews->m_previousWorldTransform));
-			renderableGpuViews->m_worldRotation = transforms[i].getRotationPart();
 
 			++renderableGpuViews;
 		}

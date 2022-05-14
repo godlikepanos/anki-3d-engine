@@ -17,7 +17,7 @@ ANKI_SPECIALIZATION_CONSTANT_U32(SAMPLE_COUNT, 6u);
 #include <AnKi/Shaders/PackFunctions.glsl>
 #include <AnKi/Shaders/ImportanceSampling.glsl>
 #include <AnKi/Shaders/TonemappingFunctions.glsl>
-#include <AnKi/Shaders/Include/IndirectDiffuseTypes.h>
+#include <AnKi/Shaders/Include/MiscRendererTypes.h>
 
 #define CLUSTERED_SHADING_SET 0u
 #define CLUSTERED_SHADING_UNIFORMS_BINDING 0u
@@ -43,7 +43,7 @@ layout(location = 0) in Vec2 in_uv;
 layout(location = 0) out Vec3 out_color;
 #endif
 
-layout(push_constant, std430) uniform b_pc
+layout(push_constant, std140) uniform b_pc
 {
 	IndirectDiffuseUniforms u_unis;
 };
@@ -73,7 +73,7 @@ void main()
 
 	// Get normal
 	const Vec3 worldNormal = unpackNormalFromGBuffer(textureLod(u_gbufferRt2, u_linearAnyClampSampler, uv, 0.0));
-	const Vec3 viewNormal = u_clusteredShading.m_matrices.m_viewRotation * worldNormal;
+	const Vec3 viewNormal = (u_clusteredShading.m_matrices.m_view * Vec4(worldNormal, 0.0)).xyz;
 
 	// Get origin
 	const F32 depth = textureLod(u_depthRt, u_linearAnyClampSampler, uv, 0.0).r;
@@ -158,10 +158,6 @@ void main()
 
 		// Get the cluster
 		Cluster cluster = getClusterFragCoord(Vec3(fragCoord * 2.0, depth));
-
-		// Get world position
-		const Vec4 worldPos4 = u_clusteredShading.m_matrices.m_invertedViewProjectionJitter * Vec4(ndc, depth, 1.0);
-		const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
 		if(bitCount(cluster.m_giProbesMask) == 1)
 		{

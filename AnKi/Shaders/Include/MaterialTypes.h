@@ -12,12 +12,11 @@ ANKI_BEGIN_NAMESPACE
 /// Common data for all materials.
 struct MaterialGlobalUniforms
 {
-	ScalarMat4 m_viewProjectionMatrix;
-	ScalarMat3x4 m_viewMatrix;
-	Mat3 m_viewRotationMatrix; ///< Essentially the rotation part of the view matrix.
-	Mat3 m_cameraRotationMatrix;
-	Vec3 m_cameraPosition; ///< In world space of course.
+	Mat4 m_viewProjectionMatrix;
+	Mat3x4 m_viewMatrix;
+	Mat3x4 m_cameraTransform;
 };
+ANKI_SHADER_STATIC_ASSERT(sizeof(MaterialGlobalUniforms) == 10 * sizeof(Vec4));
 
 const U32 MATERIAL_SET_BINDLESS = 0u;
 const U32 MATERIAL_SET_GLOBAL = 1u;

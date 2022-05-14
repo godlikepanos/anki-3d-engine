@@ -68,19 +68,17 @@ layout(set = MATERIAL_SET_GLOBAL, binding = MATERIAL_BINDING_TRILINEAR_REPEAT_SA
 #pragma anki member ANKI_RP F32 m_subsurface
 #pragma anki struct end
 
-layout(set = MATERIAL_SET_LOCAL, binding = MATERIAL_BINDING_LOCAL_UNIFORMS, row_major, scalar) buffer b_localUniforms
+layout(set = MATERIAL_SET_LOCAL, binding = MATERIAL_BINDING_LOCAL_UNIFORMS, std430) buffer b_localUniforms
 {
 	U32 u_localUniforms[];
 };
 
-layout(set = MATERIAL_SET_LOCAL, binding = MATERIAL_BINDING_RENDERABLE_GPU_VIEW, row_major,
-	   scalar) uniform b_renderableGpuView
+layout(set = MATERIAL_SET_LOCAL, binding = MATERIAL_BINDING_RENDERABLE_GPU_VIEW) uniform b_renderableGpuView
 {
 	RenderableGpuView u_renderableGpuViews[MAX_INSTANCE_COUNT];
 };
 
-layout(set = MATERIAL_SET_GLOBAL, binding = MATERIAL_BINDING_GLOBAL_UNIFORMS, row_major,
-	   scalar) uniform b_globalUniforms
+layout(set = MATERIAL_SET_GLOBAL, binding = MATERIAL_BINDING_GLOBAL_UNIFORMS) uniform b_globalUniforms
 {
 	MaterialGlobalUniforms u_globalUniforms;
 };
@@ -143,8 +141,8 @@ void positionUvNormalTangent()
 {
 	gl_Position = u_globalUniforms.m_viewProjectionMatrix
 				  * Vec4(u_renderableGpuViews[gl_InstanceIndex].m_worldTransform * Vec4(g_position, 1.0), 1.0);
-	out_normal = u_renderableGpuViews[gl_InstanceIndex].m_worldRotation * g_normal;
-	out_tangent = u_renderableGpuViews[gl_InstanceIndex].m_worldRotation * g_tangent.xyz;
+	out_normal = u_renderableGpuViews[gl_InstanceIndex].m_worldTransform * Vec4(g_normal, 0.0);
+	out_tangent = u_renderableGpuViews[gl_InstanceIndex].m_worldTransform * Vec4(g_tangent.xyz, 0.0);
 	out_bitangent = cross(out_normal, out_tangent) * g_tangent.w;
 	out_uv = g_uv;
 }
@@ -158,8 +156,10 @@ void parallax()
 	const Vec3 t = in_tangent.xyz;
 	const Vec3 b = cross(n, t) * in_tangent.w;
 
-	const Mat3 invTbn = transpose(u_globalUniforms.m_viewRotationMatrix
-								  * u_renderableGpuViews[gl_InstanceIndex].m_worldRotation * Mat3(t, b, n));
+	// TODO
+	const Mat3 invTbn = Mat3(1.0);
+	// const Mat3 invTbn = transpose(u_globalUniforms.m_viewRotationMatrix
+	//							  * u_renderableGpuViews[gl_InstanceIndex].m_worldRotation * Mat3(t, b, n));
 
 	const Vec3 viewPos = (u_globalUniforms.m_viewMatrix
 						  * Vec4(u_renderableGpuViews[gl_InstanceIndex].m_worldTransform * Vec4(g_position, 1.0), 1.0))

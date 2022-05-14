@@ -72,17 +72,7 @@ void VolumetricFog::populateRenderGraph(RenderingContext& ctx)
 
 		rgraphCtx.bindImage(0, 2, m_runCtx.m_rt, TextureSubresourceInfo());
 
-		class PushConsts
-		{
-		public:
-			Vec3 m_fogDiffuse;
-			F32 m_fogScatteringCoeff;
-			F32 m_fogAbsorptionCoeff;
-			F32 m_near;
-			F32 m_far;
-			F32 m_padding;
-		} regs;
-
+		VolumetricFogUniforms regs;
 		const SkyboxQueueElement& el = ctx.m_renderQueue->m_skybox;
 		regs.m_fogDiffuse = el.m_fog.m_diffuseColor;
 		regs.m_fogScatteringCoeff = el.m_fog.m_scatteringCoeff;

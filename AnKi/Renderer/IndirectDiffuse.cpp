@@ -11,7 +11,6 @@
 #include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Renderer/IndirectDiffuseProbes.h>
 #include <AnKi/Core/ConfigSet.h>
-#include <AnKi/Shaders/Include/IndirectDiffuseTypes.h>
 
 namespace anki {
 

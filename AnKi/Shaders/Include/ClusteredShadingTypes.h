@@ -43,66 +43,83 @@ const ANKI_RP F32 SUBSURFACE_MIN = 0.01f;
 struct PointLight
 {
 	Vec3 m_position; ///< Position in world space.
-	ANKI_RP Vec3 m_diffuseColor;
 	ANKI_RP F32 m_radius; ///< Radius
+
+	ANKI_RP Vec3 m_diffuseColor;
 	ANKI_RP F32 m_squareRadiusOverOne; ///< 1/(radius^2).
+
+	Vec2 m_padding0;
 	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
 	F32 m_shadowAtlasTileScale; ///< UV scale for all tiles.
-	Vec2 m_shadowAtlasTileOffsets[6u];
+
+	Vec4 m_shadowAtlasTileOffsets[6u]; ///< It's a array of Vec2 but because of padding round it up.
 };
-const U32 _ANKI_SIZEOF_PointLight = 22u * ANKI_SIZEOF(U32);
+const U32 _ANKI_SIZEOF_PointLight = 9u * ANKI_SIZEOF(Vec4);
 ANKI_SHADER_STATIC_ASSERT(sizeof(PointLight) == _ANKI_SIZEOF_PointLight);
 
 /// Spot light.
 struct SpotLight
 {
-	Vec3 m_position; ///< Position in world space.
-	Vec3 m_edgePoints[4u]; ///< Edge points in world space.
+	Vec3 m_position;
+	F32 m_padding0;
+
+	Vec4 m_edgePoints[4u]; ///< Edge points in world space.
+
 	ANKI_RP Vec3 m_diffuseColor;
 	ANKI_RP F32 m_radius; ///< Max distance.
-	ANKI_RP F32 m_squareRadiusOverOne; ///< 1/(radius^2).
-	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
+
 	ANKI_RP Vec3 m_direction; ///< Light direction.
+	ANKI_RP F32 m_squareRadiusOverOne; ///< 1/(radius^2).
+
+	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
 	ANKI_RP F32 m_outerCos;
 	ANKI_RP F32 m_innerCos;
-	Vec2 m_padding;
+	U32 m_padding1;
+
 	Mat4 m_textureMatrix;
 };
-const U32 _ANKI_SIZEOF_SpotLight = 28u * ANKI_SIZEOF(U32) + ANKI_SIZEOF(Mat4);
+const U32 _ANKI_SIZEOF_SpotLight = 12u * ANKI_SIZEOF(Vec4);
 ANKI_SHADER_STATIC_ASSERT(sizeof(SpotLight) == _ANKI_SIZEOF_SpotLight);
 
-/// Spot light different view. This is the same structure as SpotLight but it's designed for binning.
+/// Spot light for binning. This is the same structure as SpotLight (same signature) but it's used for binning.
 struct SpotLightBinning
 {
-	Vec3 m_edgePoints[5u]; ///< Edge points in world space.
+	Vec4 m_edgePoints[5u]; ///< Edge points in world space. Point 0 is the eye pos.
+
 	ANKI_RP Vec3 m_diffuseColor;
 	ANKI_RP F32 m_radius; ///< Max distance.
-	ANKI_RP F32 m_squareRadiusOverOne; ///< 1/(radius^2).
-	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
+
 	ANKI_RP Vec3 m_direction; ///< Light direction.
+	ANKI_RP F32 m_squareRadiusOverOne; ///< 1/(radius^2).
+
+	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
 	ANKI_RP F32 m_outerCos;
 	ANKI_RP F32 m_innerCos;
-	Vec2 m_padding;
+	U32 m_padding0;
+
 	Mat4 m_textureMatrix;
 };
 const U32 _ANKI_SIZEOF_SpotLightBinning = _ANKI_SIZEOF_SpotLight;
 ANKI_SHADER_STATIC_ASSERT(sizeof(SpotLightBinning) == _ANKI_SIZEOF_SpotLightBinning);
-ANKI_SHADER_STATIC_ASSERT(alignof(SpotLightBinning) == alignof(SpotLight));
+ANKI_SHADER_STATIC_ASSERT(sizeof(SpotLight) == sizeof(SpotLightBinning));
 
 /// Directional light (sun).
 struct DirectionalLight
 {
 	ANKI_RP Vec3 m_diffuseColor;
 	U32 m_cascadeCount; ///< If it's zero then it doesn't cast shadow.
+
 	ANKI_RP Vec3 m_direction;
 	U32 m_active;
+
 	ANKI_RP F32 m_effectiveShadowDistance;
 	ANKI_RP F32 m_shadowCascadesDistancePower;
 	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
-	U32 m_padding;
+	U32 m_padding0;
+
 	Mat4 m_textureMatrices[MAX_SHADOW_CASCADES2];
 };
-const U32 _ANKI_SIZEOF_DirectionalLight = 12u * ANKI_SIZEOF(U32) + MAX_SHADOW_CASCADES2 * ANKI_SIZEOF(Mat4);
+const U32 _ANKI_SIZEOF_DirectionalLight = 3u * ANKI_SIZEOF(Vec4) + MAX_SHADOW_CASCADES2 * ANKI_SIZEOF(Mat4);
 ANKI_SHADER_STATIC_ASSERT(sizeof(DirectionalLight) == _ANKI_SIZEOF_DirectionalLight);
 
 /// Representation of a reflection probe.
@@ -110,22 +127,31 @@ struct ReflectionProbe
 {
 	Vec3 m_position; ///< Position of the probe in world space.
 	F32 m_cubemapIndex; ///< Index in the cubemap array texture.
+
 	Vec3 m_aabbMin;
+	F32 m_padding0;
+
 	Vec3 m_aabbMax;
+	F32 m_padding1;
 };
-const U32 _ANKI_SIZEOF_ReflectionProbe = 10u * ANKI_SIZEOF(U32);
+const U32 _ANKI_SIZEOF_ReflectionProbe = 3u * ANKI_SIZEOF(Vec4);
 ANKI_SHADER_STATIC_ASSERT(sizeof(ReflectionProbe) == _ANKI_SIZEOF_ReflectionProbe);
 
 /// Decal.
 struct Decal
 {
 	Vec4 m_diffuseUv;
+
 	Vec4 m_normRoughnessUv;
+
 	ANKI_RP Vec4 m_blendFactors;
+
 	Mat4 m_textureMatrix;
+
 	Mat4 m_invertedTransform;
+
 	Vec3 m_obbExtend;
-	F32 m_padding;
+	F32 m_padding0;
 };
 const U32 _ANKI_SIZEOF_Decal = 4u * ANKI_SIZEOF(Vec4) + 2u * ANKI_SIZEOF(Mat4);
 ANKI_SHADER_STATIC_ASSERT(sizeof(Decal) == _ANKI_SIZEOF_Decal);
@@ -135,6 +161,7 @@ struct FogDensityVolume
 {
 	Vec3 m_aabbMinOrSphereCenter;
 	U32 m_isBox;
+
 	Vec3 m_aabbMaxOrSphereRadiusSquared;
 	ANKI_RP F32 m_density;
 };
@@ -145,15 +172,18 @@ ANKI_SHADER_STATIC_ASSERT(sizeof(FogDensityVolume) == _ANKI_SIZEOF_FogDensityVol
 struct GlobalIlluminationProbe
 {
 	Vec3 m_aabbMin;
+	F32 m_padding0;
+
 	Vec3 m_aabbMax;
+	F32 m_padding1;
 
 	U32 m_textureIndex; ///< Index to the array of volume textures.
 	F32 m_halfTexelSizeU; ///< (1.0 / textureSize(texArr[textureIndex]).x) / 2.0
-
 	/// Used to calculate a factor that is zero when fragPos is close to AABB bounds and 1.0 at fadeDistance and less.
 	ANKI_RP F32 m_fadeDistance;
+	F32 m_padding2;
 };
-const U32 _ANKI_SIZEOF_GlobalIlluminationProbe = 9u * ANKI_SIZEOF(U32);
+const U32 _ANKI_SIZEOF_GlobalIlluminationProbe = 3u * ANKI_SIZEOF(Vec4);
 ANKI_SHADER_STATIC_ASSERT(sizeof(GlobalIlluminationProbe) == _ANKI_SIZEOF_GlobalIlluminationProbe);
 
 /// Common matrices.
@@ -163,9 +193,6 @@ struct CommonMatrices
 	Mat4 m_view ANKI_CPP_CODE(= Mat4::getIdentity());
 	Mat4 m_projection ANKI_CPP_CODE(= Mat4::getIdentity());
 	Mat4 m_viewProjection ANKI_CPP_CODE(= Mat4::getIdentity());
-	Mat3 m_viewRotation ANKI_CPP_CODE(= Mat3::getIdentity());
-
-	F32 m_padding[3u]; // Because of the alignment requirements of some of the following members (in C++)
 
 	Mat4 m_jitter ANKI_CPP_CODE(= Mat4::getIdentity());
 	Mat4 m_projectionJitter ANKI_CPP_CODE(= Mat4::getIdentity());
@@ -190,42 +217,43 @@ struct CommonMatrices
 	/// @endcode
 	Vec4 m_unprojectionParameters ANKI_CPP_CODE(= Vec4(0.0f));
 };
-const U32 _ANKI_SIZEOF_CommonMatrices =
-	12u * ANKI_SIZEOF(Mat4) + ANKI_SIZEOF(Vec4) + ANKI_SIZEOF(Mat3) + ANKI_SIZEOF(F32) * 3u;
+const U32 _ANKI_SIZEOF_CommonMatrices = 12u * ANKI_SIZEOF(Mat4) + 1u * ANKI_SIZEOF(Vec4);
 ANKI_SHADER_STATIC_ASSERT(sizeof(CommonMatrices) == _ANKI_SIZEOF_CommonMatrices);
 
 /// Common uniforms for light shading passes.
 struct ClusteredShadingUniforms
 {
 	Vec2 m_renderingSize;
-
 	F32 m_time;
 	U32 m_frame;
 
 	Vec4 m_nearPlaneWSpace;
-	F32 m_near;
-	F32 m_far;
+
 	Vec3 m_cameraPosition;
+	F32 m_reflectionProbesMipCount;
 
 	UVec2 m_tileCounts;
 	U32 m_zSplitCount;
 	F32 m_zSplitCountOverFrustumLength; ///< m_zSplitCount/(far-near)
+
 	Vec2 m_zSplitMagic; ///< It's the "a" and "b" of computeZSplitClusterIndex(). See there for details.
 	U32 m_tileSize;
 	U32 m_lightVolumeLastZSplit;
 
-	/// This are some additive counts used to map a flat index to the index of the specific object.
-	U32 m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_COUNT];
+	Vec2 m_padding0;
+	F32 m_near;
+	F32 m_far;
 
-	F32 m_reflectionProbesMipCount;
+	DirectionalLight m_directionalLight;
 
 	CommonMatrices m_matrices;
 	CommonMatrices m_previousMatrices;
 
-	DirectionalLight m_directionalLight;
+	/// This are some additive counts used to map a flat index to the index of the specific object.
+	UVec4 m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_COUNT];
 };
-const U32 _ANKI_SIZEOF_ClusteredShadingUniforms =
-	28u * ANKI_SIZEOF(U32) + 2u * ANKI_SIZEOF(CommonMatrices) + ANKI_SIZEOF(DirectionalLight);
+const U32 _ANKI_SIZEOF_ClusteredShadingUniforms = (6u + CLUSTER_OBJECT_TYPE_COUNT) * ANKI_SIZEOF(Vec4)
+												  + 2u * ANKI_SIZEOF(CommonMatrices) + ANKI_SIZEOF(DirectionalLight);
 ANKI_SHADER_STATIC_ASSERT(sizeof(ClusteredShadingUniforms) == _ANKI_SIZEOF_ClusteredShadingUniforms);
 
 // Define the type of some cluster object masks
@@ -252,16 +280,23 @@ struct Cluster
 	U32 m_fogDensityVolumesMask;
 	U32 m_reflectionProbesMask;
 	U32 m_giProbesMask;
+
+	// Pad to 16byte
 #if ANKI_CLUSTERED_SHADING_USE_64BIT
-	U32 m_padding; ///< Add some padding to be 100% sure nothing will break.
+	U32 m_padding0;
+	U32 m_padding1;
+	U32 m_padding2;
+#else
+	U32 m_padding0;
+	U32 m_padding1;
 #endif
 };
 
 #if ANKI_CLUSTERED_SHADING_USE_64BIT
-const U32 _ANKI_SIZEOF_Cluster = 5u * ANKI_SIZEOF(U64);
+const U32 _ANKI_SIZEOF_Cluster = 3u * ANKI_SIZEOF(Vec4);
 ANKI_SHADER_STATIC_ASSERT(sizeof(Cluster) == _ANKI_SIZEOF_Cluster);
 #else
-const U32 _ANKI_SIZEOF_Cluster = 6u * ANKI_SIZEOF(U32);
+const U32 _ANKI_SIZEOF_Cluster = 2u * ANKI_SIZEOF(Vec4);
 ANKI_SHADER_STATIC_ASSERT(sizeof(Cluster) == _ANKI_SIZEOF_Cluster);
 #endif
 

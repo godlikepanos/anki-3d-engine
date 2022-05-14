@@ -26,11 +26,12 @@ layout(set = 0, binding = 9) uniform ANKI_RP texture2D u_integrationLut;
 #define CLUSTERED_SHADING_UNIFORMS_BINDING 10u
 #include <AnKi/Shaders/ClusteredShadingCommon.glsl>
 
-layout(push_constant, std430) uniform b_pc
+layout(push_constant, std140) uniform b_pc
 {
 	F32 u_near;
 	F32 u_far;
-	Vec2 u_padding;
+	F32 u_padding0;
+	F32 u_padding1;
 };
 
 layout(location = 0) in Vec2 in_uv;

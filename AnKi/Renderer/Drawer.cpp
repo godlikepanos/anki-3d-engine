@@ -49,16 +49,13 @@ void RenderableDrawer::drawRange(RenderingTechnique technique, const Mat4& viewM
 	// Allocate, set and bind global uniforms
 	{
 		StagingGpuMemoryToken globalUniformsToken;
-		MaterialGlobalUniforms* globalIniforms =
+		MaterialGlobalUniforms* globalUniforms =
 			static_cast<MaterialGlobalUniforms*>(m_r->getStagingGpuMemory().allocateFrame(
 				sizeof(MaterialGlobalUniforms), StagingGpuMemoryType::UNIFORM, globalUniformsToken));
-		memcpy(&globalIniforms->m_viewProjectionMatrix[0], &viewProjMat, sizeof(viewProjMat));
-		const Mat3x4 viewMat3x4(viewMat);
-		memcpy(&globalIniforms->m_viewMatrix[0], &viewMat3x4, sizeof(viewMat3x4));
-		globalIniforms->m_viewRotationMatrix = viewMat.getRotationPart();
-		const Mat3 camRotationMatrix = viewMat.getInverse().getRotationPart();
-		globalIniforms->m_cameraRotationMatrix = camRotationMatrix;
-		globalIniforms->m_cameraPosition = viewMat.getInverse().getTranslationPart().xyz();
+		globalUniforms->m_viewProjectionMatrix = viewProjMat;
+
+		globalUniforms->m_viewMatrix = Mat3x4(viewMat);
+		globalUniforms->m_cameraTransform = Mat3x4(viewMat.getInverse());
 
 		cmdb->bindUniformBuffer(MATERIAL_SET_GLOBAL, MATERIAL_BINDING_GLOBAL_UNIFORMS, globalUniformsToken.m_buffer,
 								globalUniformsToken.m_offset, globalUniformsToken.m_range);
