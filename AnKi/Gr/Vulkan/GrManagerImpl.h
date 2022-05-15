@@ -219,6 +219,13 @@ public:
 		return m_frameGarbageCollector;
 	}
 
+#if ANKI_PLATFORM_MOBILE
+	Mutex* getGlobalCreatePipelineMutex() const
+	{
+		return m_globalCreatePipelineMtx;
+	}
+#endif
+
 private:
 	U64 m_frame = 0;
 
@@ -322,6 +329,10 @@ private:
 	mutable SpinLock m_vkHandleToNameLock;
 
 	FrameGarbageCollector m_frameGarbageCollector;
+
+#if ANKI_PLATFORM_MOBILE
+	Mutex* m_globalCreatePipelineMtx = nullptr;
+#endif
 
 	ANKI_USE_RESULT Error initInternal(const GrManagerInitInfo& init);
 	ANKI_USE_RESULT Error initInstance(const GrManagerInitInfo& init);

@@ -97,6 +97,10 @@ GrManagerImpl::~GrManagerImpl()
 	}
 
 	m_vkHandleToName.destroy(getAllocator());
+
+#if ANKI_PLATFORM_MOBILE
+	m_alloc.deleteInstance(m_globalCreatePipelineMtx);
+#endif
 }
 
 Error GrManagerImpl::init(const GrManagerInitInfo& init)
@@ -521,6 +525,15 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 
 	m_capabilities.m_shaderGroupHandleSize = m_rtPipelineProps.shaderGroupHandleSize;
 	m_capabilities.m_sbtRecordAlignment = m_rtPipelineProps.shaderGroupBaseAlignment;
+
+#if ANKI_PLATFORM_MOBILE
+	if(m_capabilities.m_gpuVendor == GpuVendor::QUALCOMM)
+	{
+		// Calling vkCreateGraphicsPipeline from multiple threads crashes qualcomm's compiler
+		ANKI_VK_LOGI("Enabling workaround for vkCreateGraphicsPipeline crashing when called from multiple threads");
+		m_globalCreatePipelineMtx = m_alloc.newInstance<Mutex>();
+	}
+#endif
 
 	return Error::NONE;
 }
