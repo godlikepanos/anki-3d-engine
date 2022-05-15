@@ -514,6 +514,7 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 	m_capabilities.m_textureBufferBindOffsetAlignment =
 		max<U32>(ANKI_SAFE_ALIGNMENT, U32(m_devProps.properties.limits.minTexelBufferOffsetAlignment));
 	m_capabilities.m_textureBufferMaxRange = MAX_U32;
+	m_capabilities.m_computeSharedMemorySize = m_devProps.properties.limits.maxComputeSharedMemorySize;
 
 	m_capabilities.m_majorApiVersion = vulkanMajor;
 	m_capabilities.m_minorApiVersion = vulkanMinor;

@@ -108,9 +108,9 @@ Error IndirectDiffuseProbes::init()
 
 Error IndirectDiffuseProbes::initInternal()
 {
-	m_tileSize = getConfig().getRGiTileResolution();
-	m_cacheEntries.create(getAllocator(), getConfig().getRGiMaxCachedProbes());
-	m_maxVisibleProbes = getConfig().getRGiMaxVisibleProbes();
+	m_tileSize = getConfig().getRIndirectDiffuseProbeTileResolution();
+	m_cacheEntries.create(getAllocator(), getConfig().getRIndirectDiffuseProbeMaxCachedProbes());
+	m_maxVisibleProbes = getConfig().getRIndirectDiffuseProbeMaxVisibleProbes();
 	ANKI_ASSERT(m_maxVisibleProbes <= MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES);
 	ANKI_ASSERT(m_cacheEntries.getSize() >= m_maxVisibleProbes);
 
@@ -166,7 +166,7 @@ Error IndirectDiffuseProbes::initGBuffer()
 
 Error IndirectDiffuseProbes::initShadowMapping()
 {
-	const U32 resolution = getConfig().getRGiShadowMapResolution();
+	const U32 resolution = getConfig().getRIndirectDiffuseProbeShadowMapResolution();
 	ANKI_ASSERT(resolution > 8);
 
 	// RT descr
@@ -700,13 +700,11 @@ void IndirectDiffuseProbes::runIrradiance(RenderPassWorkContext& rgraphCtx, Inte
 		rgraphCtx.bindColorTexture(0, 2, giCtx.m_gbufferColorRts[i], i);
 	}
 
-	// Bind temporary memory
-	allocateAndBindStorage<void*>(sizeof(Vec4) * 6 * m_tileSize * m_tileSize, cmdb, 0, 3);
+	rgraphCtx.bindImage(0, 3, giCtx.m_irradianceProbeRts[probeIdx], TextureSubresourceInfo());
 
-	rgraphCtx.bindImage(0, 4, giCtx.m_irradianceProbeRts[probeIdx], TextureSubresourceInfo());
-
-	struct
+	class
 	{
+	public:
 		IVec3 m_volumeTexel;
 		I32 m_nextTexelOffsetInU;
 	} unis;

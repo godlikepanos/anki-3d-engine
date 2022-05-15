@@ -439,10 +439,7 @@ void ProbeReflections::runIrradiance(RenderPassWorkContext& rgraphCtx)
 	subresource.m_firstLayer = cacheEntryIdx;
 	rgraphCtx.bindTexture(0, 1, m_ctx.m_lightShadingRt, subresource);
 
-	allocateAndBindStorage<void*>(sizeof(Vec4) * 6 * m_irradiance.m_workgroupSize * m_irradiance.m_workgroupSize, cmdb,
-								  0, 3);
-
-	cmdb->bindStorageBuffer(0, 4, m_irradiance.m_diceValuesBuff, 0, m_irradiance.m_diceValuesBuff->getSize());
+	cmdb->bindStorageBuffer(0, 3, m_irradiance.m_diceValuesBuff, 0, m_irradiance.m_diceValuesBuff->getSize());
 
 	// Draw
 	cmdb->dispatchCompute(1, 1, 1);
