@@ -46,8 +46,8 @@ Error IndirectSpecular::initInternal()
 
 	// Create shader
 	ANKI_CHECK(getResourceManager().loadResource((getConfig().getRPreferCompute())
-													 ? "Shaders/IndirectSpecularCompute.ankiprog"
-													 : "Shaders/IndirectSpecularRaster.ankiprog",
+													 ? "ShaderBinaries/IndirectSpecularCompute.ankiprogbin"
+													 : "ShaderBinaries/IndirectSpecularRaster.ankiprogbin",
 												 m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInit(m_prog);

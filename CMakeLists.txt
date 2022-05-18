@@ -16,14 +16,6 @@ function(anki_install_executable EXE)
 	endif()
 endfunction()
 
-macro(anki_add_source_files)
-	foreach(f ${ARGV})
-		set(AK_SOURCES "${AK_SOURCES} ${f}")
-	endforeach()
-
-	set(AK_SOURCES ${AK_SOURCES} PARENT_SCOPE)
-endmacro()
-
 macro(anki_new_executable)
 	if(NOT ANDROID)
 		add_executable(${ARGV})
@@ -404,56 +396,11 @@ else()
 	add_compile_definitions("_CRT_SECURE_NO_WARNINGS=1") # Disable some string function warnings
 endif()
 
-# Set platform specific
-if(LINUX)
-	if(GL)
-		set(THIRD_PARTY_LIBS ${ANKI_GR_BACKEND} AnKiGlew)
-	else()
-		if(SDL)
-			set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} X11-xcb)
-		endif()
-	endif()
-
-	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} pthread dl)
-elseif(MACOS)
-	find_package(OpenGL REQUIRED)
-	set(THIRD_PARTY_LIBS ${OPENGL_LIBRARIES} AnKiGlew pthread)
-elseif(ANDROID)
-	set(THIRD_PARTY_LIBS log android)
-	#include_directories("${ANDROID_NDK}/sources/android/native_app_glue")
-	#set(_SYS_SRC "${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c")
-
-	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} AnKiAndroidNativeGlue)
-elseif(WINDOWS)
-	if(GL)
-		set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} AnKiGlew opengl32)
-	else()
-		set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS})
-	endif()
-
-	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} version Imm32 Winmm DbgHelp)
-else()
-	message(FATAL_ERROR "Unhandled case")
-endif()
-
-if(SDL)
-	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} SDL2-static)
-endif()
-
-if(ANDROID)
-	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} AnKiHwcPipe)
-endif()
-
-set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} BulletSoftBody BulletDynamics BulletCollision LinearMath
-	AnKiSpirvCross AnKiTinyXml2 AnKiLua AnKiMeshOptimizer AnKiZLib glslang SPIRV OGLCompiler OSDependent AnKiImGui)
-
 # Add AnKi sub libraries
 add_subdirectory(AnKi)
 
-separate_arguments(AK_SOURCES)
-add_library(AnKi ${AK_SOURCES})
-target_compile_definitions(AnKi PRIVATE -DANKI_SOURCE_FILE)
-target_link_libraries(AnKi ${THIRD_PARTY_LIBS})
+add_library(AnKi INTERFACE)
+target_link_libraries(AnKi INTERFACE AnKiCore ${THIRD_PARTY_LIBS})
 
 ################################################################################
 # AnKi extra                                                                   #

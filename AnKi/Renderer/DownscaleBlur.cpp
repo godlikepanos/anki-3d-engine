@@ -65,8 +65,9 @@ Error DownscaleBlur::initInternal()
 	}
 
 	// Shader programs
-	ANKI_CHECK(getResourceManager().loadResource(
-		(preferCompute) ? "Shaders/DownscaleBlurCompute.ankiprog" : "Shaders/DownscaleBlurRaster.ankiprog", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource((preferCompute) ? "ShaderBinaries/DownscaleBlurCompute.ankiprogbin"
+																 : "ShaderBinaries/DownscaleBlurRaster.ankiprogbin",
+												 m_prog));
 	const ShaderProgramResourceVariant* variant = nullptr;
 	m_prog->getOrCreateVariant(variant);
 	m_grProg = variant->getProgram();

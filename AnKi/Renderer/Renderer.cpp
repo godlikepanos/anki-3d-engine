@@ -113,7 +113,7 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		return Error::USER_DATA;
 	}
 
-	ANKI_CHECK(m_resources->loadResource("Shaders/ClearTextureCompute.ankiprog", m_clearTexComputeProg));
+	ANKI_CHECK(m_resources->loadResource("ShaderBinaries/ClearTextureCompute.ankiprogbin", m_clearTexComputeProg));
 
 	// Dummy resources
 	{

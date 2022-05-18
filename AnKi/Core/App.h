@@ -42,7 +42,8 @@ public:
 
 	/// Initialize the application.
 	/// @param[in,out] config The config. Needs to be alive as long as the app is alive.
-	ANKI_USE_RESULT Error init(ConfigSet* config, AllocAlignedCallback allocCb, void* allocCbUserData);
+	ANKI_USE_RESULT Error init(ConfigSet* config, CString executableFilename, AllocAlignedCallback allocCb,
+							   void* allocCbUserData);
 
 	const String& getSettingsDirectory() const
 	{
@@ -199,7 +200,7 @@ private:
 
 	void initMemoryCallbacks(AllocAlignedCallback allocCb, void* allocCbUserData);
 
-	ANKI_USE_RESULT Error initInternal(AllocAlignedCallback allocCb, void* allocCbUserData);
+	ANKI_USE_RESULT Error initInternal(CString executableFilename, AllocAlignedCallback allocCb, void* allocCbUserData);
 
 	ANKI_USE_RESULT Error initDirs();
 	void cleanup();

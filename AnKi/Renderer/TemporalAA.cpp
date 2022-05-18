@@ -37,9 +37,10 @@ Error TemporalAA::initInternal()
 {
 	ANKI_R_LOGV("Initializing TAA");
 
-	ANKI_CHECK(m_r->getResourceManager().loadResource(
-		(getConfig().getRPreferCompute()) ? "Shaders/TemporalAACompute.ankiprog" : "Shaders/TemporalAARaster.ankiprog",
-		m_prog));
+	ANKI_CHECK(m_r->getResourceManager().loadResource((getConfig().getRPreferCompute())
+														  ? "ShaderBinaries/TemporalAACompute.ankiprogbin"
+														  : "ShaderBinaries/TemporalAARaster.ankiprogbin",
+													  m_prog));
 
 	{
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);

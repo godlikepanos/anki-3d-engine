@@ -161,14 +161,14 @@ Error BinarySerializer::doDynamicArrayComplexType(const T* arr, PtrSize size, Pt
 	return Error::NONE;
 }
 
-template<typename T>
-Error BinaryDeserializer::deserialize(T*& x, GenericMemoryPoolAllocator<U8> allocator, File& file)
+template<typename T, typename TFile>
+Error BinaryDeserializer::deserialize(T*& x, GenericMemoryPoolAllocator<U8> allocator, TFile& file)
 {
 	x = nullptr;
 
 	detail::BinarySerializerHeader header;
 	ANKI_CHECK(file.read(&header, sizeof(header)));
-	const PtrSize dataFilePos = file.tell();
+	const PtrSize dataFilePos = sizeof(header);
 
 	// Sanity checks
 	{

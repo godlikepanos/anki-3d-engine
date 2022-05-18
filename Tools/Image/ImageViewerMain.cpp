@@ -285,7 +285,7 @@ public:
 		config->setGrDebugMarkers(false);
 		ANKI_CHECK(config->setFromCommandLineArguments(argc - 2, argv + 2));
 
-		ANKI_CHECK(App::init(config, allocAligned, nullptr));
+		ANKI_CHECK(App::init(config, argv[0], allocAligned, nullptr));
 
 		// Load the texture
 		ImageResourcePtr image;

@@ -43,8 +43,9 @@ Error Bloom::initExposure()
 	m_exposure.m_rtDescr.bake();
 
 	// init shaders
-	ANKI_CHECK(getResourceManager().loadResource((getConfig().getRPreferCompute()) ? "Shaders/BloomCompute.ankiprog"
-																				   : "Shaders/BloomRaster.ankiprog",
+	ANKI_CHECK(getResourceManager().loadResource((getConfig().getRPreferCompute())
+													 ? "ShaderBinaries/BloomCompute.ankiprogbin"
+													 : "ShaderBinaries/BloomRaster.ankiprogbin",
 												 m_exposure.m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_exposure.m_prog);
@@ -72,8 +73,8 @@ Error Bloom::initUpscale()
 
 	// init shaders
 	ANKI_CHECK(getResourceManager().loadResource((getConfig().getRPreferCompute())
-													 ? "Shaders/BloomUpscaleCompute.ankiprog"
-													 : "Shaders/BloomUpscaleRaster.ankiprog",
+													 ? "ShaderBinaries/BloomUpscaleCompute.ankiprogbin"
+													 : "ShaderBinaries/BloomUpscaleRaster.ankiprogbin",
 												 m_upscale.m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_upscale.m_prog);

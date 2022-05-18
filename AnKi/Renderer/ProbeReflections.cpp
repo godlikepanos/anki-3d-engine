@@ -141,7 +141,8 @@ Error ProbeReflections::initIrradiance()
 
 	// Create prog
 	{
-		ANKI_CHECK(m_r->getResourceManager().loadResource("Shaders/IrradianceDice.ankiprog", m_irradiance.m_prog));
+		ANKI_CHECK(
+			m_r->getResourceManager().loadResource("ShaderBinaries/IrradianceDice.ankiprogbin", m_irradiance.m_prog));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_irradiance.m_prog);
 
@@ -169,7 +170,7 @@ Error ProbeReflections::initIrradiance()
 Error ProbeReflections::initIrradianceToRefl()
 {
 	// Create program
-	ANKI_CHECK(m_r->getResourceManager().loadResource("Shaders/ApplyIrradianceToReflection.ankiprog",
+	ANKI_CHECK(m_r->getResourceManager().loadResource("ShaderBinaries/ApplyIrradianceToReflection.ankiprogbin",
 													  m_irradianceToRefl.m_prog));
 
 	const ShaderProgramResourceVariant* variant;

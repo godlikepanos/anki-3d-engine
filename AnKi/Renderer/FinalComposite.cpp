@@ -40,7 +40,7 @@ Error FinalComposite::initInternal()
 	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_blueNoise));
 
 	// Progs
-	ANKI_CHECK(getResourceManager().loadResource("Shaders/FinalComposite.ankiprog", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/FinalComposite.ankiprogbin", m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addMutation("BLUE_NOISE", 1);
@@ -57,7 +57,7 @@ Error FinalComposite::initInternal()
 		m_grProgs[dbg] = variant->getProgram();
 	}
 
-	ANKI_CHECK(getResourceManager().loadResource("Shaders/VisualizeRenderTarget.ankiprog",
+	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/VisualizeRenderTarget.ankiprogbin",
 												 m_defaultVisualizeRenderTargetProg));
 	const ShaderProgramResourceVariant* variant;
 	m_defaultVisualizeRenderTargetProg->getOrCreateVariant(variant);

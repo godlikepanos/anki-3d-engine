@@ -1,4 +1,4 @@
-set(COMMON
+set(common_sources
 	"Common.cpp"
 	"GrObject.cpp"
 	"RenderGraph.cpp"
@@ -7,12 +7,8 @@ set(COMMON
 	"Utils/FrameGpuAllocator.cpp"
 	"Utils/Functions.cpp")
 
-foreach(S ${COMMON})
-	anki_add_source_files("${CMAKE_CURRENT_SOURCE_DIR}/${S}")
-endforeach()
-
 if(VULKAN)
-	set(VKCPP
+	set(backend_sources
 		"Vulkan/AccelerationStructure.cpp"
 		"Vulkan/AccelerationStructureImpl.cpp"
 		"Vulkan/Buffer.cpp"
@@ -53,14 +49,21 @@ if(VULKAN)
 		"Vulkan/FrameGarbageCollector.cpp")
 
 	if(ANKI_HEADLESS)
-		set(VKCPP ${VKCPP} "Vulkan/GrManagerImplHeadless.cpp")
+		set(backend_sources ${backend_sources} "Vulkan/GrManagerImplHeadless.cpp")
 	elseif(SDL)
-		set(VKCPP ${VKCPP} "Vulkan/GrManagerImplSdl.cpp")
+		set(backend_sources ${backend_sources} "Vulkan/GrManagerImplSdl.cpp")
 	elseif(ANDROID)
-		set(VKCPP ${VKCPP} "Vulkan/GrManagerImplAndroid.cpp")
+		set(backend_sources ${backend_sources} "Vulkan/GrManagerImplAndroid.cpp")
 	endif()
-
-	foreach(S ${VKCPP})
-		anki_add_source_files("${CMAKE_CURRENT_SOURCE_DIR}/${S}")
-	endforeach()
 endif()
+
+# Have 2 libraries. The AnKiGrCommon is the bare minimum for the AnKiShaderCompiler to work. Don't have
+# AnKiShaderCompiler depend on what AnKiGr depends on
+
+add_library(AnKiGrCommon ${common_sources})
+target_compile_definitions(AnKiGrCommon PRIVATE -DANKI_SOURCE_FILE)
+target_link_libraries(AnKiGrCommon AnKiUtil) # Only depend on Util
+
+add_library(AnKiGr ${backend_sources})
+target_compile_definitions(AnKiGr PRIVATE -DANKI_SOURCE_FILE)
+target_link_libraries(AnKiGr AnKiCore AnKiSpirvCross AnKiGrCommon)

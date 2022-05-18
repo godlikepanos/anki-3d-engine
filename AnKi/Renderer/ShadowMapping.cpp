@@ -119,8 +119,9 @@ Error ShadowMapping::initAtlas()
 
 	// Programs and shaders
 	{
-		ANKI_CHECK(getResourceManager().loadResource(
-			(preferCompute) ? "Shaders/EvsmCompute.ankiprog" : "Shaders/EvsmRaster.ankiprog", m_atlas.m_resolveProg));
+		ANKI_CHECK(getResourceManager().loadResource((preferCompute) ? "ShaderBinaries/EvsmCompute.ankiprogbin"
+																	 : "ShaderBinaries/EvsmRaster.ankiprogbin",
+													 m_atlas.m_resolveProg));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_atlas.m_resolveProg);
 		variantInitInfo.addConstant("INPUT_TEXTURE_SIZE", UVec2(m_scratch.m_tileCountX * m_scratch.m_tileResolution,

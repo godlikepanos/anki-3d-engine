@@ -20,7 +20,6 @@ ANKI_TEST(Resource, ResourceManager)
 	ResourceManagerInitInfo rinit;
 	rinit.m_gr = nullptr;
 	rinit.m_config = &config;
-	rinit.m_cacheDir = "/tmp/";
 	rinit.m_allocCallback = allocAligned;
 	rinit.m_allocCallbackData = nullptr;
 	ResourceManager* resources = alloc.newInstance<ResourceManager>();

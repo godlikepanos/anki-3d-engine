@@ -241,7 +241,5 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	ANKI_LOGI("Done!");
-
 	return 0;
 }

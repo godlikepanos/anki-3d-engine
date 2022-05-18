@@ -12,7 +12,6 @@
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/StringList.h>
 #include <AnKi/Core/ConfigSet.h>
-#include <glslang/Public/ShaderLang.h>
 
 namespace anki {
 
@@ -153,7 +152,6 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		resetFrame(f);
 	}
 
-	glslang::InitializeProcess();
 	m_fenceFactory.init(getAllocator(), m_device);
 	m_semaphoreFactory.init(getAllocator(), m_device);
 	m_samplerFactory.init(this);

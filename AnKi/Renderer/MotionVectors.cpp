@@ -31,8 +31,8 @@ Error MotionVectors::initInternal()
 
 	// Prog
 	ANKI_CHECK(getResourceManager().loadResource((getConfig().getRPreferCompute())
-													 ? "Shaders/MotionVectorsCompute.ankiprog"
-													 : "Shaders/MotionVectorsRaster.ankiprog",
+													 ? "ShaderBinaries/MotionVectorsCompute.ankiprogbin"
+													 : "ShaderBinaries/MotionVectorsRaster.ankiprogbin",
 												 m_prog));
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addConstant("FB_SIZE", UVec2(m_r->getInternalResolution().x(), m_r->getInternalResolution().y()));

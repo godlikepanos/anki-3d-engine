@@ -94,7 +94,6 @@ public:
 	PhysicsWorld* m_physics = nullptr;
 	ResourceFilesystem* m_resourceFs = nullptr;
 	ConfigSet* m_config = nullptr;
-	CString m_cacheDir;
 	VertexGpuMemoryPool* m_vertexMemory = nullptr;
 	AllocAlignedCallback m_allocCallback = 0;
 	void* m_allocCallbackData = nullptr;
@@ -163,11 +162,6 @@ public:
 		return *m_fs;
 	}
 
-	ANKI_INTERNAL const String& getCacheDirectory() const
-	{
-		return m_cacheDir;
-	}
-
 	template<typename T>
 	ANKI_INTERNAL T* findLoadedResource(const CString& filename)
 	{
@@ -225,7 +219,6 @@ private:
 	ConfigSet* m_config = nullptr;
 	ResourceAllocator<U8> m_alloc;
 	TempResourceAllocator<U8> m_tmpAlloc;
-	String m_cacheDir;
 	AsyncLoader* m_asyncLoader = nullptr; ///< Async loading thread
 	ShaderProgramResourceSystem* m_shaderProgramSystem = nullptr;
 	VertexGpuMemoryPool* m_vertexMem = nullptr;

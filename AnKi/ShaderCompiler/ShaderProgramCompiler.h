@@ -47,6 +47,9 @@ public:
 
 	ANKI_USE_RESULT Error deserializeFromFile(CString fname);
 
+	template<typename TFile>
+	ANKI_USE_RESULT Error deserializeFromAnyFile(TFile& fname);
+
 	const ShaderProgramBinary& getBinary() const
 	{
 		ANKI_ASSERT(m_binary);
@@ -60,6 +63,24 @@ private:
 
 	void cleanup();
 };
+
+template<typename TFile>
+Error ShaderProgramBinaryWrapper::deserializeFromAnyFile(TFile& file)
+{
+	cleanup();
+	BinaryDeserializer deserializer;
+	ANKI_CHECK(deserializer.deserialize(m_binary, m_alloc, file));
+
+	m_singleAllocation = true;
+
+	if(memcmp(SHADER_BINARY_MAGIC, &m_binary->m_magic[0], strlen(SHADER_BINARY_MAGIC)) != 0)
+	{
+		ANKI_SHADER_COMPILER_LOGE("Corrupted or wrong version of shader binary.");
+		return Error::USER_DATA;
+	}
+
+	return Error::NONE;
+}
 
 /// Takes an AnKi special shader program and spits a binary.
 ANKI_USE_RESULT Error compileShaderProgram(CString fname, ShaderProgramFilesystemInterface& fsystem,

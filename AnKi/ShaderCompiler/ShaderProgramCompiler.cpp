@@ -30,23 +30,9 @@ Error ShaderProgramBinaryWrapper::serializeToFile(CString fname) const
 
 Error ShaderProgramBinaryWrapper::deserializeFromFile(CString fname)
 {
-	cleanup();
-
 	File file;
 	ANKI_CHECK(file.open(fname, FileOpenFlag::READ | FileOpenFlag::BINARY));
-
-	BinaryDeserializer deserializer;
-	ANKI_CHECK(deserializer.deserialize(m_binary, m_alloc, file));
-
-	m_singleAllocation = true;
-
-	if(memcmp(SHADER_BINARY_MAGIC, &m_binary->m_magic[0], strlen(SHADER_BINARY_MAGIC)) != 0)
-	{
-		ANKI_SHADER_COMPILER_LOGE("Corrupted or wrong version of shader binary: %s. Clean the shader cache",
-								  fname.cstr());
-		return Error::USER_DATA;
-	}
-
+	ANKI_CHECK(deserializeFromAnyFile(file));
 	return Error::NONE;
 }
 

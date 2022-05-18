@@ -41,8 +41,8 @@ Error GpuParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	m_maxParticleCount = inProps.m_maxNumOfParticles;
 
 	// Create program
-	ANKI_CHECK(
-		m_node->getSceneGraph().getResourceManager().loadResource("Shaders/GpuParticlesSimulation.ankiprog", m_prog));
+	ANKI_CHECK(m_node->getSceneGraph().getResourceManager().loadResource(
+		"ShaderBinaries/GpuParticlesSimulation.ankiprogbin", m_prog));
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variant);
 	m_grProg = variant->getProgram();

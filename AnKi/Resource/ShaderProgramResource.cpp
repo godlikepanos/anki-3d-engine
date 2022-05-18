@@ -50,12 +50,10 @@ ShaderProgramResource::~ShaderProgramResource()
 
 Error ShaderProgramResource::load(const ResourceFilename& filename, Bool async)
 {
-	// Load the binary from the cache. It should have been compiled there
-	StringAuto baseFilename(getTempAllocator());
-	getFilepathFilename(filename, baseFilename);
-	StringAuto binaryFilename(getTempAllocator());
-	binaryFilename.sprintf("%s/%sbin", getManager().getCacheDirectory().cstr(), baseFilename.cstr());
-	ANKI_CHECK(m_binary.deserializeFromFile(binaryFilename));
+	// Load the binary
+	ResourceFilePtr file;
+	ANKI_CHECK(openFile(filename, file));
+	ANKI_CHECK(m_binary.deserializeFromAnyFile(*file));
 	const ShaderProgramBinary& binary = m_binary.getBinary();
 
 	// Create the mutators

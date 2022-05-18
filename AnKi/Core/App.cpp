@@ -153,11 +153,11 @@ void App::cleanup()
 	m_cacheDir.destroy(m_heapAlloc);
 }
 
-Error App::init(ConfigSet* config, AllocAlignedCallback allocCb, void* allocCbUserData)
+Error App::init(ConfigSet* config, CString executableFilename, AllocAlignedCallback allocCb, void* allocCbUserData)
 {
 	ANKI_ASSERT(config);
 	m_config = config;
-	const Error err = initInternal(allocCb, allocCbUserData);
+	const Error err = initInternal(executableFilename, allocCb, allocCbUserData);
 	if(err)
 	{
 		ANKI_CORE_LOGE("App initialization failed. Shutting down");
@@ -167,13 +167,13 @@ Error App::init(ConfigSet* config, AllocAlignedCallback allocCb, void* allocCbUs
 	return err;
 }
 
-Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
+Error App::initInternal(CString executableFilename, AllocAlignedCallback allocCb, void* allocCbUserData)
 {
 	LoggerSingleton::get().enableVerbosity(m_config->getCoreVerboseLog());
 
 	setSignalHandlers();
 
-	Thread::setNameOfCurrentThread("anki_main");
+	Thread::setNameOfCurrentThread("AnKiMain");
 
 	initMemoryCallbacks(allocCb, allocCbUserData);
 	m_heapAlloc = HeapAllocator<U8>(m_allocCb, m_allocCbData, "Core");
@@ -292,6 +292,15 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	//
 	// Resource FS
 	//
+#if !ANKI_OS_ANDROID
+	// Add the location of the executable where the shaders are supposed to be
+	StringAuto shadersPath(m_heapAlloc);
+	getParentFilepath(executableFilename, shadersPath);
+	shadersPath.append(":");
+	shadersPath.append(m_config->getRsrcDataPaths());
+	m_config->setRsrcDataPaths(shadersPath);
+#endif
+
 	m_resourceFs = m_heapAlloc.newInstance<ResourceFilesystem>(m_heapAlloc);
 	ANKI_CHECK(m_resourceFs->init(*m_config, m_cacheDir.toCString()));
 
@@ -304,7 +313,6 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	rinit.m_resourceFs = m_resourceFs;
 	rinit.m_vertexMemory = m_vertexMem;
 	rinit.m_config = m_config;
-	rinit.m_cacheDir = m_cacheDir.toCString();
 	rinit.m_allocCallback = m_allocCb;
 	rinit.m_allocCallbackData = m_allocCbData;
 	m_resources = m_heapAlloc.newInstance<ResourceManager>();

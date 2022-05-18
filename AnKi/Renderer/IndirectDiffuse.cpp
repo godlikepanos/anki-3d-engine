@@ -52,8 +52,9 @@ Error IndirectDiffuse::initInternal()
 
 	// Init SSGI+probes pass
 	{
-		ANKI_CHECK(getResourceManager().loadResource((preferCompute) ? "Shaders/IndirectDiffuseCompute.ankiprog"
-																	 : "Shaders/IndirectDiffuseRaster.ankiprog",
+		ANKI_CHECK(getResourceManager().loadResource((preferCompute)
+														 ? "ShaderBinaries/IndirectDiffuseCompute.ankiprogbin"
+														 : "ShaderBinaries/IndirectDiffuseRaster.ankiprogbin",
 													 m_main.m_prog));
 
 		const ShaderProgramResourceVariant* variant;
@@ -63,8 +64,9 @@ Error IndirectDiffuse::initInternal()
 
 	// Init denoise
 	{
-		ANKI_CHECK(getResourceManager().loadResource((preferCompute) ? "Shaders/IndirectDiffuseDenoiseCompute.ankiprog"
-																	 : "Shaders/IndirectDiffuseDenoiseRaster.ankiprog",
+		ANKI_CHECK(getResourceManager().loadResource((preferCompute)
+														 ? "ShaderBinaries/IndirectDiffuseDenoiseCompute.ankiprogbin"
+														 : "ShaderBinaries/IndirectDiffuseDenoiseRaster.ankiprogbin",
 													 m_denoise.m_prog));
 
 		ShaderProgramResourceVariantInitInfo variantInit(m_denoise.m_prog);
