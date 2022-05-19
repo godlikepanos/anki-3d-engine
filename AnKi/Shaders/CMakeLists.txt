@@ -10,7 +10,7 @@ foreach(prog_fname ${prog_fnames})
 	set(bin_fname ${CMAKE_CURRENT_BINARY_DIR}/${filename}bin)
 
 	get_filename_component(filename ${prog_fname} NAME_WE)
-	set(target_name "${filename}.ankiprogbin")
+	set(target_name "${filename}_ankiprogbin")
 
 	add_custom_command(
 		OUTPUT ${bin_fname}
