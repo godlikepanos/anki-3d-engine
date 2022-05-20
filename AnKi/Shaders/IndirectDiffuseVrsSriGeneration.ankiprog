@@ -20,12 +20,12 @@ layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_s
 
 layout(set = 0, binding = 2) uniform writeonly uimage2D u_sriImg;
 
-layout(push_constant, std430) uniform b_pc
+layout(push_constant, std140, row_major) uniform b_pc
 {
 	Vec2 u_oneOverViewportSize;
 	F32 u_thresholdMeters;
 	F32 u_padding0;
-	Mat4 u_invertedViewProjectionJitter;
+	Mat4 u_invertedProjectionJitter;
 };
 
 #if SHARED_MEMORY
@@ -36,18 +36,19 @@ const U32 SHARED_MEMORY_ENTRIES = WORKGROUP_SIZE.x * WORKGROUP_SIZE.y / 8u;
 shared Vec2 s_maxDerivative[SHARED_MEMORY_ENTRIES];
 #endif
 
-F32 toViewSpace(Vec2 ndc, F32 depth)
+F32 sampleViewPositionZ(Vec2 uv, I32 offsetX, I32 offsetY)
 {
-	const Vec4 v4 = u_invertedViewProjectionJitter * Vec4(ndc, depth, 1.0);
+	uv += Vec2(offsetX, offsetY) * u_oneOverViewportSize;
+	const Vec2 ndc = UV_TO_NDC(uv);
+	const F32 depth = textureLod(sampler2D(u_inputTex, u_nearestClampSampler), uv, 0.0).x;
+
+	const Vec4 v4 = u_invertedProjectionJitter * Vec4(ndc, depth, 1.0);
 	return v4.z / v4.w;
 }
 
-#define sampleWorldPositionZ(offsetX, offsetY) \
-	toViewSpace(ndc, textureLodOffset(sampler2D(u_inputTex, u_nearestClampSampler), uv, 0.0, IVec2(offsetX, offsetY)).x)
-
 void main()
 {
-	const Vec2 uv = Vec2(gl_GlobalInvocationID.xy) * Vec2(REGION_SIZE) * u_oneOverViewportSize;
+	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) * Vec2(REGION_SIZE) + 0.5) * u_oneOverViewportSize;
 	const Vec2 ndc = UV_TO_NDC(uv);
 
 	// Get positions
@@ -56,16 +57,16 @@ void main()
 	// l0.z  l0.w
 	// l0.x  l0.y
 	Vec4 l0;
-	l0.x = sampleWorldPositionZ(0, 0);
-	l0.y = sampleWorldPositionZ(1, 0);
-	l0.z = sampleWorldPositionZ(0, 1);
-	l0.w = sampleWorldPositionZ(1, 1);
+	l0.x = sampleViewPositionZ(uv, 0, 0);
+	l0.y = sampleViewPositionZ(uv, 1, 0);
+	l0.z = sampleViewPositionZ(uv, 0, 1);
+	l0.w = sampleViewPositionZ(uv, 1, 1);
 
 	Vec4 l1;
-	l1.x = sampleWorldPositionZ(0, 2);
-	l1.y = sampleWorldPositionZ(1, 2);
-	l1.z = sampleWorldPositionZ(0, 3);
-	l1.w = sampleWorldPositionZ(1, 3);
+	l1.x = sampleViewPositionZ(uv, 0, 2);
+	l1.y = sampleViewPositionZ(uv, 1, 2);
+	l1.z = sampleViewPositionZ(uv, 0, 3);
+	l1.w = sampleViewPositionZ(uv, 1, 3);
 
 	// Calculate derivatives.
 	Vec4 a = Vec4(l0.y, l0.z, l1.y, l1.z);

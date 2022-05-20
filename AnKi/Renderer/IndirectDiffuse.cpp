@@ -170,11 +170,11 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			{
 			public:
 				Vec4 m_v4;
-				Mat4 m_invertedViewProjectionJitter;
+				Mat4 m_invertedProjectionJitter;
 			} pc;
 
-			pc.m_v4 = Vec4(1.0f / Vec2(viewport), 0.01f, 0.0f);
-			pc.m_invertedViewProjectionJitter = ctx.m_matrices.m_invertedViewProjectionJitter;
+			pc.m_v4 = Vec4(1.0f / Vec2(viewport), getConfig().getRIndirectDiffuseVrsDistanceThreshold(), 0.0f);
+			pc.m_invertedProjectionJitter = ctx.m_matrices.m_invertedProjectionJitter;
 
 			cmdb->setPushConstants(&pc, sizeof(pc));
 

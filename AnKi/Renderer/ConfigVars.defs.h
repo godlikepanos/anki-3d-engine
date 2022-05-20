@@ -37,6 +37,8 @@ ANKI_CONFIG_VAR_F32(RIndirectDiffuseSsgiRadius, 2.0f, 0.1f, 100.0f, "SSGI radius
 ANKI_CONFIG_VAR_U32(RIndirectDiffuseDenoiseSampleCount, 4, 1, 128, "Indirect diffuse denoise sample count")
 ANKI_CONFIG_VAR_F32(RIndirectDiffuseSsaoStrength, 2.5f, 0.1f, 10.0f, "SSAO strength")
 ANKI_CONFIG_VAR_F32(RIndirectDiffuseSsaoBias, -0.1f, -10.0f, 10.0f, "SSAO bias")
+ANKI_CONFIG_VAR_F32(RIndirectDiffuseVrsDistanceThreshold, 0.01f, 0.00001f, 10.0f,
+					"The meters that control the VRS SRI generation")
 
 ANKI_CONFIG_VAR_U32(RShadowMappingTileResolution, (ANKI_PLATFORM_MOBILE) ? 128 : 512, 16, 2048,
 					"Shadowmapping tile resolution")
