@@ -123,6 +123,8 @@ endif()
 option(ANKI_SIMD "Enable SIMD optimizations" ON)
 option(ANKI_ADDRESS_SANITIZER "Enable address sanitizer (-fsanitize=address)" OFF)
 option(ANKI_HEADLESS "Build a headless application" OFF)
+option(ANKI_SHADER_FULL_PRECISION "Build shaders with full precision" OFF)
+set(ANKI_OVERRIDE_SHADER_COMPILER "" CACHE FILEPATH "Set the ShaderCompiler to be used to compile all shaders")
 
 # Take a wild guess on the windowing system
 if(ANKI_HEADLESS)

@@ -5,6 +5,30 @@ file(GLOB_RECURSE header_fnames *.h)
 ProcessorCount(proc_count)
 MATH(EXPR proc_count "${proc_count}-1")
 
+if(ANKI_OVERRIDE_SHADER_COMPILER STREQUAL "")
+	set(shader_compiler_bin "ShaderCompiler")
+	set(shader_compiler_dep "ShaderCompiler")
+else()
+	set(shader_compiler_bin ${ANKI_OVERRIDE_SHADER_COMPILER})
+	set(shader_compiler_dep "")
+endif()
+
+set(out_dir "${CMAKE_BINARY_DIR}/Bin/ShaderBinaries")
+
+if(ANDROID OR ARM)
+	message("++ Compiling shaders for mobile")
+	set(extra_compiler_args "-mobile-platform")
+else()
+	message("++ Compiling shaders for desktop")
+endif()
+
+if(ANKI_SHADER_FULL_PRECISION)
+	message("++ Forcing full shader precision")
+	set(extra_compiler_args ${extra_compiler_args} "-force-full-fp")
+else()
+	message("++ Leaving default shader precision")
+endif()
+
 foreach(prog_fname ${prog_fnames})
 	get_filename_component(filename ${prog_fname} NAME)
 	set(bin_fname ${CMAKE_CURRENT_BINARY_DIR}/${filename}bin)
@@ -14,8 +38,8 @@ foreach(prog_fname ${prog_fnames})
 
 	add_custom_command(
 		OUTPUT ${bin_fname}
-		COMMAND ShaderCompiler -o ${bin_fname} -j ${proc_count} -I "${CMAKE_CURRENT_SOURCE_DIR}/../.." ${prog_fname}
-		DEPENDS ShaderCompiler ${prog_fname} ${glsl_fnames} ${header_fnames}
+		COMMAND ${shader_compiler_bin} -o ${bin_fname} -j ${proc_count} -I "${CMAKE_CURRENT_SOURCE_DIR}/../.." ${extra_compiler_args} ${prog_fname}
+		DEPENDS ${shader_compiler_dep} ${prog_fname} ${glsl_fnames} ${header_fnames}
 		COMMENT "Build ${prog_fname}")
 
 	add_custom_target(
@@ -24,10 +48,20 @@ foreach(prog_fname ${prog_fnames})
 
 	add_custom_command(
 		TARGET ${target_name} POST_BUILD
-		COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/Bin/ShaderBinaries
-		COMMAND ${CMAKE_COMMAND} -E copy ${bin_fname} ${CMAKE_BINARY_DIR}/Bin/ShaderBinaries)
+		COMMAND ${CMAKE_COMMAND} -E make_directory ${out_dir}
+		COMMAND ${CMAKE_COMMAND} -E copy ${bin_fname} ${out_dir})
 
 	list(APPEND program_targets ${target_name})
 endforeach()
 
-add_custom_target(AnKiShaders DEPENDS ${program_targets})
+add_custom_target(AnKiShaders ALL DEPENDS ${program_targets})
+
+# Create link of shader bin dir to the android assets
+if(ANDROID)
+	set(assets_dir "${CMAKE_BINARY_DIR}/../../../../../assets/ShaderBinaries")
+
+	add_custom_command(
+		TARGET AnKiShaders POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E create_symlink ${out_dir} ${assets_dir}
+	)
+endif()

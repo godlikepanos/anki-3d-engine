@@ -1,3 +1,4 @@
+
 // Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
@@ -294,8 +295,10 @@ Error App::initInternal(CString executableFilename, AllocAlignedCallback allocCb
 	//
 #if !ANKI_OS_ANDROID
 	// Add the location of the executable where the shaders are supposed to be
+	StringAuto executableFname(m_heapAlloc);
+	ANKI_CHECK(getApplicationPath(executableFname));
 	StringAuto shadersPath(m_heapAlloc);
-	getParentFilepath(executableFilename, shadersPath);
+	getParentFilepath(executableFname, shadersPath);
 	shadersPath.append(":");
 	shadersPath.append(m_config->getRsrcDataPaths());
 	m_config->setRsrcDataPaths(shadersPath);

@@ -24,7 +24,7 @@ static const char SHADER_HEADER[] = R"(#version 460 core
 #define ANKI_PLATFORM_MOBILE %d
 #define ANKI_FORCE_FULL_FP_PRECISION %d
 
-#define _ANKI_SUPPORTS_64BIT !ANKI_PLATFORM_MOBILE
+#define ANKI_SUPPORTS_64BIT !ANKI_PLATFORM_MOBILE
 
 #define gl_VertexID gl_VertexIndex
 
@@ -53,7 +53,7 @@ static const char SHADER_HEADER[] = R"(#version 460 core
 #extension GL_EXT_shader_explicit_arithmetic_types_float16 : enable
 #extension GL_EXT_shader_explicit_arithmetic_types_float32 : enable
 
-#if _ANKI_SUPPORTS_64BIT
+#if ANKI_SUPPORTS_64BIT
 #extension GL_EXT_shader_explicit_arithmetic_types_int64 : enable
 #extension GL_EXT_shader_explicit_arithmetic_types_float64 : enable
 #extension GL_EXT_shader_atomic_int64 : enable
@@ -150,7 +150,7 @@ static const char SHADER_HEADER[] = R"(#version 460 core
 #define IVec4 ivec4
 #define _ANKI_SIZEOF_ivec4 16u
 
-#if _ANKI_SUPPORTS_64BIT
+#if ANKI_SUPPORTS_64BIT
 #	define U64 uint64_t
 #	define _ANKI_SIZEOF_uint64_t 8u
 #	define U64Vec2 u64vec2
@@ -181,7 +181,7 @@ static const char SHADER_HEADER[] = R"(#version 460 core
 
 #define Bool bool
 
-#if _ANKI_SUPPORTS_64BIT
+#if ANKI_SUPPORTS_64BIT
 #	define Address U64
 #else
 #	define Address UVec2

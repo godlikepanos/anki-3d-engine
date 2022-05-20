@@ -9,7 +9,7 @@ namespace anki {
 
 void getFilepathExtension(const CString& filename, StringAuto& out)
 {
-	const char* pc = std::strrchr(filename.cstr(), '.');
+	const Char* pc = std::strrchr(filename.cstr(), '.');
 
 	if(pc == nullptr)
 	{
@@ -27,7 +27,13 @@ void getFilepathExtension(const CString& filename, StringAuto& out)
 
 void getFilepathFilename(const CString& filename, StringAuto& out)
 {
-	const char* pc = std::strrchr(filename.cstr(), '/');
+	const Char* pc1 = std::strrchr(filename.cstr(), '/');
+#if ANKI_OS_WINDOWS
+	const Char* pc2 = std::strrchr(filename.cstr(), '\\');
+#else
+	const Char* pc2 = pc1;
+#endif
+	const Char* pc = (pc1 > pc2) ? pc1 : pc2;
 
 	if(pc == nullptr)
 	{
@@ -45,7 +51,14 @@ void getFilepathFilename(const CString& filename, StringAuto& out)
 
 void getParentFilepath(const CString& filename, StringAuto& out)
 {
-	const char* pc = std::strrchr(filename.cstr(), '/');
+	const Char* pc1 = std::strrchr(filename.cstr(), '/');
+#if ANKI_OS_WINDOWS
+	const Char* pc2 = std::strrchr(filename.cstr(), '\\');
+#else
+	const Char* pc2 = pc1;
+#endif
+
+	const Char* pc = (pc1 > pc2) ? pc1 : pc2;
 
 	if(pc == nullptr)
 	{

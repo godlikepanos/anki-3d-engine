@@ -20,9 +20,10 @@ android {
                             "-DCMAKE_BUILD_TYPE=Debug",
                             "-DANKI_EXTRA_CHECKS=ON",
                             "-DANKI_BUILD_TESTS=ON",
-                            "-DPYTHON_EXECUTABLE:FILEPATH=%PYTHON%"
+                            "-DPYTHON_EXECUTABLE:FILEPATH=%PYTHON%",
+                            "-DANKI_OVERRIDE_SHADER_COMPILER:FILEPATH=%COMPILER%"
                     version "3.12+"
-                    targets "%TARGET%"
+                    targets "%TARGET%", "AnKiShaders"
                 }
             }
 
@@ -39,9 +40,10 @@ android {
                             "-DCMAKE_BUILD_TYPE=Release",
                             "-DANKI_EXTRA_CHECKS=OFF",
                             "-DANKI_BUILD_TESTS=ON",
-                            "-DPYTHON_EXECUTABLE:FILEPATH=%PYTHON%"
+                            "-DPYTHON_EXECUTABLE:FILEPATH=%PYTHON%",
+                            "-DANKI_OVERRIDE_SHADER_COMPILER:FILEPATH=%COMPILER%"
                     version "3.12+"
-                    targets "%TARGET%"
+                    targets "%TARGET%", "AnKiShaders"
                 }
             }
 
