@@ -29,6 +29,7 @@ public:
 	static const Bool m_doubleBuffer = true;
 	/// Create a fullscreen window with the desktop's resolution
 	Bool m_fullscreenDesktopRez = false;
+	Bool m_exclusiveMode = false;
 
 	CString m_title = "AnKi";
 };
