@@ -197,7 +197,7 @@ private:
 /// @code
 ///	<material [shadows="0|1"]>
 /// 	<shaderPrograms>
-///			<shaderProgram filename="filename">
+///			<shaderProgram name="name of the shader">
 ///				[<mutation>
 ///					<mutator name="str" value="value"/>
 ///				</mutation>]

@@ -207,15 +207,18 @@ Error MaterialResource::load(const ResourceFilename& filename, Bool async)
 
 Error MaterialResource::parseShaderProgram(XmlElement shaderProgramEl, Bool async)
 {
-	// filename
-	CString fname;
-	ANKI_CHECK(shaderProgramEl.getAttributeText("filename", fname));
+	// name
+	CString shaderName;
+	ANKI_CHECK(shaderProgramEl.getAttributeText("name", shaderName));
 
-	if(fname.find("/Rt") != CString::NPOS && !getManager().getGrManager().getDeviceCapabilities().m_rayTracingEnabled)
+	if(!getManager().getGrManager().getDeviceCapabilities().m_rayTracingEnabled && shaderName.find("Rt") == 0)
 	{
 		// Skip RT programs when RT is disabled
 		return Error::NONE;
 	}
+
+	StringAuto fname(getTempAllocator());
+	fname.sprintf("ShaderBinaries/%s.ankiprogbin", shaderName.cstr());
 
 	Program& prog = *m_programs.emplaceBack(getAllocator());
 	ANKI_CHECK(getManager().loadResource(fname, prog.m_prog, async));

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <material shadow="0">
 	<shaderPrograms>
-		<shaderProgram filename="ShaderBinaries/ForwardShadingParticles.ankiprogbin">
+		<shaderProgram name="ForwardShadingParticles">
 			<mutation>
 				<mutator name="ANIMATED_TEXTURE" value="0"/>
 				<mutator name="LIGHT" value="0"/>

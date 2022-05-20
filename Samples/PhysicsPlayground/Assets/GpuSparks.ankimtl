@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <material shadow="0">
 	<shaderPrograms>
-		<shaderProgram filename="Anki/Shaders/GBufferGpuParticles.ankiprog"/>
+		<shaderProgram name="GBufferGpuParticles"/>
 	</shaderPrograms>
 
 	<inputs>
