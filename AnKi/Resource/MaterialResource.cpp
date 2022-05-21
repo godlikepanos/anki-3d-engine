@@ -383,6 +383,11 @@ Error MaterialResource::createVars(Program& prog)
 	{
 		const ShaderProgramResourceVariant* variant;
 		prog.m_prog->getOrCreateVariant(initInfo, variant);
+		if(!variant)
+		{
+			// Skipped variant
+			continue;
+		}
 
 		// Add opaque vars
 		for(const ShaderProgramBinaryOpaqueInstance& instance : variant->getBinaryVariant().m_opaques)
@@ -785,7 +790,14 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 	ANKI_ASSERT(m_techniqueToProgram[key.getRenderingTechnique()] != MAX_U8);
 	const Program& prog = m_programs[m_techniqueToProgram[key.getRenderingTechnique()]];
 
+	// Sanitize the key
 	key.setLod(min<U32>(prog.m_lodCount - 1, key.getLod()));
+
+	if(key.getRenderingTechnique() == RenderingTechnique::GBUFFER_EARLY_Z
+	   || key.getRenderingTechnique() == RenderingTechnique::SHADOW)
+	{
+		key.setLod(0);
+	}
 
 	ANKI_ASSERT(!key.getSkinned() || !!(prog.m_presentBuildinMutators & U32(1 << BuiltinMutatorId::BONES)));
 	ANKI_ASSERT(!key.getVelocity() || !!(prog.m_presentBuildinMutators & U32(1 << BuiltinMutatorId::VELOCITY)));
@@ -837,6 +849,11 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 
 	const ShaderProgramResourceVariant* progVariant;
 	prog.m_prog->getOrCreateVariant(initInfo, progVariant);
+
+	if(!progVariant)
+	{
+		ANKI_RESOURCE_LOGF("Fetched skipped mutation on program %s", getFilename().cstr());
+	}
 
 	variant.m_prog = progVariant->getProgram();
 

@@ -1056,8 +1056,7 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 	if(parser.getMutators().getSize() > 0)
 	{
 		// Initialize
-		DynamicArrayAuto<MutatorValue> originalMutationValues(tempAllocator, parser.getMutators().getSize());
-		DynamicArrayAuto<MutatorValue> rewrittenMutationValues(tempAllocator, parser.getMutators().getSize());
+		DynamicArrayAuto<MutatorValue> mutationValues(tempAllocator, parser.getMutators().getSize());
 		DynamicArrayAuto<U32> dials(tempAllocator, parser.getMutators().getSize(), 0);
 		DynamicArrayAuto<ShaderProgramBinaryVariant> variants(binaryAllocator);
 		DynamicArrayAuto<ShaderProgramBinaryCodeBlock> codeBlocks(binaryAllocator);
@@ -1079,70 +1078,34 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 			// Create the mutation
 			for(U32 i = 0; i < parser.getMutators().getSize(); ++i)
 			{
-				originalMutationValues[i] = parser.getMutators()[i].getValues()[dials[i]];
-				rewrittenMutationValues[i] = originalMutationValues[i];
+				mutationValues[i] = parser.getMutators()[i].getValues()[dials[i]];
 			}
 
 			ShaderProgramBinaryMutation& mutation = mutations[mutationCount++];
-			binaryAllocator.newArray(originalMutationValues.getSize(), mutation.m_values);
-			memcpy(mutation.m_values.getBegin(), originalMutationValues.getBegin(),
-				   originalMutationValues.getSizeInBytes());
+			binaryAllocator.newArray(mutationValues.getSize(), mutation.m_values);
+			memcpy(mutation.m_values.getBegin(), mutationValues.getBegin(), mutationValues.getSizeInBytes());
 
-			mutation.m_hash = computeHash(originalMutationValues.getBegin(), originalMutationValues.getSizeInBytes());
+			mutation.m_hash = computeHash(mutationValues.getBegin(), mutationValues.getSizeInBytes());
 			ANKI_ASSERT(mutation.m_hash > 0);
 
-			const Bool rewritten = parser.rewriteMutation(
-				WeakArray<MutatorValue>(rewrittenMutationValues.getBegin(), rewrittenMutationValues.getSize()));
-
-			// Create the variant
-			if(!rewritten)
+			if(parser.skipMutation(mutationValues))
+			{
+				mutation.m_variantIndex = MAX_U32;
+			}
+			else
 			{
 				// New and unique mutation and thus variant, add it
 
 				ShaderProgramBinaryVariant& variant = *variants.emplaceBack();
 				baseVariant = (baseVariant == nullptr) ? variants.getBegin() : baseVariant;
 
-				compileVariantAsync(originalMutationValues, parser, variant, codeBlocks, codeBlockHashes, tempAllocator,
+				compileVariantAsync(mutationValues, parser, variant, codeBlocks, codeBlockHashes, tempAllocator,
 									binaryAllocator, taskManager, mtx, errorAtomic);
 
 				mutation.m_variantIndex = variants.getSize() - 1;
 
 				ANKI_ASSERT(mutationHashToIdx.find(mutation.m_hash) == mutationHashToIdx.getEnd());
 				mutationHashToIdx.emplace(mutation.m_hash, mutationCount - 1);
-			}
-			else
-			{
-				// Check if the rewritten mutation exists
-				const U64 otherMutationHash =
-					computeHash(rewrittenMutationValues.getBegin(), rewrittenMutationValues.getSizeInBytes());
-				auto it = mutationHashToIdx.find(otherMutationHash);
-
-				ShaderProgramBinaryVariant* variant = nullptr;
-				if(it == mutationHashToIdx.getEnd())
-				{
-					// Rewrite variant not found, create it
-
-					variant = variants.emplaceBack();
-					baseVariant = (baseVariant == nullptr) ? variants.getBegin() : baseVariant;
-
-					compileVariantAsync(originalMutationValues, parser, *variant, codeBlocks, codeBlockHashes,
-										tempAllocator, binaryAllocator, taskManager, mtx, errorAtomic);
-
-					ShaderProgramBinaryMutation& otherMutation = mutations[mutationCount++];
-					binaryAllocator.newArray(rewrittenMutationValues.getSize(), otherMutation.m_values);
-					memcpy(otherMutation.m_values.getBegin(), rewrittenMutationValues.getBegin(),
-						   rewrittenMutationValues.getSizeInBytes());
-
-					mutation.m_hash = otherMutationHash;
-					mutation.m_variantIndex = variants.getSize() - 1;
-
-					it = mutationHashToIdx.emplace(otherMutationHash, mutationCount - 1);
-				}
-
-				// Setup the new mutation
-				mutation.m_variantIndex = mutations[*it].m_variantIndex;
-
-				mutationHashToIdx.emplace(mutation.m_hash, U32(&mutation - mutations.getBegin()));
 			}
 		} while(!spinDials(dials, parser.getMutators()));
 

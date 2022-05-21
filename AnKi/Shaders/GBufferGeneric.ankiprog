@@ -16,28 +16,15 @@
 #pragma anki mutator EMISSIVE_TEX 0 1
 #pragma anki mutator ALPHA_TEST 0 1
 
-#pragma anki rewrite_mutation ANKI_TECHNIQUE 1 DIFFUSE_TEX 1 ALPHA_TEST 0 to ANKI_TECHNIQUE 1 DIFFUSE_TEX 0 ALPHA_TEST 0
-#pragma anki rewrite_mutation ANKI_TECHNIQUE 2 DIFFUSE_TEX 1 ALPHA_TEST 0 to ANKI_TECHNIQUE 2 DIFFUSE_TEX 0 ALPHA_TEST 0
+#pragma anki skip_mutation ALPHA_TEST 1 DIFFUSE_TEX 0
+#pragma anki skip_mutation ANKI_VELOCITY 1 ANKI_TECHNIQUE 1
+#pragma anki skip_mutation ANKI_VELOCITY 1 ANKI_TECHNIQUE 2
+#pragma anki skip_mutation ANKI_LOD 1 ANKI_TECHNIQUE 1
+#pragma anki skip_mutation ANKI_LOD 2 ANKI_TECHNIQUE 1
+#pragma anki skip_mutation ANKI_LOD 1 ANKI_TECHNIQUE 2
+#pragma anki skip_mutation ANKI_LOD 2 ANKI_TECHNIQUE 2
 
-#pragma anki rewrite_mutation ANKI_TECHNIQUE 1 SPECULAR_TEX 1 to ANKI_TECHNIQUE 1 SPECULAR_TEX 0
-#pragma anki rewrite_mutation ANKI_TECHNIQUE 2 SPECULAR_TEX 1 to ANKI_TECHNIQUE 2 SPECULAR_TEX 0
-
-#pragma anki rewrite_mutation ANKI_TECHNIQUE 1 NORMAL_TEX 1 to ANKI_TECHNIQUE 1 NORMAL_TEX 0
-#pragma anki rewrite_mutation ANKI_TECHNIQUE 2 NORMAL_TEX 1 to ANKI_TECHNIQUE 2 NORMAL_TEX 0
-
-#pragma anki rewrite_mutation ANKI_TECHNIQUE 1 ROUGHNESS_TEX 1 to ANKI_TECHNIQUE 1 ROUGHNESS_TEX 0
-#pragma anki rewrite_mutation ANKI_TECHNIQUE 2 ROUGHNESS_TEX 1 to ANKI_TECHNIQUE 2 ROUGHNESS_TEX 0
-
-#pragma anki rewrite_mutation ANKI_TECHNIQUE 1 METAL_TEX 1 to ANKI_TECHNIQUE 1 METAL_TEX 0
-#pragma anki rewrite_mutation ANKI_TECHNIQUE 2 METAL_TEX 1 to ANKI_TECHNIQUE 2 METAL_TEX 0
-
-#pragma anki rewrite_mutation ANKI_TECHNIQUE 1 EMISSIVE_TEX 1 to ANKI_TECHNIQUE 1 EMISSIVE_TEX 0
-#pragma anki rewrite_mutation ANKI_TECHNIQUE 2 EMISSIVE_TEX 1 to ANKI_TECHNIQUE 2 EMISSIVE_TEX 0
-
-#pragma anki rewrite_mutation ANKI_TECHNIQUE 1 PARALLAX 1 to ANKI_TECHNIQUE 1 PARALLAX 0
-#pragma anki rewrite_mutation ANKI_TECHNIQUE 2 PARALLAX 1 to ANKI_TECHNIQUE 2 PARALLAX 0
-
-#pragma anki rewrite_mutation ALPHA_TEST 1 DIFFUSE_TEX 0 to ALPHA_TEST 0 DIFFUSE_TEX 0
+#define REALLY_ALPHA_TEST (ALPHA_TEST && DIFFUSE_TEX)
 
 #include <AnKi/Shaders/GBufferCommon.glsl>
 
@@ -109,7 +96,7 @@ ANKI_RP Vec3 g_normal = in_normal;
 ANKI_RP Vec4 g_tangent = in_tangent;
 #endif
 
-#if ANKI_TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER || ALPHA_TEST
+#if ANKI_TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER || REALLY_ALPHA_TEST
 Vec2 g_uv = in_uv;
 #endif
 
@@ -213,7 +200,7 @@ void main()
 	gl_Position = u_globalUniforms.m_viewProjectionMatrix
 				  * Vec4(u_renderableGpuViews[gl_InstanceIndex].m_worldTransform * Vec4(g_position, 1.0), 1.0);
 
-#	if ALPHA_TEST
+#	if REALLY_ALPHA_TEST
 	out_uv = g_uv;
 #	endif
 #endif
@@ -330,7 +317,7 @@ void main()
 #	endif
 
 #	if DIFFUSE_TEX
-#		if ALPHA_TEST
+#		if REALLY_ALPHA_TEST
 	const ANKI_RP Vec4 diffColorA = texture(u_bindlessTextures2dF32[localUniforms.m_diffTex], u_globalSampler, uv);
 	doAlphaText(diffColorA.a);
 	const ANKI_RP Vec3 diffColor = diffColorA.rgb;
@@ -387,7 +374,7 @@ void main()
 	out_gbuffer3 = Vec2(0.0);
 #endif
 
-#if ANKI_TECHNIQUE != RENDERING_TECHNIQUE_GBUFFER && ALPHA_TEST
+#if ANKI_TECHNIQUE != RENDERING_TECHNIQUE_GBUFFER && REALLY_ALPHA_TEST
 	doAlphaText(texture(u_bindlessTextures2dF32[localUniforms.m_diffTex], u_globalSampler, in_uv).a);
 #endif
 }

@@ -281,6 +281,17 @@ Vec4 pow(Vec4 a, F32 b)
 
 static const U64 SHADER_HEADER_HASH = computeHash(SHADER_HEADER, sizeof(SHADER_HEADER));
 
+class ShaderProgramParser::PartialMutationSkip
+{
+public:
+	DynamicArrayAuto<MutatorValue> m_partialMutation;
+
+	PartialMutationSkip(const GenericMemoryPoolAllocator<U8>& alloc)
+		: m_partialMutation(alloc)
+	{
+	}
+};
+
 ShaderProgramParser::ShaderProgramParser(CString fname, ShaderProgramFilesystemInterface* fsystem,
 										 GenericMemoryPoolAllocator<U8> alloc,
 										 const ShaderCompilerOptions& compilerOptions)
@@ -567,143 +578,60 @@ Error ShaderProgramParser::parsePragmaReflect(const StringAuto* begin, const Str
 	return Error::NONE;
 }
 
-Error ShaderProgramParser::parsePragmaRewriteMutation(const StringAuto* begin, const StringAuto* end, CString line,
-													  CString fname)
+Error ShaderProgramParser::parsePragmaSkipMutation(const StringAuto* begin, const StringAuto* end, CString line,
+												   CString fname)
 {
 	ANKI_ASSERT(begin && end);
 
 	// Some basic sanity checks
 	const U tokenCount = U(end - begin);
-	constexpr U minTokenCount = 2 + 1 + 2; // Mutator + value + "to" + mutator + value
-	if(tokenCount < minTokenCount)
+	// One pair doesn't make sence so it's: mutator_name_0 + mutator_value_0 + mutator_name_1 + mutator_value_1
+	constexpr U minTokenCount = 2 + 2;
+	if(tokenCount < minTokenCount || (tokenCount % 2) != 0)
 	{
 		ANKI_PP_ERROR_MALFORMED();
 	}
 
-	MutationRewrite& rewrite = *m_mutationRewrites.emplaceBack(m_alloc);
-	Bool servingFrom = true;
+	PartialMutationSkip& skip = *m_skipMutations.emplaceBack(m_alloc);
+	skip.m_partialMutation.create(m_mutators.getSize(), std::numeric_limits<MutatorValue>::max());
 
 	do
 	{
-		if(*begin == "to")
+		// Get mutator name
+		const CString mutatorName = *begin;
+		U32 mutatorIndex = MAX_U32;
+		for(U32 i = 0; i < m_mutators.getSize(); ++i)
 		{
-			if(servingFrom == false)
+			if(m_mutators[i].m_name == mutatorName)
 			{
-				ANKI_PP_ERROR_MALFORMED();
-			}
-
-			servingFrom = false;
-		}
-		else
-		{
-			// Mutator & value
-
-			// Get mutator and value
-			const CString mutatorName = *begin;
-			++begin;
-			if(begin == end)
-			{
-				ANKI_PP_ERROR_MALFORMED();
-			}
-			const CString valueStr = *begin;
-			MutatorValue value;
-			if(valueStr.toNumber(value))
-			{
-				ANKI_PP_ERROR_MALFORMED_MSG("Malformed value");
-			}
-
-			// Get or create new record
-			if(servingFrom)
-			{
-				MutationRewrite::Record& rec = *rewrite.m_records.emplaceBack();
-				for(U32 i = 0; i < m_mutators.getSize(); ++i)
-				{
-					if(m_mutators[i].getName() == mutatorName)
-					{
-						rec.m_mutatorIndex = i;
-						break;
-					}
-				}
-
-				if(rec.m_mutatorIndex == MAX_U32)
-				{
-					ANKI_PP_ERROR_MALFORMED_MSG("Mutator not found");
-				}
-
-				if(!mutatorHasValue(m_mutators[rec.m_mutatorIndex], value))
-				{
-					ANKI_PP_ERROR_MALFORMED_MSG("Incorect value for mutator");
-				}
-
-				rec.m_valueFrom = value;
-			}
-			else
-			{
-				Bool found = false;
-				for(MutationRewrite::Record& rec : rewrite.m_records)
-				{
-					if(m_mutators[rec.m_mutatorIndex].m_name == mutatorName)
-					{
-						if(!mutatorHasValue(m_mutators[rec.m_mutatorIndex], value))
-						{
-							ANKI_PP_ERROR_MALFORMED_MSG("Incorect value for mutator");
-						}
-
-						rec.m_valueTo = value;
-						found = true;
-						break;
-					}
-				}
-
-				if(!found)
-				{
-					ANKI_PP_ERROR_MALFORMED();
-				}
-			}
-		}
-
-		++begin;
-	} while(begin < end && !tokenIsComment(*begin));
-
-	// Sort for some later cross checking
-	std::sort(rewrite.m_records.getBegin(), rewrite.m_records.getEnd(),
-			  [](const MutationRewrite::Record& a, const MutationRewrite::Record& b) {
-				  return a.m_mutatorIndex < b.m_mutatorIndex;
-			  });
-
-	// More cross checking
-	for(U32 i = 1; i < rewrite.m_records.getSize(); ++i)
-	{
-		if(rewrite.m_records[i - 1].m_mutatorIndex == rewrite.m_records[i].m_mutatorIndex)
-		{
-			ANKI_PP_ERROR_MALFORMED_MSG("Mutator appeared more than once");
-		}
-	}
-
-	for(U32 i = 0; i < m_mutationRewrites.getSize() - 1; ++i)
-	{
-		const MutationRewrite& other = m_mutationRewrites[i];
-
-		if(other.m_records.getSize() != rewrite.m_records.getSize())
-		{
-			continue;
-		}
-
-		Bool same = true;
-		for(U32 j = 0; j < rewrite.m_records.getSize(); ++j)
-		{
-			if(rewrite.m_records[j] != other.m_records[j])
-			{
-				same = false;
+				mutatorIndex = i;
 				break;
 			}
 		}
 
-		if(same)
+		if(mutatorIndex == MAX_U32)
 		{
-			ANKI_PP_ERROR_MALFORMED_MSG("Mutation already exists");
+			ANKI_PP_ERROR_MALFORMED_MSG("Mutator not found");
 		}
-	}
+
+		// Get mutator value
+		++begin;
+		const CString valueStr = *begin;
+		MutatorValue value;
+		if(valueStr.toNumber(value))
+		{
+			ANKI_PP_ERROR_MALFORMED_MSG("Malformed mutator value");
+		}
+
+		if(!mutatorHasValue(m_mutators[mutatorIndex], value))
+		{
+			ANKI_PP_ERROR_MALFORMED_MSG("Mutator value incorrect");
+		}
+
+		skip.m_partialMutation[mutatorIndex] = value;
+
+		++begin;
+	} while(begin < end && !tokenIsComment(*begin));
 
 	return Error::NONE;
 }
@@ -823,10 +751,10 @@ Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPra
 				ANKI_CHECK(checkNoActiveStruct());
 				ANKI_CHECK(parsePragmaEnd(token + 1, end, line, fname));
 			}
-			else if(*token == "rewrite_mutation")
+			else if(*token == "skip_mutation")
 			{
 				ANKI_CHECK(checkNoActiveStruct());
-				ANKI_CHECK(parsePragmaRewriteMutation(token + 1, end, line, fname));
+				ANKI_CHECK(parsePragmaSkipMutation(token + 1, end, line, fname));
 			}
 			else if(*token == "library")
 			{
@@ -1324,42 +1252,12 @@ Error ShaderProgramParser::generateVariant(ConstWeakArray<MutatorValue> mutation
 	return Error::NONE;
 }
 
-Bool ShaderProgramParser::rewriteMutation(WeakArray<MutatorValue> mutation) const
+Bool ShaderProgramParser::mutatorHasValue(const ShaderProgramParserMutator& mutator, MutatorValue value)
 {
-	// Checks
-	ANKI_ASSERT(mutation.getSize() == m_mutators.getSize());
-	for(U32 i = 0; i < mutation.getSize(); ++i)
+	for(MutatorValue v : mutator.m_values)
 	{
-		ANKI_ASSERT(mutatorHasValue(m_mutators[i], mutation[i]));
-	}
-
-	// Early exit
-	if(mutation.getSize() == 0)
-	{
-		return false;
-	}
-
-	// Find if mutation exists
-	for(const MutationRewrite& rewrite : m_mutationRewrites)
-	{
-		Bool found = true;
-		for(U32 i = 0; i < rewrite.m_records.getSize(); ++i)
+		if(value == v)
 		{
-			if(rewrite.m_records[i].m_valueFrom != mutation[rewrite.m_records[i].m_mutatorIndex])
-			{
-				found = false;
-				break;
-			}
-		}
-
-		if(found)
-		{
-			// Rewrite it
-			for(U32 i = 0; i < rewrite.m_records.getSize(); ++i)
-			{
-				mutation[rewrite.m_records[i].m_mutatorIndex] = rewrite.m_records[i].m_valueTo;
-			}
-
 			return true;
 		}
 	}
@@ -1367,11 +1265,29 @@ Bool ShaderProgramParser::rewriteMutation(WeakArray<MutatorValue> mutation) cons
 	return false;
 }
 
-Bool ShaderProgramParser::mutatorHasValue(const ShaderProgramParserMutator& mutator, MutatorValue value)
+Bool ShaderProgramParser::skipMutation(ConstWeakArray<MutatorValue> mutation) const
 {
-	for(MutatorValue v : mutator.m_values)
+	ANKI_ASSERT(mutation.getSize() == m_mutators.getSize());
+
+	for(const PartialMutationSkip& skip : m_skipMutations)
 	{
-		if(value == v)
+		Bool doSkip = true;
+		for(U32 i = 0; i < m_mutators.getSize(); ++i)
+		{
+			if(skip.m_partialMutation[i] == std::numeric_limits<MutatorValue>::max())
+			{
+				// Don't care
+				continue;
+			}
+
+			if(skip.m_partialMutation[i] != mutation[i])
+			{
+				doSkip = false;
+				break;
+			}
+		}
+
+		if(doSkip)
 		{
 			return true;
 		}

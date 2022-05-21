@@ -238,7 +238,8 @@ public:
 		return m_binary.getBinary();
 	}
 
-	/// Get or create a graphics shader program variant.
+	/// Get or create a graphics shader program variant. If returned variant is nullptr then it means that the mutation
+	/// is skipped and thus incorrect.
 	/// @note It's thread-safe.
 	void getOrCreateVariant(const ShaderProgramResourceVariantInitInfo& info,
 							const ShaderProgramResourceVariant*& variant) const;
@@ -272,7 +273,7 @@ private:
 
 	ShaderTypeBit m_shaderStages = ShaderTypeBit::NONE;
 
-	void initVariant(const ShaderProgramResourceVariantInitInfo& info, ShaderProgramResourceVariant& variant) const;
+	ShaderProgramResourceVariant* createNewVariant(const ShaderProgramResourceVariantInitInfo& info) const;
 
 	static ANKI_USE_RESULT Error parseConst(CString constName, U32& componentIdx, U32& componentCount, CString& name);
 };

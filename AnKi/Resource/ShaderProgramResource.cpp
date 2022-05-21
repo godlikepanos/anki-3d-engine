@@ -230,11 +230,10 @@ void ShaderProgramResource::getOrCreateVariant(const ShaderProgramResourceVarian
 		RLockGuard<RWMutex> lock(m_mtx);
 
 		auto it = m_variants.find(hash);
-		variant = (it != m_variants.getEnd()) ? *it : nullptr;
-
-		if(variant != nullptr)
+		if(it != m_variants.getEnd())
 		{
 			// Done
+			variant = *it;
 			return;
 		}
 	}
@@ -244,22 +243,24 @@ void ShaderProgramResource::getOrCreateVariant(const ShaderProgramResourceVarian
 
 	// Check again
 	auto it = m_variants.find(hash);
-	variant = (it != m_variants.getEnd()) ? *it : nullptr;
-	if(variant != nullptr)
+	if(it != m_variants.getEnd())
 	{
 		// Done
+		variant = *it;
 		return;
 	}
 
 	// Create
-	ShaderProgramResourceVariant* v = getAllocator().newInstance<ShaderProgramResourceVariant>();
-	initVariant(info, *v);
-	m_variants.emplace(getAllocator(), hash, v);
+	ShaderProgramResourceVariant* v = createNewVariant(info);
+	if(v)
+	{
+		m_variants.emplace(getAllocator(), hash, v);
+	}
 	variant = v;
 }
 
-void ShaderProgramResource::initVariant(const ShaderProgramResourceVariantInitInfo& info,
-										ShaderProgramResourceVariant& variant) const
+ShaderProgramResourceVariant*
+ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitInfo& info) const
 {
 	const ShaderProgramBinary& binary = m_binary.getBinary();
 
@@ -277,6 +278,12 @@ void ShaderProgramResource::initVariant(const ShaderProgramResourceVariantInitIn
 		{
 			if(mutation.m_hash == mutationHash)
 			{
+				if(mutation.m_variantIndex == MAX_U32)
+				{
+					// Skipped mutation, nothing to create
+					return nullptr;
+				}
+
 				binaryVariant = &binary.m_variants[mutation.m_variantIndex];
 				break;
 			}
@@ -288,7 +295,8 @@ void ShaderProgramResource::initVariant(const ShaderProgramResourceVariantInitIn
 		binaryVariant = &binary.m_variants[0];
 	}
 	ANKI_ASSERT(binaryVariant);
-	variant.m_binaryVariant = binaryVariant;
+	ShaderProgramResourceVariant* variant = getAllocator().newInstance<ShaderProgramResourceVariant>();
+	variant->m_binaryVariant = binaryVariant;
 
 	// Set the constant values
 	Array<ShaderSpecializationConstValue, 64> constValues;
@@ -325,7 +333,7 @@ void ShaderProgramResource::initVariant(const ShaderProgramResourceVariantInitIn
 			if(binaryVariant->m_workgroupSizes[i] != MAX_U32)
 			{
 				// Size didn't come from specialization const
-				variant.m_workgroupSizes[i] = binaryVariant->m_workgroupSizes[i];
+				variant->m_workgroupSizes[i] = binaryVariant->m_workgroupSizes[i];
 			}
 			else
 			{
@@ -350,13 +358,13 @@ void ShaderProgramResource::initVariant(const ShaderProgramResourceVariantInitIn
 						const I32 value = info.m_constantValues[i].m_ivec4[component];
 						ANKI_ASSERT(value > 0);
 
-						variant.m_workgroupSizes[i] = U32(value);
+						variant->m_workgroupSizes[i] = U32(value);
 						break;
 					}
 				}
 			}
 
-			ANKI_ASSERT(variant.m_workgroupSizes[i] != MAX_U32);
+			ANKI_ASSERT(variant->m_workgroupSizes[i] != MAX_U32);
 		}
 	}
 
@@ -402,7 +410,7 @@ void ShaderProgramResource::initVariant(const ShaderProgramResourceVariantInitIn
 		}
 
 		// Create the program
-		variant.m_prog = getManager().getGrManager().newShaderProgram(progInf);
+		variant->m_prog = getManager().getGrManager().newShaderProgram(progInf);
 	}
 	else
 	{
@@ -424,11 +432,13 @@ void ShaderProgramResource::initVariant(const ShaderProgramResourceVariantInitIn
 		}
 		ANKI_ASSERT(foundLib);
 
-		variant.m_prog = foundLib->getShaderProgram();
+		variant->m_prog = foundLib->getShaderProgram();
 
 		// Set the group handle index
-		variant.m_shaderGroupHandleIndex = foundLib->getShaderGroupHandleIndex(getFilename(), mutationHash);
+		variant->m_shaderGroupHandleIndex = foundLib->getShaderGroupHandleIndex(getFilename(), mutationHash);
 	}
+
+	return variant;
 }
 
 } // end namespace anki

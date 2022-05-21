@@ -106,13 +106,12 @@ private:
 /// #include {<> | ""}
 /// #pragma once
 /// #pragma anki mutator NAME VALUE0 [VALUE1 [VALUE2] ...]
-/// #pragma anki rewrite_mutation NAME_A VALUE0 NAME_B VALUE1 [NAME_C VALUE3...] to
-///                               NAME_A VALUE4 NAME_B VALUE5 [NAME_C VALUE6...]
 /// #pragma anki start {vert | tessc | tesse | geom | frag | comp | rgen | ahit | chit | miss | int | call}
 /// #pragma anki end
 /// #pragma anki library "name"
 /// #pragma anki ray_type NUMBER
 /// #pragma anki reflect NAME
+/// #pragma anki skip_mutation MUTATOR0 VALUE0 MUTATOR1 VALUE1 [MUTATOR2 VALUE2 ...]
 ///
 /// #pragma anki struct NAME
 /// #	pragma anki member [ANKI_RP] TYPE NAME [if MUTATOR_NAME is MUTATOR_VALUE]
@@ -135,9 +134,8 @@ public:
 	/// Parse the file and its includes.
 	ANKI_USE_RESULT Error parse();
 
-	/// Given a mutation convert it to something acceptable. This will reduce the variants.
-	/// @return true if the mutation was rewritten.
-	Bool rewriteMutation(WeakArray<MutatorValue> mutation) const;
+	/// Returns true if the mutation should be skipped.
+	Bool skipMutation(ConstWeakArray<MutatorValue> mutation) const;
 
 	/// Get the source (and a few more things) given a list of mutators.
 	ANKI_USE_RESULT Error generateVariant(ConstWeakArray<MutatorValue> mutation,
@@ -188,30 +186,7 @@ private:
 	using Member = ShaderProgramParserMember;
 	using GhostStruct = ShaderProgramParserGhostStruct;
 
-	class MutationRewrite
-	{
-	public:
-		class Record
-		{
-		public:
-			U32 m_mutatorIndex = MAX_U32;
-			MutatorValue m_valueFrom = getMaxNumericLimit<MutatorValue>();
-			MutatorValue m_valueTo = getMaxNumericLimit<MutatorValue>();
-
-			Bool operator!=(const Record& b) const
-			{
-				return !(m_mutatorIndex == b.m_mutatorIndex && m_valueFrom == b.m_valueFrom
-						 && m_valueTo == b.m_valueTo);
-			}
-		};
-
-		DynamicArrayAuto<Record> m_records;
-
-		MutationRewrite(GenericMemoryPoolAllocator<U8> alloc)
-			: m_records(alloc)
-		{
-		}
-	};
+	class PartialMutationSkip;
 
 	static constexpr U32 MAX_INCLUDE_DEPTH = 8;
 
@@ -224,7 +199,7 @@ private:
 	U64 m_codeSourceHash = 0;
 
 	DynamicArrayAuto<Mutator> m_mutators = {m_alloc};
-	DynamicArrayAuto<MutationRewrite> m_mutationRewrites = {m_alloc};
+	DynamicArrayAuto<PartialMutationSkip> m_skipMutations = {m_alloc};
 
 	ShaderTypeBit m_shaderTypes = ShaderTypeBit::NONE;
 	Bool m_insideShader = false;
@@ -246,8 +221,8 @@ private:
 											 CString fname);
 	ANKI_USE_RESULT Error parsePragmaStart(const StringAuto* begin, const StringAuto* end, CString line, CString fname);
 	ANKI_USE_RESULT Error parsePragmaEnd(const StringAuto* begin, const StringAuto* end, CString line, CString fname);
-	ANKI_USE_RESULT Error parsePragmaRewriteMutation(const StringAuto* begin, const StringAuto* end, CString line,
-													 CString fname);
+	ANKI_USE_RESULT Error parsePragmaSkipMutation(const StringAuto* begin, const StringAuto* end, CString line,
+												  CString fname);
 	ANKI_USE_RESULT Error parsePragmaLibraryName(const StringAuto* begin, const StringAuto* end, CString line,
 												 CString fname);
 	ANKI_USE_RESULT Error parsePragmaRayType(const StringAuto* begin, const StringAuto* end, CString line,
