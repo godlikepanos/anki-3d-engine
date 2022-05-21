@@ -13,7 +13,12 @@ else()
 	set(shader_compiler_dep "")
 endif()
 
-set(out_dir "${CMAKE_BINARY_DIR}/Bin/ShaderBinaries")
+if(ANDROID)
+	# Copy to the Android assets
+	set(out_dir "${CMAKE_BINARY_DIR}/../../../../../assets/ShaderBinaries")
+else()
+	set(out_dir "${CMAKE_BINARY_DIR}/Bin/ShaderBinaries")
+endif()
 
 if(ANDROID OR ARM)
 	message("++ Compiling shaders for mobile")
@@ -55,13 +60,3 @@ foreach(prog_fname ${prog_fnames})
 endforeach()
 
 add_custom_target(AnKiShaders ALL DEPENDS ${program_targets})
-
-# Create link of shader bin dir to the android assets
-if(ANDROID)
-	set(assets_dir "${CMAKE_BINARY_DIR}/../../../../../assets/ShaderBinaries")
-
-	add_custom_command(
-		TARGET AnKiShaders POST_BUILD
-		COMMAND ${CMAKE_COMMAND} -E create_symlink ${out_dir} ${assets_dir}
-	)
-endif()
