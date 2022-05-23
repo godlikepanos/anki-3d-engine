@@ -186,7 +186,16 @@ private:
 	using Member = ShaderProgramParserMember;
 	using GhostStruct = ShaderProgramParserGhostStruct;
 
-	class PartialMutationSkip;
+	class PartialMutationSkip
+	{
+	public:
+		DynamicArrayAuto<MutatorValue> m_partialMutation;
+
+		PartialMutationSkip(const GenericMemoryPoolAllocator<U8>& alloc)
+			: m_partialMutation(alloc)
+		{
+		}
+	};
 
 	static constexpr U32 MAX_INCLUDE_DEPTH = 8;
 

@@ -281,17 +281,6 @@ Vec4 pow(Vec4 a, F32 b)
 
 static const U64 SHADER_HEADER_HASH = computeHash(SHADER_HEADER, sizeof(SHADER_HEADER));
 
-class ShaderProgramParser::PartialMutationSkip
-{
-public:
-	DynamicArrayAuto<MutatorValue> m_partialMutation;
-
-	PartialMutationSkip(const GenericMemoryPoolAllocator<U8>& alloc)
-		: m_partialMutation(alloc)
-	{
-	}
-};
-
 ShaderProgramParser::ShaderProgramParser(CString fname, ShaderProgramFilesystemInterface* fsystem,
 										 GenericMemoryPoolAllocator<U8> alloc,
 										 const ShaderCompilerOptions& compilerOptions)
