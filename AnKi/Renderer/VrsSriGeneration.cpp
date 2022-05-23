@@ -53,7 +53,7 @@ Error VrsSriGeneration::initInternal()
 	m_fbDescr.bake();
 
 	// Load programs
-	ANKI_CHECK(getResourceManager().loadResource("AnKi/Shaders/VrsSriGenerationCompute.ankiprogbin", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/VrsSriGenerationCompute.ankiprogbin", m_prog));
 	ShaderProgramResourceVariantInitInfo variantInit(m_prog);
 	variantInit.addMutation("SRI_TEXEL_DIMENSION", m_sriTexelDimension);
 	const ShaderProgramResourceVariant* variant;
@@ -61,7 +61,7 @@ Error VrsSriGeneration::initInternal()
 	m_grProg = variant->getProgram();
 
 	ANKI_CHECK(
-		getResourceManager().loadResource("AnKi/Shaders/VrsSriVisualizeRenderTarget.ankiprogbin", m_visualizeProg));
+		getResourceManager().loadResource("ShaderBinaries/VrsSriVisualizeRenderTarget.ankiprogbin", m_visualizeProg));
 	m_visualizeProg->getOrCreateVariant(variant);
 	m_visualizeGrProg = variant->getProgram();
 
