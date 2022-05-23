@@ -41,4 +41,16 @@ class ThreadHive;
 template<typename T, PtrSize T_PREALLOCATED_STORAGE = ANKI_SAFE_ALIGNMENT>
 class Function;
 
+template<typename T, typename TSize = U32>
+class WeakArray;
+
+template<typename T, typename TSize = U32>
+class ConstWeakArray;
+
+template<typename T, typename TSize = U32>
+class DynamicArray;
+
+template<typename T, typename TSize = U32>
+class DynamicArrayAuto;
+
 } // end namespace anki

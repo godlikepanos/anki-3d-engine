@@ -1,0 +1,8 @@
+<model>
+	<modelPatches>
+		<modelPatch>
+			<mesh>Assets/Icosphere_lod0_834d64c142beaa13.ankimesh</mesh>
+			<material>Assets/walls_9619132fa258d22d.ankimtl</material>
+		</modelPatch>
+	</modelPatches>
+</model>

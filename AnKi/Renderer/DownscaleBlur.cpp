@@ -50,8 +50,7 @@ Error DownscaleBlur::initInternal()
 		texinit.m_usage |= TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 	}
 	texinit.m_mipmapCount = U8(m_passCount);
-	texinit.m_initialUsage = TextureUsageBit::SAMPLED_COMPUTE;
-	m_rtTex = m_r->createAndClearRenderTarget(texinit);
+	m_rtTex = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::SAMPLED_COMPUTE);
 
 	// FB descr
 	if(!preferCompute)
@@ -66,8 +65,9 @@ Error DownscaleBlur::initInternal()
 	}
 
 	// Shader programs
-	ANKI_CHECK(getResourceManager().loadResource(
-		(preferCompute) ? "Shaders/DownscaleBlurCompute.ankiprog" : "Shaders/DownscaleBlurRaster.ankiprog", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource((preferCompute) ? "ShaderBinaries/DownscaleBlurCompute.ankiprogbin"
+																 : "ShaderBinaries/DownscaleBlurRaster.ankiprogbin",
+												 m_prog));
 	const ShaderProgramResourceVariant* variant = nullptr;
 	m_prog->getOrCreateVariant(variant);
 	m_grProg = variant->getProgram();

@@ -45,6 +45,8 @@ typedef void* LPVOID;
 typedef const CHAR *LPCSTR, *PCSTR;
 typedef const CHAR* PCZZSTR;
 typedef CHAR* LPSTR;
+typedef struct HINSTANCE__* HINSTANCE;
+typedef HINSTANCE HMODULE;
 ANKI_DECLARE_HANDLE(HWND);
 
 typedef struct _SECURITY_ATTRIBUTES SECURITY_ATTRIBUTES, *LPSECURITY_ATTRIBUTES;
@@ -112,6 +114,7 @@ ANKI_WINBASEAPI BOOL ANKI_WINAPI GetConsoleScreenBufferInfo(HANDLE hConsoleOutpu
 															PCONSOLE_SCREEN_BUFFER_INFO lpConsoleScreenBufferInfo);
 ANKI_WINBASEAPI BOOL ANKI_WINAPI SetConsoleTextAttribute(HANDLE hConsoleOutput, WORD wAttributes);
 ANKI_WINBASEAPI VOID ANKI_WINAPI GetSystemInfo(LPSYSTEM_INFO lpSystemInfo);
+ANKI_WINBASEAPI DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize);
 
 #undef ANKI_WINBASEAPI
 #undef ANKI_DECLARE_HANDLE
@@ -136,7 +139,8 @@ constexpr WORD CSIDL_PROFILE = 0x0028;
 constexpr DWORD STD_OUTPUT_HANDLE = (DWORD)-11;
 constexpr HRESULT S_OK = 0;
 constexpr DWORD INFINITE = 0xFFFFFFFF;
-
+constexpr DWORD ERROR_INSUFFICIENT_BUFFER = 122l;
+constexpr DWORD ERROR_SUCCESS = 0;
 constexpr WORD FOREGROUND_BLUE = 0x0001;
 constexpr WORD FOREGROUND_GREEN = 0x0002;
 constexpr WORD FOREGROUND_RED = 0x0004;
@@ -434,6 +438,11 @@ inline BOOL GetConsoleScreenBufferInfo(HANDLE hConsoleOutput, PCONSOLE_SCREEN_BU
 inline VOID GetSystemInfo(LPSYSTEM_INFO lpSystemInfo)
 {
 	::GetSystemInfo(reinterpret_cast<::LPSYSTEM_INFO>(lpSystemInfo));
+}
+
+inline DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
+{
+	return ::GetModuleFileNameA(hModule, lpFilename, nSize);
 }
 
 } // end namespace anki

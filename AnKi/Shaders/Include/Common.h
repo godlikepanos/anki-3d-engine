@@ -32,6 +32,10 @@ inline F32 dot(const T& a, const T& b)
 }
 
 using Address = U64;
+
+using ScalarVec4 = Array<F32, 4>;
+using ScalarMat3x4 = Array<F32, 12>;
+using ScalarMat4 = Array<F32, 16>;
 ANKI_END_NAMESPACE
 
 #	define ANKI_CPP_CODE(x) x
@@ -60,6 +64,10 @@ ANKI_END_NAMESPACE
 #	define ANKI_SHADER_STATIC_ASSERT(cond_)
 
 #	define ANKI_CPP_CODE(x)
+
+#	define ScalarVec4 Vec4
+#	define ScalarMat3x4 Mat3x4
+#	define ScalarMat4 Mat4
 #endif
 
 //

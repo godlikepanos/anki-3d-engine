@@ -18,23 +18,23 @@ ANKI_SPECIALIZATION_CONSTANT_U32(TILE_SIZE, 3u);
 #include <AnKi/Shaders/Functions.glsl>
 #include <AnKi/Shaders/RtShadows.glsl>
 
-#define CLUSTERED_SHADING_SET 0
-#define CLUSTERED_SHADING_UNIFORMS_BINDING 0
-#define CLUSTERED_SHADING_LIGHTS_BINDING 1
-#define CLUSTERED_SHADING_CLUSTERS_BINDING 4
+#define CLUSTERED_SHADING_SET 0u
+#define CLUSTERED_SHADING_UNIFORMS_BINDING 0u
+#define CLUSTERED_SHADING_LIGHTS_BINDING 1u
+#define CLUSTERED_SHADING_CLUSTERS_BINDING 4u
 #include <AnKi/Shaders/ClusteredShadingCommon.glsl>
 
 layout(set = 0, binding = 5) uniform sampler u_nearestAnyClampSampler;
 layout(set = 0, binding = 6) uniform sampler u_trilinearClampSampler;
 
-layout(set = 0, binding = 7) uniform texture2D u_gbuffer0Tex;
-layout(set = 0, binding = 8) uniform texture2D u_gbuffer1Tex;
-layout(set = 0, binding = 9) uniform texture2D u_gbuffer2Tex;
+layout(set = 0, binding = 7) uniform ANKI_RP texture2D u_gbuffer0Tex;
+layout(set = 0, binding = 8) uniform ANKI_RP texture2D u_gbuffer1Tex;
+layout(set = 0, binding = 9) uniform ANKI_RP texture2D u_gbuffer2Tex;
 layout(set = 0, binding = 10) uniform texture2D u_msDepthRt;
 #if USE_SHADOW_LAYERS
 layout(set = 0, binding = 11) uniform utexture2D u_shadowLayersTex;
 #else
-layout(set = 0, binding = 12) uniform texture2D u_resolvedSm;
+layout(set = 0, binding = 12) uniform ANKI_RP texture2D u_resolvedSm;
 #endif
 
 layout(location = 0) in Vec2 in_uv;
@@ -147,7 +147,7 @@ void main()
 	{
 		const I32 idx = findLSB2(cluster.m_spotLightsMask);
 		cluster.m_spotLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
-		const SpotLight light = u_spotLights2[idx];
+		const SpotLight light = u_spotLights[idx];
 
 		LIGHTING_COMMON_BRDF();
 

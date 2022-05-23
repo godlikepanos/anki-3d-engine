@@ -62,14 +62,13 @@ Error DepthDownscale::initInternal()
 
 		TextureInitInfo texInit = m_r->create2DRenderTargetInitInfo(width, height, Format::R32_SFLOAT, usage, "HiZ");
 		texInit.m_mipmapCount = U8(m_mipCount);
-		texInit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
-		m_hizTex = m_r->createAndClearRenderTarget(texInit);
+		m_hizTex = m_r->createAndClearRenderTarget(texInit, TextureUsageBit::SAMPLED_FRAGMENT);
 	}
 
 	// Progs
 	if(preferCompute)
 	{
-		ANKI_CHECK(getResourceManager().loadResource("Shaders/DepthDownscaleCompute.ankiprog", m_prog));
+		ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/DepthDownscaleCompute.ankiprogbin", m_prog));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 		variantInitInfo.addMutation("WAVE_OPERATIONS", 0);
@@ -80,7 +79,7 @@ Error DepthDownscale::initInternal()
 	}
 	else
 	{
-		ANKI_CHECK(getResourceManager().loadResource("Shaders/DepthDownscaleRaster.ankiprog", m_prog));
+		ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/DepthDownscaleRaster.ankiprogbin", m_prog));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 		variantInitInfo.addMutation("REDUCTION_SAMPLER", supportsReductionSampler);
@@ -260,15 +259,7 @@ void DepthDownscale::runCompute(RenderPassWorkContext& rgraphCtx)
 	SpdSetup(dispatchThreadGroupCountXY, workGroupOffset, numWorkGroupsAndMips, rectInfo);
 	SpdSetup(dispatchThreadGroupCountXY, workGroupOffset, numWorkGroupsAndMips, rectInfo, m_mipCount);
 
-	class PC
-	{
-	public:
-		U32 m_workgroupCount;
-		U32 m_mipmapCount;
-		Vec2 m_srcTexSizeOverOne;
-		U32 m_lastMipWidth;
-		U32 m_padding[3u];
-	} pc;
+	DepthDownscaleUniforms pc;
 	pc.m_workgroupCount = numWorkGroupsAndMips[0];
 	pc.m_mipmapCount = numWorkGroupsAndMips[1];
 	pc.m_srcTexSizeOverOne = 1.0f / Vec2(m_r->getInternalResolution());

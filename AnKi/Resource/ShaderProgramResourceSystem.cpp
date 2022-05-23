@@ -28,226 +28,28 @@ U64 ShaderProgramRaytracingLibrary::generateShaderGroupGroupHash(CString resourc
 
 ShaderProgramResourceSystem::~ShaderProgramResourceSystem()
 {
-	m_cacheDir.destroy(m_alloc);
 	m_rtLibraries.destroy(m_alloc);
 }
 
-Error ShaderProgramResourceSystem::init()
+Error ShaderProgramResourceSystem::init(ResourceFilesystem& fs, GrManager& gr)
 {
-	ANKI_TRACE_SCOPED_EVENT(COMPILE_SHADERS);
-
-	StringListAuto rtProgramFilenames(m_alloc);
-	ANKI_CHECK(compileAllShaders(m_cacheDir, *m_gr, *m_fs, m_alloc, rtProgramFilenames));
-
-	if(m_gr->getDeviceCapabilities().m_rayTracingEnabled)
+	if(!gr.getDeviceCapabilities().m_rayTracingEnabled)
 	{
-		ANKI_CHECK(createRayTracingPrograms(m_cacheDir, rtProgramFilenames, *m_gr, m_alloc, m_rtLibraries));
+		return Error::NONE;
 	}
 
-	return Error::NONE;
-}
-
-Error ShaderProgramResourceSystem::compileAllShaders(CString cacheDir, GrManager& gr, ResourceFilesystem& fs,
-													 GenericMemoryPoolAllocator<U8>& alloc,
-													 StringListAuto& rtProgramFilenames)
-{
-	class MetaFileData
+	// Create RT pipeline libraries
+	const Error err = createRayTracingPrograms(fs, gr, m_alloc, m_rtLibraries);
+	if(err)
 	{
-	public:
-		U64 m_hash;
-		ShaderTypeBit m_shaderTypes;
-		Array<U16, 3> m_padding = {};
-	};
+		ANKI_RESOURCE_LOGE("Failed to create ray tracing programs");
+	}
 
-	ANKI_RESOURCE_LOGI("Compiling shader programs");
-	U32 shadersCompileCount = 0;
-	U32 shadersTotalCount = 0;
-
-	ThreadHive threadHive(getCpuCoresCount(), alloc, false);
-
-	// Compute hash for both
-	ShaderCompilerOptions compilerOptions;
-	compilerOptions.m_forceFullFloatingPointPrecision = gr.getConfig().getRsrcForceFullFpPrecision();
-	compilerOptions.m_mobilePlatform = ANKI_PLATFORM_MOBILE;
-	U64 gpuHash = computeHash(&compilerOptions, sizeof(compilerOptions));
-	gpuHash = appendHash(&SHADER_BINARY_VERSION, sizeof(SHADER_BINARY_VERSION), gpuHash);
-
-	ANKI_CHECK(fs.iterateAllFilenames([&](CString fname) -> Error {
-		// Check file extension
-		StringAuto extension(alloc);
-		getFilepathExtension(fname, extension);
-		if(extension.getLength() != 8 || extension != "ankiprog")
-		{
-			return Error::NONE;
-		}
-
-		++shadersTotalCount;
-
-		if(fname.find("/Rt") != CString::NPOS && !gr.getDeviceCapabilities().m_rayTracingEnabled)
-		{
-			// Skip RT programs when RT is disabled
-			return Error::NONE;
-		}
-
-		// Get some filenames
-		StringAuto baseFname(alloc);
-		getFilepathFilename(fname, baseFname);
-		StringAuto metaFname(alloc);
-		metaFname.sprintf("%s/%smeta", cacheDir.cstr(), baseFname.cstr());
-
-		// Get the hash from the meta file
-		U64 metafileHash = 0;
-		ShaderTypeBit metafileShaderTypes = ShaderTypeBit::NONE;
-		if(fileExists(metaFname))
-		{
-			File metaFile;
-			ANKI_CHECK(metaFile.open(metaFname, FileOpenFlag::READ | FileOpenFlag::BINARY));
-			MetaFileData data;
-			ANKI_CHECK(metaFile.read(&data, sizeof(data)));
-
-			if(data.m_hash == 0 || data.m_shaderTypes == ShaderTypeBit::NONE)
-			{
-				ANKI_RESOURCE_LOGE("Wrong data found in the metafile: %s", metaFname.cstr());
-				return Error::USER_DATA;
-			}
-
-			metafileHash = data.m_hash;
-			metafileShaderTypes = data.m_shaderTypes;
-		}
-
-		// Load interface
-		class FSystem : public ShaderProgramFilesystemInterface
-		{
-		public:
-			ResourceFilesystem* m_fsystem = nullptr;
-
-			Error readAllText(CString filename, StringAuto& txt) final
-			{
-				ResourceFilePtr file;
-				ANKI_CHECK(m_fsystem->openFile(filename, file));
-				ANKI_CHECK(file->readAllText(txt));
-				return Error::NONE;
-			}
-		} fsystem;
-		fsystem.m_fsystem = &fs;
-
-		// Skip interface
-		class Skip : public ShaderProgramPostParseInterface
-		{
-		public:
-			U64 m_metafileHash;
-			U64 m_newHash;
-			U64 m_gpuHash;
-			CString m_fname;
-
-			Bool skipCompilation(U64 hash)
-			{
-				ANKI_ASSERT(hash != 0);
-				const Array<U64, 2> hashes = {hash, m_gpuHash};
-				const U64 finalHash = computeHash(hashes.getBegin(), hashes.getSizeInBytes());
-
-				m_newHash = finalHash;
-				const Bool skip = finalHash == m_metafileHash;
-
-				if(!skip)
-				{
-					ANKI_RESOURCE_LOGI("\t%s", m_fname.cstr());
-				}
-
-				return skip;
-			};
-		} skip;
-		skip.m_metafileHash = metafileHash;
-		skip.m_newHash = 0;
-		skip.m_gpuHash = gpuHash;
-		skip.m_fname = fname;
-
-		// Threading interface
-		class TaskManager : public ShaderProgramAsyncTaskInterface
-		{
-		public:
-			ThreadHive* m_hive = nullptr;
-			GenericMemoryPoolAllocator<U8> m_alloc;
-
-			void enqueueTask(void (*callback)(void* userData), void* userData)
-			{
-				class Ctx
-				{
-				public:
-					void (*m_callback)(void* userData);
-					void* m_userData;
-					GenericMemoryPoolAllocator<U8> m_alloc;
-				};
-				Ctx* ctx = m_alloc.newInstance<Ctx>();
-				ctx->m_callback = callback;
-				ctx->m_userData = userData;
-				ctx->m_alloc = m_alloc;
-
-				m_hive->submitTask(
-					[](void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore) {
-						Ctx* ctx = static_cast<Ctx*>(userData);
-						ctx->m_callback(ctx->m_userData);
-						auto alloc = ctx->m_alloc;
-						alloc.deleteInstance(ctx);
-					},
-					ctx);
-			}
-
-			Error joinTasks()
-			{
-				m_hive->waitAllTasks();
-				return Error::NONE;
-			}
-		} taskManager;
-		taskManager.m_hive = &threadHive;
-		taskManager.m_alloc = alloc;
-
-		// Compile
-		ShaderProgramBinaryWrapper binary(alloc);
-		ANKI_CHECK(compileShaderProgram(fname, fsystem, &skip, &taskManager, alloc, compilerOptions, binary));
-
-		const Bool cachedBinIsUpToDate = metafileHash == skip.m_newHash;
-		if(!cachedBinIsUpToDate)
-		{
-			++shadersCompileCount;
-		}
-
-		// Update the meta file
-		if(!cachedBinIsUpToDate)
-		{
-			File metaFile;
-			ANKI_CHECK(metaFile.open(metaFname, FileOpenFlag::WRITE | FileOpenFlag::BINARY));
-
-			MetaFileData data;
-			data.m_hash = skip.m_newHash;
-			data.m_shaderTypes = binary.getBinary().m_presentShaderTypes;
-			metafileShaderTypes = data.m_shaderTypes;
-			ANKI_CHECK(metaFile.write(&data, sizeof(data)));
-		}
-
-		// Save the binary to the cache
-		if(!cachedBinIsUpToDate)
-		{
-			StringAuto storeFname(alloc);
-			storeFname.sprintf("%s/%sbin", cacheDir.cstr(), baseFname.cstr());
-			ANKI_CHECK(binary.serializeToFile(storeFname));
-		}
-
-		// Gather RT programs
-		if(!!(metafileShaderTypes & ShaderTypeBit::ALL_RAY_TRACING))
-		{
-			rtProgramFilenames.pushBack(fname);
-		}
-
-		return Error::NONE;
-	}));
-
-	ANKI_RESOURCE_LOGI("Compiled %u shader programs out of %u", shadersCompileCount, shadersTotalCount);
-	return Error::NONE;
+	return err;
 }
 
-Error ShaderProgramResourceSystem::createRayTracingPrograms(CString cacheDir, const StringListAuto& rtProgramFilenames,
-															GrManager& gr, GenericMemoryPoolAllocator<U8>& alloc,
+Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceFilesystem& fs, GrManager& gr,
+															GenericMemoryPoolAllocator<U8>& alloc,
 															DynamicArray<ShaderProgramRaytracingLibrary>& outLibs)
 {
 	ANKI_RESOURCE_LOGI("Creating ray tracing programs");
@@ -356,16 +158,33 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(CString cacheDir, co
 
 	DynamicArrayAuto<Lib> libs(alloc);
 
-	for(const String& filename : rtProgramFilenames)
-	{
+	ANKI_CHECK(fs.iterateAllFilenames([&](CString filename) -> Error {
+		// Check file extension
+		StringAuto extension(alloc);
+		getFilepathExtension(filename, extension);
+		const Char binExtension[] = "ankiprogbin";
+		if(extension.getLength() != sizeof(binExtension) - 1 || extension != binExtension)
+		{
+			return Error::NONE;
+		}
+
+		if(filename.find("ShaderBinaries/Rt") != 0)
+		{
+			// Doesn't start with the expected path, skip it
+			return Error::NONE;
+		}
+
 		// Get the binary
-		StringAuto baseFilename(alloc);
-		getFilepathFilename(filename, baseFilename);
-		StringAuto binaryFilename(alloc);
-		binaryFilename.sprintf("%s/%sbin", cacheDir.cstr(), baseFilename.cstr());
+		ResourceFilePtr file;
+		ANKI_CHECK(fs.openFile(filename, file));
 		ShaderProgramBinaryWrapper binaryw(alloc);
-		ANKI_CHECK(binaryw.deserializeFromFile(binaryFilename));
+		ANKI_CHECK(binaryw.deserializeFromAnyFile(*file));
 		const ShaderProgramBinary& binary = binaryw.getBinary();
+
+		if(!(binary.m_presentShaderTypes & ShaderTypeBit::ALL_RAY_TRACING))
+		{
+			return Error::NONE;
+		}
 
 		// Checks
 		if(binary.m_libraryName[0] == '\0')
@@ -543,7 +362,9 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(CString cacheDir, co
 				lib->addGroup(filename, mutation.m_hash, MAX_U32, MAX_U32, chitShaderIdx, ahitShaderIdx);
 			}
 		}
-	} // For all RT filenames
+
+		return Error::NONE;
+	})); // For all RT filenames
 
 	// Create the libraries the value that goes to the m_resourceHashToShaderGroupHandleIndex hashmap is the index of
 	// the shader handle inside the program. Leverage the fact that there is a predefined order between shader types.

@@ -13,7 +13,7 @@ namespace anki {
 /// @addtogroup vulkan
 /// @{
 
-/// Helper class for MicroXXX objects.
+/// Helper class for MicroXXX objects. It expects a specific interface for the T.
 template<typename T>
 class MicroObjectRecycler
 {
@@ -47,17 +47,47 @@ public:
 	void recycle(T* s);
 
 	/// Destroy those objects that their fence is done. It's thread-safe.
-	void trimCache();
+	void trimCache()
+	{
+		LockGuard<Mutex> lock(m_mtx);
+		checkDoneFences();
+		trimCacheInternal(0);
+	}
+
+	U32 getCacheSize() const
+	{
+		return m_objects.getSize();
+	}
 
 private:
+	class Object
+	{
+	public:
+		T* m_microObject;
+		Bool m_fenceDone;
+	};
+
 	GrAllocator<U8> m_alloc;
-	DynamicArray<T*> m_objects;
+	DynamicArray<Object> m_objects;
 	Mutex m_mtx;
+
+	// Begin trim cache adjustment vars
+	U32 m_readyObjectsAfterTrim = 1;
+	static constexpr U32 m_maxRequestsPerAdjustment = 128;
+	U32 m_cacheMisses = 0;
+	U32 m_requests = 0;
+	U32 m_minCacheSizePerRequest = MAX_U32;
+	// End trim cache adjustment vars
+
 #if ANKI_EXTRA_CHECKS
 	U32 m_createdAndNotRecycled = 0;
 #endif
 
-	void releaseFences();
+	void trimCacheInternal(U32 aliveObjectCountAfterTrim);
+
+	void adjustAliveObjectCount();
+
+	void checkDoneFences();
 };
 /// @}
 

@@ -13,6 +13,8 @@
 #	pragma GCC diagnostic push
 #	pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #	pragma GCC diagnostic ignored "-Wunused-function"
+#	pragma GCC diagnostic ignored "-Wconversion"
+#	pragma GCC diagnostic ignored "-Wunused-variable"
 #endif
 
 #include <ThirdParty/TinyExr/tinyexr.h>

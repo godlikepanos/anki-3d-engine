@@ -14,7 +14,7 @@ layout(set = 0, binding = 1) uniform ANKI_RP texture2D u_tex;
 layout(set = 0, binding = 2) writeonly uniform ANKI_RP image2D u_outImg;
 layout(local_size_x = 8, local_size_y = 8) in;
 #else
-layout(location = 0) out Vec3 out_color;
+layout(location = 0) out ANKI_RP Vec3 out_color;
 #endif
 
 layout(push_constant, std430) uniform b_pc

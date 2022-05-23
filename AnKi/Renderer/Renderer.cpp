@@ -113,28 +113,28 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		return Error::USER_DATA;
 	}
 
+	ANKI_CHECK(m_resources->loadResource("ShaderBinaries/ClearTextureCompute.ankiprogbin", m_clearTexComputeProg));
+
+	// Dummy resources
 	{
 		TextureInitInfo texinit("RendererDummy");
 		texinit.m_width = texinit.m_height = 4;
-		texinit.m_usage = TextureUsageBit::ALL_SAMPLED;
+		texinit.m_usage = TextureUsageBit::ALL_SAMPLED | TextureUsageBit::IMAGE_COMPUTE_WRITE;
 		texinit.m_format = Format::R8G8B8A8_UNORM;
-		texinit.m_initialUsage = TextureUsageBit::ALL_SAMPLED;
-		TexturePtr tex = getGrManager().newTexture(texinit);
+		TexturePtr tex = createAndClearRenderTarget(texinit, TextureUsageBit::ALL_SAMPLED);
 
 		TextureViewInitInfo viewinit(tex);
 		m_dummyTexView2d = getGrManager().newTextureView(viewinit);
 
 		texinit.m_depth = 4;
 		texinit.m_type = TextureType::_3D;
-		tex = getGrManager().newTexture(texinit);
+		tex = createAndClearRenderTarget(texinit, TextureUsageBit::ALL_SAMPLED);
 		viewinit = TextureViewInitInfo(tex);
 		m_dummyTexView3d = getGrManager().newTextureView(viewinit);
+
+		m_dummyBuff = getGrManager().newBuffer(BufferInitInfo(
+			1024, BufferUsageBit::ALL_UNIFORM | BufferUsageBit::ALL_STORAGE, BufferMapAccessBit::NONE, "Dummy"));
 	}
-
-	m_dummyBuff = getGrManager().newBuffer(BufferInitInfo(
-		1024, BufferUsageBit::ALL_UNIFORM | BufferUsageBit::ALL_STORAGE, BufferMapAccessBit::NONE, "Dummy"));
-
-	ANKI_CHECK(m_resources->loadResource("Shaders/ClearTextureCompute.ankiprog", m_clearTexComputeProg));
 
 	// Init the stages. Careful with the order!!!!!!!!!!
 	m_genericCompute.reset(m_alloc.newInstance<GenericCompute>(this));
@@ -301,7 +301,6 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	ctx.m_matrices.m_view = ctx.m_renderQueue->m_viewMatrix;
 	ctx.m_matrices.m_projection = ctx.m_renderQueue->m_projectionMatrix;
 	ctx.m_matrices.m_viewProjection = ctx.m_renderQueue->m_viewProjectionMatrix;
-	ctx.m_matrices.m_viewRotation = ctx.m_renderQueue->m_viewMatrix.getRotationPart();
 
 	ctx.m_matrices.m_jitter = m_jitteredMats8x[m_frameCount & (m_jitteredMats8x.getSize() - 1)];
 	ctx.m_matrices.m_projectionJitter = ctx.m_matrices.m_jitter * ctx.m_matrices.m_projection;
@@ -433,7 +432,8 @@ RenderTargetDescription Renderer::create2DRenderTargetDescription(U32 w, U32 h, 
 	return init;
 }
 
-TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, const ClearValue& clearVal)
+TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, TextureUsageBit initialUsage,
+												const ClearValue& clearVal)
 {
 	ANKI_ASSERT(!!(inf.m_usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE)
 				|| !!(inf.m_usage & TextureUsageBit::IMAGE_COMPUTE_WRITE));
@@ -480,15 +480,15 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 					Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> colUsage = {};
 					TextureUsageBit dsUsage = TextureUsageBit::NONE;
 
-					if(formatIsDepthStencil(inf.m_format))
+					if(getFormatInfo(inf.m_format).isDepthStencil())
 					{
 						DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE;
-						if(formatIsDepth(inf.m_format))
+						if(getFormatInfo(inf.m_format).isDepth())
 						{
 							aspect |= DepthStencilAspectBit::DEPTH;
 						}
 
-						if(formatIsStencil(inf.m_format))
+						if(getFormatInfo(inf.m_format).isStencil())
 						{
 							aspect |= DepthStencilAspectBit::STENCIL;
 						}
@@ -521,10 +521,10 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 					cmdb->beginRenderPass(fb, colUsage, dsUsage);
 					cmdb->endRenderPass();
 
-					if(!!inf.m_initialUsage)
+					if(!!initialUsage)
 					{
-						cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-													   inf.m_initialUsage, surf);
+						cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, initialUsage,
+													   surf);
 					}
 				}
 				else
@@ -569,10 +569,9 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 
 					cmdb->dispatchCompute(wgSize.x(), wgSize.y(), wgSize.z());
 
-					if(!!inf.m_initialUsage)
+					if(!!initialUsage)
 					{
-						cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::IMAGE_COMPUTE_WRITE, inf.m_initialUsage,
-													   surf);
+						cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::IMAGE_COMPUTE_WRITE, initialUsage, surf);
 					}
 				}
 			}

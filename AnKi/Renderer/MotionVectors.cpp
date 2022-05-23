@@ -31,8 +31,8 @@ Error MotionVectors::initInternal()
 
 	// Prog
 	ANKI_CHECK(getResourceManager().loadResource((getConfig().getRPreferCompute())
-													 ? "Shaders/MotionVectorsCompute.ankiprog"
-													 : "Shaders/MotionVectorsRaster.ankiprog",
+													 ? "ShaderBinaries/MotionVectorsCompute.ankiprogbin"
+													 : "ShaderBinaries/MotionVectorsRaster.ankiprogbin",
 												 m_prog));
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addConstant("FB_SIZE", UVec2(m_r->getInternalResolution().x(), m_r->getInternalResolution().y()));
@@ -58,10 +58,9 @@ Error MotionVectors::initInternal()
 	TextureInitInfo historyLengthTexInit =
 		m_r->create2DRenderTargetInitInfo(m_r->getInternalResolution().x(), m_r->getInternalResolution().y(),
 										  Format::R8_UNORM, historyLengthUsage, "MotionVectorsHistoryLen#1");
-	historyLengthTexInit.m_initialUsage = TextureUsageBit::ALL_SAMPLED;
-	m_historyLengthTextures[0] = m_r->createAndClearRenderTarget(historyLengthTexInit);
+	m_historyLengthTextures[0] = m_r->createAndClearRenderTarget(historyLengthTexInit, TextureUsageBit::ALL_SAMPLED);
 	historyLengthTexInit.setName("MotionVectorsHistoryLen#2");
-	m_historyLengthTextures[1] = m_r->createAndClearRenderTarget(historyLengthTexInit);
+	m_historyLengthTextures[1] = m_r->createAndClearRenderTarget(historyLengthTexInit, TextureUsageBit::ALL_SAMPLED);
 
 	m_fbDescr.m_colorAttachmentCount = 2;
 	m_fbDescr.bake();

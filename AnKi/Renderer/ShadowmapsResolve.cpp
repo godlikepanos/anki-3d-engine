@@ -44,8 +44,8 @@ Error ShadowmapsResolve::initInternal()
 
 	// Prog
 	ANKI_CHECK(getResourceManager().loadResource((getConfig().getRPreferCompute())
-													 ? "Shaders/ShadowmapsResolveCompute.ankiprog"
-													 : "Shaders/ShadowmapsResolveRaster.ankiprog",
+													 ? "ShaderBinaries/ShadowmapsResolveCompute.ankiprogbin"
+													 : "ShaderBinaries/ShadowmapsResolveRaster.ankiprogbin",
 												 m_prog));
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	if(getConfig().getRPreferCompute())

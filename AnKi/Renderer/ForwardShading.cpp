@@ -12,6 +12,7 @@
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/LensFlare.h>
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
+#include <AnKi/Shaders/Include/MaterialTypes.h>
 
 namespace anki {
 
@@ -34,19 +35,23 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 		cmdb->setBlendFactors(0, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA);
 
 		const ClusteredShadingContext& rsrc = ctx.m_clusteredShading;
-		cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
+		const U32 set = MATERIAL_SET_GLOBAL;
+		cmdb->bindSampler(set, MATERIAL_BINDING_LINEAR_CLAMP_SAMPLER, m_r->getSamplers().m_trilinearClamp);
 
-		rgraphCtx.bindTexture(0, 1, m_r->getDepthDownscale().getHiZRt(), HIZ_HALF_DEPTH);
-		rgraphCtx.bindColorTexture(0, 2, m_r->getVolumetricLightingAccumulation().getRt());
+		rgraphCtx.bindTexture(set, MATERIAL_BINDING_DEPTH_RT, m_r->getDepthDownscale().getHiZRt(), HIZ_HALF_DEPTH);
+		rgraphCtx.bindColorTexture(set, MATERIAL_BINDING_LIGHT_VOLUME,
+								   m_r->getVolumetricLightingAccumulation().getRt());
 
-		bindUniforms(cmdb, 0, 3, rsrc.m_clusteredShadingUniformsToken);
-		bindUniforms(cmdb, 0, 4, rsrc.m_pointLightsToken);
-		bindUniforms(cmdb, 0, 5, rsrc.m_spotLightsToken);
-		rgraphCtx.bindColorTexture(0, 6, m_r->getShadowMapping().getShadowmapRt());
-		bindStorage(cmdb, 0, 7, rsrc.m_clustersToken);
+		bindUniforms(cmdb, set, MATERIAL_BINDING_CLUSTER_SHADING_UNIFORMS, rsrc.m_clusteredShadingUniformsToken);
+		bindUniforms(cmdb, set, MATERIAL_BINDING_CLUSTER_SHADING_LIGHTS, rsrc.m_pointLightsToken);
+		bindUniforms(cmdb, set, MATERIAL_BINDING_CLUSTER_SHADING_LIGHTS + 1, rsrc.m_spotLightsToken);
+		rgraphCtx.bindColorTexture(set, MATERIAL_BINDING_CLUSTER_SHADING_LIGHTS + 2,
+								   m_r->getShadowMapping().getShadowmapRt());
+		bindStorage(cmdb, set, MATERIAL_BINDING_CLUSTERS, rsrc.m_clustersToken);
 
 		// Start drawing
-		m_r->getSceneDrawer().drawRange(Pass::FS, ctx.m_matrices.m_view, ctx.m_matrices.m_viewProjectionJitter,
+		m_r->getSceneDrawer().drawRange(RenderingTechnique::FORWARD, ctx.m_matrices.m_view,
+										ctx.m_matrices.m_viewProjectionJitter,
 										ctx.m_prevMatrices.m_viewProjectionJitter, cmdb,
 										m_r->getSamplers().m_trilinearRepeatAnisoResolutionScalingBias,
 										ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + start,

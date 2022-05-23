@@ -8,7 +8,7 @@
 
 #include <AnKi/Shaders/LightFunctions.glsl>
 #include <AnKi/Shaders/PackFunctions.glsl>
-#include <AnKi/Shaders/Include/SsrTypes.h>
+#include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #include <AnKi/Shaders/TonemappingFunctions.glsl>
 #include <AnKi/Shaders/SsRaymarching.glsl>
 
@@ -18,19 +18,19 @@ layout(set = 0, binding = 0, row_major) uniform b_unis
 };
 
 layout(set = 0, binding = 1) uniform sampler u_trilinearClampSampler;
-layout(set = 0, binding = 2) uniform texture2D u_gbufferRt1;
-layout(set = 0, binding = 3) uniform texture2D u_gbufferRt2;
+layout(set = 0, binding = 2) uniform ANKI_RP texture2D u_gbufferRt1;
+layout(set = 0, binding = 3) uniform ANKI_RP texture2D u_gbufferRt2;
 layout(set = 0, binding = 4) uniform texture2D u_depthRt;
-layout(set = 0, binding = 5) uniform texture2D u_lightBufferRt;
+layout(set = 0, binding = 5) uniform ANKI_RP texture2D u_lightBufferRt;
 
 layout(set = 0, binding = 6) uniform sampler u_trilinearRepeatSampler;
-layout(set = 0, binding = 7) uniform texture2D u_noiseTex;
+layout(set = 0, binding = 7) uniform ANKI_RP texture2D u_noiseTex;
 const Vec2 NOISE_TEX_SIZE = Vec2(64.0);
 
-#define CLUSTERED_SHADING_SET 0
-#define CLUSTERED_SHADING_UNIFORMS_BINDING 8
-#define CLUSTERED_SHADING_REFLECTIONS_BINDING 9
-#define CLUSTERED_SHADING_CLUSTERS_BINDING 11
+#define CLUSTERED_SHADING_SET 0u
+#define CLUSTERED_SHADING_UNIFORMS_BINDING 8u
+#define CLUSTERED_SHADING_REFLECTIONS_BINDING 9u
+#define CLUSTERED_SHADING_CLUSTERS_BINDING 11u
 #include <AnKi/Shaders/ClusteredShadingCommon.glsl>
 
 #if defined(ANKI_COMPUTE_SHADER)
@@ -73,7 +73,7 @@ void main()
 
 	// Compute refl vector
 	const Vec3 viewDir = -normalize(viewPos);
-	const Vec3 viewNormal = u_unis.m_normalMat * worldNormal;
+	const Vec3 viewNormal = u_unis.m_normalMat * Vec4(worldNormal, 0.0);
 #if STOCHASTIC
 	const Vec3 reflDir = sampleReflectionVector(viewDir, viewNormal, roughness, noise.xy);
 #else
@@ -97,7 +97,7 @@ void main()
 	{
 		const Vec3 hitNormal =
 			u_unis.m_normalMat
-			* unpackNormalFromGBuffer(textureLod(u_gbufferRt2, u_trilinearClampSampler, hitPoint.xy, 0.0));
+			* Vec4(unpackNormalFromGBuffer(textureLod(u_gbufferRt2, u_trilinearClampSampler, hitPoint.xy, 0.0)), 0.0);
 		F32 backFaceAttenuation;
 		rejectBackFaces(reflDir, hitNormal, backFaceAttenuation);
 

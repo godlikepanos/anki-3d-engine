@@ -11,23 +11,38 @@
 namespace anki {
 
 /// The AnKi passes visible to materials.
-enum class Pass : U8
+enum class RenderingTechnique : U8
 {
-	GB, ///< GBuffer.
-	FS, ///< Forward shading.
-	SM, ///< Shadow mapping.
-	EZ, ///< Early Z.
+	GBUFFER = 0,
+	GBUFFER_EARLY_Z = 1,
+	SHADOW = 2,
+	FORWARD = 3,
+	RT_SHADOW = 4,
 
 	COUNT,
 	FIRST = 0
 };
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RenderingTechnique)
+
+enum class RenderingTechniqueBit : U8
+{
+	NONE = 0,
+	GBUFFER = 1 << 0,
+	GBUFFER_EARLY_Z = 1 << 1,
+	SHADOW = 1 << 2,
+	FORWARD = 1 << 3,
+	RT_SHADOW = 1 << 4,
+
+	ALL_RT = RT_SHADOW
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RenderingTechniqueBit)
 
 /// A key that consistst of the rendering pass and the level of detail
 class RenderingKey
 {
 public:
-	RenderingKey(Pass pass, U32 lod, U32 instanceCount, Bool skinned, Bool velocity)
-		: m_pass(pass)
+	RenderingKey(RenderingTechnique technique, U32 lod, U32 instanceCount, Bool skinned, Bool velocity)
+		: m_technique(technique)
 		, m_lod(U8(lod))
 		, m_instanceCount(U8(instanceCount))
 		, m_skinned(skinned)
@@ -38,12 +53,12 @@ public:
 	}
 
 	RenderingKey()
-		: RenderingKey(Pass::GB, 0, 1, false, false)
+		: RenderingKey(RenderingTechnique::FIRST, 0, 1, false, false)
 	{
 	}
 
 	RenderingKey(const RenderingKey& b)
-		: RenderingKey(b.m_pass, b.m_lod, b.m_instanceCount, b.m_skinned, b.m_velocity)
+		: RenderingKey(b.m_technique, b.m_lod, b.m_instanceCount, b.m_skinned, b.m_velocity)
 	{
 	}
 
@@ -55,18 +70,18 @@ public:
 
 	Bool operator==(const RenderingKey& b) const
 	{
-		return m_pass == b.m_pass && m_lod == b.m_lod && m_instanceCount == b.m_instanceCount
+		return m_technique == b.m_technique && m_lod == b.m_lod && m_instanceCount == b.m_instanceCount
 			   && m_skinned == b.m_skinned && m_velocity == b.m_velocity;
 	}
 
-	Pass getPass() const
+	RenderingTechnique getRenderingTechnique() const
 	{
-		return m_pass;
+		return m_technique;
 	}
 
-	void setPass(Pass p)
+	void setRenderingTechnique(RenderingTechnique t)
 	{
-		m_pass = p;
+		m_technique = t;
 	}
 
 	U32 getLod() const
@@ -91,7 +106,7 @@ public:
 		m_instanceCount = U8(instanceCount);
 	}
 
-	Bool isSkinned() const
+	Bool getSkinned() const
 	{
 		return m_skinned;
 	}
@@ -101,7 +116,7 @@ public:
 		m_skinned = is;
 	}
 
-	Bool hasVelocity() const
+	Bool getVelocity() const
 	{
 		return m_velocity;
 	}
@@ -112,17 +127,13 @@ public:
 	}
 
 private:
-	Pass m_pass;
+	RenderingTechnique m_technique;
 	U8 m_lod;
 	U8 m_instanceCount;
-	Bool m_skinned : 1;
-	Bool m_velocity : 1;
+	Bool m_skinned;
+	Bool m_velocity;
 };
 
-template<>
-constexpr Bool isPacked<RenderingKey>()
-{
-	return sizeof(RenderingKey) == 5;
-}
+static_assert(sizeof(RenderingKey) == sizeof(U8) * 5, "RenderingKey needs to be packed because of hashing");
 
 } // end namespace anki

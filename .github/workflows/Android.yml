@@ -14,21 +14,27 @@ jobs:
 
     steps:
     - name: Install dependencies
-      run: | 
-        apt-get update 
+      run: |
+        apt-get update
         apt install ninja-build
-      
+
     - name: Clone
       uses: actions/checkout@v2
 
+    - name: Configure CMake for Linux
+      run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DANKI_EXTRA_CHECKS=OFF
+
+    - name: Build Linux ShaderCompiler
+      run: cmake --build ${{github.workspace}}/build --config Release --target ShaderCompiler
+
     - name: Generate project
-      run: ./Samples/Sponza/GenerateAndroidProject.sh
-    
+      run: ./Samples/Sponza/GenerateAndroidProject.sh ${{github.workspace}}/build/Bin/ShaderCompiler
+
     - name: local.properties
       run: |
         echo "sdk.dir=/usr/local/android-sdk" > AndroidProject_Sponza/local.properties
         echo "ndk.dir=/usr/local/android-ndk" >> AndroidProject_Sponza/local.properties
 
-    - name: Build
+    - name: Build Android
       working-directory: AndroidProject_Sponza
       run: ./gradlew build

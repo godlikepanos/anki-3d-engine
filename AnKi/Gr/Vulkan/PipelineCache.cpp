@@ -15,7 +15,7 @@ Error PipelineCache::init(VkDevice dev, VkPhysicalDevice pdev, CString cacheDir,
 {
 	ANKI_ASSERT(cacheDir && dev && pdev);
 	m_dumpSize = cfg.getGrDiskShaderCacheMaxSize();
-	m_dumpFilename.sprintf(alloc, "%s/vk_pipeline_cache", &cacheDir[0]);
+	m_dumpFilename.sprintf(alloc, "%s/VkPipelineCache", &cacheDir[0]);
 
 	// Try read the pipeline cache file.
 	DynamicArrayAuto<U8, PtrSize> diskDump(alloc);

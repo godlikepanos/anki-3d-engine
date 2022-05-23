@@ -30,7 +30,7 @@ Error ClusterBinning::init()
 {
 	ANKI_R_LOGV("Initializing clusterer binning");
 
-	ANKI_CHECK(getResourceManager().loadResource("Shaders/ClusterBinning.ankiprog", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/ClusterBinning.ankiprogbin", m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addConstant("TILE_SIZE", m_r->getTileSize());
@@ -261,9 +261,10 @@ void ClusterBinning::writeClustererBuffersTask()
 			{
 				out.m_shadowLayer = in.m_shadowLayer;
 				out.m_shadowAtlasTileScale = in.m_shadowAtlasTileSize;
-				static_assert(sizeof(out.m_shadowAtlasTileOffsets) == sizeof(in.m_shadowAtlasTileOffsets), "See file");
-				memcpy(&out.m_shadowAtlasTileOffsets[0], &in.m_shadowAtlasTileOffsets[0],
-					   sizeof(in.m_shadowAtlasTileOffsets));
+				for(U32 f = 0; f < 6; ++f)
+				{
+					out.m_shadowAtlasTileOffsets[f] = Vec4(in.m_shadowAtlasTileOffsets[f], 0.0f, 0.0f);
+				}
 			}
 		}
 	}
@@ -279,7 +280,10 @@ void ClusterBinning::writeClustererBuffersTask()
 			SpotLight& out = lights[i];
 
 			out.m_position = in.m_worldTransform.getTranslationPart().xyz();
-			memcpy(&out.m_edgePoints[0][0], &in.m_edgePoints[0][0], sizeof(out.m_edgePoints));
+			for(U32 j = 0; j < 4; ++j)
+			{
+				out.m_edgePoints[j] = in.m_edgePoints[j].xyz0();
+			}
 			out.m_diffuseColor = in.m_diffuseColor;
 			out.m_radius = in.m_distance;
 			out.m_squareRadiusOverOne = 1.0f / (in.m_distance * in.m_distance);
@@ -431,17 +435,19 @@ void ClusterBinning::writeClustererBuffersTask()
 		unis.m_tileSize = m_r->getTileSize();
 		unis.m_lightVolumeLastZSplit = m_r->getVolumetricLightingAccumulation().getFinalZSplit();
 
-		unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_POINT_LIGHT] = rqueue.m_pointLights.getSize();
-		unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_SPOT_LIGHT] =
-			unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_SPOT_LIGHT - 1] + rqueue.m_spotLights.getSize();
-		unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_DECAL] =
-			unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_DECAL - 1] + rqueue.m_decals.getSize();
-		unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_FOG_DENSITY_VOLUME] =
-			unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_FOG_DENSITY_VOLUME - 1] + rqueue.m_fogDensityVolumes.getSize();
-		unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_REFLECTION_PROBE] =
-			unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_REFLECTION_PROBE - 1] + rqueue.m_reflectionProbes.getSize();
-		unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE] =
-			unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE - 1] + rqueue.m_giProbes.getSize();
+		unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_POINT_LIGHT].x() = rqueue.m_pointLights.getSize();
+		unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_SPOT_LIGHT].x() =
+			unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_SPOT_LIGHT - 1].x() + rqueue.m_spotLights.getSize();
+		unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_DECAL].x() =
+			unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_DECAL - 1].x() + rqueue.m_decals.getSize();
+		unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_FOG_DENSITY_VOLUME].x() =
+			unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_FOG_DENSITY_VOLUME - 1].x()
+			+ rqueue.m_fogDensityVolumes.getSize();
+		unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_REFLECTION_PROBE].x() =
+			unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_REFLECTION_PROBE - 1].x() + rqueue.m_reflectionProbes.getSize();
+		unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE].x() =
+			unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE - 1].x()
+			+ rqueue.m_giProbes.getSize();
 
 		unis.m_reflectionProbesMipCount = F32(m_r->getProbeReflections().getReflectionTextureMipmapCount());
 

@@ -73,7 +73,6 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 
 	TextureInitInfo init(filenameExt);
 	init.m_usage = TextureUsageBit::ALL_SAMPLED | TextureUsageBit::TRANSFER_DESTINATION;
-	init.m_initialUsage = TextureUsageBit::ALL_SAMPLED;
 	U32 faces = 0;
 
 	ResourceFilePtr file;
@@ -206,6 +205,24 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 
 	// Create the texture
 	m_tex = getManager().getGrManager().newTexture(init);
+
+	// Transition it. TODO remove that eventually
+	{
+		CommandBufferInitInfo cmdbinit;
+		cmdbinit.m_flags = CommandBufferFlag::GENERAL_WORK | CommandBufferFlag::SMALL_BATCH;
+		CommandBufferPtr cmdb = getManager().getGrManager().newCommandBuffer(cmdbinit);
+
+		TextureSubresourceInfo subresource;
+		subresource.m_faceCount = textureTypeIsCube(init.m_type) ? 6 : 1;
+		subresource.m_layerCount = init.m_layerCount;
+		subresource.m_mipmapCount = init.m_mipmapCount;
+
+		cmdb->setTextureBarrier(m_tex, TextureUsageBit::NONE, TextureUsageBit::ALL_SAMPLED, subresource);
+
+		FencePtr outFence;
+		cmdb->flush({}, &outFence);
+		outFence->clientWait(60.0_sec);
+	}
 
 	// Set the context
 	ctx->m_faces = faces;

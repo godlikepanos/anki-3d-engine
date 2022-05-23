@@ -1,8 +1,0 @@
-<model>
-	<modelPatches>
-		<modelPatch>
-			<mesh>Assets/room.002.ankimesh</mesh>
-			<material>Assets/room.green.ankimtl</material>
-		</modelPatch>
-	</modelPatches>
-</model>

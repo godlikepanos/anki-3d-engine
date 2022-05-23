@@ -31,7 +31,7 @@ public:
 		m_faceCount =
 			(tex->getTextureType() == TextureType::CUBE_ARRAY || tex->getTextureType() == TextureType::CUBE) ? 6 : 1;
 
-		m_depthStencilAspect = computeFormatAspect(tex->getFormat());
+		m_depthStencilAspect = getFormatInfo(tex->getFormat()).m_depthStencil;
 	}
 
 	TextureViewInitInfo(CString name = {})

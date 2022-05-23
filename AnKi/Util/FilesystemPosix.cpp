@@ -19,6 +19,7 @@
 #include <ftw.h> // For walkDirectoryTree
 #include <cstdlib>
 #include <time.h>
+#include <unistd.h>
 #if ANKI_OS_ANDROID
 #	include <android_native_app_glue.h>
 #endif
@@ -239,6 +240,29 @@ Error getFileModificationTime(CString filename, U32& year, U32& month, U32& day,
 	day = t.tm_mday;
 	hour = t.tm_hour;
 	second = t.tm_sec;
+
+	return Error::NONE;
+}
+
+Error getApplicationPath(StringAuto& out)
+{
+#if ANKI_OS_ANDROID
+	ANKI_ASSERT(0 && "getApplicationPath() doesn't work on Android");
+#else
+	DynamicArrayAuto<Char> buff(out.getAllocator(), 1024);
+
+	const ssize_t result = readlink("/proc/self/exe", &buff[0], buff.getSize());
+	if(result < 0)
+	{
+		ANKI_UTIL_LOGE("readlink() failed");
+		return Error::FUNCTION_FAILED;
+	}
+
+	out.destroy();
+	out.create('0', result);
+
+	memcpy(&out[0], &buff[0], result);
+#endif
 
 	return Error::NONE;
 }

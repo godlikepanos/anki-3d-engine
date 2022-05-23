@@ -16,14 +16,6 @@ function(anki_install_executable EXE)
 	endif()
 endfunction()
 
-macro(anki_add_source_files)
-	foreach(f ${ARGV})
-		set(AK_SOURCES "${AK_SOURCES} ${f}")
-	endforeach()
-
-	set(AK_SOURCES ${AK_SOURCES} PARENT_SCOPE)
-endmacro()
-
 macro(anki_new_executable)
 	if(NOT ANDROID)
 		add_executable(${ARGV})
@@ -86,10 +78,12 @@ endif()
 set(X86 FALSE)
 set(ARM FALSE)
 if(GCC OR CLANG)
-	if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86")
-		set(X86 TRUE)
-	elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch")
+	execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpmachine OUTPUT_VARIABLE target_arch)
+
+	if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch" OR ${target_arch} MATCHES "aarch")
 		set(ARM TRUE)
+	elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86")
+		set(X86 TRUE)
 	else()
 		message(FATAL_ERROR "Couldn't find the target architecture from: ${target_arch}")
 	endif()
@@ -131,6 +125,8 @@ endif()
 option(ANKI_SIMD "Enable SIMD optimizations" ON)
 option(ANKI_ADDRESS_SANITIZER "Enable address sanitizer (-fsanitize=address)" OFF)
 option(ANKI_HEADLESS "Build a headless application" OFF)
+option(ANKI_SHADER_FULL_PRECISION "Build shaders with full precision" OFF)
+set(ANKI_OVERRIDE_SHADER_COMPILER "" CACHE FILEPATH "Set the ShaderCompiler to be used to compile all shaders")
 
 # Take a wild guess on the windowing system
 if(ANKI_HEADLESS)
@@ -391,6 +387,10 @@ if(ANDROID)
 	include_directories("${ANDROID_NDK}/sources/android/native_app_glue")
 endif()
 
+if(LINUX)
+	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} X11-xcb pthread dl)
+endif()
+
 # AnKi compiler flags (Mainly warnings)
 if(NOT MSVC)
 	add_definitions("-pedantic -Wno-unknown-warning-option -Wall -W -Wextra -Wstrict-aliasing -Wwrite-strings -Wunused "
@@ -398,62 +398,17 @@ if(NOT MSVC)
 		"-Wconversion -Wno-sign-conversion -Wno-keyword-macro -Wno-string-conversion -Wno-class-memaccess "
 		"-Wunused-variable")
 
-	set(CMAKE_CXX_STANDARD 14)
+	set(CMAKE_CXX_STANDARD 17)
 else()
 	#add_definitions("/wd4996 /wd4244 /wd4262 /wd4267 /wd26495 /wd26439")
 	add_compile_definitions("_CRT_SECURE_NO_WARNINGS=1") # Disable some string function warnings
 endif()
 
-# Set platform specific
-if(LINUX)
-	if(GL)
-		set(THIRD_PARTY_LIBS ${ANKI_GR_BACKEND} AnKiGlew)
-	else()
-		if(SDL)
-			set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} X11-xcb)
-		endif()
-	endif()
-
-	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} pthread dl)
-elseif(MACOS)
-	find_package(OpenGL REQUIRED)
-	set(THIRD_PARTY_LIBS ${OPENGL_LIBRARIES} AnKiGlew pthread)
-elseif(ANDROID)
-	set(THIRD_PARTY_LIBS log android)
-	#include_directories("${ANDROID_NDK}/sources/android/native_app_glue")
-	#set(_SYS_SRC "${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c")
-
-	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} AnKiAndroidNativeGlue)
-elseif(WINDOWS)
-	if(GL)
-		set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} AnKiGlew opengl32)
-	else()
-		set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS})
-	endif()
-
-	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} version Imm32 Winmm DbgHelp)
-else()
-	message(FATAL_ERROR "Unhandled case")
-endif()
-
-if(SDL)
-	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} SDL2-static)
-endif()
-
-if(ANDROID)
-	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} AnKiHwcPipe)
-endif()
-
-set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} BulletSoftBody BulletDynamics BulletCollision LinearMath
-	AnKiSpirvCross AnKiTinyXml2 AnKiLua AnKiMeshOptimizer AnKiZLib glslang SPIRV OGLCompiler OSDependent AnKiImGui)
-
 # Add AnKi sub libraries
 add_subdirectory(AnKi)
 
-separate_arguments(AK_SOURCES)
-add_library(AnKi ${AK_SOURCES})
-target_compile_definitions(AnKi PRIVATE -DANKI_SOURCE_FILE)
-target_link_libraries(AnKi ${THIRD_PARTY_LIBS})
+add_library(AnKi INTERFACE)
+target_link_libraries(AnKi INTERFACE AnKiCore ${THIRD_PARTY_LIBS})
 
 ################################################################################
 # AnKi extra                                                                   #

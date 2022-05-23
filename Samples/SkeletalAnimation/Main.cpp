@@ -20,8 +20,8 @@ public:
 		ANKI_CHECK(getResourceManager().loadResource("Assets/Scene.lua", script));
 		ANKI_CHECK(getScriptManager().evalString(script->getSource()));
 
-		ANKI_CHECK(getResourceManager().loadResource("Assets/float.001.ankianim", m_floatAnim));
-		ANKI_CHECK(getResourceManager().loadResource("Assets/wave.001.ankianim", m_waveAnim));
+		ANKI_CHECK(getResourceManager().loadResource("Assets/float.001_ccb9eb33e30c8fa4.ankianim", m_floatAnim));
+		ANKI_CHECK(getResourceManager().loadResource("Assets/wave_6cf284ed471bff3b.ankianim", m_waveAnim));
 
 		AnimationPlayInfo animInfo;
 		animInfo.m_startTime = 2.0;

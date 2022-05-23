@@ -23,10 +23,10 @@ layout(std430, set = 0, binding = 2) writeonly buffer b_cb
 	F32 u_clientBuf[];
 };
 
-layout(push_constant, scalar) uniform b_pc
+layout(push_constant, std140) uniform b_pc
 {
+	Vec3 u_padding;
 	U32 u_lastMipWidth;
-	UVec3 u_padding;
 };
 
 void main()

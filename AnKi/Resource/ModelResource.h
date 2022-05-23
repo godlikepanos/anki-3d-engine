@@ -74,9 +74,6 @@ public:
 	IndexType m_indexType;
 	U32 m_firstIndex;
 	U32 m_indexCount;
-
-	U32 m_boneTransformsBinding;
-	U32 m_prevFrameBoneTransformsBinding;
 };
 
 /// Part of the information required to create a TLAS and a SBT.
@@ -84,13 +81,11 @@ public:
 class ModelRayTracingInfo
 {
 public:
-	ModelGpuDescriptor m_descriptor;
 	AccelerationStructurePtr m_bottomLevelAccelerationStructure;
-	Array<U32, U(RayType::COUNT)> m_shaderGroupHandleIndices;
+	U32 m_shaderGroupHandleIndex;
 
-	/// Get some pointers that the m_descriptor is pointing to. Use these pointers for life tracking.
-	Array<GrObjectPtr, U(TextureChannelId::COUNT) + 2> m_grObjectReferences;
-	U32 m_grObjectReferenceCount;
+	/// Get some pointers to pass to the command buffer for refcounting.
+	ConstWeakArray<GrObjectPtr> m_grObjectReferences;
 };
 
 /// Model patch class. Its very important class and it binds a material with a few mesh (one for each LOD).
@@ -118,12 +113,7 @@ public:
 	void getRenderingInfo(const RenderingKey& key, ModelRenderingInfo& inf) const;
 
 	/// Get the ray tracing info.
-	void getRayTracingInfo(U32 lod, ModelRayTracingInfo& info) const;
-
-	RayTypeBit getSupportedRayTracingTypes() const
-	{
-		return m_mtl->getSupportedRayTracingTypes();
-	}
+	void getRayTracingInfo(const RenderingKey& key, ModelRayTracingInfo& info) const;
 
 private:
 #if ANKI_ENABLE_ASSERTIONS
@@ -131,6 +121,7 @@ private:
 #endif
 	MaterialResourcePtr m_mtl;
 	Array<MeshResourcePtr, MAX_LOD_COUNT> m_meshes; ///< Just keep the references.
+	DynamicArray<GrObjectPtr> m_grObjectRefs;
 
 	// Begin cached data
 	class VertexAttributeInfo
@@ -217,17 +208,11 @@ public:
 		return m_boundingVolume;
 	}
 
-	Bool supportsSkinning() const
-	{
-		return m_skinning;
-	}
-
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
 
 private:
 	DynamicArray<ModelPatch> m_modelPatches;
 	Aabb m_boundingVolume;
-	Bool m_skinning = false;
 };
 /// @}
 

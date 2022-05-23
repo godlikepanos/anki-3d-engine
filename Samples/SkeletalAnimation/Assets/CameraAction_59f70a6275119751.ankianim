@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<animation>
+	<channels>
+		<channel name="Camera">
+			<positionKeys>
+				<key time="0.000000">5.526846 8.527484 -6.015655</key>
+			</positionKeys>
+			<rotationKeys>
+				<key time="0.000000">0.188035 0.809169 -0.497781 0.249204</key>
+			</rotationKeys>
+			<scaleKeys>
+				<key time="0.000000">1.000000</key>
+			</scaleKeys>
+		</channel>
+	</channels>
+</animation>

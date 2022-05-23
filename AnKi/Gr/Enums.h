@@ -155,62 +155,30 @@ public:
 	U8 m_shaderType; ///< It's 0 if the shader sees it as float, 1 if uint and 2 if signed int.
 	DepthStencilAspectBit m_depthStencil; ///< Depth/stencil mask.
 	const char* m_name;
+
+	Bool isDepthStencil() const
+	{
+		return m_depthStencil != DepthStencilAspectBit::NONE;
+	}
+
+	Bool isDepth() const
+	{
+		return !!(m_depthStencil & DepthStencilAspectBit::DEPTH);
+	}
+
+	Bool isStencil() const
+	{
+		return !!(m_depthStencil & DepthStencilAspectBit::STENCIL);
+	}
+
+	Bool isCompressed() const
+	{
+		return m_blockSize > 0;
+	}
 };
 
 /// Get info for a specific Format.
-inline FormatInfo getFormatInfo(Format fmt)
-{
-	ANKI_ASSERT(fmt != Format::NONE);
-	FormatInfo out;
-	switch(fmt)
-	{
-#define ANKI_FORMAT_DEF(type, id, componentCount, texelSize, blockWidth, blockHeight, blockSize, shaderType, \
-						depthStencil) \
-	case Format::type: \
-		out.m_componentCount = componentCount; \
-		out.m_texelSize = texelSize; \
-		out.m_blockWidth = blockWidth; \
-		out.m_blockHeight = blockHeight; \
-		out.m_blockSize = blockSize; \
-		out.m_shaderType = shaderType; \
-		out.m_depthStencil = DepthStencilAspectBit::depthStencil; \
-		out.m_name = #type; \
-		break;
-#include <AnKi/Gr/Format.defs.h>
-#undef ANKI_FORMAT_DEF
-
-	default:
-		ANKI_ASSERT(0);
-		out = {};
-	}
-
-	return out;
-}
-
-inline Bool formatIsDepthStencil(const Format fmt)
-{
-	return getFormatInfo(fmt).m_depthStencil != DepthStencilAspectBit::NONE;
-}
-
-inline Bool formatIsDepth(const Format fmt)
-{
-	return !!(getFormatInfo(fmt).m_depthStencil & DepthStencilAspectBit::DEPTH);
-}
-
-inline Bool formatIsStencil(const Format fmt)
-{
-	return !!(getFormatInfo(fmt).m_depthStencil & DepthStencilAspectBit::STENCIL);
-}
-
-inline Bool formatIsCompressed(const Format fmt)
-{
-	return getFormatInfo(fmt).m_blockSize > 0;
-}
-
-inline DepthStencilAspectBit computeFormatAspect(const Format fmt)
-{
-	return getFormatInfo(fmt).m_depthStencil;
-}
+ANKI_PURE FormatInfo getFormatInfo(Format fmt);
 
 /// Texture type.
 enum class TextureType : U8
@@ -348,13 +316,14 @@ enum class ShaderVariableDataType : U8
 {
 	NONE,
 
-#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount) capital,
+#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount, isIntagralType) capital,
 #define ANKI_SVDT_MACRO_OPAQUE(capital, type) capital,
 #include <AnKi/Gr/ShaderVariableDataType.defs.h>
 #undef ANKI_SVDT_MACRO
 #undef ANKI_SVDT_MACRO_OPAQUE
 
 	// Derived
+	COUNT,
 
 	NUMERICS_FIRST = I32,
 	NUMERICS_LAST = MAT4,
@@ -378,6 +347,17 @@ enum class ShaderVariableDataType : U8
 	IMAGE_LAST = IMAGE_CUBE_ARRAY,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderVariableDataType)
+
+class ShaderVariableDataTypeInfo
+{
+public:
+	const Char* m_name;
+	U32 m_size; ///< Size of the type.
+	Bool m_opaque;
+	Bool m_isIntegral; ///< If true is integral type. Else it's float.
+};
+
+ANKI_PURE const ShaderVariableDataTypeInfo& getShaderVariableDataTypeInfo(ShaderVariableDataType type);
 
 /// Occlusion query result bit.
 enum class OcclusionQueryResultBit : U8

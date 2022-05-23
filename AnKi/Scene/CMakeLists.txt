@@ -1,2 +1,4 @@
-file(GLOB_RECURSE SOURCES *.cpp)
-anki_add_source_files(${SOURCES})
+file(GLOB_RECURSE sources *.cpp)
+add_library(AnKiScene ${sources})
+target_compile_definitions(AnKiScene PRIVATE -DANKI_SOURCE_FILE)
+target_link_libraries(AnKiScene AnKiResource AnKiScript AnKiCollision)

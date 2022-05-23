@@ -7,12 +7,9 @@
 
 #include <AnKi/Util/Allocator.h>
 #include <AnKi/Util/Functions.h>
+#include <AnKi/Util/Forward.h>
 
 namespace anki {
-
-// Forward
-template<typename T, typename TSize>
-class DynamicArrayAuto;
 
 /// @addtogroup util_containers
 /// @{
@@ -21,7 +18,7 @@ class DynamicArrayAuto;
 /// that requires manual destruction. Used in permanent classes.
 /// @tparam T The type this array will hold.
 /// @tparam TSize The type that denotes the maximum number of elements of the array.
-template<typename T, typename TSize = U32>
+template<typename T, typename TSize>
 class DynamicArray
 {
 public:
@@ -296,6 +293,9 @@ public:
 		m_capacity = 0;
 	}
 
+	/// @copydoc moveAndReset
+	void moveAndReset(WeakArray<Value, Size>& array);
+
 	/// Resizes the storage but DOESN'T CONSTRUCT ANY ELEMENTS. It only moves or destroys.
 	template<typename TAllocator>
 	void resizeStorage(TAllocator alloc, Size newSize);
@@ -308,7 +308,7 @@ protected:
 
 /// Dynamic array with automatic destruction. It's the same as DynamicArray but it holds the allocator in order to
 /// perform automatic destruction. Use it for temp operations and on transient classes.
-template<typename T, typename TSize = U32>
+template<typename T, typename TSize>
 class DynamicArrayAuto : public DynamicArray<T, TSize>
 {
 public:
@@ -470,6 +470,13 @@ public:
 	void moveAndReset(Value*& data, Size& size, Size& storageSize)
 	{
 		Base::moveAndReset(data, size, storageSize);
+		// Don't touch the m_alloc
+	}
+
+	/// @copydoc DynamicArray::moveAndReset
+	void moveAndReset(WeakArray<Value, Size>& array)
+	{
+		Base::moveAndReset(array);
 		// Don't touch the m_alloc
 	}
 

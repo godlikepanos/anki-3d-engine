@@ -286,7 +286,6 @@ ResourceManager* createResourceManager(ConfigSet* cfg, GrManager* gr, PhysicsWor
 	rinit.m_physics = physics;
 	rinit.m_resourceFs = resourceFs;
 	rinit.m_config = cfg;
-	rinit.m_cacheDir = "./";
 	rinit.m_allocCallback = allocAligned;
 	rinit.m_allocCallbackData = nullptr;
 	ResourceManager* resources = new ResourceManager();

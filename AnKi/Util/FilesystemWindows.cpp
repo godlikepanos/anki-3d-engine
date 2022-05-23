@@ -197,4 +197,24 @@ Error walkDirectoryTreeInternal(const CString& dir, const Function<Error(const C
 	return walkDirectoryTreeRecursive(dir, callback, baseDirLen);
 }
 
+Error getApplicationPath(StringAuto& out)
+{
+	DynamicArrayAuto<Char> buff(out.getAllocator(), 1024);
+
+	const DWORD result = GetModuleFileNameA(nullptr, &buff[0], buff.getSize());
+	DWORD lastError = GetLastError();
+	if(result == 0
+	   || (result == buff.getSize() && (lastError == ERROR_INSUFFICIENT_BUFFER || lastError == ERROR_SUCCESS)))
+	{
+		ANKI_UTIL_LOGE("GetModuleFileNameA() failed");
+		return Error::FUNCTION_FAILED;
+	}
+
+	out.destroy();
+	out.create('0', result);
+
+	memcpy(&out[0], &buff[0], result);
+	return Error::NONE;
+}
+
 } // end namespace anki

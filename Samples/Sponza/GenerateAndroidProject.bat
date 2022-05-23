@@ -1,2 +1,7 @@
-cd /D "%~dp0"
-python ../../Tools/Android/GenerateAndroidProject.py -o ../.. -t Sponza -a ./Assets/
+@echo off
+if "%~1"=="" (
+	echo "Usage: %0 <path to ShaderCompiler.exe>"
+	exit 0
+)
+
+python ./Tools/Android/GenerateAndroidProject.py -o . -t Sponza -a ./Samples/Sponza/Assets/ --shader-compiler %1

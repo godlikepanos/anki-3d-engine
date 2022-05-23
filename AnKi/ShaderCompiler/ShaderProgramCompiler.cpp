@@ -30,23 +30,9 @@ Error ShaderProgramBinaryWrapper::serializeToFile(CString fname) const
 
 Error ShaderProgramBinaryWrapper::deserializeFromFile(CString fname)
 {
-	cleanup();
-
 	File file;
 	ANKI_CHECK(file.open(fname, FileOpenFlag::READ | FileOpenFlag::BINARY));
-
-	BinaryDeserializer deserializer;
-	ANKI_CHECK(deserializer.deserialize(m_binary, m_alloc, file));
-
-	m_singleAllocation = true;
-
-	if(memcmp(SHADER_BINARY_MAGIC, &m_binary->m_magic[0], strlen(SHADER_BINARY_MAGIC)) != 0)
-	{
-		ANKI_SHADER_COMPILER_LOGE("Corrupted or wrong version of shader binary: %s. Clean the shader cache",
-								  fname.cstr());
-		return Error::USER_DATA;
-	}
-
+	ANKI_CHECK(deserializeFromAnyFile(file));
 	return Error::NONE;
 }
 
@@ -725,7 +711,7 @@ public:
 		ShaderProgramBinaryBlockInstance& instance = m_blockInstances[blockType][blockInstanceIdx];
 		instance.m_index = blockIdx;
 		instance.m_size = size;
-		instance.m_variableInstances.setArray(m_alloc.newArray<ShaderProgramBinaryVariableInstance>(varSize), varSize);
+		m_alloc.newArray(varSize, instance.m_variableInstances);
 
 		return Error::NONE;
 	}
@@ -772,6 +758,68 @@ public:
 		return Error::NONE;
 	}
 };
+
+static Error doGhostStructReflection(const StringList& symbolsToReflect,
+									 ConstWeakArray<ShaderProgramParserGhostStruct> ghostStructs,
+									 ShaderProgramBinary& binary, GenericMemoryPoolAllocator<U8>& tmpAlloc,
+									 GenericMemoryPoolAllocator<U8>& binaryAlloc)
+{
+	// Count reflectable ghost structs
+	DynamicArrayAuto<U32> ghostStructIndices(tmpAlloc);
+	for(U32 i = 0; i < ghostStructs.getSize(); ++i)
+	{
+		for(const String& s : symbolsToReflect)
+		{
+			if(s == ghostStructs[i].m_name)
+			{
+				ghostStructIndices.emplaceBack(i);
+				break;
+			}
+		}
+	}
+
+	if(ghostStructIndices.getSize() == 0)
+	{
+		return Error::NONE;
+	}
+
+	// Add the ghost structs to binary structs
+	const U32 nonGhostStructCount = binary.m_structs.getSize();
+	DynamicArrayAuto<ShaderProgramBinaryStruct> structs(binaryAlloc,
+														nonGhostStructCount + ghostStructIndices.getSize());
+
+	for(U32 i = 0; i < binary.m_structs.getSize(); ++i)
+	{
+		structs[i] = binary.m_structs[i];
+	}
+
+	for(U32 i = 0; i < ghostStructIndices.getSize(); ++i)
+	{
+		const ShaderProgramParserGhostStruct& in = ghostStructs[ghostStructIndices[i]];
+		ShaderProgramBinaryStruct& out = structs[nonGhostStructCount + i];
+
+		ANKI_CHECK(Refl::setName(in.m_name, out.m_name));
+
+		DynamicArrayAuto<ShaderProgramBinaryStructMember> members(binaryAlloc, in.m_members.getSize());
+		for(U32 j = 0; j < in.m_members.getSize(); ++j)
+		{
+			const ShaderProgramParserMember& inMember = in.m_members[j];
+			ShaderProgramBinaryStructMember& outMember = members[j];
+
+			ANKI_CHECK(Refl::setName(inMember.m_name, outMember.m_name));
+			outMember.m_type = inMember.m_type;
+			outMember.m_dependentMutator = inMember.m_dependentMutator;
+			outMember.m_dependentMutatorValue = inMember.m_mutatorValue;
+		}
+
+		members.moveAndReset(out.m_members);
+	}
+
+	binaryAlloc.deleteArray(binary.m_structs);
+	structs.moveAndReset(binary.m_structs);
+
+	return Error::NONE;
+}
 
 static Error doReflection(const StringList& symbolsToReflect, ShaderProgramBinary& binary,
 						  GenericMemoryPoolAllocator<U8>& tmpAlloc, GenericMemoryPoolAllocator<U8>& binaryAlloc)
@@ -965,18 +1013,16 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 	U32 mutationCount = 0;
 	if(parser.getMutators().getSize() > 0)
 	{
-		binary.m_mutators.setArray(binaryAllocator.newArray<ShaderProgramBinaryMutator>(parser.getMutators().getSize()),
-								   parser.getMutators().getSize());
+		binaryAllocator.newArray(parser.getMutators().getSize(), binary.m_mutators);
 
 		for(U32 i = 0; i < binary.m_mutators.getSize(); ++i)
 		{
 			ShaderProgramBinaryMutator& out = binary.m_mutators[i];
 			const ShaderProgramParserMutator& in = parser.getMutators()[i];
 
-			ANKI_ASSERT(in.getName().getLength() < out.m_name.getSize());
-			memcpy(&out.m_name[0], in.getName().cstr(), in.getName().getLength() + 1);
+			ANKI_CHECK(Refl::setName(in.getName(), out.m_name));
 
-			out.m_values.setArray(binaryAllocator.newArray<I32>(in.getValues().getSize()), in.getValues().getSize());
+			binaryAllocator.newArray(in.getValues().getSize(), out.m_values);
 			memcpy(out.m_values.getBegin(), in.getValues().getBegin(), in.getValues().getSizeInBytes());
 
 			// Update the count
@@ -1010,8 +1056,7 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 	if(parser.getMutators().getSize() > 0)
 	{
 		// Initialize
-		DynamicArrayAuto<MutatorValue> originalMutationValues(tempAllocator, parser.getMutators().getSize());
-		DynamicArrayAuto<MutatorValue> rewrittenMutationValues(tempAllocator, parser.getMutators().getSize());
+		DynamicArrayAuto<MutatorValue> mutationValues(tempAllocator, parser.getMutators().getSize());
 		DynamicArrayAuto<U32> dials(tempAllocator, parser.getMutators().getSize(), 0);
 		DynamicArrayAuto<ShaderProgramBinaryVariant> variants(binaryAllocator);
 		DynamicArrayAuto<ShaderProgramBinaryCodeBlock> codeBlocks(binaryAllocator);
@@ -1033,73 +1078,34 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 			// Create the mutation
 			for(U32 i = 0; i < parser.getMutators().getSize(); ++i)
 			{
-				originalMutationValues[i] = parser.getMutators()[i].getValues()[dials[i]];
-				rewrittenMutationValues[i] = originalMutationValues[i];
+				mutationValues[i] = parser.getMutators()[i].getValues()[dials[i]];
 			}
 
 			ShaderProgramBinaryMutation& mutation = mutations[mutationCount++];
-			mutation.m_values.setArray(binaryAllocator.newArray<MutatorValue>(originalMutationValues.getSize()),
-									   originalMutationValues.getSize());
-			memcpy(mutation.m_values.getBegin(), originalMutationValues.getBegin(),
-				   originalMutationValues.getSizeInBytes());
+			binaryAllocator.newArray(mutationValues.getSize(), mutation.m_values);
+			memcpy(mutation.m_values.getBegin(), mutationValues.getBegin(), mutationValues.getSizeInBytes());
 
-			mutation.m_hash = computeHash(originalMutationValues.getBegin(), originalMutationValues.getSizeInBytes());
+			mutation.m_hash = computeHash(mutationValues.getBegin(), mutationValues.getSizeInBytes());
 			ANKI_ASSERT(mutation.m_hash > 0);
 
-			const Bool rewritten = parser.rewriteMutation(
-				WeakArray<MutatorValue>(rewrittenMutationValues.getBegin(), rewrittenMutationValues.getSize()));
-
-			// Create the variant
-			if(!rewritten)
+			if(parser.skipMutation(mutationValues))
+			{
+				mutation.m_variantIndex = MAX_U32;
+			}
+			else
 			{
 				// New and unique mutation and thus variant, add it
 
 				ShaderProgramBinaryVariant& variant = *variants.emplaceBack();
 				baseVariant = (baseVariant == nullptr) ? variants.getBegin() : baseVariant;
 
-				compileVariantAsync(originalMutationValues, parser, variant, codeBlocks, codeBlockHashes, tempAllocator,
+				compileVariantAsync(mutationValues, parser, variant, codeBlocks, codeBlockHashes, tempAllocator,
 									binaryAllocator, taskManager, mtx, errorAtomic);
 
 				mutation.m_variantIndex = variants.getSize() - 1;
 
 				ANKI_ASSERT(mutationHashToIdx.find(mutation.m_hash) == mutationHashToIdx.getEnd());
 				mutationHashToIdx.emplace(mutation.m_hash, mutationCount - 1);
-			}
-			else
-			{
-				// Check if the rewritten mutation exists
-				const U64 otherMutationHash =
-					computeHash(rewrittenMutationValues.getBegin(), rewrittenMutationValues.getSizeInBytes());
-				auto it = mutationHashToIdx.find(otherMutationHash);
-
-				ShaderProgramBinaryVariant* variant = nullptr;
-				if(it == mutationHashToIdx.getEnd())
-				{
-					// Rewrite variant not found, create it
-
-					variant = variants.emplaceBack();
-					baseVariant = (baseVariant == nullptr) ? variants.getBegin() : baseVariant;
-
-					compileVariantAsync(originalMutationValues, parser, *variant, codeBlocks, codeBlockHashes,
-										tempAllocator, binaryAllocator, taskManager, mtx, errorAtomic);
-
-					ShaderProgramBinaryMutation& otherMutation = mutations[mutationCount++];
-					otherMutation.m_values.setArray(
-						binaryAllocator.newArray<MutatorValue>(rewrittenMutationValues.getSize()),
-						rewrittenMutationValues.getSize());
-					memcpy(otherMutation.m_values.getBegin(), rewrittenMutationValues.getBegin(),
-						   rewrittenMutationValues.getSizeInBytes());
-
-					mutation.m_hash = otherMutationHash;
-					mutation.m_variantIndex = variants.getSize() - 1;
-
-					it = mutationHashToIdx.emplace(otherMutationHash, mutationCount - 1);
-				}
-
-				// Setup the new mutation
-				mutation.m_variantIndex = mutations[*it].m_variantIndex;
-
-				mutationHashToIdx.emplace(mutation.m_hash, U32(&mutation - mutations.getBegin()));
 			}
 		} while(!spinDials(dials, parser.getMutators()));
 
@@ -1175,6 +1181,8 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 
 	// Reflection
 	ANKI_CHECK(doReflection(parser.getSymbolsToReflect(), binary, tempAllocator, binaryAllocator));
+	ANKI_CHECK(doGhostStructReflection(parser.getSymbolsToReflect(), parser.getGhostStructs(), binary, tempAllocator,
+									   binaryAllocator));
 
 	return Error::NONE;
 }

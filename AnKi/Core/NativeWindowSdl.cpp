@@ -80,19 +80,6 @@ Error NativeWindowSdl::init(const NativeWindowInitInfo& init)
 	//
 	ANKI_CORE_LOGI("Creating SDL window. SDL version %u.%u", SDL_MAJOR_VERSION, SDL_MINOR_VERSION);
 
-#if ANKI_GR_BACKEND_GL
-	if(SDL_GL_SetAttribute(SDL_GL_RED_SIZE, init.m_rgbaBits[0])
-	   || SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, init.m_rgbaBits[1])
-	   || SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, init.m_rgbaBits[2])
-	   || SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, init.m_rgbaBits[3])
-	   || SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, init.m_depthBits)
-	   || SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, init.m_doubleBuffer))
-	{
-		ANKI_CORE_LOGE("SDL_GL_SetAttribute() failed");
-		return Error::FUNCTION_FAILED;
-	}
-#endif
-
 	//
 	// Create window
 	//
@@ -104,9 +91,17 @@ Error NativeWindowSdl::init(const NativeWindowInitInfo& init)
 	flags |= SDL_WINDOW_VULKAN;
 #endif
 
+	SDL_SetHint(SDL_HINT_ALLOW_TOPMOST, "0");
 	if(init.m_fullscreenDesktopRez)
 	{
-		flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+#if ANKI_OS_WINDOWS
+		flags |= SDL_WINDOW_FULLSCREEN;
+#endif
+
+		if(init.m_exclusiveFullscreen)
+		{
+			flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+		}
 
 		// Alter the window size
 		SDL_DisplayMode mode;

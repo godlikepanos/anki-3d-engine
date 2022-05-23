@@ -9,7 +9,6 @@
 #include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Util/ThreadHive.h>
 #include <AnKi/Util/Tracer.h>
-#include <AnKi/Shaders/Include/ShadowMappingTypes.h>
 
 namespace anki {
 
@@ -109,10 +108,9 @@ Error ShadowMapping::initAtlas()
 		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
 			m_atlas.m_tileResolution * m_atlas.m_tileCountBothAxis,
 			m_atlas.m_tileResolution * m_atlas.m_tileCountBothAxis, texFormat, usage, "SM atlas");
-		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 		ClearValue clearVal;
 		clearVal.m_colorf[0] = 1.0f;
-		m_atlas.m_tex = m_r->createAndClearRenderTarget(texinit, clearVal);
+		m_atlas.m_tex = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::SAMPLED_FRAGMENT, clearVal);
 	}
 
 	// Tiles
@@ -121,8 +119,9 @@ Error ShadowMapping::initAtlas()
 
 	// Programs and shaders
 	{
-		ANKI_CHECK(getResourceManager().loadResource(
-			(preferCompute) ? "Shaders/EvsmCompute.ankiprog" : "Shaders/EvsmRaster.ankiprog", m_atlas.m_resolveProg));
+		ANKI_CHECK(getResourceManager().loadResource((preferCompute) ? "ShaderBinaries/EvsmCompute.ankiprogbin"
+																	 : "ShaderBinaries/EvsmRaster.ankiprogbin",
+													 m_atlas.m_resolveProg));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_atlas.m_resolveProg);
 		variantInitInfo.addConstant("INPUT_TEXTURE_SIZE", UVec2(m_scratch.m_tileCountX * m_scratch.m_tileResolution,
@@ -160,11 +159,11 @@ void ShadowMapping::runAtlas(RenderPassWorkContext& rgraphCtx)
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
 	// Allocate and populate uniforms
-	ShadowMappingUniforms* uniforms = allocateAndBindStorage<ShadowMappingUniforms*>(
-		m_atlas.m_resolveWorkItems.getSize() * sizeof(ShadowMappingUniforms), cmdb, 0, 0);
+	EvsmResolveUniforms* uniforms = allocateAndBindStorage<EvsmResolveUniforms*>(
+		m_atlas.m_resolveWorkItems.getSize() * sizeof(EvsmResolveUniforms), cmdb, 0, 0);
 	for(U32 i = 0; i < m_atlas.m_resolveWorkItems.getSize(); ++i)
 	{
-		ShadowMappingUniforms& uni = uniforms[i];
+		EvsmResolveUniforms& uni = uniforms[i];
 		const Atlas::ResolveWorkItem& workItem = m_atlas.m_resolveWorkItems[i];
 
 		uni.m_viewportXY = IVec2(workItem.m_viewportOut.xy());
@@ -222,7 +221,7 @@ void ShadowMapping::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 		cmdb->setViewport(work.m_viewport[0], work.m_viewport[1], work.m_viewport[2], work.m_viewport[3]);
 		cmdb->setScissor(work.m_viewport[0], work.m_viewport[1], work.m_viewport[2], work.m_viewport[3]);
 
-		m_r->getSceneDrawer().drawRange(Pass::SM, work.m_renderQueue->m_viewMatrix,
+		m_r->getSceneDrawer().drawRange(RenderingTechnique::SHADOW, work.m_renderQueue->m_viewMatrix,
 										work.m_renderQueue->m_viewProjectionMatrix,
 										Mat4::getIdentity(), // Don't care about prev matrices here
 										cmdb, m_r->getSamplers().m_trilinearRepeatAniso,

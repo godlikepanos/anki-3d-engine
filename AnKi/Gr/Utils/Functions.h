@@ -31,7 +31,7 @@ inline Bool blendingDisabled(BlendFactor srcFactorRgb, BlendFactor dstFactorRgb,
 template<typename T>
 ShaderVariableDataType getShaderVariableTypeFromTypename();
 
-#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount) \
+#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount, isIntagralType) \
 	template<> \
 	inline ShaderVariableDataType getShaderVariableTypeFromTypename<type>() \
 	{ \
@@ -44,8 +44,5 @@ ShaderVariableDataType getShaderVariableTypeFromTypename();
 /// Populate the memory of a variable that is inside a shader block.
 void writeShaderBlockMemory(ShaderVariableDataType type, const ShaderVariableBlockInfo& varBlkInfo,
 							const void* elements, U32 elementsCount, void* buffBegin, const void* buffEnd);
-
-/// Convert a ShaderVariableDataType to string.
-const CString shaderVariableDataTypeToString(ShaderVariableDataType t);
 
 } // end namespace anki

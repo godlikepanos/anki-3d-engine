@@ -49,6 +49,12 @@ public:
 		return m_fence;
 	}
 
+	/// Interface method.
+	void onFenceDone()
+	{
+		// Do nothing
+	}
+
 	VkRenderPass getRenderPass(VkAttachmentLoadOp loadOp) const
 	{
 		const U idx = (loadOp == VK_ATTACHMENT_LOAD_OP_DONT_CARE) ? RPASS_LOAD_DONT_CARE : RPASS_LOAD_CLEAR;

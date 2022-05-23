@@ -1,8 +1,7 @@
-file(GLOB_RECURSE TESTS_SOURCES *.cpp)
-file(GLOB_RECURSE TESTS_HEADERS *.h)
+file(GLOB_RECURSE sources *.cpp)
 
 include_directories("..")
 
-anki_new_executable(Tests ${TESTS_SOURCES} ${TESTS_HEADERS})
+anki_new_executable(Tests ${sources})
 target_compile_definitions(Tests PRIVATE -DANKI_SOURCE_FILE)
-target_link_libraries(Tests AnKi)
+target_link_libraries(Tests AnKi AnKiShaderCompiler AnKiImporter)

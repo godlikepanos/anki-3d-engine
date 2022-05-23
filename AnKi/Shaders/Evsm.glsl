@@ -6,11 +6,11 @@
 ANKI_SPECIALIZATION_CONSTANT_UVEC2(INPUT_TEXTURE_SIZE, 0u);
 ANKI_SPECIALIZATION_CONSTANT_UVEC2(FB_SIZE, 2u);
 
-#include <AnKi/Shaders/Include/ShadowMappingTypes.h>
+#include <AnKi/Shaders/Include/MiscRendererTypes.h>
 
-layout(set = 0, binding = 0, std430) readonly buffer b_unis
+layout(set = 0, binding = 0) readonly buffer b_unis
 {
-	ShadowMappingUniforms u_uniforms[];
+	EvsmResolveUniforms u_uniforms[];
 };
 
 #if defined(ANKI_VERTEX_SHADER)
@@ -21,7 +21,7 @@ layout(location = 1) flat out I32 out_instanceIndex;
 
 void main()
 {
-	const ShadowMappingUniforms uni = u_uniforms[gl_InstanceIndex];
+	const EvsmResolveUniforms uni = u_uniforms[gl_InstanceIndex];
 
 	const Vec2 uv = Vec2(((gl_VertexID + 2) / 3) % 2, ((gl_VertexID + 1) / 3) % 2);
 
@@ -63,12 +63,12 @@ Vec4 computeMoments(Vec2 uv)
 void main()
 {
 #	if defined(ANKI_COMPUTE_SHADER)
-	const ShadowMappingUniforms uni = u_uniforms[gl_GlobalInvocationID.z];
+	const EvsmResolveUniforms uni = u_uniforms[gl_GlobalInvocationID.z];
 
 	Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / uni.m_viewportZW; // in [0, 1]
 	uv = uv * uni.m_uvScale + uni.m_uvTranslation;
 #	else
-	const ShadowMappingUniforms uni = u_uniforms[in_instanceIndex];
+	const EvsmResolveUniforms uni = u_uniforms[in_instanceIndex];
 
 	Vec2 uv = in_uv;
 #	endif

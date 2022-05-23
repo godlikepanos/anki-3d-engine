@@ -9,7 +9,6 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Util/Functions.h>
-#include <AnKi/Shaders/Include/LensFlareTypes.h>
 
 namespace anki {
 
@@ -52,7 +51,7 @@ Error LensFlare::initSprite()
 	m_maxSprites = U16(m_maxSpritesPerFlare * m_maxFlares);
 
 	// Load prog
-	ANKI_CHECK(getResourceManager().loadResource("Shaders/LensFlareSprite.ankiprog", m_realProg));
+	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/LensFlareSprite.ankiprogbin", m_realProg));
 	const ShaderProgramResourceVariant* variant;
 	m_realProg->getOrCreateVariant(variant);
 	m_realGrProg = variant->getProgram();
@@ -68,8 +67,8 @@ Error LensFlare::initOcclusion()
 												 BufferUsageBit::INDIRECT_DRAW | BufferUsageBit::STORAGE_COMPUTE_WRITE,
 												 BufferMapAccessBit::NONE, "LensFlares"));
 
-	ANKI_CHECK(
-		getResourceManager().loadResource("Shaders/LensFlareUpdateIndirectInfo.ankiprog", m_updateIndirectBuffProg));
+	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/LensFlareUpdateIndirectInfo.ankiprogbin",
+												 m_updateIndirectBuffProg));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_updateIndirectBuffProg);
 	variantInitInfo.addConstant(

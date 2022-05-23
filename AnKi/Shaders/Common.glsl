@@ -31,8 +31,8 @@ const U32 MAX_SHARED_MEMORY = 32u * 1024u;
 #define saturateRp(x) min(x, F32(MAX_F16))
 #define mad(a_, b_, c_) fma((a_), (b_), (c_))
 
-// Passes
-#define PASS_GB 0
-#define PASS_FS 1
-#define PASS_SM 2
-#define PASS_EZ 3
+// Techniques
+#define RENDERING_TECHNIQUE_GBUFFER 0
+#define RENDERING_TECHNIQUE_GBUFFER_EZ 1
+#define RENDERING_TECHNIQUE_SHADOWS 2
+#define RENDERING_TECHNIQUE_FORWARD 3

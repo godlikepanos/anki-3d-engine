@@ -86,7 +86,7 @@ public:
 	static constexpr Bool VALUE = false;
 };
 
-#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount) \
+#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount, isIntagralType) \
 	template<> \
 	class IsShaderVarDataTypeAMatrix<type> \
 	{ \
@@ -126,7 +126,7 @@ void writeShaderBlockMemory(ShaderVariableDataType type, const ShaderVariableBlo
 {
 	switch(type)
 	{
-#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount) \
+#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount, isIntagralType) \
 	case ShaderVariableDataType::capital: \
 		WriteShaderBlockMemory<type>()(varBlkInfo, elements, elementsCount, buffBegin, buffEnd); \
 		break;
@@ -136,29 +136,6 @@ void writeShaderBlockMemory(ShaderVariableDataType type, const ShaderVariableBlo
 	default:
 		ANKI_ASSERT(0);
 	}
-}
-
-const CString shaderVariableDataTypeToString(ShaderVariableDataType t)
-{
-	switch(t)
-	{
-	case ShaderVariableDataType::NONE:
-		return "NONE";
-
-#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount) \
-	case ShaderVariableDataType::capital: \
-		return ANKI_STRINGIZE(type);
-#define ANKI_SVDT_MACRO_OPAQUE(capital, type) ANKI_SVDT_MACRO(capital, type, 0, 0, 0)
-#include <AnKi/Gr/ShaderVariableDataType.defs.h>
-#undef ANKI_SVDT_MACRO
-#undef ANKI_SVDT_MACRO_OPAQUE
-
-	default:
-		ANKI_ASSERT(0);
-	}
-
-	ANKI_ASSERT(0);
-	return "";
 }
 
 } // end namespace anki
