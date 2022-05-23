@@ -16,13 +16,13 @@ jobs:
     - name: Install dependencies
       run: |
         apt-get update
-        apt install ninja-build libx11-dev libx11-xcb-dev clang
+        apt install ninja-build
 
     - name: Clone
       uses: actions/checkout@v2
 
     - name: Configure CMake for Linux
-      run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=OFF -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Release -DANKI_EXTRA_CHECKS=OFF
+      run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DANKI_EXTRA_CHECKS=OFF
 
     - name: Build Linux ShaderCompiler
       run: cmake --build ${{github.workspace}}/build --config Release --target ShaderCompiler
