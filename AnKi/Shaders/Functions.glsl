@@ -618,21 +618,6 @@ U32 encodeVrsRate(UVec2 rateXY)
 	return (rateXY.y >> 1u) | ((rateXY.x << 1u) & 12u);
 }
 
-U32 encodeAndSanitizeVrsRate(UVec2 rate)
-{
-	// 1x4 and 4x1 shading rates don't exist.
-	if(rate == UVec2(1u, 4u))
-	{
-		rate = UVec2(1u, 2u);
-	}
-	else if(rate == UVec2(4u, 1u))
-	{
-		rate = UVec2(2u, 1u);
-	}
-
-	return encodeVrsRate(rate);
-}
-
 Vec3 visualizeVrsRate(UVec2 rate)
 {
 	if(rate == UVec2(1u))
@@ -643,13 +628,13 @@ Vec3 visualizeVrsRate(UVec2 rate)
 	{
 		return Vec3(1.0, 0.5, 0.0);
 	}
-	else if(rate == UVec2(2u))
+	else if(rate == UVec2(2u) || rate == UVec2(4u, 1u) || rate == UVec2(1u, 4u))
 	{
 		return Vec3(1.0, 1.0, 0.0);
 	}
 	else if(rate == UVec2(4u, 2u) || rate == UVec2(2u, 4u))
 	{
-		return Vec3(0.5, 1.0, 0.0);
+		return Vec3(0.65, 1.0, 0.0);
 	}
 	else if(rate == UVec2(4u))
 	{

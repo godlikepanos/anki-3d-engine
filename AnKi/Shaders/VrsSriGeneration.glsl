@@ -128,6 +128,6 @@ void main()
 		rate.y = (lumaDiff.y > threshold1) ? 1u : ((lumaDiff.y > threshold2) ? 2u : 4u);
 
 		const UVec2 outTexelCoord = gl_WorkGroupID.xy;
-		imageStore(u_sriImg, IVec2(outTexelCoord), UVec4(encodeAndSanitizeVrsRate(rate)));
+		imageStore(u_sriImg, IVec2(outTexelCoord), UVec4(encodeVrsRate(rate)));
 	}
 }
