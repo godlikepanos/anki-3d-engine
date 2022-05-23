@@ -3,42 +3,45 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki mutator ANKI_TECHNIQUE 3
 #pragma anki mutator ANIMATED_TEXTURE 0 1
 #pragma anki mutator LIGHT 0 1
 
 #include <AnKi/Shaders/ForwardShadingCommon.glsl>
 
-struct PerDraw
-{
-	Mat3x4 m_ankiTransform;
-#if ANIMATED_TEXTURE == 1
-	F32 m_animationPeriod;
-#endif
-	ANKI_RP Vec4 m_colorScale;
-	ANKI_RP Vec4 m_colorBias;
-};
+#pragma anki reflect AnKiLocalUniforms
+#pragma anki struct AnKiLocalUniforms
+#pragma anki member F32 m_animationPeriod if ANIMATED_TEXTURE is 1
+#pragma anki member ANKI_RP Vec4 m_colorScale
+#pragma anki member ANKI_RP Vec4 m_colorBias
+#pragma anki struct end
 
-#pragma anki reflect b_ankiPerDraw
-layout(set = 1, binding = 0, row_major, scalar) uniform b_ankiPerDraw
-{
-	PerDraw u_ankiPerDraw;
-};
-
-#pragma anki reflect b_ankiGlobalUniforms
-layout(set = 1, binding = 1, row_major, scalar) uniform b_ankiGlobalUniforms
+layout(set = MATERIAL_SET_GLOBAL, binding = MATERIAL_BINDING_GLOBAL_UNIFORMS) uniform b_ankiGlobalUniforms
 {
 	MaterialGlobalUniforms u_ankiGlobals;
 };
 
-#pragma anki reflect u_ankiGlobalSampler
-layout(set = 1, binding = 2) uniform sampler u_ankiGlobalSampler;
+layout(set = MATERIAL_SET_GLOBAL, binding = MATERIAL_BINDING_TRILINEAR_REPEAT_SAMPLER) uniform sampler u_globalSampler;
+
+layout(set = MATERIAL_SET_LOCAL, binding = MATERIAL_BINDING_LOCAL_UNIFORMS, std430) buffer b_localUniforms
+{
+	U32 u_localUniforms[];
+};
+
+layout(set = MATERIAL_SET_LOCAL, binding = MATERIAL_BINDING_RENDERABLE_GPU_VIEW) uniform b_renderableGpuViews
+{
+	RenderableGpuView u_renderableGpuViews[1];
+};
+
 #if ANIMATED_TEXTURE == 0
 #	pragma anki reflect u_diffuseMap
-layout(set = 1, binding = 3) uniform ANKI_RP texture2D u_diffuseMap;
+layout(set = MATERIAL_SET_LOCAL,
+	   binding = MATERIAL_BINDING_FIRST_NON_STANDARD_LOCAL) uniform ANKI_RP texture2D u_diffuseMap;
 #endif
 #if ANIMATED_TEXTURE == 1
 #	pragma anki reflect u_diffuseMapArr
-layout(set = 1, binding = 3) uniform ANKI_RP texture2DArray u_diffuseMapArr;
+layout(set = MATERIAL_SET_LOCAL,
+	   binding = MATERIAL_BINDING_FIRST_NON_STANDARD_LOCAL) uniform ANKI_RP texture2DArray u_diffuseMapArr;
 #endif
 
 #pragma anki start vert
@@ -54,9 +57,9 @@ void main()
 {
 	out_uv = Vec2(gl_VertexID & 1, gl_VertexID >> 1);
 
-	out_worldPos = u_ankiGlobals.m_cameraRotationMatrix * Vec3((out_uv - 0.5) * in_scale, 0.0) + in_position;
-	gl_Position =
-		u_ankiGlobals.m_viewProjectionMatrix * Vec4(u_ankiPerDraw.m_ankiTransform * Vec4(out_worldPos, 1.0), 1.0);
+	out_worldPos = u_ankiGlobals.m_cameraTransform * Vec4((out_uv - 0.5) * in_scale, 0.0, 0.0) + in_position;
+	gl_Position = u_ankiGlobals.m_viewProjectionMatrix
+				  * Vec4(u_renderableGpuViews[0].m_worldTransform * Vec4(out_worldPos, 1.0), 1.0);
 
 	out_alpha = in_alpha;
 }
@@ -70,19 +73,21 @@ layout(location = 2) in Vec3 in_worldPos;
 
 void main()
 {
+	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(u_localUniforms, 0u);
+
 #if ANIMATED_TEXTURE == 1
-	ANKI_RP Vec4 texCol = readAnimatedTextureRgba(u_diffuseMapArr, u_ankiGlobalSampler, u_ankiPerDraw.m_animationPeriod,
+	ANKI_RP Vec4 texCol = readAnimatedTextureRgba(u_diffuseMapArr, u_globalSampler, localUniforms.m_animationPeriod,
 												  in_uv, u_clusteredShading.m_time);
 #else
-	ANKI_RP Vec4 texCol = texture(u_diffuseMap, u_ankiGlobalSampler, in_uv);
+	ANKI_RP Vec4 texCol = texture(u_diffuseMap, u_globalSampler, in_uv);
 #endif
 
 #if LIGHT
 	texCol.rgb = computeLightColorLow(texCol.rgb, in_worldPos);
 #endif
 
-	ANKI_RP Vec4 colScale = u_ankiPerDraw.m_colorScale;
+	ANKI_RP Vec4 colScale = localUniforms.m_colorScale;
 	colScale.a *= in_alpha;
-	particleAlpha(texCol, colScale, u_ankiPerDraw.m_colorBias);
+	particleAlpha(texCol, colScale, localUniforms.m_colorBias);
 }
 #pragma anki end

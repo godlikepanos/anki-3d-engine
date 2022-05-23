@@ -9,6 +9,7 @@
 #include <AnKi/Shaders/Functions.glsl>
 #include <AnKi/Shaders/Include/ModelTypes.h>
 #include <AnKi/Shaders/Include/MaterialTypes.h>
+#include <AnKi/Shaders/Include/GpuSceneTypes.h>
 
 //
 // Vert
@@ -22,13 +23,14 @@ layout(location = VERTEX_ATTRIBUTE_ID_POSITION) in Vec3 in_position;
 //
 #if defined(ANKI_FRAGMENT_SHADER)
 // Global resources
-layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
-layout(set = 0, binding = 1) uniform texture2D u_gbufferDepthRt;
-layout(set = 0, binding = 2) uniform ANKI_RP texture3D u_lightVol;
-#	define CLUSTERED_SHADING_SET 0
-#	define CLUSTERED_SHADING_UNIFORMS_BINDING 3
-#	define CLUSTERED_SHADING_LIGHTS_BINDING 4
-#	define CLUSTERED_SHADING_CLUSTERS_BINDING 7
+layout(set = MATERIAL_SET_GLOBAL,
+	   binding = MATERIAL_BINDING_LINEAR_CLAMP_SAMPLER) uniform sampler u_linearAnyClampSampler;
+layout(set = MATERIAL_SET_GLOBAL, binding = MATERIAL_BINDING_DEPTH_RT) uniform texture2D u_gbufferDepthRt;
+layout(set = MATERIAL_SET_GLOBAL, binding = MATERIAL_BINDING_LIGHT_VOLUME) uniform ANKI_RP texture3D u_lightVol;
+#	define CLUSTERED_SHADING_SET MATERIAL_SET_GLOBAL
+#	define CLUSTERED_SHADING_UNIFORMS_BINDING MATERIAL_BINDING_CLUSTER_SHADING_UNIFORMS
+#	define CLUSTERED_SHADING_LIGHTS_BINDING MATERIAL_BINDING_CLUSTER_SHADING_LIGHTS
+#	define CLUSTERED_SHADING_CLUSTERS_BINDING MATERIAL_BINDING_CLUSTERS
 #	include <AnKi/Shaders/ClusteredShadingCommon.glsl>
 
 layout(location = 0) out Vec4 out_color;
@@ -84,7 +86,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos)
 	{
 		const I32 idx = findLSB2(cluster.m_spotLightsMask);
 		cluster.m_spotLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
-		const SpotLight light = u_spotLights2[idx];
+		const SpotLight light = u_spotLights[idx];
 
 		const Vec3 diffC = diffCol * light.m_diffuseColor;
 

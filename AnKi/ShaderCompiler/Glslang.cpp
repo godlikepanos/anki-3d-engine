@@ -295,20 +295,16 @@ Error compilerGlslToSpirv(CString src, ShaderType shaderType, GenericMemoryPoolA
 {
 #if ANKI_GLSLANG_DUMP
 	// Dump it
+	const U32 dumpFileCount = g_dumpFileCount.fetchAdd(1);
 	{
-		const U32 count = g_dumpFileCount.fetchAdd(1) / 2;
-		if(count == 0)
-		{
-			ANKI_SHADER_COMPILER_LOGW("GLSL dumping is enabled");
-		}
-
 		File file;
 
 		StringAuto tmpDir(tmpAlloc);
 		ANKI_CHECK(getTempDirectory(tmpDir));
 
 		StringAuto fname(tmpAlloc);
-		fname.sprintf("%s/%u.glsl", tmpDir.cstr(), count);
+		fname.sprintf("%s/%u.glsl", tmpDir.cstr(), dumpFileCount);
+		ANKI_SHADER_COMPILER_LOGW("GLSL dumping is enabled: %s", fname.cstr());
 		ANKI_CHECK(file.open(fname, FileOpenFlag::WRITE));
 		ANKI_CHECK(file.writeText("%s", src.cstr()));
 	}
@@ -352,19 +348,14 @@ Error compilerGlslToSpirv(CString src, ShaderType shaderType, GenericMemoryPoolA
 #if ANKI_GLSLANG_DUMP
 	// Dump it
 	{
-		const U32 count = g_dumpFileCount.fetchAdd(1) / 2;
-		if(count == 0)
-		{
-			ANKI_SHADER_COMPILER_LOGW("SPIR-V dumping is enabled");
-		}
-
 		File file;
 
 		StringAuto tmpDir(tmpAlloc);
 		ANKI_CHECK(getTempDirectory(tmpDir));
 
 		StringAuto fname(tmpAlloc);
-		fname.sprintf("%s/%u.spv", tmpDir.cstr(), count);
+		fname.sprintf("%s/%u.spv", tmpDir.cstr(), dumpFileCount);
+		ANKI_SHADER_COMPILER_LOGW("GLSL dumping is enabled: %s", fname.cstr());
 		ANKI_CHECK(file.open(fname, FileOpenFlag::WRITE | FileOpenFlag::BINARY));
 		ANKI_CHECK(file.write(spirv.getBegin(), spirv.getSizeInBytes()));
 	}

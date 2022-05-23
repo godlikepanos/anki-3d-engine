@@ -17,7 +17,7 @@
 layout(location = 0) in Vec2 in_uv;
 layout(location = 0) out ANKI_RP Vec3 out_color;
 
-layout(push_constant, scalar, row_major) uniform b_pc
+layout(push_constant, row_major, std140) uniform b_pc
 {
 	DeferredSkyboxUniforms u_unis;
 };

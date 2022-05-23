@@ -11,7 +11,7 @@
 #include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Math.h>
 #include <AnKi/Util/Enum.h>
-#include <AnKi/Shaders/Include/ModelTypes.h>
+#include <AnKi/Shaders/Include/MaterialTypes.h>
 
 namespace anki {
 
@@ -21,26 +21,11 @@ class XmlElement;
 /// @addtogroup resource
 /// @{
 
-/// The ID of a buildin material variable.
-enum class BuiltinMaterialVariableId : U8
-{
-	NONE = 0,
-	TRANSFORM,
-	PREVIOUS_TRANSFORM,
-	ROTATION,
-	GLOBAL_SAMPLER,
-
-	COUNT,
-	FIRST = 0,
-};
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BuiltinMaterialVariableId)
-
 /// The ID of builtin mutators.
 enum class BuiltinMutatorId : U8
 {
 	NONE = 0,
-	INSTANCED,
-	PASS,
+	TECHNIQUE,
 	LOD,
 	BONES,
 	VELOCITY,
@@ -73,24 +58,12 @@ public:
 	MaterialVariable& operator=(MaterialVariable&& b)
 	{
 		m_name = std::move(b.m_name);
-		m_index = b.m_index;
-		m_indexInBinary = b.m_indexInBinary;
-		m_indexInBinary2ndElement = b.m_indexInBinary2ndElement;
+		m_offsetInLocalUniforms = b.m_offsetInLocalUniforms;
 		m_opaqueBinding = b.m_opaqueBinding;
-		m_constant = b.m_constant;
-		m_instanced = b.m_instanced;
-		m_numericValueIsSet = b.m_numericValueIsSet;
 		m_dataType = b.m_dataType;
-		m_builtin = b.m_builtin;
 		m_Mat4 = b.m_Mat4;
 		m_image = std::move(b.m_image);
 		return *this;
-	}
-
-	/// Get the builtin info.
-	BuiltinMaterialVariableId getBuiltin() const
-	{
-		return m_builtin;
 	}
 
 	CString getName() const
@@ -101,35 +74,20 @@ public:
 	template<typename T>
 	const T& getValue() const;
 
-	Bool isTexture() const
+	Bool isBoundableTexture() const
 	{
 		return m_dataType >= ShaderVariableDataType::TEXTURE_FIRST
 			   && m_dataType <= ShaderVariableDataType::TEXTURE_LAST;
 	}
 
-	Bool isSampler() const
+	Bool isBindlessTexture() const
 	{
-		return m_dataType == ShaderVariableDataType::SAMPLER;
+		return m_dataType == ShaderVariableDataType::U32 && m_image.get();
 	}
 
-	Bool inBlock() const
+	Bool isUniform() const
 	{
-		return !m_constant && !isTexture() && !isSampler();
-	}
-
-	Bool isConstant() const
-	{
-		return m_constant;
-	}
-
-	Bool isInstanced() const
-	{
-		return m_instanced;
-	}
-
-	Bool isBuildin() const
-	{
-		return m_builtin != BuiltinMaterialVariableId::NONE;
+		return !isBoundableTexture();
 	}
 
 	ShaderVariableDataType getDataType() const
@@ -139,40 +97,35 @@ public:
 	}
 
 	/// Get the binding of a texture or a sampler type of material variable.
-	U32 getOpaqueBinding() const
+	U32 getTextureBinding() const
 	{
-		ANKI_ASSERT(m_opaqueBinding != MAX_U32 && (isTexture() || isSampler()));
+		ANKI_ASSERT(m_opaqueBinding != MAX_U32 && isBoundableTexture());
 		return m_opaqueBinding;
+	}
+
+	U32 getOffsetInLocalUniforms() const
+	{
+		ANKI_ASSERT(m_offsetInLocalUniforms != MAX_U32);
+		return m_offsetInLocalUniforms;
 	}
 
 protected:
 	String m_name;
-	U32 m_index = MAX_U32;
-	U32 m_indexInBinary = MAX_U32;
-	U32 m_indexInBinary2ndElement = MAX_U32; ///< To calculate the stride.
+	U32 m_offsetInLocalUniforms = MAX_U32;
 	U32 m_opaqueBinding = MAX_U32; ///< Binding for textures and samplers.
-	Bool m_constant = false;
-	Bool m_instanced = false;
-	Bool m_numericValueIsSet = false; ///< The unamed union bellow is set
 	ShaderVariableDataType m_dataType = ShaderVariableDataType::NONE;
-	BuiltinMaterialVariableId m_builtin = BuiltinMaterialVariableId::NONE;
 
-	/// Values for non-builtins
+	/// Values
 	/// @{
 	union
 	{
-#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount) type ANKI_CONCATENATE(m_, type);
+#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount, isIntagralType) type ANKI_CONCATENATE(m_, type);
 #include <AnKi/Gr/ShaderVariableDataType.defs.h>
 #undef ANKI_SVDT_MACRO
 	};
 
 	ImageResourcePtr m_image;
 	/// @}
-
-	Bool valueSetByMaterial() const
-	{
-		return m_image.isCreated() || m_numericValueIsSet;
-	}
 };
 
 // Specialize the MaterialVariable::getValue
@@ -181,11 +134,10 @@ protected:
 	inline const t_& MaterialVariable::getValue<t_>() const \
 	{ \
 		ANKI_ASSERT(m_dataType == ShaderVariableDataType::shaderType_); \
-		ANKI_ASSERT(m_builtin == BuiltinMaterialVariableId::NONE); \
 		return var_; \
 	}
 
-#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount) \
+#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount, isIntagralType) \
 	ANKI_SPECIALIZE_GET_VALUE(type, ANKI_CONCATENATE(m_, type), capital)
 #include <AnKi/Gr/ShaderVariableDataType.defs.h>
 #undef ANKI_SVDT_MACRO
@@ -195,8 +147,7 @@ protected:
 template<>
 inline const ImageResourcePtr& MaterialVariable::getValue() const
 {
-	ANKI_ASSERT(isTexture());
-	ANKI_ASSERT(m_builtin == BuiltinMaterialVariableId::NONE);
+	ANKI_ASSERT(m_image.get());
 	return m_image;
 }
 
@@ -212,92 +163,55 @@ public:
 
 	MaterialVariant& operator=(const MaterialVariant&) = delete; // Non-copyable
 
-	/// Return true of the the variable is active.
-	Bool isVariableActive(const MaterialVariable& var) const
-	{
-		return m_activeVars.get(var.m_index);
-	}
-
 	const ShaderProgramPtr& getShaderProgram() const
 	{
 		return m_prog;
 	}
 
-	U32 getPerDrawUniformBlockSize() const
+	U32 getRtShaderGroupHandleIndex() const
 	{
-		return m_perDrawUboSize;
-	}
-
-	U32 getPerInstanceUniformBlockSize(U32 instanceCount) const
-	{
-		ANKI_ASSERT(instanceCount > 0 && instanceCount <= MAX_INSTANCE_COUNT);
-		return m_perInstanceUboSizeSingleInstance * instanceCount;
-	}
-
-	ShaderVariableBlockInfo getBlockInfo(const MaterialVariable& var, U32 instanceCount) const
-	{
-		ANKI_ASSERT(isVariableActive(var));
-		ANKI_ASSERT(var.inBlock());
-		ANKI_ASSERT(m_blockInfos[var.m_index].m_offset >= 0);
-		if(var.isInstanced())
-		{
-			ANKI_ASSERT(m_blockInfos[var.m_index].m_arraySize == I16(MAX_INSTANCE_COUNT));
-			ANKI_ASSERT(instanceCount > 0 && instanceCount <= MAX_INSTANCE_COUNT);
-		}
-		else
-		{
-			ANKI_ASSERT(m_blockInfos[var.m_index].m_arraySize == 1);
-			ANKI_ASSERT(instanceCount == 1);
-		}
-
-		ShaderVariableBlockInfo out = m_blockInfos[var.m_index];
-		out.m_arraySize = I16(instanceCount);
-		return out;
-	}
-
-	template<typename T>
-	void writeShaderBlockMemory(const MaterialVariable& var, const T* elements, U32 elementCount, void* buffBegin,
-								const void* buffEnd) const
-	{
-		ANKI_ASSERT(isVariableActive(var));
-		ANKI_ASSERT(getShaderVariableTypeFromTypename<T>() == var.getDataType());
-		const ShaderVariableBlockInfo blockInfo = getBlockInfo(var, elementCount);
-		anki::writeShaderBlockMemory(var.getDataType(), blockInfo, elements, elementCount, buffBegin, buffEnd);
+		ANKI_ASSERT(m_rtShaderGroupHandleIndex != MAX_U32);
+		return m_rtShaderGroupHandleIndex;
 	}
 
 private:
 	ShaderProgramPtr m_prog;
-	DynamicArray<ShaderVariableBlockInfo> m_blockInfos;
-	BitSet<128, U32> m_activeVars = {false};
-	U32 m_perDrawUboSize = 0;
-	U32 m_perInstanceUboSizeSingleInstance = 0;
+	U32 m_rtShaderGroupHandleIndex = MAX_U32;
+
+	MaterialVariant(MaterialVariant&& b)
+	{
+		*this = std::move(b);
+	}
+
+	MaterialVariant& operator=(MaterialVariant&& b)
+	{
+		m_prog = std::move(b.m_prog);
+		m_rtShaderGroupHandleIndex = b.m_rtShaderGroupHandleIndex;
+		return *this;
+	}
 };
 
 /// Material resource.
 ///
 /// Material XML file format:
 /// @code
-/// <material [shadow="0 | 1"] [forwardShading="0 | 1"] shaderProgram="path">
-///		[<mutation>
-///			<mutator name="str" value="value"/>
-///		</mutation>]
+///	<material [shadows="0|1"]>
+/// 	<shaderPrograms>
+///			<shaderProgram name="name of the shader">
+///				[<mutation>
+///					<mutator name="str" value="value"/>
+///				</mutation>]
+///			</shaderProgram>
+///
+///			[<shaderProgram ...>
+///				...
+///			</shaderProgram>]
+/// 	</shaderPrograms>
 ///
 ///		[<inputs>
-///			<input shaderVar="name to shaderProg var" value="values"/> (1)
+///			<input name="name in AnKiMaterialUniforms struct or opaque type" value="value(s)"/> (1)
 ///		</inputs>]
-/// </material>
-///
-/// [<rtMaterial>
-///		<rayType shaderProgram="path" type="shadows|gi|reflections|pathTracing">
-///			[<mutation>
-///				<mutator name="str" value="value"/>
-///			</mutation>]
-///		</rayType>
-///
-/// 	[<inputs>
-/// 		<input name="name" value="value" />
-/// 	</inputs>]
-/// </rtMaterial>]
+///	</material>
 /// @endcode
 ///
 /// (1): Only for non-builtins.
@@ -311,29 +225,9 @@ public:
 	/// Load a material file
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
 
-	U32 getLodCount() const
-	{
-		return m_lodCount;
-	}
-
 	Bool castsShadow() const
 	{
-		return m_shadow;
-	}
-
-	Bool hasTessellation() const
-	{
-		return !!(m_prog->getStages() & (ShaderTypeBit::TESSELLATION_CONTROL | ShaderTypeBit::TESSELLATION_EVALUATION));
-	}
-
-	Bool isForwardShading() const
-	{
-		return m_forwardShading;
-	}
-
-	Bool isInstanced() const
-	{
-		return m_builtinMutators[BuiltinMutatorId::INSTANCED] != nullptr;
+		return !!(m_techniquesMask & (RenderingTechniqueBit::SHADOW | RenderingTechniqueBit::RT_SHADOW));
 	}
 
 	ConstWeakArray<MaterialVariable> getVariables() const
@@ -341,142 +235,64 @@ public:
 		return m_vars;
 	}
 
-	U32 getDescriptorSetIndex() const
-	{
-		ANKI_ASSERT(m_descriptorSetIdx != MAX_U8);
-		return m_descriptorSetIdx;
-	}
-
-	U32 getBoneTransformsStorageBlockBinding() const
-	{
-		ANKI_ASSERT(supportsSkinning());
-		return m_boneTrfsBinding;
-	}
-
-	U32 getPrevFrameBoneTransformsStorageBlockBinding() const
-	{
-		ANKI_ASSERT(supportsSkinning());
-		return m_prevFrameBoneTrfsBinding;
-	}
-
 	Bool supportsSkinning() const
 	{
-		ANKI_ASSERT((m_boneTrfsBinding == MAX_U32 && m_prevFrameBoneTrfsBinding == MAX_U32)
-					|| (m_boneTrfsBinding != MAX_U32 && m_prevFrameBoneTrfsBinding != MAX_U32));
-		return m_boneTrfsBinding != MAX_U32;
+		return m_supportsSkinning;
 	}
 
-	U32 getPerDrawUniformBlockBinding() const
+	RenderingTechniqueBit getRenderingTechniques() const
 	{
-		ANKI_ASSERT(m_perDrawUboBinding != MAX_U32);
-		return m_perDrawUboBinding;
+		ANKI_ASSERT(!!m_techniquesMask);
+		return m_techniquesMask;
 	}
 
-	U32 getPerInstanceUniformBlockBinding() const
+	/// Get all GPU resources of this material. Will be used for GPU refcounting.
+	ConstWeakArray<TexturePtr> getAllTextures() const
 	{
-		ANKI_ASSERT(isInstanced() && m_perInstanceUboBinding != MAX_U32);
-		return m_perInstanceUboBinding;
+		return m_textures;
 	}
 
-	U32 getGlobalUniformsUniformBlockBinding() const
-	{
-		ANKI_ASSERT(m_globalUniformsUboBinding != MAX_U32);
-		return m_globalUniformsUboBinding;
-	}
-
+	/// @note It's thread-safe.
 	const MaterialVariant& getOrCreateVariant(const RenderingKey& key) const;
 
-	U32 getShaderGroupHandleIndex(RayType type) const
+	/// Get a buffer with prefilled uniforms.
+	ConstWeakArray<U8> getPrefilledLocalUniforms() const
 	{
-		ANKI_ASSERT(!!(m_rayTypes & RayTypeBit(1 << type)));
-		ANKI_ASSERT(m_rtShaderGroupHandleIndices[type] < MAX_U32);
-		return m_rtShaderGroupHandleIndices[type];
-	}
-
-	RayTypeBit getSupportedRayTracingTypes() const
-	{
-		return m_rayTypes;
-	}
-
-	const MaterialGpuDescriptor& getMaterialGpuDescriptor() const
-	{
-		return m_materialGpuDescriptor;
-	}
-
-	/// Get all texture views that the MaterialGpuDescriptor returned by getMaterialGpuDescriptor(), references. Used
-	/// for lifetime management.
-	ConstWeakArray<TextureViewPtr> getAllTextureViews() const
-	{
-		return ConstWeakArray<TextureViewPtr>((m_textureViewCount) ? &m_textureViews[0] : nullptr, m_textureViewCount);
+		return ConstWeakArray<U8>(static_cast<const U8*>(m_prefilledLocalUniforms), m_localUniformsSize);
 	}
 
 private:
-	class SubMutation
+	class PartialMutation
 	{
 	public:
 		const ShaderProgramResourceMutator* m_mutator;
 		MutatorValue m_value;
 	};
 
-	ShaderProgramResourcePtr m_prog;
+	class Program;
 
-	Array<const ShaderProgramResourceMutator*, U32(BuiltinMutatorId::COUNT)> m_builtinMutators = {};
+	DynamicArray<Program> m_programs;
 
-	Bool m_shadow = true;
-	Bool m_forwardShading = false;
-	U8 m_lodCount = 1;
-	U8 m_descriptorSetIdx = MAX_U8; ///< The material set.
-	U32 m_perDrawUboIdx = MAX_U32; ///< The b_perDraw UBO inside the binary.
-	U32 m_perInstanceUboIdx = MAX_U32; ///< The b_perInstance UBO inside the binary.
-	U32 m_perDrawUboBinding = MAX_U32;
-	U32 m_perInstanceUboBinding = MAX_U32;
-	U32 m_boneTrfsBinding = MAX_U32;
-	U32 m_prevFrameBoneTrfsBinding = MAX_U32;
-	U32 m_globalUniformsUboBinding = MAX_U32;
-
-	/// Matrix of variants.
-	mutable Array5d<MaterialVariant, U(Pass::COUNT), MAX_LOD_COUNT, 2, 2, 2> m_variantMatrix;
-	mutable RWMutex m_variantMatrixMtx;
+	Array<U8, U(RenderingTechnique::COUNT)> m_techniqueToProgram;
+	RenderingTechniqueBit m_techniquesMask = RenderingTechniqueBit::NONE;
 
 	DynamicArray<MaterialVariable> m_vars;
 
-	DynamicArray<SubMutation> m_nonBuiltinsMutation;
+	Bool m_supportsSkinning = false;
 
-	Array<ShaderProgramResourcePtr, U(RayType::COUNT)> m_rtPrograms;
-	Array<U32, U(RayType::COUNT)> m_rtShaderGroupHandleIndices = {};
+	DynamicArray<TexturePtr> m_textures;
 
-	MaterialGpuDescriptor m_materialGpuDescriptor;
+	void* m_prefilledLocalUniforms = nullptr;
+	U32 m_localUniformsSize = 0;
 
-	Array<ImageResourcePtr, U(TextureChannelId::COUNT)> m_images; ///< Keep the resources alive.
-	Array<TextureViewPtr, U(TextureChannelId::COUNT)> m_textureViews; ///< Cache the GPU objects.
-	U8 m_textureViewCount = 0;
+	ANKI_USE_RESULT Error parseMutators(XmlElement mutatorsEl, Program& prog);
+	ANKI_USE_RESULT Error parseShaderProgram(XmlElement techniqueEl, Bool async);
+	ANKI_USE_RESULT Error parseInput(XmlElement inputEl, Bool async, BitSet<128>& varsSet);
+	ANKI_USE_RESULT Error findBuiltinMutators(Program& prog);
+	ANKI_USE_RESULT Error createVars(Program& prog);
+	void prefillLocalUniforms();
 
-	RayTypeBit m_rayTypes = RayTypeBit::NONE;
-
-	ANKI_USE_RESULT Error createVars();
-
-	static ANKI_USE_RESULT Error parseVariable(CString fullVarName, Bool instanced, U32& idx, CString& name);
-
-	/// Parse whatever is inside the <inputs> tag.
-	ANKI_USE_RESULT Error parseInputs(XmlElement inputsEl, Bool async);
-
-	ANKI_USE_RESULT Error parseMutators(XmlElement mutatorsEl);
-	ANKI_USE_RESULT Error findBuiltinMutators();
-
-	void initVariant(const ShaderProgramResourceVariant& progVariant, MaterialVariant& variant, Bool instanced) const;
-
-	const MaterialVariable* tryFindVariableInternal(CString name) const
-	{
-		for(const MaterialVariable& v : m_vars)
-		{
-			if(v.m_name == name)
-			{
-				return &v;
-			}
-		}
-
-		return nullptr;
-	}
+	const MaterialVariable* tryFindVariableInternal(CString name) const;
 
 	const MaterialVariable* tryFindVariable(CString name) const
 	{
@@ -487,10 +303,6 @@ private:
 	{
 		return const_cast<MaterialVariable*>(tryFindVariableInternal(name));
 	}
-
-	ANKI_USE_RESULT Error parseRtMaterial(XmlElement rootEl);
-
-	ANKI_USE_RESULT Error findGlobalUniformsUbo();
 };
 /// @}
 

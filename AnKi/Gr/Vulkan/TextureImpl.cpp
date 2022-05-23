@@ -83,27 +83,54 @@ TextureImpl::~TextureImpl()
 	}
 #endif
 
+	TextureGarbage* garbage = getAllocator().newInstance<TextureGarbage>();
+
 	for(MicroImageView& it : m_viewsMap)
 	{
-		destroyMicroImageView(it);
+		garbage->m_viewHandles.emplaceBack(getAllocator(), it.m_handle);
+		it.m_handle = VK_NULL_HANDLE;
+
+		if(it.m_bindlessIndices[0] != MAX_U32)
+		{
+			garbage->m_bindlessIndices.emplaceBack(getAllocator(), it.m_bindlessIndices[0]);
+			it.m_bindlessIndices[0] = MAX_U32;
+		}
+
+		if(it.m_bindlessIndices[1] != MAX_U32)
+		{
+			garbage->m_bindlessIndices.emplaceBack(getAllocator(), it.m_bindlessIndices[1]);
+			it.m_bindlessIndices[1] = MAX_U32;
+		}
 	}
 
 	m_viewsMap.destroy(getAllocator());
 
 	if(m_singleSurfaceImageView.m_handle != VK_NULL_HANDLE)
 	{
-		destroyMicroImageView(m_singleSurfaceImageView);
+		garbage->m_viewHandles.emplaceBack(getAllocator(), m_singleSurfaceImageView.m_handle);
+		m_singleSurfaceImageView.m_handle = VK_NULL_HANDLE;
+
+		if(m_singleSurfaceImageView.m_bindlessIndices[0] != MAX_U32)
+		{
+			garbage->m_bindlessIndices.emplaceBack(getAllocator(), m_singleSurfaceImageView.m_bindlessIndices[0]);
+			m_singleSurfaceImageView.m_bindlessIndices[0] = MAX_U32;
+		}
+
+		if(m_singleSurfaceImageView.m_bindlessIndices[1] != MAX_U32)
+		{
+			garbage->m_bindlessIndices.emplaceBack(getAllocator(), m_singleSurfaceImageView.m_bindlessIndices[1]);
+			m_singleSurfaceImageView.m_bindlessIndices[1] = MAX_U32;
+		}
 	}
 
 	if(m_imageHandle && !(m_usage & TextureUsageBit::PRESENT))
 	{
-		vkDestroyImage(getDevice(), m_imageHandle, nullptr);
+		garbage->m_imageHandle = m_imageHandle;
 	}
 
-	if(m_memHandle)
-	{
-		getGrManagerImpl().getGpuMemoryManager().freeMemory(m_memHandle);
-	}
+	garbage->m_memoryHandle = m_memHandle;
+
+	getGrManagerImpl().getFrameGarbageCollector().newTextureGarbage(garbage);
 }
 
 Error TextureImpl::initInternal(VkImage externalImage, const TextureInitInfo& init_)
@@ -174,30 +201,6 @@ Error TextureImpl::initInternal(VkImage externalImage, const TextureInitInfo& in
 		m_astcDecodeMode.decodeMode = VK_FORMAT_R8G8B8A8_UNORM;
 
 		m_viewCreateInfoTemplate.pNext = &m_astcDecodeMode;
-	}
-
-	// Transition the image layout from undefined to something relevant
-	if(!!init.m_initialUsage)
-	{
-		ANKI_ASSERT(usageValid(init.m_initialUsage));
-		ANKI_ASSERT(!(init.m_initialUsage & TextureUsageBit::GENERATE_MIPMAPS) && "That doesn't make any sense");
-
-		CommandBufferInitInfo cmdbinit;
-		cmdbinit.m_flags = CommandBufferFlag::GENERAL_WORK | CommandBufferFlag::SMALL_BATCH;
-		CommandBufferPtr cmdb = getManager().newCommandBuffer(cmdbinit);
-
-		VkImageSubresourceRange range;
-		range.aspectMask = convertImageAspect(m_aspect);
-		range.baseArrayLayer = 0;
-		range.baseMipLevel = 0;
-		range.layerCount = m_layerCount;
-		range.levelCount = m_mipCount;
-
-		CommandBufferImpl& cmdbImpl = static_cast<CommandBufferImpl&>(*cmdb);
-		cmdbImpl.setTextureBarrierRange(TexturePtr(this), TextureUsageBit::NONE, init.m_initialUsage, range);
-
-		cmdbImpl.endRecording();
-		getGrManagerImpl().flushCommandBuffer(cmdbImpl.getMicroCommandBuffer(), false, {}, nullptr);
 	}
 
 	// Create a view if the texture is a single surface
@@ -644,27 +647,6 @@ TextureType TextureImpl::computeNewTexTypeOfSubresource(const TextureSubresource
 		}
 	}
 	return m_texType;
-}
-
-void TextureImpl::destroyMicroImageView(MicroImageView& view)
-{
-	if(view.m_handle != VK_NULL_HANDLE)
-	{
-		vkDestroyImageView(getDevice(), view.m_handle, nullptr);
-		view.m_handle = VK_NULL_HANDLE;
-	}
-
-	if(view.m_bindlessIndices[0] != MAX_U32)
-	{
-		getGrManagerImpl().getDescriptorSetFactory().unbindBindlessTexture(view.m_bindlessIndices[0]);
-		view.m_bindlessIndices[0] = MAX_U32;
-	}
-
-	if(view.m_bindlessIndices[1] != MAX_U32)
-	{
-		getGrManagerImpl().getDescriptorSetFactory().unbindBindlessImage(view.m_bindlessIndices[1]);
-		view.m_bindlessIndices[1] = MAX_U32;
-	}
 }
 
 } // end namespace anki

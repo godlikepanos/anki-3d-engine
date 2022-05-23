@@ -45,14 +45,6 @@ public:
 	StackAllocator<U8> m_frameAllocator;
 	Bool m_debugDraw; ///< If true the drawcall should be drawing some kind of debug mesh.
 	BitSet<U(RenderQueueDebugDrawFlag::COUNT), U32> m_debugDrawFlags = {false};
-
-	class
-	{
-	public:
-		BufferPtr m_buffer;
-		PtrSize m_offset;
-		PtrSize m_range;
-	} m_globalUniforms; ///< Points to a MaterialGlobalUniforms structure.
 };
 
 /// Draw callback for drawing.
@@ -367,11 +359,11 @@ class RayTracingInstanceQueueElement final
 {
 public:
 	AccelerationStructure* m_bottomLevelAccelerationStructure;
-	ModelGpuDescriptor m_modelDescriptor;
-	Array<U32, U(RayType::COUNT)> m_shaderGroupHandleIndices;
+	U32 m_shaderGroupHandleIndex;
 
-	/// This points to the GR objects that are m_modelDescriptor is referencing. Use this to add a refcount to avoid
-	/// accidential deletions.
+	Mat3x4 m_transform; // TODO rm when you'll add the RenderableGpuView
+
+	/// This points to the GR objects used by this element. Use this to add a refcount to avoid accidential deletions.
 	Array<GrObject*, 8> m_grObjects;
 	U32 m_grObjectCount;
 };

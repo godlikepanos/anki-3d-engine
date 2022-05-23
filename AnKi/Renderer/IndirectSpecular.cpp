@@ -11,7 +11,6 @@
 #include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Renderer/ProbeReflections.h>
 #include <AnKi/Core/ConfigSet.h>
-#include <AnKi/Shaders/Include/SsrTypes.h>
 
 namespace anki {
 
@@ -47,8 +46,8 @@ Error IndirectSpecular::initInternal()
 
 	// Create shader
 	ANKI_CHECK(getResourceManager().loadResource((getConfig().getRPreferCompute())
-													 ? "Shaders/IndirectSpecularCompute.ankiprog"
-													 : "Shaders/IndirectSpecularRaster.ankiprog",
+													 ? "ShaderBinaries/IndirectSpecularCompute.ankiprogbin"
+													 : "ShaderBinaries/IndirectSpecularRaster.ankiprogbin",
 												 m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInit(m_prog);

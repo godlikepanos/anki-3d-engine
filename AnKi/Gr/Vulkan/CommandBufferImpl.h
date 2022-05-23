@@ -379,11 +379,6 @@ public:
 
 	void setLineWidth(F32 width);
 
-	void addReference(GrObjectPtr& ptr)
-	{
-		m_microCmdb->pushObjectRef(ptr);
-	}
-
 private:
 	StackAllocator<U8> m_alloc;
 

@@ -222,7 +222,12 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	{
 		m_graphics.m_pplineFactory = getAllocator().newInstance<PipelineFactory>();
 		m_graphics.m_pplineFactory->init(getGrManagerImpl().getAllocator(), getGrManagerImpl().getDevice(),
-										 getGrManagerImpl().getPipelineCache());
+										 getGrManagerImpl().getPipelineCache()
+#if ANKI_PLATFORM_MOBILE
+											 ,
+										 getGrManagerImpl().getGlobalCreatePipelineMutex()
+#endif
+		);
 	}
 
 	// Create the pipeline if compute

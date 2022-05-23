@@ -31,9 +31,10 @@ public:
 
 	~RenderableDrawer();
 
-	void drawRange(Pass pass, const Mat4& viewMat, const Mat4& viewProjMat, const Mat4& prevViewProjMat,
-				   CommandBufferPtr cmdb, SamplerPtr sampler, const RenderableQueueElement* begin,
-				   const RenderableQueueElement* end, U32 minLod = 0, U32 maxLod = MAX_LOD_COUNT - 1);
+	void drawRange(RenderingTechnique technique, const Mat4& viewMat, const Mat4& viewProjMat,
+				   const Mat4& prevViewProjMat, CommandBufferPtr cmdb, SamplerPtr sampler,
+				   const RenderableQueueElement* begin, const RenderableQueueElement* end, U32 minLod = 0,
+				   U32 maxLod = MAX_LOD_COUNT - 1);
 
 private:
 	Renderer* m_r;

@@ -282,7 +282,7 @@ private:
 	public:
 		ComponentsArrayElement(const SceneComponent& comp)
 		{
-			m_classId = comp.getClassId();
+			m_classId = comp.getClassId() & 0x7F;
 			ANKI_ASSERT(m_classId == comp.getClassId());
 			m_feedbackComponent = comp.isFeedbackComponent();
 		}

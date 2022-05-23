@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Util/Array.h>
-#include <AnKi/Util/DynamicArray.h>
+#include <AnKi/Util/Forward.h>
 
 namespace anki {
 
@@ -14,7 +14,7 @@ namespace anki {
 /// @{
 
 /// Array that doesn't own the memory.
-template<typename T, typename TSize = U32>
+template<typename T, typename TSize>
 class WeakArray
 {
 public:
@@ -46,25 +46,9 @@ public:
 	{
 	}
 
-	explicit WeakArray(DynamicArray<T, TSize>& arr)
-		: WeakArray()
-	{
-		if(arr.getSize())
-		{
-			m_data = &arr[0];
-			m_size = arr.getSize();
-		}
-	}
+	explicit WeakArray(DynamicArray<T, TSize>& arr);
 
-	explicit WeakArray(DynamicArrayAuto<T, TSize>& arr)
-		: WeakArray()
-	{
-		if(arr.getSize())
-		{
-			m_data = &arr[0];
-			m_size = arr.getSize();
-		}
-	}
+	explicit WeakArray(DynamicArrayAuto<T, TSize>& arr);
 
 	/// Copy.
 	WeakArray(const WeakArray& b)
@@ -105,19 +89,9 @@ public:
 		return *this;
 	}
 
-	WeakArray& operator=(DynamicArray<T, TSize>& arr)
-	{
-		m_data = (arr.getSize()) ? &arr[0] : nullptr;
-		m_size = arr.getSize();
-		return *this;
-	}
+	WeakArray& operator=(DynamicArray<T, TSize>& arr);
 
-	WeakArray& operator=(DynamicArrayAuto<T, TSize>& arr)
-	{
-		m_data = (arr.getSize()) ? &arr[0] : nullptr;
-		m_size = arr.getSize();
-		return *this;
-	}
+	WeakArray& operator=(DynamicArrayAuto<T, TSize>& arr);
 
 	Reference operator[](const Size n)
 	{
@@ -232,7 +206,7 @@ private:
 };
 
 /// Array that doesn't own the memory.
-template<typename T, typename TSize = U32>
+template<typename T, typename TSize>
 class ConstWeakArray
 {
 public:
@@ -270,26 +244,10 @@ public:
 	}
 
 	/// Construct from DynamicArray.
-	ConstWeakArray(const DynamicArray<T, TSize>& arr)
-		: ConstWeakArray()
-	{
-		if(arr.getSize())
-		{
-			m_data = &arr[0];
-			m_size = arr.getSize();
-		}
-	}
+	ConstWeakArray(const DynamicArray<T, TSize>& arr);
 
 	/// Construct from DynamicArrayAuto.
-	ConstWeakArray(const DynamicArrayAuto<T, TSize>& arr)
-		: ConstWeakArray()
-	{
-		if(arr.getSize())
-		{
-			m_data = &arr[0];
-			m_size = arr.getSize();
-		}
-	}
+	ConstWeakArray(const DynamicArrayAuto<T, TSize>& arr);
 
 	/// Copy.
 	ConstWeakArray(const ConstWeakArray& b)
@@ -339,19 +297,9 @@ public:
 		return *this;
 	}
 
-	ConstWeakArray& operator=(const DynamicArray<T, TSize>& arr)
-	{
-		m_data = (arr.getSize()) ? &arr[0] : nullptr;
-		m_size = arr.getSize();
-		return *this;
-	}
+	ConstWeakArray& operator=(const DynamicArray<T, TSize>& arr);
 
-	ConstWeakArray& operator=(const DynamicArrayAuto<T, TSize>& arr)
-	{
-		m_data = (arr.getSize()) ? &arr[0] : nullptr;
-		m_size = arr.getSize();
-		return *this;
-	}
+	ConstWeakArray& operator=(const DynamicArrayAuto<T, TSize>& arr);
 
 	ConstReference operator[](const Size n) const
 	{
@@ -425,3 +373,5 @@ private:
 /// @}
 
 } // end namespace anki
+
+#include <AnKi/Util/WeakArray.inl.h>

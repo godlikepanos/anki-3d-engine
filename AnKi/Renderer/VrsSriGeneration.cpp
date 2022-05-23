@@ -46,15 +46,14 @@ Error VrsSriGeneration::initInternal()
 									 | TextureUsageBit::SAMPLED_FRAGMENT;
 	TextureInitInfo sriInitInfo =
 		m_r->create2DRenderTargetInitInfo(rez.x(), rez.y(), Format::R8_UINT, texUsage, "VRS SRI");
-	sriInitInfo.m_initialUsage = TextureUsageBit::FRAMEBUFFER_SHADING_RATE;
-	m_sriTex = m_r->createAndClearRenderTarget(sriInitInfo);
+	m_sriTex = m_r->createAndClearRenderTarget(sriInitInfo, TextureUsageBit::FRAMEBUFFER_SHADING_RATE);
 
 	// Descr
 	m_fbDescr.m_colorAttachmentCount = 1;
 	m_fbDescr.bake();
 
 	// Load programs
-	ANKI_CHECK(getResourceManager().loadResource("AnKi/Shaders/VrsSriGenerationCompute.ankiprog", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/VrsSriGenerationCompute.ankiprogbin", m_prog));
 	ShaderProgramResourceVariantInitInfo variantInit(m_prog);
 	variantInit.addMutation("SRI_TEXEL_DIMENSION", m_sriTexelDimension);
 
@@ -73,7 +72,8 @@ Error VrsSriGeneration::initInternal()
 	m_prog->getOrCreateVariant(variantInit, variant);
 	m_grProg = variant->getProgram();
 
-	ANKI_CHECK(getResourceManager().loadResource("AnKi/Shaders/VrsSriVisualizeRenderTarget.ankiprog", m_visualizeProg));
+	ANKI_CHECK(
+		getResourceManager().loadResource("ShaderBinaries/VrsSriVisualizeRenderTarget.ankiprogbin", m_visualizeProg));
 	m_visualizeProg->getOrCreateVariant(variant);
 	m_visualizeGrProg = variant->getProgram();
 

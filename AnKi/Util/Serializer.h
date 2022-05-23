@@ -203,8 +203,8 @@ public:
 	/// @param x The struct to read.
 	/// @param allocator The allocator to use to allocate the new structures.
 	/// @param file The file to read from.
-	template<typename T>
-	static ANKI_USE_RESULT Error deserialize(T*& x, GenericMemoryPoolAllocator<U8> allocator, File& file);
+	template<typename T, typename TFile>
+	static ANKI_USE_RESULT Error deserialize(T*& x, GenericMemoryPoolAllocator<U8> allocator, TFile& file);
 
 	/// Read a single value. Can't call this directly.
 	template<typename T>

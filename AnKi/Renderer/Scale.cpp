@@ -47,19 +47,19 @@ Error Scale::init()
 		CString shaderFname;
 		if(m_fsr && preferCompute)
 		{
-			shaderFname = "Shaders/FsrCompute.ankiprog";
+			shaderFname = "ShaderBinaries/FsrCompute.ankiprogbin";
 		}
 		else if(m_fsr)
 		{
-			shaderFname = "Shaders/FsrRaster.ankiprog";
+			shaderFname = "ShaderBinaries/FsrRaster.ankiprogbin";
 		}
 		else if(preferCompute)
 		{
-			shaderFname = "Shaders/BlitCompute.ankiprog";
+			shaderFname = "ShaderBinaries/BlitCompute.ankiprogbin";
 		}
 		else
 		{
-			shaderFname = "Shaders/BlitRaster.ankiprog";
+			shaderFname = "ShaderBinaries/BlitRaster.ankiprogbin";
 		}
 
 		ANKI_CHECK(getResourceManager().loadResource(shaderFname, m_scaleProg));
@@ -80,8 +80,9 @@ Error Scale::init()
 
 	if(needsSharpening)
 	{
-		ANKI_CHECK(getResourceManager().loadResource(
-			(preferCompute) ? "Shaders/FsrCompute.ankiprog" : "Shaders/FsrRaster.ankiprog", m_sharpenProg));
+		ANKI_CHECK(getResourceManager().loadResource((preferCompute) ? "ShaderBinaries/FsrCompute.ankiprogbin"
+																	 : "ShaderBinaries/FsrRaster.ankiprogbin",
+													 m_sharpenProg));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_sharpenProg);
 		variantInitInfo.addMutation("SHARPEN", 1);
 		variantInitInfo.addMutation("FSR_QUALITY", 0);

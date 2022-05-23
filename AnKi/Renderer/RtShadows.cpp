@@ -42,7 +42,7 @@ Error RtShadows::initInternal()
 
 	// Ray gen program
 	{
-		ANKI_CHECK(getResourceManager().loadResource("Shaders/RtShadowsRayGen.ankiprog", m_rayGenProg));
+		ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/RtShadowsRayGen.ankiprogbin", m_rayGenProg));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_rayGenProg);
 		variantInitInfo.addMutation("RAYS_PER_PIXEL", getConfig().getRRtShadowsRaysPerPixel());
@@ -55,7 +55,7 @@ Error RtShadows::initInternal()
 
 	// Miss prog
 	{
-		ANKI_CHECK(getResourceManager().loadResource("Shaders/RtShadowsMiss.ankiprog", m_missProg));
+		ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/RtShadowsMiss.ankiprogbin", m_missProg));
 		const ShaderProgramResourceVariant* variant;
 		m_missProg->getOrCreateVariant(variant);
 		m_missShaderGroupIdx = variant->getShaderGroupHandleIndex();
@@ -64,7 +64,7 @@ Error RtShadows::initInternal()
 	// Denoise program
 	if(!m_useSvgf)
 	{
-		ANKI_CHECK(getResourceManager().loadResource("Shaders/RtShadowsDenoise.ankiprog", m_denoiseProg));
+		ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/RtShadowsDenoise.ankiprogbin", m_denoiseProg));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_denoiseProg);
 		variantInitInfo.addConstant("OUT_IMAGE_SIZE",
 									UVec2(m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2));
@@ -84,7 +84,8 @@ Error RtShadows::initInternal()
 	// SVGF variance program
 	if(m_useSvgf)
 	{
-		ANKI_CHECK(getResourceManager().loadResource("Shaders/RtShadowsSvgfVariance.ankiprog", m_svgfVarianceProg));
+		ANKI_CHECK(
+			getResourceManager().loadResource("ShaderBinaries/RtShadowsSvgfVariance.ankiprogbin", m_svgfVarianceProg));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_svgfVarianceProg);
 		variantInitInfo.addConstant("FB_SIZE",
 									UVec2(m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2));
@@ -97,7 +98,8 @@ Error RtShadows::initInternal()
 	// SVGF atrous program
 	if(m_useSvgf)
 	{
-		ANKI_CHECK(getResourceManager().loadResource("Shaders/RtShadowsSvgfAtrous.ankiprog", m_svgfAtrousProg));
+		ANKI_CHECK(
+			getResourceManager().loadResource("ShaderBinaries/RtShadowsSvgfAtrous.ankiprogbin", m_svgfAtrousProg));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_svgfAtrousProg);
 		variantInitInfo.addConstant("FB_SIZE",
 									UVec2(m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2));
@@ -114,7 +116,7 @@ Error RtShadows::initInternal()
 
 	// Upscale program
 	{
-		ANKI_CHECK(getResourceManager().loadResource("Shaders/RtShadowsUpscale.ankiprog", m_upscaleProg));
+		ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/RtShadowsUpscale.ankiprogbin", m_upscaleProg));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_upscaleProg);
 		variantInitInfo.addConstant("OUT_IMAGE_SIZE",
 									UVec2(m_r->getInternalResolution().x(), m_r->getInternalResolution().y()));
@@ -125,7 +127,7 @@ Error RtShadows::initInternal()
 	}
 
 	// Debug program
-	ANKI_CHECK(getResourceManager().loadResource("Shaders/RtShadowsVisualizeRenderTarget.ankiprog",
+	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/RtShadowsVisualizeRenderTarget.ankiprogbin",
 												 m_visualizeRenderTargetsProg));
 
 	// Quarter rez shadow RT
@@ -135,8 +137,7 @@ Error RtShadows::initInternal()
 			TextureUsageBit::ALL_SAMPLED | TextureUsageBit::IMAGE_TRACE_RAYS_WRITE
 				| TextureUsageBit::IMAGE_COMPUTE_WRITE,
 			"RtShadows History");
-		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
-		m_historyRt = m_r->createAndClearRenderTarget(texinit);
+		m_historyRt = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::SAMPLED_FRAGMENT);
 	}
 
 	// Temp shadow RT
@@ -154,11 +155,10 @@ Error RtShadows::initInternal()
 			TextureUsageBit::ALL_SAMPLED | TextureUsageBit::IMAGE_TRACE_RAYS_WRITE
 				| TextureUsageBit::IMAGE_COMPUTE_WRITE,
 			"RtShadows Moments #1");
-		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
-		m_momentsRts[0] = m_r->createAndClearRenderTarget(texinit);
+		m_momentsRts[0] = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::SAMPLED_FRAGMENT);
 
 		texinit.setName("RtShadows Moments #2");
-		m_momentsRts[1] = m_r->createAndClearRenderTarget(texinit);
+		m_momentsRts[1] = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::SAMPLED_FRAGMENT);
 	}
 
 	// Variance RT
@@ -640,9 +640,8 @@ void RtShadows::buildSbt(RenderingContext& ctx)
 		const RayTracingInstanceQueueElement& element = instanceElements[instanceIdx];
 
 		// Init SBT record
-		memcpy(sbt, &shaderGroupHandles[element.m_shaderGroupHandleIndices[RayType::SHADOWS] * shaderHandleSize],
-			   shaderHandleSize);
-		memcpy(sbt + shaderHandleSize, &element.m_modelDescriptor, sizeof(element.m_modelDescriptor));
+		memcpy(sbt, &shaderGroupHandles[element.m_shaderGroupHandleIndex * shaderHandleSize], shaderHandleSize);
+		// TODO add some reference to the RenderableGpuView
 		sbt += m_sbtRecordSize;
 	}
 

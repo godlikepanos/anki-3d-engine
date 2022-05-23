@@ -30,34 +30,6 @@ class TransferGpuAllocatorHandle;
 #define ANKI_RESOURCE_LOGW(...) ANKI_LOG("RSRC", WARNING, __VA_ARGS__)
 #define ANKI_RESOURCE_LOGF(...) ANKI_LOG("RSRC", FATAL, __VA_ARGS__)
 
-/// @name Constants
-/// @{
-
-enum class RayType : U8
-{
-	SHADOWS,
-	GI,
-	REFLECTIONS,
-	PATH_TRACING,
-
-	COUNT,
-	FIRST = 0
-};
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RayType)
-
-enum class RayTypeBit : U8
-{
-	NONE,
-	SHADOWS = 1 << 0,
-	GI = 1 << 1,
-	REFLECTIONS = 1 << 2,
-	PATH_TRACING = 1 << 3,
-
-	ALL = SHADOWS | GI | REFLECTIONS | PATH_TRACING
-};
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RayTypeBit)
-/// @}
-
 /// Deleter for ResourcePtr.
 template<typename T>
 class ResourcePtrDeleter

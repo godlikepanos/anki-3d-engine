@@ -23,8 +23,6 @@ ANKI_TEST(ShaderCompiler, ShaderCompilerParser)
 #pragma anki mutator M0 1 2
 #pragma anki mutator M1 3 4
 
-#pragma anki rewrite_mutation M0 2 M1 4 to M0 1 M1 3
-
 #pragma anki start vert
 
 // vert
@@ -53,11 +51,6 @@ ANKI_TEST(ShaderCompiler, ShaderCompilerParser)
 
 	ShaderProgramParserVariant variant;
 	ANKI_TEST_EXPECT_NO_ERR(parser.generateVariant(mutation, variant));
-
-	// Test rewrite
-	ANKI_TEST_EXPECT_EQ(parser.rewriteMutation(mutation), true);
-	ANKI_TEST_EXPECT_EQ(mutation[0], 1);
-	ANKI_TEST_EXPECT_EQ(mutation[1], 3);
 
 	// printf("%s\n", variant.getSource(ShaderType::VERTEX).cstr());
 }

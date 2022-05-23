@@ -1,0 +1,8 @@
+<model>
+	<modelPatches>
+		<modelPatch>
+			<mesh>Assets/Mesh_0_lod0_d56f58fc33de003f.ankimesh</mesh>
+			<material>Assets/backWall_361f28d87a6738d3.ankimtl</material>
+		</modelPatch>
+	</modelPatches>
+</model>

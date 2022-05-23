@@ -19,7 +19,7 @@ struct DrawArraysIndirectInfo
 	U32 baseInstance;
 };
 
-layout(set = 0, binding = 0, std430, row_major) readonly buffer ss0_
+layout(set = 0, binding = 0, std430, row_major) readonly buffer b_lf
 {
 	Mat4 u_mvp;
 	Vec4 u_flarePositions[];

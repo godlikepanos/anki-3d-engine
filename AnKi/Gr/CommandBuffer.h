@@ -446,9 +446,6 @@ public:
 	void pushSecondLevelCommandBuffer(CommandBufferPtr cmdb);
 
 	Bool isEmpty() const;
-
-	/// The command buffer will co-own a pointer. Useful to track the lifetime of bindless resources.
-	void addReference(GrObjectPtr ptr);
 	/// @}
 
 protected:

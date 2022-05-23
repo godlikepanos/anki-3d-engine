@@ -243,11 +243,6 @@ Error ResourceFilesystem::init(const ConfigSet& config, const CString& cacheDir)
 		return Error::USER_DATA;
 	}
 
-#if ANKI_OS_ANDROID
-	// Add the files of the .apk
-	ANKI_CHECK(addNewPath("APK package", excludedStrings, true));
-#endif
-
 	for(auto& path : paths)
 	{
 		ANKI_CHECK(addNewPath(path.toCString(), excludedStrings));
@@ -267,7 +262,7 @@ void ResourceFilesystem::addCachePath(const CString& path)
 	m_paths.emplaceBack(m_alloc, std::move(p));
 }
 
-Error ResourceFilesystem::addNewPath(const CString& filepath, const StringListAuto& excludedStrings, Bool special)
+Error ResourceFilesystem::addNewPath(const CString& filepath, const StringListAuto& excludedStrings)
 {
 	U32 fileCount = 0; // Count files manually because it's slower to get that number from the list
 	static const CString extension(".ankizip");
@@ -286,32 +281,7 @@ Error ResourceFilesystem::addNewPath(const CString& filepath, const StringListAu
 
 	PtrSize pos;
 	Path path;
-	if(special)
-	{
-		// Android apk, read the file that contains the directory structure
-
-		// Read the file
-		File dirStructure;
-		ANKI_CHECK(dirStructure.open("DirStructure.txt", FileOpenFlag::READ | FileOpenFlag::SPECIAL));
-		StringAuto txt(m_alloc);
-		ANKI_CHECK(dirStructure.readAllText(txt));
-
-		StringListAuto filenames(m_alloc);
-		filenames.splitString(txt, '\n');
-
-		// Create the Path
-		for(const String& filename : filenames)
-		{
-			if(!rejectPath(filename))
-			{
-				path.m_files.pushBack(m_alloc, filename);
-				++fileCount;
-			}
-		}
-
-		path.m_isSpecial = true;
-	}
-	else if((pos = filepath.find(extension)) != CString::NPOS && pos == filepath.getLength() - extension.getLength())
+	if((pos = filepath.find(extension)) != CString::NPOS && pos == filepath.getLength() - extension.getLength())
 	{
 		// It's an archive
 
@@ -396,8 +366,26 @@ Error ResourceFilesystem::addNewPath(const CString& filepath, const StringListAu
 
 Error ResourceFilesystem::openFile(const ResourceFilename& filename, ResourceFilePtr& filePtr)
 {
-	ResourceFile* rfile = nullptr;
-	Error err = Error::NONE;
+	ResourceFile* rfile;
+	Error err = openFileInternal(filename, rfile);
+
+	if(err)
+	{
+		ANKI_RESOURCE_LOGE("Resource file not found: %s", filename.cstr());
+		m_alloc.deleteInstance(rfile);
+	}
+	else
+	{
+		ANKI_ASSERT(rfile);
+		filePtr.reset(rfile);
+	}
+
+	return err;
+}
+
+Error ResourceFilesystem::openFileInternal(const ResourceFilename& filename, ResourceFile*& rfile)
+{
+	rfile = nullptr;
 
 	// Search for the fname in reverse order
 	for(const Path& p : m_paths)
@@ -415,7 +403,7 @@ Error ResourceFilesystem::openFile(const ResourceFilename& filename, ResourceFil
 				CResourceFile* file = m_alloc.newInstance<CResourceFile>(m_alloc);
 				rfile = file;
 
-				err = file->m_file.open(&newFname[0], FileOpenFlag::READ);
+				ANKI_CHECK(file->m_file.open(&newFname[0], FileOpenFlag::READ));
 			}
 		}
 		else
@@ -435,30 +423,16 @@ Error ResourceFilesystem::openFile(const ResourceFilename& filename, ResourceFil
 					ZipResourceFile* file = m_alloc.newInstance<ZipResourceFile>(m_alloc);
 					rfile = file;
 
-					err = file->open(p.m_path.toCString(), filename);
+					ANKI_CHECK(file->open(p.m_path.toCString(), filename));
 				}
 				else
 				{
 					StringAuto newFname(m_alloc);
-					if(!p.m_isSpecial)
-					{
-						newFname.sprintf("%s/%s", &p.m_path[0], &filename[0]);
-					}
-					else
-					{
-						newFname.sprintf("%s", &filename[0]);
-					}
+					newFname.sprintf("%s/%s", &p.m_path[0], &filename[0]);
 
 					CResourceFile* file = m_alloc.newInstance<CResourceFile>(m_alloc);
 					rfile = file;
-
-					FileOpenFlag fopenFlags = FileOpenFlag::READ;
-					if(p.m_isSpecial)
-					{
-						fopenFlags |= FileOpenFlag::SPECIAL;
-					}
-
-					err = file->m_file.open(&newFname[0], fopenFlags);
+					ANKI_CHECK(file->m_file.open(newFname, FileOpenFlag::READ));
 
 #if 0
 					printf("Opening asset %s\n", &newFname[0]);
@@ -473,37 +447,25 @@ Error ResourceFilesystem::openFile(const ResourceFilename& filename, ResourceFil
 		}
 	} // end for all paths
 
-	if(err)
-	{
-		m_alloc.deleteInstance(rfile);
-		return err;
-	}
-
-	// File not found? Try to find it outside the resource dirs
-	if(!rfile && fileExists(filename))
+	// File not found? On Win/Linux try to find it outside the resource dirs. On Android try the archive
+	if(!rfile)
 	{
 		CResourceFile* file = m_alloc.newInstance<CResourceFile>(m_alloc);
-		err = file->m_file.open(filename, FileOpenFlag::READ);
-		if(err)
-		{
-			m_alloc.deleteInstance(file);
-			return err;
-		}
-
 		rfile = file;
+
+		FileOpenFlag openFlags = FileOpenFlag::READ;
+#if ANKI_OS_ANDROID
+		openFlags |= FileOpenFlag::SPECIAL;
+#endif
+		ANKI_CHECK(file->m_file.open(filename, openFlags));
+
+#if !ANKI_OS_ANDROID
 		ANKI_RESOURCE_LOGW(
 			"Loading resource outside the resource paths/archives. This is only OK for tools and debugging: %s",
 			filename.cstr());
+#endif
 	}
 
-	if(!rfile)
-	{
-		ANKI_RESOURCE_LOGE("File not found: %s", &filename[0]);
-		return Error::USER_DATA;
-	}
-
-	// Done
-	filePtr.reset(rfile);
 	return Error::NONE;
 }
 

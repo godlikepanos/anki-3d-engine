@@ -8,7 +8,6 @@
 #include <AnKi/ShaderCompiler/Common.h>
 #include <AnKi/Util/String.h>
 #include <AnKi/Gr/Enums.h>
-#include <AnKi/Gr/Utils/Functions.h>
 
 namespace anki {
 

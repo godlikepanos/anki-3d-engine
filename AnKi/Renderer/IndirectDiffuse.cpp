@@ -11,7 +11,6 @@
 #include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Renderer/IndirectDiffuseProbes.h>
 #include <AnKi/Core/ConfigSet.h>
-#include <AnKi/Shaders/Include/IndirectDiffuseTypes.h>
 
 namespace anki {
 
@@ -44,18 +43,18 @@ Error IndirectDiffuse::initInternal()
 	usage |= (preferCompute) ? TextureUsageBit::IMAGE_COMPUTE_WRITE : TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 	TextureInitInfo texInit =
 		m_r->create2DRenderTargetInitInfo(size.x(), size.y(), m_r->getHdrFormat(), usage, "IndirectDiffuse #1");
-	texInit.m_initialUsage = TextureUsageBit::ALL_SAMPLED;
-	m_rts[0] = m_r->createAndClearRenderTarget(texInit);
+	m_rts[0] = m_r->createAndClearRenderTarget(texInit, TextureUsageBit::ALL_SAMPLED);
 	texInit.setName("IndirectDiffuse #2");
-	m_rts[1] = m_r->createAndClearRenderTarget(texInit);
+	m_rts[1] = m_r->createAndClearRenderTarget(texInit, TextureUsageBit::ALL_SAMPLED);
 
 	m_fbDescr.m_colorAttachmentCount = 1;
 	m_fbDescr.bake();
 
 	// Init SSGI+probes pass
 	{
-		ANKI_CHECK(getResourceManager().loadResource((preferCompute) ? "Shaders/IndirectDiffuseCompute.ankiprog"
-																	 : "Shaders/IndirectDiffuseRaster.ankiprog",
+		ANKI_CHECK(getResourceManager().loadResource((preferCompute)
+														 ? "ShaderBinaries/IndirectDiffuseCompute.ankiprogbin"
+														 : "ShaderBinaries/IndirectDiffuseRaster.ankiprogbin",
 													 m_main.m_prog));
 
 		const ShaderProgramResourceVariant* variant;
@@ -65,8 +64,9 @@ Error IndirectDiffuse::initInternal()
 
 	// Init denoise
 	{
-		ANKI_CHECK(getResourceManager().loadResource((preferCompute) ? "Shaders/IndirectDiffuseDenoiseCompute.ankiprog"
-																	 : "Shaders/IndirectDiffuseDenoiseRaster.ankiprog",
+		ANKI_CHECK(getResourceManager().loadResource((preferCompute)
+														 ? "ShaderBinaries/IndirectDiffuseDenoiseCompute.ankiprogbin"
+														 : "ShaderBinaries/IndirectDiffuseDenoiseRaster.ankiprogbin",
 													 m_denoise.m_prog));
 
 		ShaderProgramResourceVariantInitInfo variantInit(m_denoise.m_prog);

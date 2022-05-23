@@ -32,12 +32,20 @@ ANKI_CONFIG_VAR_U32(RSsrDepthLod, 2, 0, 1000, "Texture LOD of the depth texture 
 ANKI_CONFIG_VAR_U32(RSsrMaxSteps, 64, 1, 256, "Max SSR raymarching steps")
 ANKI_CONFIG_VAR_BOOL(RSsrStochastic, false, "Stochastic reflections")
 
+// GI probes
+ANKI_CONFIG_VAR_U32(RIndirectDiffuseProbeTileResolution, (ANKI_PLATFORM_MOBILE) ? 16 : 32, 8, 32, "GI tile resolution")
+ANKI_CONFIG_VAR_U32(RIndirectDiffuseProbeShadowMapResolution, 128, 4, 2048, "GI shadowmap resolution")
+ANKI_CONFIG_VAR_U32(RIndirectDiffuseProbeMaxCachedProbes, 16, 4, 2048, "Max cached probes")
+ANKI_CONFIG_VAR_U32(RIndirectDiffuseProbeMaxVisibleProbes, 8, 1, 256, "Max visible GI probes")
+
+// GI
 ANKI_CONFIG_VAR_U32(RIndirectDiffuseSsgiSampleCount, 8, 1, 1024, "SSGI sample count")
 ANKI_CONFIG_VAR_F32(RIndirectDiffuseSsgiRadius, 2.0f, 0.1f, 100.0f, "SSGI radius in meters")
 ANKI_CONFIG_VAR_U32(RIndirectDiffuseDenoiseSampleCount, 4, 1, 128, "Indirect diffuse denoise sample count")
 ANKI_CONFIG_VAR_F32(RIndirectDiffuseSsaoStrength, 2.5f, 0.1f, 10.0f, "SSAO strength")
 ANKI_CONFIG_VAR_F32(RIndirectDiffuseSsaoBias, -0.1f, -10.0f, 10.0f, "SSAO bias")
 
+// Shadows
 ANKI_CONFIG_VAR_U32(RShadowMappingTileResolution, (ANKI_PLATFORM_MOBILE) ? 128 : 512, 16, 2048,
 					"Shadowmapping tile resolution")
 ANKI_CONFIG_VAR_U32(RShadowMappingTileCountPerRowOrColumn, 16, 1, 256,
@@ -46,18 +54,15 @@ ANKI_CONFIG_VAR_U32(RShadowMappingScratchTileCountX, 4 * (MAX_SHADOW_CASCADES2 +
 					"Number of tiles of the scratch buffer in X")
 ANKI_CONFIG_VAR_U32(RShadowMappingScratchTileCountY, 4, 1, 256, "Number of tiles of the scratch buffer in Y")
 
+// Probe reflections
 ANKI_CONFIG_VAR_U32(RProbeReflectionResolution, 128, 4, 2048, "Reflection probe face resolution")
 ANKI_CONFIG_VAR_U32(RProbeReflectionIrradianceResolution, 16, 4, 2048, "Reflection probe irradiance resolution")
 ANKI_CONFIG_VAR_U32(RProbeRefectionMaxCachedProbes, 32, 4, 256, "Max cached number of reflection probes")
 ANKI_CONFIG_VAR_U32(RProbeReflectionShadowMapResolution, 64, 4, 2048, "Reflection probe shadow resolution")
 
+// Lens flare
 ANKI_CONFIG_VAR_U8(RLensFlareMaxSpritesPerFlare, 8, 4, 255, "Max sprites per lens flare")
 ANKI_CONFIG_VAR_U8(RLensFlareMaxFlares, 16, 8, 255, "Max flare count")
-
-ANKI_CONFIG_VAR_U32(RGiTileResolution, (ANKI_PLATFORM_MOBILE) ? 16 : 32, 4, 2048, "GI tile resolution")
-ANKI_CONFIG_VAR_U32(RGiShadowMapResolution, 128, 4, 2048, "GI shadowmap resolution")
-ANKI_CONFIG_VAR_U32(RGiMaxCachedProbes, 16, 4, 2048, "Max cached probes")
-ANKI_CONFIG_VAR_U32(RGiMaxVisibleProbes, 8, 1, 256, "Max visible GI probes")
 
 ANKI_CONFIG_VAR_U32(RMotionBlurSamples, 32, 1, 2048, "Max motion blur samples")
 

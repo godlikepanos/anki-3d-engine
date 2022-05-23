@@ -118,7 +118,6 @@ private:
 		String m_path; ///< A directory or an archive.
 		Bool m_isArchive = false;
 		Bool m_isCache = false;
-		Bool m_isSpecial = false;
 
 		Path() = default;
 
@@ -137,7 +136,6 @@ private:
 			m_path = std::move(b.m_path);
 			m_isArchive = b.m_isArchive;
 			m_isCache = b.m_isCache;
-			m_isSpecial = b.m_isSpecial;
 			return *this;
 		}
 	};
@@ -147,7 +145,9 @@ private:
 	String m_cacheDir;
 
 	/// Add a filesystem path or an archive. The path is read-only.
-	ANKI_USE_RESULT Error addNewPath(const CString& path, const StringListAuto& excludedStrings, Bool special = false);
+	ANKI_USE_RESULT Error addNewPath(const CString& path, const StringListAuto& excludedStrings);
+
+	ANKI_USE_RESULT Error openFileInternal(const ResourceFilename& filename, ResourceFile*& rfile);
 
 	void addCachePath(const CString& path);
 };

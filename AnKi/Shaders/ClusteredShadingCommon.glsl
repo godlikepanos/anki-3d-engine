@@ -11,7 +11,7 @@
 // Common uniforms
 //
 #if defined(CLUSTERED_SHADING_UNIFORMS_BINDING)
-layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_UNIFORMS_BINDING, scalar) uniform b_clusteredShading
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_UNIFORMS_BINDING) uniform b_clusteredShading
 {
 	ClusteredShadingUniforms u_clusteredShading;
 };
@@ -21,52 +21,52 @@ layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_UNIFORMS_BINDING
 // Light uniforms (3)
 //
 #if defined(CLUSTERED_SHADING_LIGHTS_BINDING)
-layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_LIGHTS_BINDING, scalar) uniform b_pointLights
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_LIGHTS_BINDING) uniform b_pointLights
 {
 	PointLight u_pointLights2[MAX_VISIBLE_POINT_LIGHTS];
 };
 
-layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_LIGHTS_BINDING + 1, scalar) uniform b_spotLights
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_LIGHTS_BINDING + 1u) uniform b_spotLights
 {
-	SpotLight u_spotLights2[MAX_VISIBLE_SPOT_LIGHTS];
+	SpotLight u_spotLights[MAX_VISIBLE_SPOT_LIGHTS];
 };
 
-layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_LIGHTS_BINDING + 2) uniform texture2D u_shadowAtlasTex;
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_LIGHTS_BINDING + 2u) uniform texture2D u_shadowAtlasTex;
 #endif
 
 //
 // Reflection probes (3)
 //
 #if defined(CLUSTERED_SHADING_REFLECTIONS_BINDING)
-layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_REFLECTIONS_BINDING, scalar) uniform b_reflectionProbes
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_REFLECTIONS_BINDING) uniform b_reflectionProbes
 {
 	ReflectionProbe u_reflectionProbes[MAX_VISIBLE_REFLECTION_PROBES];
 };
 
 layout(set = CLUSTERED_SHADING_SET,
-	   binding = CLUSTERED_SHADING_REFLECTIONS_BINDING + 1) uniform ANKI_RP textureCubeArray u_reflectionsTex;
+	   binding = CLUSTERED_SHADING_REFLECTIONS_BINDING + 1u) uniform ANKI_RP textureCubeArray u_reflectionsTex;
 #endif
 
 //
 // Decal uniforms (3)
 //
 #if defined(CLUSTERED_SHADING_DECALS_BINDING)
-layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_DECALS_BINDING, scalar) uniform b_decals
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_DECALS_BINDING) uniform b_decals
 {
 	Decal u_decals2[MAX_VISIBLE_DECALS];
 };
 
 layout(set = CLUSTERED_SHADING_SET,
-	   binding = CLUSTERED_SHADING_DECALS_BINDING + 1) uniform ANKI_RP texture2D u_diffuseDecalTex;
+	   binding = CLUSTERED_SHADING_DECALS_BINDING + 1u) uniform ANKI_RP texture2D u_diffuseDecalTex;
 layout(set = CLUSTERED_SHADING_SET,
-	   binding = CLUSTERED_SHADING_DECALS_BINDING + 2) uniform ANKI_RP texture2D u_specularRoughnessDecalTex;
+	   binding = CLUSTERED_SHADING_DECALS_BINDING + 2u) uniform ANKI_RP texture2D u_specularRoughnessDecalTex;
 #endif
 
 //
 // Fog density uniforms (1)
 //
 #if defined(CLUSTERED_SHADING_FOG_BINDING)
-layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_FOG_BINDING, scalar) uniform b_fogDensityVolumes
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_FOG_BINDING) uniform b_fogDensityVolumes
 {
 	FogDensityVolume u_fogDensityVolumes[MAX_VISIBLE_FOG_DENSITY_VOLUMES];
 };
@@ -79,7 +79,7 @@ layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_FOG_BINDING, sca
 layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_GI_BINDING) uniform ANKI_RP texture3D
 	u_globalIlluminationTextures[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES];
 
-layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_GI_BINDING + 1, scalar) uniform b_giProbes
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_GI_BINDING + 1u) uniform b_giProbes
 {
 	GlobalIlluminationProbe u_giProbes[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES];
 };
@@ -89,9 +89,9 @@ layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_GI_BINDING + 1, 
 // Cluster uniforms
 //
 #if defined(CLUSTERED_SHADING_CLUSTERS_BINDING)
-layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_CLUSTERS_BINDING, scalar) readonly buffer b_clusters
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_CLUSTERS_BINDING) readonly buffer b_clusters
 {
-	Cluster u_clusters2[];
+	Cluster u_clusters[];
 };
 #endif
 
@@ -181,9 +181,9 @@ Cluster mergeClusters(Cluster tileCluster, Cluster zCluster)
 /// Get the final cluster after ORing and ANDing the masks.
 Cluster getClusterFragCoord(Vec3 fragCoord, U32 tileSize, UVec2 tileCounts, U32 zSplitCount, F32 a, F32 b)
 {
-	const Cluster tileCluster = u_clusters2[computeTileClusterIndexFragCoord(fragCoord.xy, tileSize, tileCounts.x)];
+	const Cluster tileCluster = u_clusters[computeTileClusterIndexFragCoord(fragCoord.xy, tileSize, tileCounts.x)];
 	const Cluster zCluster =
-		u_clusters2[computeZSplitClusterIndex(fragCoord.z, zSplitCount, a, b) + tileCounts.x * tileCounts.y];
+		u_clusters[computeZSplitClusterIndex(fragCoord.z, zSplitCount, a, b) + tileCounts.x * tileCounts.y];
 	return mergeClusters(tileCluster, zCluster);
 }
 

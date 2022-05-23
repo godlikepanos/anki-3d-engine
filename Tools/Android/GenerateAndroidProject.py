@@ -16,6 +16,7 @@ class Context:
     target = ""
     asserts_dir = None
     out_dir = ""
+    shader_compiler = ""
 
 
 def parse_commandline():
@@ -26,10 +27,15 @@ def parse_commandline():
     parser.add_option("-o", "--out-dir", dest="out_dir", type="string", help="Where to create the project")
     parser.add_option("-t", "--target", dest="target", type="string", help="The name of .so to package")
     parser.add_option("-a", "--assets", dest="assets", type="string", help="Assets directory")
+    parser.add_option("-c",
+                      "--shader-compiler",
+                      dest="shader_compiler",
+                      type="string",
+                      help="The path of the shader compiler")
 
     (options, args) = parser.parse_args()
 
-    required = "target out_dir".split()
+    required = "target out_dir shader_compiler".split()
     for r in required:
         if options.__dict__[r] is None:
             parser.print_help()
@@ -40,6 +46,7 @@ def parse_commandline():
     if options.assets is not None:
         ctx.asserts_dir = os.path.abspath(options.assets)
     ctx.out_dir = os.path.abspath(options.out_dir)
+    ctx.shader_compiler = os.path.abspath(options.shader_compiler)
 
     return ctx
 
@@ -74,33 +81,12 @@ def main():
     assets_dir = os.path.join(project_dir, "assets")
     if not os.path.isdir(assets_dir):
         os.mkdir(assets_dir)
-        os.mkdir(os.path.join(project_dir, "assets/AnKi/"))
-        os.symlink(os.path.join(this_script_dir, "../../AnKi/Shaders"),
-                   os.path.join(project_dir, "assets/AnKi/Shaders"))
         os.symlink(os.path.join(this_script_dir, "../../EngineAssets"),
                    os.path.join(project_dir, "assets/EngineAssets"))
-        os.mkdir(os.path.join(project_dir, "assets/ThirdParty/"))
-        os.symlink(os.path.join(this_script_dir, "../../ThirdParty/FidelityFX"),
-                   os.path.join(project_dir, "assets/ThirdParty/FidelityFX"))
         if ctx.asserts_dir is not None:
             os.symlink(ctx.asserts_dir, os.path.join(project_dir, "assets/Assets"))
     else:
         print("Asset directory (%s) already exists. Skipping" % assets_dir)
-
-    # Write the asset directory structure to a file
-    dir_structure_file = open(os.path.join(assets_dir, "DirStructure.txt"), "w", newline="\n")
-    for root, dirs, files in os.walk(assets_dir, followlinks=True):
-        for f in files:
-            if f.find("DirStructure.txt") >= 0:
-                continue
-
-            filename = os.path.join(root, f)
-            filename = filename.replace(assets_dir, "")
-            filename = filename.replace("\\", "/")
-            if filename[0] == '/':
-                filename = filename[1:]
-            dir_structure_file.write("%s\n" % filename)
-    dir_structure_file.close()
 
     # strings.xml
     replace_in_file(os.path.join(project_dir, "app/src/main/res/values/strings.xml"), "%APP_NAME%", ctx.target)
@@ -109,6 +95,7 @@ def main():
     build_gradle = os.path.join(project_dir, "app/build.gradle")
     replace_in_file(build_gradle, "%TARGET%", ctx.target)
     replace_in_file(build_gradle, "%PYTHON%", sys.executable)
+    replace_in_file(build_gradle, "%COMPILER%", ctx.shader_compiler)
     replace_in_file(build_gradle, "%CMAKE%", os.path.join(this_script_dir, "../../CMakeLists.txt"))
 
     # Manifest

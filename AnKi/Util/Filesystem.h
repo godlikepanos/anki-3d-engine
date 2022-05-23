@@ -74,6 +74,9 @@ ANKI_USE_RESULT Error getTempDirectory(StringAuto& out);
 /// Get the time the file was last modified.
 ANKI_USE_RESULT Error getFileModificationTime(CString filename, U32& year, U32& month, U32& day, U32& hour, U32& min,
 											  U32& second);
+
+/// Get the path+filename of the currently running executable.
+ANKI_USE_RESULT Error getApplicationPath(StringAuto& path);
 /// @}
 
 } // end namespace anki

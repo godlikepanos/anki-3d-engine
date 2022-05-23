@@ -469,7 +469,22 @@ void PipelineFactory::getOrCreatePipeline(PipelineStateTracker& state, Pipeline&
 
 	{
 		ANKI_TRACE_SCOPED_EVENT(VK_PIPELINE_CREATE);
+
+#if ANKI_PLATFORM_MOBILE
+		if(m_globalCreatePipelineMtx)
+		{
+			m_globalCreatePipelineMtx->lock();
+		}
+#endif
+
 		ANKI_VK_CHECKF(vkCreateGraphicsPipelines(m_dev, m_pplineCache, 1, &ci, nullptr, &pp.m_handle));
+
+#if ANKI_PLATFORM_MOBILE
+		if(m_globalCreatePipelineMtx)
+		{
+			m_globalCreatePipelineMtx->unlock();
+		}
+#endif
 	}
 
 	ANKI_TRACE_INC_COUNTER(VK_PIPELINES_CACHE_MISS, 1);

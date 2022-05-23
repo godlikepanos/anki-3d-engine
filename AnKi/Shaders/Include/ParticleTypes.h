@@ -44,7 +44,7 @@ struct GpuParticle
 	F32 m_startingLife; // The original max life
 
 	Vec3 m_velocity;
-	F32 m_padding1;
+	F32 m_padding0;
 };
 
 struct GpuParticleSimulationState
@@ -60,17 +60,8 @@ struct GpuParticleSimulationState
 	Vec3 m_emitterPosition;
 	F32 m_padding1;
 
-#if defined(__cplusplus)
 	Mat3x4 m_emitterRotation;
-#else
-	Mat3 m_emitterRotation;
-#endif
-
-#if defined(__cplusplus)
 	Mat3x4 m_invViewRotation;
-#else
-	Mat3 m_invViewRotation;
-#endif
 };
 
 ANKI_END_NAMESPACE

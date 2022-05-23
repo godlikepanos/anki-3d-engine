@@ -23,7 +23,7 @@ static VulkanQueueType getQueueTypeFromCommandBufferFlags(CommandBufferFlag flag
 	}
 }
 
-void MicroCommandBuffer::destroy()
+MicroCommandBuffer::~MicroCommandBuffer()
 {
 	reset();
 
@@ -31,6 +31,10 @@ void MicroCommandBuffer::destroy()
 	{
 		vkFreeCommandBuffers(m_threadAlloc->m_factory->m_dev, m_threadAlloc->m_pools[m_queue], 1, &m_handle);
 		m_handle = {};
+
+		const U32 count = m_threadAlloc->m_factory->m_createdCmdBufferCount.fetchSub(1);
+		ANKI_ASSERT(count > 0);
+		(void)count;
 	}
 }
 
@@ -39,7 +43,7 @@ void MicroCommandBuffer::reset()
 	ANKI_TRACE_SCOPED_EVENT(VK_COMMAND_BUFFER_RESET);
 
 	ANKI_ASSERT(m_refcount.load() == 0);
-	ANKI_ASSERT(!m_fence.isCreated() || m_fence->done());
+	ANKI_ASSERT(!m_fence.isCreated());
 
 	for(GrObjectType type : EnumIterable<GrObjectType>())
 	{
@@ -47,8 +51,6 @@ void MicroCommandBuffer::reset()
 	}
 
 	m_fastAlloc.getMemoryPool().reset();
-
-	m_fence = {};
 }
 
 Error CommandBufferThreadAllocator::init()
@@ -68,42 +70,35 @@ Error CommandBufferThreadAllocator::init()
 		ANKI_VK_CHECK(vkCreateCommandPool(m_factory->m_dev, &ci, nullptr, &m_pools[qtype]));
 	}
 
-	return Error::NONE;
-}
-
-void CommandBufferThreadAllocator::destroyList(IntrusiveList<MicroCommandBuffer>& list)
-{
-	while(!list.isEmpty())
+	for(U32 secondLevel = 0; secondLevel < 2; ++secondLevel)
 	{
-		MicroCommandBuffer* ptr = list.popFront();
-		ptr->destroy();
-		getAllocator().deleteInstance(ptr);
-#if ANKI_EXTRA_CHECKS
-		m_createdCmdbs.fetchSub(1);
-#endif
-	}
-}
-
-void CommandBufferThreadAllocator::destroyLists()
-{
-	for(U i = 0; i < 2; ++i)
-	{
-		for(U j = 0; j < 2; ++j)
+		for(U32 smallBatch = 0; smallBatch < 2; ++smallBatch)
 		{
-			for(VulkanQueueType qtype : EnumIterable<VulkanQueueType>())
+			for(VulkanQueueType queue : EnumIterable<VulkanQueueType>())
 			{
-				CmdbType& type = m_types[i][j][qtype];
+				MicroObjectRecycler<MicroCommandBuffer>& recycler = m_recyclers[secondLevel][smallBatch][queue];
 
-				destroyList(type.m_deletedCmdbs);
-				destroyList(type.m_readyCmdbs);
-				destroyList(type.m_inUseCmdbs);
+				recycler.init(m_factory->m_alloc);
 			}
 		}
 	}
+
+	return Error::NONE;
 }
 
 void CommandBufferThreadAllocator::destroy()
 {
+	for(U32 secondLevel = 0; secondLevel < 2; ++secondLevel)
+	{
+		for(U32 smallBatch = 0; smallBatch < 2; ++smallBatch)
+		{
+			for(VulkanQueueType queue : EnumIterable<VulkanQueueType>())
+			{
+				m_recyclers[secondLevel][smallBatch][queue].destroy();
+			}
+		}
+	}
+
 	for(VkCommandPool& pool : m_pools)
 	{
 		if(pool)
@@ -112,94 +107,19 @@ void CommandBufferThreadAllocator::destroy()
 			pool = VK_NULL_HANDLE;
 		}
 	}
-
-	ANKI_ASSERT(m_createdCmdbs.load() == 0 && "Someone still holds references to command buffers");
 }
 
-Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags, MicroCommandBufferPtr& outPtr,
-													 Bool& createdNew)
+Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags, MicroCommandBufferPtr& outPtr)
 {
 	ANKI_ASSERT(!!(cmdbFlags & CommandBufferFlag::COMPUTE_WORK) ^ !!(cmdbFlags & CommandBufferFlag::GENERAL_WORK));
-	createdNew = false;
 
 	const Bool secondLevel = !!(cmdbFlags & CommandBufferFlag::SECOND_LEVEL);
 	const Bool smallBatch = !!(cmdbFlags & CommandBufferFlag::SMALL_BATCH);
 	const VulkanQueueType queue = getQueueTypeFromCommandBufferFlags(cmdbFlags, m_factory->m_queueFamilies);
 
-	CmdbType& type = m_types[secondLevel][smallBatch][queue];
+	MicroObjectRecycler<MicroCommandBuffer>& recycler = m_recyclers[secondLevel][smallBatch][queue];
 
-	// Move the deleted to (possibly) in-use or ready
-	{
-		LockGuard<Mutex> lock(type.m_deletedMtx);
-
-		while(!type.m_deletedCmdbs.isEmpty())
-		{
-			MicroCommandBuffer* ptr = type.m_deletedCmdbs.popFront();
-
-			if(secondLevel)
-			{
-				type.m_readyCmdbs.pushFront(ptr);
-				ptr->reset();
-			}
-			else
-			{
-				type.m_inUseCmdbs.pushFront(ptr);
-			}
-		}
-	}
-
-	// Reset the in-use command buffers and try to get one available
-	MicroCommandBuffer* out = nullptr;
-	if(!secondLevel)
-	{
-		// Primary
-
-		// Try to reuse a ready buffer
-		if(!type.m_readyCmdbs.isEmpty())
-		{
-			out = type.m_readyCmdbs.popFront();
-		}
-
-		// Do a sweep and move in-use buffers to ready
-		IntrusiveList<MicroCommandBuffer> inUseCmdbs; // Push to temporary because we are iterating
-		while(!type.m_inUseCmdbs.isEmpty())
-		{
-			MicroCommandBuffer* inUseCmdb = type.m_inUseCmdbs.popFront();
-
-			if(!inUseCmdb->m_fence.isCreated() || inUseCmdb->m_fence->done())
-			{
-				// It's ready
-
-				if(out)
-				{
-					type.m_readyCmdbs.pushFront(inUseCmdb);
-					inUseCmdb->reset();
-				}
-				else
-				{
-					out = inUseCmdb;
-				}
-			}
-			else
-			{
-				inUseCmdbs.pushBack(inUseCmdb);
-			}
-		}
-
-		ANKI_ASSERT(type.m_inUseCmdbs.isEmpty());
-		type.m_inUseCmdbs = std::move(inUseCmdbs);
-	}
-	else
-	{
-		// Secondary
-
-		ANKI_ASSERT(type.m_inUseCmdbs.isEmpty());
-
-		if(!type.m_readyCmdbs.isEmpty())
-		{
-			out = type.m_readyCmdbs.popFront();
-		}
-	}
+	MicroCommandBuffer* out = recycler.findToReuse();
 
 	if(ANKI_UNLIKELY(out == nullptr))
 	{
@@ -217,10 +137,6 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 
 		MicroCommandBuffer* newCmdb = getAllocator().newInstance<MicroCommandBuffer>(this);
 
-#if ANKI_EXTRA_CHECKS
-		m_createdCmdbs.fetchAdd(1);
-#endif
-
 		newCmdb->m_fastAlloc =
 			StackAllocator<U8>(m_factory->m_alloc.getMemoryPool().getAllocationCallback(),
 							   m_factory->m_alloc.getMemoryPool().getAllocationCallbackUserData(), 256_KB, 2.0f);
@@ -231,11 +147,15 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 
 		out = newCmdb;
 
-		createdNew = true;
+		m_factory->m_createdCmdBufferCount.fetchAdd(1);
 	}
 	else
 	{
-		out->reset();
+		for(GrObjectType type : EnumIterable<GrObjectType>())
+		{
+			(void)type;
+			ANKI_ASSERT(out->m_objectRefs[type].getSize() == 0);
+		}
 	}
 
 	ANKI_ASSERT(out && out->m_refcount.load() == 0);
@@ -251,10 +171,7 @@ void CommandBufferThreadAllocator::deleteCommandBuffer(MicroCommandBuffer* ptr)
 	const Bool secondLevel = !!(ptr->m_flags & CommandBufferFlag::SECOND_LEVEL);
 	const Bool smallBatch = !!(ptr->m_flags & CommandBufferFlag::SMALL_BATCH);
 
-	CmdbType& type = m_types[secondLevel][smallBatch][ptr->m_queue];
-
-	LockGuard<Mutex> lock(type.m_deletedMtx);
-	type.m_deletedCmdbs.pushBack(ptr);
+	m_recyclers[secondLevel][smallBatch][ptr->m_queue].recycle(ptr);
 }
 
 Error CommandBufferFactory::init(GrAllocator<U8> alloc, VkDevice dev, const VulkanQueueFamilies& queueFamilies)
@@ -269,12 +186,19 @@ Error CommandBufferFactory::init(GrAllocator<U8> alloc, VkDevice dev, const Vulk
 
 void CommandBufferFactory::destroy()
 {
-	// Run 2 times because destroyLists() populates other allocators' lists
-	for(U i = 0; i < 2; ++i)
+	// First trim the caches for all recyclers. This will release the primaries and populate the recyclers of
+	// secondaries
+	for(CommandBufferThreadAllocator* talloc : m_threadAllocs)
 	{
-		for(CommandBufferThreadAllocator* alloc : m_threadAllocs)
+		for(U32 secondLevel = 0; secondLevel < 2; ++secondLevel)
 		{
-			alloc->destroyLists();
+			for(U32 smallBatch = 0; smallBatch < 2; ++smallBatch)
+			{
+				for(VulkanQueueType queue : EnumIterable<VulkanQueueType>())
+				{
+					talloc->m_recyclers[secondLevel][smallBatch][queue].trimCache();
+				}
+			}
 		}
 	}
 
@@ -342,12 +266,7 @@ Error CommandBufferFactory::newCommandBuffer(ThreadId tid, CommandBufferFlag cmd
 
 	ANKI_ASSERT(alloc);
 	ANKI_ASSERT(alloc->m_tid == tid);
-	Bool createdNew;
-	ANKI_CHECK(alloc->newCommandBuffer(cmdbFlags, ptr, createdNew));
-	if(createdNew)
-	{
-		m_createdCmdBufferCount.fetchAdd(1);
-	}
+	ANKI_CHECK(alloc->newCommandBuffer(cmdbFlags, ptr));
 
 	return Error::NONE;
 }

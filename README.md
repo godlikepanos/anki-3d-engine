@@ -90,17 +90,21 @@ Prerequisites:
 
 - Android Studio
 - From Android Studio's package manager you need to install `NDK` and `CMake`
+- Having built AnKi for your host operating system (Linux or Windows)
 
-Android builds work a bit differently from Linux and Windows. You are required to generate a gradle project per build
-target. For example, if you want to generate a project for the `Sponza` sample just type from a Linux terminal:
+Android builds work a bit differently from Linux and Windows. First you need to have built AnKi for your host operating
+system. That's because Android builds requires the `ShaderCompiler/ShaderCompiler.exe` to compile the shaders for
+Android. Then you have to generate a gradle project per build target.
+
+For example, if you want to generate a project for the `Sponza` sample just type from a Linux terminal:
 
 	$cd path/to/anki
-	$./Samples/Sponza/GenerateAndroidProject.sh
+	$./Samples/Sponza/GenerateAndroidProject.sh path/to/Bin/ShaderCompiler
 
 or from a PowerShell terminal on Windows:
 
 	$cd path/to/anki
-	$./Samples/Sponza/GenerateAndroidProject.bat
+	$./Samples/Sponza/GenerateAndroidProject.bat path/to/Bin/ShaderCompiler.exe
 
 The `GenerateAndroidProject` scripts will generate a project in the root directory of AnKi. So for the `Sponza` sample
 the script will create a directory named `AndroidProject_Sponza`.

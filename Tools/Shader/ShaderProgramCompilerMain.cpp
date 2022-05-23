@@ -7,7 +7,8 @@
 #include <AnKi/Util.h>
 using namespace anki;
 
-static const char* USAGE = R"(Usage: %s input_shader_program_file [options]
+static const char* USAGE = R"(Compile an AnKi shader program
+Usage: %s [options] input_shader_program_file
 Options:
 -o <name of output>  : The name of the output binary
 -j <thread count>    : Number of threads. Defaults to system's max
@@ -36,9 +37,7 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 		return Error::USER_DATA;
 	}
 
-	info.m_inputFname.create(argv[1]);
-
-	for(I i = 2; i < argc; i++)
+	for(I i = 1; i < argc - 1; i++)
 	{
 		if(strcmp(argv[i], "-o") == 0)
 		{
@@ -106,6 +105,8 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 			return Error::USER_DATA;
 		}
 	}
+
+	info.m_inputFname.create(argv[argc - 1]);
 
 	return Error::NONE;
 }
@@ -239,8 +240,6 @@ int main(int argc, char** argv)
 		ANKI_LOGE("Failed");
 		return 1;
 	}
-
-	ANKI_LOGI("Done!");
 
 	return 0;
 }

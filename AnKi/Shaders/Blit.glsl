@@ -17,7 +17,7 @@ layout(set = 0, binding = 1) uniform texture2D u_tex;
 #if USE_COMPUTE
 layout(set = 0, binding = 2) uniform writeonly image2D u_outImage;
 
-layout(push_constant, std430) uniform b_pc
+layout(push_constant, std140) uniform b_pc
 {
 	Vec2 u_viewportSize;
 	UVec2 u_viewportSizeU;

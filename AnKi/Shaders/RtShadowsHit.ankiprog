@@ -6,12 +6,12 @@
 #pragma anki library RtShadows
 #pragma anki ray_type 0
 
+#pragma anki mutator ANKI_TECHNIQUE 4
 #pragma anki mutator ALPHA_TEXTURE 0 1
 
 #include <AnKi/Shaders/Common.glsl>
 #include <AnKi/Shaders/Include/ModelTypes.h>
 
-#if ALPHA_TEXTURE == 1
 layout(shaderRecordEXT, scalar) buffer b_model
 {
 	ModelGpuDescriptor u_modelDescriptor;
@@ -20,7 +20,6 @@ layout(shaderRecordEXT, scalar) buffer b_model
 layout(set = 0, binding = 5) uniform sampler u_sampler;
 
 ANKI_BINDLESS_SET(1);
-#endif
 
 layout(location = 0) rayPayloadInEXT F32 g_payload;
 
@@ -28,12 +27,14 @@ layout(location = 0) rayPayloadInEXT F32 g_payload;
 
 hitAttributeEXT vec2 g_attribs;
 
+#if ALPHA_TEXTURE == 1 && ANKI_SUPPORTS_64BIT
 ANKI_DEFINE_LOAD_STORE(U16Vec3, 2)
 ANKI_DEFINE_LOAD_STORE(MainVertex, ANKI_ALIGNOF(MainVertex))
+#endif
 
 void main()
 {
-#if ALPHA_TEXTURE == 1
+#if ALPHA_TEXTURE == 1 && ANKI_SUPPORTS_64BIT
 	const ModelGpuDescriptor model = u_modelDescriptor;
 	const MeshGpuDescriptor mesh = model.m_mesh;
 
