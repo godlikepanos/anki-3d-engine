@@ -15,7 +15,7 @@ ANKI_CONFIG_VAR_BOOL(CoreMaliHwCounters, false, "Enable Mali counters")
 
 ANKI_CONFIG_VAR_U32(Width, 1920, 16, 16 * 1024, "Width")
 ANKI_CONFIG_VAR_U32(Height, 1080, 16, 16 * 1024, "Height")
-ANKI_CONFIG_VAR_BOOL(WindowFullscreen, false, "Start at fullscreen")
+ANKI_CONFIG_VAR_U32(WindowFullscreen, 1, 0, 2, "Start at fullscreen")
 
 ANKI_CONFIG_VAR_U32(CoreTargetFps, 60u, 30u, MAX_U32, "Target FPS")
 ANKI_CONFIG_VAR_U32(CoreJobThreadCount, max(2u, getCpuCoresCount() / 2u), 2u, 1024u, "Number of job thread")

@@ -104,9 +104,13 @@ Error NativeWindowSdl::init(const NativeWindowInitInfo& init)
 	flags |= SDL_WINDOW_VULKAN;
 #endif
 
-	if(init.m_fullscreenDesktopRez)
+	SDL_SetHint(SDL_HINT_ALLOW_TOPMOST, "0");
+	if(init.m_fullscreenDesktopRez != NativeWindowInitInfo::WindowMode::Windowed)
 	{
-		flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+		if(init.m_fullscreenDesktopRez == NativeWindowInitInfo::WindowMode::FullscreenExclusive)
+		{
+			flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+		}
 
 		// Alter the window size
 		SDL_DisplayMode mode;
