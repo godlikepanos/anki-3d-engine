@@ -387,6 +387,10 @@ if(ANDROID)
 	include_directories("${ANDROID_NDK}/sources/android/native_app_glue")
 endif()
 
+if(LINUX)
+	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} X11-xcb pthread dl)
+endif()
+
 # AnKi compiler flags (Mainly warnings)
 if(NOT MSVC)
 	add_definitions("-pedantic -Wno-unknown-warning-option -Wall -W -Wextra -Wstrict-aliasing -Wwrite-strings -Wunused "
