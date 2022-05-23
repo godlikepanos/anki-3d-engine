@@ -17,12 +17,6 @@ namespace anki {
 class NativeWindowInitInfo
 {
 public:
-	enum class WindowMode : U8
-	{
-		Windowed = 0,
-		Fullscreen = 1,
-		FullscreenExclusive = 2
-	};
 	AllocAlignedCallback m_allocCallback = nullptr;
 	void* m_allocCallbackUserData = nullptr;
 
@@ -34,7 +28,8 @@ public:
 	U32 m_samplesCount = 0;
 	static const Bool m_doubleBuffer = true;
 	/// Create a fullscreen window with the desktop's resolution
-	WindowMode m_fullscreenDesktopRez = WindowMode::Windowed;
+	Bool m_fullscreenDesktopRez = false;
+	Bool m_exclusiveFullscreen = false;
 
 	CString m_title = "AnKi";
 };
