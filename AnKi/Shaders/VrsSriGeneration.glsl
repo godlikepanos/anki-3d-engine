@@ -44,7 +44,7 @@ shared Vec2 s_maxDerivative[SHARED_MEMORY_ENTRIES];
 
 void main()
 {
-	const Vec2 uv = Vec2(gl_GlobalInvocationID.xy) * Vec2(REGION_SIZE) * u_oneOverViewportSize;
+	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) * Vec2(REGION_SIZE) + Vec2(0.5, 0.5)) * u_oneOverViewportSize;
 
 	// Get luminance.
 	//       l2.z
