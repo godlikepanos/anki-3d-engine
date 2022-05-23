@@ -11,7 +11,7 @@
 namespace anki {
 
 static const Array<CString, U32(BuiltinMutatorId::COUNT)> BUILTIN_MUTATOR_NAMES = {
-	{"NONE", "ANKI_INSTANCED", "ANKI_PASS", "ANKI_LOD", "ANKI_BONES", "ANKI_VELOCITY"}};
+	{"NONE", "ANKI_INSTANCED", "ANKI_PASS", "ANKI_LOD", "ANKI_BONES", "ANKI_VELOCITY", "ANKI_VRS"}};
 
 class BuiltinVarInfo
 {
@@ -172,8 +172,11 @@ MaterialResource::~MaterialResource()
 				{
 					for(U32 vel = 0; vel <= 1; ++vel)
 					{
-						MaterialVariant& variant = m_variantMatrix[p][l][inst][skinned][vel];
-						variant.m_blockInfos.destroy(getAllocator());
+						for(U32 vrs = 0; vrs <= 1; ++vrs)
+						{
+							MaterialVariant& variant = m_variantMatrix[p][l][inst][skinned][vel][vrs];
+							variant.m_blockInfos.destroy(getAllocator());
+						}
 					}
 				}
 			}
@@ -509,6 +512,30 @@ Error MaterialResource::findBuiltinMutators()
 			{
 				ANKI_RESOURCE_LOGE("Values of the %s mutator in the program are not the expected",
 								   BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::VELOCITY].cstr());
+				return Error::USER_DATA;
+			}
+		}
+
+		++builtinMutatorCount;
+	}
+
+	// VRS
+	m_builtinMutators[BuiltinMutatorId::VRS] = m_prog->tryFindMutator(BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::VRS]);
+	if(m_builtinMutators[BuiltinMutatorId::VRS])
+	{
+		if(m_builtinMutators[BuiltinMutatorId::VRS]->m_values.getSize() != 2)
+		{
+			ANKI_RESOURCE_LOGE("Mutator %s should have 2 values in the program",
+							   BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::VRS].cstr());
+			return Error::USER_DATA;
+		}
+
+		for(U32 i = 0; i < m_builtinMutators[BuiltinMutatorId::VRS]->m_values.getSize(); ++i)
+		{
+			if(m_builtinMutators[BuiltinMutatorId::VRS]->m_values[i] != I(i))
+			{
+				ANKI_RESOURCE_LOGE("Values of the %s mutator in the program are not the expected",
+								   BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::VRS].cstr());
 				return Error::USER_DATA;
 			}
 		}
@@ -861,7 +888,7 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 	ANKI_ASSERT(!key.hasVelocity() || m_builtinMutators[BuiltinMutatorId::VELOCITY]);
 
 	MaterialVariant& variant =
-		m_variantMatrix[key.getPass()][key.getLod()][instanced][key.isSkinned()][key.hasVelocity()];
+		m_variantMatrix[key.getPass()][key.getLod()][instanced][key.isSkinned()][key.hasVelocity()][key.hasVrs()];
 
 	// Check if it's initialized
 	{
@@ -911,6 +938,11 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 	if(m_builtinMutators[BuiltinMutatorId::VELOCITY])
 	{
 		initInfo.addMutation(m_builtinMutators[BuiltinMutatorId::VELOCITY]->m_name, key.hasVelocity() != 0);
+	}
+
+	if(m_builtinMutators[BuiltinMutatorId::VRS])
+	{
+		initInfo.addMutation(m_builtinMutators[BuiltinMutatorId::VRS]->m_name, key.hasVrs() != 0);
 	}
 
 	for(const MaterialVariable& var : m_vars)

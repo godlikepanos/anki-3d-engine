@@ -154,7 +154,7 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 										ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection, cmdb,
 										m_r->getSamplers().m_trilinearRepeatAnisoResolutionScalingBias,
 										ctx.m_renderQueue->m_renderables.getBegin() + colorStart,
-										ctx.m_renderQueue->m_renderables.getBegin() + colorEnd);
+										ctx.m_renderQueue->m_renderables.getBegin() + colorEnd, 0U, 2U, enableVrs);
 	}
 }
 

@@ -41,7 +41,7 @@ RenderableDrawer::~RenderableDrawer()
 
 void RenderableDrawer::drawRange(Pass pass, const Mat4& viewMat, const Mat4& viewProjMat, const Mat4& prevViewProjMat,
 								 CommandBufferPtr cmdb, SamplerPtr sampler, const RenderableQueueElement* begin,
-								 const RenderableQueueElement* end, U32 minLod, U32 maxLod)
+								 const RenderableQueueElement* end, U32 minLod, U32 maxLod, bool vrsMipBias)
 {
 	ANKI_ASSERT(begin && end && begin < end);
 
@@ -67,7 +67,7 @@ void RenderableDrawer::drawRange(Pass pass, const Mat4& viewMat, const Mat4& vie
 	ctx.m_queueCtx.m_stagingGpuAllocator = &m_r->getStagingGpuMemory();
 	ctx.m_queueCtx.m_commandBuffer = cmdb;
 	ctx.m_queueCtx.m_sampler = sampler;
-	ctx.m_queueCtx.m_key = RenderingKey(pass, 0, 1, false, false);
+	ctx.m_queueCtx.m_key = RenderingKey(pass, 0, 1, false, false, vrsMipBias);
 	ctx.m_queueCtx.m_debugDraw = false;
 	ctx.m_queueCtx.m_globalUniforms.m_buffer = globalUniformsToken.m_buffer;
 	ctx.m_queueCtx.m_globalUniforms.m_offset = globalUniformsToken.m_offset;
