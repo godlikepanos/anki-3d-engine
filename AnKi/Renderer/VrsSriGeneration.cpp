@@ -56,6 +56,18 @@ Error VrsSriGeneration::initInternal()
 	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/VrsSriGenerationCompute.ankiprogbin", m_prog));
 	ShaderProgramResourceVariantInitInfo variantInit(m_prog);
 	variantInit.addMutation("SRI_TEXEL_DIMENSION", m_sriTexelDimension);
+
+	if(m_sriTexelDimension == 16 && getGrManager().getDeviceCapabilities().m_minSubgroupSize >= 32)
+	{
+		// Algorithm's workgroup size is 32, GPU's subgroup size is min 32 -> each workgroup has 1 subgroup -> No need
+		// for shared mem
+		variantInit.addMutation("SHARED_MEMORY", 0);
+	}
+	else
+	{
+		variantInit.addMutation("SHARED_MEMORY", 1);
+	}
+
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInit, variant);
 	m_grProg = variant->getProgram();
@@ -116,10 +128,13 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 		cmdb->bindShaderProgram(m_grProg);
 
 		rgraphCtx.bindColorTexture(0, 0, m_r->getTemporalAA().getTonemappedRt());
-		rgraphCtx.bindImage(0, 1, m_runCtx.m_rt);
+		cmdb->bindSampler(0, 1, m_r->getSamplers().m_nearestNearestClamp);
+		rgraphCtx.bindImage(0, 2, m_runCtx.m_rt);
+		const Vec4 pc(1.0f / Vec2(m_r->getInternalResolution()), getConfig().getRVrsThreshold(), 0.0f);
+		cmdb->setPushConstants(&pc, sizeof(pc));
 
-		const U32 workgroupSize = m_sriTexelDimension;
-		dispatchPPCompute(cmdb, workgroupSize, workgroupSize, m_r->getInternalResolution().x(),
+		const U32 fakeWorkgroupSizeXorY = m_sriTexelDimension;
+		dispatchPPCompute(cmdb, fakeWorkgroupSizeXorY, fakeWorkgroupSizeXorY, m_r->getInternalResolution().x(),
 						  m_r->getInternalResolution().y());
 	});
 }
