@@ -105,13 +105,12 @@ Error NativeWindowSdl::init(const NativeWindowInitInfo& init)
 #endif
 
 	SDL_SetHint(SDL_HINT_ALLOW_TOPMOST, "0");
-	if(init.m_exclusiveMode)
+	if(init.m_fullscreenDesktopRez != NativeWindowInitInfo::WindowMode::Windowed)
 	{
-		flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
-	}
-
-	if(init.m_fullscreenDesktopRez)
-	{
+		if(init.m_fullscreenDesktopRez == NativeWindowInitInfo::WindowMode::FullscreenExclusive)
+		{
+			flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+		}
 
 		// Alter the window size
 		SDL_DisplayMode mode;
