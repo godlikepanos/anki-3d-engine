@@ -311,6 +311,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 	if(enableVrs)
 	{
+		// Restore
 		cmdb->setVrsRate(VrsRate::_1x1);
 	}
 }

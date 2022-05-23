@@ -86,7 +86,21 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::P) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "VRS") ? "" : "VRS");
+		static U32 idx = 2;
+		++idx;
+		idx %= 3;
+		if(idx == 0)
+		{
+			renderer.setCurrentDebugRenderTarget("IndirectDiffuseVrsSri");
+		}
+		else if(idx == 1)
+		{
+			renderer.setCurrentDebugRenderTarget("VRS");
+		}
+		else
+		{
+			renderer.setCurrentDebugRenderTarget("");
+		}
 	}
 
 	if(in.getKey(KeyCode::L) == 1)
