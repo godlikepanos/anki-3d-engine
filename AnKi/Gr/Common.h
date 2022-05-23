@@ -171,6 +171,9 @@ public:
 	/// VRS.
 	Bool m_vrs = false;
 
+	/// Min size of a texel in the shading rate image.
+	U32 m_minSriTexelSize = 0;
+
 	/// Supports min/max texture filtering.
 	Bool m_samplingFilterMinMax = false;
 
@@ -179,7 +182,7 @@ public:
 };
 ANKI_END_PACKED_STRUCT
 static_assert(sizeof(GpuDeviceCapabilities)
-				  == sizeof(PtrSize) * 4 + sizeof(U32) * 7 + sizeof(U8) * 3 + sizeof(Bool) * 6,
+				  == sizeof(PtrSize) * 4 + sizeof(U32) * 8 + sizeof(U8) * 3 + sizeof(Bool) * 6,
 			  "Should be packed");
 
 /// The type of the allocator for heap allocations
