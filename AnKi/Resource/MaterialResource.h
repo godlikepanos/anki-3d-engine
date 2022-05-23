@@ -44,6 +44,7 @@ enum class BuiltinMutatorId : U8
 	LOD,
 	BONES,
 	VELOCITY,
+	VRS,
 
 	COUNT,
 	FIRST = 0
@@ -435,7 +436,7 @@ private:
 	U32 m_globalUniformsUboBinding = MAX_U32;
 
 	/// Matrix of variants.
-	mutable Array5d<MaterialVariant, U(Pass::COUNT), MAX_LOD_COUNT, 2, 2, 2> m_variantMatrix;
+	mutable Array6d<MaterialVariant, U(Pass::COUNT), MAX_LOD_COUNT, 2, 2, 2, 2> m_variantMatrix;
 	mutable RWMutex m_variantMatrixMtx;
 
 	DynamicArray<MaterialVariable> m_vars;

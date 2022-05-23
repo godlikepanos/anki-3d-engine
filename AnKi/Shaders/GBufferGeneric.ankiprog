@@ -8,6 +8,7 @@
 #pragma anki mutator ANKI_VELOCITY 0 1
 #pragma anki mutator ANKI_PASS 0 2 3
 #pragma anki mutator ANKI_BONES 0 1
+#pragma anki mutator ANKI_VRS 0 1
 #pragma anki mutator DIFFUSE_TEX 0 1
 #pragma anki mutator SPECULAR_TEX 0 1
 #pragma anki mutator ROUGHNESS_TEX 0 1
@@ -279,6 +280,10 @@ void main()
 
 #pragma anki start frag
 
+#if ANKI_VRS
+#	extension GL_EXT_fragment_shading_rate : require
+#endif
+
 #if REALLY_USING_PARALLAX
 Vec2 computeTextureCoordParallax(texture2D heightMap, sampler sampl, Vec2 uv, F32 heightMapScale)
 {
@@ -351,10 +356,10 @@ Vec2 computeTextureCoordParallax(texture2D heightMap, sampler sampl, Vec2 uv, F3
 
 // Do normal mapping
 #if ANKI_PASS == PASS_GB
-ANKI_RP Vec3 readNormalFromTexture(ANKI_RP texture2D map, sampler sampl, highp Vec2 texCoords)
+ANKI_RP Vec3 readNormalFromTexture(ANKI_RP texture2D map, sampler sampl, highp Vec2 texCoords, F32 bias)
 {
 	// First read the texture
-	const ANKI_RP Vec3 nAtTangentspace = normalize((texture(map, sampl, texCoords).rgb - 0.5) * 2.0);
+	const ANKI_RP Vec3 nAtTangentspace = normalize((texture(map, sampl, texCoords, bias).rgb - 0.5) * 2.0);
 
 	const ANKI_RP Vec3 n = normalize(in_normal);
 	const ANKI_RP Vec3 t = normalize(in_tangent);
@@ -384,44 +389,58 @@ void main()
 	const Vec2 uv = in_uv;
 #	endif
 
+	F32 bias = 0.0;
+#	if ANKI_VRS
+	if((gl_ShadingRateEXT & gl_ShadingRateFlag2VerticalPixelsEXT) != 0
+	   || (gl_ShadingRateEXT & gl_ShadingRateFlag2HorizontalPixelsEXT) != 0)
+	{
+		bias = -1.0;
+	}
+	else if((gl_ShadingRateEXT & gl_ShadingRateFlag4VerticalPixelsEXT) != 0
+			|| (gl_ShadingRateEXT & gl_ShadingRateFlag4HorizontalPixelsEXT) != 0)
+	{
+		bias = -2.0;
+	}
+#	endif
+
 #	if defined(USING_DIFF_TEX)
 #		if ALPHA_TEST
-	const ANKI_RP Vec4 diffColorA = texture(u_diffTex, u_ankiGlobalSampler, uv);
+	const ANKI_RP Vec4 diffColorA = texture(u_diffTex, u_ankiGlobalSampler, uv, bias);
 	doAlphaText(diffColorA.a);
 	const ANKI_RP Vec3 diffColor = diffColorA.rgb;
 #		else
-	const ANKI_RP Vec3 diffColor = texture(u_diffTex, u_ankiGlobalSampler, uv).rgb;
+	const ANKI_RP Vec3 diffColor = texture(u_diffTex, u_ankiGlobalSampler, uv, bias).rgb;
 #		endif
 #	else
 	const ANKI_RP Vec3 diffColor = u_ankiPerDraw.m_diffColor;
 #	endif
 
 #	if defined(USING_SPECULAR_TEX)
-	const ANKI_RP Vec3 specColor = texture(u_specTex, u_ankiGlobalSampler, uv).rgb;
+	const ANKI_RP Vec3 specColor = texture(u_specTex, u_ankiGlobalSampler, uv, bias).rgb;
 #	else
 	const ANKI_RP Vec3 specColor = u_ankiPerDraw.m_specColor;
 #	endif
 
 #	if defined(USING_ROUGHNESS_TEX)
-	const ANKI_RP F32 roughness = texture(u_roughnessTex, u_ankiGlobalSampler, uv).g;
+	const ANKI_RP F32 roughness = texture(u_roughnessTex, u_ankiGlobalSampler, uv, bias).g;
 #	else
 	const ANKI_RP F32 roughness = u_ankiPerDraw.m_roughness;
 #	endif
 
 #	if defined(USING_METALLIC_TEX)
-	const ANKI_RP F32 metallic = texture(u_metallicTex, u_ankiGlobalSampler, uv).b;
+	const ANKI_RP F32 metallic = texture(u_metallicTex, u_ankiGlobalSampler, uv, bias).b;
 #	else
 	const ANKI_RP F32 metallic = u_ankiPerDraw.m_metallic;
 #	endif
 
 #	if defined(USING_NORMAL_TEX)
-	const ANKI_RP Vec3 normal = readNormalFromTexture(u_normalTex, u_ankiGlobalSampler, uv);
+	const ANKI_RP Vec3 normal = readNormalFromTexture(u_normalTex, u_ankiGlobalSampler, uv, bias);
 #	else
 	const ANKI_RP Vec3 normal = normalize(in_normal);
 #	endif
 
 #	if defined(USING_EMISSIVE_TEX)
-	const ANKI_RP Vec3 emission = texture(u_emissiveTex, u_ankiGlobalSampler, uv).rgb;
+	const ANKI_RP Vec3 emission = texture(u_emissiveTex, u_ankiGlobalSampler, uv, bias).rgb;
 #	else
 	const ANKI_RP Vec3 emission = u_ankiPerDraw.m_emission;
 #	endif

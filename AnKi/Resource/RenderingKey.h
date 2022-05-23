@@ -26,24 +26,25 @@ enum class Pass : U8
 class RenderingKey
 {
 public:
-	RenderingKey(Pass pass, U32 lod, U32 instanceCount, Bool skinned, Bool velocity)
+	RenderingKey(Pass pass, U32 lod, U32 instanceCount, Bool skinned, Bool velocity, Bool vrs)
 		: m_pass(pass)
 		, m_lod(U8(lod))
 		, m_instanceCount(U8(instanceCount))
 		, m_skinned(skinned)
 		, m_velocity(velocity)
+		, m_vrs(vrs)
 	{
 		ANKI_ASSERT(instanceCount <= MAX_INSTANCE_COUNT && instanceCount != 0);
 		ANKI_ASSERT(lod <= MAX_LOD_COUNT);
 	}
 
 	RenderingKey()
-		: RenderingKey(Pass::GB, 0, 1, false, false)
+		: RenderingKey(Pass::GB, 0, 1, false, false, false)
 	{
 	}
 
 	RenderingKey(const RenderingKey& b)
-		: RenderingKey(b.m_pass, b.m_lod, b.m_instanceCount, b.m_skinned, b.m_velocity)
+		: RenderingKey(b.m_pass, b.m_lod, b.m_instanceCount, b.m_skinned, b.m_velocity, b.m_vrs)
 	{
 	}
 
@@ -56,7 +57,7 @@ public:
 	Bool operator==(const RenderingKey& b) const
 	{
 		return m_pass == b.m_pass && m_lod == b.m_lod && m_instanceCount == b.m_instanceCount
-			   && m_skinned == b.m_skinned && m_velocity == b.m_velocity;
+			   && m_skinned == b.m_skinned && m_velocity == b.m_velocity && m_vrs == b.m_vrs;
 	}
 
 	Pass getPass() const
@@ -111,12 +112,23 @@ public:
 		m_velocity = v;
 	}
 
+	Bool hasVrs() const
+	{
+		return m_vrs;
+	}
+
+	void setVrs(Bool v)
+	{
+		m_vrs = v;
+	}
+
 private:
 	Pass m_pass;
 	U8 m_lod;
 	U8 m_instanceCount;
 	Bool m_skinned : 1;
 	Bool m_velocity : 1;
+	Bool m_vrs : 1;
 };
 
 template<>
