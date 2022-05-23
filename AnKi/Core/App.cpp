@@ -240,7 +240,8 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	nwinit.m_height = m_config->getHeight();
 	nwinit.m_depthBits = 0;
 	nwinit.m_stencilBits = 0;
-	nwinit.m_fullscreenDesktopRez = m_config->getWindowFullscreen();
+	nwinit.m_fullscreenDesktopRez = m_config->getWindowFullscreen() > 0;
+	nwinit.m_exclusiveFullscreen = m_config->getWindowFullscreen() == 2;
 	ANKI_CHECK(NativeWindow::newInstance(nwinit, m_window));
 
 	//
