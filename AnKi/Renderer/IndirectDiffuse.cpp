@@ -57,7 +57,8 @@ Error IndirectDiffuse::initInternal()
 			m_r->create2DRenderTargetDescription(rez.x(), rez.y(), Format::R8_UINT, "IndirectDiffuse VRS SRI");
 		m_vrs.m_rtHandle.bake();
 
-		ANKI_CHECK(getResourceManager().loadResource("Shaders/IndirectDiffuseVrsSriGeneration.ankiprog", m_vrs.m_prog));
+		ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/IndirectDiffuseVrsSriGeneration.ankiprogbin",
+													 m_vrs.m_prog));
 
 		ShaderProgramResourceVariantInitInfo variantInit(m_vrs.m_prog);
 		variantInit.addMutation("SRI_TEXEL_DIMENSION", m_vrs.m_sriTexelDimension);
@@ -77,7 +78,7 @@ Error IndirectDiffuse::initInternal()
 		m_vrs.m_prog->getOrCreateVariant(variantInit, variant);
 		m_vrs.m_grProg = variant->getProgram();
 
-		ANKI_CHECK(getResourceManager().loadResource("AnKi/Shaders/VrsSriVisualizeRenderTarget.ankiprog",
+		ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/VrsSriVisualizeRenderTarget.ankiprogbin",
 													 m_vrs.m_visualizeProg));
 		m_vrs.m_visualizeProg->getOrCreateVariant(variant);
 		m_vrs.m_visualizeGrProg = variant->getProgram();
@@ -100,8 +101,9 @@ Error IndirectDiffuse::initInternal()
 		m_denoise.m_fbDescr.m_colorAttachmentCount = 1;
 		m_denoise.m_fbDescr.bake();
 
-		ANKI_CHECK(getResourceManager().loadResource((preferCompute) ? "ShaderBinaries/IndirectDiffuseDenoiseCompute.ankiprog"
-																	 : "ShaderBinaries/IndirectDiffuseDenoiseRaster.ankiprog",
+		ANKI_CHECK(getResourceManager().loadResource((preferCompute)
+														 ? "ShaderBinaries/IndirectDiffuseDenoiseCompute.ankiprogbin"
+														 : "ShaderBinaries/IndirectDiffuseDenoiseRaster.ankiprogbin",
 													 m_denoise.m_prog));
 
 		ShaderProgramResourceVariantInitInfo variantInit(m_denoise.m_prog);
