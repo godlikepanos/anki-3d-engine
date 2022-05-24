@@ -49,6 +49,9 @@ static U cgltfComponentSize(cgltf_component_type type)
 	case cgltf_component_type_r_16u:
 		out = sizeof(U16);
 		break;
+	case cgltf_component_type_r_8u:
+		out = sizeof(U8);
+		break;
 	default:
 		ANKI_ASSERT(!"TODO");
 		out = 0;
@@ -275,7 +278,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 {
 	StringAuto fname(m_alloc);
 	fname.sprintf("%s%s", m_outDir.cstr(), computeMeshResourceFilename(mesh, lod).cstr());
-	ANKI_IMPORTER_LOGI("Importing mesh (%s, decimate factor %f): %s",
+	ANKI_IMPORTER_LOGV("Importing mesh (%s, decimate factor %f): %s",
 					   (m_optimizeMeshes) ? "optimize" : "WON'T optimize", decimateFactor, fname.cstr());
 
 	ListAuto<SubMesh> submeshes(m_alloc);
@@ -354,10 +357,20 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 			else if(attrib->type == cgltf_attribute_type_joints)
 			{
 				U32 count = 0;
-				ANKI_CHECK(checkAttribute<U16Vec4>(*attrib));
-				visitAccessor<U16Vec4>(*attrib->data, [&](const U16Vec4& x) {
-					submesh.m_verts[count++].m_boneIds = x;
-				});
+				if(cgltfComponentSize(attrib->data->component_type) == 2)
+				{
+					ANKI_CHECK(checkAttribute<U16Vec4>(*attrib));
+					visitAccessor<U16Vec4>(*attrib->data, [&](const U16Vec4& x) {
+						submesh.m_verts[count++].m_boneIds = x;
+					});
+				}
+				else
+				{
+					ANKI_CHECK(checkAttribute<U8Vec4>(*attrib));
+					visitAccessor<U8Vec4>(*attrib->data, [&](const U8Vec4& x) {
+						submesh.m_verts[count++].m_boneIds = U16Vec4(x);
+					});
+				}
 				hasBoneWeights = true;
 			}
 			else if(attrib->type == cgltf_attribute_type_weights)
@@ -370,7 +383,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 			}
 			else
 			{
-				ANKI_IMPORTER_LOGW("Ignoring attribute: %s", attrib->name);
+				ANKI_IMPORTER_LOGV("Ignoring attribute: %s", attrib->name);
 			}
 		}
 

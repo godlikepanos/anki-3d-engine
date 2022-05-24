@@ -5,7 +5,7 @@
 
 #pragma anki mutator BLUR_ORIENTATION 0 1 // 0: in X axis, 1: in Y axis
 
-#include <AnKi/Shaders/Include/IndirectDiffuseTypes.h>
+#include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #include <AnKi/Shaders/PackFunctions.glsl>
 #include <AnKi/Shaders/Functions.glsl>
 #include <AnKi/Shaders/BilateralFilter.glsl>

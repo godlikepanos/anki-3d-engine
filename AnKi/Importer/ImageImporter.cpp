@@ -1008,7 +1008,7 @@ static ANKI_USE_RESULT Error importImageInternal(const ImageImporterConfig& conf
 	}
 
 	ctx.m_channelCount = desiredChannelCount;
-	ctx.m_pixelSize = ctx.m_channelCount * ((isHdr) ? sizeof(F32) : sizeof(U8));
+	ctx.m_pixelSize = ctx.m_channelCount * U32((isHdr) ? sizeof(F32) : sizeof(U8));
 
 	// Load first mip from the files
 	ANKI_CHECK(loadFirstMipmap(config, ctx));

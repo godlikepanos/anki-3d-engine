@@ -20,9 +20,9 @@ public:
 	GBuffer(Renderer* r)
 		: RendererObject(r)
 	{
-		registerDebugRenderTarget("GBuffer_normals");
-		registerDebugRenderTarget("GBuffer_albedo");
-		registerDebugRenderTarget("GBuffer_velocity");
+		registerDebugRenderTarget("GBufferNormals");
+		registerDebugRenderTarget("GBufferAlbedo");
+		registerDebugRenderTarget("GBufferVelocity");
 	}
 
 	~GBuffer();
@@ -50,15 +50,15 @@ public:
 	void getDebugRenderTarget(CString rtName, RenderTargetHandle& handle,
 							  ShaderProgramPtr& optionalShaderProgram) const override
 	{
-		if(rtName == "GBuffer_albedo")
+		if(rtName == "GBufferAlbedo")
 		{
 			handle = m_runCtx.m_colorRts[0];
 		}
-		else if(rtName == "GBuffer_normals")
+		else if(rtName == "GBufferNormals")
 		{
 			handle = m_runCtx.m_colorRts[2];
 		}
-		else if(rtName == "GBuffer_velocity")
+		else if(rtName == "GBufferVelocity")
 		{
 			handle = m_runCtx.m_colorRts[3];
 		}

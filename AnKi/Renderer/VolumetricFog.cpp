@@ -28,7 +28,7 @@ Error VolumetricFog::init()
 	ANKI_R_LOGV("Initializing volumetric fog. Resolution %ux%ux%u", m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]);
 
 	// Shaders
-	ANKI_CHECK(getResourceManager().loadResource("Shaders/VolumetricFogAccumulation.ankiprog", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/VolumetricFogAccumulation.ankiprogbin", m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addConstant("VOLUME_SIZE", UVec3(m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]));
@@ -72,17 +72,7 @@ void VolumetricFog::populateRenderGraph(RenderingContext& ctx)
 
 		rgraphCtx.bindImage(0, 2, m_runCtx.m_rt, TextureSubresourceInfo());
 
-		class PushConsts
-		{
-		public:
-			Vec3 m_fogDiffuse;
-			F32 m_fogScatteringCoeff;
-			F32 m_fogAbsorptionCoeff;
-			F32 m_near;
-			F32 m_far;
-			F32 m_padding;
-		} regs;
-
+		VolumetricFogUniforms regs;
 		const SkyboxQueueElement& el = ctx.m_renderQueue->m_skybox;
 		regs.m_fogDiffuse = el.m_fog.m_diffuseColor;
 		regs.m_fogScatteringCoeff = el.m_fog.m_scatteringCoeff;

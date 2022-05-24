@@ -1,4 +1,4 @@
-file(GLOB_RECURSE SOURCES *.cpp)
+file(GLOB_RECURSE sources *.cpp)
 
-anki_new_executable(GltfImporter ${SOURCES})
-target_link_libraries(GltfImporter AnKi)
+anki_new_executable(GltfImporter ${sources})
+target_link_libraries(GltfImporter AnKiImporter AnKiMeshOptimizer)

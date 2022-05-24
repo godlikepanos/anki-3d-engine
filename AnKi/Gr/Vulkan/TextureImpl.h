@@ -220,8 +220,6 @@ private:
 
 	void computeBarrierInfo(TextureUsageBit usage, Bool src, U32 level, VkPipelineStageFlags& stages,
 							VkAccessFlags& accesses) const;
-
-	void destroyMicroImageView(MicroImageView& view);
 };
 /// @}
 

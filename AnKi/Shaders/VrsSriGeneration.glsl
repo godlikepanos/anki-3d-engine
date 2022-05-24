@@ -164,16 +164,6 @@ void main()
 		rate.x = (lumaDiff.x > threshold1) ? 1u : ((lumaDiff.x > threshold2) ? 2u : 4u);
 		rate.y = (lumaDiff.y > threshold1) ? 1u : ((lumaDiff.y > threshold2) ? 2u : 4u);
 
-		// 1x4 and 4x1 shading rates don't exist.
-		if(rate == UVec2(1u, 4u))
-		{
-			rate = UVec2(1u, 2u);
-		}
-		else if(rate == UVec2(4u, 1u))
-		{
-			rate = UVec2(2u, 1u);
-		}
-
 		const UVec2 outTexelCoord = gl_WorkGroupID.xy;
 		imageStore(u_sriImg, IVec2(outTexelCoord), UVec4(encodeVrsRate(rate)));
 	}

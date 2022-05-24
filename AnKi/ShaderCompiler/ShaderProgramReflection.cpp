@@ -293,7 +293,7 @@ Error SpirvReflector::structReflection(uint32_t id, const spirv_cross::SPIRType&
 			if(0)
 			{
 			}
-#define ANKI_SVDT_MACRO(capital, type, baseType_, rowCount, columnCount) \
+#define ANKI_SVDT_MACRO(capital, type, baseType_, rowCount, columnCount, isIntagralType) \
 	else if(ShaderVariableDataType::baseType_ == baseType && isMatrix && memberType.vecsize == rowCount \
 			&& memberType.columns == columnCount) \
 	{ \
@@ -496,7 +496,7 @@ Error SpirvReflector::blockVariableReflection(const spirv_cross::SPIRType& type,
 			if(0)
 			{
 			}
-#define ANKI_SVDT_MACRO(capital, type_, baseType_, rowCount, columnCount) \
+#define ANKI_SVDT_MACRO(capital, type_, baseType_, rowCount, columnCount, isIntagralType) \
 	else if(ShaderVariableDataType::baseType_ == baseType && isMatrix && memberType.vecsize == rowCount \
 			&& memberType.columns == columnCount) \
 	{ \

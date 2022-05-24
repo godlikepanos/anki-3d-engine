@@ -44,7 +44,7 @@ Error VolumetricLightingAccumulation::init()
 	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_noiseImage));
 
 	// Shaders
-	ANKI_CHECK(getResourceManager().loadResource("Shaders/VolumetricLightingAccumulation.ankiprog", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/VolumetricLightingAccumulation.ankiprogbin", m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addMutation("ENABLE_SHADOWS", 1);
@@ -66,9 +66,8 @@ Error VolumetricLightingAccumulation::init()
 										  "VolLight");
 	texinit.m_depth = m_volumeSize[2];
 	texinit.m_type = TextureType::_3D;
-	texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
-	m_rtTextures[0] = m_r->createAndClearRenderTarget(texinit);
-	m_rtTextures[1] = m_r->createAndClearRenderTarget(texinit);
+	m_rtTextures[0] = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::SAMPLED_FRAGMENT);
+	m_rtTextures[1] = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::SAMPLED_FRAGMENT);
 
 	return Error::NONE;
 }
@@ -127,14 +126,7 @@ void VolumetricLightingAccumulation::run(const RenderingContext& ctx, RenderPass
 	bindUniforms(cmdb, 0, 11, rsrc.m_fogDensityVolumesToken);
 	bindStorage(cmdb, 0, 12, rsrc.m_clustersToken);
 
-	class FogUniforms
-	{
-	public:
-		F32 m_densityAtMinHeight;
-		F32 m_densityAtMaxHeight;
-		F32 m_minHeight;
-		F32 m_oneOverMaxMinusMinHeight; // 1 / (maxHeight / minHeight)
-	} unis;
+	VolumetricLightingUniforms unis;
 	const SkyboxQueueElement& queueEl = ctx.m_renderQueue->m_skybox;
 	if(queueEl.m_fog.m_heightOfMaxDensity > queueEl.m_fog.m_heightOfMinDensity)
 	{

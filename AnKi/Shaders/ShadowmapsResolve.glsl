@@ -8,10 +8,10 @@ ANKI_SPECIALIZATION_CONSTANT_UVEC2(TILE_COUNTS, 2u);
 ANKI_SPECIALIZATION_CONSTANT_U32(Z_SPLIT_COUNT, 4u);
 ANKI_SPECIALIZATION_CONSTANT_U32(TILE_SIZE, 5u);
 
-#define CLUSTERED_SHADING_SET 0
-#define CLUSTERED_SHADING_UNIFORMS_BINDING 0
-#define CLUSTERED_SHADING_LIGHTS_BINDING 1
-#define CLUSTERED_SHADING_CLUSTERS_BINDING 4
+#define CLUSTERED_SHADING_SET 0u
+#define CLUSTERED_SHADING_UNIFORMS_BINDING 0u
+#define CLUSTERED_SHADING_LIGHTS_BINDING 1u
+#define CLUSTERED_SHADING_CLUSTERS_BINDING 4u
 #include <AnKi/Shaders/ClusteredShadingCommon.glsl>
 
 layout(set = 0, binding = 5) uniform sampler u_linearAnyClampSampler;
@@ -122,7 +122,7 @@ void main()
 	{
 		const I32 idx = findLSB2(cluster.m_spotLightsMask);
 		cluster.m_spotLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
-		const SpotLight light = u_spotLights2[idx];
+		const SpotLight light = u_spotLights[idx];
 
 		ANKI_BRANCH if(light.m_shadowLayer != MAX_U32)
 		{

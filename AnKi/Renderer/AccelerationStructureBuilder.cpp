@@ -35,7 +35,7 @@ void AccelerationStructureBuilder::populateRenderGraph(RenderingContext& ctx)
 		AccelerationStructureInstance& out = instances[instanceIdx];
 		::new(&out) AccelerationStructureInstance();
 		out.m_bottomLevel.reset(element.m_bottomLevelAccelerationStructure);
-		memcpy(&out.m_transform, &element.m_modelDescriptor.m_worldTransform[0], sizeof(out.m_transform));
+		memcpy(&out.m_transform, &element.m_transform, sizeof(out.m_transform));
 		out.m_hitgroupSbtRecordIndex = instanceIdx;
 		out.m_mask = 0xFF;
 	}

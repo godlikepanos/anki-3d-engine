@@ -17,21 +17,21 @@ ANKI_SPECIALIZATION_CONSTANT_U32(SAMPLE_COUNT, 6u);
 #include <AnKi/Shaders/PackFunctions.glsl>
 #include <AnKi/Shaders/ImportanceSampling.glsl>
 #include <AnKi/Shaders/TonemappingFunctions.glsl>
-#include <AnKi/Shaders/Include/IndirectDiffuseTypes.h>
+#include <AnKi/Shaders/Include/MiscRendererTypes.h>
 
-#define CLUSTERED_SHADING_SET 0
-#define CLUSTERED_SHADING_UNIFORMS_BINDING 0
-#define CLUSTERED_SHADING_GI_BINDING 1
-#define CLUSTERED_SHADING_CLUSTERS_BINDING 3
+#define CLUSTERED_SHADING_SET 0u
+#define CLUSTERED_SHADING_UNIFORMS_BINDING 0u
+#define CLUSTERED_SHADING_GI_BINDING 1u
+#define CLUSTERED_SHADING_CLUSTERS_BINDING 3u
 #include <AnKi/Shaders/ClusteredShadingCommon.glsl>
 
 layout(set = 0, binding = 4) uniform sampler u_linearAnyClampSampler;
-layout(set = 0, binding = 5) ANKI_RP uniform texture2D u_gbufferRt2;
+layout(set = 0, binding = 5) uniform ANKI_RP texture2D u_gbufferRt2;
 layout(set = 0, binding = 6) uniform texture2D u_depthRt;
-layout(set = 0, binding = 7) ANKI_RP uniform texture2D u_lightBufferRt;
-layout(set = 0, binding = 8) ANKI_RP uniform texture2D u_historyTex;
+layout(set = 0, binding = 7) uniform ANKI_RP texture2D u_lightBufferRt;
+layout(set = 0, binding = 8) uniform ANKI_RP texture2D u_historyTex;
 layout(set = 0, binding = 9) uniform texture2D u_motionVectorsTex;
-layout(set = 0, binding = 10) uniform texture2D u_historyLengthTex;
+layout(set = 0, binding = 10) uniform ANKI_RP texture2D u_historyLengthTex;
 
 #if defined(ANKI_COMPUTE_SHADER)
 const UVec2 WORKGROUP_SIZE = UVec2(8, 8);
@@ -43,7 +43,7 @@ layout(location = 0) in Vec2 in_uv;
 layout(location = 0) out Vec3 out_color;
 #endif
 
-layout(push_constant, std430) uniform b_pc
+layout(push_constant, std140) uniform b_pc
 {
 	IndirectDiffuseUniforms u_unis;
 };
@@ -73,7 +73,7 @@ void main()
 
 	// Get normal
 	const Vec3 worldNormal = unpackNormalFromGBuffer(textureLod(u_gbufferRt2, u_linearAnyClampSampler, uv, 0.0));
-	const Vec3 viewNormal = u_clusteredShading.m_matrices.m_viewRotation * worldNormal;
+	const Vec3 viewNormal = (u_clusteredShading.m_matrices.m_view * Vec4(worldNormal, 0.0)).xyz;
 
 	// Get origin
 	const F32 depth = textureLod(u_depthRt, u_linearAnyClampSampler, uv, 0.0).r;
@@ -158,10 +158,6 @@ void main()
 
 		// Get the cluster
 		Cluster cluster = getClusterFragCoord(Vec3(fragCoord * 2.0, depth));
-
-		// Get world position
-		const Vec4 worldPos4 = u_clusteredShading.m_matrices.m_invertedViewProjectionJitter * Vec4(ndc, depth, 1.0);
-		const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
 		if(bitCount(cluster.m_giProbesMask) == 1)
 		{

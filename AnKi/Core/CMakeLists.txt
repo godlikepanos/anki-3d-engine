@@ -1,17 +1,35 @@
-set(SOURCES App.cpp ConfigSet.cpp GpuMemoryPools.cpp DeveloperConsole.cpp CoreTracer.cpp MaliHwCounters.cpp
+set(sources
+	App.cpp
+	ConfigSet.cpp
+	GpuMemoryPools.cpp
+	DeveloperConsole.cpp
+	CoreTracer.cpp
+	MaliHwCounters.cpp
 	StatsUi.cpp)
-file(GLOB HEADERS *.h)
 
 if(ANKI_HEADLESS)
-	set(SOURCES ${SOURCES} NativeWindowHeadless.cpp)
+	set(sources ${sources} NativeWindowHeadless.cpp)
 elseif(SDL)
-	set(SOURCES ${SOURCES} NativeWindowSdl.cpp)
+	set(sources ${sources} NativeWindowSdl.cpp)
 elseif(ANDROID)
-	set(SOURCES ${SOURCES} NativeWindowAndroid.cpp)
+	set(sources ${sources} NativeWindowAndroid.cpp)
 else()
 	message(FATAL_ERROR "Not implemented")
 endif()
 
-foreach(S ${SOURCES})
-	anki_add_source_files("${CMAKE_CURRENT_SOURCE_DIR}/${S}" ${HEADERS})
-endforeach()
+add_library(AnKiCore ${sources})
+
+if(SDL)
+	if(LINUX)
+		set(extra_libs X11-xcb pthread dl)
+	endif()
+
+	set(extra_libs ${extra_libs} SDL2-static)
+elseif(ANDROID)
+	set(extra_libs log android AnKiAndroidNativeGlue AnKiHwcPipe)
+elseif(WINDOWS)
+	set(extra_libs version Imm32 Winmm DbgHelp)
+endif()
+
+target_compile_definitions(AnKiCore PRIVATE -DANKI_SOURCE_FILE)
+target_link_libraries(AnKiCore AnKiGr AnKiResource AnKiUi AnKiRenderer AnKiUtil AnKiPhysics AnKiScript AnKiInput ${extra_libs})

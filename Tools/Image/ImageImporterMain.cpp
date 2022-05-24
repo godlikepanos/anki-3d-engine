@@ -17,7 +17,7 @@ Options:
 -store-raw <0|1>       : Store RAW images. Default is 0
 -mip-count <number>    : Max number of mipmaps. By default store until 4x4
 -astc-block-size <XxY> : The size of the ASTC block size. eg 4x4. Default is 8x8
--verbose               : Verbose log
+-v                     : Verbose log
 -to-linear             : Convert sRGB to linear
 -to-srgb               : Convert linear to sRGB
 -flip-image <0|1>      : Flip the image. Default is 1
@@ -165,7 +165,7 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 
 			ANKI_CHECK(CString(argv[i]).toNumber(config.m_mipmapCount));
 		}
-		else if(CString(argv[i]) == "-verbose")
+		else if(CString(argv[i]) == "-v")
 		{
 			LoggerSingleton::get().enableVerbosity(true);
 		}

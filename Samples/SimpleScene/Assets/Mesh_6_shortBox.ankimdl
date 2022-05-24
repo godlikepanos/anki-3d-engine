@@ -1,8 +1,0 @@
-<model>
-	<modelPatches>
-		<modelPatch>
-			<mesh>Assets/Mesh_6.ankimesh</mesh>
-			<material>Assets/shortBox.ankimtl</material>
-		</modelPatch>
-	</modelPatches>
-</model>

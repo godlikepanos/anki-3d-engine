@@ -62,7 +62,7 @@ Error LightShading::init()
 Error LightShading::initLightShading()
 {
 	// Load shaders and programs
-	ANKI_CHECK(getResourceManager().loadResource("Shaders/LightShading.ankiprog", m_lightShading.m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/LightShading.ankiprogbin", m_lightShading.m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_lightShading.m_prog);
 	variantInitInfo.addConstant("TILE_COUNTS", m_r->getTileCounts());
@@ -102,7 +102,7 @@ Error LightShading::initLightShading()
 
 Error LightShading::initSkybox()
 {
-	ANKI_CHECK(getResourceManager().loadResource("Shaders/LightShadingSkybox.ankiprog", m_skybox.m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/LightShadingSkybox.ankiprogbin", m_skybox.m_prog));
 
 	for(U32 method = 0; method < 2; ++method)
 	{
@@ -120,7 +120,7 @@ Error LightShading::initSkybox()
 Error LightShading::initApplyFog()
 {
 	// Load shaders and programs
-	ANKI_CHECK(getResourceManager().loadResource("Shaders/LightShadingApplyFog.ankiprog", m_applyFog.m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/LightShadingApplyFog.ankiprogbin", m_applyFog.m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_applyFog.m_prog);
 	variantInitInfo.addConstant("Z_SPLIT_COUNT", m_r->getZSplitCount());
@@ -135,7 +135,8 @@ Error LightShading::initApplyFog()
 
 Error LightShading::initApplyIndirect()
 {
-	ANKI_CHECK(getResourceManager().loadResource("Shaders/LightShadingApplyIndirect.ankiprog", m_applyIndirect.m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/LightShadingApplyIndirect.ankiprogbin",
+												 m_applyIndirect.m_prog));
 	const ShaderProgramResourceVariant* variant;
 	m_applyIndirect.m_prog->getOrCreateVariant(variant);
 	m_applyIndirect.m_grProg = variant->getProgram();
@@ -310,6 +311,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 	if(enableVrs)
 	{
+		// Restore
 		cmdb->setVrsRate(VrsRate::_1x1);
 	}
 }

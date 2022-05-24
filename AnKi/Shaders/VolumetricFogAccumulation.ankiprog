@@ -10,6 +10,7 @@ ANKI_SPECIALIZATION_CONSTANT_U32(Z_SPLIT_COUNT, 4u);
 #pragma anki start comp
 
 #include <AnKi/Shaders/Include/ClusteredShadingFunctions.h>
+#include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #include <AnKi/Shaders/Common.glsl>
 
 const UVec2 WORKGROUP_SIZE = UVec2(8, 8);
@@ -19,19 +20,9 @@ layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 1) uniform ANKI_RP texture3D u_lightVolume;
 layout(set = 0, binding = 2) writeonly uniform ANKI_RP image3D u_fogVolume;
 
-struct Uniforms
+layout(push_constant, std140) uniform b_pc
 {
-	ANKI_RP Vec3 m_fogDiffuse;
-	ANKI_RP F32 m_fogScatteringCoeff;
-	ANKI_RP F32 m_fogAbsorptionCoeff;
-	ANKI_RP F32 m_near;
-	ANKI_RP F32 m_far;
-	F32 m_padding;
-};
-
-layout(push_constant, scalar) uniform b_pc
-{
-	Uniforms u_unis;
+	VolumetricFogUniforms u_unis;
 };
 
 void main()

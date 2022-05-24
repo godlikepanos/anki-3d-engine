@@ -9,7 +9,6 @@
 #include <AnKi/Util/StringList.h>
 #include <AnKi/Util/WeakArray.h>
 #include <AnKi/Util/DynamicArray.h>
-#include <AnKi/Gr/Utils/Functions.h>
 
 namespace anki {
 
@@ -48,6 +47,35 @@ private:
 };
 
 /// @memberof ShaderProgramParser
+class ShaderProgramParserMember
+{
+public:
+	StringAuto m_name;
+	ShaderVariableDataType m_type;
+	U32 m_dependentMutator = MAX_U32;
+	MutatorValue m_mutatorValue = 0;
+
+	ShaderProgramParserMember(GenericMemoryPoolAllocator<U8> alloc)
+		: m_name(alloc)
+	{
+	}
+};
+
+/// @memberof ShaderProgramParser
+class ShaderProgramParserGhostStruct
+{
+public:
+	DynamicArrayAuto<ShaderProgramParserMember> m_members;
+	StringAuto m_name;
+
+	ShaderProgramParserGhostStruct(GenericMemoryPoolAllocator<U8> alloc)
+		: m_members(alloc)
+		, m_name(alloc)
+	{
+	}
+};
+
+/// @memberof ShaderProgramParser
 class ShaderProgramParserVariant
 {
 	friend class ShaderProgramParser;
@@ -78,15 +106,19 @@ private:
 /// #include {<> | ""}
 /// #pragma once
 /// #pragma anki mutator NAME VALUE0 [VALUE1 [VALUE2] ...]
-/// #pragma anki rewrite_mutation NAME_A VALUE0 NAME_B VALUE1 [NAME_C VALUE3...] to
-///                               NAME_A VALUE4 NAME_B VALUE5 [NAME_C VALUE6...]
 /// #pragma anki start {vert | tessc | tesse | geom | frag | comp | rgen | ahit | chit | miss | int | call}
 /// #pragma anki end
 /// #pragma anki library "name"
 /// #pragma anki ray_type NUMBER
 /// #pragma anki reflect NAME
+/// #pragma anki skip_mutation MUTATOR0 VALUE0 MUTATOR1 VALUE1 [MUTATOR2 VALUE2 ...]
 ///
-/// Only the "anki input" should be in an ifdef-like guard. For everything else it's ignored.
+/// #pragma anki struct NAME
+/// #	pragma anki member [ANKI_RP] TYPE NAME [if MUTATOR_NAME is MUTATOR_VALUE]
+/// 	...
+/// #pragma anki struct end
+///
+/// None of the pragmas should be in an ifdef-like guard. It's ignored.
 class ShaderProgramParser
 {
 public:
@@ -102,9 +134,8 @@ public:
 	/// Parse the file and its includes.
 	ANKI_USE_RESULT Error parse();
 
-	/// Given a mutation convert it to something acceptable. This will reduce the variants.
-	/// @return true if the mutation was rewritten.
-	Bool rewriteMutation(WeakArray<MutatorValue> mutation) const;
+	/// Returns true if the mutation should be skipped.
+	Bool skipMutation(ConstWeakArray<MutatorValue> mutation) const;
 
 	/// Get the source (and a few more things) given a list of mutators.
 	ANKI_USE_RESULT Error generateVariant(ConstWeakArray<MutatorValue> mutation,
@@ -141,39 +172,32 @@ public:
 		return m_symbolsToReflect;
 	}
 
+	ConstWeakArray<ShaderProgramParserGhostStruct> getGhostStructs() const
+	{
+		return m_ghostStructs;
+	}
+
 	/// Generates the common header that will be used by all AnKi shaders.
 	static void generateAnkiShaderHeader(ShaderType shaderType, const ShaderCompilerOptions& compilerOptions,
 										 StringAuto& header);
 
 private:
 	using Mutator = ShaderProgramParserMutator;
+	using Member = ShaderProgramParserMember;
+	using GhostStruct = ShaderProgramParserGhostStruct;
 
-	class MutationRewrite
+	class PartialMutationSkip
 	{
 	public:
-		class Record
-		{
-		public:
-			U32 m_mutatorIndex = MAX_U32;
-			MutatorValue m_valueFrom = getMaxNumericLimit<MutatorValue>();
-			MutatorValue m_valueTo = getMaxNumericLimit<MutatorValue>();
+		DynamicArrayAuto<MutatorValue> m_partialMutation;
 
-			Bool operator!=(const Record& b) const
-			{
-				return !(m_mutatorIndex == b.m_mutatorIndex && m_valueFrom == b.m_valueFrom
-						 && m_valueTo == b.m_valueTo);
-			}
-		};
-
-		DynamicArrayAuto<Record> m_records;
-
-		MutationRewrite(GenericMemoryPoolAllocator<U8> alloc)
-			: m_records(alloc)
+		PartialMutationSkip(const GenericMemoryPoolAllocator<U8>& alloc)
+			: m_partialMutation(alloc)
 		{
 		}
 	};
 
-	static const U32 MAX_INCLUDE_DEPTH = 8;
+	static constexpr U32 MAX_INCLUDE_DEPTH = 8;
 
 	GenericMemoryPoolAllocator<U8> m_alloc;
 	StringAuto m_fname;
@@ -184,7 +208,7 @@ private:
 	U64 m_codeSourceHash = 0;
 
 	DynamicArrayAuto<Mutator> m_mutators = {m_alloc};
-	DynamicArrayAuto<MutationRewrite> m_mutationRewrites = {m_alloc};
+	DynamicArrayAuto<PartialMutationSkip> m_skipMutations = {m_alloc};
 
 	ShaderTypeBit m_shaderTypes = ShaderTypeBit::NONE;
 	Bool m_insideShader = false;
@@ -195,6 +219,9 @@ private:
 
 	StringListAuto m_symbolsToReflect = {m_alloc};
 
+	DynamicArrayAuto<GhostStruct> m_ghostStructs = {m_alloc};
+	Bool m_insideStruct = false;
+
 	ANKI_USE_RESULT Error parseFile(CString fname, U32 depth);
 	ANKI_USE_RESULT Error parseLine(CString line, CString fname, Bool& foundPragmaOnce, U32 depth);
 	ANKI_USE_RESULT Error parseInclude(const StringAuto* begin, const StringAuto* end, CString line, CString fname,
@@ -203,14 +230,20 @@ private:
 											 CString fname);
 	ANKI_USE_RESULT Error parsePragmaStart(const StringAuto* begin, const StringAuto* end, CString line, CString fname);
 	ANKI_USE_RESULT Error parsePragmaEnd(const StringAuto* begin, const StringAuto* end, CString line, CString fname);
-	ANKI_USE_RESULT Error parsePragmaRewriteMutation(const StringAuto* begin, const StringAuto* end, CString line,
-													 CString fname);
+	ANKI_USE_RESULT Error parsePragmaSkipMutation(const StringAuto* begin, const StringAuto* end, CString line,
+												  CString fname);
 	ANKI_USE_RESULT Error parsePragmaLibraryName(const StringAuto* begin, const StringAuto* end, CString line,
 												 CString fname);
 	ANKI_USE_RESULT Error parsePragmaRayType(const StringAuto* begin, const StringAuto* end, CString line,
 											 CString fname);
 	ANKI_USE_RESULT Error parsePragmaReflect(const StringAuto* begin, const StringAuto* end, CString line,
 											 CString fname);
+	ANKI_USE_RESULT Error parsePragmaStructBegin(const StringAuto* begin, const StringAuto* end, CString line,
+												 CString fname);
+	ANKI_USE_RESULT Error parsePragmaStructEnd(const StringAuto* begin, const StringAuto* end, CString line,
+											   CString fname);
+	ANKI_USE_RESULT Error parsePragmaMember(const StringAuto* begin, const StringAuto* end, CString line,
+											CString fname);
 
 	void tokenizeLine(CString line, DynamicArrayAuto<StringAuto>& tokens) const;
 
@@ -220,6 +253,26 @@ private:
 	}
 
 	static Bool mutatorHasValue(const ShaderProgramParserMutator& mutator, MutatorValue value);
+
+	ANKI_USE_RESULT Error checkNoActiveStruct() const
+	{
+		if(m_insideStruct)
+		{
+			ANKI_SHADER_COMPILER_LOGE("Unsupported \"pragma anki\" inside \"pragma anki struct\"");
+			return Error::USER_DATA;
+		}
+		return Error::NONE;
+	}
+
+	ANKI_USE_RESULT Error checkActiveStruct() const
+	{
+		if(!m_insideStruct)
+		{
+			ANKI_SHADER_COMPILER_LOGE("Expected a \"pragma anki struct\" to open");
+			return Error::USER_DATA;
+		}
+		return Error::NONE;
+	}
 };
 /// @}
 

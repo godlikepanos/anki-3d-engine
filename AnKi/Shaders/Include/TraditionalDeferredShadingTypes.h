@@ -89,9 +89,12 @@ struct DeferredSkyboxUniforms
 {
 	ANKI_RP Vec3 m_solidColor;
 	F32 m_padding1;
+
 	Vec2 m_inputTexUvScale;
 	Vec2 m_inputTexUvBias;
+
 	Mat4 m_invertedViewProjectionMat;
+
 	Vec3 m_cameraPos;
 	F32 m_padding2;
 };

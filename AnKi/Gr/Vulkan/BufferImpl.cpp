@@ -12,15 +12,10 @@ BufferImpl::~BufferImpl()
 {
 	ANKI_ASSERT(!m_mapped);
 
-	if(m_handle)
-	{
-		vkDestroyBuffer(getDevice(), m_handle, nullptr);
-	}
-
-	if(m_memHandle)
-	{
-		getGrManagerImpl().getGpuMemoryManager().freeMemory(m_memHandle);
-	}
+	BufferGarbage* garbage = getAllocator().newInstance<BufferGarbage>();
+	garbage->m_bufferHandle = m_handle;
+	garbage->m_memoryHandle = m_memHandle;
+	getGrManagerImpl().getFrameGarbageCollector().newBufferGarbage(garbage);
 
 #if ANKI_EXTRA_CHECKS
 	if(m_needsFlush && m_flushCount.load() == 0)

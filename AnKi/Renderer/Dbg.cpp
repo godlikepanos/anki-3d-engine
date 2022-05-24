@@ -72,7 +72,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	dctx.m_frameAllocator = ctx.m_tempAllocator;
 	dctx.m_commandBuffer = cmdb;
 	dctx.m_sampler = m_r->getSamplers().m_trilinearRepeatAniso;
-	dctx.m_key = RenderingKey(Pass::FS, 0, 1, false, false);
+	dctx.m_key = RenderingKey(RenderingTechnique::FORWARD, 0, 1, false, false);
 	dctx.m_debugDraw = true;
 	dctx.m_debugDrawFlags = m_debugDrawFlags;
 

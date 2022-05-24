@@ -29,7 +29,7 @@ public:
 																		 Array<U32, 1>{16}));
 
 		ANKI_CHECK_AND_IGNORE(getSceneGraph().getResourceManager().loadResource(
-			"AnKi/Shaders/UiVisualizeImage.ankiprog", m_imageProgram));
+			"ShaderBinaries/UiVisualizeImage.ankiprog", m_imageProgram));
 	}
 
 	Error frameUpdate(Second prevUpdateTime, Second crntTime)
@@ -285,7 +285,7 @@ public:
 		config->setGrDebugMarkers(false);
 		ANKI_CHECK(config->setFromCommandLineArguments(argc - 2, argv + 2));
 
-		ANKI_CHECK(App::init(config, allocAligned, nullptr));
+		ANKI_CHECK(App::init(config, argv[0], allocAligned, nullptr));
 
 		// Load the texture
 		ImageResourcePtr image;

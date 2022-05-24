@@ -76,18 +76,14 @@ private:
 class ShaderProgramResourceSystem
 {
 public:
-	ShaderProgramResourceSystem(CString cacheDir, GrManager* gr, ResourceFilesystem* fs,
-								const GenericMemoryPoolAllocator<U8>& alloc)
+	ShaderProgramResourceSystem(const GenericMemoryPoolAllocator<U8>& alloc)
 		: m_alloc(alloc)
-		, m_gr(gr)
-		, m_fs(fs)
 	{
-		m_cacheDir.create(alloc, cacheDir);
 	}
 
 	~ShaderProgramResourceSystem();
 
-	ANKI_USE_RESULT Error init();
+	ANKI_USE_RESULT Error init(ResourceFilesystem& fs, GrManager& gr);
 
 	ConstWeakArray<ShaderProgramRaytracingLibrary> getRayTracingLibraries() const
 	{
@@ -96,18 +92,10 @@ public:
 
 private:
 	GenericMemoryPoolAllocator<U8> m_alloc;
-	String m_cacheDir;
-	GrManager* m_gr;
-	ResourceFilesystem* m_fs;
 	DynamicArray<ShaderProgramRaytracingLibrary> m_rtLibraries;
 
-	/// Iterate all programs in the filesystem and compile them to AnKi's binary format.
-	static Error compileAllShaders(CString cacheDir, GrManager& gr, ResourceFilesystem& fs,
-								   GenericMemoryPoolAllocator<U8>& alloc, StringListAuto& rtProgramFilenames);
-
-	static Error createRayTracingPrograms(CString cacheDir, const StringListAuto& rtProgramFilenames, GrManager& gr,
-										  GenericMemoryPoolAllocator<U8>& alloc,
-										  DynamicArray<ShaderProgramRaytracingLibrary>& libs);
+	static Error createRayTracingPrograms(ResourceFilesystem& fs, GrManager& gr, GenericMemoryPoolAllocator<U8>& alloc,
+										  DynamicArray<ShaderProgramRaytracingLibrary>& outLibs);
 };
 /// @}
 

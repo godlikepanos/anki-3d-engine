@@ -16,8 +16,8 @@ ANKI_SPECIALIZATION_CONSTANT_UVEC2(FB_SIZE, 2u);
 
 layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 1) uniform texture2D u_depthRt;
-layout(set = 0, binding = 2) uniform texture2D u_inputRt;
-layout(set = 0, binding = 3) uniform texture2D u_historyRt;
+layout(set = 0, binding = 2) uniform ANKI_RP texture2D u_inputRt;
+layout(set = 0, binding = 3) uniform ANKI_RP texture2D u_historyRt;
 layout(set = 0, binding = 4) uniform texture2D u_motionVectorsTex;
 
 const U32 TONEMAPPING_SET = 0u;

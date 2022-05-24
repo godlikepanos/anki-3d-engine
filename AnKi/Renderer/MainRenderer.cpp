@@ -46,7 +46,7 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 	// Init other
 	if(!m_rDrawToDefaultFb)
 	{
-		ANKI_CHECK(inf.m_resourceManager->loadResource("Shaders/BlitRaster.ankiprog", m_blitProg));
+		ANKI_CHECK(inf.m_resourceManager->loadResource("ShaderBinaries/BlitRaster.ankiprogbin", m_blitProg));
 		const ShaderProgramResourceVariant* variant;
 		m_blitProg->getOrCreateVariant(variant);
 		m_blitGrProg = variant->getProgram();

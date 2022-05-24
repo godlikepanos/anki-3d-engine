@@ -125,9 +125,8 @@ Error ProbeReflections::initLightShading()
 		texinit.m_mipmapCount = U8(m_lightShading.m_mipCount);
 		texinit.m_type = TextureType::CUBE_ARRAY;
 		texinit.m_layerCount = m_cacheEntries.getSize();
-		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 
-		m_lightShading.m_cubeArr = m_r->createAndClearRenderTarget(texinit);
+		m_lightShading.m_cubeArr = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::SAMPLED_FRAGMENT);
 	}
 
 	// Init deferred
@@ -142,7 +141,8 @@ Error ProbeReflections::initIrradiance()
 
 	// Create prog
 	{
-		ANKI_CHECK(m_r->getResourceManager().loadResource("Shaders/IrradianceDice.ankiprog", m_irradiance.m_prog));
+		ANKI_CHECK(
+			m_r->getResourceManager().loadResource("ShaderBinaries/IrradianceDice.ankiprogbin", m_irradiance.m_prog));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_irradiance.m_prog);
 
@@ -170,7 +170,7 @@ Error ProbeReflections::initIrradiance()
 Error ProbeReflections::initIrradianceToRefl()
 {
 	// Create program
-	ANKI_CHECK(m_r->getResourceManager().loadResource("Shaders/ApplyIrradianceToReflection.ankiprog",
+	ANKI_CHECK(m_r->getResourceManager().loadResource("ShaderBinaries/ApplyIrradianceToReflection.ankiprogbin",
 													  m_irradianceToRefl.m_prog));
 
 	const ShaderProgramResourceVariant* variant;
@@ -351,7 +351,7 @@ void ProbeReflections::runGBuffer(RenderPassWorkContext& rgraphCtx)
 			const RenderQueue& rqueue = *probe.m_renderQueues[faceIdx];
 			ANKI_ASSERT(localStart >= 0 && localEnd <= faceDrawcallCount);
 			m_r->getSceneDrawer().drawRange(
-				Pass::GB, rqueue.m_viewMatrix, rqueue.m_viewProjectionMatrix,
+				RenderingTechnique::GBUFFER, rqueue.m_viewMatrix, rqueue.m_viewProjectionMatrix,
 				Mat4::getIdentity(), // Don't care about prev mats
 				cmdb, m_r->getSamplers().m_trilinearRepeat, rqueue.m_renderables.getBegin() + localStart,
 				rqueue.m_renderables.getBegin() + localEnd, MAX_LOD_COUNT - 1, MAX_LOD_COUNT - 1);
@@ -440,10 +440,7 @@ void ProbeReflections::runIrradiance(RenderPassWorkContext& rgraphCtx)
 	subresource.m_firstLayer = cacheEntryIdx;
 	rgraphCtx.bindTexture(0, 1, m_ctx.m_lightShadingRt, subresource);
 
-	allocateAndBindStorage<void*>(sizeof(Vec4) * 6 * m_irradiance.m_workgroupSize * m_irradiance.m_workgroupSize, cmdb,
-								  0, 3);
-
-	cmdb->bindStorageBuffer(0, 4, m_irradiance.m_diceValuesBuff, 0, m_irradiance.m_diceValuesBuff->getSize());
+	cmdb->bindStorageBuffer(0, 3, m_irradiance.m_diceValuesBuff, 0, m_irradiance.m_diceValuesBuff->getSize());
 
 	// Draw
 	cmdb->dispatchCompute(1, 1, 1);
@@ -724,7 +721,7 @@ void ProbeReflections::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 
 			ANKI_ASSERT(localStart >= 0 && localEnd <= faceDrawcallCount);
 			m_r->getSceneDrawer().drawRange(
-				Pass::SM, cascadeRenderQueue.m_viewMatrix, cascadeRenderQueue.m_viewProjectionMatrix,
+				RenderingTechnique::SHADOW, cascadeRenderQueue.m_viewMatrix, cascadeRenderQueue.m_viewProjectionMatrix,
 				Mat4::getIdentity(), // Don't care about prev matrices here
 				cmdb, m_r->getSamplers().m_trilinearRepeatAniso,
 				cascadeRenderQueue.m_renderables.getBegin() + localStart,

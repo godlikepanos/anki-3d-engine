@@ -174,13 +174,14 @@ HeapMemoryPool::~HeapMemoryPool()
 	const U32 count = m_allocationCount.load();
 	if(count != 0)
 	{
-		ANKI_UTIL_LOGW("Memory pool destroyed before all memory being released (%u deallocations missed): %s", count,
+		ANKI_UTIL_LOGE("Memory pool destroyed before all memory being released (%u deallocations missed): %s", count,
 					   getName());
 	}
 }
 
 void* HeapMemoryPool::allocate(PtrSize size, PtrSize alignment)
 {
+	ANKI_ASSERT(size > 0);
 #if ANKI_MEM_EXTRA_CHECKS
 	ANKI_ASSERT(alignment <= MAX_ALIGNMENT && "Wrong assumption");
 	size += ALLOCATION_HEADER_SIZE;
@@ -288,6 +289,8 @@ StackMemoryPool::~StackMemoryPool()
 
 void* StackMemoryPool::allocate(PtrSize size, PtrSize alignment)
 {
+	ANKI_ASSERT(size > 0);
+
 	Chunk* chunk;
 	PtrSize offset;
 	if(m_builder.allocate(size, alignment, chunk, offset))
@@ -348,7 +351,7 @@ ChainMemoryPool::~ChainMemoryPool()
 {
 	if(m_allocationCount.load() != 0)
 	{
-		ANKI_UTIL_LOGW("Memory pool destroyed before all memory being released");
+		ANKI_UTIL_LOGE("Memory pool destroyed before all memory being released");
 	}
 
 	Chunk* ch = m_headChunk;
@@ -362,6 +365,8 @@ ChainMemoryPool::~ChainMemoryPool()
 
 void* ChainMemoryPool::allocate(PtrSize size, PtrSize alignment)
 {
+	ANKI_ASSERT(size > 0);
+
 	Chunk* ch;
 	void* mem = nullptr;
 

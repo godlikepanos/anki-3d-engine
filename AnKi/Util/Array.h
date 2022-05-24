@@ -35,7 +35,6 @@ public:
 	template<typename TInt, ANKI_ENABLE(!std::is_enum<TInt>::value)>
 	Reference operator[](const TInt n)
 	{
-		ANKI_ASSERT(!(std::is_signed<TInt>::value && n < 0));
 		ANKI_ASSERT(PtrSize(n) < N);
 		return m_data[n];
 	}
@@ -44,7 +43,6 @@ public:
 	template<typename TInt, ANKI_ENABLE(!std::is_enum<TInt>::value)>
 	ConstReference operator[](const TInt n) const
 	{
-		ANKI_ASSERT(!(std::is_signed<TInt>::value && n < 0));
 		ANKI_ASSERT(PtrSize(n) < N);
 		return m_data[n];
 	}

@@ -7,6 +7,7 @@
 
 #include <AnKi/Gr/Vulkan/FenceFactory.h>
 #include <AnKi/Gr/CommandBuffer.h>
+#include <AnKi/Gr/Vulkan/MicroObjectRecycler.h>
 #include <AnKi/Util/List.h>
 
 namespace anki {
@@ -30,12 +31,32 @@ public:
 		ANKI_ASSERT(allocator);
 	}
 
+	~MicroCommandBuffer();
+
 	Atomic<I32>& getRefcount()
 	{
 		return m_refcount;
 	}
 
+	void setFence(MicroFencePtr& fence)
+	{
+		ANKI_ASSERT(!(m_flags & CommandBufferFlag::SECOND_LEVEL));
+		ANKI_ASSERT(!m_fence.isCreated());
+		m_fence = fence;
+	}
+
+	MicroFencePtr& getFence()
+	{
+		return m_fence;
+	}
+
 	GrAllocator<U8>& getAllocator();
+
+	/// Interface method.
+	void onFenceDone()
+	{
+		reset();
+	}
 
 	StackAllocator<U8>& getFastAllocator()
 	{
@@ -52,13 +73,6 @@ public:
 	void pushObjectRef(GrObjectPtrT<T>& x)
 	{
 		pushToArray(m_objectRefs[T::CLASS_TYPE], x.get());
-	}
-
-	void setFence(MicroFencePtr& fence)
-	{
-		ANKI_ASSERT(!(m_flags & CommandBufferFlag::SECOND_LEVEL));
-		ANKI_ASSERT(!m_fence.isCreated());
-		m_fence = fence;
 	}
 
 	CommandBufferFlag getFlags() const
@@ -88,7 +102,6 @@ private:
 	CommandBufferFlag m_flags = CommandBufferFlag::NONE;
 	VulkanQueueType m_queue = VulkanQueueType::COUNT;
 
-	void destroy();
 	void reset();
 
 	void pushToArray(DynamicArray<GrObjectPtr>& arr, GrObject* grobj)
@@ -153,7 +166,7 @@ public:
 	GrAllocator<U8>& getAllocator();
 
 	/// Request a new command buffer.
-	ANKI_USE_RESULT Error newCommandBuffer(CommandBufferFlag cmdbFlags, MicroCommandBufferPtr& ptr, Bool& createdNew);
+	ANKI_USE_RESULT Error newCommandBuffer(CommandBufferFlag cmdbFlags, MicroCommandBufferPtr& ptr);
 
 	/// It will recycle it.
 	void deleteCommandBuffer(MicroCommandBuffer* ptr);
@@ -163,24 +176,11 @@ private:
 	ThreadId m_tid;
 	Array<VkCommandPool, U(VulkanQueueType::COUNT)> m_pools = {};
 
-	class CmdbType
-	{
-	public:
-		IntrusiveList<MicroCommandBuffer> m_readyCmdbs; ///< Buffers that are ready to be used.
-		IntrusiveList<MicroCommandBuffer> m_inUseCmdbs; ///< Buffer that got dereferenced and maybe in-use.
-
-		IntrusiveList<MicroCommandBuffer> m_deletedCmdbs;
-		Mutex m_deletedMtx; ///< Lock because the dallocations may happen anywhere.
-	};
-
 #if ANKI_EXTRA_CHECKS
 	Atomic<U32> m_createdCmdbs = {0};
 #endif
 
-	Array3d<CmdbType, 2, 2, U(VulkanQueueType::COUNT)> m_types;
-
-	void destroyList(IntrusiveList<MicroCommandBuffer>& list);
-	void destroyLists();
+	Array3d<MicroObjectRecycler<MicroCommandBuffer>, 2, 2, U(VulkanQueueType::COUNT)> m_recyclers;
 };
 
 /// Command bufffer object recycler.

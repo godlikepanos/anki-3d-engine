@@ -5,7 +5,7 @@
 
 #pragma anki start vert
 #include <AnKi/Shaders/Common.glsl>
-#include <AnKi/Shaders/Include/LensFlareTypes.h>
+#include <AnKi/Shaders/Include/MiscRendererTypes.h>
 
 // The block contains data for all flares
 layout(std140, set = 0, binding = 0) readonly buffer ssbo00

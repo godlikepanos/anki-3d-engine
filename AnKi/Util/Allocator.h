@@ -8,6 +8,7 @@
 #include <AnKi/Util/Assert.h>
 #include <AnKi/Util/Memory.h>
 #include <AnKi/Util/Logger.h>
+#include <AnKi/Util/Forward.h>
 #include <cstddef> // For ptrdiff_t
 #include <utility> // For forward
 #include <new> // For placement new
@@ -291,6 +292,18 @@ public:
 		return ptr;
 	}
 
+	/// Allocate a new array of objects and call their constructor.
+	/// @note This is AnKi specific.
+	/// @note The output is a parameter to work with template deduction.
+	template<typename TValue, typename TSize>
+	void newArray(size_type n, WeakArray<TValue, TSize>& out);
+
+	/// Allocate a new array of objects and call their constructor.
+	/// @note This is AnKi specific.
+	/// @note The output is a parameter to work with template deduction.
+	template<typename TValue, typename TSize>
+	void newArray(size_type n, const TValue& v, WeakArray<TValue, TSize>& out);
+
 	/// Call the destructor and deallocate an object
 	/// @note This is AnKi specific
 	template<typename Y>
@@ -326,6 +339,11 @@ public:
 			ANKI_ASSERT(n == 0);
 		}
 	}
+
+	/// Call the destructor and deallocate an array of objects
+	/// @note This is AnKi specific
+	template<typename TValue, typename TSize>
+	void deleteArray(WeakArray<TValue, TSize>& arr);
 
 private:
 	TPool* m_pool = nullptr;
@@ -414,3 +432,5 @@ using ChainAllocator = GenericPoolAllocator<T, ChainMemoryPool>;
 /// @}
 
 } // end namespace anki
+
+#include <AnKi/Util/Allocator.inl.h>

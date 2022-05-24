@@ -11,7 +11,6 @@
 #include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Renderer/IndirectDiffuseProbes.h>
 #include <AnKi/Core/ConfigSet.h>
-#include <AnKi/Shaders/Include/IndirectDiffuseTypes.h>
 
 namespace anki {
 
@@ -44,18 +43,52 @@ Error IndirectDiffuse::initInternal()
 	usage |= (preferCompute) ? TextureUsageBit::IMAGE_COMPUTE_WRITE : TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 	TextureInitInfo texInit =
 		m_r->create2DRenderTargetInitInfo(size.x(), size.y(), m_r->getHdrFormat(), usage, "IndirectDiffuse #1");
-	texInit.m_initialUsage = TextureUsageBit::ALL_SAMPLED;
-	m_rts[0] = m_r->createAndClearRenderTarget(texInit);
+	m_rts[0] = m_r->createAndClearRenderTarget(texInit, TextureUsageBit::ALL_SAMPLED);
 	texInit.setName("IndirectDiffuse #2");
-	m_rts[1] = m_r->createAndClearRenderTarget(texInit);
+	m_rts[1] = m_r->createAndClearRenderTarget(texInit, TextureUsageBit::ALL_SAMPLED);
 
-	m_fbDescr.m_colorAttachmentCount = 1;
-	m_fbDescr.bake();
+	// Init VRS SRI generation
+	{
+		m_main.m_fbDescr.m_colorAttachmentCount = 1;
+		m_main.m_fbDescr.bake();
+
+		const UVec2 rez = (size + m_vrs.m_sriTexelDimension - 1) / m_vrs.m_sriTexelDimension;
+		m_vrs.m_rtHandle =
+			m_r->create2DRenderTargetDescription(rez.x(), rez.y(), Format::R8_UINT, "IndirectDiffuse VRS SRI");
+		m_vrs.m_rtHandle.bake();
+
+		ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/IndirectDiffuseVrsSriGeneration.ankiprogbin",
+													 m_vrs.m_prog));
+
+		ShaderProgramResourceVariantInitInfo variantInit(m_vrs.m_prog);
+		variantInit.addMutation("SRI_TEXEL_DIMENSION", m_vrs.m_sriTexelDimension);
+
+		if(m_vrs.m_sriTexelDimension == 16 && getGrManager().getDeviceCapabilities().m_minSubgroupSize >= 32)
+		{
+			// Algorithm's workgroup size is 32, GPU's subgroup size is min 32 -> each workgroup has 1 subgroup -> No
+			// need for shared mem
+			variantInit.addMutation("SHARED_MEMORY", 0);
+		}
+		else
+		{
+			variantInit.addMutation("SHARED_MEMORY", 1);
+		}
+
+		const ShaderProgramResourceVariant* variant;
+		m_vrs.m_prog->getOrCreateVariant(variantInit, variant);
+		m_vrs.m_grProg = variant->getProgram();
+
+		ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/VrsSriVisualizeRenderTarget.ankiprogbin",
+													 m_vrs.m_visualizeProg));
+		m_vrs.m_visualizeProg->getOrCreateVariant(variant);
+		m_vrs.m_visualizeGrProg = variant->getProgram();
+	}
 
 	// Init SSGI+probes pass
 	{
-		ANKI_CHECK(getResourceManager().loadResource((preferCompute) ? "Shaders/IndirectDiffuseCompute.ankiprog"
-																	 : "Shaders/IndirectDiffuseRaster.ankiprog",
+		ANKI_CHECK(getResourceManager().loadResource((preferCompute)
+														 ? "ShaderBinaries/IndirectDiffuseCompute.ankiprogbin"
+														 : "ShaderBinaries/IndirectDiffuseRaster.ankiprogbin",
 													 m_main.m_prog));
 
 		const ShaderProgramResourceVariant* variant;
@@ -65,8 +98,12 @@ Error IndirectDiffuse::initInternal()
 
 	// Init denoise
 	{
-		ANKI_CHECK(getResourceManager().loadResource((preferCompute) ? "Shaders/IndirectDiffuseDenoiseCompute.ankiprog"
-																	 : "Shaders/IndirectDiffuseDenoiseRaster.ankiprog",
+		m_denoise.m_fbDescr.m_colorAttachmentCount = 1;
+		m_denoise.m_fbDescr.bake();
+
+		ANKI_CHECK(getResourceManager().loadResource((preferCompute)
+														 ? "ShaderBinaries/IndirectDiffuseDenoiseCompute.ankiprogbin"
+														 : "ShaderBinaries/IndirectDiffuseDenoiseRaster.ankiprogbin",
 													 m_denoise.m_prog));
 
 		ShaderProgramResourceVariantInitInfo variantInit(m_denoise.m_prog);
@@ -87,6 +124,64 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 	const Bool preferCompute = getConfig().getRPreferCompute();
+	const Bool enableVrs = getGrManager().getDeviceCapabilities().m_vrs && getConfig().getRVrs() && !preferCompute;
+	const Bool fbDescrHasVrs = m_main.m_fbDescr.m_shadingRateAttachmentTexelWidth > 0;
+
+	if(!preferCompute && enableVrs != fbDescrHasVrs)
+	{
+		// Re-bake the FB descriptor if the VRS state has changed
+
+		if(enableVrs)
+		{
+			m_main.m_fbDescr.m_shadingRateAttachmentTexelWidth = m_vrs.m_sriTexelDimension;
+			m_main.m_fbDescr.m_shadingRateAttachmentTexelHeight = m_vrs.m_sriTexelDimension;
+		}
+		else
+		{
+			m_main.m_fbDescr.m_shadingRateAttachmentTexelWidth = 0;
+			m_main.m_fbDescr.m_shadingRateAttachmentTexelHeight = 0;
+		}
+
+		m_main.m_fbDescr.bake();
+	}
+
+	// VRS SRI
+	if(enableVrs)
+	{
+		m_runCtx.m_sriRt = rgraph.newRenderTarget(m_vrs.m_rtHandle);
+
+		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("VRS SRI generation");
+
+		pass.newDependency(RenderPassDependency(m_runCtx.m_sriRt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
+		pass.newDependency(RenderPassDependency(m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_COMPUTE,
+												HIZ_HALF_DEPTH));
+
+		pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+			const UVec2 viewport = m_r->getInternalResolution() / 2u;
+
+			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+
+			cmdb->bindShaderProgram(m_vrs.m_grProg);
+
+			rgraphCtx.bindTexture(0, 0, m_r->getDepthDownscale().getHiZRt(), HIZ_HALF_DEPTH);
+			cmdb->bindSampler(0, 1, m_r->getSamplers().m_nearestNearestClamp);
+			rgraphCtx.bindImage(0, 2, m_runCtx.m_sriRt);
+
+			class
+			{
+			public:
+				Vec4 m_v4;
+				Mat4 m_invertedProjectionJitter;
+			} pc;
+
+			pc.m_v4 = Vec4(1.0f / Vec2(viewport), getConfig().getRIndirectDiffuseVrsDistanceThreshold(), 0.0f);
+			pc.m_invertedProjectionJitter = ctx.m_matrices.m_invertedProjectionJitter;
+
+			cmdb->setPushConstants(&pc, sizeof(pc));
+
+			dispatchPPCompute(cmdb, m_vrs.m_sriTexelDimension, m_vrs.m_sriTexelDimension, viewport.x(), viewport.y());
+		});
+	}
 
 	// SSGI+probes
 	{
@@ -119,10 +214,17 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 		else
 		{
 			GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("IndirectDiffuse");
-			rpass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_mainRtHandles[WRITE]});
+			rpass.setFramebufferInfo(m_main.m_fbDescr, {m_runCtx.m_mainRtHandles[WRITE]}, {},
+									 (enableVrs) ? m_runCtx.m_sriRt : RenderTargetHandle());
 			readUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 			writeUsage = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 			prpass = &rpass;
+
+			if(enableVrs)
+			{
+				prpass->newDependency(
+					RenderPassDependency(m_runCtx.m_sriRt, TextureUsageBit::FRAMEBUFFER_SHADING_RATE));
+			}
 		}
 
 		prpass->newDependency(RenderPassDependency(m_runCtx.m_mainRtHandles[WRITE], writeUsage));
@@ -183,6 +285,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			else
 			{
 				cmdb->setViewport(0, 0, unis.m_viewportSize.x(), unis.m_viewportSize.y());
+				cmdb->setVrsRate(VrsRate::_1x1);
 
 				cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
 			}
@@ -209,7 +312,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 		{
 			GraphicsRenderPassDescription& rpass =
 				rgraph.newGraphicsRenderPass((dir == 0) ? "IndirectDiffuseDenoiseH" : "IndirectDiffuseDenoiseV");
-			rpass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_mainRtHandles[!readIdx]});
+			rpass.setFramebufferInfo(m_denoise.m_fbDescr, {m_runCtx.m_mainRtHandles[!readIdx]});
 			readUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 			writeUsage = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 			prpass = &rpass;
@@ -257,6 +360,21 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 				cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
 			}
 		});
+	}
+}
+
+void IndirectDiffuse::getDebugRenderTarget(CString rtName, RenderTargetHandle& handle,
+										   ShaderProgramPtr& optionalShaderProgram) const
+{
+	if(rtName == "IndirectDiffuse")
+	{
+		handle = m_runCtx.m_mainRtHandles[WRITE];
+	}
+	else
+	{
+		ANKI_ASSERT(rtName == "IndirectDiffuseVrsSri");
+		handle = m_runCtx.m_sriRt;
+		optionalShaderProgram = m_vrs.m_visualizeGrProg;
 	}
 }
 

@@ -108,9 +108,9 @@ Error IndirectDiffuseProbes::init()
 
 Error IndirectDiffuseProbes::initInternal()
 {
-	m_tileSize = getConfig().getRGiTileResolution();
-	m_cacheEntries.create(getAllocator(), getConfig().getRGiMaxCachedProbes());
-	m_maxVisibleProbes = getConfig().getRGiMaxVisibleProbes();
+	m_tileSize = getConfig().getRIndirectDiffuseProbeTileResolution();
+	m_cacheEntries.create(getAllocator(), getConfig().getRIndirectDiffuseProbeMaxCachedProbes());
+	m_maxVisibleProbes = getConfig().getRIndirectDiffuseProbeMaxVisibleProbes();
 	ANKI_ASSERT(m_maxVisibleProbes <= MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES);
 	ANKI_ASSERT(m_cacheEntries.getSize() >= m_maxVisibleProbes);
 
@@ -166,7 +166,7 @@ Error IndirectDiffuseProbes::initGBuffer()
 
 Error IndirectDiffuseProbes::initShadowMapping()
 {
-	const U32 resolution = getConfig().getRGiShadowMapResolution();
+	const U32 resolution = getConfig().getRIndirectDiffuseProbeShadowMapResolution();
 	ANKI_ASSERT(resolution > 8);
 
 	// RT descr
@@ -208,7 +208,8 @@ Error IndirectDiffuseProbes::initLightShading()
 
 Error IndirectDiffuseProbes::initIrradiance()
 {
-	ANKI_CHECK(m_r->getResourceManager().loadResource("Shaders/IrradianceDice.ankiprog", m_irradiance.m_prog));
+	ANKI_CHECK(
+		m_r->getResourceManager().loadResource("ShaderBinaries/IrradianceDice.ankiprogbin", m_irradiance.m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_irradiance.m_prog);
 	variantInitInfo.addMutation("WORKGROUP_SIZE_XY", m_tileSize);
@@ -484,9 +485,8 @@ void IndirectDiffuseProbes::prepareProbes(InternalContext& giCtx)
 			texInit.m_height = probe.m_cellCounts.y();
 			texInit.m_depth = probe.m_cellCounts.z();
 			texInit.m_usage = TextureUsageBit::ALL_COMPUTE | TextureUsageBit::ALL_SAMPLED;
-			texInit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 
-			entry.m_volumeTex = m_r->createAndClearRenderTarget(texInit);
+			entry.m_volumeTex = m_r->createAndClearRenderTarget(texInit, TextureUsageBit::SAMPLED_FRAGMENT);
 		}
 
 		// Compute the render position
@@ -570,7 +570,7 @@ void IndirectDiffuseProbes::runGBufferInThread(RenderPassWorkContext& rgraphCtx,
 
 			ANKI_ASSERT(localStart >= 0 && localEnd <= faceDrawcallCount);
 			m_r->getSceneDrawer().drawRange(
-				Pass::GB, rqueue.m_viewMatrix, rqueue.m_viewProjectionMatrix,
+				RenderingTechnique::GBUFFER, rqueue.m_viewMatrix, rqueue.m_viewProjectionMatrix,
 				Mat4::getIdentity(), // Don't care about prev mats since we don't care about velocity
 				cmdb, m_r->getSamplers().m_trilinearRepeat, rqueue.m_renderables.getBegin() + localStart,
 				rqueue.m_renderables.getBegin() + localEnd, MAX_LOD_COUNT - 1, MAX_LOD_COUNT - 1);
@@ -621,7 +621,7 @@ void IndirectDiffuseProbes::runShadowmappingInThread(RenderPassWorkContext& rgra
 
 			ANKI_ASSERT(localStart >= 0 && localEnd <= faceDrawcallCount);
 			m_r->getSceneDrawer().drawRange(
-				Pass::SM, cascadeRenderQueue.m_viewMatrix, cascadeRenderQueue.m_viewProjectionMatrix,
+				RenderingTechnique::SHADOW, cascadeRenderQueue.m_viewMatrix, cascadeRenderQueue.m_viewProjectionMatrix,
 				Mat4::getIdentity(), // Don't care about prev matrices here
 				cmdb, m_r->getSamplers().m_trilinearRepeatAniso,
 				cascadeRenderQueue.m_renderables.getBegin() + localStart,
@@ -701,13 +701,11 @@ void IndirectDiffuseProbes::runIrradiance(RenderPassWorkContext& rgraphCtx, Inte
 		rgraphCtx.bindColorTexture(0, 2, giCtx.m_gbufferColorRts[i], i);
 	}
 
-	// Bind temporary memory
-	allocateAndBindStorage<void*>(sizeof(Vec4) * 6 * m_tileSize * m_tileSize, cmdb, 0, 3);
+	rgraphCtx.bindImage(0, 3, giCtx.m_irradianceProbeRts[probeIdx], TextureSubresourceInfo());
 
-	rgraphCtx.bindImage(0, 4, giCtx.m_irradianceProbeRts[probeIdx], TextureSubresourceInfo());
-
-	struct
+	class
 	{
+	public:
 		IVec3 m_volumeTexel;
 		I32 m_nextTexelOffsetInU;
 	} unis;

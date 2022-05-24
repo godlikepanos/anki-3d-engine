@@ -34,9 +34,10 @@ layout(set = 0, binding = 8) uniform texture2D u_depthRt;
 layout(set = 0, binding = 9) uniform ANKI_RP texture2D u_dbgOutlineRt;
 #endif
 
-layout(push_constant, row_major, std430) uniform b_pc
+layout(push_constant, std140) uniform b_pc
 {
-	UVec4 u_frameCountPad3;
+	Vec3 u_padding0;
+	U32 u_frameCount;
 };
 
 layout(location = 0) in Vec2 in_uv;
@@ -76,7 +77,7 @@ void main()
 #if BLUE_NOISE
 	const Vec2 bnUvw = Vec2(FB_SIZE) / Vec2(64.0) * uv;
 	ANKI_RP Vec3 blueNoise = textureLod(u_blueNoise, u_trilinearRepeatSampler, bnUvw, 0.0).rgb;
-	blueNoise = animateBlueNoise(blueNoise, u_frameCountPad3.x);
+	blueNoise = animateBlueNoise(blueNoise, u_frameCount);
 	blueNoise = blueNoise * 2.0 - 1.0;
 	blueNoise = sign(blueNoise) * (1.0 - sqrt(1.0 - abs(blueNoise)));
 

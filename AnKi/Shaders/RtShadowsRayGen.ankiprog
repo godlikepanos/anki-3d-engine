@@ -13,10 +13,10 @@
 #include <AnKi/Shaders/PackFunctions.glsl>
 #include <AnKi/Shaders/RtShadows.glsl>
 
-#define CLUSTERED_SHADING_SET 0
-#define CLUSTERED_SHADING_UNIFORMS_BINDING 0
-#define CLUSTERED_SHADING_LIGHTS_BINDING 1
-#define CLUSTERED_SHADING_CLUSTERS_BINDING 4
+#define CLUSTERED_SHADING_SET 0u
+#define CLUSTERED_SHADING_UNIFORMS_BINDING 0u
+#define CLUSTERED_SHADING_LIGHTS_BINDING 1u
+#define CLUSTERED_SHADING_CLUSTERS_BINDING 4u
 #include <AnKi/Shaders/ClusteredShadingCommon.glsl>
 
 // Used by the hit shaders. When changing the binding you need to update other shaders
@@ -150,7 +150,7 @@ void main()
 	{
 		const I32 idx = findLSB2(cluster.m_spotLightsMask);
 		cluster.m_spotLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
-		const SpotLight light = u_spotLights2[idx];
+		const SpotLight light = u_spotLights[idx];
 
 		ANKI_BRANCH if(light.m_shadowLayer != MAX_U32)
 		{

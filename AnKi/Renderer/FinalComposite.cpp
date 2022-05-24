@@ -40,7 +40,7 @@ Error FinalComposite::initInternal()
 	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_blueNoise));
 
 	// Progs
-	ANKI_CHECK(getResourceManager().loadResource("Shaders/FinalComposite.ankiprog", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/FinalComposite.ankiprogbin", m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addMutation("BLUE_NOISE", 1);
@@ -57,7 +57,7 @@ Error FinalComposite::initInternal()
 		m_grProgs[dbg] = variant->getProgram();
 	}
 
-	ANKI_CHECK(getResourceManager().loadResource("Shaders/VisualizeRenderTarget.ankiprog",
+	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/VisualizeRenderTarget.ankiprogbin",
 												 m_defaultVisualizeRenderTargetProg));
 	const ShaderProgramResourceVariant* variant;
 	m_defaultVisualizeRenderTargetProg->getOrCreateVariant(variant);
@@ -167,9 +167,8 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 			rgraphCtx.bindColorTexture(0, 9, m_r->getDbg().getRt());
 		}
 
-		UVec4 frameCountPad3;
-		frameCountPad3.x() = m_r->getFrameCount() & MAX_U32;
-		cmdb->setPushConstants(&frameCountPad3, sizeof(frameCountPad3));
+		const UVec4 frameCount(m_r->getFrameCount() & MAX_U32);
+		cmdb->setPushConstants(&frameCount, sizeof(frameCount));
 	}
 	else
 	{

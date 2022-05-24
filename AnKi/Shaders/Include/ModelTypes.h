@@ -66,7 +66,7 @@ const U32 VERTEX_ATTRIBUTE_BUFFER_ID_COUNT = 3u;
 struct MainVertex
 {
 	U32 m_normal; ///< Packed in a custom R11G11B10_SNorm
-	U32 m_tangent; ///< Packed in a custom R10G10B11A1_SNorm format
+	U32 m_tangent; ///< Packed in a custom R11G10B10A1_SNorm format
 	Vec2 m_uv0;
 };
 

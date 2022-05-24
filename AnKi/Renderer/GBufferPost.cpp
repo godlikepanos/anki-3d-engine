@@ -29,7 +29,7 @@ Error GBufferPost::initInternal()
 	ANKI_R_LOGV("Initializing GBufferPost pass");
 
 	// Load shaders
-	ANKI_CHECK(getResourceManager().loadResource("Shaders/GBufferPost.ankiprog", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/GBufferPost.ankiprogbin", m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addConstant("TILE_COUNTS", m_r->getTileCounts());

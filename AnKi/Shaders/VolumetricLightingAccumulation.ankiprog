@@ -26,25 +26,18 @@ layout(set = 0, binding = 2) writeonly uniform image3D u_volume;
 layout(set = 0, binding = 3) uniform texture2D u_noiseTex;
 layout(set = 0, binding = 4) uniform texture3D u_prevVolume;
 
-#define CLUSTERED_SHADING_SET 0
-#define CLUSTERED_SHADING_UNIFORMS_BINDING 5
-#define CLUSTERED_SHADING_LIGHTS_BINDING 6
-#define CLUSTERED_SHADING_GI_BINDING 9
-#define CLUSTERED_SHADING_FOG_BINDING 11
-#define CLUSTERED_SHADING_CLUSTERS_BINDING 12
+#define CLUSTERED_SHADING_SET 0u
+#define CLUSTERED_SHADING_UNIFORMS_BINDING 5u
+#define CLUSTERED_SHADING_LIGHTS_BINDING 6u
+#define CLUSTERED_SHADING_GI_BINDING 9u
+#define CLUSTERED_SHADING_FOG_BINDING 11u
+#define CLUSTERED_SHADING_CLUSTERS_BINDING 12u
 #include <AnKi/Shaders/ClusteredShadingCommon.glsl>
+#include <AnKi/Shaders/Include/MiscRendererTypes.h>
 
-struct FogUniforms
+layout(push_constant, std140) uniform b_pc
 {
-	ANKI_RP F32 m_densityAtMinHeight;
-	ANKI_RP F32 m_densityAtMaxHeight;
-	F32 m_minHeight;
-	F32 m_oneOverMaxMinusMinHeight; // 1 / (maxHeight / minHeight)
-};
-
-layout(push_constant, scalar) uniform b_pc
-{
-	FogUniforms u_fogUnis;
+	VolumetricLightingUniforms u_fogUnis;
 };
 
 Vec3 g_globalInvocationID = Vec3(gl_GlobalInvocationID);
@@ -157,7 +150,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 	{
 		const I32 idx = findLSB2(cluster.m_spotLightsMask);
 		cluster.m_spotLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
-		const SpotLight light = u_spotLights2[idx];
+		const SpotLight light = u_spotLights[idx];
 
 		const Vec3 frag2Light = light.m_position - worldPos;
 		F32 factor = computeAttenuationFactor(light.m_squareRadiusOverOne, frag2Light);
@@ -275,10 +268,10 @@ void main()
 	// Get the cluster
 	const UVec2 tileIdxXY = UVec2(uvw.xy * Vec2(TILE_COUNT));
 	const U32 tileIdx = tileIdxXY.y * TILE_COUNT.x + tileIdxXY.x;
-	Cluster cluster = u_clusters2[tileIdx];
+	Cluster cluster = u_clusters[tileIdx];
 
 	const U32 zSplitIdx = U32(uvw.z * F32(Z_SPLIT_COUNT));
-	const Cluster split = u_clusters2[TILE_COUNT.x * TILE_COUNT.y + zSplitIdx];
+	const Cluster split = u_clusters[TILE_COUNT.x * TILE_COUNT.y + zSplitIdx];
 
 	cluster.m_pointLightsMask |= split.m_pointLightsMask;
 	cluster.m_spotLightsMask |= split.m_spotLightsMask;

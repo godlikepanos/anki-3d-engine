@@ -72,6 +72,8 @@
 				<member name="m_name" type="char" array_size="MAX_SHADER_BINARY_NAME_LENGTH + 1" constructor="= {}" />
 				<member name="m_type" type="ShaderVariableDataType" constructor="= ShaderVariableDataType::NONE" comment="If the value is ShaderVariableDataType::NONE then it's a struct" />
 				<member name="m_structIndex" type="U32" constructor="= MAX_U32" comment="If the type is another struct then this points to ShaderProgramBinary::m_structs" />
+				<member name="m_dependentMutator" type="U32" constructor="= MAX_U32" comment="It points to a ShaderProgramBinary::m_mutators. This mutator will turn on or off this member" />
+				<member name="m_dependentMutatorValue" type="MutatorValue" constructor="= 0" comment="The value of the m_dependentMutator" />
 			</members>
 		</class>
 

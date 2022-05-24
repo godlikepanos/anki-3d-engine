@@ -73,7 +73,7 @@ Vec3 computeNormal(const Vec2 uv, const F32 depth)
 	Vec3 normalVSpace = cross(origin - top, right - origin);
 	normalVSpace = normalize(normalVSpace);
 
-	return u_state.m_invViewRotation * normalVSpace;
+	return u_state.m_invViewRotation * Vec4(normalVSpace, 0.0);
 }
 
 void initParticle(out GpuParticle p)
@@ -90,7 +90,8 @@ void initParticle(out GpuParticle p)
 	p.m_acceleration = mix(u_props.m_minGravity, u_props.m_maxGravity, randFactor);
 
 	// Calculate the initial velocity
-	const Vec3 initialForce = u_state.m_emitterRotation * mix(u_props.m_minForce, u_props.m_maxForce, randFactor);
+	const Vec3 initialForce =
+		u_state.m_emitterRotation * Vec4(mix(u_props.m_minForce, u_props.m_maxForce, randFactor), 0.0);
 	const Vec3 totalForce = (p.m_acceleration * p.m_mass) + initialForce;
 	const Vec3 acceleration = totalForce / p.m_mass;
 	p.m_velocity = acceleration * u_state.m_dt;

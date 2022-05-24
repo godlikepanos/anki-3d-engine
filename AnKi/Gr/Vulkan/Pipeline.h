@@ -549,11 +549,19 @@ public:
 	{
 	}
 
-	void init(GrAllocator<U8> alloc, VkDevice dev, VkPipelineCache pplineCache)
+	void init(GrAllocator<U8> alloc, VkDevice dev, VkPipelineCache pplineCache
+#if ANKI_PLATFORM_MOBILE
+			  ,
+			  Mutex* globalCreatePipelineMtx
+#endif
+	)
 	{
 		m_alloc = alloc;
 		m_dev = dev;
 		m_pplineCache = pplineCache;
+#if ANKI_PLATFORM_MOBILE
+		m_globalCreatePipelineMtx = globalCreatePipelineMtx;
+#endif
 	}
 
 	void destroy();
@@ -571,6 +579,9 @@ private:
 
 	HashMap<U64, PipelineInternal, Hasher> m_pplines;
 	RWMutex m_pplinesMtx;
+#if ANKI_PLATFORM_MOBILE
+	Mutex* m_globalCreatePipelineMtx = nullptr;
+#endif
 };
 /// @}
 

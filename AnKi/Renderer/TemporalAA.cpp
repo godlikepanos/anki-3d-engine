@@ -37,9 +37,10 @@ Error TemporalAA::initInternal()
 {
 	ANKI_R_LOGV("Initializing TAA");
 
-	ANKI_CHECK(m_r->getResourceManager().loadResource(
-		(getConfig().getRPreferCompute()) ? "Shaders/TemporalAACompute.ankiprog" : "Shaders/TemporalAARaster.ankiprog",
-		m_prog));
+	ANKI_CHECK(m_r->getResourceManager().loadResource((getConfig().getRPreferCompute())
+														  ? "ShaderBinaries/TemporalAACompute.ankiprogbin"
+														  : "ShaderBinaries/TemporalAARaster.ankiprogbin",
+													  m_prog));
 
 	{
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
@@ -69,9 +70,7 @@ Error TemporalAA::initInternal()
 			m_r->create2DRenderTargetInitInfo(m_r->getInternalResolution().x(), m_r->getInternalResolution().y(),
 											  m_r->getHdrFormat(), usage, "TemporalAA");
 
-		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
-
-		m_rtTextures[i] = m_r->createAndClearRenderTarget(texinit);
+		m_rtTextures[i] = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::SAMPLED_FRAGMENT);
 	}
 
 	m_tonemappedRtDescr = m_r->create2DRenderTargetDescription(

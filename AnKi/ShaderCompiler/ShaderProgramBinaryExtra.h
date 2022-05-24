@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/ShaderCompiler/Common.h>
-#include <AnKi/Gr/Utils/Functions.h>
 #include <AnKi/Util/Serializer.h>
 
 namespace anki {

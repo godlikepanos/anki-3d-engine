@@ -926,7 +926,6 @@ ANKI_TEST(Gr, DrawWithTexture)
 	init.m_depth = 1;
 	init.m_format = Format::R8G8B8_UNORM;
 	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::TRANSFER_DESTINATION;
-	init.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 	init.m_height = 2;
 	init.m_width = 2;
 	init.m_mipmapCount = 2;
@@ -947,7 +946,6 @@ ANKI_TEST(Gr, DrawWithTexture)
 	init.m_mipmapCount = 3;
 	init.m_usage =
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::TRANSFER_DESTINATION | TextureUsageBit::GENERATE_MIPMAPS;
-	init.m_initialUsage = TextureUsageBit::NONE;
 
 	TexturePtr b = gr->newTexture(init);
 
@@ -1427,7 +1425,6 @@ ANKI_TEST(Gr, 3DTextures)
 	init.m_depth = 1;
 	init.m_format = Format::R8G8B8A8_UNORM;
 	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::TRANSFER_DESTINATION;
-	init.m_initialUsage = TextureUsageBit::TRANSFER_DESTINATION;
 	init.m_height = 2;
 	init.m_width = 2;
 	init.m_mipmapCount = 2;
@@ -2266,9 +2263,6 @@ void main()
 	cmdb->bindSampler(1, 1, sampler);
 	cmdb->bindShaderProgram(prog);
 
-	cmdb->addReference(viewA);
-	cmdb->addReference(viewB);
-	cmdb->addReference(viewC);
 	const U32 idx0 = viewA->getOrCreateBindlessImageIndex();
 	const U32 idx1 = viewB->getOrCreateBindlessTextureIndex();
 	const U32 idx2 = viewC->getOrCreateBindlessTextureIndex();
@@ -2780,7 +2774,6 @@ ANKI_TEST(Gr, RayGen)
 		inf.m_format = Format::R8G8B8A8_UNORM;
 		inf.m_usage = TextureUsageBit::IMAGE_TRACE_RAYS_READ | TextureUsageBit::IMAGE_TRACE_RAYS_WRITE
 					  | TextureUsageBit::IMAGE_COMPUTE_READ;
-		inf.m_initialUsage = TextureUsageBit::IMAGE_COMPUTE_READ;
 
 		offscreenRts[0] = gr->newTexture(inf);
 
