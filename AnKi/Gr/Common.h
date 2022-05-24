@@ -153,6 +153,9 @@ public:
 	/// Max subgroup size of the GPU.
 	U32 m_maxSubgroupSize = 0;
 
+	/// Min size of a texel in the shading rate image.
+	U32 m_minShadingRateImageTexelSize = 0;
+
 	/// GPU vendor.
 	GpuVendor m_gpuVendor = GpuVendor::UNKNOWN;
 
@@ -173,9 +176,6 @@ public:
 
 	/// VRS.
 	Bool m_vrs = false;
-
-	/// Min size of a texel in the shading rate image.
-	U32 m_minSriTexelSize = 0;
 
 	/// Supports min/max texture filtering.
 	Bool m_samplingFilterMinMax = false;

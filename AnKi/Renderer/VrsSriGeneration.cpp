@@ -37,7 +37,8 @@ Error VrsSriGeneration::initInternal()
 		return Error::NONE;
 	}
 
-	m_sriTexelDimension = getGrManager().getDeviceCapabilities().m_minSriTexelSize <= 8 ? 8 : 16;
+	m_sriTexelDimension = getGrManager().getDeviceCapabilities().m_minShadingRateImageTexelSize;
+	ANKI_ASSERT(m_sriTexelDimension == 8 || m_sriTexelDimension == 16);
 	const UVec2 rez = (m_r->getInternalResolution() + m_sriTexelDimension - 1) / m_sriTexelDimension;
 
 	ANKI_R_LOGV("Intializing VRS SRI generation. SRI resolution %ux%u", rez.x(), rez.y());

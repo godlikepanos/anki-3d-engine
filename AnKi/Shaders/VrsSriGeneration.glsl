@@ -48,7 +48,7 @@ shared Vec2 s_maxDerivative[SHARED_MEMORY_ENTRIES];
 
 void main()
 {
-	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) * Vec2(REGION_SIZE) + Vec2(0.5, 0.5)) * u_oneOverViewportSize;
+	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) * Vec2(REGION_SIZE) + 0.5) * u_oneOverViewportSize;
 
 #if SRI_TEXEL_DIMENSION == 8
 	// Get luminance.
