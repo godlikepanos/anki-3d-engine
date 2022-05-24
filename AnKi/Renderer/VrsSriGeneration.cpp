@@ -37,6 +37,7 @@ Error VrsSriGeneration::initInternal()
 		return Error::NONE;
 	}
 
+	m_sriTexelDimension = getGrManager().getDeviceCapabilities().m_minSriTexelSize <= 8 ? 8 : 16;
 	const UVec2 rez = (m_r->getInternalResolution() + m_sriTexelDimension - 1) / m_sriTexelDimension;
 
 	ANKI_R_LOGV("Intializing VRS SRI generation. SRI resolution %ux%u", rez.x(), rez.y());
@@ -60,6 +61,12 @@ Error VrsSriGeneration::initInternal()
 	if(m_sriTexelDimension == 16 && getGrManager().getDeviceCapabilities().m_minSubgroupSize >= 32)
 	{
 		// Algorithm's workgroup size is 32, GPU's subgroup size is min 32 -> each workgroup has 1 subgroup -> No need
+		// for shared mem
+		variantInit.addMutation("SHARED_MEMORY", 0);
+	}
+	else if(m_sriTexelDimension == 8 && getGrManager().getDeviceCapabilities().m_minSubgroupSize >= 16)
+	{
+		// Algorithm's workgroup size is 16, GPU's subgroup size is min 16 -> each workgroup has 1 subgroup -> No need
 		// for shared mem
 		variantInit.addMutation("SHARED_MEMORY", 0);
 	}
