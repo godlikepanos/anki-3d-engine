@@ -159,7 +159,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	m_occlusionQueryFactory.init(getAllocator(), m_device, VK_QUERY_TYPE_OCCLUSION);
 	m_timestampQueryFactory.init(getAllocator(), m_device, VK_QUERY_TYPE_TIMESTAMP);
 
-	// See if analigned formats are supported
+	// See if unaligned formats are supported
 	{
 		m_capabilities.m_unalignedBbpTextureFormats = true;
 
@@ -1028,16 +1028,49 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 		if(!m_fragmentShadingRateFeatures.attachmentFragmentShadingRate
 		   || !m_fragmentShadingRateFeatures.pipelineFragmentShadingRate)
 		{
-			ANKI_VK_LOGE(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME
-						 " doesn't support attachment and/or pipeline rates");
-			return Error::FUNCTION_FAILED;
+			ANKI_VK_LOGW(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME
+						 " doesn't support attachment and/or pipeline rates. Will disable VRS");
+			m_capabilities.m_vrs = false;
+		}
+		else
+		{
+			// Disable some things
+			m_fragmentShadingRateFeatures.primitiveFragmentShadingRate = false;
 		}
 
-		// Disable some things
-		m_fragmentShadingRateFeatures.primitiveFragmentShadingRate = false;
+		if(m_capabilities.m_vrs)
+		{
+			VkPhysicalDeviceFragmentShadingRatePropertiesKHR fragmentShadingRateProperties = {};
+			fragmentShadingRateProperties.sType =
+				VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_PROPERTIES_KHR;
 
-		m_fragmentShadingRateFeatures.pNext = const_cast<void*>(ci.pNext);
-		ci.pNext = &m_fragmentShadingRateFeatures;
+			VkPhysicalDeviceProperties2 properties = {};
+			properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+			properties.pNext = &fragmentShadingRateProperties;
+			vkGetPhysicalDeviceProperties2(m_physicalDevice, &properties);
+
+			if(fragmentShadingRateProperties.minFragmentShadingRateAttachmentTexelSize.width > 16
+			   || fragmentShadingRateProperties.minFragmentShadingRateAttachmentTexelSize.height > 16
+			   || fragmentShadingRateProperties.maxFragmentShadingRateAttachmentTexelSize.width < 8
+			   || fragmentShadingRateProperties.maxFragmentShadingRateAttachmentTexelSize.height < 8)
+			{
+				ANKI_VK_LOGW(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME
+							 " doesn't support 8x8 or 16x16 shading rate attachment texel size. Will disable VRS");
+				m_capabilities.m_vrs = false;
+			}
+			else
+			{
+				m_capabilities.m_minShadingRateImageTexelSize =
+					max(fragmentShadingRateProperties.minFragmentShadingRateAttachmentTexelSize.width,
+						fragmentShadingRateProperties.minFragmentShadingRateAttachmentTexelSize.height);
+			}
+		}
+
+		if(m_capabilities.m_vrs)
+		{
+			m_fragmentShadingRateFeatures.pNext = const_cast<void*>(ci.pNext);
+			ci.pNext = &m_fragmentShadingRateFeatures;
+		}
 	}
 
 	ANKI_VK_CHECK(vkCreateDevice(m_physicalDevice, &ci, nullptr, &m_device));

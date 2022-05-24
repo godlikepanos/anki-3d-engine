@@ -47,7 +47,7 @@ public:
 	Bool m_sriTexImportedOnce = false;
 	FramebufferDescription m_fbDescr;
 
-	static constexpr U32 m_sriTexelDimension = 16;
+	U32 m_sriTexelDimension = 16;
 
 	class
 	{

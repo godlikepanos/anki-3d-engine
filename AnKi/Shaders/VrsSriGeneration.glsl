@@ -10,12 +10,16 @@
 #include <AnKi/Shaders/TonemappingFunctions.glsl>
 
 // Find the maximum luma derivative in x and y, relative to the average luma of the block.
-// Each thread handles a 2x4 region.
+// Each thread handles a 2x2 region when using 8x8 VRS tiles and a 2x4 region when using 16x16 VRS tiles.
 
 layout(set = 0, binding = 0) uniform ANKI_RP texture2D u_inputTex;
 layout(set = 0, binding = 1) uniform sampler u_nearestClampSampler;
 
+#if SRI_TEXEL_DIMENSION == 8
+const UVec2 REGION_SIZE = UVec2(2u, 2u);
+#else
 const UVec2 REGION_SIZE = UVec2(2u, 4u);
+#endif
 
 const UVec2 WORKGROUP_SIZE = UVec2(SRI_TEXEL_DIMENSION) / REGION_SIZE;
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
@@ -44,8 +48,38 @@ shared Vec2 s_maxDerivative[SHARED_MEMORY_ENTRIES];
 
 void main()
 {
-	const Vec2 uv = Vec2(gl_GlobalInvocationID.xy) * Vec2(REGION_SIZE) * u_oneOverViewportSize;
+	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) * Vec2(REGION_SIZE) + 0.5) * u_oneOverViewportSize;
 
+#if SRI_TEXEL_DIMENSION == 8
+	// Get luminance.
+	//       l1.y
+	// l0.z  l0.w  l1.x
+	// l0.x  l0.y
+	Vec4 l0;
+	l0.x = sampleLuma(0, 0);
+	l0.y = sampleLuma(1, 0);
+	l0.z = sampleLuma(0, 1);
+	l0.w = sampleLuma(1, 1);
+
+	Vec2 l1;
+	l1.x = sampleLuma(2, 1);
+	l1.y = sampleLuma(1, 2);
+
+	// Calculate derivatives.
+	Vec2 a = Vec2(l0.y, l1.x);
+	Vec2 b = Vec2(l0.x, l0.w);
+	const Vec2 dx = abs(a - b);
+
+	a = Vec2(l0.z, l1.y);
+	b = Vec2(l0.x, l0.w);
+	const Vec2 dy = abs(a - b);
+
+	F32 maxDerivativeX = max(dx.x, dx.y);
+	F32 maxDerivativeY = max(dy.x, dy.y);
+
+	// Calculate average luma.
+	F32 averageLuma = (l0.x + l0.y + l0.z + l0.w) / 4.0;
+#else
 	// Get luminance.
 	//       l2.z
 	// l1.z  l1.w  l2.y
@@ -80,12 +114,15 @@ void main()
 
 	F32 maxDerivativeX = max(max(dx.x, dx.y), max(dx.z, dx.w));
 	F32 maxDerivativeY = max(max(dy.x, dy.y), max(dy.z, dy.w));
-	maxDerivativeX = subgroupMax(maxDerivativeX);
-	maxDerivativeY = subgroupMax(maxDerivativeY);
 
-	// Calculate average luma in block.
+	// Calculate average luma.
 	const Vec4 sumL0L1 = l0 + l1;
 	F32 averageLuma = (sumL0L1.x + sumL0L1.y + sumL0L1.z + sumL0L1.w) / 8.0;
+#endif
+
+	// Share values in subgroup.
+	maxDerivativeX = subgroupMax(maxDerivativeX);
+	maxDerivativeY = subgroupMax(maxDerivativeY);
 	averageLuma = subgroupAdd(averageLuma);
 
 #if SHARED_MEMORY

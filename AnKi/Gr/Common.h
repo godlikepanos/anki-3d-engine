@@ -153,6 +153,9 @@ public:
 	/// Max subgroup size of the GPU.
 	U32 m_maxSubgroupSize = 0;
 
+	/// Min size of a texel in the shading rate image.
+	U32 m_minShadingRateImageTexelSize = 0;
+
 	/// GPU vendor.
 	GpuVendor m_gpuVendor = GpuVendor::UNKNOWN;
 
@@ -181,9 +184,6 @@ public:
 	Bool m_unalignedBbpTextureFormats = false;
 };
 ANKI_END_PACKED_STRUCT
-static_assert(sizeof(GpuDeviceCapabilities)
-				  == sizeof(PtrSize) * 5 + sizeof(U32) * 7 + sizeof(U8) * 3 + sizeof(Bool) * 6,
-			  "Should be packed");
 
 /// The type of the allocator for heap allocations
 template<typename T>

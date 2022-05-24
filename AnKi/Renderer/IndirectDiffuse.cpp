@@ -48,9 +48,14 @@ Error IndirectDiffuse::initInternal()
 	m_rts[1] = m_r->createAndClearRenderTarget(texInit, TextureUsageBit::ALL_SAMPLED);
 
 	// Init VRS SRI generation
+	const Bool enableVrs = getGrManager().getDeviceCapabilities().m_vrs && getConfig().getRVrs() && !preferCompute;
+	if(enableVrs)
 	{
 		m_main.m_fbDescr.m_colorAttachmentCount = 1;
 		m_main.m_fbDescr.bake();
+
+		m_vrs.m_sriTexelDimension = getGrManager().getDeviceCapabilities().m_minShadingRateImageTexelSize;
+		ANKI_ASSERT(m_vrs.m_sriTexelDimension == 8 || m_vrs.m_sriTexelDimension == 16);
 
 		const UVec2 rez = (size + m_vrs.m_sriTexelDimension - 1) / m_vrs.m_sriTexelDimension;
 		m_vrs.m_rtHandle =
@@ -66,6 +71,12 @@ Error IndirectDiffuse::initInternal()
 		if(m_vrs.m_sriTexelDimension == 16 && getGrManager().getDeviceCapabilities().m_minSubgroupSize >= 32)
 		{
 			// Algorithm's workgroup size is 32, GPU's subgroup size is min 32 -> each workgroup has 1 subgroup -> No
+			// need for shared mem
+			variantInit.addMutation("SHARED_MEMORY", 0);
+		}
+		else if(m_vrs.m_sriTexelDimension == 8 && getGrManager().getDeviceCapabilities().m_minSubgroupSize >= 16)
+		{
+			// Algorithm's workgroup size is 16, GPU's subgroup size is min 16 -> each workgroup has 1 subgroup -> No
 			// need for shared mem
 			variantInit.addMutation("SHARED_MEMORY", 0);
 		}
