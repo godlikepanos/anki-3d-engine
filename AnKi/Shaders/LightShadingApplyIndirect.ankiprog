@@ -114,9 +114,9 @@ void main()
 
 	// Do specular
 	const Vec2 ndc = UV_TO_NDC(in_uv);
-	const Vec4 viewPos4 = u_clusteredShading.m_matrices.m_invertedProjectionJitter * Vec4(ndc, depthCenter, 1.0);
-	const Vec3 viewPos = viewPos4.xyz / viewPos4.w;
-	const ANKI_RP Vec3 viewDir = normalize(-viewPos);
+	const Vec4 worldPos4 = u_clusteredShading.m_matrices.m_invertedViewProjectionJitter * Vec4(ndc, depthCenter, 1.0);
+	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
+	const ANKI_RP Vec3 viewDir = normalize(u_clusteredShading.m_cameraPosition - worldPos);
 	const F32 NoV = max(0.0, dot(gbuffer.m_normal, viewDir));
 	const Vec3 env = specularDFG(gbuffer.m_f0, gbuffer.m_roughness, u_integrationLut, u_linearAnyClampSampler, NoV);
 	specular *= env;

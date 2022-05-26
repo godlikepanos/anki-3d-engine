@@ -47,13 +47,16 @@ Error IndirectDiffuse::initInternal()
 	texInit.setName("IndirectDiffuse #2");
 	m_rts[1] = m_r->createAndClearRenderTarget(texInit, TextureUsageBit::ALL_SAMPLED);
 
+	if(!preferCompute)
+	{
+		m_main.m_fbDescr.m_colorAttachmentCount = 1;
+		m_main.m_fbDescr.bake();
+	}
+
 	// Init VRS SRI generation
 	const Bool enableVrs = getGrManager().getDeviceCapabilities().m_vrs && getConfig().getRVrs() && !preferCompute;
 	if(enableVrs)
 	{
-		m_main.m_fbDescr.m_colorAttachmentCount = 1;
-		m_main.m_fbDescr.bake();
-
 		m_vrs.m_sriTexelDimension = getGrManager().getDeviceCapabilities().m_minShadingRateImageTexelSize;
 		ANKI_ASSERT(m_vrs.m_sriTexelDimension == 8 || m_vrs.m_sriTexelDimension == 16);
 
@@ -250,7 +253,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 		prpass->newDependency(RenderPassDependency(m_r->getMotionVectors().getHistoryLengthRt(), readUsage));
 		prpass->newDependency(RenderPassDependency(m_runCtx.m_mainRtHandles[READ], readUsage));
 
-		prpass->setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+		prpass->setWork([this, &ctx, enableVrs](RenderPassWorkContext& rgraphCtx) {
 			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 			cmdb->bindShaderProgram(m_main.m_grProg);
 
@@ -296,7 +299,11 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			else
 			{
 				cmdb->setViewport(0, 0, unis.m_viewportSize.x(), unis.m_viewportSize.y());
-				cmdb->setVrsRate(VrsRate::_1x1);
+
+				if(enableVrs)
+				{
+					cmdb->setVrsRate(VrsRate::_1x1);
+				}
 
 				cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
 			}
