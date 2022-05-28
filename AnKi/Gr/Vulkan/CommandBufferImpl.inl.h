@@ -13,7 +13,7 @@
 
 namespace anki {
 
-inline void CommandBufferImpl::setStencilCompareMask(FaceSelectionBit face, U32 mask)
+inline void CommandBufferImpl::setStencilCompareMaskInternal(FaceSelectionBit face, U32 mask)
 {
 	commandCommon();
 
@@ -37,7 +37,7 @@ inline void CommandBufferImpl::setStencilCompareMask(FaceSelectionBit face, U32 
 	}
 }
 
-inline void CommandBufferImpl::setStencilWriteMask(FaceSelectionBit face, U32 mask)
+inline void CommandBufferImpl::setStencilWriteMaskInternal(FaceSelectionBit face, U32 mask)
 {
 	commandCommon();
 
@@ -61,7 +61,7 @@ inline void CommandBufferImpl::setStencilWriteMask(FaceSelectionBit face, U32 ma
 	}
 }
 
-inline void CommandBufferImpl::setStencilReference(FaceSelectionBit face, U32 ref)
+inline void CommandBufferImpl::setStencilReferenceInternal(FaceSelectionBit face, U32 ref)
 {
 	commandCommon();
 
@@ -122,8 +122,9 @@ inline void CommandBufferImpl::setImageBarrier(VkPipelineStageFlags srcStage, Vk
 #endif
 }
 
-inline void CommandBufferImpl::setTextureBarrierRange(TexturePtr tex, TextureUsageBit prevUsage,
-													  TextureUsageBit nextUsage, const VkImageSubresourceRange& range)
+inline void CommandBufferImpl::setTextureBarrierRangeInternal(const TexturePtr& tex, TextureUsageBit prevUsage,
+															  TextureUsageBit nextUsage,
+															  const VkImageSubresourceRange& range)
 {
 	const TextureImpl& impl = static_cast<const TextureImpl&>(*tex);
 	ANKI_ASSERT(impl.usageValid(prevUsage));
@@ -147,8 +148,9 @@ inline void CommandBufferImpl::setTextureBarrierRange(TexturePtr tex, TextureUsa
 	m_microCmdb->pushObjectRef(tex);
 }
 
-inline void CommandBufferImpl::setTextureBarrier(TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage,
-												 const TextureSubresourceInfo& subresource_)
+inline void CommandBufferImpl::setTextureBarrierInternal(const TexturePtr& tex, TextureUsageBit prevUsage,
+														 TextureUsageBit nextUsage,
+														 const TextureSubresourceInfo& subresource_)
 {
 	TextureSubresourceInfo subresource = subresource_;
 	const TextureImpl& impl = static_cast<const TextureImpl&>(*tex);
@@ -167,11 +169,12 @@ inline void CommandBufferImpl::setTextureBarrier(TexturePtr tex, TextureUsageBit
 
 	VkImageSubresourceRange range;
 	impl.computeVkImageSubresourceRange(subresource, range);
-	setTextureBarrierRange(tex, prevUsage, nextUsage, range);
+	setTextureBarrierRangeInternal(tex, prevUsage, nextUsage, range);
 }
 
-inline void CommandBufferImpl::setTextureSurfaceBarrier(TexturePtr tex, TextureUsageBit prevUsage,
-														TextureUsageBit nextUsage, const TextureSurfaceInfo& surf)
+inline void CommandBufferImpl::setTextureSurfaceBarrierInternal(const TexturePtr& tex, TextureUsageBit prevUsage,
+																TextureUsageBit nextUsage,
+																const TextureSurfaceInfo& surf)
 {
 	if(ANKI_UNLIKELY(surf.m_level > 0 && nextUsage == TextureUsageBit::GENERATE_MIPMAPS))
 	{
@@ -183,11 +186,11 @@ inline void CommandBufferImpl::setTextureSurfaceBarrier(TexturePtr tex, TextureU
 
 	VkImageSubresourceRange range;
 	impl.computeVkImageSubresourceRange(TextureSubresourceInfo(surf, impl.getDepthStencilAspect()), range);
-	setTextureBarrierRange(tex, prevUsage, nextUsage, range);
+	setTextureBarrierRangeInternal(tex, prevUsage, nextUsage, range);
 }
 
-inline void CommandBufferImpl::setTextureVolumeBarrier(TexturePtr tex, TextureUsageBit prevUsage,
-													   TextureUsageBit nextUsage, const TextureVolumeInfo& vol)
+inline void CommandBufferImpl::setTextureVolumeBarrierInternal(const TexturePtr& tex, TextureUsageBit prevUsage,
+															   TextureUsageBit nextUsage, const TextureVolumeInfo& vol)
 {
 	if(vol.m_level > 0)
 	{
@@ -199,12 +202,12 @@ inline void CommandBufferImpl::setTextureVolumeBarrier(TexturePtr tex, TextureUs
 
 	VkImageSubresourceRange range;
 	impl.computeVkImageSubresourceRange(TextureSubresourceInfo(vol, impl.getDepthStencilAspect()), range);
-	setTextureBarrierRange(tex, prevUsage, nextUsage, range);
+	setTextureBarrierRangeInternal(tex, prevUsage, nextUsage, range);
 }
 
-inline void CommandBufferImpl::setBufferBarrier(VkPipelineStageFlags srcStage, VkAccessFlags srcAccess,
-												VkPipelineStageFlags dstStage, VkAccessFlags dstAccess, PtrSize offset,
-												PtrSize size, VkBuffer buff)
+inline void CommandBufferImpl::setBufferBarrierInternal(VkPipelineStageFlags srcStage, VkAccessFlags srcAccess,
+														VkPipelineStageFlags dstStage, VkAccessFlags dstAccess,
+														PtrSize offset, PtrSize size, VkBuffer buff)
 {
 	ANKI_ASSERT(buff);
 	commandCommon();
@@ -237,8 +240,8 @@ inline void CommandBufferImpl::setBufferBarrier(VkPipelineStageFlags srcStage, V
 #endif
 }
 
-inline void CommandBufferImpl::setBufferBarrier(BufferPtr& buff, BufferUsageBit before, BufferUsageBit after,
-												PtrSize offset, PtrSize size)
+inline void CommandBufferImpl::setBufferBarrierInternal(const BufferPtr& buff, BufferUsageBit before,
+														BufferUsageBit after, PtrSize offset, PtrSize size)
 {
 	const BufferImpl& impl = static_cast<const BufferImpl&>(*buff);
 
@@ -248,12 +251,12 @@ inline void CommandBufferImpl::setBufferBarrier(BufferPtr& buff, BufferUsageBit 
 	VkAccessFlags dstAccess;
 	impl.computeBarrierInfo(before, after, srcStage, srcAccess, dstStage, dstAccess);
 
-	setBufferBarrier(srcStage, srcAccess, dstStage, dstAccess, offset, size, impl.getHandle());
+	setBufferBarrierInternal(srcStage, srcAccess, dstStage, dstAccess, offset, size, impl.getHandle());
 
 	m_microCmdb->pushObjectRef(buff);
 }
 
-inline void CommandBufferImpl::setAccelerationStructureBarrierInternal(AccelerationStructurePtr& as,
+inline void CommandBufferImpl::setAccelerationStructureBarrierInternal(const AccelerationStructurePtr& as,
 																	   AccelerationStructureUsageBit prevUsage,
 																	   AccelerationStructureUsageBit nextUsage)
 {
@@ -287,24 +290,24 @@ inline void CommandBufferImpl::setAccelerationStructureBarrierInternal(Accelerat
 #endif
 }
 
-inline void CommandBufferImpl::drawArrays(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 first,
-										  U32 baseInstance)
+inline void CommandBufferImpl::drawArraysInternal(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 first,
+												  U32 baseInstance)
 {
 	m_state.setPrimitiveTopology(topology);
 	drawcallCommon();
 	ANKI_CMD(vkCmdDraw(m_handle, count, instanceCount, first, baseInstance), ANY_OTHER_COMMAND);
 }
 
-inline void CommandBufferImpl::drawElements(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 firstIndex,
-											U32 baseVertex, U32 baseInstance)
+inline void CommandBufferImpl::drawElementsInternal(PrimitiveTopology topology, U32 count, U32 instanceCount,
+													U32 firstIndex, U32 baseVertex, U32 baseInstance)
 {
 	m_state.setPrimitiveTopology(topology);
 	drawcallCommon();
 	ANKI_CMD(vkCmdDrawIndexed(m_handle, count, instanceCount, firstIndex, baseVertex, baseInstance), ANY_OTHER_COMMAND);
 }
 
-inline void CommandBufferImpl::drawArraysIndirect(PrimitiveTopology topology, U32 drawCount, PtrSize offset,
-												  BufferPtr& buff)
+inline void CommandBufferImpl::drawArraysIndirectInternal(PrimitiveTopology topology, U32 drawCount, PtrSize offset,
+														  const BufferPtr& buff)
 {
 	m_state.setPrimitiveTopology(topology);
 	drawcallCommon();
@@ -317,8 +320,8 @@ inline void CommandBufferImpl::drawArraysIndirect(PrimitiveTopology topology, U3
 			 ANY_OTHER_COMMAND);
 }
 
-inline void CommandBufferImpl::drawElementsIndirect(PrimitiveTopology topology, U32 drawCount, PtrSize offset,
-													BufferPtr& buff)
+inline void CommandBufferImpl::drawElementsIndirectInternal(PrimitiveTopology topology, U32 drawCount, PtrSize offset,
+															const BufferPtr& buff)
 {
 	m_state.setPrimitiveTopology(topology);
 	drawcallCommon();
@@ -331,7 +334,7 @@ inline void CommandBufferImpl::drawElementsIndirect(PrimitiveTopology topology, 
 			 ANY_OTHER_COMMAND);
 }
 
-inline void CommandBufferImpl::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
+inline void CommandBufferImpl::dispatchComputeInternal(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
 {
 	ANKI_ASSERT(m_computeProg);
 	ANKI_ASSERT(m_computeProg->getReflectionInfo().m_pushConstantsSize == m_setPushConstantsSize
@@ -380,9 +383,9 @@ inline void CommandBufferImpl::dispatchCompute(U32 groupCountX, U32 groupCountY,
 	getGrManagerImpl().endMarker(m_handle);
 }
 
-inline void CommandBufferImpl::traceRaysInternal(BufferPtr& sbtBuffer, PtrSize sbtBufferOffset, U32 sbtRecordSize32,
-												 U32 hitGroupSbtRecordCount, U32 rayTypeCount, U32 width, U32 height,
-												 U32 depth)
+inline void CommandBufferImpl::traceRaysInternal(const BufferPtr& sbtBuffer, PtrSize sbtBufferOffset,
+												 U32 sbtRecordSize32, U32 hitGroupSbtRecordCount, U32 rayTypeCount,
+												 U32 width, U32 height, U32 depth)
 {
 	const PtrSize sbtRecordSize = sbtRecordSize32;
 	ANKI_ASSERT(hitGroupSbtRecordCount > 0);
@@ -466,7 +469,7 @@ inline void CommandBufferImpl::traceRaysInternal(BufferPtr& sbtBuffer, PtrSize s
 	getGrManagerImpl().endMarker(m_handle);
 }
 
-inline void CommandBufferImpl::resetOcclusionQuery(OcclusionQueryPtr query)
+inline void CommandBufferImpl::resetOcclusionQueryInternal(const OcclusionQueryPtr& query)
 {
 	commandCommon();
 
@@ -488,7 +491,7 @@ inline void CommandBufferImpl::resetOcclusionQuery(OcclusionQueryPtr query)
 	m_microCmdb->pushObjectRef(query);
 }
 
-inline void CommandBufferImpl::beginOcclusionQuery(OcclusionQueryPtr query)
+inline void CommandBufferImpl::beginOcclusionQueryInternal(const OcclusionQueryPtr& query)
 {
 	commandCommon();
 
@@ -501,7 +504,7 @@ inline void CommandBufferImpl::beginOcclusionQuery(OcclusionQueryPtr query)
 	m_microCmdb->pushObjectRef(query);
 }
 
-inline void CommandBufferImpl::endOcclusionQuery(OcclusionQueryPtr query)
+inline void CommandBufferImpl::endOcclusionQueryInternal(const OcclusionQueryPtr& query)
 {
 	commandCommon();
 
@@ -514,7 +517,7 @@ inline void CommandBufferImpl::endOcclusionQuery(OcclusionQueryPtr query)
 	m_microCmdb->pushObjectRef(query);
 }
 
-inline void CommandBufferImpl::resetTimestampQueryInternal(TimestampQueryPtr& query)
+inline void CommandBufferImpl::resetTimestampQueryInternal(const TimestampQueryPtr& query)
 {
 	commandCommon();
 
@@ -536,7 +539,7 @@ inline void CommandBufferImpl::resetTimestampQueryInternal(TimestampQueryPtr& qu
 	m_microCmdb->pushObjectRef(query);
 }
 
-inline void CommandBufferImpl::writeTimestampInternal(TimestampQueryPtr& query)
+inline void CommandBufferImpl::writeTimestampInternal(const TimestampQueryPtr& query)
 {
 	commandCommon();
 
@@ -548,7 +551,7 @@ inline void CommandBufferImpl::writeTimestampInternal(TimestampQueryPtr& query)
 	m_microCmdb->pushObjectRef(query);
 }
 
-inline void CommandBufferImpl::clearTextureView(TextureViewPtr texView, const ClearValue& clearValue)
+inline void CommandBufferImpl::clearTextureViewInternal(const TextureViewPtr& texView, const ClearValue& clearValue)
 {
 	commandCommon();
 
@@ -574,7 +577,7 @@ inline void CommandBufferImpl::clearTextureView(TextureViewPtr texView, const Cl
 	m_microCmdb->pushObjectRef(texView);
 }
 
-inline void CommandBufferImpl::pushSecondLevelCommandBuffer(CommandBufferPtr cmdb)
+inline void CommandBufferImpl::pushSecondLevelCommandBufferInternal(const CommandBufferPtr& cmdb)
 {
 	commandCommon();
 	ANKI_ASSERT(insideRenderPass());
@@ -787,7 +790,7 @@ inline void CommandBufferImpl::flushBatches(CommandBufferCommandType type)
 	}
 }
 
-inline void CommandBufferImpl::fillBuffer(BufferPtr buff, PtrSize offset, PtrSize size, U32 value)
+inline void CommandBufferImpl::fillBufferInternal(const BufferPtr& buff, PtrSize offset, PtrSize size, U32 value)
 {
 	commandCommon();
 	ANKI_ASSERT(!insideRenderPass());
@@ -807,8 +810,8 @@ inline void CommandBufferImpl::fillBuffer(BufferPtr buff, PtrSize offset, PtrSiz
 	m_microCmdb->pushObjectRef(buff);
 }
 
-inline void CommandBufferImpl::writeOcclusionQueryResultToBuffer(OcclusionQueryPtr query, PtrSize offset,
-																 BufferPtr buff)
+inline void CommandBufferImpl::writeOcclusionQueryResultToBufferInternal(const OcclusionQueryPtr& query, PtrSize offset,
+																		 const BufferPtr& buff)
 {
 	commandCommon();
 	ANKI_ASSERT(!insideRenderPass());
@@ -840,7 +843,7 @@ inline void CommandBufferImpl::writeOcclusionQueryResultToBuffer(OcclusionQueryP
 	m_microCmdb->pushObjectRef(buff);
 }
 
-inline void CommandBufferImpl::bindShaderProgram(ShaderProgramPtr& prog)
+inline void CommandBufferImpl::bindShaderProgramInternal(const ShaderProgramPtr& prog)
 {
 	commandCommon();
 
@@ -897,8 +900,8 @@ inline void CommandBufferImpl::bindShaderProgram(ShaderProgramPtr& prog)
 #endif
 }
 
-inline void CommandBufferImpl::copyBufferToBuffer(BufferPtr& src, PtrSize srcOffset, BufferPtr& dst, PtrSize dstOffset,
-												  PtrSize range)
+inline void CommandBufferImpl::copyBufferToBufferInternal(const BufferPtr& src, PtrSize srcOffset, const BufferPtr& dst,
+														  PtrSize dstOffset, PtrSize range)
 {
 	ANKI_ASSERT(static_cast<const BufferImpl&>(*src).usageValid(BufferUsageBit::TRANSFER_SOURCE));
 	ANKI_ASSERT(static_cast<const BufferImpl&>(*dst).usageValid(BufferUsageBit::TRANSFER_DESTINATION));
@@ -925,7 +928,7 @@ inline Bool CommandBufferImpl::flipViewport() const
 	return static_cast<const FramebufferImpl&>(*m_activeFb).hasPresentableTexture();
 }
 
-inline void CommandBufferImpl::setPushConstants(const void* data, U32 dataSize)
+inline void CommandBufferImpl::setPushConstantsInternal(const void* data, U32 dataSize)
 {
 	ANKI_ASSERT(data && dataSize && dataSize % 16 == 0);
 	const ShaderProgramImpl& prog = getBoundProgram();
@@ -942,7 +945,7 @@ inline void CommandBufferImpl::setPushConstants(const void* data, U32 dataSize)
 #endif
 }
 
-inline void CommandBufferImpl::setRasterizationOrder(RasterizationOrder order)
+inline void CommandBufferImpl::setRasterizationOrderInternal(RasterizationOrder order)
 {
 	commandCommon();
 
@@ -952,7 +955,7 @@ inline void CommandBufferImpl::setRasterizationOrder(RasterizationOrder order)
 	}
 }
 
-inline void CommandBufferImpl::setLineWidth(F32 width)
+inline void CommandBufferImpl::setLineWidthInternal(F32 width)
 {
 	commandCommon();
 	vkCmdSetLineWidth(m_handle, width);

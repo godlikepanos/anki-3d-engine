@@ -37,14 +37,19 @@ public:
 	ResourceAllocator<U8> getAllocator() const;
 	TempResourceAllocator<U8> getTempAllocator() const;
 
-	Atomic<I32>& getRefcount()
+	void retain() const
 	{
-		return m_refcount;
+		m_refcount.fetchAdd(1);
 	}
 
-	const Atomic<I32>& getRefcount() const
+	I32 release() const
 	{
-		return m_refcount;
+		return m_refcount.fetchSub(1);
+	}
+
+	I32 getRefcount() const
+	{
+		return m_refcount.load();
 	}
 
 	CString getFilename() const
@@ -84,7 +89,7 @@ public:
 
 private:
 	ResourceManager* m_manager;
-	Atomic<I32> m_refcount;
+	mutable Atomic<I32> m_refcount;
 	String m_fname; ///< Unique resource name.
 	U64 m_uuid = 0;
 };

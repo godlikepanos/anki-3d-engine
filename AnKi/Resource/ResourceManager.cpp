@@ -96,10 +96,10 @@ Error ResourceManager::loadResource(const CString& filename, ResourcePtr<T>& out
 	{
 		// Allocate ptr
 		T* ptr = m_alloc.newInstance<T>(this);
-		ANKI_ASSERT(ptr->getRefcount().load() == 0);
+		ANKI_ASSERT(ptr->getRefcount() == 0);
 
 		// Increment the refcount in that case where async jobs increment it and decrement it in the scope of a load()
-		ptr->getRefcount().fetchAdd(1);
+		ptr->retain();
 
 		// Populate the ptr. Use a block to cleanup temp_pool allocations
 		auto& pool = m_tmpAlloc.getMemoryPool();
@@ -134,7 +134,7 @@ Error ResourceManager::loadResource(const CString& filename, ResourcePtr<T>& out
 		out.reset(ptr);
 
 		// Decrement because of the increment happened a few lines above
-		ptr->getRefcount().fetchSub(1);
+		ptr->release();
 	}
 
 	return err;

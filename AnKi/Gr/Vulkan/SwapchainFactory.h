@@ -32,9 +32,19 @@ public:
 
 	~MicroSwapchain();
 
-	Atomic<U32>& getRefcount()
+	void retain() const
 	{
-		return m_refcount;
+		m_refcount.fetchAdd(1);
+	}
+
+	I32 release() const
+	{
+		return m_refcount.fetchSub(1);
+	}
+
+	I32 getRefcount() const
+	{
+		return m_refcount.load();
 	}
 
 	GrAllocator<U8> getAllocator() const;
@@ -62,7 +72,7 @@ public:
 	}
 
 private:
-	Atomic<U32> m_refcount = {0};
+	mutable Atomic<I32> m_refcount = {0};
 	SwapchainFactory* m_factory = nullptr;
 
 	enum

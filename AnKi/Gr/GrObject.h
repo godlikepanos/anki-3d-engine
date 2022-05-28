@@ -63,9 +63,14 @@ public:
 
 	GrAllocator<U8> getAllocator() const;
 
-	Atomic<I32>& getRefcount()
+	void retain() const
 	{
-		return m_refcount;
+		m_refcount.fetchAdd(1);
+	}
+
+	I32 release() const
+	{
+		return m_refcount.fetchSub(1);
 	}
 
 	/// A unique identifier for caching objects.
@@ -84,7 +89,7 @@ private:
 	GrManager* m_manager;
 	Char* m_name = nullptr;
 	U64 m_uuid;
-	Atomic<I32> m_refcount;
+	mutable Atomic<I32> m_refcount;
 	GrObjectType m_type;
 };
 /// @}

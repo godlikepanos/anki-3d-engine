@@ -26,9 +26,14 @@ public:
 
 	UiAllocator getAllocator() const;
 
-	Atomic<I32>& getRefcount()
+	void retain() const
 	{
-		return m_refcount;
+		m_refcount.fetchAdd(1);
+	}
+
+	I32 release() const
+	{
+		return m_refcount.fetchSub(1);
 	}
 
 	/// Set the global IMGUI allocator.
@@ -60,7 +65,7 @@ public:
 
 protected:
 	UiManager* m_manager;
-	Atomic<I32> m_refcount = {0};
+	mutable Atomic<I32> m_refcount = {0};
 };
 /// @}
 

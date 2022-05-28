@@ -116,10 +116,9 @@ void CommandBufferImpl::beginRecording()
 	}
 }
 
-void CommandBufferImpl::beginRenderPass(FramebufferPtr fb,
-										const Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS>& colorAttachmentUsages,
-										TextureUsageBit depthStencilAttachmentUsage, U32 minx, U32 miny, U32 width,
-										U32 height)
+void CommandBufferImpl::beginRenderPassInternal(
+	const FramebufferPtr& fb, const Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS>& colorAttachmentUsages,
+	TextureUsageBit depthStencilAttachmentUsage, U32 minx, U32 miny, U32 width, U32 height)
 {
 	commandCommon();
 	ANKI_ASSERT(!insideRenderPass());
@@ -219,7 +218,7 @@ void CommandBufferImpl::beginRenderPassInternal()
 	}
 }
 
-void CommandBufferImpl::endRenderPass()
+void CommandBufferImpl::endRenderPassInternal()
 {
 	commandCommon();
 	ANKI_ASSERT(insideRenderPass());
@@ -291,7 +290,7 @@ void CommandBufferImpl::endRecording()
 #endif
 }
 
-void CommandBufferImpl::generateMipmaps2d(TextureViewPtr texView)
+void CommandBufferImpl::generateMipmaps2dInternal(const TextureViewPtr& texView)
 {
 	commandCommon();
 
@@ -636,8 +635,8 @@ void CommandBufferImpl::flushWriteQueryResults()
 	m_writeQueryAtoms.resize(m_alloc, 0);
 }
 
-void CommandBufferImpl::copyBufferToTextureViewInternal(BufferPtr buff, PtrSize offset, PtrSize range,
-														TextureViewPtr texView)
+void CommandBufferImpl::copyBufferToTextureViewInternal(const BufferPtr& buff, PtrSize offset, PtrSize range,
+														const TextureViewPtr& texView)
 {
 	commandCommon();
 
@@ -745,7 +744,7 @@ void CommandBufferImpl::rebindDynamicState()
 	}
 }
 
-void CommandBufferImpl::buildAccelerationStructureInternal(AccelerationStructurePtr& as)
+void CommandBufferImpl::buildAccelerationStructureInternal(const AccelerationStructurePtr& as)
 {
 	commandCommon();
 
