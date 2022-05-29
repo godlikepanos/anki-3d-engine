@@ -226,10 +226,11 @@ void CommandBuffer::bindAccelerationStructure(U32 set, U32 binding, const Accele
 	self.bindAccelerationStructureInternal(set, binding, as, arrayIdx);
 }
 
-void CommandBuffer::bindTextureBuffer(U32 set, U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize range,
-									  Format fmt, U32 arrayIdx)
+void CommandBuffer::bindReadOnlyTextureBuffer(U32 set, U32 binding, const BufferPtr& buff, PtrSize offset,
+											  PtrSize range, Format fmt, U32 arrayIdx)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.bindReadOnlyTextureBufferInternal(set, binding, buff, offset, range, fmt, arrayIdx);
 }
 
 void CommandBuffer::bindAllBindless(U32 set)

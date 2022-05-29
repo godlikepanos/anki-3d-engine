@@ -112,6 +112,12 @@ public:
 	VkAccelerationStructureKHR m_accelerationStructureHandle;
 };
 
+class TextureBufferBinding
+{
+public:
+	VkBufferView m_buffView;
+};
+
 class AnyBinding
 {
 public:
@@ -125,6 +131,7 @@ public:
 		BufferBinding m_buff;
 		ImageBinding m_image;
 		AsBinding m_accelerationStructure;
+		TextureBufferBinding m_textureBuffer;
 	};
 
 	DescriptorType m_type;
@@ -261,6 +268,22 @@ public:
 		b.m_buff.m_buffHandle = static_cast<const BufferImpl*>(buff)->getHandle();
 		b.m_buff.m_offset = offset;
 		b.m_buff.m_range = range;
+
+		m_dirtyBindings.set(binding);
+		unbindBindlessDSet();
+	}
+
+	void bindReadOnlyTextureBuffer(U32 binding, U32 arrayIdx, const Buffer* buff, PtrSize offset, PtrSize range,
+								   Format fmt)
+	{
+		const VkBufferView view = static_cast<const BufferImpl*>(buff)->getOrCreateBufferView(fmt, offset, range);
+		AnyBinding& b = getBindingToPopulate(binding, arrayIdx);
+		b = {};
+		b.m_type = DescriptorType::READ_TEXTURE_BUFFER;
+		b.m_uuids[0] = ptrToNumber(view);
+		b.m_uuids[1] = buff->getUuid();
+
+		b.m_textureBuffer.m_buffView = view;
 
 		m_dirtyBindings.set(binding);
 		unbindBindlessDSet();

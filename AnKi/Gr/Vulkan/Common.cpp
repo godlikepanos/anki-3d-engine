@@ -298,14 +298,14 @@ VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask)
 		out |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 	}
 
-	if(!!(usageMask & (BufferUsageBit::ALL_TEXTURE & BufferUsageBit::ALL_WRITE)))
-	{
-		out |= VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT;
-	}
-
 	if(!!(usageMask & (BufferUsageBit::ALL_TEXTURE & BufferUsageBit::ALL_READ)))
 	{
 		out |= VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT;
+	}
+
+	if(!!(usageMask & (BufferUsageBit::ALL_TEXTURE & BufferUsageBit::ALL_WRITE)))
+	{
+		out |= VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT;
 	}
 
 	if(!!(usageMask & BufferUsageBit::ACCELERATION_STRUCTURE_BUILD))
