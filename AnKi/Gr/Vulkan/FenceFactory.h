@@ -36,9 +36,14 @@ public:
 		return m_handle;
 	}
 
-	Atomic<U32>& getRefcount()
+	void retain() const
 	{
-		return m_refcount;
+		m_refcount.fetchAdd(1);
+	}
+
+	I32 release() const
+	{
+		return m_refcount.fetchSub(1);
 	}
 
 	GrAllocator<U8> getAllocator() const;
@@ -58,7 +63,7 @@ public:
 
 private:
 	VkFence m_handle = VK_NULL_HANDLE;
-	Atomic<U32> m_refcount = {0};
+	mutable Atomic<I32> m_refcount = {0};
 	FenceFactory* m_factory = nullptr;
 };
 

@@ -91,22 +91,23 @@ public:
 		return !!(m_flags & CommandBufferFlag::SECOND_LEVEL);
 	}
 
-	void bindVertexBuffer(U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride, VertexStepRate stepRate)
+	void bindVertexBufferInternal(U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize stride,
+								  VertexStepRate stepRate)
 	{
 		commandCommon();
 		m_state.bindVertexBuffer(binding, stride, stepRate);
-		VkBuffer vkbuff = static_cast<const BufferImpl&>(*buff).getHandle();
+		const VkBuffer vkbuff = static_cast<const BufferImpl&>(*buff).getHandle();
 		ANKI_CMD(vkCmdBindVertexBuffers(m_handle, binding, 1, &vkbuff, &offset), ANY_OTHER_COMMAND);
 		m_microCmdb->pushObjectRef(buff);
 	}
 
-	void setVertexAttribute(U32 location, U32 buffBinding, const Format fmt, PtrSize relativeOffset)
+	void setVertexAttributeInternal(U32 location, U32 buffBinding, const Format fmt, PtrSize relativeOffset)
 	{
 		commandCommon();
 		m_state.setVertexAttribute(location, buffBinding, fmt, relativeOffset);
 	}
 
-	void bindIndexBuffer(BufferPtr buff, PtrSize offset, IndexType type)
+	void bindIndexBufferInternal(const BufferPtr& buff, PtrSize offset, IndexType type)
 	{
 		commandCommon();
 		ANKI_CMD(vkCmdBindIndexBuffer(m_handle, static_cast<const BufferImpl&>(*buff).getHandle(), offset,
@@ -115,25 +116,25 @@ public:
 		m_microCmdb->pushObjectRef(buff);
 	}
 
-	void setPrimitiveRestart(Bool enable)
+	void setPrimitiveRestartInternal(Bool enable)
 	{
 		commandCommon();
 		m_state.setPrimitiveRestart(enable);
 	}
 
-	void setFillMode(FillMode mode)
+	void setFillModeInternal(FillMode mode)
 	{
 		commandCommon();
 		m_state.setFillMode(mode);
 	}
 
-	void setCullMode(FaceSelectionBit mode)
+	void setCullModeInternal(FaceSelectionBit mode)
 	{
 		commandCommon();
 		m_state.setCullMode(mode);
 	}
 
-	void setViewport(U32 minx, U32 miny, U32 width, U32 height)
+	void setViewportInternal(U32 minx, U32 miny, U32 width, U32 height)
 	{
 		ANKI_ASSERT(width > 0 && height > 0);
 		commandCommon();
@@ -149,7 +150,7 @@ public:
 		}
 	}
 
-	void setScissor(U32 minx, U32 miny, U32 width, U32 height)
+	void setScissorInternal(U32 minx, U32 miny, U32 width, U32 height)
 	{
 		ANKI_ASSERT(width > 0 && height > 0);
 		commandCommon();
@@ -165,68 +166,70 @@ public:
 		}
 	}
 
-	void setPolygonOffset(F32 factor, F32 units)
+	void setPolygonOffsetInternal(F32 factor, F32 units)
 	{
 		commandCommon();
 		m_state.setPolygonOffset(factor, units);
 	}
 
-	void setStencilOperations(FaceSelectionBit face, StencilOperation stencilFail,
-							  StencilOperation stencilPassDepthFail, StencilOperation stencilPassDepthPass)
+	void setStencilOperationsInternal(FaceSelectionBit face, StencilOperation stencilFail,
+									  StencilOperation stencilPassDepthFail, StencilOperation stencilPassDepthPass)
 	{
 		commandCommon();
 		m_state.setStencilOperations(face, stencilFail, stencilPassDepthFail, stencilPassDepthPass);
 	}
 
-	void setStencilCompareOperation(FaceSelectionBit face, CompareOperation comp)
+	void setStencilCompareOperationInternal(FaceSelectionBit face, CompareOperation comp)
 	{
 		commandCommon();
 		m_state.setStencilCompareOperation(face, comp);
 	}
 
-	void setStencilCompareMask(FaceSelectionBit face, U32 mask);
+	void setStencilCompareMaskInternal(FaceSelectionBit face, U32 mask);
 
-	void setStencilWriteMask(FaceSelectionBit face, U32 mask);
+	void setStencilWriteMaskInternal(FaceSelectionBit face, U32 mask);
 
-	void setStencilReference(FaceSelectionBit face, U32 ref);
+	void setStencilReferenceInternal(FaceSelectionBit face, U32 ref);
 
-	void setDepthWrite(Bool enable)
+	void setDepthWriteInternal(Bool enable)
 	{
 		commandCommon();
 		m_state.setDepthWrite(enable);
 	}
 
-	void setDepthCompareOperation(CompareOperation op)
+	void setDepthCompareOperationInternal(CompareOperation op)
 	{
 		commandCommon();
 		m_state.setDepthCompareOperation(op);
 	}
 
-	void setAlphaToCoverage(Bool enable)
+	void setAlphaToCoverageInternal(Bool enable)
 	{
 		commandCommon();
 		m_state.setAlphaToCoverage(enable);
 	}
 
-	void setColorChannelWriteMask(U32 attachment, ColorBit mask)
+	void setColorChannelWriteMaskInternal(U32 attachment, ColorBit mask)
 	{
 		commandCommon();
 		m_state.setColorChannelWriteMask(attachment, mask);
 	}
 
-	void setBlendFactors(U32 attachment, BlendFactor srcRgb, BlendFactor dstRgb, BlendFactor srcA, BlendFactor dstA)
+	void setBlendFactorsInternal(U32 attachment, BlendFactor srcRgb, BlendFactor dstRgb, BlendFactor srcA,
+								 BlendFactor dstA)
 	{
 		commandCommon();
 		m_state.setBlendFactors(attachment, srcRgb, dstRgb, srcA, dstA);
 	}
 
-	void setBlendOperation(U32 attachment, BlendOperation funcRgb, BlendOperation funcA)
+	void setBlendOperationInternal(U32 attachment, BlendOperation funcRgb, BlendOperation funcA)
 	{
 		commandCommon();
 		m_state.setBlendOperation(attachment, funcRgb, funcA);
 	}
 
-	void bindTextureAndSamplerInternal(U32 set, U32 binding, TextureViewPtr& texView, SamplerPtr sampler, U32 arrayIdx)
+	void bindTextureAndSamplerInternal(U32 set, U32 binding, const TextureViewPtr& texView, const SamplerPtr& sampler,
+									   U32 arrayIdx)
 	{
 		commandCommon();
 		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
@@ -240,7 +243,7 @@ public:
 		m_microCmdb->pushObjectRef(sampler);
 	}
 
-	void bindTextureInternal(U32 set, U32 binding, TextureViewPtr& texView, U32 arrayIdx)
+	void bindTextureInternal(U32 set, U32 binding, const TextureViewPtr& texView, U32 arrayIdx)
 	{
 		commandCommon();
 		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
@@ -253,14 +256,14 @@ public:
 		m_microCmdb->pushObjectRef(texView);
 	}
 
-	void bindSamplerInternal(U32 set, U32 binding, SamplerPtr& sampler, U32 arrayIdx)
+	void bindSamplerInternal(U32 set, U32 binding, const SamplerPtr& sampler, U32 arrayIdx)
 	{
 		commandCommon();
 		m_dsetState[set].bindSampler(binding, arrayIdx, sampler.get());
 		m_microCmdb->pushObjectRef(sampler);
 	}
 
-	void bindImageInternal(U32 set, U32 binding, TextureViewPtr& img, U32 arrayIdx)
+	void bindImageInternal(U32 set, U32 binding, const TextureViewPtr& img, U32 arrayIdx)
 	{
 		commandCommon();
 		m_dsetState[set].bindImage(binding, arrayIdx, img.get());
@@ -275,7 +278,7 @@ public:
 		m_microCmdb->pushObjectRef(img);
 	}
 
-	void bindAccelerationStructureInternal(U32 set, U32 binding, AccelerationStructurePtr& as, U32 arrayIdx)
+	void bindAccelerationStructureInternal(U32 set, U32 binding, const AccelerationStructurePtr& as, U32 arrayIdx)
 	{
 		commandCommon();
 		m_dsetState[set].bindAccelerationStructure(binding, arrayIdx, as.get());
@@ -288,99 +291,108 @@ public:
 		m_dsetState[set].bindBindlessDescriptorSet();
 	}
 
-	void beginRenderPass(FramebufferPtr fb, const Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS>& colorAttachmentUsages,
-						 TextureUsageBit depthStencilAttachmentUsage, U32 minx, U32 miny, U32 width, U32 height);
+	void beginRenderPassInternal(const FramebufferPtr& fb,
+								 const Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS>& colorAttachmentUsages,
+								 TextureUsageBit depthStencilAttachmentUsage, U32 minx, U32 miny, U32 width,
+								 U32 height);
 
-	void endRenderPass();
+	void endRenderPassInternal();
 
 	void setVrsRateInternal(VrsRate rate);
 
-	void drawArrays(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 first, U32 baseInstance);
+	void drawArraysInternal(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 first, U32 baseInstance);
 
-	void drawElements(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex,
-					  U32 baseInstance);
+	void drawElementsInternal(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex,
+							  U32 baseInstance);
 
-	void drawArraysIndirect(PrimitiveTopology topology, U32 drawCount, PtrSize offset, BufferPtr& buff);
+	void drawArraysIndirectInternal(PrimitiveTopology topology, U32 drawCount, PtrSize offset, const BufferPtr& buff);
 
-	void drawElementsIndirect(PrimitiveTopology topology, U32 drawCount, PtrSize offset, BufferPtr& buff);
+	void drawElementsIndirectInternal(PrimitiveTopology topology, U32 drawCount, PtrSize offset, const BufferPtr& buff);
 
-	void dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
+	void dispatchComputeInternal(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
 
-	void traceRaysInternal(BufferPtr& sbtBuffer, PtrSize sbtBufferOffset, U32 sbtRecordSize, U32 hitGroupSbtRecordCount,
-						   U32 rayTypeCount, U32 width, U32 height, U32 depth);
+	void traceRaysInternal(const BufferPtr& sbtBuffer, PtrSize sbtBufferOffset, U32 sbtRecordSize,
+						   U32 hitGroupSbtRecordCount, U32 rayTypeCount, U32 width, U32 height, U32 depth);
 
-	void resetOcclusionQuery(OcclusionQueryPtr query);
+	void resetOcclusionQueryInternal(const OcclusionQueryPtr& query);
 
-	void beginOcclusionQuery(OcclusionQueryPtr query);
+	void beginOcclusionQueryInternal(const OcclusionQueryPtr& query);
 
-	void endOcclusionQuery(OcclusionQueryPtr query);
+	void endOcclusionQueryInternal(const OcclusionQueryPtr& query);
 
-	void resetTimestampQueryInternal(TimestampQueryPtr& query);
+	void resetTimestampQueryInternal(const TimestampQueryPtr& query);
 
-	void writeTimestampInternal(TimestampQueryPtr& query);
+	void writeTimestampInternal(const TimestampQueryPtr& query);
 
-	void generateMipmaps2d(TextureViewPtr texView);
+	void generateMipmaps2dInternal(const TextureViewPtr& texView);
 
-	void clearTextureView(TextureViewPtr texView, const ClearValue& clearValue);
+	void clearTextureViewInternal(const TextureViewPtr& texView, const ClearValue& clearValue);
 
-	void pushSecondLevelCommandBuffer(CommandBufferPtr cmdb);
+	void pushSecondLevelCommandBufferInternal(const CommandBufferPtr& cmdb);
 
 	// To enable using Anki's commandbuffers for external workloads
 	void beginRecordingExt();
 
 	void endRecording();
 
-	void setTextureBarrier(TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage,
-						   const TextureSubresourceInfo& subresource);
+	void setTextureBarrierInternal(const TexturePtr& tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage,
+								   const TextureSubresourceInfo& subresource);
 
-	void setTextureSurfaceBarrier(TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage,
-								  const TextureSurfaceInfo& surf);
+	void setTextureSurfaceBarrierInternal(const TexturePtr& tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage,
+										  const TextureSurfaceInfo& surf);
 
-	void setTextureVolumeBarrier(TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage,
-								 const TextureVolumeInfo& vol);
+	void setTextureVolumeBarrierInternal(const TexturePtr& tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage,
+										 const TextureVolumeInfo& vol);
 
-	void setTextureBarrierRange(TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage,
-								const VkImageSubresourceRange& range);
+	void setTextureBarrierRangeInternal(const TexturePtr& tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage,
+										const VkImageSubresourceRange& range);
 
-	void setBufferBarrier(VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, VkPipelineStageFlags dstStage,
-						  VkAccessFlags dstAccess, PtrSize offset, PtrSize size, VkBuffer buff);
+	void setBufferBarrierInternal(VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, VkPipelineStageFlags dstStage,
+								  VkAccessFlags dstAccess, PtrSize offset, PtrSize size, VkBuffer buff);
 
-	void setBufferBarrier(BufferPtr& buff, BufferUsageBit before, BufferUsageBit after, PtrSize offset, PtrSize size);
+	void setBufferBarrierInternal(const BufferPtr& buff, BufferUsageBit before, BufferUsageBit after, PtrSize offset,
+								  PtrSize size);
 
-	void setAccelerationStructureBarrierInternal(AccelerationStructurePtr& as, AccelerationStructureUsageBit prevUsage,
+	void setAccelerationStructureBarrierInternal(const AccelerationStructurePtr& as,
+												 AccelerationStructureUsageBit prevUsage,
 												 AccelerationStructureUsageBit nextUsage);
 
-	void fillBuffer(BufferPtr buff, PtrSize offset, PtrSize size, U32 value);
+	void fillBufferInternal(const BufferPtr& buff, PtrSize offset, PtrSize size, U32 value);
 
-	void writeOcclusionQueryResultToBuffer(OcclusionQueryPtr query, PtrSize offset, BufferPtr buff);
+	void writeOcclusionQueryResultToBufferInternal(const OcclusionQueryPtr& query, PtrSize offset,
+												   const BufferPtr& buff);
 
-	void bindShaderProgram(ShaderProgramPtr& prog);
+	void bindShaderProgramInternal(const ShaderProgramPtr& prog);
 
-	void bindUniformBufferInternal(U32 set, U32 binding, BufferPtr& buff, PtrSize offset, PtrSize range, U32 arrayIdx)
+	void bindUniformBufferInternal(U32 set, U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize range,
+								   U32 arrayIdx)
 	{
 		commandCommon();
 		m_dsetState[set].bindUniformBuffer(binding, arrayIdx, buff.get(), offset, range);
 		m_microCmdb->pushObjectRef(buff);
 	}
 
-	void bindStorageBufferInternal(U32 set, U32 binding, BufferPtr& buff, PtrSize offset, PtrSize range, U32 arrayIdx)
+	void bindStorageBufferInternal(U32 set, U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize range,
+								   U32 arrayIdx)
 	{
 		commandCommon();
 		m_dsetState[set].bindStorageBuffer(binding, arrayIdx, buff.get(), offset, range);
 		m_microCmdb->pushObjectRef(buff);
 	}
 
-	void copyBufferToTextureViewInternal(BufferPtr buff, PtrSize offset, PtrSize range, TextureViewPtr texView);
+	void copyBufferToTextureViewInternal(const BufferPtr& buff, PtrSize offset, PtrSize range,
+										 const TextureViewPtr& texView);
 
-	void copyBufferToBuffer(BufferPtr& src, PtrSize srcOffset, BufferPtr& dst, PtrSize dstOffset, PtrSize range);
+	void copyBufferToBufferInternal(const BufferPtr& src, PtrSize srcOffset, const BufferPtr& dst, PtrSize dstOffset,
+									PtrSize range);
 
-	void buildAccelerationStructureInternal(AccelerationStructurePtr& as);
+	void buildAccelerationStructureInternal(const AccelerationStructurePtr& as);
 
-	void setPushConstants(const void* data, U32 dataSize);
+	void setPushConstantsInternal(const void* data, U32 dataSize);
 
-	void setRasterizationOrder(RasterizationOrder order);
+	void setRasterizationOrderInternal(RasterizationOrder order);
 
-	void setLineWidth(F32 width);
+	void setLineWidthInternal(F32 width);
 
 private:
 	StackAllocator<U8> m_alloc;

@@ -126,6 +126,7 @@ void IndirectSpecular::run(const RenderingContext& ctx, RenderPassWorkContext& r
 	unis->m_projMat = ctx.m_matrices.m_projectionJitter;
 	unis->m_invProjMat = ctx.m_matrices.m_projectionJitter.getInverse();
 	unis->m_normalMat = Mat3x4(Vec3(0.0f), ctx.m_matrices.m_view.getRotationPart());
+	unis->m_roughnessCutoff = getConfig().getRSsrRoughnessCutoff();
 
 	// Bind all
 	cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);

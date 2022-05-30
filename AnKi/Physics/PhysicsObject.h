@@ -89,9 +89,14 @@ protected:
 		return *m_world;
 	}
 
-	Atomic<I32>& getRefcount()
+	void retain() const
 	{
-		return m_refcount;
+		m_refcount.fetchAdd(1);
+	}
+
+	I32 release() const
+	{
+		return m_refcount.fetchSub(1);
 	}
 
 	HeapAllocator<U8> getAllocator() const;
@@ -104,7 +109,7 @@ private:
 	virtual void unregisterFromWorld() = 0;
 
 private:
-	Atomic<I32> m_refcount = {0};
+	mutable Atomic<I32> m_refcount = {0};
 	PhysicsObjectType m_type;
 	void* m_userData = nullptr;
 };

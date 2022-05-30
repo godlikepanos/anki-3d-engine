@@ -80,16 +80,28 @@ void main()
 	const Vec3 reflDir = reflect(-viewDir, viewNormal);
 #endif
 
+	// Is rough enough to deserve SSR?
+	const F32 ssrFactor = saturate(1.0f - pow(roughness / u_unis.m_roughnessCutoff, 16.0f));
+
 	// Do the heavy work
 	Vec3 hitPoint;
 	F32 hitAttenuation;
-	const U32 lod = 8u; // Use the max LOD for ray marching
-	const U32 step = u_unis.m_firstStepPixels;
-	const F32 stepf = F32(step);
-	const F32 minStepf = stepf / 4.0;
-	raymarchGroundTruth(viewPos, reflDir, uv, depth, u_unis.m_projMat, u_unis.m_maxSteps, u_depthRt,
-						u_trilinearClampSampler, F32(lod), u_unis.m_depthBufferSize, step,
-						U32((stepf - minStepf) * noise.x + minStepf), hitPoint, hitAttenuation);
+	if(ssrFactor > EPSILON)
+	{
+		const U32 lod = 8u; // Use the max LOD for ray marching
+		const U32 step = u_unis.m_firstStepPixels;
+		const F32 stepf = F32(step);
+		const F32 minStepf = stepf / 4.0;
+		raymarchGroundTruth(viewPos, reflDir, uv, depth, u_unis.m_projMat, u_unis.m_maxSteps, u_depthRt,
+							u_trilinearClampSampler, F32(lod), u_unis.m_depthBufferSize, step,
+							U32((stepf - minStepf) * noise.x + minStepf), hitPoint, hitAttenuation);
+
+		hitAttenuation *= ssrFactor;
+	}
+	else
+	{
+		hitAttenuation = 0.0f;
+	}
 
 #if EXTRA_REJECTION
 	// Reject backfacing

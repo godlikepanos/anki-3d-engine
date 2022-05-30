@@ -96,12 +96,16 @@ Error NativeWindowSdl::init(const NativeWindowInitInfo& init)
 	{
 #if ANKI_OS_WINDOWS
 		flags |= SDL_WINDOW_FULLSCREEN;
-#endif
 
 		if(init.m_exclusiveFullscreen)
 		{
 			flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 		}
+#elif ANKI_OS_LINUX
+		flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+#else
+#	error See file
+#endif
 
 		// Alter the window size
 		SDL_DisplayMode mode;

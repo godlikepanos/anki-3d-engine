@@ -48,24 +48,24 @@ ANKI_TEST(Resource, ResourceManager)
 	{
 		DummyResourcePtr a;
 		ANKI_TEST_EXPECT_NO_ERR(resources->loadResource("blah", a));
-		auto refcount = a->getRefcount().load();
+		auto refcount = a->getRefcount();
 
 		DummyResourcePtr b;
 		ANKI_TEST_EXPECT_NO_ERR(resources->loadResource("blah", b));
-		ANKI_TEST_EXPECT_EQ(b->getRefcount().load(), a->getRefcount().load());
-		ANKI_TEST_EXPECT_EQ(a->getRefcount().load(), refcount + 1);
+		ANKI_TEST_EXPECT_EQ(b->getRefcount(), a->getRefcount());
+		ANKI_TEST_EXPECT_EQ(a->getRefcount(), refcount + 1);
 
 		ANKI_TEST_EXPECT_EQ(b.get(), a.get());
 
 		// Again
 		DummyResourcePtr c;
 		ANKI_TEST_EXPECT_NO_ERR(resources->loadResource("blah", c));
-		ANKI_TEST_EXPECT_EQ(a->getRefcount().load(), refcount + 2);
+		ANKI_TEST_EXPECT_EQ(a->getRefcount(), refcount + 2);
 
 		// Load something else
 		DummyResourcePtr d;
 		ANKI_TEST_EXPECT_NO_ERR(resources->loadResource("blih", d));
-		ANKI_TEST_EXPECT_EQ(a->getRefcount().load(), refcount + 2);
+		ANKI_TEST_EXPECT_EQ(a->getRefcount(), refcount + 2);
 	}
 
 	// Error

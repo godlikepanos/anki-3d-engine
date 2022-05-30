@@ -56,9 +56,14 @@ public:
 	/// Get the size of the file.
 	virtual PtrSize getSize() const = 0;
 
-	Atomic<I32>& getRefcount()
+	void retain() const
 	{
-		return m_refcount;
+		m_refcount.fetchAdd(1);
+	}
+
+	I32 release() const
+	{
+		return m_refcount.fetchSub(1);
 	}
 
 	GenericMemoryPoolAllocator<U8> getAllocator() const
@@ -68,7 +73,7 @@ public:
 
 private:
 	GenericMemoryPoolAllocator<U8> m_alloc;
-	Atomic<I32> m_refcount = {0};
+	mutable Atomic<I32> m_refcount = {0};
 };
 
 /// Resource file smart pointer.

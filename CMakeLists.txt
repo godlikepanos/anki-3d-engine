@@ -216,7 +216,7 @@ if(NOT MSVC)
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINKER_FLAGS}")
 else()
 	#ProcessorCount(PC)
-	#add_definitions("/MP${PC}")
+	add_compile_options("/MP")
 
 	if(${CMAKE_BUILD_TYPE} STREQUAL "Release" OR ${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
 		#add_definitions("/Ox")

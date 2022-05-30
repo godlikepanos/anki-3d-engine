@@ -79,7 +79,7 @@ public:
 		m_pool = balloc.m_pool;
 		if(m_pool)
 		{
-			m_pool->getRefcount().fetchAdd(1);
+			m_pool->retain();
 		}
 	}
 
@@ -95,7 +95,7 @@ public:
 
 		::new(m_pool) TPool(allocCb, allocCbUserData, std::forward<TArgs>(args)...);
 
-		m_pool->getRefcount().store(1);
+		m_pool->retain();
 	}
 
 	/// Destructor
@@ -355,7 +355,7 @@ private:
 		if(b.m_pool)
 		{
 			m_pool = b.m_pool;
-			m_pool->getRefcount().fetchAdd(1);
+			m_pool->retain();
 		}
 	}
 
@@ -363,7 +363,7 @@ private:
 	{
 		if(m_pool)
 		{
-			auto count = m_pool->getRefcount().fetchSub(1);
+			auto count = m_pool->release();
 			if(count == 1)
 			{
 				auto allocCb = m_pool->getAllocationCallback();

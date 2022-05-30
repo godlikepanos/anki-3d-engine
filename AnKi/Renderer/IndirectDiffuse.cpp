@@ -47,10 +47,18 @@ Error IndirectDiffuse::initInternal()
 	texInit.setName("IndirectDiffuse #2");
 	m_rts[1] = m_r->createAndClearRenderTarget(texInit, TextureUsageBit::ALL_SAMPLED);
 
-	// Init VRS SRI generation
+	if(!preferCompute)
 	{
 		m_main.m_fbDescr.m_colorAttachmentCount = 1;
 		m_main.m_fbDescr.bake();
+	}
+
+	// Init VRS SRI generation
+	const Bool enableVrs = getGrManager().getDeviceCapabilities().m_vrs && getConfig().getRVrs() && !preferCompute;
+	if(enableVrs)
+	{
+		m_vrs.m_sriTexelDimension = getGrManager().getDeviceCapabilities().m_minShadingRateImageTexelSize;
+		ANKI_ASSERT(m_vrs.m_sriTexelDimension == 8 || m_vrs.m_sriTexelDimension == 16);
 
 		const UVec2 rez = (size + m_vrs.m_sriTexelDimension - 1) / m_vrs.m_sriTexelDimension;
 		m_vrs.m_rtHandle =
@@ -66,6 +74,12 @@ Error IndirectDiffuse::initInternal()
 		if(m_vrs.m_sriTexelDimension == 16 && getGrManager().getDeviceCapabilities().m_minSubgroupSize >= 32)
 		{
 			// Algorithm's workgroup size is 32, GPU's subgroup size is min 32 -> each workgroup has 1 subgroup -> No
+			// need for shared mem
+			variantInit.addMutation("SHARED_MEMORY", 0);
+		}
+		else if(m_vrs.m_sriTexelDimension == 8 && getGrManager().getDeviceCapabilities().m_minSubgroupSize >= 16)
+		{
+			// Algorithm's workgroup size is 16, GPU's subgroup size is min 16 -> each workgroup has 1 subgroup -> No
 			// need for shared mem
 			variantInit.addMutation("SHARED_MEMORY", 0);
 		}
@@ -239,7 +253,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 		prpass->newDependency(RenderPassDependency(m_r->getMotionVectors().getHistoryLengthRt(), readUsage));
 		prpass->newDependency(RenderPassDependency(m_runCtx.m_mainRtHandles[READ], readUsage));
 
-		prpass->setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+		prpass->setWork([this, &ctx, enableVrs](RenderPassWorkContext& rgraphCtx) {
 			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 			cmdb->bindShaderProgram(m_main.m_grProg);
 
@@ -285,7 +299,11 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			else
 			{
 				cmdb->setViewport(0, 0, unis.m_viewportSize.x(), unis.m_viewportSize.y());
-				cmdb->setVrsRate(VrsRate::_1x1);
+
+				if(enableVrs)
+				{
+					cmdb->setVrsRate(VrsRate::_1x1);
+				}
 
 				cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
 			}

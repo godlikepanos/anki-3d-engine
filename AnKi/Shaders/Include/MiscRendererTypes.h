@@ -116,7 +116,8 @@ struct SsrUniforms
 	U32 m_maxSteps;
 	U32 m_lightBufferMipCount;
 
-	UVec3 m_padding0;
+	UVec2 m_padding0;
+	F32 m_roughnessCutoff;
 	U32 m_firstStepPixels;
 
 	Mat4 m_prevViewProjMatMulInvViewProjMat;

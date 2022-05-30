@@ -65,10 +65,14 @@ public:
 	/// @param[in, out] ptr Memory block to deallocate
 	void free(void* ptr);
 
-	/// Get refcount.
-	Atomic<U32>& getRefcount()
+	void retain() const
 	{
-		return m_refcount;
+		m_refcount.fetchAdd(1);
+	}
+
+	I32 release() const
+	{
+		return m_refcount.fetchSub(1);
 	}
 
 	/// Get number of users.
@@ -125,7 +129,7 @@ protected:
 
 private:
 	/// Refcount.
-	Atomic<U32> m_refcount = {0};
+	mutable Atomic<I32> m_refcount = {0};
 
 	/// Optional name.
 	char* m_name = nullptr;

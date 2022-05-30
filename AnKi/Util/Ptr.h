@@ -34,13 +34,7 @@ public:
 		return m_ptr;
 	}
 
-	T* get()
-	{
-		ANKI_ASSERT(m_ptr);
-		return m_ptr;
-	}
-
-	const T* get() const
+	T* get() const
 	{
 		ANKI_ASSERT(m_ptr);
 		return m_ptr;
@@ -448,7 +442,7 @@ public:
 		destroy();
 		if(ptr)
 		{
-			ptr->getRefcount().fetchAdd(1);
+			ptr->retain();
 			m_ptr = ptr;
 		}
 	}
@@ -458,7 +452,7 @@ private:
 	{
 		if(m_ptr)
 		{
-			auto count = m_ptr->getRefcount().fetchSub(1);
+			auto count = m_ptr->release();
 			if(ANKI_UNLIKELY(count == 1))
 			{
 				TDeleter deleter;

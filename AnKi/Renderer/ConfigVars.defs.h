@@ -31,9 +31,12 @@ ANKI_CONFIG_VAR_U32(RSsrFirstStepPixels, 32, 1, 256, "The 1st step in ray marchi
 ANKI_CONFIG_VAR_U32(RSsrDepthLod, 2, 0, 1000, "Texture LOD of the depth texture that will be raymarched")
 ANKI_CONFIG_VAR_U32(RSsrMaxSteps, 64, 1, 256, "Max SSR raymarching steps")
 ANKI_CONFIG_VAR_BOOL(RSsrStochastic, false, "Stochastic reflections")
+ANKI_CONFIG_VAR_F32(RSsrRoughnessCutoff, ((ANKI_PLATFORM_MOBILE) ? 0.7f : 0.9f), 0.0f, 1.0f,
+					"Materials with roughness higher that this value will fallback to probe reflections")
 
 // GI probes
-ANKI_CONFIG_VAR_U32(RIndirectDiffuseProbeTileResolution, (ANKI_PLATFORM_MOBILE) ? 16 : 32, 8, 32, "GI tile resolution")
+ANKI_CONFIG_VAR_U32(RIndirectDiffuseProbeTileResolution, ((ANKI_PLATFORM_MOBILE) ? 16 : 32), 8, 32,
+					"GI tile resolution")
 ANKI_CONFIG_VAR_U32(RIndirectDiffuseProbeShadowMapResolution, 128, 4, 2048, "GI shadowmap resolution")
 ANKI_CONFIG_VAR_U32(RIndirectDiffuseProbeMaxCachedProbes, 16, 4, 2048, "Max cached probes")
 ANKI_CONFIG_VAR_U32(RIndirectDiffuseProbeMaxVisibleProbes, 8, 1, 256, "Max visible GI probes")
@@ -48,7 +51,7 @@ ANKI_CONFIG_VAR_F32(RIndirectDiffuseVrsDistanceThreshold, 0.01f, 0.00001f, 10.0f
 					"The meters that control the VRS SRI generation")
 
 // Shadows
-ANKI_CONFIG_VAR_U32(RShadowMappingTileResolution, (ANKI_PLATFORM_MOBILE) ? 128 : 512, 16, 2048,
+ANKI_CONFIG_VAR_U32(RShadowMappingTileResolution, ((ANKI_PLATFORM_MOBILE) ? 128 : 512), 16, 2048,
 					"Shadowmapping tile resolution")
 ANKI_CONFIG_VAR_U32(RShadowMappingTileCountPerRowOrColumn, 16, 1, 256,
 					"Shadowmapping atlas will have this number squared number of tiles")

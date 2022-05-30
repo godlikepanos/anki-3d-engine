@@ -33,9 +33,19 @@ public:
 
 	~MicroCommandBuffer();
 
-	Atomic<I32>& getRefcount()
+	void retain() const
 	{
-		return m_refcount;
+		m_refcount.fetchAdd(1);
+	}
+
+	I32 release() const
+	{
+		return m_refcount.fetchSub(1);
+	}
+
+	I32 getRefcount() const
+	{
+		return m_refcount.load();
 	}
 
 	void setFence(MicroFencePtr& fence)
@@ -70,7 +80,7 @@ public:
 	}
 
 	template<typename T>
-	void pushObjectRef(GrObjectPtrT<T>& x)
+	void pushObjectRef(const GrObjectPtrT<T>& x)
 	{
 		pushToArray(m_objectRefs[T::CLASS_TYPE], x.get());
 	}
@@ -98,7 +108,7 @@ private:
 	// Cacheline boundary
 
 	CommandBufferThreadAllocator* m_threadAlloc;
-	Atomic<I32> m_refcount = {0};
+	mutable Atomic<I32> m_refcount = {0};
 	CommandBufferFlag m_flags = CommandBufferFlag::NONE;
 	VulkanQueueType m_queue = VulkanQueueType::COUNT;
 
@@ -121,12 +131,12 @@ private:
 		}
 
 		// Not found in the temp cache, add it
-		arr.emplaceBack(m_fastAlloc, GrObjectPtr(grobj));
+		arr.emplaceBack(m_fastAlloc, grobj);
 	}
 };
 
 template<>
-inline void MicroCommandBuffer::pushObjectRef<GrObject>(GrObjectPtr& x)
+inline void MicroCommandBuffer::pushObjectRef<GrObject>(const GrObjectPtr& x)
 {
 	pushToArray(m_objectRefs[x->getType()], x.get());
 }
