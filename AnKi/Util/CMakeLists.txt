@@ -38,6 +38,8 @@ elseif(WINDOWS)
 	set(sources ${sources} INotifyWindows.cpp)
 endif()
 
-add_library(AnKiUtil ${sources})
+file(GLOB_RECURSE headers *.h)
+
+add_library(AnKiUtil ${sources} ${headers})
 target_compile_definitions(AnKiUtil PRIVATE -DANKI_SOURCE_FILE)
 target_link_libraries(AnKiUtil AnKiTinyXml2)

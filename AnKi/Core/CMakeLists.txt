@@ -7,17 +7,34 @@ set(sources
 	MaliHwCounters.cpp
 	StatsUi.cpp)
 
+set(headers
+	AllConfigVars.defs.h
+	App.h
+	Common.h
+	ConfigSet.h
+	ConfigVars.defs.h
+	CoreTracer.h
+	DeveloperConsole.h
+	GpuMemoryPools.h
+	MaliHwCounters.h
+	NativeWindow.h
+	StatsUi.h
+	StdinListener.h)
+
 if(ANKI_HEADLESS)
 	set(sources ${sources} NativeWindowHeadless.cpp)
+	set(headers ${headers} NativeWindowHeadless.h)
 elseif(SDL)
 	set(sources ${sources} NativeWindowSdl.cpp)
+	set(headers ${headers} NativeWindowSdl.h)
 elseif(ANDROID)
 	set(sources ${sources} NativeWindowAndroid.cpp)
+	set(headers ${headers} NativeWindowAndroid.h)
 else()
 	message(FATAL_ERROR "Not implemented")
 endif()
 
-add_library(AnKiCore ${sources})
+add_library(AnKiCore ${sources} ${headers})
 
 if(SDL)
 	if(LINUX)
