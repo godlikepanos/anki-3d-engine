@@ -298,6 +298,7 @@ Error App::initInternal(CString executableFilename, AllocAlignedCallback allocCb
 	// Add the location of the executable where the shaders are supposed to be
 	StringAuto executableFname(m_heapAlloc);
 	ANKI_CHECK(getApplicationPath(executableFname));
+	ANKI_CORE_LOGI("Executable path is: %s", executableFname.cstr());
 	StringAuto shadersPath(m_heapAlloc);
 	getParentFilepath(executableFname, shadersPath);
 	shadersPath.append(":");
