@@ -18,6 +18,7 @@
 #include <AnKi/Gr/Vulkan/TimestampQueryImpl.h>
 #include <AnKi/Gr/Vulkan/FenceImpl.h>
 #include <AnKi/Gr/Vulkan/AccelerationStructureImpl.h>
+#include <AnKi/Gr/Vulkan/DLSSCtxImpl.h>
 
 namespace anki {
 

@@ -214,6 +214,9 @@ public:
 	/// Convenience method.
 	void bindAccelerationStructure(U32 set, U32 binding, AccelerationStructureHandle handle);
 
+	/// Convenience method. Use it carefully (i.e access the resource for an external plugin)
+	const TexturePtr getTargetTexture(RenderTargetHandle handle) const;
+
 private:
 	const RenderGraph* m_rgraph ANKI_DEBUG_CODE(= nullptr);
 	U32 m_passIdx ANKI_DEBUG_CODE(= MAX_U32);

@@ -29,6 +29,7 @@ enum class GrObjectType : U8
 	FENCE,
 	RENDER_GRAPH,
 	ACCELERATION_STRUCTURE,
+	DLSS_CTX,
 
 	COUNT,
 	FIRST = 0

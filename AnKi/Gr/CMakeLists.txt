@@ -46,7 +46,14 @@ if(VULKAN)
 		"Vulkan/TimestampQuery.cpp"
 		"Vulkan/TimestampQueryImpl.cpp"
 		"Vulkan/VulkanObject.cpp"
-		"Vulkan/FrameGarbageCollector.cpp")
+		"Vulkan/FrameGarbageCollector.cpp"
+		"Vulkan/DLSSCtx.cpp")
+
+	if(DLSS_SUPPORT)
+		set(backend_sources ${backend_sources} "Vulkan/DLSSCtxImpl.cpp")
+	else()
+		set(backend_sources ${backend_sources} "Vulkan/DLSSCtxImplDummy.cpp")
+	endif()
 
 	if(ANKI_HEADLESS)
 		set(backend_sources ${backend_sources} "Vulkan/GrManagerImplHeadless.cpp")

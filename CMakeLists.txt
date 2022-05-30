@@ -286,6 +286,13 @@ if(ANDROID)
 	add_subdirectory(ThirdParty/HwcPipe)
 endif()
 
+# DLSS
+if((LINUX OR WINDOWS) AND VULKAN)
+	add_compile_definitions(DLSS_SUPPORT=1)
+	set(DLSS_SUPPORT TRUE)
+	add_subdirectory(ThirdParty/nvngx_dlss_sdk)
+endif()
+
 ################################################################################
 # AnKi                                                                         #
 ################################################################################
@@ -389,6 +396,10 @@ endif()
 
 if(LINUX)
 	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} X11-xcb pthread dl)
+endif()
+
+if((LINUX OR WINDOWS) AND VULKAN)
+	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} AnkiNgx)
 endif()
 
 # AnKi compiler flags (Mainly warnings)

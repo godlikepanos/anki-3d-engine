@@ -18,6 +18,7 @@
 #include <AnKi/Gr/TimestampQuery.h>
 #include <AnKi/Gr/RenderGraph.h>
 #include <AnKi/Gr/AccelerationStructure.h>
+#include <AnKi/Gr/DLSSCtx.h>
 
 namespace anki {
 
@@ -139,6 +140,7 @@ ANKI_NEW_GR_OBJECT_NO_INIT_INFO(OcclusionQuery)
 ANKI_NEW_GR_OBJECT_NO_INIT_INFO(TimestampQuery)
 ANKI_NEW_GR_OBJECT_NO_INIT_INFO(RenderGraph)
 ANKI_NEW_GR_OBJECT(AccelerationStructure)
+ANKI_NEW_GR_OBJECT(DLSSCtx)
 
 #undef ANKI_NEW_GR_OBJECT
 #undef ANKI_NEW_GR_OBJECT_NO_INIT_INFO

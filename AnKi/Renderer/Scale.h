@@ -38,10 +38,13 @@ private:
 	ShaderProgramResourcePtr m_sharpenProg;
 	ShaderProgramPtr m_sharpenGrProg;
 
+	DLSSCtxPtr m_dlssCtx;
+
 	FramebufferDescription m_fbDescr;
 	RenderTargetDescription m_rtDesc;
 
 	Bool m_fsr = false;
+	Bool m_dlss = false;
 
 	class
 	{

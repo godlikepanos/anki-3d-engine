@@ -325,6 +325,9 @@ public:
 
 	void pushSecondLevelCommandBuffer(CommandBufferPtr cmdb);
 
+	// To enable using Anki's commandbuffers for external workloads
+	void beginRecordingExt();
+
 	void endRecording();
 
 	void setTextureBarrier(TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage,

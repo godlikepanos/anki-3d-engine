@@ -83,6 +83,7 @@ public:
 	ANKI_USE_RESULT OcclusionQueryPtr newOcclusionQuery();
 	ANKI_USE_RESULT TimestampQueryPtr newTimestampQuery();
 	ANKI_USE_RESULT RenderGraphPtr newRenderGraph();
+	ANKI_USE_RESULT DLSSCtxPtr newDLSSCtx(const DLSSCtxInitInfo& init);
 	ANKI_USE_RESULT AccelerationStructurePtr newAccelerationStructure(const AccelerationStructureInitInfo& init);
 	/// @}
 

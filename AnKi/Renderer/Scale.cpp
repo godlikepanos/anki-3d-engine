@@ -39,7 +39,10 @@ Error Scale::init()
 
 	const Bool preferCompute = getConfig().getRPreferCompute();
 	const U32 fsrQuality = getConfig().getRFsr();
-	m_fsr = fsrQuality != 0;
+	const U32 dlssQuality = getConfig().getRDlss();
+	// Dlss and FSR are mutually exclusive
+	m_dlss = (dlssQuality != 0) && getGrManager().getDeviceCapabilities().m_dlssSupport;
+	m_fsr = (fsrQuality != 0) && !m_dlss;
 
 	// Program
 	if(needsScaling)
@@ -57,25 +60,38 @@ Error Scale::init()
 		{
 			shaderFname = "ShaderBinaries/BlitCompute.ankiprogbin";
 		}
-		else
+		else if(!m_dlss)
 		{
 			shaderFname = "ShaderBinaries/BlitRaster.ankiprogbin";
 		}
 
-		ANKI_CHECK(getResourceManager().loadResource(shaderFname, m_scaleProg));
-		const ShaderProgramResourceVariant* variant;
-		if(m_fsr)
+		if (m_dlss) 
 		{
-			ShaderProgramResourceVariantInitInfo variantInitInfo(m_scaleProg);
-			variantInitInfo.addMutation("SHARPEN", 0);
-			variantInitInfo.addMutation("FSR_QUALITY", fsrQuality - 1);
-			m_scaleProg->getOrCreateVariant(variantInitInfo, variant);
+			DLSSCtxInitInfo init{};
+			init.m_srcRes = m_r->getInternalResolution();
+			init.m_dstRes = m_r->getPostProcessResolution();
+			init.m_mode = static_cast<DLSSQualityMode>(getConfig().getRDlss());
+			// Do not need to load shaders
+			m_dlssCtx = getGrManager().newDLSSCtx(init);
+			
 		}
-		else
+		else 
 		{
-			m_scaleProg->getOrCreateVariant(variant);
+			ANKI_CHECK(getResourceManager().loadResource(shaderFname, m_scaleProg));
+			const ShaderProgramResourceVariant* variant;
+			if(m_fsr)
+			{
+				ShaderProgramResourceVariantInitInfo variantInitInfo(m_scaleProg);
+				variantInitInfo.addMutation("SHARPEN", 0);
+				variantInitInfo.addMutation("FSR_QUALITY", fsrQuality - 1);
+				m_scaleProg->getOrCreateVariant(variantInitInfo, variant);
+			}
+			else
+			{
+				m_scaleProg->getOrCreateVariant(variant);
+			}
+			m_scaleGrProg = variant->getProgram();
 		}
-		m_scaleGrProg = variant->getProgram();
 	}
 
 	if(needsSharpening)

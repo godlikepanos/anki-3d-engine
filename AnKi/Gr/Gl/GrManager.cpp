@@ -18,6 +18,7 @@
 #include <AnKi/Gr/Framebuffer.h>
 #include <AnKi/Gr/OcclusionQuery.h>
 #include <AnKi/Gr/RenderGraph.h>
+#include <AnKi/Gr/DLSSCtx.h>
 
 #include <cstring>
 
@@ -140,6 +141,11 @@ OcclusionQueryPtr GrManager::newOcclusionQuery()
 RenderGraphPtr GrManager::newRenderGraph()
 {
 	return RenderGraphPtr(RenderGraph::newInstance(this));
+}
+
+DLSSCtxPtr GrManager::newDlssCtx(const DLSSCtxInitInfo& init)
+{
+	return DLSSCtxPtr(DLSSCtx::newInstance(this, init));
 }
 
 #undef ANKI_SAFE_CONSTRUCT
