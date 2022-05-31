@@ -28,11 +28,13 @@ ANKI_CONFIG_VAR_U32(RVolumetricLightingAccumulationFinalZSplit, 26, 1, 256,
 
 // SSR
 ANKI_CONFIG_VAR_U32(RSsrFirstStepPixels, 32, 1, 256, "The 1st step in ray marching")
-ANKI_CONFIG_VAR_U32(RSsrDepthLod, 2, 0, 1000, "Texture LOD of the depth texture that will be raymarched")
+ANKI_CONFIG_VAR_U32(RSsrDepthLod, ((ANKI_PLATFORM_MOBILE) ? 2 : 0), 0, 1000,
+					"Texture LOD of the depth texture that will be raymarched")
 ANKI_CONFIG_VAR_U32(RSsrMaxSteps, 64, 1, 256, "Max SSR raymarching steps")
 ANKI_CONFIG_VAR_BOOL(RSsrStochastic, false, "Stochastic reflections")
-ANKI_CONFIG_VAR_F32(RSsrRoughnessCutoff, ((ANKI_PLATFORM_MOBILE) ? 0.7f : 0.9f), 0.0f, 1.0f,
+ANKI_CONFIG_VAR_F32(RSsrRoughnessCutoff, ((ANKI_PLATFORM_MOBILE) ? 0.7f : 1.0f), 0.0f, 1.0f,
 					"Materials with roughness higher that this value will fallback to probe reflections")
+ANKI_CONFIG_VAR_F32(RSsrVrsThreshold, 0.05f, 0.0f, 1.0f, "Threshold under which a lower shading rate will be applied")
 
 // GI probes
 ANKI_CONFIG_VAR_U32(RIndirectDiffuseProbeTileResolution, ((ANKI_PLATFORM_MOBILE) ? 16 : 32), 8, 32,

@@ -374,6 +374,34 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 												 : "MotionVectorsHistoryLength");
 	}
 
+	if(in.getKey(KeyCode::P) == 1)
+	{
+		static U32 idx = 3;
+		++idx;
+		idx %= 4;
+		if(idx == 0)
+		{
+			renderer.setCurrentDebugRenderTarget("IndirectDiffuseVrsSri");
+		}
+		else if(idx == 1)
+		{
+			renderer.setCurrentDebugRenderTarget("IndirectSpecularVrsSri");
+		}
+		else if(idx == 2)
+		{
+			renderer.setCurrentDebugRenderTarget("VRS");
+		}
+		else
+		{
+			renderer.setCurrentDebugRenderTarget("");
+		}
+	}
+
+	if(in.getKey(KeyCode::J) == 1)
+	{
+		m_config.setRVrs(!m_config.getRVrs());
+	}
+
 	if(in.getEvent(InputEvent::WINDOW_CLOSED))
 	{
 		quit = true;

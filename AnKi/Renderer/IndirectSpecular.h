@@ -20,6 +20,7 @@ public:
 		: RendererObject(r)
 	{
 		registerDebugRenderTarget("SSR");
+		registerDebugRenderTarget("IndirectSpecularVrsSri");
 	}
 
 	~IndirectSpecular();
@@ -51,7 +52,21 @@ private:
 	class
 	{
 	public:
+		ShaderProgramResourcePtr m_prog;
+		ShaderProgramPtr m_grProg;
+		RenderTargetDescription m_rtHandle;
+
+		ShaderProgramResourcePtr m_visualizeProg;
+		ShaderProgramPtr m_visualizeGrProg;
+
+		U32 m_sriTexelDimension = 16;
+	} m_vrs;
+
+	class
+	{
+	public:
 		Array<RenderTargetHandle, 2> m_rts;
+		RenderTargetHandle m_sriRt;
 	} m_runCtx;
 
 	ANKI_USE_RESULT Error initInternal();
@@ -59,11 +74,7 @@ private:
 	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 
 	void getDebugRenderTarget(CString rtName, RenderTargetHandle& handle,
-							  ShaderProgramPtr& optionalShaderProgram) const override
-	{
-		ANKI_ASSERT(rtName == "SSR");
-		handle = m_runCtx.m_rts[WRITE];
-	}
+							  ShaderProgramPtr& optionalShaderProgram) const override;
 };
 /// @}
 
