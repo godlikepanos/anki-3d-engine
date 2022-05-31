@@ -31,14 +31,19 @@ public:
 
 	RenderTargetHandle getRt() const
 	{
-		return m_runCtx.m_rt;
+		return m_runCtx.m_rts[WRITE];
 	}
 
 private:
+	static constexpr U32 READ = 0;
+	static constexpr U32 WRITE = 1;
+
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
 
-	RenderTargetDescription m_rtDescr;
+	Array<TexturePtr, 2> m_rts;
+	Bool m_rtsImportedOnce = false;
+
 	FramebufferDescription m_fbDescr;
 
 	ImageResourcePtr m_noiseImage;
@@ -46,7 +51,7 @@ private:
 	class
 	{
 	public:
-		RenderTargetHandle m_rt;
+		Array<RenderTargetHandle, 2> m_rts;
 	} m_runCtx;
 
 	ANKI_USE_RESULT Error initInternal();
@@ -57,7 +62,7 @@ private:
 							  ShaderProgramPtr& optionalShaderProgram) const override
 	{
 		ANKI_ASSERT(rtName == "SSR");
-		handle = m_runCtx.m_rt;
+		handle = m_runCtx.m_rts[WRITE];
 	}
 };
 /// @}

@@ -10,6 +10,7 @@
 #include <AnKi/Renderer/DownscaleBlur.h>
 #include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Renderer/ProbeReflections.h>
+#include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Core/ConfigSet.h>
 
 namespace anki {
@@ -32,14 +33,21 @@ Error IndirectSpecular::initInternal()
 {
 	const U32 width = m_r->getInternalResolution().x() / 2;
 	const U32 height = m_r->getInternalResolution().y() / 2;
+	const Bool preferCompute = getConfig().getRPreferCompute();
 
 	ANKI_R_LOGV("Initializing indirect specular. Resolution %ux%u", width, height);
 
 	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_noiseImage));
 
 	// Create RT
-	m_rtDescr = m_r->create2DRenderTargetDescription(width, height, m_r->getHdrFormat(), "SSR");
-	m_rtDescr.bake();
+	TextureUsageBit usage = TextureUsageBit::ALL_SAMPLED;
+
+	usage |= (preferCompute) ? TextureUsageBit::IMAGE_COMPUTE_WRITE : TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
+
+	TextureInitInfo texInit = m_r->create2DRenderTargetInitInfo(width, height, m_r->getHdrFormat(), usage, "SSR #1");
+	m_rts[0] = m_r->createAndClearRenderTarget(texInit, TextureUsageBit::ALL_SAMPLED);
+	texInit.setName("SSR #2");
+	m_rts[1] = m_r->createAndClearRenderTarget(texInit, TextureUsageBit::ALL_SAMPLED);
 
 	m_fbDescr.m_colorAttachmentCount = 1;
 	m_fbDescr.bake();
@@ -65,8 +73,20 @@ void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 	const Bool preferCompute = getConfig().getRPreferCompute();
 
-	// Create RTs
-	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
+	// Create/import RTs
+	const U32 readRtIdx = m_r->getFrameCount() & 1;
+	const U32 writeRtIdx = !readRtIdx;
+	if(ANKI_LIKELY(m_rtsImportedOnce))
+	{
+		m_runCtx.m_rts[0] = rgraph.importRenderTarget(m_rts[readRtIdx]);
+		m_runCtx.m_rts[1] = rgraph.importRenderTarget(m_rts[writeRtIdx]);
+	}
+	else
+	{
+		m_runCtx.m_rts[0] = rgraph.importRenderTarget(m_rts[readRtIdx], TextureUsageBit::ALL_SAMPLED);
+		m_runCtx.m_rts[1] = rgraph.importRenderTarget(m_rts[writeRtIdx], TextureUsageBit::ALL_SAMPLED);
+		m_rtsImportedOnce = true;
+	}
 
 	// Create pass
 	RenderPassDescriptionBase* ppass;
@@ -83,14 +103,15 @@ void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
 	else
 	{
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("SSR");
-		pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_rt});
+		pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_rts[WRITE]});
 
 		ppass = &pass;
 		readUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 		writeUsage = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 	}
 
-	ppass->newDependency(RenderPassDependency(m_runCtx.m_rt, writeUsage));
+	ppass->newDependency(RenderPassDependency(m_runCtx.m_rts[WRITE], writeUsage));
+	ppass->newDependency(RenderPassDependency(m_runCtx.m_rts[READ], readUsage));
 	ppass->newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(1), readUsage));
 	ppass->newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(2), readUsage));
 
@@ -99,6 +120,9 @@ void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
 	ppass->newDependency(RenderPassDependency(m_r->getDepthDownscale().getHiZRt(), readUsage, hizSubresource));
 
 	ppass->newDependency(RenderPassDependency(m_r->getProbeReflections().getReflectionRt(), readUsage));
+
+	ppass->newDependency(RenderPassDependency(m_r->getMotionVectors().getMotionVectorsRt(), readUsage));
+	ppass->newDependency(RenderPassDependency(m_r->getMotionVectors().getHistoryLengthRt(), readUsage));
 
 	ppass->setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 		run(ctx, rgraphCtx);
@@ -140,18 +164,22 @@ void IndirectSpecular::run(const RenderingContext& ctx, RenderPassWorkContext& r
 
 	rgraphCtx.bindColorTexture(0, 5, m_r->getDownscaleBlur().getRt());
 
-	cmdb->bindSampler(0, 6, m_r->getSamplers().m_trilinearRepeat);
-	cmdb->bindTexture(0, 7, m_noiseImage->getTextureView());
+	rgraphCtx.bindColorTexture(0, 6, m_runCtx.m_rts[READ]);
+	rgraphCtx.bindColorTexture(0, 7, m_r->getMotionVectors().getMotionVectorsRt());
+	rgraphCtx.bindColorTexture(0, 8, m_r->getMotionVectors().getHistoryLengthRt());
+
+	cmdb->bindSampler(0, 9, m_r->getSamplers().m_trilinearRepeat);
+	cmdb->bindTexture(0, 10, m_noiseImage->getTextureView());
 
 	const ClusteredShadingContext& binning = ctx.m_clusteredShading;
-	bindUniforms(cmdb, 0, 8, binning.m_clusteredShadingUniformsToken);
-	bindUniforms(cmdb, 0, 9, binning.m_reflectionProbesToken);
-	rgraphCtx.bindColorTexture(0, 10, m_r->getProbeReflections().getReflectionRt());
-	bindStorage(cmdb, 0, 11, binning.m_clustersToken);
+	bindUniforms(cmdb, 0, 11, binning.m_clusteredShadingUniformsToken);
+	bindUniforms(cmdb, 0, 12, binning.m_reflectionProbesToken);
+	rgraphCtx.bindColorTexture(0, 13, m_r->getProbeReflections().getReflectionRt());
+	bindStorage(cmdb, 0, 14, binning.m_clustersToken);
 
 	if(getConfig().getRPreferCompute())
 	{
-		rgraphCtx.bindImage(0, 12, m_runCtx.m_rt, TextureSubresourceInfo());
+		rgraphCtx.bindImage(0, 15, m_runCtx.m_rts[WRITE], TextureSubresourceInfo());
 
 		dispatchPPCompute(cmdb, 8, 8, m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2);
 	}
