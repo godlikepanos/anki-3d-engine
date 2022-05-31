@@ -20,7 +20,6 @@ macro(anki_new_executable)
 	if(NOT ANDROID)
 		add_executable(${ARGV})
 		set_target_properties(${ARGV0} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Bin)
-		#anki_install_executable(${ARGV0})
 	else()
 		set(_SKIP TRUE)
 		foreach(ARG ${ARGV})
@@ -410,6 +409,7 @@ add_subdirectory(AnKi)
 
 add_library(AnKi INTERFACE)
 target_link_libraries(AnKi INTERFACE AnKiCore ${THIRD_PARTY_LIBS})
+add_dependencies(AnKi AnKiShaders)
 
 ################################################################################
 # AnKi extra                                                                   #
