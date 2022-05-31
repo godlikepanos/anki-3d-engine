@@ -95,8 +95,6 @@ Error NativeWindowSdl::init(const NativeWindowInitInfo& init)
 	if(init.m_fullscreenDesktopRez)
 	{
 #if ANKI_OS_WINDOWS
-		flags |= SDL_WINDOW_FULLSCREEN;
-
 		if(init.m_exclusiveFullscreen)
 		{
 			flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
