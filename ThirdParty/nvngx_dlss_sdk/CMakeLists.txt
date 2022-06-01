@@ -18,11 +18,8 @@ if (WIN32)
     MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
     )
 
-    # TODO: It seems this component should be configured as STATIC rather than SHARED
-    #       and IMPORTED_LOCATION point to the actual SDK static library that applications
-    #       will link against
-    set_target_properties(AnkiNgx PROPERTIES IMPORTED_LOCATION "${NGX_SDK_ROOT}/lib/Windows_x86_64/$<IF:$<CONFIG:Debug>,dev,rel>/nvngx_dlss.dll")
-
+    # TODO: DO NOT USE/PUSH THE DEV DLLs 
+    set_target_properties(AnkiNgx PROPERTIES IMPORTED_LOCATION "${NGX_SDK_ROOT}/lib/Windows_x86_64/dev/nvngx_dlss.dll")
 else ()
     add_library(AnkiNgx IMPORTED STATIC GLOBAL)
 
@@ -38,4 +35,4 @@ endif()
 
 set_property(TARGET AnkiNgx APPEND PROPERTY EXTRA_DLLS "${__NGX_DLLS_LIST}")
 
-target_include_directories(AnkiNgx INTERFACE ./include)
+target_include_directories(AnkiNgx INTERFACE ${NGX_SDK_ROOT}/include)

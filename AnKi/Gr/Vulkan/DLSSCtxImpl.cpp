@@ -73,6 +73,12 @@ Error DLSSCtxImpl::init(const DLSSCtxInitInfo& init)
         return Error::FUNCTION_FAILED;
     }
 
+    const char** instanceExt(nullptr);
+	const char** deviceExt(nullptr);
+	U32 instanceExtCount(0);
+	U32 deviceExtCount(0);
+	NVSDK_NGX_Result queryExtResult = NVSDK_NGX_VULKAN_RequiredExtensions(&instanceExtCount, &instanceExt, &deviceExtCount, &deviceExt);
+
     // Currently, the SDK and this sample are not in sync.  The sample is a bit forward looking,
     // in this case.  This will likely be resolved very shortly, and therefore, the code below
     // should be thought of as needed for a smooth user experience.

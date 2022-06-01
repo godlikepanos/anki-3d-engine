@@ -29,6 +29,7 @@ set(common_headers
 	Texture.h
 	TextureView.h
 	TimestampQuery.h
+	DLSSCtx.h
 	Utils/FrameGpuAllocator.h
 	Utils/Functions.h
 	Utils/InstantiationMacros.h)
@@ -138,3 +139,13 @@ target_link_libraries(AnKiGrCommon AnKiUtil) # Only depend on Util
 add_library(AnKiGr ${backend_sources} ${backend_headers})
 target_compile_definitions(AnKiGr PRIVATE -DANKI_SOURCE_FILE)
 target_link_libraries(AnKiGr AnKiCore AnKiSpirvCross AnKiGrCommon)
+
+# Copy required DLLs
+if(DLSS_SUPPORT)
+	get_target_property(ANKINGX_DLL AnkiNgx IMPORTED_LOCATION)
+	add_custom_command(TARGET AnKiGr
+	COMMENT "Dependant DLLs copy ${ANKINGX_DLL} ${CMAKE_BINARY_DIR}/Bin"
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different "${ANKINGX_DLL}" "${CMAKE_BINARY_DIR}/Bin")
+	STRING(REGEX REPLACE "\\\\" "/" ANKINGX_DLL ${ANKINGX_DLL})
+	install(FILES ${ANKINGX_DLL} DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()
