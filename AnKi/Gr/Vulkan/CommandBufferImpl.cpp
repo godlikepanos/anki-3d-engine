@@ -162,6 +162,21 @@ void CommandBufferImpl::beginRenderPassInternal()
 {
 	FramebufferImpl& impl = static_cast<FramebufferImpl&>(*m_activeFb);
 
+#if !ANKI_PLATFORM_MOBILE
+	// nVidia SRI cache workaround
+	if(impl.hasSri())
+	{
+		VkMemoryBarrier memBarrier = {};
+		memBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+		memBarrier.dstAccessMask = VK_ACCESS_FRAGMENT_SHADING_RATE_ATTACHMENT_READ_BIT_KHR;
+
+		const VkPipelineStageFlags srcStages = 0;
+		const VkPipelineStageFlags dstStages = VK_PIPELINE_STAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR;
+
+		vkCmdPipelineBarrier(m_handle, srcStages, dstStages, 0, 1, &memBarrier, 0, nullptr, 0, nullptr);
+	}
+#endif
+
 	m_state.beginRenderPass(&impl);
 
 	VkRenderPassBeginInfo bi = {};

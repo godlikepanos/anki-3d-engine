@@ -44,17 +44,15 @@ shared Vec2 s_maxDerivative[SHARED_MEMORY_ENTRIES];
 F32 sampleLuma(Vec2 uv, I32 offsetX, I32 offsetY)
 {
 	uv += Vec2(offsetX, offsetY) * u_oneOverViewportSize;
-	const Vec2 ndc = UV_TO_NDC(uv);
 	const Vec3 color = textureLod(sampler2D(u_inputTex, u_nearestClampSampler), uv, 0.0).xyz;
 	const F32 luma = computeLuminance(color);
 
-	return min(1.0, (2.0f * luma) / (1.0f + luma));
+	return (2.0f * luma) / (1.0f + luma);
 }
 
 void main()
 {
 	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) * Vec2(REGION_SIZE) + 0.5) * u_oneOverViewportSize;
-	const Vec2 ndc = UV_TO_NDC(uv);
 
 #if SRI_TEXEL_DIMENSION == 8
 	// Get positions

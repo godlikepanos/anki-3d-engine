@@ -367,12 +367,12 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 																									 : "RtShadows");
 	}
 
-	if(in.getKey(KeyCode::J) == 1)
+	/*if(in.getKey(KeyCode::J) == 1)
 	{
 		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "MotionVectorsHistoryLength")
 												 ? ""
 												 : "MotionVectorsHistoryLength");
-	}
+	}*/
 
 	if(in.getKey(KeyCode::P) == 1)
 	{
