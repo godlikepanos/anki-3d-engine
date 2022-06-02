@@ -31,6 +31,11 @@ public:
 		return m_runCtx.m_rt;
 	}
 
+	RenderTargetHandle getDownscaledSriRt() const
+	{
+		return m_runCtx.m_downscaledRt;
+	}
+
 	U32 getSriTexelDimension() const
 	{
 		return m_sriTexelDimension;
@@ -43,9 +48,12 @@ public:
 	ShaderProgramResourcePtr m_visualizeProg;
 	ShaderProgramPtr m_visualizeGrProg;
 
+	ShaderProgramResourcePtr m_downscaleProg;
+	ShaderProgramPtr m_downscaleGrProg;
+
 	TexturePtr m_sriTex;
+	TexturePtr m_downscaledSriTex;
 	Bool m_sriTexImportedOnce = false;
-	FramebufferDescription m_fbDescr;
 
 	U32 m_sriTexelDimension = 16;
 
@@ -53,6 +61,7 @@ public:
 	{
 	public:
 		RenderTargetHandle m_rt;
+		RenderTargetHandle m_downscaledRt;
 	} m_runCtx;
 
 	ANKI_USE_RESULT Error initInternal();

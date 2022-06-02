@@ -95,11 +95,11 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		}
 		else if(idx == 1)
 		{
-			renderer.setCurrentDebugRenderTarget("IndirectSpecularVrsSri");
+			renderer.setCurrentDebugRenderTarget("VrsSriDownscaled");
 		}
 		else if(idx == 2)
 		{
-			renderer.setCurrentDebugRenderTarget("VRS");
+			renderer.setCurrentDebugRenderTarget("VrsSri");
 		}
 		else
 		{

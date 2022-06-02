@@ -389,7 +389,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		}
 		else if(idx == 2)
 		{
-			renderer.setCurrentDebugRenderTarget("VRS");
+			renderer.setCurrentDebugRenderTarget("VrsSri");
 		}
 		else
 		{

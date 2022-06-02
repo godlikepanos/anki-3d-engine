@@ -11,6 +11,7 @@
 #include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Renderer/ProbeReflections.h>
 #include <AnKi/Renderer/MotionVectors.h>
+#include <AnKi/Renderer/VrsSriGeneration.h>
 #include <AnKi/Core/ConfigSet.h>
 
 namespace anki {
@@ -65,51 +66,6 @@ Error IndirectSpecular::initInternal()
 	m_prog->getOrCreateVariant(variantInit, variant);
 	m_grProg = variant->getProgram();
 
-	// Init VRS SRI generation
-	const Bool enableVrs = getGrManager().getDeviceCapabilities().m_vrs && getConfig().getRVrs() && !preferCompute;
-	if(enableVrs)
-	{
-		m_vrs.m_sriTexelDimension = getGrManager().getDeviceCapabilities().m_minShadingRateImageTexelSize;
-		ANKI_ASSERT(m_vrs.m_sriTexelDimension == 8 || m_vrs.m_sriTexelDimension == 16);
-
-		const UVec2 rez = (size + m_vrs.m_sriTexelDimension - 1) / m_vrs.m_sriTexelDimension;
-		m_vrs.m_rtHandle =
-			m_r->create2DRenderTargetDescription(rez.x(), rez.y(), Format::R8_UINT, "IndirectSpecularVrsSri");
-		m_vrs.m_rtHandle.bake();
-
-		ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/IndirectSpecularVrsSriGeneration.ankiprogbin",
-													 m_vrs.m_prog));
-
-		ShaderProgramResourceVariantInitInfo variantInit(m_vrs.m_prog);
-		variantInit.addMutation("SRI_TEXEL_DIMENSION", m_vrs.m_sriTexelDimension);
-
-		if(m_vrs.m_sriTexelDimension == 16 && getGrManager().getDeviceCapabilities().m_minSubgroupSize >= 32)
-		{
-			// Algorithm's workgroup size is 32, GPU's subgroup size is min 32 -> each workgroup has 1 subgroup -> No
-			// need for shared mem
-			variantInit.addMutation("SHARED_MEMORY", 0);
-		}
-		else if(m_vrs.m_sriTexelDimension == 8 && getGrManager().getDeviceCapabilities().m_minSubgroupSize >= 16)
-		{
-			// Algorithm's workgroup size is 16, GPU's subgroup size is min 16 -> each workgroup has 1 subgroup -> No
-			// need for shared mem
-			variantInit.addMutation("SHARED_MEMORY", 0);
-		}
-		else
-		{
-			variantInit.addMutation("SHARED_MEMORY", 1);
-		}
-
-		const ShaderProgramResourceVariant* variant;
-		m_vrs.m_prog->getOrCreateVariant(variantInit, variant);
-		m_vrs.m_grProg = variant->getProgram();
-
-		ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/VrsSriVisualizeRenderTarget.ankiprogbin",
-													 m_vrs.m_visualizeProg));
-		m_vrs.m_visualizeProg->getOrCreateVariant(variant);
-		m_vrs.m_visualizeGrProg = variant->getProgram();
-	}
-
 	return Error::NONE;
 }
 
@@ -142,8 +98,8 @@ void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
 
 		if(enableVrs)
 		{
-			m_fbDescr.m_shadingRateAttachmentTexelWidth = m_vrs.m_sriTexelDimension;
-			m_fbDescr.m_shadingRateAttachmentTexelHeight = m_vrs.m_sriTexelDimension;
+			m_fbDescr.m_shadingRateAttachmentTexelWidth = m_r->getVrsSriGeneration().getSriTexelDimension();
+			m_fbDescr.m_shadingRateAttachmentTexelHeight = m_r->getVrsSriGeneration().getSriTexelDimension();
 		}
 		else
 		{
@@ -152,41 +108,6 @@ void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
 		}
 
 		m_fbDescr.bake();
-	}
-
-	// VRS SRI
-	if(enableVrs)
-	{
-		m_runCtx.m_sriRt = rgraph.newRenderTarget(m_vrs.m_rtHandle);
-
-		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("IndirectSpecular VRS SRI gen");
-
-		pass.newDependency(RenderPassDependency(m_runCtx.m_sriRt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
-		pass.newDependency(RenderPassDependency(m_runCtx.m_rts[READ], TextureUsageBit::SAMPLED_COMPUTE));
-
-		pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
-			const UVec2 viewport = m_r->getInternalResolution() / 2u;
-
-			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-
-			cmdb->bindShaderProgram(m_vrs.m_grProg);
-
-			rgraphCtx.bindColorTexture(0, 0, m_runCtx.m_rts[READ]);
-			cmdb->bindSampler(0, 1, m_r->getSamplers().m_nearestNearestClamp);
-			rgraphCtx.bindImage(0, 2, m_runCtx.m_sriRt);
-
-			class
-			{
-			public:
-				Vec4 m_v4;
-			} pc;
-
-			pc.m_v4 = Vec4(1.0f / Vec2(viewport), getConfig().getRSsrVrsThreshold(), 0.0f);
-
-			cmdb->setPushConstants(&pc, sizeof(pc));
-
-			dispatchPPCompute(cmdb, m_vrs.m_sriTexelDimension, m_vrs.m_sriTexelDimension, viewport.x(), viewport.y());
-		});
 	}
 
 	// Create pass
@@ -206,7 +127,8 @@ void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("SSR");
 			pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_rts[WRITE]}, {},
-									(enableVrs) ? m_runCtx.m_sriRt : RenderTargetHandle());
+									(enableVrs) ? m_r->getVrsSriGeneration().getDownscaledSriRt()
+												: RenderTargetHandle());
 
 			ppass = &pass;
 			readUsage = TextureUsageBit::SAMPLED_FRAGMENT;
@@ -214,7 +136,8 @@ void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
 
 			if(enableVrs)
 			{
-				ppass->newDependency(RenderPassDependency(m_runCtx.m_sriRt, TextureUsageBit::FRAMEBUFFER_SHADING_RATE));
+				ppass->newDependency(RenderPassDependency(m_r->getVrsSriGeneration().getDownscaledSriRt(),
+														  TextureUsageBit::FRAMEBUFFER_SHADING_RATE));
 			}
 		}
 
@@ -307,12 +230,6 @@ void IndirectSpecular::getDebugRenderTarget(CString rtName, RenderTargetHandle& 
 	if(rtName == "SSR")
 	{
 		handle = m_runCtx.m_rts[WRITE];
-	}
-	else
-	{
-		ANKI_ASSERT(rtName == "IndirectSpecularVrsSri");
-		handle = m_runCtx.m_sriRt;
-		optionalShaderProgram = m_vrs.m_visualizeGrProg;
 	}
 }
 

@@ -13,7 +13,8 @@ namespace anki {
 VrsSriGeneration::VrsSriGeneration(Renderer* r)
 	: RendererObject(r)
 {
-	registerDebugRenderTarget("VRS");
+	registerDebugRenderTarget("VrsSri");
+	registerDebugRenderTarget("VrsSriDownscaled");
 }
 
 VrsSriGeneration::~VrsSriGeneration()
@@ -43,16 +44,17 @@ Error VrsSriGeneration::initInternal()
 
 	ANKI_R_LOGV("Intializing VRS SRI generation. SRI resolution %ux%u", rez.x(), rez.y());
 
-	// SRI
-	const TextureUsageBit texUsage = TextureUsageBit::FRAMEBUFFER_SHADING_RATE | TextureUsageBit::IMAGE_COMPUTE_WRITE
-									 | TextureUsageBit::SAMPLED_FRAGMENT;
+	// Create textures
+	const TextureUsageBit texUsage =
+		TextureUsageBit::FRAMEBUFFER_SHADING_RATE | TextureUsageBit::IMAGE_COMPUTE_WRITE | TextureUsageBit::ALL_SAMPLED;
 	TextureInitInfo sriInitInfo =
-		m_r->create2DRenderTargetInitInfo(rez.x(), rez.y(), Format::R8_UINT, texUsage, "VRS SRI");
+		m_r->create2DRenderTargetInitInfo(rez.x(), rez.y(), Format::R8_UINT, texUsage, "VrsSri");
 	m_sriTex = m_r->createAndClearRenderTarget(sriInitInfo, TextureUsageBit::FRAMEBUFFER_SHADING_RATE);
 
-	// Descr
-	m_fbDescr.m_colorAttachmentCount = 1;
-	m_fbDescr.bake();
+	const UVec2 rezDownscaled = (m_r->getInternalResolution() / 2 + m_sriTexelDimension - 1) / m_sriTexelDimension;
+	sriInitInfo = m_r->create2DRenderTargetInitInfo(rezDownscaled.x(), rezDownscaled.y(), Format::R8_UINT, texUsage,
+													"VrsSriDownscaled");
+	m_downscaledSriTex = m_r->createAndClearRenderTarget(sriInitInfo, TextureUsageBit::FRAMEBUFFER_SHADING_RATE);
 
 	// Load programs
 	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/VrsSriGenerationCompute.ankiprogbin", m_prog));
@@ -85,14 +87,26 @@ Error VrsSriGeneration::initInternal()
 	m_visualizeProg->getOrCreateVariant(variant);
 	m_visualizeGrProg = variant->getProgram();
 
+	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/VrsSriDownscale.ankiprogbin", m_downscaleProg));
+	m_downscaleProg->getOrCreateVariant(variant);
+	m_downscaleGrProg = variant->getProgram();
+
 	return Error::NONE;
 }
 
 void VrsSriGeneration::getDebugRenderTarget(CString rtName, RenderTargetHandle& handle,
 											ShaderProgramPtr& optionalShaderProgram) const
 {
-	ANKI_ASSERT(rtName == "VRS");
-	handle = m_runCtx.m_rt;
+	if(rtName == "VrsSri")
+	{
+		handle = m_runCtx.m_rt;
+	}
+	else
+	{
+		ANKI_ASSERT(rtName == "VrsSriDownscaled");
+		handle = m_runCtx.m_downscaledRt;
+	}
+
 	optionalShaderProgram = m_visualizeGrProg;
 }
 
@@ -107,10 +121,13 @@ void VrsSriGeneration::importRenderTargets(RenderingContext& ctx)
 	if(m_sriTexImportedOnce)
 	{
 		m_runCtx.m_rt = ctx.m_renderGraphDescr.importRenderTarget(m_sriTex);
+		m_runCtx.m_downscaledRt = ctx.m_renderGraphDescr.importRenderTarget(m_downscaledSriTex);
 	}
 	else
 	{
 		m_runCtx.m_rt = ctx.m_renderGraphDescr.importRenderTarget(m_sriTex, TextureUsageBit::FRAMEBUFFER_SHADING_RATE);
+		m_runCtx.m_downscaledRt =
+			ctx.m_renderGraphDescr.importRenderTarget(m_downscaledSriTex, TextureUsageBit::FRAMEBUFFER_SHADING_RATE);
 		m_sriTexImportedOnce = true;
 	}
 }
@@ -125,26 +142,55 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
-	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("VRS SRI generation");
+	// SRI generation
+	{
+		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("VRS SRI generation");
 
-	pass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
-	pass.newDependency(RenderPassDependency(m_r->getTemporalAA().getTonemappedRt(), TextureUsageBit::SAMPLED_COMPUTE));
+		pass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
+		pass.newDependency(
+			RenderPassDependency(m_r->getTemporalAA().getTonemappedRt(), TextureUsageBit::SAMPLED_COMPUTE));
 
-	pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
-		CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-		cmdb->bindShaderProgram(m_grProg);
+			cmdb->bindShaderProgram(m_grProg);
 
-		rgraphCtx.bindColorTexture(0, 0, m_r->getTemporalAA().getTonemappedRt());
-		cmdb->bindSampler(0, 1, m_r->getSamplers().m_nearestNearestClamp);
-		rgraphCtx.bindImage(0, 2, m_runCtx.m_rt);
-		const Vec4 pc(1.0f / Vec2(m_r->getInternalResolution()), getConfig().getRVrsThreshold(), 0.0f);
-		cmdb->setPushConstants(&pc, sizeof(pc));
+			rgraphCtx.bindColorTexture(0, 0, m_r->getTemporalAA().getTonemappedRt());
+			cmdb->bindSampler(0, 1, m_r->getSamplers().m_nearestNearestClamp);
+			rgraphCtx.bindImage(0, 2, m_runCtx.m_rt);
+			const Vec4 pc(1.0f / Vec2(m_r->getInternalResolution()), getConfig().getRVrsThreshold(), 0.0f);
+			cmdb->setPushConstants(&pc, sizeof(pc));
 
-		const U32 fakeWorkgroupSizeXorY = m_sriTexelDimension;
-		dispatchPPCompute(cmdb, fakeWorkgroupSizeXorY, fakeWorkgroupSizeXorY, m_r->getInternalResolution().x(),
-						  m_r->getInternalResolution().y());
-	});
+			const U32 fakeWorkgroupSizeXorY = m_sriTexelDimension;
+			dispatchPPCompute(cmdb, fakeWorkgroupSizeXorY, fakeWorkgroupSizeXorY, m_r->getInternalResolution().x(),
+							  m_r->getInternalResolution().y());
+		});
+	}
+
+	// Downscale
+	{
+		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("VRS SRI downscale");
+
+		pass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::SAMPLED_COMPUTE));
+		pass.newDependency(RenderPassDependency(m_runCtx.m_downscaledRt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
+
+		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+			const UVec2 rezDownscaled =
+				(m_r->getInternalResolution() / 2 + m_sriTexelDimension - 1) / m_sriTexelDimension;
+
+			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+
+			cmdb->bindShaderProgram(m_downscaleGrProg);
+
+			rgraphCtx.bindColorTexture(0, 0, m_runCtx.m_rt);
+			cmdb->bindSampler(0, 1, m_r->getSamplers().m_nearestNearestClamp);
+			rgraphCtx.bindImage(0, 2, m_runCtx.m_downscaledRt);
+			const Vec4 pc(1.0f / Vec2(rezDownscaled), 0.0f, 0.0f);
+			cmdb->setPushConstants(&pc, sizeof(pc));
+
+			dispatchPPCompute(cmdb, 8, 8, rezDownscaled.x(), rezDownscaled.y());
+		});
+	}
 }
 
 } // end namespace anki
