@@ -27,9 +27,9 @@ void main()
 	const UVec4 rates = textureGather(usampler2D(u_inputTex, u_nearestAnyClampSampler), uv, 0);
 
 	UVec2 rate = decodeVrsRate(rates[0]);
-	rate = max(rate, decodeVrsRate(rates[1]));
-	rate = max(rate, decodeVrsRate(rates[2]));
-	rate = max(rate, decodeVrsRate(rates[3]));
+	rate = min(rate, decodeVrsRate(rates[1]));
+	rate = min(rate, decodeVrsRate(rates[2]));
+	rate = min(rate, decodeVrsRate(rates[3]));
 
 	imageStore(u_outputImage, IVec2(gl_GlobalInvocationID.xy), UVec4(encodeVrsRate(rate)));
 }
