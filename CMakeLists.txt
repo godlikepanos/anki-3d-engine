@@ -388,7 +388,11 @@ if(ANDROID)
 endif()
 
 if(LINUX)
-	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} X11-xcb pthread dl)
+	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} pthread dl)
+
+	if(SDL)
+		set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} X11-xcb)
+	endif()
 endif()
 
 # AnKi compiler flags (Mainly warnings)
