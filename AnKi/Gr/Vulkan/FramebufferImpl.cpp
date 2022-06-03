@@ -55,8 +55,7 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 	// Create a renderpass.
 	initRpassCreateInfo(init);
 	ANKI_VK_CHECK(vkCreateRenderPass2KHR(getDevice(), &m_rpassCi, nullptr, &m_compatibleRenderpassHandle));
-	getGrManagerImpl().trySetVulkanHandleName(init.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT,
-											  m_compatibleRenderpassHandle);
+	getGrManagerImpl().trySetVulkanHandleName(init.getName(), VK_OBJECT_TYPE_RENDER_PASS, m_compatibleRenderpassHandle);
 
 	// Create the FB
 	ANKI_CHECK(initFbs(init));
@@ -177,7 +176,7 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 	ANKI_ASSERT(count == ci.attachmentCount);
 
 	ANKI_VK_CHECK(vkCreateFramebuffer(getDevice(), &ci, nullptr, &m_fbHandle));
-	getGrManagerImpl().trySetVulkanHandleName(init.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, m_fbHandle);
+	getGrManagerImpl().trySetVulkanHandleName(init.getName(), VK_OBJECT_TYPE_FRAMEBUFFER, m_fbHandle);
 
 	return Error::NONE;
 }
@@ -375,7 +374,7 @@ VkRenderPass FramebufferImpl::getRenderPassHandle(const Array<VkImageLayout, MAX
 			}
 
 			ANKI_VK_CHECKF(vkCreateRenderPass2KHR(getDevice(), &ci, nullptr, &out));
-			getGrManagerImpl().trySetVulkanHandleName(getName(), VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, out);
+			getGrManagerImpl().trySetVulkanHandleName(getName(), VK_OBJECT_TYPE_RENDER_PASS, out);
 
 			m_renderpassHandles.emplace(getAllocator(), hash, out);
 		}

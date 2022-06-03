@@ -449,6 +449,10 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(const FramebufferDescription&
 
 	hash = appendHash(&uuids[0], sizeof(U64) * count, hash);
 
+	// Hash the name of the pass. If you don't the code bellow may fetch an FB with some another name and that will
+	// cause problems with tools. The FB name is used as a debug marker
+	hash = appendHash(name.cstr(), name.getLength(), hash);
+
 	FramebufferPtr fb;
 	auto it = m_fbCache.find(hash);
 	if(it != m_fbCache.getEnd())
@@ -508,11 +512,7 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(const FramebufferDescription&
 		}
 
 		// Set FB name
-		Array<char, MAX_GR_OBJECT_NAME_LENGTH + 1> cutName;
-		const U cutNameLen = min<U>(name.getLength(), MAX_GR_OBJECT_NAME_LENGTH);
-		memcpy(&cutName[0], &name[0], cutNameLen);
-		cutName[cutNameLen] = '\0';
-		fbInit.setName(&cutName[0]);
+		fbInit.setName(name);
 
 		// Create
 		fb = getManager().newFramebuffer(fbInit);

@@ -342,7 +342,9 @@ inline void CommandBufferImpl::dispatchComputeInternal(U32 groupCountX, U32 grou
 
 	commandCommon();
 
-	getGrManagerImpl().beginMarker(m_handle, m_computeProg->getName());
+	flushBatches(CommandBufferCommandType::ANY_OTHER_COMMAND); // Do that before setting the markers
+
+	getGrManagerImpl().beginMarker(m_handle, m_computeProg->getName(), Vec3(1.0f, 1.0f, 0.0f));
 
 	// Bind descriptors
 	for(U32 i = 0; i < MAX_DESCRIPTOR_SETS; ++i)
@@ -378,7 +380,7 @@ inline void CommandBufferImpl::dispatchComputeInternal(U32 groupCountX, U32 grou
 		}
 	}
 
-	ANKI_CMD(vkCmdDispatch(m_handle, groupCountX, groupCountY, groupCountZ), ANY_OTHER_COMMAND);
+	vkCmdDispatch(m_handle, groupCountX, groupCountY, groupCountZ);
 
 	getGrManagerImpl().endMarker(m_handle);
 }
@@ -405,7 +407,9 @@ inline void CommandBufferImpl::traceRaysInternal(const BufferPtr& sbtBuffer, Ptr
 
 	commandCommon();
 
-	getGrManagerImpl().beginMarker(m_handle, m_rtProg->getName());
+	flushBatches(CommandBufferCommandType::ANY_OTHER_COMMAND); // Do that before setting the markers
+
+	getGrManagerImpl().beginMarker(m_handle, m_rtProg->getName(), Vec3(0.0f, 0.0f, 1.0f));
 
 	// Bind descriptors
 	for(U32 i = 0; i < MAX_DESCRIPTOR_SETS; ++i)
@@ -463,8 +467,7 @@ inline void CommandBufferImpl::traceRaysInternal(const BufferPtr& sbtBuffer, Ptr
 	// Callable, nothing for now
 	regions[3] = VkStridedDeviceAddressRegionKHR();
 
-	ANKI_CMD(vkCmdTraceRaysKHR(m_handle, &regions[0], &regions[1], &regions[2], &regions[3], width, height, depth),
-			 ANY_OTHER_COMMAND);
+	vkCmdTraceRaysKHR(m_handle, &regions[0], &regions[1], &regions[2], &regions[3], width, height, depth);
 
 	getGrManagerImpl().endMarker(m_handle);
 }

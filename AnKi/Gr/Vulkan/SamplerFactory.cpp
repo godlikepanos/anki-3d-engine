@@ -107,7 +107,7 @@ Error MicroSampler::init(const SamplerInitInfo& inf)
 
 	// Create
 	ANKI_VK_CHECK(vkCreateSampler(m_factory->m_gr->getDevice(), &ci, nullptr, &m_handle));
-	m_factory->m_gr->trySetVulkanHandleName(inf.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, m_handle);
+	m_factory->m_gr->trySetVulkanHandleName(inf.getName(), VK_OBJECT_TYPE_SAMPLER, m_handle);
 
 	return Error::NONE;
 }

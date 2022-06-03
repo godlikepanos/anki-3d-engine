@@ -212,7 +212,7 @@ Error TextureImpl::initInternal(VkImage externalImage, const TextureInitInfo& in
 		ANKI_ASSERT(m_singleSurfaceImageView.m_derivedTextureType == m_texType);
 
 		ANKI_VK_CHECKF(vkCreateImageView(getDevice(), &viewCi, nullptr, &m_singleSurfaceImageView.m_handle));
-		getGrManagerImpl().trySetVulkanHandleName(getName(), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT,
+		getGrManagerImpl().trySetVulkanHandleName(getName(), VK_OBJECT_TYPE_IMAGE_VIEW,
 												  ptrToNumber(m_singleSurfaceImageView.m_handle));
 	}
 
@@ -307,7 +307,7 @@ Error TextureImpl::initImage(const TextureInitInfo& init)
 	ci.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
 	ANKI_VK_CHECK(vkCreateImage(getDevice(), &ci, nullptr, &m_imageHandle));
-	getGrManagerImpl().trySetVulkanHandleName(init.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, m_imageHandle);
+	getGrManagerImpl().trySetVulkanHandleName(init.getName(), VK_OBJECT_TYPE_IMAGE, m_imageHandle);
 #if 0
 	printf("Creating texture %p %s\n", static_cast<void*>(m_imageHandle),
 		   init.getName() ? init.getName().cstr() : "Unnamed");
@@ -615,8 +615,7 @@ const MicroImageView& TextureImpl::getOrCreateView(const TextureSubresourceInfo&
 	ANKI_ASSERT(viewTexType != TextureType::COUNT);
 
 	ANKI_VK_CHECKF(vkCreateImageView(getDevice(), &viewCi, nullptr, &handle));
-	getGrManagerImpl().trySetVulkanHandleName(getName(), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT,
-											  ptrToNumber(handle));
+	getGrManagerImpl().trySetVulkanHandleName(getName(), VK_OBJECT_TYPE_IMAGE_VIEW, ptrToNumber(handle));
 
 	it = m_viewsMap.emplace(getAllocator(), subresource);
 	it->m_handle = handle;

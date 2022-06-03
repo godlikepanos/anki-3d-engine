@@ -162,20 +162,7 @@ void CommandBufferImpl::beginRenderPassInternal()
 {
 	FramebufferImpl& impl = static_cast<FramebufferImpl&>(*m_activeFb);
 
-#if !ANKI_PLATFORM_MOBILE
-	// nVidia SRI cache workaround
-	if(impl.hasSri())
-	{
-		VkMemoryBarrier memBarrier = {};
-		memBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-		memBarrier.dstAccessMask = VK_ACCESS_FRAGMENT_SHADING_RATE_ATTACHMENT_READ_BIT_KHR;
-
-		const VkPipelineStageFlags srcStages = VK_PIPELINE_STAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR;
-		const VkPipelineStageFlags dstStages = VK_PIPELINE_STAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR;
-
-		vkCmdPipelineBarrier(m_handle, srcStages, dstStages, 0, 1, &memBarrier, 0, nullptr, 0, nullptr);
-	}
-#endif
+	flushBatches(CommandBufferCommandType::ANY_OTHER_COMMAND); // Flush before the marker
 
 	m_state.beginRenderPass(&impl);
 
@@ -219,18 +206,30 @@ void CommandBufferImpl::beginRenderPassInternal()
 	bi.renderArea.extent.width = m_renderArea[2];
 	bi.renderArea.extent.height = m_renderArea[3];
 
-	getGrManagerImpl().beginMarker(m_handle, impl.getName());
+	getGrManagerImpl().beginMarker(m_handle, impl.getName(), Vec3(0.0f, 1.0f, 0.0f));
+
+#if !ANKI_PLATFORM_MOBILE
+	// nVidia SRI cache workaround
+	if(impl.hasSri())
+	{
+		VkMemoryBarrier memBarrier = {};
+		memBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+		memBarrier.dstAccessMask = VK_ACCESS_FRAGMENT_SHADING_RATE_ATTACHMENT_READ_BIT_KHR;
+
+		const VkPipelineStageFlags srcStages = VK_PIPELINE_STAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR;
+		const VkPipelineStageFlags dstStages = VK_PIPELINE_STAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR;
+
+		vkCmdPipelineBarrier(m_handle, srcStages, dstStages, 0, 1, &memBarrier, 0, nullptr, 0, nullptr);
+	}
+#endif
 
 	VkSubpassBeginInfo subpassBeginInfo = {};
 	subpassBeginInfo.sType = VK_STRUCTURE_TYPE_SUBPASS_BEGIN_INFO;
 	subpassBeginInfo.contents = m_subpassContents;
 
-	ANKI_CMD(vkCmdBeginRenderPass2KHR(m_handle, &bi, &subpassBeginInfo), ANY_OTHER_COMMAND);
+	vkCmdBeginRenderPass2KHR(m_handle, &bi, &subpassBeginInfo);
 
-	if(impl.hasPresentableTexture())
-	{
-		m_renderedToDefaultFb = true;
-	}
+	m_renderedToDefaultFb = m_renderedToDefaultFb || impl.hasPresentableTexture();
 }
 
 void CommandBufferImpl::endRenderPassInternal()
@@ -239,6 +238,7 @@ void CommandBufferImpl::endRenderPassInternal()
 	ANKI_ASSERT(insideRenderPass());
 	if(m_rpCommandCount == 0)
 	{
+		// Empty pass
 		m_subpassContents = VK_SUBPASS_CONTENTS_INLINE;
 		beginRenderPassInternal();
 	}

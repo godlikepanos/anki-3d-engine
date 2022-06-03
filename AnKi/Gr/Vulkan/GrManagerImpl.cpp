@@ -79,9 +79,9 @@ GrManagerImpl::~GrManagerImpl()
 		vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
 	}
 
-	if(m_debugCallback)
+	if(m_debugUtilsMessager)
 	{
-		vkDestroyDebugReportCallbackEXT(m_instance, m_debugCallback, nullptr);
+		vkDestroyDebugUtilsMessengerEXT(m_instance, m_debugUtilsMessager, nullptr);
 	}
 
 	if(m_instance)
@@ -94,8 +94,6 @@ GrManagerImpl::~GrManagerImpl()
 
 		vkDestroyInstance(m_instance, pallocCbs);
 	}
-
-	m_vkHandleToName.destroy(getAllocator());
 
 #if ANKI_PLATFORM_MOBILE
 	m_alloc.deleteInstance(m_globalCreatePipelineMtx);
@@ -315,31 +313,33 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 
 		for(U32 i = 0; i < extCount; ++i)
 		{
+			const CString extensionName = instExtensionInf[i].extensionName;
+
 #if ANKI_WINDOWING_SYSTEM_HEADLESS
-			if(CString(instExtensionInf[i].extensionName) == VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME)
+			if(extensionName == VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME)
 			{
 				m_extensions |= VulkanExtensions::EXT_HEADLESS_SURFACE;
 				instExtensions[instExtensionCount++] = VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME;
 			}
 #elif ANKI_OS_LINUX
-			if(CString(instExtensionInf[i].extensionName) == VK_KHR_XCB_SURFACE_EXTENSION_NAME)
+			if(extensionName == VK_KHR_XCB_SURFACE_EXTENSION_NAME)
 			{
 				m_extensions |= VulkanExtensions::KHR_XCB_SURFACE;
 				instExtensions[instExtensionCount++] = VK_KHR_XCB_SURFACE_EXTENSION_NAME;
 			}
-			else if(CString(instExtensionInf[i].extensionName) == VK_KHR_XLIB_SURFACE_EXTENSION_NAME)
+			else if(extensionName == VK_KHR_XLIB_SURFACE_EXTENSION_NAME)
 			{
 				m_extensions |= VulkanExtensions::KHR_XLIB_SURFACE;
 				instExtensions[instExtensionCount++] = VK_KHR_XLIB_SURFACE_EXTENSION_NAME;
 			}
 #elif ANKI_OS_WINDOWS
-			if(CString(instExtensionInf[i].extensionName) == VK_KHR_WIN32_SURFACE_EXTENSION_NAME)
+			if(extensionName == VK_KHR_WIN32_SURFACE_EXTENSION_NAME)
 			{
 				m_extensions |= VulkanExtensions::KHR_WIN32_SURFACE;
 				instExtensions[instExtensionCount++] = VK_KHR_WIN32_SURFACE_EXTENSION_NAME;
 			}
 #elif ANKI_OS_ANDROID
-			if(CString(instExtensionInf[i].extensionName) == VK_KHR_ANDROID_SURFACE_EXTENSION_NAME)
+			if(extensionName == VK_KHR_ANDROID_SURFACE_EXTENSION_NAME)
 			{
 				m_extensions |= VulkanExtensions::KHR_ANDROID_SURFACE;
 				instExtensions[instExtensionCount++] = VK_KHR_ANDROID_SURFACE_EXTENSION_NAME;
@@ -347,16 +347,16 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 #else
 #	error Not implemented
 #endif
-			else if(CString(instExtensionInf[i].extensionName) == VK_KHR_SURFACE_EXTENSION_NAME)
+			else if(extensionName == VK_KHR_SURFACE_EXTENSION_NAME)
 			{
 				m_extensions |= VulkanExtensions::KHR_SURFACE;
 				instExtensions[instExtensionCount++] = VK_KHR_SURFACE_EXTENSION_NAME;
 			}
-			else if(CString(instExtensionInf[i].extensionName) == VK_EXT_DEBUG_REPORT_EXTENSION_NAME
-					&& (m_config->getGrValidation() || m_config->getGrDebugPrintf()))
+			else if(extensionName == VK_EXT_DEBUG_UTILS_EXTENSION_NAME
+					&& (m_config->getGrDebugMarkers() || m_config->getGrValidation() || m_config->getGrDebugPrintf()))
 			{
-				m_extensions |= VulkanExtensions::EXT_DEBUG_REPORT;
-				instExtensions[instExtensionCount++] = VK_EXT_DEBUG_REPORT_EXTENSION_NAME;
+				m_extensions |= VulkanExtensions::EXT_DEBUG_UTILS;
+				instExtensions[instExtensionCount++] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
 			}
 		}
 
@@ -401,23 +401,20 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 	volkLoadInstance(m_instance);
 
 	// Set debug callbacks
-	//
-	if(!!(m_extensions & VulkanExtensions::EXT_DEBUG_REPORT))
+	if(!!(m_extensions & VulkanExtensions::EXT_DEBUG_UTILS))
 	{
-		VkDebugReportCallbackCreateInfoEXT ci = {};
-		ci.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
-		ci.pfnCallback = debugReportCallbackEXT;
-		ci.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT
-				   | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
+		VkDebugUtilsMessengerCreateInfoEXT info = {};
+		info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+		info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
+							   | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
+							   | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+		info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
+						   | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT
+						   | VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT;
+		info.pfnUserCallback = debugReportCallbackEXT;
+		info.pUserData = this;
 
-		if(m_config->getGrDebugPrintf())
-		{
-			ci.flags |= VK_DEBUG_REPORT_INFORMATION_BIT_EXT;
-		}
-
-		ci.pUserData = this;
-
-		vkCreateDebugReportCallbackEXT(m_instance, &ci, nullptr, &m_debugCallback);
+		vkCreateDebugUtilsMessengerEXT(m_instance, &info, nullptr, &m_debugUtilsMessager);
 	}
 
 	// Create the physical device
@@ -647,11 +644,6 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 			if(extensionName == VK_KHR_SWAPCHAIN_EXTENSION_NAME)
 			{
 				m_extensions |= VulkanExtensions::KHR_SWAPCHAIN;
-				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
-			}
-			else if(extensionName == VK_EXT_DEBUG_MARKER_EXTENSION_NAME && m_config->getGrDebugMarkers())
-			{
-				m_extensions |= VulkanExtensions::EXT_DEBUG_MARKER;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
 			else if(extensionName == VK_AMD_SHADER_INFO_EXTENSION_NAME && m_config->getCoreDisplayStats())
@@ -1075,31 +1067,6 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 
 	ANKI_VK_CHECK(vkCreateDevice(m_physicalDevice, &ci, nullptr, &m_device));
 
-	// Get debug marker
-	if(!!(m_extensions & VulkanExtensions::EXT_DEBUG_MARKER))
-	{
-		m_pfnDebugMarkerSetObjectNameEXT = reinterpret_cast<PFN_vkDebugMarkerSetObjectNameEXT>(
-			vkGetDeviceProcAddr(m_device, "vkDebugMarkerSetObjectNameEXT"));
-		if(!m_pfnDebugMarkerSetObjectNameEXT)
-		{
-			ANKI_VK_LOGW("VK_EXT_debug_marker is present but vkDebugMarkerSetObjectNameEXT is not there");
-		}
-
-		m_pfnCmdDebugMarkerBeginEXT =
-			reinterpret_cast<PFN_vkCmdDebugMarkerBeginEXT>(vkGetDeviceProcAddr(m_device, "vkCmdDebugMarkerBeginEXT"));
-		if(!m_pfnCmdDebugMarkerBeginEXT)
-		{
-			ANKI_VK_LOGW("VK_EXT_debug_marker is present but vkCmdDebugMarkerBeginEXT is not there");
-		}
-
-		m_pfnCmdDebugMarkerEndEXT =
-			reinterpret_cast<PFN_vkCmdDebugMarkerEndEXT>(vkGetDeviceProcAddr(m_device, "vkCmdDebugMarkerEndEXT"));
-		if(!m_pfnCmdDebugMarkerEndEXT)
-		{
-			ANKI_VK_LOGW("VK_EXT_debug_marker is present but vkCmdDebugMarkerEndEXT is not there");
-		}
-	}
-
 	// Get VK_AMD_shader_info entry points
 	if(!!(m_extensions & VulkanExtensions::AMD_SHADER_INFO))
 	{
@@ -1453,69 +1420,56 @@ void GrManagerImpl::finish()
 	}
 }
 
-void GrManagerImpl::trySetVulkanHandleName(CString name, VkDebugReportObjectTypeEXT type, U64 handle) const
+void GrManagerImpl::trySetVulkanHandleName(CString name, VkObjectType type, U64 handle) const
 {
-	if(name && name.getLength())
+	if(name && name.getLength() && !!(m_extensions & VulkanExtensions::EXT_DEBUG_UTILS))
 	{
-		if(m_pfnDebugMarkerSetObjectNameEXT)
-		{
-			VkDebugMarkerObjectNameInfoEXT inf = {};
-			inf.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_NAME_INFO_EXT;
-			inf.objectType = type;
-			inf.pObjectName = name.cstr();
-			inf.object = handle;
+		VkDebugUtilsObjectNameInfoEXT info = {};
+		info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+		info.objectHandle = handle;
+		info.objectType = type;
+		info.pObjectName = name.cstr();
 
-			m_pfnDebugMarkerSetObjectNameEXT(m_device, &inf);
-		}
-
-		LockGuard<SpinLock> lock(m_vkHandleToNameLock);
-		StringAuto newName(getAllocator());
-		newName.create(name);
-		m_vkHandleToName.emplace(getAllocator(), computeHash(&handle, sizeof(handle)), std::move(newName));
+		vkSetDebugUtilsObjectNameEXT(m_device, &info);
 	}
 }
 
-StringAuto GrManagerImpl::tryGetVulkanHandleName(U64 handle) const
+VkBool32 GrManagerImpl::debugReportCallbackEXT(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+											   VkDebugUtilsMessageTypeFlagsEXT messageTypes,
+											   const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+											   void* pUserData)
 {
-	StringAuto out(getAllocator());
-
-	LockGuard<SpinLock> lock(m_vkHandleToNameLock);
-
-	auto it = m_vkHandleToName.find(computeHash(&handle, sizeof(handle)));
-	CString objName;
-	if(it != m_vkHandleToName.getEnd())
-	{
-		objName = it->toCString();
-	}
-	else
-	{
-		objName = "Unnamed";
-	}
-
-	out.create(objName);
-
-	return out;
-}
-
-VkBool32 GrManagerImpl::debugReportCallbackEXT(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType,
-											   uint64_t object, size_t location, int32_t messageCode,
-											   const char* pLayerPrefix, const char* pMessage, void* pUserData)
-{
-	// Get the object name
+	// Get all names of affected objects
 	GrManagerImpl* self = static_cast<GrManagerImpl*>(pUserData);
-	StringAuto name = self->tryGetVulkanHandleName(object);
-
-	if(flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
+	StringAuto objectNames(self->m_alloc);
+	if(pCallbackData->objectCount)
 	{
-		ANKI_VK_LOGE("%s (handle: %s)", pMessage, name.cstr());
-	}
-	else if(flags & (VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT))
-	{
-		ANKI_VK_LOGW("%s (handle: %s)", pMessage, name.cstr());
+		for(U32 i = 0; i < pCallbackData->objectCount; ++i)
+		{
+			const Char* name = pCallbackData->pObjects[i].pObjectName;
+			objectNames.append((name) ? name : "?");
+			if(i < pCallbackData->objectCount - 1)
+			{
+				objectNames.append(", ");
+			}
+		}
 	}
 	else
 	{
-		ANKI_VK_LOGI("%s (handle: %s)", pMessage, name.cstr());
+		objectNames.create("N/A");
+	}
+
+	if(messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+	{
+		ANKI_VK_LOGE("VK debug report: %s. Affected objects: %s", pCallbackData->pMessage, objectNames.cstr());
+	}
+	else if(messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
+	{
+		ANKI_VK_LOGW("VK debug report: %s. Affected objects: %s", pCallbackData->pMessage, objectNames.cstr());
+	}
+	else
+	{
+		ANKI_VK_LOGI("VK debug report: %s. Affected objects: %s", pCallbackData->pMessage, objectNames.cstr());
 	}
 
 	return false;
