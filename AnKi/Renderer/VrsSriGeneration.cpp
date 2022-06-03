@@ -78,6 +78,8 @@ Error VrsSriGeneration::initInternal()
 		variantInit.addMutation("SHARED_MEMORY", 1);
 	}
 
+	variantInit.addMutation("LIMIT_RATE_TO_2X2", getConfig().getRVrsLimitTo2x2());
+
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInit, variant);
 	m_grProg = variant->getProgram();

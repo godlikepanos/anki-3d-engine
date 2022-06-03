@@ -10,9 +10,6 @@ ANKI_CONFIG_VAR_U8(RTextureAnisotropy, ((ANKI_PLATFORM_MOBILE) ? 1 : 8), 1, 16,
 ANKI_CONFIG_VAR_U32(RTileSize, 64, 8, 256, "Tile lighting tile size")
 ANKI_CONFIG_VAR_U32(RZSplitCount, 64, 8, 1024, "Clusterer number of Z splits")
 ANKI_CONFIG_VAR_BOOL(RPreferCompute, !ANKI_PLATFORM_MOBILE, "Prefer compute shaders")
-ANKI_CONFIG_VAR_BOOL(RVrs, true, "Enable VRS in multiple passes")
-ANKI_CONFIG_VAR_BOOL(RGBufferVrs, false, "Enable VRS in GBuffer")
-ANKI_CONFIG_VAR_F32(RVrsThreshold, 0.05f, 0.0f, 1.0f, "Threshold under which a lower shading rate will be applied")
 ANKI_CONFIG_VAR_BOOL(RHighQualityHdr, !ANKI_PLATFORM_MOBILE,
 					 "If true use R16G16B16 for HDR images. Alternatively use B10G11R11")
 
@@ -29,6 +26,12 @@ ANKI_CONFIG_VAR_U32(RVolumetricLightingAccumulationFinalZSplit, 26, 1, 256,
 					"Final cluster split that will recieve volumetric lights")
 
 ANKI_CONFIG_VAR_BOOL(RDbgEnabled, false, "Enable or not debugging")
+
+// VRS
+ANKI_CONFIG_VAR_BOOL(RVrs, true, "Enable VRS in multiple passes")
+ANKI_CONFIG_VAR_BOOL(RGBufferVrs, false, "Enable VRS in GBuffer")
+ANKI_CONFIG_VAR_F32(RVrsThreshold, 0.05f, 0.0f, 1.0f, "Threshold under which a lower shading rate will be applied")
+ANKI_CONFIG_VAR_BOOL(RVrsLimitTo2x2, false, "If true the max rate will be 2x2")
 
 // SSR
 ANKI_CONFIG_VAR_U32(RSsrFirstStepPixels, 32, 1, 256, "The 1st step in ray marching")

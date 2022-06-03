@@ -5,6 +5,7 @@
 
 #pragma anki mutator SRI_TEXEL_DIMENSION 8 16
 #pragma anki mutator SHARED_MEMORY 0 1
+#pragma anki mutator LIMIT_RATE_TO_2X2 0 1
 
 #pragma anki start comp
 
@@ -165,6 +166,10 @@ void main()
 		UVec2 rate;
 		rate.x = (lumaDiff.x > threshold1) ? 1u : ((lumaDiff.x > threshold2) ? 2u : 4u);
 		rate.y = (lumaDiff.y > threshold1) ? 1u : ((lumaDiff.y > threshold2) ? 2u : 4u);
+
+#if LIMIT_RATE_TO_2X2
+		rate = min(rate, UVec2(2u));
+#endif
 
 		const UVec2 outTexelCoord = gl_WorkGroupID.xy;
 		imageStore(u_sriImg, IVec2(outTexelCoord), UVec4(encodeVrsRate(rate)));
