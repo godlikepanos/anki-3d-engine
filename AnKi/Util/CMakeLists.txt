@@ -15,8 +15,7 @@ set(sources
 	Tracer.cpp
 	Serializer.cpp
 	Xml.cpp
-	F16.cpp
-	Process.cpp)
+	F16.cpp)
 
 if(LINUX OR ANDROID OR MACOS)
 	set(sources ${sources}
@@ -35,6 +34,10 @@ if(LINUX OR ANDROID)
 	set(sources ${sources} INotifyPosix.cpp)
 elseif(WINDOWS)
 	set(sources ${sources} INotifyWindows.cpp)
+endif()
+
+if(LINUX OR WINDOWS)
+	set(sources ${sources} Process.cpp)
 endif()
 
 file(GLOB_RECURSE headers *.h)
