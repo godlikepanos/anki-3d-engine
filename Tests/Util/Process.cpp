@@ -7,29 +7,54 @@
 #include <AnKi/Util/Process.h>
 #include <AnKi/Util/File.h>
 #include <AnKi/Util/HighRezTimer.h>
+#include <AnKi/Util/Filesystem.h>
+
+namespace anki {
+
+static void createBashScript(CString code)
+{
+	File file;
+
+	ANKI_TEST_EXPECT_NO_ERR(file.open("process_test.sh", FileOpenFlag::WRITE));
+	ANKI_TEST_EXPECT_NO_ERR(file.writeText("#!/bin/bash\n%s\n", code.cstr()));
+}
+
+} // end namespace anki
 
 ANKI_TEST(Util, Process)
 {
 	// Simple test
 	if(1)
 	{
-		Process proc;
-		ANKI_TEST_EXPECT_NO_ERR(proc.start("ls", Array<CString, 1>{{"-lt"}}, {}));
-		ANKI_TEST_EXPECT_NO_ERR(proc.wait());
-		HighRezTimer::sleep(1.0);
+		createBashScript(R"(
+echo Hello from script
+exit 6
+)");
 
-		HeapAllocator<U8> alloc(allocAligned, nullptr);
-		StringAuto stdOut(alloc);
+		Process proc;
+		ANKI_TEST_EXPECT_NO_ERR(proc.start("bash", Array<CString, 1>{{"process_test.sh"}}, {}));
+		ProcessStatus status;
+		I32 exitCode;
+		ANKI_TEST_EXPECT_NO_ERR(proc.wait(-1.0, &status, &exitCode));
+
+		ANKI_TEST_EXPECT_EQ(status, ProcessStatus::NOT_RUNNING);
+		ANKI_TEST_EXPECT_EQ(exitCode, 6);
+
+		// Get stuff again, don't wait this time
+		exitCode = 0;
+		ANKI_TEST_EXPECT_NO_ERR(proc.wait(0.0, &status, &exitCode));
+		ANKI_TEST_EXPECT_EQ(status, ProcessStatus::NOT_RUNNING);
+		ANKI_TEST_EXPECT_EQ(exitCode, 6);
+
+		StringAuto stdOut(HeapAllocator<U8>(allocAligned, nullptr));
 		ANKI_TEST_EXPECT_NO_ERR(proc.readFromStdout(stdOut));
-		ANKI_TEST_LOGI("%s", stdOut.cstr());
+		ANKI_TEST_EXPECT_EQ(stdOut, "Hello from script\n");
 	}
 
 	// Stderr and stdOut
 	if(1)
 	{
-		File file;
-		ANKI_TEST_EXPECT_NO_ERR(file.open("process_test.sh", FileOpenFlag::WRITE));
-		ANKI_TEST_EXPECT_NO_ERR(file.writeText(R"(#!/bin/bash
+		createBashScript(R"(
 x=1
 while [ $x -le 10 ]
 do
@@ -38,17 +63,19 @@ do
 	sleep 1
 	x=$(( $x + 1 ))
 done
-)"));
-		file.close();
+)");
 
 		Process proc;
 		ANKI_TEST_EXPECT_NO_ERR(proc.start("bash", Array<CString, 1>{{"process_test.sh"}}, {}));
 		ProcessStatus status;
 
+		ANKI_TEST_EXPECT_NO_ERR(proc.getStatus(status));
+		ANKI_TEST_EXPECT_EQ(status, ProcessStatus::RUNNING);
+
 		while(true)
 		{
 			ANKI_TEST_EXPECT_NO_ERR(proc.getStatus(status));
-			if(status == ProcessStatus::NORMAL_EXIT)
+			if(status == ProcessStatus::NOT_RUNNING)
 			{
 				break;
 			}
@@ -71,4 +98,27 @@ done
 
 		ANKI_TEST_EXPECT_NO_ERR(proc.wait(0.0, &status));
 	}
+
+	// Read after complete wait & env
+	if(1)
+	{
+		createBashScript(R"(
+echo $ENV_VAR
+sleep 1
+)");
+
+		Process proc;
+		ANKI_TEST_EXPECT_NO_ERR(
+			proc.start("bash", Array<CString, 1>{{"process_test.sh"}}, Array<CString, 1>{{"ENV_VAR=Lala"}}));
+
+		ANKI_TEST_EXPECT_NO_ERR(proc.wait());
+
+		HighRezTimer::sleep(0.5_sec); // Wait a bit more for good measure
+
+		StringAuto stdOut(HeapAllocator<U8>(allocAligned, nullptr));
+		ANKI_TEST_EXPECT_NO_ERR(proc.readFromStdout(stdOut));
+		ANKI_TEST_EXPECT_EQ(stdOut, "Lala\n");
+	}
+
+	ANKI_TEST_EXPECT_NO_ERR(removeFile("process_test.sh"));
 }

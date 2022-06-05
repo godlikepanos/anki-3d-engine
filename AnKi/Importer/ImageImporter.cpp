@@ -403,9 +403,9 @@ static void linearToSRgbBatch(WeakArray<TVec> pixels, TFunc func)
 		}
 		else
 		{
-			pixel.x() = p.x();
-			pixel.y() = p.y();
-			pixel.z() = p.z();
+			pixel.x() = S(p.x());
+			pixel.y() = S(p.y());
+			pixel.z() = S(p.z());
 		}
 	}
 }
@@ -588,8 +588,9 @@ static void generateSurfaceMipmap(ConstWeakArray<U8, PtrSize> inBuffer, U32 inWi
 }
 
 static ANKI_USE_RESULT Error compressS3tc(GenericMemoryPoolAllocator<U8> alloc, CString tempDirectory,
-										  CString compressonatorPath, ConstWeakArray<U8, PtrSize> inPixels, U32 inWidth,
-										  U32 inHeight, U32 channelCount, Bool hdr, WeakArray<U8, PtrSize> outPixels)
+										  CString compressonatorFilename, ConstWeakArray<U8, PtrSize> inPixels,
+										  U32 inWidth, U32 inHeight, U32 channelCount, Bool hdr,
+										  WeakArray<U8, PtrSize> outPixels)
 {
 	ANKI_ASSERT(inPixels.getSizeInBytes()
 				== PtrSize(inWidth) * inHeight * channelCount * ((hdr) ? sizeof(F32) : sizeof(U8)));
@@ -635,15 +636,13 @@ static ANKI_USE_RESULT Error compressS3tc(GenericMemoryPoolAllocator<U8> alloc, 
 
 	ANKI_IMPORTER_LOGV("Will invoke process: compressonatorcli %s %s %s %s %s", args[0].cstr(), args[1].cstr(),
 					   args[2].cstr(), args[3].cstr(), args[4].cstr());
-	ANKI_CHECK(proc.start("compressonatorcli", args,
-						  (compressonatorPath.isEmpty()) ? ConstWeakArray<CString>()
-														 : Array<CString, 2>{{"PATH", compressonatorPath}}));
+	ANKI_CHECK(proc.start(compressonatorFilename, args));
 	CleanupFile ddsCleanup(alloc, ddsFilename);
 	ProcessStatus status;
 	I32 exitCode;
-	ANKI_CHECK(proc.wait(60.0, &status, &exitCode));
+	ANKI_CHECK(proc.wait(60.0_sec, &status, &exitCode));
 
-	if(status != ProcessStatus::NORMAL_EXIT || exitCode != 0)
+	if(!(status == ProcessStatus::NOT_RUNNING && exitCode == 0))
 	{
 		StringAuto errStr(alloc);
 		if(exitCode != 0)
@@ -702,7 +701,7 @@ static ANKI_USE_RESULT Error compressS3tc(GenericMemoryPoolAllocator<U8> alloc, 
 }
 
 static ANKI_USE_RESULT Error compressAstc(GenericMemoryPoolAllocator<U8> alloc, CString tempDirectory,
-										  CString astcencPath, ConstWeakArray<U8, PtrSize> inPixels, U32 inWidth,
+										  CString astcencFilename, ConstWeakArray<U8, PtrSize> inPixels, U32 inWidth,
 										  U32 inHeight, U32 inChannelCount, UVec2 blockSize, Bool hdr,
 										  WeakArray<U8, PtrSize> outPixels)
 {
@@ -753,16 +752,14 @@ static ANKI_USE_RESULT Error compressAstc(GenericMemoryPoolAllocator<U8> alloc, 
 
 	ANKI_IMPORTER_LOGV("Will invoke process: astcenc-avx2 %s %s %s %s %s", args[0].cstr(), args[1].cstr(),
 					   args[2].cstr(), args[3].cstr(), args[4].cstr());
-	ANKI_CHECK(
-		proc.start("astcenc-avx2", args,
-				   (astcencPath.isEmpty()) ? ConstWeakArray<CString>() : Array<CString, 2>{{"PATH", astcencPath}}));
+	ANKI_CHECK(proc.start(astcencFilename, args));
 
 	CleanupFile astcCleanup(alloc, astcFilename);
 	ProcessStatus status;
 	I32 exitCode;
-	ANKI_CHECK(proc.wait(60.0, &status, &exitCode));
+	ANKI_CHECK(proc.wait(60.0_sec, &status, &exitCode));
 
-	if(status != ProcessStatus::NORMAL_EXIT || exitCode != 0)
+	if(!(status == ProcessStatus::NOT_RUNNING && exitCode == 0))
 	{
 		StringAuto errStr(alloc);
 		if(exitCode != 0)
@@ -1096,7 +1093,7 @@ static ANKI_USE_RESULT Error importImageInternal(const ImageImporterConfig& conf
 
 					surface.m_s3tcPixels.create(s3tcImageSize);
 
-					ANKI_CHECK(compressS3tc(alloc, config.m_tempDirectory, config.m_compressonatorPath,
+					ANKI_CHECK(compressS3tc(alloc, config.m_tempDirectory, config.m_compressonatorFilename,
 											ConstWeakArray<U8, PtrSize>(surface.m_pixels), width, height,
 											ctx.m_channelCount, ctx.m_hdr,
 											WeakArray<U8, PtrSize>(surface.m_s3tcPixels)));
@@ -1126,7 +1123,7 @@ static ANKI_USE_RESULT Error importImageInternal(const ImageImporterConfig& conf
 
 					surface.m_astcPixels.create(astcImageSize);
 
-					ANKI_CHECK(compressAstc(alloc, config.m_tempDirectory, config.m_astcencPath,
+					ANKI_CHECK(compressAstc(alloc, config.m_tempDirectory, config.m_astcencFilename,
 											ConstWeakArray<U8, PtrSize>(surface.m_pixels), width, height,
 											ctx.m_channelCount, config.m_astcBlockSize, ctx.m_hdr,
 											WeakArray<U8, PtrSize>(surface.m_astcPixels)));

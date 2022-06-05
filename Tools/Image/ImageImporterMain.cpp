@@ -8,8 +8,21 @@
 
 using namespace anki;
 
-static const char* USAGE = R"(Usage: %s in_files out_file [options]
+namespace {
+
+class Cleanup
+{
+public:
+	HeapAllocator<U8> m_alloc{allocAligned, nullptr};
+	DynamicArrayAuto<CString> m_inputFilenames{m_alloc};
+	StringAuto m_outFilename{m_alloc};
+};
+
+} // namespace
+
+static const char* USAGE = R"(Usage: %s [options] in_files
 Options:
+-o <filename>          : Output filename
 -t <type>              : Image type. One of: 2D, 3D, Cube, 2DArray
 -no-alpha              : If the image has alpha don't store it. By default it stores it
 -store-s3tc <0|1>      : Store S3TC images. Default is 1
@@ -23,22 +36,35 @@ Options:
 -flip-image <0|1>      : Flip the image. Default is 1
 )";
 
-static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& config,
-								  DynamicArrayAuto<StringAuto>& filenames, DynamicArrayAuto<CString>& cfilenames)
+static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& config, Cleanup& cleanup)
 {
 	config.m_compressions = ImageBinaryDataCompression::S3TC | ImageBinaryDataCompression::ASTC;
 	config.m_noAlpha = false;
 	config.m_astcBlockSize = UVec2(8u);
 
 	// Parse config
-	if(argc < 3)
+	if(argc < 2)
 	{
+		// Need at least 1 input
 		return Error::USER_DATA;
 	}
 
-	for(I i = 1; i < argc; i++)
+	I i;
+	for(i = 1; i < argc; i++)
 	{
-		if(CString(argv[i]) == "-t")
+		CString arg = argv[i];
+
+		if(arg == "-o")
+		{
+			++i;
+			if(i >= argc)
+			{
+				return Error::USER_DATA;
+			}
+
+			cleanup.m_outFilename = argv[i];
+		}
+		else if(arg == "-t")
 		{
 			++i;
 			if(i >= argc)
@@ -200,23 +226,24 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 		}
 		else
 		{
-			filenames.emplaceBack(filenames.getAllocator(), argv[i]);
+			// Probably input, break
+			break;
 		}
 	}
 
-	if(filenames.getSize() < 2)
+	// Inputs
+	for(; i < argc; ++i)
+	{
+		cleanup.m_inputFilenames.emplaceBack(argv[i]);
+	}
+
+	if(cleanup.m_outFilename.getLength() == 0 || cleanup.m_inputFilenames.getSize() == 0)
 	{
 		return Error::USER_DATA;
 	}
 
-	cfilenames.create(filenames.getSize());
-	for(U32 i = 0; i < filenames.getSize(); ++i)
-	{
-		cfilenames[i] = filenames[i];
-	}
-
-	config.m_inputFilenames = ConstWeakArray<CString>(&cfilenames[0], cfilenames.getSize() - 1);
-	config.m_outFilename = cfilenames.getBack();
+	config.m_inputFilenames = ConstWeakArray<CString>(cleanup.m_inputFilenames);
+	config.m_outFilename = cleanup.m_outFilename;
 
 	return Error::NONE;
 }
@@ -227,9 +254,8 @@ int main(int argc, char** argv)
 
 	ImageImporterConfig config;
 	config.m_allocator = alloc;
-	DynamicArrayAuto<StringAuto> filenames(alloc);
-	DynamicArrayAuto<CString> cfilenames(alloc);
-	if(parseCommandLineArgs(argc, argv, config, filenames, cfilenames))
+	Cleanup cleanup;
+	if(parseCommandLineArgs(argc, argv, config, cleanup))
 	{
 		ANKI_IMPORTER_LOGE(USAGE, argv[0]);
 		return 1;
@@ -243,15 +269,8 @@ int main(int argc, char** argv)
 	}
 	config.m_tempDirectory = tmp;
 
-	StringAuto p(alloc);
-	getParentFilepath(argv[0], p);
-	StringAuto compressonatorPath(alloc);
-	compressonatorPath.sprintf("%s/../../ThirdParty/Bin/Compressonator:%s", p.cstr(), getenv("PATH"));
-	config.m_compressonatorPath = compressonatorPath;
-
-	StringAuto astcencPath(alloc);
-	astcencPath.sprintf("%s/../../ThirdParty/Bin:%s", p.cstr(), getenv("PATH"));
-	config.m_astcencPath = astcencPath;
+	config.m_compressonatorFilename = ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Compressonator/compressonatorcli";
+	config.m_astcencFilename = ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/astcenc-avx2";
 
 	ANKI_IMPORTER_LOGI("Image importing started: %s", config.m_outFilename.cstr());
 

@@ -275,6 +275,13 @@ message("++ Configuring glslang")
 add_subdirectory(ThirdParty/Glslang)
 message("++ End configuring glslang")
 
+if(LINUX OR WINDOWS)
+	message("++ Configuring reproc")
+	set(REPROC++ OFF)
+	add_subdirectory(ThirdParty/Reproc)
+	message("++ End configuring reproc")
+endif()
+
 foreach(TMP ${ANKI_EXTERN_SUB_DIRS})
 	add_subdirectory(ThirdParty/${TMP})
 endforeach()

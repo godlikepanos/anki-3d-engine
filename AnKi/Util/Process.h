@@ -9,6 +9,9 @@
 #include <AnKi/Util/String.h>
 #include <AnKi/Util/WeakArray.h>
 
+// Forward
+struct reproc_t;
+
 namespace anki {
 
 /// @addtogroup util_system
@@ -18,9 +21,7 @@ namespace anki {
 enum class ProcessStatus : U8
 {
 	RUNNING,
-	NOT_RUNNING,
-	NORMAL_EXIT,
-	CRASH_EXIT
+	NOT_RUNNING
 };
 
 /// @memberof Process
@@ -46,19 +47,19 @@ public:
 	/// @param executable The executable to start.
 	/// @param arguments The command line arguments.
 	/// @param environment The environment variables.
-	ANKI_USE_RESULT Error start(CString executable, ConstWeakArray<CString> arguments,
-								ConstWeakArray<CString> environment);
+	ANKI_USE_RESULT Error start(CString executable, ConstWeakArray<CString> arguments = {},
+								ConstWeakArray<CString> environment = {});
 
 	/// Wait for the process to finish.
-	/// @param timeout The time to wait. If 0.0 wait forever.
+	/// @param timeout The time to wait. If it's negative wait forever.
 	/// @param[out] status The exit status
 	/// @param[out] exitCode The exit code if the process has finished.
-	ANKI_USE_RESULT Error wait(Second timeout = 0.0, ProcessStatus* status = nullptr, I32* exitCode = nullptr);
+	ANKI_USE_RESULT Error wait(Second timeout = -1.0, ProcessStatus* status = nullptr, I32* exitCode = nullptr);
 
 	/// Get the status.
 	ANKI_USE_RESULT Error getStatus(ProcessStatus& status);
 
-	/// Kill the process.
+	/// Kill the process. Need to call wait after killing the process.
 	ANKI_USE_RESULT Error kill(ProcessKillSignal k);
 
 	/// Read from stdout.
@@ -67,27 +68,14 @@ public:
 	/// Read from stderr.
 	ANKI_USE_RESULT Error readFromStderr(StringAuto& text);
 
+	/// Cleanup a finished process. Call this if you want to start a new process again. Need to have waited before
+	/// calling destroy.
+	void destroy();
+
 private:
-#if ANKI_POSIX
-	static constexpr int DEFAULT_EXIT_CODE = -1;
+	reproc_t* m_handle = nullptr;
 
-	int m_pid = -1;
-	int m_exitCode = DEFAULT_EXIT_CODE;
-	ProcessStatus m_status = ProcessStatus::NOT_RUNNING;
-	Array<int, 2> m_stdoutPipe = {-1, -1};
-	Array<int, 2> m_stderrPipe = {-1, -1};
-
-	void destroyPipes();
-
-	ANKI_USE_RESULT Error createPipes();
-
-	ANKI_USE_RESULT Error readFromFd(int fd, StringAuto& text) const;
-
-	/// Update some members.
-	ANKI_USE_RESULT Error refresh(int waitpidOptions);
-#else
-	// TODO
-#endif
+	ANKI_USE_RESULT Error readCommon(I32 reprocStream, StringAuto& text);
 };
 /// @}
 

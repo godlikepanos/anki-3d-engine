@@ -15,14 +15,14 @@ set(sources
 	Tracer.cpp
 	Serializer.cpp
 	Xml.cpp
-	F16.cpp)
+	F16.cpp
+	Process.cpp)
 
 if(LINUX OR ANDROID OR MACOS)
 	set(sources ${sources}
 		HighRezTimerPosix.cpp
 		FilesystemPosix.cpp
-		ThreadPosix.cpp
-		ProcessPosix.cpp)
+		ThreadPosix.cpp)
 else()
 	set(sources ${sources}
 		HighRezTimerWindows.cpp
@@ -42,4 +42,10 @@ file(GLOB_RECURSE headers *.h)
 
 add_library(AnKiUtil ${sources} ${headers})
 target_compile_definitions(AnKiUtil PRIVATE -DANKI_SOURCE_FILE)
-target_link_libraries(AnKiUtil AnKiTinyXml2)
+
+set(libs AnKiTinyXml2)
+if(LINUX OR WINDOWS)
+	set(libs ${libs} reproc)
+endif()
+
+target_link_libraries(AnKiUtil ${libs})

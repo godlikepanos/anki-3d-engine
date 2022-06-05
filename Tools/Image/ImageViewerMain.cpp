@@ -29,7 +29,7 @@ public:
 																		 Array<U32, 1>{16}));
 
 		ANKI_CHECK_AND_IGNORE(getSceneGraph().getResourceManager().loadResource(
-			"ShaderBinaries/UiVisualizeImage.ankiprog", m_imageProgram));
+			"ShaderBinaries/UiVisualizeImage.ankiprogbin", m_imageProgram));
 	}
 
 	Error frameUpdate(Second prevUpdateTime, Second crntTime)

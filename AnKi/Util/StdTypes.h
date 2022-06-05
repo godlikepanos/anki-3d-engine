@@ -266,6 +266,11 @@ static constexpr unsigned long long int operator""_GB(unsigned long long int x)
 
 /// @name Time user literals
 /// @{
+static constexpr Second operator""_hour(long double x)
+{
+	return Second(x) * 60.0;
+}
+
 static constexpr Second operator""_sec(long double x)
 {
 	return Second(x);
