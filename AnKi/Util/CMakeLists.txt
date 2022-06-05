@@ -28,7 +28,6 @@ else()
 		HighRezTimerWindows.cpp
 		FilesystemWindows.cpp
 		ThreadWindows.cpp
-		ProcessWindows.cpp
 		Win32Minimal.cpp)
 endif()
 
