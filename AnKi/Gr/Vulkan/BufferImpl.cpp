@@ -15,6 +15,19 @@ BufferImpl::~BufferImpl()
 	BufferGarbage* garbage = getAllocator().newInstance<BufferGarbage>();
 	garbage->m_bufferHandle = m_handle;
 	garbage->m_memoryHandle = m_memHandle;
+
+	if(m_views.getSize())
+	{
+		garbage->m_viewHandles.create(getAllocator(), U32(m_views.getSize()));
+
+		U32 count = 0;
+		for(auto it : m_views)
+		{
+			const VkBufferView view = it;
+			garbage->m_viewHandles[count++] = view;
+		}
+	}
+
 	getGrManagerImpl().getFrameGarbageCollector().newBufferGarbage(garbage);
 
 #if ANKI_EXTRA_CHECKS
@@ -28,6 +41,8 @@ BufferImpl::~BufferImpl()
 		ANKI_VK_LOGW("Buffer needed invalidation but you never invalidated: %s", getName().cstr());
 	}
 #endif
+
+	m_views.destroy(getAllocator());
 }
 
 Error BufferImpl::init(const BufferInitInfo& inf)
