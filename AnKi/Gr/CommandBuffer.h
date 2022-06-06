@@ -279,8 +279,8 @@ public:
 	///              of the buffer.
 	/// @param fmt The format of the buffer.
 	/// @param arrayIdx The array index if the binding is an array.
-	void bindTextureBuffer(U32 set, U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize range, Format fmt,
-						   U32 arrayIdx = 0);
+	void bindReadOnlyTextureBuffer(U32 set, U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize range,
+								   Format fmt, U32 arrayIdx = 0);
 
 	/// Bind an acceleration structure.
 	/// @param set The set to bind to.

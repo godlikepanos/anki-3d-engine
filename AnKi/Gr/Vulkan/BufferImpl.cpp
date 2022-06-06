@@ -15,6 +15,19 @@ BufferImpl::~BufferImpl()
 	BufferGarbage* garbage = getAllocator().newInstance<BufferGarbage>();
 	garbage->m_bufferHandle = m_handle;
 	garbage->m_memoryHandle = m_memHandle;
+
+	if(m_views.getSize())
+	{
+		garbage->m_viewHandles.create(getAllocator(), U32(m_views.getSize()));
+
+		U32 count = 0;
+		for(auto it : m_views)
+		{
+			const VkBufferView view = it;
+			garbage->m_viewHandles[count++] = view;
+		}
+	}
+
 	getGrManagerImpl().getFrameGarbageCollector().newBufferGarbage(garbage);
 
 #if ANKI_EXTRA_CHECKS
@@ -28,6 +41,8 @@ BufferImpl::~BufferImpl()
 		ANKI_VK_LOGW("Buffer needed invalidation but you never invalidated: %s", getName().cstr());
 	}
 #endif
+
+	m_views.destroy(getAllocator());
 }
 
 Error BufferImpl::init(const BufferInitInfo& inf)
@@ -360,6 +375,82 @@ void BufferImpl::computeBarrierInfo(BufferUsageBit before, BufferUsageBit after,
 	dstStages = computePplineStage(after);
 	srcAccesses = computeAccessMask(before);
 	dstAccesses = computeAccessMask(after);
+}
+
+VkBufferView BufferImpl::getOrCreateBufferView(Format fmt, PtrSize offset, PtrSize range) const
+{
+	if(range == MAX_PTR_SIZE)
+	{
+		ANKI_ASSERT(m_size >= offset);
+		range = m_size - offset;
+	}
+
+	// Checks
+	ANKI_ASSERT(!!(m_usage & BufferUsageBit::ALL_TEXTURE));
+	ANKI_ASSERT(offset + range <= m_size);
+
+	ANKI_ASSERT(isAligned(getGrManagerImpl().getDeviceCapabilities().m_textureBufferBindOffsetAlignment,
+						  m_memHandle.m_offset + offset)
+				&& "Offset not aligned");
+
+	ANKI_ASSERT((range % getFormatInfo(fmt).m_texelSize) == 0
+				&& "Range doesn't align with the number of texel elements");
+
+	const PtrSize elementCount = range / getFormatInfo(fmt).m_texelSize;
+	(void)elementCount;
+	ANKI_ASSERT(elementCount <= getGrManagerImpl().getPhysicalDeviceProperties().limits.maxTexelBufferElements);
+
+	// Hash
+	ANKI_BEGIN_PACKED_STRUCT
+	class HashData
+	{
+	public:
+		PtrSize m_offset;
+		PtrSize m_range;
+		Format m_fmt;
+	} toHash;
+	ANKI_END_PACKED_STRUCT
+
+	toHash.m_fmt = fmt;
+	toHash.m_offset = offset;
+	toHash.m_range = range;
+
+	const U64 hash = computeHash(&toHash, sizeof(toHash));
+
+	// Check if exists
+	{
+		RLockGuard<RWMutex> lock(m_viewsMtx);
+
+		auto it = m_views.find(hash);
+		if(it != m_views.getEnd())
+		{
+			return *it;
+		}
+	}
+
+	WLockGuard<RWMutex> lock(m_viewsMtx);
+
+	// Check again
+	auto it = m_views.find(hash);
+	if(it != m_views.getEnd())
+	{
+		return *it;
+	}
+
+	// Doesn't exist, need to create it
+	VkBufferViewCreateInfo viewCreateInfo = {};
+	viewCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_VIEW_CREATE_INFO;
+	viewCreateInfo.buffer = m_handle;
+	viewCreateInfo.format = convertFormat(fmt);
+	viewCreateInfo.offset = offset;
+	viewCreateInfo.range = range;
+
+	VkBufferView view;
+	ANKI_VK_CHECKF(vkCreateBufferView(getDevice(), &viewCreateInfo, nullptr, &view));
+
+	m_views.emplace(getAllocator(), hash, view);
+
+	return view;
 }
 
 } // end namespace anki

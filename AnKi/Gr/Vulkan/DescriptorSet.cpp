@@ -525,6 +525,7 @@ void DSThreadAllocator::writeSet(const Array<AnyBindingExtended, MAX_BINDINGS_PE
 	DynamicArrayAuto<VkDescriptorImageInfo> texInfos(tmpAlloc);
 	DynamicArrayAuto<VkDescriptorBufferInfo> buffInfos(tmpAlloc);
 	DynamicArrayAuto<VkWriteDescriptorSetAccelerationStructureKHR> asInfos(tmpAlloc);
+	DynamicArrayAuto<VkBufferView> bufferViews(tmpAlloc);
 
 	// First pass: Populate the VkDescriptorImageInfo and VkDescriptorBufferInfo
 	for(U bindingIdx = m_layoutEntry->m_minBinding; bindingIdx <= m_layoutEntry->m_maxBinding; ++bindingIdx)
@@ -572,6 +573,13 @@ void DSThreadAllocator::writeSet(const Array<AnyBindingExtended, MAX_BINDINGS_PE
 					info.range = (b.m_buff.m_range == MAX_PTR_SIZE) ? VK_WHOLE_SIZE : b.m_buff.m_range;
 					break;
 				}
+				case DescriptorType::READ_TEXTURE_BUFFER:
+				case DescriptorType::READ_WRITE_TEXTURE_BUFFER:
+				{
+					VkBufferView& view = *bufferViews.emplaceBack();
+					view = b.m_textureBuffer.m_buffView;
+					break;
+				}
 				case DescriptorType::IMAGE:
 				{
 					VkDescriptorImageInfo& info = *texInfos.emplaceBack();
@@ -600,8 +608,9 @@ void DSThreadAllocator::writeSet(const Array<AnyBindingExtended, MAX_BINDINGS_PE
 	U32 texCounter = 0;
 	U32 buffCounter = 0;
 	U32 asCounter = 0;
+	U32 buffViewsCounter = 0;
 
-	VkWriteDescriptorSet writeTemplate{};
+	VkWriteDescriptorSet writeTemplate = {};
 	writeTemplate.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	writeTemplate.pNext = nullptr;
 	writeTemplate.dstSet = set.m_handle;
@@ -632,6 +641,10 @@ void DSThreadAllocator::writeSet(const Array<AnyBindingExtended, MAX_BINDINGS_PE
 				case DescriptorType::UNIFORM_BUFFER:
 				case DescriptorType::STORAGE_BUFFER:
 					writeInfo.pBufferInfo = &buffInfos[buffCounter++];
+					break;
+				case DescriptorType::READ_TEXTURE_BUFFER:
+				case DescriptorType::READ_WRITE_TEXTURE_BUFFER:
+					writeInfo.pTexelBufferView = &bufferViews[buffViewsCounter++];
 					break;
 				case DescriptorType::ACCELERATION_STRUCTURE:
 					writeInfo.pNext = &asInfos[asCounter++];
@@ -884,6 +897,16 @@ void DescriptorSetState::flush(U64& hash, Array<PtrSize, MAX_BINDINGS_PER_DESCRI
 						toHash[toHashCount++] = anyBinding.m_buff.m_range;
 						dynamicOffsets[dynamicOffsetCount++] = anyBinding.m_buff.m_offset;
 						dynamicOffsetsDirty = dynamicOffsetsDirty || crntBindingDirty;
+						break;
+					case DescriptorType::READ_TEXTURE_BUFFER:
+						ANKI_ASSERT(anyBinding.m_type == DescriptorType::READ_TEXTURE_BUFFER
+									&& "Have bound the wrong type");
+						toHash[toHashCount++] = anyBinding.m_uuids[1];
+						break;
+					case DescriptorType::READ_WRITE_TEXTURE_BUFFER:
+						ANKI_ASSERT(anyBinding.m_type == DescriptorType::READ_WRITE_TEXTURE_BUFFER
+									&& "Have bound the wrong type");
+						toHash[toHashCount++] = anyBinding.m_uuids[1];
 						break;
 					case DescriptorType::IMAGE:
 						ANKI_ASSERT(anyBinding.m_type == DescriptorType::IMAGE && "Have bound the wrong type");

@@ -73,6 +73,12 @@ void FrameGarbageCollector::collectGarbage()
 		{
 			BufferGarbage* bufferGarbage = frame.m_bufferGarbage.popBack();
 
+			for(VkBufferView view : bufferGarbage->m_viewHandles)
+			{
+				vkDestroyBufferView(dev, view, nullptr);
+			}
+			bufferGarbage->m_viewHandles.destroy(alloc);
+
 			if(bufferGarbage->m_bufferHandle)
 			{
 				vkDestroyBuffer(dev, bufferGarbage->m_bufferHandle, nullptr);

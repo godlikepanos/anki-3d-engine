@@ -31,6 +31,7 @@ class BufferGarbage : public IntrusiveListEnabled<BufferGarbage>
 {
 public:
 	VkBuffer m_bufferHandle = VK_NULL_HANDLE;
+	DynamicArray<VkBufferView> m_viewHandles;
 	GpuMemoryHandle m_memoryHandle;
 };
 
