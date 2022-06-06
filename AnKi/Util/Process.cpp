@@ -5,7 +5,9 @@
 
 #include <AnKi/Util/Process.h>
 #include <AnKi/Util/Array.h>
-#include <ThirdParty/Reproc/reproc/include/reproc/reproc.h>
+#if !ANKI_OS_ANDROID
+#	include <ThirdParty/Reproc/reproc/include/reproc/reproc.h>
+#endif
 
 namespace anki {
 
@@ -16,6 +18,7 @@ Process::~Process()
 
 void Process::destroy()
 {
+#if !ANKI_OS_ANDROID
 	if(m_handle)
 	{
 		ProcessStatus status;
@@ -28,10 +31,12 @@ void Process::destroy()
 
 		m_handle = reproc_destroy(m_handle);
 	}
+#endif
 }
 
 Error Process::start(CString executable, ConstWeakArray<CString> arguments, ConstWeakArray<CString> environment)
 {
+#if !ANKI_OS_ANDROID
 	ANKI_ASSERT(m_handle == nullptr && "Already started");
 
 	// Set args and env
@@ -82,12 +87,14 @@ Error Process::start(CString executable, ConstWeakArray<CString> arguments, Cons
 		m_handle = reproc_destroy(m_handle);
 		return Error::USER_DATA;
 	}
+#endif
 
 	return Error::NONE;
 }
 
 Error Process::wait(Second timeout, ProcessStatus* pStatus, I32* pExitCode)
 {
+#if !ANKI_OS_ANDROID
 	ANKI_ASSERT(m_handle);
 	ProcessStatus status;
 	I32 exitCode;
@@ -134,18 +141,24 @@ Error Process::wait(Second timeout, ProcessStatus* pStatus, I32* pExitCode)
 	}
 
 	ANKI_ASSERT(!(status == ProcessStatus::RUNNING && timeout < 0.0));
+#endif
+
 	return Error::NONE;
 }
 
 Error Process::getStatus(ProcessStatus& status)
 {
+#if !ANKI_OS_ANDROID
 	ANKI_ASSERT(m_handle);
 	ANKI_CHECK(wait(0.0, &status, nullptr));
+#endif
+
 	return Error::NONE;
 }
 
 Error Process::kill(ProcessKillSignal k)
 {
+#if !ANKI_OS_ANDROID
 	ANKI_ASSERT(m_handle);
 
 	I32 ret;
@@ -167,20 +180,30 @@ Error Process::kill(ProcessKillSignal k)
 		ANKI_UTIL_LOGE("%s() failed: %s", funcName.cstr(), reproc_strerror(ret));
 		return Error::FUNCTION_FAILED;
 	}
+#endif
 
 	return Error::NONE;
 }
 
 Error Process::readFromStdout(StringAuto& text)
 {
+#if !ANKI_OS_ANDROID
 	return readCommon(REPROC_STREAM_OUT, text);
+#else
+	return Error::NONE;
+#endif
 }
 
 Error Process::readFromStderr(StringAuto& text)
 {
+#if !ANKI_OS_ANDROID
 	return readCommon(REPROC_STREAM_ERR, text);
+#else
+	return Error::NONE;
+#endif
 }
 
+#if !ANKI_OS_ANDROID
 Error Process::readCommon(I32 reprocStream, StringAuto& text)
 {
 	ANKI_ASSERT(m_handle);
@@ -212,5 +235,6 @@ Error Process::readCommon(I32 reprocStream, StringAuto& text)
 
 	return Error::NONE;
 }
+#endif
 
 } // end namespace anki
