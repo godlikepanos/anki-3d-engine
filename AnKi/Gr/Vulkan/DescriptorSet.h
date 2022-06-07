@@ -17,7 +17,6 @@
 namespace anki {
 
 // Forward
-class DSThreadAllocator;
 class DSLayoutCacheEntry;
 
 /// @addtogroup vulkan
@@ -405,7 +404,6 @@ private:
 class DescriptorSetFactory
 {
 	friend class DSLayoutCacheEntry;
-	friend class DSThreadAllocator;
 
 public:
 	DescriptorSetFactory() = default;
@@ -446,6 +444,12 @@ public:
 
 private:
 	class BindlessDescriptorSet;
+	class DSAllocator;
+	class ThreadLocal;
+
+	static thread_local ThreadLocal* m_threadLocal;
+	DynamicArray<ThreadLocal*> m_allThreadLocals;
+	Mutex m_allThreadLocalsMtx;
 
 	GrAllocator<U8> m_alloc;
 	VkDevice m_dev = VK_NULL_HANDLE;

@@ -13,6 +13,8 @@
 
 namespace anki {
 
+thread_local DescriptorSetFactory::ThreadLocal* DescriptorSetFactory::m_threadLocal = nullptr;
+
 /// Wraps a global descriptor set that is used to store bindless textures.
 class DescriptorSetFactory::BindlessDescriptorSet
 {
@@ -70,6 +72,103 @@ private:
 	U16 m_freeImgIndexCount ANKI_DEBUG_CODE(= MAX_U16);
 
 	void unbindCommon(U32 idx, DynamicArray<U16>& freeIndices, U16& freeIndexCount);
+};
+
+/// Descriptor set internal class.
+class DS : public IntrusiveListEnabled<DS>
+{
+public:
+	VkDescriptorSet m_handle = {};
+	U64 m_lastFrameUsed = MAX_U64;
+	U64 m_hash;
+};
+
+/// Per thread allocator.
+class DescriptorSetFactory::DSAllocator
+{
+public:
+	DSAllocator(const DSAllocator&) = delete; // Non-copyable
+
+	DSAllocator& operator=(const DSAllocator&) = delete; // Non-copyable
+
+	DSAllocator(const DSLayoutCacheEntry* layout)
+		: m_layoutEntry(layout)
+	{
+		ANKI_ASSERT(m_layoutEntry);
+	}
+
+	~DSAllocator();
+
+	ANKI_USE_RESULT Error init();
+	ANKI_USE_RESULT Error createNewPool();
+
+	ANKI_USE_RESULT Error getOrCreateSet(U64 hash,
+										 const Array<AnyBindingExtended, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings,
+										 StackAllocator<U8>& tmpAlloc, const DS*& out)
+	{
+		out = tryFindSet(hash);
+		if(out == nullptr)
+		{
+			ANKI_CHECK(newSet(hash, bindings, tmpAlloc, out));
+		}
+
+		return Error::NONE;
+	}
+
+private:
+	const DSLayoutCacheEntry* m_layoutEntry; ///< Know your father.
+
+	DynamicArray<VkDescriptorPool> m_pools;
+	U32 m_lastPoolDSCount = 0;
+	U32 m_lastPoolFreeDSCount = 0;
+
+	IntrusiveList<DS> m_list; ///< At the left of the list are the least used sets.
+	HashMap<U64, DS*> m_hashmap;
+
+	ANKI_USE_RESULT const DS* tryFindSet(U64 hash);
+	ANKI_USE_RESULT Error newSet(U64 hash, const Array<AnyBindingExtended, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings,
+								 StackAllocator<U8>& tmpAlloc, const DS*& out);
+	void writeSet(const Array<AnyBindingExtended, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings, const DS& set,
+				  StackAllocator<U8>& tmpAlloc);
+};
+
+class alignas(ANKI_CACHE_LINE_SIZE) DescriptorSetFactory::ThreadLocal
+{
+public:
+	DynamicArray<DSAllocator*> m_allocators;
+};
+
+/// Cache entry. It's built around a specific descriptor set layout.
+class DSLayoutCacheEntry
+{
+public:
+	DescriptorSetFactory* m_factory;
+
+	U64 m_hash = 0; ///< Layout hash.
+	VkDescriptorSetLayout m_layoutHandle = {};
+	BitSet<MAX_BINDINGS_PER_DESCRIPTOR_SET, U32> m_activeBindings = {false};
+	Array<U32, MAX_BINDINGS_PER_DESCRIPTOR_SET> m_bindingArraySize = {};
+	Array<DescriptorType, MAX_BINDINGS_PER_DESCRIPTOR_SET> m_bindingType = {};
+	U32 m_minBinding = MAX_U32;
+	U32 m_maxBinding = 0;
+	U32 m_index = 0; ///< Index in DescriptorSetFactory::m_caches
+
+	// Cache the create info
+	Array<VkDescriptorPoolSize, U(DescriptorType::COUNT)> m_poolSizesCreateInf = {};
+	VkDescriptorPoolCreateInfo m_poolCreateInf = {};
+
+	DSLayoutCacheEntry(DescriptorSetFactory* factory, U32 index)
+		: m_factory(factory)
+		, m_index(index)
+	{
+	}
+
+	~DSLayoutCacheEntry();
+
+	ANKI_USE_RESULT Error init(const DescriptorBinding* bindings, U32 bindingCount, U64 hash);
+
+	/// @note Thread-safe.
+	ANKI_USE_RESULT Error getOrCreateDSAllocator(DescriptorSetFactory::DSAllocator*& alloc);
 };
 
 DescriptorSetFactory::BindlessDescriptorSet::~BindlessDescriptorSet()
@@ -270,101 +369,7 @@ void DescriptorSetFactory::BindlessDescriptorSet::unbindCommon(U32 idx, DynamicA
 	}
 }
 
-/// Descriptor set internal class.
-class DS : public IntrusiveListEnabled<DS>
-{
-public:
-	VkDescriptorSet m_handle = {};
-	U64 m_lastFrameUsed = MAX_U64;
-	U64 m_hash;
-};
-
-/// Per thread allocator.
-class alignas(ANKI_CACHE_LINE_SIZE) DSThreadAllocator
-{
-public:
-	DSThreadAllocator(const DSThreadAllocator&) = delete; // Non-copyable
-
-	DSThreadAllocator& operator=(const DSThreadAllocator&) = delete; // Non-copyable
-
-	const DSLayoutCacheEntry* m_layoutEntry; ///< Know your father.
-
-	ThreadId m_tid;
-	DynamicArray<VkDescriptorPool> m_pools;
-	U32 m_lastPoolDSCount = 0;
-	U32 m_lastPoolFreeDSCount = 0;
-
-	IntrusiveList<DS> m_list; ///< At the left of the list are the least used sets.
-	HashMap<U64, DS*> m_hashmap;
-
-	DSThreadAllocator(const DSLayoutCacheEntry* layout, ThreadId tid)
-		: m_layoutEntry(layout)
-		, m_tid(tid)
-	{
-		ANKI_ASSERT(m_layoutEntry);
-	}
-
-	~DSThreadAllocator();
-
-	ANKI_USE_RESULT Error init();
-	ANKI_USE_RESULT Error createNewPool();
-
-	ANKI_USE_RESULT Error getOrCreateSet(U64 hash,
-										 const Array<AnyBindingExtended, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings,
-										 StackAllocator<U8>& tmpAlloc, const DS*& out)
-	{
-		out = tryFindSet(hash);
-		if(out == nullptr)
-		{
-			ANKI_CHECK(newSet(hash, bindings, tmpAlloc, out));
-		}
-
-		return Error::NONE;
-	}
-
-private:
-	ANKI_USE_RESULT const DS* tryFindSet(U64 hash);
-	ANKI_USE_RESULT Error newSet(U64 hash, const Array<AnyBindingExtended, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings,
-								 StackAllocator<U8>& tmpAlloc, const DS*& out);
-	void writeSet(const Array<AnyBindingExtended, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings, const DS& set,
-				  StackAllocator<U8>& tmpAlloc);
-};
-
-/// Cache entry. It's built around a specific descriptor set layout.
-class DSLayoutCacheEntry
-{
-public:
-	DescriptorSetFactory* m_factory;
-
-	U64 m_hash = 0; ///< Layout hash.
-	VkDescriptorSetLayout m_layoutHandle = {};
-	BitSet<MAX_BINDINGS_PER_DESCRIPTOR_SET, U32> m_activeBindings = {false};
-	Array<U32, MAX_BINDINGS_PER_DESCRIPTOR_SET> m_bindingArraySize = {};
-	Array<DescriptorType, MAX_BINDINGS_PER_DESCRIPTOR_SET> m_bindingType = {};
-	U32 m_minBinding = MAX_U32;
-	U32 m_maxBinding = 0;
-
-	// Cache the create info
-	Array<VkDescriptorPoolSize, U(DescriptorType::COUNT)> m_poolSizesCreateInf = {};
-	VkDescriptorPoolCreateInfo m_poolCreateInf = {};
-
-	DynamicArray<DSThreadAllocator*> m_threadAllocs;
-	RWMutex m_threadAllocsMtx;
-
-	DSLayoutCacheEntry(DescriptorSetFactory* factory)
-		: m_factory(factory)
-	{
-	}
-
-	~DSLayoutCacheEntry();
-
-	ANKI_USE_RESULT Error init(const DescriptorBinding* bindings, U32 bindingCount, U64 hash);
-
-	/// @note Thread-safe.
-	ANKI_USE_RESULT Error getOrCreateThreadAllocator(ThreadId tid, DSThreadAllocator*& alloc);
-};
-
-DSThreadAllocator::~DSThreadAllocator()
+DescriptorSetFactory::DSAllocator::~DSAllocator()
 {
 	auto alloc = m_layoutEntry->m_factory->m_alloc;
 
@@ -385,13 +390,13 @@ DSThreadAllocator::~DSThreadAllocator()
 	m_hashmap.destroy(alloc);
 }
 
-Error DSThreadAllocator::init()
+Error DescriptorSetFactory::DSAllocator::init()
 {
 	ANKI_CHECK(createNewPool());
 	return Error::NONE;
 }
 
-Error DSThreadAllocator::createNewPool()
+Error DescriptorSetFactory::DSAllocator::createNewPool()
 {
 	m_lastPoolDSCount = (m_lastPoolDSCount != 0) ? U32(F32(m_lastPoolDSCount) * DESCRIPTOR_POOL_SIZE_SCALE)
 												 : DESCRIPTOR_POOL_INITIAL_SIZE;
@@ -424,7 +429,7 @@ Error DSThreadAllocator::createNewPool()
 	return Error::NONE;
 }
 
-const DS* DSThreadAllocator::tryFindSet(U64 hash)
+const DS* DescriptorSetFactory::DSAllocator::tryFindSet(U64 hash)
 {
 	ANKI_ASSERT(hash > 0);
 
@@ -446,8 +451,9 @@ const DS* DSThreadAllocator::tryFindSet(U64 hash)
 	}
 }
 
-Error DSThreadAllocator::newSet(U64 hash, const Array<AnyBindingExtended, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings,
-								StackAllocator<U8>& tmpAlloc, const DS*& out_)
+Error DescriptorSetFactory::DSAllocator::newSet(
+	U64 hash, const Array<AnyBindingExtended, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings, StackAllocator<U8>& tmpAlloc,
+	const DS*& out_)
 {
 	DS* out = nullptr;
 
@@ -518,8 +524,9 @@ Error DSThreadAllocator::newSet(U64 hash, const Array<AnyBindingExtended, MAX_BI
 	return Error::NONE;
 }
 
-void DSThreadAllocator::writeSet(const Array<AnyBindingExtended, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings,
-								 const DS& set, StackAllocator<U8>& tmpAlloc)
+void DescriptorSetFactory::DSAllocator::writeSet(
+	const Array<AnyBindingExtended, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings, const DS& set,
+	StackAllocator<U8>& tmpAlloc)
 {
 	DynamicArrayAuto<VkWriteDescriptorSet> writeInfos(tmpAlloc);
 	DynamicArrayAuto<VkDescriptorImageInfo> texInfos(tmpAlloc);
@@ -665,13 +672,6 @@ DSLayoutCacheEntry::~DSLayoutCacheEntry()
 {
 	auto alloc = m_factory->m_alloc;
 
-	for(DSThreadAllocator* a : m_threadAllocs)
-	{
-		alloc.deleteInstance(a);
-	}
-
-	m_threadAllocs.destroy(alloc);
-
 	if(m_layoutHandle)
 	{
 		vkDestroyDescriptorSetLayout(m_factory->m_dev, m_layoutHandle, nullptr);
@@ -753,60 +753,41 @@ Error DSLayoutCacheEntry::init(const DescriptorBinding* bindings, U32 bindingCou
 	return Error::NONE;
 }
 
-Error DSLayoutCacheEntry::getOrCreateThreadAllocator(ThreadId tid, DSThreadAllocator*& alloc)
+Error DSLayoutCacheEntry::getOrCreateDSAllocator(DescriptorSetFactory::DSAllocator*& alloc)
 {
 	alloc = nullptr;
 
-	class Comp
+	// Get or create thread-local
+	DescriptorSetFactory::ThreadLocal* threadLocal = DescriptorSetFactory::m_threadLocal;
+	if(ANKI_UNLIKELY(threadLocal == nullptr))
 	{
-	public:
-		Bool operator()(const DSThreadAllocator* a, ThreadId tid) const
-		{
-			return a->m_tid < tid;
-		}
+		threadLocal = m_factory->m_alloc.newInstance<DescriptorSetFactory::ThreadLocal>();
+		DescriptorSetFactory::m_threadLocal = threadLocal;
 
-		Bool operator()(ThreadId tid, const DSThreadAllocator* a) const
-		{
-			return tid < a->m_tid;
-		}
-	};
-
-	// Find using binary search
-	{
-		RLockGuard<RWMutex> lock(m_threadAllocsMtx);
-		auto it = binarySearch(m_threadAllocs.getBegin(), m_threadAllocs.getEnd(), tid, Comp());
-		alloc = (it != m_threadAllocs.getEnd()) ? *it : nullptr;
+		LockGuard<Mutex> lock(m_factory->m_allThreadLocalsMtx);
+		m_factory->m_allThreadLocals.emplaceBack(m_factory->m_alloc, threadLocal);
 	}
 
-	if(alloc == nullptr)
+	// Get or create the allocator
+	if(ANKI_UNLIKELY(m_index >= threadLocal->m_allocators.getSize()))
 	{
-		// Need to create one
-
-		WLockGuard<RWMutex> lock(m_threadAllocsMtx);
-
-		// Search again
-		auto it = binarySearch(m_threadAllocs.getBegin(), m_threadAllocs.getEnd(), tid, Comp());
-		alloc = (it != m_threadAllocs.getEnd()) ? *it : nullptr;
-
-		// Create
-		if(alloc == nullptr)
-		{
-			alloc = m_factory->m_alloc.newInstance<DSThreadAllocator>(this, tid);
-			ANKI_CHECK(alloc->init());
-
-			m_threadAllocs.resize(m_factory->m_alloc, m_threadAllocs.getSize() + 1);
-			m_threadAllocs[m_threadAllocs.getSize() - 1] = alloc;
-
-			// Sort for fast find
-			std::sort(m_threadAllocs.getBegin(), m_threadAllocs.getEnd(),
-					  [](const DSThreadAllocator* a, const DSThreadAllocator* b) {
-						  return a->m_tid < b->m_tid;
-					  });
-		}
+		threadLocal->m_allocators.resize(m_factory->m_alloc, m_index + 1, nullptr);
+		alloc = m_factory->m_alloc.newInstance<DescriptorSetFactory::DSAllocator>(this);
+		ANKI_CHECK(alloc->init());
+		threadLocal->m_allocators[m_index] = alloc;
+	}
+	else if(ANKI_UNLIKELY(threadLocal->m_allocators[m_index] == nullptr))
+	{
+		alloc = m_factory->m_alloc.newInstance<DescriptorSetFactory::DSAllocator>(this);
+		ANKI_CHECK(alloc->init());
+		threadLocal->m_allocators[m_index] = alloc;
+	}
+	else
+	{
+		alloc = threadLocal->m_allocators[m_index];
 	}
 
 	ANKI_ASSERT(alloc);
-	ANKI_ASSERT(alloc->m_tid == tid);
 	return Error::NONE;
 }
 
@@ -973,6 +954,19 @@ Error DescriptorSetFactory::init(const GrAllocator<U8>& alloc, VkDevice dev, U32
 
 void DescriptorSetFactory::destroy()
 {
+	for(ThreadLocal* threadLocal : m_allThreadLocals)
+	{
+		for(DSAllocator* alloc : threadLocal->m_allocators)
+		{
+			m_alloc.deleteInstance(alloc);
+		}
+
+		threadLocal->m_allocators.destroy(m_alloc);
+		m_alloc.deleteInstance(threadLocal);
+	}
+
+	m_allThreadLocals.destroy(m_alloc);
+
 	for(DSLayoutCacheEntry* l : m_caches)
 	{
 		m_alloc.deleteInstance(l);
@@ -1058,11 +1052,10 @@ Error DescriptorSetFactory::newDescriptorSetLayout(const DescriptorSetLayoutInit
 
 		if(cache == nullptr)
 		{
-			cache = m_alloc.newInstance<DSLayoutCacheEntry>(this);
+			cache = m_alloc.newInstance<DSLayoutCacheEntry>(this, m_caches.getSize());
 			ANKI_CHECK(cache->init(bindings.getBegin(), bindingCount, hash));
 
-			m_caches.resize(m_alloc, m_caches.getSize() + 1);
-			m_caches[m_caches.getSize() - 1] = cache;
+			m_caches.emplaceBack(m_alloc, cache);
 		}
 
 		// Set the layout
@@ -1099,8 +1092,8 @@ Error DescriptorSetFactory::newDescriptorSet(ThreadId tid, StackAllocator<U8>& t
 			DSLayoutCacheEntry& entry = *layout.m_entry;
 
 			// Get thread allocator
-			DSThreadAllocator* alloc;
-			ANKI_CHECK(entry.getOrCreateThreadAllocator(tid, alloc));
+			DSAllocator* alloc;
+			ANKI_CHECK(entry.getOrCreateDSAllocator(alloc));
 
 			// Finally, allocate
 			const DS* s;
