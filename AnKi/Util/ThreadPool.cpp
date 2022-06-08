@@ -106,8 +106,7 @@ ThreadPool::~ThreadPool()
 
 	while(m_threadsCount-- != 0)
 	{
-		Error err = m_threads[m_threadsCount].m_thread.join();
-		(void)err;
+		[[maybe_unused]] const Error err = m_threads[m_threadsCount].m_thread.join();
 		m_threads[m_threadsCount].~ThreadPoolThread();
 	}
 

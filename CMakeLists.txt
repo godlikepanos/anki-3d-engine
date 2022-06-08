@@ -405,7 +405,7 @@ endif()
 # AnKi compiler flags (Mainly warnings)
 if(NOT MSVC)
 	add_definitions(-pedantic -Wno-unknown-warning-option -Wall -W -Wextra -Wstrict-aliasing -Wwrite-strings -Wunused
-		-Wno-unused-parameter -Wundef -Wno-ignored-attributes -Wno-implicit-fallthrough -Wunused-result
+		-Wundef -Wno-ignored-attributes -Wno-implicit-fallthrough -Wunused-result
 		-Wconversion -Wno-sign-conversion -Wno-keyword-macro -Wno-string-conversion -Wno-class-memaccess
 		-Wunused-variable)
 

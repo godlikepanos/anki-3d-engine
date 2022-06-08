@@ -1345,7 +1345,7 @@ public:
 
 	/// Calculate a perspective projection matrix. The z is mapped in [0, 1] range just like DX and Vulkan.
 	ANKI_ENABLE_METHOD(I == 4 && J == 4)
-	static ANKI_USE_RESULT TMat calculatePerspectiveProjectionMatrix(T fovX, T fovY, T near, T far)
+	[[nodiscard]] static TMat calculatePerspectiveProjectionMatrix(T fovX, T fovY, T near, T far)
 	{
 		ANKI_ASSERT(fovX > T(0) && fovY > T(0) && near > T(0) && far > T(0));
 		const T g = near - far;
@@ -1374,7 +1374,7 @@ public:
 
 	/// Calculate an orthographic projection matrix. The z is mapped in [0, 1] range just like DX and Vulkan.
 	ANKI_ENABLE_METHOD(I == 4 && J == 4)
-	static ANKI_USE_RESULT TMat calculateOrthographicProjectionMatrix(T right, T left, T top, T bottom, T near, T far)
+	[[nodiscard]] static TMat calculateOrthographicProjectionMatrix(T right, T left, T top, T bottom, T near, T far)
 	{
 		ANKI_ASSERT(right != T(0) && left != T(0) && top != T(0) && bottom != T(0) && near != T(0) && far != T(0));
 		const T difx = right - left;

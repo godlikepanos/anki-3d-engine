@@ -132,14 +132,13 @@ public:
 	ShaderProgramParser& operator=(const ShaderProgramParser&) = delete; // Non-copyable
 
 	/// Parse the file and its includes.
-	ANKI_USE_RESULT Error parse();
+	Error parse();
 
 	/// Returns true if the mutation should be skipped.
 	Bool skipMutation(ConstWeakArray<MutatorValue> mutation) const;
 
 	/// Get the source (and a few more things) given a list of mutators.
-	ANKI_USE_RESULT Error generateVariant(ConstWeakArray<MutatorValue> mutation,
-										  ShaderProgramParserVariant& variant) const;
+	Error generateVariant(ConstWeakArray<MutatorValue> mutation, ShaderProgramParserVariant& variant) const;
 
 	ConstWeakArray<ShaderProgramParserMutator> getMutators() const
 	{
@@ -222,28 +221,19 @@ private:
 	DynamicArrayAuto<GhostStruct> m_ghostStructs = {m_alloc};
 	Bool m_insideStruct = false;
 
-	ANKI_USE_RESULT Error parseFile(CString fname, U32 depth);
-	ANKI_USE_RESULT Error parseLine(CString line, CString fname, Bool& foundPragmaOnce, U32 depth);
-	ANKI_USE_RESULT Error parseInclude(const StringAuto* begin, const StringAuto* end, CString line, CString fname,
-									   U32 depth);
-	ANKI_USE_RESULT Error parsePragmaMutator(const StringAuto* begin, const StringAuto* end, CString line,
-											 CString fname);
-	ANKI_USE_RESULT Error parsePragmaStart(const StringAuto* begin, const StringAuto* end, CString line, CString fname);
-	ANKI_USE_RESULT Error parsePragmaEnd(const StringAuto* begin, const StringAuto* end, CString line, CString fname);
-	ANKI_USE_RESULT Error parsePragmaSkipMutation(const StringAuto* begin, const StringAuto* end, CString line,
-												  CString fname);
-	ANKI_USE_RESULT Error parsePragmaLibraryName(const StringAuto* begin, const StringAuto* end, CString line,
-												 CString fname);
-	ANKI_USE_RESULT Error parsePragmaRayType(const StringAuto* begin, const StringAuto* end, CString line,
-											 CString fname);
-	ANKI_USE_RESULT Error parsePragmaReflect(const StringAuto* begin, const StringAuto* end, CString line,
-											 CString fname);
-	ANKI_USE_RESULT Error parsePragmaStructBegin(const StringAuto* begin, const StringAuto* end, CString line,
-												 CString fname);
-	ANKI_USE_RESULT Error parsePragmaStructEnd(const StringAuto* begin, const StringAuto* end, CString line,
-											   CString fname);
-	ANKI_USE_RESULT Error parsePragmaMember(const StringAuto* begin, const StringAuto* end, CString line,
-											CString fname);
+	Error parseFile(CString fname, U32 depth);
+	Error parseLine(CString line, CString fname, Bool& foundPragmaOnce, U32 depth);
+	Error parseInclude(const StringAuto* begin, const StringAuto* end, CString line, CString fname, U32 depth);
+	Error parsePragmaMutator(const StringAuto* begin, const StringAuto* end, CString line, CString fname);
+	Error parsePragmaStart(const StringAuto* begin, const StringAuto* end, CString line, CString fname);
+	Error parsePragmaEnd(const StringAuto* begin, const StringAuto* end, CString line, CString fname);
+	Error parsePragmaSkipMutation(const StringAuto* begin, const StringAuto* end, CString line, CString fname);
+	Error parsePragmaLibraryName(const StringAuto* begin, const StringAuto* end, CString line, CString fname);
+	Error parsePragmaRayType(const StringAuto* begin, const StringAuto* end, CString line, CString fname);
+	Error parsePragmaReflect(const StringAuto* begin, const StringAuto* end, CString line, CString fname);
+	Error parsePragmaStructBegin(const StringAuto* begin, const StringAuto* end, CString line, CString fname);
+	Error parsePragmaStructEnd(const StringAuto* begin, const StringAuto* end, CString line, CString fname);
+	Error parsePragmaMember(const StringAuto* begin, const StringAuto* end, CString line, CString fname);
 
 	void tokenizeLine(CString line, DynamicArrayAuto<StringAuto>& tokens) const;
 
@@ -254,7 +244,7 @@ private:
 
 	static Bool mutatorHasValue(const ShaderProgramParserMutator& mutator, MutatorValue value);
 
-	ANKI_USE_RESULT Error checkNoActiveStruct() const
+	Error checkNoActiveStruct() const
 	{
 		if(m_insideStruct)
 		{
@@ -264,7 +254,7 @@ private:
 		return Error::NONE;
 	}
 
-	ANKI_USE_RESULT Error checkActiveStruct() const
+	Error checkActiveStruct() const
 	{
 		if(!m_insideStruct)
 		{

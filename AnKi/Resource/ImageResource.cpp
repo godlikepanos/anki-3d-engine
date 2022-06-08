@@ -40,7 +40,7 @@ public:
 	{
 	}
 
-	Error operator()(AsyncLoaderTaskContext& ctx) final
+	Error operator()([[maybe_unused]] AsyncLoaderTaskContext& ctx) final
 	{
 		return ImageResource::load(m_ctx);
 	}

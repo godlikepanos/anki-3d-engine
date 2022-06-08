@@ -267,9 +267,9 @@ public:
 		return true;
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
+	Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated) override
 	{
-		ANKI_ASSERT(&node == m_node);
+		ANKI_ASSERT(info.m_node == m_node);
 		updated = updateInternal();
 		return Error::NONE;
 	}

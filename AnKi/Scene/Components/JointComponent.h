@@ -37,7 +37,7 @@ public:
 	/// Create a hinge joint on the BodyComponent of the SceneNode.
 	void newHingeJoint(const Vec3& relPosFactor, const Vec3& axis, F32 brakingImpulse = MAX_F32);
 
-	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override;
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 
 private:
 	class JointNode;

@@ -24,15 +24,15 @@ public:
 	{
 	}
 
-	Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override
 	{
 		updated = false;
 
-		const MoveComponent& move = node.getComponentAt<MoveComponent>(0);
-		if(move.getTimestamp() == node.getGlobalTimestamp())
+		const MoveComponent& move = info.m_node->getComponentAt<MoveComponent>(0);
+		if(move.getTimestamp() == info.m_node->getGlobalTimestamp())
 		{
 			// Move updated
-			static_cast<LightNode&>(node).onMoved(move);
+			static_cast<LightNode&>(*info.m_node).onMoved(move);
 		}
 
 		return Error::NONE;
@@ -52,15 +52,15 @@ public:
 	{
 	}
 
-	Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override
 	{
 		updated = false;
 
-		LightComponent& light = node.getFirstComponentOfType<LightComponent>();
-		if(light.getTimestamp() == node.getGlobalTimestamp())
+		LightComponent& light = info.m_node->getFirstComponentOfType<LightComponent>();
+		if(light.getTimestamp() == info.m_node->getGlobalTimestamp())
 		{
 			// Shape updated
-			static_cast<LightNode&>(node).onLightShapeUpdated(light);
+			static_cast<LightNode&>(*info.m_node).onLightShapeUpdated(light);
 		}
 
 		return Error::NONE;
@@ -154,7 +154,7 @@ void PointLightNode::onLightShapeUpdated(LightComponent& light)
 	spatialc.setSphereWorldSpace(Sphere(light.getWorldTransform().getOrigin(), light.getRadius()));
 }
 
-Error PointLightNode::frameUpdate(Second prevUpdateTime, Second crntTime)
+Error PointLightNode::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime)
 {
 	// Lazily init
 	const LightComponent& lightc = getFirstComponentOfType<LightComponent>();
@@ -209,15 +209,15 @@ public:
 	{
 	}
 
-	Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override
 	{
 		updated = false;
 
-		FrustumComponent& frc = node.getFirstComponentOfType<FrustumComponent>();
-		if(frc.getTimestamp() == node.getGlobalTimestamp())
+		FrustumComponent& frc = info.m_node->getFirstComponentOfType<FrustumComponent>();
+		if(frc.getTimestamp() == info.m_node->getGlobalTimestamp())
 		{
 			// Shape updated
-			static_cast<SpotLightNode&>(node).onFrustumUpdated(frc);
+			static_cast<SpotLightNode&>(*info.m_node).onFrustumUpdated(frc);
 		}
 
 		return Error::NONE;
@@ -271,7 +271,7 @@ void SpotLightNode::onFrustumUpdated(FrustumComponent& frc)
 	sp.setConvexHullWorldSpace(frc.getPerspectiveBoundingShapeWorldSpace());
 }
 
-Error SpotLightNode::frameUpdate(Second prevUpdateTime, Second crntTime)
+Error SpotLightNode::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime)
 {
 	frameUpdateCommon();
 	return Error::NONE;
@@ -287,16 +287,17 @@ public:
 	{
 	}
 
-	Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override
 	{
-		const MoveComponent& move = node.getComponentAt<MoveComponent>(0);
-		if(move.getTimestamp() == node.getGlobalTimestamp())
+		updated = false;
+		const MoveComponent& move = info.m_node->getComponentAt<MoveComponent>(0);
+		if(move.getTimestamp() == info.m_node->getGlobalTimestamp())
 		{
 			// Move updated
-			LightComponent& lightc = node.getFirstComponentOfType<LightComponent>();
+			LightComponent& lightc = info.m_node->getFirstComponentOfType<LightComponent>();
 			lightc.setWorldTransform(move.getWorldTransform());
 
-			SpatialComponent& spatialc = node.getFirstComponentOfType<SpatialComponent>();
+			SpatialComponent& spatialc = info.m_node->getFirstComponentOfType<SpatialComponent>();
 			spatialc.setSpatialOrigin(move.getWorldTransform().getOrigin().xyz());
 		}
 

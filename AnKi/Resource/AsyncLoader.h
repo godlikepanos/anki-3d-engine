@@ -35,7 +35,7 @@ public:
 	{
 	}
 
-	virtual ANKI_USE_RESULT Error operator()(AsyncLoaderTaskContext& ctx) = 0;
+	virtual Error operator()(AsyncLoaderTaskContext& ctx) = 0;
 };
 
 /// Asynchronous resource loader.
@@ -98,7 +98,7 @@ private:
 	Atomic<U64> m_completedTaskCount = {0};
 
 	/// Thread callback
-	static ANKI_USE_RESULT Error threadCallback(ThreadCallbackInfo& info);
+	static Error threadCallback(ThreadCallbackInfo& info);
 
 	Error threadWorker();
 

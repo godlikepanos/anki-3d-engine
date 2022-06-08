@@ -23,10 +23,10 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error init(Second startTime, Second duration, SceneNode* light);
+	Error init(Second startTime, Second duration, SceneNode* light);
 
 	/// Implements Event::update
-	ANKI_USE_RESULT Error update(Second prevUpdateTime, Second crntTime) override;
+	Error update(Second prevUpdateTime, Second crntTime) override;
 
 	void setRadiusMultiplier(F32 v)
 	{

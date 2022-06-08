@@ -43,12 +43,12 @@ public:
 
 	ShaderProgramBinaryWrapper& operator=(const ShaderProgramBinaryWrapper&) = delete; // Non-copyable
 
-	ANKI_USE_RESULT Error serializeToFile(CString fname) const;
+	Error serializeToFile(CString fname) const;
 
-	ANKI_USE_RESULT Error deserializeFromFile(CString fname);
+	Error deserializeFromFile(CString fname);
 
 	template<typename TFile>
-	ANKI_USE_RESULT Error deserializeFromAnyFile(TFile& fname);
+	Error deserializeFromAnyFile(TFile& fname);
 
 	const ShaderProgramBinary& getBinary() const
 	{
@@ -83,12 +83,10 @@ Error ShaderProgramBinaryWrapper::deserializeFromAnyFile(TFile& file)
 }
 
 /// Takes an AnKi special shader program and spits a binary.
-ANKI_USE_RESULT Error compileShaderProgram(CString fname, ShaderProgramFilesystemInterface& fsystem,
-										   ShaderProgramPostParseInterface* postParseCallback,
-										   ShaderProgramAsyncTaskInterface* taskManager,
-										   GenericMemoryPoolAllocator<U8> tempAllocator,
-										   const ShaderCompilerOptions& compilerOptions,
-										   ShaderProgramBinaryWrapper& binary);
+Error compileShaderProgram(CString fname, ShaderProgramFilesystemInterface& fsystem,
+						   ShaderProgramPostParseInterface* postParseCallback,
+						   ShaderProgramAsyncTaskInterface* taskManager, GenericMemoryPoolAllocator<U8> tempAllocator,
+						   const ShaderCompilerOptions& compilerOptions, ShaderProgramBinaryWrapper& binary);
 /// @}
 
 } // end namespace anki

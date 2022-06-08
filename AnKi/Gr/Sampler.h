@@ -67,7 +67,7 @@ protected:
 
 private:
 	/// Allocate and initialize a new instance.
-	static ANKI_USE_RESULT Sampler* newInstance(GrManager* manager, const SamplerInitInfo& init);
+	[[nodiscard]] static Sampler* newInstance(GrManager* manager, const SamplerInitInfo& init);
 };
 /// @}
 

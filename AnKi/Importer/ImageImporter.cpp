@@ -158,7 +158,7 @@ public:
 
 } // namespace
 
-static ANKI_USE_RESULT Error checkConfig(const ImageImporterConfig& config)
+static Error checkConfig(const ImageImporterConfig& config)
 {
 #define ANKI_CFG_ASSERT(x, message) \
 	do \
@@ -212,7 +212,7 @@ static ANKI_USE_RESULT Error checkConfig(const ImageImporterConfig& config)
 	return Error::NONE;
 }
 
-static ANKI_USE_RESULT Error identifyImage(CString filename, U32& width, U32& height, U32& channelCount, Bool& hdr)
+static Error identifyImage(CString filename, U32& width, U32& height, U32& channelCount, Bool& hdr)
 {
 	I32 iwidth, iheight, ichannelCount;
 	const I ok = stbi_info(filename.cstr(), &iwidth, &iheight, &ichannelCount);
@@ -232,8 +232,8 @@ static ANKI_USE_RESULT Error identifyImage(CString filename, U32& width, U32& he
 	return Error::NONE;
 }
 
-static ANKI_USE_RESULT Error checkInputImages(const ImageImporterConfig& config, U32& width, U32& height,
-											  U32& channelCount, Bool& isHdr)
+static Error checkInputImages(const ImageImporterConfig& config, U32& width, U32& height, U32& channelCount,
+							  Bool& isHdr)
 {
 	width = 0;
 	height = 0;
@@ -271,8 +271,8 @@ static ANKI_USE_RESULT Error checkInputImages(const ImageImporterConfig& config,
 	return Error::NONE;
 }
 
-static ANKI_USE_RESULT Error resizeImage(CString inImageFilename, U32 outWidth, U32 outHeight, CString tempDirectory,
-										 GenericMemoryPoolAllocator<U8> alloc, StringAuto& tmpFilename)
+static Error resizeImage(CString inImageFilename, U32 outWidth, U32 outHeight, CString tempDirectory,
+						 GenericMemoryPoolAllocator<U8> alloc, StringAuto& tmpFilename)
 {
 	U32 inWidth, inHeight, channelCount;
 	Bool hdr;
@@ -410,7 +410,7 @@ static void linearToSRgbBatch(WeakArray<TVec> pixels, TFunc func)
 	}
 }
 
-static ANKI_USE_RESULT Error loadFirstMipmap(const ImageImporterConfig& config, ImageImporterContext& ctx)
+static Error loadFirstMipmap(const ImageImporterConfig& config, ImageImporterContext& ctx)
 {
 	GenericMemoryPoolAllocator<U8> alloc = ctx.getAllocator();
 
@@ -587,10 +587,9 @@ static void generateSurfaceMipmap(ConstWeakArray<U8, PtrSize> inBuffer, U32 inWi
 	}
 }
 
-static ANKI_USE_RESULT Error compressS3tc(GenericMemoryPoolAllocator<U8> alloc, CString tempDirectory,
-										  CString compressonatorFilename, ConstWeakArray<U8, PtrSize> inPixels,
-										  U32 inWidth, U32 inHeight, U32 channelCount, Bool hdr,
-										  WeakArray<U8, PtrSize> outPixels)
+static Error compressS3tc(GenericMemoryPoolAllocator<U8> alloc, CString tempDirectory, CString compressonatorFilename,
+						  ConstWeakArray<U8, PtrSize> inPixels, U32 inWidth, U32 inHeight, U32 channelCount, Bool hdr,
+						  WeakArray<U8, PtrSize> outPixels)
 {
 	ANKI_ASSERT(inPixels.getSizeInBytes()
 				== PtrSize(inWidth) * inHeight * channelCount * ((hdr) ? sizeof(F32) : sizeof(U8)));
@@ -700,13 +699,11 @@ static ANKI_USE_RESULT Error compressS3tc(GenericMemoryPoolAllocator<U8> alloc, 
 	return Error::NONE;
 }
 
-static ANKI_USE_RESULT Error compressAstc(GenericMemoryPoolAllocator<U8> alloc, CString tempDirectory,
-										  CString astcencFilename, ConstWeakArray<U8, PtrSize> inPixels, U32 inWidth,
-										  U32 inHeight, U32 inChannelCount, UVec2 blockSize, Bool hdr,
-										  WeakArray<U8, PtrSize> outPixels)
+static Error compressAstc(GenericMemoryPoolAllocator<U8> alloc, CString tempDirectory, CString astcencFilename,
+						  ConstWeakArray<U8, PtrSize> inPixels, U32 inWidth, U32 inHeight, U32 inChannelCount,
+						  UVec2 blockSize, Bool hdr, WeakArray<U8, PtrSize> outPixels)
 {
-	const PtrSize blockBytes = 16;
-	(void)blockBytes;
+	[[maybe_unused]] const PtrSize blockBytes = 16;
 	ANKI_ASSERT(inPixels.getSizeInBytes()
 				== PtrSize(inWidth) * inHeight * inChannelCount * ((hdr) ? sizeof(F32) : sizeof(U8)));
 	ANKI_ASSERT(inWidth > 0 && isPowerOfTwo(inWidth) && inHeight > 0 && isPowerOfTwo(inHeight));
@@ -816,7 +813,7 @@ static ANKI_USE_RESULT Error compressAstc(GenericMemoryPoolAllocator<U8> alloc, 
 	return Error::NONE;
 }
 
-static ANKI_USE_RESULT Error storeAnkiImage(const ImageImporterConfig& config, const ImageImporterContext& ctx)
+static Error storeAnkiImage(const ImageImporterConfig& config, const ImageImporterContext& ctx)
 {
 	ANKI_IMPORTER_LOGV("Storing to %s", config.m_outFilename.cstr());
 
@@ -909,7 +906,7 @@ static ANKI_USE_RESULT Error storeAnkiImage(const ImageImporterConfig& config, c
 	return Error::NONE;
 }
 
-static ANKI_USE_RESULT Error importImageInternal(const ImageImporterConfig& configOriginal)
+static Error importImageInternal(const ImageImporterConfig& configOriginal)
 {
 	GenericMemoryPoolAllocator<U8> alloc = configOriginal.m_allocator;
 	ImageImporterConfig config = configOriginal;

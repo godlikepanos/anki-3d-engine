@@ -27,7 +27,7 @@ public:
 
 	~IndirectDiffuse();
 
-	ANKI_USE_RESULT Error init();
+	Error init();
 
 	void populateRenderGraph(RenderingContext& ctx);
 
@@ -82,7 +82,7 @@ private:
 		Array<RenderTargetHandle, 2> m_mainRtHandles;
 	} m_runCtx;
 
-	ANKI_USE_RESULT Error initInternal();
+	Error initInternal();
 };
 /// @}
 

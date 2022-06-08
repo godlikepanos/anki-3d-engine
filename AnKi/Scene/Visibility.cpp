@@ -512,10 +512,10 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 					cascadeFrustumComponents[i].setEnabledVisibilityTests(
 						FrustumComponentVisibilityTestFlag::SHADOW_CASTERS);
 					Bool updated;
-					Error err = cascadeFrustumComponents[i].update(node, 0.0f, 1.0f, updated);
+					SceneComponentUpdateInfo scUpdateInfo(0.0, 1.0);
+					scUpdateInfo.m_node = &node;
+					[[maybe_unused]] const Error err = cascadeFrustumComponents[i].update(scUpdateInfo, updated);
 					ANKI_ASSERT(updated == true && !err);
-					(void)err;
-					(void)updated;
 				}
 
 				nextQueueFrustumComponents = cascadeFrustumComponents;

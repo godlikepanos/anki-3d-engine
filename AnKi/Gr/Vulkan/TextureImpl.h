@@ -35,10 +35,9 @@ public:
 
 	~MicroImageView()
 	{
-		for(U32 idx : m_bindlessIndices)
+		for([[maybe_unused]] U32 idx : m_bindlessIndices)
 		{
 			ANKI_ASSERT(idx == MAX_U32 && "Forgot to unbind the bindless");
-			(void)idx;
 		}
 		ANKI_ASSERT(m_handle == VK_NULL_HANDLE);
 	}
@@ -103,12 +102,12 @@ public:
 
 	~TextureImpl();
 
-	ANKI_USE_RESULT Error init(const TextureInitInfo& init)
+	Error init(const TextureInitInfo& init)
 	{
 		return initInternal(VK_NULL_HANDLE, init);
 	}
 
-	ANKI_USE_RESULT Error initExternal(VkImage image, const TextureInitInfo& init)
+	Error initExternal(VkImage image, const TextureInitInfo& init)
 	{
 		return initInternal(image, init);
 	}
@@ -143,7 +142,7 @@ public:
 		return layer;
 	}
 
-	U32 computeVkArrayLayer(const TextureVolumeInfo& vol) const
+	U32 computeVkArrayLayer([[maybe_unused]] const TextureVolumeInfo& vol) const
 	{
 		ANKI_ASSERT(m_texType == TextureType::_3D);
 		return 0;
@@ -207,16 +206,16 @@ private:
 	mutable SpinLock m_usedForMtx;
 #endif
 
-	ANKI_USE_RESULT static VkImageCreateFlags calcCreateFlags(const TextureInitInfo& init);
+	[[nodiscard]] static VkImageCreateFlags calcCreateFlags(const TextureInitInfo& init);
 
-	ANKI_USE_RESULT Bool imageSupported(const TextureInitInfo& init);
+	[[nodiscard]] Bool imageSupported(const TextureInitInfo& init);
 
-	ANKI_USE_RESULT Error initImage(const TextureInitInfo& init);
+	Error initImage(const TextureInitInfo& init);
 
 	/// Compute the new type of a texture view.
 	TextureType computeNewTexTypeOfSubresource(const TextureSubresourceInfo& subresource) const;
 
-	ANKI_USE_RESULT Error initInternal(VkImage externalImage, const TextureInitInfo& init);
+	Error initInternal(VkImage externalImage, const TextureInitInfo& init);
 
 	void computeBarrierInfo(TextureUsageBit usage, Bool src, U32 level, VkPipelineStageFlags& stages,
 							VkAccessFlags& accesses) const;

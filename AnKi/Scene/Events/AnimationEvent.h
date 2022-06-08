@@ -17,10 +17,10 @@ class AnimationEvent : public Event
 public:
 	AnimationEvent(EventManager* manager);
 
-	ANKI_USE_RESULT Error init(const AnimationResourcePtr& anim, SceneNode* movableSceneNode);
+	Error init(const AnimationResourcePtr& anim, SceneNode* movableSceneNode);
 
 	/// Implements Event::update
-	ANKI_USE_RESULT Error update(Second prevUpdateTime, Second crntTime) override;
+	Error update(Second prevUpdateTime, Second crntTime) override;
 
 private:
 	AnimationResourcePtr m_anim;

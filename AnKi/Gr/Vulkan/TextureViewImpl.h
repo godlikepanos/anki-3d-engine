@@ -25,7 +25,7 @@ public:
 
 	~TextureViewImpl();
 
-	ANKI_USE_RESULT Error init(const TextureViewInitInfo& inf);
+	Error init(const TextureViewInitInfo& inf);
 
 	VkImageSubresourceRange getVkImageSubresourceRange() const
 	{

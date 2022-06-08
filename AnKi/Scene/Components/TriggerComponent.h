@@ -26,7 +26,7 @@ public:
 
 	~TriggerComponent();
 
-	Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override;
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 
 	void setSphereVolumeRadius(F32 radius);
 

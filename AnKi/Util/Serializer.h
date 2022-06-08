@@ -87,7 +87,7 @@ public:
 	/// @param tmpAllocator A temp allocator for some memory needed.
 	/// @param file The file to populate.
 	template<typename T>
-	ANKI_USE_RESULT Error serialize(const T& x, GenericMemoryPoolAllocator<U8> tmpAllocator, File& file)
+	Error serialize(const T& x, GenericMemoryPoolAllocator<U8> tmpAllocator, File& file)
 	{
 		const Error err = serializeInternal(x, tmpAllocator, file);
 		if(err)
@@ -106,7 +106,7 @@ public:
 
 	/// Write an array of complex values. Can't call this directly.
 	template<typename T, ANKI_ENABLE(!_ANKI_SIMPLE_TYPE)>
-	void doArray(CString varName, PtrSize memberOffset, const T* arr, PtrSize size)
+	void doArray([[maybe_unused]] CString varName, PtrSize memberOffset, const T* arr, PtrSize size)
 	{
 		if(!m_err)
 		{
@@ -116,7 +116,8 @@ public:
 
 	/// Write an array of int or float types. Can't call this directly.
 	template<typename T, ANKI_ENABLE(_ANKI_SIMPLE_TYPE)>
-	void doArray(CString varName, PtrSize memberOffset, const T* arr, PtrSize size)
+	void doArray([[maybe_unused]] CString varName, [[maybe_unused]] PtrSize memberOffset, [[maybe_unused]] const T* arr,
+				 [[maybe_unused]] PtrSize size)
 	{
 		// Do nothing, it's already copied
 	}
@@ -130,7 +131,7 @@ public:
 
 	/// Write a dynamic array of complex types. Can't call this directly.
 	template<typename T, ANKI_ENABLE(!_ANKI_SIMPLE_TYPE)>
-	void doDynamicArray(CString varName, PtrSize memberOffset, const T* arr, PtrSize size)
+	void doDynamicArray([[maybe_unused]] CString varName, PtrSize memberOffset, const T* arr, PtrSize size)
 	{
 		if(!m_err)
 		{
@@ -140,7 +141,7 @@ public:
 
 	/// Write a dynamic array of int and float values. Can't call this directly.
 	template<typename T, ANKI_ENABLE(_ANKI_SIMPLE_TYPE)>
-	void doDynamicArray(CString varName, PtrSize memberOffset, const T* arr, PtrSize size)
+	void doDynamicArray([[maybe_unused]] CString varName, PtrSize memberOffset, const T* arr, PtrSize size)
 	{
 		if(!m_err)
 		{
@@ -165,15 +166,15 @@ private:
 	Error m_err = Error::NONE;
 
 	template<typename T>
-	ANKI_USE_RESULT Error doArrayComplexType(const T* arr, PtrSize size, PtrSize memberOffset);
+	Error doArrayComplexType(const T* arr, PtrSize size, PtrSize memberOffset);
 
 	template<typename T>
-	ANKI_USE_RESULT Error doDynamicArrayComplexType(const T* arr, PtrSize size, PtrSize memberOffset);
+	Error doDynamicArrayComplexType(const T* arr, PtrSize size, PtrSize memberOffset);
 
-	ANKI_USE_RESULT Error doDynamicArrayBasicType(const void* arr, PtrSize size, U32 alignment, PtrSize memberOffset);
+	Error doDynamicArrayBasicType(const void* arr, PtrSize size, U32 alignment, PtrSize memberOffset);
 
 	template<typename T>
-	ANKI_USE_RESULT Error serializeInternal(const T& x, GenericMemoryPoolAllocator<U8> tmpAllocator, File& file);
+	Error serializeInternal(const T& x, GenericMemoryPoolAllocator<U8> tmpAllocator, File& file);
 
 	void check()
 	{
@@ -204,32 +205,34 @@ public:
 	/// @param allocator The allocator to use to allocate the new structures.
 	/// @param file The file to read from.
 	template<typename T, typename TFile>
-	static ANKI_USE_RESULT Error deserialize(T*& x, GenericMemoryPoolAllocator<U8> allocator, TFile& file);
+	static Error deserialize(T*& x, GenericMemoryPoolAllocator<U8> allocator, TFile& file);
 
 	/// Read a single value. Can't call this directly.
 	template<typename T>
-	void doValue(CString varName, PtrSize memberOffset, T& x)
+	void doValue([[maybe_unused]] CString varName, [[maybe_unused]] PtrSize memberOffset, [[maybe_unused]] T& x)
 	{
 		// Do nothing
 	}
 
 	/// Read an array. Can't call this directly.
 	template<typename T>
-	void doArray(CString varName, PtrSize memberOffset, T* arr, PtrSize size)
+	void doArray([[maybe_unused]] CString varName, [[maybe_unused]] PtrSize memberOffset, [[maybe_unused]] T* arr,
+				 [[maybe_unused]] PtrSize size)
 	{
 		// Do nothing
 	}
 
 	/// Read a pointer. Can't call this directly.
 	template<typename T>
-	void doPointer(CString varName, PtrSize memberOffset, T* ptr)
+	void doPointer([[maybe_unused]] CString varName, [[maybe_unused]] PtrSize memberOffset, [[maybe_unused]] T* ptr)
 	{
 		// Do nothing
 	}
 
 	/// Read a dynamic array of complex types. Can't call this directly.
 	template<typename T>
-	void doDynamicArray(CString varName, PtrSize memberOffset, T* arr, PtrSize size)
+	void doDynamicArray([[maybe_unused]] CString varName, [[maybe_unused]] PtrSize memberOffset,
+						[[maybe_unused]] T* arr, [[maybe_unused]] PtrSize size)
 	{
 		// Do nothing
 	}

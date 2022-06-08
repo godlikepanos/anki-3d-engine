@@ -44,7 +44,7 @@ std::tm getLocalTime();
 /// adb shell am start XXX -e cmd "arg0 arg1 arg2"
 /// @endcode
 /// Whatever follows "cmd" will be a command line argument.
-ANKI_USE_RESULT void* getAndroidCommandLineArguments(int& argc, char**& argv);
+[[nodiscard]] void* getAndroidCommandLineArguments(int& argc, char**& argv);
 
 /// Takes the return value of getAndroidCommandLineArguments() for cleanup.
 void cleanupGetAndroidCommandLineArguments(void* ptr);

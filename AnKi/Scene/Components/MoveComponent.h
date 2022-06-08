@@ -91,7 +91,7 @@ public:
 		return m_prevWTrf;
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override;
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 
 	/// @name Mess with the local transform
 	/// @{

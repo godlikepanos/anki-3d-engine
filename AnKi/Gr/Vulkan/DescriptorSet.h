@@ -409,19 +409,16 @@ public:
 	DescriptorSetFactory() = default;
 	~DescriptorSetFactory();
 
-	ANKI_USE_RESULT Error init(const GrAllocator<U8>& alloc, VkDevice dev, U32 bindlessTextureCount,
-							   U32 bindlessImageCount);
+	Error init(const GrAllocator<U8>& alloc, VkDevice dev, U32 bindlessTextureCount, U32 bindlessImageCount);
 
 	void destroy();
 
 	/// @note It's thread-safe.
-	ANKI_USE_RESULT Error newDescriptorSetLayout(const DescriptorSetLayoutInitInfo& init, DescriptorSetLayout& layout);
+	Error newDescriptorSetLayout(const DescriptorSetLayoutInitInfo& init, DescriptorSetLayout& layout);
 
 	/// @note It's thread-safe.
-	ANKI_USE_RESULT Error newDescriptorSet(ThreadId tid, StackAllocator<U8>& tmpAlloc, DescriptorSetState& state,
-										   DescriptorSet& set, Bool& dirty,
-										   Array<PtrSize, MAX_BINDINGS_PER_DESCRIPTOR_SET>& dynamicOffsets,
-										   U32& dynamicOffsetCount);
+	Error newDescriptorSet(StackAllocator<U8>& tmpAlloc, DescriptorSetState& state, DescriptorSet& set, Bool& dirty,
+						   Array<PtrSize, MAX_BINDINGS_PER_DESCRIPTOR_SET>& dynamicOffsets, U32& dynamicOffsetCount);
 
 	void endFrame()
 	{

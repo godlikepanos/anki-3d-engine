@@ -225,7 +225,7 @@ void IndirectSpecular::run(const RenderingContext& ctx, RenderPassWorkContext& r
 }
 
 void IndirectSpecular::getDebugRenderTarget(CString rtName, RenderTargetHandle& handle,
-											ShaderProgramPtr& optionalShaderProgram) const
+											[[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const
 {
 	if(rtName == "SSR")
 	{

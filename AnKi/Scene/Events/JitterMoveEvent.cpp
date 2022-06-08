@@ -34,7 +34,7 @@ void JitterMoveEvent::setPositionLimits(const Vec4& posMin, const Vec4& posMax)
 	m_newPos += m_originalPos;
 }
 
-Error JitterMoveEvent::update(Second prevUpdateTime, Second crntTime)
+Error JitterMoveEvent::update([[maybe_unused]] Second prevUpdateTime, Second crntTime)
 {
 	SceneNode* node = m_associatedNodes[0];
 

@@ -45,9 +45,9 @@ Error ScriptComponent::loadScriptResource(CString fname)
 	return Error::NONE;
 }
 
-Error ScriptComponent::update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated)
+Error ScriptComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	ANKI_ASSERT(&node == m_node);
+	ANKI_ASSERT(info.m_node == m_node);
 	updated = false;
 	if(m_env == nullptr)
 	{
@@ -60,9 +60,9 @@ Error ScriptComponent::update(SceneNode& node, Second prevTime, Second crntTime,
 	lua_getglobal(lua, "update");
 
 	// Push args
-	LuaBinder::pushVariableToTheStack(lua, &node);
-	lua_pushnumber(lua, prevTime);
-	lua_pushnumber(lua, crntTime);
+	LuaBinder::pushVariableToTheStack(lua, info.m_node);
+	lua_pushnumber(lua, info.m_previousTime);
+	lua_pushnumber(lua, info.m_currentTime);
 
 	// Do the call (3 arguments, 1 result)
 	if(lua_pcall(lua, 3, 1, 0) != 0)

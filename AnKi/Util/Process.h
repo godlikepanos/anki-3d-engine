@@ -47,26 +47,25 @@ public:
 	/// @param executable The executable to start.
 	/// @param arguments The command line arguments.
 	/// @param environment The environment variables.
-	ANKI_USE_RESULT Error start(CString executable, ConstWeakArray<CString> arguments = {},
-								ConstWeakArray<CString> environment = {});
+	Error start(CString executable, ConstWeakArray<CString> arguments = {}, ConstWeakArray<CString> environment = {});
 
 	/// Wait for the process to finish.
 	/// @param timeout The time to wait. If it's negative wait forever.
 	/// @param[out] status The exit status
 	/// @param[out] exitCode The exit code if the process has finished.
-	ANKI_USE_RESULT Error wait(Second timeout = -1.0, ProcessStatus* status = nullptr, I32* exitCode = nullptr);
+	Error wait(Second timeout = -1.0, ProcessStatus* status = nullptr, I32* exitCode = nullptr);
 
 	/// Get the status.
-	ANKI_USE_RESULT Error getStatus(ProcessStatus& status);
+	Error getStatus(ProcessStatus& status);
 
 	/// Kill the process. Need to call wait after killing the process.
-	ANKI_USE_RESULT Error kill(ProcessKillSignal k);
+	Error kill(ProcessKillSignal k);
 
 	/// Read from stdout.
-	ANKI_USE_RESULT Error readFromStdout(StringAuto& text);
+	Error readFromStdout(StringAuto& text);
 
 	/// Read from stderr.
-	ANKI_USE_RESULT Error readFromStderr(StringAuto& text);
+	Error readFromStderr(StringAuto& text);
 
 	/// Cleanup a finished process. Call this if you want to start a new process again. Need to have waited before
 	/// calling destroy.
@@ -75,7 +74,7 @@ public:
 private:
 	reproc_t* m_handle = nullptr;
 
-	ANKI_USE_RESULT Error readCommon(I32 reprocStream, StringAuto& text);
+	Error readCommon(I32 reprocStream, StringAuto& text);
 };
 /// @}
 

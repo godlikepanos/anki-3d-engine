@@ -29,7 +29,7 @@ static F32 computeLightRadius(const Vec3 color)
 }
 
 #if 0
-static ANKI_USE_RESULT Error getUniformScale(const Mat4& m, F32& out)
+static Error getUniformScale(const Mat4& m, F32& out)
 {
 	const F32 SCALE_THRESHOLD = 0.01f; // 1 cm
 
@@ -114,7 +114,7 @@ static void getNodeTransform(const cgltf_node& node, Vec3& tsl, Mat3& rot, Vec3&
 	}
 }
 
-static ANKI_USE_RESULT Error getNodeTransform(const cgltf_node& node, Transform& trf)
+static Error getNodeTransform(const cgltf_node& node, Transform& trf)
 {
 	Vec3 tsl;
 	Mat3 rot;
@@ -712,7 +712,8 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			}
 
 			// Thread task
-			auto callback = [](void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore) {
+			auto callback = [](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
+							   [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
 				Ctx& self = *static_cast<Ctx*>(userData);
 
 				// LOD 0
@@ -1403,7 +1404,8 @@ Error GltfImporter::writeLight(const cgltf_node& node, const HashMapAuto<CString
 	return Error::NONE;
 }
 
-Error GltfImporter::writeCamera(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras)
+Error GltfImporter::writeCamera(const cgltf_node& node,
+								[[maybe_unused]] const HashMapAuto<CString, StringAuto>& parentExtras)
 {
 	if(node.camera->type != cgltf_camera_type_perspective)
 	{

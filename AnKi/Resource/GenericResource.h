@@ -20,7 +20,7 @@ public:
 
 	~GenericResource();
 
-	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
+	Error load(const ResourceFilename& filename, Bool async);
 
 	const DynamicArray<U8>& getData() const
 	{

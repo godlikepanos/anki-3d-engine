@@ -22,9 +22,9 @@ MoveComponent::~MoveComponent()
 {
 }
 
-Error MoveComponent::update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated)
+Error MoveComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	updated = updateWorldTransform(node);
+	updated = updateWorldTransform(*info.m_node);
 	return Error::NONE;
 }
 
@@ -74,13 +74,12 @@ Bool MoveComponent::updateWorldTransform(SceneNode& node)
 	// If this is dirty then make children dirty as well. Don't walk the whole tree because you will re-walk it later
 	if(dirty)
 	{
-		const Error err = node.visitChildrenMaxDepth(1, [](SceneNode& childNode) -> Error {
+		[[maybe_unused]] const Error err = node.visitChildrenMaxDepth(1, [](SceneNode& childNode) -> Error {
 			childNode.iterateComponentsOfType<MoveComponent>([](MoveComponent& mov) {
 				mov.markForUpdate();
 			});
 			return Error::NONE;
 		});
-		(void)err;
 	}
 
 	return dirty;

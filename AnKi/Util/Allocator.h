@@ -134,10 +134,9 @@ public:
 	/// Allocate memory
 	/// @param n The elements of type T to allocate
 	/// @param hint It's been used to override the alignment. The type should be PtrSize.
-	pointer allocate(size_type n, const void* hint = nullptr)
+	pointer allocate(size_type n, [[maybe_unused]] const void* hint = nullptr)
 	{
 		ANKI_ASSERT(m_pool);
-		(void)hint;
 
 		size_type size = n * sizeof(value_type);
 
@@ -166,10 +165,9 @@ public:
 	}
 
 	/// Deallocate memory
-	void deallocate(void* p, size_type n)
+	void deallocate(void* p, [[maybe_unused]] size_type n)
 	{
 		ANKI_ASSERT(m_pool);
-		(void)n;
 		m_pool->free(p);
 	}
 

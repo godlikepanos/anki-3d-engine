@@ -58,8 +58,7 @@ public:
 	}
 
 	/// Revive the particle
-	void reviveCommon(const ParticleEmitterProperties& props, const Transform& trf, Second prevUpdateTime,
-					  Second crntTime)
+	void reviveCommon(const ParticleEmitterProperties& props, Second crntTime)
 	{
 		ANKI_ASSERT(isDead());
 
@@ -77,7 +76,7 @@ public:
 	}
 
 	/// Common sumulation code
-	void simulateCommon(Second prevUpdateTime, Second crntTime)
+	void simulateCommon(Second crntTime)
 	{
 		const F32 lifeFactor = F32((crntTime - m_timeOfBirth) / (m_timeOfDeath - m_timeOfBirth));
 
@@ -98,9 +97,9 @@ public:
 		killCommon();
 	}
 
-	void revive(const ParticleEmitterProperties& props, const Transform& trf, Second prevUpdateTime, Second crntTime)
+	void revive(const ParticleEmitterProperties& props, const Transform& trf, Second crntTime)
 	{
-		reviveCommon(props, trf, prevUpdateTime, crntTime);
+		reviveCommon(props, crntTime);
 		m_velocity = Vec3(0.0f);
 
 		m_acceleration = getRandom(props.m_particle.m_minGravity, props.m_particle.m_maxGravity);
@@ -112,7 +111,7 @@ public:
 
 	void simulate(Second prevUpdateTime, Second crntTime)
 	{
-		simulateCommon(prevUpdateTime, crntTime);
+		simulateCommon(crntTime);
 
 		const F32 dt = F32(crntTime - prevUpdateTime);
 
@@ -147,9 +146,9 @@ public:
 		m_body->activate(false);
 	}
 
-	void revive(const ParticleEmitterProperties& props, const Transform& trf, Second prevUpdateTime, Second crntTime)
+	void revive(const ParticleEmitterProperties& props, const Transform& trf, Second crntTime)
 	{
-		reviveCommon(props, trf, prevUpdateTime, crntTime);
+		reviveCommon(props, crntTime);
 
 		// pre calculate
 		const Bool forceFlag = props.forceEnabled();
@@ -189,9 +188,9 @@ public:
 		m_crntPosition = pos;
 	}
 
-	void simulate(Second prevUpdateTime, Second crntTime)
+	void simulate([[maybe_unused]] Second prevUpdateTime, Second crntTime)
 	{
-		simulateCommon(prevUpdateTime, crntTime);
+		simulateCommon(crntTime);
 		m_crntPosition = m_body->getTransform().getOrigin().xyz();
 	}
 };
@@ -252,7 +251,7 @@ Error ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	return Error::NONE;
 }
 
-Error ParticleEmitterComponent::update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated)
+Error ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
 	if(ANKI_UNLIKELY(!m_particleEmitterResource.isCreated()))
 	{
@@ -264,12 +263,12 @@ Error ParticleEmitterComponent::update(SceneNode& node, Second prevTime, Second 
 
 	if(m_simulationType == SimulationType::SIMPLE)
 	{
-		simulate(prevTime, crntTime, WeakArray<SimpleParticle>(m_simpleParticles));
+		simulate(info.m_previousTime, info.m_currentTime, WeakArray<SimpleParticle>(m_simpleParticles));
 	}
 	else
 	{
 		ANKI_ASSERT(m_simulationType == SimulationType::PHYSICS_ENGINE);
-		simulate(prevTime, crntTime, WeakArray<PhysicsParticle>(m_physicsParticles));
+		simulate(info.m_previousTime, info.m_currentTime, WeakArray<PhysicsParticle>(m_physicsParticles));
 	}
 
 	return Error::NONE;
@@ -361,7 +360,7 @@ void ParticleEmitterComponent::simulate(Second prevUpdateTime, Second crntTime, 
 				continue;
 			}
 
-			particle.revive(m_props, m_transform, prevUpdateTime, crntTime);
+			particle.revive(m_props, m_transform, crntTime);
 
 			// do the rest
 			++particleCount;

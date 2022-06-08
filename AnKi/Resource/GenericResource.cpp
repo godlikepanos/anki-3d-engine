@@ -17,7 +17,7 @@ GenericResource::~GenericResource()
 	m_data.destroy(getAllocator());
 }
 
-Error GenericResource::load(const ResourceFilename& filename, Bool async)
+Error GenericResource::load(const ResourceFilename& filename, [[maybe_unused]] Bool async)
 {
 	ResourceFilePtr file;
 	ANKI_CHECK(openFile(filename, file));

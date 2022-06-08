@@ -68,7 +68,7 @@ public:
 	/// Open a file.
 	/// @param[in] filename The file to open
 	/// @param[in] openMask The open flags. It's a combination of FileOpenFlag enum
-	ANKI_USE_RESULT Error open(const CString& filename, FileOpenFlag openMask);
+	Error open(const CString& filename, FileOpenFlag openMask);
 
 	/// Return true if the file is oppen
 	Bool isOpen() const
@@ -80,34 +80,34 @@ public:
 	void close();
 
 	/// Flush pending operations
-	ANKI_USE_RESULT Error flush();
+	Error flush();
 
 	/// Read data from the file
-	ANKI_USE_RESULT Error read(void* buff, PtrSize size);
+	Error read(void* buff, PtrSize size);
 
 	/// Read all the contents of a text file
 	/// If the file is not rewined it will probably fail
-	ANKI_USE_RESULT Error readAllText(GenericMemoryPoolAllocator<U8> alloc, String& out);
+	Error readAllText(GenericMemoryPoolAllocator<U8> alloc, String& out);
 
 	/// Read all the contents of a text file. If the file is not rewined it will probably fail.
-	ANKI_USE_RESULT Error readAllText(StringAuto& out);
+	Error readAllText(StringAuto& out);
 
 	/// Read 32bit unsigned integer. Set the endianness if the file's endianness is different from the machine's.
-	ANKI_USE_RESULT Error readU32(U32& u);
+	Error readU32(U32& u);
 
 	/// Read 32bit float. Set the endianness if the file's endianness is different from the machine's.
-	ANKI_USE_RESULT Error readF32(F32& f);
+	Error readF32(F32& f);
 
 	/// Write data to the file
-	ANKI_USE_RESULT Error write(const void* buff, PtrSize size);
+	Error write(const void* buff, PtrSize size);
 
 	/// Write formated text
-	ANKI_USE_RESULT Error writeText(CString format, ...);
+	Error writeText(CString format, ...);
 
 	/// Set the position indicator to a new position.
 	/// @param offset Number of bytes to offset from origin
 	/// @param origin Position used as reference for the offset
-	ANKI_USE_RESULT Error seek(PtrSize offset, FileSeekOrigin origin);
+	Error seek(PtrSize offset, FileSeekOrigin origin);
 
 	/// Return the position indicator inside the file.
 	PtrSize tell();
@@ -128,11 +128,11 @@ private:
 	static FileOpenFlag getMachineEndianness();
 
 	/// Open a C file
-	ANKI_USE_RESULT Error openCFile(const CString& filename, FileOpenFlag flags);
+	Error openCFile(const CString& filename, FileOpenFlag flags);
 
 #if ANKI_OS_ANDROID
 	/// Open an Android file
-	ANKI_USE_RESULT Error openAndroidFile(const CString& filename, FileOpenFlag flags);
+	Error openAndroidFile(const CString& filename, FileOpenFlag flags);
 #endif
 
 	void zero()

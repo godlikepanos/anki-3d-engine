@@ -44,8 +44,8 @@ public:
 	void destroy();
 
 	/// @note It's thread-safe.
-	ANKI_USE_RESULT Error newPipelineLayout(const WeakArray<DescriptorSetLayout>& dsetLayouts, U32 pushConstantsSize,
-											PipelineLayout& layout);
+	Error newPipelineLayout(const WeakArray<DescriptorSetLayout>& dsetLayouts, U32 pushConstantsSize,
+							PipelineLayout& layout);
 
 private:
 	GrAllocator<U8> m_alloc;

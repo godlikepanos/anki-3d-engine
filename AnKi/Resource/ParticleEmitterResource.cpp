@@ -13,13 +13,13 @@
 namespace anki {
 
 template<typename T>
-static ANKI_USE_RESULT Error getXmlVal(const XmlElement& el, const CString& tag, T& out, Bool& found)
+static Error getXmlVal(const XmlElement& el, const CString& tag, T& out, Bool& found)
 {
 	return el.getAttributeNumberOptional(tag, out, found);
 }
 
 template<>
-ANKI_USE_RESULT Error getXmlVal(const XmlElement& el, const CString& tag, Vec3& out, Bool& found)
+Error getXmlVal(const XmlElement& el, const CString& tag, Vec3& out, Bool& found)
 {
 	return el.getAttributeNumbersOptional(tag, out, found);
 }

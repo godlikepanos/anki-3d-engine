@@ -137,8 +137,8 @@ protected:
 
 private:
 	/// Allocate and initialize a new instance.
-	static ANKI_USE_RESULT AccelerationStructure* newInstance(GrManager* manager,
-															  const AccelerationStructureInitInfo& init);
+	[[nodiscard]] static AccelerationStructure* newInstance(GrManager* manager,
+															const AccelerationStructureInitInfo& init);
 };
 /// @}
 

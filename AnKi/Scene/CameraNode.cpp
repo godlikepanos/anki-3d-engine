@@ -23,14 +23,14 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override
 	{
 		updated = false;
 
-		MoveComponent& move = node.getFirstComponentOfType<MoveComponent>();
-		if(move.getTimestamp() == node.getGlobalTimestamp())
+		MoveComponent& move = info.m_node->getFirstComponentOfType<MoveComponent>();
+		if(move.getTimestamp() == info.m_node->getGlobalTimestamp())
 		{
-			CameraNode& cam = static_cast<CameraNode&>(node);
+			CameraNode& cam = static_cast<CameraNode&>(*info.m_node);
 			cam.onMoveComponentUpdate(move);
 		}
 

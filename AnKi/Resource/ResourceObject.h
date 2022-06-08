@@ -81,11 +81,11 @@ public:
 		return m_uuid;
 	}
 
-	ANKI_INTERNAL ANKI_USE_RESULT Error openFile(const ResourceFilename& filename, ResourceFilePtr& file);
+	ANKI_INTERNAL Error openFile(const ResourceFilename& filename, ResourceFilePtr& file);
 
-	ANKI_INTERNAL ANKI_USE_RESULT Error openFileReadAllText(const ResourceFilename& filename, StringAuto& file);
+	ANKI_INTERNAL Error openFileReadAllText(const ResourceFilename& filename, StringAuto& file);
 
-	ANKI_INTERNAL ANKI_USE_RESULT Error openFileParseXml(const ResourceFilename& filename, XmlDocument& xml);
+	ANKI_INTERNAL Error openFileParseXml(const ResourceFilename& filename, XmlDocument& xml);
 
 private:
 	ResourceManager* m_manager;

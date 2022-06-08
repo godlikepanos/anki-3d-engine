@@ -121,7 +121,7 @@ public:
 	void getRenderingInfo(const RenderingKey& key, ShaderProgramPtr& prog) const;
 
 	/// Load it
-	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
+	Error load(const ResourceFilename& filename, Bool async);
 
 private:
 	MaterialResourcePtr m_material;
@@ -130,7 +130,7 @@ private:
 	void loadInternal(const XmlElement& el);
 
 	template<typename T>
-	ANKI_USE_RESULT Error readVar(const XmlElement& rootEl, CString varName, T& minVal, T& maxVal, const T* defaultVal);
+	Error readVar(const XmlElement& rootEl, CString varName, T& minVal, T& maxVal, const T* defaultVal);
 };
 /// @}
 

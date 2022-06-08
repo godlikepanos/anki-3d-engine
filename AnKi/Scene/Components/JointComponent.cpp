@@ -118,9 +118,9 @@ void JointComponent::newHingeJoint(const Vec3& relPosFactor, const Vec3& axis, F
 	newJoint<PhysicsHingeJoint>(relPosFactor, breakingImpulse, axis);
 }
 
-Error JointComponent::update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated)
+Error JointComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	ANKI_ASSERT(&node == m_node);
+	ANKI_ASSERT(info.m_node == m_node);
 
 	// Iterate the joints and check if the connected scene node is not the parent of this node anymore.
 	while(true)
@@ -128,10 +128,10 @@ Error JointComponent::update(SceneNode& node, Second prevTime, Second crntTime, 
 		Bool erasedOne = false;
 		for(JointNode& otherNode : m_jointList)
 		{
-			if(otherNode.m_parentNode != node.getParent() || otherNode.m_joint->isBroken())
+			if(otherNode.m_parentNode != info.m_node->getParent() || otherNode.m_joint->isBroken())
 			{
 				m_jointList.erase(&otherNode);
-				node.getAllocator().deleteInstance(&otherNode);
+				info.m_node->getAllocator().deleteInstance(&otherNode);
 				erasedOne = true;
 				updated = true;
 				break;

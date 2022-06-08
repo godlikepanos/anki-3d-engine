@@ -22,7 +22,7 @@ public:
 
 	~Bloom();
 
-	ANKI_USE_RESULT Error init()
+	Error init()
 	{
 		const Error err = initInternal();
 		if(err)
@@ -79,10 +79,10 @@ private:
 		RenderTargetHandle m_upscaleRt;
 	} m_runCtx;
 
-	ANKI_USE_RESULT Error initExposure();
-	ANKI_USE_RESULT Error initUpscale();
+	Error initExposure();
+	Error initUpscale();
 
-	ANKI_USE_RESULT Error initInternal();
+	Error initInternal();
 };
 
 /// @}

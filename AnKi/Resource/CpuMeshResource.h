@@ -25,7 +25,7 @@ public:
 	~CpuMeshResource();
 
 	/// Load from a mesh file
-	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
+	Error load(const ResourceFilename& filename, Bool async);
 
 	ConstWeakArray<Vec3> getPositions() const
 	{

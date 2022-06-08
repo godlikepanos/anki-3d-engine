@@ -22,14 +22,14 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override
 	{
 		updated = false; // Don't care about updates for this component
 
-		MoveComponent& move = node.getFirstComponentOfType<MoveComponent>();
-		if(move.getTimestamp() == node.getGlobalTimestamp())
+		MoveComponent& move = info.m_node->getFirstComponentOfType<MoveComponent>();
+		if(move.getTimestamp() == info.m_node->getGlobalTimestamp())
 		{
-			static_cast<ParticleEmitterNode&>(node).onMoveComponentUpdate(move);
+			static_cast<ParticleEmitterNode&>(*info.m_node).onMoveComponentUpdate(move);
 		}
 
 		return Error::NONE;
@@ -50,10 +50,10 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override
 	{
 		updated = false;
-		static_cast<ParticleEmitterNode&>(node).onShapeUpdate();
+		static_cast<ParticleEmitterNode&>(*info.m_node).onShapeUpdate();
 		return Error::NONE;
 	}
 };
@@ -93,7 +93,7 @@ void ParticleEmitterNode::onShapeUpdate()
 	getFirstComponentOfType<SpatialComponent>().setAabbWorldSpace(pec.getAabbWorldSpace());
 }
 
-Error ParticleEmitterNode::frameUpdate(Second prevUpdateTime, Second crntTime)
+Error ParticleEmitterNode::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime)
 {
 	const ParticleEmitterComponent& pec = getFirstComponentOfType<ParticleEmitterComponent>();
 	if(pec.isEnabled())

@@ -39,11 +39,10 @@ SceneGraph::SceneGraph()
 
 SceneGraph::~SceneGraph()
 {
-	Error err = iterateSceneNodes([&](SceneNode& s) -> Error {
+	[[maybe_unused]] const Error err = iterateSceneNodes([&](SceneNode& s) -> Error {
 		s.setMarkedForDeletion();
 		return Error::NONE;
 	});
-	(void)err;
 
 	deleteNodesMarkedForDeletion();
 
@@ -153,7 +152,7 @@ void SceneGraph::deleteNodesMarkedForDeletion()
 	/// should have finished their tasks
 	while(m_objectsMarkedForDeletionCount.load() > 0)
 	{
-		Bool found = false;
+		[[maybe_unused]] Bool found = false;
 		auto it = m_nodes.begin();
 		auto end = m_nodes.end();
 		for(; it != end; ++it)
@@ -171,7 +170,6 @@ void SceneGraph::deleteNodesMarkedForDeletion()
 			}
 		}
 
-		(void)found;
 		ANKI_ASSERT(found && "Something is wrong with marked for deletion");
 	}
 }
@@ -251,6 +249,8 @@ Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 	Error err = Error::NONE;
 
 	// Components update
+	SceneComponentUpdateInfo componentUpdateInfo(prevTime, crntTime);
+
 	Timestamp componentTimestamp = 0;
 	Bool atLeastOneComponentUpdated = false;
 	node.iterateComponents([&](SceneComponent& comp, Bool isFeedbackComponent) {
@@ -266,7 +266,8 @@ Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 		}
 		else
 		{
-			err = comp.update(node, prevTime, crntTime, updated);
+			componentUpdateInfo.m_node = &node;
+			err = comp.update(componentUpdateInfo, updated);
 		}
 
 		if(updated)

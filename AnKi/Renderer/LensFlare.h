@@ -25,7 +25,7 @@ public:
 
 	~LensFlare();
 
-	ANKI_USE_RESULT Error init();
+	Error init();
 
 	void runDrawFlares(const RenderingContext& ctx, CommandBufferPtr& cmdb);
 
@@ -56,10 +56,10 @@ private:
 		BufferHandle m_indirectBuffHandle;
 	} m_runCtx;
 
-	ANKI_USE_RESULT Error initSprite();
-	ANKI_USE_RESULT Error initOcclusion();
+	Error initSprite();
+	Error initOcclusion();
 
-	ANKI_USE_RESULT Error initInternal();
+	Error initInternal();
 
 	void updateIndirectInfo(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 };

@@ -90,17 +90,17 @@ enum class PhysicsMaterialBit : U64
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(PhysicsMaterialBit)
 
-ANKI_USE_RESULT inline Vec3 toAnki(const btVector3& v)
+[[nodiscard]] inline Vec3 toAnki(const btVector3& v)
 {
 	return Vec3(v.getX(), v.getY(), v.getZ());
 }
 
-ANKI_USE_RESULT inline btVector3 toBt(const Vec3& v)
+[[nodiscard]] inline btVector3 toBt(const Vec3& v)
 {
 	return btVector3(v.x(), v.y(), v.z());
 }
 
-ANKI_USE_RESULT inline btTransform toBt(const Transform& a)
+[[nodiscard]] inline btTransform toBt(const Transform& a)
 {
 	Mat4 mat(a);
 	mat.transpose();
@@ -109,14 +109,14 @@ ANKI_USE_RESULT inline btTransform toBt(const Transform& a)
 	return out;
 }
 
-ANKI_USE_RESULT inline Mat3x4 toAnki(const btMatrix3x3& m)
+[[nodiscard]] inline Mat3x4 toAnki(const btMatrix3x3& m)
 {
 	Mat3x4 m3;
 	m3.setRows(Vec4(toAnki(m[0]), 0.0f), Vec4(toAnki(m[1]), 0.0f), Vec4(toAnki(m[2]), 0.0f));
 	return m3;
 }
 
-ANKI_USE_RESULT inline Transform toAnki(const btTransform& t)
+[[nodiscard]] inline Transform toAnki(const btTransform& t)
 {
 	Transform out;
 	out.setRotation(toAnki(t.getBasis()));

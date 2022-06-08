@@ -291,11 +291,11 @@ public:
 
 	/// Iterate the list using lambda.
 	template<typename TFunc>
-	ANKI_USE_RESULT Error iterateForward(TFunc func);
+	Error iterateForward(TFunc func);
 
 	/// Iterate the list backwards using lambda.
 	template<typename TFunc>
-	ANKI_USE_RESULT Error iterateBackward(TFunc func);
+	Error iterateBackward(TFunc func);
 
 	/// Find item.
 	Iterator find(const Value& a);

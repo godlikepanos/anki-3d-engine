@@ -26,12 +26,12 @@ public:
 
 	~ShadowmapsResolve();
 
-	ANKI_USE_RESULT Error init();
+	Error init();
 
 	void populateRenderGraph(RenderingContext& ctx);
 
-	void getDebugRenderTarget(CString rtName, RenderTargetHandle& handle,
-							  ShaderProgramPtr& optionalShaderProgram) const override
+	void getDebugRenderTarget([[maybe_unused]] CString rtName, RenderTargetHandle& handle,
+							  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const override
 	{
 		ANKI_ASSERT(rtName == "SM_resolve");
 		handle = m_runCtx.m_rt;
@@ -55,7 +55,7 @@ public:
 		RenderTargetHandle m_rt;
 	} m_runCtx;
 
-	ANKI_USE_RESULT Error initInternal();
+	Error initInternal();
 
 	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 };

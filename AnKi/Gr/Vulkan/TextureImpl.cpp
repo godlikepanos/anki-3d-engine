@@ -344,9 +344,8 @@ Error TextureImpl::initImage(const TextureInitInfo& init)
 	// Allocate
 	if(!dedicatedRequirements.prefersDedicatedAllocation)
 	{
-		getGrManagerImpl().getGpuMemoryManager().allocateMemory(memIdx, requirements.memoryRequirements.size,
-																U32(requirements.memoryRequirements.alignment), false,
-																m_memHandle);
+		getGrManagerImpl().getGpuMemoryManager().allocateMemory(
+			memIdx, requirements.memoryRequirements.size, U32(requirements.memoryRequirements.alignment), m_memHandle);
 	}
 	else
 	{

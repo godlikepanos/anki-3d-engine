@@ -110,7 +110,7 @@ public:
 		return m_alwaysVisible;
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override;
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 
 private:
 	SceneNode* m_node;

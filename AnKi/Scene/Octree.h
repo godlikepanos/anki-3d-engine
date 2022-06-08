@@ -331,8 +331,7 @@ inline void Octree::walkTreeInternal(Leaf& leaf, U32 testId, TTestAabbFunc testF
 	}
 
 	Aabb aabb;
-	U visibleLeafs = 0;
-	(void)visibleLeafs;
+	[[maybe_unused]] U visibleLeafs = 0;
 	for(Leaf* child : leaf.m_children)
 	{
 		if(child)

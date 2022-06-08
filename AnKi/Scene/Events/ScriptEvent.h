@@ -34,11 +34,11 @@ public:
 	~ScriptEvent();
 
 	/// @param script It's a script or a filename to a script.
-	ANKI_USE_RESULT Error init(Second startTime, Second duration, CString script);
+	Error init(Second startTime, Second duration, CString script);
 
-	ANKI_USE_RESULT Error update(Second prevUpdateTime, Second crntTime) override;
+	Error update(Second prevUpdateTime, Second crntTime) override;
 
-	ANKI_USE_RESULT Error onKilled(Second prevUpdateTime, Second crntTime) override;
+	Error onKilled(Second prevUpdateTime, Second crntTime) override;
 
 private:
 	ScriptResourcePtr m_scriptRsrc;

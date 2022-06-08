@@ -268,7 +268,8 @@ ANKI_TEST(Util, SparseArray)
 
 static I64 akAllocSize = 0;
 static I64 akMaxAllocSize = 0;
-static ANKI_DONT_INLINE void* allocAlignedAk(void* userData, void* ptr, PtrSize size, PtrSize alignment)
+static ANKI_DONT_INLINE void* allocAlignedAk([[maybe_unused]] void* userData, void* ptr, PtrSize size,
+											 [[maybe_unused]] PtrSize alignment)
 {
 	if(ptr == nullptr)
 	{
@@ -291,7 +292,8 @@ static ANKI_DONT_INLINE void* allocAlignedAk(void* userData, void* ptr, PtrSize 
 
 static I64 stlAllocSize = 0;
 static I64 stlMaxAllocSize = 0;
-static ANKI_DONT_INLINE void* allocAlignedStl(void* userData, void* ptr, PtrSize size, PtrSize alignment)
+static ANKI_DONT_INLINE void* allocAlignedStl([[maybe_unused]] void* userData, void* ptr, PtrSize size,
+											  [[maybe_unused]] PtrSize alignment)
 {
 	if(ptr == nullptr)
 	{

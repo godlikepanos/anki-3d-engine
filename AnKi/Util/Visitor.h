@@ -252,7 +252,7 @@ public:
 
 	/// Apply mutable visitor
 	template<typename TVisitor>
-	ANKI_USE_RESULT Error acceptVisitor(TVisitor& v)
+	Error acceptVisitor(TVisitor& v)
 	{
 		ANKI_ASSERT(m_what != -1);
 		return acceptVisitorInternal<TVisitor, Types...>(v);
@@ -260,7 +260,7 @@ public:
 
 	/// Apply const visitor
 	template<typename TVisitor>
-	ANKI_USE_RESULT Error acceptVisitor(TVisitor& v) const
+	Error acceptVisitor(TVisitor& v) const
 	{
 		ANKI_ASSERT(m_what != -1);
 		return acceptVisitorInternalConst<TVisitor, Types...>(v);
@@ -280,7 +280,7 @@ private:
 	/// @name Accept visitor template methods
 	/// @{
 	template<typename TVisitor, typename TFirst>
-	ANKI_USE_RESULT Error acceptVisitorInternal(TVisitor& v)
+	Error acceptVisitorInternal(TVisitor& v)
 	{
 		Error err = Error::NONE;
 
@@ -306,7 +306,7 @@ private:
 	}
 
 	template<typename TVisitor, typename TFirst, typename TSecond, typename... Types_>
-	ANKI_USE_RESULT Error acceptVisitorInternal(TVisitor& v)
+	Error acceptVisitorInternal(TVisitor& v)
 	{
 		Error err = Error::NONE;
 		constexpr I i = sizeof...(Types) - sizeof...(Types_) - 1;
@@ -333,7 +333,7 @@ private:
 	}
 
 	template<typename TVisitor, typename TFirst>
-	ANKI_USE_RESULT Error acceptVisitorInternalConst(TVisitor& v) const
+	Error acceptVisitorInternalConst(TVisitor& v) const
 	{
 		Error err = Error::NONE;
 
@@ -359,7 +359,7 @@ private:
 	}
 
 	template<typename TVisitor, typename TFirst, typename TSecond, typename... Types_>
-	ANKI_USE_RESULT Error acceptVisitorInternalConst(TVisitor& v) const
+	Error acceptVisitorInternalConst(TVisitor& v) const
 	{
 		Error err = Error::NONE;
 		constexpr I i = sizeof...(Types) - sizeof...(Types_) - 1;

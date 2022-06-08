@@ -149,10 +149,10 @@ static_assert(!(BufferUsageBit::ALL & PrivateBufferUsageBit::ALL_PRIVATE), "Upda
 	} while(0)
 
 /// Convert compare op.
-ANKI_USE_RESULT VkCompareOp convertCompareOp(CompareOperation ak);
+[[nodiscard]] VkCompareOp convertCompareOp(CompareOperation ak);
 
 /// Convert format.
-ANKI_USE_RESULT inline VkFormat convertFormat(const Format ak)
+[[nodiscard]] inline VkFormat convertFormat(const Format ak)
 {
 	ANKI_ASSERT(ak != Format::NONE);
 	const VkFormat out = static_cast<VkFormat>(ak);
@@ -160,7 +160,7 @@ ANKI_USE_RESULT inline VkFormat convertFormat(const Format ak)
 }
 
 /// Get format aspect mask.
-ANKI_USE_RESULT inline DepthStencilAspectBit getImageAspectFromFormat(const Format ak)
+[[nodiscard]] inline DepthStencilAspectBit getImageAspectFromFormat(const Format ak)
 {
 	DepthStencilAspectBit out = DepthStencilAspectBit::NONE;
 	if(getFormatInfo(ak).isStencil())
@@ -177,7 +177,7 @@ ANKI_USE_RESULT inline DepthStencilAspectBit getImageAspectFromFormat(const Form
 }
 
 /// Convert image aspect.
-ANKI_USE_RESULT inline VkImageAspectFlags convertImageAspect(const DepthStencilAspectBit ak)
+[[nodiscard]] inline VkImageAspectFlags convertImageAspect(const DepthStencilAspectBit ak)
 {
 	VkImageAspectFlags out = 0;
 	if(!!(ak & DepthStencilAspectBit::DEPTH))
@@ -199,46 +199,46 @@ ANKI_USE_RESULT inline VkImageAspectFlags convertImageAspect(const DepthStencilA
 }
 
 /// Convert topology.
-ANKI_USE_RESULT VkPrimitiveTopology convertTopology(PrimitiveTopology ak);
+[[nodiscard]] VkPrimitiveTopology convertTopology(PrimitiveTopology ak);
 
 /// Convert fill mode.
-ANKI_USE_RESULT VkPolygonMode convertFillMode(FillMode ak);
+[[nodiscard]] VkPolygonMode convertFillMode(FillMode ak);
 
 /// Convert cull mode.
-ANKI_USE_RESULT VkCullModeFlags convertCullMode(FaceSelectionBit ak);
+[[nodiscard]] VkCullModeFlags convertCullMode(FaceSelectionBit ak);
 
 /// Convert blend method.
-ANKI_USE_RESULT VkBlendFactor convertBlendFactor(BlendFactor ak);
+[[nodiscard]] VkBlendFactor convertBlendFactor(BlendFactor ak);
 
 /// Convert blend function.
-ANKI_USE_RESULT VkBlendOp convertBlendOperation(BlendOperation ak);
+[[nodiscard]] VkBlendOp convertBlendOperation(BlendOperation ak);
 
 /// Convert color write mask.
-inline ANKI_USE_RESULT VkColorComponentFlags convertColorWriteMask(ColorBit ak)
+[[nodiscard]] inline VkColorComponentFlags convertColorWriteMask(ColorBit ak)
 {
 	return static_cast<VkColorComponentFlags>(ak);
 }
 
 /// Convert load op.
-ANKI_USE_RESULT VkAttachmentLoadOp convertLoadOp(AttachmentLoadOperation ak);
+[[nodiscard]] VkAttachmentLoadOp convertLoadOp(AttachmentLoadOperation ak);
 
 /// Convert store op.
-ANKI_USE_RESULT VkAttachmentStoreOp convertStoreOp(AttachmentStoreOperation ak);
+[[nodiscard]] VkAttachmentStoreOp convertStoreOp(AttachmentStoreOperation ak);
 
 /// Convert buffer usage bitmask.
-ANKI_USE_RESULT VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask);
+[[nodiscard]] VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask);
 
-ANKI_USE_RESULT VkImageType convertTextureType(TextureType ak);
+[[nodiscard]] VkImageType convertTextureType(TextureType ak);
 
-ANKI_USE_RESULT VkImageViewType convertTextureViewType(TextureType ak);
+[[nodiscard]] VkImageViewType convertTextureViewType(TextureType ak);
 
-ANKI_USE_RESULT VkImageUsageFlags convertTextureUsage(const TextureUsageBit ak, const Format format);
+[[nodiscard]] VkImageUsageFlags convertTextureUsage(const TextureUsageBit ak, const Format format);
 
-ANKI_USE_RESULT VkStencilOp convertStencilOp(StencilOperation ak);
+[[nodiscard]] VkStencilOp convertStencilOp(StencilOperation ak);
 
-ANKI_USE_RESULT VkShaderStageFlags convertShaderTypeBit(ShaderTypeBit bit);
+[[nodiscard]] VkShaderStageFlags convertShaderTypeBit(ShaderTypeBit bit);
 
-ANKI_USE_RESULT inline VkVertexInputRate convertVertexStepRate(VertexStepRate ak)
+[[nodiscard]] inline VkVertexInputRate convertVertexStepRate(VertexStepRate ak)
 {
 	VkVertexInputRate out;
 	switch(ak)
@@ -256,7 +256,7 @@ ANKI_USE_RESULT inline VkVertexInputRate convertVertexStepRate(VertexStepRate ak
 	return out;
 }
 
-ANKI_USE_RESULT inline VkDescriptorType convertDescriptorType(DescriptorType ak)
+[[nodiscard]] inline VkDescriptorType convertDescriptorType(DescriptorType ak)
 {
 	VkDescriptorType out;
 	switch(ak)
@@ -296,7 +296,7 @@ ANKI_USE_RESULT inline VkDescriptorType convertDescriptorType(DescriptorType ak)
 	return out;
 }
 
-ANKI_USE_RESULT inline VkIndexType convertIndexType(IndexType ak)
+[[nodiscard]] inline VkIndexType convertIndexType(IndexType ak)
 {
 	VkIndexType out;
 	switch(ak)
@@ -315,7 +315,7 @@ ANKI_USE_RESULT inline VkIndexType convertIndexType(IndexType ak)
 	return out;
 }
 
-ANKI_USE_RESULT inline VkRasterizationOrderAMD convertRasterizationOrder(RasterizationOrder ak)
+[[nodiscard]] inline VkRasterizationOrderAMD convertRasterizationOrder(RasterizationOrder ak)
 {
 	VkRasterizationOrderAMD out;
 	switch(ak)
@@ -334,7 +334,7 @@ ANKI_USE_RESULT inline VkRasterizationOrderAMD convertRasterizationOrder(Rasteri
 	return out;
 }
 
-ANKI_USE_RESULT inline VkAccelerationStructureTypeKHR convertAccelerationStructureType(AccelerationStructureType ak)
+[[nodiscard]] inline VkAccelerationStructureTypeKHR convertAccelerationStructureType(AccelerationStructureType ak)
 {
 	VkAccelerationStructureTypeKHR out;
 	switch(ak)
@@ -353,9 +353,9 @@ ANKI_USE_RESULT inline VkAccelerationStructureTypeKHR convertAccelerationStructu
 	return out;
 }
 
-ANKI_USE_RESULT const char* vkResultToString(VkResult res);
+[[nodiscard]] const char* vkResultToString(VkResult res);
 
-ANKI_USE_RESULT inline VkExtent2D convertVrsShadingRate(VrsRate rate)
+[[nodiscard]] inline VkExtent2D convertVrsShadingRate(VrsRate rate)
 {
 	VkExtent2D out = {};
 	switch(rate)

@@ -43,7 +43,7 @@ namespace anki {
 android_app* g_androidApp = nullptr;
 #endif
 
-void* App::MemStats::allocCallback(void* userData, void* ptr, PtrSize size, PtrSize alignment)
+void* App::MemStats::allocCallback(void* userData, void* ptr, PtrSize size, [[maybe_unused]] PtrSize alignment)
 {
 	ANKI_ASSERT(userData);
 
@@ -154,11 +154,11 @@ void App::cleanup()
 	m_cacheDir.destroy(m_heapAlloc);
 }
 
-Error App::init(ConfigSet* config, CString executableFilename, AllocAlignedCallback allocCb, void* allocCbUserData)
+Error App::init(ConfigSet* config, AllocAlignedCallback allocCb, void* allocCbUserData)
 {
 	ANKI_ASSERT(config);
 	m_config = config;
-	const Error err = initInternal(executableFilename, allocCb, allocCbUserData);
+	const Error err = initInternal(allocCb, allocCbUserData);
 	if(err)
 	{
 		ANKI_CORE_LOGE("App initialization failed. Shutting down");
@@ -168,7 +168,7 @@ Error App::init(ConfigSet* config, CString executableFilename, AllocAlignedCallb
 	return err;
 }
 
-Error App::initInternal(CString executableFilename, AllocAlignedCallback allocCb, void* allocCbUserData)
+Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 {
 	LoggerSingleton::get().enableVerbosity(m_config->getCoreVerboseLog());
 

@@ -198,7 +198,7 @@ static EShLanguage ankiToGlslangShaderType(ShaderType shaderType)
 }
 
 /// Parse Glslang's error message for the line of the error.
-static ANKI_USE_RESULT Error parseErrorLine(CString error, GenericMemoryPoolAllocator<U8> alloc, U32& lineNumber)
+static Error parseErrorLine(CString error, GenericMemoryPoolAllocator<U8> alloc, U32& lineNumber)
 {
 	lineNumber = MAX_U32;
 
@@ -227,7 +227,7 @@ static ANKI_USE_RESULT Error parseErrorLine(CString error, GenericMemoryPoolAllo
 	return Error::NONE;
 }
 
-static ANKI_USE_RESULT Error logShaderErrorCode(CString error, CString source, GenericMemoryPoolAllocator<U8> alloc)
+static Error logShaderErrorCode(CString error, CString source, GenericMemoryPoolAllocator<U8> alloc)
 {
 	U32 errorLineNumberu = 0;
 	ANKI_CHECK(parseErrorLine(error, alloc, errorLineNumberu));

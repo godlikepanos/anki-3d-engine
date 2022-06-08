@@ -64,9 +64,9 @@ public:
 /// Initialize a ThreadHiveTask.
 #define ANKI_THREAD_HIVE_TASK(callback_, argument_, waitSemaphore_, signalSemaphore_) \
 	{ \
-		[](void* ud, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore) { \
-			auto self = static_cast<decltype(argument_)>(ud); \
-			(void)self; \
+		[](void* ud, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive, \
+		   [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) { \
+			[[maybe_unused]] auto self = static_cast<decltype(argument_)>(ud); \
 			callback_ \
 		}, \
 			argument_, waitSemaphore_, signalSemaphore_ \

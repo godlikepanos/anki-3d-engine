@@ -28,7 +28,7 @@ using MutatorValue = I32; ///< The type of the mutator value
 class ShaderProgramFilesystemInterface
 {
 public:
-	virtual ANKI_USE_RESULT Error readAllText(CString filename, StringAuto& txt) = 0;
+	virtual Error readAllText(CString filename, StringAuto& txt) = 0;
 };
 
 /// This controls if the compilation will continue after the parsing stage.
@@ -44,7 +44,7 @@ class ShaderProgramAsyncTaskInterface
 public:
 	virtual void enqueueTask(void (*callback)(void* userData), void* userData) = 0;
 
-	virtual ANKI_USE_RESULT Error joinTasks() = 0;
+	virtual Error joinTasks() = 0;
 };
 
 /// Options to be passed to the compiler.

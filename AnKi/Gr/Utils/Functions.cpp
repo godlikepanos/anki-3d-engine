@@ -8,8 +8,10 @@
 namespace anki {
 
 template<typename T>
-static void writeShaderBlockMemorySanityChecks(const ShaderVariableBlockInfo& varBlkInfo, const void* elements,
-											   U32 elementsCount, void* buffBegin, const void* buffEnd)
+static void writeShaderBlockMemorySanityChecks(const ShaderVariableBlockInfo& varBlkInfo,
+											   [[maybe_unused]] const void* elements,
+											   [[maybe_unused]] U32 elementsCount, [[maybe_unused]] void* buffBegin,
+											   [[maybe_unused]] const void* buffEnd)
 {
 	// Check args
 	ANKI_ASSERT(elements != nullptr);

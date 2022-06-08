@@ -19,7 +19,7 @@ public:
 	VrsSriGeneration(Renderer* r);
 	~VrsSriGeneration();
 
-	ANKI_USE_RESULT Error init();
+	Error init();
 
 	void importRenderTargets(RenderingContext& ctx);
 
@@ -64,7 +64,7 @@ public:
 		RenderTargetHandle m_downscaledRt;
 	} m_runCtx;
 
-	ANKI_USE_RESULT Error initInternal();
+	Error initInternal();
 
 	void getDebugRenderTarget(CString rtName, RenderTargetHandle& handle,
 							  ShaderProgramPtr& optionalShaderProgram) const override;

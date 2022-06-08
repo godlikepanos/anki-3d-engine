@@ -28,7 +28,7 @@ public:
 	~OcclusionQueryImpl();
 
 	/// Create the query.
-	ANKI_USE_RESULT Error init();
+	Error init();
 
 	/// Get query result.
 	OcclusionQueryResult getResultInternal() const;

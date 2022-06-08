@@ -43,8 +43,9 @@ private:
 			m_drawer->drawLines(&lines[0], 2, Vec4(toAnki(color), 1.0f));
 		}
 
-		void drawContactPoint(const btVector3& PointOnB, const btVector3& normalOnB, btScalar distance, int lifeTime,
-							  const btVector3& color) override
+		void drawContactPoint([[maybe_unused]] const btVector3& PointOnB, [[maybe_unused]] const btVector3& normalOnB,
+							  [[maybe_unused]] btScalar distance, [[maybe_unused]] int lifeTime,
+							  [[maybe_unused]] const btVector3& color) override
 		{
 			// TODO
 		}
@@ -54,12 +55,12 @@ private:
 			ANKI_PHYS_LOGW("%s", warningString);
 		}
 
-		void draw3dText(const btVector3& location, const char* textString) override
+		void draw3dText([[maybe_unused]] const btVector3& location, [[maybe_unused]] const char* textString) override
 		{
 			// TODO
 		}
 
-		void setDebugMode(int debugMode) override
+		void setDebugMode([[maybe_unused]] int debugMode) override
 		{
 			// TODO
 		}

@@ -50,7 +50,7 @@ public:
 
 	~TraditionalDeferredLightShading();
 
-	ANKI_USE_RESULT Error init();
+	Error init();
 
 	/// Run the light shading. It will iterate over the lights and draw them. It doesn't bind anything related to
 	/// GBuffer or the output buffer.

@@ -23,7 +23,7 @@ AnimationResource::~AnimationResource()
 	m_channels.destroy(getAllocator());
 }
 
-Error AnimationResource::load(const ResourceFilename& filename, Bool async)
+Error AnimationResource::load(const ResourceFilename& filename, [[maybe_unused]] Bool async)
 {
 	XmlElement el;
 

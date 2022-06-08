@@ -71,8 +71,8 @@ public:
 
 static thread_local WalkDirectoryTreeCallbackContext g_walkDirectoryTreeContext;
 
-static int walkDirectoryTreeCallback(const char* filepath, const struct stat* info, const int typeflag,
-									 struct FTW* pathinfo)
+static int walkDirectoryTreeCallback(const char* filepath, [[maybe_unused]] const struct stat* info, const int typeflag,
+									 [[maybe_unused]] struct FTW* pathinfo)
 {
 	Bool isDir;
 	Bool ignored = true;
@@ -239,6 +239,7 @@ Error getFileModificationTime(CString filename, U32& year, U32& month, U32& day,
 	month = t.tm_mon + 1;
 	day = t.tm_mday;
 	hour = t.tm_hour;
+	min = t.tm_min;
 	second = t.tm_sec;
 
 	return Error::NONE;

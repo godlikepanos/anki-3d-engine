@@ -118,7 +118,8 @@ void main()
 			ctx->m_alloc = m_alloc;
 
 			m_hive->submitTask(
-				[](void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore) {
+				[](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
+				   [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
 					Ctx* ctx = static_cast<Ctx*>(userData);
 					ctx->m_callback(ctx->m_userData);
 					auto alloc = ctx->m_alloc;
@@ -314,7 +315,8 @@ void main()
 			ctx->m_alloc = m_alloc;
 
 			m_hive->submitTask(
-				[](void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore) {
+				[](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
+				   [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
 					Ctx* ctx = static_cast<Ctx*>(userData);
 					ctx->m_callback(ctx->m_userData);
 					auto alloc = ctx->m_alloc;

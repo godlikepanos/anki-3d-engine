@@ -86,8 +86,7 @@ ThreadHive::~ThreadHive()
 		U32 threadCount = m_threadCount;
 		while(threadCount-- != 0)
 		{
-			Error err = m_threads[threadCount].m_thread.join();
-			(void)err;
+			[[maybe_unused]] const Error err = m_threads[threadCount].m_thread.join();
 			m_threads[threadCount].~Thread();
 		}
 
@@ -168,8 +167,7 @@ void ThreadHive::threadRun(U32 threadId)
 		// Signal the semaphore as early as possible
 		if(task->m_signalSemaphore)
 		{
-			const U32 out = task->m_signalSemaphore->m_atomic.fetchSub(1);
-			(void)out;
+			[[maybe_unused]] const U32 out = task->m_signalSemaphore->m_atomic.fetchSub(1);
 			ANKI_ASSERT(out > 0u);
 			ANKI_HIVE_DEBUG_PRINT("\tsem is %u\n", out - 1u);
 		}
@@ -178,7 +176,7 @@ void ThreadHive::threadRun(U32 threadId)
 	ANKI_HIVE_DEBUG_PRINT("tid: %lu thread quits!\n", threadId);
 }
 
-Bool ThreadHive::waitForWork(U32 threadId, Task*& task)
+Bool ThreadHive::waitForWork([[maybe_unused]] U32 threadId, Task*& task)
 {
 	LockGuard<Mutex> lock(m_mtx);
 

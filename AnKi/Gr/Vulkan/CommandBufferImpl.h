@@ -58,7 +58,7 @@ public:
 
 	~CommandBufferImpl();
 
-	ANKI_USE_RESULT Error init(const CommandBufferInitInfo& init);
+	Error init(const CommandBufferInitInfo& init);
 
 	void setFence(MicroFencePtr& fence)
 	{

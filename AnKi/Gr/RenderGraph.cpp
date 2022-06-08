@@ -1021,7 +1021,7 @@ void RenderGraph::setTextureBarrier(Batch& batch, const RenderPassDependency& de
 
 					crntUsage |= depUsage;
 
-					Bool found = false;
+					[[maybe_unused]] Bool found = false;
 					for(TextureBarrier& b : batch.m_textureBarriersBefore)
 					{
 						if(b.m_idx == rtIdx && b.m_surface == surf)
@@ -1032,7 +1032,6 @@ void RenderGraph::setTextureBarrier(Batch& batch, const RenderPassDependency& de
 						}
 					}
 
-					(void)found;
 					ANKI_ASSERT(found);
 				}
 				else
@@ -1439,8 +1438,7 @@ void RenderGraph::getStatistics(RenderGraphStatistics& statistics) const
 	if(m_statistics.m_timestamps[oldFrame * 2] && m_statistics.m_timestamps[oldFrame * 2 + 1])
 	{
 		Second start, end;
-		TimestampQueryResult res = m_statistics.m_timestamps[oldFrame * 2]->getResult(start);
-		(void)res;
+		[[maybe_unused]] TimestampQueryResult res = m_statistics.m_timestamps[oldFrame * 2]->getResult(start);
 		ANKI_ASSERT(res == TimestampQueryResult::AVAILABLE);
 
 		res = m_statistics.m_timestamps[oldFrame * 2 + 1]->getResult(end);

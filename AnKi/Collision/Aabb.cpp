@@ -38,7 +38,8 @@ Aabb Aabb::getCompoundShape(const Aabb& b) const
 	return out;
 }
 
-void Aabb::setFromPointCloud(const Vec3* pointBuffer, U pointCount, PtrSize pointStride, PtrSize buffSize)
+void Aabb::setFromPointCloud(const Vec3* pointBuffer, U pointCount, PtrSize pointStride,
+							 [[maybe_unused]] PtrSize buffSize)
 {
 	// Preconditions
 	ANKI_ASSERT(pointBuffer);

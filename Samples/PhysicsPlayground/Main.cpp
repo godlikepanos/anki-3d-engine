@@ -81,7 +81,7 @@ public:
 	{
 	}
 
-	void processResult(PhysicsFilteredObject& obj, const Vec3& worldNormal, const Vec3& worldPosition)
+	void processResult([[maybe_unused]] PhysicsFilteredObject& obj, const Vec3& worldNormal, const Vec3& worldPosition)
 	{
 		if((m_from - m_to).dot(worldNormal) < 0.0f)
 		{
@@ -208,7 +208,7 @@ Error MyApp::sampleExtraInit()
 	return Error::NONE;
 }
 
-Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
+Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 {
 	// ANKI_CHECK(SampleApp::userMainLoop(quit));
 	Renderer& renderer = getMainRenderer().getOffscreenRenderer();
@@ -288,7 +288,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		body->addChild(monkey);
 
 		// Create the destruction event
-		createDestructionEvent(body);
+		ANKI_CHECK(createDestructionEvent(body));
 	}
 
 	if(getInput().getMouseButton(MouseButton::RIGHT) == 1)
@@ -327,7 +327,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 				"Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl"));
 			monkey->getFirstComponentOfType<MoveComponent>().setLocalTransform(trf);
 
-			createDestructionEvent(monkey);
+			ANKI_CHECK(createDestructionEvent(monkey));
 
 #if 1
 			// Create some particles
@@ -337,7 +337,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 			ANKI_CHECK(particles->getFirstComponentOfType<ParticleEmitterComponent>().loadParticleEmitterResource(
 				"Assets/Smoke.ankipart"));
 			particles->getFirstComponentOfType<MoveComponent>().setLocalTransform(trf);
-			createDestructionEvent(particles);
+			ANKI_CHECK(createDestructionEvent(particles));
 #endif
 
 			// Create some fog volumes
@@ -355,8 +355,8 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 				fogNode->getFirstComponentOfType<MoveComponent>().setLocalTransform(trf);
 
-				createDestructionEvent(fogNode);
-				createFogVolumeFadeEvent(fogNode);
+				ANKI_CHECK(createDestructionEvent(fogNode));
+				ANKI_CHECK(createFogVolumeFadeEvent(fogNode));
 			}
 		}
 	}

@@ -77,7 +77,7 @@ public:
 	{
 	}
 
-	Error operator()(AsyncLoaderTaskContext& ctx)
+	Error operator()([[maybe_unused]] AsyncLoaderTaskContext& ctx)
 	{
 		void* mem = m_alloc.allocate(10);
 		if(!mem)

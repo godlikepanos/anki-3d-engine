@@ -26,8 +26,8 @@ public:
 
 	~UiManager();
 
-	ANKI_USE_RESULT Error init(AllocAlignedCallback allocCallback, void* allocCallbackUserData,
-							   ResourceManager* resources, GrManager* gr, StagingGpuMemoryPool* gpuMem, Input* input);
+	Error init(AllocAlignedCallback allocCallback, void* allocCallbackUserData, ResourceManager* resources,
+			   GrManager* gr, StagingGpuMemoryPool* gpuMem, Input* input);
 
 	UiAllocator getAllocator() const
 	{
@@ -60,7 +60,7 @@ public:
 
 	/// Create a new UI object.
 	template<typename T, typename Y, typename... Args>
-	ANKI_USE_RESULT Error newInstance(IntrusivePtr<Y>& ptr, Args&&... args)
+	Error newInstance(IntrusivePtr<Y>& ptr, Args&&... args)
 	{
 		T* p = m_alloc.newInstance<T>(this);
 		ptr.reset(static_cast<Y*>(p));
@@ -69,7 +69,7 @@ public:
 
 	/// Create a new UI object.
 	template<typename T, typename... Args>
-	ANKI_USE_RESULT Error newInstance(IntrusivePtr<T>& ptr, Args&&... args)
+	Error newInstance(IntrusivePtr<T>& ptr, Args&&... args)
 	{
 		ptr.reset(m_alloc.newInstance<T>(this));
 		return ptr->init(args...);

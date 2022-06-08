@@ -51,9 +51,8 @@ Error Font::init(const CString& filename, ConstWeakArray<U32> fontHeights)
 		++count;
 	}
 
-	const Bool ok = m_imFontAtlas->Build();
+	[[maybe_unused]] const Bool ok = m_imFontAtlas->Build();
 	ANKI_ASSERT(ok);
-	(void)ok;
 
 	// Create the texture
 	U8* img;

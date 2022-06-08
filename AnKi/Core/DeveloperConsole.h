@@ -26,7 +26,7 @@ public:
 
 	~DeveloperConsole();
 
-	ANKI_USE_RESULT Error init(AllocAlignedCallback allocCb, void* allocCbUserData, ScriptManager* scriptManager);
+	Error init(AllocAlignedCallback allocCb, void* allocCbUserData, ScriptManager* scriptManager);
 
 	void build(CanvasPtr ctx) override;
 

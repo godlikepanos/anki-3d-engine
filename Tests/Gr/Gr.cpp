@@ -1083,8 +1083,8 @@ void main()
 	COMMON_END()
 }
 
-static void drawOffscreenDrawcalls(GrManager& gr, ShaderProgramPtr prog, CommandBufferPtr cmdb, U32 viewPortSize,
-								   BufferPtr indexBuff, BufferPtr vertBuff)
+static void drawOffscreenDrawcalls([[maybe_unused]] GrManager& gr, ShaderProgramPtr prog, CommandBufferPtr cmdb,
+								   U32 viewPortSize, BufferPtr indexBuff, BufferPtr vertBuff)
 {
 	static F32 ang = -2.5f;
 	ang += toRad(2.5f);

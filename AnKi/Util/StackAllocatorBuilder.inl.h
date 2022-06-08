@@ -34,11 +34,10 @@ StackAllocatorBuilder<TChunk, TInterface, TLock>::~StackAllocatorBuilder()
 }
 
 template<typename TChunk, typename TInterface, typename TLock>
-Error StackAllocatorBuilder<TChunk, TInterface, TLock>::allocate(PtrSize size, PtrSize alignment, TChunk*& chunk,
-																 PtrSize& offset)
+Error StackAllocatorBuilder<TChunk, TInterface, TLock>::allocate(PtrSize size, [[maybe_unused]] PtrSize alignment,
+																 TChunk*& chunk, PtrSize& offset)
 {
 	ANKI_ASSERT(alignment <= m_interface.getMaxAlignment());
-	(void)alignment;
 
 	size = getAlignedRoundUp(m_interface.getMaxAlignment(), size);
 	ANKI_ASSERT(size > 0);
@@ -161,9 +160,8 @@ void StackAllocatorBuilder<TChunk, TInterface, TLock>::free()
 	Atomic<U32>* allocationCount = m_interface.getAllocationCount();
 	if(allocationCount)
 	{
-		const U32 count = allocationCount->fetchSub(1);
+		[[maybe_unused]] const U32 count = allocationCount->fetchSub(1);
 		ANKI_ASSERT(count > 0);
-		(void)count;
 	}
 }
 

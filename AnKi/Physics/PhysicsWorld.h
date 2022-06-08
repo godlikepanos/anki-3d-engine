@@ -43,7 +43,7 @@ public:
 	PhysicsWorld();
 	~PhysicsWorld();
 
-	ANKI_USE_RESULT Error init(AllocAlignedCallback allocCb, void* allocCbData);
+	Error init(AllocAlignedCallback allocCb, void* allocCbData);
 
 	template<typename T, typename... TArgs>
 	PhysicsPtr<T> newInstance(TArgs&&... args)
@@ -62,7 +62,7 @@ public:
 	}
 
 	/// Do the update.
-	Error update(Second dt);
+	void update(Second dt);
 
 	HeapAllocator<U8> getAllocator() const
 	{

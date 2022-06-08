@@ -37,21 +37,21 @@ public:
 	ResourceFile& operator=(const ResourceFile&) = delete; // Non-copyable
 
 	/// Read data from the file
-	virtual ANKI_USE_RESULT Error read(void* buff, PtrSize size) = 0;
+	virtual Error read(void* buff, PtrSize size) = 0;
 
 	/// Read all the contents of a text file. If the file is not rewined it will probably fail
-	virtual ANKI_USE_RESULT Error readAllText(StringAuto& out) = 0;
+	virtual Error readAllText(StringAuto& out) = 0;
 
 	/// Read 32bit unsigned integer. Set the endianness if the file's endianness is different from the machine's
-	virtual ANKI_USE_RESULT Error readU32(U32& u) = 0;
+	virtual Error readU32(U32& u) = 0;
 
 	/// Read 32bit float. Set the endianness if the file's endianness is different from the machine's
-	virtual ANKI_USE_RESULT Error readF32(F32& f) = 0;
+	virtual Error readF32(F32& f) = 0;
 
 	/// Set the position indicator to a new position
 	/// @param offset Number of bytes to offset from origin
 	/// @param origin Position used as reference for the offset
-	virtual ANKI_USE_RESULT Error seek(PtrSize offset, FileSeekOrigin origin) = 0;
+	virtual Error seek(PtrSize offset, FileSeekOrigin origin) = 0;
 
 	/// Get the size of the file.
 	virtual PtrSize getSize() const = 0;
@@ -94,14 +94,14 @@ public:
 
 	ResourceFilesystem& operator=(const ResourceFilesystem&) = delete; // Non-copyable
 
-	ANKI_USE_RESULT Error init(const ConfigSet& config, const CString& cacheDir);
+	Error init(const ConfigSet& config, const CString& cacheDir);
 
 	/// Search the path list to find the file. Then open the file for reading. It's thread-safe.
-	ANKI_USE_RESULT Error openFile(const ResourceFilename& filename, ResourceFilePtr& file);
+	Error openFile(const ResourceFilename& filename, ResourceFilePtr& file);
 
 	/// Iterate all the filenames from all paths provided.
 	template<typename TFunc>
-	ANKI_USE_RESULT Error iterateAllFilenames(TFunc func) const
+	Error iterateAllFilenames(TFunc func) const
 	{
 		for(const Path& path : m_paths)
 		{
@@ -150,9 +150,9 @@ private:
 	String m_cacheDir;
 
 	/// Add a filesystem path or an archive. The path is read-only.
-	ANKI_USE_RESULT Error addNewPath(const CString& path, const StringListAuto& excludedStrings);
+	Error addNewPath(const CString& path, const StringListAuto& excludedStrings);
 
-	ANKI_USE_RESULT Error openFileInternal(const ResourceFilename& filename, ResourceFile*& rfile);
+	Error openFileInternal(const ResourceFilename& filename, ResourceFile*& rfile);
 
 	void addCachePath(const CString& path);
 };

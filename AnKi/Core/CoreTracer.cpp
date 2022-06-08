@@ -70,8 +70,7 @@ CoreTracer::~CoreTracer()
 		m_quit = true;
 		m_cvar.notifyOne();
 	}
-	Error err = m_thread.join();
-	(void)err;
+	[[maybe_unused]] Error err = m_thread.join();
 
 	// Finalize trace file
 	if(m_traceJsonFile.isOpen())

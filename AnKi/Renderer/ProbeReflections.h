@@ -25,7 +25,7 @@ public:
 
 	~ProbeReflections();
 
-	ANKI_USE_RESULT Error init();
+	Error init();
 
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
@@ -130,12 +130,12 @@ private:
 		U32 m_shadowRenderableCount = 0;
 	} m_ctx; ///< Runtime context.
 
-	ANKI_USE_RESULT Error initInternal();
-	ANKI_USE_RESULT Error initGBuffer();
-	ANKI_USE_RESULT Error initLightShading();
-	ANKI_USE_RESULT Error initIrradiance();
-	ANKI_USE_RESULT Error initIrradianceToRefl();
-	ANKI_USE_RESULT Error initShadowMapping();
+	Error initInternal();
+	Error initGBuffer();
+	Error initLightShading();
+	Error initIrradiance();
+	Error initIrradianceToRefl();
+	Error initShadowMapping();
 
 	/// Lazily init the cache entry
 	void initCacheEntry(U32 cacheEntryIdx);

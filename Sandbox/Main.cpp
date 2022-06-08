@@ -38,7 +38,7 @@ Error MyApp::init(int argc, char* argv[])
 	ANKI_CHECK(m_config.setFromCommandLineArguments(argc - 2, argv + 2));
 
 	// Init super class
-	ANKI_CHECK(App::init(&m_config, argv[0], allocAligned, nullptr));
+	ANKI_CHECK(App::init(&m_config, allocAligned, nullptr));
 
 	// Other init
 	ResourceManager& resources = getResourceManager();

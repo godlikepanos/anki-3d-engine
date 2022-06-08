@@ -27,7 +27,7 @@ public:
 	~Font();
 
 	/// Initialize the font.
-	ANKI_USE_RESULT Error init(const CString& filename, ConstWeakArray<U32> fontHeights);
+	Error init(const CString& filename, ConstWeakArray<U32> fontHeights);
 
 	/// Get font image atlas.
 	ANKI_INTERNAL const TextureViewPtr& getTextureView() const

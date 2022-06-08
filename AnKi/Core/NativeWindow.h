@@ -38,7 +38,7 @@ public:
 class NativeWindow
 {
 public:
-	static ANKI_USE_RESULT Error newInstance(const NativeWindowInitInfo& initInfo, NativeWindow*& nativeWindow);
+	static Error newInstance(const NativeWindowInitInfo& initInfo, NativeWindow*& nativeWindow);
 
 	static void deleteInstance(NativeWindow* nativeWindow);
 

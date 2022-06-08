@@ -72,19 +72,19 @@ public:
 
 	/// Visit the children and the children's children. Use it with lambda
 	template<typename VisitorFunc>
-	ANKI_USE_RESULT Error visitChildren(VisitorFunc vis);
+	Error visitChildren(VisitorFunc vis);
 
 	/// Visit this object and move to the children. Use it with lambda
 	template<typename VisitorFunc>
-	ANKI_USE_RESULT Error visitThisAndChildren(VisitorFunc vis);
+	Error visitThisAndChildren(VisitorFunc vis);
 
 	/// Visit the whole tree. Use it with lambda
 	template<typename VisitorFunc>
-	ANKI_USE_RESULT Error visitTree(VisitorFunc vis);
+	Error visitTree(VisitorFunc vis);
 
 	/// Visit the children and limit the depth. Use it with lambda.
 	template<typename VisitorFunc>
-	ANKI_USE_RESULT Error visitChildrenMaxDepth(I maxDepth, VisitorFunc vis);
+	Error visitChildrenMaxDepth(I maxDepth, VisitorFunc vis);
 
 private:
 	Value* m_parent; ///< May be nullptr

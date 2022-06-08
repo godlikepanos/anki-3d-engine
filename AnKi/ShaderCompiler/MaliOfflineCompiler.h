@@ -45,8 +45,8 @@ public:
 };
 
 /// Run the mali offline compiler and get some info back.
-ANKI_USE_RESULT Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv, ShaderType shaderType,
-											 GenericMemoryPoolAllocator<U8> tmpAlloc, MaliOfflineCompilerOut& out);
+Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv, ShaderType shaderType,
+							 GenericMemoryPoolAllocator<U8> tmpAlloc, MaliOfflineCompilerOut& out);
 /// @}
 
 } // end namespace anki

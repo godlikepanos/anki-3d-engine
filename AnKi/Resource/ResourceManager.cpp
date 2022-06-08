@@ -105,8 +105,7 @@ Error ResourceManager::loadResource(const CString& filename, ResourcePtr<T>& out
 		auto& pool = m_tmpAlloc.getMemoryPool();
 
 		{
-			U allocsCountBefore = pool.getAllocationCount();
-			(void)allocsCountBefore;
+			[[maybe_unused]] const U allocsCountBefore = pool.getAllocationCount();
 
 			err = ptr->load(filename, async);
 			if(err)

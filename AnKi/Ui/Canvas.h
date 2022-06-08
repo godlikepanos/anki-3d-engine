@@ -22,7 +22,7 @@ public:
 
 	virtual ~Canvas();
 
-	ANKI_USE_RESULT Error init(FontPtr font, U32 fontHeight, U32 width, U32 height);
+	Error init(FontPtr font, U32 fontHeight, U32 width, U32 height);
 
 	const FontPtr& getDefaultFont() const
 	{

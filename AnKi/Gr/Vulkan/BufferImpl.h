@@ -28,9 +28,9 @@ public:
 
 	~BufferImpl();
 
-	ANKI_USE_RESULT Error init(const BufferInitInfo& inf);
+	Error init(const BufferInitInfo& inf);
 
-	ANKI_USE_RESULT void* map(PtrSize offset, PtrSize range, BufferMapAccessBit access);
+	[[nodiscard]] void* map(PtrSize offset, PtrSize range, BufferMapAccessBit access);
 
 	void unmap()
 	{

@@ -45,7 +45,7 @@ public:
 
 	~GrManagerImpl();
 
-	ANKI_USE_RESULT Error init(const GrManagerInitInfo& cfg);
+	Error init(const GrManagerInitInfo& cfg);
 
 	ConstWeakArray<U32> getQueueFamilies() const
 	{
@@ -325,11 +325,11 @@ private:
 	Mutex* m_globalCreatePipelineMtx = nullptr;
 #endif
 
-	ANKI_USE_RESULT Error initInternal(const GrManagerInitInfo& init);
-	ANKI_USE_RESULT Error initInstance(const GrManagerInitInfo& init);
-	ANKI_USE_RESULT Error initSurface(const GrManagerInitInfo& init);
-	ANKI_USE_RESULT Error initDevice(const GrManagerInitInfo& init);
-	ANKI_USE_RESULT Error initMemory();
+	Error initInternal(const GrManagerInitInfo& init);
+	Error initInstance();
+	Error initSurface(const GrManagerInitInfo& init);
+	Error initDevice(const GrManagerInitInfo& init);
+	Error initMemory();
 
 #if ANKI_GR_MANAGER_DEBUG_MEMMORY
 	static void* allocateCallback(void* userData, size_t size, size_t alignment,
@@ -347,8 +347,7 @@ private:
 										   VkDebugUtilsMessageTypeFlagsEXT messageTypes,
 										   const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
 
-	ANKI_USE_RESULT Error printPipelineShaderInfoInternal(VkPipeline ppline, CString name, ShaderTypeBit stages,
-														  U64 hash) const;
+	Error printPipelineShaderInfoInternal(VkPipeline ppline, CString name, ShaderTypeBit stages, U64 hash) const;
 };
 /// @}
 

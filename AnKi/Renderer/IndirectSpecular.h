@@ -24,7 +24,7 @@ public:
 
 	~IndirectSpecular();
 
-	ANKI_USE_RESULT Error init();
+	Error init();
 
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
@@ -54,7 +54,7 @@ private:
 		Array<RenderTargetHandle, 2> m_rts;
 	} m_runCtx;
 
-	ANKI_USE_RESULT Error initInternal();
+	Error initInternal();
 
 	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 

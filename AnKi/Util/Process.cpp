@@ -22,8 +22,7 @@ void Process::destroy()
 	if(m_handle)
 	{
 		ProcessStatus status;
-		const Error err = getStatus(status);
-		(void)err;
+		[[maybe_unused]] const Error err = getStatus(status);
 		if(status == ProcessStatus::RUNNING)
 		{
 			ANKI_UTIL_LOGE("Process is still running. Forgot to wait for it");

@@ -85,7 +85,7 @@ protected:
 
 private:
 	/// Allocate and initialize a new instance.
-	static ANKI_USE_RESULT ShaderProgram* newInstance(GrManager* manager, const ShaderProgramInitInfo& init);
+	[[nodiscard]] static ShaderProgram* newInstance(GrManager* manager, const ShaderProgramInitInfo& init);
 };
 /// @}
 

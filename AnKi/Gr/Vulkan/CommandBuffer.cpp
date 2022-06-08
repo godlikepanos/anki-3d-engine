@@ -312,12 +312,13 @@ void CommandBuffer::generateMipmaps2d(const TextureViewPtr& texView)
 	self.generateMipmaps2dInternal(texView);
 }
 
-void CommandBuffer::generateMipmaps3d(const TextureViewPtr& texView)
+void CommandBuffer::generateMipmaps3d([[maybe_unused]] const TextureViewPtr& texView)
 {
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::blitTextureViews(const TextureViewPtr& srcView, const TextureViewPtr& destView)
+void CommandBuffer::blitTextureViews([[maybe_unused]] const TextureViewPtr& srcView,
+									 [[maybe_unused]] const TextureViewPtr& destView)
 {
 	ANKI_ASSERT(!"TODO");
 }

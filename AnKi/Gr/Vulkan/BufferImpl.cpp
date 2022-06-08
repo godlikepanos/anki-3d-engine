@@ -193,7 +193,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 
 	// Allocate
 	const U32 alignment = U32(max(m_mappedMemoryRangeAlignment, req.alignment));
-	getGrManagerImpl().getGpuMemoryManager().allocateMemory(memIdx, req.size, alignment, true, m_memHandle);
+	getGrManagerImpl().getGpuMemoryManager().allocateMemory(memIdx, req.size, alignment, m_memHandle);
 
 	// Bind mem to buffer
 	{
@@ -223,7 +223,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	return Error::NONE;
 }
 
-void* BufferImpl::map(PtrSize offset, PtrSize range, BufferMapAccessBit access)
+void* BufferImpl::map(PtrSize offset, PtrSize range, [[maybe_unused]] BufferMapAccessBit access)
 {
 	ANKI_ASSERT(isCreated());
 	ANKI_ASSERT(access != BufferMapAccessBit::NONE);
@@ -396,8 +396,7 @@ VkBufferView BufferImpl::getOrCreateBufferView(Format fmt, PtrSize offset, PtrSi
 	ANKI_ASSERT((range % getFormatInfo(fmt).m_texelSize) == 0
 				&& "Range doesn't align with the number of texel elements");
 
-	const PtrSize elementCount = range / getFormatInfo(fmt).m_texelSize;
-	(void)elementCount;
+	[[maybe_unused]] const PtrSize elementCount = range / getFormatInfo(fmt).m_texelSize;
 	ANKI_ASSERT(elementCount <= getGrManagerImpl().getPhysicalDeviceProperties().limits.maxTexelBufferElements);
 
 	// Hash

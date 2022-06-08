@@ -21,7 +21,7 @@ public:
 
 	~GlobalIlluminationProbeNode();
 
-	ANKI_USE_RESULT Error frameUpdate(Second prevUpdateTime, Second crntTime) override;
+	Error frameUpdate(Second prevUpdateTime, Second crntTime) override;
 
 private:
 	class MoveFeedbackComponent;

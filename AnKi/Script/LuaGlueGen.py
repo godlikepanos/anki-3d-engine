@@ -298,12 +298,9 @@ def get_meth_alias(meth_el):
 
 
 def write_local_vars():
-    wglue("LuaUserData* ud;")
-    wglue("(void)ud;")
-    wglue("void* voidp;")
-    wglue("(void)voidp;")
-    wglue("PtrSize size;")
-    wglue("(void)size;")
+    wglue("[[maybe_unused]] LuaUserData* ud;")
+    wglue("[[maybe_unused]] void* voidp;")
+    wglue("[[maybe_unused]] PtrSize size;")
     wglue("")
 
 

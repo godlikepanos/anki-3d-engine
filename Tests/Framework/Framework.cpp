@@ -32,6 +32,11 @@ void Test::run()
 {
 	ANKI_TEST_LOG("========\nRunning %s %s\n========", suite->name.c_str(), name.c_str());
 
+#if ANKI_COMPILER_GCC_COMPATIBLE
+#	pragma GCC diagnostic push
+#	pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 #if ANKI_OS_LINUX
 	struct mallinfo a = mallinfo();
 #endif
@@ -46,6 +51,10 @@ void Test::run()
 	{
 		ANKI_TEST_LOG("Test leaks memory: %d", diff);
 	}
+#endif
+
+#if ANKI_COMPILER_GCC_COMPATIBLE
+#	pragma GCC diagnostic pop
 #endif
 }
 

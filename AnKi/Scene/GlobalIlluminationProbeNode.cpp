@@ -27,15 +27,15 @@ public:
 	{
 	}
 
-	Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override
 	{
 		updated = false;
 
-		MoveComponent& move = node.getFirstComponentOfType<MoveComponent>();
-		if(move.getTimestamp() == node.getGlobalTimestamp())
+		MoveComponent& move = info.m_node->getFirstComponentOfType<MoveComponent>();
+		if(move.getTimestamp() == info.m_node->getGlobalTimestamp())
 		{
 			// Move updated
-			GlobalIlluminationProbeNode& dnode = static_cast<GlobalIlluminationProbeNode&>(node);
+			GlobalIlluminationProbeNode& dnode = static_cast<GlobalIlluminationProbeNode&>(*info.m_node);
 			dnode.onMoveUpdate(move);
 		}
 
@@ -58,15 +58,16 @@ public:
 	{
 	}
 
-	Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override
 	{
 		updated = false;
 
-		GlobalIlluminationProbeComponent& probec = node.getFirstComponentOfType<GlobalIlluminationProbeComponent>();
-		if(probec.getTimestamp() == node.getGlobalTimestamp() || probec.getMarkedForRendering())
+		GlobalIlluminationProbeComponent& probec =
+			info.m_node->getFirstComponentOfType<GlobalIlluminationProbeComponent>();
+		if(probec.getTimestamp() == info.m_node->getGlobalTimestamp() || probec.getMarkedForRendering())
 		{
 			// Move updated
-			GlobalIlluminationProbeNode& dnode = static_cast<GlobalIlluminationProbeNode&>(node);
+			GlobalIlluminationProbeNode& dnode = static_cast<GlobalIlluminationProbeNode&>(*info.m_node);
 			dnode.onShapeUpdateOrProbeNeedsRendering();
 		}
 
@@ -178,7 +179,7 @@ void GlobalIlluminationProbeNode::onShapeUpdateOrProbeNeedsRendering()
 	}
 }
 
-Error GlobalIlluminationProbeNode::frameUpdate(Second prevUpdateTime, Second crntTime)
+Error GlobalIlluminationProbeNode::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime)
 {
 	// Check the reflection probe component and if it's marked for rendering enable the frustum components
 	const GlobalIlluminationProbeComponent& gic = getFirstComponentOfType<GlobalIlluminationProbeComponent>();

@@ -36,7 +36,7 @@ public:
 
 	~ShaderImpl();
 
-	ANKI_USE_RESULT Error init(const ShaderInitInfo& init);
+	Error init(const ShaderInitInfo& init);
 
 	const VkSpecializationInfo* getSpecConstInfo() const
 	{

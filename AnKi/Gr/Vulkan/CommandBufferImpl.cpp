@@ -650,8 +650,8 @@ void CommandBufferImpl::flushWriteQueryResults()
 	m_writeQueryAtoms.resize(m_alloc, 0);
 }
 
-void CommandBufferImpl::copyBufferToTextureViewInternal(const BufferPtr& buff, PtrSize offset, PtrSize range,
-														const TextureViewPtr& texView)
+void CommandBufferImpl::copyBufferToTextureViewInternal(const BufferPtr& buff, PtrSize offset,
+														[[maybe_unused]] PtrSize range, const TextureViewPtr& texView)
 {
 	commandCommon();
 

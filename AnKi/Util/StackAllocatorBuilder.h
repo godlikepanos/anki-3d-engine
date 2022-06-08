@@ -49,7 +49,7 @@ public:
 	/// @param[out] chunk The chunk that the memory belongs to.
 	/// @param[out] offset The offset inside the chunk.
 	/// @note This is thread safe with itself.
-	ANKI_USE_RESULT Error allocate(PtrSize size, PtrSize alignment, TChunk*& chunk, PtrSize& offset);
+	Error allocate(PtrSize size, PtrSize alignment, TChunk*& chunk, PtrSize& offset);
 
 	/// Free memory. Doesn't do something special, only some bookkeeping.
 	void free();

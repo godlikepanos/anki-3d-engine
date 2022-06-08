@@ -27,7 +27,7 @@ public:
 
 	~GBuffer();
 
-	ANKI_USE_RESULT Error init();
+	Error init();
 
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
@@ -48,7 +48,7 @@ public:
 	}
 
 	void getDebugRenderTarget(CString rtName, RenderTargetHandle& handle,
-							  ShaderProgramPtr& optionalShaderProgram) const override
+							  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const override
 	{
 		if(rtName == "GBufferAlbedo")
 		{
@@ -81,7 +81,7 @@ private:
 		RenderTargetHandle m_prevFrameDepthRt;
 	} m_runCtx;
 
-	ANKI_USE_RESULT Error initInternal();
+	Error initInternal();
 
 	void runInThread(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx) const;
 };

@@ -24,15 +24,15 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override
 	{
 		updated = false;
 
-		BodyComponent& bodyc = node.getFirstComponentOfType<BodyComponent>();
+		BodyComponent& bodyc = info.m_node->getFirstComponentOfType<BodyComponent>();
 
-		if(bodyc.getTimestamp() == node.getGlobalTimestamp())
+		if(bodyc.getTimestamp() == info.m_node->getGlobalTimestamp())
 		{
-			MoveComponent& move = node.getFirstComponentOfType<MoveComponent>();
+			MoveComponent& move = info.m_node->getFirstComponentOfType<MoveComponent>();
 			move.setLocalTransform(bodyc.getWorldTransform());
 		}
 

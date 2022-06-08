@@ -36,7 +36,7 @@ public:
 };
 
 /// Converts images to AnKi's specific format.
-ANKI_USE_RESULT Error importImage(const ImageImporterConfig& config);
+Error importImage(const ImageImporterConfig& config);
 /// @}
 
 } // end namespace anki

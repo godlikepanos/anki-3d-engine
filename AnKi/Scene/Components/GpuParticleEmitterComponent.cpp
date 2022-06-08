@@ -261,7 +261,7 @@ void GpuParticleEmitterComponent::draw(RenderQueueDrawContext& ctx) const
 	}
 }
 
-Error GpuParticleEmitterComponent::update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated)
+Error GpuParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
 	if(ANKI_UNLIKELY(!m_particleEmitterResource.isCreated()))
 	{
@@ -272,7 +272,7 @@ Error GpuParticleEmitterComponent::update(SceneNode& node, Second prevTime, Seco
 	updated = m_markedForUpdate;
 	m_markedForUpdate = false;
 
-	m_dt = crntTime - prevTime;
+	m_dt = info.m_dt;
 
 	return Error::NONE;
 }

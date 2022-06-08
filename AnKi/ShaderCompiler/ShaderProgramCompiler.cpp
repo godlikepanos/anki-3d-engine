@@ -540,7 +540,7 @@ public:
 		return Error::NONE;
 	}
 
-	ANKI_USE_RESULT Bool findStruct(CString name, U32& idx) const
+	[[nodiscard]] Bool findStruct(CString name, U32& idx) const
 	{
 		idx = MAX_U32;
 
@@ -591,9 +591,8 @@ public:
 	{
 		// Refresh the structIdx because we have a different global mapping
 		U32 realStructIdx;
-		const Bool structFound = findStruct(structName, realStructIdx);
+		[[maybe_unused]] const Bool structFound = findStruct(structName, realStructIdx);
 		ANKI_ASSERT(structFound);
-		(void)structFound;
 		const ShaderProgramBinaryStruct& s = m_structs[realStructIdx];
 		DynamicArrayAuto<ShaderProgramBinaryStructMember>& members = m_structMembers[realStructIdx];
 
@@ -627,9 +626,8 @@ public:
 			{
 				// Type is a struct, find the right index
 
-				const Bool structFound = findStruct(typeStructName, member.m_structIndex);
+				[[maybe_unused]] const Bool structFound = findStruct(typeStructName, member.m_structIndex);
 				ANKI_ASSERT(structFound);
-				(void)structFound;
 			}
 		}
 
@@ -643,7 +641,7 @@ public:
 		return Error::NONE;
 	}
 
-	static ANKI_USE_RESULT Error setName(CString in, Array<char, MAX_SHADER_BINARY_NAME_LENGTH + 1>& out)
+	static Error setName(CString in, Array<char, MAX_SHADER_BINARY_NAME_LENGTH + 1>& out)
 	{
 		if(in.getLength() + 1 > MAX_SHADER_BINARY_NAME_LENGTH)
 		{
@@ -662,8 +660,7 @@ public:
 		return Error::NONE;
 	}
 
-	static ANKI_USE_RESULT Error findBlock(CString name, U32 set, U32 binding,
-										   ConstWeakArray<ShaderProgramBinaryBlock> arr, U32& idx)
+	static Error findBlock(CString name, U32 set, U32 binding, ConstWeakArray<ShaderProgramBinaryBlock> arr, U32& idx)
 	{
 		idx = MAX_U32;
 

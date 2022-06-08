@@ -15,7 +15,7 @@ ANKI_TEST(ShaderCompiler, ShaderCompilerParser)
 	public:
 		U32 count = 0;
 
-		Error readAllText(CString filename, StringAuto& txt) final
+		Error readAllText([[maybe_unused]] CString filename, StringAuto& txt) final
 		{
 			if(count == 0)
 			{

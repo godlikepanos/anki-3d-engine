@@ -119,7 +119,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	m_config = init.m_config;
 	ANKI_ASSERT(m_config);
 
-	ANKI_CHECK(initInstance(init));
+	ANKI_CHECK(initInstance());
 	ANKI_CHECK(initSurface(init));
 	ANKI_CHECK(initDevice(init));
 
@@ -200,7 +200,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	return Error::NONE;
 }
 
-Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
+Error GrManagerImpl::initInstance()
 {
 	// Init VOLK
 	//
@@ -1435,7 +1435,7 @@ void GrManagerImpl::trySetVulkanHandleName(CString name, VkObjectType type, U64 
 }
 
 VkBool32 GrManagerImpl::debugReportCallbackEXT(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-											   VkDebugUtilsMessageTypeFlagsEXT messageTypes,
+											   [[maybe_unused]] VkDebugUtilsMessageTypeFlagsEXT messageTypes,
 											   const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
 											   void* pUserData)
 {

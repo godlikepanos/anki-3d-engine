@@ -26,7 +26,7 @@ public:
 
 	~StatsUi();
 
-	ANKI_USE_RESULT Error init();
+	Error init();
 
 	void build(CanvasPtr ctx) override;
 

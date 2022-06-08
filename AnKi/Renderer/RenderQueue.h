@@ -179,12 +179,12 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Bool isEnabled() const
+	[[nodiscard]] Bool isEnabled() const
 	{
 		return m_uuid != 0;
 	}
 
-	ANKI_USE_RESULT Bool hasShadow() const
+	[[nodiscard]] Bool hasShadow() const
 	{
 		return isEnabled() && m_shadowCascadeCount > 0;
 	}

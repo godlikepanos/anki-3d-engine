@@ -70,7 +70,7 @@ public:
 
 	~AnimationResource();
 
-	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
+	Error load(const ResourceFilename& filename, Bool async);
 
 	/// Get a vector of all animation channels
 	const DynamicArray<AnimationChannel>& getChannels() const

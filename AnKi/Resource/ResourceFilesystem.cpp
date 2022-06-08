@@ -22,31 +22,31 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error read(void* buff, PtrSize size) override
+	Error read(void* buff, PtrSize size) override
 	{
 		ANKI_TRACE_SCOPED_EVENT(RSRC_FILE_READ);
 		return m_file.read(buff, size);
 	}
 
-	ANKI_USE_RESULT Error readAllText(StringAuto& out) override
+	Error readAllText(StringAuto& out) override
 	{
 		ANKI_TRACE_SCOPED_EVENT(RSRC_FILE_READ);
 		return m_file.readAllText(out);
 	}
 
-	ANKI_USE_RESULT Error readU32(U32& u) override
+	Error readU32(U32& u) override
 	{
 		ANKI_TRACE_SCOPED_EVENT(RSRC_FILE_READ);
 		return m_file.readU32(u);
 	}
 
-	ANKI_USE_RESULT Error readF32(F32& f) override
+	Error readF32(F32& f) override
 	{
 		ANKI_TRACE_SCOPED_EVENT(RSRC_FILE_READ);
 		return m_file.readF32(f);
 	}
 
-	ANKI_USE_RESULT Error seek(PtrSize offset, FileSeekOrigin origin) override
+	Error seek(PtrSize offset, FileSeekOrigin origin) override
 	{
 		return m_file.seek(offset, origin);
 	}
@@ -80,7 +80,7 @@ public:
 		}
 	}
 
-	ANKI_USE_RESULT Error open(const CString& archive, const CString& archivedFname)
+	Error open(const CString& archive, const CString& archivedFname)
 	{
 		// Open archive
 		m_archive = unzOpen(&archive[0]);
@@ -125,7 +125,7 @@ public:
 		}
 	}
 
-	ANKI_USE_RESULT Error read(void* buff, PtrSize size) override
+	Error read(void* buff, PtrSize size) override
 	{
 		ANKI_TRACE_SCOPED_EVENT(RSRC_FILE_READ);
 
@@ -140,28 +140,28 @@ public:
 		return Error::NONE;
 	}
 
-	ANKI_USE_RESULT Error readAllText(StringAuto& out) override
+	Error readAllText(StringAuto& out) override
 	{
 		ANKI_ASSERT(m_size);
 		out.create('?', m_size);
 		return read(&out[0], m_size);
 	}
 
-	ANKI_USE_RESULT Error readU32(U32& u) override
+	Error readU32(U32& u) override
 	{
 		// Assume machine and file have same endianness
 		ANKI_CHECK(read(&u, sizeof(u)));
 		return Error::NONE;
 	}
 
-	ANKI_USE_RESULT Error readF32(F32& u) override
+	Error readF32(F32& u) override
 	{
 		// Assume machine and file have same endianness
 		ANKI_CHECK(read(&u, sizeof(u)));
 		return Error::NONE;
 	}
 
-	ANKI_USE_RESULT Error seek(PtrSize offset, FileSeekOrigin origin) override
+	Error seek(PtrSize offset, FileSeekOrigin origin) override
 	{
 		// Rewind if needed
 		if(origin == FileSeekOrigin::BEGINNING)

@@ -55,9 +55,9 @@ void SpatialComponent::setConvexHullWorldSpace(const ConvexHullShape& hull)
 	m_markedForUpdate = true;
 }
 
-Error SpatialComponent::update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated)
+Error SpatialComponent::update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated)
 {
-	ANKI_ASSERT(&node == m_node);
+	ANKI_ASSERT(info.m_node == m_node);
 
 	updated = m_markedForUpdate;
 	if(updated)

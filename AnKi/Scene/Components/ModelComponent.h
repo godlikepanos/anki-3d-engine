@@ -24,14 +24,14 @@ public:
 
 	~ModelComponent();
 
-	ANKI_USE_RESULT Error loadModelResource(CString filename);
+	Error loadModelResource(CString filename);
 
 	const ModelResourcePtr& getModelResource() const
 	{
 		return m_model;
 	}
 
-	Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
+	Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated) override
 	{
 		updated = m_dirty;
 		m_dirty = false;

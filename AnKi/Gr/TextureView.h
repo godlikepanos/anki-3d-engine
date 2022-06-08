@@ -131,7 +131,7 @@ protected:
 
 private:
 	/// Allocate and initialize a new instance.
-	static ANKI_USE_RESULT TextureView* newInstance(GrManager* manager, const TextureViewInitInfo& init);
+	[[nodiscard]] static TextureView* newInstance(GrManager* manager, const TextureViewInitInfo& init);
 };
 /// @}
 

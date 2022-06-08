@@ -99,12 +99,11 @@ public:
 
 	~DSAllocator();
 
-	ANKI_USE_RESULT Error init();
-	ANKI_USE_RESULT Error createNewPool();
+	Error init();
+	Error createNewPool();
 
-	ANKI_USE_RESULT Error getOrCreateSet(U64 hash,
-										 const Array<AnyBindingExtended, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings,
-										 StackAllocator<U8>& tmpAlloc, const DS*& out)
+	Error getOrCreateSet(U64 hash, const Array<AnyBindingExtended, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings,
+						 StackAllocator<U8>& tmpAlloc, const DS*& out)
 	{
 		out = tryFindSet(hash);
 		if(out == nullptr)
@@ -125,9 +124,9 @@ private:
 	IntrusiveList<DS> m_list; ///< At the left of the list are the least used sets.
 	HashMap<U64, DS*> m_hashmap;
 
-	ANKI_USE_RESULT const DS* tryFindSet(U64 hash);
-	ANKI_USE_RESULT Error newSet(U64 hash, const Array<AnyBindingExtended, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings,
-								 StackAllocator<U8>& tmpAlloc, const DS*& out);
+	[[nodiscard]] const DS* tryFindSet(U64 hash);
+	Error newSet(U64 hash, const Array<AnyBindingExtended, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings,
+				 StackAllocator<U8>& tmpAlloc, const DS*& out);
 	void writeSet(const Array<AnyBindingExtended, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings, const DS& set,
 				  StackAllocator<U8>& tmpAlloc);
 };
@@ -165,10 +164,10 @@ public:
 
 	~DSLayoutCacheEntry();
 
-	ANKI_USE_RESULT Error init(const DescriptorBinding* bindings, U32 bindingCount, U64 hash);
+	Error init(const DescriptorBinding* bindings, U32 bindingCount, U64 hash);
 
 	/// @note Thread-safe.
-	ANKI_USE_RESULT Error getOrCreateDSAllocator(DescriptorSetFactory::DSAllocator*& alloc);
+	Error getOrCreateDSAllocator(DescriptorSetFactory::DSAllocator*& alloc);
 };
 
 DescriptorSetFactory::BindlessDescriptorSet::~BindlessDescriptorSet()
@@ -501,8 +500,7 @@ Error DescriptorSetFactory::DSAllocator::newSet(
 		ci.descriptorSetCount = 1;
 
 		VkDescriptorSet handle;
-		VkResult rez = vkAllocateDescriptorSets(m_layoutEntry->m_factory->m_dev, &ci, &handle);
-		(void)rez;
+		[[maybe_unused]] VkResult rez = vkAllocateDescriptorSets(m_layoutEntry->m_factory->m_dev, &ci, &handle);
 		ANKI_ASSERT(rez == VK_SUCCESS && "That allocation can't fail");
 		ANKI_TRACE_INC_COUNTER(VK_DESCRIPTOR_SET_CREATE, 1);
 
@@ -1066,7 +1064,7 @@ Error DescriptorSetFactory::newDescriptorSetLayout(const DescriptorSetLayoutInit
 	return Error::NONE;
 }
 
-Error DescriptorSetFactory::newDescriptorSet(ThreadId tid, StackAllocator<U8>& tmpAlloc, DescriptorSetState& state,
+Error DescriptorSetFactory::newDescriptorSet(StackAllocator<U8>& tmpAlloc, DescriptorSetState& state,
 											 DescriptorSet& set, Bool& dirty,
 											 Array<PtrSize, MAX_BINDINGS_PER_DESCRIPTOR_SET>& dynamicOffsets,
 											 U32& dynamicOffsetCount)

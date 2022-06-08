@@ -59,14 +59,14 @@ private:
 
 	~MicroSampler();
 
-	ANKI_USE_RESULT Error init(const SamplerInitInfo& inf);
+	Error init(const SamplerInitInfo& inf);
 };
 
 /// MicroSamplerPtr deleter.
 class MicroSamplerPtrDeleter
 {
 public:
-	void operator()(MicroSampler* s)
+	void operator()([[maybe_unused]] MicroSampler* s)
 	{
 		ANKI_ASSERT(s);
 		// Do nothing. The samplers will be destroyed at app shutdown
@@ -96,7 +96,7 @@ public:
 	void destroy();
 
 	/// Create a new sampler. It's thread-safe.
-	ANKI_USE_RESULT Error newInstance(const SamplerInitInfo& inf, MicroSamplerPtr& psampler);
+	Error newInstance(const SamplerInitInfo& inf, MicroSamplerPtr& psampler);
 
 private:
 	GrManagerImpl* m_gr = nullptr;

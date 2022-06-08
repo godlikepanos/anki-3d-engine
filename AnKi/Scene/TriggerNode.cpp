@@ -23,14 +23,14 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) final
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) final
 	{
 		updated = false;
 
-		const MoveComponent& move = node.getFirstComponentOfType<MoveComponent>();
-		if(move.getTimestamp() == node.getGlobalTimestamp())
+		const MoveComponent& move = info.m_node->getFirstComponentOfType<MoveComponent>();
+		if(move.getTimestamp() == info.m_node->getGlobalTimestamp())
 		{
-			node.getFirstComponentOfType<TriggerComponent>().setWorldTransform(move.getWorldTransform());
+			info.m_node->getFirstComponentOfType<TriggerComponent>().setWorldTransform(move.getWorldTransform());
 		}
 
 		return Error::NONE;

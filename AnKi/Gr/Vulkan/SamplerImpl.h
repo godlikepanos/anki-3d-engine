@@ -29,7 +29,7 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error init(const SamplerInitInfo& init);
+	Error init(const SamplerInitInfo& init);
 };
 /// @}
 

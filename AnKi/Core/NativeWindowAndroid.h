@@ -18,7 +18,7 @@ public:
 
 	~NativeWindowAndroid();
 
-	ANKI_USE_RESULT Error init(const NativeWindowInitInfo& init);
+	Error init(const NativeWindowInitInfo& init);
 };
 
 } // end namespace anki

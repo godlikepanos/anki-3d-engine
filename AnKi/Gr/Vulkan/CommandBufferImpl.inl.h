@@ -256,9 +256,10 @@ inline void CommandBufferImpl::setBufferBarrierInternal(const BufferPtr& buff, B
 	m_microCmdb->pushObjectRef(buff);
 }
 
-inline void CommandBufferImpl::setAccelerationStructureBarrierInternal(const AccelerationStructurePtr& as,
-																	   AccelerationStructureUsageBit prevUsage,
-																	   AccelerationStructureUsageBit nextUsage)
+inline void
+CommandBufferImpl::setAccelerationStructureBarrierInternal([[maybe_unused]] const AccelerationStructurePtr& as,
+														   AccelerationStructureUsageBit prevUsage,
+														   AccelerationStructureUsageBit nextUsage)
 {
 	commandCommon();
 
@@ -288,6 +289,8 @@ inline void CommandBufferImpl::setAccelerationStructureBarrierInternal(const Acc
 #else
 	ANKI_ASSERT(!"TODO");
 #endif
+
+	// No need to hold reference since noone touches the AS
 }
 
 inline void CommandBufferImpl::drawArraysInternal(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 first,
@@ -355,8 +358,8 @@ inline void CommandBufferImpl::dispatchComputeInternal(U32 groupCountX, U32 grou
 			Bool dirty;
 			Array<PtrSize, MAX_BINDINGS_PER_DESCRIPTOR_SET> dynamicOffsetsPtrSize;
 			U32 dynamicOffsetCount;
-			if(getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(
-				   m_tid, m_alloc, m_dsetState[i], dset, dirty, dynamicOffsetsPtrSize, dynamicOffsetCount))
+			if(getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(m_alloc, m_dsetState[i], dset, dirty,
+																			 dynamicOffsetsPtrSize, dynamicOffsetCount))
 			{
 				ANKI_VK_LOGF("Cannot recover");
 			}
@@ -400,8 +403,7 @@ inline void CommandBufferImpl::traceRaysInternal(const BufferPtr& sbtBuffer, Ptr
 	ANKI_ASSERT(rayTypeCount == sprog.getMissShaderCount() && "All the miss shaders should be in use");
 	ANKI_ASSERT((hitGroupSbtRecordCount % rayTypeCount) == 0);
 	const PtrSize sbtRecordCount = 1 + rayTypeCount + hitGroupSbtRecordCount;
-	const PtrSize sbtBufferSize = sbtRecordCount * sbtRecordSize;
-	(void)sbtBufferSize;
+	[[maybe_unused]] const PtrSize sbtBufferSize = sbtRecordCount * sbtRecordSize;
 	ANKI_ASSERT(sbtBufferSize + sbtBufferOffset <= sbtBuffer->getSize());
 	ANKI_ASSERT(isAligned(getGrManagerImpl().getDeviceCapabilities().m_sbtRecordAlignment, sbtBufferOffset));
 
@@ -420,8 +422,8 @@ inline void CommandBufferImpl::traceRaysInternal(const BufferPtr& sbtBuffer, Ptr
 			Bool dirty;
 			Array<PtrSize, MAX_BINDINGS_PER_DESCRIPTOR_SET> dynamicOffsetsPtrSize;
 			U32 dynamicOffsetCount;
-			if(getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(
-				   m_tid, m_alloc, m_dsetState[i], dset, dirty, dynamicOffsetsPtrSize, dynamicOffsetCount))
+			if(getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(m_alloc, m_dsetState[i], dset, dirty,
+																			 dynamicOffsetsPtrSize, dynamicOffsetCount))
 			{
 				ANKI_VK_LOGF("Cannot recover");
 			}
@@ -652,8 +654,8 @@ inline void CommandBufferImpl::drawcallCommon()
 			Bool dirty;
 			Array<PtrSize, MAX_BINDINGS_PER_DESCRIPTOR_SET> dynamicOffsetsPtrSize;
 			U32 dynamicOffsetCount;
-			if(getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(
-				   m_tid, m_alloc, m_dsetState[i], dset, dirty, dynamicOffsetsPtrSize, dynamicOffsetCount))
+			if(getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(m_alloc, m_dsetState[i], dset, dirty,
+																			 dynamicOffsetsPtrSize, dynamicOffsetCount))
 			{
 				ANKI_VK_LOGF("Cannot recover");
 			}

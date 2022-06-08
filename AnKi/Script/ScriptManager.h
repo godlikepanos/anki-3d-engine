@@ -24,7 +24,7 @@ public:
 	~ScriptManager();
 
 	/// Create the script manager.
-	ANKI_USE_RESULT Error init(AllocAlignedCallback allocCb, void* allocCbData);
+	Error init(AllocAlignedCallback allocCb, void* allocCbData);
 
 	void setRenderer(MainRenderer* renderer)
 	{
@@ -50,7 +50,7 @@ public:
 	}
 
 	/// Evaluate a string
-	ANKI_USE_RESULT Error evalString(const CString& str)
+	Error evalString(const CString& str)
 	{
 		LockGuard<Mutex> lock(n_luaMtx);
 		return LuaBinder::evalString(m_lua.getLuaState(), str);

@@ -30,7 +30,7 @@ public:
 
 	~FramebufferImpl();
 
-	ANKI_USE_RESULT Error init(const FramebufferInitInfo& init);
+	Error init(const FramebufferInitInfo& init);
 
 	/// Good for pipeline creation.
 	VkRenderPass getCompatibleRenderPass() const
@@ -144,7 +144,7 @@ private:
 	VkFragmentShadingRateAttachmentInfoKHR m_sriAttachmentInfo = {};
 
 	// Methods
-	ANKI_USE_RESULT Error initFbs(const FramebufferInitInfo& init);
+	Error initFbs(const FramebufferInitInfo& init);
 	void initRpassCreateInfo(const FramebufferInitInfo& init);
 	void initClearValues(const FramebufferInitInfo& init);
 	void setupAttachmentDescriptor(const FramebufferAttachmentInfo& att, VkAttachmentDescription2& desc,

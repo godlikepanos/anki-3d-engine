@@ -47,9 +47,9 @@ public:
 	~SkinComponent();
 
 	/// Load the skeleton resource.
-	ANKI_USE_RESULT Error loadSkeletonResource(CString filename);
+	Error loadSkeletonResource(CString filename);
 
-	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override;
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 
 	void playAnimation(U32 track, AnimationResourcePtr anim, const AnimationPlayInfo& info);
 

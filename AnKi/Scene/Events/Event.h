@@ -90,15 +90,13 @@ public:
 	/// This method should be implemented by the derived classes
 	/// @param prevUpdateTime The time of the previous update (sec)
 	/// @param crntTime The current time (sec)
-	virtual ANKI_USE_RESULT Error update(Second prevUpdateTime, Second crntTime) = 0;
+	virtual Error update(Second prevUpdateTime, Second crntTime) = 0;
 
 	/// This is called when the event is killed
 	/// @param prevUpdateTime The time of the previous update (sec)
 	/// @param crntTime The current time (sec)
-	virtual ANKI_USE_RESULT Error onKilled(Second prevUpdateTime, Second crntTime)
+	virtual Error onKilled([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime)
 	{
-		(void)prevUpdateTime;
-		(void)crntTime;
 		return Error::NONE;
 	}
 
