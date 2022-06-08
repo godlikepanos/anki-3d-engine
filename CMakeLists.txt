@@ -224,8 +224,6 @@ else()
 
 	# Full paths in compiler diagnostics else you can't click on visual studio have it open the file+line
 	add_compile_options("/FC")
-
-	add_compile_options("/std:c++17")
 endif()
 
 # Use LLD or gold linker
