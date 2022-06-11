@@ -35,10 +35,7 @@ public:
 
 	~MicroImageView()
 	{
-		for([[maybe_unused]] U32 idx : m_bindlessIndices)
-		{
-			ANKI_ASSERT(idx == MAX_U32 && "Forgot to unbind the bindless");
-		}
+		ANKI_ASSERT(m_bindlessIndex == MAX_U32 && "Forgot to unbind the bindless");
 		ANKI_ASSERT(m_handle == VK_NULL_HANDLE);
 	}
 
@@ -46,8 +43,8 @@ public:
 	{
 		m_handle = b.m_handle;
 		b.m_handle = VK_NULL_HANDLE;
-		m_bindlessIndices = b.m_bindlessIndices;
-		b.m_bindlessIndices = {MAX_U32, MAX_U32};
+		m_bindlessIndex = b.m_bindlessIndex;
+		b.m_bindlessIndex = MAX_U32;
 		m_derivedTextureType = b.m_derivedTextureType;
 		b.m_derivedTextureType = TextureType::COUNT;
 		return *this;
@@ -60,7 +57,7 @@ public:
 	}
 
 	/// @note It's thread-safe.
-	U32 getOrCreateBindlessIndex(VkImageLayout layout, GrManagerImpl& gr) const;
+	U32 getOrCreateBindlessIndex(GrManagerImpl& gr) const;
 
 	TextureType getDerivedTextureType() const
 	{
@@ -71,12 +68,8 @@ public:
 private:
 	VkImageView m_handle = VK_NULL_HANDLE;
 
-	/// Index 0: Sampled image with SHADER_READ_ONLY layout.
-	/// Index 1: Storage image with ofcource GENERAL layout.
-	mutable Array<U32, 2> m_bindlessIndices = {MAX_U32, MAX_U32};
-
-	/// Protect the m_bindlessIndices.
-	mutable SpinLock m_lock;
+	mutable U32 m_bindlessIndex = MAX_U32;
+	mutable SpinLock m_bindlessIndexLock;
 
 	/// Because for example a single surface view of a cube texture will be a 2D view.
 	TextureType m_derivedTextureType = TextureType::COUNT;

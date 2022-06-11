@@ -799,6 +799,12 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 		key.setLod(0);
 	}
 
+	if(!(prog.m_presentBuildinMutators & U32(BuiltinMutatorId::VELOCITY)) && key.getVelocity())
+	{
+		// Particles set their own velocity
+		key.setVelocity(false);
+	}
+
 	ANKI_ASSERT(!key.getSkinned() || !!(prog.m_presentBuildinMutators & U32(1 << BuiltinMutatorId::BONES)));
 	ANKI_ASSERT(!key.getVelocity() || !!(prog.m_presentBuildinMutators & U32(1 << BuiltinMutatorId::VELOCITY)));
 

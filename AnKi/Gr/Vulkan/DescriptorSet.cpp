@@ -27,9 +27,9 @@ public:
 	/// @note It's thread-safe.
 	U32 bindTexture(const VkImageView view, const VkImageLayout layout);
 
-	/// Bind a storage image.
+	/// Bind a uniform texel buffer.
 	/// @note It's thread-safe.
-	U32 bindImage(const VkImageView view);
+	U32 bindUniformTexelBuffer(VkBufferView view);
 
 	/// @note It's thread-safe.
 	void unbindTexture(U32 idx)
@@ -38,9 +38,9 @@ public:
 	}
 
 	/// @note It's thread-safe.
-	void unbindImage(U32 idx)
+	void unbindUniformTexelBuffer(U32 idx)
 	{
-		unbindCommon(idx, m_freeImgIndices, m_freeImgIndexCount);
+		unbindCommon(idx, m_freeTexelBufferIndices, m_freeTexelBufferIndexCount);
 	}
 
 	DescriptorSet getDescriptorSet() const
@@ -66,10 +66,10 @@ private:
 	Mutex m_mtx;
 
 	DynamicArray<U16> m_freeTexIndices;
-	DynamicArray<U16> m_freeImgIndices;
+	DynamicArray<U16> m_freeTexelBufferIndices;
 
-	U16 m_freeTexIndexCount ANKI_DEBUG_CODE(= MAX_U16);
-	U16 m_freeImgIndexCount ANKI_DEBUG_CODE(= MAX_U16);
+	U16 m_freeTexIndexCount = MAX_U16;
+	U16 m_freeTexelBufferIndexCount = MAX_U16;
 
 	void unbindCommon(U32 idx, DynamicArray<U16>& freeIndices, U16& freeIndexCount);
 };
@@ -173,7 +173,8 @@ public:
 DescriptorSetFactory::BindlessDescriptorSet::~BindlessDescriptorSet()
 {
 	ANKI_ASSERT(m_freeTexIndexCount == m_freeTexIndices.getSize() && "Forgot to unbind some textures");
-	ANKI_ASSERT(m_freeImgIndexCount == m_freeImgIndices.getSize() && "Forgot to unbind some images");
+	ANKI_ASSERT(m_freeTexelBufferIndexCount == m_freeTexelBufferIndices.getSize()
+				&& "Forgot to unbind some texel buffers");
 
 	if(m_pool)
 	{
@@ -188,12 +189,12 @@ DescriptorSetFactory::BindlessDescriptorSet::~BindlessDescriptorSet()
 		m_layout = VK_NULL_HANDLE;
 	}
 
-	m_freeImgIndices.destroy(m_alloc);
 	m_freeTexIndices.destroy(m_alloc);
+	m_freeTexelBufferIndices.destroy(m_alloc);
 }
 
 Error DescriptorSetFactory::BindlessDescriptorSet::init(const GrAllocator<U8>& alloc, VkDevice dev,
-														U32 bindlessTextureCount, U32 bindlessImageCount)
+														U32 bindlessTextureCount, U32 bindlessTextureBuffers)
 {
 	ANKI_ASSERT(dev);
 	m_alloc = alloc;
@@ -208,8 +209,8 @@ Error DescriptorSetFactory::BindlessDescriptorSet::init(const GrAllocator<U8>& a
 		bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 		bindings[1].binding = 1;
 		bindings[1].stageFlags = VK_SHADER_STAGE_ALL;
-		bindings[1].descriptorCount = bindlessImageCount;
-		bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+		bindings[1].descriptorCount = bindlessTextureBuffers;
+		bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER;
 
 		Array<VkDescriptorBindingFlagsEXT, 2> bindingFlags = {};
 		bindingFlags[0] = VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT
@@ -237,8 +238,8 @@ Error DescriptorSetFactory::BindlessDescriptorSet::init(const GrAllocator<U8>& a
 		Array<VkDescriptorPoolSize, 2> sizes = {};
 		sizes[0].type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 		sizes[0].descriptorCount = bindlessTextureCount;
-		sizes[1].type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-		sizes[1].descriptorCount = bindlessImageCount;
+		sizes[1].type = VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER;
+		sizes[1].descriptorCount = bindlessTextureBuffers;
 
 		VkDescriptorPoolCreateInfo ci = {};
 		ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -271,12 +272,12 @@ Error DescriptorSetFactory::BindlessDescriptorSet::init(const GrAllocator<U8>& a
 			m_freeTexIndices[i] = U16(m_freeTexIndices.getSize() - i - 1);
 		}
 
-		m_freeImgIndices.create(m_alloc, bindlessImageCount);
-		m_freeImgIndexCount = U16(m_freeImgIndices.getSize());
+		m_freeTexelBufferIndices.create(m_alloc, bindlessTextureBuffers);
+		m_freeTexelBufferIndexCount = U16(m_freeTexelBufferIndices.getSize());
 
-		for(U32 i = 0; i < m_freeImgIndices.getSize(); ++i)
+		for(U32 i = 0; i < m_freeTexelBufferIndices.getSize(); ++i)
 		{
-			m_freeImgIndices[i] = U16(m_freeImgIndices.getSize() - i - 1);
+			m_freeTexelBufferIndices[i] = U16(m_freeTexelBufferIndices.getSize() - i - 1);
 		}
 	}
 
@@ -316,31 +317,27 @@ U32 DescriptorSetFactory::BindlessDescriptorSet::bindTexture(const VkImageView v
 	return idx;
 }
 
-U32 DescriptorSetFactory::BindlessDescriptorSet::bindImage(const VkImageView view)
+U32 DescriptorSetFactory::BindlessDescriptorSet::bindUniformTexelBuffer(VkBufferView view)
 {
 	ANKI_ASSERT(view);
 	LockGuard<Mutex> lock(m_mtx);
-	ANKI_ASSERT(m_freeImgIndexCount > 0 && "Out of indices");
+	ANKI_ASSERT(m_freeTexelBufferIndexCount > 0 && "Out of indices");
 
-	// Get the index
-	--m_freeImgIndexCount;
-	const U32 idx = m_freeImgIndices[m_freeImgIndexCount];
-	ANKI_ASSERT(idx < m_freeImgIndices.getSize());
+	// Pop the index
+	--m_freeTexelBufferIndexCount;
+	const U16 idx = m_freeTexelBufferIndices[m_freeTexelBufferIndexCount];
+	ANKI_ASSERT(idx < m_freeTexelBufferIndices.getSize());
 
 	// Update the set
-	VkDescriptorImageInfo imageInf = {};
-	imageInf.imageView = view;
-	imageInf.imageLayout = VK_IMAGE_LAYOUT_GENERAL; // Storage images are always in general.
-
 	VkWriteDescriptorSet write = {};
 	write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	write.pNext = nullptr;
 	write.dstSet = m_dset;
 	write.dstBinding = 1;
 	write.descriptorCount = 1;
-	write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+	write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER;
 	write.dstArrayElement = idx;
-	write.pImageInfo = &imageInf;
+	write.pTexelBufferView = &view;
 
 	vkUpdateDescriptorSets(m_dev, 1, &write, 0, nullptr);
 
@@ -789,6 +786,56 @@ Error DSLayoutCacheEntry::getOrCreateDSAllocator(DescriptorSetFactory::DSAllocat
 	return Error::NONE;
 }
 
+AnyBinding& DescriptorSetState::getBindingToPopulate(U32 bindingIdx, U32 arrayIdx)
+{
+	ANKI_ASSERT(bindingIdx < MAX_BINDINGS_PER_DESCRIPTOR_SET);
+
+	AnyBindingExtended& extended = m_bindings[bindingIdx];
+	AnyBinding* out;
+	const Bool bindingIsSet = m_bindingSet.get(bindingIdx);
+	m_bindingSet.set(bindingIdx);
+	extended.m_arraySize = (!bindingIsSet) ? 0 : extended.m_arraySize;
+
+	if(ANKI_LIKELY(arrayIdx == 0 && extended.m_arraySize <= 1))
+	{
+		// Array idx is zero, most common case
+		out = &extended.m_single;
+		extended.m_arraySize = 1;
+	}
+	else if(arrayIdx < extended.m_arraySize)
+	{
+		// It's (or was) an array and there enough space in thar array
+		out = &extended.m_array[arrayIdx];
+	}
+	else
+	{
+		// Need to grow
+		const U32 newSize = max(extended.m_arraySize * 2, arrayIdx + 1);
+		AnyBinding* newArr = m_alloc.newArray<AnyBinding>(newSize);
+
+		if(extended.m_arraySize == 1)
+		{
+			newArr[0] = extended.m_single;
+		}
+		else if(extended.m_arraySize > 1)
+		{
+			// Copy old to new.
+			memcpy(newArr, extended.m_array, sizeof(AnyBinding) * extended.m_arraySize);
+		}
+
+		// Zero the rest
+		memset(newArr + extended.m_arraySize, 0, sizeof(AnyBinding) * (newSize - extended.m_arraySize));
+		extended.m_arraySize = newSize;
+		extended.m_array = newArr;
+
+		// Return
+		out = &extended.m_array[arrayIdx];
+	}
+
+	ANKI_ASSERT(out);
+	return *out;
+}
+
 void DescriptorSetState::flush(U64& hash, Array<PtrSize, MAX_BINDINGS_PER_DESCRIPTOR_SET>& dynamicOffsets,
 							   U32& dynamicOffsetCount, Bool& bindlessDSet)
 {
@@ -937,15 +984,15 @@ DescriptorSetFactory::~DescriptorSetFactory()
 }
 
 Error DescriptorSetFactory::init(const GrAllocator<U8>& alloc, VkDevice dev, U32 bindlessTextureCount,
-								 U32 bindlessImageCount)
+								 U32 bindlessTextureBuffers)
 {
 	m_alloc = alloc;
 	m_dev = dev;
 
 	m_bindless = m_alloc.newInstance<BindlessDescriptorSet>();
-	ANKI_CHECK(m_bindless->init(alloc, dev, bindlessTextureCount, bindlessImageCount));
+	ANKI_CHECK(m_bindless->init(alloc, dev, bindlessTextureCount, bindlessTextureBuffers));
 	m_bindlessTextureCount = bindlessTextureCount;
-	m_bindlessImageCount = bindlessImageCount;
+	m_bindlessUniformTexelBufferCount = bindlessTextureBuffers;
 
 	return Error::NONE;
 }
@@ -1014,8 +1061,8 @@ Error DescriptorSetFactory::newDescriptorSetLayout(const DescriptorSetLayoutInit
 			{
 				// All good
 			}
-			else if(binding.m_binding == 1 && binding.m_type == DescriptorType::IMAGE
-					&& binding.m_arraySize == m_bindlessImageCount)
+			else if(binding.m_binding == 1 && binding.m_type == DescriptorType::READ_TEXTURE_BUFFER
+					&& binding.m_arraySize == m_bindlessUniformTexelBufferCount)
 			{
 				// All good
 			}
@@ -1114,10 +1161,10 @@ U32 DescriptorSetFactory::bindBindlessTexture(const VkImageView view, const VkIm
 	return m_bindless->bindTexture(view, layout);
 }
 
-U32 DescriptorSetFactory::bindBindlessImage(const VkImageView view)
+U32 DescriptorSetFactory::bindBindlessUniformTexelBuffer(const VkBufferView view)
 {
 	ANKI_ASSERT(m_bindless);
-	return m_bindless->bindImage(view);
+	return m_bindless->bindUniformTexelBuffer(view);
 }
 
 void DescriptorSetFactory::unbindBindlessTexture(U32 idx)
@@ -1126,10 +1173,10 @@ void DescriptorSetFactory::unbindBindlessTexture(U32 idx)
 	m_bindless->unbindTexture(idx);
 }
 
-void DescriptorSetFactory::unbindBindlessImage(U32 idx)
+void DescriptorSetFactory::unbindBindlessUniformTexelBuffer(U32 idx)
 {
 	ANKI_ASSERT(m_bindless);
-	m_bindless->unbindImage(idx);
+	m_bindless->unbindUniformTexelBuffer(idx);
 }
 
 } // end namespace anki

@@ -2152,6 +2152,7 @@ void main()
 
 ANKI_TEST(Gr, Bindless)
 {
+#if 0
 	COMMON_BEGIN()
 
 	// Create texture A
@@ -2276,6 +2277,7 @@ void main()
 	resBuff->unmap();
 
 	COMMON_END()
+#endif
 }
 
 ANKI_TEST(Gr, BufferAddress)

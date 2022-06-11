@@ -44,7 +44,7 @@ constexpr U32 MAX_BINDINGS_PER_DESCRIPTOR_SET = 32;
 constexpr U32 MAX_FRAMES_IN_FLIGHT = 3; ///< Triple buffering.
 constexpr U32 MAX_GR_OBJECT_NAME_LENGTH = 31;
 constexpr U32 MAX_BINDLESS_TEXTURES = 512;
-constexpr U32 MAX_BINDLESS_IMAGES = 64;
+constexpr U32 MAX_BINDLESS_READONLY_TEXTURE_BUFFERS = 512;
 
 /// The number of commands in a command buffer that make it a small batch command buffer.
 constexpr U32 COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS = 100;
