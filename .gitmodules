@@ -1,0 +1,3 @@
+[submodule "ThirdParty/nvngx_dlss_sdk/sdk"]
+	path = ThirdParty/nvngx_dlss_sdk/sdk
+	url = https://github.com/NVIDIA/DLSS.git

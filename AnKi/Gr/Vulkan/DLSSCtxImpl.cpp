@@ -9,10 +9,10 @@
 #include <AnKi/Gr/Vulkan/CommandBufferImpl.h>
 
 // Ngx specific
-#include <ThirdParty/nvngx_dlss_sdk/include/nvsdk_ngx.h>
-#include <ThirdParty/nvngx_dlss_sdk/include/nvsdk_ngx_helpers.h>
-#include <ThirdParty/nvngx_dlss_sdk/include/nvsdk_ngx_vk.h>
-#include <ThirdParty/nvngx_dlss_sdk/include/nvsdk_ngx_helpers_vk.h>
+#include <ThirdParty/nvngx_dlss_sdk/sdk/include/nvsdk_ngx.h>
+#include <ThirdParty/nvngx_dlss_sdk/sdk/include/nvsdk_ngx_helpers.h>
+#include <ThirdParty/nvngx_dlss_sdk/sdk/include/nvsdk_ngx_vk.h>
+#include <ThirdParty/nvngx_dlss_sdk/sdk/include/nvsdk_ngx_helpers_vk.h>
 
 namespace anki {
 
