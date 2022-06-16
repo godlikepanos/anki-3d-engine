@@ -7,9 +7,7 @@
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Gr/Texture.h>
 #include <AnKi/Gr/CommandBuffer.h>
-#if DLSS_SUPPORT
 #include <AnKi/Gr/Vulkan/DLSSCtxImpl.h>
-#endif
 
 namespace anki {
 
