@@ -116,7 +116,7 @@ Error Scale::init()
 		useDlss ? m_r->getHdrFormat()
 				: ((getGrManager().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::R8G8B8_UNORM
 																						 : Format::R8G8B8A8_UNORM);
-	const char* rtName = (useDlss && needsScaling) ? "Scaled (DLSS)" : (m_fsr ? "Scaled (FSR)" : "Scaled");
+	const char* rtName = useDlss ? "Scaled (DLSS)" : (m_fsr ? "Scaled (FSR)" : "Scaled");
 	m_rtDesc = m_r->create2DRenderTargetDescription(m_r->getPostProcessResolution().x(),
 													m_r->getPostProcessResolution().y(), desiredScaledFormat, rtName);
 	m_rtDesc.bake();
