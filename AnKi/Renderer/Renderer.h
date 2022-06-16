@@ -56,6 +56,8 @@ public:
 		return m_rtShadows.isCreated();
 	}
 
+	Bool getUsingDLSS() const;
+
 	const UVec2& getInternalResolution() const
 	{
 		return m_internalResolution;
@@ -283,6 +285,7 @@ private:
 	ANKI_USE_RESULT Error initInternal(UVec2 swapchainSize);
 
 	void initJitteredMats();
+	void updateJitterMatrix(Mat4& jitterMatrix);
 }; // namespace anki
 /// @}
 

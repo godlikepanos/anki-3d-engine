@@ -33,17 +33,24 @@ public:
 		return m_runCtx.m_buffHandle;
 	}
 
+	RenderTargetHandle getExposureRT() const
+	{
+		return m_runCtx.m_exposureHandle;
+	}
+
 private:
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
 	U32 m_inputTexMip;
 
 	BufferPtr m_luminanceBuff;
+	TexturePtr m_exposure1x1;
 
 	class
 	{
 	public:
 		BufferHandle m_buffHandle;
+		RenderTargetHandle m_exposureHandle;
 	} m_runCtx;
 
 	ANKI_USE_RESULT Error initInternal();

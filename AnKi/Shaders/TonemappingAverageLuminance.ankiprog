@@ -24,6 +24,9 @@ layout(set = 0, binding = 0) uniform ANKI_RP texture2D u_tex;
 #define TONEMAPPING_BINDING 1
 #include <AnKi/Shaders/TonemappingResources.glsl>
 
+// Needed for DLSS
+layout(set = 0, binding = 2) uniform writeonly image2D u_outExposureImage;
+
 shared F32 s_avgLum[WORKGROUP_SIZE.x * WORKGROUP_SIZE.y];
 
 void main()
@@ -99,6 +102,8 @@ void main()
 
 		u_averageLuminance = finalAvgLum;
 		u_exposureThreshold0 = computeExposure(u_averageLuminance, 0.0);
+
+		imageStore(u_outExposureImage, IVec2(0,0), Vec4(u_exposureThreshold0));
 	}
 }
 #pragma anki end

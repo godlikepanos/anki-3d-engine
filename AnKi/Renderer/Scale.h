@@ -44,7 +44,6 @@ private:
 	RenderTargetDescription m_rtDesc;
 
 	Bool m_fsr = false;
-	Bool m_dlss = false;
 
 	class
 	{
@@ -55,15 +54,21 @@ private:
 
 	void runScaling(RenderPassWorkContext& rgraphCtx);
 	void runSharpening(RenderPassWorkContext& rgraphCtx);
+	void runDLSS(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 
 	Bool doSharpening() const
 	{
 		return m_sharpenProg.isCreated();
 	}
 
+	Bool doDLSS() const
+	{
+		return m_dlssCtx.isCreated();
+	}
+
 	Bool doScaling() const
 	{
-		return m_scaleProg.isCreated();
+		return m_scaleProg.isCreated() || doDLSS();
 	}
 };
 /// @}

@@ -5,6 +5,7 @@
 
 #pragma anki mutator SRI_TEXEL_DIMENSION 8 16
 #pragma anki mutator SHARED_MEMORY 0 1
+#pragma anki mutator HDR_INPUT 0 1
 
 #include <AnKi/Shaders/Functions.glsl>
 #include <AnKi/Shaders/TonemappingFunctions.glsl>
@@ -12,6 +13,11 @@
 // Find the maximum luma derivative in x and y, relative to the average luma of the block.
 // Each thread handles a 2x2 region when using 8x8 VRS tiles and a 2x4 region when using 16x16 VRS tiles.
 
+#if HDR_INPUT
+const U32 TONEMAPPING_SET = 0u;
+const U32 TONEMAPPING_BINDING = 3u;
+#include <AnKi/Shaders/TonemappingResources.glsl>
+#endif
 layout(set = 0, binding = 0) uniform ANKI_RP texture2D u_inputTex;
 layout(set = 0, binding = 1) uniform sampler u_nearestClampSampler;
 
@@ -42,9 +48,15 @@ shared F32 s_averageLuma[SHARED_MEMORY_ENTRIES];
 shared Vec2 s_maxDerivative[SHARED_MEMORY_ENTRIES];
 #endif
 
+#if HDR_INPUT
+#define sampleLuma(offsetX, offsetY) \
+	computeLuminance( \
+		linearToSRgb(tonemap(textureLodOffset(sampler2D(u_inputTex, u_nearestClampSampler), uv, 0.0, IVec2(offsetX, offsetY)).xyz, u_exposureThreshold0)))
+#else
 #define sampleLuma(offsetX, offsetY) \
 	computeLuminance( \
 		textureLodOffset(sampler2D(u_inputTex, u_nearestClampSampler), uv, 0.0, IVec2(offsetX, offsetY)).xyz)
+#endif
 
 void main()
 {

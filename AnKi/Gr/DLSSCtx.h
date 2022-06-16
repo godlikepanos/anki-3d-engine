@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include <AnKi/Math.h>
 #include <AnKi/Gr/GrObject.h>
+#include <AnKi/Math.h>
 #include <AnKi/Util/WeakArray.h>
 
 namespace anki {
@@ -24,11 +24,11 @@ enum class DLSSQualityMode : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DLSSQualityMode)
 
-class DLSSCtxInitInfo 
+class DLSSCtxInitInfo
 {
 public:
-	UVec2 m_srcRes = {0,0};
-	UVec2 m_dstRes = { 0,0 };
+	UVec2 m_srcRes = {0, 0};
+	UVec2 m_dstRes = {0, 0};
 	DLSSQualityMode m_mode = DLSSQualityMode::PERFORMANCE;
 };
 
@@ -39,8 +39,11 @@ class DLSSCtx : public GrObject
 public:
 	static constexpr GrObjectType CLASS_TYPE = GrObjectType::DLSS_CTX;
 
-protected:
+	void upscale(CommandBufferPtr cmdb, const TextureViewPtr& srcRt, const TextureViewPtr& dstRt,
+				 const TextureViewPtr& mvRt, const TextureViewPtr& depthRt, const TextureViewPtr& exposure,
+				 const Bool resetAccumulation, const Vec2& jitterOffset, const Vec2& mVScale);
 
+protected:
 	/// Construct.
 	DLSSCtx(GrManager* manager, CString name)
 		: GrObject(manager, CLASS_TYPE, name)
@@ -51,17 +54,6 @@ protected:
 	~DLSSCtx()
 	{
 	}
-
-	void upscale(CommandBufferPtr cmdb,
-		const TexturePtr srcRt,
-		const TexturePtr dstRt,
-		const TexturePtr mvRt,
-		const TexturePtr depthRt,
-		const TexturePtr exposure,
-		const Bool resetAccumulation,
-		const F32 sharpness,
-		const Vec2& jitterOffset,
-		const Vec2& mVScale);
 
 private:
 	/// Allocate and initialize a new instance.

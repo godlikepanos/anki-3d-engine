@@ -19,7 +19,7 @@ if (WIN32)
     )
 
     # TODO: DO NOT USE/PUSH THE DEV DLLs 
-    set_target_properties(AnkiNgx PROPERTIES IMPORTED_LOCATION "${NGX_SDK_ROOT}/lib/Windows_x86_64/dev/nvngx_dlss.dll")
+    set_target_properties(AnkiNgx PROPERTIES IMPORTED_LOCATION "${NGX_SDK_ROOT}/lib/Windows_x86_64/rel/nvngx_dlss.dll")
 else ()
     add_library(AnkiNgx IMPORTED STATIC GLOBAL)
 

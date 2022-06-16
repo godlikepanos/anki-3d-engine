@@ -139,16 +139,21 @@ Error DLSSCtxImpl::init(const DLSSCtxInitInfo& init)
 	return Error::NONE;
 }
 
-void DLSSCtxImpl::upscale(CommandBufferPtr cmdb,
-    const TexturePtr srcRt,
-    const TexturePtr dstRt,
-    const TexturePtr mvRt,
-    const TexturePtr depthRt,
-    const TexturePtr exposure,
-    const Bool resetAccumulation,
-    const F32 sharpness,
-    const Vec2& jitterOffset,
-    const Vec2& mVScale)
+static NVSDK_NGX_Resource_VK getNGXResourceFromAnkiTexture(const TextureViewImpl& tex, Bool isUAV)
+{
+	NVSDK_NGX_Resource_VK resourceVK = {};
+	VkImageView imageView = tex.getHandle();
+	VkFormat format = convertFormat(tex.getTextureImpl().getFormat());
+	VkImage image = tex.getTextureImpl().m_imageHandle;
+	VkImageSubresourceRange subresourceRange = tex.getVkImageSubresourceRange();
+
+	return NVSDK_NGX_Create_ImageView_Resource_VK(imageView, image, subresourceRange, format,
+												  tex.getTextureImpl().getWidth(), tex.getTextureImpl().getHeight(), isUAV);
+}
+
+void DLSSCtxImpl::upscale(CommandBufferPtr cmdb, const TextureViewPtr& srcRt, const TextureViewPtr& dstRt,
+						  const TextureViewPtr& mvRt, const TextureViewPtr& depthRt, const TextureViewPtr& exposure,
+						  const Bool resetAccumulation, const Vec2& jitterOffset, const Vec2& mVScale)
 {
     if (!isNgxInitialized())
     {
@@ -156,7 +161,50 @@ void DLSSCtxImpl::upscale(CommandBufferPtr cmdb,
         return;
     }
 
+    const TextureViewImpl& srcViewImpl = static_cast<const TextureViewImpl&>(*srcRt);
+	const TextureViewImpl& dstViewImpl = static_cast<const TextureViewImpl&>(*dstRt);
+	const TextureViewImpl& mvViewImpl = static_cast<const TextureViewImpl&>(*mvRt);
+	const TextureViewImpl& depthViewImpl = static_cast<const TextureViewImpl&>(*depthRt);
+	const TextureViewImpl& exposureViewImpl = static_cast<const TextureViewImpl&>(*exposure);
 
+    NVSDK_NGX_Resource_VK srcResVk = getNGXResourceFromAnkiTexture(srcViewImpl, false);
+	NVSDK_NGX_Resource_VK dstResVk = getNGXResourceFromAnkiTexture(dstViewImpl, true);
+	NVSDK_NGX_Resource_VK mvResVk = getNGXResourceFromAnkiTexture(mvViewImpl, false);
+	NVSDK_NGX_Resource_VK depthResVk = getNGXResourceFromAnkiTexture(depthViewImpl, false);
+	NVSDK_NGX_Resource_VK exposureResVk = getNGXResourceFromAnkiTexture(exposureViewImpl, true);
+
+    NVSDK_NGX_Coordinates renderingOffset = {0, 0};
+	NVSDK_NGX_Dimensions renderingSize = {srcViewImpl.getTextureImpl().getWidth(), srcViewImpl.getTextureImpl().getHeight()}; 
+
+    NVSDK_NGX_VK_DLSS_Eval_Params vkDlssEvalParams;
+	memset(&vkDlssEvalParams, 0, sizeof(vkDlssEvalParams));
+	vkDlssEvalParams.Feature.pInColor = &srcResVk;
+	vkDlssEvalParams.Feature.pInOutput = &dstResVk;
+	vkDlssEvalParams.pInDepth = &depthResVk;
+	vkDlssEvalParams.pInMotionVectors = &mvResVk;
+	vkDlssEvalParams.pInExposureTexture = &exposureResVk;
+	vkDlssEvalParams.InJitterOffsetX = jitterOffset.x();
+	vkDlssEvalParams.InJitterOffsetY = jitterOffset.y();
+	vkDlssEvalParams.Feature.InSharpness = m_recommendedSettings.m_recommendedSharpness;
+	vkDlssEvalParams.InReset = resetAccumulation;
+	vkDlssEvalParams.InMVScaleX = mVScale.x();
+	vkDlssEvalParams.InMVScaleY = mVScale.y();
+	vkDlssEvalParams.InColorSubrectBase = renderingOffset;
+	vkDlssEvalParams.InDepthSubrectBase = renderingOffset;
+	vkDlssEvalParams.InTranslucencySubrectBase = renderingOffset;
+	vkDlssEvalParams.InMVSubrectBase = renderingOffset;
+	vkDlssEvalParams.InRenderSubrectDimensions = renderingSize;
+
+    CommandBufferImpl& cmdbImpl = static_cast<CommandBufferImpl&>(*cmdb);
+
+    getGrManagerImpl().beginMarker(cmdbImpl.getHandle(), "DLSS");
+	NVSDK_NGX_Result result = NGX_VULKAN_EVALUATE_DLSS_EXT(cmdbImpl.getHandle(), m_dlssFeature, m_ngxParameters, &vkDlssEvalParams);
+	getGrManagerImpl().endMarker(cmdbImpl.getHandle());
+
+    if(NVSDK_NGX_FAILED(result))
+	{
+		ANKI_LOGE("Failed to NVSDK_NGX_VULKAN_EvaluateFeature for DLSS, code = 0x%08x, info: %ls", result, GetNGXResultAsString(result));
+	}
 }
 
 void DLSSCtxImpl::shutdown() 
@@ -168,7 +216,6 @@ void DLSSCtxImpl::shutdown()
 
         if (m_dlssFeature != nullptr)
         {
-            ANKI_VK_LOGW("Attempt to release NGX library before features have been released!  Releasing now but should check your code.");
             releaseDLSSFeature();
         }
         NVSDK_NGX_VULKAN_DestroyParameters(m_ngxParameters);

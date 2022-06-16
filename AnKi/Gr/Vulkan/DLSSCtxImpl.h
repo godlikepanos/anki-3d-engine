@@ -45,16 +45,9 @@ public:
 
 	Bool isNgxInitialized() const { return m_ngxInitialized; }
 
-	void upscale(CommandBufferPtr cmdb,
-		const TexturePtr srcRt,
-		const TexturePtr dstRt,
-		const TexturePtr mvRt,
-		const TexturePtr depthRt,
-		const TexturePtr exposure,
-		const Bool resetAccumulation,
-		const F32 sharpness,
-		const Vec2& jitterOffset,
-		const Vec2& mVScale);
+	void upscale(CommandBufferPtr cmdb, const TextureViewPtr& srcRt, const TextureViewPtr& dstRt,
+				 const TextureViewPtr& mvRt, const TextureViewPtr& depthRt, const TextureViewPtr& exposure,
+				 const Bool resetAccumulation, const Vec2& jitterOffset, const Vec2& mVScale);
 
 private:
 

@@ -60,6 +60,12 @@ Renderer::~Renderer()
 	m_currentDebugRtName.destroy(getAllocator());
 }
 
+Bool Renderer::getUsingDLSS() const
+{
+	Bool needsScaling = getPostProcessResolution() != getInternalResolution();
+	return needsScaling && (getConfig().getRDlss() != 0) && m_gr->getDeviceCapabilities().m_dlssSupport;
+}
+
 Error Renderer::init(ThreadHive* hive, ResourceManager* resources, GrManager* gl, StagingGpuMemoryPool* stagingMem,
 					 UiManager* ui, HeapAllocator<U8> alloc, ConfigSet* config, Timestamp* globTimestamp,
 					 UVec2 swapchainSize)
@@ -244,7 +250,7 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		sinit.m_anisotropyLevel = m_config->getRTextureAnisotropy();
 		m_samplers.m_trilinearRepeatAniso = m_gr->newSampler(sinit);
 
-		const F32 scalingMipBias = log2(F32(m_internalResolution.x()) / F32(m_postProcessResolution.x()));
+		const F32 scalingMipBias = log2(F32(m_internalResolution.x()) / F32(m_postProcessResolution.x())) - (getUsingDLSS() ? 1 : 0);
 		sinit.m_lodBias = scalingMipBias;
 		m_samplers.m_trilinearRepeatAnisoResolutionScalingBias = m_gr->newSampler(sinit);
 	}
@@ -293,6 +299,51 @@ void Renderer::initJitteredMats()
 	}
 }
 
+void Renderer::updateJitterMatrix(Mat4& jitterMatrix)
+{
+	if(!getUsingDLSS())
+	{
+		jitterMatrix = m_jitteredMats8x[m_frameCount & (m_jitteredMats8x.getSize() - 1)];
+	}
+	else
+	{
+		// Halton jitter
+		Vec2 offset(0.0f, 0.0f);
+
+		constexpr I64 s_BaseX = 2;
+		I64 index = m_frameCount + 1;
+		float InvBase = 1.0f / s_BaseX;
+		float fraction = InvBase;
+		while(index > 0)
+		{
+			offset[0] += (index % s_BaseX) * fraction;
+			index /= s_BaseX;
+			fraction *= InvBase;
+		}
+
+		constexpr I64 s_BaseY = 3;
+		index = m_frameCount + 1;
+		InvBase = 1.0f / s_BaseY;
+		fraction = InvBase;
+		while(index > 0)
+		{
+			offset[1] += (index % s_BaseY) * fraction;
+			index /= s_BaseY;
+			fraction *= InvBase;
+		}
+
+		offset = (offset - Vec2(0.5f)) * 2.0f;	
+
+		Vec2 texSize(1.0f / Vec2(F32(m_internalResolution.x()), F32(m_internalResolution.y()))); // Texel size
+		texSize *= 2.0f;
+		Vec2 subSample = offset * texSize; // In [-texSize, texSize]
+		subSample *= 0.5f; // In [-texSize / 2, texSize / 2]
+
+		jitterMatrix = Mat4::getIdentity();
+		jitterMatrix.setTranslationPart(Vec4(subSample, 0.0, 1.0));
+	}
+}
+
 Error Renderer::populateRenderGraph(RenderingContext& ctx)
 {
 	ctx.m_prevMatrices = m_prevMatrices;
@@ -302,7 +353,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	ctx.m_matrices.m_projection = ctx.m_renderQueue->m_projectionMatrix;
 	ctx.m_matrices.m_viewProjection = ctx.m_renderQueue->m_viewProjectionMatrix;
 
-	ctx.m_matrices.m_jitter = m_jitteredMats8x[m_frameCount & (m_jitteredMats8x.getSize() - 1)];
+	updateJitterMatrix(ctx.m_matrices.m_jitter);
 	ctx.m_matrices.m_projectionJitter = ctx.m_matrices.m_jitter * ctx.m_matrices.m_projection;
 	ctx.m_matrices.m_viewProjectionJitter = ctx.m_matrices.m_projectionJitter * ctx.m_matrices.m_view;
 	ctx.m_matrices.m_invertedViewProjectionJitter = ctx.m_matrices.m_viewProjectionJitter.getInverse();
@@ -362,7 +413,10 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_indirectSpecular->populateRenderGraph(ctx);
 	m_indirectDiffuse->populateRenderGraph(ctx);
 	m_lightShading->populateRenderGraph(ctx);
-	m_temporalAA->populateRenderGraph(ctx);
+	if(!getUsingDLSS())
+	{
+		m_temporalAA->populateRenderGraph(ctx);
+	}
 	m_vrsSriGeneration->populateRenderGraph(ctx);
 	m_scale->populateRenderGraph(ctx);
 	m_downscaleBlur->populateRenderGraph(ctx);
