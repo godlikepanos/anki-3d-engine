@@ -64,9 +64,9 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT static Error performSpirvReflection(Array<ConstWeakArray<U8>, U32(ShaderType::COUNT)> spirv,
-														GenericMemoryPoolAllocator<U8> tmpAlloc,
-														ShaderReflectionVisitorInterface& interface);
+	[[nodiscard]] static Error performSpirvReflection(Array<ConstWeakArray<U8>, U32(ShaderType::COUNT)> spirv,
+													  GenericMemoryPoolAllocator<U8> tmpAlloc,
+													  ShaderReflectionVisitorInterface& interface);
 
 private:
 	class Var
@@ -159,26 +159,25 @@ private:
 	GenericMemoryPoolAllocator<U8> m_alloc;
 	ShaderReflectionVisitorInterface* m_interface = nullptr;
 
-	ANKI_USE_RESULT Error spirvTypeToAnki(const spirv_cross::SPIRType& type, ShaderVariableDataType& out) const;
+	Error spirvTypeToAnki(const spirv_cross::SPIRType& type, ShaderVariableDataType& out) const;
 
-	ANKI_USE_RESULT Error blockReflection(const spirv_cross::Resource& res, Bool isStorage,
-										  DynamicArrayAuto<Block>& blocks) const;
+	Error blockReflection(const spirv_cross::Resource& res, Bool isStorage, DynamicArrayAuto<Block>& blocks) const;
 
-	ANKI_USE_RESULT Error opaqueReflection(const spirv_cross::Resource& res, DynamicArrayAuto<Opaque>& opaques) const;
+	Error opaqueReflection(const spirv_cross::Resource& res, DynamicArrayAuto<Opaque>& opaques) const;
 
-	ANKI_USE_RESULT Error constsReflection(DynamicArrayAuto<Const>& consts, ShaderType stage) const;
+	Error constsReflection(DynamicArrayAuto<Const>& consts) const;
 
-	ANKI_USE_RESULT Error blockVariablesReflection(spirv_cross::TypeID resourceId, DynamicArrayAuto<Var>& vars) const;
+	Error blockVariablesReflection(spirv_cross::TypeID resourceId, DynamicArrayAuto<Var>& vars) const;
 
-	ANKI_USE_RESULT Error blockVariableReflection(const spirv_cross::SPIRType& type, CString parentVariable,
-												  U32 baseOffset, DynamicArrayAuto<Var>& vars) const;
+	Error blockVariableReflection(const spirv_cross::SPIRType& type, CString parentVariable, U32 baseOffset,
+								  DynamicArrayAuto<Var>& vars) const;
 
-	ANKI_USE_RESULT Error workgroupSizes(U32& sizex, U32& sizey, U32& sizez, U32& specConstMask);
+	Error workgroupSizes(U32& sizex, U32& sizey, U32& sizez, U32& specConstMask);
 
-	ANKI_USE_RESULT Error structsReflection(DynamicArrayAuto<Struct>& structs) const;
+	Error structsReflection(DynamicArrayAuto<Struct>& structs) const;
 
-	ANKI_USE_RESULT Error structReflection(uint32_t id, const spirv_cross::SPIRType& type, U32 depth, Bool& skipped,
-										   DynamicArrayAuto<Struct>& structs, U32& structIndexInStructsArr) const;
+	Error structReflection(uint32_t id, const spirv_cross::SPIRType& type, U32 depth, Bool& skipped,
+						   DynamicArrayAuto<Struct>& structs, U32& structIndexInStructsArr) const;
 };
 
 Error SpirvReflector::structsReflection(DynamicArrayAuto<Struct>& structs) const
@@ -536,7 +535,7 @@ Error SpirvReflector::blockVariableReflection(const spirv_cross::SPIRType& type,
 	return Error::NONE;
 }
 
-Error SpirvReflector::blockReflection(const spirv_cross::Resource& res, Bool isStorage,
+Error SpirvReflector::blockReflection(const spirv_cross::Resource& res, [[maybe_unused]] Bool isStorage,
 									  DynamicArrayAuto<Block>& blocks) const
 {
 	Block newBlock(m_alloc);
@@ -748,7 +747,7 @@ Error SpirvReflector::opaqueReflection(const spirv_cross::Resource& res, Dynamic
 	return Error::NONE;
 }
 
-Error SpirvReflector::constsReflection(DynamicArrayAuto<Const>& consts, ShaderType stage) const
+Error SpirvReflector::constsReflection(DynamicArrayAuto<Const>& consts) const
 {
 	spirv_cross::SmallVector<spirv_cross::SpecializationConstant> specConsts = get_specialization_constants();
 	for(const spirv_cross::SpecializationConstant& c : specConsts)
@@ -930,7 +929,7 @@ Error SpirvReflector::performSpirvReflection(Array<ConstWeakArray<U8>, U32(Shade
 		}
 
 		// Spec consts
-		ANKI_CHECK(compiler.constsReflection(specializationConstants, type));
+		ANKI_CHECK(compiler.constsReflection(specializationConstants));
 
 		// Workgroup sizes
 		if(type == ShaderType::COMPUTE)

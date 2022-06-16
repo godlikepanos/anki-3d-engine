@@ -28,9 +28,9 @@ public:
 
 	~ParticleEmitterComponent();
 
-	ANKI_USE_RESULT Error loadParticleEmitterResource(CString filename);
+	Error loadParticleEmitterResource(CString filename);
 
-	Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override;
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 
 	void setWorldTransform(const Transform& transform)
 	{

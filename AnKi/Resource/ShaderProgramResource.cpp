@@ -48,7 +48,7 @@ ShaderProgramResource::~ShaderProgramResource()
 	m_variants.destroy(getAllocator());
 }
 
-Error ShaderProgramResource::load(const ResourceFilename& filename, Bool async)
+Error ShaderProgramResource::load(const ResourceFilename& filename, [[maybe_unused]] Bool async)
 {
 	// Load the binary
 	ResourceFilePtr file;
@@ -344,8 +344,7 @@ ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitIn
 				const U32 binaryConstIdx = binaryVariant->m_workgroupSizesConstants[i];
 				const U32 constIdx = m_constBinaryMapping[binaryConstIdx].m_constsIdx;
 				const U32 component = m_constBinaryMapping[binaryConstIdx].m_component;
-				const Const& c = m_consts[constIdx];
-				(void)c;
+				[[maybe_unused]] const Const& c = m_consts[constIdx];
 				ANKI_ASSERT(c.m_dataType == ShaderVariableDataType::U32 || c.m_dataType == ShaderVariableDataType::UVEC2
 							|| c.m_dataType == ShaderVariableDataType::UVEC3
 							|| c.m_dataType == ShaderVariableDataType::UVEC4);

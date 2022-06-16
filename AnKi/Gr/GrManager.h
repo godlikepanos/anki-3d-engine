@@ -50,7 +50,7 @@ class GrManager
 {
 public:
 	/// Create.
-	static ANKI_USE_RESULT Error newInstance(GrManagerInitInfo& init, GrManager*& gr);
+	static Error newInstance(GrManagerInitInfo& init, GrManager*& gr);
 
 	/// Destroy.
 	static void deleteInstance(GrManager* gr);
@@ -72,19 +72,19 @@ public:
 
 	/// @name Object creation methods. They are thread-safe.
 	/// @{
-	ANKI_USE_RESULT BufferPtr newBuffer(const BufferInitInfo& init);
-	ANKI_USE_RESULT TexturePtr newTexture(const TextureInitInfo& init);
-	ANKI_USE_RESULT TextureViewPtr newTextureView(const TextureViewInitInfo& init);
-	ANKI_USE_RESULT SamplerPtr newSampler(const SamplerInitInfo& init);
-	ANKI_USE_RESULT ShaderPtr newShader(const ShaderInitInfo& init);
-	ANKI_USE_RESULT ShaderProgramPtr newShaderProgram(const ShaderProgramInitInfo& init);
-	ANKI_USE_RESULT CommandBufferPtr newCommandBuffer(const CommandBufferInitInfo& init);
-	ANKI_USE_RESULT FramebufferPtr newFramebuffer(const FramebufferInitInfo& init);
-	ANKI_USE_RESULT OcclusionQueryPtr newOcclusionQuery();
-	ANKI_USE_RESULT TimestampQueryPtr newTimestampQuery();
-	ANKI_USE_RESULT RenderGraphPtr newRenderGraph();
-	ANKI_USE_RESULT DLSSCtxPtr newDLSSCtx(const DLSSCtxInitInfo& init);
-	ANKI_USE_RESULT AccelerationStructurePtr newAccelerationStructure(const AccelerationStructureInitInfo& init);
+	[[nodiscard]] BufferPtr newBuffer(const BufferInitInfo& init);
+	[[nodiscard]] TexturePtr newTexture(const TextureInitInfo& init);
+	[[nodiscard]] TextureViewPtr newTextureView(const TextureViewInitInfo& init);
+	[[nodiscard]] SamplerPtr newSampler(const SamplerInitInfo& init);
+	[[nodiscard]] ShaderPtr newShader(const ShaderInitInfo& init);
+	[[nodiscard]] ShaderProgramPtr newShaderProgram(const ShaderProgramInitInfo& init);
+	[[nodiscard]] CommandBufferPtr newCommandBuffer(const CommandBufferInitInfo& init);
+	[[nodiscard]] FramebufferPtr newFramebuffer(const FramebufferInitInfo& init);
+	[[nodiscard]] OcclusionQueryPtr newOcclusionQuery();
+	[[nodiscard]] TimestampQueryPtr newTimestampQuery();
+	[[nodiscard]] RenderGraphPtr newRenderGraph();
+	[[nodiscard]] DLSSCtxPtr newDLSSCtx(const DLSSCtxInitInfo& init);
+	[[nodiscard]] AccelerationStructurePtr newAccelerationStructure(const AccelerationStructureInitInfo& init);
 	/// @}
 
 	GrManagerStats getStats() const;

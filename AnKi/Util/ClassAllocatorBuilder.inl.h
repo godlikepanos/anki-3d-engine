@@ -27,9 +27,8 @@ void ClassAllocatorBuilder<TChunk, TInterface, TLock>::init(GenericMemoryPoolAll
 template<typename TChunk, typename TInterface, typename TLock>
 void ClassAllocatorBuilder<TChunk, TInterface, TLock>::destroy()
 {
-	for(Class& c : m_classes)
+	for([[maybe_unused]] const Class& c : m_classes)
 	{
-		(void)c;
 		ANKI_ASSERT(c.m_chunkList.isEmpty() && "Forgot to deallocate");
 	}
 

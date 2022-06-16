@@ -30,9 +30,9 @@ public:
 
 	VertexGpuMemoryPool& operator=(const VertexGpuMemoryPool&) = delete; // Non-copyable
 
-	ANKI_USE_RESULT Error init(GenericMemoryPoolAllocator<U8> alloc, GrManager* gr, const ConfigSet& cfg);
+	Error init(GenericMemoryPoolAllocator<U8> alloc, GrManager* gr, const ConfigSet& cfg);
 
-	ANKI_USE_RESULT Error allocate(PtrSize size, PtrSize& offset);
+	Error allocate(PtrSize size, PtrSize& offset);
 
 	void free(PtrSize size, PtrSize offset);
 
@@ -103,7 +103,7 @@ public:
 
 	StagingGpuMemoryPool& operator=(const StagingGpuMemoryPool&) = delete; // Non-copyable
 
-	ANKI_USE_RESULT Error init(GrManager* gr, const ConfigSet& cfg);
+	Error init(GrManager* gr, const ConfigSet& cfg);
 
 	void endFrame();
 

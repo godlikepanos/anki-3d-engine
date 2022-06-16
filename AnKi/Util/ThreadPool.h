@@ -54,7 +54,7 @@ public:
 
 	/// Wait for all tasks to finish.
 	/// @return The error code in one of the worker threads.
-	ANKI_USE_RESULT Error waitForAllThreadsToFinish()
+	Error waitForAllThreadsToFinish()
 	{
 		m_barrier.wait();
 		m_tasksAssigned = 0;
@@ -74,10 +74,8 @@ private:
 	class DummyTask : public ThreadPoolTask
 	{
 	public:
-		Error operator()(U32 taskId, PtrSize threadsCount)
+		Error operator()([[maybe_unused]] U32 taskId, [[maybe_unused]] PtrSize threadsCount)
 		{
-			(void)taskId;
-			(void)threadsCount;
 			return Error::NONE;
 		}
 	};

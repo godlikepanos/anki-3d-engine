@@ -17,7 +17,6 @@
 namespace anki {
 
 // Forward
-class DSThreadAllocator;
 class DSLayoutCacheEntry;
 
 /// @addtogroup vulkan
@@ -112,6 +111,12 @@ public:
 	VkAccelerationStructureKHR m_accelerationStructureHandle;
 };
 
+class TextureBufferBinding
+{
+public:
+	VkBufferView m_buffView;
+};
+
 class AnyBinding
 {
 public:
@@ -125,6 +130,7 @@ public:
 		BufferBinding m_buff;
 		ImageBinding m_image;
 		AsBinding m_accelerationStructure;
+		TextureBufferBinding m_textureBuffer;
 	};
 
 	DescriptorType m_type;
@@ -266,6 +272,22 @@ public:
 		unbindBindlessDSet();
 	}
 
+	void bindReadOnlyTextureBuffer(U32 binding, U32 arrayIdx, const Buffer* buff, PtrSize offset, PtrSize range,
+								   Format fmt)
+	{
+		const VkBufferView view = static_cast<const BufferImpl*>(buff)->getOrCreateBufferView(fmt, offset, range);
+		AnyBinding& b = getBindingToPopulate(binding, arrayIdx);
+		b = {};
+		b.m_type = DescriptorType::READ_TEXTURE_BUFFER;
+		b.m_uuids[0] = ptrToNumber(view);
+		b.m_uuids[1] = buff->getUuid();
+
+		b.m_textureBuffer.m_buffView = view;
+
+		m_dirtyBindings.set(binding);
+		unbindBindlessDSet();
+	}
+
 	void bindImage(U32 binding, U32 arrayIdx, const TextureView* texView)
 	{
 		ANKI_ASSERT(texView);
@@ -327,80 +349,28 @@ private:
 		m_bindlessDSetBound = false;
 	}
 
-	AnyBinding& getBindingToPopulate(U32 bindingIdx, U32 arrayIdx)
-	{
-		ANKI_ASSERT(bindingIdx < MAX_BINDINGS_PER_DESCRIPTOR_SET);
-
-		AnyBindingExtended& extended = m_bindings[bindingIdx];
-		AnyBinding* out;
-		const Bool bindingIsSet = m_bindingSet.get(bindingIdx);
-		m_bindingSet.set(bindingIdx);
-		extended.m_arraySize = (!bindingIsSet) ? 0 : extended.m_arraySize;
-
-		if(ANKI_LIKELY(arrayIdx == 0 && extended.m_arraySize <= 1))
-		{
-			// Array idx is zero, most common case
-			out = &extended.m_single;
-			extended.m_arraySize = 1;
-		}
-		else if(arrayIdx < extended.m_arraySize)
-		{
-			// It's (or was) an array and there enough space in thar array
-			out = &extended.m_array[arrayIdx];
-		}
-		else
-		{
-			// Need to grow
-			const U32 newSize = max(extended.m_arraySize * 2, arrayIdx + 1);
-			AnyBinding* newArr = m_alloc.newArray<AnyBinding>(newSize);
-
-			if(extended.m_arraySize == 1)
-			{
-				newArr[0] = extended.m_single;
-			}
-			else if(extended.m_arraySize > 1)
-			{
-				// Copy old to new.
-				memcpy(newArr, extended.m_array, sizeof(AnyBinding) * extended.m_arraySize);
-			}
-
-			// Zero the rest
-			memset(newArr + extended.m_arraySize, 0, sizeof(AnyBinding) * (newSize - extended.m_arraySize));
-			extended.m_arraySize = newSize;
-			extended.m_array = newArr;
-
-			// Return
-			out = &extended.m_array[arrayIdx];
-		}
-
-		ANKI_ASSERT(out);
-		return *out;
-	}
+	AnyBinding& getBindingToPopulate(U32 bindingIdx, U32 arrayIdx);
 };
 
 /// Creates new descriptor set layouts and descriptor sets.
 class DescriptorSetFactory
 {
 	friend class DSLayoutCacheEntry;
-	friend class DSThreadAllocator;
 
 public:
 	DescriptorSetFactory() = default;
 	~DescriptorSetFactory();
 
-	ANKI_USE_RESULT Error init(const GrAllocator<U8>& alloc, VkDevice dev, U32 bindlessTextureCount,
-							   U32 bindlessImageCount);
+	Error init(const GrAllocator<U8>& alloc, VkDevice dev, U32 bindlessTextureCount, U32 bindlessTextureBuffers);
 
 	void destroy();
 
 	/// @note It's thread-safe.
-	ANKI_USE_RESULT Error newDescriptorSetLayout(const DescriptorSetLayoutInitInfo& init, DescriptorSetLayout& layout);
+	Error newDescriptorSetLayout(const DescriptorSetLayoutInitInfo& init, DescriptorSetLayout& layout);
 
 	/// @note It's thread-safe.
-	ANKI_USE_RESULT Error newDescriptorSet(ThreadId tid, StackAllocator<U8>& tmpAlloc, DescriptorSetState& state,
-										   DescriptorSet& set, Bool& dirty,
-										   Array<PtrSize, MAX_BINDINGS_PER_DESCRIPTOR_SET>& dynamicOffsets,
-										   U32& dynamicOffsetCount);
+	Error newDescriptorSet(StackAllocator<U8>& tmpAlloc, DescriptorSetState& state, DescriptorSet& set, Bool& dirty,
+						   Array<PtrSize, MAX_BINDINGS_PER_DESCRIPTOR_SET>& dynamicOffsets, U32& dynamicOffsetCount);
 
 	void endFrame()
 	{
@@ -411,18 +381,24 @@ public:
 	/// @note It's thread-safe.
 	U32 bindBindlessTexture(const VkImageView view, const VkImageLayout layout);
 
-	/// Bind a storage image.
+	/// Bind a uniform texel buffer.
 	/// @note It's thread-safe.
-	U32 bindBindlessImage(const VkImageView view);
+	U32 bindBindlessUniformTexelBuffer(const VkBufferView view);
 
 	/// @note It's thread-safe.
 	void unbindBindlessTexture(U32 idx);
 
 	/// @note It's thread-safe.
-	void unbindBindlessImage(U32 idx);
+	void unbindBindlessUniformTexelBuffer(U32 idx);
 
 private:
 	class BindlessDescriptorSet;
+	class DSAllocator;
+	class ThreadLocal;
+
+	static thread_local ThreadLocal* m_threadLocal;
+	DynamicArray<ThreadLocal*> m_allThreadLocals;
+	Mutex m_allThreadLocalsMtx;
 
 	GrAllocator<U8> m_alloc;
 	VkDevice m_dev = VK_NULL_HANDLE;
@@ -433,7 +409,7 @@ private:
 
 	BindlessDescriptorSet* m_bindless = nullptr;
 	U32 m_bindlessTextureCount = MAX_U32;
-	U32 m_bindlessImageCount = MAX_U32;
+	U32 m_bindlessUniformTexelBufferCount = MAX_U32;
 };
 /// @}
 

@@ -155,13 +155,13 @@ Error XmlDocument::parse(CString xmlText, GenericMemoryPoolAllocator<U8> alloc)
 	return Error::NONE;
 }
 
-ANKI_USE_RESULT Error XmlDocument::getChildElementOptional(CString name, XmlElement& out) const
+Error XmlDocument::getChildElementOptional(CString name, XmlElement& out) const
 {
 	out = XmlElement(m_doc.FirstChildElement(&name[0]), m_alloc);
 	return Error::NONE;
 }
 
-ANKI_USE_RESULT Error XmlDocument::getChildElement(CString name, XmlElement& out) const
+Error XmlDocument::getChildElement(CString name, XmlElement& out) const
 {
 	ANKI_CHECK(getChildElementOptional(name, out));
 

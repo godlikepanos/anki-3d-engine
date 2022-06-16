@@ -57,7 +57,7 @@ protected:
 
 private:
 	/// Allocate and initialize a new instance.
-	static ANKI_USE_RESULT DLSSCtx* newInstance(GrManager* manager, const DLSSCtxInitInfo& init);
+	static [[nodiscard]] DLSSCtx* newInstance(GrManager* manager, const DLSSCtxInitInfo& init);
 };
 /// @}
 

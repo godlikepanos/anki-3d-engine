@@ -21,17 +21,17 @@ class PhysicsTriggerProcessContactCallback
 {
 public:
 	/// Will be called whenever a contact first touches a trigger.
-	virtual void onTriggerEnter(PhysicsTrigger& trigger, PhysicsFilteredObject& obj)
+	virtual void onTriggerEnter([[maybe_unused]] PhysicsTrigger& trigger, [[maybe_unused]] PhysicsFilteredObject& obj)
 	{
 	}
 
 	/// Will be called whenever a contact touches a trigger.
-	virtual void onTriggerInside(PhysicsTrigger& trigger, PhysicsFilteredObject& obj)
+	virtual void onTriggerInside([[maybe_unused]] PhysicsTrigger& trigger, [[maybe_unused]] PhysicsFilteredObject& obj)
 	{
 	}
 
 	/// Will be called whenever a contact stops touching a trigger.
-	virtual void onTriggerExit(PhysicsTrigger& trigger, PhysicsFilteredObject& obj)
+	virtual void onTriggerExit([[maybe_unused]] PhysicsTrigger& trigger, [[maybe_unused]] PhysicsFilteredObject& obj)
 	{
 	}
 };

@@ -24,19 +24,19 @@ public:
 	{
 	}
 
-	Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override
 	{
 		updated = false;
 
-		PlayerControllerComponent& playerc = node.getFirstComponentOfType<PlayerControllerComponent>();
-		const Input& in = node.getSceneGraph().getInput();
+		PlayerControllerComponent& playerc = info.m_node->getFirstComponentOfType<PlayerControllerComponent>();
+		const Input& in = info.m_node->getSceneGraph().getInput();
 		const F32 ang = toRad(7.0f);
 
 		F32 y = in.getMousePosition().y();
 		F32 x = in.getMousePosition().x();
-		if(playerc.getTimestamp() == node.getGlobalTimestamp() || y != 0.0 || x != 0.0)
+		if(playerc.getTimestamp() == info.m_node->getGlobalTimestamp() || y != 0.0 || x != 0.0)
 		{
-			MoveComponent& move = node.getFirstComponentOfType<MoveComponent>();
+			MoveComponent& move = info.m_node->getFirstComponentOfType<MoveComponent>();
 
 			// Set origin
 			Vec4 origin = playerc.getWorldTransform().getOrigin();
@@ -75,13 +75,13 @@ public:
 	{
 	}
 
-	Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override
 	{
 		updated = false;
 
-		PlayerControllerComponent& playerc = node.getFirstComponentOfType<PlayerControllerComponent>();
-		MoveComponent& move = node.getFirstComponentOfType<MoveComponent>();
-		const Input& in = node.getSceneGraph().getInput();
+		PlayerControllerComponent& playerc = info.m_node->getFirstComponentOfType<PlayerControllerComponent>();
+		MoveComponent& move = info.m_node->getFirstComponentOfType<MoveComponent>();
+		const Input& in = info.m_node->getSceneGraph().getInput();
 
 		const F32 speed = 0.5;
 

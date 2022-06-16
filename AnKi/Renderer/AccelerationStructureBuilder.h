@@ -25,7 +25,7 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error init()
+	Error init()
 	{
 		return Error::NONE;
 	}

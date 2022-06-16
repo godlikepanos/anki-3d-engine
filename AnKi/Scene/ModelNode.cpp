@@ -29,10 +29,10 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override
 	{
 		updated = false;
-		static_cast<ModelNode&>(node).feedbackUpdate();
+		static_cast<ModelNode&>(*info.m_node).feedbackUpdate();
 		return Error::NONE;
 	}
 };
@@ -118,7 +118,7 @@ void ModelNode::feedbackUpdate()
 	}
 }
 
-Error ModelNode::frameUpdate(Second prevUpdateTime, Second crntTime)
+Error ModelNode::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime)
 {
 	if(ANKI_LIKELY(!m_deferredRenderComponentUpdate))
 	{
@@ -217,9 +217,8 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		{
 			const ModelNode& otherNode = *static_cast<const RenderProxy*>(userData[i])->m_node;
 
-			const U32 otherNodeModelPatchIdx =
+			[[maybe_unused]] const U32 otherNodeModelPatchIdx =
 				U32(static_cast<const RenderProxy*>(userData[i]) - &otherNode.m_renderProxies[0]);
-			(void)otherNodeModelPatchIdx;
 			ANKI_ASSERT(otherNodeModelPatchIdx == modelPatchIdx);
 
 			const MoveComponent& otherNodeMovec = otherNode.getFirstComponentOfType<MoveComponent>();

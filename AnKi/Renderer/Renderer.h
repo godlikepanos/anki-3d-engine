@@ -74,12 +74,12 @@ public:
 	}
 
 	/// Init the renderer.
-	ANKI_USE_RESULT Error init(ThreadHive* hive, ResourceManager* resources, GrManager* gr,
-							   StagingGpuMemoryPool* stagingMem, UiManager* ui, HeapAllocator<U8> alloc,
-							   ConfigSet* config, Timestamp* globTimestamp, UVec2 swapchainSize);
+	Error init(ThreadHive* hive, ResourceManager* resources, GrManager* gr, StagingGpuMemoryPool* stagingMem,
+			   UiManager* ui, HeapAllocator<U8> alloc, ConfigSet* config, Timestamp* globTimestamp,
+			   UVec2 swapchainSize);
 
 	/// This function does all the rendering stages and produces a final result.
-	ANKI_USE_RESULT Error populateRenderGraph(RenderingContext& ctx);
+	Error populateRenderGraph(RenderingContext& ctx);
 
 	void finalize(const RenderingContext& ctx);
 
@@ -105,15 +105,15 @@ public:
 	}
 
 	/// Create the init info for a 2D texture that will be used as a render target.
-	ANKI_USE_RESULT TextureInitInfo create2DRenderTargetInitInfo(U32 w, U32 h, Format format, TextureUsageBit usage,
-																 CString name = {});
+	[[nodiscard]] TextureInitInfo create2DRenderTargetInitInfo(U32 w, U32 h, Format format, TextureUsageBit usage,
+															   CString name = {});
 
 	/// Create the init info for a 2D texture that will be used as a render target.
-	ANKI_USE_RESULT RenderTargetDescription create2DRenderTargetDescription(U32 w, U32 h, Format format,
-																			CString name = {});
+	[[nodiscard]] RenderTargetDescription create2DRenderTargetDescription(U32 w, U32 h, Format format,
+																		  CString name = {});
 
-	ANKI_USE_RESULT TexturePtr createAndClearRenderTarget(const TextureInitInfo& inf, TextureUsageBit initialUsage,
-														  const ClearValue& clearVal = ClearValue());
+	[[nodiscard]] TexturePtr createAndClearRenderTarget(const TextureInitInfo& inf, TextureUsageBit initialUsage,
+														const ClearValue& clearVal = ClearValue());
 
 	GrManager& getGrManager()
 	{
@@ -282,7 +282,7 @@ private:
 	DynamicArray<DebugRtInfo> m_debugRts;
 	String m_currentDebugRtName;
 
-	ANKI_USE_RESULT Error initInternal(UVec2 swapchainSize);
+	Error initInternal(UVec2 swapchainSize);
 
 	void initJitteredMats();
 	void updateJitterMatrix(Mat4& jitterMatrix);

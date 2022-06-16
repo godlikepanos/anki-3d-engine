@@ -64,9 +64,9 @@ void SkinComponent::playAnimation(U32 track, AnimationResourcePtr anim, const An
 	m_tracks[track].m_repeatTimes = info.m_repeatTimes;
 }
 
-Error SkinComponent::update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated)
+Error SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	ANKI_ASSERT(&node == m_node);
+	ANKI_ASSERT(info.m_node == m_node);
 
 	updated = false;
 	if(!m_skeleton.isCreated())
@@ -74,7 +74,7 @@ Error SkinComponent::update(SceneNode& node, Second prevTime, Second crntTime, B
 		return Error::NONE;
 	}
 
-	const Second dt = crntTime - prevTime;
+	const Second dt = info.m_dt;
 
 	Vec4 minExtend(MAX_F32, MAX_F32, MAX_F32, 0.0f);
 	Vec4 maxExtend(MIN_F32, MIN_F32, MIN_F32, 0.0f);

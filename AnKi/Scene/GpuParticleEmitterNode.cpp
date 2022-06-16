@@ -23,14 +23,14 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override
 	{
 		updated = false;
 
-		const MoveComponent& move = node.getFirstComponentOfType<MoveComponent>();
-		if(move.getTimestamp() == node.getGlobalTimestamp())
+		const MoveComponent& move = info.m_node->getFirstComponentOfType<MoveComponent>();
+		if(move.getTimestamp() == info.m_node->getGlobalTimestamp())
 		{
-			GpuParticleEmitterNode& mnode = static_cast<GpuParticleEmitterNode&>(node);
+			GpuParticleEmitterNode& mnode = static_cast<GpuParticleEmitterNode&>(*info.m_node);
 			mnode.onMoveComponentUpdate(move);
 		}
 
@@ -51,14 +51,14 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override
 	{
 		updated = false;
 
-		const GpuParticleEmitterComponent& pec = node.getFirstComponentOfType<GpuParticleEmitterComponent>();
-		if(pec.getTimestamp() == node.getGlobalTimestamp())
+		const GpuParticleEmitterComponent& pec = info.m_node->getFirstComponentOfType<GpuParticleEmitterComponent>();
+		if(pec.getTimestamp() == info.m_node->getGlobalTimestamp())
 		{
-			GpuParticleEmitterNode& mnode = static_cast<GpuParticleEmitterNode&>(node);
+			GpuParticleEmitterNode& mnode = static_cast<GpuParticleEmitterNode&>(*info.m_node);
 			mnode.onShapeUpdate(pec);
 		}
 
@@ -90,7 +90,7 @@ GpuParticleEmitterNode::~GpuParticleEmitterNode()
 {
 }
 
-Error GpuParticleEmitterNode::frameUpdate(Second prevUpdateTime, Second crntTime)
+Error GpuParticleEmitterNode::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime)
 {
 	const GpuParticleEmitterComponent& pec = getFirstComponentOfType<GpuParticleEmitterComponent>();
 

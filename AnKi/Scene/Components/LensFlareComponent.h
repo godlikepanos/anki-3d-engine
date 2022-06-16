@@ -25,7 +25,7 @@ public:
 
 	~LensFlareComponent();
 
-	ANKI_USE_RESULT Error loadImageResource(CString filename);
+	Error loadImageResource(CString filename);
 
 	Bool isLoaded() const
 	{
@@ -103,7 +103,8 @@ private:
 
 	Vec3 m_worldPosition = Vec3(0.0f);
 
-	static void debugDrawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
+	static void debugDrawCallback([[maybe_unused]] RenderQueueDrawContext& ctx,
+								  [[maybe_unused]] ConstWeakArray<void*> userData)
 	{
 		// Do nothing
 	}

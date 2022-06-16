@@ -180,9 +180,9 @@ static PtrSize calcSizeOfSegment(const ImageBinaryHeader& header, ImageBinaryDat
 class ImageLoader::FileInterface
 {
 public:
-	virtual ANKI_USE_RESULT Error read(void* buff, PtrSize size) = 0;
+	virtual Error read(void* buff, PtrSize size) = 0;
 
-	virtual ANKI_USE_RESULT Error seek(PtrSize offset, FileSeekOrigin origin) = 0;
+	virtual Error seek(PtrSize offset, FileSeekOrigin origin) = 0;
 
 	virtual PtrSize getSize() const
 	{
@@ -196,12 +196,12 @@ class ImageLoader::RsrcFile : public FileInterface
 public:
 	ResourceFilePtr m_rfile;
 
-	ANKI_USE_RESULT Error read(void* buff, PtrSize size) final
+	Error read(void* buff, PtrSize size) final
 	{
 		return m_rfile->read(buff, size);
 	}
 
-	ANKI_USE_RESULT Error seek(PtrSize offset, FileSeekOrigin origin) final
+	Error seek(PtrSize offset, FileSeekOrigin origin) final
 	{
 		return m_rfile->seek(offset, origin);
 	}
@@ -217,12 +217,12 @@ class ImageLoader::SystemFile : public FileInterface
 public:
 	File m_file;
 
-	ANKI_USE_RESULT Error read(void* buff, PtrSize size) final
+	Error read(void* buff, PtrSize size) final
 	{
 		return m_file.read(buff, size);
 	}
 
-	ANKI_USE_RESULT Error seek(PtrSize offset, FileSeekOrigin origin) final
+	Error seek(PtrSize offset, FileSeekOrigin origin) final
 	{
 		return m_file.seek(offset, origin);
 	}

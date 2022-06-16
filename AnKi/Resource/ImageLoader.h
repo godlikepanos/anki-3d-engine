@@ -104,10 +104,10 @@ public:
 	const ImageLoaderVolume& getVolume(U32 level) const;
 
 	/// Load a resource image file.
-	ANKI_USE_RESULT Error load(ResourceFilePtr file, const CString& filename, U32 maxImageSize = MAX_U32);
+	Error load(ResourceFilePtr file, const CString& filename, U32 maxImageSize = MAX_U32);
 
 	/// Load a system image file.
-	ANKI_USE_RESULT Error load(const CString& filename, U32 maxImageSize = MAX_U32);
+	Error load(const CString& filename, U32 maxImageSize = MAX_U32);
 
 private:
 	class FileInterface;
@@ -134,29 +134,25 @@ private:
 
 	void destroy();
 
-	static ANKI_USE_RESULT Error loadUncompressedTga(FileInterface& fs, U32& width, U32& height, U32& bpp,
-													 DynamicArray<U8, PtrSize>& data,
-													 GenericMemoryPoolAllocator<U8>& alloc);
+	static Error loadUncompressedTga(FileInterface& fs, U32& width, U32& height, U32& bpp,
+									 DynamicArray<U8, PtrSize>& data, GenericMemoryPoolAllocator<U8>& alloc);
 
-	static ANKI_USE_RESULT Error loadCompressedTga(FileInterface& fs, U32& width, U32& height, U32& bpp,
-												   DynamicArray<U8, PtrSize>& data,
-												   GenericMemoryPoolAllocator<U8>& alloc);
+	static Error loadCompressedTga(FileInterface& fs, U32& width, U32& height, U32& bpp,
+								   DynamicArray<U8, PtrSize>& data, GenericMemoryPoolAllocator<U8>& alloc);
 
-	static ANKI_USE_RESULT Error loadTga(FileInterface& fs, U32& width, U32& height, U32& bpp,
-										 DynamicArray<U8, PtrSize>& data, GenericMemoryPoolAllocator<U8>& alloc);
+	static Error loadTga(FileInterface& fs, U32& width, U32& height, U32& bpp, DynamicArray<U8, PtrSize>& data,
+						 GenericMemoryPoolAllocator<U8>& alloc);
 
-	static ANKI_USE_RESULT Error loadStb(Bool isFloat, FileInterface& fs, U32& width, U32& height,
-										 DynamicArray<U8, PtrSize>& data, GenericMemoryPoolAllocator<U8>& alloc);
+	static Error loadStb(Bool isFloat, FileInterface& fs, U32& width, U32& height, DynamicArray<U8, PtrSize>& data,
+						 GenericMemoryPoolAllocator<U8>& alloc);
 
-	static ANKI_USE_RESULT Error loadAnkiImage(FileInterface& file, U32 maxImageSize,
-											   ImageBinaryDataCompression& preferredCompression,
-											   DynamicArray<ImageLoaderSurface>& surfaces,
-											   DynamicArray<ImageLoaderVolume>& volumes,
-											   GenericMemoryPoolAllocator<U8>& alloc, U32& width, U32& height,
-											   U32& depth, U32& layerCount, U32& mipCount, ImageBinaryType& imageType,
-											   ImageBinaryColorFormat& colorFormat, UVec2& astcBlockSize);
+	static Error loadAnkiImage(FileInterface& file, U32 maxImageSize, ImageBinaryDataCompression& preferredCompression,
+							   DynamicArray<ImageLoaderSurface>& surfaces, DynamicArray<ImageLoaderVolume>& volumes,
+							   GenericMemoryPoolAllocator<U8>& alloc, U32& width, U32& height, U32& depth,
+							   U32& layerCount, U32& mipCount, ImageBinaryType& imageType,
+							   ImageBinaryColorFormat& colorFormat, UVec2& astcBlockSize);
 
-	ANKI_USE_RESULT Error loadInternal(FileInterface& file, const CString& filename, U32 maxImageSize);
+	Error loadInternal(FileInterface& file, const CString& filename, U32 maxImageSize);
 };
 
 } // end namespace anki

@@ -20,7 +20,6 @@ macro(anki_new_executable)
 	if(NOT ANDROID)
 		add_executable(${ARGV})
 		set_target_properties(${ARGV0} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Bin)
-		#anki_install_executable(${ARGV0})
 	else()
 		set(_SKIP TRUE)
 		foreach(ARG ${ARGV})
@@ -276,6 +275,13 @@ message("++ Configuring glslang")
 add_subdirectory(ThirdParty/Glslang)
 message("++ End configuring glslang")
 
+if(LINUX OR WINDOWS)
+	message("++ Configuring reproc")
+	set(REPROC++ OFF)
+	add_subdirectory(ThirdParty/Reproc)
+	message("++ End configuring reproc")
+endif()
+
 foreach(TMP ${ANKI_EXTERN_SUB_DIRS})
 	add_subdirectory(ThirdParty/${TMP})
 endforeach()
@@ -396,7 +402,11 @@ if(ANDROID)
 endif()
 
 if(LINUX)
-	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} X11-xcb pthread dl)
+	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} pthread dl)
+
+	if(SDL)
+		set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} X11-xcb)
+	endif()
 endif()
 
 if((LINUX OR WINDOWS) AND VULKAN)
@@ -405,10 +415,10 @@ endif()
 
 # AnKi compiler flags (Mainly warnings)
 if(NOT MSVC)
-	add_definitions("-pedantic -Wno-unknown-warning-option -Wall -W -Wextra -Wstrict-aliasing -Wwrite-strings -Wunused "
-		"-Wno-unused-parameter -Wundef -Wno-ignored-attributes -Wno-implicit-fallthrough -Wunused-result "
-		"-Wconversion -Wno-sign-conversion -Wno-keyword-macro -Wno-string-conversion -Wno-class-memaccess "
-		"-Wunused-variable")
+	add_definitions(-pedantic -Wno-unknown-warning-option -Wall -W -Wextra -Wstrict-aliasing -Wwrite-strings -Wunused
+		-Wundef -Wno-ignored-attributes -Wno-implicit-fallthrough -Wunused-result
+		-Wconversion -Wno-sign-conversion -Wno-keyword-macro -Wno-string-conversion -Wno-class-memaccess
+		-Wunused-variable)
 
 	set(CMAKE_CXX_STANDARD 17)
 else()
@@ -421,6 +431,7 @@ add_subdirectory(AnKi)
 
 add_library(AnKi INTERFACE)
 target_link_libraries(AnKi INTERFACE AnKiCore ${THIRD_PARTY_LIBS})
+add_dependencies(AnKi AnKiShaders)
 
 ################################################################################
 # AnKi extra                                                                   #

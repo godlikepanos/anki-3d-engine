@@ -37,7 +37,7 @@ protected:
 
 private:
 	/// Allocate and initialize a new instance.
-	static ANKI_USE_RESULT TimestampQuery* newInstance(GrManager* manager);
+	[[nodiscard]] static TimestampQuery* newInstance(GrManager* manager);
 };
 /// @}
 

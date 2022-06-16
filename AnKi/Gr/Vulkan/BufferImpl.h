@@ -8,6 +8,7 @@
 #include <AnKi/Gr/Buffer.h>
 #include <AnKi/Gr/Vulkan/VulkanObject.h>
 #include <AnKi/Gr/Vulkan/GpuMemoryManager.h>
+#include <AnKi/Util/HashMap.h>
 
 namespace anki {
 
@@ -27,9 +28,9 @@ public:
 
 	~BufferImpl();
 
-	ANKI_USE_RESULT Error init(const BufferInitInfo& inf);
+	Error init(const BufferInitInfo& inf);
 
-	ANKI_USE_RESULT void* map(PtrSize offset, PtrSize range, BufferMapAccessBit access);
+	[[nodiscard]] void* map(PtrSize offset, PtrSize range, BufferMapAccessBit access);
 
 	void unmap()
 	{
@@ -88,6 +89,9 @@ public:
 		}
 	}
 
+	/// Only for texture buffers.
+	VkBufferView getOrCreateBufferView(Format fmt, PtrSize offset, PtrSize range) const;
+
 private:
 	VkBuffer m_handle = VK_NULL_HANDLE;
 	GpuMemoryHandle m_memHandle;
@@ -96,6 +100,9 @@ private:
 	PtrSize m_mappedMemoryRangeAlignment = 0; ///< Cache this value.
 	Bool m_needsFlush : 1;
 	Bool m_needsInvalidate : 1;
+
+	mutable HashMap<U64, VkBufferView> m_views; ///< Only for texture buffers.
+	mutable RWMutex m_viewsMtx;
 
 #if ANKI_EXTRA_CHECKS
 	Bool m_mapped = false;

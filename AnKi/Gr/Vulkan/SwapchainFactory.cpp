@@ -260,9 +260,11 @@ MicroSwapchainPtr SwapchainFactory::newInstance()
 {
 	// Delete stale swapchains (they are stale because they are probably out of data) and always create a new one
 	m_recycler.trimCache();
-	MicroSwapchain* dummy = m_recycler.findToReuse(); // This is useless but call it to avoid assertions
+
+	// This is useless but call it to avoid assertions
+	[[maybe_unused]] MicroSwapchain* dummy = m_recycler.findToReuse();
 	ANKI_ASSERT(dummy == nullptr);
-	(void)dummy;
+
 	return MicroSwapchainPtr(m_gr->getAllocator().newInstance<MicroSwapchain>(this));
 }
 

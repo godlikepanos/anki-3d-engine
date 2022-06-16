@@ -5,6 +5,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
+#include <Tests/Gr/GrCommon.h>
 #include <AnKi/Gr.h>
 #include <AnKi/Core/NativeWindow.h>
 #include <AnKi/Input/Input.h>
@@ -325,23 +326,6 @@ static void* setStorage(PtrSize size, CommandBufferPtr& cmdb, U32 set, U32 bindi
 	} while(0)
 
 const Format DS_FORMAT = Format::D24_UNORM_S8_UINT;
-
-static ShaderPtr createShader(CString src, ShaderType type, GrManager& gr,
-							  ConstWeakArray<ShaderSpecializationConstValue> specVals = {})
-{
-	HeapAllocator<U8> alloc(allocAligned, nullptr);
-	StringAuto header(alloc);
-	ShaderCompilerOptions compilerOptions;
-	ShaderProgramParser::generateAnkiShaderHeader(type, compilerOptions, header);
-	header.append(src);
-	DynamicArrayAuto<U8> spirv(alloc);
-	ANKI_TEST_EXPECT_NO_ERR(compilerGlslToSpirv(header, type, alloc, spirv));
-
-	ShaderInitInfo initInf(type, spirv);
-	initInf.m_constValues = specVals;
-
-	return gr.newShader(initInf);
-}
 
 static ShaderProgramPtr createProgram(CString vertSrc, CString fragSrc, GrManager& gr)
 {
@@ -1099,8 +1083,8 @@ void main()
 	COMMON_END()
 }
 
-static void drawOffscreenDrawcalls(GrManager& gr, ShaderProgramPtr prog, CommandBufferPtr cmdb, U32 viewPortSize,
-								   BufferPtr indexBuff, BufferPtr vertBuff)
+static void drawOffscreenDrawcalls([[maybe_unused]] GrManager& gr, ShaderProgramPtr prog, CommandBufferPtr cmdb,
+								   U32 viewPortSize, BufferPtr indexBuff, BufferPtr vertBuff)
 {
 	static F32 ang = -2.5f;
 	ang += toRad(2.5f);
@@ -2168,6 +2152,7 @@ void main()
 
 ANKI_TEST(Gr, Bindless)
 {
+#if 0
 	COMMON_BEGIN()
 
 	// Create texture A
@@ -2292,6 +2277,7 @@ void main()
 	resBuff->unmap();
 
 	COMMON_END()
+#endif
 }
 
 ANKI_TEST(Gr, BufferAddress)

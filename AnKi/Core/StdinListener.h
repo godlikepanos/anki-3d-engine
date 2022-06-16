@@ -26,7 +26,7 @@ public:
 
 	~StdinListener();
 
-	ANKI_USE_RESULT Error create(HeapAllocator<String>& alloc);
+	Error create(HeapAllocator<String>& alloc);
 
 	/// Get line from the queue or return an empty string
 	String getLine();

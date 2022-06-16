@@ -321,8 +321,7 @@ void Octree::removeInternal(OctreePlaceable& placeable)
 			LeafNode* leafNode = placeable.m_leafs.popFront();
 
 			// Iterate the placeables of the leaf
-			Bool found = false;
-			(void)found;
+			[[maybe_unused]] Bool found = false;
 			for(PlaceableNode& placeableNode : leafNode->m_leaf->m_placeables)
 			{
 				if(placeableNode.m_placeable == &placeable)
@@ -501,7 +500,7 @@ void Octree::gatherVisibleTaskCallback(void* ud, U32 threadId, ThreadHive& hive,
 	taskCtx->m_ctx->m_octree->gatherVisibleParallelTask(threadId, hive, sem, *taskCtx);
 }
 
-void Octree::gatherVisibleParallelTask(U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem,
+void Octree::gatherVisibleParallelTask([[maybe_unused]] U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem,
 									   GatherParallelTaskCtx& taskCtx)
 {
 	ANKI_ASSERT(taskCtx.m_ctx && taskCtx.m_leaf);

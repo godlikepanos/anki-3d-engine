@@ -92,7 +92,7 @@ ANKI_TEST(Util, StackMemoryPool)
 			StackMemoryPool* m_pool = nullptr;
 			Array<void*, 0xF> m_allocations;
 
-			Error operator()(U32 taskId, PtrSize threadsCount)
+			Error operator()(U32 taskId, [[maybe_unused]] PtrSize threadsCount)
 			{
 				for(U i = 0; i < m_allocations.getSize(); ++i)
 				{

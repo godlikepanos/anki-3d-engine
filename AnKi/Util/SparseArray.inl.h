@@ -137,8 +137,7 @@ void SparseArray<T, TIndex>::grow(TAlloc& alloc)
 	Value* const oldElements = m_elements;
 	Metadata* const oldMetadata = m_metadata;
 	const Index oldCapacity = m_capacity;
-	const Index oldElementCount = m_elementCount;
-	(void)oldElementCount;
+	[[maybe_unused]] const Index oldElementCount = m_elementCount;
 
 	m_capacity *= 2;
 	m_elements = static_cast<Value*>(alloc.getMemoryPool().allocate(m_capacity * sizeof(Value), alignof(Value)));
@@ -281,14 +280,12 @@ void SparseArray<T, TIndex>::validate() const
 	{
 		if(m_metadata[pos].m_alive)
 		{
-			const Index myDesiredPos = mod(m_metadata[pos].m_idx);
-			(void)myDesiredPos;
+			[[maybe_unused]] const Index myDesiredPos = mod(m_metadata[pos].m_idx);
 			ANKI_ASSERT(distanceFromDesired(pos, myDesiredPos) < m_probeCount);
 
 			if(prevPos != ~Index(0))
 			{
-				Index prevDesiredPos = mod(m_metadata[prevPos].m_idx);
-				(void)prevDesiredPos;
+				[[maybe_unused]] Index prevDesiredPos = mod(m_metadata[prevPos].m_idx);
 				ANKI_ASSERT(myDesiredPos >= prevDesiredPos);
 			}
 

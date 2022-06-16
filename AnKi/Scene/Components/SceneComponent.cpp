@@ -41,7 +41,7 @@ SceneComponentRtti::SceneComponentRtti(const char* name, U32 size, U32 alignment
 	}
 }
 
-SceneComponent::SceneComponent(SceneNode* node, U8 classId, Bool isFeedbackComponent)
+SceneComponent::SceneComponent([[maybe_unused]] SceneNode* node, U8 classId, Bool isFeedbackComponent)
 	: m_classId(classId & 0x7F)
 	, m_feedbackComponent(isFeedbackComponent)
 {

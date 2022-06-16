@@ -102,7 +102,7 @@ public:
 	~SkeletonResource();
 
 	/// Load file
-	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
+	Error load(const ResourceFilename& filename, Bool async);
 
 	const DynamicArray<Bone>& getBones() const
 	{

@@ -118,8 +118,8 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 	ANKI_CHECK(proc.start(maliocExecutable, args, {}));
 	ProcessStatus status;
 	I32 exitCode;
-	ANKI_CHECK(proc.wait(10.0_sec, &status, &exitCode));
-	if(status == ProcessStatus::CRASH_EXIT || exitCode != 0)
+	ANKI_CHECK(proc.wait(-1.0, &status, &exitCode));
+	if(exitCode != 0)
 	{
 		StringAuto stderre(tmpAlloc);
 		const Error err = proc.readFromStderr(stderre);

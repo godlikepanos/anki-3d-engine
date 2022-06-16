@@ -161,7 +161,7 @@ Bool testCollision(const Aabb& aabb, const LineSegment& ls)
 	return true;
 }
 
-Bool testCollision(const Aabb& aabb, const Cone& cone)
+Bool testCollision([[maybe_unused]] const Aabb& aabb, [[maybe_unused]] const Cone& cone)
 {
 	ANKI_ASSERT(!"TODO");
 	return false;
@@ -294,7 +294,7 @@ Bool testCollision(const Obb& obb, const LineSegment& ls)
 	return true;
 }
 
-Bool testCollision(const Obb& obb, const Cone& cone)
+Bool testCollision([[maybe_unused]] const Obb& obb, [[maybe_unused]] const Cone& cone)
 {
 	ANKI_ASSERT(!"TODO");
 	return false;
@@ -305,25 +305,25 @@ Bool testCollision(const ConvexHullShape& a, const ConvexHullShape& b)
 	return testCollisionGjk(a, b);
 }
 
-Bool testCollision(const ConvexHullShape& hull, const LineSegment& ls)
+Bool testCollision([[maybe_unused]] const ConvexHullShape& hull, [[maybe_unused]] const LineSegment& ls)
 {
 	ANKI_ASSERT(!"TODO");
 	return false;
 }
 
-Bool testCollision(const ConvexHullShape& hull, const Cone& cone)
+Bool testCollision([[maybe_unused]] const ConvexHullShape& hull, [[maybe_unused]] const Cone& cone)
 {
 	ANKI_ASSERT(!"TODO");
 	return false;
 }
 
-Bool testCollision(const LineSegment& a, const LineSegment& b)
+Bool testCollision([[maybe_unused]] const LineSegment& a, [[maybe_unused]] const LineSegment& b)
 {
 	ANKI_ASSERT(!"TODO");
 	return false;
 }
 
-Bool testCollision(const Cone& a, const Cone& b)
+Bool testCollision([[maybe_unused]] const Cone& a, [[maybe_unused]] const Cone& b)
 {
 	ANKI_ASSERT(!"TODO");
 	return false;

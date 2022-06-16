@@ -42,8 +42,7 @@ public:
 
 	/// Initialize the application.
 	/// @param[in,out] config The config. Needs to be alive as long as the app is alive.
-	ANKI_USE_RESULT Error init(ConfigSet* config, CString executableFilename, AllocAlignedCallback allocCb,
-							   void* allocCbUserData);
+	Error init(ConfigSet* config, AllocAlignedCallback allocCb, void* allocCbUserData);
 
 	const String& getSettingsDirectory() const
 	{
@@ -81,10 +80,10 @@ public:
 	}
 
 	/// Run the main loop.
-	ANKI_USE_RESULT Error mainLoop();
+	Error mainLoop();
 
 	/// The user code to run along with the other main loop code.
-	virtual ANKI_USE_RESULT Error userMainLoop(Bool& quit, Second elapsedTime)
+	virtual Error userMainLoop([[maybe_unused]] Bool& quit, [[maybe_unused]] Second elapsedTime)
 	{
 		// Do nothing
 		return Error::NONE;
@@ -200,9 +199,9 @@ private:
 
 	void initMemoryCallbacks(AllocAlignedCallback allocCb, void* allocCbUserData);
 
-	ANKI_USE_RESULT Error initInternal(CString executableFilename, AllocAlignedCallback allocCb, void* allocCbUserData);
+	Error initInternal(AllocAlignedCallback allocCb, void* allocCbUserData);
 
-	ANKI_USE_RESULT Error initDirs();
+	Error initDirs();
 	void cleanup();
 
 	/// Inject a new UI element in the render queue for displaying various stuff.

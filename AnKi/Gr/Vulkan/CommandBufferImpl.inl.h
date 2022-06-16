@@ -256,9 +256,10 @@ inline void CommandBufferImpl::setBufferBarrierInternal(const BufferPtr& buff, B
 	m_microCmdb->pushObjectRef(buff);
 }
 
-inline void CommandBufferImpl::setAccelerationStructureBarrierInternal(const AccelerationStructurePtr& as,
-																	   AccelerationStructureUsageBit prevUsage,
-																	   AccelerationStructureUsageBit nextUsage)
+inline void
+CommandBufferImpl::setAccelerationStructureBarrierInternal([[maybe_unused]] const AccelerationStructurePtr& as,
+														   AccelerationStructureUsageBit prevUsage,
+														   AccelerationStructureUsageBit nextUsage)
 {
 	commandCommon();
 
@@ -288,6 +289,8 @@ inline void CommandBufferImpl::setAccelerationStructureBarrierInternal(const Acc
 #else
 	ANKI_ASSERT(!"TODO");
 #endif
+
+	// No need to hold reference since noone touches the AS
 }
 
 inline void CommandBufferImpl::drawArraysInternal(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 first,
@@ -342,7 +345,9 @@ inline void CommandBufferImpl::dispatchComputeInternal(U32 groupCountX, U32 grou
 
 	commandCommon();
 
-	getGrManagerImpl().beginMarker(m_handle, m_computeProg->getName());
+	flushBatches(CommandBufferCommandType::ANY_OTHER_COMMAND); // Do that before setting the markers
+
+	getGrManagerImpl().beginMarker(m_handle, m_computeProg->getName(), Vec3(1.0f, 1.0f, 0.0f));
 
 	// Bind descriptors
 	for(U32 i = 0; i < MAX_DESCRIPTOR_SETS; ++i)
@@ -353,8 +358,8 @@ inline void CommandBufferImpl::dispatchComputeInternal(U32 groupCountX, U32 grou
 			Bool dirty;
 			Array<PtrSize, MAX_BINDINGS_PER_DESCRIPTOR_SET> dynamicOffsetsPtrSize;
 			U32 dynamicOffsetCount;
-			if(getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(
-				   m_tid, m_alloc, m_dsetState[i], dset, dirty, dynamicOffsetsPtrSize, dynamicOffsetCount))
+			if(getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(m_alloc, m_dsetState[i], dset, dirty,
+																			 dynamicOffsetsPtrSize, dynamicOffsetCount))
 			{
 				ANKI_VK_LOGF("Cannot recover");
 			}
@@ -378,7 +383,7 @@ inline void CommandBufferImpl::dispatchComputeInternal(U32 groupCountX, U32 grou
 		}
 	}
 
-	ANKI_CMD(vkCmdDispatch(m_handle, groupCountX, groupCountY, groupCountZ), ANY_OTHER_COMMAND);
+	vkCmdDispatch(m_handle, groupCountX, groupCountY, groupCountZ);
 
 	getGrManagerImpl().endMarker(m_handle);
 }
@@ -398,14 +403,15 @@ inline void CommandBufferImpl::traceRaysInternal(const BufferPtr& sbtBuffer, Ptr
 	ANKI_ASSERT(rayTypeCount == sprog.getMissShaderCount() && "All the miss shaders should be in use");
 	ANKI_ASSERT((hitGroupSbtRecordCount % rayTypeCount) == 0);
 	const PtrSize sbtRecordCount = 1 + rayTypeCount + hitGroupSbtRecordCount;
-	const PtrSize sbtBufferSize = sbtRecordCount * sbtRecordSize;
-	(void)sbtBufferSize;
+	[[maybe_unused]] const PtrSize sbtBufferSize = sbtRecordCount * sbtRecordSize;
 	ANKI_ASSERT(sbtBufferSize + sbtBufferOffset <= sbtBuffer->getSize());
 	ANKI_ASSERT(isAligned(getGrManagerImpl().getDeviceCapabilities().m_sbtRecordAlignment, sbtBufferOffset));
 
 	commandCommon();
 
-	getGrManagerImpl().beginMarker(m_handle, m_rtProg->getName());
+	flushBatches(CommandBufferCommandType::ANY_OTHER_COMMAND); // Do that before setting the markers
+
+	getGrManagerImpl().beginMarker(m_handle, m_rtProg->getName(), Vec3(0.0f, 0.0f, 1.0f));
 
 	// Bind descriptors
 	for(U32 i = 0; i < MAX_DESCRIPTOR_SETS; ++i)
@@ -416,8 +422,8 @@ inline void CommandBufferImpl::traceRaysInternal(const BufferPtr& sbtBuffer, Ptr
 			Bool dirty;
 			Array<PtrSize, MAX_BINDINGS_PER_DESCRIPTOR_SET> dynamicOffsetsPtrSize;
 			U32 dynamicOffsetCount;
-			if(getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(
-				   m_tid, m_alloc, m_dsetState[i], dset, dirty, dynamicOffsetsPtrSize, dynamicOffsetCount))
+			if(getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(m_alloc, m_dsetState[i], dset, dirty,
+																			 dynamicOffsetsPtrSize, dynamicOffsetCount))
 			{
 				ANKI_VK_LOGF("Cannot recover");
 			}
@@ -463,8 +469,7 @@ inline void CommandBufferImpl::traceRaysInternal(const BufferPtr& sbtBuffer, Ptr
 	// Callable, nothing for now
 	regions[3] = VkStridedDeviceAddressRegionKHR();
 
-	ANKI_CMD(vkCmdTraceRaysKHR(m_handle, &regions[0], &regions[1], &regions[2], &regions[3], width, height, depth),
-			 ANY_OTHER_COMMAND);
+	vkCmdTraceRaysKHR(m_handle, &regions[0], &regions[1], &regions[2], &regions[3], width, height, depth);
 
 	getGrManagerImpl().endMarker(m_handle);
 }
@@ -654,8 +659,8 @@ inline void CommandBufferImpl::drawcallCommon()
 			Bool dirty;
 			Array<PtrSize, MAX_BINDINGS_PER_DESCRIPTOR_SET> dynamicOffsetsPtrSize;
 			U32 dynamicOffsetCount;
-			if(getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(
-				   m_tid, m_alloc, m_dsetState[i], dset, dirty, dynamicOffsetsPtrSize, dynamicOffsetCount))
+			if(getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(m_alloc, m_dsetState[i], dset, dirty,
+																			 dynamicOffsetsPtrSize, dynamicOffsetCount))
 			{
 				ANKI_VK_LOGF("Cannot recover");
 			}

@@ -27,8 +27,8 @@ public:
 	U32 m_mipmapCount = MAX_U32;
 	Bool m_noAlpha = true;
 	CString m_tempDirectory;
-	CString m_compressonatorPath; ///< Optional.
-	CString m_astcencPath; ///< Optional.
+	CString m_compressonatorFilename; ///< Optional.
+	CString m_astcencFilename; ///< Optional.
 	UVec2 m_astcBlockSize = UVec2(8u);
 	Bool m_sRgbToLinear = false;
 	Bool m_linearToSRgb = false;
@@ -36,7 +36,7 @@ public:
 };
 
 /// Converts images to AnKi's specific format.
-ANKI_USE_RESULT Error importImage(const ImageImporterConfig& config);
+Error importImage(const ImageImporterConfig& config);
 /// @}
 
 } // end namespace anki

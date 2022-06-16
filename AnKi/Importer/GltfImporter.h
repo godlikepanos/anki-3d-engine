@@ -43,9 +43,9 @@ public:
 
 	~GltfImporter();
 
-	ANKI_USE_RESULT Error init(const GltfImporterInitInfo& initInfo);
+	Error init(const GltfImporterInitInfo& initInfo);
 
-	ANKI_USE_RESULT Error writeAll();
+	Error writeAll();
 
 private:
 	class PtrHasher
@@ -89,9 +89,8 @@ private:
 	U32 m_skipLodVertexCountThreshold = 256;
 
 	// Misc
-	ANKI_USE_RESULT Error getExtras(const cgltf_extras& extras, HashMapAuto<CString, StringAuto>& out);
-	ANKI_USE_RESULT Error parseArrayOfNumbers(CString str, DynamicArrayAuto<F64>& out,
-											  const U32* expectedArraySize = nullptr);
+	Error getExtras(const cgltf_extras& extras, HashMapAuto<CString, StringAuto>& out);
+	Error parseArrayOfNumbers(CString str, DynamicArrayAuto<F64>& out, const U32* expectedArraySize = nullptr);
 	void populateNodePtrToIdx();
 	void populateNodePtrToIdxInternal(const cgltf_node& node, U32& idx);
 	StringAuto getNodeName(const cgltf_node& node);
@@ -136,19 +135,19 @@ private:
 	StringAuto computeSkeletonResourceFilename(const cgltf_skin& skin) const;
 
 	// Resources
-	ANKI_USE_RESULT Error writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFactor);
-	ANKI_USE_RESULT Error writeMaterial(const cgltf_material& mtl, Bool writeRayTracing);
-	ANKI_USE_RESULT Error writeModel(const cgltf_mesh& mesh);
-	ANKI_USE_RESULT Error writeAnimation(const cgltf_animation& anim);
-	ANKI_USE_RESULT Error writeSkeleton(const cgltf_skin& skin);
+	Error writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFactor);
+	Error writeMaterial(const cgltf_material& mtl, Bool writeRayTracing);
+	Error writeModel(const cgltf_mesh& mesh);
+	Error writeAnimation(const cgltf_animation& anim);
+	Error writeSkeleton(const cgltf_skin& skin);
 
 	// Scene
-	ANKI_USE_RESULT Error writeTransform(const Transform& trf);
-	ANKI_USE_RESULT Error visitNode(const cgltf_node& node, const Transform& parentTrf,
-									const HashMapAuto<CString, StringAuto>& parentExtras);
-	ANKI_USE_RESULT Error writeLight(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras);
-	ANKI_USE_RESULT Error writeCamera(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras);
-	ANKI_USE_RESULT Error writeModelNode(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras);
+	Error writeTransform(const Transform& trf);
+	Error visitNode(const cgltf_node& node, const Transform& parentTrf,
+					const HashMapAuto<CString, StringAuto>& parentExtras);
+	Error writeLight(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras);
+	Error writeCamera(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras);
+	Error writeModelNode(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras);
 };
 /// @}
 

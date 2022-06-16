@@ -82,10 +82,10 @@ public:
 	void setTransform(const Transform& trf);
 
 	/// Get a transformed.
-	ANKI_USE_RESULT ConvexHullShape getTransformed(const Transform& trf) const;
+	[[nodiscard]] ConvexHullShape getTransformed(const Transform& trf) const;
 
 	/// Compute the GJK support.
-	ANKI_USE_RESULT Vec4 computeSupport(const Vec4& dir) const;
+	[[nodiscard]] Vec4 computeSupport(const Vec4& dir) const;
 
 private:
 	Transform m_trf;

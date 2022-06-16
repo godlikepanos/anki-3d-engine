@@ -135,7 +135,7 @@ public:
 	void destroy();
 
 	/// Allocate memory.
-	void allocateMemory(U32 memTypeIdx, PtrSize size, U32 alignment, Bool linearResource, GpuMemoryHandle& handle);
+	void allocateMemory(U32 memTypeIdx, PtrSize size, U32 alignment, GpuMemoryHandle& handle);
 
 	void allocateMemoryDedicated(U32 memTypeIdx, PtrSize size, VkImage image, GpuMemoryHandle& handle);
 
@@ -143,7 +143,7 @@ public:
 	void freeMemory(GpuMemoryHandle& handle);
 
 	/// Map memory.
-	ANKI_USE_RESULT void* getMappedAddress(GpuMemoryHandle& handle);
+	[[nodiscard]] void* getMappedAddress(GpuMemoryHandle& handle);
 
 	/// Find a suitable memory type.
 	U32 findMemoryType(U32 resourceMemTypeBits, VkMemoryPropertyFlags preferFlags,

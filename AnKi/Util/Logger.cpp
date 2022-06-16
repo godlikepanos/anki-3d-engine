@@ -290,7 +290,6 @@ void Logger::fileMessageHandler(void* pfile, const LoggerMessageInfo& info)
 	if(!err)
 	{
 		err = file->flush();
-		(void)err;
 	}
 }
 

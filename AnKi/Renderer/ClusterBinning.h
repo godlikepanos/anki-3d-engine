@@ -20,7 +20,7 @@ public:
 
 	~ClusterBinning();
 
-	ANKI_USE_RESULT Error init();
+	Error init();
 
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);

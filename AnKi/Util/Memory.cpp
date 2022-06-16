@@ -42,7 +42,7 @@ constexpr U32 ALLOCATION_HEADER_SIZE = getAlignedRoundUp(MAX_ALIGNMENT, sizeof(A
 #define ANKI_OOM_ACTION() ANKI_UTIL_LOGE("Out of memory. Expect segfault")
 
 template<typename TPtr, typename TSize>
-static void invalidateMemory(TPtr ptr, TSize size)
+static void invalidateMemory([[maybe_unused]] TPtr ptr, [[maybe_unused]] TSize size)
 {
 #if ANKI_MEM_EXTRA_CHECKS
 	memset(static_cast<void*>(ptr), 0xCC, size);
@@ -117,9 +117,8 @@ void freeAligned(void* ptr)
 #endif
 }
 
-void* allocAligned(void* userData, void* ptr, PtrSize size, PtrSize alignment)
+void* allocAligned([[maybe_unused]] void* userData, void* ptr, PtrSize size, PtrSize alignment)
 {
-	(void)userData;
 	void* out;
 
 	if(ptr == nullptr)
@@ -310,9 +309,8 @@ void StackMemoryPool::free(void* ptr)
 		return;
 	}
 
-	const U32 count = m_allocationCount.fetchSub(1);
+	[[maybe_unused]] const U32 count = m_allocationCount.fetchSub(1);
 	ANKI_ASSERT(count > 0);
-	(void)count;
 	m_builder.free();
 }
 
@@ -526,7 +524,7 @@ ChainMemoryPool::Chunk* ChainMemoryPool::createNewChunk(PtrSize size)
 	return chunk;
 }
 
-void* ChainMemoryPool::allocateFromChunk(Chunk* ch, PtrSize size, PtrSize alignment)
+void* ChainMemoryPool::allocateFromChunk(Chunk* ch, PtrSize size, [[maybe_unused]] PtrSize alignment)
 {
 	ANKI_ASSERT(ch);
 	ANKI_ASSERT(ch->m_top <= ch->m_memory + ch->m_memsize);

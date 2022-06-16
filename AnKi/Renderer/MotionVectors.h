@@ -26,7 +26,7 @@ public:
 
 	~MotionVectors();
 
-	ANKI_USE_RESULT Error init();
+	Error init();
 
 	void populateRenderGraph(RenderingContext& ctx);
 
@@ -41,7 +41,7 @@ public:
 	}
 
 	void getDebugRenderTarget(CString rtName, RenderTargetHandle& handle,
-							  ShaderProgramPtr& optionalShaderProgram) const override
+							  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const override
 	{
 		if(rtName == "MotionVectors")
 		{
@@ -73,7 +73,7 @@ private:
 
 	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 
-	ANKI_USE_RESULT Error initInternal();
+	Error initInternal();
 };
 /// @}
 

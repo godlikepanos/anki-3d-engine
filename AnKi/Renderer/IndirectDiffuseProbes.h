@@ -29,7 +29,7 @@ public:
 
 	~IndirectDiffuseProbes();
 
-	ANKI_USE_RESULT Error init();
+	Error init();
 
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
@@ -100,11 +100,11 @@ private:
 	U32 m_tileSize = 0;
 	U32 m_maxVisibleProbes = 0;
 
-	ANKI_USE_RESULT Error initInternal();
-	ANKI_USE_RESULT Error initGBuffer();
-	ANKI_USE_RESULT Error initShadowMapping();
-	ANKI_USE_RESULT Error initLightShading();
-	ANKI_USE_RESULT Error initIrradiance();
+	Error initInternal();
+	Error initGBuffer();
+	Error initShadowMapping();
+	Error initLightShading();
+	Error initIrradiance();
 
 	void runGBufferInThread(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx) const;
 	void runShadowmappingInThread(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx) const;

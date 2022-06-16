@@ -74,7 +74,7 @@ public:
 
 	/// Begin a new event.
 	/// @note It's thread-safe.
-	ANKI_USE_RESULT TracerEventHandle beginEvent();
+	[[nodiscard]] TracerEventHandle beginEvent();
 
 	/// End the event that got started with beginEvent().
 	/// @note It's thread-safe.

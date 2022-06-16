@@ -34,7 +34,7 @@ Error LightEvent::init(Second startTime, Second duration, SceneNode* light)
 	return Error::NONE;
 }
 
-Error LightEvent::update(Second prevUpdateTime, Second crntTime)
+Error LightEvent::update([[maybe_unused]] Second prevUpdateTime, Second crntTime)
 {
 	const F32 freq = getRandomRange(m_freq - m_freqDeviation, m_freq + m_freqDeviation);
 

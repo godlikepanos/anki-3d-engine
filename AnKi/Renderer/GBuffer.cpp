@@ -110,7 +110,8 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 
 	cmdb->setRasterizationOrder(RasterizationOrder::RELAXED);
 
-	const Bool enableVrs = getGrManager().getDeviceCapabilities().m_vrs && getConfig().getRVrs();
+	const Bool enableVrs =
+		getGrManager().getDeviceCapabilities().m_vrs && getConfig().getRVrs() && getConfig().getRGBufferVrs();
 	if(enableVrs)
 	{
 		// Just set some low value, the attachment will take over
@@ -164,7 +165,8 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
-	const Bool enableVrs = getGrManager().getDeviceCapabilities().m_vrs && getConfig().getRVrs();
+	const Bool enableVrs =
+		getGrManager().getDeviceCapabilities().m_vrs && getConfig().getRVrs() && getConfig().getRGBufferVrs();
 	const Bool fbDescrHasVrs = m_fbDescr.m_shadingRateAttachmentTexelWidth > 0;
 
 	if(enableVrs != fbDescrHasVrs)

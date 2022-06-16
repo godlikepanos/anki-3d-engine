@@ -27,7 +27,7 @@ static void deserializeVec2(const void* data, LuaUserData& self)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoVec2 = {
-	6804478823655046388, "Vec2", LuaUserData::computeSizeForGarbageCollected<Vec2>(), serializeVec2, deserializeVec2};
+	-8898340712123155587, "Vec2", LuaUserData::computeSizeForGarbageCollected<Vec2>(), serializeVec2, deserializeVec2};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Vec2>()
@@ -38,12 +38,9 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Vec2>()
 /// Pre-wrap constructor for Vec2.
 static inline int pwrapVec2Ctor0(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 0)))
 	{
@@ -65,12 +62,9 @@ static inline int pwrapVec2Ctor0(lua_State* l)
 /// Pre-wrap constructor for Vec2.
 static inline int pwrapVec2Ctor1(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -133,12 +127,9 @@ static int wrapVec2Ctor(lua_State* l)
 /// Wrap destructor for Vec2.
 static int wrapVec2Dtor(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -162,12 +153,9 @@ static int wrapVec2Dtor(lua_State* l)
 /// Pre-wrap method Vec2::getX.
 static inline int pwrapVec2getX(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -186,7 +174,7 @@ static inline int pwrapVec2getX(lua_State* l)
 	F32 ret = (*self).x();
 
 	// Push return value
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }
@@ -207,12 +195,9 @@ static int wrapVec2getX(lua_State* l)
 /// Pre-wrap method Vec2::getY.
 static inline int pwrapVec2getY(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -231,7 +216,7 @@ static inline int pwrapVec2getY(lua_State* l)
 	F32 ret = (*self).y();
 
 	// Push return value
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }
@@ -252,12 +237,9 @@ static int wrapVec2getY(lua_State* l)
 /// Pre-wrap method Vec2::setX.
 static inline int pwrapVec2setX(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -301,12 +283,9 @@ static int wrapVec2setX(lua_State* l)
 /// Pre-wrap method Vec2::setY.
 static inline int pwrapVec2setY(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -350,12 +329,9 @@ static int wrapVec2setY(lua_State* l)
 /// Pre-wrap method Vec2::setAll.
 static inline int pwrapVec2setAll(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 3)))
 	{
@@ -405,12 +381,9 @@ static int wrapVec2setAll(lua_State* l)
 /// Pre-wrap method Vec2::getAt.
 static inline int pwrapVec2getAt(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -436,7 +409,7 @@ static inline int pwrapVec2getAt(lua_State* l)
 	F32 ret = (*self)[arg0];
 
 	// Push return value
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }
@@ -457,12 +430,9 @@ static int wrapVec2getAt(lua_State* l)
 /// Pre-wrap method Vec2::setAt.
 static inline int pwrapVec2setAt(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 3)))
 	{
@@ -512,12 +482,9 @@ static int wrapVec2setAt(lua_State* l)
 /// Pre-wrap method Vec2::operator=.
 static inline int pwrapVec2copy(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -564,12 +531,9 @@ static int wrapVec2copy(lua_State* l)
 /// Pre-wrap method Vec2::operator+.
 static inline int pwrapVec2__add(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -625,12 +589,9 @@ static int wrapVec2__add(lua_State* l)
 /// Pre-wrap method Vec2::operator-.
 static inline int pwrapVec2__sub(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -686,12 +647,9 @@ static int wrapVec2__sub(lua_State* l)
 /// Pre-wrap method Vec2::operator*.
 static inline int pwrapVec2__mul(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -747,12 +705,9 @@ static int wrapVec2__mul(lua_State* l)
 /// Pre-wrap method Vec2::operator/.
 static inline int pwrapVec2__div(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -808,12 +763,9 @@ static int wrapVec2__div(lua_State* l)
 /// Pre-wrap method Vec2::operator==.
 static inline int pwrapVec2__eq(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -863,12 +815,9 @@ static int wrapVec2__eq(lua_State* l)
 /// Pre-wrap method Vec2::getLength.
 static inline int pwrapVec2getLength(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -887,7 +836,7 @@ static inline int pwrapVec2getLength(lua_State* l)
 	F32 ret = self->getLength();
 
 	// Push return value
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }
@@ -908,12 +857,9 @@ static int wrapVec2getLength(lua_State* l)
 /// Pre-wrap method Vec2::getNormalized.
 static inline int pwrapVec2getNormalized(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -959,12 +905,9 @@ static int wrapVec2getNormalized(lua_State* l)
 /// Pre-wrap method Vec2::normalize.
 static inline int pwrapVec2normalize(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -1001,12 +944,9 @@ static int wrapVec2normalize(lua_State* l)
 /// Pre-wrap method Vec2::dot.
 static inline int pwrapVec2dot(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -1035,7 +975,7 @@ static inline int pwrapVec2dot(lua_State* l)
 	F32 ret = self->dot(arg0);
 
 	// Push return value
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }
@@ -1096,7 +1036,7 @@ static void deserializeVec3(const void* data, LuaUserData& self)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoVec3 = {
-	6804478823655046389, "Vec3", LuaUserData::computeSizeForGarbageCollected<Vec3>(), serializeVec3, deserializeVec3};
+	-7375600862245348524, "Vec3", LuaUserData::computeSizeForGarbageCollected<Vec3>(), serializeVec3, deserializeVec3};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Vec3>()
@@ -1107,12 +1047,9 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Vec3>()
 /// Pre-wrap constructor for Vec3.
 static inline int pwrapVec3Ctor0(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 0)))
 	{
@@ -1134,12 +1071,9 @@ static inline int pwrapVec3Ctor0(lua_State* l)
 /// Pre-wrap constructor for Vec3.
 static inline int pwrapVec3Ctor1(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -1168,12 +1102,9 @@ static inline int pwrapVec3Ctor1(lua_State* l)
 /// Pre-wrap constructor for Vec3.
 static inline int pwrapVec3Ctor2(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 3)))
 	{
@@ -1245,12 +1176,9 @@ static int wrapVec3Ctor(lua_State* l)
 /// Wrap destructor for Vec3.
 static int wrapVec3Dtor(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -1274,12 +1202,9 @@ static int wrapVec3Dtor(lua_State* l)
 /// Pre-wrap method Vec3::getX.
 static inline int pwrapVec3getX(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -1298,7 +1223,7 @@ static inline int pwrapVec3getX(lua_State* l)
 	F32 ret = (*self).x();
 
 	// Push return value
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }
@@ -1319,12 +1244,9 @@ static int wrapVec3getX(lua_State* l)
 /// Pre-wrap method Vec3::getY.
 static inline int pwrapVec3getY(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -1343,7 +1265,7 @@ static inline int pwrapVec3getY(lua_State* l)
 	F32 ret = (*self).y();
 
 	// Push return value
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }
@@ -1364,12 +1286,9 @@ static int wrapVec3getY(lua_State* l)
 /// Pre-wrap method Vec3::getZ.
 static inline int pwrapVec3getZ(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -1388,7 +1307,7 @@ static inline int pwrapVec3getZ(lua_State* l)
 	F32 ret = (*self).z();
 
 	// Push return value
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }
@@ -1409,12 +1328,9 @@ static int wrapVec3getZ(lua_State* l)
 /// Pre-wrap method Vec3::setX.
 static inline int pwrapVec3setX(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -1458,12 +1374,9 @@ static int wrapVec3setX(lua_State* l)
 /// Pre-wrap method Vec3::setY.
 static inline int pwrapVec3setY(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -1507,12 +1420,9 @@ static int wrapVec3setY(lua_State* l)
 /// Pre-wrap method Vec3::setZ.
 static inline int pwrapVec3setZ(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -1556,12 +1466,9 @@ static int wrapVec3setZ(lua_State* l)
 /// Pre-wrap method Vec3::setAll.
 static inline int pwrapVec3setAll(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 4)))
 	{
@@ -1617,12 +1524,9 @@ static int wrapVec3setAll(lua_State* l)
 /// Pre-wrap method Vec3::getAt.
 static inline int pwrapVec3getAt(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -1648,7 +1552,7 @@ static inline int pwrapVec3getAt(lua_State* l)
 	F32 ret = (*self)[arg0];
 
 	// Push return value
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }
@@ -1669,12 +1573,9 @@ static int wrapVec3getAt(lua_State* l)
 /// Pre-wrap method Vec3::setAt.
 static inline int pwrapVec3setAt(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 3)))
 	{
@@ -1724,12 +1625,9 @@ static int wrapVec3setAt(lua_State* l)
 /// Pre-wrap method Vec3::operator=.
 static inline int pwrapVec3copy(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -1776,12 +1674,9 @@ static int wrapVec3copy(lua_State* l)
 /// Pre-wrap method Vec3::operator+.
 static inline int pwrapVec3__add(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -1837,12 +1732,9 @@ static int wrapVec3__add(lua_State* l)
 /// Pre-wrap method Vec3::operator-.
 static inline int pwrapVec3__sub(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -1898,12 +1790,9 @@ static int wrapVec3__sub(lua_State* l)
 /// Pre-wrap method Vec3::operator*.
 static inline int pwrapVec3__mul(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -1959,12 +1848,9 @@ static int wrapVec3__mul(lua_State* l)
 /// Pre-wrap method Vec3::operator/.
 static inline int pwrapVec3__div(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -2020,12 +1906,9 @@ static int wrapVec3__div(lua_State* l)
 /// Pre-wrap method Vec3::operator==.
 static inline int pwrapVec3__eq(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -2075,12 +1958,9 @@ static int wrapVec3__eq(lua_State* l)
 /// Pre-wrap method Vec3::getLength.
 static inline int pwrapVec3getLength(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -2099,7 +1979,7 @@ static inline int pwrapVec3getLength(lua_State* l)
 	F32 ret = self->getLength();
 
 	// Push return value
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }
@@ -2120,12 +2000,9 @@ static int wrapVec3getLength(lua_State* l)
 /// Pre-wrap method Vec3::getNormalized.
 static inline int pwrapVec3getNormalized(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -2171,12 +2048,9 @@ static int wrapVec3getNormalized(lua_State* l)
 /// Pre-wrap method Vec3::normalize.
 static inline int pwrapVec3normalize(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -2213,12 +2087,9 @@ static int wrapVec3normalize(lua_State* l)
 /// Pre-wrap method Vec3::dot.
 static inline int pwrapVec3dot(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -2247,7 +2118,7 @@ static inline int pwrapVec3dot(lua_State* l)
 	F32 ret = self->dot(arg0);
 
 	// Push return value
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }
@@ -2310,7 +2181,7 @@ static void deserializeVec4(const void* data, LuaUserData& self)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoVec4 = {
-	6804478823655046386, "Vec4", LuaUserData::computeSizeForGarbageCollected<Vec4>(), serializeVec4, deserializeVec4};
+	6436947000103888728, "Vec4", LuaUserData::computeSizeForGarbageCollected<Vec4>(), serializeVec4, deserializeVec4};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Vec4>()
@@ -2321,12 +2192,9 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Vec4>()
 /// Pre-wrap constructor for Vec4.
 static inline int pwrapVec4Ctor0(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 0)))
 	{
@@ -2348,12 +2216,9 @@ static inline int pwrapVec4Ctor0(lua_State* l)
 /// Pre-wrap constructor for Vec4.
 static inline int pwrapVec4Ctor1(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -2382,12 +2247,9 @@ static inline int pwrapVec4Ctor1(lua_State* l)
 /// Pre-wrap constructor for Vec4.
 static inline int pwrapVec4Ctor2(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 4)))
 	{
@@ -2465,12 +2327,9 @@ static int wrapVec4Ctor(lua_State* l)
 /// Wrap destructor for Vec4.
 static int wrapVec4Dtor(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -2494,12 +2353,9 @@ static int wrapVec4Dtor(lua_State* l)
 /// Pre-wrap method Vec4::getX.
 static inline int pwrapVec4getX(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -2518,7 +2374,7 @@ static inline int pwrapVec4getX(lua_State* l)
 	F32 ret = (*self).x();
 
 	// Push return value
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }
@@ -2539,12 +2395,9 @@ static int wrapVec4getX(lua_State* l)
 /// Pre-wrap method Vec4::getY.
 static inline int pwrapVec4getY(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -2563,7 +2416,7 @@ static inline int pwrapVec4getY(lua_State* l)
 	F32 ret = (*self).y();
 
 	// Push return value
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }
@@ -2584,12 +2437,9 @@ static int wrapVec4getY(lua_State* l)
 /// Pre-wrap method Vec4::getZ.
 static inline int pwrapVec4getZ(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -2608,7 +2458,7 @@ static inline int pwrapVec4getZ(lua_State* l)
 	F32 ret = (*self).z();
 
 	// Push return value
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }
@@ -2629,12 +2479,9 @@ static int wrapVec4getZ(lua_State* l)
 /// Pre-wrap method Vec4::getW.
 static inline int pwrapVec4getW(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -2653,7 +2500,7 @@ static inline int pwrapVec4getW(lua_State* l)
 	F32 ret = (*self).w();
 
 	// Push return value
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }
@@ -2674,12 +2521,9 @@ static int wrapVec4getW(lua_State* l)
 /// Pre-wrap method Vec4::setX.
 static inline int pwrapVec4setX(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -2723,12 +2567,9 @@ static int wrapVec4setX(lua_State* l)
 /// Pre-wrap method Vec4::setY.
 static inline int pwrapVec4setY(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -2772,12 +2613,9 @@ static int wrapVec4setY(lua_State* l)
 /// Pre-wrap method Vec4::setZ.
 static inline int pwrapVec4setZ(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -2821,12 +2659,9 @@ static int wrapVec4setZ(lua_State* l)
 /// Pre-wrap method Vec4::setW.
 static inline int pwrapVec4setW(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -2870,12 +2705,9 @@ static int wrapVec4setW(lua_State* l)
 /// Pre-wrap method Vec4::setAll.
 static inline int pwrapVec4setAll(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 5)))
 	{
@@ -2937,12 +2769,9 @@ static int wrapVec4setAll(lua_State* l)
 /// Pre-wrap method Vec4::getAt.
 static inline int pwrapVec4getAt(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -2968,7 +2797,7 @@ static inline int pwrapVec4getAt(lua_State* l)
 	F32 ret = (*self)[arg0];
 
 	// Push return value
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }
@@ -2989,12 +2818,9 @@ static int wrapVec4getAt(lua_State* l)
 /// Pre-wrap method Vec4::setAt.
 static inline int pwrapVec4setAt(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 3)))
 	{
@@ -3044,12 +2870,9 @@ static int wrapVec4setAt(lua_State* l)
 /// Pre-wrap method Vec4::operator=.
 static inline int pwrapVec4copy(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -3096,12 +2919,9 @@ static int wrapVec4copy(lua_State* l)
 /// Pre-wrap method Vec4::operator+.
 static inline int pwrapVec4__add(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -3157,12 +2977,9 @@ static int wrapVec4__add(lua_State* l)
 /// Pre-wrap method Vec4::operator-.
 static inline int pwrapVec4__sub(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -3218,12 +3035,9 @@ static int wrapVec4__sub(lua_State* l)
 /// Pre-wrap method Vec4::operator*.
 static inline int pwrapVec4__mul(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -3279,12 +3093,9 @@ static int wrapVec4__mul(lua_State* l)
 /// Pre-wrap method Vec4::operator/.
 static inline int pwrapVec4__div(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -3340,12 +3151,9 @@ static int wrapVec4__div(lua_State* l)
 /// Pre-wrap method Vec4::operator==.
 static inline int pwrapVec4__eq(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -3395,12 +3203,9 @@ static int wrapVec4__eq(lua_State* l)
 /// Pre-wrap method Vec4::getLength.
 static inline int pwrapVec4getLength(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -3419,7 +3224,7 @@ static inline int pwrapVec4getLength(lua_State* l)
 	F32 ret = self->getLength();
 
 	// Push return value
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }
@@ -3440,12 +3245,9 @@ static int wrapVec4getLength(lua_State* l)
 /// Pre-wrap method Vec4::getNormalized.
 static inline int pwrapVec4getNormalized(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -3491,12 +3293,9 @@ static int wrapVec4getNormalized(lua_State* l)
 /// Pre-wrap method Vec4::normalize.
 static inline int pwrapVec4normalize(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -3533,12 +3332,9 @@ static int wrapVec4normalize(lua_State* l)
 /// Pre-wrap method Vec4::dot.
 static inline int pwrapVec4dot(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -3567,7 +3363,7 @@ static inline int pwrapVec4dot(lua_State* l)
 	F32 ret = self->dot(arg0);
 
 	// Push return value
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }
@@ -3615,7 +3411,7 @@ static inline void wrapVec4(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoMat3 = {6306819796139686981, "Mat3",
+LuaUserDataTypeInfo luaUserDataTypeInfoMat3 = {-4127883128879544239, "Mat3",
 											   LuaUserData::computeSizeForGarbageCollected<Mat3>(), nullptr, nullptr};
 
 template<>
@@ -3627,12 +3423,9 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Mat3>()
 /// Pre-wrap constructor for Mat3.
 static inline int pwrapMat3Ctor0(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 0)))
 	{
@@ -3654,12 +3447,9 @@ static inline int pwrapMat3Ctor0(lua_State* l)
 /// Pre-wrap constructor for Mat3.
 static inline int pwrapMat3Ctor1(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -3716,12 +3506,9 @@ static int wrapMat3Ctor(lua_State* l)
 /// Wrap destructor for Mat3.
 static int wrapMat3Dtor(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -3745,12 +3532,9 @@ static int wrapMat3Dtor(lua_State* l)
 /// Pre-wrap method Mat3::operator=.
 static inline int pwrapMat3copy(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -3797,12 +3581,9 @@ static int wrapMat3copy(lua_State* l)
 /// Pre-wrap method Mat3::getAt.
 static inline int pwrapMat3getAt(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 3)))
 	{
@@ -3834,7 +3615,7 @@ static inline int pwrapMat3getAt(lua_State* l)
 	F32 ret = (*self)(arg0, arg1);
 
 	// Push return value
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }
@@ -3855,12 +3636,9 @@ static int wrapMat3getAt(lua_State* l)
 /// Pre-wrap method Mat3::setAt.
 static inline int pwrapMat3setAt(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 4)))
 	{
@@ -3916,12 +3694,9 @@ static int wrapMat3setAt(lua_State* l)
 /// Pre-wrap method Mat3::setAll.
 static inline int pwrapMat3setAll(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 10)))
 	{
@@ -4024,7 +3799,7 @@ static inline void wrapMat3(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoMat3x4 = {
-	-2654194732934255869, "Mat3x4", LuaUserData::computeSizeForGarbageCollected<Mat3x4>(), nullptr, nullptr};
+	-5732152423901694347, "Mat3x4", LuaUserData::computeSizeForGarbageCollected<Mat3x4>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Mat3x4>()
@@ -4035,12 +3810,9 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Mat3x4>()
 /// Pre-wrap constructor for Mat3x4.
 static inline int pwrapMat3x4Ctor0(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 0)))
 	{
@@ -4062,12 +3834,9 @@ static inline int pwrapMat3x4Ctor0(lua_State* l)
 /// Pre-wrap constructor for Mat3x4.
 static inline int pwrapMat3x4Ctor1(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -4124,12 +3893,9 @@ static int wrapMat3x4Ctor(lua_State* l)
 /// Wrap destructor for Mat3x4.
 static int wrapMat3x4Dtor(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -4153,12 +3919,9 @@ static int wrapMat3x4Dtor(lua_State* l)
 /// Pre-wrap method Mat3x4::operator=.
 static inline int pwrapMat3x4copy(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -4205,12 +3968,9 @@ static int wrapMat3x4copy(lua_State* l)
 /// Pre-wrap method Mat3x4::getAt.
 static inline int pwrapMat3x4getAt(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 3)))
 	{
@@ -4242,7 +4002,7 @@ static inline int pwrapMat3x4getAt(lua_State* l)
 	F32 ret = (*self)(arg0, arg1);
 
 	// Push return value
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }
@@ -4263,12 +4023,9 @@ static int wrapMat3x4getAt(lua_State* l)
 /// Pre-wrap method Mat3x4::setAt.
 static inline int pwrapMat3x4setAt(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 4)))
 	{
@@ -4324,12 +4081,9 @@ static int wrapMat3x4setAt(lua_State* l)
 /// Pre-wrap method Mat3x4::setAll.
 static inline int pwrapMat3x4setAll(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 13)))
 	{
@@ -4450,7 +4204,7 @@ static inline void wrapMat3x4(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoTransform = {
-	7048620195620777229, "Transform", LuaUserData::computeSizeForGarbageCollected<Transform>(), nullptr, nullptr};
+	2689906859392931310, "Transform", LuaUserData::computeSizeForGarbageCollected<Transform>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Transform>()
@@ -4461,12 +4215,9 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Transform>()
 /// Pre-wrap constructor for Transform.
 static inline int pwrapTransformCtor0(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 0)))
 	{
@@ -4488,12 +4239,9 @@ static inline int pwrapTransformCtor0(lua_State* l)
 /// Pre-wrap constructor for Transform.
 static inline int pwrapTransformCtor1(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 3)))
 	{
@@ -4568,12 +4316,9 @@ static int wrapTransformCtor(lua_State* l)
 /// Wrap destructor for Transform.
 static int wrapTransformDtor(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -4597,12 +4342,9 @@ static int wrapTransformDtor(lua_State* l)
 /// Pre-wrap method Transform::operator=.
 static inline int pwrapTransformcopy(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -4649,12 +4391,9 @@ static int wrapTransformcopy(lua_State* l)
 /// Pre-wrap method Transform::getOrigin.
 static inline int pwrapTransformgetOrigin(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -4700,12 +4439,9 @@ static int wrapTransformgetOrigin(lua_State* l)
 /// Pre-wrap method Transform::setOrigin.
 static inline int pwrapTransformsetOrigin(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -4752,12 +4488,9 @@ static int wrapTransformsetOrigin(lua_State* l)
 /// Pre-wrap method Transform::getRotation.
 static inline int pwrapTransformgetRotation(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -4803,12 +4536,9 @@ static int wrapTransformgetRotation(lua_State* l)
 /// Pre-wrap method Transform::setRotation.
 static inline int pwrapTransformsetRotation(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -4855,12 +4585,9 @@ static int wrapTransformsetRotation(lua_State* l)
 /// Pre-wrap method Transform::getScale.
 static inline int pwrapTransformgetScale(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -4879,7 +4606,7 @@ static inline int pwrapTransformgetScale(lua_State* l)
 	F32 ret = self->getScale();
 
 	// Push return value
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }
@@ -4900,12 +4627,9 @@ static int wrapTransformgetScale(lua_State* l)
 /// Pre-wrap method Transform::setScale.
 static inline int pwrapTransformsetScale(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -4965,12 +4689,9 @@ static inline void wrapTransform(lua_State* l)
 /// Pre-wrap function toRad.
 static inline int pwraptoRad(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -4988,7 +4709,7 @@ static inline int pwraptoRad(lua_State* l)
 	F32 ret = toRad(arg0);
 
 	// Push return value
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }

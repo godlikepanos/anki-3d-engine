@@ -28,7 +28,7 @@ public:
 	~ImageResource();
 
 	/// Load an image.
-	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
+	Error load(const ResourceFilename& filename, Bool async);
 
 	/// Get the texture.
 	const TexturePtr& getTexture() const
@@ -77,7 +77,7 @@ private:
 	UVec3 m_size = UVec3(0u);
 	U32 m_layerCount = 0;
 
-	ANKI_USE_RESULT static Error load(LoadingContext& ctx);
+	[[nodiscard]] static Error load(LoadingContext& ctx);
 };
 /// @}
 

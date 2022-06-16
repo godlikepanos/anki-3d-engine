@@ -28,15 +28,15 @@ public:
 	{
 	}
 
-	Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override
 	{
 		updated = false;
 
-		MoveComponent& move = node.getFirstComponentOfType<MoveComponent>();
-		if(move.getTimestamp() == node.getGlobalTimestamp())
+		MoveComponent& move = info.m_node->getFirstComponentOfType<MoveComponent>();
+		if(move.getTimestamp() == info.m_node->getGlobalTimestamp())
 		{
 			// Move updated
-			ReflectionProbeNode& dnode = static_cast<ReflectionProbeNode&>(node);
+			ReflectionProbeNode& dnode = static_cast<ReflectionProbeNode&>(*info.m_node);
 			dnode.onMoveUpdate(move);
 		}
 
@@ -57,14 +57,14 @@ public:
 	{
 	}
 
-	Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override
 	{
 		updated = false;
 
-		ReflectionProbeComponent& reflc = node.getFirstComponentOfType<ReflectionProbeComponent>();
-		if(reflc.getTimestamp() == node.getGlobalTimestamp())
+		ReflectionProbeComponent& reflc = info.m_node->getFirstComponentOfType<ReflectionProbeComponent>();
+		if(reflc.getTimestamp() == info.m_node->getGlobalTimestamp())
 		{
-			ReflectionProbeNode& dnode = static_cast<ReflectionProbeNode&>(node);
+			ReflectionProbeNode& dnode = static_cast<ReflectionProbeNode&>(*info.m_node);
 			dnode.onShapeUpdate(reflc);
 		}
 
@@ -169,7 +169,7 @@ void ReflectionProbeNode::onShapeUpdate(ReflectionProbeComponent& reflc)
 	sp.setAabbWorldSpace(reflc.getAabbWorldSpace());
 }
 
-Error ReflectionProbeNode::frameUpdate(Second prevUpdateTime, Second crntTime)
+Error ReflectionProbeNode::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime)
 {
 	// Check the reflection probe component and if it's marked for rendering enable the frustum components
 	const ReflectionProbeComponent& reflc = getFirstComponentOfType<ReflectionProbeComponent>();

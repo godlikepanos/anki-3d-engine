@@ -18,7 +18,7 @@ public:
 
 	~NativeWindowSdl();
 
-	ANKI_USE_RESULT Error init(const NativeWindowInitInfo& init);
+	Error init(const NativeWindowInitInfo& init);
 
 private:
 	static constexpr U32 INIT_SUBSYSTEMS =

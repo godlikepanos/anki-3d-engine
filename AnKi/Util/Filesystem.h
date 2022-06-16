@@ -31,8 +31,7 @@ void getParentFilepath(const CString& filename, StringAuto& out);
 Bool directoryExists(const CString& dir);
 
 /// @internal
-ANKI_USE_RESULT Error walkDirectoryTreeInternal(const CString& dir,
-												const Function<Error(const CString&, Bool)>& callback);
+Error walkDirectoryTreeInternal(const CString& dir, const Function<Error(const CString&, Bool)>& callback);
 
 /// Walk a directory tree.
 /// @param dir The dir to walk.
@@ -46,7 +45,7 @@ ANKI_USE_RESULT Error walkDirectoryTreeInternal(const CString& dir,
 /// });
 /// @endcode
 template<typename TFunc>
-ANKI_USE_RESULT Error walkDirectoryTree(const CString& dir, GenericMemoryPoolAllocator<U8> alloc, TFunc func)
+Error walkDirectoryTree(const CString& dir, GenericMemoryPoolAllocator<U8> alloc, TFunc func)
 {
 	Function<Error(const CString&, Bool)> f(alloc, func);
 	const Error err = walkDirectoryTreeInternal(dir, f);
@@ -57,26 +56,25 @@ ANKI_USE_RESULT Error walkDirectoryTree(const CString& dir, GenericMemoryPoolAll
 /// Equivalent to: rm -rf dir
 /// @param dir The directory to remove.
 /// @param alloc A temp allocator that this function requires.
-ANKI_USE_RESULT Error removeDirectory(const CString& dir, GenericMemoryPoolAllocator<U8> alloc);
+Error removeDirectory(const CString& dir, GenericMemoryPoolAllocator<U8> alloc);
 
 /// Remove a file.
-ANKI_USE_RESULT Error removeFile(const CString& filename);
+Error removeFile(const CString& filename);
 
 /// Equivalent to: mkdir dir
-ANKI_USE_RESULT Error createDirectory(const CString& dir);
+Error createDirectory(const CString& dir);
 
 /// Get the home directory.
-ANKI_USE_RESULT Error getHomeDirectory(StringAuto& out);
+Error getHomeDirectory(StringAuto& out);
 
 /// Get the temp directory.
-ANKI_USE_RESULT Error getTempDirectory(StringAuto& out);
+Error getTempDirectory(StringAuto& out);
 
 /// Get the time the file was last modified.
-ANKI_USE_RESULT Error getFileModificationTime(CString filename, U32& year, U32& month, U32& day, U32& hour, U32& min,
-											  U32& second);
+Error getFileModificationTime(CString filename, U32& year, U32& month, U32& day, U32& hour, U32& min, U32& second);
 
 /// Get the path+filename of the currently running executable.
-ANKI_USE_RESULT Error getApplicationPath(StringAuto& path);
+Error getApplicationPath(StringAuto& path);
 /// @}
 
 } // end namespace anki

@@ -223,7 +223,8 @@ void ClusterBinning::writeClustererBuffers(RenderingContext& ctx)
 void ClusterBinning::writeClusterBuffersAsync()
 {
 	m_r->getThreadHive().submitTask(
-		[](void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore) {
+		[](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
+		   [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
 			static_cast<ClusterBinning*>(userData)->writeClustererBuffersTask();
 		},
 		this);

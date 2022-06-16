@@ -36,7 +36,7 @@ public:
 	virtual ~SceneNode();
 
 	/// A dummy init for those scene nodes that don't need it.
-	ANKI_USE_RESULT Error init()
+	Error init()
 	{
 		return Error::NONE;
 	}
@@ -96,10 +96,8 @@ public:
 	/// This is called by the scenegraph every frame after all component updates. By default it does nothing.
 	/// @param prevUpdateTime Timestamp of the previous update
 	/// @param crntTime Timestamp of this update
-	virtual ANKI_USE_RESULT Error frameUpdate(Second prevUpdateTime, Second crntTime)
+	virtual Error frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime)
 	{
-		(void)prevUpdateTime;
-		(void)crntTime;
 		return Error::NONE;
 	}
 
@@ -256,7 +254,7 @@ public:
 	U32 countComponentsOfType() const
 	{
 		U32 count = 0;
-		iterateComponentsOfType<TComponent>([&](const TComponent& c) {
+		iterateComponentsOfType<TComponent>([&]([[maybe_unused]] const TComponent& c) {
 			++count;
 		});
 		return count;

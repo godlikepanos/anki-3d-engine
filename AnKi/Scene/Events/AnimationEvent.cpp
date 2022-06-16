@@ -27,7 +27,7 @@ Error AnimationEvent::init(const AnimationResourcePtr& anim, SceneNode* movableS
 	return Error::NONE;
 }
 
-Error AnimationEvent::update(Second prevUpdateTime, Second crntTime)
+Error AnimationEvent::update([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime)
 {
 	Vec3 pos;
 	Quat rot;

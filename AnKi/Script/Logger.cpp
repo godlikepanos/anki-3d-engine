@@ -12,12 +12,9 @@ namespace anki {
 /// Pre-wrap function logi.
 static inline int pwraplogi(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -53,12 +50,9 @@ static int wraplogi(lua_State* l)
 /// Pre-wrap function loge.
 static inline int pwraploge(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -94,12 +88,9 @@ static int wraploge(lua_State* l)
 /// Pre-wrap function logw.
 static inline int pwraplogw(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{

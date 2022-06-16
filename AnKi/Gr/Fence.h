@@ -39,7 +39,7 @@ protected:
 
 private:
 	/// Allocate and initialize a new instance.
-	static ANKI_USE_RESULT Fence* newInstance(GrManager* manager);
+	[[nodiscard]] static Fence* newInstance(GrManager* manager);
 };
 /// @}
 

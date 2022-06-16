@@ -37,11 +37,11 @@ public:
 
 	void init(AllocAlignedCallback allocCb, void* allocCbUserData);
 
-	ANKI_USE_RESULT Error loadFromFile(CString filename);
+	Error loadFromFile(CString filename);
 
-	ANKI_USE_RESULT Error saveToFile(CString filename) const;
+	Error saveToFile(CString filename) const;
 
-	ANKI_USE_RESULT Error setFromCommandLineArguments(U32 cmdLineArgsCount, char* cmdLineArgs[]);
+	Error setFromCommandLineArguments(U32 cmdLineArgsCount, char* cmdLineArgs[]);
 
 	// Define getters and setters
 #if ANKI_EXTRA_CHECKS

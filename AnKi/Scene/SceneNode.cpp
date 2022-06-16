@@ -44,12 +44,10 @@ void SceneNode::setMarkedForDeletion()
 		m_scene->increaseObjectsMarkedForDeletion();
 	}
 
-	Error err = visitChildren([](SceneNode& obj) -> Error {
+	[[maybe_unused]] const Error err = visitChildren([](SceneNode& obj) -> Error {
 		obj.setMarkedForDeletion();
 		return Error::NONE;
 	});
-
-	(void)err;
 }
 
 Timestamp SceneNode::getGlobalTimestamp() const

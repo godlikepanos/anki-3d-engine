@@ -159,7 +159,7 @@ public:
 
 	LuaBinder& operator=(const LuaBinder&) = delete; // Non-copyable
 
-	ANKI_USE_RESULT Error init(ScriptAllocator alloc, LuaBinderOtherSystems* otherSystems);
+	Error init(ScriptAllocator alloc, LuaBinderOtherSystems* otherSystems);
 
 	lua_State* getLuaState()
 	{
@@ -228,11 +228,11 @@ public:
 	static void deserializeGlobals(lua_State* l, const void* data, PtrSize dataSize);
 
 	/// Make sure that the arguments match the argsCount number
-	static ANKI_USE_RESULT Error checkArgsCount(lua_State* l, I argsCount);
+	static Error checkArgsCount(lua_State* l, I argsCount);
 
 	/// Get a number from the stack.
 	template<typename TNumber>
-	static ANKI_USE_RESULT Error checkNumber(lua_State* l, I32 stackIdx, TNumber& number)
+	static Error checkNumber(lua_State* l, I32 stackIdx, TNumber& number)
 	{
 		lua_Number lnum;
 		Error err = checkNumberInternal(l, stackIdx, lnum);
@@ -244,13 +244,12 @@ public:
 	}
 
 	/// Get a string from the stack.
-	static ANKI_USE_RESULT Error checkString(lua_State* l, I32 stackIdx, const char*& out);
+	static Error checkString(lua_State* l, I32 stackIdx, const char*& out);
 
 	/// Get some user data from the stack.
 	/// The function uses the type signature to validate the type and not the
 	/// typeName. That is supposed to be faster.
-	static ANKI_USE_RESULT Error checkUserData(lua_State* l, I32 stackIdx, const LuaUserDataTypeInfo& typeInfo,
-											   LuaUserData*& out);
+	static Error checkUserData(lua_State* l, I32 stackIdx, const LuaUserDataTypeInfo& typeInfo, LuaUserData*& out);
 
 	/// Allocate memory.
 	static void* luaAlloc(lua_State* l, size_t size, U32 alignment);
@@ -266,7 +265,7 @@ private:
 
 	static void* luaAllocCallback(void* userData, void* ptr, PtrSize osize, PtrSize nsize);
 
-	static ANKI_USE_RESULT Error checkNumberInternal(lua_State* l, I32 stackIdx, lua_Number& number);
+	static Error checkNumberInternal(lua_State* l, I32 stackIdx, lua_Number& number);
 };
 /// @}
 

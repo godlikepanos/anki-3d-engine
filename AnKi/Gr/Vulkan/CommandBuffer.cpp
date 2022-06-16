@@ -226,10 +226,11 @@ void CommandBuffer::bindAccelerationStructure(U32 set, U32 binding, const Accele
 	self.bindAccelerationStructureInternal(set, binding, as, arrayIdx);
 }
 
-void CommandBuffer::bindTextureBuffer(U32 set, U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize range,
-									  Format fmt, U32 arrayIdx)
+void CommandBuffer::bindReadOnlyTextureBuffer(U32 set, U32 binding, const BufferPtr& buff, PtrSize offset,
+											  PtrSize range, Format fmt, U32 arrayIdx)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.bindReadOnlyTextureBufferInternal(set, binding, buff, offset, range, fmt, arrayIdx);
 }
 
 void CommandBuffer::bindAllBindless(U32 set)
@@ -311,12 +312,13 @@ void CommandBuffer::generateMipmaps2d(const TextureViewPtr& texView)
 	self.generateMipmaps2dInternal(texView);
 }
 
-void CommandBuffer::generateMipmaps3d(const TextureViewPtr& texView)
+void CommandBuffer::generateMipmaps3d([[maybe_unused]] const TextureViewPtr& texView)
 {
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::blitTextureViews(const TextureViewPtr& srcView, const TextureViewPtr& destView)
+void CommandBuffer::blitTextureViews([[maybe_unused]] const TextureViewPtr& srcView,
+									 [[maybe_unused]] const TextureViewPtr& destView)
 {
 	ANKI_ASSERT(!"TODO");
 }

@@ -83,7 +83,7 @@ public:
 
 	~ShaderProgramResourceSystem();
 
-	ANKI_USE_RESULT Error init(ResourceFilesystem& fs, GrManager& gr);
+	Error init(ResourceFilesystem& fs, GrManager& gr);
 
 	ConstWeakArray<ShaderProgramRaytracingLibrary> getRayTracingLibraries() const
 	{

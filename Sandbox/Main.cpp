@@ -38,7 +38,7 @@ Error MyApp::init(int argc, char* argv[])
 	ANKI_CHECK(m_config.setFromCommandLineArguments(argc - 2, argv + 2));
 
 	// Init super class
-	ANKI_CHECK(App::init(&m_config, argv[0], allocAligned, nullptr));
+	ANKI_CHECK(App::init(&m_config, allocAligned, nullptr));
 
 	// Other init
 	ResourceManager& resources = getResourceManager();
@@ -367,11 +367,39 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 																									 : "RtShadows");
 	}
 
-	if(in.getKey(KeyCode::J) == 1)
+	/*if(in.getKey(KeyCode::J) == 1)
 	{
 		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "MotionVectorsHistoryLength")
 												 ? ""
 												 : "MotionVectorsHistoryLength");
+	}*/
+
+	if(in.getKey(KeyCode::P) == 1)
+	{
+		static U32 idx = 3;
+		++idx;
+		idx %= 4;
+		if(idx == 0)
+		{
+			renderer.setCurrentDebugRenderTarget("IndirectDiffuseVrsSri");
+		}
+		else if(idx == 1)
+		{
+			renderer.setCurrentDebugRenderTarget("VrsSriDownscaled");
+		}
+		else if(idx == 2)
+		{
+			renderer.setCurrentDebugRenderTarget("VrsSri");
+		}
+		else
+		{
+			renderer.setCurrentDebugRenderTarget("");
+		}
+	}
+
+	if(in.getKey(KeyCode::J) == 1)
+	{
+		m_config.setRVrs(!m_config.getRVrs());
 	}
 
 	if(in.getEvent(InputEvent::WINDOW_CLOSED))

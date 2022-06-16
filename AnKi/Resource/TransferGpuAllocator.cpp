@@ -111,9 +111,8 @@ Error TransferGpuAllocator::allocate(PtrSize size, TransferGpuAllocatorHandle& h
 
 	Chunk* chunk;
 	PtrSize offset;
-	const Error err = pool->m_stackAlloc.allocate(size, GPU_BUFFER_ALIGNMENT, chunk, offset);
+	[[maybe_unused]] const Error err = pool->m_stackAlloc.allocate(size, GPU_BUFFER_ALIGNMENT, chunk, offset);
 	ANKI_ASSERT(!err);
-	(void)err;
 
 	handle.m_buffer = chunk->m_buffer;
 	handle.m_mappedMemory = static_cast<U8*>(chunk->m_mappedBuffer) + offset;

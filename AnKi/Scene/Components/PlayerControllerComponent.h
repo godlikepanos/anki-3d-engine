@@ -41,7 +41,7 @@ public:
 		m_player->moveToPosition(pos);
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
+	Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated) override
 	{
 		const Transform newTrf = m_player->getTransform();
 		updated = newTrf != m_trf;

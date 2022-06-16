@@ -50,6 +50,24 @@ private:
 	SceneComponentRtti className::_m_rtti(ANKI_STRINGIZE(className), sizeof(className), alignof(className), \
 										  className::_construct);
 
+/// Passed to SceneComponent::update.
+/// @memberof SceneComponent
+class SceneComponentUpdateInfo
+{
+public:
+	SceneNode* m_node;
+	const Second m_previousTime;
+	const Second m_currentTime;
+	const Second m_dt;
+
+	SceneComponentUpdateInfo(Second prevTime, Second crntTime)
+		: m_previousTime(prevTime)
+		, m_currentTime(crntTime)
+		, m_dt(crntTime - prevTime)
+	{
+	}
+};
+
 /// Scene node component
 class SceneComponent
 {
@@ -77,11 +95,9 @@ public:
 	}
 
 	/// Do some updating
-	/// @param node The owner node of this component.
-	/// @param prevTime Previous update time.
-	/// @param crntTime Current update time.
+	/// @param[in,out] info Update info.
 	/// @param[out] updated true if an update happened.
-	virtual ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated)
+	virtual Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated)
 	{
 		updated = false;
 		return Error::NONE;

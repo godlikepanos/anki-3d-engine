@@ -28,7 +28,7 @@ public:
 	~TimestampQueryImpl();
 
 	/// Create the query.
-	ANKI_USE_RESULT Error init();
+	Error init();
 
 	/// Get query result.
 	TimestampQueryResult getResultInternal(Second& timestamp) const;

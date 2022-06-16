@@ -217,7 +217,7 @@ public:
 	void test(ThreadHive& hive, U32 taskId);
 
 private:
-	ANKI_USE_RESULT Bool testAgainstRasterizer(const Aabb& aabb) const
+	[[nodiscard]] Bool testAgainstRasterizer(const Aabb& aabb) const
 	{
 		return (m_frcCtx->m_r) ? m_frcCtx->m_r->visibilityTest(aabb) : true;
 	}

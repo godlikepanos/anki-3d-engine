@@ -82,7 +82,7 @@ public:
 	}
 
 	/// @note It's thread-safe.
-	ANKI_USE_RESULT Error newQuery(MicroQuery& handle);
+	Error newQuery(MicroQuery& handle);
 
 	/// @note It's thread-safe.
 	void deleteQuery(MicroQuery& handle);

@@ -13,7 +13,7 @@ ScriptResource::~ScriptResource()
 	m_source.destroy(getAllocator());
 }
 
-Error ScriptResource::load(const ResourceFilename& filename, Bool async)
+Error ScriptResource::load(const ResourceFilename& filename, [[maybe_unused]] Bool async)
 {
 	ResourceFilePtr file;
 	ANKI_CHECK(openFile(filename, file));

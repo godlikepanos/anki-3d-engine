@@ -130,7 +130,7 @@ protected:
 	}
 
 private:
-	static ANKI_USE_RESULT Framebuffer* newInstance(GrManager* manager, const FramebufferInitInfo& init);
+	[[nodiscard]] static Framebuffer* newInstance(GrManager* manager, const FramebufferInitInfo& init);
 };
 /// @}
 

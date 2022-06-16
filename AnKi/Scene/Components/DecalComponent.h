@@ -27,12 +27,12 @@ public:
 
 	~DecalComponent();
 
-	ANKI_USE_RESULT Error setDiffuseDecal(CString texAtlasFname, CString texAtlasSubtexName, F32 blendFactor)
+	Error setDiffuseDecal(CString texAtlasFname, CString texAtlasSubtexName, F32 blendFactor)
 	{
 		return setLayer(texAtlasFname, texAtlasSubtexName, blendFactor, LayerType::DIFFUSE);
 	}
 
-	ANKI_USE_RESULT Error setSpecularRoughnessDecal(CString texAtlasFname, CString texAtlasSubtexName, F32 blendFactor)
+	Error setSpecularRoughnessDecal(CString texAtlasFname, CString texAtlasSubtexName, F32 blendFactor)
 	{
 		return setLayer(texAtlasFname, texAtlasSubtexName, blendFactor, LayerType::SPECULAR_ROUGHNESS);
 	}
@@ -62,7 +62,7 @@ public:
 	}
 
 	/// Implements SceneComponent::update.
-	ANKI_USE_RESULT Error update(SceneNode& node, Second, Second, Bool& updated) override
+	Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated) override
 	{
 		updated = m_markedForUpdate;
 		m_markedForUpdate = false;
@@ -148,7 +148,7 @@ private:
 	ImageResourcePtr m_debugImage;
 	Bool m_markedForUpdate = true;
 
-	ANKI_USE_RESULT Error setLayer(CString texAtlasFname, CString texAtlasSubtexName, F32 blendFactor, LayerType type);
+	Error setLayer(CString texAtlasFname, CString texAtlasSubtexName, F32 blendFactor, LayerType type);
 
 	void updateInternal();
 

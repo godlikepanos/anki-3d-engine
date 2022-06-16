@@ -20,14 +20,14 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override
 	{
 		updated = false;
 
-		const MoveComponent& movec = node.getFirstComponentOfType<MoveComponent>();
-		if(movec.getTimestamp() == node.getGlobalTimestamp())
+		const MoveComponent& movec = info.m_node->getFirstComponentOfType<MoveComponent>();
+		if(movec.getTimestamp() == info.m_node->getGlobalTimestamp())
 		{
-			static_cast<FogDensityNode&>(node).onMoveUpdated(movec);
+			static_cast<FogDensityNode&>(*info.m_node).onMoveUpdated(movec);
 		}
 
 		return Error::NONE;
@@ -46,14 +46,14 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override
 	{
 		updated = false;
 
-		const FogDensityComponent& fogc = node.getFirstComponentOfType<FogDensityComponent>();
-		if(fogc.getTimestamp() == node.getGlobalTimestamp())
+		const FogDensityComponent& fogc = info.m_node->getFirstComponentOfType<FogDensityComponent>();
+		if(fogc.getTimestamp() == info.m_node->getGlobalTimestamp())
 		{
-			static_cast<FogDensityNode&>(node).onDensityShapeUpdated(fogc);
+			static_cast<FogDensityNode&>(*info.m_node).onDensityShapeUpdated(fogc);
 		}
 
 		return Error::NONE;

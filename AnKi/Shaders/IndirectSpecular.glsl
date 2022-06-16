@@ -23,21 +23,25 @@ layout(set = 0, binding = 3) uniform ANKI_RP texture2D u_gbufferRt2;
 layout(set = 0, binding = 4) uniform texture2D u_depthRt;
 layout(set = 0, binding = 5) uniform ANKI_RP texture2D u_lightBufferRt;
 
-layout(set = 0, binding = 6) uniform sampler u_trilinearRepeatSampler;
-layout(set = 0, binding = 7) uniform ANKI_RP texture2D u_noiseTex;
+layout(set = 0, binding = 6) uniform ANKI_RP texture2D u_historyTex;
+layout(set = 0, binding = 7) uniform texture2D u_motionVectorsTex;
+layout(set = 0, binding = 8) uniform ANKI_RP texture2D u_historyLengthTex;
+
+layout(set = 0, binding = 9) uniform sampler u_trilinearRepeatSampler;
+layout(set = 0, binding = 10) uniform ANKI_RP texture2D u_noiseTex;
 const Vec2 NOISE_TEX_SIZE = Vec2(64.0);
 
 #define CLUSTERED_SHADING_SET 0u
-#define CLUSTERED_SHADING_UNIFORMS_BINDING 8u
-#define CLUSTERED_SHADING_REFLECTIONS_BINDING 9u
-#define CLUSTERED_SHADING_CLUSTERS_BINDING 11u
+#define CLUSTERED_SHADING_UNIFORMS_BINDING 11u
+#define CLUSTERED_SHADING_REFLECTIONS_BINDING 12u
+#define CLUSTERED_SHADING_CLUSTERS_BINDING 14u
 #include <AnKi/Shaders/ClusteredShadingCommon.glsl>
 
 #if defined(ANKI_COMPUTE_SHADER)
 const UVec2 WORKGROUP_SIZE = UVec2(8, 8);
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
 
-layout(set = 0, binding = 12) uniform writeonly image2D u_outImg;
+layout(set = 0, binding = 15) uniform writeonly image2D u_outImg;
 #else
 layout(location = 0) in Vec2 in_uv;
 layout(location = 0) out Vec3 out_color;
@@ -81,31 +85,31 @@ void main()
 #endif
 
 	// Is rough enough to deserve SSR?
-	const F32 ssrFactor = saturate(1.0f - pow(roughness / u_unis.m_roughnessCutoff, 16.0f));
+	F32 ssrAttenuation = saturate(1.0f - pow(roughness / u_unis.m_roughnessCutoff, 16.0f));
 
 	// Do the heavy work
 	Vec3 hitPoint;
-	F32 hitAttenuation;
-	if(ssrFactor > EPSILON)
+	if(ssrAttenuation > EPSILON)
 	{
 		const U32 lod = 8u; // Use the max LOD for ray marching
 		const U32 step = u_unis.m_firstStepPixels;
 		const F32 stepf = F32(step);
 		const F32 minStepf = stepf / 4.0;
+		F32 hitAttenuation;
 		raymarchGroundTruth(viewPos, reflDir, uv, depth, u_unis.m_projMat, u_unis.m_maxSteps, u_depthRt,
 							u_trilinearClampSampler, F32(lod), u_unis.m_depthBufferSize, step,
 							U32((stepf - minStepf) * noise.x + minStepf), hitPoint, hitAttenuation);
 
-		hitAttenuation *= ssrFactor;
+		ssrAttenuation *= hitAttenuation;
 	}
 	else
 	{
-		hitAttenuation = 0.0f;
+		ssrAttenuation = 0.0f;
 	}
 
 #if EXTRA_REJECTION
 	// Reject backfacing
-	ANKI_BRANCH if(hitAttenuation > 0.0)
+	ANKI_BRANCH if(ssrAttenuation > 0.0)
 	{
 		const Vec3 hitNormal =
 			u_unis.m_normalMat
@@ -113,11 +117,11 @@ void main()
 		F32 backFaceAttenuation;
 		rejectBackFaces(reflDir, hitNormal, backFaceAttenuation);
 
-		hitAttenuation *= backFaceAttenuation;
+		ssrAttenuation *= backFaceAttenuation;
 	}
 
 	// Reject far from hit point
-	ANKI_BRANCH if(hitAttenuation > 0.0)
+	ANKI_BRANCH if(ssrAttenuation > 0.0)
 	{
 		const F32 depth = textureLod(u_depthRt, u_trilinearClampSampler, hitPoint.xy, 0.0).r;
 		Vec4 viewPos4 = u_unis.m_invProjMat * Vec4(UV_TO_NDC(hitPoint.xy), depth, 1.0);
@@ -129,13 +133,13 @@ void main()
 		const F32 rejectionMeters = 1.0;
 		const F32 diff = abs(actualZ - hitZ);
 		const F32 distAttenuation = (diff < rejectionMeters) ? 1.0 : 0.0;
-		hitAttenuation *= distAttenuation;
+		ssrAttenuation *= distAttenuation;
 	}
 #endif
 
 	// Read the reflection
-	Vec3 ssrColor = Vec3(0.0);
-	ANKI_BRANCH if(hitAttenuation > 0.0)
+	Vec3 outColor = Vec3(0.0);
+	ANKI_BRANCH if(ssrAttenuation > 0.0)
 	{
 		// Reproject the UV because you are reading the previous frame
 		const Vec4 v4 = u_unis.m_prevViewProjMatMulInvViewProjMat * Vec4(UV_TO_NDC(hitPoint.xy), hitPoint.z, 1.0);
@@ -150,13 +154,33 @@ void main()
 #endif
 
 		// Read the light buffer
-		ssrColor = textureLod(u_lightBufferRt, u_trilinearClampSampler, hitPoint.xy, lod).rgb;
+		Vec3 ssrColor = textureLod(u_lightBufferRt, u_trilinearClampSampler, hitPoint.xy, lod).rgb;
 		ssrColor = clamp(ssrColor, 0.0, MAX_F32); // Fix the value just in case
+
+		outColor = ssrColor;
+	}
+
+	// Blend with history
+	{
+		const Vec2 historyUv = uv + textureLod(u_motionVectorsTex, u_trilinearClampSampler, uv, 0.0).xy;
+		const F32 historyLength = textureLod(u_historyLengthTex, u_trilinearClampSampler, uv, 0.0).x;
+
+		const F32 lowestBlendFactor = 0.2;
+		const F32 maxHistoryLength = 16.0;
+		const F32 stableFrames = 4.0;
+		const F32 lerp = min(1.0, (historyLength * maxHistoryLength - 1.0) / stableFrames);
+		const F32 blendFactor = mix(1.0, lowestBlendFactor, lerp);
+
+		// Blend with history
+		if(blendFactor < 1.0)
+		{
+			const ANKI_RP Vec3 history = textureLod(u_historyTex, u_trilinearClampSampler, historyUv, 0.0).xyz;
+			outColor = mix(history, outColor, blendFactor);
+		}
 	}
 
 	// Read probes
-	Vec3 probeColor = Vec3(0.0);
-	ANKI_BRANCH if(hitAttenuation < 1.0)
+	ANKI_BRANCH if(ssrAttenuation < 1.0)
 	{
 #if defined(ANKI_COMPUTE_SHADER)
 		const Vec2 fragCoord = Vec2(gl_GlobalInvocationID.xy) + 0.5;
@@ -183,6 +207,8 @@ void main()
 #else
 		const Vec3 reflDir = reflect(-viewDir, worldNormal);
 #endif
+
+		Vec3 probeColor = Vec3(0.0);
 
 		if(bitCount(cluster.m_reflectionProbesMask) == 1)
 		{
@@ -223,12 +249,12 @@ void main()
 			// Normalize the colors
 			probeColor /= totalBlendWeight;
 		}
+
+		outColor = mix(probeColor, outColor, ssrAttenuation);
 	}
 
-	// Compute final value
-	const Vec3 outColor = mix(probeColor, ssrColor, hitAttenuation);
-
 	// Store
+	ssrAttenuation = saturate(ssrAttenuation);
 #if defined(ANKI_COMPUTE_SHADER)
 	imageStore(u_outImg, IVec2(gl_GlobalInvocationID.xy), Vec4(outColor, 0.0));
 #else

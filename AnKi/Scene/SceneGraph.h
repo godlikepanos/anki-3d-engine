@@ -48,9 +48,9 @@ public:
 
 	~SceneGraph();
 
-	ANKI_USE_RESULT Error init(AllocAlignedCallback allocCb, void* allocCbData, ThreadHive* threadHive,
-							   ResourceManager* resources, Input* input, ScriptManager* scriptManager,
-							   UiManager* uiManager, ConfigSet* config, const Timestamp* globalTimestamp);
+	Error init(AllocAlignedCallback allocCb, void* allocCbData, ThreadHive* threadHive, ResourceManager* resources,
+			   Input* input, ScriptManager* scriptManager, UiManager* uiManager, ConfigSet* config,
+			   const Timestamp* globalTimestamp);
 
 	Timestamp getGlobalTimestamp() const
 	{
@@ -107,7 +107,7 @@ public:
 		return *m_threadHive;
 	}
 
-	ANKI_USE_RESULT Error update(Second prevUpdateTime, Second crntTime);
+	Error update(Second prevUpdateTime, Second crntTime);
 
 	void doVisibilityTests(RenderQueue& rqueue);
 
@@ -116,7 +116,7 @@ public:
 
 	/// Iterate the scene nodes using a lambda
 	template<typename Func>
-	ANKI_USE_RESULT Error iterateSceneNodes(Func func)
+	Error iterateSceneNodes(Func func)
 	{
 		for(SceneNode& psn : m_nodes)
 		{
@@ -132,11 +132,11 @@ public:
 
 	/// Iterate a range of scene nodes using a lambda
 	template<typename Func>
-	ANKI_USE_RESULT Error iterateSceneNodes(PtrSize begin, PtrSize end, Func func);
+	Error iterateSceneNodes(PtrSize begin, PtrSize end, Func func);
 
 	/// Create a new SceneNode
 	template<typename Node, typename... Args>
-	ANKI_USE_RESULT Error newSceneNode(const CString& name, Node*& node, Args&&... args);
+	Error newSceneNode(const CString& name, Node*& node, Args&&... args);
 
 	/// Delete a scene node. It actualy marks it for deletion
 	void deleteSceneNode(SceneNode* node)
@@ -266,14 +266,14 @@ private:
 	DebugDrawer2 m_debugDrawer;
 
 	/// Put a node in the appropriate containers
-	ANKI_USE_RESULT Error registerNode(SceneNode* node);
+	Error registerNode(SceneNode* node);
 	void unregisterNode(SceneNode* node);
 
 	/// Delete the nodes that are marked for deletion
 	void deleteNodesMarkedForDeletion();
 
-	ANKI_USE_RESULT Error updateNodes(UpdateSceneNodesCtx& ctx) const;
-	ANKI_USE_RESULT static Error updateNode(Second prevTime, Second crntTime, SceneNode& node);
+	Error updateNodes(UpdateSceneNodesCtx& ctx) const;
+	[[nodiscard]] static Error updateNode(Second prevTime, Second crntTime, SceneNode& node);
 
 	/// Do visibility tests.
 	static void doVisibilityTests(SceneNode& frustumable, SceneGraph& scene, RenderQueue& rqueue);

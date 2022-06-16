@@ -72,8 +72,7 @@ inline void RenderPassDescriptionBase::validateDep(const RenderPassDependency& d
 	// Validate dep
 	if(dep.m_type == RenderPassDependency::Type::TEXTURE)
 	{
-		const TextureUsageBit usage = dep.m_texture.m_usage;
-		(void)usage;
+		[[maybe_unused]] const TextureUsageBit usage = dep.m_texture.m_usage;
 		if(m_type == Type::GRAPHICS)
 		{
 			ANKI_ASSERT(!(usage & TextureUsageBit::ALL_COMPUTE));
@@ -87,8 +86,7 @@ inline void RenderPassDescriptionBase::validateDep(const RenderPassDependency& d
 	}
 	else if(dep.m_type == RenderPassDependency::Type::BUFFER)
 	{
-		const BufferUsageBit usage = dep.m_buffer.m_usage;
-		(void)usage;
+		[[maybe_unused]] const BufferUsageBit usage = dep.m_buffer.m_usage;
 		if(m_type == Type::GRAPHICS)
 		{
 			ANKI_ASSERT(!(usage & BufferUsageBit::ALL_COMPUTE));
@@ -259,9 +257,8 @@ inline ComputeRenderPassDescription& RenderGraphDescription::newComputeRenderPas
 
 inline RenderTargetHandle RenderGraphDescription::importRenderTarget(TexturePtr tex, TextureUsageBit usage)
 {
-	for(const RT& rt : m_renderTargets)
+	for([[maybe_unused]] const RT& rt : m_renderTargets)
 	{
-		(void)rt;
 		ANKI_ASSERT(rt.m_importedTex != tex && "Already imported");
 	}
 
@@ -312,9 +309,8 @@ inline BufferHandle RenderGraphDescription::importBuffer(BufferPtr buff, BufferU
 		ANKI_ASSERT((offset + range) <= buff->getSize());
 	}
 
-	for(const Buffer& bb : m_buffers)
+	for([[maybe_unused]] const Buffer& bb : m_buffers)
 	{
-		(void)bb;
 		ANKI_ASSERT((bb.m_importedBuff != buff || !bufferRangeOverlaps(bb.m_offset, bb.m_range, offset, range))
 					&& "Range already imported");
 	}
@@ -334,9 +330,8 @@ inline BufferHandle RenderGraphDescription::importBuffer(BufferPtr buff, BufferU
 inline AccelerationStructureHandle
 RenderGraphDescription::importAccelerationStructure(AccelerationStructurePtr as, AccelerationStructureUsageBit usage)
 {
-	for(const AS& a : m_as)
+	for([[maybe_unused]] const AS& a : m_as)
 	{
-		(void)a;
 		ANKI_ASSERT(a.m_importedAs != as && "Already imported");
 	}
 

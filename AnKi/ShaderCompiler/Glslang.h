@@ -15,11 +15,11 @@ namespace anki {
 /// @{
 
 /// Run glslang's preprocessor.
-ANKI_USE_RESULT Error preprocessGlsl(CString in, StringAuto& out);
+Error preprocessGlsl(CString in, StringAuto& out);
 
 /// Compile glsl to SPIR-V.
-ANKI_USE_RESULT Error compilerGlslToSpirv(CString src, ShaderType shaderType, GenericMemoryPoolAllocator<U8> tmpAlloc,
-										  DynamicArrayAuto<U8>& spirv);
+Error compilerGlslToSpirv(CString src, ShaderType shaderType, GenericMemoryPoolAllocator<U8> tmpAlloc,
+						  DynamicArrayAuto<U8>& spirv);
 /// @}
 
 } // end namespace anki

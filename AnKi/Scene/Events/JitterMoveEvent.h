@@ -23,10 +23,10 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error init(Second startTime, Second duration, SceneNode* movableSceneNode);
+	Error init(Second startTime, Second duration, SceneNode* movableSceneNode);
 
 	/// Implements Event::update
-	ANKI_USE_RESULT Error update(Second prevUpdateTime, Second crntTime);
+	Error update(Second prevUpdateTime, Second crntTime);
 
 	void setPositionLimits(const Vec4& posMin, const Vec4& posMax);
 

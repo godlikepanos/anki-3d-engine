@@ -169,14 +169,14 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error init();
+	Error init();
 
 	void destroy();
 
 	GrAllocator<U8>& getAllocator();
 
 	/// Request a new command buffer.
-	ANKI_USE_RESULT Error newCommandBuffer(CommandBufferFlag cmdbFlags, MicroCommandBufferPtr& ptr);
+	Error newCommandBuffer(CommandBufferFlag cmdbFlags, MicroCommandBufferPtr& ptr);
 
 	/// It will recycle it.
 	void deleteCommandBuffer(MicroCommandBuffer* ptr);
@@ -208,12 +208,12 @@ public:
 
 	CommandBufferFactory& operator=(const CommandBufferFactory&) = delete; // Non-copyable
 
-	ANKI_USE_RESULT Error init(GrAllocator<U8> alloc, VkDevice dev, const VulkanQueueFamilies& queueFamilies);
+	Error init(GrAllocator<U8> alloc, VkDevice dev, const VulkanQueueFamilies& queueFamilies);
 
 	void destroy();
 
 	/// Request a new command buffer.
-	ANKI_USE_RESULT Error newCommandBuffer(ThreadId tid, CommandBufferFlag cmdbFlags, MicroCommandBufferPtr& ptr);
+	Error newCommandBuffer(ThreadId tid, CommandBufferFlag cmdbFlags, MicroCommandBufferPtr& ptr);
 
 	/// Stats.
 	U32 getCreatedCommandBufferCount() const

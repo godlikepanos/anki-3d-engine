@@ -45,7 +45,7 @@ public:
 
 	~GrManagerImpl();
 
-	ANKI_USE_RESULT Error init(const GrManagerInitInfo& cfg);
+	Error init(const GrManagerInitInfo& cfg);
 
 	ConstWeakArray<U32> getQueueFamilies() const
 	{
@@ -181,40 +181,36 @@ public:
 
 	/// @name Debug report
 	/// @{
-	void beginMarker(VkCommandBuffer cmdb, CString name) const
+	void beginMarker(VkCommandBuffer cmdb, CString name, Vec3 color = Vec3(1.0f, 0.0f, 0.0f)) const
 	{
 		ANKI_ASSERT(cmdb);
-		if(m_pfnCmdDebugMarkerBeginEXT)
+		if(!!(m_extensions & VulkanExtensions::EXT_DEBUG_UTILS))
 		{
-			VkDebugMarkerMarkerInfoEXT markerInfo = {};
-			markerInfo.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
-			markerInfo.color[0] = 1.0f;
-			markerInfo.pMarkerName = (!name.isEmpty() && name.getLength() > 0) ? name.cstr() : "Unnamed";
-			m_pfnCmdDebugMarkerBeginEXT(cmdb, &markerInfo);
+			VkDebugUtilsLabelEXT label = {};
+			label.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+			label.pLabelName = name.cstr();
+			label.color[0] = color[0];
+			label.color[1] = color[1];
+			label.color[2] = color[2];
+			label.color[3] = 1.0f;
+			vkCmdBeginDebugUtilsLabelEXT(cmdb, &label);
 		}
 	}
 
 	void endMarker(VkCommandBuffer cmdb) const
 	{
 		ANKI_ASSERT(cmdb);
-		if(m_pfnCmdDebugMarkerEndEXT)
+		if(!!(m_extensions & VulkanExtensions::EXT_DEBUG_UTILS))
 		{
-			m_pfnCmdDebugMarkerEndEXT(cmdb);
+			vkCmdEndDebugUtilsLabelEXT(cmdb);
 		}
 	}
 
-	void trySetVulkanHandleName(CString name, VkDebugReportObjectTypeEXT type, U64 handle) const;
+	void trySetVulkanHandleName(CString name, VkObjectType type, U64 handle) const;
 
-	void trySetVulkanHandleName(CString name, VkDebugReportObjectTypeEXT type, void* handle) const
+	void trySetVulkanHandleName(CString name, VkObjectType type, void* handle) const
 	{
 		trySetVulkanHandleName(name, type, U64(ptrToNumber(handle)));
-	}
-
-	StringAuto tryGetVulkanHandleName(U64 handle) const;
-
-	StringAuto tryGetVulkanHandleName(void* handle) const
-	{
-		return tryGetVulkanHandleName(U64(ptrToNumber(handle)));
 	}
 	/// @}
 
@@ -248,7 +244,6 @@ private:
 #endif
 
 	VkInstance m_instance = VK_NULL_HANDLE;
-	VkDebugReportCallbackEXT m_debugCallback = VK_NULL_HANDLE;
 	VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
 	VulkanExtensions m_extensions = VulkanExtensions::NONE;
 	VkDevice m_device = VK_NULL_HANDLE;
@@ -272,9 +267,8 @@ private:
 	VkPhysicalDeviceShaderAtomicInt64FeaturesKHR m_atomicInt64Features = {};
 	VkPhysicalDeviceFragmentShadingRateFeaturesKHR m_fragmentShadingRateFeatures = {};
 
-	PFN_vkDebugMarkerSetObjectNameEXT m_pfnDebugMarkerSetObjectNameEXT = nullptr;
-	PFN_vkCmdDebugMarkerBeginEXT m_pfnCmdDebugMarkerBeginEXT = nullptr;
-	PFN_vkCmdDebugMarkerEndEXT m_pfnCmdDebugMarkerEndEXT = nullptr;
+	VkDebugUtilsMessengerEXT m_debugUtilsMessager = VK_NULL_HANDLE;
+
 	PFN_vkGetShaderInfoAMD m_pfnGetShaderInfoAMD = nullptr;
 	mutable File m_shaderStatsFile;
 	mutable SpinLock m_shaderStatsFileMtx;
@@ -331,21 +325,17 @@ private:
 
 	PipelineCache m_pplineCache;
 
-	mutable HashMap<U64, StringAuto> m_vkHandleToName;
-	mutable SpinLock m_vkHandleToNameLock;
-
 	FrameGarbageCollector m_frameGarbageCollector;
 
 #if ANKI_PLATFORM_MOBILE
 	Mutex* m_globalCreatePipelineMtx = nullptr;
 #endif
 
-	ANKI_USE_RESULT Error initInternal(const GrManagerInitInfo& init);
-	ANKI_USE_RESULT Error initInstance(const GrManagerInitInfo& init);
-	ANKI_USE_RESULT Error initSurface(const GrManagerInitInfo& init);
-	ANKI_USE_RESULT Error initDevice(const GrManagerInitInfo& init);
-	ANKI_USE_RESULT Error initFramebuffers(const GrManagerInitInfo& init);
-	ANKI_USE_RESULT Error initMemory();
+	Error initInternal(const GrManagerInitInfo& init);
+	Error initInstance();
+	Error initSurface(const GrManagerInitInfo& init);
+	Error initDevice(const GrManagerInitInfo& init);
+	Error initMemory();
 
 #if ANKI_GR_MANAGER_DEBUG_MEMMORY
 	static void* allocateCallback(void* userData, size_t size, size_t alignment,
@@ -359,12 +349,11 @@ private:
 
 	void resetFrame(PerFrame& frame);
 
-	static VkBool32 debugReportCallbackEXT(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType,
-										   uint64_t object, size_t location, int32_t messageCode,
-										   const char* pLayerPrefix, const char* pMessage, void* pUserData);
+	static VkBool32 debugReportCallbackEXT(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+										   VkDebugUtilsMessageTypeFlagsEXT messageTypes,
+										   const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
 
-	ANKI_USE_RESULT Error printPipelineShaderInfoInternal(VkPipeline ppline, CString name, ShaderTypeBit stages,
-														  U64 hash) const;
+	Error printPipelineShaderInfoInternal(VkPipeline ppline, CString name, ShaderTypeBit stages, U64 hash) const;
 };
 /// @}
 

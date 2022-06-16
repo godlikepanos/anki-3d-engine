@@ -160,10 +160,10 @@ private:
 
 	U8 m_meshLodCount : 6;
 
-	ANKI_USE_RESULT Error init(ModelResource* model, ConstWeakArray<CString> meshFNames, const CString& mtlFName,
-							   U32 subMeshIndex, Bool async, ResourceManager* resources);
+	Error init(ModelResource* model, ConstWeakArray<CString> meshFNames, const CString& mtlFName, U32 subMeshIndex,
+			   Bool async, ResourceManager* resources);
 
-	ANKI_USE_RESULT Bool supportsSkinning() const
+	[[nodiscard]] Bool supportsSkinning() const
 	{
 		return m_meshes[0]->hasBoneWeights() && m_mtl->supportsSkinning();
 	}
@@ -208,7 +208,7 @@ public:
 		return m_boundingVolume;
 	}
 
-	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
+	Error load(const ResourceFilename& filename, Bool async);
 
 private:
 	DynamicArray<ModelPatch> m_modelPatches;

@@ -24,9 +24,9 @@ public:
 
 	~ScriptComponent();
 
-	ANKI_USE_RESULT Error loadScriptResource(CString fname);
+	Error loadScriptResource(CString fname);
 
-	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override;
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 
 	Bool isEnabled() const
 	{

@@ -84,8 +84,7 @@ ANKI_TEST(Util, WalkDir)
 	} ctx;
 	ctx.m_alloc = alloc;
 
-	Error err = removeDirectory("./data", alloc);
-	(void)err;
+	[[maybe_unused]] const Error err = removeDirectory("./data", alloc);
 
 	// Create some dirs and some files
 	for(U32 i = 0; i < ctx.m_paths.getSize(); ++i)
@@ -121,12 +120,13 @@ ANKI_TEST(Util, WalkDir)
 
 	// Test error
 	U32 count = 0;
-	ANKI_TEST_EXPECT_ERR(walkDirectoryTree("./data///dir////", alloc,
-										   [&count](const CString& fname, Bool isDir) -> Error {
-											   ++count;
-											   return Error::FUNCTION_FAILED;
-										   }),
-						 Error::FUNCTION_FAILED);
+	ANKI_TEST_EXPECT_ERR(
+		walkDirectoryTree("./data///dir////", alloc,
+						  [&count]([[maybe_unused]] const CString& fname, [[maybe_unused]] Bool isDir) -> Error {
+							  ++count;
+							  return Error::FUNCTION_FAILED;
+						  }),
+		Error::FUNCTION_FAILED);
 
 	ANKI_TEST_EXPECT_EQ(count, 1);
 }

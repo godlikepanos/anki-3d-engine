@@ -21,7 +21,7 @@ CpuMeshResource::~CpuMeshResource()
 	m_positions.destroy(getAllocator());
 }
 
-Error CpuMeshResource::load(const ResourceFilename& filename, Bool async)
+Error CpuMeshResource::load(const ResourceFilename& filename, [[maybe_unused]] Bool async)
 {
 	MeshBinaryLoader loader(&getManager());
 

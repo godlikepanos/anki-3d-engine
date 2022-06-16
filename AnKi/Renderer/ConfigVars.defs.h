@@ -5,12 +5,11 @@
 
 ANKI_CONFIG_VAR_GROUP(R)
 
-ANKI_CONFIG_VAR_U8(RTextureAnisotropy, (ANKI_PLATFORM_MOBILE) ? 1 : 8, 1, 16, "Texture anisotropy for the main passes")
+ANKI_CONFIG_VAR_U8(RTextureAnisotropy, ((ANKI_PLATFORM_MOBILE) ? 1 : 8), 1, 16,
+				   "Texture anisotropy for the main passes")
 ANKI_CONFIG_VAR_U32(RTileSize, 64, 8, 256, "Tile lighting tile size")
 ANKI_CONFIG_VAR_U32(RZSplitCount, 64, 8, 1024, "Clusterer number of Z splits")
 ANKI_CONFIG_VAR_BOOL(RPreferCompute, !ANKI_PLATFORM_MOBILE, "Prefer compute shaders")
-ANKI_CONFIG_VAR_BOOL(RVrs, true, "Enable VRS in multiple passes")
-ANKI_CONFIG_VAR_F32(RVrsThreshold, 0.05f, 0.0f, 1.0f, "Threshold under which a lower shading rate will be applied")
 ANKI_CONFIG_VAR_BOOL(RHighQualityHdr, !ANKI_PLATFORM_MOBILE,
 					 "If true use R16G16B16 for HDR images. Alternatively use B10G11R11")
 
@@ -26,12 +25,21 @@ ANKI_CONFIG_VAR_F32(RVolumetricLightingAccumulationQualityZ, 4.0f, 1.0f, 16.0f,
 ANKI_CONFIG_VAR_U32(RVolumetricLightingAccumulationFinalZSplit, 26, 1, 256,
 					"Final cluster split that will recieve volumetric lights")
 
+ANKI_CONFIG_VAR_BOOL(RDbgEnabled, false, "Enable or not debugging")
+
+// VRS
+ANKI_CONFIG_VAR_BOOL(RVrs, true, "Enable VRS in multiple passes")
+ANKI_CONFIG_VAR_BOOL(RGBufferVrs, false, "Enable VRS in GBuffer")
+ANKI_CONFIG_VAR_F32(RVrsThreshold, 0.05f, 0.0f, 1.0f, "Threshold under which a lower shading rate will be applied")
+ANKI_CONFIG_VAR_BOOL(RVrsLimitTo2x2, false, "If true the max rate will be 2x2")
+
 // SSR
 ANKI_CONFIG_VAR_U32(RSsrFirstStepPixels, 32, 1, 256, "The 1st step in ray marching")
-ANKI_CONFIG_VAR_U32(RSsrDepthLod, 2, 0, 1000, "Texture LOD of the depth texture that will be raymarched")
+ANKI_CONFIG_VAR_U32(RSsrDepthLod, ((ANKI_PLATFORM_MOBILE) ? 2 : 0), 0, 1000,
+					"Texture LOD of the depth texture that will be raymarched")
 ANKI_CONFIG_VAR_U32(RSsrMaxSteps, 64, 1, 256, "Max SSR raymarching steps")
 ANKI_CONFIG_VAR_BOOL(RSsrStochastic, false, "Stochastic reflections")
-ANKI_CONFIG_VAR_F32(RSsrRoughnessCutoff, ((ANKI_PLATFORM_MOBILE) ? 0.7f : 0.9f), 0.0f, 1.0f,
+ANKI_CONFIG_VAR_F32(RSsrRoughnessCutoff, ((ANKI_PLATFORM_MOBILE) ? 0.7f : 1.0f), 0.0f, 1.0f,
 					"Materials with roughness higher that this value will fallback to probe reflections")
 
 // GI probes
@@ -70,8 +78,6 @@ ANKI_CONFIG_VAR_U8(RLensFlareMaxSpritesPerFlare, 8, 4, 255, "Max sprites per len
 ANKI_CONFIG_VAR_U8(RLensFlareMaxFlares, 16, 8, 255, "Max flare count")
 
 ANKI_CONFIG_VAR_U32(RMotionBlurSamples, 32, 1, 2048, "Max motion blur samples")
-
-ANKI_CONFIG_VAR_BOOL(RDbgEnabled, false, "Enable or not debugging")
 
 ANKI_CONFIG_VAR_F32(RBloomThreshold, 2.5f, 0.0f, 256.0f, "Bloom threshold")
 ANKI_CONFIG_VAR_F32(RBloomScale, 2.5f, 0.0f, 256.0f, "Bloom scale")

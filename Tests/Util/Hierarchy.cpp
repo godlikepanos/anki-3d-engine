@@ -78,9 +78,8 @@ ANKI_TEST(Object, Test)
 	Foo2* a = new Foo2(nullptr);
 
 	Foo2* b = new Foo2(a);
-	Foo2* c = new Foo2(b);
+	[[maybe_unused]] Foo2* c = new Foo2(b);
 
-	(void)c;
 
 	delete a;
 }

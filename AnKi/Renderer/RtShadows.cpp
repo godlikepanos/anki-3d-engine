@@ -328,8 +328,6 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	}
 
 	// SVGF Atrous
-	U32 atrousWriteRtIdx = MAX_U32;
-	(void)atrousWriteRtIdx;
 	if(m_useSvgf)
 	{
 		m_runCtx.m_atrousPassIdx = 0;
@@ -338,8 +336,6 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 		{
 			const Bool lastPass = i == U32(m_atrousPassCount - 1);
 			const U32 readRtIdx = (i + 1) & 1;
-
-			atrousWriteRtIdx = !readRtIdx;
 
 			ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("RtShadows SVGF Atrous");
 			rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
@@ -372,8 +368,8 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	// Upscale
 	{
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("RtShadows Upscale");
-		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
-			runUpscale(ctx, rgraphCtx);
+		rpass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+			runUpscale(rgraphCtx);
 		});
 
 		rpass.newDependency(RenderPassDependency(m_runCtx.m_historyRt, TextureUsageBit::SAMPLED_COMPUTE));
@@ -392,8 +388,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 		{
 			U32 layerIdx;
 			Bool rejectHistory;
-			const Bool layerFound = findShadowLayer(0, layerIdx, rejectHistory);
-			(void)layerFound;
+			[[maybe_unused]] const Bool layerFound = findShadowLayer(0, layerIdx, rejectHistory);
 			ANKI_ASSERT(layerFound && "Directional can't fail");
 
 			rqueue.m_directionalLight.m_shadowLayer = U8(layerIdx);
@@ -586,7 +581,7 @@ void RtShadows::runSvgfAtrous(const RenderingContext& ctx, RenderPassWorkContext
 	++m_runCtx.m_atrousPassIdx;
 }
 
-void RtShadows::runUpscale(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
+void RtShadows::runUpscale(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
@@ -621,8 +616,7 @@ void RtShadows::buildSbt(RenderingContext& ctx)
 	// Allocate SBT
 	StagingGpuMemoryToken token;
 	U8* sbt = allocateStorage<U8*>(PtrSize(m_sbtRecordSize) * (instanceCount + extraSbtRecords), token);
-	const U8* sbtStart = sbt;
-	(void)sbtStart;
+	[[maybe_unused]] const U8* sbtStart = sbt;
 	m_runCtx.m_sbtBuffer = token.m_buffer;
 	m_runCtx.m_sbtOffset = token.m_offset;
 

@@ -21,14 +21,14 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override
 	{
 		updated = false;
 
-		MoveComponent& movec = node.getFirstComponentOfType<MoveComponent>();
-		if(movec.getTimestamp() == node.getGlobalTimestamp())
+		MoveComponent& movec = info.m_node->getFirstComponentOfType<MoveComponent>();
+		if(movec.getTimestamp() == info.m_node->getGlobalTimestamp())
 		{
-			static_cast<DecalNode&>(node).onMove(movec);
+			static_cast<DecalNode&>(*info.m_node).onMove(movec);
 		}
 
 		return Error::NONE;
@@ -48,15 +48,15 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override
 	{
 		updated = false;
 
-		DecalComponent& decalc = node.getFirstComponentOfType<DecalComponent>();
+		DecalComponent& decalc = info.m_node->getFirstComponentOfType<DecalComponent>();
 
-		if(decalc.getTimestamp() == node.getGlobalTimestamp())
+		if(decalc.getTimestamp() == info.m_node->getGlobalTimestamp())
 		{
-			static_cast<DecalNode&>(node).onDecalUpdated(decalc);
+			static_cast<DecalNode&>(*info.m_node).onDecalUpdated(decalc);
 		}
 
 		return Error::NONE;

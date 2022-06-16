@@ -36,9 +36,8 @@ public:
 	void init(HeapAllocator<U8> alloc, U32 tileCountX, U32 tileCountY, U32 lodCount, Bool enableCaching);
 
 	/// Allocate some tiles.
-	ANKI_USE_RESULT TileAllocatorResult allocate(Timestamp crntTimestamp, Timestamp lightTimestamp, U64 lightUuid,
-												 U32 lightFace, U32 drawcallCount, U32 lod,
-												 Array<U32, 4>& tileViewport);
+	[[nodiscard]] TileAllocatorResult allocate(Timestamp crntTimestamp, Timestamp lightTimestamp, U64 lightUuid,
+											   U32 lightFace, U32 drawcallCount, U32 lod, Array<U32, 4>& tileViewport);
 
 	/// Remove an light from the cache.
 	void invalidateCache(U64 lightUuid, U32 lightFace);

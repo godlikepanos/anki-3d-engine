@@ -92,7 +92,7 @@ public:
 	}
 
 	/// Compute the GJK support.
-	ANKI_USE_RESULT Vec4 computeSupport(const Vec4& dir) const;
+	[[nodiscard]] Vec4 computeSupport(const Vec4& dir) const;
 
 	/// It uses a nice trick to avoid unwanted calculations
 	Aabb getTransformed(const Transform& transform) const;

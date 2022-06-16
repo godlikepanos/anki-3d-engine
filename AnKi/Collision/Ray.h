@@ -62,7 +62,7 @@ public:
 		m_origin = origin.xyz0();
 	}
 
-	ANKI_USE_RESULT const Vec4& getOrigin() const
+	[[nodiscard]] const Vec4& getOrigin() const
 	{
 		check();
 		return m_origin;
@@ -78,13 +78,13 @@ public:
 		m_dir = dir.xyz0();
 	}
 
-	ANKI_USE_RESULT const Vec4& getDirection() const
+	[[nodiscard]] const Vec4& getDirection() const
 	{
 		check();
 		return m_dir;
 	}
 
-	ANKI_USE_RESULT Ray getTransformed(const Transform& trf) const
+	[[nodiscard]] Ray getTransformed(const Transform& trf) const
 	{
 		check();
 		Ray out;

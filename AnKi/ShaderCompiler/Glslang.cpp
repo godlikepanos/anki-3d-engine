@@ -198,7 +198,7 @@ static EShLanguage ankiToGlslangShaderType(ShaderType shaderType)
 }
 
 /// Parse Glslang's error message for the line of the error.
-static ANKI_USE_RESULT Error parseErrorLine(CString error, GenericMemoryPoolAllocator<U8> alloc, U32& lineNumber)
+static Error parseErrorLine(CString error, GenericMemoryPoolAllocator<U8> alloc, U32& lineNumber)
 {
 	lineNumber = MAX_U32;
 
@@ -227,45 +227,32 @@ static ANKI_USE_RESULT Error parseErrorLine(CString error, GenericMemoryPoolAllo
 	return Error::NONE;
 }
 
-static ANKI_USE_RESULT Error logShaderErrorCode(CString error, CString source, GenericMemoryPoolAllocator<U8> alloc)
+static Error logShaderErrorCode(CString error, CString source, GenericMemoryPoolAllocator<U8> alloc)
 {
-	U32 errorLineNumber = 0;
-	ANKI_CHECK(parseErrorLine(error, alloc, errorLineNumber));
+	U32 errorLineNumberu = 0;
+	ANKI_CHECK(parseErrorLine(error, alloc, errorLineNumberu));
+	const I32 errorLineNumber = I32(errorLineNumberu);
+
+	constexpr I32 lineCountAroundError = 4;
 
 	StringAuto prettySrc(alloc);
 	StringListAuto lines(alloc);
-	StringAuto errorLineTxt(alloc);
-
-	static const char* padding = "==============================================================================";
 
 	lines.splitString(source, '\n', true);
 
-	U32 lineno = 0;
+	I32 lineno = 0;
 	for(auto it = lines.getBegin(); it != lines.getEnd(); ++it)
 	{
 		++lineno;
-		StringAuto tmp(alloc);
 
-		if(!it->isEmpty() && lineno == errorLineNumber)
+		if(lineno >= errorLineNumber - lineCountAroundError && lineno <= errorLineNumber + lineCountAroundError)
 		{
-			tmp.sprintf(">>%8u: %s\n", lineno, &(*it)[0]);
-			errorLineTxt.sprintf("%s", &(*it)[0]);
+			prettySrc.append(StringAuto(alloc).sprintf("%s%s\n", (lineno == errorLineNumber) ? ">>  " : "    ",
+													   (it->isEmpty()) ? " " : (*it).cstr()));
 		}
-		else if(!it->isEmpty())
-		{
-			tmp.sprintf("  %8u: %s\n", lineno, &(*it)[0]);
-		}
-		else
-		{
-			tmp.sprintf("  %8u:\n", lineno);
-		}
-
-		prettySrc.append(tmp);
 	}
 
-	ANKI_SHADER_COMPILER_LOGE("Shader compilation failed:\n%s\n%s\nIn: %s\n%s\n%s\n%s\n%s\nIn: %s\n", padding,
-							  &error[0], errorLineTxt.cstr(), padding, &prettySrc[0], padding, &error[0],
-							  errorLineTxt.cstr());
+	ANKI_SHADER_COMPILER_LOGE("Shader compilation failed:\n%sIn:\n%s\n", error.cstr(), prettySrc.cstr());
 
 	return Error::NONE;
 }

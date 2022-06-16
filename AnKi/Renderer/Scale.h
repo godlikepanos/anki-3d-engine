@@ -23,7 +23,7 @@ public:
 
 	~Scale();
 
-	ANKI_USE_RESULT Error init();
+	Error init();
 
 	void populateRenderGraph(RenderingContext& ctx);
 

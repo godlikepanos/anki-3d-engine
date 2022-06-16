@@ -1,6 +1,4 @@
 file(GLOB_RECURSE prog_fnames *.ankiprog)
-file(GLOB_RECURSE glsl_fnames *.glsl)
-file(GLOB_RECURSE header_fnames *.h)
 
 ProcessorCount(proc_count)
 MATH(EXPR proc_count "${proc_count}-1")
@@ -34,17 +32,25 @@ else()
 	message("++ Leaving default shader precision")
 endif()
 
+include(FindPythonInterp)
+
 foreach(prog_fname ${prog_fnames})
 	get_filename_component(filename ${prog_fname} NAME)
 	set(bin_fname ${CMAKE_CURRENT_BINARY_DIR}/${filename}bin)
 
-	get_filename_component(filename ${prog_fname} NAME_WE)
-	set(target_name "${filename}_ankiprogbin")
+	get_filename_component(filename2 ${prog_fname} NAME_WE)
+	set(target_name "${filename2}_ankiprogbin")
+
+	# Get deps using a script
+	execute_process(
+		COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/../../Tools/Shader/ShaderProgramDependencies.py" "-i" "AnKi/Shaders/${filename}"
+		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../.."
+		OUTPUT_VARIABLE deps)
 
 	add_custom_command(
 		OUTPUT ${bin_fname}
 		COMMAND ${shader_compiler_bin} -o ${bin_fname} -j ${proc_count} -I "${CMAKE_CURRENT_SOURCE_DIR}/../.." ${extra_compiler_args} ${prog_fname}
-		DEPENDS ${shader_compiler_dep} ${prog_fname} ${glsl_fnames} ${header_fnames}
+		DEPENDS ${shader_compiler_dep} ${prog_fname} ${deps}
 		COMMENT "Build ${prog_fname}")
 
 	add_custom_target(

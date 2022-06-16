@@ -58,7 +58,7 @@ public:
 
 	~CommandBufferImpl();
 
-	ANKI_USE_RESULT Error init(const CommandBufferInitInfo& init);
+	Error init(const CommandBufferInitInfo& init);
 
 	void setFence(MicroFencePtr& fence)
 	{
@@ -377,6 +377,14 @@ public:
 	{
 		commandCommon();
 		m_dsetState[set].bindStorageBuffer(binding, arrayIdx, buff.get(), offset, range);
+		m_microCmdb->pushObjectRef(buff);
+	}
+
+	void bindReadOnlyTextureBufferInternal(U32 set, U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize range,
+										   Format fmt, U32 arrayIdx)
+	{
+		commandCommon();
+		m_dsetState[set].bindReadOnlyTextureBuffer(binding, arrayIdx, buff.get(), offset, range, fmt);
 		m_microCmdb->pushObjectRef(buff);
 	}
 

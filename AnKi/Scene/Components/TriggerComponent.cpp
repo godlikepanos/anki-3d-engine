@@ -23,7 +23,7 @@ public:
 	Bool m_insideUpdated = false;
 	Bool m_exitUpdated = false;
 
-	void onTriggerEnter(PhysicsTrigger& trigger, PhysicsFilteredObject& obj)
+	void onTriggerEnter([[maybe_unused]] PhysicsTrigger& trigger, PhysicsFilteredObject& obj)
 	{
 		// Clean previous results
 		if(!m_enterUpdated)
@@ -38,7 +38,7 @@ public:
 										  static_cast<BodyComponent*>(obj.getUserData()));
 	}
 
-	void onTriggerInside(PhysicsTrigger& trigger, PhysicsFilteredObject& obj)
+	void onTriggerInside([[maybe_unused]] PhysicsTrigger& trigger, PhysicsFilteredObject& obj)
 	{
 		// Clean previous results
 		if(!m_insideUpdated)
@@ -53,7 +53,7 @@ public:
 										   static_cast<BodyComponent*>(obj.getUserData()));
 	}
 
-	void onTriggerExit(PhysicsTrigger& trigger, PhysicsFilteredObject& obj)
+	void onTriggerExit([[maybe_unused]] PhysicsTrigger& trigger, PhysicsFilteredObject& obj)
 	{
 		// Clean previous results
 		if(!m_exitUpdated)
@@ -94,7 +94,7 @@ void TriggerComponent::setSphereVolumeRadius(F32 radius)
 	m_trigger->setContactProcessCallback(m_callbacks);
 }
 
-Error TriggerComponent::update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated)
+Error TriggerComponent::update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated)
 {
 	updated = m_callbacks->m_updated;
 	m_callbacks->m_updated = false;

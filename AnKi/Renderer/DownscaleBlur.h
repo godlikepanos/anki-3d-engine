@@ -23,7 +23,7 @@ public:
 
 	~DownscaleBlur();
 
-	ANKI_USE_RESULT Error init();
+	Error init();
 
 	/// Import render targets
 	void importRenderTargets(RenderingContext& ctx);
@@ -69,7 +69,7 @@ private:
 		RenderTargetHandle m_rt;
 	} m_runCtx;
 
-	ANKI_USE_RESULT Error initInternal();
+	Error initInternal();
 
 	void run(U32 passIdx, RenderPassWorkContext& rgraphCtx);
 };

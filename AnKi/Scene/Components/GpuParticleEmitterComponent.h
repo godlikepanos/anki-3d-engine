@@ -25,7 +25,7 @@ public:
 
 	~GpuParticleEmitterComponent();
 
-	ANKI_USE_RESULT Error loadParticleEmitterResource(CString filename);
+	Error loadParticleEmitterResource(CString filename);
 
 	void setWorldTransform(const Transform& trf);
 
@@ -34,7 +34,7 @@ public:
 		return m_particleEmitterResource;
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override;
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 
 	/// Callback that will be used by the GenericGpuComputeJobComponent
 	static void simulateCallback(GenericGpuComputeJobQueueElementContext& ctx, const void* userData)

@@ -188,7 +188,7 @@ public:
 	~ShaderProgramResource();
 
 	/// Load the resource.
-	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
+	Error load(const ResourceFilename& filename, Bool async);
 
 	/// Get the array of constants.
 	ConstWeakArray<ShaderProgramResourceConstant> getConstants() const
@@ -275,7 +275,7 @@ private:
 
 	ShaderProgramResourceVariant* createNewVariant(const ShaderProgramResourceVariantInitInfo& info) const;
 
-	static ANKI_USE_RESULT Error parseConst(CString constName, U32& componentIdx, U32& componentCount, CString& name);
+	static Error parseConst(CString constName, U32& componentIdx, U32& componentCount, CString& name);
 };
 
 template<typename T>

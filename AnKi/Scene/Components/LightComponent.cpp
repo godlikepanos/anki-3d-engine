@@ -35,7 +35,7 @@ LightComponent::LightComponent(SceneNode* node)
 	}
 }
 
-Error LightComponent::update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated)
+Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
 	updated = m_markedForUpdate;
 	m_markedForUpdate = false;
@@ -59,7 +59,7 @@ Error LightComponent::update(SceneNode& node, Second prevTime, Second crntTime, 
 	// Update the scene bounds always
 	if(m_type == LightComponentType::DIRECTIONAL)
 	{
-		node.getSceneGraph().getOctree().getActualSceneBounds(m_dir.m_sceneMin, m_dir.m_sceneMax);
+		info.m_node->getSceneGraph().getOctree().getActualSceneBounds(m_dir.m_sceneMin, m_dir.m_sceneMax);
 	}
 
 	return Error::NONE;

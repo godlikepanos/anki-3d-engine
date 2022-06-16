@@ -30,7 +30,7 @@ void allocateAndPopulateDebugBox(StagingGpuMemoryPool& stagingGpuAllocator, Stag
 class DebugDrawer2
 {
 public:
-	ANKI_USE_RESULT Error init(ResourceManager* rsrcManager);
+	Error init(ResourceManager* rsrcManager);
 
 	Bool isInitialized() const
 	{

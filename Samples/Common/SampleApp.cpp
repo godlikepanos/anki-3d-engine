@@ -33,7 +33,7 @@ Error SampleApp::init(int argc, char** argv, CString sampleName)
 #endif
 
 	ANKI_CHECK(m_config.setFromCommandLineArguments(argc - 1, argv + 1));
-	ANKI_CHECK(App::init(&m_config, argv[0], allocAligned, nullptr));
+	ANKI_CHECK(App::init(&m_config, allocAligned, nullptr));
 
 	ANKI_CHECK(sampleExtraInit());
 
@@ -86,16 +86,20 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::P) == 1)
 	{
-		static U32 idx = 2;
+		static U32 idx = 3;
 		++idx;
-		idx %= 3;
+		idx %= 4;
 		if(idx == 0)
 		{
 			renderer.setCurrentDebugRenderTarget("IndirectDiffuseVrsSri");
 		}
 		else if(idx == 1)
 		{
-			renderer.setCurrentDebugRenderTarget("VRS");
+			renderer.setCurrentDebugRenderTarget("VrsSriDownscaled");
+		}
+		else if(idx == 2)
+		{
+			renderer.setCurrentDebugRenderTarget("VrsSri");
 		}
 		else
 		{

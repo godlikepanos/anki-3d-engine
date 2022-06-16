@@ -31,7 +31,7 @@ public:
 	INotify& operator=(const INotify&) = delete;
 
 	/// @param path Path to file or directory.
-	ANKI_USE_RESULT Error init(GenericMemoryPoolAllocator<U8> alloc, CString path)
+	Error init(GenericMemoryPoolAllocator<U8> alloc, CString path)
 	{
 		m_alloc = alloc;
 		m_path.create(alloc, path);
@@ -39,7 +39,7 @@ public:
 	}
 
 	/// Check if the file was modified in any way.
-	ANKI_USE_RESULT Error pollEvents(Bool& modified);
+	Error pollEvents(Bool& modified);
 
 private:
 	GenericMemoryPoolAllocator<U8> m_alloc;
@@ -50,7 +50,7 @@ private:
 #endif
 
 	void destroyInternal();
-	ANKI_USE_RESULT Error initInternal();
+	Error initInternal();
 };
 /// @}
 

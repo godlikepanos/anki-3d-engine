@@ -62,7 +62,7 @@ Error IndirectDiffuse::initInternal()
 
 		const UVec2 rez = (size + m_vrs.m_sriTexelDimension - 1) / m_vrs.m_sriTexelDimension;
 		m_vrs.m_rtHandle =
-			m_r->create2DRenderTargetDescription(rez.x(), rez.y(), Format::R8_UINT, "IndirectDiffuse VRS SRI");
+			m_r->create2DRenderTargetDescription(rez.x(), rez.y(), Format::R8_UINT, "IndirectDiffuseVrsSri");
 		m_vrs.m_rtHandle.bake();
 
 		ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/IndirectDiffuseVrsSriGeneration.ankiprogbin",
@@ -87,6 +87,8 @@ Error IndirectDiffuse::initInternal()
 		{
 			variantInit.addMutation("SHARED_MEMORY", 1);
 		}
+
+		variantInit.addMutation("LIMIT_RATE_TO_2X2", getConfig().getRVrsLimitTo2x2());
 
 		const ShaderProgramResourceVariant* variant;
 		m_vrs.m_prog->getOrCreateVariant(variantInit, variant);
@@ -164,7 +166,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 	{
 		m_runCtx.m_sriRt = rgraph.newRenderTarget(m_vrs.m_rtHandle);
 
-		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("VRS SRI generation");
+		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("IndirectDiffuse VRS SRI gen");
 
 		pass.newDependency(RenderPassDependency(m_runCtx.m_sriRt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
 		pass.newDependency(RenderPassDependency(m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_COMPUTE,

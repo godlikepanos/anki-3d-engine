@@ -25,7 +25,7 @@ public:
 
 	~DepthDownscale();
 
-	ANKI_USE_RESULT Error init();
+	Error init();
 
 	/// Import render targets
 	void importRenderTargets(RenderingContext& ctx);
@@ -80,7 +80,7 @@ private:
 		RenderTargetHandle m_hizRt;
 	} m_runCtx; ///< Run context.
 
-	ANKI_USE_RESULT Error initInternal();
+	Error initInternal();
 
 	void runCompute(RenderPassWorkContext& rgraphCtx);
 	void runGraphics(U32 mip, RenderPassWorkContext& rgraphCtx);

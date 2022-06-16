@@ -83,7 +83,7 @@ void BodyComponent::setMass(F32 mass)
 	}
 }
 
-Error BodyComponent::update(SceneNode& node, Second, Second, Bool& updated)
+Error BodyComponent::update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated)
 {
 	updated = m_markedForUpdate;
 	m_markedForUpdate = false;

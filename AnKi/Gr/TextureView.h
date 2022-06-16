@@ -92,10 +92,6 @@ public:
 	/// @note It's thread-safe
 	U32 getOrCreateBindlessTextureIndex();
 
-	/// Returns an index to be used for bindless access. For image read/write.
-	/// @note It's thread-safe
-	U32 getOrCreateBindlessImageIndex();
-
 protected:
 	TextureType m_texType = TextureType::COUNT;
 	TextureSubresourceInfo m_subresource;
@@ -131,7 +127,7 @@ protected:
 
 private:
 	/// Allocate and initialize a new instance.
-	static ANKI_USE_RESULT TextureView* newInstance(GrManager* manager, const TextureViewInitInfo& init);
+	[[nodiscard]] static TextureView* newInstance(GrManager* manager, const TextureViewInitInfo& init);
 };
 /// @}
 

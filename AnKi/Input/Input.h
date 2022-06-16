@@ -32,8 +32,8 @@ class Input
 	ANKI_FRIEND_ALLOCATOR
 
 public:
-	static ANKI_USE_RESULT Error newInstance(AllocAlignedCallback allocCallback, void* allocCallbackUserData,
-											 NativeWindow* nativeWindow, Input*& input);
+	static Error newInstance(AllocAlignedCallback allocCallback, void* allocCallbackUserData,
+							 NativeWindow* nativeWindow, Input*& input);
 
 	static void deleteInstance(Input* input);
 
@@ -78,7 +78,7 @@ public:
 	}
 
 	/// Populate the key and button with the new state
-	ANKI_USE_RESULT Error handleEvents();
+	Error handleEvents();
 
 	/// Move the mouse cursor to a position inside the window. Useful for locking the cursor into a fixed location (eg
 	/// in the center of the screen)

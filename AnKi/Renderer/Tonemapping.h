@@ -21,7 +21,7 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error init();
+	Error init();
 
 	void importRenderTargets(RenderingContext& ctx);
 
@@ -53,7 +53,7 @@ private:
 		RenderTargetHandle m_exposureHandle;
 	} m_runCtx;
 
-	ANKI_USE_RESULT Error initInternal();
+	Error initInternal();
 };
 /// @}
 

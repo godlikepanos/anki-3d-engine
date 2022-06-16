@@ -27,7 +27,7 @@ public:
 
 	virtual void build(CanvasPtr ctx) = 0;
 
-	ANKI_USE_RESULT Error init() const
+	Error init() const
 	{
 		return Error::NONE;
 	}

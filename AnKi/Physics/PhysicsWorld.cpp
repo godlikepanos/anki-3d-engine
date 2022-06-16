@@ -222,7 +222,7 @@ void PhysicsWorld::destroyMarkedForDeletion()
 	}
 }
 
-Error PhysicsWorld::update(Second dt)
+void PhysicsWorld::update(Second dt)
 {
 	// First destroy
 	destroyMarkedForDeletion();
@@ -260,8 +260,6 @@ Error PhysicsWorld::update(Second dt)
 
 	// Reset the pool
 	m_tmpAlloc.getMemoryPool().reset();
-
-	return Error::NONE;
 }
 
 void PhysicsWorld::destroyObject(PhysicsObject* obj)

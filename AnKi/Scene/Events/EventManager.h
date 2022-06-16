@@ -21,7 +21,7 @@ public:
 	EventManager();
 	~EventManager();
 
-	ANKI_USE_RESULT Error init(SceneGraph* scene);
+	Error init(SceneGraph* scene);
 
 	SceneGraph& getSceneGraph()
 	{
@@ -39,7 +39,7 @@ public:
 	/// Create a new event
 	/// @note It's thread-safe against itself.
 	template<typename T, typename... Args>
-	ANKI_USE_RESULT Error newEvent(T*& event, Args... args)
+	Error newEvent(T*& event, Args... args)
 	{
 		event = getAllocator().template newInstance<T>(this);
 		Error err = event->init(std::forward<Args>(args)...);
@@ -56,7 +56,7 @@ public:
 	}
 
 	/// Update
-	ANKI_USE_RESULT Error updateAllEvents(Second prevUpdateTime, Second crntTime);
+	Error updateAllEvents(Second prevUpdateTime, Second crntTime);
 
 	/// Delete events that pending deletion
 	void deleteEventsMarkedForDeletion(Bool fullCleanup);

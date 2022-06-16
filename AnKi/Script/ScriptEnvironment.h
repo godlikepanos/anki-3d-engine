@@ -40,7 +40,7 @@ public:
 	}
 
 	/// Evaluate a string
-	ANKI_USE_RESULT Error evalString(const CString& str)
+	Error evalString(const CString& str)
 	{
 		ANKI_ASSERT(isInitialized());
 		return LuaBinder::evalString(m_thread.getLuaState(), str);

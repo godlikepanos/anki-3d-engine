@@ -42,7 +42,7 @@ public:
 	PointLightNode(SceneGraph* scene, CString name);
 	~PointLightNode();
 
-	ANKI_USE_RESULT Error frameUpdate(Second prevUpdateTime, Second crntTime) override;
+	Error frameUpdate(Second prevUpdateTime, Second crntTime) override;
 
 private:
 	class ShadowCombo
@@ -63,7 +63,7 @@ class SpotLightNode : public LightNode
 public:
 	SpotLightNode(SceneGraph* scene, CString name);
 
-	ANKI_USE_RESULT Error frameUpdate(Second prevUpdateTime, Second crntTime) override;
+	Error frameUpdate(Second prevUpdateTime, Second crntTime) override;
 
 private:
 	class OnFrustumUpdatedFeedbackComponent;
@@ -82,7 +82,8 @@ public:
 private:
 	class FeedbackComponent;
 
-	static void drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
+	static void drawCallback([[maybe_unused]] RenderQueueDrawContext& ctx,
+							 [[maybe_unused]] ConstWeakArray<void*> userData)
 	{
 		// TODO
 	}

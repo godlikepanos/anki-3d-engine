@@ -41,7 +41,7 @@ public:
 
 	~DLSSCtxImpl();
 
-	ANKI_USE_RESULT Error init(const DLSSCtxInitInfo& init);
+	[[nodiscard]] Error init(const DLSSCtxInitInfo& init);
 
 	Bool isNgxInitialized() const { return m_ngxInitialized; }
 

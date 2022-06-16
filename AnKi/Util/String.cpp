@@ -247,7 +247,7 @@ String& String::sprintf(Allocator alloc, CString fmt, ...)
 	va_list args;
 
 	va_start(args, fmt);
-	I len = std::vsnprintf(&buffer[0], sizeof(buffer), &fmt[0], args);
+	[[maybe_unused]] I len = std::vsnprintf(&buffer[0], sizeof(buffer), &fmt[0], args);
 	va_end(args);
 
 	if(len < 0)
@@ -263,7 +263,6 @@ String& String::sprintf(Allocator alloc, CString fmt, ...)
 		len = std::vsnprintf(&m_data[0], size, &fmt[0], args);
 		va_end(args);
 
-		(void)len;
 		ANKI_ASSERT((len + 1) == size);
 	}
 	else

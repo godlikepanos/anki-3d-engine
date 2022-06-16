@@ -449,6 +449,10 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(const FramebufferDescription&
 
 	hash = appendHash(&uuids[0], sizeof(U64) * count, hash);
 
+	// Hash the name of the pass. If you don't the code bellow may fetch an FB with some another name and that will
+	// cause problems with tools. The FB name is used as a debug marker
+	hash = appendHash(name.cstr(), name.getLength(), hash);
+
 	FramebufferPtr fb;
 	auto it = m_fbCache.find(hash);
 	if(it != m_fbCache.getEnd())
@@ -508,11 +512,7 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(const FramebufferDescription&
 		}
 
 		// Set FB name
-		Array<char, MAX_GR_OBJECT_NAME_LENGTH + 1> cutName;
-		const U cutNameLen = min<U>(name.getLength(), MAX_GR_OBJECT_NAME_LENGTH);
-		memcpy(&cutName[0], &name[0], cutNameLen);
-		cutName[cutNameLen] = '\0';
-		fbInit.setName(&cutName[0]);
+		fbInit.setName(name);
 
 		// Create
 		fb = getManager().newFramebuffer(fbInit);
@@ -1021,7 +1021,7 @@ void RenderGraph::setTextureBarrier(Batch& batch, const RenderPassDependency& de
 
 					crntUsage |= depUsage;
 
-					Bool found = false;
+					[[maybe_unused]] Bool found = false;
 					for(TextureBarrier& b : batch.m_textureBarriersBefore)
 					{
 						if(b.m_idx == rtIdx && b.m_surface == surf)
@@ -1032,7 +1032,6 @@ void RenderGraph::setTextureBarrier(Batch& batch, const RenderPassDependency& de
 						}
 					}
 
-					(void)found;
 					ANKI_ASSERT(found);
 				}
 				else
@@ -1439,8 +1438,7 @@ void RenderGraph::getStatistics(RenderGraphStatistics& statistics) const
 	if(m_statistics.m_timestamps[oldFrame * 2] && m_statistics.m_timestamps[oldFrame * 2 + 1])
 	{
 		Second start, end;
-		TimestampQueryResult res = m_statistics.m_timestamps[oldFrame * 2]->getResult(start);
-		(void)res;
+		[[maybe_unused]] TimestampQueryResult res = m_statistics.m_timestamps[oldFrame * 2]->getResult(start);
 		ANKI_ASSERT(res == TimestampQueryResult::AVAILABLE);
 
 		res = m_statistics.m_timestamps[oldFrame * 2 + 1]->getResult(end);

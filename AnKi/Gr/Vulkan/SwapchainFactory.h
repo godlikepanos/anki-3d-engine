@@ -86,7 +86,7 @@ private:
 
 	MicroFencePtr m_fence;
 
-	ANKI_USE_RESULT Error initInternal();
+	Error initInternal();
 };
 
 /// Deleter for MicroSwapchainPtr smart pointer.

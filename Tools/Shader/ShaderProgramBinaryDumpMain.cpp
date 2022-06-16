@@ -36,7 +36,7 @@ static Error parseCommandLineArgs(int argc, char** argv, Bool& dumpStats, String
 	return Error::NONE;
 }
 
-ANKI_USE_RESULT Error dumpStats(const ShaderProgramBinary& bin)
+Error dumpStats(const ShaderProgramBinary& bin)
 {
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 

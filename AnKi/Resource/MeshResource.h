@@ -32,7 +32,7 @@ public:
 	Bool isCompatible(const MeshResource& other) const;
 
 	/// Load from a mesh file
-	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
+	Error load(const ResourceFilename& filename, Bool async);
 
 	/// Get the complete bounding box.
 	const Aabb& getBoundingShape() const
@@ -169,7 +169,7 @@ private:
 	AccelerationStructurePtr m_blas;
 	MeshGpuDescriptor m_meshGpuDescriptor;
 
-	ANKI_USE_RESULT Error loadAsync(MeshBinaryLoader& loader) const;
+	Error loadAsync(MeshBinaryLoader& loader) const;
 };
 /// @}
 

@@ -149,6 +149,19 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 			m_descriptorSetMask.set(set);
 			m_activeBindingMask[set].set(set);
 
+			// Images are special, they might be texel buffers
+			if(type == DescriptorType::TEXTURE)
+			{
+				if(typeInfo.image.dim == spv::DimBuffer && typeInfo.image.sampled == 1)
+				{
+					type = DescriptorType::READ_TEXTURE_BUFFER;
+				}
+				else if(typeInfo.image.dim == spv::DimBuffer && typeInfo.image.sampled == 2)
+				{
+					type = DescriptorType::READ_WRITE_TEXTURE_BUFFER;
+				}
+			}
+
 			// Check that there are no other descriptors with the same binding
 			U32 foundIdx = MAX_U32;
 			for(U32 i = 0; i < counts[set]; ++i)
@@ -180,7 +193,7 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 
 	func(rsrc.uniform_buffers, DescriptorType::UNIFORM_BUFFER);
 	func(rsrc.sampled_images, DescriptorType::COMBINED_TEXTURE_SAMPLER);
-	func(rsrc.separate_images, DescriptorType::TEXTURE);
+	func(rsrc.separate_images, DescriptorType::TEXTURE); // This also handles texture buffers
 	func(rsrc.separate_samplers, DescriptorType::SAMPLER);
 	func(rsrc.storage_buffers, DescriptorType::STORAGE_BUFFER);
 	func(rsrc.storage_images, DescriptorType::IMAGE);

@@ -133,7 +133,7 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 	{
 		ComputeRenderPassDescription& pass = ctx.m_renderGraphDescr.newComputeRenderPass("Present");
 
-		pass.setWork([](RenderPassWorkContext& rgraphCtx) {
+		pass.setWork([]([[maybe_unused]] RenderPassWorkContext& rgraphCtx) {
 			// Do nothing. This pass is dummy
 		});
 		pass.newDependency({presentRt, TextureUsageBit::PRESENT});
@@ -147,7 +147,8 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 	for(U i = 0; i < m_r->getThreadHive().getThreadCount(); ++i)
 	{
 		tasks[i].m_argument = this;
-		tasks[i].m_callback = [](void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore) {
+		tasks[i].m_callback = [](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
+								 [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
 			MainRenderer& self = *static_cast<MainRenderer*>(userData);
 
 			const U32 taskId = self.m_runCtx.m_secondaryTaskId.fetchAdd(1);

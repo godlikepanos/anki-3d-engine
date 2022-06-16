@@ -54,9 +54,9 @@ public:
 
 	~MainRenderer();
 
-	ANKI_USE_RESULT Error init(const MainRendererInitInfo& inf);
+	Error init(const MainRendererInitInfo& inf);
 
-	ANKI_USE_RESULT Error render(RenderQueue& rqueue, TexturePtr presentTex);
+	Error render(RenderQueue& rqueue, TexturePtr presentTex);
 
 	Dbg& getDbg();
 

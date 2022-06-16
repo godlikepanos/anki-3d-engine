@@ -21,7 +21,7 @@ static MainRenderer* getMainRenderer(lua_State* l)
 	return r;
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoMainRenderer = {-5029754327692985701, "MainRenderer",
+LuaUserDataTypeInfo luaUserDataTypeInfoMainRenderer = {-3798765529615162251, "MainRenderer",
 													   LuaUserData::computeSizeForGarbageCollected<MainRenderer>(),
 													   nullptr, nullptr};
 
@@ -34,12 +34,9 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<MainRenderer>()
 /// Pre-wrap method MainRenderer::getAspectRatio.
 static inline int pwrapMainRenderergetAspectRatio(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
 	{
@@ -79,12 +76,9 @@ static int wrapMainRenderergetAspectRatio(lua_State* l)
 /// Pre-wrap method MainRenderer::setCurrentDebugRenderTarget.
 static inline int pwrapMainRenderersetCurrentDebugRenderTarget(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
 	{
@@ -137,12 +131,9 @@ static inline void wrapMainRenderer(lua_State* l)
 /// Pre-wrap function getMainRenderer.
 static inline int pwrapgetMainRenderer(lua_State* l)
 {
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
 
 	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 0)))
 	{

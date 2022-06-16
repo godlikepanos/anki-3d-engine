@@ -15,7 +15,7 @@ namespace anki {
 class InputAndroid : public Input
 {
 public:
-	ANKI_USE_RESULT Error init();
+	Error init();
 
 	void handleAndroidEvents(android_app* app, int32_t cmd);
 	int handleAndroidInput(android_app* app, AInputEvent* event);

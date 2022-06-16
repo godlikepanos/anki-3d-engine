@@ -121,11 +121,11 @@ public:
 
 	~ResourceManager();
 
-	ANKI_USE_RESULT Error init(ResourceManagerInitInfo& init);
+	Error init(ResourceManagerInitInfo& init);
 
 	/// Load a resource.
 	template<typename T>
-	ANKI_USE_RESULT Error loadResource(const CString& filename, ResourcePtr<T>& out, Bool async = true);
+	Error loadResource(const CString& filename, ResourcePtr<T>& out, Bool async = true);
 
 	// Internals:
 

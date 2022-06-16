@@ -39,7 +39,7 @@ public:
 	~ImageAtlasResource();
 
 	/// Load the atlas.
-	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
+	Error load(const ResourceFilename& filename, Bool async);
 
 	TexturePtr getTexture() const
 	{
@@ -67,7 +67,7 @@ public:
 	}
 
 	/// Get the UV coordinates of a sub image.
-	ANKI_USE_RESULT Error getSubImageInfo(CString name, F32 uv[4]) const;
+	Error getSubImageInfo(CString name, F32 uv[4]) const;
 
 private:
 	class SubTex

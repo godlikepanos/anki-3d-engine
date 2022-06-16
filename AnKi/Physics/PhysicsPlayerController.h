@@ -32,7 +32,8 @@ class PhysicsPlayerController final : public PhysicsFilteredObject
 
 public:
 	// Update the state machine
-	void setVelocity(F32 forwardSpeed, F32 strafeSpeed, F32 jumpSpeed, const Vec4& forwardDir)
+	void setVelocity(F32 forwardSpeed, [[maybe_unused]] F32 strafeSpeed, [[maybe_unused]] F32 jumpSpeed,
+					 const Vec4& forwardDir)
 	{
 		m_controller->setWalkDirection(toBt((forwardDir * forwardSpeed).xyz()));
 	}

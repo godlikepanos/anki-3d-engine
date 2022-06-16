@@ -495,12 +495,11 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 	UVec4 emptyTileViewport;
 	{
 		Array<U32, 4> tileRange;
-		const TileAllocatorResult res =
+		[[maybe_unused]] const TileAllocatorResult res =
 			m_atlas.m_tileAlloc.allocate(m_r->getGlobalTimestamp(), 1, MAX_U64, 0, 1, m_pointLightsMaxLod, tileRange);
 
 		emptyTileViewport = UVec4(tileRange);
 
-		(void)res;
 #if ANKI_ENABLE_ASSERTIONS
 		static Bool firstRun = true;
 		if(firstRun)

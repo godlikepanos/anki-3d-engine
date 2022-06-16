@@ -35,11 +35,7 @@ public:
 
 	~MicroImageView()
 	{
-		for(U32 idx : m_bindlessIndices)
-		{
-			ANKI_ASSERT(idx == MAX_U32 && "Forgot to unbind the bindless");
-			(void)idx;
-		}
+		ANKI_ASSERT(m_bindlessIndex == MAX_U32 && "Forgot to unbind the bindless");
 		ANKI_ASSERT(m_handle == VK_NULL_HANDLE);
 	}
 
@@ -47,8 +43,8 @@ public:
 	{
 		m_handle = b.m_handle;
 		b.m_handle = VK_NULL_HANDLE;
-		m_bindlessIndices = b.m_bindlessIndices;
-		b.m_bindlessIndices = {MAX_U32, MAX_U32};
+		m_bindlessIndex = b.m_bindlessIndex;
+		b.m_bindlessIndex = MAX_U32;
 		m_derivedTextureType = b.m_derivedTextureType;
 		b.m_derivedTextureType = TextureType::COUNT;
 		return *this;
@@ -61,7 +57,7 @@ public:
 	}
 
 	/// @note It's thread-safe.
-	U32 getOrCreateBindlessIndex(VkImageLayout layout, GrManagerImpl& gr) const;
+	U32 getOrCreateBindlessIndex(GrManagerImpl& gr) const;
 
 	TextureType getDerivedTextureType() const
 	{
@@ -72,12 +68,8 @@ public:
 private:
 	VkImageView m_handle = VK_NULL_HANDLE;
 
-	/// Index 0: Sampled image with SHADER_READ_ONLY layout.
-	/// Index 1: Storage image with ofcource GENERAL layout.
-	mutable Array<U32, 2> m_bindlessIndices = {MAX_U32, MAX_U32};
-
-	/// Protect the m_bindlessIndices.
-	mutable SpinLock m_lock;
+	mutable U32 m_bindlessIndex = MAX_U32;
+	mutable SpinLock m_bindlessIndexLock;
 
 	/// Because for example a single surface view of a cube texture will be a 2D view.
 	TextureType m_derivedTextureType = TextureType::COUNT;
@@ -103,12 +95,12 @@ public:
 
 	~TextureImpl();
 
-	ANKI_USE_RESULT Error init(const TextureInitInfo& init)
+	Error init(const TextureInitInfo& init)
 	{
 		return initInternal(VK_NULL_HANDLE, init);
 	}
 
-	ANKI_USE_RESULT Error initExternal(VkImage image, const TextureInitInfo& init)
+	Error initExternal(VkImage image, const TextureInitInfo& init)
 	{
 		return initInternal(image, init);
 	}
@@ -143,7 +135,7 @@ public:
 		return layer;
 	}
 
-	U32 computeVkArrayLayer(const TextureVolumeInfo& vol) const
+	U32 computeVkArrayLayer([[maybe_unused]] const TextureVolumeInfo& vol) const
 	{
 		ANKI_ASSERT(m_texType == TextureType::_3D);
 		return 0;
@@ -207,16 +199,16 @@ private:
 	mutable SpinLock m_usedForMtx;
 #endif
 
-	ANKI_USE_RESULT static VkImageCreateFlags calcCreateFlags(const TextureInitInfo& init);
+	[[nodiscard]] static VkImageCreateFlags calcCreateFlags(const TextureInitInfo& init);
 
-	ANKI_USE_RESULT Bool imageSupported(const TextureInitInfo& init);
+	[[nodiscard]] Bool imageSupported(const TextureInitInfo& init);
 
-	ANKI_USE_RESULT Error initImage(const TextureInitInfo& init);
+	Error initImage(const TextureInitInfo& init);
 
 	/// Compute the new type of a texture view.
 	TextureType computeNewTexTypeOfSubresource(const TextureSubresourceInfo& subresource) const;
 
-	ANKI_USE_RESULT Error initInternal(VkImage externalImage, const TextureInitInfo& init);
+	Error initInternal(VkImage externalImage, const TextureInitInfo& init);
 
 	void computeBarrierInfo(TextureUsageBit usage, Bool src, U32 level, VkPipelineStageFlags& stages,
 							VkAccessFlags& accesses) const;

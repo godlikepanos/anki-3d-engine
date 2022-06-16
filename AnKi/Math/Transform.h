@@ -38,8 +38,7 @@ public:
 		const TVec<T, 3> s2 = m4.getColumn(2).xyz();
 
 		const TVec<T, 3> scales(s0.getLength(), s1.getLength(), s2.getLength());
-		const T E = T(0.001);
-		(void)E;
+		[[maybe_unused]] const T E = T(0.001);
 		ANKI_ASSERT(isZero(scales.x() - scales.y(), E) && isZero(scales.y() - scales.z(), E)
 					&& "Expecting uniform scale");
 

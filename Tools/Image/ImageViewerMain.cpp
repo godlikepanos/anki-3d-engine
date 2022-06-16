@@ -29,10 +29,10 @@ public:
 																		 Array<U32, 1>{16}));
 
 		ANKI_CHECK_AND_IGNORE(getSceneGraph().getResourceManager().loadResource(
-			"ShaderBinaries/UiVisualizeImage.ankiprog", m_imageProgram));
+			"ShaderBinaries/UiVisualizeImage.ankiprogbin", m_imageProgram));
 	}
 
-	Error frameUpdate(Second prevUpdateTime, Second crntTime)
+	Error frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime) override
 	{
 		if(!m_textureView.isCreated())
 		{
@@ -268,7 +268,7 @@ private:
 class MyApp : public App
 {
 public:
-	Error init(ConfigSet* config, int argc, char** argv, CString appName)
+	Error init(ConfigSet* config, int argc, char** argv, [[maybe_unused]] CString appName)
 	{
 		if(argc < 2)
 		{
@@ -285,7 +285,7 @@ public:
 		config->setGrDebugMarkers(false);
 		ANKI_CHECK(config->setFromCommandLineArguments(argc - 2, argv + 2));
 
-		ANKI_CHECK(App::init(config, argv[0], allocAligned, nullptr));
+		ANKI_CHECK(App::init(config, allocAligned, nullptr));
 
 		// Load the texture
 		ImageResourcePtr image;
@@ -306,7 +306,7 @@ public:
 		return Error::NONE;
 	}
 
-	Error userMainLoop(Bool& quit, Second elapsedTime) override
+	Error userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime) override
 	{
 		Input& input = getInput();
 		if(input.getKey(KeyCode::ESCAPE))

@@ -223,7 +223,7 @@ public:
 	~MaterialResource();
 
 	/// Load a material file
-	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
+	Error load(const ResourceFilename& filename, Bool async);
 
 	Bool castsShadow() const
 	{
@@ -285,11 +285,11 @@ private:
 	void* m_prefilledLocalUniforms = nullptr;
 	U32 m_localUniformsSize = 0;
 
-	ANKI_USE_RESULT Error parseMutators(XmlElement mutatorsEl, Program& prog);
-	ANKI_USE_RESULT Error parseShaderProgram(XmlElement techniqueEl, Bool async);
-	ANKI_USE_RESULT Error parseInput(XmlElement inputEl, Bool async, BitSet<128>& varsSet);
-	ANKI_USE_RESULT Error findBuiltinMutators(Program& prog);
-	ANKI_USE_RESULT Error createVars(Program& prog);
+	Error parseMutators(XmlElement mutatorsEl, Program& prog);
+	Error parseShaderProgram(XmlElement techniqueEl, Bool async);
+	Error parseInput(XmlElement inputEl, Bool async, BitSet<128>& varsSet);
+	Error findBuiltinMutators(Program& prog);
+	Error createVars(Program& prog);
 	void prefillLocalUniforms();
 
 	const MaterialVariable* tryFindVariableInternal(CString name) const;

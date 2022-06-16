@@ -37,7 +37,7 @@ public:
 	{
 	}
 
-	Error operator()(AsyncLoaderTaskContext& ctx) final
+	Error operator()([[maybe_unused]] AsyncLoaderTaskContext& ctx) final
 	{
 		return m_ctx.m_mesh->loadAsync(m_ctx.m_loader);
 	}

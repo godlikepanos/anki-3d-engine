@@ -27,7 +27,7 @@ public:
 
 	~AccelerationStructureImpl();
 
-	ANKI_USE_RESULT Error init(const AccelerationStructureInitInfo& inf);
+	Error init(const AccelerationStructureInitInfo& inf);
 
 	VkAccelerationStructureKHR getHandle() const
 	{

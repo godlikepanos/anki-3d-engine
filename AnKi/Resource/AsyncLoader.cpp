@@ -45,8 +45,7 @@ void AsyncLoader::stop()
 		m_condVar.notifyOne();
 	}
 
-	Error err = m_thread.join();
-	(void)err;
+	[[maybe_unused]] Error err = m_thread.join();
 }
 
 void AsyncLoader::pause()

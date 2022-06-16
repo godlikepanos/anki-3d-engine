@@ -36,17 +36,14 @@ Error TextureViewImpl::init(const TextureViewInitInfo& inf)
 	return Error::NONE;
 }
 
-U32 TextureViewImpl::getOrCreateBindlessIndex(VkImageLayout layout)
+U32 TextureViewImpl::getOrCreateBindlessIndex()
 {
-	const U32 arrayIdx = (layout == VK_IMAGE_LAYOUT_GENERAL) ? 1 : 0;
-	U32& bindlessIdx = m_bindlessIndices[arrayIdx];
-
-	if(bindlessIdx == MAX_U32)
+	if(m_bindlessIndex == MAX_U32)
 	{
-		bindlessIdx = m_microImageView->getOrCreateBindlessIndex(layout, getGrManagerImpl());
+		m_bindlessIndex = m_microImageView->getOrCreateBindlessIndex(getGrManagerImpl());
 	}
 
-	return bindlessIdx;
+	return m_bindlessIndex;
 }
 
 } // end namespace anki

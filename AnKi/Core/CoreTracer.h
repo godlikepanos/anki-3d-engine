@@ -25,7 +25,7 @@ public:
 	~CoreTracer();
 
 	/// @param directory The directory to store the trace and counters.
-	ANKI_USE_RESULT Error init(GenericMemoryPoolAllocator<U8> alloc, CString directory);
+	Error init(GenericMemoryPoolAllocator<U8> alloc, CString directory);
 
 	/// It will flush everything.
 	void flushFrame(U64 frame);

@@ -1,0 +1,37 @@
+// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki start comp
+
+#include <AnKi/Shaders/Functions.glsl>
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(binding = 0) uniform utexture2D u_inputTex;
+layout(binding = 1) uniform sampler u_nearestAnyClampSampler;
+layout(binding = 2) uniform uimage2D u_outputImage;
+
+layout(push_constant, std140) uniform b_pc
+{
+	Vec2 u_oneOverViewportSize;
+	F32 u_padding0;
+	F32 u_padding1;
+};
+
+void main()
+{
+	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) * u_oneOverViewportSize;
+
+	const UVec4 rates = textureGather(usampler2D(u_inputTex, u_nearestAnyClampSampler), uv, 0);
+
+	UVec2 rate = decodeVrsRate(rates[0]);
+	rate = min(rate, decodeVrsRate(rates[1]));
+	rate = min(rate, decodeVrsRate(rates[2]));
+	rate = min(rate, decodeVrsRate(rates[3]));
+
+	imageStore(u_outputImage, IVec2(gl_GlobalInvocationID.xy), UVec4(encodeVrsRate(rate)));
+}
+
+#pragma anki end

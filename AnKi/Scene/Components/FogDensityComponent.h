@@ -113,7 +113,7 @@ public:
 		}
 	}
 
-	Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
+	Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated) override
 	{
 		updated = m_markedForUpdate;
 		m_markedForUpdate = false;

@@ -161,8 +161,7 @@ void GpuMemoryManager::init(VkPhysicalDevice pdev, VkDevice dev, GrAllocator<U8>
 	}
 }
 
-void GpuMemoryManager::allocateMemory(U32 memTypeIdx, PtrSize size, U32 alignment, Bool linearResource,
-									  GpuMemoryHandle& handle)
+void GpuMemoryManager::allocateMemory(U32 memTypeIdx, PtrSize size, U32 alignment, GpuMemoryHandle& handle)
 {
 	ClassAllocator& calloc = m_callocs[memTypeIdx];
 
@@ -170,8 +169,7 @@ void GpuMemoryManager::allocateMemory(U32 memTypeIdx, PtrSize size, U32 alignmen
 
 	GpuMemoryManagerChunk* chunk;
 	PtrSize offset;
-	const Error err = calloc.allocate(size, alignment, chunk, offset);
-	(void)err;
+	[[maybe_unused]] const Error err = calloc.allocate(size, alignment, chunk, offset);
 
 	handle.m_memory = chunk->m_handle;
 	handle.m_offset = offset;
@@ -212,13 +210,11 @@ void GpuMemoryManager::freeMemory(GpuMemoryHandle& handle)
 	if(handle.isDedicated())
 	{
 		vkFreeMemory(m_dev, handle.m_memory, nullptr);
-		const PtrSize prevSize = m_dedicatedAllocatedMemory.fetchSub(handle.m_size);
+		[[maybe_unused]] const PtrSize prevSize = m_dedicatedAllocatedMemory.fetchSub(handle.m_size);
 		ANKI_ASSERT(prevSize >= handle.m_size);
-		(void)prevSize;
 
-		const U32 count = m_dedicatedAllocationCount.fetchSub(1);
+		[[maybe_unused]] const U32 count = m_dedicatedAllocationCount.fetchSub(1);
 		ANKI_ASSERT(count > 0);
-		(void)count;
 	}
 	else
 	{

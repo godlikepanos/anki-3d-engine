@@ -32,9 +32,8 @@ MicroCommandBuffer::~MicroCommandBuffer()
 		vkFreeCommandBuffers(m_threadAlloc->m_factory->m_dev, m_threadAlloc->m_pools[m_queue], 1, &m_handle);
 		m_handle = {};
 
-		const U32 count = m_threadAlloc->m_factory->m_createdCmdBufferCount.fetchSub(1);
+		[[maybe_unused]] const U32 count = m_threadAlloc->m_factory->m_createdCmdBufferCount.fetchSub(1);
 		ANKI_ASSERT(count > 0);
-		(void)count;
 	}
 }
 
@@ -151,9 +150,8 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 	}
 	else
 	{
-		for(GrObjectType type : EnumIterable<GrObjectType>())
+		for([[maybe_unused]] GrObjectType type : EnumIterable<GrObjectType>())
 		{
-			(void)type;
 			ANKI_ASSERT(out->m_objectRefs[type].getSize() == 0);
 		}
 	}

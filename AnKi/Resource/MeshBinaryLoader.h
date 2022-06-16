@@ -29,14 +29,14 @@ public:
 
 	~MeshBinaryLoader();
 
-	ANKI_USE_RESULT Error load(const ResourceFilename& filename);
+	Error load(const ResourceFilename& filename);
 
-	ANKI_USE_RESULT Error storeIndexBuffer(void* ptr, PtrSize size);
+	Error storeIndexBuffer(void* ptr, PtrSize size);
 
-	ANKI_USE_RESULT Error storeVertexBuffer(U32 bufferIdx, void* ptr, PtrSize size);
+	Error storeVertexBuffer(U32 bufferIdx, void* ptr, PtrSize size);
 
 	/// Instead of calling storeIndexBuffer and storeVertexBuffer use this method to get those buffers into the CPU.
-	ANKI_USE_RESULT Error storeIndicesAndPosition(DynamicArrayAuto<U32>& indices, DynamicArrayAuto<Vec3>& positions);
+	Error storeIndicesAndPosition(DynamicArrayAuto<U32>& indices, DynamicArrayAuto<Vec3>& positions);
 
 	const MeshBinaryHeader& getHeader() const
 	{
@@ -95,9 +95,9 @@ private:
 		return getAlignedRoundUp(MESH_BINARY_BUFFER_ALIGNMENT, getVertexBufferSize(bufferIdx));
 	}
 
-	ANKI_USE_RESULT Error checkHeader() const;
-	ANKI_USE_RESULT Error checkFormat(VertexAttributeId type, ConstWeakArray<Format> supportedFormats,
-									  U32 vertexBufferIdx, U32 relativeOffset) const;
+	Error checkHeader() const;
+	Error checkFormat(VertexAttributeId type, ConstWeakArray<Format> supportedFormats, U32 vertexBufferIdx,
+					  U32 relativeOffset) const;
 };
 /// @}
 

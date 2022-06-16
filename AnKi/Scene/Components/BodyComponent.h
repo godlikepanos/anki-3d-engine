@@ -24,7 +24,7 @@ public:
 
 	~BodyComponent();
 
-	ANKI_USE_RESULT Error loadMeshResource(CString meshFilename);
+	Error loadMeshResource(CString meshFilename);
 
 	CString getMeshResourceFilename() const;
 
@@ -57,7 +57,7 @@ public:
 		return m_body;
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode& node, Second, Second, Bool& updated) override;
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 
 	Bool isEnabled() const
 	{

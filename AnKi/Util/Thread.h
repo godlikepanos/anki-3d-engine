@@ -89,7 +89,7 @@ public:
 
 	/// Wait for the thread to finish
 	/// @return The error code of the thread's callback
-	ANKI_USE_RESULT Error join();
+	Error join();
 
 	/// Identify the current thread
 	static ThreadId getCurrentThreadId()

@@ -21,7 +21,7 @@ public:
 
 	~LightShading();
 
-	ANKI_USE_RESULT Error init();
+	Error init();
 
 	void populateRenderGraph(RenderingContext& ctx);
 
@@ -69,10 +69,10 @@ private:
 		RenderTargetHandle m_rt;
 	} m_runCtx; ///< Run context.
 
-	ANKI_USE_RESULT Error initLightShading();
-	ANKI_USE_RESULT Error initSkybox();
-	ANKI_USE_RESULT Error initApplyFog();
-	ANKI_USE_RESULT Error initApplyIndirect();
+	Error initLightShading();
+	Error initSkybox();
+	Error initApplyFog();
+	Error initApplyIndirect();
 
 	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 };
