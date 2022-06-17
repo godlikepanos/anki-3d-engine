@@ -117,7 +117,7 @@ if(VULKAN)
 	if(DLSS_SUPPORT)
 		set(backend_sources ${backend_sources} "Vulkan/GrUpscalerImpl.cpp")
 	else()
-		set(backend_sources ${backend_sources} "Vulkan/GrUpscalerDummy.cpp")
+		set(backend_sources ${backend_sources} "Vulkan/GrUpscalerImplDummy.cpp")
 	endif()
 
 	if(ANKI_HEADLESS)

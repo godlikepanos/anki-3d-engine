@@ -53,7 +53,7 @@ public:
 				 const Bool resetAccumulation, const Vec2& jitterOffset, const Vec2& mVScale);
 
 private:
-	[[nodiscard]] Error initAsDLSS();
+	Error initAsDLSS();
 
 	void shutdown();
 

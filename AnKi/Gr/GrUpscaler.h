@@ -89,7 +89,7 @@ protected:
 
 private:
 	/// Allocate and initialize a new instance.
-	static [[nodiscard]] GrUpscaler* newInstance(GrManager* manager, const GrUpscalerInitInfo& init);
+	static GrUpscaler* newInstance(GrManager* manager, const GrUpscalerInitInfo& init);
 };
 /// @}
 
