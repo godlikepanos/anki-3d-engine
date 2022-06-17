@@ -128,9 +128,9 @@ Error GrUpscalerImpl::initAsDLSS()
 {
 	NVSDK_NGX_Result result = NVSDK_NGX_Result_Fail;
 
-	VkDevice vkdevice = getGrManagerImpl().getDevice();
-	VkPhysicalDevice vkphysicaldevice = getGrManagerImpl().getPhysicalDevice();
-	VkInstance vkinstance = getGrManagerImpl().getInstance();
+	const VkDevice vkdevice = getGrManagerImpl().getDevice();
+	const VkPhysicalDevice vkphysicaldevice = getGrManagerImpl().getPhysicalDevice();
+	const VkInstance vkinstance = getGrManagerImpl().getInstance();
 	result = NVSDK_NGX_VULKAN_Init(ANKI_NGX_APP_ID, ANKI_RW_LOGS_DIR, vkinstance, vkphysicaldevice, vkdevice);
 
 	m_ngxInitialized = !NVSDK_NGX_FAILED(result);
@@ -164,7 +164,7 @@ Error GrUpscalerImpl::initAsDLSS()
 	const char** deviceExt(nullptr);
 	U32 instanceExtCount(0);
 	U32 deviceExtCount(0);
-	NVSDK_NGX_Result queryExtResult =
+	const NVSDK_NGX_Result queryExtResult =
 		NVSDK_NGX_VULKAN_RequiredExtensions(&instanceExtCount, &instanceExt, &deviceExtCount, &deviceExt);
 
 	// Currently, the SDK and this sample are not in sync.  The sample is a bit forward looking,
@@ -175,17 +175,17 @@ Error GrUpscalerImpl::initAsDLSS()
 	&& defined(NVSDK_NGX_Parameter_SuperSampling_MinDriverVersionMinor)
 
 	// If NGX Successfully initialized then it should set those flags in return
-	int needsUpdatedDriver = 0;
-	unsigned int minDriverVersionMajor = 0;
-	unsigned int minDriverVersionMinor = 0;
-	NVSDK_NGX_Result ResultUpdatedDriver =
+	I32 needsUpdatedDriver = 0;
+	U32 minDriverVersionMajor = 0;
+	U32 minDriverVersionMinor = 0;
+	const NVSDK_NGX_Result resultUpdatedDriver =
 		m_ngxParameters->Get(NVSDK_NGX_Parameter_SuperSampling_NeedsUpdatedDriver, &needsUpdatedDriver);
-	NVSDK_NGX_Result ResultMinDriverVersionMajor =
+	const NVSDK_NGX_Result resultMinDriverVersionMajor =
 		m_ngxParameters->Get(NVSDK_NGX_Parameter_SuperSampling_MinDriverVersionMajor, &minDriverVersionMajor);
-	NVSDK_NGX_Result ResultMinDriverVersionMinor =
+	const NVSDK_NGX_Result resultMinDriverVersionMinor =
 		m_ngxParameters->Get(NVSDK_NGX_Parameter_SuperSampling_MinDriverVersionMinor, &minDriverVersionMinor);
-	if(ResultUpdatedDriver == NVSDK_NGX_Result_Success && ResultMinDriverVersionMajor == NVSDK_NGX_Result_Success
-	   && ResultMinDriverVersionMinor == NVSDK_NGX_Result_Success)
+	if(resultUpdatedDriver == NVSDK_NGX_Result_Success && resultMinDriverVersionMajor == NVSDK_NGX_Result_Success
+	   && resultMinDriverVersionMinor == NVSDK_NGX_Result_Success)
 	{
 		if(needsUpdatedDriver)
 		{
@@ -208,16 +208,17 @@ Error GrUpscalerImpl::initAsDLSS()
 
 #endif
 
-	int dlssAvailable = 0;
-	NVSDK_NGX_Result resultDLSS = m_ngxParameters->Get(NVSDK_NGX_Parameter_SuperSampling_Available, &dlssAvailable);
+	I32 dlssAvailable = 0;
+	const NVSDK_NGX_Result resultDLSS =
+		m_ngxParameters->Get(NVSDK_NGX_Parameter_SuperSampling_Available, &dlssAvailable);
 	if(resultDLSS != NVSDK_NGX_Result_Success || !dlssAvailable)
 	{
 		// More details about what failed (per feature init result)
-		NVSDK_NGX_Result FeatureInitResult = NVSDK_NGX_Result_Fail;
+		const NVSDK_NGX_Result featureInitResult = NVSDK_NGX_Result_Fail;
 		NVSDK_NGX_Parameter_GetI(m_ngxParameters, NVSDK_NGX_Parameter_SuperSampling_FeatureInitResult,
-								 (int*)&FeatureInitResult);
+								 (int*)&featureInitResult);
 		ANKI_VK_LOGE("NVIDIA DLSS not available on this hardware/platform., FeatureInitResult = 0x%08x, info: %ls",
-					 FeatureInitResult, GetNGXResultAsString(FeatureInitResult));
+					 featureInitResult, GetNGXResultAsString(featureInitResult));
 		shutdown();
 		return Error::FUNCTION_FAILED;
 	}
@@ -258,16 +259,14 @@ Error GrUpscalerImpl::createDLSSFeature(const UVec2& srcRes, const UVec2& dstRes
 		return Error::FUNCTION_FAILED;
 	}
 
-	U32 creationNodeMask = 1;
-	U32 visibilityNodeMask = 1;
-	I32 dlssCreateFeatureFlags = NVSDK_NGX_DLSS_Feature_Flags_None;
+	const U32 creationNodeMask = 1;
+	const U32 visibilityNodeMask = 1;
+	// Next create features	(See NVSDK_NGX_DLSS_Feature_Flags in nvsdk_ngx_defs.h)
+	const I32 dlssCreateFeatureFlags =
+		NVSDK_NGX_DLSS_Feature_Flags_None | NVSDK_NGX_DLSS_Feature_Flags_MVLowRes | NVSDK_NGX_DLSS_Feature_Flags_IsHDR;
 	NVSDK_NGX_Result resultDLSS = NVSDK_NGX_Result_Fail;
 
-	// Next create features	(See NVSDK_NGX_DLSS_Feature_Flags in nvsdk_ngx_defs.h)
-	dlssCreateFeatureFlags |= NVSDK_NGX_DLSS_Feature_Flags_MVLowRes;
-	dlssCreateFeatureFlags |= NVSDK_NGX_DLSS_Feature_Flags_IsHDR;
-
-	Error querySettingsResult = queryOptimalSettings(dstRes, mode, &m_recommendedSettings);
+	const Error querySettingsResult = queryOptimalSettings(dstRes, mode, &m_recommendedSettings);
 	if(querySettingsResult != Error::NONE
 	   || (srcRes < m_recommendedSettings.m_dynamicMinimumRenderSize
 		   || srcRes > m_recommendedSettings.m_dynamicMaximumRenderSize))
@@ -317,7 +316,7 @@ void GrUpscalerImpl::releaseDLSSFeature()
 
 	getManager().finish();
 
-	NVSDK_NGX_Result resultDLSS =
+	const NVSDK_NGX_Result resultDLSS =
 		(m_dlssFeature != nullptr) ? NVSDK_NGX_VULKAN_ReleaseFeature(m_dlssFeature) : NVSDK_NGX_Result_Success;
 	if(NVSDK_NGX_FAILED(resultDLSS))
 	{
@@ -331,7 +330,7 @@ void GrUpscalerImpl::releaseDLSSFeature()
 static Error queryNgxQualitySettings(const UVec2& displayRes, const NVSDK_NGX_PerfQuality_Value quality,
 									 NVSDK_NGX_Parameter* parameters, DLSSRecommendedSettings* outSettings)
 {
-	NVSDK_NGX_Result result = NGX_DLSS_GET_OPTIMAL_SETTINGS(
+	const NVSDK_NGX_Result result = NGX_DLSS_GET_OPTIMAL_SETTINGS(
 		parameters, displayRes.x(), displayRes.y(), quality, &outSettings->m_recommendedOptimalRenderSize[0],
 		&outSettings->m_recommendedOptimalRenderSize[1], &outSettings->m_dynamicMaximumRenderSize[0],
 		&outSettings->m_dynamicMaximumRenderSize[1], &outSettings->m_dynamicMinimumRenderSize[0],
