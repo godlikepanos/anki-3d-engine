@@ -69,7 +69,7 @@ class GrUpscaler : public GrObject
 	ANKI_GR_OBJECT
 
 public:
-	static constexpr GrObjectType CLASS_TYPE = GrObjectType::DLSS_CTX;
+	static constexpr GrObjectType CLASS_TYPE = GrObjectType::GRUPSCALER;
 
 	void upscale(CommandBufferPtr cmdb, const TextureViewPtr& srcRt, const TextureViewPtr& dstRt,
 				 const TextureViewPtr& mvRt, const TextureViewPtr& depthRt, const TextureViewPtr& exposure,
