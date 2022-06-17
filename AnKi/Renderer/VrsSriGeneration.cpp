@@ -153,9 +153,9 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 
 		pass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
 		Bool useTonemappedRT = !m_r->getUsingDLSS();
-		pass.newDependency(
-			RenderPassDependency(useTonemappedRT ? m_r->getTemporalAA().getTonemappedRt() : m_r->getLightShading().getRt(),
-								TextureUsageBit::SAMPLED_COMPUTE));
+		pass.newDependency(RenderPassDependency(useTonemappedRT ? m_r->getTemporalAA().getTonemappedRt()
+																: m_r->getLightShading().getRt(),
+												TextureUsageBit::SAMPLED_COMPUTE));
 
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
@@ -163,7 +163,8 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 			cmdb->bindShaderProgram(m_grProg);
 
 			Bool useTonemappedRT = !m_r->getUsingDLSS();
-			rgraphCtx.bindColorTexture(0, 0, useTonemappedRT ? m_r->getTemporalAA().getTonemappedRt() : m_r->getLightShading().getRt());
+			rgraphCtx.bindColorTexture(
+				0, 0, useTonemappedRT ? m_r->getTemporalAA().getTonemappedRt() : m_r->getLightShading().getRt());
 
 			cmdb->bindSampler(0, 1, m_r->getSamplers().m_nearestNearestClamp);
 			rgraphCtx.bindImage(0, 2, m_runCtx.m_rt);
@@ -174,9 +175,9 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 			const Vec4 pc(1.0f / Vec2(m_r->getInternalResolution()), getConfig().getRVrsThreshold(), 0.0f);
 			cmdb->setPushConstants(&pc, sizeof(pc));
 
-				const U32 fakeWorkgroupSizeXorY = m_sriTexelDimension;
-				dispatchPPCompute(cmdb, fakeWorkgroupSizeXorY, fakeWorkgroupSizeXorY, m_r->getInternalResolution().x(),
-								m_r->getInternalResolution().y());
+			const U32 fakeWorkgroupSizeXorY = m_sriTexelDimension;
+			dispatchPPCompute(cmdb, fakeWorkgroupSizeXorY, fakeWorkgroupSizeXorY, m_r->getInternalResolution().x(),
+							  m_r->getInternalResolution().y());
 		});
 	}
 

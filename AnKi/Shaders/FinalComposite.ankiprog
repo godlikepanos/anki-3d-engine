@@ -32,16 +32,15 @@ layout(set = 0, binding = 6) uniform ANKI_RP texture2D u_blueNoise;
 layout(set = 0, binding = 7) uniform texture2D u_motionVectorsRt;
 layout(set = 0, binding = 8) uniform texture2D u_depthRt;
 #if APPLY_TONEMAPPING
-#include <AnKi/Shaders/TonemappingFunctions.glsl>
+#	include <AnKi/Shaders/TonemappingFunctions.glsl>
 const U32 TONEMAPPING_SET = 0u;
 const U32 TONEMAPPING_BINDING = 9u;
-#include <AnKi/Shaders/TonemappingResources.glsl>
+#	include <AnKi/Shaders/TonemappingResources.glsl>
 #endif
 
 #if DBG_ENABLED
 layout(set = 0, binding = 9) uniform ANKI_RP texture2D u_dbgOutlineRt;
 #endif
-
 
 layout(push_constant, std140) uniform b_pc
 {

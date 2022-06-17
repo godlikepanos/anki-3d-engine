@@ -38,7 +38,7 @@ private:
 	ShaderProgramResourcePtr m_sharpenProg;
 	ShaderProgramPtr m_sharpenGrProg;
 
-	DLSSCtxPtr m_dlssCtx;
+	GrUpscalerPtr m_grUpscaler;
 
 	FramebufferDescription m_fbDescr;
 	RenderTargetDescription m_rtDesc;
@@ -63,7 +63,7 @@ private:
 
 	Bool doDLSS() const
 	{
-		return m_dlssCtx.isCreated();
+		return m_grUpscaler.isCreated();
 	}
 
 	Bool doScaling() const

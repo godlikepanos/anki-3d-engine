@@ -69,17 +69,14 @@ Error Scale::init()
 			shaderFname = "ShaderBinaries/BlitRaster.ankiprogbin";
 		}
 
-		if(useDlss) 
+		if(useDlss)
 		{
-			DLSSCtxInitInfo init{};
-			init.m_srcRes = m_r->getInternalResolution();
-			init.m_dstRes = m_r->getPostProcessResolution();
-			init.m_mode = static_cast<DLSSQualityMode>(getConfig().getRDlss());
+			GrUpscalerInitInfo init(m_r->getInternalResolution(), m_r->getPostProcessResolution(),
+									{static_cast<DLSSQualityMode>(getConfig().getRDlss())});
 			// Do not need to load shaders
-			m_dlssCtx = getGrManager().newDLSSCtx(init);
-			
+			m_grUpscaler = getGrManager().newGrUpscaler(init);
 		}
-		else 
+		else
 		{
 			ANKI_CHECK(getResourceManager().loadResource(shaderFname, m_scaleProg));
 			const ShaderProgramResourceVariant* variant;
@@ -146,9 +143,12 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		{
 			ComputeRenderPassDescription& pass = ctx.m_renderGraphDescr.newComputeRenderPass("DLSS");
 			pass.newDependency(RenderPassDependency(m_r->getLightShading().getRt(), TextureUsageBit::SAMPLED_COMPUTE));
-			pass.newDependency(RenderPassDependency(m_r->getMotionVectors().getMotionVectorsRt(), TextureUsageBit::SAMPLED_COMPUTE));
-			pass.newDependency(RenderPassDependency(m_r->getTonemapping().getExposureRT(), TextureUsageBit::IMAGE_COMPUTE_READ));
-			pass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_COMPUTE, TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)));
+			pass.newDependency(
+				RenderPassDependency(m_r->getMotionVectors().getMotionVectorsRt(), TextureUsageBit::SAMPLED_COMPUTE));
+			pass.newDependency(
+				RenderPassDependency(m_r->getTonemapping().getExposureRT(), TextureUsageBit::IMAGE_COMPUTE_READ));
+			pass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_COMPUTE,
+													TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)));
 			pass.newDependency(RenderPassDependency(m_runCtx.m_scaledRt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
 
 			pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
@@ -156,7 +156,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 			});
 		}
 		else
-		{		
+		{
 			if(preferCompute)
 			{
 				ComputeRenderPassDescription& pass = ctx.m_renderGraphDescr.newComputeRenderPass("Scale");
@@ -183,7 +183,6 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 				});
 			}
 		}
-
 	}
 
 	if(doSharpening())
@@ -327,26 +326,25 @@ void Scale::runSharpening(RenderPassWorkContext& rgraphCtx)
 
 void Scale::runDLSS(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
-	Vec2 srcRes = static_cast<Vec2>(m_r->getInternalResolution());
-	Bool reset = m_r->getFrameCount() == 0; // TODO: Expose this better
-	Vec2 mvScale = srcRes; // UV space to Pixel space factor
+	const Vec2 srcRes = static_cast<Vec2>(m_r->getInternalResolution());
+	const Bool reset = m_r->getFrameCount() == 0;
+	const Vec2 mvScale = srcRes; // UV space to Pixel space factor
 	// In [-texSize / 2, texSize / 2] -> sub-pixel space {-0.5, 0.5}
-	Vec2 jitterOffset = ctx.m_matrices.m_jitter.getTranslationPart().xy() * srcRes * 0.5f;
-	
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	const Vec2 jitterOffset = ctx.m_matrices.m_jitter.getTranslationPart().xy() * srcRes * 0.5f;
+
 	const TexturePtr srcRT(rgraphCtx.getTargetTexture(m_r->getLightShading().getRt()));
 	const TexturePtr mvRT(rgraphCtx.getTargetTexture(m_r->getMotionVectors().getMotionVectorsRt()));
 	const TexturePtr depthRT(rgraphCtx.getTargetTexture(m_r->getGBuffer().getDepthRt()));
 	const TexturePtr dstRT(rgraphCtx.getTargetTexture(m_runCtx.m_scaledRt));
 	const TexturePtr exposureRT(rgraphCtx.getTargetTexture(m_r->getTonemapping().getExposureRT()));
-	
-	m_dlssCtx->upscale(cmdb, 
-		getGrManager().newTextureView(TextureViewInitInfo(srcRT, "DLSS_Src")), 
-		getGrManager().newTextureView(TextureViewInitInfo(dstRT, "DLSS_Dst")),
-		getGrManager().newTextureView(TextureViewInitInfo(mvRT, "DLSS_MV")), 
-		getGrManager().newTextureView(TextureViewInitInfo(depthRT, "DLSS_Depth")),
-	    getGrManager().newTextureView(TextureViewInitInfo(exposureRT, "DLSS_Exposure")), 
-		reset, jitterOffset, mvScale);
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+
+	cmdb->upscale(m_grUpscaler, getGrManager().newTextureView(TextureViewInitInfo(srcRT, "DLSS_Src")),
+				  getGrManager().newTextureView(TextureViewInitInfo(dstRT, "DLSS_Dst")),
+				  getGrManager().newTextureView(TextureViewInitInfo(mvRT, "DLSS_MV")),
+				  getGrManager().newTextureView(TextureViewInitInfo(depthRT, "DLSS_Depth")),
+				  getGrManager().newTextureView(TextureViewInitInfo(exposureRT, "DLSS_Exposure")), reset, jitterOffset,
+				  mvScale);
 }
 
 } // end namespace anki

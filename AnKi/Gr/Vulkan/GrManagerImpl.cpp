@@ -549,7 +549,7 @@ Error GrManagerImpl::initInstance()
 
 	// DLSS checks
 #ifdef DLSS_SUPPORT
-	if (m_capabilities.m_gpuVendor == GpuVendor::NVIDIA) 
+	if(m_capabilities.m_gpuVendor == GpuVendor::NVIDIA)
 	{
 		m_capabilities.m_dlssSupport = true;
 	}

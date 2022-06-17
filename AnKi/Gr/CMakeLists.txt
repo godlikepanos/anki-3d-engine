@@ -29,7 +29,7 @@ set(common_headers
 	Texture.h
 	TextureView.h
 	TimestampQuery.h
-	DLSSCtx.h
+	GrUpscaler.h
 	Utils/FrameGpuAllocator.h
 	Utils/Functions.h
 	Utils/InstantiationMacros.h)
@@ -74,7 +74,7 @@ if(VULKAN)
 		Vulkan/TimestampQueryImpl.cpp
 		Vulkan/VulkanObject.cpp
 		Vulkan/FrameGarbageCollector.cpp
-		Vulkan/DLSSCtx.cpp)
+		Vulkan/GrUpscaler.cpp)
 
 	set(backend_headers
 		Vulkan/AccelerationStructureImpl.h
@@ -112,12 +112,12 @@ if(VULKAN)
 		Vulkan/TextureViewImpl.h
 		Vulkan/TimestampQueryImpl.h
 		Vulkan/VulkanObject.h
-		Vulkan/DLSSCtxImpl.h)
+		Vulkan/GrUpscalerImpl.h)
 
 	if(DLSS_SUPPORT)
-		set(backend_sources ${backend_sources} "Vulkan/DLSSCtxImpl.cpp")
+		set(backend_sources ${backend_sources} "Vulkan/GrUpscalerImpl.cpp")
 	else()
-		set(backend_sources ${backend_sources} "Vulkan/DLSSCtxImplDummy.cpp")
+		set(backend_sources ${backend_sources} "Vulkan/GrUpscalerDummy.cpp")
 	endif()
 
 	if(ANKI_HEADLESS)

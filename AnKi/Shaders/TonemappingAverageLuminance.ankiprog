@@ -103,7 +103,7 @@ void main()
 		u_averageLuminance = finalAvgLum;
 		u_exposureThreshold0 = computeExposure(u_averageLuminance, 0.0);
 
-		imageStore(u_outExposureImage, IVec2(0,0), Vec4(u_exposureThreshold0));
+		imageStore(u_outExposureImage, IVec2(0, 0), Vec4(u_exposureThreshold0));
 	}
 }
 #pragma anki end

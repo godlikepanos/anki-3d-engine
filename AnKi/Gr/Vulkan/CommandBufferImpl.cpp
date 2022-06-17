@@ -3,13 +3,14 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Gr/Vulkan/CommandBufferImpl.h>
 #include <AnKi/Gr/GrManager.h>
+#include <AnKi/Gr/Vulkan/CommandBufferImpl.h>
 #include <AnKi/Gr/Vulkan/GrManagerImpl.h>
 
 #include <AnKi/Gr/Framebuffer.h>
-#include <AnKi/Gr/Vulkan/FramebufferImpl.h>
+#include <AnKi/Gr/GrUpscaler.h>
 #include <AnKi/Gr/Vulkan/AccelerationStructureImpl.h>
+#include <AnKi/Gr/Vulkan/FramebufferImpl.h>
 
 #include <algorithm>
 
@@ -784,6 +785,17 @@ void CommandBufferImpl::buildAccelerationStructureInternal(const AccelerationStr
 	// Push refs
 	m_microCmdb->pushObjectRef(as);
 	m_microCmdb->pushObjectRef(scratchBuff);
+}
+
+void CommandBufferImpl::upscaleInternal(const GrUpscalerPtr& upscaler, const TextureViewPtr& srcRt,
+										const TextureViewPtr& dstRt, const TextureViewPtr& mvRt,
+										const TextureViewPtr& depthRt, const TextureViewPtr& exposure,
+										const Bool resetAccumulation, const Vec2& jitterOffset, const Vec2& mVScale)
+{
+	commandCommon();
+	// Hide implementation details from the CommandBuffer as these might involve an external SDK
+	upscaler->upscale(CommandBufferPtr(this), srcRt, dstRt, mvRt, depthRt, exposure, resetAccumulation, jitterOffset,
+					  mVScale);
 }
 
 } // end namespace anki

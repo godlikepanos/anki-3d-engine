@@ -90,7 +90,8 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 	static const Array<CString, 8> passNames = {"DownBlur #0",  "Down/Blur #1", "Down/Blur #2", "Down/Blur #3",
 												"Down/Blur #4", "Down/Blur #5", "Down/Blur #6", "Down/Blur #7"};
 
-	RenderTargetHandle srcTarget = m_r->getUsingDLSS() ? m_r->getLightShading().getRt() : m_r->getTemporalAA().getHdrRt();
+	RenderTargetHandle srcTarget =
+		m_r->getUsingDLSS() ? m_r->getLightShading().getRt() : m_r->getTemporalAA().getHdrRt();
 
 	if(getConfig().getRPreferCompute())
 	{
@@ -172,7 +173,8 @@ void DownscaleBlur::run(U32 passIdx, RenderPassWorkContext& rgraphCtx)
 	}
 	else
 	{
-		rgraphCtx.bindColorTexture(0, 1, m_r->getUsingDLSS() ? m_r->getLightShading().getRt() : m_r->getTemporalAA().getHdrRt());
+		rgraphCtx.bindColorTexture(
+			0, 1, m_r->getUsingDLSS() ? m_r->getLightShading().getRt() : m_r->getTemporalAA().getHdrRt());
 	}
 
 	if(getConfig().getRPreferCompute())

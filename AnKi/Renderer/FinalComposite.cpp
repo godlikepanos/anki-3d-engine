@@ -116,7 +116,8 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 
 	if(m_r->getUsingDLSS())
 	{
-		pass.newDependency(RenderPassDependency(m_r->getTonemapping().getAverageLuminanceBuffer(), BufferUsageBit::UNIFORM_FRAGMENT));
+		pass.newDependency(
+			RenderPassDependency(m_r->getTonemapping().getAverageLuminanceBuffer(), BufferUsageBit::UNIFORM_FRAGMENT));
 	}
 
 	RenderTargetHandle dbgRt;

@@ -83,7 +83,7 @@ public:
 	[[nodiscard]] OcclusionQueryPtr newOcclusionQuery();
 	[[nodiscard]] TimestampQueryPtr newTimestampQuery();
 	[[nodiscard]] RenderGraphPtr newRenderGraph();
-	[[nodiscard]] DLSSCtxPtr newDLSSCtx(const DLSSCtxInitInfo& init);
+	[[nodiscard]] GrUpscalerPtr newGrUpscaler(const GrUpscalerInitInfo& init);
 	[[nodiscard]] AccelerationStructurePtr newAccelerationStructure(const AccelerationStructureInitInfo& init);
 	/// @}
 

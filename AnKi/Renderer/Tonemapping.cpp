@@ -44,7 +44,8 @@ Error Tonemapping::initInternal()
 		BufferMapAccessBit::NONE, "AvgLum"));
 
 	// Create exposure texture
-	TextureUsageBit usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE | TextureUsageBit::IMAGE_COMPUTE_WRITE;
+	TextureUsageBit usage =
+		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE | TextureUsageBit::IMAGE_COMPUTE_WRITE;
 	TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(1, 1, Format::R32_SFLOAT, usage, "Exposure 1x1");
 	m_exposure1x1 = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::TRANSFER_DESTINATION);
 
@@ -58,11 +59,12 @@ Error Tonemapping::initInternal()
 
 	*static_cast<Vec4*>(data) = Vec4(0.5);
 	cmdb->copyBufferToBuffer(handle.getBuffer(), handle.getOffset(), m_luminanceBuff, 0, handle.getRange());
-	
+
 	// TODO: Review
 	TextureSubresourceInfo subresource;
 	subresource = TextureSubresourceInfo(TextureSurfaceInfo(0, 0, 0, 0));
-	TextureViewPtr tmpView = getGrManager().newTextureView(TextureViewInitInfo(m_exposure1x1, subresource, "ExposureTmpView"));
+	TextureViewPtr tmpView =
+		getGrManager().newTextureView(TextureViewInitInfo(m_exposure1x1, subresource, "ExposureTmpView"));
 	cmdb->copyBufferToTextureView(handle.getBuffer(), handle.getOffset(), sizeof(F32), tmpView);
 
 	FencePtr fence;
@@ -79,8 +81,8 @@ void Tonemapping::importRenderTargets(RenderingContext& ctx)
 	// read/write. To skip the barrier import it as read/write as well.
 	m_runCtx.m_buffHandle = ctx.m_renderGraphDescr.importBuffer(
 		m_luminanceBuff, BufferUsageBit::STORAGE_COMPUTE_READ | BufferUsageBit::STORAGE_COMPUTE_WRITE);
-	m_runCtx.m_exposureHandle = ctx.m_renderGraphDescr.importRenderTarget(m_exposure1x1, 
-		TextureUsageBit::IMAGE_COMPUTE_READ | TextureUsageBit::IMAGE_COMPUTE_WRITE);
+	m_runCtx.m_exposureHandle = ctx.m_renderGraphDescr.importRenderTarget(
+		m_exposure1x1, TextureUsageBit::IMAGE_COMPUTE_READ | TextureUsageBit::IMAGE_COMPUTE_WRITE);
 }
 
 void Tonemapping::populateRenderGraph(RenderingContext& ctx)

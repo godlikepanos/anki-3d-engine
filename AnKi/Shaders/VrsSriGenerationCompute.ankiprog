@@ -19,7 +19,7 @@
 #if HDR_INPUT
 const U32 TONEMAPPING_SET = 0u;
 const U32 TONEMAPPING_BINDING = 3u;
-#include <AnKi/Shaders/TonemappingResources.glsl>
+#	include <AnKi/Shaders/TonemappingResources.glsl>
 #endif
 layout(set = 0, binding = 0) uniform ANKI_RP texture2D u_inputTex;
 layout(set = 0, binding = 1) uniform sampler u_nearestClampSampler;
@@ -52,15 +52,15 @@ shared Vec2 s_maxDerivative[SHARED_MEMORY_ENTRIES];
 #endif
 
 #if HDR_INPUT
-#define sampleLuma(offsetX, offsetY) \
-	computeLuminance( \
-		linearToSRgb(tonemap(textureLodOffset(sampler2D(u_inputTex, u_nearestClampSampler), uv, 0.0, IVec2(offsetX, offsetY)).xyz, u_exposureThreshold0)))
+#	define sampleLuma(offsetX, offsetY) \
+		computeLuminance(linearToSRgb(tonemap( \
+			textureLodOffset(sampler2D(u_inputTex, u_nearestClampSampler), uv, 0.0, IVec2(offsetX, offsetY)).xyz, \
+			u_exposureThreshold0)))
 #else
-#define sampleLuma(offsetX, offsetY) \
-	computeLuminance( \
-		textureLodOffset(sampler2D(u_inputTex, u_nearestClampSampler), uv, 0.0, IVec2(offsetX, offsetY)).xyz)
+#	define sampleLuma(offsetX, offsetY) \
+		computeLuminance( \
+			textureLodOffset(sampler2D(u_inputTex, u_nearestClampSampler), uv, 0.0, IVec2(offsetX, offsetY)).xyz)
 #endif
-
 
 void main()
 {

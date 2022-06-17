@@ -9,6 +9,7 @@
 #include <AnKi/Gr/Framebuffer.h>
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/WeakArray.h>
+#include <AnKi/Math.h>
 
 namespace anki {
 
@@ -409,6 +410,22 @@ public:
 
 	/// Build the acceleration structure.
 	void buildAccelerationStructure(const AccelerationStructurePtr& as);
+
+	/// Do upscaling by an external upscaler
+	/// @param[in] upscaler the upscaler to use for upscaling
+	/// @param[in] srcRt Source LowRes RenderTarget.
+	/// @param[out] dstRt Destination HighRes RenderTarget
+	/// @param[in] mvRt Motion Vectors
+	/// @param[in] depthRt Depth attachment
+	/// @param[in] exposure 1x1 texture containing exposure
+	/// @param[in] resetAccumulation whether to clean or not any temporal history
+	/// @param[in] jitterOffset Jittering offset that was applied during the generation of srcRt
+	/// @param[in] mVScale Any scale factor that might need to be applied to the mvRt (i.e UV space to Pixel space
+	/// conversion)
+	void upscale(const GrUpscalerPtr& upscaler, const TextureViewPtr& srcRt, const TextureViewPtr& dstRt,
+				 const TextureViewPtr& mvRt, const TextureViewPtr& depthRt, const TextureViewPtr& exposure,
+				 const Bool resetAccumulation, const Vec2& jitterOffset, const Vec2& mVScale);
+
 	/// @}
 
 	/// @name Sync

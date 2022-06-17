@@ -285,7 +285,6 @@ private:
 	Error initInternal(UVec2 swapchainSize);
 
 	void initJitteredMats();
-	void updateJitterMatrix(Mat4& jitterMatrix);
 }; // namespace anki
 /// @}
 

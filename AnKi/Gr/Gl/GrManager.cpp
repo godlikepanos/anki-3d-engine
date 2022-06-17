@@ -18,7 +18,7 @@
 #include <AnKi/Gr/Framebuffer.h>
 #include <AnKi/Gr/OcclusionQuery.h>
 #include <AnKi/Gr/RenderGraph.h>
-#include <AnKi/Gr/DLSSCtx.h>
+#include <AnKi/Gr/GrUpscaler.h>
 
 #include <cstring>
 
@@ -143,9 +143,9 @@ RenderGraphPtr GrManager::newRenderGraph()
 	return RenderGraphPtr(RenderGraph::newInstance(this));
 }
 
-DLSSCtxPtr GrManager::newDlssCtx(const DLSSCtxInitInfo& init)
+GrUpscalerPtr GrManager::newGrUpscaler(const GrUpscalerInitInfo& init)
 {
-	return DLSSCtxPtr(DLSSCtx::newInstance(this, init));
+	return GrUpscalerPtr(GrUpscaler::newInstance(this, init));
 }
 
 #undef ANKI_SAFE_CONSTRUCT
