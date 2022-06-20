@@ -152,7 +152,7 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("VRS SRI generation");
 
 		pass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
-		Bool useTonemappedRT = !m_r->getUsingDLSS();
+		const Bool useTonemappedRT = !m_r->getUsingDLSS();
 		pass.newDependency(RenderPassDependency(useTonemappedRT ? m_r->getTemporalAA().getTonemappedRt()
 																: m_r->getLightShading().getRt(),
 												TextureUsageBit::SAMPLED_COMPUTE));
@@ -162,7 +162,7 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb->bindShaderProgram(m_grProg);
 
-			Bool useTonemappedRT = !m_r->getUsingDLSS();
+			const Bool useTonemappedRT = !m_r->getUsingDLSS();
 			rgraphCtx.bindColorTexture(
 				0, 0, useTonemappedRT ? m_r->getTemporalAA().getTonemappedRt() : m_r->getLightShading().getRt());
 

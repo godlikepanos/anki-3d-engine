@@ -139,28 +139,5 @@ target_link_libraries(AnKiGrCommon AnKiUtil) # Only depend on Util
 add_library(AnKiGr ${backend_sources} ${backend_headers})
 target_compile_definitions(AnKiGr PRIVATE -DANKI_SOURCE_FILE)
 target_link_libraries(AnKiGr AnKiCore AnKiSpirvCross AnKiGrCommon)
-
-# Copy required DLLs
-if(DLSS_SUPPORT)
-	get_target_property(lib_type AnkiNgx TYPE)
-    if ("${lib_type}" STREQUAL "SHARED_LIBRARY")
-		get_target_property(ANKINGX_DLL AnkiNgx IMPORTED_LOCATION)
-		add_custom_command(TARGET AnKiGr
-			COMMENT "Dependant DLLs copy ${ANKINGX_DLL} ${CMAKE_BINARY_DIR}/Bin"
-			COMMAND ${CMAKE_COMMAND} -E copy_if_different "${ANKINGX_DLL}" "${CMAKE_BINARY_DIR}/Bin")
-		STRING(REGEX REPLACE "\\\\" "/" ANKINGX_DLL ${ANKINGX_DLL})
-		install(FILES ${ANKINGX_DLL} DESTINATION ${CMAKE_INSTALL_BINDIR})
-	else()
-		get_property(__NGX_DLLS_LIST TARGET AnkiNgx PROPERTY EXTRA_DLLS)
-		foreach(dll_path ${__NGX_DLLS_LIST})
-			file(GLOB dll_files "${dll_path}")
-			foreach(dll_file ${dll_files})
-				add_custom_command(TARGET AnKiGr
-					COMMENT "NGX DLL copy ${dll_file} ${CMAKE_BINARY_DIR}/Bin\n"
-					COMMAND ${CMAKE_COMMAND} -E copy_if_different "${dll_file}" "${CMAKE_BINARY_DIR}/Bin")
-				STRING(REGEX REPLACE "\\\\" "/" dll_file ${dll_file})
-				install(FILES ${dll_file} DESTINATION ${CMAKE_INSTALL_BINDIR})
-			endforeach()
-		endforeach()
-	endif()
-endif()
+# Add dynamic dependencies for AnkiNgx
+add_AnkiNgx_dependencies(AnKiGr)

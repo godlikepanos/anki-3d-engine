@@ -45,7 +45,7 @@ Error Scale::init()
 	const Bool preferCompute = getConfig().getRPreferCompute();
 	const U32 fsrQuality = getConfig().getRFsr();
 	// Dlss and FSR are mutually exclusive
-	Bool useDlss = m_r->getUsingDLSS();
+	const Bool useDlss = m_r->getUsingDLSS();
 	m_fsr = (fsrQuality != 0) && !useDlss;
 
 	// Program

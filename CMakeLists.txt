@@ -34,6 +34,34 @@ macro(anki_new_executable)
 	endif()
 endmacro()
 
+macro(add_AnkiNgx_dependencies)
+    if(DLSS_SUPPORT)
+        # Copy required DLLs
+        get_target_property(lib_type AnkiNgx TYPE)
+        if ("${lib_type}" STREQUAL "SHARED_LIBRARY")
+            get_target_property(ANKINGX_DLL AnkiNgx IMPORTED_LOCATION)
+            add_custom_command(TARGET ${ARGV}
+                COMMENT "Dependant DLLs copy ${ANKINGX_DLL} ${CMAKE_BINARY_DIR}/Bin"
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different "${ANKINGX_DLL}" "${CMAKE_BINARY_DIR}/Bin")
+            STRING(REGEX REPLACE "\\\\" "/" ANKINGX_DLL ${ANKINGX_DLL})
+            install(FILES ${ANKINGX_DLL} DESTINATION ${CMAKE_INSTALL_BINDIR})
+        else()
+            get_property(__NGX_DLLS_LIST TARGET AnkiNgx PROPERTY EXTRA_DLLS)
+            foreach(dll_path ${__NGX_DLLS_LIST})
+                file(GLOB dll_files "${dll_path}")
+                foreach(dll_file ${dll_files})
+                    add_custom_command(TARGET ${ARGV}
+                        COMMENT "NGX DLL copy ${dll_file} ${CMAKE_BINARY_DIR}/Bin\n"
+                        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${dll_file}" "${CMAKE_BINARY_DIR}/Bin")
+                    STRING(REGEX REPLACE "\\\\" "/" dll_file ${dll_file})
+                    install(FILES ${dll_file} DESTINATION ${CMAKE_INSTALL_BINDIR})
+                endforeach()
+            endforeach()
+        endif()
+    endif()
+
+endmacro()
+
 ################################################################################
 # Determin the system to build for. Do that first                              #
 ################################################################################
