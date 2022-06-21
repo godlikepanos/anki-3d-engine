@@ -396,9 +396,10 @@ public:
 
 	void buildAccelerationStructureInternal(const AccelerationStructurePtr& as);
 
-	void upscaleInternal(const GrUpscalerPtr& upscaler, const TextureViewPtr& srcRt, const TextureViewPtr& dstRt,
-						 const TextureViewPtr& mvRt, const TextureViewPtr& depthRt, const TextureViewPtr& exposure,
-						 const Bool resetAccumulation, const Vec2& jitterOffset, const Vec2& mVScale);
+	void upscaleInternal(const GrUpscalerPtr& upscaler, const TextureViewPtr& inColor,
+						 const TextureViewPtr& outUpscaledColor, const TextureViewPtr& motionVectors,
+						 const TextureViewPtr& depth, const TextureViewPtr& exposure, const Bool resetAccumulation,
+						 const Vec2& jitterOffset, const Vec2& motionVectorsScale);
 
 	void setPushConstantsInternal(const void* data, U32 dataSize);
 

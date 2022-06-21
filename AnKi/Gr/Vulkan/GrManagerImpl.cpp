@@ -548,10 +548,10 @@ Error GrManagerImpl::initInstance()
 #endif
 
 	// DLSS checks
-#ifdef DLSS_SUPPORT
+#ifdef ANKI_DLSS
 	if(m_capabilities.m_gpuVendor == GpuVendor::NVIDIA)
 	{
-		m_capabilities.m_dlssSupport = true;
+		m_capabilities.m_dlss = true;
 	}
 #endif
 

@@ -23,6 +23,7 @@
 #define ANKI_TESTS ${ANKI_TESTS}
 #define ANKI_ENABLE_TRACE ${_ANKI_ENABLE_TRACE}
 #define ANKI_SOURCE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+#define ANKI_DLSS ${_ANKI_ENABLE_DLSS}
 
 // Compiler
 #if defined(__clang__)

@@ -39,26 +39,26 @@ public:
 };
 
 /// Initialization structure for the upscaler
-class GrUpscalerInitInfo
+class GrUpscalerInitInfo : public GrBaseInitInfo
 {
 public:
-	UVec2 m_srcRes = {0, 0};
-	UVec2 m_dstRes = {0, 0};
-	UpscalerType m_type;
+	UVec2 m_sourceImageResolution = UVec2(0, 0);
+	UVec2 m_targetImageResolution = UVec2(0, 0);
+	UpscalerType m_upscalerType = UpscalerType::INVALID;
 	union
 	{
 		DLSSInitInfo m_dlssInitInfo;
 	};
 
 	GrUpscalerInitInfo()
-		: m_type(UpscalerType::INVALID)
+		: GrBaseInitInfo()
 	{
 	}
 
 	GrUpscalerInitInfo(const UVec2& srcRes, const UVec2& dstRes, const DLSSInitInfo& info)
-		: m_srcRes(srcRes)
-		, m_dstRes(dstRes)
-		, m_type(UpscalerType::DLSS_2)
+		: m_sourceImageResolution(srcRes)
+		, m_targetImageResolution(dstRes)
+		, m_upscalerType(UpscalerType::DLSS_2)
 		, m_dlssInitInfo(info)
 	{
 	}
@@ -69,11 +69,12 @@ class GrUpscaler : public GrObject
 	ANKI_GR_OBJECT
 
 public:
-	static constexpr GrObjectType CLASS_TYPE = GrObjectType::GRUPSCALER;
+	static constexpr GrObjectType CLASS_TYPE = GrObjectType::GR_UPSCALER;
 
-	void upscale(CommandBufferPtr cmdb, const TextureViewPtr& srcRt, const TextureViewPtr& dstRt,
-				 const TextureViewPtr& mvRt, const TextureViewPtr& depthRt, const TextureViewPtr& exposure,
-				 const Bool resetAccumulation, const Vec2& jitterOffset, const Vec2& mVScale);
+	UpscalerType getUpscalerType() const
+	{
+		return m_initInfo.m_upscalerType;
+	}
 
 protected:
 	/// Construct.
@@ -87,7 +88,11 @@ protected:
 	{
 	}
 
+	GrUpscalerInitInfo m_initInfo;
+
 private:
+	[[nodiscard]] Error init(const GrUpscalerInitInfo& init);
+
 	/// Allocate and initialize a new instance.
 	static GrUpscaler* newInstance(GrManager* manager, const GrUpscalerInitInfo& init);
 };

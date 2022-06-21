@@ -41,16 +41,32 @@ public:
 
 	~GrUpscalerImpl();
 
-	[[nodiscard]] Error init(const GrUpscalerInitInfo& init);
+	[[nodiscard]] Error initInternal();
 
 	Bool isNgxInitialized() const
 	{
 		return m_ngxInitialized;
 	}
 
-	void upscale(CommandBufferPtr cmdb, const TextureViewPtr& srcRt, const TextureViewPtr& dstRt,
-				 const TextureViewPtr& mvRt, const TextureViewPtr& depthRt, const TextureViewPtr& exposure,
-				 const Bool resetAccumulation, const Vec2& jitterOffset, const Vec2& mVScale);
+	/// @name DLSS data accessors
+	/// @{
+
+	NVSDK_NGX_Parameter* getParameters() const
+	{
+		return m_ngxParameters;
+	}
+
+	NVSDK_NGX_Handle* getFeature() const
+	{
+		return m_dlssFeature;
+	}
+
+	const DLSSRecommendedSettings& getRecommendedSettings() const
+	{
+		return m_recommendedSettings;
+	}
+
+	/// @}
 
 private:
 	Error initAsDLSS();
@@ -65,8 +81,6 @@ private:
 
 	Error queryOptimalSettings(const UVec2& displayRes, const DLSSQualityMode mode,
 							   DLSSRecommendedSettings* outRecommendedSettings);
-
-	GrUpscalerInitInfo m_initInfo;
 
 	// DLSS related
 	Bool m_ngxInitialized;

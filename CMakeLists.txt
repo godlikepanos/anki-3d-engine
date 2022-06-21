@@ -35,7 +35,7 @@ macro(anki_new_executable)
 endmacro()
 
 macro(add_AnkiNgx_dependencies)
-    if(DLSS_SUPPORT)
+    if(ANKI_DLSS)
         # Copy required DLLs
         get_target_property(lib_type AnkiNgx TYPE)
         if ("${lib_type}" STREQUAL "SHARED_LIBRARY")
@@ -46,7 +46,7 @@ macro(add_AnkiNgx_dependencies)
             STRING(REGEX REPLACE "\\\\" "/" ANKINGX_DLL ${ANKINGX_DLL})
             install(FILES ${ANKINGX_DLL} DESTINATION ${CMAKE_INSTALL_BINDIR})
         else()
-            get_property(__NGX_DLLS_LIST TARGET AnkiNgx PROPERTY EXTRA_DLLS)
+            get_property(__NGX_DLLS_LIST TARGET AnkiNgx PROPERTY ANKINGX_EXTRA_DLLS)
             foreach(dll_path ${__NGX_DLLS_LIST})
                 file(GLOB dll_files "${dll_path}")
                 foreach(dll_file ${dll_files})
@@ -155,6 +155,7 @@ option(ANKI_ADDRESS_SANITIZER "Enable address sanitizer (-fsanitize=address)" OF
 option(ANKI_HEADLESS "Build a headless application" OFF)
 option(ANKI_SHADER_FULL_PRECISION "Build shaders with full precision" OFF)
 set(ANKI_OVERRIDE_SHADER_COMPILER "" CACHE FILEPATH "Set the ShaderCompiler to be used to compile all shaders")
+option(ANKI_DLSS "Integrate DLSS if supported" ON)
 
 # Take a wild guess on the windowing system
 if(ANKI_HEADLESS)
@@ -322,10 +323,11 @@ if(ANDROID)
 endif()
 
 # DLSS
-if((LINUX OR WINDOWS) AND VULKAN)
-	add_compile_definitions(DLSS_SUPPORT=1)
-	set(DLSS_SUPPORT TRUE)
+if(ANKI_DLSS AND (LINUX OR WINDOWS) AND VULKAN)
+	set(_ANKI_ENABLE_DLSS 1)
 	add_subdirectory(ThirdParty/nvngx_dlss_sdk)
+elseif(ANKI_DLSS)
+	set(ANKI_DLSS OFF)
 endif()
 
 ################################################################################

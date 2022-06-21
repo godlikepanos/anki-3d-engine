@@ -63,7 +63,7 @@ Renderer::~Renderer()
 Bool Renderer::getUsingDLSS() const
 {
 	Bool needsScaling = getPostProcessResolution() != getInternalResolution();
-	return needsScaling && (getConfig().getRDlss() != 0) && m_gr->getDeviceCapabilities().m_dlssSupport;
+	return needsScaling && (getConfig().getRDlss() != 0) && m_gr->getDeviceCapabilities().m_dlss;
 }
 
 Error Renderer::init(ThreadHive* hive, ResourceManager* resources, GrManager* gl, StagingGpuMemoryPool* stagingMem,

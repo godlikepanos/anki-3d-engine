@@ -15,16 +15,9 @@ GrUpscalerImpl::~GrUpscalerImpl()
 	// TODO:
 }
 
-Error GrUpscalerImpl::init(const GrUpscalerInitInfo& init)
+Error GrUpscalerImpl::initInternal()
 {
 	return Error::NONE;
-}
-
-void GrUpscalerImpl::upscale(CommandBufferPtr cmdb, const TextureViewPtr& srcRt, const TextureViewPtr& dstRt,
-							 const TextureViewPtr& mvRt, const TextureViewPtr& depthRt, const TextureViewPtr& exposure,
-							 const Bool resetAccumulation, const Vec2& jitterOffset, const Vec2& mVScale)
-{
-	ANKI_VK_LOGE("Trying to use DLSS when not supported");
 }
 
 } // end namespace anki

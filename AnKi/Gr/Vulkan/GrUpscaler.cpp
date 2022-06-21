@@ -6,7 +6,6 @@
 #include <AnKi/Gr/GrUpscaler.h>
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Gr/Texture.h>
-#include <AnKi/Gr/CommandBuffer.h>
 #include <AnKi/Gr/Vulkan/GrUpscalerImpl.h>
 
 namespace anki {
@@ -24,12 +23,11 @@ GrUpscaler* GrUpscaler::newInstance(GrManager* manager, const GrUpscalerInitInfo
 	return impl;
 }
 
-void GrUpscaler::upscale(CommandBufferPtr cmdb, const TextureViewPtr& srcRt, const TextureViewPtr& dstRt,
-						 const TextureViewPtr& mvRt, const TextureViewPtr& depthRt, const TextureViewPtr& exposure,
-						 const Bool resetAccumulation, const Vec2& jitterOffset, const Vec2& mVScale)
+Error GrUpscaler::init(const GrUpscalerInitInfo& init)
 {
+	m_initInfo = init;
 	ANKI_VK_SELF(GrUpscalerImpl);
-	self.upscale(cmdb, srcRt, dstRt, mvRt, depthRt, exposure, resetAccumulation, jitterOffset, mVScale);
+	return self.initInternal();
 }
 
 } // end namespace anki

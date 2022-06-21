@@ -185,7 +185,7 @@ public:
 	Bool m_unalignedBbpTextureFormats = false;
 
 	/// DLSS.
-	Bool m_dlssSupport = false;
+	Bool m_dlss = false;
 };
 ANKI_END_PACKED_STRUCT
 static_assert(sizeof(GpuDeviceCapabilities)
