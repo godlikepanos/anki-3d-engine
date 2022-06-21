@@ -12,7 +12,7 @@
 #include <AnKi/Gr/Vulkan/AccelerationStructureImpl.h>
 #include <AnKi/Gr/Vulkan/FramebufferImpl.h>
 
-#ifdef ANKI_DLSS
+#if ANKI_DLSS
 // Ngx specific
 #	include <ThirdParty/nvngx_dlss_sdk/sdk/include/nvsdk_ngx.h>
 #	include <ThirdParty/nvngx_dlss_sdk/sdk/include/nvsdk_ngx_helpers.h>
@@ -795,7 +795,7 @@ void CommandBufferImpl::buildAccelerationStructureInternal(const AccelerationStr
 	m_microCmdb->pushObjectRef(scratchBuff);
 }
 
-#ifdef ANKI_DLSS
+#if ANKI_DLSS
 static NVSDK_NGX_Resource_VK getNGXResourceFromAnkiTexture(const TextureViewImpl& tex, Bool isUAV)
 {
 	NVSDK_NGX_Resource_VK resourceVK = {};
@@ -818,7 +818,7 @@ void CommandBufferImpl::upscaleInternal(const GrUpscalerPtr& upscaler, const Tex
 {
 	commandCommon();
 
-#ifdef ANKI_DLSS
+#if ANKI_DLSS
 	if(upscaler->getUpscalerType() == UpscalerType::DLSS_2)
 	{
 		const GrUpscalerImpl& upscalerImpl = static_cast<const GrUpscalerImpl&>(*upscaler);

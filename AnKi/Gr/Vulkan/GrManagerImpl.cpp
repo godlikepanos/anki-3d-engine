@@ -548,7 +548,7 @@ Error GrManagerImpl::initInstance()
 #endif
 
 	// DLSS checks
-#ifdef ANKI_DLSS
+#if ANKI_DLSS
 	if(m_capabilities.m_gpuVendor == GpuVendor::NVIDIA)
 	{
 		m_capabilities.m_dlss = true;

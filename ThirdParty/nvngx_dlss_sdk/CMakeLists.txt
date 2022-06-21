@@ -1,5 +1,5 @@
 # Create AnkiNgx
-if(ANKI_DLSS)
+if(_ANKI_ENABLE_DLSS)
     set(NGX_SDK_ROOT "${CMAKE_CURRENT_LIST_DIR}/sdk")
     # Only Linux and Windows support working with Nvidia SDK (NGX)
     if (WINDOWS)
