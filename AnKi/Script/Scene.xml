@@ -706,6 +706,7 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 				</method>
 			</methods>
 		</class>
+
 		<class name="LightEvent">
 			<methods>
 				<method name="setIntensityMultiplier">
@@ -719,6 +720,20 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 				</method>
 			</methods>
 		</class>
+
+		<class name="ScriptEvent"/>
+
+		<class name="JitterMoveEvent">
+			<methods>
+				<method name="setPositionLimits">
+					<args>
+						<arg>const Vec4&amp;</arg>
+						<arg>const Vec4&amp;</arg>
+					</args>
+				</method>
+			</methods>
+		</class>
+
 		<class name="EventManager">
 			<methods>
 				<method name="newLightEvent">
@@ -729,6 +744,26 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 						<arg>SceneNode*</arg>
 					</args>
 					<return>LightEvent*</return>
+				</method>
+
+				<method name="newScriptEvent">
+					<overrideCall><![CDATA[ScriptEvent* ret = newEvent<ScriptEvent>(self, arg0, arg1, arg2);]]></overrideCall>
+					<args>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>CString</arg>
+					</args>
+					<return>ScriptEvent*</return>
+				</method>
+
+				<method name="newJitterMoveEvent">
+					<overrideCall><![CDATA[JitterMoveEvent* ret = newEvent<JitterMoveEvent>(self, arg0, arg1, arg2);]]></overrideCall>
+					<args>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>SceneNode*</arg>
+					</args>
+					<return>JitterMoveEvent*</return>
 				</method>
 			</methods>
 		</class>
