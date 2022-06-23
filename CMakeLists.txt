@@ -159,54 +159,52 @@ if(NOT DEFINED CMAKE_BUILD_TYPE)
 endif()
 
 ################################################################################
-# Compiler & linker flags                                                      #
+# Common compiler & linker flags                                               #
 ################################################################################
 
 if(MINGW)
-	set(COMPILER_FLAGS "${COMPILER_FLAGS} -mconsole ")
+	add_compile_options(-mconsole)
 endif()
 
-add_definitions(-DSPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS)
-add_definitions(-DANKI_BUILD)
-
-# ImGUI
-add_definitions(-DIMGUI_USER_CONFIG=<AnKi/Ui/ImGuiConfig.h>)
+add_definitions(
+	-DSPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS
+	-DANKI_BUILD
+	-DIMGUI_USER_CONFIG=<AnKi/Ui/ImGuiConfig.h>)
 
 if(NOT MSVC)
 	# When building AnKi define this special flag
-	add_definitions("-fPIC")
-
-	add_definitions("-fno-exceptions")
+	add_compile_options(-fPIC -fno-exceptions)
 
 	if(GCC AND NOT CLANG)
-		add_definitions("-static-libstdc++")
+		add_compile_options(-static-libstdc++)
 	endif()
 
 	if(X86)
-		add_definitions("-msse4")
+		add_compile_options(-msse4)
 	endif()
 
 	if(ANKI_LTO)
-		add_definitions("-flto ")
+		add_compile_options(-flto)
 		set(LINKER_FLAGS "${LINKER_FLAGS} -flto ")
 	endif()
 
 	if(ANKI_STRIP)
 		set(LINKER_FLAGS "${LINKER_FLAGS} -s ")
-		add_definitions("-s")
+		add_compile_options(-s)
 	endif()
 
 	if(ANKI_ADDRESS_SANITIZER)
-		add_definitions("-fsanitize=address ")
+		add_compile_options(-fsanitize=address)
 	endif()
 
 	if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
-		add_definitions("-O3 -DNDEBUG")
+		add_compile_options(-O3)
+		add_definitions(-DNDEBUG)
 	elseif(${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
-		add_definitions("-O3 -g3 -fno-omit-frame-pointer")
+		add_compile_options(-O3 -g3 -fno-omit-frame-pointer)
 		set(LINKER_FLAGS "${LINKER_FLAGS} -rdynamic ") # For backtrace()
 	elseif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-		add_definitions("-O0 -g3")
+		add_compile_options(-O0 -g3)
 		set(LINKER_FLAGS "${LINKER_FLAGS} -rdynamic ") # For backtrace()
 	else()
 		message(FATAL_ERROR "Wrong CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
@@ -216,14 +214,18 @@ if(NOT MSVC)
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINKER_FLAGS}")
 else()
 	#ProcessorCount(PC)
-	add_compile_options("/MP")
+	add_compile_options(/MP)
 
 	if(${CMAKE_BUILD_TYPE} STREQUAL "Release" OR ${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
-		#add_definitions("/Ox")
+		#add_definitions(/Ox)
 	endif()
 
+	add_definitions(
+		-D_CRT_SECURE_NO_WARNINGS=1 # Disable some string function warnings
+		-D_ITERATOR_DEBUG_LEVEL=0)
+
 	# Full paths in compiler diagnostics else you can't click on visual studio have it open the file+line
-	add_compile_options("/FC")
+	add_compile_options(/FC)
 endif()
 
 # Use LLD or gold linker
@@ -254,6 +256,7 @@ option(BUILD_BULLET3 OFF)
 option(BUILD_CPU_DEMOS OFF)
 option(BUILD_OPENGL3_DEMOS OFF)
 option(BUILD_EXTRAS OFF)
+option(BUILD_UNIT_TESTS OFF)
 
 if((LINUX OR MACOS OR WINDOWS) AND GL)
 	set(ANKI_EXTERN_SUB_DIRS ${ANKI_EXTERN_SUB_DIRS} GLEW)
@@ -404,15 +407,30 @@ endif()
 
 # AnKi compiler flags (Mainly warnings)
 if(NOT MSVC)
-	add_definitions(-pedantic -Wno-unknown-warning-option -Wall -W -Wextra -Wstrict-aliasing -Wwrite-strings -Wunused
-		-Wundef -Wno-ignored-attributes -Wno-implicit-fallthrough -Wunused-result
-		-Wconversion -Wno-sign-conversion -Wno-keyword-macro -Wno-string-conversion -Wno-class-memaccess
+	add_compile_options(
+		-pedantic
+		-Wno-unknown-warning-option
+		-Wall
+		-W
+		-Wextra
+		-Wstrict-aliasing
+		-Wwrite-strings
+		-Wunused
+		-Wundef
+		-Wno-ignored-attributes
+		-Wno-implicit-fallthrough
+		-Wunused-result
+		-Wconversion
+		-Wno-sign-conversion
+		-Wno-keyword-macro
+		-Wno-string-conversion
+		-Wno-class-memaccess
 		-Wunused-variable)
 
 	set(CMAKE_CXX_STANDARD 17)
 else()
 	#add_definitions("/wd4996 /wd4244 /wd4262 /wd4267 /wd26495 /wd26439")
-	add_compile_definitions("_CRT_SECURE_NO_WARNINGS=1") # Disable some string function warnings
+	add_compile_options("/std:c++17")
 endif()
 
 # Add AnKi sub libraries
