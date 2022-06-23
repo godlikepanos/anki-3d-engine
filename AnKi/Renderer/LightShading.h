@@ -69,12 +69,18 @@ private:
 		RenderTargetHandle m_rt;
 	} m_runCtx; ///< Run context.
 
+	ShaderProgramResourcePtr m_visualizeRtProg;
+	ShaderProgramPtr m_visualizeRtGrProg;
+
 	Error initLightShading();
 	Error initSkybox();
 	Error initApplyFog();
 	Error initApplyIndirect();
 
 	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
+
+	void getDebugRenderTarget(CString rtName, RenderTargetHandle& handle,
+							  ShaderProgramPtr& optionalShaderProgram) const override;
 };
 /// @}
 

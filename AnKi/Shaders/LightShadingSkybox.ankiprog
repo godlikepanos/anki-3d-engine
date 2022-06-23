@@ -57,7 +57,16 @@ void main()
 	const Vec3 eyeToFrag = normalize(worldPos - u_cameraPos);
 
 	const Vec2 uv = equirectangularMapping(eyeToFrag);
-	out_color = texture(u_envMapTex, u_trilinearAnySampler, uv).rgb;
+
+	// When uv is close to the edge of the texture the other quads might be in the oposit coordinate. Then the
+	// derivatives will be huge causing the texture to use the highest mip and thus create a visible seam. To fix this
+	// find when the derivatives are large and do some manual work to fix it
+	const Vec2 dx = abs(dFdx(uv));
+	const F32 maxD = max(dx.x, dx.y);
+
+	const F32 bias = (maxD > 0.9) ? -100.0f : 0.0f;
+
+	out_color = texture(u_envMapTex, u_trilinearAnySampler, uv, bias).rgb;
 #endif
 }
 

@@ -45,9 +45,14 @@ shared F32 s_averageLuma[SHARED_MEMORY_ENTRIES];
 shared Vec2 s_maxDerivative[SHARED_MEMORY_ENTRIES];
 #endif
 
+F32 computeLuma(Vec3 color)
+{
+	const F32 l = computeLuminance(color);
+	return l / (1.0f + l);
+}
+
 #define sampleLuma(offsetX, offsetY) \
-	computeLuminance( \
-		textureLodOffset(sampler2D(u_inputTex, u_nearestClampSampler), uv, 0.0, IVec2(offsetX, offsetY)).xyz)
+	computeLuma(textureLodOffset(sampler2D(u_inputTex, u_nearestClampSampler), uv, 0.0, IVec2(offsetX, offsetY)).xyz)
 
 void main()
 {
@@ -84,11 +89,11 @@ void main()
 	F32 averageLuma = (l0.x + l0.y + l0.z + l0.w) / 4.0;
 #else
 	// Get luminance.
-	//       l2.z
-	// l1.z  l1.w  l2.y
-	// l1.x  l1.y
-	// l0.z  l0.w  l2.x
-	// l0.x  l0.y
+	//             l2.z
+	// l2.y  l1.z  l1.w
+	//       l1.x  l1.y
+	//       l0.z  l0.w  l2.x
+	//       l0.x  l0.y
 	Vec4 l0;
 	l0.x = sampleLuma(0, 0);
 	l0.y = sampleLuma(1, 0);
@@ -103,12 +108,12 @@ void main()
 
 	Vec3 l2;
 	l2.x = sampleLuma(2, 1);
-	l2.y = sampleLuma(2, 3);
+	l2.y = sampleLuma(-1, 3);
 	l2.z = sampleLuma(1, 4);
 
 	// Calculate derivatives.
 	Vec4 a = Vec4(l0.y, l2.x, l1.y, l2.y);
-	Vec4 b = Vec4(l0.x, l0.w, l1.x, l1.w);
+	Vec4 b = Vec4(l0.x, l0.w, l1.x, l1.z);
 	const Vec4 dx = abs(a - b);
 
 	a = Vec4(l0.z, l0.w, l1.z, l2.z);

@@ -5,7 +5,7 @@
 
 #include <AnKi/Renderer/VrsSriGeneration.h>
 #include <AnKi/Renderer/Renderer.h>
-#include <AnKi/Renderer/TemporalAA.h>
+#include <AnKi/Renderer/LightShading.h>
 #include <AnKi/Core/ConfigSet.h>
 
 namespace anki {
@@ -149,15 +149,14 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("VRS SRI generation");
 
 		pass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
-		pass.newDependency(
-			RenderPassDependency(m_r->getTemporalAA().getTonemappedRt(), TextureUsageBit::SAMPLED_COMPUTE));
+		pass.newDependency(RenderPassDependency(m_r->getLightShading().getRt(), TextureUsageBit::SAMPLED_COMPUTE));
 
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
 			cmdb->bindShaderProgram(m_grProg);
 
-			rgraphCtx.bindColorTexture(0, 0, m_r->getTemporalAA().getTonemappedRt());
+			rgraphCtx.bindColorTexture(0, 0, m_r->getLightShading().getRt());
 			cmdb->bindSampler(0, 1, m_r->getSamplers().m_nearestNearestClamp);
 			rgraphCtx.bindImage(0, 2, m_runCtx.m_rt);
 			const Vec4 pc(1.0f / Vec2(m_r->getInternalResolution()), getConfig().getRVrsThreshold(), 0.0f);

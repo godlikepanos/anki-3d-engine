@@ -224,10 +224,38 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 																									 : "RtShadows");
 	}
 
-	if(getInput().getKey(KeyCode::U) == 1)
+	if(getInput().getKey(KeyCode::P) == 1)
+	{
+		static U32 idx = 3;
+		++idx;
+		idx %= 4;
+		if(idx == 0)
+		{
+			renderer.setCurrentDebugRenderTarget("IndirectDiffuseVrsSri");
+		}
+		else if(idx == 1)
+		{
+			renderer.setCurrentDebugRenderTarget("VrsSriDownscaled");
+		}
+		else if(idx == 2)
+		{
+			renderer.setCurrentDebugRenderTarget("VrsSri");
+		}
+		else
+		{
+			renderer.setCurrentDebugRenderTarget("");
+		}
+	}
+
+	if(getInput().getKey(KeyCode::L) == 1)
 	{
 		renderer.setCurrentDebugRenderTarget(
-			(renderer.getCurrentDebugRenderTarget() == "GBufferNormals") ? "" : "GBufferNormals");
+			(renderer.getCurrentDebugRenderTarget() == "LightShading") ? "" : "LightShading");
+	}
+
+	if(getInput().getKey(KeyCode::J) == 1)
+	{
+		m_config.setRVrs(!m_config.getRVrs());
 	}
 
 	if(getInput().getKey(KeyCode::F1) == 1)
