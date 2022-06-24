@@ -153,7 +153,7 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 		rgraphCtx.bindColorTexture(0, 2, m_r->getLightShading().getRt());
 		rgraphCtx.bindColorTexture(0, 3, m_runCtx.m_historyRt);
 		rgraphCtx.bindColorTexture(0, 4, m_r->getMotionVectors().getMotionVectorsRt());
-		rgraphCtx.bindUniformBuffer(0, 5, m_r->getTonemapping().getAverageLuminanceBuffer());
+		rgraphCtx.bindImage(0, 5, m_r->getTonemapping().getExposureLuminanceRT());
 
 		if(getConfig().getRPreferCompute())
 		{

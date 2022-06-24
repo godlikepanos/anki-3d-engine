@@ -796,13 +796,16 @@ void CommandBufferImpl::buildAccelerationStructureInternal(const AccelerationStr
 }
 
 #if ANKI_DLSS
-static NVSDK_NGX_Resource_VK getNGXResourceFromAnkiTexture(const TextureViewImpl& tex, Bool isUAV)
+/// Utility function to get the NGX's resource structure for a texture
+/// @param[in] tex the texture to generate the NVSDK_NGX_Resource_VK from
+/// @param[in] isUAV whether IMAGE READ/WRITE access is allowed for this image
+static NVSDK_NGX_Resource_VK getNGXResourceFromAnkiTexture(const TextureViewImpl& tex, const Bool isUAV)
 {
 	NVSDK_NGX_Resource_VK resourceVK = {};
-	VkImageView imageView = tex.getHandle();
-	VkFormat format = convertFormat(tex.getTextureImpl().getFormat());
-	VkImage image = tex.getTextureImpl().m_imageHandle;
-	VkImageSubresourceRange subresourceRange = tex.getVkImageSubresourceRange();
+	const VkImageView imageView = tex.getHandle();
+	const VkFormat format = tex.getTextureImpl().m_vkFormat;
+	const VkImage image = tex.getTextureImpl().m_imageHandle;
+	const VkImageSubresourceRange subresourceRange = tex.getVkImageSubresourceRange();
 
 	return NVSDK_NGX_Create_ImageView_Resource_VK(imageView, image, subresourceRange, format,
 												  tex.getTextureImpl().getWidth(), tex.getTextureImpl().getHeight(),
@@ -817,16 +820,12 @@ void CommandBufferImpl::upscaleInternal(const GrUpscalerPtr& upscaler, const Tex
 										const Vec2& motionVectorsScale)
 {
 	commandCommon();
+	flushBatches(CommandBufferCommandType::ANY_OTHER_COMMAND);
 
 #if ANKI_DLSS
-	if(upscaler->getUpscalerType() == UpscalerType::DLSS_2)
+	if(upscaler->getUpscalerType() == GrUpscalerType::DLSS_2)
 	{
 		const GrUpscalerImpl& upscalerImpl = static_cast<const GrUpscalerImpl&>(*upscaler);
-		if(!upscalerImpl.isNgxInitialized())
-		{
-			ANKI_VK_LOGE("Attempt to upscale an image without NGX being initialized.");
-			return;
-		}
 
 		const TextureViewImpl& srcViewImpl = static_cast<const TextureViewImpl&>(*inColor);
 		const TextureViewImpl& dstViewImpl = static_cast<const TextureViewImpl&>(*outUpscaledColor);
@@ -838,11 +837,12 @@ void CommandBufferImpl::upscaleInternal(const GrUpscalerPtr& upscaler, const Tex
 		NVSDK_NGX_Resource_VK dstResVk = getNGXResourceFromAnkiTexture(dstViewImpl, true);
 		NVSDK_NGX_Resource_VK mvResVk = getNGXResourceFromAnkiTexture(mvViewImpl, false);
 		NVSDK_NGX_Resource_VK depthResVk = getNGXResourceFromAnkiTexture(depthViewImpl, false);
-		NVSDK_NGX_Resource_VK exposureResVk = getNGXResourceFromAnkiTexture(exposureViewImpl, true);
+		NVSDK_NGX_Resource_VK exposureResVk = getNGXResourceFromAnkiTexture(exposureViewImpl, false);
 
-		NVSDK_NGX_Coordinates renderingOffset = {0, 0};
-		NVSDK_NGX_Dimensions renderingSize = {srcViewImpl.getTextureImpl().getWidth(),
-											  srcViewImpl.getTextureImpl().getHeight()};
+		const U32 mipLevel = srcViewImpl.getSubresource().m_firstMipmap;
+		const NVSDK_NGX_Coordinates renderingOffset = {0, 0};
+		const NVSDK_NGX_Dimensions renderingSize = {srcViewImpl.getTextureImpl().getWidth() >> mipLevel,
+													srcViewImpl.getTextureImpl().getHeight() >> mipLevel};
 
 		NVSDK_NGX_VK_DLSS_Eval_Params vkDlssEvalParams;
 		memset(&vkDlssEvalParams, 0, sizeof(vkDlssEvalParams));
@@ -872,7 +872,7 @@ void CommandBufferImpl::upscaleInternal(const GrUpscalerPtr& upscaler, const Tex
 
 		if(NVSDK_NGX_FAILED(result))
 		{
-			ANKI_LOGE("Failed to NVSDK_NGX_VULKAN_EvaluateFeature for DLSS, code = 0x%08x, info: %ls", result,
+			ANKI_VK_LOGF("Failed to NVSDK_NGX_VULKAN_EvaluateFeature for DLSS, code = 0x%08x, info: %ls", result,
 					  GetNGXResultAsString(result));
 		}
 	}

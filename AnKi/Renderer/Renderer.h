@@ -56,8 +56,6 @@ public:
 		return m_rtShadows.isCreated();
 	}
 
-	Bool getUsingDLSS() const;
-
 	const UVec2& getInternalResolution() const
 	{
 		return m_internalResolution;

@@ -55,7 +55,7 @@ shared Vec2 s_maxDerivative[SHARED_MEMORY_ENTRIES];
 #	define sampleLuma(offsetX, offsetY) \
 		computeLuminance(linearToSRgb(tonemap( \
 			textureLodOffset(sampler2D(u_inputTex, u_nearestClampSampler), uv, 0.0, IVec2(offsetX, offsetY)).xyz, \
-			u_exposureThreshold0)))
+			getExposureLuminance().x)))
 #else
 #	define sampleLuma(offsetX, offsetY) \
 		computeLuminance( \

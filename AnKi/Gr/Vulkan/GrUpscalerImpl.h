@@ -22,10 +22,10 @@ class DLSSRecommendedSettings
 {
 public:
 	F32 m_recommendedSharpness = 0.01f;
-	UVec2 m_recommendedOptimalRenderSize = {~(0u), ~(0u)};
-	UVec2 m_dynamicMaximumRenderSize = {~(0u), ~(0u)};
-	UVec2 m_dynamicMinimumRenderSize = {~(0u), ~(0u)};
-	DLSSQualityMode m_qualityMode;
+	UVec2 m_recommendedOptimalRenderSize = UVec2(MAX_U32, MAX_U32);
+	UVec2 m_dynamicMaximumRenderSize = UVec2(MAX_U32, MAX_U32);
+	UVec2 m_dynamicMinimumRenderSize = UVec2(MAX_U32, MAX_U32);
+	GrUpscalerQualityMode m_qualityMode;
 };
 
 class GrUpscalerImpl final : public GrUpscaler, public VulkanObject<GrUpscaler, GrUpscalerImpl>
@@ -33,20 +33,12 @@ class GrUpscalerImpl final : public GrUpscaler, public VulkanObject<GrUpscaler, 
 public:
 	GrUpscalerImpl(GrManager* manager, CString name)
 		: GrUpscaler(manager, name)
-		, m_ngxInitialized(false)
-		, m_ngxParameters(nullptr)
-		, m_dlssFeature(nullptr)
 	{
 	}
 
 	~GrUpscalerImpl();
 
-	[[nodiscard]] Error initInternal();
-
-	Bool isNgxInitialized() const
-	{
-		return m_ngxInitialized;
-	}
+	Error initInternal(const GrUpscalerInitInfo& initInfo);
 
 	/// @name DLSS data accessors
 	/// @{
@@ -69,24 +61,32 @@ public:
 	/// @}
 
 private:
-	Error initAsDLSS();
+
+	// DLSS related
+	Bool m_ngxInitialized = false;
+	NVSDK_NGX_Parameter* m_ngxParameters = nullptr;
+	NVSDK_NGX_Handle* m_dlssFeature = nullptr;
+	DLSSRecommendedSettings m_recommendedSettings;
 
 	void shutdown();
 
+#if ANKI_DLSS
+	Error initAsDLSS(const GrUpscalerInitInfo& initInfo);
+
 	void shutdownDLSS();
 
-	Error createDLSSFeature(const UVec2& srcRes, const UVec2& dstRes, const DLSSQualityMode mode);
+	Error createDLSSFeature(const UVec2& srcRes, const UVec2& dstRes, const GrUpscalerQualityMode mode);
 
 	void releaseDLSSFeature();
 
-	Error queryOptimalSettings(const UVec2& displayRes, const DLSSQualityMode mode,
-							   DLSSRecommendedSettings* outRecommendedSettings);
+	Error queryOptimalSettings(const UVec2& displayRes, const GrUpscalerQualityMode mode,
+							   DLSSRecommendedSettings& outRecommendedSettings);
+#endif
 
-	// DLSS related
-	Bool m_ngxInitialized;
-	NVSDK_NGX_Parameter* m_ngxParameters;
-	NVSDK_NGX_Handle* m_dlssFeature;
-	DLSSRecommendedSettings m_recommendedSettings;
+	Bool isNgxInitialized() const
+	{
+		return m_ngxInitialized;
+	}
 };
 /// @}
 

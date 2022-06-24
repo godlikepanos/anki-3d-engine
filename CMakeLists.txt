@@ -35,7 +35,7 @@ macro(anki_new_executable)
 endmacro()
 
 macro(add_AnkiNgx_dependencies)
-    if(_ANKI_ENABLE_DLSS)
+    if(ANKI_DLSS)
         # Copy required DLLs
         get_target_property(lib_type AnkiNgx TYPE)
         if ("${lib_type}" STREQUAL "SHARED_LIBRARY")
@@ -324,10 +324,11 @@ endif()
 
 # DLSS
 if(ANKI_DLSS AND (LINUX OR WINDOWS) AND VULKAN)
-	set(_ANKI_ENABLE_DLSS 1)
 	add_subdirectory(ThirdParty/nvngx_dlss_sdk)
+	set(_ANKI_DLSS_SUPPORTED 1)
 else()
-set(_ANKI_ENABLE_DLSS 0)
+	set(ANKI_DLSS OFF CACHE BOOL "Disable DLSS support" FORCE)
+	set(_ANKI_DLSS_SUPPORTED 0)
 endif()
 
 ################################################################################
@@ -439,7 +440,7 @@ if(LINUX)
 	endif()
 endif()
 
-if((LINUX OR WINDOWS) AND VULKAN)
+if(ANKI_DLSS)
 	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} AnkiNgx)
 endif()
 

@@ -28,14 +28,9 @@ public:
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
-	BufferHandle getAverageLuminanceBuffer() const
+	RenderTargetHandle getExposureLuminanceRT() const
 	{
-		return m_runCtx.m_buffHandle;
-	}
-
-	RenderTargetHandle getExposureRT() const
-	{
-		return m_runCtx.m_exposureHandle;
+		return m_runCtx.m_exposureLuminanceHandle;
 	}
 
 private:
@@ -43,14 +38,12 @@ private:
 	ShaderProgramPtr m_grProg;
 	U32 m_inputTexMip;
 
-	BufferPtr m_luminanceBuff;
-	TexturePtr m_exposure1x1;
+	TexturePtr m_exposureLuminance1x1;
 
 	class
 	{
 	public:
-		BufferHandle m_buffHandle;
-		RenderTargetHandle m_exposureHandle;
+		RenderTargetHandle m_exposureLuminanceHandle;
 	} m_runCtx;
 
 	Error initInternal();

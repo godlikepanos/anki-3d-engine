@@ -16,10 +16,9 @@ layout(push_constant) uniform b_pc
 	Vec4 u_thresholdScalePad2;
 };
 
-layout(set = 0, binding = 2, std140) readonly buffer b_avgLum
-{
-	ANKI_RP Vec4 u_averageLuminancePad3;
-};
+const U32 TONEMAPPING_SET = 0u;
+const U32 TONEMAPPING_BINDING = 2u;
+#include <AnKi/Shaders/TonemappingResources.glsl>
 
 #if defined(ANKI_COMPUTE_SHADER)
 const UVec2 WORKGROUP_SIZE = UVec2(16, 16);
@@ -51,7 +50,7 @@ void main()
 	color += textureLodOffset(sampler2D(u_tex, u_linearAnyClampSampler), uv, 0.0, IVec2(-1, +1)).rgb * weight;
 	color += textureLodOffset(sampler2D(u_tex, u_linearAnyClampSampler), uv, 0.0, IVec2(+1, -1)).rgb * weight;
 
-	color = tonemap(color, u_averageLuminancePad3.x, u_thresholdScalePad2.x) * u_thresholdScalePad2.y;
+	color = tonemap(color, getExposureLuminance().x, u_thresholdScalePad2.x) * u_thresholdScalePad2.y;
 
 #if defined(ANKI_COMPUTE_SHADER)
 	imageStore(u_outImg, IVec2(gl_GlobalInvocationID.xy), Vec4(color, 0.0));

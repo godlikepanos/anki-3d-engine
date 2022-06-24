@@ -9,48 +9,59 @@
 #include <AnKi/Gr/Vulkan/CommandBufferImpl.h>
 
 // Ngx specific
+#if ANKI_DLSS
 #include <ThirdParty/nvngx_dlss_sdk/sdk/include/nvsdk_ngx.h>
 #include <ThirdParty/nvngx_dlss_sdk/sdk/include/nvsdk_ngx_helpers.h>
 #include <ThirdParty/nvngx_dlss_sdk/sdk/include/nvsdk_ngx_vk.h>
 #include <ThirdParty/nvngx_dlss_sdk/sdk/include/nvsdk_ngx_helpers_vk.h>
+#endif
 
 namespace anki {
-
-// Use random ID
-#define ANKI_NGX_APP_ID 231313132
-#define ANKI_RW_LOGS_DIR L"./"
-
-// See enum DLSSQualityMode
-static NVSDK_NGX_PerfQuality_Value s_NVQUALITYMODES[] = {
-	NVSDK_NGX_PerfQuality_Value_MaxPerf, // DISABLED
-	NVSDK_NGX_PerfQuality_Value_MaxPerf, NVSDK_NGX_PerfQuality_Value_Balanced, NVSDK_NGX_PerfQuality_Value_MaxQuality};
-
-static inline NVSDK_NGX_PerfQuality_Value getDlssQualityModeToNVQualityMode(DLSSQualityMode mode)
-{
-	return s_NVQUALITYMODES[static_cast<U32>(mode)];
-}
 
 GrUpscalerImpl::~GrUpscalerImpl()
 {
 	shutdown();
 }
 
-Error GrUpscalerImpl::initInternal()
+Error GrUpscalerImpl::initInternal(const GrUpscalerInitInfo& initInfo)
 {
-	if(m_initInfo.m_upscalerType != UpscalerType::DLSS_2)
+#if ANKI_DLSS
+	if(initInfo.m_upscalerType != GrUpscalerType::DLSS_2)
 	{
-		ANKI_LOGE("Currently only DLSS supported");
+		ANKI_VK_LOGE("Currently only DLSS supported");
 		return Error::FUNCTION_FAILED;
 	}
-	return initAsDLSS();
+	return initAsDLSS(initInfo);
+#else
+	return Error::FUNCTION_FAILED;
+#endif
 }
 
 void GrUpscalerImpl::shutdown()
 {
+#if ANKI_DLSS
 	shutdownDLSS();
+#endif
 }
 
-Error GrUpscalerImpl::initAsDLSS()
+// NGX related logic
+#if ANKI_DLSS
+
+// Use random ID
+#	define ANKI_NGX_APP_ID 231313132
+#	define ANKI_RW_LOGS_DIR L"./"
+
+// See enum DLSSQualityMode
+static NVSDK_NGX_PerfQuality_Value g_NVQUALITYMODES[] = {
+	NVSDK_NGX_PerfQuality_Value_MaxPerf, // DISABLED
+	NVSDK_NGX_PerfQuality_Value_MaxPerf, NVSDK_NGX_PerfQuality_Value_Balanced, NVSDK_NGX_PerfQuality_Value_MaxQuality};
+
+static inline NVSDK_NGX_PerfQuality_Value getDlssQualityModeToNVQualityMode(GrUpscalerQualityMode mode)
+{
+	return g_NVQUALITYMODES[static_cast<U32>(mode)];
+}
+
+Error GrUpscalerImpl::initAsDLSS(const GrUpscalerInitInfo& initInfo)
 {
 	NVSDK_NGX_Result result = NVSDK_NGX_Result_Fail;
 
@@ -82,16 +93,8 @@ Error GrUpscalerImpl::initAsDLSS()
 	{
 		ANKI_VK_LOGE("NVSDK_NGX_GetCapabilityParameters failed, code = 0x%08x, info: %ls", result,
 					 GetNGXResultAsString(result));
-		shutdown();
 		return Error::FUNCTION_FAILED;
 	}
-
-	const char** instanceExt(nullptr);
-	const char** deviceExt(nullptr);
-	U32 instanceExtCount(0);
-	U32 deviceExtCount(0);
-	const NVSDK_NGX_Result queryExtResult =
-		NVSDK_NGX_VULKAN_RequiredExtensions(&instanceExtCount, &instanceExt, &deviceExtCount, &deviceExt);
 
 	// Currently, the SDK and this sample are not in sync.  The sample is a bit forward looking,
 	// in this case.  This will likely be resolved very shortly, and therefore, the code below
@@ -118,7 +121,6 @@ Error GrUpscalerImpl::initAsDLSS()
 			ANKI_VK_LOGE("NVIDIA DLSS cannot be loaded due to outdated driver. Minimum Driver Version required : %u.%u",
 						 minDriverVersionMajor, minDriverVersionMinor);
 
-			shutdown();
 			return Error::FUNCTION_FAILED;
 		}
 		else
@@ -140,22 +142,20 @@ Error GrUpscalerImpl::initAsDLSS()
 	if(resultDLSS != NVSDK_NGX_Result_Success || !dlssAvailable)
 	{
 		// More details about what failed (per feature init result)
-		const NVSDK_NGX_Result featureInitResult = NVSDK_NGX_Result_Fail;
+		I32 featureInitResult = NVSDK_NGX_Result_Fail;
 		NVSDK_NGX_Parameter_GetI(m_ngxParameters, NVSDK_NGX_Parameter_SuperSampling_FeatureInitResult,
-								 (int*)&featureInitResult);
+								 &featureInitResult);
 		ANKI_VK_LOGE("NVIDIA DLSS not available on this hardware/platform., FeatureInitResult = 0x%08x, info: %ls",
-					 featureInitResult, GetNGXResultAsString(featureInitResult));
-		shutdown();
+					 featureInitResult, GetNGXResultAsString(static_cast<NVSDK_NGX_Result>(featureInitResult)));
 		return Error::FUNCTION_FAILED;
 	}
 
 	// Create the feature
-	if(createDLSSFeature(m_initInfo.m_sourceImageResolution, m_initInfo.m_targetImageResolution,
-						 m_initInfo.m_dlssInitInfo.m_mode)
+	if(createDLSSFeature(initInfo.m_sourceImageResolution, initInfo.m_targetImageResolution,
+						 initInfo.m_qualityMode)
 	   != Error::NONE)
 	{
 		ANKI_VK_LOGE("Failed to create DLSS feature");
-		shutdown();
 		return Error::FUNCTION_FAILED;
 	}
 
@@ -179,22 +179,17 @@ void GrUpscalerImpl::shutdownDLSS()
 	}
 }
 
-Error GrUpscalerImpl::createDLSSFeature(const UVec2& srcRes, const UVec2& dstRes, const DLSSQualityMode mode)
+Error GrUpscalerImpl::createDLSSFeature(const UVec2& srcRes, const UVec2& dstRes, const GrUpscalerQualityMode mode)
 {
-	if(!isNgxInitialized())
-	{
-		ANKI_VK_LOGE("Attempt to create feature without NGX being initialized.");
-		return Error::FUNCTION_FAILED;
-	}
+	ANKI_ASSERT(isNgxInitialized());
 
 	const U32 creationNodeMask = 1;
 	const U32 visibilityNodeMask = 1;
 	// Next create features	(See NVSDK_NGX_DLSS_Feature_Flags in nvsdk_ngx_defs.h)
 	const I32 dlssCreateFeatureFlags =
 		NVSDK_NGX_DLSS_Feature_Flags_None | NVSDK_NGX_DLSS_Feature_Flags_MVLowRes | NVSDK_NGX_DLSS_Feature_Flags_IsHDR;
-	NVSDK_NGX_Result resultDLSS = NVSDK_NGX_Result_Fail;
 
-	const Error querySettingsResult = queryOptimalSettings(dstRes, mode, &m_recommendedSettings);
+	const Error querySettingsResult = queryOptimalSettings(dstRes, mode, m_recommendedSettings);
 	if(querySettingsResult != Error::NONE
 	   || (srcRes < m_recommendedSettings.m_dynamicMinimumRenderSize
 		   || srcRes > m_recommendedSettings.m_dynamicMaximumRenderSize))
@@ -216,11 +211,12 @@ Error GrUpscalerImpl::createDLSSFeature(const UVec2& srcRes, const UVec2& dstRes
 	// Create the feature with a tmp CmdBuffer
 	CommandBufferInitInfo cmdbinit;
 	cmdbinit.m_flags = CommandBufferFlag::GENERAL_WORK | CommandBufferFlag::SMALL_BATCH;
-	CommandBufferPtr cmdb = getManager().newCommandBuffer(cmdbinit);
+	const CommandBufferPtr cmdb = getManager().newCommandBuffer(cmdbinit);
 	CommandBufferImpl& cmdbImpl = static_cast<CommandBufferImpl&>(*cmdb);
 
 	cmdbImpl.beginRecordingExt();
-	resultDLSS = NGX_VULKAN_CREATE_DLSS_EXT(cmdbImpl.getHandle(), creationNodeMask, visibilityNodeMask, &m_dlssFeature,
+	const NVSDK_NGX_Result resultDLSS = NGX_VULKAN_CREATE_DLSS_EXT(cmdbImpl.getHandle(), creationNodeMask, visibilityNodeMask,
+															 &m_dlssFeature,
 											m_ngxParameters, &dlssCreateParams);
 	if(NVSDK_NGX_FAILED(resultDLSS))
 	{
@@ -228,19 +224,14 @@ Error GrUpscalerImpl::createDLSSFeature(const UVec2& srcRes, const UVec2& dstRes
 					 GetNGXResultAsString(resultDLSS));
 		return Error::FUNCTION_FAILED;
 	}
-	cmdbImpl.endRecording();
-	getGrManagerImpl().flushCommandBuffer(cmdbImpl.getMicroCommandBuffer(), false, {}, nullptr);
+	cmdb->flush();
 
 	return Error::NONE;
 }
 
 void GrUpscalerImpl::releaseDLSSFeature()
 {
-	if(!isNgxInitialized())
-	{
-		ANKI_VK_LOGE("Attempt to ReleaseDLSSFeatures without NGX being initialized.");
-		return;
-	}
+	ANKI_ASSERT(isNgxInitialized());
 
 	getManager().finish();
 
@@ -256,20 +247,20 @@ void GrUpscalerImpl::releaseDLSSFeature()
 }
 
 static Error queryNgxQualitySettings(const UVec2& displayRes, const NVSDK_NGX_PerfQuality_Value quality,
-									 NVSDK_NGX_Parameter* parameters, DLSSRecommendedSettings* outSettings)
+									 NVSDK_NGX_Parameter& parameters, DLSSRecommendedSettings& outSettings)
 {
 	const NVSDK_NGX_Result result = NGX_DLSS_GET_OPTIMAL_SETTINGS(
-		parameters, displayRes.x(), displayRes.y(), quality, &outSettings->m_recommendedOptimalRenderSize[0],
-		&outSettings->m_recommendedOptimalRenderSize[1], &outSettings->m_dynamicMaximumRenderSize[0],
-		&outSettings->m_dynamicMaximumRenderSize[1], &outSettings->m_dynamicMinimumRenderSize[0],
-		&outSettings->m_dynamicMinimumRenderSize[1], &outSettings->m_recommendedSharpness);
+		&parameters, displayRes.x(), displayRes.y(), quality, &outSettings.m_recommendedOptimalRenderSize[0],
+		&outSettings.m_recommendedOptimalRenderSize[1], &outSettings.m_dynamicMaximumRenderSize[0],
+		&outSettings.m_dynamicMaximumRenderSize[1], &outSettings.m_dynamicMinimumRenderSize[0],
+		&outSettings.m_dynamicMinimumRenderSize[1], &outSettings.m_recommendedSharpness);
 
 	if(NVSDK_NGX_FAILED(result))
 	{
-		outSettings->m_recommendedOptimalRenderSize = displayRes;
-		outSettings->m_dynamicMaximumRenderSize = displayRes;
-		outSettings->m_dynamicMinimumRenderSize = displayRes;
-		outSettings->m_recommendedSharpness = 0.0f;
+		outSettings.m_recommendedOptimalRenderSize = displayRes;
+		outSettings.m_dynamicMaximumRenderSize = displayRes;
+		outSettings.m_dynamicMinimumRenderSize = displayRes;
+		outSettings.m_recommendedSharpness = 0.0f;
 
 		ANKI_VK_LOGW("Querying Settings failed! code = 0x%08x, info: %ls", result, GetNGXResultAsString(result));
 		return Error::FUNCTION_FAILED;
@@ -277,25 +268,25 @@ static Error queryNgxQualitySettings(const UVec2& displayRes, const NVSDK_NGX_Pe
 	return Error::NONE;
 }
 
-Error GrUpscalerImpl::queryOptimalSettings(const UVec2& displayRes, const DLSSQualityMode mode,
-										   DLSSRecommendedSettings* outRecommendedSettings)
+Error GrUpscalerImpl::queryOptimalSettings(const UVec2& displayRes, const GrUpscalerQualityMode mode,
+										   DLSSRecommendedSettings& outRecommendedSettings)
 {
-	ANKI_ASSERT(mode < DLSSQualityMode::COUNT);
+	ANKI_ASSERT(mode < GrUpscalerQualityMode::COUNT);
 
-	outRecommendedSettings->m_qualityMode = mode;
+	outRecommendedSettings.m_qualityMode = mode;
 	Error err(Error::FUNCTION_FAILED);
 	switch(mode)
 	{
-	case DLSSQualityMode::PERFORMANCE:
-		err = queryNgxQualitySettings(displayRes, NVSDK_NGX_PerfQuality_Value_MaxPerf, m_ngxParameters,
+	case GrUpscalerQualityMode::PERFORMANCE:
+		err = queryNgxQualitySettings(displayRes, NVSDK_NGX_PerfQuality_Value_MaxPerf, *m_ngxParameters,
 									  outRecommendedSettings);
 		break;
-	case DLSSQualityMode::BALANCED:
-		err = queryNgxQualitySettings(displayRes, NVSDK_NGX_PerfQuality_Value_Balanced, m_ngxParameters,
+	case GrUpscalerQualityMode::BALANCED:
+		err = queryNgxQualitySettings(displayRes, NVSDK_NGX_PerfQuality_Value_Balanced, *m_ngxParameters,
 									  outRecommendedSettings);
 		break;
-	case DLSSQualityMode::QUALITY:
-		err = queryNgxQualitySettings(displayRes, NVSDK_NGX_PerfQuality_Value_MaxQuality, m_ngxParameters,
+	case GrUpscalerQualityMode::QUALITY:
+		err = queryNgxQualitySettings(displayRes, NVSDK_NGX_PerfQuality_Value_MaxQuality, *m_ngxParameters,
 									  outRecommendedSettings);
 		break;
 	default:
@@ -303,5 +294,6 @@ Error GrUpscalerImpl::queryOptimalSettings(const UVec2& displayRes, const DLSSQu
 	}
 	return err;
 }
+#endif // ANKI_DLSS
 
 } // end namespace anki

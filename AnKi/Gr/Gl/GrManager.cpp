@@ -18,7 +18,6 @@
 #include <AnKi/Gr/Framebuffer.h>
 #include <AnKi/Gr/OcclusionQuery.h>
 #include <AnKi/Gr/RenderGraph.h>
-#include <AnKi/Gr/GrUpscaler.h>
 
 #include <cstring>
 
@@ -141,11 +140,6 @@ OcclusionQueryPtr GrManager::newOcclusionQuery()
 RenderGraphPtr GrManager::newRenderGraph()
 {
 	return RenderGraphPtr(RenderGraph::newInstance(this));
-}
-
-GrUpscalerPtr GrManager::newGrUpscaler(const GrUpscalerInitInfo& init)
-{
-	return GrUpscalerPtr(GrUpscaler::newInstance(this, init));
 }
 
 #undef ANKI_SAFE_CONSTRUCT

@@ -60,12 +60,6 @@ Renderer::~Renderer()
 	m_currentDebugRtName.destroy(getAllocator());
 }
 
-Bool Renderer::getUsingDLSS() const
-{
-	Bool needsScaling = getPostProcessResolution() != getInternalResolution();
-	return needsScaling && (getConfig().getRDlss() != 0) && m_gr->getDeviceCapabilities().m_dlss;
-}
-
 Error Renderer::init(ThreadHive* hive, ResourceManager* resources, GrManager* gl, StagingGpuMemoryPool* stagingMem,
 					 UiManager* ui, HeapAllocator<U8> alloc, ConfigSet* config, Timestamp* globTimestamp,
 					 UVec2 swapchainSize)
@@ -194,6 +188,9 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 	m_temporalAA.reset(getAllocator().newInstance<TemporalAA>(this));
 	ANKI_CHECK(m_temporalAA->init());
 
+	m_scale.reset(m_alloc.newInstance<Scale>(this));
+	ANKI_CHECK(m_scale->init());
+
 	m_bloom.reset(m_alloc.newInstance<Bloom>(this));
 	ANKI_CHECK(m_bloom->init());
 
@@ -205,9 +202,6 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 
 	m_uiStage.reset(m_alloc.newInstance<UiStage>(this));
 	ANKI_CHECK(m_uiStage->init());
-
-	m_scale.reset(m_alloc.newInstance<Scale>(this));
-	ANKI_CHECK(m_scale->init());
 
 	m_indirectDiffuse.reset(m_alloc.newInstance<IndirectDiffuse>(this));
 	ANKI_CHECK(m_indirectDiffuse->init());
@@ -251,7 +245,7 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		m_samplers.m_trilinearRepeatAniso = m_gr->newSampler(sinit);
 
 		const F32 scalingMipBias =
-			log2(F32(m_internalResolution.x()) / F32(m_postProcessResolution.x())) - (getUsingDLSS() ? 1 : 0);
+			log2(F32(m_internalResolution.x()) / F32(m_postProcessResolution.x())) - (getScale().getUsingDLSS() ? 1 : 0);
 		sinit.m_lodBias = scalingMipBias;
 		m_samplers.m_trilinearRepeatAnisoResolutionScalingBias = m_gr->newSampler(sinit);
 	}
@@ -369,7 +363,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_indirectSpecular->populateRenderGraph(ctx);
 	m_indirectDiffuse->populateRenderGraph(ctx);
 	m_lightShading->populateRenderGraph(ctx);
-	if(!getUsingDLSS())
+	if(!getScale().getUsingDLSS())
 	{
 		m_temporalAA->populateRenderGraph(ctx);
 	}

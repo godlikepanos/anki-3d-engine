@@ -9,18 +9,24 @@
 
 #include <AnKi/Shaders/Common.glsl>
 
-#ifndef TONEMAPPING_RESOURCE_AS_BUFFER
-#	define TONEMAPPING_RESOURCE_AS_BUFFER 0
+#ifndef TONEMAPPING_RESOURCE_AS_WRITE_IMAGE
+#	define TONEMAPPING_RESOURCE_AS_WRITE_IMAGE 0
 #endif
 
-#if TONEMAPPING_RESOURCE_AS_BUFFER
-layout(std140, set = TONEMAPPING_SET, binding = TONEMAPPING_BINDING) buffer b_tonemapping
+#if TONEMAPPING_RESOURCE_AS_WRITE_IMAGE
+layout(set = 0, binding = TONEMAPPING_BINDING) uniform image2D b_tonemapping;
 #else
-layout(std140, set = TONEMAPPING_SET, binding = TONEMAPPING_BINDING) uniform b_tonemapping
+layout(set = 0, binding = TONEMAPPING_BINDING) uniform readonly image2D b_tonemapping;
 #endif
-{
-	Vec4 u_averageLuminanceExposurePad2;
-};
 
-#define u_averageLuminance u_averageLuminanceExposurePad2.x
-#define u_exposureThreshold0 u_averageLuminanceExposurePad2.y
+void writeExposureAndLuminance(float exposure, float luminance)
+{
+#if TONEMAPPING_RESOURCE_AS_WRITE_IMAGE
+	imageStore(b_tonemapping, IVec2(0, 0), Vec4(exposure, luminance, 0.0f, 0.0f));
+#endif
+}
+
+Vec2 getExposureLuminance()
+{
+	return imageLoad(b_tonemapping, IVec2(0, 0)).xy;
+}

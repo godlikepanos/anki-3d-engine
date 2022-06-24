@@ -32,6 +32,8 @@ public:
 		return (doSharpening()) ? m_runCtx.m_sharpenedRt : m_runCtx.m_scaledRt;
 	}
 
+	Bool getUsingDLSS() const;
+
 private:
 	ShaderProgramResourcePtr m_scaleProg;
 	ShaderProgramPtr m_scaleGrProg;

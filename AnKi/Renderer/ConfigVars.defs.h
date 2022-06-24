@@ -89,6 +89,5 @@ ANKI_CONFIG_VAR_U8(RRtShadowsSvgfAtrousPassCount, 3, 1, 20, "Number of atrous pa
 ANKI_CONFIG_VAR_U32(RRtShadowsRaysPerPixel, 1, 1, 8, "Number of shadow rays per pixel")
 
 ANKI_CONFIG_VAR_U8(RFsr, 1, 0, 2, "0: Use bilinear, 1: FSR low quality, 2: FSR high quality")
-// TODO: Refactor these vars
 ANKI_CONFIG_VAR_U8(RDlss, 0, 0, 3, "0: Disabled, 1: Performance, 2: Balanced, 3: Quality")
 ANKI_CONFIG_VAR_BOOL(RSharpen, true, "Sharpen the image")

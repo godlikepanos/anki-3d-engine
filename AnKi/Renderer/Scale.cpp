@@ -31,6 +31,12 @@ Scale::~Scale()
 {
 }
 
+Bool Scale::getUsingDLSS() const
+{
+	Bool needsScaling = m_r->getPostProcessResolution() != m_r->getInternalResolution();
+	return needsScaling && (getConfig().getRDlss() != 0) && m_r->getGrManager().getDeviceCapabilities().m_dlss;
+}
+
 Error Scale::init()
 {
 	ANKI_R_LOGV("Initializing scale");
@@ -45,7 +51,7 @@ Error Scale::init()
 	const Bool preferCompute = getConfig().getRPreferCompute();
 	const U32 fsrQuality = getConfig().getRFsr();
 	// Dlss and FSR are mutually exclusive
-	const Bool useDlss = m_r->getUsingDLSS();
+	const Bool useDlss = getUsingDLSS();
 	m_fsr = (fsrQuality != 0) && !useDlss;
 
 	// Program
@@ -71,8 +77,9 @@ Error Scale::init()
 
 		if(useDlss)
 		{
-			GrUpscalerInitInfo init(m_r->getInternalResolution(), m_r->getPostProcessResolution(),
-									{static_cast<DLSSQualityMode>(getConfig().getRDlss())});
+			const GrUpscalerInitInfo init(m_r->getInternalResolution(), m_r->getPostProcessResolution(),
+									GrUpscalerType::DLSS_2,
+									static_cast<GrUpscalerQualityMode>(getConfig().getRDlss()));
 			// Do not need to load shaders
 			m_grUpscaler = getGrManager().newGrUpscaler(init);
 		}
@@ -146,7 +153,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 			pass.newDependency(
 				RenderPassDependency(m_r->getMotionVectors().getMotionVectorsRt(), TextureUsageBit::SAMPLED_COMPUTE));
 			pass.newDependency(
-				RenderPassDependency(m_r->getTonemapping().getExposureRT(), TextureUsageBit::IMAGE_COMPUTE_READ));
+				RenderPassDependency(m_r->getTonemapping().getExposureLuminanceRT(), TextureUsageBit::IMAGE_COMPUTE_READ));
 			pass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_COMPUTE,
 													TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)));
 			pass.newDependency(RenderPassDependency(m_runCtx.m_scaledRt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
@@ -336,7 +343,7 @@ void Scale::runDLSS(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 	const TexturePtr mvRT(rgraphCtx.getTargetTexture(m_r->getMotionVectors().getMotionVectorsRt()));
 	const TexturePtr depthRT(rgraphCtx.getTargetTexture(m_r->getGBuffer().getDepthRt()));
 	const TexturePtr dstRT(rgraphCtx.getTargetTexture(m_runCtx.m_scaledRt));
-	const TexturePtr exposureRT(rgraphCtx.getTargetTexture(m_r->getTonemapping().getExposureRT()));
+	const TexturePtr exposureRT(rgraphCtx.getTargetTexture(m_r->getTonemapping().getExposureLuminanceRT()));
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
 	cmdb->upscale(m_grUpscaler, getGrManager().newTextureView(TextureViewInitInfo(srcRT, "DLSS_Src")),

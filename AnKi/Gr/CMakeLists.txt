@@ -74,7 +74,8 @@ if(VULKAN)
 		Vulkan/TimestampQueryImpl.cpp
 		Vulkan/VulkanObject.cpp
 		Vulkan/FrameGarbageCollector.cpp
-		Vulkan/GrUpscaler.cpp)
+		Vulkan/GrUpscaler.cpp
+		Vulkan/GrUpscalerImpl.cpp)
 
 	set(backend_headers
 		Vulkan/AccelerationStructureImpl.h
@@ -113,12 +114,6 @@ if(VULKAN)
 		Vulkan/TimestampQueryImpl.h
 		Vulkan/VulkanObject.h
 		Vulkan/GrUpscalerImpl.h)
-
-	if(_ANKI_ENABLE_DLSS)
-		set(backend_sources ${backend_sources} "Vulkan/GrUpscalerImpl.cpp")
-	else()
-		set(backend_sources ${backend_sources} "Vulkan/GrUpscalerImplDummy.cpp")
-	endif()
 
 	if(ANKI_HEADLESS)
 		set(backend_sources ${backend_sources} "Vulkan/GrManagerImplHeadless.cpp")

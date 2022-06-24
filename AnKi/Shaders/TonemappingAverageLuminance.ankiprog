@@ -19,13 +19,12 @@ const UVec2 PIXELS_PER_TILE = ALIGNED_INPUT_TEX_SIZE / WORKGROUP_SIZE;
 
 layout(set = 0, binding = 0) uniform ANKI_RP texture2D u_tex;
 
-#define TONEMAPPING_RESOURCE_AS_BUFFER 1
+#define TONEMAPPING_RESOURCE_AS_WRITE_IMAGE 1
 #define TONEMAPPING_SET 0
 #define TONEMAPPING_BINDING 1
 #include <AnKi/Shaders/TonemappingResources.glsl>
 
 // Needed for DLSS
-layout(set = 0, binding = 2) uniform writeonly image2D u_outExposureImage;
 
 shared F32 s_avgLum[WORKGROUP_SIZE.x * WORKGROUP_SIZE.y];
 
@@ -88,7 +87,8 @@ void main()
 #endif
 
 #if 1
-		const F32 prevLum = u_averageLuminance;
+		const Vec2 prevExposureLuminance = getExposureLuminance();
+		const F32 prevLum = prevExposureLuminance.y;
 
 		// Lerp between previous and new L value
 		const F32 INTERPOLATION_FACTOR = 0.05;
@@ -100,10 +100,7 @@ void main()
 		// This is a workaround because sometimes the avg lum becomes nan
 		finalAvgLum = clamp(finalAvgLum, EPSILON, MAX_F32);
 
-		u_averageLuminance = finalAvgLum;
-		u_exposureThreshold0 = computeExposure(u_averageLuminance, 0.0);
-
-		imageStore(u_outExposureImage, IVec2(0, 0), Vec4(u_exposureThreshold0));
+		writeExposureAndLuminance(computeExposure(finalAvgLum, 0.0), finalAvgLum);
 	}
 }
 #pragma anki end

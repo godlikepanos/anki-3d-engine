@@ -76,7 +76,8 @@ void main()
 	}
 
 #if APPLY_TONEMAPPING
-	out_color = linearToSRgb(tonemap(out_color, u_exposureThreshold0));
+	const Vec2 prevExposureLuminance = getExposureLuminance();
+	out_color = linearToSRgb(tonemap(out_color, prevExposureLuminance.x));
 #endif
 
 #if BLOOM_ENABLED

@@ -616,11 +616,6 @@ inline void CommandBufferImpl::pushSecondLevelCommandBufferInternal(const Comman
 	m_microCmdb->pushObjectRef(cmdb);
 }
 
-inline void CommandBufferImpl::beginRecordingExt()
-{
-	commandCommon();
-}
-
 inline void CommandBufferImpl::drawcallCommon()
 {
 	// Preconditions

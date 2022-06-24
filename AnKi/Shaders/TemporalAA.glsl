@@ -110,8 +110,8 @@ void main()
 #if YCBCR
 	outColor = yCbCrToRgb(outColor);
 #endif
-
-	const Vec3 tonemapped = linearToSRgb(tonemap(outColor, u_exposureThreshold0));
+	const Vec2 prevExposureLuminance = getExposureLuminance();
+	const Vec3 tonemapped = linearToSRgb(tonemap(outColor, prevExposureLuminance.x));
 #if defined(ANKI_COMPUTE_SHADER)
 	imageStore(u_outImg, IVec2(gl_GlobalInvocationID.xy), Vec4(outColor, 0.0));
 	imageStore(u_tonemappedImg, IVec2(gl_GlobalInvocationID.xy), Vec4(tonemapped, 0.0));

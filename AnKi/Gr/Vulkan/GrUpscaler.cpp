@@ -10,24 +10,20 @@
 
 namespace anki {
 
-GrUpscaler* GrUpscaler::newInstance(GrManager* manager, const GrUpscalerInitInfo& init)
+GrUpscaler* GrUpscaler::newInstance(GrManager* manager, const GrUpscalerInitInfo& initInfo)
 {
 	GrUpscalerImpl* impl(nullptr);
 	impl = manager->getAllocator().newInstance<GrUpscalerImpl>(manager, "");
-	const Error err = impl->init(init);
+	ANKI_ASSERT(impl);
+	impl->m_upscalerType = initInfo.m_upscalerType;
+	const Error err = impl->initInternal(initInfo);
+
 	if(err)
 	{
 		manager->getAllocator().deleteInstance(impl);
 		impl = nullptr;
 	}
 	return impl;
-}
-
-Error GrUpscaler::init(const GrUpscalerInitInfo& init)
-{
-	m_initInfo = init;
-	ANKI_VK_SELF(GrUpscalerImpl);
-	return self.initInternal();
 }
 
 } // end namespace anki

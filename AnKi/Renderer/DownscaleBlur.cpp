@@ -7,6 +7,7 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/TemporalAA.h>
 #include <AnKi/Renderer/LightShading.h>
+#include <AnKi/Renderer/Scale.h>
 #include <AnKi/Core/ConfigSet.h>
 
 namespace anki {
@@ -91,7 +92,7 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 												"Down/Blur #4", "Down/Blur #5", "Down/Blur #6", "Down/Blur #7"};
 
 	const RenderTargetHandle srcTarget =
-		m_r->getUsingDLSS() ? m_r->getLightShading().getRt() : m_r->getTemporalAA().getHdrRt();
+		m_r->getScale().getUsingDLSS() ? m_r->getLightShading().getRt() : m_r->getTemporalAA().getHdrRt();
 
 	if(getConfig().getRPreferCompute())
 	{
@@ -174,7 +175,7 @@ void DownscaleBlur::run(U32 passIdx, RenderPassWorkContext& rgraphCtx)
 	else
 	{
 		rgraphCtx.bindColorTexture(
-			0, 1, m_r->getUsingDLSS() ? m_r->getLightShading().getRt() : m_r->getTemporalAA().getHdrRt());
+			0, 1, m_r->getScale().getUsingDLSS() ? m_r->getLightShading().getRt() : m_r->getTemporalAA().getHdrRt());
 	}
 
 	if(getConfig().getRPreferCompute())

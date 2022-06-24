@@ -8,6 +8,7 @@
 #include <AnKi/Renderer/TemporalAA.h>
 #include <AnKi/Renderer/LightShading.h>
 #include <AnKi/Renderer/Tonemapping.h>
+#include <Anki/Renderer/Scale.h>
 #include <AnKi/Core/ConfigSet.h>
 
 namespace anki {
@@ -80,7 +81,7 @@ Error VrsSriGeneration::initInternal()
 		variantInit.addMutation("SHARED_MEMORY", 1);
 	}
 
-	variantInit.addMutation("HDR_INPUT", m_r->getUsingDLSS() ? 1 : 0);
+	variantInit.addMutation("HDR_INPUT", m_r->getScale().getUsingDLSS() ? 1 : 0);
 	variantInit.addMutation("LIMIT_RATE_TO_2X2", getConfig().getRVrsLimitTo2x2());
 
 	const ShaderProgramResourceVariant* variant;
@@ -152,7 +153,7 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("VRS SRI generation");
 
 		pass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
-		const Bool useTonemappedRT = !m_r->getUsingDLSS();
+		const Bool useTonemappedRT = !m_r->getScale().getUsingDLSS();
 		pass.newDependency(RenderPassDependency(useTonemappedRT ? m_r->getTemporalAA().getTonemappedRt()
 																: m_r->getLightShading().getRt(),
 												TextureUsageBit::SAMPLED_COMPUTE));
@@ -162,15 +163,15 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb->bindShaderProgram(m_grProg);
 
-			const Bool useTonemappedRT = !m_r->getUsingDLSS();
+			const Bool useTonemappedRT = !m_r->getScale().getUsingDLSS();
 			rgraphCtx.bindColorTexture(
 				0, 0, useTonemappedRT ? m_r->getTemporalAA().getTonemappedRt() : m_r->getLightShading().getRt());
 
 			cmdb->bindSampler(0, 1, m_r->getSamplers().m_nearestNearestClamp);
 			rgraphCtx.bindImage(0, 2, m_runCtx.m_rt);
-			if(m_r->getUsingDLSS())
+			if(m_r->getScale().getUsingDLSS())
 			{
-				rgraphCtx.bindUniformBuffer(0, 3, m_r->getTonemapping().getAverageLuminanceBuffer());
+				rgraphCtx.bindImage(0, 3, m_r->getTonemapping().getExposureLuminanceRT());
 			}
 			const Vec4 pc(1.0f / Vec2(m_r->getInternalResolution()), getConfig().getRVrsThreshold(), 0.0f);
 			cmdb->setPushConstants(&pc, sizeof(pc));
