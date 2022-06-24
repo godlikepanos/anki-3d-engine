@@ -7,8 +7,6 @@
 #include <Tests/Gr/GrCommon.h>
 #include <AnKi/Gr.h>
 
-namespace anki {
-
 ANKI_TEST(Gr, TextureBuffer)
 {
 	ConfigSet cfg(allocAligned, nullptr);
@@ -80,5 +78,3 @@ void main()
 	GrManager::deleteInstance(gr);
 	NativeWindow::deleteInstance(win);
 }
-
-} // end namespace anki

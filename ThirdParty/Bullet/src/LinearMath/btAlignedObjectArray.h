@@ -40,7 +40,7 @@ subject to the following restrictions:
 #endif //BT_USE_PLACEMENT_NEW
 
 // The register keyword is deprecated in C++11 so don't use it.
-#if __cplusplus > 199711L
+#if 1 || __cplusplus > 199711L
 #define BT_REGISTER
 #else
 #define BT_REGISTER register

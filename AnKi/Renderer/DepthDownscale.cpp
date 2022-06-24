@@ -12,12 +12,17 @@
 #	pragma GCC diagnostic push
 #	pragma GCC diagnostic ignored "-Wunused-function"
 #	pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#elif ANKI_COMPILER_MSVC
+#	pragma warning(push)
+#	pragma warning(disable : 4505)
 #endif
 #define A_CPU
 #include <ThirdParty/FidelityFX/ffx_a.h>
 #include <ThirdParty/FidelityFX/ffx_spd.h>
 #if ANKI_COMPILER_GCC_COMPATIBLE
 #	pragma GCC diagnostic pop
+#elif ANKI_COMPILER_MSVC
+#	pragma warning(pop)
 #endif
 
 namespace anki {

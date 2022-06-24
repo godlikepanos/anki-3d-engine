@@ -6,8 +6,6 @@
 #include <Tests/Framework/Framework.h>
 #include <AnKi/Resource/ResourceFilesystem.h>
 
-namespace anki {
-
 ANKI_TEST(Resource, ResourceFilesystem)
 {
 	printf("Test requires the Data dir\n");
@@ -33,5 +31,3 @@ ANKI_TEST(Resource, ResourceFilesystem)
 		ANKI_TEST_EXPECT_EQ(txt, "hell\n");
 	}
 }
-
-} // end namespace anki

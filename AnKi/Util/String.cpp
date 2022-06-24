@@ -241,13 +241,14 @@ void String::appendInternal(Allocator& alloc, const Char* str, PtrSize strLen)
 	m_data = std::move(newData);
 }
 
-String& String::sprintf(Allocator alloc, CString fmt, ...)
+String& String::sprintf(Allocator alloc, const Char* fmt, ...)
 {
+	ANKI_ASSERT(fmt);
 	Array<Char, 512> buffer;
 	va_list args;
 
 	va_start(args, fmt);
-	[[maybe_unused]] I len = std::vsnprintf(&buffer[0], sizeof(buffer), &fmt[0], args);
+	I len = std::vsnprintf(&buffer[0], sizeof(buffer), fmt, args);
 	va_end(args);
 
 	if(len < 0)
@@ -260,7 +261,7 @@ String& String::sprintf(Allocator alloc, CString fmt, ...)
 		m_data.create(alloc, size);
 
 		va_start(args, fmt);
-		len = std::vsnprintf(&m_data[0], size, &fmt[0], args);
+		len = std::vsnprintf(&m_data[0], size, fmt, args);
 		va_end(args);
 
 		ANKI_ASSERT((len + 1) == size);

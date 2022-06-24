@@ -10,8 +10,6 @@
 #include <AnKi/Util/ThreadPool.h>
 #include <cstring>
 
-namespace anki {
-
 ANKI_TEST(Util, Thread)
 {
 	static const char* THREAD_NAME = "name";
@@ -114,8 +112,6 @@ struct TestJobTP : ThreadPoolTask
 		return Error::NONE;
 	}
 };
-
-} // end namespace anki
 
 ANKI_TEST(Util, ThreadPool)
 {

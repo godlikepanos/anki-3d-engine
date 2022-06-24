@@ -429,8 +429,15 @@ if(NOT MSVC)
 
 	set(CMAKE_CXX_STANDARD 17)
 else()
-	#add_definitions("/wd4996 /wd4244 /wd4262 /wd4267 /wd26495 /wd26439")
-	add_compile_options("/std:c++17")
+	string(REPLACE "/W3" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+
+	add_compile_options(
+		/std:c++17
+		/W4
+		/wd4324
+		/wd4456
+		/wd4127
+		/wd4457)
 endif()
 
 # Add AnKi sub libraries

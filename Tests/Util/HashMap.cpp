@@ -222,7 +222,7 @@ ANKI_TEST(Util, HashMap)
 		// Delete
 		{
 			// Remove in random order
-			std::random_shuffle(vals.begin(), vals.end());
+			randomShuffle(vals.begin(), vals.end());
 
 			// Random delete AnKi
 			Second akTime = 0.0;

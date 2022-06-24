@@ -8,7 +8,9 @@
 #include <AnKi/Util/HighRezTimer.h>
 #include <AnKi/Util/System.h>
 
-namespace anki {
+using namespace anki;
+
+namespace {
 
 class ThreadHiveTestContext
 {
@@ -60,6 +62,8 @@ static void taskToWait(void* arg, [[maybe_unused]] U32 threadId, [[maybe_unused]
 	U prev = ctx->m_countAtomic.fetchAdd(1);
 	ANKI_TEST_EXPECT_GEQ(prev, 10);
 }
+
+} // namespace
 
 ANKI_TEST(Util, ThreadHive)
 {
@@ -172,6 +176,8 @@ ANKI_TEST(Util, ThreadHive)
 	}
 }
 
+namespace {
+
 class FibTask
 {
 public:
@@ -225,6 +231,8 @@ static U64 fib(U64 n)
 	}
 }
 
+} // namespace
+
 ANKI_TEST(Util, ThreadHiveBench)
 {
 	static const U FIB_N = 32;
@@ -248,5 +256,3 @@ ANKI_TEST(Util, ThreadHiveBench)
 	ANKI_TEST_LOGI("Total time %fms. Ground truth %fms", (timeB - timeA) * 1000.0, (timeC - timeB) * 1000.0);
 	ANKI_TEST_EXPECT_EQ(sum.getNonAtomically(), serialFib);
 }
-
-} // end namespace anki

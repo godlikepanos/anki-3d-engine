@@ -54,7 +54,8 @@ public:
 
 	/// Push at the end of the list a formated string.
 	template<typename... TArgs>
-	void pushBackSprintf(Allocator alloc, CString fmt, TArgs... args)
+	ANKI_CHECK_FORMAT(2, 3)
+	void pushBackSprintf(Allocator alloc, const Char* fmt, TArgs... args)
 	{
 		String str;
 		str.sprintf(alloc, fmt, args...);
@@ -139,7 +140,8 @@ public:
 
 	/// Push at the end of the list a formated string
 	template<typename... TArgs>
-	void pushBackSprintf(CString fmt, TArgs... args)
+	ANKI_CHECK_FORMAT(1, 2)
+	void pushBackSprintf(const Char* fmt, TArgs... args)
 	{
 		Base::pushBackSprintf(m_alloc, fmt, args...);
 	}

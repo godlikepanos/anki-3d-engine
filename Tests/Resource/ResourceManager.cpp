@@ -8,8 +8,6 @@
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Core/ConfigSet.h>
 
-namespace anki {
-
 ANKI_TEST(Resource, ResourceManager)
 {
 	// Create
@@ -84,5 +82,3 @@ ANKI_TEST(Resource, ResourceManager)
 	// Delete
 	alloc.deleteInstance(resources);
 }
-
-} // end namespace anki

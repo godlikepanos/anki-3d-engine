@@ -163,11 +163,11 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	//
 	for(U32 set = 0; set < descriptorSetCount; ++set)
 	{
-		DescriptorSetLayoutInitInfo inf;
-		inf.m_bindings = WeakArray<DescriptorBinding>((counts[set]) ? &bindings[set][0] : nullptr, counts[set]);
+		DescriptorSetLayoutInitInfo dsinf;
+		dsinf.m_bindings = WeakArray<DescriptorBinding>((counts[set]) ? &bindings[set][0] : nullptr, counts[set]);
 
 		ANKI_CHECK(
-			getGrManagerImpl().getDescriptorSetFactory().newDescriptorSetLayout(inf, m_descriptorSetLayouts[set]));
+			getGrManagerImpl().getDescriptorSetFactory().newDescriptorSetLayout(dsinf, m_descriptorSetLayouts[set]));
 
 		// Even if the dslayout is empty we will have to list it because we'll have to bind a DS for it.
 		m_refl.m_descriptorSetMask.set(set);
@@ -206,13 +206,14 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		{
 			const ShaderImpl& shaderImpl = static_cast<const ShaderImpl&>(*shader);
 
-			VkPipelineShaderStageCreateInfo& inf = m_graphics.m_shaderCreateInfos[m_graphics.m_shaderCreateInfoCount++];
-			inf = {};
-			inf.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-			inf.stage = VkShaderStageFlagBits(convertShaderTypeBit(ShaderTypeBit(1 << shader->getShaderType())));
-			inf.pName = "main";
-			inf.module = shaderImpl.m_handle;
-			inf.pSpecializationInfo = shaderImpl.getSpecConstInfo();
+			VkPipelineShaderStageCreateInfo& createInf =
+				m_graphics.m_shaderCreateInfos[m_graphics.m_shaderCreateInfoCount++];
+			createInf = {};
+			createInf.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+			createInf.stage = VkShaderStageFlagBits(convertShaderTypeBit(ShaderTypeBit(1 << shader->getShaderType())));
+			createInf.pName = "main";
+			createInf.module = shaderImpl.m_handle;
+			createInf.pSpecializationInfo = shaderImpl.getSpecConstInfo();
 		}
 	}
 

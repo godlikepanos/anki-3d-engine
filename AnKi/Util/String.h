@@ -451,7 +451,8 @@ public:
 	}
 
 	/// Create formated string.
-	String& sprintf(Allocator alloc, CString fmt, ...);
+	ANKI_CHECK_FORMAT(2, 3)
+	String& sprintf(Allocator alloc, const Char* fmt, ...);
 
 	/// Destroy the string.
 	void destroy(Allocator alloc)
@@ -811,7 +812,8 @@ public:
 
 	/// Create formated string.
 	template<typename... TArgs>
-	StringAuto& sprintf(CString fmt, TArgs... args)
+	ANKI_CHECK_FORMAT(1, 2)
+	StringAuto& sprintf(const Char* fmt, TArgs... args)
 	{
 		Base::sprintf(m_alloc, fmt, args...);
 		return *this;

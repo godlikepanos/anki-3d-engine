@@ -18,7 +18,7 @@
 #include <AnKi/Collision/Aabb.h>
 #include <ctime>
 
-namespace anki {
+using namespace anki;
 
 const U WIDTH = 1024;
 const U HEIGHT = 768;
@@ -3050,7 +3050,7 @@ F32 scatteringPdfLambertian(Vec3 normal, Vec3 scatteredDir)
 #undef MAGIC_MACRO
 
 		StringAuto commonSrc(alloc);
-		commonSrc.sprintf(commonSrcPart, rtTypesStr.cstr());
+		commonSrc.sprintf(commonSrcPart.cstr(), rtTypesStr.cstr());
 
 		const CString lambertianSrc = R"(
 layout(location = PAYLOAD_LOCATION) rayPayloadInEXT PayLoad s_payLoad;
@@ -3643,5 +3643,3 @@ void main()
 
 	COMMON_END()
 }
-
-} // end namespace anki

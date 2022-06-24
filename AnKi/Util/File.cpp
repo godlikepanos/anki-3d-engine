@@ -349,7 +349,7 @@ Error File::write(const void* buff, PtrSize size)
 	return err;
 }
 
-Error File::writeText(CString format, ...)
+Error File::writeText(const Char* format, ...)
 {
 	ANKI_ASSERT(m_file);
 	ANKI_ASSERT(m_flags != FileOpenFlag::NONE);
@@ -369,7 +369,7 @@ Error File::writeText(CString format, ...)
 	else
 #endif
 	{
-		std::vfprintf(ANKI_CFILE, &format[0], args);
+		std::vfprintf(ANKI_CFILE, format, args);
 	}
 
 	va_end(args);
@@ -413,14 +413,13 @@ PtrSize File::tell()
 	if(!!(m_flags & FileOpenFlag::SPECIAL))
 	{
 		ANKI_ASSERT(0);
+		return 0;
 	}
 	else
 #endif
 	{
 		return ftell(ANKI_CFILE);
 	}
-
-	return 0;
 }
 
 FileOpenFlag File::getMachineEndianness()

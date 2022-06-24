@@ -102,7 +102,8 @@ public:
 	Error write(const void* buff, PtrSize size);
 
 	/// Write formated text
-	Error writeText(CString format, ...);
+	ANKI_CHECK_FORMAT(1, 2)
+	Error writeText(const Char* format, ...);
 
 	/// Set the position indicator to a new position.
 	/// @param offset Number of bytes to offset from origin

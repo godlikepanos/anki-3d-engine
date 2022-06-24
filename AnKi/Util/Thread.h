@@ -479,6 +479,7 @@ public:
 		sem_init(&m_handle, 0, initialValue);
 #else
 		ANKI_ASSERT(!"TODO");
+		(void)initialValue;
 #endif
 	}
 

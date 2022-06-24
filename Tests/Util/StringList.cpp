@@ -6,8 +6,6 @@
 #include <Tests/Framework/Framework.h>
 #include <AnKi/Util/StringList.h>
 
-namespace anki {
-
 ANKI_TEST(Util, StringList)
 {
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
@@ -37,5 +35,3 @@ ANKI_TEST(Util, StringList)
 		ANKI_TEST_EXPECT_EQ(*it, "boo");
 	}
 }
-
-} // end namespace anki
