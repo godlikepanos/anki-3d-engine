@@ -43,14 +43,14 @@ public:
 	/// @name DLSS data accessors
 	/// @{
 
-	NVSDK_NGX_Parameter* getParameters() const
+	NVSDK_NGX_Parameter& getParameters() const
 	{
-		return m_ngxParameters;
+		return *m_ngxParameters;
 	}
 
-	NVSDK_NGX_Handle* getFeature() const
+	NVSDK_NGX_Handle& getFeature() const
 	{
-		return m_dlssFeature;
+		return *m_dlssFeature;
 	}
 
 	const DLSSRecommendedSettings& getRecommendedSettings() const
