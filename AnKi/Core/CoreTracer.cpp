@@ -191,9 +191,10 @@ Error CoreTracer::writeEvents(ThreadWorkItem& item)
 		// Do a hack
 		const ThreadId tid = (event.m_name == "GPU_TIME") ? 1 : item.m_tid;
 
-		ANKI_CHECK(m_traceJsonFile.writeText("{\"name\": \"%s\", \"cat\": \"PERF\", \"ph\": \"X\", "
-											 "\"pid\": 1, \"tid\": %llu, \"ts\": %lld, \"dur\": %lld},\n",
-											 event.m_name.cstr(), tid, startMicroSec, durMicroSec));
+		ANKI_CHECK(m_traceJsonFile.writeTextf("{\"name\": \"%s\", \"cat\": \"PERF\", \"ph\": \"X\", "
+											  "\"pid\": 1, \"tid\": %" PRIu64 ", \"ts\": %" PRIi64 ", \"dur\": %" PRIi64
+											  "},\n",
+											  event.m_name.cstr(), tid, startMicroSec, durMicroSec));
 	}
 
 	// Store counters
@@ -340,14 +341,14 @@ Error CoreTracer::writeCountersForReal()
 	ANKI_CHECK(m_countersCsvFile.writeText("Frame"));
 	for(U32 i = 0; i < m_counterNames.getSize(); ++i)
 	{
-		ANKI_CHECK(m_countersCsvFile.writeText(",%s", m_counterNames[i].cstr()));
+		ANKI_CHECK(m_countersCsvFile.writeTextf(",%s", m_counterNames[i].cstr()));
 	}
 	ANKI_CHECK(m_countersCsvFile.writeText("\n"));
 
 	// Write each frame
 	for(const PerFrameCounters& frame : m_frameCounters)
 	{
-		ANKI_CHECK(m_countersCsvFile.writeText("%llu", frame.m_frame));
+		ANKI_CHECK(m_countersCsvFile.writeTextf("%" PRIu64, frame.m_frame));
 
 		for(U32 j = 0; j < m_counterNames.getSize(); ++j)
 		{
@@ -362,7 +363,7 @@ Error CoreTracer::writeCountersForReal()
 				}
 			}
 
-			ANKI_CHECK(m_countersCsvFile.writeText(",%llu", value));
+			ANKI_CHECK(m_countersCsvFile.writeTextf(",%" PRIu64, value));
 		}
 
 		ANKI_CHECK(m_countersCsvFile.writeText("\n"));
@@ -377,8 +378,8 @@ Error CoreTracer::writeCountersForReal()
 		{
 			Array<char, 3> columnName;
 			getSpreadsheetColumnName(i + 1, columnName);
-			ANKI_CHECK(m_countersCsvFile.writeText(",=%s(%s2:%s%u)", func, &columnName[0], &columnName[0],
-												   m_frameCounters.getSize() + 1));
+			ANKI_CHECK(m_countersCsvFile.writeTextf(",=%s(%s2:%s%zu)", func, &columnName[0], &columnName[0],
+													m_frameCounters.getSize() + 1));
 		}
 
 		ANKI_CHECK(m_countersCsvFile.writeText("\n"));

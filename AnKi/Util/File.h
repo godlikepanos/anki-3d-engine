@@ -103,7 +103,10 @@ public:
 
 	/// Write formated text
 	ANKI_CHECK_FORMAT(1, 2)
-	Error writeText(const Char* format, ...);
+	Error writeTextf(const Char* format, ...);
+
+	/// Write plain text.
+	Error writeText(CString text);
 
 	/// Set the position indicator to a new position.
 	/// @param offset Number of bytes to offset from origin

@@ -312,7 +312,7 @@ Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv,
 	StringAuto tmpDir(tmpAlloc);
 	ANKI_CHECK(getTempDirectory(tmpDir));
 	StringAuto spirvFilename(tmpAlloc);
-	spirvFilename.sprintf("%s/AnKiMaliocTmpSpirv_%llu.spv", tmpDir.cstr(), getRandom());
+	spirvFilename.sprintf("%s/AnKiMaliocTmpSpirv_%" PRIu64 ".spv", tmpDir.cstr(), getRandom());
 
 	File spirvFile;
 	ANKI_CHECK(spirvFile.open(spirvFilename, FileOpenFlag::WRITE | FileOpenFlag::BINARY));

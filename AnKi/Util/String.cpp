@@ -241,15 +241,14 @@ void String::appendInternal(Allocator& alloc, const Char* str, PtrSize strLen)
 	m_data = std::move(newData);
 }
 
-String& String::sprintf(Allocator alloc, const Char* fmt, ...)
+void String::sprintf(Allocator& alloc, const Char* fmt, va_list& args)
 {
-	ANKI_ASSERT(fmt);
 	Array<Char, 512> buffer;
-	va_list args;
 
-	va_start(args, fmt);
+	va_list args2;
+	va_copy(args2, args); // vsnprintf will alter "args". Copy it case we need to call vsnprintf in the else bellow
+
 	I len = std::vsnprintf(&buffer[0], sizeof(buffer), fmt, args);
-	va_end(args);
 
 	if(len < 0)
 	{
@@ -260,9 +259,7 @@ String& String::sprintf(Allocator alloc, const Char* fmt, ...)
 		I size = len + 1;
 		m_data.create(alloc, size);
 
-		va_start(args, fmt);
-		len = std::vsnprintf(&m_data[0], size, fmt, args);
-		va_end(args);
+		len = std::vsnprintf(&m_data[0], size, fmt, args2);
 
 		ANKI_ASSERT((len + 1) == size);
 	}
@@ -271,6 +268,17 @@ String& String::sprintf(Allocator alloc, const Char* fmt, ...)
 		// buffer was enough
 		create(alloc, CString(&buffer[0]));
 	}
+
+	va_end(args2);
+}
+
+String& String::sprintf(Allocator alloc, const Char* fmt, ...)
+{
+	ANKI_ASSERT(fmt);
+	va_list args;
+	va_start(args, fmt);
+	sprintf(alloc, fmt, args);
+	va_end(args);
 
 	return *this;
 }
@@ -306,6 +314,15 @@ String& String::replaceAll(Allocator alloc, CString from, CString to)
 
 	destroy(alloc);
 	*this = std::move(tmp);
+	return *this;
+}
+
+StringAuto& StringAuto::sprintf(const Char* fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	Base::sprintf(m_alloc, fmt, args);
+	va_end(args);
 	return *this;
 }
 

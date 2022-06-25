@@ -78,7 +78,7 @@ void main()
 	{
 		File file;
 		ANKI_TEST_EXPECT_NO_ERR(file.open("test.glslp", FileOpenFlag::WRITE));
-		ANKI_TEST_EXPECT_NO_ERR(file.writeText("%s", sourceCode.cstr()));
+		ANKI_TEST_EXPECT_NO_ERR(file.writeText(sourceCode));
 	}
 
 	class Fsystem : public ShaderProgramFilesystemInterface
@@ -275,7 +275,7 @@ void main()
 	{
 		File file;
 		ANKI_TEST_EXPECT_NO_ERR(file.open("test.glslp", FileOpenFlag::WRITE));
-		ANKI_TEST_EXPECT_NO_ERR(file.writeText("%s", sourceCode.cstr()));
+		ANKI_TEST_EXPECT_NO_ERR(file.writeText(sourceCode));
 	}
 
 	class Fsystem : public ShaderProgramFilesystemInterface

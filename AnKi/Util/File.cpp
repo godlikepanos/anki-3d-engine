@@ -336,12 +336,11 @@ Error File::write(const void* buff, PtrSize size)
 	else
 #endif
 	{
-		PtrSize writeSize = 0;
-		writeSize = std::fwrite(buff, 1, size, ANKI_CFILE);
+		const PtrSize writeSize = fwrite(buff, 1, size, ANKI_CFILE);
 
 		if(writeSize != size)
 		{
-			ANKI_UTIL_LOGE("std::fwrite() failed");
+			ANKI_UTIL_LOGE("fwrite() failed");
 			err = Error::FILE_ACCESS;
 		}
 	}
@@ -349,7 +348,7 @@ Error File::write(const void* buff, PtrSize size)
 	return err;
 }
 
-Error File::writeText(const Char* format, ...)
+Error File::writeTextf(const Char* format, ...)
 {
 	ANKI_ASSERT(m_file);
 	ANKI_ASSERT(m_flags != FileOpenFlag::NONE);
@@ -374,6 +373,27 @@ Error File::writeText(const Char* format, ...)
 
 	va_end(args);
 	return err;
+}
+
+Error File::writeText(CString text)
+{
+	ANKI_ASSERT(m_file);
+	ANKI_ASSERT(m_flags != FileOpenFlag::NONE);
+	ANKI_ASSERT((m_flags & FileOpenFlag::WRITE) != FileOpenFlag::NONE);
+	ANKI_ASSERT((m_flags & FileOpenFlag::BINARY) == FileOpenFlag::NONE);
+
+	const PtrSize writeSize = text.getLength() + 1;
+	const PtrSize writenSize = fwrite(text.cstr(), 1, writeSize, ANKI_CFILE);
+
+	if(writeSize != writenSize)
+	{
+		ANKI_UTIL_LOGE("fwrite() failed");
+		return Error::FILE_ACCESS;
+	}
+	else
+	{
+		return Error::NONE;
+	}
 }
 
 Error File::seek(PtrSize offset, FileSeekOrigin origin)

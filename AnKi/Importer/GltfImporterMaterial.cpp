@@ -336,7 +336,7 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 	// Write file
 	File file;
 	ANKI_CHECK(file.open(fname.toCString(), FileOpenFlag::WRITE));
-	ANKI_CHECK(file.writeText("%s", xml.cstr()));
+	ANKI_CHECK(file.writeText(xml));
 
 	return Error::NONE;
 }

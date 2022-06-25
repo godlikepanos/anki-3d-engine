@@ -648,6 +648,9 @@ public:
 		});
 	}
 
+	/// Internal don't use it.
+	ANKI_INTERNAL void sprintf(Allocator& alloc, const Char* fmt, va_list& args);
+
 protected:
 	DynamicArray<Char, PtrSize> m_data;
 
@@ -811,13 +814,8 @@ public:
 	}
 
 	/// Create formated string.
-	template<typename... TArgs>
 	ANKI_CHECK_FORMAT(1, 2)
-	StringAuto& sprintf(const Char* fmt, TArgs... args)
-	{
-		Base::sprintf(m_alloc, fmt, args...);
-		return *this;
-	}
+	StringAuto& sprintf(const Char* fmt, ...);
 
 	/// Convert a number to a string.
 	template<typename TNumber>

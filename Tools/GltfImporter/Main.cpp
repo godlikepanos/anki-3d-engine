@@ -63,7 +63,7 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 				}
 				else
 				{
-					info.m_texRpath.sprintf("");
+					info.m_texRpath.create("");
 				}
 			}
 			else
@@ -88,7 +88,7 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 				}
 				else
 				{
-					info.m_rpath.sprintf("");
+					info.m_rpath.create("");
 				}
 			}
 			else

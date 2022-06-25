@@ -153,7 +153,7 @@ Error MyApp::sampleExtraInit()
 		const U LINKS = 5;
 
 		BodyNode* prevBody = nullptr;
-		for(U i = 0; i < LINKS; ++i)
+		for(U32 i = 0; i < LINKS; ++i)
 		{
 			ModelNode* monkey;
 			ANKI_CHECK(getSceneGraph().newSceneNode<ModelNode>(
@@ -290,7 +290,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 	{
 		ANKI_LOGI("Firing a monkey");
 
-		static U instance = 0;
+		static U32 instance = 0;
 
 		Transform camTrf =
 			getSceneGraph().getActiveCameraNode().getFirstComponentOfType<MoveComponent>().getWorldTransform();
@@ -347,7 +347,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 			Transform trf(ray.m_hitPosition.xyz0(), rot, 1.0f);
 
 			// Create an obj
-			static U id = 0;
+			static U32 id = 0;
 			ModelNode* monkey;
 			ANKI_CHECK(getSceneGraph().newSceneNode(
 				StringAuto(getSceneGraph().getFrameAllocator()).sprintf("decal%u", id++).toCString(), monkey));

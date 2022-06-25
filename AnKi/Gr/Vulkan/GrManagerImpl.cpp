@@ -1509,7 +1509,7 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 												   "stage 5 VGPR,stage 5 SGPR\n"));
 		}
 
-		ANKI_CHECK(m_shaderStatsFile.writeText("%s,0x%" PRIx64 ",", name.cstr(), hash));
+		ANKI_CHECK(m_shaderStatsFile.writeTextf("%s,0x%" PRIx64 ",", name.cstr(), hash));
 
 		StringAuto str(getAllocator());
 
@@ -1530,8 +1530,9 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 						   .sprintf("Stage %u: VGRPS %02u, SGRPS %02u ", U32(type), stats.resourceUsage.numUsedVgprs,
 									stats.resourceUsage.numUsedSgprs));
 
-			ANKI_CHECK(m_shaderStatsFile.writeText((type != ShaderType::LAST) ? "%u,%u," : "%u,%u\n",
-												   stats.resourceUsage.numUsedVgprs, stats.resourceUsage.numUsedSgprs));
+			ANKI_CHECK(m_shaderStatsFile.writeTextf((type != ShaderType::LAST) ? "%u,%u," : "%u,%u\n",
+													stats.resourceUsage.numUsedVgprs,
+													stats.resourceUsage.numUsedSgprs));
 		}
 
 		ANKI_VK_LOGI("Pipeline \"%s\" (0x%016" PRIx64 ") stats: %s", name.cstr(), hash, str.cstr());
