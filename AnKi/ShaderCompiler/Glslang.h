@@ -19,7 +19,7 @@ Error preprocessGlsl(CString in, StringAuto& out);
 
 /// Compile glsl to SPIR-V.
 Error compilerGlslToSpirv(CString src, ShaderType shaderType, GenericMemoryPoolAllocator<U8> tmpAlloc,
-						  DynamicArrayAuto<U8>& spirv);
+						  DynamicArrayAuto<U8>& spirv, StringAuto& errorMessage);
 /// @}
 
 } // end namespace anki

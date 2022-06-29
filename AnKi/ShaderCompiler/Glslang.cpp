@@ -214,7 +214,7 @@ static Error parseErrorLine(CString error, GenericMemoryPoolAllocator<U8> alloc,
 			if(tokens.getSize() < 3 || (tokens.getBegin() + 2)->toNumber(lineNumber) != Error::NONE)
 			{
 
-				ANKI_SHADER_COMPILER_LOGE("Failed to parse the error message: %s", error.cstr());
+				ANKI_SHADER_COMPILER_LOGE("Failed to parse the GLSlang error message: %s", error.cstr());
 				return Error::FUNCTION_FAILED;
 			}
 			else
@@ -227,11 +227,13 @@ static Error parseErrorLine(CString error, GenericMemoryPoolAllocator<U8> alloc,
 	return Error::NONE;
 }
 
-static Error logShaderErrorCode(CString error, CString source, GenericMemoryPoolAllocator<U8> alloc)
+static void createErrorLog(CString glslangError, CString source, GenericMemoryPoolAllocator<U8> alloc,
+						   StringAuto& outError)
 {
 	U32 errorLineNumberu = 0;
-	ANKI_CHECK(parseErrorLine(error, alloc, errorLineNumberu));
-	const I32 errorLineNumber = I32(errorLineNumberu);
+	const Error err = parseErrorLine(glslangError, alloc, errorLineNumberu);
+
+	const I32 errorLineNumber = (!err) ? I32(errorLineNumberu) : -1;
 
 	constexpr I32 lineCountAroundError = 4;
 
@@ -252,9 +254,7 @@ static Error logShaderErrorCode(CString error, CString source, GenericMemoryPool
 		}
 	}
 
-	ANKI_SHADER_COMPILER_LOGE("Shader compilation failed:\n%sIn:\n%s\n", error.cstr(), prettySrc.cstr());
-
-	return Error::NONE;
+	outError.sprintf("%sIn:\n%s\n", glslangError.cstr(), prettySrc.cstr());
 }
 
 Error preprocessGlsl(CString in, StringAuto& out)
@@ -278,7 +278,7 @@ Error preprocessGlsl(CString in, StringAuto& out)
 }
 
 Error compilerGlslToSpirv(CString src, ShaderType shaderType, GenericMemoryPoolAllocator<U8> tmpAlloc,
-						  DynamicArrayAuto<U8>& spirv)
+						  DynamicArrayAuto<U8>& spirv, StringAuto& errorMessage)
 {
 #if ANKI_GLSLANG_DUMP
 	// Dump it
@@ -307,7 +307,7 @@ Error compilerGlslToSpirv(CString src, ShaderType shaderType, GenericMemoryPoolA
 	shader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_4);
 	if(!shader.parse(&GLSLANG_LIMITS, 100, false, messages))
 	{
-		ANKI_CHECK(logShaderErrorCode(shader.getInfoLog(), src, tmpAlloc));
+		createErrorLog(shader.getInfoLog(), src, tmpAlloc, errorMessage);
 		return Error::USER_DATA;
 	}
 
@@ -317,7 +317,7 @@ Error compilerGlslToSpirv(CString src, ShaderType shaderType, GenericMemoryPoolA
 
 	if(!program.link(messages))
 	{
-		ANKI_SHADER_COMPILER_LOGE("glslang failed to link a shader");
+		errorMessage.create("glslang failed to link a shader");
 		return Error::USER_DATA;
 	}
 

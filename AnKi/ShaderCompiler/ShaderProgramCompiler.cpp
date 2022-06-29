@@ -168,7 +168,7 @@ static Bool spinDials(DynamicArrayAuto<U32>& dials, ConstWeakArray<ShaderProgram
 
 static Error compileSpirv(ConstWeakArray<MutatorValue> mutation, const ShaderProgramParser& parser,
 						  GenericMemoryPoolAllocator<U8>& tmpAlloc,
-						  Array<DynamicArrayAuto<U8>, U32(ShaderType::COUNT)>& spirv)
+						  Array<DynamicArrayAuto<U8>, U32(ShaderType::COUNT)>& spirv, StringAuto& errorLog)
 {
 	// Generate the source and the rest for the variant
 	ShaderProgramParserVariant parserVariant;
@@ -183,7 +183,8 @@ static Error compileSpirv(ConstWeakArray<MutatorValue> mutation, const ShaderPro
 		}
 
 		// Compile
-		ANKI_CHECK(compilerGlslToSpirv(parserVariant.getSource(shaderType), shaderType, tmpAlloc, spirv[shaderType]));
+		ANKI_CHECK(compilerGlslToSpirv(parserVariant.getSource(shaderType), shaderType, tmpAlloc, spirv[shaderType],
+									   errorLog));
 		ANKI_ASSERT(spirv[shaderType].getSize() > 0);
 	}
 
@@ -253,7 +254,8 @@ static void compileVariantAsync(ConstWeakArray<MutatorValue> mutation, const Sha
 																	   {tmpAlloc},
 																	   {tmpAlloc},
 																	   {tmpAlloc}}};
-		const Error err = compileSpirv(ctx.m_mutation, *ctx.m_parser, tmpAlloc, spirvs);
+		StringAuto errorLog(tmpAlloc);
+		const Error err = compileSpirv(ctx.m_mutation, *ctx.m_parser, tmpAlloc, spirvs, errorLog);
 
 		if(!err)
 		{
@@ -304,7 +306,12 @@ static void compileVariantAsync(ConstWeakArray<MutatorValue> mutation, const Sha
 		}
 		else
 		{
-			ctx.m_err->store(err._getCode());
+			// Inform about the error and print only one error message. Ignore other messages
+			const Error prevErr = ctx.m_err->exchange(err._getCode());
+			if(!prevErr)
+			{
+				ANKI_SHADER_COMPILER_LOGE("GLSL compilation failed:\n%s", errorLog.cstr());
+			}
 		}
 
 		// Cleanup
