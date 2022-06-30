@@ -65,15 +65,28 @@ ANKI_RP Vec3 tonemapACESFilm(ANKI_RP Vec3 x)
 	return saturate((x * (a * x + b)) / (x * (c * x + d) + e));
 }
 
+ANKI_RP Vec3 invertTonemapACESFilm(ANKI_RP Vec3 x)
+{
+	const ANKI_RP F32 a = 2.51;
+	const ANKI_RP F32 b = 0.03;
+	const ANKI_RP F32 c = 2.43;
+	const ANKI_RP F32 d = 0.59;
+	const ANKI_RP F32 e = 0.14;
+
+	return (-0.59 * x + 0.03 - sqrt(-1.0127 * x * x + 1.3702 * x + 0.0009)) / (2.0 * (2.43 * x - 2.51));
+}
+
 ANKI_RP Vec3 tonemap(ANKI_RP Vec3 color, ANKI_RP F32 exposure)
 {
 	color *= exposure;
-#if 0
-	const ANKI_RP F32 saturation = 1.0;
-	return tonemapReinhard(color, saturation);
-#else
 	return tonemapACESFilm(color);
-#endif
+}
+
+ANKI_RP Vec3 invertTonemap(ANKI_RP Vec3 color, ANKI_RP F32 exposure)
+{
+	color = invertTonemapACESFilm(color);
+	color /= max(EPSILON, exposure);
+	return color;
 }
 
 ANKI_RP Vec3 tonemap(ANKI_RP Vec3 color, ANKI_RP F32 avgLum, ANKI_RP F32 threshold)
@@ -83,14 +96,30 @@ ANKI_RP Vec3 tonemap(ANKI_RP Vec3 color, ANKI_RP F32 avgLum, ANKI_RP F32 thresho
 }
 
 // https://graphicrants.blogspot.com/2013/12/tone-mapping.html
-ANKI_RP Vec3 invertibleTonemap(ANKI_RP Vec3 colour)
+Vec3 reinhardTonemap(Vec3 colour)
 {
-	// 1 / (1 + max(rgb))
+	// rgb / (1 + max(rgb))
 	return colour / (1.0 + max(max(colour.r, colour.g), colour.b));
 }
 
-ANKI_RP Vec3 invertInvertibleTonemap(ANKI_RP Vec3 colour)
+F32 reinhardTonemap(F32 value)
 {
-	// 1 / (1 - max(rgb))
-	return colour / (1.0 - max(max(colour.r, colour.g), colour.b));
+	return value / (1.0 + value);
+}
+
+F16 reinhardTonemap(F16 value)
+{
+	return value / (1.0hf + value);
+}
+
+Vec3 invertReinhardTonemap(Vec3 colour)
+{
+	// rgb / (1 - max(rgb))
+	return colour / max(1.0 / 32768.0, 1.0 - max(max(colour.r, colour.g), colour.b));
+}
+
+HVec3 invertReinhardTonemap(HVec3 colour)
+{
+	// rgb / (1 - max(rgb))
+	return colour / max(F16(1.0 / 32768.0), 1.0hf - max(max(colour.r, colour.g), colour.b));
 }

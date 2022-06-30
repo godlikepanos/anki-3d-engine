@@ -114,8 +114,8 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 {
 	if(!doScaling() && !doSharpening())
 	{
-		m_runCtx.m_scaledRt = m_r->getTemporalAA().getTonemappedRt();
-		m_runCtx.m_sharpenedRt = m_r->getTemporalAA().getTonemappedRt();
+		m_runCtx.m_scaledRt = m_r->getTemporalAA().getRt();
+		m_runCtx.m_sharpenedRt = m_r->getTemporalAA().getRt();
 		return;
 	}
 
@@ -129,8 +129,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		if(preferCompute)
 		{
 			ComputeRenderPassDescription& pass = ctx.m_renderGraphDescr.newComputeRenderPass("Scale");
-			pass.newDependency(
-				RenderPassDependency(m_r->getTemporalAA().getTonemappedRt(), TextureUsageBit::SAMPLED_COMPUTE));
+			pass.newDependency(RenderPassDependency(m_r->getTemporalAA().getRt(), TextureUsageBit::SAMPLED_COMPUTE));
 			pass.newDependency(RenderPassDependency(m_runCtx.m_scaledRt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
 
 			pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
@@ -142,8 +141,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 			GraphicsRenderPassDescription& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Scale");
 			pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_scaledRt});
 
-			pass.newDependency(
-				RenderPassDependency(m_r->getTemporalAA().getTonemappedRt(), TextureUsageBit::SAMPLED_FRAGMENT));
+			pass.newDependency(RenderPassDependency(m_r->getTemporalAA().getRt(), TextureUsageBit::SAMPLED_FRAGMENT));
 			pass.newDependency(
 				RenderPassDependency(m_runCtx.m_scaledRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
 
@@ -160,9 +158,8 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		if(preferCompute)
 		{
 			ComputeRenderPassDescription& pass = ctx.m_renderGraphDescr.newComputeRenderPass("Sharpen");
-			pass.newDependency(
-				RenderPassDependency((!doScaling()) ? m_r->getTemporalAA().getTonemappedRt() : m_runCtx.m_scaledRt,
-									 TextureUsageBit::SAMPLED_COMPUTE));
+			pass.newDependency(RenderPassDependency((!doScaling()) ? m_r->getTemporalAA().getRt() : m_runCtx.m_scaledRt,
+													TextureUsageBit::SAMPLED_COMPUTE));
 			pass.newDependency(RenderPassDependency(m_runCtx.m_sharpenedRt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
 
 			pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
@@ -174,9 +171,8 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 			GraphicsRenderPassDescription& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Sharpen");
 			pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_sharpenedRt});
 
-			pass.newDependency(
-				RenderPassDependency((!doScaling()) ? m_r->getTemporalAA().getTonemappedRt() : m_runCtx.m_scaledRt,
-									 TextureUsageBit::SAMPLED_FRAGMENT));
+			pass.newDependency(RenderPassDependency((!doScaling()) ? m_r->getTemporalAA().getRt() : m_runCtx.m_scaledRt,
+													TextureUsageBit::SAMPLED_FRAGMENT));
 			pass.newDependency(
 				RenderPassDependency(m_runCtx.m_sharpenedRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
 
@@ -195,7 +191,7 @@ void Scale::runScaling(RenderPassWorkContext& rgraphCtx)
 	cmdb->bindShaderProgram(m_scaleGrProg);
 
 	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
-	rgraphCtx.bindColorTexture(0, 1, m_r->getTemporalAA().getTonemappedRt());
+	rgraphCtx.bindColorTexture(0, 1, m_r->getTemporalAA().getRt());
 
 	if(preferCompute)
 	{
@@ -257,7 +253,7 @@ void Scale::runSharpening(RenderPassWorkContext& rgraphCtx)
 	cmdb->bindShaderProgram(m_sharpenGrProg);
 
 	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
-	rgraphCtx.bindColorTexture(0, 1, (!doScaling()) ? m_r->getTemporalAA().getTonemappedRt() : m_runCtx.m_scaledRt);
+	rgraphCtx.bindColorTexture(0, 1, (!doScaling()) ? m_r->getTemporalAA().getRt() : m_runCtx.m_scaledRt);
 
 	if(preferCompute)
 	{

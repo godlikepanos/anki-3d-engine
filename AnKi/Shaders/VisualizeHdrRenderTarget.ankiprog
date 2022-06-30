@@ -18,6 +18,6 @@ layout(location = 0) out Vec3 out_color;
 
 void main()
 {
-	out_color = invertibleTonemap(textureLod(u_inTex, u_nearestAnyClampSampler, in_uv, 0.0).rgb);
+	out_color = reinhardTonemap(textureLod(u_inTex, u_nearestAnyClampSampler, in_uv, 0.0).rgb);
 }
 #pragma anki end

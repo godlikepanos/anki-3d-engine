@@ -15,6 +15,7 @@ namespace anki {
 Bloom::Bloom(Renderer* r)
 	: RendererObject(r)
 {
+	registerDebugRenderTarget("Bloom");
 }
 
 Bloom::~Bloom()
@@ -214,6 +215,13 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			}
 		});
 	}
+}
+
+void Bloom::getDebugRenderTarget([[maybe_unused]] CString rtName, RenderTargetHandle& handle,
+								 [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const
+{
+	ANKI_ASSERT(rtName == "Bloom");
+	handle = m_runCtx.m_upscaleRt;
 }
 
 } // end namespace anki

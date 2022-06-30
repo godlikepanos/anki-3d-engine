@@ -249,8 +249,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 
 	if(getInput().getKey(KeyCode::L) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget(
-			(renderer.getCurrentDebugRenderTarget() == "LightShading") ? "" : "LightShading");
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "Bloom") ? "" : "Bloom");
 	}
 
 	if(getInput().getKey(KeyCode::J) == 1)

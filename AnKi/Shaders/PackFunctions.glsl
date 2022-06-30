@@ -151,7 +151,7 @@ void packGBuffer(GbufferInfo g, out Vec4 rt0, out Vec4 rt1, out Vec4 rt2, out Ve
 {
 	const F32 packedSubsurfaceMetallic = packUnorm2ToUnorm1(Vec2(g.m_subsurface, g.m_metallic));
 
-	const Vec3 tonemappedEmission = invertibleTonemap(g.m_emission);
+	const Vec3 tonemappedEmission = invertReinhardTonemap(g.m_emission);
 
 	rt0 = Vec4(g.m_diffuse, packedSubsurfaceMetallic);
 	rt1 = Vec4(g.m_roughness, g.m_f0.x, tonemappedEmission.rb);
@@ -189,7 +189,7 @@ void unpackGBufferNoVelocity(ANKI_RP Vec4 rt0, ANKI_RP Vec4 rt1, ANKI_RP Vec4 rt
 
 	g.m_roughness = unpackRoughnessFromGBuffer(rt1);
 	g.m_f0 = Vec3(rt1.y);
-	g.m_emission = invertInvertibleTonemap(Vec3(rt1.z, rt2.x, rt1.w));
+	g.m_emission = invertReinhardTonemap(Vec3(rt1.z, rt2.x, rt1.w));
 
 	g.m_normal = signedOctDecode(rt2.yzw);
 

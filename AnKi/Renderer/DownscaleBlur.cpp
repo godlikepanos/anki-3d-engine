@@ -5,7 +5,8 @@
 
 #include <AnKi/Renderer/DownscaleBlur.h>
 #include <AnKi/Renderer/Renderer.h>
-#include <AnKi/Renderer/TemporalAA.h>
+#include <AnKi/Renderer/Scale.h>
+#include <AnKi/Renderer/Tonemapping.h>
 #include <AnKi/Core/ConfigSet.h>
 
 namespace anki {
@@ -113,7 +114,7 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 				TextureSubresourceInfo renderSubresource;
 
 				pass.newDependency({m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE, renderSubresource});
-				pass.newDependency({m_r->getTemporalAA().getHdrRt(), TextureUsageBit::SAMPLED_COMPUTE});
+				pass.newDependency({m_r->getScale().getRt(), TextureUsageBit::SAMPLED_COMPUTE});
 			}
 		}
 	}
@@ -143,7 +144,7 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 				TextureSubresourceInfo renderSubresource;
 
 				pass.newDependency({m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, renderSubresource});
-				pass.newDependency({m_r->getTemporalAA().getHdrRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+				pass.newDependency({m_r->getScale().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 			}
 		}
 	}
@@ -168,17 +169,20 @@ void DownscaleBlur::run(U32 passIdx, RenderPassWorkContext& rgraphCtx)
 	}
 	else
 	{
-		rgraphCtx.bindColorTexture(0, 1, m_r->getTemporalAA().getHdrRt());
+		rgraphCtx.bindColorTexture(0, 1, m_r->getScale().getRt());
 	}
+
+	rgraphCtx.bindUniformBuffer(0, 2, m_r->getTonemapping().getAverageLuminanceBuffer());
+
+	const Bool revertTonemap = passIdx == 0;
+	const UVec4 fbSize(vpWidth, vpHeight, revertTonemap, 0);
+	cmdb->setPushConstants(&fbSize, sizeof(fbSize));
 
 	if(getConfig().getRPreferCompute())
 	{
 		TextureSubresourceInfo sampleSubresource;
 		sampleSubresource.m_firstMipmap = passIdx;
-		rgraphCtx.bindImage(0, 2, m_runCtx.m_rt, sampleSubresource);
-
-		UVec4 fbSize(vpWidth, vpHeight, 0, 0);
-		cmdb->setPushConstants(&fbSize, sizeof(fbSize));
+		rgraphCtx.bindImage(0, 3, m_runCtx.m_rt, sampleSubresource);
 
 		dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], vpWidth, vpHeight);
 	}
