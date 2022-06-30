@@ -38,10 +38,11 @@ Error Tonemapping::initInternal()
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProg = variant->getProgram();
 
-	// Create buffer
-	m_luminanceBuff = getGrManager().newBuffer(BufferInitInfo(
-		sizeof(Vec4), BufferUsageBit::ALL_STORAGE | BufferUsageBit::ALL_UNIFORM | BufferUsageBit::TRANSFER_DESTINATION,
-		BufferMapAccessBit::NONE, "AvgLum"));
+	// Create exposure texture
+	TextureUsageBit usage =
+		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE | TextureUsageBit::IMAGE_COMPUTE_WRITE;
+	TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(1, 1, Format::R16G16_SFLOAT, usage, "Exposure 1x1");
+	m_exposureLuminance1x1 = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::TRANSFER_DESTINATION);
 
 	CommandBufferInitInfo cmdbinit;
 	cmdbinit.m_flags = CommandBufferFlag::SMALL_BATCH | CommandBufferFlag::GENERAL_WORK;
@@ -50,9 +51,12 @@ Error Tonemapping::initInternal()
 	TransferGpuAllocatorHandle handle;
 	ANKI_CHECK(m_r->getResourceManager().getTransferGpuAllocator().allocate(sizeof(Vec4), handle));
 	void* data = handle.getMappedMemory();
-
 	*static_cast<Vec4*>(data) = Vec4(0.5);
-	cmdb->copyBufferToBuffer(handle.getBuffer(), handle.getOffset(), m_luminanceBuff, 0, handle.getRange());
+	TextureSubresourceInfo subresource;
+	subresource = TextureSubresourceInfo(TextureSurfaceInfo(0, 0, 0, 0));
+	TextureViewPtr tmpView =
+		getGrManager().newTextureView(TextureViewInitInfo(m_exposureLuminance1x1, subresource, "ExposureTmpView"));
+	cmdb->copyBufferToTextureView(handle.getBuffer(), handle.getOffset(), 2*sizeof(F32), tmpView);
 
 	FencePtr fence;
 	cmdb->flush({}, &fence);
@@ -64,10 +68,10 @@ Error Tonemapping::initInternal()
 
 void Tonemapping::importRenderTargets(RenderingContext& ctx)
 {
-	// Computation of the AVG luminance will run first in the frame and it will use the m_luminanceBuff as storage
+	// Computation of the AVG luminance will run first in the frame and it will use the m_exposureLuminance1x1 as storage
 	// read/write. To skip the barrier import it as read/write as well.
-	m_runCtx.m_buffHandle = ctx.m_renderGraphDescr.importBuffer(
-		m_luminanceBuff, BufferUsageBit::STORAGE_COMPUTE_READ | BufferUsageBit::STORAGE_COMPUTE_WRITE);
+	m_runCtx.m_exposureLuminanceHandle = ctx.m_renderGraphDescr.importRenderTarget(
+		m_exposureLuminance1x1, TextureUsageBit::IMAGE_COMPUTE_READ | TextureUsageBit::IMAGE_COMPUTE_WRITE);
 }
 
 void Tonemapping::populateRenderGraph(RenderingContext& ctx)
@@ -81,7 +85,7 @@ void Tonemapping::populateRenderGraph(RenderingContext& ctx)
 		CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
 		cmdb->bindShaderProgram(m_grProg);
-		rgraphCtx.bindStorageBuffer(0, 1, m_runCtx.m_buffHandle);
+		rgraphCtx.bindImage(0, 1, m_runCtx.m_exposureLuminanceHandle);
 
 		TextureSubresourceInfo inputTexSubresource;
 		inputTexSubresource.m_firstMipmap = m_inputTexMip;
@@ -89,9 +93,6 @@ void Tonemapping::populateRenderGraph(RenderingContext& ctx)
 
 		cmdb->dispatchCompute(1, 1, 1);
 	});
-
-	pass.newDependency(
-		{m_runCtx.m_buffHandle, BufferUsageBit::STORAGE_COMPUTE_READ | BufferUsageBit::STORAGE_COMPUTE_WRITE});
 
 	TextureSubresourceInfo inputTexSubresource;
 	inputTexSubresource.m_firstMipmap = m_inputTexMip;

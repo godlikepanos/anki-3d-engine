@@ -19,6 +19,7 @@
 #include <AnKi/Gr/AccelerationStructure.h>
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Gr/RenderGraph.h>
+#include <AnKi/Gr/GrUpscaler.h>
 
 #include <AnKi/Gr/Utils/FrameGpuAllocator.h>
 #include <AnKi/Gr/Utils/Functions.h>

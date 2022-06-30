@@ -5,6 +5,7 @@
 
 #pragma anki mutator BLUE_NOISE 0 1
 #pragma anki mutator BLOOM_ENABLED 0 1
+#pragma anki mutator APPLY_TONEMAPPING 0 1
 #pragma anki mutator DBG_ENABLED 0 1
 
 ANKI_SPECIALIZATION_CONSTANT_U32(LUT_SIZE, 0u);
@@ -30,6 +31,13 @@ layout(set = 0, binding = 5) uniform ANKI_RP texture3D u_lut;
 layout(set = 0, binding = 6) uniform ANKI_RP texture2D u_blueNoise;
 layout(set = 0, binding = 7) uniform texture2D u_motionVectorsRt;
 layout(set = 0, binding = 8) uniform texture2D u_depthRt;
+#if APPLY_TONEMAPPING
+#	include <AnKi/Shaders/TonemappingFunctions.glsl>
+const U32 TONEMAPPING_SET = 0u;
+const U32 TONEMAPPING_BINDING = 9u;
+#	include <AnKi/Shaders/TonemappingResources.glsl>
+#endif
+
 #if DBG_ENABLED
 layout(set = 0, binding = 9) uniform ANKI_RP texture2D u_dbgOutlineRt;
 #endif
@@ -66,6 +74,11 @@ void main()
 	{
 		out_color = textureLod(u_lightShadingRt, u_linearAnyClampSampler, uv, 0.0).rgb;
 	}
+
+#if APPLY_TONEMAPPING
+	const Vec2 prevExposureLuminance = getExposureLuminance();
+	out_color = linearToSRgb(tonemap(out_color, prevExposureLuminance.x));
+#endif
 
 #if BLOOM_ENABLED
 	const ANKI_RP Vec3 bloom = textureLod(u_ppsBloomLfRt, u_linearAnyClampSampler, uv, 0.0).rgb;

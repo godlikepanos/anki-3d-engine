@@ -29,6 +29,7 @@ set(common_headers
 	Texture.h
 	TextureView.h
 	TimestampQuery.h
+	GrUpscaler.h
 	Utils/FrameGpuAllocator.h
 	Utils/Functions.h
 	Utils/InstantiationMacros.h)
@@ -72,7 +73,9 @@ if(VULKAN)
 		Vulkan/TimestampQuery.cpp
 		Vulkan/TimestampQueryImpl.cpp
 		Vulkan/VulkanObject.cpp
-		Vulkan/FrameGarbageCollector.cpp)
+		Vulkan/FrameGarbageCollector.cpp
+		Vulkan/GrUpscaler.cpp
+		Vulkan/GrUpscalerImpl.cpp)
 
 	set(backend_headers
 		Vulkan/AccelerationStructureImpl.h
@@ -109,7 +112,8 @@ if(VULKAN)
 		Vulkan/TextureImpl.h
 		Vulkan/TextureViewImpl.h
 		Vulkan/TimestampQueryImpl.h
-		Vulkan/VulkanObject.h)
+		Vulkan/VulkanObject.h
+		Vulkan/GrUpscalerImpl.h)
 
 	if(ANKI_HEADLESS)
 		set(backend_sources ${backend_sources} "Vulkan/GrManagerImplHeadless.cpp")
@@ -130,3 +134,5 @@ target_link_libraries(AnKiGrCommon AnKiUtil) # Only depend on Util
 add_library(AnKiGr ${backend_sources} ${backend_headers})
 target_compile_definitions(AnKiGr PRIVATE -DANKI_SOURCE_FILE)
 target_link_libraries(AnKiGr AnKiCore AnKiSpirvCross AnKiGrCommon)
+# Add dynamic dependencies for AnkiNgx
+add_AnkiNgx_dependencies(AnKiGr)

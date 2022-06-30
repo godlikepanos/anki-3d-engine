@@ -147,7 +147,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			const Vec4 uniforms(getConfig().getRBloomThreshold(), getConfig().getRBloomScale(), 0.0f, 0.0f);
 			cmdb->setPushConstants(&uniforms, sizeof(uniforms));
 
-			rgraphCtx.bindStorageBuffer(0, 2, m_r->getTonemapping().getAverageLuminanceBuffer());
+			rgraphCtx.bindImage(0, 2, m_r->getTonemapping().getExposureLuminanceRT());
 
 			if(getConfig().getRPreferCompute())
 			{

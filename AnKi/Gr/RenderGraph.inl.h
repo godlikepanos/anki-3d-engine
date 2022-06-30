@@ -26,6 +26,11 @@ inline void RenderPassWorkContext::getRenderTargetState(RenderTargetHandle handl
 	tex = m_rgraph->getTexture(handle);
 }
 
+inline const TexturePtr RenderPassWorkContext::getTargetTexture(RenderTargetHandle handle) const
+{
+	return getTexture(handle);
+}
+
 inline TexturePtr RenderPassWorkContext::getTexture(RenderTargetHandle handle) const
 {
 	return m_rgraph->getTexture(handle);

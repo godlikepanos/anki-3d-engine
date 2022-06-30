@@ -32,11 +32,15 @@ public:
 		return (doSharpening()) ? m_runCtx.m_sharpenedRt : m_runCtx.m_scaledRt;
 	}
 
+	Bool getUsingDLSS() const;
+
 private:
 	ShaderProgramResourcePtr m_scaleProg;
 	ShaderProgramPtr m_scaleGrProg;
 	ShaderProgramResourcePtr m_sharpenProg;
 	ShaderProgramPtr m_sharpenGrProg;
+
+	GrUpscalerPtr m_grUpscaler;
 
 	FramebufferDescription m_fbDescr;
 	RenderTargetDescription m_rtDesc;
@@ -52,15 +56,21 @@ private:
 
 	void runScaling(RenderPassWorkContext& rgraphCtx);
 	void runSharpening(RenderPassWorkContext& rgraphCtx);
+	void runDLSS(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 
 	Bool doSharpening() const
 	{
 		return m_sharpenProg.isCreated();
 	}
 
+	Bool doDLSS() const
+	{
+		return m_grUpscaler.isCreated();
+	}
+
 	Bool doScaling() const
 	{
-		return m_scaleProg.isCreated();
+		return m_scaleProg.isCreated() || doDLSS();
 	}
 };
 /// @}

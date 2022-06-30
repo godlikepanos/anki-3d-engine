@@ -34,6 +34,34 @@ macro(anki_new_executable)
 	endif()
 endmacro()
 
+macro(add_AnkiNgx_dependencies)
+    if(ANKI_DLSS)
+        # Copy required DLLs
+        get_target_property(lib_type AnkiNgx TYPE)
+        if ("${lib_type}" STREQUAL "SHARED_LIBRARY")
+            get_target_property(ANKINGX_DLL AnkiNgx IMPORTED_LOCATION)
+            add_custom_command(TARGET ${ARGV}
+                COMMENT "Dependant DLLs copy ${ANKINGX_DLL} ${CMAKE_BINARY_DIR}/Bin"
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different "${ANKINGX_DLL}" "${CMAKE_BINARY_DIR}/Bin")
+            STRING(REGEX REPLACE "\\\\" "/" ANKINGX_DLL ${ANKINGX_DLL})
+            install(FILES ${ANKINGX_DLL} DESTINATION ${CMAKE_INSTALL_BINDIR})
+        else()
+            get_property(__NGX_DLLS_LIST TARGET AnkiNgx PROPERTY ANKINGX_EXTRA_DLLS)
+            foreach(dll_path ${__NGX_DLLS_LIST})
+                file(GLOB dll_files "${dll_path}")
+                foreach(dll_file ${dll_files})
+                    add_custom_command(TARGET ${ARGV}
+                        COMMENT "NGX DLL copy ${dll_file} ${CMAKE_BINARY_DIR}/Bin\n"
+                        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${dll_file}" "${CMAKE_BINARY_DIR}/Bin")
+                    STRING(REGEX REPLACE "\\\\" "/" dll_file ${dll_file})
+                    install(FILES ${dll_file} DESTINATION ${CMAKE_INSTALL_BINDIR})
+                endforeach()
+            endforeach()
+        endif()
+    endif()
+
+endmacro()
+
 ################################################################################
 # Determin the system to build for. Do that first                              #
 ################################################################################
@@ -127,6 +155,7 @@ option(ANKI_ADDRESS_SANITIZER "Enable address sanitizer (-fsanitize=address)" OF
 option(ANKI_HEADLESS "Build a headless application" OFF)
 option(ANKI_SHADER_FULL_PRECISION "Build shaders with full precision" OFF)
 set(ANKI_OVERRIDE_SHADER_COMPILER "" CACHE FILEPATH "Set the ShaderCompiler to be used to compile all shaders")
+option(ANKI_DLSS "Integrate DLSS if supported" ON)
 
 # Take a wild guess on the windowing system
 if(ANKI_HEADLESS)
@@ -296,6 +325,15 @@ if(ANDROID)
 	add_subdirectory(ThirdParty/HwcPipe)
 endif()
 
+# DLSS
+if(ANKI_DLSS AND (LINUX OR WINDOWS) AND VULKAN)
+	add_subdirectory(ThirdParty/nvngx_dlss_sdk)
+	set(_ANKI_DLSS_SUPPORTED 1)
+else()
+	set(ANKI_DLSS OFF CACHE BOOL "Disable DLSS support" FORCE)
+	set(_ANKI_DLSS_SUPPORTED 0)
+endif()
+
 ################################################################################
 # AnKi                                                                         #
 ################################################################################
@@ -403,6 +441,10 @@ if(LINUX)
 	if(SDL)
 		set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} X11-xcb)
 	endif()
+endif()
+
+if(ANKI_DLSS)
+	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} AnkiNgx)
 endif()
 
 # AnKi compiler flags (Mainly warnings)

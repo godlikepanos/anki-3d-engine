@@ -5,8 +5,9 @@
 
 #include <AnKi/Renderer/DownscaleBlur.h>
 #include <AnKi/Renderer/Renderer.h>
+#include <AnKi/Renderer/TemporalAA.h>
+#include <AnKi/Renderer/LightShading.h>
 #include <AnKi/Renderer/Scale.h>
-#include <AnKi/Renderer/Tonemapping.h>
 #include <AnKi/Core/ConfigSet.h>
 
 namespace anki {
@@ -89,6 +90,10 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 	// Create passes
 	static const Array<CString, 8> passNames = {"DownBlur #0",  "Down/Blur #1", "Down/Blur #2", "Down/Blur #3",
 												"Down/Blur #4", "Down/Blur #5", "Down/Blur #6", "Down/Blur #7"};
+
+	const RenderTargetHandle srcTarget =
+		m_r->getScale().getUsingDLSS() ? m_r->getLightShading().getRt() : m_r->getTemporalAA().getHdrRt();
+
 	if(getConfig().getRPreferCompute())
 	{
 		for(U32 i = 0; i < m_passCount; ++i)
@@ -114,7 +119,7 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 				TextureSubresourceInfo renderSubresource;
 
 				pass.newDependency({m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE, renderSubresource});
-				pass.newDependency({m_r->getScale().getRt(), TextureUsageBit::SAMPLED_COMPUTE});
+				pass.newDependency({srcTarget, TextureUsageBit::SAMPLED_COMPUTE});
 			}
 		}
 	}
@@ -144,7 +149,7 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 				TextureSubresourceInfo renderSubresource;
 
 				pass.newDependency({m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, renderSubresource});
-				pass.newDependency({m_r->getScale().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+				pass.newDependency({srcTarget, TextureUsageBit::SAMPLED_FRAGMENT});
 			}
 		}
 	}
@@ -169,7 +174,8 @@ void DownscaleBlur::run(U32 passIdx, RenderPassWorkContext& rgraphCtx)
 	}
 	else
 	{
-		rgraphCtx.bindColorTexture(0, 1, m_r->getScale().getRt());
+		rgraphCtx.bindColorTexture(
+			0, 1, m_r->getScale().getUsingDLSS() ? m_r->getLightShading().getRt() : m_r->getTemporalAA().getHdrRt());
 	}
 
 	rgraphCtx.bindUniformBuffer(0, 2, m_r->getTonemapping().getAverageLuminanceBuffer());

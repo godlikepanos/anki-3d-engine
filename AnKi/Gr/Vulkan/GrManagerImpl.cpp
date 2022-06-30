@@ -15,6 +15,9 @@
 
 namespace anki {
 
+// DLSS related
+#define ANKI_VK_NVX_BINARY_IMPORT "VK_NVX_binary_import"
+
 GrManagerImpl::~GrManagerImpl()
 {
 	ANKI_VK_LOGI("Destroying Vulkan backend");
@@ -544,6 +547,14 @@ Error GrManagerImpl::initInstance()
 	}
 #endif
 
+	// DLSS checks
+#if ANKI_DLSS
+	if(m_capabilities.m_gpuVendor == GpuVendor::NVIDIA)
+	{
+		m_capabilities.m_dlss = true;
+	}
+#endif
+
 	return Error::NONE;
 }
 
@@ -755,6 +766,23 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 				m_extensions |= VulkanExtensions::EXT_TEXTURE_COMPRESSION_ASTC_HDR;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
+			else if(extensionName == VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::KHR_PUSH_DESCRIPTOR;
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
+			}
+#if ANKI_DLSS
+			else if(extensionName == ANKI_VK_NVX_BINARY_IMPORT)
+			{
+				m_extensions |= VulkanExtensions::NVX_BINARY_IMPORT;
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
+			}
+			else if(extensionName == VK_NVX_IMAGE_VIEW_HANDLE_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::NVX_IMAGE_VIEW_HANDLE;
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
+			}
+#endif
 		}
 
 		ANKI_VK_LOGI("Will enable the following device extensions:");
