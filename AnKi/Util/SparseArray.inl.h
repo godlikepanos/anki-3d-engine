@@ -111,7 +111,6 @@ start:
 	grow(alloc);
 	goto start;
 
-	ANKI_ASSERT(0);
 	return 0;
 }
 

@@ -30,7 +30,7 @@ ANKI_CONFIG_VAR_BOOL(RDbgEnabled, false, "Enable or not debugging")
 // VRS
 ANKI_CONFIG_VAR_BOOL(RVrs, true, "Enable VRS in multiple passes")
 ANKI_CONFIG_VAR_BOOL(RGBufferVrs, false, "Enable VRS in GBuffer")
-ANKI_CONFIG_VAR_F32(RVrsThreshold, 0.05f, 0.0f, 1.0f, "Threshold under which a lower shading rate will be applied")
+ANKI_CONFIG_VAR_F32(RVrsThreshold, 0.1f, 0.0f, 1.0f, "Threshold under which a lower shading rate will be applied")
 ANKI_CONFIG_VAR_BOOL(RVrsLimitTo2x2, false, "If true the max rate will be 2x2")
 
 // SSR

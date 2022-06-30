@@ -95,8 +95,8 @@ void main()
 	const F32 lum1 = historyCol.r;
 	const F32 maxLum = boxMax.r;
 #else
-	const F32 lum0 = computeLuminance(invertibleTonemap(crntCol));
-	const F32 lum1 = computeLuminance(invertibleTonemap(historyCol));
+	const F32 lum0 = computeLuminance(reinhardTonemap(crntCol));
+	const F32 lum1 = computeLuminance(reinhardTonemap(historyCol));
 	const F32 maxLum = 1.0;
 #endif
 

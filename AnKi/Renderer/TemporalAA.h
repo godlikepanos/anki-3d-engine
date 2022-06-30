@@ -24,12 +24,8 @@ public:
 
 	void populateRenderGraph(RenderingContext& ctx);
 
-	RenderTargetHandle getHdrRt() const
-	{
-		return m_runCtx.m_renderRt;
-	}
-
-	RenderTargetHandle getTonemappedRt() const
+	/// Result is tonemaped.
+	RenderTargetHandle getRt() const
 	{
 		return m_runCtx.m_tonemappedRt;
 	}

@@ -7,7 +7,7 @@
 #include <AnKi/Util/BuddyAllocatorBuilder.h>
 #include <tuple>
 
-namespace anki {
+using namespace anki;
 
 /// Check if all memory has the same value.
 static int memvcmp(const void* memory, U8 val, PtrSize size)
@@ -107,5 +107,3 @@ ANKI_TEST(Util, BuddyAllocatorBuilder)
 		}
 	}
 }
-
-} // end namespace anki

@@ -229,4 +229,21 @@ GrManager* createGrManager(ConfigSet* cfg, NativeWindow* win);
 ResourceManager* createResourceManager(ConfigSet* cfg, GrManager* gr, PhysicsWorld*& physics,
 									   ResourceFilesystem*& resourceFs);
 
+/// Stolen from https://en.cppreference.com/w/cpp/algorithm/random_shuffle because std::random_suffle got deprecated
+template<class TRandomIt>
+static void randomShuffle(TRandomIt first, TRandomIt last)
+{
+	typename std::iterator_traits<TRandomIt>::difference_type i, n;
+	n = last - first;
+	for(i = n - 1; i > 0; --i)
+	{
+		using std::swap;
+		swap(first[i], first[std::rand() % (i + 1)]);
+		// rand() % (i+1) isn't actually correct, because the generated number
+		// is not uniformly distributed for most values of i. A correct implementation
+		// will need to essentially reimplement C++11 std::uniform_int_distribution,
+		// which is beyond the scope of this example.
+	}
+}
+
 } // end namespace anki

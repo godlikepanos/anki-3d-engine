@@ -53,26 +53,12 @@ public:
 	void sortAll(const Sort method = Sort::ASCENDING);
 
 	/// Push at the end of the list a formated string.
-	template<typename... TArgs>
-	void pushBackSprintf(Allocator alloc, CString fmt, TArgs... args)
-	{
-		String str;
-		str.sprintf(alloc, fmt, args...);
-
-		Base::emplaceBack(alloc);
-		Base::getBack() = std::move(str);
-	}
+	ANKI_CHECK_FORMAT(2, 3)
+	void pushBackSprintf(Allocator alloc, const Char* fmt, ...);
 
 	/// Push at the beginning of the list a formated string.
-	template<typename... TArgs>
-	void pushFrontSprintf(Allocator alloc, CString fmt, TArgs... args)
-	{
-		String str;
-		str.sprintf(alloc, fmt, args...);
-
-		Base::emplaceFront(alloc);
-		Base::getFront() = std::move(str);
-	}
+	ANKI_CHECK_FORMAT(2, 3)
+	void pushFrontSprintf(Allocator alloc, const Char* fmt, ...);
 
 	/// Push back plain CString.
 	void pushBack(Allocator alloc, CString cstr)
@@ -138,18 +124,12 @@ public:
 	}
 
 	/// Push at the end of the list a formated string
-	template<typename... TArgs>
-	void pushBackSprintf(CString fmt, TArgs... args)
-	{
-		Base::pushBackSprintf(m_alloc, fmt, args...);
-	}
+	ANKI_CHECK_FORMAT(1, 2)
+	void pushBackSprintf(const Char* fmt, ...);
 
 	/// Push at the beginning of the list a formated string
-	template<typename... TArgs>
-	void pushFrontSprintf(CString fmt, TArgs... args)
-	{
-		Base::pushFrontSprintf(m_alloc, fmt, args...);
-	}
+	ANKI_CHECK_FORMAT(1, 2)
+	void pushFrontSprintf(const Char* fmt, ...);
 
 	/// Push back plain CString.
 	void pushBack(CString cstr)

@@ -9,7 +9,9 @@
 #include <AnKi/Util/Atomic.h>
 #include <AnKi/Util/Functions.h>
 
-namespace anki {
+using namespace anki;
+
+namespace {
 
 class Task : public AsyncLoaderTask
 {
@@ -95,6 +97,8 @@ public:
 		return Error::NONE;
 	}
 };
+
+} // namespace
 
 ANKI_TEST(Resource, AsyncLoader)
 {
@@ -268,5 +272,3 @@ ANKI_TEST(Resource, AsyncLoader)
 		ANKI_TEST_EXPECT_EQ(counter.load(), 10);
 	}
 }
-
-} // end namespace anki

@@ -11,7 +11,7 @@
 #include <random>
 #include <algorithm>
 
-namespace anki {
+using namespace anki;
 
 namespace {
 
@@ -216,5 +216,3 @@ ANKI_TEST(Util, ClassAllocatorBuilder)
 		allocations.clear();
 	}
 }
-
-} // end namespace anki

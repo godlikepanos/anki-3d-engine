@@ -7,7 +7,18 @@
 #include <AnKi/Script.h>
 #include <AnKi/Math.h>
 
-static const char* script = R"(
+ANKI_TEST(Script, LuaBinder)
+{
+	ScriptManager sm;
+
+	ANKI_TEST_EXPECT_NO_ERR(sm.init(allocAligned, nullptr));
+	Vec4 v4(2.0, 3.0, 4.0, 5.0);
+	Vec3 v3(1.1f, 2.2f, 3.3f);
+
+	sm.exposeVariable("v4", &v4);
+	sm.exposeVariable("v3", &v3);
+
+	static const char* script = R"(
 b = Vec4.new(0, 0, 0, 1.1)
 if math.abs(b:getW() - 1.1) > 0.00001 then
 	print(b:getW())
@@ -21,17 +32,6 @@ v4:copy(v4 * b)
 
 v3:setZ(0.1)
 )";
-
-ANKI_TEST(Script, LuaBinder)
-{
-	ScriptManager sm;
-
-	ANKI_TEST_EXPECT_NO_ERR(sm.init(allocAligned, nullptr));
-	Vec4 v4(2.0, 3.0, 4.0, 5.0);
-	Vec3 v3(1.1f, 2.2f, 3.3f);
-
-	sm.exposeVariable("v4", &v4);
-	sm.exposeVariable("v3", &v3);
 
 	ANKI_TEST_EXPECT_NO_ERR(sm.evalString(script));
 

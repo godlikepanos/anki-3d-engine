@@ -39,19 +39,19 @@ void StatsUi::labelBytes(PtrSize val, CString name) const
 	StringAuto timestamp(getAllocator());
 	if(gb)
 	{
-		timestamp.sprintf("%s: %u,%04u,%04u,%04u", name.cstr(), gb, mb, kb, b);
+		timestamp.sprintf("%s: %zu,%04zu,%04zu,%04zu", name.cstr(), gb, mb, kb, b);
 	}
 	else if(mb)
 	{
-		timestamp.sprintf("%s: %u,%04u,%04u", name.cstr(), mb, kb, b);
+		timestamp.sprintf("%s: %zu,%04zu,%04zu", name.cstr(), mb, kb, b);
 	}
 	else if(kb)
 	{
-		timestamp.sprintf("%s: %u,%04u", name.cstr(), kb, b);
+		timestamp.sprintf("%s: %zu,%04zu", name.cstr(), kb, b);
 	}
 	else
 	{
-		timestamp.sprintf("%s: %u", name.cstr(), b);
+		timestamp.sprintf("%s: %zu", name.cstr(), b);
 	}
 	ImGui::TextUnformatted(timestamp.cstr());
 }

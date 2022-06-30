@@ -6,8 +6,6 @@
 #include <Tests/Framework/Framework.h>
 #include <AnKi/Scene/Octree.h>
 
-namespace anki {
-
 ANKI_TEST(Scene, Octree)
 {
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
@@ -84,5 +82,3 @@ ANKI_TEST(Scene, Octree)
 	}
 #endif
 }
-
-} // end namespace anki

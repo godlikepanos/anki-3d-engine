@@ -178,14 +178,17 @@ void DownscaleBlur::run(U32 passIdx, RenderPassWorkContext& rgraphCtx)
 			0, 1, m_r->getScale().getUsingDLSS() ? m_r->getLightShading().getRt() : m_r->getTemporalAA().getHdrRt());
 	}
 
+	rgraphCtx.bindUniformBuffer(0, 2, m_r->getTonemapping().getAverageLuminanceBuffer());
+
+	const Bool revertTonemap = passIdx == 0;
+	const UVec4 fbSize(vpWidth, vpHeight, revertTonemap, 0);
+	cmdb->setPushConstants(&fbSize, sizeof(fbSize));
+
 	if(getConfig().getRPreferCompute())
 	{
 		TextureSubresourceInfo sampleSubresource;
 		sampleSubresource.m_firstMipmap = passIdx;
-		rgraphCtx.bindImage(0, 2, m_runCtx.m_rt, sampleSubresource);
-
-		UVec4 fbSize(vpWidth, vpHeight, 0, 0);
-		cmdb->setPushConstants(&fbSize, sizeof(fbSize));
+		rgraphCtx.bindImage(0, 3, m_runCtx.m_rt, sampleSubresource);
 
 		dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], vpWidth, vpHeight);
 	}

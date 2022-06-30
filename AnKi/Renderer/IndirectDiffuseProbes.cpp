@@ -130,7 +130,7 @@ Error IndirectDiffuseProbes::initGBuffer()
 			m_tileSize * 6, m_tileSize, GBUFFER_COLOR_ATTACHMENT_PIXEL_FORMATS[0], "GI GBuffer");
 
 		// Create color RT descriptions
-		for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
+		for(U32 i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 		{
 			texinit.m_format = GBUFFER_COLOR_ATTACHMENT_PIXEL_FORMATS[i];
 			m_gbuffer.m_colorRtDescrs[i] = texinit;

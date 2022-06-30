@@ -24,6 +24,7 @@ namespace anki {
 LightShading::LightShading(Renderer* r)
 	: RendererObject(r)
 {
+	registerDebugRenderTarget("LightShading");
 }
 
 LightShading::~LightShading()
@@ -96,6 +97,12 @@ Error LightShading::initLightShading()
 	}
 
 	m_lightShading.m_fbDescr.bake();
+
+	// Debug visualization
+	ANKI_CHECK(
+		getResourceManager().loadResource("ShaderBinaries/VisualizeHdrRenderTarget.ankiprogbin", m_visualizeRtProg));
+	m_visualizeRtProg->getOrCreateVariant(variant);
+	m_visualizeRtGrProg = variant->getProgram();
 
 	return Error::NONE;
 }
@@ -400,6 +407,14 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 
 	// For forward shading
 	m_r->getForwardShading().setDependencies(ctx, pass);
+}
+
+void LightShading::getDebugRenderTarget([[maybe_unused]] CString rtName, RenderTargetHandle& handle,
+										ShaderProgramPtr& optionalShaderProgram) const
+{
+	ANKI_ASSERT(rtName == "LightShading");
+	handle = m_runCtx.m_rt;
+	optionalShaderProgram = m_visualizeRtGrProg;
 }
 
 } // end namespace anki

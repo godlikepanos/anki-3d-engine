@@ -83,6 +83,9 @@ private:
 	Error initUpscale();
 
 	Error initInternal();
+
+	void getDebugRenderTarget(CString rtName, RenderTargetHandle& handle,
+							  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const override;
 };
 
 /// @}

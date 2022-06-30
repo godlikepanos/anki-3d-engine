@@ -16,7 +16,7 @@ static void createBashScript(CString code)
 	File file;
 
 	ANKI_TEST_EXPECT_NO_ERR(file.open("process_test.sh", FileOpenFlag::WRITE));
-	ANKI_TEST_EXPECT_NO_ERR(file.writeText("#!/bin/bash\n%s\n", code.cstr()));
+	ANKI_TEST_EXPECT_NO_ERR(file.writeTextf("#!/bin/bash\n%s\n", code.cstr()));
 }
 
 } // end namespace anki

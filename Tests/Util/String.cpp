@@ -7,8 +7,6 @@
 #include <AnKi/Util/String.h>
 #include <string>
 
-namespace anki {
-
 ANKI_TEST(Util, String)
 {
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
@@ -230,5 +228,3 @@ ANKI_TEST(Util, String)
 		a.destroy(alloc);
 	}
 }
-
-} // end namespace anki

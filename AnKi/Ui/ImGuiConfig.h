@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Util/Assert.h>
-#include <AnKi/Math.h>
+#include <AnKi/Math/Vec.h>
 
 #define IM_ASSERT(_EXPR) ANKI_ASSERT(_EXPR)
 

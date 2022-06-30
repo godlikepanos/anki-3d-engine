@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Util/StringList.h>
+#include <cstdarg>
 
 namespace anki {
 
@@ -144,6 +145,54 @@ I StringList::getIndexOf(const CString& value) const
 	}
 
 	return (pos == Base::getSize()) ? -1 : pos;
+}
+
+void StringList::pushBackSprintf(Allocator alloc, const Char* fmt, ...)
+{
+	String str;
+	va_list args;
+	va_start(args, fmt);
+	str.sprintf(alloc, fmt, args);
+	va_end(args);
+
+	Base::emplaceBack(alloc);
+	Base::getBack() = std::move(str);
+}
+
+void StringList::pushFrontSprintf(Allocator alloc, const Char* fmt, ...)
+{
+	String str;
+	va_list args;
+	va_start(args, fmt);
+	str.sprintf(alloc, fmt, args);
+	va_end(args);
+
+	Base::emplaceFront(alloc);
+	Base::getFront() = std::move(str);
+}
+
+void StringListAuto::pushBackSprintf(const Char* fmt, ...)
+{
+	String str;
+	va_list args;
+	va_start(args, fmt);
+	str.sprintf(m_alloc, fmt, args);
+	va_end(args);
+
+	Base::emplaceBack(m_alloc);
+	Base::getBack() = std::move(str);
+}
+
+void StringListAuto::pushFrontSprintf(const Char* fmt, ...)
+{
+	String str;
+	va_list args;
+	va_start(args, fmt);
+	str.sprintf(m_alloc, fmt, args);
+	va_end(args);
+
+	Base::emplaceFront(m_alloc);
+	Base::getFront() = std::move(str);
 }
 
 } // end namespace anki

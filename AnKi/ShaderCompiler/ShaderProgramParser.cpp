@@ -713,8 +713,8 @@ Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPra
 			// Add the guard unique for this file
 			foundPragmaOnce = true;
 			const U64 hash = fname.computeHash();
-			m_codeLines.pushBackSprintf("#ifndef _ANKI_INCL_GUARD_%llu\n"
-										"#define _ANKI_INCL_GUARD_%llu",
+			m_codeLines.pushBackSprintf("#ifndef _ANKI_INCL_GUARD_%" PRIu64 "\n"
+										"#define _ANKI_INCL_GUARD_%" PRIu64,
 										hash, hash);
 		}
 		else if(*token == "anki")

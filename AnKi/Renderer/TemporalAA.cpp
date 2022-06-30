@@ -44,7 +44,7 @@ Error TemporalAA::initInternal()
 
 	{
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-		variantInitInfo.addConstant("VARIANCE_CLIPPING_GAMMA", 2.7f);
+		variantInitInfo.addConstant("VARIANCE_CLIPPING_GAMMA", 2.7f); // Variance clipping paper proposes 1.0
 		variantInitInfo.addConstant("BLEND_FACTOR", 1.0f / 16.0f);
 		variantInitInfo.addMutation("VARIANCE_CLIPPING", 1);
 		variantInitInfo.addMutation("YCBCR", 0);

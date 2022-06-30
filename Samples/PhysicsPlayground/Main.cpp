@@ -153,7 +153,7 @@ Error MyApp::sampleExtraInit()
 		const U LINKS = 5;
 
 		BodyNode* prevBody = nullptr;
-		for(U i = 0; i < LINKS; ++i)
+		for(U32 i = 0; i < LINKS; ++i)
 		{
 			ModelNode* monkey;
 			ANKI_CHECK(getSceneGraph().newSceneNode<ModelNode>(
@@ -224,10 +224,37 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 																									 : "RtShadows");
 	}
 
-	if(getInput().getKey(KeyCode::U) == 1)
+	if(getInput().getKey(KeyCode::P) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget(
-			(renderer.getCurrentDebugRenderTarget() == "GBufferNormals") ? "" : "GBufferNormals");
+		static U32 idx = 3;
+		++idx;
+		idx %= 4;
+		if(idx == 0)
+		{
+			renderer.setCurrentDebugRenderTarget("IndirectDiffuseVrsSri");
+		}
+		else if(idx == 1)
+		{
+			renderer.setCurrentDebugRenderTarget("VrsSriDownscaled");
+		}
+		else if(idx == 2)
+		{
+			renderer.setCurrentDebugRenderTarget("VrsSri");
+		}
+		else
+		{
+			renderer.setCurrentDebugRenderTarget("");
+		}
+	}
+
+	if(getInput().getKey(KeyCode::L) == 1)
+	{
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "Bloom") ? "" : "Bloom");
+	}
+
+	if(getInput().getKey(KeyCode::J) == 1)
+	{
+		m_config.setRVrs(!m_config.getRVrs());
 	}
 
 	if(getInput().getKey(KeyCode::F1) == 1)
@@ -262,7 +289,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 	{
 		ANKI_LOGI("Firing a monkey");
 
-		static U instance = 0;
+		static U32 instance = 0;
 
 		Transform camTrf =
 			getSceneGraph().getActiveCameraNode().getFirstComponentOfType<MoveComponent>().getWorldTransform();
@@ -319,7 +346,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 			Transform trf(ray.m_hitPosition.xyz0(), rot, 1.0f);
 
 			// Create an obj
-			static U id = 0;
+			static U32 id = 0;
 			ModelNode* monkey;
 			ANKI_CHECK(getSceneGraph().newSceneNode(
 				StringAuto(getSceneGraph().getFrameAllocator()).sprintf("decal%u", id++).toCString(), monkey));

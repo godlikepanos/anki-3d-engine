@@ -6,8 +6,6 @@
 #include <Tests/Framework/Framework.h>
 #include <AnKi/Renderer/TileAllocator.h>
 
-namespace anki {
-
 ANKI_TEST(Renderer, TileAllocator)
 {
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
@@ -69,5 +67,3 @@ ANKI_TEST(Renderer, TileAllocator)
 		ANKI_TEST_EXPECT_EQ(res, TileAllocatorResult::ALLOCATION_SUCCEEDED);
 	}
 }
-
-} // end namespace anki

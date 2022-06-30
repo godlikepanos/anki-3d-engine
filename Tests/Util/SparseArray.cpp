@@ -377,7 +377,7 @@ ANKI_TEST(Util, SparseArrayBench)
 	// Search
 	{
 		// Search in random order
-		std::random_shuffle(vals.begin(), vals.end());
+		randomShuffle(vals.begin(), vals.end());
 
 		int count = 0;
 
@@ -413,7 +413,7 @@ ANKI_TEST(Util, SparseArrayBench)
 	// Deletes
 	{
 		// Remove in random order
-		std::random_shuffle(vals.begin(), vals.end());
+		randomShuffle(vals.begin(), vals.end());
 
 		// Random delete AnKi
 		Second akTime = 0.0;

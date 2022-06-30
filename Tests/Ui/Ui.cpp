@@ -10,7 +10,9 @@
 #include <AnKi/Input.h>
 #include <AnKi/Core/GpuMemoryPools.h>
 
-namespace anki {
+using namespace anki;
+
+namespace {
 
 class Label : public UiImmediateModeBuilder
 {
@@ -50,6 +52,8 @@ public:
 		ImGui::GetStyle().Colors[ImGuiCol_WindowBg] = oldBackground;
 	}
 };
+
+} // namespace
 
 ANKI_TEST(Ui, Ui)
 {
@@ -154,5 +158,3 @@ ANKI_TEST(Ui, Ui)
 	Input::deleteInstance(in);
 	NativeWindow::deleteInstance(win);
 }
-
-} // end namespace anki
