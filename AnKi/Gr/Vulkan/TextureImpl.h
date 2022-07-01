@@ -84,7 +84,7 @@ public:
 	GpuMemoryHandle m_memHandle;
 
 	VkFormat m_vkFormat = VK_FORMAT_UNDEFINED;
-
+	VkImageUsageFlags m_vkUsageFlags = 0;
 	VkImageViewCreateInfo m_viewCreateInfoTemplate;
 	VkImageViewASTCDecodeModeEXT m_astcDecodeMode;
 

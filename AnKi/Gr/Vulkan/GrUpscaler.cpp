@@ -5,19 +5,14 @@
 
 #include <AnKi/Gr/GrUpscaler.h>
 #include <AnKi/Gr/GrManager.h>
-#include <AnKi/Gr/Texture.h>
 #include <AnKi/Gr/Vulkan/GrUpscalerImpl.h>
 
 namespace anki {
 
 GrUpscaler* GrUpscaler::newInstance(GrManager* manager, const GrUpscalerInitInfo& initInfo)
 {
-	GrUpscalerImpl* impl(nullptr);
-	impl = manager->getAllocator().newInstance<GrUpscalerImpl>(manager, "");
-	ANKI_ASSERT(impl);
-	impl->m_upscalerType = initInfo.m_upscalerType;
+	GrUpscalerImpl* impl = manager->getAllocator().newInstance<GrUpscalerImpl>(manager, initInfo.getName());
 	const Error err = impl->initInternal(initInfo);
-
 	if(err)
 	{
 		manager->getAllocator().deleteInstance(impl);

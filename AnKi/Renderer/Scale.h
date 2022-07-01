@@ -29,10 +29,13 @@ public:
 
 	RenderTargetHandle getRt() const
 	{
-		return (doSharpening()) ? m_runCtx.m_sharpenedRt : m_runCtx.m_scaledRt;
+		return (m_sharpenMethod != SharpenMethod::NONE) ? m_runCtx.m_sharpenedRt : m_runCtx.m_scaledRt;
 	}
 
-	Bool getUsingDLSS() const;
+	Bool getUsingGrUpscaler() const
+	{
+		return m_grUpscaler.isCreated();
+	}
 
 private:
 	ShaderProgramResourcePtr m_scaleProg;
@@ -45,7 +48,24 @@ private:
 	FramebufferDescription m_fbDescr;
 	RenderTargetDescription m_rtDesc;
 
-	Bool m_fsr = false;
+	enum class UpscalingMethod : U8
+	{
+		NONE,
+		BILINEAR,
+		FSR,
+		GR
+	};
+
+	UpscalingMethod m_upscalingMethod = UpscalingMethod::NONE;
+
+	enum class SharpenMethod : U8
+	{
+		NONE,
+		RCAS,
+		GR
+	};
+
+	SharpenMethod m_sharpenMethod = SharpenMethod::NONE;
 
 	class
 	{
@@ -54,24 +74,9 @@ private:
 		RenderTargetHandle m_sharpenedRt;
 	} m_runCtx;
 
-	void runScaling(RenderPassWorkContext& rgraphCtx);
-	void runSharpening(RenderPassWorkContext& rgraphCtx);
-	void runDLSS(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
-
-	Bool doSharpening() const
-	{
-		return m_sharpenProg.isCreated();
-	}
-
-	Bool doDLSS() const
-	{
-		return m_grUpscaler.isCreated();
-	}
-
-	Bool doScaling() const
-	{
-		return m_scaleProg.isCreated() || doDLSS();
-	}
+	void runFsrOrBilinearScaling(RenderPassWorkContext& rgraphCtx);
+	void runRcasSharpening(RenderPassWorkContext& rgraphCtx);
+	void runGrUpscaling(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 

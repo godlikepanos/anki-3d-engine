@@ -21,11 +21,10 @@ namespace anki {
 class DLSSRecommendedSettings
 {
 public:
-	F32 m_recommendedSharpness = 0.01f;
-	UVec2 m_recommendedOptimalRenderSize = UVec2(MAX_U32, MAX_U32);
-	UVec2 m_dynamicMaximumRenderSize = UVec2(MAX_U32, MAX_U32);
-	UVec2 m_dynamicMinimumRenderSize = UVec2(MAX_U32, MAX_U32);
-	GrUpscalerQualityMode m_qualityMode;
+	F32 m_sharpness = 0.01f;
+	UVec2 m_optimalRenderSize = UVec2(MAX_U32);
+	UVec2 m_dynamicMaximumRenderSize = UVec2(MAX_U32);
+	UVec2 m_dynamicMinimumRenderSize = UVec2(MAX_U32);
 };
 
 class GrUpscalerImpl final : public GrUpscaler, public VulkanObject<GrUpscaler, GrUpscalerImpl>
@@ -42,7 +41,7 @@ public:
 
 	/// @name DLSS data accessors
 	/// @{
-
+#if ANKI_DLSS
 	NVSDK_NGX_Parameter& getParameters() const
 	{
 		return *m_ngxParameters;
@@ -57,36 +56,22 @@ public:
 	{
 		return m_recommendedSettings;
 	}
-
+#endif
 	/// @}
 
 private:
-
-	// DLSS related
-	Bool m_ngxInitialized = false;
+#if ANKI_DLSS
 	NVSDK_NGX_Parameter* m_ngxParameters = nullptr;
 	NVSDK_NGX_Handle* m_dlssFeature = nullptr;
 	DLSSRecommendedSettings m_recommendedSettings;
+	Bool m_ngxInitialized = false;
 
-	void shutdown();
+	Error initDlss(const GrUpscalerInitInfo& initInfo);
 
-#if ANKI_DLSS
-	Error initAsDLSS(const GrUpscalerInitInfo& initInfo);
+	void destroyDlss();
 
-	void shutdownDLSS();
-
-	Error createDLSSFeature(const UVec2& srcRes, const UVec2& dstRes, const GrUpscalerQualityMode mode);
-
-	void releaseDLSSFeature();
-
-	Error queryOptimalSettings(const UVec2& displayRes, const GrUpscalerQualityMode mode,
-							   DLSSRecommendedSettings& outRecommendedSettings);
+	Error createDlssFeature(const UVec2& srcRes, const UVec2& dstRes, const GrUpscalerQualityMode mode);
 #endif
-
-	Bool isNgxInitialized() const
-	{
-		return m_ngxInitialized;
-	}
 };
 /// @}
 

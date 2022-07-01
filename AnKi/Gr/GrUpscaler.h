@@ -15,19 +15,19 @@ namespace anki {
 /// @{
 
 /// Different upscalers supported internally by GrUpscaler
-enum class GrUpscalerType : I8
+enum class GrUpscalerType : U8
 {
-	INVALID = -1,
-	DLSS_2 = 0
+	DLSS_2 = 0,
+	COUNT
 };
 
 /// Quality preset to be used by the upscaler if available
 enum class GrUpscalerQualityMode : U8
 {
-	DISABLED = 0,
 	PERFORMANCE,
 	BALANCED,
 	QUALITY,
+
 	COUNT
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(GrUpscalerQualityMode)
@@ -36,23 +36,10 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(GrUpscalerQualityMode)
 class GrUpscalerInitInfo : public GrBaseInitInfo
 {
 public:
-	UVec2 m_sourceImageResolution = UVec2(0, 0);
-	UVec2 m_targetImageResolution = UVec2(0, 0);
-	GrUpscalerType m_upscalerType = GrUpscalerType::INVALID;
+	UVec2 m_sourceTextureResolution = UVec2(0u);
+	UVec2 m_targetTextureResolution = UVec2(0u);
+	GrUpscalerType m_upscalerType = GrUpscalerType::COUNT;
 	GrUpscalerQualityMode m_qualityMode = GrUpscalerQualityMode::PERFORMANCE;
-
-	GrUpscalerInitInfo()
-		: GrBaseInitInfo()
-	{
-	}
-
-	GrUpscalerInitInfo(const UVec2& srcRes, const UVec2& dstRes, const GrUpscalerType type, const GrUpscalerQualityMode qualityMode)
-		: m_sourceImageResolution(srcRes)
-		, m_targetImageResolution(dstRes)
-		, m_upscalerType(type)
-		, m_qualityMode(qualityMode)
-	{
-	}
 };
 
 class GrUpscaler : public GrObject
@@ -64,10 +51,13 @@ public:
 
 	GrUpscalerType getUpscalerType() const
 	{
+		ANKI_ASSERT(m_upscalerType != GrUpscalerType::COUNT);
 		return m_upscalerType;
 	}
 
 protected:
+	GrUpscalerType m_upscalerType = GrUpscalerType::COUNT;
+
 	/// Construct.
 	GrUpscaler(GrManager* manager, CString name)
 		: GrObject(manager, CLASS_TYPE, name)
@@ -79,12 +69,9 @@ protected:
 	{
 	}
 
-	GrUpscalerType m_upscalerType;
-
 private:
-
 	/// Allocate and initialize a new instance.
-	static GrUpscaler* newInstance(GrManager* manager, const GrUpscalerInitInfo& initInfo);
+	[[nodiscard]] static GrUpscaler* newInstance(GrManager* manager, const GrUpscalerInitInfo& initInfo);
 };
 /// @}
 

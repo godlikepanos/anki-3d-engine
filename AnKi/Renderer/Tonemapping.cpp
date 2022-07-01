@@ -38,40 +38,24 @@ Error Tonemapping::initInternal()
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProg = variant->getProgram();
 
-	// Create exposure texture
-	TextureUsageBit usage =
-		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE | TextureUsageBit::IMAGE_COMPUTE_WRITE;
-	TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(1, 1, Format::R16G16_SFLOAT, usage, "Exposure 1x1");
-	m_exposureLuminance1x1 = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::TRANSFER_DESTINATION);
-
-	CommandBufferInitInfo cmdbinit;
-	cmdbinit.m_flags = CommandBufferFlag::SMALL_BATCH | CommandBufferFlag::GENERAL_WORK;
-	CommandBufferPtr cmdb = getGrManager().newCommandBuffer(cmdbinit);
-
-	TransferGpuAllocatorHandle handle;
-	ANKI_CHECK(m_r->getResourceManager().getTransferGpuAllocator().allocate(sizeof(Vec4), handle));
-	void* data = handle.getMappedMemory();
-	*static_cast<Vec4*>(data) = Vec4(0.5);
-	TextureSubresourceInfo subresource;
-	subresource = TextureSubresourceInfo(TextureSurfaceInfo(0, 0, 0, 0));
-	TextureViewPtr tmpView =
-		getGrManager().newTextureView(TextureViewInitInfo(m_exposureLuminance1x1, subresource, "ExposureTmpView"));
-	cmdb->copyBufferToTextureView(handle.getBuffer(), handle.getOffset(), 2*sizeof(F32), tmpView);
-
-	FencePtr fence;
-	cmdb->flush({}, &fence);
-
-	m_r->getResourceManager().getTransferGpuAllocator().release(handle, fence);
+	// Create exposure texture.
+	// WARNING: Use it only as IMAGE and nothing else. It will not be tracked by the rendergraph. No tracking means no
+	// automatic image transitions
+	const TextureUsageBit usage = TextureUsageBit::ALL_IMAGE;
+	const TextureInitInfo texinit =
+		m_r->create2DRenderTargetInitInfo(1, 1, Format::R16G16_SFLOAT, usage, "ExposureAndAvgLum1x1");
+	ClearValue clearValue;
+	clearValue.m_colorf = {0.5f, 0.5f, 0.5f, 0.5f};
+	m_exposureAndAvgLuminance1x1 = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::ALL_IMAGE, clearValue);
 
 	return Error::NONE;
 }
 
 void Tonemapping::importRenderTargets(RenderingContext& ctx)
 {
-	// Computation of the AVG luminance will run first in the frame and it will use the m_exposureLuminance1x1 as storage
-	// read/write. To skip the barrier import it as read/write as well.
-	m_runCtx.m_exposureLuminanceHandle = ctx.m_renderGraphDescr.importRenderTarget(
-		m_exposureLuminance1x1, TextureUsageBit::IMAGE_COMPUTE_READ | TextureUsageBit::IMAGE_COMPUTE_WRITE);
+	// Just import it. It will not be used in resource tracking
+	m_runCtx.m_exposureLuminanceHandle =
+		ctx.m_renderGraphDescr.importRenderTarget(m_exposureAndAvgLuminance1x1, TextureUsageBit::ALL_IMAGE);
 }
 
 void Tonemapping::populateRenderGraph(RenderingContext& ctx)
@@ -79,7 +63,7 @@ void Tonemapping::populateRenderGraph(RenderingContext& ctx)
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	// Create the pass
-	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Avg lum");
+	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("AvgLuminance");
 
 	pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 		CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;

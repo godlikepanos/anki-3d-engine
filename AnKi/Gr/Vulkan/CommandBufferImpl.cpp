@@ -3,21 +3,19 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Gr/GrManager.h>
 #include <AnKi/Gr/Vulkan/CommandBufferImpl.h>
+#include <AnKi/Gr/GrManager.h>
 #include <AnKi/Gr/Vulkan/GrManagerImpl.h>
-
 #include <AnKi/Gr/Framebuffer.h>
 #include <AnKi/Gr/Vulkan/GrUpscalerImpl.h>
 #include <AnKi/Gr/Vulkan/AccelerationStructureImpl.h>
 #include <AnKi/Gr/Vulkan/FramebufferImpl.h>
 
 #if ANKI_DLSS
-// Ngx specific
-#	include <ThirdParty/nvngx_dlss_sdk/sdk/include/nvsdk_ngx.h>
-#	include <ThirdParty/nvngx_dlss_sdk/sdk/include/nvsdk_ngx_helpers.h>
-#	include <ThirdParty/nvngx_dlss_sdk/sdk/include/nvsdk_ngx_vk.h>
-#	include <ThirdParty/nvngx_dlss_sdk/sdk/include/nvsdk_ngx_helpers_vk.h>
+#	include <ThirdParty/DlssSdk/sdk/include/nvsdk_ngx.h>
+#	include <ThirdParty/DlssSdk/sdk/include/nvsdk_ngx_helpers.h>
+#	include <ThirdParty/DlssSdk/sdk/include/nvsdk_ngx_vk.h>
+#	include <ThirdParty/DlssSdk/sdk/include/nvsdk_ngx_helpers_vk.h>
 #endif
 
 #include <algorithm>
@@ -798,18 +796,20 @@ void CommandBufferImpl::buildAccelerationStructureInternal(const AccelerationStr
 #if ANKI_DLSS
 /// Utility function to get the NGX's resource structure for a texture
 /// @param[in] tex the texture to generate the NVSDK_NGX_Resource_VK from
-/// @param[in] isUAV whether IMAGE READ/WRITE access is allowed for this image
-static NVSDK_NGX_Resource_VK getNGXResourceFromAnkiTexture(const TextureViewImpl& tex, const Bool isUAV)
+static NVSDK_NGX_Resource_VK getNGXResourceFromAnkiTexture(const TextureViewImpl& view)
 {
-	NVSDK_NGX_Resource_VK resourceVK = {};
-	const VkImageView imageView = tex.getHandle();
-	const VkFormat format = tex.getTextureImpl().m_vkFormat;
-	const VkImage image = tex.getTextureImpl().m_imageHandle;
-	const VkImageSubresourceRange subresourceRange = tex.getVkImageSubresourceRange();
+	const TextureImpl& tex = view.getTextureImpl();
 
-	return NVSDK_NGX_Create_ImageView_Resource_VK(imageView, image, subresourceRange, format,
-												  tex.getTextureImpl().getWidth(), tex.getTextureImpl().getHeight(),
-												  isUAV);
+	NVSDK_NGX_Resource_VK resourceVK = {};
+	const VkImageView imageView = view.getHandle();
+	const VkFormat format = tex.m_vkFormat;
+	const VkImage image = tex.m_imageHandle;
+	const VkImageSubresourceRange subresourceRange = view.getVkImageSubresourceRange();
+	const Bool isUAV = !!(tex.m_vkUsageFlags & VK_IMAGE_USAGE_STORAGE_BIT);
+
+	// TODO Not sure if I should pass the width,height of the image or the view
+	return NVSDK_NGX_Create_ImageView_Resource_VK(imageView, image, subresourceRange, format, tex.getWidth(),
+												  tex.getHeight(), isUAV);
 }
 #endif
 
@@ -819,63 +819,74 @@ void CommandBufferImpl::upscaleInternal(const GrUpscalerPtr& upscaler, const Tex
 										const Bool resetAccumulation, const Vec2& jitterOffset,
 										const Vec2& motionVectorsScale)
 {
+#if ANKI_DLSS
+	ANKI_ASSERT(getGrManagerImpl().getDeviceCapabilities().m_dlss);
+	ANKI_ASSERT(upscaler->getUpscalerType() == GrUpscalerType::DLSS_2);
+
 	commandCommon();
 	flushBatches(CommandBufferCommandType::ANY_OTHER_COMMAND);
 
-#if ANKI_DLSS
-	if(upscaler->getUpscalerType() == GrUpscalerType::DLSS_2)
+	const GrUpscalerImpl& upscalerImpl = static_cast<const GrUpscalerImpl&>(*upscaler);
+
+	const TextureViewImpl& srcViewImpl = static_cast<const TextureViewImpl&>(*inColor);
+	const TextureViewImpl& dstViewImpl = static_cast<const TextureViewImpl&>(*outUpscaledColor);
+	const TextureViewImpl& mvViewImpl = static_cast<const TextureViewImpl&>(*motionVectors);
+	const TextureViewImpl& depthViewImpl = static_cast<const TextureViewImpl&>(*depth);
+	const TextureViewImpl& exposureViewImpl = static_cast<const TextureViewImpl&>(*exposure);
+
+	NVSDK_NGX_Resource_VK srcResVk = getNGXResourceFromAnkiTexture(srcViewImpl);
+	NVSDK_NGX_Resource_VK dstResVk = getNGXResourceFromAnkiTexture(dstViewImpl);
+	NVSDK_NGX_Resource_VK mvResVk = getNGXResourceFromAnkiTexture(mvViewImpl);
+	NVSDK_NGX_Resource_VK depthResVk = getNGXResourceFromAnkiTexture(depthViewImpl);
+	NVSDK_NGX_Resource_VK exposureResVk = getNGXResourceFromAnkiTexture(exposureViewImpl);
+
+	const U32 mipLevel = srcViewImpl.getSubresource().m_firstMipmap;
+	const NVSDK_NGX_Coordinates renderingOffset = {0, 0};
+	const NVSDK_NGX_Dimensions renderingSize = {srcViewImpl.getTextureImpl().getWidth() >> mipLevel,
+												srcViewImpl.getTextureImpl().getHeight() >> mipLevel};
+
+	NVSDK_NGX_VK_DLSS_Eval_Params vkDlssEvalParams;
+	memset(&vkDlssEvalParams, 0, sizeof(vkDlssEvalParams));
+	vkDlssEvalParams.Feature.pInColor = &srcResVk;
+	vkDlssEvalParams.Feature.pInOutput = &dstResVk;
+	vkDlssEvalParams.pInDepth = &depthResVk;
+	vkDlssEvalParams.pInMotionVectors = &mvResVk;
+	vkDlssEvalParams.pInExposureTexture = &exposureResVk;
+	vkDlssEvalParams.InJitterOffsetX = jitterOffset.x();
+	vkDlssEvalParams.InJitterOffsetY = jitterOffset.y();
+	vkDlssEvalParams.Feature.InSharpness = upscalerImpl.getRecommendedSettings().m_sharpness;
+	vkDlssEvalParams.InReset = resetAccumulation;
+	vkDlssEvalParams.InMVScaleX = motionVectorsScale.x();
+	vkDlssEvalParams.InMVScaleY = motionVectorsScale.y();
+	vkDlssEvalParams.InColorSubrectBase = renderingOffset;
+	vkDlssEvalParams.InDepthSubrectBase = renderingOffset;
+	vkDlssEvalParams.InTranslucencySubrectBase = renderingOffset;
+	vkDlssEvalParams.InMVSubrectBase = renderingOffset;
+	vkDlssEvalParams.InRenderSubrectDimensions = renderingSize;
+
+	getGrManagerImpl().beginMarker(m_handle, "DLSS");
+	NVSDK_NGX_Parameter* dlssParameters = &upscalerImpl.getParameters();
+	NVSDK_NGX_Handle* dlssFeature = &upscalerImpl.getFeature();
+	const NVSDK_NGX_Result result =
+		NGX_VULKAN_EVALUATE_DLSS_EXT(m_handle, dlssFeature, dlssParameters, &vkDlssEvalParams);
+	getGrManagerImpl().endMarker(m_handle);
+
+	if(NVSDK_NGX_FAILED(result))
 	{
-		const GrUpscalerImpl& upscalerImpl = static_cast<const GrUpscalerImpl&>(*upscaler);
-
-		const TextureViewImpl& srcViewImpl = static_cast<const TextureViewImpl&>(*inColor);
-		const TextureViewImpl& dstViewImpl = static_cast<const TextureViewImpl&>(*outUpscaledColor);
-		const TextureViewImpl& mvViewImpl = static_cast<const TextureViewImpl&>(*motionVectors);
-		const TextureViewImpl& depthViewImpl = static_cast<const TextureViewImpl&>(*depth);
-		const TextureViewImpl& exposureViewImpl = static_cast<const TextureViewImpl&>(*exposure);
-
-		NVSDK_NGX_Resource_VK srcResVk = getNGXResourceFromAnkiTexture(srcViewImpl, false);
-		NVSDK_NGX_Resource_VK dstResVk = getNGXResourceFromAnkiTexture(dstViewImpl, true);
-		NVSDK_NGX_Resource_VK mvResVk = getNGXResourceFromAnkiTexture(mvViewImpl, false);
-		NVSDK_NGX_Resource_VK depthResVk = getNGXResourceFromAnkiTexture(depthViewImpl, false);
-		NVSDK_NGX_Resource_VK exposureResVk = getNGXResourceFromAnkiTexture(exposureViewImpl, false);
-
-		const U32 mipLevel = srcViewImpl.getSubresource().m_firstMipmap;
-		const NVSDK_NGX_Coordinates renderingOffset = {0, 0};
-		const NVSDK_NGX_Dimensions renderingSize = {srcViewImpl.getTextureImpl().getWidth() >> mipLevel,
-													srcViewImpl.getTextureImpl().getHeight() >> mipLevel};
-
-		NVSDK_NGX_VK_DLSS_Eval_Params vkDlssEvalParams;
-		memset(&vkDlssEvalParams, 0, sizeof(vkDlssEvalParams));
-		vkDlssEvalParams.Feature.pInColor = &srcResVk;
-		vkDlssEvalParams.Feature.pInOutput = &dstResVk;
-		vkDlssEvalParams.pInDepth = &depthResVk;
-		vkDlssEvalParams.pInMotionVectors = &mvResVk;
-		vkDlssEvalParams.pInExposureTexture = &exposureResVk;
-		vkDlssEvalParams.InJitterOffsetX = jitterOffset.x();
-		vkDlssEvalParams.InJitterOffsetY = jitterOffset.y();
-		vkDlssEvalParams.Feature.InSharpness = upscalerImpl.getRecommendedSettings().m_recommendedSharpness;
-		vkDlssEvalParams.InReset = resetAccumulation;
-		vkDlssEvalParams.InMVScaleX = motionVectorsScale.x();
-		vkDlssEvalParams.InMVScaleY = motionVectorsScale.y();
-		vkDlssEvalParams.InColorSubrectBase = renderingOffset;
-		vkDlssEvalParams.InDepthSubrectBase = renderingOffset;
-		vkDlssEvalParams.InTranslucencySubrectBase = renderingOffset;
-		vkDlssEvalParams.InMVSubrectBase = renderingOffset;
-		vkDlssEvalParams.InRenderSubrectDimensions = renderingSize;
-
-		getGrManagerImpl().beginMarker(m_handle, "DLSS");
-		NVSDK_NGX_Parameter* dlssParameters(&upscalerImpl.getParameters());
-		NVSDK_NGX_Handle* dlssFeature(&upscalerImpl.getFeature());
-		const NVSDK_NGX_Result result =
-			NGX_VULKAN_EVALUATE_DLSS_EXT(m_handle, dlssFeature, dlssParameters, &vkDlssEvalParams);
-		getGrManagerImpl().endMarker(m_handle);
-
-		if(NVSDK_NGX_FAILED(result))
-		{
-			ANKI_VK_LOGF("Failed to NVSDK_NGX_VULKAN_EvaluateFeature for DLSS, code = 0x%08x, info: %ls", result,
-					  GetNGXResultAsString(result));
-		}
+		ANKI_VK_LOGF("Failed to NVSDK_NGX_VULKAN_EvaluateFeature for DLSS, code = 0x%08x, info: %ls", result,
+					 GetNGXResultAsString(result));
 	}
+#else
+	ANKI_ASSERT(0 && "Not supported");
+	(void)upscaler;
+	(void)inColor;
+	(void)outUpscaledColor;
+	(void)motionVectors;
+	(void)depth;
+	(void)exposure;
+	(void)resetAccumulation;
+	(void)jitterOffset;
+	(void)motionVectorsScale;
 #endif
 }
 

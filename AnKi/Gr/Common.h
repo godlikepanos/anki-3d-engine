@@ -188,9 +188,6 @@ public:
 	Bool m_dlss = false;
 };
 ANKI_END_PACKED_STRUCT
-static_assert(sizeof(GpuDeviceCapabilities)
-				  == sizeof(PtrSize) * 5 + sizeof(U32) * 8 + sizeof(U8) * 3 + sizeof(Bool) * 7,
-			  "Should be packed");
 
 /// The type of the allocator for heap allocations
 template<typename T>

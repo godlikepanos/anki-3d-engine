@@ -9,24 +9,24 @@
 
 #include <AnKi/Shaders/Common.glsl>
 
-#ifndef TONEMAPPING_RESOURCE_AS_WRITE_IMAGE
+#if !defined(TONEMAPPING_RESOURCE_AS_WRITE_IMAGE)
 #	define TONEMAPPING_RESOURCE_AS_WRITE_IMAGE 0
 #endif
 
 #if TONEMAPPING_RESOURCE_AS_WRITE_IMAGE
-layout(set = 0, binding = TONEMAPPING_BINDING) uniform image2D b_tonemapping;
+layout(set = 0, binding = TONEMAPPING_BINDING) ANKI_RP uniform coherent image2D u_tonemappingImage;
 #else
-layout(set = 0, binding = TONEMAPPING_BINDING) uniform readonly image2D b_tonemapping;
+layout(set = 0, binding = TONEMAPPING_BINDING) ANKI_RP uniform readonly image2D u_tonemappingImage;
 #endif
 
-void writeExposureAndLuminance(float exposure, float luminance)
-{
 #if TONEMAPPING_RESOURCE_AS_WRITE_IMAGE
-	imageStore(b_tonemapping, IVec2(0, 0), Vec4(exposure, luminance, 0.0f, 0.0f));
-#endif
-}
-
-Vec2 getExposureLuminance()
+void writeExposureAndAverageLuminance(ANKI_RP F32 exposure, ANKI_RP F32 avgLuminance)
 {
-	return imageLoad(b_tonemapping, IVec2(0, 0)).xy;
+	imageStore(u_tonemappingImage, IVec2(0), Vec4(exposure, avgLuminance, 0.0f, 0.0f));
+}
+#endif
+
+ANKI_RP Vec2 readExposureAndAverageLuminance()
+{
+	return imageLoad(u_tonemappingImage, IVec2(0)).xy;
 }

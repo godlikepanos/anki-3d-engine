@@ -24,8 +24,6 @@ layout(set = 0, binding = 0) uniform ANKI_RP texture2D u_tex;
 #define TONEMAPPING_BINDING 1
 #include <AnKi/Shaders/TonemappingResources.glsl>
 
-// Needed for DLSS
-
 shared F32 s_avgLum[WORKGROUP_SIZE.x * WORKGROUP_SIZE.y];
 
 void main()
@@ -87,8 +85,7 @@ void main()
 #endif
 
 #if 1
-		const Vec2 prevExposureLuminance = getExposureLuminance();
-		const F32 prevLum = prevExposureLuminance.y;
+		const F32 prevLum = readExposureAndAverageLuminance().y;
 
 		// Lerp between previous and new L value
 		const F32 INTERPOLATION_FACTOR = 0.05;
@@ -100,7 +97,7 @@ void main()
 		// This is a workaround because sometimes the avg lum becomes nan
 		finalAvgLum = clamp(finalAvgLum, EPSILON, MAX_F32);
 
-		writeExposureAndLuminance(computeExposure(finalAvgLum, 0.0), finalAvgLum);
+		writeExposureAndAverageLuminance(computeExposure(finalAvgLum, 0.0), finalAvgLum);
 	}
 }
 #pragma anki end

@@ -28,7 +28,8 @@ public:
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
-	RenderTargetHandle getExposureLuminanceRT() const
+	/// @copydoc m_exposureAndAvgLuminance1x1
+	RenderTargetHandle getRt() const
 	{
 		return m_runCtx.m_exposureLuminanceHandle;
 	}
@@ -38,7 +39,8 @@ private:
 	ShaderProgramPtr m_grProg;
 	U32 m_inputTexMip;
 
-	TexturePtr m_exposureLuminance1x1;
+	/// This is a 1x1 2 component texture where R is the exposure and G the average luminance
+	TexturePtr m_exposureAndAvgLuminance1x1;
 
 	class
 	{

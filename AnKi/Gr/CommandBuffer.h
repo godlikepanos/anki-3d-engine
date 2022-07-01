@@ -417,11 +417,11 @@ public:
 	/// @param[out] outUpscaledColor Destination HighRes RenderTarget
 	/// @param[in] motionVectors Motion Vectors
 	/// @param[in] depth Depth attachment
-	/// @param[in] exposure 1x1 texture containing exposure
-	/// @param[in] resetAccumulation whether to clean or not any temporal history
+	/// @param[in] exposure 1x1 Texture containing exposure
+	/// @param[in] resetAccumulation Whether to clean or not any temporal history
 	/// @param[in] jitterOffset Jittering offset that was applied during the generation of sourceTexture
 	/// @param[in] motionVectorsScale Any scale factor that might need to be applied to the motionVectorsTexture (i.e UV
-	/// space to Pixel space conversion)
+	///                               space to Pixel space conversion)
 	void upscale(const GrUpscalerPtr& upscaler, const TextureViewPtr& inColor, const TextureViewPtr& outUpscaledColor,
 				 const TextureViewPtr& motionVectors, const TextureViewPtr& depth, const TextureViewPtr& exposure,
 				 const Bool resetAccumulation, const Vec2& jitterOffset, const Vec2& motionVectorsScale);

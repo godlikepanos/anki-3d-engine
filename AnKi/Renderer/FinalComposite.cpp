@@ -48,7 +48,6 @@ Error FinalComposite::initInternal()
 	variantInitInfo.addConstant("LUT_SIZE", U32(LUT_SIZE));
 	variantInitInfo.addConstant("FB_SIZE", m_r->getPostProcessResolution());
 	variantInitInfo.addConstant("MOTION_BLUR_SAMPLES", getConfig().getRMotionBlurSamples());
-	variantInitInfo.addMutation("APPLY_TONEMAPPING", m_r->getScale().getUsingDLSS() ? 1 : 0);
 
 	for(U32 dbg = 0; dbg < 2; ++dbg)
 	{
@@ -114,12 +113,6 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 		RenderPassDependency(m_r->getMotionVectors().getMotionVectorsRt(), TextureUsageBit::SAMPLED_FRAGMENT));
 	pass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_FRAGMENT));
 
-	if(m_r->getScale().getUsingDLSS())
-	{
-		pass.newDependency(
-			RenderPassDependency(m_r->getTonemapping().getExposureLuminanceRT(), TextureUsageBit::IMAGE_FRAGMENT_READ));
-	}
-
 	RenderTargetHandle dbgRt;
 	Bool dbgRtValid;
 	ShaderProgramPtr debugProgram;
@@ -169,14 +162,9 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 		rgraphCtx.bindTexture(0, 8, m_r->getGBuffer().getDepthRt(),
 							  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
 
-		if(m_r->getScale().getUsingDLSS())
-		{
-			rgraphCtx.bindImage(0, 9, m_r->getTonemapping().getExposureLuminanceRT());
-		}
-
 		if(dbgEnabled)
 		{
-			rgraphCtx.bindColorTexture(0, 10, m_r->getDbg().getRt());
+			rgraphCtx.bindColorTexture(0, 9, m_r->getDbg().getRt());
 		}
 
 		const UVec4 frameCount(m_r->getFrameCount() & MAX_U32);
