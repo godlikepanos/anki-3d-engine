@@ -800,7 +800,6 @@ static NVSDK_NGX_Resource_VK getNGXResourceFromAnkiTexture(const TextureViewImpl
 {
 	const TextureImpl& tex = view.getTextureImpl();
 
-	NVSDK_NGX_Resource_VK resourceVK = {};
 	const VkImageView imageView = view.getHandle();
 	const VkFormat format = tex.m_vkFormat;
 	const VkImage image = tex.m_imageHandle;

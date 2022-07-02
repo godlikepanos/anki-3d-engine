@@ -141,15 +141,15 @@ target_link_libraries(AnKiGr AnKiCore AnKiSpirvCross AnKiGrCommon ${extra_libs})
 
 # Copy DLSS files to Bin
 if(ANKI_DLSS)
-	get_target_property(lib_type AnkiNgx TYPE)
+	get_target_property(lib_type AnKiNgx TYPE)
 	if("${lib_type}" STREQUAL "SHARED_LIBRARY")
-		get_target_property(ANKINGX_DLL AnkiNgx IMPORTED_LOCATION)
+		get_target_property(ANKINGX_DLL AnKiNgx IMPORTED_LOCATION)
 		add_custom_command(
 			TARGET AnKiGr
 			COMMENT "Dependant DLLs copy ${ANKINGX_DLL} ${CMAKE_BINARY_DIR}/Bin"
 			COMMAND ${CMAKE_COMMAND} -E copy_if_different "${ANKINGX_DLL}" "${CMAKE_BINARY_DIR}/Bin")
 	else()
-		get_property(__NGX_DLLS_LIST TARGET AnkiNgx PROPERTY ANKINGX_EXTRA_DLLS)
+		get_property(__NGX_DLLS_LIST TARGET AnKiNgx PROPERTY ANKINGX_EXTRA_DLLS)
 		foreach(dll_path ${__NGX_DLLS_LIST})
 			file(GLOB dll_files "${dll_path}")
 			foreach(dll_file ${dll_files})

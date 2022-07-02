@@ -7,6 +7,7 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Renderer/VrsSriGeneration.h>
+#include <AnKi/Renderer/Scale.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Core/ConfigSet.h>
@@ -37,9 +38,10 @@ Error GBuffer::initInternal()
 	static const Array<const char*, 2> depthRtNames = {{"GBuffer depth #0", "GBuffer depth #1"}};
 	for(U32 i = 0; i < 2; ++i)
 	{
-		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
-			m_r->getInternalResolution().x(), m_r->getInternalResolution().y(), m_r->getDepthNoStencilFormat(),
-			TextureUsageBit::ALL_SAMPLED | TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT, depthRtNames[i]);
+		const TextureUsageBit usage = TextureUsageBit::ALL_SAMPLED | TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT;
+		TextureInitInfo texinit =
+			m_r->create2DRenderTargetInitInfo(m_r->getInternalResolution().x(), m_r->getInternalResolution().y(),
+											  m_r->getDepthNoStencilFormat(), usage, depthRtNames[i]);
 
 		m_depthRts[i] = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::SAMPLED_FRAGMENT);
 	}

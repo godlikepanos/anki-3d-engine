@@ -152,6 +152,9 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 	m_vrsSriGeneration.reset(m_alloc.newInstance<VrsSriGeneration>(this));
 	ANKI_CHECK(m_vrsSriGeneration->init());
 
+	m_scale.reset(m_alloc.newInstance<Scale>(this));
+	ANKI_CHECK(m_scale->init());
+
 	m_gbuffer.reset(m_alloc.newInstance<GBuffer>(this));
 	ANKI_CHECK(m_gbuffer->init());
 
@@ -199,9 +202,6 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 
 	m_uiStage.reset(m_alloc.newInstance<UiStage>(this));
 	ANKI_CHECK(m_uiStage->init());
-
-	m_scale.reset(m_alloc.newInstance<Scale>(this));
-	ANKI_CHECK(m_scale->init());
 
 	m_indirectDiffuse.reset(m_alloc.newInstance<IndirectDiffuse>(this));
 	ANKI_CHECK(m_indirectDiffuse->init());

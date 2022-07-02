@@ -28,7 +28,7 @@
 
 static inline NVSDK_NGX_Resource_VK NVSDK_NGX_Create_ImageView_Resource_VK(VkImageView imageView, VkImage image, VkImageSubresourceRange subresourceRange, VkFormat format, unsigned int width, unsigned int height, bool readWrite)
 {
-    NVSDK_NGX_Resource_VK resourceVK = {0};
+    NVSDK_NGX_Resource_VK resourceVK = {};
     resourceVK.Type = NVSDK_NGX_RESOURCE_VK_TYPE_VK_IMAGEVIEW;
     resourceVK.Resource.ImageViewInfo.ImageView = imageView;
     resourceVK.Resource.ImageViewInfo.Image = image;
@@ -42,7 +42,7 @@ static inline NVSDK_NGX_Resource_VK NVSDK_NGX_Create_ImageView_Resource_VK(VkIma
 
 static inline NVSDK_NGX_Resource_VK NVSDK_NGX_Create_Buffer_Resource_VK(VkBuffer buffer, unsigned int sizeInBytes, bool readWrite)
 {
-    NVSDK_NGX_Resource_VK resourceVK = {0};
+    NVSDK_NGX_Resource_VK resourceVK = {};
     resourceVK.Type = NVSDK_NGX_RESOURCE_VK_TYPE_VK_BUFFER;
     resourceVK.Resource.BufferInfo.Buffer = buffer;
     resourceVK.Resource.BufferInfo.SizeInBytes = sizeInBytes;

@@ -6,6 +6,7 @@
 #include <AnKi/Gr/Vulkan/GrUpscalerImpl.h>
 #include <AnKi/Gr/Vulkan/GrManagerImpl.h>
 #include <AnKi/Gr/CommandBuffer.h>
+#include <AnKi/Gr/Fence.h>
 #include <AnKi/Gr/Vulkan/CommandBufferImpl.h>
 
 // Ngx specific
@@ -67,8 +68,6 @@ static NVSDK_NGX_PerfQuality_Value getDlssQualityModeToNVQualityMode(GrUpscalerQ
 
 Error GrUpscalerImpl::initDlss(const GrUpscalerInitInfo& initInfo)
 {
-	NVSDK_NGX_Result result = NVSDK_NGX_Result_Fail;
-
 	const VkDevice vkdevice = getGrManagerImpl().getDevice();
 	const VkPhysicalDevice vkphysicaldevice = getGrManagerImpl().getPhysicalDevice();
 	const VkInstance vkinstance = getGrManagerImpl().getInstance();
@@ -146,7 +145,9 @@ Error GrUpscalerImpl::createDlssFeature(const UVec2& srcRes, const UVec2& dstRes
 	const U32 visibilityNodeMask = 1;
 	ANKI_NGX_CHECK(NGX_VULKAN_CREATE_DLSS_EXT(cmdbImpl.getHandle(), creationNodeMask, visibilityNodeMask,
 											  &m_dlssFeature, m_ngxParameters, &dlssCreateParams));
-	cmdb->flush();
+	FencePtr fence;
+	cmdb->flush({}, &fence);
+	fence->clientWait(60.0_sec);
 
 	return Error::NONE;
 }

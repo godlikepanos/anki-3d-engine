@@ -415,7 +415,7 @@ if(LINUX)
 endif()
 
 if(ANKI_DLSS)
-	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} AnkiNgx)
+	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} AnKiNgx)
 endif()
 
 # AnKi compiler flags (Mainly warnings)

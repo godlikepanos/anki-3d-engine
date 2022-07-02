@@ -125,7 +125,7 @@ Error Scale::init()
 	}
 
 	// Sharpen programs
-	if(needsSharpening)
+	if(m_sharpenMethod == SharpenMethod::RCAS)
 	{
 		ANKI_CHECK(getResourceManager().loadResource((preferCompute) ? "ShaderBinaries/FsrCompute.ankiprogbin"
 																	 : "ShaderBinaries/FsrRaster.ankiprogbin",
@@ -181,13 +181,16 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		m_runCtx.m_scaledRt = rgraph.newRenderTarget(m_rtDesc);
 
 		ComputeRenderPassDescription& pass = ctx.m_renderGraphDescr.newComputeRenderPass("DLSS");
-		pass.newDependency(RenderPassDependency(m_r->getLightShading().getRt(), TextureUsageBit::ALL_READ));
-		pass.newDependency(
-			RenderPassDependency(m_r->getMotionVectors().getMotionVectorsRt(), TextureUsageBit::ALL_READ));
-		pass.newDependency(RenderPassDependency(m_r->getTonemapping().getRt(), TextureUsageBit::ALL_READ));
-		pass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::ALL_READ,
+
+		// TODO: No idea about the usage flags
+		const TextureUsageBit readUsage = TextureUsageBit::ALL_SAMPLED & TextureUsageBit::ALL_COMPUTE;
+		const TextureUsageBit writeUsage = TextureUsageBit::ALL_IMAGE & TextureUsageBit::ALL_COMPUTE;
+
+		pass.newDependency(RenderPassDependency(m_r->getLightShading().getRt(), readUsage));
+		pass.newDependency(RenderPassDependency(m_r->getMotionVectors().getMotionVectorsRt(), readUsage));
+		pass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), readUsage,
 												TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)));
-		pass.newDependency(RenderPassDependency(m_runCtx.m_scaledRt, TextureUsageBit::ALL_WRITE));
+		pass.newDependency(RenderPassDependency(m_runCtx.m_scaledRt, writeUsage));
 
 		pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 			runGrUpscaling(ctx, rgraphCtx);
