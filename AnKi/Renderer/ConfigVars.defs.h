@@ -88,6 +88,6 @@ ANKI_CONFIG_VAR_BOOL(RRtShadowsSvgf, false, "Enable or not RT shadows SVGF")
 ANKI_CONFIG_VAR_U8(RRtShadowsSvgfAtrousPassCount, 3, 1, 20, "Number of atrous passes of SVGF")
 ANKI_CONFIG_VAR_U32(RRtShadowsRaysPerPixel, 1, 1, 8, "Number of shadow rays per pixel")
 
-ANKI_CONFIG_VAR_U8(RFsr, 1, 0, 2, "0: Use bilinear, 1: FSR low quality, 2: FSR high quality")
-ANKI_CONFIG_VAR_U8(RDlss, 2, 0, 3, "0: Disabled, 1: Performance, 2: Balanced, 3: Quality")
+ANKI_CONFIG_VAR_U8(RFsrQuality, 1, 0, 2, "0: Use bilinear, 1: FSR low quality, 2: FSR high quality")
+ANKI_CONFIG_VAR_U8(RDlssQuality, 2, 0, 3, "0: Disabled, 1: Performance, 2: Balanced, 3: Quality")
 ANKI_CONFIG_VAR_BOOL(RSharpen, true, "Sharpen the image")

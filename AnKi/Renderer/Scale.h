@@ -27,9 +27,22 @@ public:
 
 	void populateRenderGraph(RenderingContext& ctx);
 
-	RenderTargetHandle getRt() const
+	/// This is the tonemapped, upscaled and sharpened RT.
+	RenderTargetHandle getTonemappedRt() const
 	{
-		return (m_sharpenMethod != SharpenMethod::NONE) ? m_runCtx.m_sharpenedRt : m_runCtx.m_scaledRt;
+		return m_runCtx.m_tonemappedRt;
+	}
+
+	/// This is the HDR, upscaled and sharpened RT. It's available if hasUscaledHdrRt() returns true.
+	RenderTargetHandle getHdrRt() const
+	{
+		ANKI_ASSERT(hasUpscaledHdrRt());
+		return m_runCtx.m_upscaledHdrRt;
+	}
+
+	Bool hasUpscaledHdrRt() const
+	{
+		return m_upscalingMethod == UpscalingMethod::GR;
 	}
 
 	Bool getUsingGrUpscaler() const
@@ -42,18 +55,22 @@ private:
 	ShaderProgramPtr m_scaleGrProg;
 	ShaderProgramResourcePtr m_sharpenProg;
 	ShaderProgramPtr m_sharpenGrProg;
+	ShaderProgramResourcePtr m_tonemapProg;
+	ShaderProgramPtr m_tonemapGrProg;
 
 	GrUpscalerPtr m_grUpscaler;
 
 	FramebufferDescription m_fbDescr;
-	RenderTargetDescription m_rtDesc;
+	RenderTargetDescription m_upscaleAndSharpenRtDescr;
+	RenderTargetDescription m_tonemapedRtDescr;
 
 	enum class UpscalingMethod : U8
 	{
 		NONE,
 		BILINEAR,
 		FSR,
-		GR
+		GR,
+		COUNT
 	};
 
 	UpscalingMethod m_upscalingMethod = UpscalingMethod::NONE;
@@ -62,21 +79,27 @@ private:
 	{
 		NONE,
 		RCAS,
-		GR
+		GR,
+		COUNT
 	};
 
 	SharpenMethod m_sharpenMethod = SharpenMethod::NONE;
+
+	Bool m_neeedsTonemapping = false;
 
 	class
 	{
 	public:
 		RenderTargetHandle m_scaledRt;
 		RenderTargetHandle m_sharpenedRt;
+		RenderTargetHandle m_tonemappedRt;
+		RenderTargetHandle m_upscaledHdrRt;
 	} m_runCtx;
 
 	void runFsrOrBilinearScaling(RenderPassWorkContext& rgraphCtx);
 	void runRcasSharpening(RenderPassWorkContext& rgraphCtx);
 	void runGrUpscaling(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
+	void runTonemapping(RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 
