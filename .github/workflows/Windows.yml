@@ -35,7 +35,7 @@ jobs:
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config Release
 
-  Release:
+  DLSS:
     name: "DLSS"
     runs-on: windows-latest
 
