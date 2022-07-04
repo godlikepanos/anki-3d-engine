@@ -853,7 +853,6 @@ void CommandBufferImpl::upscaleInternal(const GrUpscalerPtr& upscaler, const Tex
 	vkDlssEvalParams.pInExposureTexture = &exposureResVk;
 	vkDlssEvalParams.InJitterOffsetX = jitterOffset.x();
 	vkDlssEvalParams.InJitterOffsetY = jitterOffset.y();
-	vkDlssEvalParams.Feature.InSharpness = upscalerImpl.getRecommendedSettings().m_sharpness;
 	vkDlssEvalParams.InReset = resetAccumulation;
 	vkDlssEvalParams.InMVScaleX = motionVectorsScale.x();
 	vkDlssEvalParams.InMVScaleY = motionVectorsScale.y();

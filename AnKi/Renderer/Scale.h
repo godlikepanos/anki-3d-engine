@@ -12,7 +12,7 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-/// Upscale or downscale pass.
+/// Upscales, sharpens and in some cases tonemaps.
 class Scale : public RendererObject
 {
 public:
@@ -30,19 +30,20 @@ public:
 	/// This is the tonemapped, upscaled and sharpened RT.
 	RenderTargetHandle getTonemappedRt() const
 	{
-		return m_runCtx.m_tonemappedRt;
+		return m_runCtx.m_sharpenedRt;
 	}
 
-	/// This is the HDR, upscaled and sharpened RT. It's available if hasUscaledHdrRt() returns true.
-	RenderTargetHandle getHdrRt() const
+	/// This is the HDR upscaled RT. It's available if hasUscaledHdrRt() returns true.
+	RenderTargetHandle getUpscaledHdrRt() const
 	{
 		ANKI_ASSERT(hasUpscaledHdrRt());
 		return m_runCtx.m_upscaledHdrRt;
 	}
 
+	/// @see getUpscaledHdrRt.
 	Bool hasUpscaledHdrRt() const
 	{
-		return m_upscalingMethod == UpscalingMethod::GR;
+		return m_runCtx.m_upscaledHdrRt.isValid();
 	}
 
 	Bool getUsingGrUpscaler() const
@@ -79,7 +80,6 @@ private:
 	{
 		NONE,
 		RCAS,
-		GR,
 		COUNT
 	};
 
@@ -90,10 +90,10 @@ private:
 	class
 	{
 	public:
-		RenderTargetHandle m_scaledRt;
-		RenderTargetHandle m_sharpenedRt;
-		RenderTargetHandle m_tonemappedRt;
+		RenderTargetHandle m_upscaledTonemappedRt;
 		RenderTargetHandle m_upscaledHdrRt;
+		RenderTargetHandle m_tonemappedRt;
+		RenderTargetHandle m_sharpenedRt; ///< It's tonemaped.
 	} m_runCtx;
 
 	void runFsrOrBilinearScaling(RenderPassWorkContext& rgraphCtx);

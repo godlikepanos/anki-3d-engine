@@ -90,7 +90,7 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 	static const Array<CString, 8> passNames = {"DownBlur #0",  "Down/Blur #1", "Down/Blur #2", "Down/Blur #3",
 												"Down/Blur #4", "Down/Blur #5", "Down/Blur #6", "Down/Blur #7"};
 	const RenderTargetHandle inRt =
-		(m_r->getScale().hasUpscaledHdrRt()) ? m_r->getScale().getHdrRt() : m_r->getScale().getTonemappedRt();
+		(m_r->getScale().hasUpscaledHdrRt()) ? m_r->getScale().getUpscaledHdrRt() : m_r->getScale().getTonemappedRt();
 	if(getConfig().getRPreferCompute())
 	{
 		for(U32 i = 0; i < m_passCount; ++i)
@@ -177,8 +177,8 @@ void DownscaleBlur::run(U32 passIdx, RenderPassWorkContext& rgraphCtx)
 	}
 	else
 	{
-		const RenderTargetHandle inRt =
-			(m_r->getScale().hasUpscaledHdrRt()) ? m_r->getScale().getHdrRt() : m_r->getScale().getTonemappedRt();
+		const RenderTargetHandle inRt = (m_r->getScale().hasUpscaledHdrRt()) ? m_r->getScale().getUpscaledHdrRt()
+																			 : m_r->getScale().getTonemappedRt();
 		rgraphCtx.bindColorTexture(0, 1, inRt);
 	}
 

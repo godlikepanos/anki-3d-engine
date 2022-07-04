@@ -21,7 +21,6 @@ namespace anki {
 class DLSSRecommendedSettings
 {
 public:
-	F32 m_sharpness = 0.01f;
 	UVec2 m_optimalRenderSize = UVec2(MAX_U32);
 	UVec2 m_dynamicMaximumRenderSize = UVec2(MAX_U32);
 	UVec2 m_dynamicMinimumRenderSize = UVec2(MAX_U32);

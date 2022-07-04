@@ -90,4 +90,4 @@ ANKI_CONFIG_VAR_U32(RRtShadowsRaysPerPixel, 1, 1, 8, "Number of shadow rays per 
 
 ANKI_CONFIG_VAR_U8(RFsrQuality, 1, 0, 2, "0: Use bilinear, 1: FSR low quality, 2: FSR high quality")
 ANKI_CONFIG_VAR_U8(RDlssQuality, 2, 0, 3, "0: Disabled, 1: Performance, 2: Balanced, 3: Quality")
-ANKI_CONFIG_VAR_BOOL(RSharpen, true, "Sharpen the image")
+ANKI_CONFIG_VAR_F32(RSharpness, ((ANKI_PLATFORM_MOBILE) ? 0.0f : 0.8f), 0.0f, 1.0f, "Sharpen the image. It's a factor")

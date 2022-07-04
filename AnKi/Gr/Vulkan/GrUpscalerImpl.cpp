@@ -115,11 +115,12 @@ Error GrUpscalerImpl::initDlss(const GrUpscalerInitInfo& initInfo)
 Error GrUpscalerImpl::createDlssFeature(const UVec2& srcRes, const UVec2& dstRes, const GrUpscalerQualityMode quality)
 {
 	NVSDK_NGX_PerfQuality_Value nvQuality = getDlssQualityModeToNVQualityMode(quality);
+	F32 sharpness; // Deprecared in newer DLSS
 	ANKI_NGX_CHECK(NGX_DLSS_GET_OPTIMAL_SETTINGS(
 		m_ngxParameters, dstRes.x(), dstRes.y(), nvQuality, &m_recommendedSettings.m_optimalRenderSize.x(),
 		&m_recommendedSettings.m_optimalRenderSize.y(), &m_recommendedSettings.m_dynamicMaximumRenderSize.x(),
 		&m_recommendedSettings.m_dynamicMaximumRenderSize.y(), &m_recommendedSettings.m_dynamicMinimumRenderSize.x(),
-		&m_recommendedSettings.m_dynamicMinimumRenderSize.y(), &m_recommendedSettings.m_sharpness));
+		&m_recommendedSettings.m_dynamicMinimumRenderSize.y(), &sharpness));
 
 	// Next create features	(See NVSDK_NGX_DLSS_Feature_Flags in nvsdk_ngx_defs.h)
 	const I32 dlssCreateFeatureFlags =
