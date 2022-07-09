@@ -5,7 +5,7 @@
 
 #include <AnKi/ShaderCompiler/ShaderProgramReflection.h>
 #include <AnKi/Gr/Utils/Functions.h>
-#include <SprivCross/spirv_glsl.hpp>
+#include <SpirvCross/spirv_glsl.hpp>
 
 namespace anki {
 

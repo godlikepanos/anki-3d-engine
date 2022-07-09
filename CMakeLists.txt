@@ -63,18 +63,31 @@ else()
 	message(FATAL_ERROR "Unknown system")
 endif()
 
-if(${CMAKE_C_COMPILER_ID} MATCHES "GNU" OR ${CMAKE_C_COMPILER_ID} MATCHES "Clang")
+# Indentify compiler
+set(GCC FALSE)
+set(CLANG FALSE)
+set(CLANG_WINDOWS FALSE)
+
+if(${CMAKE_C_COMPILER_ID} MATCHES "GNU")
 	set(GCC TRUE)
-else()
-	set(GCC FALSE)
+	message("++ Compiler identified as GCC")
 endif()
 
 if(${CMAKE_C_COMPILER_ID} MATCHES "Clang")
+	message("++ Compiler identified as Clang")
 	set(CLANG TRUE)
-else()
-	set(CLANG FALSE)
+	if(WINDOWS)
+		# It's clang for windows
+		message("++ Compiler identified as Clang for Windows")
+		set(CLANG_WINDOWS TRUE)
+	endif()
 endif()
 
+if(MSVC)
+	message("++ Compiler identified as MSVC")
+endif()
+
+# Identify the target system
 set(X86 FALSE)
 set(ARM FALSE)
 if(GCC OR CLANG)
@@ -82,10 +95,10 @@ if(GCC OR CLANG)
 
 	if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch" OR ${target_arch} MATCHES "aarch")
 		set(ARM TRUE)
-	elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86")
+	elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86.*" OR ${CMAKE_SYSTEM_PROCESSOR} MATCHES "AMD64.*")
 		set(X86 TRUE)
 	else()
-		message(FATAL_ERROR "Couldn't find the target architecture from: ${target_arch}")
+		message(FATAL_ERROR "Couldn't find the target architecture from: ${target_arch} or ${CMAKE_SYSTEM_PROCESSOR}")
 	endif()
 elseif(MSVC)
 	set(X86 TRUE)
@@ -174,9 +187,13 @@ add_definitions(
 
 if(NOT MSVC)
 	# When building AnKi define this special flag
-	add_compile_options(-fPIC -fno-exceptions)
+	if(NOT CLANG_WINDOWS)
+		add_compile_options(-fPIC)
+	endif()
 
-	if(GCC AND NOT CLANG)
+	add_compile_options(-fno-exceptions)
+
+	if(GCC)
 		add_compile_options(-static-libstdc++)
 	endif()
 
@@ -249,7 +266,7 @@ endif()
 ################################################################################
 # Thirdparty                                                                   #
 ################################################################################
-set(ANKI_EXTERN_SUB_DIRS TinyXml2 Lua ZLib Bullet ImGui MeshOptimizer SprivCross)
+set(ANKI_EXTERN_SUB_DIRS TinyXml2 Lua ZLib Bullet ImGui MeshOptimizer SpirvCross)
 
 # Bullet config
 option(BUILD_BULLET2_DEMOS OFF)

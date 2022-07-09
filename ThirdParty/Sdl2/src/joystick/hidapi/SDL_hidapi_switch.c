@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2021 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -323,6 +323,10 @@ HIDAPI_DriverSwitch_GetDeviceName(Uint16 vendor_id, Uint16 product_id)
 {
     /* Give a user friendly name for this controller */
     if (vendor_id == USB_VENDOR_NINTENDO) {
+        if (product_id == USB_PRODUCT_NINTENDO_SWITCH_JOY_CON_GRIP) {
+            return "Nintendo Switch Joy-Con Grip";
+        }
+
         if (product_id == USB_PRODUCT_NINTENDO_SWITCH_JOY_CON_LEFT) {
             return "Nintendo Switch Joy-Con Left";
         }
@@ -342,13 +346,13 @@ static int ReadInput(SDL_DriverSwitch_Context *ctx)
         return 0;
     }
 
-    return hid_read_timeout(ctx->device->dev, ctx->m_rgucReadBuffer, sizeof(ctx->m_rgucReadBuffer), 0);
+    return SDL_hid_read_timeout(ctx->device->dev, ctx->m_rgucReadBuffer, sizeof(ctx->m_rgucReadBuffer), 0);
 }
 
 static int WriteOutput(SDL_DriverSwitch_Context *ctx, const Uint8 *data, int size)
 {
 #ifdef SWITCH_SYNCHRONOUS_WRITES
-    return hid_write(ctx->device->dev, data, size);
+    return SDL_hid_write(ctx->device->dev, data, size);
 #else
     /* Use the rumble thread for general asynchronous writes */
     if (SDL_HIDAPI_LockRumble() < 0) {
@@ -414,7 +418,7 @@ static void ConstructSubcommand(SDL_DriverSwitch_Context *ctx, ESwitchSubcommand
     outPacket->commonData.ucPacketType = k_eSwitchOutputReportIDs_RumbleAndSubcommand;
     outPacket->commonData.ucPacketNumber = ctx->m_nCommandNumber;
 
-    SDL_memcpy(&outPacket->commonData.rumbleData, &ctx->m_RumblePacket.rumbleData, sizeof(ctx->m_RumblePacket.rumbleData));
+    SDL_memcpy(outPacket->commonData.rumbleData, ctx->m_RumblePacket.rumbleData, sizeof(ctx->m_RumblePacket.rumbleData));
 
     outPacket->ucSubcommandID = ucCommandID;
     SDL_memcpy(outPacket->rgucSubcommandData, pBuf, ucLen);
@@ -491,6 +495,64 @@ static SDL_bool WriteProprietary(SDL_DriverSwitch_Context *ctx, ESwitchProprieta
     return SDL_FALSE;
 }
 
+static Uint8 EncodeRumbleHighAmplitude(Uint16 amplitude) {
+    /* More information about these values can be found here:
+     * https://github.com/dekuNukem/Nintendo_Switch_Reverse_Engineering/blob/master/rumble_data_table.md
+     */
+    Uint16 hfa[101][2] = { {0, 0x0},{514, 0x2},{775, 0x4},{921, 0x6},{1096, 0x8},{1303, 0x0a},{1550, 0x0c},
+        {1843, 0x0e},{2192, 0x10},{2606, 0x12},{3100, 0x14},{3686, 0x16},{4383, 0x18},{5213, 0x1a},
+        {6199, 0x1c},{7372, 0x1e},{7698, 0x20},{8039, 0x22},{8395, 0x24},{8767, 0x26},{9155, 0x28},
+        {9560, 0x2a},{9984, 0x2c},{10426, 0x2e},{10887, 0x30},{11369, 0x32},{11873, 0x34},{12398, 0x36},
+        {12947, 0x38},{13520, 0x3a},{14119, 0x3c},{14744, 0x3e},{15067, 0x40},{15397, 0x42},{15734, 0x44},
+        {16079, 0x46},{16431, 0x48},{16790, 0x4a},{17158, 0x4c},{17534, 0x4e},{17918, 0x50},{18310, 0x52},
+        {18711, 0x54},{19121, 0x56},{19540, 0x58},{19967, 0x5a},{20405, 0x5c},{20851, 0x5e},{21308, 0x60},
+        {21775, 0x62},{22251, 0x64},{22739, 0x66},{23236, 0x68},{23745, 0x6a},{24265, 0x6c},{24797, 0x6e},
+        {25340, 0x70},{25894, 0x72},{26462, 0x74},{27041, 0x76},{27633, 0x78},{28238, 0x7a},{28856, 0x7c},
+        {29488, 0x7e},{30134, 0x80},{30794, 0x82},{31468, 0x84},{32157, 0x86},{32861, 0x88},{33581, 0x8a},
+        {34316, 0x8c},{35068, 0x8e},{35836, 0x90},{36620, 0x92},{37422, 0x94},{38242, 0x96},{39079, 0x98},
+        {39935, 0x9a},{40809, 0x9c},{41703, 0x9e},{42616, 0xa0},{43549, 0xa2},{44503, 0xa4},{45477, 0xa6},
+        {46473, 0xa8},{47491, 0xaa},{48531, 0xac},{49593, 0xae},{50679, 0xb0},{51789, 0xb2},{52923, 0xb4},
+        {54082, 0xb6},{55266, 0xb8},{56476, 0xba},{57713, 0xbc},{58977, 0xbe},{60268, 0xc0},{61588, 0xc2},
+        {62936, 0xc4},{64315, 0xc6},{65535, 0xc8} };
+    int index = 0;
+    for ( ; index < 101; index++) {
+        if (amplitude <= hfa[index][0]) {
+            return (Uint8)hfa[index][1];
+        }
+    }
+    return (Uint8)hfa[100][1];
+}
+
+static Uint16 EncodeRumbleLowAmplitude(Uint16 amplitude) {
+    /* More information about these values can be found here:
+     * https://github.com/dekuNukem/Nintendo_Switch_Reverse_Engineering/blob/master/rumble_data_table.md
+     */
+    Uint16 lfa[101][2] = { {0, 0x0040},{514, 0x8040},{775, 0x0041},{921, 0x8041},{1096, 0x0042},
+        {1303, 0x8042},{1550, 0x0043},{1843, 0x8043},{2192, 0x0044},{2606, 0x8044},{3100, 0x0045},
+        {3686, 0x8045},{4383, 0x0046},{5213, 0x8046},{6199, 0x0047},{7372, 0x8047},{7698, 0x0048},
+        {8039, 0x8048},{8395, 0x0049},{8767, 0x8049},{9155, 0x004a},{9560, 0x804a},{9984, 0x004b},
+        {10426, 0x804b},{10887, 0x004c},{11369, 0x804c},{11873, 0x004d},{12398, 0x804d},{12947, 0x004e},
+        {13520, 0x804e},{14119, 0x004f},{14744, 0x804f},{15067, 0x0050},{15397, 0x8050},{15734, 0x0051},
+        {16079, 0x8051},{16431, 0x0052},{16790, 0x8052},{17158, 0x0053},{17534, 0x8053},{17918, 0x0054},
+        {18310, 0x8054},{18711, 0x0055},{19121, 0x8055},{19540, 0x0056},{19967, 0x8056},{20405, 0x0057},
+        {20851, 0x8057},{21308, 0x0058},{21775, 0x8058},{22251, 0x0059},{22739, 0x8059},{23236, 0x005a},
+        {23745, 0x805a},{24265, 0x005b},{24797, 0x805b},{25340, 0x005c},{25894, 0x805c},{26462, 0x005d},
+        {27041, 0x805d},{27633, 0x005e},{28238, 0x805e},{28856, 0x005f},{29488, 0x805f},{30134, 0x0060},
+        {30794, 0x8060},{31468, 0x0061},{32157, 0x8061},{32861, 0x0062},{33581, 0x8062},{34316, 0x0063},
+        {35068, 0x8063},{35836, 0x0064},{36620, 0x8064},{37422, 0x0065},{38242, 0x8065},{39079, 0x0066},
+        {39935, 0x8066},{40809, 0x0067},{41703, 0x8067},{42616, 0x0068},{43549, 0x8068},{44503, 0x0069},
+        {45477, 0x8069},{46473, 0x006a},{47491, 0x806a},{48531, 0x006b},{49593, 0x806b},{50679, 0x006c},
+        {51789, 0x806c},{52923, 0x006d},{54082, 0x806d},{55266, 0x006e},{56476, 0x806e},{57713, 0x006f},
+        {58977, 0x806f},{60268, 0x0070},{61588, 0x8070},{62936, 0x0071},{64315, 0x8071},{65535, 0x0072} };
+    int index = 0;
+    for (; index < 101; index++) {
+        if (amplitude <= lfa[index][0]) {
+            return lfa[index][1];
+        }
+    }
+    return lfa[100][1];
+}
+
 static void SetNeutralRumble(SwitchRumbleData_t *pRumble)
 {
     pRumble->rgucData[0] = 0x00;
@@ -559,7 +621,7 @@ static SDL_bool BReadDeviceInfo(SDL_DriverSwitch_Context *ctx)
         ctx->m_eControllerType = (ESwitchDeviceInfoControllerType)reply->deviceInfo.ucDeviceType;
 
         // Bytes 4-9: MAC address (big-endian)
-        memcpy(ctx->m_rgucMACAddress, reply->deviceInfo.rgucMACAddress, sizeof(ctx->m_rgucMACAddress));
+        SDL_memcpy(ctx->m_rgucMACAddress, reply->deviceInfo.rgucMACAddress, sizeof(ctx->m_rgucMACAddress));
 
         return SDL_TRUE;
     }
@@ -584,7 +646,8 @@ static SDL_bool BTrySetupUSB(SDL_DriverSwitch_Context *ctx)
         /*return SDL_FALSE;*/
     }
     if (!WriteProprietary(ctx, k_eSwitchProprietaryCommandIDs_Handshake, NULL, 0, SDL_TRUE)) {
-        return SDL_FALSE;
+        /* This fails on the right Joy-Con when plugged into the charging grip */
+        /*return SDL_FALSE;*/
     }
     if (!WriteProprietary(ctx, k_eSwitchProprietaryCommandIDs_ForceUSB, NULL, 0, SDL_FALSE)) {
         return SDL_FALSE;
@@ -717,11 +780,7 @@ static Sint16 ApplyStickCalibrationCentered(SDL_DriverSwitch_Context *ctx, int n
         ctx->m_StickExtents[nStick].axis[nAxis].sMin = sRawValue;
     }
 
-    if (sRawValue > 0) {
-        return (Sint16)HIDAPI_RemapVal(sRawValue, 0, ctx->m_StickExtents[nStick].axis[nAxis].sMax, 0, SDL_MAX_SINT16);
-    } else {
-        return (Sint16)HIDAPI_RemapVal(sRawValue, ctx->m_StickExtents[nStick].axis[nAxis].sMin, 0, SDL_MIN_SINT16, 0);
-    }
+    return (Sint16)HIDAPI_RemapVal(sRawValue, ctx->m_StickExtents[nStick].axis[nAxis].sMin, ctx->m_StickExtents[nStick].axis[nAxis].sMax, SDL_MIN_SINT16, SDL_MAX_SINT16);
 }
 
 static Sint16 ApplyStickCalibration(SDL_DriverSwitch_Context *ctx, int nStick, int nAxis, Sint16 sRawValue)
@@ -797,7 +856,7 @@ HIDAPI_DriverSwitch_OpenJoystick(SDL_HIDAPI_Device *device, SDL_Joystick *joysti
     ctx->device = device;
     device->context = ctx;
 
-    device->dev = hid_open_path(device->path, 0);
+    device->dev = SDL_hid_open_path(device->path, 0);
     if (!device->dev) {
         SDL_SetError("Couldn't open %s", device->path);
         goto error;
@@ -838,14 +897,15 @@ HIDAPI_DriverSwitch_OpenJoystick(SDL_HIDAPI_Device *device, SDL_Joystick *joysti
          */
         if (device->vendor_id == USB_VENDOR_NINTENDO &&
                 (device->product_id == USB_PRODUCT_NINTENDO_SWITCH_PRO ||
+                device->product_id == USB_PRODUCT_NINTENDO_SWITCH_JOY_CON_GRIP ||
                 device->product_id == USB_PRODUCT_NINTENDO_SWITCH_JOY_CON_LEFT ||
                 device->product_id == USB_PRODUCT_NINTENDO_SWITCH_JOY_CON_RIGHT)) {
             input_mode = k_eSwitchInputReportIDs_FullControllerState;
         }
         
         if (input_mode == k_eSwitchInputReportIDs_FullControllerState) {
-            SDL_PrivateJoystickAddSensor(joystick, SDL_SENSOR_GYRO);
-            SDL_PrivateJoystickAddSensor(joystick, SDL_SENSOR_ACCEL);
+            SDL_PrivateJoystickAddSensor(joystick, SDL_SENSOR_GYRO, 200.0f);
+            SDL_PrivateJoystickAddSensor(joystick, SDL_SENSOR_ACCEL, 200.0f);
             ctx->m_bHasSensors = SDL_TRUE;
         }
 
@@ -876,10 +936,13 @@ HIDAPI_DriverSwitch_OpenJoystick(SDL_HIDAPI_Device *device, SDL_Joystick *joysti
 
         /* Set the LED state */
         if (ctx->m_bHasHomeLED) {
-            if (SDL_GetHintBoolean(SDL_HINT_JOYSTICK_HIDAPI_SWITCH_HOME_LED, SDL_TRUE)) {
-                SetHomeLED(ctx, 100);
-            } else {
-                SetHomeLED(ctx, 0);
+            const char *hint = SDL_GetHint(SDL_HINT_JOYSTICK_HIDAPI_SWITCH_HOME_LED);
+            if (hint && *hint) {
+                if (SDL_GetStringBoolean(hint, SDL_TRUE)) {
+                    SetHomeLED(ctx, 100);
+                } else {
+                    SetHomeLED(ctx, 0);
+                }
             }
         }
         SetSlotLED(ctx, (joystick->instance_id % 4));
@@ -908,7 +971,12 @@ HIDAPI_DriverSwitch_OpenJoystick(SDL_HIDAPI_Device *device, SDL_Joystick *joysti
                         SDL_GameControllerButtonReportingHintChanged, ctx);
 
     /* Initialize the joystick capabilities */
-    joystick->nbuttons = 16;
+    if (ctx->m_eControllerType == k_eSwitchDeviceInfoControllerType_JoyConLeft ||
+        ctx->m_eControllerType == k_eSwitchDeviceInfoControllerType_JoyConRight) {
+        joystick->nbuttons = 20;
+    } else {
+        joystick->nbuttons = 16;
+    }
     joystick->naxes = SDL_CONTROLLER_AXIS_MAX;
     joystick->epowerlevel = SDL_JOYSTICK_POWER_WIRED;
 
@@ -918,7 +986,7 @@ error:
     SDL_LockMutex(device->dev_lock);
     {
         if (device->dev) {
-            hid_close(device->dev);
+            SDL_hid_close(device->dev);
             device->dev = NULL;
         }
         if (device->context) {
@@ -940,27 +1008,22 @@ HIDAPI_DriverSwitch_ActuallyRumbleJoystick(SDL_DriverSwitch_Context *ctx, Uint16
      * https://github.com/dekuNukem/Nintendo_Switch_Reverse_Engineering/blob/master/rumble_data_table.md
      */
     const Uint16 k_usHighFreq = 0x0074;
-    const Uint8  k_ucHighFreqAmp = 0xBE;
+    const Uint8  k_ucHighFreqAmp = EncodeRumbleHighAmplitude(high_frequency_rumble);
     const Uint8  k_ucLowFreq = 0x3D;
-    const Uint16 k_usLowFreqAmp = 0x806F;
+    const Uint16 k_usLowFreqAmp = EncodeRumbleLowAmplitude(low_frequency_rumble);
 
-    if (low_frequency_rumble) {
+    if (low_frequency_rumble || high_frequency_rumble) {
         EncodeRumble(&ctx->m_RumblePacket.rumbleData[0], k_usHighFreq, k_ucHighFreqAmp, k_ucLowFreq, k_usLowFreqAmp);
-    } else {
-        SetNeutralRumble(&ctx->m_RumblePacket.rumbleData[0]);
-    }
-
-    if (high_frequency_rumble) {
         EncodeRumble(&ctx->m_RumblePacket.rumbleData[1], k_usHighFreq, k_ucHighFreqAmp, k_ucLowFreq, k_usLowFreqAmp);
     } else {
+        SetNeutralRumble(&ctx->m_RumblePacket.rumbleData[0]);
         SetNeutralRumble(&ctx->m_RumblePacket.rumbleData[1]);
     }
 
     ctx->m_bRumbleActive = (low_frequency_rumble || high_frequency_rumble) ? SDL_TRUE : SDL_FALSE;
 
     if (!WriteRumble(ctx)) {
-        SDL_SetError("Couldn't send rumble packet");
-        return -1;
+        return SDL_SetError("Couldn't send rumble packet");
     }
     return 0;
 }
@@ -1002,6 +1065,10 @@ HIDAPI_DriverSwitch_RumbleJoystick(SDL_HIDAPI_Device *device, SDL_Joystick *joys
 {
     SDL_DriverSwitch_Context *ctx = (SDL_DriverSwitch_Context *)device->context;
 
+    if (ctx->m_bInputOnly) {
+        return SDL_Unsupported();
+    }
+
     if (ctx->m_bRumblePending) {
         if (HIDAPI_DriverSwitch_SendPendingRumble(ctx) < 0) {
             return -1;
@@ -1038,15 +1105,28 @@ HIDAPI_DriverSwitch_RumbleJoystickTriggers(SDL_HIDAPI_Device *device, SDL_Joysti
     return SDL_Unsupported();
 }
 
-static SDL_bool
-HIDAPI_DriverSwitch_HasJoystickLED(SDL_HIDAPI_Device *device, SDL_Joystick *joystick)
+static Uint32
+HIDAPI_DriverSwitch_GetJoystickCapabilities(SDL_HIDAPI_Device *device, SDL_Joystick *joystick)
 {
-    /* Doesn't have an RGB LED, so don't return true here */
-    return SDL_FALSE;
+    SDL_DriverSwitch_Context *ctx = (SDL_DriverSwitch_Context *)device->context;
+    Uint32 result = 0;
+
+    if (!ctx->m_bInputOnly) {
+        /* Doesn't have an RGB LED, so don't return SDL_JOYCAP_LED here */
+        result |= SDL_JOYCAP_RUMBLE;
+    }
+
+    return result;
 }
 
 static int
 HIDAPI_DriverSwitch_SetJoystickLED(SDL_HIDAPI_Device *device, SDL_Joystick *joystick, Uint8 red, Uint8 green, Uint8 blue)
+{
+    return SDL_Unsupported();
+}
+
+static int
+HIDAPI_DriverSwitch_SendJoystickEffect(SDL_HIDAPI_Device *device, SDL_Joystick *joystick, const void *data, int size)
 {
     return SDL_Unsupported();
 }
@@ -1268,6 +1348,33 @@ static void HandleSimpleControllerState(SDL_Joystick *joystick, SDL_DriverSwitch
     ctx->m_lastSimpleState = *packet;
 }
 
+static void SendSensorUpdate(SDL_Joystick *joystick, SDL_DriverSwitch_Context *ctx, SDL_SensorType type, Sint16 *values)
+{
+    float data[3];
+
+    /* Note the order of components has been shuffled to match PlayStation controllers,
+     * since that's our de facto standard from already supporting those controllers, and
+     * users will want consistent axis mappings across devices.
+     */
+    if (type == SDL_SENSOR_GYRO) {
+        data[0] = -HIDAPI_DriverSwitch_ScaleGyro(values[1]);
+        data[1] = HIDAPI_DriverSwitch_ScaleGyro(values[2]);
+        data[2] = -HIDAPI_DriverSwitch_ScaleGyro(values[0]);
+    } else {
+        data[0] = -HIDAPI_DriverSwitch_ScaleAccel(values[1]);
+        data[1] = HIDAPI_DriverSwitch_ScaleAccel(values[2]);
+        data[2] = -HIDAPI_DriverSwitch_ScaleAccel(values[0]);
+    }
+
+    /* Right Joy-Con flips some axes, so let's flip them back for consistency */
+    if (ctx->m_eControllerType == k_eSwitchDeviceInfoControllerType_JoyConRight) {
+        data[0] = -data[0];
+        data[1] = -data[1];
+    }
+
+    SDL_PrivateJoystickSensor(joystick, type, data, 3);
+}
+
 static void HandleFullControllerState(SDL_Joystick *joystick, SDL_DriverSwitch_Context *ctx, SwitchStatePacket_t *packet)
 {
     Sint16 axis;
@@ -1278,6 +1385,10 @@ static void HandleFullControllerState(SDL_Joystick *joystick, SDL_DriverSwitch_C
         SDL_PrivateJoystickButton(joystick, RemapButton(ctx, SDL_CONTROLLER_BUTTON_B), (data & 0x04) ? SDL_PRESSED : SDL_RELEASED);
         SDL_PrivateJoystickButton(joystick, RemapButton(ctx, SDL_CONTROLLER_BUTTON_X), (data & 0x02) ? SDL_PRESSED : SDL_RELEASED);
         SDL_PrivateJoystickButton(joystick, RemapButton(ctx, SDL_CONTROLLER_BUTTON_Y), (data & 0x01) ? SDL_PRESSED : SDL_RELEASED);
+        if (ctx->m_eControllerType == k_eSwitchDeviceInfoControllerType_JoyConRight) {
+            SDL_PrivateJoystickButton(joystick, SDL_CONTROLLER_BUTTON_PADDLE1, (data & 0x10) ? SDL_PRESSED : SDL_RELEASED);
+            SDL_PrivateJoystickButton(joystick, SDL_CONTROLLER_BUTTON_PADDLE3, (data & 0x20) ? SDL_PRESSED : SDL_RELEASED);
+        }
         SDL_PrivateJoystickButton(joystick, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, (data & 0x40) ? SDL_PRESSED : SDL_RELEASED);
         axis = (data & 0x80) ? 32767 : -32768;
         SDL_PrivateJoystickAxis(joystick, SDL_CONTROLLER_AXIS_TRIGGERRIGHT, axis);
@@ -1300,6 +1411,10 @@ static void HandleFullControllerState(SDL_Joystick *joystick, SDL_DriverSwitch_C
         SDL_PrivateJoystickButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_UP, (data & 0x02) ? SDL_PRESSED : SDL_RELEASED);
         SDL_PrivateJoystickButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_RIGHT, (data & 0x04) ? SDL_PRESSED : SDL_RELEASED);
         SDL_PrivateJoystickButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_LEFT, (data & 0x08) ? SDL_PRESSED : SDL_RELEASED);
+        if (ctx->m_eControllerType == k_eSwitchDeviceInfoControllerType_JoyConLeft) {
+            SDL_PrivateJoystickButton(joystick, SDL_CONTROLLER_BUTTON_PADDLE4, (data & 0x10) ? SDL_PRESSED : SDL_RELEASED);
+            SDL_PrivateJoystickButton(joystick, SDL_CONTROLLER_BUTTON_PADDLE2, (data & 0x20) ? SDL_PRESSED : SDL_RELEASED);
+        }
         SDL_PrivateJoystickButton(joystick, SDL_CONTROLLER_BUTTON_LEFTSHOULDER, (data & 0x40) ? SDL_PRESSED : SDL_RELEASED);
         axis = (data & 0x80) ? 32767 : -32768;
         SDL_PrivateJoystickAxis(joystick, SDL_CONTROLLER_AXIS_TRIGGERLEFT, axis);
@@ -1343,51 +1458,13 @@ static void HandleFullControllerState(SDL_Joystick *joystick, SDL_DriverSwitch_C
     }
 
     if (ctx->m_bReportSensors) {
-        float data[3];
+        SendSensorUpdate(joystick, ctx, SDL_SENSOR_GYRO, &packet->imuState[2].sGyroX);
+        SendSensorUpdate(joystick, ctx, SDL_SENSOR_GYRO, &packet->imuState[1].sGyroX);
+        SendSensorUpdate(joystick, ctx, SDL_SENSOR_GYRO, &packet->imuState[0].sGyroX);
 
-        /* Note the order of components has been shuffled to match PlayStation controllers,
-         * since that's our de facto standard from already supporting those controllers, and
-         * users will want consistent axis mappings across devices.
-         */
-        data[0] = HIDAPI_DriverSwitch_ScaleGyro(packet->imuState[0].sGyroY);
-        data[1] = HIDAPI_DriverSwitch_ScaleGyro(packet->imuState[0].sGyroZ);
-        data[2] = HIDAPI_DriverSwitch_ScaleGyro(packet->imuState[0].sGyroX);
-        data[0] += HIDAPI_DriverSwitch_ScaleGyro(packet->imuState[1].sGyroY);
-        data[1] += HIDAPI_DriverSwitch_ScaleGyro(packet->imuState[1].sGyroZ);
-        data[2] += HIDAPI_DriverSwitch_ScaleGyro(packet->imuState[1].sGyroX);
-        data[0] += HIDAPI_DriverSwitch_ScaleGyro(packet->imuState[2].sGyroY);
-        data[1] += HIDAPI_DriverSwitch_ScaleGyro(packet->imuState[2].sGyroZ);
-        data[2] += HIDAPI_DriverSwitch_ScaleGyro(packet->imuState[2].sGyroX);
-        data[0] /= -3.f;
-        data[1] /= 3.f;
-        data[2] /= -3.f;
-        /* Right Joy-Con flips some axes, so let's flip them back for consistency */
-        if (ctx->m_eControllerType == k_eSwitchDeviceInfoControllerType_JoyConRight) {
-            data[0] = -data[0];
-            data[1] = -data[1];
-        }
-
-        SDL_PrivateJoystickSensor(joystick, SDL_SENSOR_GYRO, data, 3);
-
-        data[0] = HIDAPI_DriverSwitch_ScaleAccel(packet->imuState[0].sAccelY);
-        data[1] = HIDAPI_DriverSwitch_ScaleAccel(packet->imuState[0].sAccelZ);
-        data[2] = HIDAPI_DriverSwitch_ScaleAccel(packet->imuState[0].sAccelX);
-        data[0] += HIDAPI_DriverSwitch_ScaleAccel(packet->imuState[1].sAccelY);
-        data[1] += HIDAPI_DriverSwitch_ScaleAccel(packet->imuState[1].sAccelZ);
-        data[2] += HIDAPI_DriverSwitch_ScaleAccel(packet->imuState[1].sAccelX);
-        data[0] += HIDAPI_DriverSwitch_ScaleAccel(packet->imuState[2].sAccelY);
-        data[1] += HIDAPI_DriverSwitch_ScaleAccel(packet->imuState[2].sAccelZ);
-        data[2] += HIDAPI_DriverSwitch_ScaleAccel(packet->imuState[2].sAccelX);
-        data[0] /= -3.f;
-        data[1] /= 3.f;
-        data[2] /= -3.f;
-        /* Right Joy-Con flips some axes, so let's flip them back for consistency */
-        if (ctx->m_eControllerType == k_eSwitchDeviceInfoControllerType_JoyConRight) {
-            data[0] = -data[0];
-            data[1] = -data[1];
-        }
-
-        SDL_PrivateJoystickSensor(joystick, SDL_SENSOR_ACCEL, data, 3);
+        SendSensorUpdate(joystick, ctx, SDL_SENSOR_ACCEL, &packet->imuState[2].sAccelX);
+        SendSensorUpdate(joystick, ctx, SDL_SENSOR_ACCEL, &packet->imuState[1].sAccelX);
+        SendSensorUpdate(joystick, ctx, SDL_SENSOR_ACCEL, &packet->imuState[0].sAccelX);
     }
 
     ctx->m_lastFullState = *packet;
@@ -1459,7 +1536,7 @@ HIDAPI_DriverSwitch_CloseJoystick(SDL_HIDAPI_Device *device, SDL_Joystick *joyst
 
     SDL_LockMutex(device->dev_lock);
     {
-        hid_close(device->dev);
+        SDL_hid_close(device->dev);
         device->dev = NULL;
 
         SDL_free(device->context);
@@ -1477,6 +1554,7 @@ SDL_HIDAPI_DeviceDriver SDL_HIDAPI_DriverSwitch =
 {
     SDL_HINT_JOYSTICK_HIDAPI_SWITCH,
     SDL_TRUE,
+    SDL_TRUE,
     HIDAPI_DriverSwitch_IsSupportedDevice,
     HIDAPI_DriverSwitch_GetDeviceName,
     HIDAPI_DriverSwitch_InitDevice,
@@ -1486,8 +1564,9 @@ SDL_HIDAPI_DeviceDriver SDL_HIDAPI_DriverSwitch =
     HIDAPI_DriverSwitch_OpenJoystick,
     HIDAPI_DriverSwitch_RumbleJoystick,
     HIDAPI_DriverSwitch_RumbleJoystickTriggers,
-    HIDAPI_DriverSwitch_HasJoystickLED,
+    HIDAPI_DriverSwitch_GetJoystickCapabilities,
     HIDAPI_DriverSwitch_SetJoystickLED,
+    HIDAPI_DriverSwitch_SendJoystickEffect,
     HIDAPI_DriverSwitch_SetJoystickSensorsEnabled,
     HIDAPI_DriverSwitch_CloseJoystick,
     HIDAPI_DriverSwitch_FreeDevice,

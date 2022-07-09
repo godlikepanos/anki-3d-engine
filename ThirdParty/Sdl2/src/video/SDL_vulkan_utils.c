@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2021 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -88,8 +88,10 @@ const char *SDL_Vulkan_GetResultString(VkResult result)
             return "VK_ERROR_VALIDATION_FAILED_EXT";
         case VK_ERROR_INVALID_SHADER_NV:
             return "VK_ERROR_INVALID_SHADER_NV";
+#if VK_HEADER_VERSION >= 135 && VK_HEADER_VERSION < 162
         case VK_ERROR_INCOMPATIBLE_VERSION_KHR:
             return "VK_ERROR_INCOMPATIBLE_VERSION_KHR";
+#endif
         case VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT:
             return "VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT";
         case VK_ERROR_NOT_PERMITTED_EXT:

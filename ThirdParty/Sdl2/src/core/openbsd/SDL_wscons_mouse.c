@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2021 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -43,7 +43,7 @@ SDL_WSCONS_mouse_input_data* SDL_WSCONS_Init_Mouse()
     SDL_WSCONS_mouse_input_data* mouseInputData = SDL_calloc(1, sizeof(SDL_WSCONS_mouse_input_data));
 
     if (!mouseInputData) return NULL;
-    mouseInputData->fd = open("/dev/wsmouse",O_RDWR | O_NONBLOCK);
+    mouseInputData->fd = open("/dev/wsmouse",O_RDWR | O_NONBLOCK | O_CLOEXEC);
     if (mouseInputData->fd == -1) {free(mouseInputData); return NULL; }
 #ifdef WSMOUSEIO_SETMODE
     ioctl(mouseInputData->fd, WSMOUSEIO_SETMODE, WSMOUSE_COMPAT);
@@ -103,12 +103,12 @@ void updateMouse(SDL_WSCONS_mouse_input_data* inputData)
                 break;
             case WSCONS_EVENT_MOUSE_DELTA_X:
                 {
-                    SDL_SendMouseMotion(mouse->focus, mouse->mouseID, 1, events[i].value * 2, 0);
+                    SDL_SendMouseMotion(mouse->focus, mouse->mouseID, 1, events[i].value, 0);
                     break;
                 }
             case WSCONS_EVENT_MOUSE_DELTA_Y:
                 {
-                    SDL_SendMouseMotion(mouse->focus, mouse->mouseID, 1, 0, -events[i].value * 2);
+                    SDL_SendMouseMotion(mouse->focus, mouse->mouseID, 1, 0, -events[i].value);
                     break;
                 }
             case WSCONS_EVENT_MOUSE_DELTA_W:

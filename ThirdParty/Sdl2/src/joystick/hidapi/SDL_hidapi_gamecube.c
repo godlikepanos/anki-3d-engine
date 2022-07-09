@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2021 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -32,7 +32,7 @@
 #include "../SDL_sysjoystick.h"
 #include "SDL_hidapijoystick_c.h"
 #include "SDL_hidapi_rumble.h"
-#include "../../hidapi/SDL_hidapi.h"
+#include "../../hidapi/SDL_hidapi_c.h"
 
 
 #ifdef SDL_JOYSTICK_HIDAPI_GAMECUBE
@@ -53,6 +53,7 @@ typedef struct {
     /* Without this variable, hid_write starts to lag a TON */
     SDL_bool rumbleUpdate;
     SDL_bool m_bUseButtonLabels;
+    SDL_bool useRumbleBrake;
 } SDL_DriverGameCube_Context;
 
 static SDL_bool
@@ -92,6 +93,14 @@ static void SDLCALL SDL_GameControllerButtonReportingHintChanged(void *userdata,
     ctx->m_bUseButtonLabels = SDL_GetStringBoolean(hint, SDL_TRUE);
 }
 
+static void SDLCALL SDL_JoystickGameCubeRumbleBrakeHintChanged(void *userdata, const char *name, const char *oldValue, const char *hint)
+{
+    if (hint) {
+        SDL_DriverGameCube_Context *ctx = (SDL_DriverGameCube_Context *)userdata;
+        ctx->useRumbleBrake = SDL_GetStringBoolean(hint, SDL_FALSE);
+    }
+}
+
 static Uint8 RemapButton(SDL_DriverGameCube_Context *ctx, Uint8 button)
 {
     if (!ctx->m_bUseButtonLabels) {
@@ -129,7 +138,7 @@ HIDAPI_DriverGameCube_InitDevice(SDL_HIDAPI_Device *device)
         return SDL_FALSE;
     }
 
-    device->dev = hid_open_path(device->path, 0);
+    device->dev = SDL_hid_open_path(device->path, 0);
     if (!device->dev) {
         SDL_free(ctx);
         SDL_SetError("Couldn't open %s", device->path);
@@ -142,6 +151,7 @@ HIDAPI_DriverGameCube_InitDevice(SDL_HIDAPI_Device *device)
     ctx->joysticks[2] = -1;
     ctx->joysticks[3] = -1;
     ctx->rumble[0] = rumbleMagic;
+    ctx->useRumbleBrake = SDL_FALSE;
 
     if (device->vendor_id != USB_VENDOR_NINTENDO) {
         ctx->pc_mode = SDL_TRUE;
@@ -154,7 +164,7 @@ HIDAPI_DriverGameCube_InitDevice(SDL_HIDAPI_Device *device)
         }
     } else {
         /* This is all that's needed to initialize the device. Really! */
-        if (hid_write(device->dev, &initMagic, sizeof(initMagic)) != sizeof(initMagic)) {
+        if (SDL_hid_write(device->dev, &initMagic, sizeof(initMagic)) != sizeof(initMagic)) {
             SDL_SetError("Couldn't initialize WUP-028");
             goto error;
         }
@@ -163,7 +173,7 @@ HIDAPI_DriverGameCube_InitDevice(SDL_HIDAPI_Device *device)
         SDL_Delay(10);
 
         /* Add all the applicable joysticks */
-        while ((size = hid_read_timeout(device->dev, packet, sizeof(packet), 0)) > 0) {
+        while ((size = SDL_hid_read_timeout(device->dev, packet, sizeof(packet), 0)) > 0) {
 #ifdef DEBUG_GAMECUBE_PROTOCOL
             HIDAPI_DumpPacket("Nintendo GameCube packet: size = %d", packet, size);
 #endif
@@ -195,6 +205,8 @@ HIDAPI_DriverGameCube_InitDevice(SDL_HIDAPI_Device *device)
         }
     }
 
+    SDL_AddHintCallback(SDL_HINT_JOYSTICK_GAMECUBE_RUMBLE_BRAKE,
+                        SDL_JoystickGameCubeRumbleBrakeHintChanged, ctx);
     SDL_AddHintCallback(SDL_HINT_GAMECONTROLLER_USE_BUTTON_LABELS,
                         SDL_GameControllerButtonReportingHintChanged, ctx);
 
@@ -204,7 +216,7 @@ error:
     SDL_LockMutex(device->dev_lock);
     {
         if (device->dev) {
-            hid_close(device->dev);
+            SDL_hid_close(device->dev);
             device->dev = NULL;
         }
         if (device->context) {
@@ -389,7 +401,7 @@ HIDAPI_DriverGameCube_UpdateDevice(SDL_HIDAPI_Device *device)
     int size;
 
     /* Read input packet */
-    while ((size = hid_read_timeout(device->dev, packet, sizeof(packet), 0)) > 0) {
+    while ((size = SDL_hid_read_timeout(device->dev, packet, sizeof(packet), 0)) > 0) {
 #ifdef DEBUG_GAMECUBE_PROTOCOL
         //HIDAPI_DumpPacket("Nintendo GameCube packet: size = %d", packet, size);
 #endif
@@ -439,12 +451,22 @@ HIDAPI_DriverGameCube_RumbleJoystick(SDL_HIDAPI_Device *device, SDL_Joystick *jo
     for (i = 0; i < MAX_CONTROLLERS; i += 1) {
         if (joystick->instance_id == ctx->joysticks[i]) {
             if (ctx->wireless[i]) {
-                return SDL_SetError("Ninteno GameCube WaveBird controllers do not support rumble");
+                return SDL_SetError("Nintendo GameCube WaveBird controllers do not support rumble");
             }
             if (!ctx->rumbleAllowed[i]) {
                 return SDL_SetError("Second USB cable for WUP-028 not connected");
             }
-            val = (low_frequency_rumble > 0 || high_frequency_rumble > 0);
+            if (ctx->useRumbleBrake) {
+                if (low_frequency_rumble == 0 && high_frequency_rumble > 0) {
+                    val = 0; /* if only low is 0 we want to do a regular stop*/
+                } else if (low_frequency_rumble == 0 && high_frequency_rumble == 0) {
+                    val = 2; /* if both frequencies are 0 we want to do a hard stop */
+                } else {
+                    val = 1; /* normal rumble */
+                }
+            } else {
+                val = (low_frequency_rumble > 0 || high_frequency_rumble > 0);
+            }
             if (val != ctx->rumble[i + 1]) {
                 ctx->rumble[i + 1] = val;
                 ctx->rumbleUpdate = SDL_TRUE;
@@ -454,8 +476,7 @@ HIDAPI_DriverGameCube_RumbleJoystick(SDL_HIDAPI_Device *device, SDL_Joystick *jo
     }
 
     /* Should never get here! */
-    SDL_SetError("Couldn't find joystick");
-    return -1;
+    return SDL_SetError("Couldn't find joystick");
 }
 
 static int
@@ -464,14 +485,36 @@ HIDAPI_DriverGameCube_RumbleJoystickTriggers(SDL_HIDAPI_Device *device, SDL_Joys
     return SDL_Unsupported();
 }
 
-static SDL_bool
-HIDAPI_DriverGameCube_HasJoystickLED(SDL_HIDAPI_Device *device, SDL_Joystick *joystick)
+static Uint32
+HIDAPI_DriverGameCube_GetJoystickCapabilities(SDL_HIDAPI_Device *device, SDL_Joystick *joystick)
 {
-    return SDL_FALSE;
+    SDL_DriverGameCube_Context *ctx = (SDL_DriverGameCube_Context *)device->context;
+    Uint32 result = 0;
+
+    if (!ctx->pc_mode) {
+        Uint8 i;
+
+        for (i = 0; i < MAX_CONTROLLERS; i += 1) {
+            if (joystick->instance_id == ctx->joysticks[i]) {
+                if (!ctx->wireless[i] && ctx->rumbleAllowed[i]) {
+                    result |= SDL_JOYCAP_RUMBLE;
+                    break;
+                }
+            }
+        }
+    }
+
+    return result;
 }
 
 static int
 HIDAPI_DriverGameCube_SetJoystickLED(SDL_HIDAPI_Device *device, SDL_Joystick *joystick, Uint8 red, Uint8 green, Uint8 blue)
+{
+    return SDL_Unsupported();
+}
+
+static int
+HIDAPI_DriverGameCube_SendJoystickEffect(SDL_HIDAPI_Device *device, SDL_Joystick *joystick, const void *data, int size)
 {
     return SDL_Unsupported();
 }
@@ -501,10 +544,12 @@ HIDAPI_DriverGameCube_FreeDevice(SDL_HIDAPI_Device *device)
 
     SDL_DelHintCallback(SDL_HINT_GAMECONTROLLER_USE_BUTTON_LABELS,
                         SDL_GameControllerButtonReportingHintChanged, ctx);
+    SDL_DelHintCallback(SDL_HINT_JOYSTICK_GAMECUBE_RUMBLE_BRAKE,
+                        SDL_JoystickGameCubeRumbleBrakeHintChanged, ctx);
 
     SDL_LockMutex(device->dev_lock);
     {
-        hid_close(device->dev);
+        SDL_hid_close(device->dev);
         device->dev = NULL;
 
         SDL_free(device->context);
@@ -517,6 +562,7 @@ SDL_HIDAPI_DeviceDriver SDL_HIDAPI_DriverGameCube =
 {
     SDL_HINT_JOYSTICK_HIDAPI_GAMECUBE,
     SDL_TRUE,
+    SDL_TRUE,
     HIDAPI_DriverGameCube_IsSupportedDevice,
     HIDAPI_DriverGameCube_GetDeviceName,
     HIDAPI_DriverGameCube_InitDevice,
@@ -526,8 +572,9 @@ SDL_HIDAPI_DeviceDriver SDL_HIDAPI_DriverGameCube =
     HIDAPI_DriverGameCube_OpenJoystick,
     HIDAPI_DriverGameCube_RumbleJoystick,
     HIDAPI_DriverGameCube_RumbleJoystickTriggers,
-    HIDAPI_DriverGameCube_HasJoystickLED,
+    HIDAPI_DriverGameCube_GetJoystickCapabilities,
     HIDAPI_DriverGameCube_SetJoystickLED,
+    HIDAPI_DriverGameCube_SendJoystickEffect,
     HIDAPI_DriverGameCube_SetJoystickSensorsEnabled,
     HIDAPI_DriverGameCube_CloseJoystick,
     HIDAPI_DriverGameCube_FreeDevice,

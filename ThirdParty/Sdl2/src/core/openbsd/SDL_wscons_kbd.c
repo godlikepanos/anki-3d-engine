@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2021 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -255,6 +255,7 @@ static struct wscons_keycode_to_SDL {
     {KS_Num_Lock, SDL_SCANCODE_NUMLOCKCLEAR},
     {KS_Caps_Lock, SDL_SCANCODE_CAPSLOCK},
     {KS_BackSpace, SDL_SCANCODE_BACKSPACE},
+    {KS_space, SDL_SCANCODE_SPACE},
     {KS_Delete, SDL_SCANCODE_BACKSPACE},
     {KS_Home, SDL_SCANCODE_HOME},
     {KS_End, SDL_SCANCODE_END},
@@ -393,6 +394,7 @@ typedef struct {
     unsigned int text_len;
     keysym_t composebuffer[2];
     unsigned char composelen;
+    int type;
 } SDL_WSCONS_input_data;
 
 static SDL_WSCONS_input_data* inputs[4] = {NULL, NULL, NULL, NULL};
@@ -415,7 +417,7 @@ static SDL_WSCONS_input_data* SDL_WSCONS_Init_Keyboard(const char* dev)
     if (!input) {
         return input;
     }
-    input->fd = open(dev,O_RDWR | O_NONBLOCK);
+    input->fd = open(dev,O_RDWR | O_NONBLOCK | O_CLOEXEC);
     if (input->fd == -1) {
         free(input);
         input = NULL;
@@ -431,6 +433,7 @@ static SDL_WSCONS_input_data* SDL_WSCONS_Init_Keyboard(const char* dev)
     RETIFIOCTLERR(ioctl(input->fd, WSKBDIO_GETLEDS, &input->ledstate));
     input->origledstate = input->ledstate;
     RETIFIOCTLERR(ioctl(input->fd, WSKBDIO_GETENCODING, &input->encoding));
+    RETIFIOCTLERR(ioctl(input->fd, WSKBDIO_GTYPE, &input->type));
 #ifdef WSKBDIO_SETVERSION
     RETIFIOCTLERR(ioctl(input->fd, WSKBDIO_SETVERSION, &version));
 #endif
@@ -508,7 +511,7 @@ static void put_utf8(SDL_WSCONS_input_data* input, uint c)
 static void Translate_to_text(SDL_WSCONS_input_data* input, keysym_t ksym)
 {
     if (KS_GROUP(ksym) == KS_GROUP_Keypad) {
-        if (isprint(ksym & 0xFF)) ksym &= 0xFF;
+        if (SDL_isprint(ksym & 0xFF)) ksym &= 0xFF;
     }
     switch(ksym) {
     case KS_Escape:
@@ -525,7 +528,7 @@ static void Translate_to_text(SDL_WSCONS_input_data* input, keysym_t ksym)
     if (input->text_len > 0) {
         input->text[input->text_len] = '\0';
         SDL_SendKeyboardText(input->text);
-        /*memset(input->text, 0, sizeof(input->text));*/
+        /*SDL_memset(input->text, 0, sizeof(input->text));*/
         input->text_len = 0;
         input->text[0] = 0;
     }
@@ -724,7 +727,12 @@ static void updateKeyboard(SDL_WSCONS_input_data* input)
                 }
                 break;
             }
-            Translate_to_keycode(input, type, events[i].value);
+
+            if (input->type == WSKBD_TYPE_USB && events[i].value <= 0xE7)
+                SDL_SendKeyboardKey(type == WSCONS_EVENT_KEY_DOWN ? SDL_PRESSED : SDL_RELEASED, (SDL_Scancode)events[i].value);
+            else 
+                Translate_to_keycode(input, type, events[i].value);
+
             if (type == WSCONS_EVENT_KEY_UP) continue;
 
             if (IS_ALTGR_MODE && !IS_CONTROL_HELD)

@@ -6,7 +6,7 @@
 #include <AnKi/Gr/Vulkan/ShaderImpl.h>
 #include <AnKi/Gr/Vulkan/GrManagerImpl.h>
 #include <AnKi/Gr/Utils/Functions.h>
-#include <SprivCross/spirv_cross.hpp>
+#include <SpirvCross/spirv_cross.hpp>
 
 #define ANKI_DUMP_SHADERS 0
 
