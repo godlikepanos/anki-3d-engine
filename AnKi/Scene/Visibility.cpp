@@ -72,6 +72,14 @@ static Bool spatialInsideFrustum(const FrustumComponent& frc, const SpatialCompo
 	}
 }
 
+/// Used to silent warnings
+template<typename TComponent>
+Bool getComponent(SceneNode& node, TComponent*& comp)
+{
+	comp = node.tryGetFirstComponentOfType<TComponent>();
+	return comp != nullptr;
+}
+
 void VisibilityContext::submitNewWork(const FrustumComponent& frc, const FrustumComponent& primaryFrustum,
 									  RenderQueue& rqueue, ThreadHive& hive)
 {
@@ -289,66 +297,51 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		Bool wantNode = false;
 
 		const RenderComponent* rc = nullptr;
-		wantNode = wantNode
-				   || !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS)
-						  && (rc = node.tryGetFirstComponentOfType<RenderComponent>()) != nullptr;
+		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS)
+					&& getComponent(node, rc);
 
-		wantNode = wantNode
-				   || !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::SHADOW_CASTERS)
-						  && (rc = node.tryGetFirstComponentOfType<RenderComponent>()) != nullptr
-						  && !!(rc->getFlags() & RenderComponentFlag::CASTS_SHADOW);
+		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::SHADOW_CASTERS)
+					&& getComponent(node, rc) && !!(rc->getFlags() & RenderComponentFlag::CASTS_SHADOW);
 
 		const RenderComponent* rtRc = nullptr;
-		wantNode = wantNode
-				   || !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::ALL_RAY_TRACING)
-						  && (rtRc = node.tryGetFirstComponentOfType<RenderComponent>()) != nullptr
-						  && rtRc->getSupportsRayTracing();
+		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::ALL_RAY_TRACING)
+					&& getComponent(node, rtRc) && rtRc->getSupportsRayTracing();
 
 		const LightComponent* lc = nullptr;
-		wantNode = wantNode
-				   || !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS)
-						  && (lc = node.tryGetFirstComponentOfType<LightComponent>()) != nullptr;
+		wantNode |=
+			!!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS) && getComponent(node, lc);
 
 		const LensFlareComponent* lfc = nullptr;
-		wantNode = wantNode
-				   || !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::LENS_FLARE_COMPONENTS)
-						  && (lfc = node.tryGetFirstComponentOfType<LensFlareComponent>()) != nullptr;
+		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::LENS_FLARE_COMPONENTS)
+					&& getComponent(node, lfc);
 
 		const ReflectionProbeComponent* reflc = nullptr;
-		wantNode = wantNode
-				   || !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::REFLECTION_PROBES)
-						  && (reflc = node.tryGetFirstComponentOfType<ReflectionProbeComponent>()) != nullptr;
+		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::REFLECTION_PROBES)
+					&& getComponent(node, reflc);
 
 		DecalComponent* decalc = nullptr;
-		wantNode = wantNode
-				   || !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::DECALS)
-						  && (decalc = node.tryGetFirstComponentOfType<DecalComponent>()) != nullptr;
+		wantNode |=
+			!!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::DECALS) && getComponent(node, decalc);
 
 		const FogDensityComponent* fogc = nullptr;
-		wantNode = wantNode
-				   || !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::FOG_DENSITY_COMPONENTS)
-						  && (fogc = node.tryGetFirstComponentOfType<FogDensityComponent>()) != nullptr;
+		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::FOG_DENSITY_COMPONENTS)
+					&& getComponent(node, fogc);
 
 		GlobalIlluminationProbeComponent* giprobec = nullptr;
-		wantNode =
-			wantNode
-			|| !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::GLOBAL_ILLUMINATION_PROBES)
-				   && (giprobec = node.tryGetFirstComponentOfType<GlobalIlluminationProbeComponent>()) != nullptr;
+		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::GLOBAL_ILLUMINATION_PROBES)
+					&& getComponent(node, giprobec);
 
 		GenericGpuComputeJobComponent* computec = nullptr;
-		wantNode = wantNode
-				   || !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::GENERIC_COMPUTE_JOB_COMPONENTS)
-						  && (computec = node.tryGetFirstComponentOfType<GenericGpuComputeJobComponent>()) != nullptr;
+		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::GENERIC_COMPUTE_JOB_COMPONENTS)
+					&& getComponent(node, computec);
 
 		UiComponent* uic = nullptr;
-		wantNode = wantNode
-				   || !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::UI_COMPONENTS)
-						  && (uic = node.tryGetFirstComponentOfType<UiComponent>()) != nullptr;
+		wantNode |=
+			!!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::UI_COMPONENTS) && getComponent(node, uic);
 
 		SkyboxComponent* skyboxc = nullptr;
-		wantNode = wantNode
-				   || !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::SKYBOX)
-						  && (skyboxc = node.tryGetFirstComponentOfType<SkyboxComponent>()) != nullptr;
+		wantNode |=
+			!!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::SKYBOX) && getComponent(node, skyboxc);
 
 		if(ANKI_UNLIKELY(!wantNode))
 		{
