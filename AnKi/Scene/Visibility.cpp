@@ -83,7 +83,7 @@ void VisibilityContext::submitNewWork(const FrustumComponent& frc, const Frustum
 		return;
 	}
 
-	rqueue.m_cameraTransform = Mat4(frc.getWorldTransform());
+	rqueue.m_cameraTransform = Mat3x4(frc.getWorldTransform());
 	rqueue.m_viewMatrix = frc.getViewMatrix();
 	rqueue.m_projectionMatrix = frc.getProjectionMatrix();
 	rqueue.m_viewProjectionMatrix = frc.getViewProjectionMatrix();
@@ -181,7 +181,8 @@ void FillRasterizerWithCoverageTask::fill()
 	// Init the rasterizer
 	m_frcCtx->m_r = alloc.newInstance<SoftwareRasterizer>();
 	m_frcCtx->m_r->init(alloc);
-	m_frcCtx->m_r->prepare(m_frcCtx->m_frc->getViewMatrix(), m_frcCtx->m_frc->getProjectionMatrix(), width, height);
+	m_frcCtx->m_r->prepare(Mat4(m_frcCtx->m_frc->getViewMatrix(), Vec4(0.0f, 0.0f, 0.0f, 1.0f)),
+						   m_frcCtx->m_frc->getProjectionMatrix(), width, height);
 
 	// Do the work
 	m_frcCtx->m_r->fillDepthBuffer(depthBuff);
@@ -288,52 +289,66 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		Bool wantNode = false;
 
 		const RenderComponent* rc = nullptr;
-		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS)
-					&& (rc = node.tryGetFirstComponentOfType<RenderComponent>());
+		wantNode = wantNode
+				   || !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS)
+						  && (rc = node.tryGetFirstComponentOfType<RenderComponent>()) != nullptr;
 
-		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::SHADOW_CASTERS)
-					&& (rc = node.tryGetFirstComponentOfType<RenderComponent>())
-					&& !!(rc->getFlags() & RenderComponentFlag::CASTS_SHADOW);
+		wantNode = wantNode
+				   || !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::SHADOW_CASTERS)
+						  && (rc = node.tryGetFirstComponentOfType<RenderComponent>()) != nullptr
+						  && !!(rc->getFlags() & RenderComponentFlag::CASTS_SHADOW);
 
 		const RenderComponent* rtRc = nullptr;
-		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::ALL_RAY_TRACING)
-					&& (rtRc = node.tryGetFirstComponentOfType<RenderComponent>()) && rtRc->getSupportsRayTracing();
+		wantNode = wantNode
+				   || !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::ALL_RAY_TRACING)
+						  && (rtRc = node.tryGetFirstComponentOfType<RenderComponent>()) != nullptr
+						  && rtRc->getSupportsRayTracing();
 
 		const LightComponent* lc = nullptr;
-		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS)
-					&& (lc = node.tryGetFirstComponentOfType<LightComponent>());
+		wantNode = wantNode
+				   || !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS)
+						  && (lc = node.tryGetFirstComponentOfType<LightComponent>()) != nullptr;
 
 		const LensFlareComponent* lfc = nullptr;
-		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::LENS_FLARE_COMPONENTS)
-					&& (lfc = node.tryGetFirstComponentOfType<LensFlareComponent>());
+		wantNode = wantNode
+				   || !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::LENS_FLARE_COMPONENTS)
+						  && (lfc = node.tryGetFirstComponentOfType<LensFlareComponent>()) != nullptr;
 
 		const ReflectionProbeComponent* reflc = nullptr;
-		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::REFLECTION_PROBES)
-					&& (reflc = node.tryGetFirstComponentOfType<ReflectionProbeComponent>());
+		wantNode = wantNode
+				   || !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::REFLECTION_PROBES)
+						  && (reflc = node.tryGetFirstComponentOfType<ReflectionProbeComponent>()) != nullptr;
 
 		DecalComponent* decalc = nullptr;
-		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::DECALS)
-					&& (decalc = node.tryGetFirstComponentOfType<DecalComponent>());
+		wantNode = wantNode
+				   || !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::DECALS)
+						  && (decalc = node.tryGetFirstComponentOfType<DecalComponent>()) != nullptr;
 
 		const FogDensityComponent* fogc = nullptr;
-		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::FOG_DENSITY_COMPONENTS)
-					&& (fogc = node.tryGetFirstComponentOfType<FogDensityComponent>());
+		wantNode = wantNode
+				   || !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::FOG_DENSITY_COMPONENTS)
+						  && (fogc = node.tryGetFirstComponentOfType<FogDensityComponent>()) != nullptr;
 
 		GlobalIlluminationProbeComponent* giprobec = nullptr;
-		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::GLOBAL_ILLUMINATION_PROBES)
-					&& (giprobec = node.tryGetFirstComponentOfType<GlobalIlluminationProbeComponent>());
+		wantNode =
+			wantNode
+			|| !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::GLOBAL_ILLUMINATION_PROBES)
+				   && (giprobec = node.tryGetFirstComponentOfType<GlobalIlluminationProbeComponent>()) != nullptr;
 
 		GenericGpuComputeJobComponent* computec = nullptr;
-		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::GENERIC_COMPUTE_JOB_COMPONENTS)
-					&& (computec = node.tryGetFirstComponentOfType<GenericGpuComputeJobComponent>());
+		wantNode = wantNode
+				   || !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::GENERIC_COMPUTE_JOB_COMPONENTS)
+						  && (computec = node.tryGetFirstComponentOfType<GenericGpuComputeJobComponent>()) != nullptr;
 
 		UiComponent* uic = nullptr;
-		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::UI_COMPONENTS)
-					&& (uic = node.tryGetFirstComponentOfType<UiComponent>());
+		wantNode = wantNode
+				   || !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::UI_COMPONENTS)
+						  && (uic = node.tryGetFirstComponentOfType<UiComponent>()) != nullptr;
 
 		SkyboxComponent* skyboxc = nullptr;
-		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::SKYBOX)
-					&& (skyboxc = node.tryGetFirstComponentOfType<SkyboxComponent>());
+		wantNode = wantNode
+				   || !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::SKYBOX)
+						  && (skyboxc = node.tryGetFirstComponentOfType<SkyboxComponent>()) != nullptr;
 
 		if(ANKI_UNLIKELY(!wantNode))
 		{

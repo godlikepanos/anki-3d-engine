@@ -150,7 +150,7 @@ void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBufferPtr& cmd
 
 		// Compute position
 		Vec4 lfPos = Vec4(flareEl.m_worldPosition, 1.0);
-		Vec4 posClip = ctx.m_renderQueue->m_viewProjectionMatrix * lfPos;
+		Vec4 posClip = ctx.m_matrices.m_viewProjectionJitter * lfPos;
 
 		/*if(posClip.x() > posClip.w() || posClip.x() < -posClip.w() || posClip.y() > posClip.w()
 			|| posClip.y() < -posClip.w())

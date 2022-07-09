@@ -15,10 +15,15 @@
 #	pragma GCC diagnostic ignored "-Wunused-function"
 #	pragma GCC diagnostic ignored "-Wconversion"
 #	pragma GCC diagnostic ignored "-Wunused-variable"
+#elif ANKI_COMPILER_MSVC
+#	pragma warning(push)
+#	pragma warning(disable : 4018 4389 4189 4505 4706)
 #endif
 
 #include <ThirdParty/TinyExr/tinyexr.h>
 
 #if ANKI_COMPILER_GCC_COMPATIBLE
 #	pragma GCC diagnostic pop
+#elif ANKI_COMPILER_MSVC
+#	pragma warning(pop)
 #endif

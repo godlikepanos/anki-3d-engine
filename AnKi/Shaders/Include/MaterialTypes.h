@@ -13,10 +13,11 @@ ANKI_BEGIN_NAMESPACE
 struct MaterialGlobalUniforms
 {
 	Mat4 m_viewProjectionMatrix;
+	Mat4 m_previousViewProjectionMatrix;
 	Mat3x4 m_viewMatrix;
 	Mat3x4 m_cameraTransform;
 };
-ANKI_SHADER_STATIC_ASSERT(sizeof(MaterialGlobalUniforms) == 10 * sizeof(Vec4));
+ANKI_SHADER_STATIC_ASSERT(sizeof(MaterialGlobalUniforms) == 14 * sizeof(Vec4));
 
 const U32 MATERIAL_SET_BINDLESS = 0u;
 const U32 MATERIAL_SET_GLOBAL = 1u;

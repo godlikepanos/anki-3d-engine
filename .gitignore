@@ -2,3 +2,6 @@ build*/*
 out/*
 .*
 CMakeSettings.json
+*.TMP
+AndroidProject_*
+*diff*

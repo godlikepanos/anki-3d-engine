@@ -237,7 +237,7 @@ public:
 		return m_projMat;
 	}
 
-	const Mat4& getViewMatrix() const
+	const Mat3x4& getViewMatrix() const
 	{
 		return m_viewMat;
 	}
@@ -414,7 +414,7 @@ private:
 
 	Transform m_trf = Transform::getIdentity();
 	Mat4 m_projMat = Mat4::getIdentity(); ///< Projection matrix
-	Mat4 m_viewMat = Mat4::getIdentity(); ///< View matrix
+	Mat3x4 m_viewMat = Mat3x4::getIdentity(); ///< View matrix
 	Mat4 m_viewProjMat = Mat4::getIdentity(); ///< View projection matrix
 	Mat4 m_prevViewProjMat = Mat4::getIdentity();
 

@@ -36,8 +36,8 @@ public:
 	using RowVec = TVec<T, I>;
 	using ColumnVec = TVec<T, J>;
 
-	static constexpr U ROW_SIZE = J; ///< Number of rows
-	static constexpr U COLUMN_SIZE = I; ///< Number of columns
+	static constexpr U ROW_COUNT = J; ///< Number of rows
+	static constexpr U COLUMN_COUNT = I; ///< Number of columns
 	static constexpr U SIZE = J * I; ///< Number of total elements
 	static constexpr Bool HAS_SIMD = I == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
 	static constexpr Bool HAS_MAT4_SIMD = J == 4 && I == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
@@ -50,46 +50,21 @@ public:
 	}
 
 	/// Copy.
-	TMat(ANKI_ENABLE_ARG(const TMat&, !HAS_SIMD) b)
+	TMat(const TMat& b)
 	{
-		for(U i = 0; i < N; i++)
+		for(U i = 0; i < ROW_COUNT; i++)
 		{
-			m_arr1[i] = b.m_arr1[i];
+			m_rows[i] = b.m_rows[i];
 		}
 	}
 
-	/// Copy.
-	TMat(ANKI_ENABLE_ARG(const TMat&, HAS_SIMD) b)
-	{
-		for(U i = 0; i < J; i++)
-		{
-			m_simd[i] = b.m_simd[i];
-		}
-	}
-
-	ANKI_ENABLE_METHOD(!HAS_SIMD)
 	explicit TMat(const T f)
 	{
-		for(T& x : m_arr1)
+		for(U i = 0; i < ROW_COUNT; i++)
 		{
-			x = f;
+			m_rows[i] = RowVec(f);
 		}
 	}
-
-#if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(HAS_SIMD)
-	explicit TMat(const T f)
-	{
-		for(U i = 0; i < J; i++)
-		{
-#	if ANKI_SIMD_SSE
-			m_simd[i] = _mm_set1_ps(f);
-#	else
-			m_simd[i] = {f, f, f, f};
-#	endif
-		}
-	}
-#endif
 
 	explicit TMat(const T arr[])
 	{
@@ -180,6 +155,16 @@ public:
 	explicit TMat(const TTransform<T>& t)
 		: TMat(t.getOrigin().xyz1(), t.getRotation().getRotationPart(), t.getScale())
 	{
+	}
+
+	/// Set a 4x4 matrix using a 3x4 for the first 3 rows and a vec4 for the 4rth row.
+	ANKI_ENABLE_METHOD(J == 4 && I == 4)
+	explicit TMat(const TMat<T, 3, 4>& m3, const TVec<T, 4>& row3)
+	{
+		setRow(0, m3.getRow(0));
+		setRow(1, m3.getRow(1));
+		setRow(2, m3.getRow(2));
+		setRow(3, row3);
 	}
 
 	// 3x4 specific constructors
@@ -287,132 +272,52 @@ public:
 	/// @{
 
 	/// Copy.
-	TMat& operator=(ANKI_ENABLE_ARG(const TMat&, !HAS_SIMD) b)
+	TMat& operator=(const TMat& b)
 	{
-		for(U n = 0; n < N; n++)
+		for(U i = 0; i < ROW_COUNT; ++i)
 		{
-			m_arr1[n] = b.m_arr1[n];
+			m_rows[i] = b.m_rows[i];
 		}
 		return *this;
 	}
 
-	/// Copy.
-	TMat& operator=(ANKI_ENABLE_ARG(const TMat&, HAS_SIMD) b)
-	{
-		for(U i = 0; i < J; i++)
-		{
-			m_simd[i] = b.m_simd[i];
-		}
-		return *this;
-	}
-
-	ANKI_ENABLE_METHOD(!HAS_SIMD)
 	TMat operator+(const TMat& b) const
 	{
 		TMat c;
-		for(U n = 0; n < N; n++)
+		for(U i = 0; i < ROW_COUNT; ++i)
 		{
-			c.m_arr1[n] = m_arr1[n] + b.m_arr1[n];
+			c.m_rows[i] = m_rows[i] + b.m_rows[i];
 		}
 		return c;
 	}
 
-#if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(HAS_SIMD)
-	TMat operator+(const TMat& b) const
-	{
-		TMat c;
-		for(U i = 0; i < J; i++)
-		{
-#	if ANKI_SIMD_SSE
-			c.m_simd[i] = _mm_add_ps(m_simd[i], b.m_simd[i]);
-#	else
-			c.m_simd[i] = m_simd[i] + b.m_simd[i];
-#	endif
-		}
-		return c;
-	}
-#endif
-
-	ANKI_ENABLE_METHOD(!HAS_SIMD)
 	TMat& operator+=(const TMat& b)
 	{
-		for(U n = 0; n < N; n++)
+		for(U i = 0; i < ROW_COUNT; ++i)
 		{
-			m_arr1[n] += b.m_arr1[n];
+			m_rows[i] += b.m_rows[i];
 		}
 		return *this;
 	}
 
-#if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(HAS_SIMD)
-	TMat& operator+=(const TMat& b)
-	{
-		for(U i = 0; i < J; i++)
-		{
-#	if ANKI_SIMD_SSE
-			m_simd[i] = _mm_add_ps(m_simd[i], b.m_simd[i]);
-#	else
-			m_simd[i] += b.m_simd[i];
-#	endif
-		}
-		return *this;
-	}
-#endif
-
-	ANKI_ENABLE_METHOD(!HAS_SIMD)
 	TMat operator-(const TMat& b) const
 	{
 		TMat c;
-		for(U n = 0; n < N; n++)
+		for(U i = 0; i < ROW_COUNT; ++i)
 		{
-			c.m_arr1[n] = m_arr1[n] - b.m_arr1[n];
+			c.m_rows[i] = m_rows[i] - b.m_rows[i];
 		}
 		return c;
 	}
 
-#if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(HAS_SIMD)
-	TMat operator-(const TMat& b) const
-	{
-		TMat c;
-		for(U i = 0; i < J; i++)
-		{
-#	if ANKI_SIMD_SSE
-			c.m_simd[i] = _mm_sub_ps(m_simd[i], b.m_simd[i]);
-#	else
-			c.m_simd[i] = m_simd[i] - b.m_simd[i];
-#	endif
-		}
-		return c;
-	}
-#endif
-
-	ANKI_ENABLE_METHOD(!HAS_SIMD)
 	TMat& operator-=(const TMat& b)
 	{
-		for(U n = 0; n < N; n++)
+		for(U i = 0; i < ROW_COUNT; ++i)
 		{
-			m_arr1[n] -= b.m_arr1[n];
+			m_rows[i] -= b.m_rows[i];
 		}
 		return *this;
 	}
-
-#if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(HAS_SIMD)
-	TMat& operator-=(const TMat& b)
-	{
-		for(U i = 0; i < J; i++)
-		{
-#	if ANKI_SIMD_SSE
-			m_simd[i] = _mm_sub_ps(m_simd[i], b.m_simd[i]);
-#	else
-			m_simd[i] -= b.m_simd[i];
-#	endif
-		}
-		return *this;
-	}
-#endif
 
 	ANKI_ENABLE_METHOD(J == I && !HAS_MAT4_SIMD)
 	TMat operator*(const TMat& b) const
@@ -510,18 +415,18 @@ public:
 	TMat operator+(const T f) const
 	{
 		TMat out;
-		for(U i = 0; i < N; i++)
+		for(U i = 0; i < ROW_COUNT; ++i)
 		{
-			out.m_arr1[i] = m_arr1[i] + f;
+			out.m_rows[i] = m_rows[i] + f;
 		}
 		return out;
 	}
 
 	TMat& operator+=(const T f)
 	{
-		for(U i = 0; i < N; i++)
+		for(U i = 0; i < ROW_COUNT; ++i)
 		{
-			m_arr1[i] += f;
+			m_rows[i] += f;
 		}
 		return *this;
 	}
@@ -529,18 +434,18 @@ public:
 	TMat operator-(const T f) const
 	{
 		TMat out;
-		for(U i = 0; i < N; i++)
+		for(U i = 0; i < ROW_COUNT; ++i)
 		{
-			out.m_arr1[i] = m_arr1[i] - f;
+			out.m_rows[i] = m_rows[i] - f;
 		}
 		return out;
 	}
 
 	TMat& operator-=(const T f)
 	{
-		for(U i = 0; i < N; i++)
+		for(U i = 0; i < ROW_COUNT; ++i)
 		{
-			m_arr1[i] -= f;
+			m_rows[i] -= f;
 		}
 		return *this;
 	}
@@ -548,18 +453,18 @@ public:
 	TMat operator*(const T f) const
 	{
 		TMat out;
-		for(U i = 0; i < N; i++)
+		for(U i = 0; i < ROW_COUNT; ++i)
 		{
-			out.m_arr1[i] = m_arr1[i] * f;
+			out.m_rows[i] = m_rows[i] * f;
 		}
 		return out;
 	}
 
 	TMat& operator*=(const T f)
 	{
-		for(U i = 0; i < N; i++)
+		for(U i = 0; i < ROW_COUNT; ++i)
 		{
-			m_arr1[i] *= f;
+			m_rows[i] *= f;
 		}
 		return *this;
 	}
@@ -568,9 +473,9 @@ public:
 	{
 		ANKI_ASSERT(f != T(0));
 		TMat out;
-		for(U i = 0; i < N; i++)
+		for(U i = 0; i < ROW_COUNT; ++i)
 		{
-			out.m_arr1[i] = m_arr1[i] / f;
+			out.m_rows[i] = m_rows[i] / f;
 		}
 		return out;
 	}
@@ -578,9 +483,9 @@ public:
 	TMat& operator/=(const T f)
 	{
 		ANKI_ASSERT(f != T(0));
-		for(U i = 0; i < N; i++)
+		for(U i = 0; i < ROW_COUNT; ++i)
 		{
-			m_arr1[i] /= f;
+			m_rows[i] /= f;
 		}
 		return *this;
 	}
@@ -628,19 +533,9 @@ public:
 
 	/// @name Other
 	/// @{
-	ANKI_ENABLE_METHOD(!HAS_SIMD)
 	void setRow(const U j, const RowVec& v)
 	{
-		for(U i = 0; i < I; i++)
-		{
-			m_arr2[j][i] = v[i];
-		}
-	}
-
-	ANKI_ENABLE_METHOD(HAS_SIMD)
-	void setRow(const U j, const RowVec& v)
-	{
-		m_simd[j] = v.getSimd();
+		m_rows[j] = v;
 	}
 
 	void setRows(const RowVec& a, const RowVec& b, const RowVec& c)
@@ -657,14 +552,9 @@ public:
 		setRow(3, d);
 	}
 
-	RowVec getRow(const U j) const
+	const RowVec& getRow(const U j) const
 	{
-		RowVec out;
-		for(U i = 0; i < I; i++)
-		{
-			out[i] = m_arr2[j][i];
-		}
-		return out;
+		return m_rows[j];
 	}
 
 	void getRows(RowVec& a, RowVec& b, RowVec& c) const
@@ -674,9 +564,9 @@ public:
 		c = getRow(2);
 	}
 
+	ANKI_ENABLE_METHOD(J > 3)
 	void getRows(RowVec& a, RowVec& b, RowVec& c, RowVec& d) const
 	{
-		static_assert(J > 3, "Wrong matrix");
 		getRows(a, b, c);
 		d = getRow(3);
 	}
@@ -696,9 +586,9 @@ public:
 		setColumn(2, c);
 	}
 
+	ANKI_ENABLE_METHOD(I > 3)
 	void setColumns(const ColumnVec& a, const ColumnVec& b, const ColumnVec& c, const ColumnVec& d)
 	{
-		static_assert(I > 3, "Check column number");
 		setColumns(a, b, c);
 		setColumn(3, d);
 	}
@@ -720,9 +610,9 @@ public:
 		c = getColumn(2);
 	}
 
+	ANKI_ENABLE_METHOD(I > 3)
 	void getColumns(ColumnVec& a, ColumnVec& b, ColumnVec& c, ColumnVec& d) const
 	{
-		static_assert(I > 3, "Check column number");
 		getColumns(a, b, c);
 		d = getColumn(3);
 	}
@@ -814,8 +704,7 @@ public:
 		m(2, 2) = T(1);
 	}
 
-	/// It rotates "this" in the axis defined by the rotation AND not the
-	/// world axis
+	/// It rotates "this" in the axis defined by the rotation AND not the world axis.
 	void rotateXAxis(const T rad)
 	{
 		TMat& m = *this;
@@ -1008,7 +897,7 @@ public:
 
 	void setTranslationPart(const ColumnVec& v)
 	{
-		if(ROW_SIZE == 4)
+		if(ROW_COUNT == 4)
 		{
 			ANKI_ASSERT(isZero<T>(v[3] - T(1)) && "w should be 1");
 		}
@@ -1578,11 +1467,12 @@ protected:
 	/// @{
 	union
 	{
-		Array<T, N> m_arr1;
-		Array2d<T, J, I> m_arr2;
 		T m_carr1[N]; ///< For easier debugging with gdb
 		T m_carr2[J][I]; ///< For easier debugging with gdb
+		Array<T, N> m_arr1;
+		Array2d<T, J, I> m_arr2;
 		SimdArray m_simd;
+		Array<RowVec, J> m_rows;
 	};
 	/// @}
 };

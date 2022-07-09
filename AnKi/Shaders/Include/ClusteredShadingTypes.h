@@ -189,25 +189,24 @@ ANKI_SHADER_STATIC_ASSERT(sizeof(GlobalIlluminationProbe) == _ANKI_SIZEOF_Global
 /// Common matrices.
 struct CommonMatrices
 {
-	Mat4 m_cameraTransform ANKI_CPP_CODE(= Mat4::getIdentity());
-	Mat4 m_view ANKI_CPP_CODE(= Mat4::getIdentity());
-	Mat4 m_projection ANKI_CPP_CODE(= Mat4::getIdentity());
-	Mat4 m_viewProjection ANKI_CPP_CODE(= Mat4::getIdentity());
+	Mat3x4 m_cameraTransform;
+	Mat3x4 m_view;
+	Mat4 m_projection;
+	Mat4 m_viewProjection;
 
-	Mat4 m_jitter ANKI_CPP_CODE(= Mat4::getIdentity());
-	Mat4 m_projectionJitter ANKI_CPP_CODE(= Mat4::getIdentity());
-	Mat4 m_viewProjectionJitter ANKI_CPP_CODE(= Mat4::getIdentity());
+	Mat4 m_jitter;
+	Mat4 m_projectionJitter;
+	Mat4 m_viewProjectionJitter;
 
-	Mat4 m_invertedViewProjectionJitter ANKI_CPP_CODE(= Mat4::getIdentity()); ///< To unproject in world space.
-	Mat4 m_invertedViewProjection ANKI_CPP_CODE(= Mat4::getIdentity());
-	Mat4 m_invertedProjectionJitter ANKI_CPP_CODE(= Mat4::getIdentity()); ///< To unproject in view space.
-	Mat4 m_invertedView ANKI_CPP_CODE(= Mat4::getIdentity());
+	Mat4 m_invertedViewProjectionJitter; ///< To unproject in world space.
+	Mat4 m_invertedViewProjection;
+	Mat4 m_invertedProjectionJitter; ///< To unproject in view space.
 
 	/// It's being used to reproject a clip space position of the current frame to the previous frame. Its value should
 	/// be m_jitter * m_prevFrame.m_viewProjection * m_invertedViewProjectionJitter. At first it unprojects the current
 	/// position to world space, all fine here. Then it projects to the previous frame as if the previous frame was
 	/// using the current frame's jitter matrix.
-	Mat4 m_reprojection ANKI_CPP_CODE(= Mat4::getIdentity());
+	Mat4 m_reprojection;
 
 	/// To unproject to view space. Jitter not considered.
 	/// @code
@@ -215,9 +214,9 @@ struct CommonMatrices
 	/// const Vec2 xy = ndc * m_unprojectionParameters.xy * z;
 	/// pos = Vec3(xy, z);
 	/// @endcode
-	Vec4 m_unprojectionParameters ANKI_CPP_CODE(= Vec4(0.0f));
+	Vec4 m_unprojectionParameters;
 };
-const U32 _ANKI_SIZEOF_CommonMatrices = 12u * ANKI_SIZEOF(Mat4) + 1u * ANKI_SIZEOF(Vec4);
+const U32 _ANKI_SIZEOF_CommonMatrices = 43u * ANKI_SIZEOF(Vec4);
 ANKI_SHADER_STATIC_ASSERT(sizeof(CommonMatrices) == _ANKI_SIZEOF_CommonMatrices);
 
 /// Common uniforms for light shading passes.

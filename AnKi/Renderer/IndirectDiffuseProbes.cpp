@@ -569,11 +569,18 @@ void IndirectDiffuseProbes::runGBufferInThread(RenderPassWorkContext& rgraphCtx,
 			const RenderQueue& rqueue = *probe.m_renderQueues[faceIdx];
 
 			ANKI_ASSERT(localStart >= 0 && localEnd <= faceDrawcallCount);
-			m_r->getSceneDrawer().drawRange(
-				RenderingTechnique::GBUFFER, rqueue.m_viewMatrix, rqueue.m_viewProjectionMatrix,
-				Mat4::getIdentity(), // Don't care about prev mats since we don't care about velocity
-				cmdb, m_r->getSamplers().m_trilinearRepeat, rqueue.m_renderables.getBegin() + localStart,
-				rqueue.m_renderables.getBegin() + localEnd, MAX_LOD_COUNT - 1, MAX_LOD_COUNT - 1);
+
+			RenderableDrawerArguments args;
+			args.m_viewMatrix = rqueue.m_viewMatrix;
+			args.m_cameraTransform = Mat3x4::getIdentity(); // Don't care
+			args.m_viewProjectionMatrix = rqueue.m_viewProjectionMatrix;
+			args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
+			args.m_sampler = m_r->getSamplers().m_trilinearRepeat;
+			args.m_minLod = args.m_maxLod = MAX_LOD_COUNT - 1;
+
+			m_r->getSceneDrawer().drawRange(RenderingTechnique::GBUFFER, args,
+											rqueue.m_renderables.getBegin() + localStart,
+											rqueue.m_renderables.getBegin() + localEnd, cmdb);
 		}
 
 		drawcallCount += faceDrawcallCount;
@@ -620,12 +627,18 @@ void IndirectDiffuseProbes::runShadowmappingInThread(RenderPassWorkContext& rgra
 			cmdb->setScissor(rez * faceIdx, 0, rez, rez);
 
 			ANKI_ASSERT(localStart >= 0 && localEnd <= faceDrawcallCount);
-			m_r->getSceneDrawer().drawRange(
-				RenderingTechnique::SHADOW, cascadeRenderQueue.m_viewMatrix, cascadeRenderQueue.m_viewProjectionMatrix,
-				Mat4::getIdentity(), // Don't care about prev matrices here
-				cmdb, m_r->getSamplers().m_trilinearRepeatAniso,
-				cascadeRenderQueue.m_renderables.getBegin() + localStart,
-				cascadeRenderQueue.m_renderables.getBegin() + localEnd, MAX_LOD_COUNT - 1, MAX_LOD_COUNT - 1);
+
+			RenderableDrawerArguments args;
+			args.m_viewMatrix = cascadeRenderQueue.m_viewMatrix;
+			args.m_cameraTransform = Mat3x4::getIdentity(); // Don't care
+			args.m_viewProjectionMatrix = cascadeRenderQueue.m_viewProjectionMatrix;
+			args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
+			args.m_sampler = m_r->getSamplers().m_trilinearRepeatAniso;
+			args.m_maxLod = args.m_minLod = MAX_LOD_COUNT - 1;
+
+			m_r->getSceneDrawer().drawRange(RenderingTechnique::SHADOW, args,
+											cascadeRenderQueue.m_renderables.getBegin() + localStart,
+											cascadeRenderQueue.m_renderables.getBegin() + localEnd, cmdb);
 		}
 	}
 
@@ -654,7 +667,7 @@ void IndirectDiffuseProbes::runLightShading(RenderPassWorkContext& rgraphCtx, In
 		TraditionalDeferredLightShadingDrawInfo dsInfo;
 		dsInfo.m_viewProjectionMatrix = rqueue.m_viewProjectionMatrix;
 		dsInfo.m_invViewProjectionMatrix = rqueue.m_viewProjectionMatrix.getInverse();
-		dsInfo.m_cameraPosWSpace = rqueue.m_cameraTransform.getTranslationPart();
+		dsInfo.m_cameraPosWSpace = rqueue.m_cameraTransform.getTranslationPart().xyz1();
 		dsInfo.m_viewport = UVec4(faceIdx * m_tileSize, 0, m_tileSize, m_tileSize);
 		dsInfo.m_gbufferTexCoordsScale = Vec2(1.0f / F32(m_tileSize * 6), 1.0f / F32(m_tileSize));
 		dsInfo.m_gbufferTexCoordsBias = Vec2(0.0f, 0.0f);

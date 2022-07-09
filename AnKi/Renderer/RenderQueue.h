@@ -19,8 +19,8 @@ namespace anki {
 class RenderingMatrices
 {
 public:
-	Mat4 m_cameraTransform;
-	Mat4 m_viewMatrix;
+	Mat3x4 m_cameraTransform;
+	Mat3x4 m_viewMatrix;
 	Mat4 m_projectionMatrix;
 	Mat4 m_viewProjectionMatrix;
 	Mat4 m_previousViewProjectionMatrix;

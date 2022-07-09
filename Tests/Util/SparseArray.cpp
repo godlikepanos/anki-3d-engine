@@ -343,7 +343,7 @@ ANKI_TEST(Util, SparseArrayBench)
 			int v;
 			do
 			{
-				v = rand();
+				v = int(getRandom());
 			} while(tmpMap.find(v) != tmpMap.end() && v != 0);
 			tmpMap[v] = 1;
 
