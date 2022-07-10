@@ -6,13 +6,14 @@ if(ANKI_DLSS)
 		add_library(AnKiNgx IMPORTED SHARED GLOBAL)
 		set_property(TARGET AnKiNgx APPEND PROPERTY IMPORTED_CONFIGURATIONS DEBUG)
 		set_property(TARGET AnKiNgx APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
-		set_target_properties(AnKiNgx PROPERTIES IMPORTED_IMPLIB_DEBUG ${NGX_SDK_ROOT}/lib/Windows_x86_64/x86_64/nvsdk_ngx_d_dbg.lib)
+		set_target_properties(AnKiNgx PROPERTIES IMPORTED_IMPLIB_DEBUG ${NGX_SDK_ROOT}/lib/Windows_x86_64/x86_64/nvsdk_ngx_d_dbg_iterator0.lib)
 		set_target_properties(AnKiNgx PROPERTIES IMPORTED_IMPLIB_RELEASE ${NGX_SDK_ROOT}/lib/Windows_x86_64/x86_64/nvsdk_ngx_d.lib)
 		set_target_properties(AnKiNgx PROPERTIES
 			MAP_IMPORTED_CONFIG_MINSIZEREL Release
 			MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
 		)
-		set_target_properties(AnKiNgx PROPERTIES IMPORTED_LOCATION "${NGX_SDK_ROOT}/lib/Windows_x86_64/rel/nvngx_dlss.dll")
+		set_target_properties(AnKiNgx PROPERTIES IMPORTED_LOCATION
+			"${NGX_SDK_ROOT}/lib/Windows_x86_64/$<IF:$<CONFIG:Debug>,dev,rel>/nvngx_dlss.dll")
 	elseif(LINUX)
 		add_library(AnKiNgx IMPORTED STATIC GLOBAL)
 		set_property(TARGET AnKiNgx APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)

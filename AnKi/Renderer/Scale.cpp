@@ -198,7 +198,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 
 		ComputeRenderPassDescription& pass = ctx.m_renderGraphDescr.newComputeRenderPass("DLSS");
 
-		// TODO: No idea about the usage flags
+		// DLSS says input textures in sampled state and out as storage image
 		const TextureUsageBit readUsage = TextureUsageBit::ALL_SAMPLED & TextureUsageBit::ALL_COMPUTE;
 		const TextureUsageBit writeUsage = TextureUsageBit::ALL_IMAGE & TextureUsageBit::ALL_COMPUTE;
 
