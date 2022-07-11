@@ -31,7 +31,7 @@
 
 /*
 ** Enumeration tokens for SPIR-V, in various styles:
-**   C, C++, C++11, JSON, Lua, Python, C#, D
+**   C, C++, C++11, JSON, Lua, Python, C#, D, Beef
 ** 
 ** - C will have tokens with a "Spv" prefix, e.g.: SpvSourceLanguageGLSL
 ** - C++ will have tokens in the "spv" name space, e.g.: spv::SourceLanguageGLSL
@@ -41,6 +41,8 @@
 ** - C# will use enum classes in the Specification class located in the "Spv" namespace,
 **     e.g.: Spv.Specification.SourceLanguage.GLSL
 ** - D will have tokens under the "spv" module, e.g: spv.SourceLanguage.GLSL
+** - Beef will use enum classes in the Specification class located in the "Spv" namespace,
+**     e.g.: Spv.Specification.SourceLanguage.GLSL
 ** 
 ** Some tokens act like mask values, which can be OR'd together,
 ** while others are mutually exclusive.  The mask-like ones have
@@ -70,6 +72,7 @@ typedef enum SpvSourceLanguage_ {
     SpvSourceLanguageOpenCL_CPP = 4,
     SpvSourceLanguageHLSL = 5,
     SpvSourceLanguageCPP_for_OpenCL = 6,
+    SpvSourceLanguageSYCL = 7,
     SpvSourceLanguageMax = 0x7fffffff,
 } SpvSourceLanguage;
 
@@ -184,6 +187,7 @@ typedef enum SpvExecutionMode_ {
     SpvExecutionModeNoGlobalOffsetINTEL = 5895,
     SpvExecutionModeNumSIMDWorkitemsINTEL = 5896,
     SpvExecutionModeSchedulerTargetFmaxMhzINTEL = 5903,
+    SpvExecutionModeNamedBarrierCountINTEL = 6417,
     SpvExecutionModeMax = 0x7fffffff,
 } SpvExecutionMode;
 
@@ -679,6 +683,7 @@ typedef enum SpvBuiltIn_ {
     SpvBuiltInSMCountNV = 5375,
     SpvBuiltInWarpIDNV = 5376,
     SpvBuiltInSMIDNV = 5377,
+    SpvBuiltInCullMaskKHR = 6021,
     SpvBuiltInMax = 0x7fffffff,
 } SpvBuiltIn;
 
@@ -1080,7 +1085,9 @@ typedef enum SpvCapability_ {
     SpvCapabilityDotProductInput4x8BitPackedKHR = 6018,
     SpvCapabilityDotProduct = 6019,
     SpvCapabilityDotProductKHR = 6019,
+    SpvCapabilityRayCullMaskKHR = 6020,
     SpvCapabilityBitInstructions = 6025,
+    SpvCapabilityGroupNonUniformRotateKHR = 6026,
     SpvCapabilityAtomicFloat32AddEXT = 6033,
     SpvCapabilityAtomicFloat64AddEXT = 6034,
     SpvCapabilityLongConstantCompositeINTEL = 6089,
@@ -1544,6 +1551,7 @@ typedef enum SpvOp_ {
     SpvOpSubgroupAllKHR = 4428,
     SpvOpSubgroupAnyKHR = 4429,
     SpvOpSubgroupAllEqualKHR = 4430,
+    SpvOpGroupNonUniformRotateKHR = 4431,
     SpvOpSubgroupReadInvocationKHR = 4432,
     SpvOpTraceRayKHR = 4445,
     SpvOpExecuteCallableKHR = 4446,
@@ -2222,6 +2230,7 @@ inline void SpvHasResultAndType(SpvOp opcode, bool *hasResult, bool *hasResultTy
     case SpvOpSubgroupAllKHR: *hasResult = true; *hasResultType = true; break;
     case SpvOpSubgroupAnyKHR: *hasResult = true; *hasResultType = true; break;
     case SpvOpSubgroupAllEqualKHR: *hasResult = true; *hasResultType = true; break;
+    case SpvOpGroupNonUniformRotateKHR: *hasResult = true; *hasResultType = true; break;
     case SpvOpSubgroupReadInvocationKHR: *hasResult = true; *hasResultType = true; break;
     case SpvOpTraceRayKHR: *hasResult = false; *hasResultType = false; break;
     case SpvOpExecuteCallableKHR: *hasResult = false; *hasResultType = false; break;

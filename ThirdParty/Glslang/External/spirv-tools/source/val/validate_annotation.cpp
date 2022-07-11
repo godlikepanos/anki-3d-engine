@@ -136,8 +136,8 @@ std::string LogStringForDecoration(uint32_t decoration) {
       return "PerViewNV";
     case SpvDecorationPerTaskNV:
       return "PerTaskNV";
-    case SpvDecorationPerVertexNV:
-      return "PerVertexNV";
+    case SpvDecorationPerVertexKHR:
+      return "PerVertexKHR";
     case SpvDecorationNonUniform:
       return "NonUniform";
     case SpvDecorationRestrictPointer:
@@ -334,7 +334,7 @@ spv_result_t ValidateDecorationTarget(ValidationState_t& _, SpvDecoration dec,
             sc != SpvStorageClassIncomingCallableDataKHR &&
             sc != SpvStorageClassShaderRecordBufferKHR) {
           return _.diag(SPV_ERROR_INVALID_ID, target)
-                 << LogStringForDecoration(dec)
+                 << _.VkErrorID(6672) << LogStringForDecoration(dec)
                  << " decoration must not be applied to this storage class";
         }
         break;
@@ -355,7 +355,7 @@ spv_result_t ValidateDecorationTarget(ValidationState_t& _, SpvDecoration dec,
         break;
       case SpvDecorationInputAttachmentIndex:
         if (sc != SpvStorageClassUniformConstant) {
-          return fail(0) << "must be in the UniformConstant storage class";
+          return fail(6678) << "must be in the UniformConstant storage class";
         }
         break;
       case SpvDecorationFlat:
@@ -364,6 +364,11 @@ spv_result_t ValidateDecorationTarget(ValidationState_t& _, SpvDecoration dec,
       case SpvDecorationSample:
         if (sc != SpvStorageClassInput && sc != SpvStorageClassOutput) {
           return fail(4670) << "storage class must be Input or Output";
+        }
+        break;
+      case SpvDecorationPerVertexKHR:
+        if (sc != SpvStorageClassInput) {
+          return fail(6777) << "storage class must be Input";
         }
         break;
       default:

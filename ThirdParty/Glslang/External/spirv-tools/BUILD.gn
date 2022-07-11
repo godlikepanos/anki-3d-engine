@@ -20,10 +20,15 @@ if (build_with_chromium) {
 }
 
 # SPIRV-Tools may be part of multiple projects in the Chromium tree.
-# Only enable building executables if this is the main copy, or standalone.
+# Only enable building executables if this is the main copy.
 abspath = get_path_info(".", "abspath")
-spvtools_chromium_third_party = (abspath == "//third_party/SPIRV-Tools/")
-spvtools_build_executables = !build_with_chromium || spvtools_chromium_third_party
+spvtools_chromium_third_party = (abspath == "//third_party/vulkan-deps/spirv-tools/src/")
+spvtools_build_executables = build_with_chromium && spvtools_chromium_third_party
+# Fuchsia also requires building the executables.
+# TODO(b/158002593): Avoid the use of dependent-specific variables.
+if (defined(is_fuchsia_tree) && is_fuchsia_tree) {
+  spvtools_build_executables = true
+}
 
 spirv_headers = spirv_tools_spirv_headers_dir
 spirv_is_winuwp = is_win && target_os == "winuwp"
@@ -251,12 +256,12 @@ action("spvtools_generators_inc") {
 action("spvtools_build_version") {
   script = "utils/update_build_version.py"
 
-  src_dir = "."
+  changes_file = "CHANGES"
   inc_file = "${target_gen_dir}/build-version.inc"
 
   outputs = [ inc_file ]
   args = [
-    rebase_path(src_dir, root_build_dir),
+    rebase_path(changes_file, root_build_dir),
     rebase_path(inc_file, root_build_dir),
   ]
 }
@@ -624,6 +629,8 @@ static_library("spvtools_opt") {
     "source/opt/empty_pass.h",
     "source/opt/feature_manager.cpp",
     "source/opt/feature_manager.h",
+    "source/opt/fix_func_call_arguments.cpp",
+    "source/opt/fix_func_call_arguments.h",
     "source/opt/fix_storage_class.cpp",
     "source/opt/fix_storage_class.h",
     "source/opt/flatten_decoration_pass.cpp",
@@ -660,6 +667,8 @@ static_library("spvtools_opt") {
     "source/opt/instruction_list.h",
     "source/opt/instrument_pass.cpp",
     "source/opt/instrument_pass.h",
+    "source/opt/interface_var_sroa.cpp",
+    "source/opt/interface_var_sroa.h",
     "source/opt/interp_fixup_pass.cpp",
     "source/opt/interp_fixup_pass.h",
     "source/opt/ir_builder.h",

@@ -109,6 +109,7 @@ SPVTOOLS_OPT_SRC_FILES := \
 		source/opt/eliminate_dead_input_components_pass.cpp \
 		source/opt/eliminate_dead_members_pass.cpp \
 		source/opt/feature_manager.cpp \
+		source/opt/fix_func_call_arguments.cpp \
 		source/opt/fix_storage_class.cpp \
 		source/opt/flatten_decoration_pass.cpp \
 		source/opt/fold.cpp \
@@ -127,6 +128,7 @@ SPVTOOLS_OPT_SRC_FILES := \
 		source/opt/instruction.cpp \
 		source/opt/instruction_list.cpp \
 		source/opt/instrument_pass.cpp \
+		source/opt/interface_var_sroa.cpp \
 		source/opt/interp_fixup_pass.cpp \
 		source/opt/ir_context.cpp \
 		source/opt/ir_loader.cpp \
@@ -302,7 +304,7 @@ $(1)/build-version.inc: \
         $(LOCAL_PATH)/utils/update_build_version.py \
         $(LOCAL_PATH)/CHANGES
 		@$(HOST_PYTHON) $(LOCAL_PATH)/utils/update_build_version.py \
-		                $(LOCAL_PATH) $(1)/build-version.inc
+		                $(LOCAL_PATH)/CHANGES $(1)/build-version.inc
 		@echo "[$(TARGET_ARCH_ABI)] Generate       : build-version.inc <= CHANGES"
 $(LOCAL_PATH)/source/software_version.cpp: $(1)/build-version.inc
 endef

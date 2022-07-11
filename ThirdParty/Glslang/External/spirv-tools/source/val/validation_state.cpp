@@ -392,11 +392,8 @@ void ValidationState_t::RegisterCapability(SpvCapability cap) {
       features_.free_fp_rounding_mode = true;
       break;
     case SpvCapabilityVariablePointers:
-      features_.variable_pointers = true;
-      features_.variable_pointers_storage_buffer = true;
-      break;
     case SpvCapabilityVariablePointersStorageBuffer:
-      features_.variable_pointers_storage_buffer = true;
+      features_.variable_pointers = true;
       break;
     default:
       // TODO(dneto): For now don't validate SPV_NV_ray_tracing, which uses
@@ -541,7 +538,7 @@ void ValidationState_t::RegisterInstruction(Instruction* inst) {
   if (inst->id()) all_definitions_.insert(std::make_pair(inst->id(), inst));
 
   // Some validation checks are easier by getting all the consumers
-  for (uint16_t i = 0; i < inst->operands().size(); ++i) {
+  for (size_t i = 0; i < inst->operands().size(); ++i) {
     const spv_parsed_operand_t& operand = inst->operand(i);
     if ((SPV_OPERAND_TYPE_ID == operand.type) ||
         (SPV_OPERAND_TYPE_TYPE_ID == operand.type)) {
@@ -1414,6 +1411,18 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
   // Clang format adds spaces between hyphens
   // clang-format off
   switch (id) {
+    case 4154:
+      return VUID_WRAP(VUID-BaryCoordKHR-BaryCoordKHR-04154);
+    case 4155:
+      return VUID_WRAP(VUID-BaryCoordKHR-BaryCoordKHR-04155);
+    case 4156:
+      return VUID_WRAP(VUID-BaryCoordKHR-BaryCoordKHR-04156);
+    case 4160:
+      return VUID_WRAP(VUID-BaryCoordNoPerspKHR-BaryCoordNoPerspKHR-04160);
+    case 4161:
+      return VUID_WRAP(VUID-BaryCoordNoPerspKHR-BaryCoordNoPerspKHR-04161);
+    case 4162:
+      return VUID_WRAP(VUID-BaryCoordNoPerspKHR-BaryCoordNoPerspKHR-04162);
     case 4181:
       return VUID_WRAP(VUID-BaseInstance-BaseInstance-04181);
     case 4182:
@@ -1446,6 +1455,12 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-CullDistance-CullDistance-04199);
     case 4200:
       return VUID_WRAP(VUID-CullDistance-CullDistance-04200);
+    case 6735:
+      return VUID_WRAP(VUID-CullMaskKHR-CullMaskKHR-06735); // Execution Model
+    case 6736:
+      return VUID_WRAP(VUID-CullMaskKHR-CullMaskKHR-06736); // input storage
+    case 6737:
+      return VUID_WRAP(VUID-CullMaskKHR-CullMaskKHR-06737); // 32 int scalar
     case 4205:
       return VUID_WRAP(VUID-DeviceIndex-DeviceIndex-04205);
     case 4206:
@@ -1908,6 +1923,24 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-StandaloneSpirv-OpTypeImage-06214);
     case 6491:
       return VUID_WRAP(VUID-StandaloneSpirv-DescriptorSet-06491);
+    case 6671:
+      return VUID_WRAP(VUID-StandaloneSpirv-OpTypeSampledImage-06671);
+    case 6672:
+      return VUID_WRAP(VUID-StandaloneSpirv-Location-06672);
+    case 6674:
+      return VUID_WRAP(VUID-StandaloneSpirv-OpEntryPoint-06674);
+    case 6675:
+      return VUID_WRAP(VUID-StandaloneSpirv-PushConstant-06675);
+    case 6676:
+      return VUID_WRAP(VUID-StandaloneSpirv-Uniform-06676);
+    case 6677:
+      return VUID_WRAP(VUID-StandaloneSpirv-UniformConstant-06677);
+    case 6678:
+      return VUID_WRAP(VUID-StandaloneSpirv-InputAttachmentIndex-06678);
+    case 6777:
+      return VUID_WRAP(VUID-StandaloneSpirv-PerVertexKHR-06777);
+    case 6778:
+      return VUID_WRAP(VUID-StandaloneSpirv-Input-06778);
     default:
       return "";  // unknown id
   }

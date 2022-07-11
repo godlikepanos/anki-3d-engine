@@ -26,7 +26,7 @@
 -- the Binary Section of the SPIR-V specification.
 
 -- Enumeration tokens for SPIR-V, in various styles:
---   C, C++, C++11, JSON, Lua, Python, C#, D
+--   C, C++, C++11, JSON, Lua, Python, C#, D, Beef
 -- 
 -- - C will have tokens with a "Spv" prefix, e.g.: SpvSourceLanguageGLSL
 -- - C++ will have tokens in the "spv" name space, e.g.: spv::SourceLanguageGLSL
@@ -36,6 +36,8 @@
 -- - C# will use enum classes in the Specification class located in the "Spv" namespace,
 --     e.g.: Spv.Specification.SourceLanguage.GLSL
 -- - D will have tokens under the "spv" module, e.g: spv.SourceLanguage.GLSL
+-- - Beef will use enum classes in the Specification class located in the "Spv" namespace,
+--     e.g.: Spv.Specification.SourceLanguage.GLSL
 -- 
 -- Some tokens act like mask values, which can be OR'd together,
 -- while others are mutually exclusive.  The mask-like ones have
@@ -57,6 +59,7 @@ spv = {
         OpenCL_CPP = 4,
         HLSL = 5,
         CPP_for_OpenCL = 6,
+        SYCL = 7,
     },
 
     ExecutionModel = {
@@ -167,6 +170,7 @@ spv = {
         NoGlobalOffsetINTEL = 5895,
         NumSIMDWorkitemsINTEL = 5896,
         SchedulerTargetFmaxMhzINTEL = 5903,
+        NamedBarrierCountINTEL = 6417,
     },
 
     StorageClass = {
@@ -647,6 +651,7 @@ spv = {
         SMCountNV = 5375,
         WarpIDNV = 5376,
         SMIDNV = 5377,
+        CullMaskKHR = 6021,
     },
 
     SelectionControlShift = {
@@ -1038,7 +1043,9 @@ spv = {
         DotProductInput4x8BitPackedKHR = 6018,
         DotProduct = 6019,
         DotProductKHR = 6019,
+        RayCullMaskKHR = 6020,
         BitInstructions = 6025,
+        GroupNonUniformRotateKHR = 6026,
         AtomicFloat32AddEXT = 6033,
         AtomicFloat64AddEXT = 6034,
         LongConstantCompositeINTEL = 6089,
@@ -1491,6 +1498,7 @@ spv = {
         OpSubgroupAllKHR = 4428,
         OpSubgroupAnyKHR = 4429,
         OpSubgroupAllEqualKHR = 4430,
+        OpGroupNonUniformRotateKHR = 4431,
         OpSubgroupReadInvocationKHR = 4432,
         OpTraceRayKHR = 4445,
         OpExecuteCallableKHR = 4446,

@@ -2687,6 +2687,8 @@ TEST_F(ValidateDecorations, VulkanBufferBlockOnStorageBufferBad) {
   EXPECT_EQ(SPV_ERROR_INVALID_ID,
             ValidateAndRetrieveValidationState(SPV_ENV_VULKAN_1_1));
   EXPECT_THAT(getDiagnosticString(),
+              AnyVUID("VUID-StandaloneSpirv-PushConstant-06675"));
+  EXPECT_THAT(getDiagnosticString(),
               HasSubstr("In Vulkan, BufferBlock is disallowed on variables in "
                         "the StorageBuffer storage class"));
 }
@@ -2881,8 +2883,10 @@ TEST_F(ValidateDecorations, VulkanPushConstantMissingBlockBad) {
   EXPECT_EQ(SPV_ERROR_INVALID_ID,
             ValidateAndRetrieveValidationState(SPV_ENV_VULKAN_1_1));
   EXPECT_THAT(getDiagnosticString(),
+              AnyVUID("VUID-StandaloneSpirv-PushConstant-06675"));
+  EXPECT_THAT(getDiagnosticString(),
               HasSubstr("PushConstant id '2' is missing Block decoration.\n"
-                        "From Vulkan spec, section 14.5.1:\n"
+                        "From Vulkan spec:\n"
                         "Such variables must be identified with a Block "
                         "decoration"));
 }
@@ -3033,11 +3037,13 @@ TEST_F(ValidateDecorations, VulkanMultiplePushConstantsSingleEntryPointBad) {
   CompileSuccessfully(spirv, SPV_ENV_VULKAN_1_1);
   EXPECT_EQ(SPV_ERROR_INVALID_ID,
             ValidateAndRetrieveValidationState(SPV_ENV_VULKAN_1_1));
+  EXPECT_THAT(getDiagnosticString(),
+              AnyVUID("VUID-StandaloneSpirv-OpEntryPoint-06674"));
   EXPECT_THAT(
       getDiagnosticString(),
       HasSubstr(
           "Entry point id '1' uses more than one PushConstant interface.\n"
-          "From Vulkan spec, section 14.5.1:\n"
+          "From Vulkan spec:\n"
           "There must be no more than one push constant block "
           "statically used per shader entry point."));
 }
@@ -3144,11 +3150,13 @@ TEST_F(ValidateDecorations,
   CompileSuccessfully(spirv, SPV_ENV_VULKAN_1_1);
   EXPECT_EQ(SPV_ERROR_INVALID_ID,
             ValidateAndRetrieveValidationState(SPV_ENV_VULKAN_1_1));
+  EXPECT_THAT(getDiagnosticString(),
+              AnyVUID("VUID-StandaloneSpirv-OpEntryPoint-06674"));
   EXPECT_THAT(
       getDiagnosticString(),
       HasSubstr(
           "Entry point id '1' uses more than one PushConstant interface.\n"
-          "From Vulkan spec, section 14.5.1:\n"
+          "From Vulkan spec:\n"
           "There must be no more than one push constant block "
           "statically used per shader entry point."));
 }
@@ -3186,8 +3194,10 @@ TEST_F(ValidateDecorations, VulkanUniformMissingDescriptorSetBad) {
   EXPECT_EQ(SPV_ERROR_INVALID_ID,
             ValidateAndRetrieveValidationState(SPV_ENV_VULKAN_1_1));
   EXPECT_THAT(getDiagnosticString(),
+              AnyVUID("VUID-StandaloneSpirv-UniformConstant-06677"));
+  EXPECT_THAT(getDiagnosticString(),
               HasSubstr("Uniform id '3' is missing DescriptorSet decoration.\n"
-                        "From Vulkan spec, section 14.5.2:\n"
+                        "From Vulkan spec:\n"
                         "These variables must have DescriptorSet and Binding "
                         "decorations specified"));
 }
@@ -3225,8 +3235,10 @@ TEST_F(ValidateDecorations, VulkanUniformMissingBindingBad) {
   EXPECT_EQ(SPV_ERROR_INVALID_ID,
             ValidateAndRetrieveValidationState(SPV_ENV_VULKAN_1_1));
   EXPECT_THAT(getDiagnosticString(),
+              AnyVUID("VUID-StandaloneSpirv-UniformConstant-06677"));
+  EXPECT_THAT(getDiagnosticString(),
               HasSubstr("Uniform id '3' is missing Binding decoration.\n"
-                        "From Vulkan spec, section 14.5.2:\n"
+                        "From Vulkan spec:\n"
                         "These variables must have DescriptorSet and Binding "
                         "decorations specified"));
 }
@@ -3256,10 +3268,12 @@ TEST_F(ValidateDecorations, VulkanUniformConstantMissingDescriptorSetBad) {
   CompileSuccessfully(spirv, SPV_ENV_VULKAN_1_1);
   EXPECT_EQ(SPV_ERROR_INVALID_ID,
             ValidateAndRetrieveValidationState(SPV_ENV_VULKAN_1_1));
+  EXPECT_THAT(getDiagnosticString(),
+              AnyVUID("VUID-StandaloneSpirv-UniformConstant-06677"));
   EXPECT_THAT(
       getDiagnosticString(),
       HasSubstr("UniformConstant id '2' is missing DescriptorSet decoration.\n"
-                "From Vulkan spec, section 14.5.2:\n"
+                "From Vulkan spec:\n"
                 "These variables must have DescriptorSet and Binding "
                 "decorations specified"));
 }
@@ -3289,10 +3303,12 @@ TEST_F(ValidateDecorations, VulkanUniformConstantMissingBindingBad) {
   CompileSuccessfully(spirv, SPV_ENV_VULKAN_1_1);
   EXPECT_EQ(SPV_ERROR_INVALID_ID,
             ValidateAndRetrieveValidationState(SPV_ENV_VULKAN_1_1));
+  EXPECT_THAT(getDiagnosticString(),
+              AnyVUID("VUID-StandaloneSpirv-UniformConstant-06677"));
   EXPECT_THAT(
       getDiagnosticString(),
       HasSubstr("UniformConstant id '2' is missing Binding decoration.\n"
-                "From Vulkan spec, section 14.5.2:\n"
+                "From Vulkan spec:\n"
                 "These variables must have DescriptorSet and Binding "
                 "decorations specified"));
 }
@@ -3329,10 +3345,12 @@ TEST_F(ValidateDecorations, VulkanStorageBufferMissingDescriptorSetBad) {
   CompileSuccessfully(spirv, SPV_ENV_VULKAN_1_1);
   EXPECT_EQ(SPV_ERROR_INVALID_ID,
             ValidateAndRetrieveValidationState(SPV_ENV_VULKAN_1_1));
+  EXPECT_THAT(getDiagnosticString(),
+              AnyVUID("VUID-StandaloneSpirv-UniformConstant-06677"));
   EXPECT_THAT(
       getDiagnosticString(),
       HasSubstr("StorageBuffer id '3' is missing DescriptorSet decoration.\n"
-                "From Vulkan spec, section 14.5.2:\n"
+                "From Vulkan spec:\n"
                 "These variables must have DescriptorSet and Binding "
                 "decorations specified"));
 }
@@ -3370,8 +3388,10 @@ TEST_F(ValidateDecorations, VulkanStorageBufferMissingBindingBad) {
   EXPECT_EQ(SPV_ERROR_INVALID_ID,
             ValidateAndRetrieveValidationState(SPV_ENV_VULKAN_1_1));
   EXPECT_THAT(getDiagnosticString(),
+              AnyVUID("VUID-StandaloneSpirv-UniformConstant-06677"));
+  EXPECT_THAT(getDiagnosticString(),
               HasSubstr("StorageBuffer id '3' is missing Binding decoration.\n"
-                        "From Vulkan spec, section 14.5.2:\n"
+                        "From Vulkan spec:\n"
                         "These variables must have DescriptorSet and Binding "
                         "decorations specified"));
 }
@@ -3414,10 +3434,12 @@ TEST_F(ValidateDecorations,
   CompileSuccessfully(spirv, SPV_ENV_VULKAN_1_1);
   EXPECT_EQ(SPV_ERROR_INVALID_ID,
             ValidateAndRetrieveValidationState(SPV_ENV_VULKAN_1_1));
+  EXPECT_THAT(getDiagnosticString(),
+              AnyVUID("VUID-StandaloneSpirv-UniformConstant-06677"));
   EXPECT_THAT(
       getDiagnosticString(),
       HasSubstr("StorageBuffer id '3' is missing DescriptorSet decoration.\n"
-                "From Vulkan spec, section 14.5.2:\n"
+                "From Vulkan spec:\n"
                 "These variables must have DescriptorSet and Binding "
                 "decorations specified"));
 }
@@ -7158,7 +7180,9 @@ OpFunctionEnd
   CompileSuccessfully(spirv, SPV_ENV_VULKAN_1_0);
   EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_VULKAN_1_0));
   EXPECT_THAT(getDiagnosticString(),
-              HasSubstr("From Vulkan spec, section 14.5.2:\nSuch variables "
+              AnyVUID("VUID-StandaloneSpirv-PushConstant-06675"));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("From Vulkan spec:\nSuch variables "
                         "must be identified with a Block decoration"));
 }
 
@@ -7186,7 +7210,9 @@ OpFunctionEnd
   CompileSuccessfully(spirv, SPV_ENV_VULKAN_1_0);
   EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_VULKAN_1_0));
   EXPECT_THAT(getDiagnosticString(),
-              HasSubstr("From Vulkan spec, section 14.5.2:\nSuch variables "
+              AnyVUID("VUID-StandaloneSpirv-PushConstant-06675"));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("From Vulkan spec:\nSuch variables "
                         "must be identified with a Block decoration"));
 }
 
@@ -7215,7 +7241,9 @@ OpFunctionEnd
   CompileSuccessfully(spirv, SPV_ENV_VULKAN_1_0);
   EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_VULKAN_1_0));
   EXPECT_THAT(getDiagnosticString(),
-              HasSubstr("From Vulkan spec, section 14.5.2:\nSuch variables "
+              AnyVUID("VUID-StandaloneSpirv-PushConstant-06675"));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("From Vulkan spec:\nSuch variables "
                         "must be identified with a Block decoration"));
 }
 
@@ -7287,10 +7315,11 @@ OpFunctionEnd
 
   CompileSuccessfully(spirv, SPV_ENV_VULKAN_1_0);
   EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_VULKAN_1_0));
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr("From Vulkan spec, section 14.5.2:\nSuch variables must be "
-                "identified with a Block or BufferBlock decoration"));
+  EXPECT_THAT(getDiagnosticString(),
+              AnyVUID("VUID-StandaloneSpirv-Uniform-06676"));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("From Vulkan spec:\nSuch variables must be "
+                        "identified with a Block or BufferBlock decoration"));
 }
 
 TEST_F(ValidateDecorations, VulkanUniformArrayMissingBlock) {
@@ -7315,10 +7344,11 @@ OpFunctionEnd
 
   CompileSuccessfully(spirv, SPV_ENV_VULKAN_1_0);
   EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_VULKAN_1_0));
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr("From Vulkan spec, section 14.5.2:\nSuch variables must be "
-                "identified with a Block or BufferBlock decoration"));
+  EXPECT_THAT(getDiagnosticString(),
+              AnyVUID("VUID-StandaloneSpirv-Uniform-06676"));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("From Vulkan spec:\nSuch variables must be "
+                        "identified with a Block or BufferBlock decoration"));
 }
 
 TEST_F(ValidateDecorations, VulkanUniformRuntimeArrayMissingBlock) {
@@ -7344,10 +7374,11 @@ OpFunctionEnd
 
   CompileSuccessfully(spirv, SPV_ENV_VULKAN_1_0);
   EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_VULKAN_1_0));
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr("From Vulkan spec, section 14.5.2:\nSuch variables must be "
-                "identified with a Block or BufferBlock decoration"));
+  EXPECT_THAT(getDiagnosticString(),
+              AnyVUID("VUID-StandaloneSpirv-Uniform-06676"));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("From Vulkan spec:\nSuch variables must be "
+                        "identified with a Block or BufferBlock decoration"));
 }
 
 TEST_F(ValidateDecorations, VulkanArrayStrideZero) {
@@ -8187,6 +8218,149 @@ OpFunctionEnd
   EXPECT_THAT(getDiagnosticString(),
               HasSubstr("decorated as Block must be explicitly laid out with "
                         "Offset decorations"));
+}
+
+TEST_F(ValidateDecorations, PerVertexVulkanGood) {
+  const std::string spirv = R"(
+               OpCapability Shader
+               OpCapability FragmentBarycentricKHR
+               OpExtension "SPV_KHR_fragment_shader_barycentric"
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %main "main" %vertexIDs
+               OpExecutionMode %main OriginUpperLeft
+               OpDecorate %vertexIDs Location 0
+               OpDecorate %vertexIDs PerVertexKHR
+       %void = OpTypeVoid
+       %func = OpTypeFunction %void
+      %float = OpTypeFloat 32
+       %uint = OpTypeInt 32 0
+%ptrFloat = OpTypePointer Input %float
+     %uint_3 = OpConstant %uint 3
+%floatArray = OpTypeArray %float %uint_3
+%ptrFloatArray = OpTypePointer Input %floatArray
+  %vertexIDs = OpVariable %ptrFloatArray Input
+        %int = OpTypeInt 32 1
+      %int_0 = OpConstant %int 0
+       %main = OpFunction %void None %func
+      %label = OpLabel
+     %access = OpAccessChain %ptrFloat %vertexIDs %int_0
+       %load = OpLoad %float %access
+               OpReturn
+               OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv, SPV_ENV_VULKAN_1_0);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_VULKAN_1_0));
+}
+
+TEST_F(ValidateDecorations, PerVertexVulkanOutput) {
+  const std::string spirv = R"(
+               OpCapability Shader
+               OpCapability FragmentBarycentricKHR
+               OpExtension "SPV_KHR_fragment_shader_barycentric"
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %main "main" %vertexIDs
+               OpExecutionMode %main OriginUpperLeft
+               OpDecorate %vertexIDs Location 0
+               OpDecorate %vertexIDs PerVertexKHR
+       %void = OpTypeVoid
+       %func = OpTypeFunction %void
+      %float = OpTypeFloat 32
+       %uint = OpTypeInt 32 0
+%ptrFloat = OpTypePointer Output %float
+     %uint_3 = OpConstant %uint 3
+%floatArray = OpTypeArray %float %uint_3
+%ptrFloatArray = OpTypePointer Output %floatArray
+  %vertexIDs = OpVariable %ptrFloatArray Output
+        %int = OpTypeInt 32 1
+      %int_0 = OpConstant %int 0
+       %main = OpFunction %void None %func
+      %label = OpLabel
+     %access = OpAccessChain %ptrFloat %vertexIDs %int_0
+       %load = OpLoad %float %access
+               OpReturn
+               OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv, SPV_ENV_VULKAN_1_0);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_VULKAN_1_0));
+  EXPECT_THAT(getDiagnosticString(),
+              AnyVUID("VUID-StandaloneSpirv-PerVertexKHR-06777"));
+  EXPECT_THAT(getDiagnosticString(), HasSubstr("storage class must be Input"));
+}
+
+TEST_F(ValidateDecorations, PerVertexVulkanNonFragment) {
+  const std::string spirv = R"(
+               OpCapability Shader
+               OpCapability FragmentBarycentricKHR
+               OpExtension "SPV_KHR_fragment_shader_barycentric"
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Vertex %main "main" %vertexIDs
+               OpDecorate %vertexIDs Location 0
+               OpDecorate %vertexIDs PerVertexKHR
+       %void = OpTypeVoid
+       %func = OpTypeFunction %void
+      %float = OpTypeFloat 32
+       %uint = OpTypeInt 32 0
+%ptrFloat = OpTypePointer Input %float
+     %uint_3 = OpConstant %uint 3
+%floatArray = OpTypeArray %float %uint_3
+%ptrFloatArray = OpTypePointer Input %floatArray
+  %vertexIDs = OpVariable %ptrFloatArray Input
+        %int = OpTypeInt 32 1
+      %int_0 = OpConstant %int 0
+       %main = OpFunction %void None %func
+      %label = OpLabel
+     %access = OpAccessChain %ptrFloat %vertexIDs %int_0
+       %load = OpLoad %float %access
+               OpReturn
+               OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv, SPV_ENV_VULKAN_1_0);
+  EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_VULKAN_1_0));
+  EXPECT_THAT(getDiagnosticString(),
+              AnyVUID("VUID-StandaloneSpirv-PerVertexKHR-06777"));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr(
+          "PerVertexKHR can only be applied to Fragment Execution Models"));
+}
+
+TEST_F(ValidateDecorations, PerVertexVulkanNonArray) {
+  const std::string spirv = R"(
+               OpCapability Shader
+               OpCapability FragmentBarycentricKHR
+               OpExtension "SPV_KHR_fragment_shader_barycentric"
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %main "main" %vertexIDs
+               OpExecutionMode %main OriginUpperLeft
+               OpDecorate %vertexIDs Location 0
+               OpDecorate %vertexIDs PerVertexKHR
+       %void = OpTypeVoid
+       %func = OpTypeFunction %void
+      %float = OpTypeFloat 32
+   %ptrFloat = OpTypePointer Input %float
+  %vertexIDs = OpVariable %ptrFloat Input
+        %int = OpTypeInt 32 1
+      %int_0 = OpConstant %int 0
+       %main = OpFunction %void None %func
+      %label = OpLabel
+       %load = OpLoad %float %vertexIDs
+               OpReturn
+               OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv, SPV_ENV_VULKAN_1_0);
+  EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_VULKAN_1_0));
+  EXPECT_THAT(getDiagnosticString(),
+              AnyVUID("VUID-StandaloneSpirv-Input-06778"));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("PerVertexKHR must be declared as arrays"));
 }
 
 }  // namespace
