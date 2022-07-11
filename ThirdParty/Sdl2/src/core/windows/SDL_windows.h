@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2021 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -37,19 +37,23 @@
 #include <windows.h>
 #include <basetyps.h>   /* for REFIID with broken mingw.org headers */
 
+#include "SDL_rect.h"
+
 /* Routines to convert from UTF8 to native Windows text */
-#define WIN_StringToUTF8W(S) SDL_iconv_string("UTF-8", "UTF-16LE", (char *)(S), (SDL_wcslen(S)+1)*sizeof(WCHAR))
-#define WIN_UTF8ToStringW(S) (WCHAR *)SDL_iconv_string("UTF-16LE", "UTF-8", (char *)(S), SDL_strlen(S)+1)
+#define WIN_StringToUTF8W(S) SDL_iconv_string("UTF-8", "UTF-16LE", (const char *)(S), (SDL_wcslen(S)+1)*sizeof(WCHAR))
+#define WIN_UTF8ToStringW(S) (WCHAR *)SDL_iconv_string("UTF-16LE", "UTF-8", (const char *)(S), SDL_strlen(S)+1)
 /* !!! FIXME: UTF8ToString() can just be a SDL_strdup() here. */
-#define WIN_StringToUTF8A(S) SDL_iconv_string("UTF-8", "ASCII", (char *)(S), (SDL_strlen(S)+1))
-#define WIN_UTF8ToStringA(S) SDL_iconv_string("ASCII", "UTF-8", (char *)(S), SDL_strlen(S)+1)
+#define WIN_StringToUTF8A(S) SDL_iconv_string("UTF-8", "ASCII", (const char *)(S), (SDL_strlen(S)+1))
+#define WIN_UTF8ToStringA(S) SDL_iconv_string("ASCII", "UTF-8", (const char *)(S), SDL_strlen(S)+1)
 #if UNICODE
 #define WIN_StringToUTF8 WIN_StringToUTF8W
 #define WIN_UTF8ToString WIN_UTF8ToStringW
+#define SDL_tcslen SDL_wcslen
 #define SDL_tcsstr SDL_wcsstr
 #else
 #define WIN_StringToUTF8 WIN_StringToUTF8A
 #define WIN_UTF8ToString WIN_UTF8ToStringA
+#define SDL_tcslen SDL_strlen
 #define SDL_tcsstr SDL_strstr
 #endif
 
@@ -59,9 +63,18 @@ extern int WIN_SetErrorFromHRESULT(const char *prefix, HRESULT hr);
 /* Sets an error message based on GetLastError(). Always return -1. */
 extern int WIN_SetError(const char *prefix);
 
+#if !defined(__WINRT__)
+/* Load a function from combase.dll */
+void *WIN_LoadComBaseFunction(const char *name);
+#endif
+
 /* Wrap up the oddities of CoInitialize() into a common function. */
 extern HRESULT WIN_CoInitialize(void);
 extern void WIN_CoUninitialize(void);
+
+/* Wrap up the oddities of RoInitialize() into a common function. */
+extern HRESULT WIN_RoInitialize(void);
+extern void WIN_RoUninitialize(void);
 
 /* Returns SDL_TRUE if we're running on Windows Vista and newer */
 extern BOOL WIN_IsWindowsVistaOrGreater(void);
@@ -78,6 +91,10 @@ extern char *WIN_LookupAudioDeviceName(const WCHAR *name, const GUID *guid);
 /* Checks to see if two GUID are the same. */
 extern BOOL WIN_IsEqualGUID(const GUID * a, const GUID * b);
 extern BOOL WIN_IsEqualIID(REFIID a, REFIID b);
+
+/* Convert between SDL_rect and RECT */
+extern void WIN_RECTToRect(const RECT *winrect, SDL_Rect *sdlrect);
+extern void WIN_RectToRECT(const SDL_Rect *sdlrect, RECT *winrect);
 
 #endif /* _INCLUDED_WINDOWS_H */
 

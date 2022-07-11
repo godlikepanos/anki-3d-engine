@@ -47,7 +47,6 @@ ANKI_TEST(Util, Directory)
 	ANKI_TEST_EXPECT_EQ(fileExists("./dir/rid/tmp"), true);
 
 	ANKI_TEST_EXPECT_NO_ERR(removeDirectory("./dir", alloc));
-	return;
 	ANKI_TEST_EXPECT_EQ(fileExists("./dir/rid/tmp"), false);
 	ANKI_TEST_EXPECT_EQ(directoryExists("./dir/rid"), false);
 	ANKI_TEST_EXPECT_EQ(directoryExists("./dir"), false);

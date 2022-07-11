@@ -19,7 +19,7 @@ const UVec2 PIXELS_PER_TILE = ALIGNED_INPUT_TEX_SIZE / WORKGROUP_SIZE;
 
 layout(set = 0, binding = 0) uniform ANKI_RP texture2D u_tex;
 
-#define TONEMAPPING_RESOURCE_AS_BUFFER 1
+#define TONEMAPPING_RESOURCE_AS_WRITE_IMAGE 1
 #define TONEMAPPING_SET 0
 #define TONEMAPPING_BINDING 1
 #include <AnKi/Shaders/TonemappingResources.glsl>
@@ -85,7 +85,7 @@ void main()
 #endif
 
 #if 1
-		const F32 prevLum = u_averageLuminance;
+		const F32 prevLum = readExposureAndAverageLuminance().y;
 
 		// Lerp between previous and new L value
 		const F32 INTERPOLATION_FACTOR = 0.05;
@@ -97,8 +97,7 @@ void main()
 		// This is a workaround because sometimes the avg lum becomes nan
 		finalAvgLum = clamp(finalAvgLum, EPSILON, MAX_F32);
 
-		u_averageLuminance = finalAvgLum;
-		u_exposureThreshold0 = computeExposure(u_averageLuminance, 0.0);
+		writeExposureAndAverageLuminance(computeExposure(finalAvgLum, 0.0), finalAvgLum);
 	}
 }
 #pragma anki end

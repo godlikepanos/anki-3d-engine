@@ -62,7 +62,8 @@ layout(location = 6) out Vec3 out_normalTangentSpace;
 #		endif
 
 #		if ANKI_VELOCITY || ANKI_BONES
-layout(location = 7) out Vec2 out_velocity;
+layout(location = 7) out Vec3 out_prevClipXyw;
+layout(location = 8) out Vec3 out_crntClipXyw;
 #		endif
 #	endif // ANKI_TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER
 
@@ -89,7 +90,8 @@ layout(location = 6) in Vec3 in_normalTangentSpace;
 #		endif
 
 #		if ANKI_VELOCITY || ANKI_BONES
-layout(location = 7) in Vec2 in_velocity;
+layout(location = 7) in Vec3 in_prevClipXyw;
+layout(location = 8) in Vec3 in_crntClipXyw;
 #		endif
 #	endif // ANKI_TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER
 

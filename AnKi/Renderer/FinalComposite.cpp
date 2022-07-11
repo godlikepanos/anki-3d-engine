@@ -107,7 +107,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 		pass.newDependency(RenderPassDependency(m_r->getDbg().getRt(), TextureUsageBit::SAMPLED_FRAGMENT));
 	}
 
-	pass.newDependency(RenderPassDependency(m_r->getScale().getRt(), TextureUsageBit::SAMPLED_FRAGMENT));
+	pass.newDependency(RenderPassDependency(m_r->getScale().getTonemappedRt(), TextureUsageBit::SAMPLED_FRAGMENT));
 	pass.newDependency(RenderPassDependency(m_r->getBloom().getRt(), TextureUsageBit::SAMPLED_FRAGMENT));
 	pass.newDependency(
 		RenderPassDependency(m_r->getMotionVectors().getMotionVectorsRt(), TextureUsageBit::SAMPLED_FRAGMENT));
@@ -153,7 +153,7 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 		cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);
 		cmdb->bindSampler(0, 2, m_r->getSamplers().m_trilinearRepeat);
 
-		rgraphCtx.bindColorTexture(0, 3, m_r->getScale().getRt());
+		rgraphCtx.bindColorTexture(0, 3, m_r->getScale().getTonemappedRt());
 
 		rgraphCtx.bindColorTexture(0, 4, m_r->getBloom().getRt());
 		cmdb->bindTexture(0, 5, m_lut->getTextureView());

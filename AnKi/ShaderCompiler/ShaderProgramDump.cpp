@@ -6,7 +6,7 @@
 #include <AnKi/ShaderCompiler/ShaderProgramDump.h>
 #include <AnKi/Util/Serializer.h>
 #include <AnKi/Util/StringList.h>
-#include <SprivCross/spirv_glsl.hpp>
+#include <SpirvCross/spirv_glsl.hpp>
 
 namespace anki {
 

@@ -277,6 +277,7 @@ Error TextureImpl::initImage(const TextureInitInfo& init)
 	ci.samples = VK_SAMPLE_COUNT_1_BIT;
 	ci.tiling = VK_IMAGE_TILING_OPTIMAL;
 	ci.usage = convertTextureUsage(init.m_usage, init.m_format);
+	m_vkUsageFlags = ci.usage;
 	ci.queueFamilyIndexCount = getGrManagerImpl().getQueueFamilies().getSize();
 	ci.pQueueFamilyIndices = &getGrManagerImpl().getQueueFamilies()[0];
 	ci.sharingMode = (ci.queueFamilyIndexCount > 1) ? VK_SHARING_MODE_CONCURRENT : VK_SHARING_MODE_EXCLUSIVE;

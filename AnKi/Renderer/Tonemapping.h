@@ -28,9 +28,10 @@ public:
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
-	BufferHandle getAverageLuminanceBuffer() const
+	/// @copydoc m_exposureAndAvgLuminance1x1
+	RenderTargetHandle getRt() const
 	{
-		return m_runCtx.m_buffHandle;
+		return m_runCtx.m_exposureLuminanceHandle;
 	}
 
 private:
@@ -38,12 +39,14 @@ private:
 	ShaderProgramPtr m_grProg;
 	U32 m_inputTexMip;
 
-	BufferPtr m_luminanceBuff;
+	/// This is a 1x1 2 component texture where R is the exposure and G the average luminance. It's not tracked in
+	/// rendergraph depedencies. We don't care to track it because it affects the eye adaptation.
+	TexturePtr m_exposureAndAvgLuminance1x1;
 
 	class
 	{
 	public:
-		BufferHandle m_buffHandle;
+		RenderTargetHandle m_exposureLuminanceHandle;
 	} m_runCtx;
 
 	Error initInternal();

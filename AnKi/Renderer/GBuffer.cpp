@@ -7,6 +7,7 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Renderer/VrsSriGeneration.h>
+#include <AnKi/Renderer/Scale.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Core/ConfigSet.h>
@@ -37,9 +38,10 @@ Error GBuffer::initInternal()
 	static const Array<const char*, 2> depthRtNames = {{"GBuffer depth #0", "GBuffer depth #1"}};
 	for(U32 i = 0; i < 2; ++i)
 	{
-		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
-			m_r->getInternalResolution().x(), m_r->getInternalResolution().y(), m_r->getDepthNoStencilFormat(),
-			TextureUsageBit::ALL_SAMPLED | TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT, depthRtNames[i]);
+		const TextureUsageBit usage = TextureUsageBit::ALL_SAMPLED | TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT;
+		TextureInitInfo texinit =
+			m_r->create2DRenderTargetInitInfo(m_r->getInternalResolution().x(), m_r->getInternalResolution().y(),
+											  m_r->getDepthNoStencilFormat(), usage, depthRtNames[i]);
 
 		m_depthRts[i] = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::SAMPLED_FRAGMENT);
 	}
@@ -118,6 +120,13 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 		cmdb->setVrsRate(VrsRate::_1x1);
 	}
 
+	RenderableDrawerArguments args;
+	args.m_viewMatrix = ctx.m_matrices.m_view;
+	args.m_cameraTransform = ctx.m_matrices.m_cameraTransform;
+	args.m_viewProjectionMatrix = ctx.m_matrices.m_viewProjectionJitter;
+	args.m_previousViewProjectionMatrix = ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection;
+	args.m_sampler = m_r->getSamplers().m_trilinearRepeatAnisoResolutionScalingBias;
+
 	// First do early Z (if needed)
 	if(earlyZStart < earlyZEnd)
 	{
@@ -127,12 +136,9 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 		}
 
 		ANKI_ASSERT(earlyZStart < earlyZEnd && earlyZEnd <= I32(earlyZCount));
-		m_r->getSceneDrawer().drawRange(RenderingTechnique::GBUFFER_EARLY_Z, ctx.m_matrices.m_view,
-										ctx.m_matrices.m_viewProjectionJitter,
-										ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection, cmdb,
-										m_r->getSamplers().m_trilinearRepeatAnisoResolutionScalingBias,
+		m_r->getSceneDrawer().drawRange(RenderingTechnique::GBUFFER_EARLY_Z, args,
 										ctx.m_renderQueue->m_earlyZRenderables.getBegin() + earlyZStart,
-										ctx.m_renderQueue->m_earlyZRenderables.getBegin() + earlyZEnd);
+										ctx.m_renderQueue->m_earlyZRenderables.getBegin() + earlyZEnd, cmdb);
 
 		// Restore state for the color write
 		if(colorStart < colorEnd)
@@ -150,12 +156,9 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 		cmdb->setDepthCompareOperation(CompareOperation::LESS_EQUAL);
 
 		ANKI_ASSERT(colorStart < colorEnd && colorEnd <= I32(ctx.m_renderQueue->m_renderables.getSize()));
-		m_r->getSceneDrawer().drawRange(RenderingTechnique::GBUFFER, ctx.m_matrices.m_view,
-										ctx.m_matrices.m_viewProjectionJitter,
-										ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection, cmdb,
-										m_r->getSamplers().m_trilinearRepeatAnisoResolutionScalingBias,
+		m_r->getSceneDrawer().drawRange(RenderingTechnique::GBUFFER, args,
 										ctx.m_renderQueue->m_renderables.getBegin() + colorStart,
-										ctx.m_renderQueue->m_renderables.getBegin() + colorEnd);
+										ctx.m_renderQueue->m_renderables.getBegin() + colorEnd, cmdb);
 	}
 }
 

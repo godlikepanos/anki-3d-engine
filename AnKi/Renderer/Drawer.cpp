@@ -14,7 +14,7 @@
 namespace anki {
 
 /// Drawer's context
-class DrawContext
+class RenderableDrawer::Context
 {
 public:
 	RenderQueueDrawContext m_queueCtx;
@@ -39,10 +39,9 @@ RenderableDrawer::~RenderableDrawer()
 {
 }
 
-void RenderableDrawer::drawRange(RenderingTechnique technique, const Mat4& viewMat, const Mat4& viewProjMat,
-								 const Mat4& prevViewProjMat, CommandBufferPtr cmdb, SamplerPtr sampler,
-								 const RenderableQueueElement* begin, const RenderableQueueElement* end, U32 minLod,
-								 U32 maxLod)
+void RenderableDrawer::drawRange(RenderingTechnique technique, const RenderableDrawerArguments& args,
+								 const RenderableQueueElement* begin, const RenderableQueueElement* end,
+								 CommandBufferPtr& cmdb)
 {
 	ANKI_ASSERT(begin && end && begin < end);
 
@@ -52,10 +51,11 @@ void RenderableDrawer::drawRange(RenderingTechnique technique, const Mat4& viewM
 		MaterialGlobalUniforms* globalUniforms =
 			static_cast<MaterialGlobalUniforms*>(m_r->getStagingGpuMemory().allocateFrame(
 				sizeof(MaterialGlobalUniforms), StagingGpuMemoryType::UNIFORM, globalUniformsToken));
-		globalUniforms->m_viewProjectionMatrix = viewProjMat;
 
-		globalUniforms->m_viewMatrix = Mat3x4(viewMat);
-		globalUniforms->m_cameraTransform = Mat3x4(viewMat.getInverse());
+		globalUniforms->m_viewProjectionMatrix = args.m_viewProjectionMatrix;
+		globalUniforms->m_previousViewProjectionMatrix = args.m_previousViewProjectionMatrix;
+		globalUniforms->m_viewMatrix = args.m_viewMatrix;
+		globalUniforms->m_cameraTransform = args.m_cameraTransform;
 
 		cmdb->bindUniformBuffer(MATERIAL_SET_GLOBAL, MATERIAL_BINDING_GLOBAL_UNIFORMS, globalUniformsToken.m_buffer,
 								globalUniformsToken.m_offset, globalUniformsToken.m_range);
@@ -63,24 +63,24 @@ void RenderableDrawer::drawRange(RenderingTechnique technique, const Mat4& viewM
 
 	// More globals
 	cmdb->bindAllBindless(MATERIAL_SET_BINDLESS);
-	cmdb->bindSampler(MATERIAL_SET_GLOBAL, MATERIAL_BINDING_TRILINEAR_REPEAT_SAMPLER, sampler);
+	cmdb->bindSampler(MATERIAL_SET_GLOBAL, MATERIAL_BINDING_TRILINEAR_REPEAT_SAMPLER, args.m_sampler);
 
 	// Set a few things
-	DrawContext ctx;
-	ctx.m_queueCtx.m_viewMatrix = viewMat;
-	ctx.m_queueCtx.m_viewProjectionMatrix = viewProjMat;
+	Context ctx;
+	ctx.m_queueCtx.m_viewMatrix = args.m_viewMatrix;
+	ctx.m_queueCtx.m_viewProjectionMatrix = args.m_viewProjectionMatrix;
 	ctx.m_queueCtx.m_projectionMatrix = Mat4::getIdentity(); // TODO
-	ctx.m_queueCtx.m_previousViewProjectionMatrix = prevViewProjMat;
-	ctx.m_queueCtx.m_cameraTransform = ctx.m_queueCtx.m_viewMatrix.getInverse();
+	ctx.m_queueCtx.m_previousViewProjectionMatrix = args.m_previousViewProjectionMatrix;
+	ctx.m_queueCtx.m_cameraTransform = args.m_cameraTransform;
 	ctx.m_queueCtx.m_stagingGpuAllocator = &m_r->getStagingGpuMemory();
 	ctx.m_queueCtx.m_commandBuffer = cmdb;
 	ctx.m_queueCtx.m_key = RenderingKey(technique, 0, 1, false, false);
 	ctx.m_queueCtx.m_debugDraw = false;
-	ctx.m_queueCtx.m_sampler = sampler;
+	ctx.m_queueCtx.m_sampler = args.m_sampler;
 
-	ANKI_ASSERT(minLod < MAX_LOD_COUNT && maxLod < MAX_LOD_COUNT);
-	ctx.m_minLod = U8(minLod);
-	ctx.m_maxLod = U8(maxLod);
+	ANKI_ASSERT(args.m_minLod < MAX_LOD_COUNT && args.m_maxLod < MAX_LOD_COUNT && args.m_minLod <= args.m_maxLod);
+	ctx.m_minLod = U8(args.m_minLod);
+	ctx.m_maxLod = U8(args.m_maxLod);
 
 	for(; begin != end; ++begin)
 	{
@@ -93,7 +93,7 @@ void RenderableDrawer::drawRange(RenderingTechnique technique, const Mat4& viewM
 	flushDrawcall(ctx);
 }
 
-void RenderableDrawer::flushDrawcall(DrawContext& ctx)
+void RenderableDrawer::flushDrawcall(Context& ctx)
 {
 	ctx.m_queueCtx.m_key.setLod(ctx.m_cachedRenderElementLods[0]);
 	ctx.m_queueCtx.m_key.setInstanceCount(ctx.m_cachedRenderElementCount);
@@ -109,7 +109,7 @@ void RenderableDrawer::flushDrawcall(DrawContext& ctx)
 	ctx.m_cachedRenderElementCount = 0;
 }
 
-void RenderableDrawer::drawSingle(DrawContext& ctx)
+void RenderableDrawer::drawSingle(Context& ctx)
 {
 	if(ctx.m_cachedRenderElementCount == MAX_INSTANCE_COUNT)
 	{

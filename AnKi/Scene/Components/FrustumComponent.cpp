@@ -96,13 +96,13 @@ Bool FrustumComponent::updateInternal()
 	if(m_trfMarkedForUpdate)
 	{
 		updated = true;
-		m_viewMat = Mat4(m_trf.getInverse());
+		m_viewMat = Mat3x4(m_trf.getInverse());
 	}
 
 	// Updates that are affected by transform & shape updates
 	if(updated)
 	{
-		m_viewProjMat = m_projMat * m_viewMat;
+		m_viewProjMat = m_projMat * Mat4(m_viewMat, Vec4(0.0f, 0.0f, 0.0f, 1.0f));
 		m_shapeMarkedForUpdate = false;
 		m_trfMarkedForUpdate = false;
 

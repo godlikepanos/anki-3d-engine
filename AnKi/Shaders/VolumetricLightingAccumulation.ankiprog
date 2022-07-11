@@ -71,8 +71,7 @@ Vec3 worldPosInsideClusterAndZViewSpace(Vec3 relativePos, out F32 negativeZViewS
 	const Vec2 xyViewSpace = UV_TO_NDC(uv) * u_clusteredShading.m_matrices.m_unprojectionParameters.xy * zViewSpace;
 
 	// Get the final world pos
-	const Vec4 worldPos4 = u_clusteredShading.m_matrices.m_invertedView * Vec4(xyViewSpace, zViewSpace, 1.0);
-	const Vec3 worldPos = worldPos4.xyz;
+	const Vec3 worldPos = u_clusteredShading.m_matrices.m_cameraTransform * Vec4(xyViewSpace, zViewSpace, 1.0);
 
 	return worldPos;
 }

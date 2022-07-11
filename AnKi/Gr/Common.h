@@ -27,7 +27,7 @@ class ShaderInitInfo;
 class ShaderProgramInitInfo;
 class CommandBufferInitInfo;
 class AccelerationStructureInitInfo;
-
+class GrUpscalerInitInfo;
 /// @addtogroup graphics
 /// @{
 
@@ -73,6 +73,7 @@ ANKI_GR_CLASS(ShaderProgram)
 ANKI_GR_CLASS(Fence)
 ANKI_GR_CLASS(RenderGraph)
 ANKI_GR_CLASS(AccelerationStructure)
+ANKI_GR_CLASS(GrUpscaler)
 
 #undef ANKI_GR_CLASS
 
@@ -182,6 +183,9 @@ public:
 
 	/// Supports or not 24bit, 48bit or 96bit texture formats.
 	Bool m_unalignedBbpTextureFormats = false;
+
+	/// DLSS.
+	Bool m_dlss = false;
 };
 ANKI_END_PACKED_STRUCT
 

@@ -55,7 +55,7 @@ void main()
 	{
 		out_color = saturate(out_color);
 		out_color = sRgbToLinear(out_color);
-		out_color = invertTonemap(out_color, u_exposureThreshold0);
+		out_color = invertTonemap(out_color, readExposureAndAverageLuminance().x);
 	}
 
 #if defined(ANKI_COMPUTE_SHADER)

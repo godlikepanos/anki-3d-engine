@@ -218,7 +218,7 @@ void DebugDrawer2::drawLines(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 l
 	cmdb->drawArrays(PrimitiveTopology::LINES, linePositions.getSize(), mvps.getSize());
 }
 
-void DebugDrawer2::drawBillboardTextures(const Mat4& projMat, const Mat4& viewMat, ConstWeakArray<Vec3> positions,
+void DebugDrawer2::drawBillboardTextures(const Mat4& projMat, const Mat3x4& viewMat, ConstWeakArray<Vec3> positions,
 										 const Vec4& color, Bool ditherFailedDepth, TextureViewPtr tex,
 										 SamplerPtr sampler, Vec2 billboardSize,
 										 StagingGpuMemoryPool& stagingGpuAllocator, CommandBufferPtr& cmdb) const
@@ -246,7 +246,7 @@ void DebugDrawer2::drawBillboardTextures(const Mat4& projMat, const Mat4& viewMa
 	Mat4* pmvps = static_cast<Mat4*>(stagingGpuAllocator.allocateFrame(
 		sizeof(Mat4) * positions.getSize() + sizeof(Vec4), StagingGpuMemoryType::UNIFORM, unisToken));
 
-	const Mat4 camTrf = viewMat.getInverse();
+	const Mat4 camTrf = Mat4(viewMat, Vec4(0.0f, 0.0f, 0.0f, 1.0f)).getInverse();
 	const Vec3 zAxis = camTrf.getZAxis().xyz().getNormalized();
 	Vec3 yAxis = Vec3(0.0f, 1.0f, 0.0f);
 	const Vec3 xAxis = yAxis.cross(zAxis).getNormalized();
@@ -260,7 +260,7 @@ void DebugDrawer2::drawBillboardTextures(const Mat4& projMat, const Mat4& viewMa
 		scale(0, 0) *= billboardSize.x();
 		scale(1, 1) *= billboardSize.y();
 
-		*pmvps = projMat * viewMat * Mat4(pos.xyz1(), rot * scale, 1.0f);
+		*pmvps = projMat * Mat4(viewMat, Vec4(0.0f, 0.0f, 0.0f, 1.0f)) * Mat4(pos.xyz1(), rot * scale, 1.0f);
 		++pmvps;
 	}
 

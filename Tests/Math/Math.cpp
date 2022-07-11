@@ -253,9 +253,9 @@ void transpose()
 	Mat a = getNonEmptyMat<Mat>();
 	Mat b = a.getTransposed();
 
-	for(U j = 0; j < Mat::ROW_SIZE; j++)
+	for(U j = 0; j < Mat::ROW_COUNT; j++)
 	{
-		for(U i = 0; i < Mat::COLUMN_SIZE; i++)
+		for(U i = 0; i < Mat::COLUMN_COUNT; i++)
 		{
 			ANKI_TEST_EXPECT_EQ(a(j, i), b(i, j));
 		}
@@ -286,10 +286,10 @@ void matVecMul()
 
 	VecOut out = m * v;
 	VecOut out1;
-	for(U j = 0; j < Mat::ROW_SIZE; j++)
+	for(U j = 0; j < Mat::ROW_COUNT; j++)
 	{
 		T sum = 0;
-		for(U i = 0; i < Mat::COLUMN_SIZE; i++)
+		for(U i = 0; i < Mat::COLUMN_COUNT; i++)
 		{
 			sum += m(j, i) * v[j];
 		}

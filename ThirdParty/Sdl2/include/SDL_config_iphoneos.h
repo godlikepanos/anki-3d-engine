@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2021 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -48,6 +48,7 @@
 /* #undef HAVE_LIBUNWIND_H */
 
 /* C library functions */
+#define HAVE_DLOPEN 1
 #define HAVE_MALLOC 1
 #define HAVE_CALLOC 1
 #define HAVE_REALLOC    1
@@ -133,6 +134,7 @@
 #define HAVE_NANOSLEEP  1
 #define HAVE_SYSCONF    1
 #define HAVE_SYSCTLBYNAME 1
+#define HAVE_O_CLOEXEC 1
 
 /* enable iPhone version of Core Audio driver */
 #define SDL_AUDIO_DRIVER_COREAUDIO 1

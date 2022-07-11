@@ -49,13 +49,17 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 								   m_r->getShadowMapping().getShadowmapRt());
 		bindStorage(cmdb, set, MATERIAL_BINDING_CLUSTERS, rsrc.m_clustersToken);
 
+		RenderableDrawerArguments args;
+		args.m_viewMatrix = ctx.m_matrices.m_view;
+		args.m_cameraTransform = ctx.m_matrices.m_cameraTransform;
+		args.m_viewProjectionMatrix = ctx.m_matrices.m_viewProjectionJitter;
+		args.m_previousViewProjectionMatrix = ctx.m_prevMatrices.m_viewProjectionJitter; // Not sure about that
+		args.m_sampler = m_r->getSamplers().m_trilinearRepeatAnisoResolutionScalingBias;
+
 		// Start drawing
-		m_r->getSceneDrawer().drawRange(RenderingTechnique::FORWARD, ctx.m_matrices.m_view,
-										ctx.m_matrices.m_viewProjectionJitter,
-										ctx.m_prevMatrices.m_viewProjectionJitter, cmdb,
-										m_r->getSamplers().m_trilinearRepeatAnisoResolutionScalingBias,
+		m_r->getSceneDrawer().drawRange(RenderingTechnique::FORWARD, args,
 										ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + start,
-										ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + end);
+										ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + end, cmdb);
 
 		// Restore state
 		cmdb->setDepthWrite(true);

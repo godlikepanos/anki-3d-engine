@@ -221,14 +221,19 @@ void ShadowMapping::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 		cmdb->setViewport(work.m_viewport[0], work.m_viewport[1], work.m_viewport[2], work.m_viewport[3]);
 		cmdb->setScissor(work.m_viewport[0], work.m_viewport[1], work.m_viewport[2], work.m_viewport[3]);
 
-		m_r->getSceneDrawer().drawRange(RenderingTechnique::SHADOW, work.m_renderQueue->m_viewMatrix,
-										work.m_renderQueue->m_viewProjectionMatrix,
-										Mat4::getIdentity(), // Don't care about prev matrices here
-										cmdb, m_r->getSamplers().m_trilinearRepeatAniso,
+		RenderableDrawerArguments args;
+		args.m_viewMatrix = work.m_renderQueue->m_viewMatrix;
+		args.m_cameraTransform = Mat3x4::getIdentity(); // Don't care
+		args.m_viewProjectionMatrix = work.m_renderQueue->m_viewProjectionMatrix;
+		args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
+		args.m_sampler = m_r->getSamplers().m_trilinearRepeatAniso;
+		args.m_minLod = args.m_maxLod = work.m_renderQueueElementsLod;
+
+		m_r->getSceneDrawer().drawRange(RenderingTechnique::SHADOW, args,
 										work.m_renderQueue->m_renderables.getBegin() + work.m_firstRenderableElement,
 										work.m_renderQueue->m_renderables.getBegin() + work.m_firstRenderableElement
 											+ work.m_renderableElementCount,
-										work.m_renderQueueElementsLod, work.m_renderQueueElementsLod);
+										cmdb);
 	}
 }
 
@@ -708,7 +713,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 
 		// Allocate tiles
 		U32 faceIdx = 0;
-		TileAllocatorResult subResult;
+		TileAllocatorResult subResult = TileAllocatorResult::ALLOCATION_FAILED;
 		UVec4 atlasViewport;
 		UVec4 scratchViewport;
 		const U32 localDrawcallCount = light.m_shadowRenderQueue->m_renderables.getSize();

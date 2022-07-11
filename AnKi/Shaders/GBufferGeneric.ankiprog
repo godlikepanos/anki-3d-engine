@@ -164,19 +164,17 @@ void velocity()
 	const Vec3 prevLocalPos = g_prevPosition;
 
 #	if ANKI_VELOCITY
+	// Object is also moving
 	const Mat3x4 trf = u_renderableGpuViews[gl_InstanceIndex].m_previousWorldTransform;
 #	else
+	// Object is a skin that is not moving
 	const Mat3x4 trf = u_renderableGpuViews[gl_InstanceIndex].m_worldTransform;
 #	endif
 
-	const Vec4 v4 = u_globalUniforms.m_viewProjectionMatrix * Vec4(trf * Vec4(prevLocalPos, 1.0), 1.0);
+	const Vec4 v4 = u_globalUniforms.m_previousViewProjectionMatrix * Vec4(trf * Vec4(prevLocalPos, 1.0), 1.0);
 
-	const Vec2 prevNdc = v4.xy / v4.w;
-
-	const Vec2 crntNdc = gl_Position.xy / gl_Position.w;
-
-	// It's NDC_TO_UV(prevNdc) - NDC_TO_UV(crntNdc) or:
-	out_velocity = (prevNdc - crntNdc) * 0.5;
+	out_prevClipXyw = v4.xyw;
+	out_crntClipXyw = gl_Position.xyw;
 }
 #endif
 
@@ -361,7 +359,11 @@ void main()
 #	endif
 
 #	if ANKI_VELOCITY || ANKI_BONES
-	const Vec2 velocity = in_velocity;
+	const Vec2 prevNdc = in_prevClipXyw.xy / in_prevClipXyw.z;
+	const Vec2 crntNdc = in_crntClipXyw.xy / in_crntClipXyw.z;
+
+	// It's NDC_TO_UV(prevNdc) - NDC_TO_UV(crntNdc) or:
+	const Vec2 velocity = (prevNdc - crntNdc) * 0.5;
 #	else
 	const Vec2 velocity = Vec2(1.0);
 #	endif

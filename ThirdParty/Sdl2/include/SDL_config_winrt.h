@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2021 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -92,6 +92,10 @@ typedef unsigned int uintptr_t;
 # define SIZEOF_VOIDP 4
 #endif
 
+#ifdef __clang__
+# define HAVE_GCC_ATOMICS 1
+#endif
+
 /* Useful headers */
 #define HAVE_DXGI_H 1
 #if WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP
@@ -100,6 +104,7 @@ typedef unsigned int uintptr_t;
 
 #define HAVE_MMDEVICEAPI_H 1
 #define HAVE_AUDIOCLIENT_H 1
+#define HAVE_TPCSHRD_H 1
 
 #define HAVE_LIBC 1
 #define STDC_HEADERS 1
@@ -190,6 +195,8 @@ typedef unsigned int uintptr_t;
 #define HAVE_TRUNCF 1
 #define HAVE__FSEEKI64 1
 
+#define HAVE_ROAPI_H  1
+
 /* Enable various audio drivers */
 #define SDL_AUDIO_DRIVER_WASAPI 1
 #define SDL_AUDIO_DRIVER_DISK   1
@@ -201,9 +208,17 @@ typedef unsigned int uintptr_t;
 #define SDL_HAPTIC_DISABLED 1
 #else
 #define SDL_JOYSTICK_VIRTUAL    1
+#if (NTDDI_VERSION >= NTDDI_WIN10)
+#define SDL_JOYSTICK_WGI    1
+#define SDL_HAPTIC_DISABLED 1
+#else
 #define SDL_JOYSTICK_XINPUT 1
 #define SDL_HAPTIC_XINPUT   1
+#endif /* WIN10 */
 #endif
+
+/* WinRT doesn't have HIDAPI available */
+#define SDL_HIDAPI_DISABLED    1
 
 /* Enable the dummy sensor driver */
 #define SDL_SENSOR_DUMMY  1

@@ -89,6 +89,8 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 	// Create passes
 	static const Array<CString, 8> passNames = {"DownBlur #0",  "Down/Blur #1", "Down/Blur #2", "Down/Blur #3",
 												"Down/Blur #4", "Down/Blur #5", "Down/Blur #6", "Down/Blur #7"};
+	const RenderTargetHandle inRt =
+		(m_r->getScale().hasUpscaledHdrRt()) ? m_r->getScale().getUpscaledHdrRt() : m_r->getScale().getTonemappedRt();
 	if(getConfig().getRPreferCompute())
 	{
 		for(U32 i = 0; i < m_passCount; ++i)
@@ -106,15 +108,18 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 				sampleSubresource.m_firstMipmap = i - 1;
 				renderSubresource.m_firstMipmap = i;
 
-				pass.newDependency({m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE, renderSubresource});
-				pass.newDependency({m_runCtx.m_rt, TextureUsageBit::SAMPLED_COMPUTE, sampleSubresource});
+				pass.newDependency(
+					RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE, renderSubresource));
+				pass.newDependency(
+					RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::SAMPLED_COMPUTE, sampleSubresource));
 			}
 			else
 			{
 				TextureSubresourceInfo renderSubresource;
 
-				pass.newDependency({m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE, renderSubresource});
-				pass.newDependency({m_r->getScale().getRt(), TextureUsageBit::SAMPLED_COMPUTE});
+				pass.newDependency(
+					RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE, renderSubresource));
+				pass.newDependency(RenderPassDependency(inRt, TextureUsageBit::SAMPLED_COMPUTE));
 			}
 		}
 	}
@@ -136,15 +141,18 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 				sampleSubresource.m_firstMipmap = i - 1;
 				renderSubresource.m_firstMipmap = i;
 
-				pass.newDependency({m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, renderSubresource});
-				pass.newDependency({m_runCtx.m_rt, TextureUsageBit::SAMPLED_FRAGMENT, sampleSubresource});
+				pass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+														renderSubresource));
+				pass.newDependency(
+					RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::SAMPLED_FRAGMENT, sampleSubresource));
 			}
 			else
 			{
 				TextureSubresourceInfo renderSubresource;
 
-				pass.newDependency({m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, renderSubresource});
-				pass.newDependency({m_r->getScale().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+				pass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+														renderSubresource));
+				pass.newDependency(RenderPassDependency(inRt, TextureUsageBit::SAMPLED_FRAGMENT));
 			}
 		}
 	}
@@ -169,12 +177,14 @@ void DownscaleBlur::run(U32 passIdx, RenderPassWorkContext& rgraphCtx)
 	}
 	else
 	{
-		rgraphCtx.bindColorTexture(0, 1, m_r->getScale().getRt());
+		const RenderTargetHandle inRt = (m_r->getScale().hasUpscaledHdrRt()) ? m_r->getScale().getUpscaledHdrRt()
+																			 : m_r->getScale().getTonemappedRt();
+		rgraphCtx.bindColorTexture(0, 1, inRt);
 	}
 
-	rgraphCtx.bindUniformBuffer(0, 2, m_r->getTonemapping().getAverageLuminanceBuffer());
+	rgraphCtx.bindImage(0, 2, m_r->getTonemapping().getRt());
 
-	const Bool revertTonemap = passIdx == 0;
+	const Bool revertTonemap = passIdx == 0 && !m_r->getScale().hasUpscaledHdrRt();
 	const UVec4 fbSize(vpWidth, vpHeight, revertTonemap, 0);
 	cmdb->setPushConstants(&fbSize, sizeof(fbSize));
 

@@ -127,6 +127,15 @@ public:
 	void getRenderTargetState(RenderTargetHandle handle, const TextureSubresourceInfo& subresource,
 							  TexturePtr& tex) const;
 
+	/// Create a whole texture view from a handle
+	TextureViewPtr createTextureView(RenderTargetHandle handle)
+	{
+		TexturePtr tex = getTexture(handle);
+		TextureViewInitInfo viewInit(tex, "TmpRenderGraph"); // Use the whole texture
+		getRenderTargetState(handle, viewInit, tex);
+		return m_commandBuffer->getManager().newTextureView(viewInit);
+	}
+
 	/// Convenience method.
 	void bindTextureAndSampler(U32 set, U32 binding, RenderTargetHandle handle,
 							   const TextureSubresourceInfo& subresource, const SamplerPtr& sampler)

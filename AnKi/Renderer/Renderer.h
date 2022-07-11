@@ -260,8 +260,7 @@ private:
 
 	CommonMatrices m_prevMatrices;
 
-	Array<Mat4, 16> m_jitteredMats16x;
-	Array<Mat4, 8> m_jitteredMats8x;
+	Array<Vec2, 64> m_jitterOffsets;
 
 	TextureViewPtr m_dummyTexView2d;
 	TextureViewPtr m_dummyTexView3d;
@@ -281,9 +280,7 @@ private:
 	String m_currentDebugRtName;
 
 	Error initInternal(UVec2 swapchainSize);
-
-	void initJitteredMats();
-}; // namespace anki
+};
 /// @}
 
 } // end namespace anki

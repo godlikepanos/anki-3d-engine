@@ -13,10 +13,24 @@ namespace anki {
 
 // Forward
 class Renderer;
-class DrawContext;
 
 /// @addtogroup renderer
 /// @{
+
+/// @memberof RenderableDrawer.
+class RenderableDrawerArguments
+{
+public:
+	// The matrices are whatever the drawing needs. Sometimes they contain jittering and sometimes they don't.
+	Mat3x4 m_viewMatrix;
+	Mat3x4 m_cameraTransform;
+	Mat4 m_viewProjectionMatrix;
+	Mat4 m_previousViewProjectionMatrix;
+
+	SamplerPtr m_sampler;
+	U32 m_minLod = 0;
+	U32 m_maxLod = MAX_LOD_COUNT - 1;
+};
 
 /// It uses the render queue to batch and render.
 class RenderableDrawer
@@ -31,17 +45,17 @@ public:
 
 	~RenderableDrawer();
 
-	void drawRange(RenderingTechnique technique, const Mat4& viewMat, const Mat4& viewProjMat,
-				   const Mat4& prevViewProjMat, CommandBufferPtr cmdb, SamplerPtr sampler,
-				   const RenderableQueueElement* begin, const RenderableQueueElement* end, U32 minLod = 0,
-				   U32 maxLod = MAX_LOD_COUNT - 1);
+	void drawRange(RenderingTechnique technique, const RenderableDrawerArguments& args,
+				   const RenderableQueueElement* begin, const RenderableQueueElement* end, CommandBufferPtr& cmdb);
 
 private:
+	class Context;
+
 	Renderer* m_r;
 
-	void flushDrawcall(DrawContext& ctx);
+	void flushDrawcall(Context& ctx);
 
-	void drawSingle(DrawContext& ctx);
+	void drawSingle(Context& ctx);
 };
 /// @}
 

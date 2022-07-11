@@ -81,6 +81,12 @@ public:
 		return m_physicalDevice;
 	}
 
+	VkInstance getInstance() const
+	{
+		ANKI_ASSERT(m_instance);
+		return m_instance;
+	}
+
 	/// @name object_creation
 	/// @{
 

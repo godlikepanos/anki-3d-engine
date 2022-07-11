@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2021 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -87,7 +87,9 @@ WIN_DeleteDevice(SDL_VideoDevice * device)
     if (data->shcoreDLL) {
         SDL_UnloadObject(data->shcoreDLL);
     }
-
+    if (device->wakeup_lock) {
+        SDL_DestroyMutex(device->wakeup_lock);
+    }
     SDL_free(device->driverdata);
     SDL_free(device);
 }
@@ -113,6 +115,7 @@ WIN_CreateDevice(int devindex)
         return NULL;
     }
     device->driverdata = data;
+    device->wakeup_lock = SDL_CreateMutex();
 
     data->userDLL = SDL_LoadObject("USER32.DLL");
     if (data->userDLL) {
@@ -139,6 +142,8 @@ WIN_CreateDevice(int devindex)
     device->GetDisplayModes = WIN_GetDisplayModes;
     device->SetDisplayMode = WIN_SetDisplayMode;
     device->PumpEvents = WIN_PumpEvents;
+    device->WaitEventTimeout = WIN_WaitEventTimeout;
+    device->SendWakeupEvent = WIN_SendWakeupEvent;
     device->SuspendScreenSaver = WIN_SuspendScreenSaver;
 
     device->CreateSDLWindow = WIN_CreateWindow;
@@ -157,9 +162,12 @@ WIN_CreateDevice(int devindex)
     device->RestoreWindow = WIN_RestoreWindow;
     device->SetWindowBordered = WIN_SetWindowBordered;
     device->SetWindowResizable = WIN_SetWindowResizable;
+    device->SetWindowAlwaysOnTop = WIN_SetWindowAlwaysOnTop;
     device->SetWindowFullscreen = WIN_SetWindowFullscreen;
     device->SetWindowGammaRamp = WIN_SetWindowGammaRamp;
+    device->GetWindowICCProfile = WIN_GetWindowICCProfile;
     device->GetWindowGammaRamp = WIN_GetWindowGammaRamp;
+    device->SetWindowMouseRect = WIN_SetWindowMouseRect;
     device->SetWindowMouseGrab = WIN_SetWindowMouseGrab;
     device->SetWindowKeyboardGrab = WIN_SetWindowKeyboardGrab;
     device->DestroyWindow = WIN_DestroyWindow;
@@ -170,6 +178,7 @@ WIN_CreateDevice(int devindex)
     device->OnWindowEnter = WIN_OnWindowEnter;
     device->SetWindowHitTest = WIN_SetWindowHitTest;
     device->AcceptDragAndDrop = WIN_AcceptDragAndDrop;
+    device->FlashWindow = WIN_FlashWindow;
 
     device->shape_driver.CreateShaper = Win32_CreateShaper;
     device->shape_driver.SetWindowShape = Win32_SetWindowShape;
@@ -207,6 +216,8 @@ WIN_CreateDevice(int devindex)
     device->StartTextInput = WIN_StartTextInput;
     device->StopTextInput = WIN_StopTextInput;
     device->SetTextInputRect = WIN_SetTextInputRect;
+    device->ClearComposition = WIN_ClearComposition;
+    device->IsTextInputShown = WIN_IsTextInputShown;
 
     device->SetClipboardText = WIN_SetClipboardText;
     device->GetClipboardText = WIN_GetClipboardText;
@@ -225,6 +236,8 @@ VideoBootStrap WINDOWS_bootstrap = {
 int
 WIN_VideoInit(_THIS)
 {
+    SDL_VideoData *data = (SDL_VideoData *) _this->driverdata;
+
     if (WIN_InitModes(_this) < 0) {
         return -1;
     }
@@ -234,6 +247,8 @@ WIN_VideoInit(_THIS)
 
     SDL_AddHintCallback(SDL_HINT_WINDOWS_ENABLE_MESSAGELOOP, UpdateWindowsEnableMessageLoop, NULL);
     SDL_AddHintCallback(SDL_HINT_WINDOW_FRAME_USABLE_WHILE_CURSOR_HIDDEN, UpdateWindowFrameUsableWhileCursorHidden, NULL);
+
+    data->_SDL_WAKEUP = RegisterWindowMessageA("_SDL_WAKEUP");
 
     return 0;
 }

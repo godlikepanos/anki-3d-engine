@@ -20,7 +20,7 @@ jobs:
 
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config Debug
-      
+
   Release:
     name: "Release"
     runs-on: windows-latest
@@ -30,7 +30,21 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DANKI_EXTRA_CHECKS=OFF
+      run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Release -DANKI_EXTRA_CHECKS=OFF
 
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config Release
+
+  DLSS:
+    name: "DLSS"
+    runs-on: windows-latest
+
+    steps:
+    - name: Clone
+      uses: actions/checkout@v2
+
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DANKI_EXTRA_CHECKS=OFF -DANKI_DLSS=ON
+
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config Release --target Sponza

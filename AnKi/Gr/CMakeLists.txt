@@ -29,6 +29,7 @@ set(common_headers
 	Texture.h
 	TextureView.h
 	TimestampQuery.h
+	GrUpscaler.h
 	Utils/FrameGpuAllocator.h
 	Utils/Functions.h
 	Utils/InstantiationMacros.h)
@@ -72,7 +73,9 @@ if(VULKAN)
 		Vulkan/TimestampQuery.cpp
 		Vulkan/TimestampQueryImpl.cpp
 		Vulkan/VulkanObject.cpp
-		Vulkan/FrameGarbageCollector.cpp)
+		Vulkan/FrameGarbageCollector.cpp
+		Vulkan/GrUpscaler.cpp
+		Vulkan/GrUpscalerImpl.cpp)
 
 	set(backend_headers
 		Vulkan/AccelerationStructureImpl.h
@@ -109,7 +112,8 @@ if(VULKAN)
 		Vulkan/TextureImpl.h
 		Vulkan/TextureViewImpl.h
 		Vulkan/TimestampQueryImpl.h
-		Vulkan/VulkanObject.h)
+		Vulkan/VulkanObject.h
+		Vulkan/GrUpscalerImpl.h)
 
 	if(ANKI_HEADLESS)
 		set(backend_sources ${backend_sources} "Vulkan/GrManagerImplHeadless.cpp")
@@ -127,6 +131,33 @@ add_library(AnKiGrCommon ${common_sources} ${common_headers})
 target_compile_definitions(AnKiGrCommon PRIVATE -DANKI_SOURCE_FILE)
 target_link_libraries(AnKiGrCommon AnKiUtil) # Only depend on Util
 
+if(ANKI_DLSS)
+	set(extra_libs AnKiNgx)
+endif()
+
 add_library(AnKiGr ${backend_sources} ${backend_headers})
 target_compile_definitions(AnKiGr PRIVATE -DANKI_SOURCE_FILE)
-target_link_libraries(AnKiGr AnKiCore AnKiSpirvCross AnKiGrCommon)
+target_link_libraries(AnKiGr AnKiCore AnKiSpirvCross AnKiGrCommon ${extra_libs})
+
+# Copy DLSS files to Bin
+if(ANKI_DLSS)
+	get_target_property(lib_type AnKiNgx TYPE)
+	if("${lib_type}" STREQUAL "SHARED_LIBRARY")
+		get_target_property(ANKINGX_DLL AnKiNgx IMPORTED_LOCATION)
+		add_custom_command(
+			TARGET AnKiGr
+			COMMENT "Dependant DLLs copy ${ANKINGX_DLL} ${CMAKE_BINARY_DIR}/Bin"
+			COMMAND ${CMAKE_COMMAND} -E copy_if_different "${ANKINGX_DLL}" "${CMAKE_BINARY_DIR}/Bin")
+	else()
+		get_property(__NGX_DLLS_LIST TARGET AnKiNgx PROPERTY ANKINGX_EXTRA_DLLS)
+		foreach(dll_path ${__NGX_DLLS_LIST})
+			file(GLOB dll_files "${dll_path}")
+			foreach(dll_file ${dll_files})
+				add_custom_command(
+				TARGET AnKiGr
+				COMMENT "NGX DLL copy ${dll_file} ${CMAKE_BINARY_DIR}/Bin\n"
+				COMMAND ${CMAKE_COMMAND} -E copy_if_different "${dll_file}" "${CMAKE_BINARY_DIR}/Bin")
+			endforeach()
+		endforeach()
+	endif()
+endif()

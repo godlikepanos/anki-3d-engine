@@ -38,36 +38,24 @@ Error Tonemapping::initInternal()
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProg = variant->getProgram();
 
-	// Create buffer
-	m_luminanceBuff = getGrManager().newBuffer(BufferInitInfo(
-		sizeof(Vec4), BufferUsageBit::ALL_STORAGE | BufferUsageBit::ALL_UNIFORM | BufferUsageBit::TRANSFER_DESTINATION,
-		BufferMapAccessBit::NONE, "AvgLum"));
-
-	CommandBufferInitInfo cmdbinit;
-	cmdbinit.m_flags = CommandBufferFlag::SMALL_BATCH | CommandBufferFlag::GENERAL_WORK;
-	CommandBufferPtr cmdb = getGrManager().newCommandBuffer(cmdbinit);
-
-	TransferGpuAllocatorHandle handle;
-	ANKI_CHECK(m_r->getResourceManager().getTransferGpuAllocator().allocate(sizeof(Vec4), handle));
-	void* data = handle.getMappedMemory();
-
-	*static_cast<Vec4*>(data) = Vec4(0.5);
-	cmdb->copyBufferToBuffer(handle.getBuffer(), handle.getOffset(), m_luminanceBuff, 0, handle.getRange());
-
-	FencePtr fence;
-	cmdb->flush({}, &fence);
-
-	m_r->getResourceManager().getTransferGpuAllocator().release(handle, fence);
+	// Create exposure texture.
+	// WARNING: Use it only as IMAGE and nothing else. It will not be tracked by the rendergraph. No tracking means no
+	// automatic image transitions
+	const TextureUsageBit usage = TextureUsageBit::ALL_IMAGE;
+	const TextureInitInfo texinit =
+		m_r->create2DRenderTargetInitInfo(1, 1, Format::R16G16_SFLOAT, usage, "ExposureAndAvgLum1x1");
+	ClearValue clearValue;
+	clearValue.m_colorf = {0.5f, 0.5f, 0.5f, 0.5f};
+	m_exposureAndAvgLuminance1x1 = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::ALL_IMAGE, clearValue);
 
 	return Error::NONE;
 }
 
 void Tonemapping::importRenderTargets(RenderingContext& ctx)
 {
-	// Computation of the AVG luminance will run first in the frame and it will use the m_luminanceBuff as storage
-	// read/write. To skip the barrier import it as read/write as well.
-	m_runCtx.m_buffHandle = ctx.m_renderGraphDescr.importBuffer(
-		m_luminanceBuff, BufferUsageBit::STORAGE_COMPUTE_READ | BufferUsageBit::STORAGE_COMPUTE_WRITE);
+	// Just import it. It will not be used in resource tracking
+	m_runCtx.m_exposureLuminanceHandle =
+		ctx.m_renderGraphDescr.importRenderTarget(m_exposureAndAvgLuminance1x1, TextureUsageBit::ALL_IMAGE);
 }
 
 void Tonemapping::populateRenderGraph(RenderingContext& ctx)
@@ -75,13 +63,13 @@ void Tonemapping::populateRenderGraph(RenderingContext& ctx)
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	// Create the pass
-	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Avg lum");
+	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("AvgLuminance");
 
 	pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 		CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
 		cmdb->bindShaderProgram(m_grProg);
-		rgraphCtx.bindStorageBuffer(0, 1, m_runCtx.m_buffHandle);
+		rgraphCtx.bindImage(0, 1, m_runCtx.m_exposureLuminanceHandle);
 
 		TextureSubresourceInfo inputTexSubresource;
 		inputTexSubresource.m_firstMipmap = m_inputTexMip;
@@ -89,9 +77,6 @@ void Tonemapping::populateRenderGraph(RenderingContext& ctx)
 
 		cmdb->dispatchCompute(1, 1, 1);
 	});
-
-	pass.newDependency(
-		{m_runCtx.m_buffHandle, BufferUsageBit::STORAGE_COMPUTE_READ | BufferUsageBit::STORAGE_COMPUTE_WRITE});
 
 	TextureSubresourceInfo inputTexSubresource;
 	inputTexSubresource.m_firstMipmap = m_inputTexMip;

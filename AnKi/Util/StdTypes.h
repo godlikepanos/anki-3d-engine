@@ -74,6 +74,7 @@ static_assert(sizeof(bool) == 1, "Wrong size for bool");
 
 using Bool32 = I32;
 using Char = char;
+using WChar = wchar_t;
 
 using Second = F64; ///< The base time unit is second.
 constexpr Second MAX_SECOND = MAX_F64;

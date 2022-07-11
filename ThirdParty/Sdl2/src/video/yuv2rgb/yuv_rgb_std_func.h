@@ -107,7 +107,6 @@ void STD_FUNCTION_NAME(
         uint8_t *rgb_ptr2=RGB+(y+1)*RGB_stride;
 		#endif
 
-		(void)y_ptr2;
 		for(x=0; x<(width-(uv_x_sample_interval-1)); x+=uv_x_sample_interval)
 		{
 			// Compute U and V contributions, common to the four pixels

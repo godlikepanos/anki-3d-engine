@@ -12,7 +12,7 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-/// Upscale or downscale pass.
+/// Upscales, sharpens and in some cases tonemaps.
 class Scale : public RendererObject
 {
 public:
@@ -27,9 +27,28 @@ public:
 
 	void populateRenderGraph(RenderingContext& ctx);
 
-	RenderTargetHandle getRt() const
+	/// This is the tonemapped, upscaled and sharpened RT.
+	RenderTargetHandle getTonemappedRt() const
 	{
-		return (doSharpening()) ? m_runCtx.m_sharpenedRt : m_runCtx.m_scaledRt;
+		return m_runCtx.m_sharpenedRt;
+	}
+
+	/// This is the HDR upscaled RT. It's available if hasUscaledHdrRt() returns true.
+	RenderTargetHandle getUpscaledHdrRt() const
+	{
+		ANKI_ASSERT(hasUpscaledHdrRt());
+		return m_runCtx.m_upscaledHdrRt;
+	}
+
+	/// @see getUpscaledHdrRt.
+	Bool hasUpscaledHdrRt() const
+	{
+		return m_runCtx.m_upscaledHdrRt.isValid();
+	}
+
+	Bool getUsingGrUpscaler() const
+	{
+		return m_grUpscaler.isCreated();
 	}
 
 private:
@@ -37,31 +56,50 @@ private:
 	ShaderProgramPtr m_scaleGrProg;
 	ShaderProgramResourcePtr m_sharpenProg;
 	ShaderProgramPtr m_sharpenGrProg;
+	ShaderProgramResourcePtr m_tonemapProg;
+	ShaderProgramPtr m_tonemapGrProg;
+
+	GrUpscalerPtr m_grUpscaler;
 
 	FramebufferDescription m_fbDescr;
-	RenderTargetDescription m_rtDesc;
+	RenderTargetDescription m_upscaleAndSharpenRtDescr;
+	RenderTargetDescription m_tonemapedRtDescr;
 
-	Bool m_fsr = false;
+	enum class UpscalingMethod : U8
+	{
+		NONE,
+		BILINEAR,
+		FSR,
+		GR,
+		COUNT
+	};
+
+	UpscalingMethod m_upscalingMethod = UpscalingMethod::NONE;
+
+	enum class SharpenMethod : U8
+	{
+		NONE,
+		RCAS,
+		COUNT
+	};
+
+	SharpenMethod m_sharpenMethod = SharpenMethod::NONE;
+
+	Bool m_neeedsTonemapping = false;
 
 	class
 	{
 	public:
-		RenderTargetHandle m_scaledRt;
-		RenderTargetHandle m_sharpenedRt;
+		RenderTargetHandle m_upscaledTonemappedRt;
+		RenderTargetHandle m_upscaledHdrRt;
+		RenderTargetHandle m_tonemappedRt;
+		RenderTargetHandle m_sharpenedRt; ///< It's tonemaped.
 	} m_runCtx;
 
-	void runScaling(RenderPassWorkContext& rgraphCtx);
-	void runSharpening(RenderPassWorkContext& rgraphCtx);
-
-	Bool doSharpening() const
-	{
-		return m_sharpenProg.isCreated();
-	}
-
-	Bool doScaling() const
-	{
-		return m_scaleProg.isCreated();
-	}
+	void runFsrOrBilinearScaling(RenderPassWorkContext& rgraphCtx);
+	void runRcasSharpening(RenderPassWorkContext& rgraphCtx);
+	void runGrUpscaling(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
+	void runTonemapping(RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 

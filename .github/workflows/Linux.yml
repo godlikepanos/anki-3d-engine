@@ -92,3 +92,20 @@ jobs:
 
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config Release
+
+  DLSS:
+    name: "DLSS"
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Install dependencies
+      run: sudo apt install libx11-dev libx11-xcb-dev clang gcc
+
+    - name: Clone
+      uses: actions/checkout@v2
+
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=OFF -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Release -DANKI_EXTRA_CHECKS=ON -DANKI_DLSS=ON
+
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config Release --target Sponza

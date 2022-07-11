@@ -362,6 +362,16 @@ void CommandBuffer::buildAccelerationStructure(const AccelerationStructurePtr& a
 	self.buildAccelerationStructureInternal(as);
 }
 
+void CommandBuffer::upscale(const GrUpscalerPtr& upscaler, const TextureViewPtr& inColor,
+							const TextureViewPtr& outUpscaledColor, const TextureViewPtr& motionVectors,
+							const TextureViewPtr& depth, const TextureViewPtr& exposure, const Bool resetAccumulation,
+							const Vec2& jitterOffset, const Vec2& motionVectorsScale)
+{
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.upscaleInternal(upscaler, inColor, outUpscaledColor, motionVectors, depth, exposure, resetAccumulation,
+						 jitterOffset, motionVectorsScale);
+}
+
 void CommandBuffer::setTextureBarrier(const TexturePtr& tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage,
 									  const TextureSubresourceInfo& subresource)
 {

@@ -326,7 +326,7 @@ void ProbeReflections::runGBuffer(RenderPassWorkContext& rgraphCtx)
 	ANKI_ASSERT(m_ctx.m_probe);
 	ANKI_TRACE_SCOPED_EVENT(R_CUBE_REFL);
 	const ReflectionProbeQueueElement& probe = *m_ctx.m_probe;
-	const CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
 	I32 start, end;
 	U32 startu, endu;
@@ -350,11 +350,18 @@ void ProbeReflections::runGBuffer(RenderPassWorkContext& rgraphCtx)
 
 			const RenderQueue& rqueue = *probe.m_renderQueues[faceIdx];
 			ANKI_ASSERT(localStart >= 0 && localEnd <= faceDrawcallCount);
-			m_r->getSceneDrawer().drawRange(
-				RenderingTechnique::GBUFFER, rqueue.m_viewMatrix, rqueue.m_viewProjectionMatrix,
-				Mat4::getIdentity(), // Don't care about prev mats
-				cmdb, m_r->getSamplers().m_trilinearRepeat, rqueue.m_renderables.getBegin() + localStart,
-				rqueue.m_renderables.getBegin() + localEnd, MAX_LOD_COUNT - 1, MAX_LOD_COUNT - 1);
+
+			RenderableDrawerArguments args;
+			args.m_viewMatrix = rqueue.m_viewMatrix;
+			args.m_cameraTransform = rqueue.m_cameraTransform;
+			args.m_viewProjectionMatrix = rqueue.m_viewProjectionMatrix;
+			args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care about prev mats
+			args.m_sampler = m_r->getSamplers().m_trilinearRepeat;
+			args.m_minLod = args.m_maxLod = MAX_LOD_COUNT - 1;
+
+			m_r->getSceneDrawer().drawRange(RenderingTechnique::GBUFFER, args,
+											rqueue.m_renderables.getBegin() + localStart,
+											rqueue.m_renderables.getBegin() + localEnd, cmdb);
 		}
 	}
 
@@ -377,7 +384,7 @@ void ProbeReflections::runLightShading(U32 faceIdx, const RenderingContext& rctx
 	TraditionalDeferredLightShadingDrawInfo dsInfo;
 	dsInfo.m_viewProjectionMatrix = rqueue.m_viewProjectionMatrix;
 	dsInfo.m_invViewProjectionMatrix = rqueue.m_viewProjectionMatrix.getInverse();
-	dsInfo.m_cameraPosWSpace = rqueue.m_cameraTransform.getTranslationPart();
+	dsInfo.m_cameraPosWSpace = rqueue.m_cameraTransform.getTranslationPart().xyz1();
 	dsInfo.m_viewport = UVec4(0, 0, m_lightShading.m_tileSize, m_lightShading.m_tileSize);
 	dsInfo.m_gbufferTexCoordsScale =
 		Vec2(1.0f / F32(m_lightShading.m_tileSize * 6), 1.0f / F32(m_lightShading.m_tileSize));
@@ -696,7 +703,7 @@ void ProbeReflections::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 	start = I32(startu);
 	end = I32(endu);
 
-	const CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	cmdb->setPolygonOffset(1.0f, 1.0f);
 
 	I32 drawcallCount = 0;
@@ -720,12 +727,18 @@ void ProbeReflections::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 			cmdb->setScissor(rez * faceIdx, 0, rez, rez);
 
 			ANKI_ASSERT(localStart >= 0 && localEnd <= faceDrawcallCount);
-			m_r->getSceneDrawer().drawRange(
-				RenderingTechnique::SHADOW, cascadeRenderQueue.m_viewMatrix, cascadeRenderQueue.m_viewProjectionMatrix,
-				Mat4::getIdentity(), // Don't care about prev matrices here
-				cmdb, m_r->getSamplers().m_trilinearRepeatAniso,
-				cascadeRenderQueue.m_renderables.getBegin() + localStart,
-				cascadeRenderQueue.m_renderables.getBegin() + localEnd, MAX_LOD_COUNT - 1, MAX_LOD_COUNT - 1);
+
+			RenderableDrawerArguments args;
+			args.m_viewMatrix = cascadeRenderQueue.m_viewMatrix;
+			args.m_cameraTransform = Mat3x4::getIdentity(); // Don't care
+			args.m_viewProjectionMatrix = cascadeRenderQueue.m_viewProjectionMatrix;
+			args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
+			args.m_sampler = m_r->getSamplers().m_trilinearRepeatAniso;
+			args.m_minLod = args.m_maxLod = MAX_LOD_COUNT - 1;
+
+			m_r->getSceneDrawer().drawRange(RenderingTechnique::SHADOW, args,
+											cascadeRenderQueue.m_renderables.getBegin() + localStart,
+											cascadeRenderQueue.m_renderables.getBegin() + localEnd, cmdb);
 		}
 	}
 }
