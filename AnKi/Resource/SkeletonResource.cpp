@@ -71,13 +71,7 @@ Error SkeletonResource::load(const ResourceFilename& filename, [[maybe_unused]] 
 		{
 			boneParents.pushBack("");
 
-			if(m_rootBoneIdx != MAX_U32)
-			{
-				ANKI_RESOURCE_LOGE("Skeleton cannot have more than one root nodes");
-				return Error::USER_DATA;
-			}
-
-			m_rootBoneIdx = boneCount;
+			m_rootBonesIdxs.emplaceBack(getAllocator(), boneCount);
 		}
 
 		// Advance

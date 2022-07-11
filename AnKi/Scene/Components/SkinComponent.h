@@ -108,7 +108,7 @@ private:
 	U8 m_crntBoneTrfs = 0;
 	U8 m_prevBoneTrfs = 1;
 
-	void visitBones(const Bone& bone, const Mat4& parentTrf, const BitSet<128, U8>& bonesAnimated, Vec4& minExtend,
+	void visitBones(const Bone& bone, const Mat4& parentTrf, const BitSet<256, U8>& bonesAnimated, Vec4& minExtend,
 					Vec4& maxExtend);
 };
 /// @}

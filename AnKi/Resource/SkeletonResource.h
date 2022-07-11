@@ -14,7 +14,7 @@ namespace anki {
 /// @addtogroup resource
 /// @{
 
-const U32 MAX_CHILDREN_PER_BONE = 8;
+const U32 MAX_CHILDREN_PER_BONE = 12;
 
 /// Skeleton bone
 class Bone
@@ -123,14 +123,19 @@ public:
 		return nullptr;
 	}
 
-	const Bone& getRootBone() const
+	const Bone& getRootBoneAt(const U32 idx) const
 	{
-		return m_bones[m_rootBoneIdx];
+		return m_bones[m_rootBonesIdxs[idx]];
+	}
+
+	const U32 getRootBoneCount() const
+	{
+		return m_rootBonesIdxs.getSize();
 	}
 
 private:
 	DynamicArray<Bone> m_bones;
-	U32 m_rootBoneIdx = MAX_U32;
+	DynamicArray<U32> m_rootBonesIdxs;
 };
 /// @}
 
