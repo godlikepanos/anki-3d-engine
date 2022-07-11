@@ -27,8 +27,11 @@ set(SPIRV_TOOLS_OPT_SOURCES
   composite.h
   const_folding_rules.h
   constants.h
+  control_dependence.h
+  convert_to_sampled_image_pass.h
   convert_to_half_pass.h
   copy_prop_arrays.h
+  dataflow.h
   dead_branch_elim_pass.h
   dead_insert_elim_pass.h
   dead_variable_elimination.h
@@ -36,11 +39,13 @@ set(SPIRV_TOOLS_OPT_SOURCES
   debug_info_manager.h
   def_use_manager.h
   desc_sroa.h
+  desc_sroa_util.h
   dominator_analysis.h
   dominator_tree.h
   eliminate_dead_constant_pass.h
   eliminate_dead_functions_pass.h
   eliminate_dead_functions_util.h
+  eliminate_dead_input_components_pass.h
   eliminate_dead_members_pass.h
   empty_pass.h
   feature_manager.h
@@ -62,6 +67,7 @@ set(SPIRV_TOOLS_OPT_SOURCES
   instruction.h
   instruction_list.h
   instrument_pass.h
+  interp_fixup_pass.h
   ir_builder.h
   ir_context.h
   ir_loader.h
@@ -94,17 +100,21 @@ set(SPIRV_TOOLS_OPT_SOURCES
   reflect.h
   register_pressure.h
   relax_float_ops_pass.h
+  remove_dontinline_pass.h
   remove_duplicates_pass.h
+  remove_unused_interface_variables_pass.h
+  replace_desc_array_access_using_var_index.h
   replace_invalid_opc.h
   scalar_analysis.h
   scalar_analysis_nodes.h
   scalar_replacement_pass.h
   set_spec_constant_default_value_pass.h
   simplification_pass.h
+  spread_volatile_semantics.h
   ssa_rewrite_pass.h
   strength_reduction_pass.h
   strip_debug_info_pass.h
-  strip_reflect_info_pass.h
+  strip_nonsemantic_info_pass.h
   struct_cfg_analysis.h
   tree_iterator.h
   type_manager.h
@@ -131,8 +141,11 @@ set(SPIRV_TOOLS_OPT_SOURCES
   composite.cpp
   const_folding_rules.cpp
   constants.cpp
+  control_dependence.cpp
+  convert_to_sampled_image_pass.cpp
   convert_to_half_pass.cpp
   copy_prop_arrays.cpp
+  dataflow.cpp
   dead_branch_elim_pass.cpp
   dead_insert_elim_pass.cpp
   dead_variable_elimination.cpp
@@ -140,11 +153,13 @@ set(SPIRV_TOOLS_OPT_SOURCES
   debug_info_manager.cpp
   def_use_manager.cpp
   desc_sroa.cpp
+  desc_sroa_util.cpp
   dominator_analysis.cpp
   dominator_tree.cpp
   eliminate_dead_constant_pass.cpp
   eliminate_dead_functions_pass.cpp
   eliminate_dead_functions_util.cpp
+  eliminate_dead_input_components_pass.cpp
   eliminate_dead_members_pass.cpp
   feature_manager.cpp
   fix_storage_class.cpp
@@ -165,6 +180,7 @@ set(SPIRV_TOOLS_OPT_SOURCES
   instruction.cpp
   instruction_list.cpp
   instrument_pass.cpp
+  interp_fixup_pass.cpp
   ir_context.cpp
   ir_loader.cpp
   licm_pass.cpp
@@ -194,17 +210,21 @@ set(SPIRV_TOOLS_OPT_SOURCES
   redundancy_elimination.cpp
   register_pressure.cpp
   relax_float_ops_pass.cpp
+  remove_dontinline_pass.cpp
   remove_duplicates_pass.cpp
+  remove_unused_interface_variables_pass.cpp
+  replace_desc_array_access_using_var_index.cpp
   replace_invalid_opc.cpp
   scalar_analysis.cpp
   scalar_analysis_simplification.cpp
   scalar_replacement_pass.cpp
   set_spec_constant_default_value_pass.cpp
   simplification_pass.cpp
+  spread_volatile_semantics.cpp
   ssa_rewrite_pass.cpp
   strength_reduction_pass.cpp
   strip_debug_info_pass.cpp
-  strip_reflect_info_pass.cpp
+  strip_nonsemantic_info_pass.cpp
   struct_cfg_analysis.cpp
   type_manager.cpp
   types.cpp

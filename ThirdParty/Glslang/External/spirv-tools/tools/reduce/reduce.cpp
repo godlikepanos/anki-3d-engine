@@ -262,7 +262,7 @@ void DumpShader(spvtools::opt::IRContext* context, const char* filename) {
   DumpShader(binary, filename);
 }
 
-const auto kDefaultEnvironment = SPV_ENV_UNIVERSAL_1_5;
+const auto kDefaultEnvironment = SPV_ENV_UNIVERSAL_1_6;
 
 int main(int argc, const char** argv) {
   std::string in_binary_file;
@@ -318,7 +318,7 @@ int main(int argc, const char** argv) {
   reducer.SetMessageConsumer(spvtools::utils::CLIMessageConsumer);
 
   std::vector<uint32_t> binary_in;
-  if (!ReadFile<uint32_t>(in_binary_file.c_str(), "rb", &binary_in)) {
+  if (!ReadBinaryFile<uint32_t>(in_binary_file.c_str(), &binary_in)) {
     return 1;
   }
 

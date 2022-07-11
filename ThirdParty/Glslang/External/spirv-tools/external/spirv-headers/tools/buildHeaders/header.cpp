@@ -69,9 +69,9 @@ namespace {
         TPrinter();
 
         static const int         DocMagicNumber = 0x07230203;
-        static const int         DocVersion     = 0x00010500;
-        static const int         DocRevision    = 4;
-        #define DocRevisionString                "4"
+        static const int         DocVersion     = 0x00010600;
+        static const int         DocRevision    = 1;
+        #define DocRevisionString                "1"
         static const std::string DocCopyright;
         static const std::string DocComment1;
         static const std::string DocComment2;
@@ -500,7 +500,7 @@ namespace {
 
         virtual std::string fmtEnumUse(const std::string& opPrefix, const std::string& name) const { return pre() + name; }
 
-        virtual void printHasResultType(std::ostream& out) const
+        virtual void printHasResultType(std::ostream& out) const override
         {
             const Json::Value& enums = spvRoot["spv"]["enum"];
 
@@ -513,6 +513,9 @@ namespace {
                 }
 
                 out << "#ifdef SPV_ENABLE_UTILITY_CODE" << std::endl;
+                out << "#ifndef __cplusplus" << std::endl;
+                out << "#include <stdbool.h>" << std::endl;
+                out << "#endif" << std::endl;
                 out << "inline void " << pre() << "HasResultAndType(" << pre() << opName << " opcode, bool *hasResult, bool *hasResultType) {" << std::endl;
                 out << "    *hasResult = *hasResultType = false;" << std::endl;
                 out << "    switch (opcode) {" << std::endl;
@@ -643,7 +646,7 @@ namespace {
         }
 
         // Add type prefix for scoped enum
-        virtual std::string fmtEnumUse(const std::string& opPrefix, const std::string& name) const { return opPrefix + "::" + name; }
+        virtual std::string fmtEnumUse(const std::string& opPrefix, const std::string& name) const override { return opPrefix + "::" + name; }
 
         std::string headerGuardSuffix() const override { return "HPP"; }
     };

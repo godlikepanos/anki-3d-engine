@@ -1376,7 +1376,7 @@ TIntermTyped* HlslParseContext::flattenAccess(TIntermTyped* base, int member)
 
     return flattened ? flattened : base;
 }
-TIntermTyped* HlslParseContext::flattenAccess(int uniqueId, int member, TStorageQualifier outerStorage,
+TIntermTyped* HlslParseContext::flattenAccess(long long uniqueId, int member, TStorageQualifier outerStorage,
     const TType& dereferencedType, int subset)
 {
     const auto flattenData = flattenMap.find(uniqueId);
@@ -1444,7 +1444,7 @@ int HlslParseContext::findSubtreeOffset(const TType& type, int subset, const TVe
 };
 
 // Find and return the split IO TVariable for id, or nullptr if none.
-TVariable* HlslParseContext::getSplitNonIoVar(int id) const
+TVariable* HlslParseContext::getSplitNonIoVar(long long id) const
 {
     const auto splitNonIoVar = splitNonIoVars.find(id);
     if (splitNonIoVar == splitNonIoVars.end())
@@ -1752,6 +1752,18 @@ void HlslParseContext::handleEntryPointAttributes(const TSourceLoc& loc, const T
             const TIntermSequence& sequence = it->args->getSequence();
             for (int lid = 0; lid < int(sequence.size()); ++lid)
                 intermediate.setLocalSize(lid, sequence[lid]->getAsConstantUnion()->getConstArray()[0].getIConst());
+            break;
+        }
+        case EatInstance: 
+        {
+            int invocations;
+
+            if (!it->getInt(invocations)) {
+                error(loc, "invalid instance", "", "");
+            } else {
+                if (!intermediate.setInvocations(invocations))
+                    error(loc, "cannot change previously set instance attribute", "", "");
+            }
             break;
         }
         case EatMaxVertexCount:
@@ -2167,8 +2179,21 @@ TIntermNode* HlslParseContext::transformEntryPoint(const TSourceLoc& loc, TFunct
         TIntermSymbol* arg = intermediate.addSymbol(*argVars.back());
         handleFunctionArgument(&callee, callingArgs, arg);
         if (param.type->getQualifier().isParamInput()) {
-            intermediate.growAggregate(synthBody, handleAssign(loc, EOpAssign, arg,
-                                                               intermediate.addSymbol(**inputIt)));
+            TIntermTyped* input = intermediate.addSymbol(**inputIt);
+            if (input->getType().getQualifier().builtIn == EbvFragCoord && intermediate.getDxPositionW()) {
+                // Replace FragCoord W with reciprocal
+                auto pos_xyz = handleDotDereference(loc, input, "xyz");
+                auto pos_w   = handleDotDereference(loc, input, "w");
+                auto one     = intermediate.addConstantUnion(1.0, EbtFloat, loc);
+                auto recip_w = intermediate.addBinaryMath(EOpDiv, one, pos_w, loc);
+                TIntermAggregate* dst = new TIntermAggregate(EOpConstructVec4);
+                dst->getSequence().push_back(pos_xyz);
+                dst->getSequence().push_back(recip_w);
+                dst->setType(TType(EbtFloat, EvqTemporary, 4));
+                dst->setLoc(loc);
+                input = dst;
+            }
+            intermediate.growAggregate(synthBody, handleAssign(loc, EOpAssign, arg, input));
             inputIt++;
         }
         if (param.type->getQualifier().storage == EvqUniform) {
@@ -2450,6 +2475,62 @@ void HlslParseContext::handleFunctionArgument(TFunction* function,
         arguments = intermediate.growAggregate(arguments, newArg);
     else
         arguments = newArg;
+}
+
+// FragCoord may require special loading: we can optionally reciprocate W.
+TIntermTyped* HlslParseContext::assignFromFragCoord(const TSourceLoc& loc, TOperator op,
+                                                    TIntermTyped* left, TIntermTyped* right)
+{
+    // If we are not asked for reciprocal W, use a plain old assign.
+    if (!intermediate.getDxPositionW())
+        return intermediate.addAssign(op, left, right, loc);
+
+    // If we get here, we should reciprocate W.
+    TIntermAggregate* assignList = nullptr;
+
+    // If this is a complex rvalue, we don't want to dereference it many times.  Create a temporary.
+    TVariable* rhsTempVar = nullptr;
+    rhsTempVar = makeInternalVariable("@fragcoord", right->getType());
+    rhsTempVar->getWritableType().getQualifier().makeTemporary();
+
+    {
+        TIntermTyped* rhsTempSym = intermediate.addSymbol(*rhsTempVar, loc);
+        assignList = intermediate.growAggregate(assignList,
+            intermediate.addAssign(EOpAssign, rhsTempSym, right, loc), loc);
+    }
+
+    // tmp.w = 1.0 / tmp.w
+    {
+        const int W = 3;
+
+        TIntermTyped* tempSymL = intermediate.addSymbol(*rhsTempVar, loc);
+        TIntermTyped* tempSymR = intermediate.addSymbol(*rhsTempVar, loc);
+        TIntermTyped* index = intermediate.addConstantUnion(W, loc);
+
+        TIntermTyped* lhsElement = intermediate.addIndex(EOpIndexDirect, tempSymL, index, loc);
+        TIntermTyped* rhsElement = intermediate.addIndex(EOpIndexDirect, tempSymR, index, loc);
+
+        const TType derefType(right->getType(), 0);
+
+        lhsElement->setType(derefType);
+        rhsElement->setType(derefType);
+
+        auto one     = intermediate.addConstantUnion(1.0, EbtFloat, loc);
+        auto recip_w = intermediate.addBinaryMath(EOpDiv, one, rhsElement, loc);
+
+        assignList = intermediate.growAggregate(assignList, intermediate.addAssign(EOpAssign, lhsElement, recip_w, loc));
+    }
+
+    // Assign the rhs temp (now with W reciprocal) to the final output
+    {
+        TIntermTyped* rhsTempSym = intermediate.addSymbol(*rhsTempVar, loc);
+        assignList = intermediate.growAggregate(assignList, intermediate.addAssign(op, left, rhsTempSym, loc));
+    }
+
+    assert(assignList != nullptr);
+    assignList->setOperator(EOpSequence);
+
+    return assignList;
 }
 
 // Position may require special handling: we can optionally invert Y.
@@ -3071,6 +3152,10 @@ TIntermTyped* HlslParseContext::handleAssign(const TSourceLoc& loc, TOperator op
                                                                               subSplitLeft, subSplitRight);
 
                     assignList = intermediate.growAggregate(assignList, clipCullAssign, loc);
+                } else if (subSplitRight->getType().getQualifier().builtIn == EbvFragCoord) {
+                    // FragCoord can require special handling: see comment above assignFromFragCoord
+                    TIntermTyped* fragCoordAssign = assignFromFragCoord(loc, op, subSplitLeft, subSplitRight);
+                    assignList = intermediate.growAggregate(assignList, fragCoordAssign, loc);
                 } else if (assignsClipPos(subSplitLeft)) {
                     // Position can require special handling: see comment above assignPosition
                     TIntermTyped* positionAssign = assignPosition(loc, op, subSplitLeft, subSplitRight);
@@ -3256,7 +3341,7 @@ TIntermAggregate* HlslParseContext::handleSamplerTextureCombine(const TSourceLoc
         // shadow state.  This depends on downstream optimization to
         // DCE one variant in [shadow, nonshadow] if both are present,
         // or the SPIR-V module would be invalid.
-        int newId = texSymbol->getId();
+        long long newId = texSymbol->getId();
 
         // Check to see if this texture has been given a shadow mode already.
         // If so, look up the one we already have.
@@ -4017,11 +4102,11 @@ void HlslParseContext::decomposeSampleMethods(const TSourceLoc& loc, TIntermType
             txsample->getSequence().push_back(txcombine);
             txsample->getSequence().push_back(argCoord);
 
-            if (argBias != nullptr)
-                txsample->getSequence().push_back(argBias);
-
             if (argOffset != nullptr)
                 txsample->getSequence().push_back(argOffset);
+
+            if (argBias != nullptr)
+              txsample->getSequence().push_back(argBias);
 
             node = convertReturn(txsample, sampler);
 
@@ -5357,7 +5442,7 @@ void HlslParseContext::decomposeIntrinsic(const TSourceLoc& loc, TIntermTyped*& 
         }
     case EOpWavePrefixCountBits:
         {
-            // Mapped to subgroupBallotInclusiveBitCount(subgroupBallot())
+            // Mapped to subgroupBallotExclusiveBitCount(subgroupBallot())
             // builtin
 
             // uvec4 type.
@@ -5371,7 +5456,7 @@ void HlslParseContext::decomposeIntrinsic(const TSourceLoc& loc, TIntermTyped*& 
             TType uintType(EbtUint, EvqTemporary);
 
             node = intermediate.addBuiltInFunctionCall(loc,
-                EOpSubgroupBallotInclusiveBitCount, true, res, uintType);
+                EOpSubgroupBallotExclusiveBitCount, true, res, uintType);
 
             break;
         }
@@ -6075,8 +6160,12 @@ void HlslParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fn
     case EOpInterpolateAtCentroid:
     case EOpInterpolateAtSample:
     case EOpInterpolateAtOffset:
+        // TODO(greg-lunarg): Re-enable this check. It currently gives false errors for builtins
+        // defined and passed as members of a struct. In this case the storage class is showing to be
+        // Function. See glslang #2584
+
         // Make sure the first argument is an interpolant, or an array element of an interpolant
-        if (arg0->getType().getQualifier().storage != EvqVaryingIn) {
+        // if (arg0->getType().getQualifier().storage != EvqVaryingIn) {
             // It might still be an array element.
             //
             // We could check more, but the semantics of the first argument are already met; the
@@ -6084,11 +6173,11 @@ void HlslParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fn
             //
             // ES and desktop 4.3 and earlier:  swizzles may not be used
             // desktop 4.4 and later: swizzles may be used
-            const TIntermTyped* base = TIntermediate::findLValueBase(arg0, true);
-            if (base == nullptr || base->getType().getQualifier().storage != EvqVaryingIn)
-                error(loc, "first argument must be an interpolant, or interpolant-array element",
-                      fnCandidate.getName().c_str(), "");
-        }
+            // const TIntermTyped* base = TIntermediate::findLValueBase(arg0, true);
+            // if (base == nullptr || base->getType().getQualifier().storage != EvqVaryingIn)
+            //     error(loc, "first argument must be an interpolant, or interpolant-array element",
+            //           fnCandidate.getName().c_str(), "");
+        // }
         break;
 
     default:
@@ -6685,12 +6774,6 @@ void HlslParseContext::globalQualifierFix(const TSourceLoc&, TQualifier& qualifi
 
 //
 // Merge characteristics of the 'src' qualifier into the 'dst'.
-// If there is duplication, issue error messages, unless 'force'
-// is specified, which means to just override default settings.
-//
-// Also, when force is false, it will be assumed that 'src' follows
-// 'dst', for the purpose of error checking order for versions
-// that require specific orderings of qualifiers.
 //
 void HlslParseContext::mergeQualifiers(TQualifier& dst, const TQualifier& src)
 {
@@ -6708,8 +6791,7 @@ void HlslParseContext::mergeQualifiers(TQualifier& dst, const TQualifier& src)
     mergeObjectLayoutQualifiers(dst, src, false);
 
     // individual qualifiers
-    bool repeated = false;
-#define MERGE_SINGLETON(field) repeated |= dst.field && src.field; dst.field |= src.field;
+#define MERGE_SINGLETON(field) dst.field |= src.field;
     MERGE_SINGLETON(invariant);
     MERGE_SINGLETON(noContraction);
     MERGE_SINGLETON(centroid);
@@ -6936,6 +7018,9 @@ void HlslParseContext::shareStructBufferType(TType& type)
             return false;
 
         if (lhs.isStruct() != rhs.isStruct())
+            return false;
+
+        if (lhs.getQualifier().builtIn != rhs.getQualifier().builtIn)
             return false;
 
         if (lhs.isStruct() && rhs.isStruct()) {

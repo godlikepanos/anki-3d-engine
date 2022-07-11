@@ -368,7 +368,8 @@ void main()
 	const Vec2 velocity = Vec2(1.0);
 #	endif
 
-	packGBuffer(diffColor, normal, specColor, roughness, localUniforms.m_subsurface, emission, metallic, velocity);
+	packGBuffer(diffColor, normal, specColor, roughness, localUniforms.m_subsurface, emission * 0.00001, metallic,
+				velocity);
 #elif ANKI_TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER_EZ
 	out_gbuffer0 = Vec4(0.0);
 	out_gbuffer1 = Vec4(0.0);

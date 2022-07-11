@@ -188,6 +188,7 @@ const char* ExecutionModeString(int mode)
     case ExecutionModeRoundingModeRTE:          return "RoundingModeRTE";
     case ExecutionModeRoundingModeRTZ:          return "RoundingModeRTZ";
     case ExecutionModeStencilRefReplacingEXT:   return "StencilRefReplacingEXT";
+    case ExecutionModeSubgroupUniformControlFlowKHR: return "SubgroupUniformControlFlow";
 
     case ExecutionModeOutputLinesNV:            return "OutputLinesNV";
     case ExecutionModeOutputPrimitivesNV:       return "OutputPrimitivesNV";
@@ -304,7 +305,8 @@ const char* DecorationString(int decoration)
     case DecorationPerPrimitiveNV:              return "PerPrimitiveNV";
     case DecorationPerViewNV:                   return "PerViewNV";
     case DecorationPerTaskNV:                   return "PerTaskNV";
-    case DecorationPerVertexNV:                 return "PerVertexNV";
+    
+    case DecorationPerVertexKHR:                return "PerVertexKHR";
 
     case DecorationNonUniformEXT:           return "DecorationNonUniformEXT";
     case DecorationHlslCounterBufferGOOGLE: return "DecorationHlslCounterBufferGOOGLE";
@@ -391,6 +393,7 @@ const char* BuiltInString(int builtIn)
     case BuiltInObjectRayDirectionKHR:       return "ObjectRayDirectionKHR";
     case BuiltInRayTminKHR:                  return "RayTminKHR";
     case BuiltInRayTmaxKHR:                  return "RayTmaxKHR";
+    case BuiltInCullMaskKHR:                 return "CullMaskKHR";
     case BuiltInInstanceCustomIndexKHR:      return "InstanceCustomIndexKHR";
     case BuiltInRayGeometryIndexKHR:         return "RayGeometryIndexKHR";
     case BuiltInObjectToWorldKHR:            return "ObjectToWorldKHR";
@@ -405,8 +408,8 @@ const char* BuiltInString(int builtIn)
     case BuiltInViewportMaskPerViewNV:       return "ViewportMaskPerViewNV";
 //    case BuiltInFragmentSizeNV:             return "FragmentSizeNV";        // superseded by BuiltInFragSizeEXT
 //    case BuiltInInvocationsPerPixelNV:      return "InvocationsPerPixelNV"; // superseded by BuiltInFragInvocationCountEXT
-    case BuiltInBaryCoordNV:                 return "BaryCoordNV";
-    case BuiltInBaryCoordNoPerspNV:          return "BaryCoordNoPerspNV";
+    case BuiltInBaryCoordKHR:                return "BaryCoordKHR";
+    case BuiltInBaryCoordNoPerspKHR:         return "BaryCoordNoPerspKHR";
 
     case BuiltInFragSizeEXT:                 return "FragSizeEXT";
     case BuiltInFragInvocationCountEXT:      return "FragInvocationCountEXT";
@@ -425,6 +428,7 @@ const char* BuiltInString(int builtIn)
     case BuiltInSMCountNV:              return "SMCountNV";
     case BuiltInWarpIDNV:               return "WarpIDNV";
     case BuiltInSMIDNV:                 return "SMIDNV";
+    case BuiltInCurrentRayTimeNV:       return "CurrentRayTimeNV";
 
     default: return "Bad";
     }
@@ -898,6 +902,12 @@ const char* CapabilityString(int info)
     case CapabilityDeviceGroup: return "DeviceGroup";
     case CapabilityMultiView:   return "MultiView";
 
+    case CapabilityDenormPreserve:           return "DenormPreserve";
+    case CapabilityDenormFlushToZero:        return "DenormFlushToZero";
+    case CapabilitySignedZeroInfNanPreserve: return "SignedZeroInfNanPreserve";
+    case CapabilityRoundingModeRTE:          return "RoundingModeRTE";
+    case CapabilityRoundingModeRTZ:          return "RoundingModeRTZ";
+
     case CapabilityStencilExportEXT: return "StencilExportEXT";
 
     case CapabilityFloat16ImageAMD:       return "Float16ImageAMD";
@@ -915,12 +925,15 @@ const char* CapabilityString(int info)
     case CapabilityPerViewAttributesNV:             return "PerViewAttributesNV";
     case CapabilityGroupNonUniformPartitionedNV:    return "GroupNonUniformPartitionedNV";
     case CapabilityRayTracingNV:                    return "RayTracingNV";
+    case CapabilityRayTracingMotionBlurNV:          return "RayTracingMotionBlurNV";
     case CapabilityRayTracingKHR:                   return "RayTracingKHR";
+    case CapabilityRayCullMaskKHR:                  return "RayCullMaskKHR";
     case CapabilityRayQueryKHR:                     return "RayQueryKHR";
+    case CapabilityRayTracingProvisionalKHR:        return "RayTracingProvisionalKHR";
     case CapabilityRayTraversalPrimitiveCullingKHR: return "RayTraversalPrimitiveCullingKHR";
     case CapabilityComputeDerivativeGroupQuadsNV:   return "ComputeDerivativeGroupQuadsNV";
     case CapabilityComputeDerivativeGroupLinearNV:  return "ComputeDerivativeGroupLinearNV";
-    case CapabilityFragmentBarycentricNV:           return "FragmentBarycentricNV";
+    case CapabilityFragmentBarycentricKHR:          return "FragmentBarycentricKHR";
     case CapabilityMeshShadingNV:                   return "MeshShadingNV";
     case CapabilityImageFootprintNV:                return "ImageFootprintNV";
 //    case CapabilityShadingRateNV:                   return "ShadingRateNV";  // superseded by FragmentDensityEXT
@@ -964,8 +977,12 @@ const char* CapabilityString(int info)
 
     case CapabilityIntegerFunctions2INTEL:              return "CapabilityIntegerFunctions2INTEL";
 
+    case CapabilityAtomicFloat16AddEXT:                     return "AtomicFloat16AddEXT";
     case CapabilityAtomicFloat32AddEXT:                     return "AtomicFloat32AddEXT";
     case CapabilityAtomicFloat64AddEXT:                     return "AtomicFloat64AddEXT";
+    case CapabilityAtomicFloat16MinMaxEXT:                  return "AtomicFloat16MinMaxEXT";
+    case CapabilityAtomicFloat32MinMaxEXT:                  return "AtomicFloat32MinMaxEXT";
+    case CapabilityAtomicFloat64MinMaxEXT:                  return "AtomicFloat64MinMaxEXT";
 
     case CapabilityWorkgroupMemoryExplicitLayoutKHR:            return "CapabilityWorkgroupMemoryExplicitLayoutKHR";
     case CapabilityWorkgroupMemoryExplicitLayout8BitAccessKHR:  return "CapabilityWorkgroupMemoryExplicitLayout8BitAccessKHR";
@@ -1350,6 +1367,8 @@ const char* OpcodeString(int op)
     case 4432: return "OpSubgroupReadInvocationKHR";
 
     case OpAtomicFAddEXT: return "OpAtomicFAddEXT";
+    case OpAtomicFMinEXT: return "OpAtomicFMinEXT";
+    case OpAtomicFMaxEXT: return "OpAtomicFMaxEXT";
 
     case 5000: return "OpGroupIAddNonUniformAMD";
     case 5001: return "OpGroupFAddNonUniformAMD";
@@ -1374,6 +1393,7 @@ const char* OpcodeString(int op)
     case OpTerminateRayNV:                    return "OpTerminateRayNV";
     case OpTerminateRayKHR:                   return "OpTerminateRayKHR";
     case OpTraceNV:                           return "OpTraceNV";
+    case OpTraceRayMotionNV:                  return "OpTraceRayMotionNV";
     case OpTraceRayKHR:                       return "OpTraceRayKHR";
     case OpTypeAccelerationStructureKHR:      return "OpTypeAccelerationStructureKHR";
     case OpExecuteCallableNV:                 return "OpExecuteCallableNV";
@@ -2340,6 +2360,16 @@ void Parameterize()
     InstructionDesc[OpAtomicSMax].operands.push(OperandMemorySemantics, "'Semantics'");
     InstructionDesc[OpAtomicSMax].operands.push(OperandId, "'Value'");
 
+    InstructionDesc[OpAtomicFMinEXT].operands.push(OperandId, "'Pointer'");
+    InstructionDesc[OpAtomicFMinEXT].operands.push(OperandScope, "'Scope'");
+    InstructionDesc[OpAtomicFMinEXT].operands.push(OperandMemorySemantics, "'Semantics'");
+    InstructionDesc[OpAtomicFMinEXT].operands.push(OperandId, "'Value'");
+
+    InstructionDesc[OpAtomicFMaxEXT].operands.push(OperandId, "'Pointer'");
+    InstructionDesc[OpAtomicFMaxEXT].operands.push(OperandScope, "'Scope'");
+    InstructionDesc[OpAtomicFMaxEXT].operands.push(OperandMemorySemantics, "'Semantics'");
+    InstructionDesc[OpAtomicFMaxEXT].operands.push(OperandId, "'Value'");
+
     InstructionDesc[OpAtomicAnd].operands.push(OperandId, "'Pointer'");
     InstructionDesc[OpAtomicAnd].operands.push(OperandScope, "'Scope'");
     InstructionDesc[OpAtomicAnd].operands.push(OperandMemorySemantics, "'Semantics'");
@@ -2718,7 +2748,7 @@ void Parameterize()
 
     InstructionDesc[OpGroupNonUniformQuadSwap].operands.push(OperandScope, "'Execution'");
     InstructionDesc[OpGroupNonUniformQuadSwap].operands.push(OperandId, "X");
-    InstructionDesc[OpGroupNonUniformQuadSwap].operands.push(OperandLiteralNumber, "'Direction'");
+    InstructionDesc[OpGroupNonUniformQuadSwap].operands.push(OperandId, "'Direction'");
 
     InstructionDesc[OpSubgroupBallotKHR].operands.push(OperandId, "'Predicate'");
 
@@ -2793,6 +2823,20 @@ void Parameterize()
     InstructionDesc[OpTraceNV].operands.push(OperandId, "'TMax'");
     InstructionDesc[OpTraceNV].operands.push(OperandId, "'Payload'");
     InstructionDesc[OpTraceNV].setResultAndType(false, false);
+
+    InstructionDesc[OpTraceRayMotionNV].operands.push(OperandId, "'Acceleration Structure'");
+    InstructionDesc[OpTraceRayMotionNV].operands.push(OperandId, "'Ray Flags'");
+    InstructionDesc[OpTraceRayMotionNV].operands.push(OperandId, "'Cull Mask'");
+    InstructionDesc[OpTraceRayMotionNV].operands.push(OperandId, "'SBT Record Offset'");
+    InstructionDesc[OpTraceRayMotionNV].operands.push(OperandId, "'SBT Record Stride'");
+    InstructionDesc[OpTraceRayMotionNV].operands.push(OperandId, "'Miss Index'");
+    InstructionDesc[OpTraceRayMotionNV].operands.push(OperandId, "'Ray Origin'");
+    InstructionDesc[OpTraceRayMotionNV].operands.push(OperandId, "'TMin'");
+    InstructionDesc[OpTraceRayMotionNV].operands.push(OperandId, "'Ray Direction'");
+    InstructionDesc[OpTraceRayMotionNV].operands.push(OperandId, "'TMax'");
+    InstructionDesc[OpTraceRayMotionNV].operands.push(OperandId, "'Time'");
+    InstructionDesc[OpTraceRayMotionNV].operands.push(OperandId, "'Payload'");
+    InstructionDesc[OpTraceRayMotionNV].setResultAndType(false, false);
 
     InstructionDesc[OpTraceRayKHR].operands.push(OperandId, "'Acceleration Structure'");
     InstructionDesc[OpTraceRayKHR].operands.push(OperandId, "'Ray Flags'");

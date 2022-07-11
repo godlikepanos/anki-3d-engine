@@ -19,6 +19,11 @@ public:
 	Bool m_profile = false;
 	ConfigSet m_config;
 
+	AnimationResourcePtr m_danceAnim;
+	AnimationResourcePtr m_punchAnim;
+	AnimationResourcePtr m_capoeiraAnim;
+	AnimationResourcePtr m_kickAnim;
+
 	Error init(int argc, char* argv[]);
 	Error userMainLoop(Bool& quit, Second elapsedTime) override;
 };
@@ -71,6 +76,50 @@ Error MyApp::init(int argc, char* argv[])
 
 	pnode->addChild(&cam);
 #endif
+
+	ANKI_CHECK(getResourceManager().loadResource("Assets/Dance_5502fb39d4a4ca65.ankianim", m_danceAnim));
+	ANKI_CHECK(getResourceManager().loadResource("Assets/Kick_645abd9bd3a36a5b.ankianim", m_kickAnim));
+	ANKI_CHECK(getResourceManager().loadResource("Assets/Punch_3850f7b59d10e18a.ankianim", m_punchAnim));
+	ANKI_CHECK(getResourceManager().loadResource("Assets/Capoeira_b753bfdd90ac4b7f.ankianim", m_capoeiraAnim));
+
+	AnimationPlayInfo animInfo;
+	animInfo.m_startTime = 2.0;
+	animInfo.m_repeatTimes = -1.0;
+	getSceneGraph()
+		.findSceneNode("Alpha_Surface")
+		.getFirstComponentOfType<SkinComponent>()
+		.playAnimation(0, m_capoeiraAnim, animInfo);
+	getSceneGraph()
+		.findSceneNode("Alpha_Joints")
+		.getFirstComponentOfType<SkinComponent>()
+		.playAnimation(0, m_capoeiraAnim, animInfo);
+
+	getSceneGraph()
+		.findSceneNode("Alpha_Surface.001")
+		.getFirstComponentOfType<SkinComponent>()
+		.playAnimation(0, m_danceAnim, animInfo);
+	getSceneGraph()
+		.findSceneNode("Alpha_Joints.001")
+		.getFirstComponentOfType<SkinComponent>()
+		.playAnimation(0, m_danceAnim, animInfo);
+
+	getSceneGraph()
+		.findSceneNode("Alpha_Surface.002")
+		.getFirstComponentOfType<SkinComponent>()
+		.playAnimation(0, m_punchAnim, animInfo);
+	getSceneGraph()
+		.findSceneNode("Alpha_Joints.002")
+		.getFirstComponentOfType<SkinComponent>()
+		.playAnimation(0, m_punchAnim, animInfo);
+
+	getSceneGraph()
+		.findSceneNode("Alpha_Surface.003")
+		.getFirstComponentOfType<SkinComponent>()
+		.playAnimation(0, m_kickAnim, animInfo);
+	getSceneGraph()
+		.findSceneNode("Alpha_Joints.003")
+		.getFirstComponentOfType<SkinComponent>()
+		.playAnimation(0, m_kickAnim, animInfo);
 
 	return Error::NONE;
 }
@@ -147,10 +196,10 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		renderer.getDbg().switchDepthTestEnabled();
 	}
 
-	if(in.getKey(KeyCode::F11) == 1)
+	/*if(in.getKey(KeyCode::F11) == 1)
 	{
 		TracerSingleton::get().setEnabled(!TracerSingleton::get().getEnabled());
-	}
+	}*/
 
 #if !PLAYER
 	static Vec2 mousePosOn1stClick = in.getMousePosition();
@@ -261,10 +310,10 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 			mover->moveLocalZ(moveDistance);
 		}
 
-		if(in.getKey(KeyCode::F12) == 1 && ANKI_ENABLE_TRACE)
+		/* if(in.getKey(KeyCode::F12) == 1 && ANKI_ENABLE_TRACE)
 		{
 			TracerSingleton::get().setEnabled(!TracerSingleton::get().getEnabled());
-		}
+		}*/
 
 		const Vec2 velocity = in.getMousePosition() - mousePosOn1stClick;
 		in.moveCursor(mousePosOn1stClick);

@@ -93,7 +93,8 @@ CodeGenerator GetInMainCodeGenerator(const char* const built_in,
     generator.extensions_ += extensions;
   }
 
-  generator.before_types_ = "OpMemberDecorate %built_in_type 0 BuiltIn ";
+  generator.before_types_ = R"(OpDecorate %built_in_type Block
+                               OpMemberDecorate %built_in_type 0 BuiltIn )";
   generator.before_types_ += built_in;
   generator.before_types_ += "\n";
 
@@ -251,7 +252,8 @@ CodeGenerator GetInFunctionCodeGenerator(const char* const built_in,
     generator.extensions_ += extensions;
   }
 
-  generator.before_types_ = "OpMemberDecorate %built_in_type 0 BuiltIn ";
+  generator.before_types_ = R"(OpDecorate %built_in_type Block
+                              OpMemberDecorate %built_in_type 0 BuiltIn )";
   generator.before_types_ += built_in;
   generator.before_types_ += "\n";
 
@@ -767,18 +769,18 @@ INSTANTIATE_TEST_SUITE_P(
 INSTANTIATE_TEST_SUITE_P(
     ComputeShaderInputInt32Vec3NotGLCompute,
     ValidateVulkanCombineBuiltInExecutionModelDataTypeResult,
-    Combine(
-        Values("GlobalInvocationId", "LocalInvocationId", "NumWorkgroups",
-               "WorkgroupId"),
-        Values("Vertex", "Fragment", "Geometry", "TessellationControl",
-               "TessellationEvaluation"),
-        Values("Input"), Values("%u32vec3"),
-        Values("VUID-GlobalInvocationId-GlobalInvocationId-04236 "
-               "VUID-LocalInvocationId-LocalInvocationId-04281 "
-               "VUID-NumWorkgroups-NumWorkgroups-04296 "
-               "VUID-WorkgroupId-WorkgroupId-04422"),
-        Values(TestResult(SPV_ERROR_INVALID_DATA,
-                          "to be used only with GLCompute execution model"))));
+    Combine(Values("GlobalInvocationId", "LocalInvocationId", "NumWorkgroups",
+                   "WorkgroupId"),
+            Values("Vertex", "Fragment", "Geometry", "TessellationControl",
+                   "TessellationEvaluation"),
+            Values("Input"), Values("%u32vec3"),
+            Values("VUID-GlobalInvocationId-GlobalInvocationId-04236 "
+                   "VUID-LocalInvocationId-LocalInvocationId-04281 "
+                   "VUID-NumWorkgroups-NumWorkgroups-04296 "
+                   "VUID-WorkgroupId-WorkgroupId-04422"),
+            Values(TestResult(SPV_ERROR_INVALID_DATA,
+                              "to be used only with GLCompute, MeshNV, or "
+                              "TaskNV execution model"))));
 
 INSTANTIATE_TEST_SUITE_P(
     ComputeShaderInputInt32Vec3NotInput,
@@ -2828,9 +2830,10 @@ TEST_F(ValidateBuiltIns, VulkanWorkgroupSizeFragment) {
 
   CompileSuccessfully(generator.Build(), SPV_ENV_VULKAN_1_0);
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_VULKAN_1_0));
-  EXPECT_THAT(getDiagnosticString(),
-              HasSubstr("Vulkan spec allows BuiltIn WorkgroupSize to be used "
-                        "only with GLCompute execution model"));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("Vulkan spec allows BuiltIn WorkgroupSize to be used "
+                "only with GLCompute, MeshNV, or TaskNV execution model"));
   EXPECT_THAT(getDiagnosticString(),
               HasSubstr("is referencing ID <2> (OpConstantComposite) which is "
                         "decorated with BuiltIn WorkgroupSize in function <1> "
@@ -2860,9 +2863,9 @@ OpDecorate %copy BuiltIn WorkgroupSize
 
   CompileSuccessfully(generator.Build(), SPV_ENV_VULKAN_1_0);
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_VULKAN_1_0));
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr("BuiltIns can only target variables, structs or constants"));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("BuiltIns can only target variables, structure "
+                        "members or constants"));
 }
 
 CodeGenerator GetWorkgroupSizeNotVectorGenerator() {
@@ -3097,6 +3100,8 @@ TEST_F(ValidateBuiltIns, TwoBuiltInsFirstFails) {
   CodeGenerator generator = CodeGenerator::GetDefaultShaderCodeGenerator();
 
   generator.before_types_ = R"(
+OpDecorate %input_type Block
+OpDecorate %output_type Block
 OpMemberDecorate %input_type 0 BuiltIn FragCoord
 OpMemberDecorate %output_type 0 BuiltIn Position
 )";
@@ -3137,6 +3142,8 @@ TEST_F(ValidateBuiltIns, TwoBuiltInsSecondFails) {
   CodeGenerator generator = CodeGenerator::GetDefaultShaderCodeGenerator();
 
   generator.before_types_ = R"(
+OpDecorate %input_type Block
+OpDecorate %output_type Block
 OpMemberDecorate %input_type 0 BuiltIn Position
 OpMemberDecorate %output_type 0 BuiltIn FragCoord
 )";
@@ -3200,6 +3207,7 @@ OpStore %position %f32vec4_0123
 TEST_F(ValidateBuiltIns, FragmentPositionTwoEntryPoints) {
   CodeGenerator generator = CodeGenerator::GetDefaultShaderCodeGenerator();
   generator.before_types_ = R"(
+OpDecorate %output_type Block
 OpMemberDecorate %output_type 0 BuiltIn Position
 )";
 
@@ -3251,6 +3259,7 @@ CodeGenerator GetNoDepthReplacingGenerator() {
   CodeGenerator generator = CodeGenerator::GetDefaultShaderCodeGenerator();
 
   generator.before_types_ = R"(
+OpDecorate %output_type Block
 OpMemberDecorate %output_type 0 BuiltIn FragDepth
 )";
 
@@ -3302,6 +3311,7 @@ CodeGenerator GetOneMainHasDepthReplacingOtherHasntGenerator() {
   CodeGenerator generator = CodeGenerator::GetDefaultShaderCodeGenerator();
 
   generator.before_types_ = R"(
+OpDecorate %output_type Block
 OpMemberDecorate %output_type 0 BuiltIn FragDepth
 )";
 
@@ -3373,6 +3383,7 @@ OpExtension "SPV_NV_ray_tracing"
 )";
 
   generator.before_types_ = R"(
+OpDecorate %input_type Block
 OpMemberDecorate %input_type 0 BuiltIn InstanceId
 )";
 
@@ -3479,35 +3490,6 @@ OpDecorate %gl_ViewportIndex PerPrimitiveNV
   EXPECT_THAT(getDiagnosticString(),
               HasSubstr("needs to be a 32-bit int scalar"));
   EXPECT_THAT(getDiagnosticString(), HasSubstr("is not an int scalar"));
-}
-
-TEST_F(ValidateBuiltIns, GetUnderlyingTypeNoAssert) {
-  std::string spirv = R"(
-                      OpCapability Shader
-                      OpMemoryModel Logical GLSL450
-                      OpEntryPoint Fragment %4 "PSMa" %12 %17
-                      OpExecutionMode %4 OriginUpperLeft
-                      OpDecorate %gl_PointCoord BuiltIn PointCoord
-                      OpDecorate %12 Location 0
-                      OpDecorate %17 Location 0
-              %void = OpTypeVoid
-                 %3 = OpTypeFunction %void
-             %float = OpTypeFloat 32
-           %v4float = OpTypeVector %float 4
-       %gl_PointCoord = OpTypeStruct %v4float
-       %_ptr_Input_v4float = OpTypePointer Input %v4float
-       %_ptr_Output_v4float = OpTypePointer Output %v4float
-                %12 = OpVariable %_ptr_Input_v4float Input
-                %17 = OpVariable %_ptr_Output_v4float Output
-                 %4 = OpFunction %void None %3
-                %15 = OpLabel
-                      OpReturn
-                      OpFunctionEnd)";
-  CompileSuccessfully(spirv, SPV_ENV_VULKAN_1_1);
-  ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_VULKAN_1_1));
-  EXPECT_THAT(getDiagnosticString(),
-              HasSubstr("did not find an member index to get underlying data "
-                        "type"));
 }
 
 TEST_P(ValidateVulkanSubgroupBuiltIns, InMain) {
@@ -3637,6 +3619,7 @@ OpCapability GroupNonUniformBallot
 OpMemoryModel Logical GLSL450
 OpEntryPoint GLCompute %foo "foo"
 OpExecutionMode %foo LocalSize 1 1 1
+OpDecorate %struct Block
 OpMemberDecorate %struct 0 BuiltIn SubgroupEqMask
 %void = OpTypeVoid
 %int = OpTypeInt 32 0
@@ -3658,23 +3641,25 @@ OpFunctionEnd
 
 INSTANTIATE_TEST_SUITE_P(
     SubgroupInvocationIdAndSizeNotU32, ValidateVulkanSubgroupBuiltIns,
-    Combine(Values("SubgroupLocalInvocationId", "SubgroupSize"),
-            Values("GLCompute"), Values("Input"), Values("%f32"),
-            Values("VUID-SubgroupLocalInvocationId-SubgroupLocalInvocationId-"
-                   "04381 VUID-SubgroupSize-SubgroupSize-04383"),
-            Values(TestResult(SPV_ERROR_INVALID_DATA,
-                              "needs to be a 32-bit int"))));
+    Combine(
+        Values("SubgroupLocalInvocationId", "SubgroupSize"),
+        Values("GLCompute"), Values("Input"), Values("%f32"),
+        Values("VUID-SubgroupLocalInvocationId-SubgroupLocalInvocationId-04381 "
+               "VUID-SubgroupSize-SubgroupSize-04383"),
+        Values(TestResult(SPV_ERROR_INVALID_DATA,
+                          "needs to be a 32-bit int"))));
 
 INSTANTIATE_TEST_SUITE_P(
     SubgroupInvocationIdAndSizeNotInput, ValidateVulkanSubgroupBuiltIns,
-    Combine(Values("SubgroupLocalInvocationId", "SubgroupSize"),
-            Values("GLCompute"), Values("Output", "Workgroup", "Private"),
-            Values("%u32"),
-            Values("VUID-SubgroupLocalInvocationId-SubgroupLocalInvocationId-"
-                   "04380 VUID-SubgroupSize-SubgroupSize-04382"),
-            Values(TestResult(
-                SPV_ERROR_INVALID_DATA,
-                "to be only used for variables with Input storage class"))));
+    Combine(
+        Values("SubgroupLocalInvocationId", "SubgroupSize"),
+        Values("GLCompute"), Values("Output", "Workgroup", "Private"),
+        Values("%u32"),
+        Values("VUID-SubgroupLocalInvocationId-SubgroupLocalInvocationId-04380 "
+               "VUID-SubgroupSize-SubgroupSize-04382"),
+        Values(TestResult(
+            SPV_ERROR_INVALID_DATA,
+            "to be only used for variables with Input storage class"))));
 
 INSTANTIATE_TEST_SUITE_P(
     SubgroupInvocationIdAndSizeOk, ValidateVulkanSubgroupBuiltIns,
@@ -3689,6 +3674,7 @@ OpCapability GroupNonUniform
 OpMemoryModel Logical GLSL450
 OpEntryPoint GLCompute %foo "foo"
 OpExecutionMode %foo LocalSize 1 1 1
+OpDecorate %struct Block
 OpMemberDecorate %struct 0 BuiltIn SubgroupSize
 %void = OpTypeVoid
 %int = OpTypeInt 32 0
@@ -3709,13 +3695,13 @@ OpFunctionEnd
 
 INSTANTIATE_TEST_SUITE_P(
     SubgroupNumAndIdNotCompute, ValidateVulkanSubgroupBuiltIns,
-    Combine(
-        Values("SubgroupId", "NumSubgroups"), Values("Vertex"), Values("Input"),
-        Values("%u32"),
-        Values("VUID-SubgroupId-SubgroupId-04367 "
-               "VUID-NumSubgroups-NumSubgroups-04293"),
-        Values(TestResult(SPV_ERROR_INVALID_DATA,
-                          "to be used only with GLCompute execution model"))));
+    Combine(Values("SubgroupId", "NumSubgroups"), Values("Vertex"),
+            Values("Input"), Values("%u32"),
+            Values("VUID-SubgroupId-SubgroupId-04367 "
+                   "VUID-NumSubgroups-NumSubgroups-04293"),
+            Values(TestResult(SPV_ERROR_INVALID_DATA,
+                              "to be used only with GLCompute, MeshNV, or "
+                              "TaskNV execution model"))));
 
 INSTANTIATE_TEST_SUITE_P(
     SubgroupNumAndIdNotU32, ValidateVulkanSubgroupBuiltIns,
@@ -3749,6 +3735,7 @@ OpCapability GroupNonUniform
 OpMemoryModel Logical GLSL450
 OpEntryPoint GLCompute %foo "foo"
 OpExecutionMode %foo LocalSize 1 1 1
+OpDecorate %struct Block
 OpMemberDecorate %struct 0 BuiltIn SubgroupId
 %void = OpTypeVoid
 %int = OpTypeInt 32 0
@@ -3778,9 +3765,9 @@ OpDecorate %void BuiltIn Position
 
   CompileSuccessfully(text);
   EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr("BuiltIns can only target variables, structs or constants"));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("BuiltIns can only target variables, structure members "
+                        "or constants"));
 }
 
 TEST_F(ValidateBuiltIns, TargetIsVariable) {
@@ -3792,47 +3779,6 @@ OpDecorate %wg_var BuiltIn Position
 %int = OpTypeInt 32 0
 %int_wg_ptr = OpTypePointer Workgroup %int
 %wg_var = OpVariable %int_wg_ptr Workgroup
-)";
-
-  CompileSuccessfully(text);
-  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
-}
-
-TEST_F(ValidateBuiltIns, TargetIsStruct) {
-  const std::string text = R"(
-OpCapability Shader
-OpCapability Linkage
-OpMemoryModel Logical GLSL450
-OpDecorate %struct BuiltIn Position
-%struct = OpTypeStruct
-)";
-
-  CompileSuccessfully(text);
-  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
-}
-
-TEST_F(ValidateBuiltIns, TargetIsConstant) {
-  const std::string text = R"(
-OpCapability Shader
-OpCapability Linkage
-OpMemoryModel Logical GLSL450
-OpDecorate %int0 BuiltIn Position
-%int = OpTypeInt 32 0
-%int0 = OpConstant %int 0
-)";
-
-  CompileSuccessfully(text);
-  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
-}
-
-TEST_F(ValidateBuiltIns, TargetIsSpecConstant) {
-  const std::string text = R"(
-OpCapability Shader
-OpCapability Linkage
-OpMemoryModel Logical GLSL450
-OpDecorate %int0 BuiltIn Position
-%int = OpTypeInt 32 0
-%int0 = OpSpecConstant %int 0
 )";
 
   CompileSuccessfully(text);

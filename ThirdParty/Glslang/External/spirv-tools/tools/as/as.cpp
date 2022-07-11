@@ -48,7 +48,7 @@ Options:
       argv0, argv0, target_env_list.c_str());
 }
 
-static const auto kDefaultEnvironment = SPV_ENV_UNIVERSAL_1_5;
+static const auto kDefaultEnvironment = SPV_ENV_UNIVERSAL_1_6;
 
 int main(int argc, char** argv) {
   const char* inFile = nullptr;
@@ -129,7 +129,7 @@ int main(int argc, char** argv) {
   }
 
   std::vector<char> contents;
-  if (!ReadFile<char>(inFile, "r", &contents)) return 1;
+  if (!ReadTextFile<char>(inFile, &contents)) return 1;
 
   spv_binary binary;
   spv_diagnostic diagnostic = nullptr;

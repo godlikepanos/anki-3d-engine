@@ -586,6 +586,18 @@ void TScanContext::fillInKeywordMap()
     (*KeywordMap)["f64mat4x2"] =               F64MAT4X2;
     (*KeywordMap)["f64mat4x3"] =               F64MAT4X3;
     (*KeywordMap)["f64mat4x4"] =               F64MAT4X4;
+
+    // GL_EXT_spirv_intrinsics
+    (*KeywordMap)["spirv_instruction"] =       SPIRV_INSTRUCTION;
+    (*KeywordMap)["spirv_execution_mode"] =    SPIRV_EXECUTION_MODE;
+    (*KeywordMap)["spirv_execution_mode_id"] = SPIRV_EXECUTION_MODE_ID;
+    (*KeywordMap)["spirv_decorate"] =          SPIRV_DECORATE;
+    (*KeywordMap)["spirv_decorate_id"] =       SPIRV_DECORATE_ID;
+    (*KeywordMap)["spirv_decorate_string"] =   SPIRV_DECORATE_STRING;
+    (*KeywordMap)["spirv_type"] =              SPIRV_TYPE;
+    (*KeywordMap)["spirv_storage_class"] =     SPIRV_STORAGE_CLASS;
+    (*KeywordMap)["spirv_by_reference"] =      SPIRV_BY_REFERENCE;
+    (*KeywordMap)["spirv_literal"] =           SPIRV_LITERAL;
 #endif
 
     (*KeywordMap)["sampler2D"] =               SAMPLER2D;
@@ -727,6 +739,7 @@ void TScanContext::fillInKeywordMap()
     (*KeywordMap)["f16subpassInputMS"] =            F16SUBPASSINPUTMS;
     (*KeywordMap)["__explicitInterpAMD"] =     EXPLICITINTERPAMD;
     (*KeywordMap)["pervertexNV"] =             PERVERTEXNV;
+    (*KeywordMap)["pervertexEXT"] =            PERVERTEXEXT;
     (*KeywordMap)["precise"] =                 PRECISE;
 
     (*KeywordMap)["rayPayloadNV"] =            PAYLOADNV;
@@ -1707,6 +1720,12 @@ int TScanContext::tokenizeIdentifier()
             return keyword;
         return identifierOrType();
 
+    case PERVERTEXEXT:
+        if ((!parseContext.isEsProfile() && parseContext.version >= 450) ||
+            parseContext.extensionTurnedOn(E_GL_EXT_fragment_shader_barycentric))
+            return keyword;
+        return identifierOrType();
+
     case PRECISE:
         if ((parseContext.isEsProfile() &&
              (parseContext.version >= 320 || parseContext.extensionsTurnedOn(Num_AEP_gpu_shader5, AEP_gpu_shader5))) ||
@@ -1747,6 +1766,21 @@ int TScanContext::tokenizeIdentifier()
             return keyword;
         else
             return identifierOrType();
+
+    case SPIRV_INSTRUCTION:
+    case SPIRV_EXECUTION_MODE:
+    case SPIRV_EXECUTION_MODE_ID:
+    case SPIRV_DECORATE:
+    case SPIRV_DECORATE_ID:
+    case SPIRV_DECORATE_STRING:
+    case SPIRV_TYPE:
+    case SPIRV_STORAGE_CLASS:
+    case SPIRV_BY_REFERENCE:
+    case SPIRV_LITERAL:
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+            parseContext.extensionTurnedOn(E_GL_EXT_spirv_intrinsics))
+            return keyword;
+        return identifierOrType();
 #endif
 
     default:

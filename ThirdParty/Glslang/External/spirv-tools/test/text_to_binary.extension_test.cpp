@@ -197,7 +197,7 @@ INSTANTIATE_TEST_SUITE_P(
                                                  SpvBuiltInSubgroupLtMask})},
             })));
 
-// The old builtin names (with KHR suffix) still work in the assmebler, and
+// The old builtin names (with KHR suffix) still work in the assembler, and
 // map to the enums without the KHR.
 INSTANTIATE_TEST_SUITE_P(
     SPV_KHR_shader_ballot_vulkan_1_1_alias_check, ExtensionAssemblyTest,
@@ -904,6 +904,135 @@ INSTANTIATE_TEST_SUITE_P(
             {"OpDecorate %1 NonUniform\n",
              MakeInstruction(SpvOpDecorate, {1, 5300})},
         })));
+
+// SPV_KHR_linkonce_odr
+
+INSTANTIATE_TEST_SUITE_P(
+    SPV_KHR_linkonce_odr, ExtensionRoundTripTest,
+    Combine(
+        Values(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_UNIVERSAL_1_3, SPV_ENV_VULKAN_1_0,
+               SPV_ENV_VULKAN_1_1, SPV_ENV_VULKAN_1_2),
+        ValuesIn(std::vector<AssemblyCase>{
+            {"OpExtension \"SPV_KHR_linkonce_odr\"\n",
+             MakeInstruction(SpvOpExtension,
+                             MakeVector("SPV_KHR_linkonce_odr"))},
+            {"OpDecorate %1 LinkageAttributes \"foobar\" LinkOnceODR\n",
+             MakeInstruction(SpvOpDecorate,
+                             Concatenate({{1, SpvDecorationLinkageAttributes},
+                                          MakeVector("foobar"),
+                                          {SpvLinkageTypeLinkOnceODR}}))},
+        })));
+
+// SPV_KHR_expect_assume
+
+INSTANTIATE_TEST_SUITE_P(
+    SPV_KHR_expect_assume, ExtensionRoundTripTest,
+    Combine(Values(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_UNIVERSAL_1_3,
+                   SPV_ENV_VULKAN_1_0, SPV_ENV_VULKAN_1_1, SPV_ENV_VULKAN_1_2),
+            ValuesIn(std::vector<AssemblyCase>{
+                {"OpExtension \"SPV_KHR_expect_assume\"\n",
+                 MakeInstruction(SpvOpExtension,
+                                 MakeVector("SPV_KHR_expect_assume"))},
+                {"OpAssumeTrueKHR %1\n",
+                 MakeInstruction(SpvOpAssumeTrueKHR, {1})}})));
+// SPV_KHR_subgroup_uniform_control_flow
+
+INSTANTIATE_TEST_SUITE_P(
+    SPV_KHR_subgroup_uniform_control_flow, ExtensionRoundTripTest,
+    Combine(Values(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_UNIVERSAL_1_3,
+                   SPV_ENV_VULKAN_1_0, SPV_ENV_VULKAN_1_1, SPV_ENV_VULKAN_1_2),
+            ValuesIn(std::vector<AssemblyCase>{
+                {"OpExtension \"SPV_KHR_subgroup_uniform_control_flow\"\n",
+                 MakeInstruction(
+                     SpvOpExtension,
+                     MakeVector("SPV_KHR_subgroup_uniform_control_flow"))},
+                {"OpExecutionMode %1 SubgroupUniformControlFlowKHR\n",
+                 MakeInstruction(
+                     SpvOpExecutionMode,
+                     {1, SpvExecutionModeSubgroupUniformControlFlowKHR})},
+            })));
+
+// SPV_KHR_integer_dot_product
+
+INSTANTIATE_TEST_SUITE_P(
+    SPV_KHR_integer_dot_product, ExtensionRoundTripTest,
+    Combine(
+        Values(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_UNIVERSAL_1_5,
+               SPV_ENV_UNIVERSAL_1_6, SPV_ENV_VULKAN_1_0, SPV_ENV_VULKAN_1_1,
+               SPV_ENV_VULKAN_1_2, SPV_ENV_VULKAN_1_3),
+        ValuesIn(std::vector<AssemblyCase>{
+            {"OpExtension \"SPV_KHR_integer_dot_product\"\n",
+             MakeInstruction(SpvOpExtension,
+                             MakeVector("SPV_KHR_integer_dot_product"))},
+            {"OpCapability DotProductInputAll\n",
+             MakeInstruction(SpvOpCapability,
+                             {SpvCapabilityDotProductInputAllKHR})},
+            {"OpCapability DotProductInput4x8Bit\n",
+             MakeInstruction(SpvOpCapability,
+                             {SpvCapabilityDotProductInput4x8BitKHR})},
+            {"OpCapability DotProductInput4x8BitPacked\n",
+             MakeInstruction(SpvOpCapability,
+                             {SpvCapabilityDotProductInput4x8BitPackedKHR})},
+            {"OpCapability DotProduct\n",
+             MakeInstruction(SpvOpCapability, {SpvCapabilityDotProductKHR})},
+            {"%2 = OpSDot %1 %3 %4\n",
+             MakeInstruction(SpvOpSDotKHR, {1, 2, 3, 4})},
+            {"%2 = OpSDot %1 %3 %4 PackedVectorFormat4x8Bit\n",
+             MakeInstruction(
+                 SpvOpSDotKHR,
+                 {1, 2, 3, 4,
+                  SpvPackedVectorFormatPackedVectorFormat4x8BitKHR})},
+            {"%2 = OpUDot %1 %3 %4\n",
+             MakeInstruction(SpvOpUDotKHR, {1, 2, 3, 4})},
+            {"%2 = OpUDot %1 %3 %4 PackedVectorFormat4x8Bit\n",
+             MakeInstruction(
+                 SpvOpUDotKHR,
+                 {1, 2, 3, 4,
+                  SpvPackedVectorFormatPackedVectorFormat4x8BitKHR})},
+            {"%2 = OpSUDot %1 %3 %4\n",
+             MakeInstruction(SpvOpSUDotKHR, {1, 2, 3, 4})},
+            {"%2 = OpSUDot %1 %3 %4 PackedVectorFormat4x8Bit\n",
+             MakeInstruction(
+                 SpvOpSUDotKHR,
+                 {1, 2, 3, 4,
+                  SpvPackedVectorFormatPackedVectorFormat4x8BitKHR})},
+            {"%2 = OpSDotAccSat %1 %3 %4 %5\n",
+             MakeInstruction(SpvOpSDotAccSatKHR, {1, 2, 3, 4, 5})},
+            {"%2 = OpSDotAccSat %1 %3 %4 %5 PackedVectorFormat4x8Bit\n",
+             MakeInstruction(
+                 SpvOpSDotAccSatKHR,
+                 {1, 2, 3, 4, 5,
+                  SpvPackedVectorFormatPackedVectorFormat4x8BitKHR})},
+            {"%2 = OpUDotAccSat %1 %3 %4 %5\n",
+             MakeInstruction(SpvOpUDotAccSatKHR, {1, 2, 3, 4, 5})},
+            {"%2 = OpUDotAccSat %1 %3 %4 %5 PackedVectorFormat4x8Bit\n",
+             MakeInstruction(
+                 SpvOpUDotAccSatKHR,
+                 {1, 2, 3, 4, 5,
+                  SpvPackedVectorFormatPackedVectorFormat4x8BitKHR})},
+            {"%2 = OpSUDotAccSat %1 %3 %4 %5\n",
+             MakeInstruction(SpvOpSUDotAccSatKHR, {1, 2, 3, 4, 5})},
+            {"%2 = OpSUDotAccSat %1 %3 %4 %5 PackedVectorFormat4x8Bit\n",
+             MakeInstruction(
+                 SpvOpSUDotAccSatKHR,
+                 {1, 2, 3, 4, 5,
+                  SpvPackedVectorFormatPackedVectorFormat4x8BitKHR})},
+        })));
+
+// SPV_KHR_bit_instructions
+
+INSTANTIATE_TEST_SUITE_P(
+    SPV_KHR_bit_instructions, ExtensionRoundTripTest,
+    Combine(Values(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_UNIVERSAL_1_5,
+                   SPV_ENV_VULKAN_1_0, SPV_ENV_VULKAN_1_1, SPV_ENV_VULKAN_1_2),
+            ValuesIn(std::vector<AssemblyCase>{
+                {"OpExtension \"SPV_KHR_bit_instructions\"\n",
+                 MakeInstruction(SpvOpExtension,
+                                 MakeVector("SPV_KHR_bit_instructions"))},
+                {"OpCapability BitInstructions\n",
+                 MakeInstruction(SpvOpCapability,
+                                 {SpvCapabilityBitInstructions})},
+            })));
 
 }  // namespace
 }  // namespace spvtools
