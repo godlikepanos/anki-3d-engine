@@ -71,7 +71,9 @@ if not _OPTIONS["no-enet"] then
                 links {"clsocket"}
 
                 files {
+			"../../examples/SharedMemory/RemoteGUIHelperTCP.cpp",
                         "../../examples/SharedMemory/PhysicsClientTCP.cpp",
+			"../../examples/SharedMemory/GraphicsServerExample.cpp",
                         "../../examples/SharedMemory/PhysicsClientTCP.h",
                         "../../examples/SharedMemory/PhysicsClientTCP_C_API.cpp",
                         "../../examples/SharedMemory/PhysicsClientTCP_C_API.h",
@@ -81,6 +83,7 @@ if not _OPTIONS["no-enet"] then
 
 
 		files {
+		"../../examples/SharedMemory/plugins/collisionFilterPlugin/collisionFilterPlugin.cpp",
 		"../../examples/SharedMemory/plugins/pdControlPlugin/pdControlPlugin.cpp",
 		"../../examples/SharedMemory/plugins/pdControlPlugin/pdControlPlugin.h",
 		"../../examples/SharedMemory/b3RobotSimulatorClientAPI_NoGUI.cpp",
@@ -91,6 +94,7 @@ if not _OPTIONS["no-enet"] then
 		"../../examples/SharedMemory/IKTrajectoryHelper.h",
 		"../../examples/SharedMemory/plugins/tinyRendererPlugin/tinyRendererPlugin.cpp",
 		"../../examples/SharedMemory/plugins/tinyRendererPlugin/TinyRendererVisualShapeConverter.cpp",
+		"../../examples/SharedMemory/RemoteGUIHelper.cpp",
 		"../../examples/OpenGLWindow/SimpleCamera.cpp",
 		"../../examples/OpenGLWindow/SimpleCamera.h",
 		"../../examples/TinyRenderer/geometry.cpp",

@@ -529,6 +529,7 @@ typedef struct bInvalidHandle {
         btVector3DoubleData m_pointCacheLateralFrictionDir2[4];
         double m_pointCacheDistance[4];
         double m_pointCacheAppliedImpulse[4];
+        double m_pointCachePrevRHS[4];
         double m_pointCacheCombinedFriction[4];
         double m_pointCacheCombinedRollingFriction[4];
         double m_pointCacheCombinedSpinningFriction[4];
@@ -574,6 +575,7 @@ typedef struct bInvalidHandle {
         btVector3FloatData m_pointCacheLateralFrictionDir2[4];
         float m_pointCacheDistance[4];
         float m_pointCacheAppliedImpulse[4];
+        float m_pointCachePrevRHS[4];
         float m_pointCacheCombinedFriction[4];
         float m_pointCacheCombinedRollingFriction[4];
         float m_pointCacheCombinedSpinningFriction[4];
@@ -720,6 +722,7 @@ typedef struct bInvalidHandle {
         double m_splitImpulseTurnErp;
         double m_linearSlop;
         double m_warmstartingFactor;
+        double m_articulatedWarmstartingFactor;
         double m_maxGyroscopicForce;
         double m_singleAxisRollingFrictionThreshold;
         int m_numIterations;
@@ -749,6 +752,7 @@ typedef struct bInvalidHandle {
         float m_splitImpulseTurnErp;
         float m_linearSlop;
         float m_warmstartingFactor;
+        float m_articulatedWarmstartingFactor;
         float m_maxGyroscopicForce;
         float m_singleAxisRollingFrictionThreshold;
         int m_numIterations;
@@ -756,7 +760,6 @@ typedef struct bInvalidHandle {
         int m_restingContactRestitutionThreshold;
         int m_minimumSolverBatchSize;
         int m_splitImpulse;
-        char m_padding[4];
     };
 
 

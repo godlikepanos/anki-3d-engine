@@ -43,47 +43,21 @@
 		configuration{}
 	end
 
-
-	function initGlew()
-		configuration {}
-		if os.is("Windows") then
-			configuration {"Windows"}
-			defines { "GLEW_STATIC"}
-			includedirs {
-					projectRootDir .. "examples/ThirdPartyLibs/glad"
-			}
-			files { projectRootDir .. "examples/ThirdPartyLibs/glad/glad.c"}
-		end
-		if os.is("MacOSX") then
-			 includedirs {
-                                        projectRootDir .. "examples/ThirdPartyLibs/glad"
-                                }
-                                files { projectRootDir .. "examples/ThirdPartyLibs/glad/glad.c"}
-		end
-
+	function initX11()
 		if os.is("Linux") then
-			configuration{"Linux"}
-				if  _OPTIONS["enable_system_glx"] then --# and (os.isdir("/usr/include") and os.isfile("/usr/include/GL/glx.h")) then
-                                	links{"X11","pthread"}
-					print("Using system GL/glx.h")
-                        	else
-					print("Using glad_glx")
-				 	defines { "GLEW_DYNAMIC_LOAD_ALL_GLX_FUNCTIONS=1"}	
-				 	files { 
-					projectRootDir .. "examples/ThirdPartyLibs/glad/glad_glx.c"}
-				end
-
-				print("Using glad and dynamic loading of GL functions")
-			 	defines { "GLEW_STATIC"}
-                        	includedirs {
-                                        projectRootDir .. "examples/ThirdPartyLibs/glad"
-                        	}
-                        	files { projectRootDir .. "examples/ThirdPartyLibs/glad/glad.c"}
-				links {"dl"}
-
+			if _OPTIONS["enable_system_x11"] and (os.isdir("/usr/include") and os.isfile("/usr/include/X11/X.h")) then
+				links{"X11","pthread"}
+			else
+				print("No X11/X.h found, using dynamic loading of X11")
+				includedirs {
+                                        projectRootDir .. "examples/ThirdPartyLibs/optionalX11"
+                                }
+				defines {"DYNAMIC_LOAD_X11_FUNCTIONS"}	
+				links {"dl","pthread"}
+			end
 		end
-		configuration{}
 	end
+
 
 	function initX11()
 		if os.is("Linux") then
@@ -99,4 +73,49 @@
 			end
 		end
 	end
+
+
+	function initGlew()
+		configuration {}
+		if os.is("Windows") then
+			configuration {"Windows"}
+			defines { "GLEW_STATIC"}
+			includedirs {
+					projectRootDir .. "examples/ThirdPartyLibs/glad"
+			}
+			files { projectRootDir .. "examples/ThirdPartyLibs/glad/gl.c"}
+		end
+		if os.is("MacOSX") then
+			 includedirs {
+                                        projectRootDir .. "examples/ThirdPartyLibs/glad"
+                                }
+                                files { projectRootDir .. "examples/ThirdPartyLibs/glad/gl.c"}
+		end
+
+		if os.is("Linux") then
+			configuration{"Linux"}
+			  initX11()
+				if  _OPTIONS["enable_system_glx"] then --# and (os.isdir("/usr/include") and os.isfile("/usr/include/GL/glx.h")) then
+                                	links{"pthread"}
+					print("Using system GL/glx.h")
+                        	else
+					print("Using glad_glx")
+				 	defines { "GLEW_DYNAMIC_LOAD_ALL_GLX_FUNCTIONS=1"}	
+				 	files { 
+					projectRootDir .. "examples/ThirdPartyLibs/glad/glx.c"}
+				end
+
+				print("Using glad and dynamic loading of GL functions")
+			 	defines { "GLEW_STATIC"}
+                        	includedirs {
+                                        projectRootDir .. "examples/ThirdPartyLibs/glad"
+                        	}
+                        	files { projectRootDir .. "examples/ThirdPartyLibs/glad/gl.c",
+					projectRootDir .. "examples/ThirdPartyLibs/glad/glx.c"}
+				links {"dl"}
+
+		end
+		configuration{}
+	end
+
 

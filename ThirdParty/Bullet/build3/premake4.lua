@@ -23,6 +23,9 @@
 		act = _ACTION
 	end
 
+	projectRootDir = os.getcwd() .. "/../"
+	print("Project root directory: " .. projectRootDir);
+	
 	newoption {
 		trigger     = "ios",
 		description = "Enable iOS target (requires xcode4)"
@@ -53,10 +56,42 @@
 
 	newoption
 	{
+		trigger = "enable_stable_pd",
+		description = "Enable Stable PD control in PyBullet"
+	}
+
+
+	newoption
+	{
 		trigger = "enable_static_vr_plugin",
 		description = "Statically link vr plugin (in examples/SharedMemory/plugins/vrSyncPlugin)"
 	}
-
+         newoption
+        {
+                trigger = "enable_static_test_plugin",
+                description = "Statically link test plugin (in examples/SharedMemory/plugins/testPlugin)"
+        }
+         newoption
+        {
+                trigger = "enable_static_tiny_renderer__plugin",
+                description = "Statically link vr plugin (in examples/SharedMemory/plugins/tinyRendererPlugin)"
+        }
+         newoption
+        {
+                trigger = "enable_static_pd_control_plugin",
+                description = "Statically link vr plugin (in examples/SharedMemory/plugins/pdControlPlugin)"
+        }
+         newoption
+        {
+                trigger = "enable_static_collision_filter_plugin",
+                description = "Statically link vr plugin (in examples/SharedMemory/plugins/collisionFilterPlugin)"
+        }
+ 
+	newoption
+	{
+		trigger = "enable_physx",
+		description = "Allow optional PhysX backend for PyBullet, use pybullet.connect(pybullet.PhysX)."
+	}
 
 	newoption
 	{
@@ -69,6 +104,158 @@
 		trigger = "midi",
 		description = "Use Midi controller to control parameters"
 	}
+	
+	
+	newoption
+	{
+		trigger = "enable_egl",
+		value       = false,
+		description = "Build an experimental eglPlugin"
+	}
+
+	
+	newoption
+	{
+		trigger = "enable_grpc",
+		description = "Build GRPC server/client features for PyBullet/BulletRobotics"
+	
+	}
+
+	if os.is("Linux") then
+                default_grpc_include_dir = "usr/local/include/GRPC"
+                default_grpc_lib_dir = "/usr/local/lib"
+                default_protobuf_include_dir = "/usr/local/include/protobuf"
+                default_protobuf_lib_dir = "/usr/local/lib"
+	end
+
+	if os.is("macosx") then
+                default_grpc_include_dir = "/usr/local/Cellar/grpc/1.14.1/include"
+                default_grpc_lib_dir = "/usr/local/Cellar/grpc/1.14.1/lib"
+								default_protobuf_include_dir = "/usr/local/Cellar/protobuf/3.6.0/include"
+                default_protobuf_lib_dir = "/usr/local/Cellar/protobuf/3.6.0/lib"
+	end
+
+	if os.is("Windows") then
+                default_grpc_include_dir = projectRootDir .. "examples/ThirdPartyLibs/grpc/include"
+                default_grpc_lib_dir = projectRootDir .. "examples/ThirdPartyLibs/grpc/lib"
+                default_protobuf_include_dir =projectRootDir .. "examples/ThirdPartyLibs/grpc/include"
+                default_protobuf_lib_dir = projectRootDir .. "examples/ThirdPartyLibs/grpc/lib"
+	end
+	
+	newoption
+	{
+                        trigger     = "grpc_include_dir",
+                        value       = default_grpc_include_dir,
+                        description = "(optional) GRPC include directory"
+	}
+
+	newoption
+	{
+                        trigger     = "grpc_lib_dir",
+                        value       = default_grpc_lib_dir,
+                        description = "(optional) GRPC library directory "
+	}
+
+
+	newoption
+        {
+                        trigger     = "protobuf_include_dir",
+                        value       = default_protobuf_include_dir,
+                        description = "(optional) protobuf include directory"
+        }
+
+        newoption
+        {
+                        trigger     = "protobuf_lib_dir",
+                        value       = default_protobuf_lib_dir,
+                        description = "(optional) protobuf library directory "
+        }
+
+
+	if not _OPTIONS["grpc_lib_dir"] then
+		_OPTIONS["grpc_lib_dir"] = default_grpc_lib_dir
+	end
+	if not _OPTIONS["grpc_include_dir"] then
+		_OPTIONS["grpc_include_dir"] = default_grpc_include_dir
+	end
+	if not _OPTIONS["protobuf_include_dir"] then
+		_OPTIONS["protobuf_include_dir"] = default_protobuf_include_dir
+	end	
+	
+	if not _OPTIONS["protobuf_lib_dir"] then
+		_OPTIONS["protobuf_lib_dir"] = default_protobuf_lib_dir
+	end	
+	
+
+	if _OPTIONS["enable_egl"] then
+		function initEGL()
+			defines {"BT_USE_EGL"}
+		end
+	end	
+	
+	
+	if _OPTIONS["enable_grpc"] then
+	function initGRPC()
+	
+
+			print "BT_ENABLE_GRPC"
+
+			print("grpc_include_dir=")
+			print(_OPTIONS["grpc_include_dir"])
+			print("grpc_lib_dir=")
+			print(_OPTIONS["grpc_lib_dir"])
+			print("protobuf_include_dir=")
+			print(_OPTIONS["protobuf_include_dir"])
+			print("protobuf_lib_dir=")
+			print(_OPTIONS["protobuf_lib_dir"])
+			
+			defines {"BT_ENABLE_GRPC"}
+			
+				if os.is("macosx") then
+			 buildoptions { "-std=c++11" }
+			 links{ "dl"}
+			end
+			
+			if os.is("Linux") then
+			 		buildoptions { "-std=c++11" }
+					links{ "dl"}
+			end
+			
+			if os.is("Windows") then
+					defines {"_WIN32_WINNT=0x0600"}
+					links{ "zlibstatic","ssl","crypto"}
+			end
+
+      includedirs {
+             projectRootDir .. "examples", _OPTIONS["grpc_include_dir"], _OPTIONS["protobuf_include_dir"],
+      }
+
+			if os.is("Windows") then
+				configuration {"x64", "debug"}			
+						libdirs {_OPTIONS["grpc_lib_dir"] .. "/win64_debug" , _OPTIONS["protobuf_lib_dir"] .. "win64_debug",}
+				configuration {"x86", "debug"}
+						libdirs {_OPTIONS["grpc_lib_dir"] .. "/win32_debug" , _OPTIONS["protobuf_lib_dir"] .. "win32_debug",}
+				configuration {"x64", "release"}
+						libdirs {_OPTIONS["grpc_lib_dir"] .. "/win64_release", _OPTIONS["protobuf_lib_dir"] .. "win64_release",}
+				configuration {"x86", "release"}
+						libdirs {_OPTIONS["grpc_lib_dir"] .. "/win32_release" , _OPTIONS["protobuf_lib_dir"] .. "win32_release",}
+				configuration{}
+				
+				else
+				libdirs {_OPTIONS["grpc_lib_dir"], _OPTIONS["protobuf_lib_dir"],}
+			end
+      
+      links { "grpc","grpc++", "grpc++_reflection", "gpr", "protobuf"}
+      files { 
+      projectRootDir .. "examples/SharedMemory/grpc/ConvertGRPCBullet.cpp",
+			projectRootDir .. "examples/SharedMemory/grpc/ConvertGRPCBullet.h",
+			projectRootDir .. "examples/SharedMemory/grpc/proto/pybullet.grpc.pb.cpp",
+			projectRootDir .. "examples/SharedMemory/grpc/proto/pybullet.grpc.pb.h",
+			projectRootDir .. "examples/SharedMemory/grpc/proto/pybullet.pb.cpp",
+			projectRootDir .. "examples/SharedMemory/grpc/proto/pybullet.pb.h", }
+		end
+
+	end
 
 -- _OPTIONS["midi"] = "1";
 
@@ -152,6 +339,12 @@ end
 		trigger = "no-test",
 		description = "Disable all tests"
 	}
+	newoption
+        {       
+                trigger = "test-bullet2",
+
+                description = "Enable Bullet2 LinearMath test"
+        }
 
 	newoption
 	{
@@ -169,6 +362,12 @@ end
 	{
 		trigger = "double",
 		description = "Double precision version of Bullet"
+	}
+
+	newoption
+	{
+		trigger = "clamp-velocities",
+		description = "Limit maximum velocities to reduce FP exception risk"
 	}
 	
 	newoption
@@ -193,13 +392,28 @@ end
 	if _OPTIONS["double"] then
 		defines {"BT_USE_DOUBLE_PRECISION"}
 	end
+	if _OPTIONS["clamp-velocities"] then
+		defines {"BT_CLAMP_VELOCITY_TO=9999"}
+	end
 
+	newoption
+	{
+		trigger = "dynamic-runtime",
+		description = "Enable dynamic DLL CRT runtime"
+	}
 	configurations {"Release", "Debug"}
 	configuration "Release"
-		flags { "Optimize", "EnableSSE2","StaticRuntime", "NoMinimalRebuild", "FloatFast"}
+		flags { "Optimize", "EnableSSE2", "NoMinimalRebuild", "FloatFast"}
+		if not _OPTIONS["dynamic-runtime"] then
+			flags { "StaticRuntime" } 
+		end
 	configuration "Debug"
 		defines {"_DEBUG=1"}
-		flags { "Symbols", "StaticRuntime" , "NoMinimalRebuild", "NoEditAndContinue" ,"FloatFast"}
+		flags { "Symbols" , "NoMinimalRebuild", "NoEditAndContinue" ,"FloatFast"}
+		if not _OPTIONS["dynamic-runtime"] then
+			flags { "StaticRuntime" } 
+		end
+
 
 	if os.is("Linux") or os.is("macosx") then
 		if os.is64bit() then
@@ -244,8 +458,8 @@ end
 		else
 			xcodebuildsettings
 			{
-				'ARCHS = "$(ARCHS_STANDARD_32_BIT) $(ARCHS_STANDARD_64_BIT)"',
-				'VALID_ARCHS = "x86_64 i386"',
+				'ARCHS = "$(ARCHS_STANDARD_64_BIT)"',
+				'VALID_ARCHS = "x86_64"',
 --			'SDKROOT = "macosx10.9"',
 			}
 		end
@@ -259,8 +473,7 @@ end
 	targetdir( _OPTIONS["targetdir"] or "../bin" )
 	location("./" .. act .. postfix)
 
-	projectRootDir = os.getcwd() .. "/../"
-	print("Project root directory: " .. projectRootDir);
+	
 	
 	if not _OPTIONS["python_include_dir"] then
 			_OPTIONS["python_include_dir"] = default_python_include_dir
@@ -288,6 +501,9 @@ if os.is("Windows") then
 		default_glfw_lib_name = "glfw3"
 end
 
+	
+
+	
 	if not _OPTIONS["glfw_lib_dir"] then
 		_OPTIONS["glfw_lib_dir"] = default_glfw_lib_dir
 	end
@@ -330,8 +546,6 @@ end
     
 	if _OPTIONS["enable_glfw"] then
 		defines {"B3_USE_GLFW"}
-		
-			
 		
 		function initOpenGL()
 		includedirs {
@@ -458,7 +672,9 @@ end
         end
 
 	if not _OPTIONS["no-test"] then
+                if _OPTIONS["test-bullet2"] then
 		include "../test/Bullet2"
+		end
 
 		if not _OPTIONS["no-gtest"] then
 			include "../test/gtest-1.7.0"
@@ -483,4 +699,7 @@ end
 	include "../src/BulletDynamics"
 	include "../src/BulletCollision"
 	include "../src/LinearMath"
+	if _OPTIONS["enable_physx"] then
+		include "../src/physx"
+	end
 
