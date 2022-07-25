@@ -466,18 +466,18 @@ void Scale::runTonemapping(RenderPassWorkContext& rgraphCtx)
 
 	rgraphCtx.bindImage(0, 2, m_r->getTonemapping().getRt());
 
-	class
-	{
-	public:
-		Vec2 m_viewportSizeOverOne;
-		UVec2 m_viewportSize;
-	} pc;
-	pc.m_viewportSizeOverOne = 1.0f / Vec2(m_r->getPostProcessResolution());
-	pc.m_viewportSize = m_r->getPostProcessResolution();
-	cmdb->setPushConstants(&pc, sizeof(pc));
 
 	if(preferCompute)
 	{
+		class
+		{
+		public:
+			Vec2 m_viewportSizeOverOne;
+			UVec2 m_viewportSize;
+		} pc;
+		pc.m_viewportSizeOverOne = 1.0f / Vec2(m_r->getPostProcessResolution());
+		pc.m_viewportSize = m_r->getPostProcessResolution();
+		cmdb->setPushConstants(&pc, sizeof(pc));
 		rgraphCtx.bindImage(0, 3, outRt);
 
 		dispatchPPCompute(cmdb, 8, 8, m_r->getPostProcessResolution().x(), m_r->getPostProcessResolution().y());
