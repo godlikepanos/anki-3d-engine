@@ -108,15 +108,17 @@ public:
 	TValueReference operator*() const
 	{
 		ANKI_ASSERT(m_node);
-		return detail::GetListNodeValueFunc<RemovePointer<TNodePointer>::Type, RemovePointer<TValuePointer>::Type>()(
-			*m_node);
+		using NodeType = typename RemovePointer<TNodePointer>::Type;
+		using ValueType = typename RemovePointer<TValuePointer>::Type;
+		return detail::GetListNodeValueFunc<NodeType, ValueType>()(*m_node);
 	}
 
 	TValuePointer operator->() const
 	{
 		ANKI_ASSERT(m_node);
-		return &detail::GetListNodeValueFunc<RemovePointer<TNodePointer>::Type, RemovePointer<TValuePointer>::Type>()(
-			*m_node);
+		using NodeType = typename RemovePointer<TNodePointer>::Type;
+		using ValueType = typename RemovePointer<TValuePointer>::Type;
+		return &detail::GetListNodeValueFunc<NodeType, ValueType>()(*m_node);
 	}
 
 	ListIterator& operator++()

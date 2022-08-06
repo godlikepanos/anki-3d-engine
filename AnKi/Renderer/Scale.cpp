@@ -466,7 +466,6 @@ void Scale::runTonemapping(RenderPassWorkContext& rgraphCtx)
 
 	rgraphCtx.bindImage(0, 2, m_r->getTonemapping().getRt());
 
-
 	if(preferCompute)
 	{
 		class
