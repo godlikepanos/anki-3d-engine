@@ -293,6 +293,12 @@ struct RemovePointer<T*>
 	using Type = T;
 };
 
+template<typename T>
+struct RemovePointer<const T*>
+{
+	using Type = T;
+};
+
 /// Zero memory of an object
 template<typename T>
 void zeroMemory(T& x)

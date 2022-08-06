@@ -31,15 +31,32 @@ public:
 		: m_value(std::forward<TArgs>(args)...)
 	{
 	}
+};
 
-	T& getListNodeValue()
+/// Gets the value of a list node.
+/// @internal
+template<typename TNode, typename TValue>
+class GetListNodeValueFunc
+{
+public:
+	TValue& operator()(TNode& node);
+	const TValue& operator()(const TNode& node) const;
+};
+
+/// Specialization for ListNode
+/// @internal
+template<typename TValue>
+class GetListNodeValueFunc<ListNode<TValue>, TValue>
+{
+public:
+	TValue& operator()(ListNode<TValue>& node)
 	{
-		return m_value;
+		return node.m_value;
 	}
 
-	const T& getListNodeValue() const
+	const TValue& operator()(const ListNode<TValue>& node) const
 	{
-		return m_value;
+		return node.m_value;
 	}
 };
 
@@ -91,13 +108,15 @@ public:
 	TValueReference operator*() const
 	{
 		ANKI_ASSERT(m_node);
-		return m_node->getListNodeValue();
+		return detail::GetListNodeValueFunc<RemovePointer<TNodePointer>::Type, RemovePointer<TValuePointer>::Type>()(
+			*m_node);
 	}
 
 	TValuePointer operator->() const
 	{
 		ANKI_ASSERT(m_node);
-		return &m_node->getListNodeValue();
+		return &detail::GetListNodeValueFunc<RemovePointer<TNodePointer>::Type, RemovePointer<TValuePointer>::Type>()(
+			*m_node);
 	}
 
 	ListIterator& operator++()
@@ -211,28 +230,28 @@ public:
 	ConstReference getFront() const
 	{
 		ANKI_ASSERT(!isEmpty());
-		return m_head->getListNodeValue();
+		return detail::GetListNodeValueFunc<TNode, T>()(*m_head);
 	}
 
 	/// Get first element.
 	Reference getFront()
 	{
 		ANKI_ASSERT(!isEmpty());
-		return m_head->getListNodeValue();
+		return detail::GetListNodeValueFunc<TNode, T>()(*m_head);
 	}
 
 	/// Get last element.
 	ConstReference getBack() const
 	{
 		ANKI_ASSERT(!isEmpty());
-		return m_tail->getListNodeValue();
+		return detail::GetListNodeValueFunc<TNode, T>()(*m_tail);
 	}
 
 	/// Get last element.
 	Reference getBack()
 	{
 		ANKI_ASSERT(!isEmpty());
-		return m_tail->getListNodeValue();
+		return detail::GetListNodeValueFunc<TNode, T>()(*m_tail);
 	}
 
 	/// Get begin.
@@ -582,28 +601,55 @@ class IntrusiveListEnabled
 
 	friend TClass;
 
+public:
+	TClass* getPreviousListNode()
+	{
+		return m_prev;
+	}
+
+	const TClass* getPreviousListNode() const
+	{
+		return m_prev;
+	}
+
+	TClass* getNextListNode()
+	{
+		return m_next;
+	}
+
+	const TClass* getNextListNode() const
+	{
+		return m_next;
+	}
+
 private:
-	TClass* m_prev;
-	TClass* m_next;
+	TClass* m_prev = nullptr;
+	TClass* m_next = nullptr;
+};
 
-	IntrusiveListEnabled()
-		: m_prev(nullptr)
-		, m_next(nullptr)
+namespace detail {
+
+/// Specialization for IntrusiveListEnabled
+/// @internal
+template<typename TValue>
+class GetListNodeValueFunc<TValue, TValue>
+{
+public:
+	TValue& operator()(TValue& node)
 	{
+		return node;
 	}
 
-	TClass& getListNodeValue()
+	const TValue& operator()(const TValue& node) const
 	{
-		return *static_cast<TClass*>(this);
-	}
-
-	const TClass& getListNodeValue() const
-	{
-		return *static_cast<const TClass*>(this);
+		return node;
 	}
 };
 
-/// List that doesn't perform any allocations. To work the T nodes will have to inherit from IntrusiveListEnabled.
+} // end namespace detail
+
+/// List that doesn't perform any allocations. To work the T nodes will have to inherit from IntrusiveListEnabled or
+/// have 2 member variables `m_next` and `m_prev`.
 template<typename T>
 class IntrusiveList : public detail::ListBase<T, T>
 {
