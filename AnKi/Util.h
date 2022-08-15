@@ -44,6 +44,7 @@
 #include <AnKi/Util/BuddyAllocatorBuilder.h>
 #include <AnKi/Util/StackAllocatorBuilder.h>
 #include <AnKi/Util/ClassAllocatorBuilder.h>
+#include <AnKi/Util/SegregatedListsAllocatorBuilder.h>
 
 /// @defgroup util Utilities (like STL)
 

@@ -57,7 +57,7 @@ static Vec2 generateJitter(U32 frame)
 	F32 fraction = invBase;
 	while(index > 0)
 	{
-		result.x() += (index % baseX) * fraction;
+		result.x() += F32(index % baseX) * fraction;
 		index /= baseX;
 		fraction *= invBase;
 	}
@@ -68,7 +68,7 @@ static Vec2 generateJitter(U32 frame)
 	fraction = invBase;
 	while(index > 0)
 	{
-		result.y() += (index % baseY) * fraction;
+		result.y() += F32(index % baseY) * fraction;
 		index /= baseY;
 		fraction *= invBase;
 	}

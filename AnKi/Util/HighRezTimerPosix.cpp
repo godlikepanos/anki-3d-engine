@@ -66,7 +66,7 @@ void HighRezTimer::sleep(Second sec)
 Second HighRezTimer::getCurrentTime()
 {
 	// Second(ticks) / 1000.0
-	return static_cast<Second>(getNs()) * 1e-9;
+	return Second(getNs()) * 1e-9;
 }
 
 } // end namespace anki

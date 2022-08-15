@@ -106,7 +106,7 @@ extern void deleteTesterSingleton();
 			std::stringstream ss; \
 			ss << "FAILURE: " << #x << " != " << #y << " (" << file_ << ":" << line_ << ")"; \
 			fprintf(stderr, "%s\n", ss.str().c_str()); \
-			abort(); \
+			ANKI_DEBUG_BREAK(); \
 		} \
 	} while(0);
 
@@ -119,7 +119,7 @@ extern void deleteTesterSingleton();
 			std::stringstream ss; \
 			ss << "FAILURE: " << #x << " == " << #y << " (" << file_ << ":" << line_ << ")"; \
 			fprintf(stderr, "%s\n", ss.str().c_str()); \
-			abort(); \
+			ANKI_DEBUG_BREAK(); \
 		} \
 	} while(0);
 
@@ -132,7 +132,7 @@ extern void deleteTesterSingleton();
 			std::stringstream ss; \
 			ss << "FAILURE: " << #x << " > " << #y << " (" << file_ << ":" << line_ << ")"; \
 			fprintf(stderr, "%s\n", ss.str().c_str()); \
-			abort(); \
+			ANKI_DEBUG_BREAK(); \
 		} \
 	} while(0);
 
@@ -145,7 +145,7 @@ extern void deleteTesterSingleton();
 			std::stringstream ss; \
 			ss << "FAILURE: " << #x << " >= " << #y << " (" << file_ << ":" << line_ << ")"; \
 			fprintf(stderr, "%s\n", ss.str().c_str()); \
-			abort(); \
+			ANKI_DEBUG_BREAK(); \
 		} \
 	} while(0);
 
@@ -158,7 +158,7 @@ extern void deleteTesterSingleton();
 			std::stringstream ss; \
 			ss << "FAILURE: " << #x << " < " << #y << " (" << file_ << ":" << line_ << ")"; \
 			fprintf(stderr, "%s\n", ss.str().c_str()); \
-			abort(); \
+			ANKI_DEBUG_BREAK(); \
 		} \
 	} while(0);
 
@@ -171,7 +171,7 @@ extern void deleteTesterSingleton();
 			std::stringstream ss; \
 			ss << "FAILURE: " << #x << " <= " << #y << " (" << file_ << ":" << line_ << ")"; \
 			fprintf(stderr, "%s\n", ss.str().c_str()); \
-			abort(); \
+			ANKI_DEBUG_BREAK(); \
 		} \
 	} while(0);
 
@@ -186,7 +186,7 @@ extern void deleteTesterSingleton();
 			std::stringstream ss; \
 			ss << "FAILURE: " << #x << " != " << #y << " (" << file_ << ":" << line_ << ")"; \
 			fprintf(stderr, "%s\n", ss.str().c_str()); \
-			abort(); \
+			ANKI_DEBUG_BREAK(); \
 		} \
 	} while(0);
 

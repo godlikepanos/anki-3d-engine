@@ -202,6 +202,27 @@ private:
 #endif
 };
 
+/// Dummy mutex. Used mainly in tests.
+class DummyMutex
+{
+public:
+	// Does nothing.
+	void lock()
+	{
+	}
+
+	// Does nothing.
+	void unlock()
+	{
+	}
+
+	// Does nothing.
+	Bool tryLock()
+	{
+		return true;
+	}
+};
+
 /// Read write mutex.
 class RWMutex
 {

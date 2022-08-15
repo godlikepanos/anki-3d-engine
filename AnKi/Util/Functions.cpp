@@ -9,7 +9,8 @@
 
 namespace anki {
 
-thread_local std::mt19937_64 g_randromGenerator(U64(HighRezTimer::getCurrentTime() * 1000000.0));
+static std::random_device g_rd;
+thread_local static std::mt19937_64 g_randromGenerator(g_rd());
 
 U64 getRandom()
 {

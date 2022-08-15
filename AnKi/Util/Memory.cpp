@@ -97,7 +97,7 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes)
 	}
 	else
 	{
-		ANKI_UTIL_LOGE("_aligned_malloc() failed");
+		ANKI_UTIL_LOGE("_aligned_malloc() failed. Size %zu, alignment %zu", size, alignmentBytes);
 	}
 
 	return out;
