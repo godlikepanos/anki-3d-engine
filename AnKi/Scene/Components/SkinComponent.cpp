@@ -79,7 +79,7 @@ Error SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	Vec4 minExtend(MAX_F32, MAX_F32, MAX_F32, 0.0f);
 	Vec4 maxExtend(MIN_F32, MIN_F32, MIN_F32, 0.0f);
 
-	BitSet<128> bonesAnimated(false);
+	BitSet<256> bonesAnimated(false);
 
 	for(Track& track : m_tracks)
 	{
@@ -176,7 +176,11 @@ Error SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		m_crntBoneTrfs = m_crntBoneTrfs ^ 1;
 
 		// Walk the bone hierarchy to add additional transforms
-		visitBones(m_skeleton->getRootBone(), Mat4::getIdentity(), bonesAnimated, minExtend, maxExtend);
+		for(U32 i = 0; i < m_skeleton->getRootBoneCount(); ++i)
+		{
+			visitBones(m_skeleton->getRootBoneAt(i), Mat4::getIdentity(), bonesAnimated, minExtend,
+					   maxExtend);
+		}
 
 		const Vec4 E(EPSILON, EPSILON, EPSILON, 0.0f);
 		m_boneBoundingVolume.setMin(minExtend - E);
@@ -192,7 +196,7 @@ Error SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	return Error::NONE;
 }
 
-void SkinComponent::visitBones(const Bone& bone, const Mat4& parentTrf, const BitSet<128>& bonesAnimated,
+void SkinComponent::visitBones(const Bone& bone, const Mat4& parentTrf, const BitSet<256>& bonesAnimated,
 							   Vec4& minExtend, Vec4& maxExtend)
 {
 	Mat4 outMat;
