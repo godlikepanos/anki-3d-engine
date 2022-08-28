@@ -1,0 +1,174 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Texture Compression and Decompression &#8212; Compressonator Compressonator - latest build documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     'Compressonator - latest build',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Mesh Optimization" href="../mesh_optimization/index.html" />
+    <link rel="prev" title="Compressonator SDK" href="../cmp_compressonator/index.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="texture-compression-and-decompression">
+<h1>Texture Compression and Decompression<a class="headerlink" href="#texture-compression-and-decompression" title="Permalink to this headline">¶</a></h1>
+<p>For more details see Bibliography Reference (1)</p>
+<div class="section" id="bc1-block-s3tc-dxt1">
+<h2>BC1 Block (S3TC/DXT1)<a class="headerlink" href="#bc1-block-s3tc-dxt1" title="Permalink to this headline">¶</a></h2>
+<p>BC1 block consists of two base colors c0 and c1 and an index table (bitmap).</p>
+<p>The index table, however, has a two-bit entry, since BC1 allows for 2 additional colors, c2 and c3 obtained by blending of the base colors.
+All together c0, c1, c2 and c3 could be treated as a local palette for a compressed block.
+The base colors are stored in RGB565 format, i.e. 5 bits for red and blue channels and 6 bit for green channel, resulting in 4bpp compression level.</p>
+<p>There are two types of BC1 blocks: the first one that does not support transparency and the second one, that does.</p>
+</div>
+<div class="section" id="bc2-block-dxt2-dxt3">
+<h2>BC2 Block (DXT2/DXT3)<a class="headerlink" href="#bc2-block-dxt2-dxt3" title="Permalink to this headline">¶</a></h2>
+<p>The BC1 format can manage 24-bit RGB textures, but is unsuitable for 32-bit RGBA8888 textures.
+The BC2 block occupies 128 bit, twice the  BC1 size. Therefore, compression level is 8bpp.
+One half of the BC2 is reserved for alpha values with 4-bit precision, the other one is just a BC1 for storing RGB data</p>
+</div>
+<div class="section" id="bc3-block-dxt4-dxt5">
+<h2>BC3 Block (DXT4/DXT5)<a class="headerlink" href="#bc3-block-dxt4-dxt5" title="Permalink to this headline">¶</a></h2>
+<p>The BC3 block, likewise BC2, consists of two 64-bit parts: one for the alpha data and one for the color data.
+Color part repeats the BC1 layout as well, but the alpha part is stored in the compressed form.
+Alpha compression is very similar to the DXT1 except for the number of the channels; there are two endpoints with 8-bit precision and the table of 3-bit indexes allowing to choose one of the eight values of a local palette.</p>
+</div>
+<div class="section" id="bc4-block-ati1-3dc">
+<h2>BC4 Block (ATI1/3Dc+)<a class="headerlink" href="#bc4-block-ati1-3dc" title="Permalink to this headline">¶</a></h2>
+<p>The BC4 block (Figure 9) is just an alpha part of the BC3 block. It is used for 1-channel textures, for example a height map or a specular map. Decoded values are associated with the red channel.</p>
+</div>
+<div class="section" id="bc5-block-ati2-3dc">
+<h2>BC5 Block (ATI2/3Dc)<a class="headerlink" href="#bc5-block-ati2-3dc" title="Permalink to this headline">¶</a></h2>
+<p>The 3Dc format was originally developed by ATI specially for the normal map compression, as the DXT1 format did not provide the required quality for such data.
+Normal map contains information about the direction of normal vector for every texel, which allows one to compute lighting with high level of detail and without increasing the geometry complexity.</p>
+</div>
+<div class="section" id="bc6h">
+<h2>BC6H<a class="headerlink" href="#bc6h" title="Permalink to this headline">¶</a></h2>
+<p>The BC6H format is designed to compress textures with high dynamic range (HDR). Only RGB images without alpha are supported.
+The format uses 128-bit blocks, resulting in  8bpp compression level.
+Depending on the block type, a compressed block has a different set of fields and a different size of each field. This allows choosing the best encoding on the per block basis.
+This flexibility greatly reduces compression artifacts, but strongly complicates the compression procedure.
+The number of block types has increased to 14 for BC6H and to 8 for BC7. Unlike BC1, block type is set explicitly in the first bits of compressed block. Block type is also referred to as the block mode.</p>
+</div>
+<div class="section" id="bc7">
+<h2>BC7<a class="headerlink" href="#bc7" title="Permalink to this headline">¶</a></h2>
+<p>Improves quality be adding new formats that improve the endpoint precision and storing up to three pairs of endpoints.
+The format uses 128-bit blocks, resulting in  8bpp compression level.</p>
+<div class="toctree-wrapper compound" id="toc-developer-sdk-codecs">
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/acompress-128.png" alt="Logo"/>
+            </a></p>
+<h1 class="logo"><a href="../../index.html">Compressonator</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Content</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Developer SDK</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../command_line_tool/index.html">Command Line Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gui_tool/index.html">GUI Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../build_from_source/build_instructions.html">Build from GitHub Sources</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../analysis/index.html">Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../revisions.html">Revision History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../support/contact.html">Contact and Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../support/license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bibliography.html">Bibliography</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Developer SDK</a><ul>
+      <li>Previous: <a href="../cmp_compressonator/index.html" title="previous chapter">Compressonator SDK</a></li>
+      <li>Next: <a href="../mesh_optimization/index.html" title="next chapter">Mesh Optimization</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017 to 2021, AMD Developer Tools.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

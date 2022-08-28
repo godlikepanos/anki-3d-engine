@@ -425,7 +425,6 @@ public:
 	void upscale(const GrUpscalerPtr& upscaler, const TextureViewPtr& inColor, const TextureViewPtr& outUpscaledColor,
 				 const TextureViewPtr& motionVectors, const TextureViewPtr& depth, const TextureViewPtr& exposure,
 				 const Bool resetAccumulation, const Vec2& jitterOffset, const Vec2& motionVectorsScale);
-
 	/// @}
 
 	/// @name Sync

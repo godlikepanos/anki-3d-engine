@@ -8,6 +8,9 @@
 #include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Util/Tracer.h>
 #include <ZLib/contrib/minizip/unzip.h>
+#if ANKI_OS_ANDROID
+#	include <android_native_app_glue.h>
+#endif
 
 namespace anki {
 
@@ -204,7 +207,7 @@ ResourceFilesystem::~ResourceFilesystem()
 	m_cacheDir.destroy(m_alloc);
 }
 
-Error ResourceFilesystem::init(const ConfigSet& config, const CString& cacheDir)
+Error ResourceFilesystem::init(const ConfigSet& config)
 {
 	StringListAuto paths(m_alloc);
 	paths.splitString(config.getRsrcDataPaths(), ':');
@@ -248,22 +251,18 @@ Error ResourceFilesystem::init(const ConfigSet& config, const CString& cacheDir)
 		ANKI_CHECK(addNewPath(path.toCString(), excludedStrings));
 	}
 
-	addCachePath(cacheDir);
+#if ANKI_OS_ANDROID
+	// Add the external storage
+	ANKI_CHECK(addNewPath(g_androidApp->activity->externalDataPath, excludedStrings));
+#endif
 
 	return Error::NONE;
 }
 
-void ResourceFilesystem::addCachePath(const CString& path)
-{
-	Path p;
-	p.m_path.create(m_alloc, path);
-	p.m_isCache = true;
-
-	m_paths.emplaceBack(m_alloc, std::move(p));
-}
-
 Error ResourceFilesystem::addNewPath(const CString& filepath, const StringListAuto& excludedStrings)
 {
+	ANKI_RESOURCE_LOGV("Adding new resource path: %s", filepath.cstr());
+
 	U32 fileCount = 0; // Count files manually because it's slower to get that number from the list
 	static const CString extension(".ankizip");
 
@@ -390,56 +389,35 @@ Error ResourceFilesystem::openFileInternal(const ResourceFilename& filename, Res
 	// Search for the fname in reverse order
 	for(const Path& p : m_paths)
 	{
-		// Check if it's cache
-		if(p.m_isCache)
+		for(const String& pfname : p.m_files)
 		{
-			StringAuto newFname(m_alloc);
-			newFname.sprintf("%s/%s", &p.m_path[0], &filename[0]);
-
-			if(fileExists(newFname.toCString()))
+			if(pfname != filename)
 			{
-				// In cache
+				continue;
+			}
+
+			// Found
+			if(p.m_isArchive)
+			{
+				ZipResourceFile* file = m_alloc.newInstance<ZipResourceFile>(m_alloc);
+				rfile = file;
+
+				ANKI_CHECK(file->open(p.m_path.toCString(), filename));
+			}
+			else
+			{
+				StringAuto newFname(m_alloc);
+				newFname.sprintf("%s/%s", &p.m_path[0], &filename[0]);
 
 				CResourceFile* file = m_alloc.newInstance<CResourceFile>(m_alloc);
 				rfile = file;
-
-				ANKI_CHECK(file->m_file.open(&newFname[0], FileOpenFlag::READ));
-			}
-		}
-		else
-		{
-			// In data path or archive
-
-			for(const String& pfname : p.m_files)
-			{
-				if(pfname != filename)
-				{
-					continue;
-				}
-
-				// Found
-				if(p.m_isArchive)
-				{
-					ZipResourceFile* file = m_alloc.newInstance<ZipResourceFile>(m_alloc);
-					rfile = file;
-
-					ANKI_CHECK(file->open(p.m_path.toCString(), filename));
-				}
-				else
-				{
-					StringAuto newFname(m_alloc);
-					newFname.sprintf("%s/%s", &p.m_path[0], &filename[0]);
-
-					CResourceFile* file = m_alloc.newInstance<CResourceFile>(m_alloc);
-					rfile = file;
-					ANKI_CHECK(file->m_file.open(newFname, FileOpenFlag::READ));
+				ANKI_CHECK(file->m_file.open(newFname, FileOpenFlag::READ));
 
 #if 0
-					printf("Opening asset %s\n", &newFname[0]);
+				printf("Opening asset %s\n", &newFname[0]);
 #endif
-				}
 			}
-		} // end if cache
+		}
 
 		if(rfile)
 		{

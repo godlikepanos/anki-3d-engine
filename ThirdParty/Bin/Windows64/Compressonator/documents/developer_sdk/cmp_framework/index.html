@@ -1,0 +1,470 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>CMP Framework &#8212; Compressonator Compressonator - latest build documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     'Compressonator - latest build',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Compressonator SDK" href="../cmp_compressonator/index.html" />
+    <link rel="prev" title="CMP Core" href="../cmp_core/index.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="cmp-framework">
+<h1>CMP Framework<a class="headerlink" href="#cmp-framework" title="Permalink to this headline">¶</a></h1>
+<p>This library depends only on standard libaray.</p>
+<div class="section" id="cmp-error-codes">
+<h2>CMP Error Codes<a class="headerlink" href="#cmp-error-codes" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="k">typedef</span> <span class="k">enum</span> <span class="p">{</span>
+<span class="n">CMP_OK</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>                            <span class="c1">// Ok.</span>
+<span class="n">CMP_ABORTED</span><span class="p">,</span>                           <span class="c1">// The conversion was aborted.</span>
+<span class="n">CMP_ERR_INVALID_SOURCE_TEXTURE</span><span class="p">,</span>        <span class="c1">// The source texture is invalid.</span>
+<span class="n">CMP_ERR_INVALID_DEST_TEXTURE</span><span class="p">,</span>          <span class="c1">// The destination texture is invalid.</span>
+<span class="n">CMP_ERR_UNSUPPORTED_SOURCE_FORMAT</span><span class="p">,</span>     <span class="c1">// The source format is not a supported format.</span>
+<span class="n">CMP_ERR_UNSUPPORTED_DEST_FORMAT</span><span class="p">,</span>       <span class="c1">// The destination format is not a supported format.</span>
+<span class="n">CMP_ERR_UNSUPPORTED_GPU_ASTC_DECODE</span><span class="p">,</span>   <span class="c1">// The gpu hardware is not supported.</span>
+<span class="n">CMP_ERR_UNSUPPORTED_GPU_BASIS_DECODE</span><span class="p">,</span>  <span class="c1">// The gpu hardware is not supported.</span>
+<span class="n">CMP_ERR_SIZE_MISMATCH</span><span class="p">,</span>                 <span class="c1">// The source and destination texture sizes do not match.</span>
+<span class="n">CMP_ERR_UNABLE_TO_INIT_CODEC</span><span class="p">,</span>          <span class="c1">// Compressonator was unable to initialize the codec needed for conversion.</span>
+<span class="n">CMP_ERR_UNABLE_TO_INIT_DECOMPRESSLIB</span><span class="p">,</span>  <span class="c1">// GPU_Decode Lib was unable to initialize the codec needed for decompression .</span>
+<span class="n">CMP_ERR_UNABLE_TO_INIT_COMPUTELIB</span><span class="p">,</span>     <span class="c1">// Compute Lib was unable to initialize the codec needed for compression.</span>
+<span class="n">CMP_ERR_CMP_DESTINATION</span><span class="p">,</span>               <span class="c1">// Error in compressing destination texture</span>
+<span class="n">CMP_ERR_MEM_ALLOC_FOR_MIPSET</span><span class="p">,</span>          <span class="c1">// Memory Error: allocating MIPSet compression level data buffer</span>
+<span class="n">CMP_ERR_UNKNOWN_DESTINATION_FORMAT</span><span class="p">,</span>    <span class="c1">// The destination Codec Type is unknown! In SDK refer to GetCodecType()</span>
+<span class="n">CMP_ERR_FAILED_HOST_SETUP</span><span class="p">,</span>             <span class="c1">// Failed to setup Host for processing</span>
+<span class="n">CMP_ERR_PLUGIN_FILE_NOT_FOUND</span><span class="p">,</span>         <span class="c1">// The required plugin library was not found</span>
+<span class="n">CMP_ERR_UNABLE_TO_LOAD_FILE</span><span class="p">,</span>           <span class="c1">// The requested file was not loaded</span>
+<span class="n">CMP_ERR_UNABLE_TO_CREATE_ENCODER</span><span class="p">,</span>      <span class="c1">// Request to create an encoder failed</span>
+<span class="n">CMP_ERR_UNABLE_TO_LOAD_ENCODER</span><span class="p">,</span>        <span class="c1">// Unable to load an encode library</span>
+<span class="n">CMP_ERR_NOSHADER_CODE_DEFINED</span><span class="p">,</span>         <span class="c1">// No shader code is available for the requested framework</span>
+<span class="n">CMP_ERR_GPU_DOESNOT_SUPPORT_COMPUTE</span><span class="p">,</span>   <span class="c1">// The GPU device selected does not support compute</span>
+<span class="n">CMP_ERR_NOPERFSTATS</span><span class="p">,</span>                   <span class="c1">// No Performance Stats are available</span>
+<span class="n">CMP_ERR_GPU_DOESNOT_SUPPORT_CMP_EXT</span><span class="p">,</span>   <span class="c1">// The GPU does not support the requested compression extension!</span>
+<span class="n">CMP_ERR_GAMMA_OUTOFRANGE</span><span class="p">,</span>              <span class="c1">// Gamma value set for processing is out of range</span>
+<span class="n">CMP_ERR_PLUGIN_SHAREDIO_NOT_SET</span><span class="p">,</span>       <span class="c1">// The plugin C_PluginSetSharedIO call was not set and is required for this plugin to operate</span>
+<span class="n">CMP_ERR_UNABLE_TO_INIT_D3DX</span><span class="p">,</span>           <span class="c1">// Unable to initialize DirectX SDK or get a specific DX API</span>
+<span class="n">CMP_ERR_GENERIC</span>                        <span class="c1">// An unknown error occurred.</span>
+<span class="p">}</span> <span class="n">CMP_ERROR</span><span class="p">;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="kernel-options-and-extensions">
+<h2>Kernel Options and Extensions<a class="headerlink" href="#kernel-options-and-extensions" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="k">typedef</span> <span class="k">enum</span> <span class="n">CMPComputeExtensions</span> <span class="p">{</span>
+    <span class="n">CMP_COMPUTE_FP16</span> <span class="o">=</span> <span class="mh">0x0001</span><span class="p">,</span>       <span class="c1">///&lt; Enable Packed Math Option for GPU</span>
+    <span class="n">CMP_COMPUTE_MAX_ENUM</span> <span class="o">=</span> <span class="mh">0x7FFF</span>
+<span class="p">}</span> <span class="n">CMP_ComputeExtensions</span><span class="p">;</span>
+
+<span class="c1">/// An enum selecting the different GPU driver types.</span>
+<span class="k">typedef</span> <span class="k">enum</span> <span class="p">{</span>
+    <span class="n">CMP_CPU</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>   <span class="c1">//Use CPU Only, encoders defined CMP_CPUEncode or Compressonator lib will be used</span>
+    <span class="n">CMP_HPC</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>   <span class="c1">//Use CPU High Performance Compute Encoders with SPMD support defined in CMP_CPUEncode)</span>
+    <span class="n">CMP_GPU</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>   <span class="c1">//Use GPU Kernel Encoders to compress textures using Default GPU Framework auto set by the codecs been used</span>
+    <span class="n">CMP_GPU_OCL</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>   <span class="c1">//Use GPU Kernel Encoders to compress textures using OpenCL Framework</span>
+    <span class="n">CMP_GPU_DXC</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>   <span class="c1">//Use GPU Kernel Encoders to compress textures using DirectX Compute Framework</span>
+    <span class="n">CMP_GPU_VLK</span> <span class="o">=</span> <span class="mi">5</span>    <span class="c1">//Use GPU Kernel Encoders to compress textures using Vulkan Compute Framework</span>
+<span class="p">}</span> <span class="n">CMP_Compute_type</span><span class="p">;</span>
+
+
+<span class="k">struct</span> <span class="n">KernalOptions</span> <span class="p">{</span>
+    <span class="n">CMP_ComputeExtensions</span>   <span class="n">Extensions</span><span class="p">;</span> <span class="c1">// Compute extentions to use, set to 0 (default) if you are not using any extensions</span>
+    <span class="n">CMP_DWORD</span>  <span class="n">height</span><span class="p">;</span>                  <span class="c1">// Height of the encoded texture.</span>
+    <span class="n">CMP_DWORD</span>  <span class="n">width</span><span class="p">;</span>                   <span class="c1">// Width of the encoded texture.</span>
+    <span class="n">CMP_FLOAT</span>  <span class="n">fquality</span><span class="p">;</span>                <span class="c1">// Set the quality used for encoders 0.05 is the lowest and 1.0 for highest.</span>
+    <span class="n">CMP_FORMAT</span> <span class="n">format</span><span class="p">;</span>                  <span class="c1">// Encoder codec format to use for processing</span>
+    <span class="n">CMP_Compute_type</span> <span class="n">encodeWith</span><span class="p">;</span>        <span class="c1">// Host Type : default is HPC, options are [HPC or GPU (reserved for future use)]</span>
+    <span class="n">CMP_INT</span>    <span class="n">threads</span><span class="p">;</span>                 <span class="c1">// requested number of threads to use (1=single) max is 128 for HPC, 0 for Auto</span>
+<span class="p">};</span>
+
+<span class="k">typedef</span> <span class="k">enum</span> <span class="n">_CMP_ANALYSIS_MODES</span>
+<span class="p">{</span>
+    <span class="n">CMP_ANALYSIS_MSEPSNR</span> <span class="o">=</span> <span class="mh">0x00000000</span>  <span class="c1">// Enable Measurement of MSE and PSNR for 2 mipset image samples</span>
+<span class="p">}</span> <span class="n">CMP_ANALYSIS_MODES</span><span class="p">;</span>
+
+<span class="k">typedef</span> <span class="k">struct</span>
+<span class="p">{</span>
+    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">analysisMode</span><span class="p">;</span>     <span class="c1">// Bit mapped setting to enable various forms of image anlaysis</span>
+    <span class="kt">unsigned</span> <span class="kt">int</span>  <span class="n">channelBitMap</span><span class="p">;</span>    <span class="c1">// Bit setting for active channels to do analysis on and reserved features</span>
+                                    <span class="c1">// msb(....ABGR)lsb</span>
+    <span class="kt">double</span>        <span class="n">mse</span><span class="p">;</span>      <span class="c1">// Mean Square Error for all active channels in a given CMP_FORMAT</span>
+    <span class="kt">double</span>        <span class="n">mseR</span><span class="p">;</span>     <span class="c1">// Mean Square for Red Channel</span>
+    <span class="kt">double</span>        <span class="n">mseG</span><span class="p">;</span>     <span class="c1">// Mean Square for Green</span>
+    <span class="kt">double</span>        <span class="n">mseB</span><span class="p">;</span>     <span class="c1">// Mean Square for Blue</span>
+    <span class="kt">double</span>        <span class="n">mseA</span><span class="p">;</span>     <span class="c1">// Mean Square for Alpha</span>
+    <span class="kt">double</span>        <span class="n">psnr</span><span class="p">;</span>     <span class="c1">// Peak Signal Ratio for all active channels in a given CMP_FORMAT</span>
+    <span class="kt">double</span>        <span class="n">psnrR</span><span class="p">;</span>    <span class="c1">// Peak Signal Ratio for Red Chennel</span>
+    <span class="kt">double</span>        <span class="n">psnrG</span><span class="p">;</span>    <span class="c1">// Peak Signal Ratio for Green</span>
+    <span class="kt">double</span>        <span class="n">psnrB</span><span class="p">;</span>    <span class="c1">// Peak Signal Ratio for Blue</span>
+    <span class="kt">double</span>        <span class="n">psnrA</span><span class="p">;</span>    <span class="c1">// Peak Signal Ratio for Alpha</span>
+<span class="p">}</span> <span class="n">CMP_AnalysisData</span><span class="p">;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="encoder-settings">
+<h2>Encoder Settings<a class="headerlink" href="#encoder-settings" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="c1">// The structure describing block encoder level settings.</span>
+<span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+    <span class="kt">unsigned</span> <span class="kt">int</span>  <span class="n">width</span><span class="p">;</span>   <span class="c1">// Width of the encoded texture.</span>
+    <span class="kt">unsigned</span> <span class="kt">int</span>  <span class="n">height</span><span class="p">;</span>  <span class="c1">// Height of the encoded texture.</span>
+    <span class="kt">unsigned</span> <span class="kt">int</span>  <span class="n">pitch</span><span class="p">;</span>   <span class="c1">// Distance to start of next line..</span>
+    <span class="kt">float</span>         <span class="n">quality</span><span class="p">;</span> <span class="c1">// Set the quality used for encoders 0.05 is the lowest and 1.0 for highest.</span>
+    <span class="kt">unsigned</span> <span class="kt">int</span>  <span class="n">format</span><span class="p">;</span>  <span class="c1">// Format of the encoder to use: this is a enum set see compressonator.h CMP_FORMAT</span>
+<span class="p">}</span> <span class="n">CMP_EncoderSetting</span><span class="p">;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="mip-map-interfaces">
+<h2>Mip Map Interfaces<a class="headerlink" href="#mip-map-interfaces" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="c1">// MIP MAP Interfaces</span>
+<span class="n">CMP_INT</span> <span class="nf">CMP_MaxFacesOrSlices</span><span class="p">(</span><span class="k">const</span> <span class="n">CMP_MipSet</span><span class="o">*</span> <span class="n">pMipSet</span><span class="p">,</span> <span class="n">CMP_INT</span> <span class="n">nMipLevel</span><span class="p">);</span>
+<span class="n">CMP_INT</span> <span class="n">CMP_API</span> <span class="nf">CMP_CalcMinMipSize</span><span class="p">(</span><span class="n">CMP_INT</span> <span class="n">nHeight</span><span class="p">,</span> <span class="n">CMP_INT</span> <span class="n">nWidth</span><span class="p">,</span> <span class="n">CMP_INT</span> <span class="n">MipsLevel</span><span class="p">);</span>
+
+<span class="n">CMP_VOID</span> <span class="n">CMP_API</span> <span class="nf">CMP_FreeMipSet</span><span class="p">(</span><span class="n">CMP_MipSet</span> <span class="o">*</span><span class="n">MipSetIn</span><span class="p">);</span>
+<span class="n">CMP_VOID</span> <span class="n">CMP_API</span> <span class="nf">CMP_GetMipLevel</span><span class="p">(</span><span class="n">CMP_MipLevel</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="k">const</span> <span class="n">CMP_MipSet</span><span class="o">*</span> <span class="n">pMipSet</span><span class="p">,</span> <span class="n">CMP_INT</span> <span class="n">nMipLevel</span><span class="p">,</span> <span class="n">CMP_INT</span> <span class="n">nFaceOrSlice</span><span class="p">);</span>
+<span class="n">CMP_INT</span>  <span class="n">CMP_API</span> <span class="nf">CMP_CalcMaxMipLevel</span><span class="p">(</span><span class="n">CMP_INT</span> <span class="n">nHeight</span><span class="p">,</span> <span class="n">CMP_INT</span> <span class="n">nWidth</span><span class="p">,</span> <span class="n">CMP_BOOL</span> <span class="n">bForGPU</span><span class="p">);</span>
+<span class="n">CMP_INT</span>  <span class="n">CMP_API</span> <span class="nf">CMP_CalcMinMipSize</span><span class="p">(</span><span class="n">CMP_INT</span> <span class="n">nHeight</span><span class="p">,</span> <span class="n">CMP_INT</span> <span class="n">nWidth</span><span class="p">,</span> <span class="n">CMP_INT</span> <span class="n">MipsLevel</span><span class="p">);</span>
+
+<span class="n">CMP_INT</span>  <span class="n">CMP_API</span> <span class="nf">CMP_GenerateMIPLevels</span><span class="p">(</span><span class="n">CMP_MipSet</span> <span class="o">*</span><span class="n">pMipSet</span><span class="p">,</span> <span class="n">CMP_INT</span> <span class="n">nMinSize</span><span class="p">);</span>
+<span class="n">CMP_INT</span>  <span class="n">CMP_API</span> <span class="nf">CMP_GenerateMIPLevelsEx</span><span class="p">(</span><span class="n">CMP_MipSet</span><span class="o">*</span> <span class="n">pMipSet</span><span class="p">,</span> <span class="n">CMP_CFilterParams</span><span class="o">*</span> <span class="n">pCFilterParams</span><span class="p">);</span>
+
+<span class="n">CMP_ERROR</span> <span class="n">CMP_API</span> <span class="nf">CMP_CreateCompressMipSet</span><span class="p">(</span><span class="n">CMP_MipSet</span><span class="o">*</span> <span class="n">pMipSetCMP</span><span class="p">,</span> <span class="n">CMP_MipSet</span><span class="o">*</span> <span class="n">pMipSetSRC</span><span class="p">);</span>
+
+<span class="c1">// MIP Map Quality</span>
+<span class="n">CMP_UINT</span>  <span class="n">CMP_API</span> <span class="nf">CMP_getFormat_nChannels</span><span class="p">(</span><span class="n">CMP_FORMAT</span> <span class="n">format</span><span class="p">);</span>
+<span class="n">CMP_ERROR</span> <span class="n">CMP_API</span> <span class="nf">CMP_MipSetAnlaysis</span><span class="p">(</span><span class="n">CMP_MipSet</span><span class="o">*</span> <span class="n">src1</span><span class="p">,</span> <span class="n">CMP_MipSet</span><span class="o">*</span> <span class="n">src2</span><span class="p">,</span> <span class="n">CMP_INT</span> <span class="n">nMipLevel</span><span class="p">,</span> <span class="n">CMP_INT</span> <span class="n">nFaceOrSlice</span><span class="p">,</span> <span class="n">CMP_AnalysisData</span><span class="o">*</span> <span class="n">pAnalysisData</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="user-processing-callback">
+<h2>User Processing Callback<a class="headerlink" href="#user-processing-callback" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="c1">// CMP_MIPFeedback_Proc</span>
+<span class="c1">// Feedback function for conversion.</span>
+<span class="c1">// \param[in] fProgress The percentage progress of the texture compression.</span>
+<span class="c1">// \param[in] mipProgress The current MIP level been processed, value of fProgress = mipProgress</span>
+<span class="c1">// \return non-NULL(true) value to abort conversion</span>
+<span class="k">typedef</span> <span class="nf">bool</span><span class="p">(</span><span class="n">CMP_API</span><span class="o">*</span> <span class="n">CMP_MIPFeedback_Proc</span><span class="p">)(</span><span class="n">CMP_MIPPROGRESSPARAM</span> <span class="n">mipProgress</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="texture-load-and-save">
+<h2>Texture Load and Save<a class="headerlink" href="#texture-load-and-save" title="Permalink to this headline">¶</a></h2>
+<p>Has complete support for dds file format and limited versions of jpeg, png, bmp, hdr, psd, tga, gif, pic, psd, pgm and ppm file formats as used in std_image.h</p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="c1">//--------------------------------------------</span>
+<span class="c1">// CMP_Compute Lib: Texture Encoder Interfaces</span>
+<span class="c1">//--------------------------------------------</span>
+<span class="n">CMP_ERROR</span>  <span class="n">CMP_API</span> <span class="nf">CMP_LoadTexture</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">sourceFile</span><span class="p">,</span> <span class="n">CMP_MipSet</span> <span class="o">*</span><span class="n">pMipSet</span><span class="p">);</span>
+<span class="n">CMP_ERROR</span>  <span class="n">CMP_API</span> <span class="nf">CMP_SaveTexture</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">destFile</span><span class="p">,</span>   <span class="n">CMP_MipSet</span> <span class="o">*</span><span class="n">pMipSet</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="texture-processing">
+<h2>Texture Processing<a class="headerlink" href="#texture-processing" title="Permalink to this headline">¶</a></h2>
+<p>Two types of texture processing API are provided.</p>
+<p>CMP_ProcessTexture is a higher level call that sets up a complete framework and supports textures generated with mip level processing. this api uses the alternate framework API’s and CMP_ProcessTexture.</p>
+<p>CMP_CompressTexture is a lower level access API that users can use to setup processing textures. By default processing uses the Compressonator Core codecs with a CPU framework.</p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="n">CMP_ERROR</span>  <span class="n">CMP_API</span> <span class="nf">CMP_ProcessTexture</span><span class="p">(</span><span class="n">CMP_MipSet</span><span class="o">*</span> <span class="n">srcMipSet</span><span class="p">,</span> <span class="n">CMP_MipSet</span><span class="o">*</span> <span class="n">dstMipSet</span><span class="p">,</span> <span class="n">KernalOptions</span> <span class="n">kernelOptions</span><span class="p">,</span>  <span class="n">CMP_Feedback_Proc</span> <span class="n">pFeedbackProc</span><span class="p">);</span>
+<span class="n">CMP_ERROR</span>  <span class="n">CMP_API</span> <span class="nf">CMP_CompressTexture</span><span class="p">(</span><span class="n">KernalOptions</span> <span class="o">*</span><span class="n">options</span><span class="p">,</span><span class="n">CMP_MipSet</span> <span class="n">srcMipSet</span><span class="p">,</span><span class="n">CMP_MipSet</span> <span class="n">dstMipSet</span><span class="p">,</span><span class="n">CMP_Feedback_Proc</span> <span class="n">pFeedback</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="using-alternate-frameworks">
+<h2>Using Alternate Frameworks<a class="headerlink" href="#using-alternate-frameworks" title="Permalink to this headline">¶</a></h2>
+<p>These options provides user options to set setup the CMP_CompressTexture interface pipeline for CPU, HPC or GPU based processing, with the “encodeWith” option in KernelOptions.</p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="c1">//--------------------------------------------</span>
+<span class="c1">// CMP_Compute Lib: Host level interface</span>
+<span class="c1">//--------------------------------------------</span>
+<span class="n">CMP_ERROR</span> <span class="n">CMP_API</span> <span class="nf">CMP_CreateComputeLibrary</span><span class="p">(</span><span class="n">CMP_MipSet</span> <span class="o">*</span><span class="n">srcTexture</span><span class="p">,</span> <span class="n">KernelOptions</span>  <span class="o">*</span><span class="n">kernelOptions</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">Reserved</span><span class="p">);</span>
+<span class="n">CMP_ERROR</span> <span class="n">CMP_API</span> <span class="nf">CMP_DestroyComputeLibrary</span><span class="p">(</span><span class="n">CMP_BOOL</span> <span class="n">forceClose</span><span class="p">);</span>
+<span class="n">CMP_ERROR</span> <span class="n">CMP_API</span> <span class="nf">CMP_SetComputeOptions</span><span class="p">(</span><span class="n">ComputeOptions</span> <span class="o">*</span><span class="n">options</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="block-level-access">
+<h2>Block level Access<a class="headerlink" href="#block-level-access" title="Permalink to this headline">¶</a></h2>
+<p>Provides users with options to process any image block by providing a pointer to the source textures and destination buffers to be processed.
+The source pointer can be any location on the original texture as long as it is bounded within a valid 4x4 image block.
+The destination buffer must also be sufficiently large enough to hold the compressed buffer generated by the target format.</p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="c1">//---------------------------------------------------------</span>
+<span class="c1">// Generic API to access the core using CMP_EncoderSetting</span>
+<span class="c1">//----------------------------------------------------------</span>
+<span class="n">CMP_ERROR</span> <span class="n">CMP_API</span> <span class="nf">CMP_CreateBlockEncoder</span><span class="p">(</span><span class="kt">void</span> <span class="o">**</span><span class="n">blockEncoder</span><span class="p">,</span> <span class="n">CMP_EncoderSetting</span> <span class="n">encodeSettings</span><span class="p">);</span>
+<span class="kt">void</span>      <span class="n">CMP_API</span> <span class="nf">CMP_DestroyBlockEncoder</span><span class="p">(</span><span class="kt">void</span>  <span class="o">**</span><span class="n">blockEncoder</span><span class="p">);</span>
+
+<span class="n">CMP_ERROR</span> <span class="n">CMP_API</span> <span class="nf">CMP_CompressBlock</span><span class="p">(</span><span class="kt">void</span>  <span class="o">**</span><span class="n">blockEncoder</span><span class="p">,</span><span class="kt">void</span> <span class="o">*</span><span class="n">srcBlock</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">sourceStride</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">dstBlock</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">dstStride</span><span class="p">);</span>
+<span class="n">CMP_ERROR</span> <span class="n">CMP_API</span> <span class="nf">CMP_CompressBlockXY</span><span class="p">(</span><span class="kt">void</span>  <span class="o">**</span><span class="n">blockEncoder</span><span class="p">,</span><span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">blockx</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">blocky</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">imgSrc</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">sourceStride</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">cmpDst</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">dstStride</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="format-and-processor-utils">
+<h2>Format and Processor Utils<a class="headerlink" href="#format-and-processor-utils" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="n">CMP_VOID</span>   <span class="n">CMP_API</span> <span class="nf">CMP_Format2FourCC</span><span class="p">(</span><span class="n">CMP_FORMAT</span> <span class="n">format</span><span class="p">,</span>   <span class="n">CMP_MipSet</span> <span class="o">*</span><span class="n">pMipSet</span><span class="p">);</span>
+<span class="n">CMP_FORMAT</span> <span class="n">CMP_API</span> <span class="nf">CMP_ParseFormat</span><span class="p">(</span><span class="kt">char</span><span class="o">*</span> <span class="n">pFormat</span><span class="p">);</span>
+<span class="n">CMP_INT</span>    <span class="n">CMP_API</span> <span class="nf">CMP_NumberOfProcessors</span><span class="p">();</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="framework-example-mip-level-processing">
+<h2>Framework Example: Mip Level Processing<a class="headerlink" href="#framework-example-mip-level-processing" title="Permalink to this headline">¶</a></h2>
+<p>You will need to include a header file and a lib file: <strong>CMP_Framework</strong> and <strong>CMP_Framework_MD.lib</strong></p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span>     <span class="n">pszSourceFile</span> <span class="o">=</span> <span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+<span class="k">const</span> <span class="kt">char</span><span class="o">*</span>     <span class="n">pszDestFile</span>   <span class="o">=</span> <span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+<span class="n">CMP_FORMAT</span>      <span class="n">destFormat</span>    <span class="o">=</span> <span class="n">CMP_ParseFormat</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">3</span><span class="p">]);</span>
+<span class="n">CMP_ERROR</span>       <span class="n">cmp_status</span><span class="p">;</span>
+<span class="n">CMP_FLOAT</span>       <span class="n">fQuality</span><span class="p">;</span>
+
+<span class="n">try</span> <span class="p">{</span>
+  <span class="n">fQuality</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">stof</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">4</span><span class="p">]);</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">fQuality</span> <span class="o">&lt;</span> <span class="mf">0.0f</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">fQuality</span> <span class="o">=</span> <span class="mf">0.0f</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;Warning: Quality setting is out of range using 0.0</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">fQuality</span> <span class="o">&gt;</span> <span class="mf">1.0f</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">fQuality</span> <span class="o">=</span> <span class="mf">1.0f</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;Warning: Quality setting is out of range using 1.0</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span> <span class="n">catch</span> <span class="p">(...)</span> <span class="p">{</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;Error: Unable to process quality setting</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+  <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">if</span> <span class="p">(</span><span class="n">destFormat</span> <span class="o">==</span> <span class="n">CMP_FORMAT_Unknown</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;Error: Unsupported destination format</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">//---------------</span>
+<span class="c1">// Load the image</span>
+<span class="c1">//---------------</span>
+<span class="n">CMP_MipSet</span> <span class="n">MipSetIn</span><span class="p">;</span>
+<span class="n">memset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">MipSetIn</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">CMP_MipSet</span><span class="p">));</span>
+<span class="n">cmp_status</span> <span class="o">=</span> <span class="n">CMP_LoadTexture</span><span class="p">(</span><span class="n">pszSourceFile</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">MipSetIn</span><span class="p">);</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">cmp_status</span> <span class="o">!=</span> <span class="n">CMP_OK</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;Error %d: Loading source file!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="n">cmp_status</span><span class="p">);</span>
+    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">//----------------------------------------------------------------------</span>
+<span class="c1">// generate mipmap level for the source image, if not already generated</span>
+<span class="c1">//----------------------------------------------------------------------</span>
+
+<span class="k">if</span> <span class="p">(</span><span class="n">MipSetIn</span><span class="p">.</span><span class="n">m_nMipLevels</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">CMP_INT</span> <span class="n">requestLevel</span> <span class="o">=</span> <span class="mi">10</span><span class="p">;</span> <span class="c1">// Request 10 miplevels for the source image</span>
+
+    <span class="c1">//------------------------------------------------------------------------</span>
+    <span class="c1">// Checks what the minimum image size will be for the requested mip levels</span>
+    <span class="c1">// if the request is too large, a adjusted minimum size will be returns</span>
+    <span class="c1">//------------------------------------------------------------------------</span>
+    <span class="n">CMP_INT</span> <span class="n">nMinSize</span> <span class="o">=</span> <span class="n">CMP_CalcMinMipSize</span><span class="p">(</span><span class="n">MipSetIn</span><span class="p">.</span><span class="n">m_nHeight</span><span class="p">,</span> <span class="n">MipSetIn</span><span class="p">.</span><span class="n">m_nWidth</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span>
+
+    <span class="c1">//--------------------------------------------------------------</span>
+    <span class="c1">// now that the minimum size is known, generate the miplevels</span>
+    <span class="c1">// users can set any requested minumum size to use. The correct</span>
+    <span class="c1">// miplevels will be set acordingly.</span>
+    <span class="c1">//--------------------------------------------------------------</span>
+    <span class="n">CMP_GenerateMIPLevels</span><span class="p">(</span><span class="o">&amp;</span><span class="n">MipSetIn</span><span class="p">,</span> <span class="n">nMinSize</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c1">//==========================</span>
+<span class="c1">// Set Compression Options</span>
+<span class="c1">//==========================</span>
+<span class="n">KernalOptions</span>   <span class="n">kernel_options</span><span class="p">;</span>
+<span class="n">memset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">kernel_options</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">KernalOptions</span><span class="p">));</span>
+
+<span class="n">kernel_options</span><span class="p">.</span><span class="n">format</span>   <span class="o">=</span> <span class="n">destFormat</span><span class="p">;</span>   <span class="c1">// Set the format to process</span>
+<span class="n">kernel_options</span><span class="p">.</span><span class="n">fquality</span> <span class="o">=</span> <span class="n">fQuality</span><span class="p">;</span>     <span class="c1">// Set the quality of the result</span>
+<span class="n">kernel_options</span><span class="p">.</span><span class="n">threads</span>  <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>            <span class="c1">// Auto setting</span>
+
+<span class="c1">//--------------------------------------------------------------</span>
+<span class="c1">// Setup a results buffer for the processed file,</span>
+<span class="c1">// the content will be set after the source texture is processed</span>
+<span class="c1">// in the call to CMP_ConvertMipTexture()</span>
+<span class="c1">//--------------------------------------------------------------</span>
+<span class="n">CMP_MipSet</span> <span class="n">MipSetCmp</span><span class="p">;</span>
+<span class="n">memset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">MipSetCmp</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">CMP_MipSet</span><span class="p">));</span>
+
+<span class="c1">//===============================================</span>
+<span class="c1">// Compress the texture using Compressonator Lib</span>
+<span class="c1">//===============================================</span>
+<span class="n">cmp_status</span> <span class="o">=</span> <span class="n">CMP_ProcessTexture</span><span class="p">(</span><span class="o">&amp;</span><span class="n">MipSetIn</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">MipSetCmp</span><span class="p">,</span> <span class="n">kernel_options</span><span class="p">,</span> <span class="n">CompressionCallback</span><span class="p">);</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">cmp_status</span> <span class="o">!=</span> <span class="n">CMP_OK</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">CMP_FreeMipSet</span><span class="p">(</span><span class="o">&amp;</span><span class="n">MipSetIn</span><span class="p">);</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;Compression returned an error %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">cmp_status</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">cmp_status</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">//----------------------------------------------------------------</span>
+<span class="c1">// Save the result into a DDS file</span>
+<span class="c1">//----------------------------------------------------------------</span>
+<span class="n">cmp_status</span> <span class="o">=</span> <span class="n">CMP_SaveTexture</span><span class="p">(</span><span class="n">pszDestFile</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">MipSetCmp</span><span class="p">);</span>
+<span class="n">CMP_FreeMipSet</span><span class="p">(</span><span class="o">&amp;</span><span class="n">MipSetIn</span><span class="p">);</span>
+<span class="n">CMP_FreeMipSet</span><span class="p">(</span><span class="o">&amp;</span><span class="n">MipSetCmp</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Example projects have been provided <a class="reference external" href="https://github.com/GPUOpen-Tools/Compressonator/tree/master/examples/">here</a> with:</p>
+<ul class="simple">
+<li>framework_example1 demonstrates simple SDK API usage by generating mipmap levels as shown above.</li>
+<li>framework_example2 demonstrates how to use the SDK API compression format, using a quality setting and a HPC pipeline framework.</li>
+<li>framework_exmaple3 demonstrates how to use the block level encoding SDK API.</li>
+</ul>
+<p>These examples are also distributed through Compressonator Framework installer in the <a class="reference external" href="https://github.com/GPUOpen-Tools/Compressonator/releases">release</a> page.</p>
+</div>
+<div class="section" id="using-the-pipeline-api-interfaces">
+<h2>Using the Pipeline API Interfaces<a class="headerlink" href="#using-the-pipeline-api-interfaces" title="Permalink to this headline">¶</a></h2>
+<p>These interfaces are designed to setup a specific data processing pipeline for:</p>
+<ul class="simple">
+<li>CPU generated code (1) using standard compilers such Visual Studio, GCC, Clang, …</li>
+<li>Vectorized CPU generated code (2) using SPMD (Single Process Multi Data) compilers such as ISPC compiler and libs.</li>
+<li>GPU Kernels using OpenCL, DirectX or Vulkan compilers.</li>
+</ul>
+<p>To distinguish code used for (1) &amp; (2) Compressonator uses the notation CPU &amp; HPC respectively.
+The GPU setting is reserved for future release.</p>
+<p>Compressonator framework sets up the path using Encoder Settings options for processing source data at a block level using the Compressonator Core. if the pipeline fails to setup then the data processing will default to the CPU (1) process.</p>
+<p>To use the block level encoders, you must first create a specific encoder to access its block functions, this is done by calling CMP_CreateBlockEncoder (), by passing in a void reference pointer for the codec you want to create.  This API requires you to specify which codec format type you are creating using a CMP_EncoderSetting structure format setting.  An optional parameter is provided for setting the quality of the encoded blocks.</p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="kt">void</span> <span class="o">*</span><span class="n">BC7encoder</span><span class="p">;</span>
+<span class="n">BC7encoder</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+<span class="n">CMP_EncoderSetting</span> <span class="n">encodeSettings</span><span class="p">;</span>
+
+<span class="n">encodeSettings</span><span class="p">.</span><span class="n">format</span> <span class="o">=</span> <span class="n">CMP_FORMAT_BC7</span><span class="p">;</span>
+<span class="n">encodeSettings</span><span class="p">.</span><span class="n">quality</span><span class="o">=</span> <span class="mf">1.0f</span><span class="p">;</span>
+
+<span class="n">CMP_ERROR</span> <span class="n">status</span> <span class="o">=</span> <span class="n">CMP_CreateBlockEncoder</span><span class="p">(</span><span class="o">&amp;</span><span class="n">BC7block_encoder</span><span class="p">,</span> <span class="n">encodeSettings</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>If the create is successful the call will return CMP_OK else it will return a CMP_ERROR value.
+Once you have the reference pointer you can call the block encode CMP_CompressBlock () passing in the reference pointer and two block level buffers, one for the source and one for the compressed output.</p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="n">status</span> <span class="o">=</span> <span class="n">CMP_CompressBlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">BC7encoder</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span><span class="n">sourceBlock</span><span class="p">,(</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span><span class="n">compressBlock</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>For users who want to use a fixed source buffer and destination buffer and have the codec process any specified block offset to them, a call to CMP_CompressBlockXY () is provided. In order for the call to process the correct buffer offset, the original source buffer sizes must be provided during the codec create by specifying the size of the image using the EncoderSetting width and height parameters for the CMP_CreateBlockEncoder call.</p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="n">encodeSettings</span><span class="p">.</span><span class="n">width</span>  <span class="o">=</span> <span class="n">SourceBufferWidth</span><span class="p">;</span>
+<span class="n">encodeSettings</span><span class="p">.</span><span class="n">height</span> <span class="o">=</span> <span class="n">SourceBufferHeight</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>Once this is set the user can call CMP_CompressBlockXY which has a reference to the codec pointer and block locations x for column, y for the height and the fixed source and destination buffer pointers.</p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="n">CMP_CompressBlockXY</span><span class="p">(</span><span class="o">&amp;</span><span class="n">BC7encoder</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span> <span class="n">sourceBufferData</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span> <span class="n">compBufferData</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Both the source and destination buffers must be a correctly sized buffers for the encoders to use.</p>
+<p>Once the processing is done the codec reference pointers can be removes from memory by calling CMP_DestroyBlockEncoder passing in the codec reference pointer.</p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="n">CMP_DestroyBlockEncoder</span><span class="p">(</span><span class="o">&amp;</span><span class="n">BC7encoder</span><span class="p">);</span>
+</pre></div>
+</div>
+<div class="toctree-wrapper compound" id="toc-developer-sdk-cmp-framework">
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/acompress-128.png" alt="Logo"/>
+            </a></p>
+<h1 class="logo"><a href="../../index.html">Compressonator</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Content</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Developer SDK</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../command_line_tool/index.html">Command Line Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gui_tool/index.html">GUI Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../build_from_source/build_instructions.html">Build from GitHub Sources</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../analysis/index.html">Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../revisions.html">Revision History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../support/contact.html">Contact and Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../support/license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bibliography.html">Bibliography</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Developer SDK</a><ul>
+      <li>Previous: <a href="../cmp_core/index.html" title="previous chapter">CMP Core</a></li>
+      <li>Next: <a href="../cmp_compressonator/index.html" title="next chapter">Compressonator SDK</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017 to 2021, AMD Developer Tools.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

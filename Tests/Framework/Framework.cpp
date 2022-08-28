@@ -288,7 +288,7 @@ ResourceManager* createResourceManager(ConfigSet* cfg, GrManager* gr, PhysicsWor
 	ANKI_TEST_EXPECT_NO_ERR(physics->init(allocAligned, nullptr));
 
 	resourceFs = new ResourceFilesystem(alloc);
-	ANKI_TEST_EXPECT_NO_ERR(resourceFs->init(*cfg, "./"));
+	ANKI_TEST_EXPECT_NO_ERR(resourceFs->init(*cfg));
 
 	ResourceManagerInitInfo rinit;
 	rinit.m_gr = gr;

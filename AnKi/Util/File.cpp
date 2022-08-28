@@ -382,7 +382,12 @@ Error File::writeText(CString text)
 	ANKI_ASSERT((m_flags & FileOpenFlag::WRITE) != FileOpenFlag::NONE);
 	ANKI_ASSERT((m_flags & FileOpenFlag::BINARY) == FileOpenFlag::NONE);
 
-	const PtrSize writeSize = text.getLength() + 1;
+	const PtrSize writeSize = text.getLength();
+	if(ANKI_UNLIKELY(writeSize == 0))
+	{
+		return Error::NONE;
+	}
+
 	const PtrSize writenSize = fwrite(text.cstr(), 1, writeSize, ANKI_CFILE);
 
 	if(writeSize != writenSize)

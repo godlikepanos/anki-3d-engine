@@ -1,0 +1,256 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>The Main Window &#8212; Compressonator Compressonator - latest build documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     'Compressonator - latest build',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Image View" href="imageview.html" />
+    <link rel="prev" title="Application Requirements" href="introduction.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="the-main-window">
+<h1>The Main Window<a class="headerlink" href="#the-main-window" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound" id="toc-gui-themainwindow">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="imageview.html">Image View</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="imageview.html#viewing-images">Viewing Images</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="imageview.html#using-a-mouse-wheel-for-zoom">Using a Mouse Wheel for Zoom</a></li>
+<li class="toctree-l3"><a class="reference internal" href="imageview.html#using-the-mouse-to-move-the-image-in-the-view">Using the Mouse to Move the Image in the View</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="imageview.html#adding-additional-image-formats">Adding additional Image Formats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="imageview.html#ktx2-support-notes">KTX2 Support Notes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="imageview.html#image-view-switch-between-original-and-processed">Image View switch between Original and Processed</a></li>
+<li class="toctree-l2"><a class="reference internal" href="imageview.html#psnr-display-feature-for-gui-image-views">PSNR Display Feature for GUI Image Views</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="toolbars.html">Toolbars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="applicationoptions.html">Application Options</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="applicationoptions.html#encode-with">Encode with</a></li>
+<li class="toctree-l2"><a class="reference internal" href="applicationoptions.html#decode-with">Decode with</a></li>
+<li class="toctree-l2"><a class="reference internal" href="applicationoptions.html#reload-image-views-on-selection">Reload Image Views on Selection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="applicationoptions.html#close-all-image-views-prior-to-process">Close all Image Views Prior to Process</a></li>
+<li class="toctree-l2"><a class="reference internal" href="applicationoptions.html#mouse-click-on-icon-to-view-image">Mouse click on icon to view image</a></li>
+<li class="toctree-l2"><a class="reference internal" href="applicationoptions.html#load-recent-project-on-startup">Load Recent Project on Startup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="applicationoptions.html#set-image-diff-contrast">Set Image Diff Contrast</a></li>
+<li class="toctree-l2"><a class="reference internal" href="applicationoptions.html#set-number-of-threads">Set Number of Threads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="applicationoptions.html#render-models-with">Render Models with</a></li>
+<li class="toctree-l2"><a class="reference internal" href="applicationoptions.html#show-mse-psnr-ssim-results">Show MSE PSNR SSIM Results</a></li>
+<li class="toctree-l2"><a class="reference internal" href="applicationoptions.html#show-analysis-results-table">Show Analysis Results Table</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="propertyview.html">Property View</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="propertyview.html#properties">Properties</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="projectexplorer.html">Project Explorer</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="projectexplorer.html#projects">Projects</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="projectexplorer.html#sample-projects">Sample Projects</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="projectexplorer.html#add-destination-settings">Add Destination Settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="projectexplorer.html#using-codec-quality-settings">Using Codec Quality Settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="projectexplorer.html#setting-global-quality-settings">Setting Global Quality Settings</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="messageoutput.html">Message Output</a></li>
+</ul>
+</div>
+<p><img alt="image9" src="../../_images/image9.png" /></p>
+<div class="section" id="detaching-windows-from-the-application">
+<h2>Detaching Windows from the Application<a class="headerlink" href="#detaching-windows-from-the-application" title="Permalink to this headline">¶</a></h2>
+<p>With the mouse position next to any gray shaded area next to the title
+of the window, press down the left mouse key and at the same time slide
+the mouse cursor away from the application. This will detach the window
+and allow you to position it at a new location, either inside the
+application or at a new desktop screen location. Once you have
+positioned the window to where it is desired, simply release the left
+mouse key.</p>
+<p>Above are illustrations of where the mouse can be positioned for moving
+the window.</p>
+<p>Note: The Project View window is not moveable.</p>
+<p>When the window is moved “Un-Docked” around the application a blue
+shaded area will be displayed showing what new places the moved window
+can be placed.</p>
+<p>Window with Blue shaded application section.</p>
+<p>Example of Window outside of the application.</p>
+<p>The advantage of moving windows outside of the application is to provide
+a larger viewing area for the image and allow side by side comparisons
+when using multiple monitors.</p>
+</div>
+<div class="section" id="batch-processing-from-command-line-tool">
+<h2>Batch Processing from Command Line Tool<a class="headerlink" href="#batch-processing-from-command-line-tool" title="Permalink to this headline">¶</a></h2>
+<p>Once a project has been setup, just like processing from the GUI you can
+also setup processing using the CompressonatorCLI command line tool. The
+Command line tool has more options that are currently not supported on
+the GUI application. While 3D mesh process is not supported on Command
+line tool yet.</p>
+<p>Once the Batch file are generated from the GUI, it can be edited to
+include more options used by the command line tool. This also
+facilitates automated generation of compressed files from many source
+textures.</p>
+<p>Steps to generate a batch file:</p>
+<ul class="simple">
+<li>Creating a project file and set up the desired destination settings.</li>
+<li>Open the file menu and select “Export to batch file…”</li>
+<li>Select a destination file name and location to generate a batch file
+that can be run from command line.</li>
+<li>Select Save.</li>
+</ul>
+<p>The batch file requires the CompressonatorCLI.exe, support file folders
+and DLL to be present on the same location.</p>
+<p>The following files are required to run CompressonatorCLI.exe with the
+batch file:</p>
+<p>… Include all files and subfolders under that folder</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="39%" />
+<col width="61%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">\plugins...</th>
+<th class="head">Qt Windows DLL and Qt Image Plugins</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>CompressonatorCLI.exe</td>
+<td>Command line Application</td>
+</tr>
+<tr class="row-odd"><td>qt.conf</td>
+<td>Specifies the plugin folder</td>
+</tr>
+<tr class="row-even"><td>Qt5Gui.dll</td>
+<td>Qt Run time DLL’s</td>
+</tr>
+<tr class="row-odd"><td>Qt5Core.dll</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>libGLESv2.dll</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>libEGL.dll</td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+<p>`</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/acompress-128.png" alt="Logo"/>
+            </a></p>
+<h1 class="logo"><a href="../../index.html">Compressonator</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Content</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../developer_sdk/index.html">Developer SDK</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../command_line_tool/index.html">Command Line Tool</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">GUI Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../build_from_source/build_instructions.html">Build from GitHub Sources</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../analysis/index.html">Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../revisions.html">Revision History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../support/contact.html">Contact and Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../support/license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bibliography.html">Bibliography</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">GUI Tool</a><ul>
+  <li><a href="index.html">GUI User Guide</a><ul>
+      <li>Previous: <a href="introduction.html" title="previous chapter">Application Requirements</a></li>
+      <li>Next: <a href="imageview.html" title="next chapter">Image View</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017 to 2021, AMD Developer Tools.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

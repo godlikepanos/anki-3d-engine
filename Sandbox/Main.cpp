@@ -27,15 +27,21 @@ MyApp* app = nullptr;
 
 Error MyApp::init(int argc, char* argv[])
 {
+#if !ANKI_OS_ANDROID
 	if(argc < 2)
 	{
 		ANKI_LOGE("usage: %s relative/path/to/scene.lua [anki config options]", argv[0]);
 		return Error::USER_DATA;
 	}
+#endif
 
 	// Config
 	m_config.init(allocAligned, nullptr);
+#if ANKI_OS_ANDROID
+	ANKI_CHECK(m_config.setFromCommandLineArguments(argc - 1, argv + 1));
+#else
 	ANKI_CHECK(m_config.setFromCommandLineArguments(argc - 2, argv + 2));
+#endif
 
 	// Init super class
 	ANKI_CHECK(App::init(&m_config, allocAligned, nullptr));
@@ -52,7 +58,11 @@ Error MyApp::init(int argc, char* argv[])
 
 	// Load scene
 	ScriptResourcePtr script;
+#if ANKI_OS_ANDROID
+	ANKI_CHECK(resources.loadResource("Scene.lua", script));
+#else
 	ANKI_CHECK(resources.loadResource(argv[1], script));
+#endif
 	ANKI_CHECK(getScriptManager().evalString(script->getSource()));
 
 	// ANKI_CHECK(renderer.getFinalComposite().loadColorGradingTexture(

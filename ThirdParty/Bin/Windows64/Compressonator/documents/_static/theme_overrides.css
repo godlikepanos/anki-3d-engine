@@ -1,0 +1,13 @@
+
+
+img {
+  max-width: 100%;
+  max-height: auto;
+  box-shadow: 6px 6px #eee;
+  -ms-interpolation-mode: bicubic;
+  border: 1px solid #ccc;
+}
+
+table {
+	font-size: 12px;
+}

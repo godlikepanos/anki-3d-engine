@@ -1,0 +1,216 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Mesh Compression &#8212; Compressonator Compressonator - latest build documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     'Compressonator - latest build',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Command Line Tool" href="../../command_line_tool/index.html" />
+    <link rel="prev" title="Mesh Optimization" href="../mesh_optimization/index.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="mesh-compression">
+<h1>Mesh Compression<a class="headerlink" href="#mesh-compression" title="Permalink to this headline">¶</a></h1>
+<p>As of v4.2 glTF draco mesh compression is no longer supported.
+Reference CMP_Mesh lib for alternate implementations.</p>
+<p>Mesh compression/decompression provided in Compressonator by adding the following lines:</p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="c1">//========================================</span>
+<span class="c1">// Mesh Compression and Decompression</span>
+<span class="c1">//========================================</span>
+<span class="n">std</span><span class="o">::</span><span class="n">string</span>         <span class="n">src_file</span> <span class="o">=</span> <span class="s">&quot;source.gltf&quot;</span><span class="p">;</span>       <span class="c1">//input source glTF file</span>
+<span class="n">std</span><span class="o">::</span><span class="n">string</span>         <span class="n">dst_file</span> <span class="o">=</span> <span class="s">&quot;destination.gltf&quot;</span><span class="p">;</span>  <span class="c1">//output destination glTF file</span>
+<span class="n">std</span><span class="o">::</span><span class="n">string</span>         <span class="n">err</span><span class="p">;</span>                            <span class="c1">//error messages</span>
+<span class="n">tinygltf2</span><span class="o">::</span><span class="n">Model</span>    <span class="n">model</span><span class="p">;</span>
+<span class="n">tinygltf2</span><span class="o">::</span><span class="n">TinyGLTF</span> <span class="n">loader</span><span class="p">;</span>
+<span class="n">tinygltf2</span><span class="o">::</span><span class="n">TinyGLTF</span> <span class="n">saver</span><span class="p">;</span>
+
+<span class="kt">bool</span> <span class="n">perform_mesh_compression</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>  <span class="c1">//flag to turn on/off compression</span>
+<span class="kt">bool</span> <span class="n">is_src_file_draco</span>        <span class="o">=</span> <span class="nb">false</span><span class="p">;</span> <span class="c1">//flag to indicate source file is compressed or not-</span>
+                                       <span class="c1">//can be replaced with helper function provided below to check for glTF compressed file</span>
+
+<span class="kt">bool</span> <span class="n">ret</span> <span class="o">=</span> <span class="n">loader</span><span class="p">.</span><span class="n">LoadASCIIFromFile</span><span class="p">(</span><span class="o">&amp;</span><span class="n">model</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">err</span><span class="p">,</span> <span class="n">src_file</span><span class="p">,</span> <span class="n">perform_mesh_compression</span><span class="p">);</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">ret</span><span class="p">)</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;read success&quot;</span><span class="p">);</span>
+<span class="k">else</span>
+    <span class="nf">printf</span><span class="p">(</span><span class="s">&quot;read fail: %s&quot;</span><span class="p">,</span> <span class="n">err</span><span class="p">);</span>
+
+<span class="n">err</span><span class="p">.</span><span class="n">clear</span><span class="p">();</span>
+
+<span class="n">CMP_CompressOptions</span> <span class="n">CompressOptions</span><span class="p">;</span>
+<span class="c1">// it is recommended to use only default settings, other settings may result in corrupt in resource like texture.</span>
+<span class="n">CompressOptions</span><span class="p">.</span><span class="n">iCmpLevel</span>    <span class="o">=</span> <span class="n">CMP_MESH_COMP_LEVEL</span><span class="p">;</span>    <span class="c1">//setting: compression level (range 0-10: higher mean more compressed) - default 7</span>
+<span class="n">CompressOptions</span><span class="p">.</span><span class="n">iPosBits</span>     <span class="o">=</span> <span class="n">CMP_MESH_POS_BITS</span><span class="p">;</span>      <span class="c1">//setting: quantization bits for position - default 14</span>
+<span class="n">CompressOptions</span><span class="p">.</span><span class="n">iTexCBits</span>    <span class="o">=</span> <span class="n">CMP_MESH_TEXC_BITS</span><span class="p">;</span>     <span class="c1">//setting: quantization bits for texture coordinates - default 12</span>
+<span class="n">CompressOptions</span><span class="p">.</span><span class="n">iNormalBits</span>  <span class="o">=</span> <span class="n">CMP_MESH_NORMAL_BITS</span><span class="p">;</span>   <span class="c1">//setting: quantization bits for normal - default 10</span>
+<span class="n">CompressOptions</span><span class="p">.</span><span class="n">iGenericBits</span> <span class="o">=</span> <span class="n">CMP_MESH_GENERIC_BITS</span><span class="p">;</span>  <span class="c1">//setting: quantization bits for generic - default 8</span>
+
+<span class="n">ret</span> <span class="o">=</span> <span class="n">saver</span><span class="p">.</span><span class="n">WriteGltfSceneToFile</span><span class="p">(</span><span class="o">&amp;</span><span class="n">model</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">err</span><span class="p">,</span> <span class="n">dst_file</span><span class="p">,</span> <span class="n">CompressOptions</span><span class="p">,</span> <span class="n">is_src_file_draco</span><span class="p">,</span> <span class="n">perform_mesh_compression</span><span class="p">);</span>
+
+<span class="k">if</span> <span class="p">(</span><span class="n">ret</span><span class="p">)</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;write success&quot;</span><span class="p">);</span>
+<span class="k">else</span>
+    <span class="nf">printf</span><span class="p">(</span><span class="s">&quot;write fail: %s&quot;</span><span class="p">,</span> <span class="n">err</span><span class="p">);</span>
+<span class="c1">//==========================================</span>
+<span class="c1">// end of Mesh Compression and Decompression</span>
+<span class="c1">//==========================================</span>
+</pre></div>
+</div>
+<div class="section" id="helper-function">
+<h2>Helper function<a class="headerlink" href="#helper-function" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="c1">//Utility function to check for glTF draco compressed file</span>
+<span class="kt">bool</span> <span class="nf">isGLTFCompressedFile</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">filename</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">nlohmann</span><span class="o">::</span><span class="n">json</span> <span class="n">j3</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">ifstream</span>  <span class="n">f</span><span class="p">(</span><span class="n">filename</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">f</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">f</span> <span class="o">&gt;&gt;</span> <span class="n">j3</span><span class="p">;</span>
+
+    <span class="k">auto</span> <span class="n">extrequired</span> <span class="o">=</span> <span class="n">j3</span><span class="p">[</span><span class="s">&quot;extensionsRequired&quot;</span><span class="p">];</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">extrequired</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">extname</span> <span class="o">=</span> <span class="n">extrequired</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">get</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="p">();</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">extname</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="s">&quot;KHR_draco_mesh_compression&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="n">string</span><span class="o">::</span><span class="n">npos</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">auto</span> <span class="n">extused</span> <span class="o">=</span> <span class="n">j3</span><span class="p">[</span><span class="s">&quot;extensionsUsed&quot;</span><span class="p">];</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">extused</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">extnameused</span> <span class="o">=</span> <span class="n">extused</span><span class="p">[</span><span class="n">j</span><span class="p">].</span><span class="n">get</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="p">();</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">extnameused</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="s">&quot;KHR_draco_mesh_compression&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="n">string</span><span class="o">::</span><span class="n">npos</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="toctree-wrapper compound" id="toc-developer-sdk-mesh-compression">
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/acompress-128.png" alt="Logo"/>
+            </a></p>
+<h1 class="logo"><a href="../../index.html">Compressonator</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Content</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Developer SDK</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../command_line_tool/index.html">Command Line Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gui_tool/index.html">GUI Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../build_from_source/build_instructions.html">Build from GitHub Sources</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../analysis/index.html">Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../revisions.html">Revision History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../support/contact.html">Contact and Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../support/license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bibliography.html">Bibliography</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Developer SDK</a><ul>
+      <li>Previous: <a href="../mesh_optimization/index.html" title="previous chapter">Mesh Optimization</a></li>
+      <li>Next: <a href="../../command_line_tool/index.html" title="next chapter">Command Line Tool</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017 to 2021, AMD Developer Tools.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

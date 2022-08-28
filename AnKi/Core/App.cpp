@@ -307,7 +307,7 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 #endif
 
 	m_resourceFs = m_heapAlloc.newInstance<ResourceFilesystem>(m_heapAlloc);
-	ANKI_CHECK(m_resourceFs->init(*m_config, m_cacheDir.toCString()));
+	ANKI_CHECK(m_resourceFs->init(*m_config));
 
 	//
 	// Resources

@@ -1,0 +1,212 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Application Options &#8212; Compressonator Compressonator - latest build documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     'Compressonator - latest build',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Property View" href="propertyview.html" />
+    <link rel="prev" title="Toolbars" href="toolbars.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="application-options">
+<h1>Application Options<a class="headerlink" href="#application-options" title="Permalink to this headline">¶</a></h1>
+<p>Various default application behaviors can be set using the Application
+Settings window. Select <img alt="image38" src="../../_images/image41.png" /> from the application tool bar or from
+the Settings – Set Application Options menu</p>
+<p><img alt="image39" src="../../_images/image42.png" /></p>
+<p>Application Settings Window</p>
+<div class="section" id="encode-with">
+<h2>Encode with<a class="headerlink" href="#encode-with" title="Permalink to this headline">¶</a></h2>
+<p>For compressed images, this option selects how images are compressed either with CPU, HPC, or
+with GPU using shaders for OpenCL (OCL), DirectX Compute (DXC), or Graphics Hardware Extension (GPU). these options can be selected from the GUI using “Encode With”
+HPC runs codecs optimized for vector extensions and SPMD processing on CPU.</p>
+<p><em>Note</em>
+Only BC1 to BC7 format is supported with HPC Compress, if you choose another format under HPC Compress, they will be compressed with generalized CPU instructions
+See the latest release notes for details on what GPU codecs are available for encoding.</p>
+<p>Graphics Hardware Extension (GPU) is set for BCn codecs.</p>
+<p><img alt="EncodeWith" src="../../_images/image2020-3-26_14-19-1.png" /></p>
+</div>
+<div class="section" id="decode-with">
+<h2>Decode with<a class="headerlink" href="#decode-with" title="Permalink to this headline">¶</a></h2>
+<p>This option is a drop-down combo list where users can choose to decode
+the image with CPU, GPU_OpenGL, GPU_DirectX, or GPU_Vulkan. It is used
+when users click to view an image on the Image View window.</p>
+</div>
+<div class="section" id="reload-image-views-on-selection">
+<h2>Reload Image Views on Selection<a class="headerlink" href="#reload-image-views-on-selection" title="Permalink to this headline">¶</a></h2>
+<p>This option when set will always close the current image view and open a
+new image view. This is useful when an image has been processed to say a
+new compression format and changed visually from when it was last
+viewed. By default, this is turned on (check-marked). If you turn this
+option off then the view will not be refreshed every time you click on
+viewing an image from Project Explorer. The advantage of switching this
+mode is that for large compressed images the image view takes
+considerable time to decompress and not necessary if the compressed file
+content has not changed.</p>
+</div>
+<div class="section" id="close-all-image-views-prior-to-process">
+<h2>Close all Image Views Prior to Process<a class="headerlink" href="#close-all-image-views-prior-to-process" title="Permalink to this headline">¶</a></h2>
+<p>This option when set will close all Image Views in the application,
+before processing selected image destination settings in the Project
+Explorer. This will free up system memory, to avoid out of memory issues
+when processing large files.</p>
+</div>
+<div class="section" id="mouse-click-on-icon-to-view-image">
+<h2>Mouse click on icon to view image<a class="headerlink" href="#mouse-click-on-icon-to-view-image" title="Permalink to this headline">¶</a></h2>
+<p>This option is checked by default. When checked, the application will
+load the image/model onto the Image View window when the user clicks on the icon
+next to the image file node in Project Explorer. When it is
+unchecked (off), the application will load the image/model onto the
+Image View window when the user clicks on the image filename or icon.</p>
+</div>
+<div class="section" id="load-recent-project-on-startup">
+<h2>Load Recent Project on Startup<a class="headerlink" href="#load-recent-project-on-startup" title="Permalink to this headline">¶</a></h2>
+<p>This option off by default will load the last project you worked on.
+This saves you time selecting it from the welcome page or the recent
+files list from the file menu.</p>
+</div>
+<div class="section" id="set-image-diff-contrast">
+<h2>Set Image Diff Contrast<a class="headerlink" href="#set-image-diff-contrast" title="Permalink to this headline">¶</a></h2>
+<p>Sets the contrast of pixels for image view diff, using 1.0 returns pixels to original diff contrast, min is 1 max is 200</p>
+</div>
+<div class="section" id="set-number-of-threads">
+<h2>Set Number of Threads<a class="headerlink" href="#set-number-of-threads" title="Permalink to this headline">¶</a></h2>
+<p>Sets the number of threads to use for texture compression, max is 128 threads distributed over multiple cores
+Default 0 sets auto-detection, where the total threads = number of processor cores, if auto-detection fails default = 8</p>
+<p>When selecting this option users can also view what the host processor has available and is shown in square brackets as illustrated below:</p>
+<p>Max number of processors [8]</p>
+<p>The GUI application must be restarted in order for the new settings to take effect</p>
+</div>
+<div class="section" id="render-models-with">
+<h2>Render Models with<a class="headerlink" href="#render-models-with" title="Permalink to this headline">¶</a></h2>
+<p>Selects how to render 3D Model files using OpenGL for Obj and DirectX or Vulkan for GLTF files.</p>
+</div>
+<div class="section" id="show-mse-psnr-ssim-results">
+<h2>Show MSE PSNR SSIM Results<a class="headerlink" href="#show-mse-psnr-ssim-results" title="Permalink to this headline">¶</a></h2>
+<p>The output windows will display these values after processing a image, when all processing is done an average summary of all of the results will be displayed.</p>
+</div>
+<div class="section" id="show-analysis-results-table">
+<h2>Show Analysis Results Table<a class="headerlink" href="#show-analysis-results-table" title="Permalink to this headline">¶</a></h2>
+<p>Shows all Process Times, PSNR and SSIM results for compressed images in a table view.</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/acompress-128.png" alt="Logo"/>
+            </a></p>
+<h1 class="logo"><a href="../../index.html">Compressonator</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Content</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../developer_sdk/index.html">Developer SDK</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../command_line_tool/index.html">Command Line Tool</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">GUI Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../build_from_source/build_instructions.html">Build from GitHub Sources</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../analysis/index.html">Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../revisions.html">Revision History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../support/contact.html">Contact and Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../support/license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bibliography.html">Bibliography</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">GUI Tool</a><ul>
+  <li><a href="index.html">GUI User Guide</a><ul>
+  <li><a href="index_themainwindow.html">The Main Window</a><ul>
+      <li>Previous: <a href="toolbars.html" title="previous chapter">Toolbars</a></li>
+      <li>Next: <a href="propertyview.html" title="next chapter">Property View</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017 to 2021, AMD Developer Tools.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

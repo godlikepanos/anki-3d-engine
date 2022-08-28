@@ -86,8 +86,15 @@ Error dumpStats(const ShaderProgramBinary& bin)
 			const ShaderProgramBinaryCodeBlock& codeBlock = bin.m_codeBlocks[variant.m_codeBlockIndices[shaderType]];
 
 			MaliOfflineCompilerOut maliocOut;
-			const Error err = runMaliOfflineCompiler(ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/MaliOfflineCompiler/malioc",
-													 codeBlock.m_binary, shaderType, alloc, maliocOut);
+			const Error err = runMaliOfflineCompiler(
+#if ANKI_OS_LINUX
+				ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Linux64/MaliOfflineCompiler/malioc",
+#elif ANKI_OS_WINDOWS
+				ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Linux64/MaliOfflineCompiler/malioc.exe",
+#else
+#	error "Not supported"
+#endif
+				codeBlock.m_binary, shaderType, alloc, maliocOut);
 
 			if(err)
 			{

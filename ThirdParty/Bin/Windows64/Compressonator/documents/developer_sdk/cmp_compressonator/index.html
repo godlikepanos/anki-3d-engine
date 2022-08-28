@@ -1,0 +1,245 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Compressonator SDK &#8212; Compressonator Compressonator - latest build documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     'Compressonator - latest build',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Texture Compression and Decompression" href="../codecs/index.html" />
+    <link rel="prev" title="CMP Framework" href="../cmp_framework/index.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="compressonator-sdk">
+<h1>Compressonator SDK<a class="headerlink" href="#compressonator-sdk" title="Permalink to this headline">¶</a></h1>
+<p>Compressonator SDK’s supported codecs includes BC1-BC7/DXTC, ETC1, ETC2, ASTC, ATC, ATI1N, ATI2N.</p>
+<div class="section" id="error-codes">
+<h2>Error Codes<a class="headerlink" href="#error-codes" title="Permalink to this headline">¶</a></h2>
+<p>All Compressonator API calls return a int success 0 (CMP_OK) or error value &gt; 0 (CMP_ERR) for a more detailed and up to date list look at the file Compressonator.h enum CMP_ERROR values.</p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="n">CMP_OK</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>                            <span class="c1">// Ok.</span>
+<span class="n">CMP_ABORTED</span><span class="p">,</span>                           <span class="c1">// The conversion was aborted.</span>
+<span class="n">CMP_ERR_INVALID_SOURCE_TEXTURE</span><span class="p">,</span>        <span class="c1">// The source texture is invalid.</span>
+<span class="n">CMP_ERR_INVALID_DEST_TEXTURE</span><span class="p">,</span>          <span class="c1">// The destination texture is invalid.</span>
+<span class="n">CMP_ERR_UNSUPPORTED_SOURCE_FORMAT</span><span class="p">,</span>     <span class="c1">// The source format is not a supported format.</span>
+<span class="n">CMP_ERR_UNSUPPORTED_DEST_FORMAT</span><span class="p">,</span>       <span class="c1">// The destination format is not a supported format.</span>
+<span class="n">CMP_ERR_UNSUPPORTED_GPU_ASTC_DECODE</span><span class="p">,</span>   <span class="c1">// The gpu hardware is not supported.</span>
+<span class="n">CMP_ERR_UNSUPPORTED_GPU_BASIS_DECODE</span><span class="p">,</span>  <span class="c1">// The gpu hardware is not supported.</span>
+<span class="n">CMP_ERR_SIZE_MISMATCH</span><span class="p">,</span>                 <span class="c1">// The source and destination texture sizes do not match.</span>
+<span class="n">CMP_ERR_UNABLE_TO_INIT_CODEC</span><span class="p">,</span>          <span class="c1">// Compressonator was unable to initialize the codec needed for conversion.</span>
+<span class="n">CMP_ERR_UNABLE_TO_INIT_DECOMPRESSLIB</span><span class="p">,</span>  <span class="c1">// GPU_Decode Lib was unable to initialize the codec needed for decompression .</span>
+<span class="n">CMP_ERR_UNABLE_TO_INIT_COMPUTELIB</span><span class="p">,</span>     <span class="c1">// Compute Lib was unable to initialize the codec needed for compression.</span>
+<span class="n">CMP_ERR_CMP_DESTINATION</span><span class="p">,</span>               <span class="c1">// Error in compressing destination texture</span>
+<span class="n">CMP_ERR_MEM_ALLOC_FOR_MIPSET</span><span class="p">,</span>          <span class="c1">// Memory Error: allocating MIPSet compression level data buffer</span>
+<span class="n">CMP_ERR_UNKNOWN_DESTINATION_FORMAT</span><span class="p">,</span>    <span class="c1">// The destination Codec Type is unknown! In SDK refer to GetCodecType()</span>
+<span class="n">CMP_ERR_FAILED_HOST_SETUP</span><span class="p">,</span>             <span class="c1">// Failed to setup Host for processing</span>
+<span class="n">CMP_ERR_PLUGIN_FILE_NOT_FOUND</span><span class="p">,</span>         <span class="c1">// The required plugin library was not found</span>
+<span class="n">CMP_ERR_UNABLE_TO_LOAD_FILE</span><span class="p">,</span>           <span class="c1">// The requested file was not loaded</span>
+<span class="n">CMP_ERR_UNABLE_TO_CREATE_ENCODER</span><span class="p">,</span>      <span class="c1">// Request to create an encoder failed</span>
+<span class="n">CMP_ERR_UNABLE_TO_LOAD_ENCODER</span><span class="p">,</span>        <span class="c1">// Unable to load an encode library</span>
+<span class="n">CMP_ERR_NOSHADER_CODE_DEFINED</span><span class="p">,</span>         <span class="c1">// No shader code is available for the requested framework</span>
+<span class="n">CMP_ERR_GPU_DOESNOT_SUPPORT_COMPUTE</span><span class="p">,</span>   <span class="c1">// The GPU device selected does not support compute</span>
+<span class="n">CMP_ERR_GENERIC</span>                        <span class="c1">// An unknown error occurred.</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="convert-texture">
+<h2>Convert Texture<a class="headerlink" href="#convert-texture" title="Permalink to this headline">¶</a></h2>
+<p>The main API call for both compression and decompression as well as texture conversion:</p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="c1">/// Converts the source texture to the destination texture</span>
+<span class="c1">/// This can be compression, decompression or converting between two uncompressed formats.</span>
+<span class="c1">/// \param[in] pSourceTexture A pointer to the source texture.</span>
+<span class="c1">/// \param[in] pDestTexture A pointer to the destination texture.</span>
+<span class="c1">/// \param[in] pOptions A pointer to the compression options - can be NULL.</span>
+<span class="c1">/// \param[in] pFeedbackProc A pointer to the feedback function - can be NULL.</span>
+<span class="c1">/// \param[in] pUser1 User data to pass to the feedback function.</span>
+<span class="c1">/// \param[in] pUser2 User data to pass to the feedback function.</span>
+<span class="c1">/// \return    CMP_OK if successful, otherwise the error code.</span>
+<span class="n">CMP_ERROR</span> <span class="n">CMP_API</span> <span class="nf">CMP_ConvertTexture</span><span class="p">(</span><span class="n">CMP_Texture</span><span class="o">*</span> <span class="n">pSourceTexture</span><span class="p">,</span> <span class="n">CMP_Texture</span><span class="o">*</span> <span class="n">pDestTexture</span><span class="p">,</span> <span class="k">const</span> <span class="n">CMP_CompressOptions</span><span class="o">*</span> <span class="n">pOptions</span><span class="p">,</span>
+                                     <span class="n">CMP_Feedback_Proc</span> <span class="n">pFeedbackProc</span><span class="p">,</span> <span class="n">CMP_DWORD_PTR</span> <span class="n">pUser1</span><span class="p">,</span> <span class="n">CMP_DWORD_PTR</span> <span class="n">pUser2</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="example-usage-of-compressonator-api">
+<h2>Example Usage of Compressonator API<a class="headerlink" href="#example-usage-of-compressonator-api" title="Permalink to this headline">¶</a></h2>
+<p>You will need to include a header file and a lib file: <strong>Compressonator.h</strong> and <strong>Compressonator_MD.lib</strong></p>
+<p>and a simple usage is shown as below:</p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="c1">//==========================</span>
+<span class="c1">// Load Source Texture</span>
+<span class="c1">//==========================</span>
+<span class="n">CMP_Texture</span> <span class="n">srcTexture</span><span class="p">;</span>
+<span class="c1">// note that LoadDDSFile function is a utils function to initialize the source CMP_Texture</span>
+<span class="c1">// you can also initialize the source CMP_Texture the same way as initialize destination CMP_Texture</span>
+<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">LoadDDSFile</span><span class="p">(</span><span class="n">pszSourceFile</span><span class="p">,</span> <span class="n">srcTexture</span><span class="p">))</span>
+<span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;Error loading source file!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">//===================================</span>
+<span class="c1">// Initialize Compressed Destination</span>
+<span class="c1">//===================================</span>
+<span class="n">CMP_Texture</span> <span class="n">destTexture</span><span class="p">;</span>
+<span class="n">destTexture</span><span class="p">.</span><span class="n">dwSize</span>     <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">destTexture</span><span class="p">);</span>
+<span class="n">destTexture</span><span class="p">.</span><span class="n">dwWidth</span>    <span class="o">=</span> <span class="n">srcTexture</span><span class="p">.</span><span class="n">dwWidth</span><span class="p">;</span>
+<span class="n">destTexture</span><span class="p">.</span><span class="n">dwHeight</span>   <span class="o">=</span> <span class="n">srcTexture</span><span class="p">.</span><span class="n">dwHeight</span><span class="p">;</span>
+<span class="n">destTexture</span><span class="p">.</span><span class="n">dwPitch</span>    <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="n">destTexture</span><span class="p">.</span><span class="n">format</span>     <span class="o">=</span> <span class="n">destFormat</span><span class="p">;</span>
+<span class="n">destTexture</span><span class="p">.</span><span class="n">dwDataSize</span> <span class="o">=</span> <span class="n">CMP_CalculateBufferSize</span><span class="p">(</span><span class="o">&amp;</span><span class="n">destTexture</span><span class="p">);</span>
+<span class="n">destTexture</span><span class="p">.</span><span class="n">pData</span> <span class="o">=</span> <span class="p">(</span><span class="n">CMP_BYTE</span><span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="n">destTexture</span><span class="p">.</span><span class="n">dwDataSize</span><span class="p">);</span>
+
+<span class="c1">//==========================</span>
+<span class="c1">// Set Compression Options</span>
+<span class="c1">//==========================</span>
+<span class="n">CMP_CompressOptions</span> <span class="n">options</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">};</span>
+<span class="n">options</span><span class="p">.</span><span class="n">dwSize</span>       <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">options</span><span class="p">);</span>
+<span class="n">options</span><span class="p">.</span><span class="n">fquality</span>     <span class="o">=</span> <span class="n">fQuality</span><span class="p">;</span>
+<span class="n">options</span><span class="p">.</span><span class="n">dwnumThreads</span> <span class="o">=</span> <span class="mi">8</span><span class="p">;</span>
+
+<span class="c1">//==========================</span>
+<span class="c1">// Compress Texture</span>
+<span class="c1">//==========================</span>
+<span class="n">CMP_ERROR</span>   <span class="n">cmp_status</span><span class="p">;</span>
+<span class="n">cmp_status</span> <span class="o">=</span> <span class="n">CMP_ConvertTexture</span><span class="p">(</span><span class="o">&amp;</span><span class="n">srcTexture</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">destTexture</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">options</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">CompressionCallback</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">cmp_status</span> <span class="o">!=</span> <span class="n">CMP_OK</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">free</span><span class="p">(</span><span class="n">srcTexture</span><span class="p">.</span><span class="n">pData</span><span class="p">);</span>
+    <span class="n">free</span><span class="p">(</span><span class="n">destTexture</span><span class="p">.</span><span class="n">pData</span><span class="p">);</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;Compression returned an error %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">cmp_status</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">cmp_status</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">//==========================</span>
+<span class="c1">// Save Compressed Testure</span>
+<span class="c1">//==========================</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">cmp_status</span> <span class="o">==</span> <span class="n">CMP_OK</span><span class="p">)</span>
+    <span class="n">SaveDDSFile</span><span class="p">(</span><span class="n">pszDestFile</span><span class="p">,</span> <span class="n">destTexture</span><span class="p">);</span>
+
+<span class="n">free</span><span class="p">(</span><span class="n">srcTexture</span><span class="p">.</span><span class="n">pData</span><span class="p">);</span>
+<span class="n">free</span><span class="p">(</span><span class="n">destTexture</span><span class="p">.</span><span class="n">pData</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Example projects have been provided <a class="reference external" href="https://github.com/GPUOpen-Tools/Compressonator/tree/master/examples/">here</a> with:</p>
+<ul class="simple">
+<li>sdk_example1 demonstrates simple SDK API usage as shown above.</li>
+<li>sdk_example2 demonstrates how to use the SDK API in multihreaded environment.</li>
+<li>sdk_exmaple3 demonstrates how to use the block level SDK API.</li>
+</ul>
+<p>These examples are also distributed through Compressonator SDK installer in the <a class="reference external" href="https://github.com/GPUOpen-Tools/Compressonator/releases">release</a> page.</p>
+<div class="toctree-wrapper compound" id="toc-developer-sdk-cmp-compressonator">
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/acompress-128.png" alt="Logo"/>
+            </a></p>
+<h1 class="logo"><a href="../../index.html">Compressonator</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Content</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Developer SDK</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../command_line_tool/index.html">Command Line Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gui_tool/index.html">GUI Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../build_from_source/build_instructions.html">Build from GitHub Sources</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../analysis/index.html">Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../revisions.html">Revision History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../support/contact.html">Contact and Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../support/license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bibliography.html">Bibliography</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Developer SDK</a><ul>
+      <li>Previous: <a href="../cmp_framework/index.html" title="previous chapter">CMP Framework</a></li>
+      <li>Next: <a href="../codecs/index.html" title="next chapter">Texture Compression and Decompression</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017 to 2021, AMD Developer Tools.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

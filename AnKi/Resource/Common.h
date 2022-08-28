@@ -29,6 +29,7 @@ class TransferGpuAllocatorHandle;
 #define ANKI_RESOURCE_LOGE(...) ANKI_LOG("RSRC", ERROR, __VA_ARGS__)
 #define ANKI_RESOURCE_LOGW(...) ANKI_LOG("RSRC", WARNING, __VA_ARGS__)
 #define ANKI_RESOURCE_LOGF(...) ANKI_LOG("RSRC", FATAL, __VA_ARGS__)
+#define ANKI_RESOURCE_LOGV(...) ANKI_LOG("RSRC", VERBOSE, __VA_ARGS__)
 
 /// Deleter for ResourcePtr.
 template<typename T>

@@ -1,0 +1,360 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Compressing Images &#8212; Compressonator Compressonator - latest build documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     'Compressonator - latest build',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="3D Model Compression" href="index_3dmodelcompression.html" />
+    <link rel="prev" title="Texture Compression" href="index_texturecompression.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="compressing-images">
+<h1>Compressing Images<a class="headerlink" href="#compressing-images" title="Permalink to this headline">¶</a></h1>
+<p>Please refer to Getting Started document to get additional information
+on how to use sample projects</p>
+<p>After adding the <a class="reference external" href="#_Add_Destination_Settings">destination settings</a>
+for the image, select the preset setting and click on “Process” button
+or right click over the preset setting and click Process &lt;name of the
+compressed file&gt;</p>
+<p><img alt="image62" src="../../_images/image68.png" /></p>
+<p>If you want to process all the settings that are set for an original
+image, right click over the root image and click Process all setting for
+&lt;Original image file name&gt;. For instance, example below will process and
+generate result for Ruby_bmp_1 and Ruby_2.</p>
+<p><img alt="image63" src="../../_images/image69.png" /></p>
+<p>When compression process begins, a Progress window and an Output window
+will appear.</p>
+<p><img alt="image64" src="../../_images/image70.png" /></p>
+<p>When the compression process completes, the Project Explorer will change
+to indicate the status of the resulting compressed Ruby_bmp_1 image
+with a small green (succeeded) or red circle (failed), and the Output
+window will indicate additional information on the succeeded or failed
+compression process.</p>
+<p><img alt="image65" src="../../_images/image50.png" /></p>
+<p><img alt="image66" src="../../_images/image49.png" /></p>
+</div>
+<div class="section" id="converting-image-formats">
+<h1>Converting Image Formats<a class="headerlink" href="#converting-image-formats" title="Permalink to this headline">¶</a></h1>
+<p>Converting an image to a different format of similar or like quality
+(Transcode)</p>
+<ol class="arabic">
+<li><p class="first">Add the image to the project explorer</p>
+</li>
+<li><p class="first">Add a new destination item setting with a format of ARGB_8888
+(applies to most images) unless the original image is HDR in which
+case select ARGB_32F.</p>
+<p>Note: The application cannot currently convert between source and
+destination variations of ARGB_8888 and ARGB_32F formats</p>
+</li>
+<li><p class="first">Now set the desired destination file extension from the supported
+list</p>
+</li>
+<li><p class="first">Process the destination item</p>
+</li>
+</ol>
+</div>
+<div class="section" id="using-the-make-compatible-feature">
+<h1>Using the Make Compatible Feature<a class="headerlink" href="#using-the-make-compatible-feature" title="Permalink to this headline">¶</a></h1>
+<p>With the GPU or CLI tools, users can compress HDR and LDR images using any BCn codec without specific knowledge of the source format. For example, HDR images can only be compressed by BC6 any attempt to use BC1 to BC5 or BC7 will fail compression. Transformations are automatically handled to make the image source format compatible with the encoder when using the CPU or GPU based encoding.</p>
+<p>Compressonator performs auto conversions of FP16 to Byte and Byte to FP16 formats when encoding textures with GPU or CPU encoders. A pre-conversion of the source data is performed into a temporary buffer which is then sent for processing, once the processing is completed the buffer is removed.</p>
+<p>To see how this works, try processing an EXR file format image to compress with formats like BC1 to BC5 or BC7 using the “Encode with” option for HPC, GPU_DirectX or GPU_OpenCL
+If you are unfamiliar with how to process textures, check the tutorial on “getting started using sample projects”.</p>
+</div>
+<div class="section" id="compressing-signed-channel-images">
+<h1>Compressing Signed Channel Images<a class="headerlink" href="#compressing-signed-channel-images" title="Permalink to this headline">¶</a></h1>
+<p><img alt="image435" src="../../_images/image435.png" /></p>
+<p>Signed channel component processing is available in the Compressonator SDK, Command-Line, and GUI applications.</p>
+<p>This supports processing textures from 8-bit unsigned or signed channels to BC4 and BC5 formats.</p>
+<p>In the GUI the process is no different than that described for compressing images using the project explorer. Image views will show additional status information about the signed channel data and how it is rendered onto the image views as unsigned channel formats.</p>
+<p>For BC4 and BC5 encoding as a signed component use the destination settings option as BC4_S and BC5_S</p>
+</div>
+<div class="section" id="decompressing-textures">
+<h1>Decompressing Textures<a class="headerlink" href="#decompressing-textures" title="Permalink to this headline">¶</a></h1>
+<p>Compressed images can be added to the project view as original items and
+viewed with the Image Viewer.</p>
+<p><img alt="image67" src="../../_images/image71.png" /></p>
+<p>BC7 Compressed Image View of Ruby view as original image</p>
+<p>Additional destination item settings can then be added to decompress the
+original item to a new format such as BMP, PNG etc.</p>
+<p>Note: Compressed images used as original image cannot be recompressed to
+a new compressed destination, the selections are still enabled for
+support in future versions.</p>
+<p>In the example below, a BC7 compressed image ruby is uncompressed to
+ARGB 8888 format and saved as a KTX file.</p>
+<p><img alt="image68" src="../../_images/image72.png" /></p>
+<p>Ruby DDS file saved as a KTX file</p>
+</div>
+<div class="section" id="improving-compression-quality">
+<h1>Improving Compression Quality<a class="headerlink" href="#improving-compression-quality" title="Permalink to this headline">¶</a></h1>
+<p>The application allows multiple variation in processing a source image
+with a number of different image compression techniques. Each having
+specific quality and performance results.</p>
+<p>By cycling different options between compress formats, quality setting
+and examining the image differences and views, users can quickly
+determine what works best for their image samples.</p>
+</div>
+<div class="section" id="channel-weighting">
+<h1>Channel weighting<a class="headerlink" href="#channel-weighting" title="Permalink to this headline">¶</a></h1>
+<p>Channel weighting option (X Red, Y Green and Z Blue weighting) enabled
+on compression destination setting for supported Compression Codecs.</p>
+<p><img alt="image74" src="../../_images/image78.png" /></p>
+<p>Users can edit the color channel weight ratio (total is 1.0000) by
+editing the value on each channel. Each channel has their default value
+(recommended value) set.</p>
+</div>
+<div class="section" id="alpha-setting-enabled-for-bc1-dxt1">
+<h1>Alpha setting enabled for BC1 (DXT1)<a class="headerlink" href="#alpha-setting-enabled-for-bc1-dxt1" title="Permalink to this headline">¶</a></h1>
+<p>Alpha setting enabled for DXT1/BC1 compression</p>
+<p>For DXT1/BC1 compression format, users can choose to enable/disable the
+alpha channel in the compression. It is disabled by default.</p>
+<p><img alt="image75" src="../../_images/image79.png" /></p>
+</div>
+<div class="section" id="hdr-properties-setting">
+<h1>HDR Properties setting<a class="headerlink" href="#hdr-properties-setting" title="Permalink to this headline">¶</a></h1>
+<p>HDR Properties setting enabled for half float and float type images (for
+HDR view support)</p>
+<p>For HDR floating point images, users can choose to adjust the exposure,
+defog, and knee low as well as knee high properties of the display
+images. It is disabled by default.</p>
+<p>It can be enabled and shown by choosing the “HDR Properties…” from the
+“View…” drop down list:</p>
+<p><img alt="image76" src="../../_images/image80.png" /></p>
+<p>After clicking on “HDR Properties…” the window below will pop up:</p>
+<p><img alt="image77" src="../../_images/image81.png" /></p>
+</div>
+<div class="section" id="etc2">
+<h1>ETC2<a class="headerlink" href="#etc2" title="Permalink to this headline">¶</a></h1>
+<p>Compressonator supports ETC2 formats that are based on the following standards:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="19%" />
+<col width="29%" />
+<col width="18%" />
+<col width="34%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">CMP</th>
+<th class="head">Vulkan</th>
+<th class="head">DirectX</th>
+<th class="head">OpenGL</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>CMP_FORMAT_ETC_RGB</td>
+<td>VK_FORMAT_ETC2_R8G8B8_UNORM_BLOCK</td>
+<td>DXGI_FORMAT_UNKNOWN</td>
+<td>GL_COMPRESSED_RGB8_ETC2</td>
+</tr>
+<tr class="row-odd"><td>CMP_FORMAT_ETC2_RGB</td>
+<td>VK_FORMAT_ETC2_R8G8B8_UNORM_BLOCK</td>
+<td>DXGI_FORMAT_UNKNOWN</td>
+<td>GL_COMPRESSED_RGB8_ETC2</td>
+</tr>
+<tr class="row-even"><td>CMP_FORMAT_ETC2_RGBA</td>
+<td>VK_FORMAT_ETC2_R8G8B8A8_UNORM_BLOCK</td>
+<td>DXGI_FORMAT_UNKNOWN</td>
+<td>GL_COMPRESSED_RGBA8_ETC2_EAC</td>
+</tr>
+<tr class="row-odd"><td>CMP_FORMAT_ETC2_RGBA1</td>
+<td>VK_FORMAT_ETC2_R8G8B8A1_UNORM_BLOCK</td>
+<td>DXGI_FORMAT_UNKNOWN</td>
+<td>GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2</td>
+</tr>
+</tbody>
+</table>
+<p>The GUI and Command Line formats are specified as:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="41%" />
+<col width="59%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">GUI and CLI</th>
+<th class="head">SDK</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>ETC_RGB</td>
+<td>CMP_FORMAT_ETC_RGB</td>
+</tr>
+<tr class="row-odd"><td>ETC2_RGB</td>
+<td>CMP_FORMAT_ETC2_RGB</td>
+</tr>
+<tr class="row-even"><td>ETC2_RGBA</td>
+<td>CMP_FORMAT_ETC2_RGBA</td>
+</tr>
+<tr class="row-odd"><td>ETC2_RGBA1</td>
+<td>CMP_FORMAT_ETC2_RGBA1</td>
+</tr>
+</tbody>
+</table>
+<p>Process results for image with alpha channel:</p>
+<p>Using the image sample ruby_alpha.tga, add compression setting for ETC2_RGB, ETC2_RGBA and ETC2_RGBA1 and process.</p>
+<p><img alt="image119" src="../../_images/image119.png" /></p>
+<p>The results should look like the following when viewing the decompressed images:</p>
+<p><img alt="image123" src="../../_images/image123.png" /></p>
+<p>Ruby Image contains alpha channels and processed with ETC2_RGB</p>
+<p><img alt="image124" src="../../_images/image124.png" /></p>
+<p>Ruby image processed with ETC2_RGBA</p>
+<p><img alt="image125" src="../../_images/image125.png" /></p>
+<p>Ruby image processed with ETC2_RGBA1</p>
+</div>
+<div class="section" id="astc">
+<h1>ASTC<a class="headerlink" href="#astc" title="Permalink to this headline">¶</a></h1>
+<p>ASTC compression and decompression of various block sizes from 4x4 to
+12x12 has been added to the SDK. Viewing compressed ASTC images using
+the OpenGL option requires GPU hardware that supports the ASTC format.
+CPU based views have no hardware dependencies.</p>
+<p>Note: DirectX 11 does not support viewing ASTC and ETC2 compressed
+textures.</p>
+<p>When ASTC is selected as a destination format, users can specify the
+numerical compression bitrate (e.g. 8) or block number XxY (e.g. 4x4)
+under the ASTC BlockRate section. Once specified, the closest bit rate
+and the block number will be computed and shown in the info window. This
+closest bit rate will be used for ASTC compression.</p>
+<p><img alt="image78" src="../../_images/image82.png" /> <img alt="image79" src="../../_images/image83.png" /></p>
+</div>
+<div class="section" id="selectable-gpu-or-cpu-based-compressed-image-views">
+<h1>Selectable GPU or CPU based compressed image views<a class="headerlink" href="#selectable-gpu-or-cpu-based-compressed-image-views" title="Permalink to this headline">¶</a></h1>
+<p>You can select how compressed images are viewed on the GUI View image
+tabs. The compressed textures are decompressed into RGBA_8888 format
+using either the Compressonator CPU based decompression algorithms or
+the GPU via a common interface for OpenGL (version 3.3 and up) or
+DirectX (only version 11 is supported).</p>
+<p>Click on <img alt="image80" src="../../_images/image84.png" /> Set Application Options, Application Settings window
+pops up as shown below:</p>
+<p>Users can choose to view the decompressed images using CPU, OpenGL, DirectX or Vulkan.</p>
+<p><img alt="image81" src="../../_images/image85.png" /></p>
+<p>After setting the application options, click on the compressed image to
+view the image.</p>
+<blockquote>
+<div>Example views of compressed BC7 image ruby_1.dds</div></blockquote>
+<p><strong>CPU View</strong></p>
+<p><img alt="image83" src="../../_images/image87.png" /></p>
+<p><strong>View using OpenGL</strong></p>
+<p><img alt="image84" src="../../_images/image88.png" /></p>
+<p><strong>View using DirectX</strong></p>
+<p><img alt="image85" src="../../_images/image89.png" /></p>
+<p>Users still able to generate image diff view with GPU as shown below:</p>
+<p><img alt="image86" src="../../_images/image90.png" /></p>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/acompress-128.png" alt="Logo"/>
+            </a></p>
+<h1 class="logo"><a href="../../index.html">Compressonator</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Content</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../developer_sdk/index.html">Developer SDK</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../command_line_tool/index.html">Command Line Tool</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">GUI Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../build_from_source/build_instructions.html">Build from GitHub Sources</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../analysis/index.html">Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../revisions.html">Revision History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../support/contact.html">Contact and Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../support/license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bibliography.html">Bibliography</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">GUI Tool</a><ul>
+  <li><a href="index.html">GUI User Guide</a><ul>
+  <li><a href="index_texturecompression.html">Texture Compression</a><ul>
+      <li>Previous: <a href="index_texturecompression.html" title="previous chapter">Texture Compression</a></li>
+      <li>Next: <a href="index_3dmodelcompression.html" title="next chapter">3D Model Compression</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017 to 2021, AMD Developer Tools.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -94,7 +94,7 @@ public:
 
 	ResourceFilesystem& operator=(const ResourceFilesystem&) = delete; // Non-copyable
 
-	Error init(const ConfigSet& config, const CString& cacheDir);
+	Error init(const ConfigSet& config);
 
 	/// Search the path list to find the file. Then open the file for reading. It's thread-safe.
 	Error openFile(const ResourceFilename& filename, ResourceFilePtr& file);
@@ -122,7 +122,6 @@ private:
 		StringList m_files; ///< Files inside the directory.
 		String m_path; ///< A directory or an archive.
 		Bool m_isArchive = false;
-		Bool m_isCache = false;
 
 		Path() = default;
 
@@ -140,7 +139,6 @@ private:
 			m_files = std::move(b.m_files);
 			m_path = std::move(b.m_path);
 			m_isArchive = b.m_isArchive;
-			m_isCache = b.m_isCache;
 			return *this;
 		}
 	};
@@ -153,8 +151,6 @@ private:
 	Error addNewPath(const CString& path, const StringListAuto& excludedStrings);
 
 	Error openFileInternal(const ResourceFilename& filename, ResourceFile*& rfile);
-
-	void addCachePath(const CString& path);
 };
 /// @}
 

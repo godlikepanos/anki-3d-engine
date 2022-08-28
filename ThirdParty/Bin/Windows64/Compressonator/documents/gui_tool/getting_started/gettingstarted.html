@@ -1,0 +1,238 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Introduction &#8212; Compressonator Compressonator - latest build documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     'Compressonator - latest build',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="GUI User Guide" href="../user_guide/index.html" />
+    <link rel="prev" title="GUI Getting Started" href="index.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="introduction">
+<h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
+<p>This guide provides detailed information on the Compressonator application. It lists the requirement needed for running the application and helps in installation, getting started with the tool, using the sample projects and finding specific topics of interest.</p>
+</div>
+<div class="section" id="compressonator-gui-features">
+<h1>Compressonator GUI features<a class="headerlink" href="#compressonator-gui-features" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>The GUI interacts with Compressonator SDK for texture compression and bit format conversions; it can compress a wide range of compression formats including ASTC, ATC, ATInN, BCn, ETCn, DXTn, swizzle DXTn formats.</li>
+<li>Supports conversion of textures with 32 bit fixed and float formats.</li>
+<li>Process multiple compression, decompression and transcode of images with a single processing action.</li>
+<li>Allow multiple processing interactions for a single source image</li>
+<li>Inspect visually and analytically compression results.</li>
+<li>Uses a single image viewer that supports a large number of compressed and uncompressed image formats.</li>
+</ul>
+</div>
+<div class="section" id="application-requirements">
+<h1>Application Requirements<a class="headerlink" href="#application-requirements" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>Application was tested on Windows 10 platform.</li>
+<li>For best performance, a multi core CPU system with the latest AMD Graphics card are required.</li>
+<li>For ease of use, a wheel based mouse is essential.</li>
+<li>Use of multiple monitors is optional, and can be beneficial when examining multiple image views at the same time.
+Installation</li>
+<li>To install the application, download the executable file from release page to your system. Then, double click the executable to start the installation process and follow the on-screen instructions.</li>
+<li>Run the application in Administrator mode, recommended that UAC be turned off.</li>
+</ul>
+</div>
+<div class="section" id="getting-started-using-sample-projects">
+<h1>Getting started (Using sample projects)<a class="headerlink" href="#getting-started-using-sample-projects" title="Permalink to this headline">¶</a></h1>
+<p>This section shows you how to get started with the application using the sample projects that come with the installation. Note that you can also start by creating a new project and add your image files for compression.</p>
+<ol class="arabic simple">
+<li>From the start menu or desktop shortcut run the application</li>
+<li>You will see the following view</li>
+</ol>
+<img alt="../../_images/compressonator_window.jpg" src="../../_images/compressonator_window.jpg" />
+<ol class="arabic simple" start="3">
+<li>On the Welcome Page tab Window, click on “BC7_Compression”, the Project Explorer will change and show some sample images and settings</li>
+</ol>
+<img alt="../../_images/compressonator_project_explorer.jpg" src="../../_images/compressonator_project_explorer.jpg" />
+<ol class="arabic simple" start="4">
+<li>Click on Ruby.bmp file and you will see an Image View window show up on the right of the Project Explorer, tabbed with the Welcome Page window (as shown below).</li>
+</ol>
+<img alt="../../_images/compressonator_properties_view.jpg" src="../../_images/compressonator_properties_view.jpg" />
+<p>The Properties View will now display information on the selected image’s location, various sizes, dimensions, etc.</p>
+<ol class="arabic simple" start="5">
+<li>Now click on the right arrow next to the Ruby.bmp.</li>
+</ol>
+<img alt="../../_images/rubybmp.jpg" src="../../_images/rubybmp.jpg" />
+<p>This expands the view and you will see a clickable “Add destination settings …” line and a BC7 pre-compressed destination sample Ruby_1</p>
+<img alt="../../_images/ruby_1view.jpg" src="../../_images/ruby_1view.jpg" />
+<ol class="arabic simple" start="6">
+<li>Click on Ruby_1, and notice that the Properties View changed (as shown below) to indicate what settings has been preset for Ruby_1</li>
+</ol>
+<img alt="../../_images/compression_setting.jpg" src="../../_images/compression_setting.jpg" />
+<p>Ruby_1 is set to compress the original Ruby.bmp image using BC7 compression format, the expected quality of the resulting image is shown as default 0.05,
+this value ranges from 0 to 1. Note that lower quality value will have faster compression process with less amount of precision when compared to the original.
+On the other hand, higher quality value will slow down the compression process but produce better image quality.</p>
+<ol class="arabic simple" start="7">
+<li>To start the compression, click on “Process” button, a Progress windows and an Output window appear.</li>
+</ol>
+<img alt="../../_images/compressonator_process_window.jpg" src="../../_images/compressonator_process_window.jpg" />
+<p>8. When the compression process done, the Project Explorer will change to indicate the status of the resulting compressed Ruby_1 image with a small green (succeeded) or red circle (failed),
+and the Output window will indicate additional information on the succeeded or failed compression process.</p>
+<img alt="../../_images/output.png" src="../../_images/output.png" />
+<p>For this sample, we should see a green circle next to Ruby_1 (compression succeeded)</p>
+<img alt="../../_images/compressonator_tree_view.jpg" src="../../_images/compressonator_tree_view.jpg" />
+<p>9. Now the Properties View will indicate the time it took to compress the image.
+To see the Compression Ratio, click on RUby_1 again, this will update the Compression Ratio which indicates how much the image was compressed compared to the original (typically 4x)</p>
+<img alt="../../_images/compressonator_properties.jpg" src="../../_images/compressonator_properties.jpg" />
+<ol class="arabic simple" start="10">
+<li>To see the resulting compressed image, single click on Ruby_1 and you will see the image as shown below.</li>
+</ol>
+<img alt="../../_images/ruby_compress_win_view.jpg" src="../../_images/ruby_compress_win_view.jpg" />
+<ol class="arabic simple" start="11">
+<li>To view the difference between processed image (Ruby_1) and original image (Ruby.bmp), right click on Ruby_1 and select View Image Diff from the context menu</li>
+</ol>
+<img alt="../../_images/view_img_diff.jpg" src="../../_images/view_img_diff.jpg" />
+<p>You will now see a comparison of the original image with the compressed image</p>
+<img alt="../../_images/image_diff_view.jpg" src="../../_images/image_diff_view.jpg" />
+<ol class="arabic simple" start="12">
+<li>In addition, you can run analysis on the images that show various statistics such as MSE, PSNR and Similarity Indices (SSIM) by selecting</li>
+</ol>
+<img alt="../../_images/difficon.png" src="../../_images/difficon.png" />
+<p>When analysis process completed, the statistics result will be shown on the Properties View:</p>
+<img alt="../../_images/analysis_properties.jpg" src="../../_images/analysis_properties.jpg" />
+</div>
+<div class="section" id="closing-views">
+<h1>Closing views<a class="headerlink" href="#closing-views" title="Permalink to this headline">¶</a></h1>
+<p>At any time you can close various views by selecting the close button (on tabs or windows)</p>
+</div>
+<div class="section" id="changing-views">
+<h1>Changing views<a class="headerlink" href="#changing-views" title="Permalink to this headline">¶</a></h1>
+<p>Click on Image View window tab titles or click on any image on Project Explorer.</p>
+</div>
+<div class="section" id="delete-or-remove-image-s">
+<h1>Delete or Remove Image(s)<a class="headerlink" href="#delete-or-remove-image-s" title="Permalink to this headline">¶</a></h1>
+<p>Select the image in Project Explorer and press DEL key. A message window will pop up as shown below.</p>
+<img alt="../../_images/del_remove_window.jpg" src="../../_images/del_remove_window.jpg" />
+<p>Remove  Will remove the selected items from the project explorer view, keeping the files on disk.</p>
+<p>Delete  Will Remove and delete files on disk.&lt;br&gt;
+Cancel  Will return you back to the application (similar applies when selecting the red close button)</p>
+</div>
+<div class="section" id="closing-and-saving-the-project">
+<h1>Closing and Saving the Project<a class="headerlink" href="#closing-and-saving-the-project" title="Permalink to this headline">¶</a></h1>
+<p>Select File menu and then Exit or Click on the close button on the application window
+Since we have no changes to the settings or added any new images, the application will simply close when exit.
+If you made any changes to the sample project “BC7_Compression” the application will prompt to save the changes or discard them.
+When you select save the old settings for “BC7_Compression” will be overwritten.</p>
+<img alt="../../_images/save_view.jpg" src="../../_images/save_view.jpg" />
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/acompress-128.png" alt="Logo"/>
+            </a></p>
+<h1 class="logo"><a href="../../index.html">Compressonator</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Content</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../developer_sdk/index.html">Developer SDK</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../command_line_tool/index.html">Command Line Tool</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">GUI Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../build_from_source/build_instructions.html">Build from GitHub Sources</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../analysis/index.html">Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../revisions.html">Revision History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../support/contact.html">Contact and Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../support/license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bibliography.html">Bibliography</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">GUI Tool</a><ul>
+  <li><a href="index.html">GUI Getting Started</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">GUI Getting Started</a></li>
+      <li>Next: <a href="../user_guide/index.html" title="next chapter">GUI User Guide</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017 to 2021, AMD Developer Tools.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

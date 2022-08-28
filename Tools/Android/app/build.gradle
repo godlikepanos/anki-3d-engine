@@ -47,8 +47,10 @@ android {
                 }
             }
 
+			// To enable profiling (CPU & memory) disable the following 2 lines:
             debuggable true
             jniDebuggable true
+
             signingConfig signingConfigs.debug
         }
     }

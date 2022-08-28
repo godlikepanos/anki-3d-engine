@@ -22,7 +22,7 @@ public:
 
 static const char* USAGE = R"(Usage: %s [options] in_files
 Options:
--o <filename>          : Output filename
+-o <filename>          : Output filename. If not provided the file will derive it from the input filenames
 -t <type>              : Image type. One of: 2D, 3D, Cube, 2DArray
 -no-alpha              : If the image has alpha don't store it. By default it stores it
 -store-s3tc <0|1>      : Store S3TC images. Default is 1
@@ -237,9 +237,27 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 		cleanup.m_inputFilenames.emplaceBack(argv[i]);
 	}
 
-	if(cleanup.m_outFilename.getLength() == 0 || cleanup.m_inputFilenames.getSize() == 0)
+	if(cleanup.m_inputFilenames.getSize() == 0)
 	{
 		return Error::USER_DATA;
+	}
+
+	if(cleanup.m_outFilename.isEmpty())
+	{
+		CString infname = cleanup.m_inputFilenames[0];
+
+		StringAuto ext(cleanup.m_alloc);
+		getFilepathExtension(infname, ext);
+
+		getFilepathFilename(infname, cleanup.m_outFilename);
+		if(ext.getLength() > 0)
+		{
+			cleanup.m_outFilename.replaceAll(ext, "ankitex");
+		}
+		else
+		{
+			cleanup.m_outFilename.append(".ankitex");
+		}
 	}
 
 	config.m_inputFilenames = ConstWeakArray<CString>(cleanup.m_inputFilenames);
@@ -269,8 +287,16 @@ int main(int argc, char** argv)
 	}
 	config.m_tempDirectory = tmp;
 
-	config.m_compressonatorFilename = ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Compressonator/compressonatorcli";
-	config.m_astcencFilename = ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/astcenc-avx2";
+#if ANKI_OS_WINDOWS
+	config.m_compressonatorFilename =
+		ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Windows64/Compressonator/compressonatorcli.exe";
+	config.m_astcencFilename = ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Windows64/astcenc-avx2.exe";
+#elif ANKI_OS_LINUX
+	config.m_compressonatorFilename = ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Linux64/Compressonator/compressonatorcli";
+	config.m_astcencFilename = ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Linux64/astcenc-avx2";
+#else
+#	error "Unupported"
+#endif
 
 	ANKI_IMPORTER_LOGI("Image importing started: %s", config.m_outFilename.cstr());
 

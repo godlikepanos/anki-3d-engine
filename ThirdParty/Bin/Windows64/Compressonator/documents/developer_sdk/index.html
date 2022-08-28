@@ -1,0 +1,196 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Developer SDK &#8212; Compressonator Compressonator - latest build documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     'Compressonator - latest build',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="CMP Core" href="cmp_core/index.html" />
+    <link rel="prev" title="Compressonator" href="../index.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="developer-sdk">
+<h1>Developer SDK<a class="headerlink" href="#developer-sdk" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound" id="toc-developer-sdk">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="cmp_core/index.html">CMP Core</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cmp_core/index.html#gpu-shaders">GPU Shaders</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmp_core/index.html#error-codes">Error Codes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmp_core/index.html#codec-quality-settings">Codec Quality Settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmp_core/index.html#create-and-destroy-options-pointers">Create and Destroy Options Pointers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmp_core/index.html#channel-weights">Channel Weights</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmp_core/index.html#quality-settings">Quality Settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmp_core/index.html#alpha-threshold">Alpha Threshold</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmp_core/index.html#mode-masks">Mode Masks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmp_core/index.html#decoder-channel-mapping">Decoder Channel Mapping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmp_core/index.html#bc7-alpha-options">BC7 Alpha Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmp_core/index.html#bc7-error-threshold">BC7 Error Threshold</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmp_core/index.html#compressing-blocks">Compressing Blocks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmp_core/index.html#decompressing-blocks">Decompressing Blocks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmp_core/index.html#example-usage-of-core-api">Example Usage of Core API</a><ul class="simple">
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cmp_framework/index.html">CMP Framework</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cmp_framework/index.html#cmp-error-codes">CMP Error Codes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmp_framework/index.html#kernel-options-and-extensions">Kernel Options and Extensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmp_framework/index.html#encoder-settings">Encoder Settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmp_framework/index.html#mip-map-interfaces">Mip Map Interfaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmp_framework/index.html#user-processing-callback">User Processing Callback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmp_framework/index.html#texture-load-and-save">Texture Load and Save</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmp_framework/index.html#texture-processing">Texture Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmp_framework/index.html#using-alternate-frameworks">Using Alternate Frameworks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmp_framework/index.html#block-level-access">Block level Access</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmp_framework/index.html#format-and-processor-utils">Format and Processor Utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmp_framework/index.html#framework-example-mip-level-processing">Framework Example: Mip Level Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmp_framework/index.html#using-the-pipeline-api-interfaces">Using the Pipeline API Interfaces</a><ul class="simple">
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cmp_compressonator/index.html">Compressonator SDK</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cmp_compressonator/index.html#error-codes">Error Codes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmp_compressonator/index.html#convert-texture">Convert Texture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmp_compressonator/index.html#example-usage-of-compressonator-api">Example Usage of Compressonator API</a><ul class="simple">
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="codecs/index.html">Texture Compression and Decompression</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="codecs/index.html#bc1-block-s3tc-dxt1">BC1 Block (S3TC/DXT1)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="codecs/index.html#bc2-block-dxt2-dxt3">BC2 Block (DXT2/DXT3)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="codecs/index.html#bc3-block-dxt4-dxt5">BC3 Block (DXT4/DXT5)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="codecs/index.html#bc4-block-ati1-3dc">BC4 Block (ATI1/3Dc+)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="codecs/index.html#bc5-block-ati2-3dc">BC5 Block (ATI2/3Dc)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="codecs/index.html#bc6h">BC6H</a></li>
+<li class="toctree-l2"><a class="reference internal" href="codecs/index.html#bc7">BC7</a><ul class="simple">
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mesh_optimization/index.html">Mesh Optimization</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mesh_compression/index.html">Mesh Compression</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mesh_compression/index.html#helper-function">Helper function</a><ul class="simple">
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/acompress-128.png" alt="Logo"/>
+            </a></p>
+<h1 class="logo"><a href="../index.html">Compressonator</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Content</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Developer SDK</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../command_line_tool/index.html">Command Line Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gui_tool/index.html">GUI Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../build_from_source/build_instructions.html">Build from GitHub Sources</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../analysis/index.html">Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../revisions.html">Revision History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../support/contact.html">Contact and Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../support/license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bibliography.html">Bibliography</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="../index.html" title="previous chapter">Compressonator</a></li>
+      <li>Next: <a href="cmp_core/index.html" title="next chapter">CMP Core</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017 to 2021, AMD Developer Tools.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,202 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Mip Map Generation &#8212; Compressonator Compressonator - latest build documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     'Compressonator - latest build',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="&lt;no title&gt;" href="../../build_from_source/index.html" />
+    <link rel="prev" title="glTF Viewer and asset compression" href="3dmodelcompression.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="mip-map-generation">
+<h1>Mip Map Generation<a class="headerlink" href="#mip-map-generation" title="Permalink to this headline">¶</a></h1>
+<p>You can generate different MIP map level for the original image by
+selecting the image (Ruby.bmp in this example) on the project explorer
+and then click on the “Generate MIP Map” <img alt="image51" src="../../_images/image53.png" />button on the Application Toolbar.</p>
+<p>Note: Only one image on the project explorer can be selected for MIP map generation at one time.</p>
+<p>A Generate MIP Maps window will appear.</p>
+<p><img alt="image52" src="../../_images/image54.png" /></p>
+<p>Select the desired Mip-Level for MIP map generation from the drop down
+list. This drop down list is generated based on the selected original
+image and the intended targets EncodeWith options (CPU or GPU based). Select the lowest mip-level you want to generate, then press the
+Generate button.</p>
+<p><img alt="image53" src="../../_images/image55.png" /></p>
+<p>When MIP map generation completes, <img alt="image54" src="../../_images/image56.png" /> will appear in Image View
+toolbar. Click on the little triangle to expand the drop down list.</p>
+<p><img alt="image55" src="../../_images/image57.png" /></p>
+<p>You can select the view of each MIP level from the list.</p>
+<p>For example, selecting the level 3 will update the current image
+view as shown below</p>
+<p><img alt="image56" src="../../_images/image58.png" /></p>
+<p>Image View of Ruby BMP file at Mip Level 3</p>
+<p>You can always re-generate MIP map for the same image by repeating the
+all the steps mentioned in this section.</p>
+</div>
+<div class="section" id="mip-map-filter-support-using-either-gpu-or-cpu">
+<h1>MIP Map Filter Support Using either GPU or CPU<a class="headerlink" href="#mip-map-filter-support-using-either-gpu-or-cpu" title="Permalink to this headline">¶</a></h1>
+<p>The GUI applications “Generate MIP Map” option can be used on a variety of image formats to produce MIP maps filtered for optimal GPU or CPU use.</p>
+<p>Options for using a Compressonator Box filter or DirectX® based filters are provided.</p>
+<p><img alt="image436" src="../../_images/image436.png" /></p>
+</div>
+<div class="section" id="applying-gamma-to-mip-maps">
+<h1>Applying Gamma to MIP Maps<a class="headerlink" href="#applying-gamma-to-mip-maps" title="Permalink to this headline">¶</a></h1>
+<p>Gamma correction can be applied to the image pixels after MIP map generation by changing the default 1.0 value higher (darken the image) or lower (brighten the image).</p>
+</div>
+<div class="section" id="gpu-based-compression-and-mip-map-generation">
+<h1>GPU Based Compression and MIP Map generation<a class="headerlink" href="#gpu-based-compression-and-mip-map-generation" title="Permalink to this headline">¶</a></h1>
+<p>An alternative option to generate MIP map levels is provided using the application setting window.
+A feature to encode textures using just the GPU hardware and its driver components is provided. The encoding process uses no user application shader code to process the textures.
+Both the GUI and Command-line tools can run BCn GPU extensions provided by most GPU vendors and can be used to evaluate the quality and performance of encoded images using the image views and analysis setting.</p>
+<p>Just enable the GUI “Application Settings” options to set the encoding with GPU and optionally set generating GPU based mipmaps as shown:</p>
+<p><img alt="image437" src="../../_images/appsettings1.png" /></p>
+<p><img alt="image438" src="../../_images/appsettings2.png" /></p>
+<p>Once the images are processed users can view the quality of the resulting images with the applications image view PSNR feature,</p>
+</div>
+<div class="section" id="cube-maps">
+<h1>Cube Maps<a class="headerlink" href="#cube-maps" title="Permalink to this headline">¶</a></h1>
+<p>Cube Maps can be compressed with or without MIP Levels. Only a limited set of texture types (RGBA_8888 and RGBA_F16) are currently supported in DDS and KTX file formats. Compressing, Generating MIP Levels and Viewing Cube Maps uses the same process as image textures. Just place the file onto the Project Explorer and process them as required.</p>
+<p>A new notation is used for the cube faces labeled as “Frames” for each cube face. For cube mapped files maximum frames is set to 6. Support for volumetric texture files is been reviewed and the frames limit will be expanded as needed.</p>
+<p>When textures are added to the Project Explorer, the properties view will now display the type of texture as either a 2D or Cube Map, The Depth field is used for the frames size, the Depth field will also be used to indicate the z component of a 3D image (These notations may change in future revisions).</p>
+<p><img alt="image131" src="../../_images/cubemaps.png" /></p>
+</div>
+<div class="section" id="view-image-difference">
+<h1>View Image Difference<a class="headerlink" href="#view-image-difference" title="Permalink to this headline">¶</a></h1>
+<p>To view the difference between a processed image (Ruby_bmp_1) and
+original image (Ruby_bmp), right mouse button click on Ruby_bmp_1 and
+select View Image Diff from the context menu or select the View Image
+Diff Icon on the tool bar <img alt="image69" src="../../_images/image73.png" /></p>
+<p><img alt="image70" src="../../_images/image74.png" /></p>
+<p>Mouse right mouse button click over Ruby_bmp_1 showing Context menu</p>
+<p>You will now see a comparison of the original image with the compressed
+image</p>
+<p><img alt="image71" src="../../_images/image75.png" /></p>
+<p>Image Difference view</p>
+<p>Note: The windows in this view are not movable.</p>
+</div>
+<div class="section" id="analyzing-compressed-images">
+<h1>Analyzing Compressed Images<a class="headerlink" href="#analyzing-compressed-images" title="Permalink to this headline">¶</a></h1>
+<p>After clicking View Image diff, you can run analysis on the images that
+show various statistics such as MSE, PSNR and Similarity Indices (SSIM)
+by selecting <img alt="image72" src="../../_images/image76.png" /> on the top right corner of the image diff view.</p>
+<p>When analysis process completed, the statistics result will be shown on
+the Property View</p>
+<p><img alt="image73" src="../../_images/image77.png" /></p>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/acompress-128.png" alt="Logo"/>
+            </a></p>
+<h1 class="logo"><a href="../../index.html">Compressonator</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Content</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../developer_sdk/index.html">Developer SDK</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../command_line_tool/index.html">Command Line Tool</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">GUI Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../build_from_source/build_instructions.html">Build from GitHub Sources</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../analysis/index.html">Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../revisions.html">Revision History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../support/contact.html">Contact and Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../support/license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bibliography.html">Bibliography</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">GUI Tool</a><ul>
+  <li><a href="index.html">GUI User Guide</a><ul>
+      <li>Previous: <a href="3dmodelcompression.html" title="previous chapter">glTF Viewer and asset compression</a></li>
+      <li>Next: <a href="../../build_from_source/index.html" title="next chapter">&lt;no title&gt;</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017 to 2021, AMD Developer Tools.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

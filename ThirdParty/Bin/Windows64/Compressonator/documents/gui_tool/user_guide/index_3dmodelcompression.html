@@ -1,0 +1,180 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>3D Model Compression &#8212; Compressonator Compressonator - latest build documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     'Compressonator - latest build',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="glTF Viewer and asset compression" href="3dmodelcompression.html" />
+    <link rel="prev" title="Compressing Images" href="texturecompression.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="d-model-compression">
+<h1>3D Model Compression<a class="headerlink" href="#d-model-compression" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound" id="toc-gui-3dmodelcompression">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="3dmodelcompression.html">glTF Viewer and asset compression</a></li>
+<li class="toctree-l1"><a class="reference internal" href="3dmodelcompression.html#vulkan-viewer-alpha-code-windows-os-only">Vulkan®  Viewer [ Alpha Code ] (Windows OS Only)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="3dmodelcompression.html#gltf-3d-model-diff">glTF 3D Model Diff</a></li>
+<li class="toctree-l1"><a class="reference internal" href="3dmodelcompression.html#directx-3d-model-diff-view-modes">DirectX® 3D Model Diff View Modes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="3dmodelcompression.html#d-mesh-optimization-and-or-mesh-compression">3D Mesh Optimization and/or Mesh Compression</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="3dmodelcompression.html#mesh-optimizer-settings-for-useropt-selection">Mesh Optimizer Settings for “UserOpt” selection</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="3dmodelcompression.html#optimize-vertex-cache">Optimize Vertex Cache</a></li>
+<li class="toctree-l3"><a class="reference internal" href="3dmodelcompression.html#cache-size">Cache Size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="3dmodelcompression.html#optimize-vertex-fifo">Optimize Vertex FIFO</a></li>
+<li class="toctree-l3"><a class="reference internal" href="3dmodelcompression.html#fifo-cache-size">FIFO Cache Size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="3dmodelcompression.html#optimize-overdraw">Optimize Overdraw</a></li>
+<li class="toctree-l3"><a class="reference internal" href="3dmodelcompression.html#acmr-threshold">ACMR Threshold</a></li>
+<li class="toctree-l3"><a class="reference internal" href="3dmodelcompression.html#optimize-vertex-fetch">Optimize Vertex Fetch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="3dmodelcompression.html#simplify-mesh">Simplify Mesh</a></li>
+<li class="toctree-l3"><a class="reference internal" href="3dmodelcompression.html#level-of-detail">Level of Detail</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="3dmodelcompression.html#mesh-compression-settings-selection">Mesh Compression Settings selection</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="3dmodelcompression.html#analyzing-mesh">Analyzing Mesh</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="3dmodelcompression.html#analysis-vertex-cache">Analysis Vertex Cache</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="3dmodelcompression.html#vertex-cache-size">Vertex Cache Size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="3dmodelcompression.html#warp-size-of-threads">Warp Size (# of threads)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="3dmodelcompression.html#primitive-buffer-size">Primitive Buffer Size</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="3dmodelcompression.html#analysis-vertex-fetch">Analysis Vertex Fetch</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="3dmodelcompression.html#cache-line-buffer-size-bytes">Cache Line Buffer Size(bytes)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="3dmodelcompression.html#total-cache-buffer-size-bytes">Total Cache Buffer Size(bytes)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="3dmodelcompression.html#analysis-overdraw">Analysis Overdraw</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="3dmodelcompression.html#orthographic-x-and-y-view-max-value">Orthographic X and Y View Max Value</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="3dmodelcompression.html#mesh-statistic">Mesh Statistic</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="3dmodelcompression.html#acmr-average-cache-miss-ratio">ACMR (Average Cache Miss Ratio)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="3dmodelcompression.html#atvr-average-transform-vertices-ratio">ATVR (Average Transform Vertices Ratio)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="3dmodelcompression.html#overdraw">Overdraw</a></li>
+<li class="toctree-l3"><a class="reference internal" href="3dmodelcompression.html#overfetch">Overfetch</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/acompress-128.png" alt="Logo"/>
+            </a></p>
+<h1 class="logo"><a href="../../index.html">Compressonator</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Content</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../developer_sdk/index.html">Developer SDK</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../command_line_tool/index.html">Command Line Tool</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">GUI Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../build_from_source/build_instructions.html">Build from GitHub Sources</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../analysis/index.html">Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../revisions.html">Revision History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../support/contact.html">Contact and Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../support/license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bibliography.html">Bibliography</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">GUI Tool</a><ul>
+  <li><a href="index.html">GUI User Guide</a><ul>
+      <li>Previous: <a href="texturecompression.html" title="previous chapter">Compressing Images</a></li>
+      <li>Next: <a href="3dmodelcompression.html" title="next chapter">glTF Viewer and asset compression</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017 to 2021, AMD Developer Tools.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

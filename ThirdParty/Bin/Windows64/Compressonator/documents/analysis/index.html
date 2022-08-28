@@ -1,0 +1,224 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Analysis &#8212; Compressonator Compressonator - latest build documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     'Compressonator - latest build',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Revision History" href="../revisions.html" />
+    <link rel="prev" title="Build from GitHub Sources" href="../build_from_source/build_instructions.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="analysis">
+<h1>Analysis<a class="headerlink" href="#analysis" title="Permalink to this headline">¶</a></h1>
+<p>Compressonator CLI and GUI applications provides options for analysis and comparison between original and processed images.</p>
+<div class="section" id="test-analysis-log-features-and-file-filters">
+<h2>Test Analysis Log Features And File Filters<a class="headerlink" href="#test-analysis-log-features-and-file-filters" title="Permalink to this headline">¶</a></h2>
+<p>Ref: <a class="reference external" href="../command_line_tool/commandline.html#test-analysis-logging-features-and-file-filters">CLI Analysis Log File:</a></p>
+<p>Captures details of the source and destination files along with statistical data on performance and quality into a text file “process_results.txt”</p>
+<p>Example: <strong>CompressonatorCLI.exe&nbsp;-log&nbsp;&lt;source directory&gt;&nbsp; &lt;destination directory&gt;</strong></p>
+</div>
+<div class="section" id="compressonatorcli-analysis">
+<h2>CompressonatorCLI Analysis<a class="headerlink" href="#compressonatorcli-analysis" title="Permalink to this headline">¶</a></h2>
+<p>Compressonator CLI has a command line option to run Image Analysis on two sample images of the same dimension and format using the option -analysis</p>
+<p>Example:</p>
+<p>Step 1: Do compression on a sample source image, say we used BC7 on a source file Ruby.dds and the destination file Ruby_BC7.dds</p>
+<p>CompressonatorCLI.exe -fd BC7 ruby.dds ruby_bc7.dds</p>
+<p>Step 2: Check the result of the compressed image with the original</p>
+<p>CompressonatorCLI.exe -analysis ruby.dds ruby_bc7.dds</p>
+<p>The analysis results is saved to file Analysis_Result.xml</p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="o">&lt;?</span><span class="n">xml</span> <span class="n">version</span><span class="o">=</span><span class="s">&quot;1.0&quot;</span> <span class="n">encoding</span><span class="o">=</span><span class="s">&quot;UTF-8&quot;</span><span class="o">?&gt;</span>
+<span class="o">&lt;</span><span class="n">ANALYSIS</span><span class="o">&gt;</span>
+    <span class="o">&lt;</span><span class="n">ruby_ruby_bc7</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="n">MSE</span><span class="o">&gt;</span><span class="mf">0.81335721644469494</span><span class="o">&lt;/</span><span class="n">MSE</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="n">SSIM</span><span class="o">&gt;</span><span class="mf">0.99769089871409922</span><span class="o">&lt;/</span><span class="n">SSIM</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="n">SSIM_BLUE</span><span class="o">&gt;</span><span class="mf">0.99735912437459595</span><span class="o">&lt;/</span><span class="n">SSIM_BLUE</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="n">SSIM_GREEN</span><span class="o">&gt;</span><span class="mf">0.9974541763291831</span><span class="o">&lt;/</span><span class="n">SSIM_GREEN</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="n">SSIM_RED</span><span class="o">&gt;</span><span class="mf">0.99825939543851883</span><span class="o">&lt;/</span><span class="n">SSIM_RED</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="n">PSNR</span><span class="o">&gt;</span><span class="mf">49.027990366039383</span><span class="o">&lt;/</span><span class="n">PSNR</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="n">PSNR_BLUE</span><span class="o">&gt;</span><span class="mf">48.733856839394129</span><span class="o">&lt;/</span><span class="n">PSNR_BLUE</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="n">PSNR_GREEN</span><span class="o">&gt;</span><span class="mf">49.702877166369824</span><span class="o">&lt;/</span><span class="n">PSNR_GREEN</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="n">PSNR_RED</span><span class="o">&gt;</span><span class="mf">48.71854158766061</span><span class="o">&lt;/</span><span class="n">PSNR_RED</span><span class="o">&gt;</span>
+    <span class="o">&lt;/</span><span class="n">ruby_ruby_bc7</span><span class="o">&gt;</span>
+<span class="o">&lt;/</span><span class="n">ANALYSIS</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>Notice the markup label below &lt;ANALYSIS&gt; contains the source file name “ruby” and destination file name “ruby_bc7” appended by an underscore “ruby_ruby_bc7”</p>
+<p>SSIM is the calculated average of RGB Channels. A simple file parser can then be used to run SSIM and other Matrix analysis for test automation.</p>
+<p>if you wish to generate diff image file, run</p>
+<p>“CompressonatorCLI.exe -analysis -diff_image ruby.dds ruby_bc7.dds” in Step 2.</p>
+<p>A image diff (i.e. ruby_diff.bmp) will be generated. Please use the Compressonator.exe (UI app) to view the diff bmp file with adjusted brightness levels.</p>
+</div>
+<div class="section" id="analysis-for-images-in-folders">
+<h2>Analysis For Images In Folders<a class="headerlink" href="#analysis-for-images-in-folders" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li>Process a folder of images and performa analysis between images inside the source folder and destination folder</li>
+</ol>
+<p><strong>CompressonatorCLI.exe&nbsp;-fd &lt;Codec format&gt;&nbsp;&lt;source directory&gt;&nbsp; &lt;destination directory&gt;</strong></p>
+<p>Example: <code class="docutils literal"><span class="pre">CompressonatorCLI.exe&nbsp;-fd</span> <span class="pre">BC1&nbsp;-log&nbsp;./images&nbsp;</span> <span class="pre">./results</span></code></p>
+<ol class="arabic simple" start="2">
+<li>Generate analysis report between a source image and a processed image</li>
+</ol>
+<p><strong>CompressonatorCLI.exe -analysis &lt;source image file&gt; &lt;resulted image file&gt;</strong></p>
+<p>For example: <code class="docutils literal"><span class="pre">CompressonatorCLI.exe</span> <span class="pre">-analysis</span> <span class="pre">Boat.png</span> <span class="pre">result.dds</span></code></p>
+<p>This option will generate an Analysis_Result.xml report file which contain the SSIM, PSNR and MSE values between the original and processed textures.</p>
+<ol class="arabic simple" start="3">
+<li>Generate a difference image between a source image and a processed image</li>
+</ol>
+<p><strong>CompressonatorCLI.exe -diff_image &lt;source image file&gt; &lt;resulted image file&gt;</strong></p>
+<p>For example: <code class="docutils literal"><span class="pre">CompressonatorCLI.exe</span> <span class="pre">-diff_image</span> <span class="pre">Boat.png</span> <span class="pre">result.dds</span></code></p>
+<p>This option will generate difference between 2 images with same size. A result_diff.bmp file will be generated. Please use compressonator GUI to increase the contrast to view the diff pixels.</p>
+<ol class="arabic simple" start="4">
+<li>Print image properties of an image file.</li>
+</ol>
+<p><strong>CompressonatorCLI.exe -imageprops &lt;image file&gt;</strong></p>
+<p>For example: <code class="docutils literal"><span class="pre">CompressonatorCLI.exe</span> <span class="pre">-imageprops</span> <span class="pre">Boat.png</span></code></p>
+<p>This option will print file name, path, size, image width, height, mip levels and format.</p>
+</div>
+<div class="section" id="analysis-views">
+<h2>Analysis Views<a class="headerlink" href="#analysis-views" title="Permalink to this headline">¶</a></h2>
+<p>A new table view is provided for users to view test analysis results for performance, PSNR and SSIM analysis during and after processing of image textures. Previously in v3.1 user would have to run “Image Difference Views” on each processed texture to view PSNR and SSIM results, which ends up been very time consuming for large number of images. An amalgamated results view is now available for users to collect and review results for processed images.
+To enable this feature, select the “Show MSR PSNR SSIM Results” and optionally “Show Analysis Results Table” in the “Applications Settings” menu as shown:</p>
+<p><img alt="analysis_image1" src="../_images/cmp_v3.2_run_time_analysis.png" /></p>
+<p><strong>Show MSR PSNR SSIM Results</strong></p>
+<p>Enables the analysis results feature. Each processed item will display a MSE, PSNR and SSIM as it is been processed on the output window. A summary of the average processing time PSNR and SSIM is displayed once all processing is completed (MSR average results is not collected as its already included in the PSNR calculations).
+It also enables the “Show Analysis Results Table” for selection. This selection is active only when “Show MSR PSNR SSIM Results” is enabled, else the table will not be shown after processing</p>
+<p><img alt="analysis_image2" src="../_images/cmp_v3.2_analysis_output.png" /></p>
+<p><strong>Show Analysis Results Table</strong>
+Displays this table after any image is been processed (TIME is in Seconds, PSRN is in dB and SSIM is an index in range of 0…1)</p>
+<p><img alt="analysis_image3" src="../_images/image2020-3-17_13-43-45.png" /></p>
+<p>When processing images the table view will be displayed and can be used to gather results and analysis data for reports, by simply selecting the required rows and columns in the table then copy (Ctrl+C) and pasting (Ctrl+V) the table view.</p>
+<p><strong>KPerf(ms)</strong>  (Beta Feature)</p>
+<p>This estimates the time it takes to process 1000 (4x4 pixel) blocks, using the current encoder and GPU setup. where Perf(ms) is the time it took to process a single block of 16 pixels in milliseconds.</p>
+<p>HPC performance monitoring uses CPU timers. while OCL &amp; DXC uses GPU performance query timers. For CPU based encoding KPerf &amp; MTx is not measured.</p>
+<p><strong>MTx/s</strong> (Beta Feature)</p>
+<p>This is a measurement of the time it takes to process 1 Million texels in a second.</p>
+<p><strong>Time(s)</strong></p>
+<p>CPU performance based timing, that measures the overall end to end time it took for the image to be processed. It includes device setup, loading image to GPU, receiving the image from GPU and file IO.</p>
+<p><strong>Please note the following</strong></p>
+<blockquote>
+<div><ul class="simple">
+<li>The table view is re-sizable by mouse clicking on and dragging the table edges and dividers.</li>
+<li>The resized view and table position are not saved and is reset when the GUI application is restarted.</li>
+<li>Table Header labels are not copied.</li>
+<li>Table content is cleared when any of the image textures are been reprocessed.</li>
+<li>When enabled, the table will remain as a topmost windows view.</li>
+<li>During processing the table content is been updated.</li>
+<li>When deselecting the analysis table view from the “Applications Settings” menu, the table will still remain visible, it is cleared only when a image is been processed.</li>
+</ul>
+</div></blockquote>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/acompress-128.png" alt="Logo"/>
+            </a></p>
+<h1 class="logo"><a href="../index.html">Compressonator</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Content</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../developer_sdk/index.html">Developer SDK</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../command_line_tool/index.html">Command Line Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gui_tool/index.html">GUI Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../build_from_source/build_instructions.html">Build from GitHub Sources</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../revisions.html">Revision History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../support/contact.html">Contact and Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../support/license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bibliography.html">Bibliography</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="../build_from_source/build_instructions.html" title="previous chapter">Build from GitHub Sources</a></li>
+      <li>Next: <a href="../revisions.html" title="next chapter">Revision History</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017 to 2021, AMD Developer Tools.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

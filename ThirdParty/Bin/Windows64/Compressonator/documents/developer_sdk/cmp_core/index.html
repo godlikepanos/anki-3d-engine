@@ -1,0 +1,397 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>CMP Core &#8212; Compressonator Compressonator - latest build documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     'Compressonator - latest build',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="CMP Framework" href="../cmp_framework/index.html" />
+    <link rel="prev" title="Developer SDK" href="../index.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="cmp-core">
+<h1>CMP Core<a class="headerlink" href="#cmp-core" title="Permalink to this headline">¶</a></h1>
+<p>This library supports the following codecs BC1 to BC7, also known as ATI1N, ATI2N and DXTC.</p>
+<p>The main API call for both compression and decompression is at the block level for each of these codecs.</p>
+<div class="section" id="gpu-shaders">
+<h2>GPU Shaders<a class="headerlink" href="#gpu-shaders" title="Permalink to this headline">¶</a></h2>
+<p>With OpenCL (OCL) and DirectX (DXC): These API are availble for use in user defined shaders by including BCn_Encode_Kernel.h and Common_Def.h</p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="n">CGU_Vec2ui</span> <span class="n">CompressBlockBC1_UNORM</span><span class="p">(</span> <span class="n">CMP_IN</span> <span class="n">CGU_Vec3f</span> <span class="n">BlockRGB</span><span class="p">[</span><span class="mi">16</span><span class="p">],</span> <span class="n">CMP_IN</span> <span class="n">CGU_FLOAT</span> <span class="n">fquality</span><span class="p">,</span><span class="n">CGU_BOOL</span> <span class="n">isSRGB</span><span class="p">)</span>
+<span class="n">CGU_Vec4ui</span> <span class="n">CompressBlockBC2_UNORM</span><span class="p">(</span> <span class="n">CMP_IN</span> <span class="n">CGU_Vec3f</span> <span class="n">BlockRGB</span><span class="p">[</span><span class="mi">16</span><span class="p">],</span> <span class="n">CMP_IN</span> <span class="n">CGU_FLOAT</span> <span class="n">BlockA</span><span class="p">[</span><span class="mi">16</span><span class="p">],</span> <span class="n">CGU_FLOAT</span> <span class="n">fquality</span><span class="p">,</span> <span class="n">CGU_BOOL</span> <span class="n">isSRGB</span><span class="p">)</span>
+<span class="n">CGU_Vec4ui</span> <span class="n">CompressBlockBC3_UNORM</span><span class="p">(</span> <span class="n">CMP_IN</span> <span class="n">CGU_Vec3f</span> <span class="n">BlockRGB</span><span class="p">[</span><span class="mi">16</span><span class="p">],</span> <span class="n">CMP_IN</span> <span class="n">CGU_FLOAT</span> <span class="n">BlockA</span><span class="p">[</span><span class="mi">16</span><span class="p">],</span> <span class="n">CGU_FLOAT</span> <span class="n">fquality</span><span class="p">,</span><span class="n">CGU_BOOL</span> <span class="n">isSRGB</span><span class="p">)</span>
+<span class="n">CGU_Vec2ui</span> <span class="n">CompressBlockBC4_UNORM</span><span class="p">(</span> <span class="n">CMP_IN</span> <span class="n">CGU_FLOAT</span> <span class="n">Block</span><span class="p">[</span><span class="mi">16</span><span class="p">],</span> <span class="n">CGU_FLOAT</span> <span class="n">fquality</span><span class="p">)</span>
+<span class="n">CGU_Vec4ui</span> <span class="n">CompressBlockBC5_UNORM</span><span class="p">(</span> <span class="n">CMP_IN</span> <span class="n">CGU_FLOAT</span> <span class="n">BlockU</span><span class="p">[</span><span class="mi">16</span><span class="p">],</span> <span class="n">CMP_IN</span> <span class="n">CGU_FLOAT</span> <span class="n">BlockV</span><span class="p">[</span><span class="mi">16</span><span class="p">],</span> <span class="n">CGU_FLOAT</span> <span class="n">fquality</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For OCL addition API is provided under a generic API interface for all BCn encoders: CMP_STATIC CMP_KERNEL void CMP_GPUEncoder(…) see plugin CMP_GPU_OCL for details on how this is used.
+For DXC CMP_Core contains sample HLSL shaders used by the plugin CMP_GPU_DXC</p>
+</div>
+<div class="section" id="error-codes">
+<h2>Error Codes<a class="headerlink" href="#error-codes" title="Permalink to this headline">¶</a></h2>
+<p>All Core API calls return a int success 0 (CMP_CORE_OK) or error value &gt; 0 (CMP_CORE_ERR) for a more detailed and up to date list look at the file Common_Def.h</p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="n">CGU_CORE_OK</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>                          <span class="c1">// No errors, call was successfull</span>
+<span class="n">CGU_CORE_ERR_UNKOWN</span><span class="p">,</span>                      <span class="c1">// An unknown error occurred</span>
+<span class="n">CGU_CORE_ERR_NEWMEM</span><span class="p">,</span>                      <span class="c1">// New Memory Allocation Failed</span>
+<span class="n">CGU_CORE_ERR_INVALIDPTR</span><span class="p">,</span>                  <span class="c1">// The pointer value used is invalid or null</span>
+<span class="n">CGU_CORE_ERR_RANGERED</span><span class="p">,</span>                    <span class="c1">// values for Red   Channel is out of range (too high or too low)</span>
+<span class="n">CGU_CORE_ERR_RANGEGREEN</span><span class="p">,</span>                  <span class="c1">// values for Green Channel is out of range (too high or too low)</span>
+<span class="n">CGU_CORE_ERR_RANGEBLUE</span><span class="p">,</span>                   <span class="c1">// values for Blue  Channel is out of range (too high or too low)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="codec-quality-settings">
+<h2>Codec Quality Settings<a class="headerlink" href="#codec-quality-settings" title="Permalink to this headline">¶</a></h2>
+<p>BC1, BC2, and BC3 have discrete quality settings, These settings are available in the following ranges (varying the q setting in these ranges will have no new effects, q is a discrete coarse setting)</p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="n">q</span> <span class="o">=</span> <span class="mf">0.0</span>   <span class="n">to</span> <span class="mf">0.01</span> <span class="n">sets</span> <span class="n">lowest</span> <span class="n">quality</span> <span class="n">and</span> <span class="n">fast</span> <span class="n">compression</span>
+<span class="n">q</span> <span class="o">=</span> <span class="mf">0.101</span> <span class="n">to</span> <span class="mf">0.6</span> <span class="n">sets</span> <span class="n">mid</span><span class="o">-</span><span class="n">quality</span>
+<span class="n">q</span> <span class="o">=</span> <span class="mf">0.601</span> <span class="n">to</span> <span class="mf">1.0</span> <span class="n">set</span> <span class="n">the</span> <span class="n">best</span> <span class="n">quality</span> <span class="n">and</span> <span class="n">low</span> <span class="n">performance</span>
+<span class="n">BC4</span> <span class="n">and</span> <span class="n">BC5</span> <span class="n">have</span> <span class="n">no</span> <span class="n">quality</span> <span class="n">settings</span><span class="p">,</span> <span class="n">no</span> <span class="n">changes</span> <span class="n">in</span> <span class="n">quality</span> <span class="n">will</span> <span class="n">occur</span> <span class="k">if</span> <span class="n">set</span><span class="p">.</span>
+<span class="n">BC6</span> <span class="o">&amp;</span> <span class="n">BC7</span> <span class="o">&amp;</span> <span class="n">ASTC</span> <span class="n">have</span> <span class="n">full</span> <span class="n">q</span> <span class="n">ranges</span> <span class="n">from</span> <span class="mi">0</span> <span class="n">to</span> <span class="mf">1.0</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="create-and-destroy-options-pointers">
+<h2>Create and Destroy Options Pointers<a class="headerlink" href="#create-and-destroy-options-pointers" title="Permalink to this headline">¶</a></h2>
+<p>Context based reference pointers are used instead of class or structure definitions for each codec, it provides a clear definition of what the setting options are for each codec and a means for easy expansion of the features for future releases.</p>
+<p>BCn is used to describe a short form for all of the codecs BC1 to BC7.</p>
+<p>All BCn codecs will use default max quality settings when a null pointer is used for the CompressBlock calls, users can create multiple contexts to set preferred Quality, Mode Masks , Channel Mapping, Etc…</p>
+<p>A void pointer reference is used to relay the setting options to the respected setting and encoding functions. When a context pointer is created for a particular codecs like BC1 its should not be used for another codecs like BC2, it will create unpredictable results, runtime exceptions or errors.</p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">CreateOptionsBC1</span><span class="p">(</span><span class="kt">void</span> <span class="o">**</span><span class="n">optionsBC1</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">CreateOptionsBC2</span><span class="p">(</span><span class="kt">void</span> <span class="o">**</span><span class="n">optionsBC2</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">CreateOptionsBC3</span><span class="p">(</span><span class="kt">void</span> <span class="o">**</span><span class="n">optionsBC3</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">CreateOptionsBC4</span><span class="p">(</span><span class="kt">void</span> <span class="o">**</span><span class="n">optionsBC4</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">CreateOptionsBC5</span><span class="p">(</span><span class="kt">void</span> <span class="o">**</span><span class="n">optionsBC5</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">CreateOptionsBC6</span><span class="p">(</span><span class="kt">void</span> <span class="o">**</span><span class="n">optionsBC6</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">CreateOptionsBC7</span><span class="p">(</span><span class="kt">void</span> <span class="o">**</span><span class="n">optionsBC7</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>These calls removes the context memory used by the CreateOptions.</p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">DestroyOptionsBC1</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">optionsBC1</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">DestroyOptionsBC2</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">optionsBC2</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">DestroyOptionsBC3</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">optionsBC3</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">DestroyOptionsBC4</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">optionsBC4</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">DestroyOptionsBC5</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">optionsBC5</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">DestroyOptionsBC6</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">optionsBC6</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">DestroyOptionsBC7</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">optionsBC7</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="channel-weights">
+<h2>Channel Weights<a class="headerlink" href="#channel-weights" title="Permalink to this headline">¶</a></h2>
+<p>Setting channel Weights : Applies to BC1, BC2 and BC3 valid ranges are [0..1.0f] Default is {1.0f, 1.0f, 1.0f}</p>
+<p>With swizzle formats the weighting applies to the data within the specified channel not the channel itself</p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">SetChannelWeightsBC1</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">options</span><span class="p">,</span> <span class="kt">float</span> <span class="n">WeightRed</span><span class="p">,</span> <span class="kt">float</span> <span class="n">WeightGreen</span><span class="p">,</span> <span class="kt">float</span> <span class="n">WeightBlue</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">SetChannelWeightsBC2</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">options</span><span class="p">,</span> <span class="kt">float</span> <span class="n">WeightRed</span><span class="p">,</span> <span class="kt">float</span> <span class="n">WeightGreen</span><span class="p">,</span> <span class="kt">float</span> <span class="n">WeightBlue</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">SetChannelWeightsBC3</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">options</span><span class="p">,</span> <span class="kt">float</span> <span class="n">WeightRed</span><span class="p">,</span> <span class="kt">float</span> <span class="n">WeightGreen</span><span class="p">,</span> <span class="kt">float</span> <span class="n">WeightBlue</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="quality-settings">
+<h2>Quality Settings<a class="headerlink" href="#quality-settings" title="Permalink to this headline">¶</a></h2>
+<p>All values are clamped in the range 0.0 to 1.0, the encoding performance is much slower when quality is set high.</p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">SetQualityBC1</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">options</span><span class="p">,</span> <span class="kt">float</span> <span class="n">fquality</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">SetQualityBC2</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">options</span><span class="p">,</span> <span class="kt">float</span> <span class="n">fquality</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">SetQualityBC3</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">options</span><span class="p">,</span> <span class="kt">float</span> <span class="n">fquality</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">SetQualityBC4</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">options</span><span class="p">,</span> <span class="kt">float</span> <span class="n">fquality</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">SetQualityBC5</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">options</span><span class="p">,</span> <span class="kt">float</span> <span class="n">fquality</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">SetQualityBC6</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">options</span><span class="p">,</span> <span class="kt">float</span> <span class="n">fquality</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">SetQualityBC7</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">options</span><span class="p">,</span> <span class="kt">float</span> <span class="n">fquality</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="alpha-threshold">
+<h2>Alpha Threshold<a class="headerlink" href="#alpha-threshold" title="Permalink to this headline">¶</a></h2>
+<p>BC1 uses 1 bit alpha for encoding. This bit is set when pixel values are &gt;= alphaThreshold, default is 128</p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">SetAlphaThresholdBC1</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">options</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">alphaThreshold</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="mode-masks">
+<h2>Mode Masks<a class="headerlink" href="#mode-masks" title="Permalink to this headline">¶</a></h2>
+<p>This mask can be used to enable any or all encoding modes of the codec. If all are enabled the resulting quality of the image is increased, reducing the modes enabled lowers the quality and increases performance.</p>
+<p><strong>mask :</strong> BC6 uses 14 compression modes, default is all enabled (0x3FFF)</p>
+<p><strong>mask :</strong> BC7 uses 8  compression modes, default is all enabled (0xFF)</p>
+<p>The current BC6H codec always defaults all modes enabled. Next release will enable this feature setting!</p>
+<p>BC7 Mask values are mapped by bit position with mode 0 been at the lowest significant bit (LSB) value in the mask.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="47%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head" colspan="9">MSB                  LSB</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>mask bits</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr class="row-odd"><td>BC7 mode</td>
+<td>7</td>
+<td>6</td>
+<td>5</td>
+<td>4</td>
+<td>3</td>
+<td>2</td>
+<td>1</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+<p>Example: To enable modes 6 &amp; 1 only the mask value is set to hex 0x42 or binary 01000010
+if mask is set to &lt;= 0 then default will be 0xCF which is what prior versions of Compressonator used.</p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">SetMaskBC6</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">options</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span>  <span class="n">mask</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">SetMaskBC7</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">options</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">mask</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="decoder-channel-mapping">
+<h2>Decoder Channel Mapping<a class="headerlink" href="#decoder-channel-mapping" title="Permalink to this headline">¶</a></h2>
+<p>The channel mapping can be set for BC1, BC2 and BC3 decoders to decode channels Red(0) ,Green(1), Blue(2) and Alpha(3) as RGBA channels [0,1,2,3] (default True) else BGRA maps to [0,1,2,3]
+In this release bool is used as a swizzle setting (Red, Blue channel swap). Future release will allow different channel mapping!</p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">SetDecodeChannelMapping</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">options</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">mapRGBA</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="bc7-alpha-options">
+<h2>BC7 Alpha Options<a class="headerlink" href="#bc7-alpha-options" title="Permalink to this headline">¶</a></h2>
+<p><strong>imageNeedsAlpha :</strong> Reserved for future use (default is false)</p>
+<p><strong>colourRestrict :</strong> Sets block to avoid using Combined Alpha modes. value of true enables else false disables the setting (default is false)</p>
+<p><strong>alphaRestrict :</strong> Avoid blocking issues with punch-through or threshold alpha encoding. value of true enables else false disables the setting (default is false)</p>
+<p>Each pixel in the tile is checked for alpha values, if any alpha value in the input block is set below 255 (blockNeedsAlpha = TRUE) or is a value of {0 or 255} (blockAlphaZeroOne = TRUE), respective modes will be either be kept or discarded using the ModeMask as a guide and the following conditions for each block the Mode cycles from 0 to 7.</p>
+<p>If the block needs alpha and this mode doesn’t support alpha then indicate that this is not a valid mode for the block:
+if (blockNeedsAlpha == TRUE) and (Mode has NO ALPHA) then that Mode is disabled from been used for processing</p>
+<p>Optional user restriction for color only blocks so that they do not use modes that have combined color and alpha : this avoids the possibility that the encoder might choose an alpha other than 255 (due to parity) and cause something to become accidentally slightly transparent it’s possible that when encoding 3-component texture applications will assume that the 4th component can safely be assumed to be 255 all the time</p>
+<p>if (blockNeedsAlpha == TRUE) and (Mode has COMBINED ALPHA) and (ColourRestrict == TRUE) then that Mode is excluded for processing</p>
+<p>Optional restriction for blocks with alpha to avoid issues with punch-through or threshold alpha encoding:</p>
+<p>if (blockNeedsAlpha == TRUE) and (Mode has COMBINED ALPHA) and (AlphaRestrict == TRUE) and (blockAlphaZeroOne == TRUE) then that Mode is excluded for processing</p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">SetAlphaOptionsBC7</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">options</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">imageNeedsAlpha</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">colourRestrict</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">alphaRestrict</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="bc7-error-threshold">
+<h2>BC7 Error Threshold<a class="headerlink" href="#bc7-error-threshold" title="Permalink to this headline">¶</a></h2>
+<p>The <strong>minThreshold</strong> (default 5.0f) and <strong>maxThreshold</strong> (default 80.0f) is used to map the quality setting and partition ranges used during quantization.
+These values should be set prior to using the SetQualityBC7 call else it will have no effect and the defaults will be used.</p>
+<p>To increase performance, adjust maxThreshold higher, to reduce performance and increase quality adjust maxThreshold lower.</p>
+<p>minThreshold is used to clamp a minimum error value that is added to maxThreshold when quality is set to max 1.0;</p>
+<p>The upper range values are not checked, values are clampped to 0.0 if negative!</p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">SetErrorThresholdBC7</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">options</span><span class="p">,</span> <span class="kt">float</span> <span class="n">minThreshold</span><span class="p">,</span> <span class="kt">float</span> <span class="n">maxThreshold</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="compressing-blocks">
+<h2>Compressing Blocks<a class="headerlink" href="#compressing-blocks" title="Permalink to this headline">¶</a></h2>
+<p><strong>srcBlock :</strong> Buffer pointer reference to a source block to use for compression, the source buffer is expected to be in RGBA:8888 format for BC1..5,BC7 codecs. For BC6H the buffer should be in Half float format.</p>
+<p><strong>srcStrideInBytes :</strong> Is the number of bytes required to access the next row of the 4x4 block reference from the original srcBlock pointer.</p>
+<p><strong>srcStrideInShorts :</strong> Is the number of short int values required to access the next row of the 4x4 block reference from the original srcBlock pointer.</p>
+<p><strong>cmpBlock :</strong>  Pointer reference to a destination block that is typically in the range of 8 to 16 bytes for BCn codecs.</p>
+<p><strong>options :</strong> Is the encoder reference created by CreateOptions. This can be a null pointer, which uses the codecs default settings for high quality encoding.</p>
+<p>BC4 codec uses a srcBlock array of 16 bytes. This array typically represents the Red Channel of a RGBA_8888 4x4 image block.</p>
+<p>BC5 codec uses two srcBlocks each are a array of 16 bytes. These two arrays typically represents the Red and Green channels of a RGBA_8888 4x4 image block.</p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">CompressBlockBC1</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">srcBlock</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span>  <span class="n">srcStrideInBytes</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">cmpBlock</span><span class="p">[</span><span class="mi">8</span> <span class="p">],</span> <span class="kt">void</span> <span class="o">*</span><span class="n">options</span> <span class="n">CMP_DEFAULTNULL</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">CompressBlockBC2</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">srcBlock</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span>  <span class="n">srcStrideInBytes</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">cmpBlock</span><span class="p">[</span><span class="mi">16</span><span class="p">],</span> <span class="kt">void</span> <span class="o">*</span><span class="n">options</span> <span class="n">CMP_DEFAULTNULL</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">CompressBlockBC3</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">srcBlock</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span>  <span class="n">srcStrideInBytes</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">cmpBlock</span><span class="p">[</span><span class="mi">16</span><span class="p">],</span> <span class="kt">void</span> <span class="o">*</span><span class="n">options</span> <span class="n">CMP_DEFAULTNULL</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">CompressBlockBC4</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">srcBlock</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span>  <span class="n">srcStrideInBytes</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">cmpBlock</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="kt">void</span> <span class="o">*</span><span class="n">options</span>  <span class="n">CMP_DEFAULTNULL</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">CompressBlockBC5</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">srcBlock1</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">srcStrideInBytes1</span><span class="p">,</span>
+                               <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">srcBlock2</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">srcStrideInBytes2</span><span class="p">,</span>
+                               <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">cmpBlock</span><span class="p">[</span><span class="mi">16</span><span class="p">],</span> <span class="kt">void</span> <span class="o">*</span><span class="n">options</span>  <span class="n">CMP_DEFAULTNULL</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">CompressBlockBC6</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">short</span> <span class="o">*</span><span class="n">srcBlock</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">srcStrideInShorts</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">cmpBlock</span><span class="p">[</span><span class="mi">16</span><span class="p">],</span> <span class="kt">void</span> <span class="o">*</span><span class="n">options</span> <span class="n">CMP_DEFAULTNULL</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">CompressBlockBC7</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">srcBlock</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span>  <span class="n">srcStrideInBytes</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">cmpBlock</span><span class="p">[</span><span class="mi">16</span><span class="p">],</span> <span class="kt">void</span> <span class="o">*</span><span class="n">options</span> <span class="n">CMP_DEFAULTNULL</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="decompressing-blocks">
+<h2>Decompressing Blocks<a class="headerlink" href="#decompressing-blocks" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">DecompressBlockBC1</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">cmpBlock</span><span class="p">[</span><span class="mi">8</span> <span class="p">],</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">srcBlock</span><span class="p">[</span><span class="mi">64</span><span class="p">]</span> <span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">options</span> <span class="n">CMP_DEFAULTNULL</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">DecompressBlockBC2</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">cmpBlock</span><span class="p">[</span><span class="mi">16</span><span class="p">],</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">srcBlock</span><span class="p">[</span><span class="mi">64</span><span class="p">]</span> <span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">options</span> <span class="n">CMP_DEFAULTNULL</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">DecompressBlockBC3</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">cmpBlock</span><span class="p">[</span><span class="mi">16</span><span class="p">],</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">srcBlock</span><span class="p">[</span><span class="mi">64</span><span class="p">]</span> <span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">options</span> <span class="n">CMP_DEFAULTNULL</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">DecompressBlockBC4</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">cmpBlock</span><span class="p">[</span><span class="mi">8</span> <span class="p">],</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">srcBlock</span><span class="p">[</span><span class="mi">16</span><span class="p">]</span> <span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">options</span>  <span class="n">CMP_DEFAULTNULL</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">DecompressBlockBC5</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">cmpBlock</span><span class="p">[</span><span class="mi">16</span><span class="p">],</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">srcBlock1</span><span class="p">[</span><span class="mi">16</span><span class="p">],</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">srcBlock2</span><span class="p">[</span><span class="mi">16</span><span class="p">],</span> <span class="kt">void</span> <span class="o">*</span><span class="n">options</span>  <span class="n">CMP_DEFAULTNULL</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">DecompressBlockBC6</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">cmpBlock</span><span class="p">[</span><span class="mi">16</span><span class="p">],</span> <span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">srcBlock</span><span class="p">[</span><span class="mi">48</span><span class="p">],</span> <span class="kt">void</span> <span class="o">*</span><span class="n">options</span> <span class="n">CMP_DEFAULTNULL</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">CMP_CDECL</span> <span class="nf">DecompressBlockBC7</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">cmpBlock</span><span class="p">[</span><span class="mi">16</span><span class="p">],</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">srcBlock</span><span class="p">[</span><span class="mi">64</span><span class="p">]</span> <span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">options</span> <span class="n">CMP_DEFAULTNULL</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="example-usage-of-core-api">
+<h2>Example Usage of Core API<a class="headerlink" href="#example-usage-of-core-api" title="Permalink to this headline">¶</a></h2>
+<p>Sample application to process a 4x4 image block using Compress and Decompress API’s
+SDK files required for application to build:</p>
+<p>CMP_Core.h
+CMP_Core_xx.lib  For static libs xx is either MD, MT or MDd or MTd, when using DLL’s make sure the  CMP_Core_xx_DLL.dll is in exe path</p>
+<p>Example usage is shown as below, error checking on the function returns has been omitted for clarity:</p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="c1">// BC1 options context</span>
+<span class="kt">void</span> <span class="o">*</span><span class="n">BC1Options</span><span class="p">;</span>
+
+<span class="c1">// Create an options context reference using this call, it returns a pointer to use for BC1 codec settings</span>
+<span class="c1">// All functions used in CMP Core return error codes to check if calls were successful</span>
+<span class="n">CreateOptionsBC1</span><span class="p">(</span><span class="o">&amp;</span><span class="n">BC1Options</span><span class="p">);</span>
+
+<span class="c1">// Check if pointer is allocated, can also use the call function return CGU_CORE_OK</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">BC1Options</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Failed to create BC1 Options Context!&quot;</span><span class="p">);</span>
+    <span class="k">return</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c1">// Setting Channel Weights {Red,Green,Blue}</span>
+<span class="n">SetChannelWeightsBC1</span><span class="p">(</span><span class="n">BC1Options</span><span class="p">,</span> <span class="mf">0.3086f</span><span class="p">,</span> <span class="mf">0.6094f</span><span class="p">,</span> <span class="mf">0.0820f</span><span class="p">);</span>
+
+<span class="c1">// Compress a sample image shape0 which is a 4x4 RGBA_8888 block, its stride is 16 bytes to the next row of the 4x4 image block.</span>
+<span class="c1">// Users can use a pointer to any sized image buffers to reference a 4x4 block by supplying a stride offset for the next row.</span>
+
+<span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">shape0_RGBA</span><span class="p">[</span><span class="mi">64</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span> <span class="n">filled</span> <span class="n">with</span> <span class="n">image</span> <span class="n">source</span> <span class="n">data</span> <span class="n">as</span> <span class="n">RGBA</span> <span class="p">...};</span>
+
+<span class="c1">// cmpBuffer is a byte array of 8 byte to hold the compressed results.</span>
+<span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">cmpBuffer</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span>   <span class="o">=</span> <span class="p">{</span> <span class="mi">0</span> <span class="p">};</span>
+
+<span class="c1">// Compress the source into cmpBuffer</span>
+<span class="n">CompressBlockBC1</span><span class="p">(</span><span class="n">shape0_RGBA</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="n">cmpBuffer</span><span class="p">,</span> <span class="n">BC1Options</span><span class="p">);</span>
+
+<span class="c1">// Example to decompress comBuffer back to a RGBA_8888 4x4 image block</span>
+<span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">imgBuffer</span><span class="p">[</span><span class="mi">64</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span> <span class="mi">0</span> <span class="p">};</span>
+<span class="n">DecompressBlockBC1</span><span class="p">(</span><span class="n">cmpBuffer</span><span class="p">,</span><span class="n">imgBuffer</span><span class="p">,</span><span class="n">BC1Options</span><span class="p">);</span>
+
+<span class="c1">// Can compare the original image (shape0_RGBA) vs the decompressed image (imgBuffer) for quality</span>
+
+<span class="c1">// Remove the Options Setting Memory</span>
+<span class="n">DestroyOptionsBC1</span><span class="p">(</span><span class="n">BC1Options</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>A full example project is provided <a class="reference external" href="https://github.com/GPUOpen-Tools/Compressonator/tree/master/examples/">here</a></p>
+<ul class="simple">
+<li>core_example demonstrates compression and decompression of all of the available codecs with various quality and performance settings.</li>
+</ul>
+<p>The example is also distributed through CompressonatorCore installer in the <a class="reference external" href="https://github.com/GPUOpen-Tools/Compressonator/releases">release</a> page.</p>
+<div class="toctree-wrapper compound" id="toc-developer-sdk-cmp-core">
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/acompress-128.png" alt="Logo"/>
+            </a></p>
+<h1 class="logo"><a href="../../index.html">Compressonator</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Content</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Developer SDK</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../command_line_tool/index.html">Command Line Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gui_tool/index.html">GUI Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../build_from_source/build_instructions.html">Build from GitHub Sources</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../analysis/index.html">Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../revisions.html">Revision History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../support/contact.html">Contact and Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../support/license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bibliography.html">Bibliography</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Developer SDK</a><ul>
+      <li>Previous: <a href="../index.html" title="previous chapter">Developer SDK</a></li>
+      <li>Next: <a href="../cmp_framework/index.html" title="next chapter">CMP Framework</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017 to 2021, AMD Developer Tools.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

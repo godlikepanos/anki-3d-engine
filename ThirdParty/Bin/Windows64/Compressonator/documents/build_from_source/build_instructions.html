@@ -1,0 +1,206 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Build from GitHub Sources &#8212; Compressonator Compressonator - latest build documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     'Compressonator - latest build',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Analysis" href="../analysis/index.html" />
+    <link rel="prev" title="&lt;no title&gt;" href="index.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="build-from-github-sources">
+<h1>Build from GitHub Sources<a class="headerlink" href="#build-from-github-sources" title="Permalink to this headline">¶</a></h1>
+<p>Compressonator comes with pre-built binaries for all of our stable releases:</p>
+<p><a class="reference external" href="https://github.com/GPUOpen-Tools/Compressonator/releases">https://github.com/GPUOpen-Tools/Compressonator/releases</a></p>
+<p>which includes command line tools, GUI and binaries for use in developer applications.</p>
+<p>The following build instructions are provided for developers interested in building the latest sources available on <a class="reference external" href="https://github.com/GPUOpen-Tools/Compressonator">Compressonator GitHub</a> or from the source code downloaded from the <a class="reference external" href="https://github.com/GPUOpen-Tools/Compressonator/releases">releases</a> page.</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">git clone --recursive https://github.com/GPUOpen-Tools/Compressonator.git</span>
+</pre></div>
+</div>
+<p>to get all the source code including the submodules contents.</p>
+<div class="section" id="build-instructions-for-compressonator-sdk-libs">
+<h2>Build Instructions for Compressonator SDK Libs<a class="headerlink" href="#build-instructions-for-compressonator-sdk-libs" title="Permalink to this headline">¶</a></h2>
+<p>VS2017 project soultion files are provided to build SDK libs in the folder compressonator/vs2017</p>
+</div>
+<div class="section" id="build-instructions-for-compressonator-gui-and-cli-applications">
+<h2>Build Instructions for Compressonator GUI and CLI applications<a class="headerlink" href="#build-instructions-for-compressonator-gui-and-cli-applications" title="Permalink to this headline">¶</a></h2>
+<p>Building on Windows
+As a preliminary step, make sure that you have the following installed on your system:</p>
+<ul class="simple">
+<li>CMake 3.15 or above</li>
+<li>Vulkan SDK version 1.2.141.2 or above is required</li>
+<li>Python 3.6 or above</li>
+<li>Qt 5.12.6 is recommended</li>
+</ul>
+<p>Once installed users can run any of the following to build:</p>
+<div class="section" id="documents">
+<h3>Documents<a class="headerlink" href="#documents" title="Permalink to this headline">¶</a></h3>
+<p>cd to the Compressonator folder, and run:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">call scripts/windows_build_docs.bat</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="applications">
+<h3>Applications<a class="headerlink" href="#applications" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">call scripts/windows_build_apps.bat</span>
+</pre></div>
+</div>
+<p>This call will first download additional dependencies used into a “common” folder above the compressonator source folder. It calls a python script called “fetch_dependencies.py” and cmake to build a vs2017 solution file into a “build” folder</p>
+</div>
+<div class="section" id="building-all-sdk-libs">
+<h3>Building all sdk libs<a class="headerlink" href="#building-all-sdk-libs" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">call scripts/windows_build_sdk.bat</span>
+</pre></div>
+</div>
+<p>If you have Visual Studio 2017, build solutions can also be setup by running the vsbuild.bat file that calls fetch_dependencies.py and cmake.</p>
+</div>
+<div class="section" id="linux-builds-ubuntu-18-04">
+<h3>Linux Builds Ubuntu 18.04<a class="headerlink" href="#linux-builds-ubuntu-18-04" title="Permalink to this headline">¶</a></h3>
+<p>As a preliminary step, make sure that you have the following packages installed on your system:</p>
+<ul class="simple">
+<li>CMake 3.10 or above</li>
+<li>Vulkan SDK version 1.2.141.2 or above is required</li>
+<li>Python 3.6 or above</li>
+<li>Qt 5.9.2 (Qt 5.12.6 is recommended)</li>
+</ul>
+<p>Additional packages are required and can be installed using the shell script: initsetup_ubuntu.sh</p>
+<p>Then run the following in the compressonator/scripts folder</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">python3 fetch_dependencies.py --no-hooks</span>
+</pre></div>
+</div>
+<p>To build applications use</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">cd compressonator</span>
+<span class="go">export VULKAN_SDK_VER=1.2.141.2</span>
+<span class="go">export VULKAN_SDK=/opt/VulkanSDK/$VULKAN_SDK_VER/</span>
+<span class="go">QT_ROOT=/opt/Qt/Qt5.9.2/5.9.2/gcc_64</span>
+<span class="go">cmake -DQT_PACKAGE_ROOT=$QT_ROOT .</span>
+<span class="go">make</span>
+</pre></div>
+</div>
+<p>The QT_ROOT and VULKAN_SDK should be set to your package install folder</p>
+<p>To build documents use</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">set -x</span>
+<span class="go">cd compressonator/docs</span>
+<span class="go">make -j 4 clean</span>
+<span class="go">make -j 4 html</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/acompress-128.png" alt="Logo"/>
+            </a></p>
+<h1 class="logo"><a href="../index.html">Compressonator</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Content</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../developer_sdk/index.html">Developer SDK</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../command_line_tool/index.html">Command Line Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gui_tool/index.html">GUI Tool</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Build from GitHub Sources</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../analysis/index.html">Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../revisions.html">Revision History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../support/contact.html">Contact and Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../support/license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bibliography.html">Bibliography</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">&lt;no title&gt;</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">&lt;no title&gt;</a></li>
+      <li>Next: <a href="../analysis/index.html" title="next chapter">Analysis</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017 to 2021, AMD Developer Tools.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

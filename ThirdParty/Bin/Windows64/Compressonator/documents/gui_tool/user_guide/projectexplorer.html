@@ -1,0 +1,271 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Project Explorer &#8212; Compressonator Compressonator - latest build documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     'Compressonator - latest build',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Message Output" href="messageoutput.html" />
+    <link rel="prev" title="Property View" href="propertyview.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="project-explorer">
+<h1>Project Explorer<a class="headerlink" href="#project-explorer" title="Permalink to this headline">¶</a></h1>
+<p>Images and models are added to the application using the Project Explorer.</p>
+<p>2D texture image files are displayed in two levels, original source
+image is shown on the left (branch item) and destination image(s) (sub
+items) are shown on the right using a tree view outline.</p>
+<p>3D model files (only support .obj and .gltf with .bin) are displayed in
+three levels, original model is shown on the left (branch item) and
+destination model is shown as 2<sup>nd</sup> level sub item while the
+mesh/textures within the model is shown as 3<sup>rd</sup> level item of
+the tree view.</p>
+<div class="section" id="projects">
+<h2>Projects<a class="headerlink" href="#projects" title="Permalink to this headline">¶</a></h2>
+<p>The application uses a project based concept, where 2D texture images
+are added to the Project Explorer tree view as original image items in
+which settings are applied using a destination item. Each original 2D
+texture image item can have multiple destination items. A destination
+item can be set to generate a file with a specified format (compressed,
+decompressed or transcoded) and extension (DDS, KTX, BMP, etc.)</p>
+<p>While for 3D model items, they are added to the Project Explorer tree
+view as original model items, in which multiple model destination
+settings can be added as 2<sup>nd</sup> level tree which create multiple
+resulted model items, the 3<sup>rd</sup> level destination setting which
+applied to the mesh/texture items within the model can only be added
+once per mesh/texture item.</p>
+<p>Multiple destination items can be processed at the same time.</p>
+<p>Projects can be loaded, created and saved to disk at any time.</p>
+<div class="section" id="sample-projects">
+<h3>Sample Projects<a class="headerlink" href="#sample-projects" title="Permalink to this headline">¶</a></h3>
+<p>These samples can be accessed either from the Welcome Page or from the
+sample projects folder</p>
+<p>Compressonator\Projects</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="83%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">BC7_Compression.cprj</th>
+<th class="head">Project file demonstrating compression using BC7 on images with source extension formats of BMP, PNG, TGA and TIF</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>BC6H_Compression.cprj</td>
+<td>Project file demonstrating compression using BC6H on a high dynamic range image (OpenEXR) file extension format of (EXR)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Processing Ruby.bmp sample using BC7 Compression</strong></p>
+<ol class="arabic simple">
+<li>On the Welcome Page tab window as shown in the view below, click on
+“BC7_Compression”</li>
+</ol>
+<p><img alt="image40" src="../../_images/image43.png" /></p>
+<p>The Project Explorer will change and show some sample images and
+settings from the BC7 Compression sample project:</p>
+<p><img alt="image41" src="../../_images/image44.png" /></p>
+<ol class="arabic simple" start="2">
+<li>Select the image by clicking on the name (for example, Ruby.bmp), the
+Properties View will now display information on the selected image’s
+location, various sizes, dimensions, etc.</li>
+</ol>
+<p><img alt="image42" src="../../_images/image45.png" /></p>
+<ol class="arabic simple" start="3">
+<li>Now click on the right arrow next to the Ruby.bmp.</li>
+</ol>
+<p><img alt="image43" src="../../_images/image46.png" /></p>
+<p>This expands the view and you will see a clickable “Add destination
+settings …” line and a BC7 pre-compressed destination sample
+Ruby_bmp_1.</p>
+<p><img alt="image44" src="../../_images/image47.png" /></p>
+<ol class="arabic simple" start="4">
+<li>Click on Ruby_bmp_1, and notice that the Property View changed (as
+shown below) to indicate what settings has been preset for
+Ruby_bmp_1</li>
+</ol>
+<p><img alt="image45" src="../../_images/image48.png" /></p>
+<p>Note that Compression Ratio and Compression Time both show “Unknown” and
+“Not Processed”. These values will be updated when the destination file
+is created during processing.</p>
+<ol class="arabic simple" start="5">
+<li>Click on the Process button located in the Properties View. Two new
+windows will open a Progress Window and a Message Output window. When
+processing is complete the progress window will close and the Output
+window will show a result.</li>
+</ol>
+<p><img alt="image46" src="../../_images/image49.png" /></p>
+<p>Notice also that there is a green circle next to Ruby_bmp_1,
+indicating that a compressed file has been created and the process was
+successful.</p>
+<p><img alt="image47" src="../../_images/image50.png" /></p>
+<ol class="arabic simple" start="6">
+<li>To view the resulting file, double click on Ruby_bmp_1</li>
+</ol>
+<p><img alt="image48" src="../../_images/image51.png" /></p>
+</div>
+</div>
+<div class="section" id="add-destination-settings">
+<h2>Add Destination Settings<a class="headerlink" href="#add-destination-settings" title="Permalink to this headline">¶</a></h2>
+<p>To add new destination settings a for specific original image (branch
+item), expand its branch and select Add destination settings… by double
+clicking on it.</p>
+<p><img alt="image59" src="../../_images/image65.png" /></p>
+<p>A new window will be displayed</p>
+<p><img alt="image60" src="../../_images/image66.png" /></p>
+<p>Add Destination Settings Window</p>
+<p>Once you have set the desired options, the destination file name and
+folder; select save. This will now add the new item to the Project
+Explorer view.</p>
+<p><img alt="image61" src="../../_images/image67.png" /></p>
+<p><strong>Note:</strong> In some cases, a red circle with a cross is displayed
+indicating that a file already exists and will be overwritten with the
+new settings. The current release does not check for duplications during
+setting.</p>
+</div>
+<div class="section" id="using-codec-quality-settings">
+<h2>Using Codec Quality Settings<a class="headerlink" href="#using-codec-quality-settings" title="Permalink to this headline">¶</a></h2>
+<p>BC1, BC2, and BC3 have discrete quality settings, These settings are available in the following ranges (varying the q setting in these ranges will have no new effects, q is a discrete coarse setting)</p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="n">q</span> <span class="o">=</span> <span class="mf">0.0</span>     <span class="n">to</span> <span class="mf">0.01</span> <span class="n">sets</span> <span class="n">lowest</span> <span class="n">quality</span> <span class="n">and</span> <span class="n">fast</span> <span class="n">compression</span>
+<span class="n">q</span> <span class="o">=</span> <span class="mf">0.101</span> <span class="n">to</span> <span class="mf">0.6</span> <span class="n">sets</span> <span class="n">mid</span><span class="o">-</span><span class="n">quality</span>
+<span class="n">q</span> <span class="o">=</span> <span class="mf">0.601</span> <span class="n">to</span> <span class="mi">1</span><span class="p">,</span><span class="mi">0</span> <span class="n">set</span> <span class="n">the</span> <span class="n">best</span> <span class="n">quality</span> <span class="n">and</span> <span class="n">low</span> <span class="n">performance</span>
+<span class="n">BC4</span> <span class="n">and</span> <span class="n">BC5</span> <span class="n">have</span> <span class="n">no</span> <span class="n">quality</span> <span class="n">settings</span><span class="p">,</span> <span class="n">no</span> <span class="n">changes</span> <span class="n">in</span> <span class="n">quality</span> <span class="n">will</span> <span class="n">occur</span> <span class="k">if</span> <span class="n">set</span><span class="p">.</span>
+<span class="n">BC6</span> <span class="o">&amp;</span> <span class="n">BC7</span> <span class="n">have</span> <span class="n">full</span> <span class="n">q</span> <span class="n">ranges</span> <span class="n">from</span> <span class="mi">0</span> <span class="n">to</span> <span class="mf">1.0</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="setting-global-quality-settings">
+<h2>Setting Global Quality Settings<a class="headerlink" href="#setting-global-quality-settings" title="Permalink to this headline">¶</a></h2>
+<p>Users can override all individual destination compression settings, using a globally set value before processing</p>
+<p>Currently, only the quality settings can be overwritten with a new global setting.</p>
+<p><strong>The process is as follows:</strong></p>
+<p>On the project explorer click on “Double Click Here to add files”</p>
+<p><img alt="QualitySetting1" src="../../_images/globalsettings2.png" /></p>
+<p>A new property view will be displayed</p>
+<p><img alt="QualitySetting2" src="../../_images/globalsettings3.png" /></p>
+<p>Set a new Quality value to override all existing quality settings for textures in the project explorer, a value of 0 with restore the old values and disable the global settings</p>
+<p><img alt="QualitySetting3" src="../../_images/globalsettings5.png" /></p>
+<p>When an override is set the textures will display the new override setting and disable its editing features.</p>
+<p>Notice also that the “Double Click Here to add files” background color has also changed to indicate that an override setting is in effect, it will return to a white background if the override settings are turned off.</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/acompress-128.png" alt="Logo"/>
+            </a></p>
+<h1 class="logo"><a href="../../index.html">Compressonator</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Content</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../developer_sdk/index.html">Developer SDK</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../command_line_tool/index.html">Command Line Tool</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">GUI Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../build_from_source/build_instructions.html">Build from GitHub Sources</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../analysis/index.html">Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../revisions.html">Revision History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../support/contact.html">Contact and Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../support/license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bibliography.html">Bibliography</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">GUI Tool</a><ul>
+  <li><a href="index.html">GUI User Guide</a><ul>
+  <li><a href="index_themainwindow.html">The Main Window</a><ul>
+      <li>Previous: <a href="propertyview.html" title="previous chapter">Property View</a></li>
+      <li>Next: <a href="messageoutput.html" title="next chapter">Message Output</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017 to 2021, AMD Developer Tools.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
