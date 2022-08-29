@@ -15,7 +15,7 @@ namespace anki {
 /// @addtogroup resource
 /// @{
 
-static constexpr const char* MESH_MAGIC = "ANKIMES5";
+inline constexpr const char* MESH_MAGIC = "ANKIMES5";
 
 constexpr U32 MESH_BINARY_BUFFER_ALIGNMENT = 16;
 

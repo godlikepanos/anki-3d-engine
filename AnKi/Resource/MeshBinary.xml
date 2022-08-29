@@ -7,7 +7,7 @@
 	<doxygen_group name="resource"/>
 
 	<prefix_code><![CDATA[
-static constexpr const char* MESH_MAGIC = "ANKIMES5";
+inline constexpr const char* MESH_MAGIC = "ANKIMES5";
 
 constexpr U32 MESH_BINARY_BUFFER_ALIGNMENT = 16;
 

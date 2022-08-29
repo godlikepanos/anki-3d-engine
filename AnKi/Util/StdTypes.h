@@ -243,22 +243,22 @@ inline constexpr U64 operator"" _U64(unsigned long long arg) noexcept
 
 /// @name Size user literals
 /// @{
-static constexpr unsigned long long int operator""_B(unsigned long long int x)
+inline constexpr unsigned long long int operator""_B(unsigned long long int x)
 {
 	return x;
 }
 
-static constexpr unsigned long long int operator""_KB(unsigned long long int x)
+inline constexpr unsigned long long int operator""_KB(unsigned long long int x)
 {
 	return x * 1024;
 }
 
-static constexpr unsigned long long int operator""_MB(unsigned long long int x)
+inline constexpr unsigned long long int operator""_MB(unsigned long long int x)
 {
 	return x * (1024 * 1024);
 }
 
-static constexpr unsigned long long int operator""_GB(unsigned long long int x)
+inline constexpr unsigned long long int operator""_GB(unsigned long long int x)
 {
 	return x * (1024 * 1024 * 1024);
 }
@@ -266,22 +266,22 @@ static constexpr unsigned long long int operator""_GB(unsigned long long int x)
 
 /// @name Time user literals
 /// @{
-static constexpr Second operator""_hour(long double x)
+inline constexpr Second operator""_hour(long double x)
 {
 	return Second(x) * 60.0;
 }
 
-static constexpr Second operator""_sec(long double x)
+inline constexpr Second operator""_sec(long double x)
 {
 	return Second(x);
 }
 
-static constexpr Second operator""_ms(long double x)
+inline constexpr Second operator""_ms(long double x)
 {
 	return Second(x) / 1000.0;
 }
 
-static constexpr Second operator""_ns(long double x)
+inline constexpr Second operator""_ns(long double x)
 {
 	return Second(x) / 1000000000.0;
 }
@@ -289,17 +289,17 @@ static constexpr Second operator""_ns(long double x)
 
 /// @name Distance user literals
 /// @{
-static constexpr F32 operator""_dm(long double x)
+inline constexpr F32 operator""_dm(long double x)
 {
 	return F32(x) / 10.0f;
 }
 
-static constexpr F32 operator""_cm(long double x)
+inline constexpr F32 operator""_cm(long double x)
 {
 	return F32(x) / 100.0f;
 }
 
-static constexpr F32 operator""_mm(long double x)
+inline constexpr F32 operator""_mm(long double x)
 {
 	return F32(x) / 1000.0f;
 }
