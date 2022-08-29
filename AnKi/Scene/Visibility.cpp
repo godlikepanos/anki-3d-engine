@@ -470,23 +470,16 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			{
 				ANKI_ASSERT(lc->getShadowEnabled() == true && "Only with shadow for now");
 
-				U32 cascadeCount;
-				if(ANKI_UNLIKELY(!castsShadow))
+				U32 cascadeCount = max(testedFrc.getShadowCascadeCount(), U32(castsShadow));
+				if(!castsShadow)
 				{
 					cascadeCount = 0;
 				}
-				else if(!!(enabledVisibilityTests
-						   & FrustumComponentVisibilityTestFlag::DIRECTIONAL_LIGHT_SHADOWS_1_CASCADE))
-				{
-					cascadeCount = 1;
-				}
 				else
 				{
-					ANKI_ASSERT(!!(enabledVisibilityTests
-								   & FrustumComponentVisibilityTestFlag::DIRECTIONAL_LIGHT_SHADOWS_ALL_CASCADES));
-					cascadeCount = MAX_SHADOW_CASCADES2;
+					cascadeCount = max<U32>(testedFrc.getShadowCascadeCount(), 1);
 				}
-				ANKI_ASSERT(cascadeCount <= MAX_SHADOW_CASCADES2);
+				ANKI_ASSERT(cascadeCount <= MAX_SHADOW_CASCADES);
 
 				// Create some dummy frustum components and initialize them
 				WeakArray<FrustumComponent> cascadeFrustumComponents(

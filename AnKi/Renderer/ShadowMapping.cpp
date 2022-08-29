@@ -524,15 +524,15 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 	{
 		DirectionalLightQueueElement& light = ctx.m_renderQueue->m_directionalLight;
 
-		Array<U64, MAX_SHADOW_CASCADES2> timestamps;
-		Array<U32, MAX_SHADOW_CASCADES2> cascadeIndices;
-		Array<U32, MAX_SHADOW_CASCADES2> drawcallCounts;
-		Array<UVec4, MAX_SHADOW_CASCADES2> atlasViewports;
-		Array<UVec4, MAX_SHADOW_CASCADES2> scratchViewports;
-		Array<TileAllocatorResult, MAX_SHADOW_CASCADES2> subResults;
-		Array<U32, MAX_SHADOW_CASCADES2> lods;
-		Array<U32, MAX_SHADOW_CASCADES2> renderQueueElementsLods;
-		Array<Bool, MAX_SHADOW_CASCADES2> blurAtlass;
+		Array<U64, MAX_SHADOW_CASCADES> timestamps;
+		Array<U32, MAX_SHADOW_CASCADES> cascadeIndices;
+		Array<U32, MAX_SHADOW_CASCADES> drawcallCounts;
+		Array<UVec4, MAX_SHADOW_CASCADES> atlasViewports;
+		Array<UVec4, MAX_SHADOW_CASCADES> scratchViewports;
+		Array<TileAllocatorResult, MAX_SHADOW_CASCADES> subResults;
+		Array<U32, MAX_SHADOW_CASCADES> lods;
+		Array<U32, MAX_SHADOW_CASCADES> renderQueueElementsLods;
+		Array<Bool, MAX_SHADOW_CASCADES> blurAtlass;
 
 		U32 activeCascades = 0;
 

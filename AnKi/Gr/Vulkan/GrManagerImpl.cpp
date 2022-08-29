@@ -227,45 +227,41 @@ Error GrManagerImpl::initInstance()
 	ci.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	ci.pApplicationInfo = &app;
 
-	// Validation layers
-	static Array<const char*, 1> LAYERS = {"VK_LAYER_KHRONOS_validation"};
-	Array<const char*, LAYERS.getSize()> layersToEnable; // Keep it alive in the stack
-	if(m_config->getGrValidation() || m_config->getGrDebugPrintf())
+	// Instance layers
+	DynamicArrayAuto<const char*> layersToEnable(getAllocator());
 	{
-		uint32_t count;
-		vkEnumerateInstanceLayerProperties(&count, nullptr);
+		U32 layerCount;
+		vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 
-		if(count)
+		if(layerCount)
 		{
-			DynamicArrayAuto<VkLayerProperties> layerProps(getAllocator());
-			layerProps.create(count);
+			DynamicArrayAuto<VkLayerProperties> layerProps(getAllocator(), layerCount);
+			vkEnumerateInstanceLayerProperties(&layerCount, &layerProps[0]);
 
-			vkEnumerateInstanceLayerProperties(&count, &layerProps[0]);
-
-			U32 layersToEnableCount = 0;
-			for(const char* c : LAYERS)
+			ANKI_VK_LOGV("Found the following instance layers:");
+			for(const VkLayerProperties& layer : layerProps)
 			{
-				for(U32 i = 0; i < count; ++i)
+				ANKI_VK_LOGV("\t%s", layer.layerName);
+				CString layerName = layer.layerName;
+
+				static const char* validationName = "VK_LAYER_KHRONOS_validation";
+				if((m_config->getGrValidation() || m_config->getGrDebugPrintf()) && layerName == validationName)
 				{
-					if(CString(c) == layerProps[i].layerName)
-					{
-						layersToEnable[layersToEnableCount++] = c;
-						break;
-					}
+					layersToEnable.emplaceBack(validationName);
 				}
 			}
+		}
 
-			if(layersToEnableCount)
+		if(layersToEnable.getSize())
+		{
+			ANKI_VK_LOGI("Will enable the following instance layers:");
+			for(const char* name : layersToEnable)
 			{
-				ANKI_VK_LOGI("Will enable the following layers:");
-				for(U32 i = 0; i < layersToEnableCount; ++i)
-				{
-					ANKI_VK_LOGI("\t%s", layersToEnable[i]);
-				}
-
-				ci.enabledLayerCount = layersToEnableCount;
-				ci.ppEnabledLayerNames = &layersToEnable[0];
+				ANKI_VK_LOGI("\t%s", name);
 			}
+
+			ci.enabledLayerCount = layersToEnable.getSize();
+			ci.ppEnabledLayerNames = &layersToEnable[0];
 		}
 	}
 

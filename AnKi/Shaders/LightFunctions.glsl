@@ -235,7 +235,7 @@ ANKI_RP F32 computeShadowFactorDirLight(DirectionalLight light, U32 cascadeIdx, 
 #define ANKI_FAST_CASCADES_WORKAROUND 1 // Doesn't make sense but it's super fast
 
 #if ANKI_FAST_CASCADES_WORKAROUND
-	// Assumes MAX_SHADOW_CASCADES2 is 4
+	// Assumes MAX_SHADOW_CASCADES is 4
 	Mat4 lightProjectionMat;
 	switch(cascadeIdx)
 	{

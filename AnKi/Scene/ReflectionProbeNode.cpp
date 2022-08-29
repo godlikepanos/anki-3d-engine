@@ -13,10 +13,6 @@
 
 namespace anki {
 
-const FrustumComponentVisibilityTestFlag FRUSTUM_TEST_FLAGS =
-	FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS | FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS
-	| FrustumComponentVisibilityTestFlag::DIRECTIONAL_LIGHT_SHADOWS_1_CASCADE;
-
 /// Feedback component
 class ReflectionProbeNode::MoveFeedbackComponent : public SceneComponent
 {
@@ -112,6 +108,7 @@ ReflectionProbeNode::ReflectionProbeNode(SceneGraph* scene, CString name)
 		frc->setWorldTransform(m_frustumTransforms[i]);
 		frc->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
 		frc->setEffectiveShadowDistance(getConfig().getSceneReflectionProbeShadowEffectiveDistance());
+		frc->setShadowCascadeCount(1);
 	}
 
 	// Reflection probe comp
@@ -174,8 +171,11 @@ Error ReflectionProbeNode::frameUpdate([[maybe_unused]] Second prevUpdateTime, [
 	// Check the reflection probe component and if it's marked for rendering enable the frustum components
 	const ReflectionProbeComponent& reflc = getFirstComponentOfType<ReflectionProbeComponent>();
 
+	constexpr FrustumComponentVisibilityTestFlag frustumTestFlags =
+		FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS | FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS;
+
 	const FrustumComponentVisibilityTestFlag testFlags =
-		reflc.getMarkedForRendering() ? FRUSTUM_TEST_FLAGS : FrustumComponentVisibilityTestFlag::NONE;
+		reflc.getMarkedForRendering() ? frustumTestFlags : FrustumComponentVisibilityTestFlag::NONE;
 
 	iterateComponentsOfType<FrustumComponent>([testFlags](FrustumComponent& frc) {
 		frc.setEnabledVisibilityTests(testFlags);

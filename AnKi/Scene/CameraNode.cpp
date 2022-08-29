@@ -73,6 +73,7 @@ void CameraNode::initCommon(FrustumType frustumType)
 	frc->setEnabledVisibilityTests(visibilityFlags);
 	frc->setLodDistance(0, getConfig().getLod0MaxDistance());
 	frc->setLodDistance(1, getConfig().getLod1MaxDistance());
+	frc->setShadowCascadeCount(getConfig().getSceneShadowCascadeCount());
 
 	// Extended frustum for RT
 	if(getSceneGraph().getGrManager().getDeviceCapabilities().m_rayTracingEnabled

@@ -29,8 +29,6 @@ enum class FrustumComponentVisibilityTestFlag : U32
 	SHADOW_CASTERS = 1 << 3, ///< Render components that cast shadow
 	POINT_LIGHT_SHADOWS_ENABLED = 1 << 4,
 	SPOT_LIGHT_SHADOWS_ENABLED = 1 << 5,
-	DIRECTIONAL_LIGHT_SHADOWS_ALL_CASCADES = 1 << 6,
-	DIRECTIONAL_LIGHT_SHADOWS_1_CASCADE = 1 << 7,
 	REFLECTION_PROBES = 1 << 8,
 	REFLECTION_PROXIES = 1 << 9,
 	OCCLUDERS = 1 << 10,
@@ -47,13 +45,12 @@ enum class FrustumComponentVisibilityTestFlag : U32
 	SKYBOX = 1 << 21,
 
 	ALL = RENDER_COMPONENTS | LIGHT_COMPONENTS | LENS_FLARE_COMPONENTS | SHADOW_CASTERS | POINT_LIGHT_SHADOWS_ENABLED
-		  | SPOT_LIGHT_SHADOWS_ENABLED | DIRECTIONAL_LIGHT_SHADOWS_ALL_CASCADES | DIRECTIONAL_LIGHT_SHADOWS_1_CASCADE
-		  | REFLECTION_PROBES | REFLECTION_PROXIES | OCCLUDERS | DECALS | FOG_DENSITY_COMPONENTS
-		  | GLOBAL_ILLUMINATION_PROBES | EARLY_Z | GENERIC_COMPUTE_JOB_COMPONENTS | RAY_TRACING_SHADOWS | RAY_TRACING_GI
-		  | RAY_TRACING_REFLECTIONS | RAY_TRACING_PATH_TRACING | UI_COMPONENTS | SKYBOX,
+		  | SPOT_LIGHT_SHADOWS_ENABLED | REFLECTION_PROBES | REFLECTION_PROXIES | OCCLUDERS | DECALS
+		  | FOG_DENSITY_COMPONENTS | GLOBAL_ILLUMINATION_PROBES | EARLY_Z | GENERIC_COMPUTE_JOB_COMPONENTS
+		  | RAY_TRACING_SHADOWS | RAY_TRACING_GI | RAY_TRACING_REFLECTIONS | RAY_TRACING_PATH_TRACING | UI_COMPONENTS
+		  | SKYBOX,
 
-	ALL_SHADOWS_ENABLED =
-		POINT_LIGHT_SHADOWS_ENABLED | SPOT_LIGHT_SHADOWS_ENABLED | DIRECTIONAL_LIGHT_SHADOWS_ALL_CASCADES,
+	ALL_SHADOWS_ENABLED = POINT_LIGHT_SHADOWS_ENABLED | SPOT_LIGHT_SHADOWS_ENABLED,
 
 	ALL_RAY_TRACING = RAY_TRACING_SHADOWS | RAY_TRACING_GI | RAY_TRACING_REFLECTIONS | RAY_TRACING_PATH_TRACING
 };
@@ -334,7 +331,17 @@ public:
 	F32 computeShadowCascadeDistance(U32 cascadeIdx) const
 	{
 		return anki::computeShadowCascadeDistance(cascadeIdx, m_shadowCascadesDistancePower,
-												  getEffectiveShadowDistance(), getCascadeCount());
+												  getEffectiveShadowDistance(), getShadowCascadeCount());
+	}
+
+	[[nodiscard]] U32 getShadowCascadeCount() const
+	{
+		return m_shadowCascadeCount;
+	}
+
+	void setShadowCascadeCount(U32 count)
+	{
+		m_shadowCascadeCount = U8(min(count, MAX_SHADOW_CASCADES));
 	}
 
 	const ConvexHullShape& getPerspectiveBoundingShapeWorldSpace() const
@@ -426,6 +433,8 @@ private:
 
 	Array<F32, MAX_LOD_COUNT - 1> m_maxLodDistances = {};
 
+	U8 m_shadowCascadeCount = 0;
+
 	class
 	{
 	public:
@@ -439,13 +448,6 @@ private:
 	Bool m_trfMarkedForUpdate : 1;
 
 	Bool updateInternal();
-
-	U32 getCascadeCount() const
-	{
-		return !!(m_flags & FrustumComponentVisibilityTestFlag::DIRECTIONAL_LIGHT_SHADOWS_ALL_CASCADES)
-				   ? MAX_SHADOW_CASCADES2
-				   : 1;
-	}
 };
 /// @}
 

@@ -163,8 +163,8 @@ static_assert(std::is_trivially_destructible<SpotLightQueueElement>::value == tr
 class DirectionalLightQueueElement final
 {
 public:
-	Array<Mat4, MAX_SHADOW_CASCADES2> m_textureMatrices;
-	Array<RenderQueue*, MAX_SHADOW_CASCADES2> m_shadowRenderQueues;
+	Array<Mat4, MAX_SHADOW_CASCADES> m_textureMatrices;
+	Array<RenderQueue*, MAX_SHADOW_CASCADES> m_shadowRenderQueues;
 	RenderQueueDrawCallback m_drawCallback;
 	const void* m_drawCallbackUserData;
 	U64 m_uuid; ///< Zero means that there is no dir light
@@ -172,7 +172,7 @@ public:
 	Vec3 m_direction;
 	F32 m_effectiveShadowDistance;
 	F32 m_shadowCascadesDistancePower;
-	U8 m_shadowCascadeCount; ///< Zero means that it doesn't case any shadows
+	U8 m_shadowCascadeCount; ///< Zero means that it doesn't cast any shadows.
 	U8 m_shadowLayer; ///< Renderer internal.
 
 	DirectionalLightQueueElement()
