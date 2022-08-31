@@ -233,8 +233,8 @@ private:
 
 #if ANKI_GR_MANAGER_DEBUG_MEMMORY
 	VkAllocationCallbacks m_debugAllocCbs;
-	static const U32 MAX_ALLOC_ALIGNMENT = 64;
-	static const PtrSize ALLOC_SIG = 0xF00B00;
+	static constexpr U32 MAX_ALLOC_ALIGNMENT = 64;
+	static constexpr PtrSize ALLOC_SIG = 0xF00B00;
 
 	struct alignas(MAX_ALLOC_ALIGNMENT) AllocHeader
 	{

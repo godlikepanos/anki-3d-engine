@@ -50,7 +50,7 @@ public:
 	}
 
 	/// Copy.
-	TMat(const TMat& b)
+	constexpr TMat(const TMat& b)
 	{
 		for(U i = 0; i < ROW_COUNT; i++)
 		{
@@ -58,7 +58,7 @@ public:
 		}
 	}
 
-	explicit TMat(const T f)
+	explicit constexpr TMat(const T f)
 	{
 		for(U i = 0; i < ROW_COUNT; i++)
 		{
@@ -66,7 +66,7 @@ public:
 		}
 	}
 
-	explicit TMat(const T arr[])
+	explicit constexpr TMat(const T arr[])
 	{
 		for(U i = 0; i < N; i++)
 		{
@@ -77,7 +77,7 @@ public:
 	// 3x3 specific constructors
 
 	ANKI_ENABLE_METHOD(J == 3 && I == 3)
-	TMat(T m00, T m01, T m02, T m10, T m11, T m12, T m20, T m21, T m22)
+	constexpr TMat(T m00, T m01, T m02, T m10, T m11, T m12, T m20, T m21, T m22)
 	{
 		auto& m = *this;
 		m(0, 0) = m00;
@@ -92,19 +92,19 @@ public:
 	}
 
 	ANKI_ENABLE_METHOD(J == 3 && I == 3)
-	explicit TMat(const TQuat<T>& q)
+	explicit constexpr TMat(const TQuat<T>& q)
 	{
 		setRotationPart(q);
 	}
 
 	ANKI_ENABLE_METHOD(J == 3 && I == 3)
-	explicit TMat(const TEuler<T>& e)
+	explicit constexpr TMat(const TEuler<T>& e)
 	{
 		setRotationPart(e);
 	}
 
 	ANKI_ENABLE_METHOD(J == 3 && I == 3)
-	explicit TMat(const TAxisang<T>& axisang)
+	explicit constexpr TMat(const TAxisang<T>& axisang)
 	{
 		setRotationPart(axisang);
 	}
@@ -112,7 +112,8 @@ public:
 	// 4x4 specific constructors
 
 	ANKI_ENABLE_METHOD(J == 4 && I == 4)
-	TMat(T m00, T m01, T m02, T m03, T m10, T m11, T m12, T m13, T m20, T m21, T m22, T m23, T m30, T m31, T m32, T m33)
+	constexpr TMat(T m00, T m01, T m02, T m03, T m10, T m11, T m12, T m13, T m20, T m21, T m22, T m23, T m30, T m31,
+				   T m32, T m33)
 	{
 		auto& m = *this;
 		m(0, 0) = m00;
@@ -134,7 +135,7 @@ public:
 	}
 
 	ANKI_ENABLE_METHOD(J == 4 && I == 4)
-	TMat(const TVec<T, 4>& translation, const TMat<T, 3, 3>& rotation, const T scale = T(1))
+	constexpr TMat(const TVec<T, 4>& translation, const TMat<T, 3, 3>& rotation, const T scale = T(1))
 	{
 		if(isZero<T>(scale - T(1)))
 		{
@@ -152,14 +153,14 @@ public:
 	}
 
 	ANKI_ENABLE_METHOD(J == 4 && I == 4)
-	explicit TMat(const TTransform<T>& t)
+	explicit constexpr TMat(const TTransform<T>& t)
 		: TMat(t.getOrigin().xyz1(), t.getRotation().getRotationPart(), t.getScale())
 	{
 	}
 
 	/// Set a 4x4 matrix using a 3x4 for the first 3 rows and a vec4 for the 4rth row.
 	ANKI_ENABLE_METHOD(J == 4 && I == 4)
-	explicit TMat(const TMat<T, 3, 4>& m3, const TVec<T, 4>& row3)
+	explicit constexpr TMat(const TMat<T, 3, 4>& m3, const TVec<T, 4>& row3)
 	{
 		setRow(0, m3.getRow(0));
 		setRow(1, m3.getRow(1));
@@ -170,7 +171,7 @@ public:
 	// 3x4 specific constructors
 
 	ANKI_ENABLE_METHOD(J == 3 && I == 4)
-	TMat(T m00, T m01, T m02, T m03, T m10, T m11, T m12, T m13, T m20, T m21, T m22, T m23)
+	constexpr TMat(T m00, T m01, T m02, T m03, T m10, T m11, T m12, T m13, T m20, T m21, T m22, T m23)
 	{
 		auto& m = *this;
 		m(0, 0) = m00;
@@ -188,7 +189,7 @@ public:
 	}
 
 	ANKI_ENABLE_METHOD(J == 3 && I == 4)
-	explicit TMat(const TMat<T, 4, 4>& m4)
+	explicit constexpr TMat(const TMat<T, 4, 4>& m4)
 	{
 		auto& m = *this;
 		m(0, 0) = m4(0, 0);
@@ -206,7 +207,7 @@ public:
 	}
 
 	ANKI_ENABLE_METHOD(J == 3 && I == 4)
-	explicit TMat(const TVec<T, 3>& translation, const TMat<T, 3, 3>& rotation, const T scale = T(1))
+	explicit constexpr TMat(const TVec<T, 3>& translation, const TMat<T, 3, 3>& rotation, const T scale = T(1))
 	{
 		if(isZero<T>(scale - T(1)))
 		{
@@ -221,25 +222,25 @@ public:
 	}
 
 	ANKI_ENABLE_METHOD(J == 3 && I == 4)
-	explicit TMat(const TVec<T, 3>& translation, const TQuat<T>& q, const T scale = T(1))
+	explicit constexpr TMat(const TVec<T, 3>& translation, const TQuat<T>& q, const T scale = T(1))
 		: TMat(translation, TMat<T, 3, 3>(q), scale)
 	{
 	}
 
 	ANKI_ENABLE_METHOD(J == 3 && I == 4)
-	explicit TMat(const TVec<T, 3>& translation, const TEuler<T>& b, const T scale = T(1))
+	explicit constexpr TMat(const TVec<T, 3>& translation, const TEuler<T>& b, const T scale = T(1))
 		: TMat(translation, TMat<T, 3, 3>(b), scale)
 	{
 	}
 
 	ANKI_ENABLE_METHOD(J == 3 && I == 4)
-	explicit TMat(const TVec<T, 3>& translation, const TAxisang<T>& b, const T scale = T(1))
+	explicit constexpr TMat(const TVec<T, 3>& translation, const TAxisang<T>& b, const T scale = T(1))
 		: TMat(translation, TMat<T, 3, 3>(b), scale)
 	{
 	}
 
 	ANKI_ENABLE_METHOD(J == 3 && I == 4)
-	explicit TMat(const TTransform<T>& t)
+	explicit constexpr TMat(const TTransform<T>& t)
 		: TMat(t.getOrigin().xyz(), t.getRotation().getRotationPart(), t.getScale())
 	{
 	}

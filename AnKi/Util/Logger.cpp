@@ -19,13 +19,14 @@
 
 namespace anki {
 
-static const Array<const char*, static_cast<U>(LoggerMessageType::COUNT)> MSG_TEXT = {"I", "V", "E", "W", "F"};
+inline constexpr Array<const char*, U(LoggerMessageType::COUNT)> MSG_TEXT = {"I", "V", "E", "W", "F"};
 
 Logger::Logger()
 {
 	addMessageHandler(this, &defaultSystemMessageHandler);
 
-	if(getenv("ANKI_LOG_VERBOSE") && getenv("ANKI_LOG_VERBOSE") == CString("1"))
+	const Char* envVar = getenv("ANKI_LOG_VERBOSE");
+	if(envVar && envVar == CString("1"))
 	{
 		m_verbosityEnabled = true;
 	}
@@ -73,7 +74,10 @@ void Logger::write(const char* file, int line, const char* func, const char* sub
 		return;
 	}
 
-	LoggerMessageInfo inf = {file, line, func, type, msg, subsystem, tid};
+	const char* baseFile = strrchr(file, (ANKI_OS_WINDOWS) ? '\\' : '/');
+	baseFile = (baseFile) ? baseFile + 1 : file;
+
+	LoggerMessageInfo inf = {baseFile, line, func, type, msg, subsystem, tid};
 
 	m_mutex.lock();
 
@@ -94,11 +98,11 @@ void Logger::write(const char* file, int line, const char* func, const char* sub
 void Logger::writeFormated(const char* file, int line, const char* func, const char* subsystem, LoggerMessageType type,
 						   ThreadId tid, const char* fmt, ...)
 {
-	char buffer[1024 * 10];
+	Array<Char, 256> buffer;
 	va_list args;
 
 	va_start(args, fmt);
-	I len = vsnprintf(buffer, sizeof(buffer), fmt, args);
+	I len = vsnprintf(&buffer[0], sizeof(buffer), fmt, args);
 	if(len < 0)
 	{
 		fprintf(stderr, "Logger::writeFormated() failed. Will not recover");
@@ -106,7 +110,7 @@ void Logger::writeFormated(const char* file, int line, const char* func, const c
 	}
 	else if(len < I(sizeof(buffer)))
 	{
-		write(file, line, func, subsystem, type, tid, buffer);
+		write(file, line, func, subsystem, type, tid, &buffer[0]);
 		va_end(args);
 	}
 	else
@@ -222,7 +226,7 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 		SetConsoleTextAttribute(consoleHandle, attribs);
 
 		// Print
-		fprintf(out, "[%s][%s] %s (%s:%d %s)\n", MSG_TEXT[U(info.m_type)], info.m_subsystem ? info.m_subsystem : "N/A ",
+		fprintf(out, "[%s][%s] %s (%s:%d %s)\n", MSG_TEXT[info.m_type], info.m_subsystem ? info.m_subsystem : "N/A ",
 				info.m_msg, info.m_file, info.m_line, info.m_func);
 
 		// Restore state
@@ -250,7 +254,7 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 		ANKI_ASSERT(0);
 	}
 
-	__android_log_print(andMsgType, "AnKi", "[%s][%s] %s (%s:%d %s)\n", MSG_TEXT[U(info.m_type)],
+	__android_log_print(andMsgType, "AnKi", "[%s][%s] %s (%s:%d %s)\n", MSG_TEXT[info.m_type],
 						info.m_subsystem ? info.m_subsystem : "N/A ", info.m_msg, info.m_file, info.m_line,
 						info.m_func);
 #else
@@ -275,7 +279,7 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 		ANKI_ASSERT(0);
 	}
 
-	fprintf(out, "[%s][%s][%" PRIx64 "] %s (%s:%d %s)\n", MSG_TEXT[U(info.m_type)],
+	fprintf(out, "[%s][%s][%" PRIx64 "] %s (%s:%d %s)\n", MSG_TEXT[info.m_type],
 			info.m_subsystem ? info.m_subsystem : "N/A ", info.m_tid, info.m_msg, info.m_file, info.m_line,
 			info.m_func);
 
@@ -287,7 +291,7 @@ void Logger::fileMessageHandler(void* pfile, const LoggerMessageInfo& info)
 {
 	File* file = reinterpret_cast<File*>(pfile);
 
-	Error err = file->writeTextf("[%s] %s (%s:%d %s)\n", MSG_TEXT[U(info.m_type)], info.m_msg, info.m_file, info.m_line,
+	Error err = file->writeTextf("[%s] %s (%s:%d %s)\n", MSG_TEXT[info.m_type], info.m_msg, info.m_file, info.m_line,
 								 info.m_func);
 
 	if(!err)

@@ -10,8 +10,8 @@
 
 namespace anki {
 
-static const U8 tgaHeaderUncompressed[12] = {0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-static const U8 tgaHeaderCompressed[12] = {0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+inline constexpr U8 TGA_HEADER_UNCOMPRESSED[12] = {0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+inline constexpr U8 TGA_HEADER_COMPRESSED[12] = {0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 static PtrSize calcRawTexelSize(const ImageBinaryColorFormat cf)
 {
@@ -365,11 +365,11 @@ Error ImageLoader::loadTga(FileInterface& fs, U32& width, U32& height, U32& bpp,
 
 	ANKI_CHECK(fs.read(&myTgaHeader[0], sizeof(myTgaHeader)));
 
-	if(memcmp(tgaHeaderUncompressed, &myTgaHeader[0], sizeof(myTgaHeader)) == 0)
+	if(memcmp(TGA_HEADER_UNCOMPRESSED, &myTgaHeader[0], sizeof(myTgaHeader)) == 0)
 	{
 		ANKI_CHECK(loadUncompressedTga(fs, width, height, bpp, data, alloc));
 	}
-	else if(std::memcmp(tgaHeaderCompressed, &myTgaHeader[0], sizeof(myTgaHeader)) == 0)
+	else if(std::memcmp(TGA_HEADER_COMPRESSED, &myTgaHeader[0], sizeof(myTgaHeader)) == 0)
 	{
 		ANKI_CHECK(loadCompressedTga(fs, width, height, bpp, data, alloc));
 	}

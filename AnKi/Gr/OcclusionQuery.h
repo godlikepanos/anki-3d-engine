@@ -18,7 +18,7 @@ class OcclusionQuery : public GrObject
 	ANKI_GR_OBJECT
 
 public:
-	static const GrObjectType CLASS_TYPE = GrObjectType::OCCLUSION_QUERY;
+	static constexpr GrObjectType CLASS_TYPE = GrObjectType::OCCLUSION_QUERY;
 
 	/// Get the occlusion query result. It won't block.
 	OcclusionQueryResult getResult() const;

@@ -90,7 +90,7 @@ class Shader : public GrObject
 	ANKI_GR_OBJECT
 
 public:
-	static const GrObjectType CLASS_TYPE = GrObjectType::SHADER;
+	static constexpr GrObjectType CLASS_TYPE = GrObjectType::SHADER;
 
 	ShaderType getShaderType() const
 	{

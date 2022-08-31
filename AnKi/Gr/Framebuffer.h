@@ -115,7 +115,7 @@ class Framebuffer : public GrObject
 	ANKI_GR_OBJECT
 
 public:
-	static const GrObjectType CLASS_TYPE = GrObjectType::FRAMEBUFFER;
+	static constexpr GrObjectType CLASS_TYPE = GrObjectType::FRAMEBUFFER;
 
 protected:
 	/// Construct.

@@ -209,8 +209,8 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 
 		for(U32 mip = 0; mip < m_mipCount; ++mip)
 		{
-			static const Array<CString, 8> passNames = {"HiZ #1", "HiZ #2", "HiZ #3", "HiZ #4",
-														"HiZ #5", "HiZ #6", "HiZ #7", "HiZ #8"};
+			static constexpr Array<CString, 8> passNames = {"HiZ #1", "HiZ #2", "HiZ #3", "HiZ #4",
+															"HiZ #5", "HiZ #6", "HiZ #7", "HiZ #8"};
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[mip]);
 			pass.setFramebufferInfo(m_fbDescrs[mip], {m_runCtx.m_hizRt});
 

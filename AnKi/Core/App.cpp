@@ -47,7 +47,7 @@ void* App::MemStats::allocCallback(void* userData, void* ptr, PtrSize size, [[ma
 {
 	ANKI_ASSERT(userData);
 
-	static const PtrSize MAX_ALIGNMENT = 64;
+	constexpr PtrSize MAX_ALIGNMENT = 64;
 
 	struct alignas(MAX_ALIGNMENT) Header
 	{

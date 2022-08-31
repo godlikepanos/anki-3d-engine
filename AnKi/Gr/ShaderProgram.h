@@ -58,7 +58,7 @@ class ShaderProgram : public GrObject
 	ANKI_GR_OBJECT
 
 public:
-	static const GrObjectType CLASS_TYPE = GrObjectType::SHADER_PROGRAM;
+	static constexpr GrObjectType CLASS_TYPE = GrObjectType::SHADER_PROGRAM;
 
 	/// Get the shader group handles that will be used in the SBTs. The size of each handle is
 	/// GpuDeviceCapabilities::m_shaderGroupHandleSize. To access a handle use:

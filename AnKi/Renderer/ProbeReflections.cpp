@@ -601,9 +601,9 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		m_ctx.m_lightShadingRt = rgraph.importRenderTarget(m_lightShading.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
 
 		// Passes
-		static const Array<CString, 6> passNames = {"CubeRefl LightShad #0", "CubeRefl LightShad #1",
-													"CubeRefl LightShad #2", "CubeRefl LightShad #3",
-													"CubeRefl LightShad #4", "CubeRefl LightShad #5"};
+		static constexpr Array<CString, 6> passNames = {"CubeRefl LightShad #0", "CubeRefl LightShad #1",
+														"CubeRefl LightShad #2", "CubeRefl LightShad #3",
+														"CubeRefl LightShad #4", "CubeRefl LightShad #5"};
 		for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
@@ -674,8 +674,8 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 	// Mipmapping "passes"
 	{
-		static const Array<CString, 6> passNames = {"CubeRefl Mip #0", "CubeRefl Mip #1", "CubeRefl Mip #2",
-													"CubeRefl Mip #3", "CubeRefl Mip #4", "CubeRefl Mip #5"};
+		static constexpr Array<CString, 6> passNames = {"CubeRefl Mip #0", "CubeRefl Mip #1", "CubeRefl Mip #2",
+														"CubeRefl Mip #3", "CubeRefl Mip #4", "CubeRefl Mip #5"};
 		for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);

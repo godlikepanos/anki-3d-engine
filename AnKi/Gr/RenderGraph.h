@@ -625,7 +625,7 @@ class RenderGraph final : public GrObject
 	friend class RenderPassWorkContext;
 
 public:
-	static const GrObjectType CLASS_TYPE = GrObjectType::RENDER_GRAPH;
+	static constexpr GrObjectType CLASS_TYPE = GrObjectType::RENDER_GRAPH;
 
 	/// @name 1st step methods
 	/// @{

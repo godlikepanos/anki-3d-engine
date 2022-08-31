@@ -10,10 +10,10 @@
 
 namespace anki {
 
-static const Array<CString, U32(BuiltinMutatorId::COUNT)> BUILTIN_MUTATOR_NAMES = {
+inline constexpr Array<CString, U32(BuiltinMutatorId::COUNT)> BUILTIN_MUTATOR_NAMES = {
 	{"NONE", "ANKI_TECHNIQUE", "ANKI_LOD", "ANKI_BONES", "ANKI_VELOCITY"}};
 
-static const Array<CString, U(RenderingTechnique::COUNT)> TECHNIQUE_NAMES = {
+inline constexpr Array<CString, U(RenderingTechnique::COUNT)> TECHNIQUE_NAMES = {
 	{"GBuffer", "GBufferEarlyZ", "Shadow", "Forward", "RtShadow"}};
 
 // This is some trickery to select calling between XmlElement::getAttributeNumber and XmlElement::getAttributeNumbers

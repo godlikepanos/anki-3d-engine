@@ -239,11 +239,11 @@ public:
 	U32 m_face = 0;
 	U32 m_layer = 0;
 
-	TextureSurfaceInfo() = default;
+	constexpr TextureSurfaceInfo() = default;
 
-	TextureSurfaceInfo(const TextureSurfaceInfo&) = default;
+	constexpr TextureSurfaceInfo(const TextureSurfaceInfo&) = default;
 
-	TextureSurfaceInfo(U32 level, U32 depth, U32 face, U32 layer)
+	constexpr TextureSurfaceInfo(U32 level, U32 depth, U32 face, U32 layer)
 		: m_level(level)
 		, m_depth(depth)
 		, m_face(face)

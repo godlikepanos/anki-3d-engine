@@ -10,7 +10,7 @@
 
 namespace anki {
 
-static const U MAX_PATH_LEN = MAX_PATH - 1;
+static constexpr U MAX_PATH_LEN = MAX_PATH - 1;
 
 Bool fileExists(const CString& filename)
 {

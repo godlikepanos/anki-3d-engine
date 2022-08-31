@@ -264,7 +264,7 @@ Error ResourceFilesystem::addNewPath(const CString& filepath, const StringListAu
 	ANKI_RESOURCE_LOGV("Adding new resource path: %s", filepath.cstr());
 
 	U32 fileCount = 0; // Count files manually because it's slower to get that number from the list
-	static const CString extension(".ankizip");
+	constexpr CString extension(".ankizip");
 
 	auto rejectPath = [&](CString p) -> Bool {
 		for(const String& s : excludedStrings)

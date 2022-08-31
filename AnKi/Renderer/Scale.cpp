@@ -72,9 +72,9 @@ Error Scale::init()
 	m_sharpenMethod = (needsSharpening) ? SharpenMethod::RCAS : SharpenMethod::NONE;
 	m_neeedsTonemapping = (m_upscalingMethod == UpscalingMethod::GR); // Because GR upscaling spits HDR
 
-	static const Array<const Char*, U32(UpscalingMethod::COUNT)> upscalingMethodNames = {"none", "bilinear", "FSR 1.0",
-																						 "DLSS 2"};
-	static const Array<const Char*, U32(SharpenMethod::COUNT)> sharpenMethodNames = {"none", "RCAS"};
+	static constexpr Array<const Char*, U32(UpscalingMethod::COUNT)> upscalingMethodNames = {"none", "bilinear",
+																							 "FSR 1.0", "DLSS 2"};
+	static constexpr Array<const Char*, U32(SharpenMethod::COUNT)> sharpenMethodNames = {"none", "RCAS"};
 
 	ANKI_R_LOGV("Initializing upscaling. Upscaling method %s, sharpenning method %s",
 				upscalingMethodNames[U32(m_upscalingMethod)], sharpenMethodNames[U32(m_sharpenMethod)]);

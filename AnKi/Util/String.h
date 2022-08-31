@@ -67,19 +67,19 @@ public:
 
 	CString() = default;
 
-	CString(const Char* ptr)
+	constexpr CString(const Char* ptr)
 		: m_ptr(ptr)
 	{
 	}
 
 	/// Copy constructor.
-	CString(const CString& b)
+	constexpr CString(const CString& b)
 		: m_ptr(b.m_ptr)
 	{
 	}
 
 	/// Copy.
-	CString& operator=(const CString& b)
+	constexpr CString& operator=(const CString& b)
 	{
 		m_ptr = b.m_ptr;
 		return *this;
@@ -286,7 +286,7 @@ public:
 	using ConstIterator = const Char*;
 	using Allocator = GenericMemoryPoolAllocator<Char>;
 
-	static const PtrSize NPOS = MAX_PTR_SIZE;
+	static constexpr PtrSize NPOS = MAX_PTR_SIZE;
 
 	/// Default constructor.
 	String()

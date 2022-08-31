@@ -1590,7 +1590,7 @@ Error RenderGraph::dumpDependencyDotFile(const RenderGraphDescription& descr, co
 {
 	ANKI_GR_LOGW("Running with debug code");
 
-	static const Array<const char*, 5> COLORS = {"red", "green", "blue", "magenta", "cyan"};
+	static constexpr Array<const char*, 5> COLORS = {"red", "green", "blue", "magenta", "cyan"};
 	auto alloc = ctx.m_alloc;
 	StringListAuto slist(alloc);
 

@@ -18,9 +18,9 @@ namespace anki {
 /// @addtogroup scene
 /// @{
 
-static const U32 MAX_SPATIALS_PER_VIS_TEST = 48; ///< Num of spatials to test in a single ThreadHive task.
-static const U32 SW_RASTERIZER_WIDTH = 80;
-static const U32 SW_RASTERIZER_HEIGHT = 50;
+constexpr U32 MAX_SPATIALS_PER_VIS_TEST = 48; ///< Num of spatials to test in a single ThreadHive task.
+constexpr U32 SW_RASTERIZER_WIDTH = 80;
+constexpr U32 SW_RASTERIZER_HEIGHT = 50;
 
 /// Sort objects on distance
 template<typename T>

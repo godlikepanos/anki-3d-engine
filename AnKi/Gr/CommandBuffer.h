@@ -124,7 +124,7 @@ class CommandBuffer : public GrObject
 	ANKI_GR_OBJECT
 
 public:
-	static const GrObjectType CLASS_TYPE = GrObjectType::COMMAND_BUFFER;
+	static constexpr GrObjectType CLASS_TYPE = GrObjectType::COMMAND_BUFFER;
 
 	/// Finalize and submit if it's primary command buffer and just finalize if it's second level.
 	/// @param[in]  waitFences Optionally wait for some fences.

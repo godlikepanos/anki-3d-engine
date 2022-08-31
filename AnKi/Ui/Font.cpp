@@ -93,7 +93,7 @@ void Font::createTexture(const void* data, U32 width, U32 height)
 	m_imFontAtlas->SetTexID(UiImageId(m_texView));
 
 	// Do the copy
-	static const TextureSurfaceInfo surf(0, 0, 0, 0);
+	constexpr TextureSurfaceInfo surf(0, 0, 0, 0);
 	CommandBufferInitInfo cmdbInit;
 	cmdbInit.m_flags = CommandBufferFlag::GENERAL_WORK | CommandBufferFlag::SMALL_BATCH;
 	CommandBufferPtr cmdb = m_manager->getGrManager().newCommandBuffer(cmdbInit);

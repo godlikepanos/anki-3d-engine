@@ -18,7 +18,7 @@ class Fence : public GrObject
 	ANKI_GR_OBJECT
 
 public:
-	static const GrObjectType CLASS_TYPE = GrObjectType::FENCE;
+	static constexpr GrObjectType CLASS_TYPE = GrObjectType::FENCE;
 
 	/// Wait for the fence.
 	/// @param seconds The time to wait in seconds. If it's zero then just return the status.

@@ -35,7 +35,7 @@ Error GBuffer::initInternal()
 				m_r->getInternalResolution().y());
 
 	// RTs
-	static const Array<const char*, 2> depthRtNames = {{"GBuffer depth #0", "GBuffer depth #1"}};
+	static constexpr Array<const char*, 2> depthRtNames = {{"GBuffer depth #0", "GBuffer depth #1"}};
 	for(U32 i = 0; i < 2; ++i)
 	{
 		const TextureUsageBit usage = TextureUsageBit::ALL_SAMPLED | TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT;
@@ -46,7 +46,7 @@ Error GBuffer::initInternal()
 		m_depthRts[i] = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::SAMPLED_FRAGMENT);
 	}
 
-	static const Array<const char*, GBUFFER_COLOR_ATTACHMENT_COUNT> rtNames = {
+	static constexpr Array<const char*, GBUFFER_COLOR_ATTACHMENT_COUNT> rtNames = {
 		{"GBuffer rt0", "GBuffer rt1", "GBuffer rt2", "GBuffer rt3"}};
 	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 	{

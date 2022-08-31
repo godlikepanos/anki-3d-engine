@@ -15,11 +15,11 @@ namespace anki {
 	ANKI_SHADER_COMPILER_LOGE("%s: " msg_ ": %s", fname.cstr(), line.cstr()); \
 	return Error::USER_DATA
 
-static const Array<CString, U32(ShaderType::COUNT)> SHADER_STAGE_NAMES = {
+inline constexpr Array<CString, U32(ShaderType::COUNT)> SHADER_STAGE_NAMES = {
 	{"VERTEX", "TESSELLATION_CONTROL", "TESSELLATION_EVALUATION", "GEOMETRY", "FRAGMENT", "COMPUTE", "RAY_GEN",
 	 "ANY_HIT", "CLOSEST_HIT", "MISS", "INTERSECTION", "CALLABLE"}};
 
-static const char SHADER_HEADER[] = R"(#version 460 core
+inline constexpr char SHADER_HEADER[] = R"(#version 460 core
 #define ANKI_%s_SHADER 1
 #define ANKI_PLATFORM_MOBILE %d
 #define ANKI_FORCE_FULL_FP_PRECISION %d

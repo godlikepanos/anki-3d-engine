@@ -244,7 +244,7 @@ Error GrManagerImpl::initInstance()
 				ANKI_VK_LOGV("\t%s", layer.layerName);
 				CString layerName = layer.layerName;
 
-				static const char* validationName = "VK_LAYER_KHRONOS_validation";
+				static constexpr char* validationName = "VK_LAYER_KHRONOS_validation";
 				if((m_config->getGrValidation() || m_config->getGrDebugPrintf()) && layerName == validationName)
 				{
 					layersToEnable.emplaceBack(validationName);
