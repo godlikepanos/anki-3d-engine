@@ -6,7 +6,6 @@
 #pragma once
 
 #include <AnKi/ShaderCompiler/Common.h>
-#include <AnKi/Gr/Enums.h>
 #include <AnKi/Gr/Common.h>
 #include <AnKi/Util/WeakArray.h>
 

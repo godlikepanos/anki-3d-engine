@@ -4,10 +4,52 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Gr/Common.h>
+#include <AnKi/Math.h>
 
 namespace anki {
 
-Array<CString, U(GpuVendor::COUNT)> GPU_VENDOR_STR = {"UNKNOWN", "ARM", "NVIDIA", "AMD", "INTEL", "QUALCOMM"};
+/// @warning Don't use Array because the compilers can't handle it for some reason.
+inline constexpr ShaderVariableDataTypeInfo SVD_INFOS[] = {
+#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount, isIntagralType) \
+	{ANKI_STRINGIZE(type), sizeof(type), false, isIntagralType},
+#define ANKI_SVDT_MACRO_OPAQUE(capital, type) {ANKI_STRINGIZE(type), MAX_U32, true, false},
+#include <AnKi/Gr/ShaderVariableDataType.defs.h>
+#undef ANKI_SVDT_MACRO
+#undef ANKI_SVDT_MACRO_OPAQUE
+};
+
+const ShaderVariableDataTypeInfo& getShaderVariableDataTypeInfo(ShaderVariableDataType type)
+{
+	ANKI_ASSERT(type > ShaderVariableDataType::NONE && type < ShaderVariableDataType::COUNT);
+	return SVD_INFOS[U32(type) - 1];
+}
+
+FormatInfo getFormatInfo(Format fmt)
+{
+	FormatInfo out = {};
+	switch(fmt)
+	{
+#define ANKI_FORMAT_DEF(type, id, componentCount, texelSize, blockWidth, blockHeight, blockSize, shaderType, \
+						depthStencil) \
+	case Format::type: \
+		out = {componentCount, \
+			   texelSize, \
+			   blockWidth, \
+			   blockHeight, \
+			   blockSize, \
+			   shaderType, \
+			   DepthStencilAspectBit::depthStencil, \
+			   ANKI_STRINGIZE(type)}; \
+		break;
+#include <AnKi/Gr/Format.defs.h>
+#undef ANKI_FORMAT_DEF
+
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	return out;
+}
 
 PtrSize computeSurfaceSize(U32 width32, U32 height32, Format fmt)
 {
@@ -52,6 +94,35 @@ PtrSize computeVolumeSize(U32 width32, U32 height32, U32 depth32, Format fmt)
 	{
 		return width * height * depth * inf.m_texelSize;
 	}
+}
+
+U32 computeMaxMipmapCount2d(U32 w, U32 h, U32 minSizeOfLastMip)
+{
+	ANKI_ASSERT(w >= minSizeOfLastMip && h >= minSizeOfLastMip);
+	U32 s = (w < h) ? w : h;
+	U32 count = 0;
+	while(s >= minSizeOfLastMip)
+	{
+		s /= 2;
+		++count;
+	}
+
+	return count;
+}
+
+/// Compute max number of mipmaps for a 3D texture.
+U32 computeMaxMipmapCount3d(U32 w, U32 h, U32 d, U32 minSizeOfLastMip)
+{
+	U32 s = (w < h) ? w : h;
+	s = (s < d) ? s : d;
+	U32 count = 0;
+	while(s >= minSizeOfLastMip)
+	{
+		s /= 2;
+		++count;
+	}
+
+	return count;
 }
 
 } // end namespace anki

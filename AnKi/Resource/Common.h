@@ -9,7 +9,7 @@
 #include <AnKi/Util/DynamicArray.h>
 #include <AnKi/Util/String.h>
 #include <AnKi/Util/Ptr.h>
-#include <AnKi/Gr/Enums.h>
+#include <AnKi/Gr/Common.h>
 #include <AnKi/Shaders/Include/ModelTypes.h>
 
 namespace anki {

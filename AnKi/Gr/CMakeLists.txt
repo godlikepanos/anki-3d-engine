@@ -3,7 +3,6 @@ set(common_sources
 	GrObject.cpp
 	RenderGraph.cpp
 	ShaderProgram.cpp
-	Enums.cpp
 	Utils/FrameGpuAllocator.cpp
 	Utils/Functions.cpp)
 
@@ -13,7 +12,6 @@ set(common_headers
 	CommandBuffer.h
 	Common.h
 	ConfigVars.defs.h
-	Enums.h
 	Fence.h
 	Format.defs.h
 	Framebuffer.h

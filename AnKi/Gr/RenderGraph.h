@@ -6,7 +6,6 @@
 #pragma once
 
 #include <AnKi/Gr/GrObject.h>
-#include <AnKi/Gr/Enums.h>
 #include <AnKi/Gr/TextureView.h>
 #include <AnKi/Gr/Buffer.h>
 #include <AnKi/Gr/GrManager.h>

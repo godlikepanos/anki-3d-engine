@@ -1274,6 +1274,7 @@ Error GltfImporter::writeLight(const cgltf_node& node, const HashMapAuto<CString
 
 	HashMapAuto<CString, StringAuto> extras(parentExtras);
 	ANKI_CHECK(getExtras(light.extras, extras));
+	ANKI_CHECK(getExtras(node.extras, extras));
 
 	CString lightTypeStr;
 	switch(light.type)

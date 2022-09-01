@@ -6,7 +6,6 @@
 #pragma once
 
 #include <AnKi/Gr/GrObject.h>
-#include <AnKi/Math.h>
 #include <AnKi/Util/WeakArray.h>
 
 namespace anki {

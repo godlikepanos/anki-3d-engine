@@ -8,6 +8,7 @@
 #include <AnKi/Gr/GrObject.h>
 #include <AnKi/Math.h>
 #include <AnKi/Util/WeakArray.h>
+#include <AnKi/Util/Enum.h>
 
 namespace anki {
 
