@@ -360,6 +360,10 @@ public:
 												 AccelerationStructureUsageBit prevUsage,
 												 AccelerationStructureUsageBit nextUsage);
 
+	void setPipelineBarrierInternal(ConstWeakArray<TextureBarrierInfo> textures,
+									ConstWeakArray<BufferBarrierInfo> buffers,
+									ConstWeakArray<AccelerationStructureBarrierInfo> accelerationStructures);
+
 	void fillBufferInternal(const BufferPtr& buff, PtrSize offset, PtrSize size, U32 value);
 
 	void writeOcclusionQueryResultToBufferInternal(const OcclusionQueryPtr& query, PtrSize offset,

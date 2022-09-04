@@ -85,6 +85,12 @@ public:
 		pushToArray(m_objectRefs[T::CLASS_TYPE], x.get());
 	}
 
+	template<typename T>
+	void pushObjectRef(T* x)
+	{
+		pushToArray(m_objectRefs[T::CLASS_TYPE], x);
+	}
+
 	CommandBufferFlag getFlags() const
 	{
 		return m_flags;

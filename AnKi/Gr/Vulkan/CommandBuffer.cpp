@@ -408,6 +408,14 @@ void CommandBuffer::setAccelerationStructureBarrier(const AccelerationStructureP
 	self.setAccelerationStructureBarrierInternal(as, prevUsage, nextUsage);
 }
 
+void CommandBuffer::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textures,
+									   ConstWeakArray<BufferBarrierInfo> buffers,
+									   ConstWeakArray<AccelerationStructureBarrierInfo> accelerationStructures)
+{
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.setPipelineBarrierInternal(textures, buffers, accelerationStructures);
+}
+
 void CommandBuffer::resetOcclusionQuery(const OcclusionQueryPtr& query)
 {
 	ANKI_VK_SELF(CommandBufferImpl);

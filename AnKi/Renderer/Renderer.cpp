@@ -526,16 +526,19 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 					}
 					FramebufferPtr fb = m_gr->newFramebuffer(fbInit);
 
-					cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::NONE,
-												   TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, surf);
+					TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::NONE,
+												  TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, surf};
+					barrier.m_subresource.m_depthStencilAspect = tex->getDepthStencilAspect();
+					cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
 					cmdb->beginRenderPass(fb, colUsage, dsUsage);
 					cmdb->endRenderPass();
 
 					if(!!initialUsage)
 					{
-						cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, initialUsage,
-													   surf);
+						barrier.m_previousUsage = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
+						barrier.m_nextUsage = initialUsage;
+						cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 					}
 				}
 				else
@@ -570,8 +573,9 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 					TextureViewPtr view = getGrManager().newTextureView(TextureViewInitInfo(tex, surf));
 					cmdb->bindImage(0, 0, view);
 
-					cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::NONE, TextureUsageBit::IMAGE_COMPUTE_WRITE,
-												   surf);
+					const TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::NONE,
+														TextureUsageBit::IMAGE_COMPUTE_WRITE, surf};
+					cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
 					UVec3 wgSize;
 					wgSize.x() = (8 - 1 + (tex->getWidth() >> mip)) / 8;
@@ -582,7 +586,10 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 
 					if(!!initialUsage)
 					{
-						cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::IMAGE_COMPUTE_WRITE, initialUsage, surf);
+						const TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::IMAGE_COMPUTE_WRITE,
+															initialUsage, surf};
+
+						cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 					}
 				}
 			}

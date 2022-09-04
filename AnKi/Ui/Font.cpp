@@ -97,19 +97,25 @@ void Font::createTexture(const void* data, U32 width, U32 height)
 	CommandBufferInitInfo cmdbInit;
 	cmdbInit.m_flags = CommandBufferFlag::GENERAL_WORK | CommandBufferFlag::SMALL_BATCH;
 	CommandBufferPtr cmdb = m_manager->getGrManager().newCommandBuffer(cmdbInit);
-	{
-		TextureViewInitInfo viewInit(m_tex, surf, DepthStencilAspectBit::NONE, "TempFont");
-		TextureViewPtr tmpView = m_manager->getGrManager().newTextureView(viewInit);
 
-		cmdb->setTextureSurfaceBarrier(m_tex, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION, surf);
-		cmdb->copyBufferToTextureView(buff, 0, buffSize, tmpView);
-		cmdb->setTextureSurfaceBarrier(m_tex, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::GENERATE_MIPMAPS,
-									   surf);
-	}
+	TextureViewInitInfo viewInit(m_tex, surf, DepthStencilAspectBit::NONE, "TempFont");
+	TextureViewPtr tmpView = m_manager->getGrManager().newTextureView(viewInit);
+
+	TextureBarrierInfo barrier = {m_tex.get(), TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION, surf};
+	cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
+
+	cmdb->copyBufferToTextureView(buff, 0, buffSize, tmpView);
+
+	barrier.m_previousUsage = TextureUsageBit::TRANSFER_DESTINATION;
+	barrier.m_nextUsage = TextureUsageBit::GENERATE_MIPMAPS;
+	cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
 	// Gen mips
 	cmdb->generateMipmaps2d(m_texView);
-	cmdb->setTextureSurfaceBarrier(m_tex, TextureUsageBit::GENERATE_MIPMAPS, TextureUsageBit::SAMPLED_FRAGMENT, surf);
+
+	barrier.m_previousUsage = TextureUsageBit::GENERATE_MIPMAPS;
+	barrier.m_nextUsage = TextureUsageBit::SAMPLED_FRAGMENT;
+	cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
 	cmdb->flush();
 }

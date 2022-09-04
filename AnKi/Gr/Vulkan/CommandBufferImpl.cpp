@@ -888,4 +888,135 @@ void CommandBufferImpl::upscaleInternal(const GrUpscalerPtr& upscaler, const Tex
 #endif
 }
 
+void CommandBufferImpl::setPipelineBarrierInternal(
+	ConstWeakArray<TextureBarrierInfo> textures, ConstWeakArray<BufferBarrierInfo> buffers,
+	ConstWeakArray<AccelerationStructureBarrierInfo> accelerationStructures)
+{
+	commandCommon();
+
+	DynamicArrayAuto<VkImageMemoryBarrier> imageBarriers(m_alloc);
+	DynamicArrayAuto<VkBufferMemoryBarrier> bufferBarriers(m_alloc);
+	DynamicArrayAuto<VkMemoryBarrier> genericBarriers(m_alloc);
+	VkPipelineStageFlags srcStageMask = 0;
+	VkPipelineStageFlags dstStageMask = 0;
+
+	for(const TextureBarrierInfo& barrier : textures)
+	{
+		ANKI_ASSERT(barrier.m_texture);
+		const TextureImpl& impl = static_cast<const TextureImpl&>(*barrier.m_texture);
+		const TextureUsageBit nextUsage = barrier.m_nextUsage;
+		const TextureUsageBit prevUsage = barrier.m_previousUsage;
+		TextureSubresourceInfo subresource = barrier.m_subresource;
+
+		ANKI_ASSERT(impl.usageValid(prevUsage));
+		ANKI_ASSERT(impl.usageValid(nextUsage));
+		ANKI_ASSERT(((nextUsage & TextureUsageBit::GENERATE_MIPMAPS) == TextureUsageBit::GENERATE_MIPMAPS
+					 || (nextUsage & TextureUsageBit::GENERATE_MIPMAPS) == TextureUsageBit::NONE)
+					&& "GENERATE_MIPMAPS should be alone");
+		ANKI_ASSERT(impl.isSubresourceValid(subresource));
+
+		if(ANKI_UNLIKELY(subresource.m_firstMipmap > 0 && nextUsage == TextureUsageBit::GENERATE_MIPMAPS))
+		{
+			// This transition happens inside CommandBufferImpl::generateMipmapsX. No need to do something
+			continue;
+		}
+
+		if(ANKI_UNLIKELY(nextUsage == TextureUsageBit::GENERATE_MIPMAPS))
+		{
+			// The transition of the non zero mip levels happens inside CommandBufferImpl::generateMipmapsX so limit the
+			// subresource
+
+			ANKI_ASSERT(impl.isSubresourceGoodForMipmapGeneration(subresource));
+			subresource.m_firstMipmap = 0;
+			subresource.m_mipmapCount = 1;
+		}
+
+		VkImageMemoryBarrier& inf = *imageBarriers.emplaceBack();
+		inf = {};
+		inf.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		inf.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		inf.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		inf.image = impl.m_imageHandle;
+
+		impl.computeVkImageSubresourceRange(subresource, inf.subresourceRange);
+
+		VkPipelineStageFlags srcStage;
+		VkPipelineStageFlags dstStage;
+		impl.computeBarrierInfo(prevUsage, nextUsage, inf.subresourceRange.baseMipLevel, srcStage, inf.srcAccessMask,
+								dstStage, inf.dstAccessMask);
+		inf.oldLayout = impl.computeLayout(prevUsage, inf.subresourceRange.baseMipLevel);
+		inf.newLayout = impl.computeLayout(nextUsage, inf.subresourceRange.baseMipLevel);
+
+		srcStageMask |= srcStage;
+		dstStageMask |= dstStage;
+
+		m_microCmdb->pushObjectRef(barrier.m_texture);
+	}
+
+	for(const BufferBarrierInfo& barrier : buffers)
+	{
+		ANKI_ASSERT(barrier.m_buffer);
+		const BufferImpl& impl = static_cast<const BufferImpl&>(*barrier.m_buffer);
+
+		const BufferUsageBit prevUsage = barrier.m_previousUsage;
+		const BufferUsageBit nextUsage = barrier.m_nextUsage;
+
+		VkBufferMemoryBarrier& inf = *bufferBarriers.emplaceBack();
+		inf = {};
+		inf.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+		inf.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		inf.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		inf.buffer = impl.getHandle();
+
+		ANKI_ASSERT(barrier.m_offset < impl.getSize());
+		inf.offset = barrier.m_offset;
+
+		if(barrier.m_size == MAX_PTR_SIZE)
+		{
+			inf.size = VK_WHOLE_SIZE;
+		}
+		else
+		{
+			ANKI_ASSERT(barrier.m_size > 0);
+			ANKI_ASSERT(barrier.m_offset + barrier.m_size <= impl.getSize());
+			inf.size = barrier.m_size;
+		}
+
+		VkPipelineStageFlags srcStage;
+		VkPipelineStageFlags dstStage;
+		impl.computeBarrierInfo(prevUsage, nextUsage, srcStage, inf.srcAccessMask, dstStage, inf.dstAccessMask);
+
+		srcStageMask |= srcStage;
+		dstStageMask |= dstStage;
+
+		m_microCmdb->pushObjectRef(barrier.m_buffer);
+	}
+
+	for(const AccelerationStructureBarrierInfo& barrier : accelerationStructures)
+	{
+		ANKI_ASSERT(barrier.m_as);
+
+		VkMemoryBarrier& inf = *genericBarriers.emplaceBack();
+		inf = {};
+		inf.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+
+		VkPipelineStageFlags srcStage;
+		VkPipelineStageFlags dstStage;
+		AccelerationStructureImpl::computeBarrierInfo(barrier.m_previousUsage, barrier.m_nextUsage, srcStage,
+													  inf.srcAccessMask, dstStage, inf.dstAccessMask);
+
+		srcStageMask |= srcStage;
+		dstStageMask |= dstStage;
+
+		m_microCmdb->pushObjectRef(barrier.m_as);
+	}
+
+	vkCmdPipelineBarrier(m_handle, srcStageMask, dstStageMask, 0, genericBarriers.getSize(),
+						 (genericBarriers.getSize()) ? &genericBarriers[0] : nullptr, bufferBarriers.getSize(),
+						 (bufferBarriers.getSize()) ? &bufferBarriers[0] : nullptr, imageBarriers.getSize(),
+						 (imageBarriers.getSize()) ? &imageBarriers[0] : nullptr);
+
+	ANKI_TRACE_INC_COUNTER(VK_PIPELINE_BARRIERS, 1);
+}
+
 } // end namespace anki

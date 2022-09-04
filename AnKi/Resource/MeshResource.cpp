@@ -181,8 +181,10 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		cmdb->fillBuffer(m_vertexBuffer, m_vertexBuffersOffset, m_vertexBuffersSize, 0);
 		cmdb->fillBuffer(m_vertexBuffer, m_indexBufferOffset, indexBufferSize, 0);
 
-		cmdb->setBufferBarrier(m_vertexBuffer, BufferUsageBit::TRANSFER_DESTINATION, BufferUsageBit::VERTEX, 0,
-							   MAX_PTR_SIZE);
+		const BufferBarrierInfo barrier = {m_vertexBuffer.get(), BufferUsageBit::TRANSFER_DESTINATION,
+										   BufferUsageBit::VERTEX, 0, MAX_PTR_SIZE};
+
+		cmdb->setPipelineBarrier({}, {&barrier, 1}, {});
 
 		cmdb->flush();
 	}
@@ -278,8 +280,9 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 	CommandBufferPtr cmdb = gr.newCommandBuffer(cmdbinit);
 
 	// Set barriers
-	cmdb->setBufferBarrier(m_vertexBuffer, BufferUsageBit::VERTEX, BufferUsageBit::TRANSFER_DESTINATION, 0,
-						   MAX_PTR_SIZE);
+	const BufferBarrierInfo barrier = {m_vertexBuffer.get(), BufferUsageBit::VERTEX,
+									   BufferUsageBit::TRANSFER_DESTINATION, 0, MAX_PTR_SIZE};
+	cmdb->setPipelineBarrier({}, {&barrier, 1}, {});
 
 	// Write index buffer
 	{
@@ -322,23 +325,28 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 	// Build the BLAS
 	if(gr.getDeviceCapabilities().m_rayTracingEnabled)
 	{
-		cmdb->setBufferBarrier(m_vertexBuffer, BufferUsageBit::TRANSFER_DESTINATION,
-							   BufferUsageBit::ACCELERATION_STRUCTURE_BUILD | BufferUsageBit::VERTEX
-								   | BufferUsageBit::INDEX,
-							   0, MAX_PTR_SIZE);
+		const BufferBarrierInfo buffBarrier = {m_vertexBuffer.get(), BufferUsageBit::TRANSFER_DESTINATION,
+											   BufferUsageBit::ACCELERATION_STRUCTURE_BUILD | BufferUsageBit::VERTEX
+												   | BufferUsageBit::INDEX,
+											   0, MAX_PTR_SIZE};
+		const AccelerationStructureBarrierInfo asBarrier = {m_blas.get(), AccelerationStructureUsageBit::NONE,
+															AccelerationStructureUsageBit::BUILD};
 
-		cmdb->setAccelerationStructureBarrier(m_blas, AccelerationStructureUsageBit::NONE,
-											  AccelerationStructureUsageBit::BUILD);
+		cmdb->setPipelineBarrier({}, {&buffBarrier, 1}, {&asBarrier, 1});
 
 		cmdb->buildAccelerationStructure(m_blas);
 
-		cmdb->setAccelerationStructureBarrier(m_blas, AccelerationStructureUsageBit::BUILD,
-											  AccelerationStructureUsageBit::ALL_READ);
+		const AccelerationStructureBarrierInfo asBarrier2 = {m_blas.get(), AccelerationStructureUsageBit::BUILD,
+															 AccelerationStructureUsageBit::ALL_READ};
+
+		cmdb->setPipelineBarrier({}, {}, {&asBarrier2, 1});
 	}
 	else
 	{
-		cmdb->setBufferBarrier(m_vertexBuffer, BufferUsageBit::TRANSFER_DESTINATION,
-							   BufferUsageBit::VERTEX | BufferUsageBit::INDEX, 0, MAX_PTR_SIZE);
+		const BufferBarrierInfo buffBarrier = {m_vertexBuffer.get(), BufferUsageBit::TRANSFER_DESTINATION,
+											   BufferUsageBit::VERTEX | BufferUsageBit::INDEX, 0, MAX_PTR_SIZE};
+
+		cmdb->setPipelineBarrier({}, {&buffBarrier, 1}, {});
 	}
 
 	// Finalize

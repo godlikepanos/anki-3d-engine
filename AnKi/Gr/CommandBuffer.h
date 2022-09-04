@@ -361,20 +361,24 @@ public:
 
 	/// @name Sync
 	/// @{
-	void setTextureBarrier(const TexturePtr& tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage,
-						   const TextureSubresourceInfo& subresource);
+	[[deprecated]] void setTextureBarrier(const TexturePtr& tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage,
+										  const TextureSubresourceInfo& subresource);
 
-	void setTextureSurfaceBarrier(const TexturePtr& tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage,
-								  const TextureSurfaceInfo& surf);
+	[[deprecated]] void setTextureSurfaceBarrier(const TexturePtr& tex, TextureUsageBit prevUsage,
+												 TextureUsageBit nextUsage, const TextureSurfaceInfo& surf);
 
-	void setTextureVolumeBarrier(const TexturePtr& tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage,
-								 const TextureVolumeInfo& vol);
+	[[deprecated]] void setTextureVolumeBarrier(const TexturePtr& tex, TextureUsageBit prevUsage,
+												TextureUsageBit nextUsage, const TextureVolumeInfo& vol);
 
-	void setBufferBarrier(const BufferPtr& buff, BufferUsageBit prevUsage, BufferUsageBit nextUsage, PtrSize offset,
-						  PtrSize size);
+	[[deprecated]] void setBufferBarrier(const BufferPtr& buff, BufferUsageBit prevUsage, BufferUsageBit nextUsage,
+										 PtrSize offset, PtrSize size);
 
-	void setAccelerationStructureBarrier(const AccelerationStructurePtr& as, AccelerationStructureUsageBit prevUsage,
-										 AccelerationStructureUsageBit nextUsage);
+	[[deprecated]] void setAccelerationStructureBarrier(const AccelerationStructurePtr& as,
+														AccelerationStructureUsageBit prevUsage,
+														AccelerationStructureUsageBit nextUsage);
+
+	void setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textures, ConstWeakArray<BufferBarrierInfo> buffers,
+							ConstWeakArray<AccelerationStructureBarrierInfo> accelerationStructures);
 	/// @}
 
 	/// @name Other

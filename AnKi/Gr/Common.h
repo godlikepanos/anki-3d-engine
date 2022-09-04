@@ -1014,12 +1014,27 @@ public:
 		ANKI_ASSERT(_m_padding[0] == 0);
 		return anki::computeHash(this, sizeof(*this));
 	}
+
+	Bool overlapsWith(const TextureSubresourceInfo& b) const
+	{
+		auto overlaps = [](U32 beginA, U32 countA, U32 beginB, U32 countB) -> Bool {
+			return (beginA < beginB) ? (beginA + countA > beginB) : (beginB + countB > beginA);
+		};
+
+		const Bool depthStencilOverlaps = (m_depthStencilAspect == DepthStencilAspectBit::NONE
+										   && b.m_depthStencilAspect == DepthStencilAspectBit::NONE)
+										  || !!(m_depthStencilAspect & b.m_depthStencilAspect);
+
+		return overlaps(m_firstMipmap, m_mipmapCount, b.m_firstMipmap, b.m_mipmapCount)
+			   && overlaps(m_firstLayer, m_layerCount, b.m_firstLayer, b.m_layerCount)
+			   && overlaps(m_firstFace, m_faceCount, b.m_firstFace, b.m_faceCount) && depthStencilOverlaps;
+	}
 };
 
 class TextureBarrierInfo
 {
 public:
-	TexturePtr m_texture;
+	Texture* m_texture = nullptr;
 	TextureUsageBit m_previousUsage = TextureUsageBit::NONE;
 	TextureUsageBit m_nextUsage = TextureUsageBit::NONE;
 	TextureSubresourceInfo m_subresource;
@@ -1028,7 +1043,7 @@ public:
 class BufferBarrierInfo
 {
 public:
-	BufferPtr m_buffer;
+	Buffer* m_buffer = nullptr;
 	BufferUsageBit m_previousUsage = BufferUsageBit::NONE;
 	BufferUsageBit m_nextUsage = BufferUsageBit::NONE;
 	PtrSize m_offset = 0;
@@ -1038,7 +1053,7 @@ public:
 class AccelerationStructureBarrierInfo
 {
 public:
-	AccelerationStructurePtr m_as;
+	AccelerationStructure* m_as = nullptr;
 	AccelerationStructureUsageBit m_previousUsage = AccelerationStructureUsageBit::NONE;
 	AccelerationStructureUsageBit m_nextUsage = AccelerationStructureUsageBit::NONE;
 };

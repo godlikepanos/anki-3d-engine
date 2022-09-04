@@ -217,7 +217,9 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 		subresource.m_layerCount = init.m_layerCount;
 		subresource.m_mipmapCount = init.m_mipmapCount;
 
-		cmdb->setTextureBarrier(m_tex, TextureUsageBit::NONE, TextureUsageBit::ALL_SAMPLED, subresource);
+		const TextureBarrierInfo barrier = {m_tex.get(), TextureUsageBit::NONE, TextureUsageBit::ALL_SAMPLED,
+											subresource};
+		cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
 		FencePtr outFence;
 		cmdb->flush({}, &outFence);
@@ -266,24 +268,27 @@ Error ImageResource::load(LoadingContext& ctx)
 		CommandBufferPtr cmdb = ctx.m_gr->newCommandBuffer(ci);
 
 		// Set the barriers of the batch
+		Array<TextureBarrierInfo, MAX_COPIES_BEFORE_FLUSH> barriers;
+		U32 barrierCount = 0;
 		for(U32 i = begin; i < end; ++i)
 		{
 			U32 mip, layer, face;
 			unflatten3dArrayIndex(ctx.m_layerCount, ctx.m_faces, ctx.m_loader.getMipmapCount(), i, layer, face, mip);
 
+			TextureBarrierInfo& barrier = barriers[barrierCount++];
+			barrier = {ctx.m_tex.get(), TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION};
+
 			if(ctx.m_texType == TextureType::_3D)
 			{
+				barrier.m_subresource = TextureVolumeInfo(mip);
 				TextureVolumeInfo vol(mip);
-				cmdb->setTextureVolumeBarrier(ctx.m_tex, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION,
-											  vol);
 			}
 			else
 			{
-				TextureSurfaceInfo surf(mip, 0, face, layer);
-				cmdb->setTextureSurfaceBarrier(ctx.m_tex, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION,
-											   surf);
+				barrier.m_subresource = TextureSurfaceInfo(mip, 0, face, layer);
 			}
 		}
+		cmdb->setPipelineBarrier({&barriers[0], barrierCount}, {}, {});
 
 		// Do the copies
 		Array<TransferGpuAllocatorHandle, MAX_COPIES_BEFORE_FLUSH> handles;
@@ -341,26 +346,26 @@ Error ImageResource::load(LoadingContext& ctx)
 		}
 
 		// Set the barriers of the batch
+		barrierCount = 0;
 		for(U32 i = begin; i < end; ++i)
 		{
 			U32 mip, layer, face;
 			unflatten3dArrayIndex(ctx.m_layerCount, ctx.m_faces, ctx.m_loader.getMipmapCount(), i, layer, face, mip);
 
+			TextureBarrierInfo& barrier = barriers[barrierCount++];
+			barrier.m_previousUsage = TextureUsageBit::TRANSFER_DESTINATION;
+			barrier.m_nextUsage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_GEOMETRY;
+
 			if(ctx.m_texType == TextureType::_3D)
 			{
-				TextureVolumeInfo vol(mip);
-				cmdb->setTextureVolumeBarrier(ctx.m_tex, TextureUsageBit::TRANSFER_DESTINATION,
-											  TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_GEOMETRY,
-											  vol);
+				barrier.m_subresource = TextureVolumeInfo(mip);
 			}
 			else
 			{
-				TextureSurfaceInfo surf(mip, 0, face, layer);
-				cmdb->setTextureSurfaceBarrier(ctx.m_tex, TextureUsageBit::TRANSFER_DESTINATION,
-											   TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_GEOMETRY,
-											   surf);
+				barrier.m_subresource = TextureSurfaceInfo(mip, 0, face, layer);
 			}
 		}
+		cmdb->setPipelineBarrier({&barriers[0], barrierCount}, {}, {});
 
 		// Flush batch
 		FencePtr fence;

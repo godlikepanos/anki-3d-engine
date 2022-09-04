@@ -251,8 +251,9 @@ void DepthDownscale::runCompute(RenderPassWorkContext& rgraphCtx)
 
 		cmdb->fillBuffer(m_counterBuffer, 0, MAX_PTR_SIZE, 0);
 
-		cmdb->setBufferBarrier(m_counterBuffer, BufferUsageBit::TRANSFER_DESTINATION,
-							   BufferUsageBit::STORAGE_COMPUTE_WRITE, 0, MAX_PTR_SIZE);
+		const BufferBarrierInfo barrier = {m_counterBuffer.get(), BufferUsageBit::TRANSFER_DESTINATION,
+										   BufferUsageBit::STORAGE_COMPUTE_WRITE, 0, MAX_PTR_SIZE};
+		cmdb->setPipelineBarrier({}, {&barrier, 1}, {});
 	}
 
 	cmdb->bindShaderProgram(m_grProg);
