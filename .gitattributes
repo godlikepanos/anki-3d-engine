@@ -16,3 +16,7 @@
 *.ankiskel text eol=lf
 *.ankiankim text eol=lf
 *.ankicl text eol=lf
+
+# Github stats
+ThirdParty/** linguist-vendored
+*.ankiprog linguist-language=GLSL
