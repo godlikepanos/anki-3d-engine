@@ -772,6 +772,11 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 				m_extensions |= VulkanExtensions::NVX_IMAGE_VIEW_HANDLE;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
+			else if(extensionName == VK_KHR_MAINTENANCE_4_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::MAINTENANCE_4;
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
+			}
 		}
 
 		ANKI_VK_LOGI("Will enable the following device extensions:");
@@ -1081,6 +1086,15 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 			m_fragmentShadingRateFeatures.pNext = const_cast<void*>(ci.pNext);
 			ci.pNext = &m_fragmentShadingRateFeatures;
 		}
+	}
+
+	VkPhysicalDeviceMaintenance4FeaturesKHR maintenance4Features = {
+		VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_FEATURES_KHR};
+	if(!!(m_extensions & VulkanExtensions::MAINTENANCE_4))
+	{
+		maintenance4Features.maintenance4 = true;
+		maintenance4Features.pNext = const_cast<void*>(ci.pNext);
+		ci.pNext = &maintenance4Features;
 	}
 
 	ANKI_VK_CHECK(vkCreateDevice(m_physicalDevice, &ci, nullptr, &m_device));
@@ -1457,6 +1471,16 @@ VkBool32 GrManagerImpl::debugReportCallbackEXT(VkDebugUtilsMessageSeverityFlagBi
 											   const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
 											   void* pUserData)
 {
+#if ANKI_PLATFORM_MOBILE
+	if(pCallbackData->messageIdNumber == 101294395)
+	{
+		// Interface mismatch error. Eg vert shader is writing to varying that is not consumed by frag. Ignore this
+		// stupid error because I'm not going to create more shader variants to fix it. Especially when mobile drivers
+		// do linking anyway. On desktop just enable the maintenance4 extension
+		return false;
+	}
+#endif
+
 	// Get all names of affected objects
 	GrManagerImpl* self = static_cast<GrManagerImpl*>(pUserData);
 	StringAuto objectNames(self->m_alloc);

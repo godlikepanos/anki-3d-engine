@@ -11,6 +11,8 @@
 #include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 
+ANKI_BINDLESS_SET(MATERIAL_SET_BINDLESS)
+
 //
 // Vert
 //

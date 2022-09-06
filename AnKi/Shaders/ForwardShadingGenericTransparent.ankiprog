@@ -1,0 +1,81 @@
+// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki mutator ANKI_TECHNIQUE 3
+#pragma anki mutator TEXTURE 0 1
+#pragma anki mutator LIGHT 0 1
+
+#include <AnKi/Shaders/ForwardShadingCommon.glsl>
+
+#pragma anki reflect AnKiLocalUniforms
+#pragma anki struct AnKiLocalUniforms
+#pragma anki member U32 m_texture if TEXTURE is 1
+#pragma anki member ANKI_RP Vec4 m_colorScale
+#pragma anki member ANKI_RP Vec4 m_colorBias
+#pragma anki struct end
+
+layout(set = MATERIAL_SET_GLOBAL, binding = MATERIAL_BINDING_GLOBAL_UNIFORMS) uniform b_ankiGlobalUniforms
+{
+	MaterialGlobalUniforms u_ankiGlobals;
+};
+
+layout(set = MATERIAL_SET_GLOBAL, binding = MATERIAL_BINDING_TRILINEAR_REPEAT_SAMPLER) uniform sampler u_globalSampler;
+
+layout(set = MATERIAL_SET_LOCAL, binding = MATERIAL_BINDING_LOCAL_UNIFORMS, std430) buffer b_localUniforms
+{
+	U32 u_localUniforms[];
+};
+
+layout(set = MATERIAL_SET_LOCAL, binding = MATERIAL_BINDING_RENDERABLE_GPU_VIEW) uniform b_renderableGpuViews
+{
+	RenderableGpuView u_renderableGpuViews[1];
+};
+
+layout(set = MATERIAL_SET_GLOBAL, binding = MATERIAL_BINDING_GLOBAL_UNIFORMS) uniform b_globalUniforms
+{
+	MaterialGlobalUniforms u_globalUniforms;
+};
+
+#pragma anki start vert
+
+layout(location = VERTEX_ATTRIBUTE_ID_UV0) in Vec2 in_uv;
+
+layout(location = 0) out Vec2 out_uv;
+layout(location = 1) out Vec3 out_worldPosition;
+
+void main()
+{
+	out_worldPosition = u_renderableGpuViews[gl_InstanceIndex].m_worldTransform * Vec4(in_position, 1.0);
+
+	gl_Position = u_globalUniforms.m_viewProjectionMatrix * Vec4(out_worldPosition, 1.0);
+
+	out_uv = in_uv;
+}
+#pragma anki end
+
+#pragma anki start frag
+
+layout(location = 0) in Vec2 in_uv;
+layout(location = 1) in Vec3 in_worldPosition;
+
+void main()
+{
+	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(u_localUniforms, 0u);
+
+	Vec4 color = Vec4(1.0);
+
+#if TEXTURE == 1
+	color = texture(u_bindlessTextures2dF32[localUniforms.m_texture], u_globalSampler, in_uv);
+#endif
+
+#if LIGHT == 1
+	color.rgb = computeLightColorLow(color.rgb, in_worldPosition);
+#endif
+
+	color = color * localUniforms.m_colorScale + localUniforms.m_colorBias;
+
+	out_color = color;
+}
+#pragma anki end

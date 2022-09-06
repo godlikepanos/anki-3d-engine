@@ -14,6 +14,7 @@
 #pragma anki member F32 m_animationPeriod if ANIMATED_TEXTURE is 1
 #pragma anki member ANKI_RP Vec4 m_colorScale
 #pragma anki member ANKI_RP Vec4 m_colorBias
+#pragma anki member U32 m_diffuseMap
 #pragma anki struct end
 
 layout(set = MATERIAL_SET_GLOBAL, binding = MATERIAL_BINDING_GLOBAL_UNIFORMS) uniform b_ankiGlobalUniforms
@@ -32,17 +33,6 @@ layout(set = MATERIAL_SET_LOCAL, binding = MATERIAL_BINDING_RENDERABLE_GPU_VIEW)
 {
 	RenderableGpuView u_renderableGpuViews[1];
 };
-
-#if ANIMATED_TEXTURE == 0
-#	pragma anki reflect u_diffuseMap
-layout(set = MATERIAL_SET_LOCAL,
-	   binding = MATERIAL_BINDING_FIRST_NON_STANDARD_LOCAL) uniform ANKI_RP texture2D u_diffuseMap;
-#endif
-#if ANIMATED_TEXTURE == 1
-#	pragma anki reflect u_diffuseMapArr
-layout(set = MATERIAL_SET_LOCAL,
-	   binding = MATERIAL_BINDING_FIRST_NON_STANDARD_LOCAL) uniform ANKI_RP texture2DArray u_diffuseMapArr;
-#endif
 
 #pragma anki start vert
 
@@ -76,10 +66,11 @@ void main()
 	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(u_localUniforms, 0u);
 
 #if ANIMATED_TEXTURE == 1
-	ANKI_RP Vec4 texCol = readAnimatedTextureRgba(u_diffuseMapArr, u_globalSampler, localUniforms.m_animationPeriod,
-												  in_uv, u_clusteredShading.m_time);
+	ANKI_RP Vec4 texCol =
+		readAnimatedTextureRgba(u_bindlessTextures2dArrayF32[localUniforms.m_diffuseMap], u_globalSampler,
+								localUniforms.m_animationPeriod, in_uv, u_clusteredShading.m_time);
 #else
-	ANKI_RP Vec4 texCol = texture(u_diffuseMap, u_globalSampler, in_uv);
+	ANKI_RP Vec4 texCol = texture(u_bindlessTextures2dF32[localUniforms.m_diffuseMap], u_globalSampler, in_uv);
 #endif
 
 #if LIGHT

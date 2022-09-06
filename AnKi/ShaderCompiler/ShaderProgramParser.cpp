@@ -74,6 +74,7 @@ inline constexpr char SHADER_HEADER[] = R"(#version 460 core
 	layout(set = s, binding = 0) uniform utexture2D u_bindlessTextures2dU32[ANKI_MAX_BINDLESS_TEXTURES]; \
 	layout(set = s, binding = 0) uniform itexture2D u_bindlessTextures2dI32[ANKI_MAX_BINDLESS_TEXTURES]; \
 	layout(set = s, binding = 0) uniform texture2D u_bindlessTextures2dF32[ANKI_MAX_BINDLESS_TEXTURES]; \
+	layout(set = s, binding = 0) uniform texture2DArray u_bindlessTextures2dArrayF32[ANKI_MAX_BINDLESS_TEXTURES]; \
 	layout(set = s, binding = 1) uniform textureBuffer u_bindlessTextureBuffers[MAX_BINDLESS_READONLY_TEXTURE_BUFFERS];
 
 #define F32 float

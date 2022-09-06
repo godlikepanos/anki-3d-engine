@@ -10,7 +10,7 @@
 	</shaderPrograms>
 
 	<inputs>
-		<input name="u_diffuseMap" value="Assets/ember_mid.ankitex"/>
+		<input name="m_diffuseMap" value="Assets/ember_mid.ankitex"/>
 		<input name="m_colorScale" value="3 3 3 1.0"/>
 		<input name="m_colorBias" value="0 0 0 0"/>
 	</inputs>

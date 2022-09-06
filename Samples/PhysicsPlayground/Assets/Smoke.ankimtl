@@ -10,7 +10,7 @@
 	</shaderPrograms>
 
 	<inputs>
-		<input name="u_diffuseMap" value="Assets/Smoke.ankitex"/>
+		<input name="m_diffuseMap" value="Assets/Smoke.ankitex"/>
 		<input name="m_colorScale" value="1.0 1.0 1.0 1.0"/>
 		<input name="m_colorBias" value="0 0 0 0"/>
 	</inputs>
