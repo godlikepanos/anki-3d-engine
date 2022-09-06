@@ -17,13 +17,14 @@ class AnimationEvent : public Event
 public:
 	AnimationEvent(EventManager* manager);
 
-	Error init(const AnimationResourcePtr& anim, SceneNode* movableSceneNode);
+	Error init(CString animationFilename, CString channel, SceneNode* movableSceneNode);
 
 	/// Implements Event::update
 	Error update(Second prevUpdateTime, Second crntTime) override;
 
 private:
 	AnimationResourcePtr m_anim;
+	U32 m_channelIndex = 0;
 };
 /// @}
 

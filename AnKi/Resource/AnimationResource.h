@@ -73,7 +73,7 @@ public:
 	Error load(const ResourceFilename& filename, Bool async);
 
 	/// Get a vector of all animation channels
-	const DynamicArray<AnimationChannel>& getChannels() const
+	ConstWeakArray<AnimationChannel> getChannels() const
 	{
 		return m_channels;
 	}

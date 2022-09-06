@@ -5,6 +5,7 @@
 
 #include <AnKi/Scene/Events/AnimationEvent.h>
 #include <AnKi/Scene/SceneNode.h>
+#include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Scene/Components/MoveComponent.h>
 #include <AnKi/Resource/ResourceManager.h>
 
@@ -15,10 +16,26 @@ AnimationEvent::AnimationEvent(EventManager* manager)
 {
 }
 
-Error AnimationEvent::init(const AnimationResourcePtr& anim, SceneNode* movableSceneNode)
+Error AnimationEvent::init(CString animationFilename, CString channelName, SceneNode* movableSceneNode)
 {
 	ANKI_ASSERT(movableSceneNode);
-	m_anim = anim;
+	ANKI_CHECK(getSceneGraph().getResourceManager().loadResource(animationFilename, m_anim));
+
+	m_channelIndex = 0;
+	for(const AnimationChannel& channel : m_anim->getChannels())
+	{
+		if(channel.m_name == channelName)
+		{
+			break;
+		}
+		++m_channelIndex;
+	}
+
+	if(m_channelIndex == m_anim->getChannels().getSize())
+	{
+		ANKI_SCENE_LOGE("Can't initialize AnimationEvent. Channel not found: %s", channelName.cstr());
+		return Error::USER_DATA;
+	}
 
 	Event::init(m_anim->getStartingTime(), m_anim->getDuration());
 	m_reanimate = true;
@@ -32,7 +49,7 @@ Error AnimationEvent::update([[maybe_unused]] Second prevUpdateTime, [[maybe_unu
 	Vec3 pos;
 	Quat rot;
 	F32 scale = 1.0;
-	m_anim->interpolate(0, crntTime, pos, rot, scale);
+	m_anim->interpolate(m_channelIndex, crntTime, pos, rot, scale);
 
 	Transform trf;
 	trf.setOrigin(pos.xyz0());

@@ -695,6 +695,12 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 						<arg>SceneNode*</arg>
 					</args>
 				</method>
+				<method name="tryFindSceneNode">
+					<args>
+						<arg>CString</arg>
+					</args>
+					<return>SceneNode*</return>
+				</method>
 			</methods>
 		</class>
 
@@ -734,6 +740,8 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 			</methods>
 		</class>
 
+		<class name="AnimationEvent"/>
+
 		<class name="EventManager">
 			<methods>
 				<method name="newLightEvent">
@@ -764,6 +772,16 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 						<arg>SceneNode*</arg>
 					</args>
 					<return>JitterMoveEvent*</return>
+				</method>
+
+				<method name="newAnimationEvent">
+					<overrideCall><![CDATA[AnimationEvent* ret = newEvent<AnimationEvent>(self, arg0, arg1, arg2);]]></overrideCall>
+					<args>
+						<arg>CString</arg>
+						<arg>CString</arg>
+						<arg>SceneNode*</arg>
+					</args>
+					<return>AnimationEvent*</return>
 				</method>
 			</methods>
 		</class>

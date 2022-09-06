@@ -26,8 +26,8 @@ ANKI_BINDLESS_SET(MATERIAL_SET_BINDLESS)
 layout(location = VERTEX_ATTRIBUTE_ID_POSITION) in Vec3 in_position;
 
 #	if ANKI_TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER
-layout(location = VERTEX_ATTRIBUTE_ID_NORMAL) in Vec3 in_normal;
-layout(location = VERTEX_ATTRIBUTE_ID_TANGENT) in Vec4 in_tangent;
+layout(location = VERTEX_ATTRIBUTE_ID_NORMAL) in ANKI_RP Vec3 in_normal;
+layout(location = VERTEX_ATTRIBUTE_ID_TANGENT) in ANKI_RP Vec4 in_tangent;
 #	endif
 
 #	if ANKI_TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER || ALPHA_TEST
@@ -53,7 +53,7 @@ layout(location = 0) out Vec2 out_uv;
 #	if ANKI_TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER
 layout(location = 1) out ANKI_RP Vec3 out_normal;
 layout(location = 2) out ANKI_RP Vec3 out_tangent;
-layout(location = 3) out Vec3 out_bitangent;
+layout(location = 3) out ANKI_RP Vec3 out_bitangent;
 
 #		if REALLY_USING_PARALLAX
 layout(location = 4) out F32 out_distFromTheCamera;
@@ -81,7 +81,7 @@ layout(location = 0) in Vec2 in_uv;
 #	if ANKI_TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER
 layout(location = 1) in ANKI_RP Vec3 in_normal;
 layout(location = 2) in ANKI_RP Vec3 in_tangent;
-layout(location = 3) in Vec3 in_bitangent;
+layout(location = 3) in ANKI_RP Vec3 in_bitangent;
 
 #		if REALLY_USING_PARALLAX
 layout(location = 4) in F32 in_distFromTheCamera;
