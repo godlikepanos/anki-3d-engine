@@ -244,9 +244,23 @@ public:
 		return m_viewProjMat;
 	}
 
-	const Mat4& getPreviousViewProjectionMatrix() const
+	/// @param nMinusOneFrame The number of the previous frame. If 0 means the previous frame, 1 means the
+	///                       previous-previous frame.
+	const Mat4& getPreviousViewProjectionMatrix(U32 nMinusOneFrame = 0) const
 	{
-		return m_prevViewProjMat;
+		return m_prevViewProjMats[nMinusOneFrame];
+	}
+
+	/// @see getPreviousViewProjectionMatrix.
+	const Mat3x4& getPreviousViewMatrix(U32 nMinusOneFrame = 0) const
+	{
+		return m_prevViewMats[nMinusOneFrame];
+	}
+
+	/// @see getPreviousViewProjectionMatrix.
+	const Mat4& getPreviousProjectionMatrix(U32 nMinusOneFrame = 0) const
+	{
+		return m_prevProjMats[nMinusOneFrame];
 	}
 
 	/// Check if a shape is inside the frustum.
@@ -423,7 +437,11 @@ private:
 	Mat4 m_projMat = Mat4::getIdentity(); ///< Projection matrix
 	Mat3x4 m_viewMat = Mat3x4::getIdentity(); ///< View matrix
 	Mat4 m_viewProjMat = Mat4::getIdentity(); ///< View projection matrix
-	Mat4 m_prevViewProjMat = Mat4::getIdentity();
+
+	static constexpr U32 kPrevMatrixHistory = 2;
+	Array<Mat3x4, kPrevMatrixHistory> m_prevViewMats = {Mat3x4::getIdentity(), Mat3x4::getIdentity()};
+	Array<Mat4, kPrevMatrixHistory> m_prevProjMats = {Mat4::getIdentity(), Mat4::getIdentity()};
+	Array<Mat4, kPrevMatrixHistory> m_prevViewProjMats = {Mat4::getIdentity(), Mat4::getIdentity()};
 
 	/// How far to render shadows for this frustum. If negative it's the m_frustum's far.
 	F32 m_effectiveShadowDistance = -1.0f;

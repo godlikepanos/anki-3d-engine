@@ -187,13 +187,16 @@ void FillRasterizerWithCoverageTask::fill()
 	ANKI_ASSERT(width > 0 && height > 0 && depthBuff.getSize() > 0);
 
 	// Init the rasterizer
-	m_frcCtx->m_r = alloc.newInstance<SoftwareRasterizer>();
-	m_frcCtx->m_r->init(alloc);
-	m_frcCtx->m_r->prepare(Mat4(m_frcCtx->m_frc->getViewMatrix(), Vec4(0.0f, 0.0f, 0.0f, 1.0f)),
-						   m_frcCtx->m_frc->getProjectionMatrix(), width, height);
+	if(true)
+	{
+		m_frcCtx->m_r = alloc.newInstance<SoftwareRasterizer>();
+		m_frcCtx->m_r->init(alloc);
+		m_frcCtx->m_r->prepare(Mat4(m_frcCtx->m_frc->getPreviousViewMatrix(1), Vec4(0.0f, 0.0f, 0.0f, 1.0f)),
+							   m_frcCtx->m_frc->getPreviousProjectionMatrix(1), width, height);
 
-	// Do the work
-	m_frcCtx->m_r->fillDepthBuffer(depthBuff);
+		// Do the work
+		m_frcCtx->m_r->fillDepthBuffer(depthBuff);
+	}
 }
 
 void GatherVisiblesFromOctreeTask::gather(ThreadHive& hive)

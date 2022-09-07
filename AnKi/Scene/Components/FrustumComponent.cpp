@@ -35,7 +35,17 @@ Bool FrustumComponent::updateInternal()
 	ANKI_ASSERT(m_frustumType != FrustumType::COUNT);
 
 	Bool updated = false;
-	m_prevViewProjMat = m_viewProjMat;
+
+	for(U32 i = kPrevMatrixHistory - 1; i != 0; --i)
+	{
+		m_prevViewProjMats[i] = m_prevViewProjMats[i - 1];
+		m_prevViewMats[i] = m_prevViewMats[i - 1];
+		m_prevProjMats[i] = m_prevProjMats[i - 1];
+	}
+
+	m_prevViewProjMats[0] = m_viewProjMat;
+	m_prevViewMats[0] = m_viewMat;
+	m_prevProjMats[0] = m_projMat;
 
 	// Update the shape
 	if(m_shapeMarkedForUpdate)

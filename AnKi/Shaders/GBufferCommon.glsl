@@ -18,6 +18,13 @@ ANKI_BINDLESS_SET(MATERIAL_SET_BINDLESS)
 #define REALLY_USING_PARALLAX \
 	(PARALLAX == 1 && ANKI_TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER && ANKI_LOD == 0 && ALPHA_TEST == 0)
 
+// For some reason nVidia doesn't like mediump precision on bitangents
+#if ANKI_PLATFORM_MOBILE
+#	define BITANGENT_PRECISION ANKI_RP
+#else
+#	define BITANGENT_PRECISION
+#endif
+
 //
 // Vert input
 //
@@ -53,7 +60,7 @@ layout(location = 0) out Vec2 out_uv;
 #	if ANKI_TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER
 layout(location = 1) out ANKI_RP Vec3 out_normal;
 layout(location = 2) out ANKI_RP Vec3 out_tangent;
-layout(location = 3) out ANKI_RP Vec3 out_bitangent;
+layout(location = 3) out BITANGENT_PRECISION Vec3 out_bitangent;
 
 #		if REALLY_USING_PARALLAX
 layout(location = 4) out F32 out_distFromTheCamera;
@@ -81,7 +88,7 @@ layout(location = 0) in Vec2 in_uv;
 #	if ANKI_TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER
 layout(location = 1) in ANKI_RP Vec3 in_normal;
 layout(location = 2) in ANKI_RP Vec3 in_tangent;
-layout(location = 3) in ANKI_RP Vec3 in_bitangent;
+layout(location = 3) in BITANGENT_PRECISION Vec3 in_bitangent;
 
 #		if REALLY_USING_PARALLAX
 layout(location = 4) in F32 in_distFromTheCamera;
