@@ -368,7 +368,8 @@ static Vec3 sRgbToLinear(Vec3 p)
 
 	const Vec3 higher = ((p + 0.055f) / 1.055f).pow(2.4f);
 	const Vec3 lower = p / 12.92f;
-	return higher.lerp(lower, cutoff);
+	const Vec3 out = higher.lerp(lower, cutoff);
+	return out;
 }
 
 template<typename TVec, typename TFunc>
@@ -397,9 +398,9 @@ static void linearToSRgbBatch(WeakArray<TVec> pixels, TFunc func)
 
 		if(std::is_same<S, U8>::value)
 		{
-			pixel.x() = S(p.x() / 255.0f);
-			pixel.y() = S(p.y() / 255.0f);
-			pixel.z() = S(p.z() / 255.0f);
+			pixel.x() = S(p.x() * 255.0f);
+			pixel.y() = S(p.y() * 255.0f);
+			pixel.z() = S(p.z() * 255.0f);
 		}
 		else
 		{
