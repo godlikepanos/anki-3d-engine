@@ -29,6 +29,8 @@ public:
 	CString m_tempDirectory;
 	CString m_compressonatorFilename; ///< Optional.
 	CString m_astcencFilename; ///< Optional.
+	Vec3 m_hdrScale = Vec3(1.0f); ///< Scale the values of HDR textures.
+	Vec3 m_hdrBias = Vec3(0.0f); ///< Add that value to the HDR textures.
 	UVec2 m_astcBlockSize = UVec2(8u);
 	Bool m_sRgbToLinear = false;
 	Bool m_linearToSRgb = false;

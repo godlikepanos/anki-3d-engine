@@ -34,6 +34,8 @@ Options:
 -to-linear             : Convert sRGB to linear
 -to-srgb               : Convert linear to sRGB
 -flip-image <0|1>      : Flip the image. Default is 1
+-hdr-scale <3 floats>  : Apply some scale to HDR images. Default is {1 1 1}
+-hdr-bias <3 floats>   : Apply some bias to HDR images. Default is {0 0 0}
 )";
 
 static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& config, Cleanup& cleanup)
@@ -223,6 +225,34 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 			{
 				return Error::USER_DATA;
 			}
+		}
+		else if(CString(argv[i]) == "-hdr-scale")
+		{
+			++i;
+			if(i + 2 >= argc)
+			{
+				return Error::USER_DATA;
+			}
+
+			F32 x, y, z;
+			ANKI_CHECK(CString(argv[i++]).toNumber(x));
+			ANKI_CHECK(CString(argv[i++]).toNumber(y));
+			ANKI_CHECK(CString(argv[i]).toNumber(z));
+			config.m_hdrScale = Vec3(x, y, z);
+		}
+		else if(CString(argv[i]) == "-hdr-bias")
+		{
+			++i;
+			if(i + 2 >= argc)
+			{
+				return Error::USER_DATA;
+			}
+
+			F32 x, y, z;
+			ANKI_CHECK(CString(argv[i++]).toNumber(x));
+			ANKI_CHECK(CString(argv[i++]).toNumber(y));
+			ANKI_CHECK(CString(argv[i]).toNumber(z));
+			config.m_hdrBias = Vec3(x, y, z);
 		}
 		else
 		{

@@ -411,6 +411,14 @@ static void linearToSRgbBatch(WeakArray<TVec> pixels, TFunc func)
 	}
 }
 
+static void applyScaleAndBias(WeakArray<Vec3> pixels, Vec3 scale, Vec3 bias)
+{
+	for(Vec3& pixel : pixels)
+	{
+		pixel = pixel * scale + bias;
+	}
+}
+
 static Error loadFirstMipmap(const ImageImporterConfig& config, ImageImporterContext& ctx)
 {
 	GenericMemoryPoolAllocator<U8> alloc = ctx.getAllocator();
@@ -524,6 +532,13 @@ static Error loadFirstMipmap(const ImageImporterConfig& config, ImageImporterCon
 									  sRgbToLinear);
 				}
 			}
+		}
+
+		if(ctx.m_hdr && (config.m_hdrScale != Vec3(1.0f) || config.m_hdrBias != Vec3(0.0f)))
+		{
+			ANKI_IMPORTER_LOGV("Will apply scale and/or bias to the image");
+			applyScaleAndBias(WeakArray(static_cast<Vec3*>(data), ctx.m_width * ctx.m_height), config.m_hdrScale,
+							  config.m_hdrBias);
 		}
 
 		if(ctx.m_depth > 1)
