@@ -346,6 +346,22 @@ inline void splitThreadedProblem(U32 threadId, U32 threadCount, U32 problemSize,
 	end = (threadId == threadCount - 1) ? problemSize : (threadId + 1u) * div;
 	ANKI_ASSERT(!(threadId == threadCount - 1 && end != problemSize));
 }
+
+/// Just copy the memory of a float to a uint.
+inline U64 floatBitsToUint(F64 f)
+{
+	U64 out;
+	memcpy(&out, &f, sizeof(out));
+	return out;
+}
+
+/// Just copy the memory of a float to a uint.
+inline U32 floatBitsToUint(F32 f)
+{
+	U32 out;
+	memcpy(&out, &f, sizeof(out));
+	return out;
+}
 /// @}
 
 } // end namespace anki

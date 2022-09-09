@@ -37,13 +37,11 @@ Error FinalComposite::initInternal()
 	m_fbDescr.m_colorAttachmentCount = 1;
 	m_fbDescr.bake();
 
-	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_blueNoise));
-
 	// Progs
 	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/FinalComposite.ankiprogbin", m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-	variantInitInfo.addMutation("BLUE_NOISE", 1);
+	variantInitInfo.addMutation("FILM_GRAIN", (getConfig().getRFilmGrainStrength() > 0.0) ? 1 : 0);
 	variantInitInfo.addMutation("BLOOM_ENABLED", 1);
 	variantInitInfo.addConstant("LUT_SIZE", U32(LUT_SIZE));
 	variantInitInfo.addConstant("FB_SIZE", m_r->getPostProcessResolution());
@@ -157,18 +155,17 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 
 		rgraphCtx.bindColorTexture(0, 4, m_r->getBloom().getRt());
 		cmdb->bindTexture(0, 5, m_lut->getTextureView());
-		cmdb->bindTexture(0, 6, m_blueNoise->getTextureView());
-		rgraphCtx.bindColorTexture(0, 7, m_r->getMotionVectors().getMotionVectorsRt());
-		rgraphCtx.bindTexture(0, 8, m_r->getGBuffer().getDepthRt(),
+		rgraphCtx.bindColorTexture(0, 6, m_r->getMotionVectors().getMotionVectorsRt());
+		rgraphCtx.bindTexture(0, 7, m_r->getGBuffer().getDepthRt(),
 							  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
 
 		if(dbgEnabled)
 		{
-			rgraphCtx.bindColorTexture(0, 9, m_r->getDbg().getRt());
+			rgraphCtx.bindColorTexture(0, 8, m_r->getDbg().getRt());
 		}
 
-		const UVec4 frameCount(m_r->getFrameCount() & MAX_U32);
-		cmdb->setPushConstants(&frameCount, sizeof(frameCount));
+		const UVec4 pc(0, 0, floatBitsToUint(getConfig().getRFilmGrainStrength()), m_r->getFrameCount() & MAX_U32);
+		cmdb->setPushConstants(&pc, sizeof(pc));
 	}
 	else
 	{

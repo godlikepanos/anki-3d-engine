@@ -54,26 +54,27 @@ ANKI_RP Vec3 tonemapUncharted2(ANKI_RP Vec3 color)
 	return ((color * (A * color + C * B) + D * E) / (color * (A * color + B) + D * F)) - E / F;
 }
 
+const ANKI_RP F32 kACESA = 2.51;
+const ANKI_RP F32 kACESB = 0.03;
+const ANKI_RP F32 kACESC = 2.43;
+const ANKI_RP F32 kACESD = 0.59;
+const ANKI_RP F32 kACESE = 0.14;
+
+// See ACES in action and its inverse at https://www.desmos.com/calculator/n1lkpc6hwq
 ANKI_RP Vec3 tonemapACESFilm(ANKI_RP Vec3 x)
 {
-	const ANKI_RP F32 a = 2.51;
-	const ANKI_RP F32 b = 0.03;
-	const ANKI_RP F32 c = 2.43;
-	const ANKI_RP F32 d = 0.59;
-	const ANKI_RP F32 e = 0.14;
-
-	return saturate((x * (a * x + b)) / (x * (c * x + d) + e));
+	return saturate((x * (kACESA * x + kACESB)) / (x * (kACESC * x + kACESD) + kACESE));
 }
 
+// https://www.desmos.com/calculator/n1lkpc6hwq
 ANKI_RP Vec3 invertTonemapACESFilm(ANKI_RP Vec3 x)
 {
-	const ANKI_RP F32 a = 2.51;
-	const ANKI_RP F32 b = 0.03;
-	const ANKI_RP F32 c = 2.43;
-	const ANKI_RP F32 d = 0.59;
-	const ANKI_RP F32 e = 0.14;
+	ANKI_RP Vec3 res = kACESD * x - kACESB;
+	res += sqrt(x * x * (kACESD * kACESD - 4.0 * kACESE * kACESC) + x * (4.0 * kACESE * kACESA - 2.0 * kACESB * kACESD)
+				+ kACESB * kACESB);
+	res /= 2.0 * kACESA - 2.0 * kACESC * x;
 
-	return (-0.59 * x + 0.03 - sqrt(-1.0127 * x * x + 1.3702 * x + 0.0009)) / (2.0 * (2.43 * x - 2.51));
+	return res;
 }
 
 ANKI_RP Vec3 tonemap(ANKI_RP Vec3 color, ANKI_RP F32 exposure)

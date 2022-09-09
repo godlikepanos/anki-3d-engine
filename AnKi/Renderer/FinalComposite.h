@@ -40,7 +40,6 @@ private:
 	ShaderProgramPtr m_defaultVisualizeRenderTargetGrProg;
 
 	ImageResourcePtr m_lut; ///< Color grading lookup texture.
-	ImageResourcePtr m_blueNoise;
 
 	Error initInternal();
 

@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki mutator BLUE_NOISE 0 1
+#pragma anki mutator FILM_GRAIN 0 1
 #pragma anki mutator BLOOM_ENABLED 0 1
 #pragma anki mutator DBG_ENABLED 0 1
 
@@ -27,16 +27,16 @@ layout(set = 0, binding = 2) uniform sampler u_trilinearRepeatSampler;
 layout(set = 0, binding = 3) uniform ANKI_RP texture2D u_lightShadingRt;
 layout(set = 0, binding = 4) uniform ANKI_RP texture2D u_ppsBloomLfRt;
 layout(set = 0, binding = 5) uniform ANKI_RP texture3D u_lut;
-layout(set = 0, binding = 6) uniform ANKI_RP texture2D u_blueNoise;
-layout(set = 0, binding = 7) uniform texture2D u_motionVectorsRt;
-layout(set = 0, binding = 8) uniform texture2D u_depthRt;
+layout(set = 0, binding = 6) uniform texture2D u_motionVectorsRt;
+layout(set = 0, binding = 7) uniform texture2D u_depthRt;
 #if DBG_ENABLED
-layout(set = 0, binding = 9) uniform ANKI_RP texture2D u_dbgOutlineRt;
+layout(set = 0, binding = 8) uniform ANKI_RP texture2D u_dbgOutlineRt;
 #endif
 
 layout(push_constant, std140) uniform b_pc
 {
-	Vec3 u_padding0;
+	Vec2 u_padding0;
+	F32 u_filmGrainStrength;
 	U32 u_frameCount;
 };
 
@@ -74,14 +74,9 @@ void main()
 
 	out_color = colorGrading(out_color);
 
-#if BLUE_NOISE
-	const Vec2 bnUvw = Vec2(FB_SIZE) / Vec2(64.0) * uv;
-	ANKI_RP Vec3 blueNoise = textureLod(u_blueNoise, u_trilinearRepeatSampler, bnUvw, 0.0).rgb;
-	blueNoise = animateBlueNoise(blueNoise, u_frameCount);
-	blueNoise = blueNoise * 2.0 - 1.0;
-	blueNoise = sign(blueNoise) * (1.0 - sqrt(1.0 - abs(blueNoise)));
-
-	out_color += blueNoise / 255.0;
+#if FILM_GRAIN
+	const ANKI_RP F32 dt = 1.0;
+	out_color = filmGrain(out_color, uv, u_filmGrainStrength, F32(u_frameCount % 0xFFFFu) * dt);
 #endif
 
 #if DBG_ENABLED
