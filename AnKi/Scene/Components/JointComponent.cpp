@@ -70,7 +70,7 @@ void JointComponent::newJoint(const Vec3& relPosFactor, F32 breakingImpulse, TAr
 		joint->setBreakingImpulseThreshold(breakingImpulse);
 
 		JointNode* newNode = m_node->getAllocator().newInstance<JointNode>();
-		newNode->m_joint = joint;
+		newNode->m_joint = std::move(joint);
 		m_jointList.pushBack(newNode);
 	}
 	else
@@ -103,7 +103,7 @@ void JointComponent::newPoint2PointJoint2(const Vec3& relPosFactorA, const Vec3&
 		joint->setBreakingImpulseThreshold(breakingImpulse);
 
 		JointNode* newNode = m_node->getAllocator().newInstance<JointNode>();
-		newNode->m_joint = joint;
+		newNode->m_joint = std::move(joint);
 		newNode->m_parentNode = m_node->getParent();
 		m_jointList.pushBack(newNode);
 	}

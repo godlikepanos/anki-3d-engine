@@ -300,7 +300,7 @@ public:
 		SceneGraph& scene = getSceneGraph();
 		TextureViewerUiNode* node;
 		ANKI_CHECK(scene.newSceneNode("TextureViewer", node));
-		node->m_imageResource = image;
+		node->m_imageResource = std::move(image);
 
 		return Error::NONE;
 	}

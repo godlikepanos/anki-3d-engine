@@ -679,7 +679,7 @@ Error ImageLoader::loadStb(Bool isFloat, FileInterface& fs, U32& width, U32& hei
 Error ImageLoader::load(ResourceFilePtr rfile, const CString& filename, U32 maxImageSize)
 {
 	RsrcFile file;
-	file.m_rfile = rfile;
+	file.m_rfile = std::move(rfile);
 
 	const Error err = loadInternal(file, filename, maxImageSize);
 	if(err)

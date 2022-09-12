@@ -51,7 +51,7 @@ void TileAllocator::init(HeapAllocator<U8> alloc, U32 tileCountX, U32 tileCountY
 	m_tileCountX = U16(tileCountX);
 	m_tileCountY = U16(tileCountY);
 	m_lodCount = U8(lodCount);
-	m_alloc = alloc;
+	m_alloc = std::move(alloc);
 	m_cachingEnabled = enableCaching;
 	m_lodFirstTileIndex.create(m_alloc, lodCount + 1);
 

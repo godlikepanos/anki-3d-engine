@@ -62,7 +62,7 @@ protected:
 
 	void init(ResourceAllocator<U8> alloc)
 	{
-		m_alloc = alloc;
+		m_alloc = std::move(alloc);
 	}
 
 private:

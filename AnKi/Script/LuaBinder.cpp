@@ -50,7 +50,7 @@ Error LuaBinder::init(ScriptAllocator alloc, LuaBinderOtherSystems* otherSystems
 {
 	ANKI_ASSERT(otherSystems);
 	m_otherSystems = otherSystems;
-	m_alloc = alloc;
+	m_alloc = std::move(alloc);
 
 	m_l = lua_newstate(luaAllocCallback, this);
 	luaL_openlibs(m_l);

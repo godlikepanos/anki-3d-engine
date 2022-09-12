@@ -47,7 +47,7 @@ TransferGpuAllocator::~TransferGpuAllocator()
 
 Error TransferGpuAllocator::init(PtrSize maxSize, GrManager* gr, ResourceAllocator<U8> alloc)
 {
-	m_alloc = alloc;
+	m_alloc = std::move(alloc);
 	m_gr = gr;
 
 	m_maxAllocSize = getAlignedRoundUp(CHUNK_INITIAL_SIZE * POOL_COUNT, maxSize);

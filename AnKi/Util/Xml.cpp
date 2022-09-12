@@ -142,7 +142,7 @@ Error XmlDocument::loadFile(CString filename, GenericMemoryPoolAllocator<U8> all
 
 Error XmlDocument::parse(CString xmlText, GenericMemoryPoolAllocator<U8> alloc)
 {
-	m_alloc = alloc;
+	m_alloc = std::move(alloc);
 
 	if(m_doc.Parse(&xmlText[0]))
 	{

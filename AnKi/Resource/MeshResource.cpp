@@ -212,7 +212,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		PtrSize stride;
 		getVertexBufferInfo(bufferIdx, buffer, offset, stride);
 
-		inf.m_bottomLevel.m_positionBuffer = buffer;
+		inf.m_bottomLevel.m_positionBuffer = std::move(buffer);
 		inf.m_bottomLevel.m_positionBufferOffset = offset;
 		inf.m_bottomLevel.m_positionStride = U32(stride);
 		inf.m_bottomLevel.m_positionsFormat = format;

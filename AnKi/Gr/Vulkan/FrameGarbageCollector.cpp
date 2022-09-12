@@ -123,7 +123,7 @@ void FrameGarbageCollector::setNewFrame(MicroFencePtr frameFence)
 	if(!m_frames.isEmpty() && !m_frames.getBack().m_fence.isCreated())
 	{
 		// Last frame is without a fence, asign the fence to not not have it garbage collected
-		m_frames.getBack().m_fence = frameFence;
+		m_frames.getBack().m_fence = std::move(frameFence);
 	}
 
 	collectGarbage();

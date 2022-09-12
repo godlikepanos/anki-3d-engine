@@ -400,7 +400,7 @@ ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitIn
 			}
 			else if(shaderType == ShaderType::COMPUTE)
 			{
-				progInf.m_computeShader = shader;
+				progInf.m_computeShader = std::move(shader);
 			}
 			else
 			{
