@@ -34,13 +34,13 @@ enum class LoggerMessageType : U8
 class LoggerMessageInfo
 {
 public:
-	const char* m_file;
+	const Char* m_file;
 	I32 m_line;
-	const char* m_func;
+	const Char* m_func;
 	LoggerMessageType m_type;
-	const char* m_msg;
-	const char* m_subsystem;
-	ThreadId m_tid;
+	const Char* m_msg;
+	const Char* m_subsystem;
+	const Char* m_threadName;
 };
 
 /// The message handler callback.
@@ -69,13 +69,13 @@ public:
 	void addFileMessageHandler(File* file);
 
 	/// Send a message.
-	void write(const char* file, int line, const char* func, const char* subsystem, LoggerMessageType type,
-			   ThreadId tid, const char* msg);
+	void write(const Char* file, int line, const Char* func, const Char* subsystem, LoggerMessageType type,
+			   const Char* threadName, const Char* msg);
 
 	/// Send a formated message.
 	ANKI_CHECK_FORMAT(7, 8)
-	void writeFormated(const char* file, int line, const char* func, const char* subsystem, LoggerMessageType type,
-					   ThreadId tid, const char* fmt, ...);
+	void writeFormated(const Char* file, int line, const Char* func, const Char* subsystem, LoggerMessageType type,
+					   const Char* threadName, const Char* fmt, ...);
 
 	/// Enable or disable logger verbosity.
 	void enableVerbosity(Bool enable)
@@ -118,7 +118,7 @@ using LoggerSingleton = Singleton<Logger>;
 	do \
 	{ \
 		LoggerSingleton::get().writeFormated(ANKI_FILE, __LINE__, ANKI_FUNC, subsystem_, LoggerMessageType::t, \
-											 Thread::getCurrentThreadId(), __VA_ARGS__); \
+											 Thread::getCurrentThreadName(), __VA_ARGS__); \
 	} while(false);
 /// @}
 

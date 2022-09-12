@@ -151,6 +151,8 @@ private:
 	Mutex m_mtx;
 	ConditionVariable m_cvar;
 
+	static Atomic<U32> m_uuid;
+
 	void threadRun(U32 threadId);
 
 	/// Wait for more tasks.

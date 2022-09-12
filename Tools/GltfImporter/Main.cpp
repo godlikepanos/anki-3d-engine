@@ -184,7 +184,8 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 	return Error::NONE;
 }
 
-int main(int argc, char** argv)
+ANKI_MAIN_FUNCTION(myMain)
+int myMain(int argc, char** argv)
 {
 	CmdLineArgs cmdArgs;
 	if(parseCommandLineArgs(argc, argv, cmdArgs))

@@ -22,9 +22,6 @@
 
 namespace anki {
 
-// Forward
-class CString;
-
 /// @addtogroup util_thread
 /// @{
 
@@ -53,22 +50,11 @@ using ThreadCallback = Error (*)(ThreadCallbackInfo&);
 class Thread
 {
 public:
+	static constexpr U32 kThreadNameMaxLength = 15;
+
 	/// Create a thread with or without a name
 	/// @param[in] name The name of the new thread. Can be nullptr.
-	Thread(const char* name)
-	{
-		if(name)
-		{
-			PtrSize len = std::strlen(name);
-			len = std::min<PtrSize>(len, sizeof(m_name) - 1);
-			memcpy(&m_name[0], &name[0], len);
-			m_name[len] = '\0';
-		}
-		else
-		{
-			m_name[0] = '\0';
-		}
-	}
+	Thread(const Char* name);
 
 	Thread(const Thread&) = delete;
 
@@ -106,7 +92,9 @@ public:
 	void pinToCores(const ThreadCoreAffinityMask& coreAffintyMask);
 
 	/// Name the current thread.
-	static void setNameOfCurrentThread(const CString& name);
+	static void setCurrentThreadName(const Char* name);
+
+	static const Char* getCurrentThreadName();
 
 private:
 	/// The system native type.
@@ -117,7 +105,9 @@ private:
 	Error m_returnCode = Error::NONE;
 #endif
 	void* m_userData = nullptr; ///< The user date to pass to the callback.
-	Array<char, 32> m_name; ///< The name of the thread.
+	Array<Char, kThreadNameMaxLength + 1> m_name = {}; ///< The name of the thread.
+	static thread_local Array<Char, kThreadNameMaxLength + 1> m_nameTls;
+	static constexpr const Char* kDefaultThreadName = "AnKiUnnamed"; ///< the name of an unnamed thread.
 	ThreadCallback m_callback = nullptr; ///< The callback.
 
 #if ANKI_EXTRA_CHECKS

@@ -244,10 +244,10 @@ Error GrManagerImpl::initInstance()
 				ANKI_VK_LOGV("\t%s", layer.layerName);
 				CString layerName = layer.layerName;
 
-				static constexpr char* validationName = "VK_LAYER_KHRONOS_validation";
-				if((m_config->getGrValidation() || m_config->getGrDebugPrintf()) && layerName == validationName)
+				static constexpr const Char* kValidationName = "VK_LAYER_KHRONOS_validation";
+				if((m_config->getGrValidation() || m_config->getGrDebugPrintf()) && layerName == kValidationName)
 				{
-					layersToEnable.emplaceBack(validationName);
+					layersToEnable.emplaceBack(kValidationName);
 				}
 			}
 		}
@@ -1088,8 +1088,8 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 		}
 	}
 
-	VkPhysicalDeviceMaintenance4FeaturesKHR maintenance4Features = {
-		VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_FEATURES_KHR};
+	VkPhysicalDeviceMaintenance4FeaturesKHR maintenance4Features = {};
+	maintenance4Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_FEATURES_KHR;
 	if(!!(m_extensions & VulkanExtensions::MAINTENANCE_4))
 	{
 		maintenance4Features.maintenance4 = true;

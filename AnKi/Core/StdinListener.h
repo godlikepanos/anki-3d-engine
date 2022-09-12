@@ -20,7 +20,7 @@ class StdinListener
 {
 public:
 	StdinListener()
-		: m_thrd("anki_stdin")
+		: m_thrd("Stdin")
 	{
 	}
 

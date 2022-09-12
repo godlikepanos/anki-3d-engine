@@ -16,7 +16,8 @@ set(sources
 	Serializer.cpp
 	Xml.cpp
 	F16.cpp
-	Process.cpp)
+	Process.cpp
+	Thread.cpp)
 
 if(LINUX OR ANDROID OR MACOS)
 	set(sources ${sources}

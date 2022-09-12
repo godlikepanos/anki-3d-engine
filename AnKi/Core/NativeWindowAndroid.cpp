@@ -38,7 +38,7 @@ void NativeWindow::deleteInstance(NativeWindow* window)
 	}
 }
 
-void NativeWindow::setWindowTitle(CString title)
+void NativeWindow::setWindowTitle([[maybe_unused]] CString title)
 {
 	// Nothing
 }
@@ -67,7 +67,7 @@ NativeWindowAndroid::~NativeWindowAndroid()
 	m_nativeWindow = nullptr;
 }
 
-Error NativeWindowAndroid::init(const NativeWindowInitInfo& init)
+Error NativeWindowAndroid::init([[maybe_unused]] const NativeWindowInitInfo& init)
 {
 	ANKI_CORE_LOGI("Initializing Android window");
 

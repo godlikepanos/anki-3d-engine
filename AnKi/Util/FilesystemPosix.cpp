@@ -249,6 +249,7 @@ Error getApplicationPath(StringAuto& out)
 {
 #if ANKI_OS_ANDROID
 	ANKI_ASSERT(0 && "getApplicationPath() doesn't work on Android");
+	(void)out;
 #else
 	DynamicArrayAuto<Char> buff(out.getAllocator(), 1024);
 

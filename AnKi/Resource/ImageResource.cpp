@@ -276,7 +276,8 @@ Error ImageResource::load(LoadingContext& ctx)
 			unflatten3dArrayIndex(ctx.m_layerCount, ctx.m_faces, ctx.m_loader.getMipmapCount(), i, layer, face, mip);
 
 			TextureBarrierInfo& barrier = barriers[barrierCount++];
-			barrier = {ctx.m_tex.get(), TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION};
+			barrier = {ctx.m_tex.get(), TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION,
+					   TextureSubresourceInfo()};
 
 			if(ctx.m_texType == TextureType::_3D)
 			{

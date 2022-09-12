@@ -10,7 +10,7 @@
 namespace anki {
 
 AsyncLoader::AsyncLoader()
-	: m_thread("anki_asyload")
+	: m_thread("AsyncLoad")
 {
 }
 

@@ -716,8 +716,13 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 							   [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
 				Ctx& self = *static_cast<Ctx*>(userData);
 
+				Error err = self.m_importer->m_errorInThread.load();
+
 				// LOD 0
-				Error err = self.m_importer->writeMesh(*self.m_mesh, 0, self.m_importer->computeLodFactor(0));
+				if(!err)
+				{
+					err = self.m_importer->writeMesh(*self.m_mesh, 0, self.m_importer->computeLodFactor(0));
+				}
 
 				// LOD 1
 				if(!err && self.m_importer->m_lodCount > 1 && !self.m_importer->skipMeshLod(*self.m_mesh, 1))
@@ -754,7 +759,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 				self.m_importer->m_alloc.deleteInstance(&self);
 			};
 
-			if(m_hive)
+			if(m_hive != nullptr)
 			{
 				m_hive->submitTask(callback, ctx);
 			}
@@ -1153,7 +1158,8 @@ StringAuto GltfImporter::computeModelResourceFilename(const cgltf_mesh& mesh) co
 
 	for(U i = 0; i < mesh.primitives_count; ++i)
 	{
-		list.pushBackSprintf("_%s", mesh.primitives[i].material->name);
+		const Char* mtlName = (mesh.primitives[i].material) ? mesh.primitives[i].material->name : "UnamedMtl";
+		list.pushBackSprintf("_%s", mtlName);
 	}
 
 	StringAuto joined(m_alloc);

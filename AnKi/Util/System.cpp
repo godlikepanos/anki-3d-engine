@@ -6,6 +6,7 @@
 #include <AnKi/Util/System.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/StringList.h>
+#include <AnKi/Util/Thread.h>
 #include <cstdio>
 
 #if ANKI_POSIX
@@ -210,5 +211,10 @@ void cleanupGetAndroidCommandLineArguments(void* ptr)
 	freeAligned(ptr);
 }
 #endif
+
+void preMainInit()
+{
+	Thread::setCurrentThreadName("Main");
+}
 
 } // end namespace anki

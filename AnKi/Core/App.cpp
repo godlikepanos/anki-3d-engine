@@ -174,8 +174,6 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 
 	setSignalHandlers();
 
-	Thread::setNameOfCurrentThread("AnKiMain");
-
 	initMemoryCallbacks(allocCb, allocCbUserData);
 	m_heapAlloc = HeapAllocator<U8>(m_allocCb, m_allocCbData, "Core");
 
