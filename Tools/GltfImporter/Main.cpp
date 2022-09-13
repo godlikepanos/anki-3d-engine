@@ -9,14 +9,15 @@ using namespace anki;
 
 static const char* USAGE = R"(Usage: %s in_file out_dir [options]
 Options:
--rpath <string>        : Replace all absolute paths of assets with that path
--texrpath <string>     : Same as rpath but for textures
--optimize-meshes <0|1> : Optimize meshes. Default is 1
--j <thread_count>      : Number of threads. Defaults to system's max
--lod-count <1|2|3>     : The number of geometry LODs to generate. Default: 1
--lod-factor <float>    : The decimate factor for each LOD. Default 0.25
--light-scale <float>   : Multiply the light intensity with this number. Default 1.0
--v                     : Enable verbose log
+-rpath <string>            : Replace all absolute paths of assets with that path
+-texrpath <string>         : Same as rpath but for textures
+-optimize-meshes <0|1>     : Optimize meshes. Default is 1
+-optimize-animations <0|1> : Optimize animations. Default is 1
+-j <thread_count>          : Number of threads. Defaults to system's max
+-lod-count <1|2|3>         : The number of geometry LODs to generate. Default: 1
+-lod-factor <float>        : The decimate factor for each LOD. Default 0.25
+-light-scale <float>       : Multiply the light intensity with this number. Default 1.0
+-v                         : Enable verbose log
 )";
 
 class CmdLineArgs
@@ -28,6 +29,7 @@ public:
 	StringAuto m_rpath = {m_alloc};
 	StringAuto m_texRpath = {m_alloc};
 	Bool m_optimizeMeshes = true;
+	Bool m_optimizeAnimations = true;
 	U32 m_threadCount = MAX_U32;
 	U32 m_lodCount = 1;
 	F32 m_lodFactor = 0.25f;
@@ -165,6 +167,21 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 				return Error::USER_DATA;
 			}
 		}
+		else if(strcmp(argv[i], "-optimize-animations") == 0)
+		{
+			++i;
+
+			if(i < argc)
+			{
+				I optimize = 1;
+				ANKI_CHECK(CString(argv[i]).toNumber(optimize));
+				info.m_optimizeAnimations = optimize != 0;
+			}
+			else
+			{
+				return Error::USER_DATA;
+			}
+		}
 		else
 		{
 			return Error::USER_DATA;
@@ -219,6 +236,7 @@ int myMain(int argc, char** argv)
 	initInfo.m_rpath = cmdArgs.m_rpath;
 	initInfo.m_texrpath = cmdArgs.m_texRpath;
 	initInfo.m_optimizeMeshes = cmdArgs.m_optimizeMeshes;
+	initInfo.m_optimizeAnimations = cmdArgs.m_optimizeAnimations;
 	initInfo.m_lodFactor = cmdArgs.m_lodFactor;
 	initInfo.m_lodCount = cmdArgs.m_lodCount;
 	initInfo.m_lightIntensityScale = cmdArgs.m_lightIntensityScale;

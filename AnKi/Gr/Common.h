@@ -32,10 +32,10 @@ class GrUpscalerInitInfo;
 /// @addtogroup graphics
 /// @{
 
-#define ANKI_GR_LOGI(...) ANKI_LOG("GR  ", NORMAL, __VA_ARGS__)
-#define ANKI_GR_LOGE(...) ANKI_LOG("GR  ", ERROR, __VA_ARGS__)
-#define ANKI_GR_LOGW(...) ANKI_LOG("GR  ", WARNING, __VA_ARGS__)
-#define ANKI_GR_LOGF(...) ANKI_LOG("GR  ", FATAL, __VA_ARGS__)
+#define ANKI_GR_LOGI(...) ANKI_LOG("GR", NORMAL, __VA_ARGS__)
+#define ANKI_GR_LOGE(...) ANKI_LOG("GR", ERROR, __VA_ARGS__)
+#define ANKI_GR_LOGW(...) ANKI_LOG("GR", WARNING, __VA_ARGS__)
+#define ANKI_GR_LOGF(...) ANKI_LOG("GR", FATAL, __VA_ARGS__)
 
 // Some constants
 constexpr U32 MAX_VERTEX_ATTRIBUTES = 8;

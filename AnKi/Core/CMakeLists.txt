@@ -19,6 +19,7 @@ set(headers
 	MaliHwCounters.h
 	NativeWindow.h
 	StatsUi.h
+	StatsUi.defs.h
 	StdinListener.h)
 
 if(ANKI_HEADLESS)

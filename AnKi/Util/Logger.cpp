@@ -186,7 +186,7 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 			endTerminalColor);
 #elif ANKI_OS_WINDOWS
 	WORD attribs = 0;
-	FILE* out = NULL;
+	FILE* out = nullptr;
 	switch(info.m_type)
 	{
 	case LoggerMessageType::NORMAL:
@@ -211,6 +211,7 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 		break;
 	default:
 		ANKI_ASSERT(0);
+		out = stdout;
 	}
 
 	HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -228,8 +229,8 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 
 		// Print
 		static_assert(Thread::kThreadNameMaxLength == 15, "See file");
-		fprintf(out, "[%s][%s][%-15s] %s (%s:%d %s)\n", kMessageTypeTxt[info.m_type],
-				info.m_subsystem ? info.m_subsystem : "N/A ", info.m_threadName, info.m_msg, info.m_file, info.m_line,
+		fprintf(out, "[%s][%-4s][%-15s] %s (%s:%d %s)\n", kMessageTypeTxt[info.m_type],
+				info.m_subsystem ? info.m_subsystem : "N/A", info.m_threadName, info.m_msg, info.m_file, info.m_line,
 				info.m_func);
 
 		// Restore state

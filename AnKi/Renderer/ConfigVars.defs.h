@@ -74,7 +74,7 @@ ANKI_CONFIG_VAR_U32(RProbeRefectionMaxCachedProbes, 32, 4, 256, "Max cached numb
 ANKI_CONFIG_VAR_U32(RProbeReflectionShadowMapResolution, 64, 4, 2048, "Reflection probe shadow resolution")
 
 // Final composite
-ANKI_CONFIG_VAR_U32(RMotionBlurSamples, 32, 1, 2048, "Max motion blur samples")
+ANKI_CONFIG_VAR_U32(RMotionBlurSamples, 32, 0, 2048, "Max motion blur samples")
 ANKI_CONFIG_VAR_F32(RFilmGrainStrength, 16.0f, 0.0f, 250.0f, "Film grain strength")
 
 // Lens flare

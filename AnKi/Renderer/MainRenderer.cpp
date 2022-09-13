@@ -30,14 +30,15 @@ MainRenderer::~MainRenderer()
 
 Error MainRenderer::init(const MainRendererInitInfo& inf)
 {
-	ANKI_R_LOGI("Initializing main renderer");
-
 	m_alloc = HeapAllocator<U8>(inf.m_allocCallback, inf.m_allocCallbackUserData, "MainRenderer");
 	m_frameAlloc = StackAllocator<U8>(inf.m_allocCallback, inf.m_allocCallbackUserData, 10_MB, 1.0f);
 
 	// Init renderer and manipulate the width/height
 	m_swapchainResolution = inf.m_swapchainSize;
 	m_rDrawToDefaultFb = inf.m_config->getRRenderScaling() == 1.0f;
+
+	ANKI_R_LOGI("Initializing main renderer. Swapchain resolution %ux%u", m_swapchainResolution.x(),
+				m_swapchainResolution.y());
 
 	m_r.reset(m_alloc.newInstance<Renderer>());
 	ANKI_CHECK(m_r->init(inf.m_threadHive, inf.m_resourceManager, inf.m_gr, inf.m_stagingMemory, inf.m_ui, m_alloc,
@@ -70,9 +71,6 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 	}
 
 	m_rgraph = inf.m_gr->newRenderGraph();
-
-	ANKI_R_LOGI("Main renderer initialized. Swapchain resolution %ux%u", m_swapchainResolution.x(),
-				m_swapchainResolution.y());
 
 	return Error::NONE;
 }

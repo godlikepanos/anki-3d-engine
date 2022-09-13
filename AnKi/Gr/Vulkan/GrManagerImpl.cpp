@@ -682,7 +682,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
 			else if(extensionName == VK_KHR_PIPELINE_EXECUTABLE_PROPERTIES_EXTENSION_NAME
-					&& m_config->getCoreDisplayStats())
+					&& m_config->getCoreDisplayStats() > 1)
 			{
 				m_extensions |= VulkanExtensions::KHR_PIPELINE_EXECUTABLE_PROPERTIES;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();

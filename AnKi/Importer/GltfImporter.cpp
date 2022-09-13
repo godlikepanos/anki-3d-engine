@@ -173,6 +173,7 @@ Error GltfImporter::init(const GltfImporterInitInfo& initInfo)
 	m_rpath.create(initInfo.m_rpath);
 	m_texrpath.create(initInfo.m_texrpath);
 	m_optimizeMeshes = initInfo.m_optimizeMeshes;
+	m_optimizeAnimations = initInfo.m_optimizeAnimations;
 	m_comment.create(initInfo.m_comment);
 
 	m_lightIntensityScale = max(initInfo.m_lightIntensityScale, EPSILON);

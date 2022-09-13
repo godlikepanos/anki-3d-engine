@@ -449,7 +449,7 @@ Error App::mainLoop()
 
 			// Render
 			TexturePtr presentableTex = m_gr->acquireNextPresentableTexture();
-			m_renderer->setStatsEnabled(m_config->getCoreDisplayStats()
+			m_renderer->setStatsEnabled(m_config->getCoreDisplayStats() > 0
 #if ANKI_ENABLE_TRACE
 										|| TracerSingleton::get().getEnabled()
 #endif
@@ -481,36 +481,47 @@ Error App::mainLoop()
 			}
 
 			// Stats
-			if(m_config->getCoreDisplayStats())
+			if(m_config->getCoreDisplayStats() > 0)
 			{
-				StatsUi& statsUi = *static_cast<StatsUi*>(m_statsUi.get());
+				StatsUiInput in;
+				in.m_cpuFrameTime = frameTime;
+				in.m_rendererTime = m_renderer->getStats().m_renderingCpuTime;
+				in.m_sceneUpdateTime = m_scene->getStats().m_updateTime;
+				in.m_visibilityTestsTime = m_scene->getStats().m_visibilityTestsTime;
+				in.m_physicsTime = m_scene->getStats().m_physicsUpdate;
 
-				statsUi.setFrameTime(frameTime);
-				statsUi.setRenderTime(m_renderer->getStats().m_renderingCpuTime);
-				statsUi.setSceneUpdateTime(m_scene->getStats().m_updateTime);
-				statsUi.setVisibilityTestsTime(m_scene->getStats().m_visibilityTestsTime);
-				statsUi.setPhysicsTime(m_scene->getStats().m_physicsUpdate);
+				in.m_gpuFrameTime = m_renderer->getStats().m_renderingGpuTime;
 
-				statsUi.setGpuTime(m_renderer->getStats().m_renderingGpuTime);
 				if(m_maliHwCounters)
 				{
 					MaliHwCountersOut out;
 					m_maliHwCounters->sample(out);
-
-					statsUi.setGpuActiveCycles(out.m_gpuActive);
-					statsUi.setGpuReadBandwidth(out.m_readBandwidth);
-					statsUi.setGpuWriteBandwidth(out.m_writeBandwidth);
+					in.m_gpuActiveCycles = out.m_gpuActive;
+					in.m_gpuReadBandwidth = out.m_readBandwidth;
+					in.m_gpuWriteBandwidth = out.m_writeBandwidth;
 				}
 
-				statsUi.setAllocatedCpuMemory(m_memStats.m_allocatedMem.load());
-				statsUi.setCpuAllocationCount(m_memStats.m_allocCount.load());
-				statsUi.setCpuFreeCount(m_memStats.m_freeCount.load());
-				statsUi.setGrStats(m_gr->getStats());
+				in.m_cpuAllocatedMemory = m_memStats.m_allocatedMem.load();
+				in.m_cpuAllocationCount = m_memStats.m_allocCount.load();
+				in.m_cpuFreeCount = m_memStats.m_freeCount.load();
+
+				const GrManagerStats grStats = m_gr->getStats();
 				BuddyAllocatorBuilderStats vertMemStats;
 				m_vertexMem->getMemoryStats(vertMemStats);
-				statsUi.setGlobalVertexMemoryPoolStats(vertMemStats);
 
-				statsUi.setDrawableCount(rqueue.countAllRenderables());
+				in.m_gpuDeviceMemoryAllocated = grStats.m_deviceMemoryAllocated;
+				in.m_gpuDeviceMemoryInUse = grStats.m_deviceMemoryInUse;
+				in.m_globalVertexAllocated = vertMemStats.m_realAllocatedSize;
+				in.m_globalVertexUsed = vertMemStats.m_userAllocatedSize;
+				in.m_globalVertexExternalFragmentation = vertMemStats.m_externalFragmentation;
+
+				in.m_drawableCount = rqueue.countAllRenderables();
+				in.m_vkCommandBufferCount = grStats.m_commandBufferCount;
+
+				StatsUi& statsUi = *static_cast<StatsUi*>(m_statsUi.get());
+				const StatsUiDetail detail =
+					(m_config->getCoreDisplayStats() == 1) ? StatsUiDetail::kFpsOnly : StatsUiDetail::kDetailed;
+				statsUi.setStats(in, detail);
 			}
 
 #if ANKI_ENABLE_TRACE
@@ -536,9 +547,9 @@ Error App::mainLoop()
 void App::injectUiElements(DynamicArrayAuto<UiQueueElement>& newUiElementArr, RenderQueue& rqueue)
 {
 	const U32 originalCount = rqueue.m_uis.getSize();
-	if(m_config->getCoreDisplayStats() || m_consoleEnabled)
+	if(m_config->getCoreDisplayStats() > 0 || m_consoleEnabled)
 	{
-		const U32 extraElements = m_config->getCoreDisplayStats() + (m_consoleEnabled != 0);
+		const U32 extraElements = (m_config->getCoreDisplayStats() > 0) + (m_consoleEnabled != 0);
 		newUiElementArr.create(originalCount + extraElements);
 
 		if(originalCount > 0)
@@ -550,7 +561,7 @@ void App::injectUiElements(DynamicArrayAuto<UiQueueElement>& newUiElementArr, Re
 	}
 
 	U32 count = originalCount;
-	if(m_config->getCoreDisplayStats())
+	if(m_config->getCoreDisplayStats() > 0)
 	{
 		newUiElementArr[count].m_userData = m_statsUi.get();
 		newUiElementArr[count].m_drawCallback = [](CanvasPtr& canvas, void* userData) -> void {
@@ -571,7 +582,7 @@ void App::injectUiElements(DynamicArrayAuto<UiQueueElement>& newUiElementArr, Re
 
 void App::initMemoryCallbacks(AllocAlignedCallback allocCb, void* allocCbUserData)
 {
-	if(m_config->getCoreDisplayStats())
+	if(m_config->getCoreDisplayStats() > 1)
 	{
 		m_memStats.m_originalAllocCallback = allocCb;
 		m_memStats.m_originalUserData = allocCbUserData;

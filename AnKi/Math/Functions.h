@@ -18,7 +18,7 @@ namespace anki {
 constexpr F32 PI = 3.14159265358979323846f;
 
 /// Floating point epsilon.
-const F32 EPSILON = 1.0e-6f;
+constexpr F32 EPSILON = 1.0e-6f;
 
 template<typename T>
 inline T sin(const T rad)

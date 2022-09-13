@@ -436,7 +436,7 @@ public:
 		zeroMemory(m_skybox);
 	}
 
-	PtrSize countAllRenderables() const;
+	U32 countAllRenderables() const;
 };
 
 static_assert(std::is_trivially_destructible<RenderQueue>::value == true, "Should be trivially destructible");

@@ -15,6 +15,24 @@ namespace anki {
 /// @addtogroup core
 /// @{
 
+/// @memberof StatsUi
+class StatsUiInput
+{
+public:
+#define ANKI_STATS_UI_BEGIN_GROUP(x)
+#define ANKI_STATS_UI_VALUE(type, name, text, flags) type m_##name = {};
+#include <AnKi/Core/StatsUi.defs.h>
+#undef ANKI_STATS_UI_BEGIN_GROUP
+#undef ANKI_STATS_UI_VALUE
+};
+
+/// @memberof StatsUi
+enum class StatsUiDetail : U8
+{
+	kDetailed,
+	kFpsOnly
+};
+
 /// UI for displaying on-screen stats.
 class StatsUi : public UiImmediateModeBuilder
 {
@@ -30,136 +48,79 @@ public:
 
 	void build(CanvasPtr ctx) override;
 
-	void setFrameTime(Second v)
-	{
-		m_frameTime.set(v);
-	}
-
-	void setRenderTime(Second v)
-	{
-		m_renderTime.set(v);
-	}
-
-	void setSceneUpdateTime(Second v)
-	{
-		m_sceneUpdateTime.set(v);
-	}
-
-	void setVisibilityTestsTime(Second v)
-	{
-		m_visTestsTime.set(v);
-	}
-
-	void setPhysicsTime(Second v)
-	{
-		m_physicsTime.set(v);
-	}
-
-	void setGpuTime(Second v)
-	{
-		m_gpuTime.set(v);
-	}
-
-	void setGpuActiveCycles(U64 v)
-	{
-		m_gpuActive.set(v);
-	}
-
-	void setGpuReadBandwidth(PtrSize v)
-	{
-		m_gpuReadBandwidth.set(v);
-	}
-
-	void setGpuWriteBandwidth(PtrSize v)
-	{
-		m_gpuWriteBandwidth.set(v);
-	}
-
-	void setAllocatedCpuMemory(PtrSize v)
-	{
-		m_allocatedCpuMem = v;
-	}
-
-	void setCpuAllocationCount(U64 v)
-	{
-		m_allocCount = v;
-	}
-
-	void setCpuFreeCount(U64 v)
-	{
-		m_freeCount = v;
-	}
-
-	void setGrStats(const GrManagerStats& stats)
-	{
-		m_grStats = stats;
-	}
-
-	void setDrawableCount(U64 v)
-	{
-		m_drawableCount = v;
-	}
-
-	void setGlobalVertexMemoryPoolStats(const BuddyAllocatorBuilderStats& stats)
-	{
-		m_globalVertexPoolStats = stats;
-	}
+	void setStats(const StatsUiInput& input, StatsUiDetail detail);
 
 private:
-	static constexpr U32 BUFFERED_FRAMES = 16;
+	static constexpr U32 kBufferedFrames = 16;
 
-	template<typename T>
-	class BufferedValue
+	enum class ValueFlag : U8
+	{
+		kNone = 0,
+		kAverage = 1 << 0,
+		kSeconds = 1 << 1,
+		kBytes = 1 << 2,
+	};
+	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS_FRIEND(ValueFlag)
+
+	class Value
 	{
 	public:
-		void set(T x)
+		union
 		{
-			m_rollongAvg += x / T(BUFFERED_FRAMES);
+			U64 m_int = 0;
+			F64 m_float;
+			F64 m_avg;
+		};
+
+		F64 m_rollingAvg = 0.0;
+
+		template<typename T, ANKI_ENABLE(std::is_floating_point<T>::value)>
+		void update(T x, ValueFlag flags, Bool flush)
+		{
+			if(!!(flags & ValueFlag::kAverage))
+			{
+				setAverage(x, flush);
+			}
+			else
+			{
+				m_float = x;
+			}
 		}
 
-		T get(Bool flush)
+		template<typename T, ANKI_ENABLE(std::is_integral<T>::value)>
+		void update(T x, ValueFlag flags, Bool flush)
 		{
+			if(!!(flags & ValueFlag::kAverage))
+			{
+				setAverage(F64(x), flush);
+			}
+			else
+			{
+				m_int = x;
+			}
+		}
+
+		void setAverage(F64 x, Bool flush)
+		{
+			m_rollingAvg += x / F64(kBufferedFrames);
+
 			if(flush)
 			{
-				m_avg = m_rollongAvg;
-				m_rollongAvg = T(0);
+				m_avg = m_rollingAvg;
+				m_rollingAvg = 0.0;
 			}
-
-			return m_avg;
 		}
-
-	private:
-		T m_rollongAvg = T(0);
-		T m_avg = T(0);
 	};
+
+#define ANKI_STATS_UI_BEGIN_GROUP(x)
+#define ANKI_STATS_UI_VALUE(type, name, text, flags) Value m_##name;
+#include <AnKi/Core/StatsUi.defs.h>
+#undef ANKI_STATS_UI_BEGIN_GROUP
+#undef ANKI_STATS_UI_VALUE
 
 	FontPtr m_font;
 	U32 m_bufferedFrames = 0;
-
-	// CPU
-	BufferedValue<Second> m_frameTime;
-	BufferedValue<Second> m_renderTime;
-	BufferedValue<Second> m_sceneUpdateTime;
-	BufferedValue<Second> m_visTestsTime;
-	BufferedValue<Second> m_physicsTime;
-
-	// GPU
-	BufferedValue<Second> m_gpuTime;
-	BufferedValue<U64> m_gpuActive;
-	BufferedValue<PtrSize> m_gpuReadBandwidth;
-	BufferedValue<PtrSize> m_gpuWriteBandwidth;
-
-	// Memory
-	PtrSize m_allocatedCpuMem = 0;
-	U64 m_allocCount = 0;
-	U64 m_freeCount = 0;
-	BuddyAllocatorBuilderStats m_globalVertexPoolStats = {};
-
-	// GR
-	GrManagerStats m_grStats = {};
-
-	// Other
-	PtrSize m_drawableCount = 0;
+	StatsUiDetail m_detail = StatsUiDetail::kDetailed;
 
 	static void labelTime(Second val, CString name)
 	{

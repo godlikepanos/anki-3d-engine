@@ -21,10 +21,10 @@ class UiManager;
 /// @addtogroup ui
 /// @{
 
-#define ANKI_UI_LOGI(...) ANKI_LOG("UI  ", NORMAL, __VA_ARGS__)
-#define ANKI_UI_LOGE(...) ANKI_LOG("UI  ", ERROR, __VA_ARGS__)
-#define ANKI_UI_LOGW(...) ANKI_LOG("UI  ", WARNING, __VA_ARGS__)
-#define ANKI_UI_LOGF(...) ANKI_LOG("UI  ", FATAL, __VA_ARGS__)
+#define ANKI_UI_LOGI(...) ANKI_LOG("UI", NORMAL, __VA_ARGS__)
+#define ANKI_UI_LOGE(...) ANKI_LOG("UI", ERROR, __VA_ARGS__)
+#define ANKI_UI_LOGW(...) ANKI_LOG("UI", WARNING, __VA_ARGS__)
+#define ANKI_UI_LOGF(...) ANKI_LOG("UI", FATAL, __VA_ARGS__)
 
 using UiAllocator = HeapAllocator<U8>;
 
