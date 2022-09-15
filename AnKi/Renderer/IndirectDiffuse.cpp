@@ -383,17 +383,17 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 	}
 }
 
-void IndirectDiffuse::getDebugRenderTarget(CString rtName, RenderTargetHandle& handle,
+void IndirectDiffuse::getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
 										   ShaderProgramPtr& optionalShaderProgram) const
 {
 	if(rtName == "IndirectDiffuse")
 	{
-		handle = m_runCtx.m_mainRtHandles[WRITE];
+		handles[0] = m_runCtx.m_mainRtHandles[WRITE];
 	}
 	else
 	{
 		ANKI_ASSERT(rtName == "IndirectDiffuseVrsSri");
-		handle = m_runCtx.m_sriRt;
+		handles[0] = m_runCtx.m_sriRt;
 		optionalShaderProgram = m_vrs.m_visualizeGrProg;
 	}
 }

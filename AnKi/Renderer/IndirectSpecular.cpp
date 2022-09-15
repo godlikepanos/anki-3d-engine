@@ -224,12 +224,12 @@ void IndirectSpecular::run(const RenderingContext& ctx, RenderPassWorkContext& r
 	}
 }
 
-void IndirectSpecular::getDebugRenderTarget(CString rtName, RenderTargetHandle& handle,
+void IndirectSpecular::getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
 											[[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const
 {
 	if(rtName == "SSR")
 	{
-		handle = m_runCtx.m_rts[WRITE];
+		handles[0] = m_runCtx.m_rts[WRITE];
 	}
 }
 

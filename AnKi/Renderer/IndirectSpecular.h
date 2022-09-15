@@ -58,7 +58,7 @@ private:
 
 	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 
-	void getDebugRenderTarget(CString rtName, RenderTargetHandle& handle,
+	void getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
 							  ShaderProgramPtr& optionalShaderProgram) const override;
 };
 /// @}

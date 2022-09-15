@@ -37,7 +37,8 @@ public:
 
 	HeapAllocator<U8> getAllocator() const;
 
-	virtual void getDebugRenderTarget([[maybe_unused]] CString rtName, [[maybe_unused]] RenderTargetHandle& handle,
+	virtual void getDebugRenderTarget([[maybe_unused]] CString rtName,
+									  [[maybe_unused]] Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
 									  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const
 	{
 		ANKI_ASSERT(!"Object doesn't support that");

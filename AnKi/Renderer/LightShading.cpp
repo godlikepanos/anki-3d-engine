@@ -409,11 +409,12 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	m_r->getForwardShading().setDependencies(ctx, pass);
 }
 
-void LightShading::getDebugRenderTarget([[maybe_unused]] CString rtName, RenderTargetHandle& handle,
+void LightShading::getDebugRenderTarget([[maybe_unused]] CString rtName,
+										Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
 										ShaderProgramPtr& optionalShaderProgram) const
 {
 	ANKI_ASSERT(rtName == "LightShading");
-	handle = m_runCtx.m_rt;
+	handles[0] = m_runCtx.m_rt;
 	optionalShaderProgram = m_visualizeRtGrProg;
 }
 

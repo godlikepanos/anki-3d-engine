@@ -689,7 +689,7 @@ Bool RtShadows::findShadowLayer(U64 lightUuid, U32& layerIdx, Bool& rejectHistor
 	return layerIdx != MAX_U32;
 }
 
-void RtShadows::getDebugRenderTarget(CString rtName, RenderTargetHandle& handle,
+void RtShadows::getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
 									 ShaderProgramPtr& optionalShaderProgram) const
 {
 	U32 layerGroup = 0;
@@ -707,7 +707,7 @@ void RtShadows::getDebugRenderTarget(CString rtName, RenderTargetHandle& handle,
 		layerGroup = 2;
 	}
 
-	handle = m_runCtx.m_upscaledRt;
+	handles[0] = m_runCtx.m_upscaledRt;
 
 	ShaderProgramResourceVariantInitInfo variantInit(m_visualizeRenderTargetsProg);
 	variantInit.addMutation("LAYER_GROUP", layerGroup);

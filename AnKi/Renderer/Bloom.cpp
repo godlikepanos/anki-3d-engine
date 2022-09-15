@@ -217,11 +217,12 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 	}
 }
 
-void Bloom::getDebugRenderTarget([[maybe_unused]] CString rtName, RenderTargetHandle& handle,
+void Bloom::getDebugRenderTarget([[maybe_unused]] CString rtName,
+								 Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
 								 [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const
 {
 	ANKI_ASSERT(rtName == "Bloom");
-	handle = m_runCtx.m_upscaleRt;
+	handles[0] = m_runCtx.m_upscaleRt;
 }
 
 } // end namespace anki

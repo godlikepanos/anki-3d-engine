@@ -618,13 +618,12 @@ void Renderer::registerDebugRenderTarget(RendererObject* obj, CString rtName)
 	m_debugRts.emplaceBack(getAllocator(), std::move(inf));
 }
 
-void Renderer::getCurrentDebugRenderTarget(RenderTargetHandle& handle, Bool& handleValid,
+Bool Renderer::getCurrentDebugRenderTarget(Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
 										   ShaderProgramPtr& optionalShaderProgram)
 {
 	if(ANKI_LIKELY(m_currentDebugRtName.isEmpty()))
 	{
-		handleValid = false;
-		return;
+		return false;
 	}
 
 	RendererObject* obj = nullptr;
@@ -637,8 +636,8 @@ void Renderer::getCurrentDebugRenderTarget(RenderTargetHandle& handle, Bool& han
 	}
 	ANKI_ASSERT(obj);
 
-	obj->getDebugRenderTarget(m_currentDebugRtName, handle, optionalShaderProgram);
-	handleValid = true;
+	obj->getDebugRenderTarget(m_currentDebugRtName, handles, optionalShaderProgram);
+	return true;
 }
 
 void Renderer::setCurrentDebugRenderTarget(CString rtName)

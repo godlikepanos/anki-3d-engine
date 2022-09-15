@@ -96,17 +96,17 @@ Error VrsSriGeneration::initInternal()
 	return Error::NONE;
 }
 
-void VrsSriGeneration::getDebugRenderTarget(CString rtName, RenderTargetHandle& handle,
+void VrsSriGeneration::getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
 											ShaderProgramPtr& optionalShaderProgram) const
 {
 	if(rtName == "VrsSri")
 	{
-		handle = m_runCtx.m_rt;
+		handles[0] = m_runCtx.m_rt;
 	}
 	else
 	{
 		ANKI_ASSERT(rtName == "VrsSriDownscaled");
-		handle = m_runCtx.m_downscaledRt;
+		handles[0] = m_runCtx.m_downscaledRt;
 	}
 
 	optionalShaderProgram = m_visualizeGrProg;

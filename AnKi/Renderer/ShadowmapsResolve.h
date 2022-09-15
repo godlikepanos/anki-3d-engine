@@ -30,11 +30,12 @@ public:
 
 	void populateRenderGraph(RenderingContext& ctx);
 
-	void getDebugRenderTarget([[maybe_unused]] CString rtName, RenderTargetHandle& handle,
+	void getDebugRenderTarget([[maybe_unused]] CString rtName,
+							  Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
 							  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const override
 	{
 		ANKI_ASSERT(rtName == "SM_resolve");
-		handle = m_runCtx.m_rt;
+		handles[0] = m_runCtx.m_rt;
 	}
 
 	RenderTargetHandle getRt() const

@@ -33,7 +33,7 @@ public:
 
 	void populateRenderGraph(RenderingContext& ctx);
 
-	void getDebugRenderTarget(CString rtName, RenderTargetHandle& handle,
+	void getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
 							  ShaderProgramPtr& optionalShaderProgram) const override;
 
 	RenderTargetHandle getRt() const

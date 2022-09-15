@@ -56,8 +56,10 @@ constexpr U32 VOLUMETRIC_FRACTION = 4;
 /// Used to calculate the mipmap count of the HiZ map.
 constexpr U32 HIERARCHICAL_Z_MIN_HEIGHT = 80;
 
-const TextureSubresourceInfo HIZ_HALF_DEPTH(TextureSurfaceInfo(0, 0, 0, 0));
-const TextureSubresourceInfo HIZ_QUARTER_DEPTH(TextureSurfaceInfo(1, 0, 0, 0));
+constexpr TextureSubresourceInfo HIZ_HALF_DEPTH(TextureSurfaceInfo(0, 0, 0, 0));
+constexpr TextureSubresourceInfo HIZ_QUARTER_DEPTH(TextureSurfaceInfo(1, 0, 0, 0));
+
+constexpr U32 kMaxDebugRenderTargets = 2;
 
 /// Computes the 'a' and 'b' numbers for linearizeDepthOptimal (see shaders)
 inline void computeLinearizeDepthOptimal(F32 near, F32 far, F32& a, F32& b)

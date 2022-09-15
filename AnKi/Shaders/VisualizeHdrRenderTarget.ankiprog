@@ -10,8 +10,8 @@
 #pragma anki start frag
 #include <AnKi/Shaders/TonemappingFunctions.glsl>
 
-layout(set = 0, binding = 0) uniform texture2D u_inTex;
-layout(set = 0, binding = 1) uniform sampler u_nearestAnyClampSampler;
+layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
+layout(set = 0, binding = 1) uniform texture2D u_inTex;
 
 layout(location = 0) in Vec2 in_uv;
 layout(location = 0) out Vec3 out_color;

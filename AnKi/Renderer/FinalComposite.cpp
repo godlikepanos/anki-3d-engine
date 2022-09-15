@@ -111,13 +111,18 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 		RenderPassDependency(m_r->getMotionVectors().getMotionVectorsRt(), TextureUsageBit::SAMPLED_FRAGMENT));
 	pass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_FRAGMENT));
 
-	RenderTargetHandle dbgRt;
-	Bool dbgRtValid;
+	Array<RenderTargetHandle, kMaxDebugRenderTargets> dbgRts;
 	ShaderProgramPtr debugProgram;
-	m_r->getCurrentDebugRenderTarget(dbgRt, dbgRtValid, debugProgram);
-	if(dbgRtValid)
+	const Bool hasDebugRt = m_r->getCurrentDebugRenderTarget(dbgRts, debugProgram);
+	if(hasDebugRt)
 	{
-		pass.newDependency(RenderPassDependency(dbgRt, TextureUsageBit::SAMPLED_FRAGMENT));
+		for(const RenderTargetHandle& handle : dbgRts)
+		{
+			if(handle.isValid())
+			{
+				pass.newDependency(RenderPassDependency(handle, TextureUsageBit::SAMPLED_FRAGMENT));
+			}
+		}
 	}
 }
 
@@ -125,17 +130,17 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	const Bool dbgEnabled = getConfig().getRDbgEnabled();
-	RenderTargetHandle dbgRt;
-	Bool dbgRtValid;
+
+	Array<RenderTargetHandle, kMaxDebugRenderTargets> dbgRts;
 	ShaderProgramPtr optionalDebugProgram;
-	m_r->getCurrentDebugRenderTarget(dbgRt, dbgRtValid, optionalDebugProgram);
+	const Bool hasDebugRt = m_r->getCurrentDebugRenderTarget(dbgRts, optionalDebugProgram);
 
 	// Bind program
-	if(dbgRtValid && optionalDebugProgram.isCreated())
+	if(hasDebugRt && optionalDebugProgram.isCreated())
 	{
 		cmdb->bindShaderProgram(optionalDebugProgram);
 	}
-	else if(dbgRtValid)
+	else if(hasDebugRt)
 	{
 		cmdb->bindShaderProgram(m_defaultVisualizeRenderTargetGrProg);
 	}
@@ -145,7 +150,7 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 	}
 
 	// Bind stuff
-	if(!dbgRtValid)
+	if(!hasDebugRt)
 	{
 		cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
 		cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);
@@ -169,8 +174,16 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 	}
 	else
 	{
-		rgraphCtx.bindColorTexture(0, 0, dbgRt);
-		cmdb->bindSampler(0, 1, m_r->getSamplers().m_nearestNearestClamp);
+		cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
+
+		U32 count = 1;
+		for(const RenderTargetHandle& handle : dbgRts)
+		{
+			if(handle.isValid())
+			{
+				rgraphCtx.bindColorTexture(0, count++, handle);
+			}
+		}
 	}
 
 	cmdb->setViewport(0, 0, m_r->getPostProcessResolution().x(), m_r->getPostProcessResolution().y());
