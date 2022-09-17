@@ -386,7 +386,7 @@ class ShaderProgramBinaryVariant
 {
 public:
 	/// Index in ShaderProgramBinary::m_codeBlocks. MAX_U32 means no shader.
-	Array<U32, U32(ShaderType::COUNT)> m_codeBlockIndices = {};
+	Array<U32, U32(ShaderType::kCount)> m_codeBlockIndices = {};
 
 	WeakArray<ShaderProgramBinaryBlockInstance> m_uniformBlocks;
 	WeakArray<ShaderProgramBinaryBlockInstance> m_storageBlocks;
@@ -535,7 +535,7 @@ public:
 	WeakArray<ShaderProgramBinaryOpaque> m_opaques;
 	WeakArray<ShaderProgramBinaryConstant> m_constants;
 	WeakArray<ShaderProgramBinaryStruct> m_structs;
-	ShaderTypeBit m_presentShaderTypes = ShaderTypeBit::NONE;
+	ShaderTypeBit m_presentShaderTypes = ShaderTypeBit::kNone;
 
 	/// The name of the shader library. Mainly for RT shaders.
 	Array<char, 64> m_libraryName = {};

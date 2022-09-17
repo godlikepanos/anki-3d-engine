@@ -160,7 +160,7 @@ inline GLenum convertPrimitiveTopology(PrimitiveTopology ak)
 	case PrimitiveTopology::LINE_STRIP:
 		out = GL_LINE_STRIP;
 		break;
-	case PrimitiveTopology::TRIANGLES:
+	case PrimitiveTopology::kTriangles:
 		out = GL_TRIANGLES;
 		break;
 	case PrimitiveTopology::TRIANGLE_STRIP:

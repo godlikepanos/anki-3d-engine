@@ -318,7 +318,7 @@ void CommandBufferImpl::generateMipmaps2dInternal(const TextureViewPtr& texView)
 
 	const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
 	const TextureImpl& tex = view.getTextureImpl();
-	ANKI_ASSERT(tex.getTextureType() != TextureType::_3D && "Not for 3D");
+	ANKI_ASSERT(tex.getTextureType() != TextureType::k3D && "Not for 3D");
 	ANKI_ASSERT(tex.isSubresourceGoodForMipmapGeneration(view.getSubresource()));
 
 	const U32 blitCount = tex.getMipmapCount() - 1u;
@@ -371,13 +371,13 @@ void CommandBufferImpl::generateMipmaps2dInternal(const TextureViewPtr& texView)
 		U32 vkLayer = 0;
 		switch(tex.getTextureType())
 		{
-		case TextureType::_2D:
-		case TextureType::_2D_ARRAY:
+		case TextureType::k2D:
+		case TextureType::k2DArray:
 			break;
-		case TextureType::CUBE:
+		case TextureType::kCube:
 			vkLayer = face;
 			break;
-		case TextureType::CUBE_ARRAY:
+		case TextureType::kCubeArray:
 			vkLayer = layer * 6 + face;
 			break;
 		default:
@@ -664,10 +664,10 @@ void CommandBufferImpl::copyBufferToTextureViewInternal(const BufferPtr& buff, P
 
 	const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
 	const TextureImpl& tex = view.getTextureImpl();
-	ANKI_ASSERT(tex.usageValid(TextureUsageBit::TRANSFER_DESTINATION));
+	ANKI_ASSERT(tex.usageValid(TextureUsageBit::kTransferDestination));
 	ANKI_ASSERT(tex.isSubresourceGoodForCopyFromBuffer(view.getSubresource()));
 	const VkImageLayout layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-	const Bool is3D = tex.getTextureType() == TextureType::_3D;
+	const Bool is3D = tex.getTextureType() == TextureType::k3D;
 	const VkImageAspectFlags aspect = convertImageAspect(view.getSubresource().m_depthStencilAspect);
 
 	const TextureSurfaceInfo surf(view.getSubresource().m_firstMipmap, view.getSubresource().m_firstFace, 0,
@@ -910,18 +910,18 @@ void CommandBufferImpl::setPipelineBarrierInternal(
 
 		ANKI_ASSERT(impl.usageValid(prevUsage));
 		ANKI_ASSERT(impl.usageValid(nextUsage));
-		ANKI_ASSERT(((nextUsage & TextureUsageBit::GENERATE_MIPMAPS) == TextureUsageBit::GENERATE_MIPMAPS
-					 || (nextUsage & TextureUsageBit::GENERATE_MIPMAPS) == TextureUsageBit::NONE)
+		ANKI_ASSERT(((nextUsage & TextureUsageBit::kGenerateMipmaps) == TextureUsageBit::kGenerateMipmaps
+					 || (nextUsage & TextureUsageBit::kGenerateMipmaps) == TextureUsageBit::kNone)
 					&& "GENERATE_MIPMAPS should be alone");
 		ANKI_ASSERT(impl.isSubresourceValid(subresource));
 
-		if(ANKI_UNLIKELY(subresource.m_firstMipmap > 0 && nextUsage == TextureUsageBit::GENERATE_MIPMAPS))
+		if(ANKI_UNLIKELY(subresource.m_firstMipmap > 0 && nextUsage == TextureUsageBit::kGenerateMipmaps))
 		{
 			// This transition happens inside CommandBufferImpl::generateMipmapsX. No need to do something
 			continue;
 		}
 
-		if(ANKI_UNLIKELY(nextUsage == TextureUsageBit::GENERATE_MIPMAPS))
+		if(ANKI_UNLIKELY(nextUsage == TextureUsageBit::kGenerateMipmaps))
 		{
 			// The transition of the non zero mip levels happens inside CommandBufferImpl::generateMipmapsX so limit the
 			// subresource

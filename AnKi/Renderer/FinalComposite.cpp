@@ -98,18 +98,18 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 	});
 	pass.setFramebufferInfo(m_fbDescr, {ctx.m_outRenderTarget});
 
-	pass.newDependency(RenderPassDependency(ctx.m_outRenderTarget, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
+	pass.newDependency(RenderPassDependency(ctx.m_outRenderTarget, TextureUsageBit::kFramebufferWrite));
 
 	if(getConfig().getRDbgEnabled())
 	{
-		pass.newDependency(RenderPassDependency(m_r->getDbg().getRt(), TextureUsageBit::SAMPLED_FRAGMENT));
+		pass.newDependency(RenderPassDependency(m_r->getDbg().getRt(), TextureUsageBit::kSampledFragment));
 	}
 
-	pass.newDependency(RenderPassDependency(m_r->getScale().getTonemappedRt(), TextureUsageBit::SAMPLED_FRAGMENT));
-	pass.newDependency(RenderPassDependency(m_r->getBloom().getRt(), TextureUsageBit::SAMPLED_FRAGMENT));
+	pass.newDependency(RenderPassDependency(m_r->getScale().getTonemappedRt(), TextureUsageBit::kSampledFragment));
+	pass.newDependency(RenderPassDependency(m_r->getBloom().getRt(), TextureUsageBit::kSampledFragment));
 	pass.newDependency(
-		RenderPassDependency(m_r->getMotionVectors().getMotionVectorsRt(), TextureUsageBit::SAMPLED_FRAGMENT));
-	pass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_FRAGMENT));
+		RenderPassDependency(m_r->getMotionVectors().getMotionVectorsRt(), TextureUsageBit::kSampledFragment));
+	pass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::kSampledFragment));
 
 	Array<RenderTargetHandle, kMaxDebugRenderTargets> dbgRts;
 	ShaderProgramPtr debugProgram;
@@ -120,7 +120,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 		{
 			if(handle.isValid())
 			{
-				pass.newDependency(RenderPassDependency(handle, TextureUsageBit::SAMPLED_FRAGMENT));
+				pass.newDependency(RenderPassDependency(handle, TextureUsageBit::kSampledFragment));
 			}
 		}
 	}
@@ -162,7 +162,7 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 		cmdb->bindTexture(0, 5, m_lut->getTextureView());
 		rgraphCtx.bindColorTexture(0, 6, m_r->getMotionVectors().getMotionVectorsRt());
 		rgraphCtx.bindTexture(0, 7, m_r->getGBuffer().getDepthRt(),
-							  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+							  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
 		if(dbgEnabled)
 		{

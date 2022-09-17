@@ -100,12 +100,12 @@ enum class VulkanQueueType : U8
 	GENERAL,
 	COMPUTE,
 
-	COUNT,
-	FIRST = 0
+	kCount,
+	kFirst = 0
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VulkanQueueType)
 
-using VulkanQueueFamilies = Array<U32, U32(VulkanQueueType::COUNT)>;
+using VulkanQueueFamilies = Array<U32, U32(VulkanQueueType::kCount)>;
 
 /// @name Constants
 /// @{
@@ -158,7 +158,7 @@ static_assert(!(BufferUsageBit::ALL & PrivateBufferUsageBit::ALL_PRIVATE), "Upda
 /// Convert format.
 [[nodiscard]] inline VkFormat convertFormat(const Format ak)
 {
-	ANKI_ASSERT(ak != Format::NONE);
+	ANKI_ASSERT(ak != Format::kNone);
 	const VkFormat out = static_cast<VkFormat>(ak);
 	return out;
 }
@@ -166,15 +166,15 @@ static_assert(!(BufferUsageBit::ALL & PrivateBufferUsageBit::ALL_PRIVATE), "Upda
 /// Get format aspect mask.
 [[nodiscard]] inline DepthStencilAspectBit getImageAspectFromFormat(const Format ak)
 {
-	DepthStencilAspectBit out = DepthStencilAspectBit::NONE;
+	DepthStencilAspectBit out = DepthStencilAspectBit::kNone;
 	if(getFormatInfo(ak).isStencil())
 	{
-		out = DepthStencilAspectBit::STENCIL;
+		out = DepthStencilAspectBit::kStencil;
 	}
 
 	if(getFormatInfo(ak).isDepth())
 	{
-		out |= DepthStencilAspectBit::DEPTH;
+		out |= DepthStencilAspectBit::kDepth;
 	}
 
 	return out;
@@ -184,12 +184,12 @@ static_assert(!(BufferUsageBit::ALL & PrivateBufferUsageBit::ALL_PRIVATE), "Upda
 [[nodiscard]] inline VkImageAspectFlags convertImageAspect(const DepthStencilAspectBit ak)
 {
 	VkImageAspectFlags out = 0;
-	if(!!(ak & DepthStencilAspectBit::DEPTH))
+	if(!!(ak & DepthStencilAspectBit::kDepth))
 	{
 		out |= VK_IMAGE_ASPECT_DEPTH_BIT;
 	}
 
-	if(!!(ak & DepthStencilAspectBit::STENCIL))
+	if(!!(ak & DepthStencilAspectBit::kStencil))
 	{
 		out |= VK_IMAGE_ASPECT_STENCIL_BIT;
 	}
@@ -247,10 +247,10 @@ static_assert(!(BufferUsageBit::ALL & PrivateBufferUsageBit::ALL_PRIVATE), "Upda
 	VkVertexInputRate out;
 	switch(ak)
 	{
-	case VertexStepRate::VERTEX:
+	case VertexStepRate::kVertex:
 		out = VK_VERTEX_INPUT_RATE_VERTEX;
 		break;
-	case VertexStepRate::INSTANCE:
+	case VertexStepRate::kInstance:
 		out = VK_VERTEX_INPUT_RATE_INSTANCE;
 		break;
 	default:

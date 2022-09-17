@@ -235,7 +235,7 @@ public:
 		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
 		const TextureImpl& tex = view.getTextureImpl();
 		ANKI_ASSERT(tex.isSubresourceGoodForSampling(view.getSubresource()));
-		const VkImageLayout lay = tex.computeLayout(TextureUsageBit::ALL_SAMPLED & tex.getTextureUsage(), 0);
+		const VkImageLayout lay = tex.computeLayout(TextureUsageBit::kAllSampled & tex.getTextureUsage(), 0);
 
 		m_dsetState[set].bindTextureAndSampler(binding, arrayIdx, &view, sampler.get(), lay);
 
@@ -249,7 +249,7 @@ public:
 		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
 		const TextureImpl& tex = view.getTextureImpl();
 		ANKI_ASSERT(tex.isSubresourceGoodForSampling(view.getSubresource()));
-		const VkImageLayout lay = tex.computeLayout(TextureUsageBit::ALL_SAMPLED & tex.getTextureUsage(), 0);
+		const VkImageLayout lay = tex.computeLayout(TextureUsageBit::kAllSampled & tex.getTextureUsage(), 0);
 
 		m_dsetState[set].bindTexture(binding, arrayIdx, &view, lay);
 
@@ -268,8 +268,8 @@ public:
 		commandCommon();
 		m_dsetState[set].bindImage(binding, arrayIdx, img.get());
 
-		const Bool isPresentable =
-			!!(static_cast<const TextureViewImpl&>(*img).getTextureImpl().getTextureUsage() & TextureUsageBit::PRESENT);
+		const Bool isPresentable = !!(static_cast<const TextureViewImpl&>(*img).getTextureImpl().getTextureUsage()
+									  & TextureUsageBit::kPresent);
 		if(isPresentable)
 		{
 			m_renderedToDefaultFb = true;
@@ -435,7 +435,7 @@ private:
 	Array<U32, 2> m_fbSize = {0, 0};
 	U32 m_rpCommandCount = 0; ///< Number of drawcalls or pushed cmdbs in rp.
 	Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> m_colorAttachmentUsages = {};
-	TextureUsageBit m_depthStencilAttachmentUsage = TextureUsageBit::NONE;
+	TextureUsageBit m_depthStencilAttachmentUsage = TextureUsageBit::kNone;
 
 	PipelineStateTracker m_state;
 

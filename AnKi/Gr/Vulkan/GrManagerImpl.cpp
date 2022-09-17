@@ -482,33 +482,33 @@ Error GrManagerImpl::initInstance()
 	switch(m_devProps.properties.vendorID)
 	{
 	case 0x13B5:
-		m_capabilities.m_gpuVendor = GpuVendor::ARM;
+		m_capabilities.m_gpuVendor = GpuVendor::kArm;
 		m_capabilities.m_minSubgroupSize = 16;
 		m_capabilities.m_maxSubgroupSize = 16;
 		break;
 	case 0x10DE:
-		m_capabilities.m_gpuVendor = GpuVendor::NVIDIA;
+		m_capabilities.m_gpuVendor = GpuVendor::kNvidia;
 		m_capabilities.m_minSubgroupSize = 32;
 		m_capabilities.m_maxSubgroupSize = 32;
 		break;
 	case 0x1002:
 	case 0x1022:
-		m_capabilities.m_gpuVendor = GpuVendor::AMD;
+		m_capabilities.m_gpuVendor = GpuVendor::kAMD;
 		m_capabilities.m_minSubgroupSize = 32;
 		m_capabilities.m_maxSubgroupSize = 64;
 		break;
 	case 0x8086:
-		m_capabilities.m_gpuVendor = GpuVendor::INTEL;
+		m_capabilities.m_gpuVendor = GpuVendor::kIntel;
 		m_capabilities.m_minSubgroupSize = 8;
 		m_capabilities.m_maxSubgroupSize = 32;
 		break;
 	case 0x5143:
-		m_capabilities.m_gpuVendor = GpuVendor::QUALCOMM;
+		m_capabilities.m_gpuVendor = GpuVendor::kQualcomm;
 		m_capabilities.m_minSubgroupSize = 64;
 		m_capabilities.m_maxSubgroupSize = 128;
 		break;
 	default:
-		m_capabilities.m_gpuVendor = GpuVendor::UNKNOWN;
+		m_capabilities.m_gpuVendor = GpuVendor::kUnknown;
 		// Choose something really low
 		m_capabilities.m_minSubgroupSize = 8;
 		m_capabilities.m_maxSubgroupSize = 8;
@@ -535,7 +535,7 @@ Error GrManagerImpl::initInstance()
 	m_capabilities.m_sbtRecordAlignment = m_rtPipelineProps.shaderGroupBaseAlignment;
 
 #if ANKI_PLATFORM_MOBILE
-	if(m_capabilities.m_gpuVendor == GpuVendor::QUALCOMM)
+	if(m_capabilities.m_gpuVendor == GpuVendor::kQualcomm)
 	{
 		// Calling vkCreateGraphicsPipeline from multiple threads crashes qualcomm's compiler
 		ANKI_VK_LOGI("Enabling workaround for vkCreateGraphicsPipeline crashing when called from multiple threads");
@@ -544,7 +544,7 @@ Error GrManagerImpl::initInstance()
 #endif
 
 	// DLSS checks
-	m_capabilities.m_dlss = ANKI_DLSS && m_capabilities.m_gpuVendor == GpuVendor::NVIDIA;
+	m_capabilities.m_dlss = ANKI_DLSS && m_capabilities.m_gpuVendor == GpuVendor::kNvidia;
 
 	return Error::NONE;
 }
@@ -602,7 +602,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	}
 
 	const F32 priority = 1.0f;
-	Array<VkDeviceQueueCreateInfo, U32(VulkanQueueType::COUNT)> q = {};
+	Array<VkDeviceQueueCreateInfo, U32(VulkanQueueType::kCount)> q = {};
 
 	VkDeviceCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -1554,12 +1554,12 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 
 		StringAuto str(getAllocator());
 
-		for(ShaderType type = ShaderType::FIRST; type < ShaderType::COUNT; ++type)
+		for(ShaderType type = ShaderType::kFirst; type < ShaderType::kCount; ++type)
 		{
 			ShaderTypeBit stage = stages & ShaderTypeBit(1 << type);
 			if(!stage)
 			{
-				ANKI_CHECK(m_shaderStatsFile.writeText((type != ShaderType::LAST) ? "0,0," : "0,0\n"));
+				ANKI_CHECK(m_shaderStatsFile.writeText((type != ShaderType::kLast) ? "0,0," : "0,0\n"));
 				continue;
 			}
 
@@ -1571,7 +1571,7 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 						   .sprintf("Stage %u: VGRPS %02u, SGRPS %02u ", U32(type), stats.resourceUsage.numUsedVgprs,
 									stats.resourceUsage.numUsedSgprs));
 
-			ANKI_CHECK(m_shaderStatsFile.writeTextf((type != ShaderType::LAST) ? "%u,%u," : "%u,%u\n",
+			ANKI_CHECK(m_shaderStatsFile.writeTextf((type != ShaderType::kLast) ? "%u,%u," : "%u,%u\n",
 													stats.resourceUsage.numUsedVgprs,
 													stats.resourceUsage.numUsedSgprs));
 		}

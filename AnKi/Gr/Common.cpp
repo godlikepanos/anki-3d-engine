@@ -31,14 +31,14 @@ FormatInfo getFormatInfo(Format fmt)
 	{
 #define ANKI_FORMAT_DEF(type, id, componentCount, texelSize, blockWidth, blockHeight, blockSize, shaderType, \
 						depthStencil) \
-	case Format::type: \
+	case Format::k##type: \
 		out = {componentCount, \
 			   texelSize, \
 			   blockWidth, \
 			   blockHeight, \
 			   blockSize, \
 			   shaderType, \
-			   DepthStencilAspectBit::depthStencil, \
+			   DepthStencilAspectBit::k##depthStencil, \
 			   ANKI_STRINGIZE(type)}; \
 		break;
 #include <AnKi/Gr/Format.defs.h>
@@ -56,7 +56,7 @@ PtrSize computeSurfaceSize(U32 width32, U32 height32, Format fmt)
 	const PtrSize width = width32;
 	const PtrSize height = height32;
 	ANKI_ASSERT(width > 0 && height > 0);
-	ANKI_ASSERT(fmt != Format::NONE);
+	ANKI_ASSERT(fmt != Format::kNone);
 
 	const FormatInfo inf = getFormatInfo(fmt);
 
@@ -79,7 +79,7 @@ PtrSize computeVolumeSize(U32 width32, U32 height32, U32 depth32, Format fmt)
 	const PtrSize height = height32;
 	const PtrSize depth = depth32;
 	ANKI_ASSERT(width > 0 && height > 0 && depth > 0);
-	ANKI_ASSERT(fmt != Format::NONE);
+	ANKI_ASSERT(fmt != Format::kNone);
 
 	const FormatInfo inf = getFormatInfo(fmt);
 

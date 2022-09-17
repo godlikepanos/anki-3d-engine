@@ -1395,7 +1395,7 @@ void CommandBuffer::setTextureBarrier(TexturePtr tex, TextureUsageBit prevUsage,
 		e |= GL_SHADER_IMAGE_ACCESS_BARRIER_BIT;
 	}
 
-	if(!!(usage & TextureUsageBit::TRANSFER_DESTINATION))
+	if(!!(usage & TextureUsageBit::kTransferDestination))
 	{
 		e |= GL_TEXTURE_UPDATE_BARRIER_BIT;
 	}
@@ -1411,7 +1411,7 @@ void CommandBuffer::setTextureBarrier(TexturePtr tex, TextureUsageBit prevUsage,
 		// No idea
 	}
 
-	if(!!(usage & TextureUsageBit::GENERATE_MIPMAPS))
+	if(!!(usage & TextureUsageBit::kGenerateMipmaps))
 	{
 		// No idea
 	}

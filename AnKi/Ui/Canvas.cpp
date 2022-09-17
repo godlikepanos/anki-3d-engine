@@ -49,13 +49,13 @@ Error Canvas::init(FontPtr font, U32 fontHeight, U32 width, U32 height)
 
 	// Sampler
 	SamplerInitInfo samplerInit("Canvas");
-	samplerInit.m_minMagFilter = SamplingFilter::LINEAR;
-	samplerInit.m_mipmapFilter = SamplingFilter::LINEAR;
-	samplerInit.m_addressing = SamplingAddressing::REPEAT;
+	samplerInit.m_minMagFilter = SamplingFilter::kLinear;
+	samplerInit.m_mipmapFilter = SamplingFilter::kLinear;
+	samplerInit.m_addressing = SamplingAddressing::kRepeat;
 	m_linearLinearRepeatSampler = m_manager->getGrManager().newSampler(samplerInit);
 
-	samplerInit.m_minMagFilter = SamplingFilter::NEAREST;
-	samplerInit.m_mipmapFilter = SamplingFilter::NEAREST;
+	samplerInit.m_minMagFilter = SamplingFilter::kNearest;
+	samplerInit.m_mipmapFilter = SamplingFilter::kNearest;
 	m_nearestNearestRepeatSampler = m_manager->getGrManager().newSampler(samplerInit);
 
 	// Allocator
@@ -232,17 +232,17 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 		}
 	}
 
-	cmdb->setBlendFactors(0, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA);
-	cmdb->setCullMode(FaceSelectionBit::NONE);
+	cmdb->setBlendFactors(0, BlendFactor::kSrcAlpha, BlendFactor::kOneMinusSrcAlpha);
+	cmdb->setCullMode(FaceSelectionBit::kNone);
 
 	const F32 fbWidth = drawData.DisplaySize.x * drawData.FramebufferScale.x;
 	const F32 fbHeight = drawData.DisplaySize.y * drawData.FramebufferScale.y;
 	cmdb->setViewport(0, 0, U32(fbWidth), U32(fbHeight));
 
 	cmdb->bindVertexBuffer(0, vertsToken.m_buffer, vertsToken.m_offset, sizeof(ImDrawVert));
-	cmdb->setVertexAttribute(0, 0, Format::R32G32_SFLOAT, 0);
-	cmdb->setVertexAttribute(1, 0, Format::R8G8B8A8_UNORM, sizeof(Vec2) * 2);
-	cmdb->setVertexAttribute(2, 0, Format::R32G32_SFLOAT, sizeof(Vec2));
+	cmdb->setVertexAttribute(0, 0, Format::kR32G32_Sfloat, 0);
+	cmdb->setVertexAttribute(1, 0, Format::kR8G8B8A8_Unorm, sizeof(Vec2) * 2);
+	cmdb->setVertexAttribute(2, 0, Format::kR32G32_Sfloat, sizeof(Vec2));
 
 	cmdb->bindIndexBuffer(indicesToken.m_buffer, indicesToken.m_offset, IndexType::U16);
 
@@ -348,7 +348,7 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 					cmdb->setPushConstants(&pc, sizeof(Vec4) + extraPushConstantsSize);
 
 					// Draw
-					cmdb->drawElements(PrimitiveTopology::TRIANGLES, pcmd.ElemCount, 1, idxOffset, vertOffset);
+					cmdb->drawElements(PrimitiveTopology::kTriangles, pcmd.ElemCount, 1, idxOffset, vertOffset);
 				}
 			}
 			idxOffset += pcmd.ElemCount;
@@ -357,8 +357,8 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 	}
 
 	// Restore state
-	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
-	cmdb->setCullMode(FaceSelectionBit::BACK);
+	cmdb->setBlendFactors(0, BlendFactor::kOne, BlendFactor::kZero);
+	cmdb->setCullMode(FaceSelectionBit::kBack);
 }
 
 } // end namespace anki

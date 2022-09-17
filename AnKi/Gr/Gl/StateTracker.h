@@ -43,7 +43,7 @@ public:
 	{
 	public:
 		U32 m_buffBinding = MAX_U32;
-		Format m_fmt = Format::NONE;
+		Format m_fmt = Format::kNone;
 		PtrSize m_relativeOffset = MAX_PTR_SIZE;
 	};
 

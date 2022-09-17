@@ -325,15 +325,15 @@ static void* setStorage(PtrSize size, CommandBufferPtr& cmdb, U32 set, U32 bindi
 		cmdb_->copyBufferToTextureView(handle_.getBuffer(), handle_.getOffset(), handle_.getRange(), view); \
 	} while(0)
 
-const Format DS_FORMAT = Format::D24_UNORM_S8_UINT;
+constexpr Format DS_FORMAT = Format::kD24_Unorm_S8_Uint;
 
 static ShaderProgramPtr createProgram(CString vertSrc, CString fragSrc, GrManager& gr)
 {
-	ShaderPtr vert = createShader(vertSrc, ShaderType::VERTEX, gr);
-	ShaderPtr frag = createShader(fragSrc, ShaderType::FRAGMENT, gr);
+	ShaderPtr vert = createShader(vertSrc, ShaderType::kVertex, gr);
+	ShaderPtr frag = createShader(fragSrc, ShaderType::kFragment, gr);
 	ShaderProgramInitInfo inf;
-	inf.m_graphicsShaders[ShaderType::VERTEX] = vert;
-	inf.m_graphicsShaders[ShaderType::FRAGMENT] = frag;
+	inf.m_graphicsShaders[ShaderType::kVertex] = vert;
+	inf.m_graphicsShaders[ShaderType::kFragment] = frag;
 	return gr.newShaderProgram(inf);
 }
 
@@ -373,13 +373,13 @@ static void createCube(GrManager& gr, BufferPtr& verts, BufferPtr& indices)
 
 static void presentBarrierA(CommandBufferPtr cmdb, TexturePtr presentTex)
 {
-	cmdb->setTextureBarrier(presentTex, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+	cmdb->setTextureBarrier(presentTex, TextureUsageBit::kNone, TextureUsageBit::kFramebufferWrite,
 							TextureSubresourceInfo());
 }
 
 static void presentBarrierB(CommandBufferPtr cmdb, TexturePtr presentTex)
 {
-	cmdb->setTextureBarrier(presentTex, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureUsageBit::PRESENT,
+	cmdb->setTextureBarrier(presentTex, TextureUsageBit::kFramebufferWrite, TextureUsageBit::kPresent,
 							TextureSubresourceInfo());
 }
 
@@ -389,7 +389,7 @@ ANKI_TEST(Gr, Shader)
 {
 	COMMON_BEGIN()
 
-	ShaderPtr shader = createShader(FRAG_MRT_SRC, ShaderType::FRAGMENT, *gr);
+	ShaderPtr shader = createShader(FRAG_MRT_SRC, ShaderType::kFragment, *gr);
 
 	COMMON_END()
 }
@@ -422,7 +422,7 @@ ANKI_TEST(Gr, ClearScreen)
 		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 		presentBarrierA(cmdb, presentTex);
-		cmdb->beginRenderPass(fb, {TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}, {});
+		cmdb->beginRenderPass(fb, {TextureUsageBit::kFramebufferWrite}, {});
 		cmdb->endRenderPass();
 		presentBarrierB(cmdb, presentTex);
 		cmdb->flush();
@@ -463,8 +463,8 @@ ANKI_TEST(Gr, SimpleDrawcall)
 		cmdb->setViewport(0, 0, win->getWidth(), win->getHeight());
 		cmdb->bindShaderProgram(prog);
 		presentBarrierA(cmdb, presentTex);
-		cmdb->beginRenderPass(fb, {{TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}}, {});
-		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
+		cmdb->beginRenderPass(fb, {{TextureUsageBit::kFramebufferWrite}}, {});
+		cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
 		cmdb->endRenderPass();
 		presentBarrierB(cmdb, presentTex);
 		cmdb->flush();
@@ -563,20 +563,20 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 	ShaderProgramPtr prog = createProgram(VERT_QUAD_STRIP_SRC, FRAG_SRC, *gr);
 	ShaderProgramPtr blitProg = createProgram(VERT_QUAD_SRC, FRAG_TEX_SRC, *gr);
 
-	const Format COL_FORMAT = Format::R8G8B8A8_UNORM;
+	const Format COL_FORMAT = Format::kR8G8B8A8_Unorm;
 	const U RT_WIDTH = 32;
 	const U RT_HEIGHT = 16;
 	TextureInitInfo init;
 	init.m_depth = 1;
 	init.m_format = COL_FORMAT;
-	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT;
+	init.m_usage = TextureUsageBit::kSampledFragment | TextureUsageBit::kAllFramebuffer;
 	init.m_height = RT_HEIGHT;
 	init.m_width = RT_WIDTH;
 	init.m_mipmapCount = 1;
 	init.m_depth = 1;
 	init.m_layerCount = 1;
 	init.m_samples = 1;
-	init.m_type = TextureType::_2D;
+	init.m_type = TextureType::k2D;
 	TexturePtr rt = gr->newTexture(init);
 
 	TextureViewInitInfo viewInit(rt);
@@ -598,8 +598,8 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 	}
 
 	SamplerInitInfo samplerInit;
-	samplerInit.m_minMagFilter = SamplingFilter::NEAREST;
-	samplerInit.m_mipmapFilter = SamplingFilter::BASE;
+	samplerInit.m_minMagFilter = SamplingFilter::kNearest;
+	samplerInit.m_mipmapFilter = SamplingFilter::kBase;
 	SamplerPtr sampler = gr->newSampler(samplerInit);
 
 	static const Array2d<U32, 4, 4> VIEWPORTS = {{{{0, 0, RT_WIDTH / 2, RT_HEIGHT / 2}},
@@ -625,12 +625,12 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 			CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 			cmdb->setViewport(0, 0, RT_WIDTH, RT_HEIGHT);
-			cmdb->setTextureSurfaceBarrier(rt, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+			cmdb->setTextureSurfaceBarrier(rt, TextureUsageBit::kNone, TextureUsageBit::kFramebufferWrite,
 										   TextureSurfaceInfo(0, 0, 0, 0));
-			cmdb->beginRenderPass(fb[0], {{TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}}, {});
+			cmdb->beginRenderPass(fb[0], {{TextureUsageBit::kFramebufferWrite}}, {});
 			cmdb->endRenderPass();
-			cmdb->setTextureSurfaceBarrier(rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-										   TextureUsageBit::SAMPLED_FRAGMENT, TextureSurfaceInfo(0, 0, 0, 0));
+			cmdb->setTextureSurfaceBarrier(rt, TextureUsageBit::kFramebufferWrite, TextureUsageBit::kSampledFragment,
+										   TextureSurfaceInfo(0, 0, 0, 0));
 			cmdb->flush();
 		}
 
@@ -639,29 +639,29 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 		// Draw offscreen
-		cmdb->setTextureSurfaceBarrier(rt, TextureUsageBit::SAMPLED_FRAGMENT,
-									   TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureSurfaceInfo(0, 0, 0, 0));
+		cmdb->setTextureSurfaceBarrier(rt, TextureUsageBit::kSampledFragment, TextureUsageBit::kFramebufferWrite,
+									   TextureSurfaceInfo(0, 0, 0, 0));
 		auto vp = VIEWPORTS[(i / 30) % 4];
 		cmdb->setViewport(vp[0], vp[1], vp[2], vp[3]);
 		cmdb->setScissor(vp[0] + SCISSOR_MARGIN, vp[1] + SCISSOR_MARGIN, vp[2] - SCISSOR_MARGIN * 2,
 						 vp[3] - SCISSOR_MARGIN * 2);
 		cmdb->bindShaderProgram(prog);
-		cmdb->beginRenderPass(fb[i % 4], {{TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}}, {},
-							  vp[0] + RENDER_AREA_MARGIN, vp[1] + RENDER_AREA_MARGIN, vp[2] - RENDER_AREA_MARGIN * 2,
+		cmdb->beginRenderPass(fb[i % 4], {{TextureUsageBit::kFramebufferWrite}}, {}, vp[0] + RENDER_AREA_MARGIN,
+							  vp[1] + RENDER_AREA_MARGIN, vp[2] - RENDER_AREA_MARGIN * 2,
 							  vp[3] - RENDER_AREA_MARGIN * 2);
-		cmdb->drawArrays(PrimitiveTopology::TRIANGLE_STRIP, 4);
+		cmdb->drawArrays(PrimitiveTopology::kTriangleStrip, 4);
 		cmdb->endRenderPass();
 
 		// Draw onscreen
 		cmdb->setViewport(0, 0, win->getWidth(), win->getHeight());
 		cmdb->setScissor(0, 0, win->getWidth(), win->getHeight());
 		cmdb->bindShaderProgram(blitProg);
-		cmdb->setTextureSurfaceBarrier(rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-									   TextureUsageBit::SAMPLED_FRAGMENT, TextureSurfaceInfo(0, 0, 0, 0));
+		cmdb->setTextureSurfaceBarrier(rt, TextureUsageBit::kFramebufferWrite, TextureUsageBit::kSampledFragment,
+									   TextureSurfaceInfo(0, 0, 0, 0));
 		cmdb->bindTextureAndSampler(0, 0, texView, sampler);
 		presentBarrierA(cmdb, presentTex);
-		cmdb->beginRenderPass(dfb, {TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}, {});
-		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
+		cmdb->beginRenderPass(dfb, {TextureUsageBit::kFramebufferWrite}, {});
+		cmdb->drawArrays(PrimitiveTopology::kTriangles, 6);
 		cmdb->endRenderPass();
 		presentBarrierB(cmdb, presentTex);
 
@@ -745,7 +745,7 @@ ANKI_TEST(Gr, DrawWithUniforms)
 		cmdb->setViewport(0, 0, win->getWidth(), win->getHeight());
 		cmdb->bindShaderProgram(prog);
 		presentBarrierA(cmdb, presentTex);
-		cmdb->beginRenderPass(fb, {TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}, {});
+		cmdb->beginRenderPass(fb, {TextureUsageBit::kFramebufferWrite}, {});
 
 		cmdb->bindUniformBuffer(0, 0, b, 0, MAX_PTR_SIZE);
 
@@ -757,7 +757,7 @@ ANKI_TEST(Gr, DrawWithUniforms)
 		(*rotMat)[2] = sin(angle);
 		(*rotMat)[3] = cos(angle);
 
-		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
+		cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
 		cmdb->endRenderPass();
 		presentBarrierB(cmdb, presentTex);
 		cmdb->flush();
@@ -828,16 +828,16 @@ ANKI_TEST(Gr, DrawWithVertex)
 
 		cmdb->bindVertexBuffer(0, b, 0, sizeof(Vert));
 		cmdb->bindVertexBuffer(1, c, 0, sizeof(Vec3));
-		cmdb->setVertexAttribute(0, 0, Format::R32G32B32_SFLOAT, 0);
-		cmdb->setVertexAttribute(1, 0, Format::R8G8B8_UNORM, sizeof(Vec3));
-		cmdb->setVertexAttribute(2, 1, Format::R32G32B32_SFLOAT, 0);
+		cmdb->setVertexAttribute(0, 0, Format::kR32G32B32_Sfloat, 0);
+		cmdb->setVertexAttribute(1, 0, Format::kR8G8B8_Unorm, sizeof(Vec3));
+		cmdb->setVertexAttribute(2, 1, Format::kR32G32B32_Sfloat, 0);
 
 		cmdb->setViewport(0, 0, win->getWidth(), win->getHeight());
 		cmdb->setPolygonOffset(0.0, 0.0);
 		cmdb->bindShaderProgram(prog);
 		presentBarrierA(cmdb, presentTex);
-		cmdb->beginRenderPass(fb, {TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}, {});
-		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
+		cmdb->beginRenderPass(fb, {TextureUsageBit::kFramebufferWrite}, {});
+		cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
 		cmdb->endRenderPass();
 		presentBarrierB(cmdb, presentTex);
 		cmdb->flush();
@@ -872,15 +872,15 @@ ANKI_TEST(Gr, Texture)
 
 	TextureInitInfo init;
 	init.m_depth = 1;
-	init.m_format = Format::R8G8B8_UNORM;
-	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT;
+	init.m_format = Format::kR8G8B8_Unorm;
+	init.m_usage = TextureUsageBit::kSampledFragment;
 	init.m_height = 4;
 	init.m_width = 4;
 	init.m_mipmapCount = 2;
 	init.m_depth = 1;
 	init.m_layerCount = 1;
 	init.m_samples = 1;
-	init.m_type = TextureType::_2D;
+	init.m_type = TextureType::k2D;
 
 	TexturePtr b = gr->newTexture(init);
 
@@ -898,9 +898,9 @@ ANKI_TEST(Gr, DrawWithTexture)
 	// Create sampler
 	//
 	SamplerInitInfo samplerInit;
-	samplerInit.m_minMagFilter = SamplingFilter::NEAREST;
-	samplerInit.m_mipmapFilter = SamplingFilter::LINEAR;
-	samplerInit.m_addressing = SamplingAddressing::CLAMP;
+	samplerInit.m_minMagFilter = SamplingFilter::kNearest;
+	samplerInit.m_mipmapFilter = SamplingFilter::kLinear;
+	samplerInit.m_addressing = SamplingAddressing::kClamp;
 	SamplerPtr sampler = gr->newSampler(samplerInit);
 
 	//
@@ -908,15 +908,15 @@ ANKI_TEST(Gr, DrawWithTexture)
 	//
 	TextureInitInfo init;
 	init.m_depth = 1;
-	init.m_format = Format::R8G8B8_UNORM;
-	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::TRANSFER_DESTINATION;
+	init.m_format = Format::kR8G8B8_Unorm;
+	init.m_usage = TextureUsageBit::kSampledFragment | TextureUsageBit::kTransferDestination;
 	init.m_height = 2;
 	init.m_width = 2;
 	init.m_mipmapCount = 2;
 	init.m_samples = 1;
 	init.m_depth = 1;
 	init.m_layerCount = 1;
-	init.m_type = TextureType::_2D;
+	init.m_type = TextureType::k2D;
 
 	TexturePtr a = gr->newTexture(init);
 
@@ -929,7 +929,7 @@ ANKI_TEST(Gr, DrawWithTexture)
 	init.m_height = 4;
 	init.m_mipmapCount = 3;
 	init.m_usage =
-		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::TRANSFER_DESTINATION | TextureUsageBit::GENERATE_MIPMAPS;
+		TextureUsageBit::kSampledFragment | TextureUsageBit::kTransferDestination | TextureUsageBit::kGenerateMipmaps;
 
 	TexturePtr b = gr->newTexture(init);
 
@@ -951,13 +951,13 @@ ANKI_TEST(Gr, DrawWithTexture)
 	CommandBufferPtr cmdb = gr->newCommandBuffer(cmdbinit);
 
 	// Set barriers
-	cmdb->setTextureSurfaceBarrier(a, TextureUsageBit::SAMPLED_FRAGMENT, TextureUsageBit::TRANSFER_DESTINATION,
+	cmdb->setTextureSurfaceBarrier(a, TextureUsageBit::kSampledFragment, TextureUsageBit::kTransferDestination,
 								   TextureSurfaceInfo(0, 0, 0, 0));
 
-	cmdb->setTextureSurfaceBarrier(a, TextureUsageBit::SAMPLED_FRAGMENT, TextureUsageBit::TRANSFER_DESTINATION,
+	cmdb->setTextureSurfaceBarrier(a, TextureUsageBit::kSampledFragment, TextureUsageBit::kTransferDestination,
 								   TextureSurfaceInfo(1, 0, 0, 0));
 
-	cmdb->setTextureSurfaceBarrier(b, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION,
+	cmdb->setTextureSurfaceBarrier(b, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination,
 								   TextureSurfaceInfo(0, 0, 0, 0));
 
 	TransferGpuAllocatorHandle handle0, handle1, handle2;
@@ -968,21 +968,21 @@ ANKI_TEST(Gr, DrawWithTexture)
 	UPLOAD_TEX_SURFACE(cmdb, b, TextureSurfaceInfo(0, 0, 0, 0), &bmip0[0], sizeof(bmip0), handle2);
 
 	// Gen mips
-	cmdb->setTextureSurfaceBarrier(b, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::GENERATE_MIPMAPS,
+	cmdb->setTextureSurfaceBarrier(b, TextureUsageBit::kTransferDestination, TextureUsageBit::kGenerateMipmaps,
 								   TextureSurfaceInfo(0, 0, 0, 0));
 
 	cmdb->generateMipmaps2d(gr->newTextureView(TextureViewInitInfo(b)));
 
 	// Set barriers
-	cmdb->setTextureSurfaceBarrier(a, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::SAMPLED_FRAGMENT,
+	cmdb->setTextureSurfaceBarrier(a, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledFragment,
 								   TextureSurfaceInfo(0, 0, 0, 0));
 
-	cmdb->setTextureSurfaceBarrier(a, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::SAMPLED_FRAGMENT,
+	cmdb->setTextureSurfaceBarrier(a, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledFragment,
 								   TextureSurfaceInfo(1, 0, 0, 0));
 
 	for(U32 i = 0; i < 3; ++i)
 	{
-		cmdb->setTextureSurfaceBarrier(b, TextureUsageBit::GENERATE_MIPMAPS, TextureUsageBit::SAMPLED_FRAGMENT,
+		cmdb->setTextureSurfaceBarrier(b, TextureUsageBit::kGenerateMipmaps, TextureUsageBit::kSampledFragment,
 									   TextureSurfaceInfo(i, 0, 0, 0));
 	}
 
@@ -1058,14 +1058,14 @@ void main()
 		cmdb->setViewport(0, 0, win->getWidth(), win->getHeight());
 		cmdb->bindShaderProgram(prog);
 		presentBarrierA(cmdb, presentTex);
-		cmdb->beginRenderPass(fb, {TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}, {});
+		cmdb->beginRenderPass(fb, {TextureUsageBit::kFramebufferWrite}, {});
 
 		Vec4 pc(F32(win->getWidth()), F32(win->getHeight()), 0.0f, 0.0f);
 		cmdb->setPushConstants(&pc, sizeof(pc));
 
 		cmdb->bindTextureAndSampler(0, 0, aView, sampler);
 		cmdb->bindTextureAndSampler(0, 1, bView, sampler);
-		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
+		cmdb->drawArrays(PrimitiveTopology::kTriangles, 6);
 		cmdb->endRenderPass();
 		presentBarrierB(cmdb, presentTex);
 		cmdb->flush();
@@ -1104,11 +1104,11 @@ static void drawOffscreenDrawcalls([[maybe_unused]] GrManager& gr, ShaderProgram
 	*color = Vec4(0.0, 1.0, 0.0, 0.0);
 
 	cmdb->bindVertexBuffer(0, vertBuff, 0, sizeof(Vec3));
-	cmdb->setVertexAttribute(0, 0, Format::R32G32B32_SFLOAT, 0);
+	cmdb->setVertexAttribute(0, 0, Format::kR32G32B32_Sfloat, 0);
 	cmdb->bindShaderProgram(prog);
 	cmdb->bindIndexBuffer(indexBuff, 0, IndexType::U16);
 	cmdb->setViewport(0, 0, viewPortSize, viewPortSize);
-	cmdb->drawElements(PrimitiveTopology::TRIANGLES, 6 * 2 * 3);
+	cmdb->drawElements(PrimitiveTopology::kTriangles, 6 * 2 * 3);
 
 	// 2nd draw
 	modelMat = Mat4(Vec4(0.5, 0.5, 0.0, 1.0), Mat3(Euler(ang * 2.0f, ang, ang / 3.0f * 2.0f)), 1.0f);
@@ -1120,7 +1120,7 @@ static void drawOffscreenDrawcalls([[maybe_unused]] GrManager& gr, ShaderProgram
 	*color++ = Vec4(0.0, 0.0, 1.0, 0.0);
 	*color = Vec4(0.0, 1.0, 1.0, 0.0);
 
-	cmdb->drawElements(PrimitiveTopology::TRIANGLES, 6 * 2 * 3);
+	cmdb->drawElements(PrimitiveTopology::kTriangles, 6 * 2 * 3);
 }
 
 static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
@@ -1129,19 +1129,19 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 	// Create textures
 	//
 	SamplerInitInfo samplerInit;
-	samplerInit.m_minMagFilter = SamplingFilter::LINEAR;
-	samplerInit.m_mipmapFilter = SamplingFilter::LINEAR;
+	samplerInit.m_minMagFilter = SamplingFilter::kLinear;
+	samplerInit.m_mipmapFilter = SamplingFilter::kLinear;
 	SamplerPtr sampler = gr.newSampler(samplerInit);
 
-	const Format COL_FORMAT = Format::R8G8B8A8_UNORM;
+	const Format COL_FORMAT = Format::kR8G8B8A8_Unorm;
 	const U TEX_SIZE = 256;
 
 	TextureInitInfo init;
 	init.m_format = COL_FORMAT;
-	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT;
+	init.m_usage = TextureUsageBit::kSampledFragment | TextureUsageBit::kAllFramebuffer;
 	init.m_height = TEX_SIZE;
 	init.m_width = TEX_SIZE;
-	init.m_type = TextureType::_2D;
+	init.m_type = TextureType::k2D;
 
 	TexturePtr col0 = gr.newTexture(init);
 	TexturePtr col1 = gr.newTexture(init);
@@ -1162,7 +1162,7 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 	fbinit.m_colorAttachments[1].m_textureView = gr.newTextureView(TextureViewInitInfo(col1));
 	fbinit.m_colorAttachments[1].m_clearValue.m_colorf = {{0.0f, 0.1f, 0.0f, 0.0f}};
 	TextureViewInitInfo viewInit(dp);
-	viewInit.m_depthStencilAspect = DepthStencilAspectBit::DEPTH;
+	viewInit.m_depthStencilAspect = DepthStencilAspectBit::kDepth;
 	fbinit.m_depthStencilAttachment.m_textureView = gr.newTextureView(viewInit);
 	fbinit.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0;
 
@@ -1196,15 +1196,14 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 
 		cmdb->setPolygonOffset(0.0, 0.0);
 
-		cmdb->setTextureSurfaceBarrier(col0, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+		cmdb->setTextureSurfaceBarrier(col0, TextureUsageBit::kNone, TextureUsageBit::kFramebufferWrite,
 									   TextureSurfaceInfo(0, 0, 0, 0));
-		cmdb->setTextureSurfaceBarrier(col1, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+		cmdb->setTextureSurfaceBarrier(col1, TextureUsageBit::kNone, TextureUsageBit::kFramebufferWrite,
 									   TextureSurfaceInfo(0, 0, 0, 0));
-		cmdb->setTextureSurfaceBarrier(dp, TextureUsageBit::NONE, TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT,
+		cmdb->setTextureSurfaceBarrier(dp, TextureUsageBit::kNone, TextureUsageBit::kAllFramebuffer,
 									   TextureSurfaceInfo(0, 0, 0, 0));
-		cmdb->beginRenderPass(
-			fb, {{TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}},
-			TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT);
+		cmdb->beginRenderPass(fb, {{TextureUsageBit::kFramebufferWrite, TextureUsageBit::kFramebufferWrite}},
+							  TextureUsageBit::kAllFramebuffer);
 
 		if(!useSecondLevel)
 		{
@@ -1226,24 +1225,24 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 
 		cmdb->endRenderPass();
 
-		cmdb->setTextureSurfaceBarrier(col0, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-									   TextureUsageBit::SAMPLED_FRAGMENT, TextureSurfaceInfo(0, 0, 0, 0));
-		cmdb->setTextureSurfaceBarrier(col1, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-									   TextureUsageBit::SAMPLED_FRAGMENT, TextureSurfaceInfo(0, 0, 0, 0));
-		cmdb->setTextureSurfaceBarrier(dp, TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT,
-									   TextureUsageBit::SAMPLED_FRAGMENT, TextureSurfaceInfo(0, 0, 0, 0));
+		cmdb->setTextureSurfaceBarrier(col0, TextureUsageBit::kFramebufferWrite, TextureUsageBit::kSampledFragment,
+									   TextureSurfaceInfo(0, 0, 0, 0));
+		cmdb->setTextureSurfaceBarrier(col1, TextureUsageBit::kFramebufferWrite, TextureUsageBit::kSampledFragment,
+									   TextureSurfaceInfo(0, 0, 0, 0));
+		cmdb->setTextureSurfaceBarrier(dp, TextureUsageBit::kAllFramebuffer, TextureUsageBit::kSampledFragment,
+									   TextureSurfaceInfo(0, 0, 0, 0));
 
 		// Draw quad
 		TexturePtr presentTex = gr.acquireNextPresentableTexture();
 		FramebufferPtr dfb = createColorFb(gr, presentTex);
 
 		presentBarrierA(cmdb, presentTex);
-		cmdb->beginRenderPass(dfb, {TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}, {});
+		cmdb->beginRenderPass(dfb, {TextureUsageBit::kFramebufferWrite}, {});
 		cmdb->bindShaderProgram(resolveProg);
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
 		cmdb->bindTextureAndSampler(0, 0, col0View, sampler);
 		cmdb->bindTextureAndSampler(0, 2, col1View, sampler);
-		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
+		cmdb->drawArrays(PrimitiveTopology::kTriangles, 6);
 		cmdb->endRenderPass();
 		presentBarrierB(cmdb, presentTex);
 
@@ -1284,17 +1283,17 @@ ANKI_TEST(Gr, ImageLoadStore)
 	COMMON_BEGIN()
 
 	SamplerInitInfo samplerInit;
-	samplerInit.m_minMagFilter = SamplingFilter::NEAREST;
-	samplerInit.m_mipmapFilter = SamplingFilter::BASE;
+	samplerInit.m_minMagFilter = SamplingFilter::kNearest;
+	samplerInit.m_mipmapFilter = SamplingFilter::kBase;
 	SamplerPtr sampler = gr->newSampler(samplerInit);
 
 	TextureInitInfo init;
 	init.m_width = init.m_height = 4;
 	init.m_mipmapCount = 2;
 	init.m_usage =
-		TextureUsageBit::TRANSFER_DESTINATION | TextureUsageBit::ALL_SAMPLED | TextureUsageBit::IMAGE_COMPUTE_WRITE;
-	init.m_type = TextureType::_2D;
-	init.m_format = Format::R8G8B8A8_UNORM;
+		TextureUsageBit::kTransferDestination | TextureUsageBit::kAllSampled | TextureUsageBit::kImageComputeWrite;
+	init.m_type = TextureType::k2D;
+	init.m_format = Format::kR8G8B8A8_Unorm;
 
 	TexturePtr tex = gr->newTexture(init);
 
@@ -1307,7 +1306,7 @@ ANKI_TEST(Gr, ImageLoadStore)
 	ShaderProgramPtr prog = createProgram(VERT_QUAD_SRC, FRAG_SIMPLE_TEX_SRC, *gr);
 
 	// Create shader & compute prog
-	ShaderPtr shader = createShader(COMP_WRITE_IMAGE_SRC, ShaderType::COMPUTE, *gr);
+	ShaderPtr shader = createShader(COMP_WRITE_IMAGE_SRC, ShaderType::kCompute, *gr);
 	ShaderProgramInitInfo sprogInit;
 	sprogInit.m_computeShader = shader;
 	ShaderProgramPtr compProg = gr->newShaderProgram(sprogInit);
@@ -1316,7 +1315,7 @@ ANKI_TEST(Gr, ImageLoadStore)
 	CommandBufferInitInfo cmdbinit;
 	CommandBufferPtr cmdb = gr->newCommandBuffer(cmdbinit);
 
-	cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION,
+	cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination,
 								   TextureSurfaceInfo(0, 0, 0, 0));
 
 	ClearValue clear;
@@ -1324,17 +1323,17 @@ ANKI_TEST(Gr, ImageLoadStore)
 	TextureViewInitInfo viewInit2(tex, TextureSurfaceInfo(0, 0, 0, 0));
 	cmdb->clearTextureView(gr->newTextureView(viewInit2), clear);
 
-	cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::SAMPLED_FRAGMENT,
+	cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledFragment,
 								   TextureSurfaceInfo(0, 0, 0, 0));
 
-	cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION,
+	cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination,
 								   TextureSurfaceInfo(1, 0, 0, 0));
 
 	clear.m_colorf = {{0.0, 0.0, 1.0, 1.0}};
 	TextureViewInitInfo viewInit3(tex, TextureSurfaceInfo(1, 0, 0, 0));
 	cmdb->clearTextureView(gr->newTextureView(viewInit3), clear);
 
-	cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::IMAGE_COMPUTE_WRITE,
+	cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::kTransferDestination, TextureUsageBit::kImageComputeWrite,
 								   TextureSurfaceInfo(1, 0, 0, 0));
 
 	cmdb->flush();
@@ -1355,12 +1354,12 @@ ANKI_TEST(Gr, ImageLoadStore)
 		Vec4* col = SET_STORAGE(Vec4*, sizeof(*col), cmdb, 1, 0);
 		*col = Vec4(F32(iterations) / F32(ITERATION_COUNT));
 
-		cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::NONE, TextureUsageBit::IMAGE_COMPUTE_WRITE,
+		cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::kNone, TextureUsageBit::kImageComputeWrite,
 									   TextureSurfaceInfo(1, 0, 0, 0));
 		cmdb->bindShaderProgram(compProg);
 		cmdb->bindImage(0, 0, view);
 		cmdb->dispatchCompute(WIDTH / 2, HEIGHT / 2, 1);
-		cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::IMAGE_COMPUTE_WRITE, TextureUsageBit::SAMPLED_FRAGMENT,
+		cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::kImageComputeWrite, TextureUsageBit::kSampledFragment,
 									   TextureSurfaceInfo(1, 0, 0, 0));
 
 		// Present image
@@ -1370,9 +1369,9 @@ ANKI_TEST(Gr, ImageLoadStore)
 		TexturePtr presentTex = gr->acquireNextPresentableTexture();
 		FramebufferPtr dfb = createColorFb(*gr, presentTex);
 		presentBarrierA(cmdb, presentTex);
-		cmdb->beginRenderPass(dfb, {TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}, {});
+		cmdb->beginRenderPass(dfb, {TextureUsageBit::kFramebufferWrite}, {});
 		cmdb->bindTextureAndSampler(0, 0, gr->newTextureView(TextureViewInitInfo(tex)), sampler);
-		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
+		cmdb->drawArrays(PrimitiveTopology::kTriangles, 6);
 		cmdb->endRenderPass();
 		presentBarrierB(cmdb, presentTex);
 
@@ -1397,9 +1396,9 @@ ANKI_TEST(Gr, 3DTextures)
 	COMMON_BEGIN()
 
 	SamplerInitInfo samplerInit;
-	samplerInit.m_minMagFilter = SamplingFilter::NEAREST;
-	samplerInit.m_mipmapFilter = SamplingFilter::BASE;
-	samplerInit.m_addressing = SamplingAddressing::CLAMP;
+	samplerInit.m_minMagFilter = SamplingFilter::kNearest;
+	samplerInit.m_mipmapFilter = SamplingFilter::kBase;
+	samplerInit.m_addressing = SamplingAddressing::kClamp;
 	SamplerPtr sampler = gr->newSampler(samplerInit);
 
 	//
@@ -1407,15 +1406,15 @@ ANKI_TEST(Gr, 3DTextures)
 	//
 	TextureInitInfo init;
 	init.m_depth = 1;
-	init.m_format = Format::R8G8B8A8_UNORM;
-	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::TRANSFER_DESTINATION;
+	init.m_format = Format::kR8G8B8A8_Unorm;
+	init.m_usage = TextureUsageBit::kSampledFragment | TextureUsageBit::kTransferDestination;
 	init.m_height = 2;
 	init.m_width = 2;
 	init.m_mipmapCount = 2;
 	init.m_samples = 1;
 	init.m_depth = 2;
 	init.m_layerCount = 1;
-	init.m_type = TextureType::_3D;
+	init.m_type = TextureType::k3D;
 
 	TexturePtr a = gr->newTexture(init);
 
@@ -1431,10 +1430,10 @@ ANKI_TEST(Gr, 3DTextures)
 	cmdbinit.m_flags = CommandBufferFlag::GENERAL_WORK | CommandBufferFlag::SMALL_BATCH;
 	CommandBufferPtr cmdb = gr->newCommandBuffer(cmdbinit);
 
-	cmdb->setTextureVolumeBarrier(a, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION,
+	cmdb->setTextureVolumeBarrier(a, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination,
 								  TextureVolumeInfo(0));
 
-	cmdb->setTextureVolumeBarrier(a, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION,
+	cmdb->setTextureVolumeBarrier(a, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination,
 								  TextureVolumeInfo(1));
 
 	TransferGpuAllocatorHandle handle0, handle1;
@@ -1442,10 +1441,10 @@ ANKI_TEST(Gr, 3DTextures)
 
 	UPLOAD_TEX_VOL(cmdb, a, TextureVolumeInfo(1), &mip1[0], sizeof(mip1), handle1);
 
-	cmdb->setTextureVolumeBarrier(a, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::SAMPLED_FRAGMENT,
+	cmdb->setTextureVolumeBarrier(a, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledFragment,
 								  TextureVolumeInfo(0));
 
-	cmdb->setTextureVolumeBarrier(a, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::SAMPLED_FRAGMENT,
+	cmdb->setTextureVolumeBarrier(a, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledFragment,
 								  TextureVolumeInfo(1));
 
 	FencePtr fence;
@@ -1477,7 +1476,7 @@ ANKI_TEST(Gr, 3DTextures)
 		TexturePtr presentTex = gr->acquireNextPresentableTexture();
 		FramebufferPtr dfb = createColorFb(*gr, presentTex);
 		presentBarrierA(cmdb, presentTex);
-		cmdb->beginRenderPass(dfb, {TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}, {});
+		cmdb->beginRenderPass(dfb, {TextureUsageBit::kFramebufferWrite}, {});
 
 		cmdb->bindShaderProgram(prog);
 
@@ -1487,7 +1486,7 @@ ANKI_TEST(Gr, 3DTextures)
 		*uv = TEX_COORDS_LOD[idx];
 
 		cmdb->bindTextureAndSampler(0, 1, gr->newTextureView(TextureViewInitInfo(a)), sampler);
-		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
+		cmdb->drawArrays(PrimitiveTopology::kTriangles, 6);
 
 		cmdb->endRenderPass();
 		presentBarrierB(cmdb, presentTex);
@@ -1512,8 +1511,8 @@ static RenderTargetDescription newRTDescr(CString name)
 {
 	RenderTargetDescription texInf(name);
 	texInf.m_width = texInf.m_height = 16;
-	texInf.m_usage = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::SAMPLED_FRAGMENT;
-	texInf.m_format = Format::R8G8B8A8_UNORM;
+	texInf.m_usage = TextureUsageBit::kFramebufferWrite | TextureUsageBit::kSampledFragment;
+	texInf.m_format = Format::kR8G8B8A8_Unorm;
 	texInf.bake();
 	return texInf;
 }
@@ -1530,23 +1529,23 @@ ANKI_TEST(Gr, RenderGraph)
 
 	TextureInitInfo texI("dummy");
 	texI.m_width = texI.m_height = 16;
-	texI.m_usage = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::SAMPLED_FRAGMENT;
-	texI.m_format = Format::R8G8B8A8_UNORM;
+	texI.m_usage = TextureUsageBit::kFramebufferWrite | TextureUsageBit::kSampledFragment;
+	texI.m_format = Format::kR8G8B8A8_Unorm;
 	TexturePtr dummyTex = gr->newTexture(texI);
 
 	// SM
 	RenderTargetHandle smScratchRt = descr.newRenderTarget(newRTDescr("SM scratch"));
 	{
 		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("SM");
-		pass.newDependency({smScratchRt, TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT});
+		pass.newDependency({smScratchRt, TextureUsageBit::kAllFramebuffer});
 	}
 
 	// SM to exponential SM
-	RenderTargetHandle smExpRt = descr.importRenderTarget(dummyTex, TextureUsageBit::SAMPLED_FRAGMENT);
+	RenderTargetHandle smExpRt = descr.importRenderTarget(dummyTex, TextureUsageBit::kSampledFragment);
 	{
 		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("ESM");
-		pass.newDependency({smScratchRt, TextureUsageBit::SAMPLED_FRAGMENT});
-		pass.newDependency({smExpRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass.newDependency({smScratchRt, TextureUsageBit::kSampledFragment});
+		pass.newDependency({smExpRt, TextureUsageBit::kFramebufferWrite});
 	}
 
 	// GI gbuff
@@ -1555,23 +1554,23 @@ ANKI_TEST(Gr, RenderGraph)
 	RenderTargetHandle giGbuffDepthRt = descr.newRenderTarget(newRTDescr("GI GBuff depth"));
 	{
 		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("GI gbuff");
-		pass.newDependency({giGbuffNormRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-		pass.newDependency({giGbuffDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-		pass.newDependency({giGbuffDiffRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass.newDependency({giGbuffNormRt, TextureUsageBit::kFramebufferWrite});
+		pass.newDependency({giGbuffDepthRt, TextureUsageBit::kFramebufferWrite});
+		pass.newDependency({giGbuffDiffRt, TextureUsageBit::kFramebufferWrite});
 	}
 
 	// GI light
-	RenderTargetHandle giGiLightRt = descr.importRenderTarget(dummyTex, TextureUsageBit::SAMPLED_FRAGMENT);
+	RenderTargetHandle giGiLightRt = descr.importRenderTarget(dummyTex, TextureUsageBit::kSampledFragment);
 	for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
 	{
 		TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, 0));
 
 		GraphicsRenderPassDescription& pass =
 			descr.newGraphicsRenderPass(StringAuto(alloc).sprintf("GI lp%u", faceIdx).toCString());
-		pass.newDependency({giGiLightRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, subresource});
-		pass.newDependency({giGbuffNormRt, TextureUsageBit::SAMPLED_FRAGMENT});
-		pass.newDependency({giGbuffDepthRt, TextureUsageBit::SAMPLED_FRAGMENT});
-		pass.newDependency({giGbuffDiffRt, TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newDependency({giGiLightRt, TextureUsageBit::kFramebufferWrite, subresource});
+		pass.newDependency({giGbuffNormRt, TextureUsageBit::kSampledFragment});
+		pass.newDependency({giGbuffDepthRt, TextureUsageBit::kSampledFragment});
+		pass.newDependency({giGbuffDiffRt, TextureUsageBit::kSampledFragment});
 	}
 
 	// GI light mips
@@ -1584,7 +1583,7 @@ ANKI_TEST(Gr, RenderGraph)
 			for(U32 mip = 0; mip < GI_MIP_COUNT; ++mip)
 			{
 				TextureSurfaceInfo surf(mip, 0, faceIdx, 0);
-				pass.newDependency({giGiLightRt, TextureUsageBit::GENERATE_MIPMAPS, surf});
+				pass.newDependency({giGiLightRt, TextureUsageBit::kGenerateMipmaps, surf});
 			}
 		}
 	}
@@ -1596,98 +1595,97 @@ ANKI_TEST(Gr, RenderGraph)
 	RenderTargetHandle gbuffDepth = descr.newRenderTarget(newRTDescr("GBuff RT2"));
 	{
 		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("G-Buffer");
-		pass.newDependency({gbuffRt0, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-		pass.newDependency({gbuffRt1, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-		pass.newDependency({gbuffRt2, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-		pass.newDependency({gbuffDepth, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass.newDependency({gbuffRt0, TextureUsageBit::kFramebufferWrite});
+		pass.newDependency({gbuffRt1, TextureUsageBit::kFramebufferWrite});
+		pass.newDependency({gbuffRt2, TextureUsageBit::kFramebufferWrite});
+		pass.newDependency({gbuffDepth, TextureUsageBit::kFramebufferWrite});
 	}
 
 	// Half depth
 	RenderTargetHandle halfDepthRt = descr.newRenderTarget(newRTDescr("Depth/2"));
 	{
 		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("HalfDepth");
-		pass.newDependency({gbuffDepth, TextureUsageBit::SAMPLED_FRAGMENT});
-		pass.newDependency({halfDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass.newDependency({gbuffDepth, TextureUsageBit::kSampledFragment});
+		pass.newDependency({halfDepthRt, TextureUsageBit::kFramebufferWrite});
 	}
 
 	// Quarter depth
 	RenderTargetHandle quarterDepthRt = descr.newRenderTarget(newRTDescr("Depth/4"));
 	{
 		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("QuarterDepth");
-		pass.newDependency({quarterDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-		pass.newDependency({halfDepthRt, TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newDependency({quarterDepthRt, TextureUsageBit::kFramebufferWrite});
+		pass.newDependency({halfDepthRt, TextureUsageBit::kSampledFragment});
 	}
 
 	// SSAO
 	RenderTargetHandle ssaoRt = descr.newRenderTarget(newRTDescr("SSAO"));
 	{
 		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("SSAO main");
-		pass.newDependency({ssaoRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-		pass.newDependency({quarterDepthRt, TextureUsageBit::SAMPLED_FRAGMENT});
-		pass.newDependency({gbuffRt2, TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newDependency({ssaoRt, TextureUsageBit::kFramebufferWrite});
+		pass.newDependency({quarterDepthRt, TextureUsageBit::kSampledFragment});
+		pass.newDependency({gbuffRt2, TextureUsageBit::kSampledFragment});
 
 		RenderTargetHandle ssaoVBlurRt = descr.newRenderTarget(newRTDescr("SSAO tmp"));
 		GraphicsRenderPassDescription& pass2 = descr.newGraphicsRenderPass("SSAO vblur");
-		pass2.newDependency({ssaoRt, TextureUsageBit::SAMPLED_FRAGMENT});
-		pass2.newDependency({ssaoVBlurRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass2.newDependency({ssaoRt, TextureUsageBit::kSampledFragment});
+		pass2.newDependency({ssaoVBlurRt, TextureUsageBit::kFramebufferWrite});
 
 		GraphicsRenderPassDescription& pass3 = descr.newGraphicsRenderPass("SSAO hblur");
-		pass3.newDependency({ssaoRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-		pass3.newDependency({ssaoVBlurRt, TextureUsageBit::SAMPLED_FRAGMENT});
+		pass3.newDependency({ssaoRt, TextureUsageBit::kFramebufferWrite});
+		pass3.newDependency({ssaoVBlurRt, TextureUsageBit::kSampledFragment});
 	}
 
 	// Volumetric
 	RenderTargetHandle volRt = descr.newRenderTarget(newRTDescr("Vol"));
 	{
 		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("Vol main");
-		pass.newDependency({volRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-		pass.newDependency({quarterDepthRt, TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newDependency({volRt, TextureUsageBit::kFramebufferWrite});
+		pass.newDependency({quarterDepthRt, TextureUsageBit::kSampledFragment});
 
 		RenderTargetHandle volVBlurRt = descr.newRenderTarget(newRTDescr("Vol tmp"));
 		GraphicsRenderPassDescription& pass2 = descr.newGraphicsRenderPass("Vol vblur");
-		pass2.newDependency({volRt, TextureUsageBit::SAMPLED_FRAGMENT});
-		pass2.newDependency({volVBlurRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass2.newDependency({volRt, TextureUsageBit::kSampledFragment});
+		pass2.newDependency({volVBlurRt, TextureUsageBit::kFramebufferWrite});
 
 		GraphicsRenderPassDescription& pass3 = descr.newGraphicsRenderPass("Vol hblur");
-		pass3.newDependency({volRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-		pass3.newDependency({volVBlurRt, TextureUsageBit::SAMPLED_FRAGMENT});
+		pass3.newDependency({volRt, TextureUsageBit::kFramebufferWrite});
+		pass3.newDependency({volVBlurRt, TextureUsageBit::kSampledFragment});
 	}
 
 	// Forward shading
 	RenderTargetHandle fsRt = descr.newRenderTarget(newRTDescr("FS"));
 	{
 		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("Forward shading");
-		pass.newDependency({fsRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-		pass.newDependency(
-			{halfDepthRt, TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ});
-		pass.newDependency({volRt, TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newDependency({fsRt, TextureUsageBit::kFramebufferWrite});
+		pass.newDependency({halfDepthRt, TextureUsageBit::kSampledFragment | TextureUsageBit::kFramebufferRead});
+		pass.newDependency({volRt, TextureUsageBit::kSampledFragment});
 	}
 
 	// Light shading
-	RenderTargetHandle lightRt = descr.importRenderTarget(dummyTex, TextureUsageBit::NONE);
+	RenderTargetHandle lightRt = descr.importRenderTarget(dummyTex, TextureUsageBit::kNone);
 	{
 		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("Light shading");
 
-		pass.newDependency({lightRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-		pass.newDependency({gbuffRt0, TextureUsageBit::SAMPLED_FRAGMENT});
-		pass.newDependency({gbuffRt1, TextureUsageBit::SAMPLED_FRAGMENT});
-		pass.newDependency({gbuffRt2, TextureUsageBit::SAMPLED_FRAGMENT});
-		pass.newDependency({gbuffDepth, TextureUsageBit::SAMPLED_FRAGMENT});
-		pass.newDependency({smExpRt, TextureUsageBit::SAMPLED_FRAGMENT});
-		pass.newDependency({giGiLightRt, TextureUsageBit::SAMPLED_FRAGMENT});
-		pass.newDependency({ssaoRt, TextureUsageBit::SAMPLED_FRAGMENT});
-		pass.newDependency({fsRt, TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newDependency({lightRt, TextureUsageBit::kFramebufferWrite});
+		pass.newDependency({gbuffRt0, TextureUsageBit::kSampledFragment});
+		pass.newDependency({gbuffRt1, TextureUsageBit::kSampledFragment});
+		pass.newDependency({gbuffRt2, TextureUsageBit::kSampledFragment});
+		pass.newDependency({gbuffDepth, TextureUsageBit::kSampledFragment});
+		pass.newDependency({smExpRt, TextureUsageBit::kSampledFragment});
+		pass.newDependency({giGiLightRt, TextureUsageBit::kSampledFragment});
+		pass.newDependency({ssaoRt, TextureUsageBit::kSampledFragment});
+		pass.newDependency({fsRt, TextureUsageBit::kSampledFragment});
 	}
 
 	// TAA
-	RenderTargetHandle taaHistoryRt = descr.importRenderTarget(dummyTex, TextureUsageBit::SAMPLED_FRAGMENT);
-	RenderTargetHandle taaRt = descr.importRenderTarget(dummyTex, TextureUsageBit::NONE);
+	RenderTargetHandle taaHistoryRt = descr.importRenderTarget(dummyTex, TextureUsageBit::kSampledFragment);
+	RenderTargetHandle taaRt = descr.importRenderTarget(dummyTex, TextureUsageBit::kNone);
 	{
 		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("Temporal AA");
 
-		pass.newDependency({lightRt, TextureUsageBit::SAMPLED_FRAGMENT});
-		pass.newDependency({taaRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-		pass.newDependency({taaHistoryRt, TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newDependency({lightRt, TextureUsageBit::kSampledFragment});
+		pass.newDependency({taaRt, TextureUsageBit::kFramebufferWrite});
+		pass.newDependency({taaHistoryRt, TextureUsageBit::kSampledFragment});
 	}
 
 	rgraph->compileNewGraph(descr, alloc);
@@ -1756,7 +1754,7 @@ void main()
 	}
 })";
 
-	ShaderPtr comp = createShader(COMP_SRC, ShaderType::COMPUTE, *gr);
+	ShaderPtr comp = createShader(COMP_SRC, ShaderType::kCompute, *gr);
 	ShaderProgramInitInfo sinf;
 	sinf.m_computeShader = comp;
 	ShaderProgramPtr prog = gr->newShaderProgram(sinf);
@@ -1764,9 +1762,9 @@ void main()
 	// Create the texture
 	TextureInitInfo texInit;
 	texInit.m_width = texInit.m_height = 8;
-	texInit.m_format = Format::R8G8B8_UINT;
-	texInit.m_type = TextureType::_2D;
-	texInit.m_usage = TextureUsageBit::TRANSFER_DESTINATION | TextureUsageBit::ALL_SAMPLED;
+	texInit.m_format = Format::kR8G8B8_Uint;
+	texInit.m_type = TextureType::k2D;
+	texInit.m_usage = TextureUsageBit::kTransferDestination | TextureUsageBit::kAllSampled;
 	texInit.m_mipmapCount = 2;
 	TexturePtr tex = gr->newTexture(texInit);
 	TextureViewPtr texView = gr->newTextureView(TextureViewInitInfo(tex));
@@ -1810,13 +1808,13 @@ void main()
 
 	TextureSubresourceInfo subresource;
 	subresource.m_mipmapCount = texInit.m_mipmapCount;
-	cmdb->setTextureBarrier(tex, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION, subresource);
+	cmdb->setTextureBarrier(tex, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination, subresource);
 	cmdb->copyBufferToTextureView(uploadBuff, 0, uploadBuff->getSize(),
 								  gr->newTextureView(TextureViewInitInfo(tex, TextureSurfaceInfo(0, 0, 0, 0))));
 	cmdb->copyBufferToTextureView(uploadBuff2, 0, uploadBuff2->getSize(),
 								  gr->newTextureView(TextureViewInitInfo(tex, TextureSurfaceInfo(1, 0, 0, 0))));
 
-	cmdb->setTextureBarrier(tex, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::SAMPLED_COMPUTE, subresource);
+	cmdb->setTextureBarrier(tex, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledCompute, subresource);
 	cmdb->bindShaderProgram(prog);
 	cmdb->bindTextureAndSampler(0, 0, texView, sampler);
 	cmdb->bindStorageBuffer(0, 1, resultBuff, 0, resultBuff->getSize());
@@ -1900,16 +1898,16 @@ void main()
 )";
 
 	ShaderPtr vert =
-		createShader(VERT_SRC, ShaderType::VERTEX, *gr,
+		createShader(VERT_SRC, ShaderType::kVertex, *gr,
 					 Array<ShaderSpecializationConstValue, 3>{{ShaderSpecializationConstValue(2147483647),
 															   ShaderSpecializationConstValue(-1.0f),
 															   ShaderSpecializationConstValue(1234.5678f)}});
-	ShaderPtr frag = createShader(FRAG_SRC, ShaderType::FRAGMENT, *gr,
+	ShaderPtr frag = createShader(FRAG_SRC, ShaderType::kFragment, *gr,
 								  Array<ShaderSpecializationConstValue, 2>{{ShaderSpecializationConstValue(-2147483647),
 																			ShaderSpecializationConstValue(-1.0f)}});
 	ShaderProgramInitInfo sinf;
-	sinf.m_graphicsShaders[ShaderType::VERTEX] = vert;
-	sinf.m_graphicsShaders[ShaderType::FRAGMENT] = frag;
+	sinf.m_graphicsShaders[ShaderType::kVertex] = vert;
+	sinf.m_graphicsShaders[ShaderType::kFragment] = frag;
 	ShaderProgramPtr prog = gr->newShaderProgram(sinf);
 
 	// Create the result buffer
@@ -1928,8 +1926,8 @@ void main()
 	TexturePtr presentTex = gr->acquireNextPresentableTexture();
 	FramebufferPtr dfb = createColorFb(*gr, presentTex);
 	presentBarrierA(cmdb, presentTex);
-	cmdb->beginRenderPass(dfb, {TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}, {});
-	cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
+	cmdb->beginRenderPass(dfb, {TextureUsageBit::kFramebufferWrite}, {});
+	cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
 	cmdb->endRenderPass();
 	presentBarrierB(cmdb, presentTex);
 	cmdb->flush();
@@ -2055,8 +2053,8 @@ void main()
 	TexturePtr presentTex = gr->acquireNextPresentableTexture();
 	FramebufferPtr dfb = createColorFb(*gr, presentTex);
 	presentBarrierA(cmdb, presentTex);
-	cmdb->beginRenderPass(dfb, {TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}, {});
-	cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
+	cmdb->beginRenderPass(dfb, {TextureUsageBit::kFramebufferWrite}, {});
+	cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
 	cmdb->endRenderPass();
 	presentBarrierB(cmdb, presentTex);
 	cmdb->flush();
@@ -2114,7 +2112,7 @@ void main()
 	u_result = u_ubos[0].m_vec + u_ubos[1].m_vec + u_ubos[2].m_vec + u_ubos[3].m_vec;
 })";
 
-	ShaderPtr shader = createShader(PROG_SRC, ShaderType::COMPUTE, *gr);
+	ShaderPtr shader = createShader(PROG_SRC, ShaderType::kCompute, *gr);
 	ShaderProgramInitInfo sprogInit;
 	sprogInit.m_computeShader = shader;
 	ShaderProgramPtr prog = gr->newShaderProgram(sprogInit);
@@ -2160,7 +2158,7 @@ ANKI_TEST(Gr, Bindless)
 	texInit.m_width = 1;
 	texInit.m_height = 1;
 	texInit.m_format = Format::R32G32B32A32_UINT;
-	texInit.m_usage = TextureUsageBit::ALL_IMAGE | TextureUsageBit::ALL_TRANSFER | TextureUsageBit::ALL_SAMPLED;
+	texInit.m_usage = TextureUsageBit::kAllImage | TextureUsageBit::ALL_TRANSFER | TextureUsageBit::kAllSampled;
 	texInit.m_mipmapCount = 1;
 
 	TexturePtr texA = gr->newTexture(texInit);
@@ -2212,7 +2210,7 @@ void main()
 	u_result = val0 + val1 + uvec4(val2);
 })";
 
-	ShaderPtr shader = createShader(PROG_SRC, ShaderType::COMPUTE, *gr);
+	ShaderPtr shader = createShader(PROG_SRC, ShaderType::kCompute, *gr);
 	ShaderProgramInitInfo sprogInit;
 	sprogInit.m_computeShader = shader;
 	ShaderProgramPtr prog = gr->newShaderProgram(sprogInit);
@@ -2222,11 +2220,11 @@ void main()
 	cinit.m_flags = CommandBufferFlag::COMPUTE_WORK | CommandBufferFlag::SMALL_BATCH;
 	CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
-	cmdb->setTextureSurfaceBarrier(texA, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION,
+	cmdb->setTextureSurfaceBarrier(texA, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination,
 								   TextureSurfaceInfo());
-	cmdb->setTextureSurfaceBarrier(texB, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION,
+	cmdb->setTextureSurfaceBarrier(texB, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination,
 								   TextureSurfaceInfo());
-	cmdb->setTextureSurfaceBarrier(texC, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION,
+	cmdb->setTextureSurfaceBarrier(texC, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination,
 								   TextureSurfaceInfo());
 
 	TransferGpuAllocatorHandle handle0, handle1, handle2;
@@ -2237,11 +2235,11 @@ void main()
 	const Vec4 mip2 = Vec4(2.2f, 3.3f, 4.4f, 5.5f);
 	UPLOAD_TEX_SURFACE(cmdb, texC, TextureSurfaceInfo(0, 0, 0, 0), &mip2[0], sizeof(mip2), handle2);
 
-	cmdb->setTextureSurfaceBarrier(texA, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::IMAGE_COMPUTE_READ,
+	cmdb->setTextureSurfaceBarrier(texA, TextureUsageBit::kTransferDestination, TextureUsageBit::kImageComputeRead,
 								   TextureSurfaceInfo());
-	cmdb->setTextureSurfaceBarrier(texB, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::SAMPLED_COMPUTE,
+	cmdb->setTextureSurfaceBarrier(texB, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledCompute,
 								   TextureSurfaceInfo());
-	cmdb->setTextureSurfaceBarrier(texC, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::SAMPLED_COMPUTE,
+	cmdb->setTextureSurfaceBarrier(texC, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledCompute,
 								   TextureSurfaceInfo());
 
 	cmdb->bindStorageBuffer(1, 0, resBuff, 0, MAX_PTR_SIZE);
@@ -2306,7 +2304,7 @@ void main()
 	store(u_bufferAddressWrite, a + b);
 })";
 
-	ShaderPtr shader = createShader(PROG_SRC, ShaderType::COMPUTE, *gr);
+	ShaderPtr shader = createShader(PROG_SRC, ShaderType::kCompute, *gr);
 	ShaderProgramInitInfo sprogInit;
 	sprogInit.m_computeShader = shader;
 	ShaderProgramPtr prog = gr->newShaderProgram(sprogInit);
@@ -2411,7 +2409,7 @@ ANKI_TEST(Gr, RayQuery)
 		init.m_bottomLevel.m_indexType = IndexType::U16;
 		init.m_bottomLevel.m_positionBuffer = vertBuffer;
 		init.m_bottomLevel.m_positionCount = 3;
-		init.m_bottomLevel.m_positionsFormat = Format::R32G32B32_SFLOAT;
+		init.m_bottomLevel.m_positionsFormat = Format::kR32G32B32_Sfloat;
 		init.m_bottomLevel.m_positionStride = 4 * 4;
 
 		blas = gr->newAccelerationStructure(init);
@@ -2603,14 +2601,14 @@ void main()
 		TexturePtr presentTex = gr->acquireNextPresentableTexture();
 		FramebufferPtr fb = createColorFb(*gr, presentTex);
 
-		cmdb->setTextureBarrier(presentTex, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+		cmdb->setTextureBarrier(presentTex, TextureUsageBit::kNone, TextureUsageBit::kFramebufferWrite,
 								TextureSubresourceInfo{});
 
-		cmdb->beginRenderPass(fb, {TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}, {});
-		cmdb->drawArrays(PrimitiveTopology::TRIANGLE_STRIP, 4);
+		cmdb->beginRenderPass(fb, {TextureUsageBit::kFramebufferWrite}, {});
+		cmdb->drawArrays(PrimitiveTopology::kTriangleStrip, 4);
 		cmdb->endRenderPass();
 
-		cmdb->setTextureBarrier(presentTex, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureUsageBit::PRESENT,
+		cmdb->setTextureBarrier(presentTex, TextureUsageBit::kFramebufferWrite, TextureUsageBit::kPresent,
 								TextureSubresourceInfo{});
 
 		cmdb->flush();
@@ -2728,8 +2726,8 @@ enum class GeomWhat
 	BIG_BOX,
 	ROOM,
 	LIGHT,
-	COUNT,
-	FIRST = 0
+	kCount,
+	kFirst = 0
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(GeomWhat)
 
@@ -2757,9 +2755,9 @@ ANKI_TEST(Gr, RayGen)
 		TextureInitInfo inf("T_offscreen#1");
 		inf.m_width = WIDTH;
 		inf.m_height = HEIGHT;
-		inf.m_format = Format::R8G8B8A8_UNORM;
-		inf.m_usage = TextureUsageBit::IMAGE_TRACE_RAYS_READ | TextureUsageBit::IMAGE_TRACE_RAYS_WRITE
-					  | TextureUsageBit::IMAGE_COMPUTE_READ;
+		inf.m_format = Format::kR8G8B8A8_Unorm;
+		inf.m_usage = TextureUsageBit::kImageTraceRaysRead | TextureUsageBit::kImageTraceRaysWrite
+					  | TextureUsageBit::kImageComputeRead;
 
 		offscreenRts[0] = gr->newTexture(inf);
 
@@ -2788,7 +2786,7 @@ void main()
 	imageStore(u_outImg, IVec2(gl_GlobalInvocationID.xy), col);
 })";
 
-		ShaderPtr shader = createShader(src, ShaderType::COMPUTE, *gr);
+		ShaderPtr shader = createShader(src, ShaderType::kCompute, *gr);
 		ShaderProgramInitInfo sprogInit;
 		sprogInit.m_computeShader = shader;
 		copyToPresentProg = gr->newShaderProgram(sprogInit);
@@ -2810,7 +2808,7 @@ void main()
 		Vec3 m_emissiveColor = Vec3(0.0f);
 	};
 
-	Array<Geom, U(GeomWhat::COUNT)> geometries;
+	Array<Geom, U(GeomWhat::kCount)> geometries;
 	geometries[GeomWhat::SMALL_BOX].m_aabb = Aabb(Vec3(130.0f, 0.0f, 65.0f), Vec3(295.0f, 160.0f, 230.0f));
 	geometries[GeomWhat::SMALL_BOX].m_worldRotation = Mat3(Axisang(toRad(-18.0f), Vec3(0.0f, 1.0f, 0.0f)));
 	geometries[GeomWhat::SMALL_BOX].m_worldTransform = Mat3x4(
@@ -2864,14 +2862,14 @@ void main()
 			inf.m_bottomLevel.m_indexCount = g.m_indexCount;
 			inf.m_bottomLevel.m_positionBuffer = g.m_vertexBuffer;
 			inf.m_bottomLevel.m_positionCount = 8;
-			inf.m_bottomLevel.m_positionsFormat = Format::R32G32B32_SFLOAT;
+			inf.m_bottomLevel.m_positionsFormat = Format::kR32G32B32_Sfloat;
 			inf.m_bottomLevel.m_positionStride = sizeof(Vec3);
 
 			g.m_blas = gr->newAccelerationStructure(inf);
 		}
 
 		// TLAS
-		Array<AccelerationStructureInstance, U32(GeomWhat::COUNT)> instances;
+		Array<AccelerationStructureInstance, U32(GeomWhat::kCount)> instances;
 		U32 count = 0;
 		for(Geom& g : geometries)
 		{
@@ -2896,10 +2894,10 @@ void main()
 		BufferInitInfo inf;
 		inf.m_mapAccess = BufferMapAccessBit::WRITE;
 		inf.m_usage = BufferUsageBit::ALL_STORAGE;
-		inf.m_size = sizeof(Model) * U32(GeomWhat::COUNT);
+		inf.m_size = sizeof(Model) * U32(GeomWhat::kCount);
 
 		modelBuffer = gr->newBuffer(inf);
-		WeakArray<Model, PtrSize> models = modelBuffer->map<Model>(0, U32(GeomWhat::COUNT), BufferMapAccessBit::WRITE);
+		WeakArray<Model, PtrSize> models = modelBuffer->map<Model>(0, U32(GeomWhat::kCount), BufferMapAccessBit::WRITE);
 		memset(&models[0], 0, inf.m_size);
 
 		for(GeomWhat i : EnumIterable<GeomWhat>())
@@ -3259,25 +3257,25 @@ void main()
 })";
 
 		ShaderPtr lambertianShader = createShader(
-			StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), lambertianSrc.cstr()), ShaderType::CLOSEST_HIT, *gr);
+			StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), lambertianSrc.cstr()), ShaderType::kClosestHit, *gr);
 		ShaderPtr lambertianRoomShader =
 			createShader(StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), lambertianRoomSrc.cstr()),
-						 ShaderType::CLOSEST_HIT, *gr);
+						 ShaderType::kClosestHit, *gr);
 		ShaderPtr emissiveShader = createShader(
-			StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), emissiveSrc.cstr()), ShaderType::CLOSEST_HIT, *gr);
+			StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), emissiveSrc.cstr()), ShaderType::kClosestHit, *gr);
 
 		ShaderPtr shadowAhitShader = createShader(
-			StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), shadowAhitSrc.cstr()), ShaderType::ANY_HIT, *gr);
+			StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), shadowAhitSrc.cstr()), ShaderType::kAnyHit, *gr);
 		ShaderPtr shadowChitShader = createShader(
-			StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), shadowChitSrc.cstr()), ShaderType::CLOSEST_HIT, *gr);
+			StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), shadowChitSrc.cstr()), ShaderType::kClosestHit, *gr);
 		ShaderPtr missShader =
-			createShader(StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), missSrc.cstr()), ShaderType::MISS, *gr);
+			createShader(StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), missSrc.cstr()), ShaderType::kMiss, *gr);
 
 		ShaderPtr shadowMissShader = createShader(
-			StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), shadowMissSrc.cstr()), ShaderType::MISS, *gr);
+			StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), shadowMissSrc.cstr()), ShaderType::kMiss, *gr);
 
 		ShaderPtr rayGenShader = createShader(StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), rayGenSrc.cstr()),
-											  ShaderType::RAY_GEN, *gr);
+											  ShaderType::kRayGen, *gr);
 
 		Array<RayTracingHitGroup, 4> hitGroups;
 		hitGroups[0].m_closestHitShader = lambertianShader;
@@ -3302,7 +3300,7 @@ void main()
 	// Create the SBT
 	BufferPtr sbt;
 	{
-		const U32 recordCount = 1 + 2 + U32(GeomWhat::COUNT) * 2;
+		const U32 recordCount = 1 + 2 + U32(GeomWhat::kCount) * 2;
 		const U32 sbtRecordSize = gr->getDeviceCapabilities().m_sbtRecordAlignment;
 
 		BufferInitInfo inf;
@@ -3450,10 +3448,10 @@ void main()
 			offscreenHistoryView = gr->newTextureView(inf);
 		}
 
-		cmdb->setTextureBarrier(offscreenRts[i & 1], TextureUsageBit::NONE, TextureUsageBit::IMAGE_TRACE_RAYS_WRITE,
+		cmdb->setTextureBarrier(offscreenRts[i & 1], TextureUsageBit::kNone, TextureUsageBit::kImageTraceRaysWrite,
 								TextureSubresourceInfo());
-		cmdb->setTextureBarrier(offscreenRts[(i + 1) & 1], TextureUsageBit::IMAGE_COMPUTE_READ,
-								TextureUsageBit::IMAGE_TRACE_RAYS_READ, TextureSubresourceInfo());
+		cmdb->setTextureBarrier(offscreenRts[(i + 1) & 1], TextureUsageBit::kImageComputeRead,
+								TextureUsageBit::kImageTraceRaysRead, TextureSubresourceInfo());
 
 		cmdb->bindStorageBuffer(0, 0, modelBuffer, 0, MAX_PTR_SIZE);
 		cmdb->bindStorageBuffer(0, 1, lightBuffer, 0, MAX_PTR_SIZE);
@@ -3472,12 +3470,12 @@ void main()
 		cmdb->setPushConstants(&pc, sizeof(pc));
 
 		const U32 sbtRecordSize = gr->getDeviceCapabilities().m_sbtRecordAlignment;
-		cmdb->traceRays(sbt, 0, sbtRecordSize, U32(GeomWhat::COUNT) * 2, 2, WIDTH, HEIGHT, 1);
+		cmdb->traceRays(sbt, 0, sbtRecordSize, U32(GeomWhat::kCount) * 2, 2, WIDTH, HEIGHT, 1);
 
 		// Copy to present
-		cmdb->setTextureBarrier(offscreenRts[i & 1], TextureUsageBit::IMAGE_TRACE_RAYS_WRITE,
-								TextureUsageBit::IMAGE_COMPUTE_READ, TextureSubresourceInfo());
-		cmdb->setTextureBarrier(presentTex, TextureUsageBit::NONE, TextureUsageBit::IMAGE_COMPUTE_WRITE,
+		cmdb->setTextureBarrier(offscreenRts[i & 1], TextureUsageBit::kImageTraceRaysWrite,
+								TextureUsageBit::kImageComputeRead, TextureSubresourceInfo());
+		cmdb->setTextureBarrier(presentTex, TextureUsageBit::kNone, TextureUsageBit::kImageComputeWrite,
 								TextureSubresourceInfo());
 
 		cmdb->bindImage(0, 0, offscreenView);
@@ -3488,7 +3486,7 @@ void main()
 		const U32 sizeY = (HEIGHT + 8 - 1) / 8;
 		cmdb->dispatchCompute(sizeX, sizeY, 1);
 
-		cmdb->setTextureBarrier(presentTex, TextureUsageBit::IMAGE_COMPUTE_WRITE, TextureUsageBit::PRESENT,
+		cmdb->setTextureBarrier(presentTex, TextureUsageBit::kImageComputeWrite, TextureUsageBit::kPresent,
 								TextureSubresourceInfo());
 
 		cmdb->flush();
@@ -3529,7 +3527,7 @@ void main()
 	}
 })";
 
-	ShaderPtr shader = createShader(PROG_SRC, ShaderType::COMPUTE, *gr);
+	ShaderPtr shader = createShader(PROG_SRC, ShaderType::kCompute, *gr);
 	ShaderProgramInitInfo sprogInit;
 	sprogInit.m_computeShader = shader;
 	ShaderProgramPtr incrementProg = gr->newShaderProgram(sprogInit);
@@ -3557,7 +3555,7 @@ void main()
 	atomicCompSwap(u_counters[newGlobalInvocationID], expectedVal, 4u);
 })";
 
-	shader = createShader(CHECK_SRC, ShaderType::COMPUTE, *gr);
+	shader = createShader(CHECK_SRC, ShaderType::kCompute, *gr);
 	sprogInit.m_computeShader = shader;
 	ShaderProgramPtr checkProg = gr->newShaderProgram(sprogInit);
 

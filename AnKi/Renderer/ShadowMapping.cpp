@@ -83,7 +83,7 @@ Error ShadowMapping::initScratch()
 		// FB
 		m_scratch.m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
 		m_scratch.m_fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0f;
-		m_scratch.m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
+		m_scratch.m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
 		m_scratch.m_fbDescr.bake();
 	}
 
@@ -102,15 +102,15 @@ Error ShadowMapping::initAtlas()
 		m_atlas.m_tileCountBothAxis = getConfig().getRShadowMappingTileCountPerRowOrColumn();
 
 		// RT
-		const Format texFormat = (ANKI_EVSM4) ? Format::R32G32B32A32_SFLOAT : Format::R32G32_SFLOAT;
-		TextureUsageBit usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE;
-		usage |= (preferCompute) ? TextureUsageBit::IMAGE_COMPUTE_WRITE : TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT;
+		const Format texFormat = (ANKI_EVSM4) ? Format::kR32G32B32A32_Sfloat : Format::kR32G32_Sfloat;
+		TextureUsageBit usage = TextureUsageBit::kSampledFragment | TextureUsageBit::kSampledCompute;
+		usage |= (preferCompute) ? TextureUsageBit::kImageComputeWrite : TextureUsageBit::kAllFramebuffer;
 		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
 			m_atlas.m_tileResolution * m_atlas.m_tileCountBothAxis,
 			m_atlas.m_tileResolution * m_atlas.m_tileCountBothAxis, texFormat, usage, "SM atlas");
 		ClearValue clearVal;
 		clearVal.m_colorf[0] = 1.0f;
-		m_atlas.m_tex = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::SAMPLED_FRAGMENT, clearVal);
+		m_atlas.m_tex = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::kSampledFragment, clearVal);
 	}
 
 	// Tiles
@@ -182,7 +182,7 @@ void ShadowMapping::runAtlas(RenderPassWorkContext& rgraphCtx)
 
 	// Continue
 	cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);
-	rgraphCtx.bindTexture(0, 2, m_scratch.m_rt, TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+	rgraphCtx.bindTexture(0, 2, m_scratch.m_rt, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
 	if(getConfig().getRPreferCompute())
 	{
@@ -198,7 +198,7 @@ void ShadowMapping::runAtlas(RenderPassWorkContext& rgraphCtx)
 	{
 		cmdb->setViewport(0, 0, m_atlas.m_tex->getWidth(), m_atlas.m_tex->getHeight());
 
-		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6, m_atlas.m_resolveWorkItems.getSize());
+		cmdb->drawArrays(PrimitiveTopology::kTriangles, 6, m_atlas.m_resolveWorkItems.getSize());
 	}
 }
 
@@ -268,8 +268,8 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 				runShadowMapping(rgraphCtx);
 			});
 
-			TextureSubresourceInfo subresource = TextureSubresourceInfo(DepthStencilAspectBit::DEPTH);
-			pass.newDependency({m_scratch.m_rt, TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT, subresource});
+			TextureSubresourceInfo subresource = TextureSubresourceInfo(DepthStencilAspectBit::kDepth);
+			pass.newDependency({m_scratch.m_rt, TextureUsageBit::kAllFramebuffer, subresource});
 		}
 
 		// Atlas pass
@@ -280,7 +280,7 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 			}
 			else
 			{
-				m_atlas.m_rt = rgraph.importRenderTarget(m_atlas.m_tex, TextureUsageBit::SAMPLED_FRAGMENT);
+				m_atlas.m_rt = rgraph.importRenderTarget(m_atlas.m_tex, TextureUsageBit::kSampledFragment);
 				m_atlas.m_rtImportedOnce = true;
 			}
 
@@ -292,9 +292,9 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 					runAtlas(rgraphCtx);
 				});
 
-				pass.newDependency(RenderPassDependency(m_scratch.m_rt, TextureUsageBit::SAMPLED_COMPUTE,
-														TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)));
-				pass.newDependency(RenderPassDependency(m_atlas.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
+				pass.newDependency(RenderPassDependency(m_scratch.m_rt, TextureUsageBit::kSampledCompute,
+														TextureSubresourceInfo(DepthStencilAspectBit::kDepth)));
+				pass.newDependency(RenderPassDependency(m_atlas.m_rt, TextureUsageBit::kImageComputeWrite));
 			}
 			else
 			{
@@ -305,11 +305,10 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 					runAtlas(rgraphCtx);
 				});
 
-				pass.newDependency(RenderPassDependency(m_scratch.m_rt, TextureUsageBit::SAMPLED_FRAGMENT,
-														TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)));
-				pass.newDependency(
-					RenderPassDependency(m_atlas.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ
-														   | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
+				pass.newDependency(RenderPassDependency(m_scratch.m_rt, TextureUsageBit::kSampledFragment,
+														TextureSubresourceInfo(DepthStencilAspectBit::kDepth)));
+				pass.newDependency(RenderPassDependency(m_atlas.m_rt, TextureUsageBit::kFramebufferRead
+																		  | TextureUsageBit::kFramebufferWrite));
 			}
 		}
 	}
@@ -322,7 +321,7 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 		}
 		else
 		{
-			m_atlas.m_rt = rgraph.importRenderTarget(m_atlas.m_tex, TextureUsageBit::SAMPLED_FRAGMENT);
+			m_atlas.m_rt = rgraph.importRenderTarget(m_atlas.m_tex, TextureUsageBit::kSampledFragment);
 			m_atlas.m_rtImportedOnce = true;
 		}
 	}

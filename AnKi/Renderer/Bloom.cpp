@@ -40,7 +40,7 @@ Error Bloom::initExposure()
 
 	// Create RT info
 	m_exposure.m_rtDescr =
-		m_r->create2DRenderTargetDescription(m_exposure.m_width, m_exposure.m_height, RT_PIXEL_FORMAT, "Bloom Exp");
+		m_r->create2DRenderTargetDescription(m_exposure.m_width, m_exposure.m_height, kRtPixelFormat, "Bloom Exp");
 	m_exposure.m_rtDescr.bake();
 
 	// init shaders
@@ -64,12 +64,12 @@ Error Bloom::initExposure()
 
 Error Bloom::initUpscale()
 {
-	m_upscale.m_width = m_r->getPostProcessResolution().x() / BLOOM_FRACTION;
-	m_upscale.m_height = m_r->getPostProcessResolution().y() / BLOOM_FRACTION;
+	m_upscale.m_width = m_r->getPostProcessResolution().x() / kBloomFraction;
+	m_upscale.m_height = m_r->getPostProcessResolution().y() / kBloomFraction;
 
 	// Create RT descr
 	m_upscale.m_rtDescr =
-		m_r->create2DRenderTargetDescription(m_upscale.m_width, m_upscale.m_height, RT_PIXEL_FORMAT, "Bloom Upscale");
+		m_r->create2DRenderTargetDescription(m_upscale.m_width, m_upscale.m_height, kRtPixelFormat, "Bloom Upscale");
 	m_upscale.m_rtDescr.bake();
 
 	// init shaders
@@ -114,9 +114,9 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 		{
 			ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("Bloom Main");
 
-			rpass.newDependency(RenderPassDependency(m_r->getDownscaleBlur().getRt(), TextureUsageBit::SAMPLED_COMPUTE,
+			rpass.newDependency(RenderPassDependency(m_r->getDownscaleBlur().getRt(), TextureUsageBit::kSampledCompute,
 													 inputTexSubresource));
-			rpass.newDependency(RenderPassDependency(m_runCtx.m_exposureRt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
+			rpass.newDependency(RenderPassDependency(m_runCtx.m_exposureRt, TextureUsageBit::kImageComputeWrite));
 
 			prpass = &rpass;
 		}
@@ -125,10 +125,9 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("Bloom Main");
 			rpass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_exposureRt});
 
-			rpass.newDependency(RenderPassDependency(m_r->getDownscaleBlur().getRt(), TextureUsageBit::SAMPLED_FRAGMENT,
+			rpass.newDependency(RenderPassDependency(m_r->getDownscaleBlur().getRt(), TextureUsageBit::kSampledFragment,
 													 inputTexSubresource));
-			rpass.newDependency(
-				RenderPassDependency(m_runCtx.m_exposureRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
+			rpass.newDependency(RenderPassDependency(m_runCtx.m_exposureRt, TextureUsageBit::kFramebufferWrite));
 
 			prpass = &rpass;
 		}
@@ -160,7 +159,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			{
 				cmdb->setViewport(0, 0, m_exposure.m_width, m_exposure.m_height);
 
-				cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
+				cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
 			}
 		});
 	}
@@ -176,8 +175,8 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 		{
 			ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("Bloom Upscale");
 
-			rpass.newDependency({m_runCtx.m_exposureRt, TextureUsageBit::SAMPLED_COMPUTE});
-			rpass.newDependency({m_runCtx.m_upscaleRt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
+			rpass.newDependency({m_runCtx.m_exposureRt, TextureUsageBit::kSampledCompute});
+			rpass.newDependency({m_runCtx.m_upscaleRt, TextureUsageBit::kImageComputeWrite});
 
 			prpass = &rpass;
 		}
@@ -186,8 +185,8 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("Bloom Upscale");
 			rpass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_upscaleRt});
 
-			rpass.newDependency({m_runCtx.m_exposureRt, TextureUsageBit::SAMPLED_FRAGMENT});
-			rpass.newDependency({m_runCtx.m_upscaleRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+			rpass.newDependency({m_runCtx.m_exposureRt, TextureUsageBit::kSampledFragment});
+			rpass.newDependency({m_runCtx.m_upscaleRt, TextureUsageBit::kFramebufferWrite});
 
 			prpass = &rpass;
 		}
@@ -211,7 +210,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			{
 				cmdb->setViewport(0, 0, m_upscale.m_width, m_upscale.m_height);
 
-				cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
+				cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
 			}
 		});
 	}

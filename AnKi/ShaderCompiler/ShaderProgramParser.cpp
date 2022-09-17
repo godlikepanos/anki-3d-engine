@@ -15,7 +15,7 @@ namespace anki {
 	ANKI_SHADER_COMPILER_LOGE("%s: " msg_ ": %s", fname.cstr(), line.cstr()); \
 	return Error::USER_DATA
 
-inline constexpr Array<CString, U32(ShaderType::COUNT)> SHADER_STAGE_NAMES = {
+inline constexpr Array<CString, U32(ShaderType::kCount)> SHADER_STAGE_NAMES = {
 	{"VERTEX", "TESSELLATION_CONTROL", "TESSELLATION_EVALUATION", "GEOMETRY", "FRAGMENT", "COMPUTE", "RAY_GEN",
 	 "ANY_HIT", "CLOSEST_HIT", "MISS", "INTERSECTION", "CALLABLE"}};
 
@@ -329,53 +329,53 @@ Error ShaderProgramParser::parsePragmaStart(const StringAuto* begin, const Strin
 		ANKI_PP_ERROR_MALFORMED();
 	}
 
-	ShaderType shaderType = ShaderType::COUNT;
+	ShaderType shaderType = ShaderType::kCount;
 	if(*begin == "vert")
 	{
-		shaderType = ShaderType::VERTEX;
+		shaderType = ShaderType::kVertex;
 	}
 	else if(*begin == "tessc")
 	{
-		shaderType = ShaderType::TESSELLATION_CONTROL;
+		shaderType = ShaderType::kTessellationControl;
 	}
 	else if(*begin == "tesse")
 	{
 	}
 	else if(*begin == "geom")
 	{
-		shaderType = ShaderType::GEOMETRY;
+		shaderType = ShaderType::kGeometry;
 	}
 	else if(*begin == "frag")
 	{
-		shaderType = ShaderType::FRAGMENT;
+		shaderType = ShaderType::kFragment;
 	}
 	else if(*begin == "comp")
 	{
-		shaderType = ShaderType::COMPUTE;
+		shaderType = ShaderType::kCompute;
 	}
 	else if(*begin == "rgen")
 	{
-		shaderType = ShaderType::RAY_GEN;
+		shaderType = ShaderType::kRayGen;
 	}
 	else if(*begin == "ahit")
 	{
-		shaderType = ShaderType::ANY_HIT;
+		shaderType = ShaderType::kAnyHit;
 	}
 	else if(*begin == "chit")
 	{
-		shaderType = ShaderType::CLOSEST_HIT;
+		shaderType = ShaderType::kClosestHit;
 	}
 	else if(*begin == "miss")
 	{
-		shaderType = ShaderType::MISS;
+		shaderType = ShaderType::kMiss;
 	}
 	else if(*begin == "int")
 	{
-		shaderType = ShaderType::INTERSECTION;
+		shaderType = ShaderType::kIntersection;
 	}
 	else if(*begin == "call")
 	{
-		shaderType = ShaderType::CALLABLE;
+		shaderType = ShaderType::kCallable;
 	}
 	else
 	{
@@ -1137,23 +1137,23 @@ Error ShaderProgramParser::parse()
 			return Error::USER_DATA;
 		}
 
-		if(!!(m_shaderTypes & ShaderTypeBit::COMPUTE))
+		if(!!(m_shaderTypes & ShaderTypeBit::kCompute))
 		{
-			if(m_shaderTypes != ShaderTypeBit::COMPUTE)
+			if(m_shaderTypes != ShaderTypeBit::kCompute)
 			{
 				ANKI_SHADER_COMPILER_LOGE("Can't combine compute shader with other types of shaders");
 				return Error::USER_DATA;
 			}
 		}
-		else if(!!(m_shaderTypes & ShaderTypeBit::ALL_GRAPHICS))
+		else if(!!(m_shaderTypes & ShaderTypeBit::kAllGraphics))
 		{
-			if(!(m_shaderTypes & ShaderTypeBit::VERTEX))
+			if(!(m_shaderTypes & ShaderTypeBit::kVertex))
 			{
 				ANKI_SHADER_COMPILER_LOGE("Missing vertex shader");
 				return Error::USER_DATA;
 			}
 
-			if(!(m_shaderTypes & ShaderTypeBit::FRAGMENT))
+			if(!(m_shaderTypes & ShaderTypeBit::kFragment))
 			{
 				ANKI_SHADER_COMPILER_LOGE("Missing fragment shader");
 				return Error::USER_DATA;

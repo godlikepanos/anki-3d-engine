@@ -19,13 +19,13 @@ inline void CommandBufferImpl::setStencilCompareMaskInternal(FaceSelectionBit fa
 
 	VkStencilFaceFlags flags = 0;
 
-	if(!!(face & FaceSelectionBit::FRONT) && m_stencilCompareMasks[0] != mask)
+	if(!!(face & FaceSelectionBit::kFront) && m_stencilCompareMasks[0] != mask)
 	{
 		m_stencilCompareMasks[0] = mask;
 		flags = VK_STENCIL_FACE_FRONT_BIT;
 	}
 
-	if(!!(face & FaceSelectionBit::BACK) && m_stencilCompareMasks[1] != mask)
+	if(!!(face & FaceSelectionBit::kBack) && m_stencilCompareMasks[1] != mask)
 	{
 		m_stencilCompareMasks[1] = mask;
 		flags |= VK_STENCIL_FACE_BACK_BIT;
@@ -43,13 +43,13 @@ inline void CommandBufferImpl::setStencilWriteMaskInternal(FaceSelectionBit face
 
 	VkStencilFaceFlags flags = 0;
 
-	if(!!(face & FaceSelectionBit::FRONT) && m_stencilWriteMasks[0] != mask)
+	if(!!(face & FaceSelectionBit::kFront) && m_stencilWriteMasks[0] != mask)
 	{
 		m_stencilWriteMasks[0] = mask;
 		flags = VK_STENCIL_FACE_FRONT_BIT;
 	}
 
-	if(!!(face & FaceSelectionBit::BACK) && m_stencilWriteMasks[1] != mask)
+	if(!!(face & FaceSelectionBit::kBack) && m_stencilWriteMasks[1] != mask)
 	{
 		m_stencilWriteMasks[1] = mask;
 		flags |= VK_STENCIL_FACE_BACK_BIT;
@@ -67,13 +67,13 @@ inline void CommandBufferImpl::setStencilReferenceInternal(FaceSelectionBit face
 
 	VkStencilFaceFlags flags = 0;
 
-	if(!!(face & FaceSelectionBit::FRONT) && m_stencilReferenceMasks[0] != ref)
+	if(!!(face & FaceSelectionBit::kFront) && m_stencilReferenceMasks[0] != ref)
 	{
 		m_stencilReferenceMasks[0] = ref;
 		flags = VK_STENCIL_FACE_FRONT_BIT;
 	}
 
-	if(!!(face & FaceSelectionBit::BACK) && m_stencilReferenceMasks[1] != ref)
+	if(!!(face & FaceSelectionBit::kBack) && m_stencilReferenceMasks[1] != ref)
 	{
 		m_stencilWriteMasks[1] = ref;
 		flags |= VK_STENCIL_FACE_BACK_BIT;
@@ -129,8 +129,8 @@ inline void CommandBufferImpl::setTextureBarrierRangeInternal(const TexturePtr& 
 	const TextureImpl& impl = static_cast<const TextureImpl&>(*tex);
 	ANKI_ASSERT(impl.usageValid(prevUsage));
 	ANKI_ASSERT(impl.usageValid(nextUsage));
-	ANKI_ASSERT(((nextUsage & TextureUsageBit::GENERATE_MIPMAPS) == TextureUsageBit::GENERATE_MIPMAPS
-				 || (nextUsage & TextureUsageBit::GENERATE_MIPMAPS) == TextureUsageBit::NONE)
+	ANKI_ASSERT(((nextUsage & TextureUsageBit::kGenerateMipmaps) == TextureUsageBit::kGenerateMipmaps
+				 || (nextUsage & TextureUsageBit::kGenerateMipmaps) == TextureUsageBit::kNone)
 				&& "GENERATE_MIPMAPS should be alone");
 
 	VkPipelineStageFlags srcStage;
@@ -157,7 +157,7 @@ inline void CommandBufferImpl::setTextureBarrierInternal(const TexturePtr& tex, 
 
 	// The transition of the non zero mip levels happens inside CommandBufferImpl::generateMipmapsX so limit the
 	// subresource
-	if(nextUsage == TextureUsageBit::GENERATE_MIPMAPS)
+	if(nextUsage == TextureUsageBit::kGenerateMipmaps)
 	{
 		ANKI_ASSERT(impl.isSubresourceGoodForMipmapGeneration(subresource));
 
@@ -176,7 +176,7 @@ inline void CommandBufferImpl::setTextureSurfaceBarrierInternal(const TexturePtr
 																TextureUsageBit nextUsage,
 																const TextureSurfaceInfo& surf)
 {
-	if(ANKI_UNLIKELY(surf.m_level > 0 && nextUsage == TextureUsageBit::GENERATE_MIPMAPS))
+	if(ANKI_UNLIKELY(surf.m_level > 0 && nextUsage == TextureUsageBit::kGenerateMipmaps))
 	{
 		// This transition happens inside CommandBufferImpl::generateMipmapsX. No need to do something
 		return;
@@ -194,7 +194,7 @@ inline void CommandBufferImpl::setTextureVolumeBarrierInternal(const TexturePtr&
 {
 	if(vol.m_level > 0)
 	{
-		ANKI_ASSERT(!(nextUsage & TextureUsageBit::GENERATE_MIPMAPS)
+		ANKI_ASSERT(!(nextUsage & TextureUsageBit::kGenerateMipmaps)
 					&& "This transition happens inside CommandBufferImpl::generateMipmaps");
 	}
 
@@ -733,8 +733,8 @@ inline void CommandBufferImpl::drawcallCommon()
 
 	// Some checks
 #if ANKI_ENABLE_ASSERTIONS
-	if(m_state.getPrimitiveTopology() == PrimitiveTopology::LINES
-	   || m_state.getPrimitiveTopology() == PrimitiveTopology::LINE_STRIP)
+	if(m_state.getPrimitiveTopology() == PrimitiveTopology::kLines
+	   || m_state.getPrimitiveTopology() == PrimitiveTopology::kLineStip)
 	{
 		ANKI_ASSERT(m_lineWidthSet == true);
 	}
@@ -861,7 +861,7 @@ inline void CommandBufferImpl::bindShaderProgramInternal(const ShaderProgramPtr&
 		m_rtProg = nullptr; // See above
 		m_state.bindShaderProgram(&impl);
 	}
-	else if(!!(impl.getStages() & ShaderTypeBit::COMPUTE))
+	else if(!!(impl.getStages() & ShaderTypeBit::kCompute))
 	{
 		m_computeProg = &impl;
 		m_graphicsProg = nullptr; // See comment in the if()
@@ -873,7 +873,7 @@ inline void CommandBufferImpl::bindShaderProgramInternal(const ShaderProgramPtr&
 	}
 	else
 	{
-		ANKI_ASSERT(!!(impl.getStages() & ShaderTypeBit::ALL_RAY_TRACING));
+		ANKI_ASSERT(!!(impl.getStages() & ShaderTypeBit::kAllRayTracing));
 		m_computeProg = nullptr;
 		m_graphicsProg = nullptr;
 		m_rtProg = &impl;

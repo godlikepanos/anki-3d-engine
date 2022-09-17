@@ -69,14 +69,14 @@ public:
 	}
 
 private:
-	Array<RenderTargetDescription, GBUFFER_COLOR_ATTACHMENT_COUNT> m_colorRtDescrs;
+	Array<RenderTargetDescription, kGBufferColorRenderTargetCount> m_colorRtDescrs;
 	Array<TexturePtr, 2> m_depthRts;
 	FramebufferDescription m_fbDescr;
 
 	class
 	{
 	public:
-		Array<RenderTargetHandle, GBUFFER_COLOR_ATTACHMENT_COUNT> m_colorRts;
+		Array<RenderTargetHandle, kGBufferColorRenderTargetCount> m_colorRts;
 		RenderTargetHandle m_crntFrameDepthRt;
 		RenderTargetHandle m_prevFrameDepthRt;
 	} m_runCtx;

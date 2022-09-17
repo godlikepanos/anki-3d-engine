@@ -266,11 +266,11 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 			mover->setLocalRotation(Mat3x4(Vec3(0.0f), angles));
 		}
 
-		static TouchPointer rotateCameraTouch = TouchPointer::COUNT;
+		static TouchPointer rotateCameraTouch = TouchPointer::kCount;
 		static Vec2 rotateEventInitialPos = Vec2(0.0f);
 		for(TouchPointer touch : EnumIterable<TouchPointer>())
 		{
-			if(rotateCameraTouch == TouchPointer::COUNT && in.getTouchPointer(touch) == 1
+			if(rotateCameraTouch == TouchPointer::kCount && in.getTouchPointer(touch) == 1
 			   && in.getTouchPointerNdcPosition(touch).x() > 0.1f)
 			{
 				rotateCameraTouch = touch;
@@ -279,12 +279,12 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 			}
 		}
 
-		if(rotateCameraTouch != TouchPointer::COUNT && in.getTouchPointer(rotateCameraTouch) == 0)
+		if(rotateCameraTouch != TouchPointer::kCount && in.getTouchPointer(rotateCameraTouch) == 0)
 		{
-			rotateCameraTouch = TouchPointer::COUNT;
+			rotateCameraTouch = TouchPointer::kCount;
 		}
 
-		if(rotateCameraTouch != TouchPointer::COUNT && in.getTouchPointer(rotateCameraTouch) > 1)
+		if(rotateCameraTouch != TouchPointer::kCount && in.getTouchPointer(rotateCameraTouch) > 1)
 		{
 			Vec2 velocity =
 				in.getTouchPointerNdcPosition(rotateCameraTouch) * getWindow().getAspectRatio() - rotateEventInitialPos;
@@ -298,11 +298,11 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 			mover->setLocalRotation(Mat3x4(Vec3(0.0f), angles));
 		}
 
-		static TouchPointer moveCameraTouch = TouchPointer::COUNT;
+		static TouchPointer moveCameraTouch = TouchPointer::kCount;
 		static Vec2 moveEventInitialPos = Vec2(0.0f);
 		for(TouchPointer touch : EnumIterable<TouchPointer>())
 		{
-			if(moveCameraTouch == TouchPointer::COUNT && in.getTouchPointer(touch) == 1
+			if(moveCameraTouch == TouchPointer::kCount && in.getTouchPointer(touch) == 1
 			   && in.getTouchPointerNdcPosition(touch).x() < -0.1f)
 			{
 				moveCameraTouch = touch;
@@ -311,12 +311,12 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 			}
 		}
 
-		if(moveCameraTouch != TouchPointer::COUNT && in.getTouchPointer(moveCameraTouch) == 0)
+		if(moveCameraTouch != TouchPointer::kCount && in.getTouchPointer(moveCameraTouch) == 0)
 		{
-			moveCameraTouch = TouchPointer::COUNT;
+			moveCameraTouch = TouchPointer::kCount;
 		}
 
-		if(moveCameraTouch != TouchPointer::COUNT && in.getTouchPointer(moveCameraTouch) > 0)
+		if(moveCameraTouch != TouchPointer::kCount && in.getTouchPointer(moveCameraTouch) > 0)
 		{
 			Vec2 velocity =
 				in.getTouchPointerNdcPosition(moveCameraTouch) * getWindow().getAspectRatio() - moveEventInitialPos;

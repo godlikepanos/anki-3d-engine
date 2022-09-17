@@ -129,10 +129,10 @@ private:
 	public:
 		U32 m_bufferBinding : 8;
 		U32 m_relativeOffset : 24;
-		Format m_format = Format::NONE;
+		Format m_format = Format::kNone;
 	};
 
-	Array<VertexAttributeInfo, U(VertexAttributeId::COUNT)> m_vertexAttributeInfos;
+	Array<VertexAttributeInfo, U(VertexAttributeId::kCount)> m_vertexAttributeInfos;
 
 	class VertexBufferInfo
 	{
@@ -154,7 +154,7 @@ private:
 	};
 
 	Array<IndexBufferInfo, MAX_LOD_COUNT> m_indexBufferInfos;
-	BitSet<U(VertexAttributeId::COUNT)> m_presentVertexAttributes = {false};
+	BitSet<U(VertexAttributeId::kCount)> m_presentVertexAttributes = {false};
 	IndexType m_indexType : 2;
 	// End cached data
 

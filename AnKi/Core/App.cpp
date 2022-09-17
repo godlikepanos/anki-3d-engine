@@ -268,7 +268,7 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	//
 	// Mali HW counters
 	//
-	if(m_gr->getDeviceCapabilities().m_gpuVendor == GpuVendor::ARM && m_config->getCoreMaliHwCounters())
+	if(m_gr->getDeviceCapabilities().m_gpuVendor == GpuVendor::kArm && m_config->getCoreMaliHwCounters())
 	{
 		m_maliHwCounters = m_heapAlloc.newInstance<MaliHwCounters>(m_heapAlloc);
 	}

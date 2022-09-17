@@ -60,14 +60,14 @@ Error VolumetricLightingAccumulation::init()
 
 	// Create RTs
 	TextureInitInfo texinit =
-		m_r->create2DRenderTargetInitInfo(m_volumeSize[0], m_volumeSize[1], Format::R16G16B16A16_SFLOAT,
-										  TextureUsageBit::IMAGE_COMPUTE_READ | TextureUsageBit::IMAGE_COMPUTE_WRITE
-											  | TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE,
+		m_r->create2DRenderTargetInitInfo(m_volumeSize[0], m_volumeSize[1], Format::kR16G16B16A16_Sfloat,
+										  TextureUsageBit::kImageComputeRead | TextureUsageBit::kImageComputeWrite
+											  | TextureUsageBit::kSampledFragment | TextureUsageBit::kSampledCompute,
 										  "VolLight");
 	texinit.m_depth = m_volumeSize[2];
-	texinit.m_type = TextureType::_3D;
-	m_rtTextures[0] = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::SAMPLED_FRAGMENT);
-	m_rtTextures[1] = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::SAMPLED_FRAGMENT);
+	texinit.m_type = TextureType::k3D;
+	m_rtTextures[0] = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::kSampledFragment);
+	m_rtTextures[1] = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::kSampledFragment);
 
 	return Error::NONE;
 }
@@ -78,8 +78,8 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 
 	const U readRtIdx = m_r->getFrameCount() & 1;
 
-	m_runCtx.m_rts[0] = rgraph.importRenderTarget(m_rtTextures[readRtIdx], TextureUsageBit::SAMPLED_FRAGMENT);
-	m_runCtx.m_rts[1] = rgraph.importRenderTarget(m_rtTextures[!readRtIdx], TextureUsageBit::NONE);
+	m_runCtx.m_rts[0] = rgraph.importRenderTarget(m_rtTextures[readRtIdx], TextureUsageBit::kSampledFragment);
+	m_runCtx.m_rts[1] = rgraph.importRenderTarget(m_rtTextures[!readRtIdx], TextureUsageBit::kNone);
 
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Vol light");
 
@@ -87,15 +87,15 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 		run(ctx, rgraphCtx);
 	});
 
-	pass.newDependency(RenderPassDependency(m_runCtx.m_rts[0], TextureUsageBit::SAMPLED_COMPUTE));
-	pass.newDependency(RenderPassDependency(m_runCtx.m_rts[1], TextureUsageBit::IMAGE_COMPUTE_WRITE));
+	pass.newDependency(RenderPassDependency(m_runCtx.m_rts[0], TextureUsageBit::kSampledCompute));
+	pass.newDependency(RenderPassDependency(m_runCtx.m_rts[1], TextureUsageBit::kImageComputeWrite));
 	pass.newDependency(
-		RenderPassDependency(m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::SAMPLED_COMPUTE));
+		RenderPassDependency(m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::kSampledCompute));
 
 	pass.newDependency(
 		RenderPassDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::STORAGE_COMPUTE_READ));
 
-	m_r->getIndirectDiffuseProbes().setRenderGraphDependencies(ctx, pass, TextureUsageBit::SAMPLED_COMPUTE);
+	m_r->getIndirectDiffuseProbes().setRenderGraphDependencies(ctx, pass, TextureUsageBit::kSampledCompute);
 }
 
 void VolumetricLightingAccumulation::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)

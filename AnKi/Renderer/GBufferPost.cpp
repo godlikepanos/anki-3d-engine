@@ -68,12 +68,10 @@ void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 
 	rpass.setFramebufferInfo(m_fbDescr, {m_r->getGBuffer().getColorRt(0), m_r->getGBuffer().getColorRt(1)});
 
-	rpass.newDependency(
-		RenderPassDependency(m_r->getGBuffer().getColorRt(0), TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT));
-	rpass.newDependency(
-		RenderPassDependency(m_r->getGBuffer().getColorRt(1), TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT));
-	rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_FRAGMENT,
-											 TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)));
+	rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(0), TextureUsageBit::kAllFramebuffer));
+	rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(1), TextureUsageBit::kAllFramebuffer));
+	rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::kSampledFragment,
+											 TextureSubresourceInfo(DepthStencilAspectBit::kDepth)));
 	rpass.newDependency(
 		RenderPassDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::STORAGE_FRAGMENT_READ));
 }
@@ -86,13 +84,13 @@ void GBufferPost::run(const RenderingContext& ctx, RenderPassWorkContext& rgraph
 	cmdb->setViewport(0, 0, m_r->getInternalResolution().x(), m_r->getInternalResolution().y());
 	cmdb->bindShaderProgram(m_grProg);
 
-	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::SRC_ALPHA, BlendFactor::ZERO, BlendFactor::ONE);
-	cmdb->setBlendFactors(1, BlendFactor::ONE, BlendFactor::SRC_ALPHA, BlendFactor::ZERO, BlendFactor::ONE);
+	cmdb->setBlendFactors(0, BlendFactor::kOne, BlendFactor::kSrcAlpha, BlendFactor::kZero, BlendFactor::kOne);
+	cmdb->setBlendFactors(1, BlendFactor::kOne, BlendFactor::kSrcAlpha, BlendFactor::kZero, BlendFactor::kOne);
 
 	// Bind all
 	cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
 
-	rgraphCtx.bindTexture(0, 1, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+	rgraphCtx.bindTexture(0, 1, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
 	cmdb->bindSampler(0, 2, m_r->getSamplers().m_trilinearRepeat);
 
@@ -108,11 +106,11 @@ void GBufferPost::run(const RenderingContext& ctx, RenderPassWorkContext& rgraph
 	bindStorage(cmdb, 0, 7, rsrc.m_clustersToken);
 
 	// Draw
-	cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
+	cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
 
 	// Restore state
-	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
-	cmdb->setBlendFactors(1, BlendFactor::ONE, BlendFactor::ZERO);
+	cmdb->setBlendFactors(0, BlendFactor::kOne, BlendFactor::kZero);
+	cmdb->setBlendFactors(1, BlendFactor::kOne, BlendFactor::kZero);
 }
 
 } // end namespace anki

@@ -120,7 +120,7 @@ Error GpuParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	// Create the sampler
 	{
 		SamplerInitInfo sinit("GpuParticles");
-		sinit.m_addressing = SamplingAddressing::CLAMP;
+		sinit.m_addressing = SamplingAddressing::kClamp;
 		m_nearestAnyClampSampler = m_node->getSceneGraph().getGrManager().newSampler(sinit);
 	}
 
@@ -218,7 +218,7 @@ void GpuParticleEmitterComponent::draw(RenderQueueDrawContext& ctx) const
 
 		// Draw
 		cmdb->setLineWidth(8.0f);
-		cmdb->drawArrays(PrimitiveTopology::LINES, m_maxParticleCount * 2);
+		cmdb->drawArrays(PrimitiveTopology::kLines, m_maxParticleCount * 2);
 	}
 	else
 	{
@@ -236,11 +236,11 @@ void GpuParticleEmitterComponent::draw(RenderQueueDrawContext& ctx) const
 		const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);
 		if(enableDepthTest)
 		{
-			cmdb->setDepthCompareOperation(CompareOperation::LESS);
+			cmdb->setDepthCompareOperation(CompareOperation::kLess);
 		}
 		else
 		{
-			cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);
+			cmdb->setDepthCompareOperation(CompareOperation::kAlways);
 		}
 
 		m_node->getSceneGraph().getDebugDrawer().drawCubes(
@@ -256,7 +256,7 @@ void GpuParticleEmitterComponent::draw(RenderQueueDrawContext& ctx) const
 		// Restore state
 		if(!enableDepthTest)
 		{
-			cmdb->setDepthCompareOperation(CompareOperation::LESS);
+			cmdb->setDepthCompareOperation(CompareOperation::kLess);
 		}
 	}
 }

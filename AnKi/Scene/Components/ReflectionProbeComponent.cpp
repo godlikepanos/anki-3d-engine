@@ -46,11 +46,11 @@ void ReflectionProbeComponent::draw(RenderQueueDrawContext& ctx) const
 	const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);
 	if(enableDepthTest)
 	{
-		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::LESS);
+		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::kLess);
 	}
 	else
 	{
-		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::ALWAYS);
+		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::kAlways);
 	}
 
 	m_node->getSceneGraph().getDebugDrawer().drawCubes(
@@ -66,7 +66,7 @@ void ReflectionProbeComponent::draw(RenderQueueDrawContext& ctx) const
 	// Restore state
 	if(!enableDepthTest)
 	{
-		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::LESS);
+		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::kLess);
 	}
 }
 

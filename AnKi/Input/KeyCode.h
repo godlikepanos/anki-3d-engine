@@ -298,8 +298,8 @@ enum class TouchPointer : U8
 	_14,
 	_15,
 
-	COUNT,
-	FIRST = _0
+	kCount,
+	kFirst = _0
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(TouchPointer)
 

@@ -36,7 +36,7 @@ class ShaderProgramInitInfo : public GrBaseInitInfo
 {
 public:
 	/// Option 1
-	Array<ShaderPtr, U32(ShaderType::LAST_GRAPHICS + 1)> m_graphicsShaders;
+	Array<ShaderPtr, U32(ShaderType::kLastGraphics + 1)> m_graphicsShaders;
 
 	/// Option 2
 	ShaderPtr m_computeShader;

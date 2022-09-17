@@ -9,8 +9,8 @@ namespace anki {
 
 Bool ShaderProgramInitInfo::isValid() const
 {
-	ShaderTypeBit graphicsMask = ShaderTypeBit::NONE;
-	for(ShaderType i = ShaderType::FIRST_GRAPHICS; i <= ShaderType::LAST_GRAPHICS; ++i)
+	ShaderTypeBit graphicsMask = ShaderTypeBit::kNone;
+	for(ShaderType i = ShaderType::kFirstGraphics; i <= ShaderType::kLastGraphics; ++i)
 	{
 		if(m_graphicsShaders[i])
 		{
@@ -23,8 +23,8 @@ Bool ShaderProgramInitInfo::isValid() const
 	}
 
 	if(!!graphicsMask
-	   && (graphicsMask & (ShaderTypeBit::VERTEX | ShaderTypeBit::FRAGMENT))
-			  != (ShaderTypeBit::VERTEX | ShaderTypeBit::FRAGMENT))
+	   && (graphicsMask & (ShaderTypeBit::kVertex | ShaderTypeBit::kFragment))
+			  != (ShaderTypeBit::kVertex | ShaderTypeBit::kFragment))
 	{
 		return false;
 	}
@@ -32,7 +32,7 @@ Bool ShaderProgramInitInfo::isValid() const
 	Bool compute = false;
 	if(m_computeShader)
 	{
-		if(m_computeShader->getShaderType() != ShaderType::COMPUTE)
+		if(m_computeShader->getShaderType() != ShaderType::kCompute)
 		{
 			return false;
 		}
@@ -44,44 +44,44 @@ Bool ShaderProgramInitInfo::isValid() const
 		return false;
 	}
 
-	ShaderTypeBit rtMask = ShaderTypeBit::NONE;
+	ShaderTypeBit rtMask = ShaderTypeBit::kNone;
 	for(const ShaderPtr& s : m_rayTracingShaders.m_rayGenShaders)
 	{
-		if(s->getShaderType() != ShaderType::RAY_GEN)
+		if(s->getShaderType() != ShaderType::kRayGen)
 		{
 			return false;
 		}
-		rtMask |= ShaderTypeBit::RAY_GEN;
+		rtMask |= ShaderTypeBit::kRayGen;
 	}
 
 	for(const ShaderPtr& s : m_rayTracingShaders.m_missShaders)
 	{
-		if(s->getShaderType() != ShaderType::MISS)
+		if(s->getShaderType() != ShaderType::kMiss)
 		{
 			return false;
 		}
-		rtMask |= ShaderTypeBit::MISS;
+		rtMask |= ShaderTypeBit::kMiss;
 	}
 
 	for(const RayTracingHitGroup& group : m_rayTracingShaders.m_hitGroups)
 	{
-		ShaderTypeBit localRtMask = ShaderTypeBit::NONE;
+		ShaderTypeBit localRtMask = ShaderTypeBit::kNone;
 		if(group.m_anyHitShader)
 		{
-			if(group.m_anyHitShader->getShaderType() != ShaderType::ANY_HIT)
+			if(group.m_anyHitShader->getShaderType() != ShaderType::kAnyHit)
 			{
 				return false;
 			}
-			localRtMask |= ShaderTypeBit::ANY_HIT;
+			localRtMask |= ShaderTypeBit::kAnyHit;
 		}
 
 		if(group.m_closestHitShader)
 		{
-			if(group.m_closestHitShader->getShaderType() != ShaderType::CLOSEST_HIT)
+			if(group.m_closestHitShader->getShaderType() != ShaderType::kClosestHit)
 			{
 				return false;
 			}
-			localRtMask |= ShaderTypeBit::CLOSEST_HIT;
+			localRtMask |= ShaderTypeBit::kClosestHit;
 		}
 
 		if(!localRtMask)

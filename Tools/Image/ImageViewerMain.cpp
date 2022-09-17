@@ -60,12 +60,12 @@ private:
 	{
 		const Texture& grTex = *m_imageResource->getTexture().get();
 		const U32 colorComponentCount = getFormatInfo(grTex.getFormat()).m_componentCount;
-		ANKI_ASSERT(grTex.getTextureType() == TextureType::_2D || grTex.getTextureType() == TextureType::_3D);
+		ANKI_ASSERT(grTex.getTextureType() == TextureType::k2D || grTex.getTextureType() == TextureType::k3D);
 
 		if(!m_imageGrProgram.isCreated())
 		{
 			ShaderProgramResourceVariantInitInfo variantInit(m_imageProgram);
-			variantInit.addMutation("TEXTURE_TYPE", (grTex.getTextureType() == TextureType::_2D) ? 0 : 1);
+			variantInit.addMutation("TEXTURE_TYPE", (grTex.getTextureType() == TextureType::k2D) ? 0 : 1);
 
 			const ShaderProgramResourceVariant* variant;
 			m_imageProgram->getOrCreateVariant(variantInit, variant);
@@ -159,7 +159,7 @@ private:
 		}
 
 		// Depth
-		if(grTex.getTextureType() == TextureType::_3D)
+		if(grTex.getTextureType() == TextureType::k3D)
 		{
 			StringListAuto labels(getFrameAllocator());
 			for(U32 d = 0; d < grTex.getDepth(); ++d)

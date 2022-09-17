@@ -149,11 +149,11 @@ Error Scale::init()
 	}
 	else if(getGrManager().getDeviceCapabilities().m_unalignedBbpTextureFormats)
 	{
-		format = Format::R8G8B8_UNORM;
+		format = Format::kR8G8B8_Unorm;
 	}
 	else
 	{
-		format = Format::R8G8B8A8_UNORM;
+		format = Format::kR8G8B8A8_Unorm;
 	}
 
 	m_upscaleAndSharpenRtDescr = m_r->create2DRenderTargetDescription(
@@ -163,8 +163,8 @@ Error Scale::init()
 	if(m_neeedsTonemapping)
 	{
 		const Format fmt = (getGrManager().getDeviceCapabilities().m_unalignedBbpTextureFormats)
-							   ? Format::R8G8B8_UNORM
-							   : Format::R8G8B8A8_UNORM;
+							   ? Format::kR8G8B8_Unorm
+							   : Format::kR8G8B8A8_Unorm;
 		m_tonemapedRtDescr = m_r->create2DRenderTargetDescription(
 			m_r->getPostProcessResolution().x(), m_r->getPostProcessResolution().y(), fmt, "Tonemapped");
 		m_tonemapedRtDescr.bake();
@@ -199,13 +199,13 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		ComputeRenderPassDescription& pass = ctx.m_renderGraphDescr.newComputeRenderPass("DLSS");
 
 		// DLSS says input textures in sampled state and out as storage image
-		const TextureUsageBit readUsage = TextureUsageBit::ALL_SAMPLED & TextureUsageBit::ALL_COMPUTE;
-		const TextureUsageBit writeUsage = TextureUsageBit::ALL_IMAGE & TextureUsageBit::ALL_COMPUTE;
+		const TextureUsageBit readUsage = TextureUsageBit::kAllSampled & TextureUsageBit::kAllCompute;
+		const TextureUsageBit writeUsage = TextureUsageBit::kAllImage & TextureUsageBit::kAllCompute;
 
 		pass.newDependency(RenderPassDependency(m_r->getLightShading().getRt(), readUsage));
 		pass.newDependency(RenderPassDependency(m_r->getMotionVectors().getMotionVectorsRt(), readUsage));
 		pass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), readUsage,
-												TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)));
+												TextureSubresourceInfo(DepthStencilAspectBit::kDepth)));
 		pass.newDependency(RenderPassDependency(m_runCtx.m_upscaledHdrRt, writeUsage));
 
 		pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
@@ -222,8 +222,8 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		if(preferCompute)
 		{
 			ComputeRenderPassDescription& pass = ctx.m_renderGraphDescr.newComputeRenderPass("Scale");
-			pass.newDependency(RenderPassDependency(inRt, TextureUsageBit::SAMPLED_COMPUTE));
-			pass.newDependency(RenderPassDependency(outRt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
+			pass.newDependency(RenderPassDependency(inRt, TextureUsageBit::kSampledCompute));
+			pass.newDependency(RenderPassDependency(outRt, TextureUsageBit::kImageComputeWrite));
 
 			pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 				runFsrOrBilinearScaling(rgraphCtx);
@@ -233,8 +233,8 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		{
 			GraphicsRenderPassDescription& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Scale");
 			pass.setFramebufferInfo(m_fbDescr, {outRt});
-			pass.newDependency(RenderPassDependency(inRt, TextureUsageBit::SAMPLED_FRAGMENT));
-			pass.newDependency(RenderPassDependency(outRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
+			pass.newDependency(RenderPassDependency(inRt, TextureUsageBit::kSampledFragment));
+			pass.newDependency(RenderPassDependency(outRt, TextureUsageBit::kFramebufferWrite));
 
 			pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 				runFsrOrBilinearScaling(rgraphCtx);
@@ -259,8 +259,8 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		if(preferCompute)
 		{
 			ComputeRenderPassDescription& pass = ctx.m_renderGraphDescr.newComputeRenderPass("Tonemap");
-			pass.newDependency(RenderPassDependency(inRt, TextureUsageBit::SAMPLED_COMPUTE));
-			pass.newDependency(RenderPassDependency(outRt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
+			pass.newDependency(RenderPassDependency(inRt, TextureUsageBit::kSampledCompute));
+			pass.newDependency(RenderPassDependency(outRt, TextureUsageBit::kImageComputeWrite));
 
 			pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 				runTonemapping(rgraphCtx);
@@ -270,8 +270,8 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		{
 			GraphicsRenderPassDescription& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Sharpen");
 			pass.setFramebufferInfo(m_fbDescr, {outRt});
-			pass.newDependency(RenderPassDependency(inRt, TextureUsageBit::SAMPLED_FRAGMENT));
-			pass.newDependency(RenderPassDependency(outRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
+			pass.newDependency(RenderPassDependency(inRt, TextureUsageBit::kSampledFragment));
+			pass.newDependency(RenderPassDependency(outRt, TextureUsageBit::kFramebufferWrite));
 
 			pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 				runTonemapping(rgraphCtx);
@@ -293,8 +293,8 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		if(preferCompute)
 		{
 			ComputeRenderPassDescription& pass = ctx.m_renderGraphDescr.newComputeRenderPass("Sharpen");
-			pass.newDependency(RenderPassDependency(inRt, TextureUsageBit::SAMPLED_COMPUTE));
-			pass.newDependency(RenderPassDependency(outRt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
+			pass.newDependency(RenderPassDependency(inRt, TextureUsageBit::kSampledCompute));
+			pass.newDependency(RenderPassDependency(outRt, TextureUsageBit::kImageComputeWrite));
 
 			pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 				runRcasSharpening(rgraphCtx);
@@ -304,8 +304,8 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		{
 			GraphicsRenderPassDescription& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Sharpen");
 			pass.setFramebufferInfo(m_fbDescr, {outRt});
-			pass.newDependency(RenderPassDependency(inRt, TextureUsageBit::SAMPLED_FRAGMENT));
-			pass.newDependency(RenderPassDependency(outRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
+			pass.newDependency(RenderPassDependency(inRt, TextureUsageBit::kSampledFragment));
+			pass.newDependency(RenderPassDependency(outRt, TextureUsageBit::kFramebufferWrite));
 
 			pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 				runRcasSharpening(rgraphCtx);
@@ -380,7 +380,7 @@ void Scale::runFsrOrBilinearScaling(RenderPassWorkContext& rgraphCtx)
 	else
 	{
 		cmdb->setViewport(0, 0, m_r->getPostProcessResolution().x(), m_r->getPostProcessResolution().y());
-		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
+		cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
 	}
 }
 
@@ -428,7 +428,7 @@ void Scale::runRcasSharpening(RenderPassWorkContext& rgraphCtx)
 	else
 	{
 		cmdb->setViewport(0, 0, m_r->getPostProcessResolution().x(), m_r->getPostProcessResolution().y());
-		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
+		cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
 	}
 }
 
@@ -484,7 +484,7 @@ void Scale::runTonemapping(RenderPassWorkContext& rgraphCtx)
 	else
 	{
 		cmdb->setViewport(0, 0, m_r->getPostProcessResolution().x(), m_r->getPostProcessResolution().y());
-		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
+		cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
 	}
 }
 

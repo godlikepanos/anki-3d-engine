@@ -227,11 +227,11 @@ void LightComponent::draw(RenderQueueDrawContext& ctx) const
 	const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);
 	if(enableDepthTest)
 	{
-		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::LESS);
+		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::kLess);
 	}
 	else
 	{
-		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::ALWAYS);
+		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::kAlways);
 	}
 
 	Vec3 color = m_diffColor.xyz();
@@ -246,7 +246,7 @@ void LightComponent::draw(RenderQueueDrawContext& ctx) const
 	// Restore state
 	if(!enableDepthTest)
 	{
-		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::LESS);
+		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::kLess);
 	}
 }
 

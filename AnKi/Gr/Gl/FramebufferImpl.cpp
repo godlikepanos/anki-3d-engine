@@ -62,7 +62,7 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 		ANKI_ASSERT(viewImpl.m_tex->isSubresourceGoodForFramebufferAttachment(viewImpl.getSubresource()));
 
 		GLenum binding;
-		if(viewImpl.getSubresource().m_depthStencilAspect == DepthStencilAspectBit::DEPTH)
+		if(viewImpl.getSubresource().m_depthStencilAspect == DepthStencilAspectBit::kDepth)
 		{
 			binding = GL_DEPTH_ATTACHMENT;
 		}
@@ -95,7 +95,7 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 		}
 
 		// Misc
-		m_clearDepth = !!(viewImpl.getSubresource().m_depthStencilAspect & DepthStencilAspectBit::DEPTH)
+		m_clearDepth = !!(viewImpl.getSubresource().m_depthStencilAspect & DepthStencilAspectBit::kDepth)
 					   && att.m_loadOperation == AttachmentLoadOperation::CLEAR;
 
 		m_clearStencil = !!(viewImpl.getSubresource().m_depthStencilAspect & DepthStencilAspectBit::STENCIL)

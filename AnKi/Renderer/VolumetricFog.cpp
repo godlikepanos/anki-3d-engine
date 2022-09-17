@@ -43,9 +43,9 @@ Error VolumetricFog::init()
 
 	// RT descr
 	m_rtDescr =
-		m_r->create2DRenderTargetDescription(m_volumeSize[0], m_volumeSize[1], Format::R16G16B16A16_SFLOAT, "Fog");
+		m_r->create2DRenderTargetDescription(m_volumeSize[0], m_volumeSize[1], Format::kR16G16B16A16_Sfloat, "Fog");
 	m_rtDescr.m_depth = m_volumeSize[2];
-	m_rtDescr.m_type = TextureType::_3D;
+	m_rtDescr.m_type = TextureType::k3D;
 	m_rtDescr.bake();
 
 	return Error::NONE;
@@ -59,8 +59,8 @@ void VolumetricFog::populateRenderGraph(RenderingContext& ctx)
 
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Vol fog");
 
-	pass.newDependency({m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
-	pass.newDependency({m_r->getVolumetricLightingAccumulation().getRt(), TextureUsageBit::SAMPLED_COMPUTE});
+	pass.newDependency({m_runCtx.m_rt, TextureUsageBit::kImageComputeWrite});
+	pass.newDependency({m_r->getVolumetricLightingAccumulation().getRt(), TextureUsageBit::kSampledCompute});
 
 	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) -> void {
 		CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;

@@ -10,10 +10,10 @@
 
 namespace anki {
 
-inline constexpr Array<CString, U32(BuiltinMutatorId::COUNT)> BUILTIN_MUTATOR_NAMES = {
+inline constexpr Array<CString, U32(BuiltinMutatorId::kCount)> BUILTIN_MUTATOR_NAMES = {
 	{"NONE", "ANKI_TECHNIQUE", "ANKI_LOD", "ANKI_BONES", "ANKI_VELOCITY"}};
 
-inline constexpr Array<CString, U(RenderingTechnique::COUNT)> TECHNIQUE_NAMES = {
+inline constexpr Array<CString, U(RenderingTechnique::kCount)> TECHNIQUE_NAMES = {
 	{"GBuffer", "GBufferEarlyZ", "Shadow", "Forward", "RtShadow"}};
 
 // This is some trickery to select calling between XmlElement::getAttributeNumber and XmlElement::getAttributeNumbers
@@ -72,7 +72,7 @@ class MaterialResource::Program
 public:
 	ShaderProgramResourcePtr m_prog;
 
-	mutable Array4d<MaterialVariant, U(RenderingTechnique::COUNT), MAX_LOD_COUNT, 2, 2> m_variantMatrix;
+	mutable Array4d<MaterialVariant, U(RenderingTechnique::kCount), MAX_LOD_COUNT, 2, 2> m_variantMatrix;
 	mutable RWMutex m_variantMatrixMtx;
 
 	DynamicArray<PartialMutation> m_partialMutation; ///< Only with the non-builtins.
@@ -356,7 +356,7 @@ Error MaterialResource::createVars(Program& prog)
 		initInfo.addMutation(m.m_mutator->m_name, m.m_value);
 	}
 
-	Array<const ShaderProgramResourceMutator*, U(BuiltinMutatorId::COUNT)> mutatorPtrs = {};
+	Array<const ShaderProgramResourceMutator*, U(BuiltinMutatorId::kCount)> mutatorPtrs = {};
 	for(BuiltinMutatorId id : EnumIterable<BuiltinMutatorId>())
 	{
 		mutatorPtrs[id] = prog.m_prog->tryFindMutator(BUILTIN_MUTATOR_NAMES[id]);
@@ -531,7 +531,7 @@ Error MaterialResource::findBuiltinMutators(Program& prog)
 		for(U32 i = 0; i < techniqueMutator->m_values.getSize(); ++i)
 		{
 			const MutatorValue mvalue = techniqueMutator->m_values[i];
-			if(mvalue >= MutatorValue(RenderingTechnique::COUNT) || mvalue < MutatorValue(RenderingTechnique::FIRST))
+			if(mvalue >= MutatorValue(RenderingTechnique::kCount) || mvalue < MutatorValue(RenderingTechnique::kFirst))
 			{
 				ANKI_RESOURCE_LOGE("Mutator %s has a wrong value %d", techniqueMutatorName.cstr(), mvalue);
 				return Error::USER_DATA;

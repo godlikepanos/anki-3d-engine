@@ -99,7 +99,7 @@ TextureImpl::~TextureImpl()
 		}
 	}
 
-	if(m_imageHandle && !(m_usage & TextureUsageBit::PRESENT))
+	if(m_imageHandle && !(m_usage & TextureUsageBit::kPresent))
 	{
 		garbage->m_imageHandle = m_imageHandle;
 	}
@@ -115,11 +115,11 @@ Error TextureImpl::initInternal(VkImage externalImage, const TextureInitInfo& in
 	ANKI_ASSERT(init.isValid());
 	if(externalImage)
 	{
-		ANKI_ASSERT(!!(init.m_usage & TextureUsageBit::PRESENT));
+		ANKI_ASSERT(!!(init.m_usage & TextureUsageBit::kPresent));
 	}
 
 	ANKI_ASSERT(getGrManagerImpl().getDeviceCapabilities().m_vrs
-				|| !(init.m_usage & TextureUsageBit::FRAMEBUFFER_SHADING_RATE));
+				|| !(init.m_usage & TextureUsageBit::kFramebufferShadingRate));
 
 	// Set some stuff
 	m_width = init.m_width;
@@ -127,7 +127,7 @@ Error TextureImpl::initInternal(VkImage externalImage, const TextureInitInfo& in
 	m_depth = init.m_depth;
 	m_texType = init.m_type;
 
-	if(m_texType == TextureType::_3D)
+	if(m_texType == TextureType::k3D)
 	{
 		m_mipCount = min<U32>(init.m_mipmapCount, computeMaxMipmapCount3d(m_width, m_height, m_depth));
 	}
@@ -180,7 +180,7 @@ Error TextureImpl::initInternal(VkImage externalImage, const TextureInitInfo& in
 	}
 
 	// Create a view if the texture is a single surface
-	if(m_texType == TextureType::_2D && m_mipCount == 1 && m_aspect == DepthStencilAspectBit::NONE)
+	if(m_texType == TextureType::k2D && m_mipCount == 1 && m_aspect == DepthStencilAspectBit::kNone)
 	{
 		VkImageViewCreateInfo viewCi;
 		TextureSubresourceInfo subresource;
@@ -198,7 +198,7 @@ Error TextureImpl::initInternal(VkImage externalImage, const TextureInitInfo& in
 VkImageCreateFlags TextureImpl::calcCreateFlags(const TextureInitInfo& init)
 {
 	VkImageCreateFlags flags = 0;
-	if(init.m_type == TextureType::CUBE || init.m_type == TextureType::CUBE_ARRAY)
+	if(init.m_type == TextureType::kCube || init.m_type == TextureType::kCubeArray)
 	{
 		flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
 	}
@@ -247,24 +247,24 @@ Error TextureImpl::initImage(const TextureInitInfo& init)
 
 	switch(m_texType)
 	{
-	case TextureType::_1D:
-	case TextureType::_2D:
+	case TextureType::k1D:
+	case TextureType::k2D:
 		ci.extent.depth = 1;
 		ci.arrayLayers = 1;
 		break;
-	case TextureType::_2D_ARRAY:
+	case TextureType::k2DArray:
 		ci.extent.depth = 1;
 		ci.arrayLayers = init.m_layerCount;
 		break;
-	case TextureType::CUBE:
+	case TextureType::kCube:
 		ci.extent.depth = 1;
 		ci.arrayLayers = 6;
 		break;
-	case TextureType::CUBE_ARRAY:
+	case TextureType::kCubeArray:
 		ci.extent.depth = 1;
 		ci.arrayLayers = 6 * init.m_layerCount;
 		break;
-	case TextureType::_3D:
+	case TextureType::k3D:
 		ci.extent.depth = init.m_depth;
 		ci.arrayLayers = 1;
 		break;
@@ -345,57 +345,57 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit usage, Bool src, U32 level,
 	accesses = 0;
 	const Bool depthStencil = !!m_aspect;
 
-	if(!!(usage & (TextureUsageBit::SAMPLED_GEOMETRY | TextureUsageBit::IMAGE_GEOMETRY_READ)))
+	if(!!(usage & (TextureUsageBit::kSampledGeometry | TextureUsageBit::kImageGeometryRead)))
 	{
 		stages |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT
 				  | VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT | VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
 		accesses |= VK_ACCESS_SHADER_READ_BIT;
 	}
 
-	if(!!(usage & TextureUsageBit::IMAGE_GEOMETRY_WRITE))
+	if(!!(usage & TextureUsageBit::kImageGeometryWrite))
 	{
 		stages |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT
 				  | VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT | VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
 		accesses |= VK_ACCESS_SHADER_WRITE_BIT;
 	}
 
-	if(!!(usage & (TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::IMAGE_FRAGMENT_READ)))
+	if(!!(usage & (TextureUsageBit::kSampledFragment | TextureUsageBit::kImageFragmentRead)))
 	{
 		stages |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		accesses |= VK_ACCESS_SHADER_READ_BIT;
 	}
 
-	if(!!(usage & TextureUsageBit::IMAGE_FRAGMENT_WRITE))
+	if(!!(usage & TextureUsageBit::kImageFragmentWrite))
 	{
 		stages |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		accesses |= VK_ACCESS_SHADER_WRITE_BIT;
 	}
 
-	if(!!(usage & (TextureUsageBit::SAMPLED_COMPUTE | TextureUsageBit::IMAGE_COMPUTE_READ)))
+	if(!!(usage & (TextureUsageBit::kSampledCompute | TextureUsageBit::kImageComputeRead)))
 	{
 		stages |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 		accesses |= VK_ACCESS_SHADER_READ_BIT;
 	}
 
-	if(!!(usage & TextureUsageBit::IMAGE_COMPUTE_WRITE))
+	if(!!(usage & TextureUsageBit::kImageComputeWrite))
 	{
 		stages |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 		accesses |= VK_ACCESS_SHADER_WRITE_BIT;
 	}
 
-	if(!!(usage & (TextureUsageBit::SAMPLED_TRACE_RAYS | TextureUsageBit::IMAGE_TRACE_RAYS_READ)))
+	if(!!(usage & (TextureUsageBit::kSampledTraceRays | TextureUsageBit::kImageTraceRaysRead)))
 	{
 		stages |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
 		accesses |= VK_ACCESS_SHADER_READ_BIT;
 	}
 
-	if(!!(usage & TextureUsageBit::IMAGE_TRACE_RAYS_WRITE))
+	if(!!(usage & TextureUsageBit::kImageTraceRaysWrite))
 	{
 		stages |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
 		accesses |= VK_ACCESS_SHADER_WRITE_BIT;
 	}
 
-	if(!!(usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ))
+	if(!!(usage & TextureUsageBit::kFramebufferRead))
 	{
 		if(depthStencil)
 		{
@@ -409,7 +409,7 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit usage, Bool src, U32 level,
 		}
 	}
 
-	if(!!(usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE))
+	if(!!(usage & TextureUsageBit::kFramebufferWrite))
 	{
 		if(depthStencil)
 		{
@@ -423,13 +423,13 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit usage, Bool src, U32 level,
 		}
 	}
 
-	if(!!(usage & TextureUsageBit::FRAMEBUFFER_SHADING_RATE))
+	if(!!(usage & TextureUsageBit::kFramebufferShadingRate))
 	{
 		stages |= VK_PIPELINE_STAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR;
 		accesses |= VK_ACCESS_FRAGMENT_SHADING_RATE_ATTACHMENT_READ_BIT_KHR;
 	}
 
-	if(!!(usage & TextureUsageBit::GENERATE_MIPMAPS))
+	if(!!(usage & TextureUsageBit::kGenerateMipmaps))
 	{
 		stages |= VK_PIPELINE_STAGE_TRANSFER_BIT;
 		if(src)
@@ -453,13 +453,13 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit usage, Bool src, U32 level,
 		}
 	}
 
-	if(!!(usage & TextureUsageBit::TRANSFER_DESTINATION))
+	if(!!(usage & TextureUsageBit::kTransferDestination))
 	{
 		stages |= VK_PIPELINE_STAGE_TRANSFER_BIT;
 		accesses |= VK_ACCESS_TRANSFER_WRITE_BIT;
 	}
 
-	if(!!(usage & TextureUsageBit::PRESENT))
+	if(!!(usage & TextureUsageBit::kPresent))
 	{
 		stages |= VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
 		accesses |= VK_ACCESS_MEMORY_READ_BIT;
@@ -490,13 +490,13 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 	const Bool lastLevel = level == m_mipCount - 1u;
 	const Bool depthStencil = !!m_aspect;
 
-	if(usage == TextureUsageBit::NONE)
+	if(usage == TextureUsageBit::kNone)
 	{
 		out = VK_IMAGE_LAYOUT_UNDEFINED;
 	}
 	else if(depthStencil)
 	{
-		if(!(usage & ~(TextureUsageBit::ALL_SAMPLED | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ)))
+		if(!(usage & ~(TextureUsageBit::kAllSampled | TextureUsageBit::kFramebufferRead)))
 		{
 			// Only depth tests and sampled
 			out = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
@@ -504,32 +504,31 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 		else
 		{
 			// Only attachment write, the rest (eg transfer) are not supported for now
-			ANKI_ASSERT(usage == TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
-						|| usage == TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT);
+			ANKI_ASSERT(usage == TextureUsageBit::kFramebufferWrite || usage == TextureUsageBit::kAllFramebuffer);
 			out = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 		}
 	}
-	else if(!(usage & ~TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT))
+	else if(!(usage & ~TextureUsageBit::kAllFramebuffer))
 	{
 		// Color attachment
 		out = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	}
-	else if(!(usage & ~TextureUsageBit::FRAMEBUFFER_SHADING_RATE))
+	else if(!(usage & ~TextureUsageBit::kFramebufferShadingRate))
 	{
 		// SRI
 		out = VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
 	}
-	else if(!(usage & ~TextureUsageBit::ALL_IMAGE))
+	else if(!(usage & ~TextureUsageBit::kAllImage))
 	{
 		// Only image load/store
 		out = VK_IMAGE_LAYOUT_GENERAL;
 	}
-	else if(!(usage & ~TextureUsageBit::ALL_SAMPLED))
+	else if(!(usage & ~TextureUsageBit::kAllSampled))
 	{
 		// Only sampled
 		out = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	}
-	else if(usage == TextureUsageBit::GENERATE_MIPMAPS)
+	else if(usage == TextureUsageBit::kGenerateMipmaps)
 	{
 		if(!lastLevel)
 		{
@@ -540,11 +539,11 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 			out = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 		}
 	}
-	else if(usage == TextureUsageBit::TRANSFER_DESTINATION)
+	else if(usage == TextureUsageBit::kTransferDestination)
 	{
 		out = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 	}
-	else if(usage == TextureUsageBit::PRESENT)
+	else if(usage == TextureUsageBit::kPresent)
 	{
 		out = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 	}
@@ -583,12 +582,12 @@ const MicroImageView& TextureImpl::getOrCreateView(const TextureSubresourceInfo&
 	// Not found in the 2nd search, create it
 
 	VkImageView handle = VK_NULL_HANDLE;
-	TextureType viewTexType = TextureType::COUNT;
+	TextureType viewTexType = TextureType::kCount;
 
 	// Compute the VkImageViewCreateInfo
 	VkImageViewCreateInfo viewCi;
 	computeVkImageViewCreateInfo(subresource, viewCi, viewTexType);
-	ANKI_ASSERT(viewTexType != TextureType::COUNT);
+	ANKI_ASSERT(viewTexType != TextureType::kCount);
 
 	ANKI_VK_CHECKF(vkCreateImageView(getDevice(), &viewCi, nullptr, &handle));
 	getGrManagerImpl().trySetVulkanHandleName(getName(), VK_OBJECT_TYPE_IMAGE_VIEW, ptrToNumber(handle));
@@ -614,11 +613,11 @@ TextureType TextureImpl::computeNewTexTypeOfSubresource(const TextureSubresource
 		if(subresource.m_faceCount != 6)
 		{
 			ANKI_ASSERT(subresource.m_faceCount == 1);
-			return (subresource.m_layerCount > 1) ? TextureType::_2D_ARRAY : TextureType::_2D;
+			return (subresource.m_layerCount > 1) ? TextureType::k2DArray : TextureType::k2D;
 		}
 		else if(subresource.m_layerCount == 1)
 		{
-			return TextureType::CUBE;
+			return TextureType::kCube;
 		}
 	}
 	return m_texType;

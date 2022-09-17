@@ -13,17 +13,17 @@ namespace anki {
 inline Bool stencilTestDisabled(StencilOperation stencilFail, StencilOperation stencilPassDepthFail,
 								StencilOperation stencilPassDepthPass, CompareOperation compare)
 {
-	return stencilFail == StencilOperation::KEEP && stencilPassDepthFail == StencilOperation::KEEP
-		   && stencilPassDepthPass == StencilOperation::KEEP && compare == CompareOperation::ALWAYS;
+	return stencilFail == StencilOperation::kKeep && stencilPassDepthFail == StencilOperation::kKeep
+		   && stencilPassDepthPass == StencilOperation::kKeep && compare == CompareOperation::kAlways;
 }
 
 inline Bool blendingDisabled(BlendFactor srcFactorRgb, BlendFactor dstFactorRgb, BlendFactor srcFactorA,
 							 BlendFactor dstFactorA, BlendOperation opRgb, BlendOperation opA)
 {
-	Bool dontWantBlend = srcFactorRgb == BlendFactor::ONE && dstFactorRgb == BlendFactor::ZERO
-						 && srcFactorA == BlendFactor::ONE && dstFactorA == BlendFactor::ZERO
-						 && (opRgb == BlendOperation::ADD || opRgb == BlendOperation::SUBTRACT)
-						 && (opA == BlendOperation::ADD || opA == BlendOperation::SUBTRACT);
+	Bool dontWantBlend = srcFactorRgb == BlendFactor::kOne && dstFactorRgb == BlendFactor::kZero
+						 && srcFactorA == BlendFactor::kOne && dstFactorA == BlendFactor::kZero
+						 && (opRgb == BlendOperation::kAdd || opRgb == BlendOperation::kSubtract)
+						 && (opA == BlendOperation::kAdd || opA == BlendOperation::kSubtract);
 	return dontWantBlend;
 }
 

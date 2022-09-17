@@ -80,7 +80,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceFilesystem& 
 		StringAuto m_name{m_alloc};
 		DynamicArrayAuto<Shader> m_shaders{m_alloc};
 		DynamicArrayAuto<ShaderGroup> m_shaderGroups{m_alloc};
-		ShaderTypeBit m_presentStages = ShaderTypeBit::NONE;
+		ShaderTypeBit m_presentStages = ShaderTypeBit::kNone;
 		U32 m_rayTypeCount = 0;
 		BitSet<64> m_rayTypeMask = {false};
 		U32 m_rayGenShaderGroupCount = 0;
@@ -181,7 +181,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceFilesystem& 
 		ANKI_CHECK(binaryw.deserializeFromAnyFile(*file));
 		const ShaderProgramBinary& binary = binaryw.getBinary();
 
-		if(!(binary.m_presentShaderTypes & ShaderTypeBit::ALL_RAY_TRACING))
+		if(!(binary.m_presentShaderTypes & ShaderTypeBit::kAllRayTracing))
 		{
 			return Error::NONE;
 		}
@@ -226,9 +226,9 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceFilesystem& 
 		}
 
 		// Ray gen
-		if(!!(binary.m_presentShaderTypes & ShaderTypeBit::RAY_GEN))
+		if(!!(binary.m_presentShaderTypes & ShaderTypeBit::kRayGen))
 		{
-			if(!!(binary.m_presentShaderTypes & ~ShaderTypeBit::RAY_GEN))
+			if(!!(binary.m_presentShaderTypes & ~ShaderTypeBit::kRayGen))
 			{
 				ANKI_RESOURCE_LOGE("Ray gen can't co-exist with other types: %s", filename.cstr());
 				return Error::USER_DATA;
@@ -257,19 +257,19 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceFilesystem& 
 			for(const ShaderProgramBinaryMutation& mutation : mutations)
 			{
 				const ShaderProgramBinaryVariant& variant = binary.m_variants[mutation.m_variantIndex];
-				const U32 codeBlockIndex = variant.m_codeBlockIndices[ShaderType::RAY_GEN];
+				const U32 codeBlockIndex = variant.m_codeBlockIndices[ShaderType::kRayGen];
 				ANKI_ASSERT(codeBlockIndex != MAX_U32);
 				const U32 shaderIdx =
-					lib->addShader(binary.m_codeBlocks[codeBlockIndex], progName, ShaderType::RAY_GEN);
+					lib->addShader(binary.m_codeBlocks[codeBlockIndex], progName, ShaderType::kRayGen);
 
 				lib->addGroup(filename, mutation.m_hash, shaderIdx, MAX_U32, MAX_U32, MAX_U32);
 			}
 		}
 
 		// Miss shaders
-		if(!!(binary.m_presentShaderTypes & ShaderTypeBit::MISS))
+		if(!!(binary.m_presentShaderTypes & ShaderTypeBit::kMiss))
 		{
-			if(!!(binary.m_presentShaderTypes & ~ShaderTypeBit::MISS))
+			if(!!(binary.m_presentShaderTypes & ~ShaderTypeBit::kMiss))
 			{
 				ANKI_RESOURCE_LOGE("Miss shaders can't co-exist with other types: %s", filename.cstr());
 				return Error::USER_DATA;
@@ -304,18 +304,18 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceFilesystem& 
 			for(const ShaderProgramBinaryMutation& mutation : mutations)
 			{
 				const ShaderProgramBinaryVariant& variant = binary.m_variants[mutation.m_variantIndex];
-				const U32 codeBlockIndex = variant.m_codeBlockIndices[ShaderType::MISS];
+				const U32 codeBlockIndex = variant.m_codeBlockIndices[ShaderType::kMiss];
 				ANKI_ASSERT(codeBlockIndex != MAX_U32);
-				const U32 shaderIdx = lib->addShader(binary.m_codeBlocks[codeBlockIndex], progName, ShaderType::MISS);
+				const U32 shaderIdx = lib->addShader(binary.m_codeBlocks[codeBlockIndex], progName, ShaderType::kMiss);
 
 				lib->addGroup(filename, mutation.m_hash, MAX_U32, shaderIdx, MAX_U32, MAX_U32);
 			}
 		}
 
 		// Hit shaders
-		if(!!(binary.m_presentShaderTypes & (ShaderTypeBit::ANY_HIT | ShaderTypeBit::CLOSEST_HIT)))
+		if(!!(binary.m_presentShaderTypes & (ShaderTypeBit::kAnyHit | ShaderTypeBit::kClosestHit)))
 		{
-			if(!!(binary.m_presentShaderTypes & ~(ShaderTypeBit::ANY_HIT | ShaderTypeBit::CLOSEST_HIT)))
+			if(!!(binary.m_presentShaderTypes & ~(ShaderTypeBit::kAnyHit | ShaderTypeBit::kClosestHit)))
 			{
 				ANKI_RESOURCE_LOGE("Hit shaders can't co-exist with other types: %s", filename.cstr());
 				return Error::USER_DATA;
@@ -345,18 +345,18 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceFilesystem& 
 			for(const ShaderProgramBinaryMutation& mutation : mutations)
 			{
 				const ShaderProgramBinaryVariant& variant = binary.m_variants[mutation.m_variantIndex];
-				const U32 ahitCodeBlockIndex = variant.m_codeBlockIndices[ShaderType::ANY_HIT];
-				const U32 chitCodeBlockIndex = variant.m_codeBlockIndices[ShaderType::CLOSEST_HIT];
+				const U32 ahitCodeBlockIndex = variant.m_codeBlockIndices[ShaderType::kAnyHit];
+				const U32 chitCodeBlockIndex = variant.m_codeBlockIndices[ShaderType::kClosestHit];
 				ANKI_ASSERT(ahitCodeBlockIndex != MAX_U32 || chitCodeBlockIndex != MAX_U32);
 
 				const U32 ahitShaderIdx =
 					(ahitCodeBlockIndex != MAX_U32)
-						? lib->addShader(binary.m_codeBlocks[ahitCodeBlockIndex], progName, ShaderType::ANY_HIT)
+						? lib->addShader(binary.m_codeBlocks[ahitCodeBlockIndex], progName, ShaderType::kAnyHit)
 						: MAX_U32;
 
 				const U32 chitShaderIdx =
 					(chitCodeBlockIndex != MAX_U32)
-						? lib->addShader(binary.m_codeBlocks[chitCodeBlockIndex], progName, ShaderType::CLOSEST_HIT)
+						? lib->addShader(binary.m_codeBlocks[chitCodeBlockIndex], progName, ShaderType::kClosestHit)
 						: MAX_U32;
 
 				lib->addGroup(filename, mutation.m_hash, MAX_U32, MAX_U32, chitShaderIdx, ahitShaderIdx);
@@ -381,7 +381,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceFilesystem& 
 			outLib.m_alloc = alloc;
 
 			if(inLib.m_presentStages
-			   != (ShaderTypeBit::RAY_GEN | ShaderTypeBit::MISS | ShaderTypeBit::CLOSEST_HIT | ShaderTypeBit::ANY_HIT))
+			   != (ShaderTypeBit::kRayGen | ShaderTypeBit::kMiss | ShaderTypeBit::kClosestHit | ShaderTypeBit::kAnyHit))
 			{
 				ANKI_RESOURCE_LOGE("The libray is missing shader shader types: %s", inLib.m_name.cstr());
 				return Error::USER_DATA;

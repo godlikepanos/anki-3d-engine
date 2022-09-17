@@ -53,11 +53,11 @@ Error ProbeReflections::initInternal()
 	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/IblDfg.png", m_integrationLut));
 
 	SamplerInitInfo sinit;
-	sinit.m_minMagFilter = SamplingFilter::LINEAR;
-	sinit.m_mipmapFilter = SamplingFilter::BASE;
+	sinit.m_minMagFilter = SamplingFilter::kLinear;
+	sinit.m_mipmapFilter = SamplingFilter::kBase;
 	sinit.m_minLod = 0.0;
 	sinit.m_maxLod = 1.0;
-	sinit.m_addressing = SamplingAddressing::CLAMP;
+	sinit.m_addressing = SamplingAddressing::kClamp;
 	m_integrationLutSampler = getGrManager().newSampler(sinit);
 
 	return Error::NONE;
@@ -69,14 +69,13 @@ Error ProbeReflections::initGBuffer()
 
 	// Create RT descriptions
 	{
-		RenderTargetDescription texinit =
-			m_r->create2DRenderTargetDescription(m_gbuffer.m_tileSize * 6, m_gbuffer.m_tileSize,
-												 GBUFFER_COLOR_ATTACHMENT_PIXEL_FORMATS[0], "CubeRefl GBuffer");
+		RenderTargetDescription texinit = m_r->create2DRenderTargetDescription(
+			m_gbuffer.m_tileSize * 6, m_gbuffer.m_tileSize, kGBufferColorRenderTargetFormats[0], "CubeRefl GBuffer");
 
 		// Create color RT descriptions
-		for(U32 i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
+		for(U32 i = 0; i < kGBufferColorRenderTargetCount; ++i)
 		{
-			texinit.m_format = GBUFFER_COLOR_ATTACHMENT_PIXEL_FORMATS[i];
+			texinit.m_format = kGBufferColorRenderTargetFormats[i];
 			m_gbuffer.m_colorRtDescrs[i] = texinit;
 			m_gbuffer.m_colorRtDescrs[i].setName(
 				StringAuto(getAllocator()).sprintf("CubeRefl GBuff Col #%u", i).toCString());
@@ -92,14 +91,14 @@ Error ProbeReflections::initGBuffer()
 
 	// Create FB descr
 	{
-		m_gbuffer.m_fbDescr.m_colorAttachmentCount = GBUFFER_COLOR_ATTACHMENT_COUNT;
+		m_gbuffer.m_fbDescr.m_colorAttachmentCount = kGBufferColorRenderTargetCount;
 
-		for(U j = 0; j < GBUFFER_COLOR_ATTACHMENT_COUNT; ++j)
+		for(U j = 0; j < kGBufferColorRenderTargetCount; ++j)
 		{
 			m_gbuffer.m_fbDescr.m_colorAttachments[j].m_loadOperation = AttachmentLoadOperation::CLEAR;
 		}
 
-		m_gbuffer.m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
+		m_gbuffer.m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
 		m_gbuffer.m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
 		m_gbuffer.m_fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0f;
 
@@ -118,15 +117,15 @@ Error ProbeReflections::initLightShading()
 	{
 		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
 			m_lightShading.m_tileSize, m_lightShading.m_tileSize, m_r->getHdrFormat(),
-			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE | TextureUsageBit::IMAGE_COMPUTE_READ
-				| TextureUsageBit::IMAGE_COMPUTE_WRITE | TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT
-				| TextureUsageBit::GENERATE_MIPMAPS,
+			TextureUsageBit::kSampledFragment | TextureUsageBit::kSampledCompute | TextureUsageBit::kImageComputeRead
+				| TextureUsageBit::kImageComputeWrite | TextureUsageBit::kAllFramebuffer
+				| TextureUsageBit::kGenerateMipmaps,
 			"CubeRefl refl");
 		texinit.m_mipmapCount = U8(m_lightShading.m_mipCount);
-		texinit.m_type = TextureType::CUBE_ARRAY;
+		texinit.m_type = TextureType::kCubeArray;
 		texinit.m_layerCount = m_cacheEntries.getSize();
 
-		m_lightShading.m_cubeArr = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::SAMPLED_FRAGMENT);
+		m_lightShading.m_cubeArr = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::kSampledFragment);
 	}
 
 	// Init deferred
@@ -193,7 +192,7 @@ Error ProbeReflections::initShadowMapping()
 
 	// FB descr
 	m_shadowMapping.m_fbDescr.m_colorAttachmentCount = 0;
-	m_shadowMapping.m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
+	m_shadowMapping.m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
 	m_shadowMapping.m_fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0f;
 	m_shadowMapping.m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
 	m_shadowMapping.m_fbDescr.bake();
@@ -500,7 +499,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 	{
 		// Just import and exit
 
-		m_ctx.m_lightShadingRt = rgraph.importRenderTarget(m_lightShading.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
+		m_ctx.m_lightShadingRt = rgraph.importRenderTarget(m_lightShading.m_cubeArr, TextureUsageBit::kSampledFragment);
 		return;
 	}
 
@@ -516,7 +515,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 	{
 		// RTs
 		Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS> rts;
-		for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
+		for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 		{
 			m_ctx.m_gbufferColorRts[i] = rgraph.newRenderTarget(m_gbuffer.m_colorRtDescrs[i]);
 			rts[i] = m_ctx.m_gbufferColorRts[i];
@@ -538,13 +537,13 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			runGBuffer(rgraphCtx);
 		});
 
-		for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
+		for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 		{
-			pass.newDependency({m_ctx.m_gbufferColorRts[i], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+			pass.newDependency({m_ctx.m_gbufferColorRts[i], TextureUsageBit::kFramebufferWrite});
 		}
 
-		TextureSubresourceInfo subresource(DepthStencilAspectBit::DEPTH);
-		pass.newDependency({m_ctx.m_gbufferDepthRt, TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT, subresource});
+		TextureSubresourceInfo subresource(DepthStencilAspectBit::kDepth);
+		pass.newDependency({m_ctx.m_gbufferDepthRt, TextureUsageBit::kAllFramebuffer, subresource});
 	}
 
 	// Shadow pass. Optional
@@ -587,8 +586,8 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			runShadowMapping(rgraphCtx);
 		});
 
-		TextureSubresourceInfo subresource(DepthStencilAspectBit::DEPTH);
-		pass.newDependency({m_ctx.m_shadowMapRt, TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT, subresource});
+		TextureSubresourceInfo subresource(DepthStencilAspectBit::kDepth);
+		pass.newDependency({m_ctx.m_shadowMapRt, TextureUsageBit::kAllFramebuffer, subresource});
 	}
 	else
 	{
@@ -598,7 +597,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 	// Light shading passes
 	{
 		// RT
-		m_ctx.m_lightShadingRt = rgraph.importRenderTarget(m_lightShading.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
+		m_ctx.m_lightShadingRt = rgraph.importRenderTarget(m_lightShading.m_cubeArr, TextureUsageBit::kSampledFragment);
 
 		// Passes
 		static constexpr Array<CString, 6> passNames = {"CubeRefl LightShad #0", "CubeRefl LightShad #1",
@@ -614,18 +613,18 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			});
 
 			TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
-			pass.newDependency({m_ctx.m_lightShadingRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, subresource});
+			pass.newDependency({m_ctx.m_lightShadingRt, TextureUsageBit::kFramebufferWrite, subresource});
 
-			for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
+			for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 			{
-				pass.newDependency({m_ctx.m_gbufferColorRts[i], TextureUsageBit::SAMPLED_FRAGMENT});
+				pass.newDependency({m_ctx.m_gbufferColorRts[i], TextureUsageBit::kSampledFragment});
 			}
-			pass.newDependency({m_ctx.m_gbufferDepthRt, TextureUsageBit::SAMPLED_FRAGMENT,
-								TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
+			pass.newDependency({m_ctx.m_gbufferDepthRt, TextureUsageBit::kSampledFragment,
+								TextureSubresourceInfo(DepthStencilAspectBit::kDepth)});
 
 			if(m_ctx.m_shadowMapRt.isValid())
 			{
-				pass.newDependency({m_ctx.m_shadowMapRt, TextureUsageBit::SAMPLED_FRAGMENT});
+				pass.newDependency({m_ctx.m_shadowMapRt, TextureUsageBit::kSampledFragment});
 			}
 		}
 	}
@@ -645,7 +644,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		TextureSubresourceInfo readSubresource;
 		readSubresource.m_faceCount = 6;
 		readSubresource.m_firstLayer = probeToUpdateCacheEntryIdx;
-		pass.newDependency({m_ctx.m_lightShadingRt, TextureUsageBit::SAMPLED_COMPUTE, readSubresource});
+		pass.newDependency({m_ctx.m_lightShadingRt, TextureUsageBit::kSampledCompute, readSubresource});
 
 		pass.newDependency({m_ctx.m_irradianceDiceValuesBuffHandle, BufferUsageBit::STORAGE_COMPUTE_WRITE});
 	}
@@ -658,16 +657,16 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			runIrradianceToRefl(rgraphCtx);
 		});
 
-		for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT - 1; ++i)
+		for(U i = 0; i < kGBufferColorRenderTargetCount - 1; ++i)
 		{
-			pass.newDependency({m_ctx.m_gbufferColorRts[i], TextureUsageBit::SAMPLED_COMPUTE});
+			pass.newDependency({m_ctx.m_gbufferColorRts[i], TextureUsageBit::kSampledCompute});
 		}
 
 		TextureSubresourceInfo subresource;
 		subresource.m_faceCount = 6;
 		subresource.m_firstLayer = probeToUpdateCacheEntryIdx;
 		pass.newDependency({m_ctx.m_lightShadingRt,
-							TextureUsageBit::IMAGE_COMPUTE_READ | TextureUsageBit::IMAGE_COMPUTE_WRITE, subresource});
+							TextureUsageBit::kImageComputeRead | TextureUsageBit::kImageComputeWrite, subresource});
 
 		pass.newDependency({m_ctx.m_irradianceDiceValuesBuffHandle, BufferUsageBit::STORAGE_COMPUTE_READ});
 	}
@@ -686,7 +685,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
 			subresource.m_mipmapCount = m_lightShading.m_mipCount;
 
-			pass.newDependency({m_ctx.m_lightShadingRt, TextureUsageBit::GENERATE_MIPMAPS, subresource});
+			pass.newDependency({m_ctx.m_lightShadingRt, TextureUsageBit::kGenerateMipmaps, subresource});
 		}
 	}
 }

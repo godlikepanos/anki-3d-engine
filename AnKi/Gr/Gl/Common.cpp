@@ -85,34 +85,34 @@ void convertFilter(SamplingFilter minMagFilter, SamplingFilter mipFilter, GLenum
 {
 	switch(minMagFilter)
 	{
-	case SamplingFilter::NEAREST:
+	case SamplingFilter::kNearest:
 		magFilter = GL_NEAREST;
 		switch(mipFilter)
 		{
-		case SamplingFilter::NEAREST:
+		case SamplingFilter::kNearest:
 			minFilter = GL_NEAREST_MIPMAP_NEAREST;
 			break;
-		case SamplingFilter::LINEAR:
+		case SamplingFilter::kLinear:
 			minFilter = GL_NEAREST_MIPMAP_LINEAR;
 			break;
-		case SamplingFilter::BASE:
+		case SamplingFilter::kBase:
 			minFilter = GL_NEAREST;
 			break;
 		default:
 			ANKI_ASSERT(0);
 		}
 		break;
-	case SamplingFilter::LINEAR:
+	case SamplingFilter::kLinear:
 		magFilter = GL_LINEAR;
 		switch(mipFilter)
 		{
-		case SamplingFilter::NEAREST:
+		case SamplingFilter::kNearest:
 			minFilter = GL_LINEAR_MIPMAP_NEAREST;
 			break;
-		case SamplingFilter::LINEAR:
+		case SamplingFilter::kLinear:
 			minFilter = GL_LINEAR_MIPMAP_LINEAR;
 			break;
-		case SamplingFilter::BASE:
+		case SamplingFilter::kBase:
 			minFilter = GL_LINEAR;
 			break;
 		default:
@@ -129,17 +129,17 @@ void convertVertexFormat(Format fmt, U& compCount, GLenum& type, Bool& normalize
 {
 	switch(fmt)
 	{
-	case Format::R32_SFLOAT:
+	case Format::kR32_Sfloat:
 		compCount = 1;
 		type = GL_FLOAT;
 		normalized = false;
 		break;
-	case Format::R32G32_SFLOAT:
+	case Format::kR32G32_Sfloat:
 		compCount = 2;
 		type = GL_FLOAT;
 		normalized = false;
 		break;
-	case Format::R32G32B32_SFLOAT:
+	case Format::kR32G32B32_Sfloat:
 		compCount = 3;
 		type = GL_FLOAT;
 		normalized = false;
@@ -179,7 +179,7 @@ void convertVertexFormat(Format fmt, U& compCount, GLenum& type, Bool& normalize
 		type = GL_INT_2_10_10_10_REV;
 		normalized = true;
 		break;
-	case Format::R8G8B8A8_UNORM:
+	case Format::kR8G8B8A8_Unorm:
 		compCount = 4;
 		type = GL_UNSIGNED_BYTE;
 		normalized = true;
@@ -336,7 +336,7 @@ void convertTextureInformation(Format pf, Bool& compressed, GLenum& format, GLen
 		internalFormat = GL_RGB8I;
 		type = GL_RGB_INTEGER;
 		break;
-	case Format::R8G8B8A8_UNORM:
+	case Format::kR8G8B8A8_Unorm:
 		format = GL_RGBA;
 		internalFormat = GL_RGBA8;
 		type = GL_UNSIGNED_BYTE;
@@ -391,7 +391,7 @@ void convertTextureInformation(Format pf, Bool& compressed, GLenum& format, GLen
 		internalFormat = GL_RGBA16UI;
 		type = GL_UNSIGNED_SHORT;
 		break;
-	case Format::R32_SFLOAT:
+	case Format::kR32_Sfloat:
 		format = GL_R;
 		internalFormat = GL_R32F;
 		type = GL_FLOAT;
@@ -401,17 +401,17 @@ void convertTextureInformation(Format pf, Bool& compressed, GLenum& format, GLen
 		internalFormat = GL_R32UI;
 		type = GL_UNSIGNED_INT;
 		break;
-	case Format::R32G32_SFLOAT:
+	case Format::kR32G32_Sfloat:
 		format = GL_RG;
 		internalFormat = GL_RG32F;
 		type = GL_FLOAT;
 		break;
-	case Format::R32G32_UINT:
+	case Format::kR32G32_Uint:
 		format = GL_RG_INTEGER;
 		internalFormat = GL_RG32UI;
 		type = GL_UNSIGNED_INT;
 		break;
-	case Format::R32G32B32_SFLOAT:
+	case Format::kR32G32B32_Sfloat:
 		format = GL_RGB;
 		internalFormat = GL_RGB32F;
 		type = GL_FLOAT;

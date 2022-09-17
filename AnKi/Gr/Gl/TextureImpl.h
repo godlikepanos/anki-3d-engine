@@ -64,7 +64,7 @@ public:
 	TextureType computeNewTexTypeOfSubresource(const TextureSubresourceInfo& subresource) const
 	{
 		ANKI_ASSERT(isSubresourceValid(subresource));
-		return (textureTypeIsCube(m_texType) && subresource.m_faceCount != 6) ? TextureType::_2D : m_texType;
+		return (textureTypeIsCube(m_texType) && subresource.m_faceCount != 6) ? TextureType::k2D : m_texType;
 	}
 
 private:

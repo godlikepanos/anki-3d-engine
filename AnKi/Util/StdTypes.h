@@ -222,22 +222,22 @@ private:
 /// @{
 inline constexpr U8 operator"" _U8(unsigned long long arg) noexcept
 {
-	return static_cast<U8>(arg);
+	return U8(arg);
 }
 
 inline constexpr U16 operator"" _U16(unsigned long long arg) noexcept
 {
-	return static_cast<U16>(arg);
+	return U16(arg);
 }
 
 inline constexpr U32 operator"" _U32(unsigned long long arg) noexcept
 {
-	return static_cast<U32>(arg);
+	return U32(arg);
 }
 
 inline constexpr U64 operator"" _U64(unsigned long long arg) noexcept
 {
-	return static_cast<U64>(arg);
+	return U64(arg);
 }
 /// @}
 

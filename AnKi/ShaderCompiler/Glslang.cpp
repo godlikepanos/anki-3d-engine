@@ -153,40 +153,40 @@ static EShLanguage ankiToGlslangShaderType(ShaderType shaderType)
 	EShLanguage gslangShader;
 	switch(shaderType)
 	{
-	case ShaderType::VERTEX:
+	case ShaderType::kVertex:
 		gslangShader = EShLangVertex;
 		break;
-	case ShaderType::FRAGMENT:
+	case ShaderType::kFragment:
 		gslangShader = EShLangFragment;
 		break;
-	case ShaderType::TESSELLATION_EVALUATION:
+	case ShaderType::kTessellationEvaluation:
 		gslangShader = EShLangTessEvaluation;
 		break;
-	case ShaderType::TESSELLATION_CONTROL:
+	case ShaderType::kTessellationControl:
 		gslangShader = EShLangTessControl;
 		break;
-	case ShaderType::GEOMETRY:
+	case ShaderType::kGeometry:
 		gslangShader = EShLangGeometry;
 		break;
-	case ShaderType::COMPUTE:
+	case ShaderType::kCompute:
 		gslangShader = EShLangCompute;
 		break;
-	case ShaderType::RAY_GEN:
+	case ShaderType::kRayGen:
 		gslangShader = EShLangRayGen;
 		break;
-	case ShaderType::ANY_HIT:
+	case ShaderType::kAnyHit:
 		gslangShader = EShLangAnyHit;
 		break;
-	case ShaderType::CLOSEST_HIT:
+	case ShaderType::kClosestHit:
 		gslangShader = EShLangClosestHit;
 		break;
-	case ShaderType::MISS:
+	case ShaderType::kMiss:
 		gslangShader = EShLangMiss;
 		break;
-	case ShaderType::INTERSECTION:
+	case ShaderType::kIntersection:
 		gslangShader = EShLangIntersect;
 		break;
-	case ShaderType::CALLABLE:
+	case ShaderType::kCallable:
 		gslangShader = EShLangCallable;
 		break;
 	default:

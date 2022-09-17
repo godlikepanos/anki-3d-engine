@@ -271,7 +271,7 @@ private:
 	mutable HashMap<U64, ShaderProgramResourceVariant*> m_variants;
 	mutable RWMutex m_mtx;
 
-	ShaderTypeBit m_shaderStages = ShaderTypeBit::NONE;
+	ShaderTypeBit m_shaderStages = ShaderTypeBit::kNone;
 
 	ShaderProgramResourceVariant* createNewVariant(const ShaderProgramResourceVariantInitInfo& info) const;
 

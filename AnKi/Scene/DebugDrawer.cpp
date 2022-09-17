@@ -167,15 +167,15 @@ void DebugDrawer2::drawCubes(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 l
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	cmdb->bindShaderProgram(variant->getProgram());
 
-	cmdb->setVertexAttribute(0, 0, Format::R32G32B32_SFLOAT, 0);
+	cmdb->setVertexAttribute(0, 0, Format::kR32G32B32_Sfloat, 0);
 	cmdb->bindVertexBuffer(0, m_cubePositionsBuffer, 0, sizeof(Vec3));
 	cmdb->bindIndexBuffer(m_cubeIndicesBuffer, 0, IndexType::U16);
 
 	cmdb->bindUniformBuffer(1, 0, unisToken.m_buffer, unisToken.m_offset, unisToken.m_range);
 
 	cmdb->setLineWidth(lineSize);
-	constexpr U INDEX_COUNT = 12 * 2;
-	cmdb->drawElements(PrimitiveTopology::LINES, INDEX_COUNT, mvps.getSize());
+	constexpr U kIndexCount = 12 * 2;
+	cmdb->drawElements(PrimitiveTopology::kLines, kIndexCount, mvps.getSize());
 }
 
 void DebugDrawer2::drawLines(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 lineSize, Bool ditherFailedDepth,
@@ -209,13 +209,13 @@ void DebugDrawer2::drawLines(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 l
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	cmdb->bindShaderProgram(variant->getProgram());
 
-	cmdb->setVertexAttribute(0, 0, Format::R32G32B32_SFLOAT, 0);
+	cmdb->setVertexAttribute(0, 0, Format::kR32G32B32_Sfloat, 0);
 	cmdb->bindVertexBuffer(0, vertsToken.m_buffer, vertsToken.m_offset, sizeof(Vec3));
 
 	cmdb->bindUniformBuffer(1, 0, unisToken.m_buffer, unisToken.m_offset, unisToken.m_range);
 
 	cmdb->setLineWidth(lineSize);
-	cmdb->drawArrays(PrimitiveTopology::LINES, linePositions.getSize(), mvps.getSize());
+	cmdb->drawArrays(PrimitiveTopology::kLines, linePositions.getSize(), mvps.getSize());
 }
 
 void DebugDrawer2::drawBillboardTextures(const Mat4& projMat, const Mat3x4& viewMat, ConstWeakArray<Vec3> positions,
@@ -276,8 +276,8 @@ void DebugDrawer2::drawBillboardTextures(const Mat4& projMat, const Mat3x4& view
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	cmdb->bindShaderProgram(variant->getProgram());
 
-	cmdb->setVertexAttribute(0, 0, Format::R32G32B32_SFLOAT, 0);
-	cmdb->setVertexAttribute(1, 1, Format::R32G32_SFLOAT, 0);
+	cmdb->setVertexAttribute(0, 0, Format::kR32G32B32_Sfloat, 0);
+	cmdb->setVertexAttribute(1, 1, Format::kR32G32_Sfloat, 0);
 	cmdb->bindVertexBuffer(0, positionsToken.m_buffer, positionsToken.m_offset, sizeof(Vec3));
 	cmdb->bindVertexBuffer(1, uvsToken.m_buffer, uvsToken.m_offset, sizeof(Vec2));
 
@@ -285,7 +285,7 @@ void DebugDrawer2::drawBillboardTextures(const Mat4& projMat, const Mat3x4& view
 	cmdb->bindSampler(1, 1, sampler);
 	cmdb->bindTexture(1, 2, tex);
 
-	cmdb->drawArrays(PrimitiveTopology::TRIANGLE_STRIP, 4, positions.getSize());
+	cmdb->drawArrays(PrimitiveTopology::kTriangleStrip, 4, positions.getSize());
 }
 
 void PhysicsDebugDrawer::drawLines(const Vec3* lines, const U32 vertCount, const Vec4& color)

@@ -102,7 +102,7 @@ void LensFlare::updateIndirectInfo(const RenderingContext& ctx, RenderPassWorkCo
 	rgraphCtx.bindStorageBuffer(0, 1, m_runCtx.m_indirectBuffHandle);
 	// Bind neareset because you don't need high quality
 	cmdb->bindSampler(0, 2, m_r->getSamplers().m_nearestNearestClamp);
-	rgraphCtx.bindTexture(0, 3, m_r->getDepthDownscale().getHiZRt(), HIZ_QUARTER_DEPTH);
+	rgraphCtx.bindTexture(0, 3, m_r->getDepthDownscale().getHiZRt(), kHiZQuarterSurface);
 	cmdb->dispatchCompute(count, 1, 1);
 }
 
@@ -127,7 +127,8 @@ void LensFlare::populateRenderGraph(RenderingContext& ctx)
 		});
 
 		rpass.newDependency({m_runCtx.m_indirectBuffHandle, BufferUsageBit::STORAGE_COMPUTE_WRITE});
-		rpass.newDependency({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_COMPUTE, HIZ_QUARTER_DEPTH});
+		rpass.newDependency(
+			{m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::kSampledCompute, kHiZQuarterSurface});
 	}
 }
 
@@ -141,7 +142,7 @@ void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBufferPtr& cmd
 	const U32 count = min<U32>(ctx.m_renderQueue->m_lensFlares.getSize(), m_maxFlares);
 
 	cmdb->bindShaderProgram(m_realGrProg);
-	cmdb->setBlendFactors(0, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA);
+	cmdb->setBlendFactors(0, BlendFactor::kSrcAlpha, BlendFactor::kOneMinusSrcAlpha);
 	cmdb->setDepthWrite(false);
 
 	for(U32 i = 0; i < count; ++i)
@@ -183,12 +184,12 @@ void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBufferPtr& cmd
 		cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearRepeat);
 		cmdb->bindTexture(0, 2, TextureViewPtr(const_cast<TextureView*>(flareEl.m_textureView)));
 
-		cmdb->drawArraysIndirect(PrimitiveTopology::TRIANGLE_STRIP, 1, i * sizeof(DrawArraysIndirectInfo),
+		cmdb->drawArraysIndirect(PrimitiveTopology::kTriangleStrip, 1, i * sizeof(DrawArraysIndirectInfo),
 								 m_indirectBuff);
 	}
 
 	// Restore state
-	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
+	cmdb->setBlendFactors(0, BlendFactor::kOne, BlendFactor::kZero);
 	cmdb->setDepthWrite(true);
 }
 

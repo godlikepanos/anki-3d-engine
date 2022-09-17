@@ -144,14 +144,14 @@ private:
 	class AttribInfo
 	{
 	public:
-		Format m_format = Format::NONE;
+		Format m_format = Format::kNone;
 		U32 m_relativeOffset = 0;
 		U32 m_buffIdx = 0;
 	};
 
 	DynamicArray<SubMesh> m_subMeshes;
 	DynamicArray<VertBuffInfo> m_vertexBufferInfos;
-	Array<AttribInfo, U(VertexAttributeId::COUNT)> m_attributes;
+	Array<AttribInfo, U(VertexAttributeId::kCount)> m_attributes;
 
 	BufferPtr m_vertexBuffer; ///< Contains all data (vertices and indices).
 

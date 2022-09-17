@@ -26,13 +26,13 @@ public:
 	BufferPtr m_positionBuffer;
 	PtrSize m_positionBufferOffset = 0;
 	U32 m_positionStride = 0;
-	Format m_positionsFormat = Format::NONE;
+	Format m_positionsFormat = Format::kNone;
 	U32 m_positionCount = 0;
 
 	Bool isValid() const
 	{
 		if(m_indexBuffer.get() == nullptr || m_indexCount == 0 || m_indexType == IndexType::COUNT
-		   || m_positionBuffer.get() == nullptr || m_positionStride == 0 || m_positionsFormat == Format::NONE
+		   || m_positionBuffer.get() == nullptr || m_positionStride == 0 || m_positionsFormat == Format::kNone
 		   || m_positionCount == 0)
 		{
 			return false;

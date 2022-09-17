@@ -64,7 +64,7 @@ public:
 	{
 	}
 
-	[[nodiscard]] static Error performSpirvReflection(Array<ConstWeakArray<U8>, U32(ShaderType::COUNT)> spirv,
+	[[nodiscard]] static Error performSpirvReflection(Array<ConstWeakArray<U8>, U32(ShaderType::kCount)> spirv,
 													  GenericMemoryPoolAllocator<U8> tmpAlloc,
 													  ShaderReflectionVisitorInterface& interface);
 
@@ -865,7 +865,7 @@ Error SpirvReflector::workgroupSizes(U32& sizex, U32& sizey, U32& sizez, U32& sp
 	return Error::NONE;
 }
 
-Error SpirvReflector::performSpirvReflection(Array<ConstWeakArray<U8>, U32(ShaderType::COUNT)> spirv,
+Error SpirvReflector::performSpirvReflection(Array<ConstWeakArray<U8>, U32(ShaderType::kCount)> spirv,
 											 GenericMemoryPoolAllocator<U8> tmpAlloc,
 											 ShaderReflectionVisitorInterface& interface)
 {
@@ -932,7 +932,7 @@ Error SpirvReflector::performSpirvReflection(Array<ConstWeakArray<U8>, U32(Shade
 		ANKI_CHECK(compiler.constsReflection(specializationConstants));
 
 		// Workgroup sizes
-		if(type == ShaderType::COMPUTE)
+		if(type == ShaderType::kCompute)
 		{
 			ANKI_CHECK(compiler.workgroupSizes(workgroupSizes[0], workgroupSizes[1], workgroupSizes[2],
 											   workgroupSizeSpecConstMask));
@@ -997,7 +997,7 @@ Error SpirvReflector::performSpirvReflection(Array<ConstWeakArray<U8>, U32(Shade
 		ANKI_CHECK(interface.visitConstant(i, c.m_name, c.m_type, c.m_constantId));
 	}
 
-	if(spirv[ShaderType::COMPUTE].getSize())
+	if(spirv[ShaderType::kCompute].getSize())
 	{
 		ANKI_CHECK(interface.setWorkgroupSizes(workgroupSizes[0], workgroupSizes[1], workgroupSizes[2],
 											   workgroupSizeSpecConstMask));
@@ -1021,7 +1021,7 @@ Error SpirvReflector::performSpirvReflection(Array<ConstWeakArray<U8>, U32(Shade
 	return Error::NONE;
 }
 
-Error performSpirvReflection(Array<ConstWeakArray<U8>, U32(ShaderType::COUNT)> spirv,
+Error performSpirvReflection(Array<ConstWeakArray<U8>, U32(ShaderType::kCount)> spirv,
 							 GenericMemoryPoolAllocator<U8> tmpAlloc, ShaderReflectionVisitorInterface& interface)
 {
 	return SpirvReflector::performSpirvReflection(spirv, tmpAlloc, interface);

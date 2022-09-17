@@ -29,7 +29,7 @@ void main()
 }
 	)";
 
-		ShaderPtr shader = createShader(shaderSrc, ShaderType::COMPUTE, *gr);
+		ShaderPtr shader = createShader(shaderSrc, ShaderType::kCompute, *gr);
 
 		ShaderProgramInitInfo progInit;
 		progInit.m_computeShader = shader;
@@ -59,7 +59,7 @@ void main()
 		cmdbInit.m_flags = CommandBufferFlag::SMALL_BATCH | CommandBufferFlag::GENERAL_WORK;
 		CommandBufferPtr cmdb = gr->newCommandBuffer(cmdbInit);
 
-		cmdb->bindReadOnlyTextureBuffer(0, 0, texBuff, 0, MAX_PTR_SIZE, Format::R8G8B8A8_SNORM);
+		cmdb->bindReadOnlyTextureBuffer(0, 0, texBuff, 0, MAX_PTR_SIZE, Format::kR8G8B8A8_Snorm);
 		cmdb->bindStorageBuffer(0, 1, storageBuff, 0, MAX_PTR_SIZE);
 		cmdb->bindShaderProgram(prog);
 		cmdb->dispatchCompute(1, 1, 1);

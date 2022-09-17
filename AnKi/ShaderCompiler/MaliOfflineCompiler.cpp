@@ -97,13 +97,13 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 
 	switch(shaderType)
 	{
-	case ShaderType::VERTEX:
+	case ShaderType::kVertex:
 		args[0] = "-v";
 		break;
-	case ShaderType::FRAGMENT:
+	case ShaderType::kFragment:
 		args[0] = "-f";
 		break;
-	case ShaderType::COMPUTE:
+	case ShaderType::kCompute:
 		args[0] = "-C";
 		break;
 	default:
@@ -148,7 +148,7 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 #define ANKI_FLOAT_REGEX "([0-9]+[.]?[0-9]*)"
 
 	// Instructions
-	if(shaderType == ShaderType::VERTEX)
+	if(shaderType == ShaderType::kVertex)
 	{
 		// Add the instructions in position and varying variants
 
@@ -192,7 +192,7 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 			return Error::FUNCTION_FAILED;
 		}
 	}
-	else if(shaderType == ShaderType::FRAGMENT)
+	else if(shaderType == ShaderType::kFragment)
 	{
 		if(std::regex_search(stdoutstl, match,
 							 std::regex("Total instruction cycles:\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
@@ -219,7 +219,7 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 	}
 	else
 	{
-		ANKI_ASSERT(shaderType == ShaderType::COMPUTE);
+		ANKI_ASSERT(shaderType == ShaderType::kCompute);
 
 		if(std::regex_search(stdoutstl, match,
 							 std::regex("Total instruction cycles:\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX

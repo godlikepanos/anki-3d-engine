@@ -30,8 +30,8 @@ enum class BuiltinMutatorId : U8
 	BONES,
 	VELOCITY,
 
-	COUNT,
-	FIRST = 0
+	kCount,
+	kFirst = 0
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BuiltinMutatorId)
 
@@ -273,7 +273,7 @@ private:
 
 	DynamicArray<Program> m_programs;
 
-	Array<U8, U(RenderingTechnique::COUNT)> m_techniqueToProgram;
+	Array<U8, U(RenderingTechnique::kCount)> m_techniqueToProgram;
 	RenderingTechniqueBit m_techniquesMask = RenderingTechniqueBit::NONE;
 
 	DynamicArray<MaterialVariable> m_vars;

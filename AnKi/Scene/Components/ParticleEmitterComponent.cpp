@@ -402,12 +402,12 @@ void ParticleEmitterComponent::draw(RenderQueueDrawContext& ctx) const
 		cmdb->bindShaderProgram(prog);
 
 		// Vertex attribs
-		cmdb->setVertexAttribute(U32(VertexAttributeId::POSITION), 0, Format::R32G32B32_SFLOAT, 0);
-		cmdb->setVertexAttribute(U32(VertexAttributeId::SCALE), 0, Format::R32_SFLOAT, sizeof(Vec3));
-		cmdb->setVertexAttribute(U32(VertexAttributeId::ALPHA), 0, Format::R32_SFLOAT, sizeof(Vec3) + sizeof(F32));
+		cmdb->setVertexAttribute(U32(VertexAttributeId::POSITION), 0, Format::kR32G32B32_Sfloat, 0);
+		cmdb->setVertexAttribute(U32(VertexAttributeId::SCALE), 0, Format::kR32_Sfloat, sizeof(Vec3));
+		cmdb->setVertexAttribute(U32(VertexAttributeId::ALPHA), 0, Format::kR32_Sfloat, sizeof(Vec3) + sizeof(F32));
 
 		// Vertex buff
-		cmdb->bindVertexBuffer(0, token.m_buffer, token.m_offset, VERTEX_SIZE, VertexStepRate::INSTANCE);
+		cmdb->bindVertexBuffer(0, token.m_buffer, token.m_offset, VERTEX_SIZE, VertexStepRate::kInstance);
 
 		// Uniforms
 		Array<Mat3x4, 1> trf = {Mat3x4::getIdentity()};
@@ -415,7 +415,7 @@ void ParticleEmitterComponent::draw(RenderQueueDrawContext& ctx) const
 												  *ctx.m_stagingGpuAllocator);
 
 		// Draw
-		cmdb->drawArrays(PrimitiveTopology::TRIANGLE_STRIP, 4, m_aliveParticleCount, 0, 0);
+		cmdb->drawArrays(PrimitiveTopology::kTriangleStrip, 4, m_aliveParticleCount, 0, 0);
 	}
 	else
 	{
@@ -433,11 +433,11 @@ void ParticleEmitterComponent::draw(RenderQueueDrawContext& ctx) const
 		const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);
 		if(enableDepthTest)
 		{
-			cmdb->setDepthCompareOperation(CompareOperation::LESS);
+			cmdb->setDepthCompareOperation(CompareOperation::kLess);
 		}
 		else
 		{
-			cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);
+			cmdb->setDepthCompareOperation(CompareOperation::kAlways);
 		}
 
 		m_node->getSceneGraph().getDebugDrawer().drawCubes(
@@ -454,7 +454,7 @@ void ParticleEmitterComponent::draw(RenderQueueDrawContext& ctx) const
 		// Restore state
 		if(!enableDepthTest)
 		{
-			cmdb->setDepthCompareOperation(CompareOperation::LESS);
+			cmdb->setDepthCompareOperation(CompareOperation::kLess);
 		}
 	}
 }

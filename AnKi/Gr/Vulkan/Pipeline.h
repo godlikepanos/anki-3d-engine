@@ -21,7 +21,7 @@ class VertexBufferBindingPipelineState
 {
 public:
 	U32 m_stride = MAX_U32; ///< Vertex stride.
-	VertexStepRate m_stepRate = VertexStepRate::VERTEX;
+	VertexStepRate m_stepRate = VertexStepRate::kVertex;
 	Array<U8, 3> m_padding = {};
 
 	Bool operator==(const VertexBufferBindingPipelineState& b) const
@@ -40,7 +40,7 @@ class VertexAttributeBindingPipelineState
 {
 public:
 	PtrSize m_offset = 0;
-	Format m_format = Format::NONE;
+	Format m_format = Format::kNone;
 	U8 m_binding = 0;
 	Array<U8, 3> m_padding = {};
 
@@ -70,7 +70,7 @@ static_assert(sizeof(VertexPipelineState)
 class InputAssemblerPipelineState
 {
 public:
-	PrimitiveTopology m_topology = PrimitiveTopology::TRIANGLES;
+	PrimitiveTopology m_topology = PrimitiveTopology::kTriangles;
 	Bool m_primitiveRestartEnabled = false;
 };
 static_assert(sizeof(InputAssemblerPipelineState) == sizeof(U8) * 2, "Packed because it will be hashed");
@@ -78,8 +78,8 @@ static_assert(sizeof(InputAssemblerPipelineState) == sizeof(U8) * 2, "Packed bec
 class RasterizerPipelineState
 {
 public:
-	FillMode m_fillMode = FillMode::SOLID;
-	FaceSelectionBit m_cullMode = FaceSelectionBit::BACK;
+	FillMode m_fillMode = FillMode::kSolid;
+	FaceSelectionBit m_cullMode = FaceSelectionBit::kBack;
 	RasterizationOrder m_rasterizationOrder = RasterizationOrder::ORDERED;
 	U8 m_padding = 0;
 	F32 m_depthBiasConstantFactor = 0.0f;
@@ -91,7 +91,7 @@ class DepthPipelineState
 {
 public:
 	Bool m_depthWriteEnabled = true;
-	CompareOperation m_depthCompareFunction = CompareOperation::LESS;
+	CompareOperation m_depthCompareFunction = CompareOperation::kLess;
 };
 static_assert(sizeof(DepthPipelineState) == sizeof(U8) * 2, "Packed because it will be hashed");
 
@@ -101,10 +101,10 @@ public:
 	class S
 	{
 	public:
-		StencilOperation m_stencilFailOperation = StencilOperation::KEEP;
-		StencilOperation m_stencilPassDepthFailOperation = StencilOperation::KEEP;
-		StencilOperation m_stencilPassDepthPassOperation = StencilOperation::KEEP;
-		CompareOperation m_compareFunction = CompareOperation::ALWAYS;
+		StencilOperation m_stencilFailOperation = StencilOperation::kKeep;
+		StencilOperation m_stencilPassDepthFailOperation = StencilOperation::kKeep;
+		StencilOperation m_stencilPassDepthPassOperation = StencilOperation::kKeep;
+		CompareOperation m_compareFunction = CompareOperation::kAlways;
 	};
 
 	Array<S, 2> m_face;
@@ -114,13 +114,13 @@ static_assert(sizeof(StencilPipelineState) == sizeof(U32) * 2, "Packed because i
 class ColorAttachmentState
 {
 public:
-	BlendFactor m_srcBlendFactorRgb = BlendFactor::ONE;
-	BlendFactor m_srcBlendFactorA = BlendFactor::ONE;
-	BlendFactor m_dstBlendFactorRgb = BlendFactor::ZERO;
-	BlendFactor m_dstBlendFactorA = BlendFactor::ZERO;
-	BlendOperation m_blendFunctionRgb = BlendOperation::ADD;
-	BlendOperation m_blendFunctionA = BlendOperation::ADD;
-	ColorBit m_channelWriteMask = ColorBit::ALL;
+	BlendFactor m_srcBlendFactorRgb = BlendFactor::kOne;
+	BlendFactor m_srcBlendFactorA = BlendFactor::kOne;
+	BlendFactor m_dstBlendFactorRgb = BlendFactor::kZero;
+	BlendFactor m_dstBlendFactorA = BlendFactor::kZero;
+	BlendOperation m_blendFunctionRgb = BlendOperation::kAdd;
+	BlendOperation m_blendFunctionA = BlendOperation::kAdd;
+	ColorBit m_channelWriteMask = ColorBit::kAll;
 };
 static_assert(sizeof(ColorAttachmentState) == sizeof(U8) * 7, "Packed because it will be hashed");
 
@@ -243,7 +243,7 @@ public:
 	void setStencilOperations(FaceSelectionBit face, StencilOperation stencilFail,
 							  StencilOperation stencilPassDepthFail, StencilOperation stencilPassDepthPass)
 	{
-		if(!!(face & FaceSelectionBit::FRONT)
+		if(!!(face & FaceSelectionBit::kFront)
 		   && (m_state.m_stencil.m_face[0].m_stencilFailOperation != stencilFail
 			   || m_state.m_stencil.m_face[0].m_stencilPassDepthFailOperation != stencilPassDepthFail
 			   || m_state.m_stencil.m_face[0].m_stencilPassDepthPassOperation != stencilPassDepthPass))
@@ -254,7 +254,7 @@ public:
 			m_dirty.m_stencil = true;
 		}
 
-		if(!!(face & FaceSelectionBit::BACK)
+		if(!!(face & FaceSelectionBit::kBack)
 		   && (m_state.m_stencil.m_face[1].m_stencilFailOperation != stencilFail
 			   || m_state.m_stencil.m_face[1].m_stencilPassDepthFailOperation != stencilPassDepthFail
 			   || m_state.m_stencil.m_face[1].m_stencilPassDepthPassOperation != stencilPassDepthPass))
@@ -268,13 +268,13 @@ public:
 
 	void setStencilCompareOperation(FaceSelectionBit face, CompareOperation comp)
 	{
-		if(!!(face & FaceSelectionBit::FRONT) && m_state.m_stencil.m_face[0].m_compareFunction != comp)
+		if(!!(face & FaceSelectionBit::kFront) && m_state.m_stencil.m_face[0].m_compareFunction != comp)
 		{
 			m_state.m_stencil.m_face[0].m_compareFunction = comp;
 			m_dirty.m_stencil = true;
 		}
 
-		if(!!(face & FaceSelectionBit::BACK) && m_state.m_stencil.m_face[1].m_compareFunction != comp)
+		if(!!(face & FaceSelectionBit::kBack) && m_state.m_stencil.m_face[1].m_compareFunction != comp)
 		{
 			m_state.m_stencil.m_face[1].m_compareFunction = comp;
 			m_dirty.m_stencil = true;

@@ -40,15 +40,15 @@ Error IndirectSpecular::initInternal()
 	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_noiseImage));
 
 	// Create RT
-	TextureUsageBit usage = TextureUsageBit::ALL_SAMPLED;
+	TextureUsageBit usage = TextureUsageBit::kAllSampled;
 
-	usage |= (preferCompute) ? TextureUsageBit::IMAGE_COMPUTE_WRITE : TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
+	usage |= (preferCompute) ? TextureUsageBit::kImageComputeWrite : TextureUsageBit::kFramebufferWrite;
 
 	TextureInitInfo texInit =
 		m_r->create2DRenderTargetInitInfo(size.x(), size.y(), m_r->getHdrFormat(), usage, "SSR #1");
-	m_rts[0] = m_r->createAndClearRenderTarget(texInit, TextureUsageBit::ALL_SAMPLED);
+	m_rts[0] = m_r->createAndClearRenderTarget(texInit, TextureUsageBit::kAllSampled);
 	texInit.setName("SSR #2");
-	m_rts[1] = m_r->createAndClearRenderTarget(texInit, TextureUsageBit::ALL_SAMPLED);
+	m_rts[1] = m_r->createAndClearRenderTarget(texInit, TextureUsageBit::kAllSampled);
 
 	m_fbDescr.m_colorAttachmentCount = 1;
 	m_fbDescr.bake();
@@ -86,8 +86,8 @@ void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
 	}
 	else
 	{
-		m_runCtx.m_rts[0] = rgraph.importRenderTarget(m_rts[readRtIdx], TextureUsageBit::ALL_SAMPLED);
-		m_runCtx.m_rts[1] = rgraph.importRenderTarget(m_rts[writeRtIdx], TextureUsageBit::ALL_SAMPLED);
+		m_runCtx.m_rts[0] = rgraph.importRenderTarget(m_rts[readRtIdx], TextureUsageBit::kAllSampled);
+		m_runCtx.m_rts[1] = rgraph.importRenderTarget(m_rts[writeRtIdx], TextureUsageBit::kAllSampled);
 		m_rtsImportedOnce = true;
 	}
 
@@ -120,8 +120,8 @@ void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
 			ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("SSR");
 
 			ppass = &pass;
-			readUsage = TextureUsageBit::SAMPLED_COMPUTE;
-			writeUsage = TextureUsageBit::IMAGE_COMPUTE_WRITE;
+			readUsage = TextureUsageBit::kSampledCompute;
+			writeUsage = TextureUsageBit::kImageComputeWrite;
 		}
 		else
 		{
@@ -131,13 +131,13 @@ void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
 												: RenderTargetHandle());
 
 			ppass = &pass;
-			readUsage = TextureUsageBit::SAMPLED_FRAGMENT;
-			writeUsage = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
+			readUsage = TextureUsageBit::kSampledFragment;
+			writeUsage = TextureUsageBit::kFramebufferWrite;
 
 			if(enableVrs)
 			{
 				ppass->newDependency(RenderPassDependency(m_r->getVrsSriGeneration().getDownscaledSriRt(),
-														  TextureUsageBit::FRAMEBUFFER_SHADING_RATE));
+														  TextureUsageBit::kFramebufferShadingRate));
 			}
 		}
 
@@ -220,7 +220,7 @@ void IndirectSpecular::run(const RenderingContext& ctx, RenderPassWorkContext& r
 	{
 		cmdb->setViewport(0, 0, m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2);
 
-		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
+		cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
 	}
 }
 

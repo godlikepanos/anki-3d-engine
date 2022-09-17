@@ -52,8 +52,8 @@ public:
 	void getAttachmentInfo(BitSet<MAX_COLOR_ATTACHMENTS, U8>& colorAttachments, Bool& depth, Bool& stencil) const
 	{
 		colorAttachments = m_colorAttachmentMask;
-		depth = !!(m_aspect & DepthStencilAspectBit::DEPTH);
-		stencil = !!(m_aspect & DepthStencilAspectBit::STENCIL);
+		depth = !!(m_aspect & DepthStencilAspectBit::kDepth);
+		stencil = !!(m_aspect & DepthStencilAspectBit::kStencil);
 	}
 
 	U32 getColorAttachmentCount() const
@@ -109,13 +109,13 @@ public:
 	}
 
 private:
-	static constexpr U32 MAX_ATTACHMENTS = MAX_COLOR_ATTACHMENTS + 2; ///< Color + depth/stencil + SRI
+	static constexpr U32 kMaxAttachments = MAX_COLOR_ATTACHMENTS + 2; ///< Color + depth/stencil + SRI
 
 	BitSet<MAX_COLOR_ATTACHMENTS, U8> m_colorAttachmentMask = {false};
-	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::NONE;
+	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::kNone;
 
 	U8 m_colorAttCount = 0;
-	Array<VkClearValue, MAX_ATTACHMENTS> m_clearVals;
+	Array<VkClearValue, kMaxAttachments> m_clearVals;
 
 	U32 m_width = 0;
 	U32 m_height = 0;
@@ -138,8 +138,8 @@ private:
 
 	// RenderPass create info
 	VkRenderPassCreateInfo2 m_rpassCi = {};
-	Array<VkAttachmentDescription2, MAX_ATTACHMENTS> m_attachmentDescriptions = {};
-	Array<VkAttachmentReference2, MAX_ATTACHMENTS> m_references = {};
+	Array<VkAttachmentDescription2, kMaxAttachments> m_attachmentDescriptions = {};
+	Array<VkAttachmentReference2, kMaxAttachments> m_references = {};
 	VkSubpassDescription2 m_subpassDescr = {};
 	VkFragmentShadingRateAttachmentInfoKHR m_sriAttachmentInfo = {};
 

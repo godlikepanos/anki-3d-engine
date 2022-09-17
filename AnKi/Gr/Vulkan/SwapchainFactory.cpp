@@ -76,7 +76,7 @@ Error MicroSwapchain::initInternal()
 														   m_factory->m_gr->getSurface(), &formatCount, &formats[0]));
 
 		ANKI_VK_LOGV("Supported surface formats:");
-		Format akSurfaceFormat = Format::NONE;
+		Format akSurfaceFormat = Format::kNone;
 		for(U32 i = 0; i < formatCount; ++i)
 		{
 			const VkFormat vkFormat = formats[i].format;
@@ -86,15 +86,15 @@ Error MicroSwapchain::initInternal()
 #define ANKI_FORMAT_DEF(type, id, componentCount, texelSize, blockWidth, blockHeight, blockSize, shaderType, \
 						depthStencil) \
 	case id: \
-		akFormat = Format::type; \
+		akFormat = Format::k##type; \
 		break;
 #include <AnKi/Gr/Format.defs.h>
 #undef ANKI_FORMAT_DEF
 			default:
-				akFormat = Format::NONE;
+				akFormat = Format::kNone;
 			}
 
-			ANKI_VK_LOGV("\t%s", (akFormat != Format::NONE) ? getFormatInfo(akFormat).m_name : "Unknown format");
+			ANKI_VK_LOGV("\t%s", (akFormat != Format::kNone) ? getFormatInfo(akFormat).m_name : "Unknown format");
 
 			if(surfaceFormat == VK_FORMAT_UNDEFINED
 			   && (vkFormat == VK_FORMAT_R8G8B8A8_UNORM || vkFormat == VK_FORMAT_B8G8R8A8_UNORM
@@ -236,10 +236,10 @@ Error MicroSwapchain::initInternal()
 			init.m_width = surfaceWidth;
 			init.m_height = surfaceHeight;
 			init.m_format = Format(surfaceFormat); // anki::Format is compatible with VkFormat
-			init.m_usage = TextureUsageBit::IMAGE_COMPUTE_WRITE | TextureUsageBit::IMAGE_TRACE_RAYS_WRITE
-						   | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ
-						   | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::PRESENT;
-			init.m_type = TextureType::_2D;
+			init.m_usage = TextureUsageBit::kImageComputeWrite | TextureUsageBit::kImageTraceRaysWrite
+						   | TextureUsageBit::kFramebufferRead | TextureUsageBit::kFramebufferWrite
+						   | TextureUsageBit::kPresent;
+			init.m_type = TextureType::k2D;
 
 			TextureImpl* tex =
 				m_factory->m_gr->getAllocator().newInstance<TextureImpl>(m_factory->m_gr, init.getName());

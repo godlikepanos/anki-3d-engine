@@ -98,7 +98,7 @@ public:
 
 	VulkanQueueType getVulkanQueueType() const
 	{
-		ANKI_ASSERT(m_queue != VulkanQueueType::COUNT);
+		ANKI_ASSERT(m_queue != VulkanQueueType::kCount);
 		return m_queue;
 	}
 
@@ -109,14 +109,14 @@ private:
 	VkCommandBuffer m_handle = {};
 
 	MicroFencePtr m_fence;
-	Array<DynamicArray<GrObjectPtr>, U(GrObjectType::COUNT)> m_objectRefs;
+	Array<DynamicArray<GrObjectPtr>, U(GrObjectType::kCount)> m_objectRefs;
 
 	// Cacheline boundary
 
 	CommandBufferThreadAllocator* m_threadAlloc;
 	mutable Atomic<I32> m_refcount = {0};
 	CommandBufferFlag m_flags = CommandBufferFlag::NONE;
-	VulkanQueueType m_queue = VulkanQueueType::COUNT;
+	VulkanQueueType m_queue = VulkanQueueType::kCount;
 
 	void reset();
 
@@ -190,13 +190,13 @@ public:
 private:
 	CommandBufferFactory* m_factory;
 	ThreadId m_tid;
-	Array<VkCommandPool, U(VulkanQueueType::COUNT)> m_pools = {};
+	Array<VkCommandPool, U(VulkanQueueType::kCount)> m_pools = {};
 
 #if ANKI_EXTRA_CHECKS
 	Atomic<U32> m_createdCmdbs = {0};
 #endif
 
-	Array3d<MicroObjectRecycler<MicroCommandBuffer>, 2, 2, U(VulkanQueueType::COUNT)> m_recyclers;
+	Array3d<MicroObjectRecycler<MicroCommandBuffer>, 2, 2, U(VulkanQueueType::kCount)> m_recyclers;
 };
 
 /// Command bufffer object recycler.

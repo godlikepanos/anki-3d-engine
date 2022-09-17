@@ -102,7 +102,7 @@
 
 		<class name="ShaderProgramBinaryVariant">
 			<members>
-				<member name="m_codeBlockIndices" type="U32" array_size="U32(ShaderType::COUNT)" comment="Index in ShaderProgramBinary::m_codeBlocks. MAX_U32 means no shader" constructor="= {}" />
+				<member name="m_codeBlockIndices" type="U32" array_size="U32(ShaderType::kCount)" comment="Index in ShaderProgramBinary::m_codeBlocks. MAX_U32 means no shader" constructor="= {}" />
 				<member name="m_uniformBlocks" type="WeakArray&lt;ShaderProgramBinaryBlockInstance&gt;" />
 				<member name="m_storageBlocks" type="WeakArray&lt;ShaderProgramBinaryBlockInstance&gt;" />
 				<member name="m_pushConstantBlock" type="ShaderProgramBinaryBlockInstance" pointer="true" constructor="= nullptr" />
@@ -149,7 +149,7 @@
 				<member name="m_opaques" type="WeakArray&lt;ShaderProgramBinaryOpaque&gt;" />
 				<member name="m_constants" type="WeakArray&lt;ShaderProgramBinaryConstant&gt;" />
 				<member name="m_structs" type="WeakArray&lt;ShaderProgramBinaryStruct&gt;" />
-				<member name="m_presentShaderTypes" type="ShaderTypeBit" constructor="= ShaderTypeBit::NONE" />
+				<member name="m_presentShaderTypes" type="ShaderTypeBit" constructor="= ShaderTypeBit::kNone" />
 				<member name="m_libraryName" type="char" array_size="64" constructor="= {}" comment="The name of the shader library. Mainly for RT shaders" />
 				<member name="m_rayType" type="U32" constructor="= MAX_U32" comment="An arbitary number indicating the type of the ray" />
 			</members>

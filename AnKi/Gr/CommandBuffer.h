@@ -40,7 +40,7 @@ class CommandBufferInitInfo : public GrBaseInitInfo
 public:
 	FramebufferPtr m_framebuffer; ///< For second level command buffers.
 	Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> m_colorAttachmentUsages = {};
-	TextureUsageBit m_depthStencilAttachmentUsage = TextureUsageBit::NONE;
+	TextureUsageBit m_depthStencilAttachmentUsage = TextureUsageBit::kNone;
 
 	CommandBufferFlag m_flags = CommandBufferFlag::NONE;
 
@@ -68,7 +68,7 @@ public:
 
 	/// Bind vertex buffer.
 	void bindVertexBuffer(U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize stride,
-						  VertexStepRate stepRate = VertexStepRate::VERTEX);
+						  VertexStepRate stepRate = VertexStepRate::kVertex);
 
 	/// Setup a vertex attribute.
 	void setVertexAttribute(U32 location, U32 buffBinding, Format fmt, PtrSize relativeOffset);
@@ -292,7 +292,7 @@ public:
 				   U32 rayTypeCount, U32 width, U32 height, U32 depth);
 
 	/// Generate mipmaps for non-3D textures. You have to transition all the mip levels of this face and layer to
-	/// TextureUsageBit::GENERATE_MIPMAPS before calling this method.
+	/// TextureUsageBit::kGenerateMipmaps before calling this method.
 	/// @param texView The texture view to generate mips. It should point to a subresource that contains the whole
 	///                mip chain and only one face and one layer.
 	void generateMipmaps2d(const TextureViewPtr& texView);

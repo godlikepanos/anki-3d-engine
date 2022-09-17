@@ -168,7 +168,7 @@ static Bool spinDials(DynamicArrayAuto<U32>& dials, ConstWeakArray<ShaderProgram
 
 static Error compileSpirv(ConstWeakArray<MutatorValue> mutation, const ShaderProgramParser& parser,
 						  GenericMemoryPoolAllocator<U8>& tmpAlloc,
-						  Array<DynamicArrayAuto<U8>, U32(ShaderType::COUNT)>& spirv, StringAuto& errorLog)
+						  Array<DynamicArrayAuto<U8>, U32(ShaderType::kCount)>& spirv, StringAuto& errorLog)
 {
 	// Generate the source and the rest for the variant
 	ShaderProgramParserVariant parserVariant;
@@ -242,18 +242,18 @@ static void compileVariantAsync(ConstWeakArray<MutatorValue> mutation, const Sha
 		}
 
 		// All good, compile the variant
-		Array<DynamicArrayAuto<U8>, U32(ShaderType::COUNT)> spirvs = {{{tmpAlloc},
-																	   {tmpAlloc},
-																	   {tmpAlloc},
-																	   {tmpAlloc},
-																	   {tmpAlloc},
-																	   {tmpAlloc},
-																	   {tmpAlloc},
-																	   {tmpAlloc},
-																	   {tmpAlloc},
-																	   {tmpAlloc},
-																	   {tmpAlloc},
-																	   {tmpAlloc}}};
+		Array<DynamicArrayAuto<U8>, U32(ShaderType::kCount)> spirvs = {{{tmpAlloc},
+																		{tmpAlloc},
+																		{tmpAlloc},
+																		{tmpAlloc},
+																		{tmpAlloc},
+																		{tmpAlloc},
+																		{tmpAlloc},
+																		{tmpAlloc},
+																		{tmpAlloc},
+																		{tmpAlloc},
+																		{tmpAlloc},
+																		{tmpAlloc}}};
 		StringAuto errorLog(tmpAlloc);
 		const Error err = compileSpirv(ctx.m_mutation, *ctx.m_parser, tmpAlloc, spirvs, errorLog);
 
@@ -834,7 +834,7 @@ static Error doReflection(const StringList& symbolsToReflect, ShaderProgramBinar
 
 	for(ShaderProgramBinaryVariant& variant : binary.m_variants)
 	{
-		Array<ConstWeakArray<U8>, U32(ShaderType::COUNT)> spirvs;
+		Array<ConstWeakArray<U8>, U32(ShaderType::kCount)> spirvs;
 		for(ShaderType stage : EnumIterable<ShaderType>())
 		{
 			if(variant.m_codeBlockIndices[stage] != MAX_U32)

@@ -43,7 +43,7 @@ public:
 
 	Bool isGraphics() const
 	{
-		return !!(m_stages & ShaderTypeBit::ALL_GRAPHICS);
+		return !!(m_stages & ShaderTypeBit::kAllGraphics);
 	}
 
 	const VkPipelineShaderStageCreateInfo* getShaderCreateInfos(U32& count) const
@@ -108,7 +108,7 @@ public:
 
 private:
 	DynamicArray<ShaderPtr> m_shaders;
-	ShaderTypeBit m_stages = ShaderTypeBit::NONE;
+	ShaderTypeBit m_stages = ShaderTypeBit::kNone;
 
 	PipelineLayout m_pplineLayout = {};
 	Array<DescriptorSetLayout, MAX_DESCRIPTOR_SETS> m_descriptorSetLayouts;
@@ -118,7 +118,8 @@ private:
 	class
 	{
 	public:
-		Array<VkPipelineShaderStageCreateInfo, U32(ShaderType::FRAGMENT - ShaderType::VERTEX) + 1> m_shaderCreateInfos;
+		Array<VkPipelineShaderStageCreateInfo, U32(ShaderType::kFragment - ShaderType::kVertex) + 1>
+			m_shaderCreateInfos;
 		U32 m_shaderCreateInfoCount = 0;
 		PipelineFactory* m_pplineFactory = nullptr;
 	} m_graphics;

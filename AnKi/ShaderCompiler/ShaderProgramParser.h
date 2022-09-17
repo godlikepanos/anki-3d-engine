@@ -96,7 +96,7 @@ public:
 
 private:
 	GenericMemoryPoolAllocator<U8> m_alloc;
-	Array<String, U32(ShaderType::COUNT)> m_sources;
+	Array<String, U32(ShaderType::kCount)> m_sources;
 };
 
 /// This is a special preprocessor that run before the usual preprocessor. Its purpose is to add some meta information
@@ -209,7 +209,7 @@ private:
 	DynamicArrayAuto<Mutator> m_mutators = {m_alloc};
 	DynamicArrayAuto<PartialMutationSkip> m_skipMutations = {m_alloc};
 
-	ShaderTypeBit m_shaderTypes = ShaderTypeBit::NONE;
+	ShaderTypeBit m_shaderTypes = ShaderTypeBit::kNone;
 	Bool m_insideShader = false;
 	ShaderCompilerOptions m_compilerOptions;
 

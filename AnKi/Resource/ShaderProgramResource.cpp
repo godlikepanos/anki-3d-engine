@@ -165,10 +165,10 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, [[maybe_unus
 	m_shaderStages = binary.m_presentShaderTypes;
 
 	// Do some RT checks
-	if(!!(m_shaderStages & ShaderTypeBit::ALL_RAY_TRACING))
+	if(!!(m_shaderStages & ShaderTypeBit::kAllRayTracing))
 	{
-		if(m_shaderStages != (ShaderTypeBit::ANY_HIT | ShaderTypeBit::CLOSEST_HIT)
-		   && m_shaderStages != ShaderTypeBit::MISS && m_shaderStages != ShaderTypeBit::RAY_GEN)
+		if(m_shaderStages != (ShaderTypeBit::kAnyHit | ShaderTypeBit::kClosestHit)
+		   && m_shaderStages != ShaderTypeBit::kMiss && m_shaderStages != ShaderTypeBit::kRayGen)
 		{
 			ANKI_RESOURCE_LOGE("Any and closest hit shaders shouldn't coexist with other stages. Miss can't coexist "
 							   "with other stages. Raygen can't coexist with other stages as well");
@@ -326,7 +326,7 @@ ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitIn
 	}
 
 	// Get the workgroup sizes
-	if(!!(m_shaderStages & ShaderTypeBit::COMPUTE))
+	if(!!(m_shaderStages & ShaderTypeBit::kCompute))
 	{
 		for(U32 i = 0; i < 3; ++i)
 		{
@@ -368,7 +368,7 @@ ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitIn
 	}
 
 	// Time to init the shaders
-	if(!!(m_shaderStages & (ShaderTypeBit::ALL_GRAPHICS | ShaderTypeBit::COMPUTE)))
+	if(!!(m_shaderStages & (ShaderTypeBit::kAllGraphics | ShaderTypeBit::kCompute)))
 	{
 		// Create the program name
 		StringAuto progName(getTempAllocator());
@@ -394,11 +394,11 @@ ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitIn
 			ShaderPtr shader = getManager().getGrManager().newShader(inf);
 
 			const ShaderTypeBit shaderBit = ShaderTypeBit(1 << shaderType);
-			if(!!(shaderBit & ShaderTypeBit::ALL_GRAPHICS))
+			if(!!(shaderBit & ShaderTypeBit::kAllGraphics))
 			{
 				progInf.m_graphicsShaders[shaderType] = shader;
 			}
-			else if(shaderType == ShaderType::COMPUTE)
+			else if(shaderType == ShaderType::kCompute)
 			{
 				progInf.m_computeShader = shader;
 			}
@@ -413,7 +413,7 @@ ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitIn
 	}
 	else
 	{
-		ANKI_ASSERT(!!(m_shaderStages & ShaderTypeBit::ALL_RAY_TRACING));
+		ANKI_ASSERT(!!(m_shaderStages & ShaderTypeBit::kAllRayTracing));
 
 		// Find the library
 		CString libName = &binary.m_libraryName[0];

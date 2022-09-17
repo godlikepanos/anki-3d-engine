@@ -60,7 +60,7 @@ public:
 class ShaderInitInfo : public GrBaseInitInfo
 {
 public:
-	ShaderType m_shaderType = ShaderType::COUNT;
+	ShaderType m_shaderType = ShaderType::kCount;
 	ConstWeakArray<U8> m_binary = {};
 
 	/// @note It's OK to have entries in that array with consts that do not appear in the shader.
@@ -93,12 +93,12 @@ public:
 
 	ShaderType getShaderType() const
 	{
-		ANKI_ASSERT(m_shaderType != ShaderType::COUNT);
+		ANKI_ASSERT(m_shaderType != ShaderType::kCount);
 		return m_shaderType;
 	}
 
 protected:
-	ShaderType m_shaderType = ShaderType::COUNT;
+	ShaderType m_shaderType = ShaderType::kCount;
 
 	/// Construct.
 	Shader(GrManager* manager, CString name)

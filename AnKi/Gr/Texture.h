@@ -21,10 +21,10 @@ public:
 	U32 m_depth = 1; //< Relevant only for 3D textures.
 	U32 m_layerCount = 1; ///< Relevant only for texture arrays.
 
-	Format m_format = Format::NONE;
+	Format m_format = Format::kNone;
 
-	TextureUsageBit m_usage = TextureUsageBit::NONE; ///< How the texture will be used.
-	TextureType m_type = TextureType::_2D;
+	TextureUsageBit m_usage = TextureUsageBit::kNone; ///< How the texture will be used.
+	TextureType m_type = TextureType::k2D;
 
 	U8 m_mipmapCount = 1;
 
@@ -61,27 +61,27 @@ public:
 		} \
 	} while(0)
 
-		ANKI_CHECK_VAL_VALIDITY(m_format != Format::NONE);
-		ANKI_CHECK_VAL_VALIDITY(m_usage != TextureUsageBit::NONE);
+		ANKI_CHECK_VAL_VALIDITY(m_format != Format::kNone);
+		ANKI_CHECK_VAL_VALIDITY(m_usage != TextureUsageBit::kNone);
 		ANKI_CHECK_VAL_VALIDITY(m_mipmapCount > 0);
 		ANKI_CHECK_VAL_VALIDITY(m_width > 0);
 		ANKI_CHECK_VAL_VALIDITY(m_height > 0);
 		switch(m_type)
 		{
-		case TextureType::_2D:
+		case TextureType::k2D:
 			ANKI_CHECK_VAL_VALIDITY(m_depth == 1);
 			ANKI_CHECK_VAL_VALIDITY(m_layerCount == 1);
 			break;
-		case TextureType::CUBE:
+		case TextureType::kCube:
 			ANKI_CHECK_VAL_VALIDITY(m_depth == 1);
 			ANKI_CHECK_VAL_VALIDITY(m_layerCount == 1);
 			break;
-		case TextureType::_3D:
+		case TextureType::k3D:
 			ANKI_CHECK_VAL_VALIDITY(m_depth > 0);
 			ANKI_CHECK_VAL_VALIDITY(m_layerCount == 1);
 			break;
-		case TextureType::_2D_ARRAY:
-		case TextureType::CUBE_ARRAY:
+		case TextureType::k2DArray:
+		case TextureType::kCubeArray:
 			ANKI_CHECK_VAL_VALIDITY(m_depth == 1);
 			ANKI_CHECK_VAL_VALIDITY(m_layerCount > 0);
 			break;
@@ -134,7 +134,7 @@ public:
 
 	TextureType getTextureType() const
 	{
-		ANKI_ASSERT(m_texType != TextureType::COUNT);
+		ANKI_ASSERT(m_texType != TextureType::kCount);
 		return m_texType;
 	}
 
@@ -146,7 +146,7 @@ public:
 
 	Format getFormat() const
 	{
-		ANKI_ASSERT(m_format != Format::NONE);
+		ANKI_ASSERT(m_format != Format::kNone);
 		return m_format;
 	}
 
@@ -182,7 +182,7 @@ public:
 		ANKI_TEX_SUBRESOURCE_ASSERT((m_aspect & subresource.m_depthStencilAspect) == subresource.m_depthStencilAspect);
 
 		// Misc
-		if(type == TextureType::CUBE_ARRAY && subresource.m_layerCount > 1)
+		if(type == TextureType::kCubeArray && subresource.m_layerCount > 1)
 		{
 			// Because of the way surfaces are arranged in cube arrays
 			ANKI_TEX_SUBRESOURCE_ASSERT(subresource.m_faceCount == 6);
@@ -196,7 +196,7 @@ public:
 	Bool isSubresourceGoodForMipmapGeneration(const TextureSubresourceInfo& subresource) const
 	{
 		ANKI_ASSERT(isSubresourceValid(subresource));
-		if(m_texType != TextureType::_3D)
+		if(m_texType != TextureType::k3D)
 		{
 			return subresource.m_firstMipmap == 0 && subresource.m_mipmapCount == m_mipCount
 				   && subresource.m_faceCount == 1 && subresource.m_layerCount == 1
@@ -222,9 +222,9 @@ public:
 	{
 		ANKI_ASSERT(isSubresourceValid(subresource));
 		/// Can bound only one aspect at a time.
-		return subresource.m_depthStencilAspect == DepthStencilAspectBit::DEPTH
-			   || subresource.m_depthStencilAspect == DepthStencilAspectBit::STENCIL
-			   || subresource.m_depthStencilAspect == DepthStencilAspectBit::NONE;
+		return subresource.m_depthStencilAspect == DepthStencilAspectBit::kDepth
+			   || subresource.m_depthStencilAspect == DepthStencilAspectBit::kStencil
+			   || subresource.m_depthStencilAspect == DepthStencilAspectBit::kNone;
 	}
 
 	/// Return true if the subresource can be used in CommandBuffer::copyBufferToTextureView.
@@ -232,7 +232,7 @@ public:
 	{
 		ANKI_ASSERT(isSubresourceValid(subresource));
 		return subresource.m_faceCount == 1 && subresource.m_mipmapCount == 1 && subresource.m_layerCount == 1
-			   && subresource.m_depthStencilAspect == DepthStencilAspectBit::NONE;
+			   && subresource.m_depthStencilAspect == DepthStencilAspectBit::kNone;
 	}
 
 	/// Return true if the subresource can be used as Framebuffer attachment.
@@ -248,10 +248,10 @@ protected:
 	U32 m_depth = 0;
 	U32 m_layerCount = 0;
 	U32 m_mipCount = 0;
-	TextureType m_texType = TextureType::COUNT;
-	TextureUsageBit m_usage = TextureUsageBit::NONE;
-	Format m_format = Format::NONE;
-	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::NONE;
+	TextureType m_texType = TextureType::kCount;
+	TextureUsageBit m_usage = TextureUsageBit::kNone;
+	Format m_format = Format::kNone;
+	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::kNone;
 
 	/// Construct.
 	Texture(GrManager* manager, CString name)

@@ -266,7 +266,7 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		for(U i = 0; i < modelInf.m_vertexAttributeCount; ++i)
 		{
 			const ModelVertexAttribute& attrib = modelInf.m_vertexAttributes[i];
-			ANKI_ASSERT(attrib.m_format != Format::NONE);
+			ANKI_ASSERT(attrib.m_format != Format::kNone);
 			cmdb->setVertexAttribute(U32(attrib.m_location), attrib.m_bufferBinding, attrib.m_format,
 									 attrib.m_relativeOffset);
 		}
@@ -275,15 +275,15 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		for(U32 i = 0; i < modelInf.m_vertexBufferBindingCount; ++i)
 		{
 			const ModelVertexBufferBinding& binding = modelInf.m_vertexBufferBindings[i];
-			cmdb->bindVertexBuffer(i, binding.m_buffer, binding.m_offset, binding.m_stride, VertexStepRate::VERTEX);
+			cmdb->bindVertexBuffer(i, binding.m_buffer, binding.m_offset, binding.m_stride, VertexStepRate::kVertex);
 		}
 
 		// Index buffer
 		cmdb->bindIndexBuffer(modelInf.m_indexBuffer, modelInf.m_indexBufferOffset, IndexType::U16);
 
 		// Draw
-		cmdb->drawElements(PrimitiveTopology::TRIANGLES, modelInf.m_indexCount, instanceCount, modelInf.m_firstIndex, 0,
-						   0);
+		cmdb->drawElements(PrimitiveTopology::kTriangles, modelInf.m_indexCount, instanceCount, modelInf.m_firstIndex,
+						   0, 0);
 	}
 	else
 	{
@@ -310,11 +310,11 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);
 		if(enableDepthTest)
 		{
-			cmdb->setDepthCompareOperation(CompareOperation::LESS);
+			cmdb->setDepthCompareOperation(CompareOperation::kLess);
 		}
 		else
 		{
-			cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);
+			cmdb->setDepthCompareOperation(CompareOperation::kAlways);
 		}
 
 		getSceneGraph().getDebugDrawer().drawCubes(
@@ -378,7 +378,7 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		// Restore state
 		if(!enableDepthTest)
 		{
-			cmdb->setDepthCompareOperation(CompareOperation::LESS);
+			cmdb->setDepthCompareOperation(CompareOperation::kLess);
 		}
 	}
 }

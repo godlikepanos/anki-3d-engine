@@ -70,14 +70,14 @@ inline void RenderPassDescriptionBase::validateDep(const RenderPassDependency& d
 		[[maybe_unused]] const TextureUsageBit usage = dep.m_texture.m_usage;
 		if(m_type == Type::GRAPHICS)
 		{
-			ANKI_ASSERT(!(usage & TextureUsageBit::ALL_COMPUTE));
+			ANKI_ASSERT(!(usage & TextureUsageBit::kAllCompute));
 		}
 		else
 		{
-			ANKI_ASSERT(!(usage & TextureUsageBit::ALL_GRAPHICS));
+			ANKI_ASSERT(!(usage & TextureUsageBit::kAllGraphics));
 		}
 
-		ANKI_ASSERT(!!(usage & TextureUsageBit::ALL_READ) || !!(usage & TextureUsageBit::ALL_WRITE));
+		ANKI_ASSERT(!!(usage & TextureUsageBit::kAllRead) || !!(usage & TextureUsageBit::kAllWrite));
 	}
 	else if(dep.m_type == RenderPassDependency::Type::BUFFER)
 	{
@@ -116,12 +116,12 @@ inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency&
 		m_rtDeps.emplaceBack(m_alloc, dep);
 		fixSubresource(m_rtDeps.getBack());
 
-		if(!!(dep.m_texture.m_usage & TextureUsageBit::ALL_READ))
+		if(!!(dep.m_texture.m_usage & TextureUsageBit::kAllRead))
 		{
 			m_readRtMask.set(dep.m_texture.m_handle.m_idx);
 		}
 
-		if(!!(dep.m_texture.m_usage & TextureUsageBit::ALL_WRITE))
+		if(!!(dep.m_texture.m_usage & TextureUsageBit::kAllWrite))
 		{
 			m_writeRtMask.set(dep.m_texture.m_handle.m_idx);
 		}
@@ -260,7 +260,7 @@ inline RenderTargetHandle RenderGraphDescription::importRenderTarget(TexturePtr 
 	RT& rt = *m_renderTargets.emplaceBack(m_alloc);
 	rt.m_importedTex = tex;
 	rt.m_importedLastKnownUsage = usage;
-	rt.m_usageDerivedByDeps = TextureUsageBit::NONE;
+	rt.m_usageDerivedByDeps = TextureUsageBit::kNone;
 	rt.setName(tex->getName());
 
 	RenderTargetHandle out;
@@ -270,7 +270,7 @@ inline RenderTargetHandle RenderGraphDescription::importRenderTarget(TexturePtr 
 
 inline RenderTargetHandle RenderGraphDescription::importRenderTarget(TexturePtr tex)
 {
-	RenderTargetHandle out = importRenderTarget(tex, TextureUsageBit::NONE);
+	RenderTargetHandle out = importRenderTarget(tex, TextureUsageBit::kNone);
 	m_renderTargets.getBack().m_importedAndUndefinedUsage = true;
 	return out;
 }
@@ -278,12 +278,13 @@ inline RenderTargetHandle RenderGraphDescription::importRenderTarget(TexturePtr 
 inline RenderTargetHandle RenderGraphDescription::newRenderTarget(const RenderTargetDescription& initInf)
 {
 	ANKI_ASSERT(initInf.m_hash && "Forgot to call RenderTargetDescription::bake");
-	ANKI_ASSERT(initInf.m_usage == TextureUsageBit::NONE && "Don't need to supply the usage. Render grap will find it");
+	ANKI_ASSERT(initInf.m_usage == TextureUsageBit::kNone
+				&& "Don't need to supply the usage. Render grap will find it");
 	RT& rt = *m_renderTargets.emplaceBack(m_alloc);
 	rt.m_initInfo = initInf;
 	rt.m_hash = initInf.m_hash;
-	rt.m_importedLastKnownUsage = TextureUsageBit::NONE;
-	rt.m_usageDerivedByDeps = TextureUsageBit::NONE;
+	rt.m_importedLastKnownUsage = TextureUsageBit::kNone;
+	rt.m_usageDerivedByDeps = TextureUsageBit::kNone;
 	rt.setName(initInf.getName());
 
 	RenderTargetHandle out;

@@ -28,28 +28,28 @@ Error ShaderProgramImpl::initGraphics(ShaderPtr vert, ShaderPtr tessc, ShaderPtr
 	ANKI_ASSERT(m_glName != 0);
 
 	glAttachShader(m_glName, static_cast<const ShaderImpl&>(*vert).getGlName());
-	m_shaders[ShaderType::VERTEX] = vert;
+	m_shaders[ShaderType::kVertex] = vert;
 
 	if(tessc)
 	{
 		glAttachShader(m_glName, static_cast<const ShaderImpl&>(*tessc).getGlName());
-		m_shaders[ShaderType::TESSELLATION_CONTROL] = tessc;
+		m_shaders[ShaderType::kTessellationControl] = tessc;
 	}
 
 	if(tesse)
 	{
 		glAttachShader(m_glName, static_cast<const ShaderImpl&>(*tesse).getGlName());
-		m_shaders[ShaderType::TESSELLATION_EVALUATION] = tesse;
+		m_shaders[ShaderType::kTessellationEvaluation] = tesse;
 	}
 
 	if(geom)
 	{
 		glAttachShader(m_glName, static_cast<const ShaderImpl&>(*geom).getGlName());
-		m_shaders[ShaderType::GEOMETRY] = geom;
+		m_shaders[ShaderType::kGeometry] = geom;
 	}
 
 	glAttachShader(m_glName, static_cast<const ShaderImpl&>(*frag).getGlName());
-	m_shaders[ShaderType::FRAGMENT] = frag;
+	m_shaders[ShaderType::kFragment] = frag;
 
 	return link(static_cast<const ShaderImpl&>(*vert).getGlName(), static_cast<const ShaderImpl&>(*frag).getGlName());
 }
@@ -60,7 +60,7 @@ Error ShaderProgramImpl::initCompute(ShaderPtr comp)
 	ANKI_ASSERT(m_glName != 0);
 
 	glAttachShader(m_glName, static_cast<const ShaderImpl&>(*comp).getGlName());
-	m_shaders[ShaderType::COMPUTE] = comp;
+	m_shaders[ShaderType::kCompute] = comp;
 
 	return link(0, 0);
 }

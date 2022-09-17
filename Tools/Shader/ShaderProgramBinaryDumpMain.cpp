@@ -72,7 +72,7 @@ Error dumpStats(const ShaderProgramBinary& bin)
 		U32 m_count = 0;
 	};
 
-	Array<StageStats, U32(ShaderType::COUNT)> allStats;
+	Array<StageStats, U32(ShaderType::kCount)> allStats;
 
 	for(const ShaderProgramBinaryVariant& variant : bin.m_variants)
 	{

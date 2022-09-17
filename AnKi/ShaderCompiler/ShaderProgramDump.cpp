@@ -281,7 +281,7 @@ void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& huma
 				lines.pushBack("-");
 			}
 
-			if(shaderType != ShaderType::LAST)
+			if(shaderType != ShaderType::kLast)
 			{
 				lines.pushBack(",");
 			}

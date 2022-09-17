@@ -72,7 +72,7 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 	getFilepathFilename(filename, filenameExt);
 
 	TextureInitInfo init(filenameExt);
-	init.m_usage = TextureUsageBit::ALL_SAMPLED | TextureUsageBit::TRANSFER_DESTINATION;
+	init.m_usage = TextureUsageBit::kAllSampled | TextureUsageBit::kTransferDestination;
 	U32 faces = 0;
 
 	ResourceFilePtr file;
@@ -87,25 +87,25 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 	switch(loader.getImageType())
 	{
 	case ImageBinaryType::_2D:
-		init.m_type = TextureType::_2D;
+		init.m_type = TextureType::k2D;
 		init.m_depth = 1;
 		faces = 1;
 		init.m_layerCount = 1;
 		break;
 	case ImageBinaryType::CUBE:
-		init.m_type = TextureType::CUBE;
+		init.m_type = TextureType::kCube;
 		init.m_depth = 1;
 		faces = 6;
 		init.m_layerCount = 1;
 		break;
 	case ImageBinaryType::_2D_ARRAY:
-		init.m_type = TextureType::_2D_ARRAY;
+		init.m_type = TextureType::k2DArray;
 		init.m_layerCount = loader.getLayerCount();
 		init.m_depth = 1;
 		faces = 1;
 		break;
 	case ImageBinaryType::_3D:
-		init.m_type = TextureType::_3D;
+		init.m_type = TextureType::k3D;
 		init.m_depth = loader.getDepth();
 		init.m_layerCount = 1;
 		faces = 1;
@@ -120,20 +120,20 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 		switch(loader.getCompression())
 		{
 		case ImageBinaryDataCompression::RAW:
-			init.m_format = Format::R8G8B8_UNORM;
+			init.m_format = Format::kR8G8B8_Unorm;
 			break;
 		case ImageBinaryDataCompression::S3TC:
-			init.m_format = Format::BC1_RGB_UNORM_BLOCK;
+			init.m_format = Format::kBC1_RGB_Unorm_Block;
 			break;
 		case ImageBinaryDataCompression::ASTC:
 			if(loader.getAstcBlockSize() == UVec2(4u))
 			{
-				init.m_format = Format::ASTC_4x4_UNORM_BLOCK;
+				init.m_format = Format::kASTC_4x4_Unorm_Block;
 			}
 			else
 			{
 				ANKI_ASSERT(loader.getAstcBlockSize() == UVec2(8u));
-				init.m_format = Format::ASTC_8x8_UNORM_BLOCK;
+				init.m_format = Format::kASTC_8x8_Unorm_Block;
 			}
 			break;
 		default:
@@ -145,20 +145,20 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 		switch(loader.getCompression())
 		{
 		case ImageBinaryDataCompression::RAW:
-			init.m_format = Format::R8G8B8A8_UNORM;
+			init.m_format = Format::kR8G8B8A8_Unorm;
 			break;
 		case ImageBinaryDataCompression::S3TC:
-			init.m_format = Format::BC3_UNORM_BLOCK;
+			init.m_format = Format::kBC3_Unorm_Block;
 			break;
 		case ImageBinaryDataCompression::ASTC:
 			if(loader.getAstcBlockSize() == UVec2(4u))
 			{
-				init.m_format = Format::ASTC_4x4_UNORM_BLOCK;
+				init.m_format = Format::kASTC_4x4_Unorm_Block;
 			}
 			else
 			{
 				ANKI_ASSERT(loader.getAstcBlockSize() == UVec2(8u));
-				init.m_format = Format::ASTC_8x8_UNORM_BLOCK;
+				init.m_format = Format::kASTC_8x8_Unorm_Block;
 			}
 			break;
 		default:
@@ -170,11 +170,11 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 		switch(loader.getCompression())
 		{
 		case ImageBinaryDataCompression::S3TC:
-			init.m_format = Format::BC6H_UFLOAT_BLOCK;
+			init.m_format = Format::kBC6H_Ufloat_Block;
 			break;
 		case ImageBinaryDataCompression::ASTC:
 			ANKI_ASSERT(loader.getAstcBlockSize() == UVec2(8u));
-			init.m_format = Format::ASTC_8x8_SFLOAT_BLOCK_EXT;
+			init.m_format = Format::kASTC_8x8_Sfloat_Block;
 			break;
 		default:
 			ANKI_ASSERT(0);
@@ -185,11 +185,11 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 		switch(loader.getCompression())
 		{
 		case ImageBinaryDataCompression::RAW:
-			init.m_format = Format::R32G32B32A32_SFLOAT;
+			init.m_format = Format::kR32G32B32A32_Sfloat;
 			break;
 		case ImageBinaryDataCompression::ASTC:
 			ANKI_ASSERT(loader.getAstcBlockSize() == UVec2(8u));
-			init.m_format = Format::ASTC_8x8_SFLOAT_BLOCK_EXT;
+			init.m_format = Format::kASTC_8x8_Sfloat_Block;
 			break;
 		default:
 			ANKI_ASSERT(0);
@@ -217,7 +217,7 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 		subresource.m_layerCount = init.m_layerCount;
 		subresource.m_mipmapCount = init.m_mipmapCount;
 
-		const TextureBarrierInfo barrier = {m_tex.get(), TextureUsageBit::NONE, TextureUsageBit::ALL_SAMPLED,
+		const TextureBarrierInfo barrier = {m_tex.get(), TextureUsageBit::kNone, TextureUsageBit::kAllSampled,
 											subresource};
 		cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
@@ -276,10 +276,10 @@ Error ImageResource::load(LoadingContext& ctx)
 			unflatten3dArrayIndex(ctx.m_layerCount, ctx.m_faces, ctx.m_loader.getMipmapCount(), i, layer, face, mip);
 
 			TextureBarrierInfo& barrier = barriers[barrierCount++];
-			barrier = {ctx.m_tex.get(), TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION,
+			barrier = {ctx.m_tex.get(), TextureUsageBit::kNone, TextureUsageBit::kTransferDestination,
 					   TextureSubresourceInfo()};
 
-			if(ctx.m_texType == TextureType::_3D)
+			if(ctx.m_texType == TextureType::k3D)
 			{
 				barrier.m_subresource = TextureVolumeInfo(mip);
 				TextureVolumeInfo vol(mip);
@@ -303,7 +303,7 @@ Error ImageResource::load(LoadingContext& ctx)
 			const void* surfOrVolData;
 			PtrSize allocationSize;
 
-			if(ctx.m_texType == TextureType::_3D)
+			if(ctx.m_texType == TextureType::k3D)
 			{
 				const auto& vol = ctx.m_loader.getVolume(mip);
 				surfOrVolSize = vol.m_data.getSize();
@@ -332,7 +332,7 @@ Error ImageResource::load(LoadingContext& ctx)
 
 			// Create temp tex view
 			TextureSubresourceInfo subresource;
-			if(ctx.m_texType == TextureType::_3D)
+			if(ctx.m_texType == TextureType::k3D)
 			{
 				subresource = TextureSubresourceInfo(TextureVolumeInfo(mip));
 			}
@@ -354,10 +354,10 @@ Error ImageResource::load(LoadingContext& ctx)
 			unflatten3dArrayIndex(ctx.m_layerCount, ctx.m_faces, ctx.m_loader.getMipmapCount(), i, layer, face, mip);
 
 			TextureBarrierInfo& barrier = barriers[barrierCount++];
-			barrier.m_previousUsage = TextureUsageBit::TRANSFER_DESTINATION;
-			barrier.m_nextUsage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_GEOMETRY;
+			barrier.m_previousUsage = TextureUsageBit::kTransferDestination;
+			barrier.m_nextUsage = TextureUsageBit::kSampledFragment | TextureUsageBit::kSampledGeometry;
 
-			if(ctx.m_texType == TextureType::_3D)
+			if(ctx.m_texType == TextureType::k3D)
 			{
 				barrier.m_subresource = TextureVolumeInfo(mip);
 			}

@@ -117,7 +117,7 @@ public:
 	CommandBufferInitInfo m_secondLevelCmdbInitInfo;
 	Array<U32, 4> m_fbRenderArea;
 	Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> m_colorUsages = {}; ///< For beginRender pass
-	TextureUsageBit m_dsUsage = TextureUsageBit::NONE; ///< For beginRender pass
+	TextureUsageBit m_dsUsage = TextureUsageBit::kNone; ///< For beginRender pass
 
 	U32 m_batchIdx ANKI_DEBUG_CODE(= MAX_U32);
 	Bool m_drawsToPresentable = false;
@@ -218,8 +218,8 @@ void FramebufferDescription::bake()
 		ANKI_END_PACKED_STRUCT
 
 		const FramebufferDescriptionAttachment& inAtt = m_depthStencilAttachment;
-		const Bool hasDepth = !!(inAtt.m_aspect & DepthStencilAspectBit::DEPTH);
-		const Bool hasStencil = !!(inAtt.m_aspect & DepthStencilAspectBit::STENCIL);
+		const Bool hasDepth = !!(inAtt.m_aspect & DepthStencilAspectBit::kDepth);
+		const Bool hasStencil = !!(inAtt.m_aspect & DepthStencilAspectBit::kStencil);
 
 		outAtt.m_surf = inAtt.m_surface;
 		outAtt.m_loadOp = (hasDepth) ? static_cast<U32>(inAtt.m_loadOperation) : 0;
@@ -431,7 +431,7 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(const FramebufferDescription&
 	{
 		uuids[count++] = m_ctx->m_rts[rtHandles[i].m_idx].m_texture->getUuid();
 
-		if(!!(m_ctx->m_rts[rtHandles[i].m_idx].m_texture->getTextureUsage() & TextureUsageBit::PRESENT))
+		if(!!(m_ctx->m_rts[rtHandles[i].m_idx].m_texture->getTextureUsage() & TextureUsageBit::kPresent))
 		{
 			drawsToPresentable = true;
 		}
@@ -564,7 +564,7 @@ Bool RenderGraph::passADependsOnB(const RenderPassDescriptionBase& a, const Rend
 						continue;
 					}
 
-					if(!((aDep.m_texture.m_usage | bDep.m_texture.m_usage) & TextureUsageBit::ALL_WRITE))
+					if(!((aDep.m_texture.m_usage | bDep.m_texture.m_usage) & TextureUsageBit::kAllWrite))
 					{
 						// Don't care about read to read deps
 						continue;
@@ -712,7 +712,7 @@ RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphDescription& 
 			// Create a new TextureInitInfo with the derived usage
 			TextureInitInfo initInf = inRt.m_initInfo;
 			initInf.m_usage = inRt.m_usageDerivedByDeps;
-			ANKI_ASSERT(initInf.m_usage != TextureUsageBit::NONE && "Probably not referenced by any pass");
+			ANKI_ASSERT(initInf.m_usage != TextureUsageBit::kNone && "Probably not referenced by any pass");
 
 			// Create the new hash
 			const U64 hash = appendHash(&initInf.m_usage, sizeof(initInf.m_usage), inRt.m_hash);
@@ -723,7 +723,7 @@ RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphDescription& 
 
 		// Init the usage
 		const U32 surfOrVolumeCount = getTextureSurfOrVolCount(outRt.m_texture);
-		outRt.m_surfOrVolUsages.create(alloc, surfOrVolumeCount, TextureUsageBit::NONE);
+		outRt.m_surfOrVolUsages.create(alloc, surfOrVolumeCount, TextureUsageBit::kNone);
 		if(imported && inRt.m_importedAndUndefinedUsage)
 		{
 			// Get the usage from previous frames
@@ -1377,7 +1377,7 @@ void RenderGraph::flush()
 void RenderGraph::getCrntUsage(RenderTargetHandle handle, U32 batchIdx, const TextureSubresourceInfo& subresource,
 							   TextureUsageBit& usage) const
 {
-	usage = TextureUsageBit::NONE;
+	usage = TextureUsageBit::kNone;
 	const Batch& batch = m_ctx->m_batches[batchIdx];
 
 	for(U32 passIdx : batch.m_passIndices)

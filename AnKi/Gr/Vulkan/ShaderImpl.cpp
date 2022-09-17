@@ -209,7 +209,7 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 	}
 
 	// Color attachments
-	if(m_shaderType == ShaderType::FRAGMENT)
+	if(m_shaderType == ShaderType::kFragment)
 	{
 		for(const spirv_cross::Resource& r : rsrc.stage_outputs)
 		{
@@ -221,7 +221,7 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 	}
 
 	// Attribs
-	if(m_shaderType == ShaderType::VERTEX)
+	if(m_shaderType == ShaderType::kVertex)
 	{
 		for(const spirv_cross::Resource& r : rsrcActive.stage_inputs)
 		{

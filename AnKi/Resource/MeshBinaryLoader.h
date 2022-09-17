@@ -47,7 +47,7 @@ public:
 	Bool hasBoneInfo() const
 	{
 		ANKI_ASSERT(isLoaded());
-		return m_header.m_vertexAttributes[VertexAttributeId::BONE_INDICES].m_format != Format::NONE;
+		return m_header.m_vertexAttributes[VertexAttributeId::BONE_INDICES].m_format != Format::kNone;
 	}
 
 	ConstWeakArray<MeshBinarySubMesh> getSubMeshes() const

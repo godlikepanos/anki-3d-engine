@@ -26,7 +26,7 @@ class alignas(8) DescriptorBinding
 {
 public:
 	U32 m_arraySize = 0;
-	ShaderTypeBit m_stageMask = ShaderTypeBit::NONE;
+	ShaderTypeBit m_stageMask = ShaderTypeBit::kNone;
 	DescriptorType m_type = DescriptorType::COUNT;
 	U8 m_binding = MAX_U8;
 };

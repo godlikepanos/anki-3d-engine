@@ -31,8 +31,8 @@ enum class GrObjectType : U8
 	ACCELERATION_STRUCTURE,
 	GR_UPSCALER,
 
-	COUNT,
-	FIRST = 0
+	kCount,
+	kFirst = 0
 };
 
 /// Base of all graphics objects.

@@ -179,12 +179,12 @@ public:
 
 	static Iterator begin()
 	{
-		return Iterator(TEnum::FIRST);
+		return Iterator(TEnum::kFirst);
 	}
 
 	static Iterator end()
 	{
-		return Iterator(TEnum::COUNT);
+		return Iterator(TEnum::kCount);
 	}
 };
 /// @}

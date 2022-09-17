@@ -152,16 +152,16 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 	{
 		TextureInitInfo texinit("RendererDummy");
 		texinit.m_width = texinit.m_height = 4;
-		texinit.m_usage = TextureUsageBit::ALL_SAMPLED | TextureUsageBit::IMAGE_COMPUTE_WRITE;
-		texinit.m_format = Format::R8G8B8A8_UNORM;
-		TexturePtr tex = createAndClearRenderTarget(texinit, TextureUsageBit::ALL_SAMPLED);
+		texinit.m_usage = TextureUsageBit::kAllSampled | TextureUsageBit::kImageComputeWrite;
+		texinit.m_format = Format::kR8G8B8A8_Unorm;
+		TexturePtr tex = createAndClearRenderTarget(texinit, TextureUsageBit::kAllSampled);
 
 		TextureViewInitInfo viewinit(tex);
 		m_dummyTexView2d = getGrManager().newTextureView(viewinit);
 
 		texinit.m_depth = 4;
-		texinit.m_type = TextureType::_3D;
-		tex = createAndClearRenderTarget(texinit, TextureUsageBit::ALL_SAMPLED);
+		texinit.m_type = TextureType::k3D;
+		tex = createAndClearRenderTarget(texinit, TextureUsageBit::kAllSampled);
 		viewinit = TextureViewInitInfo(tex);
 		m_dummyTexView3d = getGrManager().newTextureView(viewinit);
 
@@ -262,16 +262,16 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 	// Init samplers
 	{
 		SamplerInitInfo sinit("Renderer");
-		sinit.m_addressing = SamplingAddressing::CLAMP;
-		sinit.m_mipmapFilter = SamplingFilter::NEAREST;
-		sinit.m_minMagFilter = SamplingFilter::NEAREST;
+		sinit.m_addressing = SamplingAddressing::kClamp;
+		sinit.m_mipmapFilter = SamplingFilter::kNearest;
+		sinit.m_minMagFilter = SamplingFilter::kNearest;
 		m_samplers.m_nearestNearestClamp = m_gr->newSampler(sinit);
 
-		sinit.m_minMagFilter = SamplingFilter::LINEAR;
-		sinit.m_mipmapFilter = SamplingFilter::LINEAR;
+		sinit.m_minMagFilter = SamplingFilter::kLinear;
+		sinit.m_mipmapFilter = SamplingFilter::kLinear;
 		m_samplers.m_trilinearClamp = m_gr->newSampler(sinit);
 
-		sinit.m_addressing = SamplingAddressing::REPEAT;
+		sinit.m_addressing = SamplingAddressing::kRepeat;
 		m_samplers.m_trilinearRepeat = m_gr->newSampler(sinit);
 
 		sinit.m_anisotropyLevel = m_config->getRTextureAnisotropy();
@@ -409,15 +409,14 @@ void Renderer::finalize(const RenderingContext& ctx)
 
 TextureInitInfo Renderer::create2DRenderTargetInitInfo(U32 w, U32 h, Format format, TextureUsageBit usage, CString name)
 {
-	ANKI_ASSERT(!!(usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE)
-				|| !!(usage & TextureUsageBit::IMAGE_COMPUTE_WRITE));
+	ANKI_ASSERT(!!(usage & TextureUsageBit::kFramebufferWrite) || !!(usage & TextureUsageBit::kImageComputeWrite));
 	TextureInitInfo init(name);
 
 	init.m_width = w;
 	init.m_height = h;
 	init.m_depth = 1;
 	init.m_layerCount = 1;
-	init.m_type = TextureType::_2D;
+	init.m_type = TextureType::k2D;
 	init.m_format = format;
 	init.m_mipmapCount = 1;
 	init.m_samples = 1;
@@ -434,11 +433,11 @@ RenderTargetDescription Renderer::create2DRenderTargetDescription(U32 w, U32 h, 
 	init.m_height = h;
 	init.m_depth = 1;
 	init.m_layerCount = 1;
-	init.m_type = TextureType::_2D;
+	init.m_type = TextureType::k2D;
 	init.m_format = format;
 	init.m_mipmapCount = 1;
 	init.m_samples = 1;
-	init.m_usage = TextureUsageBit::NONE;
+	init.m_usage = TextureUsageBit::kNone;
 
 	return init;
 }
@@ -446,17 +445,17 @@ RenderTargetDescription Renderer::create2DRenderTargetDescription(U32 w, U32 h, 
 TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, TextureUsageBit initialUsage,
 												const ClearValue& clearVal)
 {
-	ANKI_ASSERT(!!(inf.m_usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE)
-				|| !!(inf.m_usage & TextureUsageBit::IMAGE_COMPUTE_WRITE));
+	ANKI_ASSERT(!!(inf.m_usage & TextureUsageBit::kFramebufferWrite)
+				|| !!(inf.m_usage & TextureUsageBit::kImageComputeWrite));
 
-	const U faceCount = (inf.m_type == TextureType::CUBE || inf.m_type == TextureType::CUBE_ARRAY) ? 6 : 1;
+	const U faceCount = (inf.m_type == TextureType::kCube || inf.m_type == TextureType::kCubeArray) ? 6 : 1;
 
 	Bool useCompute = false;
-	if(!!(inf.m_usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE))
+	if(!!(inf.m_usage & TextureUsageBit::kFramebufferWrite))
 	{
 		useCompute = false;
 	}
-	else if(!!(inf.m_usage & TextureUsageBit::IMAGE_COMPUTE_WRITE))
+	else if(!!(inf.m_usage & TextureUsageBit::kImageComputeWrite))
 	{
 		useCompute = true;
 	}
@@ -489,19 +488,19 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 				{
 					FramebufferInitInfo fbInit("RendererClearRT");
 					Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> colUsage = {};
-					TextureUsageBit dsUsage = TextureUsageBit::NONE;
+					TextureUsageBit dsUsage = TextureUsageBit::kNone;
 
 					if(getFormatInfo(inf.m_format).isDepthStencil())
 					{
-						DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE;
+						DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone;
 						if(getFormatInfo(inf.m_format).isDepth())
 						{
-							aspect |= DepthStencilAspectBit::DEPTH;
+							aspect |= DepthStencilAspectBit::kDepth;
 						}
 
 						if(getFormatInfo(inf.m_format).isStencil())
 						{
-							aspect |= DepthStencilAspectBit::STENCIL;
+							aspect |= DepthStencilAspectBit::kStencil;
 						}
 
 						TextureViewPtr view = getGrManager().newTextureView(TextureViewInitInfo(tex, surf, aspect));
@@ -511,7 +510,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 						fbInit.m_depthStencilAttachment.m_stencilLoadOperation = AttachmentLoadOperation::CLEAR;
 						fbInit.m_depthStencilAttachment.m_clearValue = clearVal;
 
-						dsUsage = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
+						dsUsage = TextureUsageBit::kFramebufferWrite;
 					}
 					else
 					{
@@ -522,12 +521,12 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 						fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
 						fbInit.m_colorAttachments[0].m_clearValue = clearVal;
 
-						colUsage[0] = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
+						colUsage[0] = TextureUsageBit::kFramebufferWrite;
 					}
 					FramebufferPtr fb = m_gr->newFramebuffer(fbInit);
 
-					TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::NONE,
-												  TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, surf};
+					TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kNone, TextureUsageBit::kFramebufferWrite,
+												  surf};
 					barrier.m_subresource.m_depthStencilAspect = tex->getDepthStencilAspect();
 					cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
@@ -536,7 +535,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 
 					if(!!initialUsage)
 					{
-						barrier.m_previousUsage = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
+						barrier.m_previousUsage = TextureUsageBit::kFramebufferWrite;
 						barrier.m_nextUsage = initialUsage;
 						cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 					}
@@ -545,7 +544,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 				{
 					// Compute
 					ShaderProgramResourceVariantInitInfo variantInitInfo(m_clearTexComputeProg);
-					variantInitInfo.addMutation("TEXTURE_DIMENSIONS", I32((inf.m_type == TextureType::_3D) ? 3 : 2));
+					variantInitInfo.addMutation("TEXTURE_DIMENSIONS", I32((inf.m_type == TextureType::k3D) ? 3 : 2));
 
 					const FormatInfo formatInfo = getFormatInfo(inf.m_format);
 					I32 componentType = 0;
@@ -573,20 +572,20 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 					TextureViewPtr view = getGrManager().newTextureView(TextureViewInitInfo(tex, surf));
 					cmdb->bindImage(0, 0, view);
 
-					const TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::NONE,
-														TextureUsageBit::IMAGE_COMPUTE_WRITE, surf};
+					const TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kNone,
+														TextureUsageBit::kImageComputeWrite, surf};
 					cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
 					UVec3 wgSize;
 					wgSize.x() = (8 - 1 + (tex->getWidth() >> mip)) / 8;
 					wgSize.y() = (8 - 1 + (tex->getHeight() >> mip)) / 8;
-					wgSize.z() = (inf.m_type == TextureType::_3D) ? ((8 - 1 + (tex->getDepth() >> mip)) / 8) : 1;
+					wgSize.z() = (inf.m_type == TextureType::k3D) ? ((8 - 1 + (tex->getDepth() >> mip)) / 8) : 1;
 
 					cmdb->dispatchCompute(wgSize.x(), wgSize.y(), wgSize.z());
 
 					if(!!initialUsage)
 					{
-						const TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::IMAGE_COMPUTE_WRITE,
+						const TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kImageComputeWrite,
 															initialUsage, surf};
 
 						cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
@@ -655,15 +654,15 @@ Format Renderer::getHdrFormat() const
 	Format out;
 	if(!m_config->getRHighQualityHdr())
 	{
-		out = Format::B10G11R11_UFLOAT_PACK32;
+		out = Format::kB10G11R11_Ufloat_Pack32;
 	}
 	else if(m_gr->getDeviceCapabilities().m_unalignedBbpTextureFormats)
 	{
-		out = Format::R16G16B16_SFLOAT;
+		out = Format::kR16G16B16_Sfloat;
 	}
 	else
 	{
-		out = Format::R16G16B16A16_SFLOAT;
+		out = Format::kR16G16B16A16_Sfloat;
 	}
 	return out;
 }
@@ -672,11 +671,11 @@ Format Renderer::getDepthNoStencilFormat() const
 {
 	if(ANKI_PLATFORM_MOBILE)
 	{
-		return Format::X8_D24_UNORM_PACK32;
+		return Format::kX8_D24_Unorm_Pack32;
 	}
 	else
 	{
-		return Format::D32_SFLOAT;
+		return Format::kD32_Sfloat;
 	}
 }
 

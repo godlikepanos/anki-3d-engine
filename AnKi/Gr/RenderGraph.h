@@ -102,7 +102,7 @@ public:
 	void bake()
 	{
 		ANKI_ASSERT(m_hash == 0);
-		ANKI_ASSERT(m_usage == TextureUsageBit::NONE && "No need to supply the usage. RenderGraph will find out");
+		ANKI_ASSERT(m_usage == TextureUsageBit::kNone && "No need to supply the usage. RenderGraph will find out");
 		m_hash = computeHash();
 	}
 
@@ -194,7 +194,7 @@ public:
 #if ANKI_ENABLE_ASSERTIONS
 		tex = getTexture(handle);
 		ANKI_ASSERT(tex->getLayerCount() == 1 && tex->getMipmapCount() == 1
-					&& tex->getDepthStencilAspect() == DepthStencilAspectBit::NONE);
+					&& tex->getDepthStencilAspect() == DepthStencilAspectBit::kNone);
 #endif
 		const TextureSubresourceInfo subresource;
 		getRenderTargetState(handle, subresource, tex);
@@ -248,7 +248,7 @@ public:
 
 	/// Dependency to the whole texture.
 	RenderPassDependency(RenderTargetHandle handle, TextureUsageBit usage,
-						 DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE)
+						 DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
 		: m_texture({handle, usage, TextureSubresourceInfo()})
 		, m_type(Type::TEXTURE)
 	{
@@ -402,7 +402,7 @@ public:
 	AttachmentLoadOperation m_stencilLoadOperation = AttachmentLoadOperation::DONT_CARE;
 	AttachmentStoreOperation m_stencilStoreOperation = AttachmentStoreOperation::STORE;
 
-	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::NONE; ///< Relevant only for depth stencil textures.
+	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::kNone; ///< Relevant only for depth stencil textures.
 };
 
 /// Describes a framebuffer.
@@ -550,9 +550,9 @@ private:
 		TextureInitInfo m_initInfo;
 		U64 m_hash = 0;
 		TexturePtr m_importedTex;
-		TextureUsageBit m_importedLastKnownUsage = TextureUsageBit::NONE;
+		TextureUsageBit m_importedLastKnownUsage = TextureUsageBit::kNone;
 		/// Derived by the deps of this RT and will be used to set its usage.
-		TextureUsageBit m_usageDerivedByDeps = TextureUsageBit::NONE;
+		TextureUsageBit m_usageDerivedByDeps = TextureUsageBit::kNone;
 		Bool m_importedAndUndefinedUsage = false;
 	};
 

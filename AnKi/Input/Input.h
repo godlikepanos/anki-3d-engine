@@ -149,9 +149,9 @@ protected:
 	Vec2 m_mousePosNdc;
 	UVec2 m_mousePosWin;
 
-	Array<U32, U(TouchPointer::COUNT)> m_touchPointers;
-	Array<Vec2, U(TouchPointer::COUNT)> m_touchPointerPosNdc;
-	Array<UVec2, U(TouchPointer::COUNT)> m_touchPointerPosWin;
+	Array<U32, U(TouchPointer::kCount)> m_touchPointers;
+	Array<Vec2, U(TouchPointer::kCount)> m_touchPointerPosNdc;
+	Array<UVec2, U(TouchPointer::kCount)> m_touchPointerPosWin;
 
 	Array<U8, U(InputEvent::COUNT)> m_events;
 

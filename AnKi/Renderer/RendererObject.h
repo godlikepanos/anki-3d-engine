@@ -59,7 +59,7 @@ protected:
 	/// Used in fullscreen quad draws.
 	static void drawQuad(CommandBufferPtr& cmdb)
 	{
-		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3, 1);
+		cmdb->drawArrays(PrimitiveTopology::kTriangles, 3, 1);
 	}
 
 	/// Dispatch a compute job equivelent to drawQuad

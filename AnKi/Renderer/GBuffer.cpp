@@ -38,21 +38,21 @@ Error GBuffer::initInternal()
 	static constexpr Array<const char*, 2> depthRtNames = {{"GBuffer depth #0", "GBuffer depth #1"}};
 	for(U32 i = 0; i < 2; ++i)
 	{
-		const TextureUsageBit usage = TextureUsageBit::ALL_SAMPLED | TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT;
+		const TextureUsageBit usage = TextureUsageBit::kAllSampled | TextureUsageBit::kAllFramebuffer;
 		TextureInitInfo texinit =
 			m_r->create2DRenderTargetInitInfo(m_r->getInternalResolution().x(), m_r->getInternalResolution().y(),
 											  m_r->getDepthNoStencilFormat(), usage, depthRtNames[i]);
 
-		m_depthRts[i] = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::SAMPLED_FRAGMENT);
+		m_depthRts[i] = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::kSampledFragment);
 	}
 
-	static constexpr Array<const char*, GBUFFER_COLOR_ATTACHMENT_COUNT> rtNames = {
+	static constexpr Array<const char*, kGBufferColorRenderTargetCount> rtNames = {
 		{"GBuffer rt0", "GBuffer rt1", "GBuffer rt2", "GBuffer rt3"}};
-	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
+	for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 	{
 		m_colorRtDescrs[i] =
 			m_r->create2DRenderTargetDescription(m_r->getInternalResolution().x(), m_r->getInternalResolution().y(),
-												 GBUFFER_COLOR_ATTACHMENT_PIXEL_FORMATS[i], rtNames[i]);
+												 kGBufferColorRenderTargetFormats[i], rtNames[i]);
 		m_colorRtDescrs[i].bake();
 	}
 
@@ -62,8 +62,8 @@ Error GBuffer::initInternal()
 	loadop = AttachmentLoadOperation::CLEAR;
 #endif
 
-	m_fbDescr.m_colorAttachmentCount = GBUFFER_COLOR_ATTACHMENT_COUNT;
-	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
+	m_fbDescr.m_colorAttachmentCount = kGBufferColorRenderTargetCount;
+	for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 	{
 		m_fbDescr.m_colorAttachments[i].m_loadOperation = loadop;
 		m_fbDescr.m_colorAttachments[i].m_clearValue.m_colorf = {1.0f, 0.0f, 1.0f, 0.0f};
@@ -74,7 +74,7 @@ Error GBuffer::initInternal()
 
 	m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
 	m_fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0f;
-	m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
+	m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
 
 	if(getGrManager().getDeviceCapabilities().m_vrs && getConfig().getRVrs())
 	{
@@ -130,9 +130,9 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 	// First do early Z (if needed)
 	if(earlyZStart < earlyZEnd)
 	{
-		for(U32 i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
+		for(U32 i = 0; i < kGBufferColorRenderTargetCount; ++i)
 		{
-			cmdb->setColorChannelWriteMask(i, ColorBit::NONE);
+			cmdb->setColorChannelWriteMask(i, ColorBit::kNone);
 		}
 
 		ANKI_ASSERT(earlyZStart < earlyZEnd && earlyZEnd <= I32(earlyZCount));
@@ -143,9 +143,9 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 		// Restore state for the color write
 		if(colorStart < colorEnd)
 		{
-			for(U32 i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
+			for(U32 i = 0; i < kGBufferColorRenderTargetCount; ++i)
 			{
-				cmdb->setColorChannelWriteMask(i, ColorBit::ALL);
+				cmdb->setColorChannelWriteMask(i, ColorBit::kAll);
 			}
 		}
 	}
@@ -153,7 +153,7 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 	// Do the color writes
 	if(colorStart < colorEnd)
 	{
-		cmdb->setDepthCompareOperation(CompareOperation::LESS_EQUAL);
+		cmdb->setDepthCompareOperation(CompareOperation::kLessEqual);
 
 		ANKI_ASSERT(colorStart < colorEnd && colorEnd <= I32(ctx.m_renderQueue->m_renderables.getSize()));
 		m_r->getSceneDrawer().drawRange(RenderingTechnique::GBUFFER, args,
@@ -192,7 +192,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 
 	// Create RTs
 	Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS> rts;
-	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
+	for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 	{
 		m_runCtx.m_colorRts[i] = rgraph.newRenderTarget(m_colorRtDescrs[i]);
 		rts[i] = m_runCtx.m_colorRts[i];
@@ -202,15 +202,15 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	{
 		// Already imported once
 		m_runCtx.m_crntFrameDepthRt =
-			rgraph.importRenderTarget(m_depthRts[m_r->getFrameCount() & 1], TextureUsageBit::NONE);
+			rgraph.importRenderTarget(m_depthRts[m_r->getFrameCount() & 1], TextureUsageBit::kNone);
 		m_runCtx.m_prevFrameDepthRt = rgraph.importRenderTarget(m_depthRts[(m_r->getFrameCount() + 1) & 1]);
 	}
 	else
 	{
 		m_runCtx.m_crntFrameDepthRt =
-			rgraph.importRenderTarget(m_depthRts[m_r->getFrameCount() & 1], TextureUsageBit::NONE);
+			rgraph.importRenderTarget(m_depthRts[m_r->getFrameCount() & 1], TextureUsageBit::kNone);
 		m_runCtx.m_prevFrameDepthRt =
-			rgraph.importRenderTarget(m_depthRts[(m_r->getFrameCount() + 1) & 1], TextureUsageBit::SAMPLED_FRAGMENT);
+			rgraph.importRenderTarget(m_depthRts[(m_r->getFrameCount() + 1) & 1], TextureUsageBit::kSampledFragment);
 	}
 
 	RenderTargetHandle sriRt;
@@ -222,7 +222,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	// Create pass
 	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GBuffer");
 
-	pass.setFramebufferInfo(m_fbDescr, ConstWeakArray<RenderTargetHandle>(&rts[0], GBUFFER_COLOR_ATTACHMENT_COUNT),
+	pass.setFramebufferInfo(m_fbDescr, ConstWeakArray<RenderTargetHandle>(&rts[0], kGBufferColorRenderTargetCount),
 							m_runCtx.m_crntFrameDepthRt, sriRt);
 	pass.setWork(computeNumberOfSecondLevelCommandBuffers(ctx.m_renderQueue->m_earlyZRenderables.getSize()
 														  + ctx.m_renderQueue->m_renderables.getSize()),
@@ -230,18 +230,18 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 					 runInThread(ctx, rgraphCtx);
 				 });
 
-	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
+	for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 	{
-		pass.newDependency(RenderPassDependency(m_runCtx.m_colorRts[i], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
+		pass.newDependency(RenderPassDependency(m_runCtx.m_colorRts[i], TextureUsageBit::kFramebufferWrite));
 	}
 
-	TextureSubresourceInfo subresource(DepthStencilAspectBit::DEPTH);
+	TextureSubresourceInfo subresource(DepthStencilAspectBit::kDepth);
 	pass.newDependency(
-		RenderPassDependency(m_runCtx.m_crntFrameDepthRt, TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT, subresource));
+		RenderPassDependency(m_runCtx.m_crntFrameDepthRt, TextureUsageBit::kAllFramebuffer, subresource));
 
 	if(enableVrs)
 	{
-		pass.newDependency(RenderPassDependency(sriRt, TextureUsageBit::FRAMEBUFFER_SHADING_RATE));
+		pass.newDependency(RenderPassDependency(sriRt, TextureUsageBit::kFramebufferShadingRate));
 	}
 }
 

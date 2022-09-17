@@ -55,10 +55,10 @@ Error TraditionalDeferredLightShading::init()
 	// Shadow sampler
 	{
 		SamplerInitInfo inf;
-		inf.m_compareOperation = CompareOperation::LESS_EQUAL;
-		inf.m_addressing = SamplingAddressing::CLAMP;
-		inf.m_mipmapFilter = SamplingFilter::BASE;
-		inf.m_minMagFilter = SamplingFilter::LINEAR;
+		inf.m_compareOperation = CompareOperation::kLessEqual;
+		inf.m_addressing = SamplingAddressing::kClamp;
+		inf.m_mipmapFilter = SamplingFilter::kBase;
+		inf.m_minMagFilter = SamplingFilter::kLinear;
 		m_shadowSampler = getGrManager().newSampler(inf);
 	}
 
@@ -121,7 +121,7 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 
 		cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
 		rgraphCtx.bindTexture(0, 1, info.m_gbufferDepthRenderTarget,
-							  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+							  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
 		if(!isSolidColor)
 		{
@@ -142,7 +142,7 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 
 	// Set common state for all light drawcalls
 	{
-		cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);
+		cmdb->setBlendFactors(0, BlendFactor::kOne, BlendFactor::kOne);
 
 		// NOTE: Use nearest sampler because we don't want the result to sample the near tiles
 		cmdb->bindSampler(0, 2, m_r->getSamplers().m_nearestNearestClamp);
@@ -152,7 +152,7 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 		rgraphCtx.bindColorTexture(0, 5, info.m_gbufferRenderTargets[2]);
 
 		rgraphCtx.bindTexture(0, 6, info.m_gbufferDepthRenderTarget,
-							  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+							  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
 		// Set shadowmap resources
 		cmdb->bindSampler(0, 7, m_shadowSampler);
@@ -162,7 +162,7 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 			ANKI_ASSERT(info.m_directionalLightShadowmapRenderTarget.isValid());
 
 			rgraphCtx.bindTexture(0, 8, info.m_directionalLightShadowmapRenderTarget,
-								  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+								  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 		}
 		else
 		{
@@ -209,7 +209,7 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 	}
 
 	// Set other light state
-	cmdb->setCullMode(FaceSelectionBit::FRONT);
+	cmdb->setCullMode(FaceSelectionBit::kFront);
 
 	// Do point lights
 	U32 indexCount;
@@ -240,7 +240,7 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 		light->m_diffuseColor = plightEl.m_diffuseColor;
 
 		// Draw
-		cmdb->drawElements(PrimitiveTopology::TRIANGLES, indexCount);
+		cmdb->drawElements(PrimitiveTopology::kTriangles, indexCount);
 	}
 
 	// Do spot lights
@@ -288,12 +288,12 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 		light->m_innerCos = cos(splightEl.m_innerAngle / 2.0f);
 
 		// Draw
-		cmdb->drawElements(PrimitiveTopology::TRIANGLES, indexCount);
+		cmdb->drawElements(PrimitiveTopology::kTriangles, indexCount);
 	}
 
 	// Restore state
-	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
-	cmdb->setCullMode(FaceSelectionBit::BACK);
+	cmdb->setBlendFactors(0, BlendFactor::kOne, BlendFactor::kZero);
+	cmdb->setCullMode(FaceSelectionBit::kBack);
 }
 
 } // end namespace anki

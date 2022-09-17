@@ -248,7 +248,7 @@ private:
 	VulkanExtensions m_extensions = VulkanExtensions::NONE;
 	VkDevice m_device = VK_NULL_HANDLE;
 	VulkanQueueFamilies m_queueFamilyIndices = {MAX_U32, MAX_U32};
-	Array<VkQueue, U32(VulkanQueueType::COUNT)> m_queues = {};
+	Array<VkQueue, U32(VulkanQueueType::kCount)> m_queues = {};
 	Mutex m_globalMtx;
 
 	VkPhysicalDeviceProperties2 m_devProps = {};
@@ -284,7 +284,7 @@ private:
 		/// Signaled by the submit that renders to the default FB. Present waits for it.
 		MicroSemaphorePtr m_renderSemaphore;
 
-		VulkanQueueType m_queueWroteToSwapchainImage = VulkanQueueType::COUNT;
+		VulkanQueueType m_queueWroteToSwapchainImage = VulkanQueueType::kCount;
 	};
 
 	VkSurfaceKHR m_surface = VK_NULL_HANDLE;

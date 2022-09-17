@@ -58,8 +58,8 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 		alignRoundDown(2, resolution.y());
 		m_tmpRtDesc = m_r->create2DRenderTargetDescription(
 			resolution.x(), resolution.y(),
-			(m_r->getGrManager().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::R8G8B8_UNORM
-																					   : Format::R8G8B8A8_UNORM,
+			(m_r->getGrManager().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR8G8B8_Unorm
+																					   : Format::kR8G8B8A8_Unorm,
 			"Final Composite");
 		m_tmpRtDesc.bake();
 
@@ -90,7 +90,7 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 	m_runCtx.m_secondaryTaskId.setNonAtomically(0);
 	ctx.m_renderGraphDescr.setStatisticsEnabled(m_statsEnabled);
 
-	RenderTargetHandle presentRt = ctx.m_renderGraphDescr.importRenderTarget(presentTex, TextureUsageBit::NONE);
+	RenderTargetHandle presentRt = ctx.m_renderGraphDescr.importRenderTarget(presentTex, TextureUsageBit::kNone);
 
 	if(m_rDrawToDefaultFb)
 	{
@@ -120,11 +120,11 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 			cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
 			rgraphCtx.bindColorTexture(0, 1, m_runCtx.m_ctx->m_outRenderTarget);
 
-			cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
+			cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
 		});
 
-		pass.newDependency(RenderPassDependency(presentRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
-		pass.newDependency(RenderPassDependency(ctx.m_outRenderTarget, TextureUsageBit::SAMPLED_FRAGMENT));
+		pass.newDependency(RenderPassDependency(presentRt, TextureUsageBit::kFramebufferWrite));
+		pass.newDependency(RenderPassDependency(ctx.m_outRenderTarget, TextureUsageBit::kSampledFragment));
 	}
 
 	// Create a dummy pass to transition the presentable image to present
@@ -134,7 +134,7 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 		pass.setWork([]([[maybe_unused]] RenderPassWorkContext& rgraphCtx) {
 			// Do nothing. This pass is dummy
 		});
-		pass.newDependency({presentRt, TextureUsageBit::PRESENT});
+		pass.newDependency({presentRt, TextureUsageBit::kPresent});
 	}
 
 	// Bake the render graph

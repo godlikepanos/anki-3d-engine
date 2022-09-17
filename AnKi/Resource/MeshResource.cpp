@@ -150,7 +150,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		m_vertexBufferInfos[i].m_offset += m_vertexBuffersOffset;
 	}
 
-	for(VertexAttributeId attrib = VertexAttributeId::FIRST; attrib < VertexAttributeId::COUNT; ++attrib)
+	for(VertexAttributeId attrib = VertexAttributeId::kFirst; attrib < VertexAttributeId::kCount; ++attrib)
 	{
 		AttribInfo& out = m_attributes[attrib];
 		const MeshBinaryVertexAttribute& in = header.m_vertexAttributes[attrib];

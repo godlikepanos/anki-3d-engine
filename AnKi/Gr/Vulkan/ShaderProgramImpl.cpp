@@ -44,7 +44,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	{
 		m_shaders.emplaceBack(getAllocator(), inf.m_computeShader);
 	}
-	else if(inf.m_graphicsShaders[ShaderType::VERTEX])
+	else if(inf.m_graphicsShaders[ShaderType::kVertex])
 	{
 		for(const ShaderPtr& s : inf.m_graphicsShaders)
 		{
@@ -182,14 +182,14 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 
 	// Get some masks
 	//
-	const Bool graphicsProg = !!(m_stages & ShaderTypeBit::ALL_GRAPHICS);
+	const Bool graphicsProg = !!(m_stages & ShaderTypeBit::kAllGraphics);
 	if(graphicsProg)
 	{
 		m_refl.m_attributeMask =
-			static_cast<const ShaderImpl&>(*inf.m_graphicsShaders[ShaderType::VERTEX]).m_attributeMask;
+			static_cast<const ShaderImpl&>(*inf.m_graphicsShaders[ShaderType::kVertex]).m_attributeMask;
 
 		m_refl.m_colorAttachmentWritemask =
-			static_cast<const ShaderImpl&>(*inf.m_graphicsShaders[ShaderType::FRAGMENT]).m_colorAttachmentWritemask;
+			static_cast<const ShaderImpl&>(*inf.m_graphicsShaders[ShaderType::kFragment]).m_colorAttachmentWritemask;
 
 		const U32 attachmentCount = m_refl.m_colorAttachmentWritemask.getEnabledBitCount();
 		for(U32 i = 0; i < attachmentCount; ++i)
@@ -233,7 +233,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 
 	// Create the pipeline if compute
 	//
-	if(!!(m_stages & ShaderTypeBit::COMPUTE))
+	if(!!(m_stages & ShaderTypeBit::kCompute))
 	{
 		const ShaderImpl& shaderImpl = static_cast<const ShaderImpl&>(*m_shaders[0]);
 
@@ -256,12 +256,12 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		ANKI_TRACE_SCOPED_EVENT(VK_PIPELINE_CREATE);
 		ANKI_VK_CHECK(vkCreateComputePipelines(getDevice(), getGrManagerImpl().getPipelineCache(), 1, &ci, nullptr,
 											   &m_compute.m_ppline));
-		getGrManagerImpl().printPipelineShaderInfo(m_compute.m_ppline, getName(), ShaderTypeBit::COMPUTE);
+		getGrManagerImpl().printPipelineShaderInfo(m_compute.m_ppline, getName(), ShaderTypeBit::kCompute);
 	}
 
 	// Create the RT pipeline
 	//
-	if(!!(m_stages & ShaderTypeBit::ALL_RAY_TRACING))
+	if(!!(m_stages & ShaderTypeBit::kAllRayTracing))
 	{
 		// Create shaders
 		DynamicArrayAuto<VkPipelineShaderStageCreateInfo> stages(getAllocator(), m_shaders.getSize());
