@@ -59,7 +59,7 @@ struct DummyType
 template<bool B>
 struct RequiresBool
 {
-	static constexpr bool VALUE = B;
+	static constexpr bool kValue = B;
 };
 
 template<typename T, int N>
@@ -76,7 +76,7 @@ struct PrivateEnum
 	};
 };
 
-#	define ANKI_REQUIRES_BOOL(line, ...) RequiresUnwrap<decltype(RequiresBool<(__VA_ARGS__)>{}), line>::VALUE
+#	define ANKI_REQUIRES_BOOL(line, ...) RequiresUnwrap<decltype(RequiresBool<(__VA_ARGS__)>{}), line>::kValue
 
 #	define ANKI_ENABLE_INTERNAL(line, ...) \
 		typename PrivateEnum<line>::Type ANKI_CONCATENATE( \

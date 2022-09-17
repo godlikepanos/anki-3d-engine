@@ -15,21 +15,21 @@ namespace anki {
 
 enum class AtomicMemoryOrder
 {
-	RELAXED = std::memory_order_relaxed,
-	CONSUME = std::memory_order_consume,
-	ACQUIRE = std::memory_order_acquire,
-	RELEASE = std::memory_order_release,
-	ACQ_REL = std::memory_order_acq_rel,
-	SEQ_CST = std::memory_order_seq_cst
+	kRelaxed = std::memory_order_relaxed,
+	kConsume = std::memory_order_consume,
+	kAcquire = std::memory_order_acquire,
+	kRelease = std::memory_order_release,
+	kAcqRel = std::memory_order_acq_rel,
+	kSeqCst = std::memory_order_seq_cst
 };
 
 /// Atomic template. At the moment it doesn't work well with pointers.
-template<typename T, AtomicMemoryOrder tmemOrd = AtomicMemoryOrder::RELAXED>
+template<typename T, AtomicMemoryOrder kMemOrder = AtomicMemoryOrder::kRelaxed>
 class Atomic
 {
 public:
 	using Value = T;
-	static constexpr AtomicMemoryOrder MEMORY_ORDER = tmemOrd;
+	static constexpr AtomicMemoryOrder kDefaultMemoryOrder = kMemOrder;
 
 	/// It will not set itself to zero.
 	Atomic()
@@ -58,41 +58,41 @@ public:
 	}
 
 	/// Get the value of the atomic.
-	Value load(AtomicMemoryOrder memOrd = MEMORY_ORDER) const
+	Value load(AtomicMemoryOrder memOrd = kDefaultMemoryOrder) const
 	{
 		return m_att.load(static_cast<std::memory_order>(memOrd));
 	}
 
 	/// Store
-	void store(Value a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
+	void store(Value a, AtomicMemoryOrder memOrd = kDefaultMemoryOrder)
 	{
 		m_att.store(a, static_cast<std::memory_order>(memOrd));
 	}
 
 	/// Fetch and add.
 	template<typename Y>
-	Value fetchAdd(Y a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
+	Value fetchAdd(Y a, AtomicMemoryOrder memOrd = kDefaultMemoryOrder)
 	{
 		return m_att.fetch_add(a, static_cast<std::memory_order>(memOrd));
 	}
 
 	/// Fetch and subtract.
 	template<typename Y>
-	Value fetchSub(Y a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
+	Value fetchSub(Y a, AtomicMemoryOrder memOrd = kDefaultMemoryOrder)
 	{
 		return m_att.fetch_sub(a, static_cast<std::memory_order>(memOrd));
 	}
 
 	/// Fetch and do bitwise or.
 	template<typename Y>
-	Value fetchOr(Y a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
+	Value fetchOr(Y a, AtomicMemoryOrder memOrd = kDefaultMemoryOrder)
 	{
 		return m_att.fetch_or(a, static_cast<std::memory_order>(memOrd));
 	}
 
 	/// Fetch and do bitwise and.
 	template<typename Y>
-	Value fetchAnd(Y a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
+	Value fetchAnd(Y a, AtomicMemoryOrder memOrd = kDefaultMemoryOrder)
 	{
 		return m_att.fetch_and(a, static_cast<std::memory_order>(memOrd));
 	}
@@ -106,15 +106,15 @@ public:
 	/// 	return false;
 	/// }
 	/// @endcode
-	Bool compareExchange(Value& expected, Value desired, AtomicMemoryOrder successMemOrd = MEMORY_ORDER,
-						 AtomicMemoryOrder failMemOrd = MEMORY_ORDER)
+	Bool compareExchange(Value& expected, Value desired, AtomicMemoryOrder successMemOrd = kDefaultMemoryOrder,
+						 AtomicMemoryOrder failMemOrd = kDefaultMemoryOrder)
 	{
 		return m_att.compare_exchange_weak(expected, desired, static_cast<std::memory_order>(successMemOrd),
 										   static_cast<std::memory_order>(failMemOrd));
 	}
 
 	/// Set @a a to the atomic and return the previous value.
-	Value exchange(Value a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
+	Value exchange(Value a, AtomicMemoryOrder memOrd = kDefaultMemoryOrder)
 	{
 		return m_att.exchange(a, static_cast<std::memory_order>(memOrd));
 	}

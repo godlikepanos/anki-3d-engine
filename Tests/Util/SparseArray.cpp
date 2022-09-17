@@ -87,6 +87,32 @@ public:
 			moveCount = 0;
 	}
 };
+
+template<typename TIndex>
+class Config
+{
+public:
+	using Index = TIndex;
+
+	Index m_initialStorage = 0;
+	U32 m_linearProbingCount = 0;
+	F32 m_maxLodFactor = 0;
+
+	Index getInitialStorageSize() const
+	{
+		return m_initialStorage;
+	}
+
+	U32 getLinearProbingCount() const
+	{
+		return m_linearProbingCount;
+	}
+
+	F32 getMaxLoadFactor() const
+	{
+		return m_maxLodFactor;
+	}
+};
 } // namespace
 } // namespace anki
 
@@ -107,7 +133,7 @@ ANKI_TEST(Util, SparseArray)
 
 	// Check destroy and grow
 	{
-		SparseArray<SAFoo> arr(64, 2);
+		SparseArray<SAFoo, Config<U32>> arr(Config<U32>{64, 2, 0.8f});
 
 		arr.emplace(alloc, 64 * 1, 123);
 		arr.emplace(alloc, 64 * 2, 124);
@@ -117,15 +143,17 @@ ANKI_TEST(Util, SparseArray)
 		ANKI_TEST_EXPECT_EQ(arr.find(64 * 2)->m_x, 124);
 		ANKI_TEST_EXPECT_EQ(arr.find(64 * 3)->m_x, 125);
 
-		arr.destroy(alloc);
+		SparseArray<SAFoo, Config<U32>> arr2(std::move(arr));
+
+		arr2.destroy(alloc);
 		SAFoo::checkCalls();
 	}
 
 	// Do complex insertions
 	{
-		SparseArray<SAFoo, U32> arr(64, 3);
+		SparseArray<SAFoo, Config<U32>> arr(Config<U32>{64, 3, 0.8f});
 
-		arr.emplace(alloc, 64 * 0 - 1, 1);
+		arr.emplace(alloc, 64u * 0 - 1, 1);
 		// Linear probing to 0
 		arr.emplace(alloc, 64 * 1 - 1, 2);
 		// Linear probing to 1
@@ -143,14 +171,14 @@ ANKI_TEST(Util, SparseArray)
 
 	// Fuzzy test
 	{
-		const U MAX = 10000;
-		SparseArray<SAFoo, U32> arr;
+		constexpr U kMax = 10000;
+		SparseArray<SAFoo> arr;
 		std::vector<int> numbers;
 
 		srand(U32(time(nullptr)));
 
 		// Insert random
-		for(U i = 0; i < MAX; ++i)
+		for(U i = 0; i < kMax; ++i)
 		{
 			I32 num;
 			while(1)
@@ -176,10 +204,10 @@ ANKI_TEST(Util, SparseArray)
 			arr.validate();
 		}
 
-		ANKI_TEST_EXPECT_EQ(arr.getSize(), MAX);
+		ANKI_TEST_EXPECT_EQ(arr.getSize(), kMax);
 
 		// Remove randomly
-		U count = MAX;
+		U count = kMax;
 		while(count--)
 		{
 			U idx = rand() % (count + 1);
@@ -197,13 +225,13 @@ ANKI_TEST(Util, SparseArray)
 
 	// Fuzzy test #2: Do random insertions and removals
 	{
-		const U MAX = 10000;
-		SparseArray<SAFoo, U64> arr;
+		constexpr U kMax = 10000;
+		SparseArray<SAFoo, Config<U64>> arr(Config<U64>{64, 8, 0.8f});
 		using StlMap =
 			std::unordered_map<int, int, std::hash<int>, std::equal_to<int>, HeapAllocator<std::pair<const int, int>>>;
 		StlMap map(10, std::hash<int>(), std::equal_to<int>(), alloc);
 
-		for(U i = 0; i < MAX; ++i)
+		for(U i = 0; i < kMax; ++i)
 		{
 			const Bool insert = (rand() & 1) || arr.getSize() == 0;
 
@@ -324,8 +352,8 @@ ANKI_TEST(Util, SparseArrayBench)
 		std::unordered_map<int, int, std::hash<int>, std::equal_to<int>, HeapAllocator<std::pair<const int, int>>>;
 	StlMap stdMap(10, std::hash<int>(), std::equal_to<int>(), allocStl);
 
-	using AkMap = SparseArray<int, U32>;
-	AkMap akMap(256, U32(log2(256.0f)), 0.90f);
+	using AkMap = SparseArray<int, Config<U32>>;
+	AkMap akMap(Config<U32>{256, U32(log2(256.0f)), 0.9f});
 
 	HighRezTimer timer;
 
@@ -439,7 +467,7 @@ ANKI_TEST(Util, SparseArrayBench)
 			stlTime += timer.getElapsedTime();
 		}
 
-		ANKI_TEST_LOGI("Deleting bench: STL %f AnKi %f | %f%%\n", stlTime, akTime, stlTime / akTime * 100.0);
+		ANKI_TEST_LOGI("Deleting bench: STL %f AnKi %f | %f%%", stlTime, akTime, stlTime / akTime * 100.0);
 	}
 
 	akMap.destroy(allocAk);

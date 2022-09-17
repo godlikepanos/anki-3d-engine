@@ -7,9 +7,9 @@
 
 namespace anki {
 
-template<typename T, typename TIndex>
+template<typename T, typename TConfig>
 template<typename TAlloc>
-void SparseArray<T, TIndex>::destroy(TAlloc& alloc)
+void SparseArray<T, TConfig>::destroy(TAlloc& alloc)
 {
 	if(m_elements)
 	{
@@ -30,11 +30,11 @@ void SparseArray<T, TIndex>::destroy(TAlloc& alloc)
 	resetMembers();
 }
 
-template<typename T, typename TIndex>
+template<typename T, typename TConfig>
 template<typename TAlloc, typename... TArgs>
-void SparseArray<T, TIndex>::emplaceInternal(TAlloc& alloc, Index idx, TArgs&&... args)
+void SparseArray<T, TConfig>::emplaceInternal(TAlloc& alloc, Index idx, TArgs&&... args)
 {
-	if(m_capacity == 0 || calcLoadFactor() > m_maxLoadFactor)
+	if(m_capacity == 0 || calcLoadFactor() > getMaxLoadFactor())
 	{
 		grow(alloc);
 	}
@@ -45,9 +45,9 @@ void SparseArray<T, TIndex>::emplaceInternal(TAlloc& alloc, Index idx, TArgs&&..
 	invalidateIterators();
 }
 
-template<typename T, typename TIndex>
+template<typename T, typename TConfig>
 template<typename TAlloc, typename... TArgs>
-typename SparseArray<T, TIndex>::Iterator SparseArray<T, TIndex>::emplace(TAlloc& alloc, Index idx, TArgs&&... args)
+typename SparseArray<T, TConfig>::Iterator SparseArray<T, TConfig>::emplace(TAlloc& alloc, Index idx, TArgs&&... args)
 {
 	emplaceInternal(alloc, idx, std::forward<TArgs>(args)...);
 
@@ -59,14 +59,14 @@ typename SparseArray<T, TIndex>::Iterator SparseArray<T, TIndex>::emplace(TAlloc
 	);
 }
 
-template<typename T, typename TIndex>
+template<typename T, typename TConfig>
 template<typename TAlloc>
-TIndex SparseArray<T, TIndex>::insert(TAlloc& alloc, Index idx, Value& val)
+typename TConfig::Index SparseArray<T, TConfig>::insert(TAlloc& alloc, Index idx, Value& val)
 {
 	while(true)
 	{
 		const Index desiredPos = mod(idx);
-		const Index endPos = mod(desiredPos + m_probeCount);
+		const Index endPos = mod(desiredPos + getLinearProbingCount());
 		Index pos = desiredPos;
 
 		while(pos != endPos)
@@ -118,14 +118,14 @@ TIndex SparseArray<T, TIndex>::insert(TAlloc& alloc, Index idx, Value& val)
 	return 0;
 }
 
-template<typename T, typename TIndex>
+template<typename T, typename TConfig>
 template<typename TAlloc>
-void SparseArray<T, TIndex>::grow(TAlloc& alloc)
+void SparseArray<T, TConfig>::grow(TAlloc& alloc)
 {
 	if(m_capacity == 0)
 	{
 		ANKI_ASSERT(m_elementCount == 0);
-		m_capacity = m_initialStorageSize;
+		m_capacity = getInitialStorageSize();
 		m_elements = static_cast<Value*>(alloc.getMemoryPool().allocate(m_capacity * sizeof(Value), alignof(Value)));
 
 		m_metadata =
@@ -190,9 +190,9 @@ void SparseArray<T, TIndex>::grow(TAlloc& alloc)
 	alloc.getMemoryPool().free(oldMetadata);
 }
 
-template<typename T, typename TIndex>
+template<typename T, typename TConfig>
 template<typename TAlloc>
-void SparseArray<T, TIndex>::erase(TAlloc& alloc, Iterator it)
+void SparseArray<T, TConfig>::erase(TAlloc& alloc, Iterator it)
 {
 	ANKI_ASSERT(it.m_array == this);
 	ANKI_ASSERT(it.m_elementIdx != getMaxNumericLimit<Index>());
@@ -248,8 +248,8 @@ void SparseArray<T, TIndex>::erase(TAlloc& alloc, Iterator it)
 	invalidateIterators();
 }
 
-template<typename T, typename TIndex>
-void SparseArray<T, TIndex>::validate() const
+template<typename T, typename TConfig>
+void SparseArray<T, TConfig>::validate() const
 {
 	if(m_capacity == 0)
 	{
@@ -284,7 +284,7 @@ void SparseArray<T, TIndex>::validate() const
 		if(m_metadata[pos].m_alive)
 		{
 			[[maybe_unused]] const Index myDesiredPos = mod(m_metadata[pos].m_idx);
-			ANKI_ASSERT(distanceFromDesired(pos, myDesiredPos) < m_probeCount);
+			ANKI_ASSERT(distanceFromDesired(pos, myDesiredPos) < getLinearProbingCount());
 
 			if(prevPos != ~Index(0))
 			{
@@ -306,8 +306,8 @@ void SparseArray<T, TIndex>::validate() const
 	ANKI_ASSERT(m_elementCount == elementCount);
 }
 
-template<typename T, typename TIndex>
-TIndex SparseArray<T, TIndex>::findInternal(Index idx) const
+template<typename T, typename TConfig>
+typename TConfig::Index SparseArray<T, TConfig>::findInternal(Index idx) const
 {
 	if(ANKI_UNLIKELY(m_elementCount == 0))
 	{
@@ -315,7 +315,7 @@ TIndex SparseArray<T, TIndex>::findInternal(Index idx) const
 	}
 
 	const Index desiredPos = mod(idx);
-	const Index endPos = mod(desiredPos + m_probeCount);
+	const Index endPos = mod(desiredPos + getLinearProbingCount());
 	Index pos = desiredPos;
 	while(pos != endPos)
 	{
@@ -330,9 +330,9 @@ TIndex SparseArray<T, TIndex>::findInternal(Index idx) const
 	return getMaxNumericLimit<Index>();
 }
 
-template<typename T, typename TIndex>
+template<typename T, typename TConfig>
 template<typename TAlloc>
-void SparseArray<T, TIndex>::clone(TAlloc& alloc, SparseArray& b) const
+void SparseArray<T, TConfig>::clone(TAlloc& alloc, SparseArray& b) const
 {
 	ANKI_ASSERT(b.m_elements == nullptr && b.m_metadata == nullptr);
 	if(m_capacity == 0)
@@ -357,9 +357,7 @@ void SparseArray<T, TIndex>::clone(TAlloc& alloc, SparseArray& b) const
 	// Set the rest
 	b.m_elementCount = m_elementCount;
 	b.m_capacity = m_capacity;
-	b.m_initialStorageSize = m_initialStorageSize;
-	b.m_probeCount = m_probeCount;
-	b.m_maxLoadFactor = m_maxLoadFactor;
+	b.m_config = m_config;
 	b.invalidateIterators();
 }
 

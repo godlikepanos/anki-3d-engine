@@ -158,10 +158,38 @@ private:
 	}
 };
 
+/// Contains the default configuration for SparseArray.
+/// @memberof SparseArray
+class SparseArrayDefaultConfig
+{
+public:
+	/// Indicates the max size of the sparse indices it can accept. Can be U32 or U64.
+	using Index = U32;
+
+	/// The initial storage size of the array.
+	static constexpr Index getInitialStorageSize()
+	{
+		return 64;
+	}
+
+	/// The number of linear probes.
+	static constexpr U32 getLinearProbingCount()
+	{
+		return 8;
+	}
+
+	/// Load factor. If storage is loaded more than getMaxLoadFactor() then increase it.
+	static constexpr F32 getMaxLoadFactor()
+	{
+		return 0.8f;
+	}
+};
+
 /// Sparse array.
 /// @tparam T The type of the valut it will hold.
-/// @tparam TIndex Indicates the max size of the sparse indices it can accept. Can be U32 or U64.
-template<typename T, typename TIndex = U32>
+/// @tparam TConfig A class that has configuration required by the SparseArray. See SparseArrayDefaultConfig for
+/// details.
+template<typename T, typename TConfig = SparseArrayDefaultConfig>
 class SparseArray
 {
 	template<typename, typename, typename>
@@ -169,29 +197,17 @@ class SparseArray
 
 public:
 	// Typedefs
+	using Config = TConfig;
 	using Value = T;
 	using Iterator = SparseArrayIterator<T*, T&, SparseArray*>;
 	using ConstIterator = SparseArrayIterator<const T*, const T&, const SparseArray*>;
-	using Index = TIndex;
+	using Index = typename Config::Index;
 
-	// Consts
-	static constexpr Index INITIAL_STORAGE_SIZE = 64; ///< The initial storage size of the array.
-	static constexpr U32 LINEAR_PROBING_COUNT = 8; ///< The number of linear probes.
-	static constexpr F32 MAX_LOAD_FACTOR = 0.8f; ///< Load factor.
+	SparseArray() = default;
 
-	/// Constructor.
-	/// @param initialStorageSize The initial size of the array.
-	/// @param probeCount         The number of probe queries. It's the linear probe count the sparse array is using.
-	/// @param maxLoadFactor      If storage is loaded more than maxLoadFactor then increase it.
-	SparseArray(Index initialStorageSize = INITIAL_STORAGE_SIZE, U32 probeCount = LINEAR_PROBING_COUNT,
-				F32 maxLoadFactor = MAX_LOAD_FACTOR)
-		: m_initialStorageSize(initialStorageSize)
-		, m_probeCount(probeCount)
-		, m_maxLoadFactor(maxLoadFactor)
+	SparseArray(const Config& config)
+		: m_config(config)
 	{
-		ANKI_ASSERT(initialStorageSize > 0 && isPowerOfTwo(initialStorageSize));
-		ANKI_ASSERT(probeCount > 0 && probeCount < initialStorageSize);
-		ANKI_ASSERT(maxLoadFactor > 0.5f && maxLoadFactor < 1.0f);
 	}
 
 	/// Non-copyable.
@@ -221,9 +237,7 @@ public:
 		m_metadata = b.m_metadata;
 		m_elementCount = b.m_elementCount;
 		m_capacity = b.m_capacity;
-		m_initialStorageSize = b.m_initialStorageSize;
-		m_probeCount = b.m_probeCount;
-		m_maxLoadFactor = b.m_maxLoadFactor;
+		m_config = std::move(b.m_config);
 #if ANKI_EXTRA_CHECKS
 		++m_iteratorVer;
 #endif
@@ -354,6 +368,11 @@ public:
 	template<typename TAlloc>
 	void clone(TAlloc& alloc, SparseArray& b) const;
 
+	const Config& getConfig() const
+	{
+		return m_config;
+	}
+
 protected:
 	/// Element metadata.
 	class Metadata
@@ -367,10 +386,8 @@ protected:
 	Metadata* m_metadata = nullptr;
 	Index m_elementCount = 0;
 	Index m_capacity = 0;
+	Config m_config;
 
-	Index m_initialStorageSize = 0;
-	U32 m_probeCount = 0;
-	F32 m_maxLoadFactor = 0.0f;
 #if ANKI_EXTRA_CHECKS
 	/// Iterators version. Used to check if iterators point to the newest storage. Needs to be changed whenever we need
 	/// to invalidate iterators.
@@ -481,6 +498,27 @@ protected:
 #if ANKI_EXTRA_CHECKS
 		++m_iteratorVer;
 #endif
+	}
+
+	F32 getMaxLoadFactor() const
+	{
+		const F32 f = m_config.getMaxLoadFactor();
+		ANKI_ASSERT(f > 0.0f && f < 1.0f);
+		return f;
+	}
+
+	U32 getLinearProbingCount() const
+	{
+		const U32 o = m_config.getLinearProbingCount();
+		ANKI_ASSERT(o > 0);
+		return o;
+	}
+
+	Index getInitialStorageSize() const
+	{
+		const Index o = m_config.getInitialStorageSize();
+		ANKI_ASSERT(o > 0);
+		return o;
 	}
 };
 /// @}

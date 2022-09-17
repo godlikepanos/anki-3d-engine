@@ -393,13 +393,13 @@ public:
 	/// Unlock.
 	void unlock()
 	{
-		m_lock.store(false, AtomicMemoryOrder::RELEASE);
+		m_lock.store(false, AtomicMemoryOrder::kRelease);
 	}
 
 	/// Try to lock.
 	Bool tryLock()
 	{
-		return !m_lock.load(AtomicMemoryOrder::RELAXED) && !m_lock.exchange(true, AtomicMemoryOrder::ACQUIRE);
+		return !m_lock.load(AtomicMemoryOrder::kRelaxed) && !m_lock.exchange(true, AtomicMemoryOrder::kAcquire);
 	}
 
 private:

@@ -10,7 +10,7 @@
 
 namespace anki {
 
-static constexpr U MAX_PATH_LEN = MAX_PATH - 1;
+static constexpr U kMaxPathLen = MAX_PATH - 1;
 
 Bool fileExists(const CString& filename)
 {
@@ -97,7 +97,7 @@ static Error walkDirectoryTreeRecursive(const CString& dir, const Function<Error
 										U baseDirLen)
 {
 	// Append something to the path
-	if(dir.getLength() > MAX_PATH_LEN - 2)
+	if(dir.getLength() > kMaxPathLen - 2)
 	{
 		ANKI_UTIL_LOGE("Path too long");
 		return Error::kFunctionFailed;
@@ -141,7 +141,7 @@ static Error walkDirectoryTreeRecursive(const CString& dir, const Function<Error
 
 			// Compute new path
 			const PtrSize oldLen = strlen(&dir2[0]);
-			if(oldLen + filename.getLength() > MAX_PATH_LEN)
+			if(oldLen + filename.getLength() > kMaxPathLen)
 			{
 				ANKI_UTIL_LOGE("Path too long");
 				return Error::kFunctionFailed;

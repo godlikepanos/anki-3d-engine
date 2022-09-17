@@ -7,11 +7,11 @@
 
 namespace anki {
 
-template<U32 T_MAX_MEMORY_RANGE_LOG2, typename TLock>
-void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::init(GenericMemoryPoolAllocator<U8> alloc,
-																 U32 maxMemoryRangeLog2)
+template<U32 kMaxMemoryRangeLog2, typename TLock>
+void BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock>::init(GenericMemoryPoolAllocator<U8> alloc,
+															 U32 maxMemoryRangeLog2)
 {
-	ANKI_ASSERT(maxMemoryRangeLog2 >= 1 && maxMemoryRangeLog2 <= T_MAX_MEMORY_RANGE_LOG2);
+	ANKI_ASSERT(maxMemoryRangeLog2 >= 1 && maxMemoryRangeLog2 <= kMaxMemoryRangeLog2);
 	ANKI_ASSERT(m_freeLists.getSize() == 0 && m_userAllocatedSize == 0 && m_realAllocatedSize == 0);
 
 	const U32 orderCount = maxMemoryRangeLog2 + 1;
@@ -21,8 +21,8 @@ void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::init(GenericMemoryPo
 	m_freeLists.create(m_alloc, orderCount);
 }
 
-template<U32 T_MAX_MEMORY_RANGE_LOG2, typename TLock>
-void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::destroy()
+template<U32 kMaxMemoryRangeLog2, typename TLock>
+void BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock>::destroy()
 {
 	ANKI_ASSERT(m_userAllocatedSize == 0 && "Forgot to free all memory");
 	m_freeLists.destroy(m_alloc);
@@ -31,9 +31,8 @@ void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::destroy()
 	m_realAllocatedSize = 0;
 }
 
-template<U32 T_MAX_MEMORY_RANGE_LOG2, typename TLock>
-Bool BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::allocate(PtrSize size, PtrSize alignment,
-																	 Address& outAddress)
+template<U32 kMaxMemoryRangeLog2, typename TLock>
+Bool BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock>::allocate(PtrSize size, PtrSize alignment, Address& outAddress)
 {
 	ANKI_ASSERT(size > 0 && size <= m_maxMemoryRange);
 
@@ -109,8 +108,8 @@ Bool BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::allocate(PtrSize siz
 	return true;
 }
 
-template<U32 T_MAX_MEMORY_RANGE_LOG2, typename TLock>
-void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::free(Address address, PtrSize size, PtrSize alignment)
+template<U32 kMaxMemoryRangeLog2, typename TLock>
+void BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock>::free(Address address, PtrSize size, PtrSize alignment)
 {
 	PtrSize alignedSize = nextPowerOfTwo(size);
 	U32 order = log2(alignedSize);
@@ -147,8 +146,8 @@ void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::free(Address address
 	}
 }
 
-template<U32 T_MAX_MEMORY_RANGE_LOG2, typename TLock>
-void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::freeInternal(PtrSize address, PtrSize size)
+template<U32 kMaxMemoryRangeLog2, typename TLock>
+void BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock>::freeInternal(PtrSize address, PtrSize size)
 {
 	ANKI_ASSERT(size);
 	ANKI_ASSERT(isPowerOfTwo(size));
@@ -196,13 +195,13 @@ void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::freeInternal(PtrSize
 	}
 }
 
-template<U32 T_MAX_MEMORY_RANGE_LOG2, typename TLock>
-void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::debugPrint() const
+template<U32 kMaxMemoryRangeLog2, typename TLock>
+void BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock>::debugPrint() const
 {
-	constexpr PtrSize MAX_MEMORY_RANGE = pow2<PtrSize>(T_MAX_MEMORY_RANGE_LOG2);
+	constexpr PtrSize kMaxMemoryRange = pow2<PtrSize>(kMaxMemoryRangeLog2);
 
 	// Allocate because we can't possibly have that in the stack
-	BitSet<MAX_MEMORY_RANGE>* freeBytes = m_alloc.newInstance<BitSet<MAX_MEMORY_RANGE>>(false);
+	BitSet<kMaxMemoryRange>* freeBytes = m_alloc.newInstance<BitSet<kMaxMemoryRange>>(false);
 
 	LockGuard<TLock> lock(m_mutex);
 
@@ -230,8 +229,8 @@ void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::debugPrint() const
 	m_alloc.deleteInstance(freeBytes);
 }
 
-template<U32 T_MAX_MEMORY_RANGE_LOG2, typename TLock>
-void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::getStats(BuddyAllocatorBuilderStats& stats) const
+template<U32 kMaxMemoryRangeLog2, typename TLock>
+void BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock>::getStats(BuddyAllocatorBuilderStats& stats) const
 {
 	LockGuard<TLock> lock(m_mutex);
 

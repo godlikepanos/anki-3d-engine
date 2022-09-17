@@ -34,8 +34,8 @@ public:
 	PoolSignature m_signature;
 };
 
-constexpr U32 MAX_ALIGNMENT = 64;
-constexpr U32 ALLOCATION_HEADER_SIZE = getAlignedRoundUp(MAX_ALIGNMENT, sizeof(AllocationHeader));
+constexpr U32 kMaxAlignment = 64;
+constexpr U32 kAllocationHeaderSize = getAlignedRoundUp(kMaxAlignment, sizeof(AllocationHeader));
 #endif
 
 #define ANKI_CREATION_OOM_ACTION() ANKI_UTIL_LOGF("Out of memory")
@@ -182,8 +182,8 @@ void* HeapMemoryPool::allocate(PtrSize size, PtrSize alignment)
 {
 	ANKI_ASSERT(size > 0);
 #if ANKI_MEM_EXTRA_CHECKS
-	ANKI_ASSERT(alignment <= MAX_ALIGNMENT && "Wrong assumption");
-	size += ALLOCATION_HEADER_SIZE;
+	ANKI_ASSERT(alignment <= kMaxAlignment && "Wrong assumption");
+	size += kAllocationHeaderSize;
 #endif
 
 	void* mem = m_allocCb(m_allocCbUserData, nullptr, size, alignment);
@@ -193,12 +193,12 @@ void* HeapMemoryPool::allocate(PtrSize size, PtrSize alignment)
 		m_allocationCount.fetchAdd(1);
 
 #if ANKI_MEM_EXTRA_CHECKS
-		memset(mem, 0, ALLOCATION_HEADER_SIZE);
+		memset(mem, 0, kAllocationHeaderSize);
 		AllocationHeader& header = *static_cast<AllocationHeader*>(mem);
 		header.m_signature = m_signature;
 		header.m_allocationSize = size;
 
-		mem = static_cast<void*>(static_cast<U8*>(mem) + ALLOCATION_HEADER_SIZE);
+		mem = static_cast<void*>(static_cast<U8*>(mem) + kAllocationHeaderSize);
 #endif
 	}
 	else
@@ -217,7 +217,7 @@ void HeapMemoryPool::free(void* ptr)
 	}
 
 #if ANKI_MEM_EXTRA_CHECKS
-	U8* memU8 = static_cast<U8*>(ptr) - ALLOCATION_HEADER_SIZE;
+	U8* memU8 = static_cast<U8*>(ptr) - kAllocationHeaderSize;
 	AllocationHeader& header = *reinterpret_cast<AllocationHeader*>(memU8);
 	if(header.m_signature != m_signature)
 	{
@@ -237,7 +237,7 @@ Error StackMemoryPool::StackAllocatorBuilderInterface::allocateChunk(PtrSize siz
 
 	const PtrSize fullChunkSize = offsetof(Chunk, m_memoryStart) + size;
 
-	void* mem = m_parent->m_allocCb(m_parent->m_allocCbUserData, nullptr, fullChunkSize, MAX_ALIGNMENT);
+	void* mem = m_parent->m_allocCb(m_parent->m_allocCbUserData, nullptr, fullChunkSize, kMaxAlignment);
 
 	if(ANKI_LIKELY(mem))
 	{
@@ -272,7 +272,7 @@ StackMemoryPool::StackMemoryPool(AllocAlignedCallback allocCb, void* allocCbUser
 {
 	ANKI_ASSERT(initialChunkSize > 0);
 	ANKI_ASSERT(nextChunkScale >= 1.0);
-	ANKI_ASSERT(alignmentBytes > 0 && alignmentBytes <= MAX_ALIGNMENT);
+	ANKI_ASSERT(alignmentBytes > 0 && alignmentBytes <= kMaxAlignment);
 
 	m_builder.getInterface().m_parent = this;
 	m_builder.getInterface().m_alignmentBytes = alignmentBytes;

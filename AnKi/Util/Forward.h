@@ -17,7 +17,7 @@ class BitSet;
 template<typename T>
 class BitMask;
 
-template<typename, typename, typename>
+template<typename, typename, typename, typename>
 class HashMap;
 
 template<typename T>
@@ -29,7 +29,7 @@ class List;
 template<typename T>
 class ListAuto;
 
-template<typename T, typename TIndex>
+template<typename T, typename TConfig>
 class SparseArray;
 
 class CString;
@@ -38,7 +38,7 @@ class StringAuto;
 
 class ThreadHive;
 
-template<typename T, PtrSize T_PREALLOCATED_STORAGE = ANKI_SAFE_ALIGNMENT>
+template<typename T, PtrSize kPreallocatedStorage = ANKI_SAFE_ALIGNMENT>
 class Function;
 
 template<typename T, typename TSize = U32>

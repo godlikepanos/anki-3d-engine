@@ -29,7 +29,7 @@ void DynamicArray<T, TSize>::resizeStorage(TAllocator alloc, Size newSize)
 	{
 		// Need to grow
 
-		m_capacity = (newSize > Size(F64(m_capacity) * GROW_SCALE)) ? newSize : Size(F64(m_capacity) * GROW_SCALE);
+		m_capacity = (newSize > Size(F64(m_capacity) * kGrowScale)) ? newSize : Size(F64(m_capacity) * kGrowScale);
 		Value* newStorage =
 			static_cast<Value*>(alloc.getMemoryPool().allocate(m_capacity * sizeof(Value), alignof(Value)));
 
@@ -61,7 +61,7 @@ void DynamicArray<T, TSize>::resizeStorage(TAllocator alloc, Size newSize)
 
 		m_size = newSize;
 
-		if(newSize < Size(F64(m_capacity) / SHRINK_SCALE) || newSize == 0)
+		if(newSize < Size(F64(m_capacity) / kShrinkScale) || newSize == 0)
 		{
 			// Need to shrink
 

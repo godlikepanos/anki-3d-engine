@@ -173,7 +173,6 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 	}
 
 	static_assert(Thread::kThreadNameMaxLength == 15, "See file");
-	constexpr const Char* fmt = "%s[%s][%s][%-15s]%s%s %s (%s:%d %s)%s\n";
 	if(!runningFromATerminal())
 	{
 		terminalColor = "";
@@ -181,9 +180,9 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 		endTerminalColor = "";
 	}
 
-	fprintf(out, fmt, terminalColorBg, kMessageTypeTxt[U(info.m_type)], info.m_subsystem ? info.m_subsystem : "N/A ",
-			info.m_threadName, endTerminalColor, terminalColor, info.m_msg, info.m_file, info.m_line, info.m_func,
-			endTerminalColor);
+	fprintf(out, "%s[%s][%s][%-15s]%s%s %s (%s:%d %s)%s\n", terminalColorBg, kMessageTypeTxt[U(info.m_type)],
+			info.m_subsystem ? info.m_subsystem : "N/A ", info.m_threadName, endTerminalColor, terminalColor,
+			info.m_msg, info.m_file, info.m_line, info.m_func, endTerminalColor);
 #elif ANKI_OS_WINDOWS
 	WORD attribs = 0;
 	FILE* out = nullptr;
