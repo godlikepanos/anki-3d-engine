@@ -20,7 +20,7 @@ GlObject::GlObject()
 
 Error GlObject::serializeRenderingThread(GrManager& manager)
 {
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 	State state = State(m_state.load());
 	ANKI_ASSERT(state != State::NEW);
 
@@ -33,7 +33,7 @@ Error GlObject::serializeRenderingThread(GrManager& manager)
 
 		if(state == State::ERROR)
 		{
-			err = Error::UNKNOWN;
+			err = Error::kUnknown;
 		}
 	}
 
@@ -59,7 +59,7 @@ void GlObject::destroyDeferred(GrManager& manager, GlDeleteFunction deleteCallba
 		Error operator()(GlState&)
 		{
 			m_callback(1, &m_glName);
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 

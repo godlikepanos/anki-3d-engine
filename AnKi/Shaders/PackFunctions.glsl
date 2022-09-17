@@ -42,7 +42,7 @@ Vec3 signedOctEncode(Vec3 n)
 	outn.x = n.x * 0.5 + outn.y;
 	outn.y = n.x * -0.5 + outn.y;
 
-	outn.z = saturate(n.z * MAX_F32);
+	outn.z = saturate(n.z * kMaxF32);
 	return outn;
 }
 
@@ -193,7 +193,7 @@ void unpackGBufferNoVelocity(ANKI_RP Vec4 rt0, ANKI_RP Vec4 rt1, ANKI_RP Vec4 rt
 
 	g.m_normal = signedOctDecode(rt2.yzw);
 
-	g.m_velocity = Vec2(MAX_F32); // Put something random
+	g.m_velocity = Vec2(kMaxF32); // Put something random
 
 	// Compute reflectance
 	g.m_f0 = mix(g.m_f0, g.m_diffuse, g.m_metallic);

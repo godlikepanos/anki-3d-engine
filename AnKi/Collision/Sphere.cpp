@@ -36,8 +36,8 @@ void Sphere::setFromPointCloud(const Vec3* pointBuffer, U pointCount, PtrSize po
 {
 	// Calc center
 	{
-		Vec4 min(Vec3(MAX_F32), 0.0f);
-		Vec4 max(Vec3(MIN_F32), 0.0f);
+		Vec4 min(Vec3(kMaxF32), 0.0f);
+		Vec4 max(Vec3(kMinF32), 0.0f);
 
 		// Iterate
 		const U8* ptr = reinterpret_cast<const U8*>(pointBuffer);
@@ -57,7 +57,7 @@ void Sphere::setFromPointCloud(const Vec3* pointBuffer, U pointCount, PtrSize po
 
 	// Calc radius
 	{
-		F32 maxDist = MIN_F32;
+		F32 maxDist = kMinF32;
 
 		const U8* ptr = reinterpret_cast<const U8*>(pointBuffer);
 		while(pointCount-- != 0)

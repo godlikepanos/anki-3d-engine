@@ -117,7 +117,7 @@ public:
 	{
 		updated = m_markedForUpdate;
 		m_markedForUpdate = false;
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 private:

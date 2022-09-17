@@ -18,7 +18,7 @@ Error StatsUi::init()
 {
 	ANKI_CHECK(m_manager->newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{24}));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void StatsUi::labelBytes(PtrSize val, CString name) const

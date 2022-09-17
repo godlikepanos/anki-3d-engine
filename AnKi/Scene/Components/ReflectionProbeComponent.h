@@ -65,7 +65,7 @@ public:
 		el.m_worldPosition = m_worldPos;
 		el.m_aabbMin = -m_halfSize + m_worldPos;
 		el.m_aabbMax = m_halfSize + m_worldPos;
-		el.m_textureArrayIndex = MAX_U32;
+		el.m_textureArrayIndex = kMaxU32;
 		el.m_debugDrawCallback = [](RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) {
 			ANKI_ASSERT(userData.getSize() == 1);
 			static_cast<const ReflectionProbeComponent*>(userData[0])->draw(ctx);
@@ -77,7 +77,7 @@ public:
 	{
 		updated = m_markedForUpdate;
 		m_markedForUpdate = false;
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 private:

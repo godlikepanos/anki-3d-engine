@@ -60,7 +60,7 @@ private:
 			barrier.wait();
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 

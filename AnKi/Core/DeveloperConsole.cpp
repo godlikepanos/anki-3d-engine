@@ -32,7 +32,7 @@ Error DeveloperConsole::init(AllocAlignedCallback allocCb, void* allocCbUserData
 
 	ANKI_CHECK(m_scriptEnv.init(scriptManager));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void DeveloperConsole::build(CanvasPtr ctx)

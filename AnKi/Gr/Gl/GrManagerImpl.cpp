@@ -70,7 +70,7 @@ Error GrManagerImpl::init(GrManagerInitInfo& init, GrAllocator<U8> alloc)
 
 	initFakeDefaultFb(init);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void GrManagerImpl::initFakeDefaultFb(GrManagerInitInfo& init)

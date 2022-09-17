@@ -32,7 +32,7 @@ public:
 	F32 m_lodFactor = 1.0f;
 	U32 m_lodCount = 1;
 	F32 m_lightIntensityScale = 1.0f;
-	U32 m_threadCount = MAX_U32;
+	U32 m_threadCount = kMaxU32;
 	CString m_comment;
 };
 

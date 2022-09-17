@@ -35,7 +35,7 @@ public:
 
 	~MicroImageView()
 	{
-		ANKI_ASSERT(m_bindlessIndex == MAX_U32 && "Forgot to unbind the bindless");
+		ANKI_ASSERT(m_bindlessIndex == kMaxU32 && "Forgot to unbind the bindless");
 		ANKI_ASSERT(m_handle == VK_NULL_HANDLE);
 	}
 
@@ -44,7 +44,7 @@ public:
 		m_handle = b.m_handle;
 		b.m_handle = VK_NULL_HANDLE;
 		m_bindlessIndex = b.m_bindlessIndex;
-		b.m_bindlessIndex = MAX_U32;
+		b.m_bindlessIndex = kMaxU32;
 		m_derivedTextureType = b.m_derivedTextureType;
 		b.m_derivedTextureType = TextureType::kCount;
 		return *this;
@@ -68,7 +68,7 @@ public:
 private:
 	VkImageView m_handle = VK_NULL_HANDLE;
 
-	mutable U32 m_bindlessIndex = MAX_U32;
+	mutable U32 m_bindlessIndex = kMaxU32;
 	mutable SpinLock m_bindlessIndexLock;
 
 	/// Because for example a single surface view of a cube texture will be a 2D view.

@@ -37,7 +37,7 @@ public:
 	F32 m_texture = -1.0f;
 	MaliOfflineCompilerHwUnit m_boundUnit = MaliOfflineCompilerHwUnit::NONE;
 
-	U32 m_workRegisters = MAX_U32;
+	U32 m_workRegisters = kMaxU32;
 	U32 m_spilling = 0;
 	F32 m_fp16ArithmeticPercentage = 0.0f;
 

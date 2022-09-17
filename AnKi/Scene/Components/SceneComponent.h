@@ -100,7 +100,7 @@ public:
 	virtual Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated)
 	{
 		updated = false;
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	/// Don't call it.

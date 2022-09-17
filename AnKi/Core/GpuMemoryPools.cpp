@@ -25,7 +25,7 @@ Error VertexGpuMemoryPool::init(GenericMemoryPoolAllocator<U8> alloc, GrManager*
 	if(!isPowerOfTwo(bufferInit.m_size))
 	{
 		ANKI_CORE_LOGE("core_globalVertexMemorySize should be a power of two (because of the buddy allocator");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	bufferInit.m_usage = BufferUsageBit::VERTEX | BufferUsageBit::INDEX | BufferUsageBit::TRANSFER_DESTINATION;
@@ -39,7 +39,7 @@ Error VertexGpuMemoryPool::init(GenericMemoryPoolAllocator<U8> alloc, GrManager*
 	// Init the rest
 	m_buddyAllocator.init(alloc, __builtin_ctzll(bufferInit.m_size));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error VertexGpuMemoryPool::allocate(PtrSize size, PtrSize& offset)
@@ -53,12 +53,12 @@ Error VertexGpuMemoryPool::allocate(PtrSize size, PtrSize& offset)
 		ANKI_CORE_LOGE("Failed to allocate vertex memory of size %zu. The allocator has %zu (user requested %zu) out "
 					   "%zu allocated",
 					   size, stats.m_realAllocatedSize, stats.m_userAllocatedSize, m_vertBuffer->getSize());
-		return Error::OUT_OF_MEMORY;
+		return Error::kOutOfMemory;
 	}
 
 	offset = offset32;
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void VertexGpuMemoryPool::free(PtrSize size, PtrSize offset)
@@ -95,12 +95,12 @@ Error StagingGpuMemoryPool::init(GrManager* gr, const ConfigSet& cfg)
 			   gr->getDeviceCapabilities().m_storageBufferMaxRange, BufferUsageBit::ALL_STORAGE | BufferUsageBit::SBT,
 			   *gr);
 
-	initBuffer(StagingGpuMemoryType::VERTEX, 16, MAX_U32, BufferUsageBit::VERTEX | BufferUsageBit::INDEX, *gr);
+	initBuffer(StagingGpuMemoryType::VERTEX, 16, kMaxU32, BufferUsageBit::VERTEX | BufferUsageBit::INDEX, *gr);
 
 	initBuffer(StagingGpuMemoryType::TEXTURE, gr->getDeviceCapabilities().m_textureBufferBindOffsetAlignment,
 			   gr->getDeviceCapabilities().m_textureBufferMaxRange, BufferUsageBit::ALL_TEXTURE, *gr);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void StagingGpuMemoryPool::initBuffer(StagingGpuMemoryType type, U32 alignment, PtrSize maxAllocSize,

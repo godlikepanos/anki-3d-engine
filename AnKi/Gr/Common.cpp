@@ -12,7 +12,7 @@ namespace anki {
 inline constexpr ShaderVariableDataTypeInfo SVD_INFOS[] = {
 #define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount, isIntagralType) \
 	{ANKI_STRINGIZE(type), sizeof(type), false, isIntagralType},
-#define ANKI_SVDT_MACRO_OPAQUE(capital, type) {ANKI_STRINGIZE(type), MAX_U32, true, false},
+#define ANKI_SVDT_MACRO_OPAQUE(capital, type) {ANKI_STRINGIZE(type), kMaxU32, true, false},
 #include <AnKi/Gr/ShaderVariableDataType.defs.h>
 #undef ANKI_SVDT_MACRO
 #undef ANKI_SVDT_MACRO_OPAQUE

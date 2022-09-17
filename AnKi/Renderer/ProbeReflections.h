@@ -118,7 +118,7 @@ private:
 	{
 	public:
 		const ReflectionProbeQueueElement* m_probe = nullptr;
-		U32 m_cacheEntryIdx = MAX_U32;
+		U32 m_cacheEntryIdx = kMaxU32;
 
 		Array<RenderTargetHandle, kGBufferColorRenderTargetCount> m_gbufferColorRts;
 		RenderTargetHandle m_gbufferDepthRt;

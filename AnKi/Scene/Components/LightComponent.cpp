@@ -62,7 +62,7 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		info.m_node->getSceneGraph().getOctree().getActualSceneBounds(m_dir.m_sceneMin, m_dir.m_sceneMax);
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& frustumComp,
@@ -85,7 +85,7 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 	el.m_effectiveShadowDistance = frustumComp.getEffectiveShadowDistance();
 	el.m_shadowCascadesDistancePower = frustumComp.getShadowCascadesDistancePower();
 	el.m_shadowCascadeCount = U8(shadowCascadeCount);
-	el.m_shadowLayer = MAX_U8;
+	el.m_shadowLayer = kMaxU8;
 
 	if(shadowCascadeCount == 0)
 	{

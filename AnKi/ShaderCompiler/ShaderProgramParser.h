@@ -52,7 +52,7 @@ class ShaderProgramParserMember
 public:
 	StringAuto m_name;
 	ShaderVariableDataType m_type;
-	U32 m_dependentMutator = MAX_U32;
+	U32 m_dependentMutator = kMaxU32;
 	MutatorValue m_mutatorValue = 0;
 
 	ShaderProgramParserMember(GenericMemoryPoolAllocator<U8> alloc)
@@ -214,7 +214,7 @@ private:
 	ShaderCompilerOptions m_compilerOptions;
 
 	StringAuto m_libName = {m_alloc};
-	U32 m_rayType = MAX_U32;
+	U32 m_rayType = kMaxU32;
 
 	StringListAuto m_symbolsToReflect = {m_alloc};
 
@@ -249,9 +249,9 @@ private:
 		if(m_insideStruct)
 		{
 			ANKI_SHADER_COMPILER_LOGE("Unsupported \"pragma anki\" inside \"pragma anki struct\"");
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	Error checkActiveStruct() const
@@ -259,9 +259,9 @@ private:
 		if(!m_insideStruct)
 		{
 			ANKI_SHADER_COMPILER_LOGE("Expected a \"pragma anki struct\" to open");
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 /// @}

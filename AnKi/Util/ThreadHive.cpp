@@ -44,7 +44,7 @@ private:
 		Thread& self = *static_cast<Thread*>(info.m_userData);
 
 		self.m_hive->threadRun(self.m_id);
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 

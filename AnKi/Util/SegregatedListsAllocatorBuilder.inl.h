@@ -38,7 +38,7 @@ U32 SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::findClass(PtrSiz
 	}
 
 	// Not found
-	return MAX_U32;
+	return kMaxU32;
 }
 
 template<typename TChunk, typename TInterface, typename TLock>
@@ -109,10 +109,10 @@ void SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::placeFreeBlock(
 	ANKI_ASSERT(address + size <= chunk.m_totalSize);
 
 	// First search everything to find other coalesced free blocks
-	U32 leftBlock = MAX_U32;
-	U32 leftClass = MAX_U32;
-	U32 rightBlock = MAX_U32;
-	U32 rightClass = MAX_U32;
+	U32 leftBlock = kMaxU32;
+	U32 leftClass = kMaxU32;
+	U32 rightBlock = kMaxU32;
+	U32 rightClass = kMaxU32;
 	for(U32 classIdx = 0; classIdx < TInterface::getClassCount(); ++classIdx)
 	{
 		const DynamicArray<FreeBlock>& freeLists = chunk.m_freeLists[classIdx];
@@ -142,7 +142,7 @@ void SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::placeFreeBlock(
 		{
 			// Free block is in the left of the new
 
-			ANKI_ASSERT(leftBlock == MAX_U32);
+			ANKI_ASSERT(leftBlock == kMaxU32);
 			leftBlock = pos;
 			leftClass = classIdx;
 
@@ -152,7 +152,7 @@ void SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::placeFreeBlock(
 
 				if(address + size == freeBlock2.m_address)
 				{
-					ANKI_ASSERT(rightBlock == MAX_U32);
+					ANKI_ASSERT(rightBlock == kMaxU32);
 					rightBlock = pos + 1;
 					rightClass = classIdx;
 				}
@@ -162,7 +162,7 @@ void SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::placeFreeBlock(
 		{
 			// Free block is in the right of the new
 
-			ANKI_ASSERT(rightBlock == MAX_U32);
+			ANKI_ASSERT(rightBlock == kMaxU32);
 			rightBlock = pos;
 			rightClass = classIdx;
 
@@ -172,7 +172,7 @@ void SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::placeFreeBlock(
 
 				if(freeBlock2.m_address + freeBlock2.m_size == address)
 				{
-					ANKI_ASSERT(leftBlock == MAX_U32);
+					ANKI_ASSERT(leftBlock == kMaxU32);
 					leftBlock = pos - 1;
 					leftClass = classIdx;
 				}
@@ -183,7 +183,7 @@ void SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::placeFreeBlock(
 			// Do nothing
 		}
 
-		if(leftBlock != MAX_U32 && rightBlock != MAX_U32)
+		if(leftBlock != kMaxU32 && rightBlock != kMaxU32)
 		{
 			break;
 		}
@@ -194,7 +194,7 @@ void SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::placeFreeBlock(
 	newBlock.m_address = address;
 	newBlock.m_size = size;
 
-	if(leftBlock != MAX_U32)
+	if(leftBlock != kMaxU32)
 	{
 		const FreeBlock& lblock = chunk.m_freeLists[leftClass][leftBlock];
 
@@ -204,7 +204,7 @@ void SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::placeFreeBlock(
 		chunk.m_freeLists[leftClass].erase(m_interface.getAllocator(),
 										   chunk.m_freeLists[leftClass].getBegin() + leftBlock);
 
-		if(rightBlock != MAX_U32 && rightClass == leftClass)
+		if(rightBlock != kMaxU32 && rightClass == leftClass)
 		{
 			// Both right and left blocks live in the same dynamic array. Due to the erase() above the rights's index
 			// is no longer valid, adjust it
@@ -213,7 +213,7 @@ void SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::placeFreeBlock(
 		}
 	}
 
-	if(rightBlock != MAX_U32)
+	if(rightBlock != kMaxU32)
 	{
 		const FreeBlock& rblock = chunk.m_freeLists[rightClass][rightBlock];
 
@@ -263,10 +263,10 @@ Error SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::allocate(PtrSi
 
 	// Find starting class
 	const U32 startingClassIdx = findClass(size, alignment);
-	if(ANKI_UNLIKELY(startingClassIdx == MAX_U32))
+	if(ANKI_UNLIKELY(startingClassIdx == kMaxU32))
 	{
 		ANKI_UTIL_LOGE("Couldn't find class for allocation of size %zu", origSize);
-		return Error::OUT_OF_MEMORY;
+		return Error::kOutOfMemory;
 	}
 
 	LockGuard<TLock> lock(m_lock);
@@ -279,7 +279,7 @@ Error SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::allocate(PtrSi
 	// Find a free block, its class and its chunk
 	FreeBlock* freeBlock = nullptr;
 	ChunksIterator chunkIt = m_chunks.getBegin();
-	U32 classIdx = MAX_U32;
+	U32 classIdx = kMaxU32;
 	for(; chunkIt != m_chunks.getEnd(); ++chunkIt)
 	{
 		classIdx = startingClassIdx;
@@ -327,7 +327,7 @@ Error SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::allocate(PtrSi
 		{
 			ANKI_UTIL_LOGE("Chunk allocated can't fit the current allocation of %zu", origSize);
 			m_interface.deleteChunk(chunk);
-			return Error::OUT_OF_MEMORY;
+			return Error::kOutOfMemory;
 		}
 
 		chunk->m_totalSize = chunkSize;
@@ -378,7 +378,7 @@ Error SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::allocate(PtrSi
 
 	ANKI_ASSERT(outChunk);
 	ANKI_ASSERT(isAligned(alignment, outOffset));
-	return Error::NONE;
+	return Error::kNone;
 }
 
 template<typename TChunk, typename TInterface, typename TLock>
@@ -413,7 +413,7 @@ Error SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::validate() con
 		{ \
 			ANKI_UTIL_LOGE(__VA_ARGS__); \
 			ANKI_DEBUG_BREAK(); \
-			return Error::FUNCTION_FAILED; \
+			return Error::kFunctionFailed; \
 		} \
 	} while(0)
 
@@ -510,7 +510,7 @@ Error SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::validate() con
 	}
 
 #undef ANKI_SLAB_ASSERT
-	return Error::NONE;
+	return Error::kNone;
 }
 
 template<typename TChunk, typename TInterface, typename TLock>

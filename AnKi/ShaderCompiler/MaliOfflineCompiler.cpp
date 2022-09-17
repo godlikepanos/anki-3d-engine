@@ -125,7 +125,7 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 		const Error err = proc.readFromStderr(stderre);
 		ANKI_SHADER_COMPILER_LOGE("Mali offline compiler failed with exit code %d. Stderr: %s", exitCode,
 								  (err || stderre.isEmpty()) ? "<no text>" : stderre.cstr());
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	// Get stdout
@@ -142,7 +142,7 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 	else
 	{
 		ANKI_SHADER_COMPILER_LOGE("Error parsing work registers");
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 #define ANKI_FLOAT_REGEX "([0-9]+[.]?[0-9]*)"
@@ -189,7 +189,7 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 		if(count == 0)
 		{
 			ANKI_SHADER_COMPILER_LOGE("Error parsing instruction cycles");
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 	}
 	else if(shaderType == ShaderType::kFragment)
@@ -214,7 +214,7 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 		else
 		{
 			ANKI_SHADER_COMPILER_LOGE("Error parsing instruction cycles");
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 	}
 	else
@@ -240,7 +240,7 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 		else
 		{
 			ANKI_SHADER_COMPILER_LOGE("Error parsing instruction cycles");
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 	}
 
@@ -287,7 +287,7 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 		if(count == 0)
 		{
 			ANKI_SHADER_COMPILER_LOGE("Error parsing 16-bit arithmetic");
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 	}
 
@@ -300,7 +300,7 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 		printf("%s\n", str.cstr());
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv, ShaderType shaderType,

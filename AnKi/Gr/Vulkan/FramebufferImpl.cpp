@@ -60,7 +60,7 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 	// Create the FB
 	ANKI_CHECK(initFbs(init));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void FramebufferImpl::initClearValues(const FramebufferInitInfo& init)
@@ -178,7 +178,7 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 	ANKI_VK_CHECK(vkCreateFramebuffer(getDevice(), &ci, nullptr, &m_fbHandle));
 	getGrManagerImpl().trySetVulkanHandleName(init.getName(), VK_OBJECT_TYPE_FRAMEBUFFER, m_fbHandle);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void FramebufferImpl::setupAttachmentDescriptor(const FramebufferAttachmentInfo& att, VkAttachmentDescription2& desc,
@@ -221,7 +221,7 @@ void FramebufferImpl::initRpassCreateInfo(const FramebufferInitInfo& init)
 		ref.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 	}
 
-	U32 sriAttachmentIdx = MAX_U32;
+	U32 sriAttachmentIdx = kMaxU32;
 	if(init.m_shadingRateImage.m_textureView)
 	{
 		ANKI_ASSERT(getGrManagerImpl().getDeviceCapabilities().m_vrs && "This requires VRS to be enabled");

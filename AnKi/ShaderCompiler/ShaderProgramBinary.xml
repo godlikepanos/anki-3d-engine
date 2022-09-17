@@ -15,7 +15,7 @@
 
 		<class name="ShaderProgramBinaryVariableInstance" comment="Storage or uniform variable per variant">
 			<members>
-				<member name="m_index" type="U32" constructor="= MAX_U32" comment="Points to ShaderProgramBinaryBlock::m_variables" />
+				<member name="m_index" type="U32" constructor="= kMaxU32" comment="Points to ShaderProgramBinaryBlock::m_variables" />
 				<member name="m_blockInfo" type="ShaderVariableBlockInfo" />
 			</members>
 		</class>
@@ -24,16 +24,16 @@
 			<members>
 				<member name="m_name" type="char" array_size="MAX_SHADER_BINARY_NAME_LENGTH + 1" constructor="= {}" />
 				<member name="m_variables" type="WeakArray&lt;ShaderProgramBinaryVariable&gt;" />
-				<member name="m_binding" type="U32" constructor="= MAX_U32" />
-				<member name="m_set" type="U32" constructor="= MAX_U32" />
+				<member name="m_binding" type="U32" constructor="= kMaxU32" />
+				<member name="m_set" type="U32" constructor="= kMaxU32" />
 			</members>
 		</class>
 
 		<class name="ShaderProgramBinaryBlockInstance" comment="Storage or uniform block per variant">
 			<members>
-				<member name="m_index" type="U32" constructor="= MAX_U32" comment="Points to ShaderProgramBinary::m_uniformBlocks or m_storageBlocks" />
+				<member name="m_index" type="U32" constructor="= kMaxU32" comment="Points to ShaderProgramBinary::m_uniformBlocks or m_storageBlocks" />
 				<member name="m_variableInstances" type="WeakArray&lt;ShaderProgramBinaryVariableInstance&gt;" />
-				<member name="m_size" type="U32" constructor="= MAX_U32" />
+				<member name="m_size" type="U32" constructor="= kMaxU32" />
 			</members>
 		</class>
 
@@ -41,15 +41,15 @@
 			<members>
 				<member name="m_name" type="char" array_size="MAX_SHADER_BINARY_NAME_LENGTH + 1" constructor="= {}" />
 				<member name="m_type" type="ShaderVariableDataType" constructor="= ShaderVariableDataType::NONE" />
-				<member name="m_binding" type="U32" constructor="= MAX_U32" />
-				<member name="m_set" type="U32" constructor="= MAX_U32" />
+				<member name="m_binding" type="U32" constructor="= kMaxU32" />
+				<member name="m_set" type="U32" constructor="= kMaxU32" />
 			</members>
 		</class>
 
 		<class name="ShaderProgramBinaryOpaqueInstance" comment="Sampler or texture or image per variant">
 			<members>
-				<member name="m_index" type="U32" constructor="= MAX_U32" comment="Points to ShaderProgramBinary::m_opaques" />
-				<member name="m_arraySize" type="U32" constructor="= MAX_U32" />
+				<member name="m_index" type="U32" constructor="= kMaxU32" comment="Points to ShaderProgramBinary::m_opaques" />
+				<member name="m_arraySize" type="U32" constructor="= kMaxU32" />
 			</members>
 		</class>
 
@@ -57,13 +57,13 @@
 			<members>
 				<member name="m_name" type="char" array_size="MAX_SHADER_BINARY_NAME_LENGTH + 1" />
 				<member name="m_type" type="ShaderVariableDataType" constructor="= ShaderVariableDataType::NONE" />
-				<member name="m_constantId" type="U32" constructor="= MAX_U32"/>
+				<member name="m_constantId" type="U32" constructor="= kMaxU32"/>
 			</members>
 		</class>
 
 		<class name="ShaderProgramBinaryConstantInstance" comment="Specialization constant per variant">
 			<members>
-				<member name="m_index" type="U32" constructor="= MAX_U32" comment="Points to ShaderProgramBinary::m_constants" />
+				<member name="m_index" type="U32" constructor="= kMaxU32" comment="Points to ShaderProgramBinary::m_constants" />
 			</members>
 		</class>
 
@@ -71,17 +71,17 @@
 			<members>
 				<member name="m_name" type="char" array_size="MAX_SHADER_BINARY_NAME_LENGTH + 1" constructor="= {}" />
 				<member name="m_type" type="ShaderVariableDataType" constructor="= ShaderVariableDataType::NONE" comment="If the value is ShaderVariableDataType::NONE then it's a struct" />
-				<member name="m_structIndex" type="U32" constructor="= MAX_U32" comment="If the type is another struct then this points to ShaderProgramBinary::m_structs" />
-				<member name="m_dependentMutator" type="U32" constructor="= MAX_U32" comment="It points to a ShaderProgramBinary::m_mutators. This mutator will turn on or off this member" />
+				<member name="m_structIndex" type="U32" constructor="= kMaxU32" comment="If the type is another struct then this points to ShaderProgramBinary::m_structs" />
+				<member name="m_dependentMutator" type="U32" constructor="= kMaxU32" comment="It points to a ShaderProgramBinary::m_mutators. This mutator will turn on or off this member" />
 				<member name="m_dependentMutatorValue" type="MutatorValue" constructor="= 0" comment="The value of the m_dependentMutator" />
 			</members>
 		</class>
 
 		<class name="ShaderProgramBinaryStructMemberInstance" comment="Struct member per variant">
 			<members>
-				<member name="m_index" type="U32" constructor="= MAX_U32" comment="Points to ShaderProgramBinary::m_structs" />
-				<member name="m_offset" type="U32" constructor="= MAX_U32" comment="The offset of the member in the struct" />
-				<member name="m_arraySize" type="U32" constructor="= MAX_U32" />
+				<member name="m_index" type="U32" constructor="= kMaxU32" comment="Points to ShaderProgramBinary::m_structs" />
+				<member name="m_offset" type="U32" constructor="= kMaxU32" comment="The offset of the member in the struct" />
+				<member name="m_arraySize" type="U32" constructor="= kMaxU32" />
 			</members>
 		</class>
 
@@ -96,21 +96,21 @@
 			<members>
 				<member name="m_index" type="U32" comment="Points to ShaderProgramBinary::m_structs" />
 				<member name="m_memberInstances" type="WeakArray&lt;ShaderProgramBinaryStructMemberInstance&gt;" />
-				<member name="m_size" type="U32" constructor="= MAX_U32" />
+				<member name="m_size" type="U32" constructor="= kMaxU32" />
 			</members>
 		</class>
 
 		<class name="ShaderProgramBinaryVariant">
 			<members>
-				<member name="m_codeBlockIndices" type="U32" array_size="U32(ShaderType::kCount)" comment="Index in ShaderProgramBinary::m_codeBlocks. MAX_U32 means no shader" constructor="= {}" />
+				<member name="m_codeBlockIndices" type="U32" array_size="U32(ShaderType::kCount)" comment="Index in ShaderProgramBinary::m_codeBlocks. kMaxU32 means no shader" constructor="= {}" />
 				<member name="m_uniformBlocks" type="WeakArray&lt;ShaderProgramBinaryBlockInstance&gt;" />
 				<member name="m_storageBlocks" type="WeakArray&lt;ShaderProgramBinaryBlockInstance&gt;" />
 				<member name="m_pushConstantBlock" type="ShaderProgramBinaryBlockInstance" pointer="true" constructor="= nullptr" />
 				<member name="m_opaques" type="WeakArray&lt;ShaderProgramBinaryOpaqueInstance&gt;" />
 				<member name="m_constants" type="WeakArray&lt;ShaderProgramBinaryConstantInstance&gt;" />
 				<member name="m_structs" type="WeakArray&lt;ShaderProgramBinaryStructInstance&gt;" />
-				<member name="m_workgroupSizes" type="U32" array_size="3" constructor="= {MAX_U32, MAX_U32, MAX_U32}" />
-				<member name="m_workgroupSizesConstants" type="U32" array_size="3" constructor="= {MAX_U32, MAX_U32, MAX_U32}" comment="Indices to ShaderProgramBinary::m_constants" />
+				<member name="m_workgroupSizes" type="U32" array_size="3" constructor="= {kMaxU32, kMaxU32, kMaxU32}" />
+				<member name="m_workgroupSizesConstants" type="U32" array_size="3" constructor="= {kMaxU32, kMaxU32, kMaxU32}" comment="Indices to ShaderProgramBinary::m_constants" />
 			</members>
 		</class>
 
@@ -131,7 +131,7 @@
 		<class name="ShaderProgramBinaryMutation" comment="A mutation is a unique combination of mutator values">
 			<members>
 				<member name="m_values" type="WeakArray&lt;MutatorValue&gt;" />
-				<member name="m_variantIndex" type="U32" constructor="= MAX_U32" comment="Points to ShaderProgramBinary::m_variants" />
+				<member name="m_variantIndex" type="U32" constructor="= kMaxU32" comment="Points to ShaderProgramBinary::m_variants" />
 				<member name="m_hash" type="U64" constructor="= 0" comment="Mutation hash" />
 			</members>
 		</class>
@@ -151,7 +151,7 @@
 				<member name="m_structs" type="WeakArray&lt;ShaderProgramBinaryStruct&gt;" />
 				<member name="m_presentShaderTypes" type="ShaderTypeBit" constructor="= ShaderTypeBit::kNone" />
 				<member name="m_libraryName" type="char" array_size="64" constructor="= {}" comment="The name of the shader library. Mainly for RT shaders" />
-				<member name="m_rayType" type="U32" constructor="= MAX_U32" comment="An arbitary number indicating the type of the ray" />
+				<member name="m_rayType" type="U32" constructor="= kMaxU32" comment="An arbitary number indicating the type of the ray" />
 			</members>
 		</class>
 	</classes>

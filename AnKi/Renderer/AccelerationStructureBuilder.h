@@ -27,7 +27,7 @@ public:
 
 	Error init()
 	{
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	void populateRenderGraph(RenderingContext& ctx);

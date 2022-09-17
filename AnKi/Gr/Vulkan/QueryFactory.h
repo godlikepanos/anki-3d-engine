@@ -34,7 +34,7 @@ public:
 	/// Get the index of the query inside the query pool.
 	U32 getQueryIndex() const
 	{
-		ANKI_ASSERT(m_queryIndex != MAX_U32);
+		ANKI_ASSERT(m_queryIndex != kMaxU32);
 		return m_queryIndex;
 	}
 
@@ -45,7 +45,7 @@ public:
 
 private:
 	VkQueryPool m_pool = VK_NULL_HANDLE;
-	U32 m_queryIndex = MAX_U32;
+	U32 m_queryIndex = kMaxU32;
 	QueryFactoryChunk* m_chunk = nullptr;
 };
 

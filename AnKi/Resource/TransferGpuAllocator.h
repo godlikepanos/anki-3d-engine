@@ -61,7 +61,7 @@ public:
 
 	PtrSize getOffset() const
 	{
-		ANKI_ASSERT(m_offsetInBuffer != MAX_PTR_SIZE);
+		ANKI_ASSERT(m_offsetInBuffer != kMaxPtrSize);
 		return m_offsetInBuffer;
 	}
 
@@ -74,22 +74,22 @@ public:
 private:
 	BufferPtr m_buffer;
 	void* m_mappedMemory = nullptr;
-	PtrSize m_offsetInBuffer = MAX_PTR_SIZE;
+	PtrSize m_offsetInBuffer = kMaxPtrSize;
 	PtrSize m_range = 0;
-	U8 m_pool = MAX_U8;
+	U8 m_pool = kMaxU8;
 
 	Bool valid() const
 	{
-		return m_range != 0 && m_pool < MAX_U8;
+		return m_range != 0 && m_pool < kMaxU8;
 	}
 
 	void invalidate()
 	{
 		m_buffer.reset(nullptr);
 		m_mappedMemory = nullptr;
-		m_offsetInBuffer = MAX_PTR_SIZE;
+		m_offsetInBuffer = kMaxPtrSize;
 		m_range = 0;
-		m_pool = MAX_U8;
+		m_pool = kMaxU8;
 	}
 };
 

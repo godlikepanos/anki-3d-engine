@@ -38,7 +38,7 @@ public:
 	/// A dummy init for those scene nodes that don't need it.
 	Error init()
 	{
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	SceneGraph& getSceneGraph()
@@ -98,7 +98,7 @@ public:
 	/// @param crntTime Timestamp of this update
 	virtual Error frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime)
 	{
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	/// Iterate all components.

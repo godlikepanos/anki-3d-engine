@@ -87,7 +87,7 @@ Error ClassAllocatorBuilder<TChunk, TInterface, TLock>::allocate(PtrSize size, P
 	ANKI_ASSERT(size > 0 && alignment > 0);
 
 	chunk = nullptr;
-	offset = MAX_PTR_SIZE;
+	offset = kMaxPtrSize;
 
 	// Find the class for the given size
 	Class* cl = findClass(size, alignment);
@@ -139,7 +139,7 @@ Error ClassAllocatorBuilder<TChunk, TInterface, TLock>::allocate(PtrSize size, P
 	ANKI_ASSERT(chunk);
 	ANKI_ASSERT(isAligned(alignment, offset));
 	ANKI_ASSERT(offset + size <= cl->m_chunkSize);
-	return Error::NONE;
+	return Error::kNone;
 }
 
 template<typename TChunk, typename TInterface, typename TLock>

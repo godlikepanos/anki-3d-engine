@@ -56,7 +56,7 @@ Error GpuParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 		buffInit.m_size = sizeof(GpuParticleEmitterProperties);
 		m_propsBuff = m_node->getSceneGraph().getGrManager().newBuffer(buffInit);
 		GpuParticleEmitterProperties* props =
-			static_cast<GpuParticleEmitterProperties*>(m_propsBuff->map(0, MAX_PTR_SIZE, BufferMapAccessBit::WRITE));
+			static_cast<GpuParticleEmitterProperties*>(m_propsBuff->map(0, kMaxPtrSize, BufferMapAccessBit::WRITE));
 
 		props->m_minGravity = inProps.m_particle.m_minGravity;
 		props->m_minMass = inProps.m_particle.m_minMass;
@@ -70,7 +70,7 @@ Error GpuParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 		props->m_maxStartingPosition = inProps.m_particle.m_maxStartingPosition;
 		props->m_particleCount = inProps.m_maxNumOfParticles;
 
-		m_propsBuff->flush(0, MAX_PTR_SIZE);
+		m_propsBuff->flush(0, kMaxPtrSize);
 		m_propsBuff->unmap();
 	}
 
@@ -83,14 +83,14 @@ Error GpuParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 		m_particlesBuff = m_node->getSceneGraph().getGrManager().newBuffer(buffInit);
 
 		GpuParticle* particle =
-			static_cast<GpuParticle*>(m_particlesBuff->map(0, MAX_PTR_SIZE, BufferMapAccessBit::WRITE));
+			static_cast<GpuParticle*>(m_particlesBuff->map(0, kMaxPtrSize, BufferMapAccessBit::WRITE));
 		const GpuParticle* end = particle + m_maxParticleCount;
 		for(; particle < end; ++particle)
 		{
 			particle->m_life = -1.0f; // Force GPU to init the particle
 		}
 
-		m_particlesBuff->flush(0, MAX_PTR_SIZE);
+		m_particlesBuff->flush(0, kMaxPtrSize);
 		m_particlesBuff->unmap();
 	}
 
@@ -102,7 +102,7 @@ Error GpuParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 		buffInit.m_size = sizeof(U32) + MAX_RAND_FACTORS * sizeof(F32);
 		m_randFactorsBuff = m_node->getSceneGraph().getGrManager().newBuffer(buffInit);
 
-		F32* randFactors = static_cast<F32*>(m_randFactorsBuff->map(0, MAX_PTR_SIZE, BufferMapAccessBit::WRITE));
+		F32* randFactors = static_cast<F32*>(m_randFactorsBuff->map(0, kMaxPtrSize, BufferMapAccessBit::WRITE));
 
 		*reinterpret_cast<U32*>(randFactors) = MAX_RAND_FACTORS;
 		++randFactors;
@@ -113,7 +113,7 @@ Error GpuParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 			*randFactors = getRandomRange(0.0f, 1.0f);
 		}
 
-		m_randFactorsBuff->flush(0, MAX_PTR_SIZE);
+		m_randFactorsBuff->flush(0, kMaxPtrSize);
 		m_randFactorsBuff->unmap();
 	}
 
@@ -152,7 +152,7 @@ Error GpuParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 		m_emitterBoundingBoxLocal = Aabb(inProps.m_emitterBoundingVolumeMin, inProps.m_emitterBoundingVolumeMax);
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void GpuParticleEmitterComponent::simulate(GenericGpuComputeJobQueueElementContext& ctx) const
@@ -167,9 +167,9 @@ void GpuParticleEmitterComponent::simulate(GenericGpuComputeJobQueueElementConte
 	cmdb->bindShaderProgram(m_grProg);
 
 	// Bind resources
-	cmdb->bindStorageBuffer(1, 0, m_particlesBuff, 0, MAX_PTR_SIZE);
-	cmdb->bindUniformBuffer(1, 1, m_propsBuff, 0, MAX_PTR_SIZE);
-	cmdb->bindStorageBuffer(1, 2, m_randFactorsBuff, 0, MAX_PTR_SIZE);
+	cmdb->bindStorageBuffer(1, 0, m_particlesBuff, 0, kMaxPtrSize);
+	cmdb->bindUniformBuffer(1, 1, m_propsBuff, 0, kMaxPtrSize);
+	cmdb->bindStorageBuffer(1, 2, m_randFactorsBuff, 0, kMaxPtrSize);
 	cmdb->bindSampler(1, 3, m_nearestAnyClampSampler);
 
 	StagingGpuMemoryToken token;
@@ -214,7 +214,7 @@ void GpuParticleEmitterComponent::draw(RenderQueueDrawContext& ctx) const
 												  *ctx.m_stagingGpuAllocator);
 
 		cmdb->bindStorageBuffer(MATERIAL_SET_LOCAL, MATERIAL_BINDING_FIRST_NON_STANDARD_LOCAL, m_particlesBuff, 0,
-								MAX_PTR_SIZE);
+								kMaxPtrSize);
 
 		// Draw
 		cmdb->setLineWidth(8.0f);
@@ -266,7 +266,7 @@ Error GpuParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& 
 	if(ANKI_UNLIKELY(!m_particleEmitterResource.isCreated()))
 	{
 		updated = false;
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	updated = m_markedForUpdate;
@@ -274,7 +274,7 @@ Error GpuParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& 
 
 	m_dt = info.m_dt;
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void GpuParticleEmitterComponent::setWorldTransform(const Transform& trf)

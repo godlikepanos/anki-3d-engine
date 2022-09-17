@@ -39,7 +39,7 @@ public:
 			m_textureView = m_imageResource->getTextureView();
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 private:
@@ -272,7 +272,7 @@ public:
 		if(argc < 2)
 		{
 			ANKI_LOGE("Wrong number of arguments");
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 
 		HeapAllocator<U32> alloc(allocAligned, nullptr);
@@ -302,7 +302,7 @@ public:
 		ANKI_CHECK(scene.newSceneNode("TextureViewer", node));
 		node->m_imageResource = image;
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	Error userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime) override
@@ -313,13 +313,13 @@ public:
 			quit = true;
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 
 int main(int argc, char* argv[])
 {
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 
 	ConfigSet config(allocAligned, nullptr);
 	MyApp* app = new MyApp;

@@ -35,7 +35,7 @@ Error VrsSriGeneration::initInternal()
 {
 	if(!getGrManager().getDeviceCapabilities().m_vrs)
 	{
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	m_sriTexelDimension = getGrManager().getDeviceCapabilities().m_minShadingRateImageTexelSize;
@@ -93,7 +93,7 @@ Error VrsSriGeneration::initInternal()
 	m_downscaleProg->getOrCreateVariant(variant);
 	m_downscaleGrProg = variant->getProgram();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void VrsSriGeneration::getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,

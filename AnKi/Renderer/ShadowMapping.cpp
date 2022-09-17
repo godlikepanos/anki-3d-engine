@@ -89,7 +89,7 @@ Error ShadowMapping::initScratch()
 
 	m_scratch.m_tileAlloc.init(getAllocator(), m_scratch.m_tileCountX, m_scratch.m_tileCountY, MAX_LOD_COUNT, false);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ShadowMapping::initAtlas()
@@ -141,14 +141,14 @@ Error ShadowMapping::initAtlas()
 	m_atlas.m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::LOAD;
 	m_atlas.m_fbDescr.bake();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ShadowMapping::initInternal()
 {
 	ANKI_CHECK(initScratch());
 	ANKI_CHECK(initAtlas());
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void ShadowMapping::runAtlas(RenderPassWorkContext& rgraphCtx)
@@ -500,7 +500,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 	{
 		Array<U32, 4> tileRange;
 		[[maybe_unused]] const TileAllocatorResult res =
-			m_atlas.m_tileAlloc.allocate(m_r->getGlobalTimestamp(), 1, MAX_U64, 0, 1, m_pointLightsMaxLod, tileRange);
+			m_atlas.m_tileAlloc.allocate(m_r->getGlobalTimestamp(), 1, kMaxU64, 0, 1, m_pointLightsMaxLod, tileRange);
 
 		emptyTileViewport = UVec4(tileRange);
 

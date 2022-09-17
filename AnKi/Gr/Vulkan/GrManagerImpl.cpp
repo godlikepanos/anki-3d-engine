@@ -109,10 +109,10 @@ Error GrManagerImpl::init(const GrManagerInitInfo& init)
 	if(err)
 	{
 		ANKI_VK_LOGE("Vulkan initialization failed");
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
@@ -128,7 +128,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 
 	for(VulkanQueueType qtype : EnumIterable<VulkanQueueType>())
 	{
-		if(m_queueFamilyIndices[qtype] != MAX_U32)
+		if(m_queueFamilyIndices[qtype] != kMaxU32)
 		{
 			vkGetDeviceQueue(m_device, m_queueFamilyIndices[qtype], 0, &m_queues[qtype]);
 		}
@@ -201,7 +201,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 
 	m_frameGarbageCollector.init(this);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error GrManagerImpl::initInstance()
@@ -366,7 +366,7 @@ Error GrManagerImpl::initInstance()
 				| VulkanExtensions::KHR_ANDROID_SURFACE)))
 		{
 			ANKI_VK_LOGE("Couldn't find suitable surface extension");
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 
 		if(instExtensionCount)
@@ -425,7 +425,7 @@ Error GrManagerImpl::initInstance()
 	if(count < 1)
 	{
 		ANKI_VK_LOGE("Wrong number of physical devices");
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	// Find the correct physical device
@@ -465,7 +465,7 @@ Error GrManagerImpl::initInstance()
 		else
 		{
 			ANKI_VK_LOGE("Couldn't find a suitable descrete or integrated physical device");
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 	}
 
@@ -525,7 +525,7 @@ Error GrManagerImpl::initInstance()
 	m_capabilities.m_storageBufferMaxRange = m_devProps.properties.limits.maxStorageBufferRange;
 	m_capabilities.m_textureBufferBindOffsetAlignment =
 		max<U32>(ANKI_SAFE_ALIGNMENT, U32(m_devProps.properties.limits.minTexelBufferOffsetAlignment));
-	m_capabilities.m_textureBufferMaxRange = MAX_U32;
+	m_capabilities.m_textureBufferMaxRange = kMaxU32;
 	m_capabilities.m_computeSharedMemorySize = m_devProps.properties.limits.maxComputeSharedMemorySize;
 
 	m_capabilities.m_majorApiVersion = vulkanMajor;
@@ -546,7 +546,7 @@ Error GrManagerImpl::initInstance()
 	// DLSS checks
 	m_capabilities.m_dlss = ANKI_DLSS && m_capabilities.m_gpuVendor == GpuVendor::kNvidia;
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
@@ -580,19 +580,19 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 		}
 	}
 
-	if(m_queueFamilyIndices[VulkanQueueType::GENERAL] == MAX_U32)
+	if(m_queueFamilyIndices[VulkanQueueType::GENERAL] == kMaxU32)
 	{
 		ANKI_VK_LOGE("Couldn't find a queue family with graphics+compute+transfer+present. "
 					 "Something is wrong");
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	if(!m_config->getGrAsyncCompute())
 	{
-		m_queueFamilyIndices[VulkanQueueType::COMPUTE] = MAX_U32;
+		m_queueFamilyIndices[VulkanQueueType::COMPUTE] = kMaxU32;
 	}
 
-	if(m_queueFamilyIndices[VulkanQueueType::COMPUTE] == MAX_U32)
+	if(m_queueFamilyIndices[VulkanQueueType::COMPUTE] == kMaxU32)
 	{
 		ANKI_VK_LOGW("Couldn't find an async compute queue. Will try to use the general queue instead");
 	}
@@ -610,7 +610,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 
 	for(VulkanQueueType qtype : EnumIterable<VulkanQueueType>())
 	{
-		if(m_queueFamilyIndices[qtype] != MAX_U32)
+		if(m_queueFamilyIndices[qtype] != kMaxU32)
 		{
 			q[qtype].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
 			q[qtype].queueFamilyIndex = m_queueFamilyIndices[qtype];
@@ -806,14 +806,14 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	if(!(m_extensions & VulkanExtensions::EXT_TEXTURE_COMPRESSION_ASTC_HDR))
 	{
 		ANKI_VK_LOGE(VK_EXT_TEXTURE_COMPRESSION_ASTC_HDR_EXTENSION_NAME " is not supported");
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 #endif
 
 	if(!(m_extensions & VulkanExtensions::KHR_CREATE_RENDERPASS_2))
 	{
 		ANKI_VK_LOGE(VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME " is not supported");
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	if(!!(m_extensions & VulkanExtensions::EXT_SAMPLER_FILTER_MIN_MAX))
@@ -830,7 +830,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	if(!(m_extensions & VulkanExtensions::EXT_DESCRIPTOR_INDEXING))
 	{
 		ANKI_VK_LOGE(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME " is not supported");
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 	else
 	{
@@ -845,20 +845,20 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 		   || !m_descriptorIndexingFeatures.shaderStorageImageArrayNonUniformIndexing)
 		{
 			ANKI_VK_LOGE("Non uniform indexing is not supported by the device");
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 
 		if(!m_descriptorIndexingFeatures.descriptorBindingSampledImageUpdateAfterBind
 		   || !m_descriptorIndexingFeatures.descriptorBindingStorageImageUpdateAfterBind)
 		{
 			ANKI_VK_LOGE("Update descriptors after bind is not supported by the device");
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 
 		if(!m_descriptorIndexingFeatures.descriptorBindingUpdateUnusedWhilePending)
 		{
 			ANKI_VK_LOGE("Update descriptors while cmd buffer is pending is not supported by the device");
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 
 		m_descriptorIndexingFeatures.pNext = const_cast<void*>(ci.pNext);
@@ -891,7 +891,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	if(!(m_extensions & VulkanExtensions::EXT_SCALAR_BLOCK_LAYOUT))
 	{
 		ANKI_VK_LOGE(VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME " is not supported");
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 	else
 	{
@@ -905,7 +905,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 		if(!m_scalarBlockLayout.scalarBlockLayout)
 		{
 			ANKI_VK_LOGE("Scalar block layout is not supported by the device");
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 
 		m_scalarBlockLayout.pNext = const_cast<void*>(ci.pNext);
@@ -916,7 +916,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	if(!(m_extensions & VulkanExtensions::KHR_TIMELINE_SEMAPHORE))
 	{
 		ANKI_VK_LOGE(VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME " is not supported");
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 	else
 	{
@@ -930,7 +930,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 		if(!m_timelineSemaphoreFeatures.timelineSemaphore)
 		{
 			ANKI_VK_LOGE("Timeline semaphores are not supported by the device");
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 
 		m_timelineSemaphoreFeatures.pNext = const_cast<void*>(ci.pNext);
@@ -955,7 +955,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 		   || !m_accelerationStructureFeatures.accelerationStructure)
 		{
 			ANKI_VK_LOGE("Ray tracing and ray query are both required");
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 
 		// Only enable what's necessary
@@ -986,7 +986,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	if(!(m_extensions & VulkanExtensions::KHR_SHADER_FLOAT16_INT8))
 	{
 		ANKI_VK_LOGE(VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME " is not supported");
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 	else
 	{
@@ -1113,16 +1113,16 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	if(!(m_extensions & VulkanExtensions::KHR_SPIRV_1_4))
 	{
 		ANKI_VK_LOGE(VK_KHR_SPIRV_1_4_EXTENSION_NAME " is not supported");
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	if(!(m_extensions & VulkanExtensions::KHR_SHADER_FLOAT_CONTROLS))
 	{
 		ANKI_VK_LOGE(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME " is not supported");
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error GrManagerImpl::initMemory()
@@ -1145,7 +1145,7 @@ Error GrManagerImpl::initMemory()
 	m_gpuMemManager.init(m_physicalDevice, m_device, getAllocator(),
 						 !!(m_extensions & VulkanExtensions::KHR_BUFFER_DEVICE_ADDRESS));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 #if ANKI_GR_MANAGER_DEBUG_MEMMORY
@@ -1657,7 +1657,7 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 		ANKI_VK_LOGV("%s", finalLog.cstr());
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

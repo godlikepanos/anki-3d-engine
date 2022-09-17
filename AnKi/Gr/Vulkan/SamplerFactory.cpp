@@ -109,7 +109,7 @@ Error MicroSampler::init(const SamplerInitInfo& inf)
 	ANKI_VK_CHECK(vkCreateSampler(m_factory->m_gr->getDevice(), &ci, nullptr, &m_handle));
 	m_factory->m_gr->trySetVulkanHandleName(inf.getName(), VK_OBJECT_TYPE_SAMPLER, m_handle);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void SamplerFactory::init(GrManagerImpl* gr)
@@ -143,7 +143,7 @@ Error SamplerFactory::newInstance(const SamplerInitInfo& inf, MicroSamplerPtr& p
 {
 	ANKI_ASSERT(m_gr);
 
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 	MicroSampler* out = nullptr;
 	const U64 hash = inf.computeHash();
 

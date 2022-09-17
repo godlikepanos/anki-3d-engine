@@ -30,13 +30,13 @@ Error Bloom::initInternal()
 	ANKI_CHECK(initUpscale());
 	m_fbDescr.m_colorAttachmentCount = 1;
 	m_fbDescr.bake();
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error Bloom::initExposure()
 {
-	m_exposure.m_width = m_r->getDownscaleBlur().getPassWidth(MAX_U32) * 2;
-	m_exposure.m_height = m_r->getDownscaleBlur().getPassHeight(MAX_U32) * 2;
+	m_exposure.m_width = m_r->getDownscaleBlur().getPassWidth(kMaxU32) * 2;
+	m_exposure.m_height = m_r->getDownscaleBlur().getPassHeight(kMaxU32) * 2;
 
 	// Create RT info
 	m_exposure.m_rtDescr =
@@ -59,7 +59,7 @@ Error Bloom::initExposure()
 	m_exposure.m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_exposure.m_grProg = variant->getProgram();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error Bloom::initUpscale()
@@ -92,7 +92,7 @@ Error Bloom::initUpscale()
 	// Textures
 	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/LensDirt.ankitex", m_upscale.m_lensDirtImage));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void Bloom::populateRenderGraph(RenderingContext& ctx)

@@ -53,7 +53,7 @@ Error Input::newInstance(AllocAlignedCallback allocCallback, void* allocCallback
 	else
 	{
 		input = sdlinput;
-		return Error::NONE;
+		return Error::kNone;
 	}
 }
 
@@ -431,7 +431,7 @@ Error InputSdl::handleEventsInternal()
 		moveCursor(Vec2(0.0));
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

@@ -82,7 +82,7 @@ public:
 	/// eye point.
 	const Vec3& getSpatialOrigin() const
 	{
-		ANKI_ASSERT(m_origin.x() != MAX_F32);
+		ANKI_ASSERT(m_origin.x() != kMaxF32);
 		return m_origin;
 	}
 
@@ -129,7 +129,7 @@ private:
 	CollisionShapeType m_collisionObjectType = CollisionShapeType::COUNT;
 	Aabb m_derivedAabb; ///< A faster shape
 
-	Vec3 m_origin = Vec3(MAX_F32);
+	Vec3 m_origin = Vec3(kMaxF32);
 
 	OctreePlaceable m_octreeInfo;
 

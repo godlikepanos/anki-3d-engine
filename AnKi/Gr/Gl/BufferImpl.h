@@ -41,7 +41,7 @@ public:
 	{
 		ANKI_ASSERT(isCreated());
 
-		range = (range == MAX_PTR_SIZE) ? (m_size - offset) : range;
+		range = (range == kMaxPtrSize) ? (m_size - offset) : range;
 		ANKI_ASSERT(range > 0);
 		ANKI_ASSERT(offset + range <= m_size);
 
@@ -50,7 +50,7 @@ public:
 
 	void bind(GLenum target, U32 binding, PtrSize offset) const
 	{
-		bind(target, binding, offset, MAX_PTR_SIZE);
+		bind(target, binding, offset, kMaxPtrSize);
 	}
 
 	void write(GLuint pbo, U32 pboOffset, U32 offset, U32 size) const
@@ -67,7 +67,7 @@ public:
 		ANKI_ASSERT(offset < m_size);
 		ANKI_ASSERT((offset % 4) == 0 && "Should be multiple of 4");
 
-		size = (size == MAX_PTR_SIZE) ? (m_realSize - offset) : size;
+		size = (size == kMaxPtrSize) ? (m_realSize - offset) : size;
 		ANKI_ASSERT(offset + size <= m_realSize);
 		ANKI_ASSERT((size % 4) == 0 && "Should be multiple of 4");
 

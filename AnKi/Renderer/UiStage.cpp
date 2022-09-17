@@ -27,7 +27,7 @@ Error UiStage::init()
 	ANKI_CHECK(m_r->getUiManager().newInstance(m_canvas, m_font, 12, m_r->getPostProcessResolution().x(),
 											   m_r->getPostProcessResolution().y()));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void UiStage::draw(U32 width, U32 height, RenderingContext& ctx, CommandBufferPtr& cmdb)

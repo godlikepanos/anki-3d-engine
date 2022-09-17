@@ -180,11 +180,11 @@ private:
 		if(!found)
 		{
 			ANKI_UTIL_LOGE("Attribute not found \"%s\"", &attrib[0]);
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 		else
 		{
-			return Error::NONE;
+			return Error::kNone;
 		}
 	}
 };

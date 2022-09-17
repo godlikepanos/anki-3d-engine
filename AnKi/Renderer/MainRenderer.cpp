@@ -72,7 +72,7 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 
 	m_rgraph = inf.m_gr->newRenderGraph();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
@@ -177,7 +177,7 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 		m_stats.m_renderingGpuSubmitTimestamp = rgraphStats.m_cpuStartTime;
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Dbg& MainRenderer::getDbg()

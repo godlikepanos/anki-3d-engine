@@ -73,7 +73,7 @@ Error CommandBufferImpl::executeAllCommands()
 	m_executed = true;
 #endif
 
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 	GlState& state = static_cast<GrManagerImpl&>(getManager()).getState();
 
 	GlCommand* command = m_firstCommand;
@@ -136,12 +136,12 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 
 			if(m_state.m_stencilCompareMask[i] == StateTracker::DUMMY_STENCIL_MASK)
 			{
-				cmdb.setStencilCompareMask(face, MAX_U32);
+				cmdb.setStencilCompareMask(face, kMaxU32);
 			}
 
 			if(m_state.m_stencilWriteMask[i] == StateTracker::DUMMY_STENCIL_MASK)
 			{
-				cmdb.setStencilWriteMask(face, MAX_U32);
+				cmdb.setStencilWriteMask(face, kMaxU32);
 			}
 
 			if(m_state.m_stencilRef[i] == StateTracker::DUMMY_STENCIL_MASK)
@@ -181,7 +181,7 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 
 		if(!m_state.m_scissorSet)
 		{
-			cmdb.setScissor(0, 0, MAX_U32, MAX_U32);
+			cmdb.setScissor(0, 0, kMaxU32, kMaxU32);
 		}
 	}
 
@@ -207,7 +207,7 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 		Error operator()(GlState&)
 		{
 			glStencilFuncSeparate(m_face, m_func, m_ref, m_compareMask);
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -242,7 +242,7 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 			{
 				glDisable(GL_DEPTH_TEST);
 			}
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -271,7 +271,7 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 			{
 				glDisable(GL_STENCIL_TEST);
 			}
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -305,7 +305,7 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 					glDisablei(GL_BLEND, i);
 				}
 			}
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 

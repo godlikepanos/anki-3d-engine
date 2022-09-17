@@ -86,7 +86,7 @@ public:
 	virtual Error userMainLoop([[maybe_unused]] Bool& quit, [[maybe_unused]] Second elapsedTime)
 	{
 		// Do nothing
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	const ConfigSet& getConfig() const

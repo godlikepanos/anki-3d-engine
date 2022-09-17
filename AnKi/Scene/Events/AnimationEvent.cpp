@@ -34,14 +34,14 @@ Error AnimationEvent::init(CString animationFilename, CString channelName, Scene
 	if(m_channelIndex == m_anim->getChannels().getSize())
 	{
 		ANKI_SCENE_LOGE("Can't initialize AnimationEvent. Channel not found: %s", channelName.cstr());
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	Event::init(m_anim->getStartingTime(), m_anim->getDuration());
 	m_reanimate = true;
 	m_associatedNodes.emplaceBack(getAllocator(), movableSceneNode);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error AnimationEvent::update([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime)
@@ -59,7 +59,7 @@ Error AnimationEvent::update([[maybe_unused]] Second prevUpdateTime, [[maybe_unu
 	MoveComponent& move = m_associatedNodes[0]->getFirstComponentOfType<MoveComponent>();
 	move.setLocalTransform(trf);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

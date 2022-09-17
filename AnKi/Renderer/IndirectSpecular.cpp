@@ -66,7 +66,7 @@ Error IndirectSpecular::initInternal()
 	m_prog->getOrCreateVariant(variantInit, variant);
 	m_grProg = variant->getProgram();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
@@ -173,7 +173,7 @@ void IndirectSpecular::run(const RenderingContext& ctx, RenderPassWorkContext& r
 	SsrUniforms* unis = allocateAndBindUniforms<SsrUniforms*>(sizeof(SsrUniforms), cmdb, 0, 0);
 	unis->m_depthBufferSize = m_r->getInternalResolution() >> (depthLod + 1);
 	unis->m_framebufferSize = UVec2(m_r->getInternalResolution().x(), m_r->getInternalResolution().y()) / 2;
-	unis->m_frameCount = m_r->getFrameCount() & MAX_U32;
+	unis->m_frameCount = m_r->getFrameCount() & kMaxU32;
 	unis->m_depthMipCount = m_r->getDepthDownscale().getMipmapCount();
 	unis->m_maxSteps = getConfig().getRSsrMaxSteps();
 	unis->m_lightBufferMipCount = m_r->getDownscaleBlur().getMipmapCount();

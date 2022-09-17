@@ -41,7 +41,7 @@ void main()
 		buffInit.m_usage = BufferUsageBit::ALL_TEXTURE;
 		BufferPtr texBuff = gr->newBuffer(buffInit);
 
-		I8* data = static_cast<I8*>(texBuff->map(0, MAX_PTR_SIZE, BufferMapAccessBit::WRITE));
+		I8* data = static_cast<I8*>(texBuff->map(0, kMaxPtrSize, BufferMapAccessBit::WRITE));
 		const Vec4 values(-1.0f, -0.25f, 0.1345f, 0.8952f);
 		for(U i = 0; i < 4; ++i)
 		{
@@ -59,14 +59,14 @@ void main()
 		cmdbInit.m_flags = CommandBufferFlag::SMALL_BATCH | CommandBufferFlag::GENERAL_WORK;
 		CommandBufferPtr cmdb = gr->newCommandBuffer(cmdbInit);
 
-		cmdb->bindReadOnlyTextureBuffer(0, 0, texBuff, 0, MAX_PTR_SIZE, Format::kR8G8B8A8_Snorm);
-		cmdb->bindStorageBuffer(0, 1, storageBuff, 0, MAX_PTR_SIZE);
+		cmdb->bindReadOnlyTextureBuffer(0, 0, texBuff, 0, kMaxPtrSize, Format::kR8G8B8A8_Snorm);
+		cmdb->bindStorageBuffer(0, 1, storageBuff, 0, kMaxPtrSize);
 		cmdb->bindShaderProgram(prog);
 		cmdb->dispatchCompute(1, 1, 1);
 		cmdb->flush();
 		gr->finish();
 
-		const Vec4* inData = static_cast<const Vec4*>(storageBuff->map(0, MAX_PTR_SIZE, BufferMapAccessBit::READ));
+		const Vec4* inData = static_cast<const Vec4*>(storageBuff->map(0, kMaxPtrSize, BufferMapAccessBit::READ));
 		for(U i = 0; i < 4; ++i)
 		{
 			ANKI_TEST_EXPECT_NEAR(values[i], (*inData)[i], 0.01f);

@@ -133,7 +133,7 @@ Error IndirectDiffuse::initInternal()
 		m_denoise.m_grProgs[1] = variant->getProgram();
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)

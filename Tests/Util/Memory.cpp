@@ -101,7 +101,7 @@ ANKI_TEST(Util, StackMemoryPool)
 					m_allocations[i] = ptr;
 				}
 
-				return Error::NONE;
+				return Error::kNone;
 			}
 		};
 

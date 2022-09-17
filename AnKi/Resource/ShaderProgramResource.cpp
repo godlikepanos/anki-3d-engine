@@ -172,11 +172,11 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, [[maybe_unus
 		{
 			ANKI_RESOURCE_LOGE("Any and closest hit shaders shouldn't coexist with other stages. Miss can't coexist "
 							   "with other stages. Raygen can't coexist with other stages as well");
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ShaderProgramResource::parseConst(CString constName, U32& componentIdx, U32& componentCount, CString& name)
@@ -189,7 +189,7 @@ Error ShaderProgramResource::parseConst(CString constName, U32& componentIdx, U3
 		componentIdx = 0;
 		componentCount = 1;
 		name = constName;
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	Array<char, 2> number;
@@ -202,7 +202,7 @@ Error ShaderProgramResource::parseConst(CString constName, U32& componentIdx, U3
 
 	name = constName.getBegin() + prefixName.getLength() + 4;
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void ShaderProgramResource::getOrCreateVariant(const ShaderProgramResourceVariantInitInfo& info,
@@ -278,7 +278,7 @@ ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitIn
 		{
 			if(mutation.m_hash == mutationHash)
 			{
-				if(mutation.m_variantIndex == MAX_U32)
+				if(mutation.m_variantIndex == kMaxU32)
 				{
 					// Skipped mutation, nothing to create
 					return nullptr;
@@ -330,7 +330,7 @@ ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitIn
 	{
 		for(U32 i = 0; i < 3; ++i)
 		{
-			if(binaryVariant->m_workgroupSizes[i] != MAX_U32)
+			if(binaryVariant->m_workgroupSizes[i] != kMaxU32)
 			{
 				// Size didn't come from specialization const
 				variant->m_workgroupSizes[i] = binaryVariant->m_workgroupSizes[i];
@@ -339,7 +339,7 @@ ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitIn
 			{
 				// Size is specialization const
 
-				ANKI_ASSERT(binaryVariant->m_workgroupSizesConstants[i] != MAX_U32);
+				ANKI_ASSERT(binaryVariant->m_workgroupSizesConstants[i] != kMaxU32);
 
 				const U32 binaryConstIdx = binaryVariant->m_workgroupSizesConstants[i];
 				const U32 constIdx = m_constBinaryMapping[binaryConstIdx].m_constsIdx;
@@ -363,7 +363,7 @@ ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitIn
 				}
 			}
 
-			ANKI_ASSERT(variant->m_workgroupSizes[i] != MAX_U32);
+			ANKI_ASSERT(variant->m_workgroupSizes[i] != kMaxU32);
 		}
 	}
 

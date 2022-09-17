@@ -29,13 +29,13 @@ public:
 	~JointComponent();
 
 	/// Create a point 2 point joint on the BodyComponent of the SceneNode.
-	void newPoint2PointJoint(const Vec3& relPosFactor, F32 brakingImpulse = MAX_F32);
+	void newPoint2PointJoint(const Vec3& relPosFactor, F32 brakingImpulse = kMaxF32);
 
 	/// Create a point 2 point joint on the BodyComponents of the SceneNode and its child node.
-	void newPoint2PointJoint2(const Vec3& relPosFactorA, const Vec3& relPosFactorB, F32 brakingImpulse = MAX_F32);
+	void newPoint2PointJoint2(const Vec3& relPosFactorA, const Vec3& relPosFactorB, F32 brakingImpulse = kMaxF32);
 
 	/// Create a hinge joint on the BodyComponent of the SceneNode.
-	void newHingeJoint(const Vec3& relPosFactor, const Vec3& axis, F32 brakingImpulse = MAX_F32);
+	void newHingeJoint(const Vec3& relPosFactor, const Vec3& axis, F32 brakingImpulse = kMaxF32);
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 

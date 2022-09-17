@@ -119,7 +119,7 @@ public:
 	Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> m_colorUsages = {}; ///< For beginRender pass
 	TextureUsageBit m_dsUsage = TextureUsageBit::kNone; ///< For beginRender pass
 
-	U32 m_batchIdx ANKI_DEBUG_CODE(= MAX_U32);
+	U32 m_batchIdx ANKI_DEBUG_CODE(= kMaxU32);
 	Bool m_drawsToPresentable = false;
 
 	FramebufferPtr& fb()
@@ -750,7 +750,7 @@ RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphDescription& 
 			}
 		}
 
-		outRt.m_lastBatchThatTransitionedIt.create(alloc, surfOrVolumeCount, MAX_U16);
+		outRt.m_lastBatchThatTransitionedIt.create(alloc, surfOrVolumeCount, kMaxU16);
 		outRt.m_imported = imported;
 	}
 
@@ -1733,7 +1733,7 @@ Error RenderGraph::dumpDependencyDotFile(const RenderGraphDescription& descr, co
 		ANKI_CHECK(file.writeText("%s", &s[0]));
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 #endif
 

@@ -34,7 +34,7 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 	// Parse config
 	if(argc < 2)
 	{
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	for(I i = 1; i < argc - 1; i++)
@@ -51,12 +51,12 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 				}
 				else
 				{
-					return Error::USER_DATA;
+					return Error::kUserData;
 				}
 			}
 			else
 			{
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 		}
 		else if(strcmp(argv[i], "-j") == 0)
@@ -69,7 +69,7 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 			}
 			else
 			{
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 		}
 		else if(strcmp(argv[i], "-I") == 0)
@@ -84,12 +84,12 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 				}
 				else
 				{
-					return Error::USER_DATA;
+					return Error::kUserData;
 				}
 			}
 			else
 			{
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 		}
 		else if(strcmp(argv[i], "-force-full-fp") == 0)
@@ -102,13 +102,13 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 		}
 		else
 		{
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 	}
 
 	info.m_inputFname.create(argv[argc - 1]);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 static Error work(const CmdLineArgs& info)
@@ -140,7 +140,7 @@ static Error work(const CmdLineArgs& info)
 			File file;
 			ANKI_CHECK(file.open(fname, FileOpenFlag::READ));
 			ANKI_CHECK(file.readAllText(txt));
-			return Error::NONE;
+			return Error::kNone;
 		}
 
 		Error readAllText(CString filename, StringAuto& txt) final
@@ -190,7 +190,7 @@ static Error work(const CmdLineArgs& info)
 		Error joinTasks()
 		{
 			m_hive->waitAllTasks();
-			return Error::NONE;
+			return Error::kNone;
 		}
 	} taskManager;
 	taskManager.m_hive =
@@ -213,7 +213,7 @@ static Error work(const CmdLineArgs& info)
 	// Cleanup
 	alloc.deleteInstance(taskManager.m_hive);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 int main(int argc, char** argv)

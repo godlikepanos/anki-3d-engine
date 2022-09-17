@@ -102,14 +102,14 @@ protected:
 	{
 		m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kNone;
 
-		m_subresource.m_firstMipmap = MAX_U32;
-		m_subresource.m_mipmapCount = MAX_U32;
+		m_subresource.m_firstMipmap = kMaxU32;
+		m_subresource.m_mipmapCount = kMaxU32;
 
-		m_subresource.m_firstLayer = MAX_U32;
-		m_subresource.m_layerCount = MAX_U32;
+		m_subresource.m_firstLayer = kMaxU32;
+		m_subresource.m_layerCount = kMaxU32;
 
-		m_subresource.m_firstFace = MAX_U8;
-		m_subresource.m_faceCount = MAX_U8;
+		m_subresource.m_firstFace = kMaxU8;
+		m_subresource.m_faceCount = kMaxU8;
 	}
 
 	/// Destroy.
@@ -119,10 +119,10 @@ protected:
 
 	Bool initialized() const
 	{
-		return m_texType != TextureType::kCount && m_subresource.m_firstMipmap < MAX_U32
-			   && m_subresource.m_mipmapCount < MAX_U32 && m_subresource.m_firstLayer < MAX_U32
-			   && m_subresource.m_layerCount < MAX_U32 && m_subresource.m_firstFace < MAX_U8
-			   && m_subresource.m_faceCount < MAX_U8;
+		return m_texType != TextureType::kCount && m_subresource.m_firstMipmap < kMaxU32
+			   && m_subresource.m_mipmapCount < kMaxU32 && m_subresource.m_firstLayer < kMaxU32
+			   && m_subresource.m_layerCount < kMaxU32 && m_subresource.m_firstFace < kMaxU8
+			   && m_subresource.m_faceCount < kMaxU8;
 	}
 
 private:

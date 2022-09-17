@@ -105,7 +105,7 @@ ANKI_TEST(Util, BitSet)
 		const U N = 256;
 		BitSet<N, U64> a = {false};
 
-		ANKI_TEST_EXPECT_EQ(a.getMostSignificantBit(), MAX_U32);
+		ANKI_TEST_EXPECT_EQ(a.getMostSignificantBit(), kMaxU32);
 
 		a.set(32);
 		ANKI_TEST_EXPECT_EQ(a.getMostSignificantBit(), 32);

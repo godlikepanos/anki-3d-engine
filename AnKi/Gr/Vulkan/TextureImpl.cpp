@@ -47,7 +47,7 @@ U32 MicroImageView::getOrCreateBindlessIndex(GrManagerImpl& gr) const
 	LockGuard<SpinLock> lock(m_bindlessIndexLock);
 
 	U32 outIdx;
-	if(m_bindlessIndex != MAX_U32)
+	if(m_bindlessIndex != kMaxU32)
 	{
 		outIdx = m_bindlessIndex;
 	}
@@ -78,10 +78,10 @@ TextureImpl::~TextureImpl()
 		garbage->m_viewHandles.emplaceBack(getAllocator(), it.m_handle);
 		it.m_handle = VK_NULL_HANDLE;
 
-		if(it.m_bindlessIndex != MAX_U32)
+		if(it.m_bindlessIndex != kMaxU32)
 		{
 			garbage->m_bindlessIndices.emplaceBack(getAllocator(), it.m_bindlessIndex);
-			it.m_bindlessIndex = MAX_U32;
+			it.m_bindlessIndex = kMaxU32;
 		}
 	}
 
@@ -92,10 +92,10 @@ TextureImpl::~TextureImpl()
 		garbage->m_viewHandles.emplaceBack(getAllocator(), m_singleSurfaceImageView.m_handle);
 		m_singleSurfaceImageView.m_handle = VK_NULL_HANDLE;
 
-		if(m_singleSurfaceImageView.m_bindlessIndex != MAX_U32)
+		if(m_singleSurfaceImageView.m_bindlessIndex != kMaxU32)
 		{
 			garbage->m_bindlessIndices.emplaceBack(getAllocator(), m_singleSurfaceImageView.m_bindlessIndex);
-			m_singleSurfaceImageView.m_bindlessIndex = MAX_U32;
+			m_singleSurfaceImageView.m_bindlessIndex = kMaxU32;
 		}
 	}
 
@@ -192,7 +192,7 @@ Error TextureImpl::initInternal(VkImage externalImage, const TextureInitInfo& in
 												  ptrToNumber(m_singleSurfaceImageView.m_handle));
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 VkImageCreateFlags TextureImpl::calcCreateFlags(const TextureInitInfo& init)
@@ -233,7 +233,7 @@ Error TextureImpl::initImage(const TextureInitInfo& init)
 		ANKI_VK_LOGE("TextureInitInfo contains a combination of parameters that it's not supported by the device. "
 					 "Texture format is %s",
 					 getFormatInfo(init.m_format).m_name);
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	// Contunue with the creation
@@ -310,13 +310,13 @@ Error TextureImpl::initImage(const TextureInitInfo& init)
 																		 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
 	// Fallback
-	if(memIdx == MAX_U32)
+	if(memIdx == kMaxU32)
 	{
 		memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(requirements.memoryRequirements.memoryTypeBits,
 																		 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0);
 	}
 
-	ANKI_ASSERT(memIdx != MAX_U32);
+	ANKI_ASSERT(memIdx != kMaxU32);
 
 	// Allocate
 	if(!dedicatedRequirements.prefersDedicatedAllocation)
@@ -333,7 +333,7 @@ Error TextureImpl::initImage(const TextureInitInfo& init)
 	// Bind
 	ANKI_VK_CHECK(vkBindImageMemory(getDevice(), m_imageHandle, m_memHandle.m_memory, m_memHandle.m_offset));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void TextureImpl::computeBarrierInfo(TextureUsageBit usage, Bool src, U32 level, VkPipelineStageFlags& stages,

@@ -26,7 +26,7 @@ Error ScriptManager::init(AllocAlignedCallback allocCb, void* allocCbData)
 
 	ANKI_CHECK(m_lua.init(m_alloc, &m_otherSystems));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

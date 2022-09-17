@@ -48,7 +48,7 @@ Error VolumetricFog::init()
 	m_rtDescr.m_type = TextureType::k3D;
 	m_rtDescr.bake();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void VolumetricFog::populateRenderGraph(RenderingContext& ctx)

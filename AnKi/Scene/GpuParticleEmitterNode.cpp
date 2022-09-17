@@ -34,7 +34,7 @@ public:
 			mnode.onMoveComponentUpdate(move);
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 
@@ -62,7 +62,7 @@ public:
 			mnode.onShapeUpdate(pec);
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 
@@ -100,7 +100,7 @@ Error GpuParticleEmitterNode::frameUpdate([[maybe_unused]] Second prevUpdateTime
 		rc.setFlagsFromMaterial(pec.getParticleEmitterResource()->getMaterial());
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void GpuParticleEmitterNode::onMoveComponentUpdate(const MoveComponent& movec)

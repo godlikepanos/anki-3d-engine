@@ -83,8 +83,8 @@ void Obb::setFromPointCloud(const Vec3* pointBuffer, U pointCount, PtrSize point
 	ANKI_ASSERT(pointStride >= sizeof(Vec3));
 	ANKI_ASSERT(buffSize >= pointStride * pointCount);
 
-	Vec4 min = Vec4(Vec3(MAX_F32), 0.0);
-	Vec4 max = Vec4(Vec3(MIN_F32), 0.0);
+	Vec4 min = Vec4(Vec3(kMaxF32), 0.0);
+	Vec4 max = Vec4(Vec3(kMinF32), 0.0);
 
 	// Iterate
 	const U8* ptr = reinterpret_cast<const U8*>(pointBuffer);

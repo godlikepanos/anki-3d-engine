@@ -31,7 +31,7 @@ public:
 
 	Error load(const ResourceFilename& filename, [[maybe_unused]] Bool async)
 	{
-		Error err = Error::NONE;
+		Error err = Error::kNone;
 		if(filename.find("error") == ResourceFilename::NPOS)
 		{
 			m_memory = getAllocator().allocate(128);
@@ -42,7 +42,7 @@ public:
 		else
 		{
 			ANKI_RESOURCE_LOGE("Dummy error");
-			err = Error::USER_DATA;
+			err = Error::kUserData;
 		}
 
 		return err;

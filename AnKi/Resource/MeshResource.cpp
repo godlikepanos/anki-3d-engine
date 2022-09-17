@@ -59,12 +59,12 @@ MeshResource::~MeshResource()
 	m_subMeshes.destroy(getAllocator());
 	m_vertexBufferInfos.destroy(getAllocator());
 
-	if(m_vertexBuffersOffset != MAX_PTR_SIZE)
+	if(m_vertexBuffersOffset != kMaxPtrSize)
 	{
 		getManager().getVertexGpuMemory().free(m_vertexBuffersSize, m_vertexBuffersOffset);
 	}
 
-	if(m_indexBufferOffset != MAX_PTR_SIZE)
+	if(m_indexBufferOffset != kMaxPtrSize)
 	{
 		const PtrSize indexBufferSize = PtrSize(m_indexCount) * ((m_indexType == IndexType::U32) ? 4 : 2);
 		getManager().getVertexGpuMemory().free(indexBufferSize, m_indexBufferOffset);
@@ -182,7 +182,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		cmdb->fillBuffer(m_vertexBuffer, m_indexBufferOffset, indexBufferSize, 0);
 
 		const BufferBarrierInfo barrier = {m_vertexBuffer.get(), BufferUsageBit::TRANSFER_DESTINATION,
-										   BufferUsageBit::VERTEX, 0, MAX_PTR_SIZE};
+										   BufferUsageBit::VERTEX, 0, kMaxPtrSize};
 
 		cmdb->setPipelineBarrier({}, {&barrier, 1}, {});
 
@@ -266,7 +266,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		ANKI_CHECK(loadAsync(loader));
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
@@ -281,7 +281,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 
 	// Set barriers
 	const BufferBarrierInfo barrier = {m_vertexBuffer.get(), BufferUsageBit::VERTEX,
-									   BufferUsageBit::TRANSFER_DESTINATION, 0, MAX_PTR_SIZE};
+									   BufferUsageBit::TRANSFER_DESTINATION, 0, kMaxPtrSize};
 	cmdb->setPipelineBarrier({}, {&barrier, 1}, {});
 
 	// Write index buffer
@@ -328,7 +328,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 		const BufferBarrierInfo buffBarrier = {m_vertexBuffer.get(), BufferUsageBit::TRANSFER_DESTINATION,
 											   BufferUsageBit::ACCELERATION_STRUCTURE_BUILD | BufferUsageBit::VERTEX
 												   | BufferUsageBit::INDEX,
-											   0, MAX_PTR_SIZE};
+											   0, kMaxPtrSize};
 		const AccelerationStructureBarrierInfo asBarrier = {m_blas.get(), AccelerationStructureUsageBit::NONE,
 															AccelerationStructureUsageBit::BUILD};
 
@@ -344,7 +344,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 	else
 	{
 		const BufferBarrierInfo buffBarrier = {m_vertexBuffer.get(), BufferUsageBit::TRANSFER_DESTINATION,
-											   BufferUsageBit::VERTEX | BufferUsageBit::INDEX, 0, MAX_PTR_SIZE};
+											   BufferUsageBit::VERTEX | BufferUsageBit::INDEX, 0, kMaxPtrSize};
 
 		cmdb->setPipelineBarrier({}, {&buffBarrier, 1}, {});
 	}
@@ -356,7 +356,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 	transferAlloc.release(handles[0], fence);
 	transferAlloc.release(handles[1], fence);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

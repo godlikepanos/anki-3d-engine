@@ -166,7 +166,7 @@ static Error checkConfig(const ImageImporterConfig& config)
 		if(!(x)) \
 		{ \
 			ANKI_IMPORTER_LOGE(message); \
-			return Error::USER_DATA; \
+			return Error::kUserData; \
 		} \
 	} while(false)
 
@@ -209,7 +209,7 @@ static Error checkConfig(const ImageImporterConfig& config)
 					"Can't have a conversion to sRGB and to linear at the same time");
 
 #undef ANKI_CFG_ASSERT
-	return Error::NONE;
+	return Error::kNone;
 }
 
 static Error identifyImage(CString filename, U32& width, U32& height, U32& channelCount, Bool& hdr)
@@ -219,7 +219,7 @@ static Error identifyImage(CString filename, U32& width, U32& height, U32& chann
 	if(!ok)
 	{
 		ANKI_IMPORTER_LOGE("STB failed to load file: %s", filename.cstr());
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	const I ihdr = stbi_is_hdr(filename.cstr());
@@ -229,7 +229,7 @@ static Error identifyImage(CString filename, U32& width, U32& height, U32& chann
 	channelCount = U32(ichannelCount);
 	hdr = U32(ihdr);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 static Error checkInputImages(const ImageImporterConfig& config, U32& width, U32& height, U32& channelCount,
@@ -257,7 +257,7 @@ static Error checkInputImages(const ImageImporterConfig& config, U32& width, U32
 		{
 			ANKI_IMPORTER_LOGE("Input image doesn't match previous input images: %s",
 							   config.m_inputFilenames[i].cstr());
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 	}
 
@@ -265,10 +265,10 @@ static Error checkInputImages(const ImageImporterConfig& config, U32& width, U32
 	if(!isPowerOfTwo(width) || !isPowerOfTwo(height))
 	{
 		ANKI_IMPORTER_LOGE("Only power of two images are accepted");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 static Error resizeImage(CString inImageFilename, U32 outWidth, U32 outHeight, CString tempDirectory,
@@ -294,7 +294,7 @@ static Error resizeImage(CString inImageFilename, U32 outWidth, U32 outHeight, C
 	if(!inPixels)
 	{
 		ANKI_IMPORTER_LOGE("STB load failed: %s", inImageFilename.cstr());
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	// Resize
@@ -318,7 +318,7 @@ static Error resizeImage(CString inImageFilename, U32 outWidth, U32 outHeight, C
 	if(!ok)
 	{
 		ANKI_IMPORTER_LOGE("stbir_resize_xxx() failed to resize the image: %s", inImageFilename.cstr());
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	// Store
@@ -339,10 +339,10 @@ static Error resizeImage(CString inImageFilename, U32 outWidth, U32 outHeight, C
 	if(!ok)
 	{
 		ANKI_IMPORTER_LOGE("Failed to create: %s", tmpFilename.cstr());
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 static Vec3 linearToSRgb(Vec3 p)
@@ -463,7 +463,7 @@ static Error loadFirstMipmap(const ImageImporterConfig& config, ImageImporterCon
 		if(!data)
 		{
 			ANKI_IMPORTER_LOGE("STB load failed: %s", config.m_inputFilenames[i].cstr());
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 
 		const PtrSize dataSize = PtrSize(ctx.m_width) * ctx.m_height * ctx.m_pixelSize;
@@ -553,7 +553,7 @@ static Error loadFirstMipmap(const ImageImporterConfig& config, ImageImporterCon
 		stbi_image_free(data);
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 template<typename TStorageVec>
@@ -633,7 +633,7 @@ static Error compressS3tc(GenericMemoryPoolAllocator<U8> alloc, CString tempDire
 	if(!saveTmpImageOk)
 	{
 		ANKI_IMPORTER_LOGE("Failed to create: %s", tmpFilename.cstr());
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 	CleanupFile tmpCleanup(alloc, tmpFilename);
 
@@ -671,7 +671,7 @@ static Error compressS3tc(GenericMemoryPoolAllocator<U8> alloc, CString tempDire
 		}
 
 		ANKI_IMPORTER_LOGE("Invoking compressor process failed: %s", errStr.cstr());
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	// Read the DDS file
@@ -683,25 +683,25 @@ static Error compressS3tc(GenericMemoryPoolAllocator<U8> alloc, CString tempDire
 	if(!hdr && channelCount == 3 && memcmp(&ddsHeader.m_ddspf.m_dwFourCC[0], "DXT1", 4) != 0)
 	{
 		ANKI_IMPORTER_LOGE("Incorrect format. Expecting DXT1");
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	if(!hdr && channelCount == 4 && memcmp(&ddsHeader.m_ddspf.m_dwFourCC[0], "DXT5", 4) != 0)
 	{
 		ANKI_IMPORTER_LOGE("Incorrect format. Expecting DXT5");
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	if(hdr && memcmp(&ddsHeader.m_ddspf.m_dwFourCC[0], "DX10", 4) != 0)
 	{
 		ANKI_IMPORTER_LOGE("Incorrect format. Expecting BC6H");
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	if(ddsHeader.m_dwWidth != inWidth || ddsHeader.m_dwHeight != inHeight)
 	{
 		ANKI_IMPORTER_LOGE("Incorrect DDS image size");
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	if(hdr)
@@ -712,7 +712,7 @@ static Error compressS3tc(GenericMemoryPoolAllocator<U8> alloc, CString tempDire
 
 	ANKI_CHECK(ddsFile.read(outPixels.getBegin(), outPixels.getSizeInBytes()));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 static Error compressAstc(GenericMemoryPoolAllocator<U8> alloc, CString tempDirectory, CString astcencFilename,
@@ -745,7 +745,7 @@ static Error compressAstc(GenericMemoryPoolAllocator<U8> alloc, CString tempDire
 	if(!saveTmpImageOk)
 	{
 		ANKI_IMPORTER_LOGE("Failed to create: %s", tmpFilename.cstr());
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 	CleanupFile pngCleanup(alloc, tmpFilename);
 
@@ -786,7 +786,7 @@ static Error compressAstc(GenericMemoryPoolAllocator<U8> alloc, CString tempDire
 		}
 
 		ANKI_IMPORTER_LOGE("Invoking astcenc-avx2 process failed: %s", errStr.cstr());
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	// Read the astc file
@@ -803,7 +803,7 @@ static Error compressAstc(GenericMemoryPoolAllocator<U8> alloc, CString tempDire
 	if(magicval != 0x5CA1AB13)
 	{
 		ANKI_IMPORTER_LOGE("astcenc-avx2 produced a file with wrong magic");
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	const U32 blockx = max<U32>(header.m_blockX, 1u);
@@ -812,7 +812,7 @@ static Error compressAstc(GenericMemoryPoolAllocator<U8> alloc, CString tempDire
 	if(blockx != blockSize.x() || blocky != blockSize.y() || blockz != 1)
 	{
 		ANKI_IMPORTER_LOGE("astcenc-avx2 with wrong block size");
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	const U32 dimx = unpackBytes(header.m_dimX[0], header.m_dimX[1], header.m_dimX[2], 0);
@@ -821,12 +821,12 @@ static Error compressAstc(GenericMemoryPoolAllocator<U8> alloc, CString tempDire
 	if(dimx != inWidth || dimy != inHeight || dimz != 1)
 	{
 		ANKI_IMPORTER_LOGE("astcenc-avx2 with wrong image size");
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	ANKI_CHECK(astcFile.read(outPixels.getBegin(), outPixels.getSizeInBytes()));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 static Error storeAnkiImage(const ImageImporterConfig& config, const ImageImporterContext& ctx)
@@ -919,7 +919,7 @@ static Error storeAnkiImage(const ImageImporterConfig& config, const ImageImport
 		}
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 static Error importImageInternal(const ImageImporterConfig& configOriginal)
@@ -992,7 +992,7 @@ static Error importImageInternal(const ImageImporterConfig& configOriginal)
 		if(!!(config.m_compressions & ImageBinaryDataCompression::RAW))
 		{
 			ANKI_IMPORTER_LOGE("Can't support both BC6H (which is 3 component) and RAW which requires 4 compoments");
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 
 		desiredChannelCount = 3;
@@ -1153,7 +1153,7 @@ static Error importImageInternal(const ImageImporterConfig& configOriginal)
 	// Store the image
 	ANKI_CHECK(storeAnkiImage(config, ctx));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error importImage(const ImageImporterConfig& config)
@@ -1165,7 +1165,7 @@ Error importImage(const ImageImporterConfig& config)
 		return err;
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

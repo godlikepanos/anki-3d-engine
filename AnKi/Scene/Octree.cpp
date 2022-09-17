@@ -41,7 +41,7 @@ public:
 	Octree* m_octree = nullptr;
 	SpinLock m_lock;
 	Array<Plane, 6> m_frustumPlanes;
-	U32 m_testId = MAX_U32;
+	U32 m_testId = kMaxU32;
 	OctreeNodeVisibilityTestCallback m_testCallback = nullptr;
 	void* m_testCallbackUserData = nullptr;
 	DynamicArrayAuto<void*>* m_out = nullptr;

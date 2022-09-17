@@ -179,7 +179,7 @@ Error RtShadows::initInternal()
 	// Misc
 	m_sbtRecordSize = getAlignedRoundUp(getGrManager().getDeviceCapabilities().m_sbtRecordAlignment, m_sbtRecordSize);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void RtShadows::populateRenderGraph(RenderingContext& ctx)
@@ -643,8 +643,8 @@ void RtShadows::buildSbt(RenderingContext& ctx)
 Bool RtShadows::findShadowLayer(U64 lightUuid, U32& layerIdx, Bool& rejectHistoryBuffer)
 {
 	const U64 crntFrame = m_r->getFrameCount();
-	layerIdx = MAX_U32;
-	U32 nextBestLayerIdx = MAX_U32;
+	layerIdx = kMaxU32;
+	U32 nextBestLayerIdx = kMaxU32;
 	U64 nextBestLayerFame = crntFrame;
 	rejectHistoryBuffer = false;
 
@@ -659,7 +659,7 @@ Bool RtShadows::findShadowLayer(U64 lightUuid, U32& layerIdx, Bool& rejectHistor
 			layer.m_lightUuid = lightUuid;
 			break;
 		}
-		else if(layer.m_lightUuid == lightUuid || layer.m_frameLastUsed == MAX_U64)
+		else if(layer.m_lightUuid == lightUuid || layer.m_frameLastUsed == kMaxU64)
 		{
 			// Found an empty slot or slot used by the same light
 			layerIdx = i;
@@ -676,7 +676,7 @@ Bool RtShadows::findShadowLayer(U64 lightUuid, U32& layerIdx, Bool& rejectHistor
 	}
 
 	// Not found but there is a good candidate. Use that
-	if(layerIdx == MAX_U32 && nextBestLayerIdx != MAX_U32)
+	if(layerIdx == kMaxU32 && nextBestLayerIdx != kMaxU32)
 	{
 		layerIdx = nextBestLayerIdx;
 		m_shadowLayers[nextBestLayerIdx].m_frameLastUsed = crntFrame;
@@ -684,7 +684,7 @@ Bool RtShadows::findShadowLayer(U64 lightUuid, U32& layerIdx, Bool& rejectHistor
 		rejectHistoryBuffer = true;
 	}
 
-	return layerIdx != MAX_U32;
+	return layerIdx != kMaxU32;
 }
 
 void RtShadows::getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,

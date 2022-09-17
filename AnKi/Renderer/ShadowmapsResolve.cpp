@@ -24,7 +24,7 @@ Error ShadowmapsResolve::init()
 		ANKI_R_LOGE("Failed to initialize shadow resolve pass");
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ShadowmapsResolve::initInternal()
@@ -59,7 +59,7 @@ Error ShadowmapsResolve::initInternal()
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProg = variant->getProgram();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)

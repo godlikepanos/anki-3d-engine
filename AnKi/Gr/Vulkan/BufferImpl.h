@@ -126,7 +126,7 @@ private:
 		alignRoundDown(m_mappedMemoryRangeAlignment, offset);
 
 		// And the range
-		range = (range == MAX_PTR_SIZE) ? m_actualSize : range;
+		range = (range == kMaxPtrSize) ? m_actualSize : range;
 		alignRoundUp(m_mappedMemoryRangeAlignment, range);
 		ANKI_ASSERT(offset + range <= m_memHandle.m_offset + m_actualSize);
 

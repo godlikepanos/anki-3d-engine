@@ -73,13 +73,13 @@ static Error checkAttribute(const cgltf_attribute& attrib)
 	if(cgltfComponentCount(attrib.data->type) != T::COMPONENT_COUNT)
 	{
 		ANKI_IMPORTER_LOGE("Wrong component count for attribute: %s", attrib.name);
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	if(cgltfComponentSize(attrib.data->component_type) != sizeof(typename T::Scalar))
 	{
 		ANKI_IMPORTER_LOGE("Incompatible type: %s", attrib.name);
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	ANKI_ASSERT(attrib.data);
@@ -87,10 +87,10 @@ static Error checkAttribute(const cgltf_attribute& attrib)
 	if(count == 0)
 	{
 		ANKI_IMPORTER_LOGE("Zero vertex count");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 /// Align after laying a buffer in a file.
@@ -105,7 +105,7 @@ static Error alignBufferInFile(PtrSize bufferSize, File& file)
 		ANKI_CHECK(file.write(&value, sizeof(value)));
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 class TempVertex
@@ -133,11 +133,11 @@ public:
 	DynamicArrayAuto<TempVertex> m_verts;
 	DynamicArrayAuto<U32> m_indices;
 
-	Vec3 m_aabbMin = Vec3(MAX_F32);
-	Vec3 m_aabbMax = Vec3(MIN_F32);
+	Vec3 m_aabbMin = Vec3(kMaxF32);
+	Vec3 m_aabbMax = Vec3(kMinF32);
 
-	U32 m_firstIdx = MAX_U32;
-	U32 m_idxCount = MAX_U32;
+	U32 m_firstIdx = kMaxU32;
+	U32 m_idxCount = kMaxU32;
 
 	SubMesh(GenericMemoryPoolAllocator<U8>& alloc)
 		: m_verts(alloc)
@@ -284,10 +284,10 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 	ListAuto<SubMesh> submeshes(m_alloc);
 	U32 totalIndexCount = 0;
 	U32 totalVertexCount = 0;
-	Vec3 aabbMin(MAX_F32);
-	Vec3 aabbMax(MIN_F32);
-	F32 maxUvDistance = MIN_F32;
-	F32 minUvDistance = MAX_F32;
+	Vec3 aabbMin(kMaxF32);
+	Vec3 aabbMax(kMinF32);
+	F32 maxUvDistance = kMinF32;
+	F32 minUvDistance = kMaxF32;
 	Bool hasBoneWeights = false;
 
 	// Iterate primitives. Every primitive is a submesh
@@ -297,13 +297,13 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 		if(primitive->type != cgltf_primitive_type_triangles)
 		{
 			ANKI_IMPORTER_LOGE("Expecting triangles got %d", primitive->type);
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 
 		SubMesh& submesh = *submeshes.emplaceBack(m_alloc);
 
-		U minVertCount = MAX_U;
-		U maxVertCount = MIN_U;
+		U minVertCount = kMaxU;
+		U maxVertCount = kMinU;
 		for(const cgltf_attribute* attrib = primitive->attributes;
 			attrib < primitive->attributes + primitive->attributes_count; ++attrib)
 		{
@@ -314,7 +314,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 		if(maxVertCount == 0 || minVertCount != maxVertCount)
 		{
 			ANKI_IMPORTER_LOGE("Wrong number of vertices");
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 
 		U32 vertCount = U32(primitive->attributes[0].data->count);
@@ -434,7 +434,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 			if(primitive->indices->count == 0 || (primitive->indices->count % 3) != 0)
 			{
 				ANKI_IMPORTER_LOGE("Incorect index count: %lu", primitive->indices->count);
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 			submesh.m_indices.create(U32(primitive->indices->count));
 			const U8* base = static_cast<const U8*>(primitive->indices->buffer_view->buffer->data)
@@ -584,7 +584,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 	if(submeshes.getSize() == 0)
 	{
 		ANKI_IMPORTER_LOGE("Mesh contains degenerate geometry");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	// Find if it's a convex shape
@@ -745,10 +745,10 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 		for(U32 i = 0; i < indices.getSize(); ++i)
 		{
 			const U32 idx = submesh.m_indices[i] + vertCount;
-			if(idx > MAX_U16)
+			if(idx > kMaxU16)
 			{
 				ANKI_IMPORTER_LOGE("Only supports 16bit indices for now (%u): %s", idx, fname.cstr());
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 
 			indices[i] = U16(idx);
@@ -813,11 +813,11 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 					if(submesh.m_verts[i].m_boneIds[c] > 0XFF)
 					{
 						ANKI_IMPORTER_LOGE("Only 256 bones are supported");
-						return Error::USER_DATA;
+						return Error::kUserData;
 					}
 
 					vert.m_boneIndices[c] = U8(submesh.m_verts[i].m_boneIds[c]);
-					vert.m_boneWeights[c] = U8(submesh.m_verts[i].m_boneWeights[c] * F32(MAX_U8));
+					vert.m_boneWeights[c] = U8(submesh.m_verts[i].m_boneWeights[c] * F32(kMaxU8));
 				}
 
 				verts[i] = vert;
@@ -829,7 +829,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 		ANKI_CHECK(alignBufferInFile(header.m_totalVertexCount * sizeof(BoneInfoVertex), file));
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

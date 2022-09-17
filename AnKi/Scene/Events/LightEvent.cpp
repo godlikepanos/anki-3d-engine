@@ -31,7 +31,7 @@ Error LightEvent::init(Second startTime, Second duration, SceneNode* light)
 
 	m_originalDiffColor = lightc.getDiffuseColor();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error LightEvent::update([[maybe_unused]] Second prevUpdateTime, Second crntTime)
@@ -73,7 +73,7 @@ Error LightEvent::update([[maybe_unused]] Second prevUpdateTime, Second crntTime
 		lightc.setDiffuseColor(outCol);
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

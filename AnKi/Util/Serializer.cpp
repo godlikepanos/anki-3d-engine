@@ -37,7 +37,7 @@ Error BinarySerializer::doDynamicArrayBasicType(const void* arr, PtrSize size, U
 	}
 
 	check();
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

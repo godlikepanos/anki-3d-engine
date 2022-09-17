@@ -61,7 +61,7 @@ Error FinalComposite::initInternal()
 	m_defaultVisualizeRenderTargetProg->getOrCreateVariant(variant);
 	m_defaultVisualizeRenderTargetGrProg = variant->getProgram();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error FinalComposite::init()
@@ -83,7 +83,7 @@ Error FinalComposite::loadColorGradingTextureImage(CString filename)
 	ANKI_ASSERT(m_lut->getHeight() == LUT_SIZE);
 	ANKI_ASSERT(m_lut->getDepth() == LUT_SIZE);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void FinalComposite::populateRenderGraph(RenderingContext& ctx)
@@ -169,7 +169,7 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 			rgraphCtx.bindColorTexture(0, 8, m_r->getDbg().getRt());
 		}
 
-		const UVec4 pc(0, 0, floatBitsToUint(getConfig().getRFilmGrainStrength()), m_r->getFrameCount() & MAX_U32);
+		const UVec4 pc(0, 0, floatBitsToUint(getConfig().getRFilmGrainStrength()), m_r->getFrameCount() & kMaxU32);
 		cmdb->setPushConstants(&pc, sizeof(pc));
 	}
 	else

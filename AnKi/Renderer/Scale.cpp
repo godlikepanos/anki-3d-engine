@@ -42,7 +42,7 @@ Error Scale::init()
 	const Bool needsSharpening = getConfig().getRSharpness() > 0.0f;
 	if(!needsScaling && !needsSharpening)
 	{
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	const Bool preferCompute = getConfig().getRPreferCompute();
@@ -173,7 +173,7 @@ Error Scale::init()
 	m_fbDescr.m_colorAttachmentCount = 1;
 	m_fbDescr.bake();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void Scale::populateRenderGraph(RenderingContext& ctx)

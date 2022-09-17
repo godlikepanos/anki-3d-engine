@@ -48,7 +48,7 @@ Error Tonemapping::initInternal()
 	clearValue.m_colorf = {0.5f, 0.5f, 0.5f, 0.5f};
 	m_exposureAndAvgLuminance1x1 = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::kAllImage, clearValue);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void Tonemapping::importRenderTargets(RenderingContext& ctx)

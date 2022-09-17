@@ -9,24 +9,24 @@
 ANKI_TEST(Util, Atomic)
 {
 	{
-		Atomic<I32> a{MAX_I32};
-		I32 b = MAX_I32;
+		Atomic<I32> a{kMaxI32};
+		I32 b = kMaxI32;
 		a.fetchAdd(1);
 		++b;
 		ANKI_TEST_EXPECT_EQ(a.load(), b);
 	}
 
 	{
-		Atomic<I32> a{MAX_I32};
-		I32 b = MAX_I32;
+		Atomic<I32> a{kMaxI32};
+		I32 b = kMaxI32;
 		a.fetchAdd(-1);
 		--b;
 		ANKI_TEST_EXPECT_EQ(a.load(), b);
 	}
 
 	{
-		Atomic<I32> a{MAX_I32};
-		I32 b = MAX_I32;
+		Atomic<I32> a{kMaxI32};
+		I32 b = kMaxI32;
 		a.fetchSub(1);
 		--b;
 		ANKI_TEST_EXPECT_EQ(a.load(), b);

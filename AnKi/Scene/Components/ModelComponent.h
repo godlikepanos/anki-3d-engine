@@ -35,7 +35,7 @@ public:
 	{
 		updated = m_dirty;
 		m_dirty = false;
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	ConstWeakArray<U64> getRenderMergeKeys() const

@@ -15,8 +15,8 @@ public:
 	U64 m_lightUuid = 0;
 	U32 m_lightDrawcallCount = 0;
 	Array<U32, 4> m_viewport = {};
-	Array<U32, 4> m_subTiles = {MAX_U32, MAX_U32, MAX_U32, MAX_U32};
-	U32 m_superTile = MAX_U32;
+	Array<U32, 4> m_subTiles = {kMaxU32, kMaxU32, kMaxU32, kMaxU32};
+	U32 m_superTile = kMaxU32;
 	U8 m_lightLod = 0;
 	U8 m_lightFace = 0;
 };
@@ -118,7 +118,7 @@ void TileAllocator::init(HeapAllocator<U8> alloc, U32 tileCountX, U32 tileCountY
 
 void TileAllocator::updateSubTiles(const Tile& updateFrom)
 {
-	if(updateFrom.m_subTiles[0] == MAX_U32)
+	if(updateFrom.m_subTiles[0] == kMaxU32)
 	{
 		return;
 	}
@@ -138,7 +138,7 @@ void TileAllocator::updateSubTiles(const Tile& updateFrom)
 
 void TileAllocator::updateSuperTiles(const Tile& updateFrom)
 {
-	if(updateFrom.m_superTile != MAX_U32)
+	if(updateFrom.m_superTile != kMaxU32)
 	{
 		m_allTiles[updateFrom.m_superTile].m_lightUuid = 0;
 		m_allTiles[updateFrom.m_superTile].m_lastUsedTimestamp = updateFrom.m_lastUsedTimestamp;
@@ -164,7 +164,7 @@ Bool TileAllocator::searchTileRecursively(U32 crntTileIdx, U32 crntTileLod, U32 
 			return true;
 		}
 	}
-	else if(tile.m_subTiles[0] != MAX_U32)
+	else if(tile.m_subTiles[0] != kMaxU32)
 	{
 		// Move down the hierarchy
 
@@ -271,8 +271,8 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp, Timestamp l
 
 	// Start searching for a suitable tile. Do a hieratchical search to end up with better locality and not better
 	// utilization of the atlas' space
-	U32 emptyTileIdx = MAX_U32;
-	U32 toKickTileIdx = MAX_U32;
+	U32 emptyTileIdx = kMaxU32;
+	U32 toKickTileIdx = kMaxU32;
 	Timestamp tileToKickMinTimestamp = MAX_TIMESTAMP;
 	const U32 maxLod = m_lodCount - 1;
 	if(lod == maxLod)
@@ -307,11 +307,11 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp, Timestamp l
 	}
 
 	U32 allocatedTileIdx;
-	if(emptyTileIdx != MAX_U32)
+	if(emptyTileIdx != kMaxU32)
 	{
 		allocatedTileIdx = emptyTileIdx;
 	}
-	else if(toKickTileIdx != MAX_U32)
+	else if(toKickTileIdx != kMaxU32)
 	{
 		allocatedTileIdx = toKickTileIdx;
 	}

@@ -57,7 +57,7 @@ public:
 			move.setLocalTransform(Transform(origin, rot, 1.0));
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 
@@ -112,7 +112,7 @@ public:
 
 		playerc.setVelocity(moveVec.z() * speed, moveVec.x() * speed, 0.0, dir);
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 

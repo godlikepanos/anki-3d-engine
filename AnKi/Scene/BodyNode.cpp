@@ -36,7 +36,7 @@ public:
 			move.setLocalTransform(bodyc.getWorldTransform());
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 

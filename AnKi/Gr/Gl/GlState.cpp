@@ -134,7 +134,7 @@ void GlState::initRenderThread()
 	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_SCISSOR_TEST);
-	glScissor(0, 0, MAX_I16, MAX_I16);
+	glScissor(0, 0, kMaxI16, kMaxI16);
 	glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
 
 	// Create default VAO
@@ -163,7 +163,7 @@ void GlState::initRenderThread()
 	glGetInteger64v(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &val);
 	m_storageBlockMaxSize = val;
 
-	m_tboMaxRange = MAX_U32;
+	m_tboMaxRange = kMaxU32;
 
 	// Texture buffer textures
 	glGenTextures(MAX_DESCRIPTOR_SETS * MAX_TEXTURE_BUFFER_BINDINGS, &m_texBuffTextures[0][0]);

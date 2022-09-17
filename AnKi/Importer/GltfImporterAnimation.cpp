@@ -173,7 +173,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 			if(keys.getSize() != positions.getSize())
 			{
 				ANKI_IMPORTER_LOGE("Position count should match they keyframes");
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 
 			for(U32 i = 0; i < keys.getSize(); ++i)
@@ -197,7 +197,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 			if(keys.getSize() != rotations.getSize())
 			{
 				ANKI_IMPORTER_LOGE("Rotation count should match they keyframes");
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 
 			for(U32 i = 0; i < keys.getSize(); ++i)
@@ -221,7 +221,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 			if(keys.getSize() != scales.getSize())
 			{
 				ANKI_IMPORTER_LOGE("Scale count should match they keyframes");
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 
 			Bool scaleErrorReported = false;
@@ -366,7 +366,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 		// ANKI_CHECK(m_sceneFile.writeText("--]]\n"));
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

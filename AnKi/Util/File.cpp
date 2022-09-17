@@ -83,12 +83,12 @@ Error File::open(const CString& filename, FileOpenFlag flags)
 		ANKI_ASSERT((flags & FileOpenFlag::ENDIAN_BIG) != (flags & FileOpenFlag::ENDIAN_LITTLE));
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error File::openCFile(const CString& filename, FileOpenFlag flags)
 {
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 	const char* openMode;
 
 	if((flags & FileOpenFlag::READ) != FileOpenFlag::NONE)
@@ -114,7 +114,7 @@ Error File::openCFile(const CString& filename, FileOpenFlag flags)
 	if(m_file == nullptr)
 	{
 		ANKI_UTIL_LOGE("Failed to open file \"%s\", open mode \"%s\"", &filename[0], openMode);
-		err = Error::FILE_ACCESS;
+		err = Error::kFileAccess;
 	}
 	else
 	{
@@ -131,7 +131,7 @@ Error File::openCFile(const CString& filename, FileOpenFlag flags)
 		if((fstat(fd, &stbuf) != 0) || (!S_ISREG(stbuf.st_mode)))
 		{
 			ANKI_UTIL_LOGE("fstat() failed");
-			err = Error::FUNCTION_FAILED;
+			err = Error::kFunctionFailed;
 		}
 		else
 		{
@@ -143,7 +143,7 @@ Error File::openCFile(const CString& filename, FileOpenFlag flags)
 		if(size < 1)
 		{
 			ANKI_UTIL_LOGE("ftell() failed");
-			err = Error::FUNCTION_FAILED;
+			err = Error::kFunctionFailed;
 		}
 		else
 		{
@@ -164,13 +164,13 @@ Error File::openAndroidFile(const CString& filename, FileOpenFlag flags)
 	if(!!(flags & FileOpenFlag::WRITE))
 	{
 		ANKI_UTIL_LOGE("Cannot write inside archives");
-		return Error::FILE_ACCESS;
+		return Error::kFileAccess;
 	}
 
 	if(!(flags & FileOpenFlag::READ))
 	{
 		ANKI_UTIL_LOGE("Missing FileOpenFlag::READ flag");
-		return Error::FILE_ACCESS;
+		return Error::kFileAccess;
 	}
 
 	// Open file
@@ -181,7 +181,7 @@ Error File::openAndroidFile(const CString& filename, FileOpenFlag flags)
 	if(m_file == nullptr)
 	{
 		ANKI_UTIL_LOGE("AAssetManager_open() failed");
-		return Error::FILE_ACCESS;
+		return Error::kFileAccess;
 	}
 
 	m_flags = flags;
@@ -189,7 +189,7 @@ Error File::openAndroidFile(const CString& filename, FileOpenFlag flags)
 	// Get size
 	m_size = AAsset_getLength(ANKI_AFILE);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 #endif
 
@@ -215,7 +215,7 @@ void File::close()
 Error File::flush()
 {
 	ANKI_ASSERT(m_file);
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 
 	if((m_flags & FileOpenFlag::WRITE) != FileOpenFlag::NONE)
 	{
@@ -231,7 +231,7 @@ Error File::flush()
 			if(ierr)
 			{
 				ANKI_UTIL_LOGE("fflush() failed");
-				err = Error::FUNCTION_FAILED;
+				err = Error::kFunctionFailed;
 			}
 		}
 	}
@@ -259,11 +259,11 @@ Error File::read(void* buff, PtrSize size)
 		readSize = fread(buff, 1, size, ANKI_CFILE);
 	}
 
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 	if(static_cast<I64>(size) != readSize)
 	{
 		ANKI_UTIL_LOGE("File read failed");
-		err = Error::FILE_ACCESS;
+		err = Error::kFileAccess;
 	}
 
 	return err;
@@ -308,7 +308,7 @@ Error File::readU32(U32& out)
 
 Error File::readF32(F32& out)
 {
-	U32 integer = MAX_U32;
+	U32 integer = kMaxU32;
 	Error err = readU32(integer);
 	if(!err)
 	{
@@ -325,13 +325,13 @@ Error File::write(const void* buff, PtrSize size)
 	ANKI_ASSERT(m_file);
 	ANKI_ASSERT((m_flags & FileOpenFlag::WRITE) != FileOpenFlag::NONE);
 
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 
 #if ANKI_OS_ANDROID
 	if(!!(m_flags & FileOpenFlag::SPECIAL))
 	{
 		ANKI_UTIL_LOGE("Writting to special files is not supported");
-		err = Error::FILE_ACCESS;
+		err = Error::kFileAccess;
 	}
 	else
 #endif
@@ -341,7 +341,7 @@ Error File::write(const void* buff, PtrSize size)
 		if(writeSize != size)
 		{
 			ANKI_UTIL_LOGE("fwrite() failed");
-			err = Error::FILE_ACCESS;
+			err = Error::kFileAccess;
 		}
 	}
 
@@ -355,7 +355,7 @@ Error File::writeTextf(const Char* format, ...)
 	ANKI_ASSERT((m_flags & FileOpenFlag::WRITE) != FileOpenFlag::NONE);
 	ANKI_ASSERT((m_flags & FileOpenFlag::BINARY) == FileOpenFlag::NONE);
 
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 	va_list args;
 	va_start(args, format);
 
@@ -363,7 +363,7 @@ Error File::writeTextf(const Char* format, ...)
 	if(!!(m_flags & FileOpenFlag::SPECIAL))
 	{
 		ANKI_UTIL_LOGE("Writting to special files is not supported");
-		err = Error::FILE_ACCESS;
+		err = Error::kFileAccess;
 	}
 	else
 #endif
@@ -385,7 +385,7 @@ Error File::writeText(CString text)
 	const PtrSize writeSize = text.getLength();
 	if(ANKI_UNLIKELY(writeSize == 0))
 	{
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	const PtrSize writenSize = fwrite(text.cstr(), 1, writeSize, ANKI_CFILE);
@@ -393,11 +393,11 @@ Error File::writeText(CString text)
 	if(writeSize != writenSize)
 	{
 		ANKI_UTIL_LOGE("fwrite() failed");
-		return Error::FILE_ACCESS;
+		return Error::kFileAccess;
 	}
 	else
 	{
-		return Error::NONE;
+		return Error::kNone;
 	}
 }
 
@@ -405,7 +405,7 @@ Error File::seek(PtrSize offset, FileSeekOrigin origin)
 {
 	ANKI_ASSERT(m_file);
 	ANKI_ASSERT(m_flags != FileOpenFlag::NONE);
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 
 #if ANKI_OS_ANDROID
 	if(!!(m_flags & FileOpenFlag::SPECIAL))
@@ -413,7 +413,7 @@ Error File::seek(PtrSize offset, FileSeekOrigin origin)
 		if(AAsset_seek(ANKI_AFILE, offset, I32(origin)) == off_t(-1))
 		{
 			ANKI_UTIL_LOGE("AAsset_seek() failed");
-			err = Error::FUNCTION_FAILED;
+			err = Error::kFunctionFailed;
 		}
 	}
 	else
@@ -422,7 +422,7 @@ Error File::seek(PtrSize offset, FileSeekOrigin origin)
 		if(fseek(ANKI_CFILE, (long int)(offset), I32(origin)) != 0)
 		{
 			ANKI_UTIL_LOGE("fseek() failed");
-			err = Error::FUNCTION_FAILED;
+			err = Error::kFunctionFailed;
 		}
 	}
 
@@ -462,7 +462,7 @@ FileOpenFlag File::getMachineEndianness()
 
 Error File::readAllText(GenericMemoryPoolAllocator<U8> alloc, String& out)
 {
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 	PtrSize size = getSize();
 
 	if(size != 0)
@@ -472,7 +472,7 @@ Error File::readAllText(GenericMemoryPoolAllocator<U8> alloc, String& out)
 	}
 	else
 	{
-		err = Error::FUNCTION_FAILED;
+		err = Error::kFunctionFailed;
 	}
 
 	return err;
@@ -480,7 +480,7 @@ Error File::readAllText(GenericMemoryPoolAllocator<U8> alloc, String& out)
 
 Error File::readAllText(StringAuto& out)
 {
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 	PtrSize size = getSize();
 
 	if(size != 0)
@@ -490,7 +490,7 @@ Error File::readAllText(StringAuto& out)
 	}
 	else
 	{
-		err = Error::FUNCTION_FAILED;
+		err = Error::kFunctionFailed;
 	}
 
 	return err;

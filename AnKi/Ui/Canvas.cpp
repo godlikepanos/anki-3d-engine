@@ -100,7 +100,7 @@ Error Canvas::init(FontPtr font, U32 fontHeight, U32 width, U32 height)
 	ImGui::SetCurrentContext(nullptr);
 	unsetImAllocator();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void Canvas::handleInput()

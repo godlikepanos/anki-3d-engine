@@ -179,7 +179,7 @@ public:
 	/// @param binding The binding to bind to.
 	/// @param[in,out] buff The buffer to bind.
 	/// @param offset The base of the binding.
-	/// @param range The bytes to bind starting from the offset. If it's MAX_PTR_SIZE then map from offset to the end
+	/// @param range The bytes to bind starting from the offset. If it's kMaxPtrSize then map from offset to the end
 	///              of the buffer.
 	/// @param arrayIdx The array index if the binding is an array.
 	void bindUniformBuffer(U32 set, U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize range,
@@ -190,7 +190,7 @@ public:
 	/// @param binding The binding to bind to.
 	/// @param[in,out] buff The buffer to bind.
 	/// @param offset The base of the binding.
-	/// @param range The bytes to bind starting from the offset. If it's MAX_PTR_SIZE then map from offset to the end
+	/// @param range The bytes to bind starting from the offset. If it's kMaxPtrSize then map from offset to the end
 	///              of the buffer.
 	/// @param arrayIdx The array index if the binding is an array.
 	void bindStorageBuffer(U32 set, U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize range,
@@ -208,7 +208,7 @@ public:
 	/// @param binding The binding to bind to.
 	/// @param[in,out] buff The buffer to bind.
 	/// @param offset The base of the binding.
-	/// @param range The bytes to bind starting from the offset. If it's MAX_PTR_SIZE then map from offset to the end
+	/// @param range The bytes to bind starting from the offset. If it's kMaxPtrSize then map from offset to the end
 	///              of the buffer.
 	/// @param fmt The format of the buffer.
 	/// @param arrayIdx The array index if the binding is an array.
@@ -236,8 +236,8 @@ public:
 	/// bigger than the render area the results are undefined.
 	void beginRenderPass(const FramebufferPtr& fb,
 						 const Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS>& colorAttachmentUsages,
-						 TextureUsageBit depthStencilAttachmentUsage, U32 minx = 0, U32 miny = 0, U32 width = MAX_U32,
-						 U32 height = MAX_U32);
+						 TextureUsageBit depthStencilAttachmentUsage, U32 minx = 0, U32 miny = 0, U32 width = kMaxU32,
+						 U32 height = kMaxU32);
 
 	/// End renderpass.
 	void endRenderPass();
@@ -321,7 +321,7 @@ public:
 	/// Fill a buffer with some value.
 	/// @param[in,out] buff The buffer to fill.
 	/// @param offset From where to start filling. Must be multiple of 4.
-	/// @param size The bytes to fill. Must be multiple of 4 or MAX_PTR_SIZE to indicate the whole buffer.
+	/// @param size The bytes to fill. Must be multiple of 4 or kMaxPtrSize to indicate the whole buffer.
 	/// @param value The value to fill the buffer with.
 	void fillBuffer(const BufferPtr& buff, PtrSize offset, PtrSize size, U32 value);
 

@@ -25,7 +25,7 @@ MoveComponent::~MoveComponent()
 Error MoveComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
 	updated = updateWorldTransform(*info.m_node);
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Bool MoveComponent::updateWorldTransform(SceneNode& node)
@@ -78,7 +78,7 @@ Bool MoveComponent::updateWorldTransform(SceneNode& node)
 			childNode.iterateComponentsOfType<MoveComponent>([](MoveComponent& mov) {
 				mov.markForUpdate();
 			});
-			return Error::NONE;
+			return Error::kNone;
 		});
 	}
 

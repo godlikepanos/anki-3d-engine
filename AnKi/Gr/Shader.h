@@ -24,7 +24,7 @@ public:
 		U32 m_uint;
 	};
 
-	U32 m_constantId = MAX_U32;
+	U32 m_constantId = kMaxU32;
 	ShaderVariableDataType m_dataType;
 
 	ShaderSpecializationConstValue()

@@ -282,7 +282,7 @@ public:
 	{
 		ANKI_ASSERT(info.m_node == m_node);
 		updated = updateInternal();
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	void setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag bits);

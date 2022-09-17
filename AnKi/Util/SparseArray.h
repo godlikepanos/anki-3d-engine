@@ -32,7 +32,7 @@ public:
 		: m_array(nullptr)
 		, m_elementIdx(getMaxNumericLimit<Index>())
 #if ANKI_EXTRA_CHECKS
-		, m_iteratorVer(MAX_U32)
+		, m_iteratorVer(kMaxU32)
 #endif
 	{
 	}

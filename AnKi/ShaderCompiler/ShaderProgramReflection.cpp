@@ -87,9 +87,9 @@ private:
 	public:
 		StringAuto m_name;
 		DynamicArrayAuto<Var> m_vars;
-		U32 m_binding = MAX_U32;
-		U32 m_set = MAX_U32;
-		U32 m_size = MAX_U32;
+		U32 m_binding = kMaxU32;
+		U32 m_set = kMaxU32;
+		U32 m_size = kMaxU32;
 
 		Block(const GenericMemoryPoolAllocator<U8>& alloc)
 			: m_name(alloc)
@@ -103,9 +103,9 @@ private:
 	public:
 		StringAuto m_name;
 		ShaderVariableDataType m_type = ShaderVariableDataType::NONE;
-		U32 m_binding = MAX_U32;
-		U32 m_set = MAX_U32;
-		U32 m_arraySize = MAX_U32;
+		U32 m_binding = kMaxU32;
+		U32 m_set = kMaxU32;
+		U32 m_arraySize = kMaxU32;
 
 		Opaque(const GenericMemoryPoolAllocator<U8>& alloc)
 			: m_name(alloc)
@@ -118,7 +118,7 @@ private:
 	public:
 		StringAuto m_name;
 		ShaderVariableDataType m_type = ShaderVariableDataType::NONE;
-		U32 m_constantId = MAX_U32;
+		U32 m_constantId = kMaxU32;
 
 		Const(const GenericMemoryPoolAllocator<U8>& alloc)
 			: m_name(alloc)
@@ -131,9 +131,9 @@ private:
 	public:
 		StringAuto m_name;
 		ShaderVariableDataType m_type = ShaderVariableDataType::NONE;
-		U32 m_structIndex = MAX_U32; ///< The member is actually a struct.
-		U32 m_offset = MAX_U32;
-		U32 m_arraySize = MAX_U32;
+		U32 m_structIndex = kMaxU32; ///< The member is actually a struct.
+		U32 m_offset = kMaxU32;
+		U32 m_arraySize = kMaxU32;
 
 		StructMember(const GenericMemoryPoolAllocator<U8>& alloc)
 			: m_name(alloc)
@@ -182,7 +182,7 @@ private:
 
 Error SpirvReflector::structsReflection(DynamicArrayAuto<Struct>& structs) const
 {
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 
 	ir.for_each_typed_id<spirv_cross::SPIRType>([&err, &structs, this](uint32_t id, const spirv_cross::SPIRType& type) {
 		if(err)
@@ -217,7 +217,7 @@ Error SpirvReflector::structReflection(uint32_t id, const spirv_cross::SPIRType&
 	   || (depth == 0 && m_interface->skipSymbol(name.c_str())))
 	{
 		skipped = true;
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	// Check if the struct is already there
@@ -226,7 +226,7 @@ Error SpirvReflector::structReflection(uint32_t id, const spirv_cross::SPIRType&
 	{
 		if(s.m_name == name.c_str())
 		{
-			return Error::NONE;
+			return Error::kNone;
 		}
 
 		++structIndexInStructsArr;
@@ -258,7 +258,7 @@ Error SpirvReflector::structReflection(uint32_t id, const spirv_cross::SPIRType&
 			if(memberType.array.size() > 1)
 			{
 				ANKI_SHADER_COMPILER_LOGE("Can't support multi-dimentional arrays at the moment");
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 
 			const Bool notSpecConstantArraySize = memberType.array_size_literal[0];
@@ -270,7 +270,7 @@ Error SpirvReflector::structReflection(uint32_t id, const spirv_cross::SPIRType&
 			else
 			{
 				ANKI_SHADER_COMPILER_LOGE("Arrays with spec constant size are not allowed: %s", member.m_name.cstr());
-				return Error::FUNCTION_FAILED;
+				return Error::kFunctionFailed;
 			}
 		}
 		else
@@ -313,7 +313,7 @@ Error SpirvReflector::structReflection(uint32_t id, const spirv_cross::SPIRType&
 		}
 		else if(memberType.basetype == spirv_cross::SPIRType::Struct)
 		{
-			U32 idx = MAX_U32;
+			U32 idx = kMaxU32;
 			Bool memberSkipped = false;
 			ANKI_CHECK(structReflection(type.member_types[i], memberType, depth + 1, memberSkipped, structs, idx));
 
@@ -333,7 +333,7 @@ Error SpirvReflector::structReflection(uint32_t id, const spirv_cross::SPIRType&
 		else
 		{
 			ANKI_SHADER_COMPILER_LOGE("Unhandled base type for member: %s", name.c_str());
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 
 		// Update offsets and alignments
@@ -360,13 +360,13 @@ Error SpirvReflector::structReflection(uint32_t id, const spirv_cross::SPIRType&
 		skipped = true;
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error SpirvReflector::blockVariablesReflection(spirv_cross::TypeID resourceId, DynamicArrayAuto<Var>& vars) const
 {
 	Bool found = false;
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 	ir.for_each_typed_id<spirv_cross::SPIRType>([&](uint32_t, const spirv_cross::SPIRType& type) {
 		if(err)
 		{
@@ -387,10 +387,10 @@ Error SpirvReflector::blockVariablesReflection(spirv_cross::TypeID resourceId, D
 	if(!found)
 	{
 		ANKI_SHADER_COMPILER_LOGE("Can't determine the type of a block");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error SpirvReflector::blockVariableReflection(const spirv_cross::SPIRType& type, CString parentVariable, U32 baseOffset,
@@ -440,7 +440,7 @@ Error SpirvReflector::blockVariableReflection(const spirv_cross::SPIRType& type,
 				if(memberType.array.size() > 1)
 				{
 					ANKI_SHADER_COMPILER_LOGE("Can't support multi-dimentional arrays at the moment");
-					return Error::USER_DATA;
+					return Error::kUserData;
 				}
 
 				const Bool notSpecConstantArraySize = memberType.array_size_literal[0];
@@ -516,13 +516,13 @@ Error SpirvReflector::blockVariableReflection(const spirv_cross::SPIRType& type,
 			if(var.m_type == ShaderVariableDataType::NONE)
 			{
 				ANKI_SHADER_COMPILER_LOGE("Unhandled numeric member: %s", var.m_name.cstr());
-				return Error::FUNCTION_FAILED;
+				return Error::kFunctionFailed;
 			}
 		}
 		else
 		{
 			ANKI_SHADER_COMPILER_LOGE("Unhandled base type for member: %s", var.m_name.cstr());
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 
 		// Store the member if it's no struct
@@ -532,7 +532,7 @@ Error SpirvReflector::blockVariableReflection(const spirv_cross::SPIRType& type,
 		}
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error SpirvReflector::blockReflection(const spirv_cross::Resource& res, [[maybe_unused]] Bool isStorage,
@@ -550,12 +550,12 @@ Error SpirvReflector::blockReflection(const spirv_cross::Resource& res, [[maybe_
 		if(name.length() == 0)
 		{
 			ANKI_SHADER_COMPILER_LOGE("Can't accept zero name length");
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 
 		if(m_interface->skipSymbol(name.c_str()))
 		{
-			return Error::NONE;
+			return Error::kNone;
 		}
 
 		newBlock.m_name.create(name.c_str());
@@ -568,7 +568,7 @@ Error SpirvReflector::blockReflection(const spirv_cross::Resource& res, [[maybe_
 		if(newBlock.m_set >= MAX_DESCRIPTOR_SETS)
 		{
 			ANKI_SHADER_COMPILER_LOGE("Too high descriptor set: %u", newBlock.m_set);
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 	}
 
@@ -595,7 +595,7 @@ Error SpirvReflector::blockReflection(const spirv_cross::Resource& res, [[maybe_
 		if(err0 || err1)
 		{
 			ANKI_SHADER_COMPILER_LOGE("Linking error. Blocks %s and %s", other.m_name.cstr(), newBlock.m_name.cstr());
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 
 		if(bindingSame)
@@ -622,7 +622,7 @@ Error SpirvReflector::blockReflection(const spirv_cross::Resource& res, [[maybe_
 	}
 #endif
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error SpirvReflector::spirvTypeToAnki(const spirv_cross::SPIRType& type, ShaderVariableDataType& out) const
@@ -658,10 +658,10 @@ Error SpirvReflector::spirvTypeToAnki(const spirv_cross::SPIRType& type, ShaderV
 		break;
 	default:
 		ANKI_SHADER_COMPILER_LOGE("Can't determine the type");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error SpirvReflector::opaqueReflection(const spirv_cross::Resource& res, DynamicArrayAuto<Opaque>& opaques) const
@@ -677,12 +677,12 @@ Error SpirvReflector::opaqueReflection(const spirv_cross::Resource& res, Dynamic
 	if(name.length() == 0)
 	{
 		ANKI_SHADER_COMPILER_LOGE("Can't accept zero length name");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	if(m_interface->skipSymbol(name.c_str()))
 	{
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	newOpaque.m_name.create(name.c_str());
@@ -695,7 +695,7 @@ Error SpirvReflector::opaqueReflection(const spirv_cross::Resource& res, Dynamic
 	if(newOpaque.m_set >= MAX_DESCRIPTOR_SETS)
 	{
 		ANKI_SHADER_COMPILER_LOGE("Too high descriptor set: %u", newOpaque.m_set);
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	// Binding
@@ -713,7 +713,7 @@ Error SpirvReflector::opaqueReflection(const spirv_cross::Resource& res, Dynamic
 	else
 	{
 		ANKI_SHADER_COMPILER_LOGE("Can't support multi-dimensional arrays: %s", newOpaque.m_name.cstr());
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	// Add it
@@ -729,7 +729,7 @@ Error SpirvReflector::opaqueReflection(const spirv_cross::Resource& res, Dynamic
 		if(err)
 		{
 			ANKI_SHADER_COMPILER_LOGE("Linking error");
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 
 		if(nameSame)
@@ -744,7 +744,7 @@ Error SpirvReflector::opaqueReflection(const spirv_cross::Resource& res, Dynamic
 		opaques.emplaceBack(std::move(newOpaque));
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error SpirvReflector::constsReflection(DynamicArrayAuto<Const>& consts) const
@@ -761,7 +761,7 @@ Error SpirvReflector::constsReflection(DynamicArrayAuto<Const>& consts) const
 		if(name.length() == 0)
 		{
 			ANKI_SHADER_COMPILER_LOGE("Can't accept zero legth name");
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 		newConst.m_name.create(name.c_str());
 
@@ -780,7 +780,7 @@ Error SpirvReflector::constsReflection(DynamicArrayAuto<Const>& consts) const
 			break;
 		default:
 			ANKI_SHADER_COMPILER_LOGE("Can't determine the type of the spec constant: %s", name.c_str());
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 
 		// Search for it
@@ -796,7 +796,7 @@ Error SpirvReflector::constsReflection(DynamicArrayAuto<Const>& consts) const
 			if(err0 || err1)
 			{
 				ANKI_SHADER_COMPILER_LOGE("Linking error");
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 
 			if(idSame)
@@ -813,7 +813,7 @@ Error SpirvReflector::constsReflection(DynamicArrayAuto<Const>& consts) const
 		}
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error SpirvReflector::workgroupSizes(U32& sizex, U32& sizey, U32& sizez, U32& specConstMask)
@@ -862,7 +862,7 @@ Error SpirvReflector::workgroupSizes(U32& sizex, U32& sizey, U32& sizez, U32& sp
 		}
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error SpirvReflector::performSpirvReflection(Array<ConstWeakArray<U8>, U32(ShaderType::kCount)> spirv,
@@ -911,7 +911,7 @@ Error SpirvReflector::performSpirvReflection(Array<ConstWeakArray<U8>, U32(Shade
 		else if(compiler.get_shader_resources().push_constant_buffers.size() > 1)
 		{
 			ANKI_SHADER_COMPILER_LOGE("Expecting only a single push constants block");
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 
 		// Opaque
@@ -1012,13 +1012,13 @@ Error SpirvReflector::performSpirvReflection(Array<ConstWeakArray<U8>, U32(Shade
 		{
 			const StructMember& sm = s.m_members[j];
 			ANKI_CHECK(interface.visitStructMember(i, s.m_name, j, sm.m_name, sm.m_type,
-												   (sm.m_structIndex != MAX_U32) ? structs[sm.m_structIndex].m_name
+												   (sm.m_structIndex != kMaxU32) ? structs[sm.m_structIndex].m_name
 																				 : CString(),
 												   sm.m_offset, sm.m_arraySize));
 		}
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error performSpirvReflection(Array<ConstWeakArray<U8>, U32(ShaderType::kCount)> spirv,

@@ -61,7 +61,7 @@ Error Font::init(const CString& filename, ConstWeakArray<U32> fontHeights)
 	createTexture(img, width, height);
 
 	unsetImAllocator();
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void Font::createTexture(const void* data, U32 width, U32 height)

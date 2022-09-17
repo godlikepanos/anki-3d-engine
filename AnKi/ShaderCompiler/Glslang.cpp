@@ -200,7 +200,7 @@ static EShLanguage ankiToGlslangShaderType(ShaderType shaderType)
 /// Parse Glslang's error message for the line of the error.
 static Error parseErrorLine(CString error, GenericMemoryPoolAllocator<U8> alloc, U32& lineNumber)
 {
-	lineNumber = MAX_U32;
+	lineNumber = kMaxU32;
 
 	StringListAuto lines(alloc);
 	lines.splitString(error, '\n');
@@ -211,11 +211,11 @@ static Error parseErrorLine(CString error, GenericMemoryPoolAllocator<U8> alloc,
 			StringListAuto tokens(alloc);
 			tokens.splitString(line, ':');
 
-			if(tokens.getSize() < 3 || (tokens.getBegin() + 2)->toNumber(lineNumber) != Error::NONE)
+			if(tokens.getSize() < 3 || (tokens.getBegin() + 2)->toNumber(lineNumber) != Error::kNone)
 			{
 
 				ANKI_SHADER_COMPILER_LOGE("Failed to parse the GLSlang error message: %s", error.cstr());
-				return Error::FUNCTION_FAILED;
+				return Error::kFunctionFailed;
 			}
 			else
 			{
@@ -224,7 +224,7 @@ static Error parseErrorLine(CString error, GenericMemoryPoolAllocator<U8> alloc,
 		}
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 static void createErrorLog(CString glslangError, CString source, GenericMemoryPoolAllocator<U8> alloc,
@@ -269,12 +269,12 @@ Error preprocessGlsl(CString in, StringAuto& out)
 	if(!shader.preprocess(&GLSLANG_LIMITS, 450, ENoProfile, false, false, messages, &glslangOut, includer))
 	{
 		ANKI_SHADER_COMPILER_LOGE("Preprocessing failed:\n%s", shader.getInfoLog());
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	out.append(glslangOut.c_str());
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error compilerGlslToSpirv(CString src, ShaderType shaderType, GenericMemoryPoolAllocator<U8> tmpAlloc,
@@ -308,7 +308,7 @@ Error compilerGlslToSpirv(CString src, ShaderType shaderType, GenericMemoryPoolA
 	if(!shader.parse(&GLSLANG_LIMITS, 100, false, messages))
 	{
 		createErrorLog(shader.getInfoLog(), src, tmpAlloc, errorMessage);
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	// Setup the program
@@ -318,7 +318,7 @@ Error compilerGlslToSpirv(CString src, ShaderType shaderType, GenericMemoryPoolA
 	if(!program.link(messages))
 	{
 		errorMessage.create("glslang failed to link a shader");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	// Gen SPIRV
@@ -348,7 +348,7 @@ Error compilerGlslToSpirv(CString src, ShaderType shaderType, GenericMemoryPoolA
 	}
 #endif
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

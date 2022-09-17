@@ -32,7 +32,7 @@ Error StdinListener::create(HeapAllocator<String>& alloc)
 	m_alloc = alloc;
 	m_thrd.start(this, workingFunc);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error StdinListener::workingFunc(ThreadCallbackInfo& info)
@@ -52,7 +52,7 @@ Error StdinListener::workingFunc(ThreadCallbackInfo& info)
 		self.m_q.getBack().create(alloc, &buff[0]);
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 String StdinListener::getLine()

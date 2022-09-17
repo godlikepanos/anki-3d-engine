@@ -28,7 +28,7 @@ Error EventManager::init(SceneGraph* scene)
 {
 	ANKI_ASSERT(scene);
 	m_scene = scene;
-	return Error::NONE;
+	return Error::kNone;
 }
 
 SceneAllocator<U8> EventManager::getAllocator() const
@@ -43,7 +43,7 @@ SceneFrameAllocator<U8> EventManager::getFrameAllocator() const
 
 Error EventManager::updateAllEvents(Second prevUpdateTime, Second crntTime)
 {
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 
 	for(Event& event : m_events)
 	{

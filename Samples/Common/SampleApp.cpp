@@ -37,7 +37,7 @@ Error SampleApp::init(int argc, char** argv, CString sampleName)
 
 	ANKI_CHECK(sampleExtraInit());
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
@@ -53,7 +53,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 	if(in.getKey(KeyCode::ESCAPE))
 	{
 		quit = true;
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	if(in.getKey(KeyCode::BACKQUOTE) == 1)
@@ -331,5 +331,5 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		in.hideCursor(false);
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }

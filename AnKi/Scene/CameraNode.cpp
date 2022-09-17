@@ -34,7 +34,7 @@ public:
 			cam.onMoveComponentUpdate(move);
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 

@@ -155,11 +155,11 @@ private:
 
 	BufferPtr m_vertexBuffer; ///< Contains all data (vertices and indices).
 
-	PtrSize m_vertexBuffersOffset = MAX_PTR_SIZE; ///< Used for deallocation.
+	PtrSize m_vertexBuffersOffset = kMaxPtrSize; ///< Used for deallocation.
 	PtrSize m_vertexBuffersSize = 0; ///< Used for deallocation.
 	U32 m_vertexCount = 0;
 
-	PtrSize m_indexBufferOffset = MAX_PTR_SIZE; ///< The offset from the base of m_vertexBuffer.
+	PtrSize m_indexBufferOffset = kMaxPtrSize; ///< The offset from the base of m_vertexBuffer.
 	U32 m_indexCount = 0; ///< Total index count as if all submeshes are a single submesh.
 	IndexType m_indexType;
 

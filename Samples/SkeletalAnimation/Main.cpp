@@ -32,7 +32,7 @@ public:
 			.playAnimation(0, m_floatAnim, animInfo);
 
 		getConfig().setRBloomThreshold(5.0f);
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	Error userMainLoop(Bool& quit, Second elapsedTime) override
@@ -56,7 +56,7 @@ public:
 
 int main(int argc, char* argv[])
 {
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 
 	MyApp* app = new MyApp;
 	err = app->init(argc, argv, "SkeletalAnimation");

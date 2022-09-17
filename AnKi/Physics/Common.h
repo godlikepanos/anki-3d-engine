@@ -86,7 +86,7 @@ enum class PhysicsMaterialBit : U64
 	PLAYER = 1 << 3,
 	PARTICLE = 1 << 4,
 
-	ALL = MAX_U64
+	ALL = kMaxU64
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(PhysicsMaterialBit)
 

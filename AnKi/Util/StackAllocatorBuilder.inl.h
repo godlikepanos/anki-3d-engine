@@ -43,7 +43,7 @@ Error StackAllocatorBuilder<TChunk, TInterface, TLock>::allocate(PtrSize size, [
 	ANKI_ASSERT(size > 0);
 
 	chunk = nullptr;
-	offset = MAX_PTR_SIZE;
+	offset = kMaxPtrSize;
 
 	while(true)
 	{
@@ -150,8 +150,8 @@ Error StackAllocatorBuilder<TChunk, TInterface, TLock>::allocate(PtrSize size, [
 		}
 	}
 
-	ANKI_ASSERT(chunk && offset != MAX_PTR_SIZE);
-	return Error::NONE;
+	ANKI_ASSERT(chunk && offset != kMaxPtrSize);
+	return Error::kNone;
 }
 
 template<typename TChunk, typename TInterface, typename TLock>

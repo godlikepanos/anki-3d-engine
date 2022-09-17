@@ -49,7 +49,7 @@ public:
 		width = m_lastMipSize.x();
 		height = m_lastMipSize.y();
 		ANKI_ASSERT(m_clientBuffer);
-		m_clientBuffer->invalidate(0, MAX_PTR_SIZE);
+		m_clientBuffer->invalidate(0, kMaxPtrSize);
 		depthValues = static_cast<F32*>(m_clientBufferAddr);
 	}
 

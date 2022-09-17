@@ -18,9 +18,9 @@ Error TransferGpuAllocator::StackAllocatorBuilderInterface::allocateChunk(PtrSiz
 	BufferInitInfo bufferInit(size, BufferUsageBit::TRANSFER_SOURCE, BufferMapAccessBit::WRITE, "Transfer");
 	out->m_buffer = m_parent->m_gr->newBuffer(bufferInit);
 
-	out->m_mappedBuffer = out->m_buffer->map(0, MAX_PTR_SIZE, BufferMapAccessBit::WRITE);
+	out->m_mappedBuffer = out->m_buffer->map(0, kMaxPtrSize, BufferMapAccessBit::WRITE);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void TransferGpuAllocator::StackAllocatorBuilderInterface::freeChunk(Chunk* chunk)
@@ -58,7 +58,7 @@ Error TransferGpuAllocator::init(PtrSize maxSize, GrManager* gr, ResourceAllocat
 		pool.m_stackAlloc.getInterface().m_parent = this;
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error TransferGpuAllocator::allocate(PtrSize size, TransferGpuAllocatorHandle& handle)
@@ -144,7 +144,7 @@ Error TransferGpuAllocator::allocate(PtrSize size, TransferGpuAllocatorHandle& h
 		}
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void TransferGpuAllocator::release(TransferGpuAllocatorHandle& handle, FencePtr fence)

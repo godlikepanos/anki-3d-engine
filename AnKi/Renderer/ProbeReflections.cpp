@@ -60,7 +60,7 @@ Error ProbeReflections::initInternal()
 	sinit.m_addressing = SamplingAddressing::kClamp;
 	m_integrationLutSampler = getGrManager().newSampler(sinit);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ProbeReflections::initGBuffer()
@@ -105,7 +105,7 @@ Error ProbeReflections::initGBuffer()
 		m_gbuffer.m_fbDescr.bake();
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ProbeReflections::initLightShading()
@@ -131,7 +131,7 @@ Error ProbeReflections::initLightShading()
 	// Init deferred
 	ANKI_CHECK(m_lightShading.m_deferred.init());
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ProbeReflections::initIrradiance()
@@ -163,7 +163,7 @@ Error ProbeReflections::initIrradiance()
 		m_irradiance.m_diceValuesBuff = getGrManager().newBuffer(init);
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ProbeReflections::initIrradianceToRefl()
@@ -177,7 +177,7 @@ Error ProbeReflections::initIrradianceToRefl()
 												  variant);
 	m_irradianceToRefl.m_grProg = variant->getProgram();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ProbeReflections::initShadowMapping()
@@ -197,7 +197,7 @@ Error ProbeReflections::initShadowMapping()
 	m_shadowMapping.m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
 	m_shadowMapping.m_fbDescr.bake();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void ProbeReflections::initCacheEntry(U32 cacheEntryIdx)
@@ -221,7 +221,7 @@ void ProbeReflections::prepareProbes(RenderingContext& ctx, ReflectionProbeQueue
 									 U32& probeToUpdateThisFrameCacheEntryIdx)
 {
 	probeToUpdateThisFrame = nullptr;
-	probeToUpdateThisFrameCacheEntryIdx = MAX_U32;
+	probeToUpdateThisFrameCacheEntryIdx = kMaxU32;
 
 	if(ANKI_UNLIKELY(ctx.m_renderQueue->m_reflectionProbes.getSize() == 0))
 	{
@@ -243,7 +243,7 @@ void ProbeReflections::prepareProbes(RenderingContext& ctx, ReflectionProbeQueue
 		// Find cache entry
 		const U32 cacheEntryIdx = findBestCacheEntry(probe.m_uuid, m_r->getGlobalTimestamp(), m_cacheEntries,
 													 m_probeUuidToCacheEntryIdx, getAllocator());
-		if(ANKI_UNLIKELY(cacheEntryIdx == MAX_U32))
+		if(ANKI_UNLIKELY(cacheEntryIdx == kMaxU32))
 		{
 			// Failed
 			ANKI_R_LOGW("There is not enough space in the indirect lighting atlas for more probes. "
@@ -365,7 +365,7 @@ void ProbeReflections::runGBuffer(RenderPassWorkContext& rgraphCtx)
 	}
 
 	// Restore state
-	cmdb->setScissor(0, 0, MAX_U32, MAX_U32);
+	cmdb->setScissor(0, 0, kMaxU32, kMaxU32);
 }
 
 void ProbeReflections::runLightShading(U32 faceIdx, const RenderingContext& rctx, RenderPassWorkContext& rgraphCtx)

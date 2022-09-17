@@ -148,7 +148,7 @@ Error DepthDownscale::initInternal()
 		}
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error DepthDownscale::init()
@@ -248,10 +248,10 @@ void DepthDownscale::runCompute(RenderPassWorkContext& rgraphCtx)
 	{
 		m_counterBufferZeroed = true;
 
-		cmdb->fillBuffer(m_counterBuffer, 0, MAX_PTR_SIZE, 0);
+		cmdb->fillBuffer(m_counterBuffer, 0, kMaxPtrSize, 0);
 
 		const BufferBarrierInfo barrier = {m_counterBuffer.get(), BufferUsageBit::TRANSFER_DESTINATION,
-										   BufferUsageBit::STORAGE_COMPUTE_WRITE, 0, MAX_PTR_SIZE};
+										   BufferUsageBit::STORAGE_COMPUTE_WRITE, 0, kMaxPtrSize};
 		cmdb->setPipelineBarrier({}, {&barrier, 1}, {});
 	}
 
@@ -302,8 +302,8 @@ void DepthDownscale::runCompute(RenderPassWorkContext& rgraphCtx)
 		rgraphCtx.bindImage(0, 1, m_runCtx.m_hizRt, subresource);
 	}
 
-	cmdb->bindStorageBuffer(0, 2, m_counterBuffer, 0, MAX_PTR_SIZE);
-	cmdb->bindStorageBuffer(0, 3, m_clientBuffer, 0, MAX_PTR_SIZE);
+	cmdb->bindStorageBuffer(0, 2, m_counterBuffer, 0, kMaxPtrSize);
+	cmdb->bindStorageBuffer(0, 3, m_clientBuffer, 0, kMaxPtrSize);
 
 	cmdb->bindSampler(0, 4, m_r->getSamplers().m_trilinearClamp);
 	rgraphCtx.bindTexture(0, 5, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
@@ -342,7 +342,7 @@ void DepthDownscale::runGraphics(U32 mip, RenderPassWorkContext& rgraphCtx)
 		cmdb->bindShaderProgram(m_grProg);
 	}
 
-	cmdb->bindStorageBuffer(0, 2, m_clientBuffer, 0, MAX_PTR_SIZE);
+	cmdb->bindStorageBuffer(0, 2, m_clientBuffer, 0, kMaxPtrSize);
 
 	const UVec4 pc((mip != m_mipCount - 1) ? 0 : m_lastMipSize.x());
 	cmdb->setPushConstants(&pc, sizeof(pc));

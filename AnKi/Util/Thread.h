@@ -102,7 +102,7 @@ private:
 	pthread_t m_handle = {};
 #else
 	HANDLE m_handle = 0; ///< The user date to pass to the callback.
-	Error m_returnCode = Error::NONE;
+	Error m_returnCode = Error::kNone;
 #endif
 	void* m_userData = nullptr; ///< The user date to pass to the callback.
 	Array<Char, kThreadNameMaxLength + 1> m_name = {}; ///< The name of the thread.
@@ -348,7 +348,7 @@ public:
 #if ANKI_POSIX
 		pthread_cond_wait(&m_handle, &mtx.m_handle);
 #else
-		SleepConditionVariableCS(&m_handle, &mtx.m_handle, MAX_U32);
+		SleepConditionVariableCS(&m_handle, &mtx.m_handle, kMaxU32);
 #endif
 	}
 
@@ -460,7 +460,7 @@ public:
 		{
 			while(gen == m_generation)
 			{
-				SleepConditionVariableCS(&m_cvar, &m_mtx, MAX_U32);
+				SleepConditionVariableCS(&m_cvar, &m_mtx, kMaxU32);
 			}
 		}
 

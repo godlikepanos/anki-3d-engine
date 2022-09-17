@@ -46,7 +46,7 @@ Error GpuMemoryManagerInterface::allocateChunk(U32 classIdx, GpuMemoryManagerChu
 
 	m_allocatedMemory += m_classInfos[classIdx].m_chunkSize;
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void GpuMemoryManagerInterface::freeChunk(GpuMemoryManagerChunk* chunk)
@@ -244,7 +244,7 @@ void* GpuMemoryManager::getMappedAddress(GpuMemoryHandle& handle)
 U32 GpuMemoryManager::findMemoryType(U32 resourceMemTypeBits, VkMemoryPropertyFlags preferFlags,
 									 VkMemoryPropertyFlags avoidFlags) const
 {
-	U32 prefered = MAX_U32;
+	U32 prefered = kMaxU32;
 
 	// Iterate all mem types
 	for(U32 i = 0; i < m_memoryProperties.memoryTypeCount; i++)
@@ -257,7 +257,7 @@ U32 GpuMemoryManager::findMemoryType(U32 resourceMemTypeBits, VkMemoryPropertyFl
 			{
 				// It's the candidate we want
 
-				if(prefered == MAX_U32)
+				if(prefered == kMaxU32)
 				{
 					prefered = i;
 				}

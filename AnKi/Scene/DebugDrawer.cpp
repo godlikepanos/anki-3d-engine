@@ -76,7 +76,7 @@ Error DebugDrawer2::init(ResourceManager* rsrcManager)
 		bufferInit.m_mapAccess = BufferMapAccessBit::WRITE;
 		m_cubePositionsBuffer = rsrcManager->getGrManager().newBuffer(bufferInit);
 
-		Vec3* verts = static_cast<Vec3*>(m_cubePositionsBuffer->map(0, MAX_PTR_SIZE, BufferMapAccessBit::WRITE));
+		Vec3* verts = static_cast<Vec3*>(m_cubePositionsBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::WRITE));
 
 		const F32 size = 1.0f;
 		verts[0] = Vec3(size, size, size); // front top right
@@ -88,7 +88,7 @@ Error DebugDrawer2::init(ResourceManager* rsrcManager)
 		verts[6] = Vec3(-size, -size, -size); // back bottom left
 		verts[7] = Vec3(size, -size, -size); // back bottom right
 
-		m_cubePositionsBuffer->flush(0, MAX_PTR_SIZE);
+		m_cubePositionsBuffer->flush(0, kMaxPtrSize);
 		m_cubePositionsBuffer->unmap();
 	}
 
@@ -101,7 +101,7 @@ Error DebugDrawer2::init(ResourceManager* rsrcManager)
 		bufferInit.m_mapAccess = BufferMapAccessBit::WRITE;
 		m_cubeIndicesBuffer = rsrcManager->getGrManager().newBuffer(bufferInit);
 
-		U16* indices = static_cast<U16*>(m_cubeIndicesBuffer->map(0, MAX_PTR_SIZE, BufferMapAccessBit::WRITE));
+		U16* indices = static_cast<U16*>(m_cubeIndicesBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::WRITE));
 
 		U32 indexCount = 0;
 		indices[indexCount++] = 0;
@@ -131,11 +131,11 @@ Error DebugDrawer2::init(ResourceManager* rsrcManager)
 		indices[indexCount++] = 3;
 		indices[indexCount++] = 7;
 
-		m_cubeIndicesBuffer->flush(0, MAX_PTR_SIZE);
+		m_cubeIndicesBuffer->flush(0, kMaxPtrSize);
 		m_cubeIndicesBuffer->unmap();
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void DebugDrawer2::drawCubes(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 lineSize, Bool ditherFailedDepth,

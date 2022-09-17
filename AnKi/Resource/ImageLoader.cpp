@@ -187,7 +187,7 @@ public:
 	virtual PtrSize getSize() const
 	{
 		ANKI_ASSERT(!"Not Implemented");
-		return MAX_PTR_SIZE;
+		return kMaxPtrSize;
 	}
 };
 
@@ -248,7 +248,7 @@ Error ImageLoader::loadUncompressedTga(FileInterface& fs, U32& width, U32& heigh
 	if((width == 0) || (height == 0) || ((bpp != 24) && (bpp != 32)))
 	{
 		ANKI_RESOURCE_LOGE("Invalid image information");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	// Read the data
@@ -266,7 +266,7 @@ Error ImageLoader::loadUncompressedTga(FileInterface& fs, U32& width, U32& heigh
 		data[i + 2] = temp;
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ImageLoader::loadCompressedTga(FileInterface& fs, U32& width, U32& height, U32& bpp,
@@ -282,7 +282,7 @@ Error ImageLoader::loadCompressedTga(FileInterface& fs, U32& width, U32& height,
 	if((width <= 0) || (height <= 0) || ((bpp != 24) && (bpp != 32)))
 	{
 		ANKI_RESOURCE_LOGE("Invalid image information");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	const PtrSize bytesPerPxl = (bpp / 8);
@@ -322,7 +322,7 @@ Error ImageLoader::loadCompressedTga(FileInterface& fs, U32& width, U32& height,
 				if(currentPixel > pixelCount)
 				{
 					ANKI_RESOURCE_LOGE("Too many pixels read");
-					return Error::USER_DATA;
+					return Error::kUserData;
 				}
 			}
 		}
@@ -349,13 +349,13 @@ Error ImageLoader::loadCompressedTga(FileInterface& fs, U32& width, U32& height,
 				{
 					ANKI_RESOURCE_LOGE("Too many pixels read");
 					data.destroy(alloc);
-					return Error::USER_DATA;
+					return Error::kUserData;
 				}
 			}
 		}
 	} while(currentPixel < pixelCount);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ImageLoader::loadTga(FileInterface& fs, U32& width, U32& height, U32& bpp, DynamicArray<U8, PtrSize>& data,
@@ -376,16 +376,16 @@ Error ImageLoader::loadTga(FileInterface& fs, U32& width, U32& height, U32& bpp,
 	else
 	{
 		ANKI_RESOURCE_LOGE("Invalid image header");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	if(bpp != 32 && bpp != 24)
 	{
 		ANKI_RESOURCE_LOGE("Invalid bpp");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ImageLoader::loadAnkiImage(FileInterface& file, U32 maxImageSize,
@@ -404,32 +404,32 @@ Error ImageLoader::loadAnkiImage(FileInterface& file, U32 maxImageSize,
 	if(std::memcmp(&header.m_magic[0], IMAGE_MAGIC, sizeof(IMAGE_MAGIC) - 1) != 0)
 	{
 		ANKI_RESOURCE_LOGE("Wrong magic word");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	if(header.m_width == 0 || !isPowerOfTwo(header.m_width) || header.m_width > 4096 || header.m_height == 0
 	   || !isPowerOfTwo(header.m_height) || header.m_height > 4096)
 	{
 		ANKI_RESOURCE_LOGE("Incorrect width/height value");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	if(header.m_depthOrLayerCount < 1 || header.m_depthOrLayerCount > 4096)
 	{
 		ANKI_RESOURCE_LOGE("Zero or too big depth or layerCount");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	if(header.m_type < ImageBinaryType::_2D || header.m_type > ImageBinaryType::_2D_ARRAY)
 	{
 		ANKI_RESOURCE_LOGE("Incorrect header: image type");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	if(header.m_colorFormat < ImageBinaryColorFormat::RGB8 || header.m_colorFormat > ImageBinaryColorFormat::RGBAF32)
 	{
 		ANKI_RESOURCE_LOGE("Incorrect header: color format");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	if(!!(header.m_compressionMask & ImageBinaryDataCompression::ASTC))
@@ -438,7 +438,7 @@ Error ImageLoader::loadAnkiImage(FileInterface& file, U32 maxImageSize,
 		   || (header.m_astcBlockSizeY != 8 && header.m_astcBlockSizeY != 4))
 		{
 			ANKI_RESOURCE_LOGE("Incorrect header: ASTC block size");
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 	}
 
@@ -450,14 +450,14 @@ Error ImageLoader::loadAnkiImage(FileInterface& file, U32 maxImageSize,
 		if(!(header.m_compressionMask & preferredCompression))
 		{
 			ANKI_RESOURCE_LOGE("File does not contain raw compression");
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 	}
 
 	if(header.m_isNormal != 0 && header.m_isNormal != 1)
 	{
 		ANKI_RESOURCE_LOGE("Incorrect header: normal");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	// Set a few things
@@ -592,7 +592,7 @@ Error ImageLoader::loadAnkiImage(FileInterface& file, U32 maxImageSize,
 
 		width = surfaces[0].m_width;
 		height = surfaces[0].m_height;
-		depth = MAX_U32;
+		depth = kMaxU32;
 	}
 	else
 	{
@@ -632,7 +632,7 @@ Error ImageLoader::loadAnkiImage(FileInterface& file, U32 maxImageSize,
 		depth = volumes[0].m_depth;
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ImageLoader::loadStb(Bool isFloat, FileInterface& fs, U32& width, U32& height, DynamicArray<U8, PtrSize>& data,
@@ -660,7 +660,7 @@ Error ImageLoader::loadStb(Bool isFloat, FileInterface& fs, U32& width, U32& hei
 	if(!stbdata)
 	{
 		ANKI_RESOURCE_LOGE("STB failed to read image");
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	// Store it
@@ -673,7 +673,7 @@ Error ImageLoader::loadStb(Bool isFloat, FileInterface& fs, U32& width, U32& hei
 	// Cleanup
 	stbi_image_free(stbdata);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ImageLoader::load(ResourceFilePtr rfile, const CString& filename, U32 maxImageSize)
@@ -713,7 +713,7 @@ Error ImageLoader::loadInternal(FileInterface& file, const CString& filename, U3
 	if(ext.isEmpty())
 	{
 		ANKI_RESOURCE_LOGE("Failed to get filename extension");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	// load from this extension
@@ -788,10 +788,10 @@ Error ImageLoader::loadInternal(FileInterface& file, const CString& filename, U3
 	else
 	{
 		ANKI_RESOURCE_LOGE("Unsupported extension: %s", &ext[0]);
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 const ImageLoaderSurface& ImageLoader::getSurface(U32 level, U32 face, U32 layer) const

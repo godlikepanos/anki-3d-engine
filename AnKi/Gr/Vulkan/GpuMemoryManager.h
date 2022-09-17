@@ -51,7 +51,7 @@ class GpuMemoryManagerInterface
 public:
 	GpuMemoryManager* m_parent = nullptr;
 
-	U8 m_memTypeIdx = MAX_U8;
+	U8 m_memTypeIdx = kMaxU8;
 	Bool m_exposesBufferGpuAddress = false;
 
 	Bool m_isDeviceMemory = false;
@@ -86,17 +86,17 @@ class GpuMemoryHandle
 
 public:
 	VkDeviceMemory m_memory = VK_NULL_HANDLE;
-	PtrSize m_offset = MAX_PTR_SIZE;
+	PtrSize m_offset = kMaxPtrSize;
 
 	explicit operator Bool() const
 	{
-		return m_memory != VK_NULL_HANDLE && m_offset < MAX_PTR_SIZE && m_memTypeIdx < MAX_U8;
+		return m_memory != VK_NULL_HANDLE && m_offset < kMaxPtrSize && m_memTypeIdx < kMaxU8;
 	}
 
 private:
 	GpuMemoryManagerChunk* m_chunk = nullptr;
-	PtrSize m_size = MAX_PTR_SIZE;
-	U8 m_memTypeIdx = MAX_U8;
+	PtrSize m_size = kMaxPtrSize;
+	U8 m_memTypeIdx = kMaxU8;
 
 	Bool isDedicated() const
 	{

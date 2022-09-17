@@ -75,7 +75,7 @@ void CommandBuffer::bindVertexBuffer(U32 binding, BufferPtr buff, PtrSize offset
 		{
 			glBindVertexBuffer(m_binding, static_cast<const BufferImpl&>(*m_buff).getGlName(), m_offset, m_stride);
 			glVertexBindingDivisor(m_binding, (m_instanced) ? 1 : 0);
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -115,7 +115,7 @@ void CommandBuffer::setVertexAttribute(U32 location, U32 buffBinding, Format fmt
 		{
 			glVertexAttribFormat(m_location, m_compSize, m_fmt, m_normalized, m_relativeOffset);
 			glVertexAttribBinding(m_location, m_buffBinding);
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -148,7 +148,7 @@ void CommandBuffer::bindIndexBuffer(BufferPtr buff, PtrSize offset, IndexType ty
 		Error operator()(GlState& state)
 		{
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<const BufferImpl&>(*m_buff).getGlName());
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -184,7 +184,7 @@ void CommandBuffer::setPrimitiveRestart(Bool enable)
 				glDisable(GL_PRIMITIVE_RESTART);
 			}
 
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -210,7 +210,7 @@ void CommandBuffer::setViewport(U32 minx, U32 miny, U32 width, U32 height)
 		Error operator()(GlState& state)
 		{
 			glViewport(m_value[0], m_value[1], m_value[2], m_value[3]);
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -223,7 +223,7 @@ void CommandBuffer::setViewport(U32 minx, U32 miny, U32 width, U32 height)
 
 void CommandBuffer::setScissor(U32 minx, U32 miny, U32 width, U32 height)
 {
-	ANKI_ASSERT(minx < MAX_U32 && miny < MAX_U32);
+	ANKI_ASSERT(minx < kMaxU32 && miny < kMaxU32);
 	ANKI_ASSERT(width > 0 && height > 0);
 
 	class ScissorCommand final : public GlCommand
@@ -244,13 +244,13 @@ void CommandBuffer::setScissor(U32 minx, U32 miny, U32 width, U32 height)
 				state.m_scissor = m_value;
 				glScissor(m_value[0], m_value[1], m_value[2], m_value[3]);
 			}
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
 	// Limit the width and height to GLsizei
-	const GLsizei iwidth = (width == MAX_U32) ? MAX_I32 : width;
-	const GLsizei iheight = (height == MAX_U32) ? MAX_I32 : height;
+	const GLsizei iwidth = (width == kMaxU32) ? kMaxI32 : width;
+	const GLsizei iheight = (height == kMaxU32) ? kMaxI32 : height;
 	const GLsizei iminx = minx;
 	const GLsizei iminy = miny;
 
@@ -276,7 +276,7 @@ void CommandBuffer::setFillMode(FillMode mode)
 		Error operator()(GlState& state)
 		{
 			glPolygonMode(GL_FRONT_AND_BACK, m_fillMode);
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -302,7 +302,7 @@ void CommandBuffer::setCullMode(FaceSelectionBit mode)
 		Error operator()(GlState& state)
 		{
 			glCullFace(m_mode);
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -339,7 +339,7 @@ void CommandBuffer::setPolygonOffset(F32 factor, F32 units)
 				glPolygonOffset(m_factor, m_units);
 			}
 
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -372,7 +372,7 @@ void CommandBuffer::setStencilOperations(FaceSelectionBit face, StencilOperation
 		Error operator()(GlState& state)
 		{
 			glStencilOpSeparate(m_face, m_stencilFail, m_stencilPassDepthFail, m_stencilPassDepthPass);
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -429,7 +429,7 @@ void CommandBuffer::setStencilWriteMask(FaceSelectionBit face, U32 mask)
 				state.m_stencilWriteMask[0] = state.m_stencilWriteMask[1] = m_mask;
 			}
 
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -462,7 +462,7 @@ void CommandBuffer::setDepthWrite(Bool enable)
 		{
 			glDepthMask(m_enable);
 			state.m_depthWriteMask = m_enable;
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -488,7 +488,7 @@ void CommandBuffer::setDepthCompareOperation(CompareOperation op)
 		Error operator()(GlState& state)
 		{
 			glDepthFunc(m_op);
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -529,7 +529,7 @@ void CommandBuffer::setColorChannelWriteMask(U32 attachment, ColorBit mask)
 
 			state.m_colorWriteMasks[m_attachment] = {{r, g, b, a}};
 
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -564,7 +564,7 @@ void CommandBuffer::setBlendFactors(U32 attachment, BlendFactor srcRgb, BlendFac
 		Error operator()(GlState&)
 		{
 			glBlendFuncSeparatei(m_attachment, m_srcRgb, m_dstRgb, m_srcA, m_dstA);
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -595,7 +595,7 @@ void CommandBuffer::setBlendOperation(U32 attachment, BlendOperation funcRgb, Bl
 		Error operator()(GlState&)
 		{
 			glBlendEquationSeparatei(m_attachment, m_funcRgb, m_funcA);
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -627,7 +627,7 @@ void CommandBuffer::bindTextureAndSampler(U32 set, U32 binding, TextureViewPtr t
 		{
 			glBindTextureUnit(m_unit, static_cast<const TextureViewImpl&>(*m_texView).m_view.m_glName);
 			glBindSampler(m_unit, static_cast<const SamplerImpl&>(*m_sampler).getGlName());
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -663,7 +663,7 @@ void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrS
 		Error operator()(GlState&)
 		{
 			static_cast<const BufferImpl&>(*m_buff).bind(GL_UNIFORM_BUFFER, m_binding, m_offset, m_range);
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -699,7 +699,7 @@ void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrS
 		Error operator()(GlState&)
 		{
 			static_cast<const BufferImpl&>(*m_buff).bind(GL_SHADER_STORAGE_BUFFER, m_binding, m_offset, m_range);
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -734,7 +734,7 @@ void CommandBuffer::bindImage(U32 set, U32 binding, TextureViewPtr img)
 
 			glBindImageTexture(m_unit, view.m_view.m_glName, 0, GL_TRUE, 0, GL_READ_WRITE,
 							   static_cast<const TextureImpl&>(*view.m_tex).m_internalFormat);
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -779,7 +779,7 @@ void CommandBuffer::bindTextureBuffer(U32 set, U32 binding, BufferPtr buff, PtrS
 			const GLuint tex = state.m_texBuffTextures[m_set][m_binding];
 			glTextureBufferRange(tex, m_fmt, static_cast<const BufferImpl&>(*m_buff).getGlName(), m_offset, m_range);
 
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -814,7 +814,7 @@ void CommandBuffer::bindShaderProgram(ShaderProgramPtr prog)
 		{
 			state.m_crntProg = m_prog;
 			glUseProgram(static_cast<const ShaderProgramImpl&>(*m_prog).getGlName());
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -852,7 +852,7 @@ void CommandBuffer::beginRenderPass(FramebufferPtr fb,
 		{
 			static_cast<const FramebufferImpl&>(*m_fb).bind(state, m_renderArea[0], m_renderArea[1], m_renderArea[2],
 															m_renderArea[3]);
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -879,7 +879,7 @@ void CommandBuffer::endRenderPass()
 		Error operator()(GlState&)
 		{
 			m_fb->endRenderPass();
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -913,7 +913,7 @@ void CommandBuffer::drawElements(PrimitiveTopology topology, U32 count, U32 inst
 
 			ANKI_TRACE_INC_COUNTER(GR_DRAWCALLS, 1);
 			ANKI_TRACE_INC_COUNTER(GR_VERTICES, m_info.m_instanceCount * m_info.m_count);
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -960,7 +960,7 @@ void CommandBuffer::drawArrays(PrimitiveTopology topology, U32 count, U32 instan
 
 			ANKI_TRACE_INC_COUNTER(GR_DRAWCALLS, 1);
 			ANKI_TRACE_INC_COUNTER(GR_VERTICES, m_info.m_instanceCount * m_info.m_count);
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -1008,7 +1008,7 @@ void CommandBuffer::drawElementsIndirect(PrimitiveTopology topology, U32 drawCou
 										sizeof(DrawElementsIndirectInfo));
 
 			glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -1053,7 +1053,7 @@ void CommandBuffer::drawArraysIndirect(PrimitiveTopology topology, U32 drawCount
 									  sizeof(DrawArraysIndirectInfo));
 
 			glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -1079,7 +1079,7 @@ void CommandBuffer::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupC
 		Error operator()(GlState&)
 		{
 			glDispatchCompute(m_size[0], m_size[1], m_size[2]);
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -1110,7 +1110,7 @@ void CommandBuffer::beginOcclusionQuery(OcclusionQueryPtr query)
 		Error operator()(GlState&)
 		{
 			static_cast<OcclusionQueryImpl&>(*m_handle).begin();
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -1133,7 +1133,7 @@ void CommandBuffer::endOcclusionQuery(OcclusionQueryPtr query)
 		Error operator()(GlState&)
 		{
 			static_cast<OcclusionQueryImpl&>(*m_handle).end();
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -1166,7 +1166,7 @@ void CommandBuffer::copyBufferToTextureView(BufferPtr buff, PtrSize offset, PtrS
 
 			texImpl.copyFromBuffer(viewImpl.getSubresource(), static_cast<const BufferImpl&>(*m_buff).getGlName(),
 								   m_offset, m_range);
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -1204,7 +1204,7 @@ void CommandBuffer::copyBufferToBuffer(BufferPtr src, PtrSize srcOffset, BufferP
 		{
 			static_cast<BufferImpl&>(*m_dst).write(static_cast<const BufferImpl&>(*m_src).getGlName(), m_srcOffset,
 												   m_dstOffset, m_range);
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -1235,7 +1235,7 @@ void CommandBuffer::generateMipmaps2d(TextureViewPtr texView)
 			const TextureImpl& texImpl = static_cast<TextureImpl&>(*viewImpl.m_tex);
 
 			texImpl.generateMipmaps2d(viewImpl);
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -1300,7 +1300,7 @@ void CommandBuffer::setBufferBarrier(BufferPtr buff, BufferUsageBit prevUsage, B
 		Error operator()(GlState&)
 		{
 			glMemoryBarrier(m_barrier);
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -1378,7 +1378,7 @@ void CommandBuffer::setTextureBarrier(TexturePtr tex, TextureUsageBit prevUsage,
 		Error operator()(GlState&)
 		{
 			glMemoryBarrier(m_barrier);
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -1443,7 +1443,7 @@ void CommandBuffer::clearTextureView(TextureViewPtr texView, const ClearValue& c
 			const TextureImpl& texImpl = static_cast<TextureImpl&>(*viewImpl.m_tex);
 
 			texImpl.clear(viewImpl.getSubresource(), m_val);
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -1473,7 +1473,7 @@ void CommandBuffer::fillBuffer(BufferPtr buff, PtrSize offset, PtrSize size, U32
 		Error operator()(GlState&)
 		{
 			static_cast<BufferImpl&>(*m_buff).fill(m_offset, m_size, m_value);
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -1509,7 +1509,7 @@ void CommandBuffer::writeOcclusionQueryResultToBuffer(OcclusionQueryPtr query, P
 								numberToPtr<GLuint*>(m_offset));
 			glBindBuffer(GL_QUERY_BUFFER, 0);
 
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -1573,7 +1573,7 @@ void CommandBuffer::setPushConstants(const void* data, U32 dataSize)
 				}
 			}
 
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 

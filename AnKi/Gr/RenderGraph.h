@@ -57,11 +57,11 @@ public:
 
 	Bool isValid() const
 	{
-		return m_idx != MAX_U32;
+		return m_idx != kMaxU32;
 	}
 
 private:
-	U32 m_idx = MAX_U32;
+	U32 m_idx = kMaxU32;
 };
 
 /// Render target (TexturePtr) handle.
@@ -208,7 +208,7 @@ public:
 	{
 		BufferPtr buff;
 		getBufferState(handle, buff);
-		m_commandBuffer->bindStorageBuffer(set, binding, buff, 0, MAX_PTR_SIZE);
+		m_commandBuffer->bindStorageBuffer(set, binding, buff, 0, kMaxPtrSize);
 	}
 
 	/// Convenience method.
@@ -216,7 +216,7 @@ public:
 	{
 		BufferPtr buff;
 		getBufferState(handle, buff);
-		m_commandBuffer->bindUniformBuffer(set, binding, buff, 0, MAX_PTR_SIZE);
+		m_commandBuffer->bindUniformBuffer(set, binding, buff, 0, kMaxPtrSize);
 	}
 
 	/// Convenience method.
@@ -224,8 +224,8 @@ public:
 
 private:
 	const RenderGraph* m_rgraph ANKI_DEBUG_CODE(= nullptr);
-	U32 m_passIdx ANKI_DEBUG_CODE(= MAX_U32);
-	U32 m_batchIdx ANKI_DEBUG_CODE(= MAX_U32);
+	U32 m_passIdx ANKI_DEBUG_CODE(= kMaxU32);
+	U32 m_batchIdx ANKI_DEBUG_CODE(= kMaxU32);
 
 	TexturePtr getTexture(RenderTargetHandle handle) const;
 };
@@ -253,7 +253,7 @@ public:
 		, m_type(Type::TEXTURE)
 	{
 		ANKI_ASSERT(handle.isValid());
-		m_texture.m_subresource.m_mipmapCount = MAX_U32; // Mark it as "whole texture"
+		m_texture.m_subresource.m_mipmapCount = kMaxU32; // Mark it as "whole texture"
 		m_texture.m_subresource.m_depthStencilAspect = aspect;
 	}
 
@@ -446,13 +446,13 @@ public:
 							ConstWeakArray<RenderTargetHandle> colorRenderTargetHandles,
 							RenderTargetHandle depthStencilRenderTargetHandle = {},
 							RenderTargetHandle shadingRateRenderTargetHandle = {}, U32 minx = 0, U32 miny = 0,
-							U32 maxx = MAX_U32, U32 maxy = MAX_U32);
+							U32 maxx = kMaxU32, U32 maxy = kMaxU32);
 
 	void setFramebufferInfo(const FramebufferDescription& fbInfo,
 							std::initializer_list<RenderTargetHandle> colorRenderTargetHandles,
 							RenderTargetHandle depthStencilRenderTargetHandle = {},
 							RenderTargetHandle shadingRateRenderTargetHandle = {}, U32 minx = 0, U32 miny = 0,
-							U32 maxx = MAX_U32, U32 maxy = MAX_U32);
+							U32 maxx = kMaxU32, U32 maxy = kMaxU32);
 
 private:
 	Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS + 2> m_rtHandles;
@@ -518,7 +518,7 @@ public:
 	RenderTargetHandle newRenderTarget(const RenderTargetDescription& initInf);
 
 	/// Import a buffer.
-	BufferHandle importBuffer(BufferPtr buff, BufferUsageBit usage, PtrSize offset = 0, PtrSize range = MAX_PTR_SIZE);
+	BufferHandle importBuffer(BufferPtr buff, BufferUsageBit usage, PtrSize offset = 0, PtrSize range = kMaxPtrSize);
 
 	/// Import an AS.
 	AccelerationStructureHandle importAccelerationStructure(AccelerationStructurePtr as,
@@ -583,7 +583,7 @@ private:
 	static Bool bufferRangeOverlaps(PtrSize offsetA, PtrSize rangeA, PtrSize offsetB, PtrSize rangeB)
 	{
 		ANKI_ASSERT(rangeA > 0 && rangeB > 0);
-		if(rangeA == MAX_PTR_SIZE || rangeB == MAX_PTR_SIZE)
+		if(rangeA == kMaxPtrSize || rangeB == kMaxPtrSize)
 		{
 			return true;
 		}

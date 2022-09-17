@@ -36,7 +36,7 @@ inline void RenderPassDescriptionBase::fixSubresource(RenderPassDependency& dep)
 	ANKI_ASSERT(dep.m_type == RenderPassDependency::Type::TEXTURE);
 
 	TextureSubresourceInfo& subresource = dep.m_texture.m_subresource;
-	const Bool wholeTexture = subresource.m_mipmapCount == MAX_U32;
+	const Bool wholeTexture = subresource.m_mipmapCount == kMaxU32;
 	const RenderGraphDescription::RT& rt = m_descr->m_renderTargets[dep.m_texture.m_handle.m_idx];
 	if(wholeTexture)
 	{
@@ -296,7 +296,7 @@ inline BufferHandle RenderGraphDescription::importBuffer(BufferPtr buff, BufferU
 														 PtrSize range)
 {
 	// Checks
-	if(range == MAX_PTR_SIZE)
+	if(range == kMaxPtrSize)
 	{
 		ANKI_ASSERT(offset < buff->getSize());
 	}

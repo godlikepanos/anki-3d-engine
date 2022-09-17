@@ -112,7 +112,7 @@ public:
 private:
 	Vec4 m_center
 #if ANKI_ENABLE_ASSERTIONS
-		= Vec4(MAX_F32)
+		= Vec4(kMaxF32)
 #endif
 		;
 

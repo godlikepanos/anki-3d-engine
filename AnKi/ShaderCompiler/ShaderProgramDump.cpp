@@ -53,7 +53,7 @@ void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& huma
 		lines.pushBackSprintf(ANKI_TAB "%s\n", &binary.m_libraryName[0]);
 	}
 
-	if(binary.m_rayType != MAX_U32)
+	if(binary.m_rayType != kMaxU32)
 	{
 		lines.pushBack("\n**RAY TYPE**\n");
 		lines.pushBackSprintf(ANKI_TAB "%u\n", binary.m_rayType);
@@ -153,7 +153,7 @@ void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& huma
 				const CString typeStr = (member.m_type == ShaderVariableDataType::NONE)
 											? &binary.m_structs[member.m_structIndex].m_name[0]
 											: getShaderVariableDataTypeInfo(member.m_type).m_name;
-				const CString dependentMutator = (member.m_dependentMutator != MAX_U32)
+				const CString dependentMutator = (member.m_dependentMutator != kMaxU32)
 													 ? binary.m_mutators[member.m_dependentMutator].m_name.getBegin()
 													 : "None";
 				lines.pushBackSprintf(
@@ -272,7 +272,7 @@ void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& huma
 		lines.pushBack(ANKI_TAB ANKI_TAB "Binaries ");
 		for(ShaderType shaderType : EnumIterable<ShaderType>())
 		{
-			if(variant.m_codeBlockIndices[shaderType] < MAX_U32)
+			if(variant.m_codeBlockIndices[shaderType] < kMaxU32)
 			{
 				lines.pushBackSprintf("#bin%05u", variant.m_codeBlockIndices[shaderType]);
 			}

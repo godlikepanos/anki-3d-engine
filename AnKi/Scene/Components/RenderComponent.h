@@ -66,7 +66,7 @@ public:
 	{
 		ANKI_ASSERT(callback != nullptr);
 		ANKI_ASSERT(userData != nullptr);
-		ANKI_ASSERT(mergeKey != MAX_U64);
+		ANKI_ASSERT(mergeKey != kMaxU64);
 		m_callback = callback;
 		m_userData = userData;
 		m_mergeKey = mergeKey;
@@ -84,10 +84,10 @@ public:
 		el.m_callback = m_callback;
 		ANKI_ASSERT(m_userData != nullptr);
 		el.m_userData = m_userData;
-		ANKI_ASSERT(m_mergeKey != MAX_U64);
+		ANKI_ASSERT(m_mergeKey != kMaxU64);
 		el.m_mergeKey = m_mergeKey;
 		el.m_distanceFromCamera = -1.0f;
-		el.m_lod = MAX_U8;
+		el.m_lod = kMaxU8;
 	}
 
 	void setupRayTracingInstanceQueueElement(U32 lod, RayTracingInstanceQueueElement& el) const
@@ -109,7 +109,7 @@ public:
 private:
 	RenderQueueDrawCallback m_callback = nullptr;
 	const void* m_userData = nullptr;
-	U64 m_mergeKey = MAX_U64;
+	U64 m_mergeKey = kMaxU64;
 	FillRayTracingInstanceQueueElementCallback m_rtCallback = nullptr;
 	const void* m_rtCallbackUserData = nullptr;
 	RenderComponentFlag m_flags = RenderComponentFlag::NONE;

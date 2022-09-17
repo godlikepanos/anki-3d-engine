@@ -31,7 +31,7 @@ Error MyApp::init(int argc, char* argv[])
 	if(argc < 2)
 	{
 		ANKI_LOGE("usage: %s relative/path/to/scene.lua [anki config options]", argv[0]);
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 #endif
 
@@ -82,7 +82,7 @@ Error MyApp::init(int argc, char* argv[])
 	pnode->addChild(&cam);
 #endif
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
@@ -96,7 +96,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 	if(in.getKey(KeyCode::ESCAPE))
 	{
 		quit = true;
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	// move the camera
@@ -420,16 +420,16 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 	if(m_profile && getGlobalTimestamp() == 1000)
 	{
 		quit = true;
-		return Error::NONE;
+		return Error::kNone;
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 ANKI_MAIN_FUNCTION(myMain)
 int myMain(int argc, char* argv[])
 {
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 
 	app = new MyApp;
 	err = app->init(argc, argv);

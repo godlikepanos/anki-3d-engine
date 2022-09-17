@@ -251,7 +251,7 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 	TextureViewInitInfo viewInit(m_tex, "Rsrc");
 	m_texView = getManager().getGrManager().newTextureView(viewInit);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ImageResource::load(LoadingContext& ctx)
@@ -379,7 +379,7 @@ Error ImageResource::load(LoadingContext& ctx)
 		cmdb.reset(nullptr);
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

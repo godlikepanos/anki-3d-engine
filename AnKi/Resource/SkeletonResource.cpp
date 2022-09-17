@@ -71,10 +71,10 @@ Error SkeletonResource::load(const ResourceFilename& filename, [[maybe_unused]] 
 		{
 			boneParents.pushBack("");
 
-			if(m_rootBoneIdx != MAX_U32)
+			if(m_rootBoneIdx != kMaxU32)
 			{
 				ANKI_RESOURCE_LOGE("Skeleton cannot have more than one root nodes");
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 
 			m_rootBoneIdx = boneCount;
@@ -106,14 +106,14 @@ Error SkeletonResource::load(const ResourceFilename& filename, [[maybe_unused]] 
 			{
 				ANKI_RESOURCE_LOGE("Bone \"%s\" is referencing an unknown parent \"%s\"", &bone.m_name[0],
 								   &it->toCString()[0]);
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 
 			if(bone.m_parent->m_childrenCount >= MAX_CHILDREN_PER_BONE)
 			{
 				ANKI_RESOURCE_LOGE("Bone \"%s\" cannot have more that %u children", &bone.m_parent->m_name[0],
 								   MAX_CHILDREN_PER_BONE);
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 
 			bone.m_parent->m_children[bone.m_parent->m_childrenCount++] = &bone;
@@ -122,7 +122,7 @@ Error SkeletonResource::load(const ResourceFilename& filename, [[maybe_unused]] 
 		++it;
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

@@ -37,7 +37,7 @@ void Thread::start(void* userData, ThreadCallback callback, const ThreadCoreAffi
 #if ANKI_EXTRA_CHECKS
 	m_started = true;
 #endif
-	m_returnCode = Error::NONE;
+	m_returnCode = Error::kNone;
 
 	m_handle = CreateThread(nullptr, 0, threadCallback, this, 0, nullptr);
 	if(m_handle == nullptr)

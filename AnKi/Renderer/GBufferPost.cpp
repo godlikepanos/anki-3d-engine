@@ -46,7 +46,7 @@ Error GBufferPost::initInternal()
 	m_fbDescr.m_colorAttachments[1].m_loadOperation = AttachmentLoadOperation::LOAD;
 	m_fbDescr.bake();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void GBufferPost::populateRenderGraph(RenderingContext& ctx)

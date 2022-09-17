@@ -97,7 +97,7 @@ public:
 	/// @param crntTime The current time (sec)
 	virtual Error onKilled([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime)
 	{
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 protected:

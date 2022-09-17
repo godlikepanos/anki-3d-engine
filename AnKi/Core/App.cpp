@@ -371,7 +371,7 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 
 	ANKI_CORE_LOGI("Application initialized");
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error App::initDirs()
@@ -412,7 +412,7 @@ Error App::initDirs()
 		ANKI_CHECK(createDirectory(m_cacheDir.toCString()));
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error App::mainLoop()
@@ -541,7 +541,7 @@ Error App::mainLoop()
 #endif
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void App::injectUiElements(DynamicArrayAuto<UiQueueElement>& newUiElementArr, RenderQueue& rqueue)

@@ -84,7 +84,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	// Get mem requirements
 	VkMemoryRequirements req;
 	vkGetBufferMemoryRequirements(getDevice(), m_handle, &req);
-	U32 memIdx = MAX_U32;
+	U32 memIdx = kMaxU32;
 	const Bool isDiscreteGpu = getGrManagerImpl().getDeviceCapabilities().m_discreteGpu;
 
 	if(access == BufferMapAccessBit::WRITE)
@@ -112,7 +112,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 		memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(req.memoryTypeBits, prefer, avoid);
 
 		// 2nd try: host & coherent
-		if(memIdx == MAX_U32)
+		if(memIdx == kMaxU32)
 		{
 			prefer = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 			avoid = 0;
@@ -143,7 +143,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 																		 0);
 
 		// Fallback: Just cached
-		if(memIdx == MAX_U32)
+		if(memIdx == kMaxU32)
 		{
 			if(isDiscreteGpu)
 			{
@@ -165,17 +165,17 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 			req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
 		// Fallback: Device with anything else
-		if(memIdx == MAX_U32)
+		if(memIdx == kMaxU32)
 		{
 			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(req.memoryTypeBits,
 																			 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0);
 		}
 	}
 
-	if(memIdx == MAX_U32)
+	if(memIdx == kMaxU32)
 	{
 		ANKI_VK_LOGE("Failed to find appropriate memory type for buffer: %s", getName().cstr());
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	const VkPhysicalDeviceMemoryProperties& props = getGrManagerImpl().getMemoryProperties();
@@ -212,7 +212,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 		if(m_gpuAddress == 0)
 		{
 			ANKI_VK_LOGE("vkGetBufferDeviceAddressKHR() failed");
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 	}
 
@@ -220,7 +220,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	m_size = inf.m_size;
 	m_actualSize = size;
 	m_usage = usage;
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void* BufferImpl::map(PtrSize offset, PtrSize range, [[maybe_unused]] BufferMapAccessBit access)
@@ -230,7 +230,7 @@ void* BufferImpl::map(PtrSize offset, PtrSize range, [[maybe_unused]] BufferMapA
 	ANKI_ASSERT((access & m_access) != BufferMapAccessBit::NONE);
 	ANKI_ASSERT(!m_mapped);
 	ANKI_ASSERT(offset < m_size);
-	if(range == MAX_PTR_SIZE)
+	if(range == kMaxPtrSize)
 	{
 		range = m_size - offset;
 	}
@@ -379,7 +379,7 @@ void BufferImpl::computeBarrierInfo(BufferUsageBit before, BufferUsageBit after,
 
 VkBufferView BufferImpl::getOrCreateBufferView(Format fmt, PtrSize offset, PtrSize range) const
 {
-	if(range == MAX_PTR_SIZE)
+	if(range == kMaxPtrSize)
 	{
 		ANKI_ASSERT(m_size >= offset);
 		range = m_size - offset;

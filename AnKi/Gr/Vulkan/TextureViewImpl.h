@@ -55,7 +55,7 @@ public:
 
 private:
 	VkImageView m_handle = {}; ///< Cache the handle.
-	U32 m_bindlessIndex = MAX_U32; ///< Cache it.
+	U32 m_bindlessIndex = kMaxU32; ///< Cache it.
 
 	/// This is a hash that depends on the Texture and the VkImageView. It's used as a replacement of
 	/// TextureView::m_uuid since it creates less unique IDs.

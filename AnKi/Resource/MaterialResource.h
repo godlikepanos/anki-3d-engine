@@ -99,20 +99,20 @@ public:
 	/// Get the binding of a texture or a sampler type of material variable.
 	U32 getTextureBinding() const
 	{
-		ANKI_ASSERT(m_opaqueBinding != MAX_U32 && isBoundableTexture());
+		ANKI_ASSERT(m_opaqueBinding != kMaxU32 && isBoundableTexture());
 		return m_opaqueBinding;
 	}
 
 	U32 getOffsetInLocalUniforms() const
 	{
-		ANKI_ASSERT(m_offsetInLocalUniforms != MAX_U32);
+		ANKI_ASSERT(m_offsetInLocalUniforms != kMaxU32);
 		return m_offsetInLocalUniforms;
 	}
 
 protected:
 	String m_name;
-	U32 m_offsetInLocalUniforms = MAX_U32;
-	U32 m_opaqueBinding = MAX_U32; ///< Binding for textures and samplers.
+	U32 m_offsetInLocalUniforms = kMaxU32;
+	U32 m_opaqueBinding = kMaxU32; ///< Binding for textures and samplers.
 	ShaderVariableDataType m_dataType = ShaderVariableDataType::NONE;
 
 	/// Values
@@ -170,13 +170,13 @@ public:
 
 	U32 getRtShaderGroupHandleIndex() const
 	{
-		ANKI_ASSERT(m_rtShaderGroupHandleIndex != MAX_U32);
+		ANKI_ASSERT(m_rtShaderGroupHandleIndex != kMaxU32);
 		return m_rtShaderGroupHandleIndex;
 	}
 
 private:
 	ShaderProgramPtr m_prog;
-	U32 m_rtShaderGroupHandleIndex = MAX_U32;
+	U32 m_rtShaderGroupHandleIndex = kMaxU32;
 
 	MaterialVariant(MaterialVariant&& b)
 	{

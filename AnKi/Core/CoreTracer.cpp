@@ -126,12 +126,12 @@ Error CoreTracer::init(GenericMemoryPoolAllocator<U8> alloc, CString directory)
 
 	ANKI_CHECK(m_countersCsvFile.open(StringAuto(alloc).sprintf("%scounters.csv", fname.cstr()), FileOpenFlag::WRITE));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error CoreTracer::threadWorker()
 {
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 	Bool quit = false;
 
 	while(!err && !quit)
@@ -200,7 +200,7 @@ Error CoreTracer::writeEvents(ThreadWorkItem& item)
 	// Store counters
 	// TODO
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void CoreTracer::gatherCounters(ThreadWorkItem& item)
@@ -334,7 +334,7 @@ Error CoreTracer::writeCountersForReal()
 {
 	if(!m_countersCsvFile.isOpen() || m_frameCounters.getSize() == 0)
 	{
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	// Write the header
@@ -385,7 +385,7 @@ Error CoreTracer::writeCountersForReal()
 		ANKI_CHECK(m_countersCsvFile.writeText("\n"));
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

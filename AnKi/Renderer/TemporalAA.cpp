@@ -30,7 +30,7 @@ Error TemporalAA::init()
 		ANKI_R_LOGE("Failed to init TAA");
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error TemporalAA::initInternal()
@@ -83,7 +83,7 @@ Error TemporalAA::initInternal()
 	m_fbDescr.m_colorAttachmentCount = 2;
 	m_fbDescr.bake();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void TemporalAA::populateRenderGraph(RenderingContext& ctx)

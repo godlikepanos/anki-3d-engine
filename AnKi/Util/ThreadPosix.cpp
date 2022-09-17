@@ -78,7 +78,7 @@ void Thread::pinToCores(const ThreadCoreAffinityMask& coreAffintyMask)
 	while(affinity.getEnabledBitCount() > 0)
 	{
 		const U32 msb = affinity.getMostSignificantBit();
-		ANKI_ASSERT(msb != MAX_U32);
+		ANKI_ASSERT(msb != kMaxU32);
 		affinity.unset(msb);
 		CPU_SET(msb, &cpus);
 	}

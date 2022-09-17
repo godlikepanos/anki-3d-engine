@@ -53,7 +53,7 @@ private:
 	ClassWrapper<btPairCachingGhostObject> m_ghostObject;
 	ClassWrapper<btCapsuleShape> m_convexShape;
 	ClassWrapper<btKinematicCharacterController> m_controller;
-	Vec3 m_moveToPosition = Vec3(MAX_F32);
+	Vec3 m_moveToPosition = Vec3(kMaxF32);
 
 	PhysicsPlayerController(PhysicsWorld* world, const PhysicsPlayerControllerInitInfo& init);
 

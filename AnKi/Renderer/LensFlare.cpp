@@ -34,7 +34,7 @@ Error LensFlare::initInternal()
 	ANKI_CHECK(initSprite());
 	ANKI_CHECK(initOcclusion());
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error LensFlare::initSprite()
@@ -45,7 +45,7 @@ Error LensFlare::initSprite()
 	if(m_maxSpritesPerFlare < 1 || m_maxFlares < 1)
 	{
 		ANKI_R_LOGE("Incorrect m_maxSpritesPerFlare or m_maxFlares");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	m_maxSprites = U16(m_maxSpritesPerFlare * m_maxFlares);
@@ -56,7 +56,7 @@ Error LensFlare::initSprite()
 	m_realProg->getOrCreateVariant(variant);
 	m_realGrProg = variant->getProgram();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error LensFlare::initOcclusion()
@@ -77,7 +77,7 @@ Error LensFlare::initOcclusion()
 	m_updateIndirectBuffProg->getOrCreateVariant(variantInitInfo, variant);
 	m_updateIndirectBuffGrProg = variant->getProgram();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void LensFlare::updateIndirectInfo(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)

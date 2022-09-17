@@ -12,13 +12,13 @@ static VulkanQueueType getQueueTypeFromCommandBufferFlags(CommandBufferFlag flag
 														  const VulkanQueueFamilies& queueFamilies)
 {
 	ANKI_ASSERT(!!(flags & CommandBufferFlag::GENERAL_WORK) ^ !!(flags & CommandBufferFlag::COMPUTE_WORK));
-	if(!(flags & CommandBufferFlag::GENERAL_WORK) && queueFamilies[VulkanQueueType::COMPUTE] != MAX_U32)
+	if(!(flags & CommandBufferFlag::GENERAL_WORK) && queueFamilies[VulkanQueueType::COMPUTE] != kMaxU32)
 	{
 		return VulkanQueueType::COMPUTE;
 	}
 	else
 	{
-		ANKI_ASSERT(queueFamilies[VulkanQueueType::GENERAL] != MAX_U32);
+		ANKI_ASSERT(queueFamilies[VulkanQueueType::GENERAL] != kMaxU32);
 		return VulkanQueueType::GENERAL;
 	}
 }
@@ -56,7 +56,7 @@ Error CommandBufferThreadAllocator::init()
 {
 	for(VulkanQueueType qtype : EnumIterable<VulkanQueueType>())
 	{
-		if(m_factory->m_queueFamilies[qtype] == MAX_U32)
+		if(m_factory->m_queueFamilies[qtype] == kMaxU32)
 		{
 			continue;
 		}
@@ -82,7 +82,7 @@ Error CommandBufferThreadAllocator::init()
 		}
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void CommandBufferThreadAllocator::destroy()
@@ -159,7 +159,7 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 	ANKI_ASSERT(out && out->m_refcount.load() == 0);
 	ANKI_ASSERT(out->m_flags == cmdbFlags);
 	outPtr.reset(out);
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void CommandBufferThreadAllocator::deleteCommandBuffer(MicroCommandBuffer* ptr)
@@ -179,7 +179,7 @@ Error CommandBufferFactory::init(GrAllocator<U8> alloc, VkDevice dev, const Vulk
 	m_alloc = alloc;
 	m_dev = dev;
 	m_queueFamilies = queueFamilies;
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void CommandBufferFactory::destroy()
@@ -266,7 +266,7 @@ Error CommandBufferFactory::newCommandBuffer(ThreadId tid, CommandBufferFlag cmd
 	ANKI_ASSERT(alloc->m_tid == tid);
 	ANKI_CHECK(alloc->newCommandBuffer(cmdbFlags, ptr));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

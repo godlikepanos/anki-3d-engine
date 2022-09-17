@@ -20,7 +20,7 @@ Error JitterMoveEvent::init(Second startTime, Second duration, SceneNode* node)
 
 	m_originalPos = move.getLocalTransform().getOrigin();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void JitterMoveEvent::setPositionLimits(const Vec4& posMin, const Vec4& posMax)
@@ -48,7 +48,7 @@ Error JitterMoveEvent::update([[maybe_unused]] Second prevUpdateTime, Second crn
 
 	move.setLocalTransform(trf);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

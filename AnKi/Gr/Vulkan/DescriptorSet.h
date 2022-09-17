@@ -28,7 +28,7 @@ public:
 	U32 m_arraySize = 0;
 	ShaderTypeBit m_stageMask = ShaderTypeBit::kNone;
 	DescriptorType m_type = DescriptorType::COUNT;
-	U8 m_binding = MAX_U8;
+	U8 m_binding = kMaxU8;
 };
 static_assert(sizeof(DescriptorBinding) == 8, "Should be packed because it will be hashed");
 
@@ -408,8 +408,8 @@ private:
 	SpinLock m_cachesMtx; ///< Not a mutex because after a while there will be no reason to lock
 
 	BindlessDescriptorSet* m_bindless = nullptr;
-	U32 m_bindlessTextureCount = MAX_U32;
-	U32 m_bindlessUniformTexelBufferCount = MAX_U32;
+	U32 m_bindlessTextureCount = kMaxU32;
+	U32 m_bindlessUniformTexelBufferCount = kMaxU32;
 };
 /// @}
 

@@ -109,8 +109,8 @@ public:
 	void getActualSceneBounds(Vec3& min, Vec3& max) const
 	{
 		LockGuard<Mutex> lock(m_globalMtx);
-		ANKI_ASSERT(m_actualSceneAabbMin.x() < MAX_F32);
-		ANKI_ASSERT(m_actualSceneAabbMax.x() > MIN_F32);
+		ANKI_ASSERT(m_actualSceneAabbMin.x() < kMaxF32);
+		ANKI_ASSERT(m_actualSceneAabbMax.x() > kMinF32);
 		min = m_actualSceneAabbMin;
 		max = m_actualSceneAabbMax;
 	}
@@ -211,8 +211,8 @@ private:
 	U32 m_placeableCount = 0;
 
 	/// Compute the min of the scene bounds based on what is placed inside the octree.
-	Vec3 m_actualSceneAabbMin = Vec3(MAX_F32);
-	Vec3 m_actualSceneAabbMax = Vec3(MIN_F32);
+	Vec3 m_actualSceneAabbMin = Vec3(kMaxF32);
+	Vec3 m_actualSceneAabbMax = Vec3(kMinF32);
 
 	Leaf* newLeaf()
 	{

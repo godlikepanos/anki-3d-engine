@@ -121,19 +121,19 @@ class GpuDeviceCapabilities
 {
 public:
 	/// The alignment of offsets when bounding uniform buffers.
-	U32 m_uniformBufferBindOffsetAlignment = MAX_U32;
+	U32 m_uniformBufferBindOffsetAlignment = kMaxU32;
 
 	/// The max visible range of uniform buffers inside the shaders.
 	PtrSize m_uniformBufferMaxRange = 0;
 
 	/// The alignment of offsets when bounding storage buffers.
-	U32 m_storageBufferBindOffsetAlignment = MAX_U32;
+	U32 m_storageBufferBindOffsetAlignment = kMaxU32;
 
 	/// The max visible range of storage buffers inside the shaders.
 	PtrSize m_storageBufferMaxRange = 0;
 
 	/// The alignment of offsets when bounding texture buffers.
-	U32 m_textureBufferBindOffsetAlignment = MAX_U32;
+	U32 m_textureBufferBindOffsetAlignment = kMaxU32;
 
 	/// The max visible range of texture buffers inside the shaders.
 	PtrSize m_textureBufferMaxRange = 0;
@@ -145,7 +145,7 @@ public:
 	PtrSize m_computeSharedMemorySize = 16_KB;
 
 	/// Each SBT record should be a multiple of this.
-	U32 m_sbtRecordAlignment = MAX_U32;
+	U32 m_sbtRecordAlignment = kMaxU32;
 
 	/// The size of a shader group handle that will be placed inside an SBT record.
 	U32 m_shaderGroupHandleSize = 0;
@@ -780,7 +780,7 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VrsRate)
 class DrawElementsIndirectInfo
 {
 public:
-	U32 m_count = MAX_U32;
+	U32 m_count = kMaxU32;
 	U32 m_instanceCount = 1;
 	U32 m_firstIndex = 0;
 	U32 m_baseVertex = 0;
@@ -815,7 +815,7 @@ public:
 class DrawArraysIndirectInfo
 {
 public:
-	U32 m_count = MAX_U32;
+	U32 m_count = kMaxU32;
 	U32 m_instanceCount = 1;
 	U32 m_first = 0;
 	U32 m_baseInstance = 0;

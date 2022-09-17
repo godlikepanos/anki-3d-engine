@@ -67,7 +67,7 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 		state.init(m_alloc);
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void CommandBufferImpl::beginRecording()
@@ -971,7 +971,7 @@ void CommandBufferImpl::setPipelineBarrierInternal(
 		ANKI_ASSERT(barrier.m_offset < impl.getSize());
 		inf.offset = barrier.m_offset;
 
-		if(barrier.m_size == MAX_PTR_SIZE)
+		if(barrier.m_size == kMaxPtrSize)
 		{
 			inf.size = VK_WHOLE_SIZE;
 		}

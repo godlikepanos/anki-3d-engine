@@ -51,7 +51,7 @@ void PhysicsPlayerController::unregisterFromWorld()
 
 void PhysicsPlayerController::moveToPositionForReal()
 {
-	if(m_moveToPosition.x() == MAX_F32)
+	if(m_moveToPosition.x() == kMaxF32)
 	{
 		return;
 	}
@@ -62,7 +62,7 @@ void PhysicsPlayerController::moveToPositionForReal()
 	m_controller->reset(&getWorld().getBtWorld());
 	m_controller->warp(toBt(m_moveToPosition));
 
-	m_moveToPosition.x() = MAX_F32;
+	m_moveToPosition.x() = kMaxF32;
 }
 
 } // end namespace anki

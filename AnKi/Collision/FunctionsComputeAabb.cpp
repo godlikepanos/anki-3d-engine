@@ -38,8 +38,8 @@ Aabb computeAabb(const Obb& obb)
 
 Aabb computeAabb(const ConvexHullShape& hull)
 {
-	Vec4 mina(MAX_F32);
-	Vec4 maxa(MIN_F32);
+	Vec4 mina(kMaxF32);
+	Vec4 maxa(kMinF32);
 
 	for(const Vec4& point : hull.getPoints())
 	{

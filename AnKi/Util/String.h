@@ -63,7 +63,7 @@ class CString
 public:
 	using Char = char;
 
-	static constexpr PtrSize NPOS = MAX_PTR_SIZE;
+	static constexpr PtrSize NPOS = kMaxPtrSize;
 
 	CString() = default;
 
@@ -286,7 +286,7 @@ public:
 	using ConstIterator = const Char*;
 	using Allocator = GenericMemoryPoolAllocator<Char>;
 
-	static constexpr PtrSize NPOS = MAX_PTR_SIZE;
+	static constexpr PtrSize NPOS = kMaxPtrSize;
 
 	/// Default constructor.
 	String()

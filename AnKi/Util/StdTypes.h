@@ -17,57 +17,57 @@ namespace anki {
 /// @{
 
 using I8 = int8_t; ///< Integer 8bit
-constexpr I8 MAX_I8 = std::numeric_limits<I8>::max();
-constexpr I8 MIN_I8 = std::numeric_limits<I8>::min();
+constexpr I8 kMaxI8 = std::numeric_limits<I8>::max();
+constexpr I8 kMinI8 = std::numeric_limits<I8>::min();
 
 using I16 = int16_t; ///< Integer 16bit
-constexpr I16 MAX_I16 = std::numeric_limits<I16>::max();
-constexpr I16 MIN_I16 = std::numeric_limits<I16>::min();
+constexpr I16 kMaxI16 = std::numeric_limits<I16>::max();
+constexpr I16 kMinI16 = std::numeric_limits<I16>::min();
 
 using I32 = int32_t; ///< Integer 32bit
-constexpr I32 MAX_I32 = std::numeric_limits<I32>::max();
-constexpr I32 MIN_I32 = std::numeric_limits<I32>::min();
+constexpr I32 kMaxI32 = std::numeric_limits<I32>::max();
+constexpr I32 kMinI32 = std::numeric_limits<I32>::min();
 
 using I64 = int64_t; ///< Integer 64bit
-constexpr I64 MAX_I64 = std::numeric_limits<I64>::max();
-constexpr I64 MIN_I64 = std::numeric_limits<I64>::min();
+constexpr I64 kMaxI64 = std::numeric_limits<I64>::max();
+constexpr I64 kMinI64 = std::numeric_limits<I64>::min();
 
 using I = int_fast32_t; ///< Fast signed integer at least 32bit
-constexpr I MAX_I = std::numeric_limits<I>::max();
-constexpr I MIN_I = std::numeric_limits<I>::min();
+constexpr I kMaxI = std::numeric_limits<I>::max();
+constexpr I kMinI = std::numeric_limits<I>::min();
 
 using U8 = uint8_t; ///< Unsigned integer 8bit
-constexpr U8 MAX_U8 = std::numeric_limits<U8>::max();
-constexpr U8 MIN_U8 = std::numeric_limits<U8>::min();
+constexpr U8 kMaxU8 = std::numeric_limits<U8>::max();
+constexpr U8 kMinU8 = std::numeric_limits<U8>::min();
 
 using U16 = uint16_t; ///< Unsigned integer 16bit
-constexpr U16 MAX_U16 = std::numeric_limits<U16>::max();
-constexpr U16 MIN_U16 = std::numeric_limits<U16>::min();
+constexpr U16 kMaxU16 = std::numeric_limits<U16>::max();
+constexpr U16 kMinU16 = std::numeric_limits<U16>::min();
 
 using U32 = uint32_t; ///< Unsigned integer 32bit
-constexpr U32 MAX_U32 = std::numeric_limits<U32>::max();
-constexpr U32 MIN_U32 = std::numeric_limits<U32>::min();
+constexpr U32 kMaxU32 = std::numeric_limits<U32>::max();
+constexpr U32 kMinU32 = std::numeric_limits<U32>::min();
 
 using U64 = uint64_t; ///< Unsigned integer 64bit
-constexpr U64 MAX_U64 = std::numeric_limits<U64>::max();
-constexpr U64 MIN_U64 = std::numeric_limits<U64>::min();
+constexpr U64 kMaxU64 = std::numeric_limits<U64>::max();
+constexpr U64 kMinU64 = std::numeric_limits<U64>::min();
 
 using U = uint_fast32_t; ///< Fast unsigned integer at least 32bit
-constexpr U MAX_U = std::numeric_limits<U>::max();
-constexpr U MIN_U = std::numeric_limits<U>::min();
+constexpr U kMaxU = std::numeric_limits<U>::max();
+constexpr U kMinU = std::numeric_limits<U>::min();
 
 using PtrSize = size_t; ///< Like size_t
-constexpr PtrSize MAX_PTR_SIZE = std::numeric_limits<PtrSize>::max();
-constexpr PtrSize MIN_PTR_SIZE = std::numeric_limits<PtrSize>::min();
+constexpr PtrSize kMaxPtrSize = std::numeric_limits<PtrSize>::max();
+constexpr PtrSize kMinPtrSize = std::numeric_limits<PtrSize>::min();
 static_assert(sizeof(PtrSize) == sizeof(void*), "Wrong size for size_t");
 
 using F32 = float; ///< Floating point 32bit
-constexpr F32 MAX_F32 = std::numeric_limits<F32>::max();
-constexpr F32 MIN_F32 = -std::numeric_limits<F32>::max();
+constexpr F32 kMaxF32 = std::numeric_limits<F32>::max();
+constexpr F32 kMinF32 = -std::numeric_limits<F32>::max();
 
 using F64 = double; ///< Floating point 64bit
-constexpr F64 MAX_F64 = std::numeric_limits<F64>::max();
-constexpr F64 MIN_F64 = -std::numeric_limits<F64>::max();
+constexpr F64 kMaxF64 = std::numeric_limits<F64>::max();
+constexpr F64 kMinF64 = -std::numeric_limits<F64>::max();
 
 using Bool = bool; ///< 1 byte boolean type. The same as C++'s bool.
 static_assert(sizeof(bool) == 1, "Wrong size for bool");
@@ -77,11 +77,11 @@ using Char = char;
 using WChar = wchar_t;
 
 using Second = F64; ///< The base time unit is second.
-constexpr Second MAX_SECOND = MAX_F64;
-constexpr Second MIN_SECOND = MIN_F64;
+constexpr Second kMaxSecond = kMaxF64;
+constexpr Second kMinSecond = kMinF64;
 
 using Timestamp = U64; ///< Timestamp type.
-constexpr Timestamp MAX_TIMESTAMP = MAX_U64;
+constexpr Timestamp MAX_TIMESTAMP = kMaxU64;
 
 // Numeric limits
 template<typename T>
@@ -102,16 +102,16 @@ constexpr T getMaxNumericLimit();
 		return max; \
 	}
 
-ANKI_DO_LIMIT(I8, MIN_I8, MAX_I8)
-ANKI_DO_LIMIT(I16, MIN_I16, MAX_I16)
-ANKI_DO_LIMIT(I32, MIN_I32, MAX_I32)
-ANKI_DO_LIMIT(I64, MIN_I64, MAX_I64)
-ANKI_DO_LIMIT(U8, MIN_U8, MAX_U8)
-ANKI_DO_LIMIT(U16, MIN_U16, MAX_U16)
-ANKI_DO_LIMIT(U32, MIN_U32, MAX_U32)
-ANKI_DO_LIMIT(U64, MIN_U64, MAX_U64)
-ANKI_DO_LIMIT(F32, MIN_F32, MAX_F32)
-ANKI_DO_LIMIT(F64, MIN_F64, MAX_F64)
+ANKI_DO_LIMIT(I8, kMinI8, kMaxI8)
+ANKI_DO_LIMIT(I16, kMinI16, kMaxI16)
+ANKI_DO_LIMIT(I32, kMinI32, kMaxI32)
+ANKI_DO_LIMIT(I64, kMinI64, kMaxI64)
+ANKI_DO_LIMIT(U8, kMinU8, kMaxU8)
+ANKI_DO_LIMIT(U16, kMinU16, kMaxU16)
+ANKI_DO_LIMIT(U32, kMinU32, kMaxU32)
+ANKI_DO_LIMIT(U64, kMinU64, kMaxU64)
+ANKI_DO_LIMIT(F32, kMinF32, kMaxF32)
+ANKI_DO_LIMIT(F64, kMinF64, kMaxF64)
 
 #undef ANKI_DO_LIMIT
 
@@ -121,16 +121,16 @@ class [[nodiscard]] Error
 public:
 	/// @name Error codes
 	/// @{
-	static constexpr I32 NONE = 0;
-	static constexpr I32 OUT_OF_MEMORY = 1;
-	static constexpr I32 FUNCTION_FAILED = 2; ///< External operation failed
-	static constexpr I32 USER_DATA = 3;
+	static constexpr I32 kNone = 0;
+	static constexpr I32 kOutOfMemory = 1;
+	static constexpr I32 kFunctionFailed = 2; ///< External operation failed
+	static constexpr I32 kUserData = 3;
 
 	// File errors
-	static constexpr I32 FILE_NOT_FOUND = 4;
-	static constexpr I32 FILE_ACCESS = 5; ///< Read/write access error
+	static constexpr I32 kFileNotFound = 4;
+	static constexpr I32 kFileAccess = 5; ///< Read/write access error
 
-	static constexpr I32 UNKNOWN = 6;
+	static constexpr I32 kUnknown = 6;
 	/// @}
 
 	/// Construct using an error code.
@@ -179,7 +179,7 @@ public:
 	/// Check if it is an error.
 	explicit operator Bool() const
 	{
-		return ANKI_UNLIKELY(m_code != NONE);
+		return ANKI_UNLIKELY(m_code != kNone);
 	}
 
 	/// @privatesection
@@ -191,7 +191,7 @@ public:
 	/// @}
 
 private:
-	I32 m_code = NONE;
+	I32 m_code = kNone;
 };
 
 /// Macro to check if a method/function returned an error. It will return on error.

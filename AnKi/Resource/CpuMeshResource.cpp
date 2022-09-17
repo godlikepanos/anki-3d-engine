@@ -39,7 +39,7 @@ Error CpuMeshResource::load(const ResourceFilename& filename, [[maybe_unused]] B
 	const Bool convex = !!(loader.getHeader().m_flags & MeshBinaryFlag::CONVEX);
 	m_physicsShape = getManager().getPhysicsWorld().newInstance<PhysicsTriangleSoup>(m_positions, m_indices, convex);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

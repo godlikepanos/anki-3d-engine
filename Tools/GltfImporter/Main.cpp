@@ -30,7 +30,7 @@ public:
 	StringAuto m_texRpath = {m_alloc};
 	Bool m_optimizeMeshes = true;
 	Bool m_optimizeAnimations = true;
-	U32 m_threadCount = MAX_U32;
+	U32 m_threadCount = kMaxU32;
 	U32 m_lodCount = 1;
 	F32 m_lodFactor = 0.25f;
 	F32 m_lightIntensityScale = 1.0f;
@@ -44,7 +44,7 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 	// Parse config
 	if(argc < 3)
 	{
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	info.m_inputFname.create(argv[1]);
@@ -70,7 +70,7 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 			}
 			else
 			{
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 		}
 		else if(strcmp(argv[i], "-v") == 0)
@@ -95,7 +95,7 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 			}
 			else
 			{
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 		}
 		else if(strcmp(argv[i], "-optimize-meshes") == 0)
@@ -110,7 +110,7 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 			}
 			else
 			{
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 		}
 		else if(strcmp(argv[i], "-j") == 0)
@@ -125,7 +125,7 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 			}
 			else
 			{
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 		}
 		else if(strcmp(argv[i], "-lod-count") == 0)
@@ -138,7 +138,7 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 			}
 			else
 			{
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 		}
 		else if(strcmp(argv[i], "-lod-factor") == 0)
@@ -151,7 +151,7 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 			}
 			else
 			{
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 		}
 		else if(strcmp(argv[i], "-light-scale") == 0)
@@ -164,7 +164,7 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 			}
 			else
 			{
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 		}
 		else if(strcmp(argv[i], "-optimize-animations") == 0)
@@ -179,12 +179,12 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 			}
 			else
 			{
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 		}
 		else
 		{
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 	}
 
@@ -198,7 +198,7 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 		info.m_texRpath = info.m_rpath;
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 ANKI_MAIN_FUNCTION(myMain)

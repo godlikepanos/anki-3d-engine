@@ -73,7 +73,7 @@ Error DownscaleBlur::initInternal()
 	m_prog->getOrCreateVariant(variant);
 	m_grProg = variant->getProgram();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void DownscaleBlur::importRenderTargets(RenderingContext& ctx)

@@ -11,11 +11,11 @@ namespace anki {
 
 Error XmlElement::check() const
 {
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 	if(m_el == nullptr)
 	{
 		ANKI_UTIL_LOGE("Empty element");
-		err = Error::USER_DATA;
+		err = Error::kUserData;
 	}
 
 	return err;
@@ -25,7 +25,7 @@ Error XmlElement::getText(CString& out) const
 {
 	ANKI_CHECK(check());
 	out = (m_el->GetText()) ? CString(m_el->GetText()) : CString();
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error XmlElement::getChildElementOptional(CString name, XmlElement& out) const
@@ -61,7 +61,7 @@ Error XmlElement::getChildElement(CString name, XmlElement& out) const
 	if(!out)
 	{
 		ANKI_UTIL_LOGE("Cannot find tag: %s", &name[0]);
-		err = Error::USER_DATA;
+		err = Error::kUserData;
 	}
 
 	return err;
@@ -96,7 +96,7 @@ Error XmlElement::getSiblingElementsCount(U32& out) const
 
 	out -= 1;
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error XmlElement::getAttributeTextOptional(CString name, CString& out, Bool& attribPresent) const
@@ -107,7 +107,7 @@ Error XmlElement::getAttributeTextOptional(CString name, CString& out, Bool& att
 	if(!attrib)
 	{
 		attribPresent = false;
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	attribPresent = true;
@@ -122,7 +122,7 @@ Error XmlElement::getAttributeTextOptional(CString name, CString& out, Bool& att
 		out = CString();
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 CString XmlDocument::XML_HEADER = R"(<?xml version="1.0" encoding="UTF-8" ?>)";
@@ -137,7 +137,7 @@ Error XmlDocument::loadFile(CString filename, GenericMemoryPoolAllocator<U8> all
 
 	ANKI_CHECK(parse(text.toCString(), alloc));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error XmlDocument::parse(CString xmlText, GenericMemoryPoolAllocator<U8> alloc)
@@ -149,16 +149,16 @@ Error XmlDocument::parse(CString xmlText, GenericMemoryPoolAllocator<U8> alloc)
 		ANKI_UTIL_LOGE("Cannot parse file. Reason: %s",
 					   ((m_doc.GetErrorStr1() == nullptr) ? "unknown" : m_doc.GetErrorStr1()));
 
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error XmlDocument::getChildElementOptional(CString name, XmlElement& out) const
 {
 	out = XmlElement(m_doc.FirstChildElement(&name[0]), m_alloc);
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error XmlDocument::getChildElement(CString name, XmlElement& out) const
@@ -168,10 +168,10 @@ Error XmlDocument::getChildElement(CString name, XmlElement& out) const
 	if(!out)
 	{
 		ANKI_UTIL_LOGE("Cannot find tag \"%s\"", &name[0]);
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

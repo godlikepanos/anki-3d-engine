@@ -41,11 +41,11 @@ static Error getUniformScale(const Mat4& m, F32& out)
 	if(absolute(scale - yAxis.getLength()) > SCALE_THRESHOLD || absolute(scale - zAxis.getLength()) > SCALE_THRESHOLD)
 	{
 		ANKI_IMPORTER_LOGE("No uniform scale in the matrix");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	out = scale;
-	return Error::NONE;
+	return Error::kNone;
 }
 #endif
 
@@ -125,14 +125,14 @@ static Error getNodeTransform(const cgltf_node& node, Transform& trf)
 	if(absolute(scale[0] - scale[1]) > scaleEpsilon || absolute(scale[0] - scale[2]) > scaleEpsilon)
 	{
 		ANKI_IMPORTER_LOGE("Expecting uniform scale");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	trf.setOrigin(tsl.xyz0());
 	trf.setRotation(Mat3x4(Vec3(0.0f), rot));
 	trf.setScale(scale[0]);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 static Bool stringsExist(const HashMapAuto<CString, StringAuto>& map, const std::initializer_list<CString>& list)
@@ -183,7 +183,7 @@ Error GltfImporter::init(const GltfImporterInitInfo& initInfo)
 	if(m_lodFactor * F32(m_lodCount - 1) > 0.7f)
 	{
 		ANKI_IMPORTER_LOGE("LOD factor is too high %f", m_lodFactor);
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	if(m_lodFactor < EPSILON || m_lodCount == 1)
@@ -199,14 +199,14 @@ Error GltfImporter::init(const GltfImporterInitInfo& initInfo)
 	if(res != cgltf_result_success)
 	{
 		ANKI_IMPORTER_LOGE("Failed to open the GLTF file. Code: %d", res);
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	res = cgltf_load_buffers(&options, m_gltf, m_inputFname.cstr());
 	if(res != cgltf_result_success)
 	{
 		ANKI_IMPORTER_LOGE("Failed to load GLTF data. Code: %d", res);
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	if(initInfo.m_threadCount > 0)
@@ -215,7 +215,7 @@ Error GltfImporter::init(const GltfImporterInitInfo& initInfo)
 		m_hive = m_alloc.newInstance<ThreadHive>(threadCount, m_alloc, true);
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error GltfImporter::writeAll()
@@ -229,7 +229,7 @@ Error GltfImporter::writeAll()
 	ANKI_CHECK(m_sceneFile.writeText("local scene = getSceneGraph()\nlocal events = getEventManager()\n"));
 
 	// Nodes
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 	for(const cgltf_scene* scene = m_gltf->scenes; scene < m_gltf->scenes + m_gltf->scenes_count && !err; ++scene)
 	{
 		for(cgltf_node* const* node = scene->nodes; node < scene->nodes + scene->nodes_count && !err; ++node)
@@ -271,7 +271,7 @@ Error GltfImporter::getExtras(const cgltf_extras& extras, HashMapAuto<CString, S
 	cgltf_copy_extras_json(m_gltf, &extras, nullptr, &extrasSize);
 	if(extrasSize == 0)
 	{
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	DynamicArrayAuto<char, PtrSize> json(m_alloc);
@@ -280,7 +280,7 @@ Error GltfImporter::getExtras(const cgltf_extras& extras, HashMapAuto<CString, S
 	if(res != cgltf_result_success)
 	{
 		ANKI_IMPORTER_LOGE("cgltf_copy_extras_json failed: %d", res);
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	json[json.getSize() - 1] = '\0';
@@ -292,7 +292,7 @@ Error GltfImporter::getExtras(const cgltf_extras& extras, HashMapAuto<CString, S
 	const I tokenCount = jsmn_parse(&parser, jsonTxt.cstr(), jsonTxt.getLength(), nullptr, 0);
 	if(tokenCount < 1)
 	{
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	DynamicArrayAuto<jsmntok_t> tokens(m_alloc);
@@ -318,7 +318,7 @@ Error GltfImporter::getExtras(const cgltf_extras& extras, HashMapAuto<CString, S
 	if((tokenStrings.getSize() % 2) != 0)
 	{
 		ANKI_IMPORTER_LOGE("Unable to parse: %s", jsonTxt.cstr());
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	// Write them to the map
@@ -333,7 +333,7 @@ Error GltfImporter::getExtras(const cgltf_extras& extras, HashMapAuto<CString, S
 		++it;
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void GltfImporter::populateNodePtrToIdxInternal(const cgltf_node& node, U32& idx)
@@ -384,7 +384,7 @@ Error GltfImporter::parseArrayOfNumbers(CString str, DynamicArrayAuto<F64>& out,
 
 	out.create(U32(list.getSize()));
 
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 	auto it = list.getBegin();
 	auto end = list.getEnd();
 	U32 i = 0;
@@ -405,7 +405,7 @@ Error GltfImporter::parseArrayOfNumbers(CString str, DynamicArrayAuto<F64>& out,
 						   str.cstr());
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf,
@@ -485,7 +485,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 				if(tokens.getSize() != 3)
 				{
 					ANKI_IMPORTER_LOGE("Error parsing \"skybox_solid_color\" of node %s", getNodeName(node).cstr());
-					return Error::USER_DATA;
+					return Error::kUserData;
 				}
 
 				U count = 0;
@@ -497,7 +497,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 					if(err)
 					{
 						ANKI_IMPORTER_LOGE("Error parsing \"skybox_solid_color\" of node %s", getNodeName(node).cstr());
-						return Error::USER_DATA;
+						return Error::kUserData;
 					}
 
 					solidColor[count++] = f;
@@ -810,7 +810,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 		ANKI_CHECK(visitNode(*(*c), nodeTrf, outExtras));
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error GltfImporter::writeTransform(const Transform& trf)
@@ -831,7 +831,7 @@ Error GltfImporter::writeTransform(const Transform& trf)
 
 	ANKI_CHECK(m_sceneFile.writeText("node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)\n"));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error GltfImporter::writeModel(const cgltf_mesh& mesh)
@@ -898,7 +898,7 @@ Error GltfImporter::writeModel(const cgltf_mesh& mesh)
 
 	ANKI_CHECK(file.writeText("</model>\n"));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error GltfImporter::writeSkeleton(const cgltf_skin& skin)
@@ -913,7 +913,7 @@ Error GltfImporter::writeSkeleton(const cgltf_skin& skin)
 	if(boneMats.getSize() != skin.joints_count)
 	{
 		ANKI_IMPORTER_LOGE("Bone matrices should match the joint count");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	// Write file
@@ -963,7 +963,7 @@ Error GltfImporter::writeSkeleton(const cgltf_skin& skin)
 	ANKI_CHECK(file.writeText("\t</bones>\n"));
 	ANKI_CHECK(file.writeText("</skeleton>\n"));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error GltfImporter::writeLight(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras)
@@ -990,7 +990,7 @@ Error GltfImporter::writeLight(const cgltf_node& node, const HashMapAuto<CString
 		break;
 	default:
 		ANKI_IMPORTER_LOGE("Unsupporter light type %d", light.type);
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:new%sLightNode(\"%s\")\n", lightTypeStr.cstr(), nodeName.cstr()));
@@ -1102,7 +1102,7 @@ Error GltfImporter::writeLight(const cgltf_node& node, const HashMapAuto<CString
 		}
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error GltfImporter::writeCamera(const cgltf_node& node,
@@ -1111,7 +1111,7 @@ Error GltfImporter::writeCamera(const cgltf_node& node,
 	if(node.camera->type != cgltf_camera_type_perspective)
 	{
 		ANKI_IMPORTER_LOGV("Unsupported camera type: %s", getNodeName(node).cstr());
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	const cgltf_camera_perspective& cam = node.camera->data.perspective;
@@ -1126,7 +1126,7 @@ Error GltfImporter::writeCamera(const cgltf_node& node,
 	ANKI_CHECK(m_sceneFile.writeText("frustumc:setShadowCascadesDistancePower(1.5)\n"));
 	ANKI_CHECK(m_sceneFile.writeTextf("frustumc:setEffectiveShadowDistance(%f)\n", min(cam.zfar, 100.0f)));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error GltfImporter::writeModelNode(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras)
@@ -1148,7 +1148,7 @@ Error GltfImporter::writeModelNode(const cgltf_node& node, const HashMapAuto<CSt
 										  m_rpath.cstr(), computeSkeletonResourceFilename(*node.skin).cstr()));
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 StringAuto GltfImporter::computeModelResourceFilename(const cgltf_mesh& mesh) const

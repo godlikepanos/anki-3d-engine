@@ -35,7 +35,7 @@ public:
 			static_cast<LightNode&>(*info.m_node).onMoved(move);
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 
@@ -63,7 +63,7 @@ public:
 			static_cast<LightNode&>(*info.m_node).onLightShapeUpdated(light);
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 
@@ -196,7 +196,7 @@ Error PointLightNode::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[mayb
 
 	frameUpdateCommon();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 class SpotLightNode::OnFrustumUpdatedFeedbackComponent : public SceneComponent
@@ -220,7 +220,7 @@ public:
 			static_cast<SpotLightNode&>(*info.m_node).onFrustumUpdated(frc);
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 
@@ -274,7 +274,7 @@ void SpotLightNode::onFrustumUpdated(FrustumComponent& frc)
 Error SpotLightNode::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime)
 {
 	frameUpdateCommon();
-	return Error::NONE;
+	return Error::kNone;
 }
 
 class DirectionalLightNode::FeedbackComponent : public SceneComponent
@@ -301,7 +301,7 @@ public:
 			spatialc.setSpatialOrigin(move.getWorldTransform().getOrigin().xyz());
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 

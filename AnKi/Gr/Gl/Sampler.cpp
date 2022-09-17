@@ -34,7 +34,7 @@ Sampler* Sampler::newInstance(GrManager* manager, const SamplerInitInfo& init)
 			(void)oldState;
 			ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
 
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 

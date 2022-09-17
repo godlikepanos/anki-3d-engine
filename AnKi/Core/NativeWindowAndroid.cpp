@@ -24,7 +24,7 @@ Error NativeWindow::newInstance(const NativeWindowInitInfo& initInfo, NativeWind
 	else
 	{
 		nativeWindow = andwin;
-		return Error::NONE;
+		return Error::kNone;
 	}
 }
 
@@ -94,7 +94,7 @@ Error NativeWindowAndroid::init([[maybe_unused]] const NativeWindowInitInfo& ini
 	m_width = ANativeWindow_getWidth(g_androidApp->window);
 	m_height = ANativeWindow_getHeight(g_androidApp->window);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

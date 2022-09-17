@@ -76,10 +76,10 @@ Error ShaderProgramBinaryWrapper::deserializeFromAnyFile(TFile& file)
 	if(memcmp(SHADER_BINARY_MAGIC, &m_binary->m_magic[0], strlen(SHADER_BINARY_MAGIC)) != 0)
 	{
 		ANKI_SHADER_COMPILER_LOGE("Corrupted or wrong version of shader binary.");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 /// Takes an AnKi special shader program and spits a binary.

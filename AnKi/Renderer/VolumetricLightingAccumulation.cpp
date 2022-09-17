@@ -38,7 +38,7 @@ Error VolumetricLightingAccumulation::init()
 	   || m_volumeSize[0] == 0 || m_volumeSize[1] == 0 || m_volumeSize[2] == 0)
 	{
 		ANKI_R_LOGE("Wrong input");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_noiseImage));
@@ -69,7 +69,7 @@ Error VolumetricLightingAccumulation::init()
 	m_rtTextures[0] = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::kSampledFragment);
 	m_rtTextures[1] = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::kSampledFragment);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)

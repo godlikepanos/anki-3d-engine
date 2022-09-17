@@ -49,12 +49,12 @@ public:
 
 	Bool m_depthWriteMask = true;
 
-	Array<U32, 2> m_stencilWriteMask = {{MAX_U32, MAX_U32}};
+	Array<U32, 2> m_stencilWriteMask = {{kMaxU32, kMaxU32}};
 	/// @}
 
 	Array2d<GLuint, MAX_DESCRIPTOR_SETS, MAX_TEXTURE_BUFFER_BINDINGS> m_texBuffTextures = {};
 
-	Array<GLsizei, 4> m_scissor = {{0, 0, MAX_I32, MAX_I32}};
+	Array<GLsizei, 4> m_scissor = {{0, 0, kMaxI32, kMaxI32}};
 
 	GlState(GrManager* manager)
 		: m_manager(manager)

@@ -26,7 +26,7 @@ end
 	ANKI_CHECK(node->getSceneGraph().getEventManager().newEvent(event, -1, 10.0, script));
 	event->addAssociatedSceneNode(node);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 static Error createFogVolumeFadeEvent(SceneNode* node)
@@ -66,13 +66,13 @@ end
 	ANKI_CHECK(node->getSceneGraph().getEventManager().newEvent(event, -1, 10.0, script));
 	event->addAssociatedSceneNode(node);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 class RayCast : public PhysicsWorldRayCastCallback
 {
 public:
-	Vec3 m_hitPosition = Vec3(MAX_F32);
+	Vec3 m_hitPosition = Vec3(kMaxF32);
 	Vec3 m_hitNormal;
 	Bool m_hit = false;
 
@@ -205,7 +205,7 @@ Error MyApp::sampleExtraInit()
 	getInput().hideCursor(true);
 	getInput().moveCursor(Vec2(0.0f));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
@@ -399,12 +399,12 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 		}
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 int main(int argc, char* argv[])
 {
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 
 	MyApp* app = new MyApp;
 	err = app->init(argc, argv, "PhysicsPlayground");

@@ -96,7 +96,7 @@ Error SpatialComponent::update([[maybe_unused]] SceneComponentUpdateInfo& info, 
 
 	m_octreeInfo.reset();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

@@ -44,7 +44,7 @@ Error FrameGpuAllocator::allocate(PtrSize originalSize, PtrSize& outOffset)
 {
 	ANKI_ASSERT(isCreated());
 	ANKI_ASSERT(originalSize > 0);
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 
 	// Align size
 	PtrSize size = getAlignedRoundUp(m_alignment, originalSize);
@@ -70,8 +70,8 @@ Error FrameGpuAllocator::allocate(PtrSize originalSize, PtrSize& outOffset)
 	}
 	else
 	{
-		outOffset = MAX_PTR_SIZE;
-		err = Error::OUT_OF_MEMORY;
+		outOffset = kMaxPtrSize;
+		err = Error::kOutOfMemory;
 	}
 
 	return err;

@@ -103,7 +103,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos)
 		const F32 shadow = 1.0;
 #	else
 		F32 shadow = 1.0;
-		ANKI_BRANCH if(light.m_shadowLayer != MAX_U32)
+		ANKI_BRANCH if(light.m_shadowLayer != kMaxU32)
 		{
 			shadow = computeShadowFactorSpotLight(light, worldPos, u_shadowAtlasTex, u_linearAnyClampSampler);
 		}

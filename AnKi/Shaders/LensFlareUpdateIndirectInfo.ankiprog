@@ -59,7 +59,7 @@ void main()
 
 	// Sample and store depth
 	const F32 refDepth = textureLod(u_depthMap, u_nearestAnyClampSampler, uv, 0.0).r;
-	atomicMax(s_maxDepth, U32(refDepth * F32(MAX_U32)));
+	atomicMax(s_maxDepth, U32(refDepth * F32(kMaxU32)));
 
 	// Sync
 	memoryBarrierShared();
@@ -67,7 +67,7 @@ void main()
 
 	if(gl_LocalInvocationIndex == 0u)
 	{
-		const F32 refDepth2 = F32(s_maxDepth) / F32(MAX_U32);
+		const F32 refDepth2 = F32(s_maxDepth) / F32(kMaxU32);
 		u_indirectInfo[flareIdx].count = (depth > refDepth2) ? 0u : 4u;
 
 		u_indirectInfo[flareIdx].instanceCount = 1u;

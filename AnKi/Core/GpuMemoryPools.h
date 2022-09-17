@@ -82,12 +82,12 @@ public:
 
 	void markUnused()
 	{
-		m_offset = m_range = MAX_U32;
+		m_offset = m_range = kMaxU32;
 	}
 
 	Bool isUnused() const
 	{
-		return m_offset == MAX_U32 && m_range == MAX_U32;
+		return m_offset == kMaxU32 && m_range == kMaxU32;
 	}
 };
 

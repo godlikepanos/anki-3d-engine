@@ -25,7 +25,7 @@ SceneComponentRtti::SceneComponentRtti(const char* name, U32 size, U32 alignment
 	m_className = name;
 	m_classSize = size;
 	m_classAlignment = alignment;
-	m_classId = MAX_U8;
+	m_classId = kMaxU8;
 
 	g_rttis[g_rttiCount++] = this;
 

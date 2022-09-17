@@ -20,7 +20,7 @@ namespace anki {
 class VertexBufferBindingPipelineState
 {
 public:
-	U32 m_stride = MAX_U32; ///< Vertex stride.
+	U32 m_stride = kMaxU32; ///< Vertex stride.
 	VertexStepRate m_stepRate = VertexStepRate::kVertex;
 	Array<U8, 3> m_padding = {};
 

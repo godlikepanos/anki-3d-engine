@@ -79,7 +79,7 @@ public:
 			glDeleteTextures(1, &m_tex);
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 

@@ -42,7 +42,7 @@ public:
 			if(SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG))
 			{
 				ANKI_GL_LOGE("SDL_GL_SetAttribute() failed");
-				return Error::FUNCTION_FAILED;
+				return Error::kFunctionFailed;
 			}
 		}
 
@@ -51,7 +51,7 @@ public:
 		   || SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE))
 		{
 			ANKI_GL_LOGE("SDL_GL_SetAttribute() failed");
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 
 		// Create context
@@ -59,7 +59,7 @@ public:
 		if(m_context == nullptr)
 		{
 			ANKI_GL_LOGE("SDL_GL_CreateContext() failed: %s", SDL_GetError());
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 
 		// GLEW
@@ -67,11 +67,11 @@ public:
 		if(glewInit() != GLEW_OK)
 		{
 			ANKI_GL_LOGE("GLEW initialization failed");
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 		glGetError();
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	void pinContextToCurrentThread(Bool pin)

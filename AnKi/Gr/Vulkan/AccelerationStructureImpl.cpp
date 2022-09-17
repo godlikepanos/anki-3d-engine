@@ -99,7 +99,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 		m_topLevelInfo.m_instancesBuffer = getManager().newBuffer(buffInit);
 
 		VkAccelerationStructureInstanceKHR* instances = static_cast<VkAccelerationStructureInstanceKHR*>(
-			m_topLevelInfo.m_instancesBuffer->map(0, MAX_PTR_SIZE, BufferMapAccessBit::WRITE));
+			m_topLevelInfo.m_instancesBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::WRITE));
 		for(U32 i = 0; i < inf.m_topLevel.m_instances.getSize(); ++i)
 		{
 			VkAccelerationStructureInstanceKHR& outInst = instances[i];
@@ -119,7 +119,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 			m_topLevelInfo.m_blas.emplaceBack(getAllocator(), inf.m_topLevel.m_instances[i].m_bottomLevel);
 		}
 
-		m_topLevelInfo.m_instancesBuffer->flush(0, MAX_PTR_SIZE);
+		m_topLevelInfo.m_instancesBuffer->flush(0, kMaxPtrSize);
 		m_topLevelInfo.m_instancesBuffer->unmap();
 
 		// Geom
@@ -171,7 +171,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 		m_rangeInfo.primitiveCount = inf.m_topLevel.m_instances.getSize();
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void AccelerationStructureImpl::computeBarrierInfo(AccelerationStructureUsageBit before,

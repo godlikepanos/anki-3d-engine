@@ -40,7 +40,7 @@ Error GrUpscalerImpl::initInternal(const GrUpscalerInitInfo& initInfo)
 	ANKI_ASSERT(!"Not supported");
 #endif
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 // ==== DLSS ====
@@ -53,7 +53,7 @@ Error GrUpscalerImpl::initInternal(const GrUpscalerInitInfo& initInfo)
 			if(NVSDK_NGX_FAILED(result)) \
 			{ \
 				ANKI_VK_LOGE("DLSS failed to initialize %ls", GetNGXResultAsString(result)); \
-				return Error::FUNCTION_FAILED; \
+				return Error::kFunctionFailed; \
 			} \
 		} while(0)
 
@@ -93,7 +93,7 @@ Error GrUpscalerImpl::initDlss(const GrUpscalerInitInfo& initInfo)
 	if(needsUpdatedDriver)
 	{
 		ANKI_VK_LOGE("DLSS cannot be loaded due to outdated driver");
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 #	endif
 
@@ -102,14 +102,14 @@ Error GrUpscalerImpl::initDlss(const GrUpscalerInitInfo& initInfo)
 	if(!dlssAvailable)
 	{
 		ANKI_VK_LOGE("NVIDIA DLSS not available on this hardware/platform");
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	// Create the feature
 	ANKI_CHECK(createDlssFeature(initInfo.m_sourceTextureResolution, initInfo.m_targetTextureResolution,
 								 initInfo.m_qualityMode));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error GrUpscalerImpl::createDlssFeature(const UVec2& srcRes, const UVec2& dstRes, const GrUpscalerQualityMode quality)
@@ -150,7 +150,7 @@ Error GrUpscalerImpl::createDlssFeature(const UVec2& srcRes, const UVec2& dstRes
 	cmdb->flush({}, &fence);
 	fence->clientWait(60.0_sec);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void GrUpscalerImpl::destroyDlss()

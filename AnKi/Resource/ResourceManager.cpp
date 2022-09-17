@@ -69,7 +69,7 @@ Error ResourceManager::init(ResourceManagerInitInfo& init)
 	m_shaderProgramSystem = m_alloc.newInstance<ShaderProgramResourceSystem>(m_alloc);
 	ANKI_CHECK(m_shaderProgramSystem->init(*m_fs, *m_gr));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 U64 ResourceManager::getAsyncTaskCompletedCount() const
@@ -82,7 +82,7 @@ Error ResourceManager::loadResource(const CString& filename, ResourcePtr<T>& out
 {
 	ANKI_ASSERT(!out.isCreated() && "Already loaded");
 
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 	++m_loadRequestCount;
 
 	T* const other = findLoadedResource<T>(filename);

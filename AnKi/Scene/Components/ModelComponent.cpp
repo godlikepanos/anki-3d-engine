@@ -43,7 +43,7 @@ Error ModelComponent::loadModelResource(CString filename)
 		m_modelPatchMergeKeys[i] = computeHash(&toHash[0], sizeof(toHash));
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

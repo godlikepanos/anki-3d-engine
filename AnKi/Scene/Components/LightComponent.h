@@ -149,7 +149,7 @@ public:
 			static_cast<const LightComponent*>(userData[0])->draw(ctx);
 		};
 		el.m_debugDrawCallbackUserData = this;
-		el.m_shadowLayer = MAX_U8;
+		el.m_shadowLayer = kMaxU8;
 	}
 
 	void setupSpotLightQueueElement(SpotLightQueueElement& el) const
@@ -168,7 +168,7 @@ public:
 			static_cast<const LightComponent*>(userData[0])->draw(ctx);
 		};
 		el.m_debugDrawCallbackUserData = this;
-		el.m_shadowLayer = MAX_U8;
+		el.m_shadowLayer = kMaxU8;
 	}
 
 	/// Setup a directional queue element.

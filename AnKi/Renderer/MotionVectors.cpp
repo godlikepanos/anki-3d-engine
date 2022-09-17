@@ -65,7 +65,7 @@ Error MotionVectors::initInternal()
 	m_fbDescr.m_colorAttachmentCount = 2;
 	m_fbDescr.bake();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void MotionVectors::populateRenderGraph(RenderingContext& ctx)

@@ -49,8 +49,8 @@ public:
 		F32 m_maxForceMagnitude = 0.0f;
 
 		/// If not set then it uses the world's default
-		Vec3 m_minGravity = Vec3(MAX_F32);
-		Vec3 m_maxGravity = Vec3(MAX_F32);
+		Vec3 m_minGravity = Vec3(kMaxF32);
+		Vec3 m_maxGravity = Vec3(kMaxF32);
 
 		/// This position is relevant to the particle emitter pos
 		Vec3 m_minStartingPosition = Vec3(0.0);
@@ -95,7 +95,7 @@ public:
 
 	Bool wordGravityEnabled() const
 	{
-		return m_particle.m_maxGravity.x() < MAX_F32;
+		return m_particle.m_maxGravity.x() < kMaxF32;
 	}
 };
 

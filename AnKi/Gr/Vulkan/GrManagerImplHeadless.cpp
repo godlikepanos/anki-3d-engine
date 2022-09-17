@@ -18,7 +18,7 @@ Error GrManagerImpl::initSurface(const GrManagerInitInfo& init)
 	m_nativeWindowWidth = init.m_window->getWidth();
 	m_nativeWindowHeight = init.m_window->getHeight();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

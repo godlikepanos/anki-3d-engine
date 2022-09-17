@@ -215,7 +215,7 @@ public:
 	/// Get the max allocation size
 	size_type max_size() const
 	{
-		return MAX_PTR_SIZE;
+		return kMaxPtrSize;
 	}
 
 	/// Get the memory pool

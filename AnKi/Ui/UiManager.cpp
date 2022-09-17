@@ -31,7 +31,7 @@ Error UiManager::init(AllocAlignedCallback allocCallback, void* allocCallbackUse
 	m_gpuMem = gpuMem;
 	m_input = input;
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

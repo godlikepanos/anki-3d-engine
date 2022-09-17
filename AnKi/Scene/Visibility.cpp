@@ -793,7 +793,7 @@ void CombineResultsTask::combineQueueElements(SceneFrameAllocator<U8>& alloc,
 		// Can't reuse any of the existing storage, will allocate a brand new one
 
 		it = alloc.newArray<T>(totalElCount);
-		biggestSubStorageIdx = MAX_U32;
+		biggestSubStorageIdx = kMaxU32;
 
 		combined = WeakArray<T>(it, totalElCount);
 	}

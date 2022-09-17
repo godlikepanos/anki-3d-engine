@@ -49,7 +49,7 @@ public:
 
 	ConstWeakArray<U32> getQueueFamilies() const
 	{
-		const Bool hasAsyncCompute = m_queueFamilyIndices[VulkanQueueType::COMPUTE] != MAX_U32;
+		const Bool hasAsyncCompute = m_queueFamilyIndices[VulkanQueueType::COMPUTE] != kMaxU32;
 		return (hasAsyncCompute) ? m_queueFamilyIndices : ConstWeakArray<U32>(&m_queueFamilyIndices[0], 1);
 	}
 
@@ -247,7 +247,7 @@ private:
 	VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
 	VulkanExtensions m_extensions = VulkanExtensions::NONE;
 	VkDevice m_device = VK_NULL_HANDLE;
-	VulkanQueueFamilies m_queueFamilyIndices = {MAX_U32, MAX_U32};
+	VulkanQueueFamilies m_queueFamilyIndices = {kMaxU32, kMaxU32};
 	Array<VkQueue, U32(VulkanQueueType::kCount)> m_queues = {};
 	Mutex m_globalMtx;
 
@@ -293,7 +293,7 @@ private:
 	U32 m_nativeWindowHeight = 0;
 #endif
 	MicroSwapchainPtr m_crntSwapchain;
-	U8 m_acquiredImageIdx = MAX_U8;
+	U8 m_acquiredImageIdx = kMaxU8;
 
 	Array<PerFrame, MAX_FRAMES_IN_FLIGHT> m_perFrame;
 	/// @}

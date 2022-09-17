@@ -18,7 +18,7 @@ namespace anki {
 /// allocations. Can be used like:
 /// @code
 /// Function<Error(U32, F32), 16> func;
-/// func.init(allocator, [&someInt](U32 u, F32 f) {someInt = xxx + u + f; return Error::NONE;});
+/// func.init(allocator, [&someInt](U32 u, F32 f) {someInt = xxx + u + f; return Error::kNone;});
 /// func.call(10, 1.2f);
 /// @endcode
 /// @tparam T_INLINE_STORAGE_SIZE Optional inline storage to avoid deallocations (small object optimization)

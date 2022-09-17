@@ -33,7 +33,7 @@ public:
 		glFlush();
 		glFinish();
 		m_renderingThread->m_syncBarrier.wait();
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 
@@ -60,7 +60,7 @@ public:
 
 		// Swap buffers
 		m_renderingThread->swapBuffersInternal();
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 
@@ -70,7 +70,7 @@ class EmptyCommand final : public GlCommand
 public:
 	ANKI_USE_RESULT Error operator()(GlState&)
 	{
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 
@@ -111,7 +111,7 @@ void RenderingThread::flushCommandBuffer(CommandBufferPtr cmdb, FencePtr* fence)
 			Error operator()(GlState&)
 			{
 				static_cast<FenceImpl&>(*m_fence).m_fence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-				return Error::NONE;
+				return Error::kNone;
 			}
 		};
 
@@ -222,7 +222,7 @@ Error RenderingThread::threadCallback(ThreadCallbackInfo& info)
 {
 	RenderingThread* thread = static_cast<RenderingThread*>(info.m_userData);
 	thread->threadLoop();
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void RenderingThread::threadLoop()
@@ -256,7 +256,7 @@ void RenderingThread::threadLoop()
 			++m_head;
 		}
 
-		Error err = Error::NONE;
+		Error err = Error::kNone;
 		{
 			ANKI_TRACE_SCOPED_EVENT(GL_THREAD);
 			err = static_cast<CommandBufferImpl&>(*cmd).executeAllCommands();

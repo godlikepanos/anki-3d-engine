@@ -36,7 +36,7 @@ public:
 			dnode.onMoveUpdate(move);
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 
@@ -64,7 +64,7 @@ public:
 			dnode.onShapeUpdate(reflc);
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 
@@ -181,7 +181,7 @@ Error ReflectionProbeNode::frameUpdate([[maybe_unused]] Second prevUpdateTime, [
 		frc.setEnabledVisibilityTests(testFlags);
 	});
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

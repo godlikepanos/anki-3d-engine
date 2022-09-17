@@ -21,10 +21,10 @@ Error XmlElement::getNumber(T& out) const
 	else
 	{
 		ANKI_UTIL_LOGE("Failed to return number. Element: %s", m_el->Value());
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 template<typename T>
@@ -40,7 +40,7 @@ Error XmlElement::getNumbers(DynamicArrayAuto<T>& out) const
 	else
 	{
 		out.destroy();
-		return Error::NONE;
+		return Error::kNone;
 	}
 }
 
@@ -64,7 +64,7 @@ Error XmlElement::getAttributeNumbersOptional(CString name, DynamicArrayAuto<T>&
 	}
 	else
 	{
-		return Error::NONE;
+		return Error::kNone;
 	}
 }
 
@@ -80,7 +80,7 @@ Error XmlElement::getAttributeNumbersOptional(CString name, TArray& out, Bool& a
 	}
 	else
 	{
-		return Error::NONE;
+		return Error::kNone;
 	}
 }
 
@@ -95,13 +95,13 @@ Error XmlElement::getAttributeNumberOptional(CString name, T& out, Bool& attribP
 		if(arr.getSize() != 1)
 		{
 			ANKI_UTIL_LOGE("Expecting one element for attrib: %s", &name[0]);
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 
 		out = arr[0];
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 template<typename T>
@@ -116,7 +116,7 @@ Error XmlElement::parseNumbers(CString txt, DynamicArrayAuto<T>& out) const
 	out.destroy();
 	out.create(U32(list.getSize()));
 
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 	auto it = list.getBegin();
 	auto end = list.getEnd();
 	U32 i = 0;
@@ -147,10 +147,10 @@ Error XmlElement::parseNumbers(CString txt, TArray& out) const
 	if(listSize != out.getSize())
 	{
 		ANKI_UTIL_LOGE("Wrong number of elements for element: %s", m_el->Value());
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 	auto it = list.getBegin();
 	auto end = list.getEnd();
 	U32 i = 0;

@@ -47,7 +47,7 @@ Error ClusterBinning::init()
 	m_tileCount = m_r->getTileCounts().x() * m_r->getTileCounts().y();
 	m_clusterCount = m_tileCount + m_r->getZSplitCount();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
@@ -256,7 +256,7 @@ void ClusterBinning::writeClustererBuffersTask()
 			if(in.m_shadowRenderQueues[0] == nullptr)
 			{
 				out.m_shadowAtlasTileScale = -1.0f;
-				out.m_shadowLayer = MAX_U32;
+				out.m_shadowLayer = kMaxU32;
 			}
 			else
 			{
@@ -288,7 +288,7 @@ void ClusterBinning::writeClustererBuffersTask()
 			out.m_diffuseColor = in.m_diffuseColor;
 			out.m_radius = in.m_distance;
 			out.m_squareRadiusOverOne = 1.0f / (in.m_distance * in.m_distance);
-			out.m_shadowLayer = (in.hasShadow()) ? in.m_shadowLayer : MAX_U32;
+			out.m_shadowLayer = (in.hasShadow()) ? in.m_shadowLayer : kMaxU32;
 			out.m_direction = -in.m_worldTransform.getRotationPart().getZAxis();
 			out.m_outerCos = cos(in.m_outerAngle / 2.0f);
 			out.m_innerCos = cos(in.m_innerAngle / 2.0f);
@@ -418,7 +418,7 @@ void ClusterBinning::writeClustererBuffersTask()
 		unis.m_renderingSize = Vec2(F32(m_r->getInternalResolution().x()), F32(m_r->getInternalResolution().y()));
 
 		unis.m_time = F32(HighRezTimer::getCurrentTime());
-		unis.m_frame = m_r->getFrameCount() & MAX_U32;
+		unis.m_frame = m_r->getFrameCount() & kMaxU32;
 
 		Plane nearPlane;
 		extractClipPlane(rqueue.m_viewProjectionMatrix, FrustumPlaneType::NEAR, nearPlane);
@@ -467,7 +467,7 @@ void ClusterBinning::writeClustererBuffersTask()
 			out.m_active = 1;
 			out.m_effectiveShadowDistance = in.m_effectiveShadowDistance;
 			out.m_shadowCascadesDistancePower = in.m_shadowCascadesDistancePower;
-			out.m_shadowLayer = (in.hasShadow()) ? in.m_shadowLayer : MAX_U32;
+			out.m_shadowLayer = (in.hasShadow()) ? in.m_shadowLayer : kMaxU32;
 
 			for(U cascade = 0; cascade < in.m_shadowCascadeCount; ++cascade)
 			{

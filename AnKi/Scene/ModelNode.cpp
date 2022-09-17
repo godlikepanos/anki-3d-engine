@@ -33,7 +33,7 @@ public:
 	{
 		updated = false;
 		static_cast<ModelNode&>(*info.m_node).feedbackUpdate();
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 
@@ -122,7 +122,7 @@ Error ModelNode::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unu
 {
 	if(ANKI_LIKELY(!m_deferredRenderComponentUpdate))
 	{
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	m_deferredRenderComponentUpdate = false;
@@ -152,7 +152,7 @@ Error ModelNode::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unu
 	// Now you can init the render components
 	initRenderComponents();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void ModelNode::initRenderComponents()

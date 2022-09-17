@@ -104,7 +104,7 @@ Error LightShading::initLightShading()
 	m_visualizeRtProg->getOrCreateVariant(variant);
 	m_visualizeRtGrProg = variant->getProgram();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error LightShading::initSkybox()
@@ -121,7 +121,7 @@ Error LightShading::initSkybox()
 		m_skybox.m_grProgs[method] = variant->getProgram();
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error LightShading::initApplyFog()
@@ -137,7 +137,7 @@ Error LightShading::initApplyFog()
 	m_applyFog.m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_applyFog.m_grProg = variant->getProgram();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error LightShading::initApplyIndirect()
@@ -147,7 +147,7 @@ Error LightShading::initApplyIndirect()
 	const ShaderProgramResourceVariant* variant;
 	m_applyIndirect.m_prog->getOrCreateVariant(variant);
 	m_applyIndirect.m_grProg = variant->getProgram();
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)

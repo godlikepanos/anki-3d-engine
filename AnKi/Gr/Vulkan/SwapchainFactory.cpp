@@ -44,18 +44,18 @@ Error MicroSwapchain::initInternal()
 																m_factory->m_gr->getSurface(), &surfaceProperties));
 
 #if ANKI_WINDOWING_SYSTEM_HEADLESS
-		if(surfaceProperties.currentExtent.width != MAX_U32 || surfaceProperties.currentExtent.height != MAX_U32)
+		if(surfaceProperties.currentExtent.width != kMaxU32 || surfaceProperties.currentExtent.height != kMaxU32)
 		{
 			ANKI_VK_LOGE("Was expecting an indication that the surface size will be determined by the extent of a "
 						 "swapchain targeting the surface");
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 		m_factory->m_gr->getNativeWindowSize(surfaceWidth, surfaceHeight);
 #else
-		if(surfaceProperties.currentExtent.width == MAX_U32 || surfaceProperties.currentExtent.height == MAX_U32)
+		if(surfaceProperties.currentExtent.width == kMaxU32 || surfaceProperties.currentExtent.height == kMaxU32)
 		{
 			ANKI_VK_LOGE("Wrong surface size");
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 		surfaceWidth = surfaceProperties.currentExtent.width;
 		surfaceHeight = surfaceProperties.currentExtent.height;
@@ -109,7 +109,7 @@ Error MicroSwapchain::initInternal()
 		if(surfaceFormat == VK_FORMAT_UNDEFINED)
 		{
 			ANKI_VK_LOGE("Suitable surface format not found");
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 		else
 		{
@@ -162,7 +162,7 @@ Error MicroSwapchain::initInternal()
 		if(presentMode == VK_PRESENT_MODE_MAX_ENUM_KHR)
 		{
 			ANKI_VK_LOGE("Couldn't find a present mode");
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 	}
 
@@ -188,7 +188,7 @@ Error MicroSwapchain::initInternal()
 		else
 		{
 			ANKI_VK_LOGE("Failed to set compositeAlpha");
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 
 		VkSwapchainCreateInfoKHR ci = {};
@@ -248,7 +248,7 @@ Error MicroSwapchain::initInternal()
 		}
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 GrAllocator<U8> MicroSwapchain::getAllocator() const

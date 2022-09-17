@@ -77,7 +77,7 @@ Error TraditionalDeferredLightShading::init()
 		}
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void TraditionalDeferredLightShading::bindVertexIndexBuffers(MeshResourcePtr& mesh, CommandBufferPtr& cmdb,

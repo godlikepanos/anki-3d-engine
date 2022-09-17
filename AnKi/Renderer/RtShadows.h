@@ -45,8 +45,8 @@ public:
 	class ShadowLayer
 	{
 	public:
-		U64 m_lightUuid = MAX_U64;
-		U64 m_frameLastUsed = MAX_U64;
+		U64 m_lightUuid = kMaxU64;
+		U64 m_frameLastUsed = kMaxU64;
 	};
 
 	/// @name Render targets
@@ -64,10 +64,10 @@ public:
 	/// @{
 	ShaderProgramResourcePtr m_rayGenProg;
 	ShaderProgramPtr m_rtLibraryGrProg;
-	U32 m_rayGenShaderGroupIdx = MAX_U32;
+	U32 m_rayGenShaderGroupIdx = kMaxU32;
 
 	ShaderProgramResourcePtr m_missProg;
-	U32 m_missShaderGroupIdx = MAX_U32;
+	U32 m_missShaderGroupIdx = kMaxU32;
 
 	ShaderProgramResourcePtr m_denoiseProg;
 	ShaderProgramPtr m_grDenoiseHorizontalProg;

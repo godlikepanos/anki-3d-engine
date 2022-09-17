@@ -116,7 +116,7 @@ Error ShaderImpl::init(const ShaderInitInfo& inf)
 		}
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specConstIds)
@@ -163,7 +163,7 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 			}
 
 			// Check that there are no other descriptors with the same binding
-			U32 foundIdx = MAX_U32;
+			U32 foundIdx = kMaxU32;
 			for(U32 i = 0; i < counts[set]; ++i)
 			{
 				if(descriptors[set][i].m_binding == binding)
@@ -173,7 +173,7 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 				}
 			}
 
-			if(foundIdx == MAX_U32)
+			if(foundIdx == kMaxU32)
 			{
 				// New binding, init it
 				DescriptorBinding& descriptor = descriptors[set][counts[set]++];

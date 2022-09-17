@@ -148,7 +148,7 @@ static_assert(!(BufferUsageBit::ALL & PrivateBufferUsageBit::ALL_PRIVATE), "Upda
 		if(ANKI_UNLIKELY((rez = (x)) < 0)) \
 		{ \
 			ANKI_VK_LOGE("Vulkan function failed (VkResult: %s): %s", vkResultToString(rez), #x); \
-			return Error::FUNCTION_FAILED; \
+			return Error::kFunctionFailed; \
 		} \
 	} while(0)
 

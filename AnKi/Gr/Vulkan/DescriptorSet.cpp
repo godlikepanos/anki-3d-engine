@@ -68,8 +68,8 @@ private:
 	DynamicArray<U16> m_freeTexIndices;
 	DynamicArray<U16> m_freeTexelBufferIndices;
 
-	U16 m_freeTexIndexCount = MAX_U16;
-	U16 m_freeTexelBufferIndexCount = MAX_U16;
+	U16 m_freeTexIndexCount = kMaxU16;
+	U16 m_freeTexelBufferIndexCount = kMaxU16;
 
 	void unbindCommon(U32 idx, DynamicArray<U16>& freeIndices, U16& freeIndexCount);
 };
@@ -79,7 +79,7 @@ class DS : public IntrusiveListEnabled<DS>
 {
 public:
 	VkDescriptorSet m_handle = {};
-	U64 m_lastFrameUsed = MAX_U64;
+	U64 m_lastFrameUsed = kMaxU64;
 	U64 m_hash;
 };
 
@@ -111,7 +111,7 @@ public:
 			ANKI_CHECK(newSet(hash, bindings, tmpAlloc, out));
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 private:
@@ -148,7 +148,7 @@ public:
 	BitSet<MAX_BINDINGS_PER_DESCRIPTOR_SET, U32> m_activeBindings = {false};
 	Array<U32, MAX_BINDINGS_PER_DESCRIPTOR_SET> m_bindingArraySize = {};
 	Array<DescriptorType, MAX_BINDINGS_PER_DESCRIPTOR_SET> m_bindingType = {};
-	U32 m_minBinding = MAX_U32;
+	U32 m_minBinding = kMaxU32;
 	U32 m_maxBinding = 0;
 	U32 m_index = 0; ///< Index in DescriptorSetFactory::m_caches
 
@@ -281,7 +281,7 @@ Error DescriptorSetFactory::BindlessDescriptorSet::init(const GrAllocator<U8>& a
 		}
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 U32 DescriptorSetFactory::BindlessDescriptorSet::bindTexture(const VkImageView view, const VkImageLayout layout)
@@ -389,7 +389,7 @@ DescriptorSetFactory::DSAllocator::~DSAllocator()
 Error DescriptorSetFactory::DSAllocator::init()
 {
 	ANKI_CHECK(createNewPool());
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error DescriptorSetFactory::DSAllocator::createNewPool()
@@ -422,7 +422,7 @@ Error DescriptorSetFactory::DSAllocator::createNewPool()
 	m_pools.resize(m_layoutEntry->m_factory->m_alloc, m_pools.getSize() + 1);
 	m_pools[m_pools.getSize() - 1] = pool;
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 const DS* DescriptorSetFactory::DSAllocator::tryFindSet(U64 hash)
@@ -516,7 +516,7 @@ Error DescriptorSetFactory::DSAllocator::newSet(
 	writeSet(bindings, *out, tmpAlloc);
 
 	out_ = out;
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void DescriptorSetFactory::DSAllocator::writeSet(
@@ -572,7 +572,7 @@ void DescriptorSetFactory::DSAllocator::writeSet(
 					VkDescriptorBufferInfo& info = *buffInfos.emplaceBack();
 					info.buffer = b.m_buff.m_buffHandle;
 					info.offset = 0;
-					info.range = (b.m_buff.m_range == MAX_PTR_SIZE) ? VK_WHOLE_SIZE : b.m_buff.m_range;
+					info.range = (b.m_buff.m_range == kMaxPtrSize) ? VK_WHOLE_SIZE : b.m_buff.m_range;
 					break;
 				}
 				case DescriptorType::READ_TEXTURE_BUFFER:
@@ -745,7 +745,7 @@ Error DSLayoutCacheEntry::init(const DescriptorBinding* bindings, U32 bindingCou
 	m_poolCreateInf.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	m_poolCreateInf.poolSizeCount = poolSizeCount;
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error DSLayoutCacheEntry::getOrCreateDSAllocator(DescriptorSetFactory::DSAllocator*& alloc)
@@ -783,7 +783,7 @@ Error DSLayoutCacheEntry::getOrCreateDSAllocator(DescriptorSetFactory::DSAllocat
 	}
 
 	ANKI_ASSERT(alloc);
-	return Error::NONE;
+	return Error::kNone;
 }
 
 AnyBinding& DescriptorSetState::getBindingToPopulate(U32 bindingIdx, U32 arrayIdx)
@@ -994,7 +994,7 @@ Error DescriptorSetFactory::init(const GrAllocator<U8>& alloc, VkDevice dev, U32
 	m_bindlessTextureCount = bindlessTextureCount;
 	m_bindlessUniformTexelBufferCount = bindlessTextureBuffers;
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void DescriptorSetFactory::destroy()
@@ -1108,7 +1108,7 @@ Error DescriptorSetFactory::newDescriptorSetLayout(const DescriptorSetLayoutInit
 		layout.m_entry = cache;
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error DescriptorSetFactory::newDescriptorSet(StackAllocator<U8>& tmpAlloc, DescriptorSetState& state,
@@ -1125,7 +1125,7 @@ Error DescriptorSetFactory::newDescriptorSet(StackAllocator<U8>& tmpAlloc, Descr
 	if(hash == 0)
 	{
 		dirty = false;
-		return Error::NONE;
+		return Error::kNone;
 	}
 	else
 	{
@@ -1152,7 +1152,7 @@ Error DescriptorSetFactory::newDescriptorSet(StackAllocator<U8>& tmpAlloc, Descr
 		}
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 U32 DescriptorSetFactory::bindBindlessTexture(const VkImageView view, const VkImageLayout layout)

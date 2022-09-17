@@ -19,7 +19,7 @@ OcclusionQueryImpl::~OcclusionQueryImpl()
 Error OcclusionQueryImpl::init()
 {
 	ANKI_CHECK(getGrManagerImpl().getOcclusionQueryFactory().newQuery(m_handle));
-	return Error::NONE;
+	return Error::kNone;
 }
 
 OcclusionQueryResult OcclusionQueryImpl::getResultInternal() const

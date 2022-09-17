@@ -94,7 +94,7 @@ static Error findConstantColorsInImage(CString fname, Vec4& constantColor, Gener
 		}
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracing)
@@ -106,7 +106,7 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 	if(!mtl.has_pbr_metallic_roughness)
 	{
 		ANKI_IMPORTER_LOGE("Expecting PBR metallic roughness");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	HashMapAuto<CString, StringAuto> extras(m_alloc);
@@ -161,7 +161,7 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 			if(tokens.getSize() != 3)
 			{
 				ANKI_IMPORTER_LOGE("Wrong specular: %s", it->cstr());
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 
 			auto token = tokens.getBegin();
@@ -338,7 +338,7 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 	ANKI_CHECK(file.open(fname.toCString(), FileOpenFlag::WRITE));
 	ANKI_CHECK(file.writeText(xml));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

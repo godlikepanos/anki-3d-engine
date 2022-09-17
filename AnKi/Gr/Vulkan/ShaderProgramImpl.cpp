@@ -352,7 +352,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 														   &m_rt.m_allHandles[0]));
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

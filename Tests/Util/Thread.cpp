@@ -33,7 +33,7 @@ ANKI_TEST(Util, Thread)
 
 		HighRezTimer::sleep(1.0);
 
-		return (check != true) ? Error::FUNCTION_FAILED : Error::NONE;
+		return (check != true) ? Error::kFunctionFailed : Error::kNone;
 	});
 
 	ANKI_TEST_EXPECT_EQ(u, NUMBER); // It should be the old value
@@ -71,7 +71,7 @@ ANKI_TEST(Util, Mutex)
 			mtx.unlock();
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	});
 
 	t1.start(&in, [](ThreadCallbackInfo& info) -> Error {
@@ -87,7 +87,7 @@ ANKI_TEST(Util, Mutex)
 			mtx.unlock();
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	});
 
 	ANKI_TEST_EXPECT_NO_ERR(t0.join());
@@ -109,7 +109,7 @@ struct TestJobTP : ThreadPoolTask
 			++in;
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 
@@ -184,7 +184,7 @@ ANKI_TEST(Util, Barrier)
 		t.start(&b, [](ThreadCallbackInfo& info) -> Error {
 			Barrier& b = *reinterpret_cast<Barrier*>(info.m_userData);
 			b.wait();
-			return Error::NONE;
+			return Error::kNone;
 		});
 
 		b.wait();

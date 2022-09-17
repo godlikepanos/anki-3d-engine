@@ -149,8 +149,8 @@ U32 findBestCacheEntry(U64 uuid, Timestamp crntTimestamp, const TCacheEntryArray
 	}
 
 	// 2nd and 3rd choice, find an empty entry or some entry to re-use
-	U32 emptyCacheEntryIdx = MAX_U32;
-	U32 cacheEntryIdxToKick = MAX_U32;
+	U32 emptyCacheEntryIdx = kMaxU32;
+	U32 cacheEntryIdxToKick = kMaxU32;
 	Timestamp cacheEntryIdxToKickMinTimestamp = MAX_TIMESTAMP;
 	for(U32 cacheEntryIdx = 0; cacheEntryIdx < entries.getSize(); ++cacheEntryIdx)
 	{
@@ -170,18 +170,18 @@ U32 findBestCacheEntry(U64 uuid, Timestamp crntTimestamp, const TCacheEntryArray
 	}
 
 	U32 outCacheEntryIdx;
-	if(emptyCacheEntryIdx != MAX_U32)
+	if(emptyCacheEntryIdx != kMaxU32)
 	{
 		outCacheEntryIdx = emptyCacheEntryIdx;
 	}
-	else if(cacheEntryIdxToKick != MAX_U32)
+	else if(cacheEntryIdxToKick != kMaxU32)
 	{
 		outCacheEntryIdx = cacheEntryIdxToKick;
 	}
 	else
 	{
 		// We are out of cache entries. Return OOM
-		outCacheEntryIdx = MAX_U32;
+		outCacheEntryIdx = kMaxU32;
 	}
 
 	return outCacheEntryIdx;

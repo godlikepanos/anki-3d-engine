@@ -66,7 +66,7 @@ Error PipelineCache::init(VkDevice dev, VkPhysicalDevice pdev, CString cacheDir,
 
 	ANKI_VK_CHECK(vkCreatePipelineCache(dev, &ci, nullptr, &m_cacheHandle));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void PipelineCache::destroy(VkDevice dev, VkPhysicalDevice pdev, GrAllocator<U8> alloc)
@@ -116,7 +116,7 @@ Error PipelineCache::destroyInternal(VkDevice dev, VkPhysicalDevice pdev, GrAllo
 		m_cacheHandle = VK_NULL_HANDLE;
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

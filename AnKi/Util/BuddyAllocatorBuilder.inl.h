@@ -240,7 +240,7 @@ void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::getStats(BuddyAlloca
 
 	// Compute external fragmetation (wikipedia has the definition)
 	U32 order = 0;
-	U32 orderWithTheBiggestBlock = MAX_U32;
+	U32 orderWithTheBiggestBlock = kMaxU32;
 	for(const FreeList& list : m_freeLists)
 	{
 		if(list.getSize())
@@ -250,7 +250,7 @@ void BuddyAllocatorBuilder<T_MAX_MEMORY_RANGE_LOG2, TLock>::getStats(BuddyAlloca
 		++order;
 	}
 	const PtrSize biggestBlockSize =
-		(orderWithTheBiggestBlock == MAX_U32) ? m_maxMemoryRange : pow2<PtrSize>(orderWithTheBiggestBlock);
+		(orderWithTheBiggestBlock == kMaxU32) ? m_maxMemoryRange : pow2<PtrSize>(orderWithTheBiggestBlock);
 	const PtrSize realFreeMemory = m_maxMemoryRange - m_realAllocatedSize;
 	stats.m_externalFragmentation = F32(1.0 - F64(biggestBlockSize) / F64(realFreeMemory));
 

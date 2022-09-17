@@ -37,7 +37,7 @@ public:
 
 	GlobalIlluminationProbeQueueElement*
 		m_probeToUpdateThisFrame ANKI_DEBUG_CODE(= numberToPtr<GlobalIlluminationProbeQueueElement*>(1));
-	UVec3 m_cellOfTheProbeToUpdateThisFrame ANKI_DEBUG_CODE(= UVec3(MAX_U32));
+	UVec3 m_cellOfTheProbeToUpdateThisFrame ANKI_DEBUG_CODE(= UVec3(kMaxU32));
 
 	Array<RenderTargetHandle, kGBufferColorRenderTargetCount> m_gbufferColorRts;
 	RenderTargetHandle m_gbufferDepthRt;
@@ -45,8 +45,8 @@ public:
 	RenderTargetHandle m_lightShadingRt;
 	WeakArray<RenderTargetHandle> m_irradianceProbeRts;
 
-	U32 m_gbufferDrawcallCount ANKI_DEBUG_CODE(= MAX_U32);
-	U32 m_smDrawcallCount ANKI_DEBUG_CODE(= MAX_U32);
+	U32 m_gbufferDrawcallCount ANKI_DEBUG_CODE(= kMaxU32);
+	U32 m_smDrawcallCount ANKI_DEBUG_CODE(= kMaxU32);
 
 	static void foo()
 	{
@@ -119,7 +119,7 @@ Error IndirectDiffuseProbes::initInternal()
 	ANKI_CHECK(initShadowMapping());
 	ANKI_CHECK(initIrradiance());
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error IndirectDiffuseProbes::initGBuffer()
@@ -161,7 +161,7 @@ Error IndirectDiffuseProbes::initGBuffer()
 		m_gbuffer.m_fbDescr.bake();
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error IndirectDiffuseProbes::initShadowMapping()
@@ -181,7 +181,7 @@ Error IndirectDiffuseProbes::initShadowMapping()
 	m_shadowMapping.m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
 	m_shadowMapping.m_fbDescr.bake();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error IndirectDiffuseProbes::initLightShading()
@@ -203,7 +203,7 @@ Error IndirectDiffuseProbes::initLightShading()
 	// Init deferred
 	ANKI_CHECK(m_lightShading.m_deferred.init());
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error IndirectDiffuseProbes::initIrradiance()
@@ -221,7 +221,7 @@ Error IndirectDiffuseProbes::initIrradiance()
 	m_irradiance.m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_irradiance.m_grProg = variant->getProgram();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
@@ -411,7 +411,7 @@ void IndirectDiffuseProbes::prepareProbes(InternalContext& giCtx)
 		// Find cache entry
 		const U32 cacheEntryIdx = findBestCacheEntry(probe.m_uuid, m_r->getGlobalTimestamp(), m_cacheEntries,
 													 m_probeUuidToCacheEntryIdx, getAllocator());
-		if(ANKI_UNLIKELY(cacheEntryIdx == MAX_U32))
+		if(ANKI_UNLIKELY(cacheEntryIdx == kMaxU32))
 		{
 			// Failed
 			ANKI_R_LOGW("There is not enough space in the indirect lighting atlas for more probes. "

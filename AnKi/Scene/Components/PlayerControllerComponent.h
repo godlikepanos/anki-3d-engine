@@ -46,7 +46,7 @@ public:
 		const Transform newTrf = m_player->getTransform();
 		updated = newTrf != m_trf;
 		m_trf = newTrf;
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	PhysicsPlayerControllerPtr getPhysicsPlayerController() const

@@ -143,7 +143,7 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 	if(m_internalResolution.x() < 64 || m_internalResolution.y() < 64)
 	{
 		ANKI_R_LOGE("Incorrect sizes");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	ANKI_CHECK(m_resources->loadResource("ShaderBinaries/ClearTextureCompute.ankiprogbin", m_clearTexComputeProg));
@@ -293,7 +293,7 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		m_jitterOffsets[i] = generateJitter(i);
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error Renderer::populateRenderGraph(RenderingContext& ctx)
@@ -386,7 +386,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	// Populate the uniforms
 	m_clusterBinning->writeClusterBuffersAsync();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void Renderer::finalize(const RenderingContext& ctx)

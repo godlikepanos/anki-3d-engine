@@ -43,7 +43,7 @@ Error Dbg::init()
 	m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
 	m_fbDescr.bake();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)

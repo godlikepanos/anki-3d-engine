@@ -282,7 +282,7 @@ private:
 	template<typename TVisitor, typename TFirst>
 	Error acceptVisitorInternal(TVisitor& v)
 	{
-		Error err = Error::NONE;
+		Error err = Error::kNone;
 
 		switch(m_what)
 		{
@@ -308,7 +308,7 @@ private:
 	template<typename TVisitor, typename TFirst, typename TSecond, typename... Types_>
 	Error acceptVisitorInternal(TVisitor& v)
 	{
-		Error err = Error::NONE;
+		Error err = Error::kNone;
 		constexpr I i = sizeof...(Types) - sizeof...(Types_) - 1;
 
 		switch(m_what)
@@ -335,7 +335,7 @@ private:
 	template<typename TVisitor, typename TFirst>
 	Error acceptVisitorInternalConst(TVisitor& v) const
 	{
-		Error err = Error::NONE;
+		Error err = Error::kNone;
 
 		switch(m_what)
 		{
@@ -361,7 +361,7 @@ private:
 	template<typename TVisitor, typename TFirst, typename TSecond, typename... Types_>
 	Error acceptVisitorInternalConst(TVisitor& v) const
 	{
-		Error err = Error::NONE;
+		Error err = Error::kNone;
 		constexpr I i = sizeof...(Types) - sizeof...(Types_) - 1;
 
 		switch(m_what)

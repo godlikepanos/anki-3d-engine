@@ -248,7 +248,7 @@ Error ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 
 	m_vertBuffSize = m_props.m_maxNumOfParticles * VERTEX_SIZE;
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
@@ -256,7 +256,7 @@ Error ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 	if(ANKI_UNLIKELY(!m_particleEmitterResource.isCreated()))
 	{
 		updated = false;
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	updated = true;
@@ -271,7 +271,7 @@ Error ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 		simulate(info.m_previousTime, info.m_currentTime, WeakArray<PhysicsParticle>(m_physicsParticles));
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 template<typename TParticle>
@@ -281,8 +281,8 @@ void ParticleEmitterComponent::simulate(Second prevUpdateTime, Second crntTime, 
 	// - Calc the AABB
 	// - Calc the instancing stuff
 
-	Vec3 aabbMin(MAX_F32);
-	Vec3 aabbMax(MIN_F32);
+	Vec3 aabbMin(kMaxF32);
+	Vec3 aabbMax(kMinF32);
 	m_aliveParticleCount = 0;
 
 	F32* verts = reinterpret_cast<F32*>(m_node->getFrameAllocator().allocate(m_vertBuffSize));

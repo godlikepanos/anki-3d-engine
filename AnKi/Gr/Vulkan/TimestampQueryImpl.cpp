@@ -22,7 +22,7 @@ Error TimestampQueryImpl::init()
 
 	m_timestampPeriod = U64(getGrManagerImpl().getPhysicalDeviceProperties().limits.timestampPeriod);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 TimestampQueryResult TimestampQueryImpl::getResultInternal(Second& timestamp) const

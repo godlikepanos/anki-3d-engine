@@ -104,10 +104,10 @@ public:
 	const ImageLoaderVolume& getVolume(U32 level) const;
 
 	/// Load a resource image file.
-	Error load(ResourceFilePtr file, const CString& filename, U32 maxImageSize = MAX_U32);
+	Error load(ResourceFilePtr file, const CString& filename, U32 maxImageSize = kMaxU32);
 
 	/// Load a system image file.
-	Error load(const CString& filename, U32 maxImageSize = MAX_U32);
+	Error load(const CString& filename, U32 maxImageSize = kMaxU32);
 
 private:
 	class FileInterface;

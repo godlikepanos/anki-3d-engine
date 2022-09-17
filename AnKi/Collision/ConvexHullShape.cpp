@@ -32,7 +32,7 @@ Vec4 ConvexHullShape::computeSupport(const Vec4& dir) const
 {
 	check();
 
-	F32 m = MIN_F32;
+	F32 m = kMinF32;
 	U index = 0;
 
 	const Vec4 d = (m_trfIdentity) ? dir : (m_invTrf.getRotation() * dir).xyz0();

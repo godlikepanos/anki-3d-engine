@@ -15,8 +15,8 @@ const F32 EPSILON = 0.000001;
 const F16 EPSILON_F16 = 0.0001hf; // Divisions by this should be OK according to http://weitz.de/ieee/
 const ANKI_RP F32 EPSILON_RP = F32(EPSILON_F16);
 
-const U32 MAX_U32 = 0xFFFFFFFFu;
-const F32 MAX_F32 = 3.402823e+38;
+const U32 kMaxU32 = 0xFFFFFFFFu;
+const F32 kMaxF32 = 3.402823e+38;
 const F16 MAX_F16 = 65504.0hf;
 const F16 MIN_F16 = 0.00006104hf;
 

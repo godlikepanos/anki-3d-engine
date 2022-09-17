@@ -747,7 +747,7 @@ ANKI_TEST(Gr, DrawWithUniforms)
 		presentBarrierA(cmdb, presentTex);
 		cmdb->beginRenderPass(fb, {TextureUsageBit::kFramebufferWrite}, {});
 
-		cmdb->bindUniformBuffer(0, 0, b, 0, MAX_PTR_SIZE);
+		cmdb->bindUniformBuffer(0, 0, b, 0, kMaxPtrSize);
 
 		// Uploaded buffer
 		Vec4* rotMat = SET_UNIFORMS(Vec4*, sizeof(Vec4), cmdb, 0, 1);
@@ -2124,10 +2124,10 @@ void main()
 
 	for(U32 i = 0; i < uniformBuffers.getSize(); ++i)
 	{
-		cmdb->bindUniformBuffer(0, 0, uniformBuffers[i], 0, MAX_PTR_SIZE, i);
+		cmdb->bindUniformBuffer(0, 0, uniformBuffers[i], 0, kMaxPtrSize, i);
 	}
 
-	cmdb->bindStorageBuffer(0, 1, resBuff, 0, MAX_PTR_SIZE);
+	cmdb->bindStorageBuffer(0, 1, resBuff, 0, kMaxPtrSize);
 
 	cmdb->bindShaderProgram(prog);
 	cmdb->dispatchCompute(1, 1, 1);
@@ -2242,7 +2242,7 @@ void main()
 	cmdb->setTextureSurfaceBarrier(texC, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledCompute,
 								   TextureSurfaceInfo());
 
-	cmdb->bindStorageBuffer(1, 0, resBuff, 0, MAX_PTR_SIZE);
+	cmdb->bindStorageBuffer(1, 0, resBuff, 0, kMaxPtrSize);
 	cmdb->bindSampler(1, 1, sampler);
 	cmdb->bindShaderProgram(prog);
 
@@ -2316,7 +2316,7 @@ void main()
 	info.m_mapAccess = BufferMapAccessBit::WRITE;
 	BufferPtr ptrBuff = gr->newBuffer(info);
 
-	Vec4* mapped = static_cast<Vec4*>(ptrBuff->map(0, MAX_PTR_SIZE, BufferMapAccessBit::WRITE));
+	Vec4* mapped = static_cast<Vec4*>(ptrBuff->map(0, kMaxPtrSize, BufferMapAccessBit::WRITE));
 	const Vec4 VEC(123.456f, -1.1f, 100.0f, -666.0f);
 	*mapped = VEC;
 	++mapped;
@@ -2348,7 +2348,7 @@ void main()
 	gr->finish();
 
 	// Check
-	mapped = static_cast<Vec4*>(resBuff->map(0, MAX_PTR_SIZE, BufferMapAccessBit::READ));
+	mapped = static_cast<Vec4*>(resBuff->map(0, kMaxPtrSize, BufferMapAccessBit::READ));
 	ANKI_TEST_EXPECT_EQ(*mapped, VEC + VEC * 10.0f);
 	resBuff->unmap();
 
@@ -2376,7 +2376,7 @@ ANKI_TEST(Gr, RayQuery)
 		init.m_size = sizeof(indices);
 		idxBuffer = gr->newBuffer(init);
 
-		void* addr = idxBuffer->map(0, MAX_PTR_SIZE, BufferMapAccessBit::WRITE);
+		void* addr = idxBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::WRITE);
 		memcpy(addr, &indices[0], sizeof(indices));
 		idxBuffer->unmap();
 	}
@@ -2393,7 +2393,7 @@ ANKI_TEST(Gr, RayQuery)
 		init.m_size = sizeof(verts);
 		vertBuffer = gr->newBuffer(init);
 
-		void* addr = vertBuffer->map(0, MAX_PTR_SIZE, BufferMapAccessBit::WRITE);
+		void* addr = vertBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::WRITE);
 		memcpy(addr, &verts[0], sizeof(verts));
 		vertBuffer->unmap();
 	}
@@ -3453,8 +3453,8 @@ void main()
 		cmdb->setTextureBarrier(offscreenRts[(i + 1) & 1], TextureUsageBit::kImageComputeRead,
 								TextureUsageBit::kImageTraceRaysRead, TextureSubresourceInfo());
 
-		cmdb->bindStorageBuffer(0, 0, modelBuffer, 0, MAX_PTR_SIZE);
-		cmdb->bindStorageBuffer(0, 1, lightBuffer, 0, MAX_PTR_SIZE);
+		cmdb->bindStorageBuffer(0, 0, modelBuffer, 0, kMaxPtrSize);
+		cmdb->bindStorageBuffer(0, 1, lightBuffer, 0, kMaxPtrSize);
 		cmdb->bindAccelerationStructure(1, 0, tlas);
 		cmdb->bindImage(1, 1, offscreenHistoryView);
 		cmdb->bindImage(1, 2, offscreenView);
@@ -3566,7 +3566,7 @@ void main()
 	info.m_mapAccess = BufferMapAccessBit::WRITE | BufferMapAccessBit::READ;
 	BufferPtr atomicsBuffer = gr->newBuffer(info);
 	U32* values =
-		static_cast<U32*>(atomicsBuffer->map(0, MAX_PTR_SIZE, BufferMapAccessBit::READ | BufferMapAccessBit::WRITE));
+		static_cast<U32*>(atomicsBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::READ | BufferMapAccessBit::WRITE));
 	memset(values, 0, info.m_size);
 
 	// Pre-create some CPU result buffers
@@ -3591,21 +3591,21 @@ void main()
 	cinit.m_flags = CommandBufferFlag::COMPUTE_WORK | CommandBufferFlag::SMALL_BATCH;
 	CommandBufferPtr incrementCmdb = gr->newCommandBuffer(cinit);
 	incrementCmdb->bindShaderProgram(incrementProg);
-	incrementCmdb->bindStorageBuffer(0, 0, atomicsBuffer, 0, MAX_PTR_SIZE);
+	incrementCmdb->bindStorageBuffer(0, 0, atomicsBuffer, 0, kMaxPtrSize);
 	incrementCmdb->dispatchCompute(ARRAY_SIZE / 8, 1, 1);
 
 	// Create the 2nd command buffer
 	cinit.m_flags = CommandBufferFlag::GENERAL_WORK | CommandBufferFlag::SMALL_BATCH;
 	CommandBufferPtr checkCmdb = gr->newCommandBuffer(cinit);
 	checkCmdb->bindShaderProgram(checkProg);
-	checkCmdb->bindStorageBuffer(0, 0, atomicsBuffer, 0, MAX_PTR_SIZE);
+	checkCmdb->bindStorageBuffer(0, 0, atomicsBuffer, 0, kMaxPtrSize);
 	checkCmdb->dispatchCompute(ARRAY_SIZE / 8, 1, 1);
 
 	// Create the 3rd command buffer
 	cinit.m_flags = CommandBufferFlag::COMPUTE_WORK | CommandBufferFlag::SMALL_BATCH;
 	CommandBufferPtr incrementCmdb2 = gr->newCommandBuffer(cinit);
 	incrementCmdb2->bindShaderProgram(incrementProg);
-	incrementCmdb2->bindStorageBuffer(0, 0, atomicsBuffer, 0, MAX_PTR_SIZE);
+	incrementCmdb2->bindStorageBuffer(0, 0, atomicsBuffer, 0, kMaxPtrSize);
 	incrementCmdb2->dispatchCompute(ARRAY_SIZE / 8, 1, 1);
 
 	// Submit
@@ -3614,7 +3614,7 @@ void main()
 	incrementCmdb->flush({}, &fence);
 	checkCmdb->flush(Array<FencePtr, 1>{fence}, &fence);
 	incrementCmdb2->flush(Array<FencePtr, 1>{fence}, &fence);
-	fence->clientWait(MAX_SECOND);
+	fence->clientWait(kMaxSecond);
 #else
 	incrementCmdb->flush();
 	gr->finish();

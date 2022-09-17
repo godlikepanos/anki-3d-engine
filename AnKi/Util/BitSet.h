@@ -247,7 +247,7 @@ public:
 		return count;
 	}
 
-	/// Get the most significant bit that is enabled. Or MAX_U32 if all is zero.
+	/// Get the most significant bit that is enabled. Or kMaxU32 if all is zero.
 	U32 getMostSignificantBit() const
 	{
 		U32 i = CHUNK_COUNT;
@@ -261,7 +261,7 @@ public:
 			}
 		}
 
-		return MAX_U32;
+		return kMaxU32;
 	}
 
 	Array<TChunkType, CHUNK_COUNT> getData() const

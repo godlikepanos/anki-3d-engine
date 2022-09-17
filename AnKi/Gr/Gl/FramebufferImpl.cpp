@@ -107,11 +107,11 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 	if(status != GL_FRAMEBUFFER_COMPLETE)
 	{
 		ANKI_GL_LOGE("FBO is incomplete. Status: 0x%x", status);
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void FramebufferImpl::attachTextureInternal(GLenum attachment, const TextureViewImpl& view,
@@ -231,15 +231,15 @@ void FramebufferImpl::bind(const GlState& state, U32 minx, U32 miny, U32 width, 
 		// Enable write mask in case a pipeline changed it (else no clear will happen) and then restore state
 		// From the spec: The clear operation always uses the front stencil write mask when clearing the stencil
 		// buffer
-		if(state.m_stencilWriteMask[0] != MAX_U32)
+		if(state.m_stencilWriteMask[0] != kMaxU32)
 		{
-			glStencilMaskSeparate(GL_FRONT, MAX_U32);
+			glStencilMaskSeparate(GL_FRONT, kMaxU32);
 		}
 
 		GLint clearVal = m_in.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_stencil;
 		glClearBufferiv(GL_STENCIL, 0, &clearVal);
 
-		if(state.m_stencilWriteMask[0] != MAX_U32)
+		if(state.m_stencilWriteMask[0] != kMaxU32)
 		{
 			glStencilMaskSeparate(GL_FRONT, state.m_stencilWriteMask[0]);
 		}

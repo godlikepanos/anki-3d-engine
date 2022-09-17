@@ -26,7 +26,7 @@ Error GenericResource::load(const ResourceFilename& filename, [[maybe_unused]] B
 	m_data.create(getAllocator(), size);
 	ANKI_CHECK(file->read(&m_data[0], size));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

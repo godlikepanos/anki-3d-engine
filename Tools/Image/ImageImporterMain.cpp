@@ -48,7 +48,7 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 	if(argc < 2)
 	{
 		// Need at least 1 input
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	I i;
@@ -61,7 +61,7 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 			++i;
 			if(i >= argc)
 			{
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 
 			cleanup.m_outFilename = argv[i];
@@ -71,7 +71,7 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 			++i;
 			if(i >= argc)
 			{
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 
 			if(CString(argv[i]) == "2D")
@@ -92,7 +92,7 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 			}
 			else
 			{
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 		}
 		else if(CString(argv[i]) == "-no-alpha")
@@ -104,7 +104,7 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 			++i;
 			if(i >= argc)
 			{
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 
 			if(CString(argv[i]) == "1")
@@ -117,7 +117,7 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 			}
 			else
 			{
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 		}
 		else if(CString(argv[i]) == "-store-astc")
@@ -125,7 +125,7 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 			++i;
 			if(i >= argc)
 			{
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 
 			if(CString(argv[i]) == "1")
@@ -138,7 +138,7 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 			}
 			else
 			{
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 		}
 		else if(CString(argv[i]) == "-store-raw")
@@ -146,7 +146,7 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 			++i;
 			if(i >= argc)
 			{
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 
 			if(CString(argv[i]) == "1")
@@ -159,7 +159,7 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 			}
 			else
 			{
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 		}
 		else if(CString(argv[i]) == "-astc-block-size")
@@ -167,7 +167,7 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 			++i;
 			if(i >= argc)
 			{
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 
 			if(CString(argv[i]) == "4x4")
@@ -180,7 +180,7 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 			}
 			else
 			{
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 		}
 		else if(CString(argv[i]) == "-mip-count")
@@ -188,7 +188,7 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 			++i;
 			if(i >= argc)
 			{
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 
 			ANKI_CHECK(CString(argv[i]).toNumber(config.m_mipmapCount));
@@ -210,7 +210,7 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 			++i;
 			if(i >= argc)
 			{
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 
 			if(CString(argv[i]) == "1")
@@ -223,7 +223,7 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 			}
 			else
 			{
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 		}
 		else if(CString(argv[i]) == "-hdr-scale")
@@ -231,7 +231,7 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 			++i;
 			if(i + 2 >= argc)
 			{
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 
 			F32 x, y, z;
@@ -245,7 +245,7 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 			++i;
 			if(i + 2 >= argc)
 			{
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 
 			F32 x, y, z;
@@ -269,7 +269,7 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 
 	if(cleanup.m_inputFilenames.getSize() == 0)
 	{
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	if(cleanup.m_outFilename.isEmpty())
@@ -293,7 +293,7 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 	config.m_inputFilenames = ConstWeakArray<CString>(cleanup.m_inputFilenames);
 	config.m_outFilename = cleanup.m_outFilename;
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 int main(int argc, char** argv)

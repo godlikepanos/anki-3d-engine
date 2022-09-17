@@ -247,10 +247,10 @@ Error StackMemoryPool::StackAllocatorBuilderInterface::allocateChunk(PtrSize siz
 	else
 	{
 		ANKI_OOM_ACTION();
-		return Error::OUT_OF_MEMORY;
+		return Error::kOutOfMemory;
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void StackMemoryPool::StackAllocatorBuilderInterface::freeChunk(Chunk* chunk)
