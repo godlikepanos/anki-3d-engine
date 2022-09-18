@@ -109,10 +109,10 @@ protected:
 	/// Pool type.
 	enum class Type : U8
 	{
-		NONE,
-		HEAP,
-		STACK,
-		CHAIN
+		kNone,
+		kHeap,
+		kStack,
+		kChain
 	};
 
 	/// User allocation function.
@@ -135,7 +135,7 @@ private:
 	char* m_name = nullptr;
 
 	/// Type.
-	Type m_type = Type::NONE;
+	Type m_type = Type::kNone;
 };
 
 /// A dummy interface to match the StackMemoryPool and ChainMemoryPool interfaces in order to be used by the same
@@ -217,10 +217,10 @@ public:
 
 private:
 	/// This is the absolute max alignment.
-	static constexpr U32 MAX_ALIGNMENT = ANKI_SAFE_ALIGNMENT;
+	static constexpr U32 kMaxAlignment = ANKI_SAFE_ALIGNMENT;
 
 	/// This is the chunk the StackAllocatorBuilder will be allocating.
-	class alignas(MAX_ALIGNMENT) Chunk
+	class alignas(kMaxAlignment) Chunk
 	{
 	public:
 		/// Required by StackAllocatorBuilder.
@@ -233,7 +233,7 @@ private:
 		PtrSize m_chunkSize;
 
 		/// The start of the actual CPU memory.
-		alignas(MAX_ALIGNMENT) U8 m_memoryStart[1];
+		alignas(kMaxAlignment) U8 m_memoryStart[1];
 	};
 
 	/// Implements the StackAllocatorBuilder TInterface
@@ -402,14 +402,14 @@ inline void* BaseMemoryPool::allocate(PtrSize size, PtrSize alignmentBytes)
 	void* out = nullptr;
 	switch(m_type)
 	{
-	case Type::HEAP:
+	case Type::kHeap:
 		out = static_cast<HeapMemoryPool*>(this)->allocate(size, alignmentBytes);
 		break;
-	case Type::STACK:
+	case Type::kStack:
 		out = static_cast<StackMemoryPool*>(this)->allocate(size, alignmentBytes);
 		break;
 	default:
-		ANKI_ASSERT(m_type == Type::CHAIN);
+		ANKI_ASSERT(m_type == Type::kChain);
 		out = static_cast<ChainMemoryPool*>(this)->allocate(size, alignmentBytes);
 	}
 
@@ -420,14 +420,14 @@ inline void BaseMemoryPool::free(void* ptr)
 {
 	switch(m_type)
 	{
-	case Type::HEAP:
+	case Type::kHeap:
 		static_cast<HeapMemoryPool*>(this)->free(ptr);
 		break;
-	case Type::STACK:
+	case Type::kStack:
 		static_cast<StackMemoryPool*>(this)->free(ptr);
 		break;
 	default:
-		ANKI_ASSERT(m_type == Type::CHAIN);
+		ANKI_ASSERT(m_type == Type::kChain);
 		static_cast<ChainMemoryPool*>(this)->free(ptr);
 	}
 }

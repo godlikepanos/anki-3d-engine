@@ -19,7 +19,7 @@
 
 namespace anki {
 
-inline constexpr Array<const Char*, U(LoggerMessageType::COUNT)> kMessageTypeTxt = {"I", "V", "E", "W", "F"};
+inline constexpr Array<const Char*, U(LoggerMessageType::kCount)> kMessageTypeTxt = {"I", "V", "E", "W", "F"};
 
 Logger::Logger()
 {
@@ -69,7 +69,7 @@ void Logger::write(const Char* file, int line, const Char* func, const Char* sub
 				   const Char* threadName, const Char* msg)
 {
 	// Note: m_verbosityEnabled is not accessed in a thread-safe way. It doesn't really matter though
-	if(type == LoggerMessageType::VERBOSE && !m_verbosityEnabled)
+	if(type == LoggerMessageType::kVerbose && !m_verbosityEnabled)
 	{
 		return;
 	}
@@ -89,7 +89,7 @@ void Logger::write(const Char* file, int line, const Char* func, const Char* sub
 
 	m_mutex.unlock();
 
-	if(type == LoggerMessageType::FATAL)
+	if(type == LoggerMessageType::kFatal)
 	{
 		abort();
 	}
@@ -143,27 +143,27 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 
 	switch(info.m_type)
 	{
-	case LoggerMessageType::NORMAL:
+	case LoggerMessageType::kNormal:
 		out = stdout;
 		terminalColor = "\033[0;32m";
 		terminalColorBg = "\033[1;42;37m";
 		break;
-	case LoggerMessageType::VERBOSE:
+	case LoggerMessageType::kVerbose:
 		out = stdout;
 		terminalColor = "\033[0;34m";
 		terminalColorBg = "\033[1;44;37m";
 		break;
-	case LoggerMessageType::ERROR:
+	case LoggerMessageType::kError:
 		out = stderr;
 		terminalColor = "\033[0;31m";
 		terminalColorBg = "\033[1;41;37m";
 		break;
-	case LoggerMessageType::WARNING:
+	case LoggerMessageType::kWarning:
 		out = stderr;
 		terminalColor = "\033[2;33m";
 		terminalColorBg = "\033[1;43;37m";
 		break;
-	case LoggerMessageType::FATAL:
+	case LoggerMessageType::kFatal:
 		out = stderr;
 		terminalColor = "\033[0;31m";
 		terminalColorBg = "\033[1;41;37m";
@@ -188,23 +188,23 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 	FILE* out = nullptr;
 	switch(info.m_type)
 	{
-	case LoggerMessageType::NORMAL:
+	case LoggerMessageType::kNormal:
 		attribs |= FOREGROUND_GREEN;
 		out = stdout;
 		break;
-	case LoggerMessageType::VERBOSE:
+	case LoggerMessageType::kVerbose:
 		attribs |= FOREGROUND_BLUE;
 		out = stdout;
 		break;
-	case LoggerMessageType::ERROR:
+	case LoggerMessageType::kError:
 		attribs |= FOREGROUND_RED;
 		out = stderr;
 		break;
-	case LoggerMessageType::WARNING:
+	case LoggerMessageType::kWarning:
 		attribs |= FOREGROUND_RED | FOREGROUND_GREEN;
 		out = stderr;
 		break;
-	case LoggerMessageType::FATAL:
+	case LoggerMessageType::kFatal:
 		attribs |= FOREGROUND_RED | FOREGROUND_INTENSITY;
 		out = stderr;
 		break;
@@ -240,17 +240,17 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 
 	switch(info.m_type)
 	{
-	case LoggerMessageType::NORMAL:
-	case LoggerMessageType::VERBOSE:
+	case LoggerMessageType::kNormal:
+	case LoggerMessageType::kVerbose:
 		andMsgType = ANDROID_LOG_INFO;
 		break;
-	case LoggerMessageType::ERROR:
+	case LoggerMessageType::kError:
 		andMsgType = ANDROID_LOG_ERROR;
 		break;
-	case LoggerMessageType::WARNING:
+	case LoggerMessageType::kWarning:
 		andMsgType = ANDROID_LOG_WARN;
 		break;
-	case LoggerMessageType::FATAL:
+	case LoggerMessageType::kFatal:
 		andMsgType = ANDROID_LOG_ERROR;
 		break;
 	default:
@@ -266,17 +266,17 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 
 	switch(info.m_type)
 	{
-	case LoggerMessageType::NORMAL:
-	case LoggerMessageType::VERBOSE:
+	case LoggerMessageType::kNormal:
+	case LoggerMessageType::kVerbose:
 		out = stdout;
 		break;
-	case LoggerMessageType::ERROR:
+	case LoggerMessageType::kError:
 		out = stderr;
 		break;
-	case LoggerMessageType::WARNING:
+	case LoggerMessageType::kWarning:
 		out = stderr;
 		break;
-	case LoggerMessageType::FATAL:
+	case LoggerMessageType::kFatal:
 		out = stderr;
 		break;
 	default:

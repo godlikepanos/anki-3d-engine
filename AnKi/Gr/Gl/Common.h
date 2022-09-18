@@ -30,10 +30,10 @@ class RenderingThread;
 /// @addtogroup opengl
 /// @{
 
-#define ANKI_GL_LOGI(...) ANKI_LOG("GL  ", NORMAL, __VA_ARGS__)
-#define ANKI_GL_LOGE(...) ANKI_LOG("GL  ", ERROR, __VA_ARGS__)
-#define ANKI_GL_LOGW(...) ANKI_LOG("GL  ", WARNING, __VA_ARGS__)
-#define ANKI_GL_LOGF(...) ANKI_LOG("GL  ", FATAL, __VA_ARGS__)
+#define ANKI_GL_LOGI(...) ANKI_LOG("GL  ", kNormal, __VA_ARGS__)
+#define ANKI_GL_LOGE(...) ANKI_LOG("GL  ", kError, __VA_ARGS__)
+#define ANKI_GL_LOGW(...) ANKI_LOG("GL  ", kWarning, __VA_ARGS__)
+#define ANKI_GL_LOGF(...) ANKI_LOG("GL  ", kFatal, __VA_ARGS__)
 
 #define ANKI_GL_SELF(class_) class_& self = *static_cast<class_*>(this)
 #define ANKI_GL_SELF_CONST(class_) const class_& self = *static_cast<const class_*>(this)

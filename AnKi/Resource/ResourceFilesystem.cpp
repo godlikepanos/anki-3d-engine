@@ -269,7 +269,7 @@ Error ResourceFilesystem::addNewPath(const CString& filepath, const StringListAu
 	auto rejectPath = [&](CString p) -> Bool {
 		for(const String& s : excludedStrings)
 		{
-			if(p.find(s) != CString::NPOS)
+			if(p.find(s) != CString::kNpos)
 			{
 				return true;
 			}
@@ -280,7 +280,7 @@ Error ResourceFilesystem::addNewPath(const CString& filepath, const StringListAu
 
 	PtrSize pos;
 	Path path;
-	if((pos = filepath.find(extension)) != CString::NPOS && pos == filepath.getLength() - extension.getLength())
+	if((pos = filepath.find(extension)) != CString::kNpos && pos == filepath.getLength() - extension.getLength())
 	{
 		// It's an archive
 

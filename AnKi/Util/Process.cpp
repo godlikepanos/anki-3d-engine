@@ -23,7 +23,7 @@ void Process::destroy()
 	{
 		ProcessStatus status;
 		[[maybe_unused]] const Error err = getStatus(status);
-		if(status == ProcessStatus::RUNNING)
+		if(status == ProcessStatus::kRunning)
 		{
 			ANKI_UTIL_LOGE("Process is still running. Forgot to wait for it");
 		}
@@ -120,12 +120,12 @@ Error Process::wait(Second timeout, ProcessStatus* pStatus, I32* pExitCode)
 	const I32 ret = reproc_wait(m_handle, rtimeout);
 	if(ret == REPROC_ETIMEDOUT)
 	{
-		status = ProcessStatus::RUNNING;
+		status = ProcessStatus::kRunning;
 		exitCode = 0;
 	}
 	else
 	{
-		status = ProcessStatus::NOT_RUNNING;
+		status = ProcessStatus::kNotRunning;
 		exitCode = ret;
 	}
 
@@ -139,7 +139,7 @@ Error Process::wait(Second timeout, ProcessStatus* pStatus, I32* pExitCode)
 		*pExitCode = exitCode;
 	}
 
-	ANKI_ASSERT(!(status == ProcessStatus::RUNNING && timeout < 0.0));
+	ANKI_ASSERT(!(status == ProcessStatus::kRunning && timeout < 0.0));
 #endif
 
 	return Error::kNone;
@@ -162,14 +162,14 @@ Error Process::kill(ProcessKillSignal k)
 
 	I32 ret;
 	CString funcName;
-	if(k == ProcessKillSignal::NORMAL)
+	if(k == ProcessKillSignal::kNormal)
 	{
 		ret = reproc_terminate(m_handle);
 		funcName = "reproc_terminate";
 	}
 	else
 	{
-		ANKI_ASSERT(k == ProcessKillSignal::FORCE);
+		ANKI_ASSERT(k == ProcessKillSignal::kForce);
 		ret = reproc_kill(m_handle);
 		funcName = "reproc_kill";
 	}

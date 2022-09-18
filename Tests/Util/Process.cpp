@@ -37,13 +37,13 @@ exit 6
 		I32 exitCode;
 		ANKI_TEST_EXPECT_NO_ERR(proc.wait(-1.0, &status, &exitCode));
 
-		ANKI_TEST_EXPECT_EQ(status, ProcessStatus::NOT_RUNNING);
+		ANKI_TEST_EXPECT_EQ(status, ProcessStatus::kNotRunning);
 		ANKI_TEST_EXPECT_EQ(exitCode, 6);
 
 		// Get stuff again, don't wait this time
 		exitCode = 0;
 		ANKI_TEST_EXPECT_NO_ERR(proc.wait(0.0, &status, &exitCode));
-		ANKI_TEST_EXPECT_EQ(status, ProcessStatus::NOT_RUNNING);
+		ANKI_TEST_EXPECT_EQ(status, ProcessStatus::kNotRunning);
 		ANKI_TEST_EXPECT_EQ(exitCode, 6);
 
 		StringAuto stdOut(HeapAllocator<U8>(allocAligned, nullptr));
@@ -70,12 +70,12 @@ done
 		ProcessStatus status;
 
 		ANKI_TEST_EXPECT_NO_ERR(proc.getStatus(status));
-		ANKI_TEST_EXPECT_EQ(status, ProcessStatus::RUNNING);
+		ANKI_TEST_EXPECT_EQ(status, ProcessStatus::kRunning);
 
 		while(true)
 		{
 			ANKI_TEST_EXPECT_NO_ERR(proc.getStatus(status));
-			if(status == ProcessStatus::NOT_RUNNING)
+			if(status == ProcessStatus::kNotRunning)
 			{
 				break;
 			}

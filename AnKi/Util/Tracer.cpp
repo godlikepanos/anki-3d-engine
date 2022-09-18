@@ -13,9 +13,9 @@ namespace anki {
 class Tracer::Chunk : public IntrusiveListEnabled<Chunk>
 {
 public:
-	Array<TracerEvent, EVENTS_PER_CHUNK> m_events;
+	Array<TracerEvent, kEventsPerChunk> m_events;
 	U32 m_eventCount = 0;
-	Array<TracerCounter, COUNTERS_PER_CHUNK> m_counters;
+	Array<TracerCounter, kCountersPerChunk> m_counters;
 	U32 m_counterCount = 0;
 };
 
@@ -63,8 +63,8 @@ Tracer::Chunk& Tracer::getOrCreateChunk(ThreadLocal& tlocal)
 {
 	Chunk* out;
 
-	if(tlocal.m_currentChunk && tlocal.m_currentChunk->m_eventCount < EVENTS_PER_CHUNK
-	   && tlocal.m_currentChunk->m_counterCount < COUNTERS_PER_CHUNK)
+	if(tlocal.m_currentChunk && tlocal.m_currentChunk->m_eventCount < kEventsPerChunk
+	   && tlocal.m_currentChunk->m_counterCount < kCountersPerChunk)
 	{
 		// There is a chunk and it has enough space
 		out = tlocal.m_currentChunk;

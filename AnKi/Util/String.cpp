@@ -289,8 +289,8 @@ String& String::replaceAll(Allocator alloc, CString from, CString to)
 	const PtrSize fromLen = from.getLength();
 	const PtrSize toLen = to.getLength();
 
-	PtrSize pos = NPOS;
-	while((pos = tmp.find(from)) != NPOS)
+	PtrSize pos = kNpos;
+	while((pos = tmp.find(from)) != kNpos)
 	{
 		String tmp2;
 		if(pos > 0)

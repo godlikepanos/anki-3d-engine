@@ -91,19 +91,19 @@ void GlState::initRenderThread()
 	// Vendor
 	CString glstr = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
 
-	if(glstr.find("ARM") != CString::NPOS)
+	if(glstr.find("ARM") != CString::kNpos)
 	{
 		m_gpu = GpuVendor::ARM;
 	}
-	else if(glstr.find("NVIDIA") != CString::NPOS)
+	else if(glstr.find("NVIDIA") != CString::kNpos)
 	{
 		m_gpu = GpuVendor::NVIDIA;
 	}
-	else if(glstr.find("AMD") != CString::NPOS || glstr.find("ATI") != CString::NPOS)
+	else if(glstr.find("AMD") != CString::kNpos || glstr.find("ATI") != CString::kNpos)
 	{
 		m_gpu = GpuVendor::AMD;
 	}
-	else if(glstr.find("Intel") != CString::NPOS)
+	else if(glstr.find("Intel") != CString::kNpos)
 	{
 		m_gpu = GpuVendor::INTEL;
 	}

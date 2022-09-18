@@ -18,7 +18,7 @@ public:
 	PtrSize m_pointerCount; ///< The size of the above.
 };
 
-static constexpr const char* BINARY_SERIALIZER_MAGIC = "ANKIBIN1";
+inline constexpr const char* kBinarySerializerMagic = "ANKIBIN1";
 
 } // end namespace detail
 
@@ -76,7 +76,7 @@ Error BinarySerializer::serializeInternal(const T& x, GenericMemoryPoolAllocator
 	}
 
 	// Write the header
-	memcpy(&header.m_magic[0], detail::BINARY_SERIALIZER_MAGIC, sizeof(header.m_magic));
+	memcpy(&header.m_magic[0], detail::kBinarySerializerMagic, sizeof(header.m_magic));
 	header.m_dataSize = m_eofPos - dataFilePos;
 	ANKI_CHECK(m_file->seek(headerFilePos, FileSeekOrigin::BEGINNING));
 	ANKI_CHECK(m_file->write(&header, sizeof(header)));
@@ -172,7 +172,7 @@ Error BinaryDeserializer::deserialize(T*& x, GenericMemoryPoolAllocator<U8> allo
 
 	// Sanity checks
 	{
-		if(memcmp(&header.m_magic[0], detail::BINARY_SERIALIZER_MAGIC, 8) != 0)
+		if(memcmp(&header.m_magic[0], detail::kBinarySerializerMagic, 8) != 0)
 		{
 			ANKI_UTIL_LOGE("Wrong magic work in header");
 			return Error::kUserData;

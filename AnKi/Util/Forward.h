@@ -53,4 +53,6 @@ class DynamicArray;
 template<typename T, typename TSize = U32>
 class DynamicArrayAuto;
 
+class F16;
+
 } // end namespace anki

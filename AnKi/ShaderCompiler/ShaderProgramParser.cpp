@@ -649,7 +649,7 @@ Error ShaderProgramParser::parseInclude(const StringAuto* begin, const StringAut
 		fname2.create(path.begin() + 1, path.begin() + path.getLength() - 1);
 
 		const Bool dontIgnore =
-			fname2.find("AnKi/Shaders/") != String::NPOS || fname2.find("ThirdParty/") != String::NPOS;
+			fname2.find("AnKi/Shaders/") != String::kNpos || fname2.find("ThirdParty/") != String::kNpos;
 		if(!dontIgnore)
 		{
 			// The shaders can't include C++ files. Ignore the include
@@ -1098,7 +1098,7 @@ Error ShaderProgramParser::parseFile(CString fname, U32 depth)
 	// Parse lines
 	for(const String& line : lines)
 	{
-		if(line.find("pragma") != CString::NPOS || line.find("include") != CString::NPOS)
+		if(line.find("pragma") != String::kNpos || line.find("include") != String::kNpos)
 		{
 			// Possibly a preprocessor directive we care
 			ANKI_CHECK(parseLine(line.toCString(), fname, foundPragmaOnce, depth));

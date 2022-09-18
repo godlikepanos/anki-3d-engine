@@ -34,8 +34,8 @@ public:
 	PoolSignature m_signature;
 };
 
-constexpr U32 kMaxAlignment = 64;
-constexpr U32 kAllocationHeaderSize = getAlignedRoundUp(kMaxAlignment, sizeof(AllocationHeader));
+constexpr U32 kExtraChecksMaxAlignment = 64;
+constexpr U32 kAllocationHeaderSize = getAlignedRoundUp(kExtraChecksMaxAlignment, sizeof(AllocationHeader));
 #endif
 
 #define ANKI_CREATION_OOM_ACTION() ANKI_UTIL_LOGF("Out of memory")
@@ -161,7 +161,7 @@ BaseMemoryPool::~BaseMemoryPool()
 }
 
 HeapMemoryPool::HeapMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserDataconst, const char* name)
-	: BaseMemoryPool(Type::HEAP, allocCb, allocCbUserDataconst, name)
+	: BaseMemoryPool(Type::kHeap, allocCb, allocCbUserDataconst, name)
 {
 #if ANKI_MEM_EXTRA_CHECKS
 	m_signature = computePoolSignature(this);
@@ -182,7 +182,7 @@ void* HeapMemoryPool::allocate(PtrSize size, PtrSize alignment)
 {
 	ANKI_ASSERT(size > 0);
 #if ANKI_MEM_EXTRA_CHECKS
-	ANKI_ASSERT(alignment <= kMaxAlignment && "Wrong assumption");
+	ANKI_ASSERT(alignment <= kExtraChecksMaxAlignment && "Wrong assumption");
 	size += kAllocationHeaderSize;
 #endif
 
@@ -268,7 +268,7 @@ void StackMemoryPool::StackAllocatorBuilderInterface::recycleChunk(Chunk& chunk)
 StackMemoryPool::StackMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize,
 								 F64 nextChunkScale, PtrSize nextChunkBias, Bool ignoreDeallocationErrors,
 								 U32 alignmentBytes, const char* name)
-	: BaseMemoryPool(Type::STACK, allocCb, allocCbUserData, name)
+	: BaseMemoryPool(Type::kStack, allocCb, allocCbUserData, name)
 {
 	ANKI_ASSERT(initialChunkSize > 0);
 	ANKI_ASSERT(nextChunkScale >= 1.0);
@@ -322,7 +322,7 @@ void StackMemoryPool::reset()
 
 ChainMemoryPool::ChainMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize,
 								 F32 nextChunkScale, PtrSize nextChunkBias, PtrSize alignmentBytes, const char* name)
-	: BaseMemoryPool(Type::CHAIN, allocCb, allocCbUserData, name)
+	: BaseMemoryPool(Type::kChain, allocCb, allocCbUserData, name)
 {
 	ANKI_ASSERT(initialChunkSize > 0);
 	ANKI_ASSERT(nextChunkScale >= 1.0);

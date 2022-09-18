@@ -32,7 +32,7 @@ public:
 	Error load(const ResourceFilename& filename, [[maybe_unused]] Bool async)
 	{
 		Error err = Error::kNone;
-		if(filename.find("error") == ResourceFilename::NPOS)
+		if(filename.find("error") == CString::kNpos)
 		{
 			m_memory = getAllocator().allocate(128);
 			void* tempMem = getTempAllocator().allocate(128);

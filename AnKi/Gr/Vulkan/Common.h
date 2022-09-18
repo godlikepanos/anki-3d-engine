@@ -36,11 +36,11 @@ class GrManagerImpl;
 /// @addtogroup vulkan
 /// @{
 
-#define ANKI_VK_LOGI(...) ANKI_LOG("VK", NORMAL, __VA_ARGS__)
-#define ANKI_VK_LOGE(...) ANKI_LOG("VK", ERROR, __VA_ARGS__)
-#define ANKI_VK_LOGW(...) ANKI_LOG("VK", WARNING, __VA_ARGS__)
-#define ANKI_VK_LOGF(...) ANKI_LOG("VK", FATAL, __VA_ARGS__)
-#define ANKI_VK_LOGV(...) ANKI_LOG("VK", VERBOSE, __VA_ARGS__)
+#define ANKI_VK_LOGI(...) ANKI_LOG("VK", kNormal, __VA_ARGS__)
+#define ANKI_VK_LOGE(...) ANKI_LOG("VK", kError, __VA_ARGS__)
+#define ANKI_VK_LOGW(...) ANKI_LOG("VK", kWarning, __VA_ARGS__)
+#define ANKI_VK_LOGF(...) ANKI_LOG("VK", kFatal, __VA_ARGS__)
+#define ANKI_VK_LOGV(...) ANKI_LOG("VK", kVerbose, __VA_ARGS__)
 
 #define ANKI_VK_SELF(class_) class_& self = *static_cast<class_*>(this)
 #define ANKI_VK_SELF_CONST(class_) const class_& self = *static_cast<const class_*>(this)

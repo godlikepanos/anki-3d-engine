@@ -72,7 +72,7 @@ ThreadPool::ThreadPool(U32 threadCount, Bool pinToCores)
 	: m_barrier(threadCount + 1)
 {
 	m_threadsCount = threadCount;
-	ANKI_ASSERT(m_threadsCount <= MAX_THREADS && m_threadsCount > 0);
+	ANKI_ASSERT(m_threadsCount <= kMaxThreads && m_threadsCount > 0);
 
 	m_threads = static_cast<detail::ThreadPoolThread*>(malloc(sizeof(detail::ThreadPoolThread) * m_threadsCount));
 

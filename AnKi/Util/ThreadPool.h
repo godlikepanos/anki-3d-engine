@@ -36,7 +36,7 @@ class ThreadPool
 	friend class detail::ThreadPoolThread;
 
 public:
-	static constexpr U MAX_THREADS = 32; ///< An absolute limit
+	static constexpr U kMaxThreads = 32; ///< An absolute limit
 
 	/// Constructor.
 	ThreadPool(U32 threadCount, Bool pinToCores = false);

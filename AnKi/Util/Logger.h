@@ -21,12 +21,12 @@ class File;
 /// @memberof Logger
 enum class LoggerMessageType : U8
 {
-	NORMAL,
-	VERBOSE,
-	ERROR,
-	WARNING,
-	FATAL,
-	COUNT
+	kNormal,
+	kVerbose,
+	kError,
+	kWarning,
+	kFatal,
+	kCount
 };
 
 /// Used as parammeter when emitting the signal.
@@ -126,19 +126,19 @@ using LoggerSingleton = Singleton<Logger>;
 /// @{
 
 /// Log information message.
-#define ANKI_LOGI(...) ANKI_LOG(nullptr, NORMAL, __VA_ARGS__)
+#define ANKI_LOGI(...) ANKI_LOG(nullptr, kNormal, __VA_ARGS__)
 
 /// Log verbose information message.
-#define ANKI_LOGV(...) ANKI_LOG(nullptr, VERBOSE, __VA_ARGS__)
+#define ANKI_LOGV(...) ANKI_LOG(nullptr, kVerbose, __VA_ARGS__)
 
 /// Log warning message.
-#define ANKI_LOGW(...) ANKI_LOG(nullptr, WARNING, __VA_ARGS__)
+#define ANKI_LOGW(...) ANKI_LOG(nullptr, kWarning, __VA_ARGS__)
 
 /// Log error message.
-#define ANKI_LOGE(...) ANKI_LOG(nullptr, ERROR, __VA_ARGS__)
+#define ANKI_LOGE(...) ANKI_LOG(nullptr, kError, __VA_ARGS__)
 
 /// Log fatal message. It will will abort.
-#define ANKI_LOGF(...) ANKI_LOG(nullptr, FATAL, __VA_ARGS__)
+#define ANKI_LOGF(...) ANKI_LOG(nullptr, kFatal, __VA_ARGS__)
 /// @}
 
 } // end namespace anki

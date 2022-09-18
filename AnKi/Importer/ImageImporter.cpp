@@ -657,7 +657,7 @@ static Error compressS3tc(GenericMemoryPoolAllocator<U8> alloc, CString tempDire
 	I32 exitCode;
 	ANKI_CHECK(proc.wait(60.0_sec, &status, &exitCode));
 
-	if(!(status == ProcessStatus::NOT_RUNNING && exitCode == 0))
+	if(!(status == ProcessStatus::kNotRunning && exitCode == 0))
 	{
 		StringAuto errStr(alloc);
 		if(exitCode != 0)
@@ -772,7 +772,7 @@ static Error compressAstc(GenericMemoryPoolAllocator<U8> alloc, CString tempDire
 	I32 exitCode;
 	ANKI_CHECK(proc.wait(60.0_sec, &status, &exitCode));
 
-	if(!(status == ProcessStatus::NOT_RUNNING && exitCode == 0))
+	if(!(status == ProcessStatus::kNotRunning && exitCode == 0))
 	{
 		StringAuto errStr(alloc);
 		if(exitCode != 0)

@@ -15,10 +15,10 @@ namespace anki {
 /// @addtogroup shader_compiler
 /// @{
 
-#define ANKI_SHADER_COMPILER_LOGI(...) ANKI_LOG("SHCO", NORMAL, __VA_ARGS__)
-#define ANKI_SHADER_COMPILER_LOGE(...) ANKI_LOG("SHCO", ERROR, __VA_ARGS__)
-#define ANKI_SHADER_COMPILER_LOGW(...) ANKI_LOG("SHCO", WARNING, __VA_ARGS__)
-#define ANKI_SHADER_COMPILER_LOGF(...) ANKI_LOG("SHCO", FATAL, __VA_ARGS__)
+#define ANKI_SHADER_COMPILER_LOGI(...) ANKI_LOG("SHCO", kNormal, __VA_ARGS__)
+#define ANKI_SHADER_COMPILER_LOGE(...) ANKI_LOG("SHCO", kError, __VA_ARGS__)
+#define ANKI_SHADER_COMPILER_LOGW(...) ANKI_LOG("SHCO", kWarning, __VA_ARGS__)
+#define ANKI_SHADER_COMPILER_LOGF(...) ANKI_LOG("SHCO", kFatal, __VA_ARGS__)
 
 constexpr U32 MAX_SHADER_BINARY_NAME_LENGTH = 127;
 

@@ -141,7 +141,7 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 	m_rgraph->compileNewGraph(ctx.m_renderGraphDescr, m_frameAlloc);
 
 	// Populate the 2nd level command buffers
-	Array<ThreadHiveTask, ThreadHive::MAX_THREADS> tasks;
+	Array<ThreadHiveTask, ThreadHive::kMaxThreads> tasks;
 	for(U i = 0; i < m_r->getThreadHive().getThreadCount(); ++i)
 	{
 		tasks[i].m_argument = this;

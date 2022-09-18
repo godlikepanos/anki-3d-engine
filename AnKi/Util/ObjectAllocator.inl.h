@@ -7,13 +7,13 @@
 
 namespace anki {
 
-template<PtrSize T_OBJECT_SIZE, U32 T_OBJECT_ALIGNMENT, U32 T_OBJECTS_PER_CHUNK, typename TIndexType>
+template<PtrSize kTObjectSize, U32 kTObjectAlignment, U32 kTObjectsPerChunk, typename TIndexType>
 template<typename T, typename TAlloc, typename... TArgs>
-T* ObjectAllocator<T_OBJECT_SIZE, T_OBJECT_ALIGNMENT, T_OBJECTS_PER_CHUNK, TIndexType>::newInstance(TAlloc& alloc,
-																									TArgs&&... args)
+T* ObjectAllocator<kTObjectSize, kTObjectAlignment, kTObjectsPerChunk, TIndexType>::newInstance(TAlloc& alloc,
+																								TArgs&&... args)
 {
-	static_assert(alignof(T) <= OBJECT_ALIGNMENT, "Wrong object alignment");
-	static_assert(sizeof(T) <= OBJECT_SIZE, "Wrong object size");
+	static_assert(alignof(T) <= kObjectAlignment, "Wrong object alignment");
+	static_assert(sizeof(T) <= kObjectSize, "Wrong object size");
 
 	T* out = nullptr;
 
@@ -38,11 +38,11 @@ T* ObjectAllocator<T_OBJECT_SIZE, T_OBJECT_ALIGNMENT, T_OBJECTS_PER_CHUNK, TInde
 
 		// Create the chunk
 		chunk = alloc.template newInstance<Chunk>();
-		chunk->m_unusedCount = OBJECTS_PER_CHUNK;
+		chunk->m_unusedCount = kObjectsPerChunk;
 
-		for(U32 i = 0; i < OBJECTS_PER_CHUNK; ++i)
+		for(U32 i = 0; i < kObjectsPerChunk; ++i)
 		{
-			chunk->m_unusedStack[i] = OBJECTS_PER_CHUNK - (i + 1);
+			chunk->m_unusedStack[i] = kObjectsPerChunk - (i + 1);
 		}
 
 		if(m_chunksTail)
@@ -70,13 +70,13 @@ T* ObjectAllocator<T_OBJECT_SIZE, T_OBJECT_ALIGNMENT, T_OBJECTS_PER_CHUNK, TInde
 	return out;
 }
 
-template<PtrSize T_OBJECT_SIZE, U32 T_OBJECT_ALIGNMENT, U32 T_OBJECTS_PER_CHUNK, typename TIndexType>
+template<PtrSize kTObjectSize, U32 kTObjectAlignment, U32 kTObjectsPerChunk, typename TIndexType>
 template<typename T, typename TAlloc>
-void ObjectAllocator<T_OBJECT_SIZE, T_OBJECT_ALIGNMENT, T_OBJECTS_PER_CHUNK, TIndexType>::deleteInstance(TAlloc& alloc,
-																										 T* obj)
+void ObjectAllocator<kTObjectSize, kTObjectAlignment, kTObjectsPerChunk, TIndexType>::deleteInstance(TAlloc& alloc,
+																									 T* obj)
 {
-	static_assert(alignof(T) <= OBJECT_ALIGNMENT, "Wrong object alignment");
-	static_assert(sizeof(T) <= OBJECT_SIZE, "Wrong object size");
+	static_assert(alignof(T) <= kObjectAlignment, "Wrong object alignment");
+	static_assert(sizeof(T) <= kObjectSize, "Wrong object size");
 
 	ANKI_ASSERT(obj);
 
@@ -91,7 +91,7 @@ void ObjectAllocator<T_OBJECT_SIZE, T_OBJECT_ALIGNMENT, T_OBJECTS_PER_CHUNK, TIn
 		{
 			// Found it, remove it from the chunk and maybe delete the chunk
 
-			ANKI_ASSERT(chunk->m_unusedCount < OBJECTS_PER_CHUNK);
+			ANKI_ASSERT(chunk->m_unusedCount < kObjectsPerChunk);
 			const U32 idx = U32(mem - begin);
 
 			// Destroy the object
@@ -102,7 +102,7 @@ void ObjectAllocator<T_OBJECT_SIZE, T_OBJECT_ALIGNMENT, T_OBJECTS_PER_CHUNK, TIn
 			++chunk->m_unusedCount;
 
 			// Delete the chunk if it's empty
-			if(chunk->m_unusedCount == OBJECTS_PER_CHUNK)
+			if(chunk->m_unusedCount == kObjectsPerChunk)
 			{
 				if(chunk == m_chunksTail)
 				{

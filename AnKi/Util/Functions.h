@@ -72,7 +72,7 @@ struct PrivateEnum
 {
 	enum class Type
 	{
-		NA
+		kNA
 	};
 };
 
@@ -80,7 +80,7 @@ struct PrivateEnum
 
 #	define ANKI_ENABLE_INTERNAL(line, ...) \
 		typename PrivateEnum<line>::Type ANKI_CONCATENATE( \
-			privateEnum, line) = PrivateEnum<line>::Type::NA, \
+			privateEnum, line) = PrivateEnum<line>::Type::kNA, \
 						 bool ANKI_CONCATENATE(privateBool, line) = true, \
 						 typename = typename std::enable_if_t<(ANKI_CONCATENATE(privateBool, line) \
 															   && ANKI_REQUIRES_BOOL(line, __VA_ARGS__))>

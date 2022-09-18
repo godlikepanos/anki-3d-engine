@@ -208,7 +208,7 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 		ANKI_CHECK(m_events.updateAllEvents(prevUpdateTime, crntTime));
 
 		// Then the rest
-		Array<ThreadHiveTask, ThreadHive::MAX_THREADS> tasks;
+		Array<ThreadHiveTask, ThreadHive::kMaxThreads> tasks;
 		UpdateSceneNodesCtx updateCtx;
 		updateCtx.m_scene = this;
 		updateCtx.m_crntNode = m_nodes.getBegin();

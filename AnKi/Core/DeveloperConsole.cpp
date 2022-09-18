@@ -57,22 +57,22 @@ void DeveloperConsole::build(CanvasPtr ctx)
 	{
 		switch(item.m_type)
 		{
-		case LoggerMessageType::NORMAL:
+		case LoggerMessageType::kNormal:
 			ImGui::PushStyleColor(ImGuiCol_Text, Vec4(0.0f, 1.0f, 0.0f, 1.0f));
 			break;
-		case LoggerMessageType::ERROR:
-		case LoggerMessageType::FATAL:
+		case LoggerMessageType::kError:
+		case LoggerMessageType::kFatal:
 			ImGui::PushStyleColor(ImGuiCol_Text, Vec4(1.0f, 0.0f, 0.0f, 1.0f));
 			break;
-		case LoggerMessageType::WARNING:
+		case LoggerMessageType::kWarning:
 			ImGui::PushStyleColor(ImGuiCol_Text, Vec4(0.9f, 0.6f, 0.14f, 1.0f));
 			break;
 		default:
 			ANKI_ASSERT(0);
 		}
 
-		static constexpr Array<const char*, static_cast<U>(LoggerMessageType::COUNT)> MSG_TEXT = {"I", "E", "W", "F"};
-		ImGui::TextWrapped("[%s][%s] %s (%s:%d %s)", MSG_TEXT[static_cast<U>(item.m_type)],
+		static constexpr Array<const char*, U(LoggerMessageType::kCount)> kMsgText = {"I", "E", "W", "F"};
+		ImGui::TextWrapped("[%s][%s] %s (%s:%d %s)", kMsgText[item.m_type],
 						   (item.m_subsystem) ? item.m_subsystem : "N/A ", item.m_msg.cstr(), item.m_file, item.m_line,
 						   item.m_func);
 
