@@ -176,7 +176,7 @@ Error GltfImporter::init(const GltfImporterInitInfo& initInfo)
 	m_optimizeAnimations = initInfo.m_optimizeAnimations;
 	m_comment.create(initInfo.m_comment);
 
-	m_lightIntensityScale = max(initInfo.m_lightIntensityScale, EPSILON);
+	m_lightIntensityScale = max(initInfo.m_lightIntensityScale, kEpsilonf);
 
 	m_lodCount = clamp(initInfo.m_lodCount, 1u, 3u);
 	m_lodFactor = clamp(initInfo.m_lodFactor, 0.0f, 1.0f);
@@ -186,7 +186,7 @@ Error GltfImporter::init(const GltfImporterInitInfo& initInfo)
 		return Error::kUserData;
 	}
 
-	if(m_lodFactor < EPSILON || m_lodCount == 1)
+	if(m_lodFactor < kEpsilonf || m_lodCount == 1)
 	{
 		m_lodCount = 1;
 		m_lodFactor = 0.0f;

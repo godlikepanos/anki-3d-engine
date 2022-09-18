@@ -274,7 +274,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 			optimizeChannel(
 				channel.m_rotations, Quat::getIdentity(),
 				[&](const Quat& a) -> Bool {
-					return a.abs() < Quat(EPSILON * 20.0f);
+					return a.abs() < Quat(kEpsilonf * 20.0f);
 				},
 				[&](const Quat& a, const Quat& b, F32 u) -> Quat {
 					return a.slerp(b, u);

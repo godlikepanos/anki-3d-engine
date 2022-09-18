@@ -80,7 +80,7 @@ void CameraNode::initCommon(FrustumType frustumType)
 	   && getConfig().getSceneRayTracedShadows())
 	{
 		FrustumComponent* rtFrustumComponent = newComponent<FrustumComponent>();
-		rtFrustumComponent->setFrustumType(FrustumType::ORTHOGRAPHIC);
+		rtFrustumComponent->setFrustumType(FrustumType::kOrthographic);
 		rtFrustumComponent->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::RAY_TRACING_SHADOWS);
 
 		const F32 dist = getConfig().getSceneRayTracingExtendedFrustumDistance();
@@ -105,7 +105,7 @@ void CameraNode::onMoveComponentUpdate(MoveComponent& move)
 		else
 		{
 			// Extended RT frustum, re-align it so the frustum is positioned at the center of the camera eye
-			ANKI_ASSERT(fc.getFrustumType() == FrustumType::ORTHOGRAPHIC);
+			ANKI_ASSERT(fc.getFrustumType() == FrustumType::kOrthographic);
 			const F32 far = fc.getFar();
 			Transform extendedFrustumTransform = Transform::getIdentity();
 			Vec3 newOrigin = worldTransform.getOrigin().xyz();
@@ -121,7 +121,7 @@ void CameraNode::onMoveComponentUpdate(MoveComponent& move)
 PerspectiveCameraNode::PerspectiveCameraNode(SceneGraph* scene, CString name)
 	: CameraNode(scene, name)
 {
-	initCommon(FrustumType::PERSPECTIVE);
+	initCommon(FrustumType::kPerspective);
 }
 
 PerspectiveCameraNode::~PerspectiveCameraNode()
@@ -131,7 +131,7 @@ PerspectiveCameraNode::~PerspectiveCameraNode()
 OrthographicCameraNode::OrthographicCameraNode(SceneGraph* scene, CString name)
 	: CameraNode(scene, name)
 {
-	initCommon(FrustumType::ORTHOGRAPHIC);
+	initCommon(FrustumType::kOrthographic);
 }
 
 OrthographicCameraNode::~OrthographicCameraNode()

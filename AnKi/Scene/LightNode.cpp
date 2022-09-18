@@ -168,17 +168,17 @@ Error PointLightNode::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[mayb
 
 		Mat3 rot;
 
-		rot = Mat3(Euler(0.0, -PI / 2.0, 0.0)) * Mat3(Euler(0.0, 0.0, PI));
+		rot = Mat3(Euler(0.0, -kPi / 2.0, 0.0)) * Mat3(Euler(0.0, 0.0, kPi));
 		m_shadowData[0].m_localTrf.setRotation(Mat3x4(Vec3(0.0f), rot));
-		rot = Mat3(Euler(0.0, PI / 2.0, 0.0)) * Mat3(Euler(0.0, 0.0, PI));
+		rot = Mat3(Euler(0.0, kPi / 2.0, 0.0)) * Mat3(Euler(0.0, 0.0, kPi));
 		m_shadowData[1].m_localTrf.setRotation(Mat3x4(Vec3(0.0f), rot));
-		rot = Mat3(Euler(PI / 2.0, 0.0, 0.0));
+		rot = Mat3(Euler(kPi / 2.0, 0.0, 0.0));
 		m_shadowData[2].m_localTrf.setRotation(Mat3x4(Vec3(0.0f), rot));
-		rot = Mat3(Euler(-PI / 2.0, 0.0, 0.0));
+		rot = Mat3(Euler(-kPi / 2.0, 0.0, 0.0));
 		m_shadowData[3].m_localTrf.setRotation(Mat3x4(Vec3(0.0f), rot));
-		rot = Mat3(Euler(0.0, PI, 0.0)) * Mat3(Euler(0.0, 0.0, PI));
+		rot = Mat3(Euler(0.0, kPi, 0.0)) * Mat3(Euler(0.0, 0.0, kPi));
 		m_shadowData[4].m_localTrf.setRotation(Mat3x4(Vec3(0.0f), rot));
-		rot = Mat3(Euler(0.0, 0.0, PI));
+		rot = Mat3(Euler(0.0, 0.0, kPi));
 		m_shadowData[5].m_localTrf.setRotation(Mat3x4(Vec3(0.0f), rot));
 
 		const Vec4& origin = getFirstComponentOfType<MoveComponent>().getWorldTransform().getOrigin();
@@ -188,7 +188,7 @@ Error PointLightNode::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[mayb
 			trf.setOrigin(origin);
 
 			FrustumComponent* frc = newComponent<FrustumComponent>();
-			frc->setFrustumType(FrustumType::PERSPECTIVE);
+			frc->setFrustumType(FrustumType::kPerspective);
 			frc->setPerspective(zNear, dist, ang, ang);
 			frc->setWorldTransform(trf);
 		}
@@ -240,7 +240,7 @@ SpotLightNode::SpotLightNode(SceneGraph* scene, CString name)
 	newComponent<OnLightShapeUpdatedFeedbackComponent>();
 
 	FrustumComponent* fr = newComponent<FrustumComponent>();
-	fr->setFrustumType(FrustumType::PERSPECTIVE);
+	fr->setFrustumType(FrustumType::kPerspective);
 	fr->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
 
 	newComponent<OnFrustumUpdatedFeedbackComponent>();

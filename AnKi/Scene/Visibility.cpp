@@ -54,16 +54,16 @@ static Bool spatialInsideFrustum(const FrustumComponent& frc, const SpatialCompo
 {
 	switch(spc.getCollisionShapeType())
 	{
-	case CollisionShapeType::OBB:
+	case CollisionShapeType::kOBB:
 		return frc.insideFrustum(spc.getCollisionShape<Obb>());
 		break;
-	case CollisionShapeType::AABB:
+	case CollisionShapeType::kAABB:
 		return frc.insideFrustum(spc.getCollisionShape<Aabb>());
 		break;
-	case CollisionShapeType::SPHERE:
+	case CollisionShapeType::kSphere:
 		return frc.insideFrustum(spc.getCollisionShape<Sphere>());
 		break;
-	case CollisionShapeType::CONVEX_HULL:
+	case CollisionShapeType::kConvexHull:
 		return frc.insideFrustum(spc.getCollisionShape<ConvexHullShape>());
 		break;
 	default:
@@ -98,7 +98,7 @@ void VisibilityContext::submitNewWork(const FrustumComponent& frc, const Frustum
 	rqueue.m_previousViewProjectionMatrix = frc.getPreviousViewProjectionMatrix();
 	rqueue.m_cameraNear = frc.getNear();
 	rqueue.m_cameraFar = frc.getFar();
-	if(frc.getFrustumType() == FrustumType::PERSPECTIVE)
+	if(frc.getFrustumType() == FrustumType::kPerspective)
 	{
 		rqueue.m_cameraFovX = frc.getFovX();
 		rqueue.m_cameraFovY = frc.getFovY();
@@ -381,7 +381,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			rc.setupRenderableQueueElement(*el);
 
 			// Compute distance from the frustum
-			const Plane& nearPlane = primaryFrc.getViewPlanes()[FrustumPlaneType::NEAR];
+			const Plane& nearPlane = primaryFrc.getViewPlanes()[FrustumPlaneType::kNear];
 			el->m_distanceFromCamera = !!(rc.getFlags() & RenderComponentFlag::SORT_LAST)
 										   ? primaryFrc.getFar()
 										   : max(0.0f, testPlane(nearPlane, spatialc->getAabbWorldSpace()));
@@ -402,7 +402,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 				RayTracingInstanceQueueElement* el = result.m_rayTracingInstances.newElement(alloc);
 
 				// Compute the LOD
-				const Plane& nearPlane = primaryFrc.getViewPlanes()[FrustumPlaneType::NEAR];
+				const Plane& nearPlane = primaryFrc.getViewPlanes()[FrustumPlaneType::kNear];
 				const F32 dist = testPlane(nearPlane, spatialc->getAabbWorldSpace());
 				rc.setupRayTracingInstanceQueueElement(computeLod(primaryFrc, dist), *el);
 			}
@@ -417,7 +417,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 				// Extra check
 
 				// Compute distance from the frustum
-				const Plane& nearPlane = primaryFrc.getViewPlanes()[FrustumPlaneType::NEAR];
+				const Plane& nearPlane = primaryFrc.getViewPlanes()[FrustumPlaneType::kNear];
 				const F32 distFromFrustum = max(0.0f, testPlane(nearPlane, spatialc->getAabbWorldSpace()));
 
 				castsShadow = distFromFrustum < primaryFrc.getEffectiveShadowDistance();
@@ -493,7 +493,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 				for(U32 i = 0; i < cascadeCount; ++i)
 				{
 					::new(&cascadeFrustumComponents[i]) FrustumComponent(&node);
-					cascadeFrustumComponents[i].setFrustumType(FrustumType::ORTHOGRAPHIC);
+					cascadeFrustumComponents[i].setFrustumType(FrustumType::kOrthographic);
 				}
 
 				lc->setupDirectionalLightQueueElement(testedFrc, result.m_directionalLight, cascadeFrustumComponents);

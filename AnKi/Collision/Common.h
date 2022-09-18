@@ -17,43 +17,43 @@ namespace anki {
 /// The 6 frustum planes.
 enum class FrustumPlaneType : U8
 {
-	NEAR,
-	FAR,
-	LEFT,
-	RIGHT,
-	TOP,
-	BOTTOM,
+	kNear,
+	kFar,
+	kLeft,
+	kRight,
+	kTop,
+	kBottom,
 
-	COUNT,
-	FIRST = 0
+	kCount,
+	kFirst = 0
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FrustumPlaneType)
 
 /// Collision shape type.
 enum class CollisionShapeType : U8
 {
-	PLANE,
-	LINE_SEGMENT,
-	RAY,
-	AABB,
-	SPHERE,
-	OBB,
-	CONVEX_HULL,
-	CONE,
+	kPlane,
+	kLineSegment,
+	kRay,
+	kAABB,
+	kSphere,
+	kOBB,
+	kConvexHull,
+	kCone,
 
-	COUNT,
-	FIRST = 0
+	kCount,
+	kFirst = 0
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(CollisionShapeType)
 
 /// Frustum type
 enum class FrustumType : U8
 {
-	PERSPECTIVE,
-	ORTHOGRAPHIC,
+	kPerspective,
+	kOrthographic,
 
-	COUNT,
-	FIRST = 0
+	kCount,
+	kFirst = 0
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FrustumType)
 /// @}

@@ -178,9 +178,9 @@ Error SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		// Walk the bone hierarchy to add additional transforms
 		visitBones(m_skeleton->getRootBone(), Mat4::getIdentity(), bonesAnimated, minExtend, maxExtend);
 
-		const Vec4 E(EPSILON, EPSILON, EPSILON, 0.0f);
-		m_boneBoundingVolume.setMin(minExtend - E);
-		m_boneBoundingVolume.setMax(maxExtend + E);
+		const Vec4 e(kEpsilonf, kEpsilonf, kEpsilonf, 0.0f);
+		m_boneBoundingVolume.setMin(minExtend - e);
+		m_boneBoundingVolume.setMax(maxExtend + e);
 	}
 	else
 	{

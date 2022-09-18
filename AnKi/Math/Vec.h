@@ -17,14 +17,14 @@ namespace anki {
 /// @tparam T The scalar type. Eg float.
 /// @tparam N The number of the vector components (2, 3 or 4).
 template<typename T, U N>
-class alignas(MathSimd<T, N>::ALIGNMENT) TVec
+class alignas(MathSimd<T, N>::kAlignment) TVec
 {
 public:
 	using Scalar = T;
 	using Simd = typename MathSimd<T, N>::Type;
-	static constexpr U COMPONENT_COUNT = N;
-	static constexpr Bool IS_INTEGER = std::is_integral<T>::value;
-	static constexpr Bool HAS_VEC4_SIMD = N == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
+	static constexpr U kComponentCount = N;
+	static constexpr Bool kIsInteger = std::is_integral<T>::value;
+	static constexpr Bool kHasVec4SIMD = N == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
 
 	/// @name Constructors
 	/// @{
@@ -35,7 +35,7 @@ public:
 	}
 
 	/// Copy.
-	TVec(ANKI_ENABLE_ARG(const TVec&, !HAS_VEC4_SIMD) b)
+	TVec(ANKI_ENABLE_ARG(const TVec&, !kHasVec4SIMD) b)
 	{
 		for(U i = 0; i < N; i++)
 		{
@@ -44,7 +44,7 @@ public:
 	}
 
 	/// Copy.
-	TVec(ANKI_ENABLE_ARG(const TVec&, HAS_VEC4_SIMD) b)
+	TVec(ANKI_ENABLE_ARG(const TVec&, kHasVec4SIMD) b)
 	{
 		m_simd = b.m_simd;
 	}
@@ -59,7 +59,7 @@ public:
 		}
 	}
 
-	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
 	explicit TVec(const T f)
 	{
 		for(U i = 0; i < N; ++i)
@@ -69,7 +69,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(kHasVec4SIMD)
 	explicit TVec(const T f)
 	{
 #	if ANKI_SIMD_SSE
@@ -80,7 +80,7 @@ public:
 	}
 #endif
 
-	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
 	explicit TVec(const T arr[])
 	{
 		for(U i = 0; i < N; ++i)
@@ -89,7 +89,7 @@ public:
 		}
 	}
 
-	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(kHasVec4SIMD)
 	explicit TVec(const T arr[])
 	{
 		m_simd = _mm_load_ps(arr);
@@ -143,7 +143,7 @@ public:
 
 	// Vec4 specific
 
-	ANKI_ENABLE_METHOD(N == 4 && !HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(N == 4 && !kHasVec4SIMD)
 	TVec(const T x_, const T y_, const T z_, const T w_)
 	{
 		x() = x_;
@@ -153,7 +153,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(kHasVec4SIMD)
 	TVec(const T x_, const T y_, const T z_, const T w_)
 	{
 #	if ANKI_SIMD_SSE
@@ -2320,7 +2320,7 @@ public:
 	/// @{
 
 	// Copy
-	TVec& operator=(ANKI_ENABLE_ARG(const TVec&, !HAS_VEC4_SIMD) b)
+	TVec& operator=(ANKI_ENABLE_ARG(const TVec&, !kHasVec4SIMD) b)
 	{
 		for(U i = 0; i < N; i++)
 		{
@@ -2330,13 +2330,13 @@ public:
 	}
 
 	// Copy
-	TVec& operator=(ANKI_ENABLE_ARG(const TVec&, HAS_VEC4_SIMD) b)
+	TVec& operator=(ANKI_ENABLE_ARG(const TVec&, kHasVec4SIMD) b)
 	{
 		m_simd = b.m_simd;
 		return *this;
 	}
 
-	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
 	TVec operator+(const TVec& b) const
 	{
 		TVec out;
@@ -2348,7 +2348,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(kHasVec4SIMD)
 	TVec operator+(const TVec& b) const
 	{
 #	if ANKI_SIMD_SSE
@@ -2359,7 +2359,7 @@ public:
 	}
 #endif
 
-	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
 	TVec& operator+=(const TVec& b)
 	{
 		for(U i = 0; i < N; i++)
@@ -2370,7 +2370,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(kHasVec4SIMD)
 	TVec& operator+=(const TVec& b)
 	{
 #	if ANKI_SIMD_SSE
@@ -2382,7 +2382,7 @@ public:
 	}
 #endif
 
-	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
 	TVec operator-(const TVec& b) const
 	{
 		TVec out;
@@ -2394,7 +2394,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(kHasVec4SIMD)
 	TVec operator-(const TVec& b) const
 	{
 #	if ANKI_SIMD_SSE
@@ -2405,7 +2405,7 @@ public:
 	}
 #endif
 
-	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
 	TVec& operator-=(const TVec& b)
 	{
 		for(U i = 0; i < N; i++)
@@ -2416,7 +2416,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(kHasVec4SIMD)
 	TVec& operator-=(const TVec& b)
 	{
 #	if ANKI_SIMD_SSE
@@ -2428,7 +2428,7 @@ public:
 	}
 #endif
 
-	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
 	TVec operator*(const TVec& b) const
 	{
 		TVec out;
@@ -2440,7 +2440,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(kHasVec4SIMD)
 	TVec operator*(const TVec& b) const
 	{
 #	if ANKI_SIMD_SSE
@@ -2451,7 +2451,7 @@ public:
 	}
 #endif
 
-	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
 	TVec& operator*=(const TVec& b)
 	{
 		for(U i = 0; i < N; i++)
@@ -2462,7 +2462,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(kHasVec4SIMD)
 	TVec& operator*=(const TVec& b)
 	{
 #	if ANKI_SIMD_SSE
@@ -2474,7 +2474,7 @@ public:
 	}
 #endif
 
-	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
 	TVec operator/(const TVec& b) const
 	{
 		TVec out;
@@ -2487,7 +2487,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(kHasVec4SIMD)
 	TVec operator/(const TVec& b) const
 	{
 #	if ANKI_SIMD_SSE
@@ -2498,7 +2498,7 @@ public:
 	}
 #endif
 
-	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
 	TVec& operator/=(const TVec& b)
 	{
 		for(U i = 0; i < N; i++)
@@ -2510,7 +2510,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(kHasVec4SIMD)
 	TVec& operator/=(const TVec& b)
 	{
 #	if ANKI_SIMD_SSE
@@ -2522,7 +2522,7 @@ public:
 	}
 #endif
 
-	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
 	TVec operator-() const
 	{
 		TVec out;
@@ -2534,7 +2534,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(kHasVec4SIMD)
 	TVec operator-() const
 	{
 #	if ANKI_SIMD_SSE
@@ -2545,7 +2545,7 @@ public:
 	}
 #endif
 
-	ANKI_ENABLE_METHOD(IS_INTEGER)
+	ANKI_ENABLE_METHOD(kIsInteger)
 	TVec operator<<(const TVec& b) const
 	{
 		TVec out;
@@ -2556,7 +2556,7 @@ public:
 		return out;
 	}
 
-	ANKI_ENABLE_METHOD(IS_INTEGER)
+	ANKI_ENABLE_METHOD(kIsInteger)
 	TVec& operator<<=(const TVec& b)
 	{
 		for(U i = 0; i < N; i++)
@@ -2566,7 +2566,7 @@ public:
 		return *this;
 	}
 
-	ANKI_ENABLE_METHOD(IS_INTEGER)
+	ANKI_ENABLE_METHOD(kIsInteger)
 	TVec operator>>(const TVec& b) const
 	{
 		TVec out;
@@ -2577,7 +2577,7 @@ public:
 		return out;
 	}
 
-	ANKI_ENABLE_METHOD(IS_INTEGER)
+	ANKI_ENABLE_METHOD(kIsInteger)
 	TVec& operator>>=(const TVec& b)
 	{
 		for(U i = 0; i < N; i++)
@@ -2587,7 +2587,7 @@ public:
 		return *this;
 	}
 
-	ANKI_ENABLE_METHOD(IS_INTEGER)
+	ANKI_ENABLE_METHOD(kIsInteger)
 	TVec operator&(const TVec& b) const
 	{
 		TVec out;
@@ -2598,7 +2598,7 @@ public:
 		return out;
 	}
 
-	ANKI_ENABLE_METHOD(IS_INTEGER)
+	ANKI_ENABLE_METHOD(kIsInteger)
 	TVec& operator&=(const TVec& b)
 	{
 		for(U i = 0; i < N; i++)
@@ -2608,7 +2608,7 @@ public:
 		return *this;
 	}
 
-	ANKI_ENABLE_METHOD(IS_INTEGER)
+	ANKI_ENABLE_METHOD(kIsInteger)
 	TVec operator|(const TVec& b) const
 	{
 		TVec out;
@@ -2619,7 +2619,7 @@ public:
 		return out;
 	}
 
-	ANKI_ENABLE_METHOD(IS_INTEGER)
+	ANKI_ENABLE_METHOD(kIsInteger)
 	TVec& operator|=(const TVec& b)
 	{
 		for(U i = 0; i < N; i++)
@@ -2629,7 +2629,7 @@ public:
 		return *this;
 	}
 
-	ANKI_ENABLE_METHOD(IS_INTEGER)
+	ANKI_ENABLE_METHOD(kIsInteger)
 	TVec operator^(const TVec& b) const
 	{
 		TVec out;
@@ -2640,7 +2640,7 @@ public:
 		return out;
 	}
 
-	ANKI_ENABLE_METHOD(IS_INTEGER)
+	ANKI_ENABLE_METHOD(kIsInteger)
 	TVec& operator^=(const TVec& b)
 	{
 		for(U i = 0; i < N; i++)
@@ -2650,7 +2650,7 @@ public:
 		return *this;
 	}
 
-	ANKI_ENABLE_METHOD(IS_INTEGER)
+	ANKI_ENABLE_METHOD(kIsInteger)
 	TVec operator%(const TVec& b) const
 	{
 		TVec out;
@@ -2661,7 +2661,7 @@ public:
 		return out;
 	}
 
-	ANKI_ENABLE_METHOD(IS_INTEGER)
+	ANKI_ENABLE_METHOD(kIsInteger)
 	TVec& operator%=(const TVec& b)
 	{
 		for(U i = 0; i < N; i++)
@@ -2783,78 +2783,78 @@ public:
 		return *this;
 	}
 
-	ANKI_ENABLE_METHOD(IS_INTEGER)
+	ANKI_ENABLE_METHOD(kIsInteger)
 	TVec operator<<(const T f) const
 	{
 		return (*this) << TVec(f);
 	}
 
-	ANKI_ENABLE_METHOD(IS_INTEGER)
+	ANKI_ENABLE_METHOD(kIsInteger)
 	TVec& operator<<=(const T f)
 	{
 		(*this) <<= TVec(f);
 		return *this;
 	}
 
-	ANKI_ENABLE_METHOD(IS_INTEGER)
+	ANKI_ENABLE_METHOD(kIsInteger)
 	TVec operator>>(const T f) const
 	{
 		return (*this) >> TVec(f);
 	}
 
-	ANKI_ENABLE_METHOD(IS_INTEGER)
+	ANKI_ENABLE_METHOD(kIsInteger)
 	TVec& operator>>=(const T f)
 	{
 		(*this) >>= TVec(f);
 		return *this;
 	}
 
-	ANKI_ENABLE_METHOD(IS_INTEGER)
+	ANKI_ENABLE_METHOD(kIsInteger)
 	TVec operator&(const T f) const
 	{
 		return (*this) & TVec(f);
 	}
 
-	ANKI_ENABLE_METHOD(IS_INTEGER)
+	ANKI_ENABLE_METHOD(kIsInteger)
 	TVec& operator&=(const T f)
 	{
 		(*this) &= TVec(f);
 		return *this;
 	}
 
-	ANKI_ENABLE_METHOD(IS_INTEGER)
+	ANKI_ENABLE_METHOD(kIsInteger)
 	TVec operator|(const T f) const
 	{
 		return (*this) | TVec(f);
 	}
 
-	ANKI_ENABLE_METHOD(IS_INTEGER)
+	ANKI_ENABLE_METHOD(kIsInteger)
 	TVec& operator|=(const T f)
 	{
 		(*this) |= TVec(f);
 		return *this;
 	}
 
-	ANKI_ENABLE_METHOD(IS_INTEGER)
+	ANKI_ENABLE_METHOD(kIsInteger)
 	TVec operator^(const T f) const
 	{
 		return (*this) ^ TVec(f);
 	}
 
-	ANKI_ENABLE_METHOD(IS_INTEGER)
+	ANKI_ENABLE_METHOD(kIsInteger)
 	TVec& operator^=(const T f)
 	{
 		(*this) ^= TVec(f);
 		return *this;
 	}
 
-	ANKI_ENABLE_METHOD(IS_INTEGER)
+	ANKI_ENABLE_METHOD(kIsInteger)
 	TVec operator%(const T f) const
 	{
 		return (*this) % TVec(f);
 	}
 
-	ANKI_ENABLE_METHOD(IS_INTEGER)
+	ANKI_ENABLE_METHOD(kIsInteger)
 	TVec& operator%=(const T f)
 	{
 		(*this) %= TVec(f);
@@ -2908,7 +2908,7 @@ public:
 
 	/// @name Other
 	/// @{
-	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
 	T dot(const TVec& b) const
 	{
 		T out = T(0);
@@ -2920,7 +2920,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(kHasVec4SIMD)
 	T dot(const TVec& b) const
 	{
 		T o;
@@ -2944,7 +2944,7 @@ public:
 	}
 
 	/// It's like calculating the cross of a 3 component TVec.
-	ANKI_ENABLE_METHOD(N == 4 && !HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(N == 4 && !kHasVec4SIMD)
 	TVec cross(const TVec& b) const
 	{
 		ANKI_ASSERT(w() == T(0));
@@ -2953,7 +2953,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(N == 4 && HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(N == 4 && kHasVec4SIMD)
 	TVec cross(const TVec& b) const
 	{
 		ANKI_ASSERT(w() == T(0));
@@ -3024,7 +3024,7 @@ public:
 		return (*this) * invw;
 	}
 
-	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
 	T getLengthSquared() const
 	{
 		T out = T(0);
@@ -3035,7 +3035,7 @@ public:
 		return out;
 	}
 
-	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(kHasVec4SIMD)
 	T getLengthSquared() const
 	{
 		return dot(*this);
@@ -3056,14 +3056,14 @@ public:
 		return sqrt<T>(getDistance(b));
 	}
 
-	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
 	void normalize()
 	{
 		(*this) /= getLength();
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(kHasVec4SIMD)
 	void normalize()
 	{
 #	if ANKI_SIMD_SSE
@@ -3085,14 +3085,14 @@ public:
 	}
 #endif
 
-	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
 	TVec getNormalized() const
 	{
 		return (*this) / getLength();
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(kHasVec4SIMD)
 	TVec getNormalized() const
 	{
 #	if ANKI_SIMD_SSE
@@ -3131,7 +3131,7 @@ public:
 		return ((*this) * (T(1) - t)) + (v1 * t);
 	}
 
-	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
 	TVec abs() const
 	{
 		TVec out;
@@ -3143,7 +3143,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(kHasVec4SIMD)
 	TVec abs() const
 	{
 #	if ANKI_SIMD_SSE
@@ -3168,7 +3168,7 @@ public:
 	}
 
 	/// Get the min of all components.
-	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
 	TVec min(const TVec& b) const
 	{
 		TVec out;
@@ -3181,7 +3181,7 @@ public:
 
 #if ANKI_ENABLE_SIMD
 	/// Get the min of all components.
-	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(kHasVec4SIMD)
 	TVec min(const TVec& b) const
 	{
 #	if ANKI_SIMD_SSE
@@ -3199,7 +3199,7 @@ public:
 	}
 
 	/// Get the max of all components.
-	ANKI_ENABLE_METHOD(!HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
 	TVec max(const TVec& b) const
 	{
 		TVec out;
@@ -3212,7 +3212,7 @@ public:
 
 #if ANKI_ENABLE_SIMD
 	/// Get the max of all components.
-	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
+	ANKI_ENABLE_METHOD(kHasVec4SIMD)
 	TVec max(const TVec& b) const
 	{
 #	if ANKI_SIMD_SSE
@@ -3288,8 +3288,8 @@ public:
 		}
 	}
 
-	static constexpr Bool CLANG_WORKAROUND = std::is_integral<T>::value && std::is_unsigned<T>::value;
-	ANKI_ENABLE_METHOD(CLANG_WORKAROUND)
+	static constexpr Bool kClangWorkaround = std::is_integral<T>::value && std::is_unsigned<T>::value;
+	ANKI_ENABLE_METHOD(kClangWorkaround)
 	void toString(StringAuto& str) const
 	{
 		for(U i = 0; i < N; ++i)
@@ -3298,8 +3298,8 @@ public:
 		}
 	}
 
-	static constexpr Bool CLANG_WORKAROUND2 = std::is_integral<T>::value && std::is_signed<T>::value;
-	ANKI_ENABLE_METHOD(CLANG_WORKAROUND2)
+	static constexpr Bool kClangWorkaround2 = std::is_integral<T>::value && std::is_signed<T>::value;
+	ANKI_ENABLE_METHOD(kClangWorkaround2)
 	void toString(StringAuto& str) const
 	{
 		for(U i = 0; i < N; ++i)

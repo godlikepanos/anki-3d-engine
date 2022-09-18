@@ -78,9 +78,9 @@ public:
 
 	void setFrustumType(FrustumType type)
 	{
-		ANKI_ASSERT(type >= FrustumType::FIRST && type < FrustumType::COUNT);
+		ANKI_ASSERT(type >= FrustumType::kFirst && type < FrustumType::kCount);
 		m_frustumType = type;
-		if(m_frustumType == FrustumType::PERSPECTIVE)
+		if(m_frustumType == FrustumType::kPerspective)
 		{
 			setPerspective(0.1f, 100.0f, toRad(45.0f), toRad(45.0f));
 		}
@@ -92,15 +92,15 @@ public:
 
 	FrustumType getFrustumType() const
 	{
-		ANKI_ASSERT(m_frustumType != FrustumType::COUNT);
+		ANKI_ASSERT(m_frustumType != FrustumType::kCount);
 		return m_frustumType;
 	}
 
 	void setPerspective(F32 near, F32 far, F32 fovX, F32 fovY)
 	{
 		ANKI_ASSERT(near > 0.0f && far > 0.0f && near < far);
-		ANKI_ASSERT(fovX > 0.0f && fovY > 0.0f && fovX < PI && fovY < PI);
-		ANKI_ASSERT(m_frustumType == FrustumType::PERSPECTIVE);
+		ANKI_ASSERT(fovX > 0.0f && fovY > 0.0f && fovX < kPi && fovY < kPi);
+		ANKI_ASSERT(m_frustumType == FrustumType::kPerspective);
 		m_perspective.m_near = near;
 		m_perspective.m_far = far;
 		m_perspective.m_fovX = fovX;
@@ -112,7 +112,7 @@ public:
 	{
 		ANKI_ASSERT(near > 0.0f && far > 0.0f && near < far);
 		ANKI_ASSERT(right > left && top > bottom);
-		ANKI_ASSERT(m_frustumType == FrustumType::ORTHOGRAPHIC);
+		ANKI_ASSERT(m_frustumType == FrustumType::kOrthographic);
 		m_ortho.m_near = near;
 		m_ortho.m_far = far;
 		m_ortho.m_right = right;
@@ -146,75 +146,75 @@ public:
 
 	void setFovX(F32 fovx)
 	{
-		ANKI_ASSERT(m_frustumType == FrustumType::PERSPECTIVE);
+		ANKI_ASSERT(m_frustumType == FrustumType::kPerspective);
 		m_shapeMarkedForUpdate = true;
 		m_perspective.m_fovX = fovx;
 	}
 
 	F32 getFovX() const
 	{
-		ANKI_ASSERT(m_frustumType == FrustumType::PERSPECTIVE);
+		ANKI_ASSERT(m_frustumType == FrustumType::kPerspective);
 		return m_perspective.m_fovX;
 	}
 
 	void setFovY(F32 fovy)
 	{
-		ANKI_ASSERT(m_frustumType == FrustumType::PERSPECTIVE);
+		ANKI_ASSERT(m_frustumType == FrustumType::kPerspective);
 		m_shapeMarkedForUpdate = true;
 		m_perspective.m_fovY = fovy;
 	}
 
 	F32 getFovY() const
 	{
-		ANKI_ASSERT(m_frustumType == FrustumType::PERSPECTIVE);
+		ANKI_ASSERT(m_frustumType == FrustumType::kPerspective);
 		return m_perspective.m_fovY;
 	}
 
 	F32 getLeft() const
 	{
-		ANKI_ASSERT(m_frustumType == FrustumType::ORTHOGRAPHIC);
+		ANKI_ASSERT(m_frustumType == FrustumType::kOrthographic);
 		return m_ortho.m_left;
 	}
 
 	void setLeft(F32 value)
 	{
-		ANKI_ASSERT(m_frustumType == FrustumType::ORTHOGRAPHIC);
+		ANKI_ASSERT(m_frustumType == FrustumType::kOrthographic);
 		m_ortho.m_left = value;
 	}
 
 	F32 getRight() const
 	{
-		ANKI_ASSERT(m_frustumType == FrustumType::ORTHOGRAPHIC);
+		ANKI_ASSERT(m_frustumType == FrustumType::kOrthographic);
 		return m_ortho.m_right;
 	}
 
 	void setRight(F32 value)
 	{
-		ANKI_ASSERT(m_frustumType == FrustumType::ORTHOGRAPHIC);
+		ANKI_ASSERT(m_frustumType == FrustumType::kOrthographic);
 		m_ortho.m_right = value;
 	}
 
 	F32 getTop() const
 	{
-		ANKI_ASSERT(m_frustumType == FrustumType::ORTHOGRAPHIC);
+		ANKI_ASSERT(m_frustumType == FrustumType::kOrthographic);
 		return m_ortho.m_top;
 	}
 
 	void setTop(F32 value)
 	{
-		ANKI_ASSERT(m_frustumType == FrustumType::ORTHOGRAPHIC);
+		ANKI_ASSERT(m_frustumType == FrustumType::kOrthographic);
 		m_ortho.m_top = value;
 	}
 
 	F32 getBottom() const
 	{
-		ANKI_ASSERT(m_frustumType == FrustumType::ORTHOGRAPHIC);
+		ANKI_ASSERT(m_frustumType == FrustumType::kOrthographic);
 		return m_ortho.m_bottom;
 	}
 
 	void setBottom(F32 value)
 	{
-		ANKI_ASSERT(m_frustumType == FrustumType::ORTHOGRAPHIC);
+		ANKI_ASSERT(m_frustumType == FrustumType::kOrthographic);
 		m_ortho.m_bottom = value;
 	}
 
@@ -360,17 +360,17 @@ public:
 
 	const ConvexHullShape& getPerspectiveBoundingShapeWorldSpace() const
 	{
-		ANKI_ASSERT(m_frustumType == FrustumType::PERSPECTIVE);
+		ANKI_ASSERT(m_frustumType == FrustumType::kPerspective);
 		return m_perspective.m_hull;
 	}
 
 	const Obb& getOrthographicBoundingShapeWorldSpace() const
 	{
-		ANKI_ASSERT(m_frustumType == FrustumType::ORTHOGRAPHIC);
+		ANKI_ASSERT(m_frustumType == FrustumType::kOrthographic);
 		return m_ortho.m_obbW;
 	}
 
-	const Array<Plane, U32(FrustumPlaneType::COUNT)>& getViewPlanes() const
+	const Array<Plane, U32(FrustumPlaneType::kCount)>& getViewPlanes() const
 	{
 		return m_viewPlanesW;
 	}
@@ -420,7 +420,7 @@ private:
 
 	SceneNode* m_node;
 
-	FrustumType m_frustumType = FrustumType::COUNT;
+	FrustumType m_frustumType = FrustumType::kCount;
 
 	union
 	{
@@ -430,8 +430,8 @@ private:
 	};
 
 	// View planes
-	Array<Plane, U32(FrustumPlaneType::COUNT)> m_viewPlanesL;
-	Array<Plane, U32(FrustumPlaneType::COUNT)> m_viewPlanesW;
+	Array<Plane, U32(FrustumPlaneType::kCount)> m_viewPlanesL;
+	Array<Plane, U32(FrustumPlaneType::kCount)> m_viewPlanesW;
 
 	Transform m_trf = Transform::getIdentity();
 	Mat4 m_projMat = Mat4::getIdentity(); ///< Projection matrix

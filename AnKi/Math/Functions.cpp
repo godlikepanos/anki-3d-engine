@@ -28,8 +28,8 @@ static void sinCosInternal(const Scalar a_, Scalar& sina, Scalar& cosa)
 		a = -a;
 		negative = true;
 	}
-	const Scalar TWO_OVER_PI = Scalar(1.0 / (PI / 2.0));
-	Scalar floatA = TWO_OVER_PI * a;
+	constexpr Scalar k2OverPi = Scalar(1.0 / (kPi / 2.0));
+	Scalar floatA = k2OverPi * a;
 	I intA = (int)floatA;
 
 	const Scalar RATIONAL_HALF_PI = 201 / 128.0;

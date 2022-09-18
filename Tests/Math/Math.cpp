@@ -12,7 +12,7 @@ using namespace anki;
 template<typename Vec>
 void operatorsSame()
 {
-	const U size = Vec::COMPONENT_COUNT;
+	const U size = Vec::kComponentCount;
 	using T = typename Vec::Scalar;
 
 	Vec a, b;
@@ -63,7 +63,7 @@ void operatorsSame()
 template<typename Vec>
 void dot()
 {
-	const U size = Vec::COMPONENT_COUNT;
+	const U size = Vec::kComponentCount;
 	using T = typename Vec::Scalar;
 	T res = 0;
 	Vec vec;
@@ -84,7 +84,7 @@ template<typename Vec>
 void length()
 {
 	using T = typename Vec::Scalar;
-	U size = Vec::COMPONENT_COUNT;
+	U size = Vec::kComponentCount;
 	Vec vec;
 	T res = 0;
 
@@ -99,7 +99,7 @@ void length()
 	res = T(sqrt(F32(res)));
 	ANKI_TEST_EXPECT_EQ(vec.getLength(), res);
 
-	if(Vec::IS_INTEGER)
+	if(Vec::kIsInteger)
 	{
 		ANKI_TEST_EXPECT_EQ(vec.getNormalized(), vec / res);
 	}
@@ -117,7 +117,7 @@ void length()
 template<typename Vec>
 void comparision()
 {
-	U size = Vec::COMPONENT_COUNT;
+	U size = Vec::kComponentCount;
 	using Scalar = typename Vec::Scalar;
 	Vec a, a1, b;
 
@@ -178,7 +178,7 @@ ANKI_TEST(Math, Vec4)
 template<typename Mat>
 void matOperatorsSame()
 {
-	const U size = Mat::SIZE;
+	const U size = Mat::kSize;
 	using T = typename Mat::Scalar;
 
 	Mat a, b;
@@ -219,7 +219,7 @@ Mat getNonEmptyMat(typename Mat::Scalar offset = 0)
 {
 	Mat out;
 
-	for(U i = 0; i < Mat::SIZE; i++)
+	for(U i = 0; i < Mat::kSize; i++)
 	{
 		out[i] = typename Mat::Scalar(i) + offset;
 	}
@@ -253,9 +253,9 @@ void transpose()
 	Mat a = getNonEmptyMat<Mat>();
 	Mat b = a.getTransposed();
 
-	for(U j = 0; j < Mat::ROW_COUNT; j++)
+	for(U j = 0; j < Mat::kRowCount; j++)
 	{
-		for(U i = 0; i < Mat::COLUMN_COUNT; i++)
+		for(U i = 0; i < Mat::kColumnCount; i++)
 		{
 			ANKI_TEST_EXPECT_EQ(a(j, i), b(i, j));
 		}
@@ -279,17 +279,17 @@ void matVecMul()
 
 	Mat m = getNonEmptyMat<Mat>();
 	VecIn v;
-	for(U i = 0; i < VecIn::SIZE; i++)
+	for(U i = 0; i < VecIn::kSize; i++)
 	{
 		v[i] = i;
 	}
 
 	VecOut out = m * v;
 	VecOut out1;
-	for(U j = 0; j < Mat::ROW_COUNT; j++)
+	for(U j = 0; j < Mat::kRowCount; j++)
 	{
 		T sum = 0;
-		for(U i = 0; i < Mat::COLUMN_COUNT; i++)
+		for(U i = 0; i < Mat::kColumnCount; i++)
 		{
 			sum += m(j, i) * v[j];
 		}

@@ -93,17 +93,17 @@ GlobalIlluminationProbeNode::GlobalIlluminationProbeNode(SceneGraph* scene, CStr
 	const F32 zNear = CLUSTER_OBJECT_FRUSTUM_NEAR_PLANE;
 
 	Mat3 rot;
-	rot = Mat3(Euler(0.0f, -PI / 2.0f, 0.0f)) * Mat3(Euler(0.0f, 0.0f, PI));
+	rot = Mat3(Euler(0.0f, -kPi / 2.0f, 0.0f)) * Mat3(Euler(0.0f, 0.0f, kPi));
 	m_cubeFaceTransforms[0].setRotation(Mat3x4(Vec3(0.0f), rot));
-	rot = Mat3(Euler(0.0f, PI / 2.0f, 0.0f)) * Mat3(Euler(0.0f, 0.0f, PI));
+	rot = Mat3(Euler(0.0f, kPi / 2.0f, 0.0f)) * Mat3(Euler(0.0f, 0.0f, kPi));
 	m_cubeFaceTransforms[1].setRotation(Mat3x4(Vec3(0.0f), rot));
-	rot = Mat3(Euler(PI / 2.0f, 0.0f, 0.0f));
+	rot = Mat3(Euler(kPi / 2.0f, 0.0f, 0.0f));
 	m_cubeFaceTransforms[2].setRotation(Mat3x4(Vec3(0.0f), rot));
-	rot = Mat3(Euler(-PI / 2.0f, 0.0f, 0.0f));
+	rot = Mat3(Euler(-kPi / 2.0f, 0.0f, 0.0f));
 	m_cubeFaceTransforms[3].setRotation(Mat3x4(Vec3(0.0f), rot));
-	rot = Mat3(Euler(0.0f, PI, 0.0f)) * Mat3(Euler(0.0f, 0.0f, PI));
+	rot = Mat3(Euler(0.0f, kPi, 0.0f)) * Mat3(Euler(0.0f, 0.0f, kPi));
 	m_cubeFaceTransforms[4].setRotation(Mat3x4(Vec3(0.0f), rot));
-	rot = Mat3(Euler(0.0f, 0.0f, PI));
+	rot = Mat3(Euler(0.0f, 0.0f, kPi));
 	m_cubeFaceTransforms[5].setRotation(Mat3x4(Vec3(0.0f), rot));
 
 	for(U i = 0; i < 6; ++i)
@@ -112,7 +112,7 @@ GlobalIlluminationProbeNode::GlobalIlluminationProbeNode(SceneGraph* scene, CStr
 		m_cubeFaceTransforms[i].setScale(1.0f);
 
 		FrustumComponent* frc = newComponent<FrustumComponent>();
-		frc->setFrustumType(FrustumType::PERSPECTIVE);
+		frc->setFrustumType(FrustumType::kPerspective);
 		const F32 tempEffectiveDistance = 1.0f;
 		frc->setPerspective(zNear, tempEffectiveDistance, ang, ang);
 		frc->setWorldTransform(m_cubeFaceTransforms[i]);

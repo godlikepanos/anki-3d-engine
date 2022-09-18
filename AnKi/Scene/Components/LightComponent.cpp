@@ -94,7 +94,7 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 
 	// Compute the texture matrices
 	const Mat4 lightTrf(m_worldtransform);
-	if(frustumComp.getFrustumType() == FrustumType::PERSPECTIVE)
+	if(frustumComp.getFrustumType() == FrustumType::kPerspective)
 	{
 		// Get some stuff
 		const F32 fovX = frustumComp.getFovX();
@@ -127,7 +127,7 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 			const F32 b = n * tan(fovY / 2.0f) * fovX / fovY;
 			const F32 z = (b * b + n * n - a * a - f * f) / (2.0f * (f - n));
 			ANKI_ASSERT(absolute((Vec2(a, -f) - Vec2(0, z)).getLength() - (Vec2(b, -n) - Vec2(0, z)).getLength())
-						<= EPSILON * 100.0f);
+						<= kEpsilonf * 100.0f);
 
 			Vec3 C(0.0f, 0.0f, z); // Sphere center
 
@@ -202,13 +202,13 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 
 			// Fill the frustum with the fixed projection parameters from the fixed projection matrix
 			Plane plane;
-			extractClipPlane(cascadeProjMat, FrustumPlaneType::LEFT, plane);
+			extractClipPlane(cascadeProjMat, FrustumPlaneType::kLeft, plane);
 			const F32 left = plane.getOffset();
-			extractClipPlane(cascadeProjMat, FrustumPlaneType::RIGHT, plane);
+			extractClipPlane(cascadeProjMat, FrustumPlaneType::kRight, plane);
 			const F32 right = -plane.getOffset();
-			extractClipPlane(cascadeProjMat, FrustumPlaneType::TOP, plane);
+			extractClipPlane(cascadeProjMat, FrustumPlaneType::kTop, plane);
 			const F32 top = -plane.getOffset();
-			extractClipPlane(cascadeProjMat, FrustumPlaneType::BOTTOM, plane);
+			extractClipPlane(cascadeProjMat, FrustumPlaneType::kBottom, plane);
 			const F32 bottom = plane.getOffset();
 
 			FrustumComponent& cascadeFrustumComp = cascadeFrustumComponents[i];

@@ -38,7 +38,7 @@ Error LightEvent::update([[maybe_unused]] Second prevUpdateTime, Second crntTime
 {
 	const F32 freq = getRandomRange(m_freq - m_freqDeviation, m_freq + m_freqDeviation);
 
-	F32 factor = F32(sin(crntTime * freq * PI)) / 2.0f + 0.5f;
+	F32 factor = F32(sin(crntTime * freq * kPi)) / 2.0f + 0.5f;
 	LightComponent& lightc = m_associatedNodes[0]->getFirstComponentOfType<LightComponent>();
 
 	// Update radius

@@ -42,7 +42,7 @@ Error JitterMoveEvent::update([[maybe_unused]] Second prevUpdateTime, Second crn
 
 	Transform trf = move.getLocalTransform();
 
-	F32 factor = F32(sin(getDelta(crntTime) * PI));
+	F32 factor = F32(sin(getDelta(crntTime) * kPi));
 
 	trf.getOrigin() = linearInterpolate(m_originalPos, m_newPos, factor);
 

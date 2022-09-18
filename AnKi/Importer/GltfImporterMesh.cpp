@@ -70,7 +70,7 @@ static U calcImplicitStride(const cgltf_attribute& attrib)
 template<typename T>
 static Error checkAttribute(const cgltf_attribute& attrib)
 {
-	if(cgltfComponentCount(attrib.data->type) != T::COMPONENT_COUNT)
+	if(cgltfComponentCount(attrib.data->type) != T::kComponentCount)
 	{
 		ANKI_IMPORTER_LOGE("Wrong component count for attribute: %s", attrib.name);
 		return Error::kUserData;
@@ -389,7 +389,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 
 		aabbMin = aabbMin.min(submesh.m_aabbMin);
 		// Bump aabbMax a bit
-		submesh.m_aabbMax += EPSILON * 10.0f;
+		submesh.m_aabbMax += kEpsilonf * 10.0f;
 		aabbMax = aabbMax.max(submesh.m_aabbMax);
 
 		//
@@ -406,7 +406,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 
 				// Check the positions dist
 				const F32 posDist = (otherPos - pos).getLengthSquared();
-				if(posDist > EPSILON * EPSILON)
+				if(posDist > kEpsilonf * kEpsilonf)
 				{
 					continue;
 				}
@@ -497,7 +497,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 				Vec3 t = (edge02 * uvedge01.y() - edge01 * uvedge02.y()) * det;
 				Vec3 b = (edge02 * uvedge01.x() - edge01 * uvedge02.x()) * det;
 
-				if(t.getLengthSquared() < EPSILON)
+				if(t.getLengthSquared() < kEpsilonf)
 				{
 					t = Vec3(1.0f, 0.0f, 0.0f); // Something random
 				}
@@ -506,7 +506,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 					t.normalize();
 				}
 
-				if(b.getLengthSquared() < EPSILON)
+				if(b.getLengthSquared() < kEpsilonf)
 				{
 					b = Vec3(0.0f, 1.0f, 0.0f); // Something random
 				}
@@ -530,7 +530,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 				const Vec3& n = submesh.m_verts[i].m_normal;
 				Vec3& b = bitangents[i];
 
-				if(t.getLengthSquared() < EPSILON)
+				if(t.getLengthSquared() < kEpsilonf)
 				{
 					t = Vec3(1.0f, 0.0f, 0.0f); // Something random
 				}
@@ -539,7 +539,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 					t.normalize();
 				}
 
-				if(b.getLengthSquared() < EPSILON)
+				if(b.getLengthSquared() < kEpsilonf)
 				{
 					b = Vec3(0.0f, 1.0f, 0.0f); // Something random
 				}
@@ -601,7 +601,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 			const Vec3& v1 = submesh.m_verts[i1].m_position;
 			const Vec3& v2 = submesh.m_verts[i2].m_position;
 
-			if(computeTriangleArea(v0, v1, v2) <= EPSILON)
+			if(computeTriangleArea(v0, v1, v2) <= kEpsilonf)
 			{
 				continue;
 			}
@@ -614,7 +614,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 				for(const TempVertex& vertB : submeshB.m_verts)
 				{
 					const F32 test = testPlane(plane, vertB.m_position.xyz0());
-					if(test > EPSILON)
+					if(test > kEpsilonf)
 					{
 						convex = false;
 						break;

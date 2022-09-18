@@ -17,7 +17,7 @@ namespace anki {
 class ConvexHullShape
 {
 public:
-	static constexpr CollisionShapeType CLASS_TYPE = CollisionShapeType::CONVEX_HULL;
+	static constexpr CollisionShapeType kClassType = CollisionShapeType::kConvexHull;
 
 	/// Will not initialize any memory, nothing.
 	ConvexHullShape()

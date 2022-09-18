@@ -421,7 +421,7 @@ void ClusterBinning::writeClustererBuffersTask()
 		unis.m_frame = m_r->getFrameCount() & kMaxU32;
 
 		Plane nearPlane;
-		extractClipPlane(rqueue.m_viewProjectionMatrix, FrustumPlaneType::NEAR, nearPlane);
+		extractClipPlane(rqueue.m_viewProjectionMatrix, FrustumPlaneType::kNear, nearPlane);
 		unis.m_nearPlaneWSpace = Vec4(nearPlane.getNormal().xyz(), nearPlane.getOffset());
 		unis.m_near = rqueue.m_cameraNear;
 		unis.m_far = rqueue.m_cameraFar;

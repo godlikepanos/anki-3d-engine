@@ -51,7 +51,7 @@ void SpatialComponent::setConvexHullWorldSpace(const ConvexHullShape& hull)
 		m_hull.setTransform(hull.getTransform());
 	}
 
-	m_collisionObjectType = hull.CLASS_TYPE;
+	m_collisionObjectType = hull.kClassType;
 	m_markedForUpdate = true;
 }
 
@@ -67,16 +67,16 @@ Error SpatialComponent::update([[maybe_unused]] SceneComponentUpdateInfo& info, 
 			// Compute the AABB
 			switch(m_collisionObjectType)
 			{
-			case CollisionShapeType::AABB:
+			case CollisionShapeType::kAABB:
 				m_derivedAabb = m_aabb;
 				break;
-			case CollisionShapeType::OBB:
+			case CollisionShapeType::kOBB:
 				m_derivedAabb = computeAabb(m_obb);
 				break;
-			case CollisionShapeType::SPHERE:
+			case CollisionShapeType::kSphere:
 				m_derivedAabb = computeAabb(m_sphere);
 				break;
-			case CollisionShapeType::CONVEX_HULL:
+			case CollisionShapeType::kConvexHull:
 				m_derivedAabb = computeAabb(m_hull);
 				break;
 			default:

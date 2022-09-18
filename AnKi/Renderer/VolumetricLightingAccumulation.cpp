@@ -131,14 +131,14 @@ void VolumetricLightingAccumulation::run(const RenderingContext& ctx, RenderPass
 	if(queueEl.m_fog.m_heightOfMaxDensity > queueEl.m_fog.m_heightOfMinDensity)
 	{
 		unis.m_minHeight = queueEl.m_fog.m_heightOfMinDensity;
-		unis.m_oneOverMaxMinusMinHeight = 1.0f / (queueEl.m_fog.m_heightOfMaxDensity - unis.m_minHeight + EPSILON);
+		unis.m_oneOverMaxMinusMinHeight = 1.0f / (queueEl.m_fog.m_heightOfMaxDensity - unis.m_minHeight + kEpsilonf);
 		unis.m_densityAtMinHeight = queueEl.m_fog.m_minDensity;
 		unis.m_densityAtMaxHeight = queueEl.m_fog.m_maxDensity;
 	}
 	else
 	{
 		unis.m_minHeight = queueEl.m_fog.m_heightOfMaxDensity;
-		unis.m_oneOverMaxMinusMinHeight = 1.0f / (queueEl.m_fog.m_heightOfMinDensity - unis.m_minHeight + EPSILON);
+		unis.m_oneOverMaxMinusMinHeight = 1.0f / (queueEl.m_fog.m_heightOfMinDensity - unis.m_minHeight + kEpsilonf);
 		unis.m_densityAtMinHeight = queueEl.m_fog.m_maxDensity;
 		unis.m_densityAtMaxHeight = queueEl.m_fog.m_minDensity;
 	}

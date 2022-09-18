@@ -84,17 +84,17 @@ ReflectionProbeNode::ReflectionProbeNode(SceneGraph* scene, CString name)
 
 	Mat3 rot;
 
-	rot = Mat3(Euler(0.0f, -PI / 2.0f, 0.0f)) * Mat3(Euler(0.0f, 0.0f, PI));
+	rot = Mat3(Euler(0.0f, -kPi / 2.0f, 0.0f)) * Mat3(Euler(0.0f, 0.0f, kPi));
 	m_frustumTransforms[0].setRotation(Mat3x4(Vec3(0.0f), rot));
-	rot = Mat3(Euler(0.0f, PI / 2.0f, 0.0f)) * Mat3(Euler(0.0f, 0.0f, PI));
+	rot = Mat3(Euler(0.0f, kPi / 2.0f, 0.0f)) * Mat3(Euler(0.0f, 0.0f, kPi));
 	m_frustumTransforms[1].setRotation(Mat3x4(Vec3(0.0f), rot));
-	rot = Mat3(Euler(PI / 2.0f, 0.0f, 0.0f));
+	rot = Mat3(Euler(kPi / 2.0f, 0.0f, 0.0f));
 	m_frustumTransforms[2].setRotation(Mat3x4(Vec3(0.0f), rot));
-	rot = Mat3(Euler(-PI / 2.0f, 0.0f, 0.0f));
+	rot = Mat3(Euler(-kPi / 2.0f, 0.0f, 0.0f));
 	m_frustumTransforms[3].setRotation(Mat3x4(Vec3(0.0f), rot));
-	rot = Mat3(Euler(0.0f, PI, 0.0f)) * Mat3(Euler(0.0f, 0.0f, PI));
+	rot = Mat3(Euler(0.0f, kPi, 0.0f)) * Mat3(Euler(0.0f, 0.0f, kPi));
 	m_frustumTransforms[4].setRotation(Mat3x4(Vec3(0.0f), rot));
-	rot = Mat3(Euler(0.0f, 0.0f, PI));
+	rot = Mat3(Euler(0.0f, 0.0f, kPi));
 	m_frustumTransforms[5].setRotation(Mat3x4(Vec3(0.0f), rot));
 
 	for(U i = 0; i < 6; ++i)
@@ -103,7 +103,7 @@ ReflectionProbeNode::ReflectionProbeNode(SceneGraph* scene, CString name)
 		m_frustumTransforms[i].setScale(1.0f);
 
 		FrustumComponent* frc = newComponent<FrustumComponent>();
-		frc->setFrustumType(FrustumType::PERSPECTIVE);
+		frc->setFrustumType(FrustumType::kPerspective);
 		frc->setPerspective(CLUSTER_OBJECT_FRUSTUM_NEAR_PLANE, 10.0f, ang, ang);
 		frc->setWorldTransform(m_frustumTransforms[i]);
 		frc->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);

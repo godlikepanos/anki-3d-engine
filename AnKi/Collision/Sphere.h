@@ -16,7 +16,7 @@ namespace anki {
 class Sphere
 {
 public:
-	static constexpr CollisionShapeType CLASS_TYPE = CollisionShapeType::SPHERE;
+	static constexpr CollisionShapeType kClassType = CollisionShapeType::kSphere;
 
 	/// Will not initialize any memory, nothing.
 	Sphere()

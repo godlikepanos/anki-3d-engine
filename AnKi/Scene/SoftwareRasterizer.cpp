@@ -36,8 +36,8 @@ void SoftwareRasterizer::clipTriangle(const Vec4* inVerts, Vec4* outVerts, U& ou
 {
 	ANKI_ASSERT(inVerts && outVerts);
 
-	const Plane& plane = m_planesL[FrustumPlaneType::NEAR];
-	F32 clipZ = -plane.getOffset() - EPSILON;
+	const Plane& plane = m_planesL[FrustumPlaneType::kNear];
+	F32 clipZ = -plane.getOffset() - kEpsilonf;
 	ANKI_ASSERT(clipZ < 0.0);
 
 	Array<Bool, 3> vertInside;
@@ -282,7 +282,7 @@ void SoftwareRasterizer::rasterizeTriangle(const Vec4* tri)
 				ANKI_ASSERT(depth >= 0.0 && depth <= 1.0);
 
 				// Clamp it to a bit less that 1.0f because 1.0f will produce a 0 depthi
-				depth = min(depth, 1.0f - EPSILON);
+				depth = min(depth, 1.0f - kEpsilonf);
 
 				// Store the min of the current value and new one
 				const U32 depthi = U32(depth * F32(kMaxU32));
@@ -395,7 +395,7 @@ void SoftwareRasterizer::fillDepthBuffer(ConstWeakArray<F32> depthValues)
 		F32 depth = depthValues[count];
 		ANKI_ASSERT(depth >= 0.0f && depth <= 1.0f);
 
-		depth = min(depth, 1.0f - EPSILON); // See a few lines above why is that
+		depth = min(depth, 1.0f - kEpsilonf); // See a few lines above why is that
 
 		const U32 depthi = U32(depth * F32(kMaxU32));
 		m_zbuffer[count].setNonAtomically(depthi);

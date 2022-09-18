@@ -31,7 +31,7 @@ Aabb computeAabb(const Obb& obb)
 	const Vec4 newE = Vec4(absM * obb.getExtend(), 0.0f);
 
 	// Add a small epsilon to avoid some assertions
-	const Vec4 epsilon(Vec3(EPSILON * 100.0f), 0.0f);
+	const Vec4 epsilon(Vec3(kEpsilonf * 100.0f), 0.0f);
 
 	return Aabb(obb.getCenter() - newE, obb.getCenter() + newE + epsilon);
 }
