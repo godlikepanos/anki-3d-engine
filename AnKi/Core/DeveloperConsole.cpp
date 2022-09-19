@@ -118,7 +118,7 @@ void DeveloperConsole::newLogItem(const LoggerMessageInfo& inf)
 	LogItem* newLogItem;
 
 	// Pop first
-	if(m_logItemCount + 1 > MAX_LOG_ITEMS)
+	if(m_logItemCount + 1 > kMaxLogItems)
 	{
 		LogItem* first = &m_logItems.getFront();
 		m_logItems.popFront();

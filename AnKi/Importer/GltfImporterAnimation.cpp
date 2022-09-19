@@ -360,8 +360,8 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 		// ANKI_CHECK(m_sceneFile.writeText("--[[\n"));
 
 		ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:tryFindSceneNode(\"%s\")\n", node.name));
-		ANKI_CHECK(m_sceneFile.writeTextf("getEventManager():newAnimationEvent(\"%s\", \"%s\", node)\n",
-										  animFname.cstr(), node.name));
+		ANKI_CHECK(m_sceneFile.writeTextf("getEventManager():newAnimationEvent(\"%s%s\", \"%s\", node)\n",
+										  m_rpath.cstr(), animFname.cstr(), node.name));
 
 		// ANKI_CHECK(m_sceneFile.writeText("--]]\n"));
 	}

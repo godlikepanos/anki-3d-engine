@@ -31,7 +31,7 @@ public:
 	void build(CanvasPtr ctx) override;
 
 private:
-	static constexpr U MAX_LOG_ITEMS = 64;
+	static constexpr U kMaxLogItems = 64;
 
 	class LogItem : public IntrusiveListEnabled<LogItem>
 	{

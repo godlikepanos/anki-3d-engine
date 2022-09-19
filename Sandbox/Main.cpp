@@ -59,7 +59,7 @@ Error MyApp::init(int argc, char* argv[])
 	// Load scene
 	ScriptResourcePtr script;
 #if ANKI_OS_ANDROID
-	ANKI_CHECK(resources.loadResource("Scene.lua", script));
+	ANKI_CHECK(resources.loadResource("Assets/Scene.lua", script));
 #else
 	ANKI_CHECK(resources.loadResource(argv[1], script));
 #endif
