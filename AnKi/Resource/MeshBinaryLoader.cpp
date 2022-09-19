@@ -162,7 +162,7 @@ Error MeshBinaryLoader::checkHeader() const
 	}
 
 	// Indices format
-	if(h.m_indexType != IndexType::U16)
+	if(h.m_indexType != IndexType::kU16)
 	{
 		ANKI_RESOURCE_LOGE("Wrong format for indices");
 		return Error::kUserData;
@@ -266,7 +266,7 @@ Error MeshBinaryLoader::storeIndicesAndPosition(DynamicArrayAuto<U32>& indices, 
 		ANKI_CHECK(storeIndexBuffer(&staging[0], staging.getSizeInBytes()));
 
 		// Copy from staging
-		ANKI_ASSERT(m_header.m_indexType == IndexType::U16);
+		ANKI_ASSERT(m_header.m_indexType == IndexType::kU16);
 		for(U32 i = 0; i < m_header.m_totalIndexCount; ++i)
 		{
 			indices[i] = *reinterpret_cast<U16*>(&staging[PtrSize(i) * 2]);

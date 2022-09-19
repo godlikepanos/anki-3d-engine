@@ -244,7 +244,7 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 	cmdb->setVertexAttribute(1, 0, Format::kR8G8B8A8_Unorm, sizeof(Vec2) * 2);
 	cmdb->setVertexAttribute(2, 0, Format::kR32G32_Sfloat, sizeof(Vec2));
 
-	cmdb->bindIndexBuffer(indicesToken.m_buffer, indicesToken.m_offset, IndexType::U16);
+	cmdb->bindIndexBuffer(indicesToken.m_buffer, indicesToken.m_offset, IndexType::kU16);
 
 	// Will project scissor/clipping rectangles into framebuffer space
 	const Vec2 clipOff = drawData.DisplayPos; // (0,0) unless using multi-viewports

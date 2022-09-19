@@ -73,10 +73,10 @@ Error DebugDrawer2::init(ResourceManager* rsrcManager)
 		BufferInitInfo bufferInit("DebugCube");
 		bufferInit.m_usage = BufferUsageBit::kVertex;
 		bufferInit.m_size = sizeof(Vec3) * 8;
-		bufferInit.m_mapAccess = BufferMapAccessBit::WRITE;
+		bufferInit.m_mapAccess = BufferMapAccessBit::kWrite;
 		m_cubePositionsBuffer = rsrcManager->getGrManager().newBuffer(bufferInit);
 
-		Vec3* verts = static_cast<Vec3*>(m_cubePositionsBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::WRITE));
+		Vec3* verts = static_cast<Vec3*>(m_cubePositionsBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 
 		const F32 size = 1.0f;
 		verts[0] = Vec3(size, size, size); // front top right
@@ -98,10 +98,10 @@ Error DebugDrawer2::init(ResourceManager* rsrcManager)
 		BufferInitInfo bufferInit("DebugCube");
 		bufferInit.m_usage = BufferUsageBit::kVertex;
 		bufferInit.m_size = sizeof(U16) * INDEX_COUNT;
-		bufferInit.m_mapAccess = BufferMapAccessBit::WRITE;
+		bufferInit.m_mapAccess = BufferMapAccessBit::kWrite;
 		m_cubeIndicesBuffer = rsrcManager->getGrManager().newBuffer(bufferInit);
 
-		U16* indices = static_cast<U16*>(m_cubeIndicesBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::WRITE));
+		U16* indices = static_cast<U16*>(m_cubeIndicesBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 
 		U32 indexCount = 0;
 		indices[indexCount++] = 0;
@@ -169,7 +169,7 @@ void DebugDrawer2::drawCubes(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 l
 
 	cmdb->setVertexAttribute(0, 0, Format::kR32G32B32_Sfloat, 0);
 	cmdb->bindVertexBuffer(0, m_cubePositionsBuffer, 0, sizeof(Vec3));
-	cmdb->bindIndexBuffer(m_cubeIndicesBuffer, 0, IndexType::U16);
+	cmdb->bindIndexBuffer(m_cubeIndicesBuffer, 0, IndexType::kU16);
 
 	cmdb->bindUniformBuffer(1, 0, unisToken.m_buffer, unisToken.m_offset, unisToken.m_range);
 

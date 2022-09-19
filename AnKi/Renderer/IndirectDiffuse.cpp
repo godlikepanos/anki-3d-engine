@@ -303,7 +303,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 
 				if(enableVrs)
 				{
-					cmdb->setVrsRate(VrsRate::_1x1);
+					cmdb->setVrsRate(VrsRate::k1x1);
 				}
 
 				cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);

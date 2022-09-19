@@ -713,66 +713,66 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferUsageBit)
 /// Buffer access when mapped.
 enum class BufferMapAccessBit : U8
 {
-	NONE = 0,
-	READ = 1 << 0,
-	WRITE = 1 << 1
+	kNone = 0,
+	kRead = 1 << 0,
+	kWrite = 1 << 1
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferMapAccessBit)
 
 /// Index buffer's index type.
 enum class IndexType : U8
 {
-	U16,
-	U32,
-	COUNT
+	kU16,
+	kU32,
+	kCount
 };
 
 /// Rasterization order.
 enum class RasterizationOrder : U8
 {
-	ORDERED,
-	RELAXED,
-	COUNT
+	kOrdered,
+	kRelaxed,
+	kCount
 };
 
 /// Acceleration structure type.
 enum class AccelerationStructureType : U8
 {
-	TOP_LEVEL,
-	BOTTOM_LEVEL,
-	COUNT
+	kTopLevel,
+	kBottomLevel,
+	kCount
 };
 
 enum class AccelerationStructureUsageBit : U8
 {
-	NONE = 0,
-	BUILD = 1 << 0,
-	ATTACH = 1 << 1, ///< Attached to a TLAS. Only for BLAS.
-	GEOMETRY_READ = 1 << 2,
-	FRAGMENT_READ = 1 << 3,
-	COMPUTE_READ = 1 << 4,
-	TRACE_RAYS_READ = 1 << 5,
+	kNone = 0,
+	kBuild = 1 << 0,
+	kAttach = 1 << 1, ///< Attached to a TLAS. Only for BLAS.
+	kGeometryRead = 1 << 2,
+	kFragmentRead = 1 << 3,
+	kComputeRead = 1 << 4,
+	kTraceRaysRead = 1 << 5,
 
 	// Derived
-	ALL_GRAPHICS = GEOMETRY_READ | FRAGMENT_READ,
-	ALL_READ = ATTACH | GEOMETRY_READ | FRAGMENT_READ | COMPUTE_READ | TRACE_RAYS_READ,
-	ALL_WRITE = BUILD
+	kAllGraphics = kGeometryRead | kFragmentRead,
+	kAllRead = kAttach | kGeometryRead | kFragmentRead | kComputeRead | kTraceRaysRead,
+	kAllWrite = kBuild
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(AccelerationStructureUsageBit)
 
 /// VRS rates.
 enum class VrsRate : U8
 {
-	_1x1, ///< Disable VRS. Always supported.
-	_2x1, ///< Always supported.
-	_1x2,
-	_2x2, ///< Always supported.
-	_4x2,
-	_2x4,
-	_4x4,
+	k1x1, ///< Disable VRS. Always supported.
+	k2x1, ///< Always supported.
+	k1x2,
+	k2x2, ///< Always supported.
+	k4x2,
+	k2x4,
+	k4x4,
 
-	COUNT,
-	FIRST = 0
+	kCount,
+	kFirst = 0
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VrsRate)
 
@@ -1050,8 +1050,8 @@ class AccelerationStructureBarrierInfo
 {
 public:
 	AccelerationStructure* m_as = nullptr;
-	AccelerationStructureUsageBit m_previousUsage = AccelerationStructureUsageBit::NONE;
-	AccelerationStructureUsageBit m_nextUsage = AccelerationStructureUsageBit::NONE;
+	AccelerationStructureUsageBit m_previousUsage = AccelerationStructureUsageBit::kNone;
+	AccelerationStructureUsageBit m_nextUsage = AccelerationStructureUsageBit::kNone;
 };
 
 /// Compute max number of mipmaps for a 2D texture.

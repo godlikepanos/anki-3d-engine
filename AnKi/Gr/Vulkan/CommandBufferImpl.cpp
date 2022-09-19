@@ -718,7 +718,7 @@ void CommandBufferImpl::rebindDynamicState()
 	m_scissorDirty = true;
 	m_lastScissor = {};
 	m_vrsRateDirty = true;
-	m_vrsRate = VrsRate::_1x1;
+	m_vrsRate = VrsRate::k1x1;
 
 	// Rebind the stencil compare mask
 	if(m_stencilCompareMasks[0] == m_stencilCompareMasks[1])

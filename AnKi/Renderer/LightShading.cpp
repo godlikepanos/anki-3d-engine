@@ -160,7 +160,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 	if(enableVrs)
 	{
 		// Just set some low value, the attachment will take over
-		cmdb->setVrsRate(VrsRate::_1x1);
+		cmdb->setVrsRate(VrsRate::k1x1);
 	}
 
 	// Do light shading first
@@ -311,7 +311,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 	// Forward shading last
 	if(enableVrs)
 	{
-		cmdb->setVrsRate(VrsRate::_2x2);
+		cmdb->setVrsRate(VrsRate::k2x2);
 	}
 
 	m_r->getForwardShading().run(ctx, rgraphCtx);
@@ -319,7 +319,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 	if(enableVrs)
 	{
 		// Restore
-		cmdb->setVrsRate(VrsRate::_1x1);
+		cmdb->setVrsRate(VrsRate::k1x1);
 	}
 }
 

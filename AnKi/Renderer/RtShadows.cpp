@@ -250,7 +250,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 			RenderPassDependency(m_runCtx.m_intermediateShadowsRts[0], TextureUsageBit::kImageTraceRaysWrite));
 		rpass.newDependency(
 			RenderPassDependency(m_r->getAccelerationStructureBuilder().getAccelerationStructureHandle(),
-								 AccelerationStructureUsageBit::TRACE_RAYS_READ));
+								 AccelerationStructureUsageBit::kTraceRaysRead));
 		rpass.newDependency(depthDependency);
 		rpass.newDependency(
 			RenderPassDependency(m_r->getMotionVectors().getMotionVectorsRt(), TextureUsageBit::kSampledTraceRays));

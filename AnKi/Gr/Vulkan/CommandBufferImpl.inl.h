@@ -973,7 +973,7 @@ inline void CommandBufferImpl::setLineWidthInternal(F32 width)
 inline void CommandBufferImpl::setVrsRateInternal(VrsRate rate)
 {
 	ANKI_ASSERT(getGrManagerImpl().getDeviceCapabilities().m_vrs);
-	ANKI_ASSERT(rate < VrsRate::COUNT);
+	ANKI_ASSERT(rate < VrsRate::kCount);
 
 	commandCommon();
 

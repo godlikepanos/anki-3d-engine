@@ -65,7 +65,7 @@ Error LensFlare::initOcclusion()
 
 	m_indirectBuff = gr.newBuffer(BufferInitInfo(m_maxFlares * sizeof(DrawArraysIndirectInfo),
 												 BufferUsageBit::kIndirectDraw | BufferUsageBit::kStorageComputeWrite,
-												 BufferMapAccessBit::NONE, "LensFlares"));
+												 BufferMapAccessBit::kNone, "LensFlares"));
 
 	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/LensFlareUpdateIndirectInfo.ankiprogbin",
 												 m_updateIndirectBuffProg));

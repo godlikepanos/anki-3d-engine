@@ -464,7 +464,7 @@ private:
 	Bool m_lineWidthSet = false;
 #endif
 	Bool m_vrsRateDirty = true;
-	VrsRate m_vrsRate = VrsRate::_1x1;
+	VrsRate m_vrsRate = VrsRate::k1x1;
 
 	/// Rebind the above dynamic state. Needed after pushing secondary command buffers (they dirty the state).
 	void rebindDynamicState();

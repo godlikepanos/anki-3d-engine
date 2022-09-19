@@ -66,7 +66,7 @@ MeshResource::~MeshResource()
 
 	if(m_indexBufferOffset != kMaxPtrSize)
 	{
-		const PtrSize indexBufferSize = PtrSize(m_indexCount) * ((m_indexType == IndexType::U32) ? 4 : 2);
+		const PtrSize indexBufferSize = PtrSize(m_indexCount) * ((m_indexType == IndexType::kU32) ? 4 : 2);
 		getManager().getVertexGpuMemory().free(indexBufferSize, m_indexBufferOffset);
 	}
 }
@@ -122,7 +122,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	ANKI_ASSERT((m_indexCount % 3) == 0 && "Expecting triangles");
 	m_indexType = header.m_indexType;
 
-	const PtrSize indexBufferSize = PtrSize(m_indexCount) * ((m_indexType == IndexType::U32) ? 4 : 2);
+	const PtrSize indexBufferSize = PtrSize(m_indexCount) * ((m_indexType == IndexType::kU32) ? 4 : 2);
 	ANKI_CHECK(getManager().getVertexGpuMemory().allocate(indexBufferSize, m_indexBufferOffset));
 
 	//
@@ -195,7 +195,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	if(rayTracingEnabled)
 	{
 		AccelerationStructureInitInfo inf(StringAuto(getTempAllocator()).sprintf("%s_%s", "Blas", basename.cstr()));
-		inf.m_type = AccelerationStructureType::BOTTOM_LEVEL;
+		inf.m_type = AccelerationStructureType::kBottomLevel;
 
 		inf.m_bottomLevel.m_indexBuffer = m_vertexBuffer;
 		inf.m_bottomLevel.m_indexBufferOffset = m_indexBufferOffset;
@@ -286,7 +286,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 
 	// Write index buffer
 	{
-		const PtrSize indexBufferSize = PtrSize(m_indexCount) * ((m_indexType == IndexType::U32) ? 4 : 2);
+		const PtrSize indexBufferSize = PtrSize(m_indexCount) * ((m_indexType == IndexType::kU32) ? 4 : 2);
 
 		ANKI_CHECK(transferAlloc.allocate(indexBufferSize, handles[1]));
 		void* data = handles[1].getMappedMemory();
@@ -329,15 +329,15 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 											   BufferUsageBit::kAccelerationStructureBuild | BufferUsageBit::kVertex
 												   | BufferUsageBit::kIndex,
 											   0, kMaxPtrSize};
-		const AccelerationStructureBarrierInfo asBarrier = {m_blas.get(), AccelerationStructureUsageBit::NONE,
-															AccelerationStructureUsageBit::BUILD};
+		const AccelerationStructureBarrierInfo asBarrier = {m_blas.get(), AccelerationStructureUsageBit::kNone,
+															AccelerationStructureUsageBit::kBuild};
 
 		cmdb->setPipelineBarrier({}, {&buffBarrier, 1}, {&asBarrier, 1});
 
 		cmdb->buildAccelerationStructure(m_blas);
 
-		const AccelerationStructureBarrierInfo asBarrier2 = {m_blas.get(), AccelerationStructureUsageBit::BUILD,
-															 AccelerationStructureUsageBit::ALL_READ};
+		const AccelerationStructureBarrierInfo asBarrier2 = {m_blas.get(), AccelerationStructureUsageBit::kBuild,
+															 AccelerationStructureUsageBit::kAllRead};
 
 		cmdb->setPipelineBarrier({}, {}, {&asBarrier2, 1});
 	}

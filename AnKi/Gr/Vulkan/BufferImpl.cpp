@@ -87,7 +87,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	U32 memIdx = kMaxU32;
 	const Bool isDiscreteGpu = getGrManagerImpl().getDeviceCapabilities().m_discreteGpu;
 
-	if(access == BufferMapAccessBit::WRITE)
+	if(access == BufferMapAccessBit::kWrite)
 	{
 		// Only write, probably for uploads
 
@@ -131,7 +131,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(req.memoryTypeBits, prefer, avoid);
 		}
 	}
-	else if(!!(access & BufferMapAccessBit::READ))
+	else if(!!(access & BufferMapAccessBit::kRead))
 	{
 		// Read or read/write
 
@@ -158,7 +158,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	{
 		// Not mapped
 
-		ANKI_ASSERT(access == BufferMapAccessBit::NONE);
+		ANKI_ASSERT(access == BufferMapAccessBit::kNone);
 
 		// Device only
 		memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(
@@ -181,12 +181,12 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	const VkPhysicalDeviceMemoryProperties& props = getGrManagerImpl().getMemoryProperties();
 	m_memoryFlags = props.memoryTypes[memIdx].propertyFlags;
 
-	if(!!(access & BufferMapAccessBit::READ) && !(m_memoryFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
+	if(!!(access & BufferMapAccessBit::kRead) && !(m_memoryFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
 	{
 		m_needsInvalidate = true;
 	}
 
-	if(!!(access & BufferMapAccessBit::WRITE) && !(m_memoryFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
+	if(!!(access & BufferMapAccessBit::kWrite) && !(m_memoryFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
 	{
 		m_needsFlush = true;
 	}
@@ -226,8 +226,8 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 void* BufferImpl::map(PtrSize offset, PtrSize range, [[maybe_unused]] BufferMapAccessBit access)
 {
 	ANKI_ASSERT(isCreated());
-	ANKI_ASSERT(access != BufferMapAccessBit::NONE);
-	ANKI_ASSERT((access & m_access) != BufferMapAccessBit::NONE);
+	ANKI_ASSERT(access != BufferMapAccessBit::kNone);
+	ANKI_ASSERT((access & m_access) != BufferMapAccessBit::kNone);
 	ANKI_ASSERT(!m_mapped);
 	ANKI_ASSERT(offset < m_size);
 	if(range == kMaxPtrSize)

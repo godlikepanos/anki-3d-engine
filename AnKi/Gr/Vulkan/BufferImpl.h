@@ -65,7 +65,7 @@ public:
 
 	ANKI_FORCE_INLINE void flush(PtrSize offset, PtrSize range) const
 	{
-		ANKI_ASSERT(!!(m_access & BufferMapAccessBit::WRITE) && "No need to flush when the CPU doesn't write");
+		ANKI_ASSERT(!!(m_access & BufferMapAccessBit::kWrite) && "No need to flush when the CPU doesn't write");
 		if(m_needsFlush)
 		{
 			VkMappedMemoryRange vkrange = setVkMappedMemoryRange(offset, range);
@@ -78,7 +78,7 @@ public:
 
 	ANKI_FORCE_INLINE void invalidate(PtrSize offset, PtrSize range) const
 	{
-		ANKI_ASSERT(!!(m_access & BufferMapAccessBit::READ) && "No need to invalidate when the CPU doesn't read");
+		ANKI_ASSERT(!!(m_access & BufferMapAccessBit::kRead) && "No need to invalidate when the CPU doesn't read");
 		if(m_needsInvalidate)
 		{
 			VkMappedMemoryRange vkrange = setVkMappedMemoryRange(offset, range);

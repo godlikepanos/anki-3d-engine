@@ -112,12 +112,12 @@ Error DepthDownscale::initInternal()
 	{
 		// Create buffer
 		BufferInitInfo buffInit("HiZ Client");
-		buffInit.m_mapAccess = BufferMapAccessBit::READ;
+		buffInit.m_mapAccess = BufferMapAccessBit::kRead;
 		buffInit.m_size = PtrSize(m_lastMipSize.y()) * PtrSize(m_lastMipSize.x()) * sizeof(F32);
 		buffInit.m_usage = BufferUsageBit::kStorageComputeWrite | BufferUsageBit::kStorageFragmentWrite;
 		m_clientBuffer = getGrManager().newBuffer(buffInit);
 
-		m_clientBufferAddr = m_clientBuffer->map(0, buffInit.m_size, BufferMapAccessBit::READ);
+		m_clientBufferAddr = m_clientBuffer->map(0, buffInit.m_size, BufferMapAccessBit::kRead);
 
 		// Fill the buffer with 1.0f
 		for(U32 i = 0; i < m_lastMipSize.x() * m_lastMipSize.y(); ++i)

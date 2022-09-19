@@ -42,7 +42,7 @@ void BufferImpl::init()
 		flags |= GL_DYNAMIC_STORAGE_BIT;
 	}
 
-	if((access & BufferMapAccessBit::WRITE) != BufferMapAccessBit::NONE)
+	if((access & BufferMapAccessBit::kWrite) != BufferMapAccessBit::kNone)
 	{
 		flags |= GL_MAP_WRITE_BIT;
 		flags |= GL_MAP_PERSISTENT_BIT;
@@ -51,7 +51,7 @@ void BufferImpl::init()
 		shouldMap = true;
 	}
 
-	if((access & BufferMapAccessBit::READ) != BufferMapAccessBit::NONE)
+	if((access & BufferMapAccessBit::kRead) != BufferMapAccessBit::kNone)
 	{
 		flags |= GL_MAP_READ_BIT;
 		flags |= GL_MAP_PERSISTENT_BIT;

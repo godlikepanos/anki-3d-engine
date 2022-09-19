@@ -286,7 +286,7 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 	rastCi.lineWidth = 1.0;
 	ci.pRasterizationState = &rastCi;
 
-	if(m_state.m_rasterizer.m_rasterizationOrder != RasterizationOrder::ORDERED)
+	if(m_state.m_rasterizer.m_rasterizationOrder != RasterizationOrder::kOrdered)
 	{
 		VkPipelineRasterizationStateRasterizationOrderAMD& rastOrderCi = m_ci.m_rasterOrder;
 		rastOrderCi = {};

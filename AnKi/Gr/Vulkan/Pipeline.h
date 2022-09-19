@@ -80,7 +80,7 @@ class RasterizerPipelineState
 public:
 	FillMode m_fillMode = FillMode::kSolid;
 	FaceSelectionBit m_cullMode = FaceSelectionBit::kBack;
-	RasterizationOrder m_rasterizationOrder = RasterizationOrder::ORDERED;
+	RasterizationOrder m_rasterizationOrder = RasterizationOrder::kOrdered;
 	U8 m_padding = 0;
 	F32 m_depthBiasConstantFactor = 0.0f;
 	F32 m_depthBiasSlopeFactor = 0.0f;

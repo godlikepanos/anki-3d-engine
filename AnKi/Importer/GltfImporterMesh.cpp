@@ -709,7 +709,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 		{
 			header.m_flags |= MeshBinaryFlag::CONVEX;
 		}
-		header.m_indexType = IndexType::U16;
+		header.m_indexType = IndexType::kU16;
 		header.m_totalIndexCount = totalIndexCount;
 		header.m_totalVertexCount = totalVertexCount;
 		header.m_subMeshCount = U32(submeshes.getSize());

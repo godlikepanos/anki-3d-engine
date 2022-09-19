@@ -15,10 +15,10 @@ Error TransferGpuAllocator::StackAllocatorBuilderInterface::allocateChunk(PtrSiz
 {
 	out = m_parent->m_alloc.newInstance<Chunk>();
 
-	BufferInitInfo bufferInit(size, BufferUsageBit::kTransferSource, BufferMapAccessBit::WRITE, "Transfer");
+	BufferInitInfo bufferInit(size, BufferUsageBit::kTransferSource, BufferMapAccessBit::kWrite, "Transfer");
 	out->m_buffer = m_parent->m_gr->newBuffer(bufferInit);
 
-	out->m_mappedBuffer = out->m_buffer->map(0, kMaxPtrSize, BufferMapAccessBit::WRITE);
+	out->m_mappedBuffer = out->m_buffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
 
 	return Error::kNone;
 }

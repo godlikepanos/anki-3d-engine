@@ -108,9 +108,9 @@ void StagingGpuMemoryPool::initBuffer(StagingGpuMemoryType type, U32 alignment, 
 {
 	PerFrameBuffer& perframe = m_perFrameBuffers[type];
 
-	perframe.m_buff = gr.newBuffer(BufferInitInfo(perframe.m_size, usage, BufferMapAccessBit::WRITE, "Staging"));
+	perframe.m_buff = gr.newBuffer(BufferInitInfo(perframe.m_size, usage, BufferMapAccessBit::kWrite, "Staging"));
 	perframe.m_alloc.init(perframe.m_size, alignment, maxAllocSize);
-	perframe.m_mappedMem = static_cast<U8*>(perframe.m_buff->map(0, perframe.m_size, BufferMapAccessBit::WRITE));
+	perframe.m_mappedMem = static_cast<U8*>(perframe.m_buff->map(0, perframe.m_size, BufferMapAccessBit::kWrite));
 }
 
 void* StagingGpuMemoryPool::allocateFrame(PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token)

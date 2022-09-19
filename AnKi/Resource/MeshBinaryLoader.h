@@ -72,7 +72,7 @@ private:
 	PtrSize getIndexBufferSize() const
 	{
 		ANKI_ASSERT(isLoaded());
-		return PtrSize(m_header.m_totalIndexCount) * ((m_header.m_indexType == IndexType::U16) ? 2 : 4);
+		return PtrSize(m_header.m_totalIndexCount) * ((m_header.m_indexType == IndexType::kU16) ? 2 : 4);
 	}
 
 	PtrSize getAlignedIndexBufferSize() const

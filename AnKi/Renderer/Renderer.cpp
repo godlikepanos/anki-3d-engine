@@ -166,7 +166,7 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		m_dummyTexView3d = getGrManager().newTextureView(viewinit);
 
 		m_dummyBuff = getGrManager().newBuffer(BufferInitInfo(
-			1024, BufferUsageBit::kAllUniform | BufferUsageBit::kAllStorage, BufferMapAccessBit::NONE, "Dummy"));
+			1024, BufferUsageBit::kAllUniform | BufferUsageBit::kAllStorage, BufferMapAccessBit::kNone, "Dummy"));
 	}
 
 	// Init the stages. Careful with the order!!!!!!!!!!

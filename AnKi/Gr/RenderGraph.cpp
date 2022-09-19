@@ -644,7 +644,7 @@ Bool RenderGraph::passADependsOnB(const RenderPassDescriptionBase& a, const Rend
 						continue;
 					}
 
-					if(!((aDep.m_as.m_usage | bDep.m_as.m_usage) & AccelerationStructureUsageBit::ALL_WRITE))
+					if(!((aDep.m_as.m_usage | bDep.m_as.m_usage) & AccelerationStructureUsageBit::kAllWrite))
 					{
 						// Don't care about read to read deps
 						continue;

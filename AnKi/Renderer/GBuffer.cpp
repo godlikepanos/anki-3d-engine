@@ -110,14 +110,14 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 	const I32 colorStart = max(I32(start) - I32(earlyZCount), 0);
 	const I32 colorEnd = I32(end) - I32(earlyZCount);
 
-	cmdb->setRasterizationOrder(RasterizationOrder::RELAXED);
+	cmdb->setRasterizationOrder(RasterizationOrder::kRelaxed);
 
 	const Bool enableVrs =
 		getGrManager().getDeviceCapabilities().m_vrs && getConfig().getRVrs() && getConfig().getRGBufferVrs();
 	if(enableVrs)
 	{
 		// Just set some low value, the attachment will take over
-		cmdb->setVrsRate(VrsRate::_1x1);
+		cmdb->setVrsRate(VrsRate::k1x1);
 	}
 
 	RenderableDrawerArguments args;

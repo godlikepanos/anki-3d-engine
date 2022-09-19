@@ -98,11 +98,11 @@ inline void RenderPassDescriptionBase::validateDep(const RenderPassDependency& d
 		ANKI_ASSERT(dep.m_type == RenderPassDependency::Type::ACCELERATION_STRUCTURE);
 		if(m_type == Type::GRAPHICS)
 		{
-			ANKI_ASSERT(!(dep.m_as.m_usage & ~AccelerationStructureUsageBit::ALL_GRAPHICS));
+			ANKI_ASSERT(!(dep.m_as.m_usage & ~AccelerationStructureUsageBit::kAllGraphics));
 		}
 		else
 		{
-			ANKI_ASSERT(!(dep.m_as.m_usage & AccelerationStructureUsageBit::ALL_GRAPHICS));
+			ANKI_ASSERT(!(dep.m_as.m_usage & AccelerationStructureUsageBit::kAllGraphics));
 		}
 	}
 }
@@ -148,12 +148,12 @@ inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency&
 		ANKI_ASSERT(dep.m_type == RenderPassDependency::Type::ACCELERATION_STRUCTURE);
 		m_asDeps.emplaceBack(m_alloc, dep);
 
-		if(!!(dep.m_as.m_usage & AccelerationStructureUsageBit::ALL_READ))
+		if(!!(dep.m_as.m_usage & AccelerationStructureUsageBit::kAllRead))
 		{
 			m_readAsMask.set(dep.m_as.m_handle.m_idx);
 		}
 
-		if(!!(dep.m_as.m_usage & AccelerationStructureUsageBit::ALL_WRITE))
+		if(!!(dep.m_as.m_usage & AccelerationStructureUsageBit::kAllWrite))
 		{
 			m_writeAsMask.set(dep.m_as.m_handle.m_idx);
 		}

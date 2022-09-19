@@ -305,10 +305,10 @@ static_assert(!(BufferUsageBit::kAll & PrivateBufferUsageBit::ALL_PRIVATE), "Upd
 	VkIndexType out;
 	switch(ak)
 	{
-	case IndexType::U16:
+	case IndexType::kU16:
 		out = VK_INDEX_TYPE_UINT16;
 		break;
-	case IndexType::U32:
+	case IndexType::kU32:
 		out = VK_INDEX_TYPE_UINT32;
 		break;
 	default:
@@ -324,10 +324,10 @@ static_assert(!(BufferUsageBit::kAll & PrivateBufferUsageBit::ALL_PRIVATE), "Upd
 	VkRasterizationOrderAMD out;
 	switch(ak)
 	{
-	case RasterizationOrder::ORDERED:
+	case RasterizationOrder::kOrdered:
 		out = VK_RASTERIZATION_ORDER_STRICT_AMD;
 		break;
-	case RasterizationOrder::RELAXED:
+	case RasterizationOrder::kRelaxed:
 		out = VK_RASTERIZATION_ORDER_RELAXED_AMD;
 		break;
 	default:
@@ -343,10 +343,10 @@ static_assert(!(BufferUsageBit::kAll & PrivateBufferUsageBit::ALL_PRIVATE), "Upd
 	VkAccelerationStructureTypeKHR out;
 	switch(ak)
 	{
-	case AccelerationStructureType::BOTTOM_LEVEL:
+	case AccelerationStructureType::kBottomLevel:
 		out = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
 		break;
-	case AccelerationStructureType::TOP_LEVEL:
+	case AccelerationStructureType::kTopLevel:
 		out = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
 		break;
 	default:
@@ -364,25 +364,25 @@ static_assert(!(BufferUsageBit::kAll & PrivateBufferUsageBit::ALL_PRIVATE), "Upd
 	VkExtent2D out = {};
 	switch(rate)
 	{
-	case VrsRate::_1x1:
+	case VrsRate::k1x1:
 		out = {1, 1};
 		break;
-	case VrsRate::_2x1:
+	case VrsRate::k2x1:
 		out = {2, 1};
 		break;
-	case VrsRate::_1x2:
+	case VrsRate::k1x2:
 		out = {1, 2};
 		break;
-	case VrsRate::_2x2:
+	case VrsRate::k2x2:
 		out = {2, 2};
 		break;
-	case VrsRate::_4x2:
+	case VrsRate::k4x2:
 		out = {4, 2};
 		break;
-	case VrsRate::_2x4:
+	case VrsRate::k2x4:
 		out = {2, 4};
 		break;
-	case VrsRate::_4x4:
+	case VrsRate::k4x4:
 		out = {4, 4};
 		break;
 	default:

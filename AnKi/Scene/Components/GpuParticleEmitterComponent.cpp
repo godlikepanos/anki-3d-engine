@@ -51,12 +51,12 @@ Error GpuParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	// Create a UBO with the props
 	{
 		BufferInitInfo buffInit("GpuParticlesProps");
-		buffInit.m_mapAccess = BufferMapAccessBit::WRITE;
+		buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
 		buffInit.m_usage = BufferUsageBit::kUniformCompute;
 		buffInit.m_size = sizeof(GpuParticleEmitterProperties);
 		m_propsBuff = m_node->getSceneGraph().getGrManager().newBuffer(buffInit);
 		GpuParticleEmitterProperties* props =
-			static_cast<GpuParticleEmitterProperties*>(m_propsBuff->map(0, kMaxPtrSize, BufferMapAccessBit::WRITE));
+			static_cast<GpuParticleEmitterProperties*>(m_propsBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 
 		props->m_minGravity = inProps.m_particle.m_minGravity;
 		props->m_minMass = inProps.m_particle.m_minMass;
@@ -77,13 +77,13 @@ Error GpuParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	// Create the particle buffer
 	{
 		BufferInitInfo buffInit("GpuParticles");
-		buffInit.m_mapAccess = BufferMapAccessBit::WRITE;
+		buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
 		buffInit.m_usage = BufferUsageBit::kAllStorage;
 		buffInit.m_size = sizeof(GpuParticle) * m_maxParticleCount;
 		m_particlesBuff = m_node->getSceneGraph().getGrManager().newBuffer(buffInit);
 
 		GpuParticle* particle =
-			static_cast<GpuParticle*>(m_particlesBuff->map(0, kMaxPtrSize, BufferMapAccessBit::WRITE));
+			static_cast<GpuParticle*>(m_particlesBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 		const GpuParticle* end = particle + m_maxParticleCount;
 		for(; particle < end; ++particle)
 		{
@@ -97,12 +97,12 @@ Error GpuParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	// Create the rand buffer
 	{
 		BufferInitInfo buffInit("GpuParticlesRand");
-		buffInit.m_mapAccess = BufferMapAccessBit::WRITE;
+		buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
 		buffInit.m_usage = BufferUsageBit::kAllStorage;
 		buffInit.m_size = sizeof(U32) + MAX_RAND_FACTORS * sizeof(F32);
 		m_randFactorsBuff = m_node->getSceneGraph().getGrManager().newBuffer(buffInit);
 
-		F32* randFactors = static_cast<F32*>(m_randFactorsBuff->map(0, kMaxPtrSize, BufferMapAccessBit::WRITE));
+		F32* randFactors = static_cast<F32*>(m_randFactorsBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 
 		*reinterpret_cast<U32*>(randFactors) = MAX_RAND_FACTORS;
 		++randFactors;

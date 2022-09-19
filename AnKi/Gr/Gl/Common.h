@@ -79,10 +79,10 @@ inline GLenum convertIndexType(IndexType ak)
 	GLenum out;
 	switch(ak)
 	{
-	case IndexType::U16:
+	case IndexType::kU16:
 		out = GL_UNSIGNED_SHORT;
 		break;
-	case IndexType::U32:
+	case IndexType::kU32:
 		out = GL_UNSIGNED_INT;
 		break;
 	default:

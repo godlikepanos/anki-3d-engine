@@ -359,14 +359,14 @@ static void createCube(GrManager& gr, BufferPtr& verts, BufferPtr& indices)
 	static const Array<U16, 6 * 2 * 3> idx = {
 		{0, 1, 3, 3, 1, 2, 1, 5, 6, 1, 6, 2, 7, 4, 0, 7, 0, 3, 6, 5, 7, 7, 5, 4, 0, 4, 5, 0, 5, 1, 3, 2, 6, 3, 6, 7}};
 
-	verts = gr.newBuffer(BufferInitInfo(sizeof(pos), BufferUsageBit::kVertex, BufferMapAccessBit::WRITE));
+	verts = gr.newBuffer(BufferInitInfo(sizeof(pos), BufferUsageBit::kVertex, BufferMapAccessBit::kWrite));
 
-	void* mapped = verts->map(0, sizeof(pos), BufferMapAccessBit::WRITE);
+	void* mapped = verts->map(0, sizeof(pos), BufferMapAccessBit::kWrite);
 	memcpy(mapped, &pos[0], sizeof(pos));
 	verts->unmap();
 
-	indices = gr.newBuffer(BufferInitInfo(sizeof(idx), BufferUsageBit::kIndex, BufferMapAccessBit::WRITE));
-	mapped = indices->map(0, sizeof(idx), BufferMapAccessBit::WRITE);
+	indices = gr.newBuffer(BufferInitInfo(sizeof(idx), BufferUsageBit::kIndex, BufferMapAccessBit::kWrite));
+	mapped = indices->map(0, sizeof(idx), BufferMapAccessBit::kWrite);
 	memcpy(mapped, &idx[0], sizeof(idx));
 	indices->unmap();
 }
@@ -687,23 +687,23 @@ ANKI_TEST(Gr, Buffer)
 	BufferInitInfo buffInit("a");
 	buffInit.m_size = 512;
 	buffInit.m_usage = BufferUsageBit::kAllUniform;
-	buffInit.m_mapAccess = BufferMapAccessBit::NONE;
+	buffInit.m_mapAccess = BufferMapAccessBit::kNone;
 	BufferPtr a = gr->newBuffer(buffInit);
 
 	buffInit.setName("b");
 	buffInit.m_size = 64;
 	buffInit.m_usage = BufferUsageBit::kAllStorage;
-	buffInit.m_mapAccess = BufferMapAccessBit::WRITE | BufferMapAccessBit::READ;
+	buffInit.m_mapAccess = BufferMapAccessBit::kWrite | BufferMapAccessBit::kRead;
 	BufferPtr b = gr->newBuffer(buffInit);
 
-	void* ptr = b->map(0, 64, BufferMapAccessBit::WRITE);
+	void* ptr = b->map(0, 64, BufferMapAccessBit::kWrite);
 	ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
 	U8 ptr2[64];
 	memset(ptr, 0xCC, 64);
 	memset(ptr2, 0xCC, 64);
 	b->unmap();
 
-	ptr = b->map(0, 64, BufferMapAccessBit::READ);
+	ptr = b->map(0, 64, BufferMapAccessBit::kRead);
 	ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
 	ANKI_TEST_EXPECT_EQ(memcmp(ptr, ptr2, 64), 0);
 	b->unmap();
@@ -717,9 +717,9 @@ ANKI_TEST(Gr, DrawWithUniforms)
 
 	// A non-uploaded buffer
 	BufferPtr b =
-		gr->newBuffer(BufferInitInfo(sizeof(Vec4) * 3, BufferUsageBit::kAllUniform, BufferMapAccessBit::WRITE));
+		gr->newBuffer(BufferInitInfo(sizeof(Vec4) * 3, BufferUsageBit::kAllUniform, BufferMapAccessBit::kWrite));
 
-	Vec4* ptr = static_cast<Vec4*>(b->map(0, sizeof(Vec4) * 3, BufferMapAccessBit::WRITE));
+	Vec4* ptr = static_cast<Vec4*>(b->map(0, sizeof(Vec4) * 3, BufferMapAccessBit::kWrite));
 	ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
 	ptr[0] = Vec4(1.0, 0.0, 0.0, 0.0);
 	ptr[1] = Vec4(0.0, 1.0, 0.0, 0.0);
@@ -787,9 +787,9 @@ ANKI_TEST(Gr, DrawWithVertex)
 	};
 	static_assert(sizeof(Vert) == sizeof(Vec4), "See file");
 
-	BufferPtr b = gr->newBuffer(BufferInitInfo(sizeof(Vert) * 3, BufferUsageBit::kVertex, BufferMapAccessBit::WRITE));
+	BufferPtr b = gr->newBuffer(BufferInitInfo(sizeof(Vert) * 3, BufferUsageBit::kVertex, BufferMapAccessBit::kWrite));
 
-	Vert* ptr = static_cast<Vert*>(b->map(0, sizeof(Vert) * 3, BufferMapAccessBit::WRITE));
+	Vert* ptr = static_cast<Vert*>(b->map(0, sizeof(Vert) * 3, BufferMapAccessBit::kWrite));
 	ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
 
 	ptr[0].m_pos = Vec3(-1.0, 1.0, 0.0);
@@ -801,9 +801,9 @@ ANKI_TEST(Gr, DrawWithVertex)
 	ptr[2].m_color = {{0, 0, 255}};
 	b->unmap();
 
-	BufferPtr c = gr->newBuffer(BufferInitInfo(sizeof(Vec3) * 3, BufferUsageBit::kVertex, BufferMapAccessBit::WRITE));
+	BufferPtr c = gr->newBuffer(BufferInitInfo(sizeof(Vec3) * 3, BufferUsageBit::kVertex, BufferMapAccessBit::kWrite));
 
-	Vec3* otherColor = static_cast<Vec3*>(c->map(0, sizeof(Vec3) * 3, BufferMapAccessBit::WRITE));
+	Vec3* otherColor = static_cast<Vec3*>(c->map(0, sizeof(Vec3) * 3, BufferMapAccessBit::kWrite));
 
 	otherColor[0] = Vec3(0.0, 1.0, 1.0);
 	otherColor[1] = Vec3(1.0, 0.0, 1.0);
@@ -1106,7 +1106,7 @@ static void drawOffscreenDrawcalls([[maybe_unused]] GrManager& gr, ShaderProgram
 	cmdb->bindVertexBuffer(0, vertBuff, 0, sizeof(Vec3));
 	cmdb->setVertexAttribute(0, 0, Format::kR32G32B32_Sfloat, 0);
 	cmdb->bindShaderProgram(prog);
-	cmdb->bindIndexBuffer(indexBuff, 0, IndexType::U16);
+	cmdb->bindIndexBuffer(indexBuff, 0, IndexType::kU16);
 	cmdb->setViewport(0, 0, viewPortSize, viewPortSize);
 	cmdb->drawElements(PrimitiveTopology::kTriangles, 6 * 2 * 3);
 
@@ -1774,8 +1774,8 @@ void main()
 
 	// Create the buffer to copy to the texture
 	BufferPtr uploadBuff = gr->newBuffer(BufferInitInfo(PtrSize(texInit.m_width) * texInit.m_height * 3,
-														BufferUsageBit::kAllTransfer, BufferMapAccessBit::WRITE));
-	U8* data = static_cast<U8*>(uploadBuff->map(0, uploadBuff->getSize(), BufferMapAccessBit::WRITE));
+														BufferUsageBit::kAllTransfer, BufferMapAccessBit::kWrite));
+	U8* data = static_cast<U8*>(uploadBuff->map(0, uploadBuff->getSize(), BufferMapAccessBit::kWrite));
 	for(U32 i = 0; i < texInit.m_width * texInit.m_height; ++i)
 	{
 		data[0] = U8(i);
@@ -1786,8 +1786,8 @@ void main()
 	uploadBuff->unmap();
 
 	BufferPtr uploadBuff2 = gr->newBuffer(BufferInitInfo(PtrSize(texInit.m_width >> 1) * (texInit.m_height >> 1) * 3,
-														 BufferUsageBit::kAllTransfer, BufferMapAccessBit::WRITE));
-	data = static_cast<U8*>(uploadBuff2->map(0, uploadBuff2->getSize(), BufferMapAccessBit::WRITE));
+														 BufferUsageBit::kAllTransfer, BufferMapAccessBit::kWrite));
+	data = static_cast<U8*>(uploadBuff2->map(0, uploadBuff2->getSize(), BufferMapAccessBit::kWrite));
 	for(U i = 0; i < (texInit.m_width >> 1) * (texInit.m_height >> 1); ++i)
 	{
 		data[0] = U8(i);
@@ -1799,7 +1799,7 @@ void main()
 
 	// Create the result buffer
 	BufferPtr resultBuff =
-		gr->newBuffer(BufferInitInfo(sizeof(UVec4), BufferUsageBit::kStorageComputeWrite, BufferMapAccessBit::READ));
+		gr->newBuffer(BufferInitInfo(sizeof(UVec4), BufferUsageBit::kStorageComputeWrite, BufferMapAccessBit::kRead));
 
 	// Upload data and test them
 	CommandBufferInitInfo cmdbInit;
@@ -1827,7 +1827,7 @@ void main()
 	gr->finish();
 
 	// Get the result
-	UVec4* result = static_cast<UVec4*>(resultBuff->map(0, resultBuff->getSize(), BufferMapAccessBit::READ));
+	UVec4* result = static_cast<UVec4*>(resultBuff->map(0, resultBuff->getSize(), BufferMapAccessBit::kRead));
 	ANKI_TEST_EXPECT_EQ(result->x(), 2);
 	ANKI_TEST_EXPECT_EQ(result->y(), 2);
 	ANKI_TEST_EXPECT_EQ(result->z(), 2);
@@ -1912,7 +1912,7 @@ void main()
 
 	// Create the result buffer
 	BufferPtr resultBuff =
-		gr->newBuffer(BufferInitInfo(sizeof(UVec4), BufferUsageBit::kStorageComputeWrite, BufferMapAccessBit::READ));
+		gr->newBuffer(BufferInitInfo(sizeof(UVec4), BufferUsageBit::kStorageComputeWrite, BufferMapAccessBit::kRead));
 
 	// Draw
 
@@ -1936,7 +1936,7 @@ void main()
 	gr->finish();
 
 	// Get the result
-	UVec4* result = static_cast<UVec4*>(resultBuff->map(0, resultBuff->getSize(), BufferMapAccessBit::READ));
+	UVec4* result = static_cast<UVec4*>(resultBuff->map(0, resultBuff->getSize(), BufferMapAccessBit::kRead));
 	ANKI_TEST_EXPECT_EQ(result->x(), 2);
 	ANKI_TEST_EXPECT_EQ(result->y(), 2);
 	ANKI_TEST_EXPECT_EQ(result->z(), 2);
@@ -2025,7 +2025,7 @@ void main()
 
 	// Create the result buffer
 	BufferPtr resultBuff = gr->newBuffer(BufferInitInfo(
-		sizeof(UVec4), BufferUsageBit::kAllStorage | BufferUsageBit::kTransferDestination, BufferMapAccessBit::READ));
+		sizeof(UVec4), BufferUsageBit::kAllStorage | BufferUsageBit::kTransferDestination, BufferMapAccessBit::kRead));
 
 	// Draw
 	CommandBufferInitInfo cinit;
@@ -2063,7 +2063,7 @@ void main()
 	gr->finish();
 
 	// Get the result
-	UVec4* result = static_cast<UVec4*>(resultBuff->map(0, resultBuff->getSize(), BufferMapAccessBit::READ));
+	UVec4* result = static_cast<UVec4*>(resultBuff->map(0, resultBuff->getSize(), BufferMapAccessBit::kRead));
 	ANKI_TEST_EXPECT_EQ(result->x(), 2);
 	ANKI_TEST_EXPECT_EQ(result->y(), 2);
 	ANKI_TEST_EXPECT_EQ(result->z(), 2);
@@ -2079,15 +2079,15 @@ ANKI_TEST(Gr, BindingWithArray)
 
 	// Create result buffer
 	BufferPtr resBuff =
-		gr->newBuffer(BufferInitInfo(sizeof(Vec4), BufferUsageBit::kAllCompute, BufferMapAccessBit::READ));
+		gr->newBuffer(BufferInitInfo(sizeof(Vec4), BufferUsageBit::kAllCompute, BufferMapAccessBit::kRead));
 
 	Array<BufferPtr, 4> uniformBuffers;
 	F32 count = 1.0f;
 	for(BufferPtr& ptr : uniformBuffers)
 	{
-		ptr = gr->newBuffer(BufferInitInfo(sizeof(Vec4), BufferUsageBit::kAllCompute, BufferMapAccessBit::WRITE));
+		ptr = gr->newBuffer(BufferInitInfo(sizeof(Vec4), BufferUsageBit::kAllCompute, BufferMapAccessBit::kWrite));
 
-		Vec4* mapped = static_cast<Vec4*>(ptr->map(0, sizeof(Vec4), BufferMapAccessBit::WRITE));
+		Vec4* mapped = static_cast<Vec4*>(ptr->map(0, sizeof(Vec4), BufferMapAccessBit::kWrite));
 		*mapped = Vec4(count, count + 1.0f, count + 2.0f, count + 3.0f);
 		count += 4.0f;
 		ptr->unmap();
@@ -2136,7 +2136,7 @@ void main()
 	gr->finish();
 
 	// Check result
-	Vec4* res = static_cast<Vec4*>(resBuff->map(0, sizeof(Vec4), BufferMapAccessBit::READ));
+	Vec4* res = static_cast<Vec4*>(resBuff->map(0, sizeof(Vec4), BufferMapAccessBit::kRead));
 
 	ANKI_TEST_EXPECT_EQ(res->x(), 28.0f);
 	ANKI_TEST_EXPECT_EQ(res->y(), 32.0f);
@@ -2181,7 +2181,7 @@ ANKI_TEST(Gr, Bindless)
 
 	// Create result buffer
 	BufferPtr resBuff =
-		gr->newBuffer(BufferInitInfo(sizeof(UVec4), BufferUsageBit::kAllCompute, BufferMapAccessBit::READ));
+		gr->newBuffer(BufferInitInfo(sizeof(UVec4), BufferUsageBit::kAllCompute, BufferMapAccessBit::kRead));
 
 	// Create program A
 	static const char* PROG_SRC = R"(
@@ -2265,7 +2265,7 @@ void main()
 	gr->finish();
 
 	// Check result
-	UVec4* res = static_cast<UVec4*>(resBuff->map(0, sizeof(UVec4), BufferMapAccessBit::READ));
+	UVec4* res = static_cast<UVec4*>(resBuff->map(0, sizeof(UVec4), BufferMapAccessBit::kRead));
 
 	ANKI_TEST_EXPECT_EQ(res->x(), 13);
 	ANKI_TEST_EXPECT_EQ(res->y(), 25);
@@ -2313,10 +2313,10 @@ void main()
 	BufferInitInfo info;
 	info.m_size = sizeof(Vec4) * 2;
 	info.m_usage = BufferUsageBit::kAllCompute;
-	info.m_mapAccess = BufferMapAccessBit::WRITE;
+	info.m_mapAccess = BufferMapAccessBit::kWrite;
 	BufferPtr ptrBuff = gr->newBuffer(info);
 
-	Vec4* mapped = static_cast<Vec4*>(ptrBuff->map(0, kMaxPtrSize, BufferMapAccessBit::WRITE));
+	Vec4* mapped = static_cast<Vec4*>(ptrBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 	const Vec4 VEC(123.456f, -1.1f, 100.0f, -666.0f);
 	*mapped = VEC;
 	++mapped;
@@ -2324,7 +2324,7 @@ void main()
 	ptrBuff->unmap();
 
 	BufferPtr resBuff =
-		gr->newBuffer(BufferInitInfo(sizeof(Vec4), BufferUsageBit::kAllCompute, BufferMapAccessBit::READ));
+		gr->newBuffer(BufferInitInfo(sizeof(Vec4), BufferUsageBit::kAllCompute, BufferMapAccessBit::kRead));
 
 	// Run
 	CommandBufferInitInfo cinit;
@@ -2348,7 +2348,7 @@ void main()
 	gr->finish();
 
 	// Check
-	mapped = static_cast<Vec4*>(resBuff->map(0, kMaxPtrSize, BufferMapAccessBit::READ));
+	mapped = static_cast<Vec4*>(resBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kRead));
 	ANKI_TEST_EXPECT_EQ(*mapped, VEC + VEC * 10.0f);
 	resBuff->unmap();
 
@@ -2371,12 +2371,12 @@ ANKI_TEST(Gr, RayQuery)
 	{
 		Array<U16, 3> indices = {0, 1, 2};
 		BufferInitInfo init;
-		init.m_mapAccess = BufferMapAccessBit::WRITE;
+		init.m_mapAccess = BufferMapAccessBit::kWrite;
 		init.m_usage = BufferUsageBit::kIndex;
 		init.m_size = sizeof(indices);
 		idxBuffer = gr->newBuffer(init);
 
-		void* addr = idxBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::WRITE);
+		void* addr = idxBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
 		memcpy(addr, &indices[0], sizeof(indices));
 		idxBuffer->unmap();
 	}
@@ -2388,12 +2388,12 @@ ANKI_TEST(Gr, RayQuery)
 		Array<Vec4, 3> verts = {{{-1.0f, 0.0f, 0.0f, 100.0f}, {1.0f, 0.0f, 0.0f, 100.0f}, {0.0f, 2.0f, 0.0f, 100.0f}}};
 
 		BufferInitInfo init;
-		init.m_mapAccess = BufferMapAccessBit::WRITE;
+		init.m_mapAccess = BufferMapAccessBit::kWrite;
 		init.m_usage = BufferUsageBit::kVertex;
 		init.m_size = sizeof(verts);
 		vertBuffer = gr->newBuffer(init);
 
-		void* addr = vertBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::WRITE);
+		void* addr = vertBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
 		memcpy(addr, &verts[0], sizeof(verts));
 		vertBuffer->unmap();
 	}
@@ -2403,10 +2403,10 @@ ANKI_TEST(Gr, RayQuery)
 	if(useRayTracing)
 	{
 		AccelerationStructureInitInfo init;
-		init.m_type = AccelerationStructureType::BOTTOM_LEVEL;
+		init.m_type = AccelerationStructureType::kBottomLevel;
 		init.m_bottomLevel.m_indexBuffer = idxBuffer;
 		init.m_bottomLevel.m_indexCount = 3;
-		init.m_bottomLevel.m_indexType = IndexType::U16;
+		init.m_bottomLevel.m_indexType = IndexType::kU16;
 		init.m_bottomLevel.m_positionBuffer = vertBuffer;
 		init.m_bottomLevel.m_positionCount = 3;
 		init.m_bottomLevel.m_positionsFormat = Format::kR32G32B32_Sfloat;
@@ -2420,7 +2420,7 @@ ANKI_TEST(Gr, RayQuery)
 	if(useRayTracing)
 	{
 		AccelerationStructureInitInfo init;
-		init.m_type = AccelerationStructureType::TOP_LEVEL;
+		init.m_type = AccelerationStructureType::kTopLevel;
 		Array<AccelerationStructureInstance, 1> instances = {{{blas, Mat3x4::getIdentity()}}};
 		init.m_topLevel.m_instances = instances;
 
@@ -2551,17 +2551,17 @@ void main()
 		cinit.m_flags = CommandBufferFlag::GENERAL_WORK | CommandBufferFlag::SMALL_BATCH;
 		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
-		cmdb->setAccelerationStructureBarrier(blas, AccelerationStructureUsageBit::NONE,
-											  AccelerationStructureUsageBit::BUILD);
+		cmdb->setAccelerationStructureBarrier(blas, AccelerationStructureUsageBit::kNone,
+											  AccelerationStructureUsageBit::kBuild);
 		cmdb->buildAccelerationStructure(blas);
-		cmdb->setAccelerationStructureBarrier(blas, AccelerationStructureUsageBit::BUILD,
-											  AccelerationStructureUsageBit::ATTACH);
+		cmdb->setAccelerationStructureBarrier(blas, AccelerationStructureUsageBit::kBuild,
+											  AccelerationStructureUsageBit::kAttach);
 
-		cmdb->setAccelerationStructureBarrier(tlas, AccelerationStructureUsageBit::NONE,
-											  AccelerationStructureUsageBit::BUILD);
+		cmdb->setAccelerationStructureBarrier(tlas, AccelerationStructureUsageBit::kNone,
+											  AccelerationStructureUsageBit::kBuild);
 		cmdb->buildAccelerationStructure(tlas);
-		cmdb->setAccelerationStructureBarrier(tlas, AccelerationStructureUsageBit::BUILD,
-											  AccelerationStructureUsageBit::FRAGMENT_READ);
+		cmdb->setAccelerationStructureBarrier(tlas, AccelerationStructureUsageBit::kBuild,
+											  AccelerationStructureUsageBit::kFragmentRead);
 
 		cmdb->flush();
 	}
@@ -2630,11 +2630,11 @@ static void createCubeBuffers(GrManager& gr, Vec3 min, Vec3 max, BufferPtr& inde
 							  Bool turnInsideOut = false)
 {
 	BufferInitInfo inf;
-	inf.m_mapAccess = BufferMapAccessBit::WRITE;
+	inf.m_mapAccess = BufferMapAccessBit::kWrite;
 	inf.m_usage = BufferUsageBit::kIndex | BufferUsageBit::kVertex | BufferUsageBit::kStorageTraceRaysRead;
 	inf.m_size = sizeof(Vec3) * 8;
 	vertBuffer = gr.newBuffer(inf);
-	WeakArray<Vec3, PtrSize> positions = vertBuffer->map<Vec3>(0, 8, BufferMapAccessBit::WRITE);
+	WeakArray<Vec3, PtrSize> positions = vertBuffer->map<Vec3>(0, 8, BufferMapAccessBit::kWrite);
 
 	//   7------6
 	//  /|     /|
@@ -2656,7 +2656,7 @@ static void createCubeBuffers(GrManager& gr, Vec3 min, Vec3 max, BufferPtr& inde
 
 	inf.m_size = sizeof(U16) * 36;
 	indexBuffer = gr.newBuffer(inf);
-	WeakArray<U16, PtrSize> indices = indexBuffer->map<U16>(0, 36, BufferMapAccessBit::WRITE);
+	WeakArray<U16, PtrSize> indices = indexBuffer->map<U16>(0, 36, BufferMapAccessBit::kWrite);
 	U32 t = 0;
 
 	// Top
@@ -2856,9 +2856,9 @@ void main()
 		for(Geom& g : geometries)
 		{
 			AccelerationStructureInitInfo inf;
-			inf.m_type = AccelerationStructureType::BOTTOM_LEVEL;
+			inf.m_type = AccelerationStructureType::kBottomLevel;
 			inf.m_bottomLevel.m_indexBuffer = g.m_indexBuffer;
-			inf.m_bottomLevel.m_indexType = IndexType::U16;
+			inf.m_bottomLevel.m_indexType = IndexType::kU16;
 			inf.m_bottomLevel.m_indexCount = g.m_indexCount;
 			inf.m_bottomLevel.m_positionBuffer = g.m_vertexBuffer;
 			inf.m_bottomLevel.m_positionCount = 8;
@@ -2882,7 +2882,7 @@ void main()
 		}
 
 		AccelerationStructureInitInfo inf;
-		inf.m_type = AccelerationStructureType::TOP_LEVEL;
+		inf.m_type = AccelerationStructureType::kTopLevel;
 		inf.m_topLevel.m_instances = instances;
 
 		tlas = gr->newAccelerationStructure(inf);
@@ -2892,12 +2892,13 @@ void main()
 	BufferPtr modelBuffer;
 	{
 		BufferInitInfo inf;
-		inf.m_mapAccess = BufferMapAccessBit::WRITE;
+		inf.m_mapAccess = BufferMapAccessBit::kWrite;
 		inf.m_usage = BufferUsageBit::kAllStorage;
 		inf.m_size = sizeof(Model) * U32(GeomWhat::kCount);
 
 		modelBuffer = gr->newBuffer(inf);
-		WeakArray<Model, PtrSize> models = modelBuffer->map<Model>(0, U32(GeomWhat::kCount), BufferMapAccessBit::WRITE);
+		WeakArray<Model, PtrSize> models =
+			modelBuffer->map<Model>(0, U32(GeomWhat::kCount), BufferMapAccessBit::kWrite);
 		memset(&models[0], 0, inf.m_size);
 
 		for(GeomWhat i : EnumIterable<GeomWhat>())
@@ -3304,12 +3305,12 @@ void main()
 		const U32 sbtRecordSize = gr->getDeviceCapabilities().m_sbtRecordAlignment;
 
 		BufferInitInfo inf;
-		inf.m_mapAccess = BufferMapAccessBit::WRITE;
+		inf.m_mapAccess = BufferMapAccessBit::kWrite;
 		inf.m_usage = BufferUsageBit::kSBT;
 		inf.m_size = sbtRecordSize * recordCount;
 
 		sbt = gr->newBuffer(inf);
-		WeakArray<U8, PtrSize> mapped = sbt->map<U8>(0, inf.m_size, BufferMapAccessBit::WRITE);
+		WeakArray<U8, PtrSize> mapped = sbt->map<U8>(0, inf.m_size, BufferMapAccessBit::kWrite);
 		memset(&mapped[0], 0, inf.m_size);
 
 		ConstWeakArray<U8> handles = rtProg->getShaderGroupHandles();
@@ -3370,12 +3371,12 @@ void main()
 	constexpr U32 lightCount = 1;
 	{
 		BufferInitInfo inf;
-		inf.m_mapAccess = BufferMapAccessBit::WRITE;
+		inf.m_mapAccess = BufferMapAccessBit::kWrite;
 		inf.m_usage = BufferUsageBit::kAllStorage;
 		inf.m_size = sizeof(Light) * lightCount;
 
 		lightBuffer = gr->newBuffer(inf);
-		WeakArray<Light, PtrSize> lights = lightBuffer->map<Light>(0, lightCount, BufferMapAccessBit::WRITE);
+		WeakArray<Light, PtrSize> lights = lightBuffer->map<Light>(0, lightCount, BufferMapAccessBit::kWrite);
 
 		lights[0].m_min = geometries[GeomWhat::LIGHT].m_aabb.getMin().xyz();
 		lights[0].m_max = geometries[GeomWhat::LIGHT].m_aabb.getMax().xyz();
@@ -3406,8 +3407,8 @@ void main()
 		{
 			for(const Geom& g : geometries)
 			{
-				cmdb->setAccelerationStructureBarrier(g.m_blas, AccelerationStructureUsageBit::NONE,
-													  AccelerationStructureUsageBit::BUILD);
+				cmdb->setAccelerationStructureBarrier(g.m_blas, AccelerationStructureUsageBit::kNone,
+													  AccelerationStructureUsageBit::kBuild);
 			}
 
 			for(const Geom& g : geometries)
@@ -3417,15 +3418,15 @@ void main()
 
 			for(const Geom& g : geometries)
 			{
-				cmdb->setAccelerationStructureBarrier(g.m_blas, AccelerationStructureUsageBit::BUILD,
-													  AccelerationStructureUsageBit::ATTACH);
+				cmdb->setAccelerationStructureBarrier(g.m_blas, AccelerationStructureUsageBit::kBuild,
+													  AccelerationStructureUsageBit::kAttach);
 			}
 
-			cmdb->setAccelerationStructureBarrier(tlas, AccelerationStructureUsageBit::NONE,
-												  AccelerationStructureUsageBit::BUILD);
+			cmdb->setAccelerationStructureBarrier(tlas, AccelerationStructureUsageBit::kNone,
+												  AccelerationStructureUsageBit::kBuild);
 			cmdb->buildAccelerationStructure(tlas);
-			cmdb->setAccelerationStructureBarrier(tlas, AccelerationStructureUsageBit::BUILD,
-												  AccelerationStructureUsageBit::TRACE_RAYS_READ);
+			cmdb->setAccelerationStructureBarrier(tlas, AccelerationStructureUsageBit::kBuild,
+												  AccelerationStructureUsageBit::kTraceRaysRead);
 		}
 
 		TexturePtr presentTex = gr->acquireNextPresentableTexture();
@@ -3563,10 +3564,10 @@ void main()
 	BufferInitInfo info;
 	info.m_size = sizeof(U32) * ARRAY_SIZE;
 	info.m_usage = BufferUsageBit::kAllCompute;
-	info.m_mapAccess = BufferMapAccessBit::WRITE | BufferMapAccessBit::READ;
+	info.m_mapAccess = BufferMapAccessBit::kWrite | BufferMapAccessBit::kRead;
 	BufferPtr atomicsBuffer = gr->newBuffer(info);
 	U32* values =
-		static_cast<U32*>(atomicsBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::READ | BufferMapAccessBit::WRITE));
+		static_cast<U32*>(atomicsBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kRead | BufferMapAccessBit::kWrite));
 	memset(values, 0, info.m_size);
 
 	// Pre-create some CPU result buffers
