@@ -418,7 +418,7 @@ ANKI_TEST(Gr, ClearScreen)
 		FramebufferPtr fb = createColorFb(*gr, presentTex);
 
 		CommandBufferInitInfo cinit;
-		cinit.m_flags = CommandBufferFlag::GENERAL_WORK | CommandBufferFlag::SMALL_BATCH;
+		cinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
 		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 		presentBarrierA(cmdb, presentTex);
@@ -457,7 +457,7 @@ ANKI_TEST(Gr, SimpleDrawcall)
 		FramebufferPtr fb = createColorFb(*gr, presentTex);
 
 		CommandBufferInitInfo cinit;
-		cinit.m_flags = CommandBufferFlag::GENERAL_WORK;
+		cinit.m_flags = CommandBufferFlag::kGeneralWork;
 		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 		cmdb->setViewport(0, 0, win->getWidth(), win->getHeight());
@@ -518,7 +518,7 @@ ANKI_TEST(Gr, ViewportAndScissor)
 		gr->beginFrame();
 
 		CommandBufferInitInfo cinit;
-		cinit.m_flags = CommandBufferFlag::GENERAL_WORK | CommandBufferFlag::SMALL_BATCH;
+		cinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
 		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 		U idx = (i / 30) % 4;
@@ -621,7 +621,7 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 		if(i == 0)
 		{
 			CommandBufferInitInfo cinit;
-			cinit.m_flags = CommandBufferFlag::GENERAL_WORK | CommandBufferFlag::SMALL_BATCH;
+			cinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
 			CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 			cmdb->setViewport(0, 0, RT_WIDTH, RT_HEIGHT);
@@ -635,7 +635,7 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 		}
 
 		CommandBufferInitInfo cinit;
-		cinit.m_flags = CommandBufferFlag::GENERAL_WORK | CommandBufferFlag::SMALL_BATCH;
+		cinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
 		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 		// Draw offscreen
@@ -739,7 +739,7 @@ ANKI_TEST(Gr, DrawWithUniforms)
 		FramebufferPtr fb = createColorFb(*gr, presentTex);
 
 		CommandBufferInitInfo cinit;
-		cinit.m_flags = CommandBufferFlag::GENERAL_WORK;
+		cinit.m_flags = CommandBufferFlag::kGeneralWork;
 		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 		cmdb->setViewport(0, 0, win->getWidth(), win->getHeight());
@@ -823,7 +823,7 @@ ANKI_TEST(Gr, DrawWithVertex)
 		FramebufferPtr fb = createColorFb(*gr, presentTex);
 
 		CommandBufferInitInfo cinit;
-		cinit.m_flags = CommandBufferFlag::GENERAL_WORK;
+		cinit.m_flags = CommandBufferFlag::kGeneralWork;
 		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 		cmdb->bindVertexBuffer(0, b, 0, sizeof(Vert));
@@ -947,7 +947,7 @@ ANKI_TEST(Gr, DrawWithTexture)
 								   0,   128, 0,   128, 0,   128, 128, 128, 128, 128, 255, 128, 0,   0,   128, 255}};
 
 	CommandBufferInitInfo cmdbinit;
-	cmdbinit.m_flags = CommandBufferFlag::GENERAL_WORK;
+	cmdbinit.m_flags = CommandBufferFlag::kGeneralWork;
 	CommandBufferPtr cmdb = gr->newCommandBuffer(cmdbinit);
 
 	// Set barriers
@@ -1052,7 +1052,7 @@ void main()
 		FramebufferPtr fb = createColorFb(*gr, presentTex);
 
 		CommandBufferInitInfo cinit;
-		cinit.m_flags = CommandBufferFlag::GENERAL_WORK | CommandBufferFlag::SMALL_BATCH;
+		cinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
 		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 		cmdb->setViewport(0, 0, win->getWidth(), win->getHeight());
@@ -1191,7 +1191,7 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 		timer.start();
 
 		CommandBufferInitInfo cinit;
-		cinit.m_flags = CommandBufferFlag::GENERAL_WORK;
+		cinit.m_flags = CommandBufferFlag::kGeneralWork;
 		CommandBufferPtr cmdb = gr.newCommandBuffer(cinit);
 
 		cmdb->setPolygonOffset(0.0, 0.0);
@@ -1212,7 +1212,7 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 		else
 		{
 			CommandBufferInitInfo cinit;
-			cinit.m_flags = CommandBufferFlag::SECOND_LEVEL | CommandBufferFlag::GENERAL_WORK;
+			cinit.m_flags = CommandBufferFlag::kSecondLevel | CommandBufferFlag::kGeneralWork;
 			cinit.m_framebuffer = fb;
 			CommandBufferPtr cmdb2 = gr.newCommandBuffer(cinit);
 
@@ -1347,7 +1347,7 @@ ANKI_TEST(Gr, ImageLoadStore)
 
 		CommandBufferInitInfo cinit;
 		cinit.m_flags =
-			CommandBufferFlag::GENERAL_WORK | CommandBufferFlag::COMPUTE_WORK | CommandBufferFlag::SMALL_BATCH;
+			CommandBufferFlag::kGeneralWork | CommandBufferFlag::kComputeWork | CommandBufferFlag::kSmallBatch;
 		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 		// Write image
@@ -1427,7 +1427,7 @@ ANKI_TEST(Gr, 3DTextures)
 	Array<U8, 4> mip1 = {{128, 128, 128, 0}};
 
 	CommandBufferInitInfo cmdbinit;
-	cmdbinit.m_flags = CommandBufferFlag::GENERAL_WORK | CommandBufferFlag::SMALL_BATCH;
+	cmdbinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
 	CommandBufferPtr cmdb = gr->newCommandBuffer(cmdbinit);
 
 	cmdb->setTextureVolumeBarrier(a, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination,
@@ -1469,7 +1469,7 @@ ANKI_TEST(Gr, 3DTextures)
 		timer.start();
 
 		CommandBufferInitInfo cinit;
-		cinit.m_flags = CommandBufferFlag::GENERAL_WORK | CommandBufferFlag::SMALL_BATCH;
+		cinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
 		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
@@ -1803,7 +1803,7 @@ void main()
 
 	// Upload data and test them
 	CommandBufferInitInfo cmdbInit;
-	cmdbInit.m_flags = CommandBufferFlag::GENERAL_WORK | CommandBufferFlag::SMALL_BATCH;
+	cmdbInit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
 	CommandBufferPtr cmdb = gr->newCommandBuffer(cmdbInit);
 
 	TextureSubresourceInfo subresource;
@@ -1917,7 +1917,7 @@ void main()
 	// Draw
 
 	CommandBufferInitInfo cinit;
-	cinit.m_flags = CommandBufferFlag::GENERAL_WORK;
+	cinit.m_flags = CommandBufferFlag::kGeneralWork;
 	CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 	cmdb->setViewport(0, 0, WIDTH, HEIGHT);
@@ -2029,7 +2029,7 @@ void main()
 
 	// Draw
 	CommandBufferInitInfo cinit;
-	cinit.m_flags = CommandBufferFlag::GENERAL_WORK;
+	cinit.m_flags = CommandBufferFlag::kGeneralWork;
 	CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 	cmdb->fillBuffer(resultBuff, 0, resultBuff->getSize(), 0);
@@ -2119,7 +2119,7 @@ void main()
 
 	// Run
 	CommandBufferInitInfo cinit;
-	cinit.m_flags = CommandBufferFlag::COMPUTE_WORK | CommandBufferFlag::SMALL_BATCH;
+	cinit.m_flags = CommandBufferFlag::kComputeWork | CommandBufferFlag::kSmallBatch;
 	CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 	for(U32 i = 0; i < uniformBuffers.getSize(); ++i)
@@ -2217,7 +2217,7 @@ void main()
 
 	// Run
 	CommandBufferInitInfo cinit;
-	cinit.m_flags = CommandBufferFlag::COMPUTE_WORK | CommandBufferFlag::SMALL_BATCH;
+	cinit.m_flags = CommandBufferFlag::kComputeWork | CommandBufferFlag::kSmallBatch;
 	CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 	cmdb->setTextureSurfaceBarrier(texA, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination,
@@ -2328,7 +2328,7 @@ void main()
 
 	// Run
 	CommandBufferInitInfo cinit;
-	cinit.m_flags = CommandBufferFlag::COMPUTE_WORK | CommandBufferFlag::SMALL_BATCH;
+	cinit.m_flags = CommandBufferFlag::kComputeWork | CommandBufferFlag::kSmallBatch;
 	CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 	cmdb->bindShaderProgram(prog);
@@ -2548,7 +2548,7 @@ void main()
 	if(useRayTracing)
 	{
 		CommandBufferInitInfo cinit;
-		cinit.m_flags = CommandBufferFlag::GENERAL_WORK | CommandBufferFlag::SMALL_BATCH;
+		cinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
 		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 		cmdb->setAccelerationStructureBarrier(blas, AccelerationStructureUsageBit::kNone,
@@ -2578,7 +2578,7 @@ void main()
 		const Mat4 projMat = Mat4::calculatePerspectiveProjectionMatrix(toRad(90.0f), toRad(90.0f), 0.01f, 1000.0f);
 
 		CommandBufferInitInfo cinit;
-		cinit.m_flags = CommandBufferFlag::GENERAL_WORK | CommandBufferFlag::SMALL_BATCH;
+		cinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
 		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
@@ -3400,7 +3400,7 @@ void main()
 
 		CommandBufferInitInfo cinit;
 		cinit.m_flags =
-			CommandBufferFlag::GENERAL_WORK | CommandBufferFlag::COMPUTE_WORK | CommandBufferFlag::SMALL_BATCH;
+			CommandBufferFlag::kGeneralWork | CommandBufferFlag::kComputeWork | CommandBufferFlag::kSmallBatch;
 		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 		if(i == 0)
@@ -3589,21 +3589,21 @@ void main()
 
 	// Create the 1st command buffer
 	CommandBufferInitInfo cinit;
-	cinit.m_flags = CommandBufferFlag::COMPUTE_WORK | CommandBufferFlag::SMALL_BATCH;
+	cinit.m_flags = CommandBufferFlag::kComputeWork | CommandBufferFlag::kSmallBatch;
 	CommandBufferPtr incrementCmdb = gr->newCommandBuffer(cinit);
 	incrementCmdb->bindShaderProgram(incrementProg);
 	incrementCmdb->bindStorageBuffer(0, 0, atomicsBuffer, 0, kMaxPtrSize);
 	incrementCmdb->dispatchCompute(ARRAY_SIZE / 8, 1, 1);
 
 	// Create the 2nd command buffer
-	cinit.m_flags = CommandBufferFlag::GENERAL_WORK | CommandBufferFlag::SMALL_BATCH;
+	cinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
 	CommandBufferPtr checkCmdb = gr->newCommandBuffer(cinit);
 	checkCmdb->bindShaderProgram(checkProg);
 	checkCmdb->bindStorageBuffer(0, 0, atomicsBuffer, 0, kMaxPtrSize);
 	checkCmdb->dispatchCompute(ARRAY_SIZE / 8, 1, 1);
 
 	// Create the 3rd command buffer
-	cinit.m_flags = CommandBufferFlag::COMPUTE_WORK | CommandBufferFlag::SMALL_BATCH;
+	cinit.m_flags = CommandBufferFlag::kComputeWork | CommandBufferFlag::kSmallBatch;
 	CommandBufferPtr incrementCmdb2 = gr->newCommandBuffer(cinit);
 	incrementCmdb2->bindShaderProgram(incrementProg);
 	incrementCmdb2->bindStorageBuffer(0, 0, atomicsBuffer, 0, kMaxPtrSize);

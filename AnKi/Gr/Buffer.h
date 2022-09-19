@@ -47,7 +47,7 @@ class Buffer : public GrObject
 	ANKI_GR_OBJECT
 
 public:
-	static constexpr GrObjectType CLASS_TYPE = GrObjectType::BUFFER;
+	static constexpr GrObjectType kClassType = GrObjectType::kBuffer;
 
 	/// Return the size of the buffer.
 	PtrSize getSize() const
@@ -114,7 +114,7 @@ protected:
 
 	/// Construct.
 	Buffer(GrManager* manager, CString name)
-		: GrObject(manager, CLASS_TYPE, name)
+		: GrObject(manager, kClassType, name)
 	{
 	}
 

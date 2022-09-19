@@ -99,7 +99,7 @@ public:
 
 	Bool isSecondLevel() const
 	{
-		return !!(m_flags & CommandBufferFlag::SECOND_LEVEL);
+		return !!(m_flags & CommandBufferFlag::kSecondLevel);
 	}
 
 	void flushDrawcall(CommandBuffer& cmdb);

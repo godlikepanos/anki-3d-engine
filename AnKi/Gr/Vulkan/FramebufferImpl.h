@@ -40,7 +40,7 @@ public:
 	}
 
 	/// Use it for binding. It's thread-safe
-	VkRenderPass getRenderPassHandle(const Array<VkImageLayout, MAX_COLOR_ATTACHMENTS>& colorLayouts,
+	VkRenderPass getRenderPassHandle(const Array<VkImageLayout, kMaxColorRenderTargets>& colorLayouts,
 									 VkImageLayout dsLayout, VkImageLayout shadingRateImageLayout);
 
 	VkFramebuffer getFramebufferHandle() const
@@ -49,7 +49,7 @@ public:
 		return m_fbHandle;
 	}
 
-	void getAttachmentInfo(BitSet<MAX_COLOR_ATTACHMENTS, U8>& colorAttachments, Bool& depth, Bool& stencil) const
+	void getAttachmentInfo(BitSet<kMaxColorRenderTargets, U8>& colorAttachments, Bool& depth, Bool& stencil) const
 	{
 		colorAttachments = m_colorAttachmentMask;
 		depth = !!(m_aspect & DepthStencilAspectBit::kDepth);
@@ -109,9 +109,9 @@ public:
 	}
 
 private:
-	static constexpr U32 kMaxAttachments = MAX_COLOR_ATTACHMENTS + 2; ///< Color + depth/stencil + SRI
+	static constexpr U32 kMaxAttachments = kMaxColorRenderTargets + 2; ///< Color + depth/stencil + SRI
 
-	BitSet<MAX_COLOR_ATTACHMENTS, U8> m_colorAttachmentMask = {false};
+	BitSet<kMaxColorRenderTargets, U8> m_colorAttachmentMask = {false};
 	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::kNone;
 
 	U8 m_colorAttCount = 0;
@@ -125,7 +125,7 @@ private:
 	class
 	{
 	public:
-		Array<TextureViewPtr, MAX_COLOR_ATTACHMENTS> m_color;
+		Array<TextureViewPtr, kMaxColorRenderTargets> m_color;
 		TextureViewPtr m_depthStencil;
 		TextureViewPtr m_sri;
 	} m_viewRefs;

@@ -469,10 +469,10 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 
 	// Clear all surfaces
 	CommandBufferInitInfo cmdbinit;
-	cmdbinit.m_flags = CommandBufferFlag::GENERAL_WORK;
-	if((inf.m_mipmapCount * faceCount * inf.m_layerCount * 4) < COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS)
+	cmdbinit.m_flags = CommandBufferFlag::kGeneralWork;
+	if((inf.m_mipmapCount * faceCount * inf.m_layerCount * 4) < kCommandBufferSmallBatchMaxCommands)
 	{
-		cmdbinit.m_flags |= CommandBufferFlag::SMALL_BATCH;
+		cmdbinit.m_flags |= CommandBufferFlag::kSmallBatch;
 	}
 	CommandBufferPtr cmdb = m_gr->newCommandBuffer(cmdbinit);
 
@@ -487,7 +487,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 				if(!useCompute)
 				{
 					FramebufferInitInfo fbInit("RendererClearRT");
-					Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> colUsage = {};
+					Array<TextureUsageBit, kMaxColorRenderTargets> colUsage = {};
 					TextureUsageBit dsUsage = TextureUsageBit::kNone;
 
 					if(getFormatInfo(inf.m_format).isDepthStencil())

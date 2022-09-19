@@ -125,17 +125,17 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 	spirv_cross::ShaderResources rsrc = spvc.get_shader_resources();
 	spirv_cross::ShaderResources rsrcActive = spvc.get_shader_resources(spvc.get_active_interface_variables());
 
-	Array<U32, MAX_DESCRIPTOR_SETS> counts = {};
-	Array2d<DescriptorBinding, MAX_DESCRIPTOR_SETS, MAX_BINDINGS_PER_DESCRIPTOR_SET> descriptors;
+	Array<U32, kMaxDescriptorSets> counts = {};
+	Array2d<DescriptorBinding, kMaxDescriptorSets, kMaxBindingsPerDescriptorSet> descriptors;
 
 	auto func = [&](const spirv_cross::SmallVector<spirv_cross::Resource>& resources, DescriptorType type) -> void {
 		for(const spirv_cross::Resource& r : resources)
 		{
 			const U32 id = r.id;
 			const U32 set = spvc.get_decoration(id, spv::Decoration::DecorationDescriptorSet);
-			ANKI_ASSERT(set < MAX_DESCRIPTOR_SETS);
+			ANKI_ASSERT(set < kMaxDescriptorSets);
 			const U32 binding = spvc.get_decoration(id, spv::Decoration::DecorationBinding);
-			ANKI_ASSERT(binding < MAX_BINDINGS_PER_DESCRIPTOR_SET);
+			ANKI_ASSERT(binding < kMaxBindingsPerDescriptorSet);
 
 			const spirv_cross::SPIRType& typeInfo = spvc.get_type(r.type_id);
 			U32 arraySize = 1;
@@ -150,15 +150,15 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 			m_activeBindingMask[set].set(set);
 
 			// Images are special, they might be texel buffers
-			if(type == DescriptorType::TEXTURE)
+			if(type == DescriptorType::kTexture)
 			{
 				if(typeInfo.image.dim == spv::DimBuffer && typeInfo.image.sampled == 1)
 				{
-					type = DescriptorType::READ_TEXTURE_BUFFER;
+					type = DescriptorType::kReadTextureBuffer;
 				}
 				else if(typeInfo.image.dim == spv::DimBuffer && typeInfo.image.sampled == 2)
 				{
-					type = DescriptorType::READ_WRITE_TEXTURE_BUFFER;
+					type = DescriptorType::kReadWriteTextureBuffer;
 				}
 			}
 
@@ -191,15 +191,15 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 		}
 	};
 
-	func(rsrc.uniform_buffers, DescriptorType::UNIFORM_BUFFER);
-	func(rsrc.sampled_images, DescriptorType::COMBINED_TEXTURE_SAMPLER);
-	func(rsrc.separate_images, DescriptorType::TEXTURE); // This also handles texture buffers
-	func(rsrc.separate_samplers, DescriptorType::SAMPLER);
-	func(rsrc.storage_buffers, DescriptorType::STORAGE_BUFFER);
-	func(rsrc.storage_images, DescriptorType::IMAGE);
-	func(rsrc.acceleration_structures, DescriptorType::ACCELERATION_STRUCTURE);
+	func(rsrc.uniform_buffers, DescriptorType::kUniformBuffer);
+	func(rsrc.sampled_images, DescriptorType::kCombinedTextureSampler);
+	func(rsrc.separate_images, DescriptorType::kTexture); // This also handles texture buffers
+	func(rsrc.separate_samplers, DescriptorType::kSampler);
+	func(rsrc.storage_buffers, DescriptorType::kStorageBuffer);
+	func(rsrc.storage_images, DescriptorType::kImage);
+	func(rsrc.acceleration_structures, DescriptorType::kAccelerationStructure);
 
-	for(U32 set = 0; set < MAX_DESCRIPTOR_SETS; ++set)
+	for(U32 set = 0; set < kMaxDescriptorSets; ++set)
 	{
 		if(counts[set])
 		{

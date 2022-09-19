@@ -74,7 +74,7 @@ class TextureView : public GrObject
 	ANKI_GR_OBJECT
 
 public:
-	static constexpr GrObjectType CLASS_TYPE = GrObjectType::TEXTURE_VIEW;
+	static constexpr GrObjectType kClassType = GrObjectType::kTextureView;
 
 	TextureType getTextureType() const
 	{
@@ -98,7 +98,7 @@ protected:
 
 	/// Construct.
 	TextureView(GrManager* manager, CString name)
-		: GrObject(manager, CLASS_TYPE, name)
+		: GrObject(manager, kClassType, name)
 	{
 		m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kNone;
 

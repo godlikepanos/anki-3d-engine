@@ -102,10 +102,10 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 
 	// Merge bindings
 	//
-	Array2d<DescriptorBinding, MAX_DESCRIPTOR_SETS, MAX_BINDINGS_PER_DESCRIPTOR_SET> bindings;
-	Array<U32, MAX_DESCRIPTOR_SETS> counts = {};
+	Array2d<DescriptorBinding, kMaxDescriptorSets, kMaxBindingsPerDescriptorSet> bindings;
+	Array<U32, kMaxDescriptorSets> counts = {};
 	U32 descriptorSetCount = 0;
-	for(U32 set = 0; set < MAX_DESCRIPTOR_SETS; ++set)
+	for(U32 set = 0; set < kMaxDescriptorSets; ++set)
 	{
 		for(ShaderPtr& shader : m_shaders)
 		{
@@ -239,7 +239,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 
 		VkComputePipelineCreateInfo ci = {};
 
-		if(!!(getGrManagerImpl().getExtensions() & VulkanExtensions::KHR_PIPELINE_EXECUTABLE_PROPERTIES))
+		if(!!(getGrManagerImpl().getExtensions() & VulkanExtensions::kKHR_pipeline_executable_properties))
 		{
 			ci.flags |= VK_PIPELINE_CREATE_CAPTURE_STATISTICS_BIT_KHR;
 		}

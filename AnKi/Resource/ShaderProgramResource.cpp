@@ -375,9 +375,9 @@ ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitIn
 		StringAuto progName(getTempAllocator());
 		getFilepathFilename(getFilename(), progName);
 		char* cprogName = const_cast<char*>(progName.cstr());
-		if(progName.getLength() > MAX_GR_OBJECT_NAME_LENGTH)
+		if(progName.getLength() > kMaxGrObjectNameLength)
 		{
-			cprogName[MAX_GR_OBJECT_NAME_LENGTH] = '\0';
+			cprogName[kMaxGrObjectNameLength] = '\0';
 		}
 
 		ShaderProgramInitInfo progInf(cprogName);

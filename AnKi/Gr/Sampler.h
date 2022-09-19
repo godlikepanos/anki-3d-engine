@@ -51,12 +51,12 @@ class Sampler : public GrObject
 	ANKI_GR_OBJECT
 
 public:
-	static constexpr GrObjectType CLASS_TYPE = GrObjectType::SAMPLER;
+	static constexpr GrObjectType kClassType = GrObjectType::kSampler;
 
 protected:
 	/// Construct.
 	Sampler(GrManager* manager, CString name)
-		: GrObject(manager, CLASS_TYPE, name)
+		: GrObject(manager, kClassType, name)
 	{
 	}
 

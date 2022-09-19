@@ -194,7 +194,7 @@ Error MicroSwapchain::initInternal()
 		VkSwapchainCreateInfoKHR ci = {};
 		ci.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 		ci.surface = m_factory->m_gr->getSurface();
-		ci.minImageCount = MAX_FRAMES_IN_FLIGHT;
+		ci.minImageCount = kMaxFramesInFlight;
 		ci.imageFormat = surfaceFormat;
 		ci.imageColorSpace = colorspace;
 		ci.imageExtent.width = surfaceWidth;
@@ -217,9 +217,9 @@ Error MicroSwapchain::initInternal()
 	{
 		U32 count = 0;
 		ANKI_VK_CHECK(vkGetSwapchainImagesKHR(dev, m_swapchain, &count, nullptr));
-		if(count != MAX_FRAMES_IN_FLIGHT)
+		if(count != kMaxFramesInFlight)
 		{
-			ANKI_VK_LOGI("Requested a swapchain with %u images but got one with %u", MAX_FRAMES_IN_FLIGHT, count);
+			ANKI_VK_LOGI("Requested a swapchain with %u images but got one with %u", kMaxFramesInFlight, count);
 		}
 
 		m_textures.create(getAllocator(), count);

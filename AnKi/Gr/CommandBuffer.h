@@ -19,18 +19,18 @@ namespace anki {
 /// Command buffer initialization flags.
 enum class CommandBufferFlag : U8
 {
-	NONE = 0,
+	kNone = 0,
 
-	SECOND_LEVEL = 1 << 0,
+	kSecondLevel = 1 << 0,
 
 	/// It will contain a handfull of commands.
-	SMALL_BATCH = 1 << 3,
+	kSmallBatch = 1 << 3,
 
 	/// Will contain graphics, compute and transfer work.
-	GENERAL_WORK = 1 << 4,
+	kGeneralWork = 1 << 4,
 
 	/// Will contain only compute work. It binds to async compute queues.
-	COMPUTE_WORK = 1 << 5,
+	kComputeWork = 1 << 5,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(CommandBufferFlag)
 
@@ -39,10 +39,10 @@ class CommandBufferInitInfo : public GrBaseInitInfo
 {
 public:
 	FramebufferPtr m_framebuffer; ///< For second level command buffers.
-	Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> m_colorAttachmentUsages = {};
+	Array<TextureUsageBit, kMaxColorRenderTargets> m_colorAttachmentUsages = {};
 	TextureUsageBit m_depthStencilAttachmentUsage = TextureUsageBit::kNone;
 
-	CommandBufferFlag m_flags = CommandBufferFlag::NONE;
+	CommandBufferFlag m_flags = CommandBufferFlag::kNone;
 
 	CommandBufferInitInfo(CString name = {})
 		: GrBaseInitInfo(name)
@@ -56,7 +56,7 @@ class CommandBuffer : public GrObject
 	ANKI_GR_OBJECT
 
 public:
-	static constexpr GrObjectType CLASS_TYPE = GrObjectType::COMMAND_BUFFER;
+	static constexpr GrObjectType kClassType = GrObjectType::kCommandBuffer;
 
 	/// Finalize and submit if it's primary command buffer and just finalize if it's second level.
 	/// @param[in]  waitFences Optionally wait for some fences.
@@ -235,7 +235,7 @@ public:
 	/// The minx, miny, width, height control the area that the load and store operations will happen. If the scissor is
 	/// bigger than the render area the results are undefined.
 	void beginRenderPass(const FramebufferPtr& fb,
-						 const Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS>& colorAttachmentUsages,
+						 const Array<TextureUsageBit, kMaxColorRenderTargets>& colorAttachmentUsages,
 						 TextureUsageBit depthStencilAttachmentUsage, U32 minx = 0, U32 miny = 0, U32 width = kMaxU32,
 						 U32 height = kMaxU32);
 
@@ -408,7 +408,7 @@ public:
 protected:
 	/// Construct.
 	CommandBuffer(GrManager* manager, CString name)
-		: GrObject(manager, CLASS_TYPE, name)
+		: GrObject(manager, kClassType, name)
 	{
 	}
 

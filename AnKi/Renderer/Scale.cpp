@@ -110,7 +110,7 @@ Error Scale::init()
 		GrUpscalerInitInfo inf;
 		inf.m_sourceTextureResolution = m_r->getInternalResolution();
 		inf.m_targetTextureResolution = m_r->getPostProcessResolution();
-		inf.m_upscalerType = GrUpscalerType::DLSS_2;
+		inf.m_upscalerType = GrUpscalerType::kDlss2;
 		inf.m_qualityMode = GrUpscalerQualityMode(dlssQuality - 1);
 
 		m_grUpscaler = getGrManager().newGrUpscaler(inf);

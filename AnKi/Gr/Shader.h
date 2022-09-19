@@ -89,7 +89,7 @@ class Shader : public GrObject
 	ANKI_GR_OBJECT
 
 public:
-	static constexpr GrObjectType CLASS_TYPE = GrObjectType::SHADER;
+	static constexpr GrObjectType kClassType = GrObjectType::kShader;
 
 	ShaderType getShaderType() const
 	{
@@ -102,7 +102,7 @@ protected:
 
 	/// Construct.
 	Shader(GrManager* manager, CString name)
-		: GrObject(manager, CLASS_TYPE, name)
+		: GrObject(manager, kClassType, name)
 	{
 	}
 

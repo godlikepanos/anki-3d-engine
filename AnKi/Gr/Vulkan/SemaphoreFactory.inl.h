@@ -46,7 +46,7 @@ inline Bool MicroSemaphore::clientWait(Second seconds)
 {
 	ANKI_ASSERT(m_isTimeline);
 
-	seconds = min(seconds, MAX_FENCE_OR_SEMAPHORE_WAIT_TIME);
+	seconds = min(seconds, kMaxFenceOrSemaphoreWaitTime);
 
 	VkSemaphoreWaitInfo waitInfo = {};
 	waitInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO;

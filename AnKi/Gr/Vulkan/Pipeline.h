@@ -59,12 +59,12 @@ static_assert(sizeof(VertexAttributeBindingPipelineState) == 2 * sizeof(PtrSize)
 class VertexPipelineState
 {
 public:
-	Array<VertexBufferBindingPipelineState, MAX_VERTEX_ATTRIBUTES> m_bindings;
-	Array<VertexAttributeBindingPipelineState, MAX_VERTEX_ATTRIBUTES> m_attributes;
+	Array<VertexBufferBindingPipelineState, kMaxVertexAttributes> m_bindings;
+	Array<VertexAttributeBindingPipelineState, kMaxVertexAttributes> m_attributes;
 };
 static_assert(sizeof(VertexPipelineState)
-				  == sizeof(VertexBufferBindingPipelineState) * MAX_VERTEX_ATTRIBUTES
-						 + sizeof(VertexAttributeBindingPipelineState) * MAX_VERTEX_ATTRIBUTES,
+				  == sizeof(VertexBufferBindingPipelineState) * kMaxVertexAttributes
+						 + sizeof(VertexAttributeBindingPipelineState) * kMaxVertexAttributes,
 			  "Packed because it will be hashed");
 
 class InputAssemblerPipelineState
@@ -128,9 +128,9 @@ class ColorPipelineState
 {
 public:
 	Bool m_alphaToCoverageEnabled = false;
-	Array<ColorAttachmentState, MAX_COLOR_ATTACHMENTS> m_attachments;
+	Array<ColorAttachmentState, kMaxColorRenderTargets> m_attachments;
 };
-static_assert(sizeof(ColorPipelineState) == sizeof(ColorAttachmentState) * MAX_COLOR_ATTACHMENTS + sizeof(U8),
+static_assert(sizeof(ColorPipelineState) == sizeof(ColorAttachmentState) * kMaxColorRenderTargets + sizeof(U8),
 			  "Packed because it will be hashed");
 
 class AllPipelineState
@@ -439,10 +439,10 @@ private:
 		Bool m_color : 1;
 
 		// Vertex
-		BitSet<MAX_VERTEX_ATTRIBUTES, U8> m_attribs = {true};
-		BitSet<MAX_VERTEX_ATTRIBUTES, U8> m_vertBindings = {true};
+		BitSet<kMaxVertexAttributes, U8> m_attribs = {true};
+		BitSet<kMaxVertexAttributes, U8> m_vertBindings = {true};
 
-		BitSet<MAX_COLOR_ATTACHMENTS, U8> m_colAttachments = {true};
+		BitSet<kMaxColorRenderTargets, U8> m_colAttachments = {true};
 
 		DirtyBits()
 			: m_prog(true)
@@ -459,32 +459,32 @@ private:
 	class SetBits
 	{
 	public:
-		BitSet<MAX_VERTEX_ATTRIBUTES, U8> m_attribs = {false};
-		BitSet<MAX_VERTEX_ATTRIBUTES, U8> m_vertBindings = {false};
+		BitSet<kMaxVertexAttributes, U8> m_attribs = {false};
+		BitSet<kMaxVertexAttributes, U8> m_vertBindings = {false};
 	} m_set;
 
 	// Shader info
-	BitSet<MAX_VERTEX_ATTRIBUTES, U8> m_shaderAttributeMask = {false};
-	BitSet<MAX_COLOR_ATTACHMENTS, U8> m_shaderColorAttachmentWritemask = {false};
+	BitSet<kMaxVertexAttributes, U8> m_shaderAttributeMask = {false};
+	BitSet<kMaxColorRenderTargets, U8> m_shaderColorAttachmentWritemask = {false};
 
 	// Renderpass info
 	Bool m_fbDepth = false;
 	Bool m_fbStencil = false;
 	Bool m_defaultFb = false;
-	BitSet<MAX_COLOR_ATTACHMENTS, U8> m_fbColorAttachmentMask = {false};
+	BitSet<kMaxColorRenderTargets, U8> m_fbColorAttachmentMask = {false};
 
 	class Hashes
 	{
 	public:
 		U64 m_prog;
 		U64 m_rpass;
-		Array<U64, MAX_VERTEX_ATTRIBUTES> m_vertexAttribs;
+		Array<U64, kMaxVertexAttributes> m_vertexAttribs;
 		U64 m_ia;
 		U64 m_raster;
 		U64 m_depth;
 		U64 m_stencil;
 		U64 m_color;
-		Array<U64, MAX_COLOR_ATTACHMENTS> m_colAttachments;
+		Array<U64, kMaxColorRenderTargets> m_colAttachments;
 
 		U64 m_superHash;
 		U64 m_lastSuperHash;
@@ -499,8 +499,8 @@ private:
 	class CreateInfo
 	{
 	public:
-		Array<VkVertexInputBindingDescription, MAX_VERTEX_ATTRIBUTES> m_vertBindings;
-		Array<VkVertexInputAttributeDescription, MAX_VERTEX_ATTRIBUTES> m_attribs;
+		Array<VkVertexInputBindingDescription, kMaxVertexAttributes> m_vertBindings;
+		Array<VkVertexInputAttributeDescription, kMaxVertexAttributes> m_attribs;
 		VkPipelineVertexInputStateCreateInfo m_vert;
 		VkPipelineInputAssemblyStateCreateInfo m_ia;
 		VkPipelineViewportStateCreateInfo m_vp;
@@ -508,7 +508,7 @@ private:
 		VkPipelineRasterizationStateCreateInfo m_rast;
 		VkPipelineMultisampleStateCreateInfo m_ms;
 		VkPipelineDepthStencilStateCreateInfo m_ds;
-		Array<VkPipelineColorBlendAttachmentState, MAX_COLOR_ATTACHMENTS> m_colAttachments;
+		Array<VkPipelineColorBlendAttachmentState, kMaxColorRenderTargets> m_colAttachments;
 		VkPipelineColorBlendStateCreateInfo m_color;
 		VkPipelineDynamicStateCreateInfo m_dyn;
 		VkGraphicsPipelineCreateInfo m_ppline;

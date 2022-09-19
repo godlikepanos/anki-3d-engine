@@ -30,10 +30,10 @@ void CommandBufferImpl::init(const CommandBufferInitInfo& init)
 	m_flags = init.m_flags;
 
 #if ANKI_EXTRA_CHECKS
-	m_state.m_secondLevel = !!(init.m_flags & CommandBufferFlag::SECOND_LEVEL);
+	m_state.m_secondLevel = !!(init.m_flags & CommandBufferFlag::kSecondLevel);
 #endif
 
-	if(!!(init.m_flags & CommandBufferFlag::SECOND_LEVEL))
+	if(!!(init.m_flags & CommandBufferFlag::kSecondLevel))
 	{
 		// TODO Need to hold a ref
 		m_state.m_fb = static_cast<const FramebufferImpl*>(init.m_framebuffer.get());
@@ -160,7 +160,7 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 			cmdb.setDepthCompareOperation(CompareOperation::LESS);
 		}
 
-		for(U i = 0; i < MAX_COLOR_ATTACHMENTS; ++i)
+		for(U i = 0; i < kMaxColorRenderTargets; ++i)
 		{
 			const auto& att = m_state.m_colorAtt[i];
 			if(att.m_writeMask == StateTracker::INVALID_COLOR_MASK)
@@ -294,7 +294,7 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 
 		Error operator()(GlState&)
 		{
-			for(U i = 0; i < MAX_COLOR_ATTACHMENTS; ++i)
+			for(U i = 0; i < kMaxColorRenderTargets; ++i)
 			{
 				if(m_enableMask & (1 << i))
 				{
@@ -311,7 +311,7 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 
 	U8 blendEnableMask = 0;
 	U8 blendDisableMask = 0;
-	for(U i = 0; i < MAX_COLOR_ATTACHMENTS; ++i)
+	for(U i = 0; i < kMaxColorRenderTargets; ++i)
 	{
 		if(m_state.maybeEnableBlend(i))
 		{

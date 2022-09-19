@@ -36,7 +36,7 @@ void ModelPatch::getRenderingInfo(const RenderingKey& key, ModelRenderingInfo& i
 	// Vertex attributes & bindings
 	{
 		U32 bufferBindingVisitedMask = 0;
-		Array<U32, MAX_VERTEX_ATTRIBUTES> realBufferBindingToVirtual;
+		Array<U32, kMaxVertexAttributes> realBufferBindingToVirtual;
 
 		inf.m_vertexAttributeCount = 0;
 		inf.m_vertexBufferBindingCount = 0;

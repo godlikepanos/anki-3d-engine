@@ -100,7 +100,7 @@ class Texture : public GrObject
 	ANKI_GR_OBJECT
 
 public:
-	static constexpr GrObjectType CLASS_TYPE = GrObjectType::TEXTURE;
+	static constexpr GrObjectType kClassType = GrObjectType::kTexture;
 
 	U32 getWidth() const
 	{
@@ -255,7 +255,7 @@ protected:
 
 	/// Construct.
 	Texture(GrManager* manager, CString name)
-		: GrObject(manager, CLASS_TYPE, name)
+		: GrObject(manager, kClassType, name)
 	{
 	}
 

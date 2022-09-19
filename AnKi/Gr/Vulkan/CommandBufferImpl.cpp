@@ -53,7 +53,7 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 	m_alloc = m_microCmdb->getFastAllocator();
 
 	// Store some of the init info for later
-	if(!!(m_flags & CommandBufferFlag::SECOND_LEVEL))
+	if(!!(m_flags & CommandBufferFlag::kSecondLevel))
 	{
 		m_activeFb = init.m_framebuffer;
 		m_colorAttachmentUsages = init.m_colorAttachmentUsages;
@@ -81,12 +81,12 @@ void CommandBufferImpl::beginRecording()
 	begin.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 	begin.pInheritanceInfo = &inheritance;
 
-	if(!!(m_flags & CommandBufferFlag::SECOND_LEVEL))
+	if(!!(m_flags & CommandBufferFlag::kSecondLevel))
 	{
 		FramebufferImpl& impl = static_cast<FramebufferImpl&>(*m_activeFb);
 
 		// Calc the layouts
-		Array<VkImageLayout, MAX_COLOR_ATTACHMENTS> colAttLayouts;
+		Array<VkImageLayout, kMaxColorRenderTargets> colAttLayouts;
 		for(U i = 0; i < impl.getColorAttachmentCount(); ++i)
 		{
 			const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*impl.getColorAttachment(i));
@@ -117,14 +117,14 @@ void CommandBufferImpl::beginRecording()
 	vkBeginCommandBuffer(m_handle, &begin);
 
 	// Stats
-	if(!!(getGrManagerImpl().getExtensions() & VulkanExtensions::KHR_PIPELINE_EXECUTABLE_PROPERTIES))
+	if(!!(getGrManagerImpl().getExtensions() & VulkanExtensions::kKHR_pipeline_executable_properties))
 	{
 		m_state.setEnablePipelineStatistics(true);
 	}
 }
 
 void CommandBufferImpl::beginRenderPassInternal(
-	const FramebufferPtr& fb, const Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS>& colorAttachmentUsages,
+	const FramebufferPtr& fb, const Array<TextureUsageBit, kMaxColorRenderTargets>& colorAttachmentUsages,
 	TextureUsageBit depthStencilAttachmentUsage, U32 minx, U32 miny, U32 width, U32 height)
 {
 	commandCommon();
@@ -169,7 +169,7 @@ void CommandBufferImpl::beginRenderPassInternal()
 {
 	FramebufferImpl& impl = static_cast<FramebufferImpl&>(*m_activeFb);
 
-	flushBatches(CommandBufferCommandType::ANY_OTHER_COMMAND); // Flush before the marker
+	flushBatches(CommandBufferCommandType::kAnyOtherCommand); // Flush before the marker
 
 	m_state.beginRenderPass(&impl);
 
@@ -180,7 +180,7 @@ void CommandBufferImpl::beginRenderPassInternal()
 	bi.framebuffer = impl.getFramebufferHandle();
 
 	// Calc the layouts
-	Array<VkImageLayout, MAX_COLOR_ATTACHMENTS> colAttLayouts;
+	Array<VkImageLayout, kMaxColorRenderTargets> colAttLayouts;
 	for(U i = 0; i < impl.getColorAttachmentCount(); ++i)
 	{
 		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*impl.getColorAttachment(i));
@@ -253,7 +253,7 @@ void CommandBufferImpl::endRenderPassInternal()
 	VkSubpassEndInfo subpassEndInfo = {};
 	subpassEndInfo.sType = VK_STRUCTURE_TYPE_SUBPASS_END_INFO;
 
-	ANKI_CMD(vkCmdEndRenderPass2KHR(m_handle, &subpassEndInfo), ANY_OTHER_COMMAND);
+	ANKI_CMD(vkCmdEndRenderPass2KHR(m_handle, &subpassEndInfo), kAnyOtherCommand);
 	getGrManagerImpl().endMarker(m_handle);
 
 	m_activeFb.reset(nullptr);
@@ -274,7 +274,7 @@ void CommandBufferImpl::endRecording()
 	ANKI_ASSERT(!m_finalized);
 	ANKI_ASSERT(!m_empty);
 
-	ANKI_CMD(ANKI_VK_CHECKF(vkEndCommandBuffer(m_handle)), ANY_OTHER_COMMAND);
+	ANKI_CMD(ANKI_VK_CHECKF(vkEndCommandBuffer(m_handle)), kAnyOtherCommand);
 	m_finalized = true;
 
 #if ANKI_EXTRA_CHECKS
@@ -282,16 +282,16 @@ void CommandBufferImpl::endRecording()
 	constexpr U32 MAX_PRINT_COUNT = 10;
 
 	CString message;
-	if(!!(m_flags & CommandBufferFlag::SMALL_BATCH))
+	if(!!(m_flags & CommandBufferFlag::kSmallBatch))
 	{
-		if(m_commandCount > COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS * 4)
+		if(m_commandCount > kCommandBufferSmallBatchMaxCommands * 4)
 		{
 			message = "Command buffer has too many commands%s: %u";
 		}
 	}
 	else
 	{
-		if(m_commandCount <= COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS / 4)
+		if(m_commandCount <= kCommandBufferSmallBatchMaxCommands / 4)
 		{
 			message = "Command buffer has too few commands%s: %u";
 		}
@@ -325,7 +325,7 @@ void CommandBufferImpl::generateMipmaps2dInternal(const TextureViewPtr& texView)
 	if(blitCount == 0)
 	{
 		// Nothing to be done, flush the previous commands though because you may batch (and sort) things you shouldn't
-		flushBatches(CommandBufferCommandType::ANY_OTHER_COMMAND);
+		flushBatches(CommandBufferCommandType::kAnyOtherCommand);
 		return;
 	}
 
@@ -403,7 +403,7 @@ void CommandBufferImpl::generateMipmaps2dInternal(const TextureViewPtr& texView)
 		ANKI_CMD(vkCmdBlitImage(m_handle, tex.m_imageHandle, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, tex.m_imageHandle,
 								VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit,
 								(!!aspect) ? VK_FILTER_NEAREST : VK_FILTER_LINEAR),
-				 ANY_OTHER_COMMAND);
+				 kAnyOtherCommand);
 	}
 
 	// Hold the reference
@@ -705,7 +705,7 @@ void CommandBufferImpl::copyBufferToTextureViewInternal(const BufferPtr& buff, P
 
 	ANKI_CMD(vkCmdCopyBufferToImage(m_handle, static_cast<const BufferImpl&>(*buff).getHandle(), tex.m_imageHandle,
 									layout, 1, &region),
-			 ANY_OTHER_COMMAND);
+			 kAnyOtherCommand);
 
 	m_microCmdb->pushObjectRef(texView);
 	m_microCmdb->pushObjectRef(buff);
@@ -725,14 +725,14 @@ void CommandBufferImpl::rebindDynamicState()
 	{
 		ANKI_CMD(vkCmdSetStencilCompareMask(m_handle, VK_STENCIL_FACE_FRONT_BIT | VK_STENCIL_FACE_BACK_BIT,
 											m_stencilCompareMasks[0]),
-				 ANY_OTHER_COMMAND);
+				 kAnyOtherCommand);
 	}
 	else
 	{
 		ANKI_CMD(vkCmdSetStencilCompareMask(m_handle, VK_STENCIL_FACE_FRONT_BIT, m_stencilCompareMasks[0]),
-				 ANY_OTHER_COMMAND);
+				 kAnyOtherCommand);
 		ANKI_CMD(vkCmdSetStencilCompareMask(m_handle, VK_STENCIL_FACE_BACK_BIT, m_stencilCompareMasks[1]),
-				 ANY_OTHER_COMMAND);
+				 kAnyOtherCommand);
 	}
 
 	// Rebind the stencil write mask
@@ -740,14 +740,14 @@ void CommandBufferImpl::rebindDynamicState()
 	{
 		ANKI_CMD(vkCmdSetStencilWriteMask(m_handle, VK_STENCIL_FACE_FRONT_BIT | VK_STENCIL_FACE_BACK_BIT,
 										  m_stencilWriteMasks[0]),
-				 ANY_OTHER_COMMAND);
+				 kAnyOtherCommand);
 	}
 	else
 	{
 		ANKI_CMD(vkCmdSetStencilWriteMask(m_handle, VK_STENCIL_FACE_FRONT_BIT, m_stencilWriteMasks[0]),
-				 ANY_OTHER_COMMAND);
+				 kAnyOtherCommand);
 		ANKI_CMD(vkCmdSetStencilWriteMask(m_handle, VK_STENCIL_FACE_BACK_BIT, m_stencilWriteMasks[1]),
-				 ANY_OTHER_COMMAND);
+				 kAnyOtherCommand);
 	}
 
 	// Rebind the stencil reference
@@ -755,14 +755,14 @@ void CommandBufferImpl::rebindDynamicState()
 	{
 		ANKI_CMD(vkCmdSetStencilReference(m_handle, VK_STENCIL_FACE_FRONT_BIT | VK_STENCIL_FACE_BACK_BIT,
 										  m_stencilReferenceMasks[0]),
-				 ANY_OTHER_COMMAND);
+				 kAnyOtherCommand);
 	}
 	else
 	{
 		ANKI_CMD(vkCmdSetStencilReference(m_handle, VK_STENCIL_FACE_FRONT_BIT, m_stencilReferenceMasks[0]),
-				 ANY_OTHER_COMMAND);
+				 kAnyOtherCommand);
 		ANKI_CMD(vkCmdSetStencilReference(m_handle, VK_STENCIL_FACE_BACK_BIT, m_stencilReferenceMasks[1]),
-				 ANY_OTHER_COMMAND);
+				 kAnyOtherCommand);
 	}
 }
 
@@ -775,7 +775,7 @@ void CommandBufferImpl::buildAccelerationStructureInternal(const AccelerationStr
 
 	// Create the scrach buffer
 	BufferInitInfo bufferInit;
-	bufferInit.m_usage = PrivateBufferUsageBit::ACCELERATION_STRUCTURE_BUILD_SCRATCH;
+	bufferInit.m_usage = PrivateBufferUsageBit::kAccelerationStructureBuildScratch;
 	bufferInit.m_size = asImpl.getBuildScratchBufferSize();
 	BufferPtr scratchBuff = getManager().newBuffer(bufferInit);
 
@@ -786,7 +786,7 @@ void CommandBufferImpl::buildAccelerationStructureInternal(const AccelerationStr
 
 	// Do the command
 	Array<const VkAccelerationStructureBuildRangeInfoKHR*, 1> pRangeInfos = {&rangeInfo};
-	ANKI_CMD(vkCmdBuildAccelerationStructuresKHR(m_handle, 1, &buildInfo, &pRangeInfos[0]), ANY_OTHER_COMMAND);
+	ANKI_CMD(vkCmdBuildAccelerationStructuresKHR(m_handle, 1, &buildInfo, &pRangeInfos[0]), kAnyOtherCommand);
 
 	// Push refs
 	m_microCmdb->pushObjectRef(as);
@@ -820,10 +820,10 @@ void CommandBufferImpl::upscaleInternal(const GrUpscalerPtr& upscaler, const Tex
 {
 #if ANKI_DLSS
 	ANKI_ASSERT(getGrManagerImpl().getDeviceCapabilities().m_dlss);
-	ANKI_ASSERT(upscaler->getUpscalerType() == GrUpscalerType::DLSS_2);
+	ANKI_ASSERT(upscaler->getUpscalerType() == GrUpscalerType::kDlss2);
 
 	commandCommon();
-	flushBatches(CommandBufferCommandType::ANY_OTHER_COMMAND);
+	flushBatches(CommandBufferCommandType::kAnyOtherCommand);
 
 	const GrUpscalerImpl& upscalerImpl = static_cast<const GrUpscalerImpl&>(*upscaler);
 

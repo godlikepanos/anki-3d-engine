@@ -18,7 +18,7 @@ class TimestampQuery : public GrObject
 	ANKI_GR_OBJECT
 
 public:
-	static constexpr GrObjectType CLASS_TYPE = GrObjectType::TIMESTAMP_QUERY;
+	static constexpr GrObjectType kClassType = GrObjectType::kTimstampQuery;
 
 	/// Get the result if it's available. It won't block.
 	TimestampQueryResult getResult(Second& timestamp) const;
@@ -26,7 +26,7 @@ public:
 protected:
 	/// Construct.
 	TimestampQuery(GrManager* manager, CString name)
-		: GrObject(manager, CLASS_TYPE, name)
+		: GrObject(manager, kClassType, name)
 	{
 	}
 

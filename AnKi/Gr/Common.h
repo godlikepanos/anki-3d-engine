@@ -38,17 +38,17 @@ class GrUpscalerInitInfo;
 #define ANKI_GR_LOGF(...) ANKI_LOG("GR", kFatal, __VA_ARGS__)
 
 // Some constants
-constexpr U32 MAX_VERTEX_ATTRIBUTES = 8;
-constexpr U32 MAX_COLOR_ATTACHMENTS = 4;
-constexpr U32 MAX_DESCRIPTOR_SETS = 3; ///< Groups that can be bound at the same time.
-constexpr U32 MAX_BINDINGS_PER_DESCRIPTOR_SET = 32;
-constexpr U32 MAX_FRAMES_IN_FLIGHT = 3; ///< Triple buffering.
-constexpr U32 MAX_GR_OBJECT_NAME_LENGTH = 31;
-constexpr U32 MAX_BINDLESS_TEXTURES = 512;
-constexpr U32 MAX_BINDLESS_READONLY_TEXTURE_BUFFERS = 512;
+constexpr U32 kMaxVertexAttributes = 8;
+constexpr U32 kMaxColorRenderTargets = 4;
+constexpr U32 kMaxDescriptorSets = 3; ///< Groups that can be bound at the same time.
+constexpr U32 kMaxBindingsPerDescriptorSet = 32;
+constexpr U32 kMaxFramesInFlight = 3; ///< Triple buffering.
+constexpr U32 kMaxGrObjectNameLength = 31;
+constexpr U32 kMaxBindlessTextures = 512;
+constexpr U32 kMaxBindlessReadonlyTextureBuffers = 512;
 
 /// The number of commands in a command buffer that make it a small batch command buffer.
-constexpr U32 COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS = 100;
+constexpr U32 kCommandBufferSmallBatchMaxCommands = 100;
 
 /// Smart pointer for resources.
 template<typename T>
@@ -112,8 +112,8 @@ enum class GpuVendor : U8
 	kCount
 };
 
-inline constexpr Array<CString, U(GpuVendor::kCount)> GPU_VENDOR_STR = {"unknown", "ARM",   "nVidia",
-																		"AMD",     "Intel", "Qualcomm"};
+inline constexpr Array<CString, U(GpuVendor::kCount)> kGPUVendorStrings = {"unknown", "ARM",   "nVidia",
+																		   "AMD",     "Intel", "Qualcomm"};
 
 /// Device capabilities.
 ANKI_BEGIN_PACKED_STRUCT
@@ -234,13 +234,13 @@ public:
 		U32 len;
 		if(name && (len = name.getLength()) > 0)
 		{
-			len = min(len, MAX_GR_OBJECT_NAME_LENGTH);
+			len = min(len, kMaxGrObjectNameLength);
 			memcpy(&m_name[0], &name[0], len);
 		}
 	}
 
 private:
-	Array<char, MAX_GR_OBJECT_NAME_LENGTH + 1> m_name;
+	Array<char, kMaxGrObjectNameLength + 1> m_name;
 };
 
 enum class ColorBit : U8

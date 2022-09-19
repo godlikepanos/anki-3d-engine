@@ -209,7 +209,7 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 	// Transition it. TODO remove that eventually
 	{
 		CommandBufferInitInfo cmdbinit;
-		cmdbinit.m_flags = CommandBufferFlag::GENERAL_WORK | CommandBufferFlag::SMALL_BATCH;
+		cmdbinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
 		CommandBufferPtr cmdb = getManager().getGrManager().newCommandBuffer(cmdbinit);
 
 		TextureSubresourceInfo subresource;
@@ -264,7 +264,7 @@ Error ImageResource::load(LoadingContext& ctx)
 		const U32 end = min(copyCount, b + MAX_COPIES_BEFORE_FLUSH);
 
 		CommandBufferInitInfo ci;
-		ci.m_flags = CommandBufferFlag::GENERAL_WORK | CommandBufferFlag::SMALL_BATCH;
+		ci.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
 		CommandBufferPtr cmdb = ctx.m_gr->newCommandBuffer(ci);
 
 		// Set the barriers of the batch

@@ -47,7 +47,7 @@ Bool PipelineStateTracker::updateHashes()
 	// Vertex
 	if(m_dirty.m_attribs.getAny() || m_dirty.m_vertBindings.getAny())
 	{
-		for(U i = 0; i < MAX_VERTEX_ATTRIBUTES; ++i)
+		for(U i = 0; i < kMaxVertexAttributes; ++i)
 		{
 			if(m_shaderAttributeMask.get(i))
 			{
@@ -130,7 +130,7 @@ Bool PipelineStateTracker::updateHashes()
 
 		if(!!(m_dirty.m_colAttachments & m_fbColorAttachmentMask))
 		{
-			for(U i = 0; i < MAX_COLOR_ATTACHMENTS; ++i)
+			for(U i = 0; i < kMaxColorRenderTargets; ++i)
 			{
 				if(m_fbColorAttachmentMask.get(i) && m_dirty.m_colAttachments.get(i))
 				{
@@ -160,7 +160,7 @@ void PipelineStateTracker::updateSuperHash()
 	// Vertex
 	if(!!m_shaderAttributeMask)
 	{
-		for(U i = 0; i < MAX_VERTEX_ATTRIBUTES; ++i)
+		for(U i = 0; i < kMaxVertexAttributes; ++i)
 		{
 			if(m_shaderAttributeMask.get(i))
 			{
@@ -192,7 +192,7 @@ void PipelineStateTracker::updateSuperHash()
 	{
 		buff[count++] = m_hashes.m_color;
 
-		for(U i = 0; i < MAX_COLOR_ATTACHMENTS; ++i)
+		for(U i = 0; i < kMaxColorRenderTargets; ++i)
 		{
 			if(m_shaderColorAttachmentWritemask.get(i))
 			{
@@ -227,8 +227,8 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 	vertCi.pVertexAttributeDescriptions = &m_ci.m_attribs[0];
 	vertCi.pVertexBindingDescriptions = &m_ci.m_vertBindings[0];
 
-	BitSet<MAX_VERTEX_ATTRIBUTES, U8> bindingSet = {false};
-	for(U32 i = 0; i < MAX_VERTEX_ATTRIBUTES; ++i)
+	BitSet<kMaxVertexAttributes, U8> bindingSet = {false};
+	for(U32 i = 0; i < kMaxVertexAttributes; ++i)
 	{
 		if(m_shaderAttributeMask.get(i))
 		{

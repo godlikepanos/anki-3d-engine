@@ -113,7 +113,7 @@ class AccelerationStructure : public GrObject
 	ANKI_GR_OBJECT
 
 public:
-	static constexpr GrObjectType CLASS_TYPE = GrObjectType::ACCELERATION_STRUCTURE;
+	static constexpr GrObjectType kClassType = GrObjectType::kAccelerationStructure;
 
 	AccelerationStructureType getType() const
 	{
@@ -126,7 +126,7 @@ protected:
 
 	/// Construct.
 	AccelerationStructure(GrManager* manager, CString name)
-		: GrObject(manager, CLASS_TYPE, name)
+		: GrObject(manager, kClassType, name)
 	{
 	}
 

@@ -64,7 +64,7 @@ inline constexpr char SHADER_HEADER[] = R"(#version 460 core
 #extension GL_EXT_scalar_block_layout : enable
 
 #define ANKI_MAX_BINDLESS_TEXTURES %uu
-#define MAX_BINDLESS_READONLY_TEXTURE_BUFFERS %uu
+#define kMaxBindlessReadonlyTextureBuffers %uu
 
 #if defined(ANKI_RAY_GEN_SHADER) || defined(ANKI_ANY_HIT_SHADER) || defined(ANKI_CLOSEST_HIT_SHADER) || defined(ANKI_MISS_SHADER) || defined(ANKI_INTERSECTION_SHADER) || defined(ANKI_CALLABLE_SHADER)
 #	extension GL_EXT_ray_tracing : enable
@@ -75,7 +75,7 @@ inline constexpr char SHADER_HEADER[] = R"(#version 460 core
 	layout(set = s, binding = 0) uniform itexture2D u_bindlessTextures2dI32[ANKI_MAX_BINDLESS_TEXTURES]; \
 	layout(set = s, binding = 0) uniform texture2D u_bindlessTextures2dF32[ANKI_MAX_BINDLESS_TEXTURES]; \
 	layout(set = s, binding = 0) uniform texture2DArray u_bindlessTextures2dArrayF32[ANKI_MAX_BINDLESS_TEXTURES]; \
-	layout(set = s, binding = 1) uniform textureBuffer u_bindlessTextureBuffers[MAX_BINDLESS_READONLY_TEXTURE_BUFFERS];
+	layout(set = s, binding = 1) uniform textureBuffer u_bindlessTextureBuffers[kMaxBindlessReadonlyTextureBuffers];
 
 #define F32 float
 #define _ANKI_SIZEOF_float 4u
@@ -1196,8 +1196,8 @@ void ShaderProgramParser::generateAnkiShaderHeader(ShaderType shaderType, const 
 												   StringAuto& header)
 {
 	header.sprintf(SHADER_HEADER, SHADER_STAGE_NAMES[shaderType].cstr(), compilerOptions.m_mobilePlatform,
-				   compilerOptions.m_forceFullFloatingPointPrecision, MAX_BINDLESS_TEXTURES,
-				   MAX_BINDLESS_READONLY_TEXTURE_BUFFERS);
+				   compilerOptions.m_forceFullFloatingPointPrecision, kMaxBindlessTextures,
+				   kMaxBindlessReadonlyTextureBuffers);
 }
 
 Error ShaderProgramParser::generateVariant(ConstWeakArray<MutatorValue> mutation,

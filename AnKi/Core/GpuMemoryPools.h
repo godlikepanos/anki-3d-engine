@@ -108,11 +108,11 @@ public:
 	void endFrame();
 
 	/// Allocate staging memory for various operations. The memory will be reclaimed at the begining of the
-	/// N-(MAX_FRAMES_IN_FLIGHT-1) frame.
+	/// N-(kMaxFramesInFlight-1) frame.
 	void* allocateFrame(PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token);
 
 	/// Allocate staging memory for various operations. The memory will be reclaimed at the begining of the
-	/// N-(MAX_FRAMES_IN_FLIGHT-1) frame.
+	/// N-(kMaxFramesInFlight-1) frame.
 	void* tryAllocateFrame(PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token);
 
 private:

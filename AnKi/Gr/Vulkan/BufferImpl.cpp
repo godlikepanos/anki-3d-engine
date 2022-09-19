@@ -48,7 +48,7 @@ BufferImpl::~BufferImpl()
 Error BufferImpl::init(const BufferInitInfo& inf)
 {
 	ANKI_ASSERT(!isCreated());
-	const Bool exposeGpuAddress = !!(getGrManagerImpl().getExtensions() & VulkanExtensions::KHR_BUFFER_DEVICE_ADDRESS)
+	const Bool exposeGpuAddress = !!(getGrManagerImpl().getExtensions() & VulkanExtensions::kKHR_buffer_device_address)
 								  && !!(inf.m_usage & ~BufferUsageBit::kAllTransfer);
 
 	PtrSize size = inf.m_size;
@@ -304,13 +304,13 @@ VkAccessFlags BufferImpl::computeAccessMask(BufferUsageBit usage)
 {
 	VkAccessFlags mask = 0;
 
-	constexpr BufferUsageBit SHADER_READ = BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead
+	constexpr BufferUsageBit kShaderRead = BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead
 										   | BufferUsageBit::kStorageComputeRead | BufferUsageBit::kStorageTraceRaysRead
 										   | BufferUsageBit::kTextureGeometryRead | BufferUsageBit::kTextureFragmentRead
 										   | BufferUsageBit::kTextureComputeRead
 										   | BufferUsageBit::kTextureTraceRaysRead;
 
-	constexpr BufferUsageBit SHADER_WRITE =
+	constexpr BufferUsageBit kShaderWrite =
 		BufferUsageBit::kStorageGeometryWrite | BufferUsageBit::kStorageFragmentWrite
 		| BufferUsageBit::kStorageComputeWrite | BufferUsageBit::kStorageTraceRaysWrite
 		| BufferUsageBit::kTextureGeometryWrite | BufferUsageBit::kTextureFragmentWrite
@@ -321,12 +321,12 @@ VkAccessFlags BufferImpl::computeAccessMask(BufferUsageBit usage)
 		mask |= VK_ACCESS_UNIFORM_READ_BIT;
 	}
 
-	if(!!(usage & SHADER_READ))
+	if(!!(usage & kShaderRead))
 	{
 		mask |= VK_ACCESS_SHADER_READ_BIT;
 	}
 
-	if(!!(usage & SHADER_WRITE))
+	if(!!(usage & kShaderWrite))
 	{
 		mask |= VK_ACCESS_SHADER_WRITE_BIT;
 	}

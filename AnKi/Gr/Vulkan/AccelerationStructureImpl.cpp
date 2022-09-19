@@ -61,7 +61,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 
 		// Create the buffer that holds the AS memory
 		BufferInitInfo bufferInit(inf.getName());
-		bufferInit.m_usage = PrivateBufferUsageBit::ACCELERATION_STRUCTURE;
+		bufferInit.m_usage = PrivateBufferUsageBit::kAccelerationStructure;
 		bufferInit.m_size = buildSizes.accelerationStructureSize;
 		m_asBuffer = getManager().newBuffer(bufferInit);
 
@@ -94,7 +94,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 
 		BufferInitInfo buffInit("AS instances");
 		buffInit.m_size = sizeof(VkAccelerationStructureInstanceKHR) * inf.m_topLevel.m_instances.getSize();
-		buffInit.m_usage = PrivateBufferUsageBit::ACCELERATION_STRUCTURE;
+		buffInit.m_usage = PrivateBufferUsageBit::kAccelerationStructure;
 		buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
 		m_topLevelInfo.m_instancesBuffer = getManager().newBuffer(buffInit);
 
@@ -150,7 +150,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 
 		// Create the buffer that holds the AS memory
 		BufferInitInfo bufferInit(inf.getName());
-		bufferInit.m_usage = PrivateBufferUsageBit::ACCELERATION_STRUCTURE;
+		bufferInit.m_usage = PrivateBufferUsageBit::kAccelerationStructure;
 		bufferInit.m_size = buildSizes.accelerationStructureSize;
 		m_asBuffer = getManager().newBuffer(bufferInit);
 

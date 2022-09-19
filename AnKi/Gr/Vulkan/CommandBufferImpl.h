@@ -35,11 +35,11 @@ class CommandBufferInitInfo;
 /// List the commands that can be batched.
 enum class CommandBufferCommandType : U8
 {
-	SET_BARRIER,
-	RESET_QUERY,
-	WRITE_QUERY_RESULT,
-	PUSH_SECOND_LEVEL,
-	ANY_OTHER_COMMAND
+	kSetBarrier,
+	kResetQuery,
+	kWriteQueryResult,
+	kPushSecondLevel,
+	kAnyOtherCommand
 };
 
 /// Command buffer implementation.
@@ -88,7 +88,7 @@ public:
 
 	Bool isSecondLevel() const
 	{
-		return !!(m_flags & CommandBufferFlag::SECOND_LEVEL);
+		return !!(m_flags & CommandBufferFlag::kSecondLevel);
 	}
 
 	void bindVertexBufferInternal(U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize stride,
@@ -97,7 +97,7 @@ public:
 		commandCommon();
 		m_state.bindVertexBuffer(binding, stride, stepRate);
 		const VkBuffer vkbuff = static_cast<const BufferImpl&>(*buff).getHandle();
-		ANKI_CMD(vkCmdBindVertexBuffers(m_handle, binding, 1, &vkbuff, &offset), ANY_OTHER_COMMAND);
+		ANKI_CMD(vkCmdBindVertexBuffers(m_handle, binding, 1, &vkbuff, &offset), kAnyOtherCommand);
 		m_microCmdb->pushObjectRef(buff);
 	}
 
@@ -112,7 +112,7 @@ public:
 		commandCommon();
 		ANKI_CMD(vkCmdBindIndexBuffer(m_handle, static_cast<const BufferImpl&>(*buff).getHandle(), offset,
 									  convertIndexType(type)),
-				 ANY_OTHER_COMMAND);
+				 kAnyOtherCommand);
 		m_microCmdb->pushObjectRef(buff);
 	}
 
@@ -292,7 +292,7 @@ public:
 	}
 
 	void beginRenderPassInternal(const FramebufferPtr& fb,
-								 const Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS>& colorAttachmentUsages,
+								 const Array<TextureUsageBit, kMaxColorRenderTargets>& colorAttachmentUsages,
 								 TextureUsageBit depthStencilAttachmentUsage, U32 minx, U32 miny, U32 width,
 								 U32 height);
 
@@ -420,7 +420,7 @@ private:
 	MicroCommandBufferPtr m_microCmdb;
 	VkCommandBuffer m_handle = VK_NULL_HANDLE;
 	ThreadId m_tid = ~ThreadId(0);
-	CommandBufferFlag m_flags = CommandBufferFlag::NONE;
+	CommandBufferFlag m_flags = CommandBufferFlag::kNone;
 	Bool m_renderedToDefaultFb : 1;
 	Bool m_finalized : 1;
 	Bool m_empty : 1;
@@ -434,12 +434,12 @@ private:
 	Array<U32, 4> m_renderArea = {0, 0, kMaxU32, kMaxU32};
 	Array<U32, 2> m_fbSize = {0, 0};
 	U32 m_rpCommandCount = 0; ///< Number of drawcalls or pushed cmdbs in rp.
-	Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> m_colorAttachmentUsages = {};
+	Array<TextureUsageBit, kMaxColorRenderTargets> m_colorAttachmentUsages = {};
 	TextureUsageBit m_depthStencilAttachmentUsage = TextureUsageBit::kNone;
 
 	PipelineStateTracker m_state;
 
-	Array<DescriptorSetState, MAX_DESCRIPTOR_SETS> m_dsetState;
+	Array<DescriptorSetState, kMaxDescriptorSets> m_dsetState;
 
 	ShaderProgramImpl* m_graphicsProg ANKI_DEBUG_CODE(= nullptr); ///< Last bound graphics program
 	ShaderProgramImpl* m_computeProg ANKI_DEBUG_CODE(= nullptr);
@@ -447,7 +447,7 @@ private:
 
 	VkSubpassContents m_subpassContents = VK_SUBPASS_CONTENTS_MAX_ENUM;
 
-	CommandBufferCommandType m_lastCmdType = CommandBufferCommandType::ANY_OTHER_COMMAND;
+	CommandBufferCommandType m_lastCmdType = CommandBufferCommandType::kAnyOtherCommand;
 
 	/// @name state_opts
 	/// @{
@@ -532,7 +532,7 @@ private:
 
 	Bool secondLevel() const
 	{
-		return !!(m_flags & CommandBufferFlag::SECOND_LEVEL);
+		return !!(m_flags & CommandBufferFlag::kSecondLevel);
 	}
 
 	/// Flush batched image and buffer barriers.

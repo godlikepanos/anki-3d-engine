@@ -64,9 +64,9 @@ class ModelRenderingInfo
 public:
 	ShaderProgramPtr m_program;
 
-	Array<ModelVertexBufferBinding, MAX_VERTEX_ATTRIBUTES> m_vertexBufferBindings;
+	Array<ModelVertexBufferBinding, kMaxVertexAttributes> m_vertexBufferBindings;
 	U32 m_vertexBufferBindingCount;
-	Array<ModelVertexAttribute, MAX_VERTEX_ATTRIBUTES> m_vertexAttributes;
+	Array<ModelVertexAttribute, kMaxVertexAttributes> m_vertexAttributes;
 	U32 m_vertexAttributeCount;
 
 	BufferPtr m_indexBuffer;

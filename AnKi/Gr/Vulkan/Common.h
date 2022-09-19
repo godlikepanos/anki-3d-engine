@@ -47,58 +47,58 @@ class GrManagerImpl;
 
 enum class DescriptorType : U8
 {
-	COMBINED_TEXTURE_SAMPLER,
-	TEXTURE,
-	SAMPLER,
-	UNIFORM_BUFFER,
-	STORAGE_BUFFER,
-	IMAGE,
-	READ_TEXTURE_BUFFER,
-	READ_WRITE_TEXTURE_BUFFER,
-	ACCELERATION_STRUCTURE,
+	kCombinedTextureSampler,
+	kTexture,
+	kSampler,
+	kUniformBuffer,
+	kStorageBuffer,
+	kImage,
+	kReadTextureBuffer,
+	kReadWriteTextureBuffer,
+	kAccelerationStructure,
 
-	COUNT
+	kCount
 };
 
 enum class VulkanExtensions : U32
 {
-	NONE = 0,
-	KHR_XCB_SURFACE = 1 << 1,
-	KHR_XLIB_SURFACE = 1 << 2,
-	KHR_WIN32_SURFACE = 1 << 3,
-	KHR_ANDROID_SURFACE = 1 << 4,
-	EXT_HEADLESS_SURFACE = 1 << 5,
-	KHR_SWAPCHAIN = 1 << 6,
-	KHR_SURFACE = 1 << 7,
-	EXT_DEBUG_UTILS = 1 << 8,
-	AMD_SHADER_INFO = 1 << 9,
-	AMD_RASTERIZATION_ORDER = 1 << 10,
-	KHR_RAY_TRACING = 1 << 11,
-	KHR_PIPELINE_EXECUTABLE_PROPERTIES = 1 << 12,
-	EXT_DESCRIPTOR_INDEXING = 1 << 13,
-	KHR_BUFFER_DEVICE_ADDRESS = 1 << 14,
-	EXT_SCALAR_BLOCK_LAYOUT = 1 << 15,
-	KHR_TIMELINE_SEMAPHORE = 1 << 16,
-	KHR_SHADER_FLOAT16_INT8 = 1 << 17,
-	KHR_SHADER_ATOMIC_INT64 = 1 << 18,
-	KHR_SPIRV_1_4 = 1 << 19,
-	KHR_SHADER_FLOAT_CONTROLS = 1 << 20,
-	EXT_SAMPLER_FILTER_MIN_MAX = 1 << 21,
-	KHR_CREATE_RENDERPASS_2 = 1 << 22,
-	KHR_FRAGMENT_SHADING_RATE = 1 << 23,
-	EXT_ASTC_DECODE_MODE = 1 << 24,
-	EXT_TEXTURE_COMPRESSION_ASTC_HDR = 1 << 25,
-	NVX_BINARY_IMPORT = 1 << 26,
-	NVX_IMAGE_VIEW_HANDLE = 1 << 27,
-	KHR_PUSH_DESCRIPTOR = 1 << 28,
-	MAINTENANCE_4 = 1 << 29,
+	kNone = 0,
+	kKHR_xcb_surface = 1 << 1,
+	kKHR_xlib_surface = 1 << 2,
+	kKHR_win32_surface = 1 << 3,
+	kKHR_android_surface = 1 << 4,
+	kEXT_headless_surface = 1 << 5,
+	kKHR_swapchain = 1 << 6,
+	kKHR_surface = 1 << 7,
+	kEXT_debug_utils = 1 << 8,
+	kAMD_shader_info = 1 << 9,
+	kAMD_rasterization_order = 1 << 10,
+	kKHR_ray_tracing = 1 << 11,
+	kKHR_pipeline_executable_properties = 1 << 12,
+	kEXT_descriptor_indexing = 1 << 13,
+	kKHR_buffer_device_address = 1 << 14,
+	kEXT_scalar_block_layout = 1 << 15,
+	kKHR_timeline_semaphore = 1 << 16,
+	kKHR_shader_float16_int8 = 1 << 17,
+	kKHR_shader_atomic_int64 = 1 << 18,
+	kKHR_spirv_1_4 = 1 << 19,
+	kKHR_shader_float_controls = 1 << 20,
+	kKHR_sampler_filter_min_max = 1 << 21,
+	kKHR_create_renderpass_2 = 1 << 22,
+	kKHR_fragment_shading_rate = 1 << 23,
+	kEXT_astc_decode_mode = 1 << 24,
+	kEXT_texture_compression_astc_hdr = 1 << 25,
+	kNVX_binary_import = 1 << 26,
+	kNVX_image_view_handle = 1 << 27,
+	kKHR_push_descriptor = 1 << 28,
+	kKHR_maintenance_4 = 1 << 29,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VulkanExtensions)
 
 enum class VulkanQueueType : U8
 {
-	GENERAL,
-	COMPUTE,
+	kGeneral,
+	kCompute,
 
 	kCount,
 	kFirst = 0
@@ -109,25 +109,25 @@ using VulkanQueueFamilies = Array<U32, U32(VulkanQueueType::kCount)>;
 
 /// @name Constants
 /// @{
-constexpr U DESCRIPTOR_POOL_INITIAL_SIZE = 64;
-constexpr F32 DESCRIPTOR_POOL_SIZE_SCALE = 2.0f;
-constexpr U DESCRIPTOR_FRAME_BUFFERING = 60 * 5; ///< How many frames worth of descriptors to buffer.
+constexpr U32 kDescriptorPoolInitialSize = 64;
+constexpr F32 kDescriptorPoolSizeScale = 2.0f;
+constexpr U32 kDescriptorBufferedFrameCount = 60 * 5; ///< How many frames worth of descriptors to buffer.
 
 /// There is no need to ask for a fence or a semaphore to be waited for more than 10 seconds. The GPU will timeout
 /// anyway.
-constexpr Second MAX_FENCE_OR_SEMAPHORE_WAIT_TIME = 10.0;
+constexpr Second kMaxFenceOrSemaphoreWaitTime = 10.0;
 /// @}
 
 /// Some internal buffer usage flags.
 class PrivateBufferUsageBit
 {
 public:
-	static constexpr BufferUsageBit ACCELERATION_STRUCTURE_BUILD_SCRATCH = BufferUsageBit(1ull << 29ull);
-	static constexpr BufferUsageBit ACCELERATION_STRUCTURE = static_cast<BufferUsageBit>(1ull << 30ull);
+	static constexpr BufferUsageBit kAccelerationStructureBuildScratch = BufferUsageBit(1ull << 29ull);
+	static constexpr BufferUsageBit kAccelerationStructure = static_cast<BufferUsageBit>(1ull << 30ull);
 
-	static constexpr BufferUsageBit ALL_PRIVATE = ACCELERATION_STRUCTURE_BUILD_SCRATCH | ACCELERATION_STRUCTURE;
+	static constexpr BufferUsageBit kAllPrivate = kAccelerationStructureBuildScratch | kAccelerationStructure;
 };
-static_assert(!(BufferUsageBit::kAll & PrivateBufferUsageBit::ALL_PRIVATE), "Update the bits in PrivateBufferUsageBit");
+static_assert(!(BufferUsageBit::kAll & PrivateBufferUsageBit::kAllPrivate), "Update the bits in PrivateBufferUsageBit");
 
 /// Check if a vulkan function failed. It will abort on failure.
 #define ANKI_VK_CHECKF(x) \
@@ -265,31 +265,31 @@ static_assert(!(BufferUsageBit::kAll & PrivateBufferUsageBit::ALL_PRIVATE), "Upd
 	VkDescriptorType out;
 	switch(ak)
 	{
-	case DescriptorType::COMBINED_TEXTURE_SAMPLER:
+	case DescriptorType::kCombinedTextureSampler:
 		out = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		break;
-	case DescriptorType::TEXTURE:
+	case DescriptorType::kTexture:
 		out = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 		break;
-	case DescriptorType::SAMPLER:
+	case DescriptorType::kSampler:
 		out = VK_DESCRIPTOR_TYPE_SAMPLER;
 		break;
-	case DescriptorType::UNIFORM_BUFFER:
+	case DescriptorType::kUniformBuffer:
 		out = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 		break;
-	case DescriptorType::READ_TEXTURE_BUFFER:
+	case DescriptorType::kReadTextureBuffer:
 		out = VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER;
 		break;
-	case DescriptorType::READ_WRITE_TEXTURE_BUFFER:
+	case DescriptorType::kReadWriteTextureBuffer:
 		out = VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER;
 		break;
-	case DescriptorType::STORAGE_BUFFER:
+	case DescriptorType::kStorageBuffer:
 		out = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
 		break;
-	case DescriptorType::IMAGE:
+	case DescriptorType::kImage:
 		out = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 		break;
-	case DescriptorType::ACCELERATION_STRUCTURE:
+	case DescriptorType::kAccelerationStructure:
 		out = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
 		break;
 	default:

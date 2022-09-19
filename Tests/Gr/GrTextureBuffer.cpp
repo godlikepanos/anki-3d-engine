@@ -56,7 +56,7 @@ void main()
 		BufferPtr storageBuff = gr->newBuffer(buffInit);
 
 		CommandBufferInitInfo cmdbInit;
-		cmdbInit.m_flags = CommandBufferFlag::SMALL_BATCH | CommandBufferFlag::GENERAL_WORK;
+		cmdbInit.m_flags = CommandBufferFlag::kSmallBatch | CommandBufferFlag::kGeneralWork;
 		CommandBufferPtr cmdb = gr->newCommandBuffer(cmdbInit);
 
 		cmdb->bindReadOnlyTextureBuffer(0, 0, texBuff, 0, kMaxPtrSize, Format::kR8G8B8A8_Snorm);

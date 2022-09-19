@@ -33,7 +33,7 @@ inline TexturePtr RenderPassWorkContext::getTexture(RenderTargetHandle handle) c
 
 inline void RenderPassDescriptionBase::fixSubresource(RenderPassDependency& dep) const
 {
-	ANKI_ASSERT(dep.m_type == RenderPassDependency::Type::TEXTURE);
+	ANKI_ASSERT(dep.m_type == RenderPassDependency::Type::kTexture);
 
 	TextureSubresourceInfo& subresource = dep.m_texture.m_subresource;
 	const Bool wholeTexture = subresource.m_mipmapCount == kMaxU32;
@@ -65,10 +65,10 @@ inline void RenderPassDescriptionBase::fixSubresource(RenderPassDependency& dep)
 inline void RenderPassDescriptionBase::validateDep(const RenderPassDependency& dep)
 {
 	// Validate dep
-	if(dep.m_type == RenderPassDependency::Type::TEXTURE)
+	if(dep.m_type == RenderPassDependency::Type::kTexture)
 	{
 		[[maybe_unused]] const TextureUsageBit usage = dep.m_texture.m_usage;
-		if(m_type == Type::GRAPHICS)
+		if(m_type == Type::kGraphics)
 		{
 			ANKI_ASSERT(!(usage & TextureUsageBit::kAllCompute));
 		}
@@ -79,10 +79,10 @@ inline void RenderPassDescriptionBase::validateDep(const RenderPassDependency& d
 
 		ANKI_ASSERT(!!(usage & TextureUsageBit::kAllRead) || !!(usage & TextureUsageBit::kAllWrite));
 	}
-	else if(dep.m_type == RenderPassDependency::Type::BUFFER)
+	else if(dep.m_type == RenderPassDependency::Type::kBuffer)
 	{
 		[[maybe_unused]] const BufferUsageBit usage = dep.m_buffer.m_usage;
-		if(m_type == Type::GRAPHICS)
+		if(m_type == Type::kGraphics)
 		{
 			ANKI_ASSERT(!(usage & BufferUsageBit::kAllCompute));
 		}
@@ -95,8 +95,8 @@ inline void RenderPassDescriptionBase::validateDep(const RenderPassDependency& d
 	}
 	else
 	{
-		ANKI_ASSERT(dep.m_type == RenderPassDependency::Type::ACCELERATION_STRUCTURE);
-		if(m_type == Type::GRAPHICS)
+		ANKI_ASSERT(dep.m_type == RenderPassDependency::Type::kAccelerationStructure);
+		if(m_type == Type::kGraphics)
 		{
 			ANKI_ASSERT(!(dep.m_as.m_usage & ~AccelerationStructureUsageBit::kAllGraphics));
 		}
@@ -111,7 +111,7 @@ inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency&
 {
 	validateDep(dep);
 
-	if(dep.m_type == RenderPassDependency::Type::TEXTURE)
+	if(dep.m_type == RenderPassDependency::Type::kTexture)
 	{
 		m_rtDeps.emplaceBack(m_alloc, dep);
 		fixSubresource(m_rtDeps.getBack());
@@ -129,7 +129,7 @@ inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency&
 		// Try to derive the usage by that dep
 		m_descr->m_renderTargets[dep.m_texture.m_handle.m_idx].m_usageDerivedByDeps |= dep.m_texture.m_usage;
 	}
-	else if(dep.m_type == RenderPassDependency::Type::BUFFER)
+	else if(dep.m_type == RenderPassDependency::Type::kBuffer)
 	{
 		m_buffDeps.emplaceBack(m_alloc, dep);
 
@@ -145,7 +145,7 @@ inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency&
 	}
 	else
 	{
-		ANKI_ASSERT(dep.m_type == RenderPassDependency::Type::ACCELERATION_STRUCTURE);
+		ANKI_ASSERT(dep.m_type == RenderPassDependency::Type::kAccelerationStructure);
 		m_asDeps.emplaceBack(m_alloc, dep);
 
 		if(!!(dep.m_as.m_usage & AccelerationStructureUsageBit::kAllRead))
@@ -165,7 +165,7 @@ inline void GraphicsRenderPassDescription::setFramebufferInfo(
 	RenderTargetHandle depthStencilRenderTargetHandle, RenderTargetHandle shadingRateRenderTargetHandle, U32 minx,
 	U32 miny, U32 maxx, U32 maxy)
 {
-	Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS> rts;
+	Array<RenderTargetHandle, kMaxColorRenderTargets> rts;
 	U32 count = 0;
 	for(const RenderTargetHandle& h : colorRenderTargetHandles)
 	{
@@ -215,8 +215,8 @@ inline void GraphicsRenderPassDescription::setFramebufferInfo(
 
 	m_fbDescr = fbInfo;
 	memcpy(m_rtHandles.getBegin(), colorRenderTargetHandles.getBegin(), colorRenderTargetHandles.getSizeInBytes());
-	m_rtHandles[MAX_COLOR_ATTACHMENTS] = depthStencilRenderTargetHandle;
-	m_rtHandles[MAX_COLOR_ATTACHMENTS + 1] = shadingRateRenderTargetHandle;
+	m_rtHandles[kMaxColorRenderTargets] = depthStencilRenderTargetHandle;
+	m_rtHandles[kMaxColorRenderTargets + 1] = shadingRateRenderTargetHandle;
 	m_fbRenderArea = {minx, miny, maxx, maxy};
 }
 

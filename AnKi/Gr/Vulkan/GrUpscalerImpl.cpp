@@ -22,7 +22,7 @@ namespace anki {
 GrUpscalerImpl::~GrUpscalerImpl()
 {
 #if ANKI_DLSS
-	if(m_upscalerType == GrUpscalerType::DLSS_2)
+	if(m_upscalerType == GrUpscalerType::kDlss2)
 	{
 		destroyDlss();
 	}
@@ -34,7 +34,7 @@ Error GrUpscalerImpl::initInternal(const GrUpscalerInitInfo& initInfo)
 	m_upscalerType = initInfo.m_upscalerType;
 
 #if ANKI_DLSS
-	ANKI_ASSERT(initInfo.m_upscalerType == GrUpscalerType::DLSS_2);
+	ANKI_ASSERT(initInfo.m_upscalerType == GrUpscalerType::kDlss2);
 	ANKI_CHECK(initDlss(initInfo));
 #else
 	ANKI_ASSERT(!"Not supported");
@@ -59,7 +59,7 @@ Error GrUpscalerImpl::initInternal(const GrUpscalerInitInfo& initInfo)
 
 static NVSDK_NGX_PerfQuality_Value getDlssQualityModeToNVQualityMode(GrUpscalerQualityMode mode)
 {
-	static Array<NVSDK_NGX_PerfQuality_Value, U32(GrUpscalerQualityMode::COUNT)> nvQualityModes = {
+	static Array<NVSDK_NGX_PerfQuality_Value, U32(GrUpscalerQualityMode::kCount)> nvQualityModes = {
 		NVSDK_NGX_PerfQuality_Value_MaxPerf, NVSDK_NGX_PerfQuality_Value_Balanced,
 		NVSDK_NGX_PerfQuality_Value_MaxQuality};
 
@@ -79,9 +79,9 @@ Error GrUpscalerImpl::initDlss(const GrUpscalerInitInfo& initInfo)
 	ANKI_NGX_CHECK(NVSDK_NGX_VULKAN_GetCapabilityParameters(&m_ngxParameters));
 	ANKI_ASSERT(m_ngxParameters);
 
-	// Currently, the SDK and this sample are not in sync.  The sample is a bit forward looking,
-	// in this case.  This will likely be resolved very shortly, and therefore, the code below
-	// should be thought of as needed for a smooth user experience.
+	// Currently, the SDK and this sample are not in sync.  The sample is a bit forward looking, in this case. This will
+	// likely be resolved very shortly, and therefore, the code below should be thought of as needed for a smooth user
+	// experience.
 #	if defined(NVSDK_NGX_Parameter_SuperSampling_NeedsUpdatedDriver) \
 		&& defined(NVSDK_NGX_Parameter_SuperSampling_MinDriverVersionMajor) \
 		&& defined(NVSDK_NGX_Parameter_SuperSampling_MinDriverVersionMinor)
@@ -137,7 +137,7 @@ Error GrUpscalerImpl::createDlssFeature(const UVec2& srcRes, const UVec2& dstRes
 
 	// Create the feature with a tmp CmdBuffer
 	CommandBufferInitInfo cmdbinit;
-	cmdbinit.m_flags = CommandBufferFlag::GENERAL_WORK | CommandBufferFlag::SMALL_BATCH;
+	cmdbinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
 	CommandBufferPtr cmdb = getManager().newCommandBuffer(cmdbinit);
 	CommandBufferImpl& cmdbImpl = static_cast<CommandBufferImpl&>(*cmdb);
 

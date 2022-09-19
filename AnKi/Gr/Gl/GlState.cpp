@@ -108,7 +108,7 @@ void GlState::initRenderThread()
 		m_gpu = GpuVendor::INTEL;
 	}
 
-	ANKI_GL_LOGI("GPU vendor is %s", &GPU_VENDOR_STR[m_gpu][0]);
+	ANKI_GL_LOGI("GPU vendor is %s", &kGPUVendorStrings[m_gpu][0]);
 
 // Enable debug messages
 #if ANKI_GL == ANKI_GL_DESKTOP
@@ -142,7 +142,7 @@ void GlState::initRenderThread()
 	glBindVertexArray(m_defaultVao);
 
 	// Enable all attributes
-	for(U i = 0; i < MAX_VERTEX_ATTRIBUTES; ++i)
+	for(U i = 0; i < kMaxVertexAttributes; ++i)
 	{
 		glEnableVertexAttribArray(i);
 	}
@@ -166,12 +166,12 @@ void GlState::initRenderThread()
 	m_tboMaxRange = kMaxU32;
 
 	// Texture buffer textures
-	glGenTextures(MAX_DESCRIPTOR_SETS * MAX_TEXTURE_BUFFER_BINDINGS, &m_texBuffTextures[0][0]);
-	for(U i = 0; i < MAX_DESCRIPTOR_SETS; ++i)
+	glGenTextures(kMaxDescriptorSets * MAX_TEXTURE_BUFFER_BINDINGS, &m_texBuffTextures[0][0]);
+	for(U i = 0; i < kMaxDescriptorSets; ++i)
 	{
 		for(U j = 0; j < MAX_TEXTURE_BUFFER_BINDINGS; ++j)
 		{
-			U unit = MAX_TEXTURE_BINDINGS * MAX_DESCRIPTOR_SETS + MAX_TEXTURE_BUFFER_BINDINGS * i + j;
+			U unit = MAX_TEXTURE_BINDINGS * kMaxDescriptorSets + MAX_TEXTURE_BUFFER_BINDINGS * i + j;
 			glActiveTexture(GL_TEXTURE0 + unit);
 
 			glBindTexture(GL_TEXTURE_BUFFER, m_texBuffTextures[i][j]);

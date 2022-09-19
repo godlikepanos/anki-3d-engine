@@ -832,7 +832,7 @@ void CommandBuffer::bindShaderProgram(ShaderProgramPtr prog)
 }
 
 void CommandBuffer::beginRenderPass(FramebufferPtr fb,
-									const Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS>& colorAttachmentUsages,
+									const Array<TextureUsageBit, kMaxColorRenderTargets>& colorAttachmentUsages,
 									TextureUsageBit depthStencilAttachmentUsage, U32 minx, U32 miny, U32 width,
 									U32 height)
 {
@@ -1085,7 +1085,7 @@ void CommandBuffer::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupC
 
 	ANKI_GL_SELF(CommandBufferImpl);
 
-	ANKI_ASSERT(!!(self.m_flags & CommandBufferFlag::COMPUTE_WORK));
+	ANKI_ASSERT(!!(self.m_flags & CommandBufferFlag::kComputeWork));
 	self.m_state.checkDispatch();
 	self.pushBackNewCommand<DispatchCommand>(groupCountX, groupCountY, groupCountZ);
 }

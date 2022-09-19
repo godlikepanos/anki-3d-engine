@@ -246,7 +246,7 @@ void CommandBuffer::bindShaderProgram(const ShaderProgramPtr& prog)
 }
 
 void CommandBuffer::beginRenderPass(const FramebufferPtr& fb,
-									const Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS>& colorAttachmentUsages,
+									const Array<TextureUsageBit, kMaxColorRenderTargets>& colorAttachmentUsages,
 									TextureUsageBit depthStencilAttachmentUsage, U32 minx, U32 miny, U32 width,
 									U32 height)
 {

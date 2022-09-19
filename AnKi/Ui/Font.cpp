@@ -95,7 +95,7 @@ void Font::createTexture(const void* data, U32 width, U32 height)
 	// Do the copy
 	constexpr TextureSurfaceInfo surf(0, 0, 0, 0);
 	CommandBufferInitInfo cmdbInit;
-	cmdbInit.m_flags = CommandBufferFlag::GENERAL_WORK | CommandBufferFlag::SMALL_BATCH;
+	cmdbInit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
 	CommandBufferPtr cmdb = m_manager->getGrManager().newCommandBuffer(cmdbInit);
 
 	TextureViewInitInfo viewInit(m_tex, surf, DepthStencilAspectBit::kNone, "TempFont");

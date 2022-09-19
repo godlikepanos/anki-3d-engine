@@ -50,7 +50,7 @@ public:
 
 	void setFence(MicroFencePtr& fence)
 	{
-		ANKI_ASSERT(!(m_flags & CommandBufferFlag::SECOND_LEVEL));
+		ANKI_ASSERT(!(m_flags & CommandBufferFlag::kSecondLevel));
 		ANKI_ASSERT(!m_fence.isCreated());
 		m_fence = fence;
 	}
@@ -82,13 +82,13 @@ public:
 	template<typename T>
 	void pushObjectRef(const GrObjectPtrT<T>& x)
 	{
-		pushToArray(m_objectRefs[T::CLASS_TYPE], x.get());
+		pushToArray(m_objectRefs[T::kClassType], x.get());
 	}
 
 	template<typename T>
 	void pushObjectRef(T* x)
 	{
-		pushToArray(m_objectRefs[T::CLASS_TYPE], x);
+		pushToArray(m_objectRefs[T::kClassType], x);
 	}
 
 	CommandBufferFlag getFlags() const
@@ -103,7 +103,7 @@ public:
 	}
 
 private:
-	static constexpr U32 MAX_REF_OBJECT_SEARCH = 16;
+	static constexpr U32 kMaxRefObjectSearch = 16;
 
 	StackAllocator<U8> m_fastAlloc;
 	VkCommandBuffer m_handle = {};
@@ -115,7 +115,7 @@ private:
 
 	CommandBufferThreadAllocator* m_threadAlloc;
 	mutable Atomic<I32> m_refcount = {0};
-	CommandBufferFlag m_flags = CommandBufferFlag::NONE;
+	CommandBufferFlag m_flags = CommandBufferFlag::kNone;
 	VulkanQueueType m_queue = VulkanQueueType::kCount;
 
 	void reset();
@@ -125,9 +125,9 @@ private:
 		ANKI_ASSERT(grobj);
 
 		// Search the temp cache to avoid setting the ref again
-		if(arr.getSize() >= MAX_REF_OBJECT_SEARCH)
+		if(arr.getSize() >= kMaxRefObjectSearch)
 		{
-			for(U32 i = arr.getSize() - MAX_REF_OBJECT_SEARCH; i < arr.getSize(); ++i)
+			for(U32 i = arr.getSize() - kMaxRefObjectSearch; i < arr.getSize(); ++i)
 			{
 				if(arr[i].get() == grobj)
 				{

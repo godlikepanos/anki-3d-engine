@@ -45,8 +45,8 @@ private:
 	FramebufferInitInfo m_in;
 
 	Array<U32, 2> m_fbSize = {};
-	Array<GLenum, MAX_COLOR_ATTACHMENTS> m_drawBuffers;
-	Array<GLenum, MAX_COLOR_ATTACHMENTS + 1> m_invalidateBuffers;
+	Array<GLenum, kMaxColorRenderTargets> m_drawBuffers;
+	Array<GLenum, kMaxColorRenderTargets + 1> m_invalidateBuffers;
 	U8 m_invalidateBuffersCount = 0;
 	Bool m_clearDepth = false;
 	Bool m_clearStencil = false;
@@ -56,7 +56,8 @@ private:
 									  const FramebufferAttachmentInfo& info);
 
 	/// Create the FBO
-	ANKI_USE_RESULT Error createFbo(const Array<U, MAX_COLOR_ATTACHMENTS + 1>& layers, GLenum depthStencilBindingPoint);
+	ANKI_USE_RESULT Error createFbo(const Array<U, kMaxColorRenderTargets + 1>& layers,
+									GLenum depthStencilBindingPoint);
 };
 /// @}
 

@@ -191,7 +191,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	}
 
 	// Create RTs
-	Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS> rts;
+	Array<RenderTargetHandle, kMaxColorRenderTargets> rts;
 	for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 	{
 		m_runCtx.m_colorRts[i] = rgraph.newRenderTarget(m_colorRtDescrs[i]);

@@ -169,7 +169,7 @@ Error TextureImpl::initInternal(VkImage externalImage, const TextureInitInfo& in
 	m_viewCreateInfoTemplate.subresourceRange.layerCount = VK_REMAINING_ARRAY_LAYERS;
 	m_viewCreateInfoTemplate.subresourceRange.levelCount = VK_REMAINING_MIP_LEVELS;
 
-	if(!!(getGrManagerImpl().getExtensions() & VulkanExtensions::EXT_ASTC_DECODE_MODE) && isAstcLdrFormat(m_vkFormat)
+	if(!!(getGrManagerImpl().getExtensions() & VulkanExtensions::kEXT_astc_decode_mode) && isAstcLdrFormat(m_vkFormat)
 	   && !isAstcSrgbFormat(m_vkFormat))
 	{
 		m_astcDecodeMode = {};

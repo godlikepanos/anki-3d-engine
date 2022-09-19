@@ -565,7 +565,7 @@ Error SpirvReflector::blockReflection(const spirv_cross::Resource& res, [[maybe_
 	if(!isPushConstant)
 	{
 		newBlock.m_set = get_decoration(res.id, spv::DecorationDescriptorSet);
-		if(newBlock.m_set >= MAX_DESCRIPTOR_SETS)
+		if(newBlock.m_set >= kMaxDescriptorSets)
 		{
 			ANKI_SHADER_COMPILER_LOGE("Too high descriptor set: %u", newBlock.m_set);
 			return Error::kUserData;
@@ -692,7 +692,7 @@ Error SpirvReflector::opaqueReflection(const spirv_cross::Resource& res, Dynamic
 
 	// Set
 	newOpaque.m_set = get_decoration(res.id, spv::DecorationDescriptorSet);
-	if(newOpaque.m_set >= MAX_DESCRIPTOR_SETS)
+	if(newOpaque.m_set >= kMaxDescriptorSets)
 	{
 		ANKI_SHADER_COMPILER_LOGE("Too high descriptor set: %u", newOpaque.m_set);
 		return Error::kUserData;

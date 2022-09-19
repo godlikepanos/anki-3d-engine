@@ -47,7 +47,7 @@ public:
 		PtrSize m_relativeOffset = kMaxPtrSize;
 	};
 
-	Array<VertexAttribute, MAX_VERTEX_ATTRIBUTES> m_attribs;
+	Array<VertexAttribute, kMaxVertexAttributes> m_attribs;
 
 	Bool setVertexAttribute(U32 location, U32 buffBinding, Format fmt, PtrSize relativeOffset)
 	{
@@ -72,7 +72,7 @@ public:
 		VertexStepRate m_stepRate = VertexStepRate::COUNT;
 	};
 
-	Array<VertexBuffer, MAX_VERTEX_ATTRIBUTES> m_vertBuffs;
+	Array<VertexBuffer, kMaxVertexAttributes> m_vertBuffs;
 
 	Bool bindVertexBuffer(U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride, VertexStepRate stepRate)
 	{
@@ -380,7 +380,7 @@ public:
 		BlendOperation m_blendOpA = BlendOperation::COUNT;
 	};
 
-	Array<ColorAttachment, MAX_COLOR_ATTACHMENTS> m_colorAtt;
+	Array<ColorAttachment, kMaxColorRenderTargets> m_colorAtt;
 
 	Bool setColorChannelWriteMask(U32 attachment, ColorBit mask)
 	{
@@ -444,7 +444,7 @@ public:
 		U64 m_samplerUuid = 0;
 	};
 
-	Array2d<TextureBinding, MAX_DESCRIPTOR_SETS, MAX_TEXTURE_BINDINGS> m_textures;
+	Array2d<TextureBinding, kMaxDescriptorSets, MAX_TEXTURE_BINDINGS> m_textures;
 
 	Bool bindTextureViewAndSampler(U32 set, U32 binding, const TextureViewPtr& texView, const SamplerPtr& sampler)
 	{
@@ -473,7 +473,7 @@ public:
 		PtrSize m_range;
 	};
 
-	Array2d<ShaderBufferBinding, MAX_DESCRIPTOR_SETS, MAX_UNIFORM_BUFFER_BINDINGS> m_ubos;
+	Array2d<ShaderBufferBinding, kMaxDescriptorSets, MAX_UNIFORM_BUFFER_BINDINGS> m_ubos;
 
 	Bool bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)
 	{
@@ -484,7 +484,7 @@ public:
 		return true;
 	}
 
-	Array2d<ShaderBufferBinding, MAX_DESCRIPTOR_SETS, MAX_STORAGE_BUFFER_BINDINGS> m_ssbos;
+	Array2d<ShaderBufferBinding, kMaxDescriptorSets, MAX_STORAGE_BUFFER_BINDINGS> m_ssbos;
 
 	Bool bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)
 	{
@@ -501,7 +501,7 @@ public:
 		U64 m_texViewUuid = 0;
 	};
 
-	Array2d<ImageBinding, MAX_DESCRIPTOR_SETS, MAX_IMAGE_BINDINGS> m_images;
+	Array2d<ImageBinding, kMaxDescriptorSets, MAX_IMAGE_BINDINGS> m_images;
 
 	Bool bindImage(U32 set, U32 binding, const TextureViewPtr& img)
 	{

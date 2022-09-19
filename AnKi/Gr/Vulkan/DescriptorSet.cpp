@@ -102,7 +102,7 @@ public:
 	Error init();
 	Error createNewPool();
 
-	Error getOrCreateSet(U64 hash, const Array<AnyBindingExtended, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings,
+	Error getOrCreateSet(U64 hash, const Array<AnyBindingExtended, kMaxBindingsPerDescriptorSet>& bindings,
 						 StackAllocator<U8>& tmpAlloc, const DS*& out)
 	{
 		out = tryFindSet(hash);
@@ -125,9 +125,9 @@ private:
 	HashMap<U64, DS*> m_hashmap;
 
 	[[nodiscard]] const DS* tryFindSet(U64 hash);
-	Error newSet(U64 hash, const Array<AnyBindingExtended, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings,
+	Error newSet(U64 hash, const Array<AnyBindingExtended, kMaxBindingsPerDescriptorSet>& bindings,
 				 StackAllocator<U8>& tmpAlloc, const DS*& out);
-	void writeSet(const Array<AnyBindingExtended, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings, const DS& set,
+	void writeSet(const Array<AnyBindingExtended, kMaxBindingsPerDescriptorSet>& bindings, const DS& set,
 				  StackAllocator<U8>& tmpAlloc);
 };
 
@@ -145,15 +145,15 @@ public:
 
 	U64 m_hash = 0; ///< Layout hash.
 	VkDescriptorSetLayout m_layoutHandle = {};
-	BitSet<MAX_BINDINGS_PER_DESCRIPTOR_SET, U32> m_activeBindings = {false};
-	Array<U32, MAX_BINDINGS_PER_DESCRIPTOR_SET> m_bindingArraySize = {};
-	Array<DescriptorType, MAX_BINDINGS_PER_DESCRIPTOR_SET> m_bindingType = {};
+	BitSet<kMaxBindingsPerDescriptorSet, U32> m_activeBindings = {false};
+	Array<U32, kMaxBindingsPerDescriptorSet> m_bindingArraySize = {};
+	Array<DescriptorType, kMaxBindingsPerDescriptorSet> m_bindingType = {};
 	U32 m_minBinding = kMaxU32;
 	U32 m_maxBinding = 0;
 	U32 m_index = 0; ///< Index in DescriptorSetFactory::m_caches
 
 	// Cache the create info
-	Array<VkDescriptorPoolSize, U(DescriptorType::COUNT)> m_poolSizesCreateInf = {};
+	Array<VkDescriptorPoolSize, U(DescriptorType::kCount)> m_poolSizesCreateInf = {};
 	VkDescriptorPoolCreateInfo m_poolCreateInf = {};
 
 	DSLayoutCacheEntry(DescriptorSetFactory* factory, U32 index)
@@ -394,12 +394,12 @@ Error DescriptorSetFactory::DSAllocator::init()
 
 Error DescriptorSetFactory::DSAllocator::createNewPool()
 {
-	m_lastPoolDSCount = (m_lastPoolDSCount != 0) ? U32(F32(m_lastPoolDSCount) * DESCRIPTOR_POOL_SIZE_SCALE)
-												 : DESCRIPTOR_POOL_INITIAL_SIZE;
+	m_lastPoolDSCount =
+		(m_lastPoolDSCount != 0) ? U32(F32(m_lastPoolDSCount) * kDescriptorPoolSizeScale) : kDescriptorPoolInitialSize;
 	m_lastPoolFreeDSCount = m_lastPoolDSCount;
 
 	// Set the create info
-	Array<VkDescriptorPoolSize, U(DescriptorType::COUNT)> poolSizes;
+	Array<VkDescriptorPoolSize, U(DescriptorType::kCount)> poolSizes;
 	memcpy(&poolSizes[0], &m_layoutEntry->m_poolSizesCreateInf[0],
 		   sizeof(poolSizes[0]) * m_layoutEntry->m_poolCreateInf.poolSizeCount);
 
@@ -447,9 +447,9 @@ const DS* DescriptorSetFactory::DSAllocator::tryFindSet(U64 hash)
 	}
 }
 
-Error DescriptorSetFactory::DSAllocator::newSet(
-	U64 hash, const Array<AnyBindingExtended, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings, StackAllocator<U8>& tmpAlloc,
-	const DS*& out_)
+Error DescriptorSetFactory::DSAllocator::newSet(U64 hash,
+												const Array<AnyBindingExtended, kMaxBindingsPerDescriptorSet>& bindings,
+												StackAllocator<U8>& tmpAlloc, const DS*& out_)
 {
 	DS* out = nullptr;
 
@@ -461,7 +461,7 @@ Error DescriptorSetFactory::DSAllocator::newSet(
 	{
 		DS* set = &(*it);
 		U64 frameDiff = crntFrame - set->m_lastFrameUsed;
-		if(frameDiff > DESCRIPTOR_FRAME_BUFFERING)
+		if(frameDiff > kDescriptorBufferedFrameCount)
 		{
 			// Found something, recycle
 			auto it2 = m_hashmap.find(set->m_hash);
@@ -520,7 +520,7 @@ Error DescriptorSetFactory::DSAllocator::newSet(
 }
 
 void DescriptorSetFactory::DSAllocator::writeSet(
-	const Array<AnyBindingExtended, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings, const DS& set,
+	const Array<AnyBindingExtended, kMaxBindingsPerDescriptorSet>& bindings, const DS& set,
 	StackAllocator<U8>& tmpAlloc)
 {
 	DynamicArrayAuto<VkWriteDescriptorSet> writeInfos(tmpAlloc);
@@ -542,7 +542,7 @@ void DescriptorSetFactory::DSAllocator::writeSet(
 
 				switch(b.m_type)
 				{
-				case DescriptorType::COMBINED_TEXTURE_SAMPLER:
+				case DescriptorType::kCombinedTextureSampler:
 				{
 					VkDescriptorImageInfo& info = *texInfos.emplaceBack();
 					info.sampler = b.m_texAndSampler.m_samplerHandle;
@@ -550,7 +550,7 @@ void DescriptorSetFactory::DSAllocator::writeSet(
 					info.imageLayout = b.m_texAndSampler.m_layout;
 					break;
 				}
-				case DescriptorType::TEXTURE:
+				case DescriptorType::kTexture:
 				{
 					VkDescriptorImageInfo& info = *texInfos.emplaceBack();
 					info.sampler = VK_NULL_HANDLE;
@@ -558,7 +558,7 @@ void DescriptorSetFactory::DSAllocator::writeSet(
 					info.imageLayout = b.m_tex.m_layout;
 					break;
 				}
-				case DescriptorType::SAMPLER:
+				case DescriptorType::kSampler:
 				{
 					VkDescriptorImageInfo& info = *texInfos.emplaceBack();
 					info.sampler = b.m_sampler.m_samplerHandle;
@@ -566,8 +566,8 @@ void DescriptorSetFactory::DSAllocator::writeSet(
 					info.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 					break;
 				}
-				case DescriptorType::UNIFORM_BUFFER:
-				case DescriptorType::STORAGE_BUFFER:
+				case DescriptorType::kUniformBuffer:
+				case DescriptorType::kStorageBuffer:
 				{
 					VkDescriptorBufferInfo& info = *buffInfos.emplaceBack();
 					info.buffer = b.m_buff.m_buffHandle;
@@ -575,14 +575,14 @@ void DescriptorSetFactory::DSAllocator::writeSet(
 					info.range = (b.m_buff.m_range == kMaxPtrSize) ? VK_WHOLE_SIZE : b.m_buff.m_range;
 					break;
 				}
-				case DescriptorType::READ_TEXTURE_BUFFER:
-				case DescriptorType::READ_WRITE_TEXTURE_BUFFER:
+				case DescriptorType::kReadTextureBuffer:
+				case DescriptorType::kReadWriteTextureBuffer:
 				{
 					VkBufferView& view = *bufferViews.emplaceBack();
 					view = b.m_textureBuffer.m_buffView;
 					break;
 				}
-				case DescriptorType::IMAGE:
+				case DescriptorType::kImage:
 				{
 					VkDescriptorImageInfo& info = *texInfos.emplaceBack();
 					info.sampler = VK_NULL_HANDLE;
@@ -590,7 +590,7 @@ void DescriptorSetFactory::DSAllocator::writeSet(
 					info.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 					break;
 				}
-				case DescriptorType::ACCELERATION_STRUCTURE:
+				case DescriptorType::kAccelerationStructure:
 				{
 					VkWriteDescriptorSetAccelerationStructureKHR& info = *asInfos.emplaceBack();
 					info.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
@@ -634,21 +634,21 @@ void DescriptorSetFactory::DSAllocator::writeSet(
 
 				switch(b.m_type)
 				{
-				case DescriptorType::COMBINED_TEXTURE_SAMPLER:
-				case DescriptorType::TEXTURE:
-				case DescriptorType::SAMPLER:
-				case DescriptorType::IMAGE:
+				case DescriptorType::kCombinedTextureSampler:
+				case DescriptorType::kTexture:
+				case DescriptorType::kSampler:
+				case DescriptorType::kImage:
 					writeInfo.pImageInfo = &texInfos[texCounter++];
 					break;
-				case DescriptorType::UNIFORM_BUFFER:
-				case DescriptorType::STORAGE_BUFFER:
+				case DescriptorType::kUniformBuffer:
+				case DescriptorType::kStorageBuffer:
 					writeInfo.pBufferInfo = &buffInfos[buffCounter++];
 					break;
-				case DescriptorType::READ_TEXTURE_BUFFER:
-				case DescriptorType::READ_WRITE_TEXTURE_BUFFER:
+				case DescriptorType::kReadTextureBuffer:
+				case DescriptorType::kReadWriteTextureBuffer:
 					writeInfo.pTexelBufferView = &bufferViews[buffViewsCounter++];
 					break;
-				case DescriptorType::ACCELERATION_STRUCTURE:
+				case DescriptorType::kAccelerationStructure:
 					writeInfo.pNext = &asInfos[asCounter++];
 					break;
 				default:
@@ -681,7 +681,7 @@ Error DSLayoutCacheEntry::init(const DescriptorBinding* bindings, U32 bindingCou
 	m_hash = hash;
 
 	// Create the VK layout
-	Array<VkDescriptorSetLayoutBinding, MAX_BINDINGS_PER_DESCRIPTOR_SET> vkBindings;
+	Array<VkDescriptorSetLayoutBinding, kMaxBindingsPerDescriptorSet> vkBindings;
 	VkDescriptorSetLayoutCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 
@@ -788,7 +788,7 @@ Error DSLayoutCacheEntry::getOrCreateDSAllocator(DescriptorSetFactory::DSAllocat
 
 AnyBinding& DescriptorSetState::getBindingToPopulate(U32 bindingIdx, U32 arrayIdx)
 {
-	ANKI_ASSERT(bindingIdx < MAX_BINDINGS_PER_DESCRIPTOR_SET);
+	ANKI_ASSERT(bindingIdx < kMaxBindingsPerDescriptorSet);
 
 	AnyBindingExtended& extended = m_bindings[bindingIdx];
 	AnyBinding* out;
@@ -836,7 +836,7 @@ AnyBinding& DescriptorSetState::getBindingToPopulate(U32 bindingIdx, U32 arrayId
 	return *out;
 }
 
-void DescriptorSetState::flush(U64& hash, Array<PtrSize, MAX_BINDINGS_PER_DESCRIPTOR_SET>& dynamicOffsets,
+void DescriptorSetState::flush(U64& hash, Array<PtrSize, kMaxBindingsPerDescriptorSet>& dynamicOffsets,
 							   U32& dynamicOffsetCount, Bool& bindlessDSet)
 {
 	// Set some values
@@ -867,7 +867,7 @@ void DescriptorSetState::flush(U64& hash, Array<PtrSize, MAX_BINDINGS_PER_DESCRI
 		Bool dynamicOffsetsDirty = false;
 
 		// Compute the hash
-		Array<U64, MAX_BINDINGS_PER_DESCRIPTOR_SET * 2 * 2> toHash;
+		Array<U64, kMaxBindingsPerDescriptorSet * 2 * 2> toHash;
 		U toHashCount = 0;
 
 		const U minBinding = entry.m_minBinding;
@@ -899,46 +899,46 @@ void DescriptorSetState::flush(U64& hash, Array<PtrSize, MAX_BINDINGS_PER_DESCRI
 
 					switch(entry.m_bindingType[i])
 					{
-					case DescriptorType::COMBINED_TEXTURE_SAMPLER:
-						ANKI_ASSERT(anyBinding.m_type == DescriptorType::COMBINED_TEXTURE_SAMPLER
+					case DescriptorType::kCombinedTextureSampler:
+						ANKI_ASSERT(anyBinding.m_type == DescriptorType::kCombinedTextureSampler
 									&& "Have bound the wrong type");
 						toHash[toHashCount++] = anyBinding.m_uuids[1];
 						toHash[toHashCount++] = U64(anyBinding.m_texAndSampler.m_layout);
 						break;
-					case DescriptorType::TEXTURE:
-						ANKI_ASSERT(anyBinding.m_type == DescriptorType::TEXTURE && "Have bound the wrong type");
+					case DescriptorType::kTexture:
+						ANKI_ASSERT(anyBinding.m_type == DescriptorType::kTexture && "Have bound the wrong type");
 						toHash[toHashCount++] = U64(anyBinding.m_tex.m_layout);
 						break;
-					case DescriptorType::SAMPLER:
-						ANKI_ASSERT(anyBinding.m_type == DescriptorType::SAMPLER && "Have bound the wrong type");
+					case DescriptorType::kSampler:
+						ANKI_ASSERT(anyBinding.m_type == DescriptorType::kSampler && "Have bound the wrong type");
 						break;
-					case DescriptorType::UNIFORM_BUFFER:
-						ANKI_ASSERT(anyBinding.m_type == DescriptorType::UNIFORM_BUFFER && "Have bound the wrong type");
+					case DescriptorType::kUniformBuffer:
+						ANKI_ASSERT(anyBinding.m_type == DescriptorType::kUniformBuffer && "Have bound the wrong type");
 						toHash[toHashCount++] = anyBinding.m_buff.m_range;
 						dynamicOffsets[dynamicOffsetCount++] = anyBinding.m_buff.m_offset;
 						dynamicOffsetsDirty = dynamicOffsetsDirty || crntBindingDirty;
 						break;
-					case DescriptorType::STORAGE_BUFFER:
-						ANKI_ASSERT(anyBinding.m_type == DescriptorType::STORAGE_BUFFER && "Have bound the wrong type");
+					case DescriptorType::kStorageBuffer:
+						ANKI_ASSERT(anyBinding.m_type == DescriptorType::kStorageBuffer && "Have bound the wrong type");
 						toHash[toHashCount++] = anyBinding.m_buff.m_range;
 						dynamicOffsets[dynamicOffsetCount++] = anyBinding.m_buff.m_offset;
 						dynamicOffsetsDirty = dynamicOffsetsDirty || crntBindingDirty;
 						break;
-					case DescriptorType::READ_TEXTURE_BUFFER:
-						ANKI_ASSERT(anyBinding.m_type == DescriptorType::READ_TEXTURE_BUFFER
+					case DescriptorType::kReadTextureBuffer:
+						ANKI_ASSERT(anyBinding.m_type == DescriptorType::kReadTextureBuffer
 									&& "Have bound the wrong type");
 						toHash[toHashCount++] = anyBinding.m_uuids[1];
 						break;
-					case DescriptorType::READ_WRITE_TEXTURE_BUFFER:
-						ANKI_ASSERT(anyBinding.m_type == DescriptorType::READ_WRITE_TEXTURE_BUFFER
+					case DescriptorType::kReadWriteTextureBuffer:
+						ANKI_ASSERT(anyBinding.m_type == DescriptorType::kReadWriteTextureBuffer
 									&& "Have bound the wrong type");
 						toHash[toHashCount++] = anyBinding.m_uuids[1];
 						break;
-					case DescriptorType::IMAGE:
-						ANKI_ASSERT(anyBinding.m_type == DescriptorType::IMAGE && "Have bound the wrong type");
+					case DescriptorType::kImage:
+						ANKI_ASSERT(anyBinding.m_type == DescriptorType::kImage && "Have bound the wrong type");
 						break;
-					case DescriptorType::ACCELERATION_STRUCTURE:
-						ANKI_ASSERT(anyBinding.m_type == DescriptorType::ACCELERATION_STRUCTURE
+					case DescriptorType::kAccelerationStructure:
+						ANKI_ASSERT(anyBinding.m_type == DescriptorType::kAccelerationStructure
 									&& "Have bound the wrong type");
 						break;
 					default:
@@ -1028,7 +1028,7 @@ void DescriptorSetFactory::destroy()
 Error DescriptorSetFactory::newDescriptorSetLayout(const DescriptorSetLayoutInitInfo& init, DescriptorSetLayout& layout)
 {
 	// Compute the hash for the layout
-	Array<DescriptorBinding, MAX_BINDINGS_PER_DESCRIPTOR_SET> bindings;
+	Array<DescriptorBinding, kMaxBindingsPerDescriptorSet> bindings;
 	const U32 bindingCount = init.m_bindings.getSize();
 	U64 hash;
 
@@ -1056,12 +1056,12 @@ Error DescriptorSetFactory::newDescriptorSetLayout(const DescriptorSetLayoutInit
 		for(U32 i = 0; i < bindingCount; ++i)
 		{
 			const DescriptorBinding& binding = bindings[i];
-			if(binding.m_binding == 0 && binding.m_type == DescriptorType::TEXTURE
+			if(binding.m_binding == 0 && binding.m_type == DescriptorType::kTexture
 			   && binding.m_arraySize == m_bindlessTextureCount)
 			{
 				// All good
 			}
-			else if(binding.m_binding == 1 && binding.m_type == DescriptorType::READ_TEXTURE_BUFFER
+			else if(binding.m_binding == 1 && binding.m_type == DescriptorType::kReadTextureBuffer
 					&& binding.m_arraySize == m_bindlessUniformTexelBufferCount)
 			{
 				// All good
@@ -1113,7 +1113,7 @@ Error DescriptorSetFactory::newDescriptorSetLayout(const DescriptorSetLayoutInit
 
 Error DescriptorSetFactory::newDescriptorSet(StackAllocator<U8>& tmpAlloc, DescriptorSetState& state,
 											 DescriptorSet& set, Bool& dirty,
-											 Array<PtrSize, MAX_BINDINGS_PER_DESCRIPTOR_SET>& dynamicOffsets,
+											 Array<PtrSize, kMaxBindingsPerDescriptorSet>& dynamicOffsets,
 											 U32& dynamicOffsetCount)
 {
 	ANKI_TRACE_SCOPED_EVENT(VK_DESCRIPTOR_SET_GET_OR_CREATE);

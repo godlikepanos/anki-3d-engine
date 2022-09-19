@@ -116,7 +116,7 @@ public:
 	/// Will reuse the m_secondLevelCmdbInitInfo.m_framebuffer to get the framebuffer.
 	CommandBufferInitInfo m_secondLevelCmdbInitInfo;
 	Array<U32, 4> m_fbRenderArea;
-	Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> m_colorUsages = {}; ///< For beginRender pass
+	Array<TextureUsageBit, kMaxColorRenderTargets> m_colorUsages = {}; ///< For beginRender pass
 	TextureUsageBit m_dsUsage = TextureUsageBit::kNone; ///< For beginRender pass
 
 	U32 m_batchIdx ANKI_DEBUG_CODE(= kMaxU32);
@@ -151,7 +151,7 @@ class RenderGraph::BakeContext
 public:
 	StackAllocator<U8> m_alloc;
 	DynamicArray<Pass> m_passes;
-	BitSet<MAX_RENDER_GRAPH_PASSES, U64> m_passIsInBatch{false};
+	BitSet<kMaxRenderGraphPasses, U64> m_passIsInBatch{false};
 	DynamicArray<Batch> m_batches;
 	DynamicArray<RT> m_rts;
 	DynamicArray<Buffer> m_buffers;
@@ -186,7 +186,7 @@ void FramebufferDescription::bake()
 		ANKI_END_PACKED_STRUCT
 		static_assert(sizeof(ColorAttachment) == 4 * (4 + 1 + 1 + 4), "Wrong size");
 
-		Array<ColorAttachment, MAX_COLOR_ATTACHMENTS> colorAttachments;
+		Array<ColorAttachment, kMaxColorRenderTargets> colorAttachments;
 		for(U i = 0; i < m_colorAttachmentCount; ++i)
 		{
 			const FramebufferDescriptionAttachment& inAtt = m_colorAttachments[i];
@@ -258,7 +258,7 @@ void FramebufferDescription::bake()
 }
 
 RenderGraph::RenderGraph(GrManager* manager, CString name)
-	: GrObject(manager, CLASS_TYPE, name)
+	: GrObject(manager, kClassType, name)
 {
 	ANKI_ASSERT(manager);
 }
@@ -299,7 +299,7 @@ void RenderGraph::reset()
 		return;
 	}
 
-	if((m_version % PERIODIC_CLEANUP_EVERY) == 0)
+	if((m_version % kPeriodicCleanupEvery) == 0)
 	{
 		// Do cleanup
 		periodicCleanup();
@@ -425,7 +425,7 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(const FramebufferDescription&
 	drawsToPresentable = false;
 
 	// Create a hash that includes the render targets
-	Array<U64, MAX_COLOR_ATTACHMENTS + 2> uuids;
+	Array<U64, kMaxColorRenderTargets + 2> uuids;
 	U count = 0;
 	for(U i = 0; i < fbDescr.m_colorAttachmentCount; ++i)
 	{
@@ -439,12 +439,12 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(const FramebufferDescription&
 
 	if(!!fbDescr.m_depthStencilAttachment.m_aspect)
 	{
-		uuids[count++] = m_ctx->m_rts[rtHandles[MAX_COLOR_ATTACHMENTS].m_idx].m_texture->getUuid();
+		uuids[count++] = m_ctx->m_rts[rtHandles[kMaxColorRenderTargets].m_idx].m_texture->getUuid();
 	}
 
 	if(fbDescr.m_shadingRateAttachmentTexelWidth > 0)
 	{
-		uuids[count++] = m_ctx->m_rts[rtHandles[MAX_COLOR_ATTACHMENTS + 1].m_idx].m_texture->getUuid();
+		uuids[count++] = m_ctx->m_rts[rtHandles[kMaxColorRenderTargets + 1].m_idx].m_texture->getUuid();
 	}
 
 	hash = appendHash(&uuids[0], sizeof(U64) * count, hash);
@@ -493,7 +493,7 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(const FramebufferDescription&
 			outAtt.m_stencilStoreOperation = inAtt.m_stencilStoreOperation;
 
 			// Create texture view
-			TextureViewInitInfo viewInit(m_ctx->m_rts[rtHandles[MAX_COLOR_ATTACHMENTS].m_idx].m_texture,
+			TextureViewInitInfo viewInit(m_ctx->m_rts[rtHandles[kMaxColorRenderTargets].m_idx].m_texture,
 										 TextureSubresourceInfo(inAtt.m_surface, inAtt.m_aspect), "RenderGraph");
 			TextureViewPtr view = getManager().newTextureView(viewInit);
 
@@ -502,7 +502,7 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(const FramebufferDescription&
 
 		if(fbDescr.m_shadingRateAttachmentTexelWidth > 0)
 		{
-			TextureViewInitInfo viewInit(m_ctx->m_rts[rtHandles[MAX_COLOR_ATTACHMENTS + 1].m_idx].m_texture,
+			TextureViewInitInfo viewInit(m_ctx->m_rts[rtHandles[kMaxColorRenderTargets + 1].m_idx].m_texture,
 										 fbDescr.m_shadingRateAttachmentSurface, "RenderGraph SRI");
 			TextureViewPtr view = getManager().newTextureView(viewInit);
 
@@ -540,11 +540,11 @@ Bool RenderGraph::passADependsOnB(const RenderPassDescriptionBase& a, const Rend
 	// Render targets
 	{
 		// Compute the 3 types of dependencies
-		const BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> aReadBWrite = a.m_readRtMask & b.m_writeRtMask;
-		const BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> aWriteBRead = a.m_writeRtMask & b.m_readRtMask;
-		const BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> aWriteBWrite = a.m_writeRtMask & b.m_writeRtMask;
+		const BitSet<kMaxRenderGraphRenderTargets, U64> aReadBWrite = a.m_readRtMask & b.m_writeRtMask;
+		const BitSet<kMaxRenderGraphRenderTargets, U64> aWriteBRead = a.m_writeRtMask & b.m_readRtMask;
+		const BitSet<kMaxRenderGraphRenderTargets, U64> aWriteBWrite = a.m_writeRtMask & b.m_writeRtMask;
 
-		const BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> fullDep = aReadBWrite | aWriteBRead | aWriteBWrite;
+		const BitSet<kMaxRenderGraphRenderTargets, U64> fullDep = aReadBWrite | aWriteBRead | aWriteBWrite;
 
 		if(fullDep.getAny())
 		{
@@ -582,11 +582,11 @@ Bool RenderGraph::passADependsOnB(const RenderPassDescriptionBase& a, const Rend
 	// Buffers
 	if(a.m_readBuffMask || a.m_writeBuffMask)
 	{
-		const BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> aReadBWrite = a.m_readBuffMask & b.m_writeBuffMask;
-		const BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> aWriteBRead = a.m_writeBuffMask & b.m_readBuffMask;
-		const BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> aWriteBWrite = a.m_writeBuffMask & b.m_writeBuffMask;
+		const BitSet<kMaxRenderGraphBuffers, U64> aReadBWrite = a.m_readBuffMask & b.m_writeBuffMask;
+		const BitSet<kMaxRenderGraphBuffers, U64> aWriteBRead = a.m_writeBuffMask & b.m_readBuffMask;
+		const BitSet<kMaxRenderGraphBuffers, U64> aWriteBWrite = a.m_writeBuffMask & b.m_writeBuffMask;
 
-		const BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> fullDep = aReadBWrite | aWriteBRead | aWriteBWrite;
+		const BitSet<kMaxRenderGraphBuffers, U64> fullDep = aReadBWrite | aWriteBRead | aWriteBWrite;
 
 		if(fullDep.getAny())
 		{
@@ -622,11 +622,11 @@ Bool RenderGraph::passADependsOnB(const RenderPassDescriptionBase& a, const Rend
 	// AS
 	if(a.m_readAsMask || a.m_writeAsMask)
 	{
-		const BitSet<MAX_RENDER_GRAPH_ACCELERATION_STRUCTURES, U32> aReadBWrite = a.m_readAsMask & b.m_writeAsMask;
-		const BitSet<MAX_RENDER_GRAPH_ACCELERATION_STRUCTURES, U32> aWriteBRead = a.m_writeAsMask & b.m_readAsMask;
-		const BitSet<MAX_RENDER_GRAPH_ACCELERATION_STRUCTURES, U32> aWriteBWrite = a.m_writeAsMask & b.m_writeAsMask;
+		const BitSet<kMaxRenderGraphAccelerationStructures, U32> aReadBWrite = a.m_readAsMask & b.m_writeAsMask;
+		const BitSet<kMaxRenderGraphAccelerationStructures, U32> aWriteBRead = a.m_writeAsMask & b.m_readAsMask;
+		const BitSet<kMaxRenderGraphAccelerationStructures, U32> aWriteBWrite = a.m_writeAsMask & b.m_writeAsMask;
 
-		const BitSet<MAX_RENDER_GRAPH_ACCELERATION_STRUCTURES, U32> fullDep = aReadBWrite | aWriteBRead | aWriteBWrite;
+		const BitSet<kMaxRenderGraphAccelerationStructures, U32> fullDep = aReadBWrite | aWriteBRead | aWriteBWrite;
 
 		if(fullDep)
 		{
@@ -798,7 +798,7 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 		for(U32 depIdx = 0; depIdx < inPass.m_rtDeps.getSize(); ++depIdx)
 		{
 			const RenderPassDependency& inDep = inPass.m_rtDeps[depIdx];
-			ANKI_ASSERT(inDep.m_type == RenderPassDependency::Type::TEXTURE);
+			ANKI_ASSERT(inDep.m_type == RenderPassDependency::Type::kTexture);
 
 			RenderPassDependency::TextureInfo& inf = outPass.m_consumedTextures[depIdx];
 
@@ -807,7 +807,7 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 		}
 
 		// Create command buffers and framebuffer
-		if(inPass.m_type == RenderPassDescriptionBase::Type::GRAPHICS)
+		if(inPass.m_type == RenderPassDescriptionBase::Type::kGraphics)
 		{
 			const GraphicsRenderPassDescription& graphicsPass =
 				static_cast<const GraphicsRenderPassDescription&>(inPass);
@@ -878,7 +878,7 @@ void RenderGraph::initBatches()
 		if(m_ctx->m_graphicsCmdbs.isEmpty() || drawsToPresentable)
 		{
 			CommandBufferInitInfo cmdbInit;
-			cmdbInit.m_flags = CommandBufferFlag::GENERAL_WORK;
+			cmdbInit.m_flags = CommandBufferFlag::kGeneralWork;
 			CommandBufferPtr cmdb = getManager().newCommandBuffer(cmdbInit);
 
 			m_ctx->m_graphicsCmdbs.emplaceBack(m_ctx->m_alloc, cmdb);
@@ -893,7 +893,7 @@ void RenderGraph::initBatches()
 				cmdb->resetTimestampQuery(query);
 				cmdb->writeTimestamp(query);
 
-				m_statistics.m_nextTimestamp = (m_statistics.m_nextTimestamp + 1) % MAX_TIMESTAMPS_BUFFERED;
+				m_statistics.m_nextTimestamp = (m_statistics.m_nextTimestamp + 1) % kMaxBufferedTimestamps;
 				m_statistics.m_timestamps[m_statistics.m_nextTimestamp * 2] = query;
 			}
 		}
@@ -923,7 +923,7 @@ void RenderGraph::initGraphicsPasses(const RenderGraphDescription& descr, StackA
 		Pass& outPass = ctx.m_passes[passIdx];
 
 		// Create command buffers and framebuffer
-		if(inPass.m_type == RenderPassDescriptionBase::Type::GRAPHICS)
+		if(inPass.m_type == RenderPassDescriptionBase::Type::kGraphics)
 		{
 			const GraphicsRenderPassDescription& graphicsPass =
 				static_cast<const GraphicsRenderPassDescription&>(inPass);
@@ -946,7 +946,7 @@ void RenderGraph::initGraphicsPasses(const RenderGraphDescription& descr, StackA
 						TextureSubresourceInfo(graphicsPass.m_fbDescr.m_depthStencilAttachment.m_surface,
 											   graphicsPass.m_fbDescr.m_depthStencilAttachment.m_aspect);
 
-					getCrntUsage(graphicsPass.m_rtHandles[MAX_COLOR_ATTACHMENTS], outPass.m_batchIdx, subresource,
+					getCrntUsage(graphicsPass.m_rtHandles[kMaxColorRenderTargets], outPass.m_batchIdx, subresource,
 								 usage);
 
 					outPass.m_dsUsage = usage;
@@ -957,7 +957,7 @@ void RenderGraph::initGraphicsPasses(const RenderGraphDescription& descr, StackA
 				{
 					outPass.m_secondLevelCmdbs.create(alloc, inPass.m_secondLevelCmdbsCount);
 					CommandBufferInitInfo& cmdbInit = outPass.m_secondLevelCmdbInitInfo;
-					cmdbInit.m_flags = CommandBufferFlag::GENERAL_WORK | CommandBufferFlag::SECOND_LEVEL;
+					cmdbInit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSecondLevel;
 					ANKI_ASSERT(cmdbInit.m_framebuffer.isCreated());
 					cmdbInit.m_colorAttachmentUsages = outPass.m_colorUsages;
 					cmdbInit.m_depthStencilAttachmentUsage = outPass.m_dsUsage;
@@ -1001,7 +1001,7 @@ void RenderGraph::iterateSurfsOrVolumes(const TexturePtr& tex, const TextureSubr
 
 void RenderGraph::setTextureBarrier(Batch& batch, const RenderPassDependency& dep)
 {
-	ANKI_ASSERT(dep.m_type == RenderPassDependency::Type::TEXTURE);
+	ANKI_ASSERT(dep.m_type == RenderPassDependency::Type::kTexture);
 
 	BakeContext& ctx = *m_ctx;
 	const U32 batchIdx = U32(&batch - &ctx.m_batches[0]);
@@ -1057,8 +1057,8 @@ void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr)
 	// For all batches
 	for(Batch& batch : ctx.m_batches)
 	{
-		BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> buffHasBarrierMask(false);
-		BitSet<MAX_RENDER_GRAPH_ACCELERATION_STRUCTURES, U32> asHasBarrierMask(false);
+		BitSet<kMaxRenderGraphBuffers, U64> buffHasBarrierMask(false);
+		BitSet<kMaxRenderGraphAccelerationStructures, U32> asHasBarrierMask(false);
 
 		// For all passes of that batch
 		for(U32 passIdx : batch.m_passIndices)
@@ -1433,7 +1433,7 @@ void RenderGraph::periodicCleanup()
 
 void RenderGraph::getStatistics(RenderGraphStatistics& statistics) const
 {
-	const U32 oldFrame = (m_statistics.m_nextTimestamp + 1) % MAX_TIMESTAMPS_BUFFERED;
+	const U32 oldFrame = (m_statistics.m_nextTimestamp + 1) % kMaxBufferedTimestamps;
 
 	if(m_statistics.m_timestamps[oldFrame * 2] && m_statistics.m_timestamps[oldFrame * 2 + 1])
 	{

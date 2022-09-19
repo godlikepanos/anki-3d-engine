@@ -313,12 +313,12 @@ VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask)
 		out |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
 	}
 
-	if(!!(usageMask & PrivateBufferUsageBit::ACCELERATION_STRUCTURE_BUILD_SCRATCH))
+	if(!!(usageMask & PrivateBufferUsageBit::kAccelerationStructureBuildScratch))
 	{
 		out |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT; // Spec says that this will be enough
 	}
 
-	if(!!(usageMask & PrivateBufferUsageBit::ACCELERATION_STRUCTURE))
+	if(!!(usageMask & PrivateBufferUsageBit::kAccelerationStructure))
 	{
 		out |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR;
 	}

@@ -272,7 +272,7 @@ void FramebufferImpl::initRpassCreateInfo(const FramebufferInitInfo& init)
 	m_rpassCi.pSubpasses = &m_subpassDescr;
 }
 
-VkRenderPass FramebufferImpl::getRenderPassHandle(const Array<VkImageLayout, MAX_COLOR_ATTACHMENTS>& colorLayouts,
+VkRenderPass FramebufferImpl::getRenderPassHandle(const Array<VkImageLayout, kMaxColorRenderTargets>& colorLayouts,
 												  VkImageLayout dsLayout, VkImageLayout shadingRateImageLayout)
 {
 	VkRenderPass out = VK_NULL_HANDLE;
