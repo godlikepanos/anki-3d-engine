@@ -5,7 +5,7 @@
 
 #include <Tests/Framework/Framework.h>
 #include <Tests/Util/Foo.h>
-#include <AnKi/Util/Memory.h>
+#include <AnKi/Util/CpuMemoryPools.h>
 #include <AnKi/Util/ThreadPool.h>
 #include <type_traits>
 #include <cstring>

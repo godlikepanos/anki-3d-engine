@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Util/Assert.h>
-#include <AnKi/Util/Memory.h>
+#include <AnKi/Util/CpuMemoryPools.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/Forward.h>
 #include <cstddef> // For ptrdiff_t

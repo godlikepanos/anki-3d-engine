@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Util/Memory.h>
+#include <AnKi/Util/CpuMemoryPools.h>
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/Assert.h>
 #include <AnKi/Util/Thread.h>
@@ -140,7 +140,7 @@ void* allocAligned([[maybe_unused]] void* userData, void* ptr, PtrSize size, Ptr
 	return out;
 }
 
-BaseMemoryPool::BaseMemoryPool(Type type, AllocAlignedCallback allocCb, void* allocCbUserData, const char* name)
+BaseMemoryPool::BaseMemoryPool(Type type, AllocAlignedCallback allocCb, void* allocCbUserData, const Char* name)
 	: m_allocCb(allocCb)
 	, m_allocCbUserData(allocCbUserData)
 	, m_type(type)
@@ -160,7 +160,7 @@ BaseMemoryPool::~BaseMemoryPool()
 	ANKI_ASSERT(m_refcount.load() == 0 && "Refcount should be zero");
 }
 
-HeapMemoryPool::HeapMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserDataconst, const char* name)
+HeapMemoryPool::HeapMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserDataconst, const Char* name)
 	: BaseMemoryPool(Type::kHeap, allocCb, allocCbUserDataconst, name)
 {
 #if ANKI_MEM_EXTRA_CHECKS
@@ -267,7 +267,7 @@ void StackMemoryPool::StackAllocatorBuilderInterface::recycleChunk(Chunk& chunk)
 
 StackMemoryPool::StackMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize,
 								 F64 nextChunkScale, PtrSize nextChunkBias, Bool ignoreDeallocationErrors,
-								 U32 alignmentBytes, const char* name)
+								 U32 alignmentBytes, const Char* name)
 	: BaseMemoryPool(Type::kStack, allocCb, allocCbUserData, name)
 {
 	ANKI_ASSERT(initialChunkSize > 0);
@@ -321,7 +321,7 @@ void StackMemoryPool::reset()
 }
 
 ChainMemoryPool::ChainMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize,
-								 F32 nextChunkScale, PtrSize nextChunkBias, PtrSize alignmentBytes, const char* name)
+								 F32 nextChunkScale, PtrSize nextChunkBias, PtrSize alignmentBytes, const Char* name)
 	: BaseMemoryPool(Type::kChain, allocCb, allocCbUserData, name)
 {
 	ANKI_ASSERT(initialChunkSize > 0);

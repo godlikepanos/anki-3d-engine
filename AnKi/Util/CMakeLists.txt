@@ -3,7 +3,7 @@ set(sources
 	Functions.cpp
 	File.cpp
 	Filesystem.cpp
-	Memory.cpp
+	CpuMemoryPools.cpp
 	System.cpp
 	HighRezTimer.cpp
 	ThreadPool.cpp

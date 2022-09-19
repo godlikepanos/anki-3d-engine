@@ -100,7 +100,7 @@ public:
 	}
 
 	/// Get the name of the pool.
-	const char* getName() const
+	const Char* getName() const
 	{
 		return (m_name) ? m_name : "Unamed";
 	}
@@ -125,7 +125,7 @@ protected:
 	Atomic<U32> m_allocationCount = {0};
 
 	/// Construct it.
-	BaseMemoryPool(Type type, AllocAlignedCallback allocCb, void* allocCbUserData, const char* name);
+	BaseMemoryPool(Type type, AllocAlignedCallback allocCb, void* allocCbUserData, const Char* name);
 
 private:
 	/// Refcount.
@@ -147,7 +147,7 @@ public:
 	/// @param allocCb The allocation function callback.
 	/// @param allocCbUserData The user data to pass to the allocation function.
 	/// @param name An optional name.
-	HeapMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserDataconst, const char* name = nullptr);
+	HeapMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserDataconst, const Char* name = nullptr);
 
 	/// Destroy
 	~HeapMemoryPool();
@@ -187,7 +187,7 @@ public:
 	/// @param name An optional name.
 	StackMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize,
 					F64 nextChunkScale = 2.0, PtrSize nextChunkBias = 0, Bool ignoreDeallocationErrors = true,
-					U32 alignmentBytes = ANKI_SAFE_ALIGNMENT, const char* name = nullptr);
+					U32 alignmentBytes = ANKI_SAFE_ALIGNMENT, const Char* name = nullptr);
 
 	/// Destroy
 	~StackMemoryPool();
@@ -312,7 +312,7 @@ public:
 	/// @param name An optional name.
 	ChainMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize,
 					F32 nextChunkScale = 2.0, PtrSize nextChunkBias = 0, PtrSize alignmentBytes = ANKI_SAFE_ALIGNMENT,
-					const char* name = nullptr);
+					const Char* name = nullptr);
 
 	/// Destroy
 	~ChainMemoryPool();
