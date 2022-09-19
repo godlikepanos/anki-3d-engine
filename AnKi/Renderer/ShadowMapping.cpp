@@ -81,7 +81,7 @@ Error ShadowMapping::initScratch()
 		m_scratch.m_rtDescr.bake();
 
 		// FB
-		m_scratch.m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
+		m_scratch.m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kClear;
 		m_scratch.m_fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0f;
 		m_scratch.m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
 		m_scratch.m_fbDescr.bake();
@@ -138,7 +138,7 @@ Error ShadowMapping::initAtlas()
 	}
 
 	m_atlas.m_fbDescr.m_colorAttachmentCount = 1;
-	m_atlas.m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::LOAD;
+	m_atlas.m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::kLoad;
 	m_atlas.m_fbDescr.bake();
 
 	return Error::kNone;

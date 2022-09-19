@@ -38,7 +38,7 @@ void main()
 		BufferInitInfo buffInit;
 		buffInit.m_mapAccess = BufferMapAccessBit::WRITE;
 		buffInit.m_size = sizeof(U8) * 4;
-		buffInit.m_usage = BufferUsageBit::ALL_TEXTURE;
+		buffInit.m_usage = BufferUsageBit::kAllTexture;
 		BufferPtr texBuff = gr->newBuffer(buffInit);
 
 		I8* data = static_cast<I8*>(texBuff->map(0, kMaxPtrSize, BufferMapAccessBit::WRITE));
@@ -52,7 +52,7 @@ void main()
 
 		buffInit.m_mapAccess = BufferMapAccessBit::READ;
 		buffInit.m_size = sizeof(F32) * 4;
-		buffInit.m_usage = BufferUsageBit::ALL_STORAGE;
+		buffInit.m_usage = BufferUsageBit::kAllStorage;
 		BufferPtr storageBuff = gr->newBuffer(buffInit);
 
 		CommandBufferInitInfo cmdbInit;

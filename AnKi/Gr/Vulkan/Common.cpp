@@ -224,13 +224,13 @@ VkAttachmentLoadOp convertLoadOp(AttachmentLoadOperation ak)
 
 	switch(ak)
 	{
-	case AttachmentLoadOperation::LOAD:
+	case AttachmentLoadOperation::kLoad:
 		out = VK_ATTACHMENT_LOAD_OP_LOAD;
 		break;
-	case AttachmentLoadOperation::CLEAR:
+	case AttachmentLoadOperation::kClear:
 		out = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		break;
-	case AttachmentLoadOperation::DONT_CARE:
+	case AttachmentLoadOperation::kDontCare:
 		out = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		break;
 	default:
@@ -246,10 +246,10 @@ VkAttachmentStoreOp convertStoreOp(AttachmentStoreOperation ak)
 
 	switch(ak)
 	{
-	case AttachmentStoreOperation::STORE:
+	case AttachmentStoreOperation::kStore:
 		out = VK_ATTACHMENT_STORE_OP_STORE;
 		break;
-	case AttachmentStoreOperation::DONT_CARE:
+	case AttachmentStoreOperation::kDontCare:
 		out = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		break;
 	default:
@@ -263,52 +263,52 @@ VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask)
 {
 	VkBufferUsageFlags out = 0;
 
-	if(!!(usageMask & BufferUsageBit::ALL_UNIFORM))
+	if(!!(usageMask & BufferUsageBit::kAllUniform))
 	{
 		out |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 	}
 
-	if(!!(usageMask & BufferUsageBit::ALL_STORAGE))
+	if(!!(usageMask & BufferUsageBit::kAllStorage))
 	{
 		out |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
 	}
 
-	if(!!(usageMask & BufferUsageBit::INDEX))
+	if(!!(usageMask & BufferUsageBit::kIndex))
 	{
 		out |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
 	}
 
-	if(!!(usageMask & BufferUsageBit::VERTEX))
+	if(!!(usageMask & BufferUsageBit::kVertex))
 	{
 		out |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
 	}
 
-	if(!!(usageMask & BufferUsageBit::ALL_INDIRECT))
+	if(!!(usageMask & BufferUsageBit::kAllIndirect))
 	{
 		out |= VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
 	}
 
-	if(!!(usageMask & BufferUsageBit::TRANSFER_DESTINATION))
+	if(!!(usageMask & BufferUsageBit::kTransferDestination))
 	{
 		out |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 	}
 
-	if(!!(usageMask & BufferUsageBit::TRANSFER_SOURCE))
+	if(!!(usageMask & BufferUsageBit::kTransferSource))
 	{
 		out |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 	}
 
-	if(!!(usageMask & (BufferUsageBit::ALL_TEXTURE & BufferUsageBit::ALL_READ)))
+	if(!!(usageMask & (BufferUsageBit::kAllTexture & BufferUsageBit::kAllRead)))
 	{
 		out |= VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT;
 	}
 
-	if(!!(usageMask & (BufferUsageBit::ALL_TEXTURE & BufferUsageBit::ALL_WRITE)))
+	if(!!(usageMask & (BufferUsageBit::kAllTexture & BufferUsageBit::kAllWrite)))
 	{
 		out |= VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT;
 	}
 
-	if(!!(usageMask & BufferUsageBit::ACCELERATION_STRUCTURE_BUILD))
+	if(!!(usageMask & BufferUsageBit::kAccelerationStructureBuild))
 	{
 		out |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
 	}
@@ -323,7 +323,7 @@ VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask)
 		out |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR;
 	}
 
-	if(!!(usageMask & BufferUsageBit::SBT))
+	if(!!(usageMask & BufferUsageBit::kSBT))
 	{
 		out |= VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR;
 	}

@@ -56,7 +56,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 	writeClustererBuffers(ctx);
 
 	ctx.m_clusteredShading.m_clustersBufferHandle = ctx.m_renderGraphDescr.importBuffer(
-		ctx.m_clusteredShading.m_clustersToken.m_buffer, BufferUsageBit::NONE,
+		ctx.m_clusteredShading.m_clustersToken.m_buffer, BufferUsageBit::kNone,
 		ctx.m_clusteredShading.m_clustersToken.m_offset, ctx.m_clusteredShading.m_clustersToken.m_range);
 
 	const RenderQueue& rqueue = *ctx.m_renderQueue;
@@ -68,7 +68,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Cluster Binning");
 
 		pass.newDependency(
-			RenderPassDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::STORAGE_COMPUTE_WRITE));
+			RenderPassDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::kStorageComputeWrite));
 
 		pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;

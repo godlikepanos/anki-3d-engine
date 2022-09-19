@@ -84,14 +84,14 @@ inline void RenderPassDescriptionBase::validateDep(const RenderPassDependency& d
 		[[maybe_unused]] const BufferUsageBit usage = dep.m_buffer.m_usage;
 		if(m_type == Type::GRAPHICS)
 		{
-			ANKI_ASSERT(!(usage & BufferUsageBit::ALL_COMPUTE));
+			ANKI_ASSERT(!(usage & BufferUsageBit::kAllCompute));
 		}
 		else
 		{
-			ANKI_ASSERT(!(usage & BufferUsageBit::ALL_GRAPHICS));
+			ANKI_ASSERT(!(usage & BufferUsageBit::kAllGraphics));
 		}
 
-		ANKI_ASSERT(!!(usage & BufferUsageBit::ALL_READ) || !!(usage & BufferUsageBit::ALL_WRITE));
+		ANKI_ASSERT(!!(usage & BufferUsageBit::kAllRead) || !!(usage & BufferUsageBit::kAllWrite));
 	}
 	else
 	{
@@ -133,12 +133,12 @@ inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency&
 	{
 		m_buffDeps.emplaceBack(m_alloc, dep);
 
-		if(!!(dep.m_buffer.m_usage & BufferUsageBit::ALL_READ))
+		if(!!(dep.m_buffer.m_usage & BufferUsageBit::kAllRead))
 		{
 			m_readBuffMask.set(dep.m_buffer.m_handle.m_idx);
 		}
 
-		if(!!(dep.m_buffer.m_usage & BufferUsageBit::ALL_WRITE))
+		if(!!(dep.m_buffer.m_usage & BufferUsageBit::kAllWrite))
 		{
 			m_writeBuffMask.set(dep.m_buffer.m_handle.m_idx);
 		}

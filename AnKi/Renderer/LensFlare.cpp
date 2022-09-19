@@ -64,7 +64,7 @@ Error LensFlare::initOcclusion()
 	GrManager& gr = getGrManager();
 
 	m_indirectBuff = gr.newBuffer(BufferInitInfo(m_maxFlares * sizeof(DrawArraysIndirectInfo),
-												 BufferUsageBit::INDIRECT_DRAW | BufferUsageBit::STORAGE_COMPUTE_WRITE,
+												 BufferUsageBit::kIndirectDraw | BufferUsageBit::kStorageComputeWrite,
 												 BufferMapAccessBit::NONE, "LensFlares"));
 
 	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/LensFlareUpdateIndirectInfo.ankiprogbin",
@@ -116,7 +116,7 @@ void LensFlare::populateRenderGraph(RenderingContext& ctx)
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	// Import buffer
-	m_runCtx.m_indirectBuffHandle = rgraph.importBuffer(m_indirectBuff, BufferUsageBit::NONE);
+	m_runCtx.m_indirectBuffHandle = rgraph.importBuffer(m_indirectBuff, BufferUsageBit::kNone);
 
 	// Update the indirect buffer
 	{
@@ -126,7 +126,7 @@ void LensFlare::populateRenderGraph(RenderingContext& ctx)
 			updateIndirectInfo(ctx, rgraphCtx);
 		});
 
-		rpass.newDependency({m_runCtx.m_indirectBuffHandle, BufferUsageBit::STORAGE_COMPUTE_WRITE});
+		rpass.newDependency({m_runCtx.m_indirectBuffHandle, BufferUsageBit::kStorageComputeWrite});
 		rpass.newDependency(
 			{m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::kSampledCompute, kHiZQuarterSurface});
 	}

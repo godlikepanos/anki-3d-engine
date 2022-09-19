@@ -71,7 +71,7 @@ Error DebugDrawer2::init(ResourceManager* rsrcManager)
 
 	{
 		BufferInitInfo bufferInit("DebugCube");
-		bufferInit.m_usage = BufferUsageBit::VERTEX;
+		bufferInit.m_usage = BufferUsageBit::kVertex;
 		bufferInit.m_size = sizeof(Vec3) * 8;
 		bufferInit.m_mapAccess = BufferMapAccessBit::WRITE;
 		m_cubePositionsBuffer = rsrcManager->getGrManager().newBuffer(bufferInit);
@@ -96,7 +96,7 @@ Error DebugDrawer2::init(ResourceManager* rsrcManager)
 		constexpr U INDEX_COUNT = 12 * 2;
 
 		BufferInitInfo bufferInit("DebugCube");
-		bufferInit.m_usage = BufferUsageBit::VERTEX;
+		bufferInit.m_usage = BufferUsageBit::kVertex;
 		bufferInit.m_size = sizeof(U16) * INDEX_COUNT;
 		bufferInit.m_mapAccess = BufferMapAccessBit::WRITE;
 		m_cubeIndicesBuffer = rsrcManager->getGrManager().newBuffer(bufferInit);

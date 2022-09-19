@@ -359,13 +359,13 @@ static void createCube(GrManager& gr, BufferPtr& verts, BufferPtr& indices)
 	static const Array<U16, 6 * 2 * 3> idx = {
 		{0, 1, 3, 3, 1, 2, 1, 5, 6, 1, 6, 2, 7, 4, 0, 7, 0, 3, 6, 5, 7, 7, 5, 4, 0, 4, 5, 0, 5, 1, 3, 2, 6, 3, 6, 7}};
 
-	verts = gr.newBuffer(BufferInitInfo(sizeof(pos), BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE));
+	verts = gr.newBuffer(BufferInitInfo(sizeof(pos), BufferUsageBit::kVertex, BufferMapAccessBit::WRITE));
 
 	void* mapped = verts->map(0, sizeof(pos), BufferMapAccessBit::WRITE);
 	memcpy(mapped, &pos[0], sizeof(pos));
 	verts->unmap();
 
-	indices = gr.newBuffer(BufferInitInfo(sizeof(idx), BufferUsageBit::INDEX, BufferMapAccessBit::WRITE));
+	indices = gr.newBuffer(BufferInitInfo(sizeof(idx), BufferUsageBit::kIndex, BufferMapAccessBit::WRITE));
 	mapped = indices->map(0, sizeof(idx), BufferMapAccessBit::WRITE);
 	memcpy(mapped, &idx[0], sizeof(idx));
 	indices->unmap();
@@ -686,13 +686,13 @@ ANKI_TEST(Gr, Buffer)
 
 	BufferInitInfo buffInit("a");
 	buffInit.m_size = 512;
-	buffInit.m_usage = BufferUsageBit::ALL_UNIFORM;
+	buffInit.m_usage = BufferUsageBit::kAllUniform;
 	buffInit.m_mapAccess = BufferMapAccessBit::NONE;
 	BufferPtr a = gr->newBuffer(buffInit);
 
 	buffInit.setName("b");
 	buffInit.m_size = 64;
-	buffInit.m_usage = BufferUsageBit::ALL_STORAGE;
+	buffInit.m_usage = BufferUsageBit::kAllStorage;
 	buffInit.m_mapAccess = BufferMapAccessBit::WRITE | BufferMapAccessBit::READ;
 	BufferPtr b = gr->newBuffer(buffInit);
 
@@ -717,7 +717,7 @@ ANKI_TEST(Gr, DrawWithUniforms)
 
 	// A non-uploaded buffer
 	BufferPtr b =
-		gr->newBuffer(BufferInitInfo(sizeof(Vec4) * 3, BufferUsageBit::ALL_UNIFORM, BufferMapAccessBit::WRITE));
+		gr->newBuffer(BufferInitInfo(sizeof(Vec4) * 3, BufferUsageBit::kAllUniform, BufferMapAccessBit::WRITE));
 
 	Vec4* ptr = static_cast<Vec4*>(b->map(0, sizeof(Vec4) * 3, BufferMapAccessBit::WRITE));
 	ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
@@ -787,7 +787,7 @@ ANKI_TEST(Gr, DrawWithVertex)
 	};
 	static_assert(sizeof(Vert) == sizeof(Vec4), "See file");
 
-	BufferPtr b = gr->newBuffer(BufferInitInfo(sizeof(Vert) * 3, BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE));
+	BufferPtr b = gr->newBuffer(BufferInitInfo(sizeof(Vert) * 3, BufferUsageBit::kVertex, BufferMapAccessBit::WRITE));
 
 	Vert* ptr = static_cast<Vert*>(b->map(0, sizeof(Vert) * 3, BufferMapAccessBit::WRITE));
 	ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
@@ -801,7 +801,7 @@ ANKI_TEST(Gr, DrawWithVertex)
 	ptr[2].m_color = {{0, 0, 255}};
 	b->unmap();
 
-	BufferPtr c = gr->newBuffer(BufferInitInfo(sizeof(Vec3) * 3, BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE));
+	BufferPtr c = gr->newBuffer(BufferInitInfo(sizeof(Vec3) * 3, BufferUsageBit::kVertex, BufferMapAccessBit::WRITE));
 
 	Vec3* otherColor = static_cast<Vec3*>(c->map(0, sizeof(Vec3) * 3, BufferMapAccessBit::WRITE));
 
@@ -1774,7 +1774,7 @@ void main()
 
 	// Create the buffer to copy to the texture
 	BufferPtr uploadBuff = gr->newBuffer(BufferInitInfo(PtrSize(texInit.m_width) * texInit.m_height * 3,
-														BufferUsageBit::ALL_TRANSFER, BufferMapAccessBit::WRITE));
+														BufferUsageBit::kAllTransfer, BufferMapAccessBit::WRITE));
 	U8* data = static_cast<U8*>(uploadBuff->map(0, uploadBuff->getSize(), BufferMapAccessBit::WRITE));
 	for(U32 i = 0; i < texInit.m_width * texInit.m_height; ++i)
 	{
@@ -1786,7 +1786,7 @@ void main()
 	uploadBuff->unmap();
 
 	BufferPtr uploadBuff2 = gr->newBuffer(BufferInitInfo(PtrSize(texInit.m_width >> 1) * (texInit.m_height >> 1) * 3,
-														 BufferUsageBit::ALL_TRANSFER, BufferMapAccessBit::WRITE));
+														 BufferUsageBit::kAllTransfer, BufferMapAccessBit::WRITE));
 	data = static_cast<U8*>(uploadBuff2->map(0, uploadBuff2->getSize(), BufferMapAccessBit::WRITE));
 	for(U i = 0; i < (texInit.m_width >> 1) * (texInit.m_height >> 1); ++i)
 	{
@@ -1799,7 +1799,7 @@ void main()
 
 	// Create the result buffer
 	BufferPtr resultBuff =
-		gr->newBuffer(BufferInitInfo(sizeof(UVec4), BufferUsageBit::STORAGE_COMPUTE_WRITE, BufferMapAccessBit::READ));
+		gr->newBuffer(BufferInitInfo(sizeof(UVec4), BufferUsageBit::kStorageComputeWrite, BufferMapAccessBit::READ));
 
 	// Upload data and test them
 	CommandBufferInitInfo cmdbInit;
@@ -1820,7 +1820,7 @@ void main()
 	cmdb->bindStorageBuffer(0, 1, resultBuff, 0, resultBuff->getSize());
 	cmdb->dispatchCompute(1, 1, 1);
 
-	cmdb->setBufferBarrier(resultBuff, BufferUsageBit::STORAGE_COMPUTE_WRITE, BufferUsageBit::STORAGE_COMPUTE_WRITE, 0,
+	cmdb->setBufferBarrier(resultBuff, BufferUsageBit::kStorageComputeWrite, BufferUsageBit::kStorageComputeWrite, 0,
 						   resultBuff->getSize());
 
 	cmdb->flush();
@@ -1912,7 +1912,7 @@ void main()
 
 	// Create the result buffer
 	BufferPtr resultBuff =
-		gr->newBuffer(BufferInitInfo(sizeof(UVec4), BufferUsageBit::STORAGE_COMPUTE_WRITE, BufferMapAccessBit::READ));
+		gr->newBuffer(BufferInitInfo(sizeof(UVec4), BufferUsageBit::kStorageComputeWrite, BufferMapAccessBit::READ));
 
 	// Draw
 
@@ -2025,7 +2025,7 @@ void main()
 
 	// Create the result buffer
 	BufferPtr resultBuff = gr->newBuffer(BufferInitInfo(
-		sizeof(UVec4), BufferUsageBit::ALL_STORAGE | BufferUsageBit::TRANSFER_DESTINATION, BufferMapAccessBit::READ));
+		sizeof(UVec4), BufferUsageBit::kAllStorage | BufferUsageBit::kTransferDestination, BufferMapAccessBit::READ));
 
 	// Draw
 	CommandBufferInitInfo cinit;
@@ -2033,7 +2033,7 @@ void main()
 	CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 	cmdb->fillBuffer(resultBuff, 0, resultBuff->getSize(), 0);
-	cmdb->setBufferBarrier(resultBuff, BufferUsageBit::TRANSFER_DESTINATION, BufferUsageBit::STORAGE_FRAGMENT_WRITE, 0,
+	cmdb->setBufferBarrier(resultBuff, BufferUsageBit::kTransferDestination, BufferUsageBit::kStorageFragmentWrite, 0,
 						   resultBuff->getSize());
 
 	cmdb->setViewport(0, 0, WIDTH, HEIGHT);
@@ -2079,13 +2079,13 @@ ANKI_TEST(Gr, BindingWithArray)
 
 	// Create result buffer
 	BufferPtr resBuff =
-		gr->newBuffer(BufferInitInfo(sizeof(Vec4), BufferUsageBit::ALL_COMPUTE, BufferMapAccessBit::READ));
+		gr->newBuffer(BufferInitInfo(sizeof(Vec4), BufferUsageBit::kAllCompute, BufferMapAccessBit::READ));
 
 	Array<BufferPtr, 4> uniformBuffers;
 	F32 count = 1.0f;
 	for(BufferPtr& ptr : uniformBuffers)
 	{
-		ptr = gr->newBuffer(BufferInitInfo(sizeof(Vec4), BufferUsageBit::ALL_COMPUTE, BufferMapAccessBit::WRITE));
+		ptr = gr->newBuffer(BufferInitInfo(sizeof(Vec4), BufferUsageBit::kAllCompute, BufferMapAccessBit::WRITE));
 
 		Vec4* mapped = static_cast<Vec4*>(ptr->map(0, sizeof(Vec4), BufferMapAccessBit::WRITE));
 		*mapped = Vec4(count, count + 1.0f, count + 2.0f, count + 3.0f);
@@ -2181,7 +2181,7 @@ ANKI_TEST(Gr, Bindless)
 
 	// Create result buffer
 	BufferPtr resBuff =
-		gr->newBuffer(BufferInitInfo(sizeof(UVec4), BufferUsageBit::ALL_COMPUTE, BufferMapAccessBit::READ));
+		gr->newBuffer(BufferInitInfo(sizeof(UVec4), BufferUsageBit::kAllCompute, BufferMapAccessBit::READ));
 
 	// Create program A
 	static const char* PROG_SRC = R"(
@@ -2312,7 +2312,7 @@ void main()
 	// Create buffers
 	BufferInitInfo info;
 	info.m_size = sizeof(Vec4) * 2;
-	info.m_usage = BufferUsageBit::ALL_COMPUTE;
+	info.m_usage = BufferUsageBit::kAllCompute;
 	info.m_mapAccess = BufferMapAccessBit::WRITE;
 	BufferPtr ptrBuff = gr->newBuffer(info);
 
@@ -2324,7 +2324,7 @@ void main()
 	ptrBuff->unmap();
 
 	BufferPtr resBuff =
-		gr->newBuffer(BufferInitInfo(sizeof(Vec4), BufferUsageBit::ALL_COMPUTE, BufferMapAccessBit::READ));
+		gr->newBuffer(BufferInitInfo(sizeof(Vec4), BufferUsageBit::kAllCompute, BufferMapAccessBit::READ));
 
 	// Run
 	CommandBufferInitInfo cinit;
@@ -2372,7 +2372,7 @@ ANKI_TEST(Gr, RayQuery)
 		Array<U16, 3> indices = {0, 1, 2};
 		BufferInitInfo init;
 		init.m_mapAccess = BufferMapAccessBit::WRITE;
-		init.m_usage = BufferUsageBit::INDEX;
+		init.m_usage = BufferUsageBit::kIndex;
 		init.m_size = sizeof(indices);
 		idxBuffer = gr->newBuffer(init);
 
@@ -2389,7 +2389,7 @@ ANKI_TEST(Gr, RayQuery)
 
 		BufferInitInfo init;
 		init.m_mapAccess = BufferMapAccessBit::WRITE;
-		init.m_usage = BufferUsageBit::VERTEX;
+		init.m_usage = BufferUsageBit::kVertex;
 		init.m_size = sizeof(verts);
 		vertBuffer = gr->newBuffer(init);
 
@@ -2631,7 +2631,7 @@ static void createCubeBuffers(GrManager& gr, Vec3 min, Vec3 max, BufferPtr& inde
 {
 	BufferInitInfo inf;
 	inf.m_mapAccess = BufferMapAccessBit::WRITE;
-	inf.m_usage = BufferUsageBit::INDEX | BufferUsageBit::VERTEX | BufferUsageBit::STORAGE_TRACE_RAYS_READ;
+	inf.m_usage = BufferUsageBit::kIndex | BufferUsageBit::kVertex | BufferUsageBit::kStorageTraceRaysRead;
 	inf.m_size = sizeof(Vec3) * 8;
 	vertBuffer = gr.newBuffer(inf);
 	WeakArray<Vec3, PtrSize> positions = vertBuffer->map<Vec3>(0, 8, BufferMapAccessBit::WRITE);
@@ -2893,7 +2893,7 @@ void main()
 	{
 		BufferInitInfo inf;
 		inf.m_mapAccess = BufferMapAccessBit::WRITE;
-		inf.m_usage = BufferUsageBit::ALL_STORAGE;
+		inf.m_usage = BufferUsageBit::kAllStorage;
 		inf.m_size = sizeof(Model) * U32(GeomWhat::kCount);
 
 		modelBuffer = gr->newBuffer(inf);
@@ -3305,7 +3305,7 @@ void main()
 
 		BufferInitInfo inf;
 		inf.m_mapAccess = BufferMapAccessBit::WRITE;
-		inf.m_usage = BufferUsageBit::SBT;
+		inf.m_usage = BufferUsageBit::kSBT;
 		inf.m_size = sbtRecordSize * recordCount;
 
 		sbt = gr->newBuffer(inf);
@@ -3371,7 +3371,7 @@ void main()
 	{
 		BufferInitInfo inf;
 		inf.m_mapAccess = BufferMapAccessBit::WRITE;
-		inf.m_usage = BufferUsageBit::ALL_STORAGE;
+		inf.m_usage = BufferUsageBit::kAllStorage;
 		inf.m_size = sizeof(Light) * lightCount;
 
 		lightBuffer = gr->newBuffer(inf);
@@ -3562,7 +3562,7 @@ void main()
 	// Create buffers
 	BufferInitInfo info;
 	info.m_size = sizeof(U32) * ARRAY_SIZE;
-	info.m_usage = BufferUsageBit::ALL_COMPUTE;
+	info.m_usage = BufferUsageBit::kAllCompute;
 	info.m_mapAccess = BufferMapAccessBit::WRITE | BufferMapAccessBit::READ;
 	BufferPtr atomicsBuffer = gr->newBuffer(info);
 	U32* values =

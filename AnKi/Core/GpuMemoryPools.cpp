@@ -28,10 +28,10 @@ Error VertexGpuMemoryPool::init(GenericMemoryPoolAllocator<U8> alloc, GrManager*
 		return Error::kUserData;
 	}
 
-	bufferInit.m_usage = BufferUsageBit::VERTEX | BufferUsageBit::INDEX | BufferUsageBit::TRANSFER_DESTINATION;
+	bufferInit.m_usage = BufferUsageBit::kVertex | BufferUsageBit::kIndex | BufferUsageBit::kTransferDestination;
 	if(gr->getDeviceCapabilities().m_rayTracingEnabled)
 	{
-		bufferInit.m_usage |= BufferUsageBit::ACCELERATION_STRUCTURE_BUILD;
+		bufferInit.m_usage |= BufferUsageBit::kAccelerationStructureBuild;
 	}
 
 	m_vertBuffer = gr->newBuffer(bufferInit);
@@ -87,18 +87,18 @@ Error StagingGpuMemoryPool::init(GrManager* gr, const ConfigSet& cfg)
 	m_perFrameBuffers[StagingGpuMemoryType::TEXTURE].m_size = cfg.getCoreTextureBufferPerFrameMemorySize();
 
 	initBuffer(StagingGpuMemoryType::UNIFORM, gr->getDeviceCapabilities().m_uniformBufferBindOffsetAlignment,
-			   gr->getDeviceCapabilities().m_uniformBufferMaxRange, BufferUsageBit::ALL_UNIFORM, *gr);
+			   gr->getDeviceCapabilities().m_uniformBufferMaxRange, BufferUsageBit::kAllUniform, *gr);
 
 	initBuffer(StagingGpuMemoryType::STORAGE,
 			   max(gr->getDeviceCapabilities().m_storageBufferBindOffsetAlignment,
 				   gr->getDeviceCapabilities().m_sbtRecordAlignment),
-			   gr->getDeviceCapabilities().m_storageBufferMaxRange, BufferUsageBit::ALL_STORAGE | BufferUsageBit::SBT,
+			   gr->getDeviceCapabilities().m_storageBufferMaxRange, BufferUsageBit::kAllStorage | BufferUsageBit::kSBT,
 			   *gr);
 
-	initBuffer(StagingGpuMemoryType::VERTEX, 16, kMaxU32, BufferUsageBit::VERTEX | BufferUsageBit::INDEX, *gr);
+	initBuffer(StagingGpuMemoryType::VERTEX, 16, kMaxU32, BufferUsageBit::kVertex | BufferUsageBit::kIndex, *gr);
 
 	initBuffer(StagingGpuMemoryType::TEXTURE, gr->getDeviceCapabilities().m_textureBufferBindOffsetAlignment,
-			   gr->getDeviceCapabilities().m_textureBufferMaxRange, BufferUsageBit::ALL_TEXTURE, *gr);
+			   gr->getDeviceCapabilities().m_textureBufferMaxRange, BufferUsageBit::kAllTexture, *gr);
 
 	return Error::kNone;
 }

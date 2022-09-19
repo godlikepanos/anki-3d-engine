@@ -42,8 +42,8 @@ Error GBufferPost::initInternal()
 
 	// Create FB descr
 	m_fbDescr.m_colorAttachmentCount = 2;
-	m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::LOAD;
-	m_fbDescr.m_colorAttachments[1].m_loadOperation = AttachmentLoadOperation::LOAD;
+	m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::kLoad;
+	m_fbDescr.m_colorAttachments[1].m_loadOperation = AttachmentLoadOperation::kLoad;
 	m_fbDescr.bake();
 
 	return Error::kNone;
@@ -73,7 +73,7 @@ void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 	rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::kSampledFragment,
 											 TextureSubresourceInfo(DepthStencilAspectBit::kDepth)));
 	rpass.newDependency(
-		RenderPassDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::STORAGE_FRAGMENT_READ));
+		RenderPassDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::kStorageFragmentRead));
 }
 
 void GBufferPost::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)

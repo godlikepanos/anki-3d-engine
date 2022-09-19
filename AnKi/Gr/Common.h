@@ -597,116 +597,116 @@ ANKI_PURE const ShaderVariableDataTypeInfo& getShaderVariableDataTypeInfo(Shader
 /// Occlusion query result bit.
 enum class OcclusionQueryResultBit : U8
 {
-	NOT_AVAILABLE = 1 << 0,
-	VISIBLE = 1 << 1,
-	NOT_VISIBLE = 1 << 2
+	kNotAvailable = 1 << 0,
+	kVisible = 1 << 1,
+	kNotVisible = 1 << 2
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(OcclusionQueryResultBit)
 
 /// Occlusion query result.
 enum class OcclusionQueryResult : U8
 {
-	NOT_AVAILABLE,
-	VISIBLE,
-	NOT_VISIBLE
+	kNotAvailable,
+	kVisible,
+	kNotVisible
 };
 
 /// Timestamp query result.
 enum class TimestampQueryResult : U8
 {
-	NOT_AVAILABLE,
-	AVAILABLE
+	kNotAvailable,
+	kAvailable
 };
 
 /// Attachment load operation.
 enum class AttachmentLoadOperation : U8
 {
-	LOAD,
-	CLEAR,
-	DONT_CARE
+	kLoad,
+	kClear,
+	kDontCare
 };
 
 /// Attachment store operation.
 enum class AttachmentStoreOperation : U8
 {
-	STORE,
-	DONT_CARE
+	kStore,
+	kDontCare
 };
 
 /// Buffer usage modes.
-/// The graphics work consists of the following pipes: INDIRECT, GEOMETRY (all programmable and fixed function geometry
-/// stages) and finaly FRAGMENT.
-/// The compute from the consists of the following: INDIRECT and COMPUTE.
-/// The trace rays from the: INDIRECT and TRACE_RAYS
+/// The graphics work consists of the following pipes: indirect, geometry (all programmable and fixed function geometry
+/// stages) and finaly fragment.
+/// The compute from the consists of the following: indirect and compute.
+/// The trace rays from the: indirect and trace_rays
 /// !!WARNING!! If you change this remember to change PrivateBufferUsageBit.
 enum class BufferUsageBit : U64
 {
-	NONE = 0,
+	kNone = 0,
 
-	UNIFORM_GEOMETRY = 1ull << 0ull,
-	UNIFORM_FRAGMENT = 1ull << 1ull,
-	UNIFORM_COMPUTE = 1ull << 2ull,
-	UNIFORM_TRACE_RAYS = 1ull << 3ull,
+	kUniformGeometry = 1ull << 0ull,
+	kUniformFragment = 1ull << 1ull,
+	kUniformCompute = 1ull << 2ull,
+	kUniformTraceRays = 1ull << 3ull,
 
-	STORAGE_GEOMETRY_READ = 1ull << 4ull,
-	STORAGE_GEOMETRY_WRITE = 1ull << 5ull,
-	STORAGE_FRAGMENT_READ = 1ull << 6ull,
-	STORAGE_FRAGMENT_WRITE = 1ull << 7ull,
-	STORAGE_COMPUTE_READ = 1ull << 8ull,
-	STORAGE_COMPUTE_WRITE = 1ull << 9ull,
-	STORAGE_TRACE_RAYS_READ = 1ull << 10ull,
-	STORAGE_TRACE_RAYS_WRITE = 1ull << 11ull,
+	kStorageGeometryRead = 1ull << 4ull,
+	kStorageGeometryWrite = 1ull << 5ull,
+	kStorageFragmentRead = 1ull << 6ull,
+	kStorageFragmentWrite = 1ull << 7ull,
+	kStorageComputeRead = 1ull << 8ull,
+	kStorageComputeWrite = 1ull << 9ull,
+	kStorageTraceRaysRead = 1ull << 10ull,
+	kStorageTraceRaysWrite = 1ull << 11ull,
 
-	TEXTURE_GEOMETRY_READ = 1ull << 12ull,
-	TEXTURE_GEOMETRY_WRITE = 1ull << 13ull,
-	TEXTURE_FRAGMENT_READ = 1ull << 14ull,
-	TEXTURE_FRAGMENT_WRITE = 1ull << 15ull,
-	TEXTURE_COMPUTE_READ = 1ull << 16ull,
-	TEXTURE_COMPUTE_WRITE = 1ull << 17ull,
-	TEXTURE_TRACE_RAYS_READ = 1ull << 18ull,
-	TEXTURE_TRACE_RAYS_WRITE = 1ull << 19ull,
+	kTextureGeometryRead = 1ull << 12ull,
+	kTextureGeometryWrite = 1ull << 13ull,
+	kTextureFragmentRead = 1ull << 14ull,
+	kTextureFragmentWrite = 1ull << 15ull,
+	kTextureComputeRead = 1ull << 16ull,
+	kTextureComputeWrite = 1ull << 17ull,
+	kTextureTraceRaysRead = 1ull << 18ull,
+	kTextureTraceRaysWrite = 1ull << 19ull,
 
-	INDEX = 1ull << 20ull,
-	VERTEX = 1ull << 21ull,
+	kIndex = 1ull << 20ull,
+	kVertex = 1ull << 21ull,
 
-	INDIRECT_COMPUTE = 1ull << 22ll,
-	INDIRECT_DRAW = 1ull << 23ull,
-	INDIRECT_TRACE_RAYS = 1ull << 24ull,
+	kIndirectCompute = 1ull << 22ll,
+	kIndirectDraw = 1ull << 23ull,
+	kIndirectTraceRays = 1ull << 24ull,
 
-	TRANSFER_SOURCE = 1ull << 25ull,
-	TRANSFER_DESTINATION = 1ull << 26ull,
+	kTransferSource = 1ull << 25ull,
+	kTransferDestination = 1ull << 26ull,
 
-	ACCELERATION_STRUCTURE_BUILD = 1ull << 27ull, ///< Will be used as a position or index buffer in a BLAS build.
-	SBT = 1ull << 28ull, ///< Will be used as SBT in a traceRays() command.
+	kAccelerationStructureBuild = 1ull << 27ull, ///< Will be used as a position or index buffer in a BLAS build.
+	kSBT = 1ull << 28ull, ///< Will be used as SBT in a traceRays() command.
 
 	// Derived
-	ALL_UNIFORM = UNIFORM_GEOMETRY | UNIFORM_FRAGMENT | UNIFORM_COMPUTE | UNIFORM_TRACE_RAYS,
-	ALL_STORAGE = STORAGE_GEOMETRY_READ | STORAGE_GEOMETRY_WRITE | STORAGE_FRAGMENT_READ | STORAGE_FRAGMENT_WRITE
-				  | STORAGE_COMPUTE_READ | STORAGE_COMPUTE_WRITE | STORAGE_TRACE_RAYS_READ | STORAGE_TRACE_RAYS_WRITE,
-	ALL_TEXTURE = TEXTURE_GEOMETRY_READ | TEXTURE_GEOMETRY_WRITE | TEXTURE_FRAGMENT_READ | TEXTURE_FRAGMENT_WRITE
-				  | TEXTURE_COMPUTE_READ | TEXTURE_COMPUTE_WRITE | TEXTURE_TRACE_RAYS_READ | TEXTURE_TRACE_RAYS_WRITE,
-	ALL_INDIRECT = INDIRECT_COMPUTE | INDIRECT_DRAW | INDIRECT_TRACE_RAYS,
-	ALL_TRANSFER = TRANSFER_SOURCE | TRANSFER_DESTINATION,
+	kAllUniform = kUniformGeometry | kUniformFragment | kUniformCompute | kUniformTraceRays,
+	kAllStorage = kStorageGeometryRead | kStorageGeometryWrite | kStorageFragmentRead | kStorageFragmentWrite
+				  | kStorageComputeRead | kStorageComputeWrite | kStorageTraceRaysRead | kStorageTraceRaysWrite,
+	kAllTexture = kTextureGeometryRead | kTextureGeometryWrite | kTextureFragmentRead | kTextureFragmentWrite
+				  | kTextureComputeRead | kTextureComputeWrite | kTextureTraceRaysRead | kTextureTraceRaysWrite,
+	kAllIndirect = kIndirectCompute | kIndirectDraw | kIndirectTraceRays,
+	kAllTransfer = kTransferSource | kTransferDestination,
 
-	ALL_GEOMETRY = UNIFORM_GEOMETRY | STORAGE_GEOMETRY_READ | STORAGE_GEOMETRY_WRITE | TEXTURE_GEOMETRY_READ
-				   | TEXTURE_GEOMETRY_WRITE | INDEX | VERTEX,
-	ALL_FRAGMENT = UNIFORM_FRAGMENT | STORAGE_FRAGMENT_READ | STORAGE_FRAGMENT_WRITE | TEXTURE_FRAGMENT_READ
-				   | TEXTURE_FRAGMENT_WRITE,
-	ALL_GRAPHICS = ALL_GEOMETRY | ALL_FRAGMENT | INDIRECT_DRAW,
-	ALL_COMPUTE = UNIFORM_COMPUTE | STORAGE_COMPUTE_READ | STORAGE_COMPUTE_WRITE | TEXTURE_COMPUTE_READ
-				  | TEXTURE_COMPUTE_WRITE | INDIRECT_COMPUTE,
-	ALL_TRACE_RAYS = UNIFORM_TRACE_RAYS | STORAGE_TRACE_RAYS_READ | STORAGE_TRACE_RAYS_WRITE | TEXTURE_TRACE_RAYS_READ
-					 | TEXTURE_TRACE_RAYS_WRITE | INDIRECT_TRACE_RAYS | SBT,
+	kAllGeometry = kUniformGeometry | kStorageGeometryRead | kStorageGeometryWrite | kTextureGeometryRead
+				   | kTextureGeometryWrite | kIndex | kVertex,
+	kAllFragment =
+		kUniformFragment | kStorageFragmentRead | kStorageFragmentWrite | kTextureFragmentRead | kTextureFragmentWrite,
+	kAllGraphics = kAllGeometry | kAllFragment | kIndirectDraw,
+	kAllCompute = kUniformCompute | kStorageComputeRead | kStorageComputeWrite | kTextureComputeRead
+				  | kTextureComputeWrite | kIndirectCompute,
+	kAllTraceRays = kUniformTraceRays | kStorageTraceRaysRead | kStorageTraceRaysWrite | kTextureTraceRaysRead
+					| kTextureTraceRaysWrite | kIndirectTraceRays | kSBT,
 
-	ALL_RAY_TRACING = ALL_TRACE_RAYS | ACCELERATION_STRUCTURE_BUILD,
-	ALL_READ = ALL_UNIFORM | STORAGE_GEOMETRY_READ | STORAGE_FRAGMENT_READ | STORAGE_COMPUTE_READ
-			   | STORAGE_TRACE_RAYS_READ | TEXTURE_GEOMETRY_READ | TEXTURE_FRAGMENT_READ | TEXTURE_COMPUTE_READ
-			   | TEXTURE_TRACE_RAYS_READ | INDEX | VERTEX | INDIRECT_COMPUTE | INDIRECT_DRAW | INDIRECT_TRACE_RAYS
-			   | TRANSFER_SOURCE | ACCELERATION_STRUCTURE_BUILD | SBT,
-	ALL_WRITE = STORAGE_GEOMETRY_WRITE | STORAGE_FRAGMENT_WRITE | STORAGE_COMPUTE_WRITE | STORAGE_TRACE_RAYS_WRITE
-				| TEXTURE_GEOMETRY_WRITE | TEXTURE_FRAGMENT_WRITE | TEXTURE_COMPUTE_WRITE | TEXTURE_TRACE_RAYS_WRITE
-				| TRANSFER_DESTINATION,
-	ALL = ALL_READ | ALL_WRITE,
+	kAllRayTracing = kAllTraceRays | kAccelerationStructureBuild,
+	kAllRead = kAllUniform | kStorageGeometryRead | kStorageFragmentRead | kStorageComputeRead | kStorageTraceRaysRead
+			   | kTextureGeometryRead | kTextureFragmentRead | kTextureComputeRead | kTextureTraceRaysRead | kIndex
+			   | kVertex | kIndirectCompute | kIndirectDraw | kIndirectTraceRays | kTransferSource
+			   | kAccelerationStructureBuild | kSBT,
+	kAllWrite = kStorageGeometryWrite | kStorageFragmentWrite | kStorageComputeWrite | kStorageTraceRaysWrite
+				| kTextureGeometryWrite | kTextureFragmentWrite | kTextureComputeWrite | kTextureTraceRaysWrite
+				| kTransferDestination,
+	kAll = kAllRead | kAllWrite,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferUsageBit)
 
@@ -1040,8 +1040,8 @@ class BufferBarrierInfo
 {
 public:
 	Buffer* m_buffer = nullptr;
-	BufferUsageBit m_previousUsage = BufferUsageBit::NONE;
-	BufferUsageBit m_nextUsage = BufferUsageBit::NONE;
+	BufferUsageBit m_previousUsage = BufferUsageBit::kNone;
+	BufferUsageBit m_nextUsage = BufferUsageBit::kNone;
 	PtrSize m_offset = 0;
 	PtrSize m_size = 0;
 };

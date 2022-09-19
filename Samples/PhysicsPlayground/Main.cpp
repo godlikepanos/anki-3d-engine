@@ -402,7 +402,8 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 	return Error::kNone;
 }
 
-int main(int argc, char* argv[])
+ANKI_MAIN_FUNCTION(myMain)
+int myMain(int argc, char* argv[])
 {
 	Error err = Error::kNone;
 

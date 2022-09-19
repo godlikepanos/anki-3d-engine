@@ -67,7 +67,7 @@ void FramebufferImpl::initClearValues(const FramebufferInitInfo& init)
 {
 	for(U i = 0; i < m_colorAttCount; ++i)
 	{
-		if(init.m_colorAttachments[i].m_loadOperation == AttachmentLoadOperation::CLEAR)
+		if(init.m_colorAttachments[i].m_loadOperation == AttachmentLoadOperation::kClear)
 		{
 			F32* col = &m_clearVals[i].color.float32[0];
 			col[0] = init.m_colorAttachments[i].m_clearValue.m_colorf[0];
@@ -83,8 +83,8 @@ void FramebufferImpl::initClearValues(const FramebufferInitInfo& init)
 
 	if(hasDepthStencil())
 	{
-		if(init.m_depthStencilAttachment.m_loadOperation == AttachmentLoadOperation::CLEAR
-		   || init.m_depthStencilAttachment.m_stencilLoadOperation == AttachmentLoadOperation::CLEAR)
+		if(init.m_depthStencilAttachment.m_loadOperation == AttachmentLoadOperation::kClear
+		   || init.m_depthStencilAttachment.m_stencilLoadOperation == AttachmentLoadOperation::kClear)
 		{
 			m_clearVals[m_colorAttCount].depthStencil.depth =
 				init.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth;

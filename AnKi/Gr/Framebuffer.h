@@ -19,11 +19,11 @@ class FramebufferAttachmentInfo
 public:
 	TextureViewPtr m_textureView;
 
-	AttachmentLoadOperation m_loadOperation = AttachmentLoadOperation::CLEAR;
-	AttachmentStoreOperation m_storeOperation = AttachmentStoreOperation::STORE;
+	AttachmentLoadOperation m_loadOperation = AttachmentLoadOperation::kClear;
+	AttachmentStoreOperation m_storeOperation = AttachmentStoreOperation::kStore;
 
-	AttachmentLoadOperation m_stencilLoadOperation = AttachmentLoadOperation::CLEAR;
-	AttachmentStoreOperation m_stencilStoreOperation = AttachmentStoreOperation::STORE;
+	AttachmentLoadOperation m_stencilLoadOperation = AttachmentLoadOperation::kClear;
+	AttachmentStoreOperation m_stencilStoreOperation = AttachmentStoreOperation::kStore;
 
 	ClearValue m_clearValue;
 };

@@ -37,7 +37,7 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 
 		m_drawBuffers[i] = binding;
 
-		if(att.m_loadOperation == AttachmentLoadOperation::DONT_CARE)
+		if(att.m_loadOperation == AttachmentLoadOperation::kDontCare)
 		{
 			m_invalidateBuffers[m_invalidateBuffersCount++] = binding;
 		}
@@ -78,7 +78,7 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 
 		attachTextureInternal(binding, viewImpl, att);
 
-		if(att.m_loadOperation == AttachmentLoadOperation::DONT_CARE)
+		if(att.m_loadOperation == AttachmentLoadOperation::kDontCare)
 		{
 			m_invalidateBuffers[m_invalidateBuffersCount++] = binding;
 		}
@@ -96,10 +96,10 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 
 		// Misc
 		m_clearDepth = !!(viewImpl.getSubresource().m_depthStencilAspect & DepthStencilAspectBit::kDepth)
-					   && att.m_loadOperation == AttachmentLoadOperation::CLEAR;
+					   && att.m_loadOperation == AttachmentLoadOperation::kClear;
 
 		m_clearStencil = !!(viewImpl.getSubresource().m_depthStencilAspect & DepthStencilAspectBit::STENCIL)
-						 && att.m_stencilLoadOperation == AttachmentLoadOperation::CLEAR;
+						 && att.m_stencilLoadOperation == AttachmentLoadOperation::kClear;
 	}
 
 	// Check completeness
@@ -187,7 +187,7 @@ void FramebufferImpl::bind(const GlState& state, U32 minx, U32 miny, U32 width, 
 	{
 		const FramebufferAttachmentInfo& att = m_in.m_colorAttachments[i];
 
-		if(att.m_loadOperation == AttachmentLoadOperation::CLEAR)
+		if(att.m_loadOperation == AttachmentLoadOperation::kClear)
 		{
 			// Enable write mask in case a pipeline changed it (else no clear will happen) and then restore state
 			Bool restore = false;

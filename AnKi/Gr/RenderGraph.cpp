@@ -606,7 +606,7 @@ Bool RenderGraph::passADependsOnB(const RenderPassDescriptionBase& a, const Rend
 						continue;
 					}
 
-					if(!((aDep.m_buffer.m_usage | bDep.m_buffer.m_usage) & BufferUsageBit::ALL_WRITE))
+					if(!((aDep.m_buffer.m_usage | bDep.m_buffer.m_usage) & BufferUsageBit::kAllWrite))
 					{
 						// Don't care about read to read deps
 						continue;
@@ -1439,10 +1439,10 @@ void RenderGraph::getStatistics(RenderGraphStatistics& statistics) const
 	{
 		Second start, end;
 		[[maybe_unused]] TimestampQueryResult res = m_statistics.m_timestamps[oldFrame * 2]->getResult(start);
-		ANKI_ASSERT(res == TimestampQueryResult::AVAILABLE);
+		ANKI_ASSERT(res == TimestampQueryResult::kAvailable);
 
 		res = m_statistics.m_timestamps[oldFrame * 2 + 1]->getResult(end);
-		ANKI_ASSERT(res == TimestampQueryResult::AVAILABLE);
+		ANKI_ASSERT(res == TimestampQueryResult::kAvailable);
 
 		const Second diff = end - start;
 		statistics.m_gpuTime = diff;
@@ -1513,26 +1513,26 @@ StringAuto RenderGraph::bufferUsageToStr(StackAllocator<U8>& alloc, BufferUsageB
 			slist.pushBackSprintf("%s", #u); \
 		}
 
-	ANKI_BUFF_USAGE(UNIFORM_GEOMETRY);
-	ANKI_BUFF_USAGE(UNIFORM_FRAGMENT);
-	ANKI_BUFF_USAGE(UNIFORM_COMPUTE);
-	ANKI_BUFF_USAGE(UNIFORM_TRACE_RAYS);
-	ANKI_BUFF_USAGE(STORAGE_GEOMETRY_READ);
-	ANKI_BUFF_USAGE(STORAGE_GEOMETRY_WRITE);
-	ANKI_BUFF_USAGE(STORAGE_FRAGMENT_READ);
-	ANKI_BUFF_USAGE(STORAGE_FRAGMENT_WRITE);
-	ANKI_BUFF_USAGE(STORAGE_COMPUTE_READ);
-	ANKI_BUFF_USAGE(STORAGE_COMPUTE_WRITE);
-	ANKI_BUFF_USAGE(STORAGE_TRACE_RAYS_READ);
-	ANKI_BUFF_USAGE(STORAGE_TRACE_RAYS_WRITE);
-	ANKI_BUFF_USAGE(TEXTURE_GEOMETRY_READ);
-	ANKI_BUFF_USAGE(TEXTURE_GEOMETRY_WRITE);
-	ANKI_BUFF_USAGE(TEXTURE_FRAGMENT_READ);
-	ANKI_BUFF_USAGE(TEXTURE_FRAGMENT_WRITE);
-	ANKI_BUFF_USAGE(TEXTURE_COMPUTE_READ);
-	ANKI_BUFF_USAGE(TEXTURE_COMPUTE_WRITE);
-	ANKI_BUFF_USAGE(TEXTURE_TRACE_RAYS_READ);
-	ANKI_BUFF_USAGE(TEXTURE_TRACE_RAYS_WRITE);
+	ANKI_BUFF_USAGE(kUniformGeometry);
+	ANKI_BUFF_USAGE(kUniformFragment);
+	ANKI_BUFF_USAGE(kUniformCompute);
+	ANKI_BUFF_USAGE(kUniformTraceRays);
+	ANKI_BUFF_USAGE(kStorageGeometryRead);
+	ANKI_BUFF_USAGE(kStorageGeometryWrite);
+	ANKI_BUFF_USAGE(kStorageFragmentRead);
+	ANKI_BUFF_USAGE(kStorageFragmentWrite);
+	ANKI_BUFF_USAGE(kStorageComputeRead);
+	ANKI_BUFF_USAGE(kStorageComputeWrite);
+	ANKI_BUFF_USAGE(kStorageTraceRaysRead);
+	ANKI_BUFF_USAGE(kStorageTraceRaysWrite);
+	ANKI_BUFF_USAGE(kTextureGeometryRead);
+	ANKI_BUFF_USAGE(kTextureGeometryWrite);
+	ANKI_BUFF_USAGE(kTextureFragmentRead);
+	ANKI_BUFF_USAGE(kTextureFragmentWrite);
+	ANKI_BUFF_USAGE(kTextureComputeRead);
+	ANKI_BUFF_USAGE(kTextureComputeWrite);
+	ANKI_BUFF_USAGE(kTextureTraceRaysRead);
+	ANKI_BUFF_USAGE(kTextureTraceRaysWrite);
 	ANKI_BUFF_USAGE(INDEX);
 	ANKI_BUFF_USAGE(VERTEX);
 	ANKI_BUFF_USAGE(INDIRECT_COMPUTE);

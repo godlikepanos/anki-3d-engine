@@ -95,11 +95,11 @@ Error ProbeReflections::initGBuffer()
 
 		for(U j = 0; j < kGBufferColorRenderTargetCount; ++j)
 		{
-			m_gbuffer.m_fbDescr.m_colorAttachments[j].m_loadOperation = AttachmentLoadOperation::CLEAR;
+			m_gbuffer.m_fbDescr.m_colorAttachments[j].m_loadOperation = AttachmentLoadOperation::kClear;
 		}
 
 		m_gbuffer.m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
-		m_gbuffer.m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
+		m_gbuffer.m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kClear;
 		m_gbuffer.m_fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0f;
 
 		m_gbuffer.m_fbDescr.bake();
@@ -158,7 +158,7 @@ Error ProbeReflections::initIrradiance()
 	// Create buff
 	{
 		BufferInitInfo init;
-		init.m_usage = BufferUsageBit::ALL_STORAGE;
+		init.m_usage = BufferUsageBit::kAllStorage;
 		init.m_size = 6 * sizeof(Vec4);
 		m_irradiance.m_diceValuesBuff = getGrManager().newBuffer(init);
 	}
@@ -194,7 +194,7 @@ Error ProbeReflections::initShadowMapping()
 	m_shadowMapping.m_fbDescr.m_colorAttachmentCount = 0;
 	m_shadowMapping.m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
 	m_shadowMapping.m_fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0f;
-	m_shadowMapping.m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
+	m_shadowMapping.m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kClear;
 	m_shadowMapping.m_fbDescr.bake();
 
 	return Error::kNone;
@@ -212,7 +212,7 @@ void ProbeReflections::initCacheEntry(U32 cacheEntryIdx)
 		fbDescr.m_colorAttachmentCount = 1;
 		fbDescr.m_colorAttachments[0].m_surface.m_layer = cacheEntryIdx;
 		fbDescr.m_colorAttachments[0].m_surface.m_face = faceIdx;
-		fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
+		fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::kClear;
 		fbDescr.bake();
 	}
 }
@@ -632,7 +632,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 	// Irradiance passes
 	{
 		m_ctx.m_irradianceDiceValuesBuffHandle =
-			rgraph.importBuffer(m_irradiance.m_diceValuesBuff, BufferUsageBit::NONE);
+			rgraph.importBuffer(m_irradiance.m_diceValuesBuff, BufferUsageBit::kNone);
 
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("CubeRefl Irradiance");
 
@@ -646,7 +646,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		readSubresource.m_firstLayer = probeToUpdateCacheEntryIdx;
 		pass.newDependency({m_ctx.m_lightShadingRt, TextureUsageBit::kSampledCompute, readSubresource});
 
-		pass.newDependency({m_ctx.m_irradianceDiceValuesBuffHandle, BufferUsageBit::STORAGE_COMPUTE_WRITE});
+		pass.newDependency({m_ctx.m_irradianceDiceValuesBuffHandle, BufferUsageBit::kStorageComputeWrite});
 	}
 
 	// Write irradiance back to refl
@@ -668,7 +668,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		pass.newDependency({m_ctx.m_lightShadingRt,
 							TextureUsageBit::kImageComputeRead | TextureUsageBit::kImageComputeWrite, subresource});
 
-		pass.newDependency({m_ctx.m_irradianceDiceValuesBuffHandle, BufferUsageBit::STORAGE_COMPUTE_READ});
+		pass.newDependency({m_ctx.m_irradianceDiceValuesBuffHandle, BufferUsageBit::kStorageComputeRead});
 	}
 
 	// Mipmapping "passes"

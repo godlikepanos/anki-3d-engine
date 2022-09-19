@@ -93,7 +93,7 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 		RenderPassDependency(m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::kSampledCompute));
 
 	pass.newDependency(
-		RenderPassDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::STORAGE_COMPUTE_READ));
+		RenderPassDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::kStorageComputeRead));
 
 	m_r->getIndirectDiffuseProbes().setRenderGraphDependencies(ctx, pass, TextureUsageBit::kSampledCompute);
 }

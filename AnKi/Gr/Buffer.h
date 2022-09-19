@@ -19,7 +19,7 @@ class BufferInitInfo : public GrBaseInitInfo
 {
 public:
 	PtrSize m_size = 0;
-	BufferUsageBit m_usage = BufferUsageBit::NONE;
+	BufferUsageBit m_usage = BufferUsageBit::kNone;
 	BufferMapAccessBit m_mapAccess = BufferMapAccessBit::NONE;
 
 	BufferInitInfo(CString name = {})
@@ -108,7 +108,7 @@ public:
 
 protected:
 	PtrSize m_size = 0;
-	BufferUsageBit m_usage = BufferUsageBit::NONE;
+	BufferUsageBit m_usage = BufferUsageBit::kNone;
 	BufferMapAccessBit m_access = BufferMapAccessBit::NONE;
 	U64 m_gpuAddress = 0;
 

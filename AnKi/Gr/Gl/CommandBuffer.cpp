@@ -1317,12 +1317,12 @@ void CommandBuffer::setBufferBarrier(BufferPtr buff, BufferUsageBit prevUsage, B
 		d |= GL_SHADER_STORAGE_BARRIER_BIT;
 	}
 
-	if(!!(all & BufferUsageBit::INDEX))
+	if(!!(all & BufferUsageBit::kIndex))
 	{
 		d |= GL_ELEMENT_ARRAY_BARRIER_BIT;
 	}
 
-	if(!!(all & BufferUsageBit::VERTEX))
+	if(!!(all & BufferUsageBit::kVertex))
 	{
 		d |= GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT;
 	}

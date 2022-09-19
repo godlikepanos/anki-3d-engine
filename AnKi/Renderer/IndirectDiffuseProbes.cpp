@@ -151,11 +151,11 @@ Error IndirectDiffuseProbes::initGBuffer()
 
 		for(U j = 0; j < kGBufferColorRenderTargetCount; ++j)
 		{
-			m_gbuffer.m_fbDescr.m_colorAttachments[j].m_loadOperation = AttachmentLoadOperation::CLEAR;
+			m_gbuffer.m_fbDescr.m_colorAttachments[j].m_loadOperation = AttachmentLoadOperation::kClear;
 		}
 
 		m_gbuffer.m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
-		m_gbuffer.m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
+		m_gbuffer.m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kClear;
 		m_gbuffer.m_fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0f;
 
 		m_gbuffer.m_fbDescr.bake();
@@ -178,7 +178,7 @@ Error IndirectDiffuseProbes::initShadowMapping()
 	m_shadowMapping.m_fbDescr.m_colorAttachmentCount = 0;
 	m_shadowMapping.m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
 	m_shadowMapping.m_fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0f;
-	m_shadowMapping.m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
+	m_shadowMapping.m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kClear;
 	m_shadowMapping.m_fbDescr.bake();
 
 	return Error::kNone;
@@ -196,7 +196,7 @@ Error IndirectDiffuseProbes::initLightShading()
 	// Create FB descr
 	{
 		m_lightShading.m_fbDescr.m_colorAttachmentCount = 1;
-		m_lightShading.m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
+		m_lightShading.m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::kClear;
 		m_lightShading.m_fbDescr.bake();
 	}
 

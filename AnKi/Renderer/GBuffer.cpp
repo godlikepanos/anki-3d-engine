@@ -57,9 +57,9 @@ Error GBuffer::initInternal()
 	}
 
 	// FB descr
-	AttachmentLoadOperation loadop = AttachmentLoadOperation::DONT_CARE;
+	AttachmentLoadOperation loadop = AttachmentLoadOperation::kDontCare;
 #if ANKI_EXTRA_CHECKS
-	loadop = AttachmentLoadOperation::CLEAR;
+	loadop = AttachmentLoadOperation::kClear;
 #endif
 
 	m_fbDescr.m_colorAttachmentCount = kGBufferColorRenderTargetCount;
@@ -69,10 +69,10 @@ Error GBuffer::initInternal()
 		m_fbDescr.m_colorAttachments[i].m_clearValue.m_colorf = {1.0f, 0.0f, 1.0f, 0.0f};
 	}
 
-	m_fbDescr.m_colorAttachments[3].m_loadOperation = AttachmentLoadOperation::CLEAR;
+	m_fbDescr.m_colorAttachments[3].m_loadOperation = AttachmentLoadOperation::kClear;
 	m_fbDescr.m_colorAttachments[3].m_clearValue.m_colorf = {1.0f, 1.0f, 1.0f, 1.0f};
 
-	m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
+	m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kClear;
 	m_fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0f;
 	m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
 

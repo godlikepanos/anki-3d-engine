@@ -395,12 +395,12 @@ class FramebufferDescriptionAttachment
 {
 public:
 	TextureSurfaceInfo m_surface;
-	AttachmentLoadOperation m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-	AttachmentStoreOperation m_storeOperation = AttachmentStoreOperation::STORE;
+	AttachmentLoadOperation m_loadOperation = AttachmentLoadOperation::kDontCare;
+	AttachmentStoreOperation m_storeOperation = AttachmentStoreOperation::kStore;
 	ClearValue m_clearValue;
 
-	AttachmentLoadOperation m_stencilLoadOperation = AttachmentLoadOperation::DONT_CARE;
-	AttachmentStoreOperation m_stencilStoreOperation = AttachmentStoreOperation::STORE;
+	AttachmentLoadOperation m_stencilLoadOperation = AttachmentLoadOperation::kDontCare;
+	AttachmentStoreOperation m_stencilStoreOperation = AttachmentStoreOperation::kStore;
 
 	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::kNone; ///< Relevant only for depth stencil textures.
 };

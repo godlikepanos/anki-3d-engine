@@ -52,7 +52,7 @@ Error GpuParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	{
 		BufferInitInfo buffInit("GpuParticlesProps");
 		buffInit.m_mapAccess = BufferMapAccessBit::WRITE;
-		buffInit.m_usage = BufferUsageBit::UNIFORM_COMPUTE;
+		buffInit.m_usage = BufferUsageBit::kUniformCompute;
 		buffInit.m_size = sizeof(GpuParticleEmitterProperties);
 		m_propsBuff = m_node->getSceneGraph().getGrManager().newBuffer(buffInit);
 		GpuParticleEmitterProperties* props =
@@ -78,7 +78,7 @@ Error GpuParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	{
 		BufferInitInfo buffInit("GpuParticles");
 		buffInit.m_mapAccess = BufferMapAccessBit::WRITE;
-		buffInit.m_usage = BufferUsageBit::ALL_STORAGE;
+		buffInit.m_usage = BufferUsageBit::kAllStorage;
 		buffInit.m_size = sizeof(GpuParticle) * m_maxParticleCount;
 		m_particlesBuff = m_node->getSceneGraph().getGrManager().newBuffer(buffInit);
 
@@ -98,7 +98,7 @@ Error GpuParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	{
 		BufferInitInfo buffInit("GpuParticlesRand");
 		buffInit.m_mapAccess = BufferMapAccessBit::WRITE;
-		buffInit.m_usage = BufferUsageBit::ALL_STORAGE;
+		buffInit.m_usage = BufferUsageBit::kAllStorage;
 		buffInit.m_size = sizeof(U32) + MAX_RAND_FACTORS * sizeof(F32);
 		m_randFactorsBuff = m_node->getSceneGraph().getGrManager().newBuffer(buffInit);
 

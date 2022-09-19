@@ -127,7 +127,7 @@ public:
 
 	static constexpr BufferUsageBit ALL_PRIVATE = ACCELERATION_STRUCTURE_BUILD_SCRATCH | ACCELERATION_STRUCTURE;
 };
-static_assert(!(BufferUsageBit::ALL & PrivateBufferUsageBit::ALL_PRIVATE), "Update the bits in PrivateBufferUsageBit");
+static_assert(!(BufferUsageBit::kAll & PrivateBufferUsageBit::ALL_PRIVATE), "Update the bits in PrivateBufferUsageBit");
 
 /// Check if a vulkan function failed. It will abort on failure.
 #define ANKI_VK_CHECKF(x) \

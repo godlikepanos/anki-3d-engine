@@ -166,7 +166,7 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		m_dummyTexView3d = getGrManager().newTextureView(viewinit);
 
 		m_dummyBuff = getGrManager().newBuffer(BufferInitInfo(
-			1024, BufferUsageBit::ALL_UNIFORM | BufferUsageBit::ALL_STORAGE, BufferMapAccessBit::NONE, "Dummy"));
+			1024, BufferUsageBit::kAllUniform | BufferUsageBit::kAllStorage, BufferMapAccessBit::NONE, "Dummy"));
 	}
 
 	// Init the stages. Careful with the order!!!!!!!!!!
@@ -506,8 +506,8 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 						TextureViewPtr view = getGrManager().newTextureView(TextureViewInitInfo(tex, surf, aspect));
 
 						fbInit.m_depthStencilAttachment.m_textureView = view;
-						fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
-						fbInit.m_depthStencilAttachment.m_stencilLoadOperation = AttachmentLoadOperation::CLEAR;
+						fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kClear;
+						fbInit.m_depthStencilAttachment.m_stencilLoadOperation = AttachmentLoadOperation::kClear;
 						fbInit.m_depthStencilAttachment.m_clearValue = clearVal;
 
 						dsUsage = TextureUsageBit::kFramebufferWrite;
@@ -518,7 +518,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 
 						fbInit.m_colorAttachmentCount = 1;
 						fbInit.m_colorAttachments[0].m_textureView = view;
-						fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
+						fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::kClear;
 						fbInit.m_colorAttachments[0].m_clearValue = clearVal;
 
 						colUsage[0] = TextureUsageBit::kFramebufferWrite;

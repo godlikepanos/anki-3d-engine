@@ -22,12 +22,12 @@ void BufferImpl::init()
 	// This is a guess, not very important since DSA doesn't care about it on creation
 	m_target = GL_ARRAY_BUFFER;
 
-	if((usage & BufferUsageBit::UNIFORM_ALL) != BufferUsageBit::NONE)
+	if((usage & BufferUsageBit::UNIFORM_ALL) != BufferUsageBit::kNone)
 	{
 		m_target = GL_UNIFORM_BUFFER;
 	}
 
-	if((usage & BufferUsageBit::STORAGE_ALL) != BufferUsageBit::NONE)
+	if((usage & BufferUsageBit::STORAGE_ALL) != BufferUsageBit::kNone)
 	{
 		m_target = GL_SHADER_STORAGE_BUFFER;
 	}
@@ -37,7 +37,7 @@ void BufferImpl::init()
 	//
 	GLbitfield flags = 0;
 	Bool shouldMap = false;
-	if((usage & BufferUsageBit::TRANSFER_ALL) != BufferUsageBit::NONE)
+	if((usage & BufferUsageBit::TRANSFER_ALL) != BufferUsageBit::kNone)
 	{
 		flags |= GL_DYNAMIC_STORAGE_BIT;
 	}

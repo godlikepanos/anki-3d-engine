@@ -104,7 +104,7 @@ Error DepthDownscale::initInternal()
 	{
 		BufferInitInfo buffInit("HiZCounterBuffer");
 		buffInit.m_size = sizeof(U32);
-		buffInit.m_usage = BufferUsageBit::STORAGE_COMPUTE_WRITE | BufferUsageBit::TRANSFER_DESTINATION;
+		buffInit.m_usage = BufferUsageBit::kStorageComputeWrite | BufferUsageBit::kTransferDestination;
 		m_counterBuffer = getGrManager().newBuffer(buffInit);
 	}
 
@@ -114,7 +114,7 @@ Error DepthDownscale::initInternal()
 		BufferInitInfo buffInit("HiZ Client");
 		buffInit.m_mapAccess = BufferMapAccessBit::READ;
 		buffInit.m_size = PtrSize(m_lastMipSize.y()) * PtrSize(m_lastMipSize.x()) * sizeof(F32);
-		buffInit.m_usage = BufferUsageBit::STORAGE_COMPUTE_WRITE | BufferUsageBit::STORAGE_FRAGMENT_WRITE;
+		buffInit.m_usage = BufferUsageBit::kStorageComputeWrite | BufferUsageBit::kStorageFragmentWrite;
 		m_clientBuffer = getGrManager().newBuffer(buffInit);
 
 		m_clientBufferAddr = m_clientBuffer->map(0, buffInit.m_size, BufferMapAccessBit::READ);
@@ -250,8 +250,8 @@ void DepthDownscale::runCompute(RenderPassWorkContext& rgraphCtx)
 
 		cmdb->fillBuffer(m_counterBuffer, 0, kMaxPtrSize, 0);
 
-		const BufferBarrierInfo barrier = {m_counterBuffer.get(), BufferUsageBit::TRANSFER_DESTINATION,
-										   BufferUsageBit::STORAGE_COMPUTE_WRITE, 0, kMaxPtrSize};
+		const BufferBarrierInfo barrier = {m_counterBuffer.get(), BufferUsageBit::kTransferDestination,
+										   BufferUsageBit::kStorageComputeWrite, 0, kMaxPtrSize};
 		cmdb->setPipelineBarrier({}, {&barrier, 1}, {});
 	}
 

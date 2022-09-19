@@ -83,7 +83,7 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 			RenderPassDependency(m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::kSampledCompute));
 
 		rpass.newDependency(
-			RenderPassDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::STORAGE_COMPUTE_READ));
+			RenderPassDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::kStorageComputeRead));
 	}
 	else
 	{
@@ -102,7 +102,7 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 			RenderPassDependency(m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::kSampledFragment));
 
 		rpass.newDependency(
-			RenderPassDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::STORAGE_FRAGMENT_READ));
+			RenderPassDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::kStorageFragmentRead));
 	}
 }
 
