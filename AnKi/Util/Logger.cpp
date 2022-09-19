@@ -180,9 +180,9 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 		endTerminalColor = "";
 	}
 
-	fprintf(out, "%s[%s][%s][%-15s]%s%s %s (%s:%d %s)%s\n", terminalColorBg, kMessageTypeTxt[U(info.m_type)],
-			info.m_subsystem ? info.m_subsystem : "N/A ", info.m_threadName, endTerminalColor, terminalColor,
-			info.m_msg, info.m_file, info.m_line, info.m_func, endTerminalColor);
+	fprintf(out, "%s[%s][%s]%s%s %s [%s:%d][%s][%s]%s\n", terminalColorBg, kMessageTypeTxt[U(info.m_type)],
+			info.m_subsystem ? info.m_subsystem : "N/A ", endTerminalColor, terminalColor, info.m_msg, info.m_file,
+			info.m_line, info.m_func, info.m_threadName, endTerminalColor);
 #elif ANKI_OS_WINDOWS
 	WORD attribs = 0;
 	FILE* out = nullptr;
@@ -227,10 +227,9 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 		SetConsoleTextAttribute(consoleHandle, attribs);
 
 		// Print
-		static_assert(Thread::kThreadNameMaxLength == 15, "See file");
-		fprintf(out, "[%s][%-4s][%-15s] %s (%s:%d %s)\n", kMessageTypeTxt[info.m_type],
-				info.m_subsystem ? info.m_subsystem : "N/A", info.m_threadName, info.m_msg, info.m_file, info.m_line,
-				info.m_func);
+		fprintf(out, "[%s][%-4s] %s [%s:%d][%s][%s]\n", kMessageTypeTxt[info.m_type],
+				info.m_subsystem ? info.m_subsystem : "N/A", info.m_msg, info.m_file, info.m_line, info.m_func,
+				info.m_threadName);
 
 		// Restore state
 		SetConsoleTextAttribute(consoleHandle, savedAttribs);
@@ -258,36 +257,11 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 	}
 
 	static_assert(Thread::kThreadNameMaxLength == 15, "See file");
-	__android_log_print(andMsgType, "AnKi", "[%s][%s][%-15s] %s (%s:%d %s)\n", kMessageTypeTxt[info.m_type],
-						info.m_subsystem ? info.m_subsystem : "N/A ", info.m_threadName, info.m_msg, info.m_file,
-						info.m_line, info.m_func);
+	__android_log_print(andMsgType, "AnKi", "[%s][%-4s] %s [%s:%d][%s][%s]\n", kMessageTypeTxt[info.m_type],
+						info.m_subsystem ? info.m_subsystem : "N/A ", info.m_msg, info.m_file, info.m_line, info.m_func,
+						info.m_threadName);
 #else
-	FILE* out = NULL;
-
-	switch(info.m_type)
-	{
-	case LoggerMessageType::kNormal:
-	case LoggerMessageType::kVerbose:
-		out = stdout;
-		break;
-	case LoggerMessageType::kError:
-		out = stderr;
-		break;
-	case LoggerMessageType::kWarning:
-		out = stderr;
-		break;
-	case LoggerMessageType::kFatal:
-		out = stderr;
-		break;
-	default:
-		ANKI_ASSERT(0);
-	}
-
-	fprintf(out, "[%s][%s][%" PRIx64 "] %s (%s:%d %s)\n", kMessageTypeTxt[info.m_type],
-			info.m_subsystem ? info.m_subsystem : "N/A ", info.m_tid, info.m_msg, info.m_file, info.m_line,
-			info.m_func);
-
-	fflush(out);
+#	error "Not implemented"
 #endif
 }
 

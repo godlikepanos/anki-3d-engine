@@ -36,9 +36,10 @@ private:
 	class LogItem : public IntrusiveListEnabled<LogItem>
 	{
 	public:
-		const char* m_file;
-		const char* m_func;
-		const char* m_subsystem;
+		const Char* m_file;
+		const Char* m_func;
+		const Char* m_subsystem;
+		String m_threadName;
 		String m_msg;
 		I32 m_line;
 		LoggerMessageType m_type;
