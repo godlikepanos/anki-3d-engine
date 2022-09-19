@@ -31,11 +31,11 @@ inline Bool blendingDisabled(BlendFactor srcFactorRgb, BlendFactor dstFactorRgb,
 template<typename T>
 ShaderVariableDataType getShaderVariableTypeFromTypename();
 
-#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount, isIntagralType) \
+#define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) \
 	template<> \
 	inline ShaderVariableDataType getShaderVariableTypeFromTypename<type>() \
 	{ \
-		return ShaderVariableDataType::capital; \
+		return ShaderVariableDataType::k##type; \
 	}
 
 #include <AnKi/Gr/ShaderVariableDataType.defs.h>

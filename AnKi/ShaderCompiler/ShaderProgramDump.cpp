@@ -150,7 +150,7 @@ void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& huma
 
 			for(const ShaderProgramBinaryStructMember& member : s.m_members)
 			{
-				const CString typeStr = (member.m_type == ShaderVariableDataType::NONE)
+				const CString typeStr = (member.m_type == ShaderVariableDataType::kNone)
 											? &binary.m_structs[member.m_structIndex].m_name[0]
 											: getShaderVariableDataTypeInfo(member.m_type).m_name;
 				const CString dependentMutator = (member.m_dependentMutator != kMaxU32)

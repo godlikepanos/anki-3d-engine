@@ -55,7 +55,7 @@ class ShaderProgramResourceConstant
 {
 public:
 	String m_name;
-	ShaderVariableDataType m_dataType = ShaderVariableDataType::NONE;
+	ShaderVariableDataType m_dataType = ShaderVariableDataType::kNone;
 	U32 m_index = kMaxU32;
 };
 

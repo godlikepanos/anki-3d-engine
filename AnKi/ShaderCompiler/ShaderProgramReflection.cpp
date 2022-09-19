@@ -11,39 +11,39 @@ namespace anki {
 
 static ShaderVariableDataType spirvcrossBaseTypeToAnki(spirv_cross::SPIRType::BaseType cross)
 {
-	ShaderVariableDataType out = ShaderVariableDataType::NONE;
+	ShaderVariableDataType out = ShaderVariableDataType::kNone;
 
 	switch(cross)
 	{
 	case spirv_cross::SPIRType::SByte:
-		out = ShaderVariableDataType::I8;
+		out = ShaderVariableDataType::kI8;
 		break;
 	case spirv_cross::SPIRType::UByte:
-		out = ShaderVariableDataType::U8;
+		out = ShaderVariableDataType::kU8;
 		break;
 	case spirv_cross::SPIRType::Short:
-		out = ShaderVariableDataType::I16;
+		out = ShaderVariableDataType::kI16;
 		break;
 	case spirv_cross::SPIRType::UShort:
-		out = ShaderVariableDataType::U16;
+		out = ShaderVariableDataType::kU16;
 		break;
 	case spirv_cross::SPIRType::Int:
-		out = ShaderVariableDataType::I32;
+		out = ShaderVariableDataType::kI32;
 		break;
 	case spirv_cross::SPIRType::UInt:
-		out = ShaderVariableDataType::U32;
+		out = ShaderVariableDataType::kU32;
 		break;
 	case spirv_cross::SPIRType::Int64:
-		out = ShaderVariableDataType::I64;
+		out = ShaderVariableDataType::kI64;
 		break;
 	case spirv_cross::SPIRType::UInt64:
-		out = ShaderVariableDataType::U64;
+		out = ShaderVariableDataType::kU64;
 		break;
 	case spirv_cross::SPIRType::Half:
-		out = ShaderVariableDataType::F16;
+		out = ShaderVariableDataType::kF16;
 		break;
 	case spirv_cross::SPIRType::Float:
-		out = ShaderVariableDataType::F32;
+		out = ShaderVariableDataType::kF32;
 		break;
 	default:
 		break;
@@ -74,7 +74,7 @@ private:
 	public:
 		StringAuto m_name;
 		ShaderVariableBlockInfo m_blockInfo;
-		ShaderVariableDataType m_type = ShaderVariableDataType::NONE;
+		ShaderVariableDataType m_type = ShaderVariableDataType::kNone;
 
 		Var(const GenericMemoryPoolAllocator<U8>& alloc)
 			: m_name(alloc)
@@ -102,7 +102,7 @@ private:
 	{
 	public:
 		StringAuto m_name;
-		ShaderVariableDataType m_type = ShaderVariableDataType::NONE;
+		ShaderVariableDataType m_type = ShaderVariableDataType::kNone;
 		U32 m_binding = kMaxU32;
 		U32 m_set = kMaxU32;
 		U32 m_arraySize = kMaxU32;
@@ -117,7 +117,7 @@ private:
 	{
 	public:
 		StringAuto m_name;
-		ShaderVariableDataType m_type = ShaderVariableDataType::NONE;
+		ShaderVariableDataType m_type = ShaderVariableDataType::kNone;
 		U32 m_constantId = kMaxU32;
 
 		Const(const GenericMemoryPoolAllocator<U8>& alloc)
@@ -130,7 +130,7 @@ private:
 	{
 	public:
 		StringAuto m_name;
-		ShaderVariableDataType m_type = ShaderVariableDataType::NONE;
+		ShaderVariableDataType m_type = ShaderVariableDataType::kNone;
 		U32 m_structIndex = kMaxU32; ///< The member is actually a struct.
 		U32 m_offset = kMaxU32;
 		U32 m_arraySize = kMaxU32;
@@ -280,8 +280,8 @@ Error SpirvReflector::structReflection(uint32_t id, const spirv_cross::SPIRType&
 
 		// Type
 		const ShaderVariableDataType baseType = spirvcrossBaseTypeToAnki(memberType.basetype);
-		const Bool isNumeric = baseType != ShaderVariableDataType::NONE;
-		ShaderVariableDataType actualType = ShaderVariableDataType::NONE;
+		const Bool isNumeric = baseType != ShaderVariableDataType::kNone;
+		ShaderVariableDataType actualType = ShaderVariableDataType::kNone;
 		U32 memberSize = 0;
 		U32 memberAlignment = 0;
 
@@ -292,17 +292,17 @@ Error SpirvReflector::structReflection(uint32_t id, const spirv_cross::SPIRType&
 			if(0)
 			{
 			}
-#define ANKI_SVDT_MACRO(capital, type, baseType_, rowCount, columnCount, isIntagralType) \
-	else if(ShaderVariableDataType::baseType_ == baseType && isMatrix && memberType.vecsize == rowCount \
+#define ANKI_SVDT_MACRO(type, baseType_, rowCount, columnCount, isIntagralType) \
+	else if(ShaderVariableDataType::k##baseType_ == baseType && isMatrix && memberType.vecsize == rowCount \
 			&& memberType.columns == columnCount) \
 	{ \
-		actualType = ShaderVariableDataType::capital; \
+		actualType = ShaderVariableDataType::k##type; \
 		memberSize = sizeof(type); \
 		memberAlignment = alignof(baseType_); \
 	} \
-	else if(ShaderVariableDataType::baseType_ == baseType && !isMatrix && memberType.vecsize == rowCount) \
+	else if(ShaderVariableDataType::k##baseType_ == baseType && !isMatrix && memberType.vecsize == rowCount) \
 	{ \
-		actualType = ShaderVariableDataType::capital; \
+		actualType = ShaderVariableDataType::k##type; \
 		memberSize = sizeof(type); \
 		memberAlignment = alignof(baseType_); \
 	}
@@ -469,7 +469,7 @@ Error SpirvReflector::blockVariableReflection(const spirv_cross::SPIRType& type,
 		}
 
 		const ShaderVariableDataType baseType = spirvcrossBaseTypeToAnki(memberType.basetype);
-		const Bool isNumeric = baseType != ShaderVariableDataType::NONE;
+		const Bool isNumeric = baseType != ShaderVariableDataType::kNone;
 
 		if(memberType.basetype == spirv_cross::SPIRType::Struct)
 		{
@@ -495,25 +495,25 @@ Error SpirvReflector::blockVariableReflection(const spirv_cross::SPIRType& type,
 			if(0)
 			{
 			}
-#define ANKI_SVDT_MACRO(capital, type_, baseType_, rowCount, columnCount, isIntagralType) \
-	else if(ShaderVariableDataType::baseType_ == baseType && isMatrix && memberType.vecsize == rowCount \
+#define ANKI_SVDT_MACRO(type_, baseType_, rowCount, columnCount, isIntagralType) \
+	else if(ShaderVariableDataType::k##baseType_ == baseType && isMatrix && memberType.vecsize == rowCount \
 			&& memberType.columns == columnCount) \
 	{ \
-		var.m_type = ShaderVariableDataType::capital; \
+		var.m_type = ShaderVariableDataType::k##type_; \
 		auto it = ir.meta.find(type.self); \
 		ANKI_ASSERT(it != ir.meta.end()); \
 		const spirv_cross::Vector<spirv_cross::Meta::Decoration>& memberDecorations = it->second.members; \
 		ANKI_ASSERT(i < memberDecorations.size()); \
 		var.m_blockInfo.m_matrixStride = I16(memberDecorations[i].matrix_stride); \
 	} \
-	else if(ShaderVariableDataType::baseType_ == baseType && !isMatrix && memberType.vecsize == rowCount) \
+	else if(ShaderVariableDataType::k##baseType_ == baseType && !isMatrix && memberType.vecsize == rowCount) \
 	{ \
-		var.m_type = ShaderVariableDataType::capital; \
+		var.m_type = ShaderVariableDataType::k##type_; \
 	}
 #include <AnKi/Gr/ShaderVariableDataType.defs.h>
 #undef ANKI_SVDT_MACRO
 
-			if(var.m_type == ShaderVariableDataType::NONE)
+			if(var.m_type == ShaderVariableDataType::kNone)
 			{
 				ANKI_SHADER_COMPILER_LOGE("Unhandled numeric member: %s", var.m_name.cstr());
 				return Error::kFunctionFailed;
@@ -526,7 +526,7 @@ Error SpirvReflector::blockVariableReflection(const spirv_cross::SPIRType& type,
 		}
 
 		// Store the member if it's no struct
-		if(var.m_type != ShaderVariableDataType::NONE)
+		if(var.m_type != ShaderVariableDataType::kNone)
 		{
 			vars.emplaceBack(std::move(var));
 		}
@@ -635,17 +635,17 @@ Error SpirvReflector::spirvTypeToAnki(const spirv_cross::SPIRType& type, ShaderV
 		switch(type.image.dim)
 		{
 		case spv::Dim1D:
-			out = (type.image.arrayed) ? ShaderVariableDataType::TEXTURE_1D_ARRAY : ShaderVariableDataType::TEXTURE_1D;
+			out = (type.image.arrayed) ? ShaderVariableDataType::kTexture1DArray : ShaderVariableDataType::kTexture1D;
 			break;
 		case spv::Dim2D:
-			out = (type.image.arrayed) ? ShaderVariableDataType::TEXTURE_2D_ARRAY : ShaderVariableDataType::TEXTURE_2D;
+			out = (type.image.arrayed) ? ShaderVariableDataType::kTexture2DArray : ShaderVariableDataType::kTexture2D;
 			break;
 		case spv::Dim3D:
-			out = ShaderVariableDataType::TEXTURE_3D;
+			out = ShaderVariableDataType::kTexture3D;
 			break;
 		case spv::DimCube:
-			out = (type.image.arrayed) ? ShaderVariableDataType::TEXTURE_CUBE_ARRAY
-									   : ShaderVariableDataType::TEXTURE_CUBE;
+			out =
+				(type.image.arrayed) ? ShaderVariableDataType::kTextureCubeArray : ShaderVariableDataType::kTextureCube;
 			break;
 		default:
 			ANKI_ASSERT(0);
@@ -654,7 +654,7 @@ Error SpirvReflector::spirvTypeToAnki(const spirv_cross::SPIRType& type, ShaderV
 		break;
 	}
 	case spirv_cross::SPIRType::Sampler:
-		out = ShaderVariableDataType::SAMPLER;
+		out = ShaderVariableDataType::kSampler;
 		break;
 	default:
 		ANKI_SHADER_COMPILER_LOGE("Can't determine the type");
@@ -770,13 +770,13 @@ Error SpirvReflector::constsReflection(DynamicArrayAuto<Const>& consts) const
 		switch(type.basetype)
 		{
 		case spirv_cross::SPIRType::UInt:
-			newConst.m_type = ShaderVariableDataType::U32;
+			newConst.m_type = ShaderVariableDataType::kU32;
 			break;
 		case spirv_cross::SPIRType::Int:
-			newConst.m_type = ShaderVariableDataType::I32;
+			newConst.m_type = ShaderVariableDataType::kI32;
 			break;
 		case spirv_cross::SPIRType::Float:
-			newConst.m_type = ShaderVariableDataType::F32;
+			newConst.m_type = ShaderVariableDataType::kF32;
 			break;
 		default:
 			ANKI_SHADER_COMPILER_LOGE("Can't determine the type of the spec constant: %s", name.c_str());

@@ -549,37 +549,37 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderTypeBit)
 
 enum class ShaderVariableDataType : U8
 {
-	NONE,
+	kNone,
 
-#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount, isIntagralType) capital,
-#define ANKI_SVDT_MACRO_OPAQUE(capital, type) capital,
+#define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) k##type,
+#define ANKI_SVDT_MACRO_OPAQUE(constant, type) k##constant,
 #include <AnKi/Gr/ShaderVariableDataType.defs.h>
 #undef ANKI_SVDT_MACRO
 #undef ANKI_SVDT_MACRO_OPAQUE
 
 	// Derived
-	COUNT,
+	kCount,
 
-	NUMERICS_FIRST = I32,
-	NUMERICS_LAST = MAT4,
+	kNumericsFirst = kI32,
+	kNumericsLast = kMat4,
 
-	NUMERIC_1_COMPONENT_FIRST = I32,
-	NUMERIC_1_COMPONENT_LAST = F32,
-	NUMERIC_2_COMPONENT_FIRST = IVEC2,
-	NUMERIC_2_COMPONENT_LAST = VEC2,
-	NUMERIC_3_COMPONENT_FIRST = IVEC3,
-	NUMERIC_3_COMPONENT_LAST = VEC3,
-	NUMERIC_4_COMPONENT_FIRST = IVEC4,
-	NUMERIC_4_COMPONENT_LAST = VEC4,
+	kNumeric1ComponentFirst = kI32,
+	kNumeric1ComponentLast = kF32,
+	kNumeric2ComponentFirst = kIVec2,
+	kNumeric2ComponentLast = kVec2,
+	kNumeric3ComponentFirst = kIVec3,
+	kNumeric3ComponentLast = kVec3,
+	kNumeric4ComponentFirst = kIVec4,
+	kNumeric4ComponentLast = kVec4,
 
-	MATRIX_FIRST = MAT3,
-	MATRIX_LAST = MAT4,
+	kMatrixFirst = kMat3,
+	kMatrixLast = kMat4,
 
-	TEXTURE_FIRST = TEXTURE_1D,
-	TEXTURE_LAST = TEXTURE_CUBE_ARRAY,
+	kTextureFirst = kTexture1D,
+	kTextureLast = kTextureCubeArray,
 
-	IMAGE_FIRST = IMAGE_1D,
-	IMAGE_LAST = IMAGE_CUBE_ARRAY,
+	kImageFirst = kImage1D,
+	kImageLast = kImageCubeArray,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderVariableDataType)
 

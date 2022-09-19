@@ -23,20 +23,20 @@ template<typename T>
 class IsShaderVarDataTypeAnArray
 {
 public:
-	static constexpr Bool VALUE = false;
+	static constexpr Bool kValue = false;
 };
 
-#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount, isIntagralType) \
+#define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) \
 	template<> \
 	class IsShaderVarDataTypeAnArray<type> \
 	{ \
 	public: \
-		static constexpr Bool VALUE = rowCount * columnCount > 1; \
+		static constexpr Bool kValue = rowCount * columnCount > 1; \
 	};
 #include <AnKi/Gr/ShaderVariableDataType.defs.h>
 #undef ANKI_SVDT_MACRO
 
-template<typename T, Bool isArray = IsShaderVarDataTypeAnArray<T>::VALUE>
+template<typename T, Bool isArray = IsShaderVarDataTypeAnArray<T>::kValue>
 class GetAttribute
 {
 public:
@@ -393,7 +393,7 @@ Error MaterialResource::createVars(Program& prog)
 		for(const ShaderProgramBinaryOpaqueInstance& instance : variant->getBinaryVariant().m_opaques)
 		{
 			const ShaderProgramBinaryOpaque& opaque = binary.m_opaques[instance.m_index];
-			if(opaque.m_type == ShaderVariableDataType::SAMPLER)
+			if(opaque.m_type == ShaderVariableDataType::kSampler)
 			{
 				continue;
 			}
@@ -702,7 +702,7 @@ Error MaterialResource::parseInput(XmlElement inputEl, Bool async, BitSet<128>& 
 
 		m_textures.emplaceBack(getAllocator(), foundVar->m_image->getTexture());
 	}
-	else if(foundVar->m_dataType == ShaderVariableDataType::U32)
+	else if(foundVar->m_dataType == ShaderVariableDataType::kU32)
 	{
 		// U32 is a bit special. It might be a number or a bindless texture
 
@@ -736,8 +736,8 @@ Error MaterialResource::parseInput(XmlElement inputEl, Bool async, BitSet<128>& 
 	{
 		switch(foundVar->m_dataType)
 		{
-#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount, isIntagralType) \
-	case ShaderVariableDataType::capital: \
+#define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) \
+	case ShaderVariableDataType::k##type: \
 		ANKI_CHECK(GetAttribute<type>()(inputEl, foundVar->ANKI_CONCATENATE(m_, type))); \
 		break;
 #include <AnKi/Gr/ShaderVariableDataType.defs.h>
@@ -770,8 +770,8 @@ void MaterialResource::prefillLocalUniforms()
 
 		switch(var.m_dataType)
 		{
-#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount, isIntagralType) \
-	case ShaderVariableDataType::capital: \
+#define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) \
+	case ShaderVariableDataType::k##type: \
 		ANKI_ASSERT(var.m_offsetInLocalUniforms + sizeof(type) <= m_localUniformsSize); \
 		memcpy(static_cast<U8*>(m_prefilledLocalUniforms) + var.m_offsetInLocalUniforms, &var.m_##type, sizeof(type)); \
 		break;

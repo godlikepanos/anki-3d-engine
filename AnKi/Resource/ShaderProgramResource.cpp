@@ -110,50 +110,50 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, [[maybe_unus
 		}
 		else if(componentCount == 2)
 		{
-			if(c.m_type == ShaderVariableDataType::U32)
+			if(c.m_type == ShaderVariableDataType::kU32)
 			{
-				in.m_dataType = ShaderVariableDataType::UVEC2;
+				in.m_dataType = ShaderVariableDataType::kUVec2;
 			}
-			else if(c.m_type == ShaderVariableDataType::I32)
+			else if(c.m_type == ShaderVariableDataType::kI32)
 			{
-				in.m_dataType = ShaderVariableDataType::IVEC2;
+				in.m_dataType = ShaderVariableDataType::kIVec2;
 			}
 			else
 			{
-				ANKI_ASSERT(c.m_type == ShaderVariableDataType::F32);
-				in.m_dataType = ShaderVariableDataType::VEC2;
+				ANKI_ASSERT(c.m_type == ShaderVariableDataType::kF32);
+				in.m_dataType = ShaderVariableDataType::kVec2;
 			}
 		}
 		else if(componentCount == 3)
 		{
-			if(c.m_type == ShaderVariableDataType::U32)
+			if(c.m_type == ShaderVariableDataType::kU32)
 			{
-				in.m_dataType = ShaderVariableDataType::UVEC3;
+				in.m_dataType = ShaderVariableDataType::kUVec3;
 			}
-			else if(c.m_type == ShaderVariableDataType::I32)
+			else if(c.m_type == ShaderVariableDataType::kI32)
 			{
-				in.m_dataType = ShaderVariableDataType::IVEC3;
+				in.m_dataType = ShaderVariableDataType::kIVec3;
 			}
 			else
 			{
-				ANKI_ASSERT(c.m_type == ShaderVariableDataType::F32);
-				in.m_dataType = ShaderVariableDataType::VEC3;
+				ANKI_ASSERT(c.m_type == ShaderVariableDataType::kF32);
+				in.m_dataType = ShaderVariableDataType::kVec3;
 			}
 		}
 		else if(componentCount == 4)
 		{
-			if(c.m_type == ShaderVariableDataType::U32)
+			if(c.m_type == ShaderVariableDataType::kU32)
 			{
-				in.m_dataType = ShaderVariableDataType::UVEC4;
+				in.m_dataType = ShaderVariableDataType::kUVec4;
 			}
-			else if(c.m_type == ShaderVariableDataType::I32)
+			else if(c.m_type == ShaderVariableDataType::kI32)
 			{
-				in.m_dataType = ShaderVariableDataType::IVEC4;
+				in.m_dataType = ShaderVariableDataType::kIVec4;
 			}
 			else
 			{
-				ANKI_ASSERT(c.m_type == ShaderVariableDataType::F32);
-				in.m_dataType = ShaderVariableDataType::VEC4;
+				ANKI_ASSERT(c.m_type == ShaderVariableDataType::kF32);
+				in.m_dataType = ShaderVariableDataType::kVec4;
 			}
 		}
 		else
@@ -345,9 +345,10 @@ ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitIn
 				const U32 constIdx = m_constBinaryMapping[binaryConstIdx].m_constsIdx;
 				const U32 component = m_constBinaryMapping[binaryConstIdx].m_component;
 				[[maybe_unused]] const Const& c = m_consts[constIdx];
-				ANKI_ASSERT(c.m_dataType == ShaderVariableDataType::U32 || c.m_dataType == ShaderVariableDataType::UVEC2
-							|| c.m_dataType == ShaderVariableDataType::UVEC3
-							|| c.m_dataType == ShaderVariableDataType::UVEC4);
+				ANKI_ASSERT(c.m_dataType == ShaderVariableDataType::kU32
+							|| c.m_dataType == ShaderVariableDataType::kUVec2
+							|| c.m_dataType == ShaderVariableDataType::kUVec3
+							|| c.m_dataType == ShaderVariableDataType::kUVec4);
 
 				// Find the value
 				for(U32 i = 0; i < m_consts.getSize(); ++i)

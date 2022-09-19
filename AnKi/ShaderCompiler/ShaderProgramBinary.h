@@ -17,7 +17,7 @@ class ShaderProgramBinaryVariable
 {
 public:
 	Array<char, MAX_SHADER_BINARY_NAME_LENGTH + 1> m_name = {};
-	ShaderVariableDataType m_type = ShaderVariableDataType::NONE;
+	ShaderVariableDataType m_type = ShaderVariableDataType::kNone;
 
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& s, TClass self)
@@ -136,7 +136,7 @@ class ShaderProgramBinaryOpaque
 {
 public:
 	Array<char, MAX_SHADER_BINARY_NAME_LENGTH + 1> m_name = {};
-	ShaderVariableDataType m_type = ShaderVariableDataType::NONE;
+	ShaderVariableDataType m_type = ShaderVariableDataType::kNone;
 	U32 m_binding = kMaxU32;
 	U32 m_set = kMaxU32;
 
@@ -196,7 +196,7 @@ class ShaderProgramBinaryConstant
 {
 public:
 	Array<char, MAX_SHADER_BINARY_NAME_LENGTH + 1> m_name;
-	ShaderVariableDataType m_type = ShaderVariableDataType::NONE;
+	ShaderVariableDataType m_type = ShaderVariableDataType::kNone;
 	U32 m_constantId = kMaxU32;
 
 	template<typename TSerializer, typename TClass>
@@ -252,8 +252,8 @@ class ShaderProgramBinaryStructMember
 public:
 	Array<char, MAX_SHADER_BINARY_NAME_LENGTH + 1> m_name = {};
 
-	/// If the value is ShaderVariableDataType::NONE then it's a struct.
-	ShaderVariableDataType m_type = ShaderVariableDataType::NONE;
+	/// If the value is ShaderVariableDataType::kNone then it's a struct.
+	ShaderVariableDataType m_type = ShaderVariableDataType::kNone;
 
 	/// If the type is another struct then this points to ShaderProgramBinary::m_structs.
 	U32 m_structIndex = kMaxU32;

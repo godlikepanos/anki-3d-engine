@@ -9,7 +9,7 @@
 		<class name="ShaderProgramBinaryVariable" comment="Storage or uniform variable">
 			<members>
 				<member name="m_name" type="char" array_size="MAX_SHADER_BINARY_NAME_LENGTH + 1" constructor="= {}" />
-				<member name="m_type" type="ShaderVariableDataType" constructor="= ShaderVariableDataType::NONE" />
+				<member name="m_type" type="ShaderVariableDataType" constructor="= ShaderVariableDataType::kNone" />
 			</members>
 		</class>
 
@@ -40,7 +40,7 @@
 		<class name="ShaderProgramBinaryOpaque" comment="Sampler or texture or image">
 			<members>
 				<member name="m_name" type="char" array_size="MAX_SHADER_BINARY_NAME_LENGTH + 1" constructor="= {}" />
-				<member name="m_type" type="ShaderVariableDataType" constructor="= ShaderVariableDataType::NONE" />
+				<member name="m_type" type="ShaderVariableDataType" constructor="= ShaderVariableDataType::kNone" />
 				<member name="m_binding" type="U32" constructor="= kMaxU32" />
 				<member name="m_set" type="U32" constructor="= kMaxU32" />
 			</members>
@@ -56,7 +56,7 @@
 		<class name="ShaderProgramBinaryConstant" comment="Specialization constant">
 			<members>
 				<member name="m_name" type="char" array_size="MAX_SHADER_BINARY_NAME_LENGTH + 1" />
-				<member name="m_type" type="ShaderVariableDataType" constructor="= ShaderVariableDataType::NONE" />
+				<member name="m_type" type="ShaderVariableDataType" constructor="= ShaderVariableDataType::kNone" />
 				<member name="m_constantId" type="U32" constructor="= kMaxU32"/>
 			</members>
 		</class>
@@ -70,7 +70,7 @@
 		<class name="ShaderProgramBinaryStructMember" comment="A member of a ShaderProgramBinaryStruct">
 			<members>
 				<member name="m_name" type="char" array_size="MAX_SHADER_BINARY_NAME_LENGTH + 1" constructor="= {}" />
-				<member name="m_type" type="ShaderVariableDataType" constructor="= ShaderVariableDataType::NONE" comment="If the value is ShaderVariableDataType::NONE then it's a struct" />
+				<member name="m_type" type="ShaderVariableDataType" constructor="= ShaderVariableDataType::kNone" comment="If the value is ShaderVariableDataType::kNone then it's a struct" />
 				<member name="m_structIndex" type="U32" constructor="= kMaxU32" comment="If the type is another struct then this points to ShaderProgramBinary::m_structs" />
 				<member name="m_dependentMutator" type="U32" constructor="= kMaxU32" comment="It points to a ShaderProgramBinary::m_mutators. This mutator will turn on or off this member" />
 				<member name="m_dependentMutatorValue" type="MutatorValue" constructor="= 0" comment="The value of the m_dependentMutator" />

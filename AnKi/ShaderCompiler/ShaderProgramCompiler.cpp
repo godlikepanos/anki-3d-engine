@@ -629,7 +629,7 @@ public:
 			ANKI_CHECK(setName(memberName, member.m_name));
 			member.m_type = type;
 
-			if(type == ShaderVariableDataType::NONE)
+			if(type == ShaderVariableDataType::kNone)
 			{
 				// Type is a struct, find the right index
 

@@ -29,25 +29,25 @@ public:
 
 	ShaderSpecializationConstValue()
 		: m_int(0)
-		, m_dataType(ShaderVariableDataType::NONE)
+		, m_dataType(ShaderVariableDataType::kNone)
 	{
 	}
 
 	explicit ShaderSpecializationConstValue(F32 f)
 		: m_float(f)
-		, m_dataType(ShaderVariableDataType::F32)
+		, m_dataType(ShaderVariableDataType::kF32)
 	{
 	}
 
 	explicit ShaderSpecializationConstValue(I32 i)
 		: m_int(i)
-		, m_dataType(ShaderVariableDataType::I32)
+		, m_dataType(ShaderVariableDataType::kI32)
 	{
 	}
 
 	explicit ShaderSpecializationConstValue(U32 i)
 		: m_int(i)
-		, m_dataType(ShaderVariableDataType::U32)
+		, m_dataType(ShaderVariableDataType::kU32)
 	{
 	}
 

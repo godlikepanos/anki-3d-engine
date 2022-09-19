@@ -9,10 +9,10 @@
 namespace anki {
 
 /// @warning Don't use Array because the compilers can't handle it for some reason.
-inline constexpr ShaderVariableDataTypeInfo SVD_INFOS[] = {
-#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount, isIntagralType) \
+inline constexpr ShaderVariableDataTypeInfo kShaderVariableDataTypeInfos[] = {
+#define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) \
 	{ANKI_STRINGIZE(type), sizeof(type), false, isIntagralType},
-#define ANKI_SVDT_MACRO_OPAQUE(capital, type) {ANKI_STRINGIZE(type), kMaxU32, true, false},
+#define ANKI_SVDT_MACRO_OPAQUE(constant, type) {ANKI_STRINGIZE(type), kMaxU32, true, false},
 #include <AnKi/Gr/ShaderVariableDataType.defs.h>
 #undef ANKI_SVDT_MACRO
 #undef ANKI_SVDT_MACRO_OPAQUE
@@ -20,8 +20,8 @@ inline constexpr ShaderVariableDataTypeInfo SVD_INFOS[] = {
 
 const ShaderVariableDataTypeInfo& getShaderVariableDataTypeInfo(ShaderVariableDataType type)
 {
-	ANKI_ASSERT(type > ShaderVariableDataType::NONE && type < ShaderVariableDataType::COUNT);
-	return SVD_INFOS[U32(type) - 1];
+	ANKI_ASSERT(type > ShaderVariableDataType::kNone && type < ShaderVariableDataType::kCount);
+	return kShaderVariableDataTypeInfos[U32(type) - 1];
 }
 
 FormatInfo getFormatInfo(Format fmt)

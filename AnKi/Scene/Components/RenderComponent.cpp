@@ -66,40 +66,40 @@ void RenderComponent::allocateAndSetupUniforms(const MaterialResourcePtr& mtl, c
 	{
 		switch(mvar.getDataType())
 		{
-		case ShaderVariableDataType::U32:
+		case ShaderVariableDataType::kU32:
 		{
 			const U32 val = mvar.getValue<U32>();
 			memcpy(localUniformsBegin + mvar.getOffsetInLocalUniforms(), &val, sizeof(val));
 			break;
 		}
-		case ShaderVariableDataType::F32:
+		case ShaderVariableDataType::kF32:
 		{
 			const F32 val = mvar.getValue<F32>();
 			memcpy(localUniformsBegin + mvar.getOffsetInLocalUniforms(), &val, sizeof(val));
 			break;
 		}
-		case ShaderVariableDataType::VEC2:
+		case ShaderVariableDataType::kVec2:
 		{
 			const Vec2 val = mvar.getValue<Vec2>();
 			memcpy(localUniformsBegin + mvar.getOffsetInLocalUniforms(), &val, sizeof(val));
 			break;
 		}
-		case ShaderVariableDataType::VEC3:
+		case ShaderVariableDataType::kVec3:
 		{
 			const Vec3 val = mvar.getValue<Vec3>();
 			memcpy(localUniformsBegin + mvar.getOffsetInLocalUniforms(), &val, sizeof(val));
 			break;
 		}
-		case ShaderVariableDataType::VEC4:
+		case ShaderVariableDataType::kVec4:
 		{
 			const Vec4 val = mvar.getValue<Vec4>();
 			memcpy(localUniformsBegin + mvar.getOffsetInLocalUniforms(), &val, sizeof(val));
 			break;
 		}
-		case ShaderVariableDataType::TEXTURE_2D:
-		case ShaderVariableDataType::TEXTURE_2D_ARRAY:
-		case ShaderVariableDataType::TEXTURE_3D:
-		case ShaderVariableDataType::TEXTURE_CUBE:
+		case ShaderVariableDataType::kTexture2D:
+		case ShaderVariableDataType::kTexture2DArray:
+		case ShaderVariableDataType::kTexture3D:
+		case ShaderVariableDataType::kTextureCube:
 		{
 			cmdb->bindTexture(set, mvar.getTextureBinding(), mvar.getValue<ImageResourcePtr>()->getTextureView());
 			break;

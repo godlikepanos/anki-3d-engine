@@ -859,29 +859,29 @@ Error ShaderProgramParser::parsePragmaMember(const StringAuto* begin, const Stri
 	}
 
 	const CString typeStr = *begin;
-	member.m_type = ShaderVariableDataType::NONE;
+	member.m_type = ShaderVariableDataType::kNone;
 	if(typeStr == "F32")
 	{
-		member.m_type = ShaderVariableDataType::F32;
+		member.m_type = ShaderVariableDataType::kF32;
 	}
 	else if(typeStr == "Vec2")
 	{
-		member.m_type = ShaderVariableDataType::VEC2;
+		member.m_type = ShaderVariableDataType::kVec2;
 	}
 	else if(typeStr == "Vec3")
 	{
-		member.m_type = ShaderVariableDataType::VEC3;
+		member.m_type = ShaderVariableDataType::kVec3;
 	}
 	else if(typeStr == "Vec4")
 	{
-		member.m_type = ShaderVariableDataType::VEC4;
+		member.m_type = ShaderVariableDataType::kVec4;
 	}
 	else if(typeStr == "U32")
 	{
-		member.m_type = ShaderVariableDataType::U32;
+		member.m_type = ShaderVariableDataType::kU32;
 	}
 
-	if(member.m_type == ShaderVariableDataType::NONE)
+	if(member.m_type == ShaderVariableDataType::kNone)
 	{
 		ANKI_PP_ERROR_MALFORMED_MSG("Unrecognized type");
 	}

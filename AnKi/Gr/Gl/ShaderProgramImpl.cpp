@@ -122,7 +122,7 @@ const ShaderProgramImplReflection& ShaderProgramImpl::getReflection()
 			}
 
 			// Set type
-			ShaderVariableDataType akType = ShaderVariableDataType::NONE;
+			ShaderVariableDataType akType = ShaderVariableDataType::kNone;
 			switch(type)
 			{
 			case GL_FLOAT_VEC4:
