@@ -98,7 +98,7 @@ ANKI_TEST(Ui, Ui)
 			timer.start();
 
 			canvas->handleInput();
-			if(in->getKey(KeyCode::ESCAPE))
+			if(in->getKey(KeyCode::kEscape))
 			{
 				done = true;
 			}

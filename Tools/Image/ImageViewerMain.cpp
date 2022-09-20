@@ -308,7 +308,7 @@ public:
 	Error userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime) override
 	{
 		Input& input = getInput();
-		if(input.getKey(KeyCode::ESCAPE))
+		if(input.getKey(KeyCode::kEscape))
 		{
 			quit = true;
 		}

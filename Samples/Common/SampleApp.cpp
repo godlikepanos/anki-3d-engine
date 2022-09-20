@@ -50,41 +50,41 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 	Renderer& renderer = getMainRenderer().getOffscreenRenderer();
 	Input& in = getInput();
 
-	if(in.getKey(KeyCode::ESCAPE))
+	if(in.getKey(KeyCode::kEscape))
 	{
 		quit = true;
 		return Error::kNone;
 	}
 
-	if(in.getKey(KeyCode::BACKQUOTE) == 1)
+	if(in.getKey(KeyCode::kBackquote) == 1)
 	{
 		setDisplayDeveloperConsole(!getDisplayDeveloperConsole());
 	}
 
-	if(in.getKey(KeyCode::Y) == 1)
+	if(in.getKey(KeyCode::kY) == 1)
 	{
 		renderer.setCurrentDebugRenderTarget(
 			(renderer.getCurrentDebugRenderTarget() == "GBufferNormals") ? "" : "GBufferNormals");
 	}
 
-	if(in.getKey(KeyCode::U) == 1)
+	if(in.getKey(KeyCode::kU) == 1)
 	{
 		renderer.setCurrentDebugRenderTarget(
 			(renderer.getCurrentDebugRenderTarget() == "IndirectDiffuse") ? "" : "IndirectDiffuse");
 	}
 
-	if(in.getKey(KeyCode::I) == 1)
+	if(in.getKey(KeyCode::kI) == 1)
 	{
 		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "SSR") ? "" : "SSR");
 	}
 
-	if(in.getKey(KeyCode::O) == 1)
+	if(in.getKey(KeyCode::kO) == 1)
 	{
 		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "SM_resolve") ? ""
 																									  : "SM_resolve");
 	}
 
-	if(in.getKey(KeyCode::P) == 1)
+	if(in.getKey(KeyCode::kP) == 1)
 	{
 		static U32 idx = 3;
 		++idx;
@@ -107,13 +107,13 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		}
 	}
 
-	if(in.getKey(KeyCode::L) == 1)
+	if(in.getKey(KeyCode::kL) == 1)
 	{
 		renderer.setCurrentDebugRenderTarget(
 			(renderer.getCurrentDebugRenderTarget() == "LightShading") ? "" : "LightShading");
 	}
 
-	if(in.getKey(KeyCode::H) == 1)
+	if(in.getKey(KeyCode::kH) == 1)
 	{
 		static U32 pressCount = 0;
 		CString rtName;
@@ -136,31 +136,31 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		pressCount = (pressCount + 1) % 4;
 	}
 
-	if(in.getKey(KeyCode::J) == 1)
+	if(in.getKey(KeyCode::kJ) == 1)
 	{
 		m_config.setRVrs(!m_config.getRVrs());
 	}
 
 	static Vec2 mousePosOn1stClick = in.getMousePosition();
-	if(in.getMouseButton(MouseButton::RIGHT) == 1)
+	if(in.getMouseButton(MouseButton::kRight) == 1)
 	{
 		// Re-init mouse pos
 		mousePosOn1stClick = in.getMousePosition();
 	}
 
-	if(in.getMouseButton(MouseButton::RIGHT) || in.hasTouchDevice())
+	if(in.getMouseButton(MouseButton::kRight) || in.hasTouchDevice())
 	{
 		in.hideCursor(true);
 
 		// move the camera
 		static MoveComponent* mover = &scene.getActiveCameraNode().getFirstComponentOfType<MoveComponent>();
 
-		if(in.getKey(KeyCode::_1) == 1)
+		if(in.getKey(KeyCode::k1) == 1)
 		{
 			mover = &scene.getActiveCameraNode().getFirstComponentOfType<MoveComponent>();
 		}
 
-		if(in.getKey(KeyCode::F1) == 1)
+		if(in.getKey(KeyCode::kF1) == 1)
 		{
 			static U mode = 0;
 			mode = (mode + 1) % 3;
@@ -181,75 +181,75 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 				renderer.getDbg().setDitheredDepthTestEnabled(true);
 			}
 		}
-		if(in.getKey(KeyCode::F2) == 1)
+		if(in.getKey(KeyCode::kF2) == 1)
 		{
 			// renderer.getDbg().flipFlags(DbgFlag::SPATIAL_COMPONENT);
 		}
 
-		if(in.getKey(KeyCode::UP))
+		if(in.getKey(KeyCode::kUp))
 		{
 			mover->rotateLocalX(ROTATE_ANGLE);
 		}
 
-		if(in.getKey(KeyCode::DOWN))
+		if(in.getKey(KeyCode::kDown))
 		{
 			mover->rotateLocalX(-ROTATE_ANGLE);
 		}
 
-		if(in.getKey(KeyCode::LEFT))
+		if(in.getKey(KeyCode::kLeft))
 		{
 			mover->rotateLocalY(ROTATE_ANGLE);
 		}
 
-		if(in.getKey(KeyCode::RIGHT))
+		if(in.getKey(KeyCode::kRight))
 		{
 			mover->rotateLocalY(-ROTATE_ANGLE);
 		}
 
 		static F32 moveDistance = 0.1f;
-		if(in.getMouseButton(MouseButton::SCROLL_UP) == 1)
+		if(in.getMouseButton(MouseButton::kScrollUp) == 1)
 		{
 			moveDistance += 0.1f;
 			moveDistance = min(moveDistance, 10.0f);
 		}
 
-		if(in.getMouseButton(MouseButton::SCROLL_DOWN) == 1)
+		if(in.getMouseButton(MouseButton::kScrollDown) == 1)
 		{
 			moveDistance -= 0.1f;
 			moveDistance = max(moveDistance, 0.1f);
 		}
 
-		if(in.getKey(KeyCode::A))
+		if(in.getKey(KeyCode::kA))
 		{
 			mover->moveLocalX(-moveDistance);
 		}
 
-		if(in.getKey(KeyCode::D))
+		if(in.getKey(KeyCode::kD))
 		{
 			mover->moveLocalX(moveDistance);
 		}
 
-		if(in.getKey(KeyCode::Q))
+		if(in.getKey(KeyCode::kQ))
 		{
 			mover->moveLocalY(-moveDistance);
 		}
 
-		if(in.getKey(KeyCode::E))
+		if(in.getKey(KeyCode::kE))
 		{
 			mover->moveLocalY(moveDistance);
 		}
 
-		if(in.getKey(KeyCode::W))
+		if(in.getKey(KeyCode::kW))
 		{
 			mover->moveLocalZ(-moveDistance);
 		}
 
-		if(in.getKey(KeyCode::S))
+		if(in.getKey(KeyCode::kS))
 		{
 			mover->moveLocalZ(moveDistance);
 		}
 
-		if(in.getKey(KeyCode::F12) == 1 && ANKI_ENABLE_TRACE)
+		if(in.getKey(KeyCode::kF12) == 1 && ANKI_ENABLE_TRACE)
 		{
 			TracerSingleton::get().setEnabled(!TracerSingleton::get().getEnabled());
 		}

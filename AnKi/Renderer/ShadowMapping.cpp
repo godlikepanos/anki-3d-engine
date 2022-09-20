@@ -425,7 +425,7 @@ TileAllocatorResult ShadowMapping::allocateTilesAndScratchTiles(U64 lightUuid, U
 		if(res == TileAllocatorResult::ALLOCATION_FAILED)
 		{
 			ANKI_R_LOGW("There is not enough space in the shadow atlas for more shadow maps. "
-						"Increase the r_shadowMappingTileCountPerRowOrColumn or decrease the scene's shadow casters");
+						"Increase the RShadowMappingTileCountPerRowOrColumn or decrease the scene's shadow casters");
 
 			// Invalidate cache entries for what we already allocated
 			for(U j = 0; j < i; ++j)
@@ -459,7 +459,7 @@ TileAllocatorResult ShadowMapping::allocateTilesAndScratchTiles(U64 lightUuid, U
 		if(res == TileAllocatorResult::ALLOCATION_FAILED)
 		{
 			ANKI_R_LOGW("Don't have enough space in the scratch shadow mapping buffer. "
-						"If you see this message too often increase r_shadowMappingScratchTileCountX/Y");
+						"If you see this message too often increase RShadowMappingScratchTileCountX/Y");
 
 			// Invalidate atlas tiles
 			for(U j = 0; j < faceCount; ++j)

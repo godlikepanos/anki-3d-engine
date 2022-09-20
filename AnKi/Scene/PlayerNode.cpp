@@ -86,22 +86,22 @@ public:
 		const F32 speed = 0.5;
 
 		Vec4 moveVec(0.0);
-		if(in.getKey(KeyCode::W))
+		if(in.getKey(KeyCode::kW))
 		{
 			moveVec.z() += 1.0f;
 		}
 
-		if(in.getKey(KeyCode::A))
+		if(in.getKey(KeyCode::kA))
 		{
 			moveVec.x() -= 1.0f;
 		}
 
-		if(in.getKey(KeyCode::S))
+		if(in.getKey(KeyCode::kS))
 		{
 			moveVec.z() -= 1.0f;
 		}
 
-		if(in.getKey(KeyCode::D))
+		if(in.getKey(KeyCode::kD))
 		{
 			moveVec.x() += 1.0f;
 		}
