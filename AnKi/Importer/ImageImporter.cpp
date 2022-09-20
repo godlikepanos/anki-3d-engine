@@ -179,23 +179,23 @@ static Error checkConfig(const ImageImporterConfig& config)
 	}
 
 	// Type
-	ANKI_CFG_ASSERT(config.m_type != ImageBinaryType::NONE, "Wrong image type");
-	ANKI_CFG_ASSERT(config.m_inputFilenames.getSize() == 1 || config.m_type != ImageBinaryType::_2D,
+	ANKI_CFG_ASSERT(config.m_type != ImageBinaryType::kNone, "Wrong image type");
+	ANKI_CFG_ASSERT(config.m_inputFilenames.getSize() == 1 || config.m_type != ImageBinaryType::k2D,
 					"2D images require only one input image");
-	ANKI_CFG_ASSERT(config.m_inputFilenames.getSize() != 1 || config.m_type != ImageBinaryType::_2D_ARRAY,
+	ANKI_CFG_ASSERT(config.m_inputFilenames.getSize() != 1 || config.m_type != ImageBinaryType::k2DArray,
 					"2D array images require more than one input image");
-	ANKI_CFG_ASSERT(config.m_inputFilenames.getSize() != 1 || config.m_type != ImageBinaryType::_3D,
+	ANKI_CFG_ASSERT(config.m_inputFilenames.getSize() != 1 || config.m_type != ImageBinaryType::k3D,
 					"3D images require more than one input image");
-	ANKI_CFG_ASSERT(config.m_inputFilenames.getSize() != 6 || config.m_type != ImageBinaryType::CUBE,
+	ANKI_CFG_ASSERT(config.m_inputFilenames.getSize() != 6 || config.m_type != ImageBinaryType::kCube,
 					"Cube images require 6 input images");
 
 	// Compressions
-	ANKI_CFG_ASSERT(config.m_compressions != ImageBinaryDataCompression::NONE, "Missing output compressions");
-	ANKI_CFG_ASSERT(config.m_compressions == ImageBinaryDataCompression::RAW || config.m_type != ImageBinaryType::_3D,
+	ANKI_CFG_ASSERT(config.m_compressions != ImageBinaryDataCompression::kNone, "Missing output compressions");
+	ANKI_CFG_ASSERT(config.m_compressions == ImageBinaryDataCompression::kRaw || config.m_type != ImageBinaryType::k3D,
 					"Can't compress 3D textures");
 
 	// ASTC
-	if(!!(config.m_compressions & ImageBinaryDataCompression::ASTC))
+	if(!!(config.m_compressions & ImageBinaryDataCompression::kAstc))
 	{
 		ANKI_CFG_ASSERT(config.m_astcBlockSize == UVec2(4u) || config.m_astcBlockSize == UVec2(8u),
 						"Incorrect ASTC block sizes");
@@ -838,7 +838,7 @@ static Error storeAnkiImage(const ImageImporterConfig& config, const ImageImport
 
 	// Header
 	ImageBinaryHeader header = {};
-	memcpy(&header.m_magic[0], &IMAGE_MAGIC[0], sizeof(header.m_magic));
+	memcpy(&header.m_magic[0], &kImageMagic[0], sizeof(header.m_magic));
 	header.m_width = ctx.m_width;
 	header.m_height = ctx.m_height;
 	header.m_depthOrLayerCount = max(ctx.m_layerCount, ctx.m_depth);
@@ -846,11 +846,12 @@ static Error storeAnkiImage(const ImageImporterConfig& config, const ImageImport
 	if(ctx.m_hdr)
 	{
 		header.m_colorFormat =
-			(ctx.m_channelCount == 3) ? ImageBinaryColorFormat::RGBF32 : ImageBinaryColorFormat::RGBAF32;
+			(ctx.m_channelCount == 3) ? ImageBinaryColorFormat::kRgbFloat : ImageBinaryColorFormat::kRgbaFloat;
 	}
 	else
 	{
-		header.m_colorFormat = (ctx.m_channelCount == 3) ? ImageBinaryColorFormat::RGB8 : ImageBinaryColorFormat::RGBA8;
+		header.m_colorFormat =
+			(ctx.m_channelCount == 3) ? ImageBinaryColorFormat::kRgb8 : ImageBinaryColorFormat::kRgba8;
 	}
 	header.m_compressionMask = config.m_compressions;
 	header.m_isNormal = false;
@@ -860,7 +861,7 @@ static Error storeAnkiImage(const ImageImporterConfig& config, const ImageImport
 	ANKI_CHECK(outFile.write(&header, sizeof(header)));
 
 	// Write RAW
-	if(!!(config.m_compressions & ImageBinaryDataCompression::RAW))
+	if(!!(config.m_compressions & ImageBinaryDataCompression::kRaw))
 	{
 		ANKI_IMPORTER_LOGV("Storing RAW");
 
@@ -880,7 +881,7 @@ static Error storeAnkiImage(const ImageImporterConfig& config, const ImageImport
 	}
 
 	// Write S3TC
-	if(!!(config.m_compressions & ImageBinaryDataCompression::S3TC))
+	if(!!(config.m_compressions & ImageBinaryDataCompression::kS3tc))
 	{
 		ANKI_IMPORTER_LOGV("Storing S3TC");
 
@@ -900,7 +901,7 @@ static Error storeAnkiImage(const ImageImporterConfig& config, const ImageImport
 	}
 
 	// Write ASTC
-	if(!!(config.m_compressions & ImageBinaryDataCompression::ASTC))
+	if(!!(config.m_compressions & ImageBinaryDataCompression::kAstc))
 	{
 		ANKI_IMPORTER_LOGV("Storing ASTC");
 
@@ -928,7 +929,7 @@ static Error importImageInternal(const ImageImporterConfig& configOriginal)
 	ImageImporterConfig config = configOriginal;
 
 	config.m_minMipmapDimension = max(config.m_minMipmapDimension, 4u);
-	if(!!(config.m_compressions & ImageBinaryDataCompression::ASTC))
+	if(!!(config.m_compressions & ImageBinaryDataCompression::kAstc))
 	{
 		config.m_minMipmapDimension = max(config.m_minMipmapDimension, config.m_astcBlockSize.x());
 		config.m_minMipmapDimension = max(config.m_minMipmapDimension, config.m_astcBlockSize.y());
@@ -975,13 +976,13 @@ static Error importImageInternal(const ImageImporterConfig& configOriginal)
 
 	ctx.m_width = width;
 	ctx.m_height = height;
-	ctx.m_depth = (config.m_type == ImageBinaryType::_3D) ? config.m_inputFilenames.getSize() : 1;
-	ctx.m_faceCount = (config.m_type == ImageBinaryType::CUBE) ? 6 : 1;
-	ctx.m_layerCount = (config.m_type == ImageBinaryType::_2D_ARRAY) ? config.m_inputFilenames.getSize() : 1;
+	ctx.m_depth = (config.m_type == ImageBinaryType::k3D) ? config.m_inputFilenames.getSize() : 1;
+	ctx.m_faceCount = (config.m_type == ImageBinaryType::kCube) ? 6 : 1;
+	ctx.m_layerCount = (config.m_type == ImageBinaryType::k2DArray) ? config.m_inputFilenames.getSize() : 1;
 	ctx.m_hdr = isHdr;
 
 	U32 desiredChannelCount;
-	if(isHdr && !!(config.m_compressions & ImageBinaryDataCompression::S3TC))
+	if(isHdr && !!(config.m_compressions & ImageBinaryDataCompression::kS3tc))
 	{
 		// BC6H doesn't have a 4th channel
 		if(channelCount != 3)
@@ -989,7 +990,7 @@ static Error importImageInternal(const ImageImporterConfig& configOriginal)
 			ANKI_IMPORTER_LOGW("Input images have alpha but that can't be supported with BC6H");
 		}
 
-		if(!!(config.m_compressions & ImageBinaryDataCompression::RAW))
+		if(!!(config.m_compressions & ImageBinaryDataCompression::kRaw))
 		{
 			ANKI_IMPORTER_LOGE("Can't support both BC6H (which is 3 component) and RAW which requires 4 compoments");
 			return Error::kUserData;
@@ -997,7 +998,7 @@ static Error importImageInternal(const ImageImporterConfig& configOriginal)
 
 		desiredChannelCount = 3;
 	}
-	else if(!!(config.m_compressions & ImageBinaryDataCompression::RAW))
+	else if(!!(config.m_compressions & ImageBinaryDataCompression::kRaw))
 	{
 		// Always ask for 4 components because desktop GPUs don't always like 3
 		desiredChannelCount = 4;
@@ -1025,14 +1026,14 @@ static Error importImageInternal(const ImageImporterConfig& configOriginal)
 
 	// Generate mipmaps
 	const U32 mipCount =
-		min(config.m_mipmapCount, (config.m_type == ImageBinaryType::_3D)
+		min(config.m_mipmapCount, (config.m_type == ImageBinaryType::k3D)
 									  ? computeMaxMipmapCount3d(width, height, ctx.m_depth, config.m_minMipmapDimension)
 									  : computeMaxMipmapCount2d(width, height, config.m_minMipmapDimension));
 	for(U32 mip = 1; mip < mipCount; ++mip)
 	{
 		ctx.m_mipmaps.emplaceBack(alloc);
 
-		if(config.m_type != ImageBinaryType::_3D)
+		if(config.m_type != ImageBinaryType::k3D)
 		{
 			ctx.m_mipmaps[mip].m_surfacesOrVolume.create(ctx.m_faceCount * ctx.m_layerCount, alloc);
 			for(U32 l = 0; l < ctx.m_layerCount; ++l)
@@ -1086,7 +1087,7 @@ static Error importImageInternal(const ImageImporterConfig& configOriginal)
 	}
 
 	// Compress
-	if(!!(config.m_compressions & ImageBinaryDataCompression::S3TC))
+	if(!!(config.m_compressions & ImageBinaryDataCompression::kS3tc))
 	{
 		ANKI_IMPORTER_LOGV("Will compress in S3TC");
 
@@ -1115,7 +1116,7 @@ static Error importImageInternal(const ImageImporterConfig& configOriginal)
 		}
 	}
 
-	if(!!(config.m_compressions & ImageBinaryDataCompression::ASTC))
+	if(!!(config.m_compressions & ImageBinaryDataCompression::kAstc))
 	{
 		ANKI_IMPORTER_LOGV("Will compress in ASTC");
 
@@ -1145,7 +1146,7 @@ static Error importImageInternal(const ImageImporterConfig& configOriginal)
 		}
 	}
 
-	if(!!(config.m_compressions & ImageBinaryDataCompression::ETC))
+	if(!!(config.m_compressions & ImageBinaryDataCompression::kEtc))
 	{
 		ANKI_ASSERT(!"TODO");
 	}

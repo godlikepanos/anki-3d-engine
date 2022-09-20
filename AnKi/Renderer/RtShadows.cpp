@@ -133,7 +133,7 @@ Error RtShadows::initInternal()
 	// Quarter rez shadow RT
 	{
 		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
-			m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2, Format::kR32G32_Uint,
+			m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2, Format::kR32G32Uint,
 			TextureUsageBit::kAllSampled | TextureUsageBit::kImageTraceRaysWrite | TextureUsageBit::kImageComputeWrite,
 			"RtShadows History");
 		m_historyRt = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::kSampledFragment);
@@ -143,14 +143,14 @@ Error RtShadows::initInternal()
 	{
 		m_intermediateShadowsRtDescr = m_r->create2DRenderTargetDescription(m_r->getInternalResolution().x() / 2,
 																			m_r->getInternalResolution().y() / 2,
-																			Format::kR32G32_Uint, "RtShadows Tmp");
+																			Format::kR32G32Uint, "RtShadows Tmp");
 		m_intermediateShadowsRtDescr.bake();
 	}
 
 	// Moments RT
 	{
 		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
-			m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2, Format::kR32G32_Sfloat,
+			m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2, Format::kR32G32Sfloat,
 			TextureUsageBit::kAllSampled | TextureUsageBit::kImageTraceRaysWrite | TextureUsageBit::kImageComputeWrite,
 			"RtShadows Moments #1");
 		m_momentsRts[0] = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::kSampledFragment);
@@ -164,7 +164,7 @@ Error RtShadows::initInternal()
 	{
 		m_varianceRtDescr = m_r->create2DRenderTargetDescription(m_r->getInternalResolution().x() / 2,
 																 m_r->getInternalResolution().y() / 2,
-																 Format::kR32_Sfloat, "RtShadows Variance");
+																 Format::kR32Sfloat, "RtShadows Variance");
 		m_varianceRtDescr.bake();
 	}
 
@@ -172,7 +172,7 @@ Error RtShadows::initInternal()
 	{
 		m_upscaledRtDescr =
 			m_r->create2DRenderTargetDescription(m_r->getInternalResolution().x(), m_r->getInternalResolution().y(),
-												 Format::kR32G32_Uint, "RtShadows Upscaled");
+												 Format::kR32G32Uint, "RtShadows Upscaled");
 		m_upscaledRtDescr.bake();
 	}
 

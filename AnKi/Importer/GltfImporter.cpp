@@ -7,6 +7,7 @@
 #include <AnKi/Util/System.h>
 #include <AnKi/Util/ThreadHive.h>
 #include <AnKi/Util/StringList.h>
+#include <AnKi/Util/Xml.h>
 
 #if ANKI_COMPILER_GCC_COMPATIBLE
 #	pragma GCC diagnostic push
@@ -147,8 +148,6 @@ static Bool stringsExist(const HashMapAuto<CString, StringAuto>& map, const std:
 
 	return false;
 }
-
-const char* GltfImporter::XML_HEADER = R"(<?xml version="1.0" encoding="UTF-8" ?>)";
 
 GltfImporter::GltfImporter(GenericMemoryPoolAllocator<U8> alloc)
 	: m_alloc(alloc)
@@ -920,7 +919,7 @@ Error GltfImporter::writeSkeleton(const cgltf_skin& skin)
 	File file;
 	ANKI_CHECK(file.open(fname.toCString(), FileOpenFlag::WRITE));
 
-	ANKI_CHECK(file.writeTextf("%s\n<skeleton>\n", XML_HEADER));
+	ANKI_CHECK(file.writeTextf("%s\n<skeleton>\n", XmlDocument::kXmlHeader.cstr()));
 	ANKI_CHECK(file.writeTextf("\t<bones>\n"));
 
 	for(U32 i = 0; i < skin.joints_count; ++i)

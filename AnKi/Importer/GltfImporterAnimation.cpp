@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Importer/GltfImporter.h>
+#include <AnKi/Util/Xml.h>
 
 namespace anki {
 
@@ -294,7 +295,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 	File file;
 	ANKI_CHECK(file.open(fname.toCString(), FileOpenFlag::WRITE));
 
-	ANKI_CHECK(file.writeTextf("%s\n<animation>\n", XML_HEADER));
+	ANKI_CHECK(file.writeTextf("%s\n<animation>\n", XmlDocument::kXmlHeader.cstr()));
 	ANKI_CHECK(file.writeText("\t<channels>\n"));
 
 	for(const GltfAnimChannel& channel : tempChannels)

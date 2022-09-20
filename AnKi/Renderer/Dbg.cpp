@@ -32,7 +32,7 @@ Error Dbg::init()
 
 	// RT descr
 	m_rtDescr = m_r->create2DRenderTargetDescription(m_r->getInternalResolution().x(), m_r->getInternalResolution().y(),
-													 Format::kR8G8B8A8_Unorm, "Dbg");
+													 Format::kR8G8B8A8Unorm, "Dbg");
 	m_rtDescr.bake();
 
 	// Create FB descr

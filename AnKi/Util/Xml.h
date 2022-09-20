@@ -193,7 +193,7 @@ private:
 class XmlDocument
 {
 public:
-	static CString XML_HEADER;
+	static constexpr CString kXmlHeader = R"(<?xml version="1.0" encoding="UTF-8" ?>)";
 
 	/// Parse from a file.
 	Error loadFile(CString filename, GenericMemoryPoolAllocator<U8> alloc);

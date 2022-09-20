@@ -65,7 +65,7 @@ Error DepthDownscale::initInternal()
 			usage |= TextureUsageBit::kFramebufferWrite;
 		}
 
-		TextureInitInfo texInit = m_r->create2DRenderTargetInitInfo(width, height, Format::kR32_Sfloat, usage, "HiZ");
+		TextureInitInfo texInit = m_r->create2DRenderTargetInitInfo(width, height, Format::kR32Sfloat, usage, "HiZ");
 		texInit.m_mipmapCount = U8(m_mipCount);
 		m_hizTex = m_r->createAndClearRenderTarget(texInit, TextureUsageBit::kSampledFragment);
 	}

@@ -75,8 +75,8 @@ Error TemporalAA::initInternal()
 
 	m_tonemappedRtDescr = m_r->create2DRenderTargetDescription(
 		m_r->getInternalResolution().x(), m_r->getInternalResolution().y(),
-		(getGrManager().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR8G8B8_Unorm
-																			  : Format::kR8G8B8A8_Unorm,
+		(getGrManager().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR8G8B8Unorm
+																			  : Format::kR8G8B8A8Unorm,
 		"TemporalAA Tonemapped");
 	m_tonemappedRtDescr.bake();
 

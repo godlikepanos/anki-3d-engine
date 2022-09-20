@@ -48,11 +48,11 @@ Error VrsSriGeneration::initInternal()
 	const TextureUsageBit texUsage =
 		TextureUsageBit::kFramebufferShadingRate | TextureUsageBit::kImageComputeWrite | TextureUsageBit::kAllSampled;
 	TextureInitInfo sriInitInfo =
-		m_r->create2DRenderTargetInitInfo(rez.x(), rez.y(), Format::kR8_Uint, texUsage, "VrsSri");
+		m_r->create2DRenderTargetInitInfo(rez.x(), rez.y(), Format::kR8Uint, texUsage, "VrsSri");
 	m_sriTex = m_r->createAndClearRenderTarget(sriInitInfo, TextureUsageBit::kFramebufferShadingRate);
 
 	const UVec2 rezDownscaled = (m_r->getInternalResolution() / 2 + m_sriTexelDimension - 1) / m_sriTexelDimension;
-	sriInitInfo = m_r->create2DRenderTargetInitInfo(rezDownscaled.x(), rezDownscaled.y(), Format::kR8_Uint, texUsage,
+	sriInitInfo = m_r->create2DRenderTargetInitInfo(rezDownscaled.x(), rezDownscaled.y(), Format::kR8Uint, texUsage,
 													"VrsSriDownscaled");
 	m_downscaledSriTex = m_r->createAndClearRenderTarget(sriInitInfo, TextureUsageBit::kFramebufferShadingRate);
 

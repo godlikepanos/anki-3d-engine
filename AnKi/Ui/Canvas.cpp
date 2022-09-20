@@ -240,9 +240,9 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 	cmdb->setViewport(0, 0, U32(fbWidth), U32(fbHeight));
 
 	cmdb->bindVertexBuffer(0, vertsToken.m_buffer, vertsToken.m_offset, sizeof(ImDrawVert));
-	cmdb->setVertexAttribute(0, 0, Format::kR32G32_Sfloat, 0);
-	cmdb->setVertexAttribute(1, 0, Format::kR8G8B8A8_Unorm, sizeof(Vec2) * 2);
-	cmdb->setVertexAttribute(2, 0, Format::kR32G32_Sfloat, sizeof(Vec2));
+	cmdb->setVertexAttribute(0, 0, Format::kR32G32Sfloat, 0);
+	cmdb->setVertexAttribute(1, 0, Format::kR8G8B8A8Unorm, sizeof(Vec2) * 2);
+	cmdb->setVertexAttribute(2, 0, Format::kR32G32Sfloat, sizeof(Vec2));
 
 	cmdb->bindIndexBuffer(indicesToken.m_buffer, indicesToken.m_offset, IndexType::kU16);
 

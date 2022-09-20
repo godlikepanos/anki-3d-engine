@@ -170,7 +170,7 @@ Error ConfigSet::saveToFile(CString filename) const
 	File file;
 	ANKI_CHECK(file.open(filename, FileOpenFlag::WRITE));
 
-	ANKI_CHECK(file.writeTextf("%s\n<config>\n", XmlDocument::XML_HEADER.cstr()));
+	ANKI_CHECK(file.writeTextf("%s\n<config>\n", XmlDocument::kXmlHeader.cstr()));
 
 #define ANKI_NUMERIC_UINT(name) \
 	ANKI_CHECK(file.writeTextf("\t<!-- %s -->\n", m_##name.m_description.cstr())); \

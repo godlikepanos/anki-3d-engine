@@ -641,28 +641,28 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 		// Positions
 		MeshBinaryVertexAttribute& posa = header.m_vertexAttributes[VertexAttributeId::POSITION];
 		posa.m_bufferBinding = 0;
-		posa.m_format = Format::kR32G32B32_Sfloat;
+		posa.m_format = Format::kR32G32B32Sfloat;
 		posa.m_relativeOffset = 0;
 		posa.m_scale = 1.0f;
 
 		// Normals
 		MeshBinaryVertexAttribute& na = header.m_vertexAttributes[VertexAttributeId::NORMAL];
 		na.m_bufferBinding = 1;
-		na.m_format = Format::kA2B10G10R10_Snorm_Pack32;
+		na.m_format = Format::kA2B10G10R10SnormPack32;
 		na.m_relativeOffset = 0;
 		na.m_scale = 1.0f;
 
 		// Tangents
 		MeshBinaryVertexAttribute& ta = header.m_vertexAttributes[VertexAttributeId::TANGENT];
 		ta.m_bufferBinding = 1;
-		ta.m_format = Format::kA2B10G10R10_Snorm_Pack32;
+		ta.m_format = Format::kA2B10G10R10SnormPack32;
 		ta.m_relativeOffset = sizeof(U32);
 		ta.m_scale = 1.0f;
 
 		// UVs
 		MeshBinaryVertexAttribute& uva = header.m_vertexAttributes[VertexAttributeId::UV0];
 		uva.m_bufferBinding = 1;
-		uva.m_format = Format::kR32G32_Sfloat;
+		uva.m_format = Format::kR32G32Sfloat;
 		uva.m_relativeOffset = sizeof(U32) * 2;
 		uva.m_scale = 1.0f;
 
@@ -671,13 +671,13 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 		{
 			MeshBinaryVertexAttribute& bidxa = header.m_vertexAttributes[VertexAttributeId::BONE_INDICES];
 			bidxa.m_bufferBinding = 2;
-			bidxa.m_format = Format::kR8G8B8A8_Uint;
+			bidxa.m_format = Format::kR8G8B8A8Uint;
 			bidxa.m_relativeOffset = 0;
 			bidxa.m_scale = 1.0f;
 
 			MeshBinaryVertexAttribute& wa = header.m_vertexAttributes[VertexAttributeId::BONE_WEIGHTS];
 			wa.m_bufferBinding = 2;
-			wa.m_format = Format::kR8G8B8A8_Unorm;
+			wa.m_format = Format::kR8G8B8A8Unorm;
 			wa.m_relativeOffset = sizeof(U8Vec4);
 			wa.m_scale = 1.0f;
 		}

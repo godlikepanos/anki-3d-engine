@@ -43,7 +43,7 @@ Error VolumetricFog::init()
 
 	// RT descr
 	m_rtDescr =
-		m_r->create2DRenderTargetDescription(m_volumeSize[0], m_volumeSize[1], Format::kR16G16B16A16_Sfloat, "Fog");
+		m_r->create2DRenderTargetDescription(m_volumeSize[0], m_volumeSize[1], Format::kR16G16B16A16Sfloat, "Fog");
 	m_rtDescr.m_depth = m_volumeSize[2];
 	m_rtDescr.m_type = TextureType::k3D;
 	m_rtDescr.bake();

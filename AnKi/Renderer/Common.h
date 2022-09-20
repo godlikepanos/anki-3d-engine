@@ -68,7 +68,7 @@ constexpr U32 kGBufferColorRenderTargetCount = 4;
 constexpr U32 kDownscaleBurDownTo = 32;
 
 inline constexpr Array<Format, kGBufferColorRenderTargetCount> kGBufferColorRenderTargetFormats = {
-	{Format::kR8G8B8A8_Unorm, Format::kR8G8B8A8_Unorm, Format::kA2B10G10R10_Unorm_Pack32, Format::kR16G16_Snorm}};
+	{Format::kR8G8B8A8Unorm, Format::kR8G8B8A8Unorm, Format::kA2B10G10R10UnormPack32, Format::kR16G16Snorm}};
 
 /// GPU buffers and textures that the clusterer refers to.
 class ClusteredShadingContext

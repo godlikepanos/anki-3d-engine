@@ -41,7 +41,7 @@ public:
 	}
 
 private:
-	static constexpr Format kRtPixelFormat = Format::kA2B10G10R10_Unorm_Pack32;
+	static constexpr Format kRtPixelFormat = Format::kA2B10G10R10UnormPack32;
 
 	const Array<U32, 2> m_workgroupSize = {16, 16};
 

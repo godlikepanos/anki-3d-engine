@@ -129,17 +129,17 @@ void convertVertexFormat(Format fmt, U& compCount, GLenum& type, Bool& normalize
 {
 	switch(fmt)
 	{
-	case Format::kR32_Sfloat:
+	case Format::kR32Sfloat:
 		compCount = 1;
 		type = GL_FLOAT;
 		normalized = false;
 		break;
-	case Format::kR32G32_Sfloat:
+	case Format::kR32G32Sfloat:
 		compCount = 2;
 		type = GL_FLOAT;
 		normalized = false;
 		break;
-	case Format::kR32G32B32_Sfloat:
+	case Format::kR32G32B32Sfloat:
 		compCount = 3;
 		type = GL_FLOAT;
 		normalized = false;
@@ -179,7 +179,7 @@ void convertVertexFormat(Format fmt, U& compCount, GLenum& type, Bool& normalize
 		type = GL_INT_2_10_10_10_REV;
 		normalized = true;
 		break;
-	case Format::kR8G8B8A8_Unorm:
+	case Format::kR8G8B8A8Unorm:
 		compCount = 4;
 		type = GL_UNSIGNED_BYTE;
 		normalized = true;
@@ -336,7 +336,7 @@ void convertTextureInformation(Format pf, Bool& compressed, GLenum& format, GLen
 		internalFormat = GL_RGB8I;
 		type = GL_RGB_INTEGER;
 		break;
-	case Format::kR8G8B8A8_Unorm:
+	case Format::kR8G8B8A8Unorm:
 		format = GL_RGBA;
 		internalFormat = GL_RGBA8;
 		type = GL_UNSIGNED_BYTE;
@@ -391,7 +391,7 @@ void convertTextureInformation(Format pf, Bool& compressed, GLenum& format, GLen
 		internalFormat = GL_RGBA16UI;
 		type = GL_UNSIGNED_SHORT;
 		break;
-	case Format::kR32_Sfloat:
+	case Format::kR32Sfloat:
 		format = GL_R;
 		internalFormat = GL_R32F;
 		type = GL_FLOAT;
@@ -401,17 +401,17 @@ void convertTextureInformation(Format pf, Bool& compressed, GLenum& format, GLen
 		internalFormat = GL_R32UI;
 		type = GL_UNSIGNED_INT;
 		break;
-	case Format::kR32G32_Sfloat:
+	case Format::kR32G32Sfloat:
 		format = GL_RG;
 		internalFormat = GL_RG32F;
 		type = GL_FLOAT;
 		break;
-	case Format::kR32G32_Uint:
+	case Format::kR32G32Uint:
 		format = GL_RG_INTEGER;
 		internalFormat = GL_RG32UI;
 		type = GL_UNSIGNED_INT;
 		break;
-	case Format::kR32G32B32_Sfloat:
+	case Format::kR32G32B32Sfloat:
 		format = GL_RGB;
 		internalFormat = GL_RGB32F;
 		type = GL_FLOAT;

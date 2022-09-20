@@ -125,8 +125,6 @@ Error XmlElement::getAttributeTextOptional(CString name, CString& out, Bool& att
 	return Error::kNone;
 }
 
-CString XmlDocument::XML_HEADER = R"(<?xml version="1.0" encoding="UTF-8" ?>)";
-
 Error XmlDocument::loadFile(CString filename, GenericMemoryPoolAllocator<U8> alloc)
 {
 	File file;

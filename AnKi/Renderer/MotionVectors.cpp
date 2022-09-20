@@ -42,7 +42,7 @@ Error MotionVectors::initInternal()
 
 	// RTs
 	m_motionVectorsRtDescr = m_r->create2DRenderTargetDescription(
-		m_r->getInternalResolution().x(), m_r->getInternalResolution().y(), Format::kR16G16_Sfloat, "MotionVectors");
+		m_r->getInternalResolution().x(), m_r->getInternalResolution().y(), Format::kR16G16Sfloat, "MotionVectors");
 	m_motionVectorsRtDescr.bake();
 
 	TextureUsageBit historyLengthUsage = TextureUsageBit::kAllSampled;
@@ -57,7 +57,7 @@ Error MotionVectors::initInternal()
 
 	TextureInitInfo historyLengthTexInit =
 		m_r->create2DRenderTargetInitInfo(m_r->getInternalResolution().x(), m_r->getInternalResolution().y(),
-										  Format::kR8_Unorm, historyLengthUsage, "MotionVectorsHistoryLen#1");
+										  Format::kR8Unorm, historyLengthUsage, "MotionVectorsHistoryLen#1");
 	m_historyLengthTextures[0] = m_r->createAndClearRenderTarget(historyLengthTexInit, TextureUsageBit::kAllSampled);
 	historyLengthTexInit.setName("MotionVectorsHistoryLen#2");
 	m_historyLengthTextures[1] = m_r->createAndClearRenderTarget(historyLengthTexInit, TextureUsageBit::kAllSampled);

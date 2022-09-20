@@ -86,25 +86,25 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 
 	switch(loader.getImageType())
 	{
-	case ImageBinaryType::_2D:
+	case ImageBinaryType::k2D:
 		init.m_type = TextureType::k2D;
 		init.m_depth = 1;
 		faces = 1;
 		init.m_layerCount = 1;
 		break;
-	case ImageBinaryType::CUBE:
+	case ImageBinaryType::kCube:
 		init.m_type = TextureType::kCube;
 		init.m_depth = 1;
 		faces = 6;
 		init.m_layerCount = 1;
 		break;
-	case ImageBinaryType::_2D_ARRAY:
+	case ImageBinaryType::k2DArray:
 		init.m_type = TextureType::k2DArray;
 		init.m_layerCount = loader.getLayerCount();
 		init.m_depth = 1;
 		faces = 1;
 		break;
-	case ImageBinaryType::_3D:
+	case ImageBinaryType::k3D:
 		init.m_type = TextureType::k3D;
 		init.m_depth = loader.getDepth();
 		init.m_layerCount = 1;
@@ -115,81 +115,81 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 	}
 
 	// Internal format
-	if(loader.getColorFormat() == ImageBinaryColorFormat::RGB8)
+	if(loader.getColorFormat() == ImageBinaryColorFormat::kRgb8)
 	{
 		switch(loader.getCompression())
 		{
-		case ImageBinaryDataCompression::RAW:
-			init.m_format = Format::kR8G8B8_Unorm;
+		case ImageBinaryDataCompression::kRaw:
+			init.m_format = Format::kR8G8B8Unorm;
 			break;
-		case ImageBinaryDataCompression::S3TC:
-			init.m_format = Format::kBC1_RGB_Unorm_Block;
+		case ImageBinaryDataCompression::kS3tc:
+			init.m_format = Format::kBc1RgbUnormBlock;
 			break;
-		case ImageBinaryDataCompression::ASTC:
+		case ImageBinaryDataCompression::kAstc:
 			if(loader.getAstcBlockSize() == UVec2(4u))
 			{
-				init.m_format = Format::kASTC_4x4_Unorm_Block;
+				init.m_format = Format::kAstc4x4UnormBlock;
 			}
 			else
 			{
 				ANKI_ASSERT(loader.getAstcBlockSize() == UVec2(8u));
-				init.m_format = Format::kASTC_8x8_Unorm_Block;
+				init.m_format = Format::kAstc8x8UnormBlock;
 			}
 			break;
 		default:
 			ANKI_ASSERT(0);
 		}
 	}
-	else if(loader.getColorFormat() == ImageBinaryColorFormat::RGBA8)
+	else if(loader.getColorFormat() == ImageBinaryColorFormat::kRgba8)
 	{
 		switch(loader.getCompression())
 		{
-		case ImageBinaryDataCompression::RAW:
-			init.m_format = Format::kR8G8B8A8_Unorm;
+		case ImageBinaryDataCompression::kRaw:
+			init.m_format = Format::kR8G8B8A8Unorm;
 			break;
-		case ImageBinaryDataCompression::S3TC:
-			init.m_format = Format::kBC3_Unorm_Block;
+		case ImageBinaryDataCompression::kS3tc:
+			init.m_format = Format::kBc3UnormBlock;
 			break;
-		case ImageBinaryDataCompression::ASTC:
+		case ImageBinaryDataCompression::kAstc:
 			if(loader.getAstcBlockSize() == UVec2(4u))
 			{
-				init.m_format = Format::kASTC_4x4_Unorm_Block;
+				init.m_format = Format::kAstc4x4UnormBlock;
 			}
 			else
 			{
 				ANKI_ASSERT(loader.getAstcBlockSize() == UVec2(8u));
-				init.m_format = Format::kASTC_8x8_Unorm_Block;
+				init.m_format = Format::kAstc8x8UnormBlock;
 			}
 			break;
 		default:
 			ANKI_ASSERT(0);
 		}
 	}
-	else if(loader.getColorFormat() == ImageBinaryColorFormat::RGBF32)
+	else if(loader.getColorFormat() == ImageBinaryColorFormat::kRgbFloat)
 	{
 		switch(loader.getCompression())
 		{
-		case ImageBinaryDataCompression::S3TC:
-			init.m_format = Format::kBC6H_Ufloat_Block;
+		case ImageBinaryDataCompression::kS3tc:
+			init.m_format = Format::kBc6hUfloatBlock;
 			break;
-		case ImageBinaryDataCompression::ASTC:
+		case ImageBinaryDataCompression::kAstc:
 			ANKI_ASSERT(loader.getAstcBlockSize() == UVec2(8u));
-			init.m_format = Format::kASTC_8x8_Sfloat_Block;
+			init.m_format = Format::kAstc8x8SfloatBlock;
 			break;
 		default:
 			ANKI_ASSERT(0);
 		}
 	}
-	else if(loader.getColorFormat() == ImageBinaryColorFormat::RGBAF32)
+	else if(loader.getColorFormat() == ImageBinaryColorFormat::kRgbaFloat)
 	{
 		switch(loader.getCompression())
 		{
-		case ImageBinaryDataCompression::RAW:
-			init.m_format = Format::kR32G32B32A32_Sfloat;
+		case ImageBinaryDataCompression::kRaw:
+			init.m_format = Format::kR32G32B32A32Sfloat;
 			break;
-		case ImageBinaryDataCompression::ASTC:
+		case ImageBinaryDataCompression::kAstc:
 			ANKI_ASSERT(loader.getAstcBlockSize() == UVec2(8u));
-			init.m_format = Format::kASTC_8x8_Sfloat_Block;
+			init.m_format = Format::kAstc8x8SfloatBlock;
 			break;
 		default:
 			ANKI_ASSERT(0);

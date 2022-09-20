@@ -59,8 +59,6 @@ private:
 	};
 
 	// Data
-	static const char* XML_HEADER;
-
 	GenericMemoryPoolAllocator<U8> m_alloc;
 
 	StringAuto m_inputFname = {m_alloc};

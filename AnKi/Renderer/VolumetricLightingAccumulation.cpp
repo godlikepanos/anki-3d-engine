@@ -60,7 +60,7 @@ Error VolumetricLightingAccumulation::init()
 
 	// Create RTs
 	TextureInitInfo texinit =
-		m_r->create2DRenderTargetInitInfo(m_volumeSize[0], m_volumeSize[1], Format::kR16G16B16A16_Sfloat,
+		m_r->create2DRenderTargetInitInfo(m_volumeSize[0], m_volumeSize[1], Format::kR16G16B16A16Sfloat,
 										  TextureUsageBit::kImageComputeRead | TextureUsageBit::kImageComputeWrite
 											  | TextureUsageBit::kSampledFragment | TextureUsageBit::kSampledCompute,
 										  "VolLight");

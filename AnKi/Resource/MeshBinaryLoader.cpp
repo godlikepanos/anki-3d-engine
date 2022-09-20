@@ -137,15 +137,15 @@ Error MeshBinaryLoader::checkHeader() const
 	}
 
 	// Attributes
-	ANKI_CHECK(checkFormat(VertexAttributeId::POSITION, Array<Format, 1>{{Format::kR32G32B32_Sfloat}}, 0, 0));
-	ANKI_CHECK(checkFormat(VertexAttributeId::NORMAL, Array<Format, 1>{{Format::kA2B10G10R10_Snorm_Pack32}}, 1, 0));
-	ANKI_CHECK(checkFormat(VertexAttributeId::TANGENT, Array<Format, 1>{{Format::kA2B10G10R10_Snorm_Pack32}}, 1, 4));
-	ANKI_CHECK(checkFormat(VertexAttributeId::UV0, Array<Format, 1>{{Format::kR32G32_Sfloat}}, 1, 8));
+	ANKI_CHECK(checkFormat(VertexAttributeId::POSITION, Array<Format, 1>{{Format::kR32G32B32Sfloat}}, 0, 0));
+	ANKI_CHECK(checkFormat(VertexAttributeId::NORMAL, Array<Format, 1>{{Format::kA2B10G10R10SnormPack32}}, 1, 0));
+	ANKI_CHECK(checkFormat(VertexAttributeId::TANGENT, Array<Format, 1>{{Format::kA2B10G10R10SnormPack32}}, 1, 4));
+	ANKI_CHECK(checkFormat(VertexAttributeId::UV0, Array<Format, 1>{{Format::kR32G32Sfloat}}, 1, 8));
 	ANKI_CHECK(checkFormat(VertexAttributeId::UV1, Array<Format, 1>{{Format::kNone}}, 1, 0));
 	ANKI_CHECK(
-		checkFormat(VertexAttributeId::BONE_INDICES, Array<Format, 2>{{Format::kNone, Format::kR8G8B8A8_Uint}}, 2, 0));
+		checkFormat(VertexAttributeId::BONE_INDICES, Array<Format, 2>{{Format::kNone, Format::kR8G8B8A8Uint}}, 2, 0));
 	ANKI_CHECK(
-		checkFormat(VertexAttributeId::BONE_WEIGHTS, Array<Format, 2>{{Format::kNone, Format::kR8G8B8A8_Unorm}}, 2, 4));
+		checkFormat(VertexAttributeId::BONE_WEIGHTS, Array<Format, 2>{{Format::kNone, Format::kR8G8B8A8Unorm}}, 2, 4));
 
 	// Vertex buffers
 	if(m_header.m_vertexBufferCount != 2 + U32(hasBoneInfo()))
@@ -277,7 +277,7 @@ Error MeshBinaryLoader::storeIndicesAndPosition(DynamicArrayAuto<U32>& indices, 
 	{
 		positions.resize(m_header.m_totalVertexCount);
 		const MeshBinaryVertexAttribute& attrib = m_header.m_vertexAttributes[VertexAttributeId::POSITION];
-		ANKI_ASSERT(attrib.m_format == Format::kR32G32B32_Sfloat);
+		ANKI_ASSERT(attrib.m_format == Format::kR32G32B32Sfloat);
 		ANKI_CHECK(storeVertexBuffer(attrib.m_bufferBinding, &positions[0], positions.getSizeInBytes()));
 	}
 

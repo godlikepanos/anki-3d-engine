@@ -40,7 +40,7 @@ Options:
 
 static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& config, Cleanup& cleanup)
 {
-	config.m_compressions = ImageBinaryDataCompression::S3TC | ImageBinaryDataCompression::ASTC;
+	config.m_compressions = ImageBinaryDataCompression::kS3tc | ImageBinaryDataCompression::kAstc;
 	config.m_noAlpha = false;
 	config.m_astcBlockSize = UVec2(8u);
 
@@ -76,19 +76,19 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 
 			if(CString(argv[i]) == "2D")
 			{
-				config.m_type = ImageBinaryType::_2D;
+				config.m_type = ImageBinaryType::k2D;
 			}
 			else if(CString(argv[i]) == "3D")
 			{
-				config.m_type = ImageBinaryType::_3D;
+				config.m_type = ImageBinaryType::k3D;
 			}
 			else if(CString(argv[i]) == "Cube")
 			{
-				config.m_type = ImageBinaryType::CUBE;
+				config.m_type = ImageBinaryType::kCube;
 			}
 			else if(CString(argv[i]) == "2DArray")
 			{
-				config.m_type = ImageBinaryType::_2D_ARRAY;
+				config.m_type = ImageBinaryType::k2DArray;
 			}
 			else
 			{
@@ -109,11 +109,11 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 
 			if(CString(argv[i]) == "1")
 			{
-				config.m_compressions |= ImageBinaryDataCompression::S3TC;
+				config.m_compressions |= ImageBinaryDataCompression::kS3tc;
 			}
 			else if(CString(argv[i]) == "0")
 			{
-				config.m_compressions = config.m_compressions & ~ImageBinaryDataCompression::S3TC;
+				config.m_compressions = config.m_compressions & ~ImageBinaryDataCompression::kS3tc;
 			}
 			else
 			{
@@ -130,11 +130,11 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 
 			if(CString(argv[i]) == "1")
 			{
-				config.m_compressions |= ImageBinaryDataCompression::ASTC;
+				config.m_compressions |= ImageBinaryDataCompression::kAstc;
 			}
 			else if(CString(argv[i]) == "0")
 			{
-				config.m_compressions = config.m_compressions & ~ImageBinaryDataCompression::ASTC;
+				config.m_compressions = config.m_compressions & ~ImageBinaryDataCompression::kAstc;
 			}
 			else
 			{
@@ -151,11 +151,11 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 
 			if(CString(argv[i]) == "1")
 			{
-				config.m_compressions |= ImageBinaryDataCompression::RAW;
+				config.m_compressions |= ImageBinaryDataCompression::kRaw;
 			}
 			else if(CString(argv[i]) == "0")
 			{
-				config.m_compressions = config.m_compressions & ~ImageBinaryDataCompression::RAW;
+				config.m_compressions = config.m_compressions & ~ImageBinaryDataCompression::kRaw;
 			}
 			else
 			{
