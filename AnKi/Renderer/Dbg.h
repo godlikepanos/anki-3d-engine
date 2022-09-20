@@ -35,38 +35,38 @@ public:
 
 	Bool getDepthTestEnabled() const
 	{
-		return m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);
+		return m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDepthTestOn);
 	}
 
 	void setDepthTestEnabled(Bool enable)
 	{
-		m_debugDrawFlags.set(RenderQueueDebugDrawFlag::DEPTH_TEST_ON, enable);
+		m_debugDrawFlags.set(RenderQueueDebugDrawFlag::kDepthTestOn, enable);
 	}
 
 	void switchDepthTestEnabled()
 	{
-		m_debugDrawFlags.flip(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);
+		m_debugDrawFlags.flip(RenderQueueDebugDrawFlag::kDepthTestOn);
 	}
 
 	Bool getDitheredDepthTestEnabled() const
 	{
-		return m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON);
+		return m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn);
 	}
 
 	void setDitheredDepthTestEnabled(Bool enable)
 	{
-		m_debugDrawFlags.set(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON, enable);
+		m_debugDrawFlags.set(RenderQueueDebugDrawFlag::kDitheredDepthTestOn, enable);
 	}
 
 	void switchDitheredDepthTestEnabled()
 	{
-		m_debugDrawFlags.flip(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON);
+		m_debugDrawFlags.flip(RenderQueueDebugDrawFlag::kDitheredDepthTestOn);
 	}
 
 private:
 	RenderTargetDescription m_rtDescr;
 	FramebufferDescription m_fbDescr;
-	BitSet<U(RenderQueueDebugDrawFlag::COUNT), U32> m_debugDrawFlags = {false};
+	BitSet<U(RenderQueueDebugDrawFlag::kCount), U32> m_debugDrawFlags = {false};
 
 	class
 	{

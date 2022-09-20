@@ -307,7 +307,7 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 			mvps[i] = ctx.m_viewProjectionMatrix * Mat4(tsl.xyz1(), Mat3::getIdentity() * nonUniScale, 1.0f);
 		}
 
-		const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);
+		const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDepthTestOn);
 		if(enableDepthTest)
 		{
 			cmdb->setDepthCompareOperation(CompareOperation::kLess);
@@ -319,8 +319,8 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 
 		getSceneGraph().getDebugDrawer().drawCubes(
 			ConstWeakArray<Mat4>(mvps, instanceCount), Vec4(1.0f, 0.0f, 1.0f, 1.0f), 2.0f,
-			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), 2.0f,
-			*ctx.m_stagingGpuAllocator, cmdb);
+			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), 2.0f, *ctx.m_stagingGpuAllocator,
+			cmdb);
 
 		ctx.m_frameAllocator.deleteArray(mvps, instanceCount);
 
@@ -366,12 +366,12 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 				ctx.m_viewProjectionMatrix * Mat4(getFirstComponentOfType<MoveComponent>().getWorldTransform());
 			getSceneGraph().getDebugDrawer().drawLines(
 				ConstWeakArray<Mat4>(&mvp, 1), Vec4(1.0f), 20.0f,
-				ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), lines,
+				ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), lines,
 				*ctx.m_stagingGpuAllocator, cmdb);
 
 			getSceneGraph().getDebugDrawer().drawLines(
 				ConstWeakArray<Mat4>(&mvp, 1), Vec4(0.7f, 0.7f, 0.7f, 1.0f), 5.0f,
-				ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), chidlessLines,
+				ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), chidlessLines,
 				*ctx.m_stagingGpuAllocator, cmdb);
 		}
 

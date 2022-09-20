@@ -39,7 +39,7 @@ public:
 /// A trigger that uses a PhysicsShape and its purpose is to collect collision events.
 class PhysicsTrigger : public PhysicsFilteredObject
 {
-	ANKI_PHYSICS_OBJECT(PhysicsObjectType::TRIGGER)
+	ANKI_PHYSICS_OBJECT(PhysicsObjectType::kTrigger)
 
 public:
 	Transform getTransform() const

@@ -29,9 +29,9 @@ public:
 /// Some options that can be used as hints in debug drawcalls.
 enum class RenderQueueDebugDrawFlag : U32
 {
-	DEPTH_TEST_ON,
-	DITHERED_DEPTH_TEST_ON,
-	COUNT
+	kDepthTestOn,
+	kDitheredDepthTestOn,
+	kCount
 };
 
 /// Context that contains variables for drawing and will be passed to RenderQueueDrawCallback.
@@ -44,7 +44,7 @@ public:
 	StagingGpuMemoryPool* m_stagingGpuAllocator ANKI_DEBUG_CODE(= nullptr);
 	StackAllocator<U8> m_frameAllocator;
 	Bool m_debugDraw; ///< If true the drawcall should be drawing some kind of debug mesh.
-	BitSet<U(RenderQueueDebugDrawFlag::COUNT), U32> m_debugDrawFlags = {false};
+	BitSet<U(RenderQueueDebugDrawFlag::kCount), U32> m_debugDrawFlags = {false};
 };
 
 /// Draw callback for drawing.

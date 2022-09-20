@@ -264,7 +264,7 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp, Timestamp l
 
 				updateTileHierarchy(tile);
 
-				return (needsReRendering) ? TileAllocatorResult::ALLOCATION_SUCCEEDED : TileAllocatorResult::CACHED;
+				return (needsReRendering) ? TileAllocatorResult::kAllocationSucceded : TileAllocatorResult::kCached;
 			}
 		}
 	}
@@ -318,7 +318,7 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp, Timestamp l
 	else
 	{
 		// Out of tiles
-		return TileAllocatorResult::ALLOCATION_FAILED;
+		return TileAllocatorResult::kAllocationFailed;
 	}
 
 	// Allocation succedded, need to do some bookkeeping
@@ -344,7 +344,7 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp, Timestamp l
 	tileViewport = {allocatedTile.m_viewport[0], allocatedTile.m_viewport[1], allocatedTile.m_viewport[2],
 					allocatedTile.m_viewport[3]};
 
-	return TileAllocatorResult::ALLOCATION_SUCCEEDED;
+	return TileAllocatorResult::kAllocationSucceded;
 }
 
 void TileAllocator::invalidateCache(U64 lightUuid, U32 lightFace)

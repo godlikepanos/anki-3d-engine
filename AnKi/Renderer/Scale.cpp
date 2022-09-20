@@ -53,34 +53,34 @@ Error Scale::init()
 	{
 		if(dlssQuality > 0 && getGrManager().getDeviceCapabilities().m_dlss)
 		{
-			m_upscalingMethod = UpscalingMethod::GR;
+			m_upscalingMethod = UpscalingMethod::kGr;
 		}
 		else if(fsrQuality > 0)
 		{
-			m_upscalingMethod = UpscalingMethod::FSR;
+			m_upscalingMethod = UpscalingMethod::kFsr;
 		}
 		else
 		{
-			m_upscalingMethod = UpscalingMethod::BILINEAR;
+			m_upscalingMethod = UpscalingMethod::kBilinear;
 		}
 	}
 	else
 	{
-		m_upscalingMethod = UpscalingMethod::NONE;
+		m_upscalingMethod = UpscalingMethod::kNone;
 	}
 
-	m_sharpenMethod = (needsSharpening) ? SharpenMethod::RCAS : SharpenMethod::NONE;
-	m_neeedsTonemapping = (m_upscalingMethod == UpscalingMethod::GR); // Because GR upscaling spits HDR
+	m_sharpenMethod = (needsSharpening) ? SharpenMethod::kRcas : SharpenMethod::kNone;
+	m_neeedsTonemapping = (m_upscalingMethod == UpscalingMethod::kGr); // Because GR upscaling spits HDR
 
-	static constexpr Array<const Char*, U32(UpscalingMethod::COUNT)> upscalingMethodNames = {"none", "bilinear",
-																							 "FSR 1.0", "DLSS 2"};
-	static constexpr Array<const Char*, U32(SharpenMethod::COUNT)> sharpenMethodNames = {"none", "RCAS"};
+	static constexpr Array<const Char*, U32(UpscalingMethod::kCount)> upscalingMethodNames = {"none", "bilinear",
+																							  "FSR 1.0", "DLSS 2"};
+	static constexpr Array<const Char*, U32(SharpenMethod::kCount)> sharpenMethodNames = {"none", "RCAS"};
 
 	ANKI_R_LOGV("Initializing upscaling. Upscaling method %s, sharpenning method %s",
 				upscalingMethodNames[U32(m_upscalingMethod)], sharpenMethodNames[U32(m_sharpenMethod)]);
 
 	// Scale programs
-	if(m_upscalingMethod == UpscalingMethod::BILINEAR)
+	if(m_upscalingMethod == UpscalingMethod::kBilinear)
 	{
 		const CString shaderFname =
 			(preferCompute) ? "ShaderBinaries/BlitCompute.ankiprogbin" : "ShaderBinaries/BlitRaster.ankiprogbin";
@@ -91,7 +91,7 @@ Error Scale::init()
 		m_scaleProg->getOrCreateVariant(variant);
 		m_scaleGrProg = variant->getProgram();
 	}
-	else if(m_upscalingMethod == UpscalingMethod::FSR)
+	else if(m_upscalingMethod == UpscalingMethod::kFsr)
 	{
 		const CString shaderFname =
 			(preferCompute) ? "ShaderBinaries/FsrCompute.ankiprogbin" : "ShaderBinaries/FsrRaster.ankiprogbin";
@@ -105,7 +105,7 @@ Error Scale::init()
 		m_scaleProg->getOrCreateVariant(variantInitInfo, variant);
 		m_scaleGrProg = variant->getProgram();
 	}
-	else if(m_upscalingMethod == UpscalingMethod::GR)
+	else if(m_upscalingMethod == UpscalingMethod::kGr)
 	{
 		GrUpscalerInitInfo inf;
 		inf.m_sourceTextureResolution = m_r->getInternalResolution();
@@ -117,7 +117,7 @@ Error Scale::init()
 	}
 
 	// Sharpen programs
-	if(m_sharpenMethod == SharpenMethod::RCAS)
+	if(m_sharpenMethod == SharpenMethod::kRcas)
 	{
 		ANKI_CHECK(getResourceManager().loadResource((preferCompute) ? "ShaderBinaries/FsrCompute.ankiprogbin"
 																	 : "ShaderBinaries/FsrRaster.ankiprogbin",
@@ -143,7 +143,7 @@ Error Scale::init()
 
 	// Descriptors
 	Format format;
-	if(m_upscalingMethod == UpscalingMethod::GR)
+	if(m_upscalingMethod == UpscalingMethod::kGr)
 	{
 		format = m_r->getHdrFormat();
 	}
@@ -178,7 +178,7 @@ Error Scale::init()
 
 void Scale::populateRenderGraph(RenderingContext& ctx)
 {
-	if(m_upscalingMethod == UpscalingMethod::NONE && m_sharpenMethod == SharpenMethod::NONE)
+	if(m_upscalingMethod == UpscalingMethod::kNone && m_sharpenMethod == SharpenMethod::kNone)
 	{
 		m_runCtx.m_upscaledTonemappedRt = m_r->getTemporalAA().getTonemappedRt();
 		m_runCtx.m_upscaledHdrRt = m_r->getTemporalAA().getHdrRt();
@@ -191,7 +191,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 	const Bool preferCompute = getConfig().getRPreferCompute();
 
 	// Step 1: Upscaling
-	if(m_upscalingMethod == UpscalingMethod::GR)
+	if(m_upscalingMethod == UpscalingMethod::kGr)
 	{
 		m_runCtx.m_upscaledHdrRt = rgraph.newRenderTarget(m_upscaleAndSharpenRtDescr);
 		m_runCtx.m_upscaledTonemappedRt = {};
@@ -212,7 +212,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 			runGrUpscaling(ctx, rgraphCtx);
 		});
 	}
-	else if(m_upscalingMethod == UpscalingMethod::FSR || m_upscalingMethod == UpscalingMethod::BILINEAR)
+	else if(m_upscalingMethod == UpscalingMethod::kFsr || m_upscalingMethod == UpscalingMethod::kBilinear)
 	{
 		m_runCtx.m_upscaledTonemappedRt = rgraph.newRenderTarget(m_upscaleAndSharpenRtDescr);
 		m_runCtx.m_upscaledHdrRt = {};
@@ -243,7 +243,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 	}
 	else
 	{
-		ANKI_ASSERT(m_upscalingMethod == UpscalingMethod::NONE);
+		ANKI_ASSERT(m_upscalingMethod == UpscalingMethod::kNone);
 		// Pretend that it got scaled
 		m_runCtx.m_upscaledTonemappedRt = m_r->getTemporalAA().getTonemappedRt();
 		m_runCtx.m_upscaledHdrRt = m_r->getTemporalAA().getHdrRt();
@@ -284,7 +284,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 	}
 
 	// Step 3: Sharpenning
-	if(m_sharpenMethod == SharpenMethod::RCAS)
+	if(m_sharpenMethod == SharpenMethod::kRcas)
 	{
 		m_runCtx.m_sharpenedRt = rgraph.newRenderTarget(m_upscaleAndSharpenRtDescr);
 		const RenderTargetHandle inRt = m_runCtx.m_tonemappedRt;
@@ -314,7 +314,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 	}
 	else
 	{
-		ANKI_ASSERT(m_sharpenMethod == SharpenMethod::NONE);
+		ANKI_ASSERT(m_sharpenMethod == SharpenMethod::kNone);
 		// Pretend that it's sharpened
 		m_runCtx.m_sharpenedRt = m_runCtx.m_tonemappedRt;
 	}
@@ -337,7 +337,7 @@ void Scale::runFsrOrBilinearScaling(RenderPassWorkContext& rgraphCtx)
 		rgraphCtx.bindImage(0, 2, outRt);
 	}
 
-	if(m_upscalingMethod == UpscalingMethod::FSR)
+	if(m_upscalingMethod == UpscalingMethod::kFsr)
 	{
 		class
 		{

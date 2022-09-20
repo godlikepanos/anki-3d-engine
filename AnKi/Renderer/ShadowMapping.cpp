@@ -413,7 +413,7 @@ TileAllocatorResult ShadowMapping::allocateTilesAndScratchTiles(U64 lightUuid, U
 	ANKI_ASSERT(drawcallsCount);
 	ANKI_ASSERT(lods);
 
-	TileAllocatorResult res = TileAllocatorResult::ALLOCATION_FAILED;
+	TileAllocatorResult res = TileAllocatorResult::kAllocationFailed;
 
 	// Allocate atlas tiles first. They may be cached and that will affect how many scratch tiles we'll need
 	for(U i = 0; i < faceCount; ++i)
@@ -422,7 +422,7 @@ TileAllocatorResult ShadowMapping::allocateTilesAndScratchTiles(U64 lightUuid, U
 		res = m_atlas.m_tileAlloc.allocate(m_r->getGlobalTimestamp(), faceTimestamps[i], lightUuid, faceIndices[i],
 										   drawcallsCount[i], lods[i], tileRanges);
 
-		if(res == TileAllocatorResult::ALLOCATION_FAILED)
+		if(res == TileAllocatorResult::kAllocationFailed)
 		{
 			ANKI_R_LOGW("There is not enough space in the shadow atlas for more shadow maps. "
 						"Increase the RShadowMappingTileCountPerRowOrColumn or decrease the scene's shadow casters");
@@ -445,18 +445,18 @@ TileAllocatorResult ShadowMapping::allocateTilesAndScratchTiles(U64 lightUuid, U
 	// Allocate scratch tiles
 	for(U i = 0; i < faceCount; ++i)
 	{
-		if(subResults[i] == TileAllocatorResult::CACHED)
+		if(subResults[i] == TileAllocatorResult::kCached)
 		{
 			continue;
 		}
 
-		ANKI_ASSERT(subResults[i] == TileAllocatorResult::ALLOCATION_SUCCEEDED);
+		ANKI_ASSERT(subResults[i] == TileAllocatorResult::kAllocationSucceded);
 
 		Array<U32, 4> tileRanges;
 		res = m_scratch.m_tileAlloc.allocate(m_r->getGlobalTimestamp(), faceTimestamps[i], lightUuid, faceIndices[i],
 											 drawcallsCount[i], lods[i], tileRanges);
 
-		if(res == TileAllocatorResult::ALLOCATION_FAILED)
+		if(res == TileAllocatorResult::kAllocationFailed)
 		{
 			ANKI_R_LOGW("Don't have enough space in the scratch shadow mapping buffer. "
 						"If you see this message too often increase RShadowMappingScratchTileCountX/Y");
@@ -508,12 +508,12 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 		static Bool firstRun = true;
 		if(firstRun)
 		{
-			ANKI_ASSERT(res == TileAllocatorResult::ALLOCATION_SUCCEEDED);
+			ANKI_ASSERT(res == TileAllocatorResult::kAllocationSucceded);
 			firstRun = false;
 		}
 		else
 		{
-			ANKI_ASSERT(res == TileAllocatorResult::CACHED);
+			ANKI_ASSERT(res == TileAllocatorResult::kCached);
 		}
 #endif
 	}
@@ -560,7 +560,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 			|| allocateTilesAndScratchTiles(light.m_uuid, activeCascades, &timestamps[0], &cascadeIndices[0],
 											&drawcallCounts[0], &lods[0], &atlasViewports[0], &scratchViewports[0],
 											&subResults[0])
-				   == TileAllocatorResult::ALLOCATION_FAILED;
+				   == TileAllocatorResult::kAllocationFailed;
 
 		if(!allocationFailed)
 		{
@@ -647,7 +647,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 			|| allocateTilesAndScratchTiles(light.m_uuid, numOfFacesThatHaveDrawcalls, &timestamps[0], &faceIndices[0],
 											&drawcallCounts[0], &lods[0], &atlasViewports[0], &scratchViewports[0],
 											&subResults[0])
-				   == TileAllocatorResult::ALLOCATION_FAILED;
+				   == TileAllocatorResult::kAllocationFailed;
 
 		if(!allocationFailed)
 		{
@@ -673,7 +673,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 					light.m_shadowAtlasTileOffsets[face].x() = (F32(atlasViewport[0]) + 0.5f) / atlasResolution;
 					light.m_shadowAtlasTileOffsets[face].y() = (F32(atlasViewport[1]) + 0.5f) / atlasResolution;
 
-					if(subResults[numOfFacesThatHaveDrawcalls] != TileAllocatorResult::CACHED)
+					if(subResults[numOfFacesThatHaveDrawcalls] != TileAllocatorResult::kCached)
 					{
 						newScratchAndAtlasResloveRenderWorkItems(
 							atlasViewport, scratchViewport, blurAtlas, light.m_shadowRenderQueues[face],
@@ -712,7 +712,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 
 		// Allocate tiles
 		U32 faceIdx = 0;
-		TileAllocatorResult subResult = TileAllocatorResult::ALLOCATION_FAILED;
+		TileAllocatorResult subResult = TileAllocatorResult::kAllocationFailed;
 		UVec4 atlasViewport;
 		UVec4 scratchViewport;
 		const U32 localDrawcallCount = light.m_shadowRenderQueue->m_renderables.getSize();
@@ -726,7 +726,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 			|| allocateTilesAndScratchTiles(
 				   light.m_uuid, 1, &light.m_shadowRenderQueue->m_shadowRenderablesLastUpdateTimestamp, &faceIdx,
 				   &localDrawcallCount, &lod, &atlasViewport, &scratchViewport, &subResult)
-				   == TileAllocatorResult::ALLOCATION_FAILED;
+				   == TileAllocatorResult::kAllocationFailed;
 
 		if(!allocationFailed)
 		{
@@ -735,7 +735,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 			// Update the texture matrix to point to the correct region in the atlas
 			light.m_textureMatrix = createSpotLightTextureMatrix(atlasViewport) * light.m_textureMatrix;
 
-			if(subResult != TileAllocatorResult::CACHED)
+			if(subResult != TileAllocatorResult::kCached)
 			{
 				newScratchAndAtlasResloveRenderWorkItems(atlasViewport, scratchViewport, blurAtlas,
 														 light.m_shadowRenderQueue, renderQueueElementsLod,

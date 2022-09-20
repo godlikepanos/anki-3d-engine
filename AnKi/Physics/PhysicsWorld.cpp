@@ -60,8 +60,8 @@ public:
 		}
 
 		// Reject if they are both static
-		if(ANKI_UNLIKELY(fobj0->getMaterialGroup() == PhysicsMaterialBit::STATIC_GEOMETRY
-						 && fobj1->getMaterialGroup() == PhysicsMaterialBit::STATIC_GEOMETRY))
+		if(ANKI_UNLIKELY(fobj0->getMaterialGroup() == PhysicsMaterialBit::kStaticGeometry
+						 && fobj1->getMaterialGroup() == PhysicsMaterialBit::kStaticGeometry))
 		{
 			return false;
 		}
@@ -243,7 +243,7 @@ void PhysicsWorld::update(Second dt)
 	}
 
 	// Update the player controllers
-	for(PhysicsObject& obj : m_objectLists[PhysicsObjectType::PLAYER_CONTROLLER])
+	for(PhysicsObject& obj : m_objectLists[PhysicsObjectType::kPlayerController])
 	{
 		PhysicsPlayerController& playerController = static_cast<PhysicsPlayerController&>(obj);
 		playerController.moveToPositionForReal();
@@ -253,7 +253,7 @@ void PhysicsWorld::update(Second dt)
 	m_world->stepSimulation(F32(dt), 1, 1.0f / 60.0f);
 
 	// Process trigger contacts
-	for(PhysicsObject& trigger : m_objectLists[PhysicsObjectType::TRIGGER])
+	for(PhysicsObject& trigger : m_objectLists[PhysicsObjectType::kTrigger])
 	{
 		static_cast<PhysicsTrigger&>(trigger).processContacts();
 	}

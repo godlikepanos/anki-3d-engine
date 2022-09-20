@@ -135,8 +135,8 @@ public:
 		m_body = node->getSceneGraph().getPhysicsWorld().newInstance<PhysicsBody>(init);
 		m_body->setUserData(component);
 		m_body->activate(false);
-		m_body->setMaterialGroup(PhysicsMaterialBit::PARTICLE);
-		m_body->setMaterialMask(PhysicsMaterialBit::STATIC_GEOMETRY);
+		m_body->setMaterialGroup(PhysicsMaterialBit::kParticle);
+		m_body->setMaterialMask(PhysicsMaterialBit::kStaticGeometry);
 		m_body->setAngularFactor(Vec3(0.0f));
 	}
 
@@ -430,7 +430,7 @@ void ParticleEmitterComponent::draw(RenderQueueDrawContext& ctx) const
 
 		const Mat4 mvp = ctx.m_viewProjectionMatrix * Mat4(tsl.xyz1(), Mat3::getIdentity() * nonUniScale, 1.0f);
 
-		const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);
+		const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDepthTestOn);
 		if(enableDepthTest)
 		{
 			cmdb->setDepthCompareOperation(CompareOperation::kLess);
@@ -442,13 +442,13 @@ void ParticleEmitterComponent::draw(RenderQueueDrawContext& ctx) const
 
 		m_node->getSceneGraph().getDebugDrawer().drawCubes(
 			ConstWeakArray<Mat4>(&mvp, 1), Vec4(1.0f, 0.0f, 1.0f, 1.0f), 2.0f,
-			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), 2.0f,
-			*ctx.m_stagingGpuAllocator, cmdb);
+			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), 2.0f, *ctx.m_stagingGpuAllocator,
+			cmdb);
 
 		const Vec3 pos = m_transform.getOrigin().xyz();
 		m_node->getSceneGraph().getDebugDrawer().drawBillboardTextures(
 			ctx.m_projectionMatrix, ctx.m_viewMatrix, ConstWeakArray<Vec3>(&pos, 1), Vec4(1.0f),
-			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), m_dbgImage->getTextureView(),
+			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), m_dbgImage->getTextureView(),
 			ctx.m_sampler, Vec2(0.75f), *ctx.m_stagingGpuAllocator, ctx.m_commandBuffer);
 
 		// Restore state

@@ -123,7 +123,7 @@ Error MyApp::sampleExtraInit()
 		ANKI_CHECK(getSceneGraph().newSceneNode("player", player));
 		PlayerControllerComponent& pcomp = player->getFirstComponentOfType<PlayerControllerComponent>();
 		pcomp.moveToPosition(Vec3(0.0f, 2.5f, 0.0f));
-		pcomp.getPhysicsPlayerController()->setMaterialMask(PhysicsMaterialBit::STATIC_GEOMETRY);
+		pcomp.getPhysicsPlayerController()->setMaterialMask(PhysicsMaterialBit::kStaticGeometry);
 
 		player->addChild(&cam);
 	}
@@ -325,7 +325,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 		Vec3 from = camTrf.getOrigin().xyz();
 		Vec3 to = from + -camTrf.getRotation().getZAxis() * 100.0f;
 
-		RayCast ray(from, to, PhysicsMaterialBit::ALL & (~PhysicsMaterialBit::PARTICLE));
+		RayCast ray(from, to, PhysicsMaterialBit::kAll & (~PhysicsMaterialBit::kParticle));
 		ray.m_firstHit = true;
 
 		getPhysicsWorld().rayCast(ray);

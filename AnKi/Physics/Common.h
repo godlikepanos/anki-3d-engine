@@ -79,14 +79,14 @@ using PhysicsTriggerPtr = PhysicsPtr<PhysicsTrigger>;
 /// Material types.
 enum class PhysicsMaterialBit : U64
 {
-	NONE = 0,
-	STATIC_GEOMETRY = 1 << 0,
-	DYNAMIC_GEOMETRY = 1 << 1,
-	TRIGGER = 1 << 2,
-	PLAYER = 1 << 3,
-	PARTICLE = 1 << 4,
+	kNone = 0,
+	kStaticGeometry = 1 << 0,
+	kDynamicGeometry = 1 << 1,
+	kTrigger = 1 << 2,
+	kPlayer = 1 << 3,
+	kParticle = 1 << 4,
 
-	ALL = kMaxU64
+	kAll = kMaxU64
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(PhysicsMaterialBit)
 

@@ -224,7 +224,7 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 
 void LightComponent::draw(RenderQueueDrawContext& ctx) const
 {
-	const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);
+	const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDepthTestOn);
 	if(enableDepthTest)
 	{
 		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::kLess);
@@ -240,7 +240,7 @@ void LightComponent::draw(RenderQueueDrawContext& ctx) const
 	ImageResourcePtr imageResource = (m_type == LightComponentType::POINT) ? m_pointDebugImage : m_spotDebugImage;
 	m_node->getSceneGraph().getDebugDrawer().drawBillboardTexture(
 		ctx.m_projectionMatrix, ctx.m_viewMatrix, m_worldtransform.getOrigin().xyz(), color.xyz1(),
-		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), imageResource->getTextureView(),
+		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), imageResource->getTextureView(),
 		ctx.m_sampler, Vec2(0.75f), *ctx.m_stagingGpuAllocator, ctx.m_commandBuffer);
 
 	// Restore state
