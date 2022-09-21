@@ -116,7 +116,7 @@ GlobalIlluminationProbeNode::GlobalIlluminationProbeNode(SceneGraph* scene, CStr
 		const F32 tempEffectiveDistance = 1.0f;
 		frc->setPerspective(zNear, tempEffectiveDistance, ang, ang);
 		frc->setWorldTransform(m_cubeFaceTransforms[i]);
-		frc->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
+		frc->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::kNone);
 		frc->setEffectiveShadowDistance(getConfig().getSceneReflectionProbeShadowEffectiveDistance());
 		frc->setShadowCascadeCount(1);
 	}
@@ -181,11 +181,11 @@ Error GlobalIlluminationProbeNode::frameUpdate([[maybe_unused]] Second prevUpdat
 	// Check the reflection probe component and if it's marked for rendering enable the frustum components
 	const GlobalIlluminationProbeComponent& gic = getFirstComponentOfType<GlobalIlluminationProbeComponent>();
 
-	constexpr FrustumComponentVisibilityTestFlag frustumTestFlags =
-		FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS | FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS;
+	constexpr FrustumComponentVisibilityTestFlag kFrustumFlags =
+		FrustumComponentVisibilityTestFlag::kRenderComponents | FrustumComponentVisibilityTestFlag::kLights;
 
 	const FrustumComponentVisibilityTestFlag testFlags =
-		(gic.getMarkedForRendering()) ? frustumTestFlags : FrustumComponentVisibilityTestFlag::NONE;
+		(gic.getMarkedForRendering()) ? kFrustumFlags : FrustumComponentVisibilityTestFlag::kNone;
 
 	iterateComponentsOfType<FrustumComponent>([testFlags](FrustumComponent& frc) {
 		frc.setEnabledVisibilityTests(testFlags);

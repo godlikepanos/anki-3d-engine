@@ -106,7 +106,7 @@ ReflectionProbeNode::ReflectionProbeNode(SceneGraph* scene, CString name)
 		frc->setFrustumType(FrustumType::kPerspective);
 		frc->setPerspective(CLUSTER_OBJECT_FRUSTUM_NEAR_PLANE, 10.0f, ang, ang);
 		frc->setWorldTransform(m_frustumTransforms[i]);
-		frc->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
+		frc->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::kNone);
 		frc->setEffectiveShadowDistance(getConfig().getSceneReflectionProbeShadowEffectiveDistance());
 		frc->setShadowCascadeCount(1);
 	}
@@ -172,10 +172,10 @@ Error ReflectionProbeNode::frameUpdate([[maybe_unused]] Second prevUpdateTime, [
 	const ReflectionProbeComponent& reflc = getFirstComponentOfType<ReflectionProbeComponent>();
 
 	constexpr FrustumComponentVisibilityTestFlag frustumTestFlags =
-		FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS | FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS;
+		FrustumComponentVisibilityTestFlag::kRenderComponents | FrustumComponentVisibilityTestFlag::kLights;
 
 	const FrustumComponentVisibilityTestFlag testFlags =
-		reflc.getMarkedForRendering() ? frustumTestFlags : FrustumComponentVisibilityTestFlag::NONE;
+		reflc.getMarkedForRendering() ? frustumTestFlags : FrustumComponentVisibilityTestFlag::kNone;
 
 	iterateComponentsOfType<FrustumComponent>([testFlags](FrustumComponent& frc) {
 		frc.setEnabledVisibilityTests(testFlags);

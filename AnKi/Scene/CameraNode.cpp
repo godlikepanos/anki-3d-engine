@@ -60,17 +60,8 @@ void CameraNode::initCommon(FrustumType frustumType)
 	// Frustum component
 	FrustumComponent* frc = newComponent<FrustumComponent>();
 	frc->setFrustumType(frustumType);
-	const FrustumComponentVisibilityTestFlag visibilityFlags =
-		FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS | FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS
-		| FrustumComponentVisibilityTestFlag::LENS_FLARE_COMPONENTS
-		| FrustumComponentVisibilityTestFlag::REFLECTION_PROBES | FrustumComponentVisibilityTestFlag::REFLECTION_PROXIES
-		| FrustumComponentVisibilityTestFlag::OCCLUDERS | FrustumComponentVisibilityTestFlag::DECALS
-		| FrustumComponentVisibilityTestFlag::FOG_DENSITY_COMPONENTS
-		| FrustumComponentVisibilityTestFlag::GLOBAL_ILLUMINATION_PROBES | FrustumComponentVisibilityTestFlag::EARLY_Z
-		| FrustumComponentVisibilityTestFlag::ALL_SHADOWS_ENABLED
-		| FrustumComponentVisibilityTestFlag::GENERIC_COMPUTE_JOB_COMPONENTS
-		| FrustumComponentVisibilityTestFlag::UI_COMPONENTS | FrustumComponentVisibilityTestFlag::SKYBOX;
-	frc->setEnabledVisibilityTests(visibilityFlags);
+	frc->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::kAll
+								   ^ FrustumComponentVisibilityTestFlag::kAllRayTracing);
 	frc->setLodDistance(0, getConfig().getLod0MaxDistance());
 	frc->setLodDistance(1, getConfig().getLod1MaxDistance());
 	frc->setShadowCascadeCount(getConfig().getSceneShadowCascadeCount());
@@ -81,7 +72,7 @@ void CameraNode::initCommon(FrustumType frustumType)
 	{
 		FrustumComponent* rtFrustumComponent = newComponent<FrustumComponent>();
 		rtFrustumComponent->setFrustumType(FrustumType::kOrthographic);
-		rtFrustumComponent->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::RAY_TRACING_SHADOWS);
+		rtFrustumComponent->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::kRayTracingShadows);
 
 		const F32 dist = getConfig().getSceneRayTracingExtendedFrustumDistance();
 

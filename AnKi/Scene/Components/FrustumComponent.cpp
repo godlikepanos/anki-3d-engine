@@ -155,15 +155,15 @@ void FrustumComponent::fillCoverageBufferCallback(void* userData, F32* depthValu
 
 void FrustumComponent::setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag bits)
 {
-	m_flags = FrustumComponentVisibilityTestFlag::NONE;
+	m_flags = FrustumComponentVisibilityTestFlag::kNone;
 	m_flags |= bits;
 
 #if ANKI_ENABLE_ASSERTIONS
-	if(!!(m_flags & FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS)
-	   || !!(m_flags & FrustumComponentVisibilityTestFlag::SHADOW_CASTERS))
+	if(!!(m_flags & FrustumComponentVisibilityTestFlag::kRenderComponents)
+	   || !!(m_flags & FrustumComponentVisibilityTestFlag::kShadowCasterRenderComponents))
 	{
-		if((m_flags & FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS)
-		   == (m_flags & FrustumComponentVisibilityTestFlag::SHADOW_CASTERS))
+		if((m_flags & FrustumComponentVisibilityTestFlag::kRenderComponents)
+		   == (m_flags & FrustumComponentVisibilityTestFlag::kShadowCasterRenderComponents))
 		{
 			ANKI_ASSERT(0 && "Cannot have them both");
 		}

@@ -87,11 +87,11 @@ void LightNode::frameUpdateCommon()
 	iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) {
 		if(castsShadow)
 		{
-			frc.setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::SHADOW_CASTERS);
+			frc.setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::kShadowCasterRenderComponents);
 		}
 		else
 		{
-			frc.setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
+			frc.setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::kNone);
 		}
 	});
 }
@@ -241,7 +241,7 @@ SpotLightNode::SpotLightNode(SceneGraph* scene, CString name)
 
 	FrustumComponent* fr = newComponent<FrustumComponent>();
 	fr->setFrustumType(FrustumType::kPerspective);
-	fr->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
+	fr->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::kNone);
 
 	newComponent<OnFrustumUpdatedFeedbackComponent>();
 

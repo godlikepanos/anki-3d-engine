@@ -86,7 +86,7 @@ void VisibilityContext::submitNewWork(const FrustumComponent& frc, const Frustum
 	ANKI_TRACE_SCOPED_EVENT(SCENE_VIS_SUBMIT_WORK);
 
 	// Check enabled and make sure that the results are null (this can happen on multiple on circular viewing)
-	if(ANKI_UNLIKELY(frc.getEnabledVisibilityTests() == FrustumComponentVisibilityTestFlag::NONE))
+	if(ANKI_UNLIKELY(frc.getEnabledVisibilityTests() == FrustumComponentVisibilityTestFlag::kNone))
 	{
 		return;
 	}
@@ -142,7 +142,7 @@ void VisibilityContext::submitNewWork(const FrustumComponent& frc, const Frustum
 
 	// Software rasterizer task
 	ThreadHiveSemaphore* prepareRasterizerSem = nullptr;
-	if(!!(frc.getEnabledVisibilityTests() & FrustumComponentVisibilityTestFlag::OCCLUDERS) && frc.hasCoverageBuffer())
+	if(!!(frc.getEnabledVisibilityTests() & FrustumComponentVisibilityTestFlag::kOccluders) && frc.hasCoverageBuffer())
 	{
 		// Gather triangles task
 		ThreadHiveTask fillDepthTask =
@@ -154,7 +154,7 @@ void VisibilityContext::submitNewWork(const FrustumComponent& frc, const Frustum
 		prepareRasterizerSem = fillDepthTask.m_signalSemaphore;
 	}
 
-	if(!!(frc.getEnabledVisibilityTests() & FrustumComponentVisibilityTestFlag::OCCLUDERS))
+	if(!!(frc.getEnabledVisibilityTests() & FrustumComponentVisibilityTestFlag::kOccluders))
 	{
 		rqueue.m_fillCoverageBufferCallback = FrustumComponent::fillCoverageBufferCallback;
 		rqueue.m_fillCoverageBufferCallbackUserData = static_cast<void*>(const_cast<FrustumComponent*>(&frc));
@@ -268,8 +268,8 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 	ANKI_TRACE_SCOPED_EVENT(SCENE_VIS_TEST);
 
 	const FrustumComponent& testedFrc = *m_frcCtx->m_frc;
-	const FrustumComponentVisibilityTestFlag enabledVisibilityTests = testedFrc.getEnabledVisibilityTests();
-	ANKI_ASSERT(enabledVisibilityTests != FrustumComponentVisibilityTestFlag::NONE);
+	const FrustumComponentVisibilityTestFlag frustumFlags = testedFrc.getEnabledVisibilityTests();
+	ANKI_ASSERT(frustumFlags != FrustumComponentVisibilityTestFlag::kNone);
 	ANKI_ASSERT(m_frcCtx->m_primaryFrustum);
 	const FrustumComponent& primaryFrc = *m_frcCtx->m_primaryFrustum;
 
@@ -279,8 +279,8 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 	Timestamp& timestamp = m_frcCtx->m_queueViews[taskId].m_timestamp;
 	timestamp = testedNode.getComponentMaxTimestamp();
 
-	const Bool wantsEarlyZ = !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::EARLY_Z)
-							 && m_frcCtx->m_visCtx->m_earlyZDist > 0.0f;
+	const Bool wantsEarlyZ =
+		!!(frustumFlags & FrustumComponentVisibilityTestFlag::kEarlyZ) && m_frcCtx->m_visCtx->m_earlyZDist > 0.0f;
 
 	// Iterate
 	RenderQueueView& result = m_frcCtx->m_queueViews[taskId];
@@ -300,51 +300,45 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		Bool wantNode = false;
 
 		const RenderComponent* rc = nullptr;
-		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS)
-					&& getComponent(node, rc);
+		wantNode |= !!(frustumFlags & FrustumComponentVisibilityTestFlag::kRenderComponents) && getComponent(node, rc);
 
-		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::SHADOW_CASTERS)
+		wantNode |= !!(frustumFlags & FrustumComponentVisibilityTestFlag::kShadowCasterRenderComponents)
 					&& getComponent(node, rc) && !!(rc->getFlags() & RenderComponentFlag::CASTS_SHADOW);
 
 		const RenderComponent* rtRc = nullptr;
-		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::ALL_RAY_TRACING)
-					&& getComponent(node, rtRc) && rtRc->getSupportsRayTracing();
+		wantNode |= !!(frustumFlags & FrustumComponentVisibilityTestFlag::kAllRayTracing) && getComponent(node, rtRc)
+					&& rtRc->getSupportsRayTracing();
 
 		const LightComponent* lc = nullptr;
-		wantNode |=
-			!!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS) && getComponent(node, lc);
+		wantNode |= !!(frustumFlags & FrustumComponentVisibilityTestFlag::kLights) && getComponent(node, lc);
 
 		const LensFlareComponent* lfc = nullptr;
-		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::LENS_FLARE_COMPONENTS)
-					&& getComponent(node, lfc);
+		wantNode |= !!(frustumFlags & FrustumComponentVisibilityTestFlag::kLensFlares) && getComponent(node, lfc);
 
 		const ReflectionProbeComponent* reflc = nullptr;
-		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::REFLECTION_PROBES)
-					&& getComponent(node, reflc);
+		wantNode |=
+			!!(frustumFlags & FrustumComponentVisibilityTestFlag::kReflectionProbes) && getComponent(node, reflc);
 
 		DecalComponent* decalc = nullptr;
-		wantNode |=
-			!!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::DECALS) && getComponent(node, decalc);
+		wantNode |= !!(frustumFlags & FrustumComponentVisibilityTestFlag::kDecals) && getComponent(node, decalc);
 
 		const FogDensityComponent* fogc = nullptr;
-		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::FOG_DENSITY_COMPONENTS)
-					&& getComponent(node, fogc);
+		wantNode |=
+			!!(frustumFlags & FrustumComponentVisibilityTestFlag::kFogDensityVolumes) && getComponent(node, fogc);
 
 		GlobalIlluminationProbeComponent* giprobec = nullptr;
-		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::GLOBAL_ILLUMINATION_PROBES)
+		wantNode |= !!(frustumFlags & FrustumComponentVisibilityTestFlag::kGlobalIlluminationProbes)
 					&& getComponent(node, giprobec);
 
 		GenericGpuComputeJobComponent* computec = nullptr;
-		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::GENERIC_COMPUTE_JOB_COMPONENTS)
-					&& getComponent(node, computec);
+		wantNode |=
+			!!(frustumFlags & FrustumComponentVisibilityTestFlag::kGenericComputeJobs) && getComponent(node, computec);
 
 		UiComponent* uic = nullptr;
-		wantNode |=
-			!!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::UI_COMPONENTS) && getComponent(node, uic);
+		wantNode |= !!(frustumFlags & FrustumComponentVisibilityTestFlag::kUi) && getComponent(node, uic);
 
 		SkyboxComponent* skyboxc = nullptr;
-		wantNode |=
-			!!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::SKYBOX) && getComponent(node, skyboxc);
+		wantNode |= !!(frustumFlags & FrustumComponentVisibilityTestFlag::kSkybox) && getComponent(node, skyboxc);
 
 		if(ANKI_UNLIKELY(!wantNode))
 		{
@@ -430,8 +424,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 				PointLightQueueElement* el = result.m_pointLights.newElement(alloc);
 				lc->setupPointLightQueueElement(*el);
 
-				if(castsShadow
-				   && !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::POINT_LIGHT_SHADOWS_ENABLED))
+				if(castsShadow && !!(frustumFlags & FrustumComponentVisibilityTestFlag::kPointLightShadowsEnabled))
 				{
 					RenderQueue* a = alloc.newArray<RenderQueue>(6);
 					nextQueues = WeakArray<RenderQueue>(a, 6);
@@ -455,8 +448,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 				SpotLightQueueElement* el = result.m_spotLights.newElement(alloc);
 				lc->setupSpotLightQueueElement(*el);
 
-				if(castsShadow
-				   && !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::SPOT_LIGHT_SHADOWS_ENABLED))
+				if(castsShadow && !!(frustumFlags & FrustumComponentVisibilityTestFlag::kSpotLightShadowsEnabled))
 				{
 					RenderQueue* a = alloc.newInstance<RenderQueue>();
 					nextQueues = WeakArray<RenderQueue>(a, 1);
@@ -514,7 +506,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 				for(U32 i = 0; i < cascadeCount; ++i)
 				{
 					cascadeFrustumComponents[i].setEnabledVisibilityTests(
-						FrustumComponentVisibilityTestFlag::SHADOW_CASTERS);
+						FrustumComponentVisibilityTestFlag::kShadowCasterRenderComponents);
 					Bool updated;
 					SceneComponentUpdateInfo scUpdateInfo(0.0, 1.0);
 					scUpdateInfo.m_node = &node;
@@ -695,8 +687,8 @@ void CombineResultsTask::combine()
 
 #undef ANKI_VIS_COMBINE
 
-	const Bool isShadowFrustum =
-		!!(m_frcCtx->m_frc->getEnabledVisibilityTests() & FrustumComponentVisibilityTestFlag::SHADOW_CASTERS);
+	const Bool isShadowFrustum = !!(m_frcCtx->m_frc->getEnabledVisibilityTests()
+									& FrustumComponentVisibilityTestFlag::kShadowCasterRenderComponents);
 
 	// Sort some of the arrays
 	if(!isShadowFrustum)
@@ -856,7 +848,7 @@ void SceneGraph::doVisibilityTests(SceneNode& fsn, SceneGraph& scene, RenderQueu
 	{
 		// This is the frustum for RT.
 		ANKI_ASSERT(
-			!(extendedFrustum->getEnabledVisibilityTests() & ~FrustumComponentVisibilityTestFlag::ALL_RAY_TRACING));
+			!(extendedFrustum->getEnabledVisibilityTests() & ~FrustumComponentVisibilityTestFlag::kAllRayTracing));
 
 		rqueue.m_rayTracingQueue = scene.getFrameAllocator().newInstance<RenderQueue>();
 		ctx.submitNewWork(*extendedFrustum, mainFrustum, *rqueue.m_rayTracingQueue, hive);

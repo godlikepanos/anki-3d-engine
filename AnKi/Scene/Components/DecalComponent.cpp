@@ -36,14 +36,13 @@ Error DecalComponent::setLayer(CString texAtlasFname, CString texAtlasSubtexName
 	ANKI_CHECK(l.m_atlas->getSubImageInfo(texAtlasSubtexName, &l.m_uv[0]));
 
 	// Add a border to the UVs to avoid complex shader logic
-	if(l.m_atlas->getSubImageMargin() < ATLAS_SUB_IMAGE_MARGIN)
+	if(l.m_atlas->getSubImageMargin() < kAtlasSubImageMargin)
 	{
-		ANKI_SCENE_LOGE("Need image atlas with margin at least %u", ATLAS_SUB_IMAGE_MARGIN);
+		ANKI_SCENE_LOGE("Need image atlas with margin at least %u", kAtlasSubImageMargin);
 		return Error::kUserData;
 	}
 
-	const Vec2 marginf =
-		F32(ATLAS_SUB_IMAGE_MARGIN / 2) / Vec2(F32(l.m_atlas->getWidth()), F32(l.m_atlas->getHeight()));
+	const Vec2 marginf = F32(kAtlasSubImageMargin / 2) / Vec2(F32(l.m_atlas->getWidth()), F32(l.m_atlas->getHeight()));
 	const Vec2 minUv = l.m_uv.xy() - marginf;
 	const Vec2 sizeUv = (l.m_uv.zw() - l.m_uv.xy()) + 2.0f * marginf;
 	l.m_uv = Vec4(minUv.x(), minUv.y(), minUv.x() + sizeUv.x(), minUv.y() + sizeUv.y());
