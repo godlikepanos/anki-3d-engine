@@ -18,10 +18,10 @@ Error LightEvent::init(Second startTime, Second duration, SceneNode* light)
 
 	switch(lightc.getLightComponentType())
 	{
-	case LightComponentType::POINT:
+	case LightComponentType::kPoint:
 		m_originalRadius = lightc.getRadius();
 		break;
-	case LightComponentType::SPOT:
+	case LightComponentType::kSpot:
 		ANKI_ASSERT("TODO");
 		break;
 	default:
@@ -46,10 +46,10 @@ Error LightEvent::update([[maybe_unused]] Second prevUpdateTime, Second crntTime
 	{
 		switch(lightc.getLightComponentType())
 		{
-		case LightComponentType::POINT:
+		case LightComponentType::kPoint:
 			lightc.setRadius(m_originalRadius + factor * m_radiusMultiplier);
 			break;
-		case LightComponentType::SPOT:
+		case LightComponentType::kSpot:
 			ANKI_ASSERT("TODO");
 			break;
 		default:

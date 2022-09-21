@@ -174,26 +174,27 @@ private:
 #endif
 	};
 
-	/// P: Stands for positive and N: Negative
+	/// Pos: Stands for positive and Neg: Negative
 	enum class LeafMask : U8
 	{
-		PX_PY_PZ = 1 << 0,
-		PX_PY_NZ = 1 << 1,
-		PX_NY_PZ = 1 << 2,
-		PX_NY_NZ = 1 << 3,
-		NX_PY_PZ = 1 << 4,
-		NX_PY_NZ = 1 << 5,
-		NX_NY_PZ = 1 << 6,
-		NX_NY_NZ = 1 << 7,
+		kPosXPosYPosZ = 1 << 0,
+		kPosXPosYNegZ = 1 << 1,
+		kPosXNegYPosZ = 1 << 2,
+		kPosXNegYNegZ = 1 << 3,
+		kNegXPosYPosZ = 1 << 4,
+		kNegXPosYNegZ = 1 << 5,
+		kNegXNegYPosZ = 1 << 6,
+		kNegXNegYNegZ = 1 << 7,
 
-		NONE = 0,
-		ALL = PX_PY_PZ | PX_PY_NZ | PX_NY_PZ | PX_NY_NZ | NX_PY_PZ | NX_PY_NZ | NX_NY_PZ | NX_NY_NZ,
-		RIGHT = PX_PY_PZ | PX_PY_NZ | PX_NY_PZ | PX_NY_NZ,
-		LEFT = NX_PY_PZ | NX_PY_NZ | NX_NY_PZ | NX_NY_NZ,
-		TOP = PX_PY_PZ | PX_PY_NZ | NX_PY_PZ | NX_PY_NZ,
-		BOTTOM = PX_NY_PZ | PX_NY_NZ | NX_NY_PZ | NX_NY_NZ,
-		FRONT = PX_PY_PZ | PX_NY_PZ | NX_PY_PZ | NX_NY_PZ,
-		BACK = PX_PY_NZ | PX_NY_NZ | NX_PY_NZ | NX_NY_NZ,
+		kNone = 0,
+		kAll = kPosXPosYPosZ | kPosXPosYNegZ | kPosXNegYPosZ | kPosXNegYNegZ | kNegXPosYPosZ | kNegXPosYNegZ
+			   | kNegXNegYPosZ | kNegXNegYNegZ,
+		kRight = kPosXPosYPosZ | kPosXPosYNegZ | kPosXNegYPosZ | kPosXNegYNegZ,
+		kLeft = kNegXPosYPosZ | kNegXPosYNegZ | kNegXNegYPosZ | kNegXNegYNegZ,
+		kTop = kPosXPosYPosZ | kPosXPosYNegZ | kNegXPosYPosZ | kNegXPosYNegZ,
+		kBottom = kPosXNegYPosZ | kPosXNegYNegZ | kNegXNegYPosZ | kNegXNegYNegZ,
+		kFront = kPosXPosYPosZ | kPosXNegYPosZ | kNegXPosYPosZ | kNegXNegYPosZ,
+		kBack = kPosXPosYNegZ | kPosXNegYNegZ | kNegXPosYNegZ | kNegXNegYNegZ,
 	};
 	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS_FRIEND(LeafMask)
 

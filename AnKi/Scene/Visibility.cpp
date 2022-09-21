@@ -303,7 +303,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		wantNode |= !!(frustumFlags & FrustumComponentVisibilityTestFlag::kRenderComponents) && getComponent(node, rc);
 
 		wantNode |= !!(frustumFlags & FrustumComponentVisibilityTestFlag::kShadowCasterRenderComponents)
-					&& getComponent(node, rc) && !!(rc->getFlags() & RenderComponentFlag::CASTS_SHADOW);
+					&& getComponent(node, rc) && !!(rc->getFlags() & RenderComponentFlag::kCastsShadow);
 
 		const RenderComponent* rtRc = nullptr;
 		wantNode |= !!(frustumFlags & FrustumComponentVisibilityTestFlag::kAllRayTracing) && getComponent(node, rtRc)
@@ -363,7 +363,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 		node.iterateComponentsOfType<RenderComponent>([&](const RenderComponent& rc) {
 			RenderableQueueElement* el;
-			if(!!(rc.getFlags() & RenderComponentFlag::FORWARD_SHADING))
+			if(!!(rc.getFlags() & RenderComponentFlag::kForwardShading))
 			{
 				el = result.m_forwardShadingRenderables.newElement(alloc);
 			}
@@ -376,7 +376,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 			// Compute distance from the frustum
 			const Plane& nearPlane = primaryFrc.getViewPlanes()[FrustumPlaneType::kNear];
-			el->m_distanceFromCamera = !!(rc.getFlags() & RenderComponentFlag::SORT_LAST)
+			el->m_distanceFromCamera = !!(rc.getFlags() & RenderComponentFlag::kSortLast)
 										   ? primaryFrc.getFar()
 										   : max(0.0f, testPlane(nearPlane, spatialc->getAabbWorldSpace()));
 
@@ -384,7 +384,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 			// Add to early Z
 			if(wantsEarlyZ && el->m_distanceFromCamera < m_frcCtx->m_visCtx->m_earlyZDist
-			   && !(rc.getFlags() & RenderComponentFlag::FORWARD_SHADING))
+			   && !(rc.getFlags() & RenderComponentFlag::kForwardShading))
 			{
 				RenderableQueueElement* el2 = result.m_earlyZRenderables.newElement(alloc);
 				*el2 = *el;
@@ -406,7 +406,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		{
 			// Check if it casts shadow
 			Bool castsShadow = lc->getShadowEnabled();
-			if(castsShadow && lc->getLightComponentType() != LightComponentType::DIRECTIONAL)
+			if(castsShadow && lc->getLightComponentType() != LightComponentType::kDirectional)
 			{
 				// Extra check
 
@@ -419,7 +419,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 			switch(lc->getLightComponentType())
 			{
-			case LightComponentType::POINT:
+			case LightComponentType::kPoint:
 			{
 				PointLightQueueElement* el = result.m_pointLights.newElement(alloc);
 				lc->setupPointLightQueueElement(*el);
@@ -443,7 +443,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 				break;
 			}
-			case LightComponentType::SPOT:
+			case LightComponentType::kSpot:
 			{
 				SpotLightQueueElement* el = result.m_spotLights.newElement(alloc);
 				lc->setupSpotLightQueueElement(*el);
@@ -461,7 +461,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 				break;
 			}
-			case LightComponentType::DIRECTIONAL:
+			case LightComponentType::kDirectional:
 			{
 				ANKI_ASSERT(lc->getShadowEnabled() == true && "Only with shadow for now");
 

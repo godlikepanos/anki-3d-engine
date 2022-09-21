@@ -99,15 +99,15 @@ Error GpuParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 		BufferInitInfo buffInit("GpuParticlesRand");
 		buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
 		buffInit.m_usage = BufferUsageBit::kAllStorage;
-		buffInit.m_size = sizeof(U32) + MAX_RAND_FACTORS * sizeof(F32);
+		buffInit.m_size = sizeof(U32) + kMaxRandFactors * sizeof(F32);
 		m_randFactorsBuff = m_node->getSceneGraph().getGrManager().newBuffer(buffInit);
 
 		F32* randFactors = static_cast<F32*>(m_randFactorsBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 
-		*reinterpret_cast<U32*>(randFactors) = MAX_RAND_FACTORS;
+		*reinterpret_cast<U32*>(randFactors) = kMaxRandFactors;
 		++randFactors;
 
-		const F32* randFactorsEnd = randFactors + MAX_RAND_FACTORS;
+		const F32* randFactorsEnd = randFactors + kMaxRandFactors;
 		for(; randFactors < randFactorsEnd; ++randFactors)
 		{
 			*randFactors = getRandomRange(0.0f, 1.0f);

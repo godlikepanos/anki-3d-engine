@@ -17,10 +17,10 @@ namespace anki {
 
 enum class RenderComponentFlag : U8
 {
-	NONE = 0,
-	CASTS_SHADOW = 1 << 0,
-	FORWARD_SHADING = 1 << 1,
-	SORT_LAST = 1 << 2, ///< Push it last when sorting the visibles.
+	kNone = 0,
+	kCastsShadow = 1 << 0,
+	kForwardShading = 1 << 1,
+	kSortLast = 1 << 2, ///< Push it last when sorting the visibles.
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RenderComponentFlag)
 
@@ -56,9 +56,9 @@ public:
 	void setFlagsFromMaterial(const MaterialResourcePtr& mtl)
 	{
 		RenderComponentFlag flags = !!(mtl->getRenderingTechniques() & RenderingTechniqueBit::FORWARD)
-										? RenderComponentFlag::FORWARD_SHADING
-										: RenderComponentFlag::NONE;
-		flags |= (mtl->castsShadow()) ? RenderComponentFlag::CASTS_SHADOW : RenderComponentFlag::NONE;
+										? RenderComponentFlag::kForwardShading
+										: RenderComponentFlag::kNone;
+		flags |= (mtl->castsShadow()) ? RenderComponentFlag::kCastsShadow : RenderComponentFlag::kNone;
 		setFlags(flags);
 	}
 
@@ -112,7 +112,7 @@ private:
 	U64 m_mergeKey = kMaxU64;
 	FillRayTracingInstanceQueueElementCallback m_rtCallback = nullptr;
 	const void* m_rtCallbackUserData = nullptr;
-	RenderComponentFlag m_flags = RenderComponentFlag::NONE;
+	RenderComponentFlag m_flags = RenderComponentFlag::kNone;
 };
 /// @}
 

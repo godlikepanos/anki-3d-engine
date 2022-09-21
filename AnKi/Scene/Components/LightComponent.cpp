@@ -21,7 +21,7 @@ LightComponent::LightComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
 	, m_node(node)
 	, m_uuid(node->getSceneGraph().getNewUuid())
-	, m_type(LightComponentType::POINT)
+	, m_type(LightComponentType::kPoint)
 	, m_shadow(false)
 	, m_markedForUpdate(true)
 {
@@ -40,7 +40,7 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	updated = m_markedForUpdate;
 	m_markedForUpdate = false;
 
-	if(updated && m_type == LightComponentType::SPOT)
+	if(updated && m_type == LightComponentType::kSpot)
 	{
 
 		const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
@@ -57,7 +57,7 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	}
 
 	// Update the scene bounds always
-	if(m_type == LightComponentType::DIRECTIONAL)
+	if(m_type == LightComponentType::kDirectional)
 	{
 		info.m_node->getSceneGraph().getOctree().getActualSceneBounds(m_dir.m_sceneMin, m_dir.m_sceneMax);
 	}
@@ -69,7 +69,7 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 													   DirectionalLightQueueElement& el,
 													   WeakArray<FrustumComponent> cascadeFrustumComponents) const
 {
-	ANKI_ASSERT(m_type == LightComponentType::DIRECTIONAL);
+	ANKI_ASSERT(m_type == LightComponentType::kDirectional);
 	ANKI_ASSERT(cascadeFrustumComponents.getSize() <= MAX_SHADOW_CASCADES);
 
 	const U32 shadowCascadeCount = cascadeFrustumComponents.getSize();
@@ -237,7 +237,7 @@ void LightComponent::draw(RenderQueueDrawContext& ctx) const
 	Vec3 color = m_diffColor.xyz();
 	color /= max(max(color.x(), color.y()), color.z());
 
-	ImageResourcePtr imageResource = (m_type == LightComponentType::POINT) ? m_pointDebugImage : m_spotDebugImage;
+	ImageResourcePtr imageResource = (m_type == LightComponentType::kPoint) ? m_pointDebugImage : m_spotDebugImage;
 	m_node->getSceneGraph().getDebugDrawer().drawBillboardTexture(
 		ctx.m_projectionMatrix, ctx.m_viewMatrix, m_worldtransform.getOrigin().xyz(), color.xyz1(),
 		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), imageResource->getTextureView(),

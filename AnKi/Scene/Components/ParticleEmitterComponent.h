@@ -66,12 +66,12 @@ private:
 
 	enum class SimulationType : U8
 	{
-		UNDEFINED,
-		SIMPLE,
-		PHYSICS_ENGINE
+		kUndefined,
+		kSimple,
+		kPhysicsEngine
 	};
 
-	static constexpr U32 VERTEX_SIZE = 5 * sizeof(F32);
+	static constexpr U32 kVertexSize = 5 * sizeof(F32);
 
 	SceneNode* m_node = nullptr;
 
@@ -91,7 +91,7 @@ private:
 
 	ImageResourcePtr m_dbgImage;
 
-	SimulationType m_simulationType = SimulationType::UNDEFINED;
+	SimulationType m_simulationType = SimulationType::kUndefined;
 
 	template<typename TParticle>
 	void simulate(Second prevUpdateTime, Second crntTime, WeakArray<TParticle> particles);

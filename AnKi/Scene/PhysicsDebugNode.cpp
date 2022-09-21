@@ -16,7 +16,7 @@ PhysicsDebugNode::PhysicsDebugNode(SceneGraph* scene, CString name)
 	, m_physDbgDrawer(&scene->getDebugDrawer())
 {
 	RenderComponent* rcomp = newComponent<RenderComponent>();
-	rcomp->setFlags(RenderComponentFlag::NONE);
+	rcomp->setFlags(RenderComponentFlag::kNone);
 	rcomp->initRaster(
 		[](RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) {
 			static_cast<PhysicsDebugNode*>(userData[0])->draw(ctx);

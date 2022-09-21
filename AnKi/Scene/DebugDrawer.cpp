@@ -19,19 +19,19 @@ void allocateAndPopulateDebugBox(StagingGpuMemoryPool& stagingGpuAllocator, Stag
 	Vec3* verts = static_cast<Vec3*>(
 		stagingGpuAllocator.allocateFrame(sizeof(Vec3) * 8, StagingGpuMemoryType::VERTEX, vertsToken));
 
-	const F32 SIZE = 1.0f;
-	verts[0] = Vec3(SIZE, SIZE, SIZE); // front top right
-	verts[1] = Vec3(-SIZE, SIZE, SIZE); // front top left
-	verts[2] = Vec3(-SIZE, -SIZE, SIZE); // front bottom left
-	verts[3] = Vec3(SIZE, -SIZE, SIZE); // front bottom right
-	verts[4] = Vec3(SIZE, SIZE, -SIZE); // back top right
-	verts[5] = Vec3(-SIZE, SIZE, -SIZE); // back top left
-	verts[6] = Vec3(-SIZE, -SIZE, -SIZE); // back bottom left
-	verts[7] = Vec3(SIZE, -SIZE, -SIZE); // back bottom right
+	constexpr F32 kSize = 1.0f;
+	verts[0] = Vec3(kSize, kSize, kSize); // front top right
+	verts[1] = Vec3(-kSize, kSize, kSize); // front top left
+	verts[2] = Vec3(-kSize, -kSize, kSize); // front bottom left
+	verts[3] = Vec3(kSize, -kSize, kSize); // front bottom right
+	verts[4] = Vec3(kSize, kSize, -kSize); // back top right
+	verts[5] = Vec3(-kSize, kSize, -kSize); // back top left
+	verts[6] = Vec3(-kSize, -kSize, -kSize); // back bottom left
+	verts[7] = Vec3(kSize, -kSize, -kSize); // back bottom right
 
-	const U INDEX_COUNT = 12 * 2;
+	constexpr U kIndexCount = 12 * 2;
 	U16* indices = static_cast<U16*>(
-		stagingGpuAllocator.allocateFrame(sizeof(U16) * INDEX_COUNT, StagingGpuMemoryType::VERTEX, indicesToken));
+		stagingGpuAllocator.allocateFrame(sizeof(U16) * kIndexCount, StagingGpuMemoryType::VERTEX, indicesToken));
 
 	U c = 0;
 	indices[c++] = 0;
@@ -61,8 +61,8 @@ void allocateAndPopulateDebugBox(StagingGpuMemoryPool& stagingGpuAllocator, Stag
 	indices[c++] = 3;
 	indices[c++] = 7;
 
-	ANKI_ASSERT(c == INDEX_COUNT);
-	indexCount = INDEX_COUNT;
+	ANKI_ASSERT(c == kIndexCount);
+	indexCount = kIndexCount;
 }
 
 Error DebugDrawer2::init(ResourceManager* rsrcManager)
@@ -93,11 +93,11 @@ Error DebugDrawer2::init(ResourceManager* rsrcManager)
 	}
 
 	{
-		constexpr U INDEX_COUNT = 12 * 2;
+		constexpr U kIndexCount = 12 * 2;
 
 		BufferInitInfo bufferInit("DebugCube");
 		bufferInit.m_usage = BufferUsageBit::kVertex;
-		bufferInit.m_size = sizeof(U16) * INDEX_COUNT;
+		bufferInit.m_size = sizeof(U16) * kIndexCount;
 		bufferInit.m_mapAccess = BufferMapAccessBit::kWrite;
 		m_cubeIndicesBuffer = rsrcManager->getGrManager().newBuffer(bufferInit);
 

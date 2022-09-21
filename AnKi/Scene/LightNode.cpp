@@ -117,7 +117,7 @@ PointLightNode::PointLightNode(SceneGraph* scene, CString name)
 	newComponent<OnMovedFeedbackComponent>();
 
 	LightComponent* lc = newComponent<LightComponent>();
-	lc->setLightComponentType(LightComponentType::POINT);
+	lc->setLightComponentType(LightComponentType::kPoint);
 
 	newComponent<LensFlareComponent>();
 	newComponent<OnLightShapeUpdatedFeedbackComponent>();
@@ -233,7 +233,7 @@ SpotLightNode::SpotLightNode(SceneGraph* scene, CString name)
 	newComponent<OnMovedFeedbackComponent>();
 
 	LightComponent* lc = newComponent<LightComponent>();
-	lc->setLightComponentType(LightComponentType::SPOT);
+	lc->setLightComponentType(LightComponentType::kSpot);
 
 	newComponent<LensFlareComponent>();
 
@@ -314,7 +314,7 @@ DirectionalLightNode::DirectionalLightNode(SceneGraph* scene, CString name)
 	newComponent<FeedbackComponent>();
 
 	LightComponent* lc = newComponent<LightComponent>();
-	lc->setLightComponentType(LightComponentType::DIRECTIONAL);
+	lc->setLightComponentType(LightComponentType::kDirectional);
 
 	SpatialComponent* spatialc = newComponent<SpatialComponent>();
 

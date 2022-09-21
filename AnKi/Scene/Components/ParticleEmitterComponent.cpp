@@ -225,8 +225,8 @@ Error ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	m_physicsParticles.destroy(m_node->getAllocator());
 
 	// Init particles
-	m_simulationType = (m_props.m_usePhysicsEngine) ? SimulationType::PHYSICS_ENGINE : SimulationType::SIMPLE;
-	if(m_simulationType == SimulationType::PHYSICS_ENGINE)
+	m_simulationType = (m_props.m_usePhysicsEngine) ? SimulationType::kPhysicsEngine : SimulationType::kSimple;
+	if(m_simulationType == SimulationType::kPhysicsEngine)
 	{
 		PhysicsCollisionShapePtr collisionShape = m_node->getSceneGraph().getPhysicsWorld().newInstance<PhysicsSphere>(
 			m_props.m_particle.m_minInitialSize / 2.0f);
@@ -246,7 +246,7 @@ Error ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 		m_simpleParticles.create(m_node->getAllocator(), m_props.m_maxNumOfParticles);
 	}
 
-	m_vertBuffSize = m_props.m_maxNumOfParticles * VERTEX_SIZE;
+	m_vertBuffSize = m_props.m_maxNumOfParticles * kVertexSize;
 
 	return Error::kNone;
 }
@@ -261,13 +261,13 @@ Error ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 
 	updated = true;
 
-	if(m_simulationType == SimulationType::SIMPLE)
+	if(m_simulationType == SimulationType::kSimple)
 	{
 		simulate(info.m_previousTime, info.m_currentTime, WeakArray<SimpleParticle>(m_simpleParticles));
 	}
 	else
 	{
-		ANKI_ASSERT(m_simulationType == SimulationType::PHYSICS_ENGINE);
+		ANKI_ASSERT(m_simulationType == SimulationType::kPhysicsEngine);
 		simulate(info.m_previousTime, info.m_currentTime, WeakArray<PhysicsParticle>(m_physicsParticles));
 	}
 
@@ -308,7 +308,7 @@ void ParticleEmitterComponent::simulate(Second prevUpdateTime, Second crntTime, 
 			// It's alive
 
 			// Do checks
-			ANKI_ASSERT((ptrToNumber(verts) + VERTEX_SIZE - ptrToNumber(m_verts)) <= m_vertBuffSize);
+			ANKI_ASSERT((ptrToNumber(verts) + kVertexSize - ptrToNumber(m_verts)) <= m_vertBuffSize);
 
 			// This will calculate a new world transformation
 			particle.simulate(prevUpdateTime, crntTime);
@@ -392,9 +392,9 @@ void ParticleEmitterComponent::draw(RenderQueueDrawContext& ctx) const
 	{
 		// Load verts
 		StagingGpuMemoryToken token;
-		void* gpuStorage = ctx.m_stagingGpuAllocator->allocateFrame(m_aliveParticleCount * VERTEX_SIZE,
+		void* gpuStorage = ctx.m_stagingGpuAllocator->allocateFrame(m_aliveParticleCount * kVertexSize,
 																	StagingGpuMemoryType::VERTEX, token);
-		memcpy(gpuStorage, m_verts, m_aliveParticleCount * VERTEX_SIZE);
+		memcpy(gpuStorage, m_verts, m_aliveParticleCount * kVertexSize);
 
 		// Program
 		ShaderProgramPtr prog;
@@ -407,7 +407,7 @@ void ParticleEmitterComponent::draw(RenderQueueDrawContext& ctx) const
 		cmdb->setVertexAttribute(U32(VertexAttributeId::ALPHA), 0, Format::kR32Sfloat, sizeof(Vec3) + sizeof(F32));
 
 		// Vertex buff
-		cmdb->bindVertexBuffer(0, token.m_buffer, token.m_offset, VERTEX_SIZE, VertexStepRate::kInstance);
+		cmdb->bindVertexBuffer(0, token.m_buffer, token.m_offset, kVertexSize, VertexStepRate::kInstance);
 
 		// Uniforms
 		Array<Mat3x4, 1> trf = {Mat3x4::getIdentity()};

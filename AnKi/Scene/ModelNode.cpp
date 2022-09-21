@@ -299,10 +299,10 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 
 			// Set non uniform scale. Add a margin to avoid flickering
 			Mat3 nonUniScale = Mat3::getZero();
-			constexpr F32 MARGIN = 1.02f;
-			nonUniScale(0, 0) = scale.x() * MARGIN;
-			nonUniScale(1, 1) = scale.y() * MARGIN;
-			nonUniScale(2, 2) = scale.z() * MARGIN;
+			constexpr F32 kMargin = 1.02f;
+			nonUniScale(0, 0) = scale.x() * kMargin;
+			nonUniScale(1, 1) = scale.y() * kMargin;
+			nonUniScale(2, 2) = scale.z() * kMargin;
 
 			mvps[i] = ctx.m_viewProjectionMatrix * Mat4(tsl.xyz1(), Mat3::getIdentity() * nonUniScale, 1.0f);
 		}

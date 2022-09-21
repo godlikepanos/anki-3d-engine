@@ -40,7 +40,7 @@ class SkinComponent : public SceneComponent
 	ANKI_SCENE_COMPONENT(SkinComponent)
 
 public:
-	static constexpr U32 MAX_ANIMATION_TRACKS = 4;
+	static constexpr U32 kMaxAnimationTracks = 4;
 
 	SkinComponent(SceneNode* node);
 
@@ -103,7 +103,7 @@ private:
 	Array<DynamicArray<Mat4>, 2> m_boneTrfs;
 	DynamicArray<Trf> m_animationTrfs;
 	Aabb m_boneBoundingVolume = Aabb(Vec3(-1.0f), Vec3(1.0f));
-	Array<Track, MAX_ANIMATION_TRACKS> m_tracks;
+	Array<Track, kMaxAnimationTracks> m_tracks;
 	Second m_absoluteTime = 0.0;
 	U8 m_crntBoneTrfs = 0;
 	U8 m_prevBoneTrfs = 1;
