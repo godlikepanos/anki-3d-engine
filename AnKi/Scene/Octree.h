@@ -299,20 +299,25 @@ public:
 
 	void reset()
 	{
-		m_visitedMask.setNonAtomically(0);
+		for(Atomic<U64>& mask : m_visitedMasks)
+		{
+			mask.setNonAtomically(0);
+		}
 	}
 
 private:
-	Atomic<U64> m_visitedMask = {0u};
+	static constexpr U32 kMaxTests = 128;
+	Array<Atomic<U64>, kMaxTests / 64> m_visitedMasks = {0u, 0u};
 	IntrusiveList<Octree::LeafNode> m_leafs; ///< A list of leafs this placeable belongs.
 
 	/// Check if already visited.
 	/// @note It's thread-safe.
 	Bool alreadyVisited(U32 testId)
 	{
-		ANKI_ASSERT(testId < 64);
-		const U64 testMask = U64(1u) << U64(testId);
-		const U64 prev = m_visitedMask.fetchOr(testMask);
+		ANKI_ASSERT(testId < kMaxTests);
+		const U32 group = testId / 64;
+		const U64 testMask = U64(1u) << U64(testId % 64);
+		const U64 prev = m_visitedMasks[group].fetchOr(testMask);
 		return !!(testMask & prev);
 	}
 };
