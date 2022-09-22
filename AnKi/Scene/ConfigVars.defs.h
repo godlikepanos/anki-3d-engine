@@ -11,7 +11,7 @@ ANKI_CONFIG_VAR_U8(SceneShadowCascadeCount, (ANKI_OS_ANDROID) ? 2 : MAX_SHADOW_C
 				   "Max number of shadow cascades for directional lights")
 
 ANKI_CONFIG_VAR_U32(SceneOctreeMaxDepth, 5, 2, 10, "The max depth of the octree")
-ANKI_CONFIG_VAR_F32(SceneEarlyZDistance, 10.0f, 0.0f, kMaxF32,
+ANKI_CONFIG_VAR_F32(SceneEarlyZDistance, (ANKI_PLATFORM_MOBILE) ? 0.0f : 10.0f, 0.0f, kMaxF32,
 					"Objects with distance lower than that will be used in early Z")
 
 ANKI_CONFIG_VAR_F32(SceneReflectionProbeEffectiveDistance, 256.0f, 1.0f, kMaxF32, "How far reflection probes can look")
