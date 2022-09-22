@@ -41,7 +41,14 @@ public:
 	StackAllocatorBuilder() = default;
 
 	/// Destroy.
-	~StackAllocatorBuilder();
+	~StackAllocatorBuilder()
+	{
+		destroy();
+	}
+
+	/// Manual destroy. The destructor calls that as well.
+	/// @note It's not thread safe.
+	void destroy();
 
 	/// Allocate memory.
 	/// @param size The size to allocate.

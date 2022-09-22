@@ -35,27 +35,37 @@ public:
 };
 
 constexpr U32 kExtraChecksMaxAlignment = 64;
-constexpr U32 kAllocationHeaderSize = getAlignedRoundUp(kExtraChecksMaxAlignment, sizeof(AllocationHeader));
-#endif
-
-#define ANKI_CREATION_OOM_ACTION() ANKI_UTIL_LOGF("Out of memory")
-#define ANKI_OOM_ACTION() ANKI_UTIL_LOGE("Out of memory. Expect segfault")
+constexpr U32 kAllocationHeaderSize = getAlignedRoundUp(kExtraChecksMaxAlignment, U32(sizeof(AllocationHeader)));
 
 template<typename TPtr, typename TSize>
 static void invalidateMemory([[maybe_unused]] TPtr ptr, [[maybe_unused]] TSize size)
 {
-#if ANKI_MEM_EXTRA_CHECKS
 	memset(static_cast<void*>(ptr), 0xCC, size);
-#endif
 }
+#endif
+
+#define ANKI_OOM_ACTION() ANKI_UTIL_LOGE("Out of memory. Expect segfault")
 
 void* mallocAligned(PtrSize size, PtrSize alignmentBytes)
 {
 	ANKI_ASSERT(size > 0);
 	ANKI_ASSERT(alignmentBytes > 0);
 
-#if ANKI_POSIX
-#	if !ANKI_OS_ANDROID
+#if ANKI_OS_ANDROID
+	void* out = memalign(getAlignedRoundUp(alignmentBytes, sizeof(void*)), size);
+
+	if(out)
+	{
+		// Make sure it's aligned
+		ANKI_ASSERT(isAligned(alignmentBytes, out));
+	}
+	else
+	{
+		ANKI_UTIL_LOGE("memalign() failed, Size %zu, alignment %zu", size, alignmentBytes);
+	}
+
+	return out;
+#elif ANKI_POSIX
 	void* out = nullptr;
 	PtrSize alignment = getAlignedRoundUp(alignmentBytes, sizeof(void*));
 	int err = posix_memalign(&out, alignment, size);
@@ -68,25 +78,10 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes)
 	}
 	else
 	{
-		ANKI_UTIL_LOGE("mallocAligned() failed");
+		ANKI_UTIL_LOGE("posix_memalign() failed, Size %zu, alignment %zu", size, alignmentBytes);
 	}
 
 	return out;
-#	else
-	void* out = memalign(getAlignedRoundUp(alignmentBytes, sizeof(void*)), size);
-
-	if(out)
-	{
-		// Make sure it's aligned
-		ANKI_ASSERT(isAligned(alignmentBytes, out));
-	}
-	else
-	{
-		ANKI_UTIL_LOGE("memalign() failed");
-	}
-
-	return out;
-#	endif
 #elif ANKI_OS_WINDOWS
 	void* out = _aligned_malloc(size, alignmentBytes);
 
@@ -140,35 +135,48 @@ void* allocAligned([[maybe_unused]] void* userData, void* ptr, PtrSize size, Ptr
 	return out;
 }
 
-BaseMemoryPool::BaseMemoryPool(Type type, AllocAlignedCallback allocCb, void* allocCbUserData, const Char* name)
-	: m_allocCb(allocCb)
-	, m_allocCbUserData(allocCbUserData)
-	, m_type(type)
+void BaseMemoryPool::init(AllocAlignedCallback allocCb, void* allocCbUserData, const Char* name)
 {
-	ANKI_ASSERT(allocCb != nullptr);
+	ANKI_ASSERT(m_allocCb == nullptr && m_name == nullptr);
 
-	I64 len;
+	ANKI_ASSERT(allocCb != nullptr);
+	m_allocCb = allocCb;
+	m_allocCbUserData = allocCbUserData;
+
+	PtrSize len;
 	if(name && (len = strlen(name)) > 0)
 	{
-		m_name = static_cast<char*>(malloc(len + 1));
+		m_name = static_cast<char*>(m_allocCb(m_allocCbUserData, nullptr, len + 1, 1));
 		memcpy(m_name, name, len + 1);
 	}
 }
 
-BaseMemoryPool::~BaseMemoryPool()
+void BaseMemoryPool::destroy()
 {
 	ANKI_ASSERT(m_refcount.load() == 0 && "Refcount should be zero");
+	if(m_name != nullptr)
+	{
+		m_allocCb(m_allocCbUserData, m_name, 0, 0);
+		m_name = nullptr;
+	}
+	m_allocCb = nullptr;
+	m_allocationCount.setNonAtomically(0);
 }
 
-HeapMemoryPool::HeapMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserDataconst, const Char* name)
-	: BaseMemoryPool(Type::kHeap, allocCb, allocCbUserDataconst, name)
+HeapMemoryPool::HeapMemoryPool()
+	: BaseMemoryPool(Type::kHeap)
 {
 #if ANKI_MEM_EXTRA_CHECKS
 	m_signature = computePoolSignature(this);
 #endif
 }
 
-HeapMemoryPool::~HeapMemoryPool()
+void HeapMemoryPool::init(AllocAlignedCallback allocCb, void* allocCbUserData, const Char* name)
+{
+	BaseMemoryPool::init(allocCb, allocCbUserData, name);
+}
+
+void HeapMemoryPool::destroy()
 {
 	const U32 count = m_allocationCount.load();
 	if(count != 0)
@@ -176,6 +184,7 @@ HeapMemoryPool::~HeapMemoryPool()
 		ANKI_UTIL_LOGE("Memory pool destroyed before all memory being released (%u deallocations missed): %s", count,
 					   getName());
 	}
+	BaseMemoryPool::destroy();
 }
 
 void* HeapMemoryPool::allocate(PtrSize size, PtrSize alignment)
@@ -234,6 +243,7 @@ void HeapMemoryPool::free(void* ptr)
 Error StackMemoryPool::StackAllocatorBuilderInterface::allocateChunk(PtrSize size, Chunk*& out)
 {
 	ANKI_ASSERT(size > 0);
+	ANKI_ASSERT(m_parent && m_parent->m_allocCb);
 
 	const PtrSize fullChunkSize = offsetof(Chunk, m_memoryStart) + size;
 
@@ -242,7 +252,9 @@ Error StackMemoryPool::StackAllocatorBuilderInterface::allocateChunk(PtrSize siz
 	if(ANKI_LIKELY(mem))
 	{
 		out = static_cast<Chunk*>(mem);
+#if ANKI_MEM_EXTRA_CHECKS
 		invalidateMemory(&out->m_memoryStart[0], size);
+#endif
 	}
 	else
 	{
@@ -256,23 +268,26 @@ Error StackMemoryPool::StackAllocatorBuilderInterface::allocateChunk(PtrSize siz
 void StackMemoryPool::StackAllocatorBuilderInterface::freeChunk(Chunk* chunk)
 {
 	ANKI_ASSERT(chunk);
+	ANKI_ASSERT(m_parent && m_parent->m_allocCb);
 	m_parent->m_allocCb(m_parent->m_allocCbUserData, chunk, 0, 0);
 }
 
 void StackMemoryPool::StackAllocatorBuilderInterface::recycleChunk(Chunk& chunk)
 {
 	ANKI_ASSERT(chunk.m_chunkSize > 0);
+#if ANKI_MEM_EXTRA_CHECKS
 	invalidateMemory(&chunk.m_memoryStart[0], chunk.m_chunkSize);
+#endif
 }
 
-StackMemoryPool::StackMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize,
-								 F64 nextChunkScale, PtrSize nextChunkBias, Bool ignoreDeallocationErrors,
-								 U32 alignmentBytes, const Char* name)
-	: BaseMemoryPool(Type::kStack, allocCb, allocCbUserData, name)
+void StackMemoryPool::init(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize,
+						   F64 nextChunkScale, PtrSize nextChunkBias, Bool ignoreDeallocationErrors, U32 alignmentBytes,
+						   const Char* name)
 {
 	ANKI_ASSERT(initialChunkSize > 0);
 	ANKI_ASSERT(nextChunkScale >= 1.0);
 	ANKI_ASSERT(alignmentBytes > 0 && alignmentBytes <= kMaxAlignment);
+	BaseMemoryPool::init(allocCb, allocCbUserData, name);
 
 	m_builder.getInterface().m_parent = this;
 	m_builder.getInterface().m_alignmentBytes = alignmentBytes;
@@ -282,8 +297,11 @@ StackMemoryPool::StackMemoryPool(AllocAlignedCallback allocCb, void* allocCbUser
 	m_builder.getInterface().m_nextChunkBias = nextChunkBias;
 }
 
-StackMemoryPool::~StackMemoryPool()
+void StackMemoryPool::destroy()
 {
+	m_builder.destroy();
+	m_builder.getInterface() = {};
+	BaseMemoryPool::destroy();
 }
 
 void* StackMemoryPool::allocate(PtrSize size, PtrSize alignment)
@@ -318,268 +336,6 @@ void StackMemoryPool::reset()
 {
 	m_builder.reset();
 	m_allocationCount.store(0);
-}
-
-ChainMemoryPool::ChainMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize,
-								 F32 nextChunkScale, PtrSize nextChunkBias, PtrSize alignmentBytes, const Char* name)
-	: BaseMemoryPool(Type::kChain, allocCb, allocCbUserData, name)
-{
-	ANKI_ASSERT(initialChunkSize > 0);
-	ANKI_ASSERT(nextChunkScale >= 1.0);
-	ANKI_ASSERT(alignmentBytes > 0);
-
-	// Set all values
-	m_alignmentBytes = alignmentBytes;
-	m_initSize = initialChunkSize;
-	m_scale = nextChunkScale;
-	m_bias = nextChunkBias;
-	m_headerSize = max<PtrSize>(m_alignmentBytes, sizeof(Chunk*));
-
-	// Initial size should be > 0
-	ANKI_ASSERT(m_initSize > 0 && "Wrong arg");
-
-	// On fixed initial size is the same as the max
-	if(m_scale == 0.0 && m_bias == 0)
-	{
-		ANKI_ASSERT(0 && "Wrong arg");
-	}
-}
-
-ChainMemoryPool::~ChainMemoryPool()
-{
-	if(m_allocationCount.load() != 0)
-	{
-		ANKI_UTIL_LOGE("Memory pool destroyed before all memory being released");
-	}
-
-	Chunk* ch = m_headChunk;
-	while(ch)
-	{
-		Chunk* next = ch->m_next;
-		destroyChunk(ch);
-		ch = next;
-	}
-}
-
-void* ChainMemoryPool::allocate(PtrSize size, PtrSize alignment)
-{
-	ANKI_ASSERT(size > 0);
-
-	Chunk* ch;
-	void* mem = nullptr;
-
-	LockGuard<SpinLock> lock(m_lock);
-
-	// Get chunk
-	ch = m_tailChunk;
-
-	// Create new chunk if needed
-	if(ch == nullptr || (mem = allocateFromChunk(ch, size, alignment)) == nullptr)
-	{
-		// Create new chunk
-		PtrSize chunkSize = computeNewChunkSize(size);
-		ch = createNewChunk(chunkSize);
-
-		// Chunk creation failed
-		if(ch == nullptr)
-		{
-			return mem;
-		}
-	}
-
-	if(mem == nullptr)
-	{
-		mem = allocateFromChunk(ch, size, alignment);
-		ANKI_ASSERT(mem != nullptr && "The chunk should have space");
-	}
-
-	m_allocationCount.fetchAdd(1);
-
-	return mem;
-}
-
-void ChainMemoryPool::free(void* ptr)
-{
-	if(ANKI_UNLIKELY(ptr == nullptr))
-	{
-		return;
-	}
-
-	// Get the chunk
-	U8* mem = static_cast<U8*>(ptr);
-	mem -= m_headerSize;
-	Chunk* chunk = *reinterpret_cast<Chunk**>(mem);
-
-	ANKI_ASSERT(chunk != nullptr);
-	ANKI_ASSERT((mem >= chunk->m_memory && mem < (chunk->m_memory + chunk->m_memsize)) && "Wrong chunk");
-
-	LockGuard<SpinLock> lock(m_lock);
-
-	// Decrease the deallocation refcount and if it's zero delete the chunk
-	ANKI_ASSERT(chunk->m_allocationCount > 0);
-	if(--chunk->m_allocationCount == 0)
-	{
-		// Chunk is empty. Delete it
-		destroyChunk(chunk);
-	}
-
-	m_allocationCount.fetchSub(1);
-}
-
-PtrSize ChainMemoryPool::getChunksCount() const
-{
-	PtrSize count = 0;
-	Chunk* ch = m_headChunk;
-	while(ch)
-	{
-		++count;
-		ch = ch->m_next;
-	}
-
-	return count;
-}
-
-PtrSize ChainMemoryPool::getAllocatedSize() const
-{
-	PtrSize sum = 0;
-	Chunk* ch = m_headChunk;
-	while(ch)
-	{
-		sum += ch->m_top - ch->m_memory;
-		ch = ch->m_next;
-	}
-
-	return sum;
-}
-
-PtrSize ChainMemoryPool::computeNewChunkSize(PtrSize size) const
-{
-	size += m_headerSize;
-
-	PtrSize crntMaxSize;
-	if(m_tailChunk != nullptr)
-	{
-		// Get the size of previous
-		crntMaxSize = m_tailChunk->m_memsize;
-
-		// Compute new size
-		crntMaxSize = PtrSize(F32(crntMaxSize) * m_scale) + m_bias;
-	}
-	else
-	{
-		// No chunks. Choose initial size
-		ANKI_ASSERT(m_headChunk == nullptr);
-		crntMaxSize = m_initSize;
-	}
-
-	crntMaxSize = max(crntMaxSize, size);
-
-	ANKI_ASSERT(crntMaxSize > 0);
-
-	return crntMaxSize;
-}
-
-ChainMemoryPool::Chunk* ChainMemoryPool::createNewChunk(PtrSize size)
-{
-	ANKI_ASSERT(size > 0);
-
-	// Allocate memory and chunk in one go
-	PtrSize chunkAllocSize = getAlignedRoundUp(m_alignmentBytes, sizeof(Chunk));
-	PtrSize memAllocSize = getAlignedRoundUp(m_alignmentBytes, size);
-	PtrSize allocationSize = chunkAllocSize + memAllocSize;
-
-	Chunk* chunk = reinterpret_cast<Chunk*>(m_allocCb(m_allocCbUserData, nullptr, allocationSize, m_alignmentBytes));
-
-	if(chunk)
-	{
-		invalidateMemory(chunk, allocationSize);
-
-		// Construct it
-		memset(chunk, 0, sizeof(Chunk));
-
-		// Initialize it
-		chunk->m_memory = reinterpret_cast<U8*>(chunk) + chunkAllocSize;
-
-		chunk->m_memsize = memAllocSize;
-		chunk->m_top = chunk->m_memory;
-
-		// Register it
-		if(m_tailChunk)
-		{
-			m_tailChunk->m_next = chunk;
-			chunk->m_prev = m_tailChunk;
-			m_tailChunk = chunk;
-		}
-		else
-		{
-			ANKI_ASSERT(m_headChunk == nullptr);
-			m_headChunk = m_tailChunk = chunk;
-		}
-	}
-	else
-	{
-		ANKI_OOM_ACTION();
-	}
-
-	return chunk;
-}
-
-void* ChainMemoryPool::allocateFromChunk(Chunk* ch, PtrSize size, [[maybe_unused]] PtrSize alignment)
-{
-	ANKI_ASSERT(ch);
-	ANKI_ASSERT(ch->m_top <= ch->m_memory + ch->m_memsize);
-
-	U8* mem = ch->m_top;
-	PtrSize memV = ptrToNumber(mem);
-	alignRoundUp(m_alignmentBytes, memV);
-	mem = numberToPtr<U8*>(memV);
-	U8* newTop = mem + m_headerSize + size;
-
-	if(newTop <= ch->m_memory + ch->m_memsize)
-	{
-		*reinterpret_cast<Chunk**>(mem) = ch;
-		mem += m_headerSize;
-
-		ch->m_top = newTop;
-		++ch->m_allocationCount;
-	}
-	else
-	{
-		// Chunk is full. Need a new one
-		mem = nullptr;
-	}
-
-	return mem;
-}
-
-void ChainMemoryPool::destroyChunk(Chunk* ch)
-{
-	ANKI_ASSERT(ch);
-
-	if(ch == m_tailChunk)
-	{
-		m_tailChunk = ch->m_prev;
-	}
-
-	if(ch == m_headChunk)
-	{
-		m_headChunk = ch->m_next;
-	}
-
-	if(ch->m_prev)
-	{
-		ANKI_ASSERT(ch->m_prev->m_next == ch);
-		ch->m_prev->m_next = ch->m_next;
-	}
-
-	if(ch->m_next)
-	{
-		ANKI_ASSERT(ch->m_next->m_prev == ch);
-		ch->m_next->m_prev = ch->m_prev;
-	}
-
-	invalidateMemory(ch, getAlignedRoundUp(m_alignmentBytes, sizeof(Chunk)) + ch->m_memsize);
-	m_allocCb(m_allocCbUserData, ch, 0, 0);
 }
 
 } // end namespace anki

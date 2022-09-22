@@ -93,8 +93,8 @@ public:
 			ANKI_UTIL_LOGF("Out of memory");
 		}
 
-		::new(m_pool) TPool(allocCb, allocCbUserData, std::forward<TArgs>(args)...);
-
+		::new(m_pool) TPool();
+		m_pool->init(allocCb, allocCbUserData, std::forward<TArgs>(args)...);
 		m_pool->retain();
 	}
 
@@ -419,10 +419,6 @@ using HeapAllocator = GenericPoolAllocator<T, HeapMemoryPool>;
 /// Allocator that uses a StackMemoryPool
 template<typename T>
 using StackAllocator = GenericPoolAllocator<T, StackMemoryPool>;
-
-/// Allocator that uses a ChainMemoryPool
-template<typename T>
-using ChainAllocator = GenericPoolAllocator<T, ChainMemoryPool>;
 
 #define ANKI_FRIEND_ALLOCATOR \
 	template<typename, typename> \
