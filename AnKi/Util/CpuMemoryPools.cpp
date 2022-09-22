@@ -163,17 +163,12 @@ void BaseMemoryPool::destroy()
 	m_allocationCount.setNonAtomically(0);
 }
 
-HeapMemoryPool::HeapMemoryPool()
-	: BaseMemoryPool(Type::kHeap)
-{
-#if ANKI_MEM_EXTRA_CHECKS
-	m_signature = computePoolSignature(this);
-#endif
-}
-
 void HeapMemoryPool::init(AllocAlignedCallback allocCb, void* allocCbUserData, const Char* name)
 {
 	BaseMemoryPool::init(allocCb, allocCbUserData, name);
+#if ANKI_MEM_EXTRA_CHECKS
+	m_signature = computePoolSignature(this);
+#endif
 }
 
 void HeapMemoryPool::destroy()

@@ -150,7 +150,10 @@ class HeapMemoryPool final : public BaseMemoryPool
 {
 public:
 	/// Construct it.
-	HeapMemoryPool();
+	HeapMemoryPool()
+		: BaseMemoryPool(Type::kHeap)
+	{
+	}
 
 	/// @see init
 	HeapMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData, const Char* name = nullptr)
