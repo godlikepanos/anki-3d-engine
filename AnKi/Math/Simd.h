@@ -23,7 +23,7 @@ class MathSimd
 {
 public:
 	using Type = T[N];
-	static constexpr U ALIGNMENT = alignof(T);
+	static constexpr U kAlignment = alignof(T);
 };
 
 #if ANKI_SIMD_SSE
@@ -33,7 +33,7 @@ class MathSimd<F32, 4>
 {
 public:
 	using Type = __m128;
-	static constexpr U ALIGNMENT = 16;
+	static constexpr U kAlignment = 16;
 };
 #elif ANKI_SIMD_NEON
 // Specialize for F32
@@ -42,7 +42,7 @@ class MathSimd<F32, 4>
 {
 public:
 	using Type = float32x4_t;
-	static constexpr U ALIGNMENT = 16;
+	static constexpr U kAlignment = 16;
 };
 #endif
 

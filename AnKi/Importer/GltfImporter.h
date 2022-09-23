@@ -28,10 +28,11 @@ public:
 	CString m_rpath;
 	CString m_texrpath;
 	Bool m_optimizeMeshes = true;
+	Bool m_optimizeAnimations = true;
 	F32 m_lodFactor = 1.0f;
 	U32 m_lodCount = 1;
 	F32 m_lightIntensityScale = 1.0f;
-	U32 m_threadCount = MAX_U32;
+	U32 m_threadCount = kMaxU32;
 	CString m_comment;
 };
 
@@ -58,8 +59,6 @@ private:
 	};
 
 	// Data
-	static const char* XML_HEADER;
-
 	GenericMemoryPoolAllocator<U8> m_alloc;
 
 	StringAuto m_inputFname = {m_alloc};
@@ -83,6 +82,7 @@ private:
 	U32 m_lodCount = 1;
 	F32 m_lightIntensityScale = 1.0f;
 	Bool m_optimizeMeshes = false;
+	Bool m_optimizeAnimations = false;
 	StringAuto m_comment{m_alloc};
 
 	/// Don't generate LODs for meshes with less vertices than this number.

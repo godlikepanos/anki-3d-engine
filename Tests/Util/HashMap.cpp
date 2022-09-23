@@ -142,8 +142,30 @@ ANKI_TEST(Util, HashMap)
 
 	// Bench it
 	{
-		using AkMap = HashMap<int, int, Hasher>;
-		AkMap akMap(128, 32, 0.9f);
+		class Config
+		{
+		public:
+			using Index = U64;
+
+			static Index getInitialStorageSize()
+			{
+				return 128;
+			}
+
+			static U32 getLinearProbingCount()
+			{
+				return 32;
+			}
+
+			static F32 getMaxLoadFactor()
+			{
+				return 0.9f;
+			}
+		};
+
+		using AkMap = HashMap<int, int, Hasher, Config>;
+
+		AkMap akMap;
 		using StlMap =
 			std::unordered_map<int, int, std::hash<int>, std::equal_to<int>, HeapAllocator<std::pair<const int, int>>>;
 		StlMap stdMap(10, std::hash<int>(), std::equal_to<int>(), alloc);

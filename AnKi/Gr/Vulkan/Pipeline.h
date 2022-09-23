@@ -20,8 +20,8 @@ namespace anki {
 class VertexBufferBindingPipelineState
 {
 public:
-	U32 m_stride = MAX_U32; ///< Vertex stride.
-	VertexStepRate m_stepRate = VertexStepRate::VERTEX;
+	U32 m_stride = kMaxU32; ///< Vertex stride.
+	VertexStepRate m_stepRate = VertexStepRate::kVertex;
 	Array<U8, 3> m_padding = {};
 
 	Bool operator==(const VertexBufferBindingPipelineState& b) const
@@ -40,7 +40,7 @@ class VertexAttributeBindingPipelineState
 {
 public:
 	PtrSize m_offset = 0;
-	Format m_format = Format::NONE;
+	Format m_format = Format::kNone;
 	U8 m_binding = 0;
 	Array<U8, 3> m_padding = {};
 
@@ -59,18 +59,18 @@ static_assert(sizeof(VertexAttributeBindingPipelineState) == 2 * sizeof(PtrSize)
 class VertexPipelineState
 {
 public:
-	Array<VertexBufferBindingPipelineState, MAX_VERTEX_ATTRIBUTES> m_bindings;
-	Array<VertexAttributeBindingPipelineState, MAX_VERTEX_ATTRIBUTES> m_attributes;
+	Array<VertexBufferBindingPipelineState, kMaxVertexAttributes> m_bindings;
+	Array<VertexAttributeBindingPipelineState, kMaxVertexAttributes> m_attributes;
 };
 static_assert(sizeof(VertexPipelineState)
-				  == sizeof(VertexBufferBindingPipelineState) * MAX_VERTEX_ATTRIBUTES
-						 + sizeof(VertexAttributeBindingPipelineState) * MAX_VERTEX_ATTRIBUTES,
+				  == sizeof(VertexBufferBindingPipelineState) * kMaxVertexAttributes
+						 + sizeof(VertexAttributeBindingPipelineState) * kMaxVertexAttributes,
 			  "Packed because it will be hashed");
 
 class InputAssemblerPipelineState
 {
 public:
-	PrimitiveTopology m_topology = PrimitiveTopology::TRIANGLES;
+	PrimitiveTopology m_topology = PrimitiveTopology::kTriangles;
 	Bool m_primitiveRestartEnabled = false;
 };
 static_assert(sizeof(InputAssemblerPipelineState) == sizeof(U8) * 2, "Packed because it will be hashed");
@@ -78,9 +78,9 @@ static_assert(sizeof(InputAssemblerPipelineState) == sizeof(U8) * 2, "Packed bec
 class RasterizerPipelineState
 {
 public:
-	FillMode m_fillMode = FillMode::SOLID;
-	FaceSelectionBit m_cullMode = FaceSelectionBit::BACK;
-	RasterizationOrder m_rasterizationOrder = RasterizationOrder::ORDERED;
+	FillMode m_fillMode = FillMode::kSolid;
+	FaceSelectionBit m_cullMode = FaceSelectionBit::kBack;
+	RasterizationOrder m_rasterizationOrder = RasterizationOrder::kOrdered;
 	U8 m_padding = 0;
 	F32 m_depthBiasConstantFactor = 0.0f;
 	F32 m_depthBiasSlopeFactor = 0.0f;
@@ -91,7 +91,7 @@ class DepthPipelineState
 {
 public:
 	Bool m_depthWriteEnabled = true;
-	CompareOperation m_depthCompareFunction = CompareOperation::LESS;
+	CompareOperation m_depthCompareFunction = CompareOperation::kLess;
 };
 static_assert(sizeof(DepthPipelineState) == sizeof(U8) * 2, "Packed because it will be hashed");
 
@@ -101,10 +101,10 @@ public:
 	class S
 	{
 	public:
-		StencilOperation m_stencilFailOperation = StencilOperation::KEEP;
-		StencilOperation m_stencilPassDepthFailOperation = StencilOperation::KEEP;
-		StencilOperation m_stencilPassDepthPassOperation = StencilOperation::KEEP;
-		CompareOperation m_compareFunction = CompareOperation::ALWAYS;
+		StencilOperation m_stencilFailOperation = StencilOperation::kKeep;
+		StencilOperation m_stencilPassDepthFailOperation = StencilOperation::kKeep;
+		StencilOperation m_stencilPassDepthPassOperation = StencilOperation::kKeep;
+		CompareOperation m_compareFunction = CompareOperation::kAlways;
 	};
 
 	Array<S, 2> m_face;
@@ -114,13 +114,13 @@ static_assert(sizeof(StencilPipelineState) == sizeof(U32) * 2, "Packed because i
 class ColorAttachmentState
 {
 public:
-	BlendFactor m_srcBlendFactorRgb = BlendFactor::ONE;
-	BlendFactor m_srcBlendFactorA = BlendFactor::ONE;
-	BlendFactor m_dstBlendFactorRgb = BlendFactor::ZERO;
-	BlendFactor m_dstBlendFactorA = BlendFactor::ZERO;
-	BlendOperation m_blendFunctionRgb = BlendOperation::ADD;
-	BlendOperation m_blendFunctionA = BlendOperation::ADD;
-	ColorBit m_channelWriteMask = ColorBit::ALL;
+	BlendFactor m_srcBlendFactorRgb = BlendFactor::kOne;
+	BlendFactor m_srcBlendFactorA = BlendFactor::kOne;
+	BlendFactor m_dstBlendFactorRgb = BlendFactor::kZero;
+	BlendFactor m_dstBlendFactorA = BlendFactor::kZero;
+	BlendOperation m_blendFunctionRgb = BlendOperation::kAdd;
+	BlendOperation m_blendFunctionA = BlendOperation::kAdd;
+	ColorBit m_channelWriteMask = ColorBit::kAll;
 };
 static_assert(sizeof(ColorAttachmentState) == sizeof(U8) * 7, "Packed because it will be hashed");
 
@@ -128,9 +128,9 @@ class ColorPipelineState
 {
 public:
 	Bool m_alphaToCoverageEnabled = false;
-	Array<ColorAttachmentState, MAX_COLOR_ATTACHMENTS> m_attachments;
+	Array<ColorAttachmentState, kMaxColorRenderTargets> m_attachments;
 };
-static_assert(sizeof(ColorPipelineState) == sizeof(ColorAttachmentState) * MAX_COLOR_ATTACHMENTS + sizeof(U8),
+static_assert(sizeof(ColorPipelineState) == sizeof(ColorAttachmentState) * kMaxColorRenderTargets + sizeof(U8),
 			  "Packed because it will be hashed");
 
 class AllPipelineState
@@ -243,7 +243,7 @@ public:
 	void setStencilOperations(FaceSelectionBit face, StencilOperation stencilFail,
 							  StencilOperation stencilPassDepthFail, StencilOperation stencilPassDepthPass)
 	{
-		if(!!(face & FaceSelectionBit::FRONT)
+		if(!!(face & FaceSelectionBit::kFront)
 		   && (m_state.m_stencil.m_face[0].m_stencilFailOperation != stencilFail
 			   || m_state.m_stencil.m_face[0].m_stencilPassDepthFailOperation != stencilPassDepthFail
 			   || m_state.m_stencil.m_face[0].m_stencilPassDepthPassOperation != stencilPassDepthPass))
@@ -254,7 +254,7 @@ public:
 			m_dirty.m_stencil = true;
 		}
 
-		if(!!(face & FaceSelectionBit::BACK)
+		if(!!(face & FaceSelectionBit::kBack)
 		   && (m_state.m_stencil.m_face[1].m_stencilFailOperation != stencilFail
 			   || m_state.m_stencil.m_face[1].m_stencilPassDepthFailOperation != stencilPassDepthFail
 			   || m_state.m_stencil.m_face[1].m_stencilPassDepthPassOperation != stencilPassDepthPass))
@@ -268,13 +268,13 @@ public:
 
 	void setStencilCompareOperation(FaceSelectionBit face, CompareOperation comp)
 	{
-		if(!!(face & FaceSelectionBit::FRONT) && m_state.m_stencil.m_face[0].m_compareFunction != comp)
+		if(!!(face & FaceSelectionBit::kFront) && m_state.m_stencil.m_face[0].m_compareFunction != comp)
 		{
 			m_state.m_stencil.m_face[0].m_compareFunction = comp;
 			m_dirty.m_stencil = true;
 		}
 
-		if(!!(face & FaceSelectionBit::BACK) && m_state.m_stencil.m_face[1].m_compareFunction != comp)
+		if(!!(face & FaceSelectionBit::kBack) && m_state.m_stencil.m_face[1].m_compareFunction != comp)
 		{
 			m_state.m_stencil.m_face[1].m_compareFunction = comp;
 			m_dirty.m_stencil = true;
@@ -439,10 +439,10 @@ private:
 		Bool m_color : 1;
 
 		// Vertex
-		BitSet<MAX_VERTEX_ATTRIBUTES, U8> m_attribs = {true};
-		BitSet<MAX_VERTEX_ATTRIBUTES, U8> m_vertBindings = {true};
+		BitSet<kMaxVertexAttributes, U8> m_attribs = {true};
+		BitSet<kMaxVertexAttributes, U8> m_vertBindings = {true};
 
-		BitSet<MAX_COLOR_ATTACHMENTS, U8> m_colAttachments = {true};
+		BitSet<kMaxColorRenderTargets, U8> m_colAttachments = {true};
 
 		DirtyBits()
 			: m_prog(true)
@@ -459,32 +459,32 @@ private:
 	class SetBits
 	{
 	public:
-		BitSet<MAX_VERTEX_ATTRIBUTES, U8> m_attribs = {false};
-		BitSet<MAX_VERTEX_ATTRIBUTES, U8> m_vertBindings = {false};
+		BitSet<kMaxVertexAttributes, U8> m_attribs = {false};
+		BitSet<kMaxVertexAttributes, U8> m_vertBindings = {false};
 	} m_set;
 
 	// Shader info
-	BitSet<MAX_VERTEX_ATTRIBUTES, U8> m_shaderAttributeMask = {false};
-	BitSet<MAX_COLOR_ATTACHMENTS, U8> m_shaderColorAttachmentWritemask = {false};
+	BitSet<kMaxVertexAttributes, U8> m_shaderAttributeMask = {false};
+	BitSet<kMaxColorRenderTargets, U8> m_shaderColorAttachmentWritemask = {false};
 
 	// Renderpass info
 	Bool m_fbDepth = false;
 	Bool m_fbStencil = false;
 	Bool m_defaultFb = false;
-	BitSet<MAX_COLOR_ATTACHMENTS, U8> m_fbColorAttachmentMask = {false};
+	BitSet<kMaxColorRenderTargets, U8> m_fbColorAttachmentMask = {false};
 
 	class Hashes
 	{
 	public:
 		U64 m_prog;
 		U64 m_rpass;
-		Array<U64, MAX_VERTEX_ATTRIBUTES> m_vertexAttribs;
+		Array<U64, kMaxVertexAttributes> m_vertexAttribs;
 		U64 m_ia;
 		U64 m_raster;
 		U64 m_depth;
 		U64 m_stencil;
 		U64 m_color;
-		Array<U64, MAX_COLOR_ATTACHMENTS> m_colAttachments;
+		Array<U64, kMaxColorRenderTargets> m_colAttachments;
 
 		U64 m_superHash;
 		U64 m_lastSuperHash;
@@ -499,8 +499,8 @@ private:
 	class CreateInfo
 	{
 	public:
-		Array<VkVertexInputBindingDescription, MAX_VERTEX_ATTRIBUTES> m_vertBindings;
-		Array<VkVertexInputAttributeDescription, MAX_VERTEX_ATTRIBUTES> m_attribs;
+		Array<VkVertexInputBindingDescription, kMaxVertexAttributes> m_vertBindings;
+		Array<VkVertexInputAttributeDescription, kMaxVertexAttributes> m_attribs;
 		VkPipelineVertexInputStateCreateInfo m_vert;
 		VkPipelineInputAssemblyStateCreateInfo m_ia;
 		VkPipelineViewportStateCreateInfo m_vp;
@@ -508,7 +508,7 @@ private:
 		VkPipelineRasterizationStateCreateInfo m_rast;
 		VkPipelineMultisampleStateCreateInfo m_ms;
 		VkPipelineDepthStencilStateCreateInfo m_ds;
-		Array<VkPipelineColorBlendAttachmentState, MAX_COLOR_ATTACHMENTS> m_colAttachments;
+		Array<VkPipelineColorBlendAttachmentState, kMaxColorRenderTargets> m_colAttachments;
 		VkPipelineColorBlendStateCreateInfo m_color;
 		VkPipelineDynamicStateCreateInfo m_dyn;
 		VkGraphicsPipelineCreateInfo m_ppline;

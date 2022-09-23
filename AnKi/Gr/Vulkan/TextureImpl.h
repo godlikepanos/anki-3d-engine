@@ -35,7 +35,7 @@ public:
 
 	~MicroImageView()
 	{
-		ANKI_ASSERT(m_bindlessIndex == MAX_U32 && "Forgot to unbind the bindless");
+		ANKI_ASSERT(m_bindlessIndex == kMaxU32 && "Forgot to unbind the bindless");
 		ANKI_ASSERT(m_handle == VK_NULL_HANDLE);
 	}
 
@@ -44,9 +44,9 @@ public:
 		m_handle = b.m_handle;
 		b.m_handle = VK_NULL_HANDLE;
 		m_bindlessIndex = b.m_bindlessIndex;
-		b.m_bindlessIndex = MAX_U32;
+		b.m_bindlessIndex = kMaxU32;
 		m_derivedTextureType = b.m_derivedTextureType;
-		b.m_derivedTextureType = TextureType::COUNT;
+		b.m_derivedTextureType = TextureType::kCount;
 		return *this;
 	}
 
@@ -61,18 +61,18 @@ public:
 
 	TextureType getDerivedTextureType() const
 	{
-		ANKI_ASSERT(m_derivedTextureType != TextureType::COUNT);
+		ANKI_ASSERT(m_derivedTextureType != TextureType::kCount);
 		return m_derivedTextureType;
 	}
 
 private:
 	VkImageView m_handle = VK_NULL_HANDLE;
 
-	mutable U32 m_bindlessIndex = MAX_U32;
+	mutable U32 m_bindlessIndex = kMaxU32;
 	mutable SpinLock m_bindlessIndexLock;
 
 	/// Because for example a single surface view of a cube texture will be a 2D view.
-	TextureType m_derivedTextureType = TextureType::COUNT;
+	TextureType m_derivedTextureType = TextureType::kCount;
 };
 
 /// Texture container.
@@ -116,16 +116,16 @@ public:
 		U32 layer = 0;
 		switch(m_texType)
 		{
-		case TextureType::_2D:
+		case TextureType::k2D:
 			layer = 0;
 			break;
-		case TextureType::CUBE:
+		case TextureType::kCube:
 			layer = surf.m_face;
 			break;
-		case TextureType::_2D_ARRAY:
+		case TextureType::k2DArray:
 			layer = surf.m_layer;
 			break;
-		case TextureType::CUBE_ARRAY:
+		case TextureType::kCubeArray:
 			layer = surf.m_layer * 6 + surf.m_face;
 			break;
 		default:
@@ -137,7 +137,7 @@ public:
 
 	U32 computeVkArrayLayer([[maybe_unused]] const TextureVolumeInfo& vol) const
 	{
-		ANKI_ASSERT(m_texType == TextureType::_3D);
+		ANKI_ASSERT(m_texType == TextureType::k3D);
 		return 0;
 	}
 
@@ -195,7 +195,7 @@ private:
 	MicroImageView m_singleSurfaceImageView;
 
 #if ANKI_ENABLE_ASSERTIONS
-	mutable TextureUsageBit m_usedFor = TextureUsageBit::NONE;
+	mutable TextureUsageBit m_usedFor = TextureUsageBit::kNone;
 	mutable SpinLock m_usedForMtx;
 #endif
 

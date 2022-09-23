@@ -9,10 +9,10 @@
 namespace anki {
 
 /// @warning Don't use Array because the compilers can't handle it for some reason.
-inline constexpr ShaderVariableDataTypeInfo SVD_INFOS[] = {
-#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount, isIntagralType) \
+inline constexpr ShaderVariableDataTypeInfo kShaderVariableDataTypeInfos[] = {
+#define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) \
 	{ANKI_STRINGIZE(type), sizeof(type), false, isIntagralType},
-#define ANKI_SVDT_MACRO_OPAQUE(capital, type) {ANKI_STRINGIZE(type), MAX_U32, true, false},
+#define ANKI_SVDT_MACRO_OPAQUE(constant, type) {ANKI_STRINGIZE(type), kMaxU32, true, false},
 #include <AnKi/Gr/ShaderVariableDataType.defs.h>
 #undef ANKI_SVDT_MACRO
 #undef ANKI_SVDT_MACRO_OPAQUE
@@ -20,8 +20,8 @@ inline constexpr ShaderVariableDataTypeInfo SVD_INFOS[] = {
 
 const ShaderVariableDataTypeInfo& getShaderVariableDataTypeInfo(ShaderVariableDataType type)
 {
-	ANKI_ASSERT(type > ShaderVariableDataType::NONE && type < ShaderVariableDataType::COUNT);
-	return SVD_INFOS[U32(type) - 1];
+	ANKI_ASSERT(type > ShaderVariableDataType::kNone && type < ShaderVariableDataType::kCount);
+	return kShaderVariableDataTypeInfos[U32(type) - 1];
 }
 
 FormatInfo getFormatInfo(Format fmt)
@@ -31,14 +31,14 @@ FormatInfo getFormatInfo(Format fmt)
 	{
 #define ANKI_FORMAT_DEF(type, id, componentCount, texelSize, blockWidth, blockHeight, blockSize, shaderType, \
 						depthStencil) \
-	case Format::type: \
+	case Format::k##type: \
 		out = {componentCount, \
 			   texelSize, \
 			   blockWidth, \
 			   blockHeight, \
 			   blockSize, \
 			   shaderType, \
-			   DepthStencilAspectBit::depthStencil, \
+			   DepthStencilAspectBit::k##depthStencil, \
 			   ANKI_STRINGIZE(type)}; \
 		break;
 #include <AnKi/Gr/Format.defs.h>
@@ -56,7 +56,7 @@ PtrSize computeSurfaceSize(U32 width32, U32 height32, Format fmt)
 	const PtrSize width = width32;
 	const PtrSize height = height32;
 	ANKI_ASSERT(width > 0 && height > 0);
-	ANKI_ASSERT(fmt != Format::NONE);
+	ANKI_ASSERT(fmt != Format::kNone);
 
 	const FormatInfo inf = getFormatInfo(fmt);
 
@@ -79,7 +79,7 @@ PtrSize computeVolumeSize(U32 width32, U32 height32, U32 depth32, Format fmt)
 	const PtrSize height = height32;
 	const PtrSize depth = depth32;
 	ANKI_ASSERT(width > 0 && height > 0 && depth > 0);
-	ANKI_ASSERT(fmt != Format::NONE);
+	ANKI_ASSERT(fmt != Format::kNone);
 
 	const FormatInfo inf = getFormatInfo(fmt);
 

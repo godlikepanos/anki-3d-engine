@@ -28,7 +28,7 @@ Error NativeWindow::newInstance(const NativeWindowInitInfo& initInfo, NativeWind
 	else
 	{
 		nativeWindow = sdlwin;
-		return Error::NONE;
+		return Error::kNone;
 	}
 }
 
@@ -64,14 +64,14 @@ Error NativeWindowSdl::init(const NativeWindowInitInfo& init)
 	if(SDL_Init(INIT_SUBSYSTEMS) != 0)
 	{
 		ANKI_CORE_LOGE("SDL_Init() failed: %s", SDL_GetError());
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 #if ANKI_GR_BACKEND_VULKAN
 	if(SDL_Vulkan_LoadLibrary(nullptr))
 	{
 		ANKI_CORE_LOGE("SDL_Vulkan_LoadLibrary() failed: %s", SDL_GetError());
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 #endif
 
@@ -110,7 +110,7 @@ Error NativeWindowSdl::init(const NativeWindowInitInfo& init)
 		if(SDL_GetDesktopDisplayMode(0, &mode))
 		{
 			ANKI_CORE_LOGE("SDL_GetDesktopDisplayMode() failed: %s", SDL_GetError());
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 
 		m_width = mode.w;
@@ -128,7 +128,7 @@ Error NativeWindowSdl::init(const NativeWindowInitInfo& init)
 	if(m_window == nullptr)
 	{
 		ANKI_CORE_LOGE("SDL_CreateWindow() failed");
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	// Final check
@@ -139,7 +139,7 @@ Error NativeWindowSdl::init(const NativeWindowInitInfo& init)
 	}
 
 	ANKI_CORE_LOGI("SDL window created");
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

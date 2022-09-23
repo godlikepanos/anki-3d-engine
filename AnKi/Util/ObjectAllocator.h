@@ -13,17 +13,17 @@ namespace anki {
 /// @{
 
 /// A simple allocator for objects of similar types.
-/// @tparam T_OBJECT_SIZE       The maximum size of the objects.
-/// @tparam T_OBJECT_ALIGNMENT  The maximum alignment of the objects.
-/// @tparam T_OBJECTS_PER_CHUNK How much memory (in objects) will be allocated at once.
-/// @tparam TIndexType          If T_OBJECTS_PER_CHUNK>0xFF make it U16. If T_OBJECTS_PER_CHUNK>0xFFFF make it U32.
-template<PtrSize T_OBJECT_SIZE, U32 T_OBJECT_ALIGNMENT, U32 T_OBJECTS_PER_CHUNK = 64, typename TIndexType = U8>
+/// @tparam kTObjectSize      The maximum size of the objects.
+/// @tparam kTObjectAlignment The maximum alignment of the objects.
+/// @tparam kTObjectsPerChunk How much memory (in objects) will be allocated at once.
+/// @tparam TIndexType        If kTObjectsPerChunk>0xFF make it U16. If kTObjectsPerChunk>0xFFFF make it U32.
+template<PtrSize kTObjectSize, U32 kTObjectAlignment, U32 kTObjectsPerChunk = 64, typename TIndexType = U8>
 class ObjectAllocator
 {
 public:
-	static constexpr PtrSize OBJECT_SIZE = T_OBJECT_SIZE;
-	static constexpr U32 OBJECT_ALIGNMENT = T_OBJECT_ALIGNMENT;
-	static constexpr U32 OBJECTS_PER_CHUNK = T_OBJECTS_PER_CHUNK;
+	static constexpr PtrSize kObjectSize = kTObjectSize;
+	static constexpr U32 kObjectAlignment = kTObjectAlignment;
+	static constexpr U32 kObjectsPerChunk = kTObjectsPerChunk;
 
 	ObjectAllocator()
 	{
@@ -46,17 +46,17 @@ public:
 
 private:
 	/// Storage with equal properties as the object.
-	struct alignas(OBJECT_ALIGNMENT) Object
+	struct alignas(kObjectAlignment) Object
 	{
-		U8 m_storage[OBJECT_SIZE];
+		U8 m_storage[kObjectSize];
 	};
 
 	/// A  single allocation.
 	class Chunk
 	{
 	public:
-		Array<Object, OBJECTS_PER_CHUNK> m_objects;
-		Array<U32, OBJECTS_PER_CHUNK> m_unusedStack;
+		Array<Object, kObjectsPerChunk> m_objects;
+		Array<U32, kObjectsPerChunk> m_unusedStack;
 		U32 m_unusedCount;
 
 		Chunk* m_next = nullptr;
@@ -68,11 +68,11 @@ private:
 };
 
 /// Convenience wrapper for ObjectAllocator.
-template<typename T, U32 T_OBJECTS_PER_CHUNK = 64, typename TIndexType = U8>
-class ObjectAllocatorSameType : public ObjectAllocator<sizeof(T), U32(alignof(T)), T_OBJECTS_PER_CHUNK, TIndexType>
+template<typename T, U32 kTObjectsPerChunk = 64, typename TIndexType = U8>
+class ObjectAllocatorSameType : public ObjectAllocator<sizeof(T), U32(alignof(T)), kTObjectsPerChunk, TIndexType>
 {
 public:
-	using Base = ObjectAllocator<sizeof(T), U32(alignof(T)), T_OBJECTS_PER_CHUNK, TIndexType>;
+	using Base = ObjectAllocator<sizeof(T), U32(alignof(T)), kTObjectsPerChunk, TIndexType>;
 
 	/// Allocate and construct a new object instance.
 	/// @note Not thread-safe.

@@ -22,7 +22,7 @@ Error ScriptResource::load(const ResourceFilename& filename, [[maybe_unused]] Bo
 	ANKI_CHECK(file->readAllText(src));
 	m_source.create(getAllocator(), src);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

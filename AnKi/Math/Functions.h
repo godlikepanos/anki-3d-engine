@@ -15,10 +15,10 @@ namespace anki {
 /// @{
 
 /// Just PI.
-constexpr F32 PI = 3.14159265358979323846f;
+constexpr F32 kPi = 3.14159265358979323846f;
 
 /// Floating point epsilon.
-const F32 EPSILON = 1.0e-6f;
+constexpr F32 kEpsilonf = 1.0e-6f;
 
 template<typename T>
 inline T sin(const T rad)
@@ -125,7 +125,7 @@ inline constexpr T log2(const T x)
 }
 
 template<typename T, ANKI_ENABLE(std::is_floating_point<T>::value)>
-inline constexpr Bool isZero(const T f, const T e = EPSILON)
+inline constexpr Bool isZero(const T f, const T e = kEpsilonf)
 {
 	return absolute<T>(f) < e;
 }
@@ -139,13 +139,13 @@ inline constexpr Bool isZero(const T f)
 template<typename T, ANKI_ENABLE(std::is_floating_point<T>::value)>
 inline constexpr T toRad(const T degrees)
 {
-	return degrees * (PI / T(180));
+	return degrees * (kPi / T(180));
 }
 
 template<typename T>
 inline constexpr T toDegrees(const T rad)
 {
-	return rad * (T(180) / PI);
+	return rad * (T(180) / kPi);
 }
 
 template<typename T>
@@ -187,7 +187,7 @@ inline constexpr T linearInterpolate(const T& from, const T& to, F32 u)
 template<typename T>
 inline T cosInterpolate(const T& from, const T& to, F32 u)
 {
-	const F32 u2 = (1.0f - cos<F32>(u * PI)) / 2.0f;
+	const F32 u2 = (1.0f - cos<F32>(u * kPi)) / 2.0f;
 	return from * T(1.0f - u2) + to * T(u2);
 }
 

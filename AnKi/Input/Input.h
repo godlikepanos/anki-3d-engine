@@ -102,7 +102,7 @@ public:
 	template<typename TFunc>
 	void iteratePressedKeys(TFunc func) const
 	{
-		for(KeyCode i = KeyCode::FIRST; i < KeyCode::COUNT; ++i)
+		for(const KeyCode i : EnumIterable<KeyCode>())
 		{
 			if(m_keys[i] > 0)
 			{
@@ -142,21 +142,21 @@ protected:
 	/// - 0 times: unpressed
 	/// - 1 times: pressed once
 	/// - >1 times: Kept pressed 'n' times continuously
-	Array<U32, U(KeyCode::COUNT)> m_keys;
+	Array<U32, U(KeyCode::kCount)> m_keys;
 
 	/// Mouse btns. Supporting 3 btns & wheel. @see keys
-	Array<U32, U(MouseButton::COUNT)> m_mouseBtns;
+	Array<U32, U(MouseButton::kCount)> m_mouseBtns;
 	Vec2 m_mousePosNdc;
 	UVec2 m_mousePosWin;
 
-	Array<U32, U(TouchPointer::COUNT)> m_touchPointers;
-	Array<Vec2, U(TouchPointer::COUNT)> m_touchPointerPosNdc;
-	Array<UVec2, U(TouchPointer::COUNT)> m_touchPointerPosWin;
+	Array<U32, U(TouchPointer::kCount)> m_touchPointers;
+	Array<Vec2, U(TouchPointer::kCount)> m_touchPointerPosNdc;
+	Array<UVec2, U(TouchPointer::kCount)> m_touchPointerPosWin;
 
 	Array<U8, U(InputEvent::COUNT)> m_events;
 
 	/// The keybord input as ascii.
-	Array<char, U(KeyCode::COUNT)> m_textInput;
+	Array<char, U(KeyCode::kCount)> m_textInput;
 
 	Bool m_lockCurs = false;
 

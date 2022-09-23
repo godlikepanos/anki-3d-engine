@@ -67,7 +67,7 @@ public:
 
 	VkRenderPass getRenderPass(VkAttachmentLoadOp loadOp) const
 	{
-		const U idx = (loadOp == VK_ATTACHMENT_LOAD_OP_DONT_CARE) ? RPASS_LOAD_DONT_CARE : RPASS_LOAD_CLEAR;
+		const U idx = (loadOp == VK_ATTACHMENT_LOAD_OP_DONT_CARE) ? kLoadOpDontCare : kLoadOpClear;
 		return m_rpasses[idx];
 	}
 
@@ -77,12 +77,12 @@ private:
 
 	enum
 	{
-		RPASS_LOAD_CLEAR,
-		RPASS_LOAD_DONT_CARE,
-		RPASS_COUNT
+		kLoadOpClear,
+		kLoadOpDontCare,
+		kLoadOpCount
 	};
 
-	Array<VkRenderPass, RPASS_COUNT> m_rpasses = {};
+	Array<VkRenderPass, kLoadOpCount> m_rpasses = {};
 
 	MicroFencePtr m_fence;
 

@@ -129,7 +129,7 @@ private:
 	ClassWrapper<btSequentialImpulseConstraintSolver> m_solver;
 	ClassWrapper<btDiscreteDynamicsWorld> m_world;
 
-	Array<IntrusiveList<PhysicsObject>, U(PhysicsObjectType::COUNT)> m_objectLists;
+	Array<IntrusiveList<PhysicsObject>, U(PhysicsObjectType::kCount)> m_objectLists;
 	IntrusiveList<PhysicsObject> m_markedForCreation;
 	IntrusiveList<PhysicsObject> m_markedForDeletion;
 	Mutex m_markedMtx; ///< Locks the above

@@ -16,23 +16,23 @@ namespace anki {
 /// Graphics object type.
 enum class GrObjectType : U8
 {
-	BUFFER,
-	COMMAND_BUFFER,
-	FRAMEBUFFER,
-	OCCLUSION_QUERY,
-	TIMESTAMP_QUERY,
-	SAMPLER,
-	SHADER,
-	TEXTURE,
-	TEXTURE_VIEW,
-	SHADER_PROGRAM,
-	FENCE,
-	RENDER_GRAPH,
-	ACCELERATION_STRUCTURE,
-	GR_UPSCALER,
+	kBuffer,
+	kCommandBuffer,
+	kFramebuffer,
+	kOcclusionQuery,
+	kTimstampQuery,
+	kSampler,
+	kShader,
+	kTexture,
+	kTextureView,
+	kShaderProgram,
+	kFence,
+	kRenderGraph,
+	kAccelerationStructure,
+	kGrUpscaler,
 
-	COUNT,
-	FIRST = 0
+	kCount,
+	kFirst = 0
 };
 
 /// Base of all graphics objects.

@@ -6,6 +6,7 @@
 #include <AnKi/Util/System.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/StringList.h>
+#include <AnKi/Util/Thread.h>
 #include <cstdio>
 
 #if ANKI_POSIX
@@ -111,7 +112,7 @@ static Error getAndroidApkName(StringAuto& name)
 	if(fd < 0)
 	{
 		ANKI_UTIL_LOGE("open() failed for: %s", path.cstr());
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	Array<char, 128> tmp;
@@ -120,14 +121,14 @@ static Error getAndroidApkName(StringAuto& name)
 	{
 		close(fd);
 		ANKI_UTIL_LOGE("read() failed for: %s", path.cstr());
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	name.create('?', readBytes);
 	memcpy(&name[0], &tmp[0], readBytes);
 
 	close(fd);
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void* getAndroidCommandLineArguments(int& argc, char**& argv)
@@ -210,5 +211,10 @@ void cleanupGetAndroidCommandLineArguments(void* ptr)
 	freeAligned(ptr);
 }
 #endif
+
+void preMainInit()
+{
+	Thread::setCurrentThreadName("Main");
+}
 
 } // end namespace anki

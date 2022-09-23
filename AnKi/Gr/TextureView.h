@@ -29,7 +29,7 @@ public:
 		m_layerCount = tex->getLayerCount();
 		m_firstFace = 0;
 		m_faceCount =
-			(tex->getTextureType() == TextureType::CUBE_ARRAY || tex->getTextureType() == TextureType::CUBE) ? 6 : 1;
+			(tex->getTextureType() == TextureType::kCubeArray || tex->getTextureType() == TextureType::kCube) ? 6 : 1;
 
 		m_depthStencilAspect = getFormatInfo(tex->getFormat()).m_depthStencil;
 	}
@@ -40,7 +40,7 @@ public:
 	}
 
 	TextureViewInitInfo(TexturePtr tex, const TextureSurfaceInfo& surf,
-						DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE, CString name = {})
+						DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone, CString name = {})
 		: GrBaseInitInfo(name)
 		, m_texture(tex)
 	{
@@ -74,7 +74,7 @@ class TextureView : public GrObject
 	ANKI_GR_OBJECT
 
 public:
-	static constexpr GrObjectType CLASS_TYPE = GrObjectType::TEXTURE_VIEW;
+	static constexpr GrObjectType kClassType = GrObjectType::kTextureView;
 
 	TextureType getTextureType() const
 	{
@@ -93,23 +93,23 @@ public:
 	U32 getOrCreateBindlessTextureIndex();
 
 protected:
-	TextureType m_texType = TextureType::COUNT;
+	TextureType m_texType = TextureType::kCount;
 	TextureSubresourceInfo m_subresource;
 
 	/// Construct.
 	TextureView(GrManager* manager, CString name)
-		: GrObject(manager, CLASS_TYPE, name)
+		: GrObject(manager, kClassType, name)
 	{
-		m_subresource.m_depthStencilAspect = DepthStencilAspectBit::NONE;
+		m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kNone;
 
-		m_subresource.m_firstMipmap = MAX_U32;
-		m_subresource.m_mipmapCount = MAX_U32;
+		m_subresource.m_firstMipmap = kMaxU32;
+		m_subresource.m_mipmapCount = kMaxU32;
 
-		m_subresource.m_firstLayer = MAX_U32;
-		m_subresource.m_layerCount = MAX_U32;
+		m_subresource.m_firstLayer = kMaxU32;
+		m_subresource.m_layerCount = kMaxU32;
 
-		m_subresource.m_firstFace = MAX_U8;
-		m_subresource.m_faceCount = MAX_U8;
+		m_subresource.m_firstFace = kMaxU8;
+		m_subresource.m_faceCount = kMaxU8;
 	}
 
 	/// Destroy.
@@ -119,10 +119,10 @@ protected:
 
 	Bool initialized() const
 	{
-		return m_texType != TextureType::COUNT && m_subresource.m_firstMipmap < MAX_U32
-			   && m_subresource.m_mipmapCount < MAX_U32 && m_subresource.m_firstLayer < MAX_U32
-			   && m_subresource.m_layerCount < MAX_U32 && m_subresource.m_firstFace < MAX_U8
-			   && m_subresource.m_faceCount < MAX_U8;
+		return m_texType != TextureType::kCount && m_subresource.m_firstMipmap < kMaxU32
+			   && m_subresource.m_mipmapCount < kMaxU32 && m_subresource.m_firstLayer < kMaxU32
+			   && m_subresource.m_layerCount < kMaxU32 && m_subresource.m_firstFace < kMaxU8
+			   && m_subresource.m_faceCount < kMaxU8;
 	}
 
 private:

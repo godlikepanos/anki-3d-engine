@@ -32,7 +32,7 @@ Buffer* Buffer::newInstance(GrManager* manager, const BufferInitInfo& inf)
 			(void)oldState;
 			ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
 
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 

@@ -31,14 +31,15 @@ public:
 	void build(CanvasPtr ctx) override;
 
 private:
-	static constexpr U MAX_LOG_ITEMS = 64;
+	static constexpr U kMaxLogItems = 64;
 
 	class LogItem : public IntrusiveListEnabled<LogItem>
 	{
 	public:
-		const char* m_file;
-		const char* m_func;
-		const char* m_subsystem;
+		const Char* m_file;
+		const Char* m_func;
+		const Char* m_subsystem;
+		String m_threadName;
 		String m_msg;
 		I32 m_line;
 		LoggerMessageType m_type;

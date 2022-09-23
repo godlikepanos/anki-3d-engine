@@ -33,7 +33,7 @@ public:
 	{
 		updated = false;
 		static_cast<ModelNode&>(*info.m_node).feedbackUpdate();
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 
@@ -122,7 +122,7 @@ Error ModelNode::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unu
 {
 	if(ANKI_LIKELY(!m_deferredRenderComponentUpdate))
 	{
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	m_deferredRenderComponentUpdate = false;
@@ -152,7 +152,7 @@ Error ModelNode::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unu
 	// Now you can init the render components
 	initRenderComponents();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void ModelNode::initRenderComponents()
@@ -266,7 +266,7 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		for(U i = 0; i < modelInf.m_vertexAttributeCount; ++i)
 		{
 			const ModelVertexAttribute& attrib = modelInf.m_vertexAttributes[i];
-			ANKI_ASSERT(attrib.m_format != Format::NONE);
+			ANKI_ASSERT(attrib.m_format != Format::kNone);
 			cmdb->setVertexAttribute(U32(attrib.m_location), attrib.m_bufferBinding, attrib.m_format,
 									 attrib.m_relativeOffset);
 		}
@@ -275,15 +275,15 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		for(U32 i = 0; i < modelInf.m_vertexBufferBindingCount; ++i)
 		{
 			const ModelVertexBufferBinding& binding = modelInf.m_vertexBufferBindings[i];
-			cmdb->bindVertexBuffer(i, binding.m_buffer, binding.m_offset, binding.m_stride, VertexStepRate::VERTEX);
+			cmdb->bindVertexBuffer(i, binding.m_buffer, binding.m_offset, binding.m_stride, VertexStepRate::kVertex);
 		}
 
 		// Index buffer
-		cmdb->bindIndexBuffer(modelInf.m_indexBuffer, modelInf.m_indexBufferOffset, IndexType::U16);
+		cmdb->bindIndexBuffer(modelInf.m_indexBuffer, modelInf.m_indexBufferOffset, IndexType::kU16);
 
 		// Draw
-		cmdb->drawElements(PrimitiveTopology::TRIANGLES, modelInf.m_indexCount, instanceCount, modelInf.m_firstIndex, 0,
-						   0);
+		cmdb->drawElements(PrimitiveTopology::kTriangles, modelInf.m_indexCount, instanceCount, modelInf.m_firstIndex,
+						   0, 0);
 	}
 	else
 	{
@@ -299,28 +299,28 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 
 			// Set non uniform scale. Add a margin to avoid flickering
 			Mat3 nonUniScale = Mat3::getZero();
-			constexpr F32 MARGIN = 1.02f;
-			nonUniScale(0, 0) = scale.x() * MARGIN;
-			nonUniScale(1, 1) = scale.y() * MARGIN;
-			nonUniScale(2, 2) = scale.z() * MARGIN;
+			constexpr F32 kMargin = 1.02f;
+			nonUniScale(0, 0) = scale.x() * kMargin;
+			nonUniScale(1, 1) = scale.y() * kMargin;
+			nonUniScale(2, 2) = scale.z() * kMargin;
 
 			mvps[i] = ctx.m_viewProjectionMatrix * Mat4(tsl.xyz1(), Mat3::getIdentity() * nonUniScale, 1.0f);
 		}
 
-		const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);
+		const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDepthTestOn);
 		if(enableDepthTest)
 		{
-			cmdb->setDepthCompareOperation(CompareOperation::LESS);
+			cmdb->setDepthCompareOperation(CompareOperation::kLess);
 		}
 		else
 		{
-			cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);
+			cmdb->setDepthCompareOperation(CompareOperation::kAlways);
 		}
 
 		getSceneGraph().getDebugDrawer().drawCubes(
 			ConstWeakArray<Mat4>(mvps, instanceCount), Vec4(1.0f, 0.0f, 1.0f, 1.0f), 2.0f,
-			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), 2.0f,
-			*ctx.m_stagingGpuAllocator, cmdb);
+			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), 2.0f, *ctx.m_stagingGpuAllocator,
+			cmdb);
 
 		ctx.m_frameAllocator.deleteArray(mvps, instanceCount);
 
@@ -366,19 +366,19 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 				ctx.m_viewProjectionMatrix * Mat4(getFirstComponentOfType<MoveComponent>().getWorldTransform());
 			getSceneGraph().getDebugDrawer().drawLines(
 				ConstWeakArray<Mat4>(&mvp, 1), Vec4(1.0f), 20.0f,
-				ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), lines,
+				ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), lines,
 				*ctx.m_stagingGpuAllocator, cmdb);
 
 			getSceneGraph().getDebugDrawer().drawLines(
 				ConstWeakArray<Mat4>(&mvp, 1), Vec4(0.7f, 0.7f, 0.7f, 1.0f), 5.0f,
-				ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), chidlessLines,
+				ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), chidlessLines,
 				*ctx.m_stagingGpuAllocator, cmdb);
 		}
 
 		// Restore state
 		if(!enableDepthTest)
 		{
-			cmdb->setDepthCompareOperation(CompareOperation::LESS);
+			cmdb->setDepthCompareOperation(CompareOperation::kLess);
 		}
 	}
 }

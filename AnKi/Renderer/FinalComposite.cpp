@@ -37,13 +37,11 @@ Error FinalComposite::initInternal()
 	m_fbDescr.m_colorAttachmentCount = 1;
 	m_fbDescr.bake();
 
-	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_blueNoise));
-
 	// Progs
 	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/FinalComposite.ankiprogbin", m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-	variantInitInfo.addMutation("BLUE_NOISE", 1);
+	variantInitInfo.addMutation("FILM_GRAIN", (getConfig().getRFilmGrainStrength() > 0.0) ? 1 : 0);
 	variantInitInfo.addMutation("BLOOM_ENABLED", 1);
 	variantInitInfo.addConstant("LUT_SIZE", U32(LUT_SIZE));
 	variantInitInfo.addConstant("FB_SIZE", m_r->getPostProcessResolution());
@@ -63,7 +61,7 @@ Error FinalComposite::initInternal()
 	m_defaultVisualizeRenderTargetProg->getOrCreateVariant(variant);
 	m_defaultVisualizeRenderTargetGrProg = variant->getProgram();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error FinalComposite::init()
@@ -85,7 +83,7 @@ Error FinalComposite::loadColorGradingTextureImage(CString filename)
 	ANKI_ASSERT(m_lut->getHeight() == LUT_SIZE);
 	ANKI_ASSERT(m_lut->getDepth() == LUT_SIZE);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void FinalComposite::populateRenderGraph(RenderingContext& ctx)
@@ -100,26 +98,31 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 	});
 	pass.setFramebufferInfo(m_fbDescr, {ctx.m_outRenderTarget});
 
-	pass.newDependency(RenderPassDependency(ctx.m_outRenderTarget, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
+	pass.newDependency(RenderPassDependency(ctx.m_outRenderTarget, TextureUsageBit::kFramebufferWrite));
 
 	if(getConfig().getRDbgEnabled())
 	{
-		pass.newDependency(RenderPassDependency(m_r->getDbg().getRt(), TextureUsageBit::SAMPLED_FRAGMENT));
+		pass.newDependency(RenderPassDependency(m_r->getDbg().getRt(), TextureUsageBit::kSampledFragment));
 	}
 
-	pass.newDependency(RenderPassDependency(m_r->getScale().getTonemappedRt(), TextureUsageBit::SAMPLED_FRAGMENT));
-	pass.newDependency(RenderPassDependency(m_r->getBloom().getRt(), TextureUsageBit::SAMPLED_FRAGMENT));
+	pass.newDependency(RenderPassDependency(m_r->getScale().getTonemappedRt(), TextureUsageBit::kSampledFragment));
+	pass.newDependency(RenderPassDependency(m_r->getBloom().getRt(), TextureUsageBit::kSampledFragment));
 	pass.newDependency(
-		RenderPassDependency(m_r->getMotionVectors().getMotionVectorsRt(), TextureUsageBit::SAMPLED_FRAGMENT));
-	pass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_FRAGMENT));
+		RenderPassDependency(m_r->getMotionVectors().getMotionVectorsRt(), TextureUsageBit::kSampledFragment));
+	pass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::kSampledFragment));
 
-	RenderTargetHandle dbgRt;
-	Bool dbgRtValid;
+	Array<RenderTargetHandle, kMaxDebugRenderTargets> dbgRts;
 	ShaderProgramPtr debugProgram;
-	m_r->getCurrentDebugRenderTarget(dbgRt, dbgRtValid, debugProgram);
-	if(dbgRtValid)
+	const Bool hasDebugRt = m_r->getCurrentDebugRenderTarget(dbgRts, debugProgram);
+	if(hasDebugRt)
 	{
-		pass.newDependency(RenderPassDependency(dbgRt, TextureUsageBit::SAMPLED_FRAGMENT));
+		for(const RenderTargetHandle& handle : dbgRts)
+		{
+			if(handle.isValid())
+			{
+				pass.newDependency(RenderPassDependency(handle, TextureUsageBit::kSampledFragment));
+			}
+		}
 	}
 }
 
@@ -127,17 +130,17 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	const Bool dbgEnabled = getConfig().getRDbgEnabled();
-	RenderTargetHandle dbgRt;
-	Bool dbgRtValid;
+
+	Array<RenderTargetHandle, kMaxDebugRenderTargets> dbgRts;
 	ShaderProgramPtr optionalDebugProgram;
-	m_r->getCurrentDebugRenderTarget(dbgRt, dbgRtValid, optionalDebugProgram);
+	const Bool hasDebugRt = m_r->getCurrentDebugRenderTarget(dbgRts, optionalDebugProgram);
 
 	// Bind program
-	if(dbgRtValid && optionalDebugProgram.isCreated())
+	if(hasDebugRt && optionalDebugProgram.isCreated())
 	{
 		cmdb->bindShaderProgram(optionalDebugProgram);
 	}
-	else if(dbgRtValid)
+	else if(hasDebugRt)
 	{
 		cmdb->bindShaderProgram(m_defaultVisualizeRenderTargetGrProg);
 	}
@@ -147,7 +150,7 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 	}
 
 	// Bind stuff
-	if(!dbgRtValid)
+	if(!hasDebugRt)
 	{
 		cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
 		cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);
@@ -157,23 +160,30 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 
 		rgraphCtx.bindColorTexture(0, 4, m_r->getBloom().getRt());
 		cmdb->bindTexture(0, 5, m_lut->getTextureView());
-		cmdb->bindTexture(0, 6, m_blueNoise->getTextureView());
-		rgraphCtx.bindColorTexture(0, 7, m_r->getMotionVectors().getMotionVectorsRt());
-		rgraphCtx.bindTexture(0, 8, m_r->getGBuffer().getDepthRt(),
-							  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+		rgraphCtx.bindColorTexture(0, 6, m_r->getMotionVectors().getMotionVectorsRt());
+		rgraphCtx.bindTexture(0, 7, m_r->getGBuffer().getDepthRt(),
+							  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
 		if(dbgEnabled)
 		{
-			rgraphCtx.bindColorTexture(0, 9, m_r->getDbg().getRt());
+			rgraphCtx.bindColorTexture(0, 8, m_r->getDbg().getRt());
 		}
 
-		const UVec4 frameCount(m_r->getFrameCount() & MAX_U32);
-		cmdb->setPushConstants(&frameCount, sizeof(frameCount));
+		const UVec4 pc(0, 0, floatBitsToUint(getConfig().getRFilmGrainStrength()), m_r->getFrameCount() & kMaxU32);
+		cmdb->setPushConstants(&pc, sizeof(pc));
 	}
 	else
 	{
-		rgraphCtx.bindColorTexture(0, 0, dbgRt);
-		cmdb->bindSampler(0, 1, m_r->getSamplers().m_nearestNearestClamp);
+		cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
+
+		U32 count = 1;
+		for(const RenderTargetHandle& handle : dbgRts)
+		{
+			if(handle.isValid())
+			{
+				rgraphCtx.bindColorTexture(0, count++, handle);
+			}
+		}
 	}
 
 	cmdb->setViewport(0, 0, m_r->getPostProcessResolution().x(), m_r->getPostProcessResolution().y());

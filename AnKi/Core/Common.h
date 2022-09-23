@@ -10,9 +10,9 @@
 
 namespace anki {
 
-#define ANKI_CORE_LOGI(...) ANKI_LOG("CORE", NORMAL, __VA_ARGS__)
-#define ANKI_CORE_LOGE(...) ANKI_LOG("CORE", ERROR, __VA_ARGS__)
-#define ANKI_CORE_LOGW(...) ANKI_LOG("CORE", WARNING, __VA_ARGS__)
-#define ANKI_CORE_LOGF(...) ANKI_LOG("CORE", FATAL, __VA_ARGS__)
+#define ANKI_CORE_LOGI(...) ANKI_LOG("CORE", kNormal, __VA_ARGS__)
+#define ANKI_CORE_LOGE(...) ANKI_LOG("CORE", kError, __VA_ARGS__)
+#define ANKI_CORE_LOGW(...) ANKI_LOG("CORE", kWarning, __VA_ARGS__)
+#define ANKI_CORE_LOGF(...) ANKI_LOG("CORE", kFatal, __VA_ARGS__)
 
 } // end namespace anki

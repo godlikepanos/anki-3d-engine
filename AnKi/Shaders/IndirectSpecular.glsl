@@ -155,7 +155,7 @@ void main()
 
 		// Read the light buffer
 		Vec3 ssrColor = textureLod(u_lightBufferRt, u_trilinearClampSampler, hitPoint.xy, lod).rgb;
-		ssrColor = clamp(ssrColor, 0.0, MAX_F32); // Fix the value just in case
+		ssrColor = clamp(ssrColor, 0.0, kMaxF32); // Fix the value just in case
 
 		outColor = ssrColor;
 	}

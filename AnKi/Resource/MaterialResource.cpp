@@ -10,10 +10,10 @@
 
 namespace anki {
 
-inline constexpr Array<CString, U32(BuiltinMutatorId::COUNT)> BUILTIN_MUTATOR_NAMES = {
+inline constexpr Array<CString, U32(BuiltinMutatorId::kCount)> BUILTIN_MUTATOR_NAMES = {
 	{"NONE", "ANKI_TECHNIQUE", "ANKI_LOD", "ANKI_BONES", "ANKI_VELOCITY"}};
 
-inline constexpr Array<CString, U(RenderingTechnique::COUNT)> TECHNIQUE_NAMES = {
+inline constexpr Array<CString, U(RenderingTechnique::kCount)> TECHNIQUE_NAMES = {
 	{"GBuffer", "GBufferEarlyZ", "Shadow", "Forward", "RtShadow"}};
 
 // This is some trickery to select calling between XmlElement::getAttributeNumber and XmlElement::getAttributeNumbers
@@ -23,20 +23,20 @@ template<typename T>
 class IsShaderVarDataTypeAnArray
 {
 public:
-	static constexpr Bool VALUE = false;
+	static constexpr Bool kValue = false;
 };
 
-#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount, isIntagralType) \
+#define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) \
 	template<> \
 	class IsShaderVarDataTypeAnArray<type> \
 	{ \
 	public: \
-		static constexpr Bool VALUE = rowCount * columnCount > 1; \
+		static constexpr Bool kValue = rowCount * columnCount > 1; \
 	};
 #include <AnKi/Gr/ShaderVariableDataType.defs.h>
 #undef ANKI_SVDT_MACRO
 
-template<typename T, Bool isArray = IsShaderVarDataTypeAnArray<T>::VALUE>
+template<typename T, Bool isArray = IsShaderVarDataTypeAnArray<T>::kValue>
 class GetAttribute
 {
 public:
@@ -72,7 +72,7 @@ class MaterialResource::Program
 public:
 	ShaderProgramResourcePtr m_prog;
 
-	mutable Array4d<MaterialVariant, U(RenderingTechnique::COUNT), MAX_LOD_COUNT, 2, 2> m_variantMatrix;
+	mutable Array4d<MaterialVariant, U(RenderingTechnique::kCount), MAX_LOD_COUNT, 2, 2> m_variantMatrix;
 	mutable RWMutex m_variantMatrixMtx;
 
 	DynamicArray<PartialMutation> m_partialMutation; ///< Only with the non-builtins.
@@ -197,12 +197,12 @@ Error MaterialResource::load(const ResourceFilename& filename, Bool async)
 	{
 		ANKI_RESOURCE_LOGE("Forgot to set a default value in %u input variables",
 						   U32(m_vars.getSize() - varsSet.getEnabledBitCount()));
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	prefillLocalUniforms();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error MaterialResource::parseShaderProgram(XmlElement shaderProgramEl, Bool async)
@@ -214,7 +214,7 @@ Error MaterialResource::parseShaderProgram(XmlElement shaderProgramEl, Bool asyn
 	if(!getManager().getGrManager().getDeviceCapabilities().m_rayTracingEnabled && shaderName.find("Rt") == 0)
 	{
 		// Skip RT programs when RT is disabled
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	StringAuto fname(getTempAllocator());
@@ -237,7 +237,7 @@ Error MaterialResource::parseShaderProgram(XmlElement shaderProgramEl, Bool asyn
 	// Create the vars
 	ANKI_CHECK(createVars(prog));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error MaterialResource::createVars(Program& prog)
@@ -259,7 +259,7 @@ Error MaterialResource::createVars(Program& prog)
 
 	if(localUniformsStruct == nullptr)
 	{
-		prog.m_localUniformsStructIdx = MAX_U32;
+		prog.m_localUniformsStructIdx = kMaxU32;
 	}
 
 	// Iterate all members of the local uniforms struct to add its members
@@ -271,7 +271,7 @@ Error MaterialResource::createVars(Program& prog)
 
 		// Check if it needs to be added
 		Bool addIt = false;
-		if(member.m_dependentMutator == MAX_U32)
+		if(member.m_dependentMutator == kMaxU32)
 		{
 			addIt = true;
 		}
@@ -295,7 +295,7 @@ Error MaterialResource::createVars(Program& prog)
 			{
 				ANKI_RESOURCE_LOGE("Incorrect combination of member variable %s and dependent mutator %s",
 								   memberName.cstr(), binary.m_mutators[member.m_dependentMutator].m_name.getBegin());
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 		}
 
@@ -307,7 +307,7 @@ Error MaterialResource::createVars(Program& prog)
 				if(var->m_dataType != member.m_type || var->m_offsetInLocalUniforms != offsetof)
 				{
 					ANKI_RESOURCE_LOGE("Member variable doesn't match between techniques: %s", memberName.cstr());
-					return Error::USER_DATA;
+					return Error::kUserData;
 				}
 			}
 			else
@@ -331,7 +331,7 @@ Error MaterialResource::createVars(Program& prog)
 					{
 						ANKI_RESOURCE_LOGE("Member %s in AnKiLocalUniforms overlaps with %s. Check your shaders",
 										   memberName.cstr(), otherVar.m_name.cstr());
-						return Error::USER_DATA;
+						return Error::kUserData;
 					}
 				}
 
@@ -356,7 +356,7 @@ Error MaterialResource::createVars(Program& prog)
 		initInfo.addMutation(m.m_mutator->m_name, m.m_value);
 	}
 
-	Array<const ShaderProgramResourceMutator*, U(BuiltinMutatorId::COUNT)> mutatorPtrs = {};
+	Array<const ShaderProgramResourceMutator*, U(BuiltinMutatorId::kCount)> mutatorPtrs = {};
 	for(BuiltinMutatorId id : EnumIterable<BuiltinMutatorId>())
 	{
 		mutatorPtrs[id] = prog.m_prog->tryFindMutator(BUILTIN_MUTATOR_NAMES[id]);
@@ -393,7 +393,7 @@ Error MaterialResource::createVars(Program& prog)
 		for(const ShaderProgramBinaryOpaqueInstance& instance : variant->getBinaryVariant().m_opaques)
 		{
 			const ShaderProgramBinaryOpaque& opaque = binary.m_opaques[instance.m_index];
-			if(opaque.m_type == ShaderVariableDataType::SAMPLER)
+			if(opaque.m_type == ShaderVariableDataType::kSampler)
 			{
 				continue;
 			}
@@ -406,7 +406,7 @@ Error MaterialResource::createVars(Program& prog)
 				if(var->m_dataType != opaque.m_type || var->m_opaqueBinding != opaque.m_binding)
 				{
 					ANKI_RESOURCE_LOGE("Opaque variable doesn't match between techniques: %s", opaqueName.cstr());
-					return Error::USER_DATA;
+					return Error::kUserData;
 				}
 			}
 			else
@@ -423,7 +423,7 @@ Error MaterialResource::createVars(Program& prog)
 					{
 						ANKI_RESOURCE_LOGE("Opaque variable %s has the same binding as %s. Check your shaders",
 										   otherVar.m_name.cstr(), opaqueName.cstr());
-						return Error::USER_DATA;
+						return Error::kUserData;
 					}
 				}
 
@@ -443,7 +443,7 @@ Error MaterialResource::createVars(Program& prog)
 #undef ANKI_LOOP
 #undef ANKI_LOOP_END
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error MaterialResource::parseMutators(XmlElement mutatorsEl, Program& prog)
@@ -468,7 +468,7 @@ Error MaterialResource::parseMutators(XmlElement mutatorsEl, Program& prog)
 		if(mutatorName.isEmpty())
 		{
 			ANKI_RESOURCE_LOGE("Mutator name is empty");
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 
 		for(BuiltinMutatorId id : EnumIterable<BuiltinMutatorId>())
@@ -481,14 +481,14 @@ Error MaterialResource::parseMutators(XmlElement mutatorsEl, Program& prog)
 			if(mutatorName == BUILTIN_MUTATOR_NAMES[id])
 			{
 				ANKI_RESOURCE_LOGE("Materials shouldn't list builtin mutators: %s", mutatorName.cstr());
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 		}
 
 		if(mutatorName.find("ANKI_") == 0)
 		{
 			ANKI_RESOURCE_LOGE("Mutators can't start with ANKI_: %s", mutatorName.cstr());
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 
 		// value
@@ -500,13 +500,13 @@ Error MaterialResource::parseMutators(XmlElement mutatorsEl, Program& prog)
 		if(!pmutation.m_mutator)
 		{
 			ANKI_RESOURCE_LOGE("Mutator not found in program %s", &mutatorName[0]);
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 
 		if(!pmutation.m_mutator->valueExists(pmutation.m_value))
 		{
 			ANKI_RESOURCE_LOGE("Value %d is not part of the mutator %s", pmutation.m_value, mutatorName.cstr());
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 
 		// Advance
@@ -516,7 +516,7 @@ Error MaterialResource::parseMutators(XmlElement mutatorsEl, Program& prog)
 
 	ANKI_ASSERT(mutatorCount == prog.m_partialMutation.getSize());
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error MaterialResource::findBuiltinMutators(Program& prog)
@@ -531,10 +531,10 @@ Error MaterialResource::findBuiltinMutators(Program& prog)
 		for(U32 i = 0; i < techniqueMutator->m_values.getSize(); ++i)
 		{
 			const MutatorValue mvalue = techniqueMutator->m_values[i];
-			if(mvalue >= MutatorValue(RenderingTechnique::COUNT) || mvalue < MutatorValue(RenderingTechnique::FIRST))
+			if(mvalue >= MutatorValue(RenderingTechnique::kCount) || mvalue < MutatorValue(RenderingTechnique::kFirst))
 			{
 				ANKI_RESOURCE_LOGE("Mutator %s has a wrong value %d", techniqueMutatorName.cstr(), mvalue);
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 
 			const RenderingTechnique techniqueId = RenderingTechnique(mvalue);
@@ -546,7 +546,7 @@ Error MaterialResource::findBuiltinMutators(Program& prog)
 			if(!!(m_techniquesMask & mask))
 			{
 				ANKI_RESOURCE_LOGE("The %s technique appeared more than once", TECHNIQUE_NAMES[mvalue].cstr());
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 			m_techniquesMask |= mask;
 		}
@@ -558,7 +558,7 @@ Error MaterialResource::findBuiltinMutators(Program& prog)
 	{
 		ANKI_RESOURCE_LOGE("Mutator %s should be present in every shader program referenced by a material",
 						   techniqueMutatorName.cstr());
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	// ANKI_LOD
@@ -570,7 +570,7 @@ Error MaterialResource::findBuiltinMutators(Program& prog)
 		{
 			ANKI_RESOURCE_LOGE("Mutator %s should have at least %u values in the program", lodMutatorName.cstr(),
 							   U32(MAX_LOD_COUNT));
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 
 		for(U32 i = 0; i < lodMutator->m_values.getSize(); ++i)
@@ -579,7 +579,7 @@ Error MaterialResource::findBuiltinMutators(Program& prog)
 			{
 				ANKI_RESOURCE_LOGE("Values of the %s mutator in the program are not the expected",
 								   lodMutatorName.cstr());
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 		}
 
@@ -596,7 +596,7 @@ Error MaterialResource::findBuiltinMutators(Program& prog)
 		if(bonesMutator->m_values.getSize() != 2)
 		{
 			ANKI_RESOURCE_LOGE("Mutator %s should have 2 values in the program", bonesMutatorName.cstr());
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 
 		for(U32 i = 0; i < bonesMutator->m_values.getSize(); ++i)
@@ -605,7 +605,7 @@ Error MaterialResource::findBuiltinMutators(Program& prog)
 			{
 				ANKI_RESOURCE_LOGE("Values of the %s mutator in the program are not the expected",
 								   bonesMutatorName.cstr());
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 		}
 
@@ -629,7 +629,7 @@ Error MaterialResource::findBuiltinMutators(Program& prog)
 		{
 			ANKI_RESOURCE_LOGE("The shader has %s mutation but not the storage buffers for the bone transforms",
 							   bonesMutatorName.cstr());
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 
 		m_supportsSkinning = true;
@@ -644,7 +644,7 @@ Error MaterialResource::findBuiltinMutators(Program& prog)
 		if(velocityMutator->m_values.getSize() != 2)
 		{
 			ANKI_RESOURCE_LOGE("Mutator %s should have 2 values in the program", velocityMutatorName.cstr());
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 
 		for(U32 i = 0; i < velocityMutator->m_values.getSize(); ++i)
@@ -653,7 +653,7 @@ Error MaterialResource::findBuiltinMutators(Program& prog)
 			{
 				ANKI_RESOURCE_LOGE("Values of the %s mutator in the program are not the expected",
 								   velocityMutatorName.cstr());
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 		}
 
@@ -664,10 +664,10 @@ Error MaterialResource::findBuiltinMutators(Program& prog)
 	if(prog.m_partialMutation.getSize() + builtinMutatorCount != prog.m_prog->getMutators().getSize())
 	{
 		ANKI_RESOURCE_LOGE("Some mutatators are unacounted for");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error MaterialResource::parseInput(XmlElement inputEl, Bool async, BitSet<128>& varsSet)
@@ -681,7 +681,7 @@ Error MaterialResource::parseInput(XmlElement inputEl, Bool async, BitSet<128>& 
 	if(!foundVar)
 	{
 		ANKI_RESOURCE_LOGE("Input name is wrong, variable not found: %s", varName.cstr());
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	// Set check
@@ -689,7 +689,7 @@ Error MaterialResource::parseInput(XmlElement inputEl, Bool async, BitSet<128>& 
 	if(varsSet.get(idx))
 	{
 		ANKI_RESOURCE_LOGE("Input already has a value: %s", varName.cstr());
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 	varsSet.set(idx);
 
@@ -702,7 +702,7 @@ Error MaterialResource::parseInput(XmlElement inputEl, Bool async, BitSet<128>& 
 
 		m_textures.emplaceBack(getAllocator(), foundVar->m_image->getTexture());
 	}
-	else if(foundVar->m_dataType == ShaderVariableDataType::U32)
+	else if(foundVar->m_dataType == ShaderVariableDataType::kU32)
 	{
 		// U32 is a bit special. It might be a number or a bindless texture
 
@@ -736,8 +736,8 @@ Error MaterialResource::parseInput(XmlElement inputEl, Bool async, BitSet<128>& 
 	{
 		switch(foundVar->m_dataType)
 		{
-#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount, isIntagralType) \
-	case ShaderVariableDataType::capital: \
+#define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) \
+	case ShaderVariableDataType::k##type: \
 		ANKI_CHECK(GetAttribute<type>()(inputEl, foundVar->ANKI_CONCATENATE(m_, type))); \
 		break;
 #include <AnKi/Gr/ShaderVariableDataType.defs.h>
@@ -748,7 +748,7 @@ Error MaterialResource::parseInput(XmlElement inputEl, Bool async, BitSet<128>& 
 		}
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void MaterialResource::prefillLocalUniforms()
@@ -770,8 +770,8 @@ void MaterialResource::prefillLocalUniforms()
 
 		switch(var.m_dataType)
 		{
-#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount, isIntagralType) \
-	case ShaderVariableDataType::capital: \
+#define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) \
+	case ShaderVariableDataType::k##type: \
 		ANKI_ASSERT(var.m_offsetInLocalUniforms + sizeof(type) <= m_localUniformsSize); \
 		memcpy(static_cast<U8*>(m_prefilledLocalUniforms) + var.m_offsetInLocalUniforms, &var.m_##type, sizeof(type)); \
 		break;
@@ -787,7 +787,7 @@ void MaterialResource::prefillLocalUniforms()
 const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& key_) const
 {
 	RenderingKey key = key_;
-	ANKI_ASSERT(m_techniqueToProgram[key.getRenderingTechnique()] != MAX_U8);
+	ANKI_ASSERT(m_techniqueToProgram[key.getRenderingTechnique()] != kMaxU8);
 	const Program& prog = m_programs[m_techniqueToProgram[key.getRenderingTechnique()]];
 
 	// Sanitize the key

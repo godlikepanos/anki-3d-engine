@@ -25,7 +25,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 	ANKI_ASSERT(inf.isValid());
 	m_type = inf.m_type;
 
-	if(m_type == AccelerationStructureType::BOTTOM_LEVEL)
+	if(m_type == AccelerationStructureType::kBottomLevel)
 	{
 		// Geom
 		VkAccelerationStructureGeometryKHR& geom = m_geometry;
@@ -61,7 +61,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 
 		// Create the buffer that holds the AS memory
 		BufferInitInfo bufferInit(inf.getName());
-		bufferInit.m_usage = PrivateBufferUsageBit::ACCELERATION_STRUCTURE;
+		bufferInit.m_usage = PrivateBufferUsageBit::kAccelerationStructure;
 		bufferInit.m_size = buildSizes.accelerationStructureSize;
 		m_asBuffer = getManager().newBuffer(bufferInit);
 
@@ -94,12 +94,12 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 
 		BufferInitInfo buffInit("AS instances");
 		buffInit.m_size = sizeof(VkAccelerationStructureInstanceKHR) * inf.m_topLevel.m_instances.getSize();
-		buffInit.m_usage = PrivateBufferUsageBit::ACCELERATION_STRUCTURE;
-		buffInit.m_mapAccess = BufferMapAccessBit::WRITE;
+		buffInit.m_usage = PrivateBufferUsageBit::kAccelerationStructure;
+		buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
 		m_topLevelInfo.m_instancesBuffer = getManager().newBuffer(buffInit);
 
 		VkAccelerationStructureInstanceKHR* instances = static_cast<VkAccelerationStructureInstanceKHR*>(
-			m_topLevelInfo.m_instancesBuffer->map(0, MAX_PTR_SIZE, BufferMapAccessBit::WRITE));
+			m_topLevelInfo.m_instancesBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 		for(U32 i = 0; i < inf.m_topLevel.m_instances.getSize(); ++i)
 		{
 			VkAccelerationStructureInstanceKHR& outInst = instances[i];
@@ -119,7 +119,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 			m_topLevelInfo.m_blas.emplaceBack(getAllocator(), inf.m_topLevel.m_instances[i].m_bottomLevel);
 		}
 
-		m_topLevelInfo.m_instancesBuffer->flush(0, MAX_PTR_SIZE);
+		m_topLevelInfo.m_instancesBuffer->flush(0, kMaxPtrSize);
 		m_topLevelInfo.m_instancesBuffer->unmap();
 
 		// Geom
@@ -150,7 +150,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 
 		// Create the buffer that holds the AS memory
 		BufferInitInfo bufferInit(inf.getName());
-		bufferInit.m_usage = PrivateBufferUsageBit::ACCELERATION_STRUCTURE;
+		bufferInit.m_usage = PrivateBufferUsageBit::kAccelerationStructure;
 		bufferInit.m_size = buildSizes.accelerationStructureSize;
 		m_asBuffer = getManager().newBuffer(bufferInit);
 
@@ -171,7 +171,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 		m_rangeInfo.primitiveCount = inf.m_topLevel.m_instances.getSize();
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void AccelerationStructureImpl::computeBarrierInfo(AccelerationStructureUsageBit before,
@@ -183,44 +183,44 @@ void AccelerationStructureImpl::computeBarrierInfo(AccelerationStructureUsageBit
 	srcStages = 0;
 	srcAccesses = 0;
 
-	if(before == AccelerationStructureUsageBit::NONE)
+	if(before == AccelerationStructureUsageBit::kNone)
 	{
 		srcStages |= VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 		srcAccesses |= 0;
 	}
 
-	if(!!(before & AccelerationStructureUsageBit::BUILD))
+	if(!!(before & AccelerationStructureUsageBit::kBuild))
 	{
 		srcStages |= VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
 		srcAccesses |= VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
 	}
 
-	if(!!(before & AccelerationStructureUsageBit::ATTACH))
+	if(!!(before & AccelerationStructureUsageBit::kAttach))
 	{
 		srcStages |= VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
 		srcAccesses |= VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
 	}
 
-	if(!!(before & AccelerationStructureUsageBit::GEOMETRY_READ))
+	if(!!(before & AccelerationStructureUsageBit::kGeometryRead))
 	{
 		srcStages |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT
 					 | VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT | VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
 		srcAccesses |= VK_ACCESS_MEMORY_READ_BIT; // READ_BIT is the only viable solution by elimination
 	}
 
-	if(!!(before & AccelerationStructureUsageBit::FRAGMENT_READ))
+	if(!!(before & AccelerationStructureUsageBit::kFragmentRead))
 	{
 		srcStages |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		srcAccesses |= VK_ACCESS_MEMORY_READ_BIT;
 	}
 
-	if(!!(before & AccelerationStructureUsageBit::COMPUTE_READ))
+	if(!!(before & AccelerationStructureUsageBit::kComputeRead))
 	{
 		srcStages |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 		srcAccesses |= VK_ACCESS_MEMORY_READ_BIT;
 	}
 
-	if(!!(before & AccelerationStructureUsageBit::TRACE_RAYS_READ))
+	if(!!(before & AccelerationStructureUsageBit::kTraceRaysRead))
 	{
 		srcStages |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
 		srcAccesses |= VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
@@ -230,38 +230,38 @@ void AccelerationStructureImpl::computeBarrierInfo(AccelerationStructureUsageBit
 	dstStages = 0;
 	dstAccesses = 0;
 
-	if(!!(after & AccelerationStructureUsageBit::BUILD))
+	if(!!(after & AccelerationStructureUsageBit::kBuild))
 	{
 		dstStages |= VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
 		dstAccesses |= VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
 	}
 
-	if(!!(after & AccelerationStructureUsageBit::ATTACH))
+	if(!!(after & AccelerationStructureUsageBit::kAttach))
 	{
 		dstStages |= VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
 		dstAccesses |= VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
 	}
 
-	if(!!(after & AccelerationStructureUsageBit::GEOMETRY_READ))
+	if(!!(after & AccelerationStructureUsageBit::kGeometryRead))
 	{
 		dstStages |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT
 					 | VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT | VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
 		dstAccesses |= VK_ACCESS_MEMORY_READ_BIT; // READ_BIT is the only viable solution by elimination
 	}
 
-	if(!!(after & AccelerationStructureUsageBit::FRAGMENT_READ))
+	if(!!(after & AccelerationStructureUsageBit::kFragmentRead))
 	{
 		dstStages |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		dstAccesses |= VK_ACCESS_MEMORY_READ_BIT;
 	}
 
-	if(!!(after & AccelerationStructureUsageBit::COMPUTE_READ))
+	if(!!(after & AccelerationStructureUsageBit::kComputeRead))
 	{
 		dstStages |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 		dstAccesses |= VK_ACCESS_MEMORY_READ_BIT;
 	}
 
-	if(!!(after & AccelerationStructureUsageBit::TRACE_RAYS_READ))
+	if(!!(after & AccelerationStructureUsageBit::kTraceRaysRead))
 	{
 		dstStages |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
 		dstAccesses |= VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;

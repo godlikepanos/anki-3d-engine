@@ -85,20 +85,20 @@ template<typename T>
 class IsShaderVarDataTypeAMatrix
 {
 public:
-	static constexpr Bool VALUE = false;
+	static constexpr Bool kValue = false;
 };
 
-#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount, isIntagralType) \
+#define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) \
 	template<> \
 	class IsShaderVarDataTypeAMatrix<type> \
 	{ \
 	public: \
-		static constexpr Bool VALUE = rowCount * columnCount > 4; \
+		static constexpr Bool kValue = rowCount * columnCount > 4; \
 	};
 #include <AnKi/Gr/ShaderVariableDataType.defs.h>
 #undef ANKI_SVDT_MACRO
 
-template<typename T, Bool isMatrix = IsShaderVarDataTypeAMatrix<T>::VALUE>
+template<typename T, Bool isMatrix = IsShaderVarDataTypeAMatrix<T>::kValue>
 class WriteShaderBlockMemory
 {
 public:
@@ -128,8 +128,8 @@ void writeShaderBlockMemory(ShaderVariableDataType type, const ShaderVariableBlo
 {
 	switch(type)
 	{
-#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount, isIntagralType) \
-	case ShaderVariableDataType::capital: \
+#define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) \
+	case ShaderVariableDataType::k##type: \
 		WriteShaderBlockMemory<type>()(varBlkInfo, elements, elementsCount, buffBegin, buffEnd); \
 		break;
 #include <AnKi/Gr/ShaderVariableDataType.defs.h>

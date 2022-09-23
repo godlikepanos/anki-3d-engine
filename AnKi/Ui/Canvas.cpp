@@ -49,13 +49,13 @@ Error Canvas::init(FontPtr font, U32 fontHeight, U32 width, U32 height)
 
 	// Sampler
 	SamplerInitInfo samplerInit("Canvas");
-	samplerInit.m_minMagFilter = SamplingFilter::LINEAR;
-	samplerInit.m_mipmapFilter = SamplingFilter::LINEAR;
-	samplerInit.m_addressing = SamplingAddressing::REPEAT;
+	samplerInit.m_minMagFilter = SamplingFilter::kLinear;
+	samplerInit.m_mipmapFilter = SamplingFilter::kLinear;
+	samplerInit.m_addressing = SamplingAddressing::kRepeat;
 	m_linearLinearRepeatSampler = m_manager->getGrManager().newSampler(samplerInit);
 
-	samplerInit.m_minMagFilter = SamplingFilter::NEAREST;
-	samplerInit.m_mipmapFilter = SamplingFilter::NEAREST;
+	samplerInit.m_minMagFilter = SamplingFilter::kNearest;
+	samplerInit.m_mipmapFilter = SamplingFilter::kNearest;
 	m_nearestNearestRepeatSampler = m_manager->getGrManager().newSampler(samplerInit);
 
 	// Allocator
@@ -72,35 +72,35 @@ Error Canvas::init(FontPtr font, U32 fontHeight, U32 width, U32 height)
 
 #define ANKI_HANDLE(ak, im) ImGui::GetIO().KeyMap[im] = static_cast<int>(ak);
 
-	ANKI_HANDLE(KeyCode::TAB, ImGuiKey_Tab)
-	ANKI_HANDLE(KeyCode::LEFT, ImGuiKey_LeftArrow)
-	ANKI_HANDLE(KeyCode::RIGHT, ImGuiKey_RightArrow)
-	ANKI_HANDLE(KeyCode::UP, ImGuiKey_UpArrow)
-	ANKI_HANDLE(KeyCode::DOWN, ImGuiKey_DownArrow)
-	ANKI_HANDLE(KeyCode::PAGEUP, ImGuiKey_PageUp)
-	ANKI_HANDLE(KeyCode::PAGEDOWN, ImGuiKey_PageDown)
-	ANKI_HANDLE(KeyCode::HOME, ImGuiKey_Home)
-	ANKI_HANDLE(KeyCode::END, ImGuiKey_End)
-	ANKI_HANDLE(KeyCode::INSERT, ImGuiKey_Insert)
-	ANKI_HANDLE(KeyCode::DELETE, ImGuiKey_Delete)
-	ANKI_HANDLE(KeyCode::BACKSPACE, ImGuiKey_Backspace)
-	ANKI_HANDLE(KeyCode::SPACE, ImGuiKey_Space)
-	ANKI_HANDLE(KeyCode::RETURN, ImGuiKey_Enter)
+	ANKI_HANDLE(KeyCode::kTab, ImGuiKey_Tab)
+	ANKI_HANDLE(KeyCode::kLeft, ImGuiKey_LeftArrow)
+	ANKI_HANDLE(KeyCode::kRight, ImGuiKey_RightArrow)
+	ANKI_HANDLE(KeyCode::kUp, ImGuiKey_UpArrow)
+	ANKI_HANDLE(KeyCode::kDown, ImGuiKey_DownArrow)
+	ANKI_HANDLE(KeyCode::kPageUp, ImGuiKey_PageUp)
+	ANKI_HANDLE(KeyCode::kPageDown, ImGuiKey_PageDown)
+	ANKI_HANDLE(KeyCode::kHome, ImGuiKey_Home)
+	ANKI_HANDLE(KeyCode::kEnd, ImGuiKey_End)
+	ANKI_HANDLE(KeyCode::kInsert, ImGuiKey_Insert)
+	ANKI_HANDLE(KeyCode::kDelete, ImGuiKey_Delete)
+	ANKI_HANDLE(KeyCode::kBackspace, ImGuiKey_Backspace)
+	ANKI_HANDLE(KeyCode::kSpace, ImGuiKey_Space)
+	ANKI_HANDLE(KeyCode::kReturn, ImGuiKey_Enter)
 	// ANKI_HANDLE(KeyCode::RETURN2, ImGuiKey_Enter)
-	ANKI_HANDLE(KeyCode::ESCAPE, ImGuiKey_Escape)
-	ANKI_HANDLE(KeyCode::A, ImGuiKey_A)
-	ANKI_HANDLE(KeyCode::C, ImGuiKey_C)
-	ANKI_HANDLE(KeyCode::V, ImGuiKey_V)
-	ANKI_HANDLE(KeyCode::X, ImGuiKey_X)
-	ANKI_HANDLE(KeyCode::Y, ImGuiKey_Y)
-	ANKI_HANDLE(KeyCode::Z, ImGuiKey_Z)
+	ANKI_HANDLE(KeyCode::kEscape, ImGuiKey_Escape)
+	ANKI_HANDLE(KeyCode::kA, ImGuiKey_A)
+	ANKI_HANDLE(KeyCode::kC, ImGuiKey_C)
+	ANKI_HANDLE(KeyCode::kV, ImGuiKey_V)
+	ANKI_HANDLE(KeyCode::kX, ImGuiKey_X)
+	ANKI_HANDLE(KeyCode::kY, ImGuiKey_Y)
+	ANKI_HANDLE(KeyCode::kZ, ImGuiKey_Z)
 
 #undef ANKI_HANDLE
 
 	ImGui::SetCurrentContext(nullptr);
 	unsetImAllocator();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void Canvas::handleInput()
@@ -121,45 +121,45 @@ void Canvas::handleInput()
 	io.MousePos.x = F32(mousePos.x());
 	io.MousePos.y = F32(mousePos.y());
 
-	io.MouseClicked[0] = in.getMouseButton(MouseButton::LEFT) == 1;
-	io.MouseDown[0] = in.getMouseButton(MouseButton::LEFT) > 0;
+	io.MouseClicked[0] = in.getMouseButton(MouseButton::kLeft) == 1;
+	io.MouseDown[0] = in.getMouseButton(MouseButton::kLeft) > 0;
 
-	if(in.getMouseButton(MouseButton::SCROLL_UP) == 1)
+	if(in.getMouseButton(MouseButton::kScrollUp) == 1)
 	{
-		io.MouseWheel = F32(in.getMouseButton(MouseButton::SCROLL_UP));
+		io.MouseWheel = F32(in.getMouseButton(MouseButton::kScrollUp));
 	}
-	else if(in.getMouseButton(MouseButton::SCROLL_DOWN) == 1)
+	else if(in.getMouseButton(MouseButton::kScrollDown) == 1)
 	{
-		io.MouseWheel = -F32(in.getMouseButton(MouseButton::SCROLL_DOWN));
+		io.MouseWheel = -F32(in.getMouseButton(MouseButton::kScrollDown));
 	}
 
-	io.KeyCtrl = (in.getKey(KeyCode::LCTRL) || in.getKey(KeyCode::RCTRL));
+	io.KeyCtrl = (in.getKey(KeyCode::kLeftCtrl) || in.getKey(KeyCode::kRightCtrl));
 
 // Handle keyboard
-#define ANKI_HANDLE(ak) io.KeysDown[static_cast<int>(ak)] = (in.getKey(ak) == 1);
+#define ANKI_HANDLE(ak) io.KeysDown[int(ak)] = (in.getKey(ak) == 1);
 
-	ANKI_HANDLE(KeyCode::TAB)
-	ANKI_HANDLE(KeyCode::LEFT)
-	ANKI_HANDLE(KeyCode::RIGHT)
-	ANKI_HANDLE(KeyCode::UP)
-	ANKI_HANDLE(KeyCode::DOWN)
-	ANKI_HANDLE(KeyCode::PAGEUP)
-	ANKI_HANDLE(KeyCode::PAGEDOWN)
-	ANKI_HANDLE(KeyCode::HOME)
-	ANKI_HANDLE(KeyCode::END)
-	ANKI_HANDLE(KeyCode::INSERT)
-	ANKI_HANDLE(KeyCode::DELETE)
-	ANKI_HANDLE(KeyCode::BACKSPACE)
-	ANKI_HANDLE(KeyCode::SPACE)
-	ANKI_HANDLE(KeyCode::RETURN)
+	ANKI_HANDLE(KeyCode::kTab)
+	ANKI_HANDLE(KeyCode::kLeft)
+	ANKI_HANDLE(KeyCode::kRight)
+	ANKI_HANDLE(KeyCode::kUp)
+	ANKI_HANDLE(KeyCode::kDown)
+	ANKI_HANDLE(KeyCode::kPageUp)
+	ANKI_HANDLE(KeyCode::kPageDown)
+	ANKI_HANDLE(KeyCode::kHome)
+	ANKI_HANDLE(KeyCode::kEnd)
+	ANKI_HANDLE(KeyCode::kInsert)
+	ANKI_HANDLE(KeyCode::kDelete)
+	ANKI_HANDLE(KeyCode::kBackspace)
+	ANKI_HANDLE(KeyCode::kSpace)
+	ANKI_HANDLE(KeyCode::kReturn)
 	// ANKI_HANDLE(KeyCode::RETURN2)
-	ANKI_HANDLE(KeyCode::ESCAPE)
-	ANKI_HANDLE(KeyCode::A)
-	ANKI_HANDLE(KeyCode::C)
-	ANKI_HANDLE(KeyCode::V)
-	ANKI_HANDLE(KeyCode::X)
-	ANKI_HANDLE(KeyCode::Y)
-	ANKI_HANDLE(KeyCode::Z)
+	ANKI_HANDLE(KeyCode::kEscape)
+	ANKI_HANDLE(KeyCode::kA)
+	ANKI_HANDLE(KeyCode::kC)
+	ANKI_HANDLE(KeyCode::kV)
+	ANKI_HANDLE(KeyCode::kX)
+	ANKI_HANDLE(KeyCode::kY)
+	ANKI_HANDLE(KeyCode::kZ)
 
 #undef ANKI_HANDLE
 
@@ -232,19 +232,19 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 		}
 	}
 
-	cmdb->setBlendFactors(0, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA);
-	cmdb->setCullMode(FaceSelectionBit::NONE);
+	cmdb->setBlendFactors(0, BlendFactor::kSrcAlpha, BlendFactor::kOneMinusSrcAlpha);
+	cmdb->setCullMode(FaceSelectionBit::kNone);
 
 	const F32 fbWidth = drawData.DisplaySize.x * drawData.FramebufferScale.x;
 	const F32 fbHeight = drawData.DisplaySize.y * drawData.FramebufferScale.y;
 	cmdb->setViewport(0, 0, U32(fbWidth), U32(fbHeight));
 
 	cmdb->bindVertexBuffer(0, vertsToken.m_buffer, vertsToken.m_offset, sizeof(ImDrawVert));
-	cmdb->setVertexAttribute(0, 0, Format::R32G32_SFLOAT, 0);
-	cmdb->setVertexAttribute(1, 0, Format::R8G8B8A8_UNORM, sizeof(Vec2) * 2);
-	cmdb->setVertexAttribute(2, 0, Format::R32G32_SFLOAT, sizeof(Vec2));
+	cmdb->setVertexAttribute(0, 0, Format::kR32G32Sfloat, 0);
+	cmdb->setVertexAttribute(1, 0, Format::kR8G8B8A8Unorm, sizeof(Vec2) * 2);
+	cmdb->setVertexAttribute(2, 0, Format::kR32G32Sfloat, sizeof(Vec2));
 
-	cmdb->bindIndexBuffer(indicesToken.m_buffer, indicesToken.m_offset, IndexType::U16);
+	cmdb->bindIndexBuffer(indicesToken.m_buffer, indicesToken.m_offset, IndexType::kU16);
 
 	// Will project scissor/clipping rectangles into framebuffer space
 	const Vec2 clipOff = drawData.DisplayPos; // (0,0) unless using multi-viewports
@@ -348,7 +348,7 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 					cmdb->setPushConstants(&pc, sizeof(Vec4) + extraPushConstantsSize);
 
 					// Draw
-					cmdb->drawElements(PrimitiveTopology::TRIANGLES, pcmd.ElemCount, 1, idxOffset, vertOffset);
+					cmdb->drawElements(PrimitiveTopology::kTriangles, pcmd.ElemCount, 1, idxOffset, vertOffset);
 				}
 			}
 			idxOffset += pcmd.ElemCount;
@@ -357,8 +357,8 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 	}
 
 	// Restore state
-	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
-	cmdb->setCullMode(FaceSelectionBit::BACK);
+	cmdb->setBlendFactors(0, BlendFactor::kOne, BlendFactor::kZero);
+	cmdb->setCullMode(FaceSelectionBit::kBack);
 }
 
 } // end namespace anki

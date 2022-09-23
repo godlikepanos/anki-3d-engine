@@ -46,7 +46,7 @@ void SceneNode::setMarkedForDeletion()
 
 	[[maybe_unused]] const Error err = visitChildren([](SceneNode& obj) -> Error {
 		obj.setMarkedForDeletion();
-		return Error::NONE;
+		return Error::kNone;
 	});
 }
 

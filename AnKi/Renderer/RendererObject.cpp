@@ -64,9 +64,9 @@ U32 RendererObject::computeNumberOfSecondLevelCommandBuffers(U32 drawcallCount) 
 {
 	const U32 drawcallsPerThread = drawcallCount / m_r->getThreadHive().getThreadCount();
 	U32 secondLevelCmdbCount;
-	if(drawcallsPerThread < MIN_DRAWCALLS_PER_2ND_LEVEL_COMMAND_BUFFER)
+	if(drawcallsPerThread < kMinDrawcallsPerSecondaryCommandBuffer)
 	{
-		secondLevelCmdbCount = max(1u, drawcallCount / MIN_DRAWCALLS_PER_2ND_LEVEL_COMMAND_BUFFER);
+		secondLevelCmdbCount = max(1u, drawcallCount / kMinDrawcallsPerSecondaryCommandBuffer);
 	}
 	else
 	{

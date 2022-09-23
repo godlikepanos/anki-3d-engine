@@ -16,7 +16,7 @@ ANKI_TEST(Util, List)
 	// Simple
 	{
 		List<Foo> a;
-		Error err = Error::NONE;
+		Error err = Error::kNone;
 
 		a.emplaceBack(alloc, 10);
 		a.emplaceBack(alloc, 11);
@@ -25,10 +25,10 @@ ANKI_TEST(Util, List)
 
 		err = a.iterateForward([&](const Foo& f) -> Error {
 			sum += f.x;
-			return Error::NONE;
+			return Error::kNone;
 		});
 
-		ANKI_TEST_EXPECT_EQ(err, Error::NONE);
+		ANKI_TEST_EXPECT_EQ(err, Error::kNone);
 		ANKI_TEST_EXPECT_EQ(sum, 21);
 
 		a.destroy(alloc);
@@ -37,7 +37,7 @@ ANKI_TEST(Util, List)
 	// Sort
 	{
 		List<I> a;
-		Error err = Error::NONE;
+		Error err = Error::kNone;
 
 		a.emplaceBack(alloc, 10);
 		a.emplaceBack(alloc, 9);
@@ -52,15 +52,15 @@ ANKI_TEST(Util, List)
 		err = a.iterateForward([&](const I& i) -> Error {
 			if(arr[u++] == i)
 			{
-				return Error::NONE;
+				return Error::kNone;
 			}
 			else
 			{
-				return Error::UNKNOWN;
+				return Error::kUnknown;
 			}
 		});
 
-		ANKI_TEST_EXPECT_EQ(err, Error::NONE);
+		ANKI_TEST_EXPECT_EQ(err, Error::kNone);
 
 		a.sort([](I& a, I& b) -> Bool {
 			return a > b;
@@ -72,15 +72,15 @@ ANKI_TEST(Util, List)
 		err = a.iterateForward([&](const I& i) -> Error {
 			if(arr2[u++] == i)
 			{
-				return Error::NONE;
+				return Error::kNone;
 			}
 			else
 			{
-				return Error::UNKNOWN;
+				return Error::kUnknown;
 			}
 		});
 
-		ANKI_TEST_EXPECT_EQ(err, Error::NONE);
+		ANKI_TEST_EXPECT_EQ(err, Error::kNone);
 
 		a.destroy(alloc);
 	}
@@ -135,7 +135,7 @@ ANKI_TEST(Util, List)
 	// Iterate
 	{
 		List<I> a;
-		Error err = Error::NONE;
+		Error err = Error::kNone;
 
 		a.emplaceBack(alloc, 10);
 		a.emplaceBack(alloc, 9);
@@ -151,11 +151,11 @@ ANKI_TEST(Util, List)
 		{
 			if(*it != arr[count++])
 			{
-				err = Error::UNKNOWN;
+				err = Error::kUnknown;
 			}
 		}
 
-		ANKI_TEST_EXPECT_EQ(err, Error::NONE);
+		ANKI_TEST_EXPECT_EQ(err, Error::kNone);
 
 		// Backwards
 		--it;
@@ -163,11 +163,11 @@ ANKI_TEST(Util, List)
 		{
 			if(*it != arr[--count])
 			{
-				err = Error::UNKNOWN;
+				err = Error::kUnknown;
 			}
 		}
 
-		ANKI_TEST_EXPECT_EQ(err, Error::NONE);
+		ANKI_TEST_EXPECT_EQ(err, Error::kNone);
 
 		a.destroy(alloc);
 	}

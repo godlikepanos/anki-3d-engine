@@ -42,12 +42,12 @@ public:
 	class VertexAttribute
 	{
 	public:
-		U32 m_buffBinding = MAX_U32;
-		Format m_fmt = Format::NONE;
-		PtrSize m_relativeOffset = MAX_PTR_SIZE;
+		U32 m_buffBinding = kMaxU32;
+		Format m_fmt = Format::kNone;
+		PtrSize m_relativeOffset = kMaxPtrSize;
 	};
 
-	Array<VertexAttribute, MAX_VERTEX_ATTRIBUTES> m_attribs;
+	Array<VertexAttribute, kMaxVertexAttributes> m_attribs;
 
 	Bool setVertexAttribute(U32 location, U32 buffBinding, Format fmt, PtrSize relativeOffset)
 	{
@@ -72,7 +72,7 @@ public:
 		VertexStepRate m_stepRate = VertexStepRate::COUNT;
 	};
 
-	Array<VertexBuffer, MAX_VERTEX_ATTRIBUTES> m_vertBuffs;
+	Array<VertexBuffer, kMaxVertexAttributes> m_vertBuffs;
 
 	Bool bindVertexBuffer(U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride, VertexStepRate stepRate)
 	{
@@ -88,7 +88,7 @@ public:
 	{
 	public:
 		BufferImpl* m_buff = nullptr;
-		PtrSize m_offset = MAX_PTR_SIZE;
+		PtrSize m_offset = kMaxPtrSize;
 		GLenum m_indexType = 0;
 	} m_idx;
 
@@ -118,11 +118,11 @@ public:
 
 	/// @name viewport_state
 	/// @{
-	Array<U32, 4> m_viewport = {{MAX_U32, MAX_U32, MAX_U32, MAX_U32}};
+	Array<U32, 4> m_viewport = {{kMaxU32, kMaxU32, kMaxU32, kMaxU32}};
 
 	Bool setViewport(U32 minx, U32 miny, U32 width, U32 height)
 	{
-		ANKI_ASSERT(minx != MAX_U32 && miny != MAX_U32 && width != MAX_U32 && height != MAX_U32);
+		ANKI_ASSERT(minx != kMaxU32 && miny != kMaxU32 && width != kMaxU32 && height != kMaxU32);
 		if(m_viewport[0] != minx || m_viewport[1] != miny || m_viewport[2] != width || m_viewport[3] != height)
 		{
 			m_viewport = {{minx, miny, width, height}};
@@ -134,7 +134,7 @@ public:
 
 	/// @name scissor_state
 	/// @{
-	Array<GLsizei, 4> m_scissor = {{0, 0, MAX_I32, MAX_I32}};
+	Array<GLsizei, 4> m_scissor = {{0, 0, kMaxI32, kMaxI32}};
 	Bool m_scissorSet = false;
 
 	Bool setScissor(GLsizei minx, GLsizei miny, GLsizei width, GLsizei height)
@@ -365,7 +365,7 @@ public:
 
 	/// @name color
 	/// @{
-	static const ColorBit INVALID_COLOR_MASK = static_cast<ColorBit>(MAX_U8);
+	static const ColorBit INVALID_COLOR_MASK = static_cast<ColorBit>(kMaxU8);
 
 	class ColorAttachment
 	{
@@ -380,7 +380,7 @@ public:
 		BlendOperation m_blendOpA = BlendOperation::COUNT;
 	};
 
-	Array<ColorAttachment, MAX_COLOR_ATTACHMENTS> m_colorAtt;
+	Array<ColorAttachment, kMaxColorRenderTargets> m_colorAtt;
 
 	Bool setColorChannelWriteMask(U32 attachment, ColorBit mask)
 	{
@@ -444,7 +444,7 @@ public:
 		U64 m_samplerUuid = 0;
 	};
 
-	Array2d<TextureBinding, MAX_DESCRIPTOR_SETS, MAX_TEXTURE_BINDINGS> m_textures;
+	Array2d<TextureBinding, kMaxDescriptorSets, MAX_TEXTURE_BINDINGS> m_textures;
 
 	Bool bindTextureViewAndSampler(U32 set, U32 binding, const TextureViewPtr& texView, const SamplerPtr& sampler)
 	{
@@ -473,7 +473,7 @@ public:
 		PtrSize m_range;
 	};
 
-	Array2d<ShaderBufferBinding, MAX_DESCRIPTOR_SETS, MAX_UNIFORM_BUFFER_BINDINGS> m_ubos;
+	Array2d<ShaderBufferBinding, kMaxDescriptorSets, MAX_UNIFORM_BUFFER_BINDINGS> m_ubos;
 
 	Bool bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)
 	{
@@ -484,7 +484,7 @@ public:
 		return true;
 	}
 
-	Array2d<ShaderBufferBinding, MAX_DESCRIPTOR_SETS, MAX_STORAGE_BUFFER_BINDINGS> m_ssbos;
+	Array2d<ShaderBufferBinding, kMaxDescriptorSets, MAX_STORAGE_BUFFER_BINDINGS> m_ssbos;
 
 	Bool bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)
 	{
@@ -501,7 +501,7 @@ public:
 		U64 m_texViewUuid = 0;
 	};
 
-	Array2d<ImageBinding, MAX_DESCRIPTOR_SETS, MAX_IMAGE_BINDINGS> m_images;
+	Array2d<ImageBinding, kMaxDescriptorSets, MAX_IMAGE_BINDINGS> m_images;
 
 	Bool bindImage(U32 set, U32 binding, const TextureViewPtr& img)
 	{
@@ -573,7 +573,7 @@ public:
 
 	void checkDrawcall() const
 	{
-		ANKI_ASSERT(m_viewport[1] != MAX_U16 && "Forgot to set the viewport");
+		ANKI_ASSERT(m_viewport[1] != kMaxU16 && "Forgot to set the viewport");
 		ANKI_ASSERT(m_prog && "Forgot to bound a program");
 		ANKI_ASSERT((insideRenderPass() || m_secondLevel) && "Forgot to begin a render pass");
 	}

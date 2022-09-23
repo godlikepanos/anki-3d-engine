@@ -35,11 +35,11 @@ ANKI_TEST(ShaderCompiler, ShaderCompilerParser)
 			}
 			else
 			{
-				return Error::FUNCTION_FAILED;
+				return Error::kFunctionFailed;
 			}
 
 			++count;
-			return Error::NONE;
+			return Error::kNone;
 		}
 	} interface;
 
@@ -52,5 +52,5 @@ ANKI_TEST(ShaderCompiler, ShaderCompilerParser)
 	ShaderProgramParserVariant variant;
 	ANKI_TEST_EXPECT_NO_ERR(parser.generateVariant(mutation, variant));
 
-	// printf("%s\n", variant.getSource(ShaderType::VERTEX).cstr());
+	// printf("%s\n", variant.getSource(ShaderType::kVertex).cstr());
 }

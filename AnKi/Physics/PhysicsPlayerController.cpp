@@ -9,7 +9,7 @@
 namespace anki {
 
 PhysicsPlayerController::PhysicsPlayerController(PhysicsWorld* world, const PhysicsPlayerControllerInitInfo& init)
-	: PhysicsFilteredObject(CLASS_TYPE, world)
+	: PhysicsFilteredObject(kClassType, world)
 {
 	const btTransform trf = toBt(Transform(init.m_position.xyz0(), Mat3x4::getIdentity(), 1.0f));
 
@@ -19,8 +19,8 @@ PhysicsPlayerController::PhysicsPlayerController(PhysicsWorld* world, const Phys
 	m_ghostObject->setWorldTransform(trf);
 	m_ghostObject->setCollisionShape(m_convexShape.get());
 	m_ghostObject->setUserPointer(static_cast<PhysicsObject*>(this));
-	setMaterialGroup(PhysicsMaterialBit::PLAYER);
-	setMaterialMask(PhysicsMaterialBit::ALL);
+	setMaterialGroup(PhysicsMaterialBit::kPlayer);
+	setMaterialMask(PhysicsMaterialBit::kAll);
 
 	m_controller.init(m_ghostObject.get(), m_convexShape.get(), init.m_stepHeight, btVector3(0, 1, 0));
 
@@ -51,7 +51,7 @@ void PhysicsPlayerController::unregisterFromWorld()
 
 void PhysicsPlayerController::moveToPositionForReal()
 {
-	if(m_moveToPosition.x() == MAX_F32)
+	if(m_moveToPosition.x() == kMaxF32)
 	{
 		return;
 	}
@@ -62,7 +62,7 @@ void PhysicsPlayerController::moveToPositionForReal()
 	m_controller->reset(&getWorld().getBtWorld());
 	m_controller->warp(toBt(m_moveToPosition));
 
-	m_moveToPosition.x() = MAX_F32;
+	m_moveToPosition.x() = kMaxF32;
 }
 
 } // end namespace anki

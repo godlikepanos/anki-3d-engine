@@ -77,7 +77,7 @@ public:
 class ThreadHive
 {
 public:
-	static constexpr U32 MAX_THREADS = 32;
+	static constexpr U32 kMaxThreads = 32;
 
 	/// Create the hive.
 	ThreadHive(U32 threadCount, GenericMemoryPoolAllocator<U8> alloc, Bool pinToCores = false);
@@ -150,6 +150,8 @@ private:
 
 	Mutex m_mtx;
 	ConditionVariable m_cvar;
+
+	static Atomic<U32> m_uuid;
 
 	void threadRun(U32 threadId);
 

@@ -90,7 +90,7 @@ public:
 		if(m_archive == nullptr)
 		{
 			ANKI_RESOURCE_LOGE("Failed to open archive");
-			return Error::FILE_ACCESS;
+			return Error::kFileAccess;
 		}
 
 		// Locate archived
@@ -98,14 +98,14 @@ public:
 		if(unzLocateFile(m_archive, &archivedFname[0], caseSensitive) != UNZ_OK)
 		{
 			ANKI_RESOURCE_LOGE("Failed to locate file in archive");
-			return Error::FILE_ACCESS;
+			return Error::kFileAccess;
 		}
 
 		// Open file
 		if(unzOpenCurrentFile(m_archive) != UNZ_OK)
 		{
 			ANKI_RESOURCE_LOGE("unzOpenCurrentFile() failed");
-			return Error::FILE_ACCESS;
+			return Error::kFileAccess;
 		}
 
 		// Get size just in case
@@ -115,7 +115,7 @@ public:
 		m_size = zinfo.uncompressed_size;
 		ANKI_ASSERT(m_size != 0);
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	void close()
@@ -137,10 +137,10 @@ public:
 		if(I64(size) != readSize)
 		{
 			ANKI_RESOURCE_LOGE("File read failed");
-			return Error::FILE_ACCESS;
+			return Error::kFileAccess;
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	Error readAllText(StringAuto& out) override
@@ -154,14 +154,14 @@ public:
 	{
 		// Assume machine and file have same endianness
 		ANKI_CHECK(read(&u, sizeof(u)));
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	Error readF32(F32& u) override
 	{
 		// Assume machine and file have same endianness
 		ANKI_CHECK(read(&u, sizeof(u)));
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	Error seek(PtrSize offset, FileSeekOrigin origin) override
@@ -172,7 +172,7 @@ public:
 			if(unzCloseCurrentFile(m_archive) || unzOpenCurrentFile(m_archive))
 			{
 				ANKI_RESOURCE_LOGE("Rewind failed");
-				return Error::FUNCTION_FAILED;
+				return Error::kFunctionFailed;
 			}
 		}
 
@@ -185,7 +185,7 @@ public:
 			offset -= toRead;
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	PtrSize getSize() const override
@@ -243,7 +243,7 @@ Error ResourceFilesystem::init(const ConfigSet& config)
 	if(paths.getSize() < 1)
 	{
 		ANKI_RESOURCE_LOGE("Config option \"RsrcDataPaths\" is empty");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	for(auto& path : paths)
@@ -256,7 +256,7 @@ Error ResourceFilesystem::init(const ConfigSet& config)
 	ANKI_CHECK(addNewPath(g_androidApp->activity->externalDataPath, excludedStrings));
 #endif
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ResourceFilesystem::addNewPath(const CString& filepath, const StringListAuto& excludedStrings)
@@ -269,7 +269,7 @@ Error ResourceFilesystem::addNewPath(const CString& filepath, const StringListAu
 	auto rejectPath = [&](CString p) -> Bool {
 		for(const String& s : excludedStrings)
 		{
-			if(p.find(s) != CString::NPOS)
+			if(p.find(s) != CString::kNpos)
 			{
 				return true;
 			}
@@ -280,7 +280,7 @@ Error ResourceFilesystem::addNewPath(const CString& filepath, const StringListAu
 
 	PtrSize pos;
 	Path path;
-	if((pos = filepath.find(extension)) != CString::NPOS && pos == filepath.getLength() - extension.getLength())
+	if((pos = filepath.find(extension)) != CString::kNpos && pos == filepath.getLength() - extension.getLength())
 	{
 		// It's an archive
 
@@ -289,7 +289,7 @@ Error ResourceFilesystem::addNewPath(const CString& filepath, const StringListAu
 		if(!zfile)
 		{
 			ANKI_RESOURCE_LOGE("Failed to open archive");
-			return Error::FILE_ACCESS;
+			return Error::kFileAccess;
 		}
 
 		// List files
@@ -297,7 +297,7 @@ Error ResourceFilesystem::addNewPath(const CString& filepath, const StringListAu
 		{
 			unzClose(zfile);
 			ANKI_RESOURCE_LOGE("unzGoToFirstFile() failed. Empty archive?");
-			return Error::FILE_ACCESS;
+			return Error::kFileAccess;
 		}
 
 		do
@@ -309,7 +309,7 @@ Error ResourceFilesystem::addNewPath(const CString& filepath, const StringListAu
 			{
 				unzClose(zfile);
 				ANKI_RESOURCE_LOGE("unzGetCurrentFileInfo() failed");
-				return Error::FILE_ACCESS;
+				return Error::kFileAccess;
 			}
 
 			const Bool itsADir = info.uncompressed_size == 0;
@@ -335,7 +335,7 @@ Error ResourceFilesystem::addNewPath(const CString& filepath, const StringListAu
 				++fileCount;
 			}
 
-			return Error::NONE;
+			return Error::kNone;
 		}));
 	}
 
@@ -360,7 +360,7 @@ Error ResourceFilesystem::addNewPath(const CString& filepath, const StringListAu
 		}
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ResourceFilesystem::openFile(const ResourceFilename& filename, ResourceFilePtr& filePtr)
@@ -444,7 +444,7 @@ Error ResourceFilesystem::openFileInternal(const ResourceFilename& filename, Res
 #endif
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

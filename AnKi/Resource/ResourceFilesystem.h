@@ -110,7 +110,7 @@ public:
 				ANKI_CHECK(func(fname.toCString()));
 			}
 		}
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 #if !ANKI_TESTS

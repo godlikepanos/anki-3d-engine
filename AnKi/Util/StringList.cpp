@@ -116,7 +116,7 @@ void StringList::splitString(Allocator alloc, const CString& s, const Char separ
 
 void StringList::sortAll(const Sort method)
 {
-	if(method == Sort::ASCENDING)
+	if(method == Sort::kAscending)
 	{
 		Base::sort([](const String& a, const String& b) {
 			return a < b;
@@ -124,7 +124,7 @@ void StringList::sortAll(const Sort method)
 	}
 	else
 	{
-		ANKI_ASSERT(method == Sort::DESCENDING);
+		ANKI_ASSERT(method == Sort::kDescending);
 		Base::sort([](const String& a, const String& b) {
 			return a < b;
 		});

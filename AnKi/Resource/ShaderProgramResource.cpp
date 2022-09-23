@@ -110,50 +110,50 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, [[maybe_unus
 		}
 		else if(componentCount == 2)
 		{
-			if(c.m_type == ShaderVariableDataType::U32)
+			if(c.m_type == ShaderVariableDataType::kU32)
 			{
-				in.m_dataType = ShaderVariableDataType::UVEC2;
+				in.m_dataType = ShaderVariableDataType::kUVec2;
 			}
-			else if(c.m_type == ShaderVariableDataType::I32)
+			else if(c.m_type == ShaderVariableDataType::kI32)
 			{
-				in.m_dataType = ShaderVariableDataType::IVEC2;
+				in.m_dataType = ShaderVariableDataType::kIVec2;
 			}
 			else
 			{
-				ANKI_ASSERT(c.m_type == ShaderVariableDataType::F32);
-				in.m_dataType = ShaderVariableDataType::VEC2;
+				ANKI_ASSERT(c.m_type == ShaderVariableDataType::kF32);
+				in.m_dataType = ShaderVariableDataType::kVec2;
 			}
 		}
 		else if(componentCount == 3)
 		{
-			if(c.m_type == ShaderVariableDataType::U32)
+			if(c.m_type == ShaderVariableDataType::kU32)
 			{
-				in.m_dataType = ShaderVariableDataType::UVEC3;
+				in.m_dataType = ShaderVariableDataType::kUVec3;
 			}
-			else if(c.m_type == ShaderVariableDataType::I32)
+			else if(c.m_type == ShaderVariableDataType::kI32)
 			{
-				in.m_dataType = ShaderVariableDataType::IVEC3;
+				in.m_dataType = ShaderVariableDataType::kIVec3;
 			}
 			else
 			{
-				ANKI_ASSERT(c.m_type == ShaderVariableDataType::F32);
-				in.m_dataType = ShaderVariableDataType::VEC3;
+				ANKI_ASSERT(c.m_type == ShaderVariableDataType::kF32);
+				in.m_dataType = ShaderVariableDataType::kVec3;
 			}
 		}
 		else if(componentCount == 4)
 		{
-			if(c.m_type == ShaderVariableDataType::U32)
+			if(c.m_type == ShaderVariableDataType::kU32)
 			{
-				in.m_dataType = ShaderVariableDataType::UVEC4;
+				in.m_dataType = ShaderVariableDataType::kUVec4;
 			}
-			else if(c.m_type == ShaderVariableDataType::I32)
+			else if(c.m_type == ShaderVariableDataType::kI32)
 			{
-				in.m_dataType = ShaderVariableDataType::IVEC4;
+				in.m_dataType = ShaderVariableDataType::kIVec4;
 			}
 			else
 			{
-				ANKI_ASSERT(c.m_type == ShaderVariableDataType::F32);
-				in.m_dataType = ShaderVariableDataType::VEC4;
+				ANKI_ASSERT(c.m_type == ShaderVariableDataType::kF32);
+				in.m_dataType = ShaderVariableDataType::kVec4;
 			}
 		}
 		else
@@ -165,18 +165,18 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, [[maybe_unus
 	m_shaderStages = binary.m_presentShaderTypes;
 
 	// Do some RT checks
-	if(!!(m_shaderStages & ShaderTypeBit::ALL_RAY_TRACING))
+	if(!!(m_shaderStages & ShaderTypeBit::kAllRayTracing))
 	{
-		if(m_shaderStages != (ShaderTypeBit::ANY_HIT | ShaderTypeBit::CLOSEST_HIT)
-		   && m_shaderStages != ShaderTypeBit::MISS && m_shaderStages != ShaderTypeBit::RAY_GEN)
+		if(m_shaderStages != (ShaderTypeBit::kAnyHit | ShaderTypeBit::kClosestHit)
+		   && m_shaderStages != ShaderTypeBit::kMiss && m_shaderStages != ShaderTypeBit::kRayGen)
 		{
 			ANKI_RESOURCE_LOGE("Any and closest hit shaders shouldn't coexist with other stages. Miss can't coexist "
 							   "with other stages. Raygen can't coexist with other stages as well");
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ShaderProgramResource::parseConst(CString constName, U32& componentIdx, U32& componentCount, CString& name)
@@ -189,7 +189,7 @@ Error ShaderProgramResource::parseConst(CString constName, U32& componentIdx, U3
 		componentIdx = 0;
 		componentCount = 1;
 		name = constName;
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	Array<char, 2> number;
@@ -202,7 +202,7 @@ Error ShaderProgramResource::parseConst(CString constName, U32& componentIdx, U3
 
 	name = constName.getBegin() + prefixName.getLength() + 4;
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void ShaderProgramResource::getOrCreateVariant(const ShaderProgramResourceVariantInitInfo& info,
@@ -278,7 +278,7 @@ ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitIn
 		{
 			if(mutation.m_hash == mutationHash)
 			{
-				if(mutation.m_variantIndex == MAX_U32)
+				if(mutation.m_variantIndex == kMaxU32)
 				{
 					// Skipped mutation, nothing to create
 					return nullptr;
@@ -326,11 +326,11 @@ ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitIn
 	}
 
 	// Get the workgroup sizes
-	if(!!(m_shaderStages & ShaderTypeBit::COMPUTE))
+	if(!!(m_shaderStages & ShaderTypeBit::kCompute))
 	{
 		for(U32 i = 0; i < 3; ++i)
 		{
-			if(binaryVariant->m_workgroupSizes[i] != MAX_U32)
+			if(binaryVariant->m_workgroupSizes[i] != kMaxU32)
 			{
 				// Size didn't come from specialization const
 				variant->m_workgroupSizes[i] = binaryVariant->m_workgroupSizes[i];
@@ -339,15 +339,16 @@ ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitIn
 			{
 				// Size is specialization const
 
-				ANKI_ASSERT(binaryVariant->m_workgroupSizesConstants[i] != MAX_U32);
+				ANKI_ASSERT(binaryVariant->m_workgroupSizesConstants[i] != kMaxU32);
 
 				const U32 binaryConstIdx = binaryVariant->m_workgroupSizesConstants[i];
 				const U32 constIdx = m_constBinaryMapping[binaryConstIdx].m_constsIdx;
 				const U32 component = m_constBinaryMapping[binaryConstIdx].m_component;
 				[[maybe_unused]] const Const& c = m_consts[constIdx];
-				ANKI_ASSERT(c.m_dataType == ShaderVariableDataType::U32 || c.m_dataType == ShaderVariableDataType::UVEC2
-							|| c.m_dataType == ShaderVariableDataType::UVEC3
-							|| c.m_dataType == ShaderVariableDataType::UVEC4);
+				ANKI_ASSERT(c.m_dataType == ShaderVariableDataType::kU32
+							|| c.m_dataType == ShaderVariableDataType::kUVec2
+							|| c.m_dataType == ShaderVariableDataType::kUVec3
+							|| c.m_dataType == ShaderVariableDataType::kUVec4);
 
 				// Find the value
 				for(U32 i = 0; i < m_consts.getSize(); ++i)
@@ -363,20 +364,20 @@ ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitIn
 				}
 			}
 
-			ANKI_ASSERT(variant->m_workgroupSizes[i] != MAX_U32);
+			ANKI_ASSERT(variant->m_workgroupSizes[i] != kMaxU32);
 		}
 	}
 
 	// Time to init the shaders
-	if(!!(m_shaderStages & (ShaderTypeBit::ALL_GRAPHICS | ShaderTypeBit::COMPUTE)))
+	if(!!(m_shaderStages & (ShaderTypeBit::kAllGraphics | ShaderTypeBit::kCompute)))
 	{
 		// Create the program name
 		StringAuto progName(getTempAllocator());
 		getFilepathFilename(getFilename(), progName);
 		char* cprogName = const_cast<char*>(progName.cstr());
-		if(progName.getLength() > MAX_GR_OBJECT_NAME_LENGTH)
+		if(progName.getLength() > kMaxGrObjectNameLength)
 		{
-			cprogName[MAX_GR_OBJECT_NAME_LENGTH] = '\0';
+			cprogName[kMaxGrObjectNameLength] = '\0';
 		}
 
 		ShaderProgramInitInfo progInf(cprogName);
@@ -394,11 +395,11 @@ ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitIn
 			ShaderPtr shader = getManager().getGrManager().newShader(inf);
 
 			const ShaderTypeBit shaderBit = ShaderTypeBit(1 << shaderType);
-			if(!!(shaderBit & ShaderTypeBit::ALL_GRAPHICS))
+			if(!!(shaderBit & ShaderTypeBit::kAllGraphics))
 			{
 				progInf.m_graphicsShaders[shaderType] = shader;
 			}
-			else if(shaderType == ShaderType::COMPUTE)
+			else if(shaderType == ShaderType::kCompute)
 			{
 				progInf.m_computeShader = std::move(shader);
 			}
@@ -413,7 +414,7 @@ ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitIn
 	}
 	else
 	{
-		ANKI_ASSERT(!!(m_shaderStages & ShaderTypeBit::ALL_RAY_TRACING));
+		ANKI_ASSERT(!!(m_shaderStages & ShaderTypeBit::kAllRayTracing));
 
 		// Find the library
 		CString libName = &binary.m_libraryName[0];

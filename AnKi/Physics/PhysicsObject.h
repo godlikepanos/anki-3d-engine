@@ -16,17 +16,17 @@ namespace anki {
 /// Type of the physics object.
 enum class PhysicsObjectType : U8
 {
-	COLLISION_SHAPE,
-	JOINT,
-	BODY,
-	PLAYER_CONTROLLER,
-	TRIGGER,
+	kCollisionShape,
+	kJoint,
+	kBody,
+	kPlayerController,
+	kTrigger,
 
-	COUNT,
-	FIRST = 0,
-	LAST = COUNT - 1,
-	FIRST_FILTERED = BODY,
-	LAST_FILTERED = TRIGGER,
+	kCount,
+	kFirst = 0,
+	kLast = kCount - 1,
+	kFirstFiltered = kBody,
+	kLastFiltered = kTrigger,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(PhysicsObjectType)
 
@@ -39,7 +39,7 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(PhysicsObjectType)
 #define ANKI_PHYSICS_OBJECT(type) \
 	ANKI_PHYSICS_OBJECT_FRIENDS \
 public: \
-	static constexpr PhysicsObjectType CLASS_TYPE = type; \
+	static constexpr PhysicsObjectType kClassType = type; \
 \
 private:
 
@@ -156,8 +156,8 @@ public:
 
 	static Bool classof(const PhysicsObject* obj)
 	{
-		return obj->getType() >= PhysicsObjectType::FIRST_FILTERED
-			   && obj->getType() <= PhysicsObjectType::LAST_FILTERED;
+		return obj->getType() >= PhysicsObjectType::kFirstFiltered
+			   && obj->getType() <= PhysicsObjectType::kLastFiltered;
 	}
 
 	/// Get the material(s) this object belongs.
@@ -197,13 +197,13 @@ public:
 	}
 
 private:
-	PhysicsMaterialBit m_materialGroup = PhysicsMaterialBit::ALL;
-	PhysicsMaterialBit m_materialMask = PhysicsMaterialBit::ALL;
+	PhysicsMaterialBit m_materialGroup = PhysicsMaterialBit::kAll;
+	PhysicsMaterialBit m_materialMask = PhysicsMaterialBit::kAll;
 
 	PhysicsBroadPhaseFilterCallback* m_filter = nullptr;
 
-	static constexpr U32 MAX_TRIGGER_FILTERED_PAIRS = 4;
-	Array<PhysicsTriggerFilteredPair*, MAX_TRIGGER_FILTERED_PAIRS> m_triggerFilteredPairs = {};
+	static constexpr U32 kMaxTriggerFilteredPairs = 4;
+	Array<PhysicsTriggerFilteredPair*, kMaxTriggerFilteredPairs> m_triggerFilteredPairs = {};
 };
 /// @}
 

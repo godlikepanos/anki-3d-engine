@@ -28,14 +28,14 @@ void OcclusionQueryImpl::end()
 OcclusionQueryResult OcclusionQueryImpl::getResult() const
 {
 	ANKI_ASSERT(isCreated());
-	OcclusionQueryResult result = OcclusionQueryResult::NOT_AVAILABLE;
+	OcclusionQueryResult result = OcclusionQueryResult::kNotAvailable;
 	GLuint params;
 	glGetQueryObjectuiv(m_glName, GL_QUERY_RESULT_AVAILABLE, &params);
 
 	if(params != 0)
 	{
 		glGetQueryObjectuiv(m_glName, GL_QUERY_RESULT, &params);
-		result = (params == 1) ? OcclusionQueryResult::VISIBLE : OcclusionQueryResult::NOT_VISIBLE;
+		result = (params == 1) ? OcclusionQueryResult::kVisible : OcclusionQueryResult::kNotVisible;
 	}
 
 	return result;

@@ -19,11 +19,11 @@ public:
 	F32 m_minLod = -1000.0f;
 	F32 m_maxLod = 1000.0f;
 	F32 m_lodBias = 0.0f;
-	SamplingFilter m_minMagFilter = SamplingFilter::NEAREST;
-	SamplingFilter m_mipmapFilter = SamplingFilter::BASE;
-	CompareOperation m_compareOperation = CompareOperation::ALWAYS;
+	SamplingFilter m_minMagFilter = SamplingFilter::kNearest;
+	SamplingFilter m_mipmapFilter = SamplingFilter::kBase;
+	CompareOperation m_compareOperation = CompareOperation::kAlways;
 	U8 m_anisotropyLevel = 0;
-	SamplingAddressing m_addressing = SamplingAddressing::REPEAT;
+	SamplingAddressing m_addressing = SamplingAddressing::kRepeat;
 	U8 _m_padding[3] = {0, 0, 0};
 
 	SamplerInitInfo() = default;
@@ -51,12 +51,12 @@ class Sampler : public GrObject
 	ANKI_GR_OBJECT
 
 public:
-	static constexpr GrObjectType CLASS_TYPE = GrObjectType::SAMPLER;
+	static constexpr GrObjectType kClassType = GrObjectType::kSampler;
 
 protected:
 	/// Construct.
 	Sampler(GrManager* manager, CString name)
-		: GrObject(manager, CLASS_TYPE, name)
+		: GrObject(manager, kClassType, name)
 	{
 	}
 

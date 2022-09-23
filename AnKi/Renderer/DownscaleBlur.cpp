@@ -30,7 +30,7 @@ Error DownscaleBlur::init()
 Error DownscaleBlur::initInternal()
 {
 	m_passCount = computeMaxMipmapCount2d(m_r->getPostProcessResolution().x(), m_r->getPostProcessResolution().y(),
-										  DOWNSCALE_BLUR_DOWN_TO)
+										  kDownscaleBurDownTo)
 				  - 1;
 
 	const UVec2 rez = m_r->getPostProcessResolution() / 2;
@@ -41,17 +41,17 @@ Error DownscaleBlur::initInternal()
 	// Create the miped texture
 	TextureInitInfo texinit =
 		m_r->create2DRenderTargetDescription(rez.x(), rez.y(), m_r->getHdrFormat(), "DownscaleBlur");
-	texinit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE;
+	texinit.m_usage = TextureUsageBit::kSampledFragment | TextureUsageBit::kSampledCompute;
 	if(preferCompute)
 	{
-		texinit.m_usage |= TextureUsageBit::SAMPLED_COMPUTE | TextureUsageBit::IMAGE_COMPUTE_WRITE;
+		texinit.m_usage |= TextureUsageBit::kSampledCompute | TextureUsageBit::kImageComputeWrite;
 	}
 	else
 	{
-		texinit.m_usage |= TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
+		texinit.m_usage |= TextureUsageBit::kFramebufferWrite;
 	}
 	texinit.m_mipmapCount = U8(m_passCount);
-	m_rtTex = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::SAMPLED_COMPUTE);
+	m_rtTex = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::kSampledCompute);
 
 	// FB descr
 	if(!preferCompute)
@@ -73,13 +73,13 @@ Error DownscaleBlur::initInternal()
 	m_prog->getOrCreateVariant(variant);
 	m_grProg = variant->getProgram();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void DownscaleBlur::importRenderTargets(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
-	m_runCtx.m_rt = rgraph.importRenderTarget(m_rtTex, TextureUsageBit::SAMPLED_COMPUTE);
+	m_runCtx.m_rt = rgraph.importRenderTarget(m_rtTex, TextureUsageBit::kSampledCompute);
 }
 
 void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
@@ -109,17 +109,17 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 				renderSubresource.m_firstMipmap = i;
 
 				pass.newDependency(
-					RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE, renderSubresource));
+					RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::kImageComputeWrite, renderSubresource));
 				pass.newDependency(
-					RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::SAMPLED_COMPUTE, sampleSubresource));
+					RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::kSampledCompute, sampleSubresource));
 			}
 			else
 			{
 				TextureSubresourceInfo renderSubresource;
 
 				pass.newDependency(
-					RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE, renderSubresource));
-				pass.newDependency(RenderPassDependency(inRt, TextureUsageBit::SAMPLED_COMPUTE));
+					RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::kImageComputeWrite, renderSubresource));
+				pass.newDependency(RenderPassDependency(inRt, TextureUsageBit::kSampledCompute));
 			}
 		}
 	}
@@ -141,18 +141,18 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 				sampleSubresource.m_firstMipmap = i - 1;
 				renderSubresource.m_firstMipmap = i;
 
-				pass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-														renderSubresource));
 				pass.newDependency(
-					RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::SAMPLED_FRAGMENT, sampleSubresource));
+					RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite, renderSubresource));
+				pass.newDependency(
+					RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::kSampledFragment, sampleSubresource));
 			}
 			else
 			{
 				TextureSubresourceInfo renderSubresource;
 
-				pass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-														renderSubresource));
-				pass.newDependency(RenderPassDependency(inRt, TextureUsageBit::SAMPLED_FRAGMENT));
+				pass.newDependency(
+					RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite, renderSubresource));
+				pass.newDependency(RenderPassDependency(inRt, TextureUsageBit::kSampledFragment));
 			}
 		}
 	}
@@ -200,7 +200,7 @@ void DownscaleBlur::run(U32 passIdx, RenderPassWorkContext& rgraphCtx)
 	{
 		cmdb->setViewport(0, 0, vpWidth, vpHeight);
 
-		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
+		cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
 	}
 }
 

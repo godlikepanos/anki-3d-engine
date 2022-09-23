@@ -23,7 +23,7 @@ void Process::destroy()
 	{
 		ProcessStatus status;
 		[[maybe_unused]] const Error err = getStatus(status);
-		if(status == ProcessStatus::RUNNING)
+		if(status == ProcessStatus::kRunning)
 		{
 			ANKI_UTIL_LOGE("Process is still running. Forgot to wait for it");
 		}
@@ -76,7 +76,7 @@ Error Process::start(CString executable, ConstWeakArray<CString> arguments, Cons
 	{
 		ANKI_UTIL_LOGE("reproc_start() failed: %s", reproc_strerror(ret));
 		m_handle = reproc_destroy(m_handle);
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	ret = reproc_close(m_handle, REPROC_STREAM_IN);
@@ -84,11 +84,11 @@ Error Process::start(CString executable, ConstWeakArray<CString> arguments, Cons
 	{
 		ANKI_UTIL_LOGE("reproc_close() failed: %s. Ignoring", reproc_strerror(ret));
 		m_handle = reproc_destroy(m_handle);
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 #endif
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error Process::wait(Second timeout, ProcessStatus* pStatus, I32* pExitCode)
@@ -120,12 +120,12 @@ Error Process::wait(Second timeout, ProcessStatus* pStatus, I32* pExitCode)
 	const I32 ret = reproc_wait(m_handle, rtimeout);
 	if(ret == REPROC_ETIMEDOUT)
 	{
-		status = ProcessStatus::RUNNING;
+		status = ProcessStatus::kRunning;
 		exitCode = 0;
 	}
 	else
 	{
-		status = ProcessStatus::NOT_RUNNING;
+		status = ProcessStatus::kNotRunning;
 		exitCode = ret;
 	}
 
@@ -139,10 +139,10 @@ Error Process::wait(Second timeout, ProcessStatus* pStatus, I32* pExitCode)
 		*pExitCode = exitCode;
 	}
 
-	ANKI_ASSERT(!(status == ProcessStatus::RUNNING && timeout < 0.0));
+	ANKI_ASSERT(!(status == ProcessStatus::kRunning && timeout < 0.0));
 #endif
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error Process::getStatus(ProcessStatus& status)
@@ -152,7 +152,7 @@ Error Process::getStatus(ProcessStatus& status)
 	ANKI_CHECK(wait(0.0, &status, nullptr));
 #endif
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error Process::kill(ProcessKillSignal k)
@@ -162,14 +162,14 @@ Error Process::kill(ProcessKillSignal k)
 
 	I32 ret;
 	CString funcName;
-	if(k == ProcessKillSignal::NORMAL)
+	if(k == ProcessKillSignal::kNormal)
 	{
 		ret = reproc_terminate(m_handle);
 		funcName = "reproc_terminate";
 	}
 	else
 	{
-		ANKI_ASSERT(k == ProcessKillSignal::FORCE);
+		ANKI_ASSERT(k == ProcessKillSignal::kForce);
 		ret = reproc_kill(m_handle);
 		funcName = "reproc_kill";
 	}
@@ -177,11 +177,11 @@ Error Process::kill(ProcessKillSignal k)
 	if(ret < 0)
 	{
 		ANKI_UTIL_LOGE("%s() failed: %s", funcName.cstr(), reproc_strerror(ret));
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 #endif
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error Process::readFromStdout(StringAuto& text)
@@ -189,7 +189,7 @@ Error Process::readFromStdout(StringAuto& text)
 #if !ANKI_OS_ANDROID
 	return readCommon(REPROC_STREAM_OUT, text);
 #else
-	return Error::NONE;
+	return Error::kNone;
 #endif
 }
 
@@ -198,7 +198,7 @@ Error Process::readFromStderr(StringAuto& text)
 #if !ANKI_OS_ANDROID
 	return readCommon(REPROC_STREAM_ERR, text);
 #else
-	return Error::NONE;
+	return Error::kNone;
 #endif
 }
 
@@ -225,14 +225,14 @@ Error Process::readCommon(I32 reprocStream, StringAuto& text)
 		if(ret < 0)
 		{
 			ANKI_UTIL_LOGE("reproc_read() failed: %s", reproc_strerror(ret));
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 
 		buff[ret] = '\0';
 		text.append(&buff[0]);
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 #endif
 

@@ -180,11 +180,11 @@ private:
 		if(!found)
 		{
 			ANKI_UTIL_LOGE("Attribute not found \"%s\"", &attrib[0]);
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 		else
 		{
-			return Error::NONE;
+			return Error::kNone;
 		}
 	}
 };
@@ -193,7 +193,7 @@ private:
 class XmlDocument
 {
 public:
-	static CString XML_HEADER;
+	static constexpr CString kXmlHeader = R"(<?xml version="1.0" encoding="UTF-8" ?>)";
 
 	/// Parse from a file.
 	Error loadFile(CString filename, GenericMemoryPoolAllocator<U8> alloc);

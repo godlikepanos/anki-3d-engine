@@ -112,7 +112,7 @@ ANKI_TEST(Util, WalkDir)
 			}
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}));
 
 	ANKI_TEST_EXPECT_EQ(ctx.m_foundMask, 0b1110);
@@ -123,9 +123,9 @@ ANKI_TEST(Util, WalkDir)
 		walkDirectoryTree("./data///dir////", alloc,
 						  [&count]([[maybe_unused]] const CString& fname, [[maybe_unused]] Bool isDir) -> Error {
 							  ++count;
-							  return Error::FUNCTION_FAILED;
+							  return Error::kFunctionFailed;
 						  }),
-		Error::FUNCTION_FAILED);
+		Error::kFunctionFailed);
 
 	ANKI_TEST_EXPECT_EQ(count, 1);
 }

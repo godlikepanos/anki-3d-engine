@@ -22,24 +22,24 @@ Error MicroSampler::init(const SamplerInitInfo& inf)
 	VkSamplerCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 
-	if(inf.m_minMagFilter == SamplingFilter::NEAREST)
+	if(inf.m_minMagFilter == SamplingFilter::kNearest)
 	{
 		ci.minFilter = VK_FILTER_NEAREST;
 	}
-	else if(inf.m_minMagFilter == SamplingFilter::LINEAR)
+	else if(inf.m_minMagFilter == SamplingFilter::kLinear)
 	{
 		ci.minFilter = VK_FILTER_LINEAR;
 	}
 	else
 	{
-		ANKI_ASSERT(inf.m_minMagFilter == SamplingFilter::MAX || inf.m_minMagFilter == SamplingFilter::MIN);
+		ANKI_ASSERT(inf.m_minMagFilter == SamplingFilter::kMax || inf.m_minMagFilter == SamplingFilter::kMin);
 		ANKI_ASSERT(m_factory->m_gr->getDeviceCapabilities().m_samplingFilterMinMax);
 		ci.minFilter = VK_FILTER_LINEAR;
 	}
 
 	ci.magFilter = ci.minFilter;
 
-	if(inf.m_mipmapFilter == SamplingFilter::BASE || inf.m_mipmapFilter == SamplingFilter::NEAREST)
+	if(inf.m_mipmapFilter == SamplingFilter::kBase || inf.m_mipmapFilter == SamplingFilter::kNearest)
 	{
 		ci.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
 	}
@@ -50,17 +50,17 @@ Error MicroSampler::init(const SamplerInitInfo& inf)
 
 	switch(inf.m_addressing)
 	{
-	case SamplingAddressing::CLAMP:
+	case SamplingAddressing::kClamp:
 		ci.addressModeU = ci.addressModeV = ci.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 		break;
-	case SamplingAddressing::REPEAT:
+	case SamplingAddressing::kRepeat:
 		ci.addressModeU = ci.addressModeV = ci.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 		break;
-	case SamplingAddressing::BLACK:
+	case SamplingAddressing::kBlack:
 		ci.addressModeU = ci.addressModeV = ci.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
 		ci.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
 		break;
-	case SamplingAddressing::WHITE:
+	case SamplingAddressing::kWhite:
 		ci.addressModeU = ci.addressModeV = ci.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
 		ci.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 		break;
@@ -89,16 +89,16 @@ Error MicroSampler::init(const SamplerInitInfo& inf)
 
 	// min/max
 	VkSamplerReductionModeCreateInfoEXT reductionCi = {};
-	if(inf.m_minMagFilter == SamplingFilter::MAX || inf.m_minMagFilter == SamplingFilter::MIN)
+	if(inf.m_minMagFilter == SamplingFilter::kMax || inf.m_minMagFilter == SamplingFilter::kMin)
 	{
 		reductionCi.sType = VK_STRUCTURE_TYPE_SAMPLER_REDUCTION_MODE_CREATE_INFO_EXT;
-		if(inf.m_minMagFilter == SamplingFilter::MAX)
+		if(inf.m_minMagFilter == SamplingFilter::kMax)
 		{
 			reductionCi.reductionMode = VK_SAMPLER_REDUCTION_MODE_MAX_EXT;
 		}
 		else
 		{
-			ANKI_ASSERT(inf.m_minMagFilter == SamplingFilter::MIN);
+			ANKI_ASSERT(inf.m_minMagFilter == SamplingFilter::kMin);
 			reductionCi.reductionMode = VK_SAMPLER_REDUCTION_MODE_MIN_EXT;
 		}
 
@@ -109,7 +109,7 @@ Error MicroSampler::init(const SamplerInitInfo& inf)
 	ANKI_VK_CHECK(vkCreateSampler(m_factory->m_gr->getDevice(), &ci, nullptr, &m_handle));
 	m_factory->m_gr->trySetVulkanHandleName(inf.getName(), VK_OBJECT_TYPE_SAMPLER, m_handle);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void SamplerFactory::init(GrManagerImpl* gr)
@@ -143,7 +143,7 @@ Error SamplerFactory::newInstance(const SamplerInitInfo& inf, MicroSamplerPtr& p
 {
 	ANKI_ASSERT(m_gr);
 
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 	MicroSampler* out = nullptr;
 	const U64 hash = inf.computeHash();
 

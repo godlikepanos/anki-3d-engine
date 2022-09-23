@@ -55,8 +55,8 @@ class ShaderProgramResourceConstant
 {
 public:
 	String m_name;
-	ShaderVariableDataType m_dataType = ShaderVariableDataType::NONE;
-	U32 m_index = MAX_U32;
+	ShaderVariableDataType m_dataType = ShaderVariableDataType::kNone;
+	U32 m_index = kMaxU32;
 };
 
 /// Shader program resource variant.
@@ -89,16 +89,16 @@ public:
 
 	const Array<U32, 3>& getWorkgroupSizes() const
 	{
-		ANKI_ASSERT(m_workgroupSizes[0] != MAX_U32 && m_workgroupSizes[0] != 0);
-		ANKI_ASSERT(m_workgroupSizes[1] != MAX_U32 && m_workgroupSizes[1] != 0);
-		ANKI_ASSERT(m_workgroupSizes[2] != MAX_U32 && m_workgroupSizes[2] != 0);
+		ANKI_ASSERT(m_workgroupSizes[0] != kMaxU32 && m_workgroupSizes[0] != 0);
+		ANKI_ASSERT(m_workgroupSizes[1] != kMaxU32 && m_workgroupSizes[1] != 0);
+		ANKI_ASSERT(m_workgroupSizes[2] != kMaxU32 && m_workgroupSizes[2] != 0);
 		return m_workgroupSizes;
 	}
 
 	/// Only for hit ray tracing programs.
 	U32 getShaderGroupHandleIndex() const
 	{
-		ANKI_ASSERT(m_shaderGroupHandleIndex < MAX_U32);
+		ANKI_ASSERT(m_shaderGroupHandleIndex < kMaxU32);
 		return m_shaderGroupHandleIndex;
 	}
 
@@ -107,7 +107,7 @@ private:
 	const ShaderProgramBinaryVariant* m_binaryVariant = nullptr;
 	BitSet<128, U64> m_activeConsts = {false};
 	Array<U32, 3> m_workgroupSizes;
-	U32 m_shaderGroupHandleIndex = MAX_U32; ///< Cache the index of the handle here.
+	U32 m_shaderGroupHandleIndex = kMaxU32; ///< Cache the index of the handle here.
 };
 
 /// The value of a constant.
@@ -271,7 +271,7 @@ private:
 	mutable HashMap<U64, ShaderProgramResourceVariant*> m_variants;
 	mutable RWMutex m_mtx;
 
-	ShaderTypeBit m_shaderStages = ShaderTypeBit::NONE;
+	ShaderTypeBit m_shaderStages = ShaderTypeBit::kNone;
 
 	ShaderProgramResourceVariant* createNewVariant(const ShaderProgramResourceVariantInitInfo& info) const;
 

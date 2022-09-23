@@ -85,7 +85,7 @@ Error ParticleEmitterResource::load(const ResourceFilename& filename, Bool async
 	ANKI_CHECK(el.getAttributeText("value", cstr));
 	ANKI_CHECK(getManager().loadResource(cstr, m_material, async));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 template<typename T>
@@ -99,13 +99,13 @@ Error ParticleEmitterResource::readVar(const XmlElement& rootEl, CString varName
 	if(!el && !defaultVal)
 	{
 		ANKI_RESOURCE_LOGE("<%s> is missing", varName.cstr());
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	if(!el)
 	{
 		maxVal = minVal = *defaultVal;
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	// value tag
@@ -114,7 +114,7 @@ Error ParticleEmitterResource::readVar(const XmlElement& rootEl, CString varName
 	if(found)
 	{
 		maxVal = minVal;
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	// min & max value tags
@@ -122,23 +122,23 @@ Error ParticleEmitterResource::readVar(const XmlElement& rootEl, CString varName
 	if(!found)
 	{
 		ANKI_RESOURCE_LOGE("tag min is missing for <%s>", varName.cstr());
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	ANKI_CHECK(getXmlVal(el, "max", maxVal, found));
 	if(!found)
 	{
 		ANKI_RESOURCE_LOGE("tag max is missing for <%s>", varName.cstr());
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	if(minVal > maxVal)
 	{
 		ANKI_RESOURCE_LOGE("min tag should have less value than max for <%s>", varName.cstr());
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void ParticleEmitterResource::getRenderingInfo(const RenderingKey& key_, ShaderProgramPtr& prog) const

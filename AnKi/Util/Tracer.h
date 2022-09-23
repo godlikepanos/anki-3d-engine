@@ -103,8 +103,8 @@ public:
 	}
 
 private:
-	static constexpr U32 EVENTS_PER_CHUNK = 256;
-	static constexpr U32 COUNTERS_PER_CHUNK = 512;
+	static constexpr U32 kEventsPerChunk = 256;
+	static constexpr U32 kCountersPerChunk = 512;
 
 	class ThreadLocal;
 	class Chunk;

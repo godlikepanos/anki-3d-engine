@@ -119,8 +119,8 @@ F32 testPlane(const Plane& plane, const ConvexHullShape& hull)
 	// Compute the invert transformation of the plane instead
 	const Plane pa = (hull.isTransformIdentity()) ? plane : plane.getTransformed(hull.getInvertTransform());
 
-	F32 minDist = MAX_F32;
-	F32 maxDist = MIN_F32;
+	F32 minDist = kMaxF32;
+	F32 maxDist = kMinF32;
 
 	ConstWeakArray<Vec4> points = hull.getPoints();
 	for(const Vec4& point : points)

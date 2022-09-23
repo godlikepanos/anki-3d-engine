@@ -49,7 +49,7 @@ public:
 
 	ConstWeakArray<U32> getQueueFamilies() const
 	{
-		const Bool hasAsyncCompute = m_queueFamilyIndices[VulkanQueueType::COMPUTE] != MAX_U32;
+		const Bool hasAsyncCompute = m_queueFamilyIndices[VulkanQueueType::kCompute] != kMaxU32;
 		return (hasAsyncCompute) ? m_queueFamilyIndices : ConstWeakArray<U32>(&m_queueFamilyIndices[0], 1);
 	}
 
@@ -184,7 +184,7 @@ public:
 	void beginMarker(VkCommandBuffer cmdb, CString name, Vec3 color = Vec3(1.0f, 0.0f, 0.0f)) const
 	{
 		ANKI_ASSERT(cmdb);
-		if(!!(m_extensions & VulkanExtensions::EXT_DEBUG_UTILS))
+		if(!!(m_extensions & VulkanExtensions::kEXT_debug_utils))
 		{
 			VkDebugUtilsLabelEXT label = {};
 			label.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
@@ -200,7 +200,7 @@ public:
 	void endMarker(VkCommandBuffer cmdb) const
 	{
 		ANKI_ASSERT(cmdb);
-		if(!!(m_extensions & VulkanExtensions::EXT_DEBUG_UTILS))
+		if(!!(m_extensions & VulkanExtensions::kEXT_debug_utils))
 		{
 			vkCmdEndDebugUtilsLabelEXT(cmdb);
 		}
@@ -245,10 +245,10 @@ private:
 
 	VkInstance m_instance = VK_NULL_HANDLE;
 	VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
-	VulkanExtensions m_extensions = VulkanExtensions::NONE;
+	VulkanExtensions m_extensions = VulkanExtensions::kNone;
 	VkDevice m_device = VK_NULL_HANDLE;
-	VulkanQueueFamilies m_queueFamilyIndices = {MAX_U32, MAX_U32};
-	Array<VkQueue, U32(VulkanQueueType::COUNT)> m_queues = {};
+	VulkanQueueFamilies m_queueFamilyIndices = {kMaxU32, kMaxU32};
+	Array<VkQueue, U32(VulkanQueueType::kCount)> m_queues = {};
 	Mutex m_globalMtx;
 
 	VkPhysicalDeviceProperties2 m_devProps = {};
@@ -284,7 +284,7 @@ private:
 		/// Signaled by the submit that renders to the default FB. Present waits for it.
 		MicroSemaphorePtr m_renderSemaphore;
 
-		VulkanQueueType m_queueWroteToSwapchainImage = VulkanQueueType::COUNT;
+		VulkanQueueType m_queueWroteToSwapchainImage = VulkanQueueType::kCount;
 	};
 
 	VkSurfaceKHR m_surface = VK_NULL_HANDLE;
@@ -293,9 +293,9 @@ private:
 	U32 m_nativeWindowHeight = 0;
 #endif
 	MicroSwapchainPtr m_crntSwapchain;
-	U8 m_acquiredImageIdx = MAX_U8;
+	U8 m_acquiredImageIdx = kMaxU8;
 
-	Array<PerFrame, MAX_FRAMES_IN_FLIGHT> m_perFrame;
+	Array<PerFrame, kMaxFramesInFlight> m_perFrame;
 	/// @}
 
 	/// @name Memory

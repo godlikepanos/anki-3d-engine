@@ -144,7 +144,7 @@ Error JointComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		}
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

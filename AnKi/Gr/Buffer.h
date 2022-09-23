@@ -19,8 +19,8 @@ class BufferInitInfo : public GrBaseInitInfo
 {
 public:
 	PtrSize m_size = 0;
-	BufferUsageBit m_usage = BufferUsageBit::NONE;
-	BufferMapAccessBit m_mapAccess = BufferMapAccessBit::NONE;
+	BufferUsageBit m_usage = BufferUsageBit::kNone;
+	BufferMapAccessBit m_mapAccess = BufferMapAccessBit::kNone;
 
 	BufferInitInfo(CString name = {})
 		: GrBaseInitInfo(name)
@@ -47,7 +47,7 @@ class Buffer : public GrObject
 	ANKI_GR_OBJECT
 
 public:
-	static constexpr GrObjectType CLASS_TYPE = GrObjectType::BUFFER;
+	static constexpr GrObjectType kClassType = GrObjectType::kBuffer;
 
 	/// Return the size of the buffer.
 	PtrSize getSize() const
@@ -71,18 +71,18 @@ public:
 
 	/// Map the buffer.
 	/// @param offset The starting offset.
-	/// @param range The range to map or MAX_PTR_SIZE to map until the end.
+	/// @param range The range to map or kMaxPtrSize to map until the end.
 	/// @param access The access to the buffer.
 	void* map(PtrSize offset, PtrSize range, BufferMapAccessBit access);
 
 	/// Flush the buffer from the CPU caches. Call it to make the buffer memory available to the GPU.
 	/// @param offset The starting offset.
-	/// @param range The range to map or MAX_PTR_SIZE to map until the end.
+	/// @param range The range to map or kMaxPtrSize to map until the end.
 	void flush(PtrSize offset, PtrSize range) const;
 
 	/// Invalidate the buffer from the CPU caches. Call it to ready the buffer to see GPU updates.
 	/// @param offset The starting offset.
-	/// @param range The range to map or MAX_PTR_SIZE to map until the end.
+	/// @param range The range to map or kMaxPtrSize to map until the end.
 	void invalidate(PtrSize offset, PtrSize range) const;
 
 	/// Convenience map method.
@@ -108,13 +108,13 @@ public:
 
 protected:
 	PtrSize m_size = 0;
-	BufferUsageBit m_usage = BufferUsageBit::NONE;
-	BufferMapAccessBit m_access = BufferMapAccessBit::NONE;
+	BufferUsageBit m_usage = BufferUsageBit::kNone;
+	BufferMapAccessBit m_access = BufferMapAccessBit::kNone;
 	U64 m_gpuAddress = 0;
 
 	/// Construct.
 	Buffer(GrManager* manager, CString name)
-		: GrObject(manager, CLASS_TYPE, name)
+		: GrObject(manager, kClassType, name)
 	{
 	}
 

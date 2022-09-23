@@ -10,7 +10,7 @@
 namespace anki {
 
 PhysicsBody::PhysicsBody(PhysicsWorld* world, const PhysicsBodyInitInfo& init)
-	: PhysicsFilteredObject(CLASS_TYPE, world)
+	: PhysicsFilteredObject(kClassType, world)
 {
 	ANKI_ASSERT(init.m_mass >= 0.0f);
 
@@ -38,12 +38,12 @@ PhysicsBody::PhysicsBody(PhysicsWorld* world, const PhysicsBodyInitInfo& init)
 	m_body->setUserPointer(static_cast<PhysicsObject*>(this));
 
 	// Other
-	setMaterialGroup((dynamic) ? PhysicsMaterialBit::DYNAMIC_GEOMETRY : PhysicsMaterialBit::STATIC_GEOMETRY);
+	setMaterialGroup((dynamic) ? PhysicsMaterialBit::kDynamicGeometry : PhysicsMaterialBit::kStaticGeometry);
 
-	PhysicsMaterialBit collidesWith = PhysicsMaterialBit::ALL;
+	PhysicsMaterialBit collidesWith = PhysicsMaterialBit::kAll;
 	if(!dynamic)
 	{
-		collidesWith &= ~PhysicsMaterialBit::STATIC_GEOMETRY;
+		collidesWith &= ~PhysicsMaterialBit::kStaticGeometry;
 	}
 	setMaterialMask(collidesWith);
 	setTransform(init.m_transform);

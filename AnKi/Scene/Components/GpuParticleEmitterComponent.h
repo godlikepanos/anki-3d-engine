@@ -61,7 +61,7 @@ public:
 	}
 
 private:
-	static constexpr U32 MAX_RAND_FACTORS = 32;
+	static constexpr U32 kMaxRandFactors = 32;
 
 	SceneNode* m_node;
 	ShaderProgramResourcePtr m_prog;

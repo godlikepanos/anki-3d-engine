@@ -20,15 +20,15 @@ namespace anki {
 /// @memberof Process
 enum class ProcessStatus : U8
 {
-	RUNNING,
-	NOT_RUNNING
+	kRunning,
+	kNotRunning
 };
 
 /// @memberof Process
 enum class ProcessKillSignal : U8
 {
-	NORMAL,
-	FORCE
+	kNormal,
+	kForce
 };
 
 /// Executes external processes.

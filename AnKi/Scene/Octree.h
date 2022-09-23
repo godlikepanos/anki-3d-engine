@@ -109,8 +109,8 @@ public:
 	void getActualSceneBounds(Vec3& min, Vec3& max) const
 	{
 		LockGuard<Mutex> lock(m_globalMtx);
-		ANKI_ASSERT(m_actualSceneAabbMin.x() < MAX_F32);
-		ANKI_ASSERT(m_actualSceneAabbMax.x() > MIN_F32);
+		ANKI_ASSERT(m_actualSceneAabbMin.x() < kMaxF32);
+		ANKI_ASSERT(m_actualSceneAabbMax.x() > kMinF32);
 		min = m_actualSceneAabbMin;
 		max = m_actualSceneAabbMax;
 	}
@@ -174,26 +174,27 @@ private:
 #endif
 	};
 
-	/// P: Stands for positive and N: Negative
+	/// Pos: Stands for positive and Neg: Negative
 	enum class LeafMask : U8
 	{
-		PX_PY_PZ = 1 << 0,
-		PX_PY_NZ = 1 << 1,
-		PX_NY_PZ = 1 << 2,
-		PX_NY_NZ = 1 << 3,
-		NX_PY_PZ = 1 << 4,
-		NX_PY_NZ = 1 << 5,
-		NX_NY_PZ = 1 << 6,
-		NX_NY_NZ = 1 << 7,
+		kPosXPosYPosZ = 1 << 0,
+		kPosXPosYNegZ = 1 << 1,
+		kPosXNegYPosZ = 1 << 2,
+		kPosXNegYNegZ = 1 << 3,
+		kNegXPosYPosZ = 1 << 4,
+		kNegXPosYNegZ = 1 << 5,
+		kNegXNegYPosZ = 1 << 6,
+		kNegXNegYNegZ = 1 << 7,
 
-		NONE = 0,
-		ALL = PX_PY_PZ | PX_PY_NZ | PX_NY_PZ | PX_NY_NZ | NX_PY_PZ | NX_PY_NZ | NX_NY_PZ | NX_NY_NZ,
-		RIGHT = PX_PY_PZ | PX_PY_NZ | PX_NY_PZ | PX_NY_NZ,
-		LEFT = NX_PY_PZ | NX_PY_NZ | NX_NY_PZ | NX_NY_NZ,
-		TOP = PX_PY_PZ | PX_PY_NZ | NX_PY_PZ | NX_PY_NZ,
-		BOTTOM = PX_NY_PZ | PX_NY_NZ | NX_NY_PZ | NX_NY_NZ,
-		FRONT = PX_PY_PZ | PX_NY_PZ | NX_PY_PZ | NX_NY_PZ,
-		BACK = PX_PY_NZ | PX_NY_NZ | NX_PY_NZ | NX_NY_NZ,
+		kNone = 0,
+		kAll = kPosXPosYPosZ | kPosXPosYNegZ | kPosXNegYPosZ | kPosXNegYNegZ | kNegXPosYPosZ | kNegXPosYNegZ
+			   | kNegXNegYPosZ | kNegXNegYNegZ,
+		kRight = kPosXPosYPosZ | kPosXPosYNegZ | kPosXNegYPosZ | kPosXNegYNegZ,
+		kLeft = kNegXPosYPosZ | kNegXPosYNegZ | kNegXNegYPosZ | kNegXNegYNegZ,
+		kTop = kPosXPosYPosZ | kPosXPosYNegZ | kNegXPosYPosZ | kNegXPosYNegZ,
+		kBottom = kPosXNegYPosZ | kPosXNegYNegZ | kNegXNegYPosZ | kNegXNegYNegZ,
+		kFront = kPosXPosYPosZ | kPosXNegYPosZ | kNegXPosYPosZ | kNegXNegYPosZ,
+		kBack = kPosXPosYNegZ | kPosXNegYNegZ | kNegXPosYNegZ | kNegXNegYNegZ,
 	};
 	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS_FRIEND(LeafMask)
 
@@ -211,8 +212,8 @@ private:
 	U32 m_placeableCount = 0;
 
 	/// Compute the min of the scene bounds based on what is placed inside the octree.
-	Vec3 m_actualSceneAabbMin = Vec3(MAX_F32);
-	Vec3 m_actualSceneAabbMax = Vec3(MIN_F32);
+	Vec3 m_actualSceneAabbMin = Vec3(kMaxF32);
+	Vec3 m_actualSceneAabbMax = Vec3(kMinF32);
 
 	Leaf* newLeaf()
 	{
@@ -299,20 +300,25 @@ public:
 
 	void reset()
 	{
-		m_visitedMask.setNonAtomically(0);
+		for(Atomic<U64>& mask : m_visitedMasks)
+		{
+			mask.setNonAtomically(0);
+		}
 	}
 
 private:
-	Atomic<U64> m_visitedMask = {0u};
+	static constexpr U32 kMaxTests = 128;
+	Array<Atomic<U64>, kMaxTests / 64> m_visitedMasks = {0u, 0u};
 	IntrusiveList<Octree::LeafNode> m_leafs; ///< A list of leafs this placeable belongs.
 
 	/// Check if already visited.
 	/// @note It's thread-safe.
 	Bool alreadyVisited(U32 testId)
 	{
-		ANKI_ASSERT(testId < 64);
-		const U64 testMask = U64(1u) << U64(testId);
-		const U64 prev = m_visitedMask.fetchOr(testMask);
+		ANKI_ASSERT(testId < kMaxTests);
+		const U32 group = testId / 64;
+		const U64 testMask = U64(1u) << U64(testId % 64);
+		const U64 prev = m_visitedMasks[group].fetchOr(testMask);
 		return !!(testMask & prev);
 	}
 };

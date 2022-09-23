@@ -16,7 +16,7 @@ namespace anki {
 class Ray
 {
 public:
-	static constexpr CollisionShapeType CLASS_TYPE = CollisionShapeType::RAY;
+	static constexpr CollisionShapeType kClassType = CollisionShapeType::kRay;
 
 	/// Will not initialize any memory, nothing.
 	Ray()
@@ -96,20 +96,20 @@ public:
 private:
 	Vec4 m_origin
 #if ANKI_ENABLE_ASSERTIONS
-		= Vec4(MAX_F32)
+		= Vec4(kMaxF32)
 #endif
 		;
 
 	Vec4 m_dir
 #if ANKI_ENABLE_ASSERTIONS
-		= Vec4(MAX_F32)
+		= Vec4(kMaxF32)
 #endif
 		;
 
 	void check() const
 	{
 		ANKI_ASSERT(m_origin.w() == 0.0f && m_dir.w() == 0.0f
-					&& isZero(m_dir.getLengthSquared() - 1.0f, EPSILON * 100.0f));
+					&& isZero(m_dir.getLengthSquared() - 1.0f, kEpsilonf * 100.0f));
 	}
 };
 /// @}

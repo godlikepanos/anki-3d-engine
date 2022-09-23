@@ -222,7 +222,7 @@ public:
 	}
 
 	// Need to call it after the handle is set by the RenderGraph.
-	void getCurrentDebugRenderTarget(RenderTargetHandle& handle, Bool& handleValid,
+	Bool getCurrentDebugRenderTarget(Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
 									 ShaderProgramPtr& optionalShaderProgram);
 	/// @}
 

@@ -47,7 +47,7 @@ public:
 	const ShaderProgramImplReflection& getReflection();
 
 private:
-	Array<ShaderPtr, U(ShaderType::COUNT)> m_shaders;
+	Array<ShaderPtr, U(ShaderType::kCount)> m_shaders;
 	ShaderProgramImplReflection m_refl;
 	Bool m_reflInitialized = false;
 

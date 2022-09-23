@@ -86,9 +86,9 @@ Error LightShading::initLightShading()
 
 	// Create FB descr
 	m_lightShading.m_fbDescr.m_colorAttachmentCount = 1;
-	m_lightShading.m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::LOAD;
-	m_lightShading.m_fbDescr.m_depthStencilAttachment.m_stencilLoadOperation = AttachmentLoadOperation::DONT_CARE;
-	m_lightShading.m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
+	m_lightShading.m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kLoad;
+	m_lightShading.m_fbDescr.m_depthStencilAttachment.m_stencilLoadOperation = AttachmentLoadOperation::kDontCare;
+	m_lightShading.m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
 
 	if(getGrManager().getDeviceCapabilities().m_vrs && getConfig().getRVrs())
 	{
@@ -104,7 +104,7 @@ Error LightShading::initLightShading()
 	m_visualizeRtProg->getOrCreateVariant(variant);
 	m_visualizeRtGrProg = variant->getProgram();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error LightShading::initSkybox()
@@ -121,7 +121,7 @@ Error LightShading::initSkybox()
 		m_skybox.m_grProgs[method] = variant->getProgram();
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error LightShading::initApplyFog()
@@ -137,7 +137,7 @@ Error LightShading::initApplyFog()
 	m_applyFog.m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_applyFog.m_grProg = variant->getProgram();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error LightShading::initApplyIndirect()
@@ -147,7 +147,7 @@ Error LightShading::initApplyIndirect()
 	const ShaderProgramResourceVariant* variant;
 	m_applyIndirect.m_prog->getOrCreateVariant(variant);
 	m_applyIndirect.m_grProg = variant->getProgram();
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
@@ -160,7 +160,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 	if(enableVrs)
 	{
 		// Just set some low value, the attachment will take over
-		cmdb->setVrsRate(VrsRate::_1x1);
+		cmdb->setVrsRate(VrsRate::k1x1);
 	}
 
 	// Do light shading first
@@ -185,7 +185,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		rgraphCtx.bindColorTexture(0, 8, m_r->getGBuffer().getColorRt(1));
 		rgraphCtx.bindColorTexture(0, 9, m_r->getGBuffer().getColorRt(2));
 		rgraphCtx.bindTexture(0, 10, m_r->getGBuffer().getDepthRt(),
-							  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+							  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
 		if(m_r->getRtShadowsEnabled())
 		{
@@ -212,7 +212,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		rgraphCtx.bindColorTexture(0, 3, m_r->getIndirectSpecular().getRt());
 		rgraphCtx.bindColorTexture(0, 4, m_r->getDepthDownscale().getHiZRt());
 		rgraphCtx.bindTexture(0, 5, m_r->getGBuffer().getDepthRt(),
-							  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+							  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 		rgraphCtx.bindColorTexture(0, 6, m_r->getGBuffer().getColorRt(0));
 		rgraphCtx.bindColorTexture(0, 7, m_r->getGBuffer().getColorRt(1));
 		rgraphCtx.bindColorTexture(0, 8, m_r->getGBuffer().getColorRt(2));
@@ -224,18 +224,18 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		const Vec4 pc(ctx.m_renderQueue->m_cameraNear, ctx.m_renderQueue->m_cameraFar, 0.0f, 0.0f);
 		cmdb->setPushConstants(&pc, sizeof(pc));
 
-		cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);
+		cmdb->setBlendFactors(0, BlendFactor::kOne, BlendFactor::kOne);
 
 		drawQuad(cmdb);
 
 		// Restore state
-		cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
+		cmdb->setBlendFactors(0, BlendFactor::kOne, BlendFactor::kZero);
 	}
 
 	// Skybox
 	if(rgraphCtx.m_currentSecondLevelCommandBufferIndex == 0)
 	{
-		cmdb->setDepthCompareOperation(CompareOperation::EQUAL);
+		cmdb->setDepthCompareOperation(CompareOperation::kEqual);
 
 		const Bool isSolidColor = ctx.m_renderQueue->m_skybox.m_skyboxTexture == nullptr;
 
@@ -271,7 +271,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		drawQuad(cmdb);
 
 		// Restore state
-		cmdb->setDepthCompareOperation(CompareOperation::LESS);
+		cmdb->setDepthCompareOperation(CompareOperation::kLess);
 	}
 
 	// Do the fog apply
@@ -284,7 +284,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);
 
 		rgraphCtx.bindTexture(0, 2, m_r->getGBuffer().getDepthRt(),
-							  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+							  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 		rgraphCtx.bindColorTexture(0, 3, m_r->getVolumetricFog().getRt());
 
 		class PushConsts
@@ -300,18 +300,18 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		cmdb->setPushConstants(&regs, sizeof(regs));
 
 		// finalPixelColor = pixelWithoutFog * transmitance + inScattering (see the shader)
-		cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::SRC_ALPHA);
+		cmdb->setBlendFactors(0, BlendFactor::kOne, BlendFactor::kSrcAlpha);
 
 		drawQuad(cmdb);
 
 		// Reset state
-		cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
+		cmdb->setBlendFactors(0, BlendFactor::kOne, BlendFactor::kZero);
 	}
 
 	// Forward shading last
 	if(enableVrs)
 	{
-		cmdb->setVrsRate(VrsRate::_2x2);
+		cmdb->setVrsRate(VrsRate::k2x2);
 	}
 
 	m_r->getForwardShading().run(ctx, rgraphCtx);
@@ -319,7 +319,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 	if(enableVrs)
 	{
 		// Restore
-		cmdb->setVrsRate(VrsRate::_1x1);
+		cmdb->setVrsRate(VrsRate::k1x1);
 	}
 }
 
@@ -368,23 +368,22 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 				 });
 	pass.setFramebufferInfo(m_lightShading.m_fbDescr, {m_runCtx.m_rt}, m_r->getGBuffer().getDepthRt(), sriRt);
 
-	const TextureUsageBit readUsage = TextureUsageBit::SAMPLED_FRAGMENT;
+	const TextureUsageBit readUsage = TextureUsageBit::kSampledFragment;
 
 	// All
 	if(enableVrs)
 	{
-		pass.newDependency(RenderPassDependency(sriRt, TextureUsageBit::FRAMEBUFFER_SHADING_RATE));
+		pass.newDependency(RenderPassDependency(sriRt, TextureUsageBit::kFramebufferShadingRate));
 	}
 
 	// Light shading
-	pass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
+	pass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite));
 	pass.newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(0), readUsage));
 	pass.newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(1), readUsage));
 	pass.newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(2), readUsage));
-	pass.newDependency(
-		RenderPassDependency(m_r->getGBuffer().getDepthRt(),
-							 TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ,
-							 TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)));
+	pass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(),
+											TextureUsageBit::kSampledFragment | TextureUsageBit::kFramebufferRead,
+											TextureSubresourceInfo(DepthStencilAspectBit::kDepth)));
 	pass.newDependency(RenderPassDependency(m_r->getShadowMapping().getShadowmapRt(), readUsage));
 	if(m_r->getRtShadowsEnabled())
 	{
@@ -395,7 +394,7 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 		pass.newDependency(RenderPassDependency(m_r->getShadowmapsResolve().getRt(), readUsage));
 	}
 	pass.newDependency(
-		RenderPassDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::STORAGE_FRAGMENT_READ));
+		RenderPassDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::kStorageFragmentRead));
 
 	// Apply indirect
 	pass.newDependency(RenderPassDependency(m_r->getIndirectDiffuse().getRt(), readUsage));
@@ -409,11 +408,12 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	m_r->getForwardShading().setDependencies(ctx, pass);
 }
 
-void LightShading::getDebugRenderTarget([[maybe_unused]] CString rtName, RenderTargetHandle& handle,
+void LightShading::getDebugRenderTarget([[maybe_unused]] CString rtName,
+										Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
 										ShaderProgramPtr& optionalShaderProgram) const
 {
 	ANKI_ASSERT(rtName == "LightShading");
-	handle = m_runCtx.m_rt;
+	handles[0] = m_runCtx.m_rt;
 	optionalShaderProgram = m_visualizeRtGrProg;
 }
 

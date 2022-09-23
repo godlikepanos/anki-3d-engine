@@ -15,13 +15,13 @@ Error INotify::initInternal()
 {
 	ANKI_ASSERT(m_fd < 0 && m_watch < 0);
 
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 
 	m_fd = inotify_init();
 	if(m_fd < 0)
 	{
 		ANKI_UTIL_LOGE("inotify_init() failed: %s", strerror(errno));
-		err = Error::FUNCTION_FAILED;
+		err = Error::kFunctionFailed;
 	}
 
 	if(!err)
@@ -30,7 +30,7 @@ Error INotify::initInternal()
 		if(m_watch < 0)
 		{
 			ANKI_UTIL_LOGE("inotify_add_watch() failed: %s", strerror(errno));
-			err = Error::FUNCTION_FAILED;
+			err = Error::kFunctionFailed;
 		}
 	}
 
@@ -69,7 +69,7 @@ Error INotify::pollEvents(Bool& modified)
 {
 	ANKI_ASSERT(m_fd >= 0 && m_watch >= 0);
 
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 	modified = false;
 
 	while(true)
@@ -80,7 +80,7 @@ Error INotify::pollEvents(Bool& modified)
 		if(ret < 0)
 		{
 			ANKI_UTIL_LOGE("poll() failed: %s", strerror(errno));
-			err = Error::FUNCTION_FAILED;
+			err = Error::kFunctionFailed;
 			break;
 		}
 		else if(ret == 0)
@@ -119,7 +119,7 @@ Error INotify::pollEvents(Bool& modified)
 			else
 			{
 				ANKI_UTIL_LOGE("read() failed to read the expected size of data: %s", strerror(errno));
-				err = Error::FUNCTION_FAILED;
+				err = Error::kFunctionFailed;
 				break;
 			}
 		}

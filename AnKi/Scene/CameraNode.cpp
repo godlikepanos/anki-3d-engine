@@ -34,7 +34,7 @@ public:
 			cam.onMoveComponentUpdate(move);
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 
@@ -60,17 +60,8 @@ void CameraNode::initCommon(FrustumType frustumType)
 	// Frustum component
 	FrustumComponent* frc = newComponent<FrustumComponent>();
 	frc->setFrustumType(frustumType);
-	const FrustumComponentVisibilityTestFlag visibilityFlags =
-		FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS | FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS
-		| FrustumComponentVisibilityTestFlag::LENS_FLARE_COMPONENTS
-		| FrustumComponentVisibilityTestFlag::REFLECTION_PROBES | FrustumComponentVisibilityTestFlag::REFLECTION_PROXIES
-		| FrustumComponentVisibilityTestFlag::OCCLUDERS | FrustumComponentVisibilityTestFlag::DECALS
-		| FrustumComponentVisibilityTestFlag::FOG_DENSITY_COMPONENTS
-		| FrustumComponentVisibilityTestFlag::GLOBAL_ILLUMINATION_PROBES | FrustumComponentVisibilityTestFlag::EARLY_Z
-		| FrustumComponentVisibilityTestFlag::ALL_SHADOWS_ENABLED
-		| FrustumComponentVisibilityTestFlag::GENERIC_COMPUTE_JOB_COMPONENTS
-		| FrustumComponentVisibilityTestFlag::UI_COMPONENTS | FrustumComponentVisibilityTestFlag::SKYBOX;
-	frc->setEnabledVisibilityTests(visibilityFlags);
+	frc->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::kAll
+								   ^ FrustumComponentVisibilityTestFlag::kAllRayTracing);
 	frc->setLodDistance(0, getConfig().getLod0MaxDistance());
 	frc->setLodDistance(1, getConfig().getLod1MaxDistance());
 	frc->setShadowCascadeCount(getConfig().getSceneShadowCascadeCount());
@@ -80,8 +71,8 @@ void CameraNode::initCommon(FrustumType frustumType)
 	   && getConfig().getSceneRayTracedShadows())
 	{
 		FrustumComponent* rtFrustumComponent = newComponent<FrustumComponent>();
-		rtFrustumComponent->setFrustumType(FrustumType::ORTHOGRAPHIC);
-		rtFrustumComponent->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::RAY_TRACING_SHADOWS);
+		rtFrustumComponent->setFrustumType(FrustumType::kOrthographic);
+		rtFrustumComponent->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::kRayTracingShadows);
 
 		const F32 dist = getConfig().getSceneRayTracingExtendedFrustumDistance();
 
@@ -105,7 +96,7 @@ void CameraNode::onMoveComponentUpdate(MoveComponent& move)
 		else
 		{
 			// Extended RT frustum, re-align it so the frustum is positioned at the center of the camera eye
-			ANKI_ASSERT(fc.getFrustumType() == FrustumType::ORTHOGRAPHIC);
+			ANKI_ASSERT(fc.getFrustumType() == FrustumType::kOrthographic);
 			const F32 far = fc.getFar();
 			Transform extendedFrustumTransform = Transform::getIdentity();
 			Vec3 newOrigin = worldTransform.getOrigin().xyz();
@@ -121,7 +112,7 @@ void CameraNode::onMoveComponentUpdate(MoveComponent& move)
 PerspectiveCameraNode::PerspectiveCameraNode(SceneGraph* scene, CString name)
 	: CameraNode(scene, name)
 {
-	initCommon(FrustumType::PERSPECTIVE);
+	initCommon(FrustumType::kPerspective);
 }
 
 PerspectiveCameraNode::~PerspectiveCameraNode()
@@ -131,7 +122,7 @@ PerspectiveCameraNode::~PerspectiveCameraNode()
 OrthographicCameraNode::OrthographicCameraNode(SceneGraph* scene, CString name)
 	: CameraNode(scene, name)
 {
-	initCommon(FrustumType::ORTHOGRAPHIC);
+	initCommon(FrustumType::kOrthographic);
 }
 
 OrthographicCameraNode::~OrthographicCameraNode()

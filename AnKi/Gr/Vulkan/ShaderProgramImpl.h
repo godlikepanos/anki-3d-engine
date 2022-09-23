@@ -20,10 +20,10 @@ class PipelineFactory;
 class ShaderProgramReflectionInfo
 {
 public:
-	BitSet<MAX_COLOR_ATTACHMENTS, U8> m_colorAttachmentWritemask = {false};
-	BitSet<MAX_VERTEX_ATTRIBUTES, U8> m_attributeMask = {false};
-	BitSet<MAX_DESCRIPTOR_SETS, U8> m_descriptorSetMask = {false};
-	Array<BitSet<MAX_BINDINGS_PER_DESCRIPTOR_SET, U8>, MAX_DESCRIPTOR_SETS> m_activeBindingMask = {
+	BitSet<kMaxColorRenderTargets, U8> m_colorAttachmentWritemask = {false};
+	BitSet<kMaxVertexAttributes, U8> m_attributeMask = {false};
+	BitSet<kMaxDescriptorSets, U8> m_descriptorSetMask = {false};
+	Array<BitSet<kMaxBindingsPerDescriptorSet, U8>, kMaxDescriptorSets> m_activeBindingMask = {
 		{{false}, {false}, {false}}};
 	U32 m_pushConstantsSize = 0;
 };
@@ -43,7 +43,7 @@ public:
 
 	Bool isGraphics() const
 	{
-		return !!(m_stages & ShaderTypeBit::ALL_GRAPHICS);
+		return !!(m_stages & ShaderTypeBit::kAllGraphics);
 	}
 
 	const VkPipelineShaderStageCreateInfo* getShaderCreateInfos(U32& count) const
@@ -108,17 +108,18 @@ public:
 
 private:
 	DynamicArray<ShaderPtr> m_shaders;
-	ShaderTypeBit m_stages = ShaderTypeBit::NONE;
+	ShaderTypeBit m_stages = ShaderTypeBit::kNone;
 
 	PipelineLayout m_pplineLayout = {};
-	Array<DescriptorSetLayout, MAX_DESCRIPTOR_SETS> m_descriptorSetLayouts;
+	Array<DescriptorSetLayout, kMaxDescriptorSets> m_descriptorSetLayouts;
 
 	ShaderProgramReflectionInfo m_refl;
 
 	class
 	{
 	public:
-		Array<VkPipelineShaderStageCreateInfo, U32(ShaderType::FRAGMENT - ShaderType::VERTEX) + 1> m_shaderCreateInfos;
+		Array<VkPipelineShaderStageCreateInfo, U32(ShaderType::kFragment - ShaderType::kVertex) + 1>
+			m_shaderCreateInfos;
 		U32 m_shaderCreateInfoCount = 0;
 		PipelineFactory* m_pplineFactory = nullptr;
 	} m_graphics;

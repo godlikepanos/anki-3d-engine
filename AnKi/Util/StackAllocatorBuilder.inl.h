@@ -10,7 +10,7 @@
 namespace anki {
 
 template<typename TChunk, typename TInterface, typename TLock>
-StackAllocatorBuilder<TChunk, TInterface, TLock>::~StackAllocatorBuilder()
+void StackAllocatorBuilder<TChunk, TInterface, TLock>::destroy()
 {
 	// Free chunks
 	TChunk* chunk = m_chunksListHead;
@@ -25,12 +25,16 @@ StackAllocatorBuilder<TChunk, TInterface, TLock>::~StackAllocatorBuilder()
 	Atomic<U32>* allocationCount = m_interface.getAllocationCount();
 	if(allocationCount)
 	{
-		const U32 allocCount = allocationCount->load();
-		if(!m_interface.ignoreDeallocationErrors() && allocCount != 0)
+		if(!m_interface.ignoreDeallocationErrors() && allocationCount->load() != 0)
 		{
 			ANKI_UTIL_LOGW("Forgot to deallocate");
 		}
 	}
+
+	m_crntChunk.setNonAtomically(nullptr);
+	m_chunksListHead = nullptr;
+	m_memoryCapacity = 0;
+	m_chunkCount = 0;
 }
 
 template<typename TChunk, typename TInterface, typename TLock>
@@ -43,7 +47,7 @@ Error StackAllocatorBuilder<TChunk, TInterface, TLock>::allocate(PtrSize size, [
 	ANKI_ASSERT(size > 0);
 
 	chunk = nullptr;
-	offset = MAX_PTR_SIZE;
+	offset = kMaxPtrSize;
 
 	while(true)
 	{
@@ -150,8 +154,8 @@ Error StackAllocatorBuilder<TChunk, TInterface, TLock>::allocate(PtrSize size, [
 		}
 	}
 
-	ANKI_ASSERT(chunk && offset != MAX_PTR_SIZE);
-	return Error::NONE;
+	ANKI_ASSERT(chunk && offset != kMaxPtrSize);
+	return Error::kNone;
 }
 
 template<typename TChunk, typename TInterface, typename TLock>

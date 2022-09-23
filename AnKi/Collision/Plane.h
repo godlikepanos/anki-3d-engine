@@ -16,7 +16,7 @@ namespace anki {
 class Plane
 {
 public:
-	static constexpr CollisionShapeType CLASS_TYPE = CollisionShapeType::PLANE;
+	static constexpr CollisionShapeType kClassType = CollisionShapeType::kPlane;
 
 	/// Will not initialize any memory, nothing.
 	Plane()
@@ -91,20 +91,20 @@ public:
 private:
 	Vec4 m_normal
 #if ANKI_ENABLE_ASSERTIONS
-		= Vec4(MAX_F32)
+		= Vec4(kMaxF32)
 #endif
 		;
 
 	F32 m_offset
 #if ANKI_ENABLE_ASSERTIONS
-		= MAX_F32
+		= kMaxF32
 #endif
 		;
 
 	void check() const
 	{
 		ANKI_ASSERT(m_normal.w() == 0.0f);
-		ANKI_ASSERT(m_offset != MAX_F32);
+		ANKI_ASSERT(m_offset != kMaxF32);
 	}
 };
 /// @}

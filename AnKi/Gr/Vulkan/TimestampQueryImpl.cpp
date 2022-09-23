@@ -22,7 +22,7 @@ Error TimestampQueryImpl::init()
 
 	m_timestampPeriod = U64(getGrManagerImpl().getPhysicalDeviceProperties().limits.timestampPeriod);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 TimestampQueryResult TimestampQueryImpl::getResultInternal(Second& timestamp) const
@@ -35,16 +35,16 @@ TimestampQueryResult TimestampQueryImpl::getResultInternal(Second& timestamp) co
 	ANKI_VK_CHECKF(res = vkGetQueryPoolResults(getDevice(), m_handle.getQueryPool(), m_handle.getQueryIndex(), 1,
 											   sizeof(value), &value, sizeof(value), VK_QUERY_RESULT_64_BIT));
 
-	TimestampQueryResult qout = TimestampQueryResult::NOT_AVAILABLE;
+	TimestampQueryResult qout = TimestampQueryResult::kNotAvailable;
 	if(res == VK_SUCCESS)
 	{
 		value *= m_timestampPeriod;
 		timestamp = Second(value) / Second(1000000000);
-		qout = TimestampQueryResult::AVAILABLE;
+		qout = TimestampQueryResult::kAvailable;
 	}
 	else if(res == VK_NOT_READY)
 	{
-		qout = TimestampQueryResult::NOT_AVAILABLE;
+		qout = TimestampQueryResult::kNotAvailable;
 	}
 	else
 	{

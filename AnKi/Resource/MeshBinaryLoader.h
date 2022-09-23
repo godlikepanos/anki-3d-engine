@@ -47,7 +47,7 @@ public:
 	Bool hasBoneInfo() const
 	{
 		ANKI_ASSERT(isLoaded());
-		return m_header.m_vertexAttributes[VertexAttributeId::BONE_INDICES].m_format != Format::NONE;
+		return m_header.m_vertexAttributes[VertexAttributeId::BONE_INDICES].m_format != Format::kNone;
 	}
 
 	ConstWeakArray<MeshBinarySubMesh> getSubMeshes() const
@@ -72,7 +72,7 @@ private:
 	PtrSize getIndexBufferSize() const
 	{
 		ANKI_ASSERT(isLoaded());
-		return PtrSize(m_header.m_totalIndexCount) * ((m_header.m_indexType == IndexType::U16) ? 2 : 4);
+		return PtrSize(m_header.m_totalIndexCount) * ((m_header.m_indexType == IndexType::kU16) ? 2 : 4);
 	}
 
 	PtrSize getAlignedIndexBufferSize() const

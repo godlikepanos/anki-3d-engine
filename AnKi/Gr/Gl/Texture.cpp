@@ -34,7 +34,7 @@ Texture* Texture::newInstance(GrManager* manager, const TextureInitInfo& init)
 			ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
 			(void)oldState;
 
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 

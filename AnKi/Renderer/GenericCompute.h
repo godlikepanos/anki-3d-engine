@@ -26,7 +26,7 @@ public:
 
 	Error init()
 	{
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	/// Populate the rendergraph.

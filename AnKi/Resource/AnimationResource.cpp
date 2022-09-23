@@ -27,8 +27,8 @@ Error AnimationResource::load(const ResourceFilename& filename, [[maybe_unused]]
 {
 	XmlElement el;
 
-	m_startTime = MAX_SECOND;
-	Second maxTime = MIN_SECOND;
+	m_startTime = kMaxSecond;
+	Second maxTime = kMinSecond;
 
 	// Document
 	XmlDocument doc;
@@ -53,7 +53,7 @@ Error AnimationResource::load(const ResourceFilename& filename, [[maybe_unused]]
 	if(channelCount == 0)
 	{
 		ANKI_RESOURCE_LOGE("Didn't found any channels");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 	m_channels.create(getAllocator(), channelCount);
 
@@ -199,7 +199,7 @@ Error AnimationResource::load(const ResourceFilename& filename, [[maybe_unused]]
 
 	m_duration = maxTime - m_startTime;
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void AnimationResource::interpolate(U32 channelIndex, Second time, Vec3& pos, Quat& rot, F32& scale) const

@@ -23,14 +23,14 @@ public:
 };
 
 /// This is a generic implementation of a buddy allocator.
-/// @tparam T_MAX_MEMORY_RANGE_LOG2 The max memory to allocate.
+/// @tparam kMaxMemoryRangeLog2 The max memory to allocate.
 /// @tparam TLock This an optional lock. Can be a Mutex or SpinLock or some dummy class.
-template<U32 T_MAX_MEMORY_RANGE_LOG2, typename TLock>
+template<U32 kMaxMemoryRangeLog2, typename TLock>
 class BuddyAllocatorBuilder
 {
 public:
 	/// The type of the address.
-	using Address = std::conditional_t<(T_MAX_MEMORY_RANGE_LOG2 > 32), PtrSize, U32>;
+	using Address = std::conditional_t<(kMaxMemoryRangeLog2 > 32), PtrSize, U32>;
 
 	BuddyAllocatorBuilder()
 	{

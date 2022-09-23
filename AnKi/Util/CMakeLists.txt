@@ -3,7 +3,7 @@ set(sources
 	Functions.cpp
 	File.cpp
 	Filesystem.cpp
-	Memory.cpp
+	CpuMemoryPools.cpp
 	System.cpp
 	HighRezTimer.cpp
 	ThreadPool.cpp
@@ -16,7 +16,8 @@ set(sources
 	Serializer.cpp
 	Xml.cpp
 	F16.cpp
-	Process.cpp)
+	Process.cpp
+	Thread.cpp)
 
 if(LINUX OR ANDROID OR MACOS)
 	set(sources ${sources}

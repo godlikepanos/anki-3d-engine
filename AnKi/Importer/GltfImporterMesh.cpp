@@ -70,16 +70,16 @@ static U calcImplicitStride(const cgltf_attribute& attrib)
 template<typename T>
 static Error checkAttribute(const cgltf_attribute& attrib)
 {
-	if(cgltfComponentCount(attrib.data->type) != T::COMPONENT_COUNT)
+	if(cgltfComponentCount(attrib.data->type) != T::kComponentCount)
 	{
 		ANKI_IMPORTER_LOGE("Wrong component count for attribute: %s", attrib.name);
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	if(cgltfComponentSize(attrib.data->component_type) != sizeof(typename T::Scalar))
 	{
 		ANKI_IMPORTER_LOGE("Incompatible type: %s", attrib.name);
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	ANKI_ASSERT(attrib.data);
@@ -87,10 +87,10 @@ static Error checkAttribute(const cgltf_attribute& attrib)
 	if(count == 0)
 	{
 		ANKI_IMPORTER_LOGE("Zero vertex count");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 /// Align after laying a buffer in a file.
@@ -105,7 +105,7 @@ static Error alignBufferInFile(PtrSize bufferSize, File& file)
 		ANKI_CHECK(file.write(&value, sizeof(value)));
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 class TempVertex
@@ -133,11 +133,11 @@ public:
 	DynamicArrayAuto<TempVertex> m_verts;
 	DynamicArrayAuto<U32> m_indices;
 
-	Vec3 m_aabbMin = Vec3(MAX_F32);
-	Vec3 m_aabbMax = Vec3(MIN_F32);
+	Vec3 m_aabbMin = Vec3(kMaxF32);
+	Vec3 m_aabbMax = Vec3(kMinF32);
 
-	U32 m_firstIdx = MAX_U32;
-	U32 m_idxCount = MAX_U32;
+	U32 m_firstIdx = kMaxU32;
+	U32 m_idxCount = kMaxU32;
 
 	SubMesh(GenericMemoryPoolAllocator<U8>& alloc)
 		: m_verts(alloc)
@@ -284,10 +284,10 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 	ListAuto<SubMesh> submeshes(m_alloc);
 	U32 totalIndexCount = 0;
 	U32 totalVertexCount = 0;
-	Vec3 aabbMin(MAX_F32);
-	Vec3 aabbMax(MIN_F32);
-	F32 maxUvDistance = MIN_F32;
-	F32 minUvDistance = MAX_F32;
+	Vec3 aabbMin(kMaxF32);
+	Vec3 aabbMax(kMinF32);
+	F32 maxUvDistance = kMinF32;
+	F32 minUvDistance = kMaxF32;
 	Bool hasBoneWeights = false;
 
 	// Iterate primitives. Every primitive is a submesh
@@ -297,13 +297,13 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 		if(primitive->type != cgltf_primitive_type_triangles)
 		{
 			ANKI_IMPORTER_LOGE("Expecting triangles got %d", primitive->type);
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 
 		SubMesh& submesh = *submeshes.emplaceBack(m_alloc);
 
-		U minVertCount = MAX_U;
-		U maxVertCount = MIN_U;
+		U minVertCount = kMaxU;
+		U maxVertCount = kMinU;
 		for(const cgltf_attribute* attrib = primitive->attributes;
 			attrib < primitive->attributes + primitive->attributes_count; ++attrib)
 		{
@@ -314,7 +314,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 		if(maxVertCount == 0 || minVertCount != maxVertCount)
 		{
 			ANKI_IMPORTER_LOGE("Wrong number of vertices");
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 
 		U32 vertCount = U32(primitive->attributes[0].data->count);
@@ -389,7 +389,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 
 		aabbMin = aabbMin.min(submesh.m_aabbMin);
 		// Bump aabbMax a bit
-		submesh.m_aabbMax += EPSILON * 10.0f;
+		submesh.m_aabbMax += kEpsilonf * 10.0f;
 		aabbMax = aabbMax.max(submesh.m_aabbMax);
 
 		//
@@ -406,7 +406,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 
 				// Check the positions dist
 				const F32 posDist = (otherPos - pos).getLengthSquared();
-				if(posDist > EPSILON * EPSILON)
+				if(posDist > kEpsilonf * kEpsilonf)
 				{
 					continue;
 				}
@@ -434,7 +434,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 			if(primitive->indices->count == 0 || (primitive->indices->count % 3) != 0)
 			{
 				ANKI_IMPORTER_LOGE("Incorect index count: %lu", primitive->indices->count);
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 			submesh.m_indices.create(U32(primitive->indices->count));
 			const U8* base = static_cast<const U8*>(primitive->indices->buffer_view->buffer->data)
@@ -497,7 +497,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 				Vec3 t = (edge02 * uvedge01.y() - edge01 * uvedge02.y()) * det;
 				Vec3 b = (edge02 * uvedge01.x() - edge01 * uvedge02.x()) * det;
 
-				if(t.getLengthSquared() < EPSILON)
+				if(t.getLengthSquared() < kEpsilonf)
 				{
 					t = Vec3(1.0f, 0.0f, 0.0f); // Something random
 				}
@@ -506,7 +506,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 					t.normalize();
 				}
 
-				if(b.getLengthSquared() < EPSILON)
+				if(b.getLengthSquared() < kEpsilonf)
 				{
 					b = Vec3(0.0f, 1.0f, 0.0f); // Something random
 				}
@@ -530,7 +530,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 				const Vec3& n = submesh.m_verts[i].m_normal;
 				Vec3& b = bitangents[i];
 
-				if(t.getLengthSquared() < EPSILON)
+				if(t.getLengthSquared() < kEpsilonf)
 				{
 					t = Vec3(1.0f, 0.0f, 0.0f); // Something random
 				}
@@ -539,7 +539,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 					t.normalize();
 				}
 
-				if(b.getLengthSquared() < EPSILON)
+				if(b.getLengthSquared() < kEpsilonf)
 				{
 					b = Vec3(0.0f, 1.0f, 0.0f); // Something random
 				}
@@ -584,7 +584,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 	if(submeshes.getSize() == 0)
 	{
 		ANKI_IMPORTER_LOGE("Mesh contains degenerate geometry");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	// Find if it's a convex shape
@@ -601,7 +601,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 			const Vec3& v1 = submesh.m_verts[i1].m_position;
 			const Vec3& v2 = submesh.m_verts[i2].m_position;
 
-			if(computeTriangleArea(v0, v1, v2) <= EPSILON)
+			if(computeTriangleArea(v0, v1, v2) <= kEpsilonf)
 			{
 				continue;
 			}
@@ -614,7 +614,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 				for(const TempVertex& vertB : submeshB.m_verts)
 				{
 					const F32 test = testPlane(plane, vertB.m_position.xyz0());
-					if(test > EPSILON)
+					if(test > kEpsilonf)
 					{
 						convex = false;
 						break;
@@ -641,28 +641,28 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 		// Positions
 		MeshBinaryVertexAttribute& posa = header.m_vertexAttributes[VertexAttributeId::POSITION];
 		posa.m_bufferBinding = 0;
-		posa.m_format = Format::R32G32B32_SFLOAT;
+		posa.m_format = Format::kR32G32B32Sfloat;
 		posa.m_relativeOffset = 0;
 		posa.m_scale = 1.0f;
 
 		// Normals
 		MeshBinaryVertexAttribute& na = header.m_vertexAttributes[VertexAttributeId::NORMAL];
 		na.m_bufferBinding = 1;
-		na.m_format = Format::A2B10G10R10_SNORM_PACK32;
+		na.m_format = Format::kA2B10G10R10SnormPack32;
 		na.m_relativeOffset = 0;
 		na.m_scale = 1.0f;
 
 		// Tangents
 		MeshBinaryVertexAttribute& ta = header.m_vertexAttributes[VertexAttributeId::TANGENT];
 		ta.m_bufferBinding = 1;
-		ta.m_format = Format::A2B10G10R10_SNORM_PACK32;
+		ta.m_format = Format::kA2B10G10R10SnormPack32;
 		ta.m_relativeOffset = sizeof(U32);
 		ta.m_scale = 1.0f;
 
 		// UVs
 		MeshBinaryVertexAttribute& uva = header.m_vertexAttributes[VertexAttributeId::UV0];
 		uva.m_bufferBinding = 1;
-		uva.m_format = Format::R32G32_SFLOAT;
+		uva.m_format = Format::kR32G32Sfloat;
 		uva.m_relativeOffset = sizeof(U32) * 2;
 		uva.m_scale = 1.0f;
 
@@ -671,13 +671,13 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 		{
 			MeshBinaryVertexAttribute& bidxa = header.m_vertexAttributes[VertexAttributeId::BONE_INDICES];
 			bidxa.m_bufferBinding = 2;
-			bidxa.m_format = Format::R8G8B8A8_UINT;
+			bidxa.m_format = Format::kR8G8B8A8Uint;
 			bidxa.m_relativeOffset = 0;
 			bidxa.m_scale = 1.0f;
 
 			MeshBinaryVertexAttribute& wa = header.m_vertexAttributes[VertexAttributeId::BONE_WEIGHTS];
 			wa.m_bufferBinding = 2;
-			wa.m_format = Format::R8G8B8A8_UNORM;
+			wa.m_format = Format::kR8G8B8A8Unorm;
 			wa.m_relativeOffset = sizeof(U8Vec4);
 			wa.m_scale = 1.0f;
 		}
@@ -709,7 +709,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 		{
 			header.m_flags |= MeshBinaryFlag::CONVEX;
 		}
-		header.m_indexType = IndexType::U16;
+		header.m_indexType = IndexType::kU16;
 		header.m_totalIndexCount = totalIndexCount;
 		header.m_totalVertexCount = totalVertexCount;
 		header.m_subMeshCount = U32(submeshes.getSize());
@@ -745,10 +745,10 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 		for(U32 i = 0; i < indices.getSize(); ++i)
 		{
 			const U32 idx = submesh.m_indices[i] + vertCount;
-			if(idx > MAX_U16)
+			if(idx > kMaxU16)
 			{
 				ANKI_IMPORTER_LOGE("Only supports 16bit indices for now (%u): %s", idx, fname.cstr());
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 
 			indices[i] = U16(idx);
@@ -813,11 +813,11 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 					if(submesh.m_verts[i].m_boneIds[c] > 0XFF)
 					{
 						ANKI_IMPORTER_LOGE("Only 256 bones are supported");
-						return Error::USER_DATA;
+						return Error::kUserData;
 					}
 
 					vert.m_boneIndices[c] = U8(submesh.m_verts[i].m_boneIds[c]);
-					vert.m_boneWeights[c] = U8(submesh.m_verts[i].m_boneWeights[c] * F32(MAX_U8));
+					vert.m_boneWeights[c] = U8(submesh.m_verts[i].m_boneWeights[c] * F32(kMaxU8));
 				}
 
 				verts[i] = vert;
@@ -829,7 +829,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 		ANKI_CHECK(alignBufferInFile(header.m_totalVertexCount * sizeof(BoneInfoVertex), file));
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

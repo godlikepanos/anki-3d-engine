@@ -11,7 +11,7 @@
 namespace anki {
 
 PhysicsTrigger::PhysicsTrigger(PhysicsWorld* world, PhysicsCollisionShapePtr shape)
-	: PhysicsFilteredObject(CLASS_TYPE, world)
+	: PhysicsFilteredObject(kClassType, world)
 {
 	m_shape = shape;
 
@@ -24,8 +24,8 @@ PhysicsTrigger::PhysicsTrigger(PhysicsWorld* world, PhysicsCollisionShapePtr sha
 
 	m_ghostShape->setUserPointer(static_cast<PhysicsObject*>(this));
 
-	setMaterialGroup(PhysicsMaterialBit::TRIGGER);
-	setMaterialMask(PhysicsMaterialBit::ALL ^ PhysicsMaterialBit::STATIC_GEOMETRY);
+	setMaterialGroup(PhysicsMaterialBit::kTrigger);
+	setMaterialMask(PhysicsMaterialBit::kAll ^ PhysicsMaterialBit::kStaticGeometry);
 }
 
 PhysicsTrigger::~PhysicsTrigger()

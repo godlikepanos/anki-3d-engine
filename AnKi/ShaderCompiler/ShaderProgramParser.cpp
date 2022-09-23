@@ -9,13 +9,13 @@ namespace anki {
 
 #define ANKI_PP_ERROR_MALFORMED() \
 	ANKI_SHADER_COMPILER_LOGE("%s: Malformed expression: %s", fname.cstr(), line.cstr()); \
-	return Error::USER_DATA
+	return Error::kUserData
 
 #define ANKI_PP_ERROR_MALFORMED_MSG(msg_) \
 	ANKI_SHADER_COMPILER_LOGE("%s: " msg_ ": %s", fname.cstr(), line.cstr()); \
-	return Error::USER_DATA
+	return Error::kUserData
 
-inline constexpr Array<CString, U32(ShaderType::COUNT)> SHADER_STAGE_NAMES = {
+inline constexpr Array<CString, U32(ShaderType::kCount)> SHADER_STAGE_NAMES = {
 	{"VERTEX", "TESSELLATION_CONTROL", "TESSELLATION_EVALUATION", "GEOMETRY", "FRAGMENT", "COMPUTE", "RAY_GEN",
 	 "ANY_HIT", "CLOSEST_HIT", "MISS", "INTERSECTION", "CALLABLE"}};
 
@@ -64,7 +64,7 @@ inline constexpr char SHADER_HEADER[] = R"(#version 460 core
 #extension GL_EXT_scalar_block_layout : enable
 
 #define ANKI_MAX_BINDLESS_TEXTURES %uu
-#define MAX_BINDLESS_READONLY_TEXTURE_BUFFERS %uu
+#define kMaxBindlessReadonlyTextureBuffers %uu
 
 #if defined(ANKI_RAY_GEN_SHADER) || defined(ANKI_ANY_HIT_SHADER) || defined(ANKI_CLOSEST_HIT_SHADER) || defined(ANKI_MISS_SHADER) || defined(ANKI_INTERSECTION_SHADER) || defined(ANKI_CALLABLE_SHADER)
 #	extension GL_EXT_ray_tracing : enable
@@ -75,7 +75,7 @@ inline constexpr char SHADER_HEADER[] = R"(#version 460 core
 	layout(set = s, binding = 0) uniform itexture2D u_bindlessTextures2dI32[ANKI_MAX_BINDLESS_TEXTURES]; \
 	layout(set = s, binding = 0) uniform texture2D u_bindlessTextures2dF32[ANKI_MAX_BINDLESS_TEXTURES]; \
 	layout(set = s, binding = 0) uniform texture2DArray u_bindlessTextures2dArrayF32[ANKI_MAX_BINDLESS_TEXTURES]; \
-	layout(set = s, binding = 1) uniform textureBuffer u_bindlessTextureBuffers[MAX_BINDLESS_READONLY_TEXTURE_BUFFERS];
+	layout(set = s, binding = 1) uniform textureBuffer u_bindlessTextureBuffers[kMaxBindlessReadonlyTextureBuffers];
 
 #define F32 float
 #define _ANKI_SIZEOF_float 4u
@@ -329,53 +329,53 @@ Error ShaderProgramParser::parsePragmaStart(const StringAuto* begin, const Strin
 		ANKI_PP_ERROR_MALFORMED();
 	}
 
-	ShaderType shaderType = ShaderType::COUNT;
+	ShaderType shaderType = ShaderType::kCount;
 	if(*begin == "vert")
 	{
-		shaderType = ShaderType::VERTEX;
+		shaderType = ShaderType::kVertex;
 	}
 	else if(*begin == "tessc")
 	{
-		shaderType = ShaderType::TESSELLATION_CONTROL;
+		shaderType = ShaderType::kTessellationControl;
 	}
 	else if(*begin == "tesse")
 	{
 	}
 	else if(*begin == "geom")
 	{
-		shaderType = ShaderType::GEOMETRY;
+		shaderType = ShaderType::kGeometry;
 	}
 	else if(*begin == "frag")
 	{
-		shaderType = ShaderType::FRAGMENT;
+		shaderType = ShaderType::kFragment;
 	}
 	else if(*begin == "comp")
 	{
-		shaderType = ShaderType::COMPUTE;
+		shaderType = ShaderType::kCompute;
 	}
 	else if(*begin == "rgen")
 	{
-		shaderType = ShaderType::RAY_GEN;
+		shaderType = ShaderType::kRayGen;
 	}
 	else if(*begin == "ahit")
 	{
-		shaderType = ShaderType::ANY_HIT;
+		shaderType = ShaderType::kAnyHit;
 	}
 	else if(*begin == "chit")
 	{
-		shaderType = ShaderType::CLOSEST_HIT;
+		shaderType = ShaderType::kClosestHit;
 	}
 	else if(*begin == "miss")
 	{
-		shaderType = ShaderType::MISS;
+		shaderType = ShaderType::kMiss;
 	}
 	else if(*begin == "int")
 	{
-		shaderType = ShaderType::INTERSECTION;
+		shaderType = ShaderType::kIntersection;
 	}
 	else if(*begin == "call")
 	{
-		shaderType = ShaderType::CALLABLE;
+		shaderType = ShaderType::kCallable;
 	}
 	else
 	{
@@ -406,7 +406,7 @@ Error ShaderProgramParser::parsePragmaStart(const StringAuto* begin, const Strin
 	}
 	m_insideShader = true;
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ShaderProgramParser::parsePragmaEnd(const StringAuto* begin, const StringAuto* end, CString line, CString fname)
@@ -429,7 +429,7 @@ Error ShaderProgramParser::parsePragmaEnd(const StringAuto* begin, const StringA
 	// Write code
 	m_codeLines.pushBack("#endif // Shader guard");
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ShaderProgramParser::parsePragmaMutator(const StringAuto* begin, const StringAuto* end, CString line,
@@ -503,7 +503,7 @@ Error ShaderProgramParser::parsePragmaMutator(const StringAuto* begin, const Str
 		}
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ShaderProgramParser::parsePragmaLibraryName(const StringAuto* begin, const StringAuto* end, CString line,
@@ -523,7 +523,7 @@ Error ShaderProgramParser::parsePragmaLibraryName(const StringAuto* begin, const
 
 	m_libName = *begin;
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ShaderProgramParser::parsePragmaRayType(const StringAuto* begin, const StringAuto* end, CString line,
@@ -536,7 +536,7 @@ Error ShaderProgramParser::parsePragmaRayType(const StringAuto* begin, const Str
 		ANKI_PP_ERROR_MALFORMED();
 	}
 
-	if(m_rayType != MAX_U32)
+	if(m_rayType != kMaxU32)
 	{
 		ANKI_PP_ERROR_MALFORMED_MSG("Ray type already set");
 	}
@@ -548,7 +548,7 @@ Error ShaderProgramParser::parsePragmaRayType(const StringAuto* begin, const Str
 		ANKI_PP_ERROR_MALFORMED_MSG("Ray type has a very large value");
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ShaderProgramParser::parsePragmaReflect(const StringAuto* begin, const StringAuto* end, CString line,
@@ -563,7 +563,7 @@ Error ShaderProgramParser::parsePragmaReflect(const StringAuto* begin, const Str
 
 	m_symbolsToReflect.pushBack(*begin);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ShaderProgramParser::parsePragmaSkipMutation(const StringAuto* begin, const StringAuto* end, CString line,
@@ -587,7 +587,7 @@ Error ShaderProgramParser::parsePragmaSkipMutation(const StringAuto* begin, cons
 	{
 		// Get mutator name
 		const CString mutatorName = *begin;
-		U32 mutatorIndex = MAX_U32;
+		U32 mutatorIndex = kMaxU32;
 		for(U32 i = 0; i < m_mutators.getSize(); ++i)
 		{
 			if(m_mutators[i].m_name == mutatorName)
@@ -597,7 +597,7 @@ Error ShaderProgramParser::parsePragmaSkipMutation(const StringAuto* begin, cons
 			}
 		}
 
-		if(mutatorIndex == MAX_U32)
+		if(mutatorIndex == kMaxU32)
 		{
 			ANKI_PP_ERROR_MALFORMED_MSG("Mutator not found");
 		}
@@ -621,7 +621,7 @@ Error ShaderProgramParser::parsePragmaSkipMutation(const StringAuto* begin, cons
 		++begin;
 	} while(begin < end && !tokenIsComment(*begin));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ShaderProgramParser::parseInclude(const StringAuto* begin, const StringAuto* end, CString line, CString fname,
@@ -649,11 +649,11 @@ Error ShaderProgramParser::parseInclude(const StringAuto* begin, const StringAut
 		fname2.create(path.begin() + 1, path.begin() + path.getLength() - 1);
 
 		const Bool dontIgnore =
-			fname2.find("AnKi/Shaders/") != String::NPOS || fname2.find("ThirdParty/") != String::NPOS;
+			fname2.find("AnKi/Shaders/") != String::kNpos || fname2.find("ThirdParty/") != String::kNpos;
 		if(!dontIgnore)
 		{
 			// The shaders can't include C++ files. Ignore the include
-			return Error::NONE;
+			return Error::kNone;
 		}
 
 		if(parseFile(fname2, depth + 1))
@@ -666,7 +666,7 @@ Error ShaderProgramParser::parseInclude(const StringAuto* begin, const StringAut
 		ANKI_PP_ERROR_MALFORMED();
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPragmaOnce, U32 depth)
@@ -798,7 +798,7 @@ Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPra
 		m_codeLines.pushBack(line);
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ShaderProgramParser::parsePragmaStructBegin(const StringAuto* begin, const StringAuto* end, CString line,
@@ -829,7 +829,7 @@ Error ShaderProgramParser::parsePragmaStructBegin(const StringAuto* begin, const
 	ANKI_ASSERT(!m_insideStruct);
 	m_insideStruct = true;
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ShaderProgramParser::parsePragmaMember(const StringAuto* begin, const StringAuto* end, CString line,
@@ -859,29 +859,29 @@ Error ShaderProgramParser::parsePragmaMember(const StringAuto* begin, const Stri
 	}
 
 	const CString typeStr = *begin;
-	member.m_type = ShaderVariableDataType::NONE;
+	member.m_type = ShaderVariableDataType::kNone;
 	if(typeStr == "F32")
 	{
-		member.m_type = ShaderVariableDataType::F32;
+		member.m_type = ShaderVariableDataType::kF32;
 	}
 	else if(typeStr == "Vec2")
 	{
-		member.m_type = ShaderVariableDataType::VEC2;
+		member.m_type = ShaderVariableDataType::kVec2;
 	}
 	else if(typeStr == "Vec3")
 	{
-		member.m_type = ShaderVariableDataType::VEC3;
+		member.m_type = ShaderVariableDataType::kVec3;
 	}
 	else if(typeStr == "Vec4")
 	{
-		member.m_type = ShaderVariableDataType::VEC4;
+		member.m_type = ShaderVariableDataType::kVec4;
 	}
 	else if(typeStr == "U32")
 	{
-		member.m_type = ShaderVariableDataType::U32;
+		member.m_type = ShaderVariableDataType::kU32;
 	}
 
-	if(member.m_type == ShaderVariableDataType::NONE)
+	if(member.m_type == ShaderVariableDataType::kNone)
 	{
 		ANKI_PP_ERROR_MALFORMED_MSG("Unrecognized type");
 	}
@@ -923,7 +923,7 @@ Error ShaderProgramParser::parsePragmaMember(const StringAuto* begin, const Stri
 			}
 		}
 
-		if(member.m_dependentMutator == MAX_U32)
+		if(member.m_dependentMutator == kMaxU32)
 		{
 			ANKI_PP_ERROR_MALFORMED_MSG("Mutator not found");
 		}
@@ -965,7 +965,7 @@ Error ShaderProgramParser::parsePragmaMember(const StringAuto* begin, const Stri
 	}
 
 	// Code
-	if(member.m_dependentMutator != MAX_U32)
+	if(member.m_dependentMutator != kMaxU32)
 	{
 		m_codeLines.pushBackSprintf("#if %s == %d", m_mutators[member.m_dependentMutator].m_name.cstr(),
 									member.m_mutatorValue);
@@ -975,12 +975,12 @@ Error ShaderProgramParser::parsePragmaMember(const StringAuto* begin, const Stri
 								member.m_name.cstr());
 	m_codeLines.pushBackSprintf("\t%s %s %s;", (relaxed) ? "ANKI_RP" : "", typeStr.cstr(), member.m_name.cstr());
 
-	if(member.m_dependentMutator != MAX_U32)
+	if(member.m_dependentMutator != kMaxU32)
 	{
 		m_codeLines.pushBack("#endif");
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ShaderProgramParser::parsePragmaStructEnd(const StringAuto* begin, const StringAuto* end, CString line,
@@ -1071,7 +1071,7 @@ Error ShaderProgramParser::parsePragmaStructEnd(const StringAuto* begin, const S
 	m_codeLines.pushBackSprintf("#define %s %s_", structName.cstr(), structName.cstr());
 
 	m_insideStruct = false;
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ShaderProgramParser::parseFile(CString fname, U32 depth)
@@ -1098,7 +1098,7 @@ Error ShaderProgramParser::parseFile(CString fname, U32 depth)
 	// Parse lines
 	for(const String& line : lines)
 	{
-		if(line.find("pragma") != CString::NPOS || line.find("include") != CString::NPOS)
+		if(line.find("pragma") != String::kNpos || line.find("include") != String::kNpos)
 		{
 			// Possibly a preprocessor directive we care
 			ANKI_CHECK(parseLine(line.toCString(), fname, foundPragmaOnce, depth));
@@ -1116,7 +1116,7 @@ Error ShaderProgramParser::parseFile(CString fname, U32 depth)
 		m_codeLines.pushBack("#endif // Include guard");
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ShaderProgramParser::parse()
@@ -1134,36 +1134,36 @@ Error ShaderProgramParser::parse()
 		if(!m_shaderTypes)
 		{
 			ANKI_SHADER_COMPILER_LOGE("Haven't found any shader types");
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 
-		if(!!(m_shaderTypes & ShaderTypeBit::COMPUTE))
+		if(!!(m_shaderTypes & ShaderTypeBit::kCompute))
 		{
-			if(m_shaderTypes != ShaderTypeBit::COMPUTE)
+			if(m_shaderTypes != ShaderTypeBit::kCompute)
 			{
 				ANKI_SHADER_COMPILER_LOGE("Can't combine compute shader with other types of shaders");
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 		}
-		else if(!!(m_shaderTypes & ShaderTypeBit::ALL_GRAPHICS))
+		else if(!!(m_shaderTypes & ShaderTypeBit::kAllGraphics))
 		{
-			if(!(m_shaderTypes & ShaderTypeBit::VERTEX))
+			if(!(m_shaderTypes & ShaderTypeBit::kVertex))
 			{
 				ANKI_SHADER_COMPILER_LOGE("Missing vertex shader");
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 
-			if(!(m_shaderTypes & ShaderTypeBit::FRAGMENT))
+			if(!(m_shaderTypes & ShaderTypeBit::kFragment))
 			{
 				ANKI_SHADER_COMPILER_LOGE("Missing fragment shader");
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 		}
 
 		if(m_insideShader)
 		{
 			ANKI_SHADER_COMPILER_LOGE("Forgot a \"pragma anki end\"");
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 	}
 
@@ -1189,15 +1189,15 @@ Error ShaderProgramParser::parse()
 		m_codeSourceHash = appendHash(&m_rayType, sizeof(m_rayType), m_codeSourceHash);
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void ShaderProgramParser::generateAnkiShaderHeader(ShaderType shaderType, const ShaderCompilerOptions& compilerOptions,
 												   StringAuto& header)
 {
 	header.sprintf(SHADER_HEADER, SHADER_STAGE_NAMES[shaderType].cstr(), compilerOptions.m_mobilePlatform,
-				   compilerOptions.m_forceFullFloatingPointPrecision, MAX_BINDLESS_TEXTURES,
-				   MAX_BINDLESS_READONLY_TEXTURE_BUFFERS);
+				   compilerOptions.m_forceFullFloatingPointPrecision, kMaxBindlessTextures,
+				   kMaxBindlessReadonlyTextureBuffers);
 }
 
 Error ShaderProgramParser::generateVariant(ConstWeakArray<MutatorValue> mutation,
@@ -1244,7 +1244,7 @@ Error ShaderProgramParser::generateVariant(ConstWeakArray<MutatorValue> mutation
 		variant.m_sources[shaderType] = std::move(finalSource);
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Bool ShaderProgramParser::mutatorHasValue(const ShaderProgramParserMutator& mutator, MutatorValue value)

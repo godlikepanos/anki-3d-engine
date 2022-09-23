@@ -62,7 +62,7 @@ private:
 	class
 	{
 	public:
-		Array<RenderTargetDescription, GBUFFER_COLOR_ATTACHMENT_COUNT> m_colorRtDescrs;
+		Array<RenderTargetDescription, kGBufferColorRenderTargetCount> m_colorRtDescrs;
 		RenderTargetDescription m_depthRtDescr;
 		FramebufferDescription m_fbDescr;
 	} m_gbuffer; ///< G-buffer pass.

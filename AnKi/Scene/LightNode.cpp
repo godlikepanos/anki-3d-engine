@@ -35,7 +35,7 @@ public:
 			static_cast<LightNode&>(*info.m_node).onMoved(move);
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 
@@ -63,7 +63,7 @@ public:
 			static_cast<LightNode&>(*info.m_node).onLightShapeUpdated(light);
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 
@@ -87,11 +87,11 @@ void LightNode::frameUpdateCommon()
 	iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) {
 		if(castsShadow)
 		{
-			frc.setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::SHADOW_CASTERS);
+			frc.setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::kShadowCasterRenderComponents);
 		}
 		else
 		{
-			frc.setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
+			frc.setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::kNone);
 		}
 	});
 }
@@ -117,7 +117,7 @@ PointLightNode::PointLightNode(SceneGraph* scene, CString name)
 	newComponent<OnMovedFeedbackComponent>();
 
 	LightComponent* lc = newComponent<LightComponent>();
-	lc->setLightComponentType(LightComponentType::POINT);
+	lc->setLightComponentType(LightComponentType::kPoint);
 
 	newComponent<LensFlareComponent>();
 	newComponent<OnLightShapeUpdatedFeedbackComponent>();
@@ -168,17 +168,17 @@ Error PointLightNode::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[mayb
 
 		Mat3 rot;
 
-		rot = Mat3(Euler(0.0, -PI / 2.0, 0.0)) * Mat3(Euler(0.0, 0.0, PI));
+		rot = Mat3(Euler(0.0, -kPi / 2.0, 0.0)) * Mat3(Euler(0.0, 0.0, kPi));
 		m_shadowData[0].m_localTrf.setRotation(Mat3x4(Vec3(0.0f), rot));
-		rot = Mat3(Euler(0.0, PI / 2.0, 0.0)) * Mat3(Euler(0.0, 0.0, PI));
+		rot = Mat3(Euler(0.0, kPi / 2.0, 0.0)) * Mat3(Euler(0.0, 0.0, kPi));
 		m_shadowData[1].m_localTrf.setRotation(Mat3x4(Vec3(0.0f), rot));
-		rot = Mat3(Euler(PI / 2.0, 0.0, 0.0));
+		rot = Mat3(Euler(kPi / 2.0, 0.0, 0.0));
 		m_shadowData[2].m_localTrf.setRotation(Mat3x4(Vec3(0.0f), rot));
-		rot = Mat3(Euler(-PI / 2.0, 0.0, 0.0));
+		rot = Mat3(Euler(-kPi / 2.0, 0.0, 0.0));
 		m_shadowData[3].m_localTrf.setRotation(Mat3x4(Vec3(0.0f), rot));
-		rot = Mat3(Euler(0.0, PI, 0.0)) * Mat3(Euler(0.0, 0.0, PI));
+		rot = Mat3(Euler(0.0, kPi, 0.0)) * Mat3(Euler(0.0, 0.0, kPi));
 		m_shadowData[4].m_localTrf.setRotation(Mat3x4(Vec3(0.0f), rot));
-		rot = Mat3(Euler(0.0, 0.0, PI));
+		rot = Mat3(Euler(0.0, 0.0, kPi));
 		m_shadowData[5].m_localTrf.setRotation(Mat3x4(Vec3(0.0f), rot));
 
 		const Vec4& origin = getFirstComponentOfType<MoveComponent>().getWorldTransform().getOrigin();
@@ -188,7 +188,7 @@ Error PointLightNode::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[mayb
 			trf.setOrigin(origin);
 
 			FrustumComponent* frc = newComponent<FrustumComponent>();
-			frc->setFrustumType(FrustumType::PERSPECTIVE);
+			frc->setFrustumType(FrustumType::kPerspective);
 			frc->setPerspective(zNear, dist, ang, ang);
 			frc->setWorldTransform(trf);
 		}
@@ -196,7 +196,7 @@ Error PointLightNode::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[mayb
 
 	frameUpdateCommon();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 class SpotLightNode::OnFrustumUpdatedFeedbackComponent : public SceneComponent
@@ -220,7 +220,7 @@ public:
 			static_cast<SpotLightNode&>(*info.m_node).onFrustumUpdated(frc);
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 
@@ -233,15 +233,15 @@ SpotLightNode::SpotLightNode(SceneGraph* scene, CString name)
 	newComponent<OnMovedFeedbackComponent>();
 
 	LightComponent* lc = newComponent<LightComponent>();
-	lc->setLightComponentType(LightComponentType::SPOT);
+	lc->setLightComponentType(LightComponentType::kSpot);
 
 	newComponent<LensFlareComponent>();
 
 	newComponent<OnLightShapeUpdatedFeedbackComponent>();
 
 	FrustumComponent* fr = newComponent<FrustumComponent>();
-	fr->setFrustumType(FrustumType::PERSPECTIVE);
-	fr->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
+	fr->setFrustumType(FrustumType::kPerspective);
+	fr->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::kNone);
 
 	newComponent<OnFrustumUpdatedFeedbackComponent>();
 
@@ -274,7 +274,7 @@ void SpotLightNode::onFrustumUpdated(FrustumComponent& frc)
 Error SpotLightNode::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime)
 {
 	frameUpdateCommon();
-	return Error::NONE;
+	return Error::kNone;
 }
 
 class DirectionalLightNode::FeedbackComponent : public SceneComponent
@@ -301,7 +301,7 @@ public:
 			spatialc.setSpatialOrigin(move.getWorldTransform().getOrigin().xyz());
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 
@@ -314,7 +314,7 @@ DirectionalLightNode::DirectionalLightNode(SceneGraph* scene, CString name)
 	newComponent<FeedbackComponent>();
 
 	LightComponent* lc = newComponent<LightComponent>();
-	lc->setLightComponentType(LightComponentType::DIRECTIONAL);
+	lc->setLightComponentType(LightComponentType::kDirectional);
 
 	SpatialComponent* spatialc = newComponent<SpatialComponent>();
 

@@ -28,7 +28,7 @@ public:
 /// A player controller that walks the world.
 class PhysicsPlayerController final : public PhysicsFilteredObject
 {
-	ANKI_PHYSICS_OBJECT(PhysicsObjectType::PLAYER_CONTROLLER)
+	ANKI_PHYSICS_OBJECT(PhysicsObjectType::kPlayerController)
 
 public:
 	// Update the state machine
@@ -53,7 +53,7 @@ private:
 	ClassWrapper<btPairCachingGhostObject> m_ghostObject;
 	ClassWrapper<btCapsuleShape> m_convexShape;
 	ClassWrapper<btKinematicCharacterController> m_controller;
-	Vec3 m_moveToPosition = Vec3(MAX_F32);
+	Vec3 m_moveToPosition = Vec3(kMaxF32);
 
 	PhysicsPlayerController(PhysicsWorld* world, const PhysicsPlayerControllerInitInfo& init);
 

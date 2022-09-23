@@ -82,12 +82,12 @@ public:
 
 	void markUnused()
 	{
-		m_offset = m_range = MAX_U32;
+		m_offset = m_range = kMaxU32;
 	}
 
 	Bool isUnused() const
 	{
-		return m_offset == MAX_U32 && m_range == MAX_U32;
+		return m_offset == kMaxU32 && m_range == kMaxU32;
 	}
 };
 
@@ -108,11 +108,11 @@ public:
 	void endFrame();
 
 	/// Allocate staging memory for various operations. The memory will be reclaimed at the begining of the
-	/// N-(MAX_FRAMES_IN_FLIGHT-1) frame.
+	/// N-(kMaxFramesInFlight-1) frame.
 	void* allocateFrame(PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token);
 
 	/// Allocate staging memory for various operations. The memory will be reclaimed at the begining of the
-	/// N-(MAX_FRAMES_IN_FLIGHT-1) frame.
+	/// N-(kMaxFramesInFlight-1) frame.
 	void* tryAllocateFrame(PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token);
 
 private:

@@ -37,7 +37,7 @@ public:
 	{
 		newChunk = m_alloc.newInstance<SegregatedListsAllocatorBuilderChunk>();
 		chunkSize = m_chunkSize;
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	void deleteChunk(SegregatedListsAllocatorBuilderChunk* chunk)

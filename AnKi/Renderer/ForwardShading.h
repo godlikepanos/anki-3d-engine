@@ -25,7 +25,7 @@ public:
 
 	Error init()
 	{
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	void setDependencies(const RenderingContext& ctx, GraphicsRenderPassDescription& pass);

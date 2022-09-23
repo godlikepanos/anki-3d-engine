@@ -16,7 +16,7 @@ namespace anki {
 class Sphere
 {
 public:
-	static constexpr CollisionShapeType CLASS_TYPE = CollisionShapeType::SPHERE;
+	static constexpr CollisionShapeType kClassType = CollisionShapeType::kSphere;
 
 	/// Will not initialize any memory, nothing.
 	Sphere()
@@ -112,7 +112,7 @@ public:
 private:
 	Vec4 m_center
 #if ANKI_ENABLE_ASSERTIONS
-		= Vec4(MAX_F32)
+		= Vec4(kMaxF32)
 #endif
 		;
 

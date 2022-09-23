@@ -41,7 +41,14 @@ public:
 	StackAllocatorBuilder() = default;
 
 	/// Destroy.
-	~StackAllocatorBuilder();
+	~StackAllocatorBuilder()
+	{
+		destroy();
+	}
+
+	/// Manual destroy. The destructor calls that as well.
+	/// @note It's not thread safe.
+	void destroy();
 
 	/// Allocate memory.
 	/// @param size The size to allocate.
@@ -81,7 +88,7 @@ public:
 
 private:
 	/// The current chunk. Chose the more strict memory order to avoid compiler re-ordering of instructions
-	Atomic<TChunk*, AtomicMemoryOrder::SEQ_CST> m_crntChunk = {nullptr};
+	Atomic<TChunk*, AtomicMemoryOrder::kSeqCst> m_crntChunk = {nullptr};
 
 	/// The beginning of the chunk list.
 	TChunk* m_chunksListHead = nullptr;

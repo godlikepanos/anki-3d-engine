@@ -16,7 +16,7 @@ namespace anki {
 /// Joint base class. Joints connect two (or a single one) rigid bodies together.
 class PhysicsJoint : public PhysicsObject
 {
-	ANKI_PHYSICS_OBJECT(PhysicsObjectType::JOINT)
+	ANKI_PHYSICS_OBJECT(PhysicsObjectType::kJoint)
 
 public:
 	/// Set the breaking impulse.
@@ -49,8 +49,8 @@ protected:
 
 	enum class JointType : U8
 	{
-		P2P,
-		HINGE,
+		kP2P,
+		kHinge,
 	};
 
 	JointType m_type;
@@ -74,9 +74,9 @@ protected:
 	{
 		switch(m_type)
 		{
-		case JointType::P2P:
+		case JointType::kP2P:
 			return m_p2p.get();
-		case JointType::HINGE:
+		case JointType::kHinge:
 			return m_hinge.get();
 		default:
 			ANKI_ASSERT(0);
@@ -88,7 +88,7 @@ protected:
 /// Point to point joint.
 class PhysicsPoint2PointJoint : public PhysicsJoint
 {
-	ANKI_PHYSICS_OBJECT(PhysicsObjectType::JOINT)
+	ANKI_PHYSICS_OBJECT(PhysicsObjectType::kJoint)
 
 private:
 	PhysicsPoint2PointJoint(PhysicsWorld* world, PhysicsBodyPtr bodyA, const Vec3& relPos);
@@ -102,7 +102,7 @@ private:
 /// Hinge joint.
 class PhysicsHingeJoint : public PhysicsJoint
 {
-	ANKI_PHYSICS_OBJECT(PhysicsObjectType::JOINT)
+	ANKI_PHYSICS_OBJECT(PhysicsObjectType::kJoint)
 
 private:
 	PhysicsHingeJoint(PhysicsWorld* world, PhysicsBodyPtr bodyA, const Vec3& relPos, const Vec3& axis);

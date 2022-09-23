@@ -36,8 +36,8 @@ void SoftwareRasterizer::clipTriangle(const Vec4* inVerts, Vec4* outVerts, U& ou
 {
 	ANKI_ASSERT(inVerts && outVerts);
 
-	const Plane& plane = m_planesL[FrustumPlaneType::NEAR];
-	F32 clipZ = -plane.getOffset() - EPSILON;
+	const Plane& plane = m_planesL[FrustumPlaneType::kNear];
+	F32 clipZ = -plane.getOffset() - kEpsilonf;
 	ANKI_ASSERT(clipZ < 0.0);
 
 	Array<Bool, 3> vertInside;
@@ -250,7 +250,7 @@ void SoftwareRasterizer::rasterizeTriangle(const Vec4* tri)
 	const Vec2 windowSize{F32(m_width), F32(m_height)};
 	Array<Vec3, 3> ndc;
 	Array<Vec2, 3> window;
-	Vec2 bboxMin(MAX_F32), bboxMax(MIN_F32);
+	Vec2 bboxMin(kMaxF32), bboxMax(kMinF32);
 	for(U i = 0; i < 3; i++)
 	{
 		ndc[i] = tri[i].xyz() / tri[i].w();
@@ -282,10 +282,10 @@ void SoftwareRasterizer::rasterizeTriangle(const Vec4* tri)
 				ANKI_ASSERT(depth >= 0.0 && depth <= 1.0);
 
 				// Clamp it to a bit less that 1.0f because 1.0f will produce a 0 depthi
-				depth = min(depth, 1.0f - EPSILON);
+				depth = min(depth, 1.0f - kEpsilonf);
 
 				// Store the min of the current value and new one
-				const U32 depthi = U32(depth * F32(MAX_U32));
+				const U32 depthi = U32(depth * F32(kMaxU32));
 				m_zbuffer[U32(y) * m_width + U32(x)].min(depthi);
 			}
 		}
@@ -332,8 +332,8 @@ Bool SoftwareRasterizer::visibilityTestInternal(const Aabb& aabb) const
 	}
 
 	// Compute the min and max bounds
-	Vec4 bboxMin(MAX_F32);
-	Vec4 bboxMax(MIN_F32);
+	Vec4 bboxMin(kMaxF32);
+	Vec4 bboxMax(kMinF32);
 	for(Vec4& p : boxPoints)
 	{
 		// Perspecrive divide
@@ -374,7 +374,7 @@ Bool SoftwareRasterizer::visibilityTestInternal(const Aabb& aabb) const
 		{
 			const U32 idx = U32(y) * m_width + U32(x);
 			const U32 depthi = m_zbuffer[idx].getNonAtomically();
-			const F32 depthf = F32(depthi) / F32(MAX_U32);
+			const F32 depthf = F32(depthi) / F32(kMaxU32);
 			if(minZ < depthf)
 			{
 				return true;
@@ -395,9 +395,9 @@ void SoftwareRasterizer::fillDepthBuffer(ConstWeakArray<F32> depthValues)
 		F32 depth = depthValues[count];
 		ANKI_ASSERT(depth >= 0.0f && depth <= 1.0f);
 
-		depth = min(depth, 1.0f - EPSILON); // See a few lines above why is that
+		depth = min(depth, 1.0f - kEpsilonf); // See a few lines above why is that
 
-		const U32 depthi = U32(depth * F32(MAX_U32));
+		const U32 depthi = U32(depth * F32(kMaxU32));
 		m_zbuffer[count].setNonAtomically(depthi);
 	}
 }

@@ -112,8 +112,8 @@ Bool testCollision(const Aabb& aabb, const ConvexHullShape& hull)
 
 Bool testCollision(const Aabb& aabb, const LineSegment& ls)
 {
-	F32 maxS = MIN_F32;
-	F32 minT = MAX_F32;
+	F32 maxS = kMinF32;
+	F32 minT = kMaxF32;
 
 	// do tests against three sets of planes
 	for(U i = 0; i < 3; ++i)
@@ -235,8 +235,8 @@ Bool testCollision(const Obb& obb, const ConvexHullShape& hull)
 
 Bool testCollision(const Obb& obb, const LineSegment& ls)
 {
-	F32 maxS = MIN_F32;
-	F32 minT = MAX_F32;
+	F32 maxS = kMinF32;
+	F32 minT = kMaxF32;
 
 	// compute difference vector
 	const Vec4 diff = obb.getCenter() - ls.getOrigin();

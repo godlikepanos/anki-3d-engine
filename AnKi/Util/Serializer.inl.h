@@ -18,7 +18,7 @@ public:
 	PtrSize m_pointerCount; ///< The size of the above.
 };
 
-static constexpr const char* BINARY_SERIALIZER_MAGIC = "ANKIBIN1";
+inline constexpr const char* kBinarySerializerMagic = "ANKIBIN1";
 
 } // end namespace detail
 
@@ -30,7 +30,8 @@ Error BinarySerializer::serializeInternal(const T& x, GenericMemoryPoolAllocator
 	// Misc
 	m_file = &file;
 	ANKI_ASSERT(m_file->tell() == 0);
-	m_err = Error::NONE;
+
+	m_err = Error::kNone;
 	m_alloc = std::move(tmpAllocator);
 
 	// Write the empty header (will be filled later)
@@ -76,7 +77,7 @@ Error BinarySerializer::serializeInternal(const T& x, GenericMemoryPoolAllocator
 	}
 
 	// Write the header
-	memcpy(&header.m_magic[0], detail::BINARY_SERIALIZER_MAGIC, sizeof(header.m_magic));
+	memcpy(&header.m_magic[0], detail::kBinarySerializerMagic, sizeof(header.m_magic));
 	header.m_dataSize = m_eofPos - dataFilePos;
 	ANKI_CHECK(m_file->seek(headerFilePos, FileSeekOrigin::BEGINNING));
 	ANKI_CHECK(m_file->write(&header, sizeof(header)));
@@ -85,7 +86,7 @@ Error BinarySerializer::serializeInternal(const T& x, GenericMemoryPoolAllocator
 	m_file = nullptr;
 	m_pointerFilePositions.destroy(m_alloc);
 	m_alloc = GenericMemoryPoolAllocator<U8>();
-	return Error::NONE;
+	return Error::kNone;
 }
 
 template<typename T>
@@ -111,7 +112,7 @@ Error BinarySerializer::doArrayComplexType(const T* arr, PtrSize size, PtrSize m
 	}
 
 	check();
-	return Error::NONE;
+	return Error::kNone;
 }
 
 template<typename T>
@@ -158,7 +159,7 @@ Error BinarySerializer::doDynamicArrayComplexType(const T* arr, PtrSize size, Pt
 	}
 
 	check();
-	return Error::NONE;
+	return Error::kNone;
 }
 
 template<typename T, typename TFile>
@@ -172,16 +173,16 @@ Error BinaryDeserializer::deserialize(T*& x, GenericMemoryPoolAllocator<U8> allo
 
 	// Sanity checks
 	{
-		if(memcmp(&header.m_magic[0], detail::BINARY_SERIALIZER_MAGIC, 8) != 0)
+		if(memcmp(&header.m_magic[0], detail::kBinarySerializerMagic, 8) != 0)
 		{
 			ANKI_UTIL_LOGE("Wrong magic work in header");
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 
 		if(header.m_dataSize < sizeof(T))
 		{
 			ANKI_UTIL_LOGE("Wrong data size");
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 
 		const PtrSize expectedSizeAfterHeader = header.m_dataSize + header.m_pointerCount * sizeof(void*);
@@ -189,7 +190,7 @@ Error BinaryDeserializer::deserialize(T*& x, GenericMemoryPoolAllocator<U8> allo
 		if(expectedSizeAfterHeader > actualSizeAfterHeader)
 		{
 			ANKI_UTIL_LOGE("File size doesn't match expectations");
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 	}
 
@@ -210,7 +211,7 @@ Error BinaryDeserializer::deserialize(T*& x, GenericMemoryPoolAllocator<U8> allo
 			if(offsetFromBeginOfData >= header.m_dataSize)
 			{
 				ANKI_UTIL_LOGE("Corrupt pointer");
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 
 			// Add to the location the actual base address
@@ -219,7 +220,7 @@ Error BinaryDeserializer::deserialize(T*& x, GenericMemoryPoolAllocator<U8> allo
 			if(ptrValue >= header.m_dataSize)
 			{
 				ANKI_UTIL_LOGE("Corrupt pointer");
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 
 			ptrValue += ptrToNumber(baseAddress);
@@ -228,7 +229,7 @@ Error BinaryDeserializer::deserialize(T*& x, GenericMemoryPoolAllocator<U8> allo
 
 	// Done
 	x = reinterpret_cast<T*>(baseAddress);
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

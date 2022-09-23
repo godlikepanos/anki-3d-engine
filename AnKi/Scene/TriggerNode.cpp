@@ -33,7 +33,7 @@ public:
 			info.m_node->getFirstComponentOfType<TriggerComponent>().setWorldTransform(move.getWorldTransform());
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 

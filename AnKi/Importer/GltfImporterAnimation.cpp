@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Importer/GltfImporter.h>
+#include <AnKi/Util/Xml.h>
 
 namespace anki {
 
@@ -38,50 +39,69 @@ template<typename T, typename TZeroFunc, typename TLerpFunc>
 static void optimizeChannel(DynamicArrayAuto<GltfAnimKey<T>>& arr, const T& identity, TZeroFunc isZeroFunc,
 							TLerpFunc lerpFunc)
 {
-	if(arr.getSize() < 3)
-	{
-		return;
-	}
+	constexpr F32 kMinSkippedToTotalRatio = 0.1f;
 
-	DynamicArrayAuto<GltfAnimKey<T>> newArr(arr.getAllocator());
-	newArr.emplaceBack(arr.getFront());
-	for(U32 i = 1; i < arr.getSize() - 1; ++i)
+	U32 iterationCount = 0;
+	while(true)
 	{
-		const GltfAnimKey<T>& left = arr[i - 1];
-		const GltfAnimKey<T>& middle = arr[i];
-		const GltfAnimKey<T>& right = arr[i + 1];
-
-		if(left.m_value == middle.m_value && middle.m_value == right.m_value)
+		if(arr.getSize() < 3)
 		{
-			// Skip it
+			break;
 		}
-		else
+
+		DynamicArrayAuto<GltfAnimKey<T>> newArr(arr.getAllocator());
+		for(U32 i = 0; i < arr.getSize() - 2; i += 2)
 		{
-			const F32 factor = F32((middle.m_time - left.m_time) / (right.m_time - left.m_time));
-			ANKI_ASSERT(factor > 0.0f && factor < 1.0f);
-			const T lerpRez = lerpFunc(left.m_value, right.m_value, factor);
-			if(isZeroFunc(middle.m_value - lerpRez))
+			const GltfAnimKey<T>& left = arr[i];
+			const GltfAnimKey<T>& middle = arr[i + 1];
+			const GltfAnimKey<T>& right = arr[i + 2];
+
+			newArr.emplaceBack(left);
+
+			if(left.m_value == middle.m_value && middle.m_value == right.m_value)
 			{
-				// It's redundant, skip it
+				// Skip it
 			}
 			else
 			{
-				newArr.emplaceBack(middle);
+				const F32 factor = F32((middle.m_time - left.m_time) / (right.m_time - left.m_time));
+				ANKI_ASSERT(factor > 0.0f && factor < 1.0f);
+				const T lerpRez = lerpFunc(left.m_value, right.m_value, factor);
+				if(isZeroFunc(middle.m_value - lerpRez))
+				{
+					// It's redundant, skip it
+				}
+				else
+				{
+					newArr.emplaceBack(middle);
+				}
 			}
+
+			newArr.emplaceBack(right);
+		}
+		ANKI_ASSERT(newArr.getSize() <= arr.getSize());
+
+		// Check if identity
+		if(newArr.getSize() == 2 && isZeroFunc(newArr[0].m_value - newArr[1].m_value)
+		   && isZeroFunc(newArr[0].m_value - identity))
+		{
+			newArr.destroy();
+		}
+
+		const F32 skippedToTotalRatio = 1.0f - F32(newArr.getSize()) / F32(arr.getSize());
+
+		arr.destroy();
+		arr = std::move(newArr);
+
+		++iterationCount;
+
+		if(skippedToTotalRatio <= kMinSkippedToTotalRatio)
+		{
+			break;
 		}
 	}
-	newArr.emplaceBack(arr.getBack());
-	ANKI_ASSERT(newArr.getSize() <= arr.getSize());
 
-	// Check if identity
-	if(newArr.getSize() == 2 && isZeroFunc(newArr[0].m_value - newArr[1].m_value)
-	   && isZeroFunc(newArr[0].m_value - identity))
-	{
-		newArr.destroy();
-	}
-
-	arr.destroy();
-	arr = std::move(newArr);
+	ANKI_IMPORTER_LOGV("Channel optimization iteration count: %u", iterationCount);
 }
 
 Error GltfImporter::writeAnimation(const cgltf_animation& anim)
@@ -154,7 +174,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 			if(keys.getSize() != positions.getSize())
 			{
 				ANKI_IMPORTER_LOGE("Position count should match they keyframes");
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 
 			for(U32 i = 0; i < keys.getSize(); ++i)
@@ -178,7 +198,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 			if(keys.getSize() != rotations.getSize())
 			{
 				ANKI_IMPORTER_LOGE("Rotation count should match they keyframes");
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 
 			for(U32 i = 0; i < keys.getSize(); ++i)
@@ -202,7 +222,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 			if(keys.getSize() != scales.getSize())
 			{
 				ANKI_IMPORTER_LOGE("Scale count should match they keyframes");
-				return Error::USER_DATA;
+				return Error::kUserData;
 			}
 
 			Bool scaleErrorReported = false;
@@ -239,40 +259,43 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 	}
 
 	// Optimize animation
-	constexpr F32 KILL_EPSILON = 0.001f; // 1 millimiter
-	for(GltfAnimChannel& channel : tempChannels)
+	if(m_optimizeAnimations)
 	{
-		optimizeChannel(
-			channel.m_positions, Vec3(0.0f),
-			[&](const Vec3& a) -> Bool {
-				return a.abs() < KILL_EPSILON;
-			},
-			[&](const Vec3& a, const Vec3& b, F32 u) -> Vec3 {
-				return linearInterpolate(a, b, u);
-			});
-		optimizeChannel(
-			channel.m_rotations, Quat::getIdentity(),
-			[&](const Quat& a) -> Bool {
-				return a.abs() < Quat(EPSILON * 20.0f);
-			},
-			[&](const Quat& a, const Quat& b, F32 u) -> Quat {
-				return a.slerp(b, u);
-			});
-		optimizeChannel(
-			channel.m_scales, 1.0f,
-			[&](const F32& a) -> Bool {
-				return absolute(a) < KILL_EPSILON;
-			},
-			[&](const F32& a, const F32& b, F32 u) -> F32 {
-				return linearInterpolate(a, b, u);
-			});
+		constexpr F32 kKillEpsilon = 1.0_cm;
+		for(GltfAnimChannel& channel : tempChannels)
+		{
+			optimizeChannel(
+				channel.m_positions, Vec3(0.0f),
+				[&](const Vec3& a) -> Bool {
+					return a.abs() < kKillEpsilon;
+				},
+				[&](const Vec3& a, const Vec3& b, F32 u) -> Vec3 {
+					return linearInterpolate(a, b, u);
+				});
+			optimizeChannel(
+				channel.m_rotations, Quat::getIdentity(),
+				[&](const Quat& a) -> Bool {
+					return a.abs() < Quat(kEpsilonf * 20.0f);
+				},
+				[&](const Quat& a, const Quat& b, F32 u) -> Quat {
+					return a.slerp(b, u);
+				});
+			optimizeChannel(
+				channel.m_scales, 1.0f,
+				[&](const F32& a) -> Bool {
+					return absolute(a) < kKillEpsilon;
+				},
+				[&](const F32& a, const F32& b, F32 u) -> F32 {
+					return linearInterpolate(a, b, u);
+				});
+		}
 	}
 
 	// Write file
 	File file;
 	ANKI_CHECK(file.open(fname.toCString(), FileOpenFlag::WRITE));
 
-	ANKI_CHECK(file.writeTextf("%s\n<animation>\n", XML_HEADER));
+	ANKI_CHECK(file.writeTextf("%s\n<animation>\n", XmlDocument::kXmlHeader.cstr()));
 	ANKI_CHECK(file.writeText("\t<channels>\n"));
 
 	for(const GltfAnimChannel& channel : tempChannels)
@@ -338,13 +361,13 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 		// ANKI_CHECK(m_sceneFile.writeText("--[[\n"));
 
 		ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:tryFindSceneNode(\"%s\")\n", node.name));
-		ANKI_CHECK(m_sceneFile.writeTextf("getEventManager():newAnimationEvent(\"%s\", \"%s\", node)\n",
-										  animFname.cstr(), node.name));
+		ANKI_CHECK(m_sceneFile.writeTextf("getEventManager():newAnimationEvent(\"%s%s\", \"%s\", node)\n",
+										  m_rpath.cstr(), animFname.cstr(), node.name));
 
 		// ANKI_CHECK(m_sceneFile.writeText("--]]\n"));
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

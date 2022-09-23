@@ -18,9 +18,7 @@ namespace anki {
 /// @addtogroup scene
 /// @{
 
-constexpr U32 MAX_SPATIALS_PER_VIS_TEST = 48; ///< Num of spatials to test in a single ThreadHive task.
-constexpr U32 SW_RASTERIZER_WIDTH = 80;
-constexpr U32 SW_RASTERIZER_HEIGHT = 50;
+constexpr U32 kMaxSpatialsPerVisTest = 48; ///< Num of spatials to test in a single ThreadHive task.
 
 /// Sort objects on distance
 template<typename T>
@@ -61,7 +59,7 @@ public:
 };
 
 /// Storage for a single element type.
-template<typename T, U32 INITIAL_STORAGE_SIZE = 32, U32 STORAGE_GROW_RATE = 4>
+template<typename T, U32 kInitialStorage = 32, U32 kStorageGrowRate = 4>
 class TRenderQueueElementStorage
 {
 public:
@@ -73,7 +71,7 @@ public:
 	{
 		if(ANKI_UNLIKELY(m_elementCount + 1 > m_elementStorage))
 		{
-			m_elementStorage = max(INITIAL_STORAGE_SIZE, m_elementStorage * STORAGE_GROW_RATE);
+			m_elementStorage = max(kInitialStorage, m_elementStorage * kStorageGrowRate);
 
 			const T* oldElements = m_elements;
 			m_elements = alloc.allocate(m_elementStorage);
@@ -190,7 +188,7 @@ public:
 	void gather(ThreadHive& hive);
 
 private:
-	Array<SpatialComponent*, MAX_SPATIALS_PER_VIS_TEST> m_spatials;
+	Array<SpatialComponent*, kMaxSpatialsPerVisTest> m_spatials;
 	U32 m_spatialCount = 0;
 
 	/// Submit tasks to test the m_spatials.
@@ -205,7 +203,7 @@ class VisibilityTestTask
 public:
 	FrustumVisibilityContext* m_frcCtx = nullptr;
 
-	Array<SpatialComponent*, MAX_SPATIALS_PER_VIS_TEST> m_spatialsToTest;
+	Array<SpatialComponent*, kMaxSpatialsPerVisTest> m_spatialsToTest;
 	U32 m_spatialToTestCount = 0;
 
 	VisibilityTestTask(FrustumVisibilityContext* frcCtx)

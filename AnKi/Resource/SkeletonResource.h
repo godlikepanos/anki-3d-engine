@@ -130,7 +130,7 @@ public:
 
 private:
 	DynamicArray<Bone> m_bones;
-	U32 m_rootBoneIdx = MAX_U32;
+	U32 m_rootBoneIdx = kMaxU32;
 };
 /// @}
 

@@ -36,7 +36,7 @@ class ShaderProgramInitInfo : public GrBaseInitInfo
 {
 public:
 	/// Option 1
-	Array<ShaderPtr, U32(ShaderType::LAST_GRAPHICS + 1)> m_graphicsShaders;
+	Array<ShaderPtr, U32(ShaderType::kLastGraphics + 1)> m_graphicsShaders;
 
 	/// Option 2
 	ShaderPtr m_computeShader;
@@ -58,7 +58,7 @@ class ShaderProgram : public GrObject
 	ANKI_GR_OBJECT
 
 public:
-	static constexpr GrObjectType CLASS_TYPE = GrObjectType::SHADER_PROGRAM;
+	static constexpr GrObjectType kClassType = GrObjectType::kShaderProgram;
 
 	/// Get the shader group handles that will be used in the SBTs. The size of each handle is
 	/// GpuDeviceCapabilities::m_shaderGroupHandleSize. To access a handle use:
@@ -74,7 +74,7 @@ public:
 protected:
 	/// Construct.
 	ShaderProgram(GrManager* manager, CString name)
-		: GrObject(manager, CLASS_TYPE, name)
+		: GrObject(manager, kClassType, name)
 	{
 	}
 

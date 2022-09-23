@@ -31,7 +31,7 @@ public:
 			static_cast<DecalNode&>(*info.m_node).onMove(movec);
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 
@@ -59,7 +59,7 @@ public:
 			static_cast<DecalNode&>(*info.m_node).onDecalUpdated(decalc);
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 

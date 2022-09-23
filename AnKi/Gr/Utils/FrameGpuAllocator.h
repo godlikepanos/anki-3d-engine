@@ -34,7 +34,7 @@ public:
 	/// @param size The size of the GPU buffer.
 	/// @param alignment The working alignment.
 	/// @param maxAllocationSize The size in @a allocate cannot exceed maxAllocationSize.
-	void init(PtrSize size, U32 alignment, PtrSize maxAllocationSize = MAX_PTR_SIZE);
+	void init(PtrSize size, U32 alignment, PtrSize maxAllocationSize = kMaxPtrSize);
 
 	/// Allocate memory for a dynamic buffer.
 	Error allocate(PtrSize size, PtrSize& outOffset);

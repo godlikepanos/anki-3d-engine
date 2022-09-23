@@ -17,13 +17,13 @@ public:
 		ANKI_CHECK(getResourceManager().loadResource("Assets/Scene.lua", script));
 		ANKI_CHECK(getScriptManager().evalString(script->getSource()));
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 
 int main(int argc, char* argv[])
 {
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 
 	MyApp* app = new MyApp;
 	err = app->init(argc, argv, "SimpleScene");

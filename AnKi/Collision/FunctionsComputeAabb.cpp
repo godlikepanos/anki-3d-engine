@@ -31,15 +31,15 @@ Aabb computeAabb(const Obb& obb)
 	const Vec4 newE = Vec4(absM * obb.getExtend(), 0.0f);
 
 	// Add a small epsilon to avoid some assertions
-	const Vec4 epsilon(Vec3(EPSILON * 100.0f), 0.0f);
+	const Vec4 epsilon(Vec3(kEpsilonf * 100.0f), 0.0f);
 
 	return Aabb(obb.getCenter() - newE, obb.getCenter() + newE + epsilon);
 }
 
 Aabb computeAabb(const ConvexHullShape& hull)
 {
-	Vec4 mina(MAX_F32);
-	Vec4 maxa(MIN_F32);
+	Vec4 mina(kMaxF32);
+	Vec4 maxa(kMinF32);
 
 	for(const Vec4& point : hull.getPoints())
 	{

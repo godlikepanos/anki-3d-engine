@@ -49,6 +49,9 @@ std::tm getLocalTime();
 /// Takes the return value of getAndroidCommandLineArguments() for cleanup.
 void cleanupGetAndroidCommandLineArguments(void* ptr);
 #endif
+
+/// Some common code to be called before main.
+void preMainInit();
 /// @}
 
 } // end namespace anki

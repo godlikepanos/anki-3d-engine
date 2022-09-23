@@ -144,10 +144,10 @@ Error ShaderImpl::init(CString source, ConstWeakArray<ShaderSpecializationConstV
 		ShaderCompiler::logShaderErrorCode(compilerLog.toCString(), source, alloc);
 
 		// Compilation failed, set error anyway
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

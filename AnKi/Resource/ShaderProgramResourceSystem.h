@@ -35,7 +35,7 @@ public:
 
 	U32 getRayTypeCount() const
 	{
-		ANKI_ASSERT(m_rayTypeCount < MAX_U32);
+		ANKI_ASSERT(m_rayTypeCount < kMaxU32);
 		return m_rayTypeCount;
 	}
 
@@ -54,7 +54,7 @@ public:
 private:
 	GenericMemoryPoolAllocator<U8> m_alloc;
 	String m_libraryName;
-	U32 m_rayTypeCount = MAX_U32;
+	U32 m_rayTypeCount = kMaxU32;
 	ShaderProgramPtr m_program;
 	HashMap<U64, U32> m_resourceHashToShaderGroupHandleIndex;
 

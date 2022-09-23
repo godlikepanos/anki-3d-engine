@@ -7,17 +7,17 @@
 
 namespace anki {
 
-constexpr U32 MAX_SCENE_COMPONENT_CLASSES = 64;
-static_assert(MAX_SCENE_COMPONENT_CLASSES < 128, "It can oly be 7 bits because of SceneComponent::m_classId");
-static SceneComponentRtti* g_rttis[MAX_SCENE_COMPONENT_CLASSES] = {};
+constexpr U32 kMaxSceneComponentClasses = 64;
+static_assert(kMaxSceneComponentClasses < 128, "It can oly be 7 bits because of SceneComponent::m_classId");
+static SceneComponentRtti* g_rttis[kMaxSceneComponentClasses] = {};
 static U32 g_rttiCount = 0;
 
 SceneComponentRtti::SceneComponentRtti(const char* name, U32 size, U32 alignment, Constructor constructor)
 {
-	if(g_rttiCount >= MAX_SCENE_COMPONENT_CLASSES)
+	if(g_rttiCount >= kMaxSceneComponentClasses)
 	{
 		// No special logging because this function is called before main
-		printf("Reached maximum component count. Increase MAX_SCENE_COMPONENT_CLASSES\n");
+		printf("Reached maximum component count. Increase kMaxSceneComponentClasses\n");
 		exit(-1);
 	}
 
@@ -25,7 +25,7 @@ SceneComponentRtti::SceneComponentRtti(const char* name, U32 size, U32 alignment
 	m_className = name;
 	m_classSize = size;
 	m_classAlignment = alignment;
-	m_classId = MAX_U8;
+	m_classId = kMaxU8;
 
 	g_rttis[g_rttiCount++] = this;
 

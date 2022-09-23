@@ -21,18 +21,18 @@ public:
 	BufferPtr m_indexBuffer;
 	PtrSize m_indexBufferOffset = 0;
 	U32 m_indexCount = 0;
-	IndexType m_indexType = IndexType::COUNT;
+	IndexType m_indexType = IndexType::kCount;
 
 	BufferPtr m_positionBuffer;
 	PtrSize m_positionBufferOffset = 0;
 	U32 m_positionStride = 0;
-	Format m_positionsFormat = Format::NONE;
+	Format m_positionsFormat = Format::kNone;
 	U32 m_positionCount = 0;
 
 	Bool isValid() const
 	{
-		if(m_indexBuffer.get() == nullptr || m_indexCount == 0 || m_indexType == IndexType::COUNT
-		   || m_positionBuffer.get() == nullptr || m_positionStride == 0 || m_positionsFormat == Format::NONE
+		if(m_indexBuffer.get() == nullptr || m_indexCount == 0 || m_indexType == IndexType::kCount
+		   || m_positionBuffer.get() == nullptr || m_positionStride == 0 || m_positionsFormat == Format::kNone
 		   || m_positionCount == 0)
 		{
 			return false;
@@ -50,7 +50,7 @@ public:
 			return false;
 		}
 
-		const PtrSize idxStride = (m_indexType == IndexType::U16) ? 2 : 4;
+		const PtrSize idxStride = (m_indexType == IndexType::kU16) ? 2 : 4;
 		if(m_indexBufferOffset + idxStride * m_indexCount > m_indexBuffer->getSize())
 		{
 			return false;
@@ -87,7 +87,7 @@ public:
 class AccelerationStructureInitInfo : public GrBaseInitInfo
 {
 public:
-	AccelerationStructureType m_type = AccelerationStructureType::COUNT;
+	AccelerationStructureType m_type = AccelerationStructureType::kCount;
 	BottomLevelAccelerationStructureInitInfo m_bottomLevel;
 	TopLevelAccelerationStructureInitInfo m_topLevel;
 
@@ -98,12 +98,12 @@ public:
 
 	Bool isValid() const
 	{
-		if(m_type == AccelerationStructureType::COUNT)
+		if(m_type == AccelerationStructureType::kCount)
 		{
 			return false;
 		}
 
-		return (m_type == AccelerationStructureType::BOTTOM_LEVEL) ? m_bottomLevel.isValid() : m_topLevel.isValid();
+		return (m_type == AccelerationStructureType::kBottomLevel) ? m_bottomLevel.isValid() : m_topLevel.isValid();
 	}
 };
 
@@ -113,20 +113,20 @@ class AccelerationStructure : public GrObject
 	ANKI_GR_OBJECT
 
 public:
-	static constexpr GrObjectType CLASS_TYPE = GrObjectType::ACCELERATION_STRUCTURE;
+	static constexpr GrObjectType kClassType = GrObjectType::kAccelerationStructure;
 
 	AccelerationStructureType getType() const
 	{
-		ANKI_ASSERT(m_type != AccelerationStructureType::COUNT);
+		ANKI_ASSERT(m_type != AccelerationStructureType::kCount);
 		return m_type;
 	}
 
 protected:
-	AccelerationStructureType m_type = AccelerationStructureType::COUNT;
+	AccelerationStructureType m_type = AccelerationStructureType::kCount;
 
 	/// Construct.
 	AccelerationStructure(GrManager* manager, CString name)
-		: GrObject(manager, CLASS_TYPE, name)
+		: GrObject(manager, kClassType, name)
 	{
 	}
 

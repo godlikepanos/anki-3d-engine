@@ -60,14 +60,14 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 	// Create the FB
 	ANKI_CHECK(initFbs(init));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void FramebufferImpl::initClearValues(const FramebufferInitInfo& init)
 {
 	for(U i = 0; i < m_colorAttCount; ++i)
 	{
-		if(init.m_colorAttachments[i].m_loadOperation == AttachmentLoadOperation::CLEAR)
+		if(init.m_colorAttachments[i].m_loadOperation == AttachmentLoadOperation::kClear)
 		{
 			F32* col = &m_clearVals[i].color.float32[0];
 			col[0] = init.m_colorAttachments[i].m_clearValue.m_colorf[0];
@@ -83,8 +83,8 @@ void FramebufferImpl::initClearValues(const FramebufferInitInfo& init)
 
 	if(hasDepthStencil())
 	{
-		if(init.m_depthStencilAttachment.m_loadOperation == AttachmentLoadOperation::CLEAR
-		   || init.m_depthStencilAttachment.m_stencilLoadOperation == AttachmentLoadOperation::CLEAR)
+		if(init.m_depthStencilAttachment.m_loadOperation == AttachmentLoadOperation::kClear
+		   || init.m_depthStencilAttachment.m_stencilLoadOperation == AttachmentLoadOperation::kClear)
 		{
 			m_clearVals[m_colorAttCount].depthStencil.depth =
 				init.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth;
@@ -113,7 +113,7 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 	ci.attachmentCount = getTotalAttachmentCount();
 	ci.layers = 1;
 
-	Array<VkImageView, MAX_ATTACHMENTS> imgViews;
+	Array<VkImageView, kMaxAttachments> imgViews;
 	U count = 0;
 
 	for(U i = 0; i < init.m_colorAttachmentCount; ++i)
@@ -133,7 +133,7 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 
 		m_viewRefs.m_color[i] = att.m_textureView;
 
-		if(!!(tex.getTextureUsage() & TextureUsageBit::PRESENT))
+		if(!!(tex.getTextureUsage() & TextureUsageBit::kPresent))
 		{
 			m_presentableTex = true;
 		}
@@ -163,7 +163,7 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 	if(hasSri())
 	{
 		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*init.m_shadingRateImage.m_textureView);
-		ANKI_ASSERT(view.getTextureImpl().usageValid(TextureUsageBit::FRAMEBUFFER_SHADING_RATE));
+		ANKI_ASSERT(view.getTextureImpl().usageValid(TextureUsageBit::kFramebufferShadingRate));
 		imgViews[count] = view.getHandle();
 		m_viewRefs.m_sri = init.m_shadingRateImage.m_textureView;
 		++count;
@@ -178,7 +178,7 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 	ANKI_VK_CHECK(vkCreateFramebuffer(getDevice(), &ci, nullptr, &m_fbHandle));
 	getGrManagerImpl().trySetVulkanHandleName(init.getName(), VK_OBJECT_TYPE_FRAMEBUFFER, m_fbHandle);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void FramebufferImpl::setupAttachmentDescriptor(const FramebufferAttachmentInfo& att, VkAttachmentDescription2& desc,
@@ -221,7 +221,7 @@ void FramebufferImpl::initRpassCreateInfo(const FramebufferInitInfo& init)
 		ref.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 	}
 
-	U32 sriAttachmentIdx = MAX_U32;
+	U32 sriAttachmentIdx = kMaxU32;
 	if(init.m_shadingRateImage.m_textureView)
 	{
 		ANKI_ASSERT(getGrManagerImpl().getDeviceCapabilities().m_vrs && "This requires VRS to be enabled");
@@ -272,13 +272,13 @@ void FramebufferImpl::initRpassCreateInfo(const FramebufferInitInfo& init)
 	m_rpassCi.pSubpasses = &m_subpassDescr;
 }
 
-VkRenderPass FramebufferImpl::getRenderPassHandle(const Array<VkImageLayout, MAX_COLOR_ATTACHMENTS>& colorLayouts,
+VkRenderPass FramebufferImpl::getRenderPassHandle(const Array<VkImageLayout, kMaxColorRenderTargets>& colorLayouts,
 												  VkImageLayout dsLayout, VkImageLayout shadingRateImageLayout)
 {
 	VkRenderPass out = VK_NULL_HANDLE;
 
 	// Create hash
-	Array<VkImageLayout, MAX_ATTACHMENTS> allLayouts;
+	Array<VkImageLayout, kMaxAttachments> allLayouts;
 	U allLayoutCount = 0;
 	for(U i = 0; i < m_colorAttCount; ++i)
 	{
@@ -325,8 +325,8 @@ VkRenderPass FramebufferImpl::getRenderPassHandle(const Array<VkImageLayout, MAX
 		else
 		{
 			VkRenderPassCreateInfo2 ci = m_rpassCi;
-			Array<VkAttachmentDescription2, MAX_ATTACHMENTS> attachmentDescriptions = m_attachmentDescriptions;
-			Array<VkAttachmentReference2, MAX_ATTACHMENTS> references = m_references;
+			Array<VkAttachmentDescription2, kMaxAttachments> attachmentDescriptions = m_attachmentDescriptions;
+			Array<VkAttachmentReference2, kMaxAttachments> references = m_references;
 			VkSubpassDescription2 subpassDescr = m_subpassDescr;
 			VkFragmentShadingRateAttachmentInfoKHR sriAttachmentInfo = m_sriAttachmentInfo;
 

@@ -44,13 +44,13 @@ public:
 		if(test > T(0.499))
 		{
 			y() = T(2) * atan2<T>(q.x(), q.w());
-			z() = PI / T(2);
+			z() = kPi / T(2);
 			x() = T(0);
 		}
 		else if(test < T(-0.499))
 		{
 			y() = -T(2) * atan2<T>(q.x(), q.w());
-			z() = -PI / T(2);
+			z() = -kPi / T(2);
 			x() = T(0);
 		}
 		else
@@ -70,14 +70,14 @@ public:
 		{
 			// Singularity at north pole
 			y() = atan2(m3(0, 2), m3(2, 2));
-			z() = PI / T(2);
+			z() = kPi / T(2);
 			x() = T(0);
 		}
 		else if(m3(1, 0) < T(-0.998))
 		{
 			// Singularity at south pole
 			y() = atan2(m3(0, 2), m3(2, 2));
-			z() = -PI / T(2);
+			z() = -kPi / T(2);
 			x() = T(0);
 		}
 		else

@@ -16,12 +16,12 @@ namespace anki {
 
 enum class LightComponentType : U8
 {
-	POINT,
-	SPOT,
-	DIRECTIONAL, ///< Basically the sun.
+	kPoint,
+	kSpot,
+	kDirectional, ///< Basically the sun.
 
-	COUNT,
-	FIRST = 0
+	kCount,
+	kFirst = 0
 };
 
 /// Light component. Contains all the info of lights.
@@ -38,7 +38,7 @@ public:
 
 	void setLightComponentType(LightComponentType type)
 	{
-		ANKI_ASSERT(type >= LightComponentType::FIRST && type < LightComponentType::COUNT);
+		ANKI_ASSERT(type >= LightComponentType::kFirst && type < LightComponentType::kCount);
 		m_type = type;
 		m_markedForUpdate = true;
 	}
@@ -139,7 +139,7 @@ public:
 
 	void setupPointLightQueueElement(PointLightQueueElement& el) const
 	{
-		ANKI_ASSERT(m_type == LightComponentType::POINT);
+		ANKI_ASSERT(m_type == LightComponentType::kPoint);
 		el.m_uuid = m_uuid;
 		el.m_worldPosition = m_worldtransform.getOrigin().xyz();
 		el.m_radius = m_point.m_radius;
@@ -149,12 +149,12 @@ public:
 			static_cast<const LightComponent*>(userData[0])->draw(ctx);
 		};
 		el.m_debugDrawCallbackUserData = this;
-		el.m_shadowLayer = MAX_U8;
+		el.m_shadowLayer = kMaxU8;
 	}
 
 	void setupSpotLightQueueElement(SpotLightQueueElement& el) const
 	{
-		ANKI_ASSERT(m_type == LightComponentType::SPOT);
+		ANKI_ASSERT(m_type == LightComponentType::kSpot);
 		el.m_uuid = m_uuid;
 		el.m_worldTransform = Mat4(m_worldtransform);
 		el.m_textureMatrix = m_spot.m_textureMat;
@@ -168,7 +168,7 @@ public:
 			static_cast<const LightComponent*>(userData[0])->draw(ctx);
 		};
 		el.m_debugDrawCallbackUserData = this;
-		el.m_shadowLayer = MAX_U8;
+		el.m_shadowLayer = kMaxU8;
 	}
 
 	/// Setup a directional queue element.

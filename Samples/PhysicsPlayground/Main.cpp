@@ -26,7 +26,7 @@ end
 	ANKI_CHECK(node->getSceneGraph().getEventManager().newEvent(event, -1, 10.0, script));
 	event->addAssociatedSceneNode(node);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 static Error createFogVolumeFadeEvent(SceneNode* node)
@@ -66,13 +66,13 @@ end
 	ANKI_CHECK(node->getSceneGraph().getEventManager().newEvent(event, -1, 10.0, script));
 	event->addAssociatedSceneNode(node);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 class RayCast : public PhysicsWorldRayCastCallback
 {
 public:
-	Vec3 m_hitPosition = Vec3(MAX_F32);
+	Vec3 m_hitPosition = Vec3(kMaxF32);
 	Vec3 m_hitNormal;
 	Bool m_hit = false;
 
@@ -123,7 +123,7 @@ Error MyApp::sampleExtraInit()
 		ANKI_CHECK(getSceneGraph().newSceneNode("player", player));
 		PlayerControllerComponent& pcomp = player->getFirstComponentOfType<PlayerControllerComponent>();
 		pcomp.moveToPosition(Vec3(0.0f, 2.5f, 0.0f));
-		pcomp.getPhysicsPlayerController()->setMaterialMask(PhysicsMaterialBit::STATIC_GEOMETRY);
+		pcomp.getPhysicsPlayerController()->setMaterialMask(PhysicsMaterialBit::kStaticGeometry);
 
 		player->addChild(&cam);
 	}
@@ -205,7 +205,7 @@ Error MyApp::sampleExtraInit()
 	getInput().hideCursor(true);
 	getInput().moveCursor(Vec2(0.0f));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
@@ -213,18 +213,18 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 	// ANKI_CHECK(SampleApp::userMainLoop(quit));
 	Renderer& renderer = getMainRenderer().getOffscreenRenderer();
 
-	if(getInput().getKey(KeyCode::ESCAPE))
+	if(getInput().getKey(KeyCode::kEscape))
 	{
 		quit = true;
 	}
 
-	if(getInput().getKey(KeyCode::H) == 1)
+	if(getInput().getKey(KeyCode::kH) == 1)
 	{
 		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "RtShadows") ? ""
 																									 : "RtShadows");
 	}
 
-	if(getInput().getKey(KeyCode::P) == 1)
+	if(getInput().getKey(KeyCode::kP) == 1)
 	{
 		static U32 idx = 3;
 		++idx;
@@ -247,17 +247,17 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 		}
 	}
 
-	if(getInput().getKey(KeyCode::L) == 1)
+	if(getInput().getKey(KeyCode::kL) == 1)
 	{
 		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "Bloom") ? "" : "Bloom");
 	}
 
-	if(getInput().getKey(KeyCode::J) == 1)
+	if(getInput().getKey(KeyCode::kJ) == 1)
 	{
 		m_config.setRVrs(!m_config.getRVrs());
 	}
 
-	if(getInput().getKey(KeyCode::F1) == 1)
+	if(getInput().getKey(KeyCode::kF1) == 1)
 	{
 		static U mode = 0;
 		mode = (mode + 1) % 3;
@@ -279,13 +279,13 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 		}
 	}
 
-	if(getInput().getKey(KeyCode::R))
+	if(getInput().getKey(KeyCode::kR))
 	{
 		SceneNode& player = getSceneGraph().findSceneNode("player");
 		player.getFirstComponentOfType<PlayerControllerComponent>().moveToPosition(Vec3(0.0f, 2.0f, 0.0f));
 	}
 
-	if(getInput().getMouseButton(MouseButton::LEFT) == 1)
+	if(getInput().getMouseButton(MouseButton::kLeft) == 1)
 	{
 		ANKI_LOGI("Firing a monkey");
 
@@ -318,14 +318,14 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 		ANKI_CHECK(createDestructionEvent(body));
 	}
 
-	if(getInput().getMouseButton(MouseButton::RIGHT) == 1)
+	if(getInput().getMouseButton(MouseButton::kRight) == 1)
 	{
 		Transform camTrf =
 			getSceneGraph().getActiveCameraNode().getFirstComponentOfType<MoveComponent>().getWorldTransform();
 		Vec3 from = camTrf.getOrigin().xyz();
 		Vec3 to = from + -camTrf.getRotation().getZAxis() * 100.0f;
 
-		RayCast ray(from, to, PhysicsMaterialBit::ALL & (~PhysicsMaterialBit::PARTICLE));
+		RayCast ray(from, to, PhysicsMaterialBit::kAll & (~PhysicsMaterialBit::kParticle));
 		ray.m_firstHit = true;
 
 		getPhysicsWorld().rayCast(ray);
@@ -399,12 +399,13 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 		}
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
-int main(int argc, char* argv[])
+ANKI_MAIN_FUNCTION(myMain)
+int myMain(int argc, char* argv[])
 {
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 
 	MyApp* app = new MyApp;
 	err = app->init(argc, argv, "PhysicsPlayground");

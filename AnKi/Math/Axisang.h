@@ -64,7 +64,7 @@ public:
 				return;
 			}
 
-			m_ang = PI;
+			m_ang = kPi;
 			m_axis.x() = (m3(0, 0) + T(1)) / T(2);
 			if(m_axis.x() > T(0))
 			{

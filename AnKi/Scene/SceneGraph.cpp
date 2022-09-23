@@ -41,7 +41,7 @@ SceneGraph::~SceneGraph()
 {
 	[[maybe_unused]] const Error err = iterateSceneNodes([&](SceneNode& s) -> Error {
 		s.setMarkedForDeletion();
-		return Error::NONE;
+		return Error::kNone;
 	});
 
 	deleteNodesMarkedForDeletion();
@@ -87,7 +87,7 @@ Error SceneGraph::init(AllocAlignedCallback allocCb, void* allocCbData, ThreadHi
 	// Other
 	ANKI_CHECK(m_debugDrawer.init(&getResourceManager()));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error SceneGraph::registerNode(SceneNode* node)
@@ -100,7 +100,7 @@ Error SceneGraph::registerNode(SceneNode* node)
 		if(tryFindSceneNode(node->getName()))
 		{
 			ANKI_SCENE_LOGE("Node with the same name already exists");
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 
 		m_nodesDict.emplace(m_alloc, node->getName(), node);
@@ -110,7 +110,7 @@ Error SceneGraph::registerNode(SceneNode* node)
 	m_nodes.pushBack(node);
 	++m_nodesCount;
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void SceneGraph::unregisterNode(SceneNode* node)
@@ -208,7 +208,7 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 		ANKI_CHECK(m_events.updateAllEvents(prevUpdateTime, crntTime));
 
 		// Then the rest
-		Array<ThreadHiveTask, ThreadHive::MAX_THREADS> tasks;
+		Array<ThreadHiveTask, ThreadHive::kMaxThreads> tasks;
 		UpdateSceneNodesCtx updateCtx;
 		updateCtx.m_scene = this;
 		updateCtx.m_crntNode = m_nodes.getBegin();
@@ -232,7 +232,7 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 	}
 
 	m_stats.m_updateTime = HighRezTimer::getCurrentTime() - m_stats.m_updateTime;
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void SceneGraph::doVisibilityTests(RenderQueue& rqueue)
@@ -246,7 +246,7 @@ Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 {
 	ANKI_TRACE_INC_COUNTER(SCENE_NODES_UPDATED, 1);
 
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 
 	// Components update
 	SceneComponentUpdateInfo componentUpdateInfo(prevTime, crntTime);
@@ -313,7 +313,7 @@ Error SceneGraph::updateNodes(UpdateSceneNodesCtx& ctx) const
 	IntrusiveList<SceneNode>::ConstIterator end = m_nodes.getEnd();
 
 	Bool quit = false;
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 	while(!quit && !err)
 	{
 		// Fetch a batch of scene nodes that don't have parent

@@ -23,7 +23,7 @@ Error PipelineLayoutFactory::newPipelineLayout(const WeakArray<DescriptorSetLayo
 											   PipelineLayout& layout)
 {
 	U64 hash = computeHash(&pushConstantsSize, sizeof(pushConstantsSize));
-	Array<VkDescriptorSetLayout, MAX_DESCRIPTOR_SETS> vkDsetLayouts;
+	Array<VkDescriptorSetLayout, kMaxDescriptorSets> vkDsetLayouts;
 	U32 dsetLayoutCount = 0;
 	for(const DescriptorSetLayout& dl : dsetLayouts)
 	{
@@ -71,7 +71,7 @@ Error PipelineLayoutFactory::newPipelineLayout(const WeakArray<DescriptorSetLayo
 		layout.m_handle = pplineLayHandle;
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

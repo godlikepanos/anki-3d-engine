@@ -22,8 +22,8 @@ enum class VertexAttributeId : U8
 	BONE_WEIGHTS,
 	BONE_INDICES,
 
-	COUNT,
-	FIRST = POSITION,
+	kCount,
+	kFirst = POSITION,
 
 	SCALE = UV0, ///< Only for particles.
 	ALPHA = UV1, ///< Only for particles.

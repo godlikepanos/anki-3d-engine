@@ -59,7 +59,7 @@ struct DummyType
 template<bool B>
 struct RequiresBool
 {
-	static constexpr bool VALUE = B;
+	static constexpr bool kValue = B;
 };
 
 template<typename T, int N>
@@ -72,15 +72,15 @@ struct PrivateEnum
 {
 	enum class Type
 	{
-		NA
+		kNA
 	};
 };
 
-#	define ANKI_REQUIRES_BOOL(line, ...) RequiresUnwrap<decltype(RequiresBool<(__VA_ARGS__)>{}), line>::VALUE
+#	define ANKI_REQUIRES_BOOL(line, ...) RequiresUnwrap<decltype(RequiresBool<(__VA_ARGS__)>{}), line>::kValue
 
 #	define ANKI_ENABLE_INTERNAL(line, ...) \
 		typename PrivateEnum<line>::Type ANKI_CONCATENATE( \
-			privateEnum, line) = PrivateEnum<line>::Type::NA, \
+			privateEnum, line) = PrivateEnum<line>::Type::kNA, \
 						 bool ANKI_CONCATENATE(privateBool, line) = true, \
 						 typename = typename std::enable_if_t<(ANKI_CONCATENATE(privateBool, line) \
 															   && ANKI_REQUIRES_BOOL(line, __VA_ARGS__))>
@@ -131,7 +131,7 @@ template<typename T, ANKI_ENABLE(std::is_floating_point<T>::value)>
 T getRandomRange(T min, T max)
 {
 	ANKI_ASSERT(min <= max);
-	const F64 r = F64(getRandom()) / F64(MAX_U64);
+	const F64 r = F64(getRandom()) / F64(kMaxU64);
 	return T(min + r * (max - min));
 }
 
@@ -345,6 +345,22 @@ inline void splitThreadedProblem(U32 threadId, U32 threadCount, U32 problemSize,
 	start = threadId * div;
 	end = (threadId == threadCount - 1) ? problemSize : (threadId + 1u) * div;
 	ANKI_ASSERT(!(threadId == threadCount - 1 && end != problemSize));
+}
+
+/// Just copy the memory of a float to a uint.
+inline U64 floatBitsToUint(F64 f)
+{
+	U64 out;
+	memcpy(&out, &f, sizeof(out));
+	return out;
+}
+
+/// Just copy the memory of a float to a uint.
+inline U32 floatBitsToUint(F32 f)
+{
+	U32 out;
+	memcpy(&out, &f, sizeof(out));
+	return out;
 }
 /// @}
 

@@ -97,13 +97,13 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 
 	switch(shaderType)
 	{
-	case ShaderType::VERTEX:
+	case ShaderType::kVertex:
 		args[0] = "-v";
 		break;
-	case ShaderType::FRAGMENT:
+	case ShaderType::kFragment:
 		args[0] = "-f";
 		break;
-	case ShaderType::COMPUTE:
+	case ShaderType::kCompute:
 		args[0] = "-C";
 		break;
 	default:
@@ -125,7 +125,7 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 		const Error err = proc.readFromStderr(stderre);
 		ANKI_SHADER_COMPILER_LOGE("Mali offline compiler failed with exit code %d. Stderr: %s", exitCode,
 								  (err || stderre.isEmpty()) ? "<no text>" : stderre.cstr());
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	// Get stdout
@@ -142,13 +142,13 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 	else
 	{
 		ANKI_SHADER_COMPILER_LOGE("Error parsing work registers");
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 #define ANKI_FLOAT_REGEX "([0-9]+[.]?[0-9]*)"
 
 	// Instructions
-	if(shaderType == ShaderType::VERTEX)
+	if(shaderType == ShaderType::kVertex)
 	{
 		// Add the instructions in position and varying variants
 
@@ -189,10 +189,10 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 		if(count == 0)
 		{
 			ANKI_SHADER_COMPILER_LOGE("Error parsing instruction cycles");
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 	}
-	else if(shaderType == ShaderType::FRAGMENT)
+	else if(shaderType == ShaderType::kFragment)
 	{
 		if(std::regex_search(stdoutstl, match,
 							 std::regex("Total instruction cycles:\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
@@ -214,12 +214,12 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 		else
 		{
 			ANKI_SHADER_COMPILER_LOGE("Error parsing instruction cycles");
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 	}
 	else
 	{
-		ANKI_ASSERT(shaderType == ShaderType::COMPUTE);
+		ANKI_ASSERT(shaderType == ShaderType::kCompute);
 
 		if(std::regex_search(stdoutstl, match,
 							 std::regex("Total instruction cycles:\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
@@ -240,7 +240,7 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 		else
 		{
 			ANKI_SHADER_COMPILER_LOGE("Error parsing instruction cycles");
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 	}
 
@@ -287,7 +287,7 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 		if(count == 0)
 		{
 			ANKI_SHADER_COMPILER_LOGE("Error parsing 16-bit arithmetic");
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 	}
 
@@ -300,7 +300,7 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 		printf("%s\n", str.cstr());
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv, ShaderType shaderType,

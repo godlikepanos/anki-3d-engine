@@ -89,7 +89,7 @@ void main()
 			File file;
 			ANKI_CHECK(file.open(filename, FileOpenFlag::READ));
 			ANKI_CHECK(file.readAllText(txt));
-			return Error::NONE;
+			return Error::kNone;
 		}
 	} fsystem;
 
@@ -131,7 +131,7 @@ void main()
 		Error joinTasks()
 		{
 			m_hive->waitAllTasks();
-			return Error::NONE;
+			return Error::kNone;
 		}
 	} taskManager;
 	taskManager.m_hive = &hive;
@@ -286,7 +286,7 @@ void main()
 			File file;
 			ANKI_CHECK(file.open(filename, FileOpenFlag::READ));
 			ANKI_CHECK(file.readAllText(txt));
-			return Error::NONE;
+			return Error::kNone;
 		}
 	} fsystem;
 
@@ -328,7 +328,7 @@ void main()
 		Error joinTasks()
 		{
 			m_hive->waitAllTasks();
-			return Error::NONE;
+			return Error::kNone;
 		}
 	} taskManager;
 	taskManager.m_hive = &hive;

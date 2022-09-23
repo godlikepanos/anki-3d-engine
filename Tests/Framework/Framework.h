@@ -24,10 +24,10 @@ class TestSuite;
 class Test;
 class Tester;
 
-#define ANKI_TEST_LOGI(...) ANKI_LOG("TEST", NORMAL, __VA_ARGS__)
-#define ANKI_TEST_LOGE(...) ANKI_LOG("TEST", ERROR, __VA_ARGS__)
-#define ANKI_TEST_LOGW(...) ANKI_LOG("TEST", WARNING, __VA_ARGS__)
-#define ANKI_TEST_LOGF(...) ANKI_LOG("TEST", FATAL, __VA_ARGS__)
+#define ANKI_TEST_LOGI(...) ANKI_LOG("TEST", kNormal, __VA_ARGS__)
+#define ANKI_TEST_LOGE(...) ANKI_LOG("TEST", kError, __VA_ARGS__)
+#define ANKI_TEST_LOGW(...) ANKI_LOG("TEST", kWarning, __VA_ARGS__)
+#define ANKI_TEST_LOGF(...) ANKI_LOG("TEST", kFatal, __VA_ARGS__)
 
 /// The actual test
 using TestCallback = void (*)(Test&);
@@ -212,10 +212,10 @@ extern void deleteTesterSingleton();
 #define ANKI_TEST_EXPECT_NEAR(x_, y_, e_) ANKI_TEST_EXPECT_NEAR_IMPL(__FILE__, __LINE__, __func__, x_, y_, e_)
 
 /// Check error code.
-#define ANKI_TEST_EXPECT_NO_ERR(x_) ANKI_TEST_EXPECT_EQ_IMPL(__FILE__, __LINE__, __func__, x_, Error::NONE)
+#define ANKI_TEST_EXPECT_NO_ERR(x_) ANKI_TEST_EXPECT_EQ_IMPL(__FILE__, __LINE__, __func__, x_, Error::kNone)
 
 /// Check error code.
-#define ANKI_TEST_EXPECT_ANY_ERR(x_) ANKI_TEST_EXPECT_NEQ_IMPL(__FILE__, __LINE__, __func__, x_, Error::NONE)
+#define ANKI_TEST_EXPECT_ANY_ERR(x_) ANKI_TEST_EXPECT_NEQ_IMPL(__FILE__, __LINE__, __func__, x_, Error::kNone)
 
 /// Check error code.
 #define ANKI_TEST_EXPECT_ERR(x_, y_) ANKI_TEST_EXPECT_EQ_IMPL(__FILE__, __LINE__, __func__, x_, y_)

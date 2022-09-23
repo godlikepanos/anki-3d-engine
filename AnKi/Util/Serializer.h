@@ -163,7 +163,7 @@ private:
 	GenericMemoryPoolAllocator<U8> m_alloc;
 	DynamicArray<PointerInfo> m_pointerFilePositions; ///< Array of file positions that contain pointers.
 	DynamicArray<PtrSize> m_structureFilePos;
-	Error m_err = Error::NONE;
+	Error m_err = Error::kNone;
 
 	template<typename T>
 	Error doArrayComplexType(const T* arr, PtrSize size, PtrSize memberOffset);

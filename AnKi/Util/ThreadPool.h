@@ -36,7 +36,7 @@ class ThreadPool
 	friend class detail::ThreadPoolThread;
 
 public:
-	static constexpr U MAX_THREADS = 32; ///< An absolute limit
+	static constexpr U kMaxThreads = 32; ///< An absolute limit
 
 	/// Constructor.
 	ThreadPool(U32 threadCount, Bool pinToCores = false);
@@ -59,7 +59,7 @@ public:
 		m_barrier.wait();
 		m_tasksAssigned = 0;
 		Error err = m_err;
-		m_err = Error::NONE;
+		m_err = Error::kNone;
 		return err;
 	}
 
@@ -76,7 +76,7 @@ private:
 	public:
 		Error operator()([[maybe_unused]] U32 taskId, [[maybe_unused]] PtrSize threadsCount)
 		{
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -84,7 +84,7 @@ private:
 	detail::ThreadPoolThread* m_threads = nullptr; ///< Threads array
 	U32 m_tasksAssigned = 0;
 	U32 m_threadsCount = 0;
-	Error m_err = Error::NONE;
+	Error m_err = Error::kNone;
 	static DummyTask m_dummyTask;
 };
 /// @}

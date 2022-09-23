@@ -41,7 +41,7 @@ Error SkinComponent::loadSkeletonResource(CString fname)
 	m_animationTrfs.create(m_node->getAllocator(), m_skeleton->getBones().getSize(),
 						   {Vec3(0.0f), Quat::getIdentity(), 1.0f});
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void SkinComponent::playAnimation(U32 track, AnimationResourcePtr anim, const AnimationPlayInfo& info)
@@ -71,13 +71,13 @@ Error SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	updated = false;
 	if(!m_skeleton.isCreated())
 	{
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	const Second dt = info.m_dt;
 
-	Vec4 minExtend(MAX_F32, MAX_F32, MAX_F32, 0.0f);
-	Vec4 maxExtend(MIN_F32, MIN_F32, MIN_F32, 0.0f);
+	Vec4 minExtend(kMaxF32, kMaxF32, kMaxF32, 0.0f);
+	Vec4 maxExtend(kMinF32, kMinF32, kMinF32, 0.0f);
 
 	BitSet<128> bonesAnimated(false);
 
@@ -178,9 +178,9 @@ Error SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		// Walk the bone hierarchy to add additional transforms
 		visitBones(m_skeleton->getRootBone(), Mat4::getIdentity(), bonesAnimated, minExtend, maxExtend);
 
-		const Vec4 E(EPSILON, EPSILON, EPSILON, 0.0f);
-		m_boneBoundingVolume.setMin(minExtend - E);
-		m_boneBoundingVolume.setMax(maxExtend + E);
+		const Vec4 e(kEpsilonf, kEpsilonf, kEpsilonf, 0.0f);
+		m_boneBoundingVolume.setMin(minExtend - e);
+		m_boneBoundingVolume.setMax(maxExtend + e);
 	}
 	else
 	{
@@ -189,7 +189,7 @@ Error SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 	m_absoluteTime += dt;
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void SkinComponent::visitBones(const Bone& bone, const Mat4& parentTrf, const BitSet<128>& bonesAnimated,

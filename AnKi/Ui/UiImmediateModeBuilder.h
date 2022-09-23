@@ -29,7 +29,7 @@ public:
 
 	Error init() const
 	{
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 /// @}

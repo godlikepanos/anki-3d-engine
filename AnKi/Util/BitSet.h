@@ -24,10 +24,10 @@ private:
 	using ChunkType = TChunkType;
 
 	/// Number of bits a chunk holds.
-	static constexpr U32 CHUNK_BIT_COUNT = sizeof(ChunkType) * 8;
+	static constexpr U32 kChunkBitCount = sizeof(ChunkType) * 8;
 
 	/// Number of chunks.
-	static constexpr U32 CHUNK_COUNT = (N + (CHUNK_BIT_COUNT - 1)) / CHUNK_BIT_COUNT;
+	static constexpr U32 kChunkCount = (N + (kChunkBitCount - 1)) / kChunkBitCount;
 
 public:
 	/// Constructor. It will set all the bits or unset them.
@@ -61,7 +61,7 @@ public:
 	BitSet operator|(const BitSet& b) const
 	{
 		BitSet out;
-		for(U32 i = 0; i < CHUNK_COUNT; ++i)
+		for(U32 i = 0; i < kChunkCount; ++i)
 		{
 			out.m_chunks[i] = m_chunks[i] | b.m_chunks[i];
 		}
@@ -71,7 +71,7 @@ public:
 	/// Bitwise or between this and @a b sets.
 	BitSet& operator|=(const BitSet& b)
 	{
-		for(U32 i = 0; i < CHUNK_COUNT; ++i)
+		for(U32 i = 0; i < kChunkCount; ++i)
 		{
 			m_chunks[i] = m_chunks[i] | b.m_chunks[i];
 		}
@@ -82,7 +82,7 @@ public:
 	BitSet operator&(const BitSet& b) const
 	{
 		BitSet out;
-		for(U32 i = 0; i < CHUNK_COUNT; ++i)
+		for(U32 i = 0; i < kChunkCount; ++i)
 		{
 			out.m_chunks[i] = m_chunks[i] & b.m_chunks[i];
 		}
@@ -92,7 +92,7 @@ public:
 	/// Bitwise and between this and @a b sets.
 	BitSet& operator&=(const BitSet& b)
 	{
-		for(U32 i = 0; i < CHUNK_COUNT; ++i)
+		for(U32 i = 0; i < kChunkCount; ++i)
 		{
 			m_chunks[i] = m_chunks[i] & b.m_chunks[i];
 		}
@@ -103,7 +103,7 @@ public:
 	BitSet operator^(const BitSet& b) const
 	{
 		BitSet out;
-		for(U i = 0; i < CHUNK_COUNT; ++i)
+		for(U i = 0; i < kChunkCount; ++i)
 		{
 			out.m_chunks[i] = m_chunks[i] ^ b.m_chunks[i];
 		}
@@ -113,7 +113,7 @@ public:
 	/// Bitwise xor between this and @a b sets.
 	BitSet& operator^=(const BitSet& b)
 	{
-		for(U32 i = 0; i < CHUNK_COUNT; ++i)
+		for(U32 i = 0; i < kChunkCount; ++i)
 		{
 			m_chunks[i] = m_chunks[i] ^ b.m_chunks[i];
 		}
@@ -124,7 +124,7 @@ public:
 	BitSet operator~() const
 	{
 		BitSet out;
-		for(U32 i = 0; i < CHUNK_COUNT; ++i)
+		for(U32 i = 0; i < kChunkCount; ++i)
 		{
 			out.m_chunks[i] = TChunkType(~m_chunks[i]);
 		}
@@ -135,7 +135,7 @@ public:
 	Bool operator==(const BitSet& b) const
 	{
 		Bool same = m_chunks[0] == b.m_chunks[0];
-		for(U32 i = 1; i < CHUNK_COUNT; ++i)
+		for(U32 i = 1; i < kChunkCount; ++i)
 		{
 			same = same && (m_chunks[i] == b.m_chunks[i]);
 		}
@@ -240,37 +240,37 @@ public:
 	U32 getEnabledBitCount() const
 	{
 		U32 count = 0;
-		for(U i = 0; i < CHUNK_COUNT; ++i)
+		for(U i = 0; i < kChunkCount; ++i)
 		{
 			count += __builtin_popcountl(m_chunks[i]);
 		}
 		return count;
 	}
 
-	/// Get the most significant bit that is enabled. Or MAX_U32 if all is zero.
+	/// Get the most significant bit that is enabled. Or kMaxU32 if all is zero.
 	U32 getMostSignificantBit() const
 	{
-		U32 i = CHUNK_COUNT;
+		U32 i = kChunkCount;
 		while(i--)
 		{
 			const U64 bits = m_chunks[i];
 			if(bits != 0)
 			{
 				const U32 msb = U32(__builtin_clzll(bits));
-				return (63 - msb) + (i * CHUNK_BIT_COUNT);
+				return (63 - msb) + (i * kChunkBitCount);
 			}
 		}
 
-		return MAX_U32;
+		return kMaxU32;
 	}
 
-	Array<TChunkType, CHUNK_COUNT> getData() const
+	Array<TChunkType, kChunkCount> getData() const
 	{
 		return m_chunks;
 	}
 
 private:
-	Array<ChunkType, CHUNK_COUNT> m_chunks;
+	Array<ChunkType, kChunkCount> m_chunks;
 
 	BitSet()
 	{
@@ -279,20 +279,20 @@ private:
 	static void position(U32 bit, U32& high, U32& low)
 	{
 		ANKI_ASSERT(bit < N);
-		high = bit / CHUNK_BIT_COUNT;
-		low = bit % CHUNK_BIT_COUNT;
-		ANKI_ASSERT(high < CHUNK_COUNT);
-		ANKI_ASSERT(low < CHUNK_BIT_COUNT);
+		high = bit / kChunkBitCount;
+		low = bit % kChunkBitCount;
+		ANKI_ASSERT(high < kChunkCount);
+		ANKI_ASSERT(low < kChunkBitCount);
 	}
 
 	/// Zero the unused bits.
 	void zeroUnusedBits()
 	{
-		const ChunkType UNUSED_BITS = CHUNK_COUNT * CHUNK_BIT_COUNT - N;
-		const ChunkType USED_BITMASK = std::numeric_limits<ChunkType>::max() >> UNUSED_BITS;
-		if(USED_BITMASK > 0)
+		constexpr ChunkType kUnusedBits = kChunkCount * kChunkBitCount - N;
+		constexpr ChunkType kUsedBitmask = std::numeric_limits<ChunkType>::max() >> kUnusedBits;
+		if(kUsedBitmask > 0)
 		{
-			m_chunks[CHUNK_COUNT - 1] &= USED_BITMASK;
+			m_chunks[kChunkCount - 1] &= kUsedBitmask;
 		}
 	}
 };

@@ -677,3 +677,10 @@ Vec3 sRgbToLinear(Vec3 sRgb)
 	const Vec3 lower = sRgb / 12.92;
 	return mix(higher, lower, cutoff);
 }
+
+ANKI_RP Vec3 filmGrain(ANKI_RP Vec3 color, Vec2 uv, ANKI_RP F32 strength, ANKI_RP F32 time)
+{
+	const F32 x = (uv.x + 4.0) * (uv.y + 4.0) * time;
+	const F32 grain = 1.0 - (mod((mod(x, 13.0) + 1.0) * (mod(x, 123.0) + 1.0), 0.01) - 0.005) * strength;
+	return color * grain;
+}

@@ -158,10 +158,10 @@ public:
 	{ \
 		return type(N); \
 	}
-	ANKI_ARRAY_SIZE_METHOD(U8, N <= MAX_U8)
-	ANKI_ARRAY_SIZE_METHOD(U16, N > MAX_U8 && N <= MAX_U16)
-	ANKI_ARRAY_SIZE_METHOD(U32, N > MAX_U16 && N <= MAX_U32)
-	ANKI_ARRAY_SIZE_METHOD(U64, N > MAX_U32)
+	ANKI_ARRAY_SIZE_METHOD(U8, N <= kMaxU8)
+	ANKI_ARRAY_SIZE_METHOD(U16, N > kMaxU8 && N <= kMaxU16)
+	ANKI_ARRAY_SIZE_METHOD(U32, N > kMaxU16 && N <= kMaxU32)
+	ANKI_ARRAY_SIZE_METHOD(U64, N > kMaxU32)
 #undef ANKI_ARRAY_SIZE_METHOD
 
 	/// Make it compatible with STL
@@ -177,10 +177,10 @@ public:
 	{ \
 		return type(N * sizeof(Value)); \
 	}
-	ANKI_ARRAY_SIZE_IN_BYTES_METHOD(U8, N * sizeof(Value) <= MAX_U8)
-	ANKI_ARRAY_SIZE_IN_BYTES_METHOD(U16, N * sizeof(Value) > MAX_U8 && N * sizeof(Value) <= MAX_U16)
-	ANKI_ARRAY_SIZE_IN_BYTES_METHOD(U32, N * sizeof(Value) > MAX_U16 && N * sizeof(Value) <= MAX_U32)
-	ANKI_ARRAY_SIZE_IN_BYTES_METHOD(U64, N * sizeof(Value) > MAX_U32)
+	ANKI_ARRAY_SIZE_IN_BYTES_METHOD(U8, N * sizeof(Value) <= kMaxU8)
+	ANKI_ARRAY_SIZE_IN_BYTES_METHOD(U16, N * sizeof(Value) > kMaxU8 && N * sizeof(Value) <= kMaxU16)
+	ANKI_ARRAY_SIZE_IN_BYTES_METHOD(U32, N * sizeof(Value) > kMaxU16 && N * sizeof(Value) <= kMaxU32)
+	ANKI_ARRAY_SIZE_IN_BYTES_METHOD(U64, N * sizeof(Value) > kMaxU32)
 #undef ANKI_ARRAY_SIZE_IN_BYTES_METHOD
 };
 

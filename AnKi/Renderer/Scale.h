@@ -67,23 +67,23 @@ private:
 
 	enum class UpscalingMethod : U8
 	{
-		NONE,
-		BILINEAR,
-		FSR,
-		GR,
-		COUNT
+		kNone,
+		kBilinear,
+		kFsr,
+		kGr,
+		kCount
 	};
 
-	UpscalingMethod m_upscalingMethod = UpscalingMethod::NONE;
+	UpscalingMethod m_upscalingMethod = UpscalingMethod::kNone;
 
 	enum class SharpenMethod : U8
 	{
-		NONE,
-		RCAS,
-		COUNT
+		kNone,
+		kRcas,
+		kCount
 	};
 
-	SharpenMethod m_sharpenMethod = SharpenMethod::NONE;
+	SharpenMethod m_sharpenMethod = SharpenMethod::kNone;
 
 	Bool m_neeedsTonemapping = false;
 

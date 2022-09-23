@@ -21,7 +21,7 @@ LightComponent::LightComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
 	, m_node(node)
 	, m_uuid(node->getSceneGraph().getNewUuid())
-	, m_type(LightComponentType::POINT)
+	, m_type(LightComponentType::kPoint)
 	, m_shadow(false)
 	, m_markedForUpdate(true)
 {
@@ -40,7 +40,7 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	updated = m_markedForUpdate;
 	m_markedForUpdate = false;
 
-	if(updated && m_type == LightComponentType::SPOT)
+	if(updated && m_type == LightComponentType::kSpot)
 	{
 
 		const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
@@ -57,19 +57,19 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	}
 
 	// Update the scene bounds always
-	if(m_type == LightComponentType::DIRECTIONAL)
+	if(m_type == LightComponentType::kDirectional)
 	{
 		info.m_node->getSceneGraph().getOctree().getActualSceneBounds(m_dir.m_sceneMin, m_dir.m_sceneMax);
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& frustumComp,
 													   DirectionalLightQueueElement& el,
 													   WeakArray<FrustumComponent> cascadeFrustumComponents) const
 {
-	ANKI_ASSERT(m_type == LightComponentType::DIRECTIONAL);
+	ANKI_ASSERT(m_type == LightComponentType::kDirectional);
 	ANKI_ASSERT(cascadeFrustumComponents.getSize() <= MAX_SHADOW_CASCADES);
 
 	const U32 shadowCascadeCount = cascadeFrustumComponents.getSize();
@@ -85,7 +85,7 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 	el.m_effectiveShadowDistance = frustumComp.getEffectiveShadowDistance();
 	el.m_shadowCascadesDistancePower = frustumComp.getShadowCascadesDistancePower();
 	el.m_shadowCascadeCount = U8(shadowCascadeCount);
-	el.m_shadowLayer = MAX_U8;
+	el.m_shadowLayer = kMaxU8;
 
 	if(shadowCascadeCount == 0)
 	{
@@ -94,7 +94,7 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 
 	// Compute the texture matrices
 	const Mat4 lightTrf(m_worldtransform);
-	if(frustumComp.getFrustumType() == FrustumType::PERSPECTIVE)
+	if(frustumComp.getFrustumType() == FrustumType::kPerspective)
 	{
 		// Get some stuff
 		const F32 fovX = frustumComp.getFovX();
@@ -127,7 +127,7 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 			const F32 b = n * tan(fovY / 2.0f) * fovX / fovY;
 			const F32 z = (b * b + n * n - a * a - f * f) / (2.0f * (f - n));
 			ANKI_ASSERT(absolute((Vec2(a, -f) - Vec2(0, z)).getLength() - (Vec2(b, -n) - Vec2(0, z)).getLength())
-						<= EPSILON * 100.0f);
+						<= kEpsilonf * 100.0f);
 
 			Vec3 C(0.0f, 0.0f, z); // Sphere center
 
@@ -202,13 +202,13 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 
 			// Fill the frustum with the fixed projection parameters from the fixed projection matrix
 			Plane plane;
-			extractClipPlane(cascadeProjMat, FrustumPlaneType::LEFT, plane);
+			extractClipPlane(cascadeProjMat, FrustumPlaneType::kLeft, plane);
 			const F32 left = plane.getOffset();
-			extractClipPlane(cascadeProjMat, FrustumPlaneType::RIGHT, plane);
+			extractClipPlane(cascadeProjMat, FrustumPlaneType::kRight, plane);
 			const F32 right = -plane.getOffset();
-			extractClipPlane(cascadeProjMat, FrustumPlaneType::TOP, plane);
+			extractClipPlane(cascadeProjMat, FrustumPlaneType::kTop, plane);
 			const F32 top = -plane.getOffset();
-			extractClipPlane(cascadeProjMat, FrustumPlaneType::BOTTOM, plane);
+			extractClipPlane(cascadeProjMat, FrustumPlaneType::kBottom, plane);
 			const F32 bottom = plane.getOffset();
 
 			FrustumComponent& cascadeFrustumComp = cascadeFrustumComponents[i];
@@ -224,29 +224,29 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 
 void LightComponent::draw(RenderQueueDrawContext& ctx) const
 {
-	const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);
+	const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDepthTestOn);
 	if(enableDepthTest)
 	{
-		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::LESS);
+		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::kLess);
 	}
 	else
 	{
-		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::ALWAYS);
+		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::kAlways);
 	}
 
 	Vec3 color = m_diffColor.xyz();
 	color /= max(max(color.x(), color.y()), color.z());
 
-	ImageResourcePtr imageResource = (m_type == LightComponentType::POINT) ? m_pointDebugImage : m_spotDebugImage;
+	ImageResourcePtr imageResource = (m_type == LightComponentType::kPoint) ? m_pointDebugImage : m_spotDebugImage;
 	m_node->getSceneGraph().getDebugDrawer().drawBillboardTexture(
 		ctx.m_projectionMatrix, ctx.m_viewMatrix, m_worldtransform.getOrigin().xyz(), color.xyz1(),
-		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), imageResource->getTextureView(),
+		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), imageResource->getTextureView(),
 		ctx.m_sampler, Vec2(0.75f), *ctx.m_stagingGpuAllocator, ctx.m_commandBuffer);
 
 	// Restore state
 	if(!enableDepthTest)
 	{
-		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::LESS);
+		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::kLess);
 	}
 }
 

@@ -33,12 +33,12 @@ Error TextureViewImpl::init(const TextureViewInitInfo& inf)
 	Array<U64, 2> toHash = {tex.getUuid(), ptrToNumber(m_handle)};
 	m_hash = computeHash(&toHash[0], sizeof(toHash));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 U32 TextureViewImpl::getOrCreateBindlessIndex()
 {
-	if(m_bindlessIndex == MAX_U32)
+	if(m_bindlessIndex == kMaxU32)
 	{
 		m_bindlessIndex = m_microImageView->getOrCreateBindlessIndex(getGrManagerImpl());
 	}

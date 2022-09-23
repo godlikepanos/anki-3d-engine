@@ -25,11 +25,11 @@ class TransferGpuAllocatorHandle;
 /// @addtogroup resource
 /// @{
 
-#define ANKI_RESOURCE_LOGI(...) ANKI_LOG("RSRC", NORMAL, __VA_ARGS__)
-#define ANKI_RESOURCE_LOGE(...) ANKI_LOG("RSRC", ERROR, __VA_ARGS__)
-#define ANKI_RESOURCE_LOGW(...) ANKI_LOG("RSRC", WARNING, __VA_ARGS__)
-#define ANKI_RESOURCE_LOGF(...) ANKI_LOG("RSRC", FATAL, __VA_ARGS__)
-#define ANKI_RESOURCE_LOGV(...) ANKI_LOG("RSRC", VERBOSE, __VA_ARGS__)
+#define ANKI_RESOURCE_LOGI(...) ANKI_LOG("RSRC", kNormal, __VA_ARGS__)
+#define ANKI_RESOURCE_LOGE(...) ANKI_LOG("RSRC", kError, __VA_ARGS__)
+#define ANKI_RESOURCE_LOGW(...) ANKI_LOG("RSRC", kWarning, __VA_ARGS__)
+#define ANKI_RESOURCE_LOGF(...) ANKI_LOG("RSRC", kFatal, __VA_ARGS__)
+#define ANKI_RESOURCE_LOGV(...) ANKI_LOG("RSRC", kVerbose, __VA_ARGS__)
 
 /// Deleter for ResourcePtr.
 template<typename T>

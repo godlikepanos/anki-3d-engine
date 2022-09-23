@@ -19,11 +19,11 @@ class FramebufferAttachmentInfo
 public:
 	TextureViewPtr m_textureView;
 
-	AttachmentLoadOperation m_loadOperation = AttachmentLoadOperation::CLEAR;
-	AttachmentStoreOperation m_storeOperation = AttachmentStoreOperation::STORE;
+	AttachmentLoadOperation m_loadOperation = AttachmentLoadOperation::kClear;
+	AttachmentStoreOperation m_storeOperation = AttachmentStoreOperation::kStore;
 
-	AttachmentLoadOperation m_stencilLoadOperation = AttachmentLoadOperation::CLEAR;
-	AttachmentStoreOperation m_stencilStoreOperation = AttachmentStoreOperation::STORE;
+	AttachmentLoadOperation m_stencilLoadOperation = AttachmentLoadOperation::kClear;
+	AttachmentStoreOperation m_stencilStoreOperation = AttachmentStoreOperation::kStore;
 
 	ClearValue m_clearValue;
 };
@@ -32,7 +32,7 @@ public:
 class FramebufferInitInfo : public GrBaseInitInfo
 {
 public:
-	Array<FramebufferAttachmentInfo, MAX_COLOR_ATTACHMENTS> m_colorAttachments;
+	Array<FramebufferAttachmentInfo, kMaxColorRenderTargets> m_colorAttachments;
 	U32 m_colorAttachmentCount = 0;
 	FramebufferAttachmentInfo m_depthStencilAttachment;
 
@@ -115,12 +115,12 @@ class Framebuffer : public GrObject
 	ANKI_GR_OBJECT
 
 public:
-	static constexpr GrObjectType CLASS_TYPE = GrObjectType::FRAMEBUFFER;
+	static constexpr GrObjectType kClassType = GrObjectType::kFramebuffer;
 
 protected:
 	/// Construct.
 	Framebuffer(GrManager* manager, CString name)
-		: GrObject(manager, CLASS_TYPE, name)
+		: GrObject(manager, kClassType, name)
 	{
 	}
 

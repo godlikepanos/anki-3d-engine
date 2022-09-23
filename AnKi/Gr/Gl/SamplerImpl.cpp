@@ -13,13 +13,13 @@ void SamplerImpl::init(const SamplerInitInfo& sinit)
 	glGenSamplers(1, &m_glName);
 	ANKI_ASSERT(m_glName);
 
-	if(sinit.m_addressing == SamplingAddressing::REPEAT)
+	if(sinit.m_addressing == SamplingAddressing::kRepeat)
 	{
 		glSamplerParameteri(m_glName, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glSamplerParameteri(m_glName, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		glSamplerParameteri(m_glName, GL_TEXTURE_WRAP_R, GL_REPEAT);
 	}
-	else if(sinit.m_addressing == SamplingAddressing::CLAMP)
+	else if(sinit.m_addressing == SamplingAddressing::kClamp)
 	{
 		glSamplerParameteri(m_glName, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glSamplerParameteri(m_glName, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);

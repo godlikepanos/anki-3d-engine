@@ -47,20 +47,20 @@ public:
 		return m_runCtx.m_prevFrameDepthRt;
 	}
 
-	void getDebugRenderTarget(CString rtName, RenderTargetHandle& handle,
+	void getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
 							  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const override
 	{
 		if(rtName == "GBufferAlbedo")
 		{
-			handle = m_runCtx.m_colorRts[0];
+			handles[0] = m_runCtx.m_colorRts[0];
 		}
 		else if(rtName == "GBufferNormals")
 		{
-			handle = m_runCtx.m_colorRts[2];
+			handles[0] = m_runCtx.m_colorRts[2];
 		}
 		else if(rtName == "GBufferVelocity")
 		{
-			handle = m_runCtx.m_colorRts[3];
+			handles[0] = m_runCtx.m_colorRts[3];
 		}
 		else
 		{
@@ -69,14 +69,14 @@ public:
 	}
 
 private:
-	Array<RenderTargetDescription, GBUFFER_COLOR_ATTACHMENT_COUNT> m_colorRtDescrs;
+	Array<RenderTargetDescription, kGBufferColorRenderTargetCount> m_colorRtDescrs;
 	Array<TexturePtr, 2> m_depthRts;
 	FramebufferDescription m_fbDescr;
 
 	class
 	{
 	public:
-		Array<RenderTargetHandle, GBUFFER_COLOR_ATTACHMENT_COUNT> m_colorRts;
+		Array<RenderTargetHandle, kGBufferColorRenderTargetCount> m_colorRts;
 		RenderTargetHandle m_crntFrameDepthRt;
 		RenderTargetHandle m_prevFrameDepthRt;
 	} m_runCtx;

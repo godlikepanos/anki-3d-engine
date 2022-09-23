@@ -15,28 +15,28 @@ VkCompareOp convertCompareOp(CompareOperation ak)
 	VkCompareOp out = VK_COMPARE_OP_NEVER;
 	switch(ak)
 	{
-	case CompareOperation::ALWAYS:
+	case CompareOperation::kAlways:
 		out = VK_COMPARE_OP_ALWAYS;
 		break;
-	case CompareOperation::LESS:
+	case CompareOperation::kLess:
 		out = VK_COMPARE_OP_LESS;
 		break;
-	case CompareOperation::EQUAL:
+	case CompareOperation::kEqual:
 		out = VK_COMPARE_OP_EQUAL;
 		break;
-	case CompareOperation::LESS_EQUAL:
+	case CompareOperation::kLessEqual:
 		out = VK_COMPARE_OP_LESS_OR_EQUAL;
 		break;
-	case CompareOperation::GREATER:
+	case CompareOperation::kGreater:
 		out = VK_COMPARE_OP_GREATER;
 		break;
-	case CompareOperation::GREATER_EQUAL:
+	case CompareOperation::kGreaterEqual:
 		out = VK_COMPARE_OP_GREATER_OR_EQUAL;
 		break;
-	case CompareOperation::NOT_EQUAL:
+	case CompareOperation::kNotEqual:
 		out = VK_COMPARE_OP_NOT_EQUAL;
 		break;
-	case CompareOperation::NEVER:
+	case CompareOperation::kNever:
 		out = VK_COMPARE_OP_NEVER;
 		break;
 	default:
@@ -51,22 +51,22 @@ VkPrimitiveTopology convertTopology(PrimitiveTopology ak)
 	VkPrimitiveTopology out = VK_PRIMITIVE_TOPOLOGY_MAX_ENUM;
 	switch(ak)
 	{
-	case PrimitiveTopology::POINTS:
+	case PrimitiveTopology::kPoints:
 		out = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
 		break;
-	case PrimitiveTopology::LINES:
+	case PrimitiveTopology::kLines:
 		out = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
 		break;
-	case PrimitiveTopology::LINE_STRIP:
+	case PrimitiveTopology::kLineStip:
 		out = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
 		break;
-	case PrimitiveTopology::TRIANGLES:
+	case PrimitiveTopology::kTriangles:
 		out = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		break;
-	case PrimitiveTopology::TRIANGLE_STRIP:
+	case PrimitiveTopology::kTriangleStrip:
 		out = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
 		break;
-	case PrimitiveTopology::PATCHES:
+	case PrimitiveTopology::kPatchs:
 		out = VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
 		break;
 	default:
@@ -81,13 +81,13 @@ VkPolygonMode convertFillMode(FillMode ak)
 	VkPolygonMode out = VK_POLYGON_MODE_FILL;
 	switch(ak)
 	{
-	case FillMode::POINTS:
+	case FillMode::kPoints:
 		out = VK_POLYGON_MODE_POINT;
 		break;
-	case FillMode::WIREFRAME:
+	case FillMode::kWireframe:
 		out = VK_POLYGON_MODE_LINE;
 		break;
-	case FillMode::SOLID:
+	case FillMode::kSolid:
 		out = VK_POLYGON_MODE_FILL;
 		break;
 	default:
@@ -102,16 +102,16 @@ VkCullModeFlags convertCullMode(FaceSelectionBit ak)
 	VkCullModeFlags out = 0;
 	switch(ak)
 	{
-	case FaceSelectionBit::NONE:
+	case FaceSelectionBit::kNone:
 		out = VK_CULL_MODE_NONE;
 		break;
-	case FaceSelectionBit::FRONT:
+	case FaceSelectionBit::kFront:
 		out = VK_CULL_MODE_FRONT_BIT;
 		break;
-	case FaceSelectionBit::BACK:
+	case FaceSelectionBit::kBack:
 		out = VK_CULL_MODE_BACK_BIT;
 		break;
-	case FaceSelectionBit::FRONT_AND_BACK:
+	case FaceSelectionBit::kFrontAndBack:
 		out = VK_CULL_MODE_FRONT_BIT | VK_CULL_MODE_BACK_BIT;
 		break;
 	default:
@@ -126,61 +126,61 @@ VkBlendFactor convertBlendFactor(BlendFactor ak)
 	VkBlendFactor out = VK_BLEND_FACTOR_MAX_ENUM;
 	switch(ak)
 	{
-	case BlendFactor::ZERO:
+	case BlendFactor::kZero:
 		out = VK_BLEND_FACTOR_ZERO;
 		break;
-	case BlendFactor::ONE:
+	case BlendFactor::kOne:
 		out = VK_BLEND_FACTOR_ONE;
 		break;
-	case BlendFactor::SRC_COLOR:
+	case BlendFactor::kSrcColor:
 		out = VK_BLEND_FACTOR_SRC_COLOR;
 		break;
-	case BlendFactor::ONE_MINUS_SRC_COLOR:
+	case BlendFactor::kOneMinusSrcColor:
 		out = VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR;
 		break;
-	case BlendFactor::DST_COLOR:
+	case BlendFactor::kDstColor:
 		out = VK_BLEND_FACTOR_DST_COLOR;
 		break;
-	case BlendFactor::ONE_MINUS_DST_COLOR:
+	case BlendFactor::kOneMinusDstColor:
 		out = VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR;
 		break;
-	case BlendFactor::SRC_ALPHA:
+	case BlendFactor::kSrcAlpha:
 		out = VK_BLEND_FACTOR_SRC_ALPHA;
 		break;
-	case BlendFactor::ONE_MINUS_SRC_ALPHA:
+	case BlendFactor::kOneMinusSrcAlpha:
 		out = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 		break;
-	case BlendFactor::DST_ALPHA:
+	case BlendFactor::kDstAlpha:
 		out = VK_BLEND_FACTOR_DST_ALPHA;
 		break;
-	case BlendFactor::ONE_MINUS_DST_ALPHA:
+	case BlendFactor::kOneMinusDstAlpha:
 		out = VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA;
 		break;
-	case BlendFactor::CONSTANT_COLOR:
+	case BlendFactor::kConstantColor:
 		out = VK_BLEND_FACTOR_CONSTANT_COLOR;
 		break;
-	case BlendFactor::ONE_MINUS_CONSTANT_COLOR:
+	case BlendFactor::kOneMinusConstantColor:
 		out = VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR;
 		break;
-	case BlendFactor::CONSTANT_ALPHA:
+	case BlendFactor::kConstantAlpha:
 		out = VK_BLEND_FACTOR_CONSTANT_ALPHA;
 		break;
-	case BlendFactor::ONE_MINUS_CONSTANT_ALPHA:
+	case BlendFactor::kOneMinusConstantAlpha:
 		out = VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA;
 		break;
-	case BlendFactor::SRC_ALPHA_SATURATE:
+	case BlendFactor::kSrcAlphaSaturate:
 		out = VK_BLEND_FACTOR_SRC_ALPHA_SATURATE;
 		break;
-	case BlendFactor::SRC1_COLOR:
+	case BlendFactor::kSrc1Color:
 		out = VK_BLEND_FACTOR_SRC1_COLOR;
 		break;
-	case BlendFactor::ONE_MINUS_SRC1_COLOR:
+	case BlendFactor::kOneMinusSrc1Color:
 		out = VK_BLEND_FACTOR_ONE_MINUS_SRC1_COLOR;
 		break;
-	case BlendFactor::SRC1_ALPHA:
+	case BlendFactor::kSrc1Alpha:
 		out = VK_BLEND_FACTOR_SRC1_ALPHA;
 		break;
-	case BlendFactor::ONE_MINUS_SRC1_ALPHA:
+	case BlendFactor::kOneMinusSrc1Alpha:
 		out = VK_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA;
 		break;
 	default:
@@ -196,19 +196,19 @@ VkBlendOp convertBlendOperation(BlendOperation ak)
 
 	switch(ak)
 	{
-	case BlendOperation::ADD:
+	case BlendOperation::kAdd:
 		out = VK_BLEND_OP_ADD;
 		break;
-	case BlendOperation::SUBTRACT:
+	case BlendOperation::kSubtract:
 		out = VK_BLEND_OP_SUBTRACT;
 		break;
-	case BlendOperation::REVERSE_SUBTRACT:
+	case BlendOperation::kReverseSubtract:
 		out = VK_BLEND_OP_REVERSE_SUBTRACT;
 		break;
-	case BlendOperation::MIN:
+	case BlendOperation::kMin:
 		out = VK_BLEND_OP_MIN;
 		break;
-	case BlendOperation::MAX:
+	case BlendOperation::kMax:
 		out = VK_BLEND_OP_MAX;
 		break;
 	default:
@@ -224,13 +224,13 @@ VkAttachmentLoadOp convertLoadOp(AttachmentLoadOperation ak)
 
 	switch(ak)
 	{
-	case AttachmentLoadOperation::LOAD:
+	case AttachmentLoadOperation::kLoad:
 		out = VK_ATTACHMENT_LOAD_OP_LOAD;
 		break;
-	case AttachmentLoadOperation::CLEAR:
+	case AttachmentLoadOperation::kClear:
 		out = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		break;
-	case AttachmentLoadOperation::DONT_CARE:
+	case AttachmentLoadOperation::kDontCare:
 		out = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		break;
 	default:
@@ -246,10 +246,10 @@ VkAttachmentStoreOp convertStoreOp(AttachmentStoreOperation ak)
 
 	switch(ak)
 	{
-	case AttachmentStoreOperation::STORE:
+	case AttachmentStoreOperation::kStore:
 		out = VK_ATTACHMENT_STORE_OP_STORE;
 		break;
-	case AttachmentStoreOperation::DONT_CARE:
+	case AttachmentStoreOperation::kDontCare:
 		out = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		break;
 	default:
@@ -263,67 +263,67 @@ VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask)
 {
 	VkBufferUsageFlags out = 0;
 
-	if(!!(usageMask & BufferUsageBit::ALL_UNIFORM))
+	if(!!(usageMask & BufferUsageBit::kAllUniform))
 	{
 		out |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 	}
 
-	if(!!(usageMask & BufferUsageBit::ALL_STORAGE))
+	if(!!(usageMask & BufferUsageBit::kAllStorage))
 	{
 		out |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
 	}
 
-	if(!!(usageMask & BufferUsageBit::INDEX))
+	if(!!(usageMask & BufferUsageBit::kIndex))
 	{
 		out |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
 	}
 
-	if(!!(usageMask & BufferUsageBit::VERTEX))
+	if(!!(usageMask & BufferUsageBit::kVertex))
 	{
 		out |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
 	}
 
-	if(!!(usageMask & BufferUsageBit::ALL_INDIRECT))
+	if(!!(usageMask & BufferUsageBit::kAllIndirect))
 	{
 		out |= VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
 	}
 
-	if(!!(usageMask & BufferUsageBit::TRANSFER_DESTINATION))
+	if(!!(usageMask & BufferUsageBit::kTransferDestination))
 	{
 		out |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 	}
 
-	if(!!(usageMask & BufferUsageBit::TRANSFER_SOURCE))
+	if(!!(usageMask & BufferUsageBit::kTransferSource))
 	{
 		out |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 	}
 
-	if(!!(usageMask & (BufferUsageBit::ALL_TEXTURE & BufferUsageBit::ALL_READ)))
+	if(!!(usageMask & (BufferUsageBit::kAllTexture & BufferUsageBit::kAllRead)))
 	{
 		out |= VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT;
 	}
 
-	if(!!(usageMask & (BufferUsageBit::ALL_TEXTURE & BufferUsageBit::ALL_WRITE)))
+	if(!!(usageMask & (BufferUsageBit::kAllTexture & BufferUsageBit::kAllWrite)))
 	{
 		out |= VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT;
 	}
 
-	if(!!(usageMask & BufferUsageBit::ACCELERATION_STRUCTURE_BUILD))
+	if(!!(usageMask & BufferUsageBit::kAccelerationStructureBuild))
 	{
 		out |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
 	}
 
-	if(!!(usageMask & PrivateBufferUsageBit::ACCELERATION_STRUCTURE_BUILD_SCRATCH))
+	if(!!(usageMask & PrivateBufferUsageBit::kAccelerationStructureBuildScratch))
 	{
 		out |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT; // Spec says that this will be enough
 	}
 
-	if(!!(usageMask & PrivateBufferUsageBit::ACCELERATION_STRUCTURE))
+	if(!!(usageMask & PrivateBufferUsageBit::kAccelerationStructure))
 	{
 		out |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR;
 	}
 
-	if(!!(usageMask & BufferUsageBit::SBT))
+	if(!!(usageMask & BufferUsageBit::kSBT))
 	{
 		out |= VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR;
 	}
@@ -338,16 +338,16 @@ VkImageType convertTextureType(TextureType ak)
 	VkImageType out = VK_IMAGE_TYPE_MAX_ENUM;
 	switch(ak)
 	{
-	case TextureType::CUBE:
-	case TextureType::CUBE_ARRAY:
-	case TextureType::_2D:
-	case TextureType::_2D_ARRAY:
+	case TextureType::kCube:
+	case TextureType::kCubeArray:
+	case TextureType::k2D:
+	case TextureType::k2DArray:
 		out = VK_IMAGE_TYPE_2D;
 		break;
-	case TextureType::_3D:
+	case TextureType::k3D:
 		out = VK_IMAGE_TYPE_3D;
 		break;
-	case TextureType::_1D:
+	case TextureType::k1D:
 		out = VK_IMAGE_TYPE_1D;
 		break;
 	default:
@@ -362,22 +362,22 @@ VkImageViewType convertTextureViewType(TextureType ak)
 	VkImageViewType out = VK_IMAGE_VIEW_TYPE_MAX_ENUM;
 	switch(ak)
 	{
-	case TextureType::_1D:
+	case TextureType::k1D:
 		out = VK_IMAGE_VIEW_TYPE_1D;
 		break;
-	case TextureType::_2D:
+	case TextureType::k2D:
 		out = VK_IMAGE_VIEW_TYPE_2D;
 		break;
-	case TextureType::_2D_ARRAY:
+	case TextureType::k2DArray:
 		out = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
 		break;
-	case TextureType::_3D:
+	case TextureType::k3D:
 		out = VK_IMAGE_VIEW_TYPE_3D;
 		break;
-	case TextureType::CUBE:
+	case TextureType::kCube:
 		out = VK_IMAGE_VIEW_TYPE_CUBE;
 		break;
-	case TextureType::CUBE_ARRAY:
+	case TextureType::kCubeArray:
 		out = VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
 		break;
 	default:
@@ -391,17 +391,17 @@ VkImageUsageFlags convertTextureUsage(const TextureUsageBit ak, const Format for
 {
 	VkImageUsageFlags out = 0;
 
-	if(!!(ak & TextureUsageBit::ALL_SAMPLED))
+	if(!!(ak & TextureUsageBit::kAllSampled))
 	{
 		out |= VK_IMAGE_USAGE_SAMPLED_BIT;
 	}
 
-	if(!!(ak & TextureUsageBit::ALL_IMAGE))
+	if(!!(ak & TextureUsageBit::kAllImage))
 	{
 		out |= VK_IMAGE_USAGE_STORAGE_BIT;
 	}
 
-	if(!!(ak & (TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE)))
+	if(!!(ak & (TextureUsageBit::kFramebufferRead | TextureUsageBit::kFramebufferWrite)))
 	{
 		if(getFormatInfo(format).isDepthStencil())
 		{
@@ -413,17 +413,17 @@ VkImageUsageFlags convertTextureUsage(const TextureUsageBit ak, const Format for
 		}
 	}
 
-	if(!!(ak & TextureUsageBit::FRAMEBUFFER_SHADING_RATE))
+	if(!!(ak & TextureUsageBit::kFramebufferShadingRate))
 	{
 		out |= VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR;
 	}
 
-	if(!!(ak & TextureUsageBit::TRANSFER_DESTINATION))
+	if(!!(ak & TextureUsageBit::kTransferDestination))
 	{
 		out |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 	}
 
-	if(!!(ak & TextureUsageBit::GENERATE_MIPMAPS))
+	if(!!(ak & TextureUsageBit::kGenerateMipmaps))
 	{
 		out |= VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 	}
@@ -438,28 +438,28 @@ VkStencilOp convertStencilOp(StencilOperation ak)
 
 	switch(ak)
 	{
-	case StencilOperation::KEEP:
+	case StencilOperation::kKeep:
 		out = VK_STENCIL_OP_KEEP;
 		break;
-	case StencilOperation::ZERO:
+	case StencilOperation::kZero:
 		out = VK_STENCIL_OP_ZERO;
 		break;
-	case StencilOperation::REPLACE:
+	case StencilOperation::kReplace:
 		out = VK_STENCIL_OP_REPLACE;
 		break;
-	case StencilOperation::INCREMENT_AND_CLAMP:
+	case StencilOperation::kIncrementAndClamp:
 		out = VK_STENCIL_OP_INCREMENT_AND_CLAMP;
 		break;
-	case StencilOperation::DECREMENT_AND_CLAMP:
+	case StencilOperation::kDecrementAndClamp:
 		out = VK_STENCIL_OP_DECREMENT_AND_CLAMP;
 		break;
-	case StencilOperation::INVERT:
+	case StencilOperation::kInvert:
 		out = VK_STENCIL_OP_INVERT;
 		break;
-	case StencilOperation::INCREMENT_AND_WRAP:
+	case StencilOperation::kIncrementAndWrap:
 		out = VK_STENCIL_OP_INCREMENT_AND_WRAP;
 		break;
-	case StencilOperation::DECREMENT_AND_WRAP:
+	case StencilOperation::kDecrementAndWrap:
 		out = VK_STENCIL_OP_DECREMENT_AND_WRAP;
 		break;
 	default:
@@ -471,65 +471,65 @@ VkStencilOp convertStencilOp(StencilOperation ak)
 
 VkShaderStageFlags convertShaderTypeBit(ShaderTypeBit bit)
 {
-	ANKI_ASSERT(bit != ShaderTypeBit::NONE);
+	ANKI_ASSERT(bit != ShaderTypeBit::kNone);
 
 	VkShaderStageFlags out = 0;
-	if(!!(bit & ShaderTypeBit::VERTEX))
+	if(!!(bit & ShaderTypeBit::kVertex))
 	{
 		out |= VK_SHADER_STAGE_VERTEX_BIT;
 	}
 
-	if(!!(bit & ShaderTypeBit::TESSELLATION_CONTROL))
+	if(!!(bit & ShaderTypeBit::kTessellationControl))
 	{
 		out |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
 	}
 
-	if(!!(bit & ShaderTypeBit::TESSELLATION_EVALUATION))
+	if(!!(bit & ShaderTypeBit::kTessellationEvaluation))
 	{
 		out |= VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
 	}
 
-	if(!!(bit & ShaderTypeBit::GEOMETRY))
+	if(!!(bit & ShaderTypeBit::kGeometry))
 	{
 		out |= VK_SHADER_STAGE_GEOMETRY_BIT;
 	}
 
-	if(!!(bit & ShaderTypeBit::FRAGMENT))
+	if(!!(bit & ShaderTypeBit::kFragment))
 	{
 		out |= VK_SHADER_STAGE_FRAGMENT_BIT;
 	}
 
-	if(!!(bit & ShaderTypeBit::COMPUTE))
+	if(!!(bit & ShaderTypeBit::kCompute))
 	{
 		out |= VK_SHADER_STAGE_COMPUTE_BIT;
 	}
 
-	if(!!(bit & ShaderTypeBit::RAY_GEN))
+	if(!!(bit & ShaderTypeBit::kRayGen))
 	{
 		out |= VK_SHADER_STAGE_RAYGEN_BIT_KHR;
 	}
 
-	if(!!(bit & ShaderTypeBit::ANY_HIT))
+	if(!!(bit & ShaderTypeBit::kAnyHit))
 	{
 		out |= VK_SHADER_STAGE_ANY_HIT_BIT_KHR;
 	}
 
-	if(!!(bit & ShaderTypeBit::CLOSEST_HIT))
+	if(!!(bit & ShaderTypeBit::kClosestHit))
 	{
 		out |= VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
 	}
 
-	if(!!(bit & ShaderTypeBit::MISS))
+	if(!!(bit & ShaderTypeBit::kMiss))
 	{
 		out |= VK_SHADER_STAGE_MISS_BIT_KHR;
 	}
 
-	if(!!(bit & ShaderTypeBit::INTERSECTION))
+	if(!!(bit & ShaderTypeBit::kIntersection))
 	{
 		out |= VK_SHADER_STAGE_INTERSECTION_BIT_KHR;
 	}
 
-	if(!!(bit & ShaderTypeBit::CALLABLE))
+	if(!!(bit & ShaderTypeBit::kCallable))
 	{
 		out |= VK_SHADER_STAGE_CALLABLE_BIT_KHR;
 	}

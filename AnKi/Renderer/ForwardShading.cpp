@@ -32,13 +32,13 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 	if(start != end)
 	{
 		cmdb->setDepthWrite(false);
-		cmdb->setBlendFactors(0, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA);
+		cmdb->setBlendFactors(0, BlendFactor::kSrcAlpha, BlendFactor::kOneMinusSrcAlpha);
 
 		const ClusteredShadingContext& rsrc = ctx.m_clusteredShading;
 		const U32 set = MATERIAL_SET_GLOBAL;
 		cmdb->bindSampler(set, MATERIAL_BINDING_LINEAR_CLAMP_SAMPLER, m_r->getSamplers().m_trilinearClamp);
 
-		rgraphCtx.bindTexture(set, MATERIAL_BINDING_DEPTH_RT, m_r->getDepthDownscale().getHiZRt(), HIZ_HALF_DEPTH);
+		rgraphCtx.bindTexture(set, MATERIAL_BINDING_DEPTH_RT, m_r->getDepthDownscale().getHiZRt(), kHiZHalfSurface);
 		rgraphCtx.bindColorTexture(set, MATERIAL_BINDING_LIGHT_VOLUME,
 								   m_r->getVolumetricLightingAccumulation().getRt());
 
@@ -63,7 +63,7 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 
 		// Restore state
 		cmdb->setDepthWrite(true);
-		cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
+		cmdb->setBlendFactors(0, BlendFactor::kOne, BlendFactor::kZero);
 	}
 
 	if(threadId == threadCount - 1 && ctx.m_renderQueue->m_lensFlares.getSize())
@@ -74,12 +74,12 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 
 void ForwardShading::setDependencies(const RenderingContext& ctx, GraphicsRenderPassDescription& pass)
 {
-	pass.newDependency({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_FRAGMENT, HIZ_HALF_DEPTH});
-	pass.newDependency({m_r->getVolumetricLightingAccumulation().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+	pass.newDependency({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::kSampledFragment, kHiZHalfSurface});
+	pass.newDependency({m_r->getVolumetricLightingAccumulation().getRt(), TextureUsageBit::kSampledFragment});
 
 	if(ctx.m_renderQueue->m_lensFlares.getSize())
 	{
-		pass.newDependency({m_r->getLensFlare().getIndirectDrawBuffer(), BufferUsageBit::INDIRECT_DRAW});
+		pass.newDependency({m_r->getLensFlare().getIndirectDrawBuffer(), BufferUsageBit::kIndirectDraw});
 	}
 }
 

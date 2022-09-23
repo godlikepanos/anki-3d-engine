@@ -30,7 +30,7 @@ public:
 			static_cast<FogDensityNode&>(*info.m_node).onMoveUpdated(movec);
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 
@@ -56,7 +56,7 @@ public:
 			static_cast<FogDensityNode&>(*info.m_node).onDensityShapeUpdated(fogc);
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 

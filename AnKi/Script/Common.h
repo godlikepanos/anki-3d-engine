@@ -15,10 +15,10 @@ class LuaBinder;
 class ScriptManager;
 class ScriptEnvironment;
 
-#define ANKI_SCRIPT_LOGI(...) ANKI_LOG("SCRI", NORMAL, __VA_ARGS__)
-#define ANKI_SCRIPT_LOGE(...) ANKI_LOG("SCRI", ERROR, __VA_ARGS__)
-#define ANKI_SCRIPT_LOGW(...) ANKI_LOG("SCRI", WARNING, __VA_ARGS__)
-#define ANKI_SCRIPT_LOGF(...) ANKI_LOG("SCRI", FATAL, __VA_ARGS__)
+#define ANKI_SCRIPT_LOGI(...) ANKI_LOG("SCRI", kNormal, __VA_ARGS__)
+#define ANKI_SCRIPT_LOGE(...) ANKI_LOG("SCRI", kError, __VA_ARGS__)
+#define ANKI_SCRIPT_LOGW(...) ANKI_LOG("SCRI", kWarning, __VA_ARGS__)
+#define ANKI_SCRIPT_LOGF(...) ANKI_LOG("SCRI", kFatal, __VA_ARGS__)
 
 using ScriptAllocator = HeapAllocator<U8>;
 

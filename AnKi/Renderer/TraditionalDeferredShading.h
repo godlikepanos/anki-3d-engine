@@ -35,7 +35,7 @@ public:
 	Bool m_computeSpecular = false;
 
 	// Render targets
-	Array<RenderTargetHandle, GBUFFER_COLOR_ATTACHMENT_COUNT - 1> m_gbufferRenderTargets;
+	Array<RenderTargetHandle, kGBufferColorRenderTargetCount - 1> m_gbufferRenderTargets;
 	RenderTargetHandle m_gbufferDepthRenderTarget;
 	RenderTargetHandle m_directionalLightShadowmapRenderTarget;
 

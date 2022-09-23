@@ -16,7 +16,7 @@ namespace anki {
 class Cone
 {
 public:
-	static constexpr CollisionShapeType CLASS_TYPE = CollisionShapeType::CONE;
+	static constexpr CollisionShapeType kClassType = CollisionShapeType::kCone;
 
 	/// Will not initialize any memory, nothing.
 	Cone()
@@ -73,7 +73,7 @@ public:
 
 	void setLength(F32 len)
 	{
-		ANKI_ASSERT(len > EPSILON);
+		ANKI_ASSERT(len > kEpsilonf);
 		m_length = len;
 	}
 
@@ -85,7 +85,7 @@ public:
 
 	void setAngle(F32 ang)
 	{
-		ANKI_ASSERT(ang > 0.0f && ang < 2.0f * PI);
+		ANKI_ASSERT(ang > 0.0f && ang < 2.0f * kPi);
 		m_angle = ang;
 	}
 
@@ -107,13 +107,13 @@ public:
 private:
 	Vec4 m_origin
 #if ANKI_ENABLE_ASSERTIONS
-		= Vec4(MAX_F32)
+		= Vec4(kMaxF32)
 #endif
 		;
 
 	Vec4 m_dir
 #if ANKI_ENABLE_ASSERTIONS
-		= Vec4(MAX_F32)
+		= Vec4(kMaxF32)
 #endif
 		;
 
@@ -134,7 +134,7 @@ private:
 		ANKI_ASSERT(m_origin.w() == 0.0f);
 		ANKI_ASSERT(m_dir.w() == 0.0f);
 		ANKI_ASSERT(m_length > 0.0f);
-		ANKI_ASSERT(m_angle > 0.0f && m_angle < 2.0f * PI);
+		ANKI_ASSERT(m_angle > 0.0f && m_angle < 2.0f * kPi);
 	}
 };
 /// @}

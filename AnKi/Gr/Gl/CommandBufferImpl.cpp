@@ -30,10 +30,10 @@ void CommandBufferImpl::init(const CommandBufferInitInfo& init)
 	m_flags = init.m_flags;
 
 #if ANKI_EXTRA_CHECKS
-	m_state.m_secondLevel = !!(init.m_flags & CommandBufferFlag::SECOND_LEVEL);
+	m_state.m_secondLevel = !!(init.m_flags & CommandBufferFlag::kSecondLevel);
 #endif
 
-	if(!!(init.m_flags & CommandBufferFlag::SECOND_LEVEL))
+	if(!!(init.m_flags & CommandBufferFlag::kSecondLevel))
 	{
 		// TODO Need to hold a ref
 		m_state.m_fb = static_cast<const FramebufferImpl*>(init.m_framebuffer.get());
@@ -73,7 +73,7 @@ Error CommandBufferImpl::executeAllCommands()
 	m_executed = true;
 #endif
 
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 	GlState& state = static_cast<GrManagerImpl&>(getManager()).getState();
 
 	GlCommand* command = m_firstCommand;
@@ -136,12 +136,12 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 
 			if(m_state.m_stencilCompareMask[i] == StateTracker::DUMMY_STENCIL_MASK)
 			{
-				cmdb.setStencilCompareMask(face, MAX_U32);
+				cmdb.setStencilCompareMask(face, kMaxU32);
 			}
 
 			if(m_state.m_stencilWriteMask[i] == StateTracker::DUMMY_STENCIL_MASK)
 			{
-				cmdb.setStencilWriteMask(face, MAX_U32);
+				cmdb.setStencilWriteMask(face, kMaxU32);
 			}
 
 			if(m_state.m_stencilRef[i] == StateTracker::DUMMY_STENCIL_MASK)
@@ -160,7 +160,7 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 			cmdb.setDepthCompareOperation(CompareOperation::LESS);
 		}
 
-		for(U i = 0; i < MAX_COLOR_ATTACHMENTS; ++i)
+		for(U i = 0; i < kMaxColorRenderTargets; ++i)
 		{
 			const auto& att = m_state.m_colorAtt[i];
 			if(att.m_writeMask == StateTracker::INVALID_COLOR_MASK)
@@ -181,7 +181,7 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 
 		if(!m_state.m_scissorSet)
 		{
-			cmdb.setScissor(0, 0, MAX_U32, MAX_U32);
+			cmdb.setScissor(0, 0, kMaxU32, kMaxU32);
 		}
 	}
 
@@ -207,7 +207,7 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 		Error operator()(GlState&)
 		{
 			glStencilFuncSeparate(m_face, m_func, m_ref, m_compareMask);
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -242,7 +242,7 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 			{
 				glDisable(GL_DEPTH_TEST);
 			}
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -271,7 +271,7 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 			{
 				glDisable(GL_STENCIL_TEST);
 			}
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
@@ -294,7 +294,7 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 
 		Error operator()(GlState&)
 		{
-			for(U i = 0; i < MAX_COLOR_ATTACHMENTS; ++i)
+			for(U i = 0; i < kMaxColorRenderTargets; ++i)
 			{
 				if(m_enableMask & (1 << i))
 				{
@@ -305,13 +305,13 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 					glDisablei(GL_BLEND, i);
 				}
 			}
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 
 	U8 blendEnableMask = 0;
 	U8 blendDisableMask = 0;
-	for(U i = 0; i < MAX_COLOR_ATTACHMENTS; ++i)
+	for(U i = 0; i < kMaxColorRenderTargets; ++i)
 	{
 		if(m_state.maybeEnableBlend(i))
 		{

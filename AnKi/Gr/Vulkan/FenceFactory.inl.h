@@ -51,7 +51,7 @@ inline Bool MicroFence::clientWait(Second seconds)
 	}
 	else
 	{
-		seconds = min(seconds, MAX_FENCE_OR_SEMAPHORE_WAIT_TIME);
+		seconds = min(seconds, kMaxFenceOrSemaphoreWaitTime);
 
 		const F64 nsf = 1e+9 * seconds;
 		const U64 ns = U64(nsf);

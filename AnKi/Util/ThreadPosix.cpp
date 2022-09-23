@@ -27,10 +27,7 @@ void Thread::start(void* userData, ThreadCallback callback, const ThreadCoreAffi
 		Thread* thread = static_cast<Thread*>(ud);
 
 		// Set thread name
-		if(thread->m_name[0] != '\0')
-		{
-			setNameOfCurrentThread(&thread->m_name[0]);
-		}
+		setCurrentThreadName(&thread->m_name[0]);
 
 		// Call the callback
 		ThreadCallbackInfo info;
@@ -81,7 +78,7 @@ void Thread::pinToCores(const ThreadCoreAffinityMask& coreAffintyMask)
 	while(affinity.getEnabledBitCount() > 0)
 	{
 		const U32 msb = affinity.getMostSignificantBit();
-		ANKI_ASSERT(msb != MAX_U32);
+		ANKI_ASSERT(msb != kMaxU32);
 		affinity.unset(msb);
 		CPU_SET(msb, &cpus);
 	}
@@ -96,9 +93,21 @@ void Thread::pinToCores(const ThreadCoreAffinityMask& coreAffintyMask)
 	}
 }
 
-void Thread::setNameOfCurrentThread(const CString& name)
+void Thread::setCurrentThreadName(const Char* name)
 {
-	pthread_setname_np(pthread_self(), name.cstr());
+	// Copy the string first and limit its size
+	const PtrSize len = min<PtrSize>(strlen(name), kThreadNameMaxLength);
+	if(len > 0)
+	{
+		memcpy(&m_nameTls[0], name, len);
+		m_nameTls[len] = '\0';
+	}
+	else
+	{
+		memcpy(&m_nameTls[0], kDefaultThreadName, strlen(kDefaultThreadName) + 1);
+	}
+
+	pthread_setname_np(pthread_self(), &m_nameTls[0]);
 }
 
 } // end namespace anki

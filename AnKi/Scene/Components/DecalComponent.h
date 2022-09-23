@@ -21,7 +21,7 @@ class DecalComponent : public SceneComponent
 	ANKI_SCENE_COMPONENT(DecalComponent)
 
 public:
-	static constexpr U32 ATLAS_SUB_IMAGE_MARGIN = 16;
+	static constexpr U32 kAtlasSubImageMargin = 16;
 
 	DecalComponent(SceneNode* node);
 
@@ -29,12 +29,12 @@ public:
 
 	Error setDiffuseDecal(CString texAtlasFname, CString texAtlasSubtexName, F32 blendFactor)
 	{
-		return setLayer(texAtlasFname, texAtlasSubtexName, blendFactor, LayerType::DIFFUSE);
+		return setLayer(texAtlasFname, texAtlasSubtexName, blendFactor, LayerType::kDiffuse);
 	}
 
 	Error setSpecularRoughnessDecal(CString texAtlasFname, CString texAtlasSubtexName, F32 blendFactor)
 	{
-		return setLayer(texAtlasFname, texAtlasSubtexName, blendFactor, LayerType::SPECULAR_ROUGHNESS);
+		return setLayer(texAtlasFname, texAtlasSubtexName, blendFactor, LayerType::kSpecularRoughness);
 	}
 
 	/// Update the internal structures.
@@ -71,7 +71,7 @@ public:
 			updateInternal();
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	const Mat4& getBiasProjectionViewMatrix() const
@@ -81,37 +81,37 @@ public:
 
 	void getDiffuseAtlasInfo(Vec4& uv, TexturePtr& tex, F32& blendFactor) const
 	{
-		uv = m_layers[LayerType::DIFFUSE].m_uv;
-		tex = m_layers[LayerType::DIFFUSE].m_atlas->getTexture();
-		blendFactor = m_layers[LayerType::DIFFUSE].m_blendFactor;
+		uv = m_layers[LayerType::kDiffuse].m_uv;
+		tex = m_layers[LayerType::kDiffuse].m_atlas->getTexture();
+		blendFactor = m_layers[LayerType::kDiffuse].m_blendFactor;
 	}
 
 	void getSpecularRoughnessAtlasInfo(Vec4& uv, TexturePtr& tex, F32& blendFactor) const
 	{
-		uv = m_layers[LayerType::SPECULAR_ROUGHNESS].m_uv;
-		if(m_layers[LayerType::SPECULAR_ROUGHNESS].m_atlas)
+		uv = m_layers[LayerType::kSpecularRoughness].m_uv;
+		if(m_layers[LayerType::kSpecularRoughness].m_atlas)
 		{
-			tex = m_layers[LayerType::SPECULAR_ROUGHNESS].m_atlas->getTexture();
+			tex = m_layers[LayerType::kSpecularRoughness].m_atlas->getTexture();
 		}
 		else
 		{
 			tex.reset(nullptr);
 		}
-		blendFactor = m_layers[LayerType::SPECULAR_ROUGHNESS].m_blendFactor;
+		blendFactor = m_layers[LayerType::kSpecularRoughness].m_blendFactor;
 	}
 
 	void setupDecalQueueElement(DecalQueueElement& el)
 	{
-		el.m_diffuseAtlas = (m_layers[LayerType::DIFFUSE].m_atlas)
-								? m_layers[LayerType::DIFFUSE].m_atlas->getTextureView().get()
+		el.m_diffuseAtlas = (m_layers[LayerType::kDiffuse].m_atlas)
+								? m_layers[LayerType::kDiffuse].m_atlas->getTextureView().get()
 								: nullptr;
-		el.m_specularRoughnessAtlas = (m_layers[LayerType::SPECULAR_ROUGHNESS].m_atlas)
-										  ? m_layers[LayerType::SPECULAR_ROUGHNESS].m_atlas->getTextureView().get()
+		el.m_specularRoughnessAtlas = (m_layers[LayerType::kSpecularRoughness].m_atlas)
+										  ? m_layers[LayerType::kSpecularRoughness].m_atlas->getTextureView().get()
 										  : nullptr;
-		el.m_diffuseAtlasUv = m_layers[LayerType::DIFFUSE].m_uv;
-		el.m_specularRoughnessAtlasUv = m_layers[LayerType::SPECULAR_ROUGHNESS].m_uv;
-		el.m_diffuseAtlasBlendFactor = m_layers[LayerType::DIFFUSE].m_blendFactor;
-		el.m_specularRoughnessAtlasBlendFactor = m_layers[LayerType::SPECULAR_ROUGHNESS].m_blendFactor;
+		el.m_diffuseAtlasUv = m_layers[LayerType::kDiffuse].m_uv;
+		el.m_specularRoughnessAtlasUv = m_layers[LayerType::kSpecularRoughness].m_uv;
+		el.m_diffuseAtlasBlendFactor = m_layers[LayerType::kDiffuse].m_blendFactor;
+		el.m_specularRoughnessAtlasBlendFactor = m_layers[LayerType::kSpecularRoughness].m_blendFactor;
 		el.m_textureMatrix = m_biasProjViewMat;
 		el.m_obbCenter = m_obb.getCenter().xyz();
 		el.m_obbExtend = m_obb.getExtend().xyz();
@@ -126,9 +126,9 @@ public:
 private:
 	enum class LayerType : U8
 	{
-		DIFFUSE,
-		SPECULAR_ROUGHNESS,
-		COUNT
+		kDiffuse,
+		kSpecularRoughness,
+		kCount
 	};
 
 	class Layer
@@ -140,7 +140,7 @@ private:
 	};
 
 	SceneNode* m_node = nullptr;
-	Array<Layer, U(LayerType::COUNT)> m_layers;
+	Array<Layer, U(LayerType::kCount)> m_layers;
 	Mat4 m_biasProjViewMat = Mat4::getIdentity();
 	Vec3 m_boxSize = Vec3(1.0f);
 	Transform m_trf = Transform::getIdentity();

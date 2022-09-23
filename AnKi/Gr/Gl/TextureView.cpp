@@ -32,7 +32,7 @@ TextureView* TextureView::newInstance(GrManager* manager, const TextureViewInitI
 			ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
 			(void)oldState;
 
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 

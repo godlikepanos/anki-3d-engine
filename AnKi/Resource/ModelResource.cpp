@@ -36,7 +36,7 @@ void ModelPatch::getRenderingInfo(const RenderingKey& key, ModelRenderingInfo& i
 	// Vertex attributes & bindings
 	{
 		U32 bufferBindingVisitedMask = 0;
-		Array<U32, MAX_VERTEX_ATTRIBUTES> realBufferBindingToVirtual;
+		Array<U32, kMaxVertexAttributes> realBufferBindingToVirtual;
 
 		inf.m_vertexAttributeCount = 0;
 		inf.m_vertexBufferBindingCount = 0;
@@ -66,9 +66,9 @@ void ModelPatch::getRenderingInfo(const RenderingKey& key, ModelRenderingInfo& i
 				outBinding.m_buffer = inBinding.m_buffer;
 				ANKI_ASSERT(outBinding.m_buffer.isCreated());
 				outBinding.m_offset = inBinding.m_offset;
-				ANKI_ASSERT(outBinding.m_offset != MAX_PTR_SIZE);
+				ANKI_ASSERT(outBinding.m_offset != kMaxPtrSize);
 				outBinding.m_stride = inBinding.m_stride;
-				ANKI_ASSERT(outBinding.m_stride != MAX_PTR_SIZE);
+				ANKI_ASSERT(outBinding.m_stride != kMaxPtrSize);
 
 				realBufferBindingToVirtual[outAttribInfo.m_bufferBinding] = inf.m_vertexBufferBindingCount;
 				++inf.m_vertexBufferBindingCount;
@@ -141,14 +141,14 @@ Error ModelPatch::init(ModelResource* model, ConstWeakArray<CString> meshFNames,
 		if(lod > 0 && !m_meshes[lod]->isCompatible(*m_meshes[lod - 1]))
 		{
 			ANKI_RESOURCE_LOGE("Meshes not compatible");
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 
 		// Submesh index
-		if(subMeshIndex != MAX_U32 && subMeshIndex >= m_meshes[lod]->getSubMeshCount())
+		if(subMeshIndex != kMaxU32 && subMeshIndex >= m_meshes[lod]->getSubMeshCount())
 		{
 			ANKI_RESOURCE_LOGE("Wrong subMeshIndex given");
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 
 		++m_meshLodCount;
@@ -207,7 +207,7 @@ Error ModelPatch::init(ModelResource* model, ConstWeakArray<CString> meshFNames,
 			const MeshResource& mesh = *m_meshes[lod].get();
 			IndexBufferInfo& outIndexBufferInfo = m_indexBufferInfos[lod];
 
-			if(subMeshIndex == MAX_U32)
+			if(subMeshIndex == kMaxU32)
 			{
 				IndexType indexType;
 				PtrSize offset;
@@ -233,7 +233,7 @@ Error ModelPatch::init(ModelResource* model, ConstWeakArray<CString> meshFNames,
 		}
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 ModelResource::ModelResource(ResourceManager* manager)
@@ -286,7 +286,7 @@ Error ModelResource::load(const ResourceFilename& filename, Bool async)
 	if(count < 1)
 	{
 		ANKI_RESOURCE_LOGE("Zero number of model patches");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	m_modelPatches.create(alloc, count);
@@ -300,7 +300,7 @@ Error ModelResource::load(const ResourceFilename& filename, Bool async)
 		ANKI_CHECK(modelPatchEl.getAttributeNumberOptional("subMeshIndex", subMeshIndex, subMeshIndexPresent));
 		if(!subMeshIndexPresent)
 		{
-			subMeshIndex = MAX_U32;
+			subMeshIndex = kMaxU32;
 		}
 
 		XmlElement materialEl;
@@ -341,7 +341,7 @@ Error ModelResource::load(const ResourceFilename& filename, Bool async)
 		if(count > 0 && m_modelPatches[count].supportsSkinning() != m_modelPatches[count - 1].supportsSkinning())
 		{
 			ANKI_RESOURCE_LOGE("All model patches should support skinning or all shouldn't support skinning");
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 
 		// Move to next
@@ -357,7 +357,7 @@ Error ModelResource::load(const ResourceFilename& filename, Bool async)
 		m_boundingVolume = m_boundingVolume.getCompoundShape((*it).m_meshes[0]->getBoundingShape());
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

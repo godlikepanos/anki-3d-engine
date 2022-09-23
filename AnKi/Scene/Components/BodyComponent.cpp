@@ -40,7 +40,7 @@ Error BodyComponent::loadMeshResource(CString meshFilename)
 	m_body->setUserData(this);
 
 	m_markedForUpdate = true;
-	return Error::NONE;
+	return Error::kNone;
 }
 
 CString BodyComponent::getMeshResourceFilename() const
@@ -94,7 +94,7 @@ Error BodyComponent::update([[maybe_unused]] SceneComponentUpdateInfo& info, Boo
 		m_trf = m_body->getTransform();
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

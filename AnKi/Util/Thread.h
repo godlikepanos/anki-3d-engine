@@ -22,9 +22,6 @@
 
 namespace anki {
 
-// Forward
-class CString;
-
 /// @addtogroup util_thread
 /// @{
 
@@ -53,22 +50,11 @@ using ThreadCallback = Error (*)(ThreadCallbackInfo&);
 class Thread
 {
 public:
+	static constexpr U32 kThreadNameMaxLength = 15;
+
 	/// Create a thread with or without a name
 	/// @param[in] name The name of the new thread. Can be nullptr.
-	Thread(const char* name)
-	{
-		if(name)
-		{
-			PtrSize len = std::strlen(name);
-			len = std::min<PtrSize>(len, sizeof(m_name) - 1);
-			memcpy(&m_name[0], &name[0], len);
-			m_name[len] = '\0';
-		}
-		else
-		{
-			m_name[0] = '\0';
-		}
-	}
+	Thread(const Char* name);
 
 	Thread(const Thread&) = delete;
 
@@ -106,7 +92,9 @@ public:
 	void pinToCores(const ThreadCoreAffinityMask& coreAffintyMask);
 
 	/// Name the current thread.
-	static void setNameOfCurrentThread(const CString& name);
+	static void setCurrentThreadName(const Char* name);
+
+	static const Char* getCurrentThreadName();
 
 private:
 	/// The system native type.
@@ -114,10 +102,12 @@ private:
 	pthread_t m_handle = {};
 #else
 	HANDLE m_handle = 0; ///< The user date to pass to the callback.
-	Error m_returnCode = Error::NONE;
+	Error m_returnCode = Error::kNone;
 #endif
 	void* m_userData = nullptr; ///< The user date to pass to the callback.
-	Array<char, 32> m_name; ///< The name of the thread.
+	Array<Char, kThreadNameMaxLength + 1> m_name = {}; ///< The name of the thread.
+	static thread_local Array<Char, kThreadNameMaxLength + 1> m_nameTls;
+	static constexpr const Char* kDefaultThreadName = "AnKiUnnamed"; ///< the name of an unnamed thread.
 	ThreadCallback m_callback = nullptr; ///< The callback.
 
 #if ANKI_EXTRA_CHECKS
@@ -358,7 +348,7 @@ public:
 #if ANKI_POSIX
 		pthread_cond_wait(&m_handle, &mtx.m_handle);
 #else
-		SleepConditionVariableCS(&m_handle, &mtx.m_handle, MAX_U32);
+		SleepConditionVariableCS(&m_handle, &mtx.m_handle, kMaxU32);
 #endif
 	}
 
@@ -403,13 +393,13 @@ public:
 	/// Unlock.
 	void unlock()
 	{
-		m_lock.store(false, AtomicMemoryOrder::RELEASE);
+		m_lock.store(false, AtomicMemoryOrder::kRelease);
 	}
 
 	/// Try to lock.
 	Bool tryLock()
 	{
-		return !m_lock.load(AtomicMemoryOrder::RELAXED) && !m_lock.exchange(true, AtomicMemoryOrder::ACQUIRE);
+		return !m_lock.load(AtomicMemoryOrder::kRelaxed) && !m_lock.exchange(true, AtomicMemoryOrder::kAcquire);
 	}
 
 private:
@@ -470,7 +460,7 @@ public:
 		{
 			while(gen == m_generation)
 			{
-				SleepConditionVariableCS(&m_cvar, &m_mtx, MAX_U32);
+				SleepConditionVariableCS(&m_cvar, &m_mtx, kMaxU32);
 			}
 		}
 

@@ -32,23 +32,23 @@ class GrUpscalerInitInfo;
 /// @addtogroup graphics
 /// @{
 
-#define ANKI_GR_LOGI(...) ANKI_LOG("GR  ", NORMAL, __VA_ARGS__)
-#define ANKI_GR_LOGE(...) ANKI_LOG("GR  ", ERROR, __VA_ARGS__)
-#define ANKI_GR_LOGW(...) ANKI_LOG("GR  ", WARNING, __VA_ARGS__)
-#define ANKI_GR_LOGF(...) ANKI_LOG("GR  ", FATAL, __VA_ARGS__)
+#define ANKI_GR_LOGI(...) ANKI_LOG("GR", kNormal, __VA_ARGS__)
+#define ANKI_GR_LOGE(...) ANKI_LOG("GR", kError, __VA_ARGS__)
+#define ANKI_GR_LOGW(...) ANKI_LOG("GR", kWarning, __VA_ARGS__)
+#define ANKI_GR_LOGF(...) ANKI_LOG("GR", kFatal, __VA_ARGS__)
 
 // Some constants
-constexpr U32 MAX_VERTEX_ATTRIBUTES = 8;
-constexpr U32 MAX_COLOR_ATTACHMENTS = 4;
-constexpr U32 MAX_DESCRIPTOR_SETS = 3; ///< Groups that can be bound at the same time.
-constexpr U32 MAX_BINDINGS_PER_DESCRIPTOR_SET = 32;
-constexpr U32 MAX_FRAMES_IN_FLIGHT = 3; ///< Triple buffering.
-constexpr U32 MAX_GR_OBJECT_NAME_LENGTH = 31;
-constexpr U32 MAX_BINDLESS_TEXTURES = 512;
-constexpr U32 MAX_BINDLESS_READONLY_TEXTURE_BUFFERS = 512;
+constexpr U32 kMaxVertexAttributes = 8;
+constexpr U32 kMaxColorRenderTargets = 4;
+constexpr U32 kMaxDescriptorSets = 3; ///< Groups that can be bound at the same time.
+constexpr U32 kMaxBindingsPerDescriptorSet = 32;
+constexpr U32 kMaxFramesInFlight = 3; ///< Triple buffering.
+constexpr U32 kMaxGrObjectNameLength = 31;
+constexpr U32 kMaxBindlessTextures = 512;
+constexpr U32 kMaxBindlessReadonlyTextureBuffers = 512;
 
 /// The number of commands in a command buffer that make it a small batch command buffer.
-constexpr U32 COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS = 100;
+constexpr U32 kCommandBufferSmallBatchMaxCommands = 100;
 
 /// Smart pointer for resources.
 template<typename T>
@@ -103,17 +103,17 @@ public:
 /// Knowing the vendor allows some optimizations
 enum class GpuVendor : U8
 {
-	UNKNOWN,
-	ARM,
-	NVIDIA,
-	AMD,
-	INTEL,
-	QUALCOMM,
-	COUNT
+	kUnknown,
+	kArm,
+	kNvidia,
+	kAMD,
+	kIntel,
+	kQualcomm,
+	kCount
 };
 
-inline constexpr Array<CString, U(GpuVendor::COUNT)> GPU_VENDOR_STR = {"UNKNOWN", "ARM",   "NVIDIA",
-																	   "AMD",     "INTEL", "QUALCOMM"};
+inline constexpr Array<CString, U(GpuVendor::kCount)> kGPUVendorStrings = {"unknown", "ARM",   "nVidia",
+																		   "AMD",     "Intel", "Qualcomm"};
 
 /// Device capabilities.
 ANKI_BEGIN_PACKED_STRUCT
@@ -121,19 +121,19 @@ class GpuDeviceCapabilities
 {
 public:
 	/// The alignment of offsets when bounding uniform buffers.
-	U32 m_uniformBufferBindOffsetAlignment = MAX_U32;
+	U32 m_uniformBufferBindOffsetAlignment = kMaxU32;
 
 	/// The max visible range of uniform buffers inside the shaders.
 	PtrSize m_uniformBufferMaxRange = 0;
 
 	/// The alignment of offsets when bounding storage buffers.
-	U32 m_storageBufferBindOffsetAlignment = MAX_U32;
+	U32 m_storageBufferBindOffsetAlignment = kMaxU32;
 
 	/// The max visible range of storage buffers inside the shaders.
 	PtrSize m_storageBufferMaxRange = 0;
 
 	/// The alignment of offsets when bounding texture buffers.
-	U32 m_textureBufferBindOffsetAlignment = MAX_U32;
+	U32 m_textureBufferBindOffsetAlignment = kMaxU32;
 
 	/// The max visible range of texture buffers inside the shaders.
 	PtrSize m_textureBufferMaxRange = 0;
@@ -145,7 +145,7 @@ public:
 	PtrSize m_computeSharedMemorySize = 16_KB;
 
 	/// Each SBT record should be a multiple of this.
-	U32 m_sbtRecordAlignment = MAX_U32;
+	U32 m_sbtRecordAlignment = kMaxU32;
 
 	/// The size of a shader group handle that will be placed inside an SBT record.
 	U32 m_shaderGroupHandleSize = 0;
@@ -160,7 +160,7 @@ public:
 	U32 m_minShadingRateImageTexelSize = 0;
 
 	/// GPU vendor.
-	GpuVendor m_gpuVendor = GpuVendor::UNKNOWN;
+	GpuVendor m_gpuVendor = GpuVendor::kUnknown;
 
 	/// Descrete or integrated GPU.
 	Bool m_discreteGpu = false;
@@ -234,128 +234,128 @@ public:
 		U32 len;
 		if(name && (len = name.getLength()) > 0)
 		{
-			len = min(len, MAX_GR_OBJECT_NAME_LENGTH);
+			len = min(len, kMaxGrObjectNameLength);
 			memcpy(&m_name[0], &name[0], len);
 		}
 	}
 
 private:
-	Array<char, MAX_GR_OBJECT_NAME_LENGTH + 1> m_name;
+	Array<char, kMaxGrObjectNameLength + 1> m_name;
 };
 
 enum class ColorBit : U8
 {
-	NONE = 0,
-	RED = 1 << 0,
-	GREEN = 1 << 1,
-	BLUE = 1 << 2,
-	ALPHA = 1 << 3,
-	ALL = RED | GREEN | BLUE | ALPHA
+	kNone = 0,
+	kRed = 1 << 0,
+	kGreen = 1 << 1,
+	kBlue = 1 << 2,
+	kAlpha = 1 << 3,
+	kAll = kRed | kGreen | kBlue | kAlpha
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ColorBit)
 
 enum class PrimitiveTopology : U8
 {
-	POINTS,
-	LINES,
-	LINE_STRIP,
-	TRIANGLES,
-	TRIANGLE_STRIP,
-	PATCHES
+	kPoints,
+	kLines,
+	kLineStip,
+	kTriangles,
+	kTriangleStrip,
+	kPatchs
 };
 
 enum class FillMode : U8
 {
-	POINTS,
-	WIREFRAME,
-	SOLID,
-	COUNT
+	kPoints,
+	kWireframe,
+	kSolid,
+	kCount
 };
 
 enum class FaceSelectionBit : U8
 {
-	NONE = 0,
-	FRONT = 1 << 0,
-	BACK = 1 << 1,
-	FRONT_AND_BACK = FRONT | BACK
+	kNone = 0,
+	kFront = 1 << 0,
+	kBack = 1 << 1,
+	kFrontAndBack = kFront | kBack
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FaceSelectionBit)
 
 enum class CompareOperation : U8
 {
-	ALWAYS,
-	LESS,
-	EQUAL,
-	LESS_EQUAL,
-	GREATER,
-	GREATER_EQUAL,
-	NOT_EQUAL,
-	NEVER,
-	COUNT
+	kAlways,
+	kLess,
+	kEqual,
+	kLessEqual,
+	kGreater,
+	kGreaterEqual,
+	kNotEqual,
+	kNever,
+	kCount
 };
 
 enum class StencilOperation : U8
 {
-	KEEP,
-	ZERO,
-	REPLACE,
-	INCREMENT_AND_CLAMP,
-	DECREMENT_AND_CLAMP,
-	INVERT,
-	INCREMENT_AND_WRAP,
-	DECREMENT_AND_WRAP,
-	COUNT
+	kKeep,
+	kZero,
+	kReplace,
+	kIncrementAndClamp,
+	kDecrementAndClamp,
+	kInvert,
+	kIncrementAndWrap,
+	kDecrementAndWrap,
+	kCount
 };
 
 enum class BlendFactor : U8
 {
-	ZERO,
-	ONE,
-	SRC_COLOR,
-	ONE_MINUS_SRC_COLOR,
-	DST_COLOR,
-	ONE_MINUS_DST_COLOR,
-	SRC_ALPHA,
-	ONE_MINUS_SRC_ALPHA,
-	DST_ALPHA,
-	ONE_MINUS_DST_ALPHA,
-	CONSTANT_COLOR,
-	ONE_MINUS_CONSTANT_COLOR,
-	CONSTANT_ALPHA,
-	ONE_MINUS_CONSTANT_ALPHA,
-	SRC_ALPHA_SATURATE,
-	SRC1_COLOR,
-	ONE_MINUS_SRC1_COLOR,
-	SRC1_ALPHA,
-	ONE_MINUS_SRC1_ALPHA,
-	COUNT
+	kZero,
+	kOne,
+	kSrcColor,
+	kOneMinusSrcColor,
+	kDstColor,
+	kOneMinusDstColor,
+	kSrcAlpha,
+	kOneMinusSrcAlpha,
+	kDstAlpha,
+	kOneMinusDstAlpha,
+	kConstantColor,
+	kOneMinusConstantColor,
+	kConstantAlpha,
+	kOneMinusConstantAlpha,
+	kSrcAlphaSaturate,
+	kSrc1Color,
+	kOneMinusSrc1Color,
+	kSrc1Alpha,
+	kOneMinusSrc1Alpha,
+	kCount
 };
 
 enum class BlendOperation : U8
 {
-	ADD,
-	SUBTRACT,
-	REVERSE_SUBTRACT,
-	MIN,
-	MAX,
-	COUNT
+	kAdd,
+	kSubtract,
+	kReverseSubtract,
+	kMin,
+	kMax,
+	kCount
 };
 
 enum class VertexStepRate : U8
 {
-	VERTEX,
-	INSTANCE,
-	DRAW,
-	COUNT
+	kVertex,
+	kInstance,
+	kDraw,
+	kCount
 };
 
 /// A way to distinguish the aspect of a depth stencil texture.
 enum class DepthStencilAspectBit : U8
 {
-	NONE = 0,
-	DEPTH = 1 << 0,
-	STENCIL = 1 << 1,
-	DEPTH_STENCIL = DEPTH | STENCIL
+	kNone = 0,
+	kDepth = 1 << 0,
+	kStencil = 1 << 1,
+	kDepthStencil = kDepth | kStencil
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DepthStencilAspectBit)
 
@@ -363,11 +363,11 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DepthStencilAspectBit)
 /// WARNING: Keep it the same as vulkan (one conversion less).
 enum class Format : U32
 {
-	NONE = 0,
+	kNone = 0,
 
 #define ANKI_FORMAT_DEF(type, id, componentCount, texelSize, blockWidth, blockHeight, blockSize, shaderType, \
 						depthStencil) \
-	type = id,
+	k##type = id,
 #include <AnKi/Gr/Format.defs.h>
 #undef ANKI_FORMAT_DEF
 };
@@ -388,17 +388,17 @@ public:
 
 	Bool isDepthStencil() const
 	{
-		return m_depthStencil != DepthStencilAspectBit::NONE;
+		return m_depthStencil != DepthStencilAspectBit::kNone;
 	}
 
 	Bool isDepth() const
 	{
-		return !!(m_depthStencil & DepthStencilAspectBit::DEPTH);
+		return !!(m_depthStencil & DepthStencilAspectBit::kDepth);
 	}
 
 	Bool isStencil() const
 	{
-		return !!(m_depthStencil & DepthStencilAspectBit::STENCIL);
+		return !!(m_depthStencil & DepthStencilAspectBit::kStencil);
 	}
 
 	Bool isCompressed() const
@@ -419,173 +419,167 @@ ANKI_PURE PtrSize computeVolumeSize(U32 width, U32 height, U32 depth, Format fmt
 /// Texture type.
 enum class TextureType : U8
 {
-	_1D,
-	_2D,
-	_3D,
-	_2D_ARRAY,
-	CUBE,
-	CUBE_ARRAY,
-	COUNT
+	k1D,
+	k2D,
+	k3D,
+	k2DArray,
+	kCube,
+	kCubeArray,
+	kCount
 };
 
 inline Bool textureTypeIsCube(const TextureType t)
 {
-	return t == TextureType::CUBE || t == TextureType::CUBE_ARRAY;
+	return t == TextureType::kCube || t == TextureType::kCubeArray;
 }
 
 /// Texture usage hints. They are very important.
 enum class TextureUsageBit : U32
 {
-	NONE = 0,
+	kNone = 0,
 
-	SAMPLED_GEOMETRY = 1 << 0,
-	SAMPLED_FRAGMENT = 1 << 1,
-	SAMPLED_COMPUTE = 1 << 2,
-	SAMPLED_TRACE_RAYS = 1 << 3,
+	kSampledGeometry = 1 << 0,
+	kSampledFragment = 1 << 1,
+	kSampledCompute = 1 << 2,
+	kSampledTraceRays = 1 << 3,
 
-	IMAGE_GEOMETRY_READ = 1 << 4,
-	IMAGE_GEOMETRY_WRITE = 1 << 5,
-	IMAGE_FRAGMENT_READ = 1 << 6,
-	IMAGE_FRAGMENT_WRITE = 1 << 7,
-	IMAGE_COMPUTE_READ = 1 << 8,
-	IMAGE_COMPUTE_WRITE = 1 << 9,
-	IMAGE_TRACE_RAYS_READ = 1 << 10,
-	IMAGE_TRACE_RAYS_WRITE = 1 << 11,
+	kImageGeometryRead = 1 << 4,
+	kImageGeometryWrite = 1 << 5,
+	kImageFragmentRead = 1 << 6,
+	kImageFragmentWrite = 1 << 7,
+	kImageComputeRead = 1 << 8,
+	kImageComputeWrite = 1 << 9,
+	kImageTraceRaysRead = 1 << 10,
+	kImageTraceRaysWrite = 1 << 11,
 
-	FRAMEBUFFER_ATTACHMENT_READ = 1 << 12,
-	FRAMEBUFFER_ATTACHMENT_WRITE = 1 << 13,
-	FRAMEBUFFER_SHADING_RATE = 1 << 14,
+	kFramebufferRead = 1 << 12,
+	kFramebufferWrite = 1 << 13,
+	kFramebufferShadingRate = 1 << 14,
 
-	TRANSFER_DESTINATION = 1 << 15,
-	GENERATE_MIPMAPS = 1 << 16,
+	kTransferDestination = 1 << 15,
+	kGenerateMipmaps = 1 << 16,
 
-	PRESENT = 1 << 17,
+	kPresent = 1 << 17,
 
 	// Derived
-	ALL_SAMPLED = SAMPLED_GEOMETRY | SAMPLED_FRAGMENT | SAMPLED_COMPUTE | SAMPLED_TRACE_RAYS,
-	ALL_IMAGE = IMAGE_GEOMETRY_READ | IMAGE_GEOMETRY_WRITE | IMAGE_FRAGMENT_READ | IMAGE_FRAGMENT_WRITE
-				| IMAGE_COMPUTE_READ | IMAGE_COMPUTE_WRITE | IMAGE_TRACE_RAYS_READ | IMAGE_TRACE_RAYS_WRITE,
-	ALL_FRAMEBUFFER_ATTACHMENT = FRAMEBUFFER_ATTACHMENT_READ | FRAMEBUFFER_ATTACHMENT_WRITE,
+	kAllSampled = kSampledGeometry | kSampledFragment | kSampledCompute | kSampledTraceRays,
+	kAllImage = kImageGeometryRead | kImageGeometryWrite | kImageFragmentRead | kImageFragmentWrite | kImageComputeRead
+				| kImageComputeWrite | kImageTraceRaysRead | kImageTraceRaysWrite,
+	kAllFramebuffer = kFramebufferRead | kFramebufferWrite,
 
-	ALL_GRAPHICS = SAMPLED_GEOMETRY | SAMPLED_FRAGMENT | IMAGE_GEOMETRY_READ | IMAGE_GEOMETRY_WRITE
-				   | IMAGE_FRAGMENT_READ | IMAGE_FRAGMENT_WRITE | FRAMEBUFFER_ATTACHMENT_READ
-				   | FRAMEBUFFER_ATTACHMENT_WRITE | FRAMEBUFFER_SHADING_RATE,
-	ALL_COMPUTE = SAMPLED_COMPUTE | IMAGE_COMPUTE_READ | IMAGE_COMPUTE_WRITE,
-	ALL_TRANSFER = TRANSFER_DESTINATION | GENERATE_MIPMAPS,
+	kAllGraphics = kSampledGeometry | kSampledFragment | kImageGeometryRead | kImageGeometryWrite | kImageFragmentRead
+				   | kImageFragmentWrite | kFramebufferRead | kFramebufferWrite | kFramebufferShadingRate,
+	kAllCompute = kSampledCompute | kImageComputeRead | kImageComputeWrite,
+	kAllTransfer = kTransferDestination | kGenerateMipmaps,
 
-	ALL_READ = ALL_SAMPLED | IMAGE_GEOMETRY_READ | IMAGE_FRAGMENT_READ | IMAGE_COMPUTE_READ | IMAGE_TRACE_RAYS_READ
-			   | FRAMEBUFFER_ATTACHMENT_READ | FRAMEBUFFER_SHADING_RATE | PRESENT | GENERATE_MIPMAPS,
-	ALL_WRITE = IMAGE_GEOMETRY_WRITE | IMAGE_FRAGMENT_WRITE | IMAGE_COMPUTE_WRITE | IMAGE_TRACE_RAYS_WRITE
-				| FRAMEBUFFER_ATTACHMENT_WRITE | TRANSFER_DESTINATION | GENERATE_MIPMAPS,
-
-	/// Make GR upscaling usage equal to ALL_IMAGE to force GENERAL layout because who knows.
-	ALL_GR_UPSCALING = ALL_IMAGE,
-	ALL_GR_UPSCALING_READ = ALL_GR_UPSCALING & ALL_READ,
-	ALL_GR_UPSCALING_WRITE = ALL_GR_UPSCALING & ALL_WRITE,
+	kAllRead = kAllSampled | kImageGeometryRead | kImageFragmentRead | kImageComputeRead | kImageTraceRaysRead
+			   | kFramebufferRead | kFramebufferShadingRate | kPresent | kGenerateMipmaps,
+	kAllWrite = kImageGeometryWrite | kImageFragmentWrite | kImageComputeWrite | kImageTraceRaysWrite
+				| kFramebufferWrite | kTransferDestination | kGenerateMipmaps,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(TextureUsageBit)
 
 enum class SamplingFilter : U8
 {
-	NEAREST,
-	LINEAR,
-	MIN, ///< It calculates the min of a 2x2 quad. Only if GpuDeviceCapabilities::m_samplingFilterMinMax is supported.
-	MAX, ///< It calculates the max of a 2x2 quad. Only if GpuDeviceCapabilities::m_samplingFilterMinMax is supported.
-	BASE ///< Only for mipmaps.
+	kNearest,
+	kLinear,
+	kMin, ///< It calculates the min of a 2x2 quad. Only if GpuDeviceCapabilities::m_samplingFilterMinMax is supported.
+	kMax, ///< It calculates the max of a 2x2 quad. Only if GpuDeviceCapabilities::m_samplingFilterMinMax is supported.
+	kBase ///< Only for mipmaps.
 };
 
 enum class SamplingAddressing : U8
 {
-	CLAMP,
-	REPEAT,
-	BLACK,
-	WHITE,
+	kClamp,
+	kRepeat,
+	kBlack,
+	kWhite,
 
-	COUNT,
-	FIRST = 0,
-	LAST = COUNT - 1,
+	kCount,
+	kFirst = 0,
+	kLast = kCount - 1,
 };
 
 enum class ShaderType : U16
 {
-	VERTEX,
-	TESSELLATION_CONTROL,
-	TESSELLATION_EVALUATION,
-	GEOMETRY,
-	FRAGMENT,
-	COMPUTE,
-	RAY_GEN,
-	ANY_HIT,
-	CLOSEST_HIT,
-	MISS,
-	INTERSECTION,
-	CALLABLE,
+	kVertex,
+	kTessellationControl,
+	kTessellationEvaluation,
+	kGeometry,
+	kFragment,
+	kCompute,
+	kRayGen,
+	kAnyHit,
+	kClosestHit,
+	kMiss,
+	kIntersection,
+	kCallable,
 
-	COUNT,
-	FIRST = 0,
-	LAST = COUNT - 1,
-	FIRST_GRAPHICS = VERTEX,
-	LAST_GRAPHICS = FRAGMENT,
-	FIRST_RAY_TRACING = RAY_GEN,
-	LAST_RAY_TRACING = CALLABLE,
+	kCount,
+	kFirst = 0,
+	kLast = kCount - 1,
+	kFirstGraphics = kVertex,
+	kLastGraphics = kFragment,
+	kFirstRayTracing = kRayGen,
+	kLastRayTracing = kCallable,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderType)
 
 enum class ShaderTypeBit : U16
 {
-	VERTEX = 1 << 0,
-	TESSELLATION_CONTROL = 1 << 1,
-	TESSELLATION_EVALUATION = 1 << 2,
-	GEOMETRY = 1 << 3,
-	FRAGMENT = 1 << 4,
-	COMPUTE = 1 << 5,
-	RAY_GEN = 1 << 6,
-	ANY_HIT = 1 << 7,
-	CLOSEST_HIT = 1 << 8,
-	MISS = 1 << 9,
-	INTERSECTION = 1 << 10,
-	CALLABLE = 1 << 11,
+	kVertex = 1 << 0,
+	kTessellationControl = 1 << 1,
+	kTessellationEvaluation = 1 << 2,
+	kGeometry = 1 << 3,
+	kFragment = 1 << 4,
+	kCompute = 1 << 5,
+	kRayGen = 1 << 6,
+	kAnyHit = 1 << 7,
+	kClosestHit = 1 << 8,
+	kMiss = 1 << 9,
+	kIntersection = 1 << 10,
+	kCallable = 1 << 11,
 
-	NONE = 0,
-	ALL_GRAPHICS = VERTEX | TESSELLATION_CONTROL | TESSELLATION_EVALUATION | GEOMETRY | FRAGMENT,
-	ALL_RAY_TRACING = RAY_GEN | ANY_HIT | CLOSEST_HIT | MISS | INTERSECTION | CALLABLE,
-	ALL = ALL_GRAPHICS | COMPUTE | ALL_RAY_TRACING,
+	kNone = 0,
+	kAllGraphics = kVertex | kTessellationControl | kTessellationEvaluation | kGeometry | kFragment,
+	kAllRayTracing = kRayGen | kAnyHit | kClosestHit | kMiss | kIntersection | kCallable,
+	kAll = kAllGraphics | kCompute | kAllRayTracing,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderTypeBit)
 
 enum class ShaderVariableDataType : U8
 {
-	NONE,
+	kNone,
 
-#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount, isIntagralType) capital,
-#define ANKI_SVDT_MACRO_OPAQUE(capital, type) capital,
+#define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) k##type,
+#define ANKI_SVDT_MACRO_OPAQUE(constant, type) k##constant,
 #include <AnKi/Gr/ShaderVariableDataType.defs.h>
 #undef ANKI_SVDT_MACRO
 #undef ANKI_SVDT_MACRO_OPAQUE
 
 	// Derived
-	COUNT,
+	kCount,
 
-	NUMERICS_FIRST = I32,
-	NUMERICS_LAST = MAT4,
+	kNumericsFirst = kI32,
+	kNumericsLast = kMat4,
 
-	NUMERIC_1_COMPONENT_FIRST = I32,
-	NUMERIC_1_COMPONENT_LAST = F32,
-	NUMERIC_2_COMPONENT_FIRST = IVEC2,
-	NUMERIC_2_COMPONENT_LAST = VEC2,
-	NUMERIC_3_COMPONENT_FIRST = IVEC3,
-	NUMERIC_3_COMPONENT_LAST = VEC3,
-	NUMERIC_4_COMPONENT_FIRST = IVEC4,
-	NUMERIC_4_COMPONENT_LAST = VEC4,
+	kNumeric1ComponentFirst = kI32,
+	kNumeric1ComponentLast = kF32,
+	kNumeric2ComponentFirst = kIVec2,
+	kNumeric2ComponentLast = kVec2,
+	kNumeric3ComponentFirst = kIVec3,
+	kNumeric3ComponentLast = kVec3,
+	kNumeric4ComponentFirst = kIVec4,
+	kNumeric4ComponentLast = kVec4,
 
-	MATRIX_FIRST = MAT3,
-	MATRIX_LAST = MAT4,
+	kMatrixFirst = kMat3,
+	kMatrixLast = kMat4,
 
-	TEXTURE_FIRST = TEXTURE_1D,
-	TEXTURE_LAST = TEXTURE_CUBE_ARRAY,
+	kTextureFirst = kTexture1D,
+	kTextureLast = kTextureCubeArray,
 
-	IMAGE_FIRST = IMAGE_1D,
-	IMAGE_LAST = IMAGE_CUBE_ARRAY,
+	kImageFirst = kImage1D,
+	kImageLast = kImageCubeArray,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderVariableDataType)
 
@@ -603,182 +597,182 @@ ANKI_PURE const ShaderVariableDataTypeInfo& getShaderVariableDataTypeInfo(Shader
 /// Occlusion query result bit.
 enum class OcclusionQueryResultBit : U8
 {
-	NOT_AVAILABLE = 1 << 0,
-	VISIBLE = 1 << 1,
-	NOT_VISIBLE = 1 << 2
+	kNotAvailable = 1 << 0,
+	kVisible = 1 << 1,
+	kNotVisible = 1 << 2
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(OcclusionQueryResultBit)
 
 /// Occlusion query result.
 enum class OcclusionQueryResult : U8
 {
-	NOT_AVAILABLE,
-	VISIBLE,
-	NOT_VISIBLE
+	kNotAvailable,
+	kVisible,
+	kNotVisible
 };
 
 /// Timestamp query result.
 enum class TimestampQueryResult : U8
 {
-	NOT_AVAILABLE,
-	AVAILABLE
+	kNotAvailable,
+	kAvailable
 };
 
 /// Attachment load operation.
 enum class AttachmentLoadOperation : U8
 {
-	LOAD,
-	CLEAR,
-	DONT_CARE
+	kLoad,
+	kClear,
+	kDontCare
 };
 
 /// Attachment store operation.
 enum class AttachmentStoreOperation : U8
 {
-	STORE,
-	DONT_CARE
+	kStore,
+	kDontCare
 };
 
 /// Buffer usage modes.
-/// The graphics work consists of the following pipes: INDIRECT, GEOMETRY (all programmable and fixed function geometry
-/// stages) and finaly FRAGMENT.
-/// The compute from the consists of the following: INDIRECT and COMPUTE.
-/// The trace rays from the: INDIRECT and TRACE_RAYS
+/// The graphics work consists of the following pipes: indirect, geometry (all programmable and fixed function geometry
+/// stages) and finaly fragment.
+/// The compute from the consists of the following: indirect and compute.
+/// The trace rays from the: indirect and trace_rays
 /// !!WARNING!! If you change this remember to change PrivateBufferUsageBit.
 enum class BufferUsageBit : U64
 {
-	NONE = 0,
+	kNone = 0,
 
-	UNIFORM_GEOMETRY = 1ull << 0ull,
-	UNIFORM_FRAGMENT = 1ull << 1ull,
-	UNIFORM_COMPUTE = 1ull << 2ull,
-	UNIFORM_TRACE_RAYS = 1ull << 3ull,
+	kUniformGeometry = 1ull << 0ull,
+	kUniformFragment = 1ull << 1ull,
+	kUniformCompute = 1ull << 2ull,
+	kUniformTraceRays = 1ull << 3ull,
 
-	STORAGE_GEOMETRY_READ = 1ull << 4ull,
-	STORAGE_GEOMETRY_WRITE = 1ull << 5ull,
-	STORAGE_FRAGMENT_READ = 1ull << 6ull,
-	STORAGE_FRAGMENT_WRITE = 1ull << 7ull,
-	STORAGE_COMPUTE_READ = 1ull << 8ull,
-	STORAGE_COMPUTE_WRITE = 1ull << 9ull,
-	STORAGE_TRACE_RAYS_READ = 1ull << 10ull,
-	STORAGE_TRACE_RAYS_WRITE = 1ull << 11ull,
+	kStorageGeometryRead = 1ull << 4ull,
+	kStorageGeometryWrite = 1ull << 5ull,
+	kStorageFragmentRead = 1ull << 6ull,
+	kStorageFragmentWrite = 1ull << 7ull,
+	kStorageComputeRead = 1ull << 8ull,
+	kStorageComputeWrite = 1ull << 9ull,
+	kStorageTraceRaysRead = 1ull << 10ull,
+	kStorageTraceRaysWrite = 1ull << 11ull,
 
-	TEXTURE_GEOMETRY_READ = 1ull << 12ull,
-	TEXTURE_GEOMETRY_WRITE = 1ull << 13ull,
-	TEXTURE_FRAGMENT_READ = 1ull << 14ull,
-	TEXTURE_FRAGMENT_WRITE = 1ull << 15ull,
-	TEXTURE_COMPUTE_READ = 1ull << 16ull,
-	TEXTURE_COMPUTE_WRITE = 1ull << 17ull,
-	TEXTURE_TRACE_RAYS_READ = 1ull << 18ull,
-	TEXTURE_TRACE_RAYS_WRITE = 1ull << 19ull,
+	kTextureGeometryRead = 1ull << 12ull,
+	kTextureGeometryWrite = 1ull << 13ull,
+	kTextureFragmentRead = 1ull << 14ull,
+	kTextureFragmentWrite = 1ull << 15ull,
+	kTextureComputeRead = 1ull << 16ull,
+	kTextureComputeWrite = 1ull << 17ull,
+	kTextureTraceRaysRead = 1ull << 18ull,
+	kTextureTraceRaysWrite = 1ull << 19ull,
 
-	INDEX = 1ull << 20ull,
-	VERTEX = 1ull << 21ull,
+	kIndex = 1ull << 20ull,
+	kVertex = 1ull << 21ull,
 
-	INDIRECT_COMPUTE = 1ull << 22ll,
-	INDIRECT_DRAW = 1ull << 23ull,
-	INDIRECT_TRACE_RAYS = 1ull << 24ull,
+	kIndirectCompute = 1ull << 22ll,
+	kIndirectDraw = 1ull << 23ull,
+	kIndirectTraceRays = 1ull << 24ull,
 
-	TRANSFER_SOURCE = 1ull << 25ull,
-	TRANSFER_DESTINATION = 1ull << 26ull,
+	kTransferSource = 1ull << 25ull,
+	kTransferDestination = 1ull << 26ull,
 
-	ACCELERATION_STRUCTURE_BUILD = 1ull << 27ull, ///< Will be used as a position or index buffer in a BLAS build.
-	SBT = 1ull << 28ull, ///< Will be used as SBT in a traceRays() command.
+	kAccelerationStructureBuild = 1ull << 27ull, ///< Will be used as a position or index buffer in a BLAS build.
+	kSBT = 1ull << 28ull, ///< Will be used as SBT in a traceRays() command.
 
 	// Derived
-	ALL_UNIFORM = UNIFORM_GEOMETRY | UNIFORM_FRAGMENT | UNIFORM_COMPUTE | UNIFORM_TRACE_RAYS,
-	ALL_STORAGE = STORAGE_GEOMETRY_READ | STORAGE_GEOMETRY_WRITE | STORAGE_FRAGMENT_READ | STORAGE_FRAGMENT_WRITE
-				  | STORAGE_COMPUTE_READ | STORAGE_COMPUTE_WRITE | STORAGE_TRACE_RAYS_READ | STORAGE_TRACE_RAYS_WRITE,
-	ALL_TEXTURE = TEXTURE_GEOMETRY_READ | TEXTURE_GEOMETRY_WRITE | TEXTURE_FRAGMENT_READ | TEXTURE_FRAGMENT_WRITE
-				  | TEXTURE_COMPUTE_READ | TEXTURE_COMPUTE_WRITE | TEXTURE_TRACE_RAYS_READ | TEXTURE_TRACE_RAYS_WRITE,
-	ALL_INDIRECT = INDIRECT_COMPUTE | INDIRECT_DRAW | INDIRECT_TRACE_RAYS,
-	ALL_TRANSFER = TRANSFER_SOURCE | TRANSFER_DESTINATION,
+	kAllUniform = kUniformGeometry | kUniformFragment | kUniformCompute | kUniformTraceRays,
+	kAllStorage = kStorageGeometryRead | kStorageGeometryWrite | kStorageFragmentRead | kStorageFragmentWrite
+				  | kStorageComputeRead | kStorageComputeWrite | kStorageTraceRaysRead | kStorageTraceRaysWrite,
+	kAllTexture = kTextureGeometryRead | kTextureGeometryWrite | kTextureFragmentRead | kTextureFragmentWrite
+				  | kTextureComputeRead | kTextureComputeWrite | kTextureTraceRaysRead | kTextureTraceRaysWrite,
+	kAllIndirect = kIndirectCompute | kIndirectDraw | kIndirectTraceRays,
+	kAllTransfer = kTransferSource | kTransferDestination,
 
-	ALL_GEOMETRY = UNIFORM_GEOMETRY | STORAGE_GEOMETRY_READ | STORAGE_GEOMETRY_WRITE | TEXTURE_GEOMETRY_READ
-				   | TEXTURE_GEOMETRY_WRITE | INDEX | VERTEX,
-	ALL_FRAGMENT = UNIFORM_FRAGMENT | STORAGE_FRAGMENT_READ | STORAGE_FRAGMENT_WRITE | TEXTURE_FRAGMENT_READ
-				   | TEXTURE_FRAGMENT_WRITE,
-	ALL_GRAPHICS = ALL_GEOMETRY | ALL_FRAGMENT | INDIRECT_DRAW,
-	ALL_COMPUTE = UNIFORM_COMPUTE | STORAGE_COMPUTE_READ | STORAGE_COMPUTE_WRITE | TEXTURE_COMPUTE_READ
-				  | TEXTURE_COMPUTE_WRITE | INDIRECT_COMPUTE,
-	ALL_TRACE_RAYS = UNIFORM_TRACE_RAYS | STORAGE_TRACE_RAYS_READ | STORAGE_TRACE_RAYS_WRITE | TEXTURE_TRACE_RAYS_READ
-					 | TEXTURE_TRACE_RAYS_WRITE | INDIRECT_TRACE_RAYS | SBT,
+	kAllGeometry = kUniformGeometry | kStorageGeometryRead | kStorageGeometryWrite | kTextureGeometryRead
+				   | kTextureGeometryWrite | kIndex | kVertex,
+	kAllFragment =
+		kUniformFragment | kStorageFragmentRead | kStorageFragmentWrite | kTextureFragmentRead | kTextureFragmentWrite,
+	kAllGraphics = kAllGeometry | kAllFragment | kIndirectDraw,
+	kAllCompute = kUniformCompute | kStorageComputeRead | kStorageComputeWrite | kTextureComputeRead
+				  | kTextureComputeWrite | kIndirectCompute,
+	kAllTraceRays = kUniformTraceRays | kStorageTraceRaysRead | kStorageTraceRaysWrite | kTextureTraceRaysRead
+					| kTextureTraceRaysWrite | kIndirectTraceRays | kSBT,
 
-	ALL_RAY_TRACING = ALL_TRACE_RAYS | ACCELERATION_STRUCTURE_BUILD,
-	ALL_READ = ALL_UNIFORM | STORAGE_GEOMETRY_READ | STORAGE_FRAGMENT_READ | STORAGE_COMPUTE_READ
-			   | STORAGE_TRACE_RAYS_READ | TEXTURE_GEOMETRY_READ | TEXTURE_FRAGMENT_READ | TEXTURE_COMPUTE_READ
-			   | TEXTURE_TRACE_RAYS_READ | INDEX | VERTEX | INDIRECT_COMPUTE | INDIRECT_DRAW | INDIRECT_TRACE_RAYS
-			   | TRANSFER_SOURCE | ACCELERATION_STRUCTURE_BUILD | SBT,
-	ALL_WRITE = STORAGE_GEOMETRY_WRITE | STORAGE_FRAGMENT_WRITE | STORAGE_COMPUTE_WRITE | STORAGE_TRACE_RAYS_WRITE
-				| TEXTURE_GEOMETRY_WRITE | TEXTURE_FRAGMENT_WRITE | TEXTURE_COMPUTE_WRITE | TEXTURE_TRACE_RAYS_WRITE
-				| TRANSFER_DESTINATION,
-	ALL = ALL_READ | ALL_WRITE,
+	kAllRayTracing = kAllTraceRays | kAccelerationStructureBuild,
+	kAllRead = kAllUniform | kStorageGeometryRead | kStorageFragmentRead | kStorageComputeRead | kStorageTraceRaysRead
+			   | kTextureGeometryRead | kTextureFragmentRead | kTextureComputeRead | kTextureTraceRaysRead | kIndex
+			   | kVertex | kIndirectCompute | kIndirectDraw | kIndirectTraceRays | kTransferSource
+			   | kAccelerationStructureBuild | kSBT,
+	kAllWrite = kStorageGeometryWrite | kStorageFragmentWrite | kStorageComputeWrite | kStorageTraceRaysWrite
+				| kTextureGeometryWrite | kTextureFragmentWrite | kTextureComputeWrite | kTextureTraceRaysWrite
+				| kTransferDestination,
+	kAll = kAllRead | kAllWrite,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferUsageBit)
 
 /// Buffer access when mapped.
 enum class BufferMapAccessBit : U8
 {
-	NONE = 0,
-	READ = 1 << 0,
-	WRITE = 1 << 1
+	kNone = 0,
+	kRead = 1 << 0,
+	kWrite = 1 << 1
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferMapAccessBit)
 
 /// Index buffer's index type.
 enum class IndexType : U8
 {
-	U16,
-	U32,
-	COUNT
+	kU16,
+	kU32,
+	kCount
 };
 
 /// Rasterization order.
 enum class RasterizationOrder : U8
 {
-	ORDERED,
-	RELAXED,
-	COUNT
+	kOrdered,
+	kRelaxed,
+	kCount
 };
 
 /// Acceleration structure type.
 enum class AccelerationStructureType : U8
 {
-	TOP_LEVEL,
-	BOTTOM_LEVEL,
-	COUNT
+	kTopLevel,
+	kBottomLevel,
+	kCount
 };
 
 enum class AccelerationStructureUsageBit : U8
 {
-	NONE = 0,
-	BUILD = 1 << 0,
-	ATTACH = 1 << 1, ///< Attached to a TLAS. Only for BLAS.
-	GEOMETRY_READ = 1 << 2,
-	FRAGMENT_READ = 1 << 3,
-	COMPUTE_READ = 1 << 4,
-	TRACE_RAYS_READ = 1 << 5,
+	kNone = 0,
+	kBuild = 1 << 0,
+	kAttach = 1 << 1, ///< Attached to a TLAS. Only for BLAS.
+	kGeometryRead = 1 << 2,
+	kFragmentRead = 1 << 3,
+	kComputeRead = 1 << 4,
+	kTraceRaysRead = 1 << 5,
 
 	// Derived
-	ALL_GRAPHICS = GEOMETRY_READ | FRAGMENT_READ,
-	ALL_READ = ATTACH | GEOMETRY_READ | FRAGMENT_READ | COMPUTE_READ | TRACE_RAYS_READ,
-	ALL_WRITE = BUILD
+	kAllGraphics = kGeometryRead | kFragmentRead,
+	kAllRead = kAttach | kGeometryRead | kFragmentRead | kComputeRead | kTraceRaysRead,
+	kAllWrite = kBuild
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(AccelerationStructureUsageBit)
 
 /// VRS rates.
 enum class VrsRate : U8
 {
-	_1x1, ///< Disable VRS. Always supported.
-	_2x1, ///< Always supported.
-	_1x2,
-	_2x2, ///< Always supported.
-	_4x2,
-	_2x4,
-	_4x4,
+	k1x1, ///< Disable VRS. Always supported.
+	k2x1, ///< Always supported.
+	k1x2,
+	k2x2, ///< Always supported.
+	k4x2,
+	k2x4,
+	k4x4,
 
-	COUNT,
-	FIRST = 0
+	kCount,
+	kFirst = 0
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VrsRate)
 
@@ -786,7 +780,7 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VrsRate)
 class DrawElementsIndirectInfo
 {
 public:
-	U32 m_count = MAX_U32;
+	U32 m_count = kMaxU32;
 	U32 m_instanceCount = 1;
 	U32 m_firstIndex = 0;
 	U32 m_baseVertex = 0;
@@ -821,7 +815,7 @@ public:
 class DrawArraysIndirectInfo
 {
 public:
-	U32 m_count = MAX_U32;
+	U32 m_count = kMaxU32;
 	U32 m_instanceCount = 1;
 	U32 m_first = 0;
 	U32 m_baseInstance = 0;
@@ -962,18 +956,19 @@ public:
 	U8 m_firstFace = 0;
 	U8 m_faceCount = 1;
 
-	DepthStencilAspectBit m_depthStencilAspect = DepthStencilAspectBit::NONE;
+	DepthStencilAspectBit m_depthStencilAspect = DepthStencilAspectBit::kNone;
 
 	U8 _m_padding[1] = {0};
 
-	TextureSubresourceInfo(DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE)
+	constexpr TextureSubresourceInfo(DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
 		: m_depthStencilAspect(aspect)
 	{
 	}
 
 	TextureSubresourceInfo(const TextureSubresourceInfo&) = default;
 
-	TextureSubresourceInfo(const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE)
+	constexpr TextureSubresourceInfo(const TextureSurfaceInfo& surf,
+									 DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
 		: m_firstMipmap(surf.m_level)
 		, m_mipmapCount(1)
 		, m_firstLayer(surf.m_layer)
@@ -984,7 +979,8 @@ public:
 	{
 	}
 
-	TextureSubresourceInfo(const TextureVolumeInfo& vol, DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE)
+	constexpr TextureSubresourceInfo(const TextureVolumeInfo& vol,
+									 DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
 		: m_firstMipmap(vol.m_level)
 		, m_mipmapCount(1)
 		, m_firstLayer(0)
@@ -1021,8 +1017,8 @@ public:
 			return (beginA < beginB) ? (beginA + countA > beginB) : (beginB + countB > beginA);
 		};
 
-		const Bool depthStencilOverlaps = (m_depthStencilAspect == DepthStencilAspectBit::NONE
-										   && b.m_depthStencilAspect == DepthStencilAspectBit::NONE)
+		const Bool depthStencilOverlaps = (m_depthStencilAspect == DepthStencilAspectBit::kNone
+										   && b.m_depthStencilAspect == DepthStencilAspectBit::kNone)
 										  || !!(m_depthStencilAspect & b.m_depthStencilAspect);
 
 		return overlaps(m_firstMipmap, m_mipmapCount, b.m_firstMipmap, b.m_mipmapCount)
@@ -1035,8 +1031,8 @@ class TextureBarrierInfo
 {
 public:
 	Texture* m_texture = nullptr;
-	TextureUsageBit m_previousUsage = TextureUsageBit::NONE;
-	TextureUsageBit m_nextUsage = TextureUsageBit::NONE;
+	TextureUsageBit m_previousUsage = TextureUsageBit::kNone;
+	TextureUsageBit m_nextUsage = TextureUsageBit::kNone;
 	TextureSubresourceInfo m_subresource;
 };
 
@@ -1044,8 +1040,8 @@ class BufferBarrierInfo
 {
 public:
 	Buffer* m_buffer = nullptr;
-	BufferUsageBit m_previousUsage = BufferUsageBit::NONE;
-	BufferUsageBit m_nextUsage = BufferUsageBit::NONE;
+	BufferUsageBit m_previousUsage = BufferUsageBit::kNone;
+	BufferUsageBit m_nextUsage = BufferUsageBit::kNone;
 	PtrSize m_offset = 0;
 	PtrSize m_size = 0;
 };
@@ -1054,8 +1050,8 @@ class AccelerationStructureBarrierInfo
 {
 public:
 	AccelerationStructure* m_as = nullptr;
-	AccelerationStructureUsageBit m_previousUsage = AccelerationStructureUsageBit::NONE;
-	AccelerationStructureUsageBit m_nextUsage = AccelerationStructureUsageBit::NONE;
+	AccelerationStructureUsageBit m_previousUsage = AccelerationStructureUsageBit::kNone;
+	AccelerationStructureUsageBit m_nextUsage = AccelerationStructureUsageBit::kNone;
 };
 
 /// Compute max number of mipmaps for a 2D texture.

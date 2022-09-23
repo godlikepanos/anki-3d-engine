@@ -20,7 +20,7 @@ Error Input::newInstance(AllocAlignedCallback allocCallback, void* allocCallback
 	ainput->m_alloc = alloc;
 
 	input = ainput;
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void Input::deleteInstance(Input* input)
@@ -39,7 +39,7 @@ Error Input::handleEvents()
 		moveCursor(Vec2(0.0f));
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void Input::moveCursor(const Vec2& posNdc)

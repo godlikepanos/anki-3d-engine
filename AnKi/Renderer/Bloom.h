@@ -41,7 +41,7 @@ public:
 	}
 
 private:
-	static constexpr Format RT_PIXEL_FORMAT = Format::A2B10G10R10_UNORM_PACK32;
+	static constexpr Format kRtPixelFormat = Format::kA2B10G10R10UnormPack32;
 
 	const Array<U32, 2> m_workgroupSize = {16, 16};
 
@@ -84,7 +84,7 @@ private:
 
 	Error initInternal();
 
-	void getDebugRenderTarget(CString rtName, RenderTargetHandle& handle,
+	void getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
 							  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const override;
 };
 

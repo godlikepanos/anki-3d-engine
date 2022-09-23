@@ -42,19 +42,19 @@ public:
 
 	/// @name FB
 	/// @{
-	Array2d<Bool, MAX_COLOR_ATTACHMENTS, 4> m_colorWriteMasks = {{{{true, true, true, true}},
-																  {{true, true, true, true}},
-																  {{true, true, true, true}},
-																  {{true, true, true, true}}}};
+	Array2d<Bool, kMaxColorRenderTargets, 4> m_colorWriteMasks = {{{{true, true, true, true}},
+																   {{true, true, true, true}},
+																   {{true, true, true, true}},
+																   {{true, true, true, true}}}};
 
 	Bool m_depthWriteMask = true;
 
-	Array<U32, 2> m_stencilWriteMask = {{MAX_U32, MAX_U32}};
+	Array<U32, 2> m_stencilWriteMask = {{kMaxU32, kMaxU32}};
 	/// @}
 
-	Array2d<GLuint, MAX_DESCRIPTOR_SETS, MAX_TEXTURE_BUFFER_BINDINGS> m_texBuffTextures = {};
+	Array2d<GLuint, kMaxDescriptorSets, MAX_TEXTURE_BUFFER_BINDINGS> m_texBuffTextures = {};
 
-	Array<GLsizei, 4> m_scissor = {{0, 0, MAX_I32, MAX_I32}};
+	Array<GLsizei, 4> m_scissor = {{0, 0, kMaxI32, kMaxI32}};
 
 	GlState(GrManager* manager)
 		: m_manager(manager)

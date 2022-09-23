@@ -36,20 +36,19 @@ Error DecalComponent::setLayer(CString texAtlasFname, CString texAtlasSubtexName
 	ANKI_CHECK(l.m_atlas->getSubImageInfo(texAtlasSubtexName, &l.m_uv[0]));
 
 	// Add a border to the UVs to avoid complex shader logic
-	if(l.m_atlas->getSubImageMargin() < ATLAS_SUB_IMAGE_MARGIN)
+	if(l.m_atlas->getSubImageMargin() < kAtlasSubImageMargin)
 	{
-		ANKI_SCENE_LOGE("Need image atlas with margin at least %u", ATLAS_SUB_IMAGE_MARGIN);
-		return Error::USER_DATA;
+		ANKI_SCENE_LOGE("Need image atlas with margin at least %u", kAtlasSubImageMargin);
+		return Error::kUserData;
 	}
 
-	const Vec2 marginf =
-		F32(ATLAS_SUB_IMAGE_MARGIN / 2) / Vec2(F32(l.m_atlas->getWidth()), F32(l.m_atlas->getHeight()));
+	const Vec2 marginf = F32(kAtlasSubImageMargin / 2) / Vec2(F32(l.m_atlas->getWidth()), F32(l.m_atlas->getHeight()));
 	const Vec2 minUv = l.m_uv.xy() - marginf;
 	const Vec2 sizeUv = (l.m_uv.zw() - l.m_uv.xy()) + 2.0f * marginf;
 	l.m_uv = Vec4(minUv.x(), minUv.y(), minUv.x() + sizeUv.x(), minUv.y() + sizeUv.y());
 
 	l.m_blendFactor = blendFactor;
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void DecalComponent::updateInternal()
@@ -90,31 +89,31 @@ void DecalComponent::draw(RenderQueueDrawContext& ctx) const
 
 	const Mat4 mvp = ctx.m_viewProjectionMatrix * Mat4(tsl, rot * nonUniScale, 1.0f);
 
-	const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);
+	const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDepthTestOn);
 	if(enableDepthTest)
 	{
-		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::LESS);
+		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::kLess);
 	}
 	else
 	{
-		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::ALWAYS);
+		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::kAlways);
 	}
 
 	m_node->getSceneGraph().getDebugDrawer().drawCubes(
 		ConstWeakArray<Mat4>(&mvp, 1), Vec4(0.0f, 1.0f, 0.0f, 1.0f), 1.0f,
-		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), 2.0f, *ctx.m_stagingGpuAllocator,
+		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), 2.0f, *ctx.m_stagingGpuAllocator,
 		ctx.m_commandBuffer);
 
 	const Vec3 pos = m_obb.getCenter().xyz();
 	m_node->getSceneGraph().getDebugDrawer().drawBillboardTextures(
 		ctx.m_projectionMatrix, ctx.m_viewMatrix, ConstWeakArray<Vec3>(&pos, 1), Vec4(1.0f),
-		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), m_debugImage->getTextureView(),
+		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), m_debugImage->getTextureView(),
 		ctx.m_sampler, Vec2(0.75f), *ctx.m_stagingGpuAllocator, ctx.m_commandBuffer);
 
 	// Restore state
 	if(!enableDepthTest)
 	{
-		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::LESS);
+		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::kLess);
 	}
 }
 

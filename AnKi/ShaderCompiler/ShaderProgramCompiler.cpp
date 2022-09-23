@@ -25,7 +25,7 @@ Error ShaderProgramBinaryWrapper::serializeToFile(CString fname) const
 							   "ShaderProgramBinaryWrapper temp");
 	ANKI_CHECK(serializer.serialize(*m_binary, tmpAlloc, file));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ShaderProgramBinaryWrapper::deserializeFromFile(CString fname)
@@ -33,7 +33,7 @@ Error ShaderProgramBinaryWrapper::deserializeFromFile(CString fname)
 	File file;
 	ANKI_CHECK(file.open(fname, FileOpenFlag::READ | FileOpenFlag::BINARY));
 	ANKI_CHECK(deserializeFromAnyFile(file));
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void ShaderProgramBinaryWrapper::cleanup()
@@ -168,7 +168,7 @@ static Bool spinDials(DynamicArrayAuto<U32>& dials, ConstWeakArray<ShaderProgram
 
 static Error compileSpirv(ConstWeakArray<MutatorValue> mutation, const ShaderProgramParser& parser,
 						  GenericMemoryPoolAllocator<U8>& tmpAlloc,
-						  Array<DynamicArrayAuto<U8>, U32(ShaderType::COUNT)>& spirv, StringAuto& errorLog)
+						  Array<DynamicArrayAuto<U8>, U32(ShaderType::kCount)>& spirv, StringAuto& errorLog)
 {
 	// Generate the source and the rest for the variant
 	ShaderProgramParserVariant parserVariant;
@@ -188,7 +188,7 @@ static Error compileSpirv(ConstWeakArray<MutatorValue> mutation, const ShaderPro
 		ANKI_ASSERT(spirv[shaderType].getSize() > 0);
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 static void compileVariantAsync(ConstWeakArray<MutatorValue> mutation, const ShaderProgramParser& parser,
@@ -242,18 +242,18 @@ static void compileVariantAsync(ConstWeakArray<MutatorValue> mutation, const Sha
 		}
 
 		// All good, compile the variant
-		Array<DynamicArrayAuto<U8>, U32(ShaderType::COUNT)> spirvs = {{{tmpAlloc},
-																	   {tmpAlloc},
-																	   {tmpAlloc},
-																	   {tmpAlloc},
-																	   {tmpAlloc},
-																	   {tmpAlloc},
-																	   {tmpAlloc},
-																	   {tmpAlloc},
-																	   {tmpAlloc},
-																	   {tmpAlloc},
-																	   {tmpAlloc},
-																	   {tmpAlloc}}};
+		Array<DynamicArrayAuto<U8>, U32(ShaderType::kCount)> spirvs = {{{tmpAlloc},
+																		{tmpAlloc},
+																		{tmpAlloc},
+																		{tmpAlloc},
+																		{tmpAlloc},
+																		{tmpAlloc},
+																		{tmpAlloc},
+																		{tmpAlloc},
+																		{tmpAlloc},
+																		{tmpAlloc},
+																		{tmpAlloc},
+																		{tmpAlloc}}};
 		StringAuto errorLog(tmpAlloc);
 		const Error err = compileSpirv(ctx.m_mutation, *ctx.m_parser, tmpAlloc, spirvs, errorLog);
 
@@ -269,7 +269,7 @@ static void compileVariantAsync(ConstWeakArray<MutatorValue> mutation, const Sha
 
 				if(spirv.isEmpty())
 				{
-					ctx.m_variant->m_codeBlockIndices[shaderType] = MAX_U32;
+					ctx.m_variant->m_codeBlockIndices[shaderType] = kMaxU32;
 					continue;
 				}
 
@@ -358,8 +358,8 @@ public:
 	/// [structInstance][memberInstance]
 	DynamicArrayAuto<DynamicArrayAuto<ShaderProgramBinaryStructMemberInstance>> m_structMemberInstances = {m_alloc};
 
-	Array<U32, 3> m_workgroupSizes = {MAX_U32, MAX_U32, MAX_U32};
-	Array<U32, 3> m_workgroupSizesConstants = {MAX_U32, MAX_U32, MAX_U32};
+	Array<U32, 3> m_workgroupSizes = {kMaxU32, kMaxU32, kMaxU32};
+	Array<U32, 3> m_workgroupSizesConstants = {kMaxU32, kMaxU32, kMaxU32};
 	/// @}
 
 	Refl(const GenericMemoryPoolAllocator<U8>& alloc, const StringList* symbolsToReflect)
@@ -370,8 +370,8 @@ public:
 
 	Error setWorkgroupSizes(U32 x, U32 y, U32 z, U32 specConstMask) final
 	{
-		m_workgroupSizesConstants = {MAX_U32, MAX_U32, MAX_U32};
-		m_workgroupSizes = {MAX_U32, MAX_U32, MAX_U32};
+		m_workgroupSizesConstants = {kMaxU32, kMaxU32, kMaxU32};
+		m_workgroupSizes = {kMaxU32, kMaxU32, kMaxU32};
 		const Array<U32, 3> input = {x, y, z};
 
 		for(U32 i = 0; i < 3; ++i)
@@ -387,12 +387,12 @@ public:
 					}
 				}
 
-				if(m_workgroupSizesConstants[i] == MAX_U32)
+				if(m_workgroupSizesConstants[i] == kMaxU32)
 				{
 					ANKI_SHADER_COMPILER_LOGE("Reflection identified workgroup size dimension %u as spec constant but "
 											  "not such spec constant was found",
 											  i);
-					return Error::USER_DATA;
+					return Error::kUserData;
 				}
 			}
 			else
@@ -401,7 +401,7 @@ public:
 			}
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	Error setCounts(U32 uniformBlockCount, U32 storageBlockCount, U32 opaqueCount, Bool pushConstantBlock,
@@ -417,7 +417,7 @@ public:
 		m_constInstances.create(constCount);
 		m_structInstances.create(structCount);
 		m_structMemberInstances.create(structCount, m_alloc);
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	Error visitUniformBlock(U32 idx, CString name, U32 set, U32 binding, U32 size, U32 varCount) final
@@ -457,7 +457,7 @@ public:
 					  U32 arraySize) final
 	{
 		// Find the opaque
-		U32 opaqueIdx = MAX_U32;
+		U32 opaqueIdx = kMaxU32;
 		for(U32 i = 0; i < m_opaque.getSize(); ++i)
 		{
 			if(name == m_opaque[i].m_name.getBegin())
@@ -466,7 +466,7 @@ public:
 				{
 					ANKI_SHADER_COMPILER_LOGE(
 						"The set, binding and type can't difer between shader variants for opaque: %s", name.cstr());
-					return Error::USER_DATA;
+					return Error::kUserData;
 				}
 
 				opaqueIdx = i;
@@ -475,7 +475,7 @@ public:
 		}
 
 		// Create the opaque
-		if(opaqueIdx == MAX_U32)
+		if(opaqueIdx == kMaxU32)
 		{
 			ShaderProgramBinaryOpaque& o = *m_opaque.emplaceBack();
 			ANKI_CHECK(setName(name, o.m_name));
@@ -491,7 +491,7 @@ public:
 		instance.m_index = opaqueIdx;
 		instance.m_arraySize = arraySize;
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	Bool skipSymbol(CString symbol) const final
@@ -511,7 +511,7 @@ public:
 	Error visitConstant(U32 instanceIdx, CString name, ShaderVariableDataType type, U32 constantId) final
 	{
 		// Find const
-		U32 constIdx = MAX_U32;
+		U32 constIdx = kMaxU32;
 		for(U32 i = 0; i < m_consts.getSize(); ++i)
 		{
 			if(name == m_consts[i].m_name.getBegin())
@@ -521,7 +521,7 @@ public:
 					ANKI_SHADER_COMPILER_LOGE(
 						"The type, constantId and stages can't difer between shader variants for const: %s",
 						name.cstr());
-					return Error::USER_DATA;
+					return Error::kUserData;
 				}
 
 				constIdx = i;
@@ -530,7 +530,7 @@ public:
 		}
 
 		// Create the const
-		if(constIdx == MAX_U32)
+		if(constIdx == kMaxU32)
 		{
 			ShaderProgramBinaryConstant& c = *m_consts.emplaceBack();
 			ANKI_CHECK(setName(name, c.m_name));
@@ -544,12 +544,12 @@ public:
 		ShaderProgramBinaryConstantInstance& instance = m_constInstances[instanceIdx];
 		instance.m_index = constIdx;
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	[[nodiscard]] Bool findStruct(CString name, U32& idx) const
 	{
-		idx = MAX_U32;
+		idx = kMaxU32;
 
 		for(U32 i = 0; i < m_structs.getSize(); ++i)
 		{
@@ -561,7 +561,7 @@ public:
 			}
 		}
 
-		return idx != MAX_U32;
+		return idx != kMaxU32;
 	}
 
 	Error visitStruct(U32 instanceIdx, CString name, U32 memberCount, U32 size) final
@@ -590,7 +590,7 @@ public:
 
 		m_structMemberInstances[instanceIdx].create(memberCount);
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	Error visitStructMember(U32 structInstanceIdx, CString structName, U32 memberInstanceIdx, CString memberName,
@@ -604,7 +604,7 @@ public:
 		DynamicArrayAuto<ShaderProgramBinaryStructMember>& members = m_structMembers[realStructIdx];
 
 		// Find member
-		U32 realMemberIdx = MAX_U32;
+		U32 realMemberIdx = kMaxU32;
 		for(U32 i = 0; i < members.getSize(); ++i)
 		{
 			if(memberName == &members[i].m_name[0])
@@ -613,7 +613,7 @@ public:
 				{
 					ANKI_SHADER_COMPILER_LOGE("Member %s of struct %s has different type between variants",
 											  memberName.cstr(), &s.m_name[0]);
-					return Error::USER_DATA;
+					return Error::kUserData;
 				}
 
 				realMemberIdx = i;
@@ -622,14 +622,14 @@ public:
 		}
 
 		// If member not found in some previous variant create it
-		if(realMemberIdx == MAX_U32)
+		if(realMemberIdx == kMaxU32)
 		{
 			realMemberIdx = members.getSize();
 			ShaderProgramBinaryStructMember& member = *members.emplaceBack();
 			ANKI_CHECK(setName(memberName, member.m_name));
 			member.m_type = type;
 
-			if(type == ShaderVariableDataType::NONE)
+			if(type == ShaderVariableDataType::kNone)
 			{
 				// Type is a struct, find the right index
 
@@ -645,7 +645,7 @@ public:
 		memberInstance.m_arraySize = arraySize;
 		memberInstance.m_offset = offset;
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	static Error setName(CString in, Array<char, MAX_SHADER_BINARY_NAME_LENGTH + 1>& out)
@@ -653,23 +653,23 @@ public:
 		if(in.getLength() + 1 > MAX_SHADER_BINARY_NAME_LENGTH)
 		{
 			ANKI_SHADER_COMPILER_LOGE("Name too long: %s", in.cstr());
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 		else if(in.getLength() == 0)
 		{
 			ANKI_SHADER_COMPILER_LOGE("Found an empty string as name");
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 		else
 		{
 			memcpy(out.getBegin(), in.getBegin(), in.getLength() + 1);
 		}
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	static Error findBlock(CString name, U32 set, U32 binding, ConstWeakArray<ShaderProgramBinaryBlock> arr, U32& idx)
 	{
-		idx = MAX_U32;
+		idx = kMaxU32;
 
 		for(U32 i = 0; i < arr.getSize(); ++i)
 		{
@@ -680,7 +680,7 @@ public:
 				{
 					ANKI_SHADER_COMPILER_LOGE("The set and binding can't difer between shader variants for block: %s",
 											  name.cstr());
-					return Error::USER_DATA;
+					return Error::kUserData;
 				}
 
 				idx = i;
@@ -688,7 +688,7 @@ public:
 			}
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	Error visitAnyBlock(U32 blockInstanceIdx, CString name, U32 set, U32 binding, U32 size, U32 varSize, U32 blockType)
@@ -697,7 +697,7 @@ public:
 		U32 blockIdx;
 		ANKI_CHECK(findBlock(name, set, binding, m_blocks[blockType], blockIdx));
 
-		if(blockIdx == MAX_U32)
+		if(blockIdx == kMaxU32)
 		{
 			// Not found, create it
 			ShaderProgramBinaryBlock& block = *m_blocks[blockType].emplaceBack();
@@ -717,14 +717,14 @@ public:
 		instance.m_size = size;
 		m_alloc.newArray(varSize, instance.m_variableInstances);
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	Error visitAnyVariable(U32 blockInstanceIdx, U32 varInstanceIdx, CString name, ShaderVariableDataType type,
 						   const ShaderVariableBlockInfo& blockInfo, U32 blockType)
 	{
 		// Find the variable
-		U32 varIdx = MAX_U32;
+		U32 varIdx = kMaxU32;
 		const U32 blockIdx = m_blockInstances[blockType][blockInstanceIdx].m_index;
 		for(U32 i = 0; i < m_vars[blockType][blockIdx].getSize(); ++i)
 		{
@@ -735,7 +735,7 @@ public:
 				{
 					ANKI_SHADER_COMPILER_LOGE("The type should not differ between variants for variable: %s",
 											  name.cstr());
-					return Error::USER_DATA;
+					return Error::kUserData;
 				}
 
 				varIdx = i;
@@ -744,7 +744,7 @@ public:
 		}
 
 		// Create the variable
-		if(varIdx == MAX_U32)
+		if(varIdx == kMaxU32)
 		{
 			ShaderProgramBinaryVariable& var = *m_vars[blockType][blockIdx].emplaceBack();
 			ANKI_CHECK(setName(name, var.m_name));
@@ -759,7 +759,7 @@ public:
 		instance.m_blockInfo = blockInfo;
 		instance.m_index = varIdx;
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 
@@ -784,7 +784,7 @@ static Error doGhostStructReflection(const StringList& symbolsToReflect,
 
 	if(ghostStructIndices.getSize() == 0)
 	{
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	// Add the ghost structs to binary structs
@@ -822,7 +822,7 @@ static Error doGhostStructReflection(const StringList& symbolsToReflect,
 	binaryAlloc.deleteArray(binary.m_structs);
 	structs.moveAndReset(binary.m_structs);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 static Error doReflection(const StringList& symbolsToReflect, ShaderProgramBinary& binary,
@@ -834,10 +834,10 @@ static Error doReflection(const StringList& symbolsToReflect, ShaderProgramBinar
 
 	for(ShaderProgramBinaryVariant& variant : binary.m_variants)
 	{
-		Array<ConstWeakArray<U8>, U32(ShaderType::COUNT)> spirvs;
+		Array<ConstWeakArray<U8>, U32(ShaderType::kCount)> spirvs;
 		for(ShaderType stage : EnumIterable<ShaderType>())
 		{
-			if(variant.m_codeBlockIndices[stage] != MAX_U32)
+			if(variant.m_codeBlockIndices[stage] != kMaxU32)
 			{
 				spirvs[stage] = binary.m_codeBlocks[variant.m_codeBlockIndices[stage]].m_binary;
 			}
@@ -986,7 +986,7 @@ static Error doReflection(const StringList& symbolsToReflect, ShaderProgramBinar
 		}
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterface& fsystem,
@@ -1010,7 +1010,7 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 
 	if(postParseCallback && postParseCallback->skipCompilation(parser.getHash()))
 	{
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	// Get mutators
@@ -1052,7 +1052,7 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 		Error joinTasks() final
 		{
 			// Nothing
-			return Error::NONE;
+			return Error::kNone;
 		}
 	} syncTaskManager;
 	ShaderProgramAsyncTaskInterface& taskManager = (taskManager_) ? *taskManager_ : syncTaskManager;
@@ -1094,7 +1094,7 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 
 			if(parser.skipMutation(mutationValues))
 			{
-				mutation.m_variantIndex = MAX_U32;
+				mutation.m_variantIndex = kMaxU32;
 			}
 			else
 			{
@@ -1172,7 +1172,7 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 		if(parser.getLibraryName().getLength() >= sizeof(binary.m_libraryName))
 		{
 			ANKI_SHADER_COMPILER_LOGE("Library name too long: %s", parser.getLibraryName().cstr());
-			return Error::USER_DATA;
+			return Error::kUserData;
 		}
 
 		memcpy(&binary.m_libraryName[0], &parser.getLibraryName()[0], parser.getLibraryName().getLength());
@@ -1188,7 +1188,7 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 	ANKI_CHECK(doGhostStructReflection(parser.getSymbolsToReflect(), parser.getGhostStructs(), binary, tempAllocator,
 									   binaryAllocator));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error compileShaderProgram(CString fname, ShaderProgramFilesystemInterface& fsystem,

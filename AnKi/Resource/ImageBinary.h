@@ -14,40 +14,40 @@ namespace anki {
 /// @addtogroup resource
 /// @{
 
-static constexpr const char* IMAGE_MAGIC = "ANKITEX1";
+inline constexpr const Char* kImageMagic = "ANKITEX1";
 
 /// Image type.
 /// @memberof ImageBinaryHeader
 enum class ImageBinaryType : U32
 {
-	NONE,
-	_2D,
-	CUBE,
-	_3D,
-	_2D_ARRAY
+	kNone,
+	k2D,
+	kCube,
+	k3D,
+	k2DArray
 };
 
 /// The acceptable color types.
 /// @memberof ImageBinaryHeader
 enum class ImageBinaryColorFormat : U32
 {
-	NONE,
-	RGB8,
-	RGBA8,
-	SRGB8,
-	RGBF32,
-	RGBAF32
+	kNone,
+	kRgb8,
+	kRgba8,
+	kSrgb8,
+	kRgbFloat,
+	kRgbaFloat
 };
 
 /// The available data compressions.
 /// @memberof ImageBinaryHeader
 enum class ImageBinaryDataCompression : U32
 {
-	NONE,
-	RAW = 1 << 0,
-	S3TC = 1 << 1,
-	ETC = 1 << 2,
-	ASTC = 1 << 3
+	kNone,
+	kRaw = 1 << 0,
+	kS3tc = 1 << 1,
+	kEtc = 1 << 2,
+	kAstc = 1 << 3
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ImageBinaryDataCompression)
 

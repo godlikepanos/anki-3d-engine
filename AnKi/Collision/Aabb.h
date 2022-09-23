@@ -16,7 +16,7 @@ namespace anki {
 class Aabb
 {
 public:
-	static constexpr CollisionShapeType CLASS_TYPE = CollisionShapeType::AABB;
+	static constexpr CollisionShapeType kClassType = CollisionShapeType::kAABB;
 
 	/// Will not initialize any memory, nothing.
 	Aabb()
@@ -106,13 +106,13 @@ public:
 private:
 	Vec4 m_min
 #if ANKI_ENABLE_ASSERTIONS
-		= Vec4(MAX_F32)
+		= Vec4(kMaxF32)
 #endif
 		;
 
 	Vec4 m_max
 #if ANKI_ENABLE_ASSERTIONS
-		= Vec4(MIN_F32)
+		= Vec4(kMinF32)
 #endif
 		;
 

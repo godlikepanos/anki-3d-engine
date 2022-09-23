@@ -21,7 +21,7 @@ Aabb Aabb::getTransformed(const Transform& trf) const
 	Vec4 newC = trf.transform(center);
 	Vec4 newE = Vec4(absM * (extend * trf.getScale()), 0.0f);
 
-	return Aabb(newC - newE, newC + newE + Vec4(EPSILON, EPSILON, EPSILON, 0.0f));
+	return Aabb(newC - newE, newC + newE + Vec4(kEpsilonf, kEpsilonf, kEpsilonf, 0.0f));
 }
 
 Aabb Aabb::getCompoundShape(const Aabb& b) const
@@ -48,8 +48,8 @@ void Aabb::setFromPointCloud(const Vec3* pointBuffer, U pointCount, PtrSize poin
 	ANKI_ASSERT((pointStride % sizeof(F32)) == 0 && "Weird strides that breaks strict aliasing rules");
 	ANKI_ASSERT(buffSize >= pointStride * pointCount);
 
-	m_min = Vec4(Vec3(MAX_F32), 0.0f);
-	m_max = Vec4(Vec3(MIN_F32), 0.0f);
+	m_min = Vec4(Vec3(kMaxF32), 0.0f);
+	m_max = Vec4(Vec3(kMinF32), 0.0f);
 
 	// Iterate
 	const U8* ptr = reinterpret_cast<const U8*>(pointBuffer);

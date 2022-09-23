@@ -33,7 +33,7 @@ Error Input::newInstance(AllocAlignedCallback allocCallback, void* allocCallback
 	else
 	{
 		input = ainput;
-		return Error::NONE;
+		return Error::kNone;
 	}
 }
 
@@ -70,7 +70,7 @@ Error Input::handleEvents()
 		}
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void Input::moveCursor(const Vec2& posNdc)
@@ -105,7 +105,7 @@ Error InputAndroid::init()
 		return self->handleAndroidInput(app, event);
 	};
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void InputAndroid::handleAndroidEvents(android_app* app, int32_t cmd)

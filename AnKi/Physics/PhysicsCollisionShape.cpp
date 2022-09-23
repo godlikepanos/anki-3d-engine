@@ -9,7 +9,7 @@
 namespace anki {
 
 PhysicsSphere::PhysicsSphere(PhysicsWorld* world, F32 radius)
-	: PhysicsCollisionShape(world, ShapeType::SPHERE)
+	: PhysicsCollisionShape(world, ShapeType::kSphere)
 {
 	m_sphere.init(radius);
 	m_sphere->setMargin(getWorld().getCollisionMargin());
@@ -22,7 +22,7 @@ PhysicsSphere::~PhysicsSphere()
 }
 
 PhysicsBox::PhysicsBox(PhysicsWorld* world, const Vec3& extend)
-	: PhysicsCollisionShape(world, ShapeType::BOX)
+	: PhysicsCollisionShape(world, ShapeType::kBox)
 {
 	m_box.init(toBt(extend));
 	m_box->setMargin(getWorld().getCollisionMargin());
@@ -36,7 +36,7 @@ PhysicsBox::~PhysicsBox()
 
 PhysicsTriangleSoup::PhysicsTriangleSoup(PhysicsWorld* world, ConstWeakArray<Vec3> positions,
 										 ConstWeakArray<U32> indices, Bool convex)
-	: PhysicsCollisionShape(world, ShapeType::TRI_MESH)
+	: PhysicsCollisionShape(world, ShapeType::kTrimesh)
 {
 	if(!convex)
 	{
@@ -63,7 +63,7 @@ PhysicsTriangleSoup::PhysicsTriangleSoup(PhysicsWorld* world, ConstWeakArray<Vec
 	}
 	else
 	{
-		m_type = ShapeType::CONVEX; // Fake the type
+		m_type = ShapeType::kConvex; // Fake the type
 
 		m_convex.init(&positions[0][0], I32(positions.getSize()), U32(sizeof(Vec3)));
 		m_convex->setMargin(getWorld().getCollisionMargin());
@@ -73,7 +73,7 @@ PhysicsTriangleSoup::PhysicsTriangleSoup(PhysicsWorld* world, ConstWeakArray<Vec
 
 PhysicsTriangleSoup::~PhysicsTriangleSoup()
 {
-	if(m_type == ShapeType::TRI_MESH)
+	if(m_type == ShapeType::kTrimesh)
 	{
 		m_triMesh.m_dynamic.destroy();
 		m_triMesh.m_static.destroy();
@@ -81,7 +81,7 @@ PhysicsTriangleSoup::~PhysicsTriangleSoup()
 	}
 	else
 	{
-		ANKI_ASSERT(m_type == ShapeType::CONVEX);
+		ANKI_ASSERT(m_type == ShapeType::kConvex);
 		m_convex.destroy();
 	}
 }

@@ -16,7 +16,7 @@ Error NativeWindow::newInstance(const NativeWindowInitInfo& initInfo, NativeWind
 	hwin->m_height = initInfo.m_height;
 
 	nativeWindow = hwin;
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void NativeWindow::deleteInstance(NativeWindow* window)

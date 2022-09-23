@@ -17,7 +17,7 @@ Error GrManagerImpl::initSurface(const GrManagerInitInfo& init)
 
 	ANKI_VK_CHECK(vkCreateAndroidSurfaceKHR(m_instance, &createInfo, nullptr, &m_surface));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

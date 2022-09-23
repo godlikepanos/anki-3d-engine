@@ -5,7 +5,7 @@
 
 #include <Tests/Framework/Framework.h>
 #include <Tests/Util/Foo.h>
-#include <AnKi/Util/Memory.h>
+#include <AnKi/Util/CpuMemoryPools.h>
 #include <AnKi/Util/ThreadPool.h>
 #include <type_traits>
 #include <cstring>
@@ -101,7 +101,7 @@ ANKI_TEST(Util, StackMemoryPool)
 					m_allocations[i] = ptr;
 				}
 
-				return Error::NONE;
+				return Error::kNone;
 			}
 		};
 
@@ -155,50 +155,5 @@ ANKI_TEST(Util, StackMemoryPool)
 				}
 			}
 		}
-	}
-}
-
-ANKI_TEST(Util, ChainMemoryPool)
-{
-	// Basic test
-	{
-		const U size = 8;
-		ChainMemoryPool pool(allocAligned, nullptr, size, 2.0, 0, 1);
-
-		void* mem = pool.allocate(5, 1);
-		ANKI_TEST_EXPECT_NEQ(mem, nullptr);
-
-		void* mem1 = pool.allocate(5, 1);
-		ANKI_TEST_EXPECT_NEQ(mem1, nullptr);
-
-		pool.free(mem1);
-		pool.free(mem);
-		ANKI_TEST_EXPECT_EQ(pool.getChunksCount(), 0);
-	}
-
-	// Basic test 2
-	{
-		const U size = sizeof(PtrSize) + 10;
-		ChainMemoryPool pool(allocAligned, nullptr, size, 2.0, 0, 1);
-
-		void* mem = pool.allocate(size, 1);
-		ANKI_TEST_EXPECT_NEQ(mem, nullptr);
-
-		void* mem1 = pool.allocate(size, 1);
-		ANKI_TEST_EXPECT_NEQ(mem1, nullptr);
-
-		void* mem3 = pool.allocate(size, 1);
-		ANKI_TEST_EXPECT_NEQ(mem1, nullptr);
-
-		pool.free(mem1);
-
-		mem1 = pool.allocate(size, 1);
-		ANKI_TEST_EXPECT_NEQ(mem1, nullptr);
-
-		pool.free(mem3);
-		pool.free(mem1);
-		pool.free(mem);
-
-		ANKI_TEST_EXPECT_EQ(pool.getChunksCount(), 0);
 	}
 }

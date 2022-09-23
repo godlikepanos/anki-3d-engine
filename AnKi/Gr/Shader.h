@@ -24,30 +24,30 @@ public:
 		U32 m_uint;
 	};
 
-	U32 m_constantId = MAX_U32;
+	U32 m_constantId = kMaxU32;
 	ShaderVariableDataType m_dataType;
 
 	ShaderSpecializationConstValue()
 		: m_int(0)
-		, m_dataType(ShaderVariableDataType::NONE)
+		, m_dataType(ShaderVariableDataType::kNone)
 	{
 	}
 
 	explicit ShaderSpecializationConstValue(F32 f)
 		: m_float(f)
-		, m_dataType(ShaderVariableDataType::F32)
+		, m_dataType(ShaderVariableDataType::kF32)
 	{
 	}
 
 	explicit ShaderSpecializationConstValue(I32 i)
 		: m_int(i)
-		, m_dataType(ShaderVariableDataType::I32)
+		, m_dataType(ShaderVariableDataType::kI32)
 	{
 	}
 
 	explicit ShaderSpecializationConstValue(U32 i)
 		: m_int(i)
-		, m_dataType(ShaderVariableDataType::U32)
+		, m_dataType(ShaderVariableDataType::kU32)
 	{
 	}
 
@@ -60,7 +60,7 @@ public:
 class ShaderInitInfo : public GrBaseInitInfo
 {
 public:
-	ShaderType m_shaderType = ShaderType::COUNT;
+	ShaderType m_shaderType = ShaderType::kCount;
 	ConstWeakArray<U8> m_binary = {};
 
 	/// @note It's OK to have entries in that array with consts that do not appear in the shader.
@@ -89,20 +89,20 @@ class Shader : public GrObject
 	ANKI_GR_OBJECT
 
 public:
-	static constexpr GrObjectType CLASS_TYPE = GrObjectType::SHADER;
+	static constexpr GrObjectType kClassType = GrObjectType::kShader;
 
 	ShaderType getShaderType() const
 	{
-		ANKI_ASSERT(m_shaderType != ShaderType::COUNT);
+		ANKI_ASSERT(m_shaderType != ShaderType::kCount);
 		return m_shaderType;
 	}
 
 protected:
-	ShaderType m_shaderType = ShaderType::COUNT;
+	ShaderType m_shaderType = ShaderType::kCount;
 
 	/// Construct.
 	Shader(GrManager* manager, CString name)
-		: GrObject(manager, CLASS_TYPE, name)
+		: GrObject(manager, kClassType, name)
 	{
 	}
 

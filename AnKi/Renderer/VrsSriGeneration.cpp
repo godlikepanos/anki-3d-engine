@@ -35,7 +35,7 @@ Error VrsSriGeneration::initInternal()
 {
 	if(!getGrManager().getDeviceCapabilities().m_vrs)
 	{
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 	m_sriTexelDimension = getGrManager().getDeviceCapabilities().m_minShadingRateImageTexelSize;
@@ -46,15 +46,15 @@ Error VrsSriGeneration::initInternal()
 
 	// Create textures
 	const TextureUsageBit texUsage =
-		TextureUsageBit::FRAMEBUFFER_SHADING_RATE | TextureUsageBit::IMAGE_COMPUTE_WRITE | TextureUsageBit::ALL_SAMPLED;
+		TextureUsageBit::kFramebufferShadingRate | TextureUsageBit::kImageComputeWrite | TextureUsageBit::kAllSampled;
 	TextureInitInfo sriInitInfo =
-		m_r->create2DRenderTargetInitInfo(rez.x(), rez.y(), Format::R8_UINT, texUsage, "VrsSri");
-	m_sriTex = m_r->createAndClearRenderTarget(sriInitInfo, TextureUsageBit::FRAMEBUFFER_SHADING_RATE);
+		m_r->create2DRenderTargetInitInfo(rez.x(), rez.y(), Format::kR8Uint, texUsage, "VrsSri");
+	m_sriTex = m_r->createAndClearRenderTarget(sriInitInfo, TextureUsageBit::kFramebufferShadingRate);
 
 	const UVec2 rezDownscaled = (m_r->getInternalResolution() / 2 + m_sriTexelDimension - 1) / m_sriTexelDimension;
-	sriInitInfo = m_r->create2DRenderTargetInitInfo(rezDownscaled.x(), rezDownscaled.y(), Format::R8_UINT, texUsage,
+	sriInitInfo = m_r->create2DRenderTargetInitInfo(rezDownscaled.x(), rezDownscaled.y(), Format::kR8Uint, texUsage,
 													"VrsSriDownscaled");
-	m_downscaledSriTex = m_r->createAndClearRenderTarget(sriInitInfo, TextureUsageBit::FRAMEBUFFER_SHADING_RATE);
+	m_downscaledSriTex = m_r->createAndClearRenderTarget(sriInitInfo, TextureUsageBit::kFramebufferShadingRate);
 
 	// Load programs
 	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/VrsSriGenerationCompute.ankiprogbin", m_prog));
@@ -93,20 +93,20 @@ Error VrsSriGeneration::initInternal()
 	m_downscaleProg->getOrCreateVariant(variant);
 	m_downscaleGrProg = variant->getProgram();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
-void VrsSriGeneration::getDebugRenderTarget(CString rtName, RenderTargetHandle& handle,
+void VrsSriGeneration::getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
 											ShaderProgramPtr& optionalShaderProgram) const
 {
 	if(rtName == "VrsSri")
 	{
-		handle = m_runCtx.m_rt;
+		handles[0] = m_runCtx.m_rt;
 	}
 	else
 	{
 		ANKI_ASSERT(rtName == "VrsSriDownscaled");
-		handle = m_runCtx.m_downscaledRt;
+		handles[0] = m_runCtx.m_downscaledRt;
 	}
 
 	optionalShaderProgram = m_visualizeGrProg;
@@ -127,9 +127,9 @@ void VrsSriGeneration::importRenderTargets(RenderingContext& ctx)
 	}
 	else
 	{
-		m_runCtx.m_rt = ctx.m_renderGraphDescr.importRenderTarget(m_sriTex, TextureUsageBit::FRAMEBUFFER_SHADING_RATE);
+		m_runCtx.m_rt = ctx.m_renderGraphDescr.importRenderTarget(m_sriTex, TextureUsageBit::kFramebufferShadingRate);
 		m_runCtx.m_downscaledRt =
-			ctx.m_renderGraphDescr.importRenderTarget(m_downscaledSriTex, TextureUsageBit::FRAMEBUFFER_SHADING_RATE);
+			ctx.m_renderGraphDescr.importRenderTarget(m_downscaledSriTex, TextureUsageBit::kFramebufferShadingRate);
 		m_sriTexImportedOnce = true;
 	}
 }
@@ -148,8 +148,8 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 	{
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("VRS SRI generation");
 
-		pass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
-		pass.newDependency(RenderPassDependency(m_r->getLightShading().getRt(), TextureUsageBit::SAMPLED_COMPUTE));
+		pass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::kImageComputeWrite));
+		pass.newDependency(RenderPassDependency(m_r->getLightShading().getRt(), TextureUsageBit::kSampledCompute));
 
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
@@ -172,8 +172,8 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 	{
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("VRS SRI downscale");
 
-		pass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::SAMPLED_COMPUTE));
-		pass.newDependency(RenderPassDependency(m_runCtx.m_downscaledRt, TextureUsageBit::IMAGE_COMPUTE_WRITE));
+		pass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::kSampledCompute));
+		pass.newDependency(RenderPassDependency(m_runCtx.m_downscaledRt, TextureUsageBit::kImageComputeWrite));
 
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 			const UVec2 rezDownscaled =

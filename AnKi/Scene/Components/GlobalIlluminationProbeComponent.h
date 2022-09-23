@@ -108,7 +108,7 @@ public:
 	{
 		updated = m_shapeDirty;
 		m_shapeDirty = false;
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 private:

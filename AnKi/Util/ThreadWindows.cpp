@@ -16,11 +16,7 @@ DWORD ANKI_WINAPI Thread::threadCallback(LPVOID ud)
 	ANKI_ASSERT(ud != nullptr);
 	Thread* thread = reinterpret_cast<Thread*>(ud);
 
-	// Set thread name
-	if(thread->m_name[0] != '\0')
-	{
-		// TODO
-	}
+	setCurrentThreadName(&thread->m_name[0]);
 
 	// Call the callback
 	ThreadCallbackInfo info;
@@ -41,7 +37,7 @@ void Thread::start(void* userData, ThreadCallback callback, const ThreadCoreAffi
 #if ANKI_EXTRA_CHECKS
 	m_started = true;
 #endif
-	m_returnCode = Error::NONE;
+	m_returnCode = Error::kNone;
 
 	m_handle = CreateThread(nullptr, 0, threadCallback, this, 0, nullptr);
 	if(m_handle == nullptr)
@@ -104,9 +100,30 @@ void Thread::pinToCores(const ThreadCoreAffinityMask& coreAffintyMask)
 	}
 }
 
-void Thread::setNameOfCurrentThread(const CString& name)
+void Thread::setCurrentThreadName(const Char* name)
 {
-	// TODO
+	// Copy the string first and limit its size
+	const PtrSize len = min<PtrSize>(strlen(name), kThreadNameMaxLength);
+	if(len > 0)
+	{
+		memcpy(&m_nameTls[0], name, len);
+		m_nameTls[len] = '\0';
+	}
+	else
+	{
+		memcpy(&m_nameTls[0], kDefaultThreadName, strlen(kDefaultThreadName) + 1);
+	}
+
+	// Convert to wstring
+	Array<WChar, kThreadNameMaxLength + 1> wstring;
+	mbstowcs(&wstring[0], &m_nameTls[0], wstring.getSize());
+
+	// Set it
+	const HRESULT r = SetThreadDescription(GetCurrentThread(), &wstring[0]);
+	if(r < 0)
+	{
+		ANKI_UTIL_LOGE("SetThreadDescription() failed. Ignoring error");
+	}
 }
 
 } // end namespace anki

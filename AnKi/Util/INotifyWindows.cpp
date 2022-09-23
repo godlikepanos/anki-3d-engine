@@ -10,7 +10,7 @@ namespace anki {
 Error INotify::initInternal()
 {
 	// TODO
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void INotify::destroyInternal()
@@ -22,7 +22,7 @@ Error INotify::pollEvents(Bool& modified)
 {
 	// TODO
 	modified = false;
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

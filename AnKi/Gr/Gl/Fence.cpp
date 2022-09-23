@@ -64,7 +64,7 @@ Bool Fence::clientWait(Second seconds)
 			else
 			{
 				ANKI_ASSERT(out == GL_WAIT_FAILED);
-				return Error::FUNCTION_FAILED;
+				return Error::kFunctionFailed;
 			}
 
 			if(m_barrier)
@@ -72,7 +72,7 @@ Bool Fence::clientWait(Second seconds)
 				m_barrier->wait();
 			}
 
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 

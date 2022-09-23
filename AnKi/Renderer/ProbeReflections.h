@@ -55,7 +55,7 @@ private:
 	{
 	public:
 		U32 m_tileSize = 0;
-		Array<RenderTargetDescription, GBUFFER_COLOR_ATTACHMENT_COUNT> m_colorRtDescrs;
+		Array<RenderTargetDescription, kGBufferColorRenderTargetCount> m_colorRtDescrs;
 		RenderTargetDescription m_depthRtDescr;
 		FramebufferDescription m_fbDescr;
 	} m_gbuffer; ///< G-buffer pass.
@@ -118,9 +118,9 @@ private:
 	{
 	public:
 		const ReflectionProbeQueueElement* m_probe = nullptr;
-		U32 m_cacheEntryIdx = MAX_U32;
+		U32 m_cacheEntryIdx = kMaxU32;
 
-		Array<RenderTargetHandle, GBUFFER_COLOR_ATTACHMENT_COUNT> m_gbufferColorRts;
+		Array<RenderTargetHandle, kGBufferColorRenderTargetCount> m_gbufferColorRts;
 		RenderTargetHandle m_gbufferDepthRt;
 		RenderTargetHandle m_lightShadingRt;
 		BufferHandle m_irradianceDiceValuesBuffHandle;

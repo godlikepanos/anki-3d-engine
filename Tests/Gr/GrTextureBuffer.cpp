@@ -29,19 +29,19 @@ void main()
 }
 	)";
 
-		ShaderPtr shader = createShader(shaderSrc, ShaderType::COMPUTE, *gr);
+		ShaderPtr shader = createShader(shaderSrc, ShaderType::kCompute, *gr);
 
 		ShaderProgramInitInfo progInit;
 		progInit.m_computeShader = shader;
 		ShaderProgramPtr prog = gr->newShaderProgram(progInit);
 
 		BufferInitInfo buffInit;
-		buffInit.m_mapAccess = BufferMapAccessBit::WRITE;
+		buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
 		buffInit.m_size = sizeof(U8) * 4;
-		buffInit.m_usage = BufferUsageBit::ALL_TEXTURE;
+		buffInit.m_usage = BufferUsageBit::kAllTexture;
 		BufferPtr texBuff = gr->newBuffer(buffInit);
 
-		I8* data = static_cast<I8*>(texBuff->map(0, MAX_PTR_SIZE, BufferMapAccessBit::WRITE));
+		I8* data = static_cast<I8*>(texBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 		const Vec4 values(-1.0f, -0.25f, 0.1345f, 0.8952f);
 		for(U i = 0; i < 4; ++i)
 		{
@@ -50,23 +50,23 @@ void main()
 
 		texBuff->unmap();
 
-		buffInit.m_mapAccess = BufferMapAccessBit::READ;
+		buffInit.m_mapAccess = BufferMapAccessBit::kRead;
 		buffInit.m_size = sizeof(F32) * 4;
-		buffInit.m_usage = BufferUsageBit::ALL_STORAGE;
+		buffInit.m_usage = BufferUsageBit::kAllStorage;
 		BufferPtr storageBuff = gr->newBuffer(buffInit);
 
 		CommandBufferInitInfo cmdbInit;
-		cmdbInit.m_flags = CommandBufferFlag::SMALL_BATCH | CommandBufferFlag::GENERAL_WORK;
+		cmdbInit.m_flags = CommandBufferFlag::kSmallBatch | CommandBufferFlag::kGeneralWork;
 		CommandBufferPtr cmdb = gr->newCommandBuffer(cmdbInit);
 
-		cmdb->bindReadOnlyTextureBuffer(0, 0, texBuff, 0, MAX_PTR_SIZE, Format::R8G8B8A8_SNORM);
-		cmdb->bindStorageBuffer(0, 1, storageBuff, 0, MAX_PTR_SIZE);
+		cmdb->bindReadOnlyTextureBuffer(0, 0, texBuff, 0, kMaxPtrSize, Format::kR8G8B8A8Snorm);
+		cmdb->bindStorageBuffer(0, 1, storageBuff, 0, kMaxPtrSize);
 		cmdb->bindShaderProgram(prog);
 		cmdb->dispatchCompute(1, 1, 1);
 		cmdb->flush();
 		gr->finish();
 
-		const Vec4* inData = static_cast<const Vec4*>(storageBuff->map(0, MAX_PTR_SIZE, BufferMapAccessBit::READ));
+		const Vec4* inData = static_cast<const Vec4*>(storageBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kRead));
 		for(U i = 0; i < 4; ++i)
 		{
 			ANKI_TEST_EXPECT_NEAR(values[i], (*inData)[i], 0.01f);

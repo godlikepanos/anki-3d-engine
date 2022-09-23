@@ -19,7 +19,7 @@
 
 namespace anki {
 
-inline constexpr Array<const char*, U(LoggerMessageType::COUNT)> MSG_TEXT = {"I", "V", "E", "W", "F"};
+inline constexpr Array<const Char*, U(LoggerMessageType::kCount)> kMessageTypeTxt = {"I", "V", "E", "W", "F"};
 
 Logger::Logger()
 {
@@ -65,19 +65,19 @@ void Logger::removeMessageHandler(void* data, LoggerMessageHandlerCallback callb
 	}
 }
 
-void Logger::write(const char* file, int line, const char* func, const char* subsystem, LoggerMessageType type,
-				   ThreadId tid, const char* msg)
+void Logger::write(const Char* file, int line, const Char* func, const Char* subsystem, LoggerMessageType type,
+				   const Char* threadName, const Char* msg)
 {
 	// Note: m_verbosityEnabled is not accessed in a thread-safe way. It doesn't really matter though
-	if(type == LoggerMessageType::VERBOSE && !m_verbosityEnabled)
+	if(type == LoggerMessageType::kVerbose && !m_verbosityEnabled)
 	{
 		return;
 	}
 
-	const char* baseFile = strrchr(file, (ANKI_OS_WINDOWS) ? '\\' : '/');
+	const Char* baseFile = strrchr(file, (ANKI_OS_WINDOWS) ? '\\' : '/');
 	baseFile = (baseFile) ? baseFile + 1 : file;
 
-	LoggerMessageInfo inf = {baseFile, line, func, type, msg, subsystem, tid};
+	LoggerMessageInfo inf = {baseFile, line, func, type, msg, subsystem, threadName};
 
 	m_mutex.lock();
 
@@ -89,14 +89,14 @@ void Logger::write(const char* file, int line, const char* func, const char* sub
 
 	m_mutex.unlock();
 
-	if(type == LoggerMessageType::FATAL)
+	if(type == LoggerMessageType::kFatal)
 	{
 		abort();
 	}
 }
 
-void Logger::writeFormated(const char* file, int line, const char* func, const char* subsystem, LoggerMessageType type,
-						   ThreadId tid, const char* fmt, ...)
+void Logger::writeFormated(const Char* file, int line, const Char* func, const Char* subsystem, LoggerMessageType type,
+						   const Char* threadName, const Char* fmt, ...)
 {
 	Array<Char, 256> buffer;
 	va_list args;
@@ -110,7 +110,7 @@ void Logger::writeFormated(const char* file, int line, const char* func, const c
 	}
 	else if(len < I(sizeof(buffer)))
 	{
-		write(file, line, func, subsystem, type, tid, &buffer[0]);
+		write(file, line, func, subsystem, type, threadName, &buffer[0]);
 		va_end(args);
 	}
 	else
@@ -121,10 +121,10 @@ void Logger::writeFormated(const char* file, int line, const char* func, const c
 		va_start(args, fmt);
 
 		const PtrSize newSize = len + 1;
-		char* newBuffer = static_cast<char*>(malloc(newSize));
+		Char* newBuffer = static_cast<Char*>(malloc(newSize));
 		len = vsnprintf(newBuffer, newSize, fmt, args);
 
-		write(file, line, func, subsystem, type, tid, newBuffer);
+		write(file, line, func, subsystem, type, threadName, newBuffer);
 
 		free(newBuffer);
 		va_end(args);
@@ -137,33 +137,33 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 	// More info about terminal colors:
 	// https://stackoverflow.com/questions/4842424/list-of-ansi-color-escape-sequences
 	FILE* out = nullptr;
-	const char* terminalColor = nullptr;
-	const char* terminalColorBg = nullptr;
-	const char* endTerminalColor = "\033[0m";
+	const Char* terminalColor = nullptr;
+	const Char* terminalColorBg = nullptr;
+	const Char* endTerminalColor = "\033[0m";
 
 	switch(info.m_type)
 	{
-	case LoggerMessageType::NORMAL:
+	case LoggerMessageType::kNormal:
 		out = stdout;
 		terminalColor = "\033[0;32m";
 		terminalColorBg = "\033[1;42;37m";
 		break;
-	case LoggerMessageType::VERBOSE:
+	case LoggerMessageType::kVerbose:
 		out = stdout;
 		terminalColor = "\033[0;34m";
 		terminalColorBg = "\033[1;44;37m";
 		break;
-	case LoggerMessageType::ERROR:
+	case LoggerMessageType::kError:
 		out = stderr;
 		terminalColor = "\033[0;31m";
 		terminalColorBg = "\033[1;41;37m";
 		break;
-	case LoggerMessageType::WARNING:
+	case LoggerMessageType::kWarning:
 		out = stderr;
 		terminalColor = "\033[2;33m";
 		terminalColorBg = "\033[1;43;37m";
 		break;
-	case LoggerMessageType::FATAL:
+	case LoggerMessageType::kFatal:
 		out = stderr;
 		terminalColor = "\033[0;31m";
 		terminalColorBg = "\033[1;41;37m";
@@ -172,7 +172,7 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 		ANKI_ASSERT(0);
 	}
 
-	const char* fmt = "%s[%s][%s][%" PRIx64 "]%s%s %s (%s:%d %s)%s\n";
+	static_assert(Thread::kThreadNameMaxLength == 15, "See file");
 	if(!runningFromATerminal())
 	{
 		terminalColor = "";
@@ -180,36 +180,37 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 		endTerminalColor = "";
 	}
 
-	fprintf(out, fmt, terminalColorBg, MSG_TEXT[U(info.m_type)], info.m_subsystem ? info.m_subsystem : "N/A ",
-			info.m_tid, endTerminalColor, terminalColor, info.m_msg, info.m_file, info.m_line, info.m_func,
-			endTerminalColor);
+	fprintf(out, "%s[%s][%s]%s%s %s [%s:%d][%s][%s]%s\n", terminalColorBg, kMessageTypeTxt[U(info.m_type)],
+			info.m_subsystem ? info.m_subsystem : "N/A ", endTerminalColor, terminalColor, info.m_msg, info.m_file,
+			info.m_line, info.m_func, info.m_threadName, endTerminalColor);
 #elif ANKI_OS_WINDOWS
 	WORD attribs = 0;
-	FILE* out = NULL;
+	FILE* out = nullptr;
 	switch(info.m_type)
 	{
-	case LoggerMessageType::NORMAL:
+	case LoggerMessageType::kNormal:
 		attribs |= FOREGROUND_GREEN;
 		out = stdout;
 		break;
-	case LoggerMessageType::VERBOSE:
+	case LoggerMessageType::kVerbose:
 		attribs |= FOREGROUND_BLUE;
 		out = stdout;
 		break;
-	case LoggerMessageType::ERROR:
+	case LoggerMessageType::kError:
 		attribs |= FOREGROUND_RED;
 		out = stderr;
 		break;
-	case LoggerMessageType::WARNING:
+	case LoggerMessageType::kWarning:
 		attribs |= FOREGROUND_RED | FOREGROUND_GREEN;
 		out = stderr;
 		break;
-	case LoggerMessageType::FATAL:
+	case LoggerMessageType::kFatal:
 		attribs |= FOREGROUND_RED | FOREGROUND_INTENSITY;
 		out = stderr;
 		break;
 	default:
 		ANKI_ASSERT(0);
+		out = stdout;
 	}
 
 	HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -226,8 +227,9 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 		SetConsoleTextAttribute(consoleHandle, attribs);
 
 		// Print
-		fprintf(out, "[%s][%s] %s (%s:%d %s)\n", MSG_TEXT[info.m_type], info.m_subsystem ? info.m_subsystem : "N/A ",
-				info.m_msg, info.m_file, info.m_line, info.m_func);
+		fprintf(out, "[%s][%-4s] %s [%s:%d][%s][%s]\n", kMessageTypeTxt[info.m_type],
+				info.m_subsystem ? info.m_subsystem : "N/A", info.m_msg, info.m_file, info.m_line, info.m_func,
+				info.m_threadName);
 
 		// Restore state
 		SetConsoleTextAttribute(consoleHandle, savedAttribs);
@@ -237,53 +239,29 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 
 	switch(info.m_type)
 	{
-	case LoggerMessageType::NORMAL:
-	case LoggerMessageType::VERBOSE:
+	case LoggerMessageType::kNormal:
+	case LoggerMessageType::kVerbose:
 		andMsgType = ANDROID_LOG_INFO;
 		break;
-	case LoggerMessageType::ERROR:
+	case LoggerMessageType::kError:
 		andMsgType = ANDROID_LOG_ERROR;
 		break;
-	case LoggerMessageType::WARNING:
+	case LoggerMessageType::kWarning:
 		andMsgType = ANDROID_LOG_WARN;
 		break;
-	case LoggerMessageType::FATAL:
+	case LoggerMessageType::kFatal:
 		andMsgType = ANDROID_LOG_ERROR;
 		break;
 	default:
 		ANKI_ASSERT(0);
 	}
 
-	__android_log_print(andMsgType, "AnKi", "[%s][%s] %s (%s:%d %s)\n", MSG_TEXT[info.m_type],
-						info.m_subsystem ? info.m_subsystem : "N/A ", info.m_msg, info.m_file, info.m_line,
-						info.m_func);
+	static_assert(Thread::kThreadNameMaxLength == 15, "See file");
+	__android_log_print(andMsgType, "AnKi", "[%s][%-4s] %s [%s:%d][%s][%s]\n", kMessageTypeTxt[info.m_type],
+						info.m_subsystem ? info.m_subsystem : "N/A ", info.m_msg, info.m_file, info.m_line, info.m_func,
+						info.m_threadName);
 #else
-	FILE* out = NULL;
-
-	switch(info.m_type)
-	{
-	case LoggerMessageType::NORMAL:
-	case LoggerMessageType::VERBOSE:
-		out = stdout;
-		break;
-	case LoggerMessageType::ERROR:
-		out = stderr;
-		break;
-	case LoggerMessageType::WARNING:
-		out = stderr;
-		break;
-	case LoggerMessageType::FATAL:
-		out = stderr;
-		break;
-	default:
-		ANKI_ASSERT(0);
-	}
-
-	fprintf(out, "[%s][%s][%" PRIx64 "] %s (%s:%d %s)\n", MSG_TEXT[info.m_type],
-			info.m_subsystem ? info.m_subsystem : "N/A ", info.m_tid, info.m_msg, info.m_file, info.m_line,
-			info.m_func);
-
-	fflush(out);
+#	error "Not implemented"
 #endif
 }
 
@@ -291,8 +269,8 @@ void Logger::fileMessageHandler(void* pfile, const LoggerMessageInfo& info)
 {
 	File* file = reinterpret_cast<File*>(pfile);
 
-	Error err = file->writeTextf("[%s] %s (%s:%d %s)\n", MSG_TEXT[info.m_type], info.m_msg, info.m_file, info.m_line,
-								 info.m_func);
+	Error err = file->writeTextf("[%s] %s (%s:%d %s)\n", kMessageTypeTxt[info.m_type], info.m_msg, info.m_file,
+								 info.m_line, info.m_func);
 
 	if(!err)
 	{

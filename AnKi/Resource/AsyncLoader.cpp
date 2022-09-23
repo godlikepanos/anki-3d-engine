@@ -10,7 +10,7 @@
 namespace anki {
 
 AsyncLoader::AsyncLoader()
-	: m_thread("anki_asyload")
+	: m_thread("AsyncLoad")
 {
 }
 
@@ -75,7 +75,7 @@ Error AsyncLoader::threadCallback(ThreadCallbackInfo& info)
 
 Error AsyncLoader::threadWorker()
 {
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 
 	while(!err)
 	{

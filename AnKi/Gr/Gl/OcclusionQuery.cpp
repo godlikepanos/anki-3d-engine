@@ -33,7 +33,7 @@ OcclusionQuery* OcclusionQuery::newInstance(GrManager* manager)
 			(void)oldState;
 			ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
 
-			return Error::NONE;
+			return Error::kNone;
 		}
 	};
 

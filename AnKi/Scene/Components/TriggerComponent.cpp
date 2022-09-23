@@ -101,7 +101,7 @@ Error TriggerComponent::update([[maybe_unused]] SceneComponentUpdateInfo& info, 
 	m_callbacks->m_enterUpdated = false;
 	m_callbacks->m_insideUpdated = false;
 	m_callbacks->m_exitUpdated = false;
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

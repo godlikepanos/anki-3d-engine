@@ -19,19 +19,19 @@ void allocateAndPopulateDebugBox(StagingGpuMemoryPool& stagingGpuAllocator, Stag
 	Vec3* verts = static_cast<Vec3*>(
 		stagingGpuAllocator.allocateFrame(sizeof(Vec3) * 8, StagingGpuMemoryType::VERTEX, vertsToken));
 
-	const F32 SIZE = 1.0f;
-	verts[0] = Vec3(SIZE, SIZE, SIZE); // front top right
-	verts[1] = Vec3(-SIZE, SIZE, SIZE); // front top left
-	verts[2] = Vec3(-SIZE, -SIZE, SIZE); // front bottom left
-	verts[3] = Vec3(SIZE, -SIZE, SIZE); // front bottom right
-	verts[4] = Vec3(SIZE, SIZE, -SIZE); // back top right
-	verts[5] = Vec3(-SIZE, SIZE, -SIZE); // back top left
-	verts[6] = Vec3(-SIZE, -SIZE, -SIZE); // back bottom left
-	verts[7] = Vec3(SIZE, -SIZE, -SIZE); // back bottom right
+	constexpr F32 kSize = 1.0f;
+	verts[0] = Vec3(kSize, kSize, kSize); // front top right
+	verts[1] = Vec3(-kSize, kSize, kSize); // front top left
+	verts[2] = Vec3(-kSize, -kSize, kSize); // front bottom left
+	verts[3] = Vec3(kSize, -kSize, kSize); // front bottom right
+	verts[4] = Vec3(kSize, kSize, -kSize); // back top right
+	verts[5] = Vec3(-kSize, kSize, -kSize); // back top left
+	verts[6] = Vec3(-kSize, -kSize, -kSize); // back bottom left
+	verts[7] = Vec3(kSize, -kSize, -kSize); // back bottom right
 
-	const U INDEX_COUNT = 12 * 2;
+	constexpr U kIndexCount = 12 * 2;
 	U16* indices = static_cast<U16*>(
-		stagingGpuAllocator.allocateFrame(sizeof(U16) * INDEX_COUNT, StagingGpuMemoryType::VERTEX, indicesToken));
+		stagingGpuAllocator.allocateFrame(sizeof(U16) * kIndexCount, StagingGpuMemoryType::VERTEX, indicesToken));
 
 	U c = 0;
 	indices[c++] = 0;
@@ -61,8 +61,8 @@ void allocateAndPopulateDebugBox(StagingGpuMemoryPool& stagingGpuAllocator, Stag
 	indices[c++] = 3;
 	indices[c++] = 7;
 
-	ANKI_ASSERT(c == INDEX_COUNT);
-	indexCount = INDEX_COUNT;
+	ANKI_ASSERT(c == kIndexCount);
+	indexCount = kIndexCount;
 }
 
 Error DebugDrawer2::init(ResourceManager* rsrcManager)
@@ -71,12 +71,12 @@ Error DebugDrawer2::init(ResourceManager* rsrcManager)
 
 	{
 		BufferInitInfo bufferInit("DebugCube");
-		bufferInit.m_usage = BufferUsageBit::VERTEX;
+		bufferInit.m_usage = BufferUsageBit::kVertex;
 		bufferInit.m_size = sizeof(Vec3) * 8;
-		bufferInit.m_mapAccess = BufferMapAccessBit::WRITE;
+		bufferInit.m_mapAccess = BufferMapAccessBit::kWrite;
 		m_cubePositionsBuffer = rsrcManager->getGrManager().newBuffer(bufferInit);
 
-		Vec3* verts = static_cast<Vec3*>(m_cubePositionsBuffer->map(0, MAX_PTR_SIZE, BufferMapAccessBit::WRITE));
+		Vec3* verts = static_cast<Vec3*>(m_cubePositionsBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 
 		const F32 size = 1.0f;
 		verts[0] = Vec3(size, size, size); // front top right
@@ -88,20 +88,20 @@ Error DebugDrawer2::init(ResourceManager* rsrcManager)
 		verts[6] = Vec3(-size, -size, -size); // back bottom left
 		verts[7] = Vec3(size, -size, -size); // back bottom right
 
-		m_cubePositionsBuffer->flush(0, MAX_PTR_SIZE);
+		m_cubePositionsBuffer->flush(0, kMaxPtrSize);
 		m_cubePositionsBuffer->unmap();
 	}
 
 	{
-		constexpr U INDEX_COUNT = 12 * 2;
+		constexpr U kIndexCount = 12 * 2;
 
 		BufferInitInfo bufferInit("DebugCube");
-		bufferInit.m_usage = BufferUsageBit::VERTEX;
-		bufferInit.m_size = sizeof(U16) * INDEX_COUNT;
-		bufferInit.m_mapAccess = BufferMapAccessBit::WRITE;
+		bufferInit.m_usage = BufferUsageBit::kVertex;
+		bufferInit.m_size = sizeof(U16) * kIndexCount;
+		bufferInit.m_mapAccess = BufferMapAccessBit::kWrite;
 		m_cubeIndicesBuffer = rsrcManager->getGrManager().newBuffer(bufferInit);
 
-		U16* indices = static_cast<U16*>(m_cubeIndicesBuffer->map(0, MAX_PTR_SIZE, BufferMapAccessBit::WRITE));
+		U16* indices = static_cast<U16*>(m_cubeIndicesBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 
 		U32 indexCount = 0;
 		indices[indexCount++] = 0;
@@ -131,11 +131,11 @@ Error DebugDrawer2::init(ResourceManager* rsrcManager)
 		indices[indexCount++] = 3;
 		indices[indexCount++] = 7;
 
-		m_cubeIndicesBuffer->flush(0, MAX_PTR_SIZE);
+		m_cubeIndicesBuffer->flush(0, kMaxPtrSize);
 		m_cubeIndicesBuffer->unmap();
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void DebugDrawer2::drawCubes(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 lineSize, Bool ditherFailedDepth,
@@ -167,15 +167,15 @@ void DebugDrawer2::drawCubes(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 l
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	cmdb->bindShaderProgram(variant->getProgram());
 
-	cmdb->setVertexAttribute(0, 0, Format::R32G32B32_SFLOAT, 0);
+	cmdb->setVertexAttribute(0, 0, Format::kR32G32B32Sfloat, 0);
 	cmdb->bindVertexBuffer(0, m_cubePositionsBuffer, 0, sizeof(Vec3));
-	cmdb->bindIndexBuffer(m_cubeIndicesBuffer, 0, IndexType::U16);
+	cmdb->bindIndexBuffer(m_cubeIndicesBuffer, 0, IndexType::kU16);
 
 	cmdb->bindUniformBuffer(1, 0, unisToken.m_buffer, unisToken.m_offset, unisToken.m_range);
 
 	cmdb->setLineWidth(lineSize);
-	constexpr U INDEX_COUNT = 12 * 2;
-	cmdb->drawElements(PrimitiveTopology::LINES, INDEX_COUNT, mvps.getSize());
+	constexpr U kIndexCount = 12 * 2;
+	cmdb->drawElements(PrimitiveTopology::kLines, kIndexCount, mvps.getSize());
 }
 
 void DebugDrawer2::drawLines(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 lineSize, Bool ditherFailedDepth,
@@ -209,13 +209,13 @@ void DebugDrawer2::drawLines(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 l
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	cmdb->bindShaderProgram(variant->getProgram());
 
-	cmdb->setVertexAttribute(0, 0, Format::R32G32B32_SFLOAT, 0);
+	cmdb->setVertexAttribute(0, 0, Format::kR32G32B32Sfloat, 0);
 	cmdb->bindVertexBuffer(0, vertsToken.m_buffer, vertsToken.m_offset, sizeof(Vec3));
 
 	cmdb->bindUniformBuffer(1, 0, unisToken.m_buffer, unisToken.m_offset, unisToken.m_range);
 
 	cmdb->setLineWidth(lineSize);
-	cmdb->drawArrays(PrimitiveTopology::LINES, linePositions.getSize(), mvps.getSize());
+	cmdb->drawArrays(PrimitiveTopology::kLines, linePositions.getSize(), mvps.getSize());
 }
 
 void DebugDrawer2::drawBillboardTextures(const Mat4& projMat, const Mat3x4& viewMat, ConstWeakArray<Vec3> positions,
@@ -276,8 +276,8 @@ void DebugDrawer2::drawBillboardTextures(const Mat4& projMat, const Mat3x4& view
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	cmdb->bindShaderProgram(variant->getProgram());
 
-	cmdb->setVertexAttribute(0, 0, Format::R32G32B32_SFLOAT, 0);
-	cmdb->setVertexAttribute(1, 1, Format::R32G32_SFLOAT, 0);
+	cmdb->setVertexAttribute(0, 0, Format::kR32G32B32Sfloat, 0);
+	cmdb->setVertexAttribute(1, 1, Format::kR32G32Sfloat, 0);
 	cmdb->bindVertexBuffer(0, positionsToken.m_buffer, positionsToken.m_offset, sizeof(Vec3));
 	cmdb->bindVertexBuffer(1, uvsToken.m_buffer, uvsToken.m_offset, sizeof(Vec2));
 
@@ -285,7 +285,7 @@ void DebugDrawer2::drawBillboardTextures(const Mat4& projMat, const Mat3x4& view
 	cmdb->bindSampler(1, 1, sampler);
 	cmdb->bindTexture(1, 2, tex);
 
-	cmdb->drawArrays(PrimitiveTopology::TRIANGLE_STRIP, 4, positions.getSize());
+	cmdb->drawArrays(PrimitiveTopology::kTriangleStrip, 4, positions.getSize());
 }
 
 void PhysicsDebugDrawer::drawLines(const Vec3* lines, const U32 vertCount, const Vec4& color)

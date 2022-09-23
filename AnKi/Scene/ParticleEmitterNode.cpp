@@ -32,7 +32,7 @@ public:
 			static_cast<ParticleEmitterNode&>(*info.m_node).onMoveComponentUpdate(move);
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 
@@ -54,7 +54,7 @@ public:
 	{
 		updated = false;
 		static_cast<ParticleEmitterNode&>(*info.m_node).onShapeUpdate();
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 
@@ -102,7 +102,7 @@ Error ParticleEmitterNode::frameUpdate([[maybe_unused]] Second prevUpdateTime, [
 		rc.setFlagsFromMaterial(pec.getParticleEmitterResource()->getMaterial());
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

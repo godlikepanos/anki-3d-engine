@@ -18,7 +18,7 @@ namespace anki {
 class Obb
 {
 public:
-	static constexpr CollisionShapeType CLASS_TYPE = CollisionShapeType::OBB;
+	static constexpr CollisionShapeType kClassType = CollisionShapeType::kOBB;
 
 	/// Will not initialize any memory, nothing.
 	Obb()
@@ -110,27 +110,27 @@ public:
 private:
 	Vec4 m_center
 #if ANKI_ENABLE_ASSERTIONS
-		= Vec4(MAX_F32)
+		= Vec4(kMaxF32)
 #endif
 		;
 
 	Vec4 m_extend /// With identity rotation this points to max (front, right, top in our case)
 #if ANKI_ENABLE_ASSERTIONS
-		= Vec4(MAX_F32)
+		= Vec4(kMaxF32)
 #endif
 		;
 
 	Mat3x4 m_rotation
 #if ANKI_ENABLE_ASSERTIONS
-		= Mat3x4(MAX_F32)
+		= Mat3x4(kMaxF32)
 #endif
 		;
 
 	void check() const
 	{
-		ANKI_ASSERT(m_center != Vec4(MAX_F32));
-		ANKI_ASSERT(m_extend != Vec4(MAX_F32));
-		ANKI_ASSERT(m_rotation != Mat3x4(MAX_F32));
+		ANKI_ASSERT(m_center != Vec4(kMaxF32));
+		ANKI_ASSERT(m_extend != Vec4(kMaxF32));
+		ANKI_ASSERT(m_rotation != Mat3x4(kMaxF32));
 		ANKI_ASSERT(m_center.w() == 0.0f && m_extend.w() == 0.0f);
 	}
 };

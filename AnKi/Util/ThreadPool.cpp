@@ -5,6 +5,7 @@
 
 #include <AnKi/Util/ThreadPool.h>
 #include <AnKi/Util/Logger.h>
+#include <AnKi/Util/String.h>
 #include <cstdlib>
 #include <new>
 
@@ -23,9 +24,9 @@ public:
 	Bool m_quit = false;
 
 	/// Constructor
-	ThreadPoolThread(U32 id, ThreadPool* threadpool, Bool pinToCore)
+	ThreadPoolThread(U32 id, ThreadPool* threadpool, Bool pinToCore, CString threadName)
 		: m_id(id)
-		, m_thread("anki_threadpool")
+		, m_thread(threadName.cstr())
 		, m_task(nullptr)
 		, m_threadpool(threadpool)
 	{
@@ -59,7 +60,7 @@ private:
 			barrier.wait();
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 
@@ -71,7 +72,7 @@ ThreadPool::ThreadPool(U32 threadCount, Bool pinToCores)
 	: m_barrier(threadCount + 1)
 {
 	m_threadsCount = threadCount;
-	ANKI_ASSERT(m_threadsCount <= MAX_THREADS && m_threadsCount > 0);
+	ANKI_ASSERT(m_threadsCount <= kMaxThreads && m_threadsCount > 0);
 
 	m_threads = static_cast<detail::ThreadPoolThread*>(malloc(sizeof(detail::ThreadPoolThread) * m_threadsCount));
 
@@ -80,9 +81,11 @@ ThreadPool::ThreadPool(U32 threadCount, Bool pinToCores)
 		ANKI_UTIL_LOGF("Out of memory");
 	}
 
-	while(threadCount-- != 0)
+	for(U32 i = 0; i < threadCount; ++i)
 	{
-		::new(&m_threads[threadCount]) detail::ThreadPoolThread(threadCount, this, pinToCores);
+		Array<Char, 64> threadName;
+		snprintf(&threadName[0], threadName.getSize(), "ThreadPool#%u", i);
+		::new(&m_threads[i]) detail::ThreadPoolThread(i, this, pinToCores, &threadName[0]);
 	}
 }
 

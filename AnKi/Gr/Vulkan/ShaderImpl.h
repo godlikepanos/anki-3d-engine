@@ -21,11 +21,11 @@ class ShaderImpl final : public Shader, public VulkanObject<Shader, ShaderImpl>
 public:
 	VkShaderModule m_handle = VK_NULL_HANDLE;
 
-	Array<DynamicArray<DescriptorBinding>, MAX_DESCRIPTOR_SETS> m_bindings;
-	BitSet<MAX_COLOR_ATTACHMENTS, U8> m_colorAttachmentWritemask = {false};
-	BitSet<MAX_VERTEX_ATTRIBUTES, U8> m_attributeMask = {false};
-	BitSet<MAX_DESCRIPTOR_SETS, U8> m_descriptorSetMask = {false};
-	Array<BitSet<MAX_BINDINGS_PER_DESCRIPTOR_SET, U8>, MAX_DESCRIPTOR_SETS> m_activeBindingMask = {
+	Array<DynamicArray<DescriptorBinding>, kMaxDescriptorSets> m_bindings;
+	BitSet<kMaxColorRenderTargets, U8> m_colorAttachmentWritemask = {false};
+	BitSet<kMaxVertexAttributes, U8> m_attributeMask = {false};
+	BitSet<kMaxDescriptorSets, U8> m_descriptorSetMask = {false};
+	Array<BitSet<kMaxBindingsPerDescriptorSet, U8>, kMaxDescriptorSets> m_activeBindingMask = {
 		{{false}, {false}, {false}}};
 	U32 m_pushConstantsSize = 0;
 

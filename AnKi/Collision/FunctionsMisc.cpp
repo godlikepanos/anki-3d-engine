@@ -21,12 +21,12 @@ void extractClipPlane(const Mat4& mvp, FrustumPlaneType id, Plane& plane)
 
 	switch(id)
 	{
-		ANKI_CASE(FrustumPlaneType::NEAR, 3, +, 2)
-		ANKI_CASE(FrustumPlaneType::FAR, 3, -, 2)
-		ANKI_CASE(FrustumPlaneType::LEFT, 3, +, 0)
-		ANKI_CASE(FrustumPlaneType::RIGHT, 3, -, 0)
-		ANKI_CASE(FrustumPlaneType::TOP, 3, -, 1)
-		ANKI_CASE(FrustumPlaneType::BOTTOM, 3, +, 1)
+		ANKI_CASE(FrustumPlaneType::kNear, 3, +, 2)
+		ANKI_CASE(FrustumPlaneType::kFar, 3, -, 2)
+		ANKI_CASE(FrustumPlaneType::kLeft, 3, +, 0)
+		ANKI_CASE(FrustumPlaneType::kRight, 3, -, 0)
+		ANKI_CASE(FrustumPlaneType::kTop, 3, -, 1)
+		ANKI_CASE(FrustumPlaneType::kBottom, 3, +, 1)
 	default:
 		ANKI_ASSERT(0);
 	}

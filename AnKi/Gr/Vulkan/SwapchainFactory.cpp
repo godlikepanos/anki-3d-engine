@@ -44,18 +44,18 @@ Error MicroSwapchain::initInternal()
 																m_factory->m_gr->getSurface(), &surfaceProperties));
 
 #if ANKI_WINDOWING_SYSTEM_HEADLESS
-		if(surfaceProperties.currentExtent.width != MAX_U32 || surfaceProperties.currentExtent.height != MAX_U32)
+		if(surfaceProperties.currentExtent.width != kMaxU32 || surfaceProperties.currentExtent.height != kMaxU32)
 		{
 			ANKI_VK_LOGE("Was expecting an indication that the surface size will be determined by the extent of a "
 						 "swapchain targeting the surface");
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 		m_factory->m_gr->getNativeWindowSize(surfaceWidth, surfaceHeight);
 #else
-		if(surfaceProperties.currentExtent.width == MAX_U32 || surfaceProperties.currentExtent.height == MAX_U32)
+		if(surfaceProperties.currentExtent.width == kMaxU32 || surfaceProperties.currentExtent.height == kMaxU32)
 		{
 			ANKI_VK_LOGE("Wrong surface size");
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 		surfaceWidth = surfaceProperties.currentExtent.width;
 		surfaceHeight = surfaceProperties.currentExtent.height;
@@ -76,7 +76,7 @@ Error MicroSwapchain::initInternal()
 														   m_factory->m_gr->getSurface(), &formatCount, &formats[0]));
 
 		ANKI_VK_LOGV("Supported surface formats:");
-		Format akSurfaceFormat = Format::NONE;
+		Format akSurfaceFormat = Format::kNone;
 		for(U32 i = 0; i < formatCount; ++i)
 		{
 			const VkFormat vkFormat = formats[i].format;
@@ -86,15 +86,15 @@ Error MicroSwapchain::initInternal()
 #define ANKI_FORMAT_DEF(type, id, componentCount, texelSize, blockWidth, blockHeight, blockSize, shaderType, \
 						depthStencil) \
 	case id: \
-		akFormat = Format::type; \
+		akFormat = Format::k##type; \
 		break;
 #include <AnKi/Gr/Format.defs.h>
 #undef ANKI_FORMAT_DEF
 			default:
-				akFormat = Format::NONE;
+				akFormat = Format::kNone;
 			}
 
-			ANKI_VK_LOGV("\t%s", (akFormat != Format::NONE) ? getFormatInfo(akFormat).m_name : "Unknown format");
+			ANKI_VK_LOGV("\t%s", (akFormat != Format::kNone) ? getFormatInfo(akFormat).m_name : "Unknown format");
 
 			if(surfaceFormat == VK_FORMAT_UNDEFINED
 			   && (vkFormat == VK_FORMAT_R8G8B8A8_UNORM || vkFormat == VK_FORMAT_B8G8R8A8_UNORM
@@ -109,7 +109,7 @@ Error MicroSwapchain::initInternal()
 		if(surfaceFormat == VK_FORMAT_UNDEFINED)
 		{
 			ANKI_VK_LOGE("Suitable surface format not found");
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 		else
 		{
@@ -162,7 +162,7 @@ Error MicroSwapchain::initInternal()
 		if(presentMode == VK_PRESENT_MODE_MAX_ENUM_KHR)
 		{
 			ANKI_VK_LOGE("Couldn't find a present mode");
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 	}
 
@@ -188,13 +188,13 @@ Error MicroSwapchain::initInternal()
 		else
 		{
 			ANKI_VK_LOGE("Failed to set compositeAlpha");
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 
 		VkSwapchainCreateInfoKHR ci = {};
 		ci.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 		ci.surface = m_factory->m_gr->getSurface();
-		ci.minImageCount = MAX_FRAMES_IN_FLIGHT;
+		ci.minImageCount = kMaxFramesInFlight;
 		ci.imageFormat = surfaceFormat;
 		ci.imageColorSpace = colorspace;
 		ci.imageExtent.width = surfaceWidth;
@@ -217,9 +217,9 @@ Error MicroSwapchain::initInternal()
 	{
 		U32 count = 0;
 		ANKI_VK_CHECK(vkGetSwapchainImagesKHR(dev, m_swapchain, &count, nullptr));
-		if(count != MAX_FRAMES_IN_FLIGHT)
+		if(count != kMaxFramesInFlight)
 		{
-			ANKI_VK_LOGI("Requested a swapchain with %u images but got one with %u", MAX_FRAMES_IN_FLIGHT, count);
+			ANKI_VK_LOGI("Requested a swapchain with %u images but got one with %u", kMaxFramesInFlight, count);
 		}
 
 		m_textures.create(getAllocator(), count);
@@ -236,10 +236,10 @@ Error MicroSwapchain::initInternal()
 			init.m_width = surfaceWidth;
 			init.m_height = surfaceHeight;
 			init.m_format = Format(surfaceFormat); // anki::Format is compatible with VkFormat
-			init.m_usage = TextureUsageBit::IMAGE_COMPUTE_WRITE | TextureUsageBit::IMAGE_TRACE_RAYS_WRITE
-						   | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ
-						   | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::PRESENT;
-			init.m_type = TextureType::_2D;
+			init.m_usage = TextureUsageBit::kImageComputeWrite | TextureUsageBit::kImageTraceRaysWrite
+						   | TextureUsageBit::kFramebufferRead | TextureUsageBit::kFramebufferWrite
+						   | TextureUsageBit::kPresent;
+			init.m_type = TextureType::k2D;
 
 			TextureImpl* tex =
 				m_factory->m_gr->getAllocator().newInstance<TextureImpl>(m_factory->m_gr, init.getName());
@@ -248,7 +248,7 @@ Error MicroSwapchain::initInternal()
 		}
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 GrAllocator<U8> MicroSwapchain::getAllocator() const

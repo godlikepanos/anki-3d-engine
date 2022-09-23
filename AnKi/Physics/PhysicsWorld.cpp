@@ -60,8 +60,8 @@ public:
 		}
 
 		// Reject if they are both static
-		if(ANKI_UNLIKELY(fobj0->getMaterialGroup() == PhysicsMaterialBit::STATIC_GEOMETRY
-						 && fobj1->getMaterialGroup() == PhysicsMaterialBit::STATIC_GEOMETRY))
+		if(ANKI_UNLIKELY(fobj0->getMaterialGroup() == PhysicsMaterialBit::kStaticGeometry
+						 && fobj1->getMaterialGroup() == PhysicsMaterialBit::kStaticGeometry))
 		{
 			return false;
 		}
@@ -186,7 +186,7 @@ Error PhysicsWorld::init(AllocAlignedCallback allocCb, void* allocCbData)
 	m_world.init(m_dispatcher.get(), m_broadphase.get(), m_solver.get(), m_collisionConfig.get());
 	m_world->setGravity(btVector3(0.0f, -9.8f, 0.0f));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void PhysicsWorld::destroyMarkedForDeletion()
@@ -243,7 +243,7 @@ void PhysicsWorld::update(Second dt)
 	}
 
 	// Update the player controllers
-	for(PhysicsObject& obj : m_objectLists[PhysicsObjectType::PLAYER_CONTROLLER])
+	for(PhysicsObject& obj : m_objectLists[PhysicsObjectType::kPlayerController])
 	{
 		PhysicsPlayerController& playerController = static_cast<PhysicsPlayerController&>(obj);
 		playerController.moveToPositionForReal();
@@ -253,7 +253,7 @@ void PhysicsWorld::update(Second dt)
 	m_world->stepSimulation(F32(dt), 1, 1.0f / 60.0f);
 
 	// Process trigger contacts
-	for(PhysicsObject& trigger : m_objectLists[PhysicsObjectType::TRIGGER])
+	for(PhysicsObject& trigger : m_objectLists[PhysicsObjectType::kTrigger])
 	{
 		static_cast<PhysicsTrigger&>(trigger).processContacts();
 	}
@@ -293,7 +293,7 @@ PhysicsTriggerFilteredPair* PhysicsWorld::getOrCreatePhysicsTriggerFilteredPair(
 {
 	ANKI_ASSERT(trigger && filtered);
 
-	U32 emptySlot = MAX_U32;
+	U32 emptySlot = kMaxU32;
 	for(U32 i = 0; i < filtered->m_triggerFilteredPairs.getSize(); ++i)
 	{
 		PhysicsTriggerFilteredPair* pair = filtered->m_triggerFilteredPairs[i];
@@ -318,7 +318,7 @@ PhysicsTriggerFilteredPair* PhysicsWorld::getOrCreatePhysicsTriggerFilteredPair(
 		}
 	}
 
-	if(emptySlot == MAX_U32)
+	if(emptySlot == kMaxU32)
 	{
 		ANKI_PHYS_LOGW("Contact ignored. Too many active contacts for the filtered object");
 		return nullptr;

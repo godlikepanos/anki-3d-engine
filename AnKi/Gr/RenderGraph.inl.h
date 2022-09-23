@@ -33,10 +33,10 @@ inline TexturePtr RenderPassWorkContext::getTexture(RenderTargetHandle handle) c
 
 inline void RenderPassDescriptionBase::fixSubresource(RenderPassDependency& dep) const
 {
-	ANKI_ASSERT(dep.m_type == RenderPassDependency::Type::TEXTURE);
+	ANKI_ASSERT(dep.m_type == RenderPassDependency::Type::kTexture);
 
 	TextureSubresourceInfo& subresource = dep.m_texture.m_subresource;
-	const Bool wholeTexture = subresource.m_mipmapCount == MAX_U32;
+	const Bool wholeTexture = subresource.m_mipmapCount == kMaxU32;
 	const RenderGraphDescription::RT& rt = m_descr->m_renderTargets[dep.m_texture.m_handle.m_idx];
 	if(wholeTexture)
 	{
@@ -65,44 +65,44 @@ inline void RenderPassDescriptionBase::fixSubresource(RenderPassDependency& dep)
 inline void RenderPassDescriptionBase::validateDep(const RenderPassDependency& dep)
 {
 	// Validate dep
-	if(dep.m_type == RenderPassDependency::Type::TEXTURE)
+	if(dep.m_type == RenderPassDependency::Type::kTexture)
 	{
 		[[maybe_unused]] const TextureUsageBit usage = dep.m_texture.m_usage;
-		if(m_type == Type::GRAPHICS)
+		if(m_type == Type::kGraphics)
 		{
-			ANKI_ASSERT(!(usage & TextureUsageBit::ALL_COMPUTE));
+			ANKI_ASSERT(!(usage & TextureUsageBit::kAllCompute));
 		}
 		else
 		{
-			ANKI_ASSERT(!(usage & TextureUsageBit::ALL_GRAPHICS));
+			ANKI_ASSERT(!(usage & TextureUsageBit::kAllGraphics));
 		}
 
-		ANKI_ASSERT(!!(usage & TextureUsageBit::ALL_READ) || !!(usage & TextureUsageBit::ALL_WRITE));
+		ANKI_ASSERT(!!(usage & TextureUsageBit::kAllRead) || !!(usage & TextureUsageBit::kAllWrite));
 	}
-	else if(dep.m_type == RenderPassDependency::Type::BUFFER)
+	else if(dep.m_type == RenderPassDependency::Type::kBuffer)
 	{
 		[[maybe_unused]] const BufferUsageBit usage = dep.m_buffer.m_usage;
-		if(m_type == Type::GRAPHICS)
+		if(m_type == Type::kGraphics)
 		{
-			ANKI_ASSERT(!(usage & BufferUsageBit::ALL_COMPUTE));
+			ANKI_ASSERT(!(usage & BufferUsageBit::kAllCompute));
 		}
 		else
 		{
-			ANKI_ASSERT(!(usage & BufferUsageBit::ALL_GRAPHICS));
+			ANKI_ASSERT(!(usage & BufferUsageBit::kAllGraphics));
 		}
 
-		ANKI_ASSERT(!!(usage & BufferUsageBit::ALL_READ) || !!(usage & BufferUsageBit::ALL_WRITE));
+		ANKI_ASSERT(!!(usage & BufferUsageBit::kAllRead) || !!(usage & BufferUsageBit::kAllWrite));
 	}
 	else
 	{
-		ANKI_ASSERT(dep.m_type == RenderPassDependency::Type::ACCELERATION_STRUCTURE);
-		if(m_type == Type::GRAPHICS)
+		ANKI_ASSERT(dep.m_type == RenderPassDependency::Type::kAccelerationStructure);
+		if(m_type == Type::kGraphics)
 		{
-			ANKI_ASSERT(!(dep.m_as.m_usage & ~AccelerationStructureUsageBit::ALL_GRAPHICS));
+			ANKI_ASSERT(!(dep.m_as.m_usage & ~AccelerationStructureUsageBit::kAllGraphics));
 		}
 		else
 		{
-			ANKI_ASSERT(!(dep.m_as.m_usage & AccelerationStructureUsageBit::ALL_GRAPHICS));
+			ANKI_ASSERT(!(dep.m_as.m_usage & AccelerationStructureUsageBit::kAllGraphics));
 		}
 	}
 }
@@ -111,17 +111,17 @@ inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency&
 {
 	validateDep(dep);
 
-	if(dep.m_type == RenderPassDependency::Type::TEXTURE)
+	if(dep.m_type == RenderPassDependency::Type::kTexture)
 	{
 		m_rtDeps.emplaceBack(m_alloc, dep);
 		fixSubresource(m_rtDeps.getBack());
 
-		if(!!(dep.m_texture.m_usage & TextureUsageBit::ALL_READ))
+		if(!!(dep.m_texture.m_usage & TextureUsageBit::kAllRead))
 		{
 			m_readRtMask.set(dep.m_texture.m_handle.m_idx);
 		}
 
-		if(!!(dep.m_texture.m_usage & TextureUsageBit::ALL_WRITE))
+		if(!!(dep.m_texture.m_usage & TextureUsageBit::kAllWrite))
 		{
 			m_writeRtMask.set(dep.m_texture.m_handle.m_idx);
 		}
@@ -129,31 +129,31 @@ inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency&
 		// Try to derive the usage by that dep
 		m_descr->m_renderTargets[dep.m_texture.m_handle.m_idx].m_usageDerivedByDeps |= dep.m_texture.m_usage;
 	}
-	else if(dep.m_type == RenderPassDependency::Type::BUFFER)
+	else if(dep.m_type == RenderPassDependency::Type::kBuffer)
 	{
 		m_buffDeps.emplaceBack(m_alloc, dep);
 
-		if(!!(dep.m_buffer.m_usage & BufferUsageBit::ALL_READ))
+		if(!!(dep.m_buffer.m_usage & BufferUsageBit::kAllRead))
 		{
 			m_readBuffMask.set(dep.m_buffer.m_handle.m_idx);
 		}
 
-		if(!!(dep.m_buffer.m_usage & BufferUsageBit::ALL_WRITE))
+		if(!!(dep.m_buffer.m_usage & BufferUsageBit::kAllWrite))
 		{
 			m_writeBuffMask.set(dep.m_buffer.m_handle.m_idx);
 		}
 	}
 	else
 	{
-		ANKI_ASSERT(dep.m_type == RenderPassDependency::Type::ACCELERATION_STRUCTURE);
+		ANKI_ASSERT(dep.m_type == RenderPassDependency::Type::kAccelerationStructure);
 		m_asDeps.emplaceBack(m_alloc, dep);
 
-		if(!!(dep.m_as.m_usage & AccelerationStructureUsageBit::ALL_READ))
+		if(!!(dep.m_as.m_usage & AccelerationStructureUsageBit::kAllRead))
 		{
 			m_readAsMask.set(dep.m_as.m_handle.m_idx);
 		}
 
-		if(!!(dep.m_as.m_usage & AccelerationStructureUsageBit::ALL_WRITE))
+		if(!!(dep.m_as.m_usage & AccelerationStructureUsageBit::kAllWrite))
 		{
 			m_writeAsMask.set(dep.m_as.m_handle.m_idx);
 		}
@@ -165,7 +165,7 @@ inline void GraphicsRenderPassDescription::setFramebufferInfo(
 	RenderTargetHandle depthStencilRenderTargetHandle, RenderTargetHandle shadingRateRenderTargetHandle, U32 minx,
 	U32 miny, U32 maxx, U32 maxy)
 {
-	Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS> rts;
+	Array<RenderTargetHandle, kMaxColorRenderTargets> rts;
 	U32 count = 0;
 	for(const RenderTargetHandle& h : colorRenderTargetHandles)
 	{
@@ -215,8 +215,8 @@ inline void GraphicsRenderPassDescription::setFramebufferInfo(
 
 	m_fbDescr = fbInfo;
 	memcpy(m_rtHandles.getBegin(), colorRenderTargetHandles.getBegin(), colorRenderTargetHandles.getSizeInBytes());
-	m_rtHandles[MAX_COLOR_ATTACHMENTS] = depthStencilRenderTargetHandle;
-	m_rtHandles[MAX_COLOR_ATTACHMENTS + 1] = shadingRateRenderTargetHandle;
+	m_rtHandles[kMaxColorRenderTargets] = depthStencilRenderTargetHandle;
+	m_rtHandles[kMaxColorRenderTargets + 1] = shadingRateRenderTargetHandle;
 	m_fbRenderArea = {minx, miny, maxx, maxy};
 }
 
@@ -260,7 +260,7 @@ inline RenderTargetHandle RenderGraphDescription::importRenderTarget(TexturePtr 
 	RT& rt = *m_renderTargets.emplaceBack(m_alloc);
 	rt.m_importedTex = tex;
 	rt.m_importedLastKnownUsage = usage;
-	rt.m_usageDerivedByDeps = TextureUsageBit::NONE;
+	rt.m_usageDerivedByDeps = TextureUsageBit::kNone;
 	rt.setName(tex->getName());
 
 	RenderTargetHandle out;
@@ -270,7 +270,7 @@ inline RenderTargetHandle RenderGraphDescription::importRenderTarget(TexturePtr 
 
 inline RenderTargetHandle RenderGraphDescription::importRenderTarget(TexturePtr tex)
 {
-	RenderTargetHandle out = importRenderTarget(tex, TextureUsageBit::NONE);
+	RenderTargetHandle out = importRenderTarget(tex, TextureUsageBit::kNone);
 	m_renderTargets.getBack().m_importedAndUndefinedUsage = true;
 	return out;
 }
@@ -278,12 +278,13 @@ inline RenderTargetHandle RenderGraphDescription::importRenderTarget(TexturePtr 
 inline RenderTargetHandle RenderGraphDescription::newRenderTarget(const RenderTargetDescription& initInf)
 {
 	ANKI_ASSERT(initInf.m_hash && "Forgot to call RenderTargetDescription::bake");
-	ANKI_ASSERT(initInf.m_usage == TextureUsageBit::NONE && "Don't need to supply the usage. Render grap will find it");
+	ANKI_ASSERT(initInf.m_usage == TextureUsageBit::kNone
+				&& "Don't need to supply the usage. Render grap will find it");
 	RT& rt = *m_renderTargets.emplaceBack(m_alloc);
 	rt.m_initInfo = initInf;
 	rt.m_hash = initInf.m_hash;
-	rt.m_importedLastKnownUsage = TextureUsageBit::NONE;
-	rt.m_usageDerivedByDeps = TextureUsageBit::NONE;
+	rt.m_importedLastKnownUsage = TextureUsageBit::kNone;
+	rt.m_usageDerivedByDeps = TextureUsageBit::kNone;
 	rt.setName(initInf.getName());
 
 	RenderTargetHandle out;
@@ -295,7 +296,7 @@ inline BufferHandle RenderGraphDescription::importBuffer(BufferPtr buff, BufferU
 														 PtrSize range)
 {
 	// Checks
-	if(range == MAX_PTR_SIZE)
+	if(range == kMaxPtrSize)
 	{
 		ANKI_ASSERT(offset < buff->getSize());
 	}

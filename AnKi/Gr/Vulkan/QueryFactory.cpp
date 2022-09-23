@@ -73,12 +73,12 @@ Error QueryFactory::newQuery(MicroQuery& handle)
 	}
 
 	ANKI_ASSERT(!!handle);
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void QueryFactory::deleteQuery(MicroQuery& handle)
 {
-	ANKI_ASSERT(handle.m_pool && handle.m_queryIndex != MAX_U32 && handle.m_chunk);
+	ANKI_ASSERT(handle.m_pool && handle.m_queryIndex != kMaxU32 && handle.m_chunk);
 
 	LockGuard<Mutex> lock(m_mtx);
 

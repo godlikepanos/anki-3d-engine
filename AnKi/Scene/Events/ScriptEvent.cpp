@@ -51,7 +51,7 @@ Error ScriptEvent::init(Second startTime, Second duration, CString script)
 		ANKI_CHECK(m_env.evalString(m_script.toCString()));
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ScriptEvent::update(Second prevUpdateTime, Second crntTime)
@@ -70,14 +70,14 @@ Error ScriptEvent::update(Second prevUpdateTime, Second crntTime)
 	if(lua_pcall(lua, 3, 1, 0) != 0)
 	{
 		ANKI_SCENE_LOGE("Error running ScriptEvent's \"update\": %s", lua_tostring(lua, -1));
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	if(!lua_isnumber(lua, -1))
 	{
 		ANKI_SCENE_LOGE("ScriptEvent's \"update\" should return a number");
 		lua_pop(lua, 1);
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	// Get the result
@@ -87,10 +87,10 @@ Error ScriptEvent::update(Second prevUpdateTime, Second crntTime)
 	if(result < 0)
 	{
 		ANKI_SCENE_LOGE("ScriptEvent's \"update\" return an error code");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error ScriptEvent::onKilled(Second prevUpdateTime, Second crntTime)
@@ -109,14 +109,14 @@ Error ScriptEvent::onKilled(Second prevUpdateTime, Second crntTime)
 	if(lua_pcall(lua, 3, 1, 0) != 0)
 	{
 		ANKI_SCENE_LOGE("Error running ScriptEvent's \"onKilled\": %s", lua_tostring(lua, -1));
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	if(!lua_isnumber(lua, -1))
 	{
 		ANKI_SCENE_LOGE("ScriptEvent's \"onKilled\" should return a number");
 		lua_pop(lua, 1);
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	// Get the result
@@ -126,10 +126,10 @@ Error ScriptEvent::onKilled(Second prevUpdateTime, Second crntTime)
 	if(result < 0)
 	{
 		ANKI_SCENE_LOGE("ScriptEvent's \"onKilled\" return an error code");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

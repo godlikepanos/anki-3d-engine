@@ -10,7 +10,7 @@
 
 namespace anki {
 
-static constexpr U MAX_PATH_LEN = MAX_PATH - 1;
+static constexpr U kMaxPathLen = MAX_PATH - 1;
 
 Bool fileExists(const CString& filename)
 {
@@ -32,14 +32,14 @@ Error removeDirectory(const CString& dirname, GenericMemoryPoolAllocator<U8> all
 	if(dirname.getLength() > MAX_PATH - 2)
 	{
 		ANKI_UTIL_LOGE("Path too big");
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	Array<char, MAX_PATH> dirname2;
 	memcpy(&dirname2[0], &dirname[0], dirname.getLength() + 1);
 	dirname2[dirname.getLength() + 1] = '\0';
 
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 	SHFILEOPSTRUCTA fileOperation = {
 		NULL, FO_DELETE, &dirname2[0], "", FOF_NOCONFIRMATION | FOF_NOERRORUI | FOF_SILENT, false, 0, ""};
 
@@ -47,7 +47,7 @@ Error removeDirectory(const CString& dirname, GenericMemoryPoolAllocator<U8> all
 	if(result != 0)
 	{
 		ANKI_UTIL_LOGE("Could not delete directory %s", &dirname[0]);
-		err = Error::FUNCTION_FAILED;
+		err = Error::kFunctionFailed;
 	}
 
 	return err;
@@ -55,11 +55,11 @@ Error removeDirectory(const CString& dirname, GenericMemoryPoolAllocator<U8> all
 
 Error createDirectory(const CString& dir)
 {
-	Error err = Error::NONE;
+	Error err = Error::kNone;
 	if(CreateDirectoryA(dir.cstr(), NULL) == 0)
 	{
 		ANKI_UTIL_LOGE("Failed to create directory %s", dir.cstr());
-		err = Error::FUNCTION_FAILED;
+		err = Error::kFunctionFailed;
 	}
 
 	return err;
@@ -71,11 +71,11 @@ Error getHomeDirectory(StringAuto& out)
 	if(SHGetFolderPathA(NULL, CSIDL_PROFILE, nullptr, 0, path) != S_OK)
 	{
 		ANKI_UTIL_LOGE("SHGetFolderPath() failed");
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	out.create(path);
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error getTempDirectory(StringAuto& out)
@@ -86,21 +86,21 @@ Error getTempDirectory(StringAuto& out)
 	if(len == 0)
 	{
 		ANKI_UTIL_LOGE("GetTempPathA() failed");
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	out.create(path);
-	return Error::NONE;
+	return Error::kNone;
 }
 
 static Error walkDirectoryTreeRecursive(const CString& dir, const Function<Error(const CString&, Bool)>& callback,
 										U baseDirLen)
 {
 	// Append something to the path
-	if(dir.getLength() > MAX_PATH_LEN - 2)
+	if(dir.getLength() > kMaxPathLen - 2)
 	{
 		ANKI_UTIL_LOGE("Path too long");
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	Array<char, MAX_PATH> dir2;
@@ -125,7 +125,7 @@ static Error walkDirectoryTreeRecursive(const CString& dir, const Function<Error
 	if(handle == INVALID_HANDLE_VALUE)
 	{
 		ANKI_UTIL_LOGE("FindFirstFile() failed");
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	// Remove '*' from dir2
@@ -141,10 +141,10 @@ static Error walkDirectoryTreeRecursive(const CString& dir, const Function<Error
 
 			// Compute new path
 			const PtrSize oldLen = strlen(&dir2[0]);
-			if(oldLen + filename.getLength() > MAX_PATH_LEN)
+			if(oldLen + filename.getLength() > kMaxPathLen)
 			{
 				ANKI_UTIL_LOGE("Path too long");
-				return Error::FUNCTION_FAILED;
+				return Error::kFunctionFailed;
 			}
 
 			strcat(&dir2[0], &filename[0]);
@@ -174,11 +174,11 @@ static Error walkDirectoryTreeRecursive(const CString& dir, const Function<Error
 	{
 		ANKI_UTIL_LOGE("Unknown error");
 		FindClose(handle);
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	FindClose(handle);
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error walkDirectoryTreeInternal(const CString& dir, const Function<Error(const CString&, Bool)>& callback)
@@ -207,14 +207,14 @@ Error getApplicationPath(StringAuto& out)
 	   || (result == buff.getSize() && (lastError == ERROR_INSUFFICIENT_BUFFER || lastError == ERROR_SUCCESS)))
 	{
 		ANKI_UTIL_LOGE("GetModuleFileNameA() failed");
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	out.destroy();
 	out.create('0', result);
 
 	memcpy(&out[0], &buff[0], result);
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

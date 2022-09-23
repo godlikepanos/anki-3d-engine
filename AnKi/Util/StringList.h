@@ -25,8 +25,8 @@ public:
 	/// Sort method for sortAll().
 	enum class Sort
 	{
-		ASCENDING,
-		DESCENDING
+		kAscending,
+		kDescending
 	};
 
 	// Use the base constructors
@@ -50,7 +50,7 @@ public:
 	I getIndexOf(const CString& value) const;
 
 	/// Sort the string list
-	void sortAll(const Sort method = Sort::ASCENDING);
+	void sortAll(const Sort method = Sort::kAscending);
 
 	/// Push at the end of the list a formated string.
 	ANKI_CHECK_FORMAT(2, 3)

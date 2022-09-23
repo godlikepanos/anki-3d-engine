@@ -124,7 +124,7 @@ void main()
 		cluster.m_spotLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
 		const SpotLight light = u_spotLights[idx];
 
-		ANKI_BRANCH if(light.m_shadowLayer != MAX_U32)
+		ANKI_BRANCH if(light.m_shadowLayer != kMaxU32)
 		{
 			const ANKI_RP F32 shadowFactor =
 				computeShadowFactorSpotLight(light, worldPos, u_shadowAtlasTex, u_linearAnyClampSampler);

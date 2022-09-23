@@ -30,8 +30,8 @@ enum class BuiltinMutatorId : U8
 	BONES,
 	VELOCITY,
 
-	COUNT,
-	FIRST = 0
+	kCount,
+	kFirst = 0
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BuiltinMutatorId)
 
@@ -76,13 +76,13 @@ public:
 
 	Bool isBoundableTexture() const
 	{
-		return m_dataType >= ShaderVariableDataType::TEXTURE_FIRST
-			   && m_dataType <= ShaderVariableDataType::TEXTURE_LAST;
+		return m_dataType >= ShaderVariableDataType::kTextureFirst
+			   && m_dataType <= ShaderVariableDataType::kTextureLast;
 	}
 
 	Bool isBindlessTexture() const
 	{
-		return m_dataType == ShaderVariableDataType::U32 && m_image.get();
+		return m_dataType == ShaderVariableDataType::kU32 && m_image.get();
 	}
 
 	Bool isUniform() const
@@ -92,34 +92,34 @@ public:
 
 	ShaderVariableDataType getDataType() const
 	{
-		ANKI_ASSERT(m_dataType != ShaderVariableDataType::NONE);
+		ANKI_ASSERT(m_dataType != ShaderVariableDataType::kNone);
 		return m_dataType;
 	}
 
 	/// Get the binding of a texture or a sampler type of material variable.
 	U32 getTextureBinding() const
 	{
-		ANKI_ASSERT(m_opaqueBinding != MAX_U32 && isBoundableTexture());
+		ANKI_ASSERT(m_opaqueBinding != kMaxU32 && isBoundableTexture());
 		return m_opaqueBinding;
 	}
 
 	U32 getOffsetInLocalUniforms() const
 	{
-		ANKI_ASSERT(m_offsetInLocalUniforms != MAX_U32);
+		ANKI_ASSERT(m_offsetInLocalUniforms != kMaxU32);
 		return m_offsetInLocalUniforms;
 	}
 
 protected:
 	String m_name;
-	U32 m_offsetInLocalUniforms = MAX_U32;
-	U32 m_opaqueBinding = MAX_U32; ///< Binding for textures and samplers.
-	ShaderVariableDataType m_dataType = ShaderVariableDataType::NONE;
+	U32 m_offsetInLocalUniforms = kMaxU32;
+	U32 m_opaqueBinding = kMaxU32; ///< Binding for textures and samplers.
+	ShaderVariableDataType m_dataType = ShaderVariableDataType::kNone;
 
 	/// Values
 	/// @{
 	union
 	{
-#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount, isIntagralType) type ANKI_CONCATENATE(m_, type);
+#define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) type ANKI_CONCATENATE(m_, type);
 #include <AnKi/Gr/ShaderVariableDataType.defs.h>
 #undef ANKI_SVDT_MACRO
 	};
@@ -129,16 +129,16 @@ protected:
 };
 
 // Specialize the MaterialVariable::getValue
-#define ANKI_SPECIALIZE_GET_VALUE(t_, var_, shaderType_) \
+#define ANKI_SPECIALIZE_GET_VALUE(type, member) \
 	template<> \
-	inline const t_& MaterialVariable::getValue<t_>() const \
+	inline const type& MaterialVariable::getValue<type>() const \
 	{ \
-		ANKI_ASSERT(m_dataType == ShaderVariableDataType::shaderType_); \
-		return var_; \
+		ANKI_ASSERT(m_dataType == ShaderVariableDataType::k##type); \
+		return member; \
 	}
 
-#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount, isIntagralType) \
-	ANKI_SPECIALIZE_GET_VALUE(type, ANKI_CONCATENATE(m_, type), capital)
+#define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) \
+	ANKI_SPECIALIZE_GET_VALUE(type, ANKI_CONCATENATE(m_, type))
 #include <AnKi/Gr/ShaderVariableDataType.defs.h>
 #undef ANKI_SVDT_MACRO
 
@@ -170,13 +170,13 @@ public:
 
 	U32 getRtShaderGroupHandleIndex() const
 	{
-		ANKI_ASSERT(m_rtShaderGroupHandleIndex != MAX_U32);
+		ANKI_ASSERT(m_rtShaderGroupHandleIndex != kMaxU32);
 		return m_rtShaderGroupHandleIndex;
 	}
 
 private:
 	ShaderProgramPtr m_prog;
-	U32 m_rtShaderGroupHandleIndex = MAX_U32;
+	U32 m_rtShaderGroupHandleIndex = kMaxU32;
 
 	MaterialVariant(MaterialVariant&& b)
 	{
@@ -273,7 +273,7 @@ private:
 
 	DynamicArray<Program> m_programs;
 
-	Array<U8, U(RenderingTechnique::COUNT)> m_techniqueToProgram;
+	Array<U8, U(RenderingTechnique::kCount)> m_techniqueToProgram;
 	RenderingTechniqueBit m_techniquesMask = RenderingTechniqueBit::NONE;
 
 	DynamicArray<MaterialVariable> m_vars;

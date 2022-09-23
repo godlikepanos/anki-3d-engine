@@ -30,21 +30,21 @@ public:
 	void setObbWorldSpace(const Obb& obb)
 	{
 		m_obb = obb;
-		m_collisionObjectType = obb.CLASS_TYPE;
+		m_collisionObjectType = obb.kClassType;
 		m_markedForUpdate = true;
 	}
 
 	void setAabbWorldSpace(const Aabb& aabb)
 	{
 		m_aabb = aabb;
-		m_collisionObjectType = aabb.CLASS_TYPE;
+		m_collisionObjectType = aabb.kClassType;
 		m_markedForUpdate = true;
 	}
 
 	void setSphereWorldSpace(const Sphere& sphere)
 	{
 		m_sphere = sphere;
-		m_collisionObjectType = sphere.CLASS_TYPE;
+		m_collisionObjectType = sphere.kClassType;
 		m_markedForUpdate = true;
 	}
 
@@ -53,7 +53,7 @@ public:
 	template<typename T>
 	const T& getCollisionShape() const
 	{
-		ANKI_ASSERT(T::CLASS_TYPE == m_collisionObjectType);
+		ANKI_ASSERT(T::kClassType == m_collisionObjectType);
 		return *reinterpret_cast<const T*>(&m_anyShape);
 	}
 
@@ -82,7 +82,7 @@ public:
 	/// eye point.
 	const Vec3& getSpatialOrigin() const
 	{
-		ANKI_ASSERT(m_origin.x() != MAX_F32);
+		ANKI_ASSERT(m_origin.x() != kMaxF32);
 		return m_origin;
 	}
 
@@ -126,10 +126,10 @@ private:
 
 	DynamicArray<Vec4> m_convexHullPoints;
 
-	CollisionShapeType m_collisionObjectType = CollisionShapeType::COUNT;
+	CollisionShapeType m_collisionObjectType = CollisionShapeType::kCount;
 	Aabb m_derivedAabb; ///< A faster shape
 
-	Vec3 m_origin = Vec3(MAX_F32);
+	Vec3 m_origin = Vec3(kMaxF32);
 
 	OctreePlaceable m_octreeInfo;
 

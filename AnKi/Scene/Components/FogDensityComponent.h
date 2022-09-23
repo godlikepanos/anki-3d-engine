@@ -21,7 +21,7 @@ class FogDensityComponent : public SceneComponent
 	ANKI_SCENE_COMPONENT(FogDensityComponent)
 
 public:
-	static constexpr F32 MIN_SHAPE_SIZE = 1.0_cm;
+	static constexpr F32 kMinShapeSize = 1.0_cm;
 
 	FogDensityComponent(SceneNode* node)
 		: SceneComponent(node, getStaticClassId())
@@ -32,7 +32,7 @@ public:
 
 	void setBoxVolumeSize(Vec3 sizeXYZ)
 	{
-		sizeXYZ = sizeXYZ.max(Vec3(MIN_SHAPE_SIZE));
+		sizeXYZ = sizeXYZ.max(Vec3(kMinShapeSize));
 		m_aabbMin = -sizeXYZ / 2.0f;
 		m_aabbMax = sizeXYZ / 2.0f;
 		m_isBox = true;
@@ -53,7 +53,7 @@ public:
 
 	void setSphereVolumeRadius(F32 radius)
 	{
-		m_sphereRadius = max(MIN_SHAPE_SIZE, radius);
+		m_sphereRadius = max(kMinShapeSize, radius);
 		m_isBox = false;
 		m_markedForUpdate = true;
 	}
@@ -117,7 +117,7 @@ public:
 	{
 		updated = m_markedForUpdate;
 		m_markedForUpdate = false;
-		return Error::NONE;
+		return Error::kNone;
 	}
 
 private:

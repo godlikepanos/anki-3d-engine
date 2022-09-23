@@ -78,7 +78,7 @@ Error removeFile(const CString& filename)
 		ANKI_UTIL_LOGE("Couldn't delete file: %s", filename.cstr());
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

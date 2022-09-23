@@ -41,30 +41,30 @@ void GlobalIlluminationProbeComponent::draw(RenderQueueDrawContext& ctx) const
 
 	const Mat4 mvp = ctx.m_viewProjectionMatrix * Mat4(tsl.xyz1(), rot, 1.0f);
 
-	const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);
+	const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDepthTestOn);
 	if(enableDepthTest)
 	{
-		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::LESS);
+		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::kLess);
 	}
 	else
 	{
-		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::ALWAYS);
+		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::kAlways);
 	}
 
 	m_node->getSceneGraph().getDebugDrawer().drawCubes(
 		ConstWeakArray<Mat4>(&mvp, 1), Vec4(0.729f, 0.635f, 0.196f, 1.0f), 1.0f,
-		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), 2.0f, *ctx.m_stagingGpuAllocator,
+		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), 2.0f, *ctx.m_stagingGpuAllocator,
 		ctx.m_commandBuffer);
 
 	m_node->getSceneGraph().getDebugDrawer().drawBillboardTextures(
 		ctx.m_projectionMatrix, ctx.m_viewMatrix, ConstWeakArray<Vec3>(&m_worldPosition, 1), Vec4(1.0f),
-		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), m_debugImage->getTextureView(),
+		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), m_debugImage->getTextureView(),
 		ctx.m_sampler, Vec2(0.75f), *ctx.m_stagingGpuAllocator, ctx.m_commandBuffer);
 
 	// Restore state
 	if(!enableDepthTest)
 	{
-		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::LESS);
+		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::kLess);
 	}
 }
 

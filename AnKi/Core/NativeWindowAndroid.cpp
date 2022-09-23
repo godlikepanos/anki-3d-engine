@@ -24,7 +24,7 @@ Error NativeWindow::newInstance(const NativeWindowInitInfo& initInfo, NativeWind
 	else
 	{
 		nativeWindow = andwin;
-		return Error::NONE;
+		return Error::kNone;
 	}
 }
 
@@ -38,7 +38,7 @@ void NativeWindow::deleteInstance(NativeWindow* window)
 	}
 }
 
-void NativeWindow::setWindowTitle(CString title)
+void NativeWindow::setWindowTitle([[maybe_unused]] CString title)
 {
 	// Nothing
 }
@@ -67,7 +67,7 @@ NativeWindowAndroid::~NativeWindowAndroid()
 	m_nativeWindow = nullptr;
 }
 
-Error NativeWindowAndroid::init(const NativeWindowInitInfo& init)
+Error NativeWindowAndroid::init([[maybe_unused]] const NativeWindowInitInfo& init)
 {
 	ANKI_CORE_LOGI("Initializing Android window");
 
@@ -94,7 +94,7 @@ Error NativeWindowAndroid::init(const NativeWindowInitInfo& init)
 	m_width = ANativeWindow_getWidth(g_androidApp->window);
 	m_height = ANativeWindow_getHeight(g_androidApp->window);
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 } // end namespace anki

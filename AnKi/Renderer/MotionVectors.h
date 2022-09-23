@@ -40,17 +40,17 @@ public:
 		return m_runCtx.m_historyLengthWriteRtHandle;
 	}
 
-	void getDebugRenderTarget(CString rtName, RenderTargetHandle& handle,
+	void getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
 							  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const override
 	{
 		if(rtName == "MotionVectors")
 		{
-			handle = m_runCtx.m_motionVectorsRtHandle;
+			handles[0] = m_runCtx.m_motionVectorsRtHandle;
 		}
 		else
 		{
 			ANKI_ASSERT(rtName == "MotionVectorsHistoryLength");
-			handle = m_runCtx.m_historyLengthWriteRtHandle;
+			handles[0] = m_runCtx.m_historyLengthWriteRtHandle;
 		}
 	}
 

@@ -19,7 +19,7 @@ OcclusionQueryImpl::~OcclusionQueryImpl()
 Error OcclusionQueryImpl::init()
 {
 	ANKI_CHECK(getGrManagerImpl().getOcclusionQueryFactory().newQuery(m_handle));
-	return Error::NONE;
+	return Error::kNone;
 }
 
 OcclusionQueryResult OcclusionQueryImpl::getResultInternal() const
@@ -33,14 +33,14 @@ OcclusionQueryResult OcclusionQueryImpl::getResultInternal() const
 											   VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WITH_AVAILABILITY_BIT
 												   | VK_QUERY_RESULT_PARTIAL_BIT));
 
-	OcclusionQueryResult qout = OcclusionQueryResult::NOT_AVAILABLE;
+	OcclusionQueryResult qout = OcclusionQueryResult::kNotAvailable;
 	if(res == VK_SUCCESS)
 	{
-		qout = (out) ? OcclusionQueryResult::VISIBLE : OcclusionQueryResult::NOT_VISIBLE;
+		qout = (out) ? OcclusionQueryResult::kVisible : OcclusionQueryResult::kNotVisible;
 	}
 	else if(res == VK_NOT_READY)
 	{
-		qout = OcclusionQueryResult::NOT_AVAILABLE;
+		qout = OcclusionQueryResult::kNotAvailable;
 	}
 	else
 	{

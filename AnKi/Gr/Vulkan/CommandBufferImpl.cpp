@@ -53,7 +53,7 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 	m_alloc = m_microCmdb->getFastAllocator();
 
 	// Store some of the init info for later
-	if(!!(m_flags & CommandBufferFlag::SECOND_LEVEL))
+	if(!!(m_flags & CommandBufferFlag::kSecondLevel))
 	{
 		m_activeFb = init.m_framebuffer;
 		m_colorAttachmentUsages = init.m_colorAttachmentUsages;
@@ -67,7 +67,7 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 		state.init(m_alloc);
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void CommandBufferImpl::beginRecording()
@@ -81,12 +81,12 @@ void CommandBufferImpl::beginRecording()
 	begin.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 	begin.pInheritanceInfo = &inheritance;
 
-	if(!!(m_flags & CommandBufferFlag::SECOND_LEVEL))
+	if(!!(m_flags & CommandBufferFlag::kSecondLevel))
 	{
 		FramebufferImpl& impl = static_cast<FramebufferImpl&>(*m_activeFb);
 
 		// Calc the layouts
-		Array<VkImageLayout, MAX_COLOR_ATTACHMENTS> colAttLayouts;
+		Array<VkImageLayout, kMaxColorRenderTargets> colAttLayouts;
 		for(U i = 0; i < impl.getColorAttachmentCount(); ++i)
 		{
 			const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*impl.getColorAttachment(i));
@@ -117,14 +117,14 @@ void CommandBufferImpl::beginRecording()
 	vkBeginCommandBuffer(m_handle, &begin);
 
 	// Stats
-	if(!!(getGrManagerImpl().getExtensions() & VulkanExtensions::KHR_PIPELINE_EXECUTABLE_PROPERTIES))
+	if(!!(getGrManagerImpl().getExtensions() & VulkanExtensions::kKHR_pipeline_executable_properties))
 	{
 		m_state.setEnablePipelineStatistics(true);
 	}
 }
 
 void CommandBufferImpl::beginRenderPassInternal(
-	const FramebufferPtr& fb, const Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS>& colorAttachmentUsages,
+	const FramebufferPtr& fb, const Array<TextureUsageBit, kMaxColorRenderTargets>& colorAttachmentUsages,
 	TextureUsageBit depthStencilAttachmentUsage, U32 minx, U32 miny, U32 width, U32 height)
 {
 	commandCommon();
@@ -169,7 +169,7 @@ void CommandBufferImpl::beginRenderPassInternal()
 {
 	FramebufferImpl& impl = static_cast<FramebufferImpl&>(*m_activeFb);
 
-	flushBatches(CommandBufferCommandType::ANY_OTHER_COMMAND); // Flush before the marker
+	flushBatches(CommandBufferCommandType::kAnyOtherCommand); // Flush before the marker
 
 	m_state.beginRenderPass(&impl);
 
@@ -180,7 +180,7 @@ void CommandBufferImpl::beginRenderPassInternal()
 	bi.framebuffer = impl.getFramebufferHandle();
 
 	// Calc the layouts
-	Array<VkImageLayout, MAX_COLOR_ATTACHMENTS> colAttLayouts;
+	Array<VkImageLayout, kMaxColorRenderTargets> colAttLayouts;
 	for(U i = 0; i < impl.getColorAttachmentCount(); ++i)
 	{
 		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*impl.getColorAttachment(i));
@@ -253,7 +253,7 @@ void CommandBufferImpl::endRenderPassInternal()
 	VkSubpassEndInfo subpassEndInfo = {};
 	subpassEndInfo.sType = VK_STRUCTURE_TYPE_SUBPASS_END_INFO;
 
-	ANKI_CMD(vkCmdEndRenderPass2KHR(m_handle, &subpassEndInfo), ANY_OTHER_COMMAND);
+	ANKI_CMD(vkCmdEndRenderPass2KHR(m_handle, &subpassEndInfo), kAnyOtherCommand);
 	getGrManagerImpl().endMarker(m_handle);
 
 	m_activeFb.reset(nullptr);
@@ -274,7 +274,7 @@ void CommandBufferImpl::endRecording()
 	ANKI_ASSERT(!m_finalized);
 	ANKI_ASSERT(!m_empty);
 
-	ANKI_CMD(ANKI_VK_CHECKF(vkEndCommandBuffer(m_handle)), ANY_OTHER_COMMAND);
+	ANKI_CMD(ANKI_VK_CHECKF(vkEndCommandBuffer(m_handle)), kAnyOtherCommand);
 	m_finalized = true;
 
 #if ANKI_EXTRA_CHECKS
@@ -282,16 +282,16 @@ void CommandBufferImpl::endRecording()
 	constexpr U32 MAX_PRINT_COUNT = 10;
 
 	CString message;
-	if(!!(m_flags & CommandBufferFlag::SMALL_BATCH))
+	if(!!(m_flags & CommandBufferFlag::kSmallBatch))
 	{
-		if(m_commandCount > COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS * 4)
+		if(m_commandCount > kCommandBufferSmallBatchMaxCommands * 4)
 		{
 			message = "Command buffer has too many commands%s: %u";
 		}
 	}
 	else
 	{
-		if(m_commandCount <= COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS / 4)
+		if(m_commandCount <= kCommandBufferSmallBatchMaxCommands / 4)
 		{
 			message = "Command buffer has too few commands%s: %u";
 		}
@@ -318,14 +318,14 @@ void CommandBufferImpl::generateMipmaps2dInternal(const TextureViewPtr& texView)
 
 	const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
 	const TextureImpl& tex = view.getTextureImpl();
-	ANKI_ASSERT(tex.getTextureType() != TextureType::_3D && "Not for 3D");
+	ANKI_ASSERT(tex.getTextureType() != TextureType::k3D && "Not for 3D");
 	ANKI_ASSERT(tex.isSubresourceGoodForMipmapGeneration(view.getSubresource()));
 
 	const U32 blitCount = tex.getMipmapCount() - 1u;
 	if(blitCount == 0)
 	{
 		// Nothing to be done, flush the previous commands though because you may batch (and sort) things you shouldn't
-		flushBatches(CommandBufferCommandType::ANY_OTHER_COMMAND);
+		flushBatches(CommandBufferCommandType::kAnyOtherCommand);
 		return;
 	}
 
@@ -371,13 +371,13 @@ void CommandBufferImpl::generateMipmaps2dInternal(const TextureViewPtr& texView)
 		U32 vkLayer = 0;
 		switch(tex.getTextureType())
 		{
-		case TextureType::_2D:
-		case TextureType::_2D_ARRAY:
+		case TextureType::k2D:
+		case TextureType::k2DArray:
 			break;
-		case TextureType::CUBE:
+		case TextureType::kCube:
 			vkLayer = face;
 			break;
-		case TextureType::CUBE_ARRAY:
+		case TextureType::kCubeArray:
 			vkLayer = layer * 6 + face;
 			break;
 		default:
@@ -403,7 +403,7 @@ void CommandBufferImpl::generateMipmaps2dInternal(const TextureViewPtr& texView)
 		ANKI_CMD(vkCmdBlitImage(m_handle, tex.m_imageHandle, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, tex.m_imageHandle,
 								VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit,
 								(!!aspect) ? VK_FILTER_NEAREST : VK_FILTER_LINEAR),
-				 ANY_OTHER_COMMAND);
+				 kAnyOtherCommand);
 	}
 
 	// Hold the reference
@@ -664,10 +664,10 @@ void CommandBufferImpl::copyBufferToTextureViewInternal(const BufferPtr& buff, P
 
 	const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
 	const TextureImpl& tex = view.getTextureImpl();
-	ANKI_ASSERT(tex.usageValid(TextureUsageBit::TRANSFER_DESTINATION));
+	ANKI_ASSERT(tex.usageValid(TextureUsageBit::kTransferDestination));
 	ANKI_ASSERT(tex.isSubresourceGoodForCopyFromBuffer(view.getSubresource()));
 	const VkImageLayout layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-	const Bool is3D = tex.getTextureType() == TextureType::_3D;
+	const Bool is3D = tex.getTextureType() == TextureType::k3D;
 	const VkImageAspectFlags aspect = convertImageAspect(view.getSubresource().m_depthStencilAspect);
 
 	const TextureSurfaceInfo surf(view.getSubresource().m_firstMipmap, view.getSubresource().m_firstFace, 0,
@@ -705,7 +705,7 @@ void CommandBufferImpl::copyBufferToTextureViewInternal(const BufferPtr& buff, P
 
 	ANKI_CMD(vkCmdCopyBufferToImage(m_handle, static_cast<const BufferImpl&>(*buff).getHandle(), tex.m_imageHandle,
 									layout, 1, &region),
-			 ANY_OTHER_COMMAND);
+			 kAnyOtherCommand);
 
 	m_microCmdb->pushObjectRef(texView);
 	m_microCmdb->pushObjectRef(buff);
@@ -718,21 +718,21 @@ void CommandBufferImpl::rebindDynamicState()
 	m_scissorDirty = true;
 	m_lastScissor = {};
 	m_vrsRateDirty = true;
-	m_vrsRate = VrsRate::_1x1;
+	m_vrsRate = VrsRate::k1x1;
 
 	// Rebind the stencil compare mask
 	if(m_stencilCompareMasks[0] == m_stencilCompareMasks[1])
 	{
 		ANKI_CMD(vkCmdSetStencilCompareMask(m_handle, VK_STENCIL_FACE_FRONT_BIT | VK_STENCIL_FACE_BACK_BIT,
 											m_stencilCompareMasks[0]),
-				 ANY_OTHER_COMMAND);
+				 kAnyOtherCommand);
 	}
 	else
 	{
 		ANKI_CMD(vkCmdSetStencilCompareMask(m_handle, VK_STENCIL_FACE_FRONT_BIT, m_stencilCompareMasks[0]),
-				 ANY_OTHER_COMMAND);
+				 kAnyOtherCommand);
 		ANKI_CMD(vkCmdSetStencilCompareMask(m_handle, VK_STENCIL_FACE_BACK_BIT, m_stencilCompareMasks[1]),
-				 ANY_OTHER_COMMAND);
+				 kAnyOtherCommand);
 	}
 
 	// Rebind the stencil write mask
@@ -740,14 +740,14 @@ void CommandBufferImpl::rebindDynamicState()
 	{
 		ANKI_CMD(vkCmdSetStencilWriteMask(m_handle, VK_STENCIL_FACE_FRONT_BIT | VK_STENCIL_FACE_BACK_BIT,
 										  m_stencilWriteMasks[0]),
-				 ANY_OTHER_COMMAND);
+				 kAnyOtherCommand);
 	}
 	else
 	{
 		ANKI_CMD(vkCmdSetStencilWriteMask(m_handle, VK_STENCIL_FACE_FRONT_BIT, m_stencilWriteMasks[0]),
-				 ANY_OTHER_COMMAND);
+				 kAnyOtherCommand);
 		ANKI_CMD(vkCmdSetStencilWriteMask(m_handle, VK_STENCIL_FACE_BACK_BIT, m_stencilWriteMasks[1]),
-				 ANY_OTHER_COMMAND);
+				 kAnyOtherCommand);
 	}
 
 	// Rebind the stencil reference
@@ -755,14 +755,14 @@ void CommandBufferImpl::rebindDynamicState()
 	{
 		ANKI_CMD(vkCmdSetStencilReference(m_handle, VK_STENCIL_FACE_FRONT_BIT | VK_STENCIL_FACE_BACK_BIT,
 										  m_stencilReferenceMasks[0]),
-				 ANY_OTHER_COMMAND);
+				 kAnyOtherCommand);
 	}
 	else
 	{
 		ANKI_CMD(vkCmdSetStencilReference(m_handle, VK_STENCIL_FACE_FRONT_BIT, m_stencilReferenceMasks[0]),
-				 ANY_OTHER_COMMAND);
+				 kAnyOtherCommand);
 		ANKI_CMD(vkCmdSetStencilReference(m_handle, VK_STENCIL_FACE_BACK_BIT, m_stencilReferenceMasks[1]),
-				 ANY_OTHER_COMMAND);
+				 kAnyOtherCommand);
 	}
 }
 
@@ -775,7 +775,7 @@ void CommandBufferImpl::buildAccelerationStructureInternal(const AccelerationStr
 
 	// Create the scrach buffer
 	BufferInitInfo bufferInit;
-	bufferInit.m_usage = PrivateBufferUsageBit::ACCELERATION_STRUCTURE_BUILD_SCRATCH;
+	bufferInit.m_usage = PrivateBufferUsageBit::kAccelerationStructureBuildScratch;
 	bufferInit.m_size = asImpl.getBuildScratchBufferSize();
 	BufferPtr scratchBuff = getManager().newBuffer(bufferInit);
 
@@ -786,7 +786,7 @@ void CommandBufferImpl::buildAccelerationStructureInternal(const AccelerationStr
 
 	// Do the command
 	Array<const VkAccelerationStructureBuildRangeInfoKHR*, 1> pRangeInfos = {&rangeInfo};
-	ANKI_CMD(vkCmdBuildAccelerationStructuresKHR(m_handle, 1, &buildInfo, &pRangeInfos[0]), ANY_OTHER_COMMAND);
+	ANKI_CMD(vkCmdBuildAccelerationStructuresKHR(m_handle, 1, &buildInfo, &pRangeInfos[0]), kAnyOtherCommand);
 
 	// Push refs
 	m_microCmdb->pushObjectRef(as);
@@ -820,10 +820,10 @@ void CommandBufferImpl::upscaleInternal(const GrUpscalerPtr& upscaler, const Tex
 {
 #if ANKI_DLSS
 	ANKI_ASSERT(getGrManagerImpl().getDeviceCapabilities().m_dlss);
-	ANKI_ASSERT(upscaler->getUpscalerType() == GrUpscalerType::DLSS_2);
+	ANKI_ASSERT(upscaler->getUpscalerType() == GrUpscalerType::kDlss2);
 
 	commandCommon();
-	flushBatches(CommandBufferCommandType::ANY_OTHER_COMMAND);
+	flushBatches(CommandBufferCommandType::kAnyOtherCommand);
 
 	const GrUpscalerImpl& upscalerImpl = static_cast<const GrUpscalerImpl&>(*upscaler);
 
@@ -910,18 +910,18 @@ void CommandBufferImpl::setPipelineBarrierInternal(
 
 		ANKI_ASSERT(impl.usageValid(prevUsage));
 		ANKI_ASSERT(impl.usageValid(nextUsage));
-		ANKI_ASSERT(((nextUsage & TextureUsageBit::GENERATE_MIPMAPS) == TextureUsageBit::GENERATE_MIPMAPS
-					 || (nextUsage & TextureUsageBit::GENERATE_MIPMAPS) == TextureUsageBit::NONE)
+		ANKI_ASSERT(((nextUsage & TextureUsageBit::kGenerateMipmaps) == TextureUsageBit::kGenerateMipmaps
+					 || (nextUsage & TextureUsageBit::kGenerateMipmaps) == TextureUsageBit::kNone)
 					&& "GENERATE_MIPMAPS should be alone");
 		ANKI_ASSERT(impl.isSubresourceValid(subresource));
 
-		if(ANKI_UNLIKELY(subresource.m_firstMipmap > 0 && nextUsage == TextureUsageBit::GENERATE_MIPMAPS))
+		if(ANKI_UNLIKELY(subresource.m_firstMipmap > 0 && nextUsage == TextureUsageBit::kGenerateMipmaps))
 		{
 			// This transition happens inside CommandBufferImpl::generateMipmapsX. No need to do something
 			continue;
 		}
 
-		if(ANKI_UNLIKELY(nextUsage == TextureUsageBit::GENERATE_MIPMAPS))
+		if(ANKI_UNLIKELY(nextUsage == TextureUsageBit::kGenerateMipmaps))
 		{
 			// The transition of the non zero mip levels happens inside CommandBufferImpl::generateMipmapsX so limit the
 			// subresource
@@ -971,7 +971,7 @@ void CommandBufferImpl::setPipelineBarrierInternal(
 		ANKI_ASSERT(barrier.m_offset < impl.getSize());
 		inf.offset = barrier.m_offset;
 
-		if(barrier.m_size == MAX_PTR_SIZE)
+		if(barrier.m_size == kMaxPtrSize)
 		{
 			inf.size = VK_WHOLE_SIZE;
 		}

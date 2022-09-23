@@ -73,11 +73,13 @@ ANKI_CONFIG_VAR_U32(RProbeReflectionIrradianceResolution, 16, 4, 2048, "Reflecti
 ANKI_CONFIG_VAR_U32(RProbeRefectionMaxCachedProbes, 32, 4, 256, "Max cached number of reflection probes")
 ANKI_CONFIG_VAR_U32(RProbeReflectionShadowMapResolution, 64, 4, 2048, "Reflection probe shadow resolution")
 
+// Final composite
+ANKI_CONFIG_VAR_U32(RMotionBlurSamples, 32, 0, 2048, "Max motion blur samples")
+ANKI_CONFIG_VAR_F32(RFilmGrainStrength, 16.0f, 0.0f, 250.0f, "Film grain strength")
+
 // Lens flare
 ANKI_CONFIG_VAR_U8(RLensFlareMaxSpritesPerFlare, 8, 4, 255, "Max sprites per lens flare")
 ANKI_CONFIG_VAR_U8(RLensFlareMaxFlares, 16, 8, 255, "Max flare count")
-
-ANKI_CONFIG_VAR_U32(RMotionBlurSamples, 32, 1, 2048, "Max motion blur samples")
 
 ANKI_CONFIG_VAR_F32(RBloomThreshold, 2.5f, 0.0f, 256.0f, "Bloom threshold")
 ANKI_CONFIG_VAR_F32(RBloomScale, 2.5f, 0.0f, 256.0f, "Bloom scale")

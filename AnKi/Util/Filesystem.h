@@ -41,7 +41,7 @@ Error walkDirectoryTreeInternal(const CString& dir, const Function<Error(const C
 /// @code
 /// walkDirectoryTree("./path/to", alloc, [&, this](CString path, Bool isDir) {
 /// 	...
-/// 	return Error::NONE;
+/// 	return Error::kNone;
 /// });
 /// @endcode
 template<typename TFunc>

@@ -26,7 +26,7 @@ public:
 /// Rigid body.
 class PhysicsBody : public PhysicsFilteredObject
 {
-	ANKI_PHYSICS_OBJECT(PhysicsObjectType::BODY)
+	ANKI_PHYSICS_OBJECT(PhysicsObjectType::kBody)
 
 public:
 	const Transform& getTransform() const

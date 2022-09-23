@@ -5,7 +5,7 @@
 
 ANKI_CONFIG_VAR_GROUP(RSRC)
 
-ANKI_CONFIG_VAR_U32(RsrcMaxImageSize, 1024u * 1024u, 4u, MAX_U32, "Max image size to load")
+ANKI_CONFIG_VAR_U32(RsrcMaxImageSize, 1024u * 1024u, 4u, kMaxU32, "Max image size to load")
 ANKI_CONFIG_VAR_STRING(
 	RsrcDataPaths, ".",
 	"The engine loads assets only in from these paths. Separate them with : (it's smart enough to identify drive "

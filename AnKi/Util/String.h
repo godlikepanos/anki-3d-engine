@@ -16,9 +16,6 @@
 
 namespace anki {
 
-// Forward
-class F16;
-
 /// @addtogroup util_private
 /// @{
 
@@ -63,7 +60,7 @@ class CString
 public:
 	using Char = char;
 
-	static constexpr PtrSize NPOS = MAX_PTR_SIZE;
+	static constexpr PtrSize kNpos = kMaxPtrSize;
 
 	CString() = default;
 
@@ -206,12 +203,16 @@ public:
 		return (m_ptr == nullptr) ? 0 : U32(std::strlen(m_ptr));
 	}
 
+	/// Find a substring of this string.
+	/// @param[in] cstr The substring to search.
+	/// @param position Position of the first character in the string to be considered in the search.
+	/// @return A valid position if the string is found or kNpos if not found.
 	PtrSize find(const CString& cstr, PtrSize position = 0) const
 	{
 		checkInit();
 		ANKI_ASSERT(position < getLength());
 		const Char* out = std::strstr(m_ptr + position, &cstr[0]);
-		return (out == nullptr) ? NPOS : PtrSize(out - m_ptr);
+		return (out == nullptr) ? kNpos : PtrSize(out - m_ptr);
 	}
 
 	/// Convert to F16.
@@ -286,7 +287,7 @@ public:
 	using ConstIterator = const Char*;
 	using Allocator = GenericMemoryPoolAllocator<Char>;
 
-	static constexpr PtrSize NPOS = MAX_PTR_SIZE;
+	static constexpr PtrSize kNpos = kMaxPtrSize;
 
 	/// Default constructor.
 	String()
@@ -525,7 +526,7 @@ public:
 	/// Find a substring of this string.
 	/// @param[in] cstr The substring to search.
 	/// @param position Position of the first character in the string to be considered in the search.
-	/// @return A valid position if the string is found or NPOS if not found.
+	/// @return A valid position if the string is found or kNpos if not found.
 	PtrSize find(const CStringType& cstr, PtrSize position = 0) const
 	{
 		checkInit();
@@ -535,7 +536,7 @@ public:
 	/// Find a substring of this string.
 	/// @param[in] str The substring to search.
 	/// @param position Position of the first character in the string to be considered in the search.
-	/// @return A valid position if the string is found or NPOS if not found.
+	/// @return A valid position if the string is found or kNpos if not found.
 	PtrSize find(const String& str, PtrSize position) const
 	{
 		str.checkInit();

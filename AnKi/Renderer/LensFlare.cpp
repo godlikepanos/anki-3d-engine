@@ -34,7 +34,7 @@ Error LensFlare::initInternal()
 	ANKI_CHECK(initSprite());
 	ANKI_CHECK(initOcclusion());
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error LensFlare::initSprite()
@@ -45,7 +45,7 @@ Error LensFlare::initSprite()
 	if(m_maxSpritesPerFlare < 1 || m_maxFlares < 1)
 	{
 		ANKI_R_LOGE("Incorrect m_maxSpritesPerFlare or m_maxFlares");
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	m_maxSprites = U16(m_maxSpritesPerFlare * m_maxFlares);
@@ -56,7 +56,7 @@ Error LensFlare::initSprite()
 	m_realProg->getOrCreateVariant(variant);
 	m_realGrProg = variant->getProgram();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error LensFlare::initOcclusion()
@@ -64,8 +64,8 @@ Error LensFlare::initOcclusion()
 	GrManager& gr = getGrManager();
 
 	m_indirectBuff = gr.newBuffer(BufferInitInfo(m_maxFlares * sizeof(DrawArraysIndirectInfo),
-												 BufferUsageBit::INDIRECT_DRAW | BufferUsageBit::STORAGE_COMPUTE_WRITE,
-												 BufferMapAccessBit::NONE, "LensFlares"));
+												 BufferUsageBit::kIndirectDraw | BufferUsageBit::kStorageComputeWrite,
+												 BufferMapAccessBit::kNone, "LensFlares"));
 
 	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/LensFlareUpdateIndirectInfo.ankiprogbin",
 												 m_updateIndirectBuffProg));
@@ -77,7 +77,7 @@ Error LensFlare::initOcclusion()
 	m_updateIndirectBuffProg->getOrCreateVariant(variantInitInfo, variant);
 	m_updateIndirectBuffGrProg = variant->getProgram();
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void LensFlare::updateIndirectInfo(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
@@ -102,7 +102,7 @@ void LensFlare::updateIndirectInfo(const RenderingContext& ctx, RenderPassWorkCo
 	rgraphCtx.bindStorageBuffer(0, 1, m_runCtx.m_indirectBuffHandle);
 	// Bind neareset because you don't need high quality
 	cmdb->bindSampler(0, 2, m_r->getSamplers().m_nearestNearestClamp);
-	rgraphCtx.bindTexture(0, 3, m_r->getDepthDownscale().getHiZRt(), HIZ_QUARTER_DEPTH);
+	rgraphCtx.bindTexture(0, 3, m_r->getDepthDownscale().getHiZRt(), kHiZQuarterSurface);
 	cmdb->dispatchCompute(count, 1, 1);
 }
 
@@ -116,7 +116,7 @@ void LensFlare::populateRenderGraph(RenderingContext& ctx)
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	// Import buffer
-	m_runCtx.m_indirectBuffHandle = rgraph.importBuffer(m_indirectBuff, BufferUsageBit::NONE);
+	m_runCtx.m_indirectBuffHandle = rgraph.importBuffer(m_indirectBuff, BufferUsageBit::kNone);
 
 	// Update the indirect buffer
 	{
@@ -126,8 +126,9 @@ void LensFlare::populateRenderGraph(RenderingContext& ctx)
 			updateIndirectInfo(ctx, rgraphCtx);
 		});
 
-		rpass.newDependency({m_runCtx.m_indirectBuffHandle, BufferUsageBit::STORAGE_COMPUTE_WRITE});
-		rpass.newDependency({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_COMPUTE, HIZ_QUARTER_DEPTH});
+		rpass.newDependency({m_runCtx.m_indirectBuffHandle, BufferUsageBit::kStorageComputeWrite});
+		rpass.newDependency(
+			{m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::kSampledCompute, kHiZQuarterSurface});
 	}
 }
 
@@ -141,7 +142,7 @@ void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBufferPtr& cmd
 	const U32 count = min<U32>(ctx.m_renderQueue->m_lensFlares.getSize(), m_maxFlares);
 
 	cmdb->bindShaderProgram(m_realGrProg);
-	cmdb->setBlendFactors(0, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA);
+	cmdb->setBlendFactors(0, BlendFactor::kSrcAlpha, BlendFactor::kOneMinusSrcAlpha);
 	cmdb->setDepthWrite(false);
 
 	for(U32 i = 0; i < count; ++i)
@@ -183,12 +184,12 @@ void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBufferPtr& cmd
 		cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearRepeat);
 		cmdb->bindTexture(0, 2, TextureViewPtr(const_cast<TextureView*>(flareEl.m_textureView)));
 
-		cmdb->drawArraysIndirect(PrimitiveTopology::TRIANGLE_STRIP, 1, i * sizeof(DrawArraysIndirectInfo),
+		cmdb->drawArraysIndirect(PrimitiveTopology::kTriangleStrip, 1, i * sizeof(DrawArraysIndirectInfo),
 								 m_indirectBuff);
 	}
 
 	// Restore state
-	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
+	cmdb->setBlendFactors(0, BlendFactor::kOne, BlendFactor::kZero);
 	cmdb->setDepthWrite(true);
 }
 

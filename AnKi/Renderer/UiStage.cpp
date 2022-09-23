@@ -27,7 +27,7 @@ Error UiStage::init()
 	ANKI_CHECK(m_r->getUiManager().newInstance(m_canvas, m_font, 12, m_r->getPostProcessResolution().x(),
 											   m_r->getPostProcessResolution().y()));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void UiStage::draw(U32 width, U32 height, RenderingContext& ctx, CommandBufferPtr& cmdb)
@@ -52,9 +52,9 @@ void UiStage::draw(U32 width, U32 height, RenderingContext& ctx, CommandBufferPt
 	m_canvas->appendToCommandBuffer(cmdb);
 
 	// UI messes with the state, restore it
-	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
-	cmdb->setBlendOperation(0, BlendOperation::ADD);
-	cmdb->setCullMode(FaceSelectionBit::BACK);
+	cmdb->setBlendFactors(0, BlendFactor::kOne, BlendFactor::kZero);
+	cmdb->setBlendOperation(0, BlendOperation::kAdd);
+	cmdb->setCullMode(FaceSelectionBit::kBack);
 }
 
 } // end namespace anki

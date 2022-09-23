@@ -76,7 +76,7 @@ private:
 	static constexpr U32 m_maxRequestsPerAdjustment = 128;
 	U32 m_cacheMisses = 0;
 	U32 m_requests = 0;
-	U32 m_minCacheSizePerRequest = MAX_U32;
+	U32 m_minCacheSizePerRequest = kMaxU32;
 	// End trim cache adjustment vars
 
 #if ANKI_EXTRA_CHECKS

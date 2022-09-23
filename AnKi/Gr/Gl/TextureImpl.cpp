@@ -23,19 +23,19 @@ static GLenum convertTextureType(TextureType type)
 	case TextureType::_1D:
 		out = GL_TEXTURE_1D;
 		break;
-	case TextureType::_2D:
+	case TextureType::k2D:
 		out = GL_TEXTURE_2D;
 		break;
-	case TextureType::_3D:
+	case TextureType::k3D:
 		out = GL_TEXTURE_3D;
 		break;
-	case TextureType::_2D_ARRAY:
+	case TextureType::k2DArray:
 		out = GL_TEXTURE_2D_ARRAY;
 		break;
-	case TextureType::CUBE:
+	case TextureType::kCube:
 		out = GL_TEXTURE_CUBE_MAP;
 		break;
-	case TextureType::CUBE_ARRAY:
+	case TextureType::kCubeArray:
 		out = GL_TEXTURE_CUBE_MAP_ARRAY;
 		break;
 	default:
@@ -79,7 +79,7 @@ public:
 			glDeleteTextures(1, &m_tex);
 		}
 
-		return Error::NONE;
+		return Error::kNone;
 	}
 };
 
@@ -304,12 +304,12 @@ void TextureImpl::clear(const TextureSubresourceInfo& subresource, const ClearVa
 {
 	ANKI_ASSERT(isCreated());
 	ANKI_ASSERT(isSubresourceValid(subresource));
-	ANKI_ASSERT(m_texType != TextureType::_3D && "TODO");
+	ANKI_ASSERT(m_texType != TextureType::k3D && "TODO");
 
 	// Find the aspect to clear
 	const DepthStencilAspectBit aspect = subresource.m_depthStencilAspect;
 	GLenum format;
-	if(aspect == DepthStencilAspectBit::DEPTH)
+	if(aspect == DepthStencilAspectBit::kDepth)
 	{
 		ANKI_ASSERT(m_glFormat == GL_DEPTH_COMPONENT || m_glFormat == GL_DEPTH_STENCIL);
 		format = GL_DEPTH_COMPONENT;
@@ -396,7 +396,7 @@ MicroTextureView TextureImpl::getOrCreateView(const TextureSubresourceInfo& subr
 		// Compute the new target if needed
 		const TextureType newTexType = computeNewTexTypeOfSubresource(subresource);
 		GLenum glTarget = m_target;
-		if(newTexType == TextureType::_2D)
+		if(newTexType == TextureType::k2D)
 		{
 			// Change that anyway
 			glTarget = GL_TEXTURE_2D;

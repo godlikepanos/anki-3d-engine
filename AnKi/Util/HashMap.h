@@ -63,34 +63,45 @@ public:
 	}
 };
 
+/// SparseArray configuration. See SparseArray docs for details.
+/// @memberof HashMap
+class HashMapSparseArrayConfig
+{
+public:
+	using Index = U64;
+
+	static constexpr Index getInitialStorageSize()
+	{
+		return 64;
+	}
+
+	static constexpr U32 getLinearProbingCount()
+	{
+		return 8;
+	}
+
+	static constexpr F32 getMaxLoadFactor()
+	{
+		return 0.8f;
+	}
+};
+
 /// Hash map template.
-template<typename TKey, typename TValue, typename THasher = DefaultHasher<TKey>>
+template<typename TKey, typename TValue, typename THasher = DefaultHasher<TKey>,
+		 typename TSparseArrayConfig = HashMapSparseArrayConfig>
 class HashMap
 {
 public:
 	// Typedefs
-	using SparseArrayType = SparseArray<TValue, U64>;
+	using SparseArrayType = SparseArray<TValue, TSparseArrayConfig>;
 	using Value = TValue;
 	using Key = TKey;
 	using Hasher = THasher;
 	using Iterator = typename SparseArrayType::Iterator;
 	using ConstIterator = typename SparseArrayType::ConstIterator;
 
-	// Consts
-	/// @see SparseArray::INITIAL_STORAGE_SIZE
-	static constexpr U32 INITIAL_STORAGE_SIZE = SparseArrayType::INITIAL_STORAGE_SIZE;
-	/// @see SparseArray::LINEAR_PROBING_COUNT
-	static constexpr U32 LINEAR_PROBING_COUNT = SparseArrayType::LINEAR_PROBING_COUNT;
-	/// @see SparseArray::MAX_LOAD_FACTOR
-	static constexpr F32 MAX_LOAD_FACTOR = SparseArrayType::MAX_LOAD_FACTOR;
-
 	/// Default constructor.
-	/// @copy doc SparseArray::SparseArray
-	HashMap(U32 initialStorageSize = INITIAL_STORAGE_SIZE, U32 probeCount = LINEAR_PROBING_COUNT,
-			F32 maxLoadFactor = MAX_LOAD_FACTOR)
-		: m_sparseArr(initialStorageSize, probeCount, maxLoadFactor)
-	{
-	}
+	HashMap() = default;
 
 	/// Move.
 	HashMap(HashMap&& b)
@@ -211,18 +222,16 @@ protected:
 };
 
 /// Hash map template with automatic cleanup.
-template<typename TKey, typename TValue, typename THasher = DefaultHasher<TKey>>
-class HashMapAuto : public HashMap<TKey, TValue, THasher>
+template<typename TKey, typename TValue, typename THasher = DefaultHasher<TKey>,
+		 typename TSparseArrayConfig = HashMapSparseArrayConfig>
+class HashMapAuto : public HashMap<TKey, TValue, THasher, TSparseArrayConfig>
 {
 public:
-	using Base = HashMap<TKey, TValue, THasher>;
+	using Base = HashMap<TKey, TValue, THasher, TSparseArrayConfig>;
 
 	/// Default constructor.
-	/// @copy doc SparseArray::SparseArray
-	HashMapAuto(const GenericMemoryPoolAllocator<U8>& alloc, U32 initialStorageSize = Base::INITIAL_STORAGE_SIZE,
-				U32 probeCount = Base::LINEAR_PROBING_COUNT, F32 maxLoadFactor = Base::MAX_LOAD_FACTOR)
-		: Base(initialStorageSize, probeCount, maxLoadFactor)
-		, m_alloc(alloc)
+	HashMapAuto(const GenericMemoryPoolAllocator<U8>& alloc)
+		: m_alloc(alloc)
 	{
 	}
 

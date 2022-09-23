@@ -29,8 +29,8 @@ public:
 	using ConstReference = const Value&;
 	using Size = TSize;
 
-	static constexpr F32 GROW_SCALE = 2.0f;
-	static constexpr F32 SHRINK_SCALE = 2.0f;
+	static constexpr F32 kGrowScale = 2.0f;
+	static constexpr F32 kShrinkScale = 2.0f;
 
 	DynamicArray()
 		: m_data(nullptr)

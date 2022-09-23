@@ -15,9 +15,9 @@ namespace anki {
 /// The result of a tile allocation.
 enum class TileAllocatorResult : U32
 {
-	CACHED, ///< The tile is cached. No need to re-render it.
-	ALLOCATION_FAILED, ///< No more available tiles.
-	ALLOCATION_SUCCEEDED ///< Allocation succeded but the tile needs update.
+	kCached, ///< The tile is cached. No need to re-render it.
+	kAllocationFailed, ///< No more available tiles.
+	kAllocationSucceded ///< Allocation succeded but the tile needs update.
 };
 
 /// Allocates tiles out of a tilemap suitable for shadow mapping.

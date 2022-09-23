@@ -91,24 +91,24 @@ void GlState::initRenderThread()
 	// Vendor
 	CString glstr = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
 
-	if(glstr.find("ARM") != CString::NPOS)
+	if(glstr.find("ARM") != CString::kNpos)
 	{
 		m_gpu = GpuVendor::ARM;
 	}
-	else if(glstr.find("NVIDIA") != CString::NPOS)
+	else if(glstr.find("NVIDIA") != CString::kNpos)
 	{
 		m_gpu = GpuVendor::NVIDIA;
 	}
-	else if(glstr.find("AMD") != CString::NPOS || glstr.find("ATI") != CString::NPOS)
+	else if(glstr.find("AMD") != CString::kNpos || glstr.find("ATI") != CString::kNpos)
 	{
 		m_gpu = GpuVendor::AMD;
 	}
-	else if(glstr.find("Intel") != CString::NPOS)
+	else if(glstr.find("Intel") != CString::kNpos)
 	{
 		m_gpu = GpuVendor::INTEL;
 	}
 
-	ANKI_GL_LOGI("GPU vendor is %s", &GPU_VENDOR_STR[m_gpu][0]);
+	ANKI_GL_LOGI("GPU vendor is %s", &kGPUVendorStrings[m_gpu][0]);
 
 // Enable debug messages
 #if ANKI_GL == ANKI_GL_DESKTOP
@@ -134,7 +134,7 @@ void GlState::initRenderThread()
 	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_SCISSOR_TEST);
-	glScissor(0, 0, MAX_I16, MAX_I16);
+	glScissor(0, 0, kMaxI16, kMaxI16);
 	glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
 
 	// Create default VAO
@@ -142,7 +142,7 @@ void GlState::initRenderThread()
 	glBindVertexArray(m_defaultVao);
 
 	// Enable all attributes
-	for(U i = 0; i < MAX_VERTEX_ATTRIBUTES; ++i)
+	for(U i = 0; i < kMaxVertexAttributes; ++i)
 	{
 		glEnableVertexAttribArray(i);
 	}
@@ -163,15 +163,15 @@ void GlState::initRenderThread()
 	glGetInteger64v(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &val);
 	m_storageBlockMaxSize = val;
 
-	m_tboMaxRange = MAX_U32;
+	m_tboMaxRange = kMaxU32;
 
 	// Texture buffer textures
-	glGenTextures(MAX_DESCRIPTOR_SETS * MAX_TEXTURE_BUFFER_BINDINGS, &m_texBuffTextures[0][0]);
-	for(U i = 0; i < MAX_DESCRIPTOR_SETS; ++i)
+	glGenTextures(kMaxDescriptorSets * MAX_TEXTURE_BUFFER_BINDINGS, &m_texBuffTextures[0][0]);
+	for(U i = 0; i < kMaxDescriptorSets; ++i)
 	{
 		for(U j = 0; j < MAX_TEXTURE_BUFFER_BINDINGS; ++j)
 		{
-			U unit = MAX_TEXTURE_BINDINGS * MAX_DESCRIPTOR_SETS + MAX_TEXTURE_BUFFER_BINDINGS * i + j;
+			U unit = MAX_TEXTURE_BINDINGS * kMaxDescriptorSets + MAX_TEXTURE_BUFFER_BINDINGS * i + j;
 			glActiveTexture(GL_TEXTURE0 + unit);
 
 			glBindTexture(GL_TEXTURE_BUFFER, m_texBuffTextures[i][j]);

@@ -30,14 +30,15 @@ MainRenderer::~MainRenderer()
 
 Error MainRenderer::init(const MainRendererInitInfo& inf)
 {
-	ANKI_R_LOGI("Initializing main renderer");
-
 	m_alloc = HeapAllocator<U8>(inf.m_allocCallback, inf.m_allocCallbackUserData, "MainRenderer");
 	m_frameAlloc = StackAllocator<U8>(inf.m_allocCallback, inf.m_allocCallbackUserData, 10_MB, 1.0f);
 
 	// Init renderer and manipulate the width/height
 	m_swapchainResolution = inf.m_swapchainSize;
 	m_rDrawToDefaultFb = inf.m_config->getRRenderScaling() == 1.0f;
+
+	ANKI_R_LOGI("Initializing main renderer. Swapchain resolution %ux%u", m_swapchainResolution.x(),
+				m_swapchainResolution.y());
 
 	m_r.reset(m_alloc.newInstance<Renderer>());
 	ANKI_CHECK(m_r->init(inf.m_threadHive, inf.m_resourceManager, inf.m_gr, inf.m_stagingMemory, inf.m_ui, m_alloc,
@@ -57,8 +58,8 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 		alignRoundDown(2, resolution.y());
 		m_tmpRtDesc = m_r->create2DRenderTargetDescription(
 			resolution.x(), resolution.y(),
-			(m_r->getGrManager().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::R8G8B8_UNORM
-																					   : Format::R8G8B8A8_UNORM,
+			(m_r->getGrManager().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR8G8B8Unorm
+																					   : Format::kR8G8B8A8Unorm,
 			"Final Composite");
 		m_tmpRtDesc.bake();
 
@@ -71,10 +72,7 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 
 	m_rgraph = inf.m_gr->newRenderGraph();
 
-	ANKI_R_LOGI("Main renderer initialized. Swapchain resolution %ux%u", m_swapchainResolution.x(),
-				m_swapchainResolution.y());
-
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
@@ -92,7 +90,7 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 	m_runCtx.m_secondaryTaskId.setNonAtomically(0);
 	ctx.m_renderGraphDescr.setStatisticsEnabled(m_statsEnabled);
 
-	RenderTargetHandle presentRt = ctx.m_renderGraphDescr.importRenderTarget(presentTex, TextureUsageBit::NONE);
+	RenderTargetHandle presentRt = ctx.m_renderGraphDescr.importRenderTarget(presentTex, TextureUsageBit::kNone);
 
 	if(m_rDrawToDefaultFb)
 	{
@@ -122,11 +120,11 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 			cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
 			rgraphCtx.bindColorTexture(0, 1, m_runCtx.m_ctx->m_outRenderTarget);
 
-			cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
+			cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
 		});
 
-		pass.newDependency(RenderPassDependency(presentRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
-		pass.newDependency(RenderPassDependency(ctx.m_outRenderTarget, TextureUsageBit::SAMPLED_FRAGMENT));
+		pass.newDependency(RenderPassDependency(presentRt, TextureUsageBit::kFramebufferWrite));
+		pass.newDependency(RenderPassDependency(ctx.m_outRenderTarget, TextureUsageBit::kSampledFragment));
 	}
 
 	// Create a dummy pass to transition the presentable image to present
@@ -136,14 +134,14 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 		pass.setWork([]([[maybe_unused]] RenderPassWorkContext& rgraphCtx) {
 			// Do nothing. This pass is dummy
 		});
-		pass.newDependency({presentRt, TextureUsageBit::PRESENT});
+		pass.newDependency({presentRt, TextureUsageBit::kPresent});
 	}
 
 	// Bake the render graph
 	m_rgraph->compileNewGraph(ctx.m_renderGraphDescr, m_frameAlloc);
 
 	// Populate the 2nd level command buffers
-	Array<ThreadHiveTask, ThreadHive::MAX_THREADS> tasks;
+	Array<ThreadHiveTask, ThreadHive::kMaxThreads> tasks;
 	for(U i = 0; i < m_r->getThreadHive().getThreadCount(); ++i)
 	{
 		tasks[i].m_argument = this;
@@ -179,7 +177,7 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 		m_stats.m_renderingGpuSubmitTimestamp = rgraphStats.m_cpuStartTime;
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Dbg& MainRenderer::getDbg()

@@ -19,8 +19,8 @@ enum class RenderingTechnique : U8
 	FORWARD = 3,
 	RT_SHADOW = 4,
 
-	COUNT,
-	FIRST = 0
+	kCount,
+	kFirst = 0
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RenderingTechnique)
 
@@ -53,7 +53,7 @@ public:
 	}
 
 	RenderingKey()
-		: RenderingKey(RenderingTechnique::FIRST, 0, 1, false, false)
+		: RenderingKey(RenderingTechnique::kFirst, 0, 1, false, false)
 	{
 	}
 

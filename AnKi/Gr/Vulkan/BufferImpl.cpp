@@ -48,15 +48,15 @@ BufferImpl::~BufferImpl()
 Error BufferImpl::init(const BufferInitInfo& inf)
 {
 	ANKI_ASSERT(!isCreated());
-	const Bool exposeGpuAddress = !!(getGrManagerImpl().getExtensions() & VulkanExtensions::KHR_BUFFER_DEVICE_ADDRESS)
-								  && !!(inf.m_usage & ~BufferUsageBit::ALL_TRANSFER);
+	const Bool exposeGpuAddress = !!(getGrManagerImpl().getExtensions() & VulkanExtensions::kKHR_buffer_device_address)
+								  && !!(inf.m_usage & ~BufferUsageBit::kAllTransfer);
 
 	PtrSize size = inf.m_size;
 	BufferMapAccessBit access = inf.m_mapAccess;
 	BufferUsageBit usage = inf.m_usage;
 
 	ANKI_ASSERT(size > 0);
-	ANKI_ASSERT(usage != BufferUsageBit::NONE);
+	ANKI_ASSERT(usage != BufferUsageBit::kNone);
 
 	m_mappedMemoryRangeAlignment = getGrManagerImpl().getPhysicalDeviceProperties().limits.nonCoherentAtomSize;
 
@@ -84,10 +84,10 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	// Get mem requirements
 	VkMemoryRequirements req;
 	vkGetBufferMemoryRequirements(getDevice(), m_handle, &req);
-	U32 memIdx = MAX_U32;
+	U32 memIdx = kMaxU32;
 	const Bool isDiscreteGpu = getGrManagerImpl().getDeviceCapabilities().m_discreteGpu;
 
-	if(access == BufferMapAccessBit::WRITE)
+	if(access == BufferMapAccessBit::kWrite)
 	{
 		// Only write, probably for uploads
 
@@ -97,7 +97,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 
 		if(isDiscreteGpu)
 		{
-			if((usage & (~BufferUsageBit::ALL_TRANSFER)) != BufferUsageBit::NONE)
+			if((usage & (~BufferUsageBit::kAllTransfer)) != BufferUsageBit::kNone)
 			{
 				// Will be used for something other than transfer, try to put it in the device
 				prefer |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
@@ -112,7 +112,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 		memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(req.memoryTypeBits, prefer, avoid);
 
 		// 2nd try: host & coherent
-		if(memIdx == MAX_U32)
+		if(memIdx == kMaxU32)
 		{
 			prefer = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 			avoid = 0;
@@ -121,7 +121,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 			{
 				ANKI_VK_LOGW("Using a fallback mode for write-only buffer");
 
-				if((usage & (~BufferUsageBit::ALL_TRANSFER)) == BufferUsageBit::NONE)
+				if((usage & (~BufferUsageBit::kAllTransfer)) == BufferUsageBit::kNone)
 				{
 					// Will be used only for transfers, don't want it in the device
 					avoid |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
@@ -131,7 +131,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(req.memoryTypeBits, prefer, avoid);
 		}
 	}
-	else if(!!(access & BufferMapAccessBit::READ))
+	else if(!!(access & BufferMapAccessBit::kRead))
 	{
 		// Read or read/write
 
@@ -143,7 +143,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 																		 0);
 
 		// Fallback: Just cached
-		if(memIdx == MAX_U32)
+		if(memIdx == kMaxU32)
 		{
 			if(isDiscreteGpu)
 			{
@@ -158,35 +158,35 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	{
 		// Not mapped
 
-		ANKI_ASSERT(access == BufferMapAccessBit::NONE);
+		ANKI_ASSERT(access == BufferMapAccessBit::kNone);
 
 		// Device only
 		memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(
 			req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
 		// Fallback: Device with anything else
-		if(memIdx == MAX_U32)
+		if(memIdx == kMaxU32)
 		{
 			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(req.memoryTypeBits,
 																			 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0);
 		}
 	}
 
-	if(memIdx == MAX_U32)
+	if(memIdx == kMaxU32)
 	{
 		ANKI_VK_LOGE("Failed to find appropriate memory type for buffer: %s", getName().cstr());
-		return Error::FUNCTION_FAILED;
+		return Error::kFunctionFailed;
 	}
 
 	const VkPhysicalDeviceMemoryProperties& props = getGrManagerImpl().getMemoryProperties();
 	m_memoryFlags = props.memoryTypes[memIdx].propertyFlags;
 
-	if(!!(access & BufferMapAccessBit::READ) && !(m_memoryFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
+	if(!!(access & BufferMapAccessBit::kRead) && !(m_memoryFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
 	{
 		m_needsInvalidate = true;
 	}
 
-	if(!!(access & BufferMapAccessBit::WRITE) && !(m_memoryFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
+	if(!!(access & BufferMapAccessBit::kWrite) && !(m_memoryFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
 	{
 		m_needsFlush = true;
 	}
@@ -212,7 +212,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 		if(m_gpuAddress == 0)
 		{
 			ANKI_VK_LOGE("vkGetBufferDeviceAddressKHR() failed");
-			return Error::FUNCTION_FAILED;
+			return Error::kFunctionFailed;
 		}
 	}
 
@@ -220,17 +220,17 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	m_size = inf.m_size;
 	m_actualSize = size;
 	m_usage = usage;
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void* BufferImpl::map(PtrSize offset, PtrSize range, [[maybe_unused]] BufferMapAccessBit access)
 {
 	ANKI_ASSERT(isCreated());
-	ANKI_ASSERT(access != BufferMapAccessBit::NONE);
-	ANKI_ASSERT((access & m_access) != BufferMapAccessBit::NONE);
+	ANKI_ASSERT(access != BufferMapAccessBit::kNone);
+	ANKI_ASSERT((access & m_access) != BufferMapAccessBit::kNone);
 	ANKI_ASSERT(!m_mapped);
 	ANKI_ASSERT(offset < m_size);
-	if(range == MAX_PTR_SIZE)
+	if(range == kMaxPtrSize)
 	{
 		range = m_size - offset;
 	}
@@ -250,43 +250,43 @@ VkPipelineStageFlags BufferImpl::computePplineStage(BufferUsageBit usage)
 {
 	VkPipelineStageFlags stageMask = 0;
 
-	if(!!(usage & BufferUsageBit::ALL_INDIRECT))
+	if(!!(usage & BufferUsageBit::kAllIndirect))
 	{
 		stageMask |= VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT;
 	}
 
-	if(!!(usage & (BufferUsageBit::INDEX | BufferUsageBit::VERTEX)))
+	if(!!(usage & (BufferUsageBit::kIndex | BufferUsageBit::kVertex)))
 	{
 		stageMask |= VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
 	}
 
-	if(!!(usage & BufferUsageBit::ALL_GEOMETRY))
+	if(!!(usage & BufferUsageBit::kAllGeometry))
 	{
 		stageMask |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT
 					 | VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT | VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
 	}
 
-	if(!!(usage & BufferUsageBit::ALL_FRAGMENT))
+	if(!!(usage & BufferUsageBit::kAllFragment))
 	{
 		stageMask |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 	}
 
-	if(!!(usage & (BufferUsageBit::ALL_COMPUTE & ~BufferUsageBit::INDIRECT_COMPUTE)))
+	if(!!(usage & (BufferUsageBit::kAllCompute & ~BufferUsageBit::kIndirectCompute)))
 	{
 		stageMask |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 	}
 
-	if(!!(usage & BufferUsageBit::ACCELERATION_STRUCTURE_BUILD))
+	if(!!(usage & BufferUsageBit::kAccelerationStructureBuild))
 	{
 		stageMask |= VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
 	}
 
-	if(!!(usage & (BufferUsageBit::ALL_TRACE_RAYS & ~BufferUsageBit::INDIRECT_TRACE_RAYS)))
+	if(!!(usage & (BufferUsageBit::kAllTraceRays & ~BufferUsageBit::kIndirectTraceRays)))
 	{
 		stageMask |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
 	}
 
-	if(!!(usage & BufferUsageBit::ALL_TRANSFER))
+	if(!!(usage & BufferUsageBit::kAllTransfer))
 	{
 		stageMask |= VK_PIPELINE_STAGE_TRANSFER_BIT;
 	}
@@ -304,59 +304,59 @@ VkAccessFlags BufferImpl::computeAccessMask(BufferUsageBit usage)
 {
 	VkAccessFlags mask = 0;
 
-	constexpr BufferUsageBit SHADER_READ =
-		BufferUsageBit::STORAGE_GEOMETRY_READ | BufferUsageBit::STORAGE_FRAGMENT_READ
-		| BufferUsageBit::STORAGE_COMPUTE_READ | BufferUsageBit::STORAGE_TRACE_RAYS_READ
-		| BufferUsageBit::TEXTURE_GEOMETRY_READ | BufferUsageBit::TEXTURE_FRAGMENT_READ
-		| BufferUsageBit::TEXTURE_COMPUTE_READ | BufferUsageBit::TEXTURE_TRACE_RAYS_READ;
+	constexpr BufferUsageBit kShaderRead = BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead
+										   | BufferUsageBit::kStorageComputeRead | BufferUsageBit::kStorageTraceRaysRead
+										   | BufferUsageBit::kTextureGeometryRead | BufferUsageBit::kTextureFragmentRead
+										   | BufferUsageBit::kTextureComputeRead
+										   | BufferUsageBit::kTextureTraceRaysRead;
 
-	constexpr BufferUsageBit SHADER_WRITE =
-		BufferUsageBit::STORAGE_GEOMETRY_WRITE | BufferUsageBit::STORAGE_FRAGMENT_WRITE
-		| BufferUsageBit::STORAGE_COMPUTE_WRITE | BufferUsageBit::STORAGE_TRACE_RAYS_WRITE
-		| BufferUsageBit::TEXTURE_GEOMETRY_WRITE | BufferUsageBit::TEXTURE_FRAGMENT_WRITE
-		| BufferUsageBit::TEXTURE_COMPUTE_WRITE | BufferUsageBit::TEXTURE_TRACE_RAYS_WRITE;
+	constexpr BufferUsageBit kShaderWrite =
+		BufferUsageBit::kStorageGeometryWrite | BufferUsageBit::kStorageFragmentWrite
+		| BufferUsageBit::kStorageComputeWrite | BufferUsageBit::kStorageTraceRaysWrite
+		| BufferUsageBit::kTextureGeometryWrite | BufferUsageBit::kTextureFragmentWrite
+		| BufferUsageBit::kTextureComputeWrite | BufferUsageBit::kTextureTraceRaysWrite;
 
-	if(!!(usage & BufferUsageBit::ALL_UNIFORM))
+	if(!!(usage & BufferUsageBit::kAllUniform))
 	{
 		mask |= VK_ACCESS_UNIFORM_READ_BIT;
 	}
 
-	if(!!(usage & SHADER_READ))
+	if(!!(usage & kShaderRead))
 	{
 		mask |= VK_ACCESS_SHADER_READ_BIT;
 	}
 
-	if(!!(usage & SHADER_WRITE))
+	if(!!(usage & kShaderWrite))
 	{
 		mask |= VK_ACCESS_SHADER_WRITE_BIT;
 	}
 
-	if(!!(usage & BufferUsageBit::INDEX))
+	if(!!(usage & BufferUsageBit::kIndex))
 	{
 		mask |= VK_ACCESS_INDEX_READ_BIT;
 	}
 
-	if(!!(usage & BufferUsageBit::VERTEX))
+	if(!!(usage & BufferUsageBit::kVertex))
 	{
 		mask |= VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
 	}
 
-	if(!!(usage & BufferUsageBit::ALL_INDIRECT))
+	if(!!(usage & BufferUsageBit::kAllIndirect))
 	{
 		mask |= VK_ACCESS_INDIRECT_COMMAND_READ_BIT;
 	}
 
-	if(!!(usage & BufferUsageBit::TRANSFER_DESTINATION))
+	if(!!(usage & BufferUsageBit::kTransferDestination))
 	{
 		mask |= VK_ACCESS_TRANSFER_WRITE_BIT;
 	}
 
-	if(!!(usage & BufferUsageBit::TRANSFER_SOURCE))
+	if(!!(usage & BufferUsageBit::kTransferSource))
 	{
 		mask |= VK_ACCESS_TRANSFER_READ_BIT;
 	}
 
-	if(!!(usage & BufferUsageBit::ACCELERATION_STRUCTURE_BUILD))
+	if(!!(usage & BufferUsageBit::kAccelerationStructureBuild))
 	{
 		mask |= VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
 	}
@@ -379,14 +379,14 @@ void BufferImpl::computeBarrierInfo(BufferUsageBit before, BufferUsageBit after,
 
 VkBufferView BufferImpl::getOrCreateBufferView(Format fmt, PtrSize offset, PtrSize range) const
 {
-	if(range == MAX_PTR_SIZE)
+	if(range == kMaxPtrSize)
 	{
 		ANKI_ASSERT(m_size >= offset);
 		range = m_size - offset;
 	}
 
 	// Checks
-	ANKI_ASSERT(!!(m_usage & BufferUsageBit::ALL_TEXTURE));
+	ANKI_ASSERT(!!(m_usage & BufferUsageBit::kAllTexture));
 	ANKI_ASSERT(offset + range <= m_size);
 
 	ANKI_ASSERT(isAligned(getGrManagerImpl().getDeviceCapabilities().m_textureBufferBindOffsetAlignment,

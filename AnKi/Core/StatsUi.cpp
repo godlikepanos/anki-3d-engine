@@ -18,7 +18,7 @@ Error StatsUi::init()
 {
 	ANKI_CHECK(m_manager->newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{24}));
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 void StatsUi::labelBytes(PtrSize val, CString name) const
@@ -56,18 +56,27 @@ void StatsUi::labelBytes(PtrSize val, CString name) const
 	ImGui::TextUnformatted(timestamp.cstr());
 }
 
-void StatsUi::build(CanvasPtr canvas)
+void StatsUi::setStats(const StatsUiInput& input, StatsUiDetail detail)
 {
-	// Misc
-	++m_bufferedFrames;
 	Bool flush = false;
-	if(m_bufferedFrames == BUFFERED_FRAMES)
+	if(m_bufferedFrames == kBufferedFrames)
 	{
 		flush = true;
 		m_bufferedFrames = 0;
 	}
+	++m_bufferedFrames;
 
-	// Start drawing the UI
+#define ANKI_STATS_UI_BEGIN_GROUP(x)
+#define ANKI_STATS_UI_VALUE(type, name, text, flags) m_##name.update(input.m_##name, flags, flush);
+#include <AnKi/Core/StatsUi.defs.h>
+#undef ANKI_STATS_UI_BEGIN_GROUP
+#undef ANKI_STATS_UI_VALUE
+
+	m_detail = detail;
+}
+
+void StatsUi::build(CanvasPtr canvas)
+{
 	canvas->pushFont(m_font, 24);
 
 	const Vec4 oldWindowColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
@@ -78,48 +87,61 @@ void StatsUi::build(CanvasPtr canvas)
 		ImGui::SetWindowPos(Vec2(5.0f, 5.0f));
 		ImGui::SetWindowSize(Vec2(230.0f, 450.0f));
 
-		ImGui::Text("CPU Time:");
-		labelTime(m_frameTime.get(flush), "Total frame");
-		labelTime(m_renderTime.get(flush), "Renderer");
-		labelTime(m_sceneUpdateTime.get(flush), "Scene update");
-		labelTime(m_visTestsTime.get(flush), "Visibility");
-		labelTime(m_physicsTime.get(flush), "Physics");
+		auto writeText = [this](const Value& v, const Char* text, ValueFlag flags, Bool isFloat) {
+			if(isFloat)
+			{
+				if(!!(flags & ValueFlag::kSeconds))
+				{
+					labelTime(v.m_float, text);
+				}
+				else
+				{
+					ImGui::Text("%s: %f", text, v.m_float);
+				}
+			}
+			else
+			{
+				U64 val;
+				if(!!(flags & ValueFlag::kAverage))
+				{
+					val = U64(v.m_avg);
+				}
+				else
+				{
+					val = v.m_int;
+				}
 
-		ImGui::Text("----");
-		ImGui::Text("GPU:");
-		labelTime(m_gpuTime.get(flush), "Total frame");
-		const U64 gpuActive = m_gpuActive.get(flush);
-		if(gpuActive)
+				if(!!(flags & ValueFlag::kBytes))
+				{
+					labelBytes(val, text);
+				}
+				else
+				{
+					ImGui::Text("%s: %zu", text, val);
+				}
+			}
+		};
+
+		if(m_detail == StatsUiDetail::kDetailed)
 		{
-			ImGui::Text("%s: %luK cycles", "Active Cycles", gpuActive / 1000);
-			labelBytes(m_gpuReadBandwidth.get(flush), "Read bandwidth");
-			labelBytes(m_gpuWriteBandwidth.get(flush), "Write bandwidth");
+#define ANKI_STATS_UI_BEGIN_GROUP(x) \
+	ImGui::Text("----"); \
+	ImGui::Text(x); \
+	ImGui::Text("----");
+#define ANKI_STATS_UI_VALUE(type, name, text, flags) \
+	writeText(m_##name, text, flags, std::is_floating_point<type>::value);
+#include <AnKi/Core/StatsUi.defs.h>
+#undef ANKI_STATS_UI_BEGIN_GROUP
+#undef ANKI_STATS_UI_VALUE
 		}
-
-		ImGui::Text("----");
-		ImGui::Text("CPU Memory:");
-		labelBytes(m_allocatedCpuMem, "Total CPU");
-		labelUint(m_allocCount, "Total allocations");
-		labelUint(m_freeCount, "Total frees");
-
-		ImGui::Text("----");
-		ImGui::Text("GPU Memory:");
-		labelBytes(m_grStats.m_hostMemoryAllocated, "Host");
-		labelBytes(m_grStats.m_hostMemoryInUse, "Host in use");
-		labelUint(m_grStats.m_hostMemoryAllocationCount, "Host allocations");
-		labelBytes(m_grStats.m_deviceMemoryAllocated, "Device");
-		labelBytes(m_grStats.m_deviceMemoryInUse, "Device in use");
-		labelUint(m_grStats.m_deviceMemoryAllocationCount, "Device allocations");
-		labelBytes(m_globalVertexPoolStats.m_userAllocatedSize, "Vertex/Index GPU memory");
-		labelBytes(m_globalVertexPoolStats.m_realAllocatedSize, "Actual Vertex/Index GPU memory");
-
-		ImGui::Text("----");
-		ImGui::Text("Vulkan:");
-		labelUint(m_grStats.m_commandBufferCount, "Cmd buffers");
-
-		ImGui::Text("----");
-		ImGui::Text("Other:");
-		labelUint(m_drawableCount, "Drawbles");
+		else
+		{
+			const Second maxTime = max(m_cpuFrameTime.m_float, m_gpuFrameTime.m_float);
+			const F32 fps = F32(1.0 / maxTime);
+			const Bool cpuBound = m_cpuFrameTime.m_float > m_gpuFrameTime.m_float;
+			ImGui::TextColored((cpuBound) ? Vec4(1.0f, 0.5f, 0.5f, 1.0f) : Vec4(0.5f, 1.0f, 0.5f, 1.0f), "FPS %.1f",
+							   fps);
+		}
 	}
 
 	ImGui::End();

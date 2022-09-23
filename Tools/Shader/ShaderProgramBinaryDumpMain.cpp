@@ -19,7 +19,7 @@ static Error parseCommandLineArgs(int argc, char** argv, Bool& dumpStats, String
 	// Parse config
 	if(argc < 2)
 	{
-		return Error::USER_DATA;
+		return Error::kUserData;
 	}
 
 	dumpStats = false;
@@ -33,7 +33,7 @@ static Error parseCommandLineArgs(int argc, char** argv, Bool& dumpStats, String
 		}
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error dumpStats(const ShaderProgramBinary& bin)
@@ -67,18 +67,18 @@ Error dumpStats(const ShaderProgramBinary& bin)
 	public:
 		Stats m_avgStats{0.0};
 		Stats m_maxStats{-1.0};
-		Stats m_minStats{MAX_F64};
+		Stats m_minStats{kMaxF64};
 		U32 m_spillingCount = 0;
 		U32 m_count = 0;
 	};
 
-	Array<StageStats, U32(ShaderType::COUNT)> allStats;
+	Array<StageStats, U32(ShaderType::kCount)> allStats;
 
 	for(const ShaderProgramBinaryVariant& variant : bin.m_variants)
 	{
 		for(ShaderType shaderType : EnumIterable<ShaderType>())
 		{
-			if(variant.m_codeBlockIndices[shaderType] == MAX_U32)
+			if(variant.m_codeBlockIndices[shaderType] == kMaxU32)
 			{
 				continue;
 			}
@@ -99,7 +99,7 @@ Error dumpStats(const ShaderProgramBinary& bin)
 			if(err)
 			{
 				ANKI_LOGE("Mali offline compiler failed");
-				return Error::FUNCTION_FAILED;
+				return Error::kFunctionFailed;
 			}
 
 			// Appends stats
@@ -166,7 +166,7 @@ Error dumpStats(const ShaderProgramBinary& bin)
 			   maxs.m_fp16ArithmeticPercentage);
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 Error dump(CString fname, Bool bDumpStats)
@@ -186,7 +186,7 @@ Error dump(CString fname, Bool bDumpStats)
 		ANKI_CHECK(dumpStats(binw.getBinary()));
 	}
 
-	return Error::NONE;
+	return Error::kNone;
 }
 
 int main(int argc, char** argv)
