@@ -294,13 +294,23 @@ public:
 	/// @note This is AnKi specific.
 	/// @note The output is a parameter to work with template deduction.
 	template<typename TValue, typename TSize>
-	void newArray(size_type n, WeakArray<TValue, TSize>& out);
+	void newArray(size_type n, WeakArray<TValue, TSize>& out)
+	{
+		TValue* arr = newArray<TValue>(n);
+		ANKI_ASSERT(n < std::numeric_limits<TSize>::max());
+		out.setArray(arr, TSize(n));
+	}
 
 	/// Allocate a new array of objects and call their constructor.
 	/// @note This is AnKi specific.
 	/// @note The output is a parameter to work with template deduction.
 	template<typename TValue, typename TSize>
-	void newArray(size_type n, const TValue& v, WeakArray<TValue, TSize>& out);
+	void newArray(size_type n, const TValue& v, WeakArray<TValue, TSize>& out)
+	{
+		TValue* arr = newArray<TValue>(n, v);
+		ANKI_ASSERT(n < std::numeric_limits<TSize>::max());
+		out.setArray(arr, TSize(n));
+	}
 
 	/// Call the destructor and deallocate an object
 	/// @note This is AnKi specific
@@ -341,7 +351,11 @@ public:
 	/// Call the destructor and deallocate an array of objects
 	/// @note This is AnKi specific
 	template<typename TValue, typename TSize>
-	void deleteArray(WeakArray<TValue, TSize>& arr);
+	void deleteArray(WeakArray<TValue, TSize>& arr)
+	{
+		deleteArray(arr.getBegin(), arr.getSize());
+		arr.setArray(nullptr, 0);
+	}
 
 private:
 	TPool* m_pool = nullptr;
@@ -426,5 +440,3 @@ using StackAllocator = GenericPoolAllocator<T, StackMemoryPool>;
 /// @}
 
 } // end namespace anki
-
-#include <AnKi/Util/Allocator.inl.h>

@@ -41,6 +41,9 @@ class ThreadHive;
 template<typename T, PtrSize kPreallocatedStorage = ANKI_SAFE_ALIGNMENT>
 class Function;
 
+template<typename, PtrSize>
+class Array;
+
 template<typename T, typename TSize = U32>
 class WeakArray;
 

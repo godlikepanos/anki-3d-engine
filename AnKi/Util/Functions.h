@@ -9,6 +9,7 @@
 #pragma once
 
 #include <AnKi/Util/StdTypes.h>
+#include <AnKi/Util/Forward.h>
 #include <AnKi/Util/Assert.h>
 #include <cmath>
 #include <utility>
@@ -361,6 +362,114 @@ inline U32 floatBitsToUint(F32 f)
 	U32 out;
 	memcpy(&out, &f, sizeof(out));
 	return out;
+}
+
+/// Call one of the costructors of an object.
+template<typename T, typename... TArgs>
+void callConstructor(T& p, TArgs&&... args)
+{
+	::new(&p) T(std::forward<TArgs>(args)...);
+}
+
+/// Call the destructor of an object.
+template<typename T>
+void callDestructor(T& p)
+{
+	static_assert(sizeof(T) > 0, "Incomplete type");
+	p.~T();
+}
+
+/// Allocate a new object and call it's constructor
+template<typename T, typename TMemPool, typename... TArgs>
+[[nodiscard]] T* newInstance(TMemPool& pool, TArgs&&... args)
+{
+	T* ptr = pool.allocate(sizeof(T), alignof(T));
+	if(ANKI_LIKELY(ptr))
+	{
+		callConstructor(ptr, std::forward<TArgs>(args)...);
+	}
+
+	return ptr;
+}
+
+/// Allocate a new array of objects and call their constructor
+template<typename T, typename TMemPool>
+[[nodiscard]] T* newArray(TMemPool& pool, PtrSize n)
+{
+	T* ptr = pool.allocate(n * sizeof(T), alignof(T));
+	if(ANKI_LIKELY(ptr))
+	{
+		for(PtrSize i = 0; i < n; i++)
+		{
+			callConstructor(&ptr[i]);
+		}
+	}
+
+	return ptr;
+}
+
+/// Allocate a new array of objects and call their constructor
+template<typename T, typename TMemPool>
+[[nodiscard]] T* newArray(TMemPool& pool, PtrSize n, const T& copy)
+{
+	T* ptr = pool.allocate(n * sizeof(T), alignof(T));
+	if(ANKI_LIKELY(ptr))
+	{
+		for(PtrSize i = 0; i < n; i++)
+		{
+			callConstructor(&ptr[i], copy);
+		}
+	}
+
+	return ptr;
+}
+
+/// Allocate a new array of objects and call their constructor.
+/// @note The output is a parameter (instead of a return value) to work with template deduction.
+template<typename T, typename TMemPool, typename TSize>
+void newArray(TMemPool& pool, PtrSize n, WeakArray<T, TSize>& out)
+{
+	T* arr = newArray<T>(pool, n);
+	ANKI_ASSERT(n < getMaxNumericLimit<TSize>());
+	out.setArray(arr, TSize(n));
+}
+
+/// Call the destructor and deallocate an object.
+template<typename T, typename TMemPool>
+void deleteInstance(TMemPool& pool, T* ptr)
+{
+	if(ANKI_LIKELY(ptr != nullptr))
+	{
+		callDestructor(&ptr);
+		pool.free(ptr);
+	}
+}
+
+/// Call the destructor and deallocate an array of objects.
+template<typename T, typename TMemPool>
+void deleteArray(TMemPool& pool, T* arr, PtrSize n)
+{
+	if(ANKI_LIKELY(arr != nullptr))
+	{
+		for(PtrSize i = 0; i < n; i++)
+		{
+			callDestructor(arr[i]);
+		}
+
+		pool.free(arr);
+	}
+	else
+	{
+		ANKI_ASSERT(n == 0);
+	}
+}
+
+/// Call the destructor and deallocate an array of objects.
+template<typename T, typename TMemPool, typename TSize>
+void deleteArray(TMemPool& pool, WeakArray<T, TSize>& arr)
+{
+	deleteArray(pool, arr.getBegin(), arr.getSize());
+	arr.setArray(nullptr, 0);
 }
 /// @}
 

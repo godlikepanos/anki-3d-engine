@@ -8,7 +8,6 @@
 #include <AnKi/Util/StdTypes.h>
 #include <AnKi/Util/Atomic.h>
 #include <AnKi/Util/Assert.h>
-#include <AnKi/Util/Array.h>
 #include <AnKi/Util/Thread.h>
 #include <AnKi/Util/StackAllocatorBuilder.h>
 #include <utility> // For forward
