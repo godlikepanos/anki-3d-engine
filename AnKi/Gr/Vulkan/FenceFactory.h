@@ -98,7 +98,7 @@ public:
 	void init(GrAllocator<U8> alloc, VkDevice dev)
 	{
 		ANKI_ASSERT(dev);
-		m_alloc = alloc;
+		m_alloc = std::move(alloc);
 		m_dev = dev;
 	}
 

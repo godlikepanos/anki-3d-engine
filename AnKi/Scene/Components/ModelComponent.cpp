@@ -30,7 +30,7 @@ Error ModelComponent::loadModelResource(CString filename)
 
 	ModelResourcePtr rsrc;
 	ANKI_CHECK(m_node->getSceneGraph().getResourceManager().loadResource(filename, rsrc));
-	m_model = rsrc;
+	m_model = std::move(rsrc);
 
 	m_modelPatchMergeKeys.destroy(m_node->getAllocator());
 	m_modelPatchMergeKeys.create(m_node->getAllocator(), m_model->getModelPatches().getSize());

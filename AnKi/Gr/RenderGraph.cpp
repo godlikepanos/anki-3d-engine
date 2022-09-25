@@ -478,7 +478,7 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(const FramebufferDescription&
 										 TextureSubresourceInfo(inAtt.m_surface), "RenderGraph");
 			TextureViewPtr view = getManager().newTextureView(viewInit);
 
-			outAtt.m_textureView = view;
+			outAtt.m_textureView = std::move(view);
 		}
 
 		if(!!fbDescr.m_depthStencilAttachment.m_aspect)
@@ -497,7 +497,7 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(const FramebufferDescription&
 										 TextureSubresourceInfo(inAtt.m_surface, inAtt.m_aspect), "RenderGraph");
 			TextureViewPtr view = getManager().newTextureView(viewInit);
 
-			outAtt.m_textureView = view;
+			outAtt.m_textureView = std::move(view);
 		}
 
 		if(fbDescr.m_shadingRateAttachmentTexelWidth > 0)
@@ -508,7 +508,7 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(const FramebufferDescription&
 
 			fbInit.m_shadingRateImage.m_texelWidth = fbDescr.m_shadingRateAttachmentTexelWidth;
 			fbInit.m_shadingRateImage.m_texelHeight = fbDescr.m_shadingRateAttachmentTexelHeight;
-			fbInit.m_shadingRateImage.m_textureView = view;
+			fbInit.m_shadingRateImage.m_textureView = std::move(view);
 		}
 
 		// Set FB name

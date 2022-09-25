@@ -232,7 +232,7 @@ Error ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 			m_props.m_particle.m_minInitialSize / 2.0f);
 
 		PhysicsBodyInitInfo binit;
-		binit.m_shape = collisionShape;
+		binit.m_shape = std::move(collisionShape);
 
 		m_physicsParticles.resizeStorage(m_node->getAllocator(), m_props.m_maxNumOfParticles);
 		for(U32 i = 0; i < m_props.m_maxNumOfParticles; i++)
