@@ -8,6 +8,7 @@
 #include <AnKi/Resource/ResourceObject.h>
 #include <AnKi/Math.h>
 #include <AnKi/Util/String.h>
+#include <AnKi/Util/WeakArray.h>
 
 namespace anki {
 

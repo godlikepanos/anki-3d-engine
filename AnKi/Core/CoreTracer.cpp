@@ -121,10 +121,10 @@ Error CoreTracer::init(GenericMemoryPoolAllocator<U8> alloc, CString directory)
 	fname.sprintf("%s/%d%02d%02d-%02d%02d_", directory.cstr(), tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour,
 				  tm.tm_min);
 
-	ANKI_CHECK(m_traceJsonFile.open(StringAuto(alloc).sprintf("%strace.json", fname.cstr()), FileOpenFlag::WRITE));
+	ANKI_CHECK(m_traceJsonFile.open(StringAuto(alloc).sprintf("%strace.json", fname.cstr()), FileOpenFlag::kWrite));
 	ANKI_CHECK(m_traceJsonFile.writeText("[\n"));
 
-	ANKI_CHECK(m_countersCsvFile.open(StringAuto(alloc).sprintf("%scounters.csv", fname.cstr()), FileOpenFlag::WRITE));
+	ANKI_CHECK(m_countersCsvFile.open(StringAuto(alloc).sprintf("%scounters.csv", fname.cstr()), FileOpenFlag::kWrite));
 
 	return Error::kNone;
 }

@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Util/DynamicArray.h>
-#include <AnKi/Util/WeakArray.h>
 
 namespace anki {
 
@@ -226,16 +225,6 @@ void DynamicArray<T, TSize>::erase(TAllocator alloc, ConstIterator first, ConstI
 	// Resize storage
 	const Size newSize = m_size - Size(last - first);
 	resizeStorage(alloc, newSize);
-}
-
-template<typename T, typename TSize>
-void DynamicArray<T, TSize>::moveAndReset(WeakArray<Value, Size>& array)
-{
-	Value* data;
-	Size size;
-	Size storageSize;
-	moveAndReset(data, size, storageSize);
-	array.setArray(data, size);
 }
 
 } // end namespace anki

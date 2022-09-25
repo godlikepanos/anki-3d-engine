@@ -27,7 +27,7 @@ ANKI_TEST(Util, INotify)
 
 			File file;
 			ANKI_TEST_EXPECT_NO_ERR(
-				file.open(StringAuto(alloc).sprintf("%s/file.txt", dir.cstr()).toCString(), FileOpenFlag::WRITE));
+				file.open(StringAuto(alloc).sprintf("%s/file.txt", dir.cstr()).toCString(), FileOpenFlag::kWrite));
 			file.close();
 
 			ANKI_TEST_EXPECT_NO_ERR(in.pollEvents(modified));

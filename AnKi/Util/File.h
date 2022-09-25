@@ -18,14 +18,14 @@ namespace anki {
 /// @memberof File
 enum class FileOpenFlag : U8
 {
-	NONE = 0,
-	READ = 1 << 0,
-	WRITE = 1 << 1,
-	APPEND = WRITE | (1 << 3),
-	BINARY = 1 << 4,
-	ENDIAN_LITTLE = 1 << 5, ///< The default
-	ENDIAN_BIG = 1 << 6,
-	SPECIAL = 1 << 7, ///< Android package file.
+	kNone = 0,
+	kRead = 1 << 0,
+	kWrite = 1 << 1,
+	kAppend = kWrite | (1 << 3),
+	kBinary = 1 << 4,
+	kLittleEndian = 1 << 5, ///< The default
+	kBigEndian = 1 << 6,
+	kSpecial = 1 << 7, ///< Android package file.
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FileOpenFlag)
 
@@ -119,13 +119,13 @@ public:
 	/// The the size of the file.
 	PtrSize getSize() const
 	{
-		ANKI_ASSERT(!(m_flags & FileOpenFlag::WRITE));
+		ANKI_ASSERT(!(m_flags & FileOpenFlag::kWrite));
 		return m_size;
 	}
 
 private:
 	void* m_file = nullptr; ///< A native file type
-	FileOpenFlag m_flags = FileOpenFlag::NONE; ///< All the flags. Set on open
+	FileOpenFlag m_flags = FileOpenFlag::kNone; ///< All the flags. Set on open
 	PtrSize m_size = 0;
 
 	/// Get the current machine's endianness
@@ -142,7 +142,7 @@ private:
 	void zero()
 	{
 		m_file = nullptr;
-		m_flags = FileOpenFlag::NONE;
+		m_flags = FileOpenFlag::kNone;
 		m_size = 0;
 	}
 };

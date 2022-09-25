@@ -77,7 +77,7 @@ void main()
 	// Write the file
 	{
 		File file;
-		ANKI_TEST_EXPECT_NO_ERR(file.open("test.glslp", FileOpenFlag::WRITE));
+		ANKI_TEST_EXPECT_NO_ERR(file.open("test.glslp", FileOpenFlag::kWrite));
 		ANKI_TEST_EXPECT_NO_ERR(file.writeText(sourceCode));
 	}
 
@@ -87,7 +87,7 @@ void main()
 		Error readAllText(CString filename, StringAuto& txt) final
 		{
 			File file;
-			ANKI_CHECK(file.open(filename, FileOpenFlag::READ));
+			ANKI_CHECK(file.open(filename, FileOpenFlag::kRead));
 			ANKI_CHECK(file.readAllText(txt));
 			return Error::kNone;
 		}
@@ -274,7 +274,7 @@ void main()
 	// Write the file
 	{
 		File file;
-		ANKI_TEST_EXPECT_NO_ERR(file.open("test.glslp", FileOpenFlag::WRITE));
+		ANKI_TEST_EXPECT_NO_ERR(file.open("test.glslp", FileOpenFlag::kWrite));
 		ANKI_TEST_EXPECT_NO_ERR(file.writeText(sourceCode));
 	}
 
@@ -284,7 +284,7 @@ void main()
 		Error readAllText(CString filename, StringAuto& txt) final
 		{
 			File file;
-			ANKI_CHECK(file.open(filename, FileOpenFlag::READ));
+			ANKI_CHECK(file.open(filename, FileOpenFlag::kRead));
 			ANKI_CHECK(file.readAllText(txt));
 			return Error::kNone;
 		}

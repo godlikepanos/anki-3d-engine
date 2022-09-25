@@ -122,7 +122,7 @@ Error ShaderImpl::init(CString source, ConstWeakArray<ShaderSpecializationConstV
 		fname.sprintf("%s/%05u.%s", &cacheDir[0], static_cast<U32>(m_glName), ext);
 
 		File file;
-		ANKI_CHECK(file.open(fname.toCString(), FileOpenFlag::WRITE));
+		ANKI_CHECK(file.open(fname.toCString(), FileOpenFlag::kWrite));
 		ANKI_CHECK(file.writeText("%s", source.cstr()));
 	}
 #endif

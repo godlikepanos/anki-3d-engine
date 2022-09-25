@@ -719,7 +719,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 
 	// Open file
 	File file;
-	ANKI_CHECK(file.open(fname.toCString(), FileOpenFlag::WRITE | FileOpenFlag::BINARY));
+	ANKI_CHECK(file.open(fname.toCString(), FileOpenFlag::kWrite | FileOpenFlag::kBinary));
 
 	// Write header
 	ANKI_CHECK(file.write(&header, sizeof(header)));

@@ -1538,7 +1538,7 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 		{
 			ANKI_CHECK(m_shaderStatsFile.open(
 				StringAuto(getAllocator()).sprintf("%s/../ppline_stats.csv", m_cacheDir.cstr()).toCString(),
-				FileOpenFlag::WRITE));
+				FileOpenFlag::kWrite));
 
 			ANKI_CHECK(m_shaderStatsFile.writeText("ppline name,hash,"
 												   "stage 0 VGPR,stage 0 SGPR,"

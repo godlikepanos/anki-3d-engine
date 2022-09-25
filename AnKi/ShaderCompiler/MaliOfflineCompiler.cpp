@@ -315,7 +315,7 @@ Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv,
 	spirvFilename.sprintf("%s/AnKiMaliocTmpSpirv_%" PRIu64 ".spv", tmpDir.cstr(), getRandom());
 
 	File spirvFile;
-	ANKI_CHECK(spirvFile.open(spirvFilename, FileOpenFlag::WRITE | FileOpenFlag::BINARY));
+	ANKI_CHECK(spirvFile.open(spirvFilename, FileOpenFlag::kWrite | FileOpenFlag::kBinary));
 	Error err = spirvFile.write(spirv.getBegin(), spirv.getSizeInBytes());
 	spirvFile.close();
 

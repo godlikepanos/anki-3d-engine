@@ -411,7 +411,7 @@ Error ResourceFilesystem::openFileInternal(const ResourceFilename& filename, Res
 
 				CResourceFile* file = m_alloc.newInstance<CResourceFile>(m_alloc);
 				rfile = file;
-				ANKI_CHECK(file->m_file.open(newFname, FileOpenFlag::READ));
+				ANKI_CHECK(file->m_file.open(newFname, FileOpenFlag::kRead));
 
 #if 0
 				printf("Opening asset %s\n", &newFname[0]);
@@ -431,9 +431,9 @@ Error ResourceFilesystem::openFileInternal(const ResourceFilename& filename, Res
 		CResourceFile* file = m_alloc.newInstance<CResourceFile>(m_alloc);
 		rfile = file;
 
-		FileOpenFlag openFlags = FileOpenFlag::READ;
+		FileOpenFlag openFlags = FileOpenFlag::kRead;
 #if ANKI_OS_ANDROID
-		openFlags |= FileOpenFlag::SPECIAL;
+		openFlags |= FileOpenFlag::kSpecial;
 #endif
 		ANKI_CHECK(file->m_file.open(filename, openFlags));
 

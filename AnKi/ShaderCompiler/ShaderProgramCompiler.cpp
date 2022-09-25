@@ -17,7 +17,7 @@ Error ShaderProgramBinaryWrapper::serializeToFile(CString fname) const
 	ANKI_ASSERT(m_binary);
 
 	File file;
-	ANKI_CHECK(file.open(fname, FileOpenFlag::WRITE | FileOpenFlag::BINARY));
+	ANKI_CHECK(file.open(fname, FileOpenFlag::kWrite | FileOpenFlag::kBinary));
 
 	BinarySerializer serializer;
 	HeapAllocator<U8> tmpAlloc(m_alloc.getMemoryPool().getAllocationCallback(),
@@ -31,7 +31,7 @@ Error ShaderProgramBinaryWrapper::serializeToFile(CString fname) const
 Error ShaderProgramBinaryWrapper::deserializeFromFile(CString fname)
 {
 	File file;
-	ANKI_CHECK(file.open(fname, FileOpenFlag::READ | FileOpenFlag::BINARY));
+	ANKI_CHECK(file.open(fname, FileOpenFlag::kRead | FileOpenFlag::kBinary));
 	ANKI_CHECK(deserializeFromAnyFile(file));
 	return Error::kNone;
 }

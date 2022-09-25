@@ -676,7 +676,7 @@ static Error compressS3tc(GenericMemoryPoolAllocator<U8> alloc, CString tempDire
 
 	// Read the DDS file
 	File ddsFile;
-	ANKI_CHECK(ddsFile.open(ddsFilename, FileOpenFlag::READ | FileOpenFlag::BINARY));
+	ANKI_CHECK(ddsFile.open(ddsFilename, FileOpenFlag::kRead | FileOpenFlag::kBinary));
 	DdsHeader ddsHeader;
 	ANKI_CHECK(ddsFile.read(&ddsHeader, sizeof(DdsHeader)));
 
@@ -791,7 +791,7 @@ static Error compressAstc(GenericMemoryPoolAllocator<U8> alloc, CString tempDire
 
 	// Read the astc file
 	File astcFile;
-	ANKI_CHECK(astcFile.open(astcFilename, FileOpenFlag::READ | FileOpenFlag::BINARY));
+	ANKI_CHECK(astcFile.open(astcFilename, FileOpenFlag::kRead | FileOpenFlag::kBinary));
 	AstcHeader header;
 	ANKI_CHECK(astcFile.read(&header, sizeof(header)));
 
@@ -834,7 +834,7 @@ static Error storeAnkiImage(const ImageImporterConfig& config, const ImageImport
 	ANKI_IMPORTER_LOGV("Storing to %s", config.m_outFilename.cstr());
 
 	File outFile;
-	ANKI_CHECK(outFile.open(config.m_outFilename, FileOpenFlag::BINARY | FileOpenFlag::WRITE));
+	ANKI_CHECK(outFile.open(config.m_outFilename, FileOpenFlag::kBinary | FileOpenFlag::kWrite));
 
 	// Header
 	ImageBinaryHeader header = {};

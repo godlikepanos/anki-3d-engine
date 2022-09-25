@@ -694,7 +694,7 @@ Error ImageLoader::load(ResourceFilePtr rfile, const CString& filename, U32 maxI
 Error ImageLoader::load(const CString& filename, U32 maxImageSize)
 {
 	SystemFile file;
-	ANKI_CHECK(file.m_file.open(filename, FileOpenFlag::READ | FileOpenFlag::BINARY));
+	ANKI_CHECK(file.m_file.open(filename, FileOpenFlag::kRead | FileOpenFlag::kBinary));
 
 	const Error err = loadInternal(file, filename, maxImageSize);
 	if(err)

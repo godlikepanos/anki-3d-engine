@@ -292,7 +292,7 @@ Error compilerGlslToSpirv(CString src, ShaderType shaderType, GenericMemoryPoolA
 		StringAuto fname(tmpAlloc);
 		fname.sprintf("%s/%u.glsl", tmpDir.cstr(), dumpFileCount);
 		ANKI_SHADER_COMPILER_LOGW("GLSL dumping is enabled: %s", fname.cstr());
-		ANKI_CHECK(file.open(fname, FileOpenFlag::WRITE));
+		ANKI_CHECK(file.open(fname, FileOpenFlag::kWrite));
 		ANKI_CHECK(file.writeText("%s", src.cstr()));
 	}
 #endif
@@ -343,7 +343,7 @@ Error compilerGlslToSpirv(CString src, ShaderType shaderType, GenericMemoryPoolA
 		StringAuto fname(tmpAlloc);
 		fname.sprintf("%s/%u.spv", tmpDir.cstr(), dumpFileCount);
 		ANKI_SHADER_COMPILER_LOGW("GLSL dumping is enabled: %s", fname.cstr());
-		ANKI_CHECK(file.open(fname, FileOpenFlag::WRITE | FileOpenFlag::BINARY));
+		ANKI_CHECK(file.open(fname, FileOpenFlag::kWrite | FileOpenFlag::kBinary));
 		ANKI_CHECK(file.write(spirv.getBegin(), spirv.getSizeInBytes()));
 	}
 #endif

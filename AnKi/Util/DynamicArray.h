@@ -294,7 +294,14 @@ public:
 	}
 
 	/// @copydoc moveAndReset
-	void moveAndReset(WeakArray<Value, Size>& array);
+	void moveAndReset(WeakArray<Value, Size>& array)
+	{
+		Value* data;
+		Size size;
+		Size storageSize;
+		moveAndReset(data, size, storageSize);
+		array.setArray(data, size);
+	}
 
 	/// Resizes the storage but DOESN'T CONSTRUCT ANY ELEMENTS. It only moves or destroys.
 	template<typename TAllocator>

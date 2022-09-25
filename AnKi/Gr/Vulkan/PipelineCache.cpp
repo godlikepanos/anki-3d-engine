@@ -22,7 +22,7 @@ Error PipelineCache::init(VkDevice dev, VkPhysicalDevice pdev, CString cacheDir,
 	if(fileExists(m_dumpFilename.toCString()))
 	{
 		File file;
-		ANKI_CHECK(file.open(m_dumpFilename.toCString(), FileOpenFlag::BINARY | FileOpenFlag::READ));
+		ANKI_CHECK(file.open(m_dumpFilename.toCString(), FileOpenFlag::kBinary | FileOpenFlag::kRead));
 
 		const PtrSize diskDumpSize = file.getSize();
 		if(diskDumpSize <= sizeof(U8) * VK_UUID_SIZE)
@@ -100,7 +100,7 @@ Error PipelineCache::destroyInternal(VkDevice dev, VkPhysicalDevice pdev, GrAllo
 
 			// Write file
 			File file;
-			ANKI_CHECK(file.open(&m_dumpFilename[0], FileOpenFlag::BINARY | FileOpenFlag::WRITE));
+			ANKI_CHECK(file.open(&m_dumpFilename[0], FileOpenFlag::kBinary | FileOpenFlag::kWrite));
 
 			VkPhysicalDeviceProperties props;
 			vkGetPhysicalDeviceProperties(pdev, &props);

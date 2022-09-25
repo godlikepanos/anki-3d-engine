@@ -138,7 +138,7 @@ static Error work(const CmdLineArgs& info)
 			++m_fileReadCount;
 
 			File file;
-			ANKI_CHECK(file.open(fname, FileOpenFlag::READ));
+			ANKI_CHECK(file.open(fname, FileOpenFlag::kRead));
 			ANKI_CHECK(file.readAllText(txt));
 			return Error::kNone;
 		}

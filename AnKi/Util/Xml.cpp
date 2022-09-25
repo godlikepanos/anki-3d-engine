@@ -128,7 +128,7 @@ Error XmlElement::getAttributeTextOptional(CString name, CString& out, Bool& att
 Error XmlDocument::loadFile(CString filename, GenericMemoryPoolAllocator<U8> alloc)
 {
 	File file;
-	ANKI_CHECK(file.open(filename, FileOpenFlag::READ));
+	ANKI_CHECK(file.open(filename, FileOpenFlag::kRead));
 
 	StringAuto text(alloc);
 	ANKI_CHECK(file.readAllText(text));

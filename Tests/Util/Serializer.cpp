@@ -35,7 +35,7 @@ ANKI_TEST(Util, BinarySerializer)
 	// Serialize
 	{
 		File file;
-		ANKI_TEST_EXPECT_NO_ERR(file.open("serialized.bin", FileOpenFlag::WRITE | FileOpenFlag::BINARY));
+		ANKI_TEST_EXPECT_NO_ERR(file.open("serialized.bin", FileOpenFlag::kWrite | FileOpenFlag::kBinary));
 		BinarySerializer serializer;
 
 		ANKI_TEST_EXPECT_NO_ERR(serializer.serialize(a, alloc, file));
@@ -44,7 +44,7 @@ ANKI_TEST(Util, BinarySerializer)
 	// Deserialize
 	{
 		File file;
-		ANKI_TEST_EXPECT_NO_ERR(file.open("serialized.bin", FileOpenFlag::READ | FileOpenFlag::BINARY));
+		ANKI_TEST_EXPECT_NO_ERR(file.open("serialized.bin", FileOpenFlag::kRead | FileOpenFlag::kBinary));
 
 		BinaryDeserializer deserializer;
 		ClassA* pa;

@@ -1727,7 +1727,7 @@ Error RenderGraph::dumpDependencyDotFile(const RenderGraphDescription& descr, co
 
 	File file;
 	ANKI_CHECK(file.open(StringAuto(alloc).sprintf("%s/rgraph_%05u.dot", &path[0], m_version).toCString(),
-						 FileOpenFlag::WRITE));
+						 FileOpenFlag::kWrite));
 	for(const String& s : slist)
 	{
 		ANKI_CHECK(file.writeText("%s", &s[0]));

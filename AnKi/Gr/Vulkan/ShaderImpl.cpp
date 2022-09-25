@@ -61,8 +61,8 @@ Error ShaderImpl::init(const ShaderInitInfo& inf)
 						   U(m_shaderType), getUuid());
 
 		File fileSpirv;
-		ANKI_CHECK(
-			fileSpirv.open(fnameSpirv.toCString(), FileOpenFlag::BINARY | FileOpenFlag::WRITE | FileOpenFlag::SPECIAL));
+		ANKI_CHECK(fileSpirv.open(fnameSpirv.toCString(),
+								  FileOpenFlag::kBinary | FileOpenFlag::kWrite | FileOpenFlag::kSpecial));
 		ANKI_CHECK(fileSpirv.write(&inf.m_binary[0], inf.m_binary.getSize()));
 	}
 #endif

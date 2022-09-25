@@ -11,7 +11,7 @@ ANKI_TEST(Util, FileExists)
 {
 	// Create file
 	File file;
-	ANKI_TEST_EXPECT_NO_ERR(file.open("./tmp", FileOpenFlag::WRITE));
+	ANKI_TEST_EXPECT_NO_ERR(file.open("./tmp", FileOpenFlag::kWrite));
 	file.close();
 
 	// Check
@@ -31,7 +31,7 @@ ANKI_TEST(Util, Directory)
 	// Create simple directory
 	ANKI_TEST_EXPECT_NO_ERR(createDirectory("./dir"));
 	File file;
-	ANKI_TEST_EXPECT_NO_ERR(file.open("./dir/tmp", FileOpenFlag::WRITE));
+	ANKI_TEST_EXPECT_NO_ERR(file.open("./dir/tmp", FileOpenFlag::kWrite));
 	file.close();
 	ANKI_TEST_EXPECT_EQ(fileExists("./dir/tmp"), true);
 
@@ -42,7 +42,7 @@ ANKI_TEST(Util, Directory)
 	// A bit more complex
 	ANKI_TEST_EXPECT_NO_ERR(createDirectory("./dir"));
 	ANKI_TEST_EXPECT_NO_ERR(createDirectory("./dir/rid"));
-	ANKI_TEST_EXPECT_NO_ERR(file.open("./dir/rid/tmp", FileOpenFlag::WRITE));
+	ANKI_TEST_EXPECT_NO_ERR(file.open("./dir/rid/tmp", FileOpenFlag::kWrite));
 	file.close();
 	ANKI_TEST_EXPECT_EQ(fileExists("./dir/rid/tmp"), true);
 
@@ -95,7 +95,7 @@ ANKI_TEST(Util, WalkDir)
 		else
 		{
 			File file;
-			ANKI_TEST_EXPECT_NO_ERR(file.open(ctx.m_paths[i].m_path, FileOpenFlag::WRITE));
+			ANKI_TEST_EXPECT_NO_ERR(file.open(ctx.m_paths[i].m_path, FileOpenFlag::kWrite));
 		}
 	}
 

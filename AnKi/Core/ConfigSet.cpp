@@ -168,7 +168,7 @@ Error ConfigSet::saveToFile(CString filename) const
 	ANKI_CORE_LOGI("Saving config file %s", &filename[0]);
 
 	File file;
-	ANKI_CHECK(file.open(filename, FileOpenFlag::WRITE));
+	ANKI_CHECK(file.open(filename, FileOpenFlag::kWrite));
 
 	ANKI_CHECK(file.writeTextf("%s\n<config>\n", XmlDocument::kXmlHeader.cstr()));
 

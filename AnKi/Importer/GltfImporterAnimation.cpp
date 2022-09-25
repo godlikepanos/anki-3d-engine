@@ -293,7 +293,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 
 	// Write file
 	File file;
-	ANKI_CHECK(file.open(fname.toCString(), FileOpenFlag::WRITE));
+	ANKI_CHECK(file.open(fname.toCString(), FileOpenFlag::kWrite));
 
 	ANKI_CHECK(file.writeTextf("%s\n<animation>\n", XmlDocument::kXmlHeader.cstr()));
 	ANKI_CHECK(file.writeText("\t<channels>\n"));
