@@ -314,7 +314,7 @@ inline BufferHandle RenderGraphDescription::importBuffer(BufferPtr buff, BufferU
 	Buffer& b = *m_buffers.emplaceBack(m_alloc);
 	b.setName(buff->getName());
 	b.m_usage = usage;
-	b.m_importedBuff = buff;
+	b.m_importedBuff = std::move(buff);
 	b.m_offset = offset;
 	b.m_range = range;
 
@@ -333,7 +333,7 @@ RenderGraphDescription::importAccelerationStructure(AccelerationStructurePtr as,
 
 	AS& a = *m_as.emplaceBack(m_alloc);
 	a.setName(as->getName());
-	a.m_importedAs = as;
+	a.m_importedAs = std::move(as);
 	a.m_usage = usage;
 
 	AccelerationStructureHandle handle;

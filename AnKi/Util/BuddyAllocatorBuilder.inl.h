@@ -17,7 +17,7 @@ void BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock>::init(GenericMemoryPoolAl
 	const U32 orderCount = maxMemoryRangeLog2 + 1;
 	m_maxMemoryRange = pow2<PtrSize>(maxMemoryRangeLog2);
 
-	m_alloc = alloc;
+	m_alloc = std::move(alloc);
 	m_freeLists.create(m_alloc, orderCount);
 }
 

@@ -105,7 +105,7 @@ Error Renderer::init(ThreadHive* hive, ResourceManager* resources, GrManager* gl
 	m_gr = gl;
 	m_stagingMem = stagingMem;
 	m_ui = ui;
-	m_alloc = alloc;
+	m_alloc = std::move(alloc);
 	m_config = config;
 
 	const Error err = initInternal(swapchainSize);
@@ -505,7 +505,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 
 						TextureViewPtr view = getGrManager().newTextureView(TextureViewInitInfo(tex, surf, aspect));
 
-						fbInit.m_depthStencilAttachment.m_textureView = view;
+						fbInit.m_depthStencilAttachment.m_textureView = std::move(view);
 						fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kClear;
 						fbInit.m_depthStencilAttachment.m_stencilLoadOperation = AttachmentLoadOperation::kClear;
 						fbInit.m_depthStencilAttachment.m_clearValue = clearVal;

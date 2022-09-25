@@ -10,7 +10,7 @@ namespace anki {
 template<typename TChunk, typename TInterface, typename TLock>
 void ClassAllocatorBuilder<TChunk, TInterface, TLock>::init(GenericMemoryPoolAllocator<U8> alloc)
 {
-	m_alloc = alloc;
+	m_alloc = std::move(alloc);
 
 	m_classes.create(m_alloc, m_interface.getClassCount());
 

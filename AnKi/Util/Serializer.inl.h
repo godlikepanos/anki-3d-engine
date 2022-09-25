@@ -30,8 +30,9 @@ Error BinarySerializer::serializeInternal(const T& x, GenericMemoryPoolAllocator
 	// Misc
 	m_file = &file;
 	ANKI_ASSERT(m_file->tell() == 0);
+
 	m_err = Error::kNone;
-	m_alloc = tmpAllocator;
+	m_alloc = std::move(tmpAllocator);
 
 	// Write the empty header (will be filled later)
 	detail::BinarySerializerHeader header = {};
