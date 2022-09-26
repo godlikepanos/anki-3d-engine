@@ -372,7 +372,7 @@ ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitIn
 	if(!!(m_shaderStages & (ShaderTypeBit::kAllGraphics | ShaderTypeBit::kCompute)))
 	{
 		// Create the program name
-		StringAuto progName(getTempAllocator());
+		StringRaii progName(getTempAllocator());
 		getFilepathFilename(getFilename(), progName);
 		char* cprogName = const_cast<char*>(progName.cstr());
 		if(progName.getLength() > kMaxGrObjectNameLength)

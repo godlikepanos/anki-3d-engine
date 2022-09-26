@@ -89,7 +89,7 @@ ANKI_TEST(Util, DynamicArray)
 {
 	{
 		HeapAllocator<U8> alloc(allocAligned, nullptr);
-		DynamicArrayAuto<DynamicArrayFoo> arr(alloc);
+		DynamicArrayRaii<DynamicArrayFoo> arr(alloc);
 
 		arr.resize(0);
 		arr.resize(2, 1);
@@ -114,7 +114,7 @@ ANKI_TEST(Util, DynamicArray)
 	{
 		srand(U32(time(nullptr)));
 		HeapAllocator<U8> alloc(allocAligned, nullptr);
-		DynamicArrayAuto<DynamicArrayFoo> arr(alloc);
+		DynamicArrayRaii<DynamicArrayFoo> arr(alloc);
 
 		std::vector<DynamicArrayFoo> vec;
 
@@ -147,7 +147,7 @@ ANKI_TEST(Util, DynamicArray)
 			arr.validate();
 		}
 
-		arr = DynamicArrayAuto<DynamicArrayFoo>(alloc);
+		arr = DynamicArrayRaii<DynamicArrayFoo>(alloc);
 		vec = std::vector<DynamicArrayFoo>();
 		ANKI_TEST_EXPECT_GT(g_destructorCount, 0);
 		ANKI_TEST_EXPECT_EQ(g_constructor0Count + g_constructor1Count + g_constructor2Count + g_constructor3Count,
@@ -161,7 +161,7 @@ ANKI_TEST(Util, DynamicArrayEmplaceAt)
 
 	// Empty & add to the end
 	{
-		DynamicArrayAuto<DynamicArrayFoo> arr(alloc);
+		DynamicArrayRaii<DynamicArrayFoo> arr(alloc);
 
 		arr.emplaceAt(arr.getEnd(), 12);
 		ANKI_TEST_EXPECT_EQ(arr[0].m_x, 12);
@@ -169,7 +169,7 @@ ANKI_TEST(Util, DynamicArrayEmplaceAt)
 
 	// 1 element & add to he end
 	{
-		DynamicArrayAuto<DynamicArrayFoo> arr(alloc);
+		DynamicArrayRaii<DynamicArrayFoo> arr(alloc);
 		arr.emplaceBack(12);
 
 		arr.emplaceAt(arr.getEnd(), 34);
@@ -180,7 +180,7 @@ ANKI_TEST(Util, DynamicArrayEmplaceAt)
 
 	// 1 element & add to 0
 	{
-		DynamicArrayAuto<DynamicArrayFoo> arr(alloc);
+		DynamicArrayRaii<DynamicArrayFoo> arr(alloc);
 		arr.emplaceBack(12);
 
 		arr.emplaceAt(arr.getBegin(), 34);
@@ -191,7 +191,7 @@ ANKI_TEST(Util, DynamicArrayEmplaceAt)
 
 	// A bit more complex
 	{
-		DynamicArrayAuto<DynamicArrayFoo> arr(alloc);
+		DynamicArrayRaii<DynamicArrayFoo> arr(alloc);
 
 		for(I32 i = 0; i < 10; ++i)
 		{
@@ -221,7 +221,7 @@ ANKI_TEST(Util, DynamicArrayEmplaceAt)
 	{
 		srand(U32(time(nullptr)));
 
-		DynamicArrayAuto<DynamicArrayFoo> arr(alloc);
+		DynamicArrayRaii<DynamicArrayFoo> arr(alloc);
 		std::vector<DynamicArrayFoo> vec;
 
 		const I ITERATIONS = 10000;
@@ -277,7 +277,7 @@ ANKI_TEST(Util, DynamicArrayErase)
 	{
 		srand(U32(time(nullptr)));
 
-		DynamicArrayAuto<DynamicArrayFoo> arr(alloc);
+		DynamicArrayRaii<DynamicArrayFoo> arr(alloc);
 		std::vector<DynamicArrayFoo> vec;
 
 		const I ITERATIONS = 10000;

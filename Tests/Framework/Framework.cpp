@@ -263,7 +263,7 @@ GrManager* createGrManager(ConfigSet* cfg, NativeWindow* win)
 {
 	GrManagerInitInfo inf;
 	inf.m_allocCallback = allocAligned;
-	StringAuto home(HeapAllocator<U8>(allocAligned, nullptr));
+	StringRaii home(HeapAllocator<U8>(allocAligned, nullptr));
 	const Error err = getTempDirectory(home);
 	if(err)
 	{

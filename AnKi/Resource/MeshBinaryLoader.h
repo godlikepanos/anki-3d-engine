@@ -36,7 +36,7 @@ public:
 	Error storeVertexBuffer(U32 bufferIdx, void* ptr, PtrSize size);
 
 	/// Instead of calling storeIndexBuffer and storeVertexBuffer use this method to get those buffers into the CPU.
-	Error storeIndicesAndPosition(DynamicArrayAuto<U32>& indices, DynamicArrayAuto<Vec3>& positions);
+	Error storeIndicesAndPosition(DynamicArrayRaii<U32>& indices, DynamicArrayRaii<Vec3>& positions);
 
 	const MeshBinaryHeader& getHeader() const
 	{

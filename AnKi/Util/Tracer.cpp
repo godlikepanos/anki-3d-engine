@@ -37,9 +37,9 @@ Tracer::~Tracer()
 	LockGuard<Mutex> lock(m_allThreadLocalMtx);
 	for(ThreadLocal* tlocal : m_allThreadLocal)
 	{
-		m_alloc.deleteInstance(tlocal);
+		deleteInstance(*m_pool, tlocal);
 	}
-	m_allThreadLocal.destroy(m_alloc);
+	m_allThreadLocal.destroy(*m_pool);
 }
 
 Tracer::ThreadLocal& Tracer::getThreadLocal()
@@ -47,13 +47,13 @@ Tracer::ThreadLocal& Tracer::getThreadLocal()
 	ThreadLocal* out = m_threadLocal;
 	if(ANKI_UNLIKELY(out == nullptr))
 	{
-		out = m_alloc.newInstance<ThreadLocal>();
+		out = newInstance<ThreadLocal>(*m_pool);
 		out->m_tid = Thread::getCurrentThreadId();
 		m_threadLocal = out;
 
 		// Store it
 		LockGuard<Mutex> lock(m_allThreadLocalMtx);
-		m_allThreadLocal.emplaceBack(m_alloc, out);
+		m_allThreadLocal.emplaceBack(*m_pool, out);
 	}
 
 	return *out;
@@ -72,7 +72,7 @@ Tracer::Chunk& Tracer::getOrCreateChunk(ThreadLocal& tlocal)
 	else
 	{
 		// Create a new
-		out = m_alloc.newInstance<Chunk>();
+		out = newInstance<Chunk>(*m_pool);
 		tlocal.m_currentChunk = out;
 		tlocal.m_allChunks.pushBack(out);
 	}
@@ -185,7 +185,7 @@ void Tracer::flush(TracerFlushCallback callback, void* callbackUserData)
 			callback(callbackUserData, tlocal->m_tid, WeakArray<TracerEvent>(&chunk->m_events[0], chunk->m_eventCount),
 					 WeakArray<TracerCounter>(&chunk->m_counters[0], chunk->m_counterCount));
 
-			m_alloc.deleteInstance(chunk);
+			deleteInstance(*m_pool, chunk);
 		}
 
 		tlocal->m_currentChunk = nullptr;

@@ -35,14 +35,14 @@ Error ResourceObject::openFile(const CString& filename, ResourceFilePtr& file)
 	return m_manager->getFilesystem().openFile(filename, file);
 }
 
-Error ResourceObject::openFileReadAllText(const CString& filename, StringAuto& text)
+Error ResourceObject::openFileReadAllText(const CString& filename, StringRaii& text)
 {
 	// Load file
 	ResourceFilePtr file;
 	ANKI_CHECK(m_manager->getFilesystem().openFile(filename, file));
 
 	// Read string
-	text = StringAuto(getTempAllocator());
+	text = StringRaii(getTempAllocator());
 	ANKI_CHECK(file->readAllText(text));
 
 	return Error::kNone;
@@ -50,7 +50,7 @@ Error ResourceObject::openFileReadAllText(const CString& filename, StringAuto& t
 
 Error ResourceObject::openFileParseXml(const CString& filename, XmlDocument& xml)
 {
-	StringAuto txt(getTempAllocator());
+	StringRaii txt(getTempAllocator());
 	ANKI_CHECK(openFileReadAllText(filename, txt));
 
 	ANKI_CHECK(xml.parse(txt.toCString(), getTempAllocator()));

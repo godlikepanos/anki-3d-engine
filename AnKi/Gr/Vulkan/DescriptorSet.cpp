@@ -523,11 +523,11 @@ void DescriptorSetFactory::DSAllocator::writeSet(
 	const Array<AnyBindingExtended, kMaxBindingsPerDescriptorSet>& bindings, const DS& set,
 	StackAllocator<U8>& tmpAlloc)
 {
-	DynamicArrayAuto<VkWriteDescriptorSet> writeInfos(tmpAlloc);
-	DynamicArrayAuto<VkDescriptorImageInfo> texInfos(tmpAlloc);
-	DynamicArrayAuto<VkDescriptorBufferInfo> buffInfos(tmpAlloc);
-	DynamicArrayAuto<VkWriteDescriptorSetAccelerationStructureKHR> asInfos(tmpAlloc);
-	DynamicArrayAuto<VkBufferView> bufferViews(tmpAlloc);
+	DynamicArrayRaii<VkWriteDescriptorSet> writeInfos(tmpAlloc);
+	DynamicArrayRaii<VkDescriptorImageInfo> texInfos(tmpAlloc);
+	DynamicArrayRaii<VkDescriptorBufferInfo> buffInfos(tmpAlloc);
+	DynamicArrayRaii<VkWriteDescriptorSetAccelerationStructureKHR> asInfos(tmpAlloc);
+	DynamicArrayRaii<VkBufferView> bufferViews(tmpAlloc);
 
 	// First pass: Populate the VkDescriptorImageInfo and VkDescriptorBufferInfo
 	for(U bindingIdx = m_layoutEntry->m_minBinding; bindingIdx <= m_layoutEntry->m_maxBinding; ++bindingIdx)

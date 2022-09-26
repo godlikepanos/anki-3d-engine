@@ -205,7 +205,7 @@ private:
 	void cleanup();
 
 	/// Inject a new UI element in the render queue for displaying various stuff.
-	void injectUiElements(DynamicArrayAuto<UiQueueElement>& elements, RenderQueue& rqueue);
+	void injectUiElements(DynamicArrayRaii<UiQueueElement>& elements, RenderQueue& rqueue);
 
 	void setSignalHandlers();
 };

@@ -130,8 +130,8 @@ static_assert(sizeof(TempVertex) == 5 * sizeof(Vec4), "Will be hashed");
 class SubMesh
 {
 public:
-	DynamicArrayAuto<TempVertex> m_verts;
-	DynamicArrayAuto<U32> m_indices;
+	DynamicArrayRaii<TempVertex> m_verts;
+	DynamicArrayRaii<U32> m_indices;
 
 	Vec3 m_aabbMin = Vec3(kMaxF32);
 	Vec3 m_aabbMax = Vec3(kMinF32);
@@ -150,15 +150,15 @@ static void reindexSubmesh(SubMesh& submesh, GenericMemoryPoolAllocator<U8> allo
 {
 	const U32 vertSize = sizeof(submesh.m_verts[0]);
 
-	DynamicArrayAuto<U32> remap(alloc);
+	DynamicArrayRaii<U32> remap(alloc);
 	remap.create(submesh.m_verts.getSize(), 0);
 
 	const U32 vertCount = U32(meshopt_generateVertexRemap(&remap[0], &submesh.m_indices[0], submesh.m_indices.getSize(),
 														  &submesh.m_verts[0], submesh.m_verts.getSize(), vertSize));
 
-	DynamicArrayAuto<U32> newIdxArray(alloc);
+	DynamicArrayRaii<U32> newIdxArray(alloc);
 	newIdxArray.create(submesh.m_indices.getSize(), 0);
-	DynamicArrayAuto<TempVertex> newVertArray(alloc);
+	DynamicArrayRaii<TempVertex> newVertArray(alloc);
 	newVertArray.create(vertCount);
 
 	meshopt_remapIndexBuffer(&newIdxArray[0], &submesh.m_indices[0], submesh.m_indices.getSize(), &remap[0]);
@@ -175,7 +175,7 @@ static void optimizeSubmesh(SubMesh& submesh, GenericMemoryPoolAllocator<U8> all
 
 	// Vert cache
 	{
-		DynamicArrayAuto<U32> newIdxArray(alloc);
+		DynamicArrayRaii<U32> newIdxArray(alloc);
 		newIdxArray.create(submesh.m_indices.getSize(), 0);
 
 		meshopt_optimizeVertexCache(&newIdxArray[0], &submesh.m_indices[0], submesh.m_indices.getSize(),
@@ -186,7 +186,7 @@ static void optimizeSubmesh(SubMesh& submesh, GenericMemoryPoolAllocator<U8> all
 
 	// Overdraw
 	{
-		DynamicArrayAuto<U32> newIdxArray(alloc);
+		DynamicArrayRaii<U32> newIdxArray(alloc);
 		newIdxArray.create(submesh.m_indices.getSize(), 0);
 
 		meshopt_optimizeOverdraw(&newIdxArray[0], &submesh.m_indices[0], submesh.m_indices.getSize(),
@@ -197,7 +197,7 @@ static void optimizeSubmesh(SubMesh& submesh, GenericMemoryPoolAllocator<U8> all
 
 	// Vert fetch
 	{
-		DynamicArrayAuto<TempVertex> newVertArray(alloc);
+		DynamicArrayRaii<TempVertex> newVertArray(alloc);
 		newVertArray.create(submesh.m_verts.getSize());
 
 		const U32 newVertCount = U32(meshopt_optimizeVertexFetch(&newVertArray[0],
@@ -226,14 +226,14 @@ static void decimateSubmesh(F32 factor, SubMesh& submesh, GenericMemoryPoolAlloc
 	}
 
 	// Decimate
-	DynamicArrayAuto<U32> newIndices(alloc, submesh.m_indices.getSize());
+	DynamicArrayRaii<U32> newIndices(alloc, submesh.m_indices.getSize());
 	newIndices.resize(U32(meshopt_simplify(&newIndices[0], &submesh.m_indices[0], submesh.m_indices.getSize(),
 										   &submesh.m_verts[0].m_position.x(), submesh.m_verts.getSize(),
 										   sizeof(TempVertex), targetIndexCount, 1e-2f)));
 
 	// Re-pack
-	DynamicArrayAuto<U32> reindexedIndices(alloc);
-	DynamicArrayAuto<TempVertex> newVerts(alloc);
+	DynamicArrayRaii<U32> reindexedIndices(alloc);
+	DynamicArrayRaii<TempVertex> newVerts(alloc);
 	HashMapAuto<U32, U32> vertexStored(alloc);
 	for(U32 idx = 0; idx < newIndices.getSize(); ++idx)
 	{
@@ -276,7 +276,7 @@ U32 GltfImporter::getMeshTotalVertexCount(const cgltf_mesh& mesh)
 
 Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFactor)
 {
-	StringAuto fname(m_alloc);
+	StringRaii fname(m_alloc);
 	fname.sprintf("%s%s", m_outDir.cstr(), computeMeshResourceFilename(mesh, lod).cstr());
 	ANKI_IMPORTER_LOGV("Importing mesh (%s, decimate factor %f): %s",
 					   (m_optimizeMeshes) ? "optimize" : "WON'T optimize", decimateFactor, fname.cstr());
@@ -473,7 +473,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 		// Compute tangent
 		//
 		{
-			DynamicArrayAuto<Vec3> bitangents(m_alloc);
+			DynamicArrayRaii<Vec3> bitangents(m_alloc);
 			bitangents.create(vertCount, Vec3(0.0f));
 
 			for(U32 i = 0; i < submesh.m_indices.getSize(); i += 3)
@@ -740,7 +740,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 	U32 vertCount = 0;
 	for(const SubMesh& submesh : submeshes)
 	{
-		DynamicArrayAuto<U16> indices(m_alloc);
+		DynamicArrayRaii<U16> indices(m_alloc);
 		indices.create(submesh.m_indices.getSize());
 		for(U32 i = 0; i < indices.getSize(); ++i)
 		{
@@ -763,7 +763,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 	// Write position vert buffer
 	for(const SubMesh& submesh : submeshes)
 	{
-		DynamicArrayAuto<Vec3> positions(m_alloc);
+		DynamicArrayRaii<Vec3> positions(m_alloc);
 		positions.create(submesh.m_verts.getSize());
 		for(U32 v = 0; v < submesh.m_verts.getSize(); ++v)
 		{
@@ -777,7 +777,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 	// Write the 2nd vert buffer
 	for(const SubMesh& submesh : submeshes)
 	{
-		DynamicArrayAuto<MainVertex> verts(m_alloc);
+		DynamicArrayRaii<MainVertex> verts(m_alloc);
 		verts.create(submesh.m_verts.getSize());
 
 		for(U32 i = 0; i < verts.getSize(); ++i)
@@ -801,7 +801,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 	{
 		for(const SubMesh& submesh : submeshes)
 		{
-			DynamicArrayAuto<BoneInfoVertex> verts(m_alloc);
+			DynamicArrayRaii<BoneInfoVertex> verts(m_alloc);
 			verts.create(submesh.m_verts.getSize());
 
 			for(U32 i = 0; i < verts.getSize(); ++i)

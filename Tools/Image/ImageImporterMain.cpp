@@ -14,8 +14,8 @@ class Cleanup
 {
 public:
 	HeapAllocator<U8> m_alloc{allocAligned, nullptr};
-	DynamicArrayAuto<CString> m_inputFilenames{m_alloc};
-	StringAuto m_outFilename{m_alloc};
+	DynamicArrayRaii<CString> m_inputFilenames{m_alloc};
+	StringRaii m_outFilename{m_alloc};
 };
 
 } // namespace
@@ -276,7 +276,7 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 	{
 		CString infname = cleanup.m_inputFilenames[0];
 
-		StringAuto ext(cleanup.m_alloc);
+		StringRaii ext(cleanup.m_alloc);
 		getFilepathExtension(infname, ext);
 
 		getFilepathFilename(infname, cleanup.m_outFilename);
@@ -309,7 +309,7 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	StringAuto tmp(alloc);
+	StringRaii tmp(alloc);
 	if(getTempDirectory(tmp))
 	{
 		ANKI_IMPORTER_LOGE("getTempDirectory() failed");

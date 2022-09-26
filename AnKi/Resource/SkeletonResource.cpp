@@ -39,7 +39,7 @@ Error SkeletonResource::load(const ResourceFilename& filename, [[maybe_unused]] 
 
 	m_bones.create(getAllocator(), boneCount);
 
-	StringListAuto boneParents(getAllocator());
+	StringListRaii boneParents(getAllocator());
 
 	// Load every bone
 	boneCount = 0;

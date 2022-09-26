@@ -15,9 +15,9 @@ namespace anki {
 /// @{
 
 /// Easy bit manipulation.
-/// @tparam N The number of bits.
+/// @tparam kBitCount The number of bits.
 /// @tparam TChunkType The type of the chunks that the bitset consists. By default it's U8.
-template<U32 N, typename TChunkType = U8>
+template<U32 kBitCount, typename TChunkType = U8>
 class BitSet
 {
 private:
@@ -27,7 +27,7 @@ private:
 	static constexpr U32 kChunkBitCount = sizeof(ChunkType) * 8;
 
 	/// Number of chunks.
-	static constexpr U32 kChunkCount = (N + (kChunkBitCount - 1)) / kChunkBitCount;
+	static constexpr U32 kChunkCount = (kBitCount + (kChunkBitCount - 1)) / kChunkBitCount;
 
 public:
 	/// Constructor. It will set all the bits or unset them.
@@ -278,7 +278,7 @@ private:
 
 	static void position(U32 bit, U32& high, U32& low)
 	{
-		ANKI_ASSERT(bit < N);
+		ANKI_ASSERT(bit < kBitCount);
 		high = bit / kChunkBitCount;
 		low = bit % kChunkBitCount;
 		ANKI_ASSERT(high < kChunkCount);
@@ -288,7 +288,7 @@ private:
 	/// Zero the unused bits.
 	void zeroUnusedBits()
 	{
-		constexpr ChunkType kUnusedBits = kChunkCount * kChunkBitCount - N;
+		constexpr ChunkType kUnusedBits = kChunkCount * kChunkBitCount - kBitCount;
 		constexpr ChunkType kUsedBitmask = std::numeric_limits<ChunkType>::max() >> kUnusedBits;
 		if(kUsedBitmask > 0)
 		{

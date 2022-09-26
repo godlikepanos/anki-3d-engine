@@ -16,8 +16,8 @@ Error SampleApp::init(int argc, char** argv, CString sampleName)
 	m_config.setWindowFullscreen(true);
 
 #if !ANKI_OS_ANDROID
-	StringAuto mainDataPath(alloc, ANKI_SOURCE_DIRECTORY);
-	StringAuto assetsDataPath(alloc);
+	StringRaii mainDataPath(alloc, ANKI_SOURCE_DIRECTORY);
+	StringRaii assetsDataPath(alloc);
 	assetsDataPath.sprintf("%s/Samples/%s", ANKI_SOURCE_DIRECTORY, sampleName.cstr());
 
 	if(!directoryExists(assetsDataPath))
@@ -28,7 +28,7 @@ Error SampleApp::init(int argc, char** argv, CString sampleName)
 	}
 	else
 	{
-		m_config.setRsrcDataPaths(StringAuto(alloc).sprintf("%s:%s", mainDataPath.cstr(), assetsDataPath.cstr()));
+		m_config.setRsrcDataPaths(StringRaii(alloc).sprintf("%s:%s", mainDataPath.cstr(), assetsDataPath.cstr()));
 	}
 #endif
 

@@ -70,7 +70,7 @@ Error MicroSwapchain::initInternal()
 		ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(m_factory->m_gr->getPhysicalDevice(),
 														   m_factory->m_gr->getSurface(), &formatCount, nullptr));
 
-		DynamicArrayAuto<VkSurfaceFormatKHR> formats(getAllocator());
+		DynamicArrayRaii<VkSurfaceFormatKHR> formats(getAllocator());
 		formats.create(formatCount);
 		ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(m_factory->m_gr->getPhysicalDevice(),
 														   m_factory->m_gr->getSurface(), &formatCount, &formats[0]));

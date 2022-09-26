@@ -68,7 +68,7 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 	}
 	ImageLoader& loader = ctx->m_loader;
 
-	StringAuto filenameExt(getTempAllocator());
+	StringRaii filenameExt(getTempAllocator());
 	getFilepathFilename(filename, filenameExt);
 
 	TextureInitInfo init(filenameExt);

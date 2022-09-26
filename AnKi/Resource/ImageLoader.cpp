@@ -640,7 +640,7 @@ Error ImageLoader::loadStb(Bool isFloat, FileInterface& fs, U32& width, U32& hei
 						   GenericMemoryPoolAllocator<U8>& alloc)
 {
 	// Read the file
-	DynamicArrayAuto<U8, PtrSize> fileData(alloc);
+	DynamicArrayRaii<U8, PtrSize> fileData(alloc);
 	const PtrSize fileSize = fs.getSize();
 	fileData.create(fileSize);
 	ANKI_CHECK(fs.read(&fileData[0], fileSize));
@@ -708,7 +708,7 @@ Error ImageLoader::load(const CString& filename, U32 maxImageSize)
 Error ImageLoader::loadInternal(FileInterface& file, const CString& filename, U32 maxImageSize)
 {
 	// get the extension
-	StringAuto ext(m_alloc);
+	StringRaii ext(m_alloc);
 	getFilepathExtension(filename, ext);
 
 	if(ext.isEmpty())

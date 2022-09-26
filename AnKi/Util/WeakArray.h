@@ -56,7 +56,8 @@ public:
 		}
 	}
 
-	explicit WeakArray(DynamicArrayAuto<T, TSize>& arr)
+	template<typename TMemPool>
+	explicit WeakArray(DynamicArrayRaii<T, TSize, TMemPool>& arr)
 		: WeakArray()
 	{
 		if(arr.getSize())
@@ -112,7 +113,8 @@ public:
 		return *this;
 	}
 
-	WeakArray& operator=(DynamicArrayAuto<T, TSize>& arr)
+	template<typename TMemPool>
+	WeakArray& operator=(DynamicArrayRaii<T, TSize, TMemPool>& arr)
 	{
 		m_data = (arr.getSize()) ? &arr[0] : nullptr;
 		m_size = arr.getSize();
@@ -280,8 +282,9 @@ public:
 		}
 	}
 
-	/// Construct from DynamicArrayAuto.
-	ConstWeakArray(const DynamicArrayAuto<T, TSize>& arr)
+	/// Construct from DynamicArrayRaii.
+	template<typename TMemPool>
+	ConstWeakArray(const DynamicArrayRaii<T, TSize, TMemPool>& arr)
 		: ConstWeakArray()
 	{
 		if(arr.getSize())
@@ -346,7 +349,8 @@ public:
 		return *this;
 	}
 
-	ConstWeakArray& operator=(const DynamicArrayAuto<T, TSize>& arr)
+	template<typename TMemPool>
+	ConstWeakArray& operator=(const DynamicArrayRaii<T, TSize, TMemPool>& arr)
 	{
 		m_data = (arr.getSize()) ? &arr[0] : nullptr;
 		m_size = arr.getSize();

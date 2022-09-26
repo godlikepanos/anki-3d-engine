@@ -83,7 +83,7 @@ public:
 
 	ANKI_INTERNAL Error openFile(const ResourceFilename& filename, ResourceFilePtr& file);
 
-	ANKI_INTERNAL Error openFileReadAllText(const ResourceFilename& filename, StringAuto& file);
+	ANKI_INTERNAL Error openFileReadAllText(const ResourceFilename& filename, StringRaii& file);
 
 	ANKI_INTERNAL Error openFileParseXml(const ResourceFilename& filename, XmlDocument& xml);
 

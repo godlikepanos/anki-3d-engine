@@ -69,7 +69,7 @@ static void printAllocatorBuilder(const TAlloc& sl)
 {
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 
-	StringListAuto list(alloc);
+	StringListRaii list(alloc);
 	sl.printFreeBlocks(list);
 
 	if(list.isEmpty())
@@ -77,7 +77,7 @@ static void printAllocatorBuilder(const TAlloc& sl)
 		return;
 	}
 
-	StringAuto str(alloc);
+	StringRaii str(alloc);
 	list.join("", str);
 	printf("%s\n", str.cstr());
 }

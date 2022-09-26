@@ -21,9 +21,9 @@ class CmdLineArgs
 {
 public:
 	HeapAllocator<U8> m_alloc = {allocAligned, nullptr};
-	StringAuto m_inputFname = {m_alloc};
-	StringAuto m_outFname = {m_alloc};
-	StringAuto m_includePath = {m_alloc};
+	StringRaii m_inputFname = {m_alloc};
+	StringRaii m_outFname = {m_alloc};
+	StringRaii m_includePath = {m_alloc};
 	U32 m_threadCount = getCpuCoresCount();
 	Bool m_fullFpPrecision = false;
 	Bool m_mobilePlatform = false;
@@ -122,9 +122,9 @@ static Error work(const CmdLineArgs& info)
 		CString m_includePath;
 		U32 m_fileReadCount = 0;
 
-		Error readAllTextInternal(CString filename, StringAuto& txt)
+		Error readAllTextInternal(CString filename, StringRaii& txt)
 		{
-			StringAuto fname(txt.getAllocator());
+			StringRaii fname(txt.getAllocator());
 
 			// The first file is the input file. Don't append the include path to it
 			if(m_fileReadCount == 0)
@@ -143,7 +143,7 @@ static Error work(const CmdLineArgs& info)
 			return Error::kNone;
 		}
 
-		Error readAllText(CString filename, StringAuto& txt) final
+		Error readAllText(CString filename, StringRaii& txt) final
 		{
 			const Error err = readAllTextInternal(filename, txt);
 			if(err)

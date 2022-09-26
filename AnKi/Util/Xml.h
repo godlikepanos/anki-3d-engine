@@ -30,7 +30,7 @@ public:
 
 	XmlElement(const XmlElement& b)
 		: m_el(b.m_el)
-		, m_alloc(b.m_alloc)
+		, m_pool(b.m_pool)
 	{
 	}
 
@@ -44,7 +44,7 @@ public:
 	XmlElement& operator=(const XmlElement& b)
 	{
 		m_el = b.m_el;
-		m_alloc = b.m_alloc;
+		m_pool = b.m_pool;
 		return *this;
 	}
 
@@ -57,7 +57,7 @@ public:
 
 	/// Get a number of numbers.
 	template<typename T>
-	Error getNumbers(DynamicArrayAuto<T>& out) const;
+	Error getNumbers(DynamicArrayRaii<T>& out) const;
 
 	/// Get a fixed number of numbers.
 	/// @tparam TArray A type that should have operator[] and getSize() methods implemented.
@@ -91,7 +91,7 @@ public:
 	/// @param out The value of the attribute.
 	/// @param attribPresent True if the attribute exists. If it doesn't the @a out is undefined.
 	template<typename T>
-	Error getAttributeNumbersOptional(CString name, DynamicArrayAuto<T>& out, Bool& attribPresent) const;
+	Error getAttributeNumbersOptional(CString name, DynamicArrayRaii<T>& out, Bool& attribPresent) const;
 
 	/// Get the attribute's value as a series of numbers.
 	/// @tparam TArray A type that should have operator[] and getSize() methods implemented.
@@ -126,7 +126,7 @@ public:
 	/// @param name The name of the attribute.
 	/// @param out The value of the attribute.
 	template<typename T>
-	Error getAttributeNumbers(CString name, DynamicArrayAuto<T>& out) const
+	Error getAttributeNumbers(CString name, DynamicArrayRaii<T>& out) const
 	{
 		Bool found;
 		ANKI_CHECK(getAttributeNumbersOptional(name, out, found));
@@ -159,18 +159,18 @@ public:
 
 private:
 	const tinyxml2::XMLElement* m_el;
-	GenericMemoryPoolAllocator<U8> m_alloc;
+	BaseMemoryPool* m_pool = nullptr;
 
-	XmlElement(const tinyxml2::XMLElement* el, GenericMemoryPoolAllocator<U8> alloc)
+	XmlElement(const tinyxml2::XMLElement* el, BaseMemoryPool* pool)
 		: m_el(el)
-		, m_alloc(alloc)
+		, m_pool(pool)
 	{
 	}
 
 	Error check() const;
 
 	template<typename T>
-	Error parseNumbers(CString txt, DynamicArrayAuto<T>& out) const;
+	Error parseNumbers(CString txt, DynamicArrayRaii<T>& out) const;
 
 	template<typename TArray>
 	Error parseNumbers(CString txt, TArray& out) const;
@@ -195,11 +195,16 @@ class XmlDocument
 public:
 	static constexpr CString kXmlHeader = R"(<?xml version="1.0" encoding="UTF-8" ?>)";
 
+	XmlDocument(BaseMemoryPool* pool)
+		: m_pool(pool)
+	{
+	}
+
 	/// Parse from a file.
-	Error loadFile(CString filename, GenericMemoryPoolAllocator<U8> alloc);
+	Error loadFile(CString filename);
 
 	/// Parse from a CString.
-	Error parse(CString xmlText, GenericMemoryPoolAllocator<U8> alloc);
+	Error parse(CString xmlText);
 
 	Error getChildElement(CString name, XmlElement& out) const;
 
@@ -207,7 +212,7 @@ public:
 
 private:
 	tinyxml2::XMLDocument m_doc;
-	GenericMemoryPoolAllocator<U8> m_alloc;
+	BaseMemoryPool* m_pool = nullptr;
 };
 /// @}
 

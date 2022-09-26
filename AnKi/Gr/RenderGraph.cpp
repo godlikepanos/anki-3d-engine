@@ -1456,14 +1456,14 @@ void RenderGraph::getStatistics(RenderGraphStatistics& statistics) const
 }
 
 #if ANKI_DBG_RENDER_GRAPH
-StringAuto RenderGraph::textureUsageToStr(StackAllocator<U8>& alloc, TextureUsageBit usage)
+StringRaii RenderGraph::textureUsageToStr(StackAllocator<U8>& alloc, TextureUsageBit usage)
 {
 	if(!usage)
 	{
-		return StringAuto(alloc, "None");
+		return StringRaii(alloc, "None");
 	}
 
-	StringListAuto slist(alloc);
+	StringListRaii slist(alloc);
 
 #	define ANKI_TEX_USAGE(u) \
 		if(!!(usage & TextureUsageBit::u)) \
@@ -1498,14 +1498,14 @@ StringAuto RenderGraph::textureUsageToStr(StackAllocator<U8>& alloc, TextureUsag
 #	undef ANKI_TEX_USAGE
 
 	ANKI_ASSERT(!slist.isEmpty());
-	StringAuto str(alloc);
+	StringRaii str(alloc);
 	slist.join(" | ", str);
 	return str;
 }
 
-StringAuto RenderGraph::bufferUsageToStr(StackAllocator<U8>& alloc, BufferUsageBit usage)
+StringRaii RenderGraph::bufferUsageToStr(StackAllocator<U8>& alloc, BufferUsageBit usage)
 {
-	StringListAuto slist(alloc);
+	StringListRaii slist(alloc);
 
 #	define ANKI_BUFF_USAGE(u) \
 		if(!!(usage & BufferUsageBit::u)) \
@@ -1550,14 +1550,14 @@ StringAuto RenderGraph::bufferUsageToStr(StackAllocator<U8>& alloc, BufferUsageB
 #	undef ANKI_BUFF_USAGE
 
 	ANKI_ASSERT(!slist.isEmpty());
-	StringAuto str(alloc);
+	StringRaii str(alloc);
 	slist.join(" | ", str);
 	return str;
 }
 
-StringAuto RenderGraph::asUsageToStr(StackAllocator<U8>& alloc, AccelerationStructureUsageBit usage)
+StringRaii RenderGraph::asUsageToStr(StackAllocator<U8>& alloc, AccelerationStructureUsageBit usage)
 {
-	StringListAuto slist(alloc);
+	StringListRaii slist(alloc);
 
 #	define ANKI_AS_USAGE(u) \
 		if(!!(usage & AccelerationStructureUsageBit::u)) \
@@ -1580,7 +1580,7 @@ StringAuto RenderGraph::asUsageToStr(StackAllocator<U8>& alloc, AccelerationStru
 #	undef ANKI_AS_USAGE
 
 	ANKI_ASSERT(!slist.isEmpty());
-	StringAuto str(alloc);
+	StringRaii str(alloc);
 	slist.join(" | ", str);
 	return str;
 }
@@ -1592,7 +1592,7 @@ Error RenderGraph::dumpDependencyDotFile(const RenderGraphDescription& descr, co
 
 	static constexpr Array<const char*, 5> COLORS = {"red", "green", "blue", "magenta", "cyan"};
 	auto alloc = ctx.m_alloc;
-	StringListAuto slist(alloc);
+	StringListRaii slist(alloc);
 
 	slist.pushBackSprintf("digraph {\n");
 	slist.pushBackSprintf("\t//splines = ortho;\nconcentrate = true;\n");
@@ -1641,27 +1641,27 @@ Error RenderGraph::dumpDependencyDotFile(const RenderGraphDescription& descr, co
 
 	// Barriers
 	// slist.pushBackSprintf("subgraph cluster_1 {\n");
-	StringAuto prevBubble(ctx.m_alloc);
+	StringRaii prevBubble(ctx.m_alloc);
 	prevBubble.create("START");
 	for(U32 batchIdx = 0; batchIdx < ctx.m_batches.getSize(); ++batchIdx)
 	{
 		const Batch& batch = ctx.m_batches[batchIdx];
 
-		StringAuto batchName(ctx.m_alloc);
+		StringRaii batchName(ctx.m_alloc);
 		batchName.sprintf("batch%u", batchIdx);
 
 		for(U32 barrierIdx = 0; barrierIdx < batch.m_textureBarriersBefore.getSize(); ++barrierIdx)
 		{
 			const TextureBarrier& barrier = batch.m_textureBarriersBefore[barrierIdx];
 
-			StringAuto barrierLabel(ctx.m_alloc);
+			StringRaii barrierLabel(ctx.m_alloc);
 			barrierLabel.sprintf("<b>%s</b> (mip,dp,f,l)=(%u,%u,%u,%u)<br/>%s <b>to</b> %s",
 								 &descr.m_renderTargets[barrier.m_idx].m_name[0], barrier.m_surface.m_level,
 								 barrier.m_surface.m_depth, barrier.m_surface.m_face, barrier.m_surface.m_layer,
 								 textureUsageToStr(alloc, barrier.m_usageBefore).cstr(),
 								 textureUsageToStr(alloc, barrier.m_usageAfter).cstr());
 
-			StringAuto barrierName(ctx.m_alloc);
+			StringRaii barrierName(ctx.m_alloc);
 			barrierName.sprintf("%s tex barrier%u", batchName.cstr(), barrierIdx);
 
 			slist.pushBackSprintf("\t\"%s\"[color=%s,style=bold,shape=box,label=< %s >];\n", barrierName.cstr(),
@@ -1675,12 +1675,12 @@ Error RenderGraph::dumpDependencyDotFile(const RenderGraphDescription& descr, co
 		{
 			const BufferBarrier& barrier = batch.m_bufferBarriersBefore[barrierIdx];
 
-			StringAuto barrierLabel(ctx.m_alloc);
+			StringRaii barrierLabel(ctx.m_alloc);
 			barrierLabel.sprintf("<b>%s</b><br/>%s <b>to</b> %s", &descr.m_buffers[barrier.m_idx].m_name[0],
 								 bufferUsageToStr(alloc, barrier.m_usageBefore).cstr(),
 								 bufferUsageToStr(alloc, barrier.m_usageAfter).cstr());
 
-			StringAuto barrierName(ctx.m_alloc);
+			StringRaii barrierName(ctx.m_alloc);
 			barrierName.sprintf("%s buff barrier%u", batchName.cstr(), barrierIdx);
 
 			slist.pushBackSprintf("\t\"%s\"[color=%s,style=bold,shape=box,label=< %s >];\n", barrierName.cstr(),
@@ -1694,12 +1694,12 @@ Error RenderGraph::dumpDependencyDotFile(const RenderGraphDescription& descr, co
 		{
 			const ASBarrier& barrier = batch.m_asBarriersBefore[barrierIdx];
 
-			StringAuto barrierLabel(ctx.m_alloc);
+			StringRaii barrierLabel(ctx.m_alloc);
 			barrierLabel.sprintf("<b>%s</b><br/>%s <b>to</b> %s", descr.m_as[barrier.m_idx].m_name.getBegin(),
 								 asUsageToStr(alloc, barrier.m_usageBefore).cstr(),
 								 asUsageToStr(alloc, barrier.m_usageAfter).cstr());
 
-			StringAuto barrierName(ctx.m_alloc);
+			StringRaii barrierName(ctx.m_alloc);
 			barrierName.sprintf("%s AS barrier%u", batchName.cstr(), barrierIdx);
 
 			slist.pushBackSprintf("\t\"%s\"[color=%s,style=bold,shape=box,label=< %s >];\n", barrierName.cstr(),
@@ -1712,7 +1712,7 @@ Error RenderGraph::dumpDependencyDotFile(const RenderGraphDescription& descr, co
 		for(U32 passIdx : batch.m_passIndices)
 		{
 			const RenderPassDescriptionBase& pass = *descr.m_passes[passIdx];
-			StringAuto passName(alloc);
+			StringRaii passName(alloc);
 			passName.sprintf("%s pass", pass.m_name.cstr());
 			slist.pushBackSprintf("\t\"%s\"[color=%s,style=bold];\n", passName.cstr(),
 								  COLORS[batchIdx % COLORS.getSize()]);
@@ -1726,7 +1726,7 @@ Error RenderGraph::dumpDependencyDotFile(const RenderGraphDescription& descr, co
 	slist.pushBackSprintf("}");
 
 	File file;
-	ANKI_CHECK(file.open(StringAuto(alloc).sprintf("%s/rgraph_%05u.dot", &path[0], m_version).toCString(),
+	ANKI_CHECK(file.open(StringRaii(alloc).sprintf("%s/rgraph_%05u.dot", &path[0], m_version).toCString(),
 						 FileOpenFlag::kWrite));
 	for(const String& s : slist)
 	{

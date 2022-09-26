@@ -40,7 +40,7 @@ public:
 	virtual Error read(void* buff, PtrSize size) = 0;
 
 	/// Read all the contents of a text file. If the file is not rewined it will probably fail
-	virtual Error readAllText(StringAuto& out) = 0;
+	virtual Error readAllText(StringRaii& out) = 0;
 
 	/// Read 32bit unsigned integer. Set the endianness if the file's endianness is different from the machine's
 	virtual Error readU32(U32& u) = 0;
@@ -148,7 +148,7 @@ private:
 	String m_cacheDir;
 
 	/// Add a filesystem path or an archive. The path is read-only.
-	Error addNewPath(const CString& path, const StringListAuto& excludedStrings);
+	Error addNewPath(const CString& path, const StringListRaii& excludedStrings);
 
 	Error openFileInternal(const ResourceFilename& filename, ResourceFile*& rfile);
 };

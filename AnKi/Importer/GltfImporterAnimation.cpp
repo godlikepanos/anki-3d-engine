@@ -19,10 +19,10 @@ public:
 class GltfAnimChannel
 {
 public:
-	StringAuto m_name;
-	DynamicArrayAuto<GltfAnimKey<Vec3>> m_positions;
-	DynamicArrayAuto<GltfAnimKey<Quat>> m_rotations;
-	DynamicArrayAuto<GltfAnimKey<F32>> m_scales;
+	StringRaii m_name;
+	DynamicArrayRaii<GltfAnimKey<Vec3>> m_positions;
+	DynamicArrayRaii<GltfAnimKey<Quat>> m_rotations;
+	DynamicArrayRaii<GltfAnimKey<F32>> m_scales;
 	const cgltf_node* m_targetNode;
 
 	GltfAnimChannel(GenericMemoryPoolAllocator<U8> alloc)
@@ -36,7 +36,7 @@ public:
 
 /// Optimize out same animation keys.
 template<typename T, typename TZeroFunc, typename TLerpFunc>
-static void optimizeChannel(DynamicArrayAuto<GltfAnimKey<T>>& arr, const T& identity, TZeroFunc isZeroFunc,
+static void optimizeChannel(DynamicArrayRaii<GltfAnimKey<T>>& arr, const T& identity, TZeroFunc isZeroFunc,
 							TLerpFunc lerpFunc)
 {
 	constexpr F32 kMinSkippedToTotalRatio = 0.1f;
@@ -49,7 +49,7 @@ static void optimizeChannel(DynamicArrayAuto<GltfAnimKey<T>>& arr, const T& iden
 			break;
 		}
 
-		DynamicArrayAuto<GltfAnimKey<T>> newArr(arr.getAllocator());
+		DynamicArrayRaii<GltfAnimKey<T>> newArr(arr.getAllocator());
 		for(U32 i = 0; i < arr.getSize() - 2; i += 2)
 		{
 			const GltfAnimKey<T>& left = arr[i];
@@ -106,8 +106,8 @@ static void optimizeChannel(DynamicArrayAuto<GltfAnimKey<T>>& arr, const T& iden
 
 Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 {
-	StringAuto fname(m_alloc);
-	StringAuto animFname = computeAnimationResourceFilename(anim);
+	StringRaii fname(m_alloc);
+	StringRaii animFname = computeAnimationResourceFilename(anim);
 	fname.sprintf("%s%s", m_outDir.cstr(), animFname.cstr());
 	fname = fixFilename(fname);
 	ANKI_IMPORTER_LOGV("Importing animation %s", fname.cstr());
@@ -118,7 +118,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 	for(U i = 0; i < anim.channels_count; ++i)
 	{
 		const cgltf_animation_channel& channel = anim.channels[i];
-		const StringAuto channelName = getNodeName(*channel.target_node);
+		const StringRaii channelName = getNodeName(*channel.target_node);
 
 		U idx;
 		switch(channel.target_path)
@@ -152,13 +152,13 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 	}
 
 	// Gather the keys
-	DynamicArrayAuto<GltfAnimChannel> tempChannels(m_alloc, channelCount, m_alloc);
+	DynamicArrayRaii<GltfAnimChannel> tempChannels(m_alloc, channelCount, m_alloc);
 	channelCount = 0;
 	for(auto it = channelMap.getBegin(); it != channelMap.getEnd(); ++it)
 	{
 		Array<const cgltf_animation_channel*, 3> arr = *it;
 		const cgltf_animation_channel& anyChannel = (arr[0]) ? *arr[0] : ((arr[1]) ? *arr[1] : *arr[2]);
-		const StringAuto channelName = getNodeName(*anyChannel.target_node);
+		const StringRaii channelName = getNodeName(*anyChannel.target_node);
 
 		tempChannels[channelCount].m_name = channelName;
 		tempChannels[channelCount].m_targetNode = anyChannel.target_node;
@@ -167,9 +167,9 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 		if(arr[0])
 		{
 			const cgltf_animation_channel& channel = *arr[0];
-			DynamicArrayAuto<F32> keys(m_alloc);
+			DynamicArrayRaii<F32> keys(m_alloc);
 			readAccessor(*channel.sampler->input, keys);
-			DynamicArrayAuto<Vec3> positions(m_alloc);
+			DynamicArrayRaii<Vec3> positions(m_alloc);
 			readAccessor(*channel.sampler->output, positions);
 			if(keys.getSize() != positions.getSize())
 			{
@@ -191,9 +191,9 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 		if(arr[1])
 		{
 			const cgltf_animation_channel& channel = *arr[1];
-			DynamicArrayAuto<F32> keys(m_alloc);
+			DynamicArrayRaii<F32> keys(m_alloc);
 			readAccessor(*channel.sampler->input, keys);
-			DynamicArrayAuto<Quat> rotations(m_alloc);
+			DynamicArrayRaii<Quat> rotations(m_alloc);
 			readAccessor(*channel.sampler->output, rotations);
 			if(keys.getSize() != rotations.getSize())
 			{
@@ -215,9 +215,9 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 		if(arr[2])
 		{
 			const cgltf_animation_channel& channel = *arr[2];
-			DynamicArrayAuto<F32> keys(m_alloc);
+			DynamicArrayRaii<F32> keys(m_alloc);
 			readAccessor(*channel.sampler->input, keys);
-			DynamicArrayAuto<Vec3> scales(m_alloc);
+			DynamicArrayRaii<Vec3> scales(m_alloc);
 			readAccessor(*channel.sampler->output, scales);
 			if(keys.getSize() != scales.getSize())
 			{

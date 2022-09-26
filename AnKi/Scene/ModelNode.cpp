@@ -332,9 +332,9 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 			SkeletonResourcePtr skeleton = skinc.getSkeleronResource();
 			const U32 boneCount = skinc.getBoneTransforms().getSize();
 
-			DynamicArrayAuto<Vec3> lines(ctx.m_frameAllocator);
+			DynamicArrayRaii<Vec3> lines(ctx.m_frameAllocator);
 			lines.resizeStorage(boneCount * 2);
-			DynamicArrayAuto<Vec3> chidlessLines(ctx.m_frameAllocator);
+			DynamicArrayRaii<Vec3> chidlessLines(ctx.m_frameAllocator);
 			for(U32 i = 0; i < boneCount; ++i)
 			{
 				const Bone& bone = skeleton->getBones()[i];

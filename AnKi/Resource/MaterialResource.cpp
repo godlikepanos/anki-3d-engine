@@ -217,7 +217,7 @@ Error MaterialResource::parseShaderProgram(XmlElement shaderProgramEl, Bool asyn
 		return Error::kNone;
 	}
 
-	StringAuto fname(getTempAllocator());
+	StringRaii fname(getTempAllocator());
 	fname.sprintf("ShaderBinaries/%s.ankiprogbin", shaderName.cstr());
 
 	Program& prog = *m_programs.emplaceBack(getAllocator());

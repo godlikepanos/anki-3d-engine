@@ -224,9 +224,9 @@ public:
 		return *this;
 	}
 
-	ANKI_ENABLE_METHOD(std::is_floating_point<T>::value) void toString(StringAuto& str) const
+	ANKI_ENABLE_METHOD(std::is_floating_point<T>::value) void toString(StringRaii& str) const
 	{
-		StringAuto b(str.getAllocator());
+		StringRaii b(str.getMemoryPool());
 		m_origin.toString(b);
 		str.append(b);
 		str.append("\n");

@@ -33,7 +33,7 @@ Error XmlElement::getChildElementOptional(CString name, XmlElement& out) const
 	const Error err = check();
 	if(!err)
 	{
-		out = XmlElement(m_el->FirstChildElement(&name[0]), m_alloc);
+		out = XmlElement(m_el->FirstChildElement(&name[0]), m_pool);
 	}
 	else
 	{
@@ -72,7 +72,7 @@ Error XmlElement::getNextSiblingElement(CString name, XmlElement& out) const
 	const Error err = check();
 	if(!err)
 	{
-		out = XmlElement(m_el->NextSiblingElement(&name[0]), m_alloc);
+		out = XmlElement(m_el->NextSiblingElement(&name[0]), m_pool);
 	}
 	else
 	{
@@ -125,23 +125,21 @@ Error XmlElement::getAttributeTextOptional(CString name, CString& out, Bool& att
 	return Error::kNone;
 }
 
-Error XmlDocument::loadFile(CString filename, GenericMemoryPoolAllocator<U8> alloc)
+Error XmlDocument::loadFile(CString filename)
 {
 	File file;
 	ANKI_CHECK(file.open(filename, FileOpenFlag::kRead));
 
-	StringAuto text(alloc);
+	StringRaii text(m_pool);
 	ANKI_CHECK(file.readAllText(text));
 
-	ANKI_CHECK(parse(text.toCString(), alloc));
+	ANKI_CHECK(parse(text.toCString()));
 
 	return Error::kNone;
 }
 
-Error XmlDocument::parse(CString xmlText, GenericMemoryPoolAllocator<U8> alloc)
+Error XmlDocument::parse(CString xmlText)
 {
-	m_alloc = std::move(alloc);
-
 	if(m_doc.Parse(&xmlText[0]))
 	{
 		ANKI_UTIL_LOGE("Cannot parse file. Reason: %s",
@@ -155,7 +153,7 @@ Error XmlDocument::parse(CString xmlText, GenericMemoryPoolAllocator<U8> alloc)
 
 Error XmlDocument::getChildElementOptional(CString name, XmlElement& out) const
 {
-	out = XmlElement(m_doc.FirstChildElement(&name[0]), m_alloc);
+	out = XmlElement(m_doc.FirstChildElement(&name[0]), m_pool);
 	return Error::kNone;
 }
 

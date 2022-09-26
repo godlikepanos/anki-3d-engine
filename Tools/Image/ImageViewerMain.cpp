@@ -121,7 +121,7 @@ private:
 
 		// Mips combo
 		{
-			StringListAuto mipLabels(getFrameAllocator());
+			StringListRaii mipLabels(getFrameAllocator());
 			for(U32 mip = 0; mip < grTex.getMipmapCount(); ++mip)
 			{
 				mipLabels.pushBackSprintf("Mip %u (%u x %u)", mip, grTex.getWidth() >> mip, grTex.getHeight() >> mip);
@@ -161,7 +161,7 @@ private:
 		// Depth
 		if(grTex.getTextureType() == TextureType::k3D)
 		{
-			StringListAuto labels(getFrameAllocator());
+			StringListRaii labels(getFrameAllocator());
 			for(U32 d = 0; d < grTex.getDepth(); ++d)
 			{
 				labels.pushBackSprintf("Depth %u", d);
@@ -276,7 +276,7 @@ public:
 		}
 
 		HeapAllocator<U32> alloc(allocAligned, nullptr);
-		StringAuto mainDataPath(alloc, ANKI_SOURCE_DIRECTORY);
+		StringRaii mainDataPath(alloc, ANKI_SOURCE_DIRECTORY);
 
 		config->setWindowFullscreen(false);
 		config->setRsrcDataPaths(mainDataPath);
@@ -291,7 +291,7 @@ public:
 		ANKI_CHECK(getResourceManager().loadResource(argv[1], image, false));
 
 		// Change window name
-		StringAuto title(alloc);
+		StringRaii title(alloc);
 		title.sprintf("%s %u x %u Mips %u Format %s", argv[1], image->getWidth(), image->getHeight(),
 					  image->getTexture()->getMipmapCount(), getFormatInfo(image->getTexture()->getFormat()).m_name);
 		getWindow().setWindowTitle(title);

@@ -491,9 +491,9 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 
 	// Vars
 	const Vec4 cameraOrigin = ctx.m_renderQueue->m_cameraTransform.getTranslationPart().xyz0();
-	DynamicArrayAuto<Scratch::LightToRenderToScratchInfo> lightsToRender(ctx.m_tempAllocator);
+	DynamicArrayRaii<Scratch::LightToRenderToScratchInfo> lightsToRender(ctx.m_tempAllocator);
 	U32 drawcallCount = 0;
-	DynamicArrayAuto<Atlas::ResolveWorkItem> atlasWorkItems(ctx.m_tempAllocator);
+	DynamicArrayRaii<Atlas::ResolveWorkItem> atlasWorkItems(ctx.m_tempAllocator);
 
 	// First thing, allocate an empty tile for empty faces of point lights
 	UVec4 emptyTileViewport;
@@ -752,7 +752,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 	// Split the work that will happen in the scratch buffer
 	if(lightsToRender.getSize())
 	{
-		DynamicArrayAuto<Scratch::WorkItem> workItems(ctx.m_tempAllocator);
+		DynamicArrayRaii<Scratch::WorkItem> workItems(ctx.m_tempAllocator);
 		Scratch::LightToRenderToScratchInfo* lightToRender = lightsToRender.getBegin();
 		U32 lightToRenderDrawcallCount = lightToRender->m_drawcallCount;
 		const Scratch::LightToRenderToScratchInfo* lightToRenderEnd = lightsToRender.getEnd();
@@ -826,8 +826,8 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 
 void ShadowMapping::newScratchAndAtlasResloveRenderWorkItems(
 	const UVec4& atlasViewport, const UVec4& scratchVewport, Bool blurAtlas, RenderQueue* lightRenderQueue,
-	U32 renderQueueElementsLod, DynamicArrayAuto<Scratch::LightToRenderToScratchInfo>& scratchWorkItem,
-	DynamicArrayAuto<Atlas::ResolveWorkItem>& atlasResolveWorkItem, U32& drawcallCount) const
+	U32 renderQueueElementsLod, DynamicArrayRaii<Scratch::LightToRenderToScratchInfo>& scratchWorkItem,
+	DynamicArrayRaii<Atlas::ResolveWorkItem>& atlasResolveWorkItem, U32& drawcallCount) const
 {
 	// Scratch work item
 	{

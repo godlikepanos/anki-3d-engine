@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <AnKi/Util/Allocator.h>
+#include <AnKi/Util/CpuMemoryPools.h>
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/Forward.h>
 
@@ -67,8 +67,9 @@ public:
 		return *this;
 	}
 
-	/// Move DynamicArrayAuto to this.
-	DynamicArray& operator=(DynamicArrayAuto<T, TSize>&& b);
+	/// Move DynamicArrayRaii to this.
+	template<typename TMemPool>
+	DynamicArray& operator=(DynamicArrayRaii<T, TSize, TMemPool>&& b);
 
 	// Non-copyable
 	DynamicArray& operator=(const DynamicArray& b) = delete;
@@ -173,40 +174,40 @@ public:
 	}
 
 	/// Only create the array. Useful if @a T is non-copyable or movable .
-	template<typename TAllocator>
-	void create(TAllocator alloc, Size size)
+	template<typename TMemPool>
+	void create(TMemPool& pool, Size size)
 	{
 		ANKI_ASSERT(m_data == nullptr && m_size == 0 && m_capacity == 0);
 		if(size > 0)
 		{
-			m_data = alloc.template newArray<Value>(size);
+			m_data = newArray<Value>(pool, size);
 			m_size = size;
 			m_capacity = size;
 		}
 	}
 
 	/// Only create the array. Useful if @a T is non-copyable or movable .
-	template<typename TAllocator>
-	void create(TAllocator alloc, Size size, const Value& v)
+	template<typename TMemPool>
+	void create(TMemPool& pool, Size size, const Value& v)
 	{
 		ANKI_ASSERT(m_data == nullptr && m_size == 0 && m_capacity == 0);
 		if(size > 0)
 		{
-			m_data = alloc.template newArray<Value>(size, v);
+			m_data = newArray<Value>(pool, size, v);
 			m_size = size;
 			m_capacity = size;
 		}
 	}
 
 	/// Destroy the array.
-	template<typename TAllocator>
-	void destroy(TAllocator alloc)
+	template<typename TMemPool>
+	void destroy(TMemPool& pool)
 	{
 		if(m_data)
 		{
 			ANKI_ASSERT(m_size > 0);
 			ANKI_ASSERT(m_capacity > 0);
-			alloc.deleteArray(m_data, m_size);
+			deleteArray(pool, m_data, m_size);
 
 			m_data = nullptr;
 			m_size = 0;
@@ -217,54 +218,54 @@ public:
 	}
 
 	/// Grow or create the array. @a T needs to be copyable and moveable.
-	template<typename TAllocator>
-	void resize(TAllocator alloc, Size size, const Value& v);
+	template<typename TMemPool>
+	void resize(TMemPool& pool, Size size, const Value& v);
 
 	/// Grow or create the array. @a T needs to be copyable, moveable and default constructible.
-	template<typename TAllocator>
-	void resize(TAllocator alloc, Size size);
+	template<typename TMemPool>
+	void resize(TMemPool& pool, Size size);
 
 	/// Push back value.
-	template<typename TAllocator, typename... TArgs>
-	Iterator emplaceBack(TAllocator alloc, TArgs&&... args)
+	template<typename TMemPool, typename... TArgs>
+	Iterator emplaceBack(TMemPool& pool, TArgs&&... args)
 	{
-		resizeStorage(alloc, m_size + 1);
-		alloc.construct(&m_data[m_size], std::forward<TArgs>(args)...);
+		resizeStorage(pool, m_size + 1);
+		callConstructor(m_data[m_size], std::forward<TArgs>(args)...);
 		++m_size;
 		return &m_data[m_size - 1];
 	}
 
 	/// Remove the last value.
-	template<typename TAllocator>
-	void popBack(TAllocator alloc)
+	template<typename TMemPool>
+	void popBack(TMemPool& pool)
 	{
 		if(m_size > 0)
 		{
-			resizeStorage(alloc, m_size - 1);
+			resizeStorage(pool, m_size - 1);
 		}
 	}
 
 	/// Emplace a new element at a specific position. @a T needs to be movable and default constructible.
-	/// @param alloc The allocator.
+	/// @param pool The memory pool.
 	/// @param where Points to the position to emplace. Should be less or equal to what getEnd() returns.
 	/// @param args  Constructor arguments.
-	template<typename TAllocator, typename... TArgs>
-	Iterator emplaceAt(TAllocator alloc, ConstIterator where, TArgs&&... args);
+	template<typename TMemPool, typename... TArgs>
+	Iterator emplaceAt(TMemPool& pool, ConstIterator where, TArgs&&... args);
 
 	/// Removes the (first, last] elements.
-	/// @param alloc The allocator.
+	/// @param pool The memory pool.
 	/// @param first Points to the position of the first element to remove.
 	/// @param last Points to the position of the last element to remove minus one.
-	template<typename TAllocator>
-	void erase(TAllocator alloc, ConstIterator first, ConstIterator last);
+	template<typename TMemPool>
+	void erase(TMemPool& pool, ConstIterator first, ConstIterator last);
 
 	/// Removes one element.
-	/// @param alloc The allocator.
+	/// @param pool The memory pool.
 	/// @param at Points to the position of the element to remove.
-	template<typename TAllocator>
-	void erase(TAllocator alloc, ConstIterator at)
+	template<typename TMemPool>
+	void erase(TMemPool& pool, ConstIterator at)
 	{
-		erase(alloc, at, at + 1);
+		erase(pool, at, at + 1);
 	}
 
 	/// Validate it. Will only work when assertions are enabled.
@@ -304,8 +305,8 @@ public:
 	}
 
 	/// Resizes the storage but DOESN'T CONSTRUCT ANY ELEMENTS. It only moves or destroys.
-	template<typename TAllocator>
-	void resizeStorage(TAllocator alloc, Size newSize);
+	template<typename TMemPool>
+	void resizeStorage(TMemPool& pool, Size newSize);
 
 protected:
 	Value* m_data;
@@ -313,10 +314,10 @@ protected:
 	Size m_capacity = 0;
 };
 
-/// Dynamic array with automatic destruction. It's the same as DynamicArray but it holds the allocator in order to
+/// Dynamic array with automatic destruction. It's the same as DynamicArray but it holds the memory pool in order to
 /// perform automatic destruction. Use it for temp operations and on transient classes.
-template<typename T, typename TSize>
-class DynamicArrayAuto : public DynamicArray<T, TSize>
+template<typename T, typename TSize = U32, typename TMemPool = MemoryPoolPtrWrapper<BaseMemoryPool>>
+class DynamicArrayRaii : public DynamicArray<T, TSize>
 {
 public:
 	using Base = DynamicArray<T, TSize>;
@@ -327,48 +328,46 @@ public:
 	using typename Base::Iterator;
 	using typename Base::ConstIterator;
 	using typename Base::Size;
+	using MemoryPool = TMemPool;
 
-	template<typename TAllocator>
-	DynamicArrayAuto(TAllocator alloc)
+	DynamicArrayRaii(const MemoryPool& pool)
 		: Base()
-		, m_alloc(alloc)
+		, m_pool(pool)
 	{
 	}
 
 	/// And resize
-	template<typename TAllocator>
-	DynamicArrayAuto(TAllocator alloc, Size size)
+	DynamicArrayRaii(const MemoryPool& pool, Size size)
 		: Base()
-		, m_alloc(alloc)
+		, m_pool(pool)
 	{
 		resize(size);
 	}
 
 	/// With default value
-	template<typename TAllocator>
-	DynamicArrayAuto(TAllocator alloc, Size size, const T& v)
+	DynamicArrayRaii(const MemoryPool& pool, Size size, const T& v)
 		: Base()
-		, m_alloc(alloc)
+		, m_pool(pool)
 	{
 		create(size, v);
 	}
 
 	/// Move.
-	DynamicArrayAuto(DynamicArrayAuto&& b)
+	DynamicArrayRaii(DynamicArrayRaii&& b)
 		: Base()
 	{
 		*this = std::move(b);
 	}
 
-	~DynamicArrayAuto()
+	~DynamicArrayRaii()
 	{
-		Base::destroy(m_alloc);
+		Base::destroy(m_pool);
 	}
 
 	/// Copy.
-	DynamicArrayAuto(const DynamicArrayAuto& b)
+	DynamicArrayRaii(const DynamicArrayRaii& b)
 		: Base()
-		, m_alloc(b.m_alloc)
+		, m_pool(b.m_pool)
 	{
 		if(b.getSize())
 		{
@@ -381,9 +380,9 @@ public:
 	}
 
 	/// Move.
-	DynamicArrayAuto& operator=(DynamicArrayAuto&& b)
+	DynamicArrayRaii& operator=(DynamicArrayRaii&& b)
 	{
-		Base::destroy(m_alloc);
+		Base::destroy(m_pool);
 
 		m_data = b.m_data;
 		b.m_data = nullptr;
@@ -391,13 +390,13 @@ public:
 		b.m_size = 0;
 		m_capacity = b.m_capacity;
 		b.m_capacity = 0;
-		m_alloc = b.m_alloc;
-		b.m_alloc = {};
+		m_pool = std::move(b.m_pool);
+		b.m_pool = {};
 		return *this;
 	}
 
 	/// Copy.
-	DynamicArrayAuto& operator=(const DynamicArrayAuto& b)
+	DynamicArrayRaii& operator=(const DynamicArrayRaii& b)
 	{
 		destroy();
 		if(b.getSize())
@@ -414,93 +413,93 @@ public:
 	/// @copydoc DynamicArray::create
 	void create(Size size)
 	{
-		Base::create(m_alloc, size);
+		Base::create(m_pool, size);
 	}
 
 	/// @copydoc DynamicArray::create
 	void create(Size size, const Value& v)
 	{
-		Base::create(m_alloc, size, v);
+		Base::create(m_pool, size, v);
 	}
 
 	/// @copydoc DynamicArray::destroy
 	void destroy()
 	{
-		Base::destroy(m_alloc);
+		Base::destroy(m_pool);
 	}
 
 	/// @copydoc DynamicArray::resize
 	void resize(Size size, const Value& v)
 	{
-		Base::resize(m_alloc, size, v);
+		Base::resize(m_pool, size, v);
 	}
 
 	/// @copydoc DynamicArray::resize
 	void resize(Size size)
 	{
-		Base::resize(m_alloc, size);
+		Base::resize(m_pool, size);
 	}
 
 	/// @copydoc DynamicArray::emplaceBack
 	template<typename... TArgs>
 	Iterator emplaceBack(TArgs&&... args)
 	{
-		return Base::emplaceBack(m_alloc, std::forward<TArgs>(args)...);
+		return Base::emplaceBack(m_pool, std::forward<TArgs>(args)...);
 	}
 
 	/// @copydoc DynamicArray::popBack
 	void popBack()
 	{
-		Base::popBack(m_alloc);
+		Base::popBack(m_pool);
 	}
 
 	/// @copydoc DynamicArray::emplaceAt
 	template<typename... TArgs>
 	Iterator emplaceAt(ConstIterator where, TArgs&&... args)
 	{
-		return Base::emplaceAt(m_alloc, where, std::forward<TArgs>(args)...);
+		return Base::emplaceAt(m_pool, where, std::forward<TArgs>(args)...);
 	}
 
 	/// @copydoc DynamicArray::erase
 	void erase(ConstIterator first, ConstIterator last)
 	{
-		return Base::erase(m_alloc, first, last);
+		return Base::erase(m_pool, first, last);
 	}
 
 	/// @copydoc DynamicArray::erase
 	void erase(ConstIterator at)
 	{
-		return Base::erase(m_alloc, at);
+		return Base::erase(m_pool, at);
 	}
 
 	/// @copydoc DynamicArray::moveAndReset
 	void moveAndReset(Value*& data, Size& size, Size& storageSize)
 	{
 		Base::moveAndReset(data, size, storageSize);
-		// Don't touch the m_alloc
+		// Don't touch the m_pool
 	}
 
 	/// @copydoc DynamicArray::moveAndReset
 	void moveAndReset(WeakArray<Value, Size>& array)
 	{
 		Base::moveAndReset(array);
-		// Don't touch the m_alloc
+		// Don't touch the m_pool
 	}
 
 	/// @copydoc DynamicArray::resizeStorage
 	void resizeStorage(Size newSize)
 	{
-		Base::resizeStorage(m_alloc, newSize);
+		Base::resizeStorage(m_pool, newSize);
 	}
 
-	/// Get the allocator.
-	const GenericMemoryPoolAllocator<T>& getAllocator() const
+	/// Get the pool.
+	const MemoryPool& getMemoryPool() const
 	{
-		return m_alloc;
+		return m_pool;
 	}
 
 private:
-	GenericMemoryPoolAllocator<T> m_alloc;
+	MemoryPool m_pool;
 };
 /// @}
 

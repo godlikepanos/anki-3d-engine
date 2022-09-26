@@ -100,7 +100,7 @@ static Error findConstantColorsInImage(CString fname, Vec4& constantColor, Gener
 
 Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracing)
 {
-	StringAuto fname(m_alloc);
+	StringRaii fname(m_alloc);
 	fname.sprintf("%s%s", m_outDir.cstr(), computeMaterialResourceFilename(mtl).cstr());
 	ANKI_IMPORTER_LOGV("Importing material %s", fname.cstr());
 
@@ -110,10 +110,10 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 		return Error::kUserData;
 	}
 
-	HashMapAuto<CString, StringAuto> extras(m_alloc);
+	HashMapAuto<CString, StringRaii> extras(m_alloc);
 	ANKI_CHECK(getExtras(mtl.extras, extras));
 
-	StringAuto xml(m_alloc);
+	StringRaii xml(m_alloc);
 	xml.append(XmlDocument::kXmlHeader);
 	xml.append("\n");
 	xml.append(kMaterialTemplate);
@@ -128,10 +128,10 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 	{
 		const CString fname = getTextureUri(mtl.pbr_metallic_roughness.base_color_texture);
 
-		StringAuto uri(m_alloc);
+		StringRaii uri(m_alloc);
 		uri.sprintf("%s%s", m_texrpath.cstr(), fname.cstr());
 
-		xml.replaceAll("%diff%", StringAuto(m_alloc).sprintf("<input name=\"m_diffTex\" value=\"%s\"/>", uri.cstr()));
+		xml.replaceAll("%diff%", StringRaii(m_alloc).sprintf("<input name=\"m_diffTex\" value=\"%s\"/>", uri.cstr()));
 		xml.replaceAll("%diffTexMutator%", "1");
 
 		Vec4 constantColor;
@@ -144,7 +144,7 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 	{
 		const F32* diffCol = &mtl.pbr_metallic_roughness.base_color_factor[0];
 
-		xml.replaceAll("%diff%", StringAuto(m_alloc).sprintf("<input name=\"m_diffColor\" value=\"%f %f %f\"/>",
+		xml.replaceAll("%diff%", StringRaii(m_alloc).sprintf("<input name=\"m_diffColor\" value=\"%f %f %f\"/>",
 															 diffCol[0], diffCol[1], diffCol[2]));
 
 		xml.replaceAll("%diffTexMutator%", "0");
@@ -157,7 +157,7 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 		auto it = extras.find("specular");
 		if(it != extras.getEnd())
 		{
-			StringListAuto tokens(m_alloc);
+			StringListRaii tokens(m_alloc);
 			tokens.splitString(it->toCString(), ' ');
 			if(tokens.getSize() != 3)
 			{
@@ -177,7 +177,7 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 			specular = Vec3(0.04f);
 		}
 
-		xml.replaceAll("%spec%", StringAuto(m_alloc).sprintf("<input name=\"m_specColor\" value=\"%f %f %f\"/>",
+		xml.replaceAll("%spec%", StringRaii(m_alloc).sprintf("<input name=\"m_specColor\" value=\"%f %f %f\"/>",
 															 specular.x(), specular.y(), specular.z()));
 
 		xml.replaceAll("%specTexMutator%", "0");
@@ -198,12 +198,12 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 	// Roughness
 	if(mtl.pbr_metallic_roughness.metallic_roughness_texture.texture && constantRoughness < 0.0f)
 	{
-		StringAuto uri(m_alloc);
+		StringRaii uri(m_alloc);
 		uri.sprintf("%s%s", m_texrpath.cstr(),
 					getTextureUri(mtl.pbr_metallic_roughness.metallic_roughness_texture).cstr());
 
 		xml.replaceAll("%roughness%",
-					   StringAuto(m_alloc).sprintf("<input name=\"m_roughnessTex\" value=\"%s\"/>", uri.cstr()));
+					   StringRaii(m_alloc).sprintf("<input name=\"m_roughnessTex\" value=\"%s\"/>", uri.cstr()));
 
 		xml.replaceAll("%roughnessTexMutator%", "1");
 	}
@@ -214,7 +214,7 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 								  : mtl.pbr_metallic_roughness.roughness_factor;
 
 		xml.replaceAll("%roughness%",
-					   StringAuto(m_alloc).sprintf("<input name=\"m_roughness\" value=\"%f\"/>", roughness));
+					   StringRaii(m_alloc).sprintf("<input name=\"m_roughness\" value=\"%f\"/>", roughness));
 
 		xml.replaceAll("%roughnessTexMutator%", "0");
 	}
@@ -222,12 +222,12 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 	// Metallic
 	if(mtl.pbr_metallic_roughness.metallic_roughness_texture.texture && constantMetaliness < 0.0f)
 	{
-		StringAuto uri(m_alloc);
+		StringRaii uri(m_alloc);
 		uri.sprintf("%s%s", m_texrpath.cstr(),
 					getTextureUri(mtl.pbr_metallic_roughness.metallic_roughness_texture).cstr());
 
 		xml.replaceAll("%metallic%",
-					   StringAuto(m_alloc).sprintf("<input name=\"m_metallicTex\" value=\"%s\"/>", uri.cstr()));
+					   StringRaii(m_alloc).sprintf("<input name=\"m_metallicTex\" value=\"%s\"/>", uri.cstr()));
 
 		xml.replaceAll("%metalTexMutator%", "1");
 	}
@@ -238,7 +238,7 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 								  : mtl.pbr_metallic_roughness.metallic_factor;
 
 		xml.replaceAll("%metallic%",
-					   StringAuto(m_alloc).sprintf("<input name=\"m_metallic\" value=\"%f\"/>", metalines));
+					   StringRaii(m_alloc).sprintf("<input name=\"m_metallic\" value=\"%f\"/>", metalines));
 
 		xml.replaceAll("%metalTexMutator%", "0");
 	}
@@ -250,11 +250,11 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 		ANKI_CHECK(findConstantColorsInImage(getTextureUri(mtl.normal_texture).cstr(), constantColor, m_alloc));
 		if(constantColor.xyz() == -1.0f)
 		{
-			StringAuto uri(m_alloc);
+			StringRaii uri(m_alloc);
 			uri.sprintf("%s%s", m_texrpath.cstr(), getTextureUri(mtl.normal_texture).cstr());
 
 			xml.replaceAll("%normal%",
-						   StringAuto(m_alloc).sprintf("<input name=\"m_normalTex\" value=\"%s\"/>", uri.cstr()));
+						   StringRaii(m_alloc).sprintf("<input name=\"m_normalTex\" value=\"%s\"/>", uri.cstr()));
 
 			xml.replaceAll("%normalTexMutator%", "1");
 		}
@@ -273,11 +273,11 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 	// Emissive texture
 	if(mtl.emissive_texture.texture)
 	{
-		StringAuto uri(m_alloc);
+		StringRaii uri(m_alloc);
 		uri.sprintf("%s%s", m_texrpath.cstr(), getTextureUri(mtl.emissive_texture).cstr());
 
 		xml.replaceAll("%emission%",
-					   StringAuto(m_alloc).sprintf("<input name=\"m_emissiveTex\" value=\"%s\"/>", uri.cstr()));
+					   StringRaii(m_alloc).sprintf("<input name=\"m_emissiveTex\" value=\"%s\"/>", uri.cstr()));
 
 		xml.replaceAll("%emissiveTexMutator%", "1");
 	}
@@ -285,7 +285,7 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 	{
 		const F32* emissionCol = &mtl.emissive_factor[0];
 
-		xml.replaceAll("%emission%", StringAuto(m_alloc).sprintf("<input name=\"m_emission\" value=\"%f %f %f\"/>",
+		xml.replaceAll("%emission%", StringRaii(m_alloc).sprintf("<input name=\"m_emission\" value=\"%f %f %f\"/>",
 																 emissionCol[0], emissionCol[1], emissionCol[2]));
 
 		xml.replaceAll("%emissiveTexMutator%", "0");
@@ -305,17 +305,17 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 		}
 
 		xml.replaceAll("%subsurface%",
-					   StringAuto(m_alloc).sprintf("<input name=\"m_subsurface\" value=\"%f\"/>", subsurface));
+					   StringRaii(m_alloc).sprintf("<input name=\"m_subsurface\" value=\"%f\"/>", subsurface));
 	}
 
 	// Height texture
 	auto it = extras.find("height_map");
 	if(it != extras.getEnd())
 	{
-		StringAuto uri(m_alloc);
+		StringRaii uri(m_alloc);
 		uri.sprintf("%s%s", m_texrpath.cstr(), it->cstr());
 
-		xml.replaceAll("%height%", StringAuto(m_alloc).sprintf("<input name=\"m_heightTex\" value=\"%s\" \"/>\n"
+		xml.replaceAll("%height%", StringRaii(m_alloc).sprintf("<input name=\"m_heightTex\" value=\"%s\" \"/>\n"
 															   "\t\t<input name=\"m_heightmapScale\" value=\"0.05\"/>",
 															   uri.cstr()));
 

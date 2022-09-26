@@ -87,10 +87,10 @@ public:
 
 	/// Read all the contents of a text file
 	/// If the file is not rewined it will probably fail
-	Error readAllText(GenericMemoryPoolAllocator<U8> alloc, String& out);
+	Error readAllText(BaseMemoryPool& pool, String& out);
 
 	/// Read all the contents of a text file. If the file is not rewined it will probably fail.
-	Error readAllText(StringAuto& out);
+	Error readAllText(StringRaii& out);
 
 	/// Read 32bit unsigned integer. Set the endianness if the file's endianness is different from the machine's.
 	Error readU32(U32& u);

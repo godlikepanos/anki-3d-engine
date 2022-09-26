@@ -252,7 +252,7 @@ Error MeshBinaryLoader::storeVertexBuffer(U32 bufferIdx, void* ptr, PtrSize size
 	return Error::kNone;
 }
 
-Error MeshBinaryLoader::storeIndicesAndPosition(DynamicArrayAuto<U32>& indices, DynamicArrayAuto<Vec3>& positions)
+Error MeshBinaryLoader::storeIndicesAndPosition(DynamicArrayRaii<U32>& indices, DynamicArrayRaii<Vec3>& positions)
 {
 	ANKI_ASSERT(isLoaded());
 
@@ -261,7 +261,7 @@ Error MeshBinaryLoader::storeIndicesAndPosition(DynamicArrayAuto<U32>& indices, 
 		indices.resize(m_header.m_totalIndexCount);
 
 		// Store to staging buff
-		DynamicArrayAuto<U8, PtrSize> staging(m_alloc);
+		DynamicArrayRaii<U8, PtrSize> staging(m_alloc);
 		staging.create(getIndexBufferSize());
 		ANKI_CHECK(storeIndexBuffer(&staging[0], staging.getSizeInBytes()));
 

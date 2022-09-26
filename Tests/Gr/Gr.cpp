@@ -1566,7 +1566,7 @@ ANKI_TEST(Gr, RenderGraph)
 		TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, 0));
 
 		GraphicsRenderPassDescription& pass =
-			descr.newGraphicsRenderPass(StringAuto(alloc).sprintf("GI lp%u", faceIdx).toCString());
+			descr.newGraphicsRenderPass(StringRaii(alloc).sprintf("GI lp%u", faceIdx).toCString());
 		pass.newDependency({giGiLightRt, TextureUsageBit::kFramebufferWrite, subresource});
 		pass.newDependency({giGbuffNormRt, TextureUsageBit::kSampledFragment});
 		pass.newDependency({giGbuffDepthRt, TextureUsageBit::kSampledFragment});
@@ -1578,7 +1578,7 @@ ANKI_TEST(Gr, RenderGraph)
 		for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
 		{
 			GraphicsRenderPassDescription& pass =
-				descr.newGraphicsRenderPass(StringAuto(alloc).sprintf("GI mip%u", faceIdx).toCString());
+				descr.newGraphicsRenderPass(StringRaii(alloc).sprintf("GI mip%u", faceIdx).toCString());
 
 			for(U32 mip = 0; mip < GI_MIP_COUNT; ++mip)
 			{
@@ -2531,7 +2531,7 @@ void main()
 }
 		)";
 
-		StringAuto fragSrc(HeapAllocator<U8>(allocAligned, nullptr));
+		StringRaii fragSrc(HeapAllocator<U8>(allocAligned, nullptr));
 		if(useRayTracing)
 		{
 			fragSrc.append("#define USE_RAY_TRACING 1\n");
@@ -3048,7 +3048,7 @@ F32 scatteringPdfLambertian(Vec3 normal, Vec3 scatteredDir)
 			;
 #undef MAGIC_MACRO
 
-		StringAuto commonSrc(alloc);
+		StringRaii commonSrc(alloc);
 		commonSrc.sprintf(commonSrcPart.cstr(), rtTypesStr.cstr());
 
 		const CString lambertianSrc = R"(
@@ -3258,24 +3258,24 @@ void main()
 })";
 
 		ShaderPtr lambertianShader = createShader(
-			StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), lambertianSrc.cstr()), ShaderType::kClosestHit, *gr);
+			StringRaii(alloc).sprintf("%s\n%s", commonSrc.cstr(), lambertianSrc.cstr()), ShaderType::kClosestHit, *gr);
 		ShaderPtr lambertianRoomShader =
-			createShader(StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), lambertianRoomSrc.cstr()),
+			createShader(StringRaii(alloc).sprintf("%s\n%s", commonSrc.cstr(), lambertianRoomSrc.cstr()),
 						 ShaderType::kClosestHit, *gr);
 		ShaderPtr emissiveShader = createShader(
-			StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), emissiveSrc.cstr()), ShaderType::kClosestHit, *gr);
+			StringRaii(alloc).sprintf("%s\n%s", commonSrc.cstr(), emissiveSrc.cstr()), ShaderType::kClosestHit, *gr);
 
 		ShaderPtr shadowAhitShader = createShader(
-			StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), shadowAhitSrc.cstr()), ShaderType::kAnyHit, *gr);
+			StringRaii(alloc).sprintf("%s\n%s", commonSrc.cstr(), shadowAhitSrc.cstr()), ShaderType::kAnyHit, *gr);
 		ShaderPtr shadowChitShader = createShader(
-			StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), shadowChitSrc.cstr()), ShaderType::kClosestHit, *gr);
+			StringRaii(alloc).sprintf("%s\n%s", commonSrc.cstr(), shadowChitSrc.cstr()), ShaderType::kClosestHit, *gr);
 		ShaderPtr missShader =
-			createShader(StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), missSrc.cstr()), ShaderType::kMiss, *gr);
+			createShader(StringRaii(alloc).sprintf("%s\n%s", commonSrc.cstr(), missSrc.cstr()), ShaderType::kMiss, *gr);
 
 		ShaderPtr shadowMissShader = createShader(
-			StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), shadowMissSrc.cstr()), ShaderType::kMiss, *gr);
+			StringRaii(alloc).sprintf("%s\n%s", commonSrc.cstr(), shadowMissSrc.cstr()), ShaderType::kMiss, *gr);
 
-		ShaderPtr rayGenShader = createShader(StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), rayGenSrc.cstr()),
+		ShaderPtr rayGenShader = createShader(StringRaii(alloc).sprintf("%s\n%s", commonSrc.cstr(), rayGenSrc.cstr()),
 											  ShaderType::kRayGen, *gr);
 
 		Array<RayTracingHitGroup, 4> hitGroups;
@@ -3571,9 +3571,9 @@ void main()
 	memset(values, 0, info.m_size);
 
 	// Pre-create some CPU result buffers
-	DynamicArrayAuto<U32> atomicsBufferCpu(HeapAllocator<U8>(allocAligned, nullptr));
+	DynamicArrayRaii<U32> atomicsBufferCpu(HeapAllocator<U8>(allocAligned, nullptr));
 	atomicsBufferCpu.create(ARRAY_SIZE);
-	DynamicArrayAuto<U32> expectedResultsBufferCpu(HeapAllocator<U8>(allocAligned, nullptr));
+	DynamicArrayRaii<U32> expectedResultsBufferCpu(HeapAllocator<U8>(allocAligned, nullptr));
 	expectedResultsBufferCpu.create(ARRAY_SIZE);
 	for(U32 i = 0; i < ARRAY_SIZE; ++i)
 	{

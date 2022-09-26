@@ -46,7 +46,7 @@ exit 6
 		ANKI_TEST_EXPECT_EQ(status, ProcessStatus::kNotRunning);
 		ANKI_TEST_EXPECT_EQ(exitCode, 6);
 
-		StringAuto stdOut(HeapAllocator<U8>(allocAligned, nullptr));
+		StringRaii stdOut(HeapAllocator<U8>(allocAligned, nullptr));
 		ANKI_TEST_EXPECT_NO_ERR(proc.readFromStdout(stdOut));
 		ANKI_TEST_EXPECT_EQ(stdOut, "Hello from script\n");
 	}
@@ -81,14 +81,14 @@ done
 			}
 
 			HeapAllocator<U8> alloc(allocAligned, nullptr);
-			StringAuto stdOut(alloc);
+			StringRaii stdOut(alloc);
 			ANKI_TEST_EXPECT_NO_ERR(proc.readFromStdout(stdOut));
 			if(stdOut.getLength())
 			{
 				ANKI_TEST_LOGI("%s", stdOut.cstr());
 			}
 
-			StringAuto stderrStr(alloc);
+			StringRaii stderrStr(alloc);
 			ANKI_TEST_EXPECT_NO_ERR(proc.readFromStderr(stderrStr));
 			if(stderrStr.getLength())
 			{
@@ -115,7 +115,7 @@ sleep 1
 
 		HighRezTimer::sleep(0.5_sec); // Wait a bit more for good measure
 
-		StringAuto stdOut(HeapAllocator<U8>(allocAligned, nullptr));
+		StringRaii stdOut(HeapAllocator<U8>(allocAligned, nullptr));
 		ANKI_TEST_EXPECT_NO_ERR(proc.readFromStdout(stdOut));
 		ANKI_TEST_EXPECT_EQ(stdOut, "Lala\n");
 	}

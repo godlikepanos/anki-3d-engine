@@ -41,7 +41,7 @@ public:
 	U32 m_spilling = 0;
 	F32 m_fp16ArithmeticPercentage = 0.0f;
 
-	void toString(StringAuto& str) const;
+	void toString(StringRaii& str) const;
 };
 
 /// Run the mali offline compiler and get some info back.

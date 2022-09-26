@@ -31,7 +31,7 @@ Error ScriptEvent::init(Second startTime, Second duration, CString script)
 	ANKI_CHECK(m_env.init(&getSceneGraph().getScriptManager()));
 
 	// Do the rest
-	StringAuto extension(getAllocator());
+	StringRaii extension(getAllocator());
 	getFilepathExtension(script, extension);
 
 	if(!extension.isEmpty() && extension == "lua")

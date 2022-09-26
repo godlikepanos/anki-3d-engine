@@ -27,8 +27,8 @@ Error CpuMeshResource::load(const ResourceFilename& filename, [[maybe_unused]] B
 
 	ANKI_CHECK(loader.load(filename));
 
-	DynamicArrayAuto<Vec3> tempPositions(getAllocator());
-	DynamicArrayAuto<U32> tempIndices(getAllocator());
+	DynamicArrayRaii<Vec3> tempPositions(getAllocator());
+	DynamicArrayRaii<U32> tempIndices(getAllocator());
 
 	ANKI_CHECK(loader.storeIndicesAndPosition(tempIndices, tempPositions));
 

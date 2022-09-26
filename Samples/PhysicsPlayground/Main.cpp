@@ -157,7 +157,7 @@ Error MyApp::sampleExtraInit()
 		{
 			ModelNode* monkey;
 			ANKI_CHECK(getSceneGraph().newSceneNode<ModelNode>(
-				StringAuto(getAllocator()).sprintf("monkey_chain%u", i).toCString(), monkey));
+				StringRaii(getAllocator()).sprintf("monkey_chain%u", i).toCString(), monkey));
 			ANKI_CHECK(monkey->getFirstComponentOfType<ModelComponent>().loadModelResource(
 				"Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl"));
 
@@ -169,7 +169,7 @@ Error MyApp::sampleExtraInit()
 
 			BodyNode* body;
 			ANKI_CHECK(getSceneGraph().newSceneNode<BodyNode>(
-				StringAuto(getAllocator()).sprintf("bmonkey_chain%u", i).toCString(), body));
+				StringRaii(getAllocator()).sprintf("bmonkey_chain%u", i).toCString(), body));
 			ANKI_CHECK(body->getFirstComponentOfType<BodyComponent>().loadMeshResource(
 				"Assets/Suzanne_lod0_e3526e1428c0763c.ankimesh"));
 			body->getFirstComponentOfType<BodyComponent>().setWorldTransform(trf);
@@ -296,14 +296,14 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 
 		ModelNode* monkey;
 		ANKI_CHECK(getSceneGraph().newSceneNode<ModelNode>(
-			StringAuto(getAllocator()).sprintf("monkey%u", instance++).toCString(), monkey));
+			StringRaii(getAllocator()).sprintf("monkey%u", instance++).toCString(), monkey));
 		ANKI_CHECK(monkey->getFirstComponentOfType<ModelComponent>().loadModelResource(
 			"Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl"));
 		// monkey->getFirstComponentOfType<MoveComponent>().setLocalTransform(camTrf);
 
 		BodyNode* body;
 		ANKI_CHECK(getSceneGraph().newSceneNode<BodyNode>(
-			StringAuto(getAllocator()).sprintf("bmonkey%u", instance++).toCString(), body));
+			StringRaii(getAllocator()).sprintf("bmonkey%u", instance++).toCString(), body));
 		ANKI_CHECK(body->getFirstComponentOfType<BodyComponent>().loadMeshResource(
 			"Assets/Suzanne_lod0_e3526e1428c0763c.ankimesh"));
 		body->getFirstComponentOfType<BodyComponent>().setWorldTransform(camTrf);
@@ -349,7 +349,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 			static U32 id = 0;
 			ModelNode* monkey;
 			ANKI_CHECK(getSceneGraph().newSceneNode(
-				StringAuto(getSceneGraph().getFrameAllocator()).sprintf("decal%u", id++).toCString(), monkey));
+				StringRaii(getSceneGraph().getFrameAllocator()).sprintf("decal%u", id++).toCString(), monkey));
 			ANKI_CHECK(monkey->getFirstComponentOfType<ModelComponent>().loadModelResource(
 				"Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl"));
 			monkey->getFirstComponentOfType<MoveComponent>().setLocalTransform(trf);
@@ -360,7 +360,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 			// Create some particles
 			ParticleEmitterNode* particles;
 			ANKI_CHECK(getSceneGraph().newSceneNode(
-				StringAuto(getSceneGraph().getFrameAllocator()).sprintf("parts%u", id++).toCString(), particles));
+				StringRaii(getSceneGraph().getFrameAllocator()).sprintf("parts%u", id++).toCString(), particles));
 			ANKI_CHECK(particles->getFirstComponentOfType<ParticleEmitterComponent>().loadParticleEmitterResource(
 				"Assets/Smoke.ankipart"));
 			particles->getFirstComponentOfType<MoveComponent>().setLocalTransform(trf);
@@ -371,7 +371,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 			for(U i = 0; i < 1; ++i)
 			{
 				static int id = 0;
-				StringAuto name(getSceneGraph().getFrameAllocator());
+				StringRaii name(getSceneGraph().getFrameAllocator());
 				name.sprintf("fog%u", id++);
 
 				FogDensityNode* fogNode;

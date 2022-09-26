@@ -62,10 +62,10 @@ public:
 	Error kill(ProcessKillSignal k);
 
 	/// Read from stdout.
-	Error readFromStdout(StringAuto& text);
+	Error readFromStdout(StringRaii& text);
 
 	/// Read from stderr.
-	Error readFromStderr(StringAuto& text);
+	Error readFromStderr(StringRaii& text);
 
 	/// Cleanup a finished process. Call this if you want to start a new process again. Need to have waited before
 	/// calling destroy.
@@ -74,7 +74,7 @@ public:
 private:
 	reproc_t* m_handle = nullptr;
 
-	Error readCommon(I32 reprocStream, StringAuto& text);
+	Error readCommon(I32 reprocStream, StringRaii& text);
 };
 /// @}
 

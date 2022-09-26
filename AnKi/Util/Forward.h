@@ -11,7 +11,7 @@
 
 namespace anki {
 
-template<U32 N, typename TChunkType>
+template<U32 kBitCount, typename TChunkType>
 class BitSet;
 
 template<typename T>
@@ -23,22 +23,24 @@ class HashMap;
 template<typename T>
 class Hierarchy;
 
-template<typename T>
+template<typename>
 class List;
 
-template<typename T>
-class ListAuto;
+template<typename, typename>
+class ListRaii;
 
 template<typename T, typename TConfig>
 class SparseArray;
 
 class CString;
 class String;
-class StringAuto;
+
+template<typename>
+class BaseStringRaii;
 
 class ThreadHive;
 
-template<typename T, PtrSize kPreallocatedStorage = ANKI_SAFE_ALIGNMENT>
+template<typename, PtrSize kPreallocatedStorage = ANKI_SAFE_ALIGNMENT>
 class Function;
 
 template<typename, PtrSize>
@@ -53,8 +55,8 @@ class ConstWeakArray;
 template<typename T, typename TSize = U32>
 class DynamicArray;
 
-template<typename T, typename TSize = U32>
-class DynamicArrayAuto;
+template<typename, typename, typename>
+class DynamicArrayRaii;
 
 class F16;
 

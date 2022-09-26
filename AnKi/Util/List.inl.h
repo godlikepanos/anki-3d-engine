@@ -314,14 +314,14 @@ void ListBase<T, TNode>::popFront()
 } // end namespace detail
 
 template<typename T>
-template<typename TAllocator>
-void List<T>::destroy(TAllocator alloc)
+template<typename TMemPool>
+void List<T>::destroy(TMemPool& pool)
 {
 	Node* el = Base::m_head;
 	while(el)
 	{
 		Node* next = el->m_next;
-		alloc.deleteInstance(el);
+		deleteInstance(pool, el);
 		el = next;
 	}
 

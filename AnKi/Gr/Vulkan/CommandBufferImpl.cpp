@@ -461,11 +461,11 @@ void CommandBufferImpl::flushBarriers()
 	// Batch
 	//
 
-	DynamicArrayAuto<VkImageMemoryBarrier> finalImgBarriers(m_alloc);
+	DynamicArrayRaii<VkImageMemoryBarrier> finalImgBarriers(m_alloc);
 	U32 finalImgBarrierCount = 0;
 	if(m_imgBarrierCount > 0)
 	{
-		DynamicArrayAuto<VkImageMemoryBarrier> squashedBarriers(m_alloc);
+		DynamicArrayRaii<VkImageMemoryBarrier> squashedBarriers(m_alloc);
 		U32 squashedBarrierCount = 0;
 
 		squashedBarriers.create(m_imgBarrierCount);
@@ -894,9 +894,9 @@ void CommandBufferImpl::setPipelineBarrierInternal(
 {
 	commandCommon();
 
-	DynamicArrayAuto<VkImageMemoryBarrier> imageBarriers(m_alloc);
-	DynamicArrayAuto<VkBufferMemoryBarrier> bufferBarriers(m_alloc);
-	DynamicArrayAuto<VkMemoryBarrier> genericBarriers(m_alloc);
+	DynamicArrayRaii<VkImageMemoryBarrier> imageBarriers(m_alloc);
+	DynamicArrayRaii<VkBufferMemoryBarrier> bufferBarriers(m_alloc);
+	DynamicArrayRaii<VkMemoryBarrier> genericBarriers(m_alloc);
 	VkPipelineStageFlags srcStageMask = 0;
 	VkPipelineStageFlags dstStageMask = 0;
 

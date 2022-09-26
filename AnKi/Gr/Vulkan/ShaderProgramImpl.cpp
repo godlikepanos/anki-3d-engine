@@ -264,7 +264,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	if(!!(m_stages & ShaderTypeBit::kAllRayTracing))
 	{
 		// Create shaders
-		DynamicArrayAuto<VkPipelineShaderStageCreateInfo> stages(getAllocator(), m_shaders.getSize());
+		DynamicArrayRaii<VkPipelineShaderStageCreateInfo> stages(getAllocator(), m_shaders.getSize());
 		for(U32 i = 0; i < stages.getSize(); ++i)
 		{
 			const ShaderImpl& impl = static_cast<const ShaderImpl&>(*m_shaders[i]);
@@ -289,7 +289,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		U32 groupCount = inf.m_rayTracingShaders.m_rayGenShaders.getSize()
 						 + inf.m_rayTracingShaders.m_missShaders.getSize()
 						 + inf.m_rayTracingShaders.m_hitGroups.getSize();
-		DynamicArrayAuto<VkRayTracingShaderGroupCreateInfoKHR> groups(getAllocator(), groupCount, defaultGroup);
+		DynamicArrayRaii<VkRayTracingShaderGroupCreateInfoKHR> groups(getAllocator(), groupCount, defaultGroup);
 
 		// 1st group is the ray gen
 		groupCount = 0;

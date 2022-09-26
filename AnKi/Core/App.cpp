@@ -294,10 +294,10 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	//
 #if !ANKI_OS_ANDROID
 	// Add the location of the executable where the shaders are supposed to be
-	StringAuto executableFname(m_heapAlloc);
+	StringRaii executableFname(m_heapAlloc);
 	ANKI_CHECK(getApplicationPath(executableFname));
 	ANKI_CORE_LOGI("Executable path is: %s", executableFname.cstr());
-	StringAuto shadersPath(m_heapAlloc);
+	StringRaii shadersPath(m_heapAlloc);
 	getParentFilepath(executableFname, shadersPath);
 	shadersPath.append(":");
 	shadersPath.append(m_config->getRsrcDataPaths());
@@ -378,7 +378,7 @@ Error App::initDirs()
 {
 	// Settings path
 #if !ANKI_OS_ANDROID
-	StringAuto home(m_heapAlloc);
+	StringRaii home(m_heapAlloc);
 	ANKI_CHECK(getHomeDirectory(home));
 
 	m_settingsDir.sprintf(m_heapAlloc, "%s/.anki", &home[0]);
@@ -444,7 +444,7 @@ Error App::mainLoop()
 			m_scene->doVisibilityTests(rqueue);
 
 			// Inject stats UI
-			DynamicArrayAuto<UiQueueElement> newUiElementArr(m_heapAlloc);
+			DynamicArrayRaii<UiQueueElement> newUiElementArr(m_heapAlloc);
 			injectUiElements(newUiElementArr, rqueue);
 
 			// Render
@@ -544,7 +544,7 @@ Error App::mainLoop()
 	return Error::kNone;
 }
 
-void App::injectUiElements(DynamicArrayAuto<UiQueueElement>& newUiElementArr, RenderQueue& rqueue)
+void App::injectUiElements(DynamicArrayRaii<UiQueueElement>& newUiElementArr, RenderQueue& rqueue)
 {
 	const U32 originalCount = rqueue.m_uis.getSize();
 	if(m_config->getCoreDisplayStats() > 0 || m_consoleEnabled)

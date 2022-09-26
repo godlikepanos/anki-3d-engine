@@ -33,8 +33,8 @@ static void getSpreadsheetColumnName(U32 column, Array<char, 3>& arr)
 class CoreTracer::ThreadWorkItem : public IntrusiveListEnabled<ThreadWorkItem>
 {
 public:
-	DynamicArrayAuto<TracerEvent> m_events;
-	DynamicArrayAuto<TracerCounter> m_counters;
+	DynamicArrayRaii<TracerEvent> m_events;
+	DynamicArrayRaii<TracerCounter> m_counters;
 	ThreadId m_tid;
 	U64 m_frame;
 
@@ -48,7 +48,7 @@ public:
 class CoreTracer::PerFrameCounters : public IntrusiveListEnabled<PerFrameCounters>
 {
 public:
-	DynamicArrayAuto<TracerCounter> m_counters;
+	DynamicArrayRaii<TracerCounter> m_counters;
 	U64 m_frame;
 
 	PerFrameCounters(GenericMemoryPoolAllocator<U8>& alloc)
@@ -117,14 +117,14 @@ Error CoreTracer::init(GenericMemoryPoolAllocator<U8> alloc, CString directory)
 	});
 
 	std::tm tm = getLocalTime();
-	StringAuto fname(m_alloc);
+	StringRaii fname(m_alloc);
 	fname.sprintf("%s/%d%02d%02d-%02d%02d_", directory.cstr(), tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour,
 				  tm.tm_min);
 
-	ANKI_CHECK(m_traceJsonFile.open(StringAuto(alloc).sprintf("%strace.json", fname.cstr()), FileOpenFlag::kWrite));
+	ANKI_CHECK(m_traceJsonFile.open(StringRaii(alloc).sprintf("%strace.json", fname.cstr()), FileOpenFlag::kWrite));
 	ANKI_CHECK(m_traceJsonFile.writeText("[\n"));
 
-	ANKI_CHECK(m_countersCsvFile.open(StringAuto(alloc).sprintf("%scounters.csv", fname.cstr()), FileOpenFlag::kWrite));
+	ANKI_CHECK(m_countersCsvFile.open(StringRaii(alloc).sprintf("%scounters.csv", fname.cstr()), FileOpenFlag::kWrite));
 
 	return Error::kNone;
 }
@@ -211,7 +211,7 @@ void CoreTracer::gatherCounters(ThreadWorkItem& item)
 	});
 
 	// Merge same
-	DynamicArrayAuto<TracerCounter> mergedCounters(m_alloc);
+	DynamicArrayRaii<TracerCounter> mergedCounters(m_alloc);
 	for(U32 i = 0; i < item.m_counters.getSize(); ++i)
 	{
 		if(mergedCounters.getSize() == 0 || mergedCounters.getBack().m_name != item.m_counters[i].m_name)

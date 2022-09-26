@@ -20,7 +20,7 @@ U64 ShaderProgramRaytracingLibrary::generateShaderGroupGroupHash(CString resourc
 																 GenericMemoryPoolAllocator<U8> alloc)
 {
 	ANKI_ASSERT(resourceFilename.getLength() > 0);
-	StringAuto basename(alloc);
+	StringRaii basename(alloc);
 	getFilepathFilename(resourceFilename, basename);
 	const U64 hash = appendHash(basename.cstr(), basename.getLength(), mutationHash);
 	return hash;
@@ -77,9 +77,9 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceFilesystem& 
 	public:
 		GenericMemoryPoolAllocator<U8> m_alloc;
 		GrManager* m_gr;
-		StringAuto m_name{m_alloc};
-		DynamicArrayAuto<Shader> m_shaders{m_alloc};
-		DynamicArrayAuto<ShaderGroup> m_shaderGroups{m_alloc};
+		StringRaii m_name{m_alloc};
+		DynamicArrayRaii<Shader> m_shaders{m_alloc};
+		DynamicArrayRaii<ShaderGroup> m_shaderGroups{m_alloc};
 		ShaderTypeBit m_presentStages = ShaderTypeBit::kNone;
 		U32 m_rayTypeCount = 0;
 		BitSet<64> m_rayTypeMask = {false};
@@ -156,11 +156,11 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceFilesystem& 
 		}
 	};
 
-	DynamicArrayAuto<Lib> libs(alloc);
+	DynamicArrayRaii<Lib> libs(alloc);
 
 	ANKI_CHECK(fs.iterateAllFilenames([&](CString filename) -> Error {
 		// Check file extension
-		StringAuto extension(alloc);
+		StringRaii extension(alloc);
 		getFilepathExtension(filename, extension);
 		const Char binExtension[] = "ankiprogbin";
 		if(extension.getLength() != sizeof(binExtension) - 1 || extension != binExtension)
@@ -194,7 +194,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceFilesystem& 
 		}
 
 		// Create the program name
-		StringAuto progName(alloc);
+		StringRaii progName(alloc);
 		getFilepathFilename(filename, progName);
 
 		// Find or create the lib
@@ -396,9 +396,9 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceFilesystem& 
 			outLib.m_libraryName.create(alloc, inLib.m_name);
 			outLib.m_rayTypeCount = inLib.m_rayTypeCount;
 
-			DynamicArrayAuto<RayTracingHitGroup> initInfoHitGroups(alloc);
-			DynamicArrayAuto<ShaderPtr> missShaders(alloc);
-			DynamicArrayAuto<ShaderPtr> rayGenShaders(alloc);
+			DynamicArrayRaii<RayTracingHitGroup> initInfoHitGroups(alloc);
+			DynamicArrayRaii<ShaderPtr> missShaders(alloc);
+			DynamicArrayRaii<ShaderPtr> rayGenShaders(alloc);
 
 			// Add the hitgroups to the init info
 			for(U32 shaderGroupIdx = 0; shaderGroupIdx < inLib.m_shaderGroups.getSize(); ++shaderGroupIdx)

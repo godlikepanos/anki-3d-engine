@@ -101,11 +101,11 @@ std::tm getLocalTime()
 
 #if ANKI_OS_ANDROID
 /// Get the name of the apk. Doesn't use File to open files because /proc files are a bit special.
-static Error getAndroidApkName(StringAuto& name)
+static Error getAndroidApkName(StringRaii& name)
 {
 	const pid_t pid = getpid();
 
-	StringAuto path(name.getAllocator());
+	StringRaii path(name.getAllocator());
 	path.sprintf("/proc/%d/cmdline", pid);
 
 	const int fd = open(path.cstr(), O_RDONLY);
@@ -154,7 +154,7 @@ void* getAndroidCommandLineArguments(int& argc, char**& argv)
 
 	// Parse the command line args
 	HeapAllocator<U8> alloc(allocAligned, nullptr, "getAndroidCommandLineArguments temp");
-	StringListAuto args(alloc);
+	StringListRaii args(alloc);
 
 	if(jsParam1)
 	{
@@ -164,7 +164,7 @@ void* getAndroidCommandLineArguments(int& argc, char**& argv)
 	}
 
 	// Add the apk name
-	StringAuto apkName(alloc);
+	StringRaii apkName(alloc);
 	if(!getAndroidApkName(apkName))
 	{
 		args.pushFront(apkName);

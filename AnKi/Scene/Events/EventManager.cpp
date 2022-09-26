@@ -130,7 +130,7 @@ void EventManager::deleteEventsMarkedForDeletion(Bool fullCleanup)
 	if(fullCleanup)
 	{
 		// Gather in an array because we can't call setMarkedForDeletion while iterating m_events
-		DynamicArrayAuto<Event*> markedForDeletion(getFrameAllocator());
+		DynamicArrayRaii<Event*> markedForDeletion(getFrameAllocator());
 		for(Event& event : m_events)
 		{
 			for(SceneNode* node : event.m_associatedNodes)

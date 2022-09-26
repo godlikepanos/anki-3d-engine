@@ -84,12 +84,12 @@ public:
 
 	/// Serialize a class.
 	/// @param x What to serialize.
-	/// @param tmpAllocator A temp allocator for some memory needed.
+	/// @param tmpPool A temp mem pool for some memory needed.
 	/// @param file The file to populate.
 	template<typename T>
-	Error serialize(const T& x, GenericMemoryPoolAllocator<U8> tmpAllocator, File& file)
+	Error serialize(const T& x, BaseMemoryPool& tmpPool, File& file)
 	{
-		const Error err = serializeInternal(x, tmpAllocator, file);
+		const Error err = serializeInternal(x, tmpPool, file);
 		if(err)
 		{
 			ANKI_UTIL_LOGE("There was a serialization error");
@@ -160,7 +160,7 @@ private:
 	File* m_file = nullptr;
 	PtrSize m_eofPos; ///< A logical end of the file. Used for allocations.
 	PtrSize m_beginOfDataFilePos; ///< Where the data are located in the file.
-	GenericMemoryPoolAllocator<U8> m_alloc;
+	BaseMemoryPool* m_pool = nullptr;
 	DynamicArray<PointerInfo> m_pointerFilePositions; ///< Array of file positions that contain pointers.
 	DynamicArray<PtrSize> m_structureFilePos;
 	Error m_err = Error::kNone;
@@ -174,7 +174,7 @@ private:
 	Error doDynamicArrayBasicType(const void* arr, PtrSize size, U32 alignment, PtrSize memberOffset);
 
 	template<typename T>
-	Error serializeInternal(const T& x, GenericMemoryPoolAllocator<U8> tmpAllocator, File& file);
+	Error serializeInternal(const T& x, BaseMemoryPool& tmpPool, File& file);
 
 	void check()
 	{
@@ -202,10 +202,10 @@ public:
 
 	/// Serialize a class.
 	/// @param x The struct to read.
-	/// @param allocator The allocator to use to allocate the new structures.
+	/// @param pool The memory pool to use to allocate the new structures.
 	/// @param file The file to read from.
 	template<typename T, typename TFile>
-	static Error deserialize(T*& x, GenericMemoryPoolAllocator<U8> allocator, TFile& file);
+	static Error deserialize(T*& x, BaseMemoryPool& pool, TFile& file);
 
 	/// Read a single value. Can't call this directly.
 	template<typename T>

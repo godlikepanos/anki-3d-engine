@@ -31,7 +31,7 @@ public:
 		return m_file.read(buff, size);
 	}
 
-	Error readAllText(StringAuto& out) override
+	Error readAllText(StringRaii& out) override
 	{
 		ANKI_TRACE_SCOPED_EVENT(RSRC_FILE_READ);
 		return m_file.readAllText(out);
@@ -143,7 +143,7 @@ public:
 		return Error::kNone;
 	}
 
-	Error readAllText(StringAuto& out) override
+	Error readAllText(StringRaii& out) override
 	{
 		ANKI_ASSERT(m_size);
 		out.create('?', m_size);
@@ -406,7 +406,7 @@ Error ResourceFilesystem::openFileInternal(const ResourceFilename& filename, Res
 			}
 			else
 			{
-				StringAuto newFname(m_alloc);
+				StringRaii newFname(m_alloc);
 				newFname.sprintf("%s/%s", &p.m_path[0], &filename[0]);
 
 				CResourceFile* file = m_alloc.newInstance<CResourceFile>(m_alloc);

@@ -338,6 +338,34 @@ private:
 	StackAllocatorBuilder<Chunk, StackAllocatorBuilderInterface, Mutex> m_builder;
 };
 
+/// A wrapper class that makes a pointer to a memory pool act like a reference.
+template<typename TMemPool>
+class MemoryPoolPtrWrapper
+{
+public:
+	TMemPool* m_pool;
+
+	MemoryPoolPtrWrapper(TMemPool* pool)
+		: m_pool(pool)
+	{
+	}
+
+	TMemPool* operator&()
+	{
+		return m_pool;
+	}
+
+	void* allocate(PtrSize size, PtrSize alignmentBytes)
+	{
+		return m_pool->allocate(size, alignmentBytes);
+	}
+
+	void free(void* ptr)
+	{
+		m_pool->free(ptr);
+	}
+};
+
 inline void* BaseMemoryPool::allocate(PtrSize size, PtrSize alignmentBytes)
 {
 	void* out = nullptr;

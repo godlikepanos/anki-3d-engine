@@ -294,11 +294,11 @@ ShaderProgramParser::~ShaderProgramParser()
 {
 }
 
-void ShaderProgramParser::tokenizeLine(CString line, DynamicArrayAuto<StringAuto>& tokens) const
+void ShaderProgramParser::tokenizeLine(CString line, DynamicArrayRaii<StringRaii>& tokens) const
 {
 	ANKI_ASSERT(line.getLength() > 0);
 
-	StringAuto l(m_alloc, line);
+	StringRaii l(m_alloc, line);
 
 	// Replace all tabs with spaces
 	for(char& c : l)
@@ -320,7 +320,7 @@ void ShaderProgramParser::tokenizeLine(CString line, DynamicArrayAuto<StringAuto
 	}
 }
 
-Error ShaderProgramParser::parsePragmaStart(const StringAuto* begin, const StringAuto* end, CString line, CString fname)
+Error ShaderProgramParser::parsePragmaStart(const StringRaii* begin, const StringRaii* end, CString line, CString fname)
 {
 	ANKI_ASSERT(begin && end);
 
@@ -409,7 +409,7 @@ Error ShaderProgramParser::parsePragmaStart(const StringAuto* begin, const Strin
 	return Error::kNone;
 }
 
-Error ShaderProgramParser::parsePragmaEnd(const StringAuto* begin, const StringAuto* end, CString line, CString fname)
+Error ShaderProgramParser::parsePragmaEnd(const StringRaii* begin, const StringRaii* end, CString line, CString fname)
 {
 	ANKI_ASSERT(begin && end);
 
@@ -432,7 +432,7 @@ Error ShaderProgramParser::parsePragmaEnd(const StringAuto* begin, const StringA
 	return Error::kNone;
 }
 
-Error ShaderProgramParser::parsePragmaMutator(const StringAuto* begin, const StringAuto* end, CString line,
+Error ShaderProgramParser::parsePragmaMutator(const StringRaii* begin, const StringRaii* end, CString line,
 											  CString fname)
 {
 	ANKI_ASSERT(begin && end);
@@ -506,7 +506,7 @@ Error ShaderProgramParser::parsePragmaMutator(const StringAuto* begin, const Str
 	return Error::kNone;
 }
 
-Error ShaderProgramParser::parsePragmaLibraryName(const StringAuto* begin, const StringAuto* end, CString line,
+Error ShaderProgramParser::parsePragmaLibraryName(const StringRaii* begin, const StringRaii* end, CString line,
 												  CString fname)
 {
 	ANKI_ASSERT(begin && end);
@@ -526,7 +526,7 @@ Error ShaderProgramParser::parsePragmaLibraryName(const StringAuto* begin, const
 	return Error::kNone;
 }
 
-Error ShaderProgramParser::parsePragmaRayType(const StringAuto* begin, const StringAuto* end, CString line,
+Error ShaderProgramParser::parsePragmaRayType(const StringRaii* begin, const StringRaii* end, CString line,
 											  CString fname)
 {
 	ANKI_ASSERT(begin && end);
@@ -551,7 +551,7 @@ Error ShaderProgramParser::parsePragmaRayType(const StringAuto* begin, const Str
 	return Error::kNone;
 }
 
-Error ShaderProgramParser::parsePragmaReflect(const StringAuto* begin, const StringAuto* end, CString line,
+Error ShaderProgramParser::parsePragmaReflect(const StringRaii* begin, const StringRaii* end, CString line,
 											  CString fname)
 {
 	ANKI_ASSERT(begin && end);
@@ -566,7 +566,7 @@ Error ShaderProgramParser::parsePragmaReflect(const StringAuto* begin, const Str
 	return Error::kNone;
 }
 
-Error ShaderProgramParser::parsePragmaSkipMutation(const StringAuto* begin, const StringAuto* end, CString line,
+Error ShaderProgramParser::parsePragmaSkipMutation(const StringRaii* begin, const StringRaii* end, CString line,
 												   CString fname)
 {
 	ANKI_ASSERT(begin && end);
@@ -624,11 +624,11 @@ Error ShaderProgramParser::parsePragmaSkipMutation(const StringAuto* begin, cons
 	return Error::kNone;
 }
 
-Error ShaderProgramParser::parseInclude(const StringAuto* begin, const StringAuto* end, CString line, CString fname,
+Error ShaderProgramParser::parseInclude(const StringRaii* begin, const StringRaii* end, CString line, CString fname,
 										U32 depth)
 {
 	// Gather the path
-	StringAuto path(m_alloc);
+	StringRaii path(m_alloc);
 	for(; begin < end; ++begin)
 	{
 		path.append(*begin);
@@ -645,7 +645,7 @@ Error ShaderProgramParser::parseInclude(const StringAuto* begin, const StringAut
 
 	if((firstChar == '\"' && lastChar == '\"') || (firstChar == '<' && lastChar == '>'))
 	{
-		StringAuto fname2(m_alloc);
+		StringRaii fname2(m_alloc);
 		fname2.create(path.begin() + 1, path.begin() + path.getLength() - 1);
 
 		const Bool dontIgnore =
@@ -672,12 +672,12 @@ Error ShaderProgramParser::parseInclude(const StringAuto* begin, const StringAut
 Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPragmaOnce, U32 depth)
 {
 	// Tokenize
-	DynamicArrayAuto<StringAuto> tokens(m_alloc);
+	DynamicArrayRaii<StringRaii> tokens(m_alloc);
 	tokenizeLine(line, tokens);
 	ANKI_ASSERT(tokens.getSize() > 0);
 
-	const StringAuto* token = tokens.getBegin();
-	const StringAuto* end = tokens.getEnd();
+	const StringRaii* token = tokens.getBegin();
+	const StringRaii* end = tokens.getEnd();
 
 	// Skip the hash
 	Bool foundAloneHash = false;
@@ -801,7 +801,7 @@ Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPra
 	return Error::kNone;
 }
 
-Error ShaderProgramParser::parsePragmaStructBegin(const StringAuto* begin, const StringAuto* end, CString line,
+Error ShaderProgramParser::parsePragmaStructBegin(const StringRaii* begin, const StringRaii* end, CString line,
 												  CString fname)
 {
 	const U tokenCount = U(end - begin);
@@ -832,7 +832,7 @@ Error ShaderProgramParser::parsePragmaStructBegin(const StringAuto* begin, const
 	return Error::kNone;
 }
 
-Error ShaderProgramParser::parsePragmaMember(const StringAuto* begin, const StringAuto* end, CString line,
+Error ShaderProgramParser::parsePragmaMember(const StringRaii* begin, const StringRaii* end, CString line,
 											 CString fname)
 {
 	ANKI_ASSERT(m_insideStruct);
@@ -983,7 +983,7 @@ Error ShaderProgramParser::parsePragmaMember(const StringAuto* begin, const Stri
 	return Error::kNone;
 }
 
-Error ShaderProgramParser::parsePragmaStructEnd(const StringAuto* begin, const StringAuto* end, CString line,
+Error ShaderProgramParser::parsePragmaStructEnd(const StringRaii* begin, const StringRaii* end, CString line,
 												CString fname)
 {
 	ANKI_ASSERT(m_insideStruct);
@@ -1031,10 +1031,10 @@ Error ShaderProgramParser::parsePragmaStructEnd(const StringAuto* begin, const S
 		// #	define XXX_LOAD()
 		const Bool isIntegral = getShaderVariableDataTypeInfo(m.m_type).m_isIntegral;
 		const U32 componentCount = getShaderVariableDataTypeInfo(m.m_type).m_size / sizeof(U32);
-		StringAuto values(m_alloc);
+		StringRaii values(m_alloc);
 		for(U32 j = 0; j < componentCount; ++j)
 		{
-			StringAuto tmp(m_alloc);
+			StringRaii tmp(m_alloc);
 			tmp.sprintf("%s(ssbo[%s_%s_OFFSETOF + offset + %uu])%s", (isIntegral) ? "" : "uintBitsToFloat",
 						structName.cstr(), m.m_name.cstr(), j, (j != componentCount - 1) ? "," : "");
 
@@ -1085,7 +1085,7 @@ Error ShaderProgramParser::parseFile(CString fname, U32 depth)
 	Bool foundPragmaOnce = false;
 
 	// Load file in lines
-	StringAuto txt(m_alloc);
+	StringRaii txt(m_alloc);
 	ANKI_CHECK(m_fsystem->readAllText(fname, txt));
 
 	StringListAuto lines(m_alloc);
@@ -1193,7 +1193,7 @@ Error ShaderProgramParser::parse()
 }
 
 void ShaderProgramParser::generateAnkiShaderHeader(ShaderType shaderType, const ShaderCompilerOptions& compilerOptions,
-												   StringAuto& header)
+												   StringRaii& header)
 {
 	header.sprintf(SHADER_HEADER, SHADER_STAGE_NAMES[shaderType].cstr(), compilerOptions.m_mobilePlatform,
 				   compilerOptions.m_forceFullFloatingPointPrecision, kMaxBindlessTextures,
@@ -1216,10 +1216,10 @@ Error ShaderProgramParser::generateVariant(ConstWeakArray<MutatorValue> mutation
 	variant.m_alloc = m_alloc;
 
 	// Create the mutator defines
-	StringAuto mutatorDefines(m_alloc);
+	StringRaii mutatorDefines(m_alloc);
 	for(U32 i = 0; i < mutation.getSize(); ++i)
 	{
-		mutatorDefines.append(StringAuto(m_alloc).sprintf("#define %s %d\n", m_mutators[i].m_name.cstr(), mutation[i]));
+		mutatorDefines.append(StringRaii(m_alloc).sprintf("#define %s %d\n", m_mutators[i].m_name.cstr(), mutation[i]));
 	}
 
 	// Generate souce per stage
@@ -1231,11 +1231,11 @@ Error ShaderProgramParser::generateVariant(ConstWeakArray<MutatorValue> mutation
 		}
 
 		// Create the header
-		StringAuto header(m_alloc);
+		StringRaii header(m_alloc);
 		generateAnkiShaderHeader(shaderType, m_compilerOptions, header);
 
 		// Create the final source without the bindings
-		StringAuto finalSource(m_alloc);
+		StringRaii finalSource(m_alloc);
 		finalSource.append(header);
 		finalSource.append(mutatorDefines);
 		finalSource.append(m_codeSource);

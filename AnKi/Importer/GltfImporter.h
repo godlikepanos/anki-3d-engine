@@ -61,10 +61,10 @@ private:
 	// Data
 	GenericMemoryPoolAllocator<U8> m_alloc;
 
-	StringAuto m_inputFname = {m_alloc};
-	StringAuto m_outDir = {m_alloc};
-	StringAuto m_rpath = {m_alloc};
-	StringAuto m_texrpath = {m_alloc};
+	StringRaii m_inputFname = {m_alloc};
+	StringRaii m_outDir = {m_alloc};
+	StringRaii m_rpath = {m_alloc};
+	StringRaii m_texrpath = {m_alloc};
 
 	cgltf_data* m_gltf = nullptr;
 
@@ -83,32 +83,32 @@ private:
 	F32 m_lightIntensityScale = 1.0f;
 	Bool m_optimizeMeshes = false;
 	Bool m_optimizeAnimations = false;
-	StringAuto m_comment{m_alloc};
+	StringRaii m_comment{m_alloc};
 
 	/// Don't generate LODs for meshes with less vertices than this number.
 	U32 m_skipLodVertexCountThreshold = 256;
 
 	// Misc
-	Error getExtras(const cgltf_extras& extras, HashMapAuto<CString, StringAuto>& out);
-	Error parseArrayOfNumbers(CString str, DynamicArrayAuto<F64>& out, const U32* expectedArraySize = nullptr);
+	Error getExtras(const cgltf_extras& extras, HashMapAuto<CString, StringRaii>& out);
+	Error parseArrayOfNumbers(CString str, DynamicArrayRaii<F64>& out, const U32* expectedArraySize = nullptr);
 	void populateNodePtrToIdx();
 	void populateNodePtrToIdxInternal(const cgltf_node& node, U32& idx);
-	StringAuto getNodeName(const cgltf_node& node);
+	StringRaii getNodeName(const cgltf_node& node);
 
 	template<typename T, typename TFunc>
 	static void visitAccessor(const cgltf_accessor& accessor, TFunc func);
 
 	template<typename T>
-	static void readAccessor(const cgltf_accessor& accessor, DynamicArrayAuto<T>& out)
+	static void readAccessor(const cgltf_accessor& accessor, DynamicArrayRaii<T>& out)
 	{
 		visitAccessor<T>(accessor, [&](const T& val) {
 			out.emplaceBack(val);
 		});
 	}
 
-	StringAuto fixFilename(CString in) const
+	StringRaii fixFilename(CString in) const
 	{
-		StringAuto out(m_alloc, in);
+		StringRaii out(m_alloc, in);
 		out.replaceAll("|", "_");
 		out.replaceAll(" ", "_");
 		return out;
@@ -128,11 +128,11 @@ private:
 	static U32 getMeshTotalVertexCount(const cgltf_mesh& mesh);
 
 	// Compute filenames for various resources. Use a hash to solve the casing issue and remove unwanted special chars
-	StringAuto computeModelResourceFilename(const cgltf_mesh& mesh) const;
-	StringAuto computeMeshResourceFilename(const cgltf_mesh& mesh, U32 lod = 0) const;
-	StringAuto computeMaterialResourceFilename(const cgltf_material& mtl) const;
-	StringAuto computeAnimationResourceFilename(const cgltf_animation& anim) const;
-	StringAuto computeSkeletonResourceFilename(const cgltf_skin& skin) const;
+	StringRaii computeModelResourceFilename(const cgltf_mesh& mesh) const;
+	StringRaii computeMeshResourceFilename(const cgltf_mesh& mesh, U32 lod = 0) const;
+	StringRaii computeMaterialResourceFilename(const cgltf_material& mtl) const;
+	StringRaii computeAnimationResourceFilename(const cgltf_animation& anim) const;
+	StringRaii computeSkeletonResourceFilename(const cgltf_skin& skin) const;
 
 	// Resources
 	Error writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFactor);
@@ -144,10 +144,10 @@ private:
 	// Scene
 	Error writeTransform(const Transform& trf);
 	Error visitNode(const cgltf_node& node, const Transform& parentTrf,
-					const HashMapAuto<CString, StringAuto>& parentExtras);
-	Error writeLight(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras);
-	Error writeCamera(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras);
-	Error writeModelNode(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras);
+					const HashMapAuto<CString, StringRaii>& parentExtras);
+	Error writeLight(const cgltf_node& node, const HashMapAuto<CString, StringRaii>& parentExtras);
+	Error writeCamera(const cgltf_node& node, const HashMapAuto<CString, StringRaii>& parentExtras);
+	Error writeModelNode(const cgltf_node& node, const HashMapAuto<CString, StringRaii>& parentExtras);
 };
 /// @}
 

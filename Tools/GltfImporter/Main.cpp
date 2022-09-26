@@ -24,10 +24,10 @@ class CmdLineArgs
 {
 public:
 	HeapAllocator<U8> m_alloc = {allocAligned, nullptr};
-	StringAuto m_inputFname = {m_alloc};
-	StringAuto m_outDir = {m_alloc};
-	StringAuto m_rpath = {m_alloc};
-	StringAuto m_texRpath = {m_alloc};
+	StringRaii m_inputFname = {m_alloc};
+	StringRaii m_outDir = {m_alloc};
+	StringRaii m_rpath = {m_alloc};
+	StringRaii m_texRpath = {m_alloc};
 	Bool m_optimizeMeshes = true;
 	Bool m_optimizeAnimations = true;
 	U32 m_threadCount = kMaxU32;
@@ -212,7 +212,7 @@ int myMain(int argc, char** argv)
 	}
 
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
-	StringAuto comment(alloc);
+	StringRaii comment(alloc);
 	for(I32 i = 0; i < argc; ++i)
 	{
 		if(i != 0)

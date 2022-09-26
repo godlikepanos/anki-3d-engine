@@ -383,10 +383,10 @@ void callDestructor(T& p)
 template<typename T, typename TMemPool, typename... TArgs>
 [[nodiscard]] T* newInstance(TMemPool& pool, TArgs&&... args)
 {
-	T* ptr = pool.allocate(sizeof(T), alignof(T));
+	T* ptr = static_cast<T*>(pool.allocate(sizeof(T), alignof(T)));
 	if(ANKI_LIKELY(ptr))
 	{
-		callConstructor(ptr, std::forward<TArgs>(args)...);
+		callConstructor(*ptr, std::forward<TArgs>(args)...);
 	}
 
 	return ptr;
@@ -396,12 +396,12 @@ template<typename T, typename TMemPool, typename... TArgs>
 template<typename T, typename TMemPool>
 [[nodiscard]] T* newArray(TMemPool& pool, PtrSize n)
 {
-	T* ptr = pool.allocate(n * sizeof(T), alignof(T));
+	T* ptr = static_cast<T*>(pool.allocate(n * sizeof(T), alignof(T)));
 	if(ANKI_LIKELY(ptr))
 	{
 		for(PtrSize i = 0; i < n; i++)
 		{
-			callConstructor(&ptr[i]);
+			callConstructor(ptr[i]);
 		}
 	}
 
@@ -412,12 +412,12 @@ template<typename T, typename TMemPool>
 template<typename T, typename TMemPool>
 [[nodiscard]] T* newArray(TMemPool& pool, PtrSize n, const T& copy)
 {
-	T* ptr = pool.allocate(n * sizeof(T), alignof(T));
+	T* ptr = static_cast<T*>(pool.allocate(n * sizeof(T), alignof(T)));
 	if(ANKI_LIKELY(ptr))
 	{
 		for(PtrSize i = 0; i < n; i++)
 		{
-			callConstructor(&ptr[i], copy);
+			callConstructor(ptr[i], copy);
 		}
 	}
 
@@ -440,7 +440,7 @@ void deleteInstance(TMemPool& pool, T* ptr)
 {
 	if(ANKI_LIKELY(ptr != nullptr))
 	{
-		callDestructor(&ptr);
+		callDestructor(ptr);
 		pool.free(ptr);
 	}
 }

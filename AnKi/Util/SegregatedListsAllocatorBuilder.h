@@ -89,7 +89,7 @@ public:
 	Error validate() const;
 
 	/// Print debug info.
-	void printFreeBlocks(StringListAuto& strList) const;
+	void printFreeBlocks(StringListRaii& strList) const;
 
 	/// It's 1-(largestBlockOfFreeMemory/totalFreeMemory). 0.0 is no fragmentation, 1.0 is totally fragmented.
 	[[nodiscard]] F32 computeExternalFragmentation(PtrSize baseSize = 1) const;

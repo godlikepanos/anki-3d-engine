@@ -227,14 +227,14 @@ Error GrManagerImpl::initInstance()
 	ci.pApplicationInfo = &app;
 
 	// Instance layers
-	DynamicArrayAuto<const char*> layersToEnable(getAllocator());
+	DynamicArrayRaii<const char*> layersToEnable(getAllocator());
 	{
 		U32 layerCount;
 		vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 
 		if(layerCount)
 		{
-			DynamicArrayAuto<VkLayerProperties> layerProps(getAllocator(), layerCount);
+			DynamicArrayRaii<VkLayerProperties> layerProps(getAllocator(), layerCount);
 			vkEnumerateInstanceLayerProperties(&layerCount, &layerProps[0]);
 
 			ANKI_VK_LOGV("Found the following instance layers:");
@@ -265,8 +265,8 @@ Error GrManagerImpl::initInstance()
 	}
 
 	// Validation features
-	DynamicArrayAuto<VkValidationFeatureEnableEXT> enabledValidationFeatures(getAllocator());
-	DynamicArrayAuto<VkValidationFeatureDisableEXT> disabledValidationFeatures(getAllocator());
+	DynamicArrayRaii<VkValidationFeatureEnableEXT> enabledValidationFeatures(getAllocator());
+	DynamicArrayRaii<VkValidationFeatureDisableEXT> disabledValidationFeatures(getAllocator());
 	if(m_config->getGrDebugPrintf())
 	{
 		enabledValidationFeatures.emplaceBack(VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT);
@@ -292,8 +292,8 @@ Error GrManagerImpl::initInstance()
 	}
 
 	// Extensions
-	DynamicArrayAuto<const char*> instExtensions(getAllocator());
-	DynamicArrayAuto<VkExtensionProperties> instExtensionInf(getAllocator());
+	DynamicArrayRaii<const char*> instExtensions(getAllocator());
+	DynamicArrayRaii<VkExtensionProperties> instExtensionInf(getAllocator());
 	U32 extCount = 0;
 	vkEnumerateInstanceExtensionProperties(nullptr, &extCount, nullptr);
 	if(extCount)
@@ -429,7 +429,7 @@ Error GrManagerImpl::initInstance()
 
 	// Find the correct physical device
 	{
-		DynamicArrayAuto<VkPhysicalDevice> physicalDevices(m_alloc, count);
+		DynamicArrayRaii<VkPhysicalDevice> physicalDevices(m_alloc, count);
 		ANKI_VK_CHECK(vkEnumeratePhysicalDevices(m_instance, &count, &physicalDevices[0]));
 
 		VkPhysicalDevice firstChoice = VK_NULL_HANDLE;
@@ -554,7 +554,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &count, nullptr);
 	ANKI_VK_LOGI("Number of queue families: %u", count);
 
-	DynamicArrayAuto<VkQueueFamilyProperties> queueInfos(getAllocator());
+	DynamicArrayRaii<VkQueueFamilyProperties> queueInfos(getAllocator());
 	queueInfos.create(count);
 	vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &count, &queueInfos[0]);
 
@@ -624,8 +624,8 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	U32 extCount = 0;
 	vkEnumerateDeviceExtensionProperties(m_physicalDevice, nullptr, &extCount, nullptr);
 
-	DynamicArrayAuto<VkExtensionProperties> extensionInfos(getAllocator()); // Keep it alive in the stack
-	DynamicArrayAuto<const char*> extensionsToEnable(getAllocator());
+	DynamicArrayRaii<VkExtensionProperties> extensionInfos(getAllocator()); // Keep it alive in the stack
+	DynamicArrayRaii<const char*> extensionsToEnable(getAllocator());
 	if(extCount)
 	{
 		extensionInfos.create(extCount);
@@ -1482,7 +1482,7 @@ VkBool32 GrManagerImpl::debugReportCallbackEXT(VkDebugUtilsMessageSeverityFlagBi
 
 	// Get all names of affected objects
 	GrManagerImpl* self = static_cast<GrManagerImpl*>(pUserData);
-	StringAuto objectNames(self->m_alloc);
+	StringRaii objectNames(self->m_alloc);
 	if(pCallbackData->objectCount)
 	{
 		for(U32 i = 0; i < pCallbackData->objectCount; ++i)
@@ -1537,7 +1537,7 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 		if(!m_shaderStatsFile.isOpen())
 		{
 			ANKI_CHECK(m_shaderStatsFile.open(
-				StringAuto(getAllocator()).sprintf("%s/../ppline_stats.csv", m_cacheDir.cstr()).toCString(),
+				StringRaii(getAllocator()).sprintf("%s/../ppline_stats.csv", m_cacheDir.cstr()).toCString(),
 				FileOpenFlag::kWrite));
 
 			ANKI_CHECK(m_shaderStatsFile.writeText("ppline name,hash,"
@@ -1551,7 +1551,7 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 
 		ANKI_CHECK(m_shaderStatsFile.writeTextf("%s,0x%" PRIx64 ",", name.cstr(), hash));
 
-		StringAuto str(getAllocator());
+		StringRaii str(getAllocator());
 
 		for(ShaderType type = ShaderType::kFirst; type < ShaderType::kCount; ++type)
 		{
@@ -1566,7 +1566,7 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 			ANKI_VK_CHECK(m_pfnGetShaderInfoAMD(m_device, ppline, VkShaderStageFlagBits(convertShaderTypeBit(stage)),
 												VK_SHADER_INFO_TYPE_STATISTICS_AMD, &size, &stats));
 
-			str.append(StringAuto(getAllocator())
+			str.append(StringRaii(getAllocator())
 						   .sprintf("Stage %u: VGRPS %02u, SGRPS %02u ", U32(type), stats.resourceUsage.numUsedVgprs,
 									stats.resourceUsage.numUsedSgprs));
 
@@ -1583,14 +1583,14 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 
 	if(!!(m_extensions & VulkanExtensions::kKHR_pipeline_executable_properties))
 	{
-		StringListAuto log(m_alloc);
+		StringListRaii log(m_alloc);
 
 		VkPipelineInfoKHR pplineInf = {};
 		pplineInf.sType = VK_STRUCTURE_TYPE_PIPELINE_INFO_KHR;
 		pplineInf.pipeline = ppline;
 		U32 executableCount = 0;
 		ANKI_VK_CHECK(vkGetPipelineExecutablePropertiesKHR(m_device, &pplineInf, &executableCount, nullptr));
-		DynamicArrayAuto<VkPipelineExecutablePropertiesKHR> executableProps(m_alloc, executableCount);
+		DynamicArrayRaii<VkPipelineExecutablePropertiesKHR> executableProps(m_alloc, executableCount);
 		for(VkPipelineExecutablePropertiesKHR& prop : executableProps)
 		{
 			prop = {};
@@ -1612,7 +1612,7 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 			exeInf.pipeline = ppline;
 			U32 statCount = 0;
 			vkGetPipelineExecutableStatisticsKHR(m_device, &exeInf, &statCount, nullptr);
-			DynamicArrayAuto<VkPipelineExecutableStatisticKHR> stats(m_alloc, statCount);
+			DynamicArrayRaii<VkPipelineExecutableStatisticKHR> stats(m_alloc, statCount);
 			for(VkPipelineExecutableStatisticKHR& s : stats)
 			{
 				s = {};
@@ -1651,7 +1651,7 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 			}
 		}
 
-		StringAuto finalLog(m_alloc);
+		StringRaii finalLog(m_alloc);
 		log.join("", finalLog);
 		ANKI_VK_LOGV("%s", finalLog.cstr());
 	}

@@ -74,14 +74,14 @@ public:
 	/// @param out The output of the tests.
 	/// @note It's thread-safe against other gatherVisible calls.
 	void gatherVisible(const Plane frustumPlanes[6], U32 testId, OctreeNodeVisibilityTestCallback testCallback,
-					   void* testCallbackUserData, DynamicArrayAuto<void*>& out)
+					   void* testCallbackUserData, DynamicArrayRaii<void*>& out)
 	{
 		gatherVisibleRecursive(frustumPlanes, testId, testCallback, testCallbackUserData, m_rootLeaf, out);
 	}
 
 	/// Similar to gatherVisible but it spawns ThreadHive tasks.
 	void gatherVisibleParallel(const Plane frustumPlanes[6], U32 testId, OctreeNodeVisibilityTestCallback testCallback,
-							   void* testCallbackUserData, DynamicArrayAuto<void*>* out, ThreadHive& hive,
+							   void* testCallbackUserData, DynamicArrayRaii<void*>* out, ThreadHive& hive,
 							   ThreadHiveSemaphore* waitSemaphore, ThreadHiveSemaphore*& signalSemaphore);
 
 	/// Walk the tree.
@@ -263,7 +263,7 @@ private:
 
 	static void gatherVisibleRecursive(const Plane frustumPlanes[6], U32 testId,
 									   OctreeNodeVisibilityTestCallback testCallback, void* testCallbackUserData,
-									   Leaf* leaf, DynamicArrayAuto<void*>& out);
+									   Leaf* leaf, DynamicArrayRaii<void*>& out);
 
 	/// ThreadHive callback.
 	static void gatherVisibleTaskCallback(void* ud, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem);

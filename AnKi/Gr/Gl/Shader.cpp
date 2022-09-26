@@ -16,8 +16,8 @@ Shader* Shader::newInstance(GrManager* manager, const ShaderInitInfo& init)
 	{
 	public:
 		ShaderPtr m_shader;
-		StringAuto m_source;
-		DynamicArrayAuto<ShaderSpecializationConstValue> m_constValues;
+		StringRaii m_source;
+		DynamicArrayRaii<ShaderSpecializationConstValue> m_constValues;
 
 		ShaderCreateCommand(Shader* shader, ConstWeakArray<U8> bin,
 							ConstWeakArray<ShaderSpecializationConstValue> constValues,

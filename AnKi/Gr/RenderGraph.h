@@ -745,9 +745,9 @@ private:
 	/// @name Dump the dependency graph into a file.
 	/// @{
 	Error dumpDependencyDotFile(const RenderGraphDescription& descr, const BakeContext& ctx, CString path) const;
-	static StringAuto textureUsageToStr(StackAllocator<U8>& alloc, TextureUsageBit usage);
-	static StringAuto bufferUsageToStr(StackAllocator<U8>& alloc, BufferUsageBit usage);
-	static StringAuto asUsageToStr(StackAllocator<U8>& alloc, AccelerationStructureUsageBit usage);
+	static StringRaii textureUsageToStr(StackAllocator<U8>& alloc, TextureUsageBit usage);
+	static StringRaii bufferUsageToStr(StackAllocator<U8>& alloc, BufferUsageBit usage);
+	static StringRaii asUsageToStr(StackAllocator<U8>& alloc, AccelerationStructureUsageBit usage);
 	/// @}
 
 	TexturePtr getTexture(RenderTargetHandle handle) const;

@@ -84,7 +84,7 @@ void main()
 	class Fsystem : public ShaderProgramFilesystemInterface
 	{
 	public:
-		Error readAllText(CString filename, StringAuto& txt) final
+		Error readAllText(CString filename, StringRaii& txt) final
 		{
 			File file;
 			ANKI_CHECK(file.open(filename, FileOpenFlag::kRead));
@@ -143,7 +143,7 @@ void main()
 		compileShaderProgram("test.glslp", fsystem, nullptr, &taskManager, alloc, compilerOptions, binary));
 
 #if 1
-	StringAuto dis(alloc);
+	StringRaii dis(alloc);
 	dumpShaderProgramBinary(binary.getBinary(), dis);
 	ANKI_LOGI("Binary disassembly:\n%s\n", dis.cstr());
 #endif
@@ -281,7 +281,7 @@ void main()
 	class Fsystem : public ShaderProgramFilesystemInterface
 	{
 	public:
-		Error readAllText(CString filename, StringAuto& txt) final
+		Error readAllText(CString filename, StringRaii& txt) final
 		{
 			File file;
 			ANKI_CHECK(file.open(filename, FileOpenFlag::kRead));
@@ -339,7 +339,7 @@ void main()
 		compileShaderProgram("test.glslp", fsystem, nullptr, &taskManager, alloc, ShaderCompilerOptions(), binary));
 
 #if 1
-	StringAuto dis(alloc);
+	StringRaii dis(alloc);
 	dumpShaderProgramBinary(binary.getBinary(), dis);
 	ANKI_LOGI("Binary disassembly:\n%s\n", dis.cstr());
 #endif

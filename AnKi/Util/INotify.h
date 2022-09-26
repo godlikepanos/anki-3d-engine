@@ -24,17 +24,18 @@ public:
 	~INotify()
 	{
 		destroyInternal();
-		m_path.destroy(m_alloc);
+		m_path.destroy(*m_pool);
 	}
 
 	// Non-copyable
 	INotify& operator=(const INotify&) = delete;
 
 	/// @param path Path to file or directory.
-	Error init(GenericMemoryPoolAllocator<U8> alloc, CString path)
+	Error init(BaseMemoryPool* pool, CString path)
 	{
-		m_alloc = alloc;
-		m_path.create(alloc, path);
+		ANKI_ASSERT(pool);
+		m_pool = pool;
+		m_path.create(*m_pool, path);
 		return initInternal();
 	}
 
@@ -42,7 +43,7 @@ public:
 	Error pollEvents(Bool& modified);
 
 private:
-	GenericMemoryPoolAllocator<U8> m_alloc;
+	BaseMemoryPool* m_pool = nullptr;
 	String m_path;
 #if ANKI_POSIX
 	int m_fd = -1;

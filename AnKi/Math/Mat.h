@@ -1436,7 +1436,7 @@ public:
 	}
 
 	ANKI_ENABLE_METHOD(std::is_floating_point<T>::value)
-	void toString(StringAuto& str) const
+	void toString(StringRaii& str) const
 	{
 		for(U j = 0; j < J; ++j)
 		{
@@ -1455,7 +1455,7 @@ public:
 				{
 					fmt = "%f ";
 				}
-				str.append(StringAuto(str.getAllocator()).sprintf(fmt, m_arr2[j][i]));
+				str.append(StringRaii(str.getMemoryPool()).sprintf(fmt, m_arr2[j][i]));
 			}
 		}
 	}

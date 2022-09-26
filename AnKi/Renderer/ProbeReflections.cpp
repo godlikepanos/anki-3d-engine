@@ -78,7 +78,7 @@ Error ProbeReflections::initGBuffer()
 			texinit.m_format = kGBufferColorRenderTargetFormats[i];
 			m_gbuffer.m_colorRtDescrs[i] = texinit;
 			m_gbuffer.m_colorRtDescrs[i].setName(
-				StringAuto(getAllocator()).sprintf("CubeRefl GBuff Col #%u", i).toCString());
+				StringRaii(getAllocator()).sprintf("CubeRefl GBuff Col #%u", i).toCString());
 			m_gbuffer.m_colorRtDescrs[i].bake();
 		}
 

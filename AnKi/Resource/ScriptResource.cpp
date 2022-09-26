@@ -18,7 +18,7 @@ Error ScriptResource::load(const ResourceFilename& filename, [[maybe_unused]] Bo
 	ResourceFilePtr file;
 	ANKI_CHECK(openFile(filename, file));
 
-	StringAuto src(getAllocator());
+	StringRaii src(getAllocator());
 	ANKI_CHECK(file->readAllText(src));
 	m_source.create(getAllocator(), src);
 

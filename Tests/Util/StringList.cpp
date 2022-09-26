@@ -14,7 +14,7 @@ ANKI_TEST(Util, StringList)
 	{
 		CString toSplit = "foo\n\nboo\n";
 
-		StringListAuto list(alloc);
+		StringListRaii list(alloc);
 		list.splitString(toSplit, '\n');
 
 		ANKI_TEST_EXPECT_EQ(list.getSize(), 2);

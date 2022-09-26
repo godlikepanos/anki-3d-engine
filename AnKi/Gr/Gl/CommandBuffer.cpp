@@ -1523,7 +1523,7 @@ void CommandBuffer::setPushConstants(const void* data, U32 dataSize)
 	class PushConstants final : public GlCommand
 	{
 	public:
-		DynamicArrayAuto<Vec4> m_data;
+		DynamicArrayRaii<Vec4> m_data;
 
 		PushConstants(const void* data, U32 dataSize, const CommandBufferAllocator<F32>& alloc)
 			: m_data(alloc)

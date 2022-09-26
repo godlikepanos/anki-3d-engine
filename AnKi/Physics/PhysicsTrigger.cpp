@@ -68,7 +68,7 @@ void PhysicsTrigger::processContacts()
 	}
 
 	// Gather the new pairs
-	DynamicArrayAuto<PhysicsTriggerFilteredPair*> newPairs(getWorld().getTempAllocator());
+	DynamicArrayRaii<PhysicsTriggerFilteredPair*> newPairs(getWorld().getTempAllocator());
 	newPairs.resizeStorage(m_ghostShape->getOverlappingPairs().size());
 	for(U32 i = 0; i < U32(m_ghostShape->getOverlappingPairs().size()); ++i)
 	{

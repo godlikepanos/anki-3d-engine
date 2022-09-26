@@ -55,7 +55,7 @@ ANKI_TEST(Util, Directory)
 ANKI_TEST(Util, HomeDir)
 {
 	HeapAllocator<char> alloc(allocAligned, nullptr);
-	StringAuto out(alloc);
+	StringRaii out(alloc);
 
 	ANKI_TEST_EXPECT_NO_ERR(getHomeDirectory(out));
 	printf("home dir %s\n", &out[0]);
@@ -103,7 +103,7 @@ ANKI_TEST(Util, WalkDir)
 	ANKI_TEST_EXPECT_NO_ERR(walkDirectoryTree("./data", alloc, [&](const CString& fname, Bool isDir) -> Error {
 		for(U32 i = 0; i < ctx.m_paths.getSize(); ++i)
 		{
-			StringAuto p(ctx.m_alloc);
+			StringRaii p(ctx.m_alloc);
 			p.sprintf("./data/%s", fname.cstr());
 			if(ctx.m_paths[i].m_path == p)
 			{

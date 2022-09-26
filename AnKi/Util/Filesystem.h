@@ -17,15 +17,15 @@ namespace anki {
 Bool fileExists(const CString& filename);
 
 /// Get path extension.
-void getFilepathExtension(const CString& filename, StringAuto& out);
+void getFilepathExtension(const CString& filename, StringRaii& out);
 
 /// Get path filename.
 /// On path/to/file.ext return file.ext
-void getFilepathFilename(const CString& filename, StringAuto& out);
+void getFilepathFilename(const CString& filename, StringRaii& out);
 
 /// Get base path.
 /// On path/to/file.ext return path/to
-void getParentFilepath(const CString& filename, StringAuto& out);
+void getParentFilepath(const CString& filename, StringRaii& out);
 
 /// Return true if directory exists?
 Bool directoryExists(const CString& dir);
@@ -35,28 +35,28 @@ Error walkDirectoryTreeInternal(const CString& dir, const Function<Error(const C
 
 /// Walk a directory tree.
 /// @param dir The dir to walk.
-/// @param alloc An allocator for temp allocations.
+/// @param pool A mem pool for temp allocations.
 /// @param func A lambda. See code example on how to use it.
 /// Example:
 /// @code
-/// walkDirectoryTree("./path/to", alloc, [&, this](CString path, Bool isDir) {
+/// walkDirectoryTree("./path/to", pool, [&, this](CString path, Bool isDir) {
 /// 	...
 /// 	return Error::kNone;
 /// });
 /// @endcode
-template<typename TFunc>
-Error walkDirectoryTree(const CString& dir, GenericMemoryPoolAllocator<U8> alloc, TFunc func)
+template<typename TMemPool, typename TFunc>
+Error walkDirectoryTree(const CString& dir, TMemPool& pool, TFunc func)
 {
-	Function<Error(const CString&, Bool)> f(alloc, func);
+	Function<Error(const CString&, Bool)> f(pool, func);
 	const Error err = walkDirectoryTreeInternal(dir, f);
-	f.destroy(alloc);
+	f.destroy(pool);
 	return err;
 }
 
 /// Equivalent to: rm -rf dir
 /// @param dir The directory to remove.
-/// @param alloc A temp allocator that this function requires.
-Error removeDirectory(const CString& dir, GenericMemoryPoolAllocator<U8> alloc);
+/// @param pool A temp mem pool that this function requires.
+Error removeDirectory(const CString& dir, BaseMemoryPool& pool);
 
 /// Remove a file.
 Error removeFile(const CString& filename);
@@ -65,16 +65,16 @@ Error removeFile(const CString& filename);
 Error createDirectory(const CString& dir);
 
 /// Get the home directory.
-Error getHomeDirectory(StringAuto& out);
+Error getHomeDirectory(StringRaii& out);
 
 /// Get the temp directory.
-Error getTempDirectory(StringAuto& out);
+Error getTempDirectory(StringRaii& out);
 
 /// Get the time the file was last modified.
 Error getFileModificationTime(CString filename, U32& year, U32& month, U32& day, U32& hour, U32& min, U32& second);
 
 /// Get the path+filename of the currently running executable.
-Error getApplicationPath(StringAuto& path);
+Error getApplicationPath(StringRaii& path);
 /// @}
 
 } // end namespace anki

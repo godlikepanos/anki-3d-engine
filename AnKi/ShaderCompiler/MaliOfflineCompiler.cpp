@@ -77,7 +77,7 @@ static CString hwUnitToStr(MaliOfflineCompilerHwUnit u)
 	return out;
 }
 
-void MaliOfflineCompilerOut::toString(StringAuto& str) const
+void MaliOfflineCompilerOut::toString(StringRaii& str) const
 {
 	str.destroy();
 	str.sprintf("Regs %u Spilling %u "
@@ -121,7 +121,7 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 	ANKI_CHECK(proc.wait(-1.0, &status, &exitCode));
 	if(exitCode != 0)
 	{
-		StringAuto stderre(tmpAlloc);
+		StringRaii stderre(tmpAlloc);
 		const Error err = proc.readFromStderr(stderre);
 		ANKI_SHADER_COMPILER_LOGE("Mali offline compiler failed with exit code %d. Stderr: %s", exitCode,
 								  (err || stderre.isEmpty()) ? "<no text>" : stderre.cstr());
@@ -129,7 +129,7 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 	}
 
 	// Get stdout
-	StringAuto stdouts(tmpAlloc);
+	StringRaii stdouts(tmpAlloc);
 	ANKI_CHECK(proc.readFromStdout(stdouts));
 	const std::string stdoutstl(stdouts.cstr());
 
@@ -295,7 +295,7 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 	if(false)
 	{
 		printf("%s\n", stdouts.cstr());
-		StringAuto str(tmpAlloc);
+		StringRaii str(tmpAlloc);
 		out.toString(str);
 		printf("%s\n", str.cstr());
 	}
@@ -309,9 +309,9 @@ Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv,
 	ANKI_ASSERT(spirv.getSize() > 0);
 
 	// Create temp file to dump the spirv
-	StringAuto tmpDir(tmpAlloc);
+	StringRaii tmpDir(tmpAlloc);
 	ANKI_CHECK(getTempDirectory(tmpDir));
-	StringAuto spirvFilename(tmpAlloc);
+	StringRaii spirvFilename(tmpAlloc);
 	spirvFilename.sprintf("%s/AnKiMaliocTmpSpirv_%" PRIu64 ".spv", tmpDir.cstr(), getRandom());
 
 	File spirvFile;

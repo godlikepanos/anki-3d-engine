@@ -514,7 +514,7 @@ Error SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::validate() con
 }
 
 template<typename TChunk, typename TInterface, typename TLock>
-void SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::printFreeBlocks(StringListAuto& strList) const
+void SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::printFreeBlocks(StringListRaii& strList) const
 {
 	LockGuard<TLock> lock(m_lock);
 

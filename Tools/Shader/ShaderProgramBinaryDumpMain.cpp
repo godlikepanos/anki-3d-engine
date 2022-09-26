@@ -14,7 +14,7 @@ Options:
 -stats : Print performance statistics for all shaders. By default it doesn't
 )";
 
-static Error parseCommandLineArgs(int argc, char** argv, Bool& dumpStats, StringAuto& filename)
+static Error parseCommandLineArgs(int argc, char** argv, Bool& dumpStats, StringRaii& filename)
 {
 	// Parse config
 	if(argc < 2)
@@ -176,7 +176,7 @@ Error dump(CString fname, Bool bDumpStats)
 	ShaderProgramBinaryWrapper binw(alloc);
 	ANKI_CHECK(binw.deserializeFromFile(fname));
 
-	StringAuto txt(alloc);
+	StringRaii txt(alloc);
 	dumpShaderProgramBinary(binw.getBinary(), txt);
 
 	printf("%s\n", txt.cstr());
@@ -191,7 +191,7 @@ Error dump(CString fname, Bool bDumpStats)
 
 int main(int argc, char** argv)
 {
-	StringAuto filename(HeapAllocator<U8>(allocAligned, nullptr));
+	StringRaii filename(HeapAllocator<U8>(allocAligned, nullptr));
 	Bool dumpStats;
 	if(parseCommandLineArgs(argc, argv, dumpStats, filename))
 	{

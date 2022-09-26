@@ -82,7 +82,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	LoadContext* ctx;
 	LoadContext localCtx(MeshResourcePtr(this), getTempAllocator());
 
-	StringAuto basename(getTempAllocator());
+	StringRaii basename(getTempAllocator());
 	getFilepathFilename(filename, basename);
 
 	const Bool rayTracingEnabled = getManager().getGrManager().getDeviceCapabilities().m_rayTracingEnabled;
@@ -194,7 +194,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	//
 	if(rayTracingEnabled)
 	{
-		AccelerationStructureInitInfo inf(StringAuto(getTempAllocator()).sprintf("%s_%s", "Blas", basename.cstr()));
+		AccelerationStructureInitInfo inf(StringRaii(getTempAllocator()).sprintf("%s_%s", "Blas", basename.cstr()));
 		inf.m_type = AccelerationStructureType::kBottomLevel;
 
 		inf.m_bottomLevel.m_indexBuffer = m_vertexBuffer;

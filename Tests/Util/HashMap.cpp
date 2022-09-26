@@ -176,7 +176,7 @@ ANKI_TEST(Util, HashMap)
 
 		// Create a huge set
 		const U32 COUNT = 1024 * 1024 * 10;
-		DynamicArrayAuto<int> vals(alloc);
+		DynamicArrayRaii<int> vals(alloc);
 		vals.create(COUNT);
 
 		for(U32 i = 0; i < COUNT; ++i)

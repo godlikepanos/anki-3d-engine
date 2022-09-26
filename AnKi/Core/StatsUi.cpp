@@ -36,7 +36,7 @@ void StatsUi::labelBytes(PtrSize val, CString name) const
 
 	b = val;
 
-	StringAuto timestamp(getAllocator());
+	StringRaii timestamp(getAllocator());
 	if(gb)
 	{
 		timestamp.sprintf("%s: %zu,%04zu,%04zu,%04zu", name.cstr(), gb, mb, kb, b);

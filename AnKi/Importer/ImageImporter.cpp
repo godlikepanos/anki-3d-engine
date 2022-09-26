@@ -18,9 +18,9 @@ namespace {
 class SurfaceOrVolumeData
 {
 public:
-	DynamicArrayAuto<U8, PtrSize> m_pixels;
-	DynamicArrayAuto<U8, PtrSize> m_s3tcPixels;
-	DynamicArrayAuto<U8, PtrSize> m_astcPixels;
+	DynamicArrayRaii<U8, PtrSize> m_pixels;
+	DynamicArrayRaii<U8, PtrSize> m_s3tcPixels;
+	DynamicArrayRaii<U8, PtrSize> m_astcPixels;
 
 	SurfaceOrVolumeData(GenericMemoryPoolAllocator<U8> alloc)
 		: m_pixels(alloc)
@@ -34,7 +34,7 @@ class Mipmap
 {
 public:
 	/// One surface for each layer ore one per face or a single volume if it's a 3D texture.
-	DynamicArrayAuto<SurfaceOrVolumeData> m_surfacesOrVolume;
+	DynamicArrayRaii<SurfaceOrVolumeData> m_surfacesOrVolume;
 
 	Mipmap(GenericMemoryPoolAllocator<U8> alloc)
 		: m_surfacesOrVolume(alloc)
@@ -46,7 +46,7 @@ public:
 class ImageImporterContext
 {
 public:
-	DynamicArrayAuto<Mipmap> m_mipmaps;
+	DynamicArrayRaii<Mipmap> m_mipmaps;
 	U32 m_width = 0;
 	U32 m_height = 0;
 	U32 m_depth = 0;
@@ -136,7 +136,7 @@ public:
 class CleanupFile
 {
 public:
-	StringAuto m_fileToDelete;
+	StringRaii m_fileToDelete;
 
 	CleanupFile(GenericMemoryPoolAllocator<U8> alloc, CString filename)
 		: m_fileToDelete(alloc, filename)
@@ -272,7 +272,7 @@ static Error checkInputImages(const ImageImporterConfig& config, U32& width, U32
 }
 
 static Error resizeImage(CString inImageFilename, U32 outWidth, U32 outHeight, CString tempDirectory,
-						 GenericMemoryPoolAllocator<U8> alloc, StringAuto& tmpFilename)
+						 GenericMemoryPoolAllocator<U8> alloc, StringRaii& tmpFilename)
 {
 	U32 inWidth, inHeight, channelCount;
 	Bool hdr;
@@ -299,7 +299,7 @@ static Error resizeImage(CString inImageFilename, U32 outWidth, U32 outHeight, C
 
 	// Resize
 	I ok;
-	DynamicArrayAuto<U8> outPixels(alloc);
+	DynamicArrayRaii<U8> outPixels(alloc);
 	if(!hdr)
 	{
 		outPixels.resize(outWidth * outHeight * channelCount);
@@ -614,7 +614,7 @@ static Error compressS3tc(GenericMemoryPoolAllocator<U8> alloc, CString tempDire
 				== PtrSize((hdr || channelCount == 4) ? 16 : 8) * (inWidth / 4) * (inHeight / 4));
 
 	// Create a PNG image to feed to the compressor
-	StringAuto tmpFilename(alloc);
+	StringRaii tmpFilename(alloc);
 	tmpFilename.sprintf("%s/AnKiImageImporter_%u.%s", tempDirectory.cstr(), U32(std::rand()), (hdr) ? "exr" : "png");
 	ANKI_IMPORTER_LOGV("Will store: %s", tmpFilename.cstr());
 	Bool saveTmpImageOk = false;
@@ -638,7 +638,7 @@ static Error compressS3tc(GenericMemoryPoolAllocator<U8> alloc, CString tempDire
 	CleanupFile tmpCleanup(alloc, tmpFilename);
 
 	// Invoke the compressor process
-	StringAuto ddsFilename(alloc);
+	StringRaii ddsFilename(alloc);
 	ddsFilename.sprintf("%s/AnKiImageImporter_%u.dds", tempDirectory.cstr(), U32(std::rand()));
 	Process proc;
 	Array<CString, 5> args;
@@ -659,7 +659,7 @@ static Error compressS3tc(GenericMemoryPoolAllocator<U8> alloc, CString tempDire
 
 	if(!(status == ProcessStatus::kNotRunning && exitCode == 0))
 	{
-		StringAuto errStr(alloc);
+		StringRaii errStr(alloc);
 		if(exitCode != 0)
 		{
 			ANKI_CHECK(proc.readFromStdout(errStr));
@@ -726,7 +726,7 @@ static Error compressAstc(GenericMemoryPoolAllocator<U8> alloc, CString tempDire
 	ANKI_ASSERT(outPixels.getSizeInBytes() == blockBytes * (inWidth / blockSize.x()) * (inHeight / blockSize.y()));
 
 	// Create a BMP image to feed to the astcebc
-	StringAuto tmpFilename(alloc);
+	StringRaii tmpFilename(alloc);
 	tmpFilename.sprintf("%s/AnKiImageImporter_%u.%s", tempDirectory.cstr(), U32(std::rand()), (hdr) ? "exr" : "png");
 	ANKI_IMPORTER_LOGV("Will store: %s", tmpFilename.cstr());
 	Bool saveTmpImageOk = false;
@@ -750,9 +750,9 @@ static Error compressAstc(GenericMemoryPoolAllocator<U8> alloc, CString tempDire
 	CleanupFile pngCleanup(alloc, tmpFilename);
 
 	// Invoke the compressor process
-	StringAuto astcFilename(alloc);
+	StringRaii astcFilename(alloc);
 	astcFilename.sprintf("%s/AnKiImageImporter_%u.astc", tempDirectory.cstr(), U32(std::rand()));
-	StringAuto blockStr(alloc);
+	StringRaii blockStr(alloc);
 	blockStr.sprintf("%ux%u", blockSize.x(), blockSize.y());
 	Process proc;
 	Array<CString, 5> args;
@@ -774,7 +774,7 @@ static Error compressAstc(GenericMemoryPoolAllocator<U8> alloc, CString tempDire
 
 	if(!(status == ProcessStatus::kNotRunning && exitCode == 0))
 	{
-		StringAuto errStr(alloc);
+		StringRaii errStr(alloc);
 		if(exitCode != 0)
 		{
 			ANKI_CHECK(proc.readFromStdout(errStr));
@@ -942,9 +942,9 @@ static Error importImageInternal(const ImageImporterConfig& configOriginal)
 	ANKI_CHECK(checkInputImages(config, width, height, channelCount, isHdr));
 
 	// Resize
-	DynamicArrayAuto<StringAuto> newFilenames(alloc);
-	DynamicArrayAuto<CString> newFilenamesCString(alloc);
-	DynamicArrayAuto<CleanupFile> resizedImagesCleanup(alloc);
+	DynamicArrayRaii<StringRaii> newFilenames(alloc);
+	DynamicArrayRaii<CString> newFilenamesCString(alloc);
+	DynamicArrayRaii<CleanupFile> resizedImagesCleanup(alloc);
 	if(width < config.m_minMipmapDimension || height < config.m_minMipmapDimension)
 	{
 		const U32 newWidth = max(width, config.m_minMipmapDimension);
@@ -953,7 +953,7 @@ static Error importImageInternal(const ImageImporterConfig& configOriginal)
 		ANKI_IMPORTER_LOGV("Image is smaller than the min mipmap dimension. Will resize it to %ux%u", newWidth,
 						   newHeight);
 
-		newFilenames.resize(config.m_inputFilenames.getSize(), StringAuto(alloc));
+		newFilenames.resize(config.m_inputFilenames.getSize(), StringRaii(alloc));
 		newFilenamesCString.resize(config.m_inputFilenames.getSize());
 
 		for(U32 i = 0; i < config.m_inputFilenames.getSize(); ++i)

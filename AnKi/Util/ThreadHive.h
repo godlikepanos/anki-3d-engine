@@ -7,7 +7,7 @@
 
 #include <AnKi/Util/Thread.h>
 #include <AnKi/Util/WeakArray.h>
-#include <AnKi/Util/Allocator.h>
+#include <AnKi/Util/CpuMemoryPools.h>
 
 namespace anki {
 
@@ -80,7 +80,7 @@ public:
 	static constexpr U32 kMaxThreads = 32;
 
 	/// Create the hive.
-	ThreadHive(U32 threadCount, GenericMemoryPoolAllocator<U8> alloc, Bool pinToCores = false);
+	ThreadHive(U32 threadCount, BaseMemoryPool* pool, Bool pinToCores = false);
 
 	ThreadHive(const ThreadHive&) = delete; // Non-copyable
 
@@ -98,9 +98,8 @@ public:
 	ThreadHiveSemaphore* newSemaphore(const U32 initialValue)
 	{
 		ANKI_ASSERT(initialValue > 0);
-		PtrSize alignment = alignof(ThreadHiveSemaphore);
-		ThreadHiveSemaphore* sem =
-			reinterpret_cast<ThreadHiveSemaphore*>(m_alloc.allocate(sizeof(ThreadHiveSemaphore), &alignment));
+		ThreadHiveSemaphore* sem = static_cast<ThreadHiveSemaphore*>(
+			m_pool.allocate(sizeof(ThreadHiveSemaphore), alignof(ThreadHiveSemaphore)));
 		sem->m_atomic.setNonAtomically(initialValue);
 		return sem;
 	}
@@ -109,8 +108,7 @@ public:
 	void* allocateScratchMemory(PtrSize size, U32 alignment)
 	{
 		ANKI_ASSERT(size > 0 && alignment > 0);
-		PtrSize align = alignment;
-		void* out = m_alloc.allocate(size, &align);
+		void* out = m_pool.allocate(size, alignment);
 #if ANKI_ENABLE_ASSERTIONS
 		memset(out, 0, size);
 #endif
@@ -138,8 +136,8 @@ private:
 	/// Lightweight task.
 	class Task;
 
-	GenericMemoryPoolAllocator<U8> m_slowAlloc;
-	StackAllocator<U8> m_alloc;
+	BaseMemoryPool* m_slowPool;
+	StackMemoryPool m_pool;
 	Thread* m_threads = nullptr;
 	U32 m_threadCount = 0;
 
