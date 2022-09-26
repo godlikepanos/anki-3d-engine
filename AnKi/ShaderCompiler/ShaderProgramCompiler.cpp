@@ -1066,7 +1066,7 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 		DynamicArrayRaii<ShaderProgramBinaryCodeBlock> codeBlocks(binaryAllocator);
 		DynamicArrayRaii<ShaderProgramBinaryMutation> mutations(binaryAllocator, mutationCount);
 		DynamicArrayRaii<U64> codeBlockHashes(tempAllocator);
-		HashMapAuto<U64, U32> mutationHashToIdx(tempAllocator);
+		HashMapRaii<U64, U32> mutationHashToIdx(tempAllocator);
 
 		// Grow the storage of the variants array. Can't have it resize, threads will work on stale data
 		variants.resizeStorage(mutationCount);

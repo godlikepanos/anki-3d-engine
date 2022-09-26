@@ -8,7 +8,6 @@
 #include <AnKi/Util/StdTypes.h>
 #include <AnKi/Util/Assert.h>
 #include <AnKi/Util/Array.h>
-#include <AnKi/Util/Allocator.h>
 #include <utility>
 
 namespace anki {
@@ -328,12 +327,12 @@ public:
 	}
 
 	/// Destroy the array and free its elements.
-	template<typename TAlloc>
-	void destroy(TAlloc& alloc);
+	template<typename TMemPool>
+	void destroy(TMemPool& pool);
 
 	/// Set a value to an index.
-	template<typename TAlloc, typename... TArgs>
-	Iterator emplace(TAlloc& alloc, Index idx, TArgs&&... args);
+	template<typename TMemPool, typename... TArgs>
+	Iterator emplace(TMemPool& pool, Index idx, TArgs&&... args);
 
 	/// Get an iterator.
 	Iterator find(Index idx)
@@ -358,15 +357,15 @@ public:
 	}
 
 	/// Remove an element.
-	template<typename TAlloc>
-	void erase(TAlloc& alloc, Iterator it);
+	template<typename TMemPool>
+	void erase(TMemPool& pool, Iterator it);
 
 	/// Check the validity of the array.
 	void validate() const;
 
 	/// Create a copy of this.
-	template<typename TAlloc>
-	void clone(TAlloc& alloc, SparseArray& b) const;
+	template<typename TMemPool>
+	void clone(TMemPool& pool, SparseArray& b) const;
 
 	const Config& getConfig() const
 	{
@@ -419,12 +418,12 @@ protected:
 
 	/// Insert a value. This method will move the val to a new place.
 	/// @return One if the idx was a new element or zero if the idx was there already.
-	template<typename TAlloc>
-	Index insert(TAlloc& alloc, Index idx, Value& val);
+	template<typename TMemPool>
+	Index insert(TMemPool& pool, Index idx, Value& val);
 
 	/// Grow the storage and re-insert.
-	template<typename TAlloc>
-	void grow(TAlloc& alloc);
+	template<typename TMemPool>
+	void grow(TMemPool& pool);
 
 	/// Compute the distance between a desired position and the current one. This method does a trick with capacity to
 	/// account for wrapped positions.
@@ -482,8 +481,8 @@ protected:
 		return (pos >= m_capacity) ? getMaxNumericLimit<Index>() : pos;
 	}
 
-	template<typename TAlloc, typename... TArgs>
-	void emplaceInternal(TAlloc& alloc, Index idx, TArgs&&... args);
+	template<typename TMemPool, typename... TArgs>
+	void emplaceInternal(TMemPool& pool, Index idx, TArgs&&... args);
 
 	void destroyElement(Value& v)
 	{

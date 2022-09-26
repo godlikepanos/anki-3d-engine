@@ -76,7 +76,7 @@ private:
 
 	Atomic<I32> m_errorInThread{0};
 
-	HashMapAuto<const void*, U32, PtrHasher> m_nodePtrToIdx{m_alloc}; ///< Need an index for the unnamed nodes.
+	HashMapRaii<const void*, U32, PtrHasher> m_nodePtrToIdx{m_alloc}; ///< Need an index for the unnamed nodes.
 
 	F32 m_lodFactor = 1.0f;
 	U32 m_lodCount = 1;
@@ -89,7 +89,7 @@ private:
 	U32 m_skipLodVertexCountThreshold = 256;
 
 	// Misc
-	Error getExtras(const cgltf_extras& extras, HashMapAuto<CString, StringRaii>& out);
+	Error getExtras(const cgltf_extras& extras, HashMapRaii<CString, StringRaii>& out);
 	Error parseArrayOfNumbers(CString str, DynamicArrayRaii<F64>& out, const U32* expectedArraySize = nullptr);
 	void populateNodePtrToIdx();
 	void populateNodePtrToIdxInternal(const cgltf_node& node, U32& idx);
@@ -144,10 +144,10 @@ private:
 	// Scene
 	Error writeTransform(const Transform& trf);
 	Error visitNode(const cgltf_node& node, const Transform& parentTrf,
-					const HashMapAuto<CString, StringRaii>& parentExtras);
-	Error writeLight(const cgltf_node& node, const HashMapAuto<CString, StringRaii>& parentExtras);
-	Error writeCamera(const cgltf_node& node, const HashMapAuto<CString, StringRaii>& parentExtras);
-	Error writeModelNode(const cgltf_node& node, const HashMapAuto<CString, StringRaii>& parentExtras);
+					const HashMapRaii<CString, StringRaii>& parentExtras);
+	Error writeLight(const cgltf_node& node, const HashMapRaii<CString, StringRaii>& parentExtras);
+	Error writeCamera(const cgltf_node& node, const HashMapRaii<CString, StringRaii>& parentExtras);
+	Error writeModelNode(const cgltf_node& node, const HashMapRaii<CString, StringRaii>& parentExtras);
 };
 /// @}
 

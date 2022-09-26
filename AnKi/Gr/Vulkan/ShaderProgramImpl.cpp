@@ -39,7 +39,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 
 	// Create the shader references
 	//
-	HashMapAuto<U64, U32> shaderUuidToMShadersIdx(getAllocator()); // Shader UUID to m_shaders idx
+	HashMapRaii<U64, U32> shaderUuidToMShadersIdx(getAllocator()); // Shader UUID to m_shaders idx
 	if(inf.m_computeShader)
 	{
 		m_shaders.emplaceBack(getAllocator(), inf.m_computeShader);

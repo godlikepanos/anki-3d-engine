@@ -234,7 +234,7 @@ static void decimateSubmesh(F32 factor, SubMesh& submesh, GenericMemoryPoolAlloc
 	// Re-pack
 	DynamicArrayRaii<U32> reindexedIndices(alloc);
 	DynamicArrayRaii<TempVertex> newVerts(alloc);
-	HashMapAuto<U32, U32> vertexStored(alloc);
+	HashMapRaii<U32, U32> vertexStored(alloc);
 	for(U32 idx = 0; idx < newIndices.getSize(); ++idx)
 	{
 		U32 newIdx;

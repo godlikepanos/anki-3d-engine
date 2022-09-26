@@ -8,8 +8,8 @@
 namespace anki {
 
 template<typename T, typename TConfig>
-template<typename TAlloc>
-void SparseArray<T, TConfig>::destroy(TAlloc& alloc)
+template<typename TMemPool>
+void SparseArray<T, TConfig>::destroy(TMemPool& pool)
 {
 	if(m_elements)
 	{
@@ -21,35 +21,35 @@ void SparseArray<T, TConfig>::destroy(TAlloc& alloc)
 			}
 		}
 
-		alloc.deallocate(m_elements, m_capacity);
+		pool.free(m_elements);
 
 		ANKI_ASSERT(m_metadata);
-		alloc.deallocate(m_metadata, m_capacity);
+		pool.free(m_metadata);
 	}
 
 	resetMembers();
 }
 
 template<typename T, typename TConfig>
-template<typename TAlloc, typename... TArgs>
-void SparseArray<T, TConfig>::emplaceInternal(TAlloc& alloc, Index idx, TArgs&&... args)
+template<typename TMemPool, typename... TArgs>
+void SparseArray<T, TConfig>::emplaceInternal(TMemPool& pool, Index idx, TArgs&&... args)
 {
 	if(m_capacity == 0 || calcLoadFactor() > getMaxLoadFactor())
 	{
-		grow(alloc);
+		grow(pool);
 	}
 
 	Value tmp(std::forward<TArgs>(args)...);
-	m_elementCount += insert(alloc, idx, tmp);
+	m_elementCount += insert(pool, idx, tmp);
 
 	invalidateIterators();
 }
 
 template<typename T, typename TConfig>
-template<typename TAlloc, typename... TArgs>
-typename SparseArray<T, TConfig>::Iterator SparseArray<T, TConfig>::emplace(TAlloc& alloc, Index idx, TArgs&&... args)
+template<typename TMemPool, typename... TArgs>
+typename SparseArray<T, TConfig>::Iterator SparseArray<T, TConfig>::emplace(TMemPool& pool, Index idx, TArgs&&... args)
 {
-	emplaceInternal(alloc, idx, std::forward<TArgs>(args)...);
+	emplaceInternal(pool, idx, std::forward<TArgs>(args)...);
 
 	return Iterator(this, findInternal(idx)
 #if ANKI_EXTRA_CHECKS
@@ -60,8 +60,8 @@ typename SparseArray<T, TConfig>::Iterator SparseArray<T, TConfig>::emplace(TAll
 }
 
 template<typename T, typename TConfig>
-template<typename TAlloc>
-typename TConfig::Index SparseArray<T, TConfig>::insert(TAlloc& alloc, Index idx, Value& val)
+template<typename TMemPool>
+typename TConfig::Index SparseArray<T, TConfig>::insert(TMemPool& pool, Index idx, Value& val)
 {
 	while(true)
 	{
@@ -80,7 +80,7 @@ typename TConfig::Index SparseArray<T, TConfig>::insert(TAlloc& alloc, Index idx
 
 				meta.m_alive = true;
 				meta.m_idx = idx;
-				alloc.construct(&crntVal, std::move(val));
+				callConstructor(crntVal, std::move(val));
 
 				return 1;
 			}
@@ -90,7 +90,7 @@ typename TConfig::Index SparseArray<T, TConfig>::insert(TAlloc& alloc, Index idx
 
 				meta.m_idx = idx;
 				destroyElement(crntVal);
-				alloc.construct(&crntVal, std::move(val));
+				callConstructor(crntVal, std::move(val));
 
 				return 0;
 			}
@@ -111,7 +111,7 @@ typename TConfig::Index SparseArray<T, TConfig>::insert(TAlloc& alloc, Index idx
 		if(pos == endPos)
 		{
 			// Didn't found an empty place, need to grow and try again
-			grow(alloc);
+			grow(pool);
 		}
 	}
 
@@ -119,17 +119,16 @@ typename TConfig::Index SparseArray<T, TConfig>::insert(TAlloc& alloc, Index idx
 }
 
 template<typename T, typename TConfig>
-template<typename TAlloc>
-void SparseArray<T, TConfig>::grow(TAlloc& alloc)
+template<typename TMemPool>
+void SparseArray<T, TConfig>::grow(TMemPool& pool)
 {
 	if(m_capacity == 0)
 	{
 		ANKI_ASSERT(m_elementCount == 0);
 		m_capacity = getInitialStorageSize();
-		m_elements = static_cast<Value*>(alloc.getMemoryPool().allocate(m_capacity * sizeof(Value), alignof(Value)));
+		m_elements = static_cast<Value*>(pool.allocate(m_capacity * sizeof(Value), alignof(Value)));
 
-		m_metadata =
-			static_cast<Metadata*>(alloc.getMemoryPool().allocate(m_capacity * sizeof(Metadata), alignof(Metadata)));
+		m_metadata = static_cast<Metadata*>(pool.allocate(m_capacity * sizeof(Metadata), alignof(Metadata)));
 
 		memset(m_metadata, 0, m_capacity * sizeof(Metadata));
 
@@ -143,9 +142,8 @@ void SparseArray<T, TConfig>::grow(TAlloc& alloc)
 	[[maybe_unused]] const Index oldElementCount = m_elementCount;
 
 	m_capacity *= 2;
-	m_elements = static_cast<Value*>(alloc.getMemoryPool().allocate(m_capacity * sizeof(Value), alignof(Value)));
-	m_metadata =
-		static_cast<Metadata*>(alloc.getMemoryPool().allocate(m_capacity * sizeof(Metadata), alignof(Metadata)));
+	m_elements = static_cast<Value*>(pool.allocate(m_capacity * sizeof(Value), alignof(Value)));
+	m_metadata = static_cast<Metadata*>(pool.allocate(m_capacity * sizeof(Metadata), alignof(Metadata)));
 	memset(m_metadata, 0, m_capacity * sizeof(Metadata));
 	m_elementCount = 0;
 
@@ -172,7 +170,7 @@ void SparseArray<T, TConfig>::grow(TAlloc& alloc)
 	{
 		if(oldMetadata[pos].m_alive)
 		{
-			Index c = insert(alloc, oldMetadata[pos].m_idx, oldElements[pos]);
+			Index c = insert(pool, oldMetadata[pos].m_idx, oldElements[pos]);
 			ANKI_ASSERT(c > 0);
 			m_elementCount += c;
 
@@ -186,13 +184,13 @@ void SparseArray<T, TConfig>::grow(TAlloc& alloc)
 	ANKI_ASSERT(oldElementCount == m_elementCount);
 
 	// Finalize
-	alloc.getMemoryPool().free(oldElements);
-	alloc.getMemoryPool().free(oldMetadata);
+	pool.free(oldElements);
+	pool.free(oldMetadata);
 }
 
 template<typename T, typename TConfig>
-template<typename TAlloc>
-void SparseArray<T, TConfig>::erase(TAlloc& alloc, Iterator it)
+template<typename TMemPool>
+void SparseArray<T, TConfig>::erase(TMemPool& pool, Iterator it)
 {
 	ANKI_ASSERT(it.m_array == this);
 	ANKI_ASSERT(it.m_elementIdx != getMaxNumericLimit<Index>());
@@ -242,7 +240,7 @@ void SparseArray<T, TConfig>::erase(TAlloc& alloc, Iterator it)
 	// If you erased everything destroy the storage
 	if(m_elementCount == 0)
 	{
-		destroy(alloc);
+		destroy(pool);
 	}
 
 	invalidateIterators();
@@ -331,8 +329,8 @@ typename TConfig::Index SparseArray<T, TConfig>::findInternal(Index idx) const
 }
 
 template<typename T, typename TConfig>
-template<typename TAlloc>
-void SparseArray<T, TConfig>::clone(TAlloc& alloc, SparseArray& b) const
+template<typename TMemPool>
+void SparseArray<T, TConfig>::clone(TMemPool& pool, SparseArray& b) const
 {
 	ANKI_ASSERT(b.m_elements == nullptr && b.m_metadata == nullptr);
 	if(m_capacity == 0)
@@ -341,9 +339,8 @@ void SparseArray<T, TConfig>::clone(TAlloc& alloc, SparseArray& b) const
 	}
 
 	// Allocate memory
-	b.m_elements = static_cast<Value*>(alloc.getMemoryPool().allocate(m_capacity * sizeof(Value), alignof(Value)));
-	b.m_metadata =
-		static_cast<Metadata*>(alloc.getMemoryPool().allocate(m_capacity * sizeof(Metadata), alignof(Metadata)));
+	b.m_elements = static_cast<Value*>(pool.allocate(m_capacity * sizeof(Value), alignof(Value)));
+	b.m_metadata = static_cast<Metadata*>(pool.allocate(m_capacity * sizeof(Metadata), alignof(Metadata)));
 	memcpy(b.m_metadata, m_metadata, m_capacity * sizeof(Metadata));
 
 	for(U i = 0; i < m_capacity; ++i)

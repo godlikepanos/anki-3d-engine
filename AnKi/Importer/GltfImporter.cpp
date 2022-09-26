@@ -136,7 +136,7 @@ static Error getNodeTransform(const cgltf_node& node, Transform& trf)
 	return Error::kNone;
 }
 
-static Bool stringsExist(const HashMapAuto<CString, StringRaii>& map, const std::initializer_list<CString>& list)
+static Bool stringsExist(const HashMapRaii<CString, StringRaii>& map, const std::initializer_list<CString>& list)
 {
 	for(CString item : list)
 	{
@@ -233,7 +233,7 @@ Error GltfImporter::writeAll()
 	{
 		for(cgltf_node* const* node = scene->nodes; node < scene->nodes + scene->nodes_count && !err; ++node)
 		{
-			err = visitNode(*(*node), Transform::getIdentity(), HashMapAuto<CString, StringRaii>(m_alloc));
+			err = visitNode(*(*node), Transform::getIdentity(), HashMapRaii<CString, StringRaii>(m_alloc));
 		}
 	}
 
@@ -264,7 +264,7 @@ Error GltfImporter::writeAll()
 	return err;
 }
 
-Error GltfImporter::getExtras(const cgltf_extras& extras, HashMapAuto<CString, StringRaii>& out)
+Error GltfImporter::getExtras(const cgltf_extras& extras, HashMapRaii<CString, StringRaii>& out)
 {
 	cgltf_size extrasSize;
 	cgltf_copy_extras_json(m_gltf, &extras, nullptr, &extrasSize);
@@ -408,7 +408,7 @@ Error GltfImporter::parseArrayOfNumbers(CString str, DynamicArrayRaii<F64>& out,
 }
 
 Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf,
-							  const HashMapAuto<CString, StringRaii>& parentExtras)
+							  const HashMapRaii<CString, StringRaii>& parentExtras)
 {
 	// Check error from a thread
 	const Error threadErr = m_errorInThread.load();
@@ -418,7 +418,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 		return threadErr;
 	}
 
-	HashMapAuto<CString, StringRaii> outExtras(m_alloc);
+	HashMapRaii<CString, StringRaii> outExtras(m_alloc);
 	if(node.light)
 	{
 		ANKI_CHECK(writeLight(node, parentExtras));
@@ -440,11 +440,11 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 	else if(node.mesh)
 	{
 		// Handle special nodes
-		HashMapAuto<CString, StringRaii> extras(parentExtras);
+		HashMapRaii<CString, StringRaii> extras(parentExtras);
 		ANKI_CHECK(getExtras(node.mesh->extras, extras));
 		ANKI_CHECK(getExtras(node.extras, extras));
 
-		HashMapAuto<CString, StringRaii>::Iterator it;
+		HashMapRaii<CString, StringRaii>::Iterator it;
 
 		const Bool skipRt = (it = extras.find("no_rt")) != extras.getEnd() && (*it == "true" || *it == "1");
 
@@ -698,7 +698,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			ctx->m_skin = node.skin;
 			ctx->m_rayTracing = !skipRt;
 
-			HashMapAuto<CString, StringRaii>::Iterator it2;
+			HashMapRaii<CString, StringRaii>::Iterator it2;
 			const Bool selfCollision = (it2 = extras.find("collision_mesh")) != extras.getEnd() && *it2 == "self";
 
 			U32 maxLod = 0;
@@ -838,7 +838,7 @@ Error GltfImporter::writeModel(const cgltf_mesh& mesh)
 	const StringRaii modelFname = computeModelResourceFilename(mesh);
 	ANKI_IMPORTER_LOGV("Importing model %s", modelFname.cstr());
 
-	HashMapAuto<CString, StringRaii> extras(m_alloc);
+	HashMapRaii<CString, StringRaii> extras(m_alloc);
 	ANKI_CHECK(getExtras(mesh.extras, extras));
 
 	File file;
@@ -877,7 +877,7 @@ Error GltfImporter::writeModel(const cgltf_mesh& mesh)
 			ANKI_CHECK(file.writeTextf("\t\t\t<mesh2>%s%s</mesh2>\n", m_rpath.cstr(), meshFname.cstr()));
 		}
 
-		HashMapAuto<CString, StringRaii> materialExtras(m_alloc);
+		HashMapRaii<CString, StringRaii> materialExtras(m_alloc);
 		ANKI_CHECK(getExtras(mesh.primitives[primIdx].material->extras, materialExtras));
 		auto mtlOverride = materialExtras.find("material_override");
 		if(mtlOverride != materialExtras.getEnd())
@@ -965,13 +965,13 @@ Error GltfImporter::writeSkeleton(const cgltf_skin& skin)
 	return Error::kNone;
 }
 
-Error GltfImporter::writeLight(const cgltf_node& node, const HashMapAuto<CString, StringRaii>& parentExtras)
+Error GltfImporter::writeLight(const cgltf_node& node, const HashMapRaii<CString, StringRaii>& parentExtras)
 {
 	const cgltf_light& light = *node.light;
 	StringRaii nodeName = getNodeName(node);
 	ANKI_IMPORTER_LOGV("Importing light %s", nodeName.cstr());
 
-	HashMapAuto<CString, StringRaii> extras(parentExtras);
+	HashMapRaii<CString, StringRaii> extras(parentExtras);
 	ANKI_CHECK(getExtras(light.extras, extras));
 	ANKI_CHECK(getExtras(node.extras, extras));
 
@@ -1105,7 +1105,7 @@ Error GltfImporter::writeLight(const cgltf_node& node, const HashMapAuto<CString
 }
 
 Error GltfImporter::writeCamera(const cgltf_node& node,
-								[[maybe_unused]] const HashMapAuto<CString, StringRaii>& parentExtras)
+								[[maybe_unused]] const HashMapRaii<CString, StringRaii>& parentExtras)
 {
 	if(node.camera->type != cgltf_camera_type_perspective)
 	{
@@ -1128,11 +1128,11 @@ Error GltfImporter::writeCamera(const cgltf_node& node,
 	return Error::kNone;
 }
 
-Error GltfImporter::writeModelNode(const cgltf_node& node, const HashMapAuto<CString, StringRaii>& parentExtras)
+Error GltfImporter::writeModelNode(const cgltf_node& node, const HashMapRaii<CString, StringRaii>& parentExtras)
 {
 	ANKI_IMPORTER_LOGV("Importing model node %s", getNodeName(node).cstr());
 
-	HashMapAuto<CString, StringRaii> extras(parentExtras);
+	HashMapRaii<CString, StringRaii> extras(parentExtras);
 	ANKI_CHECK(getExtras(node.extras, extras));
 
 	const StringRaii modelFname = computeModelResourceFilename(*node.mesh);

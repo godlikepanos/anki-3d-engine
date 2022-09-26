@@ -110,7 +110,7 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 		return Error::kUserData;
 	}
 
-	HashMapAuto<CString, StringRaii> extras(m_alloc);
+	HashMapRaii<CString, StringRaii> extras(m_alloc);
 	ANKI_CHECK(getExtras(mtl.extras, extras));
 
 	StringRaii xml(m_alloc);

@@ -113,7 +113,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 	ANKI_IMPORTER_LOGV("Importing animation %s", fname.cstr());
 
 	// Gather the channels
-	HashMapAuto<CString, Array<const cgltf_animation_channel*, 3>> channelMap(m_alloc);
+	HashMapRaii<CString, Array<const cgltf_animation_channel*, 3>> channelMap(m_alloc);
 	U32 channelCount = 0;
 	for(U i = 0; i < anim.channels_count; ++i)
 	{

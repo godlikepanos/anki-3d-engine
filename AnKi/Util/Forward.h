@@ -20,6 +20,9 @@ class BitMask;
 template<typename, typename, typename, typename>
 class HashMap;
 
+template<typename, typename, typename, typename, typename>
+class HashMapRaii;
+
 template<typename T>
 class Hierarchy;
 

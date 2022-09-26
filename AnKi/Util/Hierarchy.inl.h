@@ -6,12 +6,12 @@
 namespace anki {
 
 template<typename T>
-template<typename TAllocator>
-void Hierarchy<T>::destroy(TAllocator alloc)
+template<typename TMemPool>
+void Hierarchy<T>::destroy(TMemPool& pool)
 {
 	if(m_parent != nullptr)
 	{
-		m_parent->removeChild(alloc, getSelf());
+		m_parent->removeChild(pool, getSelf());
 		m_parent = nullptr;
 	}
 
@@ -24,12 +24,12 @@ void Hierarchy<T>::destroy(TAllocator alloc)
 		child->m_parent = nullptr;
 	}
 
-	m_children.destroy(alloc);
+	m_children.destroy(pool);
 }
 
 template<typename T>
-template<typename TAllocator>
-void Hierarchy<T>::addChild(TAllocator alloc, Value* child)
+template<typename TMemPool>
+void Hierarchy<T>::addChild(TMemPool& pool, Value* child)
 {
 	ANKI_ASSERT(child != nullptr && "Null arg");
 	ANKI_ASSERT(child != getSelf() && "Cannot put itself");
@@ -38,12 +38,12 @@ void Hierarchy<T>::addChild(TAllocator alloc, Value* child)
 	ANKI_ASSERT(findChild(child) == m_children.getEnd() && "Already has that child");
 
 	child->m_parent = getSelf();
-	m_children.emplaceBack(alloc, child);
+	m_children.emplaceBack(pool, child);
 }
 
 template<typename T>
-template<typename TAllocator>
-void Hierarchy<T>::removeChild(TAllocator alloc, Value* child)
+template<typename TMemPool>
+void Hierarchy<T>::removeChild(TMemPool& pool, Value* child)
 {
 	ANKI_ASSERT(child != nullptr && "Null arg");
 	ANKI_ASSERT(child->m_parent == getSelf() && "Child has other parent");
@@ -52,7 +52,7 @@ void Hierarchy<T>::removeChild(TAllocator alloc, Value* child)
 
 	ANKI_ASSERT(it != m_children.getEnd() && "Child not found");
 
-	m_children.erase(alloc, it);
+	m_children.erase(pool, it);
 	child->m_parent = nullptr;
 }
 
