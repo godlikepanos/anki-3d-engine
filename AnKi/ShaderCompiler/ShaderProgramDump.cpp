@@ -44,8 +44,8 @@ static void disassembleBlock(const ShaderProgramBinaryBlock& block, StringListRa
 
 void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringRaii& humanReadable)
 {
-	GenericMemoryPoolAllocator<U8> alloc = humanReadable.getAllocator();
-	StringListRaii lines(alloc);
+	BaseMemoryPool& pool = humanReadable.getMemoryPool();
+	StringListRaii lines(&pool);
 
 	if(binary.m_libraryName[0])
 	{
@@ -182,9 +182,9 @@ void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringRaii& huma
 		compiler.set_common_options(options);
 
 		std::string glsl = compiler.compile();
-		StringListRaii sourceLines(alloc);
+		StringListRaii sourceLines(&pool);
 		sourceLines.splitString(glsl.c_str(), '\n');
-		StringRaii newGlsl(alloc);
+		StringRaii newGlsl(&pool);
 		sourceLines.join("\n" ANKI_TAB ANKI_TAB, newGlsl);
 
 		lines.pushBackSprintf(ANKI_TAB "#bin%05u \n" ANKI_TAB ANKI_TAB "%s\n", count++, newGlsl.cstr());

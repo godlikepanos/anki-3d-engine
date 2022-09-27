@@ -88,7 +88,7 @@ void MaliOfflineCompilerOut::toString(StringRaii& str) const
 }
 
 static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString spirvFilename, ShaderType shaderType,
-											GenericMemoryPoolAllocator<U8> tmpAlloc, MaliOfflineCompilerOut& out)
+											BaseMemoryPool& tmpPool, MaliOfflineCompilerOut& out)
 {
 	out = {};
 
@@ -121,7 +121,7 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 	ANKI_CHECK(proc.wait(-1.0, &status, &exitCode));
 	if(exitCode != 0)
 	{
-		StringRaii stderre(tmpAlloc);
+		StringRaii stderre(&tmpPool);
 		const Error err = proc.readFromStderr(stderre);
 		ANKI_SHADER_COMPILER_LOGE("Mali offline compiler failed with exit code %d. Stderr: %s", exitCode,
 								  (err || stderre.isEmpty()) ? "<no text>" : stderre.cstr());
@@ -129,7 +129,7 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 	}
 
 	// Get stdout
-	StringRaii stdouts(tmpAlloc);
+	StringRaii stdouts(&tmpPool);
 	ANKI_CHECK(proc.readFromStdout(stdouts));
 	const std::string stdoutstl(stdouts.cstr());
 
@@ -295,7 +295,7 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 	if(false)
 	{
 		printf("%s\n", stdouts.cstr());
-		StringRaii str(tmpAlloc);
+		StringRaii str(&tmpPool);
 		out.toString(str);
 		printf("%s\n", str.cstr());
 	}
@@ -304,14 +304,14 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 }
 
 Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv, ShaderType shaderType,
-							 GenericMemoryPoolAllocator<U8> tmpAlloc, MaliOfflineCompilerOut& out)
+							 BaseMemoryPool& tmpPool, MaliOfflineCompilerOut& out)
 {
 	ANKI_ASSERT(spirv.getSize() > 0);
 
 	// Create temp file to dump the spirv
-	StringRaii tmpDir(tmpAlloc);
+	StringRaii tmpDir(&tmpPool);
 	ANKI_CHECK(getTempDirectory(tmpDir));
-	StringRaii spirvFilename(tmpAlloc);
+	StringRaii spirvFilename(&tmpPool);
 	spirvFilename.sprintf("%s/AnKiMaliocTmpSpirv_%" PRIu64 ".spv", tmpDir.cstr(), getRandom());
 
 	File spirvFile;
@@ -322,7 +322,7 @@ Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv,
 	// Call malioc
 	if(!err)
 	{
-		err = runMaliOfflineCompilerInternal(maliocExecutable, spirvFilename, shaderType, tmpAlloc, out);
+		err = runMaliOfflineCompilerInternal(maliocExecutable, spirvFilename, shaderType, tmpPool, out);
 	}
 
 	// Cleanup

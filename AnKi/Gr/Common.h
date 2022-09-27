@@ -82,8 +82,8 @@ ANKI_GR_CLASS(GrUpscaler)
 	friend class GrManager; \
 	template<typename, typename> \
 	friend class IntrusivePtr; \
-	template<typename, typename> \
-	friend class GenericPoolAllocator;
+	template<typename T, typename... TArgs> \
+	friend void callConstructor(T& p, TArgs&&... args);
 
 /// Shader block information.
 class ShaderVariableBlockInfo

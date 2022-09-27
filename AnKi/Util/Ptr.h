@@ -253,7 +253,7 @@ class DefaultPtrDeleter
 public:
 	void operator()(T* x)
 	{
-		auto pool = x->getMemoryPool();
+		auto& pool = x->getMemoryPool();
 		deleteInstance<T>(pool, x);
 	}
 };

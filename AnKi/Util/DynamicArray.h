@@ -498,6 +498,12 @@ public:
 		return m_pool;
 	}
 
+	/// Get the pool.
+	MemoryPool& getMemoryPool()
+	{
+		return m_pool;
+	}
+
 private:
 	MemoryPool m_pool;
 };

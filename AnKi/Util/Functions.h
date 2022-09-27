@@ -371,6 +371,10 @@ void callConstructor(T& p, TArgs&&... args)
 	::new(&p) T(std::forward<TArgs>(args)...);
 }
 
+#define ANKI_FRIEND_CALL_CONSTRUCTOR \
+	template<typename T, typename... TArgs> \
+	friend void callConstructor(T& p, TArgs&&... args);
+
 /// Call the destructor of an object.
 template<typename T>
 void callDestructor(T& p)

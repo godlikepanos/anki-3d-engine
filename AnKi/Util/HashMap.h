@@ -275,19 +275,19 @@ public:
 	template<typename... TArgs>
 	typename Base::Iterator emplace(const TKey& key, TArgs&&... args)
 	{
-		return Base::emplace(*m_pool, key, std::forward<TArgs>(args)...);
+		return Base::emplace(m_pool, key, std::forward<TArgs>(args)...);
 	}
 
 	/// Erase element.
 	void erase(typename Base::Iterator it)
 	{
-		Base::erase(*m_pool, it);
+		Base::erase(m_pool, it);
 	}
 
 	/// Clean up the map.
 	void destroy()
 	{
-		Base::destroy(*m_pool);
+		Base::destroy(m_pool);
 	}
 
 private:

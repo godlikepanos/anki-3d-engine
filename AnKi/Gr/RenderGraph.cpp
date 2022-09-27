@@ -149,7 +149,7 @@ public:
 class RenderGraph::BakeContext
 {
 public:
-	StackAllocator<U8> m_alloc;
+	StackMemoryPool* m_pool = nullptr;
 	DynamicArray<Pass> m_passes;
 	BitSet<kMaxRenderGraphPasses, U64> m_passIsInBatch{false};
 	DynamicArray<Batch> m_batches;
@@ -161,8 +161,8 @@ public:
 
 	Bool m_gatherStatistics = false;
 
-	BakeContext(const StackAllocator<U8>& alloc)
-		: m_alloc(alloc)
+	BakeContext(StackMemoryPool* pool)
+		: m_pool(pool)
 	{
 	}
 };
@@ -271,23 +271,23 @@ RenderGraph::~RenderGraph()
 	{
 		auto it = m_renderTargetCache.getBegin();
 		RenderTargetCacheEntry& entry = *it;
-		entry.m_textures.destroy(getAllocator());
-		m_renderTargetCache.erase(getAllocator(), it);
+		entry.m_textures.destroy(getMemoryPool());
+		m_renderTargetCache.erase(getMemoryPool(), it);
 	}
 
-	m_fbCache.destroy(getAllocator());
+	m_fbCache.destroy(getMemoryPool());
 
 	for(auto& it : m_importedRenderTargets)
 	{
-		it.m_surfOrVolLastUsages.destroy(getAllocator());
+		it.m_surfOrVolLastUsages.destroy(getMemoryPool());
 	}
 
-	m_importedRenderTargets.destroy(getAllocator());
+	m_importedRenderTargets.destroy(getMemoryPool());
 }
 
 RenderGraph* RenderGraph::newInstance(GrManager* manager)
 {
-	return manager->getAllocator().newInstance<RenderGraph>(manager, "N/A");
+	return anki::newInstance<RenderGraph>(manager->getMemoryPool(), manager, "N/A");
 }
 
 void RenderGraph::reset()
@@ -326,8 +326,8 @@ void RenderGraph::reset()
 			else
 			{
 				// Not found, create
-				it = m_importedRenderTargets.emplace(getAllocator(), hash);
-				it->m_surfOrVolLastUsages.create(getAllocator(), surfOrVolumeCount);
+				it = m_importedRenderTargets.emplace(getMemoryPool(), hash);
+				it->m_surfOrVolLastUsages.create(getMemoryPool(), surfOrVolumeCount);
 			}
 
 			// Update the usage
@@ -358,13 +358,12 @@ void RenderGraph::reset()
 	for(Pass& p : m_ctx->m_passes)
 	{
 		p.fb().reset(nullptr);
-		p.m_secondLevelCmdbs.destroy(m_ctx->m_alloc);
-		p.m_callback.destroy(m_ctx->m_alloc);
+		p.m_secondLevelCmdbs.destroy(*m_ctx->m_pool);
+		p.m_callback.destroy(*m_ctx->m_pool);
 	}
 
-	m_ctx->m_graphicsCmdbs.destroy(m_ctx->m_alloc);
+	m_ctx->m_graphicsCmdbs.destroy(*m_ctx->m_pool);
 
-	m_ctx->m_alloc = StackAllocator<U8>();
 	m_ctx = nullptr;
 	++m_version;
 }
@@ -372,7 +371,6 @@ void RenderGraph::reset()
 TexturePtr RenderGraph::getOrCreateRenderTarget(const TextureInitInfo& initInf, U64 hash)
 {
 	ANKI_ASSERT(hash);
-	auto alloc = getManager().getAllocator();
 
 	// Find a cache entry
 	RenderTargetCacheEntry* entry = nullptr;
@@ -381,7 +379,7 @@ TexturePtr RenderGraph::getOrCreateRenderTarget(const TextureInitInfo& initInf, 
 	{
 		// Didn't found the entry, create a new one
 
-		auto it2 = m_renderTargetCache.emplace(getAllocator(), hash);
+		auto it2 = m_renderTargetCache.emplace(getMemoryPool(), hash);
 		entry = &(*it2);
 	}
 	else
@@ -406,7 +404,7 @@ TexturePtr RenderGraph::getOrCreateRenderTarget(const TextureInitInfo& initInf, 
 		tex = getManager().newTexture(initInf);
 
 		ANKI_ASSERT(entry->m_texturesInUse == entry->m_textures.getSize());
-		entry->m_textures.resize(alloc, entry->m_textures.getSize() + 1);
+		entry->m_textures.resize(getMemoryPool(), entry->m_textures.getSize() + 1);
 		entry->m_textures[entry->m_textures.getSize() - 1] = tex;
 		++entry->m_texturesInUse;
 	}
@@ -516,7 +514,7 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(const FramebufferDescription&
 
 		// Create
 		fb = getManager().newFramebuffer(fbInit);
-		m_fbCache.emplace(getAllocator(), hash, fb);
+		m_fbCache.emplace(getMemoryPool(), hash, fb);
 	}
 
 	return fb;
@@ -687,13 +685,13 @@ Bool RenderGraph::passHasUnmetDependencies(const BakeContext& ctx, U32 passIdx)
 	return depends;
 }
 
-RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphDescription& descr, StackAllocator<U8>& alloc)
+RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphDescription& descr, StackMemoryPool& pool)
 {
 	// Allocate
-	BakeContext* ctx = alloc.newInstance<BakeContext>(alloc);
+	BakeContext* ctx = anki::newInstance<BakeContext>(pool, &pool);
 
 	// Init the resources
-	ctx->m_rts.create(alloc, descr.m_renderTargets.getSize());
+	ctx->m_rts.create(pool, descr.m_renderTargets.getSize());
 	for(U32 rtIdx = 0; rtIdx < ctx->m_rts.getSize(); ++rtIdx)
 	{
 		RT& outRt = ctx->m_rts[rtIdx];
@@ -723,7 +721,7 @@ RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphDescription& 
 
 		// Init the usage
 		const U32 surfOrVolumeCount = getTextureSurfOrVolCount(outRt.m_texture);
-		outRt.m_surfOrVolUsages.create(alloc, surfOrVolumeCount, TextureUsageBit::kNone);
+		outRt.m_surfOrVolUsages.create(pool, surfOrVolumeCount, TextureUsageBit::kNone);
 		if(imported && inRt.m_importedAndUndefinedUsage)
 		{
 			// Get the usage from previous frames
@@ -750,12 +748,12 @@ RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphDescription& 
 			}
 		}
 
-		outRt.m_lastBatchThatTransitionedIt.create(alloc, surfOrVolumeCount, kMaxU16);
+		outRt.m_lastBatchThatTransitionedIt.create(pool, surfOrVolumeCount, kMaxU16);
 		outRt.m_imported = imported;
 	}
 
 	// Buffers
-	ctx->m_buffers.create(alloc, descr.m_buffers.getSize());
+	ctx->m_buffers.create(pool, descr.m_buffers.getSize());
 	for(U32 buffIdx = 0; buffIdx < ctx->m_buffers.getSize(); ++buffIdx)
 	{
 		ctx->m_buffers[buffIdx].m_usage = descr.m_buffers[buffIdx].m_usage;
@@ -766,7 +764,7 @@ RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphDescription& 
 	}
 
 	// AS
-	ctx->m_as.create(alloc, descr.m_as.getSize());
+	ctx->m_as.create(pool, descr.m_as.getSize());
 	for(U32 i = 0; i < descr.m_as.getSize(); ++i)
 	{
 		ctx->m_as[i].m_usage = descr.m_as[i].m_usage;
@@ -779,22 +777,22 @@ RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphDescription& 
 	return ctx;
 }
 
-void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr, StackAllocator<U8>& alloc)
+void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr, StackMemoryPool& pool)
 {
 	BakeContext& ctx = *m_ctx;
 	const U32 passCount = descr.m_passes.getSize();
 	ANKI_ASSERT(passCount > 0);
 
-	ctx.m_passes.create(alloc, passCount);
+	ctx.m_passes.create(pool, passCount);
 	for(U32 passIdx = 0; passIdx < passCount; ++passIdx)
 	{
 		const RenderPassDescriptionBase& inPass = *descr.m_passes[passIdx];
 		Pass& outPass = ctx.m_passes[passIdx];
 
-		outPass.m_callback.copy(inPass.m_callback, alloc);
+		outPass.m_callback.copy(inPass.m_callback, pool);
 
 		// Create consumer info
-		outPass.m_consumedTextures.resize(alloc, inPass.m_rtDeps.getSize());
+		outPass.m_consumedTextures.resize(pool, inPass.m_rtDeps.getSize());
 		for(U32 depIdx = 0; depIdx < inPass.m_rtDeps.getSize(); ++depIdx)
 		{
 			const RenderPassDependency& inDep = inPass.m_rtDeps[depIdx];
@@ -838,7 +836,7 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 			const RenderPassDescriptionBase& prevPass = *descr.m_passes[prevPassIdx];
 			if(passADependsOnB(inPass, prevPass))
 			{
-				outPass.m_dependsOn.emplaceBack(alloc, prevPassIdx);
+				outPass.m_dependsOn.emplaceBack(pool, prevPassIdx);
 			}
 		}
 	}
@@ -854,7 +852,7 @@ void RenderGraph::initBatches()
 	Bool setTimestamp = m_ctx->m_gatherStatistics;
 	while(passesAssignedToBatchCount < passCount)
 	{
-		m_ctx->m_batches.emplaceBack(m_ctx->m_alloc);
+		m_ctx->m_batches.emplaceBack(*m_ctx->m_pool);
 		Batch& batch = m_ctx->m_batches.getBack();
 
 		Bool drawsToPresentable = false;
@@ -865,7 +863,7 @@ void RenderGraph::initBatches()
 			{
 				// Add to the batch
 				++passesAssignedToBatchCount;
-				batch.m_passIndices.emplaceBack(m_ctx->m_alloc, i);
+				batch.m_passIndices.emplaceBack(*m_ctx->m_pool, i);
 
 				// Will batch draw to the swapchain?
 				drawsToPresentable = drawsToPresentable || m_ctx->m_passes[i].m_drawsToPresentable;
@@ -881,7 +879,7 @@ void RenderGraph::initBatches()
 			cmdbInit.m_flags = CommandBufferFlag::kGeneralWork;
 			CommandBufferPtr cmdb = getManager().newCommandBuffer(cmdbInit);
 
-			m_ctx->m_graphicsCmdbs.emplaceBack(m_ctx->m_alloc, cmdb);
+			m_ctx->m_graphicsCmdbs.emplaceBack(*m_ctx->m_pool, cmdb);
 
 			batch.m_cmdb = cmdb.get();
 
@@ -911,7 +909,7 @@ void RenderGraph::initBatches()
 	}
 }
 
-void RenderGraph::initGraphicsPasses(const RenderGraphDescription& descr, StackAllocator<U8>& alloc)
+void RenderGraph::initGraphicsPasses(const RenderGraphDescription& descr, StackMemoryPool& pool)
 {
 	BakeContext& ctx = *m_ctx;
 	const U32 passCount = descr.m_passes.getSize();
@@ -955,7 +953,7 @@ void RenderGraph::initGraphicsPasses(const RenderGraphDescription& descr, StackA
 				// Do some pre-work for the second level command buffers
 				if(inPass.m_secondLevelCmdbsCount)
 				{
-					outPass.m_secondLevelCmdbs.create(alloc, inPass.m_secondLevelCmdbsCount);
+					outPass.m_secondLevelCmdbs.create(pool, inPass.m_secondLevelCmdbsCount);
 					CommandBufferInitInfo& cmdbInit = outPass.m_secondLevelCmdbInitInfo;
 					cmdbInit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSecondLevel;
 					ANKI_ASSERT(cmdbInit.m_framebuffer.isCreated());
@@ -1038,7 +1036,7 @@ void RenderGraph::setTextureBarrier(Batch& batch, const RenderPassDependency& de
 				{
 					// Create a new barrier for this surface
 
-					batch.m_textureBarriersBefore.emplaceBack(ctx.m_alloc, rtIdx, crntUsage, depUsage, surf);
+					batch.m_textureBarriersBefore.emplaceBack(*ctx.m_pool, rtIdx, crntUsage, depUsage, surf);
 
 					crntUsage = depUsage;
 					rt.m_lastBatchThatTransitionedIt[surfOrVolIdx] = U16(batchIdx);
@@ -1052,7 +1050,7 @@ void RenderGraph::setTextureBarrier(Batch& batch, const RenderPassDependency& de
 void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr)
 {
 	BakeContext& ctx = *m_ctx;
-	const StackAllocator<U8>& alloc = ctx.m_alloc;
+	StackMemoryPool& pool = *ctx.m_pool;
 
 	// For all batches
 	for(Batch& batch : ctx.m_batches)
@@ -1089,7 +1087,7 @@ void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr)
 				{
 					// Buff hasn't had a barrier in this batch, add a new barrier
 
-					batch.m_bufferBarriersBefore.emplaceBack(alloc, buffIdx, crntUsage, depUsage);
+					batch.m_bufferBarriersBefore.emplaceBack(pool, buffIdx, crntUsage, depUsage);
 
 					crntUsage = depUsage;
 					buffHasBarrierMask.set(buffIdx);
@@ -1132,7 +1130,7 @@ void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr)
 				{
 					// AS doesn't have a barrier in this batch, create a new one
 
-					batch.m_asBarriersBefore.emplaceBack(alloc, asIdx, crntUsage, depUsage);
+					batch.m_asBarriersBefore.emplaceBack(pool, asIdx, crntUsage, depUsage);
 					crntUsage = depUsage;
 					asHasBarrierMask.set(asIdx);
 				}
@@ -1203,22 +1201,22 @@ void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr)
 	} // For all batches
 }
 
-void RenderGraph::compileNewGraph(const RenderGraphDescription& descr, StackAllocator<U8>& alloc)
+void RenderGraph::compileNewGraph(const RenderGraphDescription& descr, StackMemoryPool& pool)
 {
 	ANKI_TRACE_SCOPED_EVENT(GR_RENDER_GRAPH_COMPILE);
 
 	// Init the context
-	BakeContext& ctx = *newContext(descr, alloc);
+	BakeContext& ctx = *newContext(descr, pool);
 	m_ctx = &ctx;
 
 	// Init the passes and find the dependencies between passes
-	initRenderPassesAndSetDeps(descr, alloc);
+	initRenderPassesAndSetDeps(descr, pool);
 
 	// Walk the graph and create pass batches
 	initBatches();
 
 	// Now that we know the batches every pass belongs init the graphics passes
-	initGraphicsPasses(descr, alloc);
+	initGraphicsPasses(descr, pool);
 
 	// Create barriers between batches
 	setBatchBarriers(descr);
@@ -1408,7 +1406,7 @@ void RenderGraph::periodicCleanup()
 			DynamicArray<TexturePtr> newArray;
 			if(entry.m_texturesInUse > 0)
 			{
-				newArray.create(getAllocator(), entry.m_texturesInUse);
+				newArray.create(getMemoryPool(), entry.m_texturesInUse);
 			}
 
 			// Populate the new array
@@ -1418,7 +1416,7 @@ void RenderGraph::periodicCleanup()
 			}
 
 			// Destroy the old array and the rest of the textures
-			entry.m_textures.destroy(getAllocator());
+			entry.m_textures.destroy(getMemoryPool());
 
 			// Move new array
 			entry.m_textures = std::move(newArray);
@@ -1456,14 +1454,14 @@ void RenderGraph::getStatistics(RenderGraphStatistics& statistics) const
 }
 
 #if ANKI_DBG_RENDER_GRAPH
-StringRaii RenderGraph::textureUsageToStr(StackAllocator<U8>& alloc, TextureUsageBit usage)
+StringRaii RenderGraph::textureUsageToStr(StackMemoryPool& pool, TextureUsageBit usage)
 {
 	if(!usage)
 	{
-		return StringRaii(alloc, "None");
+		return StringRaii(&pool, "None");
 	}
 
-	StringListRaii slist(alloc);
+	StringListRaii slist(&pool);
 
 #	define ANKI_TEX_USAGE(u) \
 		if(!!(usage & TextureUsageBit::u)) \
@@ -1471,24 +1469,24 @@ StringRaii RenderGraph::textureUsageToStr(StackAllocator<U8>& alloc, TextureUsag
 			slist.pushBackSprintf("%s", #u); \
 		}
 
-	ANKI_TEX_USAGE(SAMPLED_GEOMETRY);
-	ANKI_TEX_USAGE(SAMPLED_FRAGMENT);
-	ANKI_TEX_USAGE(SAMPLED_COMPUTE);
-	ANKI_TEX_USAGE(SAMPLED_TRACE_RAYS);
-	ANKI_TEX_USAGE(IMAGE_GEOMETRY_READ);
-	ANKI_TEX_USAGE(IMAGE_GEOMETRY_WRITE);
-	ANKI_TEX_USAGE(IMAGE_FRAGMENT_READ);
-	ANKI_TEX_USAGE(IMAGE_FRAGMENT_WRITE);
-	ANKI_TEX_USAGE(IMAGE_COMPUTE_READ);
-	ANKI_TEX_USAGE(IMAGE_COMPUTE_WRITE);
-	ANKI_TEX_USAGE(IMAGE_TRACE_RAYS_READ);
-	ANKI_TEX_USAGE(IMAGE_TRACE_RAYS_WRITE);
-	ANKI_TEX_USAGE(FRAMEBUFFER_ATTACHMENT_READ);
-	ANKI_TEX_USAGE(FRAMEBUFFER_ATTACHMENT_WRITE);
-	ANKI_TEX_USAGE(TRANSFER_DESTINATION);
-	ANKI_TEX_USAGE(GENERATE_MIPMAPS);
-	ANKI_TEX_USAGE(PRESENT);
-	ANKI_TEX_USAGE(FRAMEBUFFER_SHADING_RATE);
+	ANKI_TEX_USAGE(kSampledGeometry);
+	ANKI_TEX_USAGE(kSampledFragment);
+	ANKI_TEX_USAGE(kSampledCompute);
+	ANKI_TEX_USAGE(kSampledTraceRays);
+	ANKI_TEX_USAGE(kImageGeometryRead);
+	ANKI_TEX_USAGE(kImageGeometryWrite);
+	ANKI_TEX_USAGE(kImageFragmentRead);
+	ANKI_TEX_USAGE(kImageFragmentWrite);
+	ANKI_TEX_USAGE(kImageComputeRead);
+	ANKI_TEX_USAGE(kImageComputeWrite);
+	ANKI_TEX_USAGE(kImageTraceRaysRead);
+	ANKI_TEX_USAGE(kImageTraceRaysWrite);
+	ANKI_TEX_USAGE(kFramebufferRead);
+	ANKI_TEX_USAGE(kFramebufferWrite);
+	ANKI_TEX_USAGE(kTransferDestination);
+	ANKI_TEX_USAGE(kGenerateMipmaps);
+	ANKI_TEX_USAGE(kPresent);
+	ANKI_TEX_USAGE(kFramebufferShadingRate);
 
 	if(!usage)
 	{
@@ -1498,14 +1496,14 @@ StringRaii RenderGraph::textureUsageToStr(StackAllocator<U8>& alloc, TextureUsag
 #	undef ANKI_TEX_USAGE
 
 	ANKI_ASSERT(!slist.isEmpty());
-	StringRaii str(alloc);
+	StringRaii str(&pool);
 	slist.join(" | ", str);
 	return str;
 }
 
-StringRaii RenderGraph::bufferUsageToStr(StackAllocator<U8>& alloc, BufferUsageBit usage)
+StringRaii RenderGraph::bufferUsageToStr(StackMemoryPool& pool, BufferUsageBit usage)
 {
-	StringListRaii slist(alloc);
+	StringListRaii slist(&pool);
 
 #	define ANKI_BUFF_USAGE(u) \
 		if(!!(usage & BufferUsageBit::u)) \
@@ -1533,14 +1531,14 @@ StringRaii RenderGraph::bufferUsageToStr(StackAllocator<U8>& alloc, BufferUsageB
 	ANKI_BUFF_USAGE(kTextureComputeWrite);
 	ANKI_BUFF_USAGE(kTextureTraceRaysRead);
 	ANKI_BUFF_USAGE(kTextureTraceRaysWrite);
-	ANKI_BUFF_USAGE(INDEX);
-	ANKI_BUFF_USAGE(VERTEX);
-	ANKI_BUFF_USAGE(INDIRECT_COMPUTE);
-	ANKI_BUFF_USAGE(INDIRECT_DRAW);
-	ANKI_BUFF_USAGE(INDIRECT_TRACE_RAYS);
-	ANKI_BUFF_USAGE(TRANSFER_SOURCE);
-	ANKI_BUFF_USAGE(TRANSFER_DESTINATION);
-	ANKI_BUFF_USAGE(ACCELERATION_STRUCTURE_BUILD);
+	ANKI_BUFF_USAGE(kIndex);
+	ANKI_BUFF_USAGE(kVertex);
+	ANKI_BUFF_USAGE(kIndirectCompute);
+	ANKI_BUFF_USAGE(kIndirectDraw);
+	ANKI_BUFF_USAGE(kIndirectTraceRays);
+	ANKI_BUFF_USAGE(kTransferSource);
+	ANKI_BUFF_USAGE(kTransferDestination);
+	ANKI_BUFF_USAGE(kAccelerationStructureBuild);
 
 	if(!usage)
 	{
@@ -1550,14 +1548,14 @@ StringRaii RenderGraph::bufferUsageToStr(StackAllocator<U8>& alloc, BufferUsageB
 #	undef ANKI_BUFF_USAGE
 
 	ANKI_ASSERT(!slist.isEmpty());
-	StringRaii str(alloc);
+	StringRaii str(&pool);
 	slist.join(" | ", str);
 	return str;
 }
 
-StringRaii RenderGraph::asUsageToStr(StackAllocator<U8>& alloc, AccelerationStructureUsageBit usage)
+StringRaii RenderGraph::asUsageToStr(StackMemoryPool& pool, AccelerationStructureUsageBit usage)
 {
-	StringListRaii slist(alloc);
+	StringListRaii slist(&pool);
 
 #	define ANKI_AS_USAGE(u) \
 		if(!!(usage & AccelerationStructureUsageBit::u)) \
@@ -1565,12 +1563,12 @@ StringRaii RenderGraph::asUsageToStr(StackAllocator<U8>& alloc, AccelerationStru
 			slist.pushBackSprintf("%s", #u); \
 		}
 
-	ANKI_AS_USAGE(BUILD);
-	ANKI_AS_USAGE(ATTACH);
-	ANKI_AS_USAGE(GEOMETRY_READ);
-	ANKI_AS_USAGE(FRAGMENT_READ);
-	ANKI_AS_USAGE(COMPUTE_READ);
-	ANKI_AS_USAGE(TRACE_RAYS_READ);
+	ANKI_AS_USAGE(kBuild);
+	ANKI_AS_USAGE(kAttach);
+	ANKI_AS_USAGE(kGeometryRead);
+	ANKI_AS_USAGE(kFragmentRead);
+	ANKI_AS_USAGE(kComputeRead);
+	ANKI_AS_USAGE(kTraceRaysRead);
 
 	if(!usage)
 	{
@@ -1580,7 +1578,7 @@ StringRaii RenderGraph::asUsageToStr(StackAllocator<U8>& alloc, AccelerationStru
 #	undef ANKI_AS_USAGE
 
 	ANKI_ASSERT(!slist.isEmpty());
-	StringRaii str(alloc);
+	StringRaii str(&pool);
 	slist.join(" | ", str);
 	return str;
 }
@@ -1591,8 +1589,8 @@ Error RenderGraph::dumpDependencyDotFile(const RenderGraphDescription& descr, co
 	ANKI_GR_LOGW("Running with debug code");
 
 	static constexpr Array<const char*, 5> COLORS = {"red", "green", "blue", "magenta", "cyan"};
-	auto alloc = ctx.m_alloc;
-	StringListRaii slist(alloc);
+	StackMemoryPool& pool = *ctx.m_pool;
+	StringListRaii slist(&pool);
 
 	slist.pushBackSprintf("digraph {\n");
 	slist.pushBackSprintf("\t//splines = ortho;\nconcentrate = true;\n");
@@ -1614,7 +1612,7 @@ Error RenderGraph::dumpDependencyDotFile(const RenderGraphDescription& descr, co
 
 			slist.pushBackSprintf(
 				"\t\"%s\"[color=%s,style=%s,shape=box];\n", passName.cstr(), COLORS[batchIdx % COLORS.getSize()],
-				(descr.m_passes[passIdx]->m_type == RenderPassDescriptionBase::Type::GRAPHICS) ? "bold" : "dashed");
+				(descr.m_passes[passIdx]->m_type == RenderPassDescriptionBase::Type::kGraphics) ? "bold" : "dashed");
 
 			for(U32 depIdx : ctx.m_passes[passIdx].m_dependsOn)
 			{
@@ -1641,27 +1639,27 @@ Error RenderGraph::dumpDependencyDotFile(const RenderGraphDescription& descr, co
 
 	// Barriers
 	// slist.pushBackSprintf("subgraph cluster_1 {\n");
-	StringRaii prevBubble(ctx.m_alloc);
+	StringRaii prevBubble(&pool);
 	prevBubble.create("START");
 	for(U32 batchIdx = 0; batchIdx < ctx.m_batches.getSize(); ++batchIdx)
 	{
 		const Batch& batch = ctx.m_batches[batchIdx];
 
-		StringRaii batchName(ctx.m_alloc);
+		StringRaii batchName(&pool);
 		batchName.sprintf("batch%u", batchIdx);
 
 		for(U32 barrierIdx = 0; barrierIdx < batch.m_textureBarriersBefore.getSize(); ++barrierIdx)
 		{
 			const TextureBarrier& barrier = batch.m_textureBarriersBefore[barrierIdx];
 
-			StringRaii barrierLabel(ctx.m_alloc);
+			StringRaii barrierLabel(&pool);
 			barrierLabel.sprintf("<b>%s</b> (mip,dp,f,l)=(%u,%u,%u,%u)<br/>%s <b>to</b> %s",
 								 &descr.m_renderTargets[barrier.m_idx].m_name[0], barrier.m_surface.m_level,
 								 barrier.m_surface.m_depth, barrier.m_surface.m_face, barrier.m_surface.m_layer,
-								 textureUsageToStr(alloc, barrier.m_usageBefore).cstr(),
-								 textureUsageToStr(alloc, barrier.m_usageAfter).cstr());
+								 textureUsageToStr(pool, barrier.m_usageBefore).cstr(),
+								 textureUsageToStr(pool, barrier.m_usageAfter).cstr());
 
-			StringRaii barrierName(ctx.m_alloc);
+			StringRaii barrierName(&pool);
 			barrierName.sprintf("%s tex barrier%u", batchName.cstr(), barrierIdx);
 
 			slist.pushBackSprintf("\t\"%s\"[color=%s,style=bold,shape=box,label=< %s >];\n", barrierName.cstr(),
@@ -1675,12 +1673,12 @@ Error RenderGraph::dumpDependencyDotFile(const RenderGraphDescription& descr, co
 		{
 			const BufferBarrier& barrier = batch.m_bufferBarriersBefore[barrierIdx];
 
-			StringRaii barrierLabel(ctx.m_alloc);
+			StringRaii barrierLabel(&pool);
 			barrierLabel.sprintf("<b>%s</b><br/>%s <b>to</b> %s", &descr.m_buffers[barrier.m_idx].m_name[0],
-								 bufferUsageToStr(alloc, barrier.m_usageBefore).cstr(),
-								 bufferUsageToStr(alloc, barrier.m_usageAfter).cstr());
+								 bufferUsageToStr(pool, barrier.m_usageBefore).cstr(),
+								 bufferUsageToStr(pool, barrier.m_usageAfter).cstr());
 
-			StringRaii barrierName(ctx.m_alloc);
+			StringRaii barrierName(&pool);
 			barrierName.sprintf("%s buff barrier%u", batchName.cstr(), barrierIdx);
 
 			slist.pushBackSprintf("\t\"%s\"[color=%s,style=bold,shape=box,label=< %s >];\n", barrierName.cstr(),
@@ -1694,12 +1692,12 @@ Error RenderGraph::dumpDependencyDotFile(const RenderGraphDescription& descr, co
 		{
 			const ASBarrier& barrier = batch.m_asBarriersBefore[barrierIdx];
 
-			StringRaii barrierLabel(ctx.m_alloc);
+			StringRaii barrierLabel(&pool);
 			barrierLabel.sprintf("<b>%s</b><br/>%s <b>to</b> %s", descr.m_as[barrier.m_idx].m_name.getBegin(),
-								 asUsageToStr(alloc, barrier.m_usageBefore).cstr(),
-								 asUsageToStr(alloc, barrier.m_usageAfter).cstr());
+								 asUsageToStr(pool, barrier.m_usageBefore).cstr(),
+								 asUsageToStr(pool, barrier.m_usageAfter).cstr());
 
-			StringRaii barrierName(ctx.m_alloc);
+			StringRaii barrierName(&pool);
 			barrierName.sprintf("%s AS barrier%u", batchName.cstr(), barrierIdx);
 
 			slist.pushBackSprintf("\t\"%s\"[color=%s,style=bold,shape=box,label=< %s >];\n", barrierName.cstr(),
@@ -1712,7 +1710,7 @@ Error RenderGraph::dumpDependencyDotFile(const RenderGraphDescription& descr, co
 		for(U32 passIdx : batch.m_passIndices)
 		{
 			const RenderPassDescriptionBase& pass = *descr.m_passes[passIdx];
-			StringRaii passName(alloc);
+			StringRaii passName(&pool);
 			passName.sprintf("%s pass", pass.m_name.cstr());
 			slist.pushBackSprintf("\t\"%s\"[color=%s,style=bold];\n", passName.cstr(),
 								  COLORS[batchIdx % COLORS.getSize()]);
@@ -1726,11 +1724,11 @@ Error RenderGraph::dumpDependencyDotFile(const RenderGraphDescription& descr, co
 	slist.pushBackSprintf("}");
 
 	File file;
-	ANKI_CHECK(file.open(StringRaii(alloc).sprintf("%s/rgraph_%05u.dot", &path[0], m_version).toCString(),
+	ANKI_CHECK(file.open(StringRaii(&pool).sprintf("%s/rgraph_%05u.dot", &path[0], m_version).toCString(),
 						 FileOpenFlag::kWrite));
 	for(const String& s : slist)
 	{
-		ANKI_CHECK(file.writeText("%s", &s[0]));
+		ANKI_CHECK(file.writeTextf("%s", &s[0]));
 	}
 
 	return Error::kNone;

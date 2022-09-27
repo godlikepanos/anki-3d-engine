@@ -20,10 +20,7 @@ Error ShaderProgramBinaryWrapper::serializeToFile(CString fname) const
 	ANKI_CHECK(file.open(fname, FileOpenFlag::kWrite | FileOpenFlag::kBinary));
 
 	BinarySerializer serializer;
-	HeapAllocator<U8> tmpAlloc(m_alloc.getMemoryPool().getAllocationCallback(),
-							   m_alloc.getMemoryPool().getAllocationCallbackUserData(),
-							   "ShaderProgramBinaryWrapper temp");
-	ANKI_CHECK(serializer.serialize(*m_binary, tmpAlloc, file));
+	ANKI_CHECK(serializer.serialize(*m_binary, *m_pool, file));
 
 	return Error::kNone;
 }
@@ -43,7 +40,7 @@ void ShaderProgramBinaryWrapper::cleanup()
 		return;
 	}
 
-	BaseMemoryPool& mempool = m_alloc.getMemoryPool();
+	BaseMemoryPool& mempool = *m_pool;
 
 	if(!m_singleAllocation)
 	{
@@ -167,8 +164,8 @@ static Bool spinDials(DynamicArrayRaii<U32>& dials, ConstWeakArray<ShaderProgram
 }
 
 static Error compileSpirv(ConstWeakArray<MutatorValue> mutation, const ShaderProgramParser& parser,
-						  GenericMemoryPoolAllocator<U8>& tmpAlloc,
-						  Array<DynamicArrayRaii<U8>, U32(ShaderType::kCount)>& spirv, StringRaii& errorLog)
+						  BaseMemoryPool& tempPool, Array<DynamicArrayRaii<U8>, U32(ShaderType::kCount)>& spirv,
+						  StringRaii& errorLog)
 {
 	// Generate the source and the rest for the variant
 	ShaderProgramParserVariant parserVariant;
@@ -183,7 +180,7 @@ static Error compileSpirv(ConstWeakArray<MutatorValue> mutation, const ShaderPro
 		}
 
 		// Compile
-		ANKI_CHECK(compilerGlslToSpirv(parserVariant.getSource(shaderType), shaderType, tmpAlloc, spirv[shaderType],
+		ANKI_CHECK(compilerGlslToSpirv(parserVariant.getSource(shaderType), shaderType, tempPool, spirv[shaderType],
 									   errorLog));
 		ANKI_ASSERT(spirv[shaderType].getSize() > 0);
 	}
@@ -194,18 +191,18 @@ static Error compileSpirv(ConstWeakArray<MutatorValue> mutation, const ShaderPro
 static void compileVariantAsync(ConstWeakArray<MutatorValue> mutation, const ShaderProgramParser& parser,
 								ShaderProgramBinaryVariant& variant,
 								DynamicArrayRaii<ShaderProgramBinaryCodeBlock>& codeBlocks,
-								DynamicArrayRaii<U64>& codeBlockHashes, GenericMemoryPoolAllocator<U8>& tmpAlloc,
-								GenericMemoryPoolAllocator<U8>& binaryAlloc,
-								ShaderProgramAsyncTaskInterface& taskManager, Mutex& mtx, Atomic<I32>& error)
+								DynamicArrayRaii<U64>& codeBlockHashes, BaseMemoryPool& tmpPool,
+								BaseMemoryPool& binaryPool, ShaderProgramAsyncTaskInterface& taskManager, Mutex& mtx,
+								Atomic<I32>& error)
 {
 	variant = {};
 
 	class Ctx
 	{
 	public:
-		GenericMemoryPoolAllocator<U8> m_tmpAlloc;
-		GenericMemoryPoolAllocator<U8> m_binaryAlloc;
-		DynamicArrayRaii<MutatorValue> m_mutation = {m_tmpAlloc};
+		BaseMemoryPool* m_tmpPool;
+		BaseMemoryPool* m_binaryPool;
+		DynamicArrayRaii<MutatorValue> m_mutation = {m_tmpPool};
 		const ShaderProgramParser* m_parser;
 		ShaderProgramBinaryVariant* m_variant;
 		DynamicArrayRaii<ShaderProgramBinaryCodeBlock>* m_codeBlocks;
@@ -213,14 +210,14 @@ static void compileVariantAsync(ConstWeakArray<MutatorValue> mutation, const Sha
 		Mutex* m_mtx;
 		Atomic<I32>* m_err;
 
-		Ctx(GenericMemoryPoolAllocator<U8> tmpAlloc)
-			: m_tmpAlloc(tmpAlloc)
+		Ctx(BaseMemoryPool* tmpPool)
+			: m_tmpPool(tmpPool)
 		{
 		}
 	};
 
-	Ctx* ctx = tmpAlloc.newInstance<Ctx>(tmpAlloc);
-	ctx->m_binaryAlloc = binaryAlloc;
+	Ctx* ctx = newInstance<Ctx>(tmpPool, &tmpPool);
+	ctx->m_binaryPool = &binaryPool;
 	ctx->m_mutation.create(mutation.getSize());
 	memcpy(ctx->m_mutation.getBegin(), mutation.getBegin(), mutation.getSizeInBytes());
 	ctx->m_parser = &parser;
@@ -232,30 +229,30 @@ static void compileVariantAsync(ConstWeakArray<MutatorValue> mutation, const Sha
 
 	auto callback = [](void* userData) {
 		Ctx& ctx = *static_cast<Ctx*>(userData);
-		GenericMemoryPoolAllocator<U8>& tmpAlloc = ctx.m_tmpAlloc;
+		BaseMemoryPool& tmpPool = *ctx.m_tmpPool;
 
 		if(ctx.m_err->load() != 0)
 		{
 			// Cleanup and return
-			tmpAlloc.deleteInstance(&ctx);
+			deleteInstance(tmpPool, &ctx);
 			return;
 		}
 
 		// All good, compile the variant
-		Array<DynamicArrayRaii<U8>, U32(ShaderType::kCount)> spirvs = {{{tmpAlloc},
-																		{tmpAlloc},
-																		{tmpAlloc},
-																		{tmpAlloc},
-																		{tmpAlloc},
-																		{tmpAlloc},
-																		{tmpAlloc},
-																		{tmpAlloc},
-																		{tmpAlloc},
-																		{tmpAlloc},
-																		{tmpAlloc},
-																		{tmpAlloc}}};
-		StringRaii errorLog(tmpAlloc);
-		const Error err = compileSpirv(ctx.m_mutation, *ctx.m_parser, tmpAlloc, spirvs, errorLog);
+		Array<DynamicArrayRaii<U8>, U32(ShaderType::kCount)> spirvs = {{{&tmpPool},
+																		{&tmpPool},
+																		{&tmpPool},
+																		{&tmpPool},
+																		{&tmpPool},
+																		{&tmpPool},
+																		{&tmpPool},
+																		{&tmpPool},
+																		{&tmpPool},
+																		{&tmpPool},
+																		{&tmpPool},
+																		{&tmpPool}}};
+		StringRaii errorLog(&tmpPool);
+		const Error err = compileSpirv(ctx.m_mutation, *ctx.m_parser, tmpPool, spirvs, errorLog);
 
 		if(!err)
 		{
@@ -290,7 +287,7 @@ static void compileVariantAsync(ConstWeakArray<MutatorValue> mutation, const Sha
 				// Create it if not found
 				if(!found)
 				{
-					U8* code = ctx.m_binaryAlloc.allocate(spirv.getSizeInBytes());
+					U8* code = static_cast<U8*>(ctx.m_binaryPool->allocate(spirv.getSizeInBytes(), 1));
 					memcpy(code, &spirv[0], spirv.getSizeInBytes());
 
 					ShaderProgramBinaryCodeBlock block;
@@ -315,7 +312,7 @@ static void compileVariantAsync(ConstWeakArray<MutatorValue> mutation, const Sha
 		}
 
 		// Cleanup
-		tmpAlloc.deleteInstance(&ctx);
+		deleteInstance(tmpPool, &ctx);
 	};
 
 	taskManager.enqueueTask(callback, ctx);
@@ -324,46 +321,45 @@ static void compileVariantAsync(ConstWeakArray<MutatorValue> mutation, const Sha
 class Refl final : public ShaderReflectionVisitorInterface
 {
 public:
-	GenericMemoryPoolAllocator<U8> m_alloc;
+	BaseMemoryPool* m_pool = nullptr;
 	const StringList* m_symbolsToReflect = nullptr;
 
 	/// Will be stored in the binary
 	/// @{
 
 	/// [blockType][blockIdx]
-	Array<DynamicArrayRaii<ShaderProgramBinaryBlock>, 3> m_blocks = {{m_alloc, m_alloc, m_alloc}};
+	Array<DynamicArrayRaii<ShaderProgramBinaryBlock>, 3> m_blocks = {{{m_pool}, {m_pool}, {m_pool}}};
 
 	/// [blockType][blockIdx][varIdx]
-	Array<DynamicArrayRaii<DynamicArrayRaii<ShaderProgramBinaryVariable>>, 3> m_vars = {
-		{{m_alloc}, {m_alloc}, {m_alloc}}};
+	Array<DynamicArrayRaii<DynamicArrayRaii<ShaderProgramBinaryVariable>>, 3> m_vars = {{{m_pool}, {m_pool}, {m_pool}}};
 
-	DynamicArrayRaii<ShaderProgramBinaryOpaque> m_opaque = {m_alloc};
-	DynamicArrayRaii<ShaderProgramBinaryConstant> m_consts = {m_alloc};
+	DynamicArrayRaii<ShaderProgramBinaryOpaque> m_opaque = {m_pool};
+	DynamicArrayRaii<ShaderProgramBinaryConstant> m_consts = {m_pool};
 
-	DynamicArrayRaii<ShaderProgramBinaryStruct> m_structs = {m_alloc};
+	DynamicArrayRaii<ShaderProgramBinaryStruct> m_structs = {m_pool};
 	/// [structIndex][memberIndex]
-	DynamicArrayRaii<DynamicArrayRaii<ShaderProgramBinaryStructMember>> m_structMembers = {m_alloc};
+	DynamicArrayRaii<DynamicArrayRaii<ShaderProgramBinaryStructMember>> m_structMembers = {m_pool};
 	/// @}
 
 	/// Will be stored in a variant
 	/// @{
 
 	/// [blockType][blockInstanceIdx]
-	Array<DynamicArrayRaii<ShaderProgramBinaryBlockInstance>, 3> m_blockInstances = {{m_alloc, m_alloc, m_alloc}};
+	Array<DynamicArrayRaii<ShaderProgramBinaryBlockInstance>, 3> m_blockInstances = {{{m_pool}, {m_pool}, {m_pool}}};
 
-	DynamicArrayRaii<ShaderProgramBinaryOpaqueInstance> m_opaqueInstances = {m_alloc};
-	DynamicArrayRaii<ShaderProgramBinaryConstantInstance> m_constInstances = {m_alloc};
+	DynamicArrayRaii<ShaderProgramBinaryOpaqueInstance> m_opaqueInstances = {m_pool};
+	DynamicArrayRaii<ShaderProgramBinaryConstantInstance> m_constInstances = {m_pool};
 
-	DynamicArrayRaii<ShaderProgramBinaryStructInstance> m_structInstances = {m_alloc};
+	DynamicArrayRaii<ShaderProgramBinaryStructInstance> m_structInstances = {m_pool};
 	/// [structInstance][memberInstance]
-	DynamicArrayRaii<DynamicArrayRaii<ShaderProgramBinaryStructMemberInstance>> m_structMemberInstances = {m_alloc};
+	DynamicArrayRaii<DynamicArrayRaii<ShaderProgramBinaryStructMemberInstance>> m_structMemberInstances = {m_pool};
 
 	Array<U32, 3> m_workgroupSizes = {kMaxU32, kMaxU32, kMaxU32};
 	Array<U32, 3> m_workgroupSizesConstants = {kMaxU32, kMaxU32, kMaxU32};
 	/// @}
 
-	Refl(const GenericMemoryPoolAllocator<U8>& alloc, const StringList* symbolsToReflect)
-		: m_alloc(alloc)
+	Refl(BaseMemoryPool* pool, const StringList* symbolsToReflect)
+		: m_pool(pool)
 		, m_symbolsToReflect(symbolsToReflect)
 	{
 	}
@@ -416,7 +412,7 @@ public:
 		m_opaqueInstances.create(opaqueCount);
 		m_constInstances.create(constCount);
 		m_structInstances.create(structCount);
-		m_structMemberInstances.create(structCount, m_alloc);
+		m_structMemberInstances.create(structCount, {m_pool});
 		return Error::kNone;
 	}
 
@@ -579,7 +575,7 @@ public:
 			ANKI_CHECK(setName(name, s.m_name));
 
 			// Allocate members
-			m_structMembers.emplaceBack(m_alloc);
+			m_structMembers.emplaceBack(m_pool);
 			ANKI_ASSERT(m_structs.getSize() == m_structMembers.getSize());
 		}
 
@@ -707,7 +703,7 @@ public:
 			blockIdx = m_blocks[blockType].getSize() - 1;
 
 			// Create some storage for vars as well
-			m_vars[blockType].emplaceBack(m_alloc);
+			m_vars[blockType].emplaceBack(m_pool);
 			ANKI_ASSERT(m_vars[blockType].getSize() == m_blocks[blockType].getSize());
 		}
 
@@ -715,7 +711,7 @@ public:
 		ShaderProgramBinaryBlockInstance& instance = m_blockInstances[blockType][blockInstanceIdx];
 		instance.m_index = blockIdx;
 		instance.m_size = size;
-		m_alloc.newArray(varSize, instance.m_variableInstances);
+		newArray(*m_pool, varSize, instance.m_variableInstances);
 
 		return Error::kNone;
 	}
@@ -765,11 +761,10 @@ public:
 
 static Error doGhostStructReflection(const StringList& symbolsToReflect,
 									 ConstWeakArray<ShaderProgramParserGhostStruct> ghostStructs,
-									 ShaderProgramBinary& binary, GenericMemoryPoolAllocator<U8>& tmpAlloc,
-									 GenericMemoryPoolAllocator<U8>& binaryAlloc)
+									 ShaderProgramBinary& binary, BaseMemoryPool& tmpPool, BaseMemoryPool& binaryPool)
 {
 	// Count reflectable ghost structs
-	DynamicArrayRaii<U32> ghostStructIndices(tmpAlloc);
+	DynamicArrayRaii<U32> ghostStructIndices(&tmpPool);
 	for(U32 i = 0; i < ghostStructs.getSize(); ++i)
 	{
 		for(const String& s : symbolsToReflect)
@@ -789,7 +784,7 @@ static Error doGhostStructReflection(const StringList& symbolsToReflect,
 
 	// Add the ghost structs to binary structs
 	const U32 nonGhostStructCount = binary.m_structs.getSize();
-	DynamicArrayRaii<ShaderProgramBinaryStruct> structs(binaryAlloc,
+	DynamicArrayRaii<ShaderProgramBinaryStruct> structs(&binaryPool,
 														nonGhostStructCount + ghostStructIndices.getSize());
 
 	for(U32 i = 0; i < binary.m_structs.getSize(); ++i)
@@ -804,7 +799,7 @@ static Error doGhostStructReflection(const StringList& symbolsToReflect,
 
 		ANKI_CHECK(Refl::setName(in.m_name, out.m_name));
 
-		DynamicArrayRaii<ShaderProgramBinaryStructMember> members(binaryAlloc, in.m_members.getSize());
+		DynamicArrayRaii<ShaderProgramBinaryStructMember> members(&binaryPool, in.m_members.getSize());
 		for(U32 j = 0; j < in.m_members.getSize(); ++j)
 		{
 			const ShaderProgramParserMember& inMember = in.m_members[j];
@@ -819,18 +814,18 @@ static Error doGhostStructReflection(const StringList& symbolsToReflect,
 		members.moveAndReset(out.m_members);
 	}
 
-	binaryAlloc.deleteArray(binary.m_structs);
+	deleteArray(binaryPool, binary.m_structs);
 	structs.moveAndReset(binary.m_structs);
 
 	return Error::kNone;
 }
 
-static Error doReflection(const StringList& symbolsToReflect, ShaderProgramBinary& binary,
-						  GenericMemoryPoolAllocator<U8>& tmpAlloc, GenericMemoryPoolAllocator<U8>& binaryAlloc)
+static Error doReflection(const StringList& symbolsToReflect, ShaderProgramBinary& binary, BaseMemoryPool& tmpPool,
+						  BaseMemoryPool& binaryPool)
 {
 	ANKI_ASSERT(binary.m_variants.getSize() > 0);
 
-	Refl refl(binaryAlloc, &symbolsToReflect);
+	Refl refl(&binaryPool, &symbolsToReflect);
 
 	for(ShaderProgramBinaryVariant& variant : binary.m_variants)
 	{
@@ -843,7 +838,7 @@ static Error doReflection(const StringList& symbolsToReflect, ShaderProgramBinar
 			}
 		}
 
-		ANKI_CHECK(performSpirvReflection(spirvs, tmpAlloc, refl));
+		ANKI_CHECK(performSpirvReflection(spirvs, tmpPool, refl));
 
 		// Store the instances
 		if(refl.m_blockInstances[0].getSize())
@@ -991,21 +986,20 @@ static Error doReflection(const StringList& symbolsToReflect, ShaderProgramBinar
 
 Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterface& fsystem,
 								   ShaderProgramPostParseInterface* postParseCallback,
-								   ShaderProgramAsyncTaskInterface* taskManager_,
-								   GenericMemoryPoolAllocator<U8> tempAllocator,
+								   ShaderProgramAsyncTaskInterface* taskManager_, BaseMemoryPool& tempPool,
 								   const ShaderCompilerOptions& compilerOptions, ShaderProgramBinaryWrapper& binaryW)
 {
 	// Initialize the binary
 	binaryW.cleanup();
 	binaryW.m_singleAllocation = false;
-	GenericMemoryPoolAllocator<U8> binaryAllocator = binaryW.m_alloc;
-	binaryW.m_binary = binaryAllocator.newInstance<ShaderProgramBinary>();
+	BaseMemoryPool& binaryPool = *binaryW.m_pool;
+	binaryW.m_binary = newInstance<ShaderProgramBinary>(binaryPool);
 	ShaderProgramBinary& binary = *binaryW.m_binary;
 	binary = {};
 	memcpy(&binary.m_magic[0], SHADER_BINARY_MAGIC, 8);
 
 	// Parse source
-	ShaderProgramParser parser(fname, &fsystem, tempAllocator, compilerOptions);
+	ShaderProgramParser parser(fname, &fsystem, &tempPool, compilerOptions);
 	ANKI_CHECK(parser.parse());
 
 	if(postParseCallback && postParseCallback->skipCompilation(parser.getHash()))
@@ -1017,7 +1011,7 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 	U32 mutationCount = 0;
 	if(parser.getMutators().getSize() > 0)
 	{
-		binaryAllocator.newArray(parser.getMutators().getSize(), binary.m_mutators);
+		newArray(binaryPool, parser.getMutators().getSize(), binary.m_mutators);
 
 		for(U32 i = 0; i < binary.m_mutators.getSize(); ++i)
 		{
@@ -1026,7 +1020,7 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 
 			ANKI_CHECK(Refl::setName(in.getName(), out.m_name));
 
-			binaryAllocator.newArray(in.getValues().getSize(), out.m_values);
+			newArray(binaryPool, in.getValues().getSize(), out.m_values);
 			memcpy(out.m_values.getBegin(), in.getValues().getBegin(), in.getValues().getSizeInBytes());
 
 			// Update the count
@@ -1060,13 +1054,13 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 	if(parser.getMutators().getSize() > 0)
 	{
 		// Initialize
-		DynamicArrayRaii<MutatorValue> mutationValues(tempAllocator, parser.getMutators().getSize());
-		DynamicArrayRaii<U32> dials(tempAllocator, parser.getMutators().getSize(), 0);
-		DynamicArrayRaii<ShaderProgramBinaryVariant> variants(binaryAllocator);
-		DynamicArrayRaii<ShaderProgramBinaryCodeBlock> codeBlocks(binaryAllocator);
-		DynamicArrayRaii<ShaderProgramBinaryMutation> mutations(binaryAllocator, mutationCount);
-		DynamicArrayRaii<U64> codeBlockHashes(tempAllocator);
-		HashMapRaii<U64, U32> mutationHashToIdx(tempAllocator);
+		DynamicArrayRaii<MutatorValue> mutationValues(&tempPool, parser.getMutators().getSize());
+		DynamicArrayRaii<U32> dials(&tempPool, parser.getMutators().getSize(), 0);
+		DynamicArrayRaii<ShaderProgramBinaryVariant> variants(&binaryPool);
+		DynamicArrayRaii<ShaderProgramBinaryCodeBlock> codeBlocks(&binaryPool);
+		DynamicArrayRaii<ShaderProgramBinaryMutation> mutations(&binaryPool, mutationCount);
+		DynamicArrayRaii<U64> codeBlockHashes(&tempPool);
+		HashMapRaii<U64, U32> mutationHashToIdx(&tempPool);
 
 		// Grow the storage of the variants array. Can't have it resize, threads will work on stale data
 		variants.resizeStorage(mutationCount);
@@ -1086,7 +1080,7 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 			}
 
 			ShaderProgramBinaryMutation& mutation = mutations[mutationCount++];
-			binaryAllocator.newArray(mutationValues.getSize(), mutation.m_values);
+			newArray(binaryPool, mutationValues.getSize(), mutation.m_values);
 			memcpy(mutation.m_values.getBegin(), mutationValues.getBegin(), mutationValues.getSizeInBytes());
 
 			mutation.m_hash = computeHash(mutationValues.getBegin(), mutationValues.getSizeInBytes());
@@ -1103,8 +1097,8 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 				ShaderProgramBinaryVariant& variant = *variants.emplaceBack();
 				baseVariant = (baseVariant == nullptr) ? variants.getBegin() : baseVariant;
 
-				compileVariantAsync(mutationValues, parser, variant, codeBlocks, codeBlockHashes, tempAllocator,
-									binaryAllocator, taskManager, mtx, errorAtomic);
+				compileVariantAsync(mutationValues, parser, variant, codeBlocks, codeBlockHashes, tempPool, binaryPool,
+									taskManager, mtx, errorAtomic);
 
 				mutation.m_variantIndex = variants.getSize() - 1;
 
@@ -1136,14 +1130,14 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 	}
 	else
 	{
-		DynamicArrayRaii<MutatorValue> mutation(tempAllocator);
-		DynamicArrayRaii<ShaderProgramBinaryCodeBlock> codeBlocks(binaryAllocator);
-		DynamicArrayRaii<U64> codeBlockHashes(tempAllocator);
+		DynamicArrayRaii<MutatorValue> mutation(&tempPool);
+		DynamicArrayRaii<ShaderProgramBinaryCodeBlock> codeBlocks(&binaryPool);
+		DynamicArrayRaii<U64> codeBlockHashes(&tempPool);
 
-		binary.m_variants.setArray(binaryAllocator.newInstance<ShaderProgramBinaryVariant>(), 1);
+		binary.m_variants.setArray(newInstance<ShaderProgramBinaryVariant>(binaryPool), 1);
 
-		compileVariantAsync(mutation, parser, binary.m_variants[0], codeBlocks, codeBlockHashes, tempAllocator,
-							binaryAllocator, taskManager, mtx, errorAtomic);
+		compileVariantAsync(mutation, parser, binary.m_variants[0], codeBlocks, codeBlockHashes, tempPool, binaryPool,
+							taskManager, mtx, errorAtomic);
 
 		ANKI_CHECK(taskManager.joinTasks());
 		ANKI_CHECK(Error(errorAtomic.getNonAtomically()));
@@ -1155,7 +1149,7 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 		codeBlocks.moveAndReset(firstCodeBlock, size, storage);
 		binary.m_codeBlocks.setArray(firstCodeBlock, size);
 
-		binary.m_mutations.setArray(binaryAllocator.newInstance<ShaderProgramBinaryMutation>(), 1);
+		binary.m_mutations.setArray(newInstance<ShaderProgramBinaryMutation>(binaryPool), 1);
 		binary.m_mutations[0].m_hash = 1;
 		binary.m_mutations[0].m_variantIndex = 0;
 	}
@@ -1184,19 +1178,19 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 	binary.m_presentShaderTypes = parser.getShaderTypes();
 
 	// Reflection
-	ANKI_CHECK(doReflection(parser.getSymbolsToReflect(), binary, tempAllocator, binaryAllocator));
-	ANKI_CHECK(doGhostStructReflection(parser.getSymbolsToReflect(), parser.getGhostStructs(), binary, tempAllocator,
-									   binaryAllocator));
+	ANKI_CHECK(doReflection(parser.getSymbolsToReflect(), binary, tempPool, binaryPool));
+	ANKI_CHECK(
+		doGhostStructReflection(parser.getSymbolsToReflect(), parser.getGhostStructs(), binary, tempPool, binaryPool));
 
 	return Error::kNone;
 }
 
 Error compileShaderProgram(CString fname, ShaderProgramFilesystemInterface& fsystem,
 						   ShaderProgramPostParseInterface* postParseCallback,
-						   ShaderProgramAsyncTaskInterface* taskManager, GenericMemoryPoolAllocator<U8> tempAllocator,
+						   ShaderProgramAsyncTaskInterface* taskManager, BaseMemoryPool& tempPool,
 						   const ShaderCompilerOptions& compilerOptions, ShaderProgramBinaryWrapper& binaryW)
 {
-	const Error err = compileShaderProgramInternal(fname, fsystem, postParseCallback, taskManager, tempAllocator,
+	const Error err = compileShaderProgramInternal(fname, fsystem, postParseCallback, taskManager, tempPool,
 												   compilerOptions, binaryW);
 	if(err)
 	{

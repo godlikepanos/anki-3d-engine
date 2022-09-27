@@ -280,11 +280,10 @@ Vec4 pow(Vec4 a, F32 b)
 
 static const U64 SHADER_HEADER_HASH = computeHash(SHADER_HEADER, sizeof(SHADER_HEADER));
 
-ShaderProgramParser::ShaderProgramParser(CString fname, ShaderProgramFilesystemInterface* fsystem,
-										 GenericMemoryPoolAllocator<U8> alloc,
+ShaderProgramParser::ShaderProgramParser(CString fname, ShaderProgramFilesystemInterface* fsystem, BaseMemoryPool* pool,
 										 const ShaderCompilerOptions& compilerOptions)
-	: m_alloc(alloc)
-	, m_fname(alloc, fname)
+	: m_pool(pool)
+	, m_fname(pool, fname)
 	, m_fsystem(fsystem)
 	, m_compilerOptions(compilerOptions)
 {
@@ -298,7 +297,7 @@ void ShaderProgramParser::tokenizeLine(CString line, DynamicArrayRaii<StringRaii
 {
 	ANKI_ASSERT(line.getLength() > 0);
 
-	StringRaii l(m_alloc, line);
+	StringRaii l(m_pool, line);
 
 	// Replace all tabs with spaces
 	for(char& c : l)
@@ -310,13 +309,13 @@ void ShaderProgramParser::tokenizeLine(CString line, DynamicArrayRaii<StringRaii
 	}
 
 	// Split
-	StringListAuto spaceTokens(m_alloc);
+	StringListRaii spaceTokens(m_pool);
 	spaceTokens.splitString(l, ' ', false);
 
 	// Create the array
 	for(const String& s : spaceTokens)
 	{
-		tokens.emplaceBack(m_alloc, s);
+		tokens.emplaceBack(m_pool, s);
 	}
 }
 
@@ -442,7 +441,7 @@ Error ShaderProgramParser::parsePragmaMutator(const StringRaii* begin, const Str
 		ANKI_PP_ERROR_MALFORMED();
 	}
 
-	m_mutators.emplaceBack(m_alloc);
+	m_mutators.emplaceBack(m_pool);
 	Mutator& mutator = m_mutators.getBack();
 
 	// Name
@@ -580,7 +579,7 @@ Error ShaderProgramParser::parsePragmaSkipMutation(const StringRaii* begin, cons
 		ANKI_PP_ERROR_MALFORMED();
 	}
 
-	PartialMutationSkip& skip = *m_skipMutations.emplaceBack(m_alloc);
+	PartialMutationSkip& skip = *m_skipMutations.emplaceBack(m_pool);
 	skip.m_partialMutation.create(m_mutators.getSize(), std::numeric_limits<MutatorValue>::max());
 
 	do
@@ -628,7 +627,7 @@ Error ShaderProgramParser::parseInclude(const StringRaii* begin, const StringRai
 										U32 depth)
 {
 	// Gather the path
-	StringRaii path(m_alloc);
+	StringRaii path(m_pool);
 	for(; begin < end; ++begin)
 	{
 		path.append(*begin);
@@ -645,7 +644,7 @@ Error ShaderProgramParser::parseInclude(const StringRaii* begin, const StringRai
 
 	if((firstChar == '\"' && lastChar == '\"') || (firstChar == '<' && lastChar == '>'))
 	{
-		StringRaii fname2(m_alloc);
+		StringRaii fname2(m_pool);
 		fname2.create(path.begin() + 1, path.begin() + path.getLength() - 1);
 
 		const Bool dontIgnore =
@@ -672,7 +671,7 @@ Error ShaderProgramParser::parseInclude(const StringRaii* begin, const StringRai
 Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPragmaOnce, U32 depth)
 {
 	// Tokenize
-	DynamicArrayRaii<StringRaii> tokens(m_alloc);
+	DynamicArrayRaii<StringRaii> tokens(m_pool);
 	tokenizeLine(line, tokens);
 	ANKI_ASSERT(tokens.getSize() > 0);
 
@@ -810,7 +809,7 @@ Error ShaderProgramParser::parsePragmaStructBegin(const StringRaii* begin, const
 		ANKI_PP_ERROR_MALFORMED();
 	}
 
-	GhostStruct& gstruct = *m_ghostStructs.emplaceBack(m_alloc);
+	GhostStruct& gstruct = *m_ghostStructs.emplaceBack(m_pool);
 	gstruct.m_name.create(*begin);
 
 	// Add a '_' to the struct name.
@@ -842,7 +841,7 @@ Error ShaderProgramParser::parsePragmaMember(const StringRaii* begin, const Stri
 		ANKI_PP_ERROR_MALFORMED();
 	}
 
-	Member& member = *m_ghostStructs.getBack().m_members.emplaceBack(m_alloc);
+	Member& member = *m_ghostStructs.getBack().m_members.emplaceBack(m_pool);
 
 	// Relaxed
 	Bool relaxed = false;
@@ -1031,10 +1030,10 @@ Error ShaderProgramParser::parsePragmaStructEnd(const StringRaii* begin, const S
 		// #	define XXX_LOAD()
 		const Bool isIntegral = getShaderVariableDataTypeInfo(m.m_type).m_isIntegral;
 		const U32 componentCount = getShaderVariableDataTypeInfo(m.m_type).m_size / sizeof(U32);
-		StringRaii values(m_alloc);
+		StringRaii values(m_pool);
 		for(U32 j = 0; j < componentCount; ++j)
 		{
-			StringRaii tmp(m_alloc);
+			StringRaii tmp(m_pool);
 			tmp.sprintf("%s(ssbo[%s_%s_OFFSETOF + offset + %uu])%s", (isIntegral) ? "" : "uintBitsToFloat",
 						structName.cstr(), m.m_name.cstr(), j, (j != componentCount - 1) ? "," : "");
 
@@ -1085,10 +1084,10 @@ Error ShaderProgramParser::parseFile(CString fname, U32 depth)
 	Bool foundPragmaOnce = false;
 
 	// Load file in lines
-	StringRaii txt(m_alloc);
+	StringRaii txt(m_pool);
 	ANKI_CHECK(m_fsystem->readAllText(fname, txt));
 
-	StringListAuto lines(m_alloc);
+	StringListRaii lines(m_pool);
 	lines.splitString(txt.toCString(), '\n');
 	if(lines.getSize() < 1)
 	{
@@ -1213,13 +1212,13 @@ Error ShaderProgramParser::generateVariant(ConstWeakArray<MutatorValue> mutation
 
 	// Init variant
 	::new(&variant) ShaderProgramParserVariant();
-	variant.m_alloc = m_alloc;
+	variant.m_pool = m_pool;
 
 	// Create the mutator defines
-	StringRaii mutatorDefines(m_alloc);
+	StringRaii mutatorDefines(m_pool);
 	for(U32 i = 0; i < mutation.getSize(); ++i)
 	{
-		mutatorDefines.append(StringRaii(m_alloc).sprintf("#define %s %d\n", m_mutators[i].m_name.cstr(), mutation[i]));
+		mutatorDefines.append(StringRaii(m_pool).sprintf("#define %s %d\n", m_mutators[i].m_name.cstr(), mutation[i]));
 	}
 
 	// Generate souce per stage
@@ -1231,11 +1230,11 @@ Error ShaderProgramParser::generateVariant(ConstWeakArray<MutatorValue> mutation
 		}
 
 		// Create the header
-		StringRaii header(m_alloc);
+		StringRaii header(m_pool);
 		generateAnkiShaderHeader(shaderType, m_compilerOptions, header);
 
 		// Create the final source without the bindings
-		StringRaii finalSource(m_alloc);
+		StringRaii finalSource(m_pool);
 		finalSource.append(header);
 		finalSource.append(mutatorDefines);
 		finalSource.append(m_codeSource);

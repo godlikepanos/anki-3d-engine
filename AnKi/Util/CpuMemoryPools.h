@@ -343,25 +343,37 @@ template<typename TMemPool>
 class MemoryPoolPtrWrapper
 {
 public:
-	TMemPool* m_pool;
+	TMemPool* m_pool = nullptr;
+
+	MemoryPoolPtrWrapper() = default;
 
 	MemoryPoolPtrWrapper(TMemPool* pool)
 		: m_pool(pool)
 	{
+		ANKI_ASSERT(pool);
 	}
 
 	TMemPool* operator&()
 	{
+		ANKI_ASSERT(m_pool);
 		return m_pool;
+	}
+
+	operator TMemPool&()
+	{
+		ANKI_ASSERT(m_pool);
+		return *m_pool;
 	}
 
 	void* allocate(PtrSize size, PtrSize alignmentBytes)
 	{
+		ANKI_ASSERT(m_pool);
 		return m_pool->allocate(size, alignmentBytes);
 	}
 
 	void free(void* ptr)
 	{
+		ANKI_ASSERT(m_pool);
 		m_pool->free(ptr);
 	}
 };

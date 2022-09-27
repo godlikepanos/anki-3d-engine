@@ -52,8 +52,8 @@ public:
 };
 
 /// Does reflection using SPIR-V.
-Error performSpirvReflection(Array<ConstWeakArray<U8>, U32(ShaderType::kCount)> spirv,
-							 GenericMemoryPoolAllocator<U8> tmpAlloc, ShaderReflectionVisitorInterface& interface);
+Error performSpirvReflection(Array<ConstWeakArray<U8>, U32(ShaderType::kCount)> spirv, BaseMemoryPool& tmpPool,
+							 ShaderReflectionVisitorInterface& interface);
 /// @}
 
 } // end namespace anki

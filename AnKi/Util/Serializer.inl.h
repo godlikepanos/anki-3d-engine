@@ -56,7 +56,7 @@ Error BinarySerializer::serializeInternal(const T& x, BaseMemoryPool& tmpPool, F
 	}
 
 	// Write all pointers. Do that now and not while writing the actual shader in order to avoid the file seeks
-	DynamicArrayRaii<PtrSize> pointerFilePositions(tmpPool);
+	DynamicArrayRaii<PtrSize> pointerFilePositions(&tmpPool);
 	for(const PointerInfo& pointer : m_pointerFilePositions)
 	{
 		ANKI_CHECK(m_file->seek(pointer.m_filePos, FileSeekOrigin::BEGINNING));

@@ -853,7 +853,7 @@ public:
 	}
 
 	/// Create with memory pool and data.
-	BaseStringRaii(MemoryPool& pool, const CStringType& cstr)
+	BaseStringRaii(const MemoryPool& pool, const CStringType& cstr)
 		: Base()
 		, m_pool(pool)
 	{

@@ -25,9 +25,9 @@ class ShaderProgramParserMutator
 	friend ShaderProgramParser;
 
 public:
-	ShaderProgramParserMutator(GenericMemoryPoolAllocator<U8> alloc)
-		: m_name(alloc)
-		, m_values(alloc)
+	ShaderProgramParserMutator(BaseMemoryPool* pool)
+		: m_name(pool)
+		, m_values(pool)
 	{
 	}
 
@@ -55,8 +55,8 @@ public:
 	U32 m_dependentMutator = kMaxU32;
 	MutatorValue m_mutatorValue = 0;
 
-	ShaderProgramParserMember(GenericMemoryPoolAllocator<U8> alloc)
-		: m_name(alloc)
+	ShaderProgramParserMember(BaseMemoryPool* pool)
+		: m_name(pool)
 	{
 	}
 };
@@ -68,9 +68,9 @@ public:
 	DynamicArrayRaii<ShaderProgramParserMember> m_members;
 	StringRaii m_name;
 
-	ShaderProgramParserGhostStruct(GenericMemoryPoolAllocator<U8> alloc)
-		: m_members(alloc)
-		, m_name(alloc)
+	ShaderProgramParserGhostStruct(BaseMemoryPool* pool)
+		: m_members(pool)
+		, m_name(pool)
 	{
 	}
 };
@@ -85,7 +85,7 @@ public:
 	{
 		for(String& s : m_sources)
 		{
-			s.destroy(m_alloc);
+			s.destroy(*m_pool);
 		}
 	}
 
@@ -95,7 +95,7 @@ public:
 	}
 
 private:
-	GenericMemoryPoolAllocator<U8> m_alloc;
+	BaseMemoryPool* m_pool = nullptr;
 	Array<String, U32(ShaderType::kCount)> m_sources;
 };
 
@@ -122,7 +122,7 @@ private:
 class ShaderProgramParser
 {
 public:
-	ShaderProgramParser(CString fname, ShaderProgramFilesystemInterface* fsystem, GenericMemoryPoolAllocator<U8> alloc,
+	ShaderProgramParser(CString fname, ShaderProgramFilesystemInterface* fsystem, BaseMemoryPool* pool,
 						const ShaderCompilerOptions& compilerOptions);
 
 	ShaderProgramParser(const ShaderProgramParser&) = delete; // Non-copyable
@@ -190,35 +190,35 @@ private:
 	public:
 		DynamicArrayRaii<MutatorValue> m_partialMutation;
 
-		PartialMutationSkip(const GenericMemoryPoolAllocator<U8>& alloc)
-			: m_partialMutation(alloc)
+		PartialMutationSkip(BaseMemoryPool* pool)
+			: m_partialMutation(pool)
 		{
 		}
 	};
 
 	static constexpr U32 MAX_INCLUDE_DEPTH = 8;
 
-	GenericMemoryPoolAllocator<U8> m_alloc;
+	BaseMemoryPool* m_pool = nullptr;
 	StringRaii m_fname;
 	ShaderProgramFilesystemInterface* m_fsystem = nullptr;
 
-	StringListRaii m_codeLines = {m_alloc}; ///< The code.
-	StringRaii m_codeSource = {m_alloc};
+	StringListRaii m_codeLines = {m_pool}; ///< The code.
+	StringRaii m_codeSource = {m_pool};
 	U64 m_codeSourceHash = 0;
 
-	DynamicArrayRaii<Mutator> m_mutators = {m_alloc};
-	DynamicArrayRaii<PartialMutationSkip> m_skipMutations = {m_alloc};
+	DynamicArrayRaii<Mutator> m_mutators = {m_pool};
+	DynamicArrayRaii<PartialMutationSkip> m_skipMutations = {m_pool};
 
 	ShaderTypeBit m_shaderTypes = ShaderTypeBit::kNone;
 	Bool m_insideShader = false;
 	ShaderCompilerOptions m_compilerOptions;
 
-	StringRaii m_libName = {m_alloc};
+	StringRaii m_libName = {m_pool};
 	U32 m_rayType = kMaxU32;
 
-	StringListRaii m_symbolsToReflect = {m_alloc};
+	StringListRaii m_symbolsToReflect = {m_pool};
 
-	DynamicArrayRaii<GhostStruct> m_ghostStructs = {m_alloc};
+	DynamicArrayRaii<GhostStruct> m_ghostStructs = {m_pool};
 	Bool m_insideStruct = false;
 
 	Error parseFile(CString fname, U32 depth);

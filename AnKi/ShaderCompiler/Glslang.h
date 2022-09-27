@@ -17,8 +17,8 @@ namespace anki {
 Error preprocessGlsl(CString in, StringRaii& out);
 
 /// Compile glsl to SPIR-V.
-Error compilerGlslToSpirv(CString src, ShaderType shaderType, GenericMemoryPoolAllocator<U8> tmpAlloc,
-						  DynamicArrayRaii<U8>& spirv, StringRaii& errorMessage);
+Error compilerGlslToSpirv(CString src, ShaderType shaderType, BaseMemoryPool& tmpPool, DynamicArrayRaii<U8>& spirv,
+						  StringRaii& errorMessage);
 /// @}
 
 } // end namespace anki

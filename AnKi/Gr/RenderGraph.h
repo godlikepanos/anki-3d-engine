@@ -321,18 +321,18 @@ class RenderPassDescriptionBase
 public:
 	virtual ~RenderPassDescriptionBase()
 	{
-		m_name.destroy(m_alloc); // To avoid the assertion
-		m_rtDeps.destroy(m_alloc);
-		m_buffDeps.destroy(m_alloc);
-		m_asDeps.destroy(m_alloc);
-		m_callback.destroy(m_alloc);
+		m_name.destroy(*m_pool); // To avoid the assertion
+		m_rtDeps.destroy(*m_pool);
+		m_buffDeps.destroy(*m_pool);
+		m_asDeps.destroy(*m_pool);
+		m_callback.destroy(*m_pool);
 	}
 
 	template<typename TFunc>
 	void setWork(U32 secondLeveCmdbCount, TFunc func)
 	{
 		ANKI_ASSERT(m_type == Type::kGraphics || secondLeveCmdbCount == 0);
-		m_callback.init(m_alloc, func);
+		m_callback.init(m_pool, func);
 		m_secondLevelCmdbsCount = secondLeveCmdbCount;
 	}
 
@@ -354,7 +354,7 @@ protected:
 
 	Type m_type;
 
-	StackAllocator<U8> m_alloc;
+	StackMemoryPool* m_pool = nullptr;
 	RenderGraphDescription* m_descr;
 
 	Function<void(RenderPassWorkContext&)> m_callback;
@@ -382,7 +382,7 @@ protected:
 
 	void setName(CString name)
 	{
-		m_name.create(m_alloc, (name.isEmpty()) ? "N/A" : name);
+		m_name.create(*m_pool, (name.isEmpty()) ? "N/A" : name);
 	}
 
 	void fixSubresource(RenderPassDependency& dep) const;
@@ -438,10 +438,14 @@ class GraphicsRenderPassDescription : public RenderPassDescriptionBase
 {
 	friend class RenderGraphDescription;
 	friend class RenderGraph;
-	template<typename, typename>
-	friend class GenericPoolAllocator;
 
 public:
+	GraphicsRenderPassDescription(RenderGraphDescription* descr)
+		: RenderPassDescriptionBase(Type::kGraphics, descr)
+	{
+		memset(&m_rtHandles[0], 0xFF, sizeof(m_rtHandles));
+	}
+
 	void setFramebufferInfo(const FramebufferDescription& fbInfo,
 							ConstWeakArray<RenderTargetHandle> colorRenderTargetHandles,
 							RenderTargetHandle depthStencilRenderTargetHandle = {},
@@ -459,12 +463,6 @@ private:
 	FramebufferDescription m_fbDescr;
 	Array<U32, 4> m_fbRenderArea = {};
 
-	GraphicsRenderPassDescription(RenderGraphDescription* descr)
-		: RenderPassDescriptionBase(Type::kGraphics, descr)
-	{
-		memset(&m_rtHandles[0], 0xFF, sizeof(m_rtHandles));
-	}
-
 	Bool hasFramebuffer() const
 	{
 		return m_fbDescr.m_hash != 0;
@@ -476,10 +474,8 @@ private:
 class ComputeRenderPassDescription : public RenderPassDescriptionBase
 {
 	friend class RenderGraphDescription;
-	template<typename, typename>
-	friend class GenericPoolAllocator;
 
-private:
+public:
 	ComputeRenderPassDescription(RenderGraphDescription* descr)
 		: RenderPassDescriptionBase(Type::kNoGraphics, descr)
 	{
@@ -494,8 +490,8 @@ class RenderGraphDescription
 	friend class RenderPassDescriptionBase;
 
 public:
-	RenderGraphDescription(const StackAllocator<U8>& alloc)
-		: m_alloc(alloc)
+	RenderGraphDescription(StackMemoryPool* pool)
+		: m_pool(pool)
 	{
 	}
 
@@ -572,7 +568,7 @@ private:
 		AccelerationStructureUsageBit m_usage;
 	};
 
-	StackAllocator<U8> m_alloc;
+	StackMemoryPool* m_pool = nullptr;
 	DynamicArray<RenderPassDescriptionBase*> m_passes;
 	DynamicArray<RT> m_renderTargets;
 	DynamicArray<Buffer> m_buffers;
@@ -628,7 +624,7 @@ public:
 
 	/// @name 1st step methods
 	/// @{
-	void compileNewGraph(const RenderGraphDescription& descr, StackAllocator<U8>& alloc);
+	void compileNewGraph(const RenderGraphDescription& descr, StackMemoryPool& pool);
 	/// @}
 
 	/// @name 2nd step methods
@@ -715,10 +711,10 @@ private:
 
 	[[nodiscard]] static RenderGraph* newInstance(GrManager* manager);
 
-	BakeContext* newContext(const RenderGraphDescription& descr, StackAllocator<U8>& alloc);
-	void initRenderPassesAndSetDeps(const RenderGraphDescription& descr, StackAllocator<U8>& alloc);
+	BakeContext* newContext(const RenderGraphDescription& descr, StackMemoryPool& pool);
+	void initRenderPassesAndSetDeps(const RenderGraphDescription& descr, StackMemoryPool& pool);
 	void initBatches();
-	void initGraphicsPasses(const RenderGraphDescription& descr, StackAllocator<U8>& alloc);
+	void initGraphicsPasses(const RenderGraphDescription& descr, StackMemoryPool& pool);
 	void setBatchBarriers(const RenderGraphDescription& descr);
 
 	TexturePtr getOrCreateRenderTarget(const TextureInitInfo& initInf, U64 hash);
@@ -745,9 +741,9 @@ private:
 	/// @name Dump the dependency graph into a file.
 	/// @{
 	Error dumpDependencyDotFile(const RenderGraphDescription& descr, const BakeContext& ctx, CString path) const;
-	static StringRaii textureUsageToStr(StackAllocator<U8>& alloc, TextureUsageBit usage);
-	static StringRaii bufferUsageToStr(StackAllocator<U8>& alloc, BufferUsageBit usage);
-	static StringRaii asUsageToStr(StackAllocator<U8>& alloc, AccelerationStructureUsageBit usage);
+	static StringRaii textureUsageToStr(StackMemoryPool& pool, TextureUsageBit usage);
+	static StringRaii bufferUsageToStr(StackMemoryPool& pool, BufferUsageBit usage);
+	static StringRaii asUsageToStr(StackMemoryPool& pool, AccelerationStructureUsageBit usage);
 	/// @}
 
 	TexturePtr getTexture(RenderTargetHandle handle) const;
