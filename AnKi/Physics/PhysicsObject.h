@@ -99,7 +99,7 @@ protected:
 		return m_refcount.fetchSub(1);
 	}
 
-	HeapAllocator<U8> getAllocator() const;
+	HeapMemoryPool& getMemoryPool();
 
 private:
 	Bool m_registered = false;

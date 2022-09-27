@@ -21,14 +21,14 @@ PhysicsFilteredObject::~PhysicsFilteredObject()
 
 		if(pair->shouldDelete())
 		{
-			getAllocator().deleteInstance(pair);
+			deleteInstance(getMemoryPool(), pair);
 		}
 	}
 }
 
-HeapAllocator<U8> PhysicsObject::getAllocator() const
+HeapMemoryPool& PhysicsObject::getMemoryPool()
 {
-	return m_world->getAllocator();
+	return m_world->getMemoryPool();
 }
 
 } // end namespace anki
