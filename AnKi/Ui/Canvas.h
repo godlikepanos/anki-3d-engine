@@ -85,7 +85,7 @@ private:
 	SamplerPtr m_linearLinearRepeatSampler;
 	SamplerPtr m_nearestNearestRepeatSampler;
 
-	StackAllocator<U8> m_stackAlloc;
+	StackMemoryPool m_tempPool;
 
 	List<IntrusivePtr<UiObject>> m_references;
 

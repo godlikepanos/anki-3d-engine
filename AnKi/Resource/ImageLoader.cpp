@@ -544,7 +544,7 @@ Error ImageLoader::loadAnkiImage(FileInterface& file, U32 maxImageSize,
 
 	if(skipSize)
 	{
-		ANKI_CHECK(file.seek(skipSize, FileSeekOrigin::CURRENT));
+		ANKI_CHECK(file.seek(skipSize, FileSeekOrigin::kCurrent));
 	}
 
 	//
@@ -582,7 +582,7 @@ Error ImageLoader::loadAnkiImage(FileInterface& file, U32 maxImageSize,
 					}
 					else
 					{
-						ANKI_CHECK(file.seek(dataSize, FileSeekOrigin::CURRENT));
+						ANKI_CHECK(file.seek(dataSize, FileSeekOrigin::kCurrent));
 					}
 				}
 			}
@@ -620,7 +620,7 @@ Error ImageLoader::loadAnkiImage(FileInterface& file, U32 maxImageSize,
 			}
 			else
 			{
-				ANKI_CHECK(file.seek(dataSize, FileSeekOrigin::CURRENT));
+				ANKI_CHECK(file.seek(dataSize, FileSeekOrigin::kCurrent));
 			}
 
 			mipWidth /= 2;

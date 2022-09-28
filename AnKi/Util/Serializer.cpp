@@ -32,7 +32,7 @@ Error BinarySerializer::doDynamicArrayBasicType(const void* arr, PtrSize size, U
 		m_pointerFilePositions.emplaceBack(*m_pool, pinfo);
 
 		// Write the array
-		ANKI_CHECK(m_file->seek(arrayFilePos, FileSeekOrigin::BEGINNING));
+		ANKI_CHECK(m_file->seek(arrayFilePos, FileSeekOrigin::kBeginning));
 		ANKI_CHECK(m_file->write(arr, size));
 	}
 

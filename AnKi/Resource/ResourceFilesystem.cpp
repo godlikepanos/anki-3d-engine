@@ -167,7 +167,7 @@ public:
 	Error seek(PtrSize offset, FileSeekOrigin origin) override
 	{
 		// Rewind if needed
-		if(origin == FileSeekOrigin::BEGINNING)
+		if(origin == FileSeekOrigin::kBeginning)
 		{
 			if(unzCloseCurrentFile(m_archive) || unzOpenCurrentFile(m_archive))
 			{

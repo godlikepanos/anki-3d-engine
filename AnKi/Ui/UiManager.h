@@ -29,9 +29,9 @@ public:
 	Error init(AllocAlignedCallback allocCallback, void* allocCallbackUserData, ResourceManager* resources,
 			   GrManager* gr, StagingGpuMemoryPool* gpuMem, Input* input);
 
-	UiAllocator getAllocator() const
+	HeapMemoryPool& getMemoryPool() const
 	{
-		return m_alloc;
+		return m_pool;
 	}
 
 	ResourceManager& getResourceManager()
@@ -62,7 +62,7 @@ public:
 	template<typename T, typename Y, typename... Args>
 	Error newInstance(IntrusivePtr<Y>& ptr, Args&&... args)
 	{
-		T* p = m_alloc.newInstance<T>(this);
+		T* p = anki::newInstance<T>(m_pool, this);
 		ptr.reset(static_cast<Y*>(p));
 		return p->init(args...);
 	}
@@ -71,12 +71,12 @@ public:
 	template<typename T, typename... Args>
 	Error newInstance(IntrusivePtr<T>& ptr, Args&&... args)
 	{
-		ptr.reset(m_alloc.newInstance<T>(this));
+		ptr.reset(anki::newInstance<T>(m_pool, this));
 		return ptr->init(args...);
 	}
 
 private:
-	UiAllocator m_alloc;
+	mutable HeapMemoryPool m_pool;
 	ResourceManager* m_resources = nullptr;
 	GrManager* m_gr = nullptr;
 	StagingGpuMemoryPool* m_gpuMem = nullptr;

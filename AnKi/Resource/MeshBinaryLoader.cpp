@@ -227,7 +227,7 @@ Error MeshBinaryLoader::storeIndexBuffer(void* ptr, PtrSize size)
 	ANKI_ASSERT(size == getIndexBufferSize());
 
 	const PtrSize seek = sizeof(m_header) + m_subMeshes.getSizeInBytes();
-	ANKI_CHECK(m_file->seek(seek, FileSeekOrigin::BEGINNING));
+	ANKI_CHECK(m_file->seek(seek, FileSeekOrigin::kBeginning));
 	ANKI_CHECK(m_file->read(ptr, size));
 
 	return Error::kNone;
@@ -246,7 +246,7 @@ Error MeshBinaryLoader::storeVertexBuffer(U32 bufferIdx, void* ptr, PtrSize size
 		seek += getAlignedVertexBufferSize(i);
 	}
 
-	ANKI_CHECK(m_file->seek(seek, FileSeekOrigin::BEGINNING));
+	ANKI_CHECK(m_file->seek(seek, FileSeekOrigin::kBeginning));
 	ANKI_CHECK(m_file->read(ptr, size));
 
 	return Error::kNone;

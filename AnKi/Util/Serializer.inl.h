@@ -59,7 +59,7 @@ Error BinarySerializer::serializeInternal(const T& x, BaseMemoryPool& tmpPool, F
 	DynamicArrayRaii<PtrSize> pointerFilePositions(&tmpPool);
 	for(const PointerInfo& pointer : m_pointerFilePositions)
 	{
-		ANKI_CHECK(m_file->seek(pointer.m_filePos, FileSeekOrigin::BEGINNING));
+		ANKI_CHECK(m_file->seek(pointer.m_filePos, FileSeekOrigin::kBeginning));
 		ANKI_CHECK(m_file->write(&pointer.m_value, sizeof(pointer.m_value)));
 
 		const PtrSize offsetAfterHeader = pointer.m_filePos - m_beginOfDataFilePos;
@@ -70,7 +70,7 @@ Error BinarySerializer::serializeInternal(const T& x, BaseMemoryPool& tmpPool, F
 	// Write the pointer offsets
 	if(pointerFilePositions.getSize() > 0)
 	{
-		ANKI_CHECK(m_file->seek(m_eofPos, FileSeekOrigin::BEGINNING));
+		ANKI_CHECK(m_file->seek(m_eofPos, FileSeekOrigin::kBeginning));
 		ANKI_CHECK(m_file->write(&pointerFilePositions[0], pointerFilePositions.getSizeInBytes()));
 		header.m_pointerCount = pointerFilePositions.getSize();
 		header.m_pointerArrayFilePosition = m_eofPos;
@@ -79,7 +79,7 @@ Error BinarySerializer::serializeInternal(const T& x, BaseMemoryPool& tmpPool, F
 	// Write the header
 	memcpy(&header.m_magic[0], detail::kBinarySerializerMagic, sizeof(header.m_magic));
 	header.m_dataSize = m_eofPos - dataFilePos;
-	ANKI_CHECK(m_file->seek(headerFilePos, FileSeekOrigin::BEGINNING));
+	ANKI_CHECK(m_file->seek(headerFilePos, FileSeekOrigin::kBeginning));
 	ANKI_CHECK(m_file->write(&header, sizeof(header)));
 
 	// Done
@@ -142,7 +142,7 @@ Error BinarySerializer::doDynamicArrayComplexType(const T* arr, PtrSize size, Pt
 		m_pointerFilePositions.emplaceBack(*m_pool, pinfo);
 
 		// Write the structures
-		ANKI_CHECK(m_file->seek(arrayFilePos, FileSeekOrigin::BEGINNING));
+		ANKI_CHECK(m_file->seek(arrayFilePos, FileSeekOrigin::kBeginning));
 		ANKI_CHECK(m_file->write(&arr[0], sizeof(T) * size));
 
 		// Basically serialize pointers
@@ -201,7 +201,7 @@ Error BinaryDeserializer::deserialize(T*& x, BaseMemoryPool& pool, TFile& file)
 	// Fix pointers
 	if(header.m_pointerCount)
 	{
-		ANKI_CHECK(file.seek(header.m_pointerArrayFilePosition, FileSeekOrigin::BEGINNING));
+		ANKI_CHECK(file.seek(header.m_pointerArrayFilePosition, FileSeekOrigin::kBeginning));
 		for(PtrSize i = 0; i < header.m_pointerCount; ++i)
 		{
 			// Read the location of the pointer

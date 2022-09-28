@@ -33,9 +33,9 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FileOpenFlag)
 /// @memberof File
 enum class FileSeekOrigin
 {
-	BEGINNING = SEEK_SET,
-	CURRENT = SEEK_CUR,
-	END = SEEK_END
+	kBeginning = SEEK_SET,
+	kCurrent = SEEK_CUR,
+	kEnd = SEEK_END
 };
 
 /// An abstraction over typical files and files in ziped archives. This class can read from regular C files, zip files

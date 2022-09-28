@@ -20,8 +20,8 @@ Font::~Font()
 	m_imFontAtlas.destroy();
 	unsetImAllocator();
 
-	m_fonts.destroy(getAllocator());
-	m_fontData.destroy(getAllocator());
+	m_fonts.destroy(getMemoryPool());
+	m_fontData.destroy(getMemoryPool());
 }
 
 Error Font::init(const CString& filename, ConstWeakArray<U32> fontHeights)
@@ -32,10 +32,10 @@ Error Font::init(const CString& filename, ConstWeakArray<U32> fontHeights)
 	// Load font in memory
 	ResourceFilePtr file;
 	ANKI_CHECK(m_manager->getResourceManager().getFilesystem().openFile(filename, file));
-	m_fontData.create(getAllocator(), U32(file->getSize()));
+	m_fontData.create(getMemoryPool(), U32(file->getSize()));
 	ANKI_CHECK(file->read(&m_fontData[0], file->getSize()));
 
-	m_fonts.create(getAllocator(), U32(fontHeights.getSize()));
+	m_fonts.create(getMemoryPool(), U32(fontHeights.getSize()));
 
 	// Bake font
 	ImFontConfig cfg;

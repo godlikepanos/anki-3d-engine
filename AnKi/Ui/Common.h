@@ -26,8 +26,6 @@ class UiManager;
 #define ANKI_UI_LOGW(...) ANKI_LOG("UI", kWarning, __VA_ARGS__)
 #define ANKI_UI_LOGF(...) ANKI_LOG("UI", kFatal, __VA_ARGS__)
 
-using UiAllocator = HeapAllocator<U8>;
-
 #define ANKI_UI_OBJECT_FW(name_) \
 	class name_; \
 	using name_##Ptr = IntrusivePtr<name_>;

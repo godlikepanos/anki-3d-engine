@@ -8,9 +8,9 @@
 
 namespace anki {
 
-UiAllocator UiObject::getAllocator() const
+HeapMemoryPool& UiObject::getMemoryPool() const
 {
-	return m_manager->getAllocator();
+	return m_manager->getMemoryPool();
 }
 
 } // end namespace anki
