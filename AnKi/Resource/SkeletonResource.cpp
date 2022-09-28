@@ -13,15 +13,15 @@ SkeletonResource::~SkeletonResource()
 {
 	for(Bone& b : m_bones)
 	{
-		b.destroy(getAllocator());
+		b.destroy(getMemoryPool());
 	}
 
-	m_bones.destroy(getAllocator());
+	m_bones.destroy(getMemoryPool());
 }
 
 Error SkeletonResource::load(const ResourceFilename& filename, [[maybe_unused]] Bool async)
 {
-	XmlDocument doc;
+	XmlDocument doc(&getTempMemoryPool());
 	ANKI_CHECK(openFileParseXml(filename, doc));
 
 	XmlElement rootEl;
@@ -37,9 +37,9 @@ Error SkeletonResource::load(const ResourceFilename& filename, [[maybe_unused]] 
 	ANKI_CHECK(boneEl.getSiblingElementsCount(boneCount));
 	++boneCount;
 
-	m_bones.create(getAllocator(), boneCount);
+	m_bones.create(getMemoryPool(), boneCount);
 
-	StringListRaii boneParents(getAllocator());
+	StringListRaii boneParents(&getMemoryPool());
 
 	// Load every bone
 	boneCount = 0;
@@ -51,7 +51,7 @@ Error SkeletonResource::load(const ResourceFilename& filename, [[maybe_unused]] 
 		// name
 		CString name;
 		ANKI_CHECK(boneEl.getAttributeText("name", name));
-		bone.m_name.create(getAllocator(), name);
+		bone.m_name.create(getMemoryPool(), name);
 
 		// transform
 		ANKI_CHECK(boneEl.getAttributeNumbers("transform", bone.m_transform));
@@ -109,10 +109,10 @@ Error SkeletonResource::load(const ResourceFilename& filename, [[maybe_unused]] 
 				return Error::kUserData;
 			}
 
-			if(bone.m_parent->m_childrenCount >= MAX_CHILDREN_PER_BONE)
+			if(bone.m_parent->m_childrenCount >= kMaxChildrenPerBone)
 			{
 				ANKI_RESOURCE_LOGE("Bone \"%s\" cannot have more that %u children", &bone.m_parent->m_name[0],
-								   MAX_CHILDREN_PER_BONE);
+								   kMaxChildrenPerBone);
 				return Error::kUserData;
 			}
 

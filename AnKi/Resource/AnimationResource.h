@@ -53,13 +53,13 @@ public:
 	DynamicArray<AnimationKeyframe<F32>> m_scales;
 	DynamicArray<AnimationKeyframe<F32>> m_cameraFovs;
 
-	void destroy(ResourceAllocator<U8> alloc)
+	void destroy(HeapMemoryPool& pool)
 	{
-		m_name.destroy(alloc);
-		m_positions.destroy(alloc);
-		m_rotations.destroy(alloc);
-		m_scales.destroy(alloc);
-		m_cameraFovs.destroy(alloc);
+		m_name.destroy(pool);
+		m_positions.destroy(pool);
+		m_rotations.destroy(pool);
+		m_scales.destroy(pool);
+		m_cameraFovs.destroy(pool);
 	}
 };
 

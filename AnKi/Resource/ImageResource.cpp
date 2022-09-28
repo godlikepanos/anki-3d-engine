@@ -23,8 +23,8 @@ public:
 	TextureType m_texType;
 	TexturePtr m_tex;
 
-	LoadingContext(GenericMemoryPoolAllocator<U8> alloc)
-		: m_loader(alloc)
+	LoadingContext(BaseMemoryPool* pool)
+		: m_loader(pool)
 	{
 	}
 };
@@ -35,8 +35,8 @@ class ImageResource::TexUploadTask : public AsyncLoaderTask
 public:
 	ImageResource::LoadingContext m_ctx;
 
-	TexUploadTask(GenericMemoryPoolAllocator<U8> alloc)
-		: m_ctx(alloc)
+	TexUploadTask(BaseMemoryPool* pool)
+		: m_ctx(pool)
 	{
 	}
 
@@ -54,11 +54,11 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 {
 	TexUploadTask* task;
 	LoadingContext* ctx;
-	LoadingContext localCtx(getTempAllocator());
+	LoadingContext localCtx(&getTempMemoryPool());
 
 	if(async)
 	{
-		task = getManager().getAsyncLoader().newTask<TexUploadTask>(getManager().getAsyncLoader().getAllocator());
+		task = getManager().getAsyncLoader().newTask<TexUploadTask>(&getManager().getAsyncLoader().getMemoryPool());
 		ctx = &task->m_ctx;
 	}
 	else
@@ -68,7 +68,7 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 	}
 	ImageLoader& loader = ctx->m_loader;
 
-	StringRaii filenameExt(getTempAllocator());
+	StringRaii filenameExt(&getTempMemoryPool());
 	getFilepathFilename(filename, filenameExt);
 
 	TextureInitInfo init(filenameExt);

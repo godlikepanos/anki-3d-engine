@@ -17,17 +17,17 @@ ResourceObject::ResourceObject(ResourceManager* manager)
 
 ResourceObject::~ResourceObject()
 {
-	m_fname.destroy(getAllocator());
+	m_fname.destroy(getMemoryPool());
 }
 
-ResourceAllocator<U8> ResourceObject::getAllocator() const
+HeapMemoryPool& ResourceObject::getMemoryPool() const
 {
-	return m_manager->getAllocator();
+	return m_manager->getMemoryPool();
 }
 
-TempResourceAllocator<U8> ResourceObject::getTempAllocator() const
+StackMemoryPool& ResourceObject::getTempMemoryPool() const
 {
-	return m_manager->getTempAllocator();
+	return m_manager->getTempMemoryPool();
 }
 
 Error ResourceObject::openFile(const CString& filename, ResourceFilePtr& file)
@@ -42,7 +42,6 @@ Error ResourceObject::openFileReadAllText(const CString& filename, StringRaii& t
 	ANKI_CHECK(m_manager->getFilesystem().openFile(filename, file));
 
 	// Read string
-	text = StringRaii(getTempAllocator());
 	ANKI_CHECK(file->readAllText(text));
 
 	return Error::kNone;
@@ -50,10 +49,10 @@ Error ResourceObject::openFileReadAllText(const CString& filename, StringRaii& t
 
 Error ResourceObject::openFileParseXml(const CString& filename, XmlDocument& xml)
 {
-	StringRaii txt(getTempAllocator());
+	StringRaii txt(&xml.getMemoryPool());
 	ANKI_CHECK(openFileReadAllText(filename, txt));
 
-	ANKI_CHECK(xml.parse(txt.toCString(), getTempAllocator()));
+	ANKI_CHECK(xml.parse(txt.toCString()));
 
 	return Error::kNone;
 }

@@ -29,7 +29,7 @@ enum class InputEvent : U8
 /// @note All positions are in NDC space
 class Input
 {
-	ANKI_FRIEND_ALLOCATOR
+	ANKI_FRIEND_CALL_CONSTRUCTOR
 
 public:
 	static Error newInstance(AllocAlignedCallback allocCallback, void* allocCallbackUserData,
@@ -136,7 +136,7 @@ public:
 
 protected:
 	NativeWindow* m_nativeWindow = nullptr;
-	HeapAllocator<U8> m_alloc;
+	HeapMemoryPool m_pool;
 
 	/// Shows the current key state
 	/// - 0 times: unpressed

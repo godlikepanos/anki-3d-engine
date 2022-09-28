@@ -14,7 +14,7 @@ GenericResource::GenericResource(ResourceManager* manager)
 
 GenericResource::~GenericResource()
 {
-	m_data.destroy(getAllocator());
+	m_data.destroy(getMemoryPool());
 }
 
 Error GenericResource::load(const ResourceFilename& filename, [[maybe_unused]] Bool async)
@@ -23,7 +23,7 @@ Error GenericResource::load(const ResourceFilename& filename, [[maybe_unused]] B
 	ANKI_CHECK(openFile(filename, file));
 
 	const U32 size = U32(file->getSize());
-	m_data.create(getAllocator(), size);
+	m_data.create(getMemoryPool(), size);
 	ANKI_CHECK(file->read(&m_data[0], size));
 
 	return Error::kNone;

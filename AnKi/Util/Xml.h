@@ -210,6 +210,11 @@ public:
 
 	Error getChildElementOptional(CString name, XmlElement& out) const;
 
+	BaseMemoryPool& getMemoryPool()
+	{
+		return *m_pool;
+	}
+
 private:
 	tinyxml2::XMLDocument m_doc;
 	BaseMemoryPool* m_pool = nullptr;

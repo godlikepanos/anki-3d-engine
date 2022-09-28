@@ -24,11 +24,11 @@ class XmlElement;
 /// The ID of builtin mutators.
 enum class BuiltinMutatorId : U8
 {
-	NONE = 0,
-	TECHNIQUE,
-	LOD,
-	BONES,
-	VELOCITY,
+	kNone = 0,
+	kTechnique,
+	kLod,
+	kBones,
+	kVelocity,
 
 	kCount,
 	kFirst = 0

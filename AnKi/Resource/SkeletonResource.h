@@ -14,7 +14,7 @@ namespace anki {
 /// @addtogroup resource
 /// @{
 
-const U32 MAX_CHILDREN_PER_BONE = 8;
+constexpr U32 kMaxChildrenPerBone = 8;
 
 /// Skeleton bone
 class Bone
@@ -65,12 +65,12 @@ private:
 	U32 m_idx;
 
 	Bone* m_parent = nullptr;
-	Array<Bone*, MAX_CHILDREN_PER_BONE> m_children = {};
+	Array<Bone*, kMaxChildrenPerBone> m_children = {};
 	U8 m_childrenCount = 0;
 
-	void destroy(ResourceAllocator<U8> alloc)
+	void destroy(HeapMemoryPool& pool)
 	{
-		m_name.destroy(alloc);
+		m_name.destroy(pool);
 	}
 };
 

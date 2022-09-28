@@ -9,18 +9,18 @@
 namespace anki {
 
 MeshBinaryLoader::MeshBinaryLoader(ResourceManager* manager)
-	: MeshBinaryLoader(manager, manager->getTempAllocator())
+	: MeshBinaryLoader(manager, &manager->getTempMemoryPool())
 {
 }
 
 MeshBinaryLoader::~MeshBinaryLoader()
 {
-	m_subMeshes.destroy(m_alloc);
+	m_subMeshes.destroy(*m_pool);
 }
 
 Error MeshBinaryLoader::load(const ResourceFilename& filename)
 {
-	auto& alloc = m_alloc;
+	BaseMemoryPool& pool = *m_pool;
 
 	// Load header
 	ANKI_CHECK(m_manager->getFilesystem().openFile(filename, m_file));
@@ -29,7 +29,7 @@ Error MeshBinaryLoader::load(const ResourceFilename& filename)
 
 	// Read submesh info
 	{
-		m_subMeshes.create(alloc, m_header.m_subMeshCount);
+		m_subMeshes.create(pool, m_header.m_subMeshCount);
 		ANKI_CHECK(m_file->read(&m_subMeshes[0], m_subMeshes.getSizeInBytes()));
 
 		// Checks
@@ -261,7 +261,7 @@ Error MeshBinaryLoader::storeIndicesAndPosition(DynamicArrayRaii<U32>& indices, 
 		indices.resize(m_header.m_totalIndexCount);
 
 		// Store to staging buff
-		DynamicArrayRaii<U8, PtrSize> staging(m_alloc);
+		DynamicArrayRaii<U8, PtrSize> staging(m_pool);
 		staging.create(getIndexBufferSize());
 		ANKI_CHECK(storeIndexBuffer(&staging[0], staging.getSizeInBytes()));
 

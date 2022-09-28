@@ -49,7 +49,7 @@ public:
 	PhysicsPtr<T> newInstance(TArgs&&... args)
 	{
 		T* obj = static_cast<T*>(m_pool.allocate(sizeof(T), alignof(T)));
-		callConstructor(&obj, this, std::forward<TArgs>(args)...);
+		callConstructor(*obj, this, std::forward<TArgs>(args)...);
 		{
 			LockGuard<Mutex> lock(m_markedMtx);
 			m_markedForCreation.pushBack(obj);

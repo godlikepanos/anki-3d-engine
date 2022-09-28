@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include <AnKi/Util/Allocator.h>
 #include <AnKi/Util/DynamicArray.h>
 #include <AnKi/Util/String.h>
 #include <AnKi/Util/Ptr.h>
@@ -53,12 +52,6 @@ using ResourcePtr = IntrusivePtr<T, ResourcePtrDeleter<T>>;
 #include <AnKi/Resource/InstantiationMacros.h>
 #undef ANKI_INSTANTIATE_RESOURCE
 #undef ANKI_INSTANSIATE_RESOURCE_DELIMITER
-
-template<typename T>
-using ResourceAllocator = HeapAllocator<T>;
-
-template<typename T>
-using TempResourceAllocator = StackAllocator<T>;
 
 /// An alias that denotes a ResourceFilesystem path.
 using ResourceFilename = CString;

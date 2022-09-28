@@ -17,8 +17,8 @@ CpuMeshResource::CpuMeshResource(ResourceManager* manager)
 
 CpuMeshResource::~CpuMeshResource()
 {
-	m_indices.destroy(getAllocator());
-	m_positions.destroy(getAllocator());
+	m_indices.destroy(getMemoryPool());
+	m_positions.destroy(getMemoryPool());
 }
 
 Error CpuMeshResource::load(const ResourceFilename& filename, [[maybe_unused]] Bool async)
@@ -27,8 +27,8 @@ Error CpuMeshResource::load(const ResourceFilename& filename, [[maybe_unused]] B
 
 	ANKI_CHECK(loader.load(filename));
 
-	DynamicArrayRaii<Vec3> tempPositions(getAllocator());
-	DynamicArrayRaii<U32> tempIndices(getAllocator());
+	DynamicArrayRaii<Vec3> tempPositions(&getMemoryPool());
+	DynamicArrayRaii<U32> tempIndices(&getMemoryPool());
 
 	ANKI_CHECK(loader.storeIndicesAndPosition(tempIndices, tempPositions));
 

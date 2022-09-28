@@ -23,9 +23,10 @@ class ConfigSet;
 class ResourceFile
 {
 public:
-	ResourceFile(GenericMemoryPoolAllocator<U8> alloc)
-		: m_alloc(alloc)
+	ResourceFile(HeapMemoryPool* pool)
+		: m_pool(pool)
 	{
+		ANKI_ASSERT(pool);
 	}
 
 	ResourceFile(const ResourceFile&) = delete; // Non-copyable
@@ -66,13 +67,13 @@ public:
 		return m_refcount.fetchSub(1);
 	}
 
-	GenericMemoryPoolAllocator<U8> getAllocator() const
+	HeapMemoryPool& getMemoryPool() const
 	{
-		return m_alloc;
+		return *m_pool;
 	}
 
 private:
-	GenericMemoryPoolAllocator<U8> m_alloc;
+	mutable HeapMemoryPool* m_pool = nullptr;
 	mutable Atomic<I32> m_refcount = {0};
 };
 
@@ -83,9 +84,10 @@ using ResourceFilePtr = IntrusivePtr<ResourceFile>;
 class ResourceFilesystem
 {
 public:
-	ResourceFilesystem(GenericMemoryPoolAllocator<U8> alloc)
-		: m_alloc(alloc)
+	ResourceFilesystem(HeapMemoryPool* pool)
+		: m_pool(pool)
 	{
+		ANKI_ASSERT(pool);
 	}
 
 	ResourceFilesystem(const ResourceFilesystem&) = delete; // Non-copyable
@@ -143,7 +145,7 @@ private:
 		}
 	};
 
-	GenericMemoryPoolAllocator<U8> m_alloc;
+	HeapMemoryPool* m_pool = nullptr;
 	List<Path> m_paths;
 	String m_cacheDir;
 

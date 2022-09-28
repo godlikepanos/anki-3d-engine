@@ -21,10 +21,11 @@ class MeshBinaryLoader
 public:
 	MeshBinaryLoader(ResourceManager* manager);
 
-	MeshBinaryLoader(ResourceManager* manager, GenericMemoryPoolAllocator<U8> alloc)
+	MeshBinaryLoader(ResourceManager* manager, BaseMemoryPool* pool)
 		: m_manager(manager)
-		, m_alloc(alloc)
+		, m_pool(pool)
 	{
+		ANKI_ASSERT(manager && pool);
 	}
 
 	~MeshBinaryLoader();
@@ -56,8 +57,8 @@ public:
 	}
 
 private:
-	ResourceManager* m_manager;
-	GenericMemoryPoolAllocator<U8> m_alloc;
+	ResourceManager* m_manager = nullptr;
+	BaseMemoryPool* m_pool = nullptr;
 	ResourceFilePtr m_file;
 
 	MeshBinaryHeader m_header;

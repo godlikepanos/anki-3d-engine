@@ -33,9 +33,9 @@ ResourceManager::~ResourceManager()
 {
 	ANKI_RESOURCE_LOGI("Destroying resource manager");
 
-	m_alloc.deleteInstance(m_asyncLoader);
-	m_alloc.deleteInstance(m_shaderProgramSystem);
-	m_alloc.deleteInstance(m_transferGpuAlloc);
+	deleteInstance(m_pool, m_asyncLoader);
+	deleteInstance(m_pool, m_shaderProgramSystem);
+	deleteInstance(m_pool, m_transferGpuAlloc);
 }
 
 Error ResourceManager::init(ResourceManagerInitInfo& init)
@@ -47,26 +47,26 @@ Error ResourceManager::init(ResourceManagerInitInfo& init)
 	m_fs = init.m_resourceFs;
 	m_config = init.m_config;
 	m_vertexMem = init.m_vertexMemory;
-	m_alloc = ResourceAllocator<U8>(init.m_allocCallback, init.m_allocCallbackData, "Resources");
 
-	m_tmpAlloc = TempResourceAllocator<U8>(init.m_allocCallback, init.m_allocCallbackData, 10_MB);
+	m_pool.init(init.m_allocCallback, init.m_allocCallbackData, "Resources");
+	m_tmpPool.init(init.m_allocCallback, init.m_allocCallbackData, 10_MB);
 
 	// Init type resource managers
-#define ANKI_INSTANTIATE_RESOURCE(rsrc_, ptr_) TypeResourceManager<rsrc_>::init(m_alloc);
+#define ANKI_INSTANTIATE_RESOURCE(rsrc_, ptr_) TypeResourceManager<rsrc_>::init(&m_pool);
 #define ANKI_INSTANSIATE_RESOURCE_DELIMITER()
 #include <AnKi/Resource/InstantiationMacros.h>
 #undef ANKI_INSTANTIATE_RESOURCE
 #undef ANKI_INSTANSIATE_RESOURCE_DELIMITER
 
 	// Init the thread
-	m_asyncLoader = m_alloc.newInstance<AsyncLoader>();
-	m_asyncLoader->init(m_alloc);
+	m_asyncLoader = newInstance<AsyncLoader>(m_pool);
+	m_asyncLoader->init(&m_pool);
 
-	m_transferGpuAlloc = m_alloc.newInstance<TransferGpuAllocator>();
-	ANKI_CHECK(m_transferGpuAlloc->init(m_config->getRsrcTransferScratchMemorySize(), m_gr, m_alloc));
+	m_transferGpuAlloc = newInstance<TransferGpuAllocator>(m_pool);
+	ANKI_CHECK(m_transferGpuAlloc->init(m_config->getRsrcTransferScratchMemorySize(), m_gr, &m_pool));
 
 	// Init the programs
-	m_shaderProgramSystem = m_alloc.newInstance<ShaderProgramResourceSystem>(m_alloc);
+	m_shaderProgramSystem = newInstance<ShaderProgramResourceSystem>(m_pool, &m_pool);
 	ANKI_CHECK(m_shaderProgramSystem->init(*m_fs, *m_gr));
 
 	return Error::kNone;
@@ -95,27 +95,27 @@ Error ResourceManager::loadResource(const CString& filename, ResourcePtr<T>& out
 	else
 	{
 		// Allocate ptr
-		T* ptr = m_alloc.newInstance<T>(this);
+		T* ptr = newInstance<T>(m_pool, this);
 		ANKI_ASSERT(ptr->getRefcount() == 0);
 
 		// Increment the refcount in that case where async jobs increment it and decrement it in the scope of a load()
 		ptr->retain();
 
 		// Populate the ptr. Use a block to cleanup temp_pool allocations
-		auto& pool = m_tmpAlloc.getMemoryPool();
+		StackMemoryPool& tmpPool = m_tmpPool;
 
 		{
-			[[maybe_unused]] const U allocsCountBefore = pool.getAllocationCount();
+			[[maybe_unused]] const U allocsCountBefore = tmpPool.getAllocationCount();
 
 			err = ptr->load(filename, async);
 			if(err)
 			{
 				ANKI_RESOURCE_LOGE("Failed to load resource: %s", &filename[0]);
-				m_alloc.deleteInstance(ptr);
+				deleteInstance(m_pool, ptr);
 				return err;
 			}
 
-			ANKI_ASSERT(pool.getAllocationCount() == allocsCountBefore && "Forgot to deallocate");
+			ANKI_ASSERT(tmpPool.getAllocationCount() == allocsCountBefore && "Forgot to deallocate");
 		}
 
 		ptr->setFilename(filename);
@@ -123,9 +123,9 @@ Error ResourceManager::loadResource(const CString& filename, ResourcePtr<T>& out
 
 		// Reset the memory pool if no-one is using it.
 		// NOTE: Check because resources load other resources
-		if(pool.getAllocationCount() == 0)
+		if(tmpPool.getAllocationCount() == 0)
 		{
-			pool.reset();
+			tmpPool.reset();
 		}
 
 		// Register resource

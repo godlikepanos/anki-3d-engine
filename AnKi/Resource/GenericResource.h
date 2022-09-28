@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Resource/ResourceObject.h>
+#include <AnKi/Util/WeakArray.h>
 
 namespace anki {
 
@@ -22,7 +23,7 @@ public:
 
 	Error load(const ResourceFilename& filename, Bool async);
 
-	const DynamicArray<U8>& getData() const
+	ConstWeakArray<U8> getData() const
 	{
 		return m_data;
 	}

@@ -35,7 +35,7 @@ ParticleEmitterResource::~ParticleEmitterResource()
 
 Error ParticleEmitterResource::load(const ResourceFilename& filename, Bool async)
 {
-	XmlDocument doc;
+	XmlDocument doc(&getTempMemoryPool());
 	ANKI_CHECK(openFileParseXml(filename, doc));
 	XmlElement rootEl; // Root element
 	ANKI_CHECK(doc.getChildElement("particleEmitter", rootEl));
