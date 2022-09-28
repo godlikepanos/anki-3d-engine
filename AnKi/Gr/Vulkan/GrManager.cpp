@@ -29,23 +29,24 @@ GrManager::GrManager()
 GrManager::~GrManager()
 {
 	// Destroy in reverse order
-	m_cacheDir.destroy(m_alloc);
+	m_cacheDir.destroy(m_pool);
 }
 
 Error GrManager::newInstance(GrManagerInitInfo& init, GrManager*& gr)
 {
-	auto alloc = HeapAllocator<U8>(init.m_allocCallback, init.m_allocCallbackUserData, "Gr");
-
-	GrManagerImpl* impl = alloc.newInstance<GrManagerImpl>();
+	GrManagerImpl* impl = static_cast<GrManagerImpl*>(
+		init.m_allocCallback(init.m_allocCallbackUserData, nullptr, sizeof(GrManagerImpl), alignof(GrManagerImpl)));
+	callConstructor(*impl);
 
 	// Init
-	impl->m_alloc = alloc;
-	impl->m_cacheDir.create(alloc, init.m_cacheDirectory);
+	impl->m_pool.init(init.m_allocCallback, init.m_allocCallbackUserData);
+	impl->m_cacheDir.create(impl->m_pool, init.m_cacheDirectory);
 	Error err = impl->init(init);
 
 	if(err)
 	{
-		alloc.deleteInstance(impl);
+		callDestructor(*impl);
+		init.m_allocCallback(init.m_allocCallbackUserData, impl, 0, 0);
 		gr = nullptr;
 	}
 	else
@@ -63,9 +64,10 @@ void GrManager::deleteInstance(GrManager* gr)
 		return;
 	}
 
-	auto alloc = gr->m_alloc;
+	AllocAlignedCallback callback = gr->m_pool.getAllocationCallback();
+	void* userData = gr->m_pool.getAllocationCallbackUserData();
 	gr->~GrManager();
-	alloc.deallocate(gr, 1);
+	callback(userData, gr, 0, 0);
 }
 
 TexturePtr GrManager::acquireNextPresentableTexture()

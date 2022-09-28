@@ -11,11 +11,11 @@ namespace anki {
 
 TimestampQuery* TimestampQuery::newInstance(GrManager* manager)
 {
-	TimestampQueryImpl* impl = manager->getAllocator().newInstance<TimestampQueryImpl>(manager, "N/A");
+	TimestampQueryImpl* impl = anki::newInstance<TimestampQueryImpl>(manager->getMemoryPool(), manager, "N/A");
 	const Error err = impl->init();
 	if(err)
 	{
-		manager->getAllocator().deleteInstance(impl);
+		deleteInstance(manager->getMemoryPool(), impl);
 		impl = nullptr;
 	}
 	return impl;

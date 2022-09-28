@@ -11,11 +11,11 @@ namespace anki {
 
 GrUpscaler* GrUpscaler::newInstance(GrManager* manager, const GrUpscalerInitInfo& initInfo)
 {
-	GrUpscalerImpl* impl = manager->getAllocator().newInstance<GrUpscalerImpl>(manager, initInfo.getName());
+	GrUpscalerImpl* impl = anki::newInstance<GrUpscalerImpl>(manager->getMemoryPool(), manager, initInfo.getName());
 	const Error err = impl->initInternal(initInfo);
 	if(err)
 	{
-		manager->getAllocator().deleteInstance(impl);
+		deleteInstance(manager->getMemoryPool(), impl);
 		impl = nullptr;
 	}
 	return impl;

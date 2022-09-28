@@ -423,7 +423,7 @@ void PipelineFactory::destroy()
 		}
 	}
 
-	m_pplines.destroy(m_alloc);
+	m_pplines.destroy(*m_pool);
 }
 
 void PipelineFactory::getOrCreatePipeline(PipelineStateTracker& state, Pipeline& ppline, Bool& stateDirty)
@@ -489,7 +489,7 @@ void PipelineFactory::getOrCreatePipeline(PipelineStateTracker& state, Pipeline&
 
 	ANKI_TRACE_INC_COUNTER(VK_PIPELINES_CACHE_MISS, 1);
 
-	m_pplines.emplace(m_alloc, hash, pp);
+	m_pplines.emplace(*m_pool, hash, pp);
 	ppline.m_handle = pp.m_handle;
 
 	// Print shader info

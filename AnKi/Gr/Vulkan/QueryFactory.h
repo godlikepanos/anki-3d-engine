@@ -17,7 +17,7 @@ class QueryFactoryChunk;
 /// @addtogroup vulkan
 /// @{
 
-const U MAX_SUB_ALLOCATIONS_PER_QUERY_CHUNK = 64;
+constexpr U kMaxSuballocationsPerQueryChunk = 64;
 
 /// The return handle of a query allocation.
 class MicroQuery
@@ -56,7 +56,7 @@ class QueryFactoryChunk : public IntrusiveListEnabled<QueryFactoryChunk>
 
 private:
 	VkQueryPool m_pool = VK_NULL_HANDLE;
-	BitSet<MAX_SUB_ALLOCATIONS_PER_QUERY_CHUNK> m_allocatedMask = {false};
+	BitSet<kMaxSuballocationsPerQueryChunk> m_allocatedMask = {false};
 	U32 m_subAllocationCount = 0;
 };
 
@@ -74,9 +74,10 @@ public:
 
 	QueryFactory& operator=(const QueryFactory&) = delete; // Non-copyable
 
-	void init(GrAllocator<U8> alloc, VkDevice dev, VkQueryType poolType)
+	void init(HeapMemoryPool* pool, VkDevice dev, VkQueryType poolType)
 	{
-		m_alloc = alloc;
+		ANKI_ASSERT(pool);
+		m_pool = pool;
 		m_dev = dev;
 		m_poolType = poolType;
 	}
@@ -90,7 +91,7 @@ public:
 private:
 	using Chunk = QueryFactoryChunk;
 
-	GrAllocator<U8> m_alloc;
+	HeapMemoryPool* m_pool = nullptr;
 	VkDevice m_dev;
 	IntrusiveList<Chunk> m_chunks;
 	Mutex m_mtx;

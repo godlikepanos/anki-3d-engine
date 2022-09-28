@@ -71,30 +71,30 @@ TextureImpl::~TextureImpl()
 	}
 #endif
 
-	TextureGarbage* garbage = getAllocator().newInstance<TextureGarbage>();
+	TextureGarbage* garbage = anki::newInstance<TextureGarbage>(getMemoryPool());
 
 	for(MicroImageView& it : m_viewsMap)
 	{
-		garbage->m_viewHandles.emplaceBack(getAllocator(), it.m_handle);
+		garbage->m_viewHandles.emplaceBack(getMemoryPool(), it.m_handle);
 		it.m_handle = VK_NULL_HANDLE;
 
 		if(it.m_bindlessIndex != kMaxU32)
 		{
-			garbage->m_bindlessIndices.emplaceBack(getAllocator(), it.m_bindlessIndex);
+			garbage->m_bindlessIndices.emplaceBack(getMemoryPool(), it.m_bindlessIndex);
 			it.m_bindlessIndex = kMaxU32;
 		}
 	}
 
-	m_viewsMap.destroy(getAllocator());
+	m_viewsMap.destroy(getMemoryPool());
 
 	if(m_singleSurfaceImageView.m_handle != VK_NULL_HANDLE)
 	{
-		garbage->m_viewHandles.emplaceBack(getAllocator(), m_singleSurfaceImageView.m_handle);
+		garbage->m_viewHandles.emplaceBack(getMemoryPool(), m_singleSurfaceImageView.m_handle);
 		m_singleSurfaceImageView.m_handle = VK_NULL_HANDLE;
 
 		if(m_singleSurfaceImageView.m_bindlessIndex != kMaxU32)
 		{
-			garbage->m_bindlessIndices.emplaceBack(getAllocator(), m_singleSurfaceImageView.m_bindlessIndex);
+			garbage->m_bindlessIndices.emplaceBack(getMemoryPool(), m_singleSurfaceImageView.m_bindlessIndex);
 			m_singleSurfaceImageView.m_bindlessIndex = kMaxU32;
 		}
 	}
@@ -592,7 +592,7 @@ const MicroImageView& TextureImpl::getOrCreateView(const TextureSubresourceInfo&
 	ANKI_VK_CHECKF(vkCreateImageView(getDevice(), &viewCi, nullptr, &handle));
 	getGrManagerImpl().trySetVulkanHandleName(getName(), VK_OBJECT_TYPE_IMAGE_VIEW, ptrToNumber(handle));
 
-	it = m_viewsMap.emplace(getAllocator(), subresource);
+	it = m_viewsMap.emplace(getMemoryPool(), subresource);
 	it->m_handle = handle;
 	it->m_derivedTextureType = viewTexType;
 

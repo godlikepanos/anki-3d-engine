@@ -415,7 +415,7 @@ public:
 	void setLineWidthInternal(F32 width);
 
 private:
-	StackAllocator<U8> m_alloc;
+	StackMemoryPool* m_pool = nullptr;
 
 	MicroCommandBufferPtr m_microCmdb;
 	VkCommandBuffer m_handle = VK_NULL_HANDLE;

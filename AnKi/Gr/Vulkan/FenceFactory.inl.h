@@ -28,9 +28,9 @@ inline MicroFence::~MicroFence()
 	}
 }
 
-inline GrAllocator<U8> MicroFence::getAllocator() const
+inline HeapMemoryPool& MicroFence::getMemoryPool()
 {
-	return m_factory->m_alloc;
+	return *m_factory->m_pool;
 }
 
 inline Bool MicroFence::done() const

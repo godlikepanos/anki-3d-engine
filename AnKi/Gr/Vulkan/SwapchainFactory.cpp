@@ -23,7 +23,7 @@ MicroSwapchain::~MicroSwapchain()
 {
 	const VkDevice dev = m_factory->m_gr->getDevice();
 
-	m_textures.destroy(getAllocator());
+	m_textures.destroy(getMemoryPool());
 
 	if(m_swapchain)
 	{
@@ -70,7 +70,7 @@ Error MicroSwapchain::initInternal()
 		ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(m_factory->m_gr->getPhysicalDevice(),
 														   m_factory->m_gr->getSurface(), &formatCount, nullptr));
 
-		DynamicArrayRaii<VkSurfaceFormatKHR> formats(getAllocator());
+		DynamicArrayRaii<VkSurfaceFormatKHR> formats(&getMemoryPool());
 		formats.create(formatCount);
 		ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(m_factory->m_gr->getPhysicalDevice(),
 														   m_factory->m_gr->getSurface(), &formatCount, &formats[0]));
@@ -222,7 +222,7 @@ Error MicroSwapchain::initInternal()
 			ANKI_VK_LOGI("Requested a swapchain with %u images but got one with %u", kMaxFramesInFlight, count);
 		}
 
-		m_textures.create(getAllocator(), count);
+		m_textures.create(getMemoryPool(), count);
 
 		ANKI_VK_LOGI("Created a swapchain. Image count: %u, present mode: %u, size: %ux%u, vsync: %u", count,
 					 presentMode, surfaceWidth, surfaceHeight, U32(m_factory->m_vsync));
@@ -242,7 +242,7 @@ Error MicroSwapchain::initInternal()
 			init.m_type = TextureType::k2D;
 
 			TextureImpl* tex =
-				m_factory->m_gr->getAllocator().newInstance<TextureImpl>(m_factory->m_gr, init.getName());
+				newInstance<TextureImpl>(m_factory->m_gr->getMemoryPool(), m_factory->m_gr, init.getName());
 			m_textures[i].reset(tex);
 			ANKI_CHECK(tex->initExternal(images[i], init));
 		}
@@ -251,9 +251,9 @@ Error MicroSwapchain::initInternal()
 	return Error::kNone;
 }
 
-GrAllocator<U8> MicroSwapchain::getAllocator() const
+HeapMemoryPool& MicroSwapchain::getMemoryPool()
 {
-	return m_factory->m_gr->getAllocator();
+	return m_factory->m_gr->getMemoryPool();
 }
 
 MicroSwapchainPtr SwapchainFactory::newInstance()
@@ -265,7 +265,7 @@ MicroSwapchainPtr SwapchainFactory::newInstance()
 	[[maybe_unused]] MicroSwapchain* dummy = m_recycler.findToReuse();
 	ANKI_ASSERT(dummy == nullptr);
 
-	return MicroSwapchainPtr(m_gr->getAllocator().newInstance<MicroSwapchain>(this));
+	return MicroSwapchainPtr(anki::newInstance<MicroSwapchain>(m_gr->getMemoryPool(), this));
 }
 
 void SwapchainFactory::init(GrManagerImpl* manager, Bool vsync)
@@ -273,7 +273,7 @@ void SwapchainFactory::init(GrManagerImpl* manager, Bool vsync)
 	ANKI_ASSERT(manager);
 	m_gr = manager;
 	m_vsync = vsync;
-	m_recycler.init(m_gr->getAllocator());
+	m_recycler.init(&m_gr->getMemoryPool());
 }
 
 } // end namespace anki

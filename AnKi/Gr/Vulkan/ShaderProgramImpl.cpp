@@ -16,7 +16,7 @@ ShaderProgramImpl::~ShaderProgramImpl()
 	if(m_graphics.m_pplineFactory)
 	{
 		m_graphics.m_pplineFactory->destroy();
-		getAllocator().deleteInstance(m_graphics.m_pplineFactory);
+		deleteInstance(getMemoryPool(), m_graphics.m_pplineFactory);
 	}
 
 	if(m_compute.m_ppline)
@@ -29,8 +29,8 @@ ShaderProgramImpl::~ShaderProgramImpl()
 		vkDestroyPipeline(getDevice(), m_rt.m_ppline, nullptr);
 	}
 
-	m_shaders.destroy(getAllocator());
-	m_rt.m_allHandles.destroy(getAllocator());
+	m_shaders.destroy(getMemoryPool());
+	m_rt.m_allHandles.destroy(getMemoryPool());
 }
 
 Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
@@ -39,10 +39,10 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 
 	// Create the shader references
 	//
-	HashMapRaii<U64, U32> shaderUuidToMShadersIdx(getAllocator()); // Shader UUID to m_shaders idx
+	HashMapRaii<U64, U32> shaderUuidToMShadersIdx(&getMemoryPool()); // Shader UUID to m_shaders idx
 	if(inf.m_computeShader)
 	{
-		m_shaders.emplaceBack(getAllocator(), inf.m_computeShader);
+		m_shaders.emplaceBack(getMemoryPool(), inf.m_computeShader);
 	}
 	else if(inf.m_graphicsShaders[ShaderType::kVertex])
 	{
@@ -50,7 +50,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		{
 			if(s)
 			{
-				m_shaders.emplaceBack(getAllocator(), s);
+				m_shaders.emplaceBack(getMemoryPool(), s);
 			}
 		}
 	}
@@ -58,18 +58,18 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	{
 		// Ray tracing
 
-		m_shaders.resizeStorage(getAllocator(), inf.m_rayTracingShaders.m_rayGenShaders.getSize()
-													+ inf.m_rayTracingShaders.m_missShaders.getSize()
-													+ 1); // Plus at least one hit shader
+		m_shaders.resizeStorage(getMemoryPool(), inf.m_rayTracingShaders.m_rayGenShaders.getSize()
+													 + inf.m_rayTracingShaders.m_missShaders.getSize()
+													 + 1); // Plus at least one hit shader
 
 		for(const ShaderPtr& s : inf.m_rayTracingShaders.m_rayGenShaders)
 		{
-			m_shaders.emplaceBack(getAllocator(), s);
+			m_shaders.emplaceBack(getMemoryPool(), s);
 		}
 
 		for(const ShaderPtr& s : inf.m_rayTracingShaders.m_missShaders)
 		{
-			m_shaders.emplaceBack(getAllocator(), s);
+			m_shaders.emplaceBack(getMemoryPool(), s);
 		}
 
 		m_rt.m_missShaderCount = inf.m_rayTracingShaders.m_missShaders.getSize();
@@ -82,7 +82,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 				if(it == shaderUuidToMShadersIdx.getEnd())
 				{
 					shaderUuidToMShadersIdx.emplace(group.m_anyHitShader->getUuid(), m_shaders.getSize());
-					m_shaders.emplaceBack(getAllocator(), group.m_anyHitShader);
+					m_shaders.emplaceBack(getMemoryPool(), group.m_anyHitShader);
 				}
 			}
 
@@ -92,7 +92,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 				if(it == shaderUuidToMShadersIdx.getEnd())
 				{
 					shaderUuidToMShadersIdx.emplace(group.m_closestHitShader->getUuid(), m_shaders.getSize());
-					m_shaders.emplaceBack(getAllocator(), group.m_closestHitShader);
+					m_shaders.emplaceBack(getMemoryPool(), group.m_closestHitShader);
 				}
 			}
 		}
@@ -221,8 +221,8 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	//
 	if(graphicsProg)
 	{
-		m_graphics.m_pplineFactory = getAllocator().newInstance<PipelineFactory>();
-		m_graphics.m_pplineFactory->init(getGrManagerImpl().getAllocator(), getGrManagerImpl().getDevice(),
+		m_graphics.m_pplineFactory = anki::newInstance<PipelineFactory>(getMemoryPool());
+		m_graphics.m_pplineFactory->init(&getMemoryPool(), getGrManagerImpl().getDevice(),
 										 getGrManagerImpl().getPipelineCache()
 #if ANKI_PLATFORM_MOBILE
 											 ,
@@ -264,7 +264,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	if(!!(m_stages & ShaderTypeBit::kAllRayTracing))
 	{
 		// Create shaders
-		DynamicArrayRaii<VkPipelineShaderStageCreateInfo> stages(getAllocator(), m_shaders.getSize());
+		DynamicArrayRaii<VkPipelineShaderStageCreateInfo> stages(&getMemoryPool(), m_shaders.getSize());
 		for(U32 i = 0; i < stages.getSize(); ++i)
 		{
 			const ShaderImpl& impl = static_cast<const ShaderImpl&>(*m_shaders[i]);
@@ -289,7 +289,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		U32 groupCount = inf.m_rayTracingShaders.m_rayGenShaders.getSize()
 						 + inf.m_rayTracingShaders.m_missShaders.getSize()
 						 + inf.m_rayTracingShaders.m_hitGroups.getSize();
-		DynamicArrayRaii<VkRayTracingShaderGroupCreateInfoKHR> groups(getAllocator(), groupCount, defaultGroup);
+		DynamicArrayRaii<VkRayTracingShaderGroupCreateInfoKHR> groups(&getMemoryPool(), groupCount, defaultGroup);
 
 		// 1st group is the ray gen
 		groupCount = 0;
@@ -347,7 +347,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		// Get RT handles
 		const U32 handleArraySize =
 			getGrManagerImpl().getPhysicalDeviceRayTracingProperties().shaderGroupHandleSize * groupCount;
-		m_rt.m_allHandles.create(getAllocator(), handleArraySize, 0);
+		m_rt.m_allHandles.create(getMemoryPool(), handleArraySize, 0);
 		ANKI_VK_CHECK(vkGetRayTracingShaderGroupHandlesKHR(getDevice(), m_rt.m_ppline, 0, groupCount, handleArraySize,
 														   &m_rt.m_allHandles[0]));
 	}

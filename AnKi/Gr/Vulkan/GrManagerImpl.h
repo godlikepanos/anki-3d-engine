@@ -214,6 +214,7 @@ public:
 	}
 	/// @}
 
+	/// @note It's thread-safe.
 	void printPipelineShaderInfo(VkPipeline ppline, CString name, ShaderTypeBit stages, U64 hash = 0) const;
 
 	FrameGarbageCollector& getFrameGarbageCollector()

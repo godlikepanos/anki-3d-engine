@@ -11,11 +11,11 @@ namespace anki {
 
 Buffer* Buffer::newInstance(GrManager* manager, const BufferInitInfo& init)
 {
-	BufferImpl* impl = manager->getAllocator().newInstance<BufferImpl>(manager, init.getName());
+	BufferImpl* impl = anki::newInstance<BufferImpl>(manager->getMemoryPool(), manager, init.getName());
 	const Error err = impl->init(init);
 	if(err)
 	{
-		manager->getAllocator().deleteInstance(impl);
+		deleteInstance(manager->getMemoryPool(), impl);
 		impl = nullptr;
 	}
 	return impl;

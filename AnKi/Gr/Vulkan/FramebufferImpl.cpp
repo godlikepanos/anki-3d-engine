@@ -24,7 +24,7 @@ FramebufferImpl::~FramebufferImpl()
 		vkDestroyRenderPass(getDevice(), rpass, nullptr);
 	}
 
-	m_renderpassHandles.destroy(getAllocator());
+	m_renderpassHandles.destroy(getMemoryPool());
 
 	if(m_compatibleRenderpassHandle)
 	{
@@ -376,7 +376,7 @@ VkRenderPass FramebufferImpl::getRenderPassHandle(const Array<VkImageLayout, kMa
 			ANKI_VK_CHECKF(vkCreateRenderPass2KHR(getDevice(), &ci, nullptr, &out));
 			getGrManagerImpl().trySetVulkanHandleName(getName(), VK_OBJECT_TYPE_RENDER_PASS, out);
 
-			m_renderpassHandles.emplace(getAllocator(), hash, out);
+			m_renderpassHandles.emplace(getMemoryPool(), hash, out);
 		}
 	}
 

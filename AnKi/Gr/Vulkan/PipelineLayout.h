@@ -35,9 +35,10 @@ public:
 	PipelineLayoutFactory() = default;
 	~PipelineLayoutFactory() = default;
 
-	void init(GrAllocator<U8> alloc, VkDevice dev)
+	void init(HeapMemoryPool* pool, VkDevice dev)
 	{
-		m_alloc = alloc;
+		ANKI_ASSERT(pool);
+		m_pool = pool;
 		m_dev = dev;
 	}
 
@@ -48,7 +49,7 @@ public:
 							PipelineLayout& layout);
 
 private:
-	GrAllocator<U8> m_alloc;
+	HeapMemoryPool* m_pool = nullptr;
 	VkDevice m_dev = VK_NULL_HANDLE;
 
 	HashMap<U64, VkPipelineLayout> m_layouts;

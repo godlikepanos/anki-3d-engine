@@ -109,7 +109,7 @@ inline void CommandBufferImpl::setImageBarrier(VkPipelineStageFlags srcStage, Vk
 
 	if(m_imgBarriers.getSize() <= m_imgBarrierCount)
 	{
-		m_imgBarriers.resize(m_alloc, max<U32>(2, m_imgBarrierCount * 2));
+		m_imgBarriers.resize(*m_pool, max<U32>(2, m_imgBarrierCount * 2));
 	}
 
 	m_imgBarriers[m_imgBarrierCount++] = inf;
@@ -131,7 +131,7 @@ inline void CommandBufferImpl::setTextureBarrierRangeInternal(const TexturePtr& 
 	ANKI_ASSERT(impl.usageValid(nextUsage));
 	ANKI_ASSERT(((nextUsage & TextureUsageBit::kGenerateMipmaps) == TextureUsageBit::kGenerateMipmaps
 				 || (nextUsage & TextureUsageBit::kGenerateMipmaps) == TextureUsageBit::kNone)
-				&& "GENERATE_MIPMAPS should be alone");
+				&& "kGenerateMipmaps should be alone");
 
 	VkPipelineStageFlags srcStage;
 	VkAccessFlags srcAccess;
@@ -227,7 +227,7 @@ inline void CommandBufferImpl::setBufferBarrierInternal(VkPipelineStageFlags src
 
 	if(m_buffBarriers.getSize() <= m_buffBarrierCount)
 	{
-		m_buffBarriers.resize(m_alloc, max<U32>(2, m_buffBarrierCount * 2));
+		m_buffBarriers.resize(*m_pool, max<U32>(2, m_buffBarrierCount * 2));
 	}
 
 	m_buffBarriers[m_buffBarrierCount++] = b;
@@ -279,7 +279,7 @@ CommandBufferImpl::setAccelerationStructureBarrierInternal([[maybe_unused]] cons
 
 	if(m_memBarriers.getSize() <= m_memBarrierCount)
 	{
-		m_memBarriers.resize(m_alloc, max<U32>(2, m_memBarrierCount * 2));
+		m_memBarriers.resize(*m_pool, max<U32>(2, m_memBarrierCount * 2));
 	}
 
 	m_memBarriers[m_memBarrierCount++] = memBarrier;
@@ -358,7 +358,7 @@ inline void CommandBufferImpl::dispatchComputeInternal(U32 groupCountX, U32 grou
 			Bool dirty;
 			Array<PtrSize, kMaxBindingsPerDescriptorSet> dynamicOffsetsPtrSize;
 			U32 dynamicOffsetCount;
-			if(getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(m_alloc, m_dsetState[i], dset, dirty,
+			if(getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(*m_pool, m_dsetState[i], dset, dirty,
 																			 dynamicOffsetsPtrSize, dynamicOffsetCount))
 			{
 				ANKI_VK_LOGF("Cannot recover");
@@ -422,7 +422,7 @@ inline void CommandBufferImpl::traceRaysInternal(const BufferPtr& sbtBuffer, Ptr
 			Bool dirty;
 			Array<PtrSize, kMaxBindingsPerDescriptorSet> dynamicOffsetsPtrSize;
 			U32 dynamicOffsetCount;
-			if(getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(m_alloc, m_dsetState[i], dset, dirty,
+			if(getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(*m_pool, m_dsetState[i], dset, dirty,
 																			 dynamicOffsetsPtrSize, dynamicOffsetCount))
 			{
 				ANKI_VK_LOGF("Cannot recover");
@@ -488,7 +488,7 @@ inline void CommandBufferImpl::resetOcclusionQueryInternal(const OcclusionQueryP
 	QueryResetAtom atom;
 	atom.m_pool = handle;
 	atom.m_queryIdx = idx;
-	m_queryResetAtoms.emplaceBack(m_alloc, atom);
+	m_queryResetAtoms.emplaceBack(*m_pool, atom);
 #else
 	ANKI_CMD(vkCmdResetQueryPool(m_handle, handle, idx, 1), kAnyOtherCommand);
 #endif
@@ -536,7 +536,7 @@ inline void CommandBufferImpl::resetTimestampQueryInternal(const TimestampQueryP
 	QueryResetAtom atom;
 	atom.m_pool = handle;
 	atom.m_queryIdx = idx;
-	m_queryResetAtoms.emplaceBack(m_alloc, atom);
+	m_queryResetAtoms.emplaceBack(*m_pool, atom);
 #else
 	ANKI_CMD(vkCmdResetQueryPool(m_handle, handle, idx, 1), kAnyOtherCommand);
 #endif
@@ -603,7 +603,7 @@ inline void CommandBufferImpl::pushSecondLevelCommandBufferInternal(const Comman
 
 	if(m_secondLevelAtoms.getSize() <= m_secondLevelAtomCount)
 	{
-		m_secondLevelAtoms.resize(m_alloc, max<U32>(8, m_secondLevelAtomCount * 2));
+		m_secondLevelAtoms.resize(*m_pool, max<U32>(8, m_secondLevelAtomCount * 2));
 	}
 
 	m_secondLevelAtoms[m_secondLevelAtomCount++] = static_cast<const CommandBufferImpl&>(*cmdb).m_handle;
@@ -654,7 +654,7 @@ inline void CommandBufferImpl::drawcallCommon()
 			Bool dirty;
 			Array<PtrSize, kMaxBindingsPerDescriptorSet> dynamicOffsetsPtrSize;
 			U32 dynamicOffsetCount;
-			if(getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(m_alloc, m_dsetState[i], dset, dirty,
+			if(getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(*m_pool, m_dsetState[i], dset, dirty,
 																			 dynamicOffsetsPtrSize, dynamicOffsetCount))
 			{
 				ANKI_VK_LOGF("Cannot recover");
@@ -837,7 +837,7 @@ inline void CommandBufferImpl::writeOcclusionQueryResultToBufferInternal(const O
 	atom.m_buffer = impl.getHandle();
 	atom.m_offset = offset;
 
-	m_writeQueryAtoms.emplaceBack(m_alloc, atom);
+	m_writeQueryAtoms.emplaceBack(*m_pool, atom);
 #else
 	ANKI_CMD(vkCmdCopyQueryPoolResults(m_handle, q.m_handle.m_pool, q.m_handle.m_queryIndex, 1, impl.getHandle(),
 									   offset, sizeof(U32), VK_QUERY_RESULT_PARTIAL_BIT),

@@ -37,9 +37,9 @@ inline MicroSemaphore::~MicroSemaphore()
 	}
 }
 
-inline GrAllocator<U8> MicroSemaphore::getAllocator() const
+inline HeapMemoryPool& MicroSemaphore::getMemoryPool()
 {
-	return m_factory->m_alloc;
+	return *m_factory->m_pool;
 }
 
 inline Bool MicroSemaphore::clientWait(Second seconds)
@@ -86,7 +86,7 @@ inline MicroSemaphorePtr SemaphoreFactory::newInstance(MicroFencePtr fence, Bool
 	if(out == nullptr)
 	{
 		// Create a new one
-		out = m_alloc.newInstance<MicroSemaphore>(this, fence, isTimeline);
+		out = anki::newInstance<MicroSemaphore>(*m_pool, this, fence, isTimeline);
 	}
 	else
 	{

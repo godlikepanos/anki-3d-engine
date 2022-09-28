@@ -7,16 +7,16 @@
 
 namespace anki {
 
-static constexpr Array<GpuMemoryManagerClassInfo, 7> CLASSES{{{4_KB, 256_KB},
-															  {128_KB, 8_MB},
-															  {1_MB, 64_MB},
-															  {16_MB, 128_MB},
-															  {64_MB, 128_MB},
-															  {128_MB, 128_MB},
-															  {256_MB, 256_MB}}};
+static constexpr Array<GpuMemoryManagerClassInfo, 7> kClasses{{{4_KB, 256_KB},
+															   {128_KB, 8_MB},
+															   {1_MB, 64_MB},
+															   {16_MB, 128_MB},
+															   {64_MB, 128_MB},
+															   {128_MB, 128_MB},
+															   {256_MB, 256_MB}}};
 
 /// Special classes for the ReBAR memory. Have that as a special case because it's so limited and needs special care.
-static constexpr Array<GpuMemoryManagerClassInfo, 3> REBAR_CLASSES{{{1_MB, 1_MB}, {12_MB, 12_MB}, {24_MB, 24_MB}}};
+static constexpr Array<GpuMemoryManagerClassInfo, 3> kRebarClasses{{{1_MB, 1_MB}, {12_MB, 12_MB}, {24_MB, 24_MB}}};
 
 Error GpuMemoryManagerInterface::allocateChunk(U32 classIdx, GpuMemoryManagerChunk*& chunk)
 {
@@ -40,7 +40,7 @@ Error GpuMemoryManagerInterface::allocateChunk(U32 classIdx, GpuMemoryManagerChu
 					 m_classInfos[classIdx].m_suballocationSize);
 	}
 
-	chunk = m_parent->m_alloc.newInstance<GpuMemoryManagerChunk>();
+	chunk = newInstance<GpuMemoryManagerChunk>(*m_parent->m_pool);
 	chunk->m_handle = memHandle;
 	chunk->m_size = m_classInfos[classIdx].m_chunkSize;
 
@@ -64,7 +64,7 @@ void GpuMemoryManagerInterface::freeChunk(GpuMemoryManagerChunk* chunk)
 	ANKI_ASSERT(m_allocatedMemory >= chunk->m_size);
 	m_allocatedMemory -= chunk->m_size;
 
-	m_parent->m_alloc.deleteInstance(chunk);
+	deleteInstance(*m_parent->m_pool, chunk);
 }
 
 GpuMemoryManager::~GpuMemoryManager()
@@ -74,17 +74,17 @@ GpuMemoryManager::~GpuMemoryManager()
 void GpuMemoryManager::destroy()
 {
 	ANKI_VK_LOGV("Destroying memory manager");
-	m_callocs.destroy(m_alloc);
+	m_callocs.destroy(*m_pool);
 }
 
-void GpuMemoryManager::init(VkPhysicalDevice pdev, VkDevice dev, GrAllocator<U8> alloc, Bool exposeBufferGpuAddress)
+void GpuMemoryManager::init(VkPhysicalDevice pdev, VkDevice dev, HeapMemoryPool* pool, Bool exposeBufferGpuAddress)
 {
-	ANKI_ASSERT(pdev);
+	ANKI_ASSERT(pool && pdev);
 	ANKI_ASSERT(dev);
 
 	// Print some info
 	ANKI_VK_LOGV("Initializing memory manager");
-	for(const GpuMemoryManagerClassInfo& c : CLASSES)
+	for(const GpuMemoryManagerClassInfo& c : kClasses)
 	{
 		ANKI_VK_LOGV("\tGPU mem class. Chunk size: %lu, suballocationSize: %lu, allocsPerChunk %lu", c.m_chunkSize,
 					 c.m_suballocationSize, c.m_chunkSize / c.m_suballocationSize);
@@ -104,7 +104,7 @@ void GpuMemoryManager::init(VkPhysicalDevice pdev, VkDevice dev, GrAllocator<U8>
 				m_bufferImageGranularity);
 		}
 
-		for(const GpuMemoryManagerClassInfo& c : CLASSES)
+		for(const GpuMemoryManagerClassInfo& c : kClasses)
 		{
 			if(!isAligned(m_bufferImageGranularity, c.m_suballocationSize))
 			{
@@ -118,10 +118,10 @@ void GpuMemoryManager::init(VkPhysicalDevice pdev, VkDevice dev, GrAllocator<U8>
 
 	vkGetPhysicalDeviceMemoryProperties(pdev, &m_memoryProperties);
 
-	m_alloc = alloc;
+	m_pool = pool;
 	m_dev = dev;
 
-	m_callocs.create(alloc, m_memoryProperties.memoryTypeCount);
+	m_callocs.create(*pool, m_memoryProperties.memoryTypeCount);
 	for(U32 memTypeIdx = 0; memTypeIdx < m_callocs.getSize(); ++memTypeIdx)
 	{
 		GpuMemoryManagerInterface& iface = m_callocs[memTypeIdx].getInterface();
@@ -149,15 +149,15 @@ void GpuMemoryManager::init(VkPhysicalDevice pdev, VkDevice dev, GrAllocator<U8>
 		// Choose different classes
 		if(!isReBar)
 		{
-			iface.m_classInfos = CLASSES;
+			iface.m_classInfos = kClasses;
 		}
 		else
 		{
-			iface.m_classInfos = REBAR_CLASSES;
+			iface.m_classInfos = kRebarClasses;
 		}
 
 		// The interface is initialized, init the builder
-		m_callocs[memTypeIdx].init(m_alloc);
+		m_callocs[memTypeIdx].init(m_pool);
 	}
 }
 

@@ -66,7 +66,7 @@ GrManagerImpl::~GrManagerImpl()
 	m_pplineLayoutFactory.destroy();
 	m_descrFactory.destroy();
 
-	m_pplineCache.destroy(m_device, m_physicalDevice, getAllocator());
+	m_pplineCache.destroy(m_device, m_physicalDevice, m_pool);
 
 	m_fenceFactory.destroy();
 
@@ -142,23 +142,23 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 
 	m_crntSwapchain = m_swapchainFactory.newInstance();
 
-	ANKI_CHECK(m_pplineCache.init(m_device, m_physicalDevice, init.m_cacheDirectory, *m_config, getAllocator()));
+	ANKI_CHECK(m_pplineCache.init(m_device, m_physicalDevice, init.m_cacheDirectory, *m_config, m_pool));
 
 	ANKI_CHECK(initMemory());
 
-	ANKI_CHECK(m_cmdbFactory.init(getAllocator(), m_device, m_queueFamilyIndices));
+	ANKI_CHECK(m_cmdbFactory.init(&m_pool, m_device, m_queueFamilyIndices));
 
 	for(PerFrame& f : m_perFrame)
 	{
 		resetFrame(f);
 	}
 
-	m_fenceFactory.init(getAllocator(), m_device);
-	m_semaphoreFactory.init(getAllocator(), m_device);
+	m_fenceFactory.init(&m_pool, m_device);
+	m_semaphoreFactory.init(&m_pool, m_device);
 	m_samplerFactory.init(this);
-	m_barrierFactory.init(getAllocator(), m_device);
-	m_occlusionQueryFactory.init(getAllocator(), m_device, VK_QUERY_TYPE_OCCLUSION);
-	m_timestampQueryFactory.init(getAllocator(), m_device, VK_QUERY_TYPE_TIMESTAMP);
+	m_barrierFactory.init(&m_pool, m_device);
+	m_occlusionQueryFactory.init(&m_pool, m_device, VK_QUERY_TYPE_OCCLUSION);
+	m_timestampQueryFactory.init(&m_pool, m_device, VK_QUERY_TYPE_TIMESTAMP);
 
 	// See if unaligned formats are supported
 	{
@@ -195,8 +195,8 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		}
 	}
 
-	ANKI_CHECK(m_descrFactory.init(getAllocator(), m_device, kMaxBindlessTextures, kMaxBindlessReadonlyTextureBuffers));
-	m_pplineLayoutFactory.init(getAllocator(), m_device);
+	ANKI_CHECK(m_descrFactory.init(&m_pool, m_device, kMaxBindlessTextures, kMaxBindlessReadonlyTextureBuffers));
+	m_pplineLayoutFactory.init(&m_pool, m_device);
 
 	m_frameGarbageCollector.init(this);
 
@@ -227,14 +227,14 @@ Error GrManagerImpl::initInstance()
 	ci.pApplicationInfo = &app;
 
 	// Instance layers
-	DynamicArrayRaii<const char*> layersToEnable(getAllocator());
+	DynamicArrayRaii<const char*> layersToEnable(&m_pool);
 	{
 		U32 layerCount;
 		vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 
 		if(layerCount)
 		{
-			DynamicArrayRaii<VkLayerProperties> layerProps(getAllocator(), layerCount);
+			DynamicArrayRaii<VkLayerProperties> layerProps(&m_pool, layerCount);
 			vkEnumerateInstanceLayerProperties(&layerCount, &layerProps[0]);
 
 			ANKI_VK_LOGV("Found the following instance layers:");
@@ -265,8 +265,8 @@ Error GrManagerImpl::initInstance()
 	}
 
 	// Validation features
-	DynamicArrayRaii<VkValidationFeatureEnableEXT> enabledValidationFeatures(getAllocator());
-	DynamicArrayRaii<VkValidationFeatureDisableEXT> disabledValidationFeatures(getAllocator());
+	DynamicArrayRaii<VkValidationFeatureEnableEXT> enabledValidationFeatures(&m_pool);
+	DynamicArrayRaii<VkValidationFeatureDisableEXT> disabledValidationFeatures(&m_pool);
 	if(m_config->getGrDebugPrintf())
 	{
 		enabledValidationFeatures.emplaceBack(VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT);
@@ -292,8 +292,8 @@ Error GrManagerImpl::initInstance()
 	}
 
 	// Extensions
-	DynamicArrayRaii<const char*> instExtensions(getAllocator());
-	DynamicArrayRaii<VkExtensionProperties> instExtensionInf(getAllocator());
+	DynamicArrayRaii<const char*> instExtensions(&m_pool);
+	DynamicArrayRaii<VkExtensionProperties> instExtensionInf(&m_pool);
 	U32 extCount = 0;
 	vkEnumerateInstanceExtensionProperties(nullptr, &extCount, nullptr);
 	if(extCount)
@@ -429,7 +429,7 @@ Error GrManagerImpl::initInstance()
 
 	// Find the correct physical device
 	{
-		DynamicArrayRaii<VkPhysicalDevice> physicalDevices(m_alloc, count);
+		DynamicArrayRaii<VkPhysicalDevice> physicalDevices(&m_pool, count);
 		ANKI_VK_CHECK(vkEnumeratePhysicalDevices(m_instance, &count, &physicalDevices[0]));
 
 		VkPhysicalDevice firstChoice = VK_NULL_HANDLE;
@@ -554,7 +554,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &count, nullptr);
 	ANKI_VK_LOGI("Number of queue families: %u", count);
 
-	DynamicArrayRaii<VkQueueFamilyProperties> queueInfos(getAllocator());
+	DynamicArrayRaii<VkQueueFamilyProperties> queueInfos(&m_pool);
 	queueInfos.create(count);
 	vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &count, &queueInfos[0]);
 
@@ -624,8 +624,8 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	U32 extCount = 0;
 	vkEnumerateDeviceExtensionProperties(m_physicalDevice, nullptr, &extCount, nullptr);
 
-	DynamicArrayRaii<VkExtensionProperties> extensionInfos(getAllocator()); // Keep it alive in the stack
-	DynamicArrayRaii<const char*> extensionsToEnable(getAllocator());
+	DynamicArrayRaii<VkExtensionProperties> extensionInfos(&m_pool); // Keep it alive in the stack
+	DynamicArrayRaii<const char*> extensionsToEnable(&m_pool);
 	if(extCount)
 	{
 		extensionInfos.create(extCount);
@@ -1141,7 +1141,7 @@ Error GrManagerImpl::initMemory()
 					 ANKI_FORMAT_U32(m_memoryProperties.memoryTypes[i].propertyFlags));
 	}
 
-	m_gpuMemManager.init(m_physicalDevice, m_device, getAllocator(),
+	m_gpuMemManager.init(m_physicalDevice, m_device, &m_pool,
 						 !!(m_extensions & VulkanExtensions::kKHR_buffer_device_address));
 
 	return Error::kNone;
@@ -1482,7 +1482,7 @@ VkBool32 GrManagerImpl::debugReportCallbackEXT(VkDebugUtilsMessageSeverityFlagBi
 
 	// Get all names of affected objects
 	GrManagerImpl* self = static_cast<GrManagerImpl*>(pUserData);
-	StringRaii objectNames(self->m_alloc);
+	StringRaii objectNames(&self->m_pool);
 	if(pCallbackData->objectCount)
 	{
 		for(U32 i = 0; i < pCallbackData->objectCount; ++i)
@@ -1537,7 +1537,7 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 		if(!m_shaderStatsFile.isOpen())
 		{
 			ANKI_CHECK(m_shaderStatsFile.open(
-				StringRaii(getAllocator()).sprintf("%s/../ppline_stats.csv", m_cacheDir.cstr()).toCString(),
+				StringRaii(&m_pool).sprintf("%s/../ppline_stats.csv", m_cacheDir.cstr()).toCString(),
 				FileOpenFlag::kWrite));
 
 			ANKI_CHECK(m_shaderStatsFile.writeText("ppline name,hash,"
@@ -1551,7 +1551,7 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 
 		ANKI_CHECK(m_shaderStatsFile.writeTextf("%s,0x%" PRIx64 ",", name.cstr(), hash));
 
-		StringRaii str(getAllocator());
+		StringRaii str(&m_pool);
 
 		for(ShaderType type = ShaderType::kFirst; type < ShaderType::kCount; ++type)
 		{
@@ -1566,9 +1566,8 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 			ANKI_VK_CHECK(m_pfnGetShaderInfoAMD(m_device, ppline, VkShaderStageFlagBits(convertShaderTypeBit(stage)),
 												VK_SHADER_INFO_TYPE_STATISTICS_AMD, &size, &stats));
 
-			str.append(StringRaii(getAllocator())
-						   .sprintf("Stage %u: VGRPS %02u, SGRPS %02u ", U32(type), stats.resourceUsage.numUsedVgprs,
-									stats.resourceUsage.numUsedSgprs));
+			str.append(StringRaii(&m_pool).sprintf("Stage %u: VGRPS %02u, SGRPS %02u ", U32(type),
+												   stats.resourceUsage.numUsedVgprs, stats.resourceUsage.numUsedSgprs));
 
 			ANKI_CHECK(m_shaderStatsFile.writeTextf((type != ShaderType::kLast) ? "%u,%u," : "%u,%u\n",
 													stats.resourceUsage.numUsedVgprs,
@@ -1583,14 +1582,14 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 
 	if(!!(m_extensions & VulkanExtensions::kKHR_pipeline_executable_properties))
 	{
-		StringListRaii log(m_alloc);
+		StringListRaii log(&m_pool);
 
 		VkPipelineInfoKHR pplineInf = {};
 		pplineInf.sType = VK_STRUCTURE_TYPE_PIPELINE_INFO_KHR;
 		pplineInf.pipeline = ppline;
 		U32 executableCount = 0;
 		ANKI_VK_CHECK(vkGetPipelineExecutablePropertiesKHR(m_device, &pplineInf, &executableCount, nullptr));
-		DynamicArrayRaii<VkPipelineExecutablePropertiesKHR> executableProps(m_alloc, executableCount);
+		DynamicArrayRaii<VkPipelineExecutablePropertiesKHR> executableProps(&m_pool, executableCount);
 		for(VkPipelineExecutablePropertiesKHR& prop : executableProps)
 		{
 			prop = {};
@@ -1612,7 +1611,7 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 			exeInf.pipeline = ppline;
 			U32 statCount = 0;
 			vkGetPipelineExecutableStatisticsKHR(m_device, &exeInf, &statCount, nullptr);
-			DynamicArrayRaii<VkPipelineExecutableStatisticKHR> stats(m_alloc, statCount);
+			DynamicArrayRaii<VkPipelineExecutableStatisticKHR> stats(&m_pool, statCount);
 			for(VkPipelineExecutableStatisticKHR& s : stats)
 			{
 				s = {};
@@ -1651,7 +1650,7 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 			}
 		}
 
-		StringRaii finalLog(m_alloc);
+		StringRaii finalLog(&m_pool);
 		log.join("", finalLog);
 		ANKI_VK_LOGV("%s", finalLog.cstr());
 	}

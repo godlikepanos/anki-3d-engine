@@ -62,7 +62,7 @@ public:
 		return *m_manager;
 	}
 
-	HeapMemoryPool& getMemoryPool();
+	HeapMemoryPool& getMemoryPool() const;
 
 	void retain() const
 	{

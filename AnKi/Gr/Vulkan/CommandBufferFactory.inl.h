@@ -7,9 +7,9 @@
 
 namespace anki {
 
-inline GrAllocator<U8>& MicroCommandBuffer::getAllocator()
+inline HeapMemoryPool& MicroCommandBuffer::getMemoryPool()
 {
-	return m_threadAlloc->getAllocator();
+	return m_threadAlloc->getMemoryPool();
 }
 
 inline void MicroCommandBufferPtrDeleter::operator()(MicroCommandBuffer* ptr)
@@ -18,9 +18,9 @@ inline void MicroCommandBufferPtrDeleter::operator()(MicroCommandBuffer* ptr)
 	ptr->m_threadAlloc->deleteCommandBuffer(ptr);
 }
 
-inline GrAllocator<U8>& CommandBufferThreadAllocator::getAllocator()
+inline HeapMemoryPool& CommandBufferThreadAllocator::getMemoryPool()
 {
-	return m_factory->m_alloc;
+	return *m_factory->m_pool;
 }
 
 } // end namespace anki

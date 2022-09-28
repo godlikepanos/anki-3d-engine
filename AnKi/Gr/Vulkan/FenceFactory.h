@@ -46,7 +46,7 @@ public:
 		return m_refcount.fetchSub(1);
 	}
 
-	GrAllocator<U8> getAllocator() const;
+	HeapMemoryPool& getMemoryPool();
 
 	void wait()
 	{
@@ -95,10 +95,10 @@ public:
 	{
 	}
 
-	void init(GrAllocator<U8> alloc, VkDevice dev)
+	void init(HeapMemoryPool* pool, VkDevice dev)
 	{
-		ANKI_ASSERT(dev);
-		m_alloc = std::move(alloc);
+		ANKI_ASSERT(pool && dev);
+		m_pool = pool;
 		m_dev = dev;
 	}
 
@@ -111,7 +111,7 @@ public:
 	}
 
 private:
-	GrAllocator<U8> m_alloc;
+	HeapMemoryPool* m_pool = nullptr;
 	VkDevice m_dev = VK_NULL_HANDLE;
 	DynamicArray<MicroFence*> m_fences;
 	U32 m_aliveFenceCount = 0;

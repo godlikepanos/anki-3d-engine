@@ -8,11 +8,12 @@
 namespace anki {
 
 template<typename TChunk, typename TInterface, typename TLock>
-void ClassAllocatorBuilder<TChunk, TInterface, TLock>::init(GenericMemoryPoolAllocator<U8> alloc)
+void ClassAllocatorBuilder<TChunk, TInterface, TLock>::init(BaseMemoryPool* pool)
 {
-	m_alloc = std::move(alloc);
+	ANKI_ASSERT(pool);
+	m_pool = pool;
 
-	m_classes.create(m_alloc, m_interface.getClassCount());
+	m_classes.create(*m_pool, m_interface.getClassCount());
 
 	for(U32 classIdx = 0; classIdx < m_classes.getSize(); ++classIdx)
 	{
@@ -32,7 +33,7 @@ void ClassAllocatorBuilder<TChunk, TInterface, TLock>::destroy()
 		ANKI_ASSERT(c.m_chunkList.isEmpty() && "Forgot to deallocate");
 	}
 
-	m_classes.destroy(m_alloc);
+	m_classes.destroy(*m_pool);
 }
 
 template<typename TChunk, typename TInterface, typename TLock>

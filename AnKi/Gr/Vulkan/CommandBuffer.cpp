@@ -14,11 +14,11 @@ namespace anki {
 CommandBuffer* CommandBuffer::newInstance(GrManager* manager, const CommandBufferInitInfo& init)
 {
 	ANKI_TRACE_SCOPED_EVENT(VK_NEW_CCOMMAND_BUFFER);
-	CommandBufferImpl* impl = manager->getAllocator().newInstance<CommandBufferImpl>(manager, init.getName());
+	CommandBufferImpl* impl = anki::newInstance<CommandBufferImpl>(manager->getMemoryPool(), manager, init.getName());
 	const Error err = impl->init(init);
 	if(err)
 	{
-		manager->getAllocator().deleteInstance(impl);
+		deleteInstance(manager->getMemoryPool(), impl);
 		impl = nullptr;
 	}
 	return impl;
@@ -46,7 +46,7 @@ void CommandBuffer::flush(ConstWeakArray<FencePtr> waitFences, FencePtr* signalF
 		if(signalFence)
 		{
 			FenceImpl* fenceImpl =
-				self.getGrManagerImpl().getAllocator().newInstance<FenceImpl>(&getManager(), "SignalFence");
+				anki::newInstance<FenceImpl>(self.getGrManagerImpl().getMemoryPool(), &getManager(), "SignalFence");
 			fenceImpl->m_semaphore = signalSemaphore;
 			signalFence->reset(fenceImpl);
 		}

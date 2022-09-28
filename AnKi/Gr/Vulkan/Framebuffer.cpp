@@ -11,11 +11,11 @@ namespace anki {
 
 Framebuffer* Framebuffer::newInstance(GrManager* manager, const FramebufferInitInfo& init)
 {
-	FramebufferImpl* impl = manager->getAllocator().newInstance<FramebufferImpl>(manager, init.getName());
+	FramebufferImpl* impl = anki::newInstance<FramebufferImpl>(manager->getMemoryPool(), manager, init.getName());
 	const Error err = impl->init(init);
 	if(err)
 	{
-		manager->getAllocator().deleteInstance(impl);
+		deleteInstance(manager->getMemoryPool(), impl);
 		impl = nullptr;
 	}
 	return impl;

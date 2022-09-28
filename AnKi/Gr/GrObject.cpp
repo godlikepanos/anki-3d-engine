@@ -31,7 +31,7 @@ GrObject::~GrObject()
 	}
 }
 
-HeapMemoryPool& GrObject::getMemoryPool()
+HeapMemoryPool& GrObject::getMemoryPool() const
 {
 	return m_manager->getMemoryPool();
 }

@@ -25,9 +25,9 @@ inline MicroDeferredBarrier::~MicroDeferredBarrier()
 	}
 }
 
-inline GrAllocator<U8> MicroDeferredBarrier::getAllocator() const
+inline HeapMemoryPool& MicroDeferredBarrier::getMemoryPool()
 {
-	return m_factory->m_alloc;
+	return *m_factory->m_pool;
 }
 
 inline void MicroDeferredBarrierPtrDeleter::operator()(MicroDeferredBarrier* s)
@@ -43,7 +43,7 @@ inline MicroDeferredBarrierPtr DeferredBarrierFactory::newInstance()
 	if(out == nullptr)
 	{
 		// Create a new one
-		out = m_alloc.newInstance<MicroDeferredBarrier>(this);
+		out = anki::newInstance<MicroDeferredBarrier>(*m_pool, this);
 	}
 
 	return MicroDeferredBarrierPtr(out);

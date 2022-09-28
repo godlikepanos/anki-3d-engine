@@ -10,7 +10,7 @@ namespace anki {
 
 AccelerationStructureImpl::~AccelerationStructureImpl()
 {
-	m_topLevelInfo.m_blas.destroy(getAllocator());
+	m_topLevelInfo.m_blas.destroy(getMemoryPool());
 
 	if(m_handle)
 	{
@@ -90,7 +90,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 	else
 	{
 		// Create the instances buffer
-		m_topLevelInfo.m_blas.resizeStorage(getAllocator(), inf.m_topLevel.m_instances.getSize());
+		m_topLevelInfo.m_blas.resizeStorage(getMemoryPool(), inf.m_topLevel.m_instances.getSize());
 
 		BufferInitInfo buffInit("AS instances");
 		buffInit.m_size = sizeof(VkAccelerationStructureInstanceKHR) * inf.m_topLevel.m_instances.getSize();
@@ -116,7 +116,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 			ANKI_ASSERT(outInst.accelerationStructureReference != 0);
 
 			// Hold the reference
-			m_topLevelInfo.m_blas.emplaceBack(getAllocator(), inf.m_topLevel.m_instances[i].m_bottomLevel);
+			m_topLevelInfo.m_blas.emplaceBack(getMemoryPool(), inf.m_topLevel.m_instances[i].m_bottomLevel);
 		}
 
 		m_topLevelInfo.m_instancesBuffer->flush(0, kMaxPtrSize);

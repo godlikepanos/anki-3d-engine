@@ -25,7 +25,7 @@ Error QueryFactory::newQuery(MicroQuery& handle)
 	Chunk* chunk = nullptr;
 	for(Chunk& c : m_chunks)
 	{
-		if(c.m_subAllocationCount < MAX_SUB_ALLOCATIONS_PER_QUERY_CHUNK)
+		if(c.m_subAllocationCount < kMaxSuballocationsPerQueryChunk)
 		{
 			// Found one
 
@@ -44,12 +44,12 @@ Error QueryFactory::newQuery(MicroQuery& handle)
 	if(chunk == nullptr)
 	{
 		// Create new chunk
-		chunk = m_alloc.newInstance<Chunk>();
+		chunk = newInstance<Chunk>(*m_pool);
 
 		VkQueryPoolCreateInfo ci = {};
 		ci.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
 		ci.queryType = m_poolType;
-		ci.queryCount = MAX_SUB_ALLOCATIONS_PER_QUERY_CHUNK;
+		ci.queryCount = kMaxSuballocationsPerQueryChunk;
 
 		ANKI_VK_CHECK(vkCreateQueryPool(m_dev, &ci, nullptr, &chunk->m_pool));
 		m_chunks.pushBack(chunk);
@@ -58,7 +58,7 @@ Error QueryFactory::newQuery(MicroQuery& handle)
 	ANKI_ASSERT(chunk);
 
 	// Allocate from chunk
-	for(U32 i = 0; i < MAX_SUB_ALLOCATIONS_PER_QUERY_CHUNK; ++i)
+	for(U32 i = 0; i < kMaxSuballocationsPerQueryChunk; ++i)
 	{
 		if(chunk->m_allocatedMask.get(i) == 0)
 		{
@@ -94,7 +94,7 @@ void QueryFactory::deleteQuery(MicroQuery& handle)
 		vkDestroyQueryPool(m_dev, chunk->m_pool, nullptr);
 
 		m_chunks.erase(chunk);
-		m_alloc.deleteInstance(chunk);
+		deleteInstance(*m_pool, chunk);
 	}
 	else
 	{

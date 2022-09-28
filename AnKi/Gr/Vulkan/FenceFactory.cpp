@@ -11,10 +11,10 @@ void FenceFactory::destroy()
 {
 	for(MicroFence* fence : m_fences)
 	{
-		m_alloc.deleteInstance(fence);
+		deleteInstance(*m_pool, fence);
 	}
 
-	m_fences.destroy(m_alloc);
+	m_fences.destroy(*m_pool);
 }
 
 MicroFence* FenceFactory::newFence()
@@ -33,7 +33,7 @@ MicroFence* FenceFactory::newFence()
 				out = m_fences[i];
 
 				// Pop it
-				m_fences.erase(m_alloc, m_fences.getBegin() + i);
+				m_fences.erase(*m_pool, m_fences.getBegin() + i);
 				break;
 			}
 			else if(status != VK_NOT_READY)
@@ -62,7 +62,7 @@ MicroFence* FenceFactory::newFence()
 	if(out == nullptr)
 	{
 		// Create a new one
-		out = m_alloc.newInstance<MicroFence>(this);
+		out = anki::newInstance<MicroFence>(*m_pool, this);
 	}
 	else
 	{
@@ -79,7 +79,7 @@ void FenceFactory::deleteFence(MicroFence* fence)
 	ANKI_ASSERT(fence);
 
 	LockGuard<Mutex> lock(m_mtx);
-	m_fences.emplaceBack(m_alloc, fence);
+	m_fences.emplaceBack(*m_pool, fence);
 }
 
 } // end namespace anki
