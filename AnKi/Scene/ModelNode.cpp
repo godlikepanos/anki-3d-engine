@@ -54,12 +54,12 @@ ModelNode::ModelNode(SceneGraph* scene, CString name)
 	newComponent<FeedbackComponent>();
 	newComponent<SpatialComponent>();
 	newComponent<RenderComponent>(); // One of many
-	m_renderProxies.create(getAllocator(), 1);
+	m_renderProxies.create(getMemoryPool(), 1);
 }
 
 ModelNode::~ModelNode()
 {
-	m_renderProxies.destroy(getAllocator());
+	m_renderProxies.destroy(getMemoryPool());
 }
 
 void ModelNode::feedbackUpdate()
@@ -140,7 +140,7 @@ Error ModelNode::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unu
 			newComponent<RenderComponent>();
 		}
 
-		m_renderProxies.resize(getAllocator(), modelPatchCount);
+		m_renderProxies.resize(getMemoryPool(), modelPatchCount);
 	}
 	else
 	{
@@ -289,7 +289,7 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 	{
 		// Draw the bounding volumes
 
-		Mat4* const mvps = ctx.m_frameAllocator.newArray<Mat4>(instanceCount);
+		Mat4* const mvps = newArray<Mat4>(*ctx.m_framePool, instanceCount);
 		for(U32 i = 0; i < instanceCount; ++i)
 		{
 			const ModelNode& otherNode = *static_cast<const RenderProxy*>(userData[i])->m_node;
@@ -322,7 +322,7 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), 2.0f, *ctx.m_stagingGpuAllocator,
 			cmdb);
 
-		ctx.m_frameAllocator.deleteArray(mvps, instanceCount);
+		deleteArray(*ctx.m_framePool, mvps, instanceCount);
 
 		// Bones
 		const SkinComponent& skinc = getFirstComponentOfType<SkinComponent>();
@@ -332,9 +332,9 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 			SkeletonResourcePtr skeleton = skinc.getSkeleronResource();
 			const U32 boneCount = skinc.getBoneTransforms().getSize();
 
-			DynamicArrayRaii<Vec3> lines(ctx.m_frameAllocator);
+			DynamicArrayRaii<Vec3> lines(ctx.m_framePool);
 			lines.resizeStorage(boneCount * 2);
-			DynamicArrayRaii<Vec3> chidlessLines(ctx.m_frameAllocator);
+			DynamicArrayRaii<Vec3> chidlessLines(ctx.m_framePool);
 			for(U32 i = 0; i < boneCount; ++i)
 			{
 				const Bone& bone = skeleton->getBones()[i];

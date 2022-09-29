@@ -67,14 +67,14 @@ public:
 	U32 m_elementCount = 0;
 	U32 m_elementStorage = 0;
 
-	T* newElement(SceneFrameAllocator<T> alloc)
+	T* newElement(StackMemoryPool& pool)
 	{
 		if(ANKI_UNLIKELY(m_elementCount + 1 > m_elementStorage))
 		{
 			m_elementStorage = max(kInitialStorage, m_elementStorage * kStorageGrowRate);
 
 			const T* oldElements = m_elements;
-			m_elements = alloc.allocate(m_elementStorage);
+			m_elements = static_cast<T*>(pool.allocate(m_elementStorage, alignof(T)));
 
 			if(oldElements)
 			{
@@ -238,8 +238,7 @@ public:
 
 private:
 	template<typename T>
-	static void combineQueueElements(SceneFrameAllocator<U8>& alloc,
-									 WeakArray<TRenderQueueElementStorage<T>> subStorages,
+	static void combineQueueElements(StackMemoryPool& pool, WeakArray<TRenderQueueElementStorage<T>> subStorages,
 									 WeakArray<TRenderQueueElementStorage<U32>>* ptrSubStorage, WeakArray<T>& combined,
 									 WeakArray<T*>* ptrCombined);
 };

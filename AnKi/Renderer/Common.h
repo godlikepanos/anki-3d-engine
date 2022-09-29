@@ -101,7 +101,7 @@ public:
 class RenderingContext
 {
 public:
-	StackAllocator<U8> m_tempAllocator;
+	StackMemoryPool* m_tempPool = nullptr;
 	RenderQueue* m_renderQueue = nullptr;
 
 	RenderGraphDescription m_renderGraphDescr;
@@ -114,9 +114,9 @@ public:
 
 	ClusteredShadingContext m_clusteredShading;
 
-	RenderingContext(const StackAllocator<U8>& alloc)
-		: m_tempAllocator(alloc)
-		, m_renderGraphDescr(alloc)
+	RenderingContext(StackMemoryPool* pool)
+		: m_tempPool(pool)
+		, m_renderGraphDescr(pool)
 	{
 	}
 

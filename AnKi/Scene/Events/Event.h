@@ -25,7 +25,7 @@ public:
 
 	virtual ~Event();
 
-	SceneAllocator<U8> getAllocator() const;
+	HeapMemoryPool& getMemoryPool() const;
 
 	EventManager& getEventManager()
 	{
@@ -84,7 +84,7 @@ public:
 	void addAssociatedSceneNode(SceneNode* node)
 	{
 		ANKI_ASSERT(node);
-		m_associatedNodes.emplaceBack(getAllocator(), node);
+		m_associatedNodes.emplaceBack(getMemoryPool(), node);
 	}
 
 	/// This method should be implemented by the derived classes

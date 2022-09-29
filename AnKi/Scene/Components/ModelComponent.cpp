@@ -21,7 +21,7 @@ ModelComponent::ModelComponent(SceneNode* node)
 
 ModelComponent::~ModelComponent()
 {
-	m_modelPatchMergeKeys.destroy(m_node->getAllocator());
+	m_modelPatchMergeKeys.destroy(m_node->getMemoryPool());
 }
 
 Error ModelComponent::loadModelResource(CString filename)
@@ -32,8 +32,8 @@ Error ModelComponent::loadModelResource(CString filename)
 	ANKI_CHECK(m_node->getSceneGraph().getResourceManager().loadResource(filename, rsrc));
 	m_model = std::move(rsrc);
 
-	m_modelPatchMergeKeys.destroy(m_node->getAllocator());
-	m_modelPatchMergeKeys.create(m_node->getAllocator(), m_model->getModelPatches().getSize());
+	m_modelPatchMergeKeys.destroy(m_node->getMemoryPool());
+	m_modelPatchMergeKeys.create(m_node->getMemoryPool(), m_model->getModelPatches().getSize());
 
 	for(U32 i = 0; i < m_model->getModelPatches().getSize(); ++i)
 	{

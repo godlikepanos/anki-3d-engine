@@ -23,7 +23,7 @@ ScriptComponent::ScriptComponent(SceneNode* node)
 
 ScriptComponent::~ScriptComponent()
 {
-	m_node->getAllocator().deleteInstance(m_env);
+	deleteInstance(m_node->getMemoryPool(), m_env);
 }
 
 Error ScriptComponent::loadScriptResource(CString fname)
@@ -34,9 +34,9 @@ Error ScriptComponent::loadScriptResource(CString fname)
 	// Create the env
 	if(m_env)
 	{
-		m_node->getAllocator().deleteInstance(m_env);
+		deleteInstance(m_node->getMemoryPool(), m_env);
 	}
-	m_env = m_node->getAllocator().newInstance<ScriptEnvironment>();
+	m_env = newInstance<ScriptEnvironment>(m_node->getMemoryPool());
 	ANKI_CHECK(m_env->init(&m_node->getSceneGraph().getScriptManager()));
 
 	// Exec the script

@@ -8,8 +8,8 @@
 namespace anki {
 
 template<PtrSize kTObjectSize, U32 kTObjectAlignment, U32 kTObjectsPerChunk, typename TIndexType>
-template<typename T, typename TAlloc, typename... TArgs>
-T* ObjectAllocator<kTObjectSize, kTObjectAlignment, kTObjectsPerChunk, TIndexType>::newInstance(TAlloc& alloc,
+template<typename T, typename TMemPool, typename... TArgs>
+T* ObjectAllocator<kTObjectSize, kTObjectAlignment, kTObjectsPerChunk, TIndexType>::newInstance(TMemPool& pool,
 																								TArgs&&... args)
 {
 	static_assert(alignof(T) <= kObjectAlignment, "Wrong object alignment");
@@ -37,7 +37,7 @@ T* ObjectAllocator<kTObjectSize, kTObjectAlignment, kTObjectsPerChunk, TIndexTyp
 		// Need to create a new chunk
 
 		// Create the chunk
-		chunk = alloc.template newInstance<Chunk>();
+		chunk = anki::newInstance<Chunk>(pool);
 		chunk->m_unusedCount = kObjectsPerChunk;
 
 		for(U32 i = 0; i < kObjectsPerChunk; ++i)
@@ -65,14 +65,14 @@ T* ObjectAllocator<kTObjectSize, kTObjectAlignment, kTObjectsPerChunk, TIndexTyp
 	ANKI_ASSERT(out);
 
 	// Construct it
-	alloc.construct(out, std::forward<TArgs>(args)...);
+	callConstructor(*out, std::forward<TArgs>(args)...);
 
 	return out;
 }
 
 template<PtrSize kTObjectSize, U32 kTObjectAlignment, U32 kTObjectsPerChunk, typename TIndexType>
-template<typename T, typename TAlloc>
-void ObjectAllocator<kTObjectSize, kTObjectAlignment, kTObjectsPerChunk, TIndexType>::deleteInstance(TAlloc& alloc,
+template<typename T, typename TMemPool>
+void ObjectAllocator<kTObjectSize, kTObjectAlignment, kTObjectsPerChunk, TIndexType>::deleteInstance(TMemPool& pool,
 																									 T* obj)
 {
 	static_assert(alignof(T) <= kObjectAlignment, "Wrong object alignment");
@@ -95,7 +95,7 @@ void ObjectAllocator<kTObjectSize, kTObjectAlignment, kTObjectsPerChunk, TIndexT
 			const U32 idx = U32(mem - begin);
 
 			// Destroy the object
-			obj->~T();
+			callDestructor(*obj);
 
 			// Remove from the chunk
 			chunk->m_unusedStack[chunk->m_unusedCount] = idx;
@@ -126,7 +126,7 @@ void ObjectAllocator<kTObjectSize, kTObjectAlignment, kTObjectsPerChunk, TIndexT
 					chunk->m_next->m_prev = chunk->m_prev;
 				}
 
-				alloc.deleteInstance(chunk);
+				anki::deleteInstance(pool, chunk);
 			}
 
 			break;

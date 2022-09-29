@@ -35,7 +35,7 @@ public:
 	{
 	}
 
-	HeapAllocator<U8> getAllocator() const;
+	HeapMemoryPool& getMemoryPool() const;
 
 	virtual void getDebugRenderTarget([[maybe_unused]] CString rtName,
 									  [[maybe_unused]] Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,

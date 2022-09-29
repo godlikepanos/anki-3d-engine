@@ -20,7 +20,7 @@ ScriptEvent::ScriptEvent(EventManager* manager)
 
 ScriptEvent::~ScriptEvent()
 {
-	m_script.destroy(getAllocator());
+	m_script.destroy(getMemoryPool());
 }
 
 Error ScriptEvent::init(Second startTime, Second duration, CString script)
@@ -31,7 +31,7 @@ Error ScriptEvent::init(Second startTime, Second duration, CString script)
 	ANKI_CHECK(m_env.init(&getSceneGraph().getScriptManager()));
 
 	// Do the rest
-	StringRaii extension(getAllocator());
+	StringRaii extension(&getMemoryPool());
 	getFilepathExtension(script, extension);
 
 	if(!extension.isEmpty() && extension == "lua")
@@ -45,7 +45,7 @@ Error ScriptEvent::init(Second startTime, Second duration, CString script)
 	else
 	{
 		// It's a string
-		m_script.create(getAllocator(), script);
+		m_script.create(getMemoryPool(), script);
 
 		// Exec the script
 		ANKI_CHECK(m_env.evalString(m_script.toCString()));

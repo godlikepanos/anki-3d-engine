@@ -36,13 +36,13 @@ public:
 
 	/// Allocate and construct a new object instance.
 	/// @note Not thread-safe.
-	template<typename T, typename TAlloc, typename... TArgs>
-	T* newInstance(TAlloc& alloc, TArgs&&... args);
+	template<typename T, typename TMemPool, typename... TArgs>
+	T* newInstance(TMemPool& pool, TArgs&&... args);
 
 	/// Delete an object.
 	/// @note Not thread-safe.
-	template<typename T, typename TAlloc>
-	void deleteInstance(TAlloc& alloc, T* obj);
+	template<typename T, typename TMemPool>
+	void deleteInstance(TMemPool& pool, T* obj);
 
 private:
 	/// Storage with equal properties as the object.
@@ -76,18 +76,18 @@ public:
 
 	/// Allocate and construct a new object instance.
 	/// @note Not thread-safe.
-	template<typename TAlloc, typename... TArgs>
-	T* newInstance(TAlloc& alloc, TArgs&&... args)
+	template<typename TMemPool, typename... TArgs>
+	T* newInstance(TMemPool& pool, TArgs&&... args)
 	{
-		return Base::template newInstance<T>(alloc, std::forward(args)...);
+		return Base::template newInstance<T>(pool, std::forward(args)...);
 	}
 
 	/// Delete an object.
 	/// @note Not thread-safe.
-	template<typename TAlloc>
-	void deleteInstance(TAlloc& alloc, T* obj)
+	template<typename TMemPool>
+	void deleteInstance(TMemPool& pool, T* obj)
 	{
-		Base::deleteInstance(alloc, obj);
+		Base::deleteInstance(pool, obj);
 	}
 };
 /// @}

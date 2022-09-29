@@ -73,8 +73,7 @@ public:
 
 	/// Init the renderer.
 	Error init(ThreadHive* hive, ResourceManager* resources, GrManager* gr, StagingGpuMemoryPool* stagingMem,
-			   UiManager* ui, HeapAllocator<U8> alloc, ConfigSet* config, Timestamp* globTimestamp,
-			   UVec2 swapchainSize);
+			   UiManager* ui, HeapMemoryPool* pool, ConfigSet* config, Timestamp* globTimestamp, UVec2 swapchainSize);
 
 	/// This function does all the rendering stages and produces a final result.
 	Error populateRenderGraph(RenderingContext& ctx);
@@ -118,9 +117,9 @@ public:
 		return *m_gr;
 	}
 
-	HeapAllocator<U8> getAllocator() const
+	HeapMemoryPool& getMemoryPool() const
 	{
-		return m_alloc;
+		return *m_pool;
 	}
 
 	ResourceManager& getResourceManager()
@@ -234,7 +233,7 @@ private:
 	UiManager* m_ui = nullptr;
 	Timestamp* m_globTimestamp = nullptr;
 	ConfigSet* m_config = nullptr;
-	HeapAllocator<U8> m_alloc;
+	mutable HeapMemoryPool* m_pool = nullptr;
 
 	/// @name Rendering stages
 	/// @{

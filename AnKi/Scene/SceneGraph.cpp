@@ -48,7 +48,7 @@ SceneGraph::~SceneGraph()
 
 	if(m_octree)
 	{
-		m_alloc.deleteInstance(m_octree);
+		deleteInstance(m_pool, m_octree);
 	}
 }
 
@@ -66,12 +66,12 @@ Error SceneGraph::init(AllocAlignedCallback allocCb, void* allocCbData, ThreadHi
 	m_uiManager = uiManager;
 	m_config = config;
 
-	m_alloc = SceneAllocator<U8>(allocCb, allocCbData);
-	m_frameAlloc = SceneFrameAllocator<U8>(allocCb, allocCbData, 1 * 1024 * 1024);
+	m_pool.init(allocCb, allocCbData);
+	m_framePool.init(allocCb, allocCbData, 1 * 1024 * 1024);
 
 	ANKI_CHECK(m_events.init(this));
 
-	m_octree = m_alloc.newInstance<Octree>(m_alloc);
+	m_octree = newInstance<Octree>(m_pool, &m_pool);
 	m_octree->init(m_sceneMin, m_sceneMax, m_config->getSceneOctreeMaxDepth());
 
 	// Init the default main camera
@@ -103,7 +103,7 @@ Error SceneGraph::registerNode(SceneNode* node)
 			return Error::kUserData;
 		}
 
-		m_nodesDict.emplace(m_alloc, node->getName(), node);
+		m_nodesDict.emplace(m_pool, node->getName(), node);
 	}
 
 	// Add to vector
@@ -129,7 +129,7 @@ void SceneGraph::unregisterNode(SceneNode* node)
 	{
 		auto it = m_nodesDict.find(node->getName());
 		ANKI_ASSERT(it != m_nodesDict.getEnd());
-		m_nodesDict.erase(m_alloc, it);
+		m_nodesDict.erase(m_pool, it);
 	}
 }
 
@@ -163,7 +163,7 @@ void SceneGraph::deleteNodesMarkedForDeletion()
 			{
 				// Delete node
 				unregisterNode(&node);
-				m_alloc.deleteInstance(&node);
+				deleteInstance(m_pool, &node);
 				m_objectsMarkedForDeletionCount.fetchSub(1);
 				found = true;
 				break;
@@ -185,7 +185,7 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 	ANKI_ASSERT(m_timestamp > 0);
 
 	// Reset the framepool
-	m_frameAlloc.getMemoryPool().reset();
+	m_framePool.reset();
 
 	// Delete stuff
 	{

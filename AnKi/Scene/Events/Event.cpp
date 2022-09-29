@@ -17,7 +17,7 @@ Event::Event(EventManager* manager)
 
 Event::~Event()
 {
-	m_associatedNodes.destroy(getAllocator());
+	m_associatedNodes.destroy(getMemoryPool());
 }
 
 void Event::init(Second startTime, Second duration)
@@ -31,9 +31,9 @@ void Event::init(Second startTime, Second duration)
 	}
 }
 
-SceneAllocator<U8> Event::getAllocator() const
+HeapMemoryPool& Event::getMemoryPool() const
 {
-	return m_manager->getSceneGraph().getAllocator();
+	return m_manager->getSceneGraph().getMemoryPool();
 }
 
 void Event::setMarkedForDeletion()

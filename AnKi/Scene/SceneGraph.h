@@ -57,16 +57,14 @@ public:
 		return m_timestamp;
 	}
 
-	/// @note Return a copy
-	SceneAllocator<U8> getAllocator() const
+	HeapMemoryPool& getMemoryPool() const
 	{
-		return m_alloc;
+		return m_pool;
 	}
 
-	/// @note Return a copy
-	SceneFrameAllocator<U8> getFrameAllocator() const
+	StackMemoryPool& getFrameMemoryPool() const
 	{
-		return m_frameAlloc;
+		return m_framePool;
 	}
 
 	SceneNode& getActiveCameraNode()
@@ -239,8 +237,8 @@ private:
 	UiManager* m_uiManager = nullptr;
 	ConfigSet* m_config = nullptr;
 
-	SceneAllocator<U8> m_alloc;
-	SceneFrameAllocator<U8> m_frameAlloc;
+	mutable HeapMemoryPool m_pool;
+	mutable StackMemoryPool m_framePool;
 
 	IntrusiveList<SceneNode> m_nodes;
 	U32 m_nodesCount = 0;
@@ -283,9 +281,8 @@ template<typename Node, typename... Args>
 inline Error SceneGraph::newSceneNode(const CString& name, Node*& node, Args&&... args)
 {
 	Error err = Error::kNone;
-	SceneAllocator<Node> al = m_alloc;
 
-	node = al.template newInstance<Node>(this, name);
+	node = newInstance<Node>(m_pool, this, name);
 	if(node)
 	{
 		err = node->init(std::forward<Args>(args)...);
@@ -306,7 +303,7 @@ inline Error SceneGraph::newSceneNode(const CString& name, Node*& node, Args&&..
 
 		if(node)
 		{
-			al.deleteInstance(node);
+			deleteInstance(m_pool, node);
 			node = nullptr;
 		}
 	}

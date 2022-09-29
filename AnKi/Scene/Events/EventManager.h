@@ -33,19 +33,19 @@ public:
 		return *m_scene;
 	}
 
-	SceneAllocator<U8> getAllocator() const;
-	SceneFrameAllocator<U8> getFrameAllocator() const;
+	HeapMemoryPool& getMemoryPool() const;
+	StackMemoryPool& getFrameMemoryPool() const;
 
 	/// Create a new event
 	/// @note It's thread-safe against itself.
 	template<typename T, typename... Args>
 	Error newEvent(T*& event, Args... args)
 	{
-		event = getAllocator().template newInstance<T>(this);
+		event = newInstance<T>(getMemoryPool(), this);
 		Error err = event->init(std::forward<Args>(args)...);
 		if(err)
 		{
-			getAllocator().deleteInstance(event);
+			deleteInstance(getMemoryPool(), event);
 		}
 		else
 		{

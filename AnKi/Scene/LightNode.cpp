@@ -126,7 +126,7 @@ PointLightNode::PointLightNode(SceneGraph* scene, CString name)
 
 PointLightNode::~PointLightNode()
 {
-	m_shadowData.destroy(getAllocator());
+	m_shadowData.destroy(getMemoryPool());
 }
 
 void PointLightNode::onMoved(const MoveComponent& move)
@@ -160,7 +160,7 @@ Error PointLightNode::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[mayb
 	const LightComponent& lightc = getFirstComponentOfType<LightComponent>();
 	if(lightc.getShadowEnabled() && m_shadowData.isEmpty())
 	{
-		m_shadowData.create(getAllocator(), 6);
+		m_shadowData.create(getMemoryPool(), 6);
 
 		const F32 ang = toRad(90.0f);
 		const F32 dist = lightc.getRadius();

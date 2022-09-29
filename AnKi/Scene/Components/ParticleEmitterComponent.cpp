@@ -203,8 +203,8 @@ ParticleEmitterComponent::ParticleEmitterComponent(SceneNode* node)
 
 ParticleEmitterComponent::~ParticleEmitterComponent()
 {
-	m_simpleParticles.destroy(m_node->getAllocator());
-	m_physicsParticles.destroy(m_node->getAllocator());
+	m_simpleParticles.destroy(m_node->getMemoryPool());
+	m_physicsParticles.destroy(m_node->getMemoryPool());
 }
 
 Error ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
@@ -221,8 +221,8 @@ Error ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	m_props = m_particleEmitterResource->getProperties();
 
 	// Cleanup
-	m_simpleParticles.destroy(m_node->getAllocator());
-	m_physicsParticles.destroy(m_node->getAllocator());
+	m_simpleParticles.destroy(m_node->getMemoryPool());
+	m_physicsParticles.destroy(m_node->getMemoryPool());
 
 	// Init particles
 	m_simulationType = (m_props.m_usePhysicsEngine) ? SimulationType::kPhysicsEngine : SimulationType::kSimple;
@@ -234,16 +234,16 @@ Error ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 		PhysicsBodyInitInfo binit;
 		binit.m_shape = std::move(collisionShape);
 
-		m_physicsParticles.resizeStorage(m_node->getAllocator(), m_props.m_maxNumOfParticles);
+		m_physicsParticles.resizeStorage(m_node->getMemoryPool(), m_props.m_maxNumOfParticles);
 		for(U32 i = 0; i < m_props.m_maxNumOfParticles; i++)
 		{
 			binit.m_mass = getRandomRange(m_props.m_particle.m_minMass, m_props.m_particle.m_maxMass);
-			m_physicsParticles.emplaceBack(m_node->getAllocator(), binit, m_node, this);
+			m_physicsParticles.emplaceBack(m_node->getMemoryPool(), binit, m_node, this);
 		}
 	}
 	else
 	{
-		m_simpleParticles.create(m_node->getAllocator(), m_props.m_maxNumOfParticles);
+		m_simpleParticles.create(m_node->getMemoryPool(), m_props.m_maxNumOfParticles);
 	}
 
 	m_vertBuffSize = m_props.m_maxNumOfParticles * kVertexSize;
@@ -285,7 +285,7 @@ void ParticleEmitterComponent::simulate(Second prevUpdateTime, Second crntTime, 
 	Vec3 aabbMax(kMinF32);
 	m_aliveParticleCount = 0;
 
-	F32* verts = reinterpret_cast<F32*>(m_node->getFrameAllocator().allocate(m_vertBuffSize));
+	F32* verts = static_cast<F32*>(m_node->getFrameMemoryPool().allocate(m_vertBuffSize, alignof(F32)));
 	m_verts = verts;
 
 	F32 maxParticleSize = -1.0f;
