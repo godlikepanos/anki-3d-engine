@@ -33,7 +33,7 @@ public:
 	TileAllocator& operator=(const TileAllocator&) = delete; // Non-copyable
 
 	/// Initialize the allocator.
-	void init(HeapAllocator<U8> alloc, U32 tileCountX, U32 tileCountY, U32 lodCount, Bool enableCaching);
+	void init(HeapMemoryPool* pool, U32 tileCountX, U32 tileCountY, U32 lodCount, Bool enableCaching);
 
 	/// Allocate some tiles.
 	[[nodiscard]] TileAllocatorResult allocate(Timestamp crntTimestamp, Timestamp lightTimestamp, U64 lightUuid,
@@ -48,7 +48,7 @@ private:
 	/// A HashMap key.
 	class HashMapKey;
 
-	HeapAllocator<U8> m_alloc;
+	HeapMemoryPool* m_pool = nullptr;
 	DynamicArray<Tile> m_allTiles;
 	DynamicArray<U32> m_lodFirstTileIndex;
 

@@ -23,8 +23,8 @@ ProbeReflections::ProbeReflections(Renderer* r)
 
 ProbeReflections::~ProbeReflections()
 {
-	m_cacheEntries.destroy(getAllocator());
-	m_probeUuidToCacheEntryIdx.destroy(getAllocator());
+	m_cacheEntries.destroy(getMemoryPool());
+	m_probeUuidToCacheEntryIdx.destroy(getMemoryPool());
 }
 
 Error ProbeReflections::init()
@@ -41,7 +41,7 @@ Error ProbeReflections::init()
 Error ProbeReflections::initInternal()
 {
 	// Init cache entries
-	m_cacheEntries.create(getAllocator(), getConfig().getRProbeRefectionMaxCachedProbes());
+	m_cacheEntries.create(getMemoryPool(), getConfig().getRProbeRefectionMaxCachedProbes());
 
 	ANKI_CHECK(initGBuffer());
 	ANKI_CHECK(initLightShading());
@@ -78,7 +78,7 @@ Error ProbeReflections::initGBuffer()
 			texinit.m_format = kGBufferColorRenderTargetFormats[i];
 			m_gbuffer.m_colorRtDescrs[i] = texinit;
 			m_gbuffer.m_colorRtDescrs[i].setName(
-				StringRaii(getAllocator()).sprintf("CubeRefl GBuff Col #%u", i).toCString());
+				StringRaii(&getMemoryPool()).sprintf("CubeRefl GBuff Col #%u", i).toCString());
 			m_gbuffer.m_colorRtDescrs[i].bake();
 		}
 
@@ -233,7 +233,7 @@ void ProbeReflections::prepareProbes(RenderingContext& ctx, ReflectionProbeQueue
 	// - Find a probe to update next frame
 	// - Find the cache entries for each probe
 	DynamicArray<ReflectionProbeQueueElement> newListOfProbes;
-	newListOfProbes.create(ctx.m_tempAllocator, ctx.m_renderQueue->m_reflectionProbes.getSize());
+	newListOfProbes.create(*ctx.m_tempPool, ctx.m_renderQueue->m_reflectionProbes.getSize());
 	U32 newListOfProbeCount = 0;
 	Bool foundProbeToUpdateNextFrame = false;
 	for(U32 probeIdx = 0; probeIdx < ctx.m_renderQueue->m_reflectionProbes.getSize(); ++probeIdx)
@@ -242,7 +242,7 @@ void ProbeReflections::prepareProbes(RenderingContext& ctx, ReflectionProbeQueue
 
 		// Find cache entry
 		const U32 cacheEntryIdx = findBestCacheEntry(probe.m_uuid, m_r->getGlobalTimestamp(), m_cacheEntries,
-													 m_probeUuidToCacheEntryIdx, getAllocator());
+													 m_probeUuidToCacheEntryIdx, getMemoryPool());
 		if(ANKI_UNLIKELY(cacheEntryIdx == kMaxU32))
 		{
 			// Failed
@@ -295,7 +295,7 @@ void ProbeReflections::prepareProbes(RenderingContext& ctx, ReflectionProbeQueue
 		// Update cache map
 		if(!probeFoundInCache)
 		{
-			m_probeUuidToCacheEntryIdx.emplace(getAllocator(), probe.m_uuid, cacheEntryIdx);
+			m_probeUuidToCacheEntryIdx.emplace(getMemoryPool(), probe.m_uuid, cacheEntryIdx);
 		}
 
 		// Don't gather renderables next frame
@@ -316,7 +316,7 @@ void ProbeReflections::prepareProbes(RenderingContext& ctx, ReflectionProbeQueue
 	else
 	{
 		ctx.m_renderQueue->m_reflectionProbes = WeakArray<ReflectionProbeQueueElement>();
-		newListOfProbes.destroy(ctx.m_tempAllocator);
+		newListOfProbes.destroy(*ctx.m_tempPool);
 	}
 }
 

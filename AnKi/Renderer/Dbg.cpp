@@ -69,7 +69,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	dctx.m_projectionMatrix = ctx.m_renderQueue->m_projectionMatrix;
 	dctx.m_cameraTransform = ctx.m_renderQueue->m_cameraTransform;
 	dctx.m_stagingGpuAllocator = &m_r->getStagingGpuMemory();
-	dctx.m_frameAllocator = ctx.m_tempAllocator;
+	dctx.m_framePool = ctx.m_tempPool;
 	dctx.m_commandBuffer = cmdb;
 	dctx.m_sampler = m_r->getSamplers().m_trilinearRepeatAniso;
 	dctx.m_key = RenderingKey(RenderingTechnique::FORWARD, 0, 1, false, false);

@@ -56,8 +56,8 @@ public:
 
 IndirectDiffuseProbes::~IndirectDiffuseProbes()
 {
-	m_cacheEntries.destroy(getAllocator());
-	m_probeUuidToCacheEntryIdx.destroy(getAllocator());
+	m_cacheEntries.destroy(getMemoryPool());
+	m_probeUuidToCacheEntryIdx.destroy(getMemoryPool());
 }
 
 const RenderTargetHandle&
@@ -109,7 +109,7 @@ Error IndirectDiffuseProbes::init()
 Error IndirectDiffuseProbes::initInternal()
 {
 	m_tileSize = getConfig().getRIndirectDiffuseProbeTileResolution();
-	m_cacheEntries.create(getAllocator(), getConfig().getRIndirectDiffuseProbeMaxCachedProbes());
+	m_cacheEntries.create(getMemoryPool(), getConfig().getRIndirectDiffuseProbeMaxCachedProbes());
 	m_maxVisibleProbes = getConfig().getRIndirectDiffuseProbeMaxVisibleProbes();
 	ANKI_ASSERT(m_maxVisibleProbes <= MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES);
 	ANKI_ASSERT(m_cacheEntries.getSize() >= m_maxVisibleProbes);
@@ -134,7 +134,8 @@ Error IndirectDiffuseProbes::initGBuffer()
 		{
 			texinit.m_format = kGBufferColorRenderTargetFormats[i];
 			m_gbuffer.m_colorRtDescrs[i] = texinit;
-			m_gbuffer.m_colorRtDescrs[i].setName(StringRaii(getAllocator()).sprintf("GI GBuff Col #%u", i).toCString());
+			m_gbuffer.m_colorRtDescrs[i].setName(
+				StringRaii(&getMemoryPool()).sprintf("GI GBuff Col #%u", i).toCString());
 			m_gbuffer.m_colorRtDescrs[i].bake();
 		}
 
@@ -228,7 +229,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(R_GI);
 
-	InternalContext* giCtx = rctx.m_tempAllocator.newInstance<InternalContext>();
+	InternalContext* giCtx = newInstance<InternalContext>(*rctx.m_tempPool);
 	m_giCtx = giCtx;
 	giCtx->m_gi = this;
 	giCtx->m_ctx = &rctx;
@@ -391,9 +392,9 @@ void IndirectDiffuseProbes::prepareProbes(InternalContext& giCtx)
 	// - Find a probe to update next frame
 	// - Find the cache entries for each probe
 	DynamicArray<GlobalIlluminationProbeQueueElement> newListOfProbes;
-	newListOfProbes.create(ctx.m_tempAllocator, ctx.m_renderQueue->m_giProbes.getSize());
+	newListOfProbes.create(*ctx.m_tempPool, ctx.m_renderQueue->m_giProbes.getSize());
 	DynamicArray<RenderTargetHandle> volumeRts;
-	volumeRts.create(ctx.m_tempAllocator, ctx.m_renderQueue->m_giProbes.getSize());
+	volumeRts.create(*ctx.m_tempPool, ctx.m_renderQueue->m_giProbes.getSize());
 	U32 newListOfProbeCount = 0;
 	Bool foundProbeToUpdateNextFrame = false;
 	for(U32 probeIdx = 0; probeIdx < ctx.m_renderQueue->m_giProbes.getSize(); ++probeIdx)
@@ -410,7 +411,7 @@ void IndirectDiffuseProbes::prepareProbes(InternalContext& giCtx)
 
 		// Find cache entry
 		const U32 cacheEntryIdx = findBestCacheEntry(probe.m_uuid, m_r->getGlobalTimestamp(), m_cacheEntries,
-													 m_probeUuidToCacheEntryIdx, getAllocator());
+													 m_probeUuidToCacheEntryIdx, getMemoryPool());
 		if(ANKI_UNLIKELY(cacheEntryIdx == kMaxU32))
 		{
 			// Failed
@@ -468,7 +469,7 @@ void IndirectDiffuseProbes::prepareProbes(InternalContext& giCtx)
 			entry.m_probeAabbMin = probe.m_aabbMin;
 			entry.m_probeAabbMax = probe.m_aabbMax;
 			entry.m_volumeSize = probe.m_cellCounts;
-			m_probeUuidToCacheEntryIdx.emplace(getAllocator(), probe.m_uuid, cacheEntryIdx);
+			m_probeUuidToCacheEntryIdx.emplace(getMemoryPool(), probe.m_uuid, cacheEntryIdx);
 		}
 
 		// Update the cache entry
@@ -533,8 +534,8 @@ void IndirectDiffuseProbes::prepareProbes(InternalContext& giCtx)
 	else
 	{
 		ctx.m_renderQueue->m_giProbes = WeakArray<GlobalIlluminationProbeQueueElement>();
-		newListOfProbes.destroy(ctx.m_tempAllocator);
-		volumeRts.destroy(ctx.m_tempAllocator);
+		newListOfProbes.destroy(*ctx.m_tempPool);
+		volumeRts.destroy(*ctx.m_tempPool);
 	}
 }
 

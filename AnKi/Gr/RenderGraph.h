@@ -332,7 +332,7 @@ public:
 	void setWork(U32 secondLeveCmdbCount, TFunc func)
 	{
 		ANKI_ASSERT(m_type == Type::kGraphics || secondLeveCmdbCount == 0);
-		m_callback.init(m_pool, func);
+		m_callback.init(*m_pool, func);
 		m_secondLevelCmdbsCount = secondLeveCmdbCount;
 	}
 

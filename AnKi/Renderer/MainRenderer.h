@@ -83,8 +83,8 @@ public:
 	}
 
 private:
-	HeapAllocator<U8> m_alloc;
-	StackAllocator<U8> m_frameAlloc;
+	HeapMemoryPool m_pool;
+	StackMemoryPool m_framePool;
 
 	UniquePtr<Renderer> m_r;
 	Bool m_rDrawToDefaultFb = false;

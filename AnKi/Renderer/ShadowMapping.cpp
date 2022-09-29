@@ -87,7 +87,7 @@ Error ShadowMapping::initScratch()
 		m_scratch.m_fbDescr.bake();
 	}
 
-	m_scratch.m_tileAlloc.init(getAllocator(), m_scratch.m_tileCountX, m_scratch.m_tileCountY, MAX_LOD_COUNT, false);
+	m_scratch.m_tileAlloc.init(&getMemoryPool(), m_scratch.m_tileCountX, m_scratch.m_tileCountY, MAX_LOD_COUNT, false);
 
 	return Error::kNone;
 }
@@ -114,7 +114,7 @@ Error ShadowMapping::initAtlas()
 	}
 
 	// Tiles
-	m_atlas.m_tileAlloc.init(getAllocator(), m_atlas.m_tileCountBothAxis, m_atlas.m_tileCountBothAxis, MAX_LOD_COUNT,
+	m_atlas.m_tileAlloc.init(&getMemoryPool(), m_atlas.m_tileCountBothAxis, m_atlas.m_tileCountBothAxis, MAX_LOD_COUNT,
 							 true);
 
 	// Programs and shaders
@@ -491,9 +491,9 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 
 	// Vars
 	const Vec4 cameraOrigin = ctx.m_renderQueue->m_cameraTransform.getTranslationPart().xyz0();
-	DynamicArrayRaii<Scratch::LightToRenderToScratchInfo> lightsToRender(ctx.m_tempAllocator);
+	DynamicArrayRaii<Scratch::LightToRenderToScratchInfo> lightsToRender(ctx.m_tempPool);
 	U32 drawcallCount = 0;
-	DynamicArrayRaii<Atlas::ResolveWorkItem> atlasWorkItems(ctx.m_tempAllocator);
+	DynamicArrayRaii<Atlas::ResolveWorkItem> atlasWorkItems(ctx.m_tempPool);
 
 	// First thing, allocate an empty tile for empty faces of point lights
 	UVec4 emptyTileViewport;
@@ -752,7 +752,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 	// Split the work that will happen in the scratch buffer
 	if(lightsToRender.getSize())
 	{
-		DynamicArrayRaii<Scratch::WorkItem> workItems(ctx.m_tempAllocator);
+		DynamicArrayRaii<Scratch::WorkItem> workItems(ctx.m_tempPool);
 		Scratch::LightToRenderToScratchInfo* lightToRender = lightsToRender.getBegin();
 		U32 lightToRenderDrawcallCount = lightToRender->m_drawcallCount;
 		const Scratch::LightToRenderToScratchInfo* lightToRenderEnd = lightsToRender.getEnd();

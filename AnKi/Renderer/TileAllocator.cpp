@@ -35,12 +35,12 @@ public:
 
 TileAllocator::~TileAllocator()
 {
-	m_lightInfoToTileIdx.destroy(m_alloc);
-	m_allTiles.destroy(m_alloc);
-	m_lodFirstTileIndex.destroy(m_alloc);
+	m_lightInfoToTileIdx.destroy(*m_pool);
+	m_allTiles.destroy(*m_pool);
+	m_lodFirstTileIndex.destroy(*m_pool);
 }
 
-void TileAllocator::init(HeapAllocator<U8> alloc, U32 tileCountX, U32 tileCountY, U32 lodCount, Bool enableCaching)
+void TileAllocator::init(HeapMemoryPool* pool, U32 tileCountX, U32 tileCountY, U32 lodCount, Bool enableCaching)
 {
 	// Preconditions
 	ANKI_ASSERT(tileCountX > 0);
@@ -51,9 +51,9 @@ void TileAllocator::init(HeapAllocator<U8> alloc, U32 tileCountX, U32 tileCountY
 	m_tileCountX = U16(tileCountX);
 	m_tileCountY = U16(tileCountY);
 	m_lodCount = U8(lodCount);
-	m_alloc = std::move(alloc);
+	m_pool = pool;
 	m_cachingEnabled = enableCaching;
-	m_lodFirstTileIndex.create(m_alloc, lodCount + 1);
+	m_lodFirstTileIndex.create(*m_pool, lodCount + 1);
 
 	// Create the tile array & index ranges
 	U32 tileCount = 0;
@@ -69,7 +69,7 @@ void TileAllocator::init(HeapAllocator<U8> alloc, U32 tileCountX, U32 tileCountY
 		tileCount += lodTileCountX * lodTileCountY;
 	}
 	ANKI_ASSERT(tileCount >= tileCountX * tileCountY);
-	m_allTiles.create(m_alloc, tileCount);
+	m_allTiles.create(*m_pool, tileCount);
 	m_lodFirstTileIndex[lodCount] = tileCount - 1;
 
 	// Init the tiles
@@ -242,7 +242,7 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp, Timestamp l
 			if(tile.m_lightUuid != lightUuid || tile.m_lightLod != lod || tile.m_lightFace != lightFace)
 			{
 				// Cache entry is wrong, remove it
-				m_lightInfoToTileIdx.erase(m_alloc, it);
+				m_lightInfoToTileIdx.erase(*m_pool, it);
 			}
 			else
 			{
@@ -337,7 +337,7 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp, Timestamp l
 	// Update the cache
 	if(m_cachingEnabled)
 	{
-		m_lightInfoToTileIdx.emplace(m_alloc, key, allocatedTileIdx);
+		m_lightInfoToTileIdx.emplace(*m_pool, key, allocatedTileIdx);
 	}
 
 	// Return
@@ -359,7 +359,7 @@ void TileAllocator::invalidateCache(U64 lightUuid, U32 lightFace)
 	auto it = m_lightInfoToTileIdx.find(key);
 	if(it != m_lightInfoToTileIdx.getEnd())
 	{
-		m_lightInfoToTileIdx.erase(m_alloc, it);
+		m_lightInfoToTileIdx.erase(*m_pool, it);
 	}
 }
 

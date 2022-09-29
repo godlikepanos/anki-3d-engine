@@ -126,8 +126,9 @@ public:
 };
 
 /// A convenience function to find empty cache entries. Used for various probes.
-template<typename THashMap, typename TCacheEntryArray, typename TAlloc>
-U32 findBestCacheEntry(U64 uuid, Timestamp crntTimestamp, const TCacheEntryArray& entries, THashMap& map, TAlloc alloc)
+template<typename THashMap, typename TCacheEntryArray, typename TMemPool>
+U32 findBestCacheEntry(U64 uuid, Timestamp crntTimestamp, const TCacheEntryArray& entries, THashMap& map,
+					   TMemPool& pool)
 {
 	ANKI_ASSERT(uuid > 0);
 
@@ -144,7 +145,7 @@ U32 findBestCacheEntry(U64 uuid, Timestamp crntTimestamp, const TCacheEntryArray
 		else
 		{
 			// Cache entry is wrong, remove it
-			map.erase(alloc, it);
+			map.erase(pool, it);
 		}
 	}
 

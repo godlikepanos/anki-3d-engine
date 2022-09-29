@@ -13,7 +13,7 @@ namespace anki {
 
 DownscaleBlur::~DownscaleBlur()
 {
-	m_fbDescrs.destroy(getAllocator());
+	m_fbDescrs.destroy(getMemoryPool());
 }
 
 Error DownscaleBlur::init()
@@ -56,7 +56,7 @@ Error DownscaleBlur::initInternal()
 	// FB descr
 	if(!preferCompute)
 	{
-		m_fbDescrs.create(getAllocator(), m_passCount);
+		m_fbDescrs.create(getMemoryPool(), m_passCount);
 		for(U32 pass = 0; pass < m_passCount; ++pass)
 		{
 			m_fbDescrs[pass].m_colorAttachmentCount = 1;
