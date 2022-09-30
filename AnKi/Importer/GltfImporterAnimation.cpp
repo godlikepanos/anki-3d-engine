@@ -49,7 +49,7 @@ static void optimizeChannel(DynamicArrayRaii<GltfAnimKey<T>>& arr, const T& iden
 			break;
 		}
 
-		DynamicArrayRaii<GltfAnimKey<T>> newArr(arr.getAllocator());
+		DynamicArrayRaii<GltfAnimKey<T>> newArr(&arr.getMemoryPool());
 		for(U32 i = 0; i < arr.getSize() - 2; i += 2)
 		{
 			const GltfAnimKey<T>& left = arr[i];

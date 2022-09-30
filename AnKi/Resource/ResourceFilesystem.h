@@ -84,11 +84,7 @@ using ResourceFilePtr = IntrusivePtr<ResourceFile>;
 class ResourceFilesystem
 {
 public:
-	ResourceFilesystem(HeapMemoryPool* pool)
-		: m_pool(pool)
-	{
-		ANKI_ASSERT(pool);
-	}
+	ResourceFilesystem() = default;
 
 	ResourceFilesystem(const ResourceFilesystem&) = delete; // Non-copyable
 
@@ -96,7 +92,7 @@ public:
 
 	ResourceFilesystem& operator=(const ResourceFilesystem&) = delete; // Non-copyable
 
-	Error init(const ConfigSet& config);
+	Error init(const ConfigSet& config, AllocAlignedCallback allocCallback, void* allocCallbackUserData);
 
 	/// Search the path list to find the file. Then open the file for reading. It's thread-safe.
 	Error openFile(const ResourceFilename& filename, ResourceFilePtr& file);
@@ -145,7 +141,7 @@ private:
 		}
 	};
 
-	HeapMemoryPool* m_pool = nullptr;
+	HeapMemoryPool m_pool;
 	List<Path> m_paths;
 	String m_cacheDir;
 

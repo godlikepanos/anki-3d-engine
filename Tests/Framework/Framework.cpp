@@ -263,7 +263,8 @@ GrManager* createGrManager(ConfigSet* cfg, NativeWindow* win)
 {
 	GrManagerInitInfo inf;
 	inf.m_allocCallback = allocAligned;
-	StringRaii home(HeapAllocator<U8>(allocAligned, nullptr));
+	HeapMemoryPool pool(allocAligned, nullptr);
+	StringRaii home(&pool);
 	const Error err = getTempDirectory(home);
 	if(err)
 	{
@@ -281,14 +282,12 @@ GrManager* createGrManager(ConfigSet* cfg, NativeWindow* win)
 ResourceManager* createResourceManager(ConfigSet* cfg, GrManager* gr, PhysicsWorld*& physics,
 									   ResourceFilesystem*& resourceFs)
 {
-	HeapAllocator<U8> alloc(allocAligned, nullptr);
-
 	physics = new PhysicsWorld();
 
 	ANKI_TEST_EXPECT_NO_ERR(physics->init(allocAligned, nullptr));
 
-	resourceFs = new ResourceFilesystem(alloc);
-	ANKI_TEST_EXPECT_NO_ERR(resourceFs->init(*cfg));
+	resourceFs = new ResourceFilesystem();
+	ANKI_TEST_EXPECT_NO_ERR(resourceFs->init(*cfg, allocAligned, nullptr));
 
 	ResourceManagerInitInfo rinit;
 	rinit.m_gr = gr;

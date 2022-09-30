@@ -68,8 +68,8 @@ static void taskToWait(void* arg, [[maybe_unused]] U32 threadId, [[maybe_unused]
 ANKI_TEST(Util, ThreadHive)
 {
 	const U32 threadCount = 32;
-	HeapAllocator<U8> alloc(allocAligned, nullptr);
-	ThreadHive hive(threadCount, alloc);
+	HeapMemoryPool pool(allocAligned, nullptr);
+	ThreadHive hive(threadCount, &pool);
 
 	// Simple test
 	if(1)
@@ -238,8 +238,8 @@ ANKI_TEST(Util, ThreadHiveBench)
 	static const U FIB_N = 32;
 
 	const U32 threadCount = getCpuCoresCount();
-	HeapAllocator<U8> alloc(allocAligned, nullptr);
-	ThreadHive hive(threadCount, alloc, true);
+	HeapMemoryPool pool(allocAligned, nullptr);
+	ThreadHive hive(threadCount, &pool, true);
 
 	StackAllocator<U8> salloc(allocAligned, nullptr, 1024);
 	Atomic<U64> sum = {0};

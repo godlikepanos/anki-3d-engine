@@ -423,7 +423,7 @@ static Error loadFirstMipmap(const ImageImporterConfig& config, ImageImporterCon
 {
 	BaseMemoryPool& pool = ctx.getMemoryPool();
 
-	ctx.m_mipmaps.emplaceBack(pool);
+	ctx.m_mipmaps.emplaceBack(&pool);
 	Mipmap& mip0 = ctx.m_mipmaps[0];
 
 	if(ctx.m_depth > 1)
@@ -962,7 +962,7 @@ static Error importImageInternal(const ImageImporterConfig& configOriginal)
 								   newFilenames[i]));
 
 			newFilenamesCString[i] = newFilenames[i];
-			resizedImagesCleanup.emplaceBack(pool, newFilenames[i]);
+			resizedImagesCleanup.emplaceBack(&pool, newFilenames[i]);
 		}
 
 		// Override config

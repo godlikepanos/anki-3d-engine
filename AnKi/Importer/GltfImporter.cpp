@@ -1167,7 +1167,7 @@ StringRaii GltfImporter::computeModelResourceFilename(const cgltf_mesh& mesh) co
 
 	const U64 hash = computeHash(joined.getBegin(), joined.getLength());
 
-	StringRaii out(m_alloc);
+	StringRaii out(m_pool);
 	out.sprintf("%.64s_%" PRIx64 ".ankimdl", joined.cstr(), hash); // Limit the filename size
 
 	return out;

@@ -201,7 +201,7 @@ void SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::placeFreeBlock(
 		newBlock.m_address = lblock.m_address;
 		newBlock.m_size += lblock.m_size;
 
-		chunk.m_freeLists[leftClass].erase(m_interface.getAllocator(),
+		chunk.m_freeLists[leftClass].erase(m_interface.getMemoryPool(),
 										   chunk.m_freeLists[leftClass].getBegin() + leftBlock);
 
 		if(rightBlock != kMaxU32 && rightClass == leftClass)
@@ -219,13 +219,13 @@ void SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::placeFreeBlock(
 
 		newBlock.m_size += rblock.m_size;
 
-		chunk.m_freeLists[rightClass].erase(m_interface.getAllocator(),
+		chunk.m_freeLists[rightClass].erase(m_interface.getMemoryPool(),
 											chunk.m_freeLists[rightClass].getBegin() + rightBlock);
 	}
 
 	// Store the new block
 	const U32 newClassIdx = findClass(newBlock.m_size, 1);
-	chunk.m_freeLists[newClassIdx].emplaceBack(m_interface.getAllocator(), newBlock);
+	chunk.m_freeLists[newClassIdx].emplaceBack(m_interface.getMemoryPool(), newBlock);
 
 	std::sort(chunk.m_freeLists[newClassIdx].getBegin(), chunk.m_freeLists[newClassIdx].getEnd(),
 			  [](const FreeBlock& a, const FreeBlock& b) {
@@ -243,12 +243,12 @@ void SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::placeFreeBlock(
 		for(U32 classIdx = 0; classIdx < TInterface::getClassCount(); ++classIdx)
 		{
 			blockCount += chunk.m_freeLists[classIdx].getSize();
-			chunk.m_freeLists[classIdx].destroy(m_interface.getAllocator());
+			chunk.m_freeLists[classIdx].destroy(m_interface.getMemoryPool());
 		}
 
 		ANKI_ASSERT(blockCount == 1);
 
-		m_chunks.erase(m_interface.getAllocator(), chunkIt);
+		m_chunks.erase(m_interface.getMemoryPool(), chunkIt);
 		m_interface.deleteChunk(&chunk);
 	}
 }
@@ -332,7 +332,7 @@ Error SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::allocate(PtrSi
 
 		chunk->m_totalSize = chunkSize;
 		chunk->m_freeSize = 0;
-		m_chunks.emplaceBack(m_interface.getAllocator(), chunk);
+		m_chunks.emplaceBack(m_interface.getMemoryPool(), chunk);
 
 		placeFreeBlock(size, chunkSize - size, m_chunks.getBegin() + m_chunks.getSize() - 1);
 
@@ -349,7 +349,7 @@ Error SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::allocate(PtrSi
 		TChunk& chunk = *(*chunkIt);
 
 		const FreeBlock fBlock = *freeBlock;
-		chunk.m_freeLists[classIdx].erase(m_interface.getAllocator(), freeBlock);
+		chunk.m_freeLists[classIdx].erase(m_interface.getMemoryPool(), freeBlock);
 		freeBlock = nullptr;
 
 		ANKI_ASSERT(chunk.m_freeSize >= fBlock.m_size);

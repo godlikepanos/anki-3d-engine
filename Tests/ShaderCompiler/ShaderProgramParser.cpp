@@ -8,7 +8,7 @@
 
 ANKI_TEST(ShaderCompiler, ShaderCompilerParser)
 {
-	HeapAllocator<U8> alloc(allocAligned, nullptr);
+	HeapMemoryPool pool(allocAligned, nullptr);
 
 	class FilesystemInterface : public ShaderProgramFilesystemInterface
 	{
@@ -43,7 +43,7 @@ ANKI_TEST(ShaderCompiler, ShaderCompilerParser)
 		}
 	} interface;
 
-	ShaderProgramParser parser("filename0", &interface, alloc, ShaderCompilerOptions());
+	ShaderProgramParser parser("filename0", &interface, &pool, ShaderCompilerOptions());
 	ANKI_TEST_EXPECT_NO_ERR(parser.parse());
 
 	// Test a variant

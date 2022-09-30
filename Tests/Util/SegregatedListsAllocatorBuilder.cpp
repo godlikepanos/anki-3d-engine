@@ -9,40 +9,40 @@
 
 using namespace anki;
 
-static constexpr U32 CLASS_COUNT = 6;
+static constexpr U32 kClassCount = 6;
 
 class SegregatedListsAllocatorBuilderChunk :
-	public SegregatedListsAllocatorBuilderChunkBase<SegregatedListsAllocatorBuilderChunk, CLASS_COUNT>
+	public SegregatedListsAllocatorBuilderChunkBase<SegregatedListsAllocatorBuilderChunk, kClassCount>
 {
 };
 
 class SegregatedListsAllocatorBuilderInterface
 {
 public:
-	HeapAllocator<U8> m_alloc = {allocAligned, nullptr};
-	static constexpr PtrSize m_chunkSize = 100_MB;
+	HeapMemoryPool m_pool = {allocAligned, nullptr};
+	static constexpr PtrSize kChunkSize = 100_MB;
 
 	static constexpr U32 getClassCount()
 	{
-		return CLASS_COUNT;
+		return kClassCount;
 	}
 
 	void getClassInfo(U32 idx, PtrSize& size) const
 	{
-		static const Array<PtrSize, getClassCount()> classes = {512_KB, 1_MB, 5_MB, 10_MB, 30_MB, m_chunkSize};
+		static const Array<PtrSize, getClassCount()> classes = {512_KB, 1_MB, 5_MB, 10_MB, 30_MB, kChunkSize};
 		size = classes[idx];
 	}
 
 	Error allocateChunk(SegregatedListsAllocatorBuilderChunk*& newChunk, PtrSize& chunkSize)
 	{
-		newChunk = m_alloc.newInstance<SegregatedListsAllocatorBuilderChunk>();
-		chunkSize = m_chunkSize;
+		newChunk = newInstance<SegregatedListsAllocatorBuilderChunk>(m_pool);
+		chunkSize = kChunkSize;
 		return Error::kNone;
 	}
 
 	void deleteChunk(SegregatedListsAllocatorBuilderChunk* chunk)
 	{
-		m_alloc.deleteInstance(chunk);
+		deleteInstance(m_pool, chunk);
 	}
 
 	static constexpr PtrSize getMinSizeAlignment()
@@ -50,14 +50,9 @@ public:
 		return 4;
 	}
 
-	HeapAllocator<U8>& getAllocator()
+	HeapMemoryPool& getMemoryPool()
 	{
-		return m_alloc;
-	}
-
-	HeapAllocator<U8> getAllocator() const
-	{
-		return m_alloc;
+		return m_pool;
 	}
 };
 

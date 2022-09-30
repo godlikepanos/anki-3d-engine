@@ -297,7 +297,7 @@ private:
 	{
 		destroy();
 		m_pool = b.m_pool;
-		b.m_sparseArr.clone(*m_pool, Base::m_sparseArr);
+		b.m_sparseArr.clone(m_pool, Base::m_sparseArr);
 	}
 };
 /// @}

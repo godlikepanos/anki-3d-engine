@@ -304,8 +304,9 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	m_config->setRsrcDataPaths(shadersPath);
 #endif
 
-	m_resourceFs = newInstance<ResourceFilesystem>(m_mainPool, &m_mainPool);
-	ANKI_CHECK(m_resourceFs->init(*m_config));
+	m_resourceFs = newInstance<ResourceFilesystem>(m_mainPool);
+	ANKI_CHECK(
+		m_resourceFs->init(*m_config, m_mainPool.getAllocationCallback(), m_mainPool.getAllocationCallbackUserData()));
 
 	//
 	// Resources

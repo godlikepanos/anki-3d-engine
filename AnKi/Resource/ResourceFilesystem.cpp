@@ -199,25 +199,26 @@ ResourceFilesystem::~ResourceFilesystem()
 {
 	for(Path& p : m_paths)
 	{
-		p.m_files.destroy(*m_pool);
-		p.m_path.destroy(*m_pool);
+		p.m_files.destroy(m_pool);
+		p.m_path.destroy(m_pool);
 	}
 
-	m_paths.destroy(*m_pool);
-	m_cacheDir.destroy(*m_pool);
+	m_paths.destroy(m_pool);
+	m_cacheDir.destroy(m_pool);
 }
 
-Error ResourceFilesystem::init(const ConfigSet& config)
+Error ResourceFilesystem::init(const ConfigSet& config, AllocAlignedCallback allocCallback, void* allocCallbackUserData)
 {
-	StringListRaii paths(m_pool);
+	m_pool.init(allocCallback, allocCallbackUserData);
+	StringListRaii paths(&m_pool);
 	paths.splitString(config.getRsrcDataPaths(), ':');
 
-	StringListRaii excludedStrings(m_pool);
+	StringListRaii excludedStrings(&m_pool);
 	excludedStrings.splitString(config.getRsrcDataPathExcludedStrings(), ':');
 
 	// Workaround the fact that : is used in drives in Windows
 #if ANKI_OS_WINDOWS
-	StringListRaii paths2(m_pool);
+	StringListRaii paths2(&m_pool);
 	StringListRaii::Iterator it = paths.getBegin();
 	while(it != paths.getEnd())
 	{
@@ -315,7 +316,7 @@ Error ResourceFilesystem::addNewPath(const CString& filepath, const StringListRa
 			const Bool itsADir = info.uncompressed_size == 0;
 			if(!itsADir && !rejectPath(&filename[0]))
 			{
-				path.m_files.pushBackSprintf(*m_pool, "%s", &filename[0]);
+				path.m_files.pushBackSprintf(m_pool, "%s", &filename[0]);
 				++fileCount;
 			}
 		} while(unzGoToNextFile(zfile) == UNZ_OK);
@@ -328,10 +329,10 @@ Error ResourceFilesystem::addNewPath(const CString& filepath, const StringListRa
 	{
 		// It's simple directory
 
-		ANKI_CHECK(walkDirectoryTree(filepath, *m_pool, [&, this](const CString& fname, Bool isDir) -> Error {
+		ANKI_CHECK(walkDirectoryTree(filepath, m_pool, [&, this](const CString& fname, Bool isDir) -> Error {
 			if(!isDir && !rejectPath(fname))
 			{
-				path.m_files.pushBackSprintf(*m_pool, "%s", fname.cstr());
+				path.m_files.pushBackSprintf(m_pool, "%s", fname.cstr());
 				++fileCount;
 			}
 
@@ -346,8 +347,8 @@ Error ResourceFilesystem::addNewPath(const CString& filepath, const StringListRa
 	}
 	else
 	{
-		path.m_path.sprintf(*m_pool, "%s", &filepath[0]);
-		m_paths.emplaceFront(*m_pool, std::move(path));
+		path.m_path.sprintf(m_pool, "%s", &filepath[0]);
+		m_paths.emplaceFront(m_pool, std::move(path));
 
 		ANKI_RESOURCE_LOGI("Added new data path \"%s\" that contains %u files", &filepath[0], fileCount);
 	}
@@ -371,7 +372,7 @@ Error ResourceFilesystem::openFile(const ResourceFilename& filename, ResourceFil
 	if(err)
 	{
 		ANKI_RESOURCE_LOGE("Resource file not found: %s", filename.cstr());
-		deleteInstance(*m_pool, rfile);
+		deleteInstance(m_pool, rfile);
 	}
 	else
 	{
@@ -399,17 +400,17 @@ Error ResourceFilesystem::openFileInternal(const ResourceFilename& filename, Res
 			// Found
 			if(p.m_isArchive)
 			{
-				ZipResourceFile* file = newInstance<ZipResourceFile>(*m_pool, m_pool);
+				ZipResourceFile* file = newInstance<ZipResourceFile>(m_pool, &m_pool);
 				rfile = file;
 
 				ANKI_CHECK(file->open(p.m_path.toCString(), filename));
 			}
 			else
 			{
-				StringRaii newFname(m_pool);
+				StringRaii newFname(&m_pool);
 				newFname.sprintf("%s/%s", &p.m_path[0], &filename[0]);
 
-				CResourceFile* file = newInstance<CResourceFile>(*m_pool, m_pool);
+				CResourceFile* file = newInstance<CResourceFile>(m_pool, &m_pool);
 				rfile = file;
 				ANKI_CHECK(file->m_file.open(newFname, FileOpenFlag::kRead));
 
@@ -428,7 +429,7 @@ Error ResourceFilesystem::openFileInternal(const ResourceFilename& filename, Res
 	// File not found? On Win/Linux try to find it outside the resource dirs. On Android try the archive
 	if(!rfile)
 	{
-		CResourceFile* file = newInstance<CResourceFile>(*m_pool, m_pool);
+		CResourceFile* file = newInstance<CResourceFile>(m_pool, &m_pool);
 		rfile = file;
 
 		FileOpenFlag openFlags = FileOpenFlag::kRead;
