@@ -43,14 +43,14 @@ LuaBinder::~LuaBinder()
 	{
 		lua_close(m_l);
 	}
-	m_userDataSigToDataInfo.destroy(m_alloc);
+	m_userDataSigToDataInfo.destroy(*m_pool);
 }
 
-Error LuaBinder::init(ScriptAllocator alloc, LuaBinderOtherSystems* otherSystems)
+Error LuaBinder::init(HeapMemoryPool* pool, LuaBinderOtherSystems* otherSystems)
 {
-	ANKI_ASSERT(otherSystems);
+	ANKI_ASSERT(otherSystems && pool);
 	m_otherSystems = otherSystems;
-	m_alloc = std::move(alloc);
+	m_pool = pool;
 
 	m_l = lua_newstate(luaAllocCallback, this);
 	luaL_openlibs(m_l);
@@ -73,7 +73,7 @@ void* LuaBinder::luaAllocCallback(void* userData, void* ptr, PtrSize osize, PtrS
 	{
 		if(ptr != nullptr)
 		{
-			binder.m_alloc.getMemoryPool().free(ptr);
+			binder.m_pool->free(ptr);
 		}
 	}
 	else
@@ -82,7 +82,7 @@ void* LuaBinder::luaAllocCallback(void* userData, void* ptr, PtrSize osize, PtrS
 
 		if(ptr == nullptr)
 		{
-			out = binder.m_alloc.getMemoryPool().allocate(nsize, 16);
+			out = binder.m_pool->allocate(nsize, 16);
 		}
 		else if(nsize <= osize)
 		{
@@ -92,9 +92,9 @@ void* LuaBinder::luaAllocCallback(void* userData, void* ptr, PtrSize osize, PtrS
 		{
 			// realloc
 
-			out = binder.m_alloc.getMemoryPool().allocate(nsize, 16);
+			out = binder.m_pool->allocate(nsize, 16);
 			memcpy(out, ptr, osize);
-			binder.m_alloc.getMemoryPool().free(ptr);
+			binder.m_pool->free(ptr);
 		}
 	}
 #else
@@ -146,7 +146,7 @@ void LuaBinder::createClass(lua_State* l, const LuaUserDataTypeInfo* typeInfo)
 	lua_getallocf(l, &ud);
 	ANKI_ASSERT(ud);
 	LuaBinder& binder = *static_cast<LuaBinder*>(ud);
-	binder.m_userDataSigToDataInfo.emplace(binder.m_alloc, typeInfo->m_signature, typeInfo);
+	binder.m_userDataSigToDataInfo.emplace(*binder.m_pool, typeInfo->m_signature, typeInfo);
 }
 
 void LuaBinder::pushLuaCFuncMethod(lua_State* l, const char* name, lua_CFunction luafunc)
@@ -260,7 +260,7 @@ void* LuaBinder::luaAlloc(lua_State* l, size_t size, U32 alignment)
 	ANKI_ASSERT(ud);
 	LuaBinder* binder = static_cast<LuaBinder*>(ud);
 
-	return binder->m_alloc.getMemoryPool().allocate(size, alignment);
+	return binder->m_pool->allocate(size, alignment);
 }
 
 void LuaBinder::luaFree(lua_State* l, void* ptr)
@@ -270,7 +270,7 @@ void LuaBinder::luaFree(lua_State* l, void* ptr)
 	ANKI_ASSERT(ud);
 	LuaBinder* binder = static_cast<LuaBinder*>(ud);
 
-	binder->m_alloc.getMemoryPool().free(ptr);
+	binder->m_pool->free(ptr);
 }
 
 void LuaBinder::serializeGlobals(lua_State* l, LuaBinderSerializeGlobalsCallback& callback)

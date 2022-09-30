@@ -217,9 +217,9 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 		}
 
 		ImDrawVert* verts = static_cast<ImDrawVert*>(
-			m_manager->getStagingGpuMemory().allocateFrame(verticesSize, StagingGpuMemoryType::VERTEX, vertsToken));
+			m_manager->getStagingGpuMemory().allocateFrame(verticesSize, StagingGpuMemoryType::kVertex, vertsToken));
 		ImDrawIdx* indices = static_cast<ImDrawIdx*>(
-			m_manager->getStagingGpuMemory().allocateFrame(indicesSize, StagingGpuMemoryType::VERTEX, indicesToken));
+			m_manager->getStagingGpuMemory().allocateFrame(indicesSize, StagingGpuMemoryType::kVertex, indicesToken));
 
 		for(I n = 0; n < drawData.CmdListsCount; ++n)
 		{

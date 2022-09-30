@@ -13,15 +13,15 @@ namespace anki {
 
 Error NativeWindow::newInstance(const NativeWindowInitInfo& initInfo, NativeWindow*& nativeWindow)
 {
-	HeapAllocator<U8> alloc(initInfo.m_allocCallback, initInfo.m_allocCallbackUserData, "NativeWindow");
-	NativeWindowSdl* sdlwin = alloc.newInstance<NativeWindowSdl>();
-
-	sdlwin->m_alloc = alloc;
+	NativeWindowSdl* sdlwin = static_cast<NativeWindowSdl*>(initInfo.m_allocCallback(
+		initInfo.m_allocCallbackUserData, nullptr, sizeof(NativeWindowSdl), alignof(NativeWindowSdl)));
+	callConstructor(*sdlwin);
 
 	const Error err = sdlwin->init(initInfo);
 	if(err)
 	{
-		alloc.deleteInstance(sdlwin);
+		callDestructor(*sdlwin);
+		initInfo.m_allocCallback(initInfo.m_allocCallbackUserData, sdlwin, 0, 0);
 		nativeWindow = nullptr;
 		return err;
 	}
@@ -37,8 +37,10 @@ void NativeWindow::deleteInstance(NativeWindow* window)
 	if(window)
 	{
 		NativeWindowSdl* self = static_cast<NativeWindowSdl*>(window);
-		HeapAllocator<U8> alloc = self->m_alloc;
-		alloc.deleteInstance(self);
+		AllocAlignedCallback callback = self->m_pool.getAllocationCallback();
+		void* userData = self->m_pool.getAllocationCallbackUserData();
+		callDestructor(*self);
+		callback(userData, self, 0, 0);
 	}
 }
 
@@ -55,13 +57,15 @@ NativeWindowSdl::~NativeWindowSdl()
 		SDL_DestroyWindow(m_window);
 	}
 
-	SDL_QuitSubSystem(INIT_SUBSYSTEMS);
+	SDL_QuitSubSystem(kInitSubsystems);
 	SDL_Quit();
 }
 
 Error NativeWindowSdl::init(const NativeWindowInitInfo& init)
 {
-	if(SDL_Init(INIT_SUBSYSTEMS) != 0)
+	m_pool.init(init.m_allocCallback, init.m_allocCallbackUserData);
+
+	if(SDL_Init(kInitSubsystems) != 0)
 	{
 		ANKI_CORE_LOGE("SDL_Init() failed: %s", SDL_GetError());
 		return Error::kFunctionFailed;

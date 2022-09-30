@@ -15,15 +15,14 @@ DeveloperConsole::~DeveloperConsole()
 	{
 		LogItem* item = &m_logItems.getFront();
 		m_logItems.popFront();
-		item->m_threadName.destroy(m_alloc);
-		item->m_msg.destroy(m_alloc);
-		m_alloc.deleteInstance(item);
+		item->m_threadName.destroy(getMemoryPool());
+		item->m_msg.destroy(getMemoryPool());
+		deleteInstance(getMemoryPool(), item);
 	}
 }
 
-Error DeveloperConsole::init(AllocAlignedCallback allocCb, void* allocCbUserData, ScriptManager* scriptManager)
+Error DeveloperConsole::init(ScriptManager* scriptManager)
 {
-	m_alloc = HeapAllocator<U8>(allocCb, allocCbUserData, "DeveloperConsole");
 	zeroMemory(m_inputText);
 
 	ANKI_CHECK(m_manager->newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{16}));
@@ -123,8 +122,8 @@ void DeveloperConsole::newLogItem(const LoggerMessageInfo& inf)
 		LogItem* first = &m_logItems.getFront();
 		m_logItems.popFront();
 
-		first->m_msg.destroy(m_alloc);
-		first->m_threadName.destroy(m_alloc);
+		first->m_msg.destroy(getMemoryPool());
+		first->m_threadName.destroy(getMemoryPool());
 
 		// Re-use the log item
 		newLogItem = first;
@@ -132,15 +131,15 @@ void DeveloperConsole::newLogItem(const LoggerMessageInfo& inf)
 	}
 	else
 	{
-		newLogItem = m_alloc.newInstance<LogItem>();
+		newLogItem = newInstance<LogItem>(getMemoryPool());
 	}
 
 	// Create the new item
 	newLogItem->m_file = inf.m_file;
 	newLogItem->m_func = inf.m_func;
 	newLogItem->m_subsystem = inf.m_subsystem;
-	newLogItem->m_threadName.create(m_alloc, inf.m_threadName);
-	newLogItem->m_msg.create(m_alloc, inf.m_msg);
+	newLogItem->m_threadName.create(getMemoryPool(), inf.m_threadName);
+	newLogItem->m_msg.create(getMemoryPool(), inf.m_msg);
 	newLogItem->m_line = inf.m_line;
 	newLogItem->m_type = inf.m_type;
 

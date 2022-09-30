@@ -19,7 +19,7 @@ ConfigSet::~ConfigSet()
 #define ANKI_CONFIG_VAR_STRING(name, defaultValue, description) \
 	if(m_##name.m_value) \
 	{ \
-		m_alloc.getMemoryPool().free(m_##name.m_value); \
+		m_pool.free(m_##name.m_value); \
 	}
 #include <AnKi/Core/AllConfigVars.defs.h>
 
@@ -37,7 +37,7 @@ ConfigSet::~ConfigSet()
 void ConfigSet::init(AllocAlignedCallback allocCb, void* allocCbUserData)
 {
 	ANKI_ASSERT(!isInitialized());
-	m_alloc = HeapAllocator<U8>(allocCb, allocCbUserData);
+	m_pool.init(allocCb, allocCbUserData);
 
 #define ANKI_CONFIG_VAR_NUMERIC(name, defaultValue, minValue, maxValue, description) \
 	ANKI_ASSERT(minValue <= maxValue && defaultValue >= minValue && defaultValue <= maxValue); \
@@ -106,8 +106,8 @@ Error ConfigSet::loadFromFile(CString filename)
 	ANKI_ASSERT(isInitialized());
 
 	ANKI_CORE_LOGI("Loading config file %s", filename.cstr());
-	XmlDocument xml;
-	ANKI_CHECK(xml.loadFile(filename, m_alloc));
+	XmlDocument xml(&m_pool);
+	ANKI_CHECK(xml.loadFile(filename));
 
 	XmlElement rootel;
 	ANKI_CHECK(xml.getChildElement("config", rootel));

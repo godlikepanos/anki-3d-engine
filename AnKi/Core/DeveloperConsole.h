@@ -26,7 +26,7 @@ public:
 
 	~DeveloperConsole();
 
-	Error init(AllocAlignedCallback allocCb, void* allocCbUserData, ScriptManager* scriptManager);
+	Error init(ScriptManager* scriptManager);
 
 	void build(CanvasPtr ctx) override;
 
@@ -45,7 +45,6 @@ private:
 		LoggerMessageType m_type;
 	};
 
-	HeapAllocator<U8> m_alloc;
 	FontPtr m_font;
 	IntrusiveList<LogItem> m_logItems;
 	U32 m_logItemCount = 0;

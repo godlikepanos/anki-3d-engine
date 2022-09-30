@@ -8,7 +8,6 @@
 #include <AnKi/Script/Common.h>
 #include <AnKi/Util/Assert.h>
 #include <AnKi/Util/StdTypes.h>
-#include <AnKi/Util/Allocator.h>
 #include <AnKi/Util/String.h>
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/HashMap.h>
@@ -159,7 +158,7 @@ public:
 
 	LuaBinder& operator=(const LuaBinder&) = delete; // Non-copyable
 
-	Error init(ScriptAllocator alloc, LuaBinderOtherSystems* otherSystems);
+	Error init(HeapMemoryPool* pool, LuaBinderOtherSystems* otherSystems);
 
 	lua_State* getLuaState()
 	{
@@ -167,9 +166,9 @@ public:
 		return m_l;
 	}
 
-	ScriptAllocator getAllocator() const
+	HeapMemoryPool& getMemoryPool() const
 	{
-		return m_alloc;
+		return *m_pool;
 	}
 
 	LuaBinderOtherSystems& getOtherSystems()
@@ -259,7 +258,7 @@ public:
 
 private:
 	LuaBinderOtherSystems* m_otherSystems;
-	ScriptAllocator m_alloc;
+	HeapMemoryPool* m_pool = nullptr;
 	lua_State* m_l = nullptr;
 	HashMap<I64, const LuaUserDataTypeInfo*> m_userDataSigToDataInfo;
 

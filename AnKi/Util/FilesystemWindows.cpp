@@ -26,7 +26,7 @@ Bool directoryExists(const CString& filename)
 	return dwAttrib != INVALID_FILE_ATTRIBUTES && (dwAttrib & FILE_ATTRIBUTE_DIRECTORY);
 }
 
-Error removeDirectory(const CString& dirname, GenericMemoryPoolAllocator<U8> alloc)
+Error removeDirectory(const CString& dirname, [[maybe_unused]] BaseMemoryPool& pool)
 {
 	// For some reason dirname should be double null terminated
 	if(dirname.getLength() > MAX_PATH - 2)
@@ -199,7 +199,7 @@ Error walkDirectoryTreeInternal(const CString& dir, const Function<Error(const C
 
 Error getApplicationPath(StringRaii& out)
 {
-	DynamicArrayRaii<Char> buff(out.getAllocator(), 1024);
+	DynamicArrayRaii<Char> buff(&out.getMemoryPool(), 1024);
 
 	const DWORD result = GetModuleFileNameA(nullptr, &buff[0], buff.getSize());
 	DWORD lastError = GetLastError();

@@ -742,7 +742,7 @@ public:
 
 	/// Internal don't use it.
 	template<typename TMemPool>
-	ANKI_INTERNAL void sprintf(TMemPool& pool, const Char* fmt, va_list& args)
+	void sprintfInternal(TMemPool& pool, const Char* fmt, va_list& args)
 	{
 		Array<Char, 512> buffer;
 
@@ -957,7 +957,7 @@ public:
 	{
 		va_list args;
 		va_start(args, fmt);
-		Base::sprintf(m_pool, fmt, args);
+		Base::sprintfInternal(m_pool, fmt, args);
 		va_end(args);
 		return *this;
 	}

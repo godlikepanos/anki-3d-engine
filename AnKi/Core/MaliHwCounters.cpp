@@ -13,11 +13,12 @@
 
 namespace anki {
 
-MaliHwCounters::MaliHwCounters(GenericMemoryPoolAllocator<U8> alloc)
-	: m_alloc(alloc)
+MaliHwCounters::MaliHwCounters(BaseMemoryPool* pool)
+	: m_pool(pool)
 {
+	ANKI_ASSERT(pool);
 #if ANKI_HWCPIPE_ENABLE
-	hwcpipe::HWCPipe* hwc = m_alloc.newInstance<hwcpipe::HWCPipe>();
+	hwcpipe::HWCPipe* hwc = newInstance<hwcpipe::HWCPipe>(*m_pool);
 	hwc->set_enabled_gpu_counters({hwcpipe::GpuCounter::GpuCycles, hwcpipe::GpuCounter::ExternalMemoryWriteBytes,
 								   hwcpipe::GpuCounter::ExternalMemoryReadBytes});
 
@@ -34,7 +35,7 @@ MaliHwCounters::~MaliHwCounters()
 #if ANKI_HWCPIPE_ENABLE
 	hwcpipe::HWCPipe* hwc = static_cast<hwcpipe::HWCPipe*>(m_impl);
 	hwc->stop();
-	m_alloc.deleteInstance(hwc);
+	deleteInstance(*m_pool, hwc);
 	m_impl = nullptr;
 #endif
 }

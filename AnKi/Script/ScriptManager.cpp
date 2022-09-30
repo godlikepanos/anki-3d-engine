@@ -22,9 +22,9 @@ Error ScriptManager::init(AllocAlignedCallback allocCb, void* allocCbData)
 {
 	ANKI_SCRIPT_LOGI("Initializing scripting engine...");
 
-	m_alloc = ScriptAllocator(allocCb, allocCbData);
+	m_pool.init(allocCb, allocCbData);
 
-	ANKI_CHECK(m_lua.init(m_alloc, &m_otherSystems));
+	ANKI_CHECK(m_lua.init(&m_pool, &m_otherSystems));
 
 	return Error::kNone;
 }

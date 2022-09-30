@@ -63,7 +63,7 @@ protected:
 	U32 m_width = 0;
 	U32 m_height = 0;
 
-	HeapAllocator<U8> m_alloc;
+	HeapMemoryPool m_pool;
 
 	NativeWindow()
 	{

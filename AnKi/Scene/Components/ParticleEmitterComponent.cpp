@@ -393,7 +393,7 @@ void ParticleEmitterComponent::draw(RenderQueueDrawContext& ctx) const
 		// Load verts
 		StagingGpuMemoryToken token;
 		void* gpuStorage = ctx.m_stagingGpuAllocator->allocateFrame(m_aliveParticleCount * kVertexSize,
-																	StagingGpuMemoryType::VERTEX, token);
+																	StagingGpuMemoryType::kVertex, token);
 		memcpy(gpuStorage, m_verts, m_aliveParticleCount * kVertexSize);
 
 		// Program

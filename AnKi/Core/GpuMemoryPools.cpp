@@ -15,8 +15,9 @@ VertexGpuMemoryPool::~VertexGpuMemoryPool()
 	// Do nothing
 }
 
-Error VertexGpuMemoryPool::init(GenericMemoryPoolAllocator<U8> alloc, GrManager* gr, const ConfigSet& cfg)
+Error VertexGpuMemoryPool::init(HeapMemoryPool* pool, GrManager* gr, const ConfigSet& cfg)
 {
+	ANKI_ASSERT(pool && gr);
 	m_gr = gr;
 
 	// Create the GPU buffer.
@@ -37,7 +38,7 @@ Error VertexGpuMemoryPool::init(GenericMemoryPoolAllocator<U8> alloc, GrManager*
 	m_vertBuffer = gr->newBuffer(bufferInit);
 
 	// Init the rest
-	m_buddyAllocator.init(alloc, __builtin_ctzll(bufferInit.m_size));
+	m_buddyAllocator.init(pool, __builtin_ctzll(bufferInit.m_size));
 
 	return Error::kNone;
 }
@@ -81,23 +82,23 @@ Error StagingGpuMemoryPool::init(GrManager* gr, const ConfigSet& cfg)
 {
 	m_gr = gr;
 
-	m_perFrameBuffers[StagingGpuMemoryType::UNIFORM].m_size = cfg.getCoreUniformPerFrameMemorySize();
-	m_perFrameBuffers[StagingGpuMemoryType::STORAGE].m_size = cfg.getCoreStoragePerFrameMemorySize();
-	m_perFrameBuffers[StagingGpuMemoryType::VERTEX].m_size = cfg.getCoreVertexPerFrameMemorySize();
-	m_perFrameBuffers[StagingGpuMemoryType::TEXTURE].m_size = cfg.getCoreTextureBufferPerFrameMemorySize();
+	m_perFrameBuffers[StagingGpuMemoryType::kUniform].m_size = cfg.getCoreUniformPerFrameMemorySize();
+	m_perFrameBuffers[StagingGpuMemoryType::kStorage].m_size = cfg.getCoreStoragePerFrameMemorySize();
+	m_perFrameBuffers[StagingGpuMemoryType::kVertex].m_size = cfg.getCoreVertexPerFrameMemorySize();
+	m_perFrameBuffers[StagingGpuMemoryType::kTexture].m_size = cfg.getCoreTextureBufferPerFrameMemorySize();
 
-	initBuffer(StagingGpuMemoryType::UNIFORM, gr->getDeviceCapabilities().m_uniformBufferBindOffsetAlignment,
+	initBuffer(StagingGpuMemoryType::kUniform, gr->getDeviceCapabilities().m_uniformBufferBindOffsetAlignment,
 			   gr->getDeviceCapabilities().m_uniformBufferMaxRange, BufferUsageBit::kAllUniform, *gr);
 
-	initBuffer(StagingGpuMemoryType::STORAGE,
+	initBuffer(StagingGpuMemoryType::kStorage,
 			   max(gr->getDeviceCapabilities().m_storageBufferBindOffsetAlignment,
 				   gr->getDeviceCapabilities().m_sbtRecordAlignment),
 			   gr->getDeviceCapabilities().m_storageBufferMaxRange, BufferUsageBit::kAllStorage | BufferUsageBit::kSBT,
 			   *gr);
 
-	initBuffer(StagingGpuMemoryType::VERTEX, 16, kMaxU32, BufferUsageBit::kVertex | BufferUsageBit::kIndex, *gr);
+	initBuffer(StagingGpuMemoryType::kVertex, 16, kMaxU32, BufferUsageBit::kVertex | BufferUsageBit::kIndex, *gr);
 
-	initBuffer(StagingGpuMemoryType::TEXTURE, gr->getDeviceCapabilities().m_textureBufferBindOffsetAlignment,
+	initBuffer(StagingGpuMemoryType::kTexture, gr->getDeviceCapabilities().m_textureBufferBindOffsetAlignment,
 			   gr->getDeviceCapabilities().m_textureBufferMaxRange, BufferUsageBit::kAllTexture, *gr);
 
 	return Error::kNone;
@@ -149,7 +150,7 @@ void* StagingGpuMemoryPool::tryAllocateFrame(PtrSize size, StagingGpuMemoryType 
 
 void StagingGpuMemoryPool::endFrame()
 {
-	for(StagingGpuMemoryType usage = StagingGpuMemoryType::UNIFORM; usage < StagingGpuMemoryType::COUNT; ++usage)
+	for(StagingGpuMemoryType usage : EnumIterable<StagingGpuMemoryType>())
 	{
 		PerFrameBuffer& buff = m_perFrameBuffers[usage];
 
@@ -158,10 +159,10 @@ void StagingGpuMemoryPool::endFrame()
 			// Increase the counters
 			switch(usage)
 			{
-			case StagingGpuMemoryType::UNIFORM:
+			case StagingGpuMemoryType::kUniform:
 				ANKI_TRACE_INC_COUNTER(STAGING_UNIFORMS_SIZE, buff.m_alloc.getUnallocatedMemorySize());
 				break;
-			case StagingGpuMemoryType::STORAGE:
+			case StagingGpuMemoryType::kStorage:
 				ANKI_TRACE_INC_COUNTER(STAGING_STORAGE_SIZE, buff.m_alloc.getUnallocatedMemorySize());
 				break;
 			default:

@@ -13,7 +13,7 @@ Error ScriptEnvironment::init(ScriptManager* manager)
 	ANKI_ASSERT(!isInitialized());
 	ANKI_ASSERT(manager);
 	m_manager = manager;
-	return m_thread.init(m_manager->getAllocator(), &m_manager->getOtherSystems());
+	return m_thread.init(&m_manager->getMemoryPool(), &m_manager->getOtherSystems());
 }
 
 } // end namespace anki

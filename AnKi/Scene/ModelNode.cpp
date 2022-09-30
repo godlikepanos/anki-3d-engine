@@ -239,10 +239,10 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 			const U32 boneCount = skinc.getBoneTransforms().getSize();
 			StagingGpuMemoryToken token, tokenPrev;
 			void* trfs = ctx.m_stagingGpuAllocator->allocateFrame(boneCount * sizeof(Mat4),
-																  StagingGpuMemoryType::STORAGE, token);
+																  StagingGpuMemoryType::kStorage, token);
 			memcpy(trfs, &skinc.getBoneTransforms()[0], boneCount * sizeof(Mat4));
 
-			trfs = ctx.m_stagingGpuAllocator->allocateFrame(boneCount * sizeof(Mat4), StagingGpuMemoryType::STORAGE,
+			trfs = ctx.m_stagingGpuAllocator->allocateFrame(boneCount * sizeof(Mat4), StagingGpuMemoryType::kStorage,
 															tokenPrev);
 			memcpy(trfs, &skinc.getPreviousFrameBoneTransforms()[0], boneCount * sizeof(Mat4));
 

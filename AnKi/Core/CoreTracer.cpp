@@ -38,9 +38,9 @@ public:
 	ThreadId m_tid;
 	U64 m_frame;
 
-	ThreadWorkItem(GenericMemoryPoolAllocator<U8>& alloc)
-		: m_events(alloc)
-		, m_counters(alloc)
+	ThreadWorkItem(HeapMemoryPool* pool)
+		: m_events(pool)
+		, m_counters(pool)
 	{
 	}
 };
@@ -51,8 +51,8 @@ public:
 	DynamicArrayRaii<TracerCounter> m_counters;
 	U64 m_frame;
 
-	PerFrameCounters(GenericMemoryPoolAllocator<U8>& alloc)
-		: m_counters(alloc)
+	PerFrameCounters(HeapMemoryPool* pool)
+		: m_counters(pool)
 	{
 	}
 };
@@ -85,46 +85,49 @@ CoreTracer::~CoreTracer()
 	while(!m_frameCounters.isEmpty())
 	{
 		PerFrameCounters* frame = m_frameCounters.popBack();
-		m_alloc.deleteInstance(frame);
+		deleteInstance(*m_pool, frame);
 	}
 
 	while(!m_workItems.isEmpty())
 	{
 		ThreadWorkItem* item = m_workItems.popBack();
-		m_alloc.deleteInstance(item);
+		deleteInstance(*m_pool, item);
 	}
 
 	for(String& s : m_counterNames)
 	{
-		s.destroy(m_alloc);
+		s.destroy(*m_pool);
 	}
-	m_counterNames.destroy(m_alloc);
+	m_counterNames.destroy(*m_pool);
 
 	// Destroy the tracer
 	TracerSingleton::destroy();
 }
 
-Error CoreTracer::init(GenericMemoryPoolAllocator<U8> alloc, CString directory)
+Error CoreTracer::init(HeapMemoryPool* pool, CString directory)
 {
-	TracerSingleton::init(alloc);
+	ANKI_ASSERT(pool);
+	m_pool = pool;
+
+	TracerSingleton::init(m_pool);
 	const Bool enableTracer = getenv("ANKI_CORE_TRACER_ENABLED") && getenv("ANKI_CORE_TRACER_ENABLED")[0] == '1';
 	TracerSingleton::get().setEnabled(enableTracer);
 	ANKI_CORE_LOGI("Tracing is %s from the beginning", (enableTracer) ? "enabled" : "disabled");
 
-	m_alloc = alloc;
 	m_thread.start(this, [](ThreadCallbackInfo& info) -> Error {
 		return static_cast<CoreTracer*>(info.m_userData)->threadWorker();
 	});
 
 	std::tm tm = getLocalTime();
-	StringRaii fname(m_alloc);
+	StringRaii fname(m_pool);
 	fname.sprintf("%s/%d%02d%02d-%02d%02d_", directory.cstr(), tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour,
 				  tm.tm_min);
 
-	ANKI_CHECK(m_traceJsonFile.open(StringRaii(alloc).sprintf("%strace.json", fname.cstr()), FileOpenFlag::kWrite));
+	ANKI_CHECK(m_traceJsonFile.open(StringRaii(m_pool).sprintf("%strace.json", fname.cstr()), FileOpenFlag::kWrite));
 	ANKI_CHECK(m_traceJsonFile.writeText("[\n"));
 
-	ANKI_CHECK(m_countersCsvFile.open(StringRaii(alloc).sprintf("%scounters.csv", fname.cstr()), FileOpenFlag::kWrite));
+	ANKI_CHECK(
+		m_countersCsvFile.open(StringRaii(m_pool).sprintf("%scounters.csv", fname.cstr()), FileOpenFlag::kWrite));
 
 	return Error::kNone;
 }
@@ -168,7 +171,7 @@ Error CoreTracer::threadWorker()
 				gatherCounters(*item);
 			}
 
-			m_alloc.deleteInstance(item);
+			deleteInstance(*m_pool, item);
 		}
 	}
 
@@ -211,7 +214,7 @@ void CoreTracer::gatherCounters(ThreadWorkItem& item)
 	});
 
 	// Merge same
-	DynamicArrayRaii<TracerCounter> mergedCounters(m_alloc);
+	DynamicArrayRaii<TracerCounter> mergedCounters(m_pool);
 	for(U32 i = 0; i < item.m_counters.getSize(); ++i)
 	{
 		if(mergedCounters.getSize() == 0 || mergedCounters.getBack().m_name != item.m_counters[i].m_name)
@@ -245,7 +248,7 @@ void CoreTracer::gatherCounters(ThreadWorkItem& item)
 
 		if(!found)
 		{
-			m_counterNames.emplaceBack(m_alloc, m_alloc, counter.m_name);
+			m_counterNames.emplaceBack(*m_pool, *m_pool, counter.m_name);
 			addedCounterName = true;
 		}
 	}
@@ -259,7 +262,7 @@ void CoreTracer::gatherCounters(ThreadWorkItem& item)
 	if(m_frameCounters.isEmpty() || m_frameCounters.getBack().m_frame != item.m_frame)
 	{
 		// Create new frame
-		PerFrameCounters* newPerFrame = m_alloc.newInstance<PerFrameCounters>(m_alloc);
+		PerFrameCounters* newPerFrame = newInstance<PerFrameCounters>(*m_pool, m_pool);
 		newPerFrame->m_counters = std::move(mergedCounters);
 		newPerFrame->m_frame = item.m_frame;
 		m_frameCounters.pushBack(newPerFrame);
@@ -307,7 +310,7 @@ void CoreTracer::flushFrame(U64 frame)
 			Ctx& ctx = *static_cast<Ctx*>(ud);
 			CoreTracer& self = *ctx.m_self;
 
-			ThreadWorkItem* item = self.m_alloc.newInstance<ThreadWorkItem>(self.m_alloc);
+			ThreadWorkItem* item = newInstance<ThreadWorkItem>(*self.m_pool, self.m_pool);
 			item->m_tid = tid;
 			item->m_frame = ctx.m_frame;
 

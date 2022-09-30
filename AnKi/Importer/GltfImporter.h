@@ -40,7 +40,7 @@ public:
 class GltfImporter
 {
 public:
-	GltfImporter(GenericMemoryPoolAllocator<U8> alloc);
+	GltfImporter(BaseMemoryPool* pool);
 
 	~GltfImporter();
 
@@ -59,12 +59,12 @@ private:
 	};
 
 	// Data
-	GenericMemoryPoolAllocator<U8> m_alloc;
+	BaseMemoryPool* m_pool = nullptr;
 
-	StringRaii m_inputFname = {m_alloc};
-	StringRaii m_outDir = {m_alloc};
-	StringRaii m_rpath = {m_alloc};
-	StringRaii m_texrpath = {m_alloc};
+	StringRaii m_inputFname = {m_pool};
+	StringRaii m_outDir = {m_pool};
+	StringRaii m_rpath = {m_pool};
+	StringRaii m_texrpath = {m_pool};
 
 	cgltf_data* m_gltf = nullptr;
 
@@ -76,14 +76,14 @@ private:
 
 	Atomic<I32> m_errorInThread{0};
 
-	HashMapRaii<const void*, U32, PtrHasher> m_nodePtrToIdx{m_alloc}; ///< Need an index for the unnamed nodes.
+	HashMapRaii<const void*, U32, PtrHasher> m_nodePtrToIdx = {m_pool}; ///< Need an index for the unnamed nodes.
 
 	F32 m_lodFactor = 1.0f;
 	U32 m_lodCount = 1;
 	F32 m_lightIntensityScale = 1.0f;
 	Bool m_optimizeMeshes = false;
 	Bool m_optimizeAnimations = false;
-	StringRaii m_comment{m_alloc};
+	StringRaii m_comment = {m_pool};
 
 	/// Don't generate LODs for meshes with less vertices than this number.
 	U32 m_skipLodVertexCountThreshold = 256;
@@ -108,7 +108,7 @@ private:
 
 	StringRaii fixFilename(CString in) const
 	{
-		StringRaii out(m_alloc, in);
+		StringRaii out(m_pool, in);
 		out.replaceAll("|", "_");
 		out.replaceAll(" ", "_");
 		return out;

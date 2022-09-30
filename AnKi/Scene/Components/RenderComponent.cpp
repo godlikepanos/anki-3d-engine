@@ -31,7 +31,7 @@ void RenderComponent::allocateAndSetupUniforms(const MaterialResourcePtr& mtl, c
 	{
 		StagingGpuMemoryToken token;
 		RenderableGpuView* renderableGpuViews = static_cast<RenderableGpuView*>(
-			alloc.allocateFrame(renderableGpuViewsUboSize, StagingGpuMemoryType::UNIFORM, token));
+			alloc.allocateFrame(renderableGpuViewsUboSize, StagingGpuMemoryType::kUniform, token));
 		ANKI_ASSERT(isAligned(alignof(RenderableGpuView), renderableGpuViews));
 
 		cmdb->bindUniformBuffer(set, MATERIAL_BINDING_RENDERABLE_GPU_VIEW, token.m_buffer, token.m_offset,
@@ -53,7 +53,7 @@ void RenderComponent::allocateAndSetupUniforms(const MaterialResourcePtr& mtl, c
 	StagingGpuMemoryToken token;
 	U8* const localUniformsBegin =
 		(localUniformsUboSize != 0)
-			? static_cast<U8*>(alloc.allocateFrame(localUniformsUboSize, StagingGpuMemoryType::STORAGE, token))
+			? static_cast<U8*>(alloc.allocateFrame(localUniformsUboSize, StagingGpuMemoryType::kStorage, token))
 			: nullptr;
 
 	if(localUniformsUboSize)

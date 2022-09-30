@@ -133,7 +133,7 @@ private:
 		Bool m_value;
 	};
 
-	HeapAllocator<U8> m_alloc;
+	HeapMemoryPool m_pool;
 	IntrusiveList<Var> m_vars;
 
 #define ANKI_CONFIG_VAR_U8(name, defaultValue, minValue, maxValue, description) NumberVar<U8> m_##name;
@@ -168,9 +168,9 @@ private:
 
 	void setStringVar(CString val, StringVar& var)
 	{
-		m_alloc.getMemoryPool().free(var.m_value);
+		m_pool.free(var.m_value);
 		const U32 len = val.getLength();
-		var.m_value = static_cast<Char*>(m_alloc.getMemoryPool().allocate(len + 1, alignof(Char)));
+		var.m_value = static_cast<Char*>(m_pool.allocate(len + 1, alignof(Char)));
 		memcpy(var.m_value, val.getBegin(), len + 1);
 	}
 };

@@ -289,7 +289,7 @@ static Input* input = nullptr;
 static void* setUniforms(PtrSize size, CommandBufferPtr& cmdb, U32 set, U32 binding)
 {
 	StagingGpuMemoryToken token;
-	void* ptr = stagingMem->allocateFrame(size, StagingGpuMemoryType::UNIFORM, token);
+	void* ptr = stagingMem->allocateFrame(size, StagingGpuMemoryType::kUniform, token);
 	cmdb->bindUniformBuffer(set, binding, token.m_buffer, token.m_offset, token.m_range);
 	return ptr;
 }
@@ -297,7 +297,7 @@ static void* setUniforms(PtrSize size, CommandBufferPtr& cmdb, U32 set, U32 bind
 static void* setStorage(PtrSize size, CommandBufferPtr& cmdb, U32 set, U32 binding)
 {
 	StagingGpuMemoryToken token;
-	void* ptr = stagingMem->allocateFrame(size, StagingGpuMemoryType::STORAGE, token);
+	void* ptr = stagingMem->allocateFrame(size, StagingGpuMemoryType::kStorage, token);
 	cmdb->bindStorageBuffer(set, binding, token.m_buffer, token.m_offset, token.m_range);
 	return ptr;
 }

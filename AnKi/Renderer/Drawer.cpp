@@ -50,7 +50,7 @@ void RenderableDrawer::drawRange(RenderingTechnique technique, const RenderableD
 		StagingGpuMemoryToken globalUniformsToken;
 		MaterialGlobalUniforms* globalUniforms =
 			static_cast<MaterialGlobalUniforms*>(m_r->getStagingGpuMemory().allocateFrame(
-				sizeof(MaterialGlobalUniforms), StagingGpuMemoryType::UNIFORM, globalUniformsToken));
+				sizeof(MaterialGlobalUniforms), StagingGpuMemoryType::kUniform, globalUniformsToken));
 
 		globalUniforms->m_viewProjectionMatrix = args.m_viewProjectionMatrix;
 		globalUniforms->m_previousViewProjectionMatrix = args.m_previousViewProjectionMatrix;

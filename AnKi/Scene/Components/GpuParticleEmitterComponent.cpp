@@ -175,7 +175,7 @@ void GpuParticleEmitterComponent::simulate(GenericGpuComputeJobQueueElementConte
 	StagingGpuMemoryToken token;
 	GpuParticleSimulationState* unis =
 		static_cast<GpuParticleSimulationState*>(ctx.m_stagingGpuAllocator->allocateFrame(
-			sizeof(GpuParticleSimulationState), StagingGpuMemoryType::UNIFORM, token));
+			sizeof(GpuParticleSimulationState), StagingGpuMemoryType::kUniform, token));
 
 	unis->m_viewProjMat = ctx.m_viewProjectionMatrix;
 	unis->m_unprojectionParams = ctx.m_projectionMatrix.extractPerspectiveUnprojectionParams();
