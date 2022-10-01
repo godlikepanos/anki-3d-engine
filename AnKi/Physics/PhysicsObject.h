@@ -35,7 +35,7 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(PhysicsObjectType)
 	friend class PhysicsPtrDeleter; \
 	template<typename T, typename TDeleter> \
 	friend class IntrusivePtr; \
-	ANKI_FRIEND_CALL_CONSTRUCTOR
+	ANKI_FRIEND_CALL_CONSTRUCTOR_AND_DESTRUCTOR
 
 #define ANKI_PHYSICS_OBJECT(type) \
 	ANKI_PHYSICS_OBJECT_FRIENDS \

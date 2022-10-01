@@ -21,7 +21,7 @@ class MicroSemaphore
 {
 	friend class SemaphoreFactory;
 	friend class MicroSemaphorePtrDeleter;
-	ANKI_FRIEND_CALL_CONSTRUCTOR
+	ANKI_FRIEND_CALL_CONSTRUCTOR_AND_DESTRUCTOR
 
 public:
 	MicroSemaphore(const MicroSemaphore&) = delete; // Non-copyable

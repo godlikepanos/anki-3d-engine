@@ -478,7 +478,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 				// Create some dummy frustum components and initialize them
 				WeakArray<FrustumComponent> cascadeFrustumComponents(
-					(cascadeCount) ? reinterpret_cast<FrustumComponent*>(
+					(cascadeCount) ? static_cast<FrustumComponent*>(
 						pool.allocate(cascadeCount * sizeof(FrustumComponent), alignof(FrustumComponent)))
 								   : nullptr,
 					cascadeCount);

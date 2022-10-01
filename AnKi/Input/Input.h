@@ -29,7 +29,7 @@ enum class InputEvent : U8
 /// @note All positions are in NDC space
 class Input
 {
-	ANKI_FRIEND_CALL_CONSTRUCTOR
+	ANKI_FRIEND_CALL_CONSTRUCTOR_AND_DESTRUCTOR
 
 public:
 	static Error newInstance(AllocAlignedCallback allocCallback, void* allocCallbackUserData,

@@ -492,7 +492,7 @@ public:
 		ANKI_ASSERT(fmt);
 		va_list args;
 		va_start(args, fmt);
-		sprintf(pool, fmt, args);
+		sprintfInternal(pool, fmt, args);
 		va_end(args);
 		return *this;
 	}

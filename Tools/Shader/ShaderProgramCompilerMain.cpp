@@ -113,7 +113,7 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 
 static Error work(const CmdLineArgs& info)
 {
-	HeapMemoryPool pool(allocAligned, nullptr);
+	HeapMemoryPool pool(allocAligned, nullptr, "ProgramPool");
 
 	// Load interface
 	class FSystem : public ShaderProgramFilesystemInterface

@@ -21,7 +21,7 @@ class MicroSampler
 {
 	friend class MicroSamplerPtrDeleter;
 	friend class SamplerFactory;
-	ANKI_FRIEND_CALL_CONSTRUCTOR
+	ANKI_FRIEND_CALL_CONSTRUCTOR_AND_DESTRUCTOR
 
 public:
 	const VkSampler& getHandle() const

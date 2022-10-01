@@ -371,10 +371,6 @@ void callConstructor(T& p, TArgs&&... args)
 	::new(&p) T(std::forward<TArgs>(args)...);
 }
 
-#define ANKI_FRIEND_CALL_CONSTRUCTOR \
-	template<typename T, typename... TArgs> \
-	friend void callConstructor(T& p, TArgs&&... args);
-
 /// Call the destructor of an object.
 template<typename T>
 void callDestructor(T& p)
@@ -382,6 +378,12 @@ void callDestructor(T& p)
 	static_assert(sizeof(T) > 0, "Incomplete type");
 	p.~T();
 }
+
+#define ANKI_FRIEND_CALL_CONSTRUCTOR_AND_DESTRUCTOR \
+	template<typename T, typename... TArgs> \
+	friend void callConstructor(T& p, TArgs&&... args); \
+	template<typename T> \
+	friend void callDestructor(T& p);
 
 /// Allocate a new object and call it's constructor
 template<typename T, typename TMemPool, typename... TArgs>
@@ -444,7 +446,7 @@ void deleteInstance(TMemPool& pool, T* ptr)
 {
 	if(ANKI_LIKELY(ptr != nullptr))
 	{
-		callDestructor(ptr);
+		callDestructor(*ptr);
 		pool.free(ptr);
 	}
 }

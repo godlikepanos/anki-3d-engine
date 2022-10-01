@@ -115,7 +115,7 @@ void StringList::pushBackSprintf(TMemPool& pool, const Char* fmt, ...)
 	String str;
 	va_list args;
 	va_start(args, fmt);
-	str.sprintf(pool, fmt, args);
+	str.sprintfInternal(pool, fmt, args);
 	va_end(args);
 
 	Base::emplaceBack(pool);
@@ -128,7 +128,7 @@ void StringList::pushFrontSprintf(TMemPool& pool, const Char* fmt, ...)
 	String str;
 	va_list args;
 	va_start(args, fmt);
-	str.sprintf(pool, fmt, args);
+	str.sprintfInternal(pool, fmt, args);
 	va_end(args);
 
 	Base::emplaceFront(pool);
@@ -141,7 +141,7 @@ void BaseStringListRaii<TMemPool>::pushBackSprintf(const Char* fmt, ...)
 	String str;
 	va_list args;
 	va_start(args, fmt);
-	str.sprintf(m_pool, fmt, args);
+	str.sprintfInternal(m_pool, fmt, args);
 	va_end(args);
 
 	Base::emplaceBack(m_pool);
@@ -154,7 +154,7 @@ void BaseStringListRaii<TMemPool>::pushFrontSprintf(const Char* fmt, ...)
 	String str;
 	va_list args;
 	va_start(args, fmt);
-	str.sprintf(m_pool, fmt, args);
+	str.sprintfInternal(m_pool, fmt, args);
 	va_end(args);
 
 	Base::emplaceFront(m_pool);
