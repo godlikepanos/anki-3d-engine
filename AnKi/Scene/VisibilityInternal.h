@@ -74,7 +74,7 @@ public:
 			m_elementStorage = max(kInitialStorage, m_elementStorage * kStorageGrowRate);
 
 			const T* oldElements = m_elements;
-			m_elements = static_cast<T*>(pool.allocate(m_elementStorage, alignof(T)));
+			m_elements = static_cast<T*>(pool.allocate(m_elementStorage * sizeof(T), alignof(T)));
 
 			if(oldElements)
 			{
