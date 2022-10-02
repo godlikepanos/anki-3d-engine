@@ -16,7 +16,7 @@ namespace anki {
 class ShaderProgramBinaryVariable
 {
 public:
-	Array<char, MAX_SHADER_BINARY_NAME_LENGTH + 1> m_name = {};
+	Array<char, kMaxShaderBinaryNameLength + 1> m_name = {};
 	ShaderVariableDataType m_type = ShaderVariableDataType::kNone;
 
 	template<typename TSerializer, typename TClass>
@@ -72,7 +72,7 @@ public:
 class ShaderProgramBinaryBlock
 {
 public:
-	Array<char, MAX_SHADER_BINARY_NAME_LENGTH + 1> m_name = {};
+	Array<char, kMaxShaderBinaryNameLength + 1> m_name = {};
 	WeakArray<ShaderProgramBinaryVariable> m_variables;
 	U32 m_binding = kMaxU32;
 	U32 m_set = kMaxU32;
@@ -135,7 +135,7 @@ public:
 class ShaderProgramBinaryOpaque
 {
 public:
-	Array<char, MAX_SHADER_BINARY_NAME_LENGTH + 1> m_name = {};
+	Array<char, kMaxShaderBinaryNameLength + 1> m_name = {};
 	ShaderVariableDataType m_type = ShaderVariableDataType::kNone;
 	U32 m_binding = kMaxU32;
 	U32 m_set = kMaxU32;
@@ -195,7 +195,7 @@ public:
 class ShaderProgramBinaryConstant
 {
 public:
-	Array<char, MAX_SHADER_BINARY_NAME_LENGTH + 1> m_name;
+	Array<char, kMaxShaderBinaryNameLength + 1> m_name;
 	ShaderVariableDataType m_type = ShaderVariableDataType::kNone;
 	U32 m_constantId = kMaxU32;
 
@@ -250,7 +250,7 @@ public:
 class ShaderProgramBinaryStructMember
 {
 public:
-	Array<char, MAX_SHADER_BINARY_NAME_LENGTH + 1> m_name = {};
+	Array<char, kMaxShaderBinaryNameLength + 1> m_name = {};
 
 	/// If the value is ShaderVariableDataType::kNone then it's a struct.
 	ShaderVariableDataType m_type = ShaderVariableDataType::kNone;
@@ -326,7 +326,7 @@ public:
 class ShaderProgramBinaryStruct
 {
 public:
-	Array<char, MAX_SHADER_BINARY_NAME_LENGTH + 1> m_name;
+	Array<char, kMaxShaderBinaryNameLength + 1> m_name;
 	WeakArray<ShaderProgramBinaryStructMember> m_members;
 
 	template<typename TSerializer, typename TClass>
@@ -434,7 +434,7 @@ public:
 class ShaderProgramBinaryMutator
 {
 public:
-	Array<char, MAX_SHADER_BINARY_NAME_LENGTH + 1> m_name = {};
+	Array<char, kMaxShaderBinaryNameLength + 1> m_name = {};
 	WeakArray<MutatorValue> m_values;
 
 	template<typename TSerializer, typename TClass>

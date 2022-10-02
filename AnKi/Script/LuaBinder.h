@@ -60,7 +60,7 @@ public:
 		ANKI_ASSERT(info);
 		m_sig = info->m_signature;
 		m_info = info;
-		m_addressOrGarbageCollect = GARBAGE_COLLECTED;
+		m_addressOrGarbageCollect = kGarbageCollectedMagic;
 	}
 
 	/// @note Accepting const void* is wrong because getData returns a mutable pointer. Fix that.
@@ -70,14 +70,14 @@ public:
 		m_sig = info->m_signature;
 		m_info = info;
 		const U64 addr = ptrToNumber(ptrToObject);
-		ANKI_ASSERT(addr != GARBAGE_COLLECTED && "Can't use this address");
+		ANKI_ASSERT(addr != kGarbageCollectedMagic && "Can't use this address");
 		m_addressOrGarbageCollect = addr;
 	}
 
 	Bool isGarbageCollected() const
 	{
 		ANKI_ASSERT(m_addressOrGarbageCollect != 0);
-		return m_addressOrGarbageCollect == GARBAGE_COLLECTED;
+		return m_addressOrGarbageCollect == kGarbageCollectedMagic;
 	}
 
 	template<typename T>
@@ -121,7 +121,7 @@ public:
 	static const LuaUserDataTypeInfo& getDataTypeInfoFor();
 
 private:
-	static constexpr U64 GARBAGE_COLLECTED = 0xFAFC0FEEDEADB1FF;
+	static constexpr U64 kGarbageCollectedMagic = 0xFAFC0FEEDEADB1FF;
 
 	I64 m_sig = 0; ///< Signature to identify the user data.
 

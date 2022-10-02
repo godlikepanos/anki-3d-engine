@@ -177,7 +177,7 @@ void ModelNode::initRenderComponents()
 		rc.setFlagsFromMaterial(model->getModelPatches()[patchIdx].getMaterial());
 
 		if(!!(model->getModelPatches()[patchIdx].getMaterial()->getRenderingTechniques()
-			  & RenderingTechniqueBit::ALL_RT))
+			  & RenderingTechniqueBit::kAllRt))
 		{
 			rc.initRayTracing(
 				[](U32 lod, const void* userData, RayTracingInstanceQueueElement& el) {
@@ -195,7 +195,7 @@ void ModelNode::initRenderComponents()
 void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData, U32 modelPatchIdx) const
 {
 	const U32 instanceCount = userData.getSize();
-	ANKI_ASSERT(instanceCount > 0 && instanceCount <= MAX_INSTANCE_COUNT);
+	ANKI_ASSERT(instanceCount > 0 && instanceCount <= kMaxInstanceCount);
 	ANKI_ASSERT(ctx.m_key.getInstanceCount() == instanceCount);
 
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
@@ -207,8 +207,8 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		const SkinComponent& skinc = getFirstComponentOfType<SkinComponent>();
 
 		// Transforms
-		Array<Mat3x4, MAX_INSTANCE_COUNT> trfs;
-		Array<Mat3x4, MAX_INSTANCE_COUNT> prevTrfs;
+		Array<Mat3x4, kMaxInstanceCount> trfs;
+		Array<Mat3x4, kMaxInstanceCount> prevTrfs;
 		const MoveComponent& movec = getFirstComponentOfType<MoveComponent>();
 		trfs[0] = Mat3x4(movec.getWorldTransform());
 		prevTrfs[0] = Mat3x4(movec.getPreviousWorldTransform());
@@ -228,7 +228,7 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 			moved = moved || (trfs[i] != prevTrfs[i]);
 		}
 
-		ctx.m_key.setVelocity(moved && ctx.m_key.getRenderingTechnique() == RenderingTechnique::GBUFFER);
+		ctx.m_key.setVelocity(moved && ctx.m_key.getRenderingTechnique() == RenderingTechnique::kGBuffer);
 		ctx.m_key.setSkinned(skinc.isEnabled());
 		ModelRenderingInfo modelInf;
 		patch.getRenderingInfo(ctx.m_key, modelInf);
@@ -246,10 +246,10 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 															tokenPrev);
 			memcpy(trfs, &skinc.getPreviousFrameBoneTransforms()[0], boneCount * sizeof(Mat4));
 
-			cmdb->bindStorageBuffer(MATERIAL_SET_LOCAL, MATERIAL_BINDING_BONE_TRANSFORMS, token.m_buffer,
-									token.m_offset, token.m_range);
+			cmdb->bindStorageBuffer(kMaterialSetLocal, kMaterialBindingBoneTransforms, token.m_buffer, token.m_offset,
+									token.m_range);
 
-			cmdb->bindStorageBuffer(MATERIAL_SET_LOCAL, MATERIAL_BINDING_PREVIOUS_BONE_TRANSFORMS, tokenPrev.m_buffer,
+			cmdb->bindStorageBuffer(kMaterialSetLocal, kMaterialBindingPreviousBoneTransforms, tokenPrev.m_buffer,
 									tokenPrev.m_offset, tokenPrev.m_range);
 		}
 
@@ -389,7 +389,7 @@ void ModelNode::setupRayTracingInstanceQueueElement(U32 lod, U32 modelPatchIdx,
 	const ModelComponent& modelc = getFirstComponentOfType<ModelComponent>();
 	const ModelPatch& patch = modelc.getModelResource()->getModelPatches()[modelPatchIdx];
 
-	RenderingKey key(RenderingTechnique::RT_SHADOW, lod, 1, false, false);
+	RenderingKey key(RenderingTechnique::kRtShadow, lod, 1, false, false);
 
 	ModelRayTracingInfo info;
 	patch.getRayTracingInfo(key, info);

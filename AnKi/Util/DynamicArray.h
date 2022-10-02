@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <AnKi/Util/CpuMemoryPools.h>
+#include <AnKi/Util/MemoryPool.h>
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/Forward.h>
 

@@ -81,7 +81,7 @@ constexpr Second kMaxSecond = kMaxF64;
 constexpr Second kMinSecond = kMinF64;
 
 using Timestamp = U64; ///< Timestamp type.
-constexpr Timestamp MAX_TIMESTAMP = kMaxU64;
+constexpr Timestamp kMaxTimestamp = kMaxU64;
 
 // Numeric limits
 template<typename T>

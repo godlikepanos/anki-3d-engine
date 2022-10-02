@@ -13,18 +13,18 @@ namespace anki {
 
 static Bool attributeIsRequired(VertexAttributeId loc, RenderingTechnique technique, Bool hasSkin)
 {
-	if(technique == RenderingTechnique::GBUFFER || technique == RenderingTechnique::FORWARD)
+	if(technique == RenderingTechnique::kGBuffer || technique == RenderingTechnique::kForward)
 	{
 		return true;
 	}
 	else if(!hasSkin)
 	{
-		return loc == VertexAttributeId::POSITION || loc == VertexAttributeId::UV0;
+		return loc == VertexAttributeId::kPosition || loc == VertexAttributeId::kUv0;
 	}
 	else
 	{
-		return loc == VertexAttributeId::POSITION || loc == VertexAttributeId::BONE_INDICES
-			   || loc == VertexAttributeId::BONE_WEIGHTS || loc == VertexAttributeId::UV0;
+		return loc == VertexAttributeId::kPosition || loc == VertexAttributeId::kBoneIndices
+			   || loc == VertexAttributeId::kBoneWeights || loc == VertexAttributeId::kUv0;
 	}
 }
 

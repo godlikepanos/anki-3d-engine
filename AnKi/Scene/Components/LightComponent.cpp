@@ -70,7 +70,7 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 													   WeakArray<FrustumComponent> cascadeFrustumComponents) const
 {
 	ANKI_ASSERT(m_type == LightComponentType::kDirectional);
-	ANKI_ASSERT(cascadeFrustumComponents.getSize() <= MAX_SHADOW_CASCADES);
+	ANKI_ASSERT(cascadeFrustumComponents.getSize() <= kMaxShadowCascades);
 
 	const U32 shadowCascadeCount = cascadeFrustumComponents.getSize();
 
@@ -101,7 +101,7 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 		const F32 fovY = frustumComp.getFovY();
 
 		// Compute a sphere per cascade
-		Array<Sphere, MAX_SHADOW_CASCADES> boundingSpheres;
+		Array<Sphere, kMaxShadowCascades> boundingSpheres;
 		for(U32 i = 0; i < shadowCascadeCount; ++i)
 		{
 			// Compute the center of the sphere

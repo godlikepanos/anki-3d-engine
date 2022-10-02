@@ -13,20 +13,20 @@ ANKI_BEGIN_NAMESPACE
 #if defined(__cplusplus)
 enum class VertexAttributeId : U8
 {
-	POSITION,
-	UV0,
-	UV1,
-	NORMAL,
-	TANGENT,
-	COLOR,
-	BONE_WEIGHTS,
-	BONE_INDICES,
+	kPosition,
+	kUv0,
+	kUv1,
+	kNormal,
+	kTangent,
+	kColor,
+	kBoneWeights,
+	kBoneIndices,
 
 	kCount,
-	kFirst = POSITION,
+	kFirst = kPosition,
 
-	SCALE = UV0, ///< Only for particles.
-	ALPHA = UV1, ///< Only for particles.
+	SCALE = kUv0, ///< Only for particles.
+	ALPHA = kUv1, ///< Only for particles.
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexAttributeId)
 #else
@@ -48,11 +48,11 @@ const U32 VERTEX_ATTRIBUTE_ID_ALPHA = VERTEX_ATTRIBUTE_ID_UV1; ///< Only for par
 #if defined(__cplusplus)
 enum class VertexAttributeBufferId : U8
 {
-	POSITION,
-	NORMAL_TANGENT_UV0,
-	BONE,
+	kPosition,
+	kNormalTangentUv0,
+	kBone,
 
-	COUNT
+	kCount
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexAttributeBufferId)
 #else
@@ -90,7 +90,7 @@ struct MeshGpuDescriptor
 {
 	Address m_indexBufferPtr; ///< Points to a buffer of U16 indices.
 #if defined(__cplusplus)
-	Array<Address, U(VertexAttributeBufferId::COUNT)> m_vertexBufferPtrs;
+	Array<Address, U(VertexAttributeBufferId::kCount)> m_vertexBufferPtrs;
 #else
 	Address m_vertexBufferPtrs[VERTEX_ATTRIBUTE_BUFFER_ID_COUNT];
 #endif

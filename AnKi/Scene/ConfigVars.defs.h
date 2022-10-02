@@ -7,7 +7,7 @@ ANKI_CONFIG_VAR_GROUP(SCENE)
 
 ANKI_CONFIG_VAR_F32(Lod0MaxDistance, 20.0f, 1.0f, kMaxF32, "Distance that will be used to calculate the LOD 0")
 ANKI_CONFIG_VAR_F32(Lod1MaxDistance, 40.0f, 2.0f, kMaxF32, "Distance that will be used to calculate the LOD 1")
-ANKI_CONFIG_VAR_U8(SceneShadowCascadeCount, (ANKI_OS_ANDROID) ? 2 : MAX_SHADOW_CASCADES, 1, MAX_SHADOW_CASCADES,
+ANKI_CONFIG_VAR_U8(SceneShadowCascadeCount, (ANKI_OS_ANDROID) ? 2 : kMaxShadowCascades, 1, kMaxShadowCascades,
 				   "Max number of shadow cascades for directional lights")
 
 ANKI_CONFIG_VAR_U32(SceneOctreeMaxDepth, 5, 2, 10, "The max depth of the octree")

@@ -22,17 +22,17 @@ struct PerDraw
 #pragma anki member ANKI_RP F32 m_fogDistanceOfMaxThikness
 #pragma anki struct end
 
-layout(set = MATERIAL_SET_GLOBAL, binding = MATERIAL_BINDING_GLOBAL_UNIFORMS) uniform b_ankiGlobalUniforms
+layout(set = kMaterialSetGlobal, binding = kMaterialBindingGlobalUniforms) uniform b_ankiGlobalUniforms
 {
 	MaterialGlobalUniforms u_global;
 };
 
-layout(set = MATERIAL_SET_LOCAL, binding = MATERIAL_BINDING_RENDERABLE_GPU_VIEW) uniform b_renderableGpuViews
+layout(set = kMaterialSetLocal, binding = kMaterialBindingRenderableGpuView) uniform b_renderableGpuViews
 {
 	RenderableGpuView u_renderableGpuViews[1];
 };
 
-layout(set = MATERIAL_SET_LOCAL, binding = MATERIAL_BINDING_LOCAL_UNIFORMS, std430) buffer b_localUniforms
+layout(set = kMaterialSetLocal, binding = kMaterialBindingLocalUniforms, std430) buffer b_localUniforms
 {
 	U32 u_localUniforms[];
 };

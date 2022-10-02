@@ -87,7 +87,7 @@ Error ShadowMapping::initScratch()
 		m_scratch.m_fbDescr.bake();
 	}
 
-	m_scratch.m_tileAlloc.init(&getMemoryPool(), m_scratch.m_tileCountX, m_scratch.m_tileCountY, MAX_LOD_COUNT, false);
+	m_scratch.m_tileAlloc.init(&getMemoryPool(), m_scratch.m_tileCountX, m_scratch.m_tileCountY, kMaxLodCount, false);
 
 	return Error::kNone;
 }
@@ -114,7 +114,7 @@ Error ShadowMapping::initAtlas()
 	}
 
 	// Tiles
-	m_atlas.m_tileAlloc.init(&getMemoryPool(), m_atlas.m_tileCountBothAxis, m_atlas.m_tileCountBothAxis, MAX_LOD_COUNT,
+	m_atlas.m_tileAlloc.init(&getMemoryPool(), m_atlas.m_tileCountBothAxis, m_atlas.m_tileCountBothAxis, kMaxLodCount,
 							 true);
 
 	// Programs and shaders
@@ -229,7 +229,7 @@ void ShadowMapping::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 		args.m_sampler = m_r->getSamplers().m_trilinearRepeatAniso;
 		args.m_minLod = args.m_maxLod = work.m_renderQueueElementsLod;
 
-		m_r->getSceneDrawer().drawRange(RenderingTechnique::SHADOW, args,
+		m_r->getSceneDrawer().drawRange(RenderingTechnique::kShadow, args,
 										work.m_renderQueue->m_renderables.getBegin() + work.m_firstRenderableElement,
 										work.m_renderQueue->m_renderables.getBegin() + work.m_firstRenderableElement
 											+ work.m_renderableElementCount,
@@ -362,7 +362,7 @@ void ShadowMapping::chooseLod(const Vec4& cameraOrigin, const PointLightQueueEle
 	{
 		blurAtlas = false;
 		tileBufferLod = 0;
-		renderQueueElementsLod = MAX_LOD_COUNT - 1;
+		renderQueueElementsLod = kMaxLodCount - 1;
 	}
 }
 
@@ -390,13 +390,13 @@ void ShadowMapping::chooseLod(const Vec4& cameraOrigin, const SpotLightQueueElem
 	{
 		blurAtlas = false;
 		tileBufferLod = 1;
-		renderQueueElementsLod = MAX_LOD_COUNT - 1;
+		renderQueueElementsLod = kMaxLodCount - 1;
 	}
 	else
 	{
 		blurAtlas = false;
 		tileBufferLod = 0;
-		renderQueueElementsLod = MAX_LOD_COUNT - 1;
+		renderQueueElementsLod = kMaxLodCount - 1;
 	}
 }
 
@@ -523,15 +523,15 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 	{
 		DirectionalLightQueueElement& light = ctx.m_renderQueue->m_directionalLight;
 
-		Array<U64, MAX_SHADOW_CASCADES> timestamps;
-		Array<U32, MAX_SHADOW_CASCADES> cascadeIndices;
-		Array<U32, MAX_SHADOW_CASCADES> drawcallCounts;
-		Array<UVec4, MAX_SHADOW_CASCADES> atlasViewports;
-		Array<UVec4, MAX_SHADOW_CASCADES> scratchViewports;
-		Array<TileAllocatorResult, MAX_SHADOW_CASCADES> subResults;
-		Array<U32, MAX_SHADOW_CASCADES> lods;
-		Array<U32, MAX_SHADOW_CASCADES> renderQueueElementsLods;
-		Array<Bool, MAX_SHADOW_CASCADES> blurAtlass;
+		Array<U64, kMaxShadowCascades> timestamps;
+		Array<U32, kMaxShadowCascades> cascadeIndices;
+		Array<U32, kMaxShadowCascades> drawcallCounts;
+		Array<UVec4, kMaxShadowCascades> atlasViewports;
+		Array<UVec4, kMaxShadowCascades> scratchViewports;
+		Array<TileAllocatorResult, kMaxShadowCascades> subResults;
+		Array<U32, kMaxShadowCascades> lods;
+		Array<U32, kMaxShadowCascades> renderQueueElementsLods;
+		Array<Bool, kMaxShadowCascades> blurAtlass;
 
 		U32 activeCascades = 0;
 
@@ -548,8 +548,8 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 
 				// Change the quality per cascade
 				blurAtlass[activeCascades] = (cascade <= 1);
-				lods[activeCascades] = (cascade <= 1) ? (MAX_LOD_COUNT - 1) : (lods[0] - 1);
-				renderQueueElementsLods[activeCascades] = (cascade == 0) ? 0 : (MAX_LOD_COUNT - 1);
+				lods[activeCascades] = (cascade <= 1) ? (kMaxLodCount - 1) : (lods[0] - 1);
+				renderQueueElementsLods[activeCascades] = (cascade == 0) ? 0 : (kMaxLodCount - 1);
 
 				++activeCascades;
 			}

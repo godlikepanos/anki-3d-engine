@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include <AnKi/Util/Allocator.h>
 #include <AnKi/Util/String.h>
 #include <AnKi/Scene/Forward.h>
 

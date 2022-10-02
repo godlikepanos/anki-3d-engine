@@ -96,7 +96,7 @@ static Error checkAttribute(const cgltf_attribute& attrib)
 /// Align after laying a buffer in a file.
 static Error alignBufferInFile(PtrSize bufferSize, File& file)
 {
-	const PtrSize alignedBufferSize = getAlignedRoundUp(MESH_BINARY_BUFFER_ALIGNMENT, bufferSize);
+	const PtrSize alignedBufferSize = getAlignedRoundUp(kMeshBinaryBufferAlignment, bufferSize);
 	const PtrSize extraBytes = alignedBufferSize - bufferSize;
 
 	for(U32 i = 0; i < extraBytes; ++i)
@@ -639,28 +639,28 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 	memset(&header, 0, sizeof(header));
 	{
 		// Positions
-		MeshBinaryVertexAttribute& posa = header.m_vertexAttributes[VertexAttributeId::POSITION];
+		MeshBinaryVertexAttribute& posa = header.m_vertexAttributes[VertexAttributeId::kPosition];
 		posa.m_bufferBinding = 0;
 		posa.m_format = Format::kR32G32B32Sfloat;
 		posa.m_relativeOffset = 0;
 		posa.m_scale = 1.0f;
 
 		// Normals
-		MeshBinaryVertexAttribute& na = header.m_vertexAttributes[VertexAttributeId::NORMAL];
+		MeshBinaryVertexAttribute& na = header.m_vertexAttributes[VertexAttributeId::kNormal];
 		na.m_bufferBinding = 1;
 		na.m_format = Format::kA2B10G10R10SnormPack32;
 		na.m_relativeOffset = 0;
 		na.m_scale = 1.0f;
 
 		// Tangents
-		MeshBinaryVertexAttribute& ta = header.m_vertexAttributes[VertexAttributeId::TANGENT];
+		MeshBinaryVertexAttribute& ta = header.m_vertexAttributes[VertexAttributeId::kTangent];
 		ta.m_bufferBinding = 1;
 		ta.m_format = Format::kA2B10G10R10SnormPack32;
 		ta.m_relativeOffset = sizeof(U32);
 		ta.m_scale = 1.0f;
 
 		// UVs
-		MeshBinaryVertexAttribute& uva = header.m_vertexAttributes[VertexAttributeId::UV0];
+		MeshBinaryVertexAttribute& uva = header.m_vertexAttributes[VertexAttributeId::kUv0];
 		uva.m_bufferBinding = 1;
 		uva.m_format = Format::kR32G32Sfloat;
 		uva.m_relativeOffset = sizeof(U32) * 2;
@@ -669,13 +669,13 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 		// Bone weight
 		if(hasBoneWeights)
 		{
-			MeshBinaryVertexAttribute& bidxa = header.m_vertexAttributes[VertexAttributeId::BONE_INDICES];
+			MeshBinaryVertexAttribute& bidxa = header.m_vertexAttributes[VertexAttributeId::kBoneIndices];
 			bidxa.m_bufferBinding = 2;
 			bidxa.m_format = Format::kR8G8B8A8Uint;
 			bidxa.m_relativeOffset = 0;
 			bidxa.m_scale = 1.0f;
 
-			MeshBinaryVertexAttribute& wa = header.m_vertexAttributes[VertexAttributeId::BONE_WEIGHTS];
+			MeshBinaryVertexAttribute& wa = header.m_vertexAttributes[VertexAttributeId::kBoneWeights];
 			wa.m_bufferBinding = 2;
 			wa.m_format = Format::kR8G8B8A8Unorm;
 			wa.m_relativeOffset = sizeof(U8Vec4);
@@ -703,11 +703,11 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 
 	// Write some other header stuff
 	{
-		memcpy(&header.m_magic[0], MESH_MAGIC, 8);
-		header.m_flags = MeshBinaryFlag::NONE;
+		memcpy(&header.m_magic[0], kMeshMagic, 8);
+		header.m_flags = MeshBinaryFlag::kNone;
 		if(convex)
 		{
-			header.m_flags |= MeshBinaryFlag::CONVEX;
+			header.m_flags |= MeshBinaryFlag::kConvex;
 		}
 		header.m_indexType = IndexType::kU16;
 		header.m_totalIndexCount = totalIndexCount;

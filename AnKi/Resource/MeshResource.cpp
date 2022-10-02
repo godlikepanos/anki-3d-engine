@@ -134,7 +134,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	m_vertexBuffersSize = 0;
 	for(U32 i = 0; i < header.m_vertexBufferCount; ++i)
 	{
-		alignRoundUp(MESH_BINARY_BUFFER_ALIGNMENT, m_vertexBuffersSize);
+		alignRoundUp(kMeshBinaryBufferAlignment, m_vertexBuffersSize);
 
 		m_vertexBufferInfos[i].m_offset = m_vertexBuffersSize;
 		m_vertexBufferInfos[i].m_stride = header.m_vertexBuffers[i].m_vertexStride;
@@ -205,7 +205,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		U32 bufferIdx;
 		Format format;
 		U32 relativeOffset;
-		getVertexAttributeInfo(VertexAttributeId::POSITION, bufferIdx, format, relativeOffset);
+		getVertexAttributeInfo(VertexAttributeId::kPosition, bufferIdx, format, relativeOffset);
 
 		BufferPtr buffer;
 		PtrSize offset;
@@ -229,23 +229,23 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		U32 bufferIdx;
 		Format format;
 		U32 relativeOffset;
-		getVertexAttributeInfo(VertexAttributeId::POSITION, bufferIdx, format, relativeOffset);
+		getVertexAttributeInfo(VertexAttributeId::kPosition, bufferIdx, format, relativeOffset);
 		BufferPtr buffer;
 		PtrSize offset;
 		PtrSize stride;
 		getVertexBufferInfo(bufferIdx, buffer, offset, stride);
-		m_meshGpuDescriptor.m_vertexBufferPtrs[VertexAttributeBufferId::POSITION] = buffer->getGpuAddress() + offset;
+		m_meshGpuDescriptor.m_vertexBufferPtrs[VertexAttributeBufferId::kPosition] = buffer->getGpuAddress() + offset;
 
-		getVertexAttributeInfo(VertexAttributeId::NORMAL, bufferIdx, format, relativeOffset);
+		getVertexAttributeInfo(VertexAttributeId::kNormal, bufferIdx, format, relativeOffset);
 		getVertexBufferInfo(bufferIdx, buffer, offset, stride);
-		m_meshGpuDescriptor.m_vertexBufferPtrs[VertexAttributeBufferId::NORMAL_TANGENT_UV0] =
+		m_meshGpuDescriptor.m_vertexBufferPtrs[VertexAttributeBufferId::kNormalTangentUv0] =
 			buffer->getGpuAddress() + offset;
 
 		if(hasBoneWeights())
 		{
-			getVertexAttributeInfo(VertexAttributeId::BONE_WEIGHTS, bufferIdx, format, relativeOffset);
+			getVertexAttributeInfo(VertexAttributeId::kBoneWeights, bufferIdx, format, relativeOffset);
 			getVertexBufferInfo(bufferIdx, buffer, offset, stride);
-			m_meshGpuDescriptor.m_vertexBufferPtrs[VertexAttributeBufferId::BONE] = buffer->getGpuAddress() + offset;
+			m_meshGpuDescriptor.m_vertexBufferPtrs[VertexAttributeBufferId::kBone] = buffer->getGpuAddress() + offset;
 		}
 
 		m_meshGpuDescriptor.m_indexCount = m_indexCount;
@@ -308,7 +308,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 		PtrSize offset = 0;
 		for(U32 i = 0; i < m_vertexBufferInfos.getSize(); ++i)
 		{
-			alignRoundUp(MESH_BINARY_BUFFER_ALIGNMENT, offset);
+			alignRoundUp(kMeshBinaryBufferAlignment, offset);
 			ANKI_CHECK(
 				loader.storeVertexBuffer(i, data + offset, PtrSize(m_vertexBufferInfos[i].m_stride) * m_vertexCount));
 

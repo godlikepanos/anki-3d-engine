@@ -273,7 +273,7 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp, Timestamp l
 	// utilization of the atlas' space
 	U32 emptyTileIdx = kMaxU32;
 	U32 toKickTileIdx = kMaxU32;
-	Timestamp tileToKickMinTimestamp = MAX_TIMESTAMP;
+	Timestamp tileToKickMinTimestamp = kMaxTimestamp;
 	const U32 maxLod = m_lodCount - 1;
 	if(lod == maxLod)
 	{

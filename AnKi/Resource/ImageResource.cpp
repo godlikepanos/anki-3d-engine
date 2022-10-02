@@ -258,17 +258,17 @@ Error ImageResource::load(LoadingContext& ctx)
 {
 	const U32 copyCount = ctx.m_layerCount * ctx.m_faces * ctx.m_loader.getMipmapCount();
 
-	for(U32 b = 0; b < copyCount; b += MAX_COPIES_BEFORE_FLUSH)
+	for(U32 b = 0; b < copyCount; b += kMaxCopiesBeforeFlush)
 	{
 		const U32 begin = b;
-		const U32 end = min(copyCount, b + MAX_COPIES_BEFORE_FLUSH);
+		const U32 end = min(copyCount, b + kMaxCopiesBeforeFlush);
 
 		CommandBufferInitInfo ci;
 		ci.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
 		CommandBufferPtr cmdb = ctx.m_gr->newCommandBuffer(ci);
 
 		// Set the barriers of the batch
-		Array<TextureBarrierInfo, MAX_COPIES_BEFORE_FLUSH> barriers;
+		Array<TextureBarrierInfo, kMaxCopiesBeforeFlush> barriers;
 		U32 barrierCount = 0;
 		for(U32 i = begin; i < end; ++i)
 		{
@@ -292,7 +292,7 @@ Error ImageResource::load(LoadingContext& ctx)
 		cmdb->setPipelineBarrier({&barriers[0], barrierCount}, {}, {});
 
 		// Do the copies
-		Array<TransferGpuAllocatorHandle, MAX_COPIES_BEFORE_FLUSH> handles;
+		Array<TransferGpuAllocatorHandle, kMaxCopiesBeforeFlush> handles;
 		U32 handleCount = 0;
 		for(U32 i = begin; i < end; ++i)
 		{

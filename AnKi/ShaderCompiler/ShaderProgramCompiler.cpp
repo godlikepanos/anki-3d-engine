@@ -644,9 +644,9 @@ public:
 		return Error::kNone;
 	}
 
-	static Error setName(CString in, Array<char, MAX_SHADER_BINARY_NAME_LENGTH + 1>& out)
+	static Error setName(CString in, Array<char, kMaxShaderBinaryNameLength + 1>& out)
 	{
-		if(in.getLength() + 1 > MAX_SHADER_BINARY_NAME_LENGTH)
+		if(in.getLength() + 1 > kMaxShaderBinaryNameLength)
 		{
 			ANKI_SHADER_COMPILER_LOGE("Name too long: %s", in.cstr());
 			return Error::kUserData;

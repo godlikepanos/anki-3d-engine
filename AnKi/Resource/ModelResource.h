@@ -120,7 +120,7 @@ private:
 	ModelResource* m_model = nullptr;
 #endif
 	MaterialResourcePtr m_mtl;
-	Array<MeshResourcePtr, MAX_LOD_COUNT> m_meshes; ///< Just keep the references.
+	Array<MeshResourcePtr, kMaxLodCount> m_meshes; ///< Just keep the references.
 	DynamicArray<GrObjectPtr> m_grObjectRefs;
 
 	// Begin cached data
@@ -142,7 +142,7 @@ private:
 		PtrSize m_offset : 48;
 	};
 
-	Array2d<VertexBufferInfo, MAX_LOD_COUNT, U(VertexAttributeBufferId::COUNT)> m_vertexBufferInfos;
+	Array2d<VertexBufferInfo, kMaxLodCount, U(VertexAttributeBufferId::kCount)> m_vertexBufferInfos;
 
 	class IndexBufferInfo
 	{
@@ -153,7 +153,7 @@ private:
 		U32 m_indexCount = kMaxU32;
 	};
 
-	Array<IndexBufferInfo, MAX_LOD_COUNT> m_indexBufferInfos;
+	Array<IndexBufferInfo, kMaxLodCount> m_indexBufferInfos;
 	BitSet<U(VertexAttributeId::kCount)> m_presentVertexAttributes = {false};
 	IndexType m_indexType : 2;
 	// End cached data

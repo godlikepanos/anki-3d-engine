@@ -11,7 +11,7 @@
 #include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 
-ANKI_BINDLESS_SET(MATERIAL_SET_BINDLESS)
+ANKI_BINDLESS_SET(kMaterialSetBindless)
 
 //
 // Vert
@@ -25,14 +25,13 @@ layout(location = VERTEX_ATTRIBUTE_ID_POSITION) in Vec3 in_position;
 //
 #if defined(ANKI_FRAGMENT_SHADER)
 // Global resources
-layout(set = MATERIAL_SET_GLOBAL,
-	   binding = MATERIAL_BINDING_LINEAR_CLAMP_SAMPLER) uniform sampler u_linearAnyClampSampler;
-layout(set = MATERIAL_SET_GLOBAL, binding = MATERIAL_BINDING_DEPTH_RT) uniform texture2D u_gbufferDepthRt;
-layout(set = MATERIAL_SET_GLOBAL, binding = MATERIAL_BINDING_LIGHT_VOLUME) uniform ANKI_RP texture3D u_lightVol;
-#	define CLUSTERED_SHADING_SET MATERIAL_SET_GLOBAL
-#	define CLUSTERED_SHADING_UNIFORMS_BINDING MATERIAL_BINDING_CLUSTER_SHADING_UNIFORMS
-#	define CLUSTERED_SHADING_LIGHTS_BINDING MATERIAL_BINDING_CLUSTER_SHADING_LIGHTS
-#	define CLUSTERED_SHADING_CLUSTERS_BINDING MATERIAL_BINDING_CLUSTERS
+layout(set = kMaterialSetGlobal, binding = kMaterialBindingLinearClampSampler) uniform sampler u_linearAnyClampSampler;
+layout(set = kMaterialSetGlobal, binding = kMaterialBindingDepthRt) uniform texture2D u_gbufferDepthRt;
+layout(set = kMaterialSetGlobal, binding = kMaterialBindingLightVolume) uniform ANKI_RP texture3D u_lightVol;
+#	define CLUSTERED_SHADING_SET kMaterialSetGlobal
+#	define CLUSTERED_SHADING_UNIFORMS_BINDING kMaterialBindingClusterShadingUniforms
+#	define CLUSTERED_SHADING_LIGHTS_BINDING kMaterialBindingClusterShadingLights
+#	define CLUSTERED_SHADING_CLUSTERS_BINDING kMaterialBindingClusters
 #	include <AnKi/Shaders/ClusteredShadingCommon.glsl>
 
 layout(location = 0) out Vec4 out_color;

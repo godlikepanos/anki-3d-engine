@@ -227,7 +227,7 @@ public:
 
 	Bool castsShadow() const
 	{
-		return !!(m_techniquesMask & (RenderingTechniqueBit::SHADOW | RenderingTechniqueBit::RT_SHADOW));
+		return !!(m_techniquesMask & (RenderingTechniqueBit::kShadow | RenderingTechniqueBit::kRtShadow));
 	}
 
 	ConstWeakArray<MaterialVariable> getVariables() const
@@ -274,7 +274,7 @@ private:
 	DynamicArray<Program> m_programs;
 
 	Array<U8, U(RenderingTechnique::kCount)> m_techniqueToProgram;
-	RenderingTechniqueBit m_techniquesMask = RenderingTechniqueBit::NONE;
+	RenderingTechniqueBit m_techniquesMask = RenderingTechniqueBit::kNone;
 
 	DynamicArray<MaterialVariable> m_vars;
 

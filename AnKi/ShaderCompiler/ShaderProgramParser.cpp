@@ -15,11 +15,11 @@ namespace anki {
 	ANKI_SHADER_COMPILER_LOGE("%s: " msg_ ": %s", fname.cstr(), line.cstr()); \
 	return Error::kUserData
 
-inline constexpr Array<CString, U32(ShaderType::kCount)> SHADER_STAGE_NAMES = {
+inline constexpr Array<CString, U32(ShaderType::kCount)> kShaderStageNames = {
 	{"VERTEX", "TESSELLATION_CONTROL", "TESSELLATION_EVALUATION", "GEOMETRY", "FRAGMENT", "COMPUTE", "RAY_GEN",
 	 "ANY_HIT", "CLOSEST_HIT", "MISS", "INTERSECTION", "CALLABLE"}};
 
-inline constexpr char SHADER_HEADER[] = R"(#version 460 core
+inline constexpr char kShaderHeader[] = R"(#version 460 core
 #define ANKI_%s_SHADER 1
 #define ANKI_PLATFORM_MOBILE %d
 #define ANKI_FORCE_FULL_FP_PRECISION %d
@@ -278,7 +278,7 @@ Vec4 pow(Vec4 a, F32 b)
 }
 )";
 
-static const U64 SHADER_HEADER_HASH = computeHash(SHADER_HEADER, sizeof(SHADER_HEADER));
+static const U64 kShaderHeaderHash = computeHash(kShaderHeader, sizeof(kShaderHeader));
 
 ShaderProgramParser::ShaderProgramParser(CString fname, ShaderProgramFilesystemInterface* fsystem, BaseMemoryPool* pool,
 										 const ShaderCompilerOptions& compilerOptions)
@@ -381,7 +381,7 @@ Error ShaderProgramParser::parsePragmaStart(const StringRaii* begin, const Strin
 		ANKI_PP_ERROR_MALFORMED();
 	}
 
-	m_codeLines.pushBackSprintf("#ifdef ANKI_%s_SHADER", SHADER_STAGE_NAMES[shaderType].cstr());
+	m_codeLines.pushBackSprintf("#ifdef ANKI_%s_SHADER", kShaderStageNames[shaderType].cstr());
 
 	++begin;
 	if(begin != end)
@@ -461,7 +461,7 @@ Error ShaderProgramParser::parsePragmaMutator(const StringRaii* begin, const Str
 			}
 		}
 
-		if(begin->getLength() > MAX_SHADER_BINARY_NAME_LENGTH)
+		if(begin->getLength() > kMaxShaderBinaryNameLength)
 		{
 			ANKI_PP_ERROR_MALFORMED_MSG("Too big name");
 		}
@@ -1177,7 +1177,7 @@ Error ShaderProgramParser::parse()
 	{
 		if(m_codeSource.getLength())
 		{
-			m_codeSourceHash = appendHash(m_codeSource.getBegin(), m_codeSource.getLength(), SHADER_HEADER_HASH);
+			m_codeSourceHash = appendHash(m_codeSource.getBegin(), m_codeSource.getLength(), kShaderHeaderHash);
 		}
 
 		if(m_libName.getLength() > 0)
@@ -1194,7 +1194,7 @@ Error ShaderProgramParser::parse()
 void ShaderProgramParser::generateAnkiShaderHeader(ShaderType shaderType, const ShaderCompilerOptions& compilerOptions,
 												   StringRaii& header)
 {
-	header.sprintf(SHADER_HEADER, SHADER_STAGE_NAMES[shaderType].cstr(), compilerOptions.m_mobilePlatform,
+	header.sprintf(kShaderHeader, kShaderStageNames[shaderType].cstr(), compilerOptions.m_mobilePlatform,
 				   compilerOptions.m_forceFullFloatingPointPrecision, kMaxBindlessTextures,
 				   kMaxBindlessReadonlyTextureBuffers);
 }

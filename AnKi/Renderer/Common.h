@@ -152,7 +152,7 @@ U32 findBestCacheEntry(U64 uuid, Timestamp crntTimestamp, const TCacheEntryArray
 	// 2nd and 3rd choice, find an empty entry or some entry to re-use
 	U32 emptyCacheEntryIdx = kMaxU32;
 	U32 cacheEntryIdxToKick = kMaxU32;
-	Timestamp cacheEntryIdxToKickMinTimestamp = MAX_TIMESTAMP;
+	Timestamp cacheEntryIdxToKickMinTimestamp = kMaxTimestamp;
 	for(U32 cacheEntryIdx = 0; cacheEntryIdx < entries.getSize(); ++cacheEntryIdx)
 	{
 		if(entries[cacheEntryIdx].m_uuid == 0)

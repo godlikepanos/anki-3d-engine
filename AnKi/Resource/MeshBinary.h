@@ -15,22 +15,22 @@ namespace anki {
 /// @addtogroup resource
 /// @{
 
-inline constexpr const char* MESH_MAGIC = "ANKIMES5";
+inline constexpr const char* kMeshMagic = "ANKIMES5";
 
-constexpr U32 MESH_BINARY_BUFFER_ALIGNMENT = 16;
+constexpr U32 kMeshBinaryBufferAlignment = 16;
 
 enum class MeshBinaryFlag : U32
 {
-	NONE = 0,
-	QUAD = 1 << 0,
-	CONVEX = 1 << 1,
+	kNone = 0,
+	kQuad = 1 << 0,
+	kConvex = 1 << 1,
 
-	ALL = QUAD | CONVEX,
+	kAll = kQuad | kConvex,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(MeshBinaryFlag)
 
 /// Vertex buffer info. The size of the buffer is m_vertexStride*MeshBinaryHeader::m_totalVertexCount aligned to
-/// MESH_BINARY_BUFFER_ALIGNMENT.
+/// kMeshBinaryBufferAlignment.
 class MeshBinaryVertexBuffer
 {
 public:
@@ -62,7 +62,7 @@ class MeshBinaryVertexAttribute
 public:
 	U32 m_bufferBinding;
 
-	/// If the format is NONE then the attribute is not present.
+	/// If the format is kNone then the attribute is not present.
 	Format m_format;
 
 	U32 m_relativeOffset;
@@ -126,7 +126,7 @@ public:
 };
 
 /// The 1st things that appears in a mesh binary. @note The index and vertex buffers are aligned to
-/// MESH_BINARY_BUFFER_ALIGNMENT bytes.
+/// kMeshBinaryBufferAlignment bytes.
 class MeshBinaryHeader
 {
 public:

@@ -36,7 +36,7 @@ const U32 MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES = 8u;
 
 // Other consts
 const ANKI_RP F32 CLUSTER_OBJECT_FRUSTUM_NEAR_PLANE = 0.1f / 4.0f; ///< Near plane of various clusterer object frustums.
-const U32 MAX_SHADOW_CASCADES = 4u;
+const U32 kMaxShadowCascades = 4u;
 const ANKI_RP F32 SUBSURFACE_MIN = 0.01f;
 
 /// Point light.
@@ -117,9 +117,9 @@ struct DirectionalLight
 	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
 	U32 m_padding0;
 
-	Mat4 m_textureMatrices[MAX_SHADOW_CASCADES];
+	Mat4 m_textureMatrices[kMaxShadowCascades];
 };
-const U32 _ANKI_SIZEOF_DirectionalLight = 3u * ANKI_SIZEOF(Vec4) + MAX_SHADOW_CASCADES * ANKI_SIZEOF(Mat4);
+const U32 _ANKI_SIZEOF_DirectionalLight = 3u * ANKI_SIZEOF(Vec4) + kMaxShadowCascades * ANKI_SIZEOF(Mat4);
 ANKI_SHADER_STATIC_ASSERT(sizeof(DirectionalLight) == _ANKI_SIZEOF_DirectionalLight);
 
 /// Representation of a reflection probe.

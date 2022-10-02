@@ -96,7 +96,7 @@ public:
 	/// Return true if it has bone weights.
 	Bool hasBoneWeights() const
 	{
-		return isVertexAttributePresent(VertexAttributeId::BONE_WEIGHTS);
+		return isVertexAttributePresent(VertexAttributeId::kBoneWeights);
 	}
 
 	AccelerationStructurePtr getBottomLevelAccelerationStructure() const

@@ -7,7 +7,7 @@
 
 #include <AnKi/Util/Thread.h>
 #include <AnKi/Util/WeakArray.h>
-#include <AnKi/Util/CpuMemoryPools.h>
+#include <AnKi/Util/MemoryPool.h>
 
 namespace anki {
 

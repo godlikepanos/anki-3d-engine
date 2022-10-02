@@ -35,19 +35,18 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 		cmdb->setBlendFactors(0, BlendFactor::kSrcAlpha, BlendFactor::kOneMinusSrcAlpha);
 
 		const ClusteredShadingContext& rsrc = ctx.m_clusteredShading;
-		const U32 set = MATERIAL_SET_GLOBAL;
-		cmdb->bindSampler(set, MATERIAL_BINDING_LINEAR_CLAMP_SAMPLER, m_r->getSamplers().m_trilinearClamp);
+		const U32 set = kMaterialSetGlobal;
+		cmdb->bindSampler(set, kMaterialBindingLinearClampSampler, m_r->getSamplers().m_trilinearClamp);
 
-		rgraphCtx.bindTexture(set, MATERIAL_BINDING_DEPTH_RT, m_r->getDepthDownscale().getHiZRt(), kHiZHalfSurface);
-		rgraphCtx.bindColorTexture(set, MATERIAL_BINDING_LIGHT_VOLUME,
-								   m_r->getVolumetricLightingAccumulation().getRt());
+		rgraphCtx.bindTexture(set, kMaterialBindingDepthRt, m_r->getDepthDownscale().getHiZRt(), kHiZHalfSurface);
+		rgraphCtx.bindColorTexture(set, kMaterialBindingLightVolume, m_r->getVolumetricLightingAccumulation().getRt());
 
-		bindUniforms(cmdb, set, MATERIAL_BINDING_CLUSTER_SHADING_UNIFORMS, rsrc.m_clusteredShadingUniformsToken);
-		bindUniforms(cmdb, set, MATERIAL_BINDING_CLUSTER_SHADING_LIGHTS, rsrc.m_pointLightsToken);
-		bindUniforms(cmdb, set, MATERIAL_BINDING_CLUSTER_SHADING_LIGHTS + 1, rsrc.m_spotLightsToken);
-		rgraphCtx.bindColorTexture(set, MATERIAL_BINDING_CLUSTER_SHADING_LIGHTS + 2,
+		bindUniforms(cmdb, set, kMaterialBindingClusterShadingUniforms, rsrc.m_clusteredShadingUniformsToken);
+		bindUniforms(cmdb, set, kMaterialBindingClusterShadingLights, rsrc.m_pointLightsToken);
+		bindUniforms(cmdb, set, kMaterialBindingClusterShadingLights + 1, rsrc.m_spotLightsToken);
+		rgraphCtx.bindColorTexture(set, kMaterialBindingClusterShadingLights + 2,
 								   m_r->getShadowMapping().getShadowmapRt());
-		bindStorage(cmdb, set, MATERIAL_BINDING_CLUSTERS, rsrc.m_clustersToken);
+		bindStorage(cmdb, set, kMaterialBindingClusters, rsrc.m_clustersToken);
 
 		RenderableDrawerArguments args;
 		args.m_viewMatrix = ctx.m_matrices.m_view;
@@ -57,7 +56,7 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 		args.m_sampler = m_r->getSamplers().m_trilinearRepeatAnisoResolutionScalingBias;
 
 		// Start drawing
-		m_r->getSceneDrawer().drawRange(RenderingTechnique::FORWARD, args,
+		m_r->getSceneDrawer().drawRange(RenderingTechnique::kForward, args,
 										ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + start,
 										ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + end, cmdb);
 

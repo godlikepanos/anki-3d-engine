@@ -20,7 +20,7 @@ namespace anki {
 #define ANKI_SHADER_COMPILER_LOGW(...) ANKI_LOG("SHCO", kWarning, __VA_ARGS__)
 #define ANKI_SHADER_COMPILER_LOGF(...) ANKI_LOG("SHCO", kFatal, __VA_ARGS__)
 
-constexpr U32 MAX_SHADER_BINARY_NAME_LENGTH = 127;
+constexpr U32 kMaxShaderBinaryNameLength = 127;
 
 using MutatorValue = I32; ///< The type of the mutator value
 

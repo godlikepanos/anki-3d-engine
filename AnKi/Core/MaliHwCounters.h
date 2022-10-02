@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Core/Common.h>
-#include <AnKi/Util/Allocator.h>
+#include <AnKi/Util/MemoryPool.h>
 
 namespace anki {
 

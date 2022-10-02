@@ -9,7 +9,6 @@
 #include <AnKi/Util/StdTypes.h>
 #include <AnKi/Util/Array.h>
 #include <AnKi/Util/String.h>
-#include <AnKi/Util/Allocator.h>
 
 namespace anki {
 

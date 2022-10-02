@@ -36,7 +36,7 @@ Error CpuMeshResource::load(const ResourceFilename& filename, [[maybe_unused]] B
 	m_positions = std::move(tempPositions);
 
 	// Create the collision shape
-	const Bool convex = !!(loader.getHeader().m_flags & MeshBinaryFlag::CONVEX);
+	const Bool convex = !!(loader.getHeader().m_flags & MeshBinaryFlag::kConvex);
 	m_physicsShape = getManager().getPhysicsWorld().newInstance<PhysicsTriangleSoup>(m_positions, m_indices, convex);
 
 	return Error::kNone;

@@ -27,7 +27,7 @@ namespace anki {
 
 static U8 computeLod(const FrustumComponent& frc, F32 distanceFromTheNearPlane)
 {
-	static_assert(MAX_LOD_COUNT == 3, "Wrong assumption");
+	static_assert(kMaxLodCount == 3, "Wrong assumption");
 	U8 lod;
 	if(distanceFromTheNearPlane < 0.0f)
 	{
@@ -474,7 +474,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 				{
 					cascadeCount = max<U32>(testedFrc.getShadowCascadeCount(), 1);
 				}
-				ANKI_ASSERT(cascadeCount <= MAX_SHADOW_CASCADES);
+				ANKI_ASSERT(cascadeCount <= kMaxShadowCascades);
 
 				// Create some dummy frustum components and initialize them
 				WeakArray<FrustumComponent> cascadeFrustumComponents(

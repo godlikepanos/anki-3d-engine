@@ -232,8 +232,8 @@ public:
 	/// Any are enabled.
 	Bool getAny() const
 	{
-		static const BitSet ZERO(false);
-		return *this != ZERO;
+		const BitSet kZero(false);
+		return *this != kZero;
 	}
 
 	/// Count bits.

@@ -9,7 +9,6 @@
 #include <AnKi/Ui/ImGuiConfig.h>
 #include <ImGui/imgui.h>
 
-#include <AnKi/Util/Allocator.h>
 #include <AnKi/Util/Ptr.h>
 #include <AnKi/Gr/TextureView.h>
 

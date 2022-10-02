@@ -13,7 +13,7 @@
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 #include <AnKi/Shaders/Common.glsl>
 
-ANKI_BINDLESS_SET(MATERIAL_SET_BINDLESS)
+ANKI_BINDLESS_SET(kMaterialSetBindless)
 
 #define REALLY_USING_PARALLAX \
 	(PARALLAX == 1 && ANKI_TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER && ANKI_LOD == 0 && ALPHA_TEST == 0)

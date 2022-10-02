@@ -38,7 +38,7 @@ Error Canvas::init(FontPtr font, U32 fontHeight, U32 width, U32 height)
 	// Create program
 	ANKI_CHECK(m_manager->getResourceManager().loadResource("ShaderBinaries/Ui.ankiprogbin", m_prog));
 
-	for(U32 i = 0; i < SHADER_COUNT; ++i)
+	for(U32 i = 0; i < kShaderCount; ++i)
 	{
 		const ShaderProgramResourceVariant* variant;
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
@@ -308,11 +308,11 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 					}
 					else if(textureView.isCreated())
 					{
-						cmdb->bindShaderProgram(m_grProgs[RGBA_TEX]);
+						cmdb->bindShaderProgram(m_grProgs[kRgbaTex]);
 					}
 					else
 					{
-						cmdb->bindShaderProgram(m_grProgs[NO_TEX]);
+						cmdb->bindShaderProgram(m_grProgs[kNoTex]);
 					}
 
 					// Bindings

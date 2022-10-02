@@ -72,7 +72,7 @@ class MaterialResource::Program
 public:
 	ShaderProgramResourcePtr m_prog;
 
-	mutable Array4d<MaterialVariant, U(RenderingTechnique::kCount), MAX_LOD_COUNT, 2, 2> m_variantMatrix;
+	mutable Array4d<MaterialVariant, U(RenderingTechnique::kCount), kMaxLodCount, 2, 2> m_variantMatrix;
 	mutable RWMutex m_variantMatrixMtx;
 
 	DynamicArray<PartialMutation> m_partialMutation; ///< Only with the non-builtins.
@@ -98,7 +98,7 @@ public:
 		m_prog = std::move(b.m_prog);
 		for(RenderingTechnique t : EnumIterable<RenderingTechnique>())
 		{
-			for(U32 l = 0; l < MAX_LOD_COUNT; ++l)
+			for(U32 l = 0; l < kMaxLodCount; ++l)
 			{
 				for(U32 skin = 0; skin < 2; ++skin)
 				{
@@ -566,10 +566,10 @@ Error MaterialResource::findBuiltinMutators(Program& prog)
 	const ShaderProgramResourceMutator* lodMutator = prog.m_prog->tryFindMutator(lodMutatorName);
 	if(lodMutator)
 	{
-		if(lodMutator->m_values.getSize() > MAX_LOD_COUNT)
+		if(lodMutator->m_values.getSize() > kMaxLodCount)
 		{
 			ANKI_RESOURCE_LOGE("Mutator %s should have at least %u values in the program", lodMutatorName.cstr(),
-							   U32(MAX_LOD_COUNT));
+							   U32(kMaxLodCount));
 			return Error::kUserData;
 		}
 
@@ -618,8 +618,8 @@ Error MaterialResource::findBuiltinMutators(Program& prog)
 		{
 			const U32 binding = storageBlocks[i].m_binding;
 			const U32 set = storageBlocks[i].m_set;
-			if((binding == MATERIAL_BINDING_BONE_TRANSFORMS || binding == MATERIAL_BINDING_PREVIOUS_BONE_TRANSFORMS)
-			   && set == MATERIAL_SET_LOCAL)
+			if((binding == kMaterialBindingBoneTransforms || binding == kMaterialBindingPreviousBoneTransforms)
+			   && set == kMaterialSetLocal)
 			{
 				++foundCount;
 			}
@@ -793,8 +793,8 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 	// Sanitize the key
 	key.setLod(min<U32>(prog.m_lodCount - 1, key.getLod()));
 
-	if(key.getRenderingTechnique() == RenderingTechnique::GBUFFER_EARLY_Z
-	   || key.getRenderingTechnique() == RenderingTechnique::SHADOW)
+	if(key.getRenderingTechnique() == RenderingTechnique::kGBufferEarlyZ
+	   || key.getRenderingTechnique() == RenderingTechnique::kShadow)
 	{
 		key.setLod(0);
 	}
@@ -863,7 +863,7 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 
 	variant.m_prog = progVariant->getProgram();
 
-	if(!!(RenderingTechniqueBit(1 << key.getRenderingTechnique()) & RenderingTechniqueBit::ALL_RT))
+	if(!!(RenderingTechniqueBit(1 << key.getRenderingTechnique()) & RenderingTechniqueBit::kAllRt))
 	{
 		variant.m_rtShaderGroupHandleIndex = progVariant->getShaderGroupHandleIndex();
 	}
