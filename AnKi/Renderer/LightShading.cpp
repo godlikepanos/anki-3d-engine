@@ -66,9 +66,9 @@ Error LightShading::initLightShading()
 	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/LightShading.ankiprogbin", m_lightShading.m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_lightShading.m_prog);
-	variantInitInfo.addConstant("TILE_COUNTS", m_r->getTileCounts());
-	variantInitInfo.addConstant("Z_SPLIT_COUNT", m_r->getZSplitCount());
-	variantInitInfo.addConstant("TILE_SIZE", m_r->getTileSize());
+	variantInitInfo.addConstant("kTileCount", m_r->getTileCounts());
+	variantInitInfo.addConstant("kZSplitCount", m_r->getZSplitCount());
+	variantInitInfo.addConstant("kTileSize", m_r->getTileSize());
 	const ShaderProgramResourceVariant* variant;
 
 	variantInitInfo.addMutation("USE_SHADOW_LAYERS", 0);
@@ -130,8 +130,8 @@ Error LightShading::initApplyFog()
 	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/LightShadingApplyFog.ankiprogbin", m_applyFog.m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_applyFog.m_prog);
-	variantInitInfo.addConstant("Z_SPLIT_COUNT", m_r->getZSplitCount());
-	variantInitInfo.addConstant("FINAL_Z_SPLIT", m_r->getVolumetricFog().getFinalClusterInZ());
+	variantInitInfo.addConstant("kZSplitCount", m_r->getZSplitCount());
+	variantInitInfo.addConstant("kFinalZSplit", m_r->getVolumetricFog().getFinalClusterInZ());
 
 	const ShaderProgramResourceVariant* variant;
 	m_applyFog.m_prog->getOrCreateVariant(variantInitInfo, variant);

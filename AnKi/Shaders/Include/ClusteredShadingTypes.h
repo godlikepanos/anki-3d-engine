@@ -12,32 +12,32 @@
 ANKI_BEGIN_NAMESPACE
 
 // Enum of clusterer object types
-const U32 CLUSTER_OBJECT_TYPE_POINT_LIGHT = 0u;
-const U32 CLUSTER_OBJECT_TYPE_SPOT_LIGHT = 1u;
-const U32 CLUSTER_OBJECT_TYPE_DECAL = 2u;
-const U32 CLUSTER_OBJECT_TYPE_FOG_DENSITY_VOLUME = 3u;
-const U32 CLUSTER_OBJECT_TYPE_REFLECTION_PROBE = 4u;
-const U32 CLUSTER_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE = 5u;
-const U32 CLUSTER_OBJECT_TYPE_COUNT = 6u; ///< Point and spot lights, refl and GI probes, decals and fog volumes.
+const U32 kClusterObjectTypePointLight = 0u;
+const U32 kClusterObjectTypeSpotLight = 1u;
+const U32 kClusterObjectTypeDecal = 2u;
+const U32 kClusterObjectTypeFogDensityVolume = 3u;
+const U32 kClusterObjectTypeReflectionProbe = 4u;
+const U32 kClusterObjectTypeGlobalIlluminationProbe = 5u;
+const U32 kClusterObjectTypeCount = 6u; ///< Point and spot lights, refl and GI probes, decals and fog volumes.
 
 // Limits
 #if ANKI_CLUSTERED_SHADING_USE_64BIT
-const U32 MAX_VISIBLE_POINT_LIGHTS = 64u;
-const U32 MAX_VISIBLE_SPOT_LIGHTS = 64u;
-const U32 MAX_VISIBLE_DECALS = 64u;
+const U32 kMaxVisiblePointLights = 64u;
+const U32 kMaxVisibleSpotLights = 64u;
+const U32 kMaxVisibleDecals = 64u;
 #else
-const U32 MAX_VISIBLE_POINT_LIGHTS = 32u;
-const U32 MAX_VISIBLE_SPOT_LIGHTS = 32u;
-const U32 MAX_VISIBLE_DECALS = 32u;
+const U32 kMaxVisiblePointLights = 32u;
+const U32 kMaxVisibleSpotLights = 32u;
+const U32 kMaxVisibleDecals = 32u;
 #endif
-const U32 MAX_VISIBLE_FOG_DENSITY_VOLUMES = 16u;
-const U32 MAX_VISIBLE_REFLECTION_PROBES = 16u;
-const U32 MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES = 8u;
+const U32 kMaxVisibleFogDensityVolumes = 16u;
+const U32 kMaxVisibleReflectionProbes = 16u;
+const U32 kMaxVisibleGlobalIlluminationProbes = 8u;
 
 // Other consts
-const ANKI_RP F32 CLUSTER_OBJECT_FRUSTUM_NEAR_PLANE = 0.1f / 4.0f; ///< Near plane of various clusterer object frustums.
+const ANKI_RP F32 kClusterObjectFrustumNearPlane = 0.1f / 4.0f; ///< Near plane of various clusterer object frustums.
 const U32 kMaxShadowCascades = 4u;
-const ANKI_RP F32 SUBSURFACE_MIN = 0.01f;
+const ANKI_RP F32 kSubsurfaceMin = 0.01f;
 
 /// Point light.
 struct PointLight
@@ -249,9 +249,9 @@ struct ClusteredShadingUniforms
 	CommonMatrices m_previousMatrices;
 
 	/// This are some additive counts used to map a flat index to the index of the specific object.
-	UVec4 m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_COUNT];
+	UVec4 m_objectCountsUpTo[kClusterObjectTypeCount];
 };
-const U32 _ANKI_SIZEOF_ClusteredShadingUniforms = (6u + CLUSTER_OBJECT_TYPE_COUNT) * ANKI_SIZEOF(Vec4)
+const U32 _ANKI_SIZEOF_ClusteredShadingUniforms = (6u + kClusterObjectTypeCount) * ANKI_SIZEOF(Vec4)
 												  + 2u * ANKI_SIZEOF(CommonMatrices) + ANKI_SIZEOF(DirectionalLight);
 ANKI_SHADER_STATIC_ASSERT(sizeof(ClusteredShadingUniforms) == _ANKI_SIZEOF_ClusteredShadingUniforms);
 

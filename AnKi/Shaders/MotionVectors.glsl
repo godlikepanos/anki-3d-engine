@@ -5,9 +5,9 @@
 
 // Calculates the motion vectors that will be used to sample from the previous frame
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(FB_SIZE, 0u);
-const F32 MAX_REJECTION_DISTANCE = 0.1; // In meters
-const F32 MAX_HISTORY_LENGTH = 16.0;
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(kFramebufferSize, 0u);
+const F32 kMaxRejectionDistance = 0.1; // In meters
+const F32 kMaxHistoryLength = 16.0;
 
 #include <AnKi/Shaders/Functions.glsl>
 
@@ -33,8 +33,8 @@ layout(set = 0, binding = 5, std140, row_major) uniform b_unis
 layout(set = 0, binding = 6) uniform writeonly image2D u_motionVectorsImage;
 layout(set = 0, binding = 7) uniform writeonly image2D u_historyLengthImage;
 
-const UVec2 WORKGROUP_SIZE = UVec2(8, 8);
-layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
+const UVec2 kWorkgroupSize = UVec2(8, 8);
+layout(local_size_x = kWorkgroupSize.x, local_size_y = kWorkgroupSize.y, local_size_z = 1) in;
 #else
 layout(location = 0) in Vec2 in_uv;
 layout(location = 0) out Vec2 out_motionVectors;
@@ -50,7 +50,7 @@ Vec3 clipToWorld(Vec4 clip, Mat4 clipToWorldMat)
 /// Average the some depth values and unproject.
 Vec3 getAverageWorldPosition(texture2D tex, Vec2 uv, Mat4 clipToWorldMat)
 {
-	const Vec2 halfTexel = (1.0 / Vec2(FB_SIZE)) / 2.0;
+	const Vec2 halfTexel = (1.0 / Vec2(kFramebufferSize)) / 2.0;
 
 	Vec4 depths = textureGather(sampler2D(tex, u_linearAnyClampSampler), uv + halfTexel, 0);
 	depths += textureGather(sampler2D(tex, u_linearAnyClampSampler), uv - halfTexel, 0);
@@ -63,7 +63,7 @@ Vec3 getAverageWorldPosition(texture2D tex, Vec2 uv, Mat4 clipToWorldMat)
 /// Get the depths of some neighbour texels, unproject and find the AABB in world space that encloses them.
 void getMinMaxWorldPositions(texture2D tex, Vec2 uv, Mat4 clipToWorldMat, out Vec3 aabbMin, out Vec3 aabbMax)
 {
-	const Vec2 halfTexel = (1.0 / Vec2(FB_SIZE)) / 2.0;
+	const Vec2 halfTexel = (1.0 / Vec2(kFramebufferSize)) / 2.0;
 
 	const Vec4 depths1 = textureGather(sampler2D(tex, u_linearAnyClampSampler), uv + halfTexel, 0);
 	const Vec4 depths2 = textureGather(sampler2D(tex, u_linearAnyClampSampler), uv - halfTexel, 0);
@@ -103,7 +103,7 @@ F32 computeRejectionFactor(Vec2 uv, Vec2 historyUv)
 	// This factor shows when new pixels appeared by checking depth differences
 	const Vec3 delta = clampedHistoryWorldPos - historyWorldPos;
 	const F32 distSquared = dot(delta, delta);
-	const F32 disocclusionFactor = min(1.0, distSquared / (MAX_REJECTION_DISTANCE * MAX_REJECTION_DISTANCE));
+	const F32 disocclusionFactor = min(1.0, distSquared / (kMaxRejectionDistance * kMaxRejectionDistance));
 	F32 rejection = disocclusionFactor;
 
 	// New pixels might appeared, add them to the disocclusion
@@ -120,12 +120,12 @@ F32 computeRejectionFactor(Vec2 uv, Vec2 historyUv)
 void main()
 {
 #if defined(ANKI_COMPUTE_SHADER)
-	if(skipOutOfBoundsInvocations(WORKGROUP_SIZE, FB_SIZE))
+	if(skipOutOfBoundsInvocations(kWorkgroupSize, kFramebufferSize))
 	{
 		return;
 	}
 
-	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(FB_SIZE);
+	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(kFramebufferSize);
 #else
 	const Vec2 uv = in_uv;
 #endif
@@ -151,12 +151,12 @@ void main()
 	if(rejection >= 0.5)
 	{
 		// Rejection factor too high, reset the temporal history
-		historyLength = 1.0 / MAX_HISTORY_LENGTH;
+		historyLength = 1.0 / kMaxHistoryLength;
 	}
 	else
 	{
 		historyLength = textureLod(u_historyLengthTex, u_linearAnyClampSampler, historyUv, 0.0).r;
-		historyLength += 1.0 / MAX_HISTORY_LENGTH;
+		historyLength += 1.0 / kMaxHistoryLength;
 	}
 
 	// Write out

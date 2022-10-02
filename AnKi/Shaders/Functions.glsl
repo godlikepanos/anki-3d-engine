@@ -188,7 +188,7 @@ F32 _calcDepthWeight(texture2D depthLow, sampler nearestAnyClamp, Vec2 uv, F32 r
 {
 	const F32 d = textureLod(depthLow, nearestAnyClamp, uv, 0.0).r;
 	const F32 linearD = linearizeDepthOptimal(d, linearDepthCf.x, linearDepthCf.y);
-	return 1.0 / (EPSILON + abs(ref - linearD));
+	return 1.0 / (kEpsilonf + abs(ref - linearD));
 }
 
 Vec4 _sampleAndWeight(texture2D depthLow, texture2D colorLow, sampler linearAnyClamp, sampler nearestAnyClamp,
@@ -205,29 +205,29 @@ Vec4 _sampleAndWeight(texture2D depthLow, texture2D colorLow, sampler linearAnyC
 Vec4 bilateralUpsample(texture2D depthHigh, texture2D depthLow, texture2D colorLow, sampler linearAnyClamp,
 					   sampler nearestAnyClamp, const Vec2 lowInvSize, const Vec2 uv, const Vec2 linearDepthCf)
 {
-	const Vec3 WEIGHTS = Vec3(0.25, 0.125, 0.0625);
+	const Vec3 kWeights = Vec3(0.25, 0.125, 0.0625);
 	const F32 depthRef =
 		linearizeDepthOptimal(textureLod(depthHigh, nearestAnyClamp, uv, 0.0).r, linearDepthCf.x, linearDepthCf.y);
 	F32 normalize = 0.0;
 
 	Vec4 sum = _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(0.0, 0.0),
-								depthRef, WEIGHTS.x, linearDepthCf, normalize);
+								depthRef, kWeights.x, linearDepthCf, normalize);
 	sum += _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(-1.0, 0.0),
-							depthRef, WEIGHTS.y, linearDepthCf, normalize);
+							depthRef, kWeights.y, linearDepthCf, normalize);
 	sum += _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(0.0, -1.0),
-							depthRef, WEIGHTS.y, linearDepthCf, normalize);
+							depthRef, kWeights.y, linearDepthCf, normalize);
 	sum += _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(1.0, 0.0),
-							depthRef, WEIGHTS.y, linearDepthCf, normalize);
+							depthRef, kWeights.y, linearDepthCf, normalize);
 	sum += _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(0.0, 1.0),
-							depthRef, WEIGHTS.y, linearDepthCf, normalize);
+							depthRef, kWeights.y, linearDepthCf, normalize);
 	sum += _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(1.0, 1.0),
-							depthRef, WEIGHTS.z, linearDepthCf, normalize);
+							depthRef, kWeights.z, linearDepthCf, normalize);
 	sum += _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(1.0, -1.0),
-							depthRef, WEIGHTS.z, linearDepthCf, normalize);
+							depthRef, kWeights.z, linearDepthCf, normalize);
 	sum += _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(-1.0, 1.0),
-							depthRef, WEIGHTS.z, linearDepthCf, normalize);
+							depthRef, kWeights.z, linearDepthCf, normalize);
 	sum += _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(-1.0, -1.0),
-							depthRef, WEIGHTS.z, linearDepthCf, normalize);
+							depthRef, kWeights.z, linearDepthCf, normalize);
 
 	return sum / normalize;
 }
@@ -309,8 +309,8 @@ Vec3 grayScale(const Vec3 col)
 
 Vec3 saturateColor(const Vec3 col, const F32 factor)
 {
-	const Vec3 LUM_COEFF = Vec3(0.2125, 0.7154, 0.0721);
-	const Vec3 intensity = Vec3(dot(col, LUM_COEFF));
+	const Vec3 lumCoeff = Vec3(0.2125, 0.7154, 0.0721);
+	const Vec3 intensity = Vec3(dot(col, lumCoeff));
 	return mix(intensity, col, factor);
 }
 
@@ -461,7 +461,7 @@ Mat3 rotationFromDirection(Vec3 zAxis)
 {
 #if 0
 	const Vec3 z = zAxis;
-	const Bool alignsWithXBasis = abs(z.x - 1.0) <= EPSILON; // aka z == Vec3(1.0, 0.0, 0.0)
+	const Bool alignsWithXBasis = abs(z.x - 1.0) <= kEpsilonf; // aka z == Vec3(1.0, 0.0, 0.0)
 	Vec3 x = (alignsWithXBasis) ? Vec3(0.0, 0.0, 1.0) : Vec3(1.0, 0.0, 0.0);
 	const Vec3 y = normalize(cross(x, z));
 	x = normalize(cross(z, y));
@@ -557,7 +557,7 @@ UVec2 getOptimalGlobalInvocationId8x8Nvidia()
 // Gaussian distrubution function
 F32 gaussianWeight(F32 s, F32 x)
 {
-	F32 p = 1.0 / (s * sqrt(2.0 * PI));
+	F32 p = 1.0 / (s * sqrt(2.0 * kPi));
 	p *= exp((x * x) / (-2.0 * s * s));
 	return p;
 }

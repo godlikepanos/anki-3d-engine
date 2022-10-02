@@ -82,7 +82,7 @@ void IndirectDiffuseProbes::setRenderGraphDependencies(const RenderingContext& c
 void IndirectDiffuseProbes::bindVolumeTextures(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx, U32 set,
 											   U32 binding) const
 {
-	for(U32 idx = 0; idx < MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES; ++idx)
+	for(U32 idx = 0; idx < kMaxVisibleGlobalIlluminationProbes; ++idx)
 	{
 		if(idx < ctx.m_renderQueue->m_giProbes.getSize())
 		{
@@ -111,7 +111,7 @@ Error IndirectDiffuseProbes::initInternal()
 	m_tileSize = getConfig().getRIndirectDiffuseProbeTileResolution();
 	m_cacheEntries.create(getMemoryPool(), getConfig().getRIndirectDiffuseProbeMaxCachedProbes());
 	m_maxVisibleProbes = getConfig().getRIndirectDiffuseProbeMaxVisibleProbes();
-	ANKI_ASSERT(m_maxVisibleProbes <= MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES);
+	ANKI_ASSERT(m_maxVisibleProbes <= kMaxVisibleGlobalIlluminationProbes);
 	ANKI_ASSERT(m_cacheEntries.getSize() >= m_maxVisibleProbes);
 
 	ANKI_CHECK(initGBuffer());

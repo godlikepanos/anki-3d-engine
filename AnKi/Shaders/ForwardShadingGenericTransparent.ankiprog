@@ -40,7 +40,7 @@ layout(set = kMaterialSetGlobal, binding = kMaterialBindingGlobalUniforms) unifo
 
 #pragma anki start vert
 
-layout(location = VERTEX_ATTRIBUTE_ID_UV0) in Vec2 in_uv;
+layout(location = kVertexAttributeIdUv0) in Vec2 in_uv;
 
 layout(location = 0) out Vec2 out_uv;
 layout(location = 1) out Vec3 out_worldPosition;

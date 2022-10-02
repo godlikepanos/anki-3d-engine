@@ -16,7 +16,7 @@ F32 calculateBilateralWeightDepth(F32 depthCenter, F32 depthTap, F32 phi)
 #if 0
 	return max(0.0, 1.0 - diff * phi);
 #else
-	return sqrt(1.0 / (EPSILON + diff)) * phi;
+	return sqrt(1.0 / (kEpsilonf + diff)) * phi;
 #endif
 }
 

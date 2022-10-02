@@ -9,10 +9,10 @@
 #include <AnKi/Shaders/Functions.glsl>
 #include <AnKi/Shaders/BilateralFilter.glsl>
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(OUT_IMAGE_SIZE, 0u);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(kOutImageSize, 0u);
 
-const UVec2 WORKGROUP_SIZE = UVec2(8u, 8u);
-layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
+const UVec2 kWorkgroupSize = UVec2(8u, 8u);
+layout(local_size_x = kWorkgroupSize.x, local_size_y = kWorkgroupSize.y, local_size_z = 1) in;
 
 layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
 layout(set = 0, binding = 1) uniform sampler u_linearAnyClampSampler;
@@ -23,23 +23,23 @@ layout(set = 0, binding = 5) uniform texture2D u_fullDepthTex;
 
 void main()
 {
-	if(skipOutOfBoundsInvocations(WORKGROUP_SIZE, OUT_IMAGE_SIZE))
+	if(skipOutOfBoundsInvocations(kWorkgroupSize, kOutImageSize))
 	{
 		return;
 	}
 
-	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(OUT_IMAGE_SIZE);
+	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(kOutImageSize);
 
 	// Reference
 	const F32 depthCenter = textureLod(u_fullDepthTex, u_linearAnyClampSampler, uv, 0.0).x;
 
-	F32 sumShadowLayers[MAX_RT_SHADOW_LAYERS];
+	F32 sumShadowLayers[kMaxRtShadowLayers];
 	zeroRtShadowLayers(sumShadowLayers);
 
 	// Do a bilateral upscale
-	const Vec2 texelSize = 1.0 / Vec2(OUT_IMAGE_SIZE / 2u);
+	const Vec2 texelSize = 1.0 / Vec2(kOutImageSize / 2u);
 	const I32 radius = 1;
-	F32 sumWeight = EPSILON;
+	F32 sumWeight = kEpsilonf;
 	for(I32 x = -radius; x <= radius; ++x)
 	{
 		for(I32 y = -radius; y <= radius; ++y)
@@ -49,10 +49,10 @@ void main()
 
 			const F32 w = calculateBilateralWeightDepth(depthCenter, depthTap, 1.0);
 
-			F32 shadowLayers[MAX_RT_SHADOW_LAYERS];
+			F32 shadowLayers[kMaxRtShadowLayers];
 			unpackRtShadows(textureLod(u_quarterShadowsTex, u_nearestAnyClampSampler, sampleUv, 0.0), shadowLayers);
 
-			for(U32 i = 0u; i < MAX_RT_SHADOW_LAYERS; ++i)
+			for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
 			{
 				sumShadowLayers[i] += shadowLayers[i] * w;
 			}
@@ -61,7 +61,7 @@ void main()
 		}
 	}
 
-	for(U32 i = 0u; i < MAX_RT_SHADOW_LAYERS; ++i)
+	for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
 	{
 		sumShadowLayers[i] /= sumWeight;
 	}

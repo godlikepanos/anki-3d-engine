@@ -5,9 +5,9 @@
 
 #pragma anki mutator USE_SHADOW_LAYERS 0 1
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(TILE_COUNTS, 0u);
-ANKI_SPECIALIZATION_CONSTANT_U32(Z_SPLIT_COUNT, 2u);
-ANKI_SPECIALIZATION_CONSTANT_U32(TILE_SIZE, 3u);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(kTileCount, 0u);
+ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 2u);
+ANKI_SPECIALIZATION_CONSTANT_U32(kTileSize, 3u);
 
 #pragma anki start vert
 #include <AnKi/Shaders/QuadVert.glsl>
@@ -66,21 +66,21 @@ void main()
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
 	// Get the cluster
-	Cluster cluster = getClusterFragCoord(Vec3(gl_FragCoord.xy, depth), TILE_SIZE, TILE_COUNTS, Z_SPLIT_COUNT,
+	Cluster cluster = getClusterFragCoord(Vec3(gl_FragCoord.xy, depth), kTileSize, kTileCount, kZSplitCount,
 										  u_clusteredShading.m_zSplitMagic.x, u_clusteredShading.m_zSplitMagic.y);
 
-	// out_color = clusterHeatmap(cluster, 1u << CLUSTER_OBJECT_TYPE_POINT_LIGHT); return;
+	// out_color = clusterHeatmap(cluster, 1u << kClusterObjectTypePointLight); return;
 
 	// Decode GBuffer
 	GbufferInfo gbuffer;
 	unpackGBufferNoVelocity(textureLod(u_gbuffer0Tex, u_nearestAnyClampSampler, in_uv, 0.0),
 							textureLod(u_gbuffer1Tex, u_nearestAnyClampSampler, in_uv, 0.0),
 							textureLod(u_gbuffer2Tex, u_nearestAnyClampSampler, in_uv, 0.0), gbuffer);
-	gbuffer.m_subsurface = max(gbuffer.m_subsurface, SUBSURFACE_MIN);
+	gbuffer.m_subsurface = max(gbuffer.m_subsurface, kSubsurfaceMin);
 
 	// SM
 #if USE_SHADOW_LAYERS
-	ANKI_RP F32 resolvedSm[MAX_RT_SHADOW_LAYERS];
+	ANKI_RP F32 resolvedSm[kMaxRtShadowLayers];
 	unpackRtShadows(textureLod(u_shadowLayersTex, u_nearestAnyClampSampler, in_uv, 0.0), resolvedSm);
 #else
 	ANKI_RP Vec4 resolvedSm = textureLod(u_resolvedSm, u_trilinearClampSampler, in_uv, 0.0);

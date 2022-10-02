@@ -32,9 +32,9 @@ Error GBufferPost::initInternal()
 	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/GBufferPost.ankiprogbin", m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-	variantInitInfo.addConstant("TILE_COUNTS", m_r->getTileCounts());
-	variantInitInfo.addConstant("Z_SPLIT_COUNT", m_r->getZSplitCount());
-	variantInitInfo.addConstant("TILE_SIZE", m_r->getTileSize());
+	variantInitInfo.addConstant("kTileCount", m_r->getTileCounts());
+	variantInitInfo.addConstant("kZSplitCount", m_r->getZSplitCount());
+	variantInitInfo.addConstant("kTileSize", m_r->getTileSize());
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);

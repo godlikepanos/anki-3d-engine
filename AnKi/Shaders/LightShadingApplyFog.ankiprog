@@ -3,8 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-ANKI_SPECIALIZATION_CONSTANT_U32(Z_SPLIT_COUNT, 0u);
-ANKI_SPECIALIZATION_CONSTANT_U32(FINAL_Z_SPLIT, 1u);
+ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 0u);
+ANKI_SPECIALIZATION_CONSTANT_U32(kFinalZSplit, 1u);
 
 #pragma anki start vert
 #include <AnKi/Shaders/QuadVert.glsl>
@@ -36,7 +36,7 @@ void main()
 	// Compute W coordinate
 	const F32 depth = textureLod(u_depthRt, u_nearestAnyClampSampler, in_uv, 0.0).r;
 	const F32 linearDepth = linearizeDepth(depth, u_near, u_far);
-	uvw.z = linearDepth * (F32(Z_SPLIT_COUNT) / F32(FINAL_Z_SPLIT + 1u));
+	uvw.z = linearDepth * (F32(kZSplitCount) / F32(kFinalZSplit + 1u));
 
 	// Compute UV coordinates
 	uvw.xy = in_uv;

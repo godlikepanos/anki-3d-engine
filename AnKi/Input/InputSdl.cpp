@@ -196,7 +196,7 @@ Error InputSdl::handleEventsInternal()
 			m_mousePosNdc.y() = -(F32(event.button.y) / F32(m_nativeWindow->getHeight()) * 2.0f - 1.0f);
 			break;
 		case SDL_QUIT:
-			addEvent(InputEvent::WINDOW_CLOSED);
+			addEvent(InputEvent::kWindowClosed);
 			break;
 		case SDL_TEXTINPUT:
 			std::strncpy(&m_textInput[0], event.text.text, m_textInput.getSize() - 1);

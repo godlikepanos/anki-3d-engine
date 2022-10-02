@@ -17,7 +17,7 @@ ANKI_BINDLESS_SET(kMaterialSetBindless)
 // Vert
 //
 #if defined(ANKI_VERTEX_SHADER)
-layout(location = VERTEX_ATTRIBUTE_ID_POSITION) in Vec3 in_position;
+layout(location = kVertexAttributeIdPosition) in Vec3 in_position;
 #endif
 
 //

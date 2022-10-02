@@ -3,9 +3,9 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(TILE_COUNTS, 0u);
-ANKI_SPECIALIZATION_CONSTANT_U32(Z_SPLIT_COUNT, 2u);
-ANKI_SPECIALIZATION_CONSTANT_U32(TILE_SIZE, 3u);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(kTileCount, 0u);
+ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 2u);
+ANKI_SPECIALIZATION_CONSTANT_U32(kTileSize, 3u);
 
 #pragma anki start vert
 #include <AnKi/Shaders/QuadVert.glsl>
@@ -49,7 +49,7 @@ void main()
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
 	// Get the cluster
-	Cluster cluster = getClusterFragCoord(Vec3(gl_FragCoord.xy, depth), TILE_SIZE, TILE_COUNTS, Z_SPLIT_COUNT,
+	Cluster cluster = getClusterFragCoord(Vec3(gl_FragCoord.xy, depth), kTileSize, kTileCount, kZSplitCount,
 										  u_clusteredShading.m_zSplitMagic.x, u_clusteredShading.m_zSplitMagic.y);
 
 	// Process decals

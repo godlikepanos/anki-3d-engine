@@ -34,8 +34,8 @@ layout(set = 0, binding = 9) uniform texture2D u_motionVectorsTex;
 layout(set = 0, binding = 10) uniform ANKI_RP texture2D u_historyLengthTex;
 
 #if defined(ANKI_COMPUTE_SHADER)
-const UVec2 WORKGROUP_SIZE = UVec2(8, 8);
-layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y) in;
+const UVec2 kWorkgroupSize = UVec2(8, 8);
+layout(local_size_x = kWorkgroupSize.x, local_size_y = kWorkgroupSize.y) in;
 
 layout(set = 0, binding = 11) writeonly uniform image2D u_outImage;
 #else
@@ -118,7 +118,7 @@ void main()
 			const F32 len = length(dir);
 			const Vec3 n = normalize(dir);
 			const F32 NoL = max(0.0, dot(viewNormal, n));
-			// const F32 distFactor = 1.0 - sin(min(1.0, len / u_unis.m_radius) * PI / 2.0);
+			// const F32 distFactor = 1.0 - sin(min(1.0, len / u_unis.m_radius) * kPi / 2.0);
 			const F32 distFactor = 1.0 - min(1.0, len / u_unis.m_radius);
 
 			// Compute the UV for sampling the pyramid
@@ -140,11 +140,11 @@ void main()
 			outColor += c * w;
 
 			// Compute SSAO as well
-			ssao += max(dot(viewNormal, dir) + u_unis.m_ssaoBias, EPSILON) / max(len * len, EPSILON);
+			ssao += max(dot(viewNormal, dir) + u_unis.m_ssaoBias, kEpsilonf) / max(len * len, kEpsilonf);
 		}
 
 		const ANKI_RP F32 scount = 1.0 / u_unis.m_sampleCountf;
-		outColor *= scount * 2.0 * PI;
+		outColor *= scount * 2.0 * kPi;
 		ssao *= scount;
 	}
 
@@ -173,7 +173,7 @@ void main()
 		{
 			// Zero or more than one probes, do a slow path that blends them together
 
-			F32 totalBlendWeight = EPSILON;
+			F32 totalBlendWeight = kEpsilonf;
 
 			// Loop probes
 			ANKI_LOOP while(cluster.m_giProbesMask != 0u)

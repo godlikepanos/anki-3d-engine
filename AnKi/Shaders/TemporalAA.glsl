@@ -6,9 +6,9 @@
 #pragma anki mutator VARIANCE_CLIPPING 0 1
 #pragma anki mutator YCBCR 0 1
 
-ANKI_SPECIALIZATION_CONSTANT_F32(VARIANCE_CLIPPING_GAMMA, 0u);
-ANKI_SPECIALIZATION_CONSTANT_F32(BLEND_FACTOR, 1u);
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(FB_SIZE, 2u);
+ANKI_SPECIALIZATION_CONSTANT_F32(kVarianceClippingGamma, 0u);
+ANKI_SPECIALIZATION_CONSTANT_F32(kBlendFactor, 1u);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(kFramebufferSize, 2u);
 
 #include <AnKi/Shaders/Functions.glsl>
 #include <AnKi/Shaders/PackFunctions.glsl>
@@ -20,16 +20,15 @@ layout(set = 0, binding = 2) uniform ANKI_RP texture2D u_inputRt;
 layout(set = 0, binding = 3) uniform ANKI_RP texture2D u_historyRt;
 layout(set = 0, binding = 4) uniform texture2D u_motionVectorsTex;
 
-const U32 TONEMAPPING_SET = 0u;
-const U32 TONEMAPPING_BINDING = 5u;
+const U32 kTonemappingBinding = 5u;
 #include <AnKi/Shaders/TonemappingResources.glsl>
 
 #if defined(ANKI_COMPUTE_SHADER)
 layout(set = 0, binding = 6) writeonly uniform image2D u_outImg;
 layout(set = 0, binding = 7) writeonly uniform image2D u_tonemappedImg;
 
-const UVec2 WORKGROUP_SIZE = UVec2(8, 8);
-layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
+const UVec2 kWorkgroupSize = UVec2(8, 8);
+layout(local_size_x = kWorkgroupSize.x, local_size_y = kWorkgroupSize.y, local_size_z = 1) in;
 #else
 layout(location = 0) in Vec2 in_uv;
 layout(location = 0) out Vec3 out_color;
@@ -48,12 +47,12 @@ layout(location = 1) out Vec3 out_tonemappedColor;
 void main()
 {
 #if defined(ANKI_COMPUTE_SHADER)
-	if(skipOutOfBoundsInvocations(WORKGROUP_SIZE, FB_SIZE))
+	if(skipOutOfBoundsInvocations(kWorkgroupSize, kFramebufferSize))
 	{
 		return;
 	}
 
-	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(FB_SIZE);
+	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(kFramebufferSize);
 #else
 	const Vec2 uv = in_uv;
 #endif
@@ -80,8 +79,8 @@ void main()
 	const Vec3 mu = m1 / 5.0;
 	const Vec3 sigma = sqrt(m2 / 5.0 - mu * mu);
 
-	const Vec3 boxMin = mu - VARIANCE_CLIPPING_GAMMA * sigma;
-	const Vec3 boxMax = mu + VARIANCE_CLIPPING_GAMMA * sigma;
+	const Vec3 boxMin = mu - kVarianceClippingGamma * sigma;
+	const Vec3 boxMax = mu + kVarianceClippingGamma * sigma;
 #else
 	const Vec3 boxMin = min(crntCol, min(near0, min(near1, min(near2, near3))));
 	const Vec3 boxMax = max(crntCol, max(near0, max(near1, max(near2, near3))));
@@ -100,10 +99,10 @@ void main()
 	const F32 maxLum = 1.0;
 #endif
 
-	F32 diff = abs(lum0 - lum1) / max(lum0, max(lum1, maxLum + EPSILON));
+	F32 diff = abs(lum0 - lum1) / max(lum0, max(lum1, maxLum + kEpsilonf));
 	diff = 1.0 - diff;
 	diff = diff * diff;
-	const F32 feedback = mix(0.0, BLEND_FACTOR, diff);
+	const F32 feedback = mix(0.0, kBlendFactor, diff);
 
 	// Write result
 	Vec3 outColor = mix(historyCol, crntCol, feedback);

@@ -23,12 +23,12 @@ layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_UNIFORMS_BINDING
 #if defined(CLUSTERED_SHADING_LIGHTS_BINDING)
 layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_LIGHTS_BINDING) uniform b_pointLights
 {
-	PointLight u_pointLights2[MAX_VISIBLE_POINT_LIGHTS];
+	PointLight u_pointLights2[kMaxVisiblePointLights];
 };
 
 layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_LIGHTS_BINDING + 1u) uniform b_spotLights
 {
-	SpotLight u_spotLights[MAX_VISIBLE_SPOT_LIGHTS];
+	SpotLight u_spotLights[kMaxVisibleSpotLights];
 };
 
 layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_LIGHTS_BINDING + 2u) uniform texture2D u_shadowAtlasTex;
@@ -40,7 +40,7 @@ layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_LIGHTS_BINDING +
 #if defined(CLUSTERED_SHADING_REFLECTIONS_BINDING)
 layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_REFLECTIONS_BINDING) uniform b_reflectionProbes
 {
-	ReflectionProbe u_reflectionProbes[MAX_VISIBLE_REFLECTION_PROBES];
+	ReflectionProbe u_reflectionProbes[kMaxVisibleReflectionProbes];
 };
 
 layout(set = CLUSTERED_SHADING_SET,
@@ -53,7 +53,7 @@ layout(set = CLUSTERED_SHADING_SET,
 #if defined(CLUSTERED_SHADING_DECALS_BINDING)
 layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_DECALS_BINDING) uniform b_decals
 {
-	Decal u_decals2[MAX_VISIBLE_DECALS];
+	Decal u_decals2[kMaxVisibleDecals];
 };
 
 layout(set = CLUSTERED_SHADING_SET,
@@ -68,7 +68,7 @@ layout(set = CLUSTERED_SHADING_SET,
 #if defined(CLUSTERED_SHADING_FOG_BINDING)
 layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_FOG_BINDING) uniform b_fogDensityVolumes
 {
-	FogDensityVolume u_fogDensityVolumes[MAX_VISIBLE_FOG_DENSITY_VOLUMES];
+	FogDensityVolume u_fogDensityVolumes[kMaxVisibleFogDensityVolumes];
 };
 #endif
 
@@ -77,11 +77,11 @@ layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_FOG_BINDING) uni
 //
 #if defined(CLUSTERED_SHADING_GI_BINDING)
 layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_GI_BINDING) uniform ANKI_RP texture3D
-	u_globalIlluminationTextures[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES];
+	u_globalIlluminationTextures[kMaxVisibleGlobalIlluminationProbes];
 
 layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_GI_BINDING + 1u) uniform b_giProbes
 {
-	GlobalIlluminationProbe u_giProbes[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES];
+	GlobalIlluminationProbe u_giProbes[kMaxVisibleGlobalIlluminationProbes];
 };
 #endif
 
@@ -101,39 +101,39 @@ Vec3 clusterHeatmap(Cluster cluster, U32 objectTypeMask)
 	U32 maxObjects = 0u;
 	I32 count = 0;
 
-	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_POINT_LIGHT)) != 0u)
+	if((objectTypeMask & (1u << kClusterObjectTypePointLight)) != 0u)
 	{
-		maxObjects += MAX_VISIBLE_POINT_LIGHTS;
+		maxObjects += kMaxVisiblePointLights;
 		count += I32(bitCount(cluster.m_pointLightsMask));
 	}
 
-	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_SPOT_LIGHT)) != 0u)
+	if((objectTypeMask & (1u << kClusterObjectTypeSpotLight)) != 0u)
 	{
-		maxObjects += MAX_VISIBLE_SPOT_LIGHTS;
+		maxObjects += kMaxVisibleSpotLights;
 		count += I32(bitCount(cluster.m_spotLightsMask));
 	}
 
-	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_DECAL)) != 0u)
+	if((objectTypeMask & (1u << kClusterObjectTypeDecal)) != 0u)
 	{
-		maxObjects += MAX_VISIBLE_DECALS;
+		maxObjects += kMaxVisibleDecals;
 		count += I32(bitCount(cluster.m_decalsMask));
 	}
 
-	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_FOG_DENSITY_VOLUME)) != 0u)
+	if((objectTypeMask & (1u << kClusterObjectTypeFogDensityVolume)) != 0u)
 	{
-		maxObjects += MAX_VISIBLE_FOG_DENSITY_VOLUMES;
+		maxObjects += kMaxVisibleFogDensityVolumes;
 		count += bitCount(cluster.m_fogDensityVolumesMask);
 	}
 
-	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_REFLECTION_PROBE)) != 0u)
+	if((objectTypeMask & (1u << kClusterObjectTypeReflectionProbe)) != 0u)
 	{
-		maxObjects += MAX_VISIBLE_REFLECTION_PROBES;
+		maxObjects += kMaxVisibleReflectionProbes;
 		count += bitCount(cluster.m_reflectionProbesMask);
 	}
 
-	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE)) != 0u)
+	if((objectTypeMask & (1u << kClusterObjectTypeGlobalIlluminationProbe)) != 0u)
 	{
-		maxObjects += MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES;
+		maxObjects += kMaxVisibleGlobalIlluminationProbes;
 		count += bitCount(cluster.m_giProbesMask);
 	}
 

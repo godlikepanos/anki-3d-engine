@@ -7,17 +7,17 @@
 
 #pragma anki mutator ENABLE_SHADOWS 0 1
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC3(VOLUME_SIZE, 0u);
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(TILE_COUNT, 3u);
-ANKI_SPECIALIZATION_CONSTANT_U32(Z_SPLIT_COUNT, 5u);
-ANKI_SPECIALIZATION_CONSTANT_U32(FINAL_Z_SPLIT, 6u);
+ANKI_SPECIALIZATION_CONSTANT_UVEC3(kVolumeSize, 0u);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(kTileCount, 3u);
+ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 5u);
+ANKI_SPECIALIZATION_CONSTANT_U32(kFinalZSplit, 6u);
 
 #pragma anki start comp
 
-const F32 PHASE_FUNCTION_ANISOTROPY = 0.3;
+const F32 kPhaseFunctionAnisotropy = 0.3;
 
-const UVec3 WORKGROUP_SIZE = UVec3(8, 8, 8);
-layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = WORKGROUP_SIZE.z) in;
+const UVec3 kWorkgroupSize = UVec3(8, 8, 8);
+layout(local_size_x = kWorkgroupSize.x, local_size_y = kWorkgroupSize.y, local_size_z = kWorkgroupSize.z) in;
 
 layout(set = 0, binding = 0) uniform sampler u_linearAnyRepeatSampler;
 layout(set = 0, binding = 1) uniform sampler u_linearAnyClampSampler;
@@ -53,8 +53,8 @@ Vec3 readRand()
 Vec3 worldPosInsideClusterAndZViewSpace(Vec3 relativePos, out F32 negativeZViewSpace, out Vec3 uvw)
 {
 	// Compute the linear depth
-	const F32 maxLinearDepth = F32(FINAL_Z_SPLIT + 1u) / F32(Z_SPLIT_COUNT);
-	const F32 linearDepthFraction = maxLinearDepth / F32(VOLUME_SIZE.z);
+	const F32 maxLinearDepth = F32(kFinalZSplit + 1u) / F32(kZSplitCount);
+	const F32 linearDepthFraction = maxLinearDepth / F32(kVolumeSize.z);
 	const F32 linearDepthNear = g_globalInvocationID.z * linearDepthFraction;
 	const F32 linearDepthFar = (g_globalInvocationID.z + 1.0) * linearDepthFraction;
 	const F32 linearDepth = mix(linearDepthNear, linearDepthFar, relativePos.z);
@@ -66,7 +66,7 @@ Vec3 worldPosInsideClusterAndZViewSpace(Vec3 relativePos, out F32 negativeZViewS
 	const F32 zViewSpace = -negativeZViewSpace;
 
 	// Get the position in view space
-	const Vec2 uv = mix(g_globalInvocationID.xy, g_globalInvocationID.xy + 1.0, relativePos.xy) / Vec2(VOLUME_SIZE.xy);
+	const Vec2 uv = mix(g_globalInvocationID.xy, g_globalInvocationID.xy + 1.0, relativePos.xy) / Vec2(kVolumeSize.xy);
 	uvw.xy = uv;
 	const Vec2 xyViewSpace = UV_TO_NDC(uv) * u_clusteredShading.m_matrices.m_unprojectionParameters.xy * zViewSpace;
 
@@ -105,7 +105,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 	const DirectionalLight dirLight = u_clusteredShading.m_directionalLight;
 	if(dirLight.m_active != 0u)
 	{
-		F32 factor = phaseFunction(viewDir, dirLight.m_direction, PHASE_FUNCTION_ANISOTROPY);
+		F32 factor = phaseFunction(viewDir, dirLight.m_direction, kPhaseFunctionAnisotropy);
 
 #if ENABLE_SHADOWS
 		if(dirLight.m_cascadeCount > 0u && negativeZViewSpace < dirLight.m_effectiveShadowDistance)
@@ -132,7 +132,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 		const Vec3 frag2Light = light.m_position - worldPos;
 		F32 factor = computeAttenuationFactor(light.m_squareRadiusOverOne, frag2Light);
 
-		factor *= phaseFunction(viewDir, normalize(worldPos - light.m_position), PHASE_FUNCTION_ANISOTROPY);
+		factor *= phaseFunction(viewDir, normalize(worldPos - light.m_position), kPhaseFunctionAnisotropy);
 
 #if ENABLE_SHADOWS
 		if(light.m_shadowAtlasTileScale >= 0.0)
@@ -158,7 +158,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 
 		factor *= computeSpotFactor(l, light.m_outerCos, light.m_innerCos, light.m_direction);
 
-		factor *= phaseFunction(viewDir, light.m_direction, PHASE_FUNCTION_ANISOTROPY);
+		factor *= phaseFunction(viewDir, light.m_direction, kPhaseFunctionAnisotropy);
 
 #if ENABLE_SHADOWS
 		if(light.m_shadowLayer != kMaxU32)
@@ -188,7 +188,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 		{
 			// Zero or more than one probes, do a slow path that blends them together
 
-			F32 totalBlendWeight = EPSILON;
+			F32 totalBlendWeight = kEpsilonf;
 			diffIndirect = Vec3(0.0);
 
 			// Loop probes
@@ -213,7 +213,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 			diffIndirect /= totalBlendWeight;
 		}
 
-		diffIndirect *= PI; // Irradiance is pre-divided with PI so fix it
+		diffIndirect *= kPi; // Irradiance is pre-divided with PI so fix it
 
 		color += diffIndirect;
 	}
@@ -254,7 +254,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 
 void main()
 {
-	if(any(greaterThanEqual(gl_GlobalInvocationID.xyz, VOLUME_SIZE)))
+	if(any(greaterThanEqual(gl_GlobalInvocationID.xyz, kVolumeSize)))
 	{
 		return;
 	}
@@ -265,12 +265,12 @@ void main()
 	const Vec3 worldPos = worldPosInsideClusterAndZViewSpace(readRand(), negativeZViewSpace, uvw);
 
 	// Get the cluster
-	const UVec2 tileIdxXY = UVec2(uvw.xy * Vec2(TILE_COUNT));
-	const U32 tileIdx = tileIdxXY.y * TILE_COUNT.x + tileIdxXY.x;
+	const UVec2 tileIdxXY = UVec2(uvw.xy * Vec2(kTileCount));
+	const U32 tileIdx = tileIdxXY.y * kTileCount.x + tileIdxXY.x;
 	Cluster cluster = u_clusters[tileIdx];
 
-	const U32 zSplitIdx = U32(uvw.z * F32(Z_SPLIT_COUNT));
-	const Cluster split = u_clusters[TILE_COUNT.x * TILE_COUNT.y + zSplitIdx];
+	const U32 zSplitIdx = U32(uvw.z * F32(kZSplitCount));
+	const Cluster split = u_clusters[kTileCount.x * kTileCount.y + zSplitIdx];
 
 	cluster.m_pointLightsMask |= split.m_pointLightsMask;
 	cluster.m_spotLightsMask |= split.m_spotLightsMask;
@@ -294,7 +294,7 @@ void main()
 		{
 			const F32 linearDepth = linearizeDepth(prevClipPos.z, u_clusteredShading.m_near, u_clusteredShading.m_far);
 			const Vec3 uvw =
-				Vec3(NDC_TO_UV(prevClipPos.xy), linearDepth * (F32(Z_SPLIT_COUNT) / F32(FINAL_Z_SPLIT + 1u)));
+				Vec3(NDC_TO_UV(prevClipPos.xy), linearDepth * (F32(kZSplitCount) / F32(kFinalZSplit + 1u)));
 			const Vec4 history = textureLod(u_prevVolume, u_linearAnyClampSampler, uvw, 0.0);
 			lightAndFog = mix(history, lightAndFog, 1.0 / 16.0);
 		}

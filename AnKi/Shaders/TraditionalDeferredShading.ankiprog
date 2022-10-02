@@ -96,7 +96,7 @@ void main()
 	unpackGBufferNoVelocity(textureLod(u_msRt0, u_msSampler, uvToRead, 0.0),
 							textureLod(u_msRt1, u_msSampler, uvToRead, 0.0),
 							textureLod(u_msRt2, u_msSampler, uvToRead, 0.0), gbuffer);
-	gbuffer.m_subsurface = max(gbuffer.m_subsurface, SUBSURFACE_MIN * 8.0);
+	gbuffer.m_subsurface = max(gbuffer.m_subsurface, kSubsurfaceMin * 8.0);
 
 	const Vec4 worldPos4 = u_unis.m_invViewProjMat * Vec4(UV_TO_NDC(uvToWrite), depth, 1.0);
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;

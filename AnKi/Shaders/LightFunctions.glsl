@@ -17,8 +17,8 @@
 Vec2 evsmProcessDepth(F32 depth)
 {
 	depth = 2.0 * depth - 1.0;
-	const F32 pos = exp(EVSM_POSITIVE_CONSTANT * depth);
-	const F32 neg = -exp(EVSM_NEGATIVE_CONSTANT * depth);
+	const F32 pos = exp(kEvsmPositiveConstant * depth);
+	const F32 neg = -exp(kEvsmNegativeConstant * depth);
 	return Vec2(pos, neg);
 }
 
@@ -54,17 +54,16 @@ F32 chebyshevUpperBound(Vec2 moments, F32 mean, F32 minVariance, F32 lightBleedi
 F32 evsmComputeShadowFactor(F32 occluderDepth, Vec4 shadowMapMoments)
 {
 	const Vec2 evsmOccluderDepths = evsmProcessDepth(occluderDepth);
-	const Vec2 depthScale =
-		EVSM_BIAS * 0.01 * Vec2(EVSM_POSITIVE_CONSTANT, EVSM_NEGATIVE_CONSTANT) * evsmOccluderDepths;
+	const Vec2 depthScale = kEvsmBias * 0.01 * Vec2(kEvsmPositiveConstant, kEvsmNegativeConstant) * evsmOccluderDepths;
 	const Vec2 minVariance = depthScale * depthScale;
 
 #if !ANKI_EVSM4
-	return chebyshevUpperBound(shadowMapMoments.xy, evsmOccluderDepths.x, minVariance.x, EVSM_LIGHT_BLEEDING_REDUCTION);
+	return chebyshevUpperBound(shadowMapMoments.xy, evsmOccluderDepths.x, minVariance.x, kEvsmLightBleedingReduction);
 #else
 	const F32 pos =
-		chebyshevUpperBound(shadowMapMoments.xy, evsmOccluderDepths.x, minVariance.x, EVSM_LIGHT_BLEEDING_REDUCTION);
+		chebyshevUpperBound(shadowMapMoments.xy, evsmOccluderDepths.x, minVariance.x, kEvsmLightBleedingReduction);
 	const F32 neg =
-		chebyshevUpperBound(shadowMapMoments.zw, evsmOccluderDepths.y, minVariance.y, EVSM_LIGHT_BLEEDING_REDUCTION);
+		chebyshevUpperBound(shadowMapMoments.zw, evsmOccluderDepths.y, minVariance.y, kEvsmLightBleedingReduction);
 	return min(pos, neg);
 #endif
 }
@@ -97,7 +96,7 @@ ANKI_RP F32 D_GGX(ANKI_RP F32 roughness, ANKI_RP F32 NoH, ANKI_RP Vec3 h, ANKI_R
 	const ANKI_RP F32 a = roughness * roughness;
 	const ANKI_RP F32 v = NoH * a;
 	const ANKI_RP F32 k = a / (oneMinusNoHSquared + v * v);
-	const ANKI_RP F32 d = k * k * (1.0 / PI);
+	const ANKI_RP F32 d = k * k * (1.0 / kPi);
 	return saturateRp(d);
 }
 
@@ -120,7 +119,7 @@ ANKI_RP F32 V_SmithGGXCorrelatedFast(ANKI_RP F32 roughness, ANKI_RP F32 NoV, ANK
 
 ANKI_RP F32 Fd_Lambert()
 {
-	return 1.0 / PI;
+	return 1.0 / kPi;
 }
 
 ANKI_RP Vec3 diffuseLobe(ANKI_RP Vec3 diffuse)
@@ -195,7 +194,7 @@ ANKI_RP F32 computeShadowFactorPointLight(PointLight light, Vec3 frag2Light, tex
 
 	// 1) Project the dist to light's proj mat
 	//
-	const F32 near = CLUSTER_OBJECT_FRUSTUM_NEAR_PLANE;
+	const F32 near = kClusterObjectFrustumNearPlane;
 	const F32 far = light.m_radius;
 	const F32 g = near - far;
 
@@ -353,14 +352,14 @@ ANKI_RP Vec3 sampleAmbientDice(ANKI_RP Vec3 posx, ANKI_RP Vec3 negx, ANKI_RP Vec
 	col += mix(negz, posz, uv.z) * axisWeights.z;
 
 	// Divide by weight
-	col /= axisWeights.x + axisWeights.y + axisWeights.z + EPSILON_RP;
+	col /= axisWeights.x + axisWeights.y + axisWeights.z + kEpsilonRp;
 
 	return col;
 }
 
 // Sample the irradiance term from the clipmap
 ANKI_RP Vec3 sampleGlobalIllumination(const Vec3 worldPos, const Vec3 normal, const GlobalIlluminationProbe probe,
-									  ANKI_RP texture3D textures[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES],
+									  ANKI_RP texture3D textures[kMaxVisibleGlobalIlluminationProbes],
 									  sampler linearAnyClampSampler)
 {
 	// Find the UVW
@@ -434,7 +433,7 @@ Vec3 sampleGgxVndf(Vec3 v, F32 alphaX, F32 alphaY, F32 u1, F32 u2)
 
 	// Section 4.2: parameterization of the projected area
 	const F32 r = sqrt(u1);
-	const F32 phi = 2.0 * PI * u2;
+	const F32 phi = 2.0 * kPi * u2;
 	const F32 t1 = r * cos(phi);
 	F32 t2 = r * sin(phi);
 	const F32 s = 0.5 * (1.0 + vH.z);

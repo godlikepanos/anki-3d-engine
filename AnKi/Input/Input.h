@@ -19,10 +19,10 @@ class NativeWindow;
 
 enum class InputEvent : U8
 {
-	WINDOW_FOCUS_LOST,
-	WINDOW_FOCUS_GAINED,
-	WINDOW_CLOSED,
-	COUNT
+	kWindowFocusLost,
+	kWindowFocusGained,
+	kWindowClosed,
+	kCount
 };
 
 /// Handle the input and other events
@@ -153,7 +153,7 @@ protected:
 	Array<Vec2, U(TouchPointer::kCount)> m_touchPointerPosNdc;
 	Array<UVec2, U(TouchPointer::kCount)> m_touchPointerPosWin;
 
-	Array<U8, U(InputEvent::COUNT)> m_events;
+	Array<U8, U(InputEvent::kCount)> m_events;
 
 	/// The keybord input as ascii.
 	Array<char, U(KeyCode::kCount)> m_textInput;

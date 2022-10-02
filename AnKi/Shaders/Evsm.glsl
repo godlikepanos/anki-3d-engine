@@ -3,8 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(INPUT_TEXTURE_SIZE, 0u);
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(FB_SIZE, 2u);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(kInputTextureSize, 0u);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(kFramebufferSize, 2u);
 
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
 
@@ -27,7 +27,7 @@ void main()
 
 	out_uv = uv * uni.m_uvScale + uni.m_uvTranslation;
 
-	const Vec2 pos = UV_TO_NDC((Vec2(uni.m_viewportXY) + uni.m_viewportZW * uv) / Vec2(FB_SIZE));
+	const Vec2 pos = UV_TO_NDC((Vec2(uni.m_viewportXY) + uni.m_viewportZW * uv) / Vec2(kFramebufferSize));
 	gl_Position = Vec4(pos, 0.0, 1.0);
 
 	out_instanceIndex = gl_InstanceIndex;
@@ -38,7 +38,7 @@ void main()
 #	include <AnKi/Shaders/GaussianBlurCommon.glsl>
 #	include <AnKi/Shaders/LightFunctions.glsl>
 
-const F32 OFFSET = 1.25;
+const F32 kOffset = 1.25;
 
 layout(set = 0, binding = 1) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 2) uniform texture2D u_inputTex;
@@ -74,28 +74,28 @@ void main()
 #	endif
 
 	// Compute the UV limits. We can't sample beyond those
-	const Vec2 TEXEL_SIZE = 1.0 / Vec2(INPUT_TEXTURE_SIZE);
-	const Vec2 HALF_TEXEL_SIZE = TEXEL_SIZE / 2.0;
-	const Vec2 maxUv = uni.m_uvMax - HALF_TEXEL_SIZE;
-	const Vec2 minUv = uni.m_uvMin + HALF_TEXEL_SIZE;
+	const Vec2 kTexelSize = 1.0 / Vec2(kInputTextureSize);
+	const Vec2 kHalfTexelSize = kTexelSize / 2.0;
+	const Vec2 maxUv = uni.m_uvMax - kHalfTexelSize;
+	const Vec2 minUv = uni.m_uvMin + kHalfTexelSize;
 
 	// Sample
-	const Vec2 UV_OFFSET = OFFSET * TEXEL_SIZE;
-	const F32 w0 = BOX_WEIGHTS[0u];
-	const F32 w1 = BOX_WEIGHTS[1u];
-	const F32 w2 = BOX_WEIGHTS[2u];
+	const Vec2 kUvOffset = kOffset * kTexelSize;
+	const F32 w0 = kBoxWeights[0u];
+	const F32 w1 = kBoxWeights[1u];
+	const F32 w2 = kBoxWeights[2u];
 	Vec4 moments;
 	if(uni.m_blur != 0u)
 	{
 		moments = computeMoments(uv) * w0;
-		moments += computeMoments(clamp(uv + Vec2(UV_OFFSET.x, 0.0), minUv, maxUv)) * w1;
-		moments += computeMoments(clamp(uv + Vec2(-UV_OFFSET.x, 0.0), minUv, maxUv)) * w1;
-		moments += computeMoments(clamp(uv + Vec2(0.0, UV_OFFSET.y), minUv, maxUv)) * w1;
-		moments += computeMoments(clamp(uv + Vec2(0.0, -UV_OFFSET.y), minUv, maxUv)) * w1;
-		moments += computeMoments(clamp(uv + Vec2(UV_OFFSET.x, UV_OFFSET.y), minUv, maxUv)) * w2;
-		moments += computeMoments(clamp(uv + Vec2(-UV_OFFSET.x, UV_OFFSET.y), minUv, maxUv)) * w2;
-		moments += computeMoments(clamp(uv + Vec2(UV_OFFSET.x, -UV_OFFSET.y), minUv, maxUv)) * w2;
-		moments += computeMoments(clamp(uv + Vec2(-UV_OFFSET.x, -UV_OFFSET.y), minUv, maxUv)) * w2;
+		moments += computeMoments(clamp(uv + Vec2(kUvOffset.x, 0.0), minUv, maxUv)) * w1;
+		moments += computeMoments(clamp(uv + Vec2(-kUvOffset.x, 0.0), minUv, maxUv)) * w1;
+		moments += computeMoments(clamp(uv + Vec2(0.0, kUvOffset.y), minUv, maxUv)) * w1;
+		moments += computeMoments(clamp(uv + Vec2(0.0, -kUvOffset.y), minUv, maxUv)) * w1;
+		moments += computeMoments(clamp(uv + Vec2(kUvOffset.x, kUvOffset.y), minUv, maxUv)) * w2;
+		moments += computeMoments(clamp(uv + Vec2(-kUvOffset.x, kUvOffset.y), minUv, maxUv)) * w2;
+		moments += computeMoments(clamp(uv + Vec2(kUvOffset.x, -kUvOffset.y), minUv, maxUv)) * w2;
+		moments += computeMoments(clamp(uv + Vec2(-kUvOffset.x, -kUvOffset.y), minUv, maxUv)) * w2;
 	}
 	else
 	{

@@ -47,15 +47,15 @@ void* App::MemStats::allocCallback(void* userData, void* ptr, PtrSize size, [[ma
 {
 	ANKI_ASSERT(userData);
 
-	constexpr PtrSize MAX_ALIGNMENT = 64;
+	constexpr PtrSize kMaxAlignment = 64;
 
-	struct alignas(MAX_ALIGNMENT) Header
+	struct alignas(kMaxAlignment) Header
 	{
 		PtrSize m_allocatedSize;
-		Array<U8, MAX_ALIGNMENT - sizeof(PtrSize)> _m_padding;
+		Array<U8, kMaxAlignment - sizeof(PtrSize)> _m_padding;
 	};
-	static_assert(sizeof(Header) == MAX_ALIGNMENT, "See file");
-	static_assert(alignof(Header) == MAX_ALIGNMENT, "See file");
+	static_assert(sizeof(Header) == kMaxAlignment, "See file");
+	static_assert(alignof(Header) == kMaxAlignment, "See file");
 
 	void* out = nullptr;
 
@@ -63,9 +63,9 @@ void* App::MemStats::allocCallback(void* userData, void* ptr, PtrSize size, [[ma
 	{
 		// Need to allocate
 		ANKI_ASSERT(size > 0);
-		ANKI_ASSERT(alignment > 0 && alignment <= MAX_ALIGNMENT);
+		ANKI_ASSERT(alignment > 0 && alignment <= kMaxAlignment);
 
-		const PtrSize newAlignment = MAX_ALIGNMENT;
+		const PtrSize newAlignment = kMaxAlignment;
 		const PtrSize newSize = sizeof(Header) + size;
 
 		// Allocate

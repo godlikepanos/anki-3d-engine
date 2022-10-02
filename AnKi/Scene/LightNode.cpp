@@ -164,7 +164,7 @@ Error PointLightNode::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[mayb
 
 		const F32 ang = toRad(90.0f);
 		const F32 dist = lightc.getRadius();
-		const F32 zNear = CLUSTER_OBJECT_FRUSTUM_NEAR_PLANE;
+		const F32 zNear = kClusterObjectFrustumNearPlane;
 
 		Mat3 rot;
 
@@ -261,7 +261,7 @@ void SpotLightNode::onMoved(const MoveComponent& move)
 void SpotLightNode::onLightShapeUpdated(LightComponent& light)
 {
 	FrustumComponent& frc = getFirstComponentOfType<FrustumComponent>();
-	frc.setPerspective(CLUSTER_OBJECT_FRUSTUM_NEAR_PLANE, light.getDistance(), light.getOuterAngle(),
+	frc.setPerspective(kClusterObjectFrustumNearPlane, light.getDistance(), light.getOuterAngle(),
 					   light.getOuterAngle());
 }
 

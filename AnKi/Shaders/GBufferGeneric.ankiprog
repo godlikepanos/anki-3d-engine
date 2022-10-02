@@ -210,9 +210,9 @@ void main()
 #if REALLY_USING_PARALLAX
 Vec2 computeTextureCoordParallax(texture2D heightMap, sampler sampl, Vec2 uv, F32 heightMapScale)
 {
-	const U32 MAX_SAMPLES = 25u;
-	const U32 MIN_SAMPLES = 1u;
-	const F32 MAX_EFFECTIVE_DISTANCE = 32.0;
+	const U32 kMaxSamples = 25u;
+	const U32 kMinSamples = 1u;
+	const F32 kMaxEffectiveDistance = 32.0;
 
 	// Get that because we are sampling inside a loop
 	const Vec2 dPdx = dFdx(uv);
@@ -230,9 +230,9 @@ Vec2 computeTextureCoordParallax(texture2D heightMap, sampler sampl, Vec2 uv, F3
 	const Vec3 E = normalize(eyeTangentSpace);
 
 	const F32 factor0 = -dot(E, normTangentSpace);
-	const F32 factor1 = in_distFromTheCamera / -MAX_EFFECTIVE_DISTANCE;
+	const F32 factor1 = in_distFromTheCamera / -kMaxEffectiveDistance;
 	const F32 factor = saturate((1.0 - factor0) * (1.0 - factor1));
-	const F32 sampleCountf = mix(F32(MIN_SAMPLES), F32(MAX_SAMPLES), factor);
+	const F32 sampleCountf = mix(F32(kMinSamples), F32(kMaxSamples), factor);
 
 	const F32 stepSize = 1.0 / sampleCountf;
 

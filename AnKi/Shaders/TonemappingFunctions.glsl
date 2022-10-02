@@ -15,7 +15,7 @@ ANKI_RP F32 log10(ANKI_RP F32 x)
 
 ANKI_RP F32 computeLuminance(ANKI_RP Vec3 color)
 {
-	return max(dot(Vec3(0.30, 0.59, 0.11), color), EPSILON_RP);
+	return max(dot(Vec3(0.30, 0.59, 0.11), color), kEpsilonRp);
 }
 
 ANKI_RP F32 computeExposure(ANKI_RP F32 avgLum, ANKI_RP F32 threshold)
@@ -86,7 +86,7 @@ ANKI_RP Vec3 tonemap(ANKI_RP Vec3 color, ANKI_RP F32 exposure)
 ANKI_RP Vec3 invertTonemap(ANKI_RP Vec3 color, ANKI_RP F32 exposure)
 {
 	color = invertTonemapACESFilm(color);
-	color /= max(EPSILON, exposure);
+	color /= max(kEpsilonf, exposure);
 	return color;
 }
 

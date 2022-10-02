@@ -7,9 +7,9 @@
 #pragma anki mutator BLOOM_ENABLED 0 1
 #pragma anki mutator DBG_ENABLED 0 1
 
-ANKI_SPECIALIZATION_CONSTANT_U32(LUT_SIZE, 0u);
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(FB_SIZE, 1u);
-ANKI_SPECIALIZATION_CONSTANT_U32(MOTION_BLUR_SAMPLES, 3u);
+ANKI_SPECIALIZATION_CONSTANT_U32(kLutSize, 0u);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(kFramebufferSize, 1u);
+ANKI_SPECIALIZATION_CONSTANT_U32(kMotionBlurSamples, 3u);
 
 #pragma anki start vert
 #include <AnKi/Shaders/QuadVert.glsl>
@@ -45,11 +45,11 @@ layout(location = 0) out ANKI_RP Vec3 out_color;
 
 ANKI_RP Vec3 colorGrading(ANKI_RP Vec3 color)
 {
-	const ANKI_RP Vec3 LUT_SCALE = Vec3((F32(LUT_SIZE) - 1.0) / F32(LUT_SIZE));
-	const ANKI_RP Vec3 LUT_OFFSET = Vec3(1.0 / (2.0 * F32(LUT_SIZE)));
+	const ANKI_RP Vec3 kLutScale = Vec3((F32(kLutSize) - 1.0) / F32(kLutSize));
+	const ANKI_RP Vec3 kLutOffset = Vec3(1.0 / (2.0 * F32(kLutSize)));
 
 	color = min(color, Vec3(1.0));
-	const ANKI_RP Vec3 lutCoords = color * LUT_SCALE + LUT_OFFSET;
+	const ANKI_RP Vec3 lutCoords = color * kLutScale + kLutOffset;
 	return textureLod(u_lut, u_trilinearRepeatSampler, lutCoords, 0.0).rgb;
 }
 
@@ -57,10 +57,10 @@ void main()
 {
 	const Vec2 uv = in_uv;
 
-	if(MOTION_BLUR_SAMPLES > 0u)
+	if(kMotionBlurSamples > 0u)
 	{
-		out_color = motionBlur(u_motionVectorsRt, u_nearestAnyClampSampler, u_lightShadingRt, Vec2(FB_SIZE),
-							   u_linearAnyClampSampler, uv, MOTION_BLUR_SAMPLES);
+		out_color = motionBlur(u_motionVectorsRt, u_nearestAnyClampSampler, u_lightShadingRt, Vec2(kFramebufferSize),
+							   u_linearAnyClampSampler, uv, kMotionBlurSamples);
 	}
 	else
 	{

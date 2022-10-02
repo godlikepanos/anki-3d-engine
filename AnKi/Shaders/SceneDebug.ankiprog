@@ -6,11 +6,11 @@
 #pragma anki mutator COLOR_TEXTURE 0 1
 #pragma anki mutator DITHERED_DEPTH_TEST 0 1
 
-ANKI_SPECIALIZATION_CONSTANT_U32(INSTANCE_COUNT, 0u);
+ANKI_SPECIALIZATION_CONSTANT_U32(kInstanceCount, 0u);
 
 layout(set = 1, binding = 0, row_major) uniform u0_
 {
-	Mat4 u_mvp[INSTANCE_COUNT];
+	Mat4 u_mvp[kInstanceCount];
 	Vec4 u_color;
 };
 

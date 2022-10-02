@@ -82,7 +82,7 @@ void main()
 	// Cluster
 	Cluster cluster = getClusterFragCoord(Vec3(uv * u_clusteredShading.m_renderingSize, depth));
 
-	F32 shadowFactors[MAX_RT_SHADOW_LAYERS];
+	F32 shadowFactors[kMaxRtShadowLayers];
 	zeroRtShadowLayers(shadowFactors);
 
 	// Get a random factor
@@ -178,14 +178,14 @@ void main()
 	// Compute blend fractor. Use nearest sampler because it's an integer texture
 	const F32 lowestBlendFactor = 0.1;
 	const F32 stableFrames = 4.0;
-	const F32 lerp = min(1.0, (historyLength * RT_SHADOWS_MAX_HISTORY_LENGTH - 1.0) / stableFrames);
+	const F32 lerp = min(1.0, (historyLength * kRtShadowsMaxHistoryLength - 1.0) / stableFrames);
 	const F32 blendFactor = mix(1.0, lowestBlendFactor, lerp);
 
 	// Blend with history
 	const UVec4 packedhistory = textureLod(u_historyShadowsTex, u_nearestAnyClampSampler, historyUv, 0.0);
-	F32 history[MAX_RT_SHADOW_LAYERS];
+	F32 history[kMaxRtShadowLayers];
 	unpackRtShadows(packedhistory, history);
-	for(U32 i = 0u; i < MAX_RT_SHADOW_LAYERS; ++i)
+	for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
 	{
 		const F32 lerp = min(1.0, u_unis.historyRejectFactor[i] + blendFactor);
 		shadowFactors[i] = mix(history[i], shadowFactors[i], lerp);
@@ -197,7 +197,7 @@ void main()
 
 	// Compute the moments that will give temporal variance
 	Vec2 moments = Vec2(0.0);
-	ANKI_UNROLL for(U32 i = 0u; i < MAX_RT_SHADOW_LAYERS; ++i)
+	ANKI_UNROLL for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
 	{
 		moments.x += shadowFactors[i];
 	}

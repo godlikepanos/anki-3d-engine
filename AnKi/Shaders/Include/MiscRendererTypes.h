@@ -12,10 +12,10 @@ ANKI_BEGIN_NAMESPACE
 // EVSM
 #define ANKI_EVSM4 0 // 2 component EVSM or 4 component EVSM
 
-const F32 EVSM_POSITIVE_CONSTANT = 40.0f; // EVSM positive constant
-const F32 EVSM_NEGATIVE_CONSTANT = 5.0f; // EVSM negative constant
-const F32 EVSM_BIAS = 0.01f;
-const F32 EVSM_LIGHT_BLEEDING_REDUCTION = 0.05f;
+const F32 kEvsmPositiveConstant = 40.0f; // EVSM positive constant
+const F32 kEvsmNegativeConstant = 5.0f; // EVSM negative constant
+const F32 kEvsmBias = 0.01f;
+const F32 kEvsmLightBleedingReduction = 0.05f;
 
 struct EvsmResolveUniforms
 {
@@ -35,11 +35,11 @@ struct EvsmResolveUniforms
 };
 
 // RT shadows
-const U32 MAX_RT_SHADOW_LAYERS = 8u;
+const U32 kMaxRtShadowLayers = 8u;
 
 struct RtShadowsUniforms
 {
-	F32 historyRejectFactor[MAX_RT_SHADOW_LAYERS]; // 1.0 means reject, 0.0 not reject
+	F32 historyRejectFactor[kMaxRtShadowLayers]; // 1.0 means reject, 0.0 not reject
 };
 
 struct RtShadowsDenoiseUniforms

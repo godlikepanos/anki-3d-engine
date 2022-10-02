@@ -9,12 +9,12 @@
 #pragma anki mutator KERNEL_SIZE 3 5 7 9 11
 #pragma anki mutator COLOR_COMPONENTS 4 3 1
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(TEXTURE_SIZE, 0u);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(kTextureSize, 0u);
 
 #include <AnKi/Shaders/GaussianBlurCommon.glsl>
 
 #if defined(ANKI_COMPUTE_SHADER)
-const UVec2 WORKGROUP_SIZE = UVec2(8, 8);
+const UVec2 kWorkgroupSize = UVec2(8, 8);
 #	define USE_COMPUTE 1
 #else
 #	define USE_COMPUTE 0
@@ -49,7 +49,7 @@ layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 1) uniform texture2D u_tex; ///< Input texture
 
 #if USE_COMPUTE
-layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
+layout(local_size_x = kWorkgroupSize.x, local_size_y = kWorkgroupSize.y, local_size_z = 1) in;
 layout(set = 0, binding = 2) writeonly uniform image2D u_outImg;
 #else
 layout(location = 0) in Vec2 in_uv;
@@ -60,18 +60,18 @@ void main()
 {
 	// Set UVs
 #if USE_COMPUTE
-	ANKI_BRANCH if(gl_GlobalInvocationID.x >= TEXTURE_SIZE.x || gl_GlobalInvocationID.y >= TEXTURE_SIZE.y)
+	ANKI_BRANCH if(gl_GlobalInvocationID.x >= kTextureSize.x || gl_GlobalInvocationID.y >= kTextureSize.y)
 	{
 		// Out of bounds
 		return;
 	}
 
-	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(TEXTURE_SIZE);
+	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(kTextureSize);
 #else
 	const Vec2 uv = in_uv;
 #endif
 
-	const Vec2 TEXEL_SIZE = 1.0 / Vec2(TEXTURE_SIZE);
+	const Vec2 TEXEL_SIZE = 1.0 / Vec2(kTextureSize);
 
 #if !defined(BOX)
 	// Do seperable
@@ -82,16 +82,16 @@ void main()
 #		define X_OR_Y y
 #	endif
 
-	COL_TYPE color = textureLod(u_tex, u_linearAnyClampSampler, uv, 0.0).TEX_FETCH * WEIGHTS[0u];
+	COL_TYPE color = textureLod(u_tex, u_linearAnyClampSampler, uv, 0.0).TEX_FETCH * kWeights[0u];
 
 	Vec2 uvOffset = Vec2(0.0);
 	uvOffset.X_OR_Y = 1.5 * TEXEL_SIZE.X_OR_Y;
 
-	ANKI_UNROLL for(U32 i = 0u; i < STEP_COUNT; ++i)
+	ANKI_UNROLL for(U32 i = 0u; i < kStepCount; ++i)
 	{
 		COL_TYPE col = textureLod(u_tex, u_linearAnyClampSampler, uv + uvOffset, 0.0).TEX_FETCH;
 		col += textureLod(u_tex, u_linearAnyClampSampler, uv - uvOffset, 0.0).TEX_FETCH;
-		color += WEIGHTS[i + 1u] * col;
+		color += kWeights[i + 1u] * col;
 
 		uvOffset.X_OR_Y += 2.0 * TEXEL_SIZE.X_OR_Y;
 	}
@@ -100,20 +100,20 @@ void main()
 
 	const Vec2 OFFSET = 1.5 * TEXEL_SIZE;
 
-	COL_TYPE color = textureLod(u_tex, u_linearAnyClampSampler, uv, 0.0).TEX_FETCH * BOX_WEIGHTS[0u];
+	COL_TYPE color = textureLod(u_tex, u_linearAnyClampSampler, uv, 0.0).TEX_FETCH * kBoxWeights[0u];
 
 	COL_TYPE col;
 	col = textureLod(u_tex, u_linearAnyClampSampler, uv + Vec2(OFFSET.x, 0.0), 0.0).TEX_FETCH;
 	col += textureLod(u_tex, u_linearAnyClampSampler, uv + Vec2(0.0, OFFSET.y), 0.0).TEX_FETCH;
 	col += textureLod(u_tex, u_linearAnyClampSampler, uv + Vec2(-OFFSET.x, 0.0), 0.0).TEX_FETCH;
 	col += textureLod(u_tex, u_linearAnyClampSampler, uv + Vec2(0.0, -OFFSET.y), 0.0).TEX_FETCH;
-	color += col * BOX_WEIGHTS[1u];
+	color += col * kBoxWeights[1u];
 
 	col = textureLod(u_tex, u_linearAnyClampSampler, uv + Vec2(+OFFSET.x, +OFFSET.y), 0.0).TEX_FETCH;
 	col += textureLod(u_tex, u_linearAnyClampSampler, uv + Vec2(+OFFSET.x, -OFFSET.y), 0.0).TEX_FETCH;
 	col += textureLod(u_tex, u_linearAnyClampSampler, uv + Vec2(-OFFSET.x, +OFFSET.y), 0.0).TEX_FETCH;
 	col += textureLod(u_tex, u_linearAnyClampSampler, uv + Vec2(-OFFSET.x, -OFFSET.y), 0.0).TEX_FETCH;
-	color += col * BOX_WEIGHTS[2u];
+	color += col * kBoxWeights[2u];
 #endif
 
 	// Write value

@@ -7,7 +7,7 @@
 #pragma anki mutator SAMPLE_COUNT 3 5 7 9 11 13 15
 #pragma anki mutator COLOR_COMPONENTS 4 3 1
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(TEXTURE_SIZE, 0u);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(kTextureSize, 0u);
 
 #include <AnKi/Shaders/Common.glsl>
 
@@ -25,7 +25,7 @@ ANKI_SPECIALIZATION_CONSTANT_UVEC2(TEXTURE_SIZE, 0u);
 
 #if defined(ANKI_COMPUTE_SHADER)
 #	define USE_COMPUTE 1
-const UVec2 WORKGROUP_SIZE = UVec2(8u, 8u);
+const UVec2 kWorkgroupSize = UVec2(8u, 8u);
 #else
 #	define USE_COMPUTE 0
 #endif
@@ -52,7 +52,7 @@ layout(set = 0, binding = 1) uniform texture2D u_inTex;
 layout(set = 0, binding = 2) uniform texture2D u_depthTex;
 
 #if USE_COMPUTE
-layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
+layout(local_size_x = kWorkgroupSize.x, local_size_y = kWorkgroupSize.y, local_size_z = 1) in;
 layout(set = 0, binding = 3) writeonly uniform image2D u_outImg;
 #else
 layout(location = 0) in Vec2 in_uv;
@@ -62,7 +62,7 @@ layout(location = 0) out COL_TYPE out_color;
 F32 computeDepthWeight(F32 refDepth, F32 depth)
 {
 	const F32 diff = abs(refDepth - depth);
-	const F32 weight = 1.0 / (EPSILON + diff);
+	const F32 weight = 1.0 / (kEpsilonf + diff);
 	return sqrt(weight);
 }
 
@@ -83,18 +83,18 @@ void main()
 {
 	// Set UVs
 #if USE_COMPUTE
-	ANKI_BRANCH if(gl_GlobalInvocationID.x >= TEXTURE_SIZE.x || gl_GlobalInvocationID.y >= TEXTURE_SIZE.y)
+	ANKI_BRANCH if(gl_GlobalInvocationID.x >= kTextureSize.x || gl_GlobalInvocationID.y >= kTextureSize.y)
 	{
 		// Out of bounds
 		return;
 	}
 
-	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(TEXTURE_SIZE);
+	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(kTextureSize);
 #else
 	const Vec2 uv = in_uv;
 #endif
 
-	const Vec2 TEXEL_SIZE = 1.0 / Vec2(TEXTURE_SIZE);
+	const Vec2 TEXEL_SIZE = 1.0 / Vec2(kTextureSize);
 
 	// Sample
 	COL_TYPE color = textureLod(u_inTex, u_linearAnyClampSampler, uv, 0.0).TEX_FETCH;

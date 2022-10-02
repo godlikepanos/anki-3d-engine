@@ -124,12 +124,13 @@ Error ShadowMapping::initAtlas()
 													 m_atlas.m_resolveProg));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_atlas.m_resolveProg);
-		variantInitInfo.addConstant("INPUT_TEXTURE_SIZE", UVec2(m_scratch.m_tileCountX * m_scratch.m_tileResolution,
-																m_scratch.m_tileCountY * m_scratch.m_tileResolution));
+		variantInitInfo.addConstant("kInputTextureSize", UVec2(m_scratch.m_tileCountX * m_scratch.m_tileResolution,
+															   m_scratch.m_tileCountY * m_scratch.m_tileResolution));
 
 		if(!preferCompute)
 		{
-			variantInitInfo.addConstant("FB_SIZE", UVec2(m_atlas.m_tileCountBothAxis * m_atlas.m_tileResolution));
+			variantInitInfo.addConstant("kFramebufferSize",
+										UVec2(m_atlas.m_tileCountBothAxis * m_atlas.m_tileResolution));
 		}
 
 		const ShaderProgramResourceVariant* variant;

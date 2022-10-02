@@ -29,7 +29,7 @@ public:
 	Error loadColorGradingTextureImage(CString filename);
 
 private:
-	static constexpr U LUT_SIZE = 16;
+	static constexpr U kLutSize = 16;
 
 	FramebufferDescription m_fbDescr;
 

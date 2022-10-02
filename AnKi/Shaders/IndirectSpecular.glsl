@@ -38,8 +38,8 @@ const Vec2 NOISE_TEX_SIZE = Vec2(64.0);
 #include <AnKi/Shaders/ClusteredShadingCommon.glsl>
 
 #if defined(ANKI_COMPUTE_SHADER)
-const UVec2 WORKGROUP_SIZE = UVec2(8, 8);
-layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
+const UVec2 kWorkgroupSize = UVec2(8, 8);
+layout(local_size_x = kWorkgroupSize.x, local_size_y = kWorkgroupSize.y, local_size_z = 1) in;
 
 layout(set = 0, binding = 15) uniform writeonly image2D u_outImg;
 #else
@@ -50,7 +50,7 @@ layout(location = 0) out Vec3 out_color;
 void main()
 {
 #if defined(ANKI_COMPUTE_SHADER)
-	if(skipOutOfBoundsInvocations(WORKGROUP_SIZE, u_unis.m_framebufferSize))
+	if(skipOutOfBoundsInvocations(kWorkgroupSize, u_unis.m_framebufferSize))
 	{
 		return;
 	}
@@ -89,7 +89,7 @@ void main()
 
 	// Do the heavy work
 	Vec3 hitPoint;
-	if(ssrAttenuation > EPSILON)
+	if(ssrAttenuation > kEpsilonf)
 	{
 		const U32 lod = 8u; // Use the max LOD for ray marching
 		const U32 step = u_unis.m_firstStepPixels;
@@ -225,7 +225,7 @@ void main()
 		{
 			// Zero or more than one probes, do a slow path that blends them together
 
-			F32 totalBlendWeight = EPSILON;
+			F32 totalBlendWeight = kEpsilonf;
 
 			// Loop probes
 			ANKI_LOOP while(cluster.m_reflectionProbesMask != 0u)
