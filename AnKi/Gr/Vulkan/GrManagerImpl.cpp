@@ -99,7 +99,7 @@ GrManagerImpl::~GrManagerImpl()
 	}
 
 #if ANKI_PLATFORM_MOBILE
-	m_alloc.deleteInstance(m_globalCreatePipelineMtx);
+	anki::deleteInstance(m_pool, m_globalCreatePipelineMtx);
 #endif
 }
 
@@ -538,7 +538,7 @@ Error GrManagerImpl::initInstance()
 	{
 		// Calling vkCreateGraphicsPipeline from multiple threads crashes qualcomm's compiler
 		ANKI_VK_LOGI("Enabling workaround for vkCreateGraphicsPipeline crashing when called from multiple threads");
-		m_globalCreatePipelineMtx = m_alloc.newInstance<Mutex>();
+		m_globalCreatePipelineMtx = anki::newInstance<Mutex>(m_pool);
 	}
 #endif
 

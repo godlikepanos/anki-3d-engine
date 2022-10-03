@@ -105,7 +105,7 @@ static Error getAndroidApkName(StringRaii& name)
 {
 	const pid_t pid = getpid();
 
-	StringRaii path(name.getAllocator());
+	StringRaii path(&name.getMemoryPool());
 	path.sprintf("/proc/%d/cmdline", pid);
 
 	const int fd = open(path.cstr(), O_RDONLY);
@@ -153,8 +153,8 @@ void* getAndroidCommandLineArguments(int& argc, char**& argv)
 	jstring jsParam1 = static_cast<jstring>(env->CallObjectMethod(intent, gseid, env->NewStringUTF("cmd")));
 
 	// Parse the command line args
-	HeapAllocator<U8> alloc(allocAligned, nullptr, "getAndroidCommandLineArguments temp");
-	StringListRaii args(alloc);
+	HeapMemoryPool pool(allocAligned, nullptr, "getAndroidCommandLineArguments temp");
+	StringListRaii args(&pool);
 
 	if(jsParam1)
 	{
@@ -164,7 +164,7 @@ void* getAndroidCommandLineArguments(int& argc, char**& argv)
 	}
 
 	// Add the apk name
-	StringRaii apkName(alloc);
+	StringRaii apkName(&pool);
 	if(!getAndroidApkName(apkName))
 	{
 		args.pushFront(apkName);

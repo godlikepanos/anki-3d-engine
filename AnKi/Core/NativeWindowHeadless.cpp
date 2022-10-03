@@ -9,9 +9,11 @@ namespace anki {
 
 Error NativeWindow::newInstance(const NativeWindowInitInfo& initInfo, NativeWindow*& nativeWindow)
 {
-	HeapAllocator<U8> alloc(initInfo.m_allocCallback, initInfo.m_allocCallbackUserData, "NativeWindow");
-	NativeWindowHeadless* hwin = alloc.newInstance<NativeWindowHeadless>();
-	hwin->m_alloc = alloc;
+	NativeWindowHeadless* hwin = static_cast<NativeWindowHeadless*>(initInfo.m_allocCallback(
+		initInfo.m_allocCallbackUserData, nullptr, sizeof(NativeWindowHeadless), alignof(NativeWindowHeadless)));
+	callConstructor(*hwin);
+
+	hwin->m_pool.init(initInfo.m_allocCallback, initInfo.m_allocCallbackUserData);
 	hwin->m_width = initInfo.m_width;
 	hwin->m_height = initInfo.m_height;
 
@@ -24,12 +26,14 @@ void NativeWindow::deleteInstance(NativeWindow* window)
 	if(window)
 	{
 		NativeWindowHeadless* self = static_cast<NativeWindowHeadless*>(window);
-		HeapAllocator<U8> alloc = self->m_alloc;
-		alloc.deleteInstance(self);
+		AllocAlignedCallback callback = self->m_pool.getAllocationCallback();
+		void* userData = self->m_pool.getAllocationCallbackUserData();
+		callDestructor(*self);
+		callback(userData, self, 0, 0);
 	}
 }
 
-void NativeWindow::setWindowTitle(CString title)
+void NativeWindow::setWindowTitle([[maybe_unused]] CString title)
 {
 	// Nothing
 }

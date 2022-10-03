@@ -1003,16 +1003,16 @@ using StringRaii = BaseStringRaii<>;
 	ANKI_STRING_COMPARE_OPERATOR(TypeA, TypeB, >, __VA_ARGS__) \
 	ANKI_STRING_COMPARE_OPERATOR(TypeA, TypeB, >=, __VA_ARGS__)
 
-ANKI_STRING_COMPARE_OPS(const Char*, CString)
-ANKI_STRING_COMPARE_OPS(const Char*, const String&)
+ANKI_STRING_COMPARE_OPS(const Char*, CString, )
+ANKI_STRING_COMPARE_OPS(const Char*, const String&, )
 ANKI_STRING_COMPARE_OPS(const Char*, const BaseStringRaii<TMemPool>&, template<typename TMemPool>)
 
-ANKI_STRING_COMPARE_OPS(CString, const Char*)
-ANKI_STRING_COMPARE_OPS(CString, const String&)
+ANKI_STRING_COMPARE_OPS(CString, const Char*, )
+ANKI_STRING_COMPARE_OPS(CString, const String&, )
 ANKI_STRING_COMPARE_OPS(CString, const BaseStringRaii<TMemPool>&, template<typename TMemPool>)
 
-ANKI_STRING_COMPARE_OPS(const String&, const Char*)
-ANKI_STRING_COMPARE_OPS(const String&, CString)
+ANKI_STRING_COMPARE_OPS(const String&, const Char*, )
+ANKI_STRING_COMPARE_OPS(const String&, CString, )
 ANKI_STRING_COMPARE_OPS(const String&, const BaseStringRaii<TMemPool>&, template<typename TMemPool>)
 
 ANKI_STRING_COMPARE_OPS(const BaseStringRaii<TMemPool>&, const Char*, template<typename TMemPool>)

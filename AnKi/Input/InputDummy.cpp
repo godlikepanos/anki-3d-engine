@@ -13,11 +13,11 @@ Error Input::newInstance(AllocAlignedCallback allocCallback, void* allocCallback
 {
 	ANKI_ASSERT(allocCallback && nativeWindow);
 
-	HeapAllocator<U8> alloc(allocCallback, allocCallbackUserData, "Input");
-	Input* ainput = alloc.newInstance<Input>();
+	Input* ainput = static_cast<Input*>(allocCallback(allocCallbackUserData, nullptr, sizeof(Input), alignof(Input)));
+	callConstructor(*ainput);
 
+	ainput->m_pool.init(allocCallback, allocCallbackUserData);
 	ainput->m_nativeWindow = nativeWindow;
-	ainput->m_alloc = alloc;
 
 	input = ainput;
 	return Error::kNone;
@@ -27,8 +27,10 @@ void Input::deleteInstance(Input* input)
 {
 	if(input)
 	{
-		HeapAllocator<U8> alloc = input->m_alloc;
-		alloc.deleteInstance(input);
+		AllocAlignedCallback callback = input->m_pool.getAllocationCallback();
+		void* userData = input->m_pool.getAllocationCallbackUserData();
+		callDestructor(*input);
+		callback(userData, input, 0, 0);
 	}
 }
 
@@ -49,7 +51,7 @@ void Input::moveCursor(const Vec2& posNdc)
 	m_mousePosWin.y() = U32(F32(m_nativeWindow->getHeight()) * (-posNdc.y() * 0.5f + 0.5f));
 }
 
-void Input::hideCursor(Bool hide)
+void Input::hideCursor([[maybe_unused]] Bool hide)
 {
 	// Nothing
 }

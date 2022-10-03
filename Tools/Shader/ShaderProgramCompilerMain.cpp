@@ -7,7 +7,7 @@
 #include <AnKi/Util.h>
 using namespace anki;
 
-static constexpr char* kUsage = R"(Compile an AnKi shader program
+static constexpr const char* kUsage = R"(Compile an AnKi shader program
 Usage: %s [options] input_shader_program_file
 Options:
 -o <name of output>  : The name of the output binary
