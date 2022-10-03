@@ -108,18 +108,15 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 				sampleSubresource.m_firstMipmap = i - 1;
 				renderSubresource.m_firstMipmap = i;
 
-				pass.newDependency(
-					RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::kImageComputeWrite, renderSubresource));
-				pass.newDependency(
-					RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::kSampledCompute, sampleSubresource));
+				pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kImageComputeWrite, renderSubresource);
+				pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kSampledCompute, sampleSubresource);
 			}
 			else
 			{
 				TextureSubresourceInfo renderSubresource;
 
-				pass.newDependency(
-					RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::kImageComputeWrite, renderSubresource));
-				pass.newDependency(RenderPassDependency(inRt, TextureUsageBit::kSampledCompute));
+				pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kImageComputeWrite, renderSubresource);
+				pass.newTextureDependency(inRt, TextureUsageBit::kSampledCompute);
 			}
 		}
 	}
@@ -141,18 +138,15 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 				sampleSubresource.m_firstMipmap = i - 1;
 				renderSubresource.m_firstMipmap = i;
 
-				pass.newDependency(
-					RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite, renderSubresource));
-				pass.newDependency(
-					RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::kSampledFragment, sampleSubresource));
+				pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite, renderSubresource);
+				pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kSampledFragment, sampleSubresource);
 			}
 			else
 			{
 				TextureSubresourceInfo renderSubresource;
 
-				pass.newDependency(
-					RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite, renderSubresource));
-				pass.newDependency(RenderPassDependency(inRt, TextureUsageBit::kSampledFragment));
+				pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite, renderSubresource);
+				pass.newTextureDependency(inRt, TextureUsageBit::kSampledFragment);
 			}
 		}
 	}

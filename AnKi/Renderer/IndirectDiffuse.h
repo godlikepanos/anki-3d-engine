@@ -36,15 +36,15 @@ public:
 
 	RenderTargetHandle getRt() const
 	{
-		return m_runCtx.m_mainRtHandles[WRITE];
+		return m_runCtx.m_mainRtHandles[kWrite];
 	}
 
 private:
 	Array<TexturePtr, 2> m_rts;
 	Bool m_rtsImportedOnce = false;
 
-	static constexpr U32 READ = 0;
-	static constexpr U32 WRITE = 1;
+	static constexpr U32 kRead = 0;
+	static constexpr U32 kWrite = 1;
 
 	class
 	{

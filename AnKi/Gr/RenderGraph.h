@@ -342,8 +342,27 @@ public:
 		setWork(0, func);
 	}
 
-	/// Add a new consumer or producer dependency.
-	void newDependency(const RenderPassDependency& dep);
+	void newTextureDependency(RenderTargetHandle handle, TextureUsageBit usage,
+							  const TextureSubresourceInfo& subresource)
+	{
+		newDependency<RenderPassDependency::Type::kTexture>(RenderPassDependency(handle, usage, subresource));
+	}
+
+	void newTextureDependency(RenderTargetHandle handle, TextureUsageBit usage,
+							  DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
+	{
+		newDependency<RenderPassDependency::Type::kTexture>(RenderPassDependency(handle, usage, aspect));
+	}
+
+	void newBufferDependency(BufferHandle handle, BufferUsageBit usage)
+	{
+		newDependency<RenderPassDependency::Type::kBuffer>(RenderPassDependency(handle, usage));
+	}
+
+	void newAccelerationStructureDependency(AccelerationStructureHandle handle, AccelerationStructureUsageBit usage)
+	{
+		newDependency<RenderPassDependency::Type::kAccelerationStructure>(RenderPassDependency(handle, usage));
+	}
 
 protected:
 	enum class Type : U8
@@ -388,6 +407,10 @@ protected:
 	void fixSubresource(RenderPassDependency& dep) const;
 
 	void validateDep(const RenderPassDependency& dep);
+
+	/// Add a new consumer or producer dependency.
+	template<RenderPassDependency::Type kType>
+	void newDependency(const RenderPassDependency& dep);
 };
 
 /// Framebuffer attachment info.

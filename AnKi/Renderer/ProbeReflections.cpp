@@ -539,11 +539,11 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 		for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 		{
-			pass.newDependency({m_ctx.m_gbufferColorRts[i], TextureUsageBit::kFramebufferWrite});
+			pass.newTextureDependency(m_ctx.m_gbufferColorRts[i], TextureUsageBit::kFramebufferWrite);
 		}
 
 		TextureSubresourceInfo subresource(DepthStencilAspectBit::kDepth);
-		pass.newDependency({m_ctx.m_gbufferDepthRt, TextureUsageBit::kAllFramebuffer, subresource});
+		pass.newTextureDependency(m_ctx.m_gbufferDepthRt, TextureUsageBit::kAllFramebuffer, subresource);
 	}
 
 	// Shadow pass. Optional
@@ -587,7 +587,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		});
 
 		TextureSubresourceInfo subresource(DepthStencilAspectBit::kDepth);
-		pass.newDependency({m_ctx.m_shadowMapRt, TextureUsageBit::kAllFramebuffer, subresource});
+		pass.newTextureDependency(m_ctx.m_shadowMapRt, TextureUsageBit::kAllFramebuffer, subresource);
 	}
 	else
 	{
@@ -613,18 +613,18 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			});
 
 			TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
-			pass.newDependency({m_ctx.m_lightShadingRt, TextureUsageBit::kFramebufferWrite, subresource});
+			pass.newTextureDependency(m_ctx.m_lightShadingRt, TextureUsageBit::kFramebufferWrite, subresource);
 
 			for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 			{
-				pass.newDependency({m_ctx.m_gbufferColorRts[i], TextureUsageBit::kSampledFragment});
+				pass.newTextureDependency(m_ctx.m_gbufferColorRts[i], TextureUsageBit::kSampledFragment);
 			}
-			pass.newDependency({m_ctx.m_gbufferDepthRt, TextureUsageBit::kSampledFragment,
-								TextureSubresourceInfo(DepthStencilAspectBit::kDepth)});
+			pass.newTextureDependency(m_ctx.m_gbufferDepthRt, TextureUsageBit::kSampledFragment,
+									  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
 			if(m_ctx.m_shadowMapRt.isValid())
 			{
-				pass.newDependency({m_ctx.m_shadowMapRt, TextureUsageBit::kSampledFragment});
+				pass.newTextureDependency(m_ctx.m_shadowMapRt, TextureUsageBit::kSampledFragment);
 			}
 		}
 	}
@@ -644,9 +644,9 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		TextureSubresourceInfo readSubresource;
 		readSubresource.m_faceCount = 6;
 		readSubresource.m_firstLayer = probeToUpdateCacheEntryIdx;
-		pass.newDependency({m_ctx.m_lightShadingRt, TextureUsageBit::kSampledCompute, readSubresource});
+		pass.newTextureDependency(m_ctx.m_lightShadingRt, TextureUsageBit::kSampledCompute, readSubresource);
 
-		pass.newDependency({m_ctx.m_irradianceDiceValuesBuffHandle, BufferUsageBit::kStorageComputeWrite});
+		pass.newBufferDependency(m_ctx.m_irradianceDiceValuesBuffHandle, BufferUsageBit::kStorageComputeWrite);
 	}
 
 	// Write irradiance back to refl
@@ -659,16 +659,17 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 		for(U i = 0; i < kGBufferColorRenderTargetCount - 1; ++i)
 		{
-			pass.newDependency({m_ctx.m_gbufferColorRts[i], TextureUsageBit::kSampledCompute});
+			pass.newTextureDependency(m_ctx.m_gbufferColorRts[i], TextureUsageBit::kSampledCompute);
 		}
 
 		TextureSubresourceInfo subresource;
 		subresource.m_faceCount = 6;
 		subresource.m_firstLayer = probeToUpdateCacheEntryIdx;
-		pass.newDependency({m_ctx.m_lightShadingRt,
-							TextureUsageBit::kImageComputeRead | TextureUsageBit::kImageComputeWrite, subresource});
+		pass.newTextureDependency(m_ctx.m_lightShadingRt,
+								  TextureUsageBit::kImageComputeRead | TextureUsageBit::kImageComputeWrite,
+								  subresource);
 
-		pass.newDependency({m_ctx.m_irradianceDiceValuesBuffHandle, BufferUsageBit::kStorageComputeRead});
+		pass.newBufferDependency(m_ctx.m_irradianceDiceValuesBuffHandle, BufferUsageBit::kStorageComputeRead);
 	}
 
 	// Mipmapping "passes"
@@ -685,7 +686,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
 			subresource.m_mipmapCount = m_lightShading.m_mipCount;
 
-			pass.newDependency({m_ctx.m_lightShadingRt, TextureUsageBit::kGenerateMipmaps, subresource});
+			pass.newTextureDependency(m_ctx.m_lightShadingRt, TextureUsageBit::kGenerateMipmaps, subresource);
 		}
 	}
 }

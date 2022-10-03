@@ -61,7 +61,7 @@ void AccelerationStructureBuilder::populateRenderGraph(RenderingContext& ctx)
 		rgraphCtx.m_commandBuffer->buildAccelerationStructure(m_runCtx.m_tlas);
 	});
 
-	rpass.newDependency(RenderPassDependency(m_runCtx.m_tlasHandle, AccelerationStructureUsageBit::kBuild));
+	rpass.newAccelerationStructureDependency(m_runCtx.m_tlasHandle, AccelerationStructureUsageBit::kBuild);
 }
 
 } // end namespace anki

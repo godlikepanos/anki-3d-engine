@@ -73,12 +73,12 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 
 void ForwardShading::setDependencies(const RenderingContext& ctx, GraphicsRenderPassDescription& pass)
 {
-	pass.newDependency({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::kSampledFragment, kHiZHalfSurface});
-	pass.newDependency({m_r->getVolumetricLightingAccumulation().getRt(), TextureUsageBit::kSampledFragment});
+	pass.newTextureDependency(m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::kSampledFragment, kHiZHalfSurface);
+	pass.newTextureDependency(m_r->getVolumetricLightingAccumulation().getRt(), TextureUsageBit::kSampledFragment);
 
 	if(ctx.m_renderQueue->m_lensFlares.getSize())
 	{
-		pass.newDependency({m_r->getLensFlare().getIndirectDrawBuffer(), BufferUsageBit::kIndirectDraw});
+		pass.newBufferDependency(m_r->getLensFlare().getIndirectDrawBuffer(), BufferUsageBit::kIndirectDraw);
 	}
 }
 

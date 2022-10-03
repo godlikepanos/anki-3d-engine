@@ -202,11 +202,11 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		const TextureUsageBit readUsage = TextureUsageBit::kAllSampled & TextureUsageBit::kAllCompute;
 		const TextureUsageBit writeUsage = TextureUsageBit::kAllImage & TextureUsageBit::kAllCompute;
 
-		pass.newDependency(RenderPassDependency(m_r->getLightShading().getRt(), readUsage));
-		pass.newDependency(RenderPassDependency(m_r->getMotionVectors().getMotionVectorsRt(), readUsage));
-		pass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), readUsage,
-												TextureSubresourceInfo(DepthStencilAspectBit::kDepth)));
-		pass.newDependency(RenderPassDependency(m_runCtx.m_upscaledHdrRt, writeUsage));
+		pass.newTextureDependency(m_r->getLightShading().getRt(), readUsage);
+		pass.newTextureDependency(m_r->getMotionVectors().getMotionVectorsRt(), readUsage);
+		pass.newTextureDependency(m_r->getGBuffer().getDepthRt(), readUsage,
+								  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+		pass.newTextureDependency(m_runCtx.m_upscaledHdrRt, writeUsage);
 
 		pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 			runGrUpscaling(ctx, rgraphCtx);
@@ -222,8 +222,8 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		if(preferCompute)
 		{
 			ComputeRenderPassDescription& pass = ctx.m_renderGraphDescr.newComputeRenderPass("Scale");
-			pass.newDependency(RenderPassDependency(inRt, TextureUsageBit::kSampledCompute));
-			pass.newDependency(RenderPassDependency(outRt, TextureUsageBit::kImageComputeWrite));
+			pass.newTextureDependency(inRt, TextureUsageBit::kSampledCompute);
+			pass.newTextureDependency(outRt, TextureUsageBit::kImageComputeWrite);
 
 			pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 				runFsrOrBilinearScaling(rgraphCtx);
@@ -233,8 +233,8 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		{
 			GraphicsRenderPassDescription& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Scale");
 			pass.setFramebufferInfo(m_fbDescr, {outRt});
-			pass.newDependency(RenderPassDependency(inRt, TextureUsageBit::kSampledFragment));
-			pass.newDependency(RenderPassDependency(outRt, TextureUsageBit::kFramebufferWrite));
+			pass.newTextureDependency(inRt, TextureUsageBit::kSampledFragment);
+			pass.newTextureDependency(outRt, TextureUsageBit::kFramebufferWrite);
 
 			pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 				runFsrOrBilinearScaling(rgraphCtx);
@@ -259,8 +259,8 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		if(preferCompute)
 		{
 			ComputeRenderPassDescription& pass = ctx.m_renderGraphDescr.newComputeRenderPass("Tonemap");
-			pass.newDependency(RenderPassDependency(inRt, TextureUsageBit::kSampledCompute));
-			pass.newDependency(RenderPassDependency(outRt, TextureUsageBit::kImageComputeWrite));
+			pass.newTextureDependency(inRt, TextureUsageBit::kSampledCompute);
+			pass.newTextureDependency(outRt, TextureUsageBit::kImageComputeWrite);
 
 			pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 				runTonemapping(rgraphCtx);
@@ -270,8 +270,8 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		{
 			GraphicsRenderPassDescription& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Sharpen");
 			pass.setFramebufferInfo(m_fbDescr, {outRt});
-			pass.newDependency(RenderPassDependency(inRt, TextureUsageBit::kSampledFragment));
-			pass.newDependency(RenderPassDependency(outRt, TextureUsageBit::kFramebufferWrite));
+			pass.newTextureDependency(inRt, TextureUsageBit::kSampledFragment);
+			pass.newTextureDependency(outRt, TextureUsageBit::kFramebufferWrite);
 
 			pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 				runTonemapping(rgraphCtx);
@@ -293,8 +293,8 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		if(preferCompute)
 		{
 			ComputeRenderPassDescription& pass = ctx.m_renderGraphDescr.newComputeRenderPass("Sharpen");
-			pass.newDependency(RenderPassDependency(inRt, TextureUsageBit::kSampledCompute));
-			pass.newDependency(RenderPassDependency(outRt, TextureUsageBit::kImageComputeWrite));
+			pass.newTextureDependency(inRt, TextureUsageBit::kSampledCompute);
+			pass.newTextureDependency(outRt, TextureUsageBit::kImageComputeWrite);
 
 			pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 				runRcasSharpening(rgraphCtx);
@@ -304,8 +304,8 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		{
 			GraphicsRenderPassDescription& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Sharpen");
 			pass.setFramebufferInfo(m_fbDescr, {outRt});
-			pass.newDependency(RenderPassDependency(inRt, TextureUsageBit::kSampledFragment));
-			pass.newDependency(RenderPassDependency(outRt, TextureUsageBit::kFramebufferWrite));
+			pass.newTextureDependency(inRt, TextureUsageBit::kSampledFragment);
+			pass.newTextureDependency(outRt, TextureUsageBit::kFramebufferWrite);
 
 			pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 				runRcasSharpening(rgraphCtx);

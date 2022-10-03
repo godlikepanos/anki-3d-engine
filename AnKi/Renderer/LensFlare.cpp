@@ -126,9 +126,9 @@ void LensFlare::populateRenderGraph(RenderingContext& ctx)
 			updateIndirectInfo(ctx, rgraphCtx);
 		});
 
-		rpass.newDependency({m_runCtx.m_indirectBuffHandle, BufferUsageBit::kStorageComputeWrite});
-		rpass.newDependency(
-			{m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::kSampledCompute, kHiZQuarterSurface});
+		rpass.newBufferDependency(m_runCtx.m_indirectBuffHandle, BufferUsageBit::kStorageComputeWrite);
+		rpass.newTextureDependency(m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::kSampledCompute,
+								   kHiZQuarterSurface);
 	}
 }
 

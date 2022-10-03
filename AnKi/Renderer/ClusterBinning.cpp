@@ -67,8 +67,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 		RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Cluster Binning");
 
-		pass.newDependency(
-			RenderPassDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::kStorageComputeWrite));
+		pass.newBufferDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::kStorageComputeWrite);
 
 		pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;

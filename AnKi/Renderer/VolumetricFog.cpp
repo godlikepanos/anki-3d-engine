@@ -59,8 +59,8 @@ void VolumetricFog::populateRenderGraph(RenderingContext& ctx)
 
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Vol fog");
 
-	pass.newDependency({m_runCtx.m_rt, TextureUsageBit::kImageComputeWrite});
-	pass.newDependency({m_r->getVolumetricLightingAccumulation().getRt(), TextureUsageBit::kSampledCompute});
+	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kImageComputeWrite);
+	pass.newTextureDependency(m_r->getVolumetricLightingAccumulation().getRt(), TextureUsageBit::kSampledCompute);
 
 	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) -> void {
 		CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;

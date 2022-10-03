@@ -98,18 +98,17 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 	});
 	pass.setFramebufferInfo(m_fbDescr, {ctx.m_outRenderTarget});
 
-	pass.newDependency(RenderPassDependency(ctx.m_outRenderTarget, TextureUsageBit::kFramebufferWrite));
+	pass.newTextureDependency(ctx.m_outRenderTarget, TextureUsageBit::kFramebufferWrite);
 
 	if(getConfig().getRDbgEnabled())
 	{
-		pass.newDependency(RenderPassDependency(m_r->getDbg().getRt(), TextureUsageBit::kSampledFragment));
+		pass.newTextureDependency(m_r->getDbg().getRt(), TextureUsageBit::kSampledFragment);
 	}
 
-	pass.newDependency(RenderPassDependency(m_r->getScale().getTonemappedRt(), TextureUsageBit::kSampledFragment));
-	pass.newDependency(RenderPassDependency(m_r->getBloom().getRt(), TextureUsageBit::kSampledFragment));
-	pass.newDependency(
-		RenderPassDependency(m_r->getMotionVectors().getMotionVectorsRt(), TextureUsageBit::kSampledFragment));
-	pass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::kSampledFragment));
+	pass.newTextureDependency(m_r->getScale().getTonemappedRt(), TextureUsageBit::kSampledFragment);
+	pass.newTextureDependency(m_r->getBloom().getRt(), TextureUsageBit::kSampledFragment);
+	pass.newTextureDependency(m_r->getMotionVectors().getMotionVectorsRt(), TextureUsageBit::kSampledFragment);
+	pass.newTextureDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::kSampledFragment);
 
 	Array<RenderTargetHandle, kMaxDebugRenderTargets> dbgRts;
 	ShaderProgramPtr debugProgram;
@@ -120,7 +119,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 		{
 			if(handle.isValid())
 			{
-				pass.newDependency(RenderPassDependency(handle, TextureUsageBit::kSampledFragment));
+				pass.newTextureDependency(handle, TextureUsageBit::kSampledFragment);
 			}
 		}
 	}

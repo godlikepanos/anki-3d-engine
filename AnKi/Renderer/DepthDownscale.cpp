@@ -188,15 +188,14 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("HiZ");
 
-		pass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::kSampledCompute,
-												TextureSubresourceInfo(DepthStencilAspectBit::kDepth)));
+		pass.newTextureDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::kSampledCompute,
+								  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
 		for(U32 mip = 0; mip < m_mipCount; ++mip)
 		{
 			TextureSubresourceInfo subresource;
 			subresource.m_firstMipmap = mip;
-			pass.newDependency(
-				RenderPassDependency(m_runCtx.m_hizRt, TextureUsageBit::kImageComputeWrite, subresource));
+			pass.newTextureDependency(m_runCtx.m_hizRt, TextureUsageBit::kImageComputeWrite, subresource);
 		}
 
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
@@ -216,21 +215,19 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 
 			if(mip == 0)
 			{
-				pass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(),
-														TextureUsageBit::kSampledFragment,
-														TextureSubresourceInfo(DepthStencilAspectBit::kDepth)));
+				pass.newTextureDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::kSampledFragment,
+										  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 			}
 			else
 			{
 				TextureSurfaceInfo subresource;
 				subresource.m_level = mip - 1;
-				pass.newDependency(
-					RenderPassDependency(m_runCtx.m_hizRt, TextureUsageBit::kSampledFragment, subresource));
+				pass.newTextureDependency(m_runCtx.m_hizRt, TextureUsageBit::kSampledFragment, subresource);
 			}
 
 			TextureSurfaceInfo subresource;
 			subresource.m_level = mip;
-			pass.newDependency(RenderPassDependency(m_runCtx.m_hizRt, TextureUsageBit::kFramebufferWrite, subresource));
+			pass.newTextureDependency(m_runCtx.m_hizRt, TextureUsageBit::kFramebufferWrite, subresource);
 
 			pass.setWork([this, mip](RenderPassWorkContext& rgraphCtx) {
 				runGraphics(mip, rgraphCtx);

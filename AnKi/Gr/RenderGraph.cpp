@@ -59,12 +59,15 @@ public:
 	TextureUsageBit m_usageBefore;
 	TextureUsageBit m_usageAfter;
 	TextureSurfaceInfo m_surface;
+	DepthStencilAspectBit m_dsAspect;
 
-	TextureBarrier(U32 rtIdx, TextureUsageBit usageBefore, TextureUsageBit usageAfter, const TextureSurfaceInfo& surf)
+	TextureBarrier(U32 rtIdx, TextureUsageBit usageBefore, TextureUsageBit usageAfter, const TextureSurfaceInfo& surf,
+				   DepthStencilAspectBit dsAspect)
 		: m_idx(rtIdx)
 		, m_usageBefore(usageBefore)
 		, m_usageAfter(usageAfter)
 		, m_surface(surf)
+		, m_dsAspect(dsAspect)
 	{
 	}
 };
@@ -1036,7 +1039,8 @@ void RenderGraph::setTextureBarrier(Batch& batch, const RenderPassDependency& de
 				{
 					// Create a new barrier for this surface
 
-					batch.m_textureBarriersBefore.emplaceBack(*ctx.m_pool, rtIdx, crntUsage, depUsage, surf);
+					batch.m_textureBarriersBefore.emplaceBack(*ctx.m_pool, rtIdx, crntUsage, depUsage, surf,
+															  dep.m_texture.m_subresource.m_depthStencilAspect);
 
 					crntUsage = depUsage;
 					rt.m_lastBatchThatTransitionedIt[surfOrVolIdx] = U16(batchIdx);
@@ -1297,6 +1301,39 @@ void RenderGraph::run() const
 		CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 		// Set the barriers
+#if 1
+		DynamicArrayRaii<TextureBarrierInfo> texBarriers(m_ctx->m_pool);
+		texBarriers.resizeStorage(batch.m_textureBarriersBefore.getSize());
+		for(const TextureBarrier& barrier : batch.m_textureBarriersBefore)
+		{
+			TextureBarrierInfo& inf = *texBarriers.emplaceBack();
+			inf.m_previousUsage = barrier.m_usageBefore;
+			inf.m_nextUsage = barrier.m_usageAfter;
+			inf.m_subresource = barrier.m_surface;
+			inf.m_subresource.m_depthStencilAspect = barrier.m_dsAspect;
+			inf.m_texture = m_ctx->m_rts[barrier.m_idx].m_texture.get();
+		}
+		DynamicArrayRaii<BufferBarrierInfo> buffBarriers(m_ctx->m_pool);
+		buffBarriers.resizeStorage(batch.m_bufferBarriersBefore.getSize());
+		for(const BufferBarrier& barrier : batch.m_bufferBarriersBefore)
+		{
+			BufferBarrierInfo& inf = *buffBarriers.emplaceBack();
+			inf.m_previousUsage = barrier.m_usageBefore;
+			inf.m_nextUsage = barrier.m_usageAfter;
+			inf.m_offset = m_ctx->m_buffers[barrier.m_idx].m_offset;
+			inf.m_size = m_ctx->m_buffers[barrier.m_idx].m_range;
+			inf.m_buffer = m_ctx->m_buffers[barrier.m_idx].m_buffer.get();
+		}
+		DynamicArrayRaii<AccelerationStructureBarrierInfo> asBarriers(m_ctx->m_pool);
+		for(const ASBarrier& barrier : batch.m_asBarriersBefore)
+		{
+			AccelerationStructureBarrierInfo& inf = *asBarriers.emplaceBack();
+			inf.m_previousUsage = barrier.m_usageBefore;
+			inf.m_nextUsage = barrier.m_usageAfter;
+			inf.m_as = m_ctx->m_as[barrier.m_idx].m_as.get();
+		}
+		cmdb->setPipelineBarrier(texBarriers, buffBarriers, asBarriers);
+#else
 		for(const TextureBarrier& barrier : batch.m_textureBarriersBefore)
 		{
 			cmdb->setTextureSurfaceBarrier(m_ctx->m_rts[barrier.m_idx].m_texture, barrier.m_usageBefore,
@@ -1312,6 +1349,7 @@ void RenderGraph::run() const
 			cmdb->setAccelerationStructureBarrier(m_ctx->m_as[barrier.m_idx].m_as, barrier.m_usageBefore,
 												  barrier.m_usageAfter);
 		}
+#endif
 
 		// Call the passes
 		for(U32 passIdx : batch.m_passIndices)

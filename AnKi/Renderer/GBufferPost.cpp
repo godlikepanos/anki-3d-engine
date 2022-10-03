@@ -68,12 +68,11 @@ void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 
 	rpass.setFramebufferInfo(m_fbDescr, {m_r->getGBuffer().getColorRt(0), m_r->getGBuffer().getColorRt(1)});
 
-	rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(0), TextureUsageBit::kAllFramebuffer));
-	rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(1), TextureUsageBit::kAllFramebuffer));
-	rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::kSampledFragment,
-											 TextureSubresourceInfo(DepthStencilAspectBit::kDepth)));
-	rpass.newDependency(
-		RenderPassDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::kStorageFragmentRead));
+	rpass.newTextureDependency(m_r->getGBuffer().getColorRt(0), TextureUsageBit::kAllFramebuffer);
+	rpass.newTextureDependency(m_r->getGBuffer().getColorRt(1), TextureUsageBit::kAllFramebuffer);
+	rpass.newTextureDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::kSampledFragment,
+							   TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+	rpass.newBufferDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::kStorageFragmentRead);
 }
 
 void GBufferPost::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)

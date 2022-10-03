@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+
+	<Type Name="anki::ConstWeakArray&lt;*&gt;">
+		<Intrinsic Name="size" Expression="m_size" />
+		<DisplayString>{{ size={m_size} }}</DisplayString>
+		<Expand>
+			<ArrayItems>
+				<Size>m_size</Size>
+				<ValuePointer>m_data</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
+
+	<Type Name="anki::WeakArray&lt;*&gt;">
+		<Intrinsic Name="size" Expression="m_size" />
+		<DisplayString>{{ size={m_size} }}</DisplayString>
+		<Expand>
+			<ArrayItems>
+				<Size>m_size</Size>
+				<ValuePointer>m_data</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
+
+	<Type Name="anki::DynamicArray&lt;*&gt;">
+		<Intrinsic Name="size" Expression="m_size" />
+		<DisplayString>{{ size={m_size} capacity={m_capacity} }}</DisplayString>
+		<Expand>
+			<ArrayItems>
+				<Size>m_size</Size>
+				<ValuePointer>m_data</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
+
+	<Type Name="anki::DynamicArrayRaii&lt;*&gt;">
+		<Intrinsic Name="size" Expression="m_size" />
+		<DisplayString>{{ size={m_size} capacity={m_capacity} }}</DisplayString>
+		<Expand>
+			<ArrayItems>
+				<Size>m_size</Size>
+				<ValuePointer>m_data</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
+
+</AutoVisualizer>

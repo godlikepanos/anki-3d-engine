@@ -115,8 +115,8 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 	{
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("TemporalAA");
 
-		pass.newDependency(RenderPassDependency(m_runCtx.m_renderRt, TextureUsageBit::kImageComputeWrite));
-		pass.newDependency(RenderPassDependency(m_runCtx.m_tonemappedRt, TextureUsageBit::kImageComputeWrite));
+		pass.newTextureDependency(m_runCtx.m_renderRt, TextureUsageBit::kImageComputeWrite);
+		pass.newTextureDependency(m_runCtx.m_tonemappedRt, TextureUsageBit::kImageComputeWrite);
 
 		readUsage = TextureUsageBit::kSampledCompute;
 
@@ -127,19 +127,19 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("TemporalAA");
 		pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_renderRt, m_runCtx.m_tonemappedRt});
 
-		pass.newDependency(RenderPassDependency(m_runCtx.m_renderRt, TextureUsageBit::kFramebufferWrite));
-		pass.newDependency(RenderPassDependency(m_runCtx.m_tonemappedRt, TextureUsageBit::kFramebufferWrite));
+		pass.newTextureDependency(m_runCtx.m_renderRt, TextureUsageBit::kFramebufferWrite);
+		pass.newTextureDependency(m_runCtx.m_tonemappedRt, TextureUsageBit::kFramebufferWrite);
 
 		readUsage = TextureUsageBit::kSampledFragment;
 
 		prpass = &pass;
 	}
 
-	prpass->newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), readUsage,
-											   TextureSubresourceInfo(DepthStencilAspectBit::kDepth)));
-	prpass->newDependency(RenderPassDependency(m_r->getLightShading().getRt(), readUsage));
-	prpass->newDependency(RenderPassDependency(m_runCtx.m_historyRt, readUsage));
-	prpass->newDependency(RenderPassDependency(m_r->getMotionVectors().getMotionVectorsRt(), readUsage));
+	prpass->newTextureDependency(m_r->getGBuffer().getDepthRt(), readUsage,
+								 TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+	prpass->newTextureDependency(m_r->getLightShading().getRt(), readUsage);
+	prpass->newTextureDependency(m_runCtx.m_historyRt, readUsage);
+	prpass->newTextureDependency(m_r->getMotionVectors().getMotionVectorsRt(), readUsage);
 
 	prpass->setWork([this](RenderPassWorkContext& rgraphCtx) {
 		CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;

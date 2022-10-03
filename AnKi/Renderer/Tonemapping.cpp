@@ -80,7 +80,7 @@ void Tonemapping::populateRenderGraph(RenderingContext& ctx)
 
 	TextureSubresourceInfo inputTexSubresource;
 	inputTexSubresource.m_firstMipmap = m_inputTexMip;
-	pass.newDependency({m_r->getDownscaleBlur().getRt(), TextureUsageBit::kSampledCompute, inputTexSubresource});
+	pass.newTextureDependency(m_r->getDownscaleBlur().getRt(), TextureUsageBit::kSampledCompute, inputTexSubresource);
 }
 
 } // end namespace anki

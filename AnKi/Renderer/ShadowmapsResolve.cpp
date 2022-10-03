@@ -75,15 +75,13 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 			run(ctx, rgraphCtx);
 		});
 
-		rpass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::kImageComputeWrite));
-		rpass.newDependency(
-			RenderPassDependency((m_quarterRez) ? m_r->getDepthDownscale().getHiZRt() : m_r->getGBuffer().getDepthRt(),
-								 TextureUsageBit::kSampledCompute, TextureSurfaceInfo(0, 0, 0, 0)));
-		rpass.newDependency(
-			RenderPassDependency(m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::kSampledCompute));
+		rpass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kImageComputeWrite);
+		rpass.newTextureDependency((m_quarterRez) ? m_r->getDepthDownscale().getHiZRt()
+												  : m_r->getGBuffer().getDepthRt(),
+								   TextureUsageBit::kSampledCompute, TextureSurfaceInfo(0, 0, 0, 0));
+		rpass.newTextureDependency(m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::kSampledCompute);
 
-		rpass.newDependency(
-			RenderPassDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::kStorageComputeRead));
+		rpass.newBufferDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::kStorageComputeRead);
 	}
 	else
 	{
@@ -94,15 +92,13 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 			run(ctx, rgraphCtx);
 		});
 
-		rpass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite));
-		rpass.newDependency(
-			RenderPassDependency((m_quarterRez) ? m_r->getDepthDownscale().getHiZRt() : m_r->getGBuffer().getDepthRt(),
-								 TextureUsageBit::kSampledFragment, TextureSurfaceInfo(0, 0, 0, 0)));
-		rpass.newDependency(
-			RenderPassDependency(m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::kSampledFragment));
+		rpass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite);
+		rpass.newTextureDependency((m_quarterRez) ? m_r->getDepthDownscale().getHiZRt()
+												  : m_r->getGBuffer().getDepthRt(),
+								   TextureUsageBit::kSampledFragment, TextureSurfaceInfo(0, 0, 0, 0));
+		rpass.newTextureDependency(m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::kSampledFragment);
 
-		rpass.newDependency(
-			RenderPassDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::kStorageFragmentRead));
+		rpass.newBufferDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::kStorageFragmentRead);
 	}
 }
 

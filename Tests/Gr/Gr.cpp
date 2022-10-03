@@ -1537,15 +1537,15 @@ ANKI_TEST(Gr, RenderGraph)
 	RenderTargetHandle smScratchRt = descr.newRenderTarget(newRTDescr("SM scratch"));
 	{
 		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("SM");
-		pass.newDependency({smScratchRt, TextureUsageBit::kAllFramebuffer});
+		pass.newTextureDependency(smScratchRt, TextureUsageBit::kAllFramebuffer);
 	}
 
 	// SM to exponential SM
 	RenderTargetHandle smExpRt = descr.importRenderTarget(dummyTex, TextureUsageBit::kSampledFragment);
 	{
 		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("ESM");
-		pass.newDependency({smScratchRt, TextureUsageBit::kSampledFragment});
-		pass.newDependency({smExpRt, TextureUsageBit::kFramebufferWrite});
+		pass.newTextureDependency(smScratchRt, TextureUsageBit::kSampledFragment);
+		pass.newTextureDependency(smExpRt, TextureUsageBit::kFramebufferWrite);
 	}
 
 	// GI gbuff
@@ -1554,9 +1554,9 @@ ANKI_TEST(Gr, RenderGraph)
 	RenderTargetHandle giGbuffDepthRt = descr.newRenderTarget(newRTDescr("GI GBuff depth"));
 	{
 		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("GI gbuff");
-		pass.newDependency({giGbuffNormRt, TextureUsageBit::kFramebufferWrite});
-		pass.newDependency({giGbuffDepthRt, TextureUsageBit::kFramebufferWrite});
-		pass.newDependency({giGbuffDiffRt, TextureUsageBit::kFramebufferWrite});
+		pass.newTextureDependency(giGbuffNormRt, TextureUsageBit::kFramebufferWrite);
+		pass.newTextureDependency(giGbuffDepthRt, TextureUsageBit::kFramebufferWrite);
+		pass.newTextureDependency(giGbuffDiffRt, TextureUsageBit::kFramebufferWrite);
 	}
 
 	// GI light
@@ -1567,10 +1567,10 @@ ANKI_TEST(Gr, RenderGraph)
 
 		GraphicsRenderPassDescription& pass =
 			descr.newGraphicsRenderPass(StringRaii(&pool).sprintf("GI lp%u", faceIdx).toCString());
-		pass.newDependency({giGiLightRt, TextureUsageBit::kFramebufferWrite, subresource});
-		pass.newDependency({giGbuffNormRt, TextureUsageBit::kSampledFragment});
-		pass.newDependency({giGbuffDepthRt, TextureUsageBit::kSampledFragment});
-		pass.newDependency({giGbuffDiffRt, TextureUsageBit::kSampledFragment});
+		pass.newTextureDependency(giGiLightRt, TextureUsageBit::kFramebufferWrite, subresource);
+		pass.newTextureDependency(giGbuffNormRt, TextureUsageBit::kSampledFragment);
+		pass.newTextureDependency(giGbuffDepthRt, TextureUsageBit::kSampledFragment);
+		pass.newTextureDependency(giGbuffDiffRt, TextureUsageBit::kSampledFragment);
 	}
 
 	// GI light mips
@@ -1583,7 +1583,7 @@ ANKI_TEST(Gr, RenderGraph)
 			for(U32 mip = 0; mip < GI_MIP_COUNT; ++mip)
 			{
 				TextureSurfaceInfo surf(mip, 0, faceIdx, 0);
-				pass.newDependency({giGiLightRt, TextureUsageBit::kGenerateMipmaps, surf});
+				pass.newTextureDependency(giGiLightRt, TextureUsageBit::kGenerateMipmaps, surf);
 			}
 		}
 	}
@@ -1595,70 +1595,70 @@ ANKI_TEST(Gr, RenderGraph)
 	RenderTargetHandle gbuffDepth = descr.newRenderTarget(newRTDescr("GBuff RT2"));
 	{
 		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("G-Buffer");
-		pass.newDependency({gbuffRt0, TextureUsageBit::kFramebufferWrite});
-		pass.newDependency({gbuffRt1, TextureUsageBit::kFramebufferWrite});
-		pass.newDependency({gbuffRt2, TextureUsageBit::kFramebufferWrite});
-		pass.newDependency({gbuffDepth, TextureUsageBit::kFramebufferWrite});
+		pass.newTextureDependency(gbuffRt0, TextureUsageBit::kFramebufferWrite);
+		pass.newTextureDependency(gbuffRt1, TextureUsageBit::kFramebufferWrite);
+		pass.newTextureDependency(gbuffRt2, TextureUsageBit::kFramebufferWrite);
+		pass.newTextureDependency(gbuffDepth, TextureUsageBit::kFramebufferWrite);
 	}
 
 	// Half depth
 	RenderTargetHandle halfDepthRt = descr.newRenderTarget(newRTDescr("Depth/2"));
 	{
 		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("HalfDepth");
-		pass.newDependency({gbuffDepth, TextureUsageBit::kSampledFragment});
-		pass.newDependency({halfDepthRt, TextureUsageBit::kFramebufferWrite});
+		pass.newTextureDependency(gbuffDepth, TextureUsageBit::kSampledFragment);
+		pass.newTextureDependency(halfDepthRt, TextureUsageBit::kFramebufferWrite);
 	}
 
 	// Quarter depth
 	RenderTargetHandle quarterDepthRt = descr.newRenderTarget(newRTDescr("Depth/4"));
 	{
 		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("QuarterDepth");
-		pass.newDependency({quarterDepthRt, TextureUsageBit::kFramebufferWrite});
-		pass.newDependency({halfDepthRt, TextureUsageBit::kSampledFragment});
+		pass.newTextureDependency(quarterDepthRt, TextureUsageBit::kFramebufferWrite);
+		pass.newTextureDependency(halfDepthRt, TextureUsageBit::kSampledFragment);
 	}
 
 	// SSAO
 	RenderTargetHandle ssaoRt = descr.newRenderTarget(newRTDescr("SSAO"));
 	{
 		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("SSAO main");
-		pass.newDependency({ssaoRt, TextureUsageBit::kFramebufferWrite});
-		pass.newDependency({quarterDepthRt, TextureUsageBit::kSampledFragment});
-		pass.newDependency({gbuffRt2, TextureUsageBit::kSampledFragment});
+		pass.newTextureDependency(ssaoRt, TextureUsageBit::kFramebufferWrite);
+		pass.newTextureDependency(quarterDepthRt, TextureUsageBit::kSampledFragment);
+		pass.newTextureDependency(gbuffRt2, TextureUsageBit::kSampledFragment);
 
 		RenderTargetHandle ssaoVBlurRt = descr.newRenderTarget(newRTDescr("SSAO tmp"));
 		GraphicsRenderPassDescription& pass2 = descr.newGraphicsRenderPass("SSAO vblur");
-		pass2.newDependency({ssaoRt, TextureUsageBit::kSampledFragment});
-		pass2.newDependency({ssaoVBlurRt, TextureUsageBit::kFramebufferWrite});
+		pass2.newTextureDependency(ssaoRt, TextureUsageBit::kSampledFragment);
+		pass2.newTextureDependency(ssaoVBlurRt, TextureUsageBit::kFramebufferWrite);
 
 		GraphicsRenderPassDescription& pass3 = descr.newGraphicsRenderPass("SSAO hblur");
-		pass3.newDependency({ssaoRt, TextureUsageBit::kFramebufferWrite});
-		pass3.newDependency({ssaoVBlurRt, TextureUsageBit::kSampledFragment});
+		pass3.newTextureDependency(ssaoRt, TextureUsageBit::kFramebufferWrite);
+		pass3.newTextureDependency(ssaoVBlurRt, TextureUsageBit::kSampledFragment);
 	}
 
 	// Volumetric
 	RenderTargetHandle volRt = descr.newRenderTarget(newRTDescr("Vol"));
 	{
 		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("Vol main");
-		pass.newDependency({volRt, TextureUsageBit::kFramebufferWrite});
-		pass.newDependency({quarterDepthRt, TextureUsageBit::kSampledFragment});
+		pass.newTextureDependency(volRt, TextureUsageBit::kFramebufferWrite);
+		pass.newTextureDependency(quarterDepthRt, TextureUsageBit::kSampledFragment);
 
 		RenderTargetHandle volVBlurRt = descr.newRenderTarget(newRTDescr("Vol tmp"));
 		GraphicsRenderPassDescription& pass2 = descr.newGraphicsRenderPass("Vol vblur");
-		pass2.newDependency({volRt, TextureUsageBit::kSampledFragment});
-		pass2.newDependency({volVBlurRt, TextureUsageBit::kFramebufferWrite});
+		pass2.newTextureDependency(volRt, TextureUsageBit::kSampledFragment);
+		pass2.newTextureDependency(volVBlurRt, TextureUsageBit::kFramebufferWrite);
 
 		GraphicsRenderPassDescription& pass3 = descr.newGraphicsRenderPass("Vol hblur");
-		pass3.newDependency({volRt, TextureUsageBit::kFramebufferWrite});
-		pass3.newDependency({volVBlurRt, TextureUsageBit::kSampledFragment});
+		pass3.newTextureDependency(volRt, TextureUsageBit::kFramebufferWrite);
+		pass3.newTextureDependency(volVBlurRt, TextureUsageBit::kSampledFragment);
 	}
 
 	// Forward shading
 	RenderTargetHandle fsRt = descr.newRenderTarget(newRTDescr("FS"));
 	{
 		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("Forward shading");
-		pass.newDependency({fsRt, TextureUsageBit::kFramebufferWrite});
-		pass.newDependency({halfDepthRt, TextureUsageBit::kSampledFragment | TextureUsageBit::kFramebufferRead});
-		pass.newDependency({volRt, TextureUsageBit::kSampledFragment});
+		pass.newTextureDependency(fsRt, TextureUsageBit::kFramebufferWrite);
+		pass.newTextureDependency(halfDepthRt, TextureUsageBit::kSampledFragment | TextureUsageBit::kFramebufferRead);
+		pass.newTextureDependency(volRt, TextureUsageBit::kSampledFragment);
 	}
 
 	// Light shading
@@ -1666,15 +1666,15 @@ ANKI_TEST(Gr, RenderGraph)
 	{
 		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("Light shading");
 
-		pass.newDependency({lightRt, TextureUsageBit::kFramebufferWrite});
-		pass.newDependency({gbuffRt0, TextureUsageBit::kSampledFragment});
-		pass.newDependency({gbuffRt1, TextureUsageBit::kSampledFragment});
-		pass.newDependency({gbuffRt2, TextureUsageBit::kSampledFragment});
-		pass.newDependency({gbuffDepth, TextureUsageBit::kSampledFragment});
-		pass.newDependency({smExpRt, TextureUsageBit::kSampledFragment});
-		pass.newDependency({giGiLightRt, TextureUsageBit::kSampledFragment});
-		pass.newDependency({ssaoRt, TextureUsageBit::kSampledFragment});
-		pass.newDependency({fsRt, TextureUsageBit::kSampledFragment});
+		pass.newTextureDependency(lightRt, TextureUsageBit::kFramebufferWrite);
+		pass.newTextureDependency(gbuffRt0, TextureUsageBit::kSampledFragment);
+		pass.newTextureDependency(gbuffRt1, TextureUsageBit::kSampledFragment);
+		pass.newTextureDependency(gbuffRt2, TextureUsageBit::kSampledFragment);
+		pass.newTextureDependency(gbuffDepth, TextureUsageBit::kSampledFragment);
+		pass.newTextureDependency(smExpRt, TextureUsageBit::kSampledFragment);
+		pass.newTextureDependency(giGiLightRt, TextureUsageBit::kSampledFragment);
+		pass.newTextureDependency(ssaoRt, TextureUsageBit::kSampledFragment);
+		pass.newTextureDependency(fsRt, TextureUsageBit::kSampledFragment);
 	}
 
 	// TAA
@@ -1683,9 +1683,9 @@ ANKI_TEST(Gr, RenderGraph)
 	{
 		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("Temporal AA");
 
-		pass.newDependency({lightRt, TextureUsageBit::kSampledFragment});
-		pass.newDependency({taaRt, TextureUsageBit::kFramebufferWrite});
-		pass.newDependency({taaHistoryRt, TextureUsageBit::kSampledFragment});
+		pass.newTextureDependency(lightRt, TextureUsageBit::kSampledFragment);
+		pass.newTextureDependency(taaRt, TextureUsageBit::kFramebufferWrite);
+		pass.newTextureDependency(taaHistoryRt, TextureUsageBit::kSampledFragment);
 	}
 
 	rgraph->compileNewGraph(descr, pool);

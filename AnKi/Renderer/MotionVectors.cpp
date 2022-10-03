@@ -119,12 +119,12 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 		run(ctx, rgraphCtx);
 	});
 
-	ppass->newDependency(RenderPassDependency(m_runCtx.m_motionVectorsRtHandle, writeUsage));
-	ppass->newDependency(RenderPassDependency(m_runCtx.m_historyLengthWriteRtHandle, writeUsage));
-	ppass->newDependency(RenderPassDependency(m_runCtx.m_historyLengthReadRtHandle, readUsage));
-	ppass->newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(3), readUsage));
-	ppass->newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), readUsage));
-	ppass->newDependency(RenderPassDependency(m_r->getGBuffer().getPreviousFrameDepthRt(), readUsage));
+	ppass->newTextureDependency(m_runCtx.m_motionVectorsRtHandle, writeUsage);
+	ppass->newTextureDependency(m_runCtx.m_historyLengthWriteRtHandle, writeUsage);
+	ppass->newTextureDependency(m_runCtx.m_historyLengthReadRtHandle, readUsage);
+	ppass->newTextureDependency(m_r->getGBuffer().getColorRt(3), readUsage);
+	ppass->newTextureDependency(m_r->getGBuffer().getDepthRt(), readUsage);
+	ppass->newTextureDependency(m_r->getGBuffer().getPreviousFrameDepthRt(), readUsage);
 }
 
 void MotionVectors::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)

@@ -181,9 +181,9 @@ void Dbg::populateRenderGraph(RenderingContext& ctx)
 
 	pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_rt}, m_r->getGBuffer().getDepthRt());
 
-	pass.newDependency({m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite});
-	pass.newDependency(
-		{m_r->getGBuffer().getDepthRt(), TextureUsageBit::kSampledFragment | TextureUsageBit::kFramebufferRead});
+	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite);
+	pass.newTextureDependency(m_r->getGBuffer().getDepthRt(),
+							  TextureUsageBit::kSampledFragment | TextureUsageBit::kFramebufferRead);
 }
 
 } // end namespace anki

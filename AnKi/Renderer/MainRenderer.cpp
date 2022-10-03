@@ -123,8 +123,8 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 			cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
 		});
 
-		pass.newDependency(RenderPassDependency(presentRt, TextureUsageBit::kFramebufferWrite));
-		pass.newDependency(RenderPassDependency(ctx.m_outRenderTarget, TextureUsageBit::kSampledFragment));
+		pass.newTextureDependency(presentRt, TextureUsageBit::kFramebufferWrite);
+		pass.newTextureDependency(ctx.m_outRenderTarget, TextureUsageBit::kSampledFragment);
 	}
 
 	// Create a dummy pass to transition the presentable image to present
@@ -134,7 +134,7 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 		pass.setWork([]([[maybe_unused]] RenderPassWorkContext& rgraphCtx) {
 			// Do nothing. This pass is dummy
 		});
-		pass.newDependency({presentRt, TextureUsageBit::kPresent});
+		pass.newTextureDependency(presentRt, TextureUsageBit::kPresent);
 	}
 
 	// Bake the render graph

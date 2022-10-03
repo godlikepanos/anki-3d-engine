@@ -114,9 +114,9 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 		{
 			ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("Bloom Main");
 
-			rpass.newDependency(RenderPassDependency(m_r->getDownscaleBlur().getRt(), TextureUsageBit::kSampledCompute,
-													 inputTexSubresource));
-			rpass.newDependency(RenderPassDependency(m_runCtx.m_exposureRt, TextureUsageBit::kImageComputeWrite));
+			rpass.newTextureDependency(m_r->getDownscaleBlur().getRt(), TextureUsageBit::kSampledCompute,
+									   inputTexSubresource);
+			rpass.newTextureDependency(m_runCtx.m_exposureRt, TextureUsageBit::kImageComputeWrite);
 
 			prpass = &rpass;
 		}
@@ -125,9 +125,9 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("Bloom Main");
 			rpass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_exposureRt});
 
-			rpass.newDependency(RenderPassDependency(m_r->getDownscaleBlur().getRt(), TextureUsageBit::kSampledFragment,
-													 inputTexSubresource));
-			rpass.newDependency(RenderPassDependency(m_runCtx.m_exposureRt, TextureUsageBit::kFramebufferWrite));
+			rpass.newTextureDependency(m_r->getDownscaleBlur().getRt(), TextureUsageBit::kSampledFragment,
+									   inputTexSubresource);
+			rpass.newTextureDependency(m_runCtx.m_exposureRt, TextureUsageBit::kFramebufferWrite);
 
 			prpass = &rpass;
 		}
@@ -175,8 +175,8 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 		{
 			ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("Bloom Upscale");
 
-			rpass.newDependency({m_runCtx.m_exposureRt, TextureUsageBit::kSampledCompute});
-			rpass.newDependency({m_runCtx.m_upscaleRt, TextureUsageBit::kImageComputeWrite});
+			rpass.newTextureDependency(m_runCtx.m_exposureRt, TextureUsageBit::kSampledCompute);
+			rpass.newTextureDependency(m_runCtx.m_upscaleRt, TextureUsageBit::kImageComputeWrite);
 
 			prpass = &rpass;
 		}
@@ -185,8 +185,8 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("Bloom Upscale");
 			rpass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_upscaleRt});
 
-			rpass.newDependency({m_runCtx.m_exposureRt, TextureUsageBit::kSampledFragment});
-			rpass.newDependency({m_runCtx.m_upscaleRt, TextureUsageBit::kFramebufferWrite});
+			rpass.newTextureDependency(m_runCtx.m_exposureRt, TextureUsageBit::kSampledFragment);
+			rpass.newTextureDependency(m_runCtx.m_upscaleRt, TextureUsageBit::kFramebufferWrite);
 
 			prpass = &rpass;
 		}

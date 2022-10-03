@@ -926,9 +926,7 @@ void CommandBufferImpl::setPipelineBarrierInternal(
 			// The transition of the non zero mip levels happens inside CommandBufferImpl::generateMipmapsX so limit the
 			// subresource
 
-			ANKI_ASSERT(impl.isSubresourceGoodForMipmapGeneration(subresource));
-			subresource.m_firstMipmap = 0;
-			subresource.m_mipmapCount = 1;
+			ANKI_ASSERT(subresource.m_firstMipmap == 0 && subresource.m_mipmapCount == 1);
 		}
 
 		VkImageMemoryBarrier& inf = *imageBarriers.emplaceBack();

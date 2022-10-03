@@ -58,6 +58,19 @@ inline void RenderPassDescriptionBase::fixSubresource(RenderPassDependency& dep)
 		}
 	}
 
+	if(subresource.m_depthStencilAspect == DepthStencilAspectBit::kNone)
+	{
+		const Bool imported = rt.m_importedTex.isCreated();
+		if(imported)
+		{
+			subresource.m_depthStencilAspect = rt.m_importedTex->getDepthStencilAspect();
+		}
+		else if(!imported && getFormatInfo(rt.m_initInfo.m_format).isDepthStencil())
+		{
+			subresource.m_depthStencilAspect = getFormatInfo(rt.m_initInfo.m_format).m_depthStencil;
+		}
+	}
+
 	ANKI_ASSERT(dep.m_texture.m_subresource.m_firstMipmap + dep.m_texture.m_subresource.m_mipmapCount
 				<= ((rt.m_importedTex) ? rt.m_importedTex->getMipmapCount() : rt.m_initInfo.m_mipmapCount));
 }
@@ -107,11 +120,13 @@ inline void RenderPassDescriptionBase::validateDep(const RenderPassDependency& d
 	}
 }
 
+template<RenderPassDependency::Type kType>
 inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency& dep)
 {
+	ANKI_ASSERT(kType == dep.m_type);
 	validateDep(dep);
 
-	if(dep.m_type == RenderPassDependency::Type::kTexture)
+	if(kType == RenderPassDependency::Type::kTexture)
 	{
 		m_rtDeps.emplaceBack(*m_pool, dep);
 		fixSubresource(m_rtDeps.getBack());
@@ -128,8 +143,19 @@ inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency&
 
 		// Try to derive the usage by that dep
 		m_descr->m_renderTargets[dep.m_texture.m_handle.m_idx].m_usageDerivedByDeps |= dep.m_texture.m_usage;
+
+		// Checks
+#if ANKI_ENABLE_ASSERTIONS
+		const RenderGraphDescription::RT& rt = m_descr->m_renderTargets[dep.m_texture.m_handle.m_idx];
+		if((!rt.m_importedTex.isCreated() && !!getFormatInfo(rt.m_initInfo.m_format).m_depthStencil)
+		   || (rt.m_importedTex.isCreated() && !!rt.m_importedTex->getDepthStencilAspect()))
+		{
+			ANKI_ASSERT(!!m_rtDeps.getBack().m_texture.m_subresource.m_depthStencilAspect
+						&& "Dependencies of depth/stencil resources should have a valid DS aspect");
+		}
+#endif
 	}
-	else if(dep.m_type == RenderPassDependency::Type::kBuffer)
+	else if(kType == RenderPassDependency::Type::kBuffer)
 	{
 		m_buffDeps.emplaceBack(*m_pool, dep);
 
@@ -145,7 +171,7 @@ inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency&
 	}
 	else
 	{
-		ANKI_ASSERT(dep.m_type == RenderPassDependency::Type::kAccelerationStructure);
+		ANKI_ASSERT(kType == RenderPassDependency::Type::kAccelerationStructure);
 		m_asDeps.emplaceBack(*m_pool, dep);
 
 		if(!!(dep.m_as.m_usage & AccelerationStructureUsageBit::kAllRead))

@@ -232,16 +232,15 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 
 	for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 	{
-		pass.newDependency(RenderPassDependency(m_runCtx.m_colorRts[i], TextureUsageBit::kFramebufferWrite));
+		pass.newTextureDependency(m_runCtx.m_colorRts[i], TextureUsageBit::kFramebufferWrite);
 	}
 
 	TextureSubresourceInfo subresource(DepthStencilAspectBit::kDepth);
-	pass.newDependency(
-		RenderPassDependency(m_runCtx.m_crntFrameDepthRt, TextureUsageBit::kAllFramebuffer, subresource));
+	pass.newTextureDependency(m_runCtx.m_crntFrameDepthRt, TextureUsageBit::kAllFramebuffer, subresource);
 
 	if(enableVrs)
 	{
-		pass.newDependency(RenderPassDependency(sriRt, TextureUsageBit::kFramebufferShadingRate));
+		pass.newTextureDependency(sriRt, TextureUsageBit::kFramebufferShadingRate);
 	}
 }
 

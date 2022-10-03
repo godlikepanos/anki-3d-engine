@@ -373,36 +373,35 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	// All
 	if(enableVrs)
 	{
-		pass.newDependency(RenderPassDependency(sriRt, TextureUsageBit::kFramebufferShadingRate));
+		pass.newTextureDependency(sriRt, TextureUsageBit::kFramebufferShadingRate);
 	}
 
 	// Light shading
-	pass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite));
-	pass.newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(0), readUsage));
-	pass.newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(1), readUsage));
-	pass.newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(2), readUsage));
-	pass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(),
-											TextureUsageBit::kSampledFragment | TextureUsageBit::kFramebufferRead,
-											TextureSubresourceInfo(DepthStencilAspectBit::kDepth)));
-	pass.newDependency(RenderPassDependency(m_r->getShadowMapping().getShadowmapRt(), readUsage));
+	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite);
+	pass.newTextureDependency(m_r->getGBuffer().getColorRt(0), readUsage);
+	pass.newTextureDependency(m_r->getGBuffer().getColorRt(1), readUsage);
+	pass.newTextureDependency(m_r->getGBuffer().getColorRt(2), readUsage);
+	pass.newTextureDependency(m_r->getGBuffer().getDepthRt(),
+							  TextureUsageBit::kSampledFragment | TextureUsageBit::kFramebufferRead,
+							  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+	pass.newTextureDependency(m_r->getShadowMapping().getShadowmapRt(), readUsage);
 	if(m_r->getRtShadowsEnabled())
 	{
-		pass.newDependency(RenderPassDependency(m_r->getRtShadows().getRt(), readUsage));
+		pass.newTextureDependency(m_r->getRtShadows().getRt(), readUsage);
 	}
 	else
 	{
-		pass.newDependency(RenderPassDependency(m_r->getShadowmapsResolve().getRt(), readUsage));
+		pass.newTextureDependency(m_r->getShadowmapsResolve().getRt(), readUsage);
 	}
-	pass.newDependency(
-		RenderPassDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::kStorageFragmentRead));
+	pass.newBufferDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::kStorageFragmentRead);
 
 	// Apply indirect
-	pass.newDependency(RenderPassDependency(m_r->getIndirectDiffuse().getRt(), readUsage));
-	pass.newDependency(RenderPassDependency(m_r->getDepthDownscale().getHiZRt(), readUsage));
-	pass.newDependency(RenderPassDependency(m_r->getIndirectSpecular().getRt(), readUsage));
+	pass.newTextureDependency(m_r->getIndirectDiffuse().getRt(), readUsage);
+	pass.newTextureDependency(m_r->getDepthDownscale().getHiZRt(), readUsage);
+	pass.newTextureDependency(m_r->getIndirectSpecular().getRt(), readUsage);
 
 	// Fog
-	pass.newDependency(RenderPassDependency(m_r->getVolumetricFog().getRt(), readUsage));
+	pass.newTextureDependency(m_r->getVolumetricFog().getRt(), readUsage);
 
 	// For forward shading
 	m_r->getForwardShading().setDependencies(ctx, pass);

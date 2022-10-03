@@ -148,8 +148,8 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 	{
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("VRS SRI generation");
 
-		pass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::kImageComputeWrite));
-		pass.newDependency(RenderPassDependency(m_r->getLightShading().getRt(), TextureUsageBit::kSampledCompute));
+		pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kImageComputeWrite);
+		pass.newTextureDependency(m_r->getLightShading().getRt(), TextureUsageBit::kSampledCompute);
 
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
@@ -172,8 +172,8 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 	{
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("VRS SRI downscale");
 
-		pass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::kSampledCompute));
-		pass.newDependency(RenderPassDependency(m_runCtx.m_downscaledRt, TextureUsageBit::kImageComputeWrite));
+		pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kSampledCompute);
+		pass.newTextureDependency(m_runCtx.m_downscaledRt, TextureUsageBit::kImageComputeWrite);
 
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 			const UVec2 rezDownscaled =

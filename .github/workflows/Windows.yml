@@ -19,7 +19,7 @@ jobs:
       run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DANKI_EXTRA_CHECKS=ON
 
     - name: Build
-      run: cmake --build ${{github.workspace}}/build --config Debug --parallel
+      run: cmake --build ${{github.workspace}}/build --config Debug
 
   Release:
     name: "Release"
@@ -33,7 +33,7 @@ jobs:
       run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Release -DANKI_EXTRA_CHECKS=OFF
 
     - name: Build
-      run: cmake --build ${{github.workspace}}/build --config Release --parallel
+      run: cmake --build ${{github.workspace}}/build --config Release
 
   DLSS:
     name: "DLSS"
@@ -47,4 +47,4 @@ jobs:
       run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DANKI_EXTRA_CHECKS=OFF -DANKI_DLSS=ON
 
     - name: Build
-      run: cmake --build ${{github.workspace}}/build --config Release --target Sponza --parallel
+      run: cmake --build ${{github.workspace}}/build --config Release --target Sponza

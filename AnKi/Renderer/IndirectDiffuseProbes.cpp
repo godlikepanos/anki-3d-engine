@@ -75,7 +75,7 @@ void IndirectDiffuseProbes::setRenderGraphDependencies(const RenderingContext& c
 {
 	for(U32 idx = 0; idx < ctx.m_renderQueue->m_giProbes.getSize(); ++idx)
 	{
-		pass.newDependency({getVolumeRenderTarget(ctx.m_renderQueue->m_giProbes[idx]), usage});
+		pass.newTextureDependency(getVolumeRenderTarget(ctx.m_renderQueue->m_giProbes[idx]), usage);
 	}
 }
 
@@ -282,11 +282,11 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 
 		for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 		{
-			pass.newDependency({giCtx->m_gbufferColorRts[i], TextureUsageBit::kFramebufferWrite});
+			pass.newTextureDependency(giCtx->m_gbufferColorRts[i], TextureUsageBit::kFramebufferWrite);
 		}
 
 		TextureSubresourceInfo subresource(DepthStencilAspectBit::kDepth);
-		pass.newDependency({giCtx->m_gbufferDepthRt, TextureUsageBit::kAllFramebuffer, subresource});
+		pass.newTextureDependency(giCtx->m_gbufferDepthRt, TextureUsageBit::kAllFramebuffer, subresource);
 	}
 
 	// Shadow pass. Optional
@@ -323,7 +323,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 		});
 
 		TextureSubresourceInfo subresource(DepthStencilAspectBit::kDepth);
-		pass.newDependency({giCtx->m_shadowsRt, TextureUsageBit::kAllFramebuffer, subresource});
+		pass.newTextureDependency(giCtx->m_shadowsRt, TextureUsageBit::kAllFramebuffer, subresource);
 	}
 	else
 	{
@@ -342,18 +342,18 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 			runLightShading(rgraphCtx, *giCtx);
 		});
 
-		pass.newDependency({giCtx->m_lightShadingRt, TextureUsageBit::kFramebufferWrite});
+		pass.newTextureDependency(giCtx->m_lightShadingRt, TextureUsageBit::kFramebufferWrite);
 
 		for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 		{
-			pass.newDependency({giCtx->m_gbufferColorRts[i], TextureUsageBit::kSampledFragment});
+			pass.newTextureDependency(giCtx->m_gbufferColorRts[i], TextureUsageBit::kSampledFragment);
 		}
-		pass.newDependency({giCtx->m_gbufferDepthRt, TextureUsageBit::kSampledFragment,
-							TextureSubresourceInfo(DepthStencilAspectBit::kDepth)});
+		pass.newTextureDependency(giCtx->m_gbufferDepthRt, TextureUsageBit::kSampledFragment,
+								  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
 		if(giCtx->m_shadowsRt.isValid())
 		{
-			pass.newDependency({giCtx->m_shadowsRt, TextureUsageBit::kSampledFragment});
+			pass.newTextureDependency(giCtx->m_shadowsRt, TextureUsageBit::kSampledFragment);
 		}
 	}
 
@@ -365,15 +365,15 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 			runIrradiance(rgraphCtx, *giCtx);
 		});
 
-		pass.newDependency({giCtx->m_lightShadingRt, TextureUsageBit::kSampledCompute});
+		pass.newTextureDependency(giCtx->m_lightShadingRt, TextureUsageBit::kSampledCompute);
 
 		for(U32 i = 0; i < kGBufferColorRenderTargetCount - 1; ++i)
 		{
-			pass.newDependency({giCtx->m_gbufferColorRts[i], TextureUsageBit::kSampledCompute});
+			pass.newTextureDependency(giCtx->m_gbufferColorRts[i], TextureUsageBit::kSampledCompute);
 		}
 
 		const U32 probeIdx = U32(giCtx->m_probeToUpdateThisFrame - &giCtx->m_ctx->m_renderQueue->m_giProbes.getFront());
-		pass.newDependency({giCtx->m_irradianceProbeRts[probeIdx], TextureUsageBit::kImageComputeWrite});
+		pass.newTextureDependency(giCtx->m_irradianceProbeRts[probeIdx], TextureUsageBit::kImageComputeWrite);
 	}
 }
 
