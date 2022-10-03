@@ -25,7 +25,7 @@ public:
 	{
 		if(m_memory)
 		{
-			getAllocator().deallocate(m_memory, 128);
+			getMemoryPool().free(m_memory);
 		}
 	}
 
@@ -34,10 +34,10 @@ public:
 		Error err = Error::kNone;
 		if(filename.find("error") == CString::kNpos)
 		{
-			m_memory = getAllocator().allocate(128);
-			void* tempMem = getTempAllocator().allocate(128);
+			m_memory = getMemoryPool().allocate(128, 1);
+			void* tempMem = getTempMemoryPool().allocate(128, 1);
 
-			getTempAllocator().deallocate(tempMem, 128);
+			getTempMemoryPool().free(tempMem);
 		}
 		else
 		{

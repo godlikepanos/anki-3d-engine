@@ -44,8 +44,8 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	{
 
 		const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
-		const Mat4 proj = Mat4::calculatePerspectiveProjectionMatrix(
-			m_spot.m_outerAngle, m_spot.m_outerAngle, CLUSTER_OBJECT_FRUSTUM_NEAR_PLANE, m_spot.m_distance);
+		const Mat4 proj = Mat4::calculatePerspectiveProjectionMatrix(m_spot.m_outerAngle, m_spot.m_outerAngle,
+																	 kClusterObjectFrustumNearPlane, m_spot.m_distance);
 		m_spot.m_textureMat = biasMat4 * proj * Mat4(m_worldtransform.getInverse());
 
 		Array<Vec4, 4> points;
@@ -70,7 +70,7 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 													   WeakArray<FrustumComponent> cascadeFrustumComponents) const
 {
 	ANKI_ASSERT(m_type == LightComponentType::kDirectional);
-	ANKI_ASSERT(cascadeFrustumComponents.getSize() <= MAX_SHADOW_CASCADES);
+	ANKI_ASSERT(cascadeFrustumComponents.getSize() <= kMaxShadowCascades);
 
 	const U32 shadowCascadeCount = cascadeFrustumComponents.getSize();
 
@@ -101,7 +101,7 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 		const F32 fovY = frustumComp.getFovY();
 
 		// Compute a sphere per cascade
-		Array<Sphere, MAX_SHADOW_CASCADES> boundingSpheres;
+		Array<Sphere, kMaxShadowCascades> boundingSpheres;
 		for(U32 i = 0; i < shadowCascadeCount; ++i)
 		{
 			// Compute the center of the sphere
@@ -167,7 +167,7 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 			// Projection
 			const F32 far = (eye - sphereCenter).getLength() + sphereRadius;
 			Mat4 cascadeProjMat = Mat4::calculateOrthographicProjectionMatrix(
-				sphereRadius, -sphereRadius, sphereRadius, -sphereRadius, CLUSTER_OBJECT_FRUSTUM_NEAR_PLANE, far);
+				sphereRadius, -sphereRadius, sphereRadius, -sphereRadius, kClusterObjectFrustumNearPlane, far);
 
 			// View
 			Transform cascadeTransform = m_worldtransform;
@@ -212,7 +212,7 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 			const F32 bottom = plane.getOffset();
 
 			FrustumComponent& cascadeFrustumComp = cascadeFrustumComponents[i];
-			cascadeFrustumComp.setOrthographic(CLUSTER_OBJECT_FRUSTUM_NEAR_PLANE, far, right, left, top, bottom);
+			cascadeFrustumComp.setOrthographic(kClusterObjectFrustumNearPlane, far, right, left, top, bottom);
 			cascadeFrustumComp.setWorldTransform(cascadeTransform);
 		}
 	}

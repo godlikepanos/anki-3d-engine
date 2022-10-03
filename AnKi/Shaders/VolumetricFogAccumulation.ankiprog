@@ -3,9 +3,9 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC3(VOLUME_SIZE, 0u);
-ANKI_SPECIALIZATION_CONSTANT_U32(FINAL_Z_SPLIT, 3u);
-ANKI_SPECIALIZATION_CONSTANT_U32(Z_SPLIT_COUNT, 4u);
+ANKI_SPECIALIZATION_CONSTANT_UVEC3(kVolumeSize, 0u);
+ANKI_SPECIALIZATION_CONSTANT_U32(kFinalZSplit, 3u);
+ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 4u);
 
 #pragma anki start comp
 
@@ -13,8 +13,8 @@ ANKI_SPECIALIZATION_CONSTANT_U32(Z_SPLIT_COUNT, 4u);
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #include <AnKi/Shaders/Common.glsl>
 
-const UVec2 WORKGROUP_SIZE = UVec2(8, 8);
-layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
+const UVec2 kWorkgroupSize = UVec2(8, 8);
+layout(local_size_x = kWorkgroupSize.x, local_size_y = kWorkgroupSize.y, local_size_z = 1) in;
 
 layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 1) uniform ANKI_RP texture3D u_lightVolume;
@@ -27,21 +27,21 @@ layout(push_constant, std140) uniform b_pc
 
 void main()
 {
-	if(any(greaterThanEqual(gl_GlobalInvocationID.xy, VOLUME_SIZE.xy)))
+	if(any(greaterThanEqual(gl_GlobalInvocationID.xy, kVolumeSize.xy)))
 	{
 		return;
 	}
 
-	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(VOLUME_SIZE.xy);
+	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(kVolumeSize.xy);
 
 	ANKI_RP Vec4 colorAndDensityFront = Vec4(0.0);
-	ANKI_LOOP for(U32 i = 0u; i < VOLUME_SIZE.z; ++i)
+	ANKI_LOOP for(U32 i = 0u; i < kVolumeSize.z; ++i)
 	{
 		const ANKI_RP F32 fi = F32(i);
 
 		// Compute the linear depth
-		const ANKI_RP F32 maxLinearDepth = F32(FINAL_Z_SPLIT + 1u) / F32(Z_SPLIT_COUNT);
-		const ANKI_RP F32 linearDepthFraction = maxLinearDepth / F32(VOLUME_SIZE.z);
+		const ANKI_RP F32 maxLinearDepth = F32(kFinalZSplit + 1u) / F32(kZSplitCount);
+		const ANKI_RP F32 linearDepthFraction = maxLinearDepth / F32(kVolumeSize.z);
 		const ANKI_RP F32 linearDepthNear = fi * linearDepthFraction;
 		const ANKI_RP F32 linearDepthFar = (fi + 1.0) * linearDepthFraction;
 
@@ -53,9 +53,9 @@ void main()
 		const ANKI_RP F32 layerThinkness = abs(zVSpaceNear - zVSpaceFar);
 
 		// Read the light value and the fog density from the fog volumes
-		const ANKI_RP F32 w = (fi + 0.5) / F32(VOLUME_SIZE.z);
+		const ANKI_RP F32 w = (fi + 0.5) / F32(kVolumeSize.z);
 		ANKI_RP Vec4 lightAndFogDensity = textureLod(u_lightVolume, u_linearAnyClampSampler, Vec3(uv, w), 0.0);
-		lightAndFogDensity.xyz *= u_unis.m_fogDiffuse / PI;
+		lightAndFogDensity.xyz *= u_unis.m_fogDiffuse / kPi;
 
 		// Scattering & absorption
 		const ANKI_RP F32 scattering = lightAndFogDensity.w * u_unis.m_fogScatteringCoeff * layerThinkness;

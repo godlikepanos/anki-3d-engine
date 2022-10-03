@@ -8,13 +8,13 @@
 
 ANKI_TEST(Util, StringList)
 {
-	HeapAllocator<U8> alloc(allocAligned, nullptr);
+	HeapMemoryPool pool(allocAligned, nullptr);
 
 	// Test splitString
 	{
 		CString toSplit = "foo\n\nboo\n";
 
-		StringListAuto list(alloc);
+		StringListRaii list(&pool);
 		list.splitString(toSplit, '\n');
 
 		ANKI_TEST_EXPECT_EQ(list.getSize(), 2);

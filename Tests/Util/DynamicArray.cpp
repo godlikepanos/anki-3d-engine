@@ -21,7 +21,7 @@ static I64 g_moveCount = 0;
 class DynamicArrayFoo
 {
 public:
-	static constexpr I32 WRONG_NUMBER = -1234;
+	static constexpr I32 kWrongNumber = -1234;
 
 	int m_x;
 
@@ -35,7 +35,7 @@ public:
 		: m_x(x)
 	{
 		++g_constructor1Count;
-		if(m_x == WRONG_NUMBER)
+		if(m_x == kWrongNumber)
 		{
 			++m_x;
 		}
@@ -44,29 +44,29 @@ public:
 	DynamicArrayFoo(const DynamicArrayFoo& b)
 		: m_x(b.m_x)
 	{
-		ANKI_TEST_EXPECT_NEQ(b.m_x, WRONG_NUMBER);
+		ANKI_TEST_EXPECT_NEQ(b.m_x, kWrongNumber);
 		++g_constructor2Count;
 	}
 
 	DynamicArrayFoo(DynamicArrayFoo&& b)
 		: m_x(b.m_x)
 	{
-		ANKI_TEST_EXPECT_NEQ(b.m_x, WRONG_NUMBER);
+		ANKI_TEST_EXPECT_NEQ(b.m_x, kWrongNumber);
 		b.m_x = 0;
 		++g_constructor3Count;
 	}
 
 	~DynamicArrayFoo()
 	{
-		ANKI_TEST_EXPECT_NEQ(m_x, WRONG_NUMBER);
-		m_x = WRONG_NUMBER;
+		ANKI_TEST_EXPECT_NEQ(m_x, kWrongNumber);
+		m_x = kWrongNumber;
 		++g_destructorCount;
 	}
 
 	DynamicArrayFoo& operator=(const DynamicArrayFoo& b)
 	{
-		ANKI_TEST_EXPECT_NEQ(m_x, WRONG_NUMBER);
-		ANKI_TEST_EXPECT_NEQ(b.m_x, WRONG_NUMBER);
+		ANKI_TEST_EXPECT_NEQ(m_x, kWrongNumber);
+		ANKI_TEST_EXPECT_NEQ(b.m_x, kWrongNumber);
 		m_x = b.m_x;
 		++g_copyCount;
 		return *this;
@@ -74,8 +74,8 @@ public:
 
 	DynamicArrayFoo& operator=(DynamicArrayFoo&& b)
 	{
-		ANKI_TEST_EXPECT_NEQ(m_x, WRONG_NUMBER);
-		ANKI_TEST_EXPECT_NEQ(b.m_x, WRONG_NUMBER);
+		ANKI_TEST_EXPECT_NEQ(m_x, kWrongNumber);
+		ANKI_TEST_EXPECT_NEQ(b.m_x, kWrongNumber);
 		m_x = b.m_x;
 		b.m_x = 0;
 		++g_moveCount;
@@ -88,8 +88,8 @@ public:
 ANKI_TEST(Util, DynamicArray)
 {
 	{
-		HeapAllocator<U8> alloc(allocAligned, nullptr);
-		DynamicArrayAuto<DynamicArrayFoo> arr(alloc);
+		HeapMemoryPool pool(allocAligned, nullptr);
+		DynamicArrayRaii<DynamicArrayFoo> arr(&pool);
 
 		arr.resize(0);
 		arr.resize(2, 1);
@@ -113,8 +113,8 @@ ANKI_TEST(Util, DynamicArray)
 	// Fuzzy
 	{
 		srand(U32(time(nullptr)));
-		HeapAllocator<U8> alloc(allocAligned, nullptr);
-		DynamicArrayAuto<DynamicArrayFoo> arr(alloc);
+		HeapMemoryPool pool(allocAligned, nullptr);
+		DynamicArrayRaii<DynamicArrayFoo> arr(&pool);
 
 		std::vector<DynamicArrayFoo> vec;
 
@@ -147,7 +147,7 @@ ANKI_TEST(Util, DynamicArray)
 			arr.validate();
 		}
 
-		arr = DynamicArrayAuto<DynamicArrayFoo>(alloc);
+		arr = DynamicArrayRaii<DynamicArrayFoo>(&pool);
 		vec = std::vector<DynamicArrayFoo>();
 		ANKI_TEST_EXPECT_GT(g_destructorCount, 0);
 		ANKI_TEST_EXPECT_EQ(g_constructor0Count + g_constructor1Count + g_constructor2Count + g_constructor3Count,
@@ -157,11 +157,11 @@ ANKI_TEST(Util, DynamicArray)
 
 ANKI_TEST(Util, DynamicArrayEmplaceAt)
 {
-	HeapAllocator<U8> alloc(allocAligned, nullptr);
+	HeapMemoryPool pool(allocAligned, nullptr);
 
 	// Empty & add to the end
 	{
-		DynamicArrayAuto<DynamicArrayFoo> arr(alloc);
+		DynamicArrayRaii<DynamicArrayFoo> arr(&pool);
 
 		arr.emplaceAt(arr.getEnd(), 12);
 		ANKI_TEST_EXPECT_EQ(arr[0].m_x, 12);
@@ -169,7 +169,7 @@ ANKI_TEST(Util, DynamicArrayEmplaceAt)
 
 	// 1 element & add to he end
 	{
-		DynamicArrayAuto<DynamicArrayFoo> arr(alloc);
+		DynamicArrayRaii<DynamicArrayFoo> arr(&pool);
 		arr.emplaceBack(12);
 
 		arr.emplaceAt(arr.getEnd(), 34);
@@ -180,7 +180,7 @@ ANKI_TEST(Util, DynamicArrayEmplaceAt)
 
 	// 1 element & add to 0
 	{
-		DynamicArrayAuto<DynamicArrayFoo> arr(alloc);
+		DynamicArrayRaii<DynamicArrayFoo> arr(&pool);
 		arr.emplaceBack(12);
 
 		arr.emplaceAt(arr.getBegin(), 34);
@@ -191,7 +191,7 @@ ANKI_TEST(Util, DynamicArrayEmplaceAt)
 
 	// A bit more complex
 	{
-		DynamicArrayAuto<DynamicArrayFoo> arr(alloc);
+		DynamicArrayRaii<DynamicArrayFoo> arr(&pool);
 
 		for(I32 i = 0; i < 10; ++i)
 		{
@@ -221,7 +221,7 @@ ANKI_TEST(Util, DynamicArrayEmplaceAt)
 	{
 		srand(U32(time(nullptr)));
 
-		DynamicArrayAuto<DynamicArrayFoo> arr(alloc);
+		DynamicArrayRaii<DynamicArrayFoo> arr(&pool);
 		std::vector<DynamicArrayFoo> vec;
 
 		const I ITERATIONS = 10000;
@@ -271,13 +271,13 @@ ANKI_TEST(Util, DynamicArrayEmplaceAt)
 
 ANKI_TEST(Util, DynamicArrayErase)
 {
-	HeapAllocator<U8> alloc(allocAligned, nullptr);
+	HeapMemoryPool pool(allocAligned, nullptr);
 
 	// Fuzzy
 	{
 		srand(U32(time(nullptr)));
 
-		DynamicArrayAuto<DynamicArrayFoo> arr(alloc);
+		DynamicArrayRaii<DynamicArrayFoo> arr(&pool);
 		std::vector<DynamicArrayFoo> vec;
 
 		const I ITERATIONS = 10000;

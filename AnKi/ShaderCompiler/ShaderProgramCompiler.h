@@ -23,14 +23,13 @@ class ShaderProgramBinaryWrapper
 {
 	friend Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterface& fsystem,
 											  ShaderProgramPostParseInterface* postParseCallback,
-											  ShaderProgramAsyncTaskInterface* taskManager,
-											  GenericMemoryPoolAllocator<U8> tempAllocator,
+											  ShaderProgramAsyncTaskInterface* taskManager, BaseMemoryPool& tempPool,
 											  const ShaderCompilerOptions& compilerOptions,
 											  ShaderProgramBinaryWrapper& binary);
 
 public:
-	ShaderProgramBinaryWrapper(GenericMemoryPoolAllocator<U8> alloc)
-		: m_alloc(alloc)
+	ShaderProgramBinaryWrapper(BaseMemoryPool* pool)
+		: m_pool(pool)
 	{
 	}
 
@@ -57,7 +56,7 @@ public:
 	}
 
 private:
-	GenericMemoryPoolAllocator<U8> m_alloc;
+	BaseMemoryPool* m_pool = nullptr;
 	ShaderProgramBinary* m_binary = nullptr;
 	Bool m_singleAllocation = false;
 
@@ -69,7 +68,7 @@ Error ShaderProgramBinaryWrapper::deserializeFromAnyFile(TFile& file)
 {
 	cleanup();
 	BinaryDeserializer deserializer;
-	ANKI_CHECK(deserializer.deserialize(m_binary, m_alloc, file));
+	ANKI_CHECK(deserializer.deserialize(m_binary, *m_pool, file));
 
 	m_singleAllocation = true;
 
@@ -85,7 +84,7 @@ Error ShaderProgramBinaryWrapper::deserializeFromAnyFile(TFile& file)
 /// Takes an AnKi special shader program and spits a binary.
 Error compileShaderProgram(CString fname, ShaderProgramFilesystemInterface& fsystem,
 						   ShaderProgramPostParseInterface* postParseCallback,
-						   ShaderProgramAsyncTaskInterface* taskManager, GenericMemoryPoolAllocator<U8> tempAllocator,
+						   ShaderProgramAsyncTaskInterface* taskManager, BaseMemoryPool& tempPool,
 						   const ShaderCompilerOptions& compilerOptions, ShaderProgramBinaryWrapper& binary);
 /// @}
 

@@ -21,8 +21,7 @@ class MicroSemaphore
 {
 	friend class SemaphoreFactory;
 	friend class MicroSemaphorePtrDeleter;
-	template<typename, typename>
-	friend class GenericPoolAllocator;
+	ANKI_FRIEND_CALL_CONSTRUCTOR_AND_DESTRUCTOR
 
 public:
 	MicroSemaphore(const MicroSemaphore&) = delete; // Non-copyable
@@ -35,7 +34,7 @@ public:
 		return m_handle;
 	}
 
-	GrAllocator<U8> getAllocator() const;
+	HeapMemoryPool& getMemoryPool();
 
 	void retain() const
 	{
@@ -124,13 +123,13 @@ class SemaphoreFactory
 	friend class MicroSemaphorePtrDeleter;
 
 public:
-	void init(GrAllocator<U8> alloc, VkDevice dev)
+	void init(HeapMemoryPool* pool, VkDevice dev)
 	{
 		ANKI_ASSERT(dev);
-		m_alloc = alloc;
+		m_pool = pool;
 		m_dev = dev;
-		m_binaryRecycler.init(alloc);
-		m_timelineRecycler.init(alloc);
+		m_binaryRecycler.init(m_pool);
+		m_timelineRecycler.init(m_pool);
 	}
 
 	void destroy()
@@ -142,7 +141,7 @@ public:
 	MicroSemaphorePtr newInstance(MicroFencePtr fence, Bool isTimeline);
 
 private:
-	GrAllocator<U8> m_alloc;
+	HeapMemoryPool* m_pool = nullptr;
 	VkDevice m_dev = VK_NULL_HANDLE;
 	MicroObjectRecycler<MicroSemaphore> m_binaryRecycler;
 	MicroObjectRecycler<MicroSemaphore> m_timelineRecycler;

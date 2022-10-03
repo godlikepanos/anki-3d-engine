@@ -7,7 +7,6 @@
 
 #include <AnKi/Core/Common.h>
 #include <AnKi/Util/Thread.h>
-#include <AnKi/Util/Allocator.h>
 #include <AnKi/Util/List.h>
 #include <AnKi/Util/File.h>
 
@@ -25,7 +24,7 @@ public:
 	~CoreTracer();
 
 	/// @param directory The directory to store the trace and counters.
-	Error init(GenericMemoryPoolAllocator<U8> alloc, CString directory);
+	Error init(HeapMemoryPool* pool, CString directory);
 
 	/// It will flush everything.
 	void flushFrame(U64 frame);
@@ -34,7 +33,7 @@ private:
 	class ThreadWorkItem;
 	class PerFrameCounters;
 
-	GenericMemoryPoolAllocator<U8> m_alloc;
+	HeapMemoryPool* m_pool = nullptr;
 
 	Thread m_thread;
 	ConditionVariable m_cvar;

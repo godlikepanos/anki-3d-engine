@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <AnKi/Util/Allocator.h>
+#include <AnKi/Util/MemoryPool.h>
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/SparseArray.h>
 
@@ -182,25 +182,25 @@ public:
 	}
 
 	/// Destroy the list.
-	template<typename TAllocator>
-	void destroy(TAllocator alloc)
+	template<typename TMemPool>
+	void destroy(TMemPool& pool)
 	{
-		m_sparseArr.destroy(alloc);
+		m_sparseArr.destroy(pool);
 	}
 
 	/// Construct an element inside the map.
-	template<typename TAllocator, typename... TArgs>
-	Iterator emplace(TAllocator alloc, const TKey& key, TArgs&&... args)
+	template<typename TMemPool, typename... TArgs>
+	Iterator emplace(TMemPool& pool, const TKey& key, TArgs&&... args)
 	{
 		const U64 hash = THasher()(key);
-		return m_sparseArr.emplace(alloc, hash, std::forward<TArgs>(args)...);
+		return m_sparseArr.emplace(pool, hash, std::forward<TArgs>(args)...);
 	}
 
 	/// Erase element.
-	template<typename TAllocator>
-	void erase(TAllocator alloc, Iterator it)
+	template<typename TMemPool>
+	void erase(TMemPool& pool, Iterator it)
 	{
-		m_sparseArr.erase(alloc, it);
+		m_sparseArr.erase(pool, it);
 	}
 
 	/// Find a value using a key.
@@ -223,47 +223,49 @@ protected:
 
 /// Hash map template with automatic cleanup.
 template<typename TKey, typename TValue, typename THasher = DefaultHasher<TKey>,
-		 typename TSparseArrayConfig = HashMapSparseArrayConfig>
-class HashMapAuto : public HashMap<TKey, TValue, THasher, TSparseArrayConfig>
+		 typename TSparseArrayConfig = HashMapSparseArrayConfig,
+		 typename TMemPool = MemoryPoolPtrWrapper<BaseMemoryPool>>
+class HashMapRaii : public HashMap<TKey, TValue, THasher, TSparseArrayConfig>
 {
 public:
 	using Base = HashMap<TKey, TValue, THasher, TSparseArrayConfig>;
+	using MemoryPool = TMemPool;
 
 	/// Default constructor.
-	HashMapAuto(const GenericMemoryPoolAllocator<U8>& alloc)
-		: m_alloc(alloc)
+	HashMapRaii(const TMemPool& pool)
+		: m_pool(pool)
 	{
 	}
 
 	/// Move.
-	HashMapAuto(HashMapAuto&& b)
+	HashMapRaii(HashMapRaii&& b)
 	{
 		*this = std::move(b);
 	}
 
 	/// Copy.
-	HashMapAuto(const HashMapAuto& b)
+	HashMapRaii(const HashMapRaii& b)
 		: Base()
 	{
 		copy(b);
 	}
 
 	/// Destructor.
-	~HashMapAuto()
+	~HashMapRaii()
 	{
 		destroy();
 	}
 
 	/// Move.
-	HashMapAuto& operator=(HashMapAuto&& b)
+	HashMapRaii& operator=(HashMapRaii&& b)
 	{
-		std::move(*static_cast<HashMapAuto>(this));
-		m_alloc = std::move(b.m_alloc);
+		std::move(*static_cast<HashMapRaii>(this));
+		m_pool = std::move(b.m_pool);
 		return *this;
 	}
 
 	/// Copy.
-	HashMapAuto& operator=(const HashMapAuto& b)
+	HashMapRaii& operator=(const HashMapRaii& b)
 	{
 		copy(b);
 		return *this;
@@ -273,29 +275,29 @@ public:
 	template<typename... TArgs>
 	typename Base::Iterator emplace(const TKey& key, TArgs&&... args)
 	{
-		return Base::emplace(m_alloc, key, std::forward<TArgs>(args)...);
+		return Base::emplace(m_pool, key, std::forward<TArgs>(args)...);
 	}
 
 	/// Erase element.
 	void erase(typename Base::Iterator it)
 	{
-		Base::erase(m_alloc, it);
+		Base::erase(m_pool, it);
 	}
 
 	/// Clean up the map.
 	void destroy()
 	{
-		Base::destroy(m_alloc);
+		Base::destroy(m_pool);
 	}
 
 private:
-	GenericMemoryPoolAllocator<U8> m_alloc;
+	MemoryPool m_pool;
 
-	void copy(const HashMapAuto& b)
+	void copy(const HashMapRaii& b)
 	{
 		destroy();
-		m_alloc = b.m_alloc;
-		b.m_sparseArr.clone(m_alloc, Base::m_sparseArr);
+		m_pool = b.m_pool;
+		b.m_sparseArr.clone(m_pool, Base::m_sparseArr);
 	}
 };
 /// @}

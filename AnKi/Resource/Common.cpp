@@ -14,8 +14,8 @@ template<typename T>
 void ResourcePtrDeleter<T>::operator()(T* ptr)
 {
 	ptr->getManager().unregisterResource(ptr);
-	auto alloc = ptr->getAllocator();
-	alloc.deleteInstance(ptr);
+	HeapMemoryPool& pool = ptr->getMemoryPool();
+	deleteInstance(pool, ptr);
 }
 
 #define ANKI_INSTANTIATE_RESOURCE(rsrc_, ptr_) template void ResourcePtrDeleter<rsrc_>::operator()(rsrc_* ptr);

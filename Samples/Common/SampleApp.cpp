@@ -9,15 +9,15 @@ using namespace anki;
 
 Error SampleApp::init(int argc, char** argv, CString sampleName)
 {
-	HeapAllocator<U32> alloc(allocAligned, nullptr);
+	HeapMemoryPool pool(allocAligned, nullptr);
 
 	// Init the super class
 	m_config.init(allocAligned, nullptr);
 	m_config.setWindowFullscreen(true);
 
 #if !ANKI_OS_ANDROID
-	StringAuto mainDataPath(alloc, ANKI_SOURCE_DIRECTORY);
-	StringAuto assetsDataPath(alloc);
+	StringRaii mainDataPath(&pool, ANKI_SOURCE_DIRECTORY);
+	StringRaii assetsDataPath(&pool);
 	assetsDataPath.sprintf("%s/Samples/%s", ANKI_SOURCE_DIRECTORY, sampleName.cstr());
 
 	if(!directoryExists(assetsDataPath))
@@ -28,7 +28,7 @@ Error SampleApp::init(int argc, char** argv, CString sampleName)
 	}
 	else
 	{
-		m_config.setRsrcDataPaths(StringAuto(alloc).sprintf("%s:%s", mainDataPath.cstr(), assetsDataPath.cstr()));
+		m_config.setRsrcDataPaths(StringRaii(&pool).sprintf("%s:%s", mainDataPath.cstr(), assetsDataPath.cstr()));
 	}
 #endif
 

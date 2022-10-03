@@ -55,7 +55,7 @@ public:
 
 	void setFlagsFromMaterial(const MaterialResourcePtr& mtl)
 	{
-		RenderComponentFlag flags = !!(mtl->getRenderingTechniques() & RenderingTechniqueBit::FORWARD)
+		RenderComponentFlag flags = !!(mtl->getRenderingTechniques() & RenderingTechniqueBit::kForward)
 										? RenderComponentFlag::kForwardShading
 										: RenderComponentFlag::kNone;
 		flags |= (mtl->castsShadow()) ? RenderComponentFlag::kCastsShadow : RenderComponentFlag::kNone;

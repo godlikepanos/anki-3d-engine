@@ -11,15 +11,14 @@
 layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
 layout(set = 0, binding = 1) uniform ANKI_RP texture2D u_inputRt;
 
-const U32 TONEMAPPING_SET = 0u;
-const U32 TONEMAPPING_BINDING = 2u;
+const U32 kTonemappingBinding = 2u;
 #include <AnKi/Shaders/TonemappingResources.glsl>
 
 #if defined(ANKI_COMPUTE_SHADER)
 layout(set = 0, binding = 3) writeonly uniform image2D u_outImg;
 
-const UVec2 WORKGROUP_SIZE = UVec2(8, 8);
-layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
+const UVec2 kWorkgroupSize = UVec2(8, 8);
+layout(local_size_x = kWorkgroupSize.x, local_size_y = kWorkgroupSize.y, local_size_z = 1) in;
 #else
 layout(location = 0) in Vec2 in_uv;
 layout(location = 0) out Vec3 out_color;
@@ -34,7 +33,7 @@ layout(push_constant, std140) uniform b_pc
 void main()
 {
 #if defined(ANKI_COMPUTE_SHADER)
-	if(skipOutOfBoundsInvocations(WORKGROUP_SIZE, u_viewportSize))
+	if(skipOutOfBoundsInvocations(kWorkgroupSize, u_viewportSize))
 	{
 		return;
 	}

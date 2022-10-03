@@ -22,9 +22,9 @@ public:
 	{
 	}
 
-	MicroObjectRecycler(GrAllocator<U8> alloc)
+	MicroObjectRecycler(HeapMemoryPool* pool)
 	{
-		init(alloc);
+		init(pool);
 	}
 
 	~MicroObjectRecycler()
@@ -32,9 +32,9 @@ public:
 		destroy();
 	}
 
-	void init(GrAllocator<U8> alloc)
+	void init(HeapMemoryPool* pool)
 	{
-		m_alloc = alloc;
+		m_pool = pool;
 	}
 
 	/// It's thread-safe.
@@ -67,7 +67,7 @@ private:
 		Bool m_fenceDone;
 	};
 
-	GrAllocator<U8> m_alloc;
+	HeapMemoryPool* m_pool = nullptr;
 	DynamicArray<Object> m_objects;
 	Mutex m_mtx;
 

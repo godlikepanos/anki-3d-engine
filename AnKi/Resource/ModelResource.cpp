@@ -13,18 +13,18 @@ namespace anki {
 
 static Bool attributeIsRequired(VertexAttributeId loc, RenderingTechnique technique, Bool hasSkin)
 {
-	if(technique == RenderingTechnique::GBUFFER || technique == RenderingTechnique::FORWARD)
+	if(technique == RenderingTechnique::kGBuffer || technique == RenderingTechnique::kForward)
 	{
 		return true;
 	}
 	else if(!hasSkin)
 	{
-		return loc == VertexAttributeId::POSITION || loc == VertexAttributeId::UV0;
+		return loc == VertexAttributeId::kPosition || loc == VertexAttributeId::kUv0;
 	}
 	else
 	{
-		return loc == VertexAttributeId::POSITION || loc == VertexAttributeId::BONE_INDICES
-			   || loc == VertexAttributeId::BONE_WEIGHTS || loc == VertexAttributeId::UV0;
+		return loc == VertexAttributeId::kPosition || loc == VertexAttributeId::kBoneIndices
+			   || loc == VertexAttributeId::kBoneWeights || loc == VertexAttributeId::kUv0;
 	}
 }
 
@@ -123,11 +123,11 @@ Error ModelPatch::init(ModelResource* model, ConstWeakArray<CString> meshFNames,
 	// Gather the material refs
 	if(m_mtl->getAllTextures().getSize())
 	{
-		m_grObjectRefs.resizeStorage(model->getAllocator(), m_mtl->getAllTextures().getSize());
+		m_grObjectRefs.resizeStorage(model->getMemoryPool(), m_mtl->getAllTextures().getSize());
 
 		for(U32 i = 0; i < m_mtl->getAllTextures().getSize(); ++i)
 		{
-			m_grObjectRefs.emplaceBack(model->getAllocator(), m_mtl->getAllTextures()[i]);
+			m_grObjectRefs.emplaceBack(model->getMemoryPool(), m_mtl->getAllTextures()[i]);
 		}
 	}
 
@@ -243,24 +243,22 @@ ModelResource::ModelResource(ResourceManager* manager)
 
 ModelResource::~ModelResource()
 {
-	auto alloc = getAllocator();
-
 	for(ModelPatch& patch : m_modelPatches)
 	{
-		patch.m_grObjectRefs.destroy(alloc);
+		patch.m_grObjectRefs.destroy(getMemoryPool());
 	}
 
-	m_modelPatches.destroy(alloc);
+	m_modelPatches.destroy(getMemoryPool());
 }
 
 Error ModelResource::load(const ResourceFilename& filename, Bool async)
 {
-	auto alloc = getAllocator();
+	HeapMemoryPool& pool = getMemoryPool();
 
 	// Load
 	//
 	XmlElement el;
-	XmlDocument doc;
+	XmlDocument doc(&getTempMemoryPool());
 	ANKI_CHECK(openFileParseXml(filename, doc));
 
 	XmlElement rootEl;
@@ -289,7 +287,7 @@ Error ModelResource::load(const ResourceFilename& filename, Bool async)
 		return Error::kUserData;
 	}
 
-	m_modelPatches.create(alloc, count);
+	m_modelPatches.create(pool, count);
 
 	count = 0;
 	ANKI_CHECK(modelPatchesEl.getChildElement("modelPatch", modelPatchEl));

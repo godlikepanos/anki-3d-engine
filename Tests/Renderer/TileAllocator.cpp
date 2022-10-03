@@ -8,10 +8,10 @@
 
 ANKI_TEST(Renderer, TileAllocator)
 {
-	HeapAllocator<U8> alloc(allocAligned, nullptr);
+	HeapMemoryPool pool(allocAligned, nullptr);
 
 	TileAllocator talloc;
-	talloc.init(alloc, 8, 8, 3, true);
+	talloc.init(&pool, 8, 8, 3, true);
 
 	Array<U32, 4> viewport;
 	TileAllocatorResult res;

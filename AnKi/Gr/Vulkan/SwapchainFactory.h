@@ -47,7 +47,7 @@ public:
 		return m_refcount.load();
 	}
 
-	GrAllocator<U8> getAllocator() const;
+	HeapMemoryPool& getMemoryPool();
 
 	void setFence(MicroFencePtr fence)
 	{

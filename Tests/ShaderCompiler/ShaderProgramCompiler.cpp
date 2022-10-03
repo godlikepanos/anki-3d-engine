@@ -84,7 +84,7 @@ void main()
 	class Fsystem : public ShaderProgramFilesystemInterface
 	{
 	public:
-		Error readAllText(CString filename, StringAuto& txt) final
+		Error readAllText(CString filename, StringRaii& txt) final
 		{
 			File file;
 			ANKI_CHECK(file.open(filename, FileOpenFlag::kRead));
@@ -93,16 +93,16 @@ void main()
 		}
 	} fsystem;
 
-	HeapAllocator<U8> alloc(allocAligned, nullptr);
+	HeapMemoryPool pool(allocAligned, nullptr);
 
 	const U32 threadCount = 8;
-	ThreadHive hive(threadCount, alloc);
+	ThreadHive hive(threadCount, &pool);
 
 	class TaskManager : public ShaderProgramAsyncTaskInterface
 	{
 	public:
 		ThreadHive* m_hive = nullptr;
-		HeapAllocator<U8> m_alloc;
+		HeapMemoryPool* m_pool;
 
 		void enqueueTask(void (*callback)(void* userData), void* userData)
 		{
@@ -110,20 +110,19 @@ void main()
 			{
 				void (*m_callback)(void* userData);
 				void* m_userData;
-				HeapAllocator<U8> m_alloc;
+				HeapMemoryPool* m_pool;
 			};
-			Ctx* ctx = m_alloc.newInstance<Ctx>();
+			Ctx* ctx = newInstance<Ctx>(*m_pool);
 			ctx->m_callback = callback;
 			ctx->m_userData = userData;
-			ctx->m_alloc = m_alloc;
+			ctx->m_pool = m_pool;
 
 			m_hive->submitTask(
 				[](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
 				   [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
 					Ctx* ctx = static_cast<Ctx*>(userData);
 					ctx->m_callback(ctx->m_userData);
-					auto alloc = ctx->m_alloc;
-					alloc.deleteInstance(ctx);
+					deleteInstance(*ctx->m_pool, ctx);
 				},
 				ctx);
 		}
@@ -135,15 +134,15 @@ void main()
 		}
 	} taskManager;
 	taskManager.m_hive = &hive;
-	taskManager.m_alloc = alloc;
+	taskManager.m_pool = &pool;
 
-	ShaderProgramBinaryWrapper binary(alloc);
+	ShaderProgramBinaryWrapper binary(&pool);
 	ShaderCompilerOptions compilerOptions;
 	ANKI_TEST_EXPECT_NO_ERR(
-		compileShaderProgram("test.glslp", fsystem, nullptr, &taskManager, alloc, compilerOptions, binary));
+		compileShaderProgram("test.glslp", fsystem, nullptr, &taskManager, pool, compilerOptions, binary));
 
 #if 1
-	StringAuto dis(alloc);
+	StringRaii dis(&pool);
 	dumpShaderProgramBinary(binary.getBinary(), dis);
 	ANKI_LOGI("Binary disassembly:\n%s\n", dis.cstr());
 #endif
@@ -281,7 +280,7 @@ void main()
 	class Fsystem : public ShaderProgramFilesystemInterface
 	{
 	public:
-		Error readAllText(CString filename, StringAuto& txt) final
+		Error readAllText(CString filename, StringRaii& txt) final
 		{
 			File file;
 			ANKI_CHECK(file.open(filename, FileOpenFlag::kRead));
@@ -290,16 +289,16 @@ void main()
 		}
 	} fsystem;
 
-	HeapAllocator<U8> alloc(allocAligned, nullptr);
+	HeapMemoryPool pool(allocAligned, nullptr);
 
 	const U32 threadCount = 24;
-	ThreadHive hive(threadCount, alloc);
+	ThreadHive hive(threadCount, &pool);
 
 	class TaskManager : public ShaderProgramAsyncTaskInterface
 	{
 	public:
 		ThreadHive* m_hive = nullptr;
-		HeapAllocator<U8> m_alloc;
+		HeapMemoryPool* m_pool = nullptr;
 
 		void enqueueTask(void (*callback)(void* userData), void* userData)
 		{
@@ -307,20 +306,19 @@ void main()
 			{
 				void (*m_callback)(void* userData);
 				void* m_userData;
-				HeapAllocator<U8> m_alloc;
+				HeapMemoryPool* m_pool;
 			};
-			Ctx* ctx = m_alloc.newInstance<Ctx>();
+			Ctx* ctx = newInstance<Ctx>(*m_pool);
 			ctx->m_callback = callback;
 			ctx->m_userData = userData;
-			ctx->m_alloc = m_alloc;
+			ctx->m_pool = m_pool;
 
 			m_hive->submitTask(
 				[](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
 				   [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
 					Ctx* ctx = static_cast<Ctx*>(userData);
 					ctx->m_callback(ctx->m_userData);
-					auto alloc = ctx->m_alloc;
-					alloc.deleteInstance(ctx);
+					deleteInstance(*ctx->m_pool, ctx);
 				},
 				ctx);
 		}
@@ -332,14 +330,14 @@ void main()
 		}
 	} taskManager;
 	taskManager.m_hive = &hive;
-	taskManager.m_alloc = alloc;
+	taskManager.m_pool = &pool;
 
-	ShaderProgramBinaryWrapper binary(alloc);
+	ShaderProgramBinaryWrapper binary(&pool);
 	ANKI_TEST_EXPECT_NO_ERR(
-		compileShaderProgram("test.glslp", fsystem, nullptr, &taskManager, alloc, ShaderCompilerOptions(), binary));
+		compileShaderProgram("test.glslp", fsystem, nullptr, &taskManager, pool, ShaderCompilerOptions(), binary));
 
 #if 1
-	StringAuto dis(alloc);
+	StringRaii dis(&pool);
 	dumpShaderProgramBinary(binary.getBinary(), dis);
 	ANKI_LOGI("Binary disassembly:\n%s\n", dis.cstr());
 #endif

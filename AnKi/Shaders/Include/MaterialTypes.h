@@ -19,29 +19,29 @@ struct MaterialGlobalUniforms
 };
 ANKI_SHADER_STATIC_ASSERT(sizeof(MaterialGlobalUniforms) == 14 * sizeof(Vec4));
 
-const U32 MATERIAL_SET_BINDLESS = 0u;
-const U32 MATERIAL_SET_GLOBAL = 1u;
-const U32 MATERIAL_SET_LOCAL = 2u;
+const U32 kMaterialSetBindless = 0u;
+const U32 kMaterialSetGlobal = 1u;
+const U32 kMaterialSetLocal = 2u;
 
 // Begin global bindings
-const U32 MATERIAL_BINDING_TRILINEAR_REPEAT_SAMPLER = 0u;
-const U32 MATERIAL_BINDING_GLOBAL_UNIFORMS = 1u;
+const U32 kMaterialBindingTrilinearRepeatSampler = 0u;
+const U32 kMaterialBindingGlobalUniforms = 1u;
 
 // For forward shading:
-const U32 MATERIAL_BINDING_LINEAR_CLAMP_SAMPLER = 2u;
-const U32 MATERIAL_BINDING_DEPTH_RT = 3u;
-const U32 MATERIAL_BINDING_LIGHT_VOLUME = 4u;
-const U32 MATERIAL_BINDING_CLUSTER_SHADING_UNIFORMS = 5u;
-const U32 MATERIAL_BINDING_CLUSTER_SHADING_LIGHTS = 6u;
-const U32 MATERIAL_BINDING_CLUSTERS = 9u;
+const U32 kMaterialBindingLinearClampSampler = 2u;
+const U32 kMaterialBindingDepthRt = 3u;
+const U32 kMaterialBindingLightVolume = 4u;
+const U32 kMaterialBindingClusterShadingUniforms = 5u;
+const U32 kMaterialBindingClusterShadingLights = 6u;
+const U32 kMaterialBindingClusters = 9u;
 // End global bindings
 
 // Begin local bindings
-const U32 MATERIAL_BINDING_LOCAL_UNIFORMS = 0u;
-const U32 MATERIAL_BINDING_RENDERABLE_GPU_VIEW = 1u;
-const U32 MATERIAL_BINDING_BONE_TRANSFORMS = 2u;
-const U32 MATERIAL_BINDING_PREVIOUS_BONE_TRANSFORMS = 3u;
-const U32 MATERIAL_BINDING_FIRST_NON_STANDARD_LOCAL = 4u;
+const U32 kMaterialBindingLocalUniforms = 0u;
+const U32 kMaterialBindingRenderableGpuView = 1u;
+const U32 kMaterialBindingBoneTransforms = 2u;
+const U32 kMaterialBindingPreviousBoneTransforms = 3u;
+const U32 kMaterialBindingFirstNonStandardLocal = 4u;
 // End local bindings
 
 ANKI_END_NAMESPACE

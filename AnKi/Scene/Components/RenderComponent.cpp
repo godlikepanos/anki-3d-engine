@@ -18,12 +18,12 @@ void RenderComponent::allocateAndSetupUniforms(const MaterialResourcePtr& mtl, c
 											   ConstWeakArray<Mat3x4> transforms, ConstWeakArray<Mat3x4> prevTransforms,
 											   StagingGpuMemoryPool& alloc)
 {
-	ANKI_ASSERT(transforms.getSize() <= MAX_INSTANCE_COUNT);
+	ANKI_ASSERT(transforms.getSize() <= kMaxInstanceCount);
 	ANKI_ASSERT(prevTransforms.getSize() == transforms.getSize());
 
 	CommandBufferPtr cmdb = ctx.m_commandBuffer;
 
-	const U32 set = MATERIAL_SET_LOCAL;
+	const U32 set = kMaterialSetLocal;
 
 	// Fill the RenderableGpuView
 	const U32 renderableGpuViewsUboSize = sizeof(RenderableGpuView) * transforms.getSize();
@@ -31,11 +31,10 @@ void RenderComponent::allocateAndSetupUniforms(const MaterialResourcePtr& mtl, c
 	{
 		StagingGpuMemoryToken token;
 		RenderableGpuView* renderableGpuViews = static_cast<RenderableGpuView*>(
-			alloc.allocateFrame(renderableGpuViewsUboSize, StagingGpuMemoryType::UNIFORM, token));
+			alloc.allocateFrame(renderableGpuViewsUboSize, StagingGpuMemoryType::kUniform, token));
 		ANKI_ASSERT(isAligned(alignof(RenderableGpuView), renderableGpuViews));
 
-		cmdb->bindUniformBuffer(set, MATERIAL_BINDING_RENDERABLE_GPU_VIEW, token.m_buffer, token.m_offset,
-								token.m_range);
+		cmdb->bindUniformBuffer(set, kMaterialBindingRenderableGpuView, token.m_buffer, token.m_offset, token.m_range);
 
 		for(U32 i = 0; i < transforms.getSize(); ++i)
 		{
@@ -53,12 +52,12 @@ void RenderComponent::allocateAndSetupUniforms(const MaterialResourcePtr& mtl, c
 	StagingGpuMemoryToken token;
 	U8* const localUniformsBegin =
 		(localUniformsUboSize != 0)
-			? static_cast<U8*>(alloc.allocateFrame(localUniformsUboSize, StagingGpuMemoryType::STORAGE, token))
+			? static_cast<U8*>(alloc.allocateFrame(localUniformsUboSize, StagingGpuMemoryType::kStorage, token))
 			: nullptr;
 
 	if(localUniformsUboSize)
 	{
-		cmdb->bindStorageBuffer(set, MATERIAL_BINDING_LOCAL_UNIFORMS, token.m_buffer, token.m_offset, token.m_range);
+		cmdb->bindStorageBuffer(set, kMaterialBindingLocalUniforms, token.m_buffer, token.m_offset, token.m_range);
 	}
 
 	// Iterate variables

@@ -23,8 +23,8 @@ public:
 	TextureType m_texType;
 	TexturePtr m_tex;
 
-	LoadingContext(GenericMemoryPoolAllocator<U8> alloc)
-		: m_loader(alloc)
+	LoadingContext(BaseMemoryPool* pool)
+		: m_loader(pool)
 	{
 	}
 };
@@ -35,8 +35,8 @@ class ImageResource::TexUploadTask : public AsyncLoaderTask
 public:
 	ImageResource::LoadingContext m_ctx;
 
-	TexUploadTask(GenericMemoryPoolAllocator<U8> alloc)
-		: m_ctx(alloc)
+	TexUploadTask(BaseMemoryPool* pool)
+		: m_ctx(pool)
 	{
 	}
 
@@ -54,11 +54,11 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 {
 	TexUploadTask* task;
 	LoadingContext* ctx;
-	LoadingContext localCtx(getTempAllocator());
+	LoadingContext localCtx(&getTempMemoryPool());
 
 	if(async)
 	{
-		task = getManager().getAsyncLoader().newTask<TexUploadTask>(getManager().getAsyncLoader().getAllocator());
+		task = getManager().getAsyncLoader().newTask<TexUploadTask>(&getManager().getAsyncLoader().getMemoryPool());
 		ctx = &task->m_ctx;
 	}
 	else
@@ -68,7 +68,7 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 	}
 	ImageLoader& loader = ctx->m_loader;
 
-	StringAuto filenameExt(getTempAllocator());
+	StringRaii filenameExt(&getTempMemoryPool());
 	getFilepathFilename(filename, filenameExt);
 
 	TextureInitInfo init(filenameExt);
@@ -258,17 +258,17 @@ Error ImageResource::load(LoadingContext& ctx)
 {
 	const U32 copyCount = ctx.m_layerCount * ctx.m_faces * ctx.m_loader.getMipmapCount();
 
-	for(U32 b = 0; b < copyCount; b += MAX_COPIES_BEFORE_FLUSH)
+	for(U32 b = 0; b < copyCount; b += kMaxCopiesBeforeFlush)
 	{
 		const U32 begin = b;
-		const U32 end = min(copyCount, b + MAX_COPIES_BEFORE_FLUSH);
+		const U32 end = min(copyCount, b + kMaxCopiesBeforeFlush);
 
 		CommandBufferInitInfo ci;
 		ci.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
 		CommandBufferPtr cmdb = ctx.m_gr->newCommandBuffer(ci);
 
 		// Set the barriers of the batch
-		Array<TextureBarrierInfo, MAX_COPIES_BEFORE_FLUSH> barriers;
+		Array<TextureBarrierInfo, kMaxCopiesBeforeFlush> barriers;
 		U32 barrierCount = 0;
 		for(U32 i = begin; i < end; ++i)
 		{
@@ -292,7 +292,7 @@ Error ImageResource::load(LoadingContext& ctx)
 		cmdb->setPipelineBarrier({&barriers[0], barrierCount}, {}, {});
 
 		// Do the copies
-		Array<TransferGpuAllocatorHandle, MAX_COPIES_BEFORE_FLUSH> handles;
+		Array<TransferGpuAllocatorHandle, kMaxCopiesBeforeFlush> handles;
 		U32 handleCount = 0;
 		for(U32 i = begin; i < end; ++i)
 		{

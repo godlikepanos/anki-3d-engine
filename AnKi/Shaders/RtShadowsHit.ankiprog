@@ -43,7 +43,7 @@ void main()
 	load(mesh.m_indexBufferPtr + U64(offset), indices16);
 	const UVec3 indices = UVec3(indices16);
 
-	const U64 vertBufferPtr = mesh.m_vertexBufferPtrs[VERTEX_ATTRIBUTE_BUFFER_ID_NORMAL_TANGENT_UV0];
+	const U64 vertBufferPtr = mesh.m_vertexBufferPtrs[kVertexAttributeBufferIdNormalTangentUv0];
 
 	MainVertex vert0, vert1, vert2;
 	load(vertBufferPtr + U64(indices[0] * ANKI_SIZEOF(MainVertex)), vert0);

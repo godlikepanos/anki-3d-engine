@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <AnKi/Util/Allocator.h>
+#include <AnKi/Util/MemoryPool.h>
 #include <AnKi/Util/Forward.h>
 #include <AnKi/Util/Array.h>
 
@@ -18,7 +18,7 @@ namespace anki {
 /// allocations. Can be used like:
 /// @code
 /// Function<Error(U32, F32), 16> func;
-/// func.init(allocator, [&someInt](U32 u, F32 f) {someInt = xxx + u + f; return Error::kNone;});
+/// func.init(pool, [&someInt](U32 u, F32 f) {someInt = xxx + u + f; return Error::kNone;});
 /// func.call(10, 1.2f);
 /// @endcode
 /// @tparam kTInlineStorageSize Optional inline storage to avoid deallocations (small object optimization)
@@ -38,10 +38,10 @@ public:
 	Function(const Function&) = delete;
 
 	/// Same as init().
-	template<typename TAlloc, typename T>
-	Function(TAlloc alloc, const T& func)
+	template<typename TMemPool, typename T>
+	Function(TMemPool& pool, const T& func)
 	{
-		init(alloc, func);
+		init(pool, func);
 	}
 
 	// Does nothing important.
@@ -64,10 +64,10 @@ public:
 	}
 
 	/// Initialize the function.
-	/// @param alloc The allocator (it might be used).
+	/// @param pool The memory pool (it might be used).
 	/// @param func The lambda.
-	template<typename TAlloc, typename T>
-	void init(TAlloc alloc, const T& func)
+	template<typename TMemPool, typename T>
+	void init(TMemPool& pool, const T& func)
 	{
 		ANKI_ASSERT(getState() == kStateUninitialized);
 
@@ -91,7 +91,7 @@ public:
 		{
 			setState(kStateAllocated);
 			using CallableT = Callable<T>;
-			CallableT* callable = alloc.template newInstance<CallableT>(func);
+			CallableT* callable = newInstance<CallableT>(pool, func);
 			m_callablePtr = callable;
 
 			callable->m_size = sizeof(CallableT);
@@ -112,14 +112,14 @@ public:
 	}
 
 	/// Destroy the object.
-	template<typename TAlloc>
-	void destroy(TAlloc alloc)
+	template<typename TMemPool>
+	void destroy(TMemPool& pool)
 	{
 		if(getState() == kStateAllocated)
 		{
 			ANKI_ASSERT(m_callablePtr && m_callablePtr->m_destroyCallback);
 			m_callablePtr->m_destroyCallback(*m_callablePtr);
-			alloc.getMemoryPool().free(m_callablePtr);
+			pool.free(m_callablePtr);
 		}
 
 		m_state = kStateUninitialized;
@@ -138,8 +138,8 @@ public:
 	}
 
 	/// Copy from another.
-	template<typename TAlloc>
-	Function& copy(const Function& other, TAlloc alloc)
+	template<typename TMemPool>
+	Function& copy(const Function& other, TMemPool& pool)
 	{
 		ANKI_ASSERT(getState() == kStateUninitialized && "Need to destroy it first");
 
@@ -161,7 +161,7 @@ public:
 			// Allocate callable
 			ANKI_ASSERT(other.m_callablePtr && other.m_callablePtr->m_alignment > 0 && other.m_callablePtr->m_size > 0);
 			m_callablePtr = static_cast<CallableBase*>(
-				alloc.getMemoryPool().allocate(other.m_callablePtr->m_size, other.m_callablePtr->m_alignment));
+				pool.allocate(other.m_callablePtr->m_size, other.m_callablePtr->m_alignment));
 
 			// Copy
 			other.m_callablePtr->m_copyCallback(*other.m_callablePtr, *m_callablePtr);

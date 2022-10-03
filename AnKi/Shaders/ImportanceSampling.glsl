@@ -52,7 +52,7 @@ Vec2 hammersleyRandom16(U32 sampleIdx, U32 sampleCount, UVec2 random)
 /// From a uniform 2D point inside a circle get a 3D point in the surface of a hemisphere. It's oriented in the z axis
 Vec3 hemisphereSampleUniform(Vec2 uv)
 {
-	const F32 phi = uv.y * 2.0 * PI;
+	const F32 phi = uv.y * 2.0 * kPi;
 	const F32 cosTheta = 1.0 - uv.x;
 	const F32 sinTheta = sqrt(1.0 - cosTheta * cosTheta);
 	return Vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);
@@ -62,7 +62,7 @@ Vec3 hemisphereSampleUniform(Vec2 uv)
 /// Same as hemisphereSampleUniform but it distributes points closer to the z axis
 Vec3 hemisphereSampleCos(Vec2 uv)
 {
-	const F32 phi = uv.y * 2.0 * PI;
+	const F32 phi = uv.y * 2.0 * kPi;
 	const F32 cosTheta = sqrt(1.0 - uv.x);
 	const F32 sinTheta = sqrt(1.0 - cosTheta * cosTheta);
 	return Vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);

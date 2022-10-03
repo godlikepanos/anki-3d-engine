@@ -130,7 +130,7 @@ public:
 
 	GpuMemoryManager& operator=(const GpuMemoryManager&) = delete; // Non-copyable
 
-	void init(VkPhysicalDevice pdev, VkDevice dev, GrAllocator<U8> alloc, Bool exposeBufferGpuAddress);
+	void init(VkPhysicalDevice pdev, VkDevice dev, HeapMemoryPool* pool, Bool exposeBufferGpuAddress);
 
 	void destroy();
 
@@ -155,13 +155,13 @@ public:
 private:
 	using ClassAllocator = ClassAllocatorBuilder<GpuMemoryManagerChunk, GpuMemoryManagerInterface, Mutex>;
 
-	GrAllocator<U8> m_alloc;
+	HeapMemoryPool* m_pool = nullptr;
 
 	VkDevice m_dev = VK_NULL_HANDLE;
 
 	DynamicArray<ClassAllocator> m_callocs;
 
-	VkPhysicalDeviceMemoryProperties m_memoryProperties;
+	VkPhysicalDeviceMemoryProperties m_memoryProperties = {};
 	U32 m_bufferImageGranularity = 0;
 
 	// Dedicated allocation stats

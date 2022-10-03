@@ -48,8 +48,8 @@ public:
 	template<typename T, typename... TArgs>
 	PhysicsPtr<T> newInstance(TArgs&&... args)
 	{
-		T* obj = static_cast<T*>(m_alloc.getMemoryPool().allocate(sizeof(T), alignof(T)));
-		::new(obj) T(this, std::forward<TArgs>(args)...);
+		T* obj = static_cast<T*>(m_pool.allocate(sizeof(T), alignof(T)));
+		callConstructor(*obj, this, std::forward<TArgs>(args)...);
 		{
 			LockGuard<Mutex> lock(m_markedMtx);
 			m_markedForCreation.pushBack(obj);
@@ -64,24 +64,14 @@ public:
 	/// Do the update.
 	void update(Second dt);
 
-	HeapAllocator<U8> getAllocator() const
+	HeapMemoryPool& getMemoryPool()
 	{
-		return m_alloc;
+		return m_pool;
 	}
 
-	HeapAllocator<U8>& getAllocator()
+	StackMemoryPool& getTempMemoryPool()
 	{
-		return m_alloc;
-	}
-
-	StackAllocator<U8> getTempAllocator() const
-	{
-		return m_tmpAlloc;
-	}
-
-	StackAllocator<U8>& getTempAllocator()
-	{
-		return m_tmpAlloc;
+		return m_tmpPool;
 	}
 
 	void rayCast(WeakArray<PhysicsWorldRayCastCallback*> rayCasts) const;
@@ -117,8 +107,8 @@ private:
 	class MyOverlapFilterCallback;
 	class MyRaycastCallback;
 
-	HeapAllocator<U8> m_alloc;
-	StackAllocator<U8> m_tmpAlloc;
+	HeapMemoryPool m_pool;
+	StackMemoryPool m_tmpPool;
 
 	ClassWrapper<btDbvtBroadphase> m_broadphase;
 	ClassWrapper<btGhostPairCallback> m_gpc;

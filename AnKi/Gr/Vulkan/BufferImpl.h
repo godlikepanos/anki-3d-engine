@@ -90,6 +90,7 @@ public:
 	}
 
 	/// Only for texture buffers.
+	/// @note It's thread-safe
 	VkBufferView getOrCreateBufferView(Format fmt, PtrSize offset, PtrSize range) const;
 
 private:

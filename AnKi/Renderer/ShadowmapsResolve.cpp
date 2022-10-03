@@ -50,11 +50,11 @@ Error ShadowmapsResolve::initInternal()
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	if(getConfig().getRPreferCompute())
 	{
-		variantInitInfo.addConstant("FB_SIZE", UVec2(width, height));
+		variantInitInfo.addConstant("kFramebufferSize", UVec2(width, height));
 	}
-	variantInitInfo.addConstant("TILE_COUNTS", m_r->getTileCounts());
-	variantInitInfo.addConstant("Z_SPLIT_COUNT", m_r->getZSplitCount());
-	variantInitInfo.addConstant("TILE_SIZE", m_r->getTileSize());
+	variantInitInfo.addConstant("kTileCount", m_r->getTileCounts());
+	variantInitInfo.addConstant("kZSplitCount", m_r->getZSplitCount());
+	variantInitInfo.addConstant("kTileSize", m_r->getTileSize());
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProg = variant->getProgram();

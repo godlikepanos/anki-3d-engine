@@ -33,9 +33,9 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FileOpenFlag)
 /// @memberof File
 enum class FileSeekOrigin
 {
-	BEGINNING = SEEK_SET,
-	CURRENT = SEEK_CUR,
-	END = SEEK_END
+	kBeginning = SEEK_SET,
+	kCurrent = SEEK_CUR,
+	kEnd = SEEK_END
 };
 
 /// An abstraction over typical files and files in ziped archives. This class can read from regular C files, zip files
@@ -87,10 +87,10 @@ public:
 
 	/// Read all the contents of a text file
 	/// If the file is not rewined it will probably fail
-	Error readAllText(GenericMemoryPoolAllocator<U8> alloc, String& out);
+	Error readAllText(BaseMemoryPool& pool, String& out);
 
 	/// Read all the contents of a text file. If the file is not rewined it will probably fail.
-	Error readAllText(StringAuto& out);
+	Error readAllText(StringRaii& out);
 
 	/// Read 32bit unsigned integer. Set the endianness if the file's endianness is different from the machine's.
 	Error readU32(U32& u);

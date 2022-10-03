@@ -88,7 +88,7 @@ public:
 
 	ImageResourcePtr m_blueNoiseImage;
 
-	Array<ShadowLayer, MAX_RT_SHADOW_LAYERS> m_shadowLayers;
+	Array<ShadowLayer, kMaxRtShadowLayers> m_shadowLayers;
 
 	U32 m_sbtRecordSize = 256;
 
@@ -112,7 +112,7 @@ public:
 		PtrSize m_sbtOffset;
 		U32 m_hitGroupCount = 0;
 
-		BitSet<MAX_RT_SHADOW_LAYERS, U8> m_layersWithRejectedHistory = {false};
+		BitSet<kMaxRtShadowLayers, U8> m_layersWithRejectedHistory = {false};
 
 		U8 m_atrousPassIdx = 0;
 		U8 m_denoiseOrientation = 0;

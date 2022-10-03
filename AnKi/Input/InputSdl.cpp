@@ -31,22 +31,40 @@ static MouseButton sdlMouseButtonToAnKi(const U32 sdl)
 	return out;
 }
 
+static KeyCode sdlKeytoAnKi(SDL_Keycode sdlk)
+{
+	KeyCode akk = KeyCode::kUnknown;
+	switch(sdlk)
+	{
+#define ANKI_KEY_CODE(ak, sdl) \
+	case SDLK_##sdl: \
+		akk = KeyCode::k##ak; \
+		break;
+#include <AnKi/Input/KeyCode.defs.h>
+#undef ANKI_KEY_CODE
+	}
+
+	ANKI_ASSERT(akk != KeyCode::kUnknown);
+	return akk;
+}
+
 Error Input::newInstance(AllocAlignedCallback allocCallback, void* allocCallbackUserData, NativeWindow* nativeWindow,
 						 Input*& input)
 {
 	ANKI_ASSERT(allocCallback && nativeWindow);
 
-	HeapAllocator<U8> alloc(allocCallback, allocCallbackUserData, "Input");
-	InputSdl* sdlinput = alloc.newInstance<InputSdl>(alloc);
+	InputSdl* sdlinput =
+		static_cast<InputSdl*>(allocCallback(allocCallbackUserData, nullptr, sizeof(InputSdl), alignof(InputSdl)));
+	callConstructor(*sdlinput);
 
-	sdlinput->m_alloc = alloc;
+	sdlinput->m_pool.init(allocCallback, allocCallbackUserData);
 	sdlinput->m_nativeWindow = nativeWindow;
 
 	const Error err = sdlinput->init();
 	if(err)
 	{
-		sdlinput->~InputSdl();
-		alloc.getMemoryPool().free(sdlinput);
+		callDestructor(*sdlinput);
+		allocCallback(allocCallbackUserData, sdlinput, 0, 0);
 		input = nullptr;
 		return err;
 	}
@@ -62,8 +80,10 @@ void Input::deleteInstance(Input* input)
 	if(input)
 	{
 		InputSdl* self = static_cast<InputSdl*>(input);
-		HeapAllocator<U8> alloc = self->m_alloc;
-		alloc.deleteInstance(self);
+		AllocAlignedCallback callback = self->m_pool.getAllocationCallback();
+		void* userData = self->m_pool.getAllocationCallbackUserData();
+		callDestructor(*self);
+		callback(userData, self, 0, 0);
 	}
 }
 
@@ -106,10 +126,6 @@ Error InputSdl::init()
 {
 	ANKI_ASSERT(m_nativeWindow);
 
-#define ANKI_KEY_CODE(ak, sdl) m_sdlToAnki[SDLK_##sdl] = KeyCode::k##ak;
-#include <AnKi/Input/KeyCode.defs.h>
-#undef ANKI_KEY_CODE
-
 	// Call once to clear first events
 	return handleEvents();
 }
@@ -144,11 +160,11 @@ Error InputSdl::handleEventsInternal()
 		switch(event.type)
 		{
 		case SDL_KEYDOWN:
-			akkey = m_sdlToAnki[event.key.keysym.sym];
+			akkey = sdlKeytoAnKi(event.key.keysym.sym);
 			m_keys[akkey] = 1;
 			break;
 		case SDL_KEYUP:
-			akkey = m_sdlToAnki[event.key.keysym.sym];
+			akkey = sdlKeytoAnKi(event.key.keysym.sym);
 			m_keys[akkey] = 0;
 			break;
 		case SDL_MOUSEBUTTONDOWN:
@@ -180,7 +196,7 @@ Error InputSdl::handleEventsInternal()
 			m_mousePosNdc.y() = -(F32(event.button.y) / F32(m_nativeWindow->getHeight()) * 2.0f - 1.0f);
 			break;
 		case SDL_QUIT:
-			addEvent(InputEvent::WINDOW_CLOSED);
+			addEvent(InputEvent::kWindowClosed);
 			break;
 		case SDL_TEXTINPUT:
 			std::strncpy(&m_textInput[0], event.text.text, m_textInput.getSize() - 1);

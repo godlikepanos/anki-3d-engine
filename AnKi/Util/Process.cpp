@@ -184,7 +184,7 @@ Error Process::kill(ProcessKillSignal k)
 	return Error::kNone;
 }
 
-Error Process::readFromStdout(StringAuto& text)
+Error Process::readFromStdout(StringRaii& text)
 {
 #if !ANKI_OS_ANDROID
 	return readCommon(REPROC_STREAM_OUT, text);
@@ -193,7 +193,7 @@ Error Process::readFromStdout(StringAuto& text)
 #endif
 }
 
-Error Process::readFromStderr(StringAuto& text)
+Error Process::readFromStderr(StringRaii& text)
 {
 #if !ANKI_OS_ANDROID
 	return readCommon(REPROC_STREAM_ERR, text);
@@ -203,7 +203,7 @@ Error Process::readFromStderr(StringAuto& text)
 }
 
 #if !ANKI_OS_ANDROID
-Error Process::readCommon(I32 reprocStream, StringAuto& text)
+Error Process::readCommon(I32 reprocStream, StringRaii& text)
 {
 	ANKI_ASSERT(m_handle);
 

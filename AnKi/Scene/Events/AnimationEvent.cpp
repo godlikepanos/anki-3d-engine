@@ -39,7 +39,7 @@ Error AnimationEvent::init(CString animationFilename, CString channelName, Scene
 
 	Event::init(m_anim->getStartingTime(), m_anim->getDuration());
 	m_reanimate = true;
-	m_associatedNodes.emplaceBack(getAllocator(), movableSceneNode);
+	m_associatedNodes.emplaceBack(getMemoryPool(), movableSceneNode);
 
 	return Error::kNone;
 }

@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Util/Assert.h>
-#include <AnKi/Util/CpuMemoryPools.h>
+#include <AnKi/Util/MemoryPool.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/Forward.h>
 #include <cstddef> // For ptrdiff_t
@@ -424,15 +424,15 @@ inline Bool operator!=(const GenericPoolAllocator<T1, TPool>&, const AnotherAllo
 
 /// Allocator using the base memory pool.
 template<typename T>
-using GenericMemoryPoolAllocator = GenericPoolAllocator<T, BaseMemoryPool>;
+using GenericMemoryPoolAllocator = GenericPoolAllocator<T, RefCountedMemoryPool<BaseMemoryPool>>;
 
 /// Heap based allocator. The default allocator. It uses malloc and free for allocations/deallocations
 template<typename T>
-using HeapAllocator = GenericPoolAllocator<T, HeapMemoryPool>;
+using HeapAllocator = GenericPoolAllocator<T, RefCountedMemoryPool<HeapMemoryPool>>;
 
 /// Allocator that uses a StackMemoryPool
 template<typename T>
-using StackAllocator = GenericPoolAllocator<T, StackMemoryPool>;
+using StackAllocator = GenericPoolAllocator<T, RefCountedMemoryPool<StackMemoryPool>>;
 
 #define ANKI_FRIEND_ALLOCATOR \
 	template<typename, typename> \

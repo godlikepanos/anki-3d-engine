@@ -549,14 +549,15 @@ public:
 	{
 	}
 
-	void init(GrAllocator<U8> alloc, VkDevice dev, VkPipelineCache pplineCache
+	void init(HeapMemoryPool* pool, VkDevice dev, VkPipelineCache pplineCache
 #if ANKI_PLATFORM_MOBILE
 			  ,
 			  Mutex* globalCreatePipelineMtx
 #endif
 	)
 	{
-		m_alloc = alloc;
+		ANKI_ASSERT(pool);
+		m_pool = pool;
 		m_dev = dev;
 		m_pplineCache = pplineCache;
 #if ANKI_PLATFORM_MOBILE
@@ -573,7 +574,7 @@ private:
 	class PipelineInternal;
 	class Hasher;
 
-	GrAllocator<U8> m_alloc;
+	HeapMemoryPool* m_pool = nullptr;
 	VkDevice m_dev = VK_NULL_HANDLE;
 	VkPipelineCache m_pplineCache = VK_NULL_HANDLE;
 

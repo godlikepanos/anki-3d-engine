@@ -32,7 +32,7 @@ Error Tonemapping::initInternal()
 	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/TonemappingAverageLuminance.ankiprogbin", m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-	variantInitInfo.addConstant("INPUT_TEX_SIZE", UVec2(width, height));
+	variantInitInfo.addConstant("kInputTexSize", UVec2(width, height));
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);

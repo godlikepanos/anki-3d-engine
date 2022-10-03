@@ -3,42 +3,41 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(INPUT_TEX_SIZE, 0u);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(kInputTexSize, 0u);
 
 #pragma anki start comp
 #define LOG_AVG 0
 
 #include <AnKi/Shaders/TonemappingFunctions.glsl>
 
-const UVec2 WORKGROUP_SIZE = UVec2(32u, 16u);
-layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
+const UVec2 kWorkgroupSize = UVec2(32u, 16u);
+layout(local_size_x = kWorkgroupSize.x, local_size_y = kWorkgroupSize.y, local_size_z = 1) in;
 
 // Align the tex size to workgroup size
-const UVec2 ALIGNED_INPUT_TEX_SIZE = WORKGROUP_SIZE * ((INPUT_TEX_SIZE + WORKGROUP_SIZE - 1u) / WORKGROUP_SIZE);
-const UVec2 PIXELS_PER_TILE = ALIGNED_INPUT_TEX_SIZE / WORKGROUP_SIZE;
+const UVec2 kAlignedInputTexSize = kWorkgroupSize * ((kInputTexSize + kWorkgroupSize - 1u) / kWorkgroupSize);
+const UVec2 kPixelsPerTile = kAlignedInputTexSize / kWorkgroupSize;
 
 layout(set = 0, binding = 0) uniform ANKI_RP texture2D u_tex;
 
 #define TONEMAPPING_RESOURCE_AS_WRITE_IMAGE 1
-#define TONEMAPPING_SET 0
-#define TONEMAPPING_BINDING 1
+const U32 kTonemappingBinding = 1u;
 #include <AnKi/Shaders/TonemappingResources.glsl>
 
-shared F32 s_avgLum[WORKGROUP_SIZE.x * WORKGROUP_SIZE.y];
+shared F32 s_avgLum[kWorkgroupSize.x * kWorkgroupSize.y];
 
 void main()
 {
 	// Gather the log-average luminance of a tile. It will miss some pixels but not too many
-	const U32 yStart = gl_LocalInvocationID.y * PIXELS_PER_TILE.y;
-	const U32 xStart = gl_LocalInvocationID.x * PIXELS_PER_TILE.x;
+	const U32 yStart = gl_LocalInvocationID.y * kPixelsPerTile.y;
+	const U32 xStart = gl_LocalInvocationID.x * kPixelsPerTile.x;
 
 	F32 avgLum = 0.0;
-	ANKI_UNROLL for(U32 y = 0u; y < PIXELS_PER_TILE.y; ++y)
+	ANKI_UNROLL for(U32 y = 0u; y < kPixelsPerTile.y; ++y)
 	{
-		ANKI_UNROLL for(U32 x = 0u; x < PIXELS_PER_TILE.x; ++x)
+		ANKI_UNROLL for(U32 x = 0u; x < kPixelsPerTile.x; ++x)
 		{
 			const UVec2 uv = UVec2(xStart, yStart) + UVec2(x, y);
-			if(uv.x >= INPUT_TEX_SIZE.x || uv.y >= INPUT_TEX_SIZE.y)
+			if(uv.x >= kInputTexSize.x || uv.y >= kInputTexSize.y)
 			{
 				continue;
 			}
@@ -46,7 +45,7 @@ void main()
 			const Vec3 color = texelFetch(u_tex, IVec2(uv), 0).rgb;
 			const F32 lum = computeLuminance(color);
 #if LOG_AVG
-			avgLum += log(max(EPSILON, lum));
+			avgLum += log(max(kEpsilonf, lum));
 #else
 			avgLum += lum;
 #endif
@@ -59,7 +58,7 @@ void main()
 	barrier();
 
 	// Gather the results into one
-	ANKI_LOOP for(U32 s = (WORKGROUP_SIZE.x * WORKGROUP_SIZE.y) / 2u; s > 0u; s >>= 1u)
+	ANKI_LOOP for(U32 s = (kWorkgroupSize.x * kWorkgroupSize.y) / 2u; s > 0u; s >>= 1u)
 	{
 		if(gl_LocalInvocationIndex < s)
 		{
@@ -79,23 +78,23 @@ void main()
 	ANKI_BRANCH if(gl_LocalInvocationIndex == 0u)
 	{
 #if LOG_AVG
-		const F32 crntLum = exp(s_avgLum[0] * (1.0 / F32(INPUT_TEX_SIZE.x * INPUT_TEX_SIZE.y)));
+		const F32 crntLum = exp(s_avgLum[0] * (1.0 / F32(kInputTexSize.x * kInputTexSize.y)));
 #else
-		const F32 crntLum = s_avgLum[0] * (1.0 / F32(INPUT_TEX_SIZE.x * INPUT_TEX_SIZE.y));
+		const F32 crntLum = s_avgLum[0] * (1.0 / F32(kInputTexSize.x * kInputTexSize.y));
 #endif
 
 #if 1
 		const F32 prevLum = readExposureAndAverageLuminance().y;
 
 		// Lerp between previous and new L value
-		const F32 INTERPOLATION_FACTOR = 0.05;
-		F32 finalAvgLum = mix(prevLum, crntLum, INTERPOLATION_FACTOR);
+		const F32 interpolationFactor = 0.05;
+		F32 finalAvgLum = mix(prevLum, crntLum, interpolationFactor);
 #else
 		F32 finalAvgLum = crntLum;
 #endif
 
 		// This is a workaround because sometimes the avg lum becomes nan
-		finalAvgLum = clamp(finalAvgLum, EPSILON, kMaxF32);
+		finalAvgLum = clamp(finalAvgLum, kEpsilonf, kMaxF32);
 
 		writeExposureAndAverageLuminance(computeExposure(finalAvgLum, 0.0), finalAvgLum);
 	}

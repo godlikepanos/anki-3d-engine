@@ -3,13 +3,13 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(IN_DEPTH_MAP_SIZE, 0u);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(kInDepthMapSize, 0u);
 
 #pragma anki start comp
 #include <AnKi/Shaders/Common.glsl>
 
-const U32 WORKGROUP_SIZE = 8u;
-layout(local_size_x = WORKGROUP_SIZE, local_size_y = WORKGROUP_SIZE, local_size_z = 1) in;
+const U32 kWorkgroupSize = 8u;
+layout(local_size_x = kWorkgroupSize, local_size_y = kWorkgroupSize, local_size_z = 1) in;
 
 struct DrawArraysIndirectInfo
 {
@@ -25,7 +25,7 @@ layout(set = 0, binding = 0, std430, row_major) readonly buffer b_lf
 	Vec4 u_flarePositions[];
 };
 
-layout(set = 0, binding = 1, std430) writeonly buffer ss1_
+layout(set = 0, binding = 1, std430) writeonly buffer b_indirectInfo
 {
 	DrawArraysIndirectInfo u_indirectInfo[];
 };
@@ -52,10 +52,10 @@ void main()
 	const F32 depth = posNdc.z;
 
 	// Compute the UVs to sample the depth map
-	// Belongs to [-WORKGROUP_SIZE, WORKGROUP_SIZE]
-	const Vec2 displacement = Vec2(gl_LocalInvocationID.xy) - Vec2(WORKGROUP_SIZE / 2u);
-	const Vec2 TEXEL_SIZE = 1.0 / Vec2(IN_DEPTH_MAP_SIZE);
-	const Vec2 uv = NDC_TO_UV(posNdc.xy) + displacement * TEXEL_SIZE;
+	// Belongs to [-kWorkgroupSize, kWorkgroupSize]
+	const Vec2 displacement = Vec2(gl_LocalInvocationID.xy) - Vec2(kWorkgroupSize / 2u);
+	const Vec2 texelSize = 1.0 / Vec2(kInDepthMapSize);
+	const Vec2 uv = NDC_TO_UV(posNdc.xy) + displacement * texelSize;
 
 	// Sample and store depth
 	const F32 refDepth = textureLod(u_depthMap, u_nearestAnyClampSampler, uv, 0.0).r;

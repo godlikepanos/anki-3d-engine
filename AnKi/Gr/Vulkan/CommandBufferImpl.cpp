@@ -34,12 +34,12 @@ CommandBufferImpl::~CommandBufferImpl()
 		ANKI_VK_LOGW("Command buffer was not flushed");
 	}
 
-	m_imgBarriers.destroy(m_alloc);
-	m_buffBarriers.destroy(m_alloc);
-	m_memBarriers.destroy(m_alloc);
-	m_queryResetAtoms.destroy(m_alloc);
-	m_writeQueryAtoms.destroy(m_alloc);
-	m_secondLevelAtoms.destroy(m_alloc);
+	m_imgBarriers.destroy(*m_pool);
+	m_buffBarriers.destroy(*m_pool);
+	m_memBarriers.destroy(*m_pool);
+	m_queryResetAtoms.destroy(*m_pool);
+	m_writeQueryAtoms.destroy(*m_pool);
+	m_secondLevelAtoms.destroy(*m_pool);
 }
 
 Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
@@ -50,7 +50,7 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 	ANKI_CHECK(getGrManagerImpl().getCommandBufferFactory().newCommandBuffer(m_tid, m_flags, m_microCmdb));
 	m_handle = m_microCmdb->getHandle();
 
-	m_alloc = m_microCmdb->getFastAllocator();
+	m_pool = &m_microCmdb->getFastMemoryPool();
 
 	// Store some of the init info for later
 	if(!!(m_flags & CommandBufferFlag::kSecondLevel))
@@ -64,7 +64,7 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 
 	for(DescriptorSetState& state : m_dsetState)
 	{
-		state.init(m_alloc);
+		state.init(m_pool);
 	}
 
 	return Error::kNone;
@@ -461,11 +461,11 @@ void CommandBufferImpl::flushBarriers()
 	// Batch
 	//
 
-	DynamicArrayAuto<VkImageMemoryBarrier> finalImgBarriers(m_alloc);
+	DynamicArrayRaii<VkImageMemoryBarrier> finalImgBarriers(m_pool);
 	U32 finalImgBarrierCount = 0;
 	if(m_imgBarrierCount > 0)
 	{
-		DynamicArrayAuto<VkImageMemoryBarrier> squashedBarriers(m_alloc);
+		DynamicArrayRaii<VkImageMemoryBarrier> squashedBarriers(m_pool);
 		U32 squashedBarrierCount = 0;
 
 		squashedBarriers.create(m_imgBarrierCount);
@@ -590,7 +590,7 @@ void CommandBufferImpl::flushQueryResets()
 
 	vkCmdResetQueryPool(m_handle, pool, firstQuery, queryCount);
 
-	m_queryResetAtoms.destroy(m_alloc);
+	m_queryResetAtoms.destroy(*m_pool);
 }
 
 void CommandBufferImpl::flushWriteQueryResults()
@@ -654,7 +654,7 @@ void CommandBufferImpl::flushWriteQueryResults()
 	vkCmdCopyQueryPoolResults(m_handle, pool, firstQuery, queryCount, buff, offset, sizeof(U32),
 							  VK_QUERY_RESULT_PARTIAL_BIT);
 
-	m_writeQueryAtoms.resize(m_alloc, 0);
+	m_writeQueryAtoms.resize(*m_pool, 0);
 }
 
 void CommandBufferImpl::copyBufferToTextureViewInternal(const BufferPtr& buff, PtrSize offset,
@@ -894,9 +894,9 @@ void CommandBufferImpl::setPipelineBarrierInternal(
 {
 	commandCommon();
 
-	DynamicArrayAuto<VkImageMemoryBarrier> imageBarriers(m_alloc);
-	DynamicArrayAuto<VkBufferMemoryBarrier> bufferBarriers(m_alloc);
-	DynamicArrayAuto<VkMemoryBarrier> genericBarriers(m_alloc);
+	DynamicArrayRaii<VkImageMemoryBarrier> imageBarriers(m_pool);
+	DynamicArrayRaii<VkBufferMemoryBarrier> bufferBarriers(m_pool);
+	DynamicArrayRaii<VkMemoryBarrier> genericBarriers(m_pool);
 	VkPipelineStageFlags srcStageMask = 0;
 	VkPipelineStageFlags dstStageMask = 0;
 

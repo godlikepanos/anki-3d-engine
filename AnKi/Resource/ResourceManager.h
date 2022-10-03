@@ -38,7 +38,7 @@ protected:
 	~TypeResourceManager()
 	{
 		ANKI_ASSERT(m_ptrs.isEmpty() && "Forgot to delete some resources");
-		m_ptrs.destroy(m_alloc);
+		m_ptrs.destroy(*m_pool);
 	}
 
 	Type* findLoadedResource(const CString& filename)
@@ -50,25 +50,26 @@ protected:
 	void registerResource(Type* ptr)
 	{
 		ANKI_ASSERT(find(ptr->getFilename()) == m_ptrs.getEnd());
-		m_ptrs.pushBack(m_alloc, ptr);
+		m_ptrs.pushBack(*m_pool, ptr);
 	}
 
 	void unregisterResource(Type* ptr)
 	{
 		auto it = find(ptr->getFilename());
 		ANKI_ASSERT(it != m_ptrs.end());
-		m_ptrs.erase(m_alloc, it);
+		m_ptrs.erase(*m_pool, it);
 	}
 
-	void init(ResourceAllocator<U8> alloc)
+	void init(HeapMemoryPool* pool)
 	{
-		m_alloc = std::move(alloc);
+		ANKI_ASSERT(pool);
+		m_pool = pool;
 	}
 
 private:
 	using Container = List<Type*>;
 
-	ResourceAllocator<U8> m_alloc;
+	HeapMemoryPool* m_pool = nullptr;
 	Container m_ptrs;
 
 	typename Container::Iterator find(const CString& filename)
@@ -129,14 +130,14 @@ public:
 
 	// Internals:
 
-	ANKI_INTERNAL ResourceAllocator<U8>& getAllocator()
+	ANKI_INTERNAL HeapMemoryPool& getMemoryPool() const
 	{
-		return m_alloc;
+		return m_pool;
 	}
 
-	ANKI_INTERNAL TempResourceAllocator<U8>& getTempAllocator()
+	ANKI_INTERNAL StackMemoryPool& getTempMemoryPool() const
 	{
-		return m_tmpAlloc;
+		return m_tmpPool;
 	}
 
 	ANKI_INTERNAL GrManager& getGrManager()
@@ -217,8 +218,8 @@ private:
 	PhysicsWorld* m_physics = nullptr;
 	ResourceFilesystem* m_fs = nullptr;
 	ConfigSet* m_config = nullptr;
-	ResourceAllocator<U8> m_alloc;
-	TempResourceAllocator<U8> m_tmpAlloc;
+	mutable HeapMemoryPool m_pool; ///< Mutable because it's thread-safe and is may be called by const methods.
+	mutable StackMemoryPool m_tmpPool; ///< Same as above.
 	AsyncLoader* m_asyncLoader = nullptr; ///< Async loading thread
 	ShaderProgramResourceSystem* m_shaderProgramSystem = nullptr;
 	VertexGpuMemoryPool* m_vertexMem = nullptr;

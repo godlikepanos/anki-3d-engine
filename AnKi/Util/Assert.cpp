@@ -35,7 +35,8 @@ void akassert(const char* exprTxt, const char* file, int line, const char* func)
 
 	printf("Backtrace:\n");
 	U32 count = 0;
-	backtrace(HeapAllocator<U8>(allocAligned, nullptr), [&count](CString symbol) {
+	HeapMemoryPool pool(allocAligned, nullptr);
+	backtrace(pool, [&count](CString symbol) {
 		printf("%.2u: %s\n", count++, symbol.cstr());
 	});
 

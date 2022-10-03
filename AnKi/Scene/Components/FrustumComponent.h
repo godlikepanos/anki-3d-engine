@@ -351,7 +351,7 @@ public:
 
 	void setShadowCascadeCount(U32 count)
 	{
-		m_shadowCascadeCount = U8(min(count, MAX_SHADOW_CASCADES));
+		m_shadowCascadeCount = U8(min(count, kMaxShadowCascades));
 	}
 
 	const ConvexHullShape& getPerspectiveBoundingShapeWorldSpace() const
@@ -445,7 +445,7 @@ private:
 	/// Defines the the rate of the cascade distances
 	F32 m_shadowCascadesDistancePower = 1.0f;
 
-	Array<F32, MAX_LOD_COUNT - 1> m_maxLodDistances = {};
+	Array<F32, kMaxLodCount - 1> m_maxLodDistances = {};
 
 	U8 m_shadowCascadeCount = 0;
 

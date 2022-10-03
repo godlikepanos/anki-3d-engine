@@ -28,7 +28,7 @@ Error XmlElement::getNumber(T& out) const
 }
 
 template<typename T>
-Error XmlElement::getNumbers(DynamicArrayAuto<T>& out) const
+Error XmlElement::getNumbers(DynamicArrayRaii<T>& out) const
 {
 	CString txt;
 	ANKI_CHECK(getText(txt));
@@ -53,7 +53,7 @@ Error XmlElement::getNumbers(TArray& out) const
 }
 
 template<typename T>
-Error XmlElement::getAttributeNumbersOptional(CString name, DynamicArrayAuto<T>& out, Bool& attribPresent) const
+Error XmlElement::getAttributeNumbersOptional(CString name, DynamicArrayRaii<T>& out, Bool& attribPresent) const
 {
 	CString txtVal;
 	ANKI_CHECK(getAttributeTextOptional(name, txtVal, attribPresent));
@@ -87,7 +87,7 @@ Error XmlElement::getAttributeNumbersOptional(CString name, TArray& out, Bool& a
 template<typename T>
 Error XmlElement::getAttributeNumberOptional(CString name, T& out, Bool& attribPresent) const
 {
-	DynamicArrayAuto<T> arr(m_alloc);
+	DynamicArrayRaii<T> arr(m_pool);
 	ANKI_CHECK(getAttributeNumbersOptional(name, arr, attribPresent));
 
 	if(attribPresent)
@@ -105,12 +105,12 @@ Error XmlElement::getAttributeNumberOptional(CString name, T& out, Bool& attribP
 }
 
 template<typename T>
-Error XmlElement::parseNumbers(CString txt, DynamicArrayAuto<T>& out) const
+Error XmlElement::parseNumbers(CString txt, DynamicArrayRaii<T>& out) const
 {
 	ANKI_ASSERT(txt);
 	ANKI_ASSERT(m_el);
 
-	StringListAuto list(m_alloc);
+	StringListRaii list(m_pool);
 	list.splitString(txt, ' ');
 
 	out.destroy();
@@ -140,7 +140,7 @@ Error XmlElement::parseNumbers(CString txt, TArray& out) const
 	ANKI_ASSERT(!txt.isEmpty());
 	ANKI_ASSERT(m_el);
 
-	StringListAuto list(m_alloc);
+	StringListRaii list(m_pool);
 	list.splitString(txt, ' ');
 	const PtrSize listSize = list.getSize();
 

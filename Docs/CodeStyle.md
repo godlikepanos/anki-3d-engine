@@ -16,7 +16,7 @@ Table of contents
 Comments in C++ & GLSL
 ======================
 
-All comments are C++ like:
+All comments are C++ like (double slash):
 
 	// Some comment
 
@@ -43,13 +43,13 @@ All **types** are PascalCase and that includes classes, structs, typedefs and en
 	class MyClass {...};
 	using MyType = int;
 
-All **constant expressions** are SCREAMING_SNAKE_CASE and that includes enumerants.
+All **constexpr expressions** start with a `k` and that includes enumerants.
 
-	constexpr int MY_CONSTANT = ...;
+	constexpr int kMyConstant = ...;
 
 	enum MyEnum
 	{
-		ENUMERANT_A
+		kEnumerantA
 	};
 
 All **macros and defines** should be SCREAMING_SNAKE_CASE and they should have an `ANKI_` prefix.
@@ -58,9 +58,9 @@ All **macros and defines** should be SCREAMING_SNAKE_CASE and they should have a
 
 	#define ANKI_MAX_SOMETHING ...
 
-All **template arguments** should start with `T`.
+All **template typedefs** should start with `T`. No need for constant template arguments.
 
-	template<typename TSomething, typename TOther, U32 T_SOME_CONST>
+	template<typename TSomething, typename TOther, U32 kSomeConst>
 
 All **function and method names** should form a sentence with at least one verb.
 
@@ -68,8 +68,9 @@ All **function and method names** should form a sentence with at least one verb.
 	getSomething();
 	calculateSomething(...);
 
-**No hungarian notations** with 2 exceptions.
+**Using some hungarian notations**.
 
+- Constants start with `k` as mentioned above.
 - All member variables have the `m_` prefix. That applies to classes and structs.
 - All global variables have the `g_` prefix.
 
@@ -128,7 +129,7 @@ C++ rules
 
 **Always use `constexpr`** when applicable. Never use defines for constants.
 
-	constexpr uint SOME_CONST = ...; // YES!!
+	constexpr uint kSomeConst = ...; // YES!!
 	#define SOME_CONST (...)         // NO
 
 **Never use `struct`** and always use `class` instead. Since it's difficult to come up with rules on when to use struct over class always use class and be done with it.
@@ -140,7 +141,10 @@ C++ rules
 		int m_y;
 	};
 
-**Avoid using `auto`**. It's only allowed in some templates and in iterators. auto makes reading code difficult.
+**Avoid using `auto`**. It's only allowed in some templates and in iterators. auto makes reviewing code difficult.
+
+	auto i = 10;               // NO
+	auto it = list.getBegin(); // ... FINE
 
 **Includes should always have the full file path**. This avoids issues with files of similar name. Non-AnKi includes follow AnKi includes.
 
@@ -149,7 +153,7 @@ C++ rules
 	#include <AnKi/Util/Allocator.h>
 	#include <cstdio>
 
-**Never use public nested classes**. Only private nested classes are allowed. Nested classes cannot be forward declared.
+**Never use public nested classes**. Only private nested classes are allowed. Nested classes cannot be forward declared. Nexted typedefs are fine.
 
 	class MyClass
 	{
@@ -157,11 +161,14 @@ C++ rules
 		// NO!!!!!!!!!!!
 		class Nested {...};
 
+		// OK
+		using SomeTypedef = U32;
+
 	private:
-		// It's fine
+		// OK
 		class Nested {...};
 
-		// Also fine
+		// Also OK
 		class
 		{
 			...
@@ -193,6 +200,7 @@ AnKi uses **const correctness** throughout and that's mandatory. Always use `con
 Always **use AnKi's fudmental types** (U32, I32, F32, Bool etc etc). For integers and if you don't care about the size of the integer you can use the type `U` for unsinged or `I` for signed. Both of them are at least 32bit.
 
 	for(U32 i = 0; i < 10; ++i) {...}
+	U32 i = ...;
 
 If you have to overload the operator Bool always use **`explicit operator Bool` operator** overloading. Omitting the `explicit` may lead to bugs.
 
@@ -211,13 +219,14 @@ The use of **references and pointers** is govern by some rules. Always use refer
 		ref += ...;
 	}
 
-Always **use `nullptr`**.
+Always **use `nullptr`** and never NULL.
 
 	void* ptr = nullptr;
 
 **Never use C style arrays**. Use the `Array<>` template instead.
 
-	Array<MyType, 10> myArray;
+	Array<MyType, 10> myArray; // YES
+	MyType myArray[10];        // NO
 
 **Don't use STL**. AnKi has a replacement for most STL templates. There are some exceptions though.
 
@@ -226,6 +235,15 @@ Always **use `nullptr`**.
 - Some from `algorithm` eg std::sort.
 
 Always try to **comment parts of the source code**. Self documenting code is never enough.
+
+	void someFunction(...)
+	{
+		// Now do X
+		...
+
+		// Now do Y
+		...
+	}
 
 Always **use `override` or `final`** on virtual methods and try to use `final` on classes when applicable.
 
@@ -248,11 +266,8 @@ Always **use `override` or `final`** on virtual methods and try to use `final` o
 
 Always place the **condition of a conditional ternary operator** inside parenthesis.
 
-	// NO!!!!!!!!!!!
-	a = b ? 1 : 0;
-
-	// YES!!!!!!!!!!!!!!
-	a = (b) ? 1 : 0;
+	a = b ? 1 : 0;   // NO
+	a = (b) ? 1 : 0; // YES
 
 GLSL rules
 ==========

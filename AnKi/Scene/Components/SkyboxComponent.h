@@ -20,8 +20,8 @@ class SkyboxQueueElement;
 /// @memberof SkyboxComponent
 enum class SkyboxType : U8
 {
-	SOLID_COLOR,
-	IMAGE_2D
+	kSolidColor,
+	kImage2D
 };
 
 /// Skybox config.
@@ -36,7 +36,7 @@ public:
 
 	void setSolidColor(const Vec3& color)
 	{
-		m_type = SkyboxType::SOLID_COLOR;
+		m_type = SkyboxType::kSolidColor;
 		m_color = color.max(Vec3(0.0f));
 	}
 
@@ -118,7 +118,7 @@ public:
 
 private:
 	SceneNode* m_node;
-	SkyboxType m_type = SkyboxType::SOLID_COLOR;
+	SkyboxType m_type = SkyboxType::kSolidColor;
 	Vec3 m_color = Vec3(0.0f, 0.0f, 0.5f);
 	ImageResourcePtr m_image;
 

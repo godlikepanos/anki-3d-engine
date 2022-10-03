@@ -87,7 +87,7 @@ Error ShadowMapping::initScratch()
 		m_scratch.m_fbDescr.bake();
 	}
 
-	m_scratch.m_tileAlloc.init(getAllocator(), m_scratch.m_tileCountX, m_scratch.m_tileCountY, MAX_LOD_COUNT, false);
+	m_scratch.m_tileAlloc.init(&getMemoryPool(), m_scratch.m_tileCountX, m_scratch.m_tileCountY, kMaxLodCount, false);
 
 	return Error::kNone;
 }
@@ -114,7 +114,7 @@ Error ShadowMapping::initAtlas()
 	}
 
 	// Tiles
-	m_atlas.m_tileAlloc.init(getAllocator(), m_atlas.m_tileCountBothAxis, m_atlas.m_tileCountBothAxis, MAX_LOD_COUNT,
+	m_atlas.m_tileAlloc.init(&getMemoryPool(), m_atlas.m_tileCountBothAxis, m_atlas.m_tileCountBothAxis, kMaxLodCount,
 							 true);
 
 	// Programs and shaders
@@ -124,12 +124,13 @@ Error ShadowMapping::initAtlas()
 													 m_atlas.m_resolveProg));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_atlas.m_resolveProg);
-		variantInitInfo.addConstant("INPUT_TEXTURE_SIZE", UVec2(m_scratch.m_tileCountX * m_scratch.m_tileResolution,
-																m_scratch.m_tileCountY * m_scratch.m_tileResolution));
+		variantInitInfo.addConstant("kInputTextureSize", UVec2(m_scratch.m_tileCountX * m_scratch.m_tileResolution,
+															   m_scratch.m_tileCountY * m_scratch.m_tileResolution));
 
 		if(!preferCompute)
 		{
-			variantInitInfo.addConstant("FB_SIZE", UVec2(m_atlas.m_tileCountBothAxis * m_atlas.m_tileResolution));
+			variantInitInfo.addConstant("kFramebufferSize",
+										UVec2(m_atlas.m_tileCountBothAxis * m_atlas.m_tileResolution));
 		}
 
 		const ShaderProgramResourceVariant* variant;
@@ -229,7 +230,7 @@ void ShadowMapping::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 		args.m_sampler = m_r->getSamplers().m_trilinearRepeatAniso;
 		args.m_minLod = args.m_maxLod = work.m_renderQueueElementsLod;
 
-		m_r->getSceneDrawer().drawRange(RenderingTechnique::SHADOW, args,
+		m_r->getSceneDrawer().drawRange(RenderingTechnique::kShadow, args,
 										work.m_renderQueue->m_renderables.getBegin() + work.m_firstRenderableElement,
 										work.m_renderQueue->m_renderables.getBegin() + work.m_firstRenderableElement
 											+ work.m_renderableElementCount,
@@ -362,7 +363,7 @@ void ShadowMapping::chooseLod(const Vec4& cameraOrigin, const PointLightQueueEle
 	{
 		blurAtlas = false;
 		tileBufferLod = 0;
-		renderQueueElementsLod = MAX_LOD_COUNT - 1;
+		renderQueueElementsLod = kMaxLodCount - 1;
 	}
 }
 
@@ -390,13 +391,13 @@ void ShadowMapping::chooseLod(const Vec4& cameraOrigin, const SpotLightQueueElem
 	{
 		blurAtlas = false;
 		tileBufferLod = 1;
-		renderQueueElementsLod = MAX_LOD_COUNT - 1;
+		renderQueueElementsLod = kMaxLodCount - 1;
 	}
 	else
 	{
 		blurAtlas = false;
 		tileBufferLod = 0;
-		renderQueueElementsLod = MAX_LOD_COUNT - 1;
+		renderQueueElementsLod = kMaxLodCount - 1;
 	}
 }
 
@@ -491,9 +492,9 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 
 	// Vars
 	const Vec4 cameraOrigin = ctx.m_renderQueue->m_cameraTransform.getTranslationPart().xyz0();
-	DynamicArrayAuto<Scratch::LightToRenderToScratchInfo> lightsToRender(ctx.m_tempAllocator);
+	DynamicArrayRaii<Scratch::LightToRenderToScratchInfo> lightsToRender(ctx.m_tempPool);
 	U32 drawcallCount = 0;
-	DynamicArrayAuto<Atlas::ResolveWorkItem> atlasWorkItems(ctx.m_tempAllocator);
+	DynamicArrayRaii<Atlas::ResolveWorkItem> atlasWorkItems(ctx.m_tempPool);
 
 	// First thing, allocate an empty tile for empty faces of point lights
 	UVec4 emptyTileViewport;
@@ -523,15 +524,15 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 	{
 		DirectionalLightQueueElement& light = ctx.m_renderQueue->m_directionalLight;
 
-		Array<U64, MAX_SHADOW_CASCADES> timestamps;
-		Array<U32, MAX_SHADOW_CASCADES> cascadeIndices;
-		Array<U32, MAX_SHADOW_CASCADES> drawcallCounts;
-		Array<UVec4, MAX_SHADOW_CASCADES> atlasViewports;
-		Array<UVec4, MAX_SHADOW_CASCADES> scratchViewports;
-		Array<TileAllocatorResult, MAX_SHADOW_CASCADES> subResults;
-		Array<U32, MAX_SHADOW_CASCADES> lods;
-		Array<U32, MAX_SHADOW_CASCADES> renderQueueElementsLods;
-		Array<Bool, MAX_SHADOW_CASCADES> blurAtlass;
+		Array<U64, kMaxShadowCascades> timestamps;
+		Array<U32, kMaxShadowCascades> cascadeIndices;
+		Array<U32, kMaxShadowCascades> drawcallCounts;
+		Array<UVec4, kMaxShadowCascades> atlasViewports;
+		Array<UVec4, kMaxShadowCascades> scratchViewports;
+		Array<TileAllocatorResult, kMaxShadowCascades> subResults;
+		Array<U32, kMaxShadowCascades> lods;
+		Array<U32, kMaxShadowCascades> renderQueueElementsLods;
+		Array<Bool, kMaxShadowCascades> blurAtlass;
 
 		U32 activeCascades = 0;
 
@@ -548,8 +549,8 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 
 				// Change the quality per cascade
 				blurAtlass[activeCascades] = (cascade <= 1);
-				lods[activeCascades] = (cascade <= 1) ? (MAX_LOD_COUNT - 1) : (lods[0] - 1);
-				renderQueueElementsLods[activeCascades] = (cascade == 0) ? 0 : (MAX_LOD_COUNT - 1);
+				lods[activeCascades] = (cascade <= 1) ? (kMaxLodCount - 1) : (lods[0] - 1);
+				renderQueueElementsLods[activeCascades] = (cascade == 0) ? 0 : (kMaxLodCount - 1);
 
 				++activeCascades;
 			}
@@ -752,7 +753,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 	// Split the work that will happen in the scratch buffer
 	if(lightsToRender.getSize())
 	{
-		DynamicArrayAuto<Scratch::WorkItem> workItems(ctx.m_tempAllocator);
+		DynamicArrayRaii<Scratch::WorkItem> workItems(ctx.m_tempPool);
 		Scratch::LightToRenderToScratchInfo* lightToRender = lightsToRender.getBegin();
 		U32 lightToRenderDrawcallCount = lightToRender->m_drawcallCount;
 		const Scratch::LightToRenderToScratchInfo* lightToRenderEnd = lightsToRender.getEnd();
@@ -826,8 +827,8 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 
 void ShadowMapping::newScratchAndAtlasResloveRenderWorkItems(
 	const UVec4& atlasViewport, const UVec4& scratchVewport, Bool blurAtlas, RenderQueue* lightRenderQueue,
-	U32 renderQueueElementsLod, DynamicArrayAuto<Scratch::LightToRenderToScratchInfo>& scratchWorkItem,
-	DynamicArrayAuto<Atlas::ResolveWorkItem>& atlasResolveWorkItem, U32& drawcallCount) const
+	U32 renderQueueElementsLod, DynamicArrayRaii<Scratch::LightToRenderToScratchInfo>& scratchWorkItem,
+	DynamicArrayRaii<Atlas::ResolveWorkItem>& atlasResolveWorkItem, U32& drawcallCount) const
 {
 	// Scratch work item
 	{

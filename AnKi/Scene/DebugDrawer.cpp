@@ -17,7 +17,7 @@ void allocateAndPopulateDebugBox(StagingGpuMemoryPool& stagingGpuAllocator, Stag
 								 StagingGpuMemoryToken& indicesToken, U32& indexCount)
 {
 	Vec3* verts = static_cast<Vec3*>(
-		stagingGpuAllocator.allocateFrame(sizeof(Vec3) * 8, StagingGpuMemoryType::VERTEX, vertsToken));
+		stagingGpuAllocator.allocateFrame(sizeof(Vec3) * 8, StagingGpuMemoryType::kVertex, vertsToken));
 
 	constexpr F32 kSize = 1.0f;
 	verts[0] = Vec3(kSize, kSize, kSize); // front top right
@@ -31,7 +31,7 @@ void allocateAndPopulateDebugBox(StagingGpuMemoryPool& stagingGpuAllocator, Stag
 
 	constexpr U kIndexCount = 12 * 2;
 	U16* indices = static_cast<U16*>(
-		stagingGpuAllocator.allocateFrame(sizeof(U16) * kIndexCount, StagingGpuMemoryType::VERTEX, indicesToken));
+		stagingGpuAllocator.allocateFrame(sizeof(U16) * kIndexCount, StagingGpuMemoryType::kVertex, indicesToken));
 
 	U c = 0;
 	indices[c++] = 0;
@@ -144,7 +144,7 @@ void DebugDrawer2::drawCubes(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 l
 	// Set the uniforms
 	StagingGpuMemoryToken unisToken;
 	Mat4* pmvps = static_cast<Mat4*>(stagingGpuAllocator.allocateFrame(sizeof(Mat4) * mvps.getSize() + sizeof(Vec4),
-																	   StagingGpuMemoryType::UNIFORM, unisToken));
+																	   StagingGpuMemoryType::kUniform, unisToken));
 
 	if(cubeSideSize == 2.0f)
 	{
@@ -162,7 +162,7 @@ void DebugDrawer2::drawCubes(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 l
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addMutation("COLOR_TEXTURE", 0);
 	variantInitInfo.addMutation("DITHERED_DEPTH_TEST", U32(ditherFailedDepth != 0));
-	variantInitInfo.addConstant("INSTANCE_COUNT", mvps.getSize());
+	variantInitInfo.addConstant("kInstanceCount", mvps.getSize());
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	cmdb->bindShaderProgram(variant->getProgram());
@@ -188,13 +188,13 @@ void DebugDrawer2::drawLines(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 l
 	// Verts
 	StagingGpuMemoryToken vertsToken;
 	Vec3* verts = static_cast<Vec3*>(stagingGpuAllocator.allocateFrame(sizeof(Vec3) * linePositions.getSize(),
-																	   StagingGpuMemoryType::VERTEX, vertsToken));
+																	   StagingGpuMemoryType::kVertex, vertsToken));
 	memcpy(verts, linePositions.getBegin(), linePositions.getSizeInBytes());
 
 	// Set the uniforms
 	StagingGpuMemoryToken unisToken;
 	Mat4* pmvps = static_cast<Mat4*>(stagingGpuAllocator.allocateFrame(sizeof(Mat4) * mvps.getSize() + sizeof(Vec4),
-																	   StagingGpuMemoryType::UNIFORM, unisToken));
+																	   StagingGpuMemoryType::kUniform, unisToken));
 
 	memcpy(pmvps, &mvps[0], mvps.getSizeInBytes());
 	Vec4* pcolor = reinterpret_cast<Vec4*>(pmvps + mvps.getSize());
@@ -204,7 +204,7 @@ void DebugDrawer2::drawLines(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 l
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addMutation("COLOR_TEXTURE", 0);
 	variantInitInfo.addMutation("DITHERED_DEPTH_TEST", U32(ditherFailedDepth != 0));
-	variantInitInfo.addConstant("INSTANCE_COUNT", mvps.getSize());
+	variantInitInfo.addConstant("kInstanceCount", mvps.getSize());
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	cmdb->bindShaderProgram(variant->getProgram());
@@ -225,7 +225,7 @@ void DebugDrawer2::drawBillboardTextures(const Mat4& projMat, const Mat3x4& view
 {
 	StagingGpuMemoryToken positionsToken;
 	Vec3* verts = static_cast<Vec3*>(
-		stagingGpuAllocator.allocateFrame(sizeof(Vec3) * 4, StagingGpuMemoryType::VERTEX, positionsToken));
+		stagingGpuAllocator.allocateFrame(sizeof(Vec3) * 4, StagingGpuMemoryType::kVertex, positionsToken));
 
 	verts[0] = Vec3(-0.5f, -0.5f, 0.0f);
 	verts[1] = Vec3(+0.5f, -0.5f, 0.0f);
@@ -233,8 +233,8 @@ void DebugDrawer2::drawBillboardTextures(const Mat4& projMat, const Mat3x4& view
 	verts[3] = Vec3(+0.5f, +0.5f, 0.0f);
 
 	StagingGpuMemoryToken uvsToken;
-	Vec2* uvs =
-		static_cast<Vec2*>(stagingGpuAllocator.allocateFrame(sizeof(Vec2) * 4, StagingGpuMemoryType::VERTEX, uvsToken));
+	Vec2* uvs = static_cast<Vec2*>(
+		stagingGpuAllocator.allocateFrame(sizeof(Vec2) * 4, StagingGpuMemoryType::kVertex, uvsToken));
 
 	uvs[0] = Vec2(0.0f, 0.0f);
 	uvs[1] = Vec2(1.0f, 0.0f);
@@ -244,7 +244,7 @@ void DebugDrawer2::drawBillboardTextures(const Mat4& projMat, const Mat3x4& view
 	// Set the uniforms
 	StagingGpuMemoryToken unisToken;
 	Mat4* pmvps = static_cast<Mat4*>(stagingGpuAllocator.allocateFrame(
-		sizeof(Mat4) * positions.getSize() + sizeof(Vec4), StagingGpuMemoryType::UNIFORM, unisToken));
+		sizeof(Mat4) * positions.getSize() + sizeof(Vec4), StagingGpuMemoryType::kUniform, unisToken));
 
 	const Mat4 camTrf = Mat4(viewMat, Vec4(0.0f, 0.0f, 0.0f, 1.0f)).getInverse();
 	const Vec3 zAxis = camTrf.getZAxis().xyz().getNormalized();
@@ -271,7 +271,7 @@ void DebugDrawer2::drawBillboardTextures(const Mat4& projMat, const Mat3x4& view
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addMutation("COLOR_TEXTURE", 1);
 	variantInitInfo.addMutation("DITHERED_DEPTH_TEST", U32(ditherFailedDepth != 0));
-	variantInitInfo.addConstant("INSTANCE_COUNT", positions.getSize());
+	variantInitInfo.addConstant("kInstanceCount", positions.getSize());
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	cmdb->bindShaderProgram(variant->getProgram());

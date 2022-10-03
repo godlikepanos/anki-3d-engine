@@ -75,17 +75,17 @@ private:
 
 	enum ShaderType
 	{
-		NO_TEX,
-		RGBA_TEX,
-		SHADER_COUNT
+		kNoTex,
+		kRgbaTex,
+		kShaderCount
 	};
 
 	ShaderProgramResourcePtr m_prog;
-	Array<ShaderProgramPtr, SHADER_COUNT> m_grProgs;
+	Array<ShaderProgramPtr, kShaderCount> m_grProgs;
 	SamplerPtr m_linearLinearRepeatSampler;
 	SamplerPtr m_nearestNearestRepeatSampler;
 
-	StackAllocator<U8> m_stackAlloc;
+	StackMemoryPool m_tempPool;
 
 	List<IntrusivePtr<UiObject>> m_references;
 

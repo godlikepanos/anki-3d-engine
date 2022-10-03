@@ -27,7 +27,7 @@ ShaderImpl::~ShaderImpl()
 {
 	for(auto& x : m_bindings)
 	{
-		x.destroy(getAllocator());
+		x.destroy(getMemoryPool());
 	}
 
 	if(m_handle)
@@ -37,14 +37,14 @@ ShaderImpl::~ShaderImpl()
 
 	if(m_specConstInfo.pMapEntries)
 	{
-		getAllocator().deleteArray(const_cast<VkSpecializationMapEntry*>(m_specConstInfo.pMapEntries),
-								   m_specConstInfo.mapEntryCount);
+		deleteArray(getMemoryPool(), const_cast<VkSpecializationMapEntry*>(m_specConstInfo.pMapEntries),
+					m_specConstInfo.mapEntryCount);
 	}
 
 	if(m_specConstInfo.pData)
 	{
-		getAllocator().deleteArray(static_cast<I32*>(const_cast<void*>(m_specConstInfo.pData)),
-								   m_specConstInfo.dataSize / sizeof(I32));
+		deleteArray(getMemoryPool(), static_cast<I32*>(const_cast<void*>(m_specConstInfo.pData)),
+					m_specConstInfo.dataSize / sizeof(I32));
 	}
 }
 
@@ -56,7 +56,7 @@ Error ShaderImpl::init(const ShaderInitInfo& inf)
 
 #if ANKI_DUMP_SHADERS
 	{
-		StringAuto fnameSpirv(getAllocator());
+		StringRaii fnameSpirv(getAllocator());
 		fnameSpirv.sprintf("%s/%s_t%u_%05u.spv", getManager().getCacheDirectory().cstr(), getName().cstr(),
 						   U(m_shaderType), getUuid());
 
@@ -82,9 +82,9 @@ Error ShaderImpl::init(const ShaderInitInfo& inf)
 		const U32 constCount = U32(specConstIds.m_vec.size());
 
 		m_specConstInfo.mapEntryCount = constCount;
-		m_specConstInfo.pMapEntries = getAllocator().newArray<VkSpecializationMapEntry>(constCount);
+		m_specConstInfo.pMapEntries = newArray<VkSpecializationMapEntry>(getMemoryPool(), constCount);
 		m_specConstInfo.dataSize = constCount * sizeof(U32);
-		m_specConstInfo.pData = getAllocator().newArray<U32>(constCount);
+		m_specConstInfo.pData = newArray<U32>(getMemoryPool(), constCount);
 
 		U32 count = 0;
 		for(const spirv_cross::SpecializationConstant& sconst : specConstIds.m_vec)
@@ -203,7 +203,7 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 	{
 		if(counts[set])
 		{
-			m_bindings[set].create(getAllocator(), counts[set]);
+			m_bindings[set].create(getMemoryPool(), counts[set]);
 			memcpy(&m_bindings[set][0], &descriptors[set][0], counts[set] * sizeof(DescriptorBinding));
 		}
 	}

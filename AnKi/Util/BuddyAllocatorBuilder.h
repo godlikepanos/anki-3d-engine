@@ -25,21 +25,24 @@ public:
 /// This is a generic implementation of a buddy allocator.
 /// @tparam kMaxMemoryRangeLog2 The max memory to allocate.
 /// @tparam TLock This an optional lock. Can be a Mutex or SpinLock or some dummy class.
-template<U32 kMaxMemoryRangeLog2, typename TLock>
+/// @tparam TMemPool The type of the pool to be used in internal CPU allocations.
+template<U32 kMaxMemoryRangeLog2, typename TLock, typename TMemPool = MemoryPoolPtrWrapper<HeapMemoryPool>>
 class BuddyAllocatorBuilder
 {
 public:
 	/// The type of the address.
 	using Address = std::conditional_t<(kMaxMemoryRangeLog2 > 32), PtrSize, U32>;
 
+	using InternalMemoryPool = TMemPool;
+
 	BuddyAllocatorBuilder()
 	{
 	}
 
 	/// @copydoc init
-	BuddyAllocatorBuilder(GenericMemoryPoolAllocator<U8> alloc, U32 maxMemoryRangeLog2)
+	BuddyAllocatorBuilder(InternalMemoryPool pool, U32 maxMemoryRangeLog2)
 	{
-		init(alloc, maxMemoryRangeLog2);
+		init(pool, maxMemoryRangeLog2);
 	}
 
 	BuddyAllocatorBuilder(const BuddyAllocatorBuilder&) = delete; // Non-copyable
@@ -52,9 +55,9 @@ public:
 	BuddyAllocatorBuilder& operator=(const BuddyAllocatorBuilder&) = delete; // Non-copyable
 
 	/// Init the allocator.
-	/// @param alloc The allocator used for internal structures of the BuddyAllocatorBuilder.
+	/// @param pool The memory pool to be used for internal structures of the BuddyAllocatorBuilder.
 	/// @param maxMemoryRangeLog2 The max memory to allocate.
-	void init(GenericMemoryPoolAllocator<U8> alloc, U32 maxMemoryRangeLog2);
+	void init(InternalMemoryPool pool, U32 maxMemoryRangeLog2);
 
 	/// Destroy the allocator.
 	void destroy();
@@ -92,7 +95,7 @@ private:
 	}
 
 	using FreeList = DynamicArray<Address, PtrSize>;
-	GenericMemoryPoolAllocator<U8> m_alloc;
+	InternalMemoryPool m_pool;
 	DynamicArray<FreeList> m_freeLists;
 	PtrSize m_maxMemoryRange = 0;
 	PtrSize m_userAllocatedSize = 0; ///< The total ammount of memory requested by the user.
@@ -108,7 +111,7 @@ private:
 	{
 		ANKI_ASSERT(m_freeLists[order].getSize() > 0);
 		const PtrSize address = m_freeLists[order].getBack();
-		m_freeLists[order].popBack(m_alloc);
+		m_freeLists[order].popBack(m_pool);
 		ANKI_ASSERT(address < m_maxMemoryRange);
 		return address;
 	}

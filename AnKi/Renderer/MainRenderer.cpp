@@ -30,8 +30,8 @@ MainRenderer::~MainRenderer()
 
 Error MainRenderer::init(const MainRendererInitInfo& inf)
 {
-	m_alloc = HeapAllocator<U8>(inf.m_allocCallback, inf.m_allocCallbackUserData, "MainRenderer");
-	m_frameAlloc = StackAllocator<U8>(inf.m_allocCallback, inf.m_allocCallbackUserData, 10_MB, 1.0f);
+	m_pool.init(inf.m_allocCallback, inf.m_allocCallbackUserData, "MainRenderer");
+	m_framePool.init(inf.m_allocCallback, inf.m_allocCallbackUserData, 10_MB, 1.0f);
 
 	// Init renderer and manipulate the width/height
 	m_swapchainResolution = inf.m_swapchainSize;
@@ -40,8 +40,8 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 	ANKI_R_LOGI("Initializing main renderer. Swapchain resolution %ux%u", m_swapchainResolution.x(),
 				m_swapchainResolution.y());
 
-	m_r.reset(m_alloc.newInstance<Renderer>());
-	ANKI_CHECK(m_r->init(inf.m_threadHive, inf.m_resourceManager, inf.m_gr, inf.m_stagingMemory, inf.m_ui, m_alloc,
+	m_r.reset(newInstance<Renderer>(m_pool));
+	ANKI_CHECK(m_r->init(inf.m_threadHive, inf.m_resourceManager, inf.m_gr, inf.m_stagingMemory, inf.m_ui, &m_pool,
 						 inf.m_config, inf.m_globTimestamp, m_swapchainResolution));
 
 	// Init other
@@ -82,10 +82,10 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 	m_stats.m_renderingCpuTime = (m_statsEnabled) ? HighRezTimer::getCurrentTime() : -1.0;
 
 	// First thing, reset the temp mem pool
-	m_frameAlloc.getMemoryPool().reset();
+	m_framePool.reset();
 
 	// Run renderer
-	RenderingContext ctx(m_frameAlloc);
+	RenderingContext ctx(&m_framePool);
 	m_runCtx.m_ctx = &ctx;
 	m_runCtx.m_secondaryTaskId.setNonAtomically(0);
 	ctx.m_renderGraphDescr.setStatisticsEnabled(m_statsEnabled);
@@ -138,7 +138,7 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 	}
 
 	// Bake the render graph
-	m_rgraph->compileNewGraph(ctx.m_renderGraphDescr, m_frameAlloc);
+	m_rgraph->compileNewGraph(ctx.m_renderGraphDescr, m_framePool);
 
 	// Populate the 2nd level command buffers
 	Array<ThreadHiveTask, ThreadHive::kMaxThreads> tasks;

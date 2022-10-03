@@ -35,7 +35,7 @@ public:
 	{
 	}
 
-	HeapAllocator<U8> getAllocator() const;
+	HeapMemoryPool& getMemoryPool() const;
 
 	virtual void getDebugRenderTarget([[maybe_unused]] CString rtName,
 									  [[maybe_unused]] Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
@@ -83,7 +83,7 @@ protected:
 	template<typename TPtr>
 	TPtr allocateUniforms(PtrSize size, StagingGpuMemoryToken& token)
 	{
-		return static_cast<TPtr>(allocateFrameStagingMemory(size, StagingGpuMemoryType::UNIFORM, token));
+		return static_cast<TPtr>(allocateFrameStagingMemory(size, StagingGpuMemoryType::kUniform, token));
 	}
 
 	void bindUniforms(CommandBufferPtr& cmdb, U32 set, U32 binding, const StagingGpuMemoryToken& token) const;
@@ -100,7 +100,7 @@ protected:
 	template<typename TPtr>
 	TPtr allocateStorage(PtrSize size, StagingGpuMemoryToken& token)
 	{
-		return static_cast<TPtr>(allocateFrameStagingMemory(size, StagingGpuMemoryType::STORAGE, token));
+		return static_cast<TPtr>(allocateFrameStagingMemory(size, StagingGpuMemoryType::kStorage, token));
 	}
 
 	void bindStorage(CommandBufferPtr& cmdb, U32 set, U32 binding, const StagingGpuMemoryToken& token) const;

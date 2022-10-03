@@ -101,17 +101,17 @@ class TransferGpuAllocator
 public:
 	/// Choose an alignment that satisfies 16 bytes and 3 bytes. RGB8 formats require 3 bytes alignment for the source
 	/// of the buffer to image copies.
-	static constexpr U32 GPU_BUFFER_ALIGNMENT = 16 * 3;
+	static constexpr U32 kGpuBufferAlignment = 16 * 3;
 
-	static constexpr U32 POOL_COUNT = 2;
-	static constexpr PtrSize CHUNK_INITIAL_SIZE = 64_MB;
-	static constexpr Second MAX_FENCE_WAIT_TIME = 500.0_ms;
+	static constexpr U32 kPoolCount = 2;
+	static constexpr PtrSize kChunkInitialSize = 64_MB;
+	static constexpr Second kMaxFenceWaitTime = 500.0_ms;
 
 	TransferGpuAllocator();
 
 	~TransferGpuAllocator();
 
-	Error init(PtrSize maxSize, GrManager* gr, ResourceAllocator<U8> alloc);
+	Error init(PtrSize maxSize, GrManager* gr, HeapMemoryPool* pool);
 
 	/// Allocate some transfer memory. If there is not enough memory it will block until some is releaced. It's
 	/// threadsafe.
@@ -151,12 +151,12 @@ private:
 
 		constexpr PtrSize getMaxAlignment()
 		{
-			return GPU_BUFFER_ALIGNMENT;
+			return kGpuBufferAlignment;
 		}
 
 		constexpr PtrSize getInitialChunkSize() const
 		{
-			return CHUNK_INITIAL_SIZE;
+			return kChunkInitialSize;
 		}
 
 		constexpr F64 getNextChunkGrowScale() const
@@ -210,13 +210,13 @@ private:
 		U32 m_pendingReleases = 0;
 	};
 
-	ResourceAllocator<U8> m_alloc;
+	HeapMemoryPool* m_pool = nullptr;
 	GrManager* m_gr = nullptr;
 	PtrSize m_maxAllocSize = 0;
 
 	Mutex m_mtx; ///< Protect all members bellow.
 	ConditionVariable m_condVar;
-	Array<Pool, POOL_COUNT> m_pools;
+	Array<Pool, kPoolCount> m_pools;
 	U8 m_crntPool = 0;
 	PtrSize m_crntPoolAllocatedSize = 0;
 };

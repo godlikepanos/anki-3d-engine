@@ -213,8 +213,8 @@ public:
 		return out;
 	}
 
-	template<U VEC_DIMS>
-	TTransform& lookAt(const TVec<T, VEC_DIMS>& refPoint, const TVec<T, VEC_DIMS>& up)
+	template<U kVecComponentCount>
+	TTransform& lookAt(const TVec<T, kVecComponentCount>& refPoint, const TVec<T, kVecComponentCount>& up)
 	{
 		const TVec<T, 4> j = up.xyz0();
 		const TVec<T, 4> vdir = (refPoint.xyz0() - m_origin).getNormalized();
@@ -224,9 +224,9 @@ public:
 		return *this;
 	}
 
-	ANKI_ENABLE_METHOD(std::is_floating_point<T>::value) void toString(StringAuto& str) const
+	ANKI_ENABLE_METHOD(std::is_floating_point<T>::value) void toString(StringRaii& str) const
 	{
-		StringAuto b(str.getAllocator());
+		StringRaii b(str.getMemoryPool());
 		m_origin.toString(b);
 		str.append(b);
 		str.append("\n");

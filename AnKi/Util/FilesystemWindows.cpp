@@ -26,7 +26,7 @@ Bool directoryExists(const CString& filename)
 	return dwAttrib != INVALID_FILE_ATTRIBUTES && (dwAttrib & FILE_ATTRIBUTE_DIRECTORY);
 }
 
-Error removeDirectory(const CString& dirname, GenericMemoryPoolAllocator<U8> alloc)
+Error removeDirectory(const CString& dirname, [[maybe_unused]] BaseMemoryPool& pool)
 {
 	// For some reason dirname should be double null terminated
 	if(dirname.getLength() > MAX_PATH - 2)
@@ -65,7 +65,7 @@ Error createDirectory(const CString& dir)
 	return err;
 }
 
-Error getHomeDirectory(StringAuto& out)
+Error getHomeDirectory(StringRaii& out)
 {
 	char path[MAX_PATH];
 	if(SHGetFolderPathA(NULL, CSIDL_PROFILE, nullptr, 0, path) != S_OK)
@@ -78,7 +78,7 @@ Error getHomeDirectory(StringAuto& out)
 	return Error::kNone;
 }
 
-Error getTempDirectory(StringAuto& out)
+Error getTempDirectory(StringRaii& out)
 {
 	char path[MAX_PATH + 1];
 
@@ -197,9 +197,9 @@ Error walkDirectoryTreeInternal(const CString& dir, const Function<Error(const C
 	return walkDirectoryTreeRecursive(dir, callback, baseDirLen);
 }
 
-Error getApplicationPath(StringAuto& out)
+Error getApplicationPath(StringRaii& out)
 {
-	DynamicArrayAuto<Char> buff(out.getAllocator(), 1024);
+	DynamicArrayRaii<Char> buff(&out.getMemoryPool(), 1024);
 
 	const DWORD result = GetModuleFileNameA(nullptr, &buff[0], buff.getSize());
 	DWORD lastError = GetLastError();

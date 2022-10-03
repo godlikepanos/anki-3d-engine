@@ -8,7 +8,6 @@
 #include <AnKi/Script/Common.h>
 #include <AnKi/Util/Assert.h>
 #include <AnKi/Util/StdTypes.h>
-#include <AnKi/Util/Allocator.h>
 #include <AnKi/Util/String.h>
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/HashMap.h>
@@ -61,7 +60,7 @@ public:
 		ANKI_ASSERT(info);
 		m_sig = info->m_signature;
 		m_info = info;
-		m_addressOrGarbageCollect = GARBAGE_COLLECTED;
+		m_addressOrGarbageCollect = kGarbageCollectedMagic;
 	}
 
 	/// @note Accepting const void* is wrong because getData returns a mutable pointer. Fix that.
@@ -71,14 +70,14 @@ public:
 		m_sig = info->m_signature;
 		m_info = info;
 		const U64 addr = ptrToNumber(ptrToObject);
-		ANKI_ASSERT(addr != GARBAGE_COLLECTED && "Can't use this address");
+		ANKI_ASSERT(addr != kGarbageCollectedMagic && "Can't use this address");
 		m_addressOrGarbageCollect = addr;
 	}
 
 	Bool isGarbageCollected() const
 	{
 		ANKI_ASSERT(m_addressOrGarbageCollect != 0);
-		return m_addressOrGarbageCollect == GARBAGE_COLLECTED;
+		return m_addressOrGarbageCollect == kGarbageCollectedMagic;
 	}
 
 	template<typename T>
@@ -122,7 +121,7 @@ public:
 	static const LuaUserDataTypeInfo& getDataTypeInfoFor();
 
 private:
-	static constexpr U64 GARBAGE_COLLECTED = 0xFAFC0FEEDEADB1FF;
+	static constexpr U64 kGarbageCollectedMagic = 0xFAFC0FEEDEADB1FF;
 
 	I64 m_sig = 0; ///< Signature to identify the user data.
 
@@ -159,7 +158,7 @@ public:
 
 	LuaBinder& operator=(const LuaBinder&) = delete; // Non-copyable
 
-	Error init(ScriptAllocator alloc, LuaBinderOtherSystems* otherSystems);
+	Error init(HeapMemoryPool* pool, LuaBinderOtherSystems* otherSystems);
 
 	lua_State* getLuaState()
 	{
@@ -167,9 +166,9 @@ public:
 		return m_l;
 	}
 
-	ScriptAllocator getAllocator() const
+	HeapMemoryPool& getMemoryPool() const
 	{
-		return m_alloc;
+		return *m_pool;
 	}
 
 	LuaBinderOtherSystems& getOtherSystems()
@@ -259,7 +258,7 @@ public:
 
 private:
 	LuaBinderOtherSystems* m_otherSystems;
-	ScriptAllocator m_alloc;
+	HeapMemoryPool* m_pool = nullptr;
 	lua_State* m_l = nullptr;
 	HashMap<I64, const LuaUserDataTypeInfo*> m_userDataSigToDataInfo;
 

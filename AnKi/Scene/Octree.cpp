@@ -44,7 +44,7 @@ public:
 	U32 m_testId = kMaxU32;
 	OctreeNodeVisibilityTestCallback m_testCallback = nullptr;
 	void* m_testCallbackUserData = nullptr;
-	DynamicArrayAuto<void*>* m_out = nullptr;
+	DynamicArrayRaii<void*>* m_out = nullptr;
 };
 
 class Octree::GatherParallelTaskCtx
@@ -351,7 +351,7 @@ void Octree::removeInternal(OctreePlaceable& placeable)
 
 void Octree::gatherVisibleRecursive(const Plane frustumPlanes[6], U32 testId,
 									OctreeNodeVisibilityTestCallback testCallback, void* testCallbackUserData,
-									Leaf* leaf, DynamicArrayAuto<void*>& out)
+									Leaf* leaf, DynamicArrayRaii<void*>& out)
 {
 	ANKI_ASSERT(leaf);
 
@@ -459,7 +459,7 @@ void Octree::debugDrawRecursive(const Leaf& leaf, OctreeDebugDrawer& drawer) con
 
 void Octree::gatherVisibleParallel(const Plane frustumPlanes[6], U32 testId,
 								   OctreeNodeVisibilityTestCallback testCallback, void* testCallbackUserData,
-								   DynamicArrayAuto<void*>* out, ThreadHive& hive, ThreadHiveSemaphore* waitSemaphore,
+								   DynamicArrayRaii<void*>* out, ThreadHive& hive, ThreadHiveSemaphore* waitSemaphore,
 								   ThreadHiveSemaphore*& signalSemaphore)
 {
 	ANKI_ASSERT(out && frustumPlanes);
@@ -507,7 +507,7 @@ void Octree::gatherVisibleParallelTask([[maybe_unused]] U32 threadId, ThreadHive
 	GatherParallelCtx& ctx = *taskCtx.m_ctx;
 
 	Leaf* const leaf = taskCtx.m_leaf;
-	DynamicArrayAuto<void*>& out = *ctx.m_out;
+	DynamicArrayRaii<void*>& out = *ctx.m_out;
 	OctreeNodeVisibilityTestCallback testCallback = ctx.m_testCallback;
 	void* testCallbackUserData = ctx.m_testCallbackUserData;
 	const U32 testId = ctx.m_testId;

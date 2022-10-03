@@ -24,16 +24,16 @@ public:
 
 ANKI_TEST(Util, HashMap)
 {
-	HeapAllocator<U8> alloc(allocAligned, nullptr);
+	HeapMemoryPool pool(allocAligned, nullptr);
 	int vals[] = {20, 15, 5, 1, 10, 0, 18, 6, 7, 11, 13, 3};
 	U valsSize = sizeof(vals) / sizeof(vals[0]);
 
 	// Simple
 	{
 		HashMap<int, int, Hasher> map;
-		map.emplace(alloc, 20, 1);
-		map.emplace(alloc, 21, 1);
-		map.destroy(alloc);
+		map.emplace(pool, 20, 1);
+		map.emplace(pool, 21, 1);
+		map.destroy(pool);
 	}
 
 	// Add more and iterate
@@ -42,7 +42,7 @@ ANKI_TEST(Util, HashMap)
 
 		for(U i = 0; i < valsSize; ++i)
 		{
-			map.emplace(alloc, vals[i], vals[i] * 10);
+			map.emplace(pool, vals[i], vals[i] * 10);
 		}
 
 		U count = 0;
@@ -53,7 +53,7 @@ ANKI_TEST(Util, HashMap)
 		}
 		ANKI_TEST_EXPECT_EQ(count, valsSize);
 
-		map.destroy(alloc);
+		map.destroy(pool);
 	}
 
 	// Erase
@@ -62,7 +62,7 @@ ANKI_TEST(Util, HashMap)
 
 		for(U i = 0; i < valsSize; ++i)
 		{
-			map.emplace(alloc, vals[i], vals[i] * 10);
+			map.emplace(pool, vals[i], vals[i] * 10);
 		}
 
 		for(U i = valsSize - 1; i != 0; --i)
@@ -70,11 +70,11 @@ ANKI_TEST(Util, HashMap)
 			HashMap<int, int, Hasher>::Iterator it = map.find(vals[i]);
 			ANKI_TEST_EXPECT_NEQ(it, map.getEnd());
 
-			map.erase(alloc, it);
-			map.emplace(alloc, vals[i], vals[i] * 10);
+			map.erase(pool, it);
+			map.emplace(pool, vals[i], vals[i] * 10);
 		}
 
-		map.destroy(alloc);
+		map.destroy(pool);
 	}
 
 	// Find
@@ -83,7 +83,7 @@ ANKI_TEST(Util, HashMap)
 
 		for(U i = 0; i < valsSize; ++i)
 		{
-			map.emplace(alloc, vals[i], vals[i] * 10);
+			map.emplace(pool, vals[i], vals[i] * 10);
 		}
 
 		for(U i = valsSize - 1; i != 0; --i)
@@ -93,7 +93,7 @@ ANKI_TEST(Util, HashMap)
 			ANKI_TEST_EXPECT_EQ(*it, vals[i] * 10);
 		}
 
-		map.destroy(alloc);
+		map.destroy(pool);
 	}
 
 	// Fuzzy test
@@ -113,7 +113,7 @@ ANKI_TEST(Util, HashMap)
 				{
 					// Not found
 					ANKI_TEST_EXPECT_EQ(akMap.find(num), akMap.getEnd());
-					akMap.emplace(alloc, num, num);
+					akMap.emplace(pool, num, num);
 					numbers.push_back(num);
 					break;
 				}
@@ -134,10 +134,10 @@ ANKI_TEST(Util, HashMap)
 			numbers.erase(numbers.begin() + idx);
 
 			auto it = akMap.find(num);
-			akMap.erase(alloc, it);
+			akMap.erase(pool, it);
 		}
 
-		akMap.destroy(alloc);
+		akMap.destroy(pool);
 	}
 
 	// Bench it
@@ -166,9 +166,8 @@ ANKI_TEST(Util, HashMap)
 		using AkMap = HashMap<int, int, Hasher, Config>;
 
 		AkMap akMap;
-		using StlMap =
-			std::unordered_map<int, int, std::hash<int>, std::equal_to<int>, HeapAllocator<std::pair<const int, int>>>;
-		StlMap stdMap(10, std::hash<int>(), std::equal_to<int>(), alloc);
+		using StlMap = std::unordered_map<int, int, std::hash<int>, std::equal_to<int>>;
+		StlMap stdMap(10, std::hash<int>(), std::equal_to<int>());
 
 		std::unordered_map<int, int> tmpMap;
 
@@ -176,7 +175,7 @@ ANKI_TEST(Util, HashMap)
 
 		// Create a huge set
 		const U32 COUNT = 1024 * 1024 * 10;
-		DynamicArrayAuto<int> vals(alloc);
+		DynamicArrayRaii<int> vals(&pool);
 		vals.create(COUNT);
 
 		for(U32 i = 0; i < COUNT; ++i)
@@ -198,7 +197,7 @@ ANKI_TEST(Util, HashMap)
 			timer.start();
 			for(U32 i = 0; i < COUNT; ++i)
 			{
-				akMap.emplace(alloc, vals[i], vals[i]);
+				akMap.emplace(pool, vals[i], vals[i]);
 			}
 			timer.stop();
 			Second akTime = timer.getElapsedTime();
@@ -253,7 +252,7 @@ ANKI_TEST(Util, HashMap)
 				auto it = akMap.find(vals[i]);
 
 				timer.start();
-				akMap.erase(alloc, it);
+				akMap.erase(pool, it);
 				timer.stop();
 				akTime += timer.getElapsedTime();
 			}
@@ -273,6 +272,6 @@ ANKI_TEST(Util, HashMap)
 			ANKI_TEST_LOGI("Deleting bench: STL %f AnKi %f | %f%%", stlTime, akTime, stlTime / akTime * 100.0);
 		}
 
-		akMap.destroy(alloc);
+		akMap.destroy(pool);
 	}
 }

@@ -13,11 +13,11 @@ namespace anki {
 /// The AnKi passes visible to materials.
 enum class RenderingTechnique : U8
 {
-	GBUFFER = 0,
-	GBUFFER_EARLY_Z = 1,
-	SHADOW = 2,
-	FORWARD = 3,
-	RT_SHADOW = 4,
+	kGBuffer = 0,
+	kGBufferEarlyZ = 1,
+	kShadow = 2,
+	kForward = 3,
+	kRtShadow = 4,
 
 	kCount,
 	kFirst = 0
@@ -26,14 +26,14 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RenderingTechnique)
 
 enum class RenderingTechniqueBit : U8
 {
-	NONE = 0,
-	GBUFFER = 1 << 0,
-	GBUFFER_EARLY_Z = 1 << 1,
-	SHADOW = 1 << 2,
-	FORWARD = 1 << 3,
-	RT_SHADOW = 1 << 4,
+	kNone = 0,
+	kGBuffer = 1 << 0,
+	kGBufferEarlyZ = 1 << 1,
+	kShadow = 1 << 2,
+	kForward = 1 << 3,
+	kRtShadow = 1 << 4,
 
-	ALL_RT = RT_SHADOW
+	kAllRt = kRtShadow
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RenderingTechniqueBit)
 
@@ -48,8 +48,8 @@ public:
 		, m_skinned(skinned)
 		, m_velocity(velocity)
 	{
-		ANKI_ASSERT(instanceCount <= MAX_INSTANCE_COUNT && instanceCount != 0);
-		ANKI_ASSERT(lod <= MAX_LOD_COUNT);
+		ANKI_ASSERT(instanceCount <= kMaxInstanceCount && instanceCount != 0);
+		ANKI_ASSERT(lod <= kMaxLodCount);
 	}
 
 	RenderingKey()
@@ -91,7 +91,7 @@ public:
 
 	void setLod(U32 lod)
 	{
-		ANKI_ASSERT(lod < MAX_LOD_COUNT);
+		ANKI_ASSERT(lod < kMaxLodCount);
 		m_lod = U8(lod);
 	}
 
@@ -102,7 +102,7 @@ public:
 
 	void setInstanceCount(U32 instanceCount)
 	{
-		ANKI_ASSERT(instanceCount <= MAX_INSTANCE_COUNT && instanceCount > 0);
+		ANKI_ASSERT(instanceCount <= kMaxInstanceCount && instanceCount > 0);
 		m_instanceCount = U8(instanceCount);
 	}
 

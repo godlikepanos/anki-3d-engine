@@ -25,13 +25,14 @@ public:
 
 	~SoftwareRasterizer()
 	{
-		m_zbuffer.destroy(m_alloc);
+		m_zbuffer.destroy(*m_pool);
 	}
 
 	/// Initialize.
-	void init(const GenericMemoryPoolAllocator<U8>& alloc)
+	void init(BaseMemoryPool* pool)
 	{
-		m_alloc = alloc;
+		ANKI_ASSERT(pool);
+		m_pool = pool;
 	}
 
 	/// Prepare for rendering. Call it before every draw.
@@ -54,7 +55,7 @@ public:
 	Bool visibilityTest(const Aabb& aabb) const;
 
 private:
-	GenericMemoryPoolAllocator<U8> m_alloc;
+	BaseMemoryPool* m_pool = nullptr;
 	Mat4 m_mv; ///< ModelView.
 	Mat4 m_p; ///< Projection.
 	Mat4 m_mvp;

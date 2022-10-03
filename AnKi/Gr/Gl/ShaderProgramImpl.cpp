@@ -77,7 +77,7 @@ Error ShaderProgramImpl::link(GLuint vert, GLuint frag)
 	{
 		GLint infoLen = 0;
 		GLint charsWritten = 0;
-		DynamicArrayAuto<char> infoLogTxt(getAllocator());
+		DynamicArrayRaii<char> infoLogTxt(getAllocator());
 
 		glGetProgramiv(m_glName, GL_INFO_LOG_LENGTH, &infoLen);
 

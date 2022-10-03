@@ -34,8 +34,8 @@ public:
 		return *m_manager;
 	}
 
-	ResourceAllocator<U8> getAllocator() const;
-	TempResourceAllocator<U8> getTempAllocator() const;
+	HeapMemoryPool& getMemoryPool() const;
+	StackMemoryPool& getTempMemoryPool() const;
 
 	void retain() const
 	{
@@ -65,7 +65,7 @@ public:
 	ANKI_INTERNAL void setFilename(const CString& fname)
 	{
 		ANKI_ASSERT(m_fname.isEmpty());
-		m_fname.create(getAllocator(), fname);
+		m_fname.create(getMemoryPool(), fname);
 	}
 
 	ANKI_INTERNAL void setUuid(U64 uuid)
@@ -83,7 +83,7 @@ public:
 
 	ANKI_INTERNAL Error openFile(const ResourceFilename& filename, ResourceFilePtr& file);
 
-	ANKI_INTERNAL Error openFileReadAllText(const ResourceFilename& filename, StringAuto& file);
+	ANKI_INTERNAL Error openFileReadAllText(const ResourceFilename& filename, StringRaii& file);
 
 	ANKI_INTERNAL Error openFileParseXml(const ResourceFilename& filename, XmlDocument& xml);
 

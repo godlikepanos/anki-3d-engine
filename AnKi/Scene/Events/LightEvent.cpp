@@ -12,7 +12,7 @@ namespace anki {
 Error LightEvent::init(Second startTime, Second duration, SceneNode* light)
 {
 	Event::init(startTime, duration);
-	m_associatedNodes.emplaceBack(getAllocator(), light);
+	m_associatedNodes.emplaceBack(getMemoryPool(), light);
 
 	LightComponent& lightc = light->getFirstComponentOfType<LightComponent>();
 

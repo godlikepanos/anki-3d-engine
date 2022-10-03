@@ -52,7 +52,7 @@ ANKI_TEST(Scene, Octree)
 					placeables[idx].reset();
 				}
 
-				DynamicArrayAuto<void*> arr(alloc);
+				DynamicArrayRaii<void*> arr(alloc);
 				octree.gatherVisible(frustum, 0, nullptr, nullptr, arr);
 
 				ANKI_TEST_EXPECT_EQ(arr.getSize(), placed.size());

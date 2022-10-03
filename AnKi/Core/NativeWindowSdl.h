@@ -21,7 +21,7 @@ public:
 	Error init(const NativeWindowInitInfo& init);
 
 private:
-	static constexpr U32 INIT_SUBSYSTEMS =
+	static constexpr U32 kInitSubsystems =
 		SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER;
 };
 

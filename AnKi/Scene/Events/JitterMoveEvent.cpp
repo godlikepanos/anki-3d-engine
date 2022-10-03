@@ -14,7 +14,7 @@ Error JitterMoveEvent::init(Second startTime, Second duration, SceneNode* node)
 {
 	ANKI_ASSERT(node);
 	Event::init(startTime, duration);
-	m_associatedNodes.emplaceBack(getAllocator(), node);
+	m_associatedNodes.emplaceBack(getMemoryPool(), node);
 
 	const MoveComponent& move = node->getFirstComponentOfType<MoveComponent>();
 

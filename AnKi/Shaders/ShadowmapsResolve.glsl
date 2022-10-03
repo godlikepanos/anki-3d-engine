@@ -3,10 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(FB_SIZE, 0u);
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(TILE_COUNTS, 2u);
-ANKI_SPECIALIZATION_CONSTANT_U32(Z_SPLIT_COUNT, 4u);
-ANKI_SPECIALIZATION_CONSTANT_U32(TILE_SIZE, 5u);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(kFramebufferSize, 0u);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(kTileCount, 2u);
+ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 4u);
+ANKI_SPECIALIZATION_CONSTANT_U32(kTileSize, 5u);
 
 #define CLUSTERED_SHADING_SET 0u
 #define CLUSTERED_SHADING_UNIFORMS_BINDING 0u
@@ -18,8 +18,8 @@ layout(set = 0, binding = 5) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 6) uniform texture2D u_depthRt;
 
 #if defined(ANKI_COMPUTE_SHADER)
-const UVec2 WORKGROUP_SIZE = UVec2(8, 8);
-layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
+const UVec2 kWorkgroupSize = UVec2(8, 8);
+layout(local_size_x = kWorkgroupSize.x, local_size_y = kWorkgroupSize.y, local_size_z = 1) in;
 layout(set = 0, binding = 7, rgba8) writeonly uniform ANKI_RP image2D u_outImg;
 #else
 layout(location = 0) in Vec2 in_uv;
@@ -29,11 +29,11 @@ layout(location = 0) out Vec4 out_color;
 void main()
 {
 #if defined(ANKI_COMPUTE_SHADER)
-	if(skipOutOfBoundsInvocations(WORKGROUP_SIZE, FB_SIZE))
+	if(skipOutOfBoundsInvocations(kWorkgroupSize, kFramebufferSize))
 	{
 		return;
 	}
-	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(FB_SIZE);
+	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(kFramebufferSize);
 #else
 	const Vec2 uv = in_uv;
 #endif
@@ -46,7 +46,7 @@ void main()
 
 	// Cluster
 	const Vec2 fragCoord = uv * u_clusteredShading.m_renderingSize;
-	Cluster cluster = getClusterFragCoord(Vec3(fragCoord, depth), TILE_SIZE, TILE_COUNTS, Z_SPLIT_COUNT,
+	Cluster cluster = getClusterFragCoord(Vec3(fragCoord, depth), kTileSize, kTileCount, kZSplitCount,
 										  u_clusteredShading.m_zSplitMagic.x, u_clusteredShading.m_zSplitMagic.y);
 
 	// Layers

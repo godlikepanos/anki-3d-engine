@@ -21,15 +21,16 @@ StdinListener::~StdinListener()
 
 	for(String& s : m_q)
 	{
-		s.destroy(m_alloc);
+		s.destroy(*m_pool);
 	}
 
-	m_q.destroy(m_alloc);
+	m_q.destroy(*m_pool);
 }
 
-Error StdinListener::create(HeapAllocator<String>& alloc)
+Error StdinListener::create(HeapMemoryPool* pool)
 {
-	m_alloc = alloc;
+	ANKI_ASSERT(pool);
+	m_pool = pool;
 	m_thrd.start(this, workingFunc);
 
 	return Error::kNone;
@@ -46,10 +47,9 @@ Error StdinListener::workingFunc(ThreadCallbackInfo& info)
 		buff[m] = '\0';
 
 		LockGuard<Mutex>(self.m_mtx);
-		auto alloc = self.m_alloc;
-		self.m_q.emplaceBack(self.m_alloc);
+		self.m_q.emplaceBack(*self.m_pool);
 
-		self.m_q.getBack().create(alloc, &buff[0]);
+		self.m_q.getBack().create(*self.m_pool, &buff[0]);
 	}
 
 	return Error::kNone;
@@ -63,7 +63,7 @@ String StdinListener::getLine()
 	if(!m_q.isEmpty())
 	{
 		ret = std::move(m_q.getFront());
-		m_q.popFront(m_alloc);
+		m_q.popFront(*m_pool);
 	}
 
 	m_mtx.unlock();

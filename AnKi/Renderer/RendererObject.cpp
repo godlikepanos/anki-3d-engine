@@ -20,9 +20,9 @@ const GrManager& RendererObject::getGrManager() const
 	return m_r->getGrManager();
 }
 
-HeapAllocator<U8> RendererObject::getAllocator() const
+HeapMemoryPool& RendererObject::getMemoryPool() const
 {
-	return m_r->getAllocator();
+	return m_r->getMemoryPool();
 }
 
 ResourceManager& RendererObject::getResourceManager()

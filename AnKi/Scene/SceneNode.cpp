@@ -14,25 +14,25 @@ SceneNode::SceneNode(SceneGraph* scene, CString name)
 {
 	if(name)
 	{
-		m_name.create(getAllocator(), name);
+		m_name.create(getMemoryPool(), name);
 	}
 }
 
 SceneNode::~SceneNode()
 {
-	auto alloc = getAllocator();
+	HeapMemoryPool& pool = getMemoryPool();
 
 	auto it = m_components.getBegin();
 	auto end = m_components.getEnd();
 	for(; it != end; ++it)
 	{
-		alloc.deleteInstance(*it);
+		deleteInstance(pool, *it);
 	}
 
-	Base::destroy(alloc);
-	m_name.destroy(alloc);
-	m_components.destroy(alloc);
-	m_componentInfos.destroy(alloc);
+	Base::destroy(pool);
+	m_name.destroy(pool);
+	m_components.destroy(pool);
+	m_componentInfos.destroy(pool);
 }
 
 void SceneNode::setMarkedForDeletion()
@@ -55,16 +55,16 @@ Timestamp SceneNode::getGlobalTimestamp() const
 	return m_scene->getGlobalTimestamp();
 }
 
-SceneAllocator<U8> SceneNode::getAllocator() const
+HeapMemoryPool& SceneNode::getMemoryPool() const
 {
 	ANKI_ASSERT(m_scene);
-	return m_scene->getAllocator();
+	return m_scene->getMemoryPool();
 }
 
-SceneFrameAllocator<U8> SceneNode::getFrameAllocator() const
+StackMemoryPool& SceneNode::getFrameMemoryPool() const
 {
 	ANKI_ASSERT(m_scene);
-	return m_scene->getFrameAllocator();
+	return m_scene->getFrameMemoryPool();
 }
 
 ResourceManager& SceneNode::getResourceManager()

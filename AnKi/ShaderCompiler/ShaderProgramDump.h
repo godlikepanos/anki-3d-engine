@@ -12,7 +12,7 @@ namespace anki {
 /// @{
 
 /// Create a human readable representation of the shader binary.
-void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& humanReadable);
+void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringRaii& humanReadable);
 /// @}
 
 } // end namespace anki

@@ -26,8 +26,8 @@ void SoftwareRasterizer::prepare(const Mat4& mv, const Mat4& p, U32 width, U32 h
 	U32 size = width * height;
 	if(m_zbuffer.getSize() < size)
 	{
-		m_zbuffer.destroy(m_alloc);
-		m_zbuffer.create(m_alloc, size);
+		m_zbuffer.destroy(*m_pool);
+		m_zbuffer.create(*m_pool, size);
 	}
 	memset(&m_zbuffer[0], 0xFF, sizeof(m_zbuffer[0]) * size);
 }

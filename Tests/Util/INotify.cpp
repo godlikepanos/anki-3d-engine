@@ -9,7 +9,7 @@
 
 ANKI_TEST(Util, INotify)
 {
-	HeapAllocator<U8> alloc(allocAligned, nullptr);
+	HeapMemoryPool pool(allocAligned, nullptr);
 
 	// Monitor a dir
 	{
@@ -19,7 +19,7 @@ ANKI_TEST(Util, INotify)
 
 		{
 			INotify in;
-			ANKI_TEST_EXPECT_NO_ERR(in.init(alloc, dir));
+			ANKI_TEST_EXPECT_NO_ERR(in.init(&pool, dir));
 
 			Bool modified;
 			ANKI_TEST_EXPECT_NO_ERR(in.pollEvents(modified));
@@ -27,13 +27,13 @@ ANKI_TEST(Util, INotify)
 
 			File file;
 			ANKI_TEST_EXPECT_NO_ERR(
-				file.open(StringAuto(alloc).sprintf("%s/file.txt", dir.cstr()).toCString(), FileOpenFlag::kWrite));
+				file.open(StringRaii(&pool).sprintf("%s/file.txt", dir.cstr()).toCString(), FileOpenFlag::kWrite));
 			file.close();
 
 			ANKI_TEST_EXPECT_NO_ERR(in.pollEvents(modified));
 			ANKI_TEST_EXPECT_EQ(modified, true);
 		}
 
-		ANKI_TEST_EXPECT_NO_ERR(removeDirectory(dir, alloc));
+		ANKI_TEST_EXPECT_NO_ERR(removeDirectory(dir, pool));
 	}
 }

@@ -13,7 +13,7 @@ namespace anki {
 
 Error TransferGpuAllocator::StackAllocatorBuilderInterface::allocateChunk(PtrSize size, Chunk*& out)
 {
-	out = m_parent->m_alloc.newInstance<Chunk>();
+	out = newInstance<Chunk>(*m_parent->m_pool);
 
 	BufferInitInfo bufferInit(size, BufferUsageBit::kTransferSource, BufferMapAccessBit::kWrite, "Transfer");
 	out->m_buffer = m_parent->m_gr->newBuffer(bufferInit);
@@ -29,7 +29,7 @@ void TransferGpuAllocator::StackAllocatorBuilderInterface::freeChunk(Chunk* chun
 
 	chunk->m_buffer->unmap();
 
-	m_parent->m_alloc.deleteInstance(chunk);
+	deleteInstance(*m_parent->m_pool, chunk);
 }
 
 TransferGpuAllocator::TransferGpuAllocator()
@@ -41,16 +41,17 @@ TransferGpuAllocator::~TransferGpuAllocator()
 	for(Pool& pool : m_pools)
 	{
 		ANKI_ASSERT(pool.m_pendingReleases == 0);
-		pool.m_fences.destroy(m_alloc);
+		pool.m_fences.destroy(*m_pool);
 	}
 }
 
-Error TransferGpuAllocator::init(PtrSize maxSize, GrManager* gr, ResourceAllocator<U8> alloc)
+Error TransferGpuAllocator::init(PtrSize maxSize, GrManager* gr, HeapMemoryPool* pool)
 {
-	m_alloc = std::move(alloc);
+	ANKI_ASSERT(pool);
+	m_pool = pool;
 	m_gr = gr;
 
-	m_maxAllocSize = getAlignedRoundUp(CHUNK_INITIAL_SIZE * POOL_COUNT, maxSize);
+	m_maxAllocSize = getAlignedRoundUp(kChunkInitialSize * kPoolCount, maxSize);
 	ANKI_RESOURCE_LOGI("Will use %zuMB of memory for transfer scratch", m_maxAllocSize / PtrSize(1_MB));
 
 	for(Pool& pool : m_pools)
@@ -65,7 +66,7 @@ Error TransferGpuAllocator::allocate(PtrSize size, TransferGpuAllocatorHandle& h
 {
 	ANKI_TRACE_SCOPED_EVENT(RSRC_ALLOCATE_TRANSFER);
 
-	const PtrSize poolSize = m_maxAllocSize / POOL_COUNT;
+	const PtrSize poolSize = m_maxAllocSize / kPoolCount;
 
 	LockGuard<Mutex> lock(m_mtx);
 
@@ -80,7 +81,7 @@ Error TransferGpuAllocator::allocate(PtrSize size, TransferGpuAllocatorHandle& h
 	{
 		// Don't have enough space. Wait for one pool used in the past
 
-		m_crntPool = U8((m_crntPool + 1) % POOL_COUNT);
+		m_crntPool = U8((m_crntPool + 1) % kPoolCount);
 		pool = &m_pools[m_crntPool];
 
 		{
@@ -97,10 +98,10 @@ Error TransferGpuAllocator::allocate(PtrSize size, TransferGpuAllocatorHandle& h
 			{
 				FencePtr fence = pool->m_fences.getFront();
 
-				const Bool done = fence->clientWait(MAX_FENCE_WAIT_TIME);
+				const Bool done = fence->clientWait(kMaxFenceWaitTime);
 				if(done)
 				{
-					pool->m_fences.popFront(m_alloc);
+					pool->m_fences.popFront(*m_pool);
 				}
 			}
 		}
@@ -111,7 +112,7 @@ Error TransferGpuAllocator::allocate(PtrSize size, TransferGpuAllocatorHandle& h
 
 	Chunk* chunk;
 	PtrSize offset;
-	[[maybe_unused]] const Error err = pool->m_stackAlloc.allocate(size, GPU_BUFFER_ALIGNMENT, chunk, offset);
+	[[maybe_unused]] const Error err = pool->m_stackAlloc.allocate(size, kGpuBufferAlignment, chunk, offset);
 	ANKI_ASSERT(!err);
 
 	handle.m_buffer = chunk->m_buffer;
@@ -134,7 +135,7 @@ Error TransferGpuAllocator::allocate(PtrSize size, TransferGpuAllocatorHandle& h
 			if(fenceDone)
 			{
 				auto nextIt = it + 1;
-				p.m_fences.erase(m_alloc, it);
+				p.m_fences.erase(*m_pool, it);
 				it = nextIt;
 			}
 			else
@@ -157,7 +158,7 @@ void TransferGpuAllocator::release(TransferGpuAllocatorHandle& handle, FencePtr 
 	{
 		LockGuard<Mutex> lock(m_mtx);
 
-		pool.m_fences.pushBack(m_alloc, fence);
+		pool.m_fences.pushBack(*m_pool, fence);
 
 		ANKI_ASSERT(pool.m_pendingReleases > 0);
 		--pool.m_pendingReleases;

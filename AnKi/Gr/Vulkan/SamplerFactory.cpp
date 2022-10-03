@@ -126,15 +126,15 @@ void SamplerFactory::destroy()
 		return;
 	}
 
-	GrAllocator<U8> alloc = m_gr->getAllocator();
+	HeapMemoryPool& pool = m_gr->getMemoryPool();
 	for(auto it : m_map)
 	{
 		MicroSampler* const sampler = it;
 		ANKI_ASSERT(sampler->getRefcount() == 0 && "Someone still holds a reference to a sampler");
-		alloc.deleteInstance(sampler);
+		deleteInstance(pool, sampler);
 	}
 
-	m_map.destroy(alloc);
+	m_map.destroy(pool);
 
 	m_gr = nullptr;
 }
@@ -159,19 +159,19 @@ Error SamplerFactory::newInstance(const SamplerInitInfo& inf, MicroSamplerPtr& p
 	{
 		// Create a new one
 
-		GrAllocator<U8> alloc = m_gr->getAllocator();
+		HeapMemoryPool& pool = m_gr->getMemoryPool();
 
-		out = alloc.newInstance<MicroSampler>(this);
+		out = anki::newInstance<MicroSampler>(pool, this);
 		err = out->init(inf);
 
 		if(err)
 		{
-			alloc.deleteInstance(out);
+			deleteInstance(pool, out);
 			out = nullptr;
 		}
 		else
 		{
-			m_map.emplace(alloc, hash, out);
+			m_map.emplace(pool, hash, out);
 		}
 	}
 

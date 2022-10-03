@@ -24,7 +24,7 @@ public:
 
 	virtual ~UiObject() = default;
 
-	UiAllocator getAllocator() const;
+	HeapMemoryPool& getMemoryPool() const;
 
 	void retain() const
 	{
@@ -39,7 +39,7 @@ public:
 	/// Set the global IMGUI allocator.
 	void setImAllocator(BaseMemoryPool* pool = nullptr)
 	{
-		pool = (pool) ? pool : &getAllocator().getMemoryPool();
+		pool = (pool) ? pool : &getMemoryPool();
 
 		auto allocCallback = [](size_t size, void* userData) -> void* {
 			BaseMemoryPool* pool = static_cast<BaseMemoryPool*>(userData);

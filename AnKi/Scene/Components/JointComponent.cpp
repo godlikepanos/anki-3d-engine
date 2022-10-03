@@ -31,7 +31,7 @@ void JointComponent::removeAllJoints()
 		JointNode* node = &m_jointList.getFront();
 		m_jointList.popFront();
 
-		m_node->getAllocator().deleteInstance(node);
+		deleteInstance(m_node->getMemoryPool(), node);
 	}
 }
 
@@ -69,7 +69,7 @@ void JointComponent::newJoint(const Vec3& relPosFactor, F32 breakingImpulse, TAr
 			bodyc->getPhysicsBody(), relPos, std::forward<TArgs>(args)...);
 		joint->setBreakingImpulseThreshold(breakingImpulse);
 
-		JointNode* newNode = m_node->getAllocator().newInstance<JointNode>();
+		JointNode* newNode = newInstance<JointNode>(m_node->getMemoryPool());
 		newNode->m_joint = std::move(joint);
 		m_jointList.pushBack(newNode);
 	}
@@ -102,7 +102,7 @@ void JointComponent::newPoint2PointJoint2(const Vec3& relPosFactorA, const Vec3&
 			bodycA->getPhysicsBody(), relPosA, bodycB->getPhysicsBody(), relPosB);
 		joint->setBreakingImpulseThreshold(breakingImpulse);
 
-		JointNode* newNode = m_node->getAllocator().newInstance<JointNode>();
+		JointNode* newNode = newInstance<JointNode>(m_node->getMemoryPool());
 		newNode->m_joint = std::move(joint);
 		newNode->m_parentNode = m_node->getParent();
 		m_jointList.pushBack(newNode);
@@ -131,7 +131,7 @@ Error JointComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			if(otherNode.m_parentNode != info.m_node->getParent() || otherNode.m_joint->isBroken())
 			{
 				m_jointList.erase(&otherNode);
-				info.m_node->getAllocator().deleteInstance(&otherNode);
+				deleteInstance(info.m_node->getMemoryPool(), &otherNode);
 				erasedOne = true;
 				updated = true;
 				break;

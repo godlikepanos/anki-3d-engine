@@ -13,14 +13,14 @@ namespace {
 class Cleanup
 {
 public:
-	HeapAllocator<U8> m_alloc{allocAligned, nullptr};
-	DynamicArrayAuto<CString> m_inputFilenames{m_alloc};
-	StringAuto m_outFilename{m_alloc};
+	HeapMemoryPool m_pool = {allocAligned, nullptr};
+	DynamicArrayRaii<CString> m_inputFilenames = {&m_pool};
+	StringRaii m_outFilename = {&m_pool};
 };
 
 } // namespace
 
-static const char* USAGE = R"(Usage: %s [options] in_files
+static const char* kUsage = R"(Usage: %s [options] in_files
 Options:
 -o <filename>          : Output filename. If not provided the file will derive it from the input filenames
 -t <type>              : Image type. One of: 2D, 3D, Cube, 2DArray
@@ -276,7 +276,7 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 	{
 		CString infname = cleanup.m_inputFilenames[0];
 
-		StringAuto ext(cleanup.m_alloc);
+		StringRaii ext(&cleanup.m_pool);
 		getFilepathExtension(infname, ext);
 
 		getFilepathFilename(infname, cleanup.m_outFilename);
@@ -298,18 +298,18 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 
 int main(int argc, char** argv)
 {
-	HeapAllocator<U8> alloc(allocAligned, nullptr);
+	HeapMemoryPool pool(allocAligned, nullptr);
 
 	ImageImporterConfig config;
-	config.m_allocator = alloc;
+	config.m_pool = &pool;
 	Cleanup cleanup;
 	if(parseCommandLineArgs(argc, argv, config, cleanup))
 	{
-		ANKI_IMPORTER_LOGE(USAGE, argv[0]);
+		ANKI_IMPORTER_LOGE(kUsage, argv[0]);
 		return 1;
 	}
 
-	StringAuto tmp(alloc);
+	StringRaii tmp(&pool);
 	if(getTempDirectory(tmp))
 	{
 		ANKI_IMPORTER_LOGE("getTempDirectory() failed");

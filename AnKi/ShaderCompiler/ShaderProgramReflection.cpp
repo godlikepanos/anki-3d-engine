@@ -56,28 +56,28 @@ static ShaderVariableDataType spirvcrossBaseTypeToAnki(spirv_cross::SPIRType::Ba
 class SpirvReflector : public spirv_cross::Compiler
 {
 public:
-	SpirvReflector(const U32* ir, PtrSize wordCount, const GenericMemoryPoolAllocator<U8>& tmpAlloc,
+	SpirvReflector(const U32* ir, PtrSize wordCount, BaseMemoryPool* tmpPool,
 				   ShaderReflectionVisitorInterface* interface)
 		: spirv_cross::Compiler(ir, wordCount)
-		, m_alloc(tmpAlloc)
+		, m_pool(tmpPool)
 		, m_interface(interface)
 	{
 	}
 
 	[[nodiscard]] static Error performSpirvReflection(Array<ConstWeakArray<U8>, U32(ShaderType::kCount)> spirv,
-													  GenericMemoryPoolAllocator<U8> tmpAlloc,
+													  BaseMemoryPool& tmpPool,
 													  ShaderReflectionVisitorInterface& interface);
 
 private:
 	class Var
 	{
 	public:
-		StringAuto m_name;
+		StringRaii m_name;
 		ShaderVariableBlockInfo m_blockInfo;
 		ShaderVariableDataType m_type = ShaderVariableDataType::kNone;
 
-		Var(const GenericMemoryPoolAllocator<U8>& alloc)
-			: m_name(alloc)
+		Var(BaseMemoryPool* pool)
+			: m_name(pool)
 		{
 		}
 	};
@@ -85,15 +85,15 @@ private:
 	class Block
 	{
 	public:
-		StringAuto m_name;
-		DynamicArrayAuto<Var> m_vars;
+		StringRaii m_name;
+		DynamicArrayRaii<Var> m_vars;
 		U32 m_binding = kMaxU32;
 		U32 m_set = kMaxU32;
 		U32 m_size = kMaxU32;
 
-		Block(const GenericMemoryPoolAllocator<U8>& alloc)
-			: m_name(alloc)
-			, m_vars(alloc)
+		Block(BaseMemoryPool* pool)
+			: m_name(pool)
+			, m_vars(pool)
 		{
 		}
 	};
@@ -101,14 +101,14 @@ private:
 	class Opaque
 	{
 	public:
-		StringAuto m_name;
+		StringRaii m_name;
 		ShaderVariableDataType m_type = ShaderVariableDataType::kNone;
 		U32 m_binding = kMaxU32;
 		U32 m_set = kMaxU32;
 		U32 m_arraySize = kMaxU32;
 
-		Opaque(const GenericMemoryPoolAllocator<U8>& alloc)
-			: m_name(alloc)
+		Opaque(BaseMemoryPool* pool)
+			: m_name(pool)
 		{
 		}
 	};
@@ -116,12 +116,12 @@ private:
 	class Const
 	{
 	public:
-		StringAuto m_name;
+		StringRaii m_name;
 		ShaderVariableDataType m_type = ShaderVariableDataType::kNone;
 		U32 m_constantId = kMaxU32;
 
-		Const(const GenericMemoryPoolAllocator<U8>& alloc)
-			: m_name(alloc)
+		Const(BaseMemoryPool* pool)
+			: m_name(pool)
 		{
 		}
 	};
@@ -129,14 +129,14 @@ private:
 	class StructMember
 	{
 	public:
-		StringAuto m_name;
+		StringRaii m_name;
 		ShaderVariableDataType m_type = ShaderVariableDataType::kNone;
 		U32 m_structIndex = kMaxU32; ///< The member is actually a struct.
 		U32 m_offset = kMaxU32;
 		U32 m_arraySize = kMaxU32;
 
-		StructMember(const GenericMemoryPoolAllocator<U8>& alloc)
-			: m_name(alloc)
+		StructMember(BaseMemoryPool* pool)
+			: m_name(pool)
 		{
 		}
 	};
@@ -144,43 +144,43 @@ private:
 	class Struct
 	{
 	public:
-		StringAuto m_name;
-		DynamicArrayAuto<StructMember> m_members;
+		StringRaii m_name;
+		DynamicArrayRaii<StructMember> m_members;
 		U32 m_size = 0;
 		U32 m_alignment = 0;
 
-		Struct(const GenericMemoryPoolAllocator<U8>& alloc)
-			: m_name(alloc)
-			, m_members(alloc)
+		Struct(BaseMemoryPool* pool)
+			: m_name(pool)
+			, m_members(pool)
 		{
 		}
 	};
 
-	GenericMemoryPoolAllocator<U8> m_alloc;
+	BaseMemoryPool* m_pool = nullptr;
 	ShaderReflectionVisitorInterface* m_interface = nullptr;
 
 	Error spirvTypeToAnki(const spirv_cross::SPIRType& type, ShaderVariableDataType& out) const;
 
-	Error blockReflection(const spirv_cross::Resource& res, Bool isStorage, DynamicArrayAuto<Block>& blocks) const;
+	Error blockReflection(const spirv_cross::Resource& res, Bool isStorage, DynamicArrayRaii<Block>& blocks) const;
 
-	Error opaqueReflection(const spirv_cross::Resource& res, DynamicArrayAuto<Opaque>& opaques) const;
+	Error opaqueReflection(const spirv_cross::Resource& res, DynamicArrayRaii<Opaque>& opaques) const;
 
-	Error constsReflection(DynamicArrayAuto<Const>& consts) const;
+	Error constsReflection(DynamicArrayRaii<Const>& consts) const;
 
-	Error blockVariablesReflection(spirv_cross::TypeID resourceId, DynamicArrayAuto<Var>& vars) const;
+	Error blockVariablesReflection(spirv_cross::TypeID resourceId, DynamicArrayRaii<Var>& vars) const;
 
 	Error blockVariableReflection(const spirv_cross::SPIRType& type, CString parentVariable, U32 baseOffset,
-								  DynamicArrayAuto<Var>& vars) const;
+								  DynamicArrayRaii<Var>& vars) const;
 
 	Error workgroupSizes(U32& sizex, U32& sizey, U32& sizez, U32& specConstMask);
 
-	Error structsReflection(DynamicArrayAuto<Struct>& structs) const;
+	Error structsReflection(DynamicArrayRaii<Struct>& structs) const;
 
 	Error structReflection(uint32_t id, const spirv_cross::SPIRType& type, U32 depth, Bool& skipped,
-						   DynamicArrayAuto<Struct>& structs, U32& structIndexInStructsArr) const;
+						   DynamicArrayRaii<Struct>& structs, U32& structIndexInStructsArr) const;
 };
 
-Error SpirvReflector::structsReflection(DynamicArrayAuto<Struct>& structs) const
+Error SpirvReflector::structsReflection(DynamicArrayRaii<Struct>& structs) const
 {
 	Error err = Error::kNone;
 
@@ -205,7 +205,7 @@ Error SpirvReflector::structsReflection(DynamicArrayAuto<Struct>& structs) const
 }
 
 Error SpirvReflector::structReflection(uint32_t id, const spirv_cross::SPIRType& type, U32 depth, Bool& skipped,
-									   DynamicArrayAuto<Struct>& structs, U32& structIndexInStructsArr) const
+									   DynamicArrayRaii<Struct>& structs, U32& structIndexInStructsArr) const
 {
 	skipped = false;
 
@@ -233,8 +233,8 @@ Error SpirvReflector::structReflection(uint32_t id, const spirv_cross::SPIRType&
 	}
 
 	// Create new struct
-	GenericMemoryPoolAllocator<U8> alloc = structs.getAllocator();
-	Struct cstruct(alloc);
+	BaseMemoryPool& pool = structs.getMemoryPool();
+	Struct cstruct(&pool);
 	cstruct.m_name = name.c_str();
 	U32 membersOffset = 0;
 	Bool aMemberWasSkipped = false;
@@ -242,7 +242,7 @@ Error SpirvReflector::structReflection(uint32_t id, const spirv_cross::SPIRType&
 	// Members
 	for(U32 i = 0; i < type.member_types.size(); ++i)
 	{
-		StructMember& member = *cstruct.m_members.emplaceBack(alloc);
+		StructMember& member = *cstruct.m_members.emplaceBack(&pool);
 		const spirv_cross::SPIRType& memberType = get<spirv_cross::SPIRType>(type.member_types[i]);
 
 		// Get name
@@ -352,7 +352,7 @@ Error SpirvReflector::structReflection(uint32_t id, const spirv_cross::SPIRType&
 
 		alignRoundUp(cstruct.m_alignment, cstruct.m_size);
 
-		Struct& newStruct = *structs.emplaceBack(alloc);
+		Struct& newStruct = *structs.emplaceBack(&pool);
 		newStruct = std::move(cstruct);
 	}
 	else
@@ -363,7 +363,7 @@ Error SpirvReflector::structReflection(uint32_t id, const spirv_cross::SPIRType&
 	return Error::kNone;
 }
 
-Error SpirvReflector::blockVariablesReflection(spirv_cross::TypeID resourceId, DynamicArrayAuto<Var>& vars) const
+Error SpirvReflector::blockVariablesReflection(spirv_cross::TypeID resourceId, DynamicArrayRaii<Var>& vars) const
 {
 	Bool found = false;
 	Error err = Error::kNone;
@@ -394,13 +394,13 @@ Error SpirvReflector::blockVariablesReflection(spirv_cross::TypeID resourceId, D
 }
 
 Error SpirvReflector::blockVariableReflection(const spirv_cross::SPIRType& type, CString parentVariable, U32 baseOffset,
-											  DynamicArrayAuto<Var>& vars) const
+											  DynamicArrayRaii<Var>& vars) const
 {
 	ANKI_ASSERT(type.basetype == spirv_cross::SPIRType::Struct);
 
 	for(U32 i = 0; i < type.member_types.size(); ++i)
 	{
-		Var var(m_alloc);
+		Var var(m_pool);
 		const spirv_cross::SPIRType& memberType = get<spirv_cross::SPIRType>(type.member_types[i]);
 
 		// Name
@@ -481,7 +481,7 @@ Error SpirvReflector::blockVariableReflection(const spirv_cross::SPIRType& type,
 			{
 				for(U32 i = 0; i < U32(var.m_blockInfo.m_arraySize); ++i)
 				{
-					StringAuto newName(m_alloc);
+					StringRaii newName(m_pool);
 					newName.sprintf("%s[%u]", var.m_name.getBegin(), i);
 					ANKI_CHECK(blockVariableReflection(
 						memberType, newName, var.m_blockInfo.m_offset + var.m_blockInfo.m_arrayStride * i, vars));
@@ -536,9 +536,9 @@ Error SpirvReflector::blockVariableReflection(const spirv_cross::SPIRType& type,
 }
 
 Error SpirvReflector::blockReflection(const spirv_cross::Resource& res, [[maybe_unused]] Bool isStorage,
-									  DynamicArrayAuto<Block>& blocks) const
+									  DynamicArrayRaii<Block>& blocks) const
 {
-	Block newBlock(m_alloc);
+	Block newBlock(m_pool);
 	const spirv_cross::SPIRType type = get_type(res.type_id);
 	const spirv_cross::Bitset decorationMask = get_decoration_bitset(res.id);
 
@@ -616,7 +616,7 @@ Error SpirvReflector::blockReflection(const spirv_cross::Resource& res, [[maybe_
 #if ANKI_ENABLE_ASSERTIONS
 	else
 	{
-		DynamicArrayAuto<Var> vars(m_alloc);
+		DynamicArrayRaii<Var> vars(m_pool);
 		ANKI_CHECK(blockVariablesReflection(res.base_type_id, vars));
 		ANKI_ASSERT(vars.getSize() == otherFound->m_vars.getSize() && "Expecting same vars");
 	}
@@ -664,9 +664,9 @@ Error SpirvReflector::spirvTypeToAnki(const spirv_cross::SPIRType& type, ShaderV
 	return Error::kNone;
 }
 
-Error SpirvReflector::opaqueReflection(const spirv_cross::Resource& res, DynamicArrayAuto<Opaque>& opaques) const
+Error SpirvReflector::opaqueReflection(const spirv_cross::Resource& res, DynamicArrayRaii<Opaque>& opaques) const
 {
-	Opaque newOpaque(m_alloc);
+	Opaque newOpaque(m_pool);
 	const spirv_cross::SPIRType type = get_type(res.type_id);
 	const spirv_cross::Bitset decorationMask = get_decoration_bitset(res.id);
 
@@ -747,12 +747,12 @@ Error SpirvReflector::opaqueReflection(const spirv_cross::Resource& res, Dynamic
 	return Error::kNone;
 }
 
-Error SpirvReflector::constsReflection(DynamicArrayAuto<Const>& consts) const
+Error SpirvReflector::constsReflection(DynamicArrayRaii<Const>& consts) const
 {
 	spirv_cross::SmallVector<spirv_cross::SpecializationConstant> specConsts = get_specialization_constants();
 	for(const spirv_cross::SpecializationConstant& c : specConsts)
 	{
-		Const newConst(m_alloc);
+		Const newConst(m_pool);
 
 		const spirv_cross::SPIRConstant cc = get<spirv_cross::SPIRConstant>(c.id);
 		const spirv_cross::SPIRType type = get<spirv_cross::SPIRType>(cc.constant_type);
@@ -866,17 +866,16 @@ Error SpirvReflector::workgroupSizes(U32& sizex, U32& sizey, U32& sizez, U32& sp
 }
 
 Error SpirvReflector::performSpirvReflection(Array<ConstWeakArray<U8>, U32(ShaderType::kCount)> spirv,
-											 GenericMemoryPoolAllocator<U8> tmpAlloc,
-											 ShaderReflectionVisitorInterface& interface)
+											 BaseMemoryPool& tmpPool, ShaderReflectionVisitorInterface& interface)
 {
-	DynamicArrayAuto<Block> uniformBlocks(tmpAlloc);
-	DynamicArrayAuto<Block> storageBlocks(tmpAlloc);
-	DynamicArrayAuto<Block> pushConstantBlock(tmpAlloc);
-	DynamicArrayAuto<Opaque> opaques(tmpAlloc);
-	DynamicArrayAuto<Const> specializationConstants(tmpAlloc);
+	DynamicArrayRaii<Block> uniformBlocks(&tmpPool);
+	DynamicArrayRaii<Block> storageBlocks(&tmpPool);
+	DynamicArrayRaii<Block> pushConstantBlock(&tmpPool);
+	DynamicArrayRaii<Opaque> opaques(&tmpPool);
+	DynamicArrayRaii<Const> specializationConstants(&tmpPool);
 	Array<U32, 3> workgroupSizes = {};
 	U32 workgroupSizeSpecConstMask = 0;
-	DynamicArrayAuto<Struct> structs(tmpAlloc);
+	DynamicArrayRaii<Struct> structs(&tmpPool);
 
 	// Perform reflection for each stage
 	for(const ShaderType type : EnumIterable<ShaderType>())
@@ -888,7 +887,7 @@ Error SpirvReflector::performSpirvReflection(Array<ConstWeakArray<U8>, U32(Shade
 
 		// Parse SPIR-V
 		const unsigned int* spvb = reinterpret_cast<const unsigned int*>(spirv[type].getBegin());
-		SpirvReflector compiler(spvb, spirv[type].getSizeInBytes() / sizeof(unsigned int), tmpAlloc, &interface);
+		SpirvReflector compiler(spvb, spirv[type].getSizeInBytes() / sizeof(unsigned int), &tmpPool, &interface);
 
 		// Uniform blocks
 		for(const spirv_cross::Resource& res : compiler.get_shader_resources().uniform_buffers)
@@ -1021,10 +1020,10 @@ Error SpirvReflector::performSpirvReflection(Array<ConstWeakArray<U8>, U32(Shade
 	return Error::kNone;
 }
 
-Error performSpirvReflection(Array<ConstWeakArray<U8>, U32(ShaderType::kCount)> spirv,
-							 GenericMemoryPoolAllocator<U8> tmpAlloc, ShaderReflectionVisitorInterface& interface)
+Error performSpirvReflection(Array<ConstWeakArray<U8>, U32(ShaderType::kCount)> spirv, BaseMemoryPool& tmpPool,
+							 ShaderReflectionVisitorInterface& interface)
 {
-	return SpirvReflector::performSpirvReflection(spirv, tmpAlloc, interface);
+	return SpirvReflector::performSpirvReflection(spirv, tmpPool, interface);
 }
 
 } // end namespace anki

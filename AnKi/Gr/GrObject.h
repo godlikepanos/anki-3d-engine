@@ -62,7 +62,7 @@ public:
 		return *m_manager;
 	}
 
-	GrAllocator<U8> getAllocator() const;
+	HeapMemoryPool& getMemoryPool() const;
 
 	void retain() const
 	{

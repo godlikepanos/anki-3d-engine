@@ -90,7 +90,7 @@ GlobalIlluminationProbeNode::GlobalIlluminationProbeNode(SceneGraph* scene, CStr
 
 	// The frustum components
 	constexpr F32 ang = toRad(90.0f);
-	const F32 zNear = CLUSTER_OBJECT_FRUSTUM_NEAR_PLANE;
+	const F32 zNear = kClusterObjectFrustumNearPlane;
 
 	Mat3 rot;
 	rot = Mat3(Euler(0.0f, -kPi / 2.0f, 0.0f)) * Mat3(Euler(0.0f, 0.0f, kPi));

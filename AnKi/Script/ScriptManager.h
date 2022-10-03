@@ -61,14 +61,14 @@ public:
 		return m_lua;
 	}
 
-	ANKI_INTERNAL ScriptAllocator getAllocator() const
+	ANKI_INTERNAL HeapMemoryPool& getMemoryPool() const
 	{
-		return m_alloc;
+		return m_pool;
 	}
 
 private:
 	LuaBinderOtherSystems m_otherSystems;
-	ScriptAllocator m_alloc;
+	mutable HeapMemoryPool m_pool;
 	LuaBinder m_lua;
 	Mutex n_luaMtx;
 };

@@ -64,10 +64,10 @@ Vec3 computeNormal(const Vec2 uv, const F32 depth)
 	const F32 ddy = smallerDelta(depthBottom, depth, depthTop);
 
 	const Vec2 ndc = UV_TO_NDC(uv);
-	const Vec2 TEXEL_SIZE = 1.0 / Vec2(textureSize(u_depthRt, 0));
-	const Vec2 NDC_TEXEL_SIZE = 2.0 * TEXEL_SIZE;
-	const Vec3 right = unproject(ndc + Vec2(NDC_TEXEL_SIZE.x, 0.0), depth + ddx);
-	const Vec3 top = unproject(ndc + Vec2(0.0, NDC_TEXEL_SIZE.y), depth + ddy);
+	const Vec2 texelSize = 1.0 / Vec2(textureSize(u_depthRt, 0));
+	const Vec2 ndcTexelSize = 2.0 * texelSize;
+	const Vec3 right = unproject(ndc + Vec2(ndcTexelSize.x, 0.0), depth + ddx);
+	const Vec3 top = unproject(ndc + Vec2(0.0, ndcTexelSize.y), depth + ddy);
 
 	const Vec3 origin = unproject(ndc, depth);
 	Vec3 normalVSpace = cross(origin - top, right - origin);

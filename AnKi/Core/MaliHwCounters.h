@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Core/Common.h>
-#include <AnKi/Util/Allocator.h>
+#include <AnKi/Util/MemoryPool.h>
 
 namespace anki {
 
@@ -27,7 +27,7 @@ public:
 class MaliHwCounters
 {
 public:
-	MaliHwCounters(GenericMemoryPoolAllocator<U8> alloc);
+	MaliHwCounters(BaseMemoryPool* pool);
 
 	MaliHwCounters(const MaliHwCounters&) = delete; // Non-copyable
 
@@ -38,7 +38,7 @@ public:
 	void sample(MaliHwCountersOut& out);
 
 private:
-	GenericMemoryPoolAllocator<U8> m_alloc;
+	BaseMemoryPool* m_pool = nullptr;
 	void* m_impl = nullptr;
 };
 /// @}

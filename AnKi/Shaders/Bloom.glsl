@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(FB_SIZE, 0u);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(kViewport, 0u);
 
 #include <AnKi/Shaders/TonemappingFunctions.glsl>
 #include <AnKi/Shaders/Functions.glsl>
@@ -16,13 +16,12 @@ layout(push_constant) uniform b_pc
 	Vec4 u_thresholdScalePad2;
 };
 
-const U32 TONEMAPPING_SET = 0u;
-const U32 TONEMAPPING_BINDING = 2u;
+const U32 kTonemappingBinding = 2u;
 #include <AnKi/Shaders/TonemappingResources.glsl>
 
 #if defined(ANKI_COMPUTE_SHADER)
-const UVec2 WORKGROUP_SIZE = UVec2(16, 16);
-layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
+const UVec2 kWorkgroupSize = UVec2(16, 16);
+layout(local_size_x = kWorkgroupSize.x, local_size_y = kWorkgroupSize.y, local_size_z = 1) in;
 
 layout(set = 0, binding = 3) writeonly uniform image2D u_outImg;
 #else
@@ -33,12 +32,12 @@ layout(location = 0) out ANKI_RP Vec3 out_color;
 void main()
 {
 #if defined(ANKI_COMPUTE_SHADER)
-	if(skipOutOfBoundsInvocations(WORKGROUP_SIZE, FB_SIZE))
+	if(skipOutOfBoundsInvocations(kWorkgroupSize, kViewport))
 	{
 		return;
 	}
 
-	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(FB_SIZE);
+	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(kViewport);
 #else
 	const Vec2 uv = in_uv;
 #endif

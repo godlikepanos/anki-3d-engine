@@ -412,7 +412,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		m_config.setRVrs(!m_config.getRVrs());
 	}
 
-	if(in.getEvent(InputEvent::WINDOW_CLOSED))
+	if(in.getEvent(InputEvent::kWindowClosed))
 	{
 		quit = true;
 	}

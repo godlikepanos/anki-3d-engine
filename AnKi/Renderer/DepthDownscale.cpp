@@ -34,7 +34,7 @@ DepthDownscale::~DepthDownscale()
 		m_clientBuffer->unmap();
 	}
 
-	m_fbDescrs.destroy(getAllocator());
+	m_fbDescrs.destroy(getMemoryPool());
 }
 
 Error DepthDownscale::initInternal()
@@ -138,7 +138,7 @@ Error DepthDownscale::initInternal()
 
 	if(!preferCompute)
 	{
-		m_fbDescrs.create(getAllocator(), m_mipCount);
+		m_fbDescrs.create(getMemoryPool(), m_mipCount);
 		for(U32 mip = 0; mip < m_mipCount; ++mip)
 		{
 			FramebufferDescription& fbDescr = m_fbDescrs[mip];

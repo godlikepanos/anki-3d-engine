@@ -174,9 +174,9 @@ class DescriptorSetState
 	friend class DescriptorSetFactory;
 
 public:
-	void init(StackAllocator<U8>& alloc)
+	void init(StackMemoryPool* pool)
 	{
-		m_alloc = alloc;
+		m_pool = pool;
 	}
 
 	void setLayout(const DescriptorSetLayout& layout)
@@ -326,7 +326,7 @@ public:
 	}
 
 private:
-	StackAllocator<U8> m_alloc;
+	StackMemoryPool* m_pool = nullptr;
 	DescriptorSetLayout m_layout;
 
 	Array<AnyBindingExtended, kMaxBindingsPerDescriptorSet> m_bindings;
@@ -361,7 +361,7 @@ public:
 	DescriptorSetFactory() = default;
 	~DescriptorSetFactory();
 
-	Error init(const GrAllocator<U8>& alloc, VkDevice dev, U32 bindlessTextureCount, U32 bindlessTextureBuffers);
+	Error init(HeapMemoryPool* pool, VkDevice dev, U32 bindlessTextureCount, U32 bindlessTextureBuffers);
 
 	void destroy();
 
@@ -369,7 +369,7 @@ public:
 	Error newDescriptorSetLayout(const DescriptorSetLayoutInitInfo& init, DescriptorSetLayout& layout);
 
 	/// @note It's thread-safe.
-	Error newDescriptorSet(StackAllocator<U8>& tmpAlloc, DescriptorSetState& state, DescriptorSet& set, Bool& dirty,
+	Error newDescriptorSet(StackMemoryPool& tmpPool, DescriptorSetState& state, DescriptorSet& set, Bool& dirty,
 						   Array<PtrSize, kMaxBindingsPerDescriptorSet>& dynamicOffsets, U32& dynamicOffsetCount);
 
 	void endFrame()
@@ -400,7 +400,7 @@ private:
 	DynamicArray<ThreadLocal*> m_allThreadLocals;
 	Mutex m_allThreadLocalsMtx;
 
-	GrAllocator<U8> m_alloc;
+	HeapMemoryPool* m_pool = nullptr;
 	VkDevice m_dev = VK_NULL_HANDLE;
 	U64 m_frameCount = 0;
 

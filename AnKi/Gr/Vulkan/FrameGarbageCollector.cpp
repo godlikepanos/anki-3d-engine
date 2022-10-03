@@ -22,7 +22,7 @@ void FrameGarbageCollector::collectGarbage()
 	}
 
 	const VkDevice dev = m_gr->getDevice();
-	GrAllocator<U8> alloc = m_gr->getAllocator();
+	HeapMemoryPool& pool = m_gr->getMemoryPool();
 
 	IntrusiveList<FrameGarbage> newFrames;
 	while(!m_frames.isEmpty())
@@ -47,13 +47,13 @@ void FrameGarbageCollector::collectGarbage()
 			{
 				vkDestroyImageView(dev, viewHandle, nullptr);
 			}
-			textureGarbage->m_viewHandles.destroy(alloc);
+			textureGarbage->m_viewHandles.destroy(pool);
 
 			for(U32 bindlessIndex : textureGarbage->m_bindlessIndices)
 			{
 				m_gr->getDescriptorSetFactory().unbindBindlessTexture(bindlessIndex);
 			}
-			textureGarbage->m_bindlessIndices.destroy(alloc);
+			textureGarbage->m_bindlessIndices.destroy(pool);
 
 			if(textureGarbage->m_imageHandle)
 			{
@@ -65,7 +65,7 @@ void FrameGarbageCollector::collectGarbage()
 				m_gr->getGpuMemoryManager().freeMemory(textureGarbage->m_memoryHandle);
 			}
 
-			alloc.deleteInstance(textureGarbage);
+			deleteInstance(pool, textureGarbage);
 		}
 
 		// Dispose buffer garbage
@@ -77,7 +77,7 @@ void FrameGarbageCollector::collectGarbage()
 			{
 				vkDestroyBufferView(dev, view, nullptr);
 			}
-			bufferGarbage->m_viewHandles.destroy(alloc);
+			bufferGarbage->m_viewHandles.destroy(pool);
 
 			if(bufferGarbage->m_bufferHandle)
 			{
@@ -89,10 +89,10 @@ void FrameGarbageCollector::collectGarbage()
 				m_gr->getGpuMemoryManager().freeMemory(bufferGarbage->m_memoryHandle);
 			}
 
-			alloc.deleteInstance(bufferGarbage);
+			deleteInstance(pool, bufferGarbage);
 		}
 
-		alloc.deleteInstance(&frame);
+		deleteInstance(pool, &frame);
 	}
 
 	m_frames = std::move(newFrames);
@@ -106,7 +106,7 @@ FrameGarbageCollector::FrameGarbage& FrameGarbageCollector::getFrame()
 	}
 	else
 	{
-		FrameGarbage* newGarbage = m_gr->getAllocator().newInstance<FrameGarbage>();
+		FrameGarbage* newGarbage = newInstance<FrameGarbage>(m_gr->getMemoryPool());
 		m_frames.pushBack(newGarbage);
 	}
 

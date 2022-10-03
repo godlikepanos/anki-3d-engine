@@ -21,8 +21,7 @@ class MicroSampler
 {
 	friend class MicroSamplerPtrDeleter;
 	friend class SamplerFactory;
-	template<typename, typename>
-	friend class GenericPoolAllocator;
+	ANKI_FRIEND_CALL_CONSTRUCTOR_AND_DESTRUCTOR
 
 public:
 	const VkSampler& getHandle() const

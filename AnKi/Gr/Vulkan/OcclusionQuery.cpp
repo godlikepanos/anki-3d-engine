@@ -11,11 +11,11 @@ namespace anki {
 
 OcclusionQuery* OcclusionQuery::newInstance(GrManager* manager)
 {
-	OcclusionQueryImpl* impl = manager->getAllocator().newInstance<OcclusionQueryImpl>(manager, "N/A");
+	OcclusionQueryImpl* impl = anki::newInstance<OcclusionQueryImpl>(manager->getMemoryPool(), manager, "N/A");
 	const Error err = impl->init();
 	if(err)
 	{
-		manager->getAllocator().deleteInstance(impl);
+		deleteInstance(manager->getMemoryPool(), impl);
 		impl = nullptr;
 	}
 	return impl;

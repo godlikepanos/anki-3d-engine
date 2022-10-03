@@ -14,9 +14,9 @@
 #endif
 
 #if TONEMAPPING_RESOURCE_AS_WRITE_IMAGE
-layout(set = 0, binding = TONEMAPPING_BINDING) ANKI_RP uniform coherent image2D u_tonemappingImage;
+layout(set = 0, binding = kTonemappingBinding) ANKI_RP uniform coherent image2D u_tonemappingImage;
 #else
-layout(set = 0, binding = TONEMAPPING_BINDING) ANKI_RP uniform readonly image2D u_tonemappingImage;
+layout(set = 0, binding = kTonemappingBinding) ANKI_RP uniform readonly image2D u_tonemappingImage;
 #endif
 
 #if TONEMAPPING_RESOURCE_AS_WRITE_IMAGE

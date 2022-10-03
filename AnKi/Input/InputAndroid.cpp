@@ -14,19 +14,18 @@ Error Input::newInstance(AllocAlignedCallback allocCallback, void* allocCallback
 {
 	ANKI_ASSERT(allocCallback && nativeWindow);
 
-	HeapAllocator<U8> alloc(allocCallback, allocCallbackUserData, "Input");
-	InputAndroid* ainput =
-		static_cast<InputAndroid*>(alloc.getMemoryPool().allocate(sizeof(InputAndroid), alignof(InputAndroid)));
-	::new(ainput) InputAndroid();
+	InputAndroid* ainput = static_cast<InputAndroid*>(
+		allocCallback(allocCallbackUserData, nullptr, sizeof(InputAndroid), alignof(InputAndroid)));
+	callConstructor(*ainput);
 
-	ainput->m_alloc = alloc;
+	ainput->m_pool.init(allocCallback, allocCallbackUserData);
 	ainput->m_nativeWindow = nativeWindow;
 
 	const Error err = ainput->init();
 	if(err)
 	{
-		ainput->~InputAndroid();
-		alloc.getMemoryPool().free(ainput);
+		callDestructor(*ainput);
+		allocCallback(allocCallbackUserData, ainput, 0, 0);
 		input = nullptr;
 		return err;
 	}
@@ -42,9 +41,10 @@ void Input::deleteInstance(Input* input)
 	if(input)
 	{
 		InputAndroid* self = static_cast<InputAndroid*>(input);
-		HeapAllocator<U8> alloc = self->m_alloc;
-		self->~InputAndroid();
-		alloc.getMemoryPool().free(self);
+		AllocAlignedCallback callback = self->m_pool.getAllocationCallback();
+		void* userData = self->m_pool.getAllocationCallbackUserData();
+		callDestructor(*self);
+		callback(userData, self, 0, 0);
 	}
 }
 
@@ -114,7 +114,7 @@ void InputAndroid::handleAndroidEvents(android_app* app, int32_t cmd)
 	{
 	case APP_CMD_TERM_WINDOW:
 	case APP_CMD_LOST_FOCUS:
-		addEvent(InputEvent::WINDOW_CLOSED);
+		addEvent(InputEvent::kWindowClosed);
 		break;
 	}
 }

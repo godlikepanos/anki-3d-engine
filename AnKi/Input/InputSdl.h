@@ -16,15 +16,6 @@ namespace anki {
 class InputSdl : public Input
 {
 public:
-	std::unordered_map<SDL_Keycode, KeyCode, std::hash<SDL_Keycode>, std::equal_to<SDL_Keycode>,
-					   HeapAllocator<std::pair<const SDL_Keycode, KeyCode>>>
-		m_sdlToAnki;
-
-	InputSdl(HeapAllocator<std::pair<const SDL_Keycode, KeyCode>> alloc)
-		: m_sdlToAnki(10, std::hash<SDL_Keycode>(), std::equal_to<SDL_Keycode>(), alloc)
-	{
-	}
-
 	Error init();
 	Error handleEventsInternal();
 };

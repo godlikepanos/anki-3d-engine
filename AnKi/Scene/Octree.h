@@ -40,8 +40,8 @@ class Octree
 	friend class OctreePlaceable;
 
 public:
-	Octree(SceneAllocator<U8> alloc)
-		: m_alloc(alloc)
+	Octree(HeapMemoryPool* pool)
+		: m_pool(pool)
 	{
 	}
 
@@ -74,14 +74,14 @@ public:
 	/// @param out The output of the tests.
 	/// @note It's thread-safe against other gatherVisible calls.
 	void gatherVisible(const Plane frustumPlanes[6], U32 testId, OctreeNodeVisibilityTestCallback testCallback,
-					   void* testCallbackUserData, DynamicArrayAuto<void*>& out)
+					   void* testCallbackUserData, DynamicArrayRaii<void*>& out)
 	{
 		gatherVisibleRecursive(frustumPlanes, testId, testCallback, testCallbackUserData, m_rootLeaf, out);
 	}
 
 	/// Similar to gatherVisible but it spawns ThreadHive tasks.
 	void gatherVisibleParallel(const Plane frustumPlanes[6], U32 testId, OctreeNodeVisibilityTestCallback testCallback,
-							   void* testCallbackUserData, DynamicArrayAuto<void*>* out, ThreadHive& hive,
+							   void* testCallbackUserData, DynamicArrayRaii<void*>* out, ThreadHive& hive,
 							   ThreadHiveSemaphore* waitSemaphore, ThreadHiveSemaphore*& signalSemaphore);
 
 	/// Walk the tree.
@@ -198,7 +198,7 @@ private:
 	};
 	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS_FRIEND(LeafMask)
 
-	SceneAllocator<U8> m_alloc;
+	HeapMemoryPool* m_pool;
 	U32 m_maxDepth = 0;
 	Vec3 m_sceneAabbMin = Vec3(0.0f);
 	Vec3 m_sceneAabbMax = Vec3(0.0f);
@@ -217,38 +217,38 @@ private:
 
 	Leaf* newLeaf()
 	{
-		return m_leafAlloc.newInstance(m_alloc);
+		return m_leafAlloc.newInstance(*m_pool);
 	}
 
 	void releaseLeaf(Leaf* leaf)
 	{
-		m_leafAlloc.deleteInstance(m_alloc, leaf);
+		m_leafAlloc.deleteInstance(*m_pool, leaf);
 	}
 
 	PlaceableNode* newPlaceableNode(OctreePlaceable* placeable)
 	{
 		ANKI_ASSERT(placeable);
-		PlaceableNode* out = m_placeableNodeAlloc.newInstance(m_alloc);
+		PlaceableNode* out = m_placeableNodeAlloc.newInstance(*m_pool);
 		out->m_placeable = placeable;
 		return out;
 	}
 
 	void releasePlaceableNode(PlaceableNode* placeable)
 	{
-		m_placeableNodeAlloc.deleteInstance(m_alloc, placeable);
+		m_placeableNodeAlloc.deleteInstance(*m_pool, placeable);
 	}
 
 	LeafNode* newLeafNode(Leaf* leaf)
 	{
 		ANKI_ASSERT(leaf);
-		LeafNode* out = m_leafNodeAlloc.newInstance(m_alloc);
+		LeafNode* out = m_leafNodeAlloc.newInstance(*m_pool);
 		out->m_leaf = leaf;
 		return out;
 	}
 
 	void releaseLeafNode(LeafNode* node)
 	{
-		m_leafNodeAlloc.deleteInstance(m_alloc, node);
+		m_leafNodeAlloc.deleteInstance(*m_pool, node);
 	}
 
 	void placeRecursive(const Aabb& volume, OctreePlaceable* placeable, Leaf* parent, U32 depth);
@@ -263,7 +263,7 @@ private:
 
 	static void gatherVisibleRecursive(const Plane frustumPlanes[6], U32 testId,
 									   OctreeNodeVisibilityTestCallback testCallback, void* testCallbackUserData,
-									   Leaf* leaf, DynamicArrayAuto<void*>& out);
+									   Leaf* leaf, DynamicArrayRaii<void*>& out);
 
 	/// ThreadHive callback.
 	static void gatherVisibleTaskCallback(void* ud, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem);

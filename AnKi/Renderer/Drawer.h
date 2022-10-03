@@ -29,7 +29,7 @@ public:
 
 	SamplerPtr m_sampler;
 	U32 m_minLod = 0;
-	U32 m_maxLod = MAX_LOD_COUNT - 1;
+	U32 m_maxLod = kMaxLodCount - 1;
 };
 
 /// It uses the render queue to batch and render.

@@ -44,14 +44,14 @@ Error TemporalAA::initInternal()
 
 	{
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-		variantInitInfo.addConstant("VARIANCE_CLIPPING_GAMMA", 2.7f); // Variance clipping paper proposes 1.0
-		variantInitInfo.addConstant("BLEND_FACTOR", 1.0f / 16.0f);
+		variantInitInfo.addConstant("kVarianceClippingGamma", 2.7f); // Variance clipping paper proposes 1.0
+		variantInitInfo.addConstant("kBlendFactor", 1.0f / 16.0f);
 		variantInitInfo.addMutation("VARIANCE_CLIPPING", 1);
 		variantInitInfo.addMutation("YCBCR", 0);
 
 		if(getConfig().getRPreferCompute())
 		{
-			variantInitInfo.addConstant("FB_SIZE",
+			variantInitInfo.addConstant("kFramebufferSize",
 										UVec2(m_r->getInternalResolution().x(), m_r->getInternalResolution().y()));
 		}
 

@@ -7,7 +7,7 @@
 #pragma anki mutator KERNEL_SIZE 3 5 7 9 11 13 15
 #pragma anki mutator COLOR_COMPONENTS 4 3 1
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(TEXTURE_SIZE, 0u);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(kTextureSize, 0u);
 
 #pragma anki start vert
 #include <AnKi/Shaders/QuadVert.glsl>
@@ -40,7 +40,7 @@ F32 computeLumaWeight(F32 refLuma, COL_TYPE col)
 {
 	const F32 l = computeLuminance(Vec3(col));
 	const F32 diff = abs(refLuma - l);
-	const F32 weight = 1.0 / (EPSILON + diff);
+	const F32 weight = 1.0 / (kEpsilonf + diff);
 	return weight;
 }
 
@@ -50,16 +50,16 @@ layout(location = 0) out COL_TYPE out_color;
 void main()
 {
 #if HORIZONTAL
-	const Vec2 TEXEL_SIZE = Vec2(1.0 / F32(TEXTURE_SIZE.x), 0.0);
+	const Vec2 texelSize = Vec2(1.0 / F32(kTextureSize.x), 0.0);
 #else
-	const Vec2 TEXEL_SIZE = Vec2(0.0, 1.0 / F32(TEXTURE_SIZE.y));
+	const Vec2 texelSize = Vec2(0.0, 1.0 / F32(kTextureSize.y));
 #endif
 
 	COL_TYPE col = textureLod(u_tex, u_linearAnyClampSampler, in_uv, 0.0).TEX_FETCH;
 	out_color = col;
 	const F32 refLuma = computeLuminance(Vec3(col));
 	F32 weight = 1.0;
-	Vec2 texCoordOffset = 1.5 * TEXEL_SIZE;
+	Vec2 texCoordOffset = 1.5 * texelSize;
 
 	for(U32 i = 0u; i < U32(KERNEL_SIZE); ++i)
 	{
@@ -73,7 +73,7 @@ void main()
 		out_color += col * w;
 		weight += w;
 
-		texCoordOffset += 2.0 * TEXEL_SIZE;
+		texCoordOffset += 2.0 * texelSize;
 	}
 
 	out_color = out_color / weight;

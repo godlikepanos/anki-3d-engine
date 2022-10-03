@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Util/CpuMemoryPools.h>
+#include <AnKi/Util/MemoryPool.h>
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/Assert.h>
 #include <AnKi/Util/Thread.h>
@@ -153,7 +153,6 @@ void BaseMemoryPool::init(AllocAlignedCallback allocCb, void* allocCbUserData, c
 
 void BaseMemoryPool::destroy()
 {
-	ANKI_ASSERT(m_refcount.load() == 0 && "Refcount should be zero");
 	if(m_name != nullptr)
 	{
 		m_allocCb(m_allocCbUserData, m_name, 0, 0);

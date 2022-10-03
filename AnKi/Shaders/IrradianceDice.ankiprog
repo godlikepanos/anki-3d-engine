@@ -18,7 +18,7 @@
 
 #define DEBUG_MODE 0 // 0: disable, 1: different color per dice face, 2: different color per cell
 
-const U32 WORKGROUP_SIZE = U32(WORKGROUP_SIZE_XY) * U32(WORKGROUP_SIZE_XY);
+const U32 kWorkgroupSize = U32(WORKGROUP_SIZE_XY) * U32(WORKGROUP_SIZE_XY);
 
 layout(local_size_x = WORKGROUP_SIZE_XY, local_size_y = WORKGROUP_SIZE_XY, local_size_z = 1) in;
 
@@ -48,7 +48,7 @@ layout(set = 0, binding = 3) writeonly buffer b_ssbo1
 };
 #endif
 
-shared Vec3 s_integrationResults[6u][WORKGROUP_SIZE / 8u];
+shared Vec3 s_integrationResults[6u][kWorkgroupSize / 8u];
 
 ANKI_RP Vec3 sampleLightShadingTexture(const U32 face)
 {
@@ -69,10 +69,10 @@ ANKI_RP Vec3 sampleLightShadingTexture(const U32 face)
 
 void main()
 {
-	const F32 WORKGROUP_SIZE_XY_F = F32(WORKGROUP_SIZE_XY);
+	const F32 workgroupSizeXYf = F32(WORKGROUP_SIZE_XY);
 
 	// Compute the NDC used in cubeCoordSolidAngle
-	const Vec2 faceUv = (Vec2(gl_LocalInvocationID.xy) + 0.5) / WORKGROUP_SIZE_XY_F;
+	const Vec2 faceUv = (Vec2(gl_LocalInvocationID.xy) + 0.5) / workgroupSizeXYf;
 	const Vec2 ndc = UV_TO_NDC(faceUv);
 
 	// Compute result for a pixel
@@ -87,7 +87,7 @@ void main()
 		// Compute integral part
 		const ANKI_RP F32 lambert = max(0.0, dot(r, diceDir));
 		const ANKI_RP Vec3 lightShading = sampleLightShadingTexture(f);
-		const ANKI_RP Vec3 irradiance = lightShading * lambert * cubeCoordSolidAngle(ndc, WORKGROUP_SIZE_XY_F);
+		const ANKI_RP Vec3 irradiance = lightShading * lambert * cubeCoordSolidAngle(ndc, workgroupSizeXYf);
 
 		// Store
 		resultFaces[f] = irradiance;
@@ -138,7 +138,7 @@ void main()
 		const ANKI_RP F32 lambert = max(0.0, dot(r, diceDir));
 
 		// Read the gbuffer
-		Vec2 gbufferUv = (Vec2(gl_LocalInvocationID.xy) + 0.5) / WORKGROUP_SIZE_XY_F;
+		Vec2 gbufferUv = (Vec2(gl_LocalInvocationID.xy) + 0.5) / workgroupSizeXYf;
 		gbufferUv.x *= 1.0 / 6.0;
 		gbufferUv.x += (1.0 / 6.0) * F32(f);
 		GbufferInfo gbuffer;
@@ -155,7 +155,7 @@ void main()
 		// Compute 2nd bounce
 		const ANKI_RP Vec3 lightShading = sampleLightShadingTexture(f);
 		const ANKI_RP Vec3 irradiance =
-			(firstBounceIrradiance + lightShading * lambert) * cubeCoordSolidAngle(ndc, WORKGROUP_SIZE_XY_F);
+			(firstBounceIrradiance + lightShading * lambert) * cubeCoordSolidAngle(ndc, workgroupSizeXYf);
 
 		// Store
 		resultFaces[f] = irradiance;

@@ -8,7 +8,6 @@
 #include <AnKi/Util/Assert.h>
 #include <AnKi/Util/List.h>
 #include <AnKi/Util/StdTypes.h>
-#include <AnKi/Util/Allocator.h>
 #include <algorithm>
 
 namespace anki {
@@ -39,8 +38,8 @@ public:
 
 	Hierarchy& operator=(const Hierarchy&) = delete; // Non-copyable
 
-	template<typename TAllocator>
-	void destroy(TAllocator alloc);
+	template<typename TMemPool>
+	void destroy(TMemPool& pool);
 
 	const Value* getParent() const
 	{
@@ -63,12 +62,12 @@ public:
 	}
 
 	/// Add a new child.
-	template<typename TAllocator>
-	void addChild(TAllocator alloc, Value* child);
+	template<typename TMemPool>
+	void addChild(TMemPool& pool, Value* child);
 
 	/// Remove a child.
-	template<typename TAllocator>
-	void removeChild(TAllocator alloc, Value* child);
+	template<typename TMemPool>
+	void removeChild(TMemPool& pool, Value* child);
 
 	/// Visit the children and the children's children. Use it with lambda
 	template<typename VisitorFunc>

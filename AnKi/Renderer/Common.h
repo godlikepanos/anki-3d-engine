@@ -101,7 +101,7 @@ public:
 class RenderingContext
 {
 public:
-	StackAllocator<U8> m_tempAllocator;
+	StackMemoryPool* m_tempPool = nullptr;
 	RenderQueue* m_renderQueue = nullptr;
 
 	RenderGraphDescription m_renderGraphDescr;
@@ -114,9 +114,9 @@ public:
 
 	ClusteredShadingContext m_clusteredShading;
 
-	RenderingContext(const StackAllocator<U8>& alloc)
-		: m_tempAllocator(alloc)
-		, m_renderGraphDescr(alloc)
+	RenderingContext(StackMemoryPool* pool)
+		: m_tempPool(pool)
+		, m_renderGraphDescr(pool)
 	{
 	}
 
@@ -126,8 +126,9 @@ public:
 };
 
 /// A convenience function to find empty cache entries. Used for various probes.
-template<typename THashMap, typename TCacheEntryArray, typename TAlloc>
-U32 findBestCacheEntry(U64 uuid, Timestamp crntTimestamp, const TCacheEntryArray& entries, THashMap& map, TAlloc alloc)
+template<typename THashMap, typename TCacheEntryArray, typename TMemPool>
+U32 findBestCacheEntry(U64 uuid, Timestamp crntTimestamp, const TCacheEntryArray& entries, THashMap& map,
+					   TMemPool& pool)
 {
 	ANKI_ASSERT(uuid > 0);
 
@@ -144,14 +145,14 @@ U32 findBestCacheEntry(U64 uuid, Timestamp crntTimestamp, const TCacheEntryArray
 		else
 		{
 			// Cache entry is wrong, remove it
-			map.erase(alloc, it);
+			map.erase(pool, it);
 		}
 	}
 
 	// 2nd and 3rd choice, find an empty entry or some entry to re-use
 	U32 emptyCacheEntryIdx = kMaxU32;
 	U32 cacheEntryIdxToKick = kMaxU32;
-	Timestamp cacheEntryIdxToKickMinTimestamp = MAX_TIMESTAMP;
+	Timestamp cacheEntryIdxToKickMinTimestamp = kMaxTimestamp;
 	for(U32 cacheEntryIdx = 0; cacheEntryIdx < entries.getSize(); ++cacheEntryIdx)
 	{
 		if(entries[cacheEntryIdx].m_uuid == 0)

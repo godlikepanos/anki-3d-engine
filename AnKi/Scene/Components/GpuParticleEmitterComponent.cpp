@@ -175,7 +175,7 @@ void GpuParticleEmitterComponent::simulate(GenericGpuComputeJobQueueElementConte
 	StagingGpuMemoryToken token;
 	GpuParticleSimulationState* unis =
 		static_cast<GpuParticleSimulationState*>(ctx.m_stagingGpuAllocator->allocateFrame(
-			sizeof(GpuParticleSimulationState), StagingGpuMemoryType::UNIFORM, token));
+			sizeof(GpuParticleSimulationState), StagingGpuMemoryType::kUniform, token));
 
 	unis->m_viewProjMat = ctx.m_viewProjectionMatrix;
 	unis->m_unprojectionParams = ctx.m_projectionMatrix.extractPerspectiveUnprojectionParams();
@@ -213,7 +213,7 @@ void GpuParticleEmitterComponent::draw(RenderQueueDrawContext& ctx) const
 		RenderComponent::allocateAndSetupUniforms(m_particleEmitterResource->getMaterial(), ctx, identity, identity,
 												  *ctx.m_stagingGpuAllocator);
 
-		cmdb->bindStorageBuffer(MATERIAL_SET_LOCAL, MATERIAL_BINDING_FIRST_NON_STANDARD_LOCAL, m_particlesBuff, 0,
+		cmdb->bindStorageBuffer(kMaterialSetLocal, kMaterialBindingFirstNonStandardLocal, m_particlesBuff, 0,
 								kMaxPtrSize);
 
 		// Draw

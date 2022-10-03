@@ -84,13 +84,13 @@ public:
 		m_maxComponentTimestamp = maxComponentTimestamp;
 	}
 
-	SceneAllocator<U8> getAllocator() const;
+	HeapMemoryPool& getMemoryPool() const;
 
-	SceneFrameAllocator<U8> getFrameAllocator() const;
+	StackMemoryPool& getFrameMemoryPool() const;
 
 	void addChild(SceneNode* obj)
 	{
-		Base::addChild(getAllocator(), obj);
+		Base::addChild(getMemoryPool(), obj);
 	}
 
 	/// This is called by the scenegraph every frame after all component updates. By default it does nothing.
@@ -265,9 +265,9 @@ protected:
 	template<typename TComponent>
 	TComponent* newComponent()
 	{
-		TComponent* comp = getAllocator().newInstance<TComponent>(this);
-		m_components.emplaceBack(getAllocator(), comp);
-		m_componentInfos.emplaceBack(getAllocator(), *comp);
+		TComponent* comp = newInstance<TComponent>(getMemoryPool(), this);
+		m_components.emplaceBack(getMemoryPool(), comp);
+		m_componentInfos.emplaceBack(getMemoryPool(), *comp);
 		return comp;
 	}
 

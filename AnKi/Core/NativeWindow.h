@@ -9,7 +9,6 @@
 #include <AnKi/Util/StdTypes.h>
 #include <AnKi/Util/Array.h>
 #include <AnKi/Util/String.h>
-#include <AnKi/Util/Allocator.h>
 
 namespace anki {
 
@@ -63,7 +62,7 @@ protected:
 	U32 m_width = 0;
 	U32 m_height = 0;
 
-	HeapAllocator<U8> m_alloc;
+	HeapMemoryPool m_pool;
 
 	NativeWindow()
 	{

@@ -3,11 +3,11 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-ANKI_SPECIALIZATION_CONSTANT_U32(TILE_SIZE, 0u);
-ANKI_SPECIALIZATION_CONSTANT_U32(TILE_COUNT_X, 1u);
-ANKI_SPECIALIZATION_CONSTANT_U32(TILE_COUNT_Y, 2u);
-ANKI_SPECIALIZATION_CONSTANT_U32(Z_SPLIT_COUNT, 3u);
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(RENDERING_SIZE, 4u);
+ANKI_SPECIALIZATION_CONSTANT_U32(kTileSize, 0u);
+ANKI_SPECIALIZATION_CONSTANT_U32(kTileCountX, 1u);
+ANKI_SPECIALIZATION_CONSTANT_U32(kTileCountY, 2u);
+ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 3u);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(kRenderingSize, 4u);
 
 #pragma anki start comp
 
@@ -15,8 +15,8 @@ ANKI_SPECIALIZATION_CONSTANT_UVEC2(RENDERING_SIZE, 4u);
 #include <AnKi/Shaders/Common.glsl>
 #include <AnKi/Shaders/CollisionFunctions.glsl>
 
-const U32 WORKGROUP_SIZE = 64u;
-layout(local_size_x = WORKGROUP_SIZE) in;
+const U32 kWorkgroupSize = 64u;
+layout(local_size_x = kWorkgroupSize) in;
 
 layout(set = 0, binding = 0) uniform b_unis
 {
@@ -30,93 +30,93 @@ layout(set = 0, binding = 1) writeonly buffer b_clusters
 
 layout(set = 0, binding = 2) uniform b_pointLights
 {
-	PointLight u_pointLights[MAX_VISIBLE_POINT_LIGHTS];
+	PointLight u_pointLights[kMaxVisiblePointLights];
 };
 
 layout(set = 0, binding = 3) uniform b_spotLights
 {
-	SpotLightBinning u_spotLights[MAX_VISIBLE_SPOT_LIGHTS];
+	SpotLightBinning u_spotLights[kMaxVisibleSpotLights];
 };
 
 layout(set = 0, binding = 4) uniform b_reflectionProbes
 {
-	ReflectionProbe u_reflectionProbes[MAX_VISIBLE_REFLECTION_PROBES];
+	ReflectionProbe u_reflectionProbes[kMaxVisibleReflectionProbes];
 };
 
 layout(set = 0, binding = 5) uniform b_giProbes
 {
-	GlobalIlluminationProbe u_giProbes[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES];
+	GlobalIlluminationProbe u_giProbes[kMaxVisibleGlobalIlluminationProbes];
 };
 
 layout(set = 0, binding = 6) uniform b_fogVolumes
 {
-	FogDensityVolume u_fogVolumes[MAX_VISIBLE_FOG_DENSITY_VOLUMES];
+	FogDensityVolume u_fogVolumes[kMaxVisibleFogDensityVolumes];
 };
 
 layout(set = 0, binding = 7) uniform b_decals
 {
-	Decal u_decals[MAX_VISIBLE_DECALS];
+	Decal u_decals[kMaxVisibleDecals];
 };
 
-const U32 TILE_COUNT = TILE_COUNT_X * TILE_COUNT_Y;
+const U32 kTileCount = kTileCountX * kTileCountY;
 
 // DX Sample locations
-const U32 SAMPLE_COUNT = 4u;
-#define LOCATION(x, y) UVec2(Vec2(IVec2(x, y) + 8) / 16.0 * F32(TILE_SIZE))
-UVec2 SAMPLE_LOCATIONS[SAMPLE_COUNT] = UVec2[](LOCATION(-2, -6), LOCATION(6, -2), LOCATION(-6, 2), LOCATION(2, 6));
+const U32 kSampleCount = 4u;
+#define LOCATION(x, y) UVec2(Vec2(IVec2(x, y) + 8) / 16.0 * F32(kTileSize))
+UVec2 SAMPLE_LOCATIONS[kSampleCount] = UVec2[](LOCATION(-2, -6), LOCATION(6, -2), LOCATION(-6, 2), LOCATION(2, 6));
 #undef LOCATION
 
 // A mask per tile of this workgroup for the clusterer object being processed by this workgroup
-const U32 TILES_PER_WORKGROUP = WORKGROUP_SIZE / SAMPLE_COUNT;
-shared ExtendedClusterObjectMask s_tileMasks[TILES_PER_WORKGROUP];
+const U32 kTilesPerWorkgroup = kWorkgroupSize / kSampleCount;
+shared ExtendedClusterObjectMask s_tileMasks[kTilesPerWorkgroup];
 
 // A mask for each Z split for a specific clusterer object
-shared ExtendedClusterObjectMask s_zSplitMasks[Z_SPLIT_COUNT];
+shared ExtendedClusterObjectMask s_zSplitMasks[kZSplitCount];
 
 Bool isPointLight()
 {
-	return gl_GlobalInvocationID.y < u_unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_POINT_LIGHT].x;
+	return gl_GlobalInvocationID.y < u_unis.m_objectCountsUpTo[kClusterObjectTypePointLight].x;
 }
 
 Bool isSpotLight()
 {
-	return gl_GlobalInvocationID.y < u_unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_SPOT_LIGHT].x;
+	return gl_GlobalInvocationID.y < u_unis.m_objectCountsUpTo[kClusterObjectTypeSpotLight].x;
 }
 
 Bool isDecal()
 {
-	return gl_GlobalInvocationID.y < u_unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_DECAL].x;
+	return gl_GlobalInvocationID.y < u_unis.m_objectCountsUpTo[kClusterObjectTypeDecal].x;
 }
 
 Bool isFogVolume()
 {
-	return gl_GlobalInvocationID.y < u_unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_FOG_DENSITY_VOLUME].x;
+	return gl_GlobalInvocationID.y < u_unis.m_objectCountsUpTo[kClusterObjectTypeFogDensityVolume].x;
 }
 
 Bool isReflectionProbe()
 {
-	return gl_GlobalInvocationID.y < u_unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_REFLECTION_PROBE].x;
+	return gl_GlobalInvocationID.y < u_unis.m_objectCountsUpTo[kClusterObjectTypeReflectionProbe].x;
 }
 
 Bool isGiProbe()
 {
-	return gl_GlobalInvocationID.y < u_unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE].x;
+	return gl_GlobalInvocationID.y < u_unis.m_objectCountsUpTo[kClusterObjectTypeGlobalIlluminationProbe].x;
 }
 
 void main()
 {
-	const U32 globalInvocationIDX = min(gl_GlobalInvocationID.x, TILE_COUNT * SAMPLE_COUNT);
-	const U32 tileIdx = globalInvocationIDX / SAMPLE_COUNT;
-	const U32 sampleIdx = globalInvocationIDX % SAMPLE_COUNT;
-	const U32 localTileIdx = gl_LocalInvocationIndex / SAMPLE_COUNT;
+	const U32 globalInvocationIDX = min(gl_GlobalInvocationID.x, kTileCount * kSampleCount);
+	const U32 tileIdx = globalInvocationIDX / kSampleCount;
+	const U32 sampleIdx = globalInvocationIDX % kSampleCount;
+	const U32 localTileIdx = gl_LocalInvocationIndex / kSampleCount;
 	const U32 clustererObjectIdx = gl_GlobalInvocationID.y;
 
-	const UVec2 tileXY = UVec2(tileIdx % TILE_COUNT_X, tileIdx / TILE_COUNT_X);
+	const UVec2 tileXY = UVec2(tileIdx % kTileCountX, tileIdx / kTileCountX);
 
 	// This is a pixel in one of the main framebuffers of the renderer, eg the gbuffer's framebuffers
-	const UVec2 pixel = tileXY * TILE_SIZE + SAMPLE_LOCATIONS[sampleIdx];
+	const UVec2 pixel = tileXY * kTileSize + SAMPLE_LOCATIONS[sampleIdx];
 
-	const Vec2 uv = Vec2(pixel) / Vec2(RENDERING_SIZE);
+	const Vec2 uv = Vec2(pixel) / Vec2(kRenderingSize);
 	const Vec2 ndc = UV_TO_NDC(uv);
 
 	// Unproject the sample in view space
@@ -129,9 +129,9 @@ void main()
 
 	// Zero shared memory
 	s_tileMasks[localTileIdx] = ExtendedClusterObjectMask(0);
-	const U32 splitsPerInvocation = max(1u, Z_SPLIT_COUNT / WORKGROUP_SIZE);
+	const U32 splitsPerInvocation = max(1u, kZSplitCount / kWorkgroupSize);
 	for(U32 i = gl_LocalInvocationIndex * splitsPerInvocation;
-		i < (gl_LocalInvocationIndex + 1u) * splitsPerInvocation && i < Z_SPLIT_COUNT; ++i)
+		i < (gl_LocalInvocationIndex + 1u) * splitsPerInvocation && i < kZSplitCount; ++i)
 	{
 		s_zSplitMasks[i] = ExtendedClusterObjectMask(0);
 	}
@@ -152,7 +152,7 @@ void main()
 	// Spot light
 	else if(isSpotLight())
 	{
-		objectArrayIdx = clustererObjectIdx - u_unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_SPOT_LIGHT - 1u].x;
+		objectArrayIdx = clustererObjectIdx - u_unis.m_objectCountsUpTo[kClusterObjectTypeSpotLight - 1u].x;
 		const SpotLightBinning light = u_spotLights[objectArrayIdx];
 
 		t0 = 10000.0;
@@ -190,7 +190,7 @@ void main()
 	// Decal
 	else if(isDecal())
 	{
-		objectArrayIdx = clustererObjectIdx - u_unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_DECAL - 1u].x;
+		objectArrayIdx = clustererObjectIdx - u_unis.m_objectCountsUpTo[kClusterObjectTypeDecal - 1u].x;
 		const Decal decal = u_decals[objectArrayIdx];
 
 		collides = testRayObb(rayOrigin, rayDir, decal.m_obbExtend, decal.m_invertedTransform, t0, t1);
@@ -198,7 +198,7 @@ void main()
 	// Fog volume
 	else if(isFogVolume())
 	{
-		objectArrayIdx = clustererObjectIdx - u_unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_FOG_DENSITY_VOLUME - 1u].x;
+		objectArrayIdx = clustererObjectIdx - u_unis.m_objectCountsUpTo[kClusterObjectTypeFogDensityVolume - 1u].x;
 		const FogDensityVolume vol = u_fogVolumes[objectArrayIdx];
 
 		if(vol.m_isBox != 0u)
@@ -215,7 +215,7 @@ void main()
 	// Reflection probe
 	else if(isReflectionProbe())
 	{
-		objectArrayIdx = clustererObjectIdx - u_unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_REFLECTION_PROBE - 1u].x;
+		objectArrayIdx = clustererObjectIdx - u_unis.m_objectCountsUpTo[kClusterObjectTypeReflectionProbe - 1u].x;
 		const ReflectionProbe probe = u_reflectionProbes[objectArrayIdx];
 
 		collides = testRayAabb(rayOrigin, rayDir, probe.m_aabbMin, probe.m_aabbMax, t0, t1);
@@ -224,7 +224,7 @@ void main()
 	else
 	{
 		objectArrayIdx =
-			clustererObjectIdx - u_unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE - 1u].x;
+			clustererObjectIdx - u_unis.m_objectCountsUpTo[kClusterObjectTypeGlobalIlluminationProbe - 1u].x;
 		const GlobalIlluminationProbe probe = u_giProbes[objectArrayIdx];
 
 		collides = testRayAabb(rayOrigin, rayDir, probe.m_aabbMin, probe.m_aabbMax, t0, t1);
@@ -261,7 +261,7 @@ void main()
 
 		const I32 startZSplit = max(I32(minDistFromNearPlane * u_unis.m_zSplitCountOverFrustumLength), 0);
 		const I32 endZSplit =
-			clamp(I32(maxDistFromNearPlane * u_unis.m_zSplitCountOverFrustumLength), 0, I32(Z_SPLIT_COUNT) - 1);
+			clamp(I32(maxDistFromNearPlane * u_unis.m_zSplitCountOverFrustumLength), 0, I32(kZSplitCount) - 1);
 		for(I32 i = startZSplit; i <= endZSplit; ++i)
 		{
 			atomicOr(s_zSplitMasks[i], mask);
@@ -303,33 +303,33 @@ void main()
 
 	// All invocations write at least one Z split
 	for(U32 i = gl_LocalInvocationIndex * splitsPerInvocation;
-		i < (gl_LocalInvocationIndex + 1u) * splitsPerInvocation && i < Z_SPLIT_COUNT; ++i)
+		i < (gl_LocalInvocationIndex + 1u) * splitsPerInvocation && i < kZSplitCount; ++i)
 	{
 		if(s_zSplitMasks[i] != ExtendedClusterObjectMask(0))
 		{
 			if(isPointLight())
 			{
-				atomicOr(u_clusters[TILE_COUNT + i].m_pointLightsMask, s_zSplitMasks[i]);
+				atomicOr(u_clusters[kTileCount + i].m_pointLightsMask, s_zSplitMasks[i]);
 			}
 			else if(isSpotLight())
 			{
-				atomicOr(u_clusters[TILE_COUNT + i].m_spotLightsMask, s_zSplitMasks[i]);
+				atomicOr(u_clusters[kTileCount + i].m_spotLightsMask, s_zSplitMasks[i]);
 			}
 			else if(isDecal())
 			{
-				atomicOr(u_clusters[TILE_COUNT + i].m_decalsMask, s_zSplitMasks[i]);
+				atomicOr(u_clusters[kTileCount + i].m_decalsMask, s_zSplitMasks[i]);
 			}
 			else if(isFogVolume())
 			{
-				atomicOr(u_clusters[TILE_COUNT + i].m_fogDensityVolumesMask, U32(s_zSplitMasks[i]));
+				atomicOr(u_clusters[kTileCount + i].m_fogDensityVolumesMask, U32(s_zSplitMasks[i]));
 			}
 			else if(isReflectionProbe())
 			{
-				atomicOr(u_clusters[TILE_COUNT + i].m_reflectionProbesMask, U32(s_zSplitMasks[i]));
+				atomicOr(u_clusters[kTileCount + i].m_reflectionProbesMask, U32(s_zSplitMasks[i]));
 			}
 			else
 			{
-				atomicOr(u_clusters[TILE_COUNT + i].m_giProbesMask, U32(s_zSplitMasks[i]));
+				atomicOr(u_clusters[kTileCount + i].m_giProbesMask, U32(s_zSplitMasks[i]));
 			}
 		}
 	}

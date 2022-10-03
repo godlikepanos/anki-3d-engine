@@ -89,14 +89,9 @@ public:
 
 	GrManagerStats getStats() const;
 
-	ANKI_INTERNAL GrAllocator<U8>& getAllocator()
+	ANKI_INTERNAL HeapMemoryPool& getMemoryPool() const
 	{
-		return m_alloc;
-	}
-
-	ANKI_INTERNAL GrAllocator<U8> getAllocator() const
-	{
-		return m_alloc;
+		return m_pool;
 	}
 
 	ANKI_INTERNAL CString getCacheDirectory() const
@@ -120,7 +115,10 @@ public:
 	}
 
 protected:
-	GrAllocator<U8> m_alloc; ///< Keep it first to get deleted last
+	/// Keep it first to get deleted last. It's mutable because its methods are thread-safe and we want to use it in
+	/// const methods.
+	mutable HeapMemoryPool m_pool;
+
 	ConfigSet* m_config = nullptr;
 	String m_cacheDir;
 	Atomic<U64> m_uuidIndex = {1};

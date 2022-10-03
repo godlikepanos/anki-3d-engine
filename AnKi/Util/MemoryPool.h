@@ -66,22 +66,6 @@ public:
 	/// @param[in, out] ptr Memory block to deallocate
 	void free(void* ptr);
 
-	void retain() const
-	{
-		m_refcount.fetchAdd(1);
-	}
-
-	I32 release() const
-	{
-		return m_refcount.fetchSub(1);
-	}
-
-	/// Get number of users.
-	U32 getUsersCount() const
-	{
-		return m_refcount.load();
-	}
-
 	/// Get allocation callback.
 	AllocAlignedCallback getAllocationCallback() const
 	{
@@ -134,9 +118,6 @@ protected:
 	void destroy();
 
 private:
-	/// Refcount.
-	mutable Atomic<I32> m_refcount = {0};
-
 	/// Optional name.
 	char* m_name = nullptr;
 
@@ -145,7 +126,7 @@ private:
 };
 
 /// A dummy interface to match the StackMemoryPool interfaces in order to be used by the same allocator template.
-class HeapMemoryPool final : public BaseMemoryPool
+class HeapMemoryPool : public BaseMemoryPool
 {
 public:
 	/// Construct it.
@@ -191,7 +172,7 @@ private:
 
 /// Thread safe memory pool. It's a preallocated memory pool that is used for memory allocations on top of that
 /// preallocated memory. It is mainly used by fast stack allocators
-class StackMemoryPool final : public BaseMemoryPool
+class StackMemoryPool : public BaseMemoryPool
 {
 public:
 	StackMemoryPool()
@@ -336,6 +317,65 @@ private:
 
 	/// The allocator helper.
 	StackAllocatorBuilder<Chunk, StackAllocatorBuilderInterface, Mutex> m_builder;
+};
+
+/// A wrapper class that makes a pointer to a memory pool act like a reference.
+template<typename TMemPool>
+class MemoryPoolPtrWrapper
+{
+public:
+	TMemPool* m_pool = nullptr;
+
+	MemoryPoolPtrWrapper() = default;
+
+	MemoryPoolPtrWrapper(TMemPool* pool)
+		: m_pool(pool)
+	{
+		ANKI_ASSERT(pool);
+	}
+
+	TMemPool* operator&()
+	{
+		ANKI_ASSERT(m_pool);
+		return m_pool;
+	}
+
+	operator TMemPool&()
+	{
+		ANKI_ASSERT(m_pool);
+		return *m_pool;
+	}
+
+	void* allocate(PtrSize size, PtrSize alignmentBytes)
+	{
+		ANKI_ASSERT(m_pool);
+		return m_pool->allocate(size, alignmentBytes);
+	}
+
+	void free(void* ptr)
+	{
+		ANKI_ASSERT(m_pool);
+		m_pool->free(ptr);
+	}
+};
+
+/// A wrapper class that adds a refcount to a memory pool.
+template<typename TMemPool>
+class RefCountedMemoryPool : public TMemPool
+{
+public:
+	void retain() const
+	{
+		m_refcount.fetchAdd(1);
+	}
+
+	I32 release() const
+	{
+		return m_refcount.fetchSub(1);
+	}
+
+private:
+	mutable Atomic<I32> m_refcount = {0};
 };
 
 inline void* BaseMemoryPool::allocate(PtrSize size, PtrSize alignmentBytes)

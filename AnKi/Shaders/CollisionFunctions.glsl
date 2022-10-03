@@ -14,7 +14,7 @@ Bool testRayTriangle(Vec3 rayOrigin, Vec3 rayDir, Vec3 v0, Vec3 v1, Vec3 v2, Boo
 	const Vec3 pvec = cross(rayDir, v0v2);
 	const F32 det = dot(v0v1, pvec);
 
-	if((backfaceCulling && det < EPSILON) || abs(det) < EPSILON)
+	if((backfaceCulling && det < kEpsilonf) || abs(det) < kEpsilonf)
 	{
 		return false;
 	}
@@ -37,7 +37,7 @@ Bool testRayTriangle(Vec3 rayOrigin, Vec3 rayDir, Vec3 v0, Vec3 v1, Vec3 v2, Boo
 
 	t = dot(v0v2, qvec) * invDet;
 
-	if(t <= EPSILON)
+	if(t <= kEpsilonf)
 	{
 		// This is an addition to the original code. Can't have rays that don't touch the triangle
 		return false;
@@ -77,7 +77,7 @@ Bool testRayAabb(Vec3 rayOrigin, Vec3 rayDir, Vec3 aabbMin, Vec3 aabbMax, out F3
 	t0 = max(tmin.x, max(tmin.y, tmin.z));
 	t1 = min(tmax.x, min(tmax.y, tmax.z));
 
-	return t0 < t1 && t1 > EPSILON;
+	return t0 < t1 && t1 > kEpsilonf;
 }
 
 Bool testRayObb(Vec3 rayOrigin, Vec3 rayDir, Vec3 obbExtend, Mat4 obbTransformInv, out F32 t0, out F32 t1)

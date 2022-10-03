@@ -119,8 +119,8 @@ private:
 	/// Add new work to render to scratch buffer and atlas buffer.
 	void newScratchAndAtlasResloveRenderWorkItems(
 		const UVec4& atlasViewport, const UVec4& scratchVewport, Bool blurAtlas, RenderQueue* lightRenderQueue,
-		U32 renderQueueElementsLod, DynamicArrayAuto<Scratch::LightToRenderToScratchInfo>& scratchWorkItem,
-		DynamicArrayAuto<Atlas::ResolveWorkItem>& atlasResolveWorkItem, U32& drawcallCount) const;
+		U32 renderQueueElementsLod, DynamicArrayRaii<Scratch::LightToRenderToScratchInfo>& scratchWorkItem,
+		DynamicArrayRaii<Atlas::ResolveWorkItem>& atlasResolveWorkItem, U32& drawcallCount) const;
 
 	/// Iterate lights and create work items.
 	void processLights(RenderingContext& ctx, U32& threadCountForScratchPass);

@@ -12,13 +12,13 @@ BufferImpl::~BufferImpl()
 {
 	ANKI_ASSERT(!m_mapped);
 
-	BufferGarbage* garbage = getAllocator().newInstance<BufferGarbage>();
+	BufferGarbage* garbage = anki::newInstance<BufferGarbage>(getMemoryPool());
 	garbage->m_bufferHandle = m_handle;
 	garbage->m_memoryHandle = m_memHandle;
 
 	if(m_views.getSize())
 	{
-		garbage->m_viewHandles.create(getAllocator(), U32(m_views.getSize()));
+		garbage->m_viewHandles.create(getMemoryPool(), U32(m_views.getSize()));
 
 		U32 count = 0;
 		for(auto it : m_views)
@@ -42,7 +42,7 @@ BufferImpl::~BufferImpl()
 	}
 #endif
 
-	m_views.destroy(getAllocator());
+	m_views.destroy(getMemoryPool());
 }
 
 Error BufferImpl::init(const BufferInitInfo& inf)
@@ -447,7 +447,7 @@ VkBufferView BufferImpl::getOrCreateBufferView(Format fmt, PtrSize offset, PtrSi
 	VkBufferView view;
 	ANKI_VK_CHECKF(vkCreateBufferView(getDevice(), &viewCreateInfo, nullptr, &view));
 
-	m_views.emplace(getAllocator(), hash, view);
+	m_views.emplace(getMemoryPool(), hash, view);
 
 	return view;
 }

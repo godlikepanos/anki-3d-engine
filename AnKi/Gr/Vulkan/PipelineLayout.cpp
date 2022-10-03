@@ -13,7 +13,7 @@ void PipelineLayoutFactory::destroy()
 	{
 		auto it = m_layouts.getBegin();
 		VkPipelineLayout handle = *it;
-		m_layouts.erase(m_alloc, it);
+		m_layouts.erase(*m_pool, it);
 
 		vkDestroyPipelineLayout(m_dev, handle, nullptr);
 	}
@@ -66,7 +66,7 @@ Error PipelineLayoutFactory::newPipelineLayout(const WeakArray<DescriptorSetLayo
 		VkPipelineLayout pplineLayHandle;
 		ANKI_VK_CHECK(vkCreatePipelineLayout(m_dev, &ci, nullptr, &pplineLayHandle));
 
-		m_layouts.emplace(m_alloc, hash, pplineLayHandle);
+		m_layouts.emplace(*m_pool, hash, pplineLayHandle);
 
 		layout.m_handle = pplineLayHandle;
 	}

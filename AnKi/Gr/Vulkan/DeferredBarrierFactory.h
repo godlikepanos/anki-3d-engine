@@ -48,7 +48,7 @@ public:
 		return m_refcount.load();
 	}
 
-	GrAllocator<U8> getAllocator() const;
+	HeapMemoryPool& getMemoryPool();
 
 	void setFence(MicroFencePtr& f)
 	{
@@ -98,10 +98,10 @@ public:
 
 	DeferredBarrierFactory& operator=(const DeferredBarrierFactory&) = delete; // Non-copyable
 
-	void init(GrAllocator<U8> alloc, VkDevice dev)
+	void init(HeapMemoryPool* pool, VkDevice dev)
 	{
-		ANKI_ASSERT(dev);
-		m_alloc = alloc;
+		ANKI_ASSERT(pool && dev);
+		m_pool = pool;
 		m_dev = dev;
 	}
 
@@ -113,7 +113,7 @@ public:
 	MicroDeferredBarrierPtr newInstance();
 
 private:
-	GrAllocator<U8> m_alloc;
+	HeapMemoryPool* m_pool = nullptr;
 	VkDevice m_dev = VK_NULL_HANDLE;
 	MicroObjectRecycler<MicroDeferredBarrier> m_recycler;
 

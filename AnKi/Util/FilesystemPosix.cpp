@@ -134,7 +134,7 @@ Error walkDirectoryTreeInternal(const CString& dir, const Function<Error(const C
 	return err;
 }
 
-static Error removeDirectoryInternal(const CString& dirname, GenericMemoryPoolAllocator<U8>& alloc)
+static Error removeDirectoryInternal(const CString& dirname, BaseMemoryPool& pool)
 {
 	DIR* dir;
 	struct dirent* entry;
@@ -150,12 +150,12 @@ static Error removeDirectoryInternal(const CString& dirname, GenericMemoryPoolAl
 	{
 		if(strcmp(entry->d_name, ".") && strcmp(entry->d_name, ".."))
 		{
-			StringAuto path(alloc);
+			StringRaii path(&pool);
 			path.sprintf("%s/%s", dirname.cstr(), entry->d_name);
 
 			if(entry->d_type == DT_DIR)
 			{
-				Error err = removeDirectoryInternal(path.toCString(), alloc);
+				Error err = removeDirectoryInternal(path.toCString(), pool);
 				if(err)
 				{
 					return err;
@@ -174,9 +174,9 @@ static Error removeDirectoryInternal(const CString& dirname, GenericMemoryPoolAl
 	return Error::kNone;
 }
 
-Error removeDirectory(const CString& dirname, GenericMemoryPoolAllocator<U8> alloc)
+Error removeDirectory(const CString& dirname, BaseMemoryPool& pool)
 {
-	return removeDirectoryInternal(dirname, alloc);
+	return removeDirectoryInternal(dirname, pool);
 }
 
 Error createDirectory(const CString& dir)
@@ -196,7 +196,7 @@ Error createDirectory(const CString& dir)
 	return err;
 }
 
-Error getHomeDirectory(StringAuto& out)
+Error getHomeDirectory(StringRaii& out)
 {
 #if ANKI_OS_LINUX
 	const char* home = getenv("HOME");
@@ -214,7 +214,7 @@ Error getHomeDirectory(StringAuto& out)
 	return Error::kNone;
 }
 
-Error getTempDirectory(StringAuto& out)
+Error getTempDirectory(StringRaii& out)
 {
 #if ANKI_OS_LINUX
 	out.create("/tmp/");
@@ -245,13 +245,13 @@ Error getFileModificationTime(CString filename, U32& year, U32& month, U32& day,
 	return Error::kNone;
 }
 
-Error getApplicationPath(StringAuto& out)
+Error getApplicationPath(StringRaii& out)
 {
 #if ANKI_OS_ANDROID
 	ANKI_ASSERT(0 && "getApplicationPath() doesn't work on Android");
 	(void)out;
 #else
-	DynamicArrayAuto<Char> buff(out.getAllocator(), 1024);
+	DynamicArrayRaii<Char> buff(&out.getMemoryPool(), 1024);
 
 	const ssize_t result = readlink("/proc/self/exe", &buff[0], buff.getSize());
 	if(result < 0)

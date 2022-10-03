@@ -46,10 +46,10 @@ void MicroCommandBuffer::reset()
 
 	for(GrObjectType type : EnumIterable<GrObjectType>())
 	{
-		m_objectRefs[type].destroy(m_fastAlloc);
+		m_objectRefs[type].destroy(m_fastPool);
 	}
 
-	m_fastAlloc.getMemoryPool().reset();
+	m_fastPool.reset();
 }
 
 Error CommandBufferThreadAllocator::init()
@@ -77,7 +77,7 @@ Error CommandBufferThreadAllocator::init()
 			{
 				MicroObjectRecycler<MicroCommandBuffer>& recycler = m_recyclers[secondLevel][smallBatch][queue];
 
-				recycler.init(m_factory->m_alloc);
+				recycler.init(m_factory->m_pool);
 			}
 		}
 	}
@@ -134,11 +134,10 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 		VkCommandBuffer cmdb;
 		ANKI_VK_CHECK(vkAllocateCommandBuffers(m_factory->m_dev, &ci, &cmdb));
 
-		MicroCommandBuffer* newCmdb = getAllocator().newInstance<MicroCommandBuffer>(this);
+		MicroCommandBuffer* newCmdb = newInstance<MicroCommandBuffer>(getMemoryPool(), this);
 
-		newCmdb->m_fastAlloc =
-			StackAllocator<U8>(m_factory->m_alloc.getMemoryPool().getAllocationCallback(),
-							   m_factory->m_alloc.getMemoryPool().getAllocationCallbackUserData(), 256_KB, 2.0f);
+		newCmdb->m_fastPool.init(m_factory->m_pool->getAllocationCallback(),
+								 m_factory->m_pool->getAllocationCallbackUserData(), 256_KB, 2.0f);
 
 		newCmdb->m_handle = cmdb;
 		newCmdb->m_flags = cmdbFlags;
@@ -172,11 +171,11 @@ void CommandBufferThreadAllocator::deleteCommandBuffer(MicroCommandBuffer* ptr)
 	m_recyclers[secondLevel][smallBatch][ptr->m_queue].recycle(ptr);
 }
 
-Error CommandBufferFactory::init(GrAllocator<U8> alloc, VkDevice dev, const VulkanQueueFamilies& queueFamilies)
+Error CommandBufferFactory::init(HeapMemoryPool* pool, VkDevice dev, const VulkanQueueFamilies& queueFamilies)
 {
-	ANKI_ASSERT(dev);
+	ANKI_ASSERT(pool && dev);
 
-	m_alloc = alloc;
+	m_pool = pool;
 	m_dev = dev;
 	m_queueFamilies = queueFamilies;
 	return Error::kNone;
@@ -203,10 +202,10 @@ void CommandBufferFactory::destroy()
 	for(CommandBufferThreadAllocator* talloc : m_threadAllocs)
 	{
 		talloc->destroy();
-		m_alloc.deleteInstance(talloc);
+		deleteInstance(*m_pool, talloc);
 	}
 
-	m_threadAllocs.destroy(m_alloc);
+	m_threadAllocs.destroy(*m_pool);
 }
 
 Error CommandBufferFactory::newCommandBuffer(ThreadId tid, CommandBufferFlag cmdbFlags, MicroCommandBufferPtr& ptr)
@@ -246,9 +245,9 @@ Error CommandBufferFactory::newCommandBuffer(ThreadId tid, CommandBufferFlag cmd
 
 			if(alloc == nullptr)
 			{
-				alloc = m_alloc.newInstance<CommandBufferThreadAllocator>(this, tid);
+				alloc = newInstance<CommandBufferThreadAllocator>(*m_pool, this, tid);
 
-				m_threadAllocs.resize(m_alloc, m_threadAllocs.getSize() + 1);
+				m_threadAllocs.resize(*m_pool, m_threadAllocs.getSize() + 1);
 				m_threadAllocs[m_threadAllocs.getSize() - 1] = alloc;
 
 				// Sort for fast find

@@ -21,15 +21,15 @@ class PipelineCache
 public:
 	VkPipelineCache m_cacheHandle = VK_NULL_HANDLE;
 
-	Error init(VkDevice dev, VkPhysicalDevice pdev, CString cacheDir, const ConfigSet& cfg, GrAllocator<U8> alloc);
+	Error init(VkDevice dev, VkPhysicalDevice pdev, CString cacheDir, const ConfigSet& cfg, HeapMemoryPool& pool);
 
-	void destroy(VkDevice dev, VkPhysicalDevice pdev, GrAllocator<U8> alloc);
+	void destroy(VkDevice dev, VkPhysicalDevice pdev, HeapMemoryPool& pool);
 
 private:
 	String m_dumpFilename;
 	PtrSize m_dumpSize = 0;
 
-	Error destroyInternal(VkDevice dev, VkPhysicalDevice pdev, GrAllocator<U8> alloc);
+	Error destroyInternal(VkDevice dev, VkPhysicalDevice pdev, HeapMemoryPool& pool);
 };
 /// @}
 

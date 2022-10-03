@@ -13,7 +13,7 @@ namespace anki {
 #define ANKI_TAB "    "
 
 static void disassembleBlockInstance(const ShaderProgramBinaryBlockInstance& instance,
-									 const ShaderProgramBinaryBlock& block, StringListAuto& lines)
+									 const ShaderProgramBinaryBlock& block, StringListRaii& lines)
 {
 	lines.pushBackSprintf(ANKI_TAB ANKI_TAB ANKI_TAB "%-32s set %4u binding %4u size %4u\n", block.m_name.getBegin(),
 						  block.m_set, block.m_binding, instance.m_size);
@@ -30,7 +30,7 @@ static void disassembleBlockInstance(const ShaderProgramBinaryBlockInstance& ins
 	}
 }
 
-static void disassembleBlock(const ShaderProgramBinaryBlock& block, StringListAuto& lines)
+static void disassembleBlock(const ShaderProgramBinaryBlock& block, StringListRaii& lines)
 {
 	lines.pushBackSprintf(ANKI_TAB "%-32s set %4u binding %4u\n", block.m_name.getBegin(), block.m_set,
 						  block.m_binding);
@@ -42,10 +42,10 @@ static void disassembleBlock(const ShaderProgramBinaryBlock& block, StringListAu
 	}
 }
 
-void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& humanReadable)
+void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringRaii& humanReadable)
 {
-	GenericMemoryPoolAllocator<U8> alloc = humanReadable.getAllocator();
-	StringListAuto lines(alloc);
+	BaseMemoryPool& pool = humanReadable.getMemoryPool();
+	StringListRaii lines(&pool);
 
 	if(binary.m_libraryName[0])
 	{
@@ -182,9 +182,9 @@ void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& huma
 		compiler.set_common_options(options);
 
 		std::string glsl = compiler.compile();
-		StringListAuto sourceLines(alloc);
+		StringListRaii sourceLines(&pool);
 		sourceLines.splitString(glsl.c_str(), '\n');
-		StringAuto newGlsl(alloc);
+		StringRaii newGlsl(&pool);
 		sourceLines.join("\n" ANKI_TAB ANKI_TAB, newGlsl);
 
 		lines.pushBackSprintf(ANKI_TAB "#bin%05u \n" ANKI_TAB ANKI_TAB "%s\n", count++, newGlsl.cstr());

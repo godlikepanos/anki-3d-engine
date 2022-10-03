@@ -11,14 +11,14 @@
 namespace anki {
 
 Error PipelineCache::init(VkDevice dev, VkPhysicalDevice pdev, CString cacheDir, const ConfigSet& cfg,
-						  GrAllocator<U8> alloc)
+						  HeapMemoryPool& pool)
 {
 	ANKI_ASSERT(cacheDir && dev && pdev);
 	m_dumpSize = cfg.getGrDiskShaderCacheMaxSize();
-	m_dumpFilename.sprintf(alloc, "%s/VkPipelineCache", &cacheDir[0]);
+	m_dumpFilename.sprintf(pool, "%s/VkPipelineCache", &cacheDir[0]);
 
 	// Try read the pipeline cache file.
-	DynamicArrayAuto<U8, PtrSize> diskDump(alloc);
+	DynamicArrayRaii<U8, PtrSize> diskDump(&pool);
 	if(fileExists(m_dumpFilename.toCString()))
 	{
 		File file;
@@ -69,18 +69,18 @@ Error PipelineCache::init(VkDevice dev, VkPhysicalDevice pdev, CString cacheDir,
 	return Error::kNone;
 }
 
-void PipelineCache::destroy(VkDevice dev, VkPhysicalDevice pdev, GrAllocator<U8> alloc)
+void PipelineCache::destroy(VkDevice dev, VkPhysicalDevice pdev, HeapMemoryPool& pool)
 {
-	const Error err = destroyInternal(dev, pdev, alloc);
+	const Error err = destroyInternal(dev, pdev, pool);
 	if(err)
 	{
 		ANKI_VK_LOGE("An error occurred while storing the pipeline cache to disk. Will ignore");
 	}
 
-	m_dumpFilename.destroy(alloc);
+	m_dumpFilename.destroy(pool);
 }
 
-Error PipelineCache::destroyInternal(VkDevice dev, VkPhysicalDevice pdev, GrAllocator<U8> alloc)
+Error PipelineCache::destroyInternal(VkDevice dev, VkPhysicalDevice pdev, HeapMemoryPool& pool)
 {
 	if(m_cacheHandle)
 	{
@@ -94,7 +94,7 @@ Error PipelineCache::destroyInternal(VkDevice dev, VkPhysicalDevice pdev, GrAllo
 		if(size > 0)
 		{
 			// Read cache
-			DynamicArrayAuto<U8, PtrSize> cacheData(alloc);
+			DynamicArrayRaii<U8, PtrSize> cacheData(&pool);
 			cacheData.create(size);
 			ANKI_VK_CHECK(vkGetPipelineCacheData(dev, m_cacheHandle, &size, &cacheData[0]));
 

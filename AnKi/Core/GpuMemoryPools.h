@@ -30,7 +30,7 @@ public:
 
 	VertexGpuMemoryPool& operator=(const VertexGpuMemoryPool&) = delete; // Non-copyable
 
-	Error init(GenericMemoryPoolAllocator<U8> alloc, GrManager* gr, const ConfigSet& cfg);
+	Error init(HeapMemoryPool* pool, GrManager* gr, const ConfigSet& cfg);
 
 	Error allocate(PtrSize size, PtrSize& offset);
 
@@ -54,11 +54,13 @@ private:
 
 enum class StagingGpuMemoryType : U8
 {
-	UNIFORM,
-	STORAGE,
-	VERTEX,
-	TEXTURE,
-	COUNT
+	kUniform,
+	kStorage,
+	kVertex,
+	kTexture,
+
+	kCount,
+	kFirst = 0,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(StagingGpuMemoryType)
 
@@ -69,7 +71,7 @@ public:
 	BufferPtr m_buffer;
 	PtrSize m_offset = 0;
 	PtrSize m_range = 0;
-	StagingGpuMemoryType m_type = StagingGpuMemoryType::COUNT;
+	StagingGpuMemoryType m_type = StagingGpuMemoryType::kCount;
 
 	StagingGpuMemoryToken() = default;
 
@@ -126,7 +128,7 @@ private:
 	};
 
 	GrManager* m_gr = nullptr;
-	Array<PerFrameBuffer, U(StagingGpuMemoryType::COUNT)> m_perFrameBuffers;
+	Array<PerFrameBuffer, U(StagingGpuMemoryType::kCount)> m_perFrameBuffers;
 
 	void initBuffer(StagingGpuMemoryType type, U32 alignment, PtrSize maxAllocSize, BufferUsageBit usage,
 					GrManager& gr);

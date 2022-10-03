@@ -39,7 +39,7 @@ jobs:
       run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=ON -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCMAKE_BUILD_TYPE=Release -DANKI_EXTRA_CHECKS=OFF
 
     - name: Build
-      run: cmake --build ${{github.workspace}}/build --config Release
+      run: cmake --build ${{github.workspace}}/build --config Release --parallel
 
 
   Debug_Clang:
@@ -57,7 +57,7 @@ jobs:
       run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=ON -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Debug -DANKI_EXTRA_CHECKS=ON
 
     - name: Build
-      run: cmake --build ${{github.workspace}}/build --config Debug
+      run: cmake --build ${{github.workspace}}/build --config Debug --parallel
 
   Release_Clang:
     name: "Clang Release"
@@ -74,7 +74,7 @@ jobs:
       run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=ON -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Release -DANKI_EXTRA_CHECKS=OFF
 
     - name: Build
-      run: cmake --build ${{github.workspace}}/build --config Release
+      run: cmake --build ${{github.workspace}}/build --config Release --parallel
 
   Headless:
     name: "Headless"
@@ -91,7 +91,7 @@ jobs:
       run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=OFF -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Release -DANKI_EXTRA_CHECKS=ON -DANKI_HEADLESS=ON
 
     - name: Build
-      run: cmake --build ${{github.workspace}}/build --config Release
+      run: cmake --build ${{github.workspace}}/build --config Release --parallel
 
   DLSS:
     name: "DLSS"
@@ -108,4 +108,4 @@ jobs:
       run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=OFF -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Release -DANKI_EXTRA_CHECKS=ON -DANKI_DLSS=ON
 
     - name: Build
-      run: cmake --build ${{github.workspace}}/build --config Release --target Sponza
+      run: cmake --build ${{github.workspace}}/build --config Release --target Sponza --parallel

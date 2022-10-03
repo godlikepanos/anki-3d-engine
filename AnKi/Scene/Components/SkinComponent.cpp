@@ -23,22 +23,22 @@ SkinComponent::SkinComponent(SceneNode* node)
 
 SkinComponent::~SkinComponent()
 {
-	m_boneTrfs[0].destroy(m_node->getAllocator());
-	m_boneTrfs[1].destroy(m_node->getAllocator());
-	m_animationTrfs.destroy(m_node->getAllocator());
+	m_boneTrfs[0].destroy(m_node->getMemoryPool());
+	m_boneTrfs[1].destroy(m_node->getMemoryPool());
+	m_animationTrfs.destroy(m_node->getMemoryPool());
 }
 
 Error SkinComponent::loadSkeletonResource(CString fname)
 {
 	ANKI_CHECK(m_node->getSceneGraph().getResourceManager().loadResource(fname, m_skeleton));
 
-	m_boneTrfs[0].destroy(m_node->getAllocator());
-	m_boneTrfs[1].destroy(m_node->getAllocator());
-	m_animationTrfs.destroy(m_node->getAllocator());
+	m_boneTrfs[0].destroy(m_node->getMemoryPool());
+	m_boneTrfs[1].destroy(m_node->getMemoryPool());
+	m_animationTrfs.destroy(m_node->getMemoryPool());
 
-	m_boneTrfs[0].create(m_node->getAllocator(), m_skeleton->getBones().getSize(), Mat4::getIdentity());
-	m_boneTrfs[1].create(m_node->getAllocator(), m_skeleton->getBones().getSize(), Mat4::getIdentity());
-	m_animationTrfs.create(m_node->getAllocator(), m_skeleton->getBones().getSize(),
+	m_boneTrfs[0].create(m_node->getMemoryPool(), m_skeleton->getBones().getSize(), Mat4::getIdentity());
+	m_boneTrfs[1].create(m_node->getMemoryPool(), m_skeleton->getBones().getSize(), Mat4::getIdentity());
+	m_animationTrfs.create(m_node->getMemoryPool(), m_skeleton->getBones().getSize(),
 						   {Vec3(0.0f), Quat::getIdentity(), 1.0f});
 
 	return Error::kNone;

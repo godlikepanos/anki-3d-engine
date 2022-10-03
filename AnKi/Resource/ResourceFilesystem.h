@@ -23,9 +23,10 @@ class ConfigSet;
 class ResourceFile
 {
 public:
-	ResourceFile(GenericMemoryPoolAllocator<U8> alloc)
-		: m_alloc(alloc)
+	ResourceFile(HeapMemoryPool* pool)
+		: m_pool(pool)
 	{
+		ANKI_ASSERT(pool);
 	}
 
 	ResourceFile(const ResourceFile&) = delete; // Non-copyable
@@ -40,7 +41,7 @@ public:
 	virtual Error read(void* buff, PtrSize size) = 0;
 
 	/// Read all the contents of a text file. If the file is not rewined it will probably fail
-	virtual Error readAllText(StringAuto& out) = 0;
+	virtual Error readAllText(StringRaii& out) = 0;
 
 	/// Read 32bit unsigned integer. Set the endianness if the file's endianness is different from the machine's
 	virtual Error readU32(U32& u) = 0;
@@ -66,13 +67,13 @@ public:
 		return m_refcount.fetchSub(1);
 	}
 
-	GenericMemoryPoolAllocator<U8> getAllocator() const
+	HeapMemoryPool& getMemoryPool() const
 	{
-		return m_alloc;
+		return *m_pool;
 	}
 
 private:
-	GenericMemoryPoolAllocator<U8> m_alloc;
+	mutable HeapMemoryPool* m_pool = nullptr;
 	mutable Atomic<I32> m_refcount = {0};
 };
 
@@ -83,10 +84,7 @@ using ResourceFilePtr = IntrusivePtr<ResourceFile>;
 class ResourceFilesystem
 {
 public:
-	ResourceFilesystem(GenericMemoryPoolAllocator<U8> alloc)
-		: m_alloc(alloc)
-	{
-	}
+	ResourceFilesystem() = default;
 
 	ResourceFilesystem(const ResourceFilesystem&) = delete; // Non-copyable
 
@@ -94,7 +92,7 @@ public:
 
 	ResourceFilesystem& operator=(const ResourceFilesystem&) = delete; // Non-copyable
 
-	Error init(const ConfigSet& config);
+	Error init(const ConfigSet& config, AllocAlignedCallback allocCallback, void* allocCallbackUserData);
 
 	/// Search the path list to find the file. Then open the file for reading. It's thread-safe.
 	Error openFile(const ResourceFilename& filename, ResourceFilePtr& file);
@@ -143,12 +141,12 @@ private:
 		}
 	};
 
-	GenericMemoryPoolAllocator<U8> m_alloc;
+	HeapMemoryPool m_pool;
 	List<Path> m_paths;
 	String m_cacheDir;
 
 	/// Add a filesystem path or an archive. The path is read-only.
-	Error addNewPath(const CString& path, const StringListAuto& excludedStrings);
+	Error addNewPath(const CString& path, const StringListRaii& excludedStrings);
 
 	Error openFileInternal(const ResourceFilename& filename, ResourceFile*& rfile);
 };

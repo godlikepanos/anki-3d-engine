@@ -42,7 +42,7 @@ public:
 	CommandBufferPtr m_commandBuffer;
 	SamplerPtr m_sampler; ///< A trilinear sampler with anisotropy.
 	StagingGpuMemoryPool* m_stagingGpuAllocator ANKI_DEBUG_CODE(= nullptr);
-	StackAllocator<U8> m_frameAllocator;
+	StackMemoryPool* m_framePool = nullptr;
 	Bool m_debugDraw; ///< If true the drawcall should be drawing some kind of debug mesh.
 	BitSet<U(RenderQueueDebugDrawFlag::kCount), U32> m_debugDrawFlags = {false};
 };
@@ -163,8 +163,8 @@ static_assert(std::is_trivially_destructible<SpotLightQueueElement>::value == tr
 class DirectionalLightQueueElement final
 {
 public:
-	Array<Mat4, MAX_SHADOW_CASCADES> m_textureMatrices;
-	Array<RenderQueue*, MAX_SHADOW_CASCADES> m_shadowRenderQueues;
+	Array<Mat4, kMaxShadowCascades> m_textureMatrices;
+	Array<RenderQueue*, kMaxShadowCascades> m_shadowRenderQueues;
 	RenderQueueDrawCallback m_drawCallback;
 	const void* m_drawCallbackUserData;
 	U64 m_uuid; ///< Zero means that there is no dir light

@@ -19,9 +19,9 @@ public:
 	MeshResourcePtr m_mesh;
 	MeshBinaryLoader m_loader;
 
-	LoadContext(const MeshResourcePtr& mesh, GenericMemoryPoolAllocator<U8> alloc)
+	LoadContext(const MeshResourcePtr& mesh, BaseMemoryPool* pool)
 		: m_mesh(mesh)
-		, m_loader(&mesh->getManager(), alloc)
+		, m_loader(&mesh->getManager(), pool)
 	{
 	}
 };
@@ -33,7 +33,7 @@ public:
 	MeshResource::LoadContext m_ctx;
 
 	LoadTask(const MeshResourcePtr& mesh)
-		: m_ctx(mesh, mesh->getManager().getAsyncLoader().getAllocator())
+		: m_ctx(mesh, &mesh->getManager().getAsyncLoader().getMemoryPool())
 	{
 	}
 
@@ -42,9 +42,9 @@ public:
 		return m_ctx.m_mesh->loadAsync(m_ctx.m_loader);
 	}
 
-	GenericMemoryPoolAllocator<U8> getAllocator() const
+	BaseMemoryPool& getMemoryPool() const
 	{
-		return m_ctx.m_mesh->getManager().getAsyncLoader().getAllocator();
+		return m_ctx.m_mesh->getManager().getAsyncLoader().getMemoryPool();
 	}
 };
 
@@ -56,8 +56,8 @@ MeshResource::MeshResource(ResourceManager* manager)
 
 MeshResource::~MeshResource()
 {
-	m_subMeshes.destroy(getAllocator());
-	m_vertexBufferInfos.destroy(getAllocator());
+	m_subMeshes.destroy(getMemoryPool());
+	m_vertexBufferInfos.destroy(getMemoryPool());
 
 	if(m_vertexBuffersOffset != kMaxPtrSize)
 	{
@@ -80,9 +80,9 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 {
 	UniquePtr<LoadTask> task;
 	LoadContext* ctx;
-	LoadContext localCtx(MeshResourcePtr(this), getTempAllocator());
+	LoadContext localCtx(MeshResourcePtr(this), &getTempMemoryPool());
 
-	StringAuto basename(getTempAllocator());
+	StringRaii basename(&getTempMemoryPool());
 	getFilepathFilename(filename, basename);
 
 	const Bool rayTracingEnabled = getManager().getGrManager().getDeviceCapabilities().m_rayTracingEnabled;
@@ -106,7 +106,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	//
 	// Submeshes
 	//
-	m_subMeshes.create(getAllocator(), header.m_subMeshCount);
+	m_subMeshes.create(getMemoryPool(), header.m_subMeshCount);
 	for(U32 i = 0; i < m_subMeshes.getSize(); ++i)
 	{
 		m_subMeshes[i].m_firstIndex = loader.getSubMeshes()[i].m_firstIndex;
@@ -129,12 +129,12 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	// Vertex stuff
 	//
 	m_vertexCount = header.m_totalVertexCount;
-	m_vertexBufferInfos.create(getAllocator(), header.m_vertexBufferCount);
+	m_vertexBufferInfos.create(getMemoryPool(), header.m_vertexBufferCount);
 
 	m_vertexBuffersSize = 0;
 	for(U32 i = 0; i < header.m_vertexBufferCount; ++i)
 	{
-		alignRoundUp(MESH_BINARY_BUFFER_ALIGNMENT, m_vertexBuffersSize);
+		alignRoundUp(kMeshBinaryBufferAlignment, m_vertexBuffersSize);
 
 		m_vertexBufferInfos[i].m_offset = m_vertexBuffersSize;
 		m_vertexBufferInfos[i].m_stride = header.m_vertexBuffers[i].m_vertexStride;
@@ -194,7 +194,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	//
 	if(rayTracingEnabled)
 	{
-		AccelerationStructureInitInfo inf(StringAuto(getTempAllocator()).sprintf("%s_%s", "Blas", basename.cstr()));
+		AccelerationStructureInitInfo inf(StringRaii(&getTempMemoryPool()).sprintf("%s_%s", "Blas", basename.cstr()));
 		inf.m_type = AccelerationStructureType::kBottomLevel;
 
 		inf.m_bottomLevel.m_indexBuffer = m_vertexBuffer;
@@ -205,7 +205,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		U32 bufferIdx;
 		Format format;
 		U32 relativeOffset;
-		getVertexAttributeInfo(VertexAttributeId::POSITION, bufferIdx, format, relativeOffset);
+		getVertexAttributeInfo(VertexAttributeId::kPosition, bufferIdx, format, relativeOffset);
 
 		BufferPtr buffer;
 		PtrSize offset;
@@ -229,23 +229,23 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		U32 bufferIdx;
 		Format format;
 		U32 relativeOffset;
-		getVertexAttributeInfo(VertexAttributeId::POSITION, bufferIdx, format, relativeOffset);
+		getVertexAttributeInfo(VertexAttributeId::kPosition, bufferIdx, format, relativeOffset);
 		BufferPtr buffer;
 		PtrSize offset;
 		PtrSize stride;
 		getVertexBufferInfo(bufferIdx, buffer, offset, stride);
-		m_meshGpuDescriptor.m_vertexBufferPtrs[VertexAttributeBufferId::POSITION] = buffer->getGpuAddress() + offset;
+		m_meshGpuDescriptor.m_vertexBufferPtrs[VertexAttributeBufferId::kPosition] = buffer->getGpuAddress() + offset;
 
-		getVertexAttributeInfo(VertexAttributeId::NORMAL, bufferIdx, format, relativeOffset);
+		getVertexAttributeInfo(VertexAttributeId::kNormal, bufferIdx, format, relativeOffset);
 		getVertexBufferInfo(bufferIdx, buffer, offset, stride);
-		m_meshGpuDescriptor.m_vertexBufferPtrs[VertexAttributeBufferId::NORMAL_TANGENT_UV0] =
+		m_meshGpuDescriptor.m_vertexBufferPtrs[VertexAttributeBufferId::kNormalTangentUv0] =
 			buffer->getGpuAddress() + offset;
 
 		if(hasBoneWeights())
 		{
-			getVertexAttributeInfo(VertexAttributeId::BONE_WEIGHTS, bufferIdx, format, relativeOffset);
+			getVertexAttributeInfo(VertexAttributeId::kBoneWeights, bufferIdx, format, relativeOffset);
 			getVertexBufferInfo(bufferIdx, buffer, offset, stride);
-			m_meshGpuDescriptor.m_vertexBufferPtrs[VertexAttributeBufferId::BONE] = buffer->getGpuAddress() + offset;
+			m_meshGpuDescriptor.m_vertexBufferPtrs[VertexAttributeBufferId::kBone] = buffer->getGpuAddress() + offset;
 		}
 
 		m_meshGpuDescriptor.m_indexCount = m_indexCount;
@@ -308,7 +308,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 		PtrSize offset = 0;
 		for(U32 i = 0; i < m_vertexBufferInfos.getSize(); ++i)
 		{
-			alignRoundUp(MESH_BINARY_BUFFER_ALIGNMENT, offset);
+			alignRoundUp(kMeshBinaryBufferAlignment, offset);
 			ANKI_CHECK(
 				loader.storeVertexBuffer(i, data + offset, PtrSize(m_vertexBufferInfos[i].m_stride) * m_vertexCount));
 

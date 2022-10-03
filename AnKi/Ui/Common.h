@@ -9,7 +9,6 @@
 #include <AnKi/Ui/ImGuiConfig.h>
 #include <ImGui/imgui.h>
 
-#include <AnKi/Util/Allocator.h>
 #include <AnKi/Util/Ptr.h>
 #include <AnKi/Gr/TextureView.h>
 
@@ -25,8 +24,6 @@ class UiManager;
 #define ANKI_UI_LOGE(...) ANKI_LOG("UI", kError, __VA_ARGS__)
 #define ANKI_UI_LOGW(...) ANKI_LOG("UI", kWarning, __VA_ARGS__)
 #define ANKI_UI_LOGF(...) ANKI_LOG("UI", kFatal, __VA_ARGS__)
-
-using UiAllocator = HeapAllocator<U8>;
 
 #define ANKI_UI_OBJECT_FW(name_) \
 	class name_; \

@@ -36,9 +36,10 @@ public:
 class ImageLoader
 {
 public:
-	ImageLoader(GenericMemoryPoolAllocator<U8> alloc)
-		: m_alloc(alloc)
+	ImageLoader(BaseMemoryPool* pool)
+		: m_pool(pool)
 	{
+		ANKI_ASSERT(pool);
 	}
 
 	~ImageLoader()
@@ -114,7 +115,7 @@ private:
 	class RsrcFile;
 	class SystemFile;
 
-	GenericMemoryPoolAllocator<U8> m_alloc;
+	BaseMemoryPool* m_pool = nullptr;
 
 	/// [mip][depth or face or layer]. Loader doesn't support cube arrays ATM so face and layer won't be used at the
 	/// same time.
@@ -135,22 +136,22 @@ private:
 	void destroy();
 
 	static Error loadUncompressedTga(FileInterface& fs, U32& width, U32& height, U32& bpp,
-									 DynamicArray<U8, PtrSize>& data, GenericMemoryPoolAllocator<U8>& alloc);
+									 DynamicArray<U8, PtrSize>& data, BaseMemoryPool& pool);
 
 	static Error loadCompressedTga(FileInterface& fs, U32& width, U32& height, U32& bpp,
-								   DynamicArray<U8, PtrSize>& data, GenericMemoryPoolAllocator<U8>& alloc);
+								   DynamicArray<U8, PtrSize>& data, BaseMemoryPool& pool);
 
 	static Error loadTga(FileInterface& fs, U32& width, U32& height, U32& bpp, DynamicArray<U8, PtrSize>& data,
-						 GenericMemoryPoolAllocator<U8>& alloc);
+						 BaseMemoryPool& pool);
 
 	static Error loadStb(Bool isFloat, FileInterface& fs, U32& width, U32& height, DynamicArray<U8, PtrSize>& data,
-						 GenericMemoryPoolAllocator<U8>& alloc);
+						 BaseMemoryPool& pool);
 
 	static Error loadAnkiImage(FileInterface& file, U32 maxImageSize, ImageBinaryDataCompression& preferredCompression,
 							   DynamicArray<ImageLoaderSurface>& surfaces, DynamicArray<ImageLoaderVolume>& volumes,
-							   GenericMemoryPoolAllocator<U8>& alloc, U32& width, U32& height, U32& depth,
-							   U32& layerCount, U32& mipCount, ImageBinaryType& imageType,
-							   ImageBinaryColorFormat& colorFormat, UVec2& astcBlockSize);
+							   BaseMemoryPool& pool, U32& width, U32& height, U32& depth, U32& layerCount,
+							   U32& mipCount, ImageBinaryType& imageType, ImageBinaryColorFormat& colorFormat,
+							   UVec2& astcBlockSize);
 
 	Error loadInternal(FileInterface& file, const CString& filename, U32 maxImageSize);
 };

@@ -33,13 +33,13 @@ void SkyboxComponent::setImage(CString filename)
 	}
 	else
 	{
-		m_type = SkyboxType::IMAGE_2D;
+		m_type = SkyboxType::kImage2D;
 	}
 }
 
 void SkyboxComponent::setupSkyboxQueueElement(SkyboxQueueElement& queueElement) const
 {
-	if(m_type == SkyboxType::IMAGE_2D)
+	if(m_type == SkyboxType::kImage2D)
 	{
 		queueElement.m_skyboxTexture = m_image->getTextureView().get();
 	}

@@ -7,7 +7,7 @@
 #include <AnKi/Util.h>
 using namespace anki;
 
-static const char* USAGE = R"(Compile an AnKi shader program
+static constexpr const char* kUsage = R"(Compile an AnKi shader program
 Usage: %s [options] input_shader_program_file
 Options:
 -o <name of output>  : The name of the output binary
@@ -20,10 +20,10 @@ Options:
 class CmdLineArgs
 {
 public:
-	HeapAllocator<U8> m_alloc = {allocAligned, nullptr};
-	StringAuto m_inputFname = {m_alloc};
-	StringAuto m_outFname = {m_alloc};
-	StringAuto m_includePath = {m_alloc};
+	HeapMemoryPool m_pool = {allocAligned, nullptr};
+	StringRaii m_inputFname = {&m_pool};
+	StringRaii m_outFname = {&m_pool};
+	StringRaii m_includePath = {&m_pool};
 	U32 m_threadCount = getCpuCoresCount();
 	Bool m_fullFpPrecision = false;
 	Bool m_mobilePlatform = false;
@@ -113,7 +113,7 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 
 static Error work(const CmdLineArgs& info)
 {
-	HeapAllocator<U8> alloc{allocAligned, nullptr};
+	HeapMemoryPool pool(allocAligned, nullptr, "ProgramPool");
 
 	// Load interface
 	class FSystem : public ShaderProgramFilesystemInterface
@@ -122,9 +122,9 @@ static Error work(const CmdLineArgs& info)
 		CString m_includePath;
 		U32 m_fileReadCount = 0;
 
-		Error readAllTextInternal(CString filename, StringAuto& txt)
+		Error readAllTextInternal(CString filename, StringRaii& txt)
 		{
-			StringAuto fname(txt.getAllocator());
+			StringRaii fname(&txt.getMemoryPool());
 
 			// The first file is the input file. Don't append the include path to it
 			if(m_fileReadCount == 0)
@@ -143,7 +143,7 @@ static Error work(const CmdLineArgs& info)
 			return Error::kNone;
 		}
 
-		Error readAllText(CString filename, StringAuto& txt) final
+		Error readAllText(CString filename, StringRaii& txt) final
 		{
 			const Error err = readAllTextInternal(filename, txt);
 			if(err)
@@ -161,7 +161,7 @@ static Error work(const CmdLineArgs& info)
 	{
 	public:
 		ThreadHive* m_hive = nullptr;
-		HeapAllocator<U8> m_alloc;
+		HeapMemoryPool* m_pool = nullptr;
 
 		void enqueueTask(void (*callback)(void* userData), void* userData)
 		{
@@ -169,20 +169,19 @@ static Error work(const CmdLineArgs& info)
 			{
 				void (*m_callback)(void* userData);
 				void* m_userData;
-				HeapAllocator<U8> m_alloc;
+				HeapMemoryPool* m_pool = nullptr;
 			};
-			Ctx* ctx = m_alloc.newInstance<Ctx>();
+			Ctx* ctx = newInstance<Ctx>(*m_pool);
 			ctx->m_callback = callback;
 			ctx->m_userData = userData;
-			ctx->m_alloc = m_alloc;
+			ctx->m_pool = m_pool;
 
 			m_hive->submitTask(
 				[](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
 				   [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
 					Ctx* ctx = static_cast<Ctx*>(userData);
 					ctx->m_callback(ctx->m_userData);
-					auto alloc = ctx->m_alloc;
-					alloc.deleteInstance(ctx);
+					deleteInstance(*ctx->m_pool, ctx);
 				},
 				ctx);
 		}
@@ -194,8 +193,8 @@ static Error work(const CmdLineArgs& info)
 		}
 	} taskManager;
 	taskManager.m_hive =
-		(info.m_threadCount) ? alloc.newInstance<ThreadHive>(info.m_threadCount, alloc, true) : nullptr;
-	taskManager.m_alloc = alloc;
+		(info.m_threadCount) ? newInstance<ThreadHive>(pool, info.m_threadCount, &pool, true) : nullptr;
+	taskManager.m_pool = &pool;
 
 	// Compiler options
 	ShaderCompilerOptions compilerOptions;
@@ -203,15 +202,15 @@ static Error work(const CmdLineArgs& info)
 	compilerOptions.m_mobilePlatform = info.m_mobilePlatform;
 
 	// Compile
-	ShaderProgramBinaryWrapper binary(alloc);
+	ShaderProgramBinaryWrapper binary(&pool);
 	ANKI_CHECK(compileShaderProgram(info.m_inputFname, fsystem, nullptr, (info.m_threadCount) ? &taskManager : nullptr,
-									alloc, compilerOptions, binary));
+									pool, compilerOptions, binary));
 
 	// Store the binary
 	ANKI_CHECK(binary.serializeToFile(info.m_outFname));
 
 	// Cleanup
-	alloc.deleteInstance(taskManager.m_hive);
+	deleteInstance(pool, taskManager.m_hive);
 
 	return Error::kNone;
 }
@@ -221,7 +220,7 @@ int main(int argc, char** argv)
 	CmdLineArgs info;
 	if(parseCommandLineArgs(argc, argv, info))
 	{
-		ANKI_LOGE(USAGE, argv[0]);
+		ANKI_LOGE(kUsage, argv[0]);
 		return 1;
 	}
 

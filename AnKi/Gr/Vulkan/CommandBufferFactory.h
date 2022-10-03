@@ -60,7 +60,7 @@ public:
 		return m_fence;
 	}
 
-	GrAllocator<U8>& getAllocator();
+	HeapMemoryPool& getMemoryPool();
 
 	/// Interface method.
 	void onFenceDone()
@@ -68,9 +68,9 @@ public:
 		reset();
 	}
 
-	StackAllocator<U8>& getFastAllocator()
+	StackMemoryPool& getFastMemoryPool()
 	{
-		return m_fastAlloc;
+		return m_fastPool;
 	}
 
 	VkCommandBuffer getHandle() const
@@ -105,7 +105,7 @@ public:
 private:
 	static constexpr U32 kMaxRefObjectSearch = 16;
 
-	StackAllocator<U8> m_fastAlloc;
+	StackMemoryPool m_fastPool;
 	VkCommandBuffer m_handle = {};
 
 	MicroFencePtr m_fence;
@@ -137,7 +137,7 @@ private:
 		}
 
 		// Not found in the temp cache, add it
-		arr.emplaceBack(m_fastAlloc, grobj);
+		arr.emplaceBack(m_fastPool, grobj);
 	}
 };
 
@@ -179,7 +179,7 @@ public:
 
 	void destroy();
 
-	GrAllocator<U8>& getAllocator();
+	HeapMemoryPool& getMemoryPool();
 
 	/// Request a new command buffer.
 	Error newCommandBuffer(CommandBufferFlag cmdbFlags, MicroCommandBufferPtr& ptr);
@@ -214,7 +214,7 @@ public:
 
 	CommandBufferFactory& operator=(const CommandBufferFactory&) = delete; // Non-copyable
 
-	Error init(GrAllocator<U8> alloc, VkDevice dev, const VulkanQueueFamilies& queueFamilies);
+	Error init(HeapMemoryPool* pool, VkDevice dev, const VulkanQueueFamilies& queueFamilies);
 
 	void destroy();
 
@@ -228,7 +228,7 @@ public:
 	}
 
 private:
-	GrAllocator<U8> m_alloc;
+	HeapMemoryPool* m_pool = nullptr;
 	VkDevice m_dev = VK_NULL_HANDLE;
 	VulkanQueueFamilies m_queueFamilies;
 

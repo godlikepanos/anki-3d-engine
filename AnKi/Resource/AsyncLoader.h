@@ -46,7 +46,7 @@ public:
 
 	~AsyncLoader();
 
-	void init(const HeapAllocator<U8>& alloc);
+	void init(HeapMemoryPool* pool);
 
 	/// Submit a task.
 	void submitTask(AsyncLoaderTask* task);
@@ -55,7 +55,7 @@ public:
 	template<typename TTask, typename... TArgs>
 	TTask* newTask(TArgs&&... args)
 	{
-		return m_alloc.template newInstance<TTask>(std::forward<TArgs>(args)...);
+		return newInstance<TTask>(*m_pool, std::forward<TArgs>(args)...);
 	}
 
 	/// Create and submit a new asynchronous loading task.
@@ -72,9 +72,9 @@ public:
 	/// Resume the async loading.
 	void resume();
 
-	HeapAllocator<U8> getAllocator() const
+	HeapMemoryPool& getMemoryPool() const
 	{
-		return m_alloc;
+		return *m_pool;
 	}
 
 	/// Get the total number of completed tasks.
@@ -84,7 +84,7 @@ public:
 	}
 
 private:
-	HeapAllocator<U8> m_alloc;
+	mutable HeapMemoryPool* m_pool = nullptr;
 	Thread m_thread;
 	Barrier m_barrier = {2};
 

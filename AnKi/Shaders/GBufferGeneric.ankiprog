@@ -28,7 +28,7 @@
 
 #include <AnKi/Shaders/GBufferCommon.glsl>
 
-layout(set = MATERIAL_SET_GLOBAL, binding = MATERIAL_BINDING_TRILINEAR_REPEAT_SAMPLER) uniform sampler u_globalSampler;
+layout(set = kMaterialSetGlobal, binding = kMaterialBindingTrilinearRepeatSampler) uniform sampler u_globalSampler;
 
 #pragma anki reflect AnKiLocalUniforms
 #pragma anki struct AnKiLocalUniforms
@@ -55,31 +55,31 @@ layout(set = MATERIAL_SET_GLOBAL, binding = MATERIAL_BINDING_TRILINEAR_REPEAT_SA
 #pragma anki member ANKI_RP F32 m_subsurface
 #pragma anki struct end
 
-layout(set = MATERIAL_SET_LOCAL, binding = MATERIAL_BINDING_LOCAL_UNIFORMS, std430) buffer b_localUniforms
+layout(set = kMaterialSetLocal, binding = kMaterialBindingLocalUniforms, std430) buffer b_localUniforms
 {
 	U32 u_localUniforms[];
 };
 
-layout(set = MATERIAL_SET_LOCAL, binding = MATERIAL_BINDING_RENDERABLE_GPU_VIEW) uniform b_renderableGpuView
+layout(set = kMaterialSetLocal, binding = kMaterialBindingRenderableGpuView) uniform b_renderableGpuView
 {
-	RenderableGpuView u_renderableGpuViews[MAX_INSTANCE_COUNT];
+	RenderableGpuView u_renderableGpuViews[kMaxInstanceCount];
 };
 
-layout(set = MATERIAL_SET_GLOBAL, binding = MATERIAL_BINDING_GLOBAL_UNIFORMS) uniform b_globalUniforms
+layout(set = kMaterialSetGlobal, binding = kMaterialBindingGlobalUniforms) uniform b_globalUniforms
 {
 	MaterialGlobalUniforms u_globalUniforms;
 };
 
 #if ANKI_BONES
 #	pragma anki reflect b_boneTransforms
-layout(set = MATERIAL_SET_LOCAL, binding = MATERIAL_BINDING_BONE_TRANSFORMS, row_major,
+layout(set = kMaterialSetLocal, binding = kMaterialBindingBoneTransforms, row_major,
 	   std140) readonly buffer b_boneTransforms
 {
 	Mat4 u_boneTransforms[];
 };
 
 #	pragma anki reflect b_prevFrameBoneTransforms
-layout(set = MATERIAL_SET_LOCAL, binding = MATERIAL_BINDING_PREVIOUS_BONE_TRANSFORMS, row_major,
+layout(set = kMaterialSetLocal, binding = kMaterialBindingPreviousBoneTransforms, row_major,
 	   std140) readonly buffer b_prevFrameBoneTransforms
 {
 	Mat4 u_prevFrameBoneTransforms[];
@@ -210,9 +210,9 @@ void main()
 #if REALLY_USING_PARALLAX
 Vec2 computeTextureCoordParallax(texture2D heightMap, sampler sampl, Vec2 uv, F32 heightMapScale)
 {
-	const U32 MAX_SAMPLES = 25u;
-	const U32 MIN_SAMPLES = 1u;
-	const F32 MAX_EFFECTIVE_DISTANCE = 32.0;
+	const U32 kMaxSamples = 25u;
+	const U32 kMinSamples = 1u;
+	const F32 kMaxEffectiveDistance = 32.0;
 
 	// Get that because we are sampling inside a loop
 	const Vec2 dPdx = dFdx(uv);
@@ -230,9 +230,9 @@ Vec2 computeTextureCoordParallax(texture2D heightMap, sampler sampl, Vec2 uv, F3
 	const Vec3 E = normalize(eyeTangentSpace);
 
 	const F32 factor0 = -dot(E, normTangentSpace);
-	const F32 factor1 = in_distFromTheCamera / -MAX_EFFECTIVE_DISTANCE;
+	const F32 factor1 = in_distFromTheCamera / -kMaxEffectiveDistance;
 	const F32 factor = saturate((1.0 - factor0) * (1.0 - factor1));
-	const F32 sampleCountf = mix(F32(MIN_SAMPLES), F32(MAX_SAMPLES), factor);
+	const F32 sampleCountf = mix(F32(kMinSamples), F32(kMaxSamples), factor);
 
 	const F32 stepSize = 1.0 / sampleCountf;
 

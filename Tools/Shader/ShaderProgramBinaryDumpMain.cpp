@@ -8,13 +8,13 @@
 
 using namespace anki;
 
-static const char* USAGE = R"(Dump the shader binary to stdout
+static const char* kUsage = R"(Dump the shader binary to stdout
 Usage: %s [options] input_shader_program_binary
 Options:
 -stats : Print performance statistics for all shaders. By default it doesn't
 )";
 
-static Error parseCommandLineArgs(int argc, char** argv, Bool& dumpStats, StringAuto& filename)
+static Error parseCommandLineArgs(int argc, char** argv, Bool& dumpStats, StringRaii& filename)
 {
 	// Parse config
 	if(argc < 2)
@@ -38,7 +38,7 @@ static Error parseCommandLineArgs(int argc, char** argv, Bool& dumpStats, String
 
 Error dumpStats(const ShaderProgramBinary& bin)
 {
-	HeapAllocator<U8> alloc(allocAligned, nullptr);
+	HeapMemoryPool pool(allocAligned, nullptr);
 
 	printf("\nMali offline compiler stats:\n");
 	fflush(stdout);
@@ -94,7 +94,7 @@ Error dumpStats(const ShaderProgramBinary& bin)
 #else
 #	error "Not supported"
 #endif
-				codeBlock.m_binary, shaderType, alloc, maliocOut);
+				codeBlock.m_binary, shaderType, pool, maliocOut);
 
 			if(err)
 			{
@@ -171,12 +171,12 @@ Error dumpStats(const ShaderProgramBinary& bin)
 
 Error dump(CString fname, Bool bDumpStats)
 {
-	HeapAllocator<U8> alloc(allocAligned, nullptr);
+	HeapMemoryPool pool(allocAligned, nullptr);
 
-	ShaderProgramBinaryWrapper binw(alloc);
+	ShaderProgramBinaryWrapper binw(&pool);
 	ANKI_CHECK(binw.deserializeFromFile(fname));
 
-	StringAuto txt(alloc);
+	StringRaii txt(&pool);
 	dumpShaderProgramBinary(binw.getBinary(), txt);
 
 	printf("%s\n", txt.cstr());
@@ -191,11 +191,12 @@ Error dump(CString fname, Bool bDumpStats)
 
 int main(int argc, char** argv)
 {
-	StringAuto filename(HeapAllocator<U8>(allocAligned, nullptr));
+	HeapMemoryPool pool(allocAligned, nullptr);
+	StringRaii filename(&pool);
 	Bool dumpStats;
 	if(parseCommandLineArgs(argc, argv, dumpStats, filename))
 	{
-		ANKI_LOGE(USAGE, argv[0]);
+		ANKI_LOGE(kUsage, argv[0]);
 		return 1;
 	}
 

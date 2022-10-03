@@ -460,14 +460,14 @@ FileOpenFlag File::getMachineEndianness()
 	}
 }
 
-Error File::readAllText(GenericMemoryPoolAllocator<U8> alloc, String& out)
+Error File::readAllText(BaseMemoryPool& pool, String& out)
 {
 	Error err = Error::kNone;
 	PtrSize size = getSize();
 
 	if(size != 0)
 	{
-		out.create(alloc, '?', size);
+		out.create(pool, '?', size);
 		err = read(&out[0], size);
 	}
 	else
@@ -478,7 +478,7 @@ Error File::readAllText(GenericMemoryPoolAllocator<U8> alloc, String& out)
 	return err;
 }
 
-Error File::readAllText(StringAuto& out)
+Error File::readAllText(StringRaii& out)
 {
 	Error err = Error::kNone;
 	PtrSize size = getSize();

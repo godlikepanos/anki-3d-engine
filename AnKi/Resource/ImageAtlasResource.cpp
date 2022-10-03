@@ -16,13 +16,13 @@ ImageAtlasResource::ImageAtlasResource(ResourceManager* manager)
 
 ImageAtlasResource::~ImageAtlasResource()
 {
-	m_subTexes.destroy(getAllocator());
-	m_subTexNames.destroy(getAllocator());
+	m_subTexes.destroy(getMemoryPool());
+	m_subTexNames.destroy(getMemoryPool());
 }
 
 Error ImageAtlasResource::load(const ResourceFilename& filename, Bool async)
 {
-	XmlDocument doc;
+	XmlDocument doc(&getTempMemoryPool());
 	ANKI_CHECK(openFileParseXml(filename, doc));
 
 	XmlElement rootel, el;
@@ -85,8 +85,8 @@ Error ImageAtlasResource::load(const ResourceFilename& filename, Bool async)
 	} while(subTexEl);
 
 	// Allocate
-	m_subTexNames.create(getAllocator(), namesSize);
-	m_subTexes.create(getAllocator(), subTexesCount);
+	m_subTexNames.create(getMemoryPool(), namesSize);
+	m_subTexes.create(getMemoryPool(), subTexesCount);
 
 	// Iterate again and populate
 	subTexesCount = 0;

@@ -34,7 +34,8 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(PhysicsObjectType)
 	friend class PhysicsWorld; \
 	friend class PhysicsPtrDeleter; \
 	template<typename T, typename TDeleter> \
-	friend class IntrusivePtr;
+	friend class IntrusivePtr; \
+	ANKI_FRIEND_CALL_CONSTRUCTOR_AND_DESTRUCTOR
 
 #define ANKI_PHYSICS_OBJECT(type) \
 	ANKI_PHYSICS_OBJECT_FRIENDS \
@@ -99,7 +100,7 @@ protected:
 		return m_refcount.fetchSub(1);
 	}
 
-	HeapAllocator<U8> getAllocator() const;
+	HeapMemoryPool& getMemoryPool();
 
 private:
 	Bool m_registered = false;

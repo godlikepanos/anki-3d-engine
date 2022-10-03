@@ -15,8 +15,8 @@ layout(set = 0, binding = 1) uniform ANKI_RP texture2D u_toDenoiseTex;
 layout(set = 0, binding = 2) uniform texture2D u_depthTex;
 
 #if defined(ANKI_COMPUTE_SHADER)
-const UVec2 WORKGROUP_SIZE = UVec2(8u, 8u);
-layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y) in;
+const UVec2 kWorkgroupSize = UVec2(8u, 8u);
+layout(local_size_x = kWorkgroupSize.x, local_size_y = kWorkgroupSize.y) in;
 
 layout(set = 0, binding = 3) writeonly uniform ANKI_RP image2D u_outImg;
 #else
@@ -39,7 +39,7 @@ Vec3 unproject(Vec2 ndc, F32 depth)
 void main()
 {
 #if defined(ANKI_COMPUTE_SHADER)
-	if(skipOutOfBoundsInvocations(WORKGROUP_SIZE, u_unis.m_viewportSize))
+	if(skipOutOfBoundsInvocations(kWorkgroupSize, u_unis.m_viewportSize))
 	{
 		return;
 	}
@@ -64,7 +64,7 @@ void main()
 	const Vec3 positionCenter = unproject(UV_TO_NDC(uv), depthCenter);
 
 	// Sample
-	ANKI_RP F32 weight = EPSILON_RP;
+	ANKI_RP F32 weight = kEpsilonRp;
 	ANKI_RP Vec3 color = Vec3(0.0);
 
 	for(F32 i = -u_unis.m_sampleCountDiv2; i <= u_unis.m_sampleCountDiv2; i += 1.0)

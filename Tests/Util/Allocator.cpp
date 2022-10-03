@@ -50,22 +50,6 @@ ANKI_TEST(Util, StackAllocator)
 		ANKI_TEST_EXPECT_EQ(sum, sumi);
 	}
 
-	// Copy around
-	{
-		using Alloc = StackAllocator<Foo>;
-
-		Alloc a(allocAligned, nullptr, (sizeof(Foo) + 1) * 10);
-
-		Alloc b(allocAligned, nullptr, (sizeof(Foo) + 1) * 10);
-
-		a = b;
-		ANKI_TEST_EXPECT_EQ(a.getMemoryPool().getUsersCount(), 2);
-
-		b = a;
-		ANKI_TEST_EXPECT_EQ(&a.getMemoryPool(), &b.getMemoryPool());
-		ANKI_TEST_EXPECT_EQ(a.getMemoryPool().getUsersCount(), 2);
-	}
-
 	// Reset
 	{
 		using Alloc = StackAllocator<U8>;

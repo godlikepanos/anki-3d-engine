@@ -14,14 +14,14 @@ namespace anki {
 inline ShaderPtr createShader(CString src, ShaderType type, GrManager& gr,
 							  ConstWeakArray<ShaderSpecializationConstValue> specVals = {})
 {
-	HeapAllocator<U8> alloc(allocAligned, nullptr);
-	StringAuto header(alloc);
+	HeapMemoryPool pool(allocAligned, nullptr);
+	StringRaii header(&pool);
 	ShaderCompilerOptions compilerOptions;
 	ShaderProgramParser::generateAnkiShaderHeader(type, compilerOptions, header);
 	header.append(src);
-	DynamicArrayAuto<U8> spirv(alloc);
-	StringAuto errorLog(alloc);
-	ANKI_TEST_EXPECT_NO_ERR(compilerGlslToSpirv(header, type, alloc, spirv, errorLog));
+	DynamicArrayRaii<U8> spirv(&pool);
+	StringRaii errorLog(&pool);
+	ANKI_TEST_EXPECT_NO_ERR(compilerGlslToSpirv(header, type, pool, spirv, errorLog));
 
 	ShaderInitInfo initInf(type, spirv);
 	initInf.m_constValues = specVals;

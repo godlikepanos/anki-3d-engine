@@ -25,27 +25,27 @@ ShaderProgramResourceVariant::~ShaderProgramResourceVariant()
 
 ShaderProgramResource::ShaderProgramResource(ResourceManager* manager)
 	: ResourceObject(manager)
-	, m_binary(getAllocator())
+	, m_binary(&getMemoryPool())
 {
 }
 
 ShaderProgramResource::~ShaderProgramResource()
 {
-	m_mutators.destroy(getAllocator());
+	m_mutators.destroy(getMemoryPool());
 
 	for(ShaderProgramResourceConstant& c : m_consts)
 	{
-		c.m_name.destroy(getAllocator());
+		c.m_name.destroy(getMemoryPool());
 	}
-	m_consts.destroy(getAllocator());
-	m_constBinaryMapping.destroy(getAllocator());
+	m_consts.destroy(getMemoryPool());
+	m_constBinaryMapping.destroy(getMemoryPool());
 
 	for(auto it : m_variants)
 	{
 		ShaderProgramResourceVariant* variant = &(*it);
-		getAllocator().deleteInstance(variant);
+		deleteInstance(getMemoryPool(), variant);
 	}
-	m_variants.destroy(getAllocator());
+	m_variants.destroy(getMemoryPool());
 }
 
 Error ShaderProgramResource::load(const ResourceFilename& filename, [[maybe_unused]] Bool async)
@@ -59,7 +59,7 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, [[maybe_unus
 	// Create the mutators
 	if(binary.m_mutators.getSize() > 0)
 	{
-		m_mutators.create(getAllocator(), binary.m_mutators.getSize());
+		m_mutators.create(getMemoryPool(), binary.m_mutators.getSize());
 
 		for(U32 i = 0; i < binary.m_mutators.getSize(); ++i)
 		{
@@ -91,7 +91,7 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, [[maybe_unus
 			mapping.m_constsIdx = m_consts.getSize();
 		}
 
-		m_constBinaryMapping.emplaceBack(getAllocator(), mapping);
+		m_constBinaryMapping.emplaceBack(getMemoryPool(), mapping);
 
 		// Skip if const is there
 		if(componentIdx > 0)
@@ -100,8 +100,8 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, [[maybe_unus
 		}
 
 		// Create new one
-		ShaderProgramResourceConstant& in = *m_consts.emplaceBack(getAllocator());
-		in.m_name.create(getAllocator(), name);
+		ShaderProgramResourceConstant& in = *m_consts.emplaceBack(getMemoryPool());
+		in.m_name.create(getMemoryPool(), name);
 		in.m_index = m_consts.getSize() - 1;
 
 		if(componentCount == 1)
@@ -254,7 +254,7 @@ void ShaderProgramResource::getOrCreateVariant(const ShaderProgramResourceVarian
 	ShaderProgramResourceVariant* v = createNewVariant(info);
 	if(v)
 	{
-		m_variants.emplace(getAllocator(), hash, v);
+		m_variants.emplace(getMemoryPool(), hash, v);
 	}
 	variant = v;
 }
@@ -295,7 +295,7 @@ ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitIn
 		binaryVariant = &binary.m_variants[0];
 	}
 	ANKI_ASSERT(binaryVariant);
-	ShaderProgramResourceVariant* variant = getAllocator().newInstance<ShaderProgramResourceVariant>();
+	ShaderProgramResourceVariant* variant = newInstance<ShaderProgramResourceVariant>(getMemoryPool());
 	variant->m_binaryVariant = binaryVariant;
 
 	// Set the constant values
@@ -372,7 +372,7 @@ ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitIn
 	if(!!(m_shaderStages & (ShaderTypeBit::kAllGraphics | ShaderTypeBit::kCompute)))
 	{
 		// Create the program name
-		StringAuto progName(getTempAllocator());
+		StringRaii progName(&getTempMemoryPool());
 		getFilepathFilename(getFilename(), progName);
 		char* cprogName = const_cast<char*>(progName.cstr());
 		if(progName.getLength() > kMaxGrObjectNameLength)

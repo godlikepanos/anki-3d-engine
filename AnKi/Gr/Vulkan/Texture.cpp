@@ -11,11 +11,11 @@ namespace anki {
 
 Texture* Texture::newInstance(GrManager* manager, const TextureInitInfo& init)
 {
-	TextureImpl* impl = manager->getAllocator().newInstance<TextureImpl>(manager, init.getName());
+	TextureImpl* impl = anki::newInstance<TextureImpl>(manager->getMemoryPool(), manager, init.getName());
 	const Error err = impl->init(init);
 	if(err)
 	{
-		manager->getAllocator().deleteInstance(impl);
+		deleteInstance(manager->getMemoryPool(), impl);
 		impl = nullptr;
 	}
 	return impl;

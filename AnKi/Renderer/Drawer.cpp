@@ -21,9 +21,9 @@ public:
 
 	const RenderableQueueElement* m_renderableElement = nullptr;
 
-	Array<RenderableQueueElement, MAX_INSTANCE_COUNT> m_cachedRenderElements;
-	Array<U8, MAX_INSTANCE_COUNT> m_cachedRenderElementLods;
-	Array<const void*, MAX_INSTANCE_COUNT> m_userData;
+	Array<RenderableQueueElement, kMaxInstanceCount> m_cachedRenderElements;
+	Array<U8, kMaxInstanceCount> m_cachedRenderElementLods;
+	Array<const void*, kMaxInstanceCount> m_userData;
 	U32 m_cachedRenderElementCount = 0;
 	U8 m_minLod = 0;
 	U8 m_maxLod = 0;
@@ -50,20 +50,20 @@ void RenderableDrawer::drawRange(RenderingTechnique technique, const RenderableD
 		StagingGpuMemoryToken globalUniformsToken;
 		MaterialGlobalUniforms* globalUniforms =
 			static_cast<MaterialGlobalUniforms*>(m_r->getStagingGpuMemory().allocateFrame(
-				sizeof(MaterialGlobalUniforms), StagingGpuMemoryType::UNIFORM, globalUniformsToken));
+				sizeof(MaterialGlobalUniforms), StagingGpuMemoryType::kUniform, globalUniformsToken));
 
 		globalUniforms->m_viewProjectionMatrix = args.m_viewProjectionMatrix;
 		globalUniforms->m_previousViewProjectionMatrix = args.m_previousViewProjectionMatrix;
 		globalUniforms->m_viewMatrix = args.m_viewMatrix;
 		globalUniforms->m_cameraTransform = args.m_cameraTransform;
 
-		cmdb->bindUniformBuffer(MATERIAL_SET_GLOBAL, MATERIAL_BINDING_GLOBAL_UNIFORMS, globalUniformsToken.m_buffer,
+		cmdb->bindUniformBuffer(kMaterialSetGlobal, kMaterialBindingGlobalUniforms, globalUniformsToken.m_buffer,
 								globalUniformsToken.m_offset, globalUniformsToken.m_range);
 	}
 
 	// More globals
-	cmdb->bindAllBindless(MATERIAL_SET_BINDLESS);
-	cmdb->bindSampler(MATERIAL_SET_GLOBAL, MATERIAL_BINDING_TRILINEAR_REPEAT_SAMPLER, args.m_sampler);
+	cmdb->bindAllBindless(kMaterialSetBindless);
+	cmdb->bindSampler(kMaterialSetGlobal, kMaterialBindingTrilinearRepeatSampler, args.m_sampler);
 
 	// Set a few things
 	Context ctx;
@@ -78,7 +78,7 @@ void RenderableDrawer::drawRange(RenderingTechnique technique, const RenderableD
 	ctx.m_queueCtx.m_debugDraw = false;
 	ctx.m_queueCtx.m_sampler = args.m_sampler;
 
-	ANKI_ASSERT(args.m_minLod < MAX_LOD_COUNT && args.m_maxLod < MAX_LOD_COUNT && args.m_minLod <= args.m_maxLod);
+	ANKI_ASSERT(args.m_minLod < kMaxLodCount && args.m_maxLod < kMaxLodCount && args.m_minLod <= args.m_maxLod);
 	ctx.m_minLod = U8(args.m_minLod);
 	ctx.m_maxLod = U8(args.m_maxLod);
 
@@ -111,7 +111,7 @@ void RenderableDrawer::flushDrawcall(Context& ctx)
 
 void RenderableDrawer::drawSingle(Context& ctx)
 {
-	if(ctx.m_cachedRenderElementCount == MAX_INSTANCE_COUNT)
+	if(ctx.m_cachedRenderElementCount == kMaxInstanceCount)
 	{
 		flushDrawcall(ctx);
 	}

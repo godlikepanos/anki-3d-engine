@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <AnKi/Util/Allocator.h>
+#include <AnKi/Util/MemoryPool.h>
 
 namespace anki {
 
@@ -253,30 +253,8 @@ class DefaultPtrDeleter
 public:
 	void operator()(T* x)
 	{
-		auto alloc = x->getAllocator();
-		alloc.template deleteInstance<T>(x);
-	}
-};
-
-/// UniquePtr alternative deleter.
-template<typename T>
-class AllocatorPtrDeleter
-{
-public:
-	GenericMemoryPoolAllocator<U8> m_allocator;
-
-	AllocatorPtrDeleter()
-	{
-	}
-
-	AllocatorPtrDeleter(GenericMemoryPoolAllocator<U8> alloc)
-		: m_allocator(alloc)
-	{
-	}
-
-	void operator()(T* x)
-	{
-		m_allocator.template deleteInstance<T>(x);
+		auto& pool = x->getMemoryPool();
+		deleteInstance<T>(pool, x);
 	}
 };
 

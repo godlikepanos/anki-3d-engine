@@ -8,7 +8,6 @@
 #include <AnKi/Gr/CommandBuffer.h>
 #include <AnKi/Gr/gl/StateTracker.h>
 #include <AnKi/Util/Assert.h>
-#include <AnKi/Util/Allocator.h>
 
 namespace anki {
 

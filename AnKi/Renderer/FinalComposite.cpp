@@ -43,9 +43,9 @@ Error FinalComposite::initInternal()
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addMutation("FILM_GRAIN", (getConfig().getRFilmGrainStrength() > 0.0) ? 1 : 0);
 	variantInitInfo.addMutation("BLOOM_ENABLED", 1);
-	variantInitInfo.addConstant("LUT_SIZE", U32(LUT_SIZE));
-	variantInitInfo.addConstant("FB_SIZE", m_r->getPostProcessResolution());
-	variantInitInfo.addConstant("MOTION_BLUR_SAMPLES", getConfig().getRMotionBlurSamples());
+	variantInitInfo.addConstant("kLutSize", U32(kLutSize));
+	variantInitInfo.addConstant("kFramebufferSize", m_r->getPostProcessResolution());
+	variantInitInfo.addConstant("kMotionBlurSamples", getConfig().getRMotionBlurSamples());
 
 	for(U32 dbg = 0; dbg < 2; ++dbg)
 	{
@@ -79,9 +79,9 @@ Error FinalComposite::loadColorGradingTextureImage(CString filename)
 {
 	m_lut.reset(nullptr);
 	ANKI_CHECK(getResourceManager().loadResource(filename, m_lut));
-	ANKI_ASSERT(m_lut->getWidth() == LUT_SIZE);
-	ANKI_ASSERT(m_lut->getHeight() == LUT_SIZE);
-	ANKI_ASSERT(m_lut->getDepth() == LUT_SIZE);
+	ANKI_ASSERT(m_lut->getWidth() == kLutSize);
+	ANKI_ASSERT(m_lut->getHeight() == kLutSize);
+	ANKI_ASSERT(m_lut->getDepth() == kLutSize);
 
 	return Error::kNone;
 }

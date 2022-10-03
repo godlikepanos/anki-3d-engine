@@ -23,11 +23,11 @@ Options:
 class CmdLineArgs
 {
 public:
-	HeapAllocator<U8> m_alloc = {allocAligned, nullptr};
-	StringAuto m_inputFname = {m_alloc};
-	StringAuto m_outDir = {m_alloc};
-	StringAuto m_rpath = {m_alloc};
-	StringAuto m_texRpath = {m_alloc};
+	HeapMemoryPool m_pool = {allocAligned, nullptr};
+	StringRaii m_inputFname = {&m_pool};
+	StringRaii m_outDir = {&m_pool};
+	StringRaii m_rpath = {&m_pool};
+	StringRaii m_texRpath = {&m_pool};
 	Bool m_optimizeMeshes = true;
 	Bool m_optimizeAnimations = true;
 	U32 m_threadCount = kMaxU32;
@@ -211,8 +211,8 @@ int myMain(int argc, char** argv)
 		return 1;
 	}
 
-	HeapAllocator<U8> alloc(allocAligned, nullptr);
-	StringAuto comment(alloc);
+	HeapMemoryPool pool(allocAligned, nullptr);
+	StringRaii comment(&pool);
 	for(I32 i = 0; i < argc; ++i)
 	{
 		if(i != 0)
@@ -243,7 +243,7 @@ int myMain(int argc, char** argv)
 	initInfo.m_threadCount = cmdArgs.m_threadCount;
 	initInfo.m_comment = comment;
 
-	GltfImporter importer(alloc);
+	GltfImporter importer(&pool);
 	if(importer.init(initInfo))
 	{
 		return 1;

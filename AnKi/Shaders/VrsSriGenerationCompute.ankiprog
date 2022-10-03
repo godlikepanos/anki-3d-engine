@@ -19,13 +19,13 @@ layout(set = 0, binding = 0) uniform ANKI_RP texture2D u_inputTex;
 layout(set = 0, binding = 1) uniform sampler u_nearestClampSampler;
 
 #if SRI_TEXEL_DIMENSION == 8
-const UVec2 REGION_SIZE = UVec2(2u, 2u);
+const UVec2 kRegionSize = UVec2(2u, 2u);
 #else
-const UVec2 REGION_SIZE = UVec2(2u, 4u);
+const UVec2 kRegionSize = UVec2(2u, 4u);
 #endif
 
-const UVec2 WORKGROUP_SIZE = UVec2(SRI_TEXEL_DIMENSION) / REGION_SIZE;
-layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
+const UVec2 kWorkgroupSize = UVec2(SRI_TEXEL_DIMENSION) / kRegionSize;
+layout(local_size_x = kWorkgroupSize.x, local_size_y = kWorkgroupSize.y, local_size_z = 1) in;
 
 layout(set = 0, binding = 2) uniform writeonly uimage2D u_sriImg;
 
@@ -40,9 +40,9 @@ layout(push_constant, std430) uniform b_pc
 // Ideally, we'd be able to calculate the min/max/average using subgroup operations, but there's no guarantee
 // subgroupSize is large enough so we need shared memory as a fallback. We need gl_NumSubgroups entries, but it is not a
 // constant, so estimate it assuming a subgroupSize of at least 8.
-const U32 SHARED_MEMORY_ENTRIES = WORKGROUP_SIZE.x * WORKGROUP_SIZE.y / 8u;
-shared F32 s_averageLuma[SHARED_MEMORY_ENTRIES];
-shared Vec2 s_maxDerivative[SHARED_MEMORY_ENTRIES];
+const U32 kSharedMemoryEntries = kWorkgroupSize.x * kWorkgroupSize.y / 8u;
+shared F32 s_averageLuma[kSharedMemoryEntries];
+shared Vec2 s_maxDerivative[kSharedMemoryEntries];
 #endif
 
 F32 computeLuma(Vec3 color)
@@ -56,7 +56,7 @@ F32 computeLuma(Vec3 color)
 
 void main()
 {
-	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) * Vec2(REGION_SIZE) + 0.5) * u_oneOverViewportSize;
+	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) * Vec2(kRegionSize) + 0.5) * u_oneOverViewportSize;
 
 #if SRI_TEXEL_DIMENSION == 8
 	// Get luminance.
@@ -163,7 +163,7 @@ void main()
 #endif
 
 		// Determine shading rate.
-		const F32 avgLuma = averageLuma / F32(WORKGROUP_SIZE.x * WORKGROUP_SIZE.y);
+		const F32 avgLuma = averageLuma / F32(kWorkgroupSize.x * kWorkgroupSize.y);
 		const Vec2 lumaDiff = maxDerivative / avgLuma;
 		const F32 threshold1 = u_threshold;
 		const F32 threshold2 = threshold1 * 0.4;

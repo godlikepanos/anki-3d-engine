@@ -21,10 +21,11 @@ class MeshBinaryLoader
 public:
 	MeshBinaryLoader(ResourceManager* manager);
 
-	MeshBinaryLoader(ResourceManager* manager, GenericMemoryPoolAllocator<U8> alloc)
+	MeshBinaryLoader(ResourceManager* manager, BaseMemoryPool* pool)
 		: m_manager(manager)
-		, m_alloc(alloc)
+		, m_pool(pool)
 	{
+		ANKI_ASSERT(manager && pool);
 	}
 
 	~MeshBinaryLoader();
@@ -36,7 +37,7 @@ public:
 	Error storeVertexBuffer(U32 bufferIdx, void* ptr, PtrSize size);
 
 	/// Instead of calling storeIndexBuffer and storeVertexBuffer use this method to get those buffers into the CPU.
-	Error storeIndicesAndPosition(DynamicArrayAuto<U32>& indices, DynamicArrayAuto<Vec3>& positions);
+	Error storeIndicesAndPosition(DynamicArrayRaii<U32>& indices, DynamicArrayRaii<Vec3>& positions);
 
 	const MeshBinaryHeader& getHeader() const
 	{
@@ -47,7 +48,7 @@ public:
 	Bool hasBoneInfo() const
 	{
 		ANKI_ASSERT(isLoaded());
-		return m_header.m_vertexAttributes[VertexAttributeId::BONE_INDICES].m_format != Format::kNone;
+		return m_header.m_vertexAttributes[VertexAttributeId::kBoneIndices].m_format != Format::kNone;
 	}
 
 	ConstWeakArray<MeshBinarySubMesh> getSubMeshes() const
@@ -56,8 +57,8 @@ public:
 	}
 
 private:
-	ResourceManager* m_manager;
-	GenericMemoryPoolAllocator<U8> m_alloc;
+	ResourceManager* m_manager = nullptr;
+	BaseMemoryPool* m_pool = nullptr;
 	ResourceFilePtr m_file;
 
 	MeshBinaryHeader m_header;
@@ -78,7 +79,7 @@ private:
 	PtrSize getAlignedIndexBufferSize() const
 	{
 		ANKI_ASSERT(isLoaded());
-		return getAlignedRoundUp(MESH_BINARY_BUFFER_ALIGNMENT, getIndexBufferSize());
+		return getAlignedRoundUp(kMeshBinaryBufferAlignment, getIndexBufferSize());
 	}
 
 	PtrSize getVertexBufferSize(U32 bufferIdx) const
@@ -92,7 +93,7 @@ private:
 	{
 		ANKI_ASSERT(isLoaded());
 		ANKI_ASSERT(bufferIdx < m_header.m_vertexBufferCount);
-		return getAlignedRoundUp(MESH_BINARY_BUFFER_ALIGNMENT, getVertexBufferSize(bufferIdx));
+		return getAlignedRoundUp(kMeshBinaryBufferAlignment, getVertexBufferSize(bufferIdx));
 	}
 
 	Error checkHeader() const;

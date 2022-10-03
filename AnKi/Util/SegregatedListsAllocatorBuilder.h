@@ -30,14 +30,14 @@ public:
 
 /// The base class for all user memory chunks of SegregatedListsAllocatorBuilder.
 /// @memberof SegregatedListsAllocatorBuilder
-template<typename TChunk, U32 T_CLASS_COUNT>
+template<typename TChunk, U32 kClassCount>
 class SegregatedListsAllocatorBuilderChunkBase
 {
 	template<typename TChunk_, typename TInterface, typename TLock>
 	friend class SegregatedListsAllocatorBuilder;
 
 private:
-	Array<DynamicArray<detail::SegregatedListsAllocatorBuilderFreeBlock>, T_CLASS_COUNT> m_freeLists;
+	Array<DynamicArray<detail::SegregatedListsAllocatorBuilderFreeBlock>, kClassCount> m_freeLists;
 	PtrSize m_totalSize = 0;
 	PtrSize m_freeSize = 0;
 };
@@ -56,8 +56,7 @@ private:
 ///                    /// Deletes a chunk.
 ///                    void deleteChunk(TChunk* chunk);
 ///                    /// Get an allocator for internal allocations of the builder.
-///                    SomeAllocator& getAllocator();
-///                    const SomeAllocator getAllocator() const;
+///                    SomeMemoryPool& getMemoryPool() const;
 ///                    @endcode
 /// @tparam TLock User defined lock (eg Mutex).
 template<typename TChunk, typename TInterface, typename TLock>
@@ -89,7 +88,7 @@ public:
 	Error validate() const;
 
 	/// Print debug info.
-	void printFreeBlocks(StringListAuto& strList) const;
+	void printFreeBlocks(StringListRaii& strList) const;
 
 	/// It's 1-(largestBlockOfFreeMemory/totalFreeMemory). 0.0 is no fragmentation, 1.0 is totally fragmented.
 	[[nodiscard]] F32 computeExternalFragmentation(PtrSize baseSize = 1) const;
@@ -101,7 +100,7 @@ private:
 	using FreeBlock = detail::SegregatedListsAllocatorBuilderFreeBlock;
 	using ChunksIterator = typename DynamicArray<TChunk*>::Iterator;
 
-	TInterface m_interface; ///< XXX
+	TInterface m_interface; ///< The interface.
 
 	DynamicArray<TChunk*> m_chunks;
 

@@ -19,7 +19,7 @@ GrObject::GrObject(GrManager* manager, GrObjectType type, CString name)
 		name = "N/A";
 	}
 
-	m_name = static_cast<Char*>(manager->getAllocator().getMemoryPool().allocate(name.getLength() + 1, alignof(Char)));
+	m_name = static_cast<Char*>(manager->getMemoryPool().allocate(name.getLength() + 1, alignof(Char)));
 	memcpy(m_name, &name[0], name.getLength() + 1);
 }
 
@@ -27,13 +27,13 @@ GrObject::~GrObject()
 {
 	if(m_name)
 	{
-		m_manager->getAllocator().getMemoryPool().free(m_name);
+		m_manager->getMemoryPool().free(m_name);
 	}
 }
 
-GrAllocator<U8> GrObject::getAllocator() const
+HeapMemoryPool& GrObject::getMemoryPool() const
 {
-	return m_manager->getAllocator();
+	return m_manager->getMemoryPool();
 }
 
 } // end namespace anki

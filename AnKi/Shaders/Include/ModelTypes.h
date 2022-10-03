@@ -13,53 +13,53 @@ ANKI_BEGIN_NAMESPACE
 #if defined(__cplusplus)
 enum class VertexAttributeId : U8
 {
-	POSITION,
-	UV0,
-	UV1,
-	NORMAL,
-	TANGENT,
-	COLOR,
-	BONE_WEIGHTS,
-	BONE_INDICES,
+	kPosition,
+	kUv0,
+	kUv1,
+	kNormal,
+	kTangent,
+	kColor,
+	kBoneWeights,
+	kBoneIndices,
 
 	kCount,
-	kFirst = POSITION,
+	kFirst = kPosition,
 
-	SCALE = UV0, ///< Only for particles.
-	ALPHA = UV1, ///< Only for particles.
+	SCALE = kUv0, ///< Only for particles.
+	ALPHA = kUv1, ///< Only for particles.
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexAttributeId)
 #else
-const U32 VERTEX_ATTRIBUTE_ID_POSITION = 0u;
-const U32 VERTEX_ATTRIBUTE_ID_UV0 = 1u;
-const U32 VERTEX_ATTRIBUTE_ID_UV1 = 2u;
-const U32 VERTEX_ATTRIBUTE_ID_NORMAL = 3u;
-const U32 VERTEX_ATTRIBUTE_ID_TANGENT = 4u;
-const U32 VERTEX_ATTRIBUTE_ID_COLOR = 5u;
-const U32 VERTEX_ATTRIBUTE_ID_BONE_WEIGHTS = 6u;
-const U32 VERTEX_ATTRIBUTE_ID_BONE_INDICES = 7u;
-const U32 VERTEX_ATTRIBUTE_ID_COUNT = 8u;
+const U32 kVertexAttributeIdPosition = 0u;
+const U32 kVertexAttributeIdUv0 = 1u;
+const U32 kVertexAttributeIdUv1 = 2u;
+const U32 kVertexAttributeIdNormal = 3u;
+const U32 kVertexAttributeIdTangent = 4u;
+const U32 kVertexAttributeIdColor = 5u;
+const U32 kVertexAttributeIdBoneWeights = 6u;
+const U32 kVertexAttributeIdBoneIndices = 7u;
+const U32 kVertexAttributeIdCount = 8u;
 
-const U32 VERTEX_ATTRIBUTE_ID_SCALE = VERTEX_ATTRIBUTE_ID_UV0; ///< Only for particles.
-const U32 VERTEX_ATTRIBUTE_ID_ALPHA = VERTEX_ATTRIBUTE_ID_UV1; ///< Only for particles.
+const U32 kVertexAttributeIdScale = kVertexAttributeIdUv0; ///< Only for particles.
+const U32 kVertexAttributeIdAlpha = kVertexAttributeIdUv1; ///< Only for particles.
 #endif
 
 // Vertex buffers
 #if defined(__cplusplus)
 enum class VertexAttributeBufferId : U8
 {
-	POSITION,
-	NORMAL_TANGENT_UV0,
-	BONE,
+	kPosition,
+	kNormalTangentUv0,
+	kBone,
 
-	COUNT
+	kCount
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexAttributeBufferId)
 #else
-const U32 VERTEX_ATTRIBUTE_BUFFER_ID_POSITION = 0u;
-const U32 VERTEX_ATTRIBUTE_BUFFER_ID_NORMAL_TANGENT_UV0 = 1u;
-const U32 VERTEX_ATTRIBUTE_BUFFER_ID_BONE = 2u;
-const U32 VERTEX_ATTRIBUTE_BUFFER_ID_COUNT = 3u;
+const U32 kVertexAttributeBufferIdPosition = 0u;
+const U32 kVertexAttributeBufferIdNormalTangentUv0 = 1u;
+const U32 kVertexAttributeBufferIdBone = 2u;
+const U32 kVertexAttributeBufferIdCount = 3u;
 #endif
 
 /// The main vertex that contains normals, tangents and UVs.
@@ -90,9 +90,9 @@ struct MeshGpuDescriptor
 {
 	Address m_indexBufferPtr; ///< Points to a buffer of U16 indices.
 #if defined(__cplusplus)
-	Array<Address, U(VertexAttributeBufferId::COUNT)> m_vertexBufferPtrs;
+	Array<Address, U(VertexAttributeBufferId::kCount)> m_vertexBufferPtrs;
 #else
-	Address m_vertexBufferPtrs[VERTEX_ATTRIBUTE_BUFFER_ID_COUNT];
+	Address m_vertexBufferPtrs[kVertexAttributeBufferIdCount];
 #endif
 	U32 m_indexCount;
 	U32 m_vertexCount;

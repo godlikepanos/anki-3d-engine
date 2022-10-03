@@ -72,7 +72,7 @@ Error LensFlare::initOcclusion()
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_updateIndirectBuffProg);
 	variantInitInfo.addConstant(
-		"IN_DEPTH_MAP_SIZE", UVec2(m_r->getInternalResolution().x() / 2 / 2, m_r->getInternalResolution().y() / 2 / 2));
+		"kInDepthMapSize", UVec2(m_r->getInternalResolution().x() / 2 / 2, m_r->getInternalResolution().y() / 2 / 2));
 	const ShaderProgramResourceVariant* variant;
 	m_updateIndirectBuffProg->getOrCreateVariant(variantInitInfo, variant);
 	m_updateIndirectBuffGrProg = variant->getProgram();

@@ -3,8 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(FB_SIZE, 0u);
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(INPUT_TEX_SIZE, 2u);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(kViewport, 0u);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(kInputTextureSize, 2u);
 
 #include <AnKi/Shaders/Functions.glsl>
 
@@ -13,8 +13,8 @@ layout(set = 0, binding = 1) uniform ANKI_RP texture2D u_tex;
 layout(set = 0, binding = 2) uniform ANKI_RP texture2D u_lensDirtTex;
 
 #if defined(ANKI_COMPUTE_SHADER)
-const UVec2 WORKGROUP_SIZE = UVec2(16u, 16u);
-layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
+const UVec2 kWorkgroupSize = UVec2(16u, 16u);
+layout(local_size_x = kWorkgroupSize.x, local_size_y = kWorkgroupSize.y, local_size_z = 1) in;
 
 layout(set = 0, binding = 3) writeonly uniform ANKI_RP image2D u_outImg;
 #else
@@ -23,13 +23,13 @@ layout(location = 0) out ANKI_RP Vec3 out_color;
 #endif
 
 // Constants
-const U32 MAX_GHOSTS = 4u;
-const F32 GHOST_DISPERSAL = 0.7;
-const F32 HALO_WIDTH = 0.4;
-const F32 CHROMATIC_DISTORTION = 3.0;
+const U32 kMaxGhosts = 4u;
+const F32 kGhostDispersal = 0.7;
+const F32 kHaloWidth = 0.4;
+const F32 kChromaticDistortion = 3.0;
 #define ENABLE_CHROMATIC_DISTORTION 1
 #define ENABLE_HALO 1
-const F32 HALO_OPACITY = 0.5;
+const F32 kHaloOpacity = 0.5;
 
 ANKI_RP Vec3 textureDistorted(ANKI_RP texture2D tex, sampler sampl, Vec2 uv,
 							  Vec2 direction, // direction of distortion
@@ -46,35 +46,35 @@ ANKI_RP Vec3 textureDistorted(ANKI_RP texture2D tex, sampler sampl, Vec2 uv,
 
 ANKI_RP Vec3 ssLensFlare(Vec2 uv)
 {
-	const Vec2 TEXEL_SIZE = 1.0 / Vec2(INPUT_TEX_SIZE);
-	const Vec3 DISTORTION = Vec3(-TEXEL_SIZE.x * CHROMATIC_DISTORTION, 0.0, TEXEL_SIZE.x * CHROMATIC_DISTORTION);
-	const F32 LEN_OF_HALF = length(Vec2(0.5));
+	const Vec2 kTexelSize = 1.0 / Vec2(kInputTextureSize);
+	const Vec3 kDistortion = Vec3(-kTexelSize.x * kChromaticDistortion, 0.0, kTexelSize.x * kChromaticDistortion);
+	const F32 kLensOfHalf = length(Vec2(0.5));
 
 	const Vec2 flipUv = Vec2(1.0) - uv;
 
-	const Vec2 ghostVec = (Vec2(0.5) - flipUv) * GHOST_DISPERSAL;
+	const Vec2 ghostVec = (Vec2(0.5) - flipUv) * kGhostDispersal;
 
 	const Vec2 direction = normalize(ghostVec);
 	ANKI_RP Vec3 result = Vec3(0.0);
 
 	// Sample ghosts
-	ANKI_UNROLL for(U32 i = 0u; i < MAX_GHOSTS; ++i)
+	ANKI_UNROLL for(U32 i = 0u; i < kMaxGhosts; ++i)
 	{
 		const Vec2 offset = fract(flipUv + ghostVec * F32(i));
 
-		ANKI_RP F32 weight = length(Vec2(0.5) - offset) / LEN_OF_HALF;
+		ANKI_RP F32 weight = length(Vec2(0.5) - offset) / kLensOfHalf;
 		weight = pow(1.0 - weight, 10.0);
 
-		result += textureDistorted(u_tex, u_linearAnyClampSampler, offset, direction, DISTORTION) * weight;
+		result += textureDistorted(u_tex, u_linearAnyClampSampler, offset, direction, kDistortion) * weight;
 	}
 
 	// Sample halo
 #if ENABLE_HALO
-	const Vec2 haloVec = normalize(ghostVec) * HALO_WIDTH;
-	ANKI_RP F32 weight = length(Vec2(0.5) - fract(flipUv + haloVec)) / LEN_OF_HALF;
+	const Vec2 haloVec = normalize(ghostVec) * kHaloWidth;
+	ANKI_RP F32 weight = length(Vec2(0.5) - fract(flipUv + haloVec)) / kLensOfHalf;
 	weight = pow(1.0 - weight, 20.0);
-	result += textureDistorted(u_tex, u_linearAnyClampSampler, flipUv + haloVec, direction, DISTORTION)
-			  * (weight * HALO_OPACITY);
+	result += textureDistorted(u_tex, u_linearAnyClampSampler, flipUv + haloVec, direction, kDistortion)
+			  * (weight * kHaloOpacity);
 #endif
 
 	// Lens dirt
@@ -98,12 +98,12 @@ ANKI_RP Vec3 upscale(Vec2 uv)
 void main()
 {
 #if defined(ANKI_COMPUTE_SHADER)
-	if(skipOutOfBoundsInvocations(WORKGROUP_SIZE, FB_SIZE))
+	if(skipOutOfBoundsInvocations(kWorkgroupSize, kViewport))
 	{
 		return;
 	}
 
-	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(FB_SIZE);
+	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(kViewport);
 #else
 	const Vec2 uv = in_uv;
 #endif

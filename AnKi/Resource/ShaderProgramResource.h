@@ -167,16 +167,16 @@ public:
 	ShaderProgramResourceVariantInitInfo& addMutation(CString name, MutatorValue t);
 
 private:
-	static constexpr U32 MAX_CONSTANTS = 32;
-	static constexpr U32 MAX_MUTATORS = 32;
+	static constexpr U32 kMaxConstants = 32;
+	static constexpr U32 kMaxMutators = 32;
 
 	ShaderProgramResourcePtr m_ptr;
 
-	Array<ShaderProgramResourceConstantValue, MAX_CONSTANTS> m_constantValues;
-	BitSet<MAX_CONSTANTS> m_setConstants = {false};
+	Array<ShaderProgramResourceConstantValue, kMaxConstants> m_constantValues;
+	BitSet<kMaxConstants> m_setConstants = {false};
 
-	Array<MutatorValue, MAX_MUTATORS> m_mutation; ///< The order of storing the values is important. It will be hashed.
-	BitSet<MAX_MUTATORS> m_setMutators = {false};
+	Array<MutatorValue, kMaxMutators> m_mutation; ///< The order of storing the values is important. It will be hashed.
+	BitSet<kMaxMutators> m_setMutators = {false};
 };
 
 /// Shader program resource. It loads special AnKi programs.

@@ -67,7 +67,7 @@ public:
 	}
 
 private:
-	static constexpr U32 MAX_COPIES_BEFORE_FLUSH = 4;
+	static constexpr U32 kMaxCopiesBeforeFlush = 4;
 
 	class TexUploadTask;
 	class LoadingContext;

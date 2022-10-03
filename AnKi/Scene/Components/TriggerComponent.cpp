@@ -29,12 +29,12 @@ public:
 		if(!m_enterUpdated)
 		{
 			m_enterUpdated = true;
-			m_comp->m_bodiesEnter.destroy(m_comp->m_node->getAllocator());
+			m_comp->m_bodiesEnter.destroy(m_comp->m_node->getMemoryPool());
 		}
 
 		m_updated = true;
 
-		m_comp->m_bodiesEnter.emplaceBack(m_comp->m_node->getAllocator(),
+		m_comp->m_bodiesEnter.emplaceBack(m_comp->m_node->getMemoryPool(),
 										  static_cast<BodyComponent*>(obj.getUserData()));
 	}
 
@@ -44,12 +44,12 @@ public:
 		if(!m_insideUpdated)
 		{
 			m_insideUpdated = true;
-			m_comp->m_bodiesInside.destroy(m_comp->m_node->getAllocator());
+			m_comp->m_bodiesInside.destroy(m_comp->m_node->getMemoryPool());
 		}
 
 		m_updated = true;
 
-		m_comp->m_bodiesInside.emplaceBack(m_comp->m_node->getAllocator(),
+		m_comp->m_bodiesInside.emplaceBack(m_comp->m_node->getMemoryPool(),
 										   static_cast<BodyComponent*>(obj.getUserData()));
 	}
 
@@ -59,12 +59,12 @@ public:
 		if(!m_exitUpdated)
 		{
 			m_exitUpdated = true;
-			m_comp->m_bodiesExit.destroy(m_comp->m_node->getAllocator());
+			m_comp->m_bodiesExit.destroy(m_comp->m_node->getMemoryPool());
 		}
 
 		m_updated = true;
 
-		m_comp->m_bodiesExit.emplaceBack(m_comp->m_node->getAllocator(),
+		m_comp->m_bodiesExit.emplaceBack(m_comp->m_node->getMemoryPool(),
 										 static_cast<BodyComponent*>(obj.getUserData()));
 	}
 };
@@ -74,16 +74,16 @@ TriggerComponent::TriggerComponent(SceneNode* node)
 	, m_node(node)
 {
 	ANKI_ASSERT(node);
-	m_callbacks = m_node->getAllocator().newInstance<MyPhysicsTriggerProcessContactCallback>();
+	m_callbacks = newInstance<MyPhysicsTriggerProcessContactCallback>(m_node->getMemoryPool());
 	m_callbacks->m_comp = this;
 }
 
 TriggerComponent::~TriggerComponent()
 {
-	m_node->getAllocator().deleteInstance(m_callbacks);
-	m_bodiesEnter.destroy(m_node->getAllocator());
-	m_bodiesInside.destroy(m_node->getAllocator());
-	m_bodiesExit.destroy(m_node->getAllocator());
+	deleteInstance(m_node->getMemoryPool(), m_callbacks);
+	m_bodiesEnter.destroy(m_node->getMemoryPool());
+	m_bodiesInside.destroy(m_node->getMemoryPool());
+	m_bodiesExit.destroy(m_node->getMemoryPool());
 }
 
 void TriggerComponent::setSphereVolumeRadius(F32 radius)

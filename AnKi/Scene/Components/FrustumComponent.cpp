@@ -27,7 +27,7 @@ FrustumComponent::FrustumComponent(SceneNode* node)
 
 FrustumComponent::~FrustumComponent()
 {
-	m_coverageBuff.m_depthMap.destroy(m_node->getAllocator());
+	m_coverageBuff.m_depthMap.destroy(m_node->getMemoryPool());
 }
 
 Bool FrustumComponent::updateInternal()
@@ -145,8 +145,8 @@ void FrustumComponent::fillCoverageBufferCallback(void* userData, F32* depthValu
 	ANKI_ASSERT(userData && depthValues && width > 0 && height > 0);
 	FrustumComponent& self = *static_cast<FrustumComponent*>(userData);
 
-	self.m_coverageBuff.m_depthMap.destroy(self.m_node->getAllocator());
-	self.m_coverageBuff.m_depthMap.create(self.m_node->getAllocator(), width * height);
+	self.m_coverageBuff.m_depthMap.destroy(self.m_node->getMemoryPool());
+	self.m_coverageBuff.m_depthMap.create(self.m_node->getMemoryPool(), width * height);
 	memcpy(&self.m_coverageBuff.m_depthMap[0], depthValues, self.m_coverageBuff.m_depthMap.getSizeInBytes());
 
 	self.m_coverageBuff.m_depthMapWidth = width;

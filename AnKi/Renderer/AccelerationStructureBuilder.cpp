@@ -22,8 +22,8 @@ void AccelerationStructureBuilder::populateRenderGraph(RenderingContext& ctx)
 	ANKI_ASSERT(instanceCount > 0);
 
 	// Create the instances. Allocate but not construct to save some CPU time
-	void* instancesMem = ctx.m_tempAllocator.getMemoryPool().allocate(
-		sizeof(AccelerationStructureInstance) * instanceCount, alignof(AccelerationStructureInstance));
+	void* instancesMem = ctx.m_tempPool->allocate(sizeof(AccelerationStructureInstance) * instanceCount,
+												  alignof(AccelerationStructureInstance));
 	WeakArray<AccelerationStructureInstance> instances(static_cast<AccelerationStructureInstance*>(instancesMem),
 													   instanceCount);
 

@@ -31,7 +31,7 @@ SpatialComponent::~SpatialComponent()
 		m_node->getSceneGraph().getOctree().remove(m_octreeInfo);
 	}
 
-	m_convexHullPoints.destroy(m_node->getAllocator());
+	m_convexHullPoints.destroy(m_node->getMemoryPool());
 }
 
 void SpatialComponent::setConvexHullWorldSpace(const ConvexHullShape& hull)
@@ -40,7 +40,7 @@ void SpatialComponent::setConvexHullWorldSpace(const ConvexHullShape& hull)
 
 	if(m_convexHullPoints.getSize() != hull.getPoints().getSize())
 	{
-		m_convexHullPoints.resize(m_node->getAllocator(), hull.getPoints().getSize());
+		m_convexHullPoints.resize(m_node->getMemoryPool(), hull.getPoints().getSize());
 	}
 
 	memcpy(&m_convexHullPoints[0], &hull.getPoints()[0], hull.getPoints().getSizeInBytes());

@@ -56,7 +56,7 @@ public:
 	ClassAllocatorBuilder& operator=(const ClassAllocatorBuilder&) = delete; // Non-copyable
 
 	/// Initialize it. Feel free to feedle with the TInterface before you do that.
-	void init(GenericMemoryPoolAllocator<U8> alloc);
+	void init(BaseMemoryPool* pool);
 
 	/// Destroy the allocator builder.
 	void destroy();
@@ -110,7 +110,7 @@ private:
 		mutable TLock m_mtx;
 	};
 
-	GenericMemoryPoolAllocator<U8> m_alloc;
+	BaseMemoryPool* m_pool = nullptr;
 
 	/// The interface as decribed in the class docs.
 	TInterface m_interface;

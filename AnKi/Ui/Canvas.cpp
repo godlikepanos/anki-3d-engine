@@ -38,7 +38,7 @@ Error Canvas::init(FontPtr font, U32 fontHeight, U32 width, U32 height)
 	// Create program
 	ANKI_CHECK(m_manager->getResourceManager().loadResource("ShaderBinaries/Ui.ankiprogbin", m_prog));
 
-	for(U32 i = 0; i < SHADER_COUNT; ++i)
+	for(U32 i = 0; i < kShaderCount; ++i)
 	{
 		const ShaderProgramResourceVariant* variant;
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
@@ -59,8 +59,7 @@ Error Canvas::init(FontPtr font, U32 fontHeight, U32 width, U32 height)
 	m_nearestNearestRepeatSampler = m_manager->getGrManager().newSampler(samplerInit);
 
 	// Allocator
-	m_stackAlloc = StackAllocator<U8>(getAllocator().getMemoryPool().getAllocationCallback(),
-									  getAllocator().getMemoryPool().getAllocationCallbackUserData(), 512_B);
+	m_tempPool.init(getMemoryPool().getAllocationCallback(), getMemoryPool().getAllocationCallbackUserData(), 512_B);
 
 	// Create the context
 	setImAllocator();
@@ -185,7 +184,7 @@ void Canvas::beginBuilding()
 
 void Canvas::pushFont(const FontPtr& font, U32 fontHeight)
 {
-	m_references.pushBack(m_stackAlloc, IntrusivePtr<UiObject>(const_cast<Font*>(font.get())));
+	m_references.pushBack(m_tempPool, IntrusivePtr<UiObject>(const_cast<Font*>(font.get())));
 	ImGui::PushFont(&font->getImFont(fontHeight));
 }
 
@@ -196,8 +195,8 @@ void Canvas::appendToCommandBuffer(CommandBufferPtr cmdb)
 	// Done
 	ImGui::SetCurrentContext(nullptr);
 
-	m_references.destroy(m_stackAlloc);
-	m_stackAlloc.getMemoryPool().reset();
+	m_references.destroy(m_tempPool);
+	m_tempPool.reset();
 }
 
 void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
@@ -218,9 +217,9 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 		}
 
 		ImDrawVert* verts = static_cast<ImDrawVert*>(
-			m_manager->getStagingGpuMemory().allocateFrame(verticesSize, StagingGpuMemoryType::VERTEX, vertsToken));
+			m_manager->getStagingGpuMemory().allocateFrame(verticesSize, StagingGpuMemoryType::kVertex, vertsToken));
 		ImDrawIdx* indices = static_cast<ImDrawIdx*>(
-			m_manager->getStagingGpuMemory().allocateFrame(indicesSize, StagingGpuMemoryType::VERTEX, indicesToken));
+			m_manager->getStagingGpuMemory().allocateFrame(indicesSize, StagingGpuMemoryType::kVertex, indicesToken));
 
 		for(I n = 0; n < drawData.CmdListsCount; ++n)
 		{
@@ -309,11 +308,11 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 					}
 					else if(textureView.isCreated())
 					{
-						cmdb->bindShaderProgram(m_grProgs[RGBA_TEX]);
+						cmdb->bindShaderProgram(m_grProgs[kRgbaTex]);
 					}
 					else
 					{
-						cmdb->bindShaderProgram(m_grProgs[NO_TEX]);
+						cmdb->bindShaderProgram(m_grProgs[kNoTex]);
 					}
 
 					// Bindings

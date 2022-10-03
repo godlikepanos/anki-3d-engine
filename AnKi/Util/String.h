@@ -13,6 +13,7 @@
 #include <cstdio>
 #include <cctype>
 #include <cinttypes> // For PRId8 etc
+#include <cstdarg> // For var args
 
 namespace anki {
 
@@ -285,7 +286,6 @@ public:
 	using CStringType = CString;
 	using Iterator = Char*;
 	using ConstIterator = const Char*;
-	using Allocator = GenericMemoryPoolAllocator<Char>;
 
 	static constexpr PtrSize kNpos = kMaxPtrSize;
 
@@ -300,14 +300,16 @@ public:
 		*this = std::move(b);
 	}
 
-	String(StringAuto&& b)
+	template<typename TMemPool>
+	String(BaseStringRaii<TMemPool>&& b)
 	{
 		*this = std::move(b);
 	}
 
-	String(Allocator alloc, CString str)
+	template<typename TMemPool>
+	String(TMemPool& pool, CString str)
 	{
-		create(alloc, str);
+		create(pool, str);
 	}
 
 	String(const String&) = delete; // Non-copyable
@@ -326,8 +328,13 @@ public:
 		return *this;
 	}
 
-	/// Move a StringAuto to this one.
-	String& operator=(StringAuto&& b);
+	/// Move a BaseStringRaii to this one.
+	template<typename TMemPool>
+	String& operator=(BaseStringRaii<TMemPool>&& b)
+	{
+		m_data = std::move(b.m_data);
+		return *this;
+	}
 
 	/// Return char at the specified position.
 	template<typename TInt>
@@ -409,56 +416,92 @@ public:
 	}
 
 	/// Initialize using a const string.
-	void create(Allocator alloc, const CStringType& cstr);
+	template<typename TMemPool>
+	void create(TMemPool& pool, const CStringType& cstr)
+	{
+		const U32 size = cstr.getLength() + 1;
+		m_data.create(pool, size);
+		memcpy(&m_data[0], &cstr[0], sizeof(Char) * size);
+	}
 
 	/// Initialize using a range. Copies the range of [first, last)
-	void create(Allocator alloc, ConstIterator first, ConstIterator last);
+	template<typename TMemPool>
+	void create(TMemPool& pool, ConstIterator first, ConstIterator last)
+	{
+		ANKI_ASSERT(first != 0 && last != 0);
+		auto length = last - first;
+		m_data.create(pool, length + 1);
+
+		memcpy(&m_data[0], first, length);
+		m_data[length] = '\0';
+	}
 
 	/// Initialize using a character.
-	void create(Allocator alloc, Char c, PtrSize length);
+	template<typename TMemPool>
+	void create(TMemPool& pool, Char c, PtrSize length)
+	{
+		ANKI_ASSERT(c != '\0');
+		m_data.create(pool, length + 1);
+		memset(&m_data[0], c, length);
+		m_data[length] = '\0';
+	}
 
 	/// Copy one string to this one.
-	void create(Allocator alloc, const String& b)
+	template<typename TMemPool>
+	void create(TMemPool& pool, const String& b)
 	{
-		create(alloc, b.toCString());
+		create(pool, b.toCString());
 	}
 
 	/// Append another string to this one.
-	String& append(Allocator alloc, const String& b)
+	template<typename TMemPool>
+	String& append(TMemPool& pool, const String& b)
 	{
 		if(!b.isEmpty())
 		{
-			appendInternal(alloc, &b.m_data[0], b.m_data.getSize() - 1);
+			appendInternal(pool, &b.m_data[0], b.m_data.getSize() - 1);
 		}
 		return *this;
 	}
 
 	/// Append a const string to this one.
-	String& append(Allocator alloc, const CStringType& cstr)
+	template<typename TMemPool>
+	String& append(TMemPool& pool, const CStringType& cstr)
 	{
 		if(!cstr.isEmpty())
 		{
-			appendInternal(alloc, cstr.cstr(), cstr.getLength());
+			appendInternal(pool, cstr.cstr(), cstr.getLength());
 		}
 		return *this;
 	}
 
 	/// Append using a range. Copies the range of [first, oneAfterLast)
-	String& append(Allocator alloc, ConstIterator first, ConstIterator oneAfterLast)
+	template<typename TMemPool>
+	String& append(TMemPool& pool, ConstIterator first, ConstIterator oneAfterLast)
 	{
 		const PtrSize len = oneAfterLast - first;
-		appendInternal(alloc, first, len);
+		appendInternal(pool, first, len);
 		return *this;
 	}
 
 	/// Create formated string.
+	template<typename TMemPool>
 	ANKI_CHECK_FORMAT(2, 3)
-	String& sprintf(Allocator alloc, const Char* fmt, ...);
+	String& sprintf(TMemPool& pool, const Char* fmt, ...)
+	{
+		ANKI_ASSERT(fmt);
+		va_list args;
+		va_start(args, fmt);
+		sprintfInternal(pool, fmt, args);
+		va_end(args);
+		return *this;
+	}
 
 	/// Destroy the string.
-	void destroy(Allocator alloc)
+	template<typename TMemPool>
+	void destroy(TMemPool& pool)
 	{
-		m_data.destroy(alloc);
+		m_data.destroy(pool);
 	}
 
 	Iterator getBegin()
@@ -544,8 +587,23 @@ public:
 	}
 
 	/// Convert a number to a string.
-	template<typename TNumber>
-	void toString(Allocator alloc, TNumber number);
+	template<typename TMemPool, typename TNumber>
+	void toString(TMemPool& pool, TNumber number)
+	{
+		destroy(pool);
+
+		Array<Char, 512> buff;
+		const I ret = std::snprintf(&buff[0], buff.size(), detail::toStringFormat<TNumber>(), number);
+
+		if(ret < 0 || ret > static_cast<I>(buff.getSize()))
+		{
+			ANKI_UTIL_LOGF("To small intermediate buffer");
+		}
+		else
+		{
+			create(pool, &buff[0]);
+		}
+	}
 
 	/// Convert to F16.
 	Error toNumber(F16& out) const
@@ -627,7 +685,40 @@ public:
 	}
 
 	/// Replace all occurrences of "from" with "to".
-	String& replaceAll(Allocator alloc, CString from, CString to);
+	template<typename TMemPool>
+	String& replaceAll(TMemPool& pool, CString from, CString to)
+	{
+		String tmp(pool, toCString());
+		const PtrSize fromLen = from.getLength();
+		const PtrSize toLen = to.getLength();
+
+		PtrSize pos = kNpos;
+		while((pos = tmp.find(from)) != kNpos)
+		{
+			String tmp2;
+			if(pos > 0)
+			{
+				tmp2.create(pool, tmp.getBegin(), tmp.getBegin() + pos);
+			}
+
+			if(toLen > 0)
+			{
+				tmp2.append(pool, to.getBegin(), to.getBegin() + toLen);
+			}
+
+			if(pos + fromLen < tmp.getLength())
+			{
+				tmp2.append(pool, tmp.getBegin() + pos + fromLen, tmp.getEnd());
+			}
+
+			tmp.destroy(pool);
+			tmp = std::move(tmp2);
+		}
+
+		destroy(pool);
+		*this = std::move(tmp);
+		return *this;
+	}
 
 	/// @brief  Execute a functor for all characters of the string.
 	template<typename TFunc>
@@ -650,7 +741,37 @@ public:
 	}
 
 	/// Internal don't use it.
-	ANKI_INTERNAL void sprintf(Allocator& alloc, const Char* fmt, va_list& args);
+	template<typename TMemPool>
+	void sprintfInternal(TMemPool& pool, const Char* fmt, va_list& args)
+	{
+		Array<Char, 512> buffer;
+
+		va_list args2;
+		va_copy(args2, args); // vsnprintf will alter "args". Copy it case we need to call vsnprintf in the else bellow
+
+		I len = std::vsnprintf(&buffer[0], sizeof(buffer), fmt, args);
+
+		if(len < 0)
+		{
+			ANKI_UTIL_LOGF("vsnprintf() failed");
+		}
+		else if(static_cast<PtrSize>(len) >= sizeof(buffer))
+		{
+			I size = len + 1;
+			m_data.create(pool, size);
+
+			len = std::vsnprintf(&m_data[0], size, fmt, args2);
+
+			ANKI_ASSERT((len + 1) == size);
+		}
+		else
+		{
+			// buffer was enough
+			create(pool, CString(&buffer[0]));
+		}
+
+		va_end(args2);
+	}
 
 protected:
 	DynamicArray<Char, PtrSize> m_data;
@@ -661,7 +782,35 @@ protected:
 	}
 
 	/// Append to this string.
-	void appendInternal(Allocator& alloc, const Char* str, PtrSize strLen);
+	template<typename TMemPool>
+	void appendInternal(TMemPool& pool, const Char* str, PtrSize strLen)
+	{
+		ANKI_ASSERT(str != nullptr);
+		ANKI_ASSERT(strLen > 0);
+
+		auto size = m_data.getSize();
+
+		// Fix empty string
+		if(size == 0)
+		{
+			size = 1;
+		}
+
+		DynamicArray<Char, PtrSize> newData;
+		newData.create(pool, size + strLen);
+
+		if(!m_data.isEmpty())
+		{
+			memcpy(&newData[0], &m_data[0], sizeof(Char) * size);
+		}
+
+		memcpy(&newData[size - 1], str, sizeof(Char) * strLen);
+
+		newData[newData.getSize() - 1] = '\0';
+
+		m_data.destroy(pool);
+		m_data = std::move(newData);
+	}
 
 	void move(String& b)
 	{
@@ -670,42 +819,25 @@ protected:
 	}
 };
 
-template<typename TNumber>
-inline void String::toString(Allocator alloc, TNumber number)
-{
-	destroy(alloc);
-
-	Array<Char, 512> buff;
-	const I ret = std::snprintf(&buff[0], buff.size(), detail::toStringFormat<TNumber>(), number);
-
-	if(ret < 0 || ret > static_cast<I>(buff.getSize()))
-	{
-		ANKI_UTIL_LOGF("To small intermediate buffer");
-	}
-	else
-	{
-		create(alloc, &buff[0]);
-	}
-}
-
 /// String with automatic cleanup.
-class StringAuto : public String
+template<typename TMemPool = MemoryPoolPtrWrapper<BaseMemoryPool>>
+class BaseStringRaii : public String
 {
 public:
 	using Base = String;
-	using Allocator = typename Base::Allocator;
+	using MemoryPool = TMemPool;
 
-	/// Create with allocator.
-	StringAuto(Allocator alloc)
+	/// Create with pool.
+	BaseStringRaii(const MemoryPool& pool)
 		: Base()
-		, m_alloc(alloc)
+		, m_pool(pool)
 	{
 	}
 
 	/// Copy construcor.
-	StringAuto(const StringAuto& b)
+	BaseStringRaii(const BaseStringRaii& b)
 		: Base()
-		, m_alloc(b.m_alloc)
+		, m_pool(b.m_pool)
 	{
 		if(!b.isEmpty())
 		{
@@ -714,31 +846,31 @@ public:
 	}
 
 	/// Move constructor.
-	StringAuto(StringAuto&& b)
+	BaseStringRaii(BaseStringRaii&& b)
 		: Base()
 	{
 		move(b);
 	}
 
-	/// Create with allocator and data.
-	StringAuto(Allocator alloc, const CStringType& cstr)
+	/// Create with memory pool and data.
+	BaseStringRaii(const MemoryPool& pool, const CStringType& cstr)
 		: Base()
-		, m_alloc(alloc)
+		, m_pool(pool)
 	{
 		create(cstr);
 	}
 
 	/// Automatic destruction.
-	~StringAuto()
+	~BaseStringRaii()
 	{
-		Base::destroy(m_alloc);
+		Base::destroy(m_pool);
 	}
 
 	/// Copy operator.
-	StringAuto& operator=(const StringAuto& b)
+	BaseStringRaii& operator=(const BaseStringRaii& b)
 	{
 		destroy();
-		m_alloc = b.m_alloc;
+		m_pool = b.m_pool;
 		if(!b.isEmpty())
 		{
 			create(b.m_data.getBegin(), b.m_data.getEnd());
@@ -747,7 +879,7 @@ public:
 	}
 
 	/// Copy from string.
-	StringAuto& operator=(const CString& b)
+	BaseStringRaii& operator=(const CString& b)
 	{
 		destroy();
 		if(!b.isEmpty())
@@ -758,120 +890,135 @@ public:
 	}
 
 	/// Move one string to this one.
-	StringAuto& operator=(StringAuto&& b)
+	BaseStringRaii& operator=(BaseStringRaii&& b)
 	{
 		destroy();
 		move(b);
 		return *this;
 	}
 
-	GenericMemoryPoolAllocator<Char> getAllocator() const
+	const MemoryPool& getMemoryPool() const
 	{
-		return m_alloc;
+		return m_pool;
+	}
+
+	MemoryPool& getMemoryPool()
+	{
+		return m_pool;
 	}
 
 	/// Initialize using a const string.
 	void create(const CStringType& cstr)
 	{
-		Base::create(m_alloc, cstr);
+		Base::create(m_pool, cstr);
 	}
 
 	/// Initialize using a range. Copies the range of [first, last)
 	void create(ConstIterator first, ConstIterator last)
 	{
-		Base::create(m_alloc, first, last);
+		Base::create(m_pool, first, last);
 	}
 
 	/// Initialize using a character.
 	void create(Char c, PtrSize length)
 	{
-		Base::create(m_alloc, c, length);
+		Base::create(m_pool, c, length);
 	}
 
 	/// Copy one string to this one.
 	void create(const String& b)
 	{
-		Base::create(m_alloc, b.toCString());
+		Base::create(m_pool, b.toCString());
 	}
 
 	/// Destroy the string.
 	void destroy()
 	{
-		Base::destroy(m_alloc);
+		Base::destroy(m_pool);
 	}
 
 	/// Append another string to this one.
-	StringAuto& append(const String& b)
+	BaseStringRaii& append(const String& b)
 	{
-		Base::append(m_alloc, b);
+		Base::append(m_pool, b);
 		return *this;
 	}
 
 	/// Append a const string to this one.
-	StringAuto& append(const CStringType& cstr)
+	BaseStringRaii& append(const CStringType& cstr)
 	{
-		Base::append(m_alloc, cstr);
+		Base::append(m_pool, cstr);
 		return *this;
 	}
 
 	/// Create formated string.
 	ANKI_CHECK_FORMAT(1, 2)
-	StringAuto& sprintf(const Char* fmt, ...);
+	BaseStringRaii& sprintf(const Char* fmt, ...)
+	{
+		va_list args;
+		va_start(args, fmt);
+		Base::sprintfInternal(m_pool, fmt, args);
+		va_end(args);
+		return *this;
+	}
 
 	/// Convert a number to a string.
 	template<typename TNumber>
 	void toString(TNumber number)
 	{
-		Base::toString(m_alloc, number);
+		Base::toString(m_pool, number);
 	}
 
 	/// Replace all occurrences of "from" with "to".
-	StringAuto& replaceAll(CString from, CString to)
+	BaseStringRaii& replaceAll(CString from, CString to)
 	{
-		Base::replaceAll(m_alloc, from, to);
+		Base::replaceAll(m_pool, from, to);
 		return *this;
 	}
 
 private:
-	GenericMemoryPoolAllocator<Char> m_alloc;
+	MemoryPool m_pool;
 
-	void move(StringAuto& b)
+	void move(BaseStringRaii& b)
 	{
 		Base::move(b);
-		m_alloc = std::move(b.m_alloc);
+		m_pool = std::move(b.m_pool);
 	}
 };
 
-#define ANKI_STRING_COMPARE_OPERATOR(TypeA, TypeB, op) \
+using StringRaii = BaseStringRaii<>;
+
+#define ANKI_STRING_COMPARE_OPERATOR(TypeA, TypeB, op, ...) \
+	__VA_ARGS__ \
 	inline Bool operator op(TypeA a, TypeB b) \
 	{ \
 		return CString(a) op CString(b); \
 	}
 
-#define ANKI_STRING_COMPARE_OPS(TypeA, TypeB) \
-	ANKI_STRING_COMPARE_OPERATOR(TypeA, TypeB, ==) \
-	ANKI_STRING_COMPARE_OPERATOR(TypeA, TypeB, !=) \
-	ANKI_STRING_COMPARE_OPERATOR(TypeA, TypeB, <) \
-	ANKI_STRING_COMPARE_OPERATOR(TypeA, TypeB, <=) \
-	ANKI_STRING_COMPARE_OPERATOR(TypeA, TypeB, >) \
-	ANKI_STRING_COMPARE_OPERATOR(TypeA, TypeB, >=)
+#define ANKI_STRING_COMPARE_OPS(TypeA, TypeB, ...) \
+	ANKI_STRING_COMPARE_OPERATOR(TypeA, TypeB, ==, __VA_ARGS__) \
+	ANKI_STRING_COMPARE_OPERATOR(TypeA, TypeB, !=, __VA_ARGS__) \
+	ANKI_STRING_COMPARE_OPERATOR(TypeA, TypeB, <, __VA_ARGS__) \
+	ANKI_STRING_COMPARE_OPERATOR(TypeA, TypeB, <=, __VA_ARGS__) \
+	ANKI_STRING_COMPARE_OPERATOR(TypeA, TypeB, >, __VA_ARGS__) \
+	ANKI_STRING_COMPARE_OPERATOR(TypeA, TypeB, >=, __VA_ARGS__)
 
-ANKI_STRING_COMPARE_OPS(const char*, CString)
-ANKI_STRING_COMPARE_OPS(const char*, const String&)
-ANKI_STRING_COMPARE_OPS(const char*, const StringAuto&)
+ANKI_STRING_COMPARE_OPS(const Char*, CString, )
+ANKI_STRING_COMPARE_OPS(const Char*, const String&, )
+ANKI_STRING_COMPARE_OPS(const Char*, const BaseStringRaii<TMemPool>&, template<typename TMemPool>)
 
-ANKI_STRING_COMPARE_OPS(CString, const char*)
-ANKI_STRING_COMPARE_OPS(CString, const String&)
-ANKI_STRING_COMPARE_OPS(CString, const StringAuto&)
+ANKI_STRING_COMPARE_OPS(CString, const Char*, )
+ANKI_STRING_COMPARE_OPS(CString, const String&, )
+ANKI_STRING_COMPARE_OPS(CString, const BaseStringRaii<TMemPool>&, template<typename TMemPool>)
 
-ANKI_STRING_COMPARE_OPS(const String&, const char*)
-ANKI_STRING_COMPARE_OPS(const String&, CString)
-ANKI_STRING_COMPARE_OPS(const String&, const StringAuto&)
+ANKI_STRING_COMPARE_OPS(const String&, const Char*, )
+ANKI_STRING_COMPARE_OPS(const String&, CString, )
+ANKI_STRING_COMPARE_OPS(const String&, const BaseStringRaii<TMemPool>&, template<typename TMemPool>)
 
-ANKI_STRING_COMPARE_OPS(const StringAuto&, const char*)
-ANKI_STRING_COMPARE_OPS(const StringAuto&, CString)
-ANKI_STRING_COMPARE_OPS(const StringAuto&, const String&)
-ANKI_STRING_COMPARE_OPS(const StringAuto&, const StringAuto&)
+ANKI_STRING_COMPARE_OPS(const BaseStringRaii<TMemPool>&, const Char*, template<typename TMemPool>)
+ANKI_STRING_COMPARE_OPS(const BaseStringRaii<TMemPool>&, CString, template<typename TMemPool>)
+ANKI_STRING_COMPARE_OPS(const BaseStringRaii<TMemPool>&, const String&, template<typename TMemPool>)
+ANKI_STRING_COMPARE_OPS(const BaseStringRaii<TMemPool>&, const BaseStringRaii<TMemPool>&, template<typename TMemPool>)
 
 #undef ANKI_STRING_COMPARE_OPERATOR
 #undef ANKI_STRING_COMPARE_OPS

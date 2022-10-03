@@ -13,7 +13,7 @@
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 #include <AnKi/Shaders/Common.glsl>
 
-ANKI_BINDLESS_SET(MATERIAL_SET_BINDLESS)
+ANKI_BINDLESS_SET(kMaterialSetBindless)
 
 #define REALLY_USING_PARALLAX \
 	(PARALLAX == 1 && ANKI_TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER && ANKI_LOD == 0 && ALPHA_TEST == 0)
@@ -30,20 +30,20 @@ ANKI_BINDLESS_SET(MATERIAL_SET_BINDLESS)
 //
 #if defined(ANKI_VERTEX_SHADER)
 
-layout(location = VERTEX_ATTRIBUTE_ID_POSITION) in Vec3 in_position;
+layout(location = kVertexAttributeIdPosition) in Vec3 in_position;
 
 #	if ANKI_TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER
-layout(location = VERTEX_ATTRIBUTE_ID_NORMAL) in ANKI_RP Vec3 in_normal;
-layout(location = VERTEX_ATTRIBUTE_ID_TANGENT) in ANKI_RP Vec4 in_tangent;
+layout(location = kVertexAttributeIdNormal) in ANKI_RP Vec3 in_normal;
+layout(location = kVertexAttributeIdTangent) in ANKI_RP Vec4 in_tangent;
 #	endif
 
 #	if ANKI_TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER || ALPHA_TEST
-layout(location = VERTEX_ATTRIBUTE_ID_UV0) in Vec2 in_uv;
+layout(location = kVertexAttributeIdUv0) in Vec2 in_uv;
 #	endif
 
 #	if ANKI_BONES
-layout(location = VERTEX_ATTRIBUTE_ID_BONE_WEIGHTS) in Vec4 in_boneWeights;
-layout(location = VERTEX_ATTRIBUTE_ID_BONE_INDICES) in UVec4 in_boneIndices;
+layout(location = kVertexAttributeIdBoneWeights) in Vec4 in_boneWeights;
+layout(location = kVertexAttributeIdBoneIndices) in UVec4 in_boneIndices;
 #	endif
 
 #endif // defined(ANKI_VERTEX_SHADER)

@@ -66,10 +66,10 @@ Error RtShadows::initInternal()
 	{
 		ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/RtShadowsDenoise.ankiprogbin", m_denoiseProg));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_denoiseProg);
-		variantInitInfo.addConstant("OUT_IMAGE_SIZE",
+		variantInitInfo.addConstant("kOutImageSize",
 									UVec2(m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2));
-		variantInitInfo.addConstant("MIN_SAMPLE_COUNT", 8u);
-		variantInitInfo.addConstant("MAX_SAMPLE_COUNT", 32u);
+		variantInitInfo.addConstant("kMinSampleCount", 8u);
+		variantInitInfo.addConstant("kMaxSampleCount", 32u);
 		variantInitInfo.addMutation("BLUR_ORIENTATION", 0);
 
 		const ShaderProgramResourceVariant* variant;
@@ -87,7 +87,7 @@ Error RtShadows::initInternal()
 		ANKI_CHECK(
 			getResourceManager().loadResource("ShaderBinaries/RtShadowsSvgfVariance.ankiprogbin", m_svgfVarianceProg));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_svgfVarianceProg);
-		variantInitInfo.addConstant("FB_SIZE",
+		variantInitInfo.addConstant("kFramebufferSize",
 									UVec2(m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2));
 
 		const ShaderProgramResourceVariant* variant;
@@ -101,7 +101,7 @@ Error RtShadows::initInternal()
 		ANKI_CHECK(
 			getResourceManager().loadResource("ShaderBinaries/RtShadowsSvgfAtrous.ankiprogbin", m_svgfAtrousProg));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_svgfAtrousProg);
-		variantInitInfo.addConstant("FB_SIZE",
+		variantInitInfo.addConstant("kFramebufferSize",
 									UVec2(m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2));
 		variantInitInfo.addMutation("LAST_PASS", 0);
 
@@ -118,7 +118,7 @@ Error RtShadows::initInternal()
 	{
 		ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/RtShadowsUpscale.ankiprogbin", m_upscaleProg));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_upscaleProg);
-		variantInitInfo.addConstant("OUT_IMAGE_SIZE",
+		variantInitInfo.addConstant("kOutImageSize",
 									UVec2(m_r->getInternalResolution().x(), m_r->getInternalResolution().y()));
 
 		const ShaderProgramResourceVariant* variant;
@@ -390,7 +390,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 			ANKI_ASSERT(layerFound && "Directional can't fail");
 
 			rqueue.m_directionalLight.m_shadowLayer = U8(layerIdx);
-			ANKI_ASSERT(rqueue.m_directionalLight.m_shadowLayer < MAX_RT_SHADOW_LAYERS);
+			ANKI_ASSERT(rqueue.m_directionalLight.m_shadowLayer < kMaxRtShadowLayers);
 			m_runCtx.m_layersWithRejectedHistory.set(layerIdx, rejectHistory);
 		}
 
@@ -408,7 +408,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 			if(layerFound)
 			{
 				light.m_shadowLayer = U8(layerIdx);
-				ANKI_ASSERT(light.m_shadowLayer < MAX_RT_SHADOW_LAYERS);
+				ANKI_ASSERT(light.m_shadowLayer < kMaxRtShadowLayers);
 				m_runCtx.m_layersWithRejectedHistory.set(layerIdx, rejectHistory);
 			}
 			else
@@ -432,7 +432,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 			if(layerFound)
 			{
 				light.m_shadowLayer = U8(layerIdx);
-				ANKI_ASSERT(light.m_shadowLayer < MAX_RT_SHADOW_LAYERS);
+				ANKI_ASSERT(light.m_shadowLayer < kMaxRtShadowLayers);
 				m_runCtx.m_layersWithRejectedHistory.set(layerIdx, rejectHistory);
 			}
 			else
@@ -478,7 +478,7 @@ void RtShadows::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCt
 	cmdb->bindAllBindless(1);
 
 	RtShadowsUniforms unis;
-	for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
+	for(U32 i = 0; i < kMaxRtShadowLayers; ++i)
 	{
 		unis.historyRejectFactor[i] = F32(m_runCtx.m_layersWithRejectedHistory.get(i));
 	}

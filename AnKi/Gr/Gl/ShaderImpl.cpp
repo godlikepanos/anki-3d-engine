@@ -43,11 +43,11 @@ Error ShaderImpl::init(CString source, ConstWeakArray<ShaderSpecializationConstV
 	m_glType = gltype[U(m_shaderType)];
 
 	// Create a new shader with spec consts if needed
-	StringAuto newSrc(getAllocator());
+	StringRaii newSrc(getAllocator());
 	if(constValues.getSize())
 	{
 		// Create const str
-		StringListAuto constStrLines(getAllocator());
+		StringListRaii constStrLines(getAllocator());
 		U count = 0;
 		for(const ShaderSpecializationConstValue& constVal : constValues)
 		{
@@ -63,11 +63,11 @@ Error ShaderImpl::init(CString source, ConstWeakArray<ShaderSpecializationConstV
 
 			++count;
 		}
-		StringAuto constStr(getAllocator());
+		StringRaii constStr(getAllocator());
 		constStrLines.join("\n", constStr);
 
 		// Break the old source
-		StringListAuto lines(getAllocator());
+		StringListRaii lines(getAllocator());
 		lines.splitString(source, '\n');
 		ANKI_ASSERT(lines.getFront().find("#version") == 0);
 		lines.popFront();
@@ -117,7 +117,7 @@ Error ShaderImpl::init(CString source, ConstWeakArray<ShaderSpecializationConstV
 			ANKI_ASSERT(0);
 		}
 
-		StringAuto fname(getAllocator());
+		StringRaii fname(getAllocator());
 		CString cacheDir = getManager().getCacheDirectory();
 		fname.sprintf("%s/%05u.%s", &cacheDir[0], static_cast<U32>(m_glName), ext);
 
@@ -132,7 +132,7 @@ Error ShaderImpl::init(CString source, ConstWeakArray<ShaderSpecializationConstV
 	if(status == GL_FALSE)
 	{
 		auto alloc = getAllocator();
-		StringAuto compilerLog(alloc);
+		StringRaii compilerLog(alloc);
 		GLint compilerLogLen = 0;
 		GLint charsWritten = 0;
 
