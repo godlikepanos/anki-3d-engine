@@ -25,7 +25,7 @@ jobs:
       run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DANKI_EXTRA_CHECKS=OFF
 
     - name: Build Linux ShaderCompiler
-      run: cmake --build ${{github.workspace}}/build --parallel --config Release --target ShaderCompiler
+      run: cmake --build ${{github.workspace}}/build --config Release --target ShaderCompiler
 
     - name: Generate project
       run: ./Samples/Sponza/GenerateAndroidProject.sh ${{github.workspace}}/build/Bin/ShaderCompiler
