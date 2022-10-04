@@ -891,7 +891,8 @@ void RenderGraph::initBatches()
 			{
 				setTimestamp = false;
 				TimestampQueryPtr query = getManager().newTimestampQuery();
-				cmdb->resetTimestampQuery(query);
+				TimestampQuery* pQuery = query.get();
+				cmdb->resetTimestampQueries({&pQuery, 1});
 				cmdb->writeTimestamp(query);
 
 				m_statistics.m_nextTimestamp = (m_statistics.m_nextTimestamp + 1) % kMaxBufferedTimestamps;
@@ -1301,7 +1302,6 @@ void RenderGraph::run() const
 		CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 		// Set the barriers
-#if 1
 		DynamicArrayRaii<TextureBarrierInfo> texBarriers(m_ctx->m_pool);
 		texBarriers.resizeStorage(batch.m_textureBarriersBefore.getSize());
 		for(const TextureBarrier& barrier : batch.m_textureBarriersBefore)
@@ -1333,23 +1333,6 @@ void RenderGraph::run() const
 			inf.m_as = m_ctx->m_as[barrier.m_idx].m_as.get();
 		}
 		cmdb->setPipelineBarrier(texBarriers, buffBarriers, asBarriers);
-#else
-		for(const TextureBarrier& barrier : batch.m_textureBarriersBefore)
-		{
-			cmdb->setTextureSurfaceBarrier(m_ctx->m_rts[barrier.m_idx].m_texture, barrier.m_usageBefore,
-										   barrier.m_usageAfter, barrier.m_surface);
-		}
-		for(const BufferBarrier& barrier : batch.m_bufferBarriersBefore)
-		{
-			const Buffer& b = m_ctx->m_buffers[barrier.m_idx];
-			cmdb->setBufferBarrier(b.m_buffer, barrier.m_usageBefore, barrier.m_usageAfter, b.m_offset, b.m_range);
-		}
-		for(const ASBarrier& barrier : batch.m_asBarriersBefore)
-		{
-			cmdb->setAccelerationStructureBarrier(m_ctx->m_as[barrier.m_idx].m_as, barrier.m_usageBefore,
-												  barrier.m_usageAfter);
-		}
-#endif
 
 		// Call the passes
 		for(U32 passIdx : batch.m_passIndices)
@@ -1373,10 +1356,13 @@ void RenderGraph::run() const
 			}
 			else
 			{
+				DynamicArrayRaii<CommandBuffer*> cmdbs(m_ctx->m_pool);
+				cmdbs.resizeStorage(size);
 				for(const CommandBufferPtr& cmdb2nd : pass.m_secondLevelCmdbs)
 				{
-					cmdb->pushSecondLevelCommandBuffer(cmdb2nd);
+					cmdbs.emplaceBack(cmdb2nd.get());
 				}
+				cmdb->pushSecondLevelCommandBuffers(cmdbs);
 			}
 
 			if(pass.fb().isCreated())
@@ -1398,7 +1384,8 @@ void RenderGraph::flush()
 			// Write a timestamp before the last flush
 
 			TimestampQueryPtr query = getManager().newTimestampQuery();
-			m_ctx->m_graphicsCmdbs[i]->resetTimestampQuery(query);
+			TimestampQuery* pQuery = query.get();
+			m_ctx->m_graphicsCmdbs[i]->resetTimestampQueries({&pQuery, 1});
 			m_ctx->m_graphicsCmdbs[i]->writeTimestamp(query);
 
 			m_statistics.m_timestamps[m_statistics.m_nextTimestamp * 2 + 1] = query;

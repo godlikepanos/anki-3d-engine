@@ -23,19 +23,6 @@ using namespace anki;
 const U WIDTH = 1024;
 const U HEIGHT = 768;
 
-static const char* VERT_SRC = R"(
-out gl_PerVertex
-{
-	vec4 gl_Position;
-};
-
-void main()
-{
-	const vec2 POSITIONS[3] = vec2[](vec2(-1.0, 1.0), vec2(0.0, -1.0), vec2(1.0, 1.0));
-
-	gl_Position = vec4(POSITIONS[gl_VertexID % 3], 0.0, 1.0);
-})";
-
 static const char* VERT_QUAD_STRIP_SRC = R"(
 out gl_PerVertex
 {
@@ -137,13 +124,6 @@ layout(set = 0, binding = 0, std140, row_major) uniform u0_
 void main()
 {
 	gl_Position = u_mvp * vec4(in_pos, 1.0);
-})";
-
-static const char* FRAG_SRC = R"(layout (location = 0) out vec4 out_color;
-
-void main()
-{
-	out_color = vec4(0.5);
 })";
 
 static const char* FRAG_UBO_SRC = R"(layout (location = 0) out vec4 out_color;
@@ -250,8 +230,8 @@ void main()
 	imageStore(u_img, ivec2(gl_WorkGroupID.x, gl_WorkGroupID.y), u_color);
 })";
 
-static NativeWindow* win = nullptr;
-static GrManager* gr = nullptr;
+static NativeWindow* g_win = nullptr;
+static GrManager* g_gr = nullptr;
 static StagingGpuMemoryPool* stagingMem = nullptr;
 static Input* input = nullptr;
 
@@ -264,26 +244,26 @@ static Input* input = nullptr;
 	cfg.setGrVsync(false); \
 	cfg.setGrRayTracing(true); \
 	cfg.setGrDebugMarkers(true); \
-	win = createWindow(cfg); \
-	ANKI_TEST_EXPECT_NO_ERR(Input::newInstance(allocAligned, nullptr, win, input)); \
-	gr = createGrManager(&cfg, win); \
-	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(gr, cfg)); \
+	g_win = createWindow(cfg); \
+	ANKI_TEST_EXPECT_NO_ERR(Input::newInstance(allocAligned, nullptr, g_win, input)); \
+	g_gr = createGrManager(&cfg, g_win); \
+	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(g_gr, cfg)); \
 	TransferGpuAllocator* transfAlloc = new TransferGpuAllocator(); \
-	ANKI_TEST_EXPECT_NO_ERR(transfAlloc->init(128_MB, gr, &gr->getMemoryPool())); \
+	ANKI_TEST_EXPECT_NO_ERR(transfAlloc->init(128_MB, g_gr, &g_gr->getMemoryPool())); \
 	while(true) \
 	{
 
 #define COMMON_END() \
 	break; \
 	} \
-	gr->finish(); \
+	g_gr->finish(); \
 	delete transfAlloc; \
 	delete stagingMem; \
-	GrManager::deleteInstance(gr); \
+	GrManager::deleteInstance(g_gr); \
 	Input::deleteInstance(input); \
-	NativeWindow::deleteInstance(win); \
-	win = nullptr; \
-	gr = nullptr; \
+	NativeWindow::deleteInstance(g_win); \
+	g_win = nullptr; \
+	g_gr = nullptr; \
 	stagingMem = nullptr;
 
 static void* setUniforms(PtrSize size, CommandBufferPtr& cmdb, U32 set, U32 binding)
@@ -311,7 +291,7 @@ static void* setStorage(PtrSize size, CommandBufferPtr& cmdb, U32 set, U32 bindi
 		ANKI_TEST_EXPECT_NO_ERR(transfAlloc->allocate(size_, handle_)); \
 		void* f = handle_.getMappedMemory(); \
 		memcpy(f, ptr_, size_); \
-		TextureViewPtr view = gr->newTextureView(TextureViewInitInfo(tex_, surf_)); \
+		TextureViewPtr view = g_gr->newTextureView(TextureViewInitInfo(tex_, surf_)); \
 		cmdb_->copyBufferToTextureView(handle_.getBuffer(), handle_.getOffset(), handle_.getRange(), view); \
 	} while(0)
 
@@ -321,7 +301,7 @@ static void* setStorage(PtrSize size, CommandBufferPtr& cmdb, U32 set, U32 bindi
 		ANKI_TEST_EXPECT_NO_ERR(transfAlloc->allocate(size_, handle_)); \
 		void* f = handle_.getMappedMemory(); \
 		memcpy(f, ptr_, size_); \
-		TextureViewPtr view = gr->newTextureView(TextureViewInitInfo(tex_, vol_)); \
+		TextureViewPtr view = g_gr->newTextureView(TextureViewInitInfo(tex_, vol_)); \
 		cmdb_->copyBufferToTextureView(handle_.getBuffer(), handle_.getOffset(), handle_.getRange(), view); \
 	} while(0)
 
@@ -373,14 +353,80 @@ static void createCube(GrManager& gr, BufferPtr& verts, BufferPtr& indices)
 
 static void presentBarrierA(CommandBufferPtr cmdb, TexturePtr presentTex)
 {
-	cmdb->setTextureBarrier(presentTex, TextureUsageBit::kNone, TextureUsageBit::kFramebufferWrite,
-							TextureSubresourceInfo());
+	TextureBarrierInfo barrier;
+	barrier.m_previousUsage = TextureUsageBit::kNone;
+	barrier.m_nextUsage = TextureUsageBit::kFramebufferWrite;
+	barrier.m_texture = presentTex.get();
+	cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 }
 
 static void presentBarrierB(CommandBufferPtr cmdb, TexturePtr presentTex)
 {
-	cmdb->setTextureBarrier(presentTex, TextureUsageBit::kFramebufferWrite, TextureUsageBit::kPresent,
-							TextureSubresourceInfo());
+	TextureBarrierInfo barrier;
+	barrier.m_previousUsage = TextureUsageBit::kFramebufferWrite;
+	barrier.m_nextUsage = TextureUsageBit::kPresent;
+	barrier.m_texture = presentTex.get();
+	cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
+}
+
+static void setTextureSurfaceBarrier(CommandBufferPtr& cmdb, TexturePtr tex, TextureUsageBit before,
+									 TextureUsageBit after, const TextureSurfaceInfo& surf)
+{
+	TextureBarrierInfo barrier;
+	barrier.m_previousUsage = before;
+	barrier.m_nextUsage = after;
+	barrier.m_texture = tex.get();
+	barrier.m_subresource = surf;
+
+	cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
+}
+
+static void setTextureBarrier(CommandBufferPtr& cmdb, TexturePtr tex, TextureUsageBit before, TextureUsageBit after,
+							  const TextureSubresourceInfo& subresource)
+{
+	TextureBarrierInfo barrier;
+	barrier.m_previousUsage = before;
+	barrier.m_nextUsage = after;
+	barrier.m_texture = tex.get();
+	barrier.m_subresource = subresource;
+
+	cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
+}
+
+static void setTextureVolumeBarrier(CommandBufferPtr& cmdb, TexturePtr tex, TextureUsageBit before,
+									TextureUsageBit after, const TextureVolumeInfo& vol)
+{
+	TextureBarrierInfo barrier;
+	barrier.m_previousUsage = before;
+	barrier.m_nextUsage = after;
+	barrier.m_texture = tex.get();
+	barrier.m_subresource = vol;
+
+	cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
+}
+
+static void setBufferBarrier(CommandBufferPtr cmdb, BufferPtr buffer, BufferUsageBit before, BufferUsageBit after,
+							 PtrSize offset, PtrSize range)
+{
+	BufferBarrierInfo barrier;
+	barrier.m_previousUsage = before;
+	barrier.m_nextUsage = after;
+	barrier.m_offset = offset;
+	barrier.m_size = range;
+	barrier.m_buffer = buffer.get();
+
+	cmdb->setPipelineBarrier({}, {&barrier, 1}, {});
+}
+
+static void setAccelerationStructureBarrier(CommandBufferPtr cmdb, AccelerationStructurePtr as,
+											AccelerationStructureUsageBit before, AccelerationStructureUsageBit after)
+{
+	AccelerationStructureBarrierInfo barrier;
+	barrier.m_previousUsage = before;
+	barrier.m_nextUsage = after;
+	barrier.m_as = as.get();
+
+	cmdb->setPipelineBarrier({}, {}, {&barrier, 1});
 }
 
 ANKI_TEST(Gr, GrManager){COMMON_BEGIN() COMMON_END()}
@@ -389,7 +435,7 @@ ANKI_TEST(Gr, Shader)
 {
 	COMMON_BEGIN()
 
-	ShaderPtr shader = createShader(FRAG_MRT_SRC, ShaderType::kFragment, *gr);
+	ShaderPtr shader = createShader(FRAG_MRT_SRC, ShaderType::kFragment, *g_gr);
 
 	COMMON_END()
 }
@@ -398,7 +444,27 @@ ANKI_TEST(Gr, ShaderProgram)
 {
 	COMMON_BEGIN()
 
-	ShaderProgramPtr ppline = createProgram(VERT_SRC, FRAG_SRC, *gr);
+	constexpr const char* kVertSrc = R"(
+out gl_PerVertex
+{
+	vec4 gl_Position;
+};
+
+void main()
+{
+	const vec2 POSITIONS[3] = vec2[](vec2(-1.0, 1.0), vec2(0.0, -1.0), vec2(1.0, 1.0));
+
+	gl_Position = vec4(POSITIONS[gl_VertexID % 3], 0.0, 1.0);
+})";
+
+	constexpr const char* kFragSrc = R"(layout (location = 0) out vec4 out_color;
+
+void main()
+{
+	out_color = vec4(0.5);
+})";
+
+	ShaderProgramPtr ppline = createProgram(kVertSrc, kFragSrc, *g_gr);
 
 	COMMON_END()
 }
@@ -414,12 +480,12 @@ ANKI_TEST(Gr, ClearScreen)
 		HighRezTimer timer;
 		timer.start();
 
-		TexturePtr presentTex = gr->acquireNextPresentableTexture();
-		FramebufferPtr fb = createColorFb(*gr, presentTex);
+		TexturePtr presentTex = g_gr->acquireNextPresentableTexture();
+		FramebufferPtr fb = createColorFb(*g_gr, presentTex);
 
 		CommandBufferInitInfo cinit;
 		cinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
-		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
+		CommandBufferPtr cmdb = g_gr->newCommandBuffer(cinit);
 
 		presentBarrierA(cmdb, presentTex);
 		cmdb->beginRenderPass(fb, {TextureUsageBit::kFramebufferWrite}, {});
@@ -427,7 +493,7 @@ ANKI_TEST(Gr, ClearScreen)
 		presentBarrierB(cmdb, presentTex);
 		cmdb->flush();
 
-		gr->swapBuffers();
+		g_gr->swapBuffers();
 
 		timer.stop();
 		const F32 TICK = 1.0f / 30.0f;
@@ -444,8 +510,28 @@ ANKI_TEST(Gr, SimpleDrawcall)
 {
 	COMMON_BEGIN()
 
+	constexpr const char* kVertSrc = R"(
+out gl_PerVertex
+{
+	vec4 gl_Position;
+};
+
+void main()
+{
+	const vec2 POSITIONS[3] = vec2[](vec2(-1.0, 1.0), vec2(0.0, -1.0), vec2(1.0, 1.0));
+
+	gl_Position = vec4(POSITIONS[gl_VertexID % 3], 0.0, 1.0);
+})";
+
+	constexpr const char* kFragSrc = R"(layout (location = 0) out vec4 out_color;
+
+void main()
+{
+	out_color = vec4(0.5);
+})";
+
 	ANKI_TEST_LOGI("Expect to see a grey triangle");
-	ShaderProgramPtr prog = createProgram(VERT_SRC, FRAG_SRC, *gr);
+	ShaderProgramPtr prog = createProgram(kVertSrc, kFragSrc, *g_gr);
 
 	const U ITERATIONS = 200;
 	for(U i = 0; i < ITERATIONS; ++i)
@@ -453,14 +539,14 @@ ANKI_TEST(Gr, SimpleDrawcall)
 		HighRezTimer timer;
 		timer.start();
 
-		TexturePtr presentTex = gr->acquireNextPresentableTexture();
-		FramebufferPtr fb = createColorFb(*gr, presentTex);
+		TexturePtr presentTex = g_gr->acquireNextPresentableTexture();
+		FramebufferPtr fb = createColorFb(*g_gr, presentTex);
 
 		CommandBufferInitInfo cinit;
 		cinit.m_flags = CommandBufferFlag::kGeneralWork;
-		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
+		CommandBufferPtr cmdb = g_gr->newCommandBuffer(cinit);
 
-		cmdb->setViewport(0, 0, win->getWidth(), win->getHeight());
+		cmdb->setViewport(0, 0, g_win->getWidth(), g_win->getHeight());
 		cmdb->bindShaderProgram(prog);
 		presentBarrierA(cmdb, presentTex);
 		cmdb->beginRenderPass(fb, {{TextureUsageBit::kFramebufferWrite}}, {});
@@ -469,7 +555,7 @@ ANKI_TEST(Gr, SimpleDrawcall)
 		presentBarrierB(cmdb, presentTex);
 		cmdb->flush();
 
-		gr->swapBuffers();
+		g_gr->swapBuffers();
 
 		timer.stop();
 		const F32 TICK = 1.0f / 30.0f;
@@ -557,11 +643,18 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 	srand(U32(time(nullptr)));
 	COMMON_BEGIN()
 
+	constexpr const char* kFragSrc = R"(layout (location = 0) out vec4 out_color;
+
+void main()
+{
+	out_color = vec4(0.5);
+})";
+
 	ANKI_TEST_LOGI("Expect to see a grey quad appearing in the 4 corners. "
 				   "Around that quad is a border that changes color. "
 				   "The quads appear counter-clockwise");
-	ShaderProgramPtr prog = createProgram(VERT_QUAD_STRIP_SRC, FRAG_SRC, *gr);
-	ShaderProgramPtr blitProg = createProgram(VERT_QUAD_SRC, FRAG_TEX_SRC, *gr);
+	ShaderProgramPtr prog = createProgram(VERT_QUAD_STRIP_SRC, kFragSrc, *g_gr);
+	ShaderProgramPtr blitProg = createProgram(VERT_QUAD_SRC, FRAG_TEX_SRC, *g_gr);
 
 	const Format COL_FORMAT = Format::kR8G8B8A8Unorm;
 	const U RT_WIDTH = 32;
@@ -577,16 +670,16 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 	init.m_layerCount = 1;
 	init.m_samples = 1;
 	init.m_type = TextureType::k2D;
-	TexturePtr rt = gr->newTexture(init);
+	TexturePtr rt = g_gr->newTexture(init);
 
 	TextureViewInitInfo viewInit(rt);
-	TextureViewPtr texView = gr->newTextureView(viewInit);
+	TextureViewPtr texView = g_gr->newTextureView(viewInit);
 
 	Array<FramebufferPtr, 4> fb;
 	for(FramebufferPtr& f : fb)
 	{
 		TextureViewInitInfo viewInf(rt);
-		TextureViewPtr view = gr->newTextureView(viewInf);
+		TextureViewPtr view = g_gr->newTextureView(viewInf);
 
 		FramebufferInitInfo fbinit;
 		fbinit.m_colorAttachmentCount = 1;
@@ -594,13 +687,13 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 			{getRandomRange(0.0f, 1.0f), getRandomRange(0.0f, 1.0f), getRandomRange(0.0f, 1.0f), 1.0}};
 		fbinit.m_colorAttachments[0].m_textureView = view;
 
-		f = gr->newFramebuffer(fbinit);
+		f = g_gr->newFramebuffer(fbinit);
 	}
 
 	SamplerInitInfo samplerInit;
 	samplerInit.m_minMagFilter = SamplingFilter::kNearest;
 	samplerInit.m_mipmapFilter = SamplingFilter::kBase;
-	SamplerPtr sampler = gr->newSampler(samplerInit);
+	SamplerPtr sampler = g_gr->newSampler(samplerInit);
 
 	static const Array2d<U32, 4, 4> VIEWPORTS = {{{{0, 0, RT_WIDTH / 2, RT_HEIGHT / 2}},
 												  {{RT_WIDTH / 2, 0, RT_WIDTH / 2, RT_HEIGHT / 2}},
@@ -615,32 +708,32 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 		HighRezTimer timer;
 		timer.start();
 
-		TexturePtr presentTex = gr->acquireNextPresentableTexture();
-		FramebufferPtr dfb = createColorFb(*gr, presentTex);
+		TexturePtr presentTex = g_gr->acquireNextPresentableTexture();
+		FramebufferPtr dfb = createColorFb(*g_gr, presentTex);
 
 		if(i == 0)
 		{
 			CommandBufferInitInfo cinit;
 			cinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
-			CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
+			CommandBufferPtr cmdb = g_gr->newCommandBuffer(cinit);
 
 			cmdb->setViewport(0, 0, RT_WIDTH, RT_HEIGHT);
-			cmdb->setTextureSurfaceBarrier(rt, TextureUsageBit::kNone, TextureUsageBit::kFramebufferWrite,
-										   TextureSurfaceInfo(0, 0, 0, 0));
+			setTextureSurfaceBarrier(cmdb, rt, TextureUsageBit::kNone, TextureUsageBit::kFramebufferWrite,
+									 TextureSurfaceInfo(0, 0, 0, 0));
 			cmdb->beginRenderPass(fb[0], {{TextureUsageBit::kFramebufferWrite}}, {});
 			cmdb->endRenderPass();
-			cmdb->setTextureSurfaceBarrier(rt, TextureUsageBit::kFramebufferWrite, TextureUsageBit::kSampledFragment,
-										   TextureSurfaceInfo(0, 0, 0, 0));
+			setTextureSurfaceBarrier(cmdb, rt, TextureUsageBit::kFramebufferWrite, TextureUsageBit::kSampledFragment,
+									 TextureSurfaceInfo(0, 0, 0, 0));
 			cmdb->flush();
 		}
 
 		CommandBufferInitInfo cinit;
 		cinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
-		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
+		CommandBufferPtr cmdb = g_gr->newCommandBuffer(cinit);
 
 		// Draw offscreen
-		cmdb->setTextureSurfaceBarrier(rt, TextureUsageBit::kSampledFragment, TextureUsageBit::kFramebufferWrite,
-									   TextureSurfaceInfo(0, 0, 0, 0));
+		setTextureSurfaceBarrier(cmdb, rt, TextureUsageBit::kSampledFragment, TextureUsageBit::kFramebufferWrite,
+								 TextureSurfaceInfo(0, 0, 0, 0));
 		auto vp = VIEWPORTS[(i / 30) % 4];
 		cmdb->setViewport(vp[0], vp[1], vp[2], vp[3]);
 		cmdb->setScissor(vp[0] + SCISSOR_MARGIN, vp[1] + SCISSOR_MARGIN, vp[2] - SCISSOR_MARGIN * 2,
@@ -653,11 +746,11 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 		cmdb->endRenderPass();
 
 		// Draw onscreen
-		cmdb->setViewport(0, 0, win->getWidth(), win->getHeight());
-		cmdb->setScissor(0, 0, win->getWidth(), win->getHeight());
+		cmdb->setViewport(0, 0, g_win->getWidth(), g_win->getHeight());
+		cmdb->setScissor(0, 0, g_win->getWidth(), g_win->getHeight());
 		cmdb->bindShaderProgram(blitProg);
-		cmdb->setTextureSurfaceBarrier(rt, TextureUsageBit::kFramebufferWrite, TextureUsageBit::kSampledFragment,
-									   TextureSurfaceInfo(0, 0, 0, 0));
+		setTextureSurfaceBarrier(cmdb, rt, TextureUsageBit::kFramebufferWrite, TextureUsageBit::kSampledFragment,
+								 TextureSurfaceInfo(0, 0, 0, 0));
 		cmdb->bindTextureAndSampler(0, 0, texView, sampler);
 		presentBarrierA(cmdb, presentTex);
 		cmdb->beginRenderPass(dfb, {TextureUsageBit::kFramebufferWrite}, {});
@@ -667,7 +760,7 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 
 		cmdb->flush();
 
-		gr->swapBuffers();
+		g_gr->swapBuffers();
 
 		timer.stop();
 		const F32 TICK = 1.0f / 30.0f;
@@ -688,13 +781,13 @@ ANKI_TEST(Gr, Buffer)
 	buffInit.m_size = 512;
 	buffInit.m_usage = BufferUsageBit::kAllUniform;
 	buffInit.m_mapAccess = BufferMapAccessBit::kNone;
-	BufferPtr a = gr->newBuffer(buffInit);
+	BufferPtr a = g_gr->newBuffer(buffInit);
 
 	buffInit.setName("b");
 	buffInit.m_size = 64;
 	buffInit.m_usage = BufferUsageBit::kAllStorage;
 	buffInit.m_mapAccess = BufferMapAccessBit::kWrite | BufferMapAccessBit::kRead;
-	BufferPtr b = gr->newBuffer(buffInit);
+	BufferPtr b = g_gr->newBuffer(buffInit);
 
 	void* ptr = b->map(0, 64, BufferMapAccessBit::kWrite);
 	ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
@@ -717,7 +810,7 @@ ANKI_TEST(Gr, DrawWithUniforms)
 
 	// A non-uploaded buffer
 	BufferPtr b =
-		gr->newBuffer(BufferInitInfo(sizeof(Vec4) * 3, BufferUsageBit::kAllUniform, BufferMapAccessBit::kWrite));
+		g_gr->newBuffer(BufferInitInfo(sizeof(Vec4) * 3, BufferUsageBit::kAllUniform, BufferMapAccessBit::kWrite));
 
 	Vec4* ptr = static_cast<Vec4*>(b->map(0, sizeof(Vec4) * 3, BufferMapAccessBit::kWrite));
 	ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
@@ -727,7 +820,7 @@ ANKI_TEST(Gr, DrawWithUniforms)
 	b->unmap();
 
 	// Progm
-	ShaderProgramPtr prog = createProgram(VERT_UBO_SRC, FRAG_UBO_SRC, *gr);
+	ShaderProgramPtr prog = createProgram(VERT_UBO_SRC, FRAG_UBO_SRC, *g_gr);
 
 	const U ITERATION_COUNT = 100;
 	U iterations = ITERATION_COUNT;
@@ -735,14 +828,14 @@ ANKI_TEST(Gr, DrawWithUniforms)
 	{
 		HighRezTimer timer;
 		timer.start();
-		TexturePtr presentTex = gr->acquireNextPresentableTexture();
-		FramebufferPtr fb = createColorFb(*gr, presentTex);
+		TexturePtr presentTex = g_gr->acquireNextPresentableTexture();
+		FramebufferPtr fb = createColorFb(*g_gr, presentTex);
 
 		CommandBufferInitInfo cinit;
 		cinit.m_flags = CommandBufferFlag::kGeneralWork;
-		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
+		CommandBufferPtr cmdb = g_gr->newCommandBuffer(cinit);
 
-		cmdb->setViewport(0, 0, win->getWidth(), win->getHeight());
+		cmdb->setViewport(0, 0, g_win->getWidth(), g_win->getHeight());
 		cmdb->bindShaderProgram(prog);
 		presentBarrierA(cmdb, presentTex);
 		cmdb->beginRenderPass(fb, {TextureUsageBit::kFramebufferWrite}, {});
@@ -762,7 +855,7 @@ ANKI_TEST(Gr, DrawWithUniforms)
 		presentBarrierB(cmdb, presentTex);
 		cmdb->flush();
 
-		gr->swapBuffers();
+		g_gr->swapBuffers();
 
 		timer.stop();
 		const F32 TICK = 1.0f / 30.0f;
@@ -787,7 +880,8 @@ ANKI_TEST(Gr, DrawWithVertex)
 	};
 	static_assert(sizeof(Vert) == sizeof(Vec4), "See file");
 
-	BufferPtr b = gr->newBuffer(BufferInitInfo(sizeof(Vert) * 3, BufferUsageBit::kVertex, BufferMapAccessBit::kWrite));
+	BufferPtr b =
+		g_gr->newBuffer(BufferInitInfo(sizeof(Vert) * 3, BufferUsageBit::kVertex, BufferMapAccessBit::kWrite));
 
 	Vert* ptr = static_cast<Vert*>(b->map(0, sizeof(Vert) * 3, BufferMapAccessBit::kWrite));
 	ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
@@ -801,7 +895,8 @@ ANKI_TEST(Gr, DrawWithVertex)
 	ptr[2].m_color = {{0, 0, 255}};
 	b->unmap();
 
-	BufferPtr c = gr->newBuffer(BufferInitInfo(sizeof(Vec3) * 3, BufferUsageBit::kVertex, BufferMapAccessBit::kWrite));
+	BufferPtr c =
+		g_gr->newBuffer(BufferInitInfo(sizeof(Vec3) * 3, BufferUsageBit::kVertex, BufferMapAccessBit::kWrite));
 
 	Vec3* otherColor = static_cast<Vec3*>(c->map(0, sizeof(Vec3) * 3, BufferMapAccessBit::kWrite));
 
@@ -811,7 +906,7 @@ ANKI_TEST(Gr, DrawWithVertex)
 	c->unmap();
 
 	// Prog
-	ShaderProgramPtr prog = createProgram(VERT_INP_SRC, FRAG_INP_SRC, *gr);
+	ShaderProgramPtr prog = createProgram(VERT_INP_SRC, FRAG_INP_SRC, *g_gr);
 
 	U iterations = 100;
 	while(iterations--)
@@ -819,12 +914,12 @@ ANKI_TEST(Gr, DrawWithVertex)
 		HighRezTimer timer;
 		timer.start();
 
-		TexturePtr presentTex = gr->acquireNextPresentableTexture();
-		FramebufferPtr fb = createColorFb(*gr, presentTex);
+		TexturePtr presentTex = g_gr->acquireNextPresentableTexture();
+		FramebufferPtr fb = createColorFb(*g_gr, presentTex);
 
 		CommandBufferInitInfo cinit;
 		cinit.m_flags = CommandBufferFlag::kGeneralWork;
-		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
+		CommandBufferPtr cmdb = g_gr->newCommandBuffer(cinit);
 
 		cmdb->bindVertexBuffer(0, b, 0, sizeof(Vert));
 		cmdb->bindVertexBuffer(1, c, 0, sizeof(Vec3));
@@ -832,7 +927,7 @@ ANKI_TEST(Gr, DrawWithVertex)
 		cmdb->setVertexAttribute(1, 0, Format::kR8G8B8Unorm, sizeof(Vec3));
 		cmdb->setVertexAttribute(2, 1, Format::kR32G32B32Sfloat, 0);
 
-		cmdb->setViewport(0, 0, win->getWidth(), win->getHeight());
+		cmdb->setViewport(0, 0, g_win->getWidth(), g_win->getHeight());
 		cmdb->setPolygonOffset(0.0, 0.0);
 		cmdb->bindShaderProgram(prog);
 		presentBarrierA(cmdb, presentTex);
@@ -842,7 +937,7 @@ ANKI_TEST(Gr, DrawWithVertex)
 		presentBarrierB(cmdb, presentTex);
 		cmdb->flush();
 
-		gr->swapBuffers();
+		g_gr->swapBuffers();
 
 		timer.stop();
 		const F32 TICK = 1.0f / 30.0f;
@@ -861,7 +956,7 @@ ANKI_TEST(Gr, Sampler)
 
 	SamplerInitInfo init;
 
-	SamplerPtr b = gr->newSampler(init);
+	SamplerPtr b = g_gr->newSampler(init);
 
 	COMMON_END()
 }
@@ -882,10 +977,10 @@ ANKI_TEST(Gr, Texture)
 	init.m_samples = 1;
 	init.m_type = TextureType::k2D;
 
-	TexturePtr b = gr->newTexture(init);
+	TexturePtr b = g_gr->newTexture(init);
 
 	TextureViewInitInfo view(b);
-	TextureViewPtr v = gr->newTextureView(view);
+	TextureViewPtr v = g_gr->newTextureView(view);
 
 	COMMON_END()
 }
@@ -901,7 +996,7 @@ ANKI_TEST(Gr, DrawWithTexture)
 	samplerInit.m_minMagFilter = SamplingFilter::kNearest;
 	samplerInit.m_mipmapFilter = SamplingFilter::kLinear;
 	samplerInit.m_addressing = SamplingAddressing::kClamp;
-	SamplerPtr sampler = gr->newSampler(samplerInit);
+	SamplerPtr sampler = g_gr->newSampler(samplerInit);
 
 	//
 	// Create texture A
@@ -918,9 +1013,9 @@ ANKI_TEST(Gr, DrawWithTexture)
 	init.m_layerCount = 1;
 	init.m_type = TextureType::k2D;
 
-	TexturePtr a = gr->newTexture(init);
+	TexturePtr a = g_gr->newTexture(init);
 
-	TextureViewPtr aView = gr->newTextureView(TextureViewInitInfo(a));
+	TextureViewPtr aView = g_gr->newTextureView(TextureViewInitInfo(a));
 
 	//
 	// Create texture B
@@ -931,9 +1026,9 @@ ANKI_TEST(Gr, DrawWithTexture)
 	init.m_usage =
 		TextureUsageBit::kSampledFragment | TextureUsageBit::kTransferDestination | TextureUsageBit::kGenerateMipmaps;
 
-	TexturePtr b = gr->newTexture(init);
+	TexturePtr b = g_gr->newTexture(init);
 
-	TextureViewPtr bView = gr->newTextureView(TextureViewInitInfo(b));
+	TextureViewPtr bView = g_gr->newTextureView(TextureViewInitInfo(b));
 
 	//
 	// Upload all textures
@@ -948,17 +1043,17 @@ ANKI_TEST(Gr, DrawWithTexture)
 
 	CommandBufferInitInfo cmdbinit;
 	cmdbinit.m_flags = CommandBufferFlag::kGeneralWork;
-	CommandBufferPtr cmdb = gr->newCommandBuffer(cmdbinit);
+	CommandBufferPtr cmdb = g_gr->newCommandBuffer(cmdbinit);
 
 	// Set barriers
-	cmdb->setTextureSurfaceBarrier(a, TextureUsageBit::kSampledFragment, TextureUsageBit::kTransferDestination,
-								   TextureSurfaceInfo(0, 0, 0, 0));
+	setTextureSurfaceBarrier(cmdb, a, TextureUsageBit::kSampledFragment, TextureUsageBit::kTransferDestination,
+							 TextureSurfaceInfo(0, 0, 0, 0));
 
-	cmdb->setTextureSurfaceBarrier(a, TextureUsageBit::kSampledFragment, TextureUsageBit::kTransferDestination,
-								   TextureSurfaceInfo(1, 0, 0, 0));
+	setTextureSurfaceBarrier(cmdb, a, TextureUsageBit::kSampledFragment, TextureUsageBit::kTransferDestination,
+							 TextureSurfaceInfo(1, 0, 0, 0));
 
-	cmdb->setTextureSurfaceBarrier(b, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination,
-								   TextureSurfaceInfo(0, 0, 0, 0));
+	setTextureSurfaceBarrier(cmdb, b, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination,
+							 TextureSurfaceInfo(0, 0, 0, 0));
 
 	TransferGpuAllocatorHandle handle0, handle1, handle2;
 	UPLOAD_TEX_SURFACE(cmdb, a, TextureSurfaceInfo(0, 0, 0, 0), &mip0[0], sizeof(mip0), handle0);
@@ -968,22 +1063,22 @@ ANKI_TEST(Gr, DrawWithTexture)
 	UPLOAD_TEX_SURFACE(cmdb, b, TextureSurfaceInfo(0, 0, 0, 0), &bmip0[0], sizeof(bmip0), handle2);
 
 	// Gen mips
-	cmdb->setTextureSurfaceBarrier(b, TextureUsageBit::kTransferDestination, TextureUsageBit::kGenerateMipmaps,
-								   TextureSurfaceInfo(0, 0, 0, 0));
+	setTextureSurfaceBarrier(cmdb, b, TextureUsageBit::kTransferDestination, TextureUsageBit::kGenerateMipmaps,
+							 TextureSurfaceInfo(0, 0, 0, 0));
 
-	cmdb->generateMipmaps2d(gr->newTextureView(TextureViewInitInfo(b)));
+	cmdb->generateMipmaps2d(g_gr->newTextureView(TextureViewInitInfo(b)));
 
 	// Set barriers
-	cmdb->setTextureSurfaceBarrier(a, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledFragment,
-								   TextureSurfaceInfo(0, 0, 0, 0));
+	setTextureSurfaceBarrier(cmdb, a, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledFragment,
+							 TextureSurfaceInfo(0, 0, 0, 0));
 
-	cmdb->setTextureSurfaceBarrier(a, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledFragment,
-								   TextureSurfaceInfo(1, 0, 0, 0));
+	setTextureSurfaceBarrier(cmdb, a, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledFragment,
+							 TextureSurfaceInfo(1, 0, 0, 0));
 
 	for(U32 i = 0; i < 3; ++i)
 	{
-		cmdb->setTextureSurfaceBarrier(b, TextureUsageBit::kGenerateMipmaps, TextureUsageBit::kSampledFragment,
-									   TextureSurfaceInfo(i, 0, 0, 0));
+		setTextureSurfaceBarrier(cmdb, b, TextureUsageBit::kGenerateMipmaps, TextureUsageBit::kSampledFragment,
+								 TextureSurfaceInfo(i, 0, 0, 0));
 	}
 
 	FencePtr fence;
@@ -1036,7 +1131,7 @@ void main()
 		}
 	}
 })";
-	ShaderProgramPtr prog = createProgram(VERT_QUAD_SRC, FRAG_2TEX_SRC, *gr);
+	ShaderProgramPtr prog = createProgram(VERT_QUAD_SRC, FRAG_2TEX_SRC, *g_gr);
 
 	//
 	// Draw
@@ -1048,19 +1143,19 @@ void main()
 		HighRezTimer timer;
 		timer.start();
 
-		TexturePtr presentTex = gr->acquireNextPresentableTexture();
-		FramebufferPtr fb = createColorFb(*gr, presentTex);
+		TexturePtr presentTex = g_gr->acquireNextPresentableTexture();
+		FramebufferPtr fb = createColorFb(*g_gr, presentTex);
 
 		CommandBufferInitInfo cinit;
 		cinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
-		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
+		CommandBufferPtr cmdb = g_gr->newCommandBuffer(cinit);
 
-		cmdb->setViewport(0, 0, win->getWidth(), win->getHeight());
+		cmdb->setViewport(0, 0, g_win->getWidth(), g_win->getHeight());
 		cmdb->bindShaderProgram(prog);
 		presentBarrierA(cmdb, presentTex);
 		cmdb->beginRenderPass(fb, {TextureUsageBit::kFramebufferWrite}, {});
 
-		Vec4 pc(F32(win->getWidth()), F32(win->getHeight()), 0.0f, 0.0f);
+		Vec4 pc(F32(g_win->getWidth()), F32(g_win->getHeight()), 0.0f, 0.0f);
 		cmdb->setPushConstants(&pc, sizeof(pc));
 
 		cmdb->bindTextureAndSampler(0, 0, aView, sampler);
@@ -1070,7 +1165,7 @@ void main()
 		presentBarrierB(cmdb, presentTex);
 		cmdb->flush();
 
-		gr->swapBuffers();
+		g_gr->swapBuffers();
 
 		timer.stop();
 		const F32 TICK = 1.0f / 30.0f;
@@ -1196,12 +1291,12 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 
 		cmdb->setPolygonOffset(0.0, 0.0);
 
-		cmdb->setTextureSurfaceBarrier(col0, TextureUsageBit::kNone, TextureUsageBit::kFramebufferWrite,
-									   TextureSurfaceInfo(0, 0, 0, 0));
-		cmdb->setTextureSurfaceBarrier(col1, TextureUsageBit::kNone, TextureUsageBit::kFramebufferWrite,
-									   TextureSurfaceInfo(0, 0, 0, 0));
-		cmdb->setTextureSurfaceBarrier(dp, TextureUsageBit::kNone, TextureUsageBit::kAllFramebuffer,
-									   TextureSurfaceInfo(0, 0, 0, 0));
+		setTextureSurfaceBarrier(cmdb, col0, TextureUsageBit::kNone, TextureUsageBit::kFramebufferWrite,
+								 TextureSurfaceInfo(0, 0, 0, 0));
+		setTextureSurfaceBarrier(cmdb, col1, TextureUsageBit::kNone, TextureUsageBit::kFramebufferWrite,
+								 TextureSurfaceInfo(0, 0, 0, 0));
+		setTextureSurfaceBarrier(cmdb, dp, TextureUsageBit::kNone, TextureUsageBit::kAllFramebuffer,
+								 TextureSurfaceInfo(0, 0, 0, 0));
 		cmdb->beginRenderPass(fb, {{TextureUsageBit::kFramebufferWrite, TextureUsageBit::kFramebufferWrite}},
 							  TextureUsageBit::kAllFramebuffer);
 
@@ -1220,17 +1315,18 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 
 			cmdb2->flush();
 
-			cmdb->pushSecondLevelCommandBuffer(cmdb2);
+			CommandBuffer* pCmdb = cmdb2.get();
+			cmdb->pushSecondLevelCommandBuffers({&pCmdb, 1});
 		}
 
 		cmdb->endRenderPass();
 
-		cmdb->setTextureSurfaceBarrier(col0, TextureUsageBit::kFramebufferWrite, TextureUsageBit::kSampledFragment,
-									   TextureSurfaceInfo(0, 0, 0, 0));
-		cmdb->setTextureSurfaceBarrier(col1, TextureUsageBit::kFramebufferWrite, TextureUsageBit::kSampledFragment,
-									   TextureSurfaceInfo(0, 0, 0, 0));
-		cmdb->setTextureSurfaceBarrier(dp, TextureUsageBit::kAllFramebuffer, TextureUsageBit::kSampledFragment,
-									   TextureSurfaceInfo(0, 0, 0, 0));
+		setTextureSurfaceBarrier(cmdb, col0, TextureUsageBit::kFramebufferWrite, TextureUsageBit::kSampledFragment,
+								 TextureSurfaceInfo(0, 0, 0, 0));
+		setTextureSurfaceBarrier(cmdb, col1, TextureUsageBit::kFramebufferWrite, TextureUsageBit::kSampledFragment,
+								 TextureSurfaceInfo(0, 0, 0, 0));
+		setTextureSurfaceBarrier(cmdb, dp, TextureUsageBit::kAllFramebuffer, TextureUsageBit::kSampledFragment,
+								 TextureSurfaceInfo(0, 0, 0, 0));
 
 		// Draw quad
 		TexturePtr presentTex = gr.acquireNextPresentableTexture();
@@ -1264,7 +1360,7 @@ ANKI_TEST(Gr, DrawOffscreen)
 {
 	COMMON_BEGIN()
 
-	drawOffscreen(*gr, false);
+	drawOffscreen(*g_gr, false);
 
 	COMMON_END()
 }
@@ -1273,7 +1369,7 @@ ANKI_TEST(Gr, DrawWithSecondLevel)
 {
 	COMMON_BEGIN()
 
-	drawOffscreen(*gr, true);
+	drawOffscreen(*g_gr, true);
 
 	COMMON_END()
 }
@@ -1285,7 +1381,7 @@ ANKI_TEST(Gr, ImageLoadStore)
 	SamplerInitInfo samplerInit;
 	samplerInit.m_minMagFilter = SamplingFilter::kNearest;
 	samplerInit.m_mipmapFilter = SamplingFilter::kBase;
-	SamplerPtr sampler = gr->newSampler(samplerInit);
+	SamplerPtr sampler = g_gr->newSampler(samplerInit);
 
 	TextureInitInfo init;
 	init.m_width = init.m_height = 4;
@@ -1295,46 +1391,46 @@ ANKI_TEST(Gr, ImageLoadStore)
 	init.m_type = TextureType::k2D;
 	init.m_format = Format::kR8G8B8A8Unorm;
 
-	TexturePtr tex = gr->newTexture(init);
+	TexturePtr tex = g_gr->newTexture(init);
 
 	TextureViewInitInfo viewInit(tex);
 	viewInit.m_firstMipmap = 1;
 	viewInit.m_mipmapCount = 1;
-	TextureViewPtr view = gr->newTextureView(viewInit);
+	TextureViewPtr view = g_gr->newTextureView(viewInit);
 
 	// Prog
-	ShaderProgramPtr prog = createProgram(VERT_QUAD_SRC, FRAG_SIMPLE_TEX_SRC, *gr);
+	ShaderProgramPtr prog = createProgram(VERT_QUAD_SRC, FRAG_SIMPLE_TEX_SRC, *g_gr);
 
 	// Create shader & compute prog
-	ShaderPtr shader = createShader(COMP_WRITE_IMAGE_SRC, ShaderType::kCompute, *gr);
+	ShaderPtr shader = createShader(COMP_WRITE_IMAGE_SRC, ShaderType::kCompute, *g_gr);
 	ShaderProgramInitInfo sprogInit;
 	sprogInit.m_computeShader = shader;
-	ShaderProgramPtr compProg = gr->newShaderProgram(sprogInit);
+	ShaderProgramPtr compProg = g_gr->newShaderProgram(sprogInit);
 
 	// Write texture data
 	CommandBufferInitInfo cmdbinit;
-	CommandBufferPtr cmdb = gr->newCommandBuffer(cmdbinit);
+	CommandBufferPtr cmdb = g_gr->newCommandBuffer(cmdbinit);
 
-	cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination,
-								   TextureSurfaceInfo(0, 0, 0, 0));
+	setTextureSurfaceBarrier(cmdb, tex, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination,
+							 TextureSurfaceInfo(0, 0, 0, 0));
 
 	ClearValue clear;
 	clear.m_colorf = {{0.0, 1.0, 0.0, 1.0}};
 	TextureViewInitInfo viewInit2(tex, TextureSurfaceInfo(0, 0, 0, 0));
-	cmdb->clearTextureView(gr->newTextureView(viewInit2), clear);
+	cmdb->clearTextureView(g_gr->newTextureView(viewInit2), clear);
 
-	cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledFragment,
-								   TextureSurfaceInfo(0, 0, 0, 0));
+	setTextureSurfaceBarrier(cmdb, tex, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledFragment,
+							 TextureSurfaceInfo(0, 0, 0, 0));
 
-	cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination,
-								   TextureSurfaceInfo(1, 0, 0, 0));
+	setTextureSurfaceBarrier(cmdb, tex, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination,
+							 TextureSurfaceInfo(1, 0, 0, 0));
 
 	clear.m_colorf = {{0.0, 0.0, 1.0, 1.0}};
 	TextureViewInitInfo viewInit3(tex, TextureSurfaceInfo(1, 0, 0, 0));
-	cmdb->clearTextureView(gr->newTextureView(viewInit3), clear);
+	cmdb->clearTextureView(g_gr->newTextureView(viewInit3), clear);
 
-	cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::kTransferDestination, TextureUsageBit::kImageComputeWrite,
-								   TextureSurfaceInfo(1, 0, 0, 0));
+	setTextureSurfaceBarrier(cmdb, tex, TextureUsageBit::kTransferDestination, TextureUsageBit::kImageComputeWrite,
+							 TextureSurfaceInfo(1, 0, 0, 0));
 
 	cmdb->flush();
 
@@ -1348,29 +1444,29 @@ ANKI_TEST(Gr, ImageLoadStore)
 		CommandBufferInitInfo cinit;
 		cinit.m_flags =
 			CommandBufferFlag::kGeneralWork | CommandBufferFlag::kComputeWork | CommandBufferFlag::kSmallBatch;
-		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
+		CommandBufferPtr cmdb = g_gr->newCommandBuffer(cinit);
 
 		// Write image
 		Vec4* col = SET_STORAGE(Vec4*, sizeof(*col), cmdb, 1, 0);
 		*col = Vec4(F32(iterations) / F32(ITERATION_COUNT));
 
-		cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::kNone, TextureUsageBit::kImageComputeWrite,
-									   TextureSurfaceInfo(1, 0, 0, 0));
+		setTextureSurfaceBarrier(cmdb, tex, TextureUsageBit::kNone, TextureUsageBit::kImageComputeWrite,
+								 TextureSurfaceInfo(1, 0, 0, 0));
 		cmdb->bindShaderProgram(compProg);
 		cmdb->bindImage(0, 0, view);
 		cmdb->dispatchCompute(WIDTH / 2, HEIGHT / 2, 1);
-		cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::kImageComputeWrite, TextureUsageBit::kSampledFragment,
-									   TextureSurfaceInfo(1, 0, 0, 0));
+		setTextureSurfaceBarrier(cmdb, tex, TextureUsageBit::kImageComputeWrite, TextureUsageBit::kSampledFragment,
+								 TextureSurfaceInfo(1, 0, 0, 0));
 
 		// Present image
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
 
 		cmdb->bindShaderProgram(prog);
-		TexturePtr presentTex = gr->acquireNextPresentableTexture();
-		FramebufferPtr dfb = createColorFb(*gr, presentTex);
+		TexturePtr presentTex = g_gr->acquireNextPresentableTexture();
+		FramebufferPtr dfb = createColorFb(*g_gr, presentTex);
 		presentBarrierA(cmdb, presentTex);
 		cmdb->beginRenderPass(dfb, {TextureUsageBit::kFramebufferWrite}, {});
-		cmdb->bindTextureAndSampler(0, 0, gr->newTextureView(TextureViewInitInfo(tex)), sampler);
+		cmdb->bindTextureAndSampler(0, 0, g_gr->newTextureView(TextureViewInitInfo(tex)), sampler);
 		cmdb->drawArrays(PrimitiveTopology::kTriangles, 6);
 		cmdb->endRenderPass();
 		presentBarrierB(cmdb, presentTex);
@@ -1378,7 +1474,7 @@ ANKI_TEST(Gr, ImageLoadStore)
 		cmdb->flush();
 
 		// End
-		gr->swapBuffers();
+		g_gr->swapBuffers();
 
 		timer.stop();
 		const F32 TICK = 1.0f / 30.0f;
@@ -1399,7 +1495,7 @@ ANKI_TEST(Gr, 3DTextures)
 	samplerInit.m_minMagFilter = SamplingFilter::kNearest;
 	samplerInit.m_mipmapFilter = SamplingFilter::kBase;
 	samplerInit.m_addressing = SamplingAddressing::kClamp;
-	SamplerPtr sampler = gr->newSampler(samplerInit);
+	SamplerPtr sampler = g_gr->newSampler(samplerInit);
 
 	//
 	// Create texture A
@@ -1416,7 +1512,7 @@ ANKI_TEST(Gr, 3DTextures)
 	init.m_layerCount = 1;
 	init.m_type = TextureType::k3D;
 
-	TexturePtr a = gr->newTexture(init);
+	TexturePtr a = g_gr->newTexture(init);
 
 	//
 	// Upload all textures
@@ -1428,24 +1524,24 @@ ANKI_TEST(Gr, 3DTextures)
 
 	CommandBufferInitInfo cmdbinit;
 	cmdbinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
-	CommandBufferPtr cmdb = gr->newCommandBuffer(cmdbinit);
+	CommandBufferPtr cmdb = g_gr->newCommandBuffer(cmdbinit);
 
-	cmdb->setTextureVolumeBarrier(a, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination,
-								  TextureVolumeInfo(0));
+	setTextureVolumeBarrier(cmdb, a, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination,
+							TextureVolumeInfo(0));
 
-	cmdb->setTextureVolumeBarrier(a, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination,
-								  TextureVolumeInfo(1));
+	setTextureVolumeBarrier(cmdb, a, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination,
+							TextureVolumeInfo(1));
 
 	TransferGpuAllocatorHandle handle0, handle1;
 	UPLOAD_TEX_VOL(cmdb, a, TextureVolumeInfo(0), &mip0[0], sizeof(mip0), handle0);
 
 	UPLOAD_TEX_VOL(cmdb, a, TextureVolumeInfo(1), &mip1[0], sizeof(mip1), handle1);
 
-	cmdb->setTextureVolumeBarrier(a, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledFragment,
-								  TextureVolumeInfo(0));
+	setTextureVolumeBarrier(cmdb, a, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledFragment,
+							TextureVolumeInfo(0));
 
-	cmdb->setTextureVolumeBarrier(a, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledFragment,
-								  TextureVolumeInfo(1));
+	setTextureVolumeBarrier(cmdb, a, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledFragment,
+							TextureVolumeInfo(1));
 
 	FencePtr fence;
 	cmdb->flush({}, &fence);
@@ -1455,7 +1551,7 @@ ANKI_TEST(Gr, 3DTextures)
 	//
 	// Rest
 	//
-	ShaderProgramPtr prog = createProgram(VERT_QUAD_SRC, FRAG_TEX3D_SRC, *gr);
+	ShaderProgramPtr prog = createProgram(VERT_QUAD_SRC, FRAG_TEX3D_SRC, *g_gr);
 
 	static Array<Vec4, 9> TEX_COORDS_LOD = {{Vec4(0, 0, 0, 0), Vec4(1, 0, 0, 0), Vec4(0, 1, 0, 0), Vec4(1, 1, 0, 0),
 											 Vec4(0, 0, 1, 0), Vec4(1, 0, 1, 0), Vec4(0, 1, 1, 0), Vec4(1, 1, 1, 0),
@@ -1470,11 +1566,11 @@ ANKI_TEST(Gr, 3DTextures)
 
 		CommandBufferInitInfo cinit;
 		cinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
-		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
+		CommandBufferPtr cmdb = g_gr->newCommandBuffer(cinit);
 
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
-		TexturePtr presentTex = gr->acquireNextPresentableTexture();
-		FramebufferPtr dfb = createColorFb(*gr, presentTex);
+		TexturePtr presentTex = g_gr->acquireNextPresentableTexture();
+		FramebufferPtr dfb = createColorFb(*g_gr, presentTex);
 		presentBarrierA(cmdb, presentTex);
 		cmdb->beginRenderPass(dfb, {TextureUsageBit::kFramebufferWrite}, {});
 
@@ -1485,7 +1581,7 @@ ANKI_TEST(Gr, 3DTextures)
 		U32 idx = U32((F32(ITERATION_COUNT - iterations - 1) / F32(ITERATION_COUNT)) * F32(TEX_COORDS_LOD.getSize()));
 		*uv = TEX_COORDS_LOD[idx];
 
-		cmdb->bindTextureAndSampler(0, 1, gr->newTextureView(TextureViewInitInfo(a)), sampler);
+		cmdb->bindTextureAndSampler(0, 1, g_gr->newTextureView(TextureViewInitInfo(a)), sampler);
 		cmdb->drawArrays(PrimitiveTopology::kTriangles, 6);
 
 		cmdb->endRenderPass();
@@ -1494,7 +1590,7 @@ ANKI_TEST(Gr, 3DTextures)
 		cmdb->flush();
 
 		// End
-		gr->swapBuffers();
+		g_gr->swapBuffers();
 
 		timer.stop();
 		const F32 TICK = 1.0f / 15.0f;
@@ -1523,7 +1619,7 @@ ANKI_TEST(Gr, RenderGraph)
 
 	StackMemoryPool pool(allocAligned, nullptr, 2_MB);
 	RenderGraphDescription descr(&pool);
-	RenderGraphPtr rgraph = gr->newRenderGraph();
+	RenderGraphPtr rgraph = g_gr->newRenderGraph();
 
 	const U GI_MIP_COUNT = 4;
 
@@ -1531,7 +1627,7 @@ ANKI_TEST(Gr, RenderGraph)
 	texI.m_width = texI.m_height = 16;
 	texI.m_usage = TextureUsageBit::kFramebufferWrite | TextureUsageBit::kSampledFragment;
 	texI.m_format = Format::kR8G8B8A8Unorm;
-	TexturePtr dummyTex = gr->newTexture(texI);
+	TexturePtr dummyTex = g_gr->newTexture(texI);
 
 	// SM
 	RenderTargetHandle smScratchRt = descr.newRenderTarget(newRTDescr("SM scratch"));
@@ -1754,10 +1850,10 @@ void main()
 	}
 })";
 
-	ShaderPtr comp = createShader(COMP_SRC, ShaderType::kCompute, *gr);
+	ShaderPtr comp = createShader(COMP_SRC, ShaderType::kCompute, *g_gr);
 	ShaderProgramInitInfo sinf;
 	sinf.m_computeShader = comp;
-	ShaderProgramPtr prog = gr->newShaderProgram(sinf);
+	ShaderProgramPtr prog = g_gr->newShaderProgram(sinf);
 
 	// Create the texture
 	TextureInitInfo texInit;
@@ -1766,15 +1862,15 @@ void main()
 	texInit.m_type = TextureType::k2D;
 	texInit.m_usage = TextureUsageBit::kTransferDestination | TextureUsageBit::kAllSampled;
 	texInit.m_mipmapCount = 2;
-	TexturePtr tex = gr->newTexture(texInit);
-	TextureViewPtr texView = gr->newTextureView(TextureViewInitInfo(tex));
+	TexturePtr tex = g_gr->newTexture(texInit);
+	TextureViewPtr texView = g_gr->newTextureView(TextureViewInitInfo(tex));
 
 	SamplerInitInfo samplerInit;
-	SamplerPtr sampler = gr->newSampler(samplerInit);
+	SamplerPtr sampler = g_gr->newSampler(samplerInit);
 
 	// Create the buffer to copy to the texture
-	BufferPtr uploadBuff = gr->newBuffer(BufferInitInfo(PtrSize(texInit.m_width) * texInit.m_height * 3,
-														BufferUsageBit::kAllTransfer, BufferMapAccessBit::kWrite));
+	BufferPtr uploadBuff = g_gr->newBuffer(BufferInitInfo(PtrSize(texInit.m_width) * texInit.m_height * 3,
+														  BufferUsageBit::kAllTransfer, BufferMapAccessBit::kWrite));
 	U8* data = static_cast<U8*>(uploadBuff->map(0, uploadBuff->getSize(), BufferMapAccessBit::kWrite));
 	for(U32 i = 0; i < texInit.m_width * texInit.m_height; ++i)
 	{
@@ -1785,8 +1881,8 @@ void main()
 	}
 	uploadBuff->unmap();
 
-	BufferPtr uploadBuff2 = gr->newBuffer(BufferInitInfo(PtrSize(texInit.m_width >> 1) * (texInit.m_height >> 1) * 3,
-														 BufferUsageBit::kAllTransfer, BufferMapAccessBit::kWrite));
+	BufferPtr uploadBuff2 = g_gr->newBuffer(BufferInitInfo(PtrSize(texInit.m_width >> 1) * (texInit.m_height >> 1) * 3,
+														   BufferUsageBit::kAllTransfer, BufferMapAccessBit::kWrite));
 	data = static_cast<U8*>(uploadBuff2->map(0, uploadBuff2->getSize(), BufferMapAccessBit::kWrite));
 	for(U i = 0; i < (texInit.m_width >> 1) * (texInit.m_height >> 1); ++i)
 	{
@@ -1799,32 +1895,32 @@ void main()
 
 	// Create the result buffer
 	BufferPtr resultBuff =
-		gr->newBuffer(BufferInitInfo(sizeof(UVec4), BufferUsageBit::kStorageComputeWrite, BufferMapAccessBit::kRead));
+		g_gr->newBuffer(BufferInitInfo(sizeof(UVec4), BufferUsageBit::kStorageComputeWrite, BufferMapAccessBit::kRead));
 
 	// Upload data and test them
 	CommandBufferInitInfo cmdbInit;
 	cmdbInit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
-	CommandBufferPtr cmdb = gr->newCommandBuffer(cmdbInit);
+	CommandBufferPtr cmdb = g_gr->newCommandBuffer(cmdbInit);
 
 	TextureSubresourceInfo subresource;
 	subresource.m_mipmapCount = texInit.m_mipmapCount;
-	cmdb->setTextureBarrier(tex, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination, subresource);
+	setTextureBarrier(cmdb, tex, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination, subresource);
 	cmdb->copyBufferToTextureView(uploadBuff, 0, uploadBuff->getSize(),
-								  gr->newTextureView(TextureViewInitInfo(tex, TextureSurfaceInfo(0, 0, 0, 0))));
+								  g_gr->newTextureView(TextureViewInitInfo(tex, TextureSurfaceInfo(0, 0, 0, 0))));
 	cmdb->copyBufferToTextureView(uploadBuff2, 0, uploadBuff2->getSize(),
-								  gr->newTextureView(TextureViewInitInfo(tex, TextureSurfaceInfo(1, 0, 0, 0))));
+								  g_gr->newTextureView(TextureViewInitInfo(tex, TextureSurfaceInfo(1, 0, 0, 0))));
 
-	cmdb->setTextureBarrier(tex, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledCompute, subresource);
+	setTextureBarrier(cmdb, tex, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledCompute, subresource);
 	cmdb->bindShaderProgram(prog);
 	cmdb->bindTextureAndSampler(0, 0, texView, sampler);
 	cmdb->bindStorageBuffer(0, 1, resultBuff, 0, resultBuff->getSize());
 	cmdb->dispatchCompute(1, 1, 1);
 
-	cmdb->setBufferBarrier(resultBuff, BufferUsageBit::kStorageComputeWrite, BufferUsageBit::kStorageComputeWrite, 0,
-						   resultBuff->getSize());
+	setBufferBarrier(cmdb, resultBuff, BufferUsageBit::kStorageComputeWrite, BufferUsageBit::kStorageComputeWrite, 0,
+					 resultBuff->getSize());
 
 	cmdb->flush();
-	gr->finish();
+	g_gr->finish();
 
 	// Get the result
 	UVec4* result = static_cast<UVec4*>(resultBuff->map(0, resultBuff->getSize(), BufferMapAccessBit::kRead));
@@ -1898,33 +1994,33 @@ void main()
 )";
 
 	ShaderPtr vert =
-		createShader(VERT_SRC, ShaderType::kVertex, *gr,
+		createShader(VERT_SRC, ShaderType::kVertex, *g_gr,
 					 Array<ShaderSpecializationConstValue, 3>{{ShaderSpecializationConstValue(2147483647),
 															   ShaderSpecializationConstValue(-1.0f),
 															   ShaderSpecializationConstValue(1234.5678f)}});
-	ShaderPtr frag = createShader(FRAG_SRC, ShaderType::kFragment, *gr,
+	ShaderPtr frag = createShader(FRAG_SRC, ShaderType::kFragment, *g_gr,
 								  Array<ShaderSpecializationConstValue, 2>{{ShaderSpecializationConstValue(-2147483647),
 																			ShaderSpecializationConstValue(-1.0f)}});
 	ShaderProgramInitInfo sinf;
 	sinf.m_graphicsShaders[ShaderType::kVertex] = vert;
 	sinf.m_graphicsShaders[ShaderType::kFragment] = frag;
-	ShaderProgramPtr prog = gr->newShaderProgram(sinf);
+	ShaderProgramPtr prog = g_gr->newShaderProgram(sinf);
 
 	// Create the result buffer
 	BufferPtr resultBuff =
-		gr->newBuffer(BufferInitInfo(sizeof(UVec4), BufferUsageBit::kStorageComputeWrite, BufferMapAccessBit::kRead));
+		g_gr->newBuffer(BufferInitInfo(sizeof(UVec4), BufferUsageBit::kStorageComputeWrite, BufferMapAccessBit::kRead));
 
 	// Draw
 
 	CommandBufferInitInfo cinit;
 	cinit.m_flags = CommandBufferFlag::kGeneralWork;
-	CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
+	CommandBufferPtr cmdb = g_gr->newCommandBuffer(cinit);
 
 	cmdb->setViewport(0, 0, WIDTH, HEIGHT);
 	cmdb->bindShaderProgram(prog);
 	cmdb->bindStorageBuffer(0, 0, resultBuff, 0, resultBuff->getSize());
-	TexturePtr presentTex = gr->acquireNextPresentableTexture();
-	FramebufferPtr dfb = createColorFb(*gr, presentTex);
+	TexturePtr presentTex = g_gr->acquireNextPresentableTexture();
+	FramebufferPtr dfb = createColorFb(*g_gr, presentTex);
 	presentBarrierA(cmdb, presentTex);
 	cmdb->beginRenderPass(dfb, {TextureUsageBit::kFramebufferWrite}, {});
 	cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
@@ -1932,8 +2028,8 @@ void main()
 	presentBarrierB(cmdb, presentTex);
 	cmdb->flush();
 
-	gr->swapBuffers();
-	gr->finish();
+	g_gr->swapBuffers();
+	g_gr->finish();
 
 	// Get the result
 	UVec4* result = static_cast<UVec4*>(resultBuff->map(0, resultBuff->getSize(), BufferMapAccessBit::kRead));
@@ -2021,20 +2117,20 @@ void main()
 }
 )";
 
-	ShaderProgramPtr prog = createProgram(VERT_SRC, FRAG_SRC, *gr);
+	ShaderProgramPtr prog = createProgram(VERT_SRC, FRAG_SRC, *g_gr);
 
 	// Create the result buffer
-	BufferPtr resultBuff = gr->newBuffer(BufferInitInfo(
+	BufferPtr resultBuff = g_gr->newBuffer(BufferInitInfo(
 		sizeof(UVec4), BufferUsageBit::kAllStorage | BufferUsageBit::kTransferDestination, BufferMapAccessBit::kRead));
 
 	// Draw
 	CommandBufferInitInfo cinit;
 	cinit.m_flags = CommandBufferFlag::kGeneralWork;
-	CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
+	CommandBufferPtr cmdb = g_gr->newCommandBuffer(cinit);
 
 	cmdb->fillBuffer(resultBuff, 0, resultBuff->getSize(), 0);
-	cmdb->setBufferBarrier(resultBuff, BufferUsageBit::kTransferDestination, BufferUsageBit::kStorageFragmentWrite, 0,
-						   resultBuff->getSize());
+	setBufferBarrier(cmdb, resultBuff, BufferUsageBit::kTransferDestination, BufferUsageBit::kStorageFragmentWrite, 0,
+					 resultBuff->getSize());
 
 	cmdb->setViewport(0, 0, WIDTH, HEIGHT);
 	cmdb->bindShaderProgram(prog);
@@ -2050,8 +2146,8 @@ void main()
 	cmdb->setPushConstants(&pc, sizeof(pc));
 
 	cmdb->bindStorageBuffer(0, 0, resultBuff, 0, resultBuff->getSize());
-	TexturePtr presentTex = gr->acquireNextPresentableTexture();
-	FramebufferPtr dfb = createColorFb(*gr, presentTex);
+	TexturePtr presentTex = g_gr->acquireNextPresentableTexture();
+	FramebufferPtr dfb = createColorFb(*g_gr, presentTex);
 	presentBarrierA(cmdb, presentTex);
 	cmdb->beginRenderPass(dfb, {TextureUsageBit::kFramebufferWrite}, {});
 	cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
@@ -2059,8 +2155,8 @@ void main()
 	presentBarrierB(cmdb, presentTex);
 	cmdb->flush();
 
-	gr->swapBuffers();
-	gr->finish();
+	g_gr->swapBuffers();
+	g_gr->finish();
 
 	// Get the result
 	UVec4* result = static_cast<UVec4*>(resultBuff->map(0, resultBuff->getSize(), BufferMapAccessBit::kRead));
@@ -2079,13 +2175,13 @@ ANKI_TEST(Gr, BindingWithArray)
 
 	// Create result buffer
 	BufferPtr resBuff =
-		gr->newBuffer(BufferInitInfo(sizeof(Vec4), BufferUsageBit::kAllCompute, BufferMapAccessBit::kRead));
+		g_gr->newBuffer(BufferInitInfo(sizeof(Vec4), BufferUsageBit::kAllCompute, BufferMapAccessBit::kRead));
 
 	Array<BufferPtr, 4> uniformBuffers;
 	F32 count = 1.0f;
 	for(BufferPtr& ptr : uniformBuffers)
 	{
-		ptr = gr->newBuffer(BufferInitInfo(sizeof(Vec4), BufferUsageBit::kAllCompute, BufferMapAccessBit::kWrite));
+		ptr = g_gr->newBuffer(BufferInitInfo(sizeof(Vec4), BufferUsageBit::kAllCompute, BufferMapAccessBit::kWrite));
 
 		Vec4* mapped = static_cast<Vec4*>(ptr->map(0, sizeof(Vec4), BufferMapAccessBit::kWrite));
 		*mapped = Vec4(count, count + 1.0f, count + 2.0f, count + 3.0f);
@@ -2112,15 +2208,15 @@ void main()
 	u_result = u_ubos[0].m_vec + u_ubos[1].m_vec + u_ubos[2].m_vec + u_ubos[3].m_vec;
 })";
 
-	ShaderPtr shader = createShader(PROG_SRC, ShaderType::kCompute, *gr);
+	ShaderPtr shader = createShader(PROG_SRC, ShaderType::kCompute, *g_gr);
 	ShaderProgramInitInfo sprogInit;
 	sprogInit.m_computeShader = shader;
-	ShaderProgramPtr prog = gr->newShaderProgram(sprogInit);
+	ShaderProgramPtr prog = g_gr->newShaderProgram(sprogInit);
 
 	// Run
 	CommandBufferInitInfo cinit;
 	cinit.m_flags = CommandBufferFlag::kComputeWork | CommandBufferFlag::kSmallBatch;
-	CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
+	CommandBufferPtr cmdb = g_gr->newCommandBuffer(cinit);
 
 	for(U32 i = 0; i < uniformBuffers.getSize(); ++i)
 	{
@@ -2133,7 +2229,7 @@ void main()
 	cmdb->dispatchCompute(1, 1, 1);
 
 	cmdb->flush();
-	gr->finish();
+	g_gr->finish();
 
 	// Check result
 	Vec4* res = static_cast<Vec4*>(resBuff->map(0, sizeof(Vec4), BufferMapAccessBit::kRead));
@@ -2220,11 +2316,11 @@ void main()
 	cinit.m_flags = CommandBufferFlag::kComputeWork | CommandBufferFlag::kSmallBatch;
 	CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
-	cmdb->setTextureSurfaceBarrier(texA, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination,
+	setTextureSurfaceBarrier(cmdb, texA, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination,
 								   TextureSurfaceInfo());
-	cmdb->setTextureSurfaceBarrier(texB, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination,
+	setTextureSurfaceBarrier(cmdb, texB, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination,
 								   TextureSurfaceInfo());
-	cmdb->setTextureSurfaceBarrier(texC, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination,
+	setTextureSurfaceBarrier(cmdb, texC, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination,
 								   TextureSurfaceInfo());
 
 	TransferGpuAllocatorHandle handle0, handle1, handle2;
@@ -2235,11 +2331,11 @@ void main()
 	const Vec4 mip2 = Vec4(2.2f, 3.3f, 4.4f, 5.5f);
 	UPLOAD_TEX_SURFACE(cmdb, texC, TextureSurfaceInfo(0, 0, 0, 0), &mip2[0], sizeof(mip2), handle2);
 
-	cmdb->setTextureSurfaceBarrier(texA, TextureUsageBit::kTransferDestination, TextureUsageBit::kImageComputeRead,
+	setTextureSurfaceBarrier(cmdb, texA, TextureUsageBit::kTransferDestination, TextureUsageBit::kImageComputeRead,
 								   TextureSurfaceInfo());
-	cmdb->setTextureSurfaceBarrier(texB, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledCompute,
+	setTextureSurfaceBarrier(cmdb, texB, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledCompute,
 								   TextureSurfaceInfo());
-	cmdb->setTextureSurfaceBarrier(texC, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledCompute,
+	setTextureSurfaceBarrier(cmdb, texC, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledCompute,
 								   TextureSurfaceInfo());
 
 	cmdb->bindStorageBuffer(1, 0, resBuff, 0, kMaxPtrSize);
@@ -2304,17 +2400,17 @@ void main()
 	store(u_bufferAddressWrite, a + b);
 })";
 
-	ShaderPtr shader = createShader(PROG_SRC, ShaderType::kCompute, *gr);
+	ShaderPtr shader = createShader(PROG_SRC, ShaderType::kCompute, *g_gr);
 	ShaderProgramInitInfo sprogInit;
 	sprogInit.m_computeShader = shader;
-	ShaderProgramPtr prog = gr->newShaderProgram(sprogInit);
+	ShaderProgramPtr prog = g_gr->newShaderProgram(sprogInit);
 
 	// Create buffers
 	BufferInitInfo info;
 	info.m_size = sizeof(Vec4) * 2;
 	info.m_usage = BufferUsageBit::kAllCompute;
 	info.m_mapAccess = BufferMapAccessBit::kWrite;
-	BufferPtr ptrBuff = gr->newBuffer(info);
+	BufferPtr ptrBuff = g_gr->newBuffer(info);
 
 	Vec4* mapped = static_cast<Vec4*>(ptrBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 	const Vec4 VEC(123.456f, -1.1f, 100.0f, -666.0f);
@@ -2324,12 +2420,12 @@ void main()
 	ptrBuff->unmap();
 
 	BufferPtr resBuff =
-		gr->newBuffer(BufferInitInfo(sizeof(Vec4), BufferUsageBit::kAllCompute, BufferMapAccessBit::kRead));
+		g_gr->newBuffer(BufferInitInfo(sizeof(Vec4), BufferUsageBit::kAllCompute, BufferMapAccessBit::kRead));
 
 	// Run
 	CommandBufferInitInfo cinit;
 	cinit.m_flags = CommandBufferFlag::kComputeWork | CommandBufferFlag::kSmallBatch;
-	CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
+	CommandBufferPtr cmdb = g_gr->newCommandBuffer(cinit);
 
 	cmdb->bindShaderProgram(prog);
 
@@ -2345,7 +2441,7 @@ void main()
 	cmdb->dispatchCompute(1, 1, 1);
 
 	cmdb->flush();
-	gr->finish();
+	g_gr->finish();
 
 	// Check
 	mapped = static_cast<Vec4*>(resBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kRead));
@@ -2359,7 +2455,7 @@ ANKI_TEST(Gr, RayQuery)
 {
 	COMMON_BEGIN();
 
-	const Bool useRayTracing = gr->getDeviceCapabilities().m_rayTracingEnabled;
+	const Bool useRayTracing = g_gr->getDeviceCapabilities().m_rayTracingEnabled;
 	if(!useRayTracing)
 	{
 		ANKI_TEST_LOGW("Test will run without using ray tracing");
@@ -2374,7 +2470,7 @@ ANKI_TEST(Gr, RayQuery)
 		init.m_mapAccess = BufferMapAccessBit::kWrite;
 		init.m_usage = BufferUsageBit::kIndex;
 		init.m_size = sizeof(indices);
-		idxBuffer = gr->newBuffer(init);
+		idxBuffer = g_gr->newBuffer(init);
 
 		void* addr = idxBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
 		memcpy(addr, &indices[0], sizeof(indices));
@@ -2391,7 +2487,7 @@ ANKI_TEST(Gr, RayQuery)
 		init.m_mapAccess = BufferMapAccessBit::kWrite;
 		init.m_usage = BufferUsageBit::kVertex;
 		init.m_size = sizeof(verts);
-		vertBuffer = gr->newBuffer(init);
+		vertBuffer = g_gr->newBuffer(init);
 
 		void* addr = vertBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
 		memcpy(addr, &verts[0], sizeof(verts));
@@ -2412,7 +2508,7 @@ ANKI_TEST(Gr, RayQuery)
 		init.m_bottomLevel.m_positionsFormat = Format::kR32G32B32Sfloat;
 		init.m_bottomLevel.m_positionStride = 4 * 4;
 
-		blas = gr->newAccelerationStructure(init);
+		blas = g_gr->newAccelerationStructure(init);
 	}
 
 	// TLAS
@@ -2424,7 +2520,7 @@ ANKI_TEST(Gr, RayQuery)
 		Array<AccelerationStructureInstance, 1> instances = {{{blas, Mat3x4::getIdentity()}}};
 		init.m_topLevel.m_instances = instances;
 
-		tlas = gr->newAccelerationStructure(init);
+		tlas = g_gr->newAccelerationStructure(init);
 	}
 
 	// Program
@@ -2542,7 +2638,7 @@ void main()
 			fragSrc.append("#define USE_RAY_TRACING 0\n");
 		}
 		fragSrc.append(src);
-		prog = createProgram(VERT_QUAD_STRIP_SRC, fragSrc, *gr);
+		prog = createProgram(VERT_QUAD_STRIP_SRC, fragSrc, *g_gr);
 	}
 
 	// Build AS
@@ -2550,19 +2646,19 @@ void main()
 	{
 		CommandBufferInitInfo cinit;
 		cinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
-		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
+		CommandBufferPtr cmdb = g_gr->newCommandBuffer(cinit);
 
-		cmdb->setAccelerationStructureBarrier(blas, AccelerationStructureUsageBit::kNone,
-											  AccelerationStructureUsageBit::kBuild);
+		setAccelerationStructureBarrier(cmdb, blas, AccelerationStructureUsageBit::kNone,
+										AccelerationStructureUsageBit::kBuild);
 		cmdb->buildAccelerationStructure(blas);
-		cmdb->setAccelerationStructureBarrier(blas, AccelerationStructureUsageBit::kBuild,
-											  AccelerationStructureUsageBit::kAttach);
+		setAccelerationStructureBarrier(cmdb, blas, AccelerationStructureUsageBit::kBuild,
+										AccelerationStructureUsageBit::kAttach);
 
-		cmdb->setAccelerationStructureBarrier(tlas, AccelerationStructureUsageBit::kNone,
-											  AccelerationStructureUsageBit::kBuild);
+		setAccelerationStructureBarrier(cmdb, tlas, AccelerationStructureUsageBit::kNone,
+										AccelerationStructureUsageBit::kBuild);
 		cmdb->buildAccelerationStructure(tlas);
-		cmdb->setAccelerationStructureBarrier(tlas, AccelerationStructureUsageBit::kBuild,
-											  AccelerationStructureUsageBit::kFragmentRead);
+		setAccelerationStructureBarrier(cmdb, tlas, AccelerationStructureUsageBit::kBuild,
+										AccelerationStructureUsageBit::kFragmentRead);
 
 		cmdb->flush();
 	}
@@ -2580,7 +2676,7 @@ void main()
 
 		CommandBufferInitInfo cinit;
 		cinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
-		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
+		CommandBufferPtr cmdb = g_gr->newCommandBuffer(cinit);
 
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
 
@@ -2599,22 +2695,22 @@ void main()
 			cmdb->bindAccelerationStructure(0, 0, tlas);
 		}
 
-		TexturePtr presentTex = gr->acquireNextPresentableTexture();
-		FramebufferPtr fb = createColorFb(*gr, presentTex);
+		TexturePtr presentTex = g_gr->acquireNextPresentableTexture();
+		FramebufferPtr fb = createColorFb(*g_gr, presentTex);
 
-		cmdb->setTextureBarrier(presentTex, TextureUsageBit::kNone, TextureUsageBit::kFramebufferWrite,
-								TextureSubresourceInfo{});
+		setTextureBarrier(cmdb, presentTex, TextureUsageBit::kNone, TextureUsageBit::kFramebufferWrite,
+						  TextureSubresourceInfo{});
 
 		cmdb->beginRenderPass(fb, {TextureUsageBit::kFramebufferWrite}, {});
 		cmdb->drawArrays(PrimitiveTopology::kTriangleStrip, 4);
 		cmdb->endRenderPass();
 
-		cmdb->setTextureBarrier(presentTex, TextureUsageBit::kFramebufferWrite, TextureUsageBit::kPresent,
-								TextureSubresourceInfo{});
+		setTextureBarrier(cmdb, presentTex, TextureUsageBit::kFramebufferWrite, TextureUsageBit::kPresent,
+						  TextureSubresourceInfo{});
 
 		cmdb->flush();
 
-		gr->swapBuffers();
+		g_gr->swapBuffers();
 
 		timer.stop();
 		const F32 TICK = 1.0f / 30.0f;
@@ -2736,7 +2832,7 @@ ANKI_TEST(Gr, RayGen)
 {
 	COMMON_BEGIN();
 
-	const Bool useRayTracing = gr->getDeviceCapabilities().m_rayTracingEnabled;
+	const Bool useRayTracing = g_gr->getDeviceCapabilities().m_rayTracingEnabled;
 	if(!useRayTracing)
 	{
 		ANKI_TEST_LOGW("Ray tracing not supported");
@@ -2760,10 +2856,10 @@ ANKI_TEST(Gr, RayGen)
 		inf.m_usage = TextureUsageBit::kImageTraceRaysRead | TextureUsageBit::kImageTraceRaysWrite
 					  | TextureUsageBit::kImageComputeRead;
 
-		offscreenRts[0] = gr->newTexture(inf);
+		offscreenRts[0] = g_gr->newTexture(inf);
 
 		inf.setName("T_offscreen#2");
-		offscreenRts[1] = gr->newTexture(inf);
+		offscreenRts[1] = g_gr->newTexture(inf);
 	}
 
 	// Copy to present program
@@ -2787,10 +2883,10 @@ void main()
 	imageStore(u_outImg, IVec2(gl_GlobalInvocationID.xy), col);
 })";
 
-		ShaderPtr shader = createShader(src, ShaderType::kCompute, *gr);
+		ShaderPtr shader = createShader(src, ShaderType::kCompute, *g_gr);
 		ShaderProgramInitInfo sprogInit;
 		sprogInit.m_computeShader = shader;
-		copyToPresentProg = gr->newShaderProgram(sprogInit);
+		copyToPresentProg = g_gr->newShaderProgram(sprogInit);
 	}
 
 	// Create the gometries
@@ -2846,7 +2942,7 @@ void main()
 	// Create Buffers
 	for(Geom& g : geometries)
 	{
-		createCubeBuffers(*gr, -(g.m_aabb.getMax().xyz() - g.m_aabb.getMin().xyz()) / 2.0f,
+		createCubeBuffers(*g_gr, -(g.m_aabb.getMax().xyz() - g.m_aabb.getMin().xyz()) / 2.0f,
 						  (g.m_aabb.getMax().xyz() - g.m_aabb.getMin().xyz()) / 2.0f, g.m_indexBuffer, g.m_vertexBuffer,
 						  g.m_insideOut);
 	}
@@ -2866,7 +2962,7 @@ void main()
 			inf.m_bottomLevel.m_positionsFormat = Format::kR32G32B32Sfloat;
 			inf.m_bottomLevel.m_positionStride = sizeof(Vec3);
 
-			g.m_blas = gr->newAccelerationStructure(inf);
+			g.m_blas = g_gr->newAccelerationStructure(inf);
 		}
 
 		// TLAS
@@ -2886,7 +2982,7 @@ void main()
 		inf.m_type = AccelerationStructureType::kTopLevel;
 		inf.m_topLevel.m_instances = instances;
 
-		tlas = gr->newAccelerationStructure(inf);
+		tlas = g_gr->newAccelerationStructure(inf);
 	}
 
 	// Create model info
@@ -2897,7 +2993,7 @@ void main()
 		inf.m_usage = BufferUsageBit::kAllStorage;
 		inf.m_size = sizeof(Model) * U32(GeomWhat::kCount);
 
-		modelBuffer = gr->newBuffer(inf);
+		modelBuffer = g_gr->newBuffer(inf);
 		WeakArray<Model, PtrSize> models =
 			modelBuffer->map<Model>(0, U32(GeomWhat::kCount), BufferMapAccessBit::kWrite);
 		memset(&models[0], 0, inf.m_size);
@@ -3258,26 +3354,28 @@ void main()
 	imageStore(u_outImg, IVec2(gl_LaunchIDEXT.xy), Vec4(outColor, 0.0));
 })";
 
-		ShaderPtr lambertianShader = createShader(
-			StringRaii(&pool).sprintf("%s\n%s", commonSrc.cstr(), lambertianSrc.cstr()), ShaderType::kClosestHit, *gr);
+		ShaderPtr lambertianShader =
+			createShader(StringRaii(&pool).sprintf("%s\n%s", commonSrc.cstr(), lambertianSrc.cstr()),
+						 ShaderType::kClosestHit, *g_gr);
 		ShaderPtr lambertianRoomShader =
 			createShader(StringRaii(&pool).sprintf("%s\n%s", commonSrc.cstr(), lambertianRoomSrc.cstr()),
-						 ShaderType::kClosestHit, *gr);
+						 ShaderType::kClosestHit, *g_gr);
 		ShaderPtr emissiveShader = createShader(
-			StringRaii(&pool).sprintf("%s\n%s", commonSrc.cstr(), emissiveSrc.cstr()), ShaderType::kClosestHit, *gr);
+			StringRaii(&pool).sprintf("%s\n%s", commonSrc.cstr(), emissiveSrc.cstr()), ShaderType::kClosestHit, *g_gr);
 
 		ShaderPtr shadowAhitShader = createShader(
-			StringRaii(&pool).sprintf("%s\n%s", commonSrc.cstr(), shadowAhitSrc.cstr()), ShaderType::kAnyHit, *gr);
-		ShaderPtr shadowChitShader = createShader(
-			StringRaii(&pool).sprintf("%s\n%s", commonSrc.cstr(), shadowChitSrc.cstr()), ShaderType::kClosestHit, *gr);
-		ShaderPtr missShader =
-			createShader(StringRaii(&pool).sprintf("%s\n%s", commonSrc.cstr(), missSrc.cstr()), ShaderType::kMiss, *gr);
+			StringRaii(&pool).sprintf("%s\n%s", commonSrc.cstr(), shadowAhitSrc.cstr()), ShaderType::kAnyHit, *g_gr);
+		ShaderPtr shadowChitShader =
+			createShader(StringRaii(&pool).sprintf("%s\n%s", commonSrc.cstr(), shadowChitSrc.cstr()),
+						 ShaderType::kClosestHit, *g_gr);
+		ShaderPtr missShader = createShader(StringRaii(&pool).sprintf("%s\n%s", commonSrc.cstr(), missSrc.cstr()),
+											ShaderType::kMiss, *g_gr);
 
 		ShaderPtr shadowMissShader = createShader(
-			StringRaii(&pool).sprintf("%s\n%s", commonSrc.cstr(), shadowMissSrc.cstr()), ShaderType::kMiss, *gr);
+			StringRaii(&pool).sprintf("%s\n%s", commonSrc.cstr(), shadowMissSrc.cstr()), ShaderType::kMiss, *g_gr);
 
 		ShaderPtr rayGenShader = createShader(StringRaii(&pool).sprintf("%s\n%s", commonSrc.cstr(), rayGenSrc.cstr()),
-											  ShaderType::kRayGen, *gr);
+											  ShaderType::kRayGen, *g_gr);
 
 		Array<RayTracingHitGroup, 4> hitGroups;
 		hitGroups[0].m_closestHitShader = lambertianShader;
@@ -3296,73 +3394,73 @@ void main()
 		inf.m_rayTracingShaders.m_rayGenShaders = rayGenShaders;
 		inf.m_rayTracingShaders.m_missShaders = missShaders;
 
-		rtProg = gr->newShaderProgram(inf);
+		rtProg = g_gr->newShaderProgram(inf);
 	}
 
 	// Create the SBT
 	BufferPtr sbt;
 	{
 		const U32 recordCount = 1 + 2 + U32(GeomWhat::kCount) * 2;
-		const U32 sbtRecordSize = gr->getDeviceCapabilities().m_sbtRecordAlignment;
+		const U32 sbtRecordSize = g_gr->getDeviceCapabilities().m_sbtRecordAlignment;
 
 		BufferInitInfo inf;
 		inf.m_mapAccess = BufferMapAccessBit::kWrite;
 		inf.m_usage = BufferUsageBit::kSBT;
 		inf.m_size = sbtRecordSize * recordCount;
 
-		sbt = gr->newBuffer(inf);
+		sbt = g_gr->newBuffer(inf);
 		WeakArray<U8, PtrSize> mapped = sbt->map<U8>(0, inf.m_size, BufferMapAccessBit::kWrite);
 		memset(&mapped[0], 0, inf.m_size);
 
 		ConstWeakArray<U8> handles = rtProg->getShaderGroupHandles();
 		ANKI_TEST_EXPECT_EQ(handles.getSize(),
-							gr->getDeviceCapabilities().m_shaderGroupHandleSize * (hitgroupCount + 1));
+							g_gr->getDeviceCapabilities().m_shaderGroupHandleSize * (hitgroupCount + 1));
 
 		// Ray gen
 		U32 record = 0;
 		memcpy(&mapped[sbtRecordSize * record++],
-			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * rayGenGroupIdx],
-			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
+			   &handles[g_gr->getDeviceCapabilities().m_shaderGroupHandleSize * rayGenGroupIdx],
+			   g_gr->getDeviceCapabilities().m_shaderGroupHandleSize);
 
 		// 2xMiss
 		memcpy(&mapped[sbtRecordSize * record++],
-			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * missGroupIdx],
-			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
+			   &handles[g_gr->getDeviceCapabilities().m_shaderGroupHandleSize * missGroupIdx],
+			   g_gr->getDeviceCapabilities().m_shaderGroupHandleSize);
 		memcpy(&mapped[sbtRecordSize * record++],
-			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * shadowMissGroupIdx],
-			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
+			   &handles[g_gr->getDeviceCapabilities().m_shaderGroupHandleSize * shadowMissGroupIdx],
+			   g_gr->getDeviceCapabilities().m_shaderGroupHandleSize);
 
 		// Small box
 		memcpy(&mapped[sbtRecordSize * record++],
-			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * lambertianChitGroupIdx],
-			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
+			   &handles[g_gr->getDeviceCapabilities().m_shaderGroupHandleSize * lambertianChitGroupIdx],
+			   g_gr->getDeviceCapabilities().m_shaderGroupHandleSize);
 		memcpy(&mapped[sbtRecordSize * record++],
-			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * shadowAhitGroupIdx],
-			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
+			   &handles[g_gr->getDeviceCapabilities().m_shaderGroupHandleSize * shadowAhitGroupIdx],
+			   g_gr->getDeviceCapabilities().m_shaderGroupHandleSize);
 
 		// Big box
 		memcpy(&mapped[sbtRecordSize * record++],
-			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * lambertianChitGroupIdx],
-			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
+			   &handles[g_gr->getDeviceCapabilities().m_shaderGroupHandleSize * lambertianChitGroupIdx],
+			   g_gr->getDeviceCapabilities().m_shaderGroupHandleSize);
 		memcpy(&mapped[sbtRecordSize * record++],
-			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * shadowAhitGroupIdx],
-			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
+			   &handles[g_gr->getDeviceCapabilities().m_shaderGroupHandleSize * shadowAhitGroupIdx],
+			   g_gr->getDeviceCapabilities().m_shaderGroupHandleSize);
 
 		// Room
 		memcpy(&mapped[sbtRecordSize * record++],
-			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * lambertianRoomChitGroupIdx],
-			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
+			   &handles[g_gr->getDeviceCapabilities().m_shaderGroupHandleSize * lambertianRoomChitGroupIdx],
+			   g_gr->getDeviceCapabilities().m_shaderGroupHandleSize);
 		memcpy(&mapped[sbtRecordSize * record++],
-			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * shadowAhitGroupIdx],
-			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
+			   &handles[g_gr->getDeviceCapabilities().m_shaderGroupHandleSize * shadowAhitGroupIdx],
+			   g_gr->getDeviceCapabilities().m_shaderGroupHandleSize);
 
 		// Light
 		memcpy(&mapped[sbtRecordSize * record++],
-			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * emissiveChitGroupIdx],
-			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
+			   &handles[g_gr->getDeviceCapabilities().m_shaderGroupHandleSize * emissiveChitGroupIdx],
+			   g_gr->getDeviceCapabilities().m_shaderGroupHandleSize);
 		memcpy(&mapped[sbtRecordSize * record++],
-			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * shadowAhitGroupIdx],
-			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
+			   &handles[g_gr->getDeviceCapabilities().m_shaderGroupHandleSize * shadowAhitGroupIdx],
+			   g_gr->getDeviceCapabilities().m_shaderGroupHandleSize);
 
 		sbt->unmap();
 	}
@@ -3376,7 +3474,7 @@ void main()
 		inf.m_usage = BufferUsageBit::kAllStorage;
 		inf.m_size = sizeof(Light) * lightCount;
 
-		lightBuffer = gr->newBuffer(inf);
+		lightBuffer = g_gr->newBuffer(inf);
 		WeakArray<Light, PtrSize> lights = lightBuffer->map<Light>(0, lightCount, BufferMapAccessBit::kWrite);
 
 		lights[0].m_min = geometries[GeomWhat::LIGHT].m_aabb.getMin().xyz();
@@ -3402,14 +3500,14 @@ void main()
 		CommandBufferInitInfo cinit;
 		cinit.m_flags =
 			CommandBufferFlag::kGeneralWork | CommandBufferFlag::kComputeWork | CommandBufferFlag::kSmallBatch;
-		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
+		CommandBufferPtr cmdb = g_gr->newCommandBuffer(cinit);
 
 		if(i == 0)
 		{
 			for(const Geom& g : geometries)
 			{
-				cmdb->setAccelerationStructureBarrier(g.m_blas, AccelerationStructureUsageBit::kNone,
-													  AccelerationStructureUsageBit::kBuild);
+				setAccelerationStructureBarrier(cmdb, g.m_blas, AccelerationStructureUsageBit::kNone,
+												AccelerationStructureUsageBit::kBuild);
 			}
 
 			for(const Geom& g : geometries)
@@ -3419,24 +3517,24 @@ void main()
 
 			for(const Geom& g : geometries)
 			{
-				cmdb->setAccelerationStructureBarrier(g.m_blas, AccelerationStructureUsageBit::kBuild,
-													  AccelerationStructureUsageBit::kAttach);
+				setAccelerationStructureBarrier(cmdb, g.m_blas, AccelerationStructureUsageBit::kBuild,
+												AccelerationStructureUsageBit::kAttach);
 			}
 
-			cmdb->setAccelerationStructureBarrier(tlas, AccelerationStructureUsageBit::kNone,
-												  AccelerationStructureUsageBit::kBuild);
+			setAccelerationStructureBarrier(cmdb, tlas, AccelerationStructureUsageBit::kNone,
+											AccelerationStructureUsageBit::kBuild);
 			cmdb->buildAccelerationStructure(tlas);
-			cmdb->setAccelerationStructureBarrier(tlas, AccelerationStructureUsageBit::kBuild,
-												  AccelerationStructureUsageBit::kTraceRaysRead);
+			setAccelerationStructureBarrier(cmdb, tlas, AccelerationStructureUsageBit::kBuild,
+											AccelerationStructureUsageBit::kTraceRaysRead);
 		}
 
-		TexturePtr presentTex = gr->acquireNextPresentableTexture();
+		TexturePtr presentTex = g_gr->acquireNextPresentableTexture();
 		TextureViewPtr presentView;
 		{
 
 			TextureViewInitInfo inf;
 			inf.m_texture = presentTex;
-			presentView = gr->newTextureView(inf);
+			presentView = g_gr->newTextureView(inf);
 		}
 
 		TextureViewPtr offscreenView, offscreenHistoryView;
@@ -3444,16 +3542,16 @@ void main()
 
 			TextureViewInitInfo inf;
 			inf.m_texture = offscreenRts[i & 1];
-			offscreenView = gr->newTextureView(inf);
+			offscreenView = g_gr->newTextureView(inf);
 
 			inf.m_texture = offscreenRts[(i + 1) & 1];
-			offscreenHistoryView = gr->newTextureView(inf);
+			offscreenHistoryView = g_gr->newTextureView(inf);
 		}
 
-		cmdb->setTextureBarrier(offscreenRts[i & 1], TextureUsageBit::kNone, TextureUsageBit::kImageTraceRaysWrite,
-								TextureSubresourceInfo());
-		cmdb->setTextureBarrier(offscreenRts[(i + 1) & 1], TextureUsageBit::kImageComputeRead,
-								TextureUsageBit::kImageTraceRaysRead, TextureSubresourceInfo());
+		setTextureBarrier(cmdb, offscreenRts[i & 1], TextureUsageBit::kNone, TextureUsageBit::kImageTraceRaysWrite,
+						  TextureSubresourceInfo());
+		setTextureBarrier(cmdb, offscreenRts[(i + 1) & 1], TextureUsageBit::kImageComputeRead,
+						  TextureUsageBit::kImageTraceRaysRead, TextureSubresourceInfo());
 
 		cmdb->bindStorageBuffer(0, 0, modelBuffer, 0, kMaxPtrSize);
 		cmdb->bindStorageBuffer(0, 1, lightBuffer, 0, kMaxPtrSize);
@@ -3471,14 +3569,14 @@ void main()
 
 		cmdb->setPushConstants(&pc, sizeof(pc));
 
-		const U32 sbtRecordSize = gr->getDeviceCapabilities().m_sbtRecordAlignment;
+		const U32 sbtRecordSize = g_gr->getDeviceCapabilities().m_sbtRecordAlignment;
 		cmdb->traceRays(sbt, 0, sbtRecordSize, U32(GeomWhat::kCount) * 2, 2, WIDTH, HEIGHT, 1);
 
 		// Copy to present
-		cmdb->setTextureBarrier(offscreenRts[i & 1], TextureUsageBit::kImageTraceRaysWrite,
-								TextureUsageBit::kImageComputeRead, TextureSubresourceInfo());
-		cmdb->setTextureBarrier(presentTex, TextureUsageBit::kNone, TextureUsageBit::kImageComputeWrite,
-								TextureSubresourceInfo());
+		setTextureBarrier(cmdb, offscreenRts[i & 1], TextureUsageBit::kImageTraceRaysWrite,
+						  TextureUsageBit::kImageComputeRead, TextureSubresourceInfo());
+		setTextureBarrier(cmdb, presentTex, TextureUsageBit::kNone, TextureUsageBit::kImageComputeWrite,
+						  TextureSubresourceInfo());
 
 		cmdb->bindImage(0, 0, offscreenView);
 		cmdb->bindImage(0, 1, presentView);
@@ -3488,12 +3586,12 @@ void main()
 		const U32 sizeY = (HEIGHT + 8 - 1) / 8;
 		cmdb->dispatchCompute(sizeX, sizeY, 1);
 
-		cmdb->setTextureBarrier(presentTex, TextureUsageBit::kImageComputeWrite, TextureUsageBit::kPresent,
-								TextureSubresourceInfo());
+		setTextureBarrier(cmdb, presentTex, TextureUsageBit::kImageComputeWrite, TextureUsageBit::kPresent,
+						  TextureSubresourceInfo());
 
 		cmdb->flush();
 
-		gr->swapBuffers();
+		g_gr->swapBuffers();
 
 		timer.stop();
 		const F32 TICK = 1.0f / 60.0f;
@@ -3529,10 +3627,10 @@ void main()
 	}
 })";
 
-	ShaderPtr shader = createShader(PROG_SRC, ShaderType::kCompute, *gr);
+	ShaderPtr shader = createShader(PROG_SRC, ShaderType::kCompute, *g_gr);
 	ShaderProgramInitInfo sprogInit;
 	sprogInit.m_computeShader = shader;
-	ShaderProgramPtr incrementProg = gr->newShaderProgram(sprogInit);
+	ShaderProgramPtr incrementProg = g_gr->newShaderProgram(sprogInit);
 
 	// Create the check program
 	static const char* CHECK_SRC = R"(
@@ -3557,16 +3655,16 @@ void main()
 	atomicCompSwap(u_counters[newGlobalInvocationID], expectedVal, 4u);
 })";
 
-	shader = createShader(CHECK_SRC, ShaderType::kCompute, *gr);
+	shader = createShader(CHECK_SRC, ShaderType::kCompute, *g_gr);
 	sprogInit.m_computeShader = shader;
-	ShaderProgramPtr checkProg = gr->newShaderProgram(sprogInit);
+	ShaderProgramPtr checkProg = g_gr->newShaderProgram(sprogInit);
 
 	// Create buffers
 	BufferInitInfo info;
 	info.m_size = sizeof(U32) * ARRAY_SIZE;
 	info.m_usage = BufferUsageBit::kAllCompute;
 	info.m_mapAccess = BufferMapAccessBit::kWrite | BufferMapAccessBit::kRead;
-	BufferPtr atomicsBuffer = gr->newBuffer(info);
+	BufferPtr atomicsBuffer = g_gr->newBuffer(info);
 	U32* values =
 		static_cast<U32*>(atomicsBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kRead | BufferMapAccessBit::kWrite));
 	memset(values, 0, info.m_size);
@@ -3592,21 +3690,21 @@ void main()
 	// Create the 1st command buffer
 	CommandBufferInitInfo cinit;
 	cinit.m_flags = CommandBufferFlag::kComputeWork | CommandBufferFlag::kSmallBatch;
-	CommandBufferPtr incrementCmdb = gr->newCommandBuffer(cinit);
+	CommandBufferPtr incrementCmdb = g_gr->newCommandBuffer(cinit);
 	incrementCmdb->bindShaderProgram(incrementProg);
 	incrementCmdb->bindStorageBuffer(0, 0, atomicsBuffer, 0, kMaxPtrSize);
 	incrementCmdb->dispatchCompute(ARRAY_SIZE / 8, 1, 1);
 
 	// Create the 2nd command buffer
 	cinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
-	CommandBufferPtr checkCmdb = gr->newCommandBuffer(cinit);
+	CommandBufferPtr checkCmdb = g_gr->newCommandBuffer(cinit);
 	checkCmdb->bindShaderProgram(checkProg);
 	checkCmdb->bindStorageBuffer(0, 0, atomicsBuffer, 0, kMaxPtrSize);
 	checkCmdb->dispatchCompute(ARRAY_SIZE / 8, 1, 1);
 
 	// Create the 3rd command buffer
 	cinit.m_flags = CommandBufferFlag::kComputeWork | CommandBufferFlag::kSmallBatch;
-	CommandBufferPtr incrementCmdb2 = gr->newCommandBuffer(cinit);
+	CommandBufferPtr incrementCmdb2 = g_gr->newCommandBuffer(cinit);
 	incrementCmdb2->bindShaderProgram(incrementProg);
 	incrementCmdb2->bindStorageBuffer(0, 0, atomicsBuffer, 0, kMaxPtrSize);
 	incrementCmdb2->dispatchCompute(ARRAY_SIZE / 8, 1, 1);

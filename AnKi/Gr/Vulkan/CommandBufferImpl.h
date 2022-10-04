@@ -28,20 +28,6 @@ class CommandBufferInitInfo;
 /// @addtogroup vulkan
 /// @{
 
-#define ANKI_CMD(x_, t_) \
-	flushBatches(CommandBufferCommandType::t_); \
-	x_;
-
-/// List the commands that can be batched.
-enum class CommandBufferCommandType : U8
-{
-	kSetBarrier,
-	kResetQuery,
-	kWriteQueryResult,
-	kPushSecondLevel,
-	kAnyOtherCommand
-};
-
 /// Command buffer implementation.
 class CommandBufferImpl final : public CommandBuffer, public VulkanObject<CommandBuffer, CommandBufferImpl>
 {
@@ -97,7 +83,7 @@ public:
 		commandCommon();
 		m_state.bindVertexBuffer(binding, stride, stepRate);
 		const VkBuffer vkbuff = static_cast<const BufferImpl&>(*buff).getHandle();
-		ANKI_CMD(vkCmdBindVertexBuffers(m_handle, binding, 1, &vkbuff, &offset), kAnyOtherCommand);
+		vkCmdBindVertexBuffers(m_handle, binding, 1, &vkbuff, &offset);
 		m_microCmdb->pushObjectRef(buff);
 	}
 
@@ -110,9 +96,8 @@ public:
 	void bindIndexBufferInternal(const BufferPtr& buff, PtrSize offset, IndexType type)
 	{
 		commandCommon();
-		ANKI_CMD(vkCmdBindIndexBuffer(m_handle, static_cast<const BufferImpl&>(*buff).getHandle(), offset,
-									  convertIndexType(type)),
-				 kAnyOtherCommand);
+		vkCmdBindIndexBuffer(m_handle, static_cast<const BufferImpl&>(*buff).getHandle(), offset,
+							 convertIndexType(type));
 		m_microCmdb->pushObjectRef(buff);
 	}
 
@@ -314,13 +299,13 @@ public:
 	void traceRaysInternal(const BufferPtr& sbtBuffer, PtrSize sbtBufferOffset, U32 sbtRecordSize,
 						   U32 hitGroupSbtRecordCount, U32 rayTypeCount, U32 width, U32 height, U32 depth);
 
-	void resetOcclusionQueryInternal(const OcclusionQueryPtr& query);
+	void resetOcclusionQueriesInternal(ConstWeakArray<OcclusionQuery*> queries);
 
 	void beginOcclusionQueryInternal(const OcclusionQueryPtr& query);
 
 	void endOcclusionQueryInternal(const OcclusionQueryPtr& query);
 
-	void resetTimestampQueryInternal(const TimestampQueryPtr& query);
+	void resetTimestampQueriesInternal(ConstWeakArray<TimestampQuery*> queries);
 
 	void writeTimestampInternal(const TimestampQueryPtr& query);
 
@@ -328,7 +313,7 @@ public:
 
 	void clearTextureViewInternal(const TextureViewPtr& texView, const ClearValue& clearValue);
 
-	void pushSecondLevelCommandBufferInternal(const CommandBufferPtr& cmdb);
+	void pushSecondLevelCommandBuffersInternal(ConstWeakArray<CommandBuffer*> cmdbs);
 
 	// To enable using Anki's commandbuffers for external workloads
 	void beginRecordingExt()
@@ -338,36 +323,14 @@ public:
 
 	void endRecording();
 
-	void setTextureBarrierInternal(const TexturePtr& tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage,
-								   const TextureSubresourceInfo& subresource);
-
-	void setTextureSurfaceBarrierInternal(const TexturePtr& tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage,
-										  const TextureSurfaceInfo& surf);
-
-	void setTextureVolumeBarrierInternal(const TexturePtr& tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage,
-										 const TextureVolumeInfo& vol);
-
-	void setTextureBarrierRangeInternal(const TexturePtr& tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage,
-										const VkImageSubresourceRange& range);
-
-	void setBufferBarrierInternal(VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, VkPipelineStageFlags dstStage,
-								  VkAccessFlags dstAccess, PtrSize offset, PtrSize size, VkBuffer buff);
-
-	void setBufferBarrierInternal(const BufferPtr& buff, BufferUsageBit before, BufferUsageBit after, PtrSize offset,
-								  PtrSize size);
-
-	void setAccelerationStructureBarrierInternal(const AccelerationStructurePtr& as,
-												 AccelerationStructureUsageBit prevUsage,
-												 AccelerationStructureUsageBit nextUsage);
-
 	void setPipelineBarrierInternal(ConstWeakArray<TextureBarrierInfo> textures,
 									ConstWeakArray<BufferBarrierInfo> buffers,
 									ConstWeakArray<AccelerationStructureBarrierInfo> accelerationStructures);
 
 	void fillBufferInternal(const BufferPtr& buff, PtrSize offset, PtrSize size, U32 value);
 
-	void writeOcclusionQueryResultToBufferInternal(const OcclusionQueryPtr& query, PtrSize offset,
-												   const BufferPtr& buff);
+	void writeOcclusionQueriesResultToBufferInternal(ConstWeakArray<OcclusionQuery*> queries, PtrSize offset,
+													 const BufferPtr& buff);
 
 	void bindShaderProgramInternal(const ShaderProgramPtr& prog);
 
@@ -447,8 +410,6 @@ private:
 
 	VkSubpassContents m_subpassContents = VK_SUBPASS_CONTENTS_MAX_ENUM;
 
-	CommandBufferCommandType m_lastCmdType = CommandBufferCommandType::kAnyOtherCommand;
-
 	/// @name state_opts
 	/// @{
 	Array<U32, 4> m_viewport = {0, 0, 0, 0};
@@ -470,56 +431,25 @@ private:
 	void rebindDynamicState();
 	/// @}
 
-	/// @name barrier_batch
-	/// @{
-	DynamicArray<VkImageMemoryBarrier> m_imgBarriers;
-	DynamicArray<VkBufferMemoryBarrier> m_buffBarriers;
-	DynamicArray<VkMemoryBarrier> m_memBarriers;
-	U16 m_imgBarrierCount = 0;
-	U16 m_buffBarrierCount = 0;
-	U16 m_memBarrierCount = 0;
-	VkPipelineStageFlags m_srcStageMask = 0;
-	VkPipelineStageFlags m_dstStageMask = 0;
-	/// @}
-
-	/// @name reset_query_batch
-	/// @{
-	class QueryResetAtom
-	{
-	public:
-		VkQueryPool m_pool;
-		U32 m_queryIdx;
-	};
-
-	DynamicArray<QueryResetAtom> m_queryResetAtoms;
-	/// @}
-
-	/// @name write_query_result_batch
-	/// @{
-	class WriteQueryAtom
-	{
-	public:
-		VkQueryPool m_pool;
-		U32 m_queryIdx;
-		VkBuffer m_buffer;
-		PtrSize m_offset;
-	};
-
-	DynamicArray<WriteQueryAtom> m_writeQueryAtoms;
-	/// @}
-
-	/// @name push_second_level_batch
-	/// @{
-	DynamicArray<VkCommandBuffer> m_secondLevelAtoms;
-	U16 m_secondLevelAtomCount = 0;
-	/// @}
-
 	/// Some common operations per command.
-	void commandCommon();
+	ANKI_FORCE_INLINE void commandCommon()
+	{
+		ANKI_ASSERT(!m_finalized);
+#if ANKI_EXTRA_CHECKS
+		++m_commandCount;
+#endif
+		m_empty = false;
 
-	/// Flush batches. Use ANKI_CMD on every vkCmdXXX to do that automatically and call it manually before adding to a
-	/// batch.
-	void flushBatches(CommandBufferCommandType type);
+		if(ANKI_UNLIKELY(!m_beganRecording))
+		{
+			beginRecording();
+			m_beganRecording = true;
+		}
+
+		ANKI_ASSERT(Thread::getCurrentThreadId() == m_tid
+					&& "Commands must be recorder and flushed by the thread this command buffer was created");
+		ANKI_ASSERT(m_handle);
+	}
 
 	void drawcallCommon();
 
@@ -534,13 +464,6 @@ private:
 	{
 		return !!(m_flags & CommandBufferFlag::kSecondLevel);
 	}
-
-	/// Flush batched image and buffer barriers.
-	void flushBarriers();
-
-	void flushQueryResets();
-
-	void flushWriteQueryResults();
 
 	void setImageBarrier(VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, VkImageLayout prevLayout,
 						 VkPipelineStageFlags dstStage, VkAccessFlags dstAccess, VkImageLayout newLayout, VkImage img,

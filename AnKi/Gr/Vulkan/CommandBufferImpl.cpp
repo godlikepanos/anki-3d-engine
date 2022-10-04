@@ -33,13 +33,6 @@ CommandBufferImpl::~CommandBufferImpl()
 	{
 		ANKI_VK_LOGW("Command buffer was not flushed");
 	}
-
-	m_imgBarriers.destroy(*m_pool);
-	m_buffBarriers.destroy(*m_pool);
-	m_memBarriers.destroy(*m_pool);
-	m_queryResetAtoms.destroy(*m_pool);
-	m_writeQueryAtoms.destroy(*m_pool);
-	m_secondLevelAtoms.destroy(*m_pool);
 }
 
 Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
@@ -169,8 +162,6 @@ void CommandBufferImpl::beginRenderPassInternal()
 {
 	FramebufferImpl& impl = static_cast<FramebufferImpl&>(*m_activeFb);
 
-	flushBatches(CommandBufferCommandType::kAnyOtherCommand); // Flush before the marker
-
 	m_state.beginRenderPass(&impl);
 
 	VkRenderPassBeginInfo bi = {};
@@ -253,7 +244,7 @@ void CommandBufferImpl::endRenderPassInternal()
 	VkSubpassEndInfo subpassEndInfo = {};
 	subpassEndInfo.sType = VK_STRUCTURE_TYPE_SUBPASS_END_INFO;
 
-	ANKI_CMD(vkCmdEndRenderPass2KHR(m_handle, &subpassEndInfo), kAnyOtherCommand);
+	vkCmdEndRenderPass2KHR(m_handle, &subpassEndInfo);
 	getGrManagerImpl().endMarker(m_handle);
 
 	m_activeFb.reset(nullptr);
@@ -274,7 +265,7 @@ void CommandBufferImpl::endRecording()
 	ANKI_ASSERT(!m_finalized);
 	ANKI_ASSERT(!m_empty);
 
-	ANKI_CMD(ANKI_VK_CHECKF(vkEndCommandBuffer(m_handle)), kAnyOtherCommand);
+	ANKI_VK_CHECKF(vkEndCommandBuffer(m_handle));
 	m_finalized = true;
 
 #if ANKI_EXTRA_CHECKS
@@ -325,7 +316,6 @@ void CommandBufferImpl::generateMipmaps2dInternal(const TextureViewPtr& texView)
 	if(blitCount == 0)
 	{
 		// Nothing to be done, flush the previous commands though because you may batch (and sort) things you shouldn't
-		flushBatches(CommandBufferCommandType::kAnyOtherCommand);
 		return;
 	}
 
@@ -336,6 +326,7 @@ void CommandBufferImpl::generateMipmaps2dInternal(const TextureViewPtr& texView)
 	for(U32 i = 0; i < blitCount; ++i)
 	{
 		// Transition source
+		// OPT: Combine the 2 barriers
 		if(i > 0)
 		{
 			VkImageSubresourceRange range;
@@ -400,261 +391,13 @@ void CommandBufferImpl::generateMipmaps2dInternal(const TextureViewPtr& texView)
 		blit.dstOffsets[0] = {0, 0, 0};
 		blit.dstOffsets[1] = {dstWidth, dstHeight, 1};
 
-		ANKI_CMD(vkCmdBlitImage(m_handle, tex.m_imageHandle, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, tex.m_imageHandle,
-								VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit,
-								(!!aspect) ? VK_FILTER_NEAREST : VK_FILTER_LINEAR),
-				 kAnyOtherCommand);
+		vkCmdBlitImage(m_handle, tex.m_imageHandle, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, tex.m_imageHandle,
+					   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit,
+					   (!!aspect) ? VK_FILTER_NEAREST : VK_FILTER_LINEAR);
 	}
 
 	// Hold the reference
 	m_microCmdb->pushObjectRef(texView);
-}
-
-void CommandBufferImpl::flushBarriers()
-{
-	if(m_imgBarrierCount == 0 && m_buffBarrierCount == 0 && m_memBarrierCount == 0)
-	{
-		return;
-	}
-
-	// Sort
-	//
-
-	if(m_imgBarrierCount > 0)
-	{
-		std::sort(&m_imgBarriers[0], &m_imgBarriers[0] + m_imgBarrierCount,
-				  [](const VkImageMemoryBarrier& a, const VkImageMemoryBarrier& b) -> Bool {
-					  if(a.image != b.image)
-					  {
-						  return a.image < b.image;
-					  }
-
-					  if(a.subresourceRange.aspectMask != b.subresourceRange.aspectMask)
-					  {
-						  return a.subresourceRange.aspectMask < b.subresourceRange.aspectMask;
-					  }
-
-					  if(a.oldLayout != b.oldLayout)
-					  {
-						  return a.oldLayout < b.oldLayout;
-					  }
-
-					  if(a.newLayout != b.newLayout)
-					  {
-						  return a.newLayout < b.newLayout;
-					  }
-
-					  if(a.subresourceRange.baseArrayLayer != b.subresourceRange.baseArrayLayer)
-					  {
-						  return a.subresourceRange.baseArrayLayer < b.subresourceRange.baseArrayLayer;
-					  }
-
-					  if(a.subresourceRange.baseMipLevel != b.subresourceRange.baseMipLevel)
-					  {
-						  return a.subresourceRange.baseMipLevel < b.subresourceRange.baseMipLevel;
-					  }
-
-					  return false;
-				  });
-	}
-
-	// Batch
-	//
-
-	DynamicArrayRaii<VkImageMemoryBarrier> finalImgBarriers(m_pool);
-	U32 finalImgBarrierCount = 0;
-	if(m_imgBarrierCount > 0)
-	{
-		DynamicArrayRaii<VkImageMemoryBarrier> squashedBarriers(m_pool);
-		U32 squashedBarrierCount = 0;
-
-		squashedBarriers.create(m_imgBarrierCount);
-
-		// Squash the mips by reducing the barriers
-		for(U32 i = 0; i < m_imgBarrierCount; ++i)
-		{
-			const VkImageMemoryBarrier* prev = (i > 0) ? &m_imgBarriers[i - 1] : nullptr;
-			const VkImageMemoryBarrier& crnt = m_imgBarriers[i];
-
-			if(prev && prev->image == crnt.image
-			   && prev->subresourceRange.aspectMask == crnt.subresourceRange.aspectMask
-			   && prev->oldLayout == crnt.oldLayout && prev->newLayout == crnt.newLayout
-			   && prev->srcAccessMask == crnt.srcAccessMask && prev->dstAccessMask == crnt.dstAccessMask
-			   && prev->subresourceRange.baseMipLevel + prev->subresourceRange.levelCount
-					  == crnt.subresourceRange.baseMipLevel
-			   && prev->subresourceRange.baseArrayLayer == crnt.subresourceRange.baseArrayLayer
-			   && prev->subresourceRange.layerCount == crnt.subresourceRange.layerCount)
-			{
-				// Can batch
-				squashedBarriers[squashedBarrierCount - 1].subresourceRange.levelCount +=
-					crnt.subresourceRange.levelCount;
-			}
-			else
-			{
-				// Can't batch, create new barrier
-				squashedBarriers[squashedBarrierCount++] = crnt;
-			}
-		}
-
-		ANKI_ASSERT(squashedBarrierCount);
-
-		// Squash the layers
-		finalImgBarriers.create(squashedBarrierCount);
-
-		for(U32 i = 0; i < squashedBarrierCount; ++i)
-		{
-			const VkImageMemoryBarrier* prev = (i > 0) ? &squashedBarriers[i - 1] : nullptr;
-			const VkImageMemoryBarrier& crnt = squashedBarriers[i];
-
-			if(prev && prev->image == crnt.image
-			   && prev->subresourceRange.aspectMask == crnt.subresourceRange.aspectMask
-			   && prev->oldLayout == crnt.oldLayout && prev->newLayout == crnt.newLayout
-			   && prev->srcAccessMask == crnt.srcAccessMask && prev->dstAccessMask == crnt.dstAccessMask
-			   && prev->subresourceRange.baseMipLevel == crnt.subresourceRange.baseMipLevel
-			   && prev->subresourceRange.levelCount == crnt.subresourceRange.levelCount
-			   && prev->subresourceRange.baseArrayLayer + prev->subresourceRange.layerCount
-					  == crnt.subresourceRange.baseArrayLayer)
-			{
-				// Can batch
-				finalImgBarriers[finalImgBarrierCount - 1].subresourceRange.layerCount +=
-					crnt.subresourceRange.layerCount;
-			}
-			else
-			{
-				// Can't batch, create new barrier
-				finalImgBarriers[finalImgBarrierCount++] = crnt;
-			}
-		}
-
-		ANKI_ASSERT(finalImgBarrierCount);
-	}
-
-	// Finish the job
-	//
-	vkCmdPipelineBarrier(m_handle, m_srcStageMask, m_dstStageMask, 0, m_memBarrierCount,
-						 (m_memBarrierCount) ? &m_memBarriers[0] : nullptr, m_buffBarrierCount,
-						 (m_buffBarrierCount) ? &m_buffBarriers[0] : nullptr, finalImgBarrierCount,
-						 (finalImgBarrierCount) ? &finalImgBarriers[0] : nullptr);
-
-	ANKI_TRACE_INC_COUNTER(VK_PIPELINE_BARRIERS, 1);
-
-	m_imgBarrierCount = 0;
-	m_buffBarrierCount = 0;
-	m_memBarrierCount = 0;
-	m_srcStageMask = 0;
-	m_dstStageMask = 0;
-}
-
-void CommandBufferImpl::flushQueryResets()
-{
-	if(m_queryResetAtoms.getSize() == 0)
-	{
-		return;
-	}
-
-	std::sort(m_queryResetAtoms.getBegin(), m_queryResetAtoms.getEnd(),
-			  [](const QueryResetAtom& a, const QueryResetAtom& b) -> Bool {
-				  if(a.m_pool != b.m_pool)
-				  {
-					  return a.m_pool < b.m_pool;
-				  }
-
-				  ANKI_ASSERT(a.m_queryIdx != b.m_queryIdx && "Tried to reset the same query more than once");
-				  return a.m_queryIdx < b.m_queryIdx;
-			  });
-
-	U32 firstQuery = m_queryResetAtoms[0].m_queryIdx;
-	U32 queryCount = 1;
-	VkQueryPool pool = m_queryResetAtoms[0].m_pool;
-	for(U32 i = 1; i < m_queryResetAtoms.getSize(); ++i)
-	{
-		const QueryResetAtom& crnt = m_queryResetAtoms[i];
-		const QueryResetAtom& prev = m_queryResetAtoms[i - 1];
-
-		if(crnt.m_pool == prev.m_pool && crnt.m_queryIdx == prev.m_queryIdx + 1)
-		{
-			// Can batch
-			++queryCount;
-		}
-		else
-		{
-			// Flush batch
-			vkCmdResetQueryPool(m_handle, pool, firstQuery, queryCount);
-
-			// New batch
-			firstQuery = crnt.m_queryIdx;
-			queryCount = 1;
-			pool = crnt.m_pool;
-		}
-	}
-
-	vkCmdResetQueryPool(m_handle, pool, firstQuery, queryCount);
-
-	m_queryResetAtoms.destroy(*m_pool);
-}
-
-void CommandBufferImpl::flushWriteQueryResults()
-{
-	if(m_writeQueryAtoms.getSize() == 0)
-	{
-		return;
-	}
-
-	std::sort(&m_writeQueryAtoms[0], &m_writeQueryAtoms[0] + m_writeQueryAtoms.getSize(),
-			  [](const WriteQueryAtom& a, const WriteQueryAtom& b) -> Bool {
-				  if(a.m_pool != b.m_pool)
-				  {
-					  return a.m_pool < b.m_pool;
-				  }
-
-				  if(a.m_buffer != b.m_buffer)
-				  {
-					  return a.m_buffer < b.m_buffer;
-				  }
-
-				  if(a.m_offset != b.m_offset)
-				  {
-					  return a.m_offset < b.m_offset;
-				  }
-
-				  ANKI_ASSERT(a.m_queryIdx != b.m_queryIdx && "Tried to write the same query more than once");
-				  return a.m_queryIdx < b.m_queryIdx;
-			  });
-
-	U32 firstQuery = m_writeQueryAtoms[0].m_queryIdx;
-	U32 queryCount = 1;
-	VkQueryPool pool = m_writeQueryAtoms[0].m_pool;
-	PtrSize offset = m_writeQueryAtoms[0].m_offset;
-	VkBuffer buff = m_writeQueryAtoms[0].m_buffer;
-	for(U32 i = 1; i < m_writeQueryAtoms.getSize(); ++i)
-	{
-		const WriteQueryAtom& crnt = m_writeQueryAtoms[i];
-		const WriteQueryAtom& prev = m_writeQueryAtoms[i - 1];
-
-		if(crnt.m_pool == prev.m_pool && crnt.m_buffer == prev.m_buffer && prev.m_queryIdx + 1 == crnt.m_queryIdx
-		   && prev.m_offset + sizeof(U32) == crnt.m_offset)
-		{
-			// Can batch
-			++queryCount;
-		}
-		else
-		{
-			// Flush batch
-			vkCmdCopyQueryPoolResults(m_handle, pool, firstQuery, queryCount, buff, offset, sizeof(U32),
-									  VK_QUERY_RESULT_PARTIAL_BIT);
-
-			// New batch
-			firstQuery = crnt.m_queryIdx;
-			queryCount = 1;
-			pool = crnt.m_pool;
-			buff = crnt.m_buffer;
-		}
-	}
-
-	vkCmdCopyQueryPoolResults(m_handle, pool, firstQuery, queryCount, buff, offset, sizeof(U32),
-							  VK_QUERY_RESULT_PARTIAL_BIT);
-
-	m_writeQueryAtoms.resize(*m_pool, 0);
 }
 
 void CommandBufferImpl::copyBufferToTextureViewInternal(const BufferPtr& buff, PtrSize offset,
@@ -703,9 +446,8 @@ void CommandBufferImpl::copyBufferToTextureViewInternal(const BufferPtr& buff, P
 	region.bufferImageHeight = 0;
 	region.bufferRowLength = 0;
 
-	ANKI_CMD(vkCmdCopyBufferToImage(m_handle, static_cast<const BufferImpl&>(*buff).getHandle(), tex.m_imageHandle,
-									layout, 1, &region),
-			 kAnyOtherCommand);
+	vkCmdCopyBufferToImage(m_handle, static_cast<const BufferImpl&>(*buff).getHandle(), tex.m_imageHandle, layout, 1,
+						   &region);
 
 	m_microCmdb->pushObjectRef(texView);
 	m_microCmdb->pushObjectRef(buff);
@@ -723,46 +465,37 @@ void CommandBufferImpl::rebindDynamicState()
 	// Rebind the stencil compare mask
 	if(m_stencilCompareMasks[0] == m_stencilCompareMasks[1])
 	{
-		ANKI_CMD(vkCmdSetStencilCompareMask(m_handle, VK_STENCIL_FACE_FRONT_BIT | VK_STENCIL_FACE_BACK_BIT,
-											m_stencilCompareMasks[0]),
-				 kAnyOtherCommand);
+		vkCmdSetStencilCompareMask(m_handle, VK_STENCIL_FACE_FRONT_BIT | VK_STENCIL_FACE_BACK_BIT,
+								   m_stencilCompareMasks[0]);
 	}
 	else
 	{
-		ANKI_CMD(vkCmdSetStencilCompareMask(m_handle, VK_STENCIL_FACE_FRONT_BIT, m_stencilCompareMasks[0]),
-				 kAnyOtherCommand);
-		ANKI_CMD(vkCmdSetStencilCompareMask(m_handle, VK_STENCIL_FACE_BACK_BIT, m_stencilCompareMasks[1]),
-				 kAnyOtherCommand);
+		vkCmdSetStencilCompareMask(m_handle, VK_STENCIL_FACE_FRONT_BIT, m_stencilCompareMasks[0]);
+		vkCmdSetStencilCompareMask(m_handle, VK_STENCIL_FACE_BACK_BIT, m_stencilCompareMasks[1]);
 	}
 
 	// Rebind the stencil write mask
 	if(m_stencilWriteMasks[0] == m_stencilWriteMasks[1])
 	{
-		ANKI_CMD(vkCmdSetStencilWriteMask(m_handle, VK_STENCIL_FACE_FRONT_BIT | VK_STENCIL_FACE_BACK_BIT,
-										  m_stencilWriteMasks[0]),
-				 kAnyOtherCommand);
+		vkCmdSetStencilWriteMask(m_handle, VK_STENCIL_FACE_FRONT_BIT | VK_STENCIL_FACE_BACK_BIT,
+								 m_stencilWriteMasks[0]);
 	}
 	else
 	{
-		ANKI_CMD(vkCmdSetStencilWriteMask(m_handle, VK_STENCIL_FACE_FRONT_BIT, m_stencilWriteMasks[0]),
-				 kAnyOtherCommand);
-		ANKI_CMD(vkCmdSetStencilWriteMask(m_handle, VK_STENCIL_FACE_BACK_BIT, m_stencilWriteMasks[1]),
-				 kAnyOtherCommand);
+		vkCmdSetStencilWriteMask(m_handle, VK_STENCIL_FACE_FRONT_BIT, m_stencilWriteMasks[0]);
+		vkCmdSetStencilWriteMask(m_handle, VK_STENCIL_FACE_BACK_BIT, m_stencilWriteMasks[1]);
 	}
 
 	// Rebind the stencil reference
 	if(m_stencilReferenceMasks[0] == m_stencilReferenceMasks[1])
 	{
-		ANKI_CMD(vkCmdSetStencilReference(m_handle, VK_STENCIL_FACE_FRONT_BIT | VK_STENCIL_FACE_BACK_BIT,
-										  m_stencilReferenceMasks[0]),
-				 kAnyOtherCommand);
+		vkCmdSetStencilReference(m_handle, VK_STENCIL_FACE_FRONT_BIT | VK_STENCIL_FACE_BACK_BIT,
+								 m_stencilReferenceMasks[0]);
 	}
 	else
 	{
-		ANKI_CMD(vkCmdSetStencilReference(m_handle, VK_STENCIL_FACE_FRONT_BIT, m_stencilReferenceMasks[0]),
-				 kAnyOtherCommand);
-		ANKI_CMD(vkCmdSetStencilReference(m_handle, VK_STENCIL_FACE_BACK_BIT, m_stencilReferenceMasks[1]),
-				 kAnyOtherCommand);
+		vkCmdSetStencilReference(m_handle, VK_STENCIL_FACE_FRONT_BIT, m_stencilReferenceMasks[0]);
+		vkCmdSetStencilReference(m_handle, VK_STENCIL_FACE_BACK_BIT, m_stencilReferenceMasks[1]);
 	}
 }
 
@@ -786,7 +519,7 @@ void CommandBufferImpl::buildAccelerationStructureInternal(const AccelerationStr
 
 	// Do the command
 	Array<const VkAccelerationStructureBuildRangeInfoKHR*, 1> pRangeInfos = {&rangeInfo};
-	ANKI_CMD(vkCmdBuildAccelerationStructuresKHR(m_handle, 1, &buildInfo, &pRangeInfos[0]), kAnyOtherCommand);
+	vkCmdBuildAccelerationStructuresKHR(m_handle, 1, &buildInfo, &pRangeInfos[0]);
 
 	// Push refs
 	m_microCmdb->pushObjectRef(as);
@@ -823,7 +556,6 @@ void CommandBufferImpl::upscaleInternal(const GrUpscalerPtr& upscaler, const Tex
 	ANKI_ASSERT(upscaler->getUpscalerType() == GrUpscalerType::kDlss2);
 
 	commandCommon();
-	flushBatches(CommandBufferCommandType::kAnyOtherCommand);
 
 	const GrUpscalerImpl& upscalerImpl = static_cast<const GrUpscalerImpl&>(*upscaler);
 

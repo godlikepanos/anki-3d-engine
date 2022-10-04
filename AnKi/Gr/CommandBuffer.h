@@ -326,10 +326,11 @@ public:
 	void fillBuffer(const BufferPtr& buff, PtrSize offset, PtrSize size, U32 value);
 
 	/// Write the occlusion result to buffer.
-	/// @param[in] query The query to get the result from.
+	/// @param[in] queries The queries to write the result of.
 	/// @param offset The offset inside the buffer to write the result.
 	/// @param buff The buffer to update.
-	void writeOcclusionQueryResultToBuffer(const OcclusionQueryPtr& query, PtrSize offset, const BufferPtr& buff);
+	void writeOcclusionQueriesResultToBuffer(ConstWeakArray<OcclusionQuery*> queries, PtrSize offset,
+											 const BufferPtr& buff);
 
 	/// Copy buffer to buffer.
 	/// @param[in] src Source buffer.
@@ -361,22 +362,6 @@ public:
 
 	/// @name Sync
 	/// @{
-	[[deprecated]] void setTextureBarrier(const TexturePtr& tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage,
-										  const TextureSubresourceInfo& subresource);
-
-	[[deprecated]] void setTextureSurfaceBarrier(const TexturePtr& tex, TextureUsageBit prevUsage,
-												 TextureUsageBit nextUsage, const TextureSurfaceInfo& surf);
-
-	[[deprecated]] void setTextureVolumeBarrier(const TexturePtr& tex, TextureUsageBit prevUsage,
-												TextureUsageBit nextUsage, const TextureVolumeInfo& vol);
-
-	[[deprecated]] void setBufferBarrier(const BufferPtr& buff, BufferUsageBit prevUsage, BufferUsageBit nextUsage,
-										 PtrSize offset, PtrSize size);
-
-	[[deprecated]] void setAccelerationStructureBarrier(const AccelerationStructurePtr& as,
-														AccelerationStructureUsageBit prevUsage,
-														AccelerationStructureUsageBit nextUsage);
-
 	void setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textures, ConstWeakArray<BufferBarrierInfo> buffers,
 							ConstWeakArray<AccelerationStructureBarrierInfo> accelerationStructures);
 	/// @}
@@ -384,8 +369,8 @@ public:
 	/// @name Other
 	/// @{
 
-	/// Reset query before beginOcclusionQuery.
-	void resetOcclusionQuery(const OcclusionQueryPtr& query);
+	/// Reset queries before beginOcclusionQuery.
+	void resetOcclusionQueries(ConstWeakArray<OcclusionQuery*> queries);
 
 	/// Begin query.
 	void beginOcclusionQuery(const OcclusionQueryPtr& query);
@@ -393,14 +378,14 @@ public:
 	/// End query.
 	void endOcclusionQuery(const OcclusionQueryPtr& query);
 
-	/// Reset timestamp query before writeTimestamp.
-	void resetTimestampQuery(const TimestampQueryPtr& query);
+	/// Reset timestamp queries before writeTimestamp.
+	void resetTimestampQueries(ConstWeakArray<TimestampQuery*> queries);
 
 	/// Write a timestamp.
 	void writeTimestamp(const TimestampQueryPtr& query);
 
-	/// Append a second level command buffer.
-	void pushSecondLevelCommandBuffer(const CommandBufferPtr& cmdb);
+	/// Append second level command buffers.
+	void pushSecondLevelCommandBuffers(ConstWeakArray<CommandBuffer*> cmdbs);
 
 	Bool isEmpty() const;
 	/// @}
