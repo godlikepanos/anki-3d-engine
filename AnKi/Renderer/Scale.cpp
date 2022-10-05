@@ -149,11 +149,11 @@ Error Scale::init()
 	}
 	else if(getGrManager().getDeviceCapabilities().m_unalignedBbpTextureFormats)
 	{
-		format = Format::kR8G8B8Unorm;
+		format = Format::kR8G8B8_Unorm;
 	}
 	else
 	{
-		format = Format::kR8G8B8A8Unorm;
+		format = Format::kR8G8B8A8_Unorm;
 	}
 
 	m_upscaleAndSharpenRtDescr = m_r->create2DRenderTargetDescription(
@@ -163,8 +163,8 @@ Error Scale::init()
 	if(m_neeedsTonemapping)
 	{
 		const Format fmt = (getGrManager().getDeviceCapabilities().m_unalignedBbpTextureFormats)
-							   ? Format::kR8G8B8Unorm
-							   : Format::kR8G8B8A8Unorm;
+							   ? Format::kR8G8B8_Unorm
+							   : Format::kR8G8B8A8_Unorm;
 		m_tonemapedRtDescr = m_r->create2DRenderTargetDescription(
 			m_r->getPostProcessResolution().x(), m_r->getPostProcessResolution().y(), fmt, "Tonemapped");
 		m_tonemapedRtDescr.bake();

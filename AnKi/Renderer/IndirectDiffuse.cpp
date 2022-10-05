@@ -62,7 +62,7 @@ Error IndirectDiffuse::initInternal()
 
 		const UVec2 rez = (size + m_vrs.m_sriTexelDimension - 1) / m_vrs.m_sriTexelDimension;
 		m_vrs.m_rtHandle =
-			m_r->create2DRenderTargetDescription(rez.x(), rez.y(), Format::kR8Uint, "IndirectDiffuseVrsSri");
+			m_r->create2DRenderTargetDescription(rez.x(), rez.y(), Format::kR8_Uint, "IndirectDiffuseVrsSri");
 		m_vrs.m_rtHandle.bake();
 
 		ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/IndirectDiffuseVrsSriGeneration.ankiprogbin",

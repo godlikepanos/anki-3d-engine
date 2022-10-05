@@ -305,7 +305,7 @@ static void* setStorage(PtrSize size, CommandBufferPtr& cmdb, U32 set, U32 bindi
 		cmdb_->copyBufferToTextureView(handle_.getBuffer(), handle_.getOffset(), handle_.getRange(), view); \
 	} while(0)
 
-constexpr Format kDsFormat = Format::kD24UnormS8Uint;
+constexpr Format kDsFormat = Format::kD24_Unorm_S8_Uint;
 
 static ShaderProgramPtr createProgram(CString vertSrc, CString fragSrc, GrManager& gr)
 {
@@ -656,7 +656,7 @@ void main()
 	ShaderProgramPtr prog = createProgram(VERT_QUAD_STRIP_SRC, kFragSrc, *g_gr);
 	ShaderProgramPtr blitProg = createProgram(VERT_QUAD_SRC, FRAG_TEX_SRC, *g_gr);
 
-	const Format COL_FORMAT = Format::kR8G8B8A8Unorm;
+	const Format COL_FORMAT = Format::kR8G8B8A8_Unorm;
 	const U RT_WIDTH = 32;
 	const U RT_HEIGHT = 16;
 	TextureInitInfo init;
@@ -923,9 +923,9 @@ ANKI_TEST(Gr, DrawWithVertex)
 
 		cmdb->bindVertexBuffer(0, b, 0, sizeof(Vert));
 		cmdb->bindVertexBuffer(1, c, 0, sizeof(Vec3));
-		cmdb->setVertexAttribute(0, 0, Format::kR32G32B32Sfloat, 0);
-		cmdb->setVertexAttribute(1, 0, Format::kR8G8B8Unorm, sizeof(Vec3));
-		cmdb->setVertexAttribute(2, 1, Format::kR32G32B32Sfloat, 0);
+		cmdb->setVertexAttribute(0, 0, Format::kR32G32B32_Sfloat, 0);
+		cmdb->setVertexAttribute(1, 0, Format::kR8G8B8_Unorm, sizeof(Vec3));
+		cmdb->setVertexAttribute(2, 1, Format::kR32G32B32_Sfloat, 0);
 
 		cmdb->setViewport(0, 0, g_win->getWidth(), g_win->getHeight());
 		cmdb->setPolygonOffset(0.0, 0.0);
@@ -967,7 +967,7 @@ ANKI_TEST(Gr, Texture)
 
 	TextureInitInfo init;
 	init.m_depth = 1;
-	init.m_format = Format::kR8G8B8Unorm;
+	init.m_format = Format::kR8G8B8_Unorm;
 	init.m_usage = TextureUsageBit::kSampledFragment;
 	init.m_height = 4;
 	init.m_width = 4;
@@ -1003,7 +1003,7 @@ ANKI_TEST(Gr, DrawWithTexture)
 	//
 	TextureInitInfo init;
 	init.m_depth = 1;
-	init.m_format = Format::kR8G8B8Unorm;
+	init.m_format = Format::kR8G8B8_Unorm;
 	init.m_usage = TextureUsageBit::kSampledFragment | TextureUsageBit::kTransferDestination;
 	init.m_height = 2;
 	init.m_width = 2;
@@ -1199,7 +1199,7 @@ static void drawOffscreenDrawcalls([[maybe_unused]] GrManager& gr, ShaderProgram
 	*color = Vec4(0.0, 1.0, 0.0, 0.0);
 
 	cmdb->bindVertexBuffer(0, vertBuff, 0, sizeof(Vec3));
-	cmdb->setVertexAttribute(0, 0, Format::kR32G32B32Sfloat, 0);
+	cmdb->setVertexAttribute(0, 0, Format::kR32G32B32_Sfloat, 0);
 	cmdb->bindShaderProgram(prog);
 	cmdb->bindIndexBuffer(indexBuff, 0, IndexType::kU16);
 	cmdb->setViewport(0, 0, viewPortSize, viewPortSize);
@@ -1228,7 +1228,7 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 	samplerInit.m_mipmapFilter = SamplingFilter::kLinear;
 	SamplerPtr sampler = gr.newSampler(samplerInit);
 
-	const Format COL_FORMAT = Format::kR8G8B8A8Unorm;
+	const Format COL_FORMAT = Format::kR8G8B8A8_Unorm;
 	const U TEX_SIZE = 256;
 
 	TextureInitInfo init;
@@ -1389,7 +1389,7 @@ ANKI_TEST(Gr, ImageLoadStore)
 	init.m_usage =
 		TextureUsageBit::kTransferDestination | TextureUsageBit::kAllSampled | TextureUsageBit::kImageComputeWrite;
 	init.m_type = TextureType::k2D;
-	init.m_format = Format::kR8G8B8A8Unorm;
+	init.m_format = Format::kR8G8B8A8_Unorm;
 
 	TexturePtr tex = g_gr->newTexture(init);
 
@@ -1502,7 +1502,7 @@ ANKI_TEST(Gr, 3DTextures)
 	//
 	TextureInitInfo init;
 	init.m_depth = 1;
-	init.m_format = Format::kR8G8B8A8Unorm;
+	init.m_format = Format::kR8G8B8A8_Unorm;
 	init.m_usage = TextureUsageBit::kSampledFragment | TextureUsageBit::kTransferDestination;
 	init.m_height = 2;
 	init.m_width = 2;
@@ -1608,7 +1608,7 @@ static RenderTargetDescription newRTDescr(CString name)
 	RenderTargetDescription texInf(name);
 	texInf.m_width = texInf.m_height = 16;
 	texInf.m_usage = TextureUsageBit::kFramebufferWrite | TextureUsageBit::kSampledFragment;
-	texInf.m_format = Format::kR8G8B8A8Unorm;
+	texInf.m_format = Format::kR8G8B8A8_Unorm;
 	texInf.bake();
 	return texInf;
 }
@@ -1626,7 +1626,7 @@ ANKI_TEST(Gr, RenderGraph)
 	TextureInitInfo texI("dummy");
 	texI.m_width = texI.m_height = 16;
 	texI.m_usage = TextureUsageBit::kFramebufferWrite | TextureUsageBit::kSampledFragment;
-	texI.m_format = Format::kR8G8B8A8Unorm;
+	texI.m_format = Format::kR8G8B8A8_Unorm;
 	TexturePtr dummyTex = g_gr->newTexture(texI);
 
 	// SM
@@ -1858,7 +1858,7 @@ void main()
 	// Create the texture
 	TextureInitInfo texInit;
 	texInit.m_width = texInit.m_height = 8;
-	texInit.m_format = Format::kR8G8B8Uint;
+	texInit.m_format = Format::kR8G8B8_Uint;
 	texInit.m_type = TextureType::k2D;
 	texInit.m_usage = TextureUsageBit::kTransferDestination | TextureUsageBit::kAllSampled;
 	texInit.m_mipmapCount = 2;
@@ -2505,7 +2505,7 @@ ANKI_TEST(Gr, RayQuery)
 		init.m_bottomLevel.m_indexType = IndexType::kU16;
 		init.m_bottomLevel.m_positionBuffer = vertBuffer;
 		init.m_bottomLevel.m_positionCount = 3;
-		init.m_bottomLevel.m_positionsFormat = Format::kR32G32B32Sfloat;
+		init.m_bottomLevel.m_positionsFormat = Format::kR32G32B32_Sfloat;
 		init.m_bottomLevel.m_positionStride = 4 * 4;
 
 		blas = g_gr->newAccelerationStructure(init);
@@ -2852,7 +2852,7 @@ ANKI_TEST(Gr, RayGen)
 		TextureInitInfo inf("T_offscreen#1");
 		inf.m_width = WIDTH;
 		inf.m_height = HEIGHT;
-		inf.m_format = Format::kR8G8B8A8Unorm;
+		inf.m_format = Format::kR8G8B8A8_Unorm;
 		inf.m_usage = TextureUsageBit::kImageTraceRaysRead | TextureUsageBit::kImageTraceRaysWrite
 					  | TextureUsageBit::kImageComputeRead;
 
@@ -2959,7 +2959,7 @@ void main()
 			inf.m_bottomLevel.m_indexCount = g.m_indexCount;
 			inf.m_bottomLevel.m_positionBuffer = g.m_vertexBuffer;
 			inf.m_bottomLevel.m_positionCount = 8;
-			inf.m_bottomLevel.m_positionsFormat = Format::kR32G32B32Sfloat;
+			inf.m_bottomLevel.m_positionsFormat = Format::kR32G32B32_Sfloat;
 			inf.m_bottomLevel.m_positionStride = sizeof(Vec3);
 
 			g.m_blas = g_gr->newAccelerationStructure(inf);

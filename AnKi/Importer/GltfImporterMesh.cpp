@@ -261,6 +261,175 @@ static void decimateSubmesh(F32 factor, SubMesh& submesh, BaseMemoryPool* pool)
 	submesh.m_verts = std::move(newVerts);
 }
 
+/// If normal A and normal B have the same position then try to merge them. Do that before optimizations.
+static void fixNormals(const F32 normalsMergeAngle, SubMesh& submesh)
+{
+	for(U32 v = 0; v < submesh.m_verts.getSize(); ++v)
+	{
+		const Vec3& pos = submesh.m_verts[v].m_position;
+		Vec3& normal = submesh.m_verts[v].m_normal;
+
+		for(U32 prevV = 0; prevV < v; ++prevV)
+		{
+			const Vec3& otherPos = submesh.m_verts[prevV].m_position;
+
+			// Check the positions dist
+			const F32 posDist = (otherPos - pos).getLengthSquared();
+			if(posDist > kEpsilonf * kEpsilonf)
+			{
+				continue;
+			}
+
+			// Check angle of the normals
+			Vec3& otherNormal = submesh.m_verts[prevV].m_normal;
+			const F32 ang = acos(clamp(otherNormal.dot(normal), -1.0f, 1.0f));
+			if(ang > normalsMergeAngle)
+			{
+				continue;
+			}
+
+			// Merge normals
+			const Vec3 newNormal = (otherNormal + normal).getNormalized();
+			normal = newNormal;
+			otherNormal = newNormal;
+		}
+	}
+}
+
+static void computeTangents(SubMesh& submesh)
+{
+	DynamicArrayRaii<Vec3> bitangents(&submesh.m_verts.getMemoryPool());
+	const U32 vertCount = submesh.m_verts.getSize();
+	bitangents.create(vertCount, Vec3(0.0f));
+
+	for(U32 i = 0; i < submesh.m_indices.getSize(); i += 3)
+	{
+		const U32 i0 = submesh.m_indices[i + 0];
+		const U32 i1 = submesh.m_indices[i + 1];
+		const U32 i2 = submesh.m_indices[i + 2];
+
+		const Vec3& v0 = submesh.m_verts[i0].m_position;
+		const Vec3& v1 = submesh.m_verts[i1].m_position;
+		const Vec3& v2 = submesh.m_verts[i2].m_position;
+		const Vec3 edge01 = v1 - v0;
+		const Vec3 edge02 = v2 - v0;
+
+		const Vec2 uvedge01 = submesh.m_verts[i1].m_uv - submesh.m_verts[i0].m_uv;
+		const Vec2 uvedge02 = submesh.m_verts[i2].m_uv - submesh.m_verts[i0].m_uv;
+
+		F32 det = (uvedge01.y() * uvedge02.x()) - (uvedge01.x() * uvedge02.y());
+		det = (isZero(det)) ? 0.0001f : (1.0f / det);
+
+		Vec3 t = (edge02 * uvedge01.y() - edge01 * uvedge02.y()) * det;
+		Vec3 b = (edge02 * uvedge01.x() - edge01 * uvedge02.x()) * det;
+
+		if(t.getLengthSquared() < kEpsilonf)
+		{
+			t = Vec3(1.0f, 0.0f, 0.0f); // Something random
+		}
+		else
+		{
+			t.normalize();
+		}
+
+		if(b.getLengthSquared() < kEpsilonf)
+		{
+			b = Vec3(0.0f, 1.0f, 0.0f); // Something random
+		}
+		else
+		{
+			b.normalize();
+		}
+
+		submesh.m_verts[i0].m_tangent += Vec4(t, 0.0f);
+		submesh.m_verts[i1].m_tangent += Vec4(t, 0.0f);
+		submesh.m_verts[i2].m_tangent += Vec4(t, 0.0f);
+
+		bitangents[i0] += b;
+		bitangents[i1] += b;
+		bitangents[i2] += b;
+	}
+
+	for(U32 i = 0; i < vertCount; ++i)
+	{
+		Vec3 t = Vec3(submesh.m_verts[i].m_tangent.xyz());
+		const Vec3& n = submesh.m_verts[i].m_normal;
+		Vec3& b = bitangents[i];
+
+		if(t.getLengthSquared() < kEpsilonf)
+		{
+			t = Vec3(1.0f, 0.0f, 0.0f); // Something random
+		}
+		else
+		{
+			t.normalize();
+		}
+
+		if(b.getLengthSquared() < kEpsilonf)
+		{
+			b = Vec3(0.0f, 1.0f, 0.0f); // Something random
+		}
+		else
+		{
+			b.normalize();
+		}
+
+		const F32 w = ((n.cross(t)).dot(b) < 0.0f) ? 1.0f : -1.0f;
+		submesh.m_verts[i].m_tangent = Vec4(t, w);
+	}
+}
+
+static Bool isConvex(const List<SubMesh>& submeshes)
+{
+	Bool convex = true;
+	for(const SubMesh& submesh : submeshes)
+	{
+		for(U32 i = 0; i < submesh.m_indices.getSize(); i += 3)
+		{
+			const U32 i0 = submesh.m_indices[i + 0];
+			const U32 i1 = submesh.m_indices[i + 1];
+			const U32 i2 = submesh.m_indices[i + 2];
+
+			const Vec3& v0 = submesh.m_verts[i0].m_position;
+			const Vec3& v1 = submesh.m_verts[i1].m_position;
+			const Vec3& v2 = submesh.m_verts[i2].m_position;
+
+			if(computeTriangleArea(v0, v1, v2) <= kEpsilonf)
+			{
+				continue;
+			}
+
+			// Check that all positions are behind the plane
+			const Plane plane(v0.xyz0(), v1.xyz0(), v2.xyz0());
+
+			for(const SubMesh& submeshB : submeshes)
+			{
+				for(const TempVertex& vertB : submeshB.m_verts)
+				{
+					const F32 test = testPlane(plane, vertB.m_position.xyz0());
+					if(test > kEpsilonf)
+					{
+						convex = false;
+						break;
+					}
+				}
+
+				if(!convex)
+				{
+					break;
+				}
+			}
+
+			if(!convex)
+			{
+				break;
+			}
+		}
+	}
+
+	return convex;
+}
+
 U32 GltfImporter::getMeshTotalVertexCount(const cgltf_mesh& mesh)
 {
 	U32 totalVertexCount = 0;
@@ -392,39 +561,8 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 		submesh.m_aabbMax += kEpsilonf * 10.0f;
 		aabbMax = aabbMax.max(submesh.m_aabbMax);
 
-		//
-		// Fix normals. If normal A and normal B have the same position then try to merge them
-		//
-		for(U32 v = 0; v < vertCount; ++v)
-		{
-			const Vec3& pos = submesh.m_verts[v].m_position;
-			Vec3& normal = submesh.m_verts[v].m_normal;
-
-			for(U32 prevV = 0; prevV < v; ++prevV)
-			{
-				const Vec3& otherPos = submesh.m_verts[prevV].m_position;
-
-				// Check the positions dist
-				const F32 posDist = (otherPos - pos).getLengthSquared();
-				if(posDist > kEpsilonf * kEpsilonf)
-				{
-					continue;
-				}
-
-				// Check angle of the normals
-				Vec3& otherNormal = submesh.m_verts[prevV].m_normal;
-				const F32 ang = acos(clamp(otherNormal.dot(normal), -1.0f, 1.0f));
-				if(ang > m_normalsMergeAngle)
-				{
-					continue;
-				}
-
-				// Merge normals
-				const Vec3 newNormal = (otherNormal + normal).getNormalized();
-				normal = newNormal;
-				otherNormal = newNormal;
-			}
-		}
+		// Fix normals
+		fixNormals(m_normalsMergeAngle, submesh);
 
 		//
 		// Load indices
@@ -469,89 +607,8 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 			vertCount = submesh.m_verts.getSize();
 		}
 
-		//
 		// Compute tangent
-		//
-		{
-			DynamicArrayRaii<Vec3> bitangents(m_pool);
-			bitangents.create(vertCount, Vec3(0.0f));
-
-			for(U32 i = 0; i < submesh.m_indices.getSize(); i += 3)
-			{
-				const U32 i0 = submesh.m_indices[i + 0];
-				const U32 i1 = submesh.m_indices[i + 1];
-				const U32 i2 = submesh.m_indices[i + 2];
-
-				const Vec3& v0 = submesh.m_verts[i0].m_position;
-				const Vec3& v1 = submesh.m_verts[i1].m_position;
-				const Vec3& v2 = submesh.m_verts[i2].m_position;
-				const Vec3 edge01 = v1 - v0;
-				const Vec3 edge02 = v2 - v0;
-
-				const Vec2 uvedge01 = submesh.m_verts[i1].m_uv - submesh.m_verts[i0].m_uv;
-				const Vec2 uvedge02 = submesh.m_verts[i2].m_uv - submesh.m_verts[i0].m_uv;
-
-				F32 det = (uvedge01.y() * uvedge02.x()) - (uvedge01.x() * uvedge02.y());
-				det = (isZero(det)) ? 0.0001f : (1.0f / det);
-
-				Vec3 t = (edge02 * uvedge01.y() - edge01 * uvedge02.y()) * det;
-				Vec3 b = (edge02 * uvedge01.x() - edge01 * uvedge02.x()) * det;
-
-				if(t.getLengthSquared() < kEpsilonf)
-				{
-					t = Vec3(1.0f, 0.0f, 0.0f); // Something random
-				}
-				else
-				{
-					t.normalize();
-				}
-
-				if(b.getLengthSquared() < kEpsilonf)
-				{
-					b = Vec3(0.0f, 1.0f, 0.0f); // Something random
-				}
-				else
-				{
-					b.normalize();
-				}
-
-				submesh.m_verts[i0].m_tangent += Vec4(t, 0.0f);
-				submesh.m_verts[i1].m_tangent += Vec4(t, 0.0f);
-				submesh.m_verts[i2].m_tangent += Vec4(t, 0.0f);
-
-				bitangents[i0] += b;
-				bitangents[i1] += b;
-				bitangents[i2] += b;
-			}
-
-			for(U32 i = 0; i < vertCount; ++i)
-			{
-				Vec3 t = Vec3(submesh.m_verts[i].m_tangent.xyz());
-				const Vec3& n = submesh.m_verts[i].m_normal;
-				Vec3& b = bitangents[i];
-
-				if(t.getLengthSquared() < kEpsilonf)
-				{
-					t = Vec3(1.0f, 0.0f, 0.0f); // Something random
-				}
-				else
-				{
-					t.normalize();
-				}
-
-				if(b.getLengthSquared() < kEpsilonf)
-				{
-					b = Vec3(0.0f, 1.0f, 0.0f); // Something random
-				}
-				else
-				{
-					b.normalize();
-				}
-
-				const F32 w = ((n.cross(t)).dot(b) < 0.0f) ? 1.0f : -1.0f;
-				submesh.m_verts[i].m_tangent = Vec4(t, w);
-			}
-		}
+		computeTangents(submesh);
 
 		// Optimize
 		if(m_optimizeMeshes)
@@ -588,51 +645,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 	}
 
 	// Find if it's a convex shape
-	Bool convex = true;
-	for(const SubMesh& submesh : submeshes)
-	{
-		for(U32 i = 0; i < submesh.m_indices.getSize(); i += 3)
-		{
-			const U32 i0 = submesh.m_indices[i + 0];
-			const U32 i1 = submesh.m_indices[i + 1];
-			const U32 i2 = submesh.m_indices[i + 2];
-
-			const Vec3& v0 = submesh.m_verts[i0].m_position;
-			const Vec3& v1 = submesh.m_verts[i1].m_position;
-			const Vec3& v2 = submesh.m_verts[i2].m_position;
-
-			if(computeTriangleArea(v0, v1, v2) <= kEpsilonf)
-			{
-				continue;
-			}
-
-			// Check that all positions are behind the plane
-			const Plane plane(v0.xyz0(), v1.xyz0(), v2.xyz0());
-
-			for(const SubMesh& submeshB : submeshes)
-			{
-				for(const TempVertex& vertB : submeshB.m_verts)
-				{
-					const F32 test = testPlane(plane, vertB.m_position.xyz0());
-					if(test > kEpsilonf)
-					{
-						convex = false;
-						break;
-					}
-				}
-
-				if(!convex)
-				{
-					break;
-				}
-			}
-
-			if(!convex)
-			{
-				break;
-			}
-		}
-	}
+	const Bool convex = isConvex(submeshes);
 
 	// Chose the formats of the attributes
 	MeshBinaryHeader header;
@@ -641,28 +654,28 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 		// Positions
 		MeshBinaryVertexAttribute& posa = header.m_vertexAttributes[VertexAttributeId::kPosition];
 		posa.m_bufferBinding = 0;
-		posa.m_format = Format::kR32G32B32Sfloat;
+		posa.m_format = Format::kR32G32B32_Sfloat;
 		posa.m_relativeOffset = 0;
 		posa.m_scale = 1.0f;
 
 		// Normals
 		MeshBinaryVertexAttribute& na = header.m_vertexAttributes[VertexAttributeId::kNormal];
 		na.m_bufferBinding = 1;
-		na.m_format = Format::kA2B10G10R10SnormPack32;
+		na.m_format = Format::kA2B10G10R10_Snorm_Pack32;
 		na.m_relativeOffset = 0;
 		na.m_scale = 1.0f;
 
 		// Tangents
 		MeshBinaryVertexAttribute& ta = header.m_vertexAttributes[VertexAttributeId::kTangent];
 		ta.m_bufferBinding = 1;
-		ta.m_format = Format::kA2B10G10R10SnormPack32;
+		ta.m_format = Format::kA2B10G10R10_Snorm_Pack32;
 		ta.m_relativeOffset = sizeof(U32);
 		ta.m_scale = 1.0f;
 
 		// UVs
 		MeshBinaryVertexAttribute& uva = header.m_vertexAttributes[VertexAttributeId::kUv0];
 		uva.m_bufferBinding = 1;
-		uva.m_format = Format::kR32G32Sfloat;
+		uva.m_format = Format::kR32G32_Sfloat;
 		uva.m_relativeOffset = sizeof(U32) * 2;
 		uva.m_scale = 1.0f;
 
@@ -671,13 +684,13 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 		{
 			MeshBinaryVertexAttribute& bidxa = header.m_vertexAttributes[VertexAttributeId::kBoneIndices];
 			bidxa.m_bufferBinding = 2;
-			bidxa.m_format = Format::kR8G8B8A8Uint;
+			bidxa.m_format = Format::kR8G8B8A8_Uint;
 			bidxa.m_relativeOffset = 0;
 			bidxa.m_scale = 1.0f;
 
 			MeshBinaryVertexAttribute& wa = header.m_vertexAttributes[VertexAttributeId::kBoneWeights];
 			wa.m_bufferBinding = 2;
-			wa.m_format = Format::kR8G8B8A8Unorm;
+			wa.m_format = Format::kR8G8B8A8_Unorm;
 			wa.m_relativeOffset = sizeof(U8Vec4);
 			wa.m_scale = 1.0f;
 		}

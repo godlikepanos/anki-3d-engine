@@ -32,9 +32,9 @@ public:
 
 	Error init(HeapMemoryPool* pool, GrManager* gr, const ConfigSet& cfg);
 
-	Error allocate(PtrSize size, PtrSize& offset);
+	Error allocate(PtrSize size, U32 alignment, PtrSize& offset);
 
-	void free(PtrSize size, PtrSize offset);
+	void free(PtrSize size, U32 alignment, PtrSize offset);
 
 	BufferPtr getVertexBuffer() const
 	{

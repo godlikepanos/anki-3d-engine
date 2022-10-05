@@ -43,7 +43,7 @@ Error Tonemapping::initInternal()
 	// automatic image transitions
 	const TextureUsageBit usage = TextureUsageBit::kAllImage;
 	const TextureInitInfo texinit =
-		m_r->create2DRenderTargetInitInfo(1, 1, Format::kR16G16Sfloat, usage, "ExposureAndAvgLum1x1");
+		m_r->create2DRenderTargetInitInfo(1, 1, Format::kR16G16_Sfloat, usage, "ExposureAndAvgLum1x1");
 	ClearValue clearValue;
 	clearValue.m_colorf = {0.5f, 0.5f, 0.5f, 0.5f};
 	m_exposureAndAvgLuminance1x1 = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::kAllImage, clearValue);

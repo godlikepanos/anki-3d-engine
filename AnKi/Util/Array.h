@@ -170,6 +170,16 @@ public:
 		return kSize;
 	}
 
+	/// Fill the array.
+	void fill(Iterator begin, Iterator end, const T& val)
+	{
+		while(begin != end)
+		{
+			*begin = val;
+			++begin;
+		}
+	}
+
 	// Get size in bytes
 #define ANKI_ARRAY_SIZE_IN_BYTES_METHOD(type, condition) \
 	ANKI_ENABLE_METHOD(condition) \
@@ -183,6 +193,12 @@ public:
 	ANKI_ARRAY_SIZE_IN_BYTES_METHOD(U64, kSize * sizeof(Value) > kMaxU32)
 #undef ANKI_ARRAY_SIZE_IN_BYTES_METHOD
 };
+
+// Some trick stolen from GCC's std::array. It allows deduction of Array's template params. For example you can write:
+// Array a{1, 2, 3};
+template<typename TFirst, typename... TRest>
+Array(TFirst, TRest...)
+	-> Array<std::enable_if_t<(std::is_same_v<TFirst, TRest> && ...), TFirst>, 1 + sizeof...(TRest)>;
 
 /// 2D Array. @code Array2d<X, 10, 2> a; @endcode is equivelent to @code X a[10][2]; @endcode
 template<typename T, PtrSize I, PtrSize J>

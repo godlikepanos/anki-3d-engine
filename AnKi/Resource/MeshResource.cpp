@@ -61,13 +61,13 @@ MeshResource::~MeshResource()
 
 	if(m_vertexBuffersOffset != kMaxPtrSize)
 	{
-		getManager().getVertexGpuMemory().free(m_vertexBuffersSize, m_vertexBuffersOffset);
+		getManager().getVertexGpuMemory().free(m_vertexBuffersSize, 4, m_vertexBuffersOffset);
 	}
 
 	if(m_indexBufferOffset != kMaxPtrSize)
 	{
 		const PtrSize indexBufferSize = PtrSize(m_indexCount) * ((m_indexType == IndexType::kU32) ? 4 : 2);
-		getManager().getVertexGpuMemory().free(indexBufferSize, m_indexBufferOffset);
+		getManager().getVertexGpuMemory().free(indexBufferSize, getIndexSize(m_indexType), m_indexBufferOffset);
 	}
 }
 
@@ -123,7 +123,8 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	m_indexType = header.m_indexType;
 
 	const PtrSize indexBufferSize = PtrSize(m_indexCount) * ((m_indexType == IndexType::kU32) ? 4 : 2);
-	ANKI_CHECK(getManager().getVertexGpuMemory().allocate(indexBufferSize, m_indexBufferOffset));
+	ANKI_CHECK(
+		getManager().getVertexGpuMemory().allocate(indexBufferSize, getIndexSize(m_indexType), m_indexBufferOffset));
 
 	//
 	// Vertex stuff
@@ -142,7 +143,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		m_vertexBuffersSize += m_vertexCount * m_vertexBufferInfos[i].m_stride;
 	}
 
-	ANKI_CHECK(getManager().getVertexGpuMemory().allocate(m_vertexBuffersSize, m_vertexBuffersOffset));
+	ANKI_CHECK(getManager().getVertexGpuMemory().allocate(m_vertexBuffersSize, 4, m_vertexBuffersOffset));
 
 	// Readjust the individual offset now that we have a global offset
 	for(U32 i = 0; i < header.m_vertexBufferCount; ++i)

@@ -153,7 +153,7 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		TextureInitInfo texinit("RendererDummy");
 		texinit.m_width = texinit.m_height = 4;
 		texinit.m_usage = TextureUsageBit::kAllSampled | TextureUsageBit::kImageComputeWrite;
-		texinit.m_format = Format::kR8G8B8A8Unorm;
+		texinit.m_format = Format::kR8G8B8A8_Unorm;
 		TexturePtr tex = createAndClearRenderTarget(texinit, TextureUsageBit::kAllSampled);
 
 		TextureViewInitInfo viewinit(tex);
@@ -654,15 +654,15 @@ Format Renderer::getHdrFormat() const
 	Format out;
 	if(!m_config->getRHighQualityHdr())
 	{
-		out = Format::kB10G11R11UfloatPack32;
+		out = Format::kB10G11R11_Ufloat_Pack32;
 	}
 	else if(m_gr->getDeviceCapabilities().m_unalignedBbpTextureFormats)
 	{
-		out = Format::kR16G16B16Sfloat;
+		out = Format::kR16G16B16_Sfloat;
 	}
 	else
 	{
-		out = Format::kR16G16B16A16Sfloat;
+		out = Format::kR16G16B16A16_Sfloat;
 	}
 	return out;
 }
@@ -671,11 +671,11 @@ Format Renderer::getDepthNoStencilFormat() const
 {
 	if(ANKI_PLATFORM_MOBILE)
 	{
-		return Format::kX8D24UnormPack32;
+		return Format::kX8D24_Unorm_Pack32;
 	}
 	else
 	{
-		return Format::kD32Sfloat;
+		return Format::kD32_Sfloat;
 	}
 }
 

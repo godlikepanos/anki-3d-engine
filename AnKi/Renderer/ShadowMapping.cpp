@@ -102,7 +102,7 @@ Error ShadowMapping::initAtlas()
 		m_atlas.m_tileCountBothAxis = getConfig().getRShadowMappingTileCountPerRowOrColumn();
 
 		// RT
-		const Format texFormat = (ANKI_EVSM4) ? Format::kR32G32B32A32Sfloat : Format::kR32G32Sfloat;
+		const Format texFormat = (ANKI_EVSM4) ? Format::kR32G32B32A32_Sfloat : Format::kR32G32_Sfloat;
 		TextureUsageBit usage = TextureUsageBit::kSampledFragment | TextureUsageBit::kSampledCompute;
 		usage |= (preferCompute) ? TextureUsageBit::kImageComputeWrite : TextureUsageBit::kAllFramebuffer;
 		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(

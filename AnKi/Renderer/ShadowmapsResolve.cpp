@@ -35,7 +35,7 @@ Error ShadowmapsResolve::initInternal()
 
 	ANKI_R_LOGV("Initializing shadowmaps resolve. Resolution %ux%u", width, height);
 
-	m_rtDescr = m_r->create2DRenderTargetDescription(width, height, Format::kR8G8B8A8Unorm, "SM resolve");
+	m_rtDescr = m_r->create2DRenderTargetDescription(width, height, Format::kR8G8B8A8_Unorm, "SM resolve");
 	m_rtDescr.bake();
 
 	// Create FB descr

@@ -59,7 +59,7 @@ void main()
 		cmdbInit.m_flags = CommandBufferFlag::kSmallBatch | CommandBufferFlag::kGeneralWork;
 		CommandBufferPtr cmdb = gr->newCommandBuffer(cmdbInit);
 
-		cmdb->bindReadOnlyTextureBuffer(0, 0, texBuff, 0, kMaxPtrSize, Format::kR8G8B8A8Snorm);
+		cmdb->bindReadOnlyTextureBuffer(0, 0, texBuff, 0, kMaxPtrSize, Format::kR8G8B8A8_Snorm);
 		cmdb->bindStorageBuffer(0, 1, storageBuff, 0, kMaxPtrSize);
 		cmdb->bindShaderProgram(prog);
 		cmdb->dispatchCompute(1, 1, 1);

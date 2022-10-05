@@ -43,10 +43,10 @@ Error VertexGpuMemoryPool::init(HeapMemoryPool* pool, GrManager* gr, const Confi
 	return Error::kNone;
 }
 
-Error VertexGpuMemoryPool::allocate(PtrSize size, PtrSize& offset)
+Error VertexGpuMemoryPool::allocate(PtrSize size, U32 alignment, PtrSize& offset)
 {
 	U32 offset32;
-	const Bool success = m_buddyAllocator.allocate(size, 4, offset32);
+	const Bool success = m_buddyAllocator.allocate(size, alignment, offset32);
 	if(ANKI_UNLIKELY(!success))
 	{
 		BuddyAllocatorBuilderStats stats;
@@ -62,9 +62,9 @@ Error VertexGpuMemoryPool::allocate(PtrSize size, PtrSize& offset)
 	return Error::kNone;
 }
 
-void VertexGpuMemoryPool::free(PtrSize size, PtrSize offset)
+void VertexGpuMemoryPool::free(PtrSize size, U32 alignment, PtrSize offset)
 {
-	m_buddyAllocator.free(U32(offset), size, 4);
+	m_buddyAllocator.free(U32(offset), size, alignment);
 }
 
 StagingGpuMemoryPool::~StagingGpuMemoryPool()
