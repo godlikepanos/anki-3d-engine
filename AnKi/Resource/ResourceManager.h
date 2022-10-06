@@ -21,7 +21,7 @@ class AsyncLoader;
 class ResourceManagerModel;
 class ShaderCompilerCache;
 class ShaderProgramResourceSystem;
-class VertexGpuMemoryPool;
+class UnifiedGeometryMemoryPool;
 
 /// @addtogroup resource
 /// @{
@@ -95,7 +95,7 @@ public:
 	PhysicsWorld* m_physics = nullptr;
 	ResourceFilesystem* m_resourceFs = nullptr;
 	ConfigSet* m_config = nullptr;
-	VertexGpuMemoryPool* m_vertexMemory = nullptr;
+	UnifiedGeometryMemoryPool* m_unifiedGometryMemoryPool = nullptr;
 	AllocAlignedCallback m_allocCallback = 0;
 	void* m_allocCallbackData = nullptr;
 };
@@ -201,10 +201,10 @@ public:
 		return *m_shaderProgramSystem;
 	}
 
-	VertexGpuMemoryPool& getVertexGpuMemory()
+	UnifiedGeometryMemoryPool& getUnifiedGeometryMemoryPool()
 	{
-		ANKI_ASSERT(m_vertexMem);
-		return *m_vertexMem;
+		ANKI_ASSERT(m_unifiedGometryMemoryPool);
+		return *m_unifiedGometryMemoryPool;
 	}
 
 	const ConfigSet& getConfig() const
@@ -222,7 +222,7 @@ private:
 	mutable StackMemoryPool m_tmpPool; ///< Same as above.
 	AsyncLoader* m_asyncLoader = nullptr; ///< Async loading thread
 	ShaderProgramResourceSystem* m_shaderProgramSystem = nullptr;
-	VertexGpuMemoryPool* m_vertexMem = nullptr;
+	UnifiedGeometryMemoryPool* m_unifiedGometryMemoryPool = nullptr;
 	U64 m_uuid = 0;
 	U64 m_loadRequestCount = 0;
 	TransferGpuAllocator* m_transferGpuAlloc = nullptr;

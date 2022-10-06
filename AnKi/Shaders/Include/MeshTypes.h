@@ -22,7 +22,7 @@ const U32 kRegularVertexStreamCount = 6u;
 #if __cplusplus
 inline constexpr Array<Format, kRegularVertexStreamCount> kRegularVertexStreamFormats = {
 	Format::kR32R32G32B32_Sfloat, Format::kR8G8B8A8_Snorm, Format::kR8G8B8A8_Snorm,
-	Format::R32G32_Sfloat,        Format::kR8G8B8A8_Uint,  Format::R8G8B8A8_Snorm};
+	Format::kR32G32_Sfloat,       Format::kR8G8B8A8_Uint,  Format::kR8G8B8A8_Snorm};
 #endif
 
 // For particles

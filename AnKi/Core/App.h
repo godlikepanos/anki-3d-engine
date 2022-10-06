@@ -26,7 +26,7 @@ class ScriptManager;
 class ResourceManager;
 class ResourceFilesystem;
 class StagingGpuMemoryPool;
-class VertexGpuMemoryPool;
+class UnifiedGeometryMemoryPool;
 class UiManager;
 class UiQueueElement;
 class RenderQueue;
@@ -146,7 +146,7 @@ private:
 	ThreadHive* m_threadHive = nullptr;
 	GrManager* m_gr = nullptr;
 	MaliHwCounters* m_maliHwCounters = nullptr;
-	VertexGpuMemoryPool* m_vertexMem = nullptr;
+	UnifiedGeometryMemoryPool* m_unifiedGometryMemPool = nullptr;
 	StagingGpuMemoryPool* m_stagingMem = nullptr;
 	PhysicsWorld* m_physics = nullptr;
 	ResourceFilesystem* m_resourceFs = nullptr;

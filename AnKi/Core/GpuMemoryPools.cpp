@@ -10,12 +10,12 @@
 
 namespace anki {
 
-VertexGpuMemoryPool::~VertexGpuMemoryPool()
+UnifiedGeometryMemoryPool::~UnifiedGeometryMemoryPool()
 {
 	// Do nothing
 }
 
-Error VertexGpuMemoryPool::init(HeapMemoryPool* pool, GrManager* gr, const ConfigSet& cfg)
+Error UnifiedGeometryMemoryPool::init(HeapMemoryPool* pool, GrManager* gr, const ConfigSet& cfg)
 {
 	ANKI_ASSERT(pool && gr);
 	m_gr = gr;
@@ -43,7 +43,7 @@ Error VertexGpuMemoryPool::init(HeapMemoryPool* pool, GrManager* gr, const Confi
 	return Error::kNone;
 }
 
-Error VertexGpuMemoryPool::allocate(PtrSize size, U32 alignment, PtrSize& offset)
+Error UnifiedGeometryMemoryPool::allocate(PtrSize size, U32 alignment, PtrSize& offset)
 {
 	U32 offset32;
 	const Bool success = m_buddyAllocator.allocate(size, alignment, offset32);
@@ -62,7 +62,7 @@ Error VertexGpuMemoryPool::allocate(PtrSize size, U32 alignment, PtrSize& offset
 	return Error::kNone;
 }
 
-void VertexGpuMemoryPool::free(PtrSize size, U32 alignment, PtrSize offset)
+void UnifiedGeometryMemoryPool::free(PtrSize size, U32 alignment, PtrSize offset)
 {
 	m_buddyAllocator.free(U32(offset), size, alignment);
 }

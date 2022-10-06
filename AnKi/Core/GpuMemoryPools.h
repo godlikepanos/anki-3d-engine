@@ -19,16 +19,16 @@ class ConfigSet;
 /// @{
 
 /// Manages vertex and index memory for the whole application.
-class VertexGpuMemoryPool
+class UnifiedGeometryMemoryPool
 {
 public:
-	VertexGpuMemoryPool() = default;
+	UnifiedGeometryMemoryPool() = default;
 
-	VertexGpuMemoryPool(const VertexGpuMemoryPool&) = delete; // Non-copyable
+	UnifiedGeometryMemoryPool(const UnifiedGeometryMemoryPool&) = delete; // Non-copyable
 
-	~VertexGpuMemoryPool();
+	~UnifiedGeometryMemoryPool();
 
-	VertexGpuMemoryPool& operator=(const VertexGpuMemoryPool&) = delete; // Non-copyable
+	UnifiedGeometryMemoryPool& operator=(const UnifiedGeometryMemoryPool&) = delete; // Non-copyable
 
 	Error init(HeapMemoryPool* pool, GrManager* gr, const ConfigSet& cfg);
 

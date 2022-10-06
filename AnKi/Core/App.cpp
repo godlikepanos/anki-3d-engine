@@ -132,8 +132,8 @@ void App::cleanup()
 	m_physics = nullptr;
 	deleteInstance(m_mainPool, m_stagingMem);
 	m_stagingMem = nullptr;
-	deleteInstance(m_mainPool, m_vertexMem);
-	m_vertexMem = nullptr;
+	deleteInstance(m_mainPool, m_unifiedGometryMemPool);
+	m_unifiedGometryMemPool = nullptr;
 	deleteInstance(m_mainPool, m_threadHive);
 	m_threadHive = nullptr;
 	deleteInstance(m_mainPool, m_maliHwCounters);
@@ -277,8 +277,8 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	//
 	// GPU mem
 	//
-	m_vertexMem = newInstance<VertexGpuMemoryPool>(m_mainPool);
-	ANKI_CHECK(m_vertexMem->init(&m_mainPool, m_gr, *m_config));
+	m_unifiedGometryMemPool = newInstance<UnifiedGeometryMemoryPool>(m_mainPool);
+	ANKI_CHECK(m_unifiedGometryMemPool->init(&m_mainPool, m_gr, *m_config));
 
 	m_stagingMem = newInstance<StagingGpuMemoryPool>(m_mainPool);
 	ANKI_CHECK(m_stagingMem->init(m_gr, *m_config));
@@ -315,7 +315,7 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	rinit.m_gr = m_gr;
 	rinit.m_physics = m_physics;
 	rinit.m_resourceFs = m_resourceFs;
-	rinit.m_vertexMemory = m_vertexMem;
+	rinit.m_unifiedGometryMemoryPool = m_unifiedGometryMemPool;
 	rinit.m_config = m_config;
 	rinit.m_allocCallback = m_mainPool.getAllocationCallback();
 	rinit.m_allocCallbackData = m_mainPool.getAllocationCallbackUserData();
@@ -509,7 +509,7 @@ Error App::mainLoop()
 
 				const GrManagerStats grStats = m_gr->getStats();
 				BuddyAllocatorBuilderStats vertMemStats;
-				m_vertexMem->getMemoryStats(vertMemStats);
+				m_unifiedGometryMemPool->getMemoryStats(vertMemStats);
 
 				in.m_gpuDeviceMemoryAllocated = grStats.m_deviceMemoryAllocated;
 				in.m_gpuDeviceMemoryInUse = grStats.m_deviceMemoryInUse;

@@ -46,7 +46,7 @@ Error ResourceManager::init(ResourceManagerInitInfo& init)
 	m_physics = init.m_physics;
 	m_fs = init.m_resourceFs;
 	m_config = init.m_config;
-	m_vertexMem = init.m_vertexMemory;
+	m_unifiedGometryMemoryPool = init.m_unifiedGometryMemoryPool;
 
 	m_pool.init(init.m_allocCallback, init.m_allocCallbackData, "Resources");
 	m_tmpPool.init(init.m_allocCallback, init.m_allocCallbackData, 10_MB);
