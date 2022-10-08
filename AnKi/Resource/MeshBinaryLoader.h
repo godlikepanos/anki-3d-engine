@@ -9,6 +9,7 @@
 #include <AnKi/Resource/ResourceFilesystem.h>
 #include <AnKi/Resource/MeshBinary.h>
 #include <AnKi/Util/WeakArray.h>
+#include <AnKi/Shaders/Include/MeshTypes.h>
 
 namespace anki {
 
@@ -16,6 +17,12 @@ namespace anki {
 /// @{
 
 /// This class loads the mesh binary file. It only supports a subset of combinations of vertex formats and buffers.
+/// The file is layed out in memory:
+/// * Header
+/// * Submeshes
+/// * Index buffer of max LOD
+/// * Vertex buffer #0 of max LOD
+/// * etc...
 class MeshBinaryLoader
 {
 public:
@@ -32,23 +39,17 @@ public:
 
 	Error load(const ResourceFilename& filename);
 
-	Error storeIndexBuffer(void* ptr, PtrSize size);
+	Error storeIndexBuffer(U32 lod, void* ptr, PtrSize size);
 
-	Error storeVertexBuffer(U32 bufferIdx, void* ptr, PtrSize size);
+	Error storeVertexBuffer(U32 lod, U32 bufferIdx, void* ptr, PtrSize size);
 
 	/// Instead of calling storeIndexBuffer and storeVertexBuffer use this method to get those buffers into the CPU.
-	Error storeIndicesAndPosition(DynamicArrayRaii<U32>& indices, DynamicArrayRaii<Vec3>& positions);
+	Error storeIndicesAndPosition(U32 lod, DynamicArrayRaii<U32>& indices, DynamicArrayRaii<Vec3>& positions);
 
 	const MeshBinaryHeader& getHeader() const
 	{
 		ANKI_ASSERT(isLoaded());
 		return m_header;
-	}
-
-	Bool hasBoneInfo() const
-	{
-		ANKI_ASSERT(isLoaded());
-		return m_header.m_vertexAttributes[VertexAttributeId::kBoneIndices].m_format != Format::kNone;
 	}
 
 	ConstWeakArray<MeshBinarySubMesh> getSubMeshes() const
@@ -70,35 +71,25 @@ private:
 		return m_file.get() != nullptr;
 	}
 
-	PtrSize getIndexBufferSize() const
+	PtrSize getIndexBufferSize(U32 lod) const
 	{
 		ANKI_ASSERT(isLoaded());
-		return PtrSize(m_header.m_totalIndexCount) * ((m_header.m_indexType == IndexType::kU16) ? 2 : 4);
+		ANKI_ASSERT(lod < m_header.m_lodCount);
+		return PtrSize(m_header.m_totalIndexCounts[lod]) * getIndexSize(m_header.m_indexType);
 	}
 
-	PtrSize getAlignedIndexBufferSize() const
+	PtrSize getVertexBufferSize(U32 lod, U32 bufferIdx) const
 	{
 		ANKI_ASSERT(isLoaded());
-		return getAlignedRoundUp(kMeshBinaryBufferAlignment, getIndexBufferSize());
+		ANKI_ASSERT(lod < m_header.m_lodCount);
+		return PtrSize(m_header.m_totalVertexCounts[lod]) * PtrSize(m_header.m_vertexBuffers[bufferIdx].m_vertexStride);
 	}
 
-	PtrSize getVertexBufferSize(U32 bufferIdx) const
-	{
-		ANKI_ASSERT(isLoaded());
-		ANKI_ASSERT(bufferIdx < m_header.m_vertexBufferCount);
-		return PtrSize(m_header.m_totalVertexCount) * PtrSize(m_header.m_vertexBuffers[bufferIdx].m_vertexStride);
-	}
-
-	PtrSize getAlignedVertexBufferSize(U32 bufferIdx) const
-	{
-		ANKI_ASSERT(isLoaded());
-		ANKI_ASSERT(bufferIdx < m_header.m_vertexBufferCount);
-		return getAlignedRoundUp(kMeshBinaryBufferAlignment, getVertexBufferSize(bufferIdx));
-	}
+	PtrSize getLodBuffersSize(U32 lod) const;
 
 	Error checkHeader() const;
-	Error checkFormat(VertexAttributeId type, ConstWeakArray<Format> supportedFormats, U32 vertexBufferIdx,
-					  U32 relativeOffset) const;
+	Error checkFormat(VertexStreamId stream, Bool isOptional) const;
+	Error loadSubmeshes();
 };
 /// @}
 

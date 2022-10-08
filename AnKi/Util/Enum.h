@@ -140,7 +140,7 @@ class EnumIterableIterator
 public:
 	using Type = typename std::underlying_type<TEnum>::type;
 
-	EnumIterableIterator(TEnum val)
+	constexpr EnumIterableIterator(TEnum val)
 		: m_val(static_cast<Type>(val))
 	{
 	}
@@ -177,15 +177,33 @@ class EnumIterable
 public:
 	using Iterator = EnumIterableIterator<TEnum>;
 
-	static Iterator begin()
+	constexpr EnumIterable()
+		: m_begin(TEnum::kFirst)
+		, m_end(TEnum::kCount)
 	{
-		return Iterator(TEnum::kFirst);
+		ANKI_ASSERT(m_begin <= m_end);
 	}
 
-	static Iterator end()
+	constexpr EnumIterable(TEnum begin, TEnum end)
+		: m_begin(begin)
+		, m_end(end)
 	{
-		return Iterator(TEnum::kCount);
+		ANKI_ASSERT(m_begin <= m_end);
 	}
+
+	Iterator begin() const
+	{
+		return Iterator(m_begin);
+	}
+
+	Iterator end() const
+	{
+		return Iterator(m_end);
+	}
+
+public:
+	TEnum m_begin;
+	TEnum m_end;
 };
 /// @}
 
