@@ -15,33 +15,35 @@ namespace anki {
 
 /// Matrix type.
 /// @tparam T The scalar type. Eg float.
-/// @tparam J The number of rows.
-/// @tparam I The number of columns.
-template<typename T, U J, U I>
-class alignas(MathSimd<T, I>::kAlignment) TMat
+/// @tparam kTRowCount The number of rows.
+/// @tparam kTColumnCount The number of columns.
+template<typename T, U kTRowCount, U kTColumnCount>
+class alignas(MathSimd<T, kTColumnCount>::kAlignment) TMat
 {
 public:
 	using Scalar = T;
-	using Simd = typename MathSimd<T, I>::Type;
+	using Simd = typename MathSimd<T, kTColumnCount>::Type;
 
 #if ANKI_COMPILER_GCC_COMPATIBLE
 #	pragma GCC diagnostic push
 #	pragma GCC diagnostic ignored "-Wignored-attributes"
 #endif
-	using SimdArray = Array<Simd, J>;
+	using SimdArray = Array<Simd, kTRowCount>;
 #if ANKI_COMPILER_GCC_COMPATIBLE
 #	pragma GCC diagnostic pop
 #endif
 
-	using RowVec = TVec<T, I>;
-	using ColumnVec = TVec<T, J>;
+	using RowVec = TVec<T, kTColumnCount>;
+	using ColumnVec = TVec<T, kTRowCount>;
 
-	static constexpr U kRowCount = J; ///< Number of rows
-	static constexpr U kColumnCount = I; ///< Number of columns
-	static constexpr U kSize = J * I; ///< Number of total elements
-	static constexpr Bool kHasSIMD = I == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
-	static constexpr Bool kHasMat4SIMD = J == 4 && I == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
-	static constexpr Bool kHasMat3x4SIMD = J == 3 && I == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
+	static constexpr U kRowCount = kTRowCount; ///< Number of rows
+	static constexpr U kColumnCount = kTColumnCount; ///< Number of columns
+	static constexpr U kSize = kTRowCount * kTColumnCount; ///< Number of total elements
+	static constexpr Bool kHasSIMD = kTColumnCount == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
+	static constexpr Bool kHasMat4SIMD =
+		kTRowCount == 4 && kTColumnCount == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
+	static constexpr Bool kHasMat3x4SIMD =
+		kTRowCount == 3 && kTColumnCount == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
 
 	/// @name Constructors
 	/// @{
@@ -76,7 +78,7 @@ public:
 
 	// 3x3 specific constructors
 
-	ANKI_ENABLE_METHOD(J == 3 && I == 3)
+	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 3)
 	constexpr TMat(T m00, T m01, T m02, T m10, T m11, T m12, T m20, T m21, T m22)
 	{
 		auto& m = *this;
@@ -91,19 +93,19 @@ public:
 		m(2, 2) = m22;
 	}
 
-	ANKI_ENABLE_METHOD(J == 3 && I == 3)
+	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 3)
 	explicit constexpr TMat(const TQuat<T>& q)
 	{
 		setRotationPart(q);
 	}
 
-	ANKI_ENABLE_METHOD(J == 3 && I == 3)
+	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 3)
 	explicit constexpr TMat(const TEuler<T>& e)
 	{
 		setRotationPart(e);
 	}
 
-	ANKI_ENABLE_METHOD(J == 3 && I == 3)
+	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 3)
 	explicit constexpr TMat(const TAxisang<T>& axisang)
 	{
 		setRotationPart(axisang);
@@ -111,7 +113,7 @@ public:
 
 	// 4x4 specific constructors
 
-	ANKI_ENABLE_METHOD(J == 4 && I == 4)
+	ANKI_ENABLE_METHOD(kTRowCount == 4 && kTColumnCount == 4)
 	constexpr TMat(T m00, T m01, T m02, T m03, T m10, T m11, T m12, T m13, T m20, T m21, T m22, T m23, T m30, T m31,
 				   T m32, T m33)
 	{
@@ -134,7 +136,7 @@ public:
 		m(3, 3) = m33;
 	}
 
-	ANKI_ENABLE_METHOD(J == 4 && I == 4)
+	ANKI_ENABLE_METHOD(kTRowCount == 4 && kTColumnCount == 4)
 	constexpr TMat(const TVec<T, 4>& translation, const TMat<T, 3, 3>& rotation, const T scale = T(1))
 	{
 		if(isZero<T>(scale - T(1)))
@@ -152,14 +154,14 @@ public:
 		m(3, 0) = m(3, 1) = m(3, 2) = T(0);
 	}
 
-	ANKI_ENABLE_METHOD(J == 4 && I == 4)
+	ANKI_ENABLE_METHOD(kTRowCount == 4 && kTColumnCount == 4)
 	explicit constexpr TMat(const TTransform<T>& t)
 		: TMat(t.getOrigin().xyz1(), t.getRotation().getRotationPart(), t.getScale())
 	{
 	}
 
 	/// Set a 4x4 matrix using a 3x4 for the first 3 rows and a vec4 for the 4rth row.
-	ANKI_ENABLE_METHOD(J == 4 && I == 4)
+	ANKI_ENABLE_METHOD(kTRowCount == 4 && kTColumnCount == 4)
 	explicit constexpr TMat(const TMat<T, 3, 4>& m3, const TVec<T, 4>& row3)
 	{
 		setRow(0, m3.getRow(0));
@@ -170,7 +172,7 @@ public:
 
 	// 3x4 specific constructors
 
-	ANKI_ENABLE_METHOD(J == 3 && I == 4)
+	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 4)
 	constexpr TMat(T m00, T m01, T m02, T m03, T m10, T m11, T m12, T m13, T m20, T m21, T m22, T m23)
 	{
 		auto& m = *this;
@@ -188,7 +190,7 @@ public:
 		m(2, 3) = m23;
 	}
 
-	ANKI_ENABLE_METHOD(J == 3 && I == 4)
+	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 4)
 	explicit constexpr TMat(const TMat<T, 4, 4>& m4)
 	{
 		auto& m = *this;
@@ -206,7 +208,7 @@ public:
 		m(2, 3) = m4(2, 3);
 	}
 
-	ANKI_ENABLE_METHOD(J == 3 && I == 4)
+	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 4)
 	explicit constexpr TMat(const TVec<T, 3>& translation, const TMat<T, 3, 3>& rotation, const T scale = T(1))
 	{
 		if(isZero<T>(scale - T(1)))
@@ -221,25 +223,25 @@ public:
 		setTranslationPart(translation);
 	}
 
-	ANKI_ENABLE_METHOD(J == 3 && I == 4)
+	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 4)
 	explicit constexpr TMat(const TVec<T, 3>& translation, const TQuat<T>& q, const T scale = T(1))
 		: TMat(translation, TMat<T, 3, 3>(q), scale)
 	{
 	}
 
-	ANKI_ENABLE_METHOD(J == 3 && I == 4)
+	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 4)
 	explicit constexpr TMat(const TVec<T, 3>& translation, const TEuler<T>& b, const T scale = T(1))
 		: TMat(translation, TMat<T, 3, 3>(b), scale)
 	{
 	}
 
-	ANKI_ENABLE_METHOD(J == 3 && I == 4)
+	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 4)
 	explicit constexpr TMat(const TVec<T, 3>& translation, const TAxisang<T>& b, const T scale = T(1))
 		: TMat(translation, TMat<T, 3, 3>(b), scale)
 	{
 	}
 
-	ANKI_ENABLE_METHOD(J == 3 && I == 4)
+	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 4)
 	explicit constexpr TMat(const TTransform<T>& t)
 		: TMat(t.getOrigin().xyz(), t.getRotation().getRotationPart(), t.getScale())
 	{
@@ -320,17 +322,17 @@ public:
 		return *this;
 	}
 
-	ANKI_ENABLE_METHOD(J == I && !kHasMat4SIMD)
+	ANKI_ENABLE_METHOD(kTRowCount == kTColumnCount && !kHasMat4SIMD)
 	TMat operator*(const TMat& b) const
 	{
 		TMat out;
 		const TMat& a = *this;
-		for(U j = 0; j < J; j++)
+		for(U j = 0; j < kTRowCount; j++)
 		{
-			for(U i = 0; i < I; i++)
+			for(U i = 0; i < kTColumnCount; i++)
 			{
 				out(j, i) = T(0);
-				for(U k = 0; k < I; k++)
+				for(U k = 0; k < kTColumnCount; k++)
 				{
 					out(j, i) += a(j, k) * b(k, i);
 				}
@@ -499,10 +501,10 @@ public:
 	{
 		const TMat& m = *this;
 		ColumnVec out;
-		for(U j = 0; j < J; j++)
+		for(U j = 0; j < kTRowCount; j++)
 		{
 			T sum = T(0);
-			for(U i = 0; i < I; i++)
+			for(U i = 0; i < kTColumnCount; i++)
 			{
 				sum += m(j, i) * v[i];
 			}
@@ -517,12 +519,12 @@ public:
 	{
 		ColumnVec out;
 #	if ANKI_SIMD_SSE
-		for(U i = 0; i < J; i++)
+		for(U i = 0; i < kTRowCount; i++)
 		{
 			_mm_store_ss(&out[i], _mm_dp_ps(m_simd[i], v.getSimd(), 0xF1));
 		}
 #	else
-		for(U i = 0; i < J; i++)
+		for(U i = 0; i < kTRowCount; i++)
 		{
 			out[i] = RowVec(m_simd[i]).dot(v);
 		}
@@ -546,7 +548,7 @@ public:
 		setRow(2, c);
 	}
 
-	ANKI_ENABLE_METHOD(J > 3)
+	ANKI_ENABLE_METHOD(kTRowCount > 3)
 	void setRows(const RowVec& a, const RowVec& b, const RowVec& c, const RowVec& d)
 	{
 		setRows(a, b, c);
@@ -565,7 +567,7 @@ public:
 		c = getRow(2);
 	}
 
-	ANKI_ENABLE_METHOD(J > 3)
+	ANKI_ENABLE_METHOD(kTRowCount > 3)
 	void getRows(RowVec& a, RowVec& b, RowVec& c, RowVec& d) const
 	{
 		getRows(a, b, c);
@@ -574,7 +576,7 @@ public:
 
 	void setColumn(const U i, const ColumnVec& v)
 	{
-		for(U j = 0; j < J; j++)
+		for(U j = 0; j < kTRowCount; j++)
 		{
 			m_arr2[j][i] = v[j];
 		}
@@ -587,7 +589,7 @@ public:
 		setColumn(2, c);
 	}
 
-	ANKI_ENABLE_METHOD(I > 3)
+	ANKI_ENABLE_METHOD(kTColumnCount > 3)
 	void setColumns(const ColumnVec& a, const ColumnVec& b, const ColumnVec& c, const ColumnVec& d)
 	{
 		setColumns(a, b, c);
@@ -597,7 +599,7 @@ public:
 	ColumnVec getColumn(const U i) const
 	{
 		ColumnVec out;
-		for(U j = 0; j < J; j++)
+		for(U j = 0; j < kTRowCount; j++)
 		{
 			out[j] = m_arr2[j][i];
 		}
@@ -611,7 +613,7 @@ public:
 		c = getColumn(2);
 	}
 
-	ANKI_ENABLE_METHOD(I > 3)
+	ANKI_ENABLE_METHOD(kTColumnCount > 3)
 	void getColumns(ColumnVec& a, ColumnVec& b, ColumnVec& c, ColumnVec& d) const
 	{
 		getColumns(a, b, c);
@@ -927,12 +929,12 @@ public:
 		setColumns(xAxis, yAxis, zAxis);
 	}
 
-	ANKI_ENABLE_METHOD(J == I && !kHasSIMD)
+	ANKI_ENABLE_METHOD(kTRowCount == kTColumnCount && !kHasSIMD)
 	void transpose()
 	{
-		for(U j = 0; j < J; j++)
+		for(U j = 0; j < kTRowCount; j++)
 		{
-			for(U i = j + 1; i < I; i++)
+			for(U i = j + 1; i < kTColumnCount; i++)
 			{
 				T tmp = m_arr2[j][i];
 				m_arr2[j][i] = m_arr2[i][j];
@@ -942,7 +944,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(J == I && kHasSIMD)
+	ANKI_ENABLE_METHOD(kTRowCount == kTColumnCount && kHasSIMD)
 	void transpose()
 	{
 #	if ANKI_SIMD_SSE
@@ -971,13 +973,13 @@ public:
 		}
 	}
 
-	ANKI_ENABLE_METHOD(I == J)
+	ANKI_ENABLE_METHOD(kTColumnCount == kTRowCount)
 	TMat getTransposed() const
 	{
 		TMat out;
-		for(U j = 0; j < J; j++)
+		for(U j = 0; j < kTRowCount; j++)
 		{
-			for(U i = 0; i < I; i++)
+			for(U i = 0; i < kTColumnCount; i++)
 			{
 				out.m_arr2[i][j] = m_arr2[j][i];
 			}
@@ -985,7 +987,7 @@ public:
 		return out;
 	}
 
-	ANKI_ENABLE_METHOD(I == 3 && J == 3)
+	ANKI_ENABLE_METHOD(kTColumnCount == 3 && kTRowCount == 3)
 	T getDet() const
 	{
 		const auto& m = *this;
@@ -994,7 +996,7 @@ public:
 			   + m(0, 2) * (m(0, 1) * m(2, 1) - m(1, 1) * m(2, 0));
 	}
 
-	ANKI_ENABLE_METHOD(I == 4 && J == 4)
+	ANKI_ENABLE_METHOD(kTColumnCount == 4 && kTRowCount == 4)
 	T getDet() const
 	{
 		const auto& t = *this;
@@ -1012,7 +1014,7 @@ public:
 			   - t(0, 1) * t(1, 0) * t(2, 2) * t(3, 3) + t(0, 0) * t(1, 1) * t(2, 2) * t(3, 3);
 	}
 
-	ANKI_ENABLE_METHOD(I == 3 && J == 3)
+	ANKI_ENABLE_METHOD(kTColumnCount == 3 && kTRowCount == 3)
 	TMat getInverse() const
 	{
 		// Using Gramer's method Inv(A) = (1 / getDet(A)) * Adj(A)
@@ -1045,7 +1047,7 @@ public:
 	}
 
 	/// Invert using Cramer's rule
-	ANKI_ENABLE_METHOD(I == 4 && J == 4)
+	ANKI_ENABLE_METHOD(kTColumnCount == 4 && kTRowCount == 4)
 	TMat getInverse() const
 	{
 		Array<T, 12> tmp;
@@ -1121,14 +1123,14 @@ public:
 	}
 
 	/// See getInverse
-	ANKI_ENABLE_METHOD((I == 4 && J == 4) || (I == 3 && J == 3))
+	ANKI_ENABLE_METHOD((kTColumnCount == 4 && kTRowCount == 4) || (kTColumnCount == 3 && kTRowCount == 3))
 	void invert()
 	{
 		(*this) = getInverse();
 	}
 
 	/// 12 muls, 27 adds. Something like m4 = m0 * m1 but without touching the 4rth row and allot faster
-	ANKI_ENABLE_METHOD(I == 4 && J == 4)
+	ANKI_ENABLE_METHOD(kTColumnCount == 4 && kTRowCount == 4)
 	static TMat combineTransformations(const TMat& m0, const TMat& m1)
 	{
 		// See the clean code in < r664
@@ -1162,7 +1164,7 @@ public:
 	}
 
 	/// Create a new matrix that is equivalent to Mat4(this)*Mat4(b)
-	ANKI_ENABLE_METHOD(J == 3 && I == 4 && !kHasSIMD)
+	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 4 && !kHasSIMD)
 	TMat combineTransformations(const TMat& b) const
 	{
 		const auto& a = *this;
@@ -1188,7 +1190,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(J == 3 && I == 4 && kHasSIMD)
+	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 4 && kHasSIMD)
 	TMat combineTransformations(const TMat& b) const
 	{
 		TMat c;
@@ -1234,7 +1236,7 @@ public:
 #endif
 
 	/// Calculate a perspective projection matrix. The z is mapped in [0, 1] range just like DX and Vulkan.
-	ANKI_ENABLE_METHOD(I == 4 && J == 4)
+	ANKI_ENABLE_METHOD(kTColumnCount == 4 && kTRowCount == 4)
 	[[nodiscard]] static TMat calculatePerspectiveProjectionMatrix(T fovX, T fovY, T near, T far)
 	{
 		ANKI_ASSERT(fovX > T(0) && fovY > T(0) && near > T(0) && far > T(0));
@@ -1263,7 +1265,7 @@ public:
 	}
 
 	/// Calculate an orthographic projection matrix. The z is mapped in [0, 1] range just like DX and Vulkan.
-	ANKI_ENABLE_METHOD(I == 4 && J == 4)
+	ANKI_ENABLE_METHOD(kTColumnCount == 4 && kTRowCount == 4)
 	[[nodiscard]] static TMat calculateOrthographicProjectionMatrix(T right, T left, T top, T bottom, T near, T far)
 	{
 		ANKI_ASSERT(right != T(0) && left != T(0) && top != T(0) && bottom != T(0) && near != T(0) && far != T(0));
@@ -1303,7 +1305,7 @@ public:
 	/// Vec2 xy = ndc.xy() * unprojParams.xy() * z;
 	/// Vec3 posViewSpace(xy, z);
 	/// @endcode
-	ANKI_ENABLE_METHOD(I == 4 && J == 4)
+	ANKI_ENABLE_METHOD(kTColumnCount == 4 && kTRowCount == 4)
 	static TVec<T, 4> calculatePerspectiveUnprojectionParams(T fovX, T fovY, T near, T far)
 	{
 		TVec<T, 4> out;
@@ -1336,7 +1338,7 @@ public:
 
 	/// Assuming this is a projection matrix extract the unprojection parameters. See
 	/// calculatePerspectiveUnprojectionParams for more info.
-	ANKI_ENABLE_METHOD(I == 4 && J == 4)
+	ANKI_ENABLE_METHOD(kTColumnCount == 4 && kTRowCount == 4)
 	TVec<T, 4> extractPerspectiveUnprojectionParams() const
 	{
 		TVec<T, 4> out;
@@ -1349,7 +1351,7 @@ public:
 	}
 
 	/// If we suppose this matrix represents a transformation, return the inverted transformation
-	ANKI_ENABLE_METHOD(I == 4 && J == 4)
+	ANKI_ENABLE_METHOD(kTColumnCount == 4 && kTRowCount == 4)
 	TMat getInverseTransformation() const
 	{
 		const TMat<T, 3, 3> invertedRot = getRotationPart().getTransposed();
@@ -1359,7 +1361,7 @@ public:
 	}
 
 	/// @note 9 muls, 9 adds
-	ANKI_ENABLE_METHOD(I == 4 && J == 4)
+	ANKI_ENABLE_METHOD(kTColumnCount == 4 && kTRowCount == 4)
 	TVec<T, 3> transform(const TVec<T, 3>& v) const
 	{
 		const auto& m = *this;
@@ -1369,7 +1371,7 @@ public:
 	}
 
 	/// Create a new transform matrix position at eye and looking at refPoint.
-	template<U VEC_DIMS, ANKI_ENABLE(J == 3 && I == 4 && VEC_DIMS >= 3)>
+	template<U VEC_DIMS, ANKI_ENABLE(kTRowCount == 3 && kTColumnCount == 4 && VEC_DIMS >= 3)>
 	static TMat lookAt(const TVec<T, VEC_DIMS>& eye, const TVec<T, VEC_DIMS>& refPoint, const TVec<T, VEC_DIMS>& up)
 	{
 		const TVec<T, 3> vdir = (refPoint.xyz() - eye.xyz()).getNormalized();
@@ -1381,7 +1383,7 @@ public:
 	}
 
 	/// Create a new transform matrix position at eye and looking at refPoint.
-	template<U VEC_DIMS, ANKI_ENABLE(J == 4 && I == 4 && VEC_DIMS >= 3)>
+	template<U VEC_DIMS, ANKI_ENABLE(kTRowCount == 4 && kTColumnCount == 4 && VEC_DIMS >= 3)>
 	static TMat lookAt(const TVec<T, VEC_DIMS>& eye, const TVec<T, VEC_DIMS>& refPoint, const TVec<T, VEC_DIMS>& up)
 	{
 		const TVec<T, 4> vdir = (refPoint.xyz0() - eye.xyz0()).getNormalized();
@@ -1407,19 +1409,19 @@ public:
 		*this = getZero();
 	}
 
-	ANKI_ENABLE_METHOD(I == 3 && J == 3)
+	ANKI_ENABLE_METHOD(kTColumnCount == 3 && kTRowCount == 3)
 	static TMat getIdentity()
 	{
 		return TMat(T(1), T(0), T(0), T(0), T(1), T(0), T(0), T(0), T(1));
 	}
 
-	ANKI_ENABLE_METHOD(I == 4 && J == 4)
+	ANKI_ENABLE_METHOD(kTColumnCount == 4 && kTRowCount == 4)
 	static TMat getIdentity()
 	{
 		return TMat(T(1), T(0), T(0), T(0), T(0), T(1), T(0), T(0), T(0), T(0), T(1), T(0), T(0), T(0), T(0), T(1));
 	}
 
-	ANKI_ENABLE_METHOD(I == 4 && J == 3)
+	ANKI_ENABLE_METHOD(kTColumnCount == 4 && kTRowCount == 3)
 	static TMat getIdentity()
 	{
 		return TMat(T(1), T(0), T(0), T(0), T(0), T(1), T(0), T(0), T(0), T(0), T(1), T(0));
@@ -1432,22 +1434,22 @@ public:
 
 	static constexpr U8 getSize()
 	{
-		return U8(I * J);
+		return U8(kTColumnCount * kTRowCount);
 	}
 
 	ANKI_ENABLE_METHOD(std::is_floating_point<T>::value)
 	void toString(StringRaii& str) const
 	{
-		for(U j = 0; j < J; ++j)
+		for(U j = 0; j < kTRowCount; ++j)
 		{
-			for(U i = 0; i < I; ++i)
+			for(U i = 0; i < kTColumnCount; ++i)
 			{
 				CString fmt;
-				if(i == I - 1 && j == J - 1)
+				if(i == kTColumnCount - 1 && j == kTRowCount - 1)
 				{
 					fmt = "%f";
 				}
-				else if(i == I - 1)
+				else if(i == kTColumnCount - 1)
 				{
 					fmt = "%f\n";
 				}
@@ -1462,35 +1464,35 @@ public:
 	/// @}
 
 protected:
-	static constexpr U N = I * J;
+	static constexpr U N = kTColumnCount * kTRowCount;
 
 	/// @name Data members
 	/// @{
 	union
 	{
 		T m_carr1[N]; ///< For easier debugging with gdb
-		T m_carr2[J][I]; ///< For easier debugging with gdb
+		T m_carr2[kTRowCount][kTColumnCount]; ///< For easier debugging with gdb
 		Array<T, N> m_arr1;
-		Array2d<T, J, I> m_arr2;
+		Array2d<T, kTRowCount, kTColumnCount> m_arr2;
 		SimdArray m_simd;
-		Array<RowVec, J> m_rows;
+		Array<RowVec, kTRowCount> m_rows;
 	};
 	/// @}
 };
 
 /// @memberof TMat
-template<typename T, U J, U I>
-TMat<T, J, I> operator+(const T f, const TMat<T, J, I>& m)
+template<typename T, U kTRowCount, U kTColumnCount>
+TMat<T, kTRowCount, kTColumnCount> operator+(const T f, const TMat<T, kTRowCount, kTColumnCount>& m)
 {
 	return m + f;
 }
 
 /// @memberof TMat
-template<typename T, U J, U I>
-TMat<T, J, I> operator-(const T f, const TMat<T, J, I>& m)
+template<typename T, U kTRowCount, U kTColumnCount>
+TMat<T, kTRowCount, kTColumnCount> operator-(const T f, const TMat<T, kTRowCount, kTColumnCount>& m)
 {
-	TMat<T, J, I> out;
-	for(U i = 0; i < J * I; i++)
+	TMat<T, kTRowCount, kTColumnCount> out;
+	for(U i = 0; i < kTRowCount * kTColumnCount; i++)
 	{
 		out[i] = f - m[i];
 	}
@@ -1498,18 +1500,18 @@ TMat<T, J, I> operator-(const T f, const TMat<T, J, I>& m)
 }
 
 /// @memberof TMat
-template<typename T, U J, U I>
-TMat<T, J, I> operator*(const T f, const TMat<T, J, I>& m)
+template<typename T, U kTRowCount, U kTColumnCount>
+TMat<T, kTRowCount, kTColumnCount> operator*(const T f, const TMat<T, kTRowCount, kTColumnCount>& m)
 {
 	return m * f;
 }
 
 /// @memberof TMat
-template<typename T, U J, U I>
-TMat<T, J, I> operator/(const T f, const TMat<T, 3, 3>& m3)
+template<typename T, U kTRowCount, U kTColumnCount>
+TMat<T, kTRowCount, kTColumnCount> operator/(const T f, const TMat<T, 3, 3>& m3)
 {
-	TMat<T, J, I> out;
-	for(U i = 0; i < J * I; i++)
+	TMat<T, kTRowCount, kTColumnCount> out;
+	for(U i = 0; i < kTRowCount * kTColumnCount; i++)
 	{
 		ANKI_ASSERT(m3[i] != T(0));
 		out[i] = f / m3[i];

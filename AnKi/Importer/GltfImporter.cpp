@@ -701,16 +701,6 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			HashMapRaii<CString, StringRaii>::Iterator it2;
 			const Bool selfCollision = (it2 = extras.find("collision_mesh")) != extras.getEnd() && *it2 == "self";
 
-			U32 maxLod = 0;
-			if(m_lodCount > 1 && !skipMeshLod(*node.mesh, 1))
-			{
-				maxLod = 1;
-			}
-			if(m_lodCount > 2 && !skipMeshLod(*node.mesh, 2))
-			{
-				maxLod = 2;
-			}
-
 			// Thread task
 			auto callback = [](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
 							   [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
@@ -718,22 +708,9 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 
 				Error err = self.m_importer->m_errorInThread.load();
 
-				// LOD 0
 				if(!err)
 				{
-					err = self.m_importer->writeMesh(*self.m_mesh, 0, self.m_importer->computeLodFactor(0));
-				}
-
-				// LOD 1
-				if(!err && self.m_importer->m_lodCount > 1 && !self.m_importer->skipMeshLod(*self.m_mesh, 1))
-				{
-					err = self.m_importer->writeMesh(*self.m_mesh, 1, self.m_importer->computeLodFactor(1));
-				}
-
-				// LOD 2
-				if(!err && self.m_importer->m_lodCount > 2 && !self.m_importer->skipMeshLod(*self.m_mesh, 2))
-				{
-					err = self.m_importer->writeMesh(*self.m_mesh, 2, self.m_importer->computeLodFactor(2));
+					err = self.m_importer->writeMesh(*self.m_mesh);
 				}
 
 				for(U32 i = 0; i < self.m_materialCount && !err; ++i)
@@ -781,7 +758,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 
 				ANKI_CHECK(m_sceneFile.writeText("comp = node2:getSceneNodeBase():getBodyComponent()\n"));
 
-				const StringRaii meshFname = computeMeshResourceFilename(*node.mesh, maxLod);
+				const StringRaii meshFname = computeMeshResourceFilename(*node.mesh);
 
 				ANKI_CHECK(
 					m_sceneFile.writeTextf("comp:loadMeshResource(\"%s%s\")\n", m_rpath.cstr(), meshFname.cstr()));
@@ -851,30 +828,17 @@ Error GltfImporter::writeModel(const cgltf_mesh& mesh)
 
 	for(U32 primIdx = 0; primIdx < mesh.primitives_count; ++primIdx)
 	{
+		ANKI_CHECK(file.writeText("\t\t<modelPatch>\n"));
+
+		const StringRaii meshFname = computeMeshResourceFilename(mesh);
 		if(mesh.primitives_count == 1)
 		{
-			ANKI_CHECK(file.writeText("\t\t<modelPatch>\n"));
+			ANKI_CHECK(file.writeTextf("\t\t\t<mesh>%s%s</mesh>\n", m_rpath.cstr(), meshFname.cstr()));
 		}
 		else
 		{
-			ANKI_CHECK(file.writeTextf("\t\t<modelPatch subMeshIndex=\"%u\">\n", primIdx));
-		}
-
-		{
-			const StringRaii meshFname = computeMeshResourceFilename(mesh);
-			ANKI_CHECK(file.writeTextf("\t\t\t<mesh>%s%s</mesh>\n", m_rpath.cstr(), meshFname.cstr()));
-		}
-
-		if(m_lodCount > 1 && !skipMeshLod(mesh, 1))
-		{
-			const StringRaii meshFname = computeMeshResourceFilename(mesh, 1);
-			ANKI_CHECK(file.writeTextf("\t\t\t<mesh1>%s%s</mesh1>\n", m_rpath.cstr(), meshFname.cstr()));
-		}
-
-		if(m_lodCount > 2 && !skipMeshLod(mesh, 2))
-		{
-			const StringRaii meshFname = computeMeshResourceFilename(mesh, 2);
-			ANKI_CHECK(file.writeTextf("\t\t\t<mesh2>%s%s</mesh2>\n", m_rpath.cstr(), meshFname.cstr()));
+			ANKI_CHECK(file.writeTextf("\t\t\t<mesh subMeshIndex=\"%u\">%s%s</mesh>\n", primIdx, m_rpath.cstr(),
+									   meshFname.cstr()));
 		}
 
 		HashMapRaii<CString, StringRaii> materialExtras(m_pool);
@@ -1173,14 +1137,11 @@ StringRaii GltfImporter::computeModelResourceFilename(const cgltf_mesh& mesh) co
 	return out;
 }
 
-StringRaii GltfImporter::computeMeshResourceFilename(const cgltf_mesh& mesh, U32 lod) const
+StringRaii GltfImporter::computeMeshResourceFilename(const cgltf_mesh& mesh) const
 {
 	const U64 hash = computeHash(mesh.name, strlen(mesh.name));
-
 	StringRaii out(m_pool);
-
-	out.sprintf("%.64s_lod%u_%" PRIx64 ".ankimesh", mesh.name, lod, hash); // Limit the filename size
-
+	out.sprintf("%.64s_%" PRIx64 ".ankimesh", mesh.name, hash); // Limit the filename size
 	return out;
 }
 

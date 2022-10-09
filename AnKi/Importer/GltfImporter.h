@@ -129,13 +129,13 @@ private:
 
 	// Compute filenames for various resources. Use a hash to solve the casing issue and remove unwanted special chars
 	StringRaii computeModelResourceFilename(const cgltf_mesh& mesh) const;
-	StringRaii computeMeshResourceFilename(const cgltf_mesh& mesh, U32 lod = 0) const;
+	StringRaii computeMeshResourceFilename(const cgltf_mesh& mesh) const;
 	StringRaii computeMaterialResourceFilename(const cgltf_material& mtl) const;
 	StringRaii computeAnimationResourceFilename(const cgltf_animation& anim) const;
 	StringRaii computeSkeletonResourceFilename(const cgltf_skin& skin) const;
 
 	// Resources
-	Error writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFactor);
+	Error writeMesh(const cgltf_mesh& mesh);
 	Error writeMaterial(const cgltf_material& mtl, Bool writeRayTracing);
 	Error writeModel(const cgltf_mesh& mesh);
 	Error writeAnimation(const cgltf_animation& anim);

@@ -262,24 +262,30 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 			ConstWeakArray<Mat3x4>(&trfs[0], instanceCount), ConstWeakArray<Mat3x4>(&prevTrfs[0], instanceCount),
 			*ctx.m_stagingGpuAllocator);
 
-		// Set attributes
-		for(U i = 0; i < modelInf.m_vertexAttributeCount; ++i)
+		// Bind attributes & vertex buffers
+		for(VertexStreamId streamId :
+			EnumIterable<VertexStreamId>(VertexStreamId::kMeshRelatedFirst, VertexStreamId::kMeshRelatedCount))
 		{
-			const ModelVertexAttribute& attrib = modelInf.m_vertexAttributes[i];
-			ANKI_ASSERT(attrib.m_format != Format::kNone);
-			cmdb->setVertexAttribute(U32(attrib.m_location), attrib.m_bufferBinding, attrib.m_format,
-									 attrib.m_relativeOffset);
+			if(modelInf.m_vertexBufferOffsets[streamId] == kMaxPtrSize)
+			{
+				continue;
+			}
+
+			const U32 attribLocation = U32(streamId);
+			const U32 bufferBinding = U32(streamId);
+			const Format fmt = kMeshRelatedVertexStreamFormats[streamId];
+			const U32 relativeOffset = 0;
+			const U32 vertexStride = getFormatInfo(fmt).m_texelSize;
+
+			cmdb->setVertexAttribute(attribLocation, bufferBinding, fmt, relativeOffset);
+
+			cmdb->bindVertexBuffer(bufferBinding, getUnifiedGeometryMemoryPool().getVertexBuffer(),
+								   modelInf.m_vertexBufferOffsets[streamId], vertexStride, VertexStepRate::kVertex);
 		}
 
-		// Set vertex buffers
-		for(U32 i = 0; i < modelInf.m_vertexBufferBindingCount; ++i)
-		{
-			const ModelVertexBufferBinding& binding = modelInf.m_vertexBufferBindings[i];
-			cmdb->bindVertexBuffer(i, binding.m_buffer, binding.m_offset, binding.m_stride, VertexStepRate::kVertex);
-		}
-
-		// Index buffer
-		cmdb->bindIndexBuffer(modelInf.m_indexBuffer, modelInf.m_indexBufferOffset, IndexType::kU16);
+		// Bind index buffer
+		cmdb->bindIndexBuffer(getUnifiedGeometryMemoryPool().getVertexBuffer(), modelInf.m_indexBufferOffset,
+							  IndexType::kU16);
 
 		// Draw
 		cmdb->drawElements(PrimitiveTopology::kTriangles, modelInf.m_indexCount, instanceCount, modelInf.m_firstIndex,
@@ -402,15 +408,6 @@ void ModelNode::setupRayTracingInstanceQueueElement(U32 lod, U32 modelPatchIdx,
 	el.m_transform = Mat3x4(movec.getWorldTransform());
 
 	el.m_shaderGroupHandleIndex = info.m_shaderGroupHandleIndex;
-
-	// References
-	el.m_grObjectCount = info.m_grObjectReferences.getSize();
-	for(U32 i = 0; i < el.m_grObjectCount; ++i)
-	{
-		// const_cast hack follows. To avoid the const you could copy m_grObjectReferences[i] to a GrObjectPtr and then
-		// call get() on that. But that will cost 2 atomic operations
-		el.m_grObjects[i] = const_cast<GrObject*>(info.m_grObjectReferences[i].get());
-	}
 }
 
 } // end namespace anki

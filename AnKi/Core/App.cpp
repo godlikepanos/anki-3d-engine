@@ -359,7 +359,8 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	m_scene = newInstance<SceneGraph>(m_mainPool);
 
 	ANKI_CHECK(m_scene->init(m_mainPool.getAllocationCallback(), m_mainPool.getAllocationCallbackUserData(),
-							 m_threadHive, m_resources, m_input, m_script, m_ui, m_config, &m_globalTimestamp));
+							 m_threadHive, m_resources, m_input, m_script, m_ui, m_config, &m_globalTimestamp,
+							 m_unifiedGometryMemPool));
 
 	// Inform the script engine about some subsystems
 	m_script->setRenderer(m_renderer);
