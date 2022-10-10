@@ -36,8 +36,8 @@ layout(set = kMaterialSetLocal, binding = kMaterialBindingRenderableGpuView) uni
 
 #pragma anki start vert
 
-layout(location = kVertexAttributeIdScale) in F32 in_scale;
-layout(location = kVertexAttributeIdAlpha) in F32 in_alpha;
+layout(location = kVertexStreamIdParticleScale) in F32 in_scale;
+layout(location = kVertexStreamIdParticleAlpha) in F32 in_alpha;
 
 layout(location = 0) flat out ANKI_RP F32 out_alpha;
 layout(location = 1) out Vec2 out_uv;

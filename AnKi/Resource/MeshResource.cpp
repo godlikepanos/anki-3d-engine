@@ -127,7 +127,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 
 	// LODs
 	m_lods.create(getMemoryPool(), header.m_lodCount);
-	for(U32 l = header.m_lodCount - 1; l >= 0; --l)
+	for(I32 l = I32(header.m_lodCount - 1); l >= 0; --l)
 	{
 		Lod& lod = m_lods[l];
 
@@ -237,13 +237,15 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 	U32 handleCount = 0;
 
 	BufferPtr unifiedGeometryBuffer = getManager().getUnifiedGeometryMemoryPool().getVertexBuffer();
+	const BufferUsageBit unifiedGeometryBufferNonTransferUsage =
+		unifiedGeometryBuffer->getBufferUsage() ^ BufferUsageBit::kTransferDestination;
 
 	CommandBufferInitInfo cmdbinit;
 	cmdbinit.m_flags = CommandBufferFlag::kSmallBatch | CommandBufferFlag::kGeneralWork;
 	CommandBufferPtr cmdb = gr.newCommandBuffer(cmdbinit);
 
 	// Set transfer to transfer barrier because of the clear that happened while sync loading
-	const BufferBarrierInfo barrier = {unifiedGeometryBuffer.get(), BufferUsageBit::kVertex,
+	const BufferBarrierInfo barrier = {unifiedGeometryBuffer.get(), unifiedGeometryBufferNonTransferUsage,
 									   BufferUsageBit::kTransferDestination, 0, kMaxPtrSize};
 	cmdb->setPipelineBarrier({}, {&barrier, 1}, {});
 
@@ -302,7 +304,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 		bufferBarrier.m_offset = 0;
 		bufferBarrier.m_size = kMaxPtrSize;
 		bufferBarrier.m_previousUsage = BufferUsageBit::kTransferDestination;
-		bufferBarrier.m_nextUsage = BufferUsageBit::kAllRead;
+		bufferBarrier.m_nextUsage = unifiedGeometryBufferNonTransferUsage;
 
 		Array<AccelerationStructureBarrierInfo, kMaxLodCount> asBarriers;
 		for(U32 lodIdx = 0; lodIdx < m_lods.getSize(); ++lodIdx)
@@ -338,7 +340,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 		bufferBarrier.m_offset = 0;
 		bufferBarrier.m_size = kMaxPtrSize;
 		bufferBarrier.m_previousUsage = BufferUsageBit::kTransferDestination;
-		bufferBarrier.m_nextUsage = BufferUsageBit::kAllRead;
+		bufferBarrier.m_nextUsage = unifiedGeometryBufferNonTransferUsage;
 
 		cmdb->setPipelineBarrier({}, {&bufferBarrier, 1}, {});
 	}

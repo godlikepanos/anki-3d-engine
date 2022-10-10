@@ -45,4 +45,38 @@
 		</Expand>
 	</Type>
 
+	<Type Name="anki::Array&lt;*,*&gt;">
+		<DisplayString>{{ size={$T2} }}</DisplayString>
+		<Expand>
+			<ExpandedItem>m_data</ExpandedItem>
+		</Expand>
+	</Type>
+
+	<Type Name="anki::CString">
+		<DisplayString Condition="(bool)(m_ptr==0)">*Empty*</DisplayString>
+		<DisplayString>{m_ptr,s}</DisplayString>
+	</Type>
+
+	<Type Name="anki::String">
+		<DisplayString Condition="(bool)(m_data.m_data==0)">*Empty*</DisplayString>
+		<DisplayString>{m_data.m_data,s}</DisplayString>
+	</Type>
+
+	<Type Name="anki::BaseStringRaii&lt;*&gt;">
+		<DisplayString Condition="(bool)(m_data.m_data==0)">*Empty*</DisplayString>
+		<DisplayString>{m_data.m_data,s}</DisplayString>
+	</Type>
+
+	<Type Name="anki::TVec&lt;*,2&gt;">
+		<DisplayString>x={m_carr[0]} y={m_carr[1]}</DisplayString>
+	</Type>
+
+	<Type Name="anki::TVec&lt;*,3&gt;">
+		<DisplayString>x={m_carr[0]} y={m_carr[1]} z={m_carr[2]}</DisplayString>
+	</Type>
+
+	<Type Name="anki::TVec&lt;*,4&gt;">
+		<DisplayString>x={m_carr[0]} y={m_carr[1]} z={m_carr[2]} w={m_carr[3]}</DisplayString>
+	</Type>
+
 </AutoVisualizer>

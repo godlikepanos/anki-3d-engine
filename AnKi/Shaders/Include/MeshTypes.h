@@ -54,28 +54,26 @@ enum class VertexStreamMask : U8
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexStreamMask)
 
 inline constexpr Array<Format, U32(VertexStreamId::kMeshRelatedCount)> kMeshRelatedVertexStreamFormats = {
-	Format::kR32G32B32A32_Sfloat, Format::kR8G8B8A8_Snorm, Format::kR8G8B8A8_Snorm,
-	Format::kR32G32_Sfloat,       Format::kR8G8B8A8_Uint,  Format::kR8G8B8A8_Snorm};
+	Format::kR32G32B32_Sfloat, Format::kR8G8B8A8_Snorm, Format::kR8G8B8A8_Snorm,
+	Format::kR32G32_Sfloat,    Format::kR8G8B8A8_Uint,  Format::kR8G8B8A8_Snorm};
 
 #else
 
 // For regular geometry
-const U32 kVertexStreamPosition = 0u;
-const U32 kVertexStreamNormal = 1u;
-const U32 kVertexStreamTangent = 2u;
-const U32 kVertexStreamUv = 3u;
-const U32 kVertexStreamBoneIds = 4u;
-const U32 kVertexStreamBoneWeights = 5u;
-
-const U32 kVertexStreamRegularCount = 6u;
+const U32 kVertexStreamIdPosition = 0u;
+const U32 kVertexStreamIdNormal = 1u;
+const U32 kVertexStreamIdTangent = 2u;
+const U32 kVertexStreamIdUv = 3u;
+const U32 kVertexStreamIdBoneIds = 4u;
+const U32 kVertexStreamIdBoneWeights = 5u;
 
 // For particles
-const U32 kVertexStreamParticlePosition = 0u;
-const U32 kVertexStreamParticleScale = 1u;
-const U32 kVertexStreamParticleAlpha = 2u;
-const U32 kVertexStreamParticleLife = 3u;
-const U32 kVertexStreamParticleStartingLife = 4u;
-const U32 kVertexStreamParticlePreviousPosition = 5u;
+const U32 kVertexStreamIdParticlePosition = 0u;
+const U32 kVertexStreamIdParticleScale = 1u;
+const U32 kVertexStreamIdParticleAlpha = 2u;
+const U32 kVertexStreamIdParticleLife = 3u;
+const U32 kVertexStreamIdParticleStartingLife = 4u;
+const U32 kVertexStreamIdParticlePreviousPosition = 5u;
 #endif
 
 ANKI_END_NAMESPACE

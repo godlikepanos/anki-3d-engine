@@ -157,14 +157,6 @@ Error ModelResource::load(const ResourceFilename& filename, Bool async)
 	ANKI_CHECK(modelPatchesEl.getChildElement("modelPatch", modelPatchEl));
 	do
 	{
-		U32 subMeshIndex;
-		Bool subMeshIndexPresent;
-		ANKI_CHECK(modelPatchEl.getAttributeNumberOptional("subMeshIndex", subMeshIndex, subMeshIndexPresent));
-		if(!subMeshIndexPresent)
-		{
-			subMeshIndex = kMaxU32;
-		}
-
 		XmlElement materialEl;
 		ANKI_CHECK(modelPatchEl.getChildElement("material", materialEl));
 
@@ -172,6 +164,14 @@ Error ModelResource::load(const ResourceFilename& filename, Bool async)
 		ANKI_CHECK(modelPatchEl.getChildElement("mesh", meshEl));
 		CString meshFname;
 		ANKI_CHECK(meshEl.getText(meshFname));
+
+		U32 subMeshIndex;
+		Bool subMeshIndexPresent;
+		ANKI_CHECK(meshEl.getAttributeNumberOptional("subMeshIndex", subMeshIndex, subMeshIndexPresent));
+		if(!subMeshIndexPresent)
+		{
+			subMeshIndex = kMaxU32;
+		}
 
 		CString cstr;
 		ANKI_CHECK(materialEl.getText(cstr));

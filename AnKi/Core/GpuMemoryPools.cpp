@@ -93,8 +93,8 @@ Error StagingGpuMemoryPool::init(GrManager* gr, const ConfigSet& cfg)
 	initBuffer(StagingGpuMemoryType::kStorage,
 			   max(gr->getDeviceCapabilities().m_storageBufferBindOffsetAlignment,
 				   gr->getDeviceCapabilities().m_sbtRecordAlignment),
-			   gr->getDeviceCapabilities().m_storageBufferMaxRange, BufferUsageBit::kAllStorage | BufferUsageBit::kSBT,
-			   *gr);
+			   gr->getDeviceCapabilities().m_storageBufferMaxRange,
+			   BufferUsageBit::kAllStorage | BufferUsageBit::kShaderBindingTable, *gr);
 
 	initBuffer(StagingGpuMemoryType::kVertex, 16, kMaxU32, BufferUsageBit::kVertex | BufferUsageBit::kIndex, *gr);
 

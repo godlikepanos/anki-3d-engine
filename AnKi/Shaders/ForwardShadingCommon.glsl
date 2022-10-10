@@ -8,6 +8,7 @@
 #include <AnKi/Shaders/Common.glsl>
 #include <AnKi/Shaders/Functions.glsl>
 #include <AnKi/Shaders/Include/ModelTypes.h>
+#include <AnKi/Shaders/Include/MeshTypes.h>
 #include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 
@@ -17,7 +18,7 @@ ANKI_BINDLESS_SET(kMaterialSetBindless)
 // Vert
 //
 #if defined(ANKI_VERTEX_SHADER)
-layout(location = kVertexAttributeIdPosition) in Vec3 in_position;
+layout(location = kVertexStreamIdPosition) in Vec3 in_position;
 #endif
 
 //

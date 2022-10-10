@@ -651,9 +651,10 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh)
 		header.m_flags |= MeshBinaryFlag::kConvex;
 	}
 	header.m_indexType = IndexType::kU16;
-	header.m_subMeshCount = submeshes.getSize();
+	header.m_subMeshCount = U32(submeshes[0].getSize());
 	header.m_aabbMin = aabbMin;
 	header.m_aabbMax = aabbMax;
+	header.m_lodCount = maxLod + 1;
 
 	writeVertexAttribAndBufferInfoToHeader(VertexStreamId::kPosition, header);
 	writeVertexAttribAndBufferInfoToHeader(VertexStreamId::kNormal, header);
