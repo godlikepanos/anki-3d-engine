@@ -1,8 +1,7 @@
 <model>
 	<modelPatches>
 		<modelPatch>
-			<mesh>Assets/sponza_381_lod0_d80b7e06247cf847.ankimesh</mesh>
-			<mesh1>Assets/sponza_381_lod1_d80b7e06247cf847.ankimesh</mesh1>
+			<mesh>Assets/sponza_381_d80b7e06247cf847.ankimesh</mesh>
 			<material>Assets/roof_4359bd4e3b26845.ankimtl</material>
 		</modelPatch>
 	</modelPatches>

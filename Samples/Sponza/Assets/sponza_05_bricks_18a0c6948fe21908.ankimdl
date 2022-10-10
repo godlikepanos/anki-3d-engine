@@ -1,7 +1,7 @@
 <model>
 	<modelPatches>
 		<modelPatch>
-			<mesh>Assets/sponza_05_lod0_e7b110614ca46ef3.ankimesh</mesh>
+			<mesh>Assets/sponza_05_e7b110614ca46ef3.ankimesh</mesh>
 			<material>Assets/bricks_8bd6f24aa0ad3654.ankimtl</material>
 		</modelPatch>
 	</modelPatches>
