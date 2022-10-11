@@ -772,10 +772,10 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh)
 			// Bone IDs
 			for(const SubMesh& submesh : submeshes[lod])
 			{
-				DynamicArrayRaii<UVec4> boneids(m_pool, submesh.m_verts.getSize());
+				DynamicArrayRaii<U8Vec4> boneids(m_pool, submesh.m_verts.getSize());
 				for(U32 v = 0; v < submesh.m_verts.getSize(); ++v)
 				{
-					boneids[v] = UVec4(submesh.m_verts[v].m_boneIds);
+					boneids[v] = U8Vec4(submesh.m_verts[v].m_boneIds);
 				}
 
 				ANKI_CHECK(file.write(&boneids[0], boneids.getSizeInBytes()));

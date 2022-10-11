@@ -43,8 +43,8 @@ layout(location = kVertexStreamIdUv) in Vec2 in_uv;
 #	endif
 
 #	if ANKI_BONES
-layout(location = kVertexStreamIdBoneIds) in Vec4 in_boneWeights;
-layout(location = kVertexStreamIdBoneWeights) in UVec4 in_boneIndices;
+layout(location = kVertexStreamIdBoneIds) in UVec4 in_boneIndices;
+layout(location = kVertexStreamIdBoneWeights) in Vec4 in_boneWeights;
 #	endif
 
 #endif // defined(ANKI_VERTEX_SHADER)

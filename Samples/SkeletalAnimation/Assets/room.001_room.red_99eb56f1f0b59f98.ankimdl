@@ -1,7 +1,7 @@
 <model>
 	<modelPatches>
 		<modelPatch>
-			<mesh>Assets/room.001_lod0_82c13d2071184ecf.ankimesh</mesh>
+			<mesh>Assets/room.001_82c13d2071184ecf.ankimesh</mesh>
 			<material>Assets/room.red_4176c8682cee36ac.ankimtl</material>
 		</modelPatch>
 	</modelPatches>
