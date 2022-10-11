@@ -79,7 +79,7 @@ public:
 		return !!(m_presentVertStreams & VertexStreamMask(1 << stream));
 	}
 
-	Bool getLodCount() const
+	U32 getLodCount() const
 	{
 		return m_lods.getSize();
 	}
