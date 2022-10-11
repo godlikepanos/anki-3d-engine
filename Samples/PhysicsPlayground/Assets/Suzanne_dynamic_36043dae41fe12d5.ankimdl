@@ -1,7 +1,7 @@
 <model>
 	<modelPatches>
 		<modelPatch>
-			<mesh>Assets/Suzanne_lod0_e3526e1428c0763c.ankimesh</mesh>
+			<mesh>Assets/Suzanne_e3526e1428c0763c.ankimesh</mesh>
 			<material>Assets/dynamic_f238b379a41079ff.ankimtl</material>
 		</modelPatch>
 	</modelPatches>
