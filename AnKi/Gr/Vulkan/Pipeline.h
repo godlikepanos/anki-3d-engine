@@ -81,11 +81,9 @@ public:
 	FillMode m_fillMode = FillMode::kSolid;
 	FaceSelectionBit m_cullMode = FaceSelectionBit::kBack;
 	RasterizationOrder m_rasterizationOrder = RasterizationOrder::kOrdered;
-	U8 m_padding = 0;
-	F32 m_depthBiasConstantFactor = 0.0f;
-	F32 m_depthBiasSlopeFactor = 0.0f;
+	Bool m_depthBiasEnabled = false;
 };
-static_assert(sizeof(RasterizerPipelineState) == sizeof(U32) * 3, "Packed because it will be hashed");
+static_assert(sizeof(RasterizerPipelineState) == sizeof(U32), "Packed because it will be hashed");
 
 class DepthPipelineState
 {
@@ -222,11 +220,10 @@ public:
 
 	void setPolygonOffset(F32 factor, F32 units)
 	{
-		if(m_state.m_rasterizer.m_depthBiasConstantFactor != factor
-		   || m_state.m_rasterizer.m_depthBiasSlopeFactor != units)
+		const Bool depthBiasEnabled = factor != 0.0f || units != 0.0f;
+		if(depthBiasEnabled != m_state.m_rasterizer.m_depthBiasEnabled)
 		{
-			m_state.m_rasterizer.m_depthBiasConstantFactor = factor;
-			m_state.m_rasterizer.m_depthBiasSlopeFactor = units;
+			m_state.m_rasterizer.m_depthBiasEnabled = depthBiasEnabled;
 			m_dirty.m_rasterizer = true;
 		}
 	}

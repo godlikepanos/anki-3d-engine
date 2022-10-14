@@ -66,6 +66,7 @@ ANKI_CONFIG_VAR_U32(RShadowMappingTileCountPerRowOrColumn, 16, 1, 256,
 ANKI_CONFIG_VAR_U32(RShadowMappingScratchTileCountX, 4 * (kMaxShadowCascades + 2), 1, 256,
 					"Number of tiles of the scratch buffer in X")
 ANKI_CONFIG_VAR_U32(RShadowMappingScratchTileCountY, 4, 1, 256, "Number of tiles of the scratch buffer in Y")
+ANKI_CONFIG_VAR_BOOL(RShadowMappingPcf, (ANKI_PLATFORM_MOBILE) ? false : true, "Enable or not PCF")
 
 // Probe reflections
 ANKI_CONFIG_VAR_U32(RProbeReflectionResolution, 128, 4, 2048, "Reflection probe face resolution")

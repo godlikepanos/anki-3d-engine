@@ -704,7 +704,7 @@ void ProbeReflections::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 	end = I32(endu);
 
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	cmdb->setPolygonOffset(1.0f, 1.0f);
+	cmdb->setPolygonOffset(kShadowsPolygonOffsetFactor, kShadowsPolygonOffsetUnits);
 
 	I32 drawcallCount = 0;
 	for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)

@@ -3,6 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki mutator PCF 0 1
+
 ANKI_SPECIALIZATION_CONSTANT_UVEC2(kFramebufferSize, 0u);
 ANKI_SPECIALIZATION_CONSTANT_UVEC2(kTileCount, 2u);
 ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 4u);
@@ -15,12 +17,15 @@ ANKI_SPECIALIZATION_CONSTANT_U32(kTileSize, 5u);
 #include <AnKi/Shaders/ClusteredShadingCommon.glsl>
 
 layout(set = 0, binding = 5) uniform sampler u_linearAnyClampSampler;
-layout(set = 0, binding = 6) uniform texture2D u_depthRt;
+layout(set = 0, binding = 6) uniform samplerShadow u_linearAnyClampShadowSampler;
+layout(set = 0, binding = 7) uniform sampler u_trilinearRepeatSampler;
+layout(set = 0, binding = 8) uniform texture2D u_depthRt;
+layout(set = 0, binding = 9) uniform texture2D u_noiseTex;
 
 #if defined(ANKI_COMPUTE_SHADER)
 const UVec2 kWorkgroupSize = UVec2(8, 8);
 layout(local_size_x = kWorkgroupSize.x, local_size_y = kWorkgroupSize.y, local_size_z = 1) in;
-layout(set = 0, binding = 7, rgba8) writeonly uniform ANKI_RP image2D u_outImg;
+layout(set = 0, binding = 10, rgba8) writeonly uniform ANKI_RP image2D u_outImg;
 #else
 layout(location = 0) in Vec2 in_uv;
 layout(location = 0) out Vec4 out_color;
@@ -36,6 +41,15 @@ void main()
 	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(kFramebufferSize);
 #else
 	const Vec2 uv = in_uv;
+#endif
+
+#if PCF
+	// Noise
+	const Vec2 kNoiseTexSize = Vec2(64.0);
+	const Vec2 noiseUv = Vec2(kFramebufferSize) / kNoiseTexSize * uv;
+	ANKI_RP Vec3 noise = textureLod(u_noiseTex, u_trilinearRepeatSampler, noiseUv, 0.0).rgb;
+	noise = animateBlueNoise(noise, u_clusteredShading.m_frame % 16u);
+	const ANKI_RP F32 randFactor = noise.x;
 #endif
 
 	// World position
@@ -70,8 +84,23 @@ void main()
 				positiveZViewSpace, dirLight.m_shadowCascadesDistancePower, dirLight.m_effectiveShadowDistance,
 				dirLight.m_cascadeCount, cascadeBlendFactor);
 
-			const F32 shadowFactorCascadeA = computeShadowFactorDirLight(dirLight, cascadeIndices.x, worldPos,
-																		 u_shadowAtlasTex, u_linearAnyClampSampler);
+#if PCF
+			F32 shadowFactorCascadeA;
+			if(cascadeIndices.x == 0u)
+			{
+				const ANKI_RP F32 rand = noise.x;
+				shadowFactorCascadeA = computeShadowFactorDirLightPcf(
+					dirLight, cascadeIndices.x, worldPos, u_shadowAtlasTex, u_linearAnyClampShadowSampler, rand);
+			}
+			else
+			{
+				shadowFactorCascadeA = computeShadowFactorDirLight(dirLight, cascadeIndices.x, worldPos,
+																   u_shadowAtlasTex, u_linearAnyClampShadowSampler);
+			}
+#else
+			const F32 shadowFactorCascadeA = computeShadowFactorDirLight(
+				dirLight, cascadeIndices.x, worldPos, u_shadowAtlasTex, u_linearAnyClampShadowSampler);
+#endif
 
 			if(cascadeBlendFactor < 0.01 || cascadeIndices.x == cascadeIndices.y)
 			{
@@ -81,8 +110,8 @@ void main()
 			else
 			{
 				// Blend cascades
-				const F32 shadowFactorCascadeB = computeShadowFactorDirLight(dirLight, cascadeIndices.y, worldPos,
-																			 u_shadowAtlasTex, u_linearAnyClampSampler);
+				const F32 shadowFactorCascadeB = computeShadowFactorDirLight(
+					dirLight, cascadeIndices.y, worldPos, u_shadowAtlasTex, u_linearAnyClampShadowSampler);
 
 				shadowFactor = mix(shadowFactorCascadeA, shadowFactorCascadeB, cascadeBlendFactor);
 			}
@@ -111,8 +140,13 @@ void main()
 		{
 			const Vec3 frag2Light = light.m_position - worldPos;
 
+#if PCF
+			const ANKI_RP F32 shadowFactor = computeShadowFactorPointLightPcf(
+				light, frag2Light, u_shadowAtlasTex, u_linearAnyClampShadowSampler, randFactor);
+#else
 			const ANKI_RP F32 shadowFactor =
-				computeShadowFactorPointLight(light, frag2Light, u_shadowAtlasTex, u_linearAnyClampSampler);
+				computeShadowFactorPointLight(light, frag2Light, u_shadowAtlasTex, u_linearAnyClampShadowSampler);
+#endif
 			shadowFactors[min(maxShadowCastersPerFragment - 1u, shadowCasterCountPerFragment++)] = shadowFactor;
 		}
 	}
@@ -126,8 +160,13 @@ void main()
 
 		ANKI_BRANCH if(light.m_shadowLayer != kMaxU32)
 		{
+#if PCF
+			const ANKI_RP F32 shadowFactor = computeShadowFactorSpotLightPcf(light, worldPos, u_shadowAtlasTex,
+																			 u_linearAnyClampShadowSampler, randFactor);
+#else
 			const ANKI_RP F32 shadowFactor =
-				computeShadowFactorSpotLight(light, worldPos, u_shadowAtlasTex, u_linearAnyClampSampler);
+				computeShadowFactorSpotLight(light, worldPos, u_shadowAtlasTex, u_linearAnyClampShadowSampler);
+#endif
 			shadowFactors[min(maxShadowCastersPerFragment - 1u, shadowCasterCountPerFragment++)] = shadowFactor;
 		}
 	}

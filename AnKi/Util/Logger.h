@@ -119,7 +119,7 @@ using LoggerSingleton = Singleton<Logger>;
 	{ \
 		LoggerSingleton::get().writeFormated(ANKI_FILE, __LINE__, ANKI_FUNC, subsystem_, LoggerMessageType::t, \
 											 Thread::getCurrentThreadName(), __VA_ARGS__); \
-	} while(false);
+	} while(false)
 /// @}
 
 /// @addtogroup util_logging

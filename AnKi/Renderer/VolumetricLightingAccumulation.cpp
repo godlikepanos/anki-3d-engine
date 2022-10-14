@@ -106,23 +106,24 @@ void VolumetricLightingAccumulation::run(const RenderingContext& ctx, RenderPass
 	// Bind all
 	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearRepeat);
 	cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);
+	cmdb->bindSampler(0, 2, m_r->getSamplers().m_trilinearClampShadow);
 
-	rgraphCtx.bindImage(0, 2, m_runCtx.m_rts[1], TextureSubresourceInfo());
+	rgraphCtx.bindImage(0, 3, m_runCtx.m_rts[1], TextureSubresourceInfo());
 
-	cmdb->bindTexture(0, 3, m_noiseImage->getTextureView());
+	cmdb->bindTexture(0, 4, m_noiseImage->getTextureView());
 
-	rgraphCtx.bindColorTexture(0, 4, m_runCtx.m_rts[0]);
+	rgraphCtx.bindColorTexture(0, 5, m_runCtx.m_rts[0]);
 
-	bindUniforms(cmdb, 0, 5, rsrc.m_clusteredShadingUniformsToken);
-	bindUniforms(cmdb, 0, 6, rsrc.m_pointLightsToken);
-	bindUniforms(cmdb, 0, 7, rsrc.m_spotLightsToken);
-	rgraphCtx.bindColorTexture(0, 8, m_r->getShadowMapping().getShadowmapRt());
+	bindUniforms(cmdb, 0, 6, rsrc.m_clusteredShadingUniformsToken);
+	bindUniforms(cmdb, 0, 7, rsrc.m_pointLightsToken);
+	bindUniforms(cmdb, 0, 8, rsrc.m_spotLightsToken);
+	rgraphCtx.bindColorTexture(0, 9, m_r->getShadowMapping().getShadowmapRt());
 
-	m_r->getIndirectDiffuseProbes().bindVolumeTextures(ctx, rgraphCtx, 0, 9);
-	bindUniforms(cmdb, 0, 10, rsrc.m_globalIlluminationProbesToken);
+	m_r->getIndirectDiffuseProbes().bindVolumeTextures(ctx, rgraphCtx, 0, 10);
+	bindUniforms(cmdb, 0, 11, rsrc.m_globalIlluminationProbesToken);
 
-	bindUniforms(cmdb, 0, 11, rsrc.m_fogDensityVolumesToken);
-	bindStorage(cmdb, 0, 12, rsrc.m_clustersToken);
+	bindUniforms(cmdb, 0, 12, rsrc.m_fogDensityVolumesToken);
+	bindStorage(cmdb, 0, 13, rsrc.m_clustersToken);
 
 	VolumetricLightingUniforms unis;
 	const SkyboxQueueElement& queueEl = ctx.m_renderQueue->m_skybox;

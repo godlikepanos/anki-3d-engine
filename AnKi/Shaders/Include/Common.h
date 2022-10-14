@@ -79,4 +79,7 @@ ANKI_BEGIN_NAMESPACE
 const U32 kMaxInstanceCount = 64u;
 const U32 kMaxLodCount = 3u;
 
+const F32 kShadowsPolygonOffsetFactor = 1.25f;
+const F32 kShadowsPolygonOffsetUnits = 2.75f;
+
 ANKI_END_NAMESPACE

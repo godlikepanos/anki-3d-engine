@@ -4,9 +4,19 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki start vert
-#include <AnKi/Shaders/Evsm.glsl>
+
+void main()
+{
+	const Vec2 uv = Vec2(gl_VertexID & 1, gl_VertexID >> 1) * 2.0;
+	const Vec2 pos = uv * 2.0 - 1.0;
+
+	gl_Position = Vec4(pos, 1.0, 1.0);
+}
+
 #pragma anki end
 
 #pragma anki start frag
-#include <AnKi/Shaders/Evsm.glsl>
+void main()
+{
+}
 #pragma anki end

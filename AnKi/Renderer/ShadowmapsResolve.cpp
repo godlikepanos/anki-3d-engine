@@ -48,16 +48,16 @@ Error ShadowmapsResolve::initInternal()
 													 : "ShaderBinaries/ShadowmapsResolveRaster.ankiprogbin",
 												 m_prog));
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-	if(getConfig().getRPreferCompute())
-	{
-		variantInitInfo.addConstant("kFramebufferSize", UVec2(width, height));
-	}
+	variantInitInfo.addConstant("kFramebufferSize", UVec2(width, height));
 	variantInitInfo.addConstant("kTileCount", m_r->getTileCounts());
 	variantInitInfo.addConstant("kZSplitCount", m_r->getZSplitCount());
 	variantInitInfo.addConstant("kTileSize", m_r->getTileSize());
+	variantInitInfo.addMutation("PCF", getConfig().getRShadowMappingPcf());
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProg = variant->getProgram();
+
+	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_noiseImage));
 
 	return Error::kNone;
 }
@@ -69,7 +69,7 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 
 	if(getConfig().getRPreferCompute())
 	{
-		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("SM resolve");
+		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("ResolveShadows");
 
 		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 			run(ctx, rgraphCtx);
@@ -85,7 +85,7 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 	}
 	else
 	{
-		GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("SM resolve");
+		GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("ResolveShadows");
 		rpass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_rt});
 
 		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
@@ -116,20 +116,24 @@ void ShadowmapsResolve::run(const RenderingContext& ctx, RenderPassWorkContext& 
 	bindStorage(cmdb, 0, 4, rsrc.m_clustersToken);
 
 	cmdb->bindSampler(0, 5, m_r->getSamplers().m_trilinearClamp);
+	cmdb->bindSampler(0, 6, m_r->getSamplers().m_trilinearClampShadow);
+	cmdb->bindSampler(0, 7, m_r->getSamplers().m_trilinearRepeat);
+
 	if(m_quarterRez)
 	{
-		rgraphCtx.bindTexture(0, 6, m_r->getDepthDownscale().getHiZRt(),
+		rgraphCtx.bindTexture(0, 8, m_r->getDepthDownscale().getHiZRt(),
 							  TextureSubresourceInfo(TextureSurfaceInfo(0, 0, 0, 0)));
 	}
 	else
 	{
-		rgraphCtx.bindTexture(0, 6, m_r->getGBuffer().getDepthRt(),
+		rgraphCtx.bindTexture(0, 8, m_r->getGBuffer().getDepthRt(),
 							  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 	}
+	cmdb->bindTexture(0, 9, m_noiseImage->getTextureView());
 
 	if(getConfig().getRPreferCompute())
 	{
-		rgraphCtx.bindImage(0, 7, m_runCtx.m_rt, TextureSubresourceInfo());
+		rgraphCtx.bindImage(0, 10, m_runCtx.m_rt, TextureSubresourceInfo());
 		dispatchPPCompute(cmdb, 8, 8, m_rtDescr.m_width, m_rtDescr.m_height);
 	}
 	else

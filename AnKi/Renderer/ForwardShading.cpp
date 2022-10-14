@@ -37,6 +37,7 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 		const ClusteredShadingContext& rsrc = ctx.m_clusteredShading;
 		const U32 set = kMaterialSetGlobal;
 		cmdb->bindSampler(set, kMaterialBindingLinearClampSampler, m_r->getSamplers().m_trilinearClamp);
+		cmdb->bindSampler(set, kMaterialBindingShadowSampler, m_r->getSamplers().m_trilinearClampShadow);
 
 		rgraphCtx.bindTexture(set, kMaterialBindingDepthRt, m_r->getDepthDownscale().getHiZRt(), kHiZHalfSurface);
 		rgraphCtx.bindColorTexture(set, kMaterialBindingLightVolume, m_r->getVolumetricLightingAccumulation().getRt());

@@ -21,7 +21,7 @@ public:
 	ShadowmapsResolve(Renderer* r)
 		: RendererObject(r)
 	{
-		registerDebugRenderTarget("SM_resolve");
+		registerDebugRenderTarget("ResolvedShadows");
 	}
 
 	~ShadowmapsResolve();
@@ -34,7 +34,7 @@ public:
 							  Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
 							  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const override
 	{
-		ANKI_ASSERT(rtName == "SM_resolve");
+		ANKI_ASSERT(rtName == "ResolvedShadows");
 		handles[0] = m_runCtx.m_rt;
 	}
 
@@ -49,6 +49,7 @@ public:
 	RenderTargetDescription m_rtDescr;
 	FramebufferDescription m_fbDescr;
 	Bool m_quarterRez = false;
+	ImageResourcePtr m_noiseImage;
 
 	class
 	{
