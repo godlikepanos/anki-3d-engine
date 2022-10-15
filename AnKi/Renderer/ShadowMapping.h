@@ -40,10 +40,10 @@ private:
 	class LightToRenderTempInfo;
 	class ThreadWorkItem;
 
-	static constexpr U32 kPointLightMaxTileLod = 1;
-
 	TileAllocator m_tileAlloc;
-	static constexpr U32 kTileAllocLodCount = 3;
+	static constexpr U32 kTileAllocHierarchyCount = 4;
+	static constexpr U32 kPointLightMaxTileAllocHierarchy = 1;
+	static constexpr U32 kSpotLightMaxTileAllocHierarchy = 1;
 
 	TexturePtr m_atlasTex; ///<  Size (m_tileResolution*m_tileCountBothAxis)^2
 	Bool m_rtImportedOnce = false;
@@ -69,17 +69,17 @@ private:
 	void processLights(RenderingContext& ctx, U32& threadCountForScratchPass);
 
 	Bool allocateAtlasTiles(U64 lightUuid, U32 faceCount, const U64* faceTimestamps, const U32* faceIndices,
-							const U32* drawcallsCount, const U32* lods, UVec4* atlasTileViewports,
+							const U32* drawcallsCount, const U32* hierarchies, UVec4* atlasTileViewports,
 							TileAllocatorResult* subResults);
 
 	Mat4 createSpotLightTextureMatrix(const UVec4& viewport) const;
 
-	/// Find the lod of the light
-	void chooseLods(const Vec4& cameraOrigin, const PointLightQueueElement& light, U32& tileBufferLod,
-					U32& renderQueueElementsLod) const;
-	/// Find the lod of the light
-	void chooseLods(const Vec4& cameraOrigin, const SpotLightQueueElement& light, U32& tileBufferLod,
-					U32& renderQueueElementsLod) const;
+	/// Find the detail of the light
+	void chooseDetail(const Vec4& cameraOrigin, const PointLightQueueElement& light, U32& tileAllocatorHierarchy,
+					  U32& renderQueueElementsLod) const;
+	/// Find the detail of the light
+	void chooseDetail(const Vec4& cameraOrigin, const SpotLightQueueElement& light, U32& tileAllocatorHierarchy,
+					  U32& renderQueueElementsLod) const;
 
 	void newWorkItems(const UVec4& atlasViewport, RenderQueue* lightRenderQueue, U32 renderQueueElementsLod,
 					  DynamicArrayRaii<LightToRenderTempInfo>& workItems, U32& drawcallCount) const;

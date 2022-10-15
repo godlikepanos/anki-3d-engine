@@ -59,14 +59,11 @@ ANKI_CONFIG_VAR_F32(RIndirectDiffuseVrsDistanceThreshold, 0.01f, 0.00001f, 10.0f
 					"The meters that control the VRS SRI generation")
 
 // Shadows
-ANKI_CONFIG_VAR_U32(RShadowMappingTileResolution, ((ANKI_PLATFORM_MOBILE) ? 128 : 512), 16, 2048,
+ANKI_CONFIG_VAR_U32(RShadowMappingTileResolution, ((ANKI_PLATFORM_MOBILE) ? 64 : 256), 16, 2048,
 					"Shadowmapping tile resolution")
-ANKI_CONFIG_VAR_U32(RShadowMappingTileCountPerRowOrColumn, 16, 1, 256,
+ANKI_CONFIG_VAR_U32(RShadowMappingTileCountPerRowOrColumn, 32, 1, 256,
 					"Shadowmapping atlas will have this number squared number of tiles")
-ANKI_CONFIG_VAR_U32(RShadowMappingScratchTileCountX, 4 * (kMaxShadowCascades + 2), 1, 256,
-					"Number of tiles of the scratch buffer in X")
-ANKI_CONFIG_VAR_U32(RShadowMappingScratchTileCountY, 4, 1, 256, "Number of tiles of the scratch buffer in Y")
-ANKI_CONFIG_VAR_BOOL(RShadowMappingPcf, (ANKI_PLATFORM_MOBILE) ? false : true, "Enable or not PCF")
+ANKI_CONFIG_VAR_U32(RShadowMappingPcf, ((ANKI_PLATFORM_MOBILE) ? 0 : 1), 0, 1, "Shadow PCF (0: off, 1: on)")
 
 // Probe reflections
 ANKI_CONFIG_VAR_U32(RProbeReflectionResolution, 128, 4, 2048, "Reflection probe face resolution")

@@ -85,18 +85,8 @@ void main()
 				dirLight.m_cascadeCount, cascadeBlendFactor);
 
 #if PCF
-			F32 shadowFactorCascadeA;
-			if(cascadeIndices.x == 0u)
-			{
-				const ANKI_RP F32 rand = noise.x;
-				shadowFactorCascadeA = computeShadowFactorDirLightPcf(
-					dirLight, cascadeIndices.x, worldPos, u_shadowAtlasTex, u_linearAnyClampShadowSampler, rand);
-			}
-			else
-			{
-				shadowFactorCascadeA = computeShadowFactorDirLight(dirLight, cascadeIndices.x, worldPos,
-																   u_shadowAtlasTex, u_linearAnyClampShadowSampler);
-			}
+			const F32 shadowFactorCascadeA = computeShadowFactorDirLightPcf(
+				dirLight, cascadeIndices.x, worldPos, u_shadowAtlasTex, u_linearAnyClampShadowSampler, randFactor);
 #else
 			const F32 shadowFactorCascadeA = computeShadowFactorDirLight(
 				dirLight, cascadeIndices.x, worldPos, u_shadowAtlasTex, u_linearAnyClampShadowSampler);
@@ -109,10 +99,15 @@ void main()
 			}
 			else
 			{
+#if PCF
+				// Blend cascades
+				const F32 shadowFactorCascadeB = computeShadowFactorDirLightPcf(
+					dirLight, cascadeIndices.y, worldPos, u_shadowAtlasTex, u_linearAnyClampShadowSampler, randFactor);
+#else
 				// Blend cascades
 				const F32 shadowFactorCascadeB = computeShadowFactorDirLight(
 					dirLight, cascadeIndices.y, worldPos, u_shadowAtlasTex, u_linearAnyClampShadowSampler);
-
+#endif
 				shadowFactor = mix(shadowFactorCascadeA, shadowFactorCascadeB, cascadeBlendFactor);
 			}
 

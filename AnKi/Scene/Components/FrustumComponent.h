@@ -321,8 +321,7 @@ public:
 	F32 getEffectiveShadowDistance() const
 	{
 		const F32 distance = (m_effectiveShadowDistance <= 0.0f) ? m_common.m_far : m_effectiveShadowDistance;
-		ANKI_ASSERT(distance > m_common.m_near && distance <= m_common.m_far);
-		return distance;
+		return clamp(m_common.m_near, m_common.m_far, distance);
 	}
 
 	/// See computeShadowCascadeDistance()
