@@ -195,7 +195,7 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 		if(info.m_directionalLight->m_shadowCascadeCount > 0)
 		{
 			unis->m_effectiveShadowDistance =
-				info.m_directionalLight->m_shadowRenderQueues[0]->m_effectiveShadowDistance;
+				info.m_directionalLight->m_shadowCascadesDistances[info.m_directionalLight->m_shadowCascadeCount - 1];
 		}
 		else
 		{

@@ -96,7 +96,7 @@ void main()
 	if(dirLight.m_active != 0u)
 	{
 		ANKI_RP F32 shadowFactor;
-		if(dirLight.m_cascadeCount > 0u)
+		if(dirLight.m_shadowCascadeCount > 0u)
 		{
 #if USE_SHADOW_LAYERS
 			shadowFactor = resolvedSm[dirLight.m_shadowLayer];

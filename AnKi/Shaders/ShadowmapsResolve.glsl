@@ -16,6 +16,8 @@ ANKI_SPECIALIZATION_CONSTANT_U32(kTileSize, 5u);
 #define CLUSTERED_SHADING_CLUSTERS_BINDING 4u
 #include <AnKi/Shaders/ClusteredShadingCommon.glsl>
 
+#define DEBUG_CASCADES 0
+
 layout(set = 0, binding = 5) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 6) uniform samplerShadow u_linearAnyClampShadowSampler;
 layout(set = 0, binding = 7) uniform sampler u_trilinearRepeatSampler;
@@ -30,6 +32,35 @@ layout(set = 0, binding = 10, rgba8) writeonly uniform ANKI_RP image2D u_outImg;
 layout(location = 0) in Vec2 in_uv;
 layout(location = 0) out Vec4 out_color;
 #endif
+
+Vec3 computeDebugShadowCascadeColor(U32 cascade)
+{
+	if(cascade == 0u)
+	{
+		return Vec3(0.0f, 1.0f, 0.0f);
+	}
+	else if(cascade == 1u)
+	{
+		return Vec3(0.0f, 0.0f, 1.0f);
+	}
+	else if(cascade == 2u)
+	{
+		return Vec3(0.0f, 1.0f, 1.0f);
+	}
+	else
+	{
+		return Vec3(1.0f, 0.0f, 0.0f);
+	}
+}
+
+void writeOutputColor(ANKI_RP Vec4 shadowFactors)
+{
+#if defined(ANKI_COMPUTE_SHADER)
+	imageStore(u_outImg, IVec2(gl_GlobalInvocationID.xy), shadowFactors);
+#else
+	out_color = shadowFactors;
+#endif
+}
 
 void main()
 {
@@ -65,24 +96,33 @@ void main()
 
 	// Layers
 	U32 shadowCasterCountPerFragment = 0u;
-	const U32 maxShadowCastersPerFragment = 4u;
-	ANKI_RP F32 shadowFactors[maxShadowCastersPerFragment] = F32[](0.0, 0.0, 0.0, 0.0);
+	const U32 kMaxShadowCastersPerFragment = 4u;
+	ANKI_RP Vec4 shadowFactors = Vec4(0.0f);
 
 	// Dir light
 	const DirectionalLight dirLight = u_clusteredShading.m_directionalLight;
-	if(dirLight.m_active != 0u && dirLight.m_cascadeCount > 0u)
+	if(dirLight.m_active != 0u && dirLight.m_shadowCascadeCount > 0u)
 	{
 		const ANKI_RP F32 positiveZViewSpace =
 			testPlanePoint(u_clusteredShading.m_nearPlaneWSpace.xyz, u_clusteredShading.m_nearPlaneWSpace.w, worldPos)
 			+ u_clusteredShading.m_near;
 
+		const F32 lastCascadeDistance = dirLight.m_shadowCascadeDistances[dirLight.m_shadowCascadeCount - 1u];
 		ANKI_RP F32 shadowFactor;
-		if(positiveZViewSpace < dirLight.m_effectiveShadowDistance)
+		if(positiveZViewSpace < lastCascadeDistance)
 		{
-			F32 cascadeBlendFactor;
-			const UVec2 cascadeIndices = computeShadowCascadeIndex2(
-				positiveZViewSpace, dirLight.m_shadowCascadesDistancePower, dirLight.m_effectiveShadowDistance,
-				dirLight.m_cascadeCount, cascadeBlendFactor);
+			ANKI_RP F32 cascadeBlendFactor;
+			const UVec2 cascadeIndices =
+				computeShadowCascadeIndex2(positiveZViewSpace, dirLight.m_shadowCascadeDistances,
+										   dirLight.m_shadowCascadeCount, cascadeBlendFactor);
+
+#if DEBUG_CASCADES
+			const Vec3 debugColorA = computeDebugShadowCascadeColor(cascadeIndices[0]);
+			const Vec3 debugColorB = computeDebugShadowCascadeColor(cascadeIndices[1]);
+			const Vec3 debugColor = mix(debugColorA, debugColorB, cascadeBlendFactor);
+			writeOutputColor(Vec4(debugColor, 0.0f));
+			return;
+#endif
 
 #if PCF
 			const F32 shadowFactorCascadeA = computeShadowFactorDirLightPcf(
@@ -111,7 +151,7 @@ void main()
 				shadowFactor = mix(shadowFactorCascadeA, shadowFactorCascadeB, cascadeBlendFactor);
 			}
 
-			ANKI_RP F32 distanceFadeFactor = saturate(positiveZViewSpace / dirLight.m_effectiveShadowDistance);
+			ANKI_RP F32 distanceFadeFactor = saturate(positiveZViewSpace / lastCascadeDistance);
 			distanceFadeFactor = pow(distanceFadeFactor, 8.0);
 			shadowFactor += distanceFadeFactor;
 		}
@@ -142,7 +182,7 @@ void main()
 			const ANKI_RP F32 shadowFactor =
 				computeShadowFactorPointLight(light, frag2Light, u_shadowAtlasTex, u_linearAnyClampShadowSampler);
 #endif
-			shadowFactors[min(maxShadowCastersPerFragment - 1u, shadowCasterCountPerFragment++)] = shadowFactor;
+			shadowFactors[min(kMaxShadowCastersPerFragment - 1u, shadowCasterCountPerFragment++)] = shadowFactor;
 		}
 	}
 
@@ -162,15 +202,10 @@ void main()
 			const ANKI_RP F32 shadowFactor =
 				computeShadowFactorSpotLight(light, worldPos, u_shadowAtlasTex, u_linearAnyClampShadowSampler);
 #endif
-			shadowFactors[min(maxShadowCastersPerFragment - 1u, shadowCasterCountPerFragment++)] = shadowFactor;
+			shadowFactors[min(kMaxShadowCastersPerFragment - 1u, shadowCasterCountPerFragment++)] = shadowFactor;
 		}
 	}
 
 	// Store
-#if defined(ANKI_COMPUTE_SHADER)
-	imageStore(u_outImg, IVec2(gl_GlobalInvocationID.xy),
-			   Vec4(shadowFactors[0], shadowFactors[1], shadowFactors[2], shadowFactors[3]));
-#else
-	out_color = Vec4(shadowFactors[0], shadowFactors[1], shadowFactors[2], shadowFactors[3]);
-#endif
+	writeOutputColor(shadowFactors);
 }

@@ -103,7 +103,7 @@ void main()
 
 	// Dir light
 	const DirectionalLight dirLight = u_clusteredShading.m_directionalLight;
-	ANKI_BRANCH if(dirLight.m_active != 0u && dirLight.m_cascadeCount > 0u)
+	ANKI_BRANCH if(dirLight.m_active != 0u && dirLight.m_shadowCascadeCount > 0u)
 	{
 		for(I32 i = 0; i < RAYS_PER_PIXEL; ++i)
 		{

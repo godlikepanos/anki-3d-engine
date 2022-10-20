@@ -90,7 +90,7 @@ GlobalIlluminationProbeNode::GlobalIlluminationProbeNode(SceneGraph* scene, CStr
 
 	// The frustum components
 	constexpr F32 ang = toRad(90.0f);
-	const F32 zNear = kClusterObjectFrustumNearPlane;
+	constexpr F32 zNear = kClusterObjectFrustumNearPlane;
 
 	Mat3 rot;
 	rot = Mat3(Euler(0.0f, -kPi / 2.0f, 0.0f)) * Mat3(Euler(0.0f, 0.0f, kPi));
@@ -113,11 +113,11 @@ GlobalIlluminationProbeNode::GlobalIlluminationProbeNode(SceneGraph* scene, CStr
 
 		FrustumComponent* frc = newComponent<FrustumComponent>();
 		frc->setFrustumType(FrustumType::kPerspective);
-		const F32 tempEffectiveDistance = 1.0f;
-		frc->setPerspective(zNear, tempEffectiveDistance, ang, ang);
+		frc->setPerspective(zNear, 10.0f, ang, ang);
+		frc->setLodDistances({1.0f, 2.0f, 3.0f});
 		frc->setWorldTransform(m_cubeFaceTransforms[i]);
 		frc->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::kNone);
-		frc->setEffectiveShadowDistance(getConfig().getSceneReflectionProbeShadowEffectiveDistance());
+		frc->setShadowCascadeDistance(0, 10.0f);
 		frc->setShadowCascadeCount(1);
 	}
 
@@ -159,6 +159,12 @@ void GlobalIlluminationProbeNode::onShapeUpdateOrProbeNeedsRendering()
 
 			frc.setWorldTransform(trf);
 			frc.setFar(effectiveDistance);
+			frc.setShadowCascadeDistance(
+				0, min(effectiveDistance, getConfig().getSceneReflectionProbeShadowEffectiveDistance()));
+
+			// Add something to avoid complains
+			frc.setLodDistances(
+				{frc.getNear() + kEpsilonf, frc.getNear() + 2.0f * kEpsilonf, frc.getNear() + 3.0f * kEpsilonf});
 			++count;
 		});
 

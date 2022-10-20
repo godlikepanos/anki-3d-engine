@@ -295,15 +295,17 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 						<arg>F32</arg>
 					</args>
 				</method>
-				<method name="setShadowCascadesDistancePower">
+				<method name="setShadowCascadeDistance">
 					<args>
+						<arg>U32</arg>
 						<arg>F32</arg>
 					</args>
 				</method>
-				<method name="setEffectiveShadowDistance">
+				<method name="getShadowCascadeDistance">
 					<args>
-						<arg>F32</arg>
+						<arg>U32</arg>
 					</args>
+					<return>F32</return>
 				</method>
 			</methods>
 		</class>

@@ -312,7 +312,8 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForPass
 				drawcallCounts[activeCascades] = 1; // Doesn't matter
 
 				// Change the quality per cascade
-				hierarchies[activeCascades] = (cascade <= 1) ? (kTileAllocHierarchyCount - 1) : (hierarchies[0] - 1);
+				hierarchies[activeCascades] =
+					(cascade <= 1) ? (kTileAllocHierarchyCount - 1) : (kTileAllocHierarchyCount - 2);
 				renderQueueElementsLods[activeCascades] = (cascade == 0) ? 0 : (kMaxLodCount - 1);
 
 				++activeCascades;

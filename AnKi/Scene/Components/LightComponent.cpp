@@ -82,8 +82,10 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 	el.m_uuid = m_uuid;
 	el.m_diffuseColor = m_diffColor.xyz();
 	el.m_direction = -m_worldtransform.getRotation().getZAxis().xyz();
-	el.m_effectiveShadowDistance = frustumComp.getEffectiveShadowDistance();
-	el.m_shadowCascadesDistancePower = frustumComp.getShadowCascadesDistancePower();
+	for(U32 i = 0; i < shadowCascadeCount; ++i)
+	{
+		el.m_shadowCascadesDistances[i] = frustumComp.getShadowCascadeDistance(i);
+	}
 	el.m_shadowCascadeCount = U8(shadowCascadeCount);
 	el.m_shadowLayer = kMaxU8;
 
@@ -120,9 +122,9 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 			// --------------------------> x
 			//           |
 			// The square distance of A-C is equal to B-C. Solve the equation to find the z.
-			const F32 f = frustumComp.computeShadowCascadeDistance(i); // Cascade far
+			const F32 f = frustumComp.getShadowCascadeDistance(i); // Cascade far
 			const F32 n =
-				(i == 0) ? frustumComp.getNear() : frustumComp.computeShadowCascadeDistance(i - 1); // Cascade near
+				(i == 0) ? frustumComp.getNear() : frustumComp.getShadowCascadeDistance(i - 1); // Cascade near
 			const F32 a = f * tan(fovY / 2.0f) * fovX / fovY;
 			const F32 b = n * tan(fovY / 2.0f) * fovX / fovY;
 			const F32 z = (b * b + n * n - a * a - f * f) / (2.0f * (f - n));

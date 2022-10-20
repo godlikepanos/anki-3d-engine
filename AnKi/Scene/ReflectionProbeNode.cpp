@@ -105,9 +105,10 @@ ReflectionProbeNode::ReflectionProbeNode(SceneGraph* scene, CString name)
 		FrustumComponent* frc = newComponent<FrustumComponent>();
 		frc->setFrustumType(FrustumType::kPerspective);
 		frc->setPerspective(kClusterObjectFrustumNearPlane, 10.0f, ang, ang);
+		frc->setLodDistances({1.0f, 2.0f, 3.0f});
 		frc->setWorldTransform(m_frustumTransforms[i]);
 		frc->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::kNone);
-		frc->setEffectiveShadowDistance(getConfig().getSceneReflectionProbeShadowEffectiveDistance());
+		frc->setShadowCascadeDistance(0, 10.0f);
 		frc->setShadowCascadeCount(1);
 	}
 
@@ -159,6 +160,12 @@ void ReflectionProbeNode::onShapeUpdate(ReflectionProbeComponent& reflc)
 	// Update frustum components
 	iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) {
 		frc.setFar(effectiveDistance);
+		frc.setShadowCascadeDistance(
+			0, min(effectiveDistance, getConfig().getSceneReflectionProbeShadowEffectiveDistance()));
+
+		// Add something to avoid complains
+		frc.setLodDistances(
+			{frc.getNear() + kEpsilonf, frc.getNear() + 2.0f * kEpsilonf, frc.getNear() + 3.0f * kEpsilonf});
 	});
 
 	// Update the spatial comp

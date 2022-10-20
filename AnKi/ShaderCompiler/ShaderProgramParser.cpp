@@ -63,7 +63,7 @@ inline constexpr char kShaderHeader[] = R"(#version 460 core
 #extension GL_EXT_nonuniform_qualifier : enable
 #extension GL_EXT_scalar_block_layout : enable
 
-#define ANKI_MAX_BINDLESS_TEXTURES %uu
+#define kMaxBindlessTextures %uu
 #define kMaxBindlessReadonlyTextureBuffers %uu
 
 #if defined(ANKI_RAY_GEN_SHADER) || defined(ANKI_ANY_HIT_SHADER) || defined(ANKI_CLOSEST_HIT_SHADER) || defined(ANKI_MISS_SHADER) || defined(ANKI_INTERSECTION_SHADER) || defined(ANKI_CALLABLE_SHADER)
@@ -71,112 +71,112 @@ inline constexpr char kShaderHeader[] = R"(#version 460 core
 #endif
 
 #define ANKI_BINDLESS_SET(s) \
-	layout(set = s, binding = 0) uniform utexture2D u_bindlessTextures2dU32[ANKI_MAX_BINDLESS_TEXTURES]; \
-	layout(set = s, binding = 0) uniform itexture2D u_bindlessTextures2dI32[ANKI_MAX_BINDLESS_TEXTURES]; \
-	layout(set = s, binding = 0) uniform texture2D u_bindlessTextures2dF32[ANKI_MAX_BINDLESS_TEXTURES]; \
-	layout(set = s, binding = 0) uniform texture2DArray u_bindlessTextures2dArrayF32[ANKI_MAX_BINDLESS_TEXTURES]; \
+	layout(set = s, binding = 0) uniform utexture2D u_bindlessTextures2dU32[kMaxBindlessTextures]; \
+	layout(set = s, binding = 0) uniform itexture2D u_bindlessTextures2dI32[kMaxBindlessTextures]; \
+	layout(set = s, binding = 0) uniform texture2D u_bindlessTextures2dF32[kMaxBindlessTextures]; \
+	layout(set = s, binding = 0) uniform texture2DArray u_bindlessTextures2dArrayF32[kMaxBindlessTextures]; \
 	layout(set = s, binding = 1) uniform textureBuffer u_bindlessTextureBuffers[kMaxBindlessReadonlyTextureBuffers];
 
 #define F32 float
-#define _ANKI_SIZEOF_float 4u
+const uint kSizeof_float = 4u;
 #define Vec2 vec2
-#define _ANKI_SIZEOF_vec2 8u
+const uint kSizeof_vec2 = 8u;
 #define Vec3 vec3
-#define _ANKI_SIZEOF_vec3 12u
+const uint kSizeof_vec3 = 12u;
 #define Vec4 vec4
-#define _ANKI_SIZEOF_vec4 16u
+const uint kSizeof_vec4 = 16u;
 
 #define F16 float16_t
-#define _ANKI_SIZEOF_float16_t 2u
+const uint kSizeof_float16_t = 2u;
 #define HVec2 f16vec2
-#define _ANKI_SIZEOF_f16vec2 4u
+const uint kSizeof_f16vec2 = 4u;
 #define HVec3 f16vec3
-#define _ANKI_SIZEOF_f16vec3 6u
+const uint kSizeof_f16vec3 = 6u;
 #define HVec4 f16vec4
-#define _ANKI_SIZEOF_f16vec4 8u
+const uint kSizeof_f16vec4 = 8u;
 
 #define U8 uint8_t
-#define _ANKI_SIZEOF_uint8_t 1u
+const uint kSizeof_uint8_t = 1u;
 #define U8Vec2 u8vec2
-#define _ANKI_SIZEOF_u8vec2 2u
+const uint kSizeof_u8vec2 = 2u;
 #define U8Vec3 u8vec3
-#define _ANKI_SIZEOF_u8vec3 3u
+const uint kSizeof_u8vec3 = 3u;
 #define U8Vec4 u8vec4
-#define _ANKI_SIZEOF_u8vec4 4u
+const uint kSizeof_u8vec4 = 4u;
 
 #define I8 int8_t
-#define _ANKI_SIZEOF_int8_t 1u
+const uint kSizeof_int8_t = 1u;
 #define I8Vec2 i8vec2
-#define _ANKI_SIZEOF_i8vec2 2u
+const uint kSizeof_i8vec2 = 2u;
 #define I8Vec3 i8vec3
-#define _ANKI_SIZEOF_i8vec3 3u
+const uint kSizeof_i8vec3 = 3u;
 #define I8Vec4 i8vec4
-#define _ANKI_SIZEOF_i8vec4 4u
+const uint kSizeof_i8vec4 = 4u;
 
 #define U16 uint16_t
-#define _ANKI_SIZEOF_uint16_t 2u
+const uint kSizeof_uint16_t = 2u;
 #define U16Vec2 u16vec2
-#define _ANKI_SIZEOF_u16vec2 4u
+const uint kSizeof_u16vec2 = 4u;
 #define U16Vec3 u16vec3
-#define _ANKI_SIZEOF_u16vec3 6u
+const uint kSizeof_u16vec3 = 6u;
 #define U16Vec4 u16vec4
-#define _ANKI_SIZEOF_u16vec4 8u
+const uint kSizeof_u16vec4 = 8u;
 
 #define I16 int16_t
-#define _ANKI_SIZEOF_int16_t 2u
+const uint kSizeof_int16_t = 2u;
 #define I16Vec2 i16vec2
-#define _ANKI_SIZEOF_i16vec2 4u
+const uint kSizeof_i16vec2 = 4u;
 #define I16Vec3 i16vec3
-#define _ANKI_SIZEOF_i16vec3 6u
+const uint kSizeof_i16vec3 = 6u;
 #define i16Vec4 i16vec4
-#define _ANKI_SIZEOF_i16vec4 8u
+const uint kSizeof_i16vec4 = 8u;
 
 #define U32 uint
-#define _ANKI_SIZEOF_uint 4u
+const uint kSizeof_uint = 4u;
 #define UVec2 uvec2
-#define _ANKI_SIZEOF_uvec2 8u
+const uint kSizeof_uvec2 = 8u;
 #define UVec3 uvec3
-#define _ANKI_SIZEOF_uvec3 12u
+const uint kSizeof_uvec3 = 12u;
 #define UVec4 uvec4
-#define _ANKI_SIZEOF_uvec4 16u
+const uint kSizeof_uvec4 = 16u;
 
 #define I32 int
-#define _ANKI_SIZEOF_int 4u
+const uint kSizeof_int = 4u;
 #define IVec2 ivec2
-#define _ANKI_SIZEOF_ivec2 8u
+const uint kSizeof_ivec2 = 8u;
 #define IVec3 ivec3
-#define _ANKI_SIZEOF_ivec3 12u
+const uint kSizeof_ivec3 = 12u;
 #define IVec4 ivec4
-#define _ANKI_SIZEOF_ivec4 16u
+const uint kSizeof_ivec4 = 16u;
 
 #if ANKI_SUPPORTS_64BIT
 #	define U64 uint64_t
-#	define _ANKI_SIZEOF_uint64_t 8u
+const uint kSizeof_uint64_t = 8u;
 #	define U64Vec2 u64vec2
-#	define _ANKI_SIZEOF_u64vec2 16u
+const uint kSizeof_u64vec2 = 16u;
 #	define U64Vec3 u64vec3
-#	define _ANKI_SIZEOF_u64vec3 24u
+const uint kSizeof_u64vec3 = 24u;
 #	define U64Vec4 u64vec4
-#	define _ANKI_SIZEOF_u64vec4 32u
+const uint kSizeof_u64vec4 = 32u;
 
 #	define I64 int64_t
-#	define _ANKI_SIZEOF_int64_t 8u
+const uint kSizeof_int64_t = 8u;
 #	define I64Vec2 i64vec2
-#	define _ANKI_SIZEOF_i64vec2 16u
+const uint kSizeof_i64vec2 = 16u;
 #	define I64Vec3 i64vec3
-#	define _ANKI_SIZEOF_i64vec3 24u
+const uint kSizeof_i64vec3 = 24u;
 #	define I64Vec4 i64vec4
-#	define _ANKI_SIZEOF_i64vec4 32u
+const uint kSizeof_i64vec4 = 32u;
 #endif
 
 #define Mat3 mat3
-#define _ANKI_SIZEOF_mat3 36u
+const uint kSizeof_mat3 = 36u;
 
 #define Mat4 mat4
-#define _ANKI_SIZEOF_mat4 64u
+const uint kSizeof_mat4 = 64u;
 
 #define Mat3x4 mat4x3 // GLSL has the column number first and then the rows
-#define _ANKI_SIZEOF_mat3x4 48u
+const uint kSizeof_mat3x4 = 48u;
 
 #define Bool bool
 
@@ -185,13 +185,13 @@ inline constexpr char kShaderHeader[] = R"(#version 460 core
 #else
 #	define Address UVec2
 #endif
-#define _ANKI_SIZEOF_Address 8u
+const uint kSizeof_Address = 8u;
 
 #define _ANKI_CONCATENATE(a, b) a##b
 #define ANKI_CONCATENATE(a, b) _ANKI_CONCATENATE(a, b)
 
-#define ANKI_SIZEOF(type) _ANKI_CONCATENATE(_ANKI_SIZEOF_, type)
-#define ANKI_ALIGNOF(type) _ANKI_CONCATENATE(_ANKI_ALIGNOF_, type)
+#define ANKI_SIZEOF(type) _ANKI_CONCATENATE(kSizeof_, type)
+#define ANKI_ALIGNOF(type) _ANKI_CONCATENATE(kAlignof_, type)
 
 #define _ANKI_SCONST_X(type, n, id) \
 	layout(constant_id = id) const type n = type(1); \
