@@ -133,6 +133,8 @@ static Error importImage(BaseMemoryPool& pool, CString in, CString out, Bool alp
 #	error "Unupported"
 #endif
 
+	config.m_flipImage = false;
+
 	ANKI_IMPORTER_LOGV("Importing image \"%s\" as \"%s\"", in.cstr(), out.cstr());
 	ANKI_CHECK(importImage(config));
 
