@@ -34,6 +34,7 @@ public:
 	F32 m_lightIntensityScale = 1.0f;
 	U32 m_threadCount = kMaxU32;
 	CString m_comment;
+	Bool m_importTextures = false;
 };
 
 /// Import GLTF and spit AnKi scenes.
@@ -87,6 +88,8 @@ private:
 
 	/// Don't generate LODs for meshes with less vertices than this number.
 	U32 m_skipLodVertexCountThreshold = 256;
+
+	Bool m_importTextures = false;
 
 	// Misc
 	Error getExtras(const cgltf_extras& extras, HashMapRaii<CString, StringRaii>& out);

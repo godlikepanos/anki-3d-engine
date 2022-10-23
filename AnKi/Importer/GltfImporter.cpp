@@ -214,6 +214,8 @@ Error GltfImporter::init(const GltfImporterInitInfo& initInfo)
 		m_hive = newInstance<ThreadHive>(*m_pool, threadCount, m_pool, true);
 	}
 
+	m_importTextures = initInfo.m_importTextures;
+
 	return Error::kNone;
 }
 

@@ -14,9 +14,10 @@ Options:
 -optimize-meshes <0|1>     : Optimize meshes. Default is 1
 -optimize-animations <0|1> : Optimize animations. Default is 1
 -j <thread_count>          : Number of threads. Defaults to system's max
--lod-count <1|2|3>         : The number of geometry LODs to generate. Default: 1
+-lod-count <1|2|3>         : The number of geometry LODs to generate. Default is 1
 -lod-factor <float>        : The decimate factor for each LOD. Default 0.25
--light-scale <float>       : Multiply the light intensity with this number. Default 1.0
+-light-scale <float>       : Multiply the light intensity with this number. Default is 1.0
+-import-testures <0|1>     : Import textures. Default is 0
 -v                         : Enable verbose log
 )";
 
@@ -30,6 +31,7 @@ public:
 	StringRaii m_texRpath = {&m_pool};
 	Bool m_optimizeMeshes = true;
 	Bool m_optimizeAnimations = true;
+	Bool m_importTextures = false;
 	U32 m_threadCount = kMaxU32;
 	U32 m_lodCount = 1;
 	F32 m_lodFactor = 0.25f;
@@ -182,6 +184,21 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 				return Error::kUserData;
 			}
 		}
+		else if(strcmp(argv[i], "-import-textures") == 0)
+		{
+			++i;
+
+			if(i < argc)
+			{
+				I val = 1;
+				ANKI_CHECK(CString(argv[i]).toNumber(val));
+				info.m_importTextures = val != 0;
+			}
+			else
+			{
+				return Error::kUserData;
+			}
+		}
 		else
 		{
 			return Error::kUserData;
@@ -242,6 +259,7 @@ int myMain(int argc, char** argv)
 	initInfo.m_lightIntensityScale = cmdArgs.m_lightIntensityScale;
 	initInfo.m_threadCount = cmdArgs.m_threadCount;
 	initInfo.m_comment = comment;
+	initInfo.m_importTextures = cmdArgs.m_importTextures;
 
 	GltfImporter importer(&pool);
 	if(importer.init(initInfo))
