@@ -230,43 +230,151 @@ Error GltfImporter::writeAll()
 	ANKI_CHECK(m_sceneFile.writeText("local scene = getSceneGraph()\nlocal events = getEventManager()\n"));
 
 	// Nodes
-	Error err = Error::kNone;
-	for(const cgltf_scene* scene = m_gltf->scenes; scene < m_gltf->scenes + m_gltf->scenes_count && !err; ++scene)
+	for(const cgltf_scene* scene = m_gltf->scenes; scene < m_gltf->scenes + m_gltf->scenes_count; ++scene)
 	{
-		for(cgltf_node* const* node = scene->nodes; node < scene->nodes + scene->nodes_count && !err; ++node)
+		for(cgltf_node* const* node = scene->nodes; node < scene->nodes + scene->nodes_count; ++node)
 		{
-			err = visitNode(*(*node), Transform::getIdentity(), HashMapRaii<CString, StringRaii>(m_pool));
+			ANKI_CHECK(visitNode(*(*node), Transform::getIdentity(), HashMapRaii<CString, StringRaii>(m_pool)));
+		}
+	}
+
+	// Fire up all requests
+	for(auto& req : m_meshImportRequests)
+	{
+		if(m_hive)
+		{
+			m_hive->submitTask(
+				[](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
+				   [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
+					ImportRequest<const cgltf_mesh*>* req = static_cast<ImportRequest<const cgltf_mesh*>*>(userData);
+					Error err = req->m_importer->m_errorInThread.load();
+
+					if(!err)
+					{
+						err = req->m_importer->writeMesh(*req->m_value);
+					}
+
+					if(err)
+					{
+						req->m_importer->m_errorInThread.store(err._getCode());
+					}
+				},
+				&req);
+		}
+		else
+		{
+			ANKI_CHECK(writeMesh(*req.m_value));
+		}
+	}
+
+	for(auto& req : m_materialImportRequests)
+	{
+		if(m_hive)
+		{
+			m_hive->submitTask(
+				[](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
+				   [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
+					ImportRequest<MaterialImportRequest>* req =
+						static_cast<ImportRequest<MaterialImportRequest>*>(userData);
+					Error err = req->m_importer->m_errorInThread.load();
+
+					if(!err)
+					{
+						err = req->m_importer->writeMaterial(*req->m_value.m_cgltfMaterial, req->m_value.m_writeRt);
+					}
+
+					if(err)
+					{
+						req->m_importer->m_errorInThread.store(err._getCode());
+					}
+				},
+				&req);
+		}
+		else
+		{
+			ANKI_CHECK(writeMaterial(*req.m_value.m_cgltfMaterial, req.m_value.m_writeRt));
+		}
+	}
+
+	for(auto& req : m_skinImportRequests)
+	{
+		if(m_hive)
+		{
+			m_hive->submitTask(
+				[](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
+				   [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
+					ImportRequest<const cgltf_skin*>* req = static_cast<ImportRequest<const cgltf_skin*>*>(userData);
+					Error err = req->m_importer->m_errorInThread.load();
+
+					if(!err)
+					{
+						err = req->m_importer->writeSkeleton(*req->m_value);
+					}
+
+					if(err)
+					{
+						req->m_importer->m_errorInThread.store(err._getCode());
+					}
+				},
+				&req);
+		}
+		else
+		{
+			ANKI_CHECK(writeSkeleton(*req.m_value));
+		}
+	}
+
+	for(auto& req : m_modelImportRequests)
+	{
+		if(m_hive)
+		{
+			m_hive->submitTask(
+				[](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
+				   [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
+					ImportRequest<const cgltf_mesh*>* req = static_cast<ImportRequest<const cgltf_mesh*>*>(userData);
+					Error err = req->m_importer->m_errorInThread.load();
+
+					if(!err)
+					{
+						err = req->m_importer->writeModel(*req->m_value);
+					}
+
+					if(err)
+					{
+						req->m_importer->m_errorInThread.store(err._getCode());
+					}
+				},
+				&req);
+		}
+		else
+		{
+			ANKI_CHECK(writeModel(*req.m_value));
 		}
 	}
 
 	if(m_hive)
 	{
 		m_hive->waitAllTasks();
+
+		const Error threadErr = m_errorInThread.load();
+		if(threadErr)
+		{
+			ANKI_IMPORTER_LOGE("Error happened in a thread");
+			return threadErr;
+		}
 	}
 
-	// Check error
-	if(err)
-	{
-		ANKI_IMPORTER_LOGE("Error happened in main thread");
-		return err;
-	}
-
-	const Error threadErr = m_errorInThread.load();
-	if(threadErr)
-	{
-		ANKI_IMPORTER_LOGE("Error happened in a thread");
-		return threadErr;
-	}
-
+	// Animations
 	for(const cgltf_animation* anim = m_gltf->animations; anim < m_gltf->animations + m_gltf->animations_count; ++anim)
 	{
 		ANKI_CHECK(writeAnimation(*anim));
 	}
 
-	return err;
+	ANKI_IMPORTER_LOGV("Importing GLTF has completed");
+	return Error::kNone;
 }
 
-Error GltfImporter::getExtras(const cgltf_extras& extras, HashMapRaii<CString, StringRaii>& out)
+Error GltfImporter::getExtras(const cgltf_extras& extras, HashMapRaii<CString, StringRaii>& out) const
 {
 	cgltf_size extrasSize;
 	cgltf_copy_extras_json(m_gltf, &extras, nullptr, &extrasSize);
@@ -360,7 +468,7 @@ void GltfImporter::populateNodePtrToIdx()
 	}
 }
 
-StringRaii GltfImporter::getNodeName(const cgltf_node& node)
+StringRaii GltfImporter::getNodeName(const cgltf_node& node) const
 {
 	StringRaii out(m_pool);
 
@@ -447,8 +555,6 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 		ANKI_CHECK(getExtras(node.extras, extras));
 
 		HashMapRaii<CString, StringRaii>::Iterator it;
-
-		const Bool skipRt = (it = extras.find("no_rt")) != extras.getEnd() && (*it == "true" || *it == "1");
 
 		if((it = extras.find("particles")) != extras.getEnd())
 		{
@@ -680,72 +786,22 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 		{
 			// Model node
 
-			// Async because it's slow
-			struct Ctx
-			{
-				GltfImporter* m_importer;
-				const cgltf_mesh* m_mesh;
-				Array<const cgltf_material*, 128> m_materials;
-				U32 m_materialCount = 0;
-				const cgltf_skin* m_skin;
-				Bool m_rayTracing;
-			};
-			Ctx* ctx = newInstance<Ctx>(*m_pool);
-			ctx->m_importer = this;
-			ctx->m_mesh = node.mesh;
+			const Bool skipRt = (it = extras.find("no_rt")) != extras.getEnd() && (*it == "true" || *it == "1");
+
+			addRequest<const cgltf_mesh*>(node.mesh, m_meshImportRequests);
 			for(U32 i = 0; i < node.mesh->primitives_count; ++i)
 			{
-				ctx->m_materials[ctx->m_materialCount++] = node.mesh->primitives[i].material;
+				const MaterialImportRequest req = {node.mesh->primitives[i].material, !skipRt};
+				addRequest<MaterialImportRequest>(req, m_materialImportRequests);
 			}
-			ctx->m_skin = node.skin;
-			ctx->m_rayTracing = !skipRt;
+
+			if(node.skin)
+			{
+				addRequest<const cgltf_skin*>(node.skin, m_skinImportRequests);
+			}
 
 			HashMapRaii<CString, StringRaii>::Iterator it2;
 			const Bool selfCollision = (it2 = extras.find("collision_mesh")) != extras.getEnd() && *it2 == "self";
-
-			// Thread task
-			auto callback = [](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
-							   [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
-				Ctx& self = *static_cast<Ctx*>(userData);
-
-				Error err = self.m_importer->m_errorInThread.load();
-
-				if(!err)
-				{
-					err = self.m_importer->writeMesh(*self.m_mesh);
-				}
-
-				for(U32 i = 0; i < self.m_materialCount && !err; ++i)
-				{
-					err = self.m_importer->writeMaterial(*self.m_materials[i], self.m_rayTracing);
-				}
-
-				if(!err)
-				{
-					err = self.m_importer->writeModel(*self.m_mesh);
-				}
-
-				if(!err && self.m_skin)
-				{
-					err = self.m_importer->writeSkeleton(*self.m_skin);
-				}
-
-				if(err)
-				{
-					self.m_importer->m_errorInThread.store(err._getCode());
-				}
-
-				deleteInstance(*self.m_importer->m_pool, &self);
-			};
-
-			if(m_hive != nullptr)
-			{
-				m_hive->submitTask(callback, ctx);
-			}
-			else
-			{
-				callback(ctx, 0, *m_hive, nullptr);
-			}
 
 			ANKI_CHECK(writeModelNode(node, parentExtras));
 
@@ -812,7 +868,7 @@ Error GltfImporter::writeTransform(const Transform& trf)
 	return Error::kNone;
 }
 
-Error GltfImporter::writeModel(const cgltf_mesh& mesh)
+Error GltfImporter::writeModel(const cgltf_mesh& mesh) const
 {
 	const StringRaii modelFname = computeModelResourceFilename(mesh);
 	ANKI_IMPORTER_LOGV("Importing model %s", modelFname.cstr());
@@ -866,7 +922,7 @@ Error GltfImporter::writeModel(const cgltf_mesh& mesh)
 	return Error::kNone;
 }
 
-Error GltfImporter::writeSkeleton(const cgltf_skin& skin)
+Error GltfImporter::writeSkeleton(const cgltf_skin& skin) const
 {
 	StringRaii fname(m_pool);
 	fname.sprintf("%s%s", m_outDir.cstr(), computeSkeletonResourceFilename(skin).cstr());

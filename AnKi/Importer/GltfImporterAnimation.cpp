@@ -364,18 +364,14 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 
 		// Only animate cameras for now
 		const cgltf_node& node = *channel.m_targetNode;
-		if((node.camera == nullptr) || node.name == nullptr)
+		if(node.camera == nullptr || node.name == nullptr)
 		{
 			continue;
 		}
 
-		// ANKI_CHECK(m_sceneFile.writeText("--[[\n"));
-
 		ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:tryFindSceneNode(\"%s\")\n", node.name));
 		ANKI_CHECK(m_sceneFile.writeTextf("getEventManager():newAnimationEvent(\"%s%s\", \"%s\", node)\n",
 										  m_rpath.cstr(), animFname.cstr(), node.name));
-
-		// ANKI_CHECK(m_sceneFile.writeText("--]]\n"));
 	}
 
 	return Error::kNone;

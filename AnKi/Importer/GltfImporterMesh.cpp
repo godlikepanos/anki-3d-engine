@@ -440,7 +440,7 @@ U32 GltfImporter::getMeshTotalVertexCount(const cgltf_mesh& mesh)
 	return totalVertexCount;
 }
 
-Error GltfImporter::writeMesh(const cgltf_mesh& mesh)
+Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 {
 	StringRaii meshName = computeMeshResourceFilename(mesh);
 	StringRaii fname(m_pool);

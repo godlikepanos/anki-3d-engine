@@ -149,7 +149,7 @@ static void fixImageUri(StringRaii& uri)
 	uri.replaceAll(".jpeg", ".ankitex");
 }
 
-Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracing)
+Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracing) const
 {
 	StringRaii fname(m_pool);
 	fname.sprintf("%s%s", m_outDir.cstr(), computeMaterialResourceFilename(mtl).cstr());

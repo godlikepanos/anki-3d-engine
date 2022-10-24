@@ -60,7 +60,7 @@ private:
 	};
 
 	// Data
-	BaseMemoryPool* m_pool = nullptr;
+	mutable BaseMemoryPool* m_pool = nullptr;
 
 	StringRaii m_inputFname = {m_pool};
 	StringRaii m_outDir = {m_pool};
@@ -75,7 +75,7 @@ private:
 
 	File m_sceneFile;
 
-	Atomic<I32> m_errorInThread{0};
+	mutable Atomic<I32> m_errorInThread = {0};
 
 	HashMapRaii<const void*, U32, PtrHasher> m_nodePtrToIdx = {m_pool}; ///< Need an index for the unnamed nodes.
 
@@ -91,12 +91,58 @@ private:
 
 	Bool m_importTextures = false;
 
+	template<typename T>
+	class ImportRequest
+	{
+	public:
+		const GltfImporter* m_importer = nullptr;
+		T m_value = {};
+	};
+
+	class MaterialImportRequest
+	{
+	public:
+		const cgltf_material* m_cgltfMaterial = nullptr;
+		Bool m_writeRt = true;
+
+		Bool operator==(const MaterialImportRequest& b) const
+		{
+			return m_cgltfMaterial == b.m_cgltfMaterial && m_writeRt == b.m_writeRt;
+		}
+	};
+
+	DynamicArrayRaii<ImportRequest<const cgltf_mesh*>> m_meshImportRequests = {m_pool};
+	DynamicArrayRaii<ImportRequest<MaterialImportRequest>> m_materialImportRequests = {m_pool};
+	DynamicArrayRaii<ImportRequest<const cgltf_skin*>> m_skinImportRequests = {m_pool};
+	DynamicArrayRaii<ImportRequest<const cgltf_mesh*>> m_modelImportRequests = {m_pool};
+
 	// Misc
-	Error getExtras(const cgltf_extras& extras, HashMapRaii<CString, StringRaii>& out);
+	template<typename T>
+	void addRequest(const T& value, DynamicArrayRaii<ImportRequest<T>>& array) const
+	{
+		Bool found = false;
+		for(const auto& req : array)
+		{
+			ANKI_ASSERT(req.m_importer == this);
+			if(req.m_value == value)
+			{
+				found = true;
+				break;
+			}
+		}
+
+		if(!found)
+		{
+			const ImportRequest<T> req = {this, value};
+			array.emplaceBack(req);
+		}
+	}
+
+	Error getExtras(const cgltf_extras& extras, HashMapRaii<CString, StringRaii>& out) const;
 	Error parseArrayOfNumbers(CString str, DynamicArrayRaii<F64>& out, const U32* expectedArraySize = nullptr);
 	void populateNodePtrToIdx();
 	void populateNodePtrToIdxInternal(const cgltf_node& node, U32& idx);
-	StringRaii getNodeName(const cgltf_node& node);
+	StringRaii getNodeName(const cgltf_node& node) const;
 
 	template<typename T, typename TFunc>
 	static void visitAccessor(const cgltf_accessor& accessor, TFunc func);
@@ -138,11 +184,11 @@ private:
 	StringRaii computeSkeletonResourceFilename(const cgltf_skin& skin) const;
 
 	// Resources
-	Error writeMesh(const cgltf_mesh& mesh);
-	Error writeMaterial(const cgltf_material& mtl, Bool writeRayTracing);
-	Error writeModel(const cgltf_mesh& mesh);
+	Error writeMesh(const cgltf_mesh& mesh) const;
+	Error writeMaterial(const cgltf_material& mtl, Bool writeRayTracing) const;
+	Error writeModel(const cgltf_mesh& mesh) const;
 	Error writeAnimation(const cgltf_animation& anim);
-	Error writeSkeleton(const cgltf_skin& skin);
+	Error writeSkeleton(const cgltf_skin& skin) const;
 
 	// Scene
 	Error writeTransform(const Transform& trf);
