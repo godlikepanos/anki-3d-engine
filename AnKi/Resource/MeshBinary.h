@@ -16,9 +16,7 @@ namespace anki {
 /// @addtogroup resource
 /// @{
 
-inline constexpr const char* kMeshMagic = "ANKIMES6";
-
-constexpr U32 kMeshBinaryBufferAlignment = 16;
+inline constexpr const char* kMeshMagic = "ANKIMES7";
 
 enum class MeshBinaryFlag : U32
 {
@@ -66,7 +64,12 @@ public:
 	Format m_format;
 
 	U32 m_relativeOffset;
-	F32 m_scale;
+
+	/// Attribute is compressed and needs to be scaled.
+	Array<F32, 4> m_scale;
+
+	/// Attribute is compressed and needs to be translated.
+	Array<F32, 4> m_translation;
 
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& s, TClass self)
@@ -74,7 +77,9 @@ public:
 		s.doValue("m_bufferIndex", offsetof(MeshBinaryVertexAttribute, m_bufferIndex), self.m_bufferIndex);
 		s.doValue("m_format", offsetof(MeshBinaryVertexAttribute, m_format), self.m_format);
 		s.doValue("m_relativeOffset", offsetof(MeshBinaryVertexAttribute, m_relativeOffset), self.m_relativeOffset);
-		s.doValue("m_scale", offsetof(MeshBinaryVertexAttribute, m_scale), self.m_scale);
+		s.doArray("m_scale", offsetof(MeshBinaryVertexAttribute, m_scale), &self.m_scale[0], self.m_scale.getSize());
+		s.doArray("m_translation", offsetof(MeshBinaryVertexAttribute, m_translation), &self.m_translation[0],
+				  self.m_translation.getSize());
 	}
 
 	template<typename TDeserializer>

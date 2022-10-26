@@ -36,7 +36,7 @@ public:
 
 	void free(PtrSize size, U32 alignment, PtrSize offset);
 
-	BufferPtr getVertexBuffer() const
+	const BufferPtr& getVertexBuffer() const
 	{
 		return m_vertBuffer;
 	}

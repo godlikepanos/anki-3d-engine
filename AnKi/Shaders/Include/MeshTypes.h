@@ -54,8 +54,8 @@ enum class VertexStreamMask : U8
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexStreamMask)
 
 inline constexpr Array<Format, U32(VertexStreamId::kMeshRelatedCount)> kMeshRelatedVertexStreamFormats = {
-	Format::kR32G32B32_Sfloat, Format::kR8G8B8A8_Snorm, Format::kR8G8B8A8_Snorm,
-	Format::kR32G32_Sfloat,    Format::kR8G8B8A8_Uint,  Format::kR8G8B8A8_Snorm};
+	Format::kR16G16B16_Unorm, Format::kR8G8B8A8_Snorm, Format::kR8G8B8A8_Snorm,
+	Format::kR32G32_Sfloat,   Format::kR8G8B8A8_Uint,  Format::kR8G8B8A8_Snorm};
 
 #else
 

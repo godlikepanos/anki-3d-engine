@@ -71,7 +71,7 @@ Error MeshBinaryLoader::loadSubmeshes()
 	return Error::kNone;
 }
 
-Error MeshBinaryLoader::checkFormat(VertexStreamId stream, Bool isOptional) const
+Error MeshBinaryLoader::checkFormat(VertexStreamId stream, Bool isOptional, Bool canBeTransformed) const
 {
 	const U32 vertexAttribIdx = U32(stream);
 	const U32 vertexBufferIdx = U32(stream);
@@ -104,10 +104,29 @@ Error MeshBinaryLoader::checkFormat(VertexStreamId stream, Bool isOptional) cons
 		return Error::kUserData;
 	}
 
-	// Scale should be 1.0 for now
-	if(attrib.m_scale != 1.0f)
+	if(!canBeTransformed && Vec4(attrib.m_scale) != Vec4(1.0f))
 	{
 		ANKI_RESOURCE_LOGE("Vertex attribute %u should have 1.0 scale", vertexAttribIdx);
+		return Error::kUserData;
+	}
+
+	if(canBeTransformed && Vec4(attrib.m_scale) <= kEpsilonf)
+	{
+		ANKI_RESOURCE_LOGE("Vertex attribute %u should have positive scale", vertexAttribIdx);
+		return Error::kUserData;
+	}
+
+	if(canBeTransformed
+	   && (attrib.m_scale[0] != attrib.m_scale[1] || attrib.m_scale[0] != attrib.m_scale[2]
+		   || attrib.m_scale[0] != attrib.m_scale[3]))
+	{
+		ANKI_RESOURCE_LOGE("Vertex attribute %u should have uniform scale", vertexAttribIdx);
+		return Error::kUserData;
+	}
+
+	if(!canBeTransformed && Vec4(attrib.m_translation) != Vec4(0.0f))
+	{
+		ANKI_RESOURCE_LOGE("Vertex attribute %u should have 0.0 translation", vertexAttribIdx);
 		return Error::kUserData;
 	}
 
@@ -141,12 +160,12 @@ Error MeshBinaryLoader::checkHeader() const
 	}
 
 	// Attributes
-	ANKI_CHECK(checkFormat(VertexStreamId::kPosition, false));
-	ANKI_CHECK(checkFormat(VertexStreamId::kNormal, false));
-	ANKI_CHECK(checkFormat(VertexStreamId::kTangent, false));
-	ANKI_CHECK(checkFormat(VertexStreamId::kUv, false));
-	ANKI_CHECK(checkFormat(VertexStreamId::kBoneIds, true));
-	ANKI_CHECK(checkFormat(VertexStreamId::kBoneWeights, true));
+	ANKI_CHECK(checkFormat(VertexStreamId::kPosition, false, true));
+	ANKI_CHECK(checkFormat(VertexStreamId::kNormal, false, false));
+	ANKI_CHECK(checkFormat(VertexStreamId::kTangent, false, false));
+	ANKI_CHECK(checkFormat(VertexStreamId::kUv, false, false));
+	ANKI_CHECK(checkFormat(VertexStreamId::kBoneIds, true, false));
+	ANKI_CHECK(checkFormat(VertexStreamId::kBoneWeights, true, false));
 
 	// Vertex buffers
 	const Format boneIdxFormat = m_header.m_vertexAttributes[VertexStreamId::kBoneIds].m_format;

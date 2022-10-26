@@ -88,7 +88,7 @@ private:
 	PtrSize getLodBuffersSize(U32 lod) const;
 
 	Error checkHeader() const;
-	Error checkFormat(VertexStreamId stream, Bool isOptional) const;
+	Error checkFormat(VertexStreamId stream, Bool isOptional, Bool canBeTransformed) const;
 	Error loadSubmeshes();
 };
 /// @}

@@ -43,6 +43,10 @@ class ModelNode::RenderProxy
 {
 public:
 	ModelNode* m_node = nullptr;
+
+	/// Uncompresses the mesh positions to the local view. The scale should be uniform because it will be applied to
+	/// normals and tangents and non-uniform data will cause problems.
+	Mat4 m_compressedToModelTransform = Mat4::getIdentity();
 };
 
 ModelNode::ModelNode(SceneGraph* scene, CString name)
@@ -165,6 +169,7 @@ void ModelNode::initRenderComponents()
 
 	for(U32 patchIdx = 0; patchIdx < model->getModelPatches().getSize(); ++patchIdx)
 	{
+		const ModelPatch& modelPatch = model->getModelPatches()[patchIdx];
 		RenderComponent& rc = getNthComponentOfType<RenderComponent>(patchIdx);
 		rc.initRaster(
 			[](RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) {
@@ -174,10 +179,9 @@ void ModelNode::initRenderComponents()
 			},
 			&m_renderProxies[patchIdx], modelc.getRenderMergeKeys()[patchIdx]);
 
-		rc.setFlagsFromMaterial(model->getModelPatches()[patchIdx].getMaterial());
+		rc.setFlagsFromMaterial(modelPatch.getMaterial());
 
-		if(!!(model->getModelPatches()[patchIdx].getMaterial()->getRenderingTechniques()
-			  & RenderingTechniqueBit::kAllRt))
+		if(!!(modelPatch.getMaterial()->getRenderingTechniques() & RenderingTechniqueBit::kAllRt))
 		{
 			rc.initRayTracing(
 				[](U32 lod, const void* userData, RayTracingInstanceQueueElement& el) {
@@ -188,7 +192,15 @@ void ModelNode::initRenderComponents()
 				&m_renderProxies[patchIdx]);
 		}
 
-		m_renderProxies[patchIdx].m_node = this;
+		// Init the proxy
+		RenderProxy& proxy = m_renderProxies[patchIdx];
+		proxy.m_node = this;
+
+		const MeshResource& meshResource = *modelPatch.getMesh();
+		proxy.m_compressedToModelTransform.setTranslationPart(meshResource.getPositionsTranslation().xyz1());
+		proxy.m_compressedToModelTransform(0, 0) = meshResource.getPositionsScale();
+		proxy.m_compressedToModelTransform(1, 1) = meshResource.getPositionsScale();
+		proxy.m_compressedToModelTransform(2, 2) = meshResource.getPositionsScale();
 	}
 }
 
@@ -207,11 +219,16 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		const SkinComponent& skinc = getFirstComponentOfType<SkinComponent>();
 
 		// Transforms
+		auto computeTranform = [&](const Transform& trf) -> Mat3x4 {
+			const Mat4 m4 = Mat4(trf) * m_renderProxies[modelPatchIdx].m_compressedToModelTransform;
+			const Mat3x4 out(m4);
+			return out;
+		};
 		Array<Mat3x4, kMaxInstanceCount> trfs;
 		Array<Mat3x4, kMaxInstanceCount> prevTrfs;
 		const MoveComponent& movec = getFirstComponentOfType<MoveComponent>();
-		trfs[0] = Mat3x4(movec.getWorldTransform());
-		prevTrfs[0] = Mat3x4(movec.getPreviousWorldTransform());
+		trfs[0] = computeTranform(movec.getWorldTransform());
+		prevTrfs[0] = computeTranform(movec.getPreviousWorldTransform());
 		Bool moved = trfs[0] != prevTrfs[0];
 		for(U32 i = 1; i < instanceCount; ++i)
 		{
@@ -222,8 +239,8 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 			ANKI_ASSERT(otherNodeModelPatchIdx == modelPatchIdx);
 
 			const MoveComponent& otherNodeMovec = otherNode.getFirstComponentOfType<MoveComponent>();
-			trfs[i] = Mat3x4(otherNodeMovec.getWorldTransform());
-			prevTrfs[i] = Mat3x4(otherNodeMovec.getPreviousWorldTransform());
+			trfs[i] = computeTranform(otherNodeMovec.getWorldTransform());
+			prevTrfs[i] = computeTranform(otherNodeMovec.getPreviousWorldTransform());
 
 			moved = moved || (trfs[i] != prevTrfs[i]);
 		}

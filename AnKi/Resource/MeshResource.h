@@ -84,6 +84,16 @@ public:
 		return m_lods.getSize();
 	}
 
+	F32 getPositionsScale() const
+	{
+		return m_positionsScale;
+	}
+
+	Vec3 getPositionsTranslation() const
+	{
+		return m_positionsTranslation;
+	}
+
 private:
 	class LoadTask;
 	class LoadContext;
@@ -119,6 +129,9 @@ private:
 	Aabb m_aabb;
 	IndexType m_indexType;
 	VertexStreamMask m_presentVertStreams = VertexStreamMask::kNone;
+
+	F32 m_positionsScale = 0.0f;
+	Vec3 m_positionsTranslation = Vec3(0.0f);
 
 	Error loadAsync(MeshBinaryLoader& loader) const;
 };

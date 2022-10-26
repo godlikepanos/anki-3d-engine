@@ -114,6 +114,8 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	m_indexType = header.m_indexType;
 	m_aabb.setMin(header.m_aabbMin);
 	m_aabb.setMax(header.m_aabbMax);
+	m_positionsScale = header.m_vertexAttributes[VertexStreamId::kPosition].m_scale[0];
+	m_positionsTranslation = Vec3(&header.m_vertexAttributes[VertexStreamId::kPosition].m_translation[0]);
 
 	// Submeshes
 	m_subMeshes.create(getMemoryPool(), header.m_subMeshCount);
@@ -152,9 +154,9 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 
 			const U32 texelSize = getFormatInfo(kMeshRelatedVertexStreamFormats[stream]).m_texelSize;
 			const PtrSize vertexBufferSize = PtrSize(lod.m_vertexCount) * texelSize;
-
+			const U32 alignment = 4;
 			ANKI_CHECK(getManager().getUnifiedGeometryMemoryPool().allocate(
-				vertexBufferSize, texelSize, lod.m_unifiedGeometryVertBufferOffsets[stream]));
+				vertexBufferSize, alignment, lod.m_unifiedGeometryVertBufferOffsets[stream]));
 		}
 
 		// BLAS

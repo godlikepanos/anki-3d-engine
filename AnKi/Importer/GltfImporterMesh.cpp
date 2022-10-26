@@ -415,13 +415,15 @@ static Bool isConvex(const List<SubMesh>& submeshes)
 	return convex;
 }
 
-static void writeVertexAttribAndBufferInfoToHeader(VertexStreamId stream, MeshBinaryHeader& header)
+static void writeVertexAttribAndBufferInfoToHeader(VertexStreamId stream, MeshBinaryHeader& header,
+												   const Vec4& scale = Vec4(1.0f), const Vec4& translation = Vec4(0.0f))
 {
 	MeshBinaryVertexAttribute& attrib = header.m_vertexAttributes[stream];
 	attrib.m_bufferIndex = U32(stream);
 	attrib.m_format = kMeshRelatedVertexStreamFormats[stream];
 	attrib.m_relativeOffset = 0;
-	attrib.m_scale = 1.0f;
+	attrib.m_scale = {scale[0], scale[1], scale[2], scale[3]};
+	attrib.m_translation = {translation[0], translation[1], translation[2], translation[3]};
 
 	MeshBinaryVertexBuffer& buff = header.m_vertexBuffers[stream];
 	buff.m_vertexStride = getFormatInfo(attrib.m_format).m_texelSize;
@@ -656,7 +658,17 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 	header.m_aabbMax = aabbMax;
 	header.m_lodCount = maxLod + 1;
 
-	writeVertexAttribAndBufferInfoToHeader(VertexStreamId::kPosition, header);
+	// Compute the pos scale and transform. The scale is uniform because it's applied to the model matrix of the object
+	F32 posScale = kMinF32;
+	for(U c = 0; c < 3; c++)
+	{
+		posScale = max(posScale, aabbMax[c] - aabbMin[c]);
+	}
+	posScale = (posScale < 1.0f) ? 1.0f : (1.0f / posScale);
+	const Vec3 posTranslation = -aabbMin;
+
+	writeVertexAttribAndBufferInfoToHeader(VertexStreamId::kPosition, header, Vec4(1.0f / posScale),
+										   (-posTranslation).xyz1());
 	writeVertexAttribAndBufferInfoToHeader(VertexStreamId::kNormal, header);
 	writeVertexAttribAndBufferInfoToHeader(VertexStreamId::kTangent, header);
 	writeVertexAttribAndBufferInfoToHeader(VertexStreamId::kUv, header);
@@ -722,10 +734,14 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 		// Write positions
 		for(const SubMesh& submesh : submeshes[lod])
 		{
-			DynamicArrayRaii<Vec3> positions(m_pool, submesh.m_verts.getSize());
+			DynamicArrayRaii<U16Vec3> positions(m_pool, submesh.m_verts.getSize());
 			for(U32 v = 0; v < submesh.m_verts.getSize(); ++v)
 			{
-				positions[v] = submesh.m_verts[v].m_position;
+				Vec3 localPos = (submesh.m_verts[v].m_position + posTranslation) * posScale;
+				localPos = localPos.clamp(0.0f, 1.0f);
+				localPos *= F32(kMaxU16);
+				localPos = localPos.round();
+				positions[v] = U16Vec3(localPos);
 			}
 
 			ANKI_CHECK(file.write(&positions[0], positions.getSizeInBytes()));

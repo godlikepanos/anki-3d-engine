@@ -8,9 +8,7 @@
 	<doxygen_group name="resource"/>
 
 	<prefix_code><![CDATA[
-inline constexpr const char* kMeshMagic = "ANKIMES6";
-
-constexpr U32 kMeshBinaryBufferAlignment = 16;
+inline constexpr const char* kMeshMagic = "ANKIMES7";
 
 enum class MeshBinaryFlag : U32
 {
@@ -35,7 +33,8 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(MeshBinaryFlag)
 				<member name="m_bufferIndex" type="U32"/>
 				<member name="m_format" type="Format" comment="If the format is kNone then the attribute is not present"/>
 				<member name="m_relativeOffset" type="U32"/>
-				<member name="m_scale" type="F32"/>
+				<member name="m_scale" type="F32" array_size="4" comment="Attribute is compressed and needs to be scaled"/>
+				<member name="m_translation" type="F32" array_size="4" comment="Attribute is compressed and needs to be translated"/>
 			</members>
 		</class>
 
