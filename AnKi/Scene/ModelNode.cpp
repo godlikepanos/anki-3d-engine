@@ -422,7 +422,9 @@ void ModelNode::setupRayTracingInstanceQueueElement(U32 lod, U32 modelPatchIdx,
 	el.m_bottomLevelAccelerationStructure = info.m_bottomLevelAccelerationStructure.get();
 
 	const MoveComponent& movec = getFirstComponentOfType<MoveComponent>();
-	el.m_transform = Mat3x4(movec.getWorldTransform());
+
+	const Mat4 m4 = Mat4(movec.getWorldTransform()) * m_renderProxies[modelPatchIdx].m_compressedToModelTransform;
+	el.m_transform = Mat3x4(m4);
 
 	el.m_shaderGroupHandleIndex = info.m_shaderGroupHandleIndex;
 }

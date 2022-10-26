@@ -33,7 +33,7 @@ public:
 
 	/// Access an element using an integer.
 	template<typename TInt, ANKI_ENABLE(!std::is_enum<TInt>::value)>
-	Reference operator[](const TInt n)
+	constexpr Reference operator[](const TInt n)
 	{
 		ANKI_ASSERT(PtrSize(n) < kSize);
 		return m_data[n];
@@ -41,7 +41,7 @@ public:
 
 	/// Access an element using an integer.
 	template<typename TInt, ANKI_ENABLE(!std::is_enum<TInt>::value)>
-	ConstReference operator[](const TInt n) const
+	constexpr ConstReference operator[](const TInt n) const
 	{
 		ANKI_ASSERT(PtrSize(n) < kSize);
 		return m_data[n];
@@ -50,7 +50,7 @@ public:
 	/// Access an element using an enumerant. It's a little bit special and separate from operator[] that accepts
 	/// integer. This to avoid any short of arbitrary integer type casting.
 	template<typename TEnum, ANKI_ENABLE(std::is_enum<TEnum>::value)>
-	Reference operator[](const TEnum n)
+	constexpr Reference operator[](const TEnum n)
 	{
 		return operator[](typename std::underlying_type<TEnum>::type(n));
 	}
@@ -58,7 +58,7 @@ public:
 	/// Access an element using an enumerant. It's a little bit special and separate from operator[] that accepts
 	/// integer. This to avoid any short of arbitrary integer type casting.
 	template<typename TEnum, ANKI_ENABLE(std::is_enum<TEnum>::value)>
-	ConstReference operator[](const TEnum n) const
+	constexpr ConstReference operator[](const TEnum n) const
 	{
 		return operator[](typename std::underlying_type<TEnum>::type(n));
 	}
