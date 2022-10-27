@@ -16,7 +16,7 @@ ANKI_SCENE_COMPONENT_STATICS(RenderComponent)
 
 void RenderComponent::allocateAndSetupUniforms(const MaterialResourcePtr& mtl, const RenderQueueDrawContext& ctx,
 											   ConstWeakArray<Mat3x4> transforms, ConstWeakArray<Mat3x4> prevTransforms,
-											   StagingGpuMemoryPool& alloc)
+											   StagingGpuMemoryPool& alloc, const Vec4& positionScaleAndTranslation)
 {
 	ANKI_ASSERT(transforms.getSize() <= kMaxInstanceCount);
 	ANKI_ASSERT(prevTransforms.getSize() == transforms.getSize());
@@ -41,6 +41,7 @@ void RenderComponent::allocateAndSetupUniforms(const MaterialResourcePtr& mtl, c
 			memcpy(&renderableGpuViews->m_worldTransform, &transforms[i], sizeof(renderableGpuViews->m_worldTransform));
 			memcpy(&renderableGpuViews->m_previousWorldTransform, &prevTransforms[i],
 				   sizeof(renderableGpuViews->m_previousWorldTransform));
+			renderableGpuViews->m_positionScaleF32AndTranslationVec3 = positionScaleAndTranslation;
 
 			++renderableGpuViews;
 		}

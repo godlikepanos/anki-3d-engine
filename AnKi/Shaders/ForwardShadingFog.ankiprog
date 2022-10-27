@@ -43,7 +43,8 @@ layout(location = 0) out F32 out_zVSpace;
 
 void main()
 {
-	const Vec3 worldPos = u_renderableGpuViews[0].m_worldTransform * Vec4(in_position, 1.0);
+	const RenderableGpuView renderable = u_renderableGpuViews[0];
+	const Vec3 worldPos = renderable.m_worldTransform * Vec4(in_position, 1.0);
 
 	gl_Position = u_global.m_viewProjectionMatrix * Vec4(worldPos, 1.0);
 

@@ -220,9 +220,17 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 
 		// Transforms
 		auto computeTranform = [&](const Transform& trf) -> Mat3x4 {
-			const Mat4 m4 = Mat4(trf) * m_renderProxies[modelPatchIdx].m_compressedToModelTransform;
-			const Mat3x4 out(m4);
-			return out;
+			if(skinc.isEnabled())
+			{
+				return Mat3x4(trf);
+			}
+			else
+			{
+				// Bake the decompression in the model matrix
+				const Mat4 m4 = Mat4(trf) * m_renderProxies[modelPatchIdx].m_compressedToModelTransform;
+				const Mat3x4 out(m4);
+				return out;
+			}
 		};
 		Array<Mat3x4, kMaxInstanceCount> trfs;
 		Array<Mat3x4, kMaxInstanceCount> prevTrfs;
@@ -274,10 +282,13 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		cmdb->bindShaderProgram(modelInf.m_program);
 
 		// Uniforms
+		const Vec4 positionScaleAndTransform(
+			m_renderProxies[modelPatchIdx].m_compressedToModelTransform(0, 0),
+			m_renderProxies[modelPatchIdx].m_compressedToModelTransform.getTranslationPart().xyz());
 		RenderComponent::allocateAndSetupUniforms(
 			modelc.getModelResource()->getModelPatches()[modelPatchIdx].getMaterial(), ctx,
 			ConstWeakArray<Mat3x4>(&trfs[0], instanceCount), ConstWeakArray<Mat3x4>(&prevTrfs[0], instanceCount),
-			*ctx.m_stagingGpuAllocator);
+			*ctx.m_stagingGpuAllocator, positionScaleAndTransform);
 
 		// Bind attributes & vertex buffers
 		for(VertexStreamId streamId :

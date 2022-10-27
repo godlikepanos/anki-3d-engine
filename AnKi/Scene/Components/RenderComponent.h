@@ -104,7 +104,8 @@ public:
 	/// Helper function.
 	static void allocateAndSetupUniforms(const MaterialResourcePtr& mtl, const RenderQueueDrawContext& ctx,
 										 ConstWeakArray<Mat3x4> transforms, ConstWeakArray<Mat3x4> prevTransforms,
-										 StagingGpuMemoryPool& alloc);
+										 StagingGpuMemoryPool& alloc,
+										 const Vec4& positionScaleAndTranslation = Vec4(1.0f, 0.0f, 0.0f, 0.0f));
 
 private:
 	RenderQueueDrawCallback m_callback = nullptr;

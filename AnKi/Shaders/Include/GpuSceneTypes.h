@@ -13,6 +13,7 @@ struct RenderableGpuView
 {
 	Mat3x4 m_worldTransform;
 	Mat3x4 m_previousWorldTransform;
+	Vec4 m_positionScaleF32AndTranslationVec3; ///< The scale and translation that uncompress positions.
 };
 
 struct SkinGpuView
