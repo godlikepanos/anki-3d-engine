@@ -459,11 +459,13 @@ void ClusterBinning::writeClustererBuffersTask()
 			const DirectionalLightQueueElement& in = rqueue.m_directionalLight;
 
 			out.m_diffuseColor = in.m_diffuseColor;
-			out.m_cascadeCount = in.m_shadowCascadeCount;
+			out.m_shadowCascadeCount = in.m_shadowCascadeCount;
 			out.m_direction = in.m_direction;
 			out.m_active = 1;
-			out.m_effectiveShadowDistance = in.m_effectiveShadowDistance;
-			out.m_shadowCascadesDistancePower = in.m_shadowCascadesDistancePower;
+			for(U32 i = 0; i < kMaxShadowCascades; ++i)
+			{
+				out.m_shadowCascadeDistances[i] = in.m_shadowCascadesDistances[i];
+			}
 			out.m_shadowLayer = (in.hasShadow()) ? in.m_shadowLayer : kMaxU32;
 
 			for(U cascade = 0; cascade < in.m_shadowCascadeCount; ++cascade)

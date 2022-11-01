@@ -301,9 +301,9 @@ Vec2 convertCubeUvsu(const Vec3 v, out U32 faceIndex)
 	return 0.5 / mag * uv + 0.5;
 }
 
-Vec3 grayScale(const Vec3 col)
+ANKI_RP Vec3 grayScale(const ANKI_RP Vec3 col)
 {
-	const F32 grey = (col.r + col.g + col.b) * (1.0 / 3.0);
+	const ANKI_RP F32 grey = (col.r + col.g + col.b) * (1.0 / 3.0);
 	return Vec3(grey);
 }
 
@@ -683,4 +683,24 @@ ANKI_RP Vec3 filmGrain(ANKI_RP Vec3 color, Vec2 uv, ANKI_RP F32 strength, ANKI_R
 	const F32 x = (uv.x + 4.0) * (uv.y + 4.0) * time;
 	const F32 grain = 1.0 - (mod((mod(x, 13.0) + 1.0) * (mod(x, 123.0) + 1.0), 0.01) - 0.005) * strength;
 	return color * grain;
+}
+
+/// Sin approximation: https://www.desmos.com/calculator/svgcjfskne
+ANKI_RP F32 fastSin(ANKI_RP F32 x)
+{
+	const ANKI_RP F32 k2Pi = 2.0 * kPi;
+	const ANKI_RP F32 kPiOver2 = kPi / 2.0;
+
+	x = (x + kPiOver2) / (k2Pi) + 0.75;
+	x = fract(x);
+	x = x * 2.0 - 1.0;
+	x = x * abs(x) - x;
+	x *= 4.0;
+	return x;
+}
+
+/// Cos approximation
+ANKI_RP F32 fastCos(ANKI_RP F32 x)
+{
+	return fastSin(x + kPi / 2.0);
 }

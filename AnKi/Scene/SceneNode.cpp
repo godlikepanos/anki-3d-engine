@@ -77,4 +77,9 @@ const ConfigSet& SceneNode::getConfig() const
 	return m_scene->getConfig();
 }
 
+const UnifiedGeometryMemoryPool& SceneNode::getUnifiedGeometryMemoryPool() const
+{
+	return *m_scene->m_unifiedGeometryMemPool;
+}
+
 } // end namespace anki

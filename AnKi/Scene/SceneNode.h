@@ -17,6 +17,7 @@ namespace anki {
 // Forward
 class ResourceManager;
 class ConfigSet;
+class UnifiedGeometryMemoryPool;
 
 /// @addtogroup scene
 /// @{
@@ -72,6 +73,8 @@ public:
 	void setMarkedForDeletion();
 
 	Timestamp getGlobalTimestamp() const;
+
+	const UnifiedGeometryMemoryPool& getUnifiedGeometryMemoryPool() const;
 
 	Timestamp getComponentMaxTimestamp() const
 	{

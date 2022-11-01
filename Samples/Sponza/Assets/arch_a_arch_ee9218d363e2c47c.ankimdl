@@ -1,8 +1,7 @@
 <model>
 	<modelPatches>
 		<modelPatch>
-			<mesh>Assets/arch_a_lod0_2340d230b53e2a69.ankimesh</mesh>
-			<mesh1>Assets/arch_a_lod1_2340d230b53e2a69.ankimesh</mesh1>
+			<mesh>Assets/arch_a_2340d230b53e2a69.ankimesh</mesh>
 			<material>Assets/arch_e0c8c7e29c806284.ankimtl</material>
 		</modelPatch>
 	</modelPatches>

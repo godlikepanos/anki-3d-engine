@@ -8,6 +8,7 @@
 #include <AnKi/Shaders/Common.glsl>
 #include <AnKi/Shaders/Functions.glsl>
 #include <AnKi/Shaders/Include/ModelTypes.h>
+#include <AnKi/Shaders/Include/MeshTypes.h>
 #include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 
@@ -17,7 +18,7 @@ ANKI_BINDLESS_SET(kMaterialSetBindless)
 // Vert
 //
 #if defined(ANKI_VERTEX_SHADER)
-layout(location = kVertexAttributeIdPosition) in Vec3 in_position;
+layout(location = kVertexStreamIdPosition) in Vec3 in_position;
 #endif
 
 //
@@ -28,6 +29,7 @@ layout(location = kVertexAttributeIdPosition) in Vec3 in_position;
 layout(set = kMaterialSetGlobal, binding = kMaterialBindingLinearClampSampler) uniform sampler u_linearAnyClampSampler;
 layout(set = kMaterialSetGlobal, binding = kMaterialBindingDepthRt) uniform texture2D u_gbufferDepthRt;
 layout(set = kMaterialSetGlobal, binding = kMaterialBindingLightVolume) uniform ANKI_RP texture3D u_lightVol;
+layout(set = kMaterialSetGlobal, binding = kMaterialBindingShadowSampler) uniform samplerShadow u_shadowSampler;
 #	define CLUSTERED_SHADING_SET kMaterialSetGlobal
 #	define CLUSTERED_SHADING_UNIFORMS_BINDING kMaterialBindingClusterShadingUniforms
 #	define CLUSTERED_SHADING_LIGHTS_BINDING kMaterialBindingClusterShadingLights
@@ -75,7 +77,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos)
 		F32 shadow = 1.0;
 		if(light.m_shadowAtlasTileScale >= 0.0)
 		{
-			shadow = computeShadowFactorPointLight(light, frag2Light, u_shadowAtlasTex, u_linearAnyClampSampler);
+			shadow = computeShadowFactorPointLight(light, frag2Light, u_shadowAtlasTex, u_shadowSampler);
 		}
 #	endif
 
@@ -104,7 +106,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos)
 		F32 shadow = 1.0;
 		ANKI_BRANCH if(light.m_shadowLayer != kMaxU32)
 		{
-			shadow = computeShadowFactorSpotLight(light, worldPos, u_shadowAtlasTex, u_linearAnyClampSampler);
+			shadow = computeShadowFactorSpotLight(light, worldPos, u_shadowAtlasTex, u_shadowSampler);
 		}
 #	endif
 

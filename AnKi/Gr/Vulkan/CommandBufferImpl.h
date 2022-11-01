@@ -155,6 +155,7 @@ public:
 	{
 		commandCommon();
 		m_state.setPolygonOffset(factor, units);
+		vkCmdSetDepthBias(m_handle, factor, 0.0f, units);
 	}
 
 	void setStencilOperationsInternal(FaceSelectionBit face, StencilOperation stencilFail,

@@ -429,6 +429,11 @@ public:
 	void create(TMemPool& pool, ConstIterator first, ConstIterator last)
 	{
 		ANKI_ASSERT(first != 0 && last != 0);
+		for(ConstIterator it = first; it < last; ++it)
+		{
+			ANKI_ASSERT(*it != '\0');
+		}
+
 		auto length = last - first;
 		m_data.create(pool, length + 1);
 
@@ -841,7 +846,7 @@ public:
 	{
 		if(!b.isEmpty())
 		{
-			create(b.m_data.getBegin(), b.m_data.getEnd());
+			create(b.m_data.getBegin(), b.m_data.getEnd() - 1);
 		}
 	}
 
@@ -873,7 +878,7 @@ public:
 		m_pool = b.m_pool;
 		if(!b.isEmpty())
 		{
-			create(b.m_data.getBegin(), b.m_data.getEnd());
+			create(b.m_data.getBegin(), b.m_data.getEnd() - 1);
 		}
 		return *this;
 	}
@@ -884,7 +889,7 @@ public:
 		destroy();
 		if(!b.isEmpty())
 		{
-			create(b.getBegin(), b.getEnd());
+			create(b.getBegin(), b.getEnd() - 1);
 		}
 		return *this;
 	}

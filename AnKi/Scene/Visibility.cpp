@@ -107,7 +107,6 @@ void VisibilityContext::submitNewWork(const FrustumComponent& frc, const Frustum
 	{
 		rqueue.m_cameraFovX = rqueue.m_cameraFovY = 0.0f;
 	}
-	rqueue.m_effectiveShadowDistance = frc.getEffectiveShadowDistance();
 
 	StackMemoryPool& pool = m_scene->getFrameMemoryPool();
 
@@ -414,7 +413,11 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 				const Plane& nearPlane = primaryFrc.getViewPlanes()[FrustumPlaneType::kNear];
 				const F32 distFromFrustum = max(0.0f, testPlane(nearPlane, spatialc->getAabbWorldSpace()));
 
-				castsShadow = distFromFrustum < primaryFrc.getEffectiveShadowDistance();
+				const F32 shadowEffectiveDistance =
+					(primaryFrc.getShadowCascadeCount() > 0)
+						? primaryFrc.getShadowCascadeDistance(primaryFrc.getShadowCascadeCount() - 1)
+						: primaryFrc.getFar();
+				castsShadow = distFromFrustum < shadowEffectiveDistance;
 			}
 
 			switch(lc->getLightComponentType())

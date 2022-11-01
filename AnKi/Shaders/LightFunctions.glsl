@@ -13,60 +13,9 @@
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
 
-// Do some EVSM magic with depth
-Vec2 evsmProcessDepth(F32 depth)
-{
-	depth = 2.0 * depth - 1.0;
-	const F32 pos = exp(kEvsmPositiveConstant * depth);
-	const F32 neg = -exp(kEvsmNegativeConstant * depth);
-	return Vec2(pos, neg);
-}
-
-F32 linstep(F32 a, F32 b, F32 v)
-{
-	return saturate((v - a) / (b - a));
-}
-
-// Reduces VSM light bleedning
-F32 reduceLightBleeding(F32 pMax, F32 amount)
-{
-	// Remove the [0, amount] tail and linearly rescale (amount, 1].
-	return linstep(amount, 1.0, pMax);
-}
-
-F32 chebyshevUpperBound(Vec2 moments, F32 mean, F32 minVariance, F32 lightBleedingReduction)
-{
-	// Compute variance
-	F32 variance = moments.y - (moments.x * moments.x);
-	variance = max(variance, minVariance);
-
-	// Compute probabilistic upper bound
-	const F32 d = mean - moments.x;
-	F32 pMax = variance / (variance + (d * d));
-
-	pMax = reduceLightBleeding(pMax, lightBleedingReduction);
-
-	// One-tailed Chebyshev
-	return (mean <= moments.x) ? 1.0 : pMax;
-}
-
-// Compute the shadow factor of EVSM given the 2 depths
-F32 evsmComputeShadowFactor(F32 occluderDepth, Vec4 shadowMapMoments)
-{
-	const Vec2 evsmOccluderDepths = evsmProcessDepth(occluderDepth);
-	const Vec2 depthScale = kEvsmBias * 0.01 * Vec2(kEvsmPositiveConstant, kEvsmNegativeConstant) * evsmOccluderDepths;
-	const Vec2 minVariance = depthScale * depthScale;
-
-#if !ANKI_EVSM4
-	return chebyshevUpperBound(shadowMapMoments.xy, evsmOccluderDepths.x, minVariance.x, kEvsmLightBleedingReduction);
-#else
-	const F32 pos =
-		chebyshevUpperBound(shadowMapMoments.xy, evsmOccluderDepths.x, minVariance.x, kEvsmLightBleedingReduction);
-	const F32 neg =
-		chebyshevUpperBound(shadowMapMoments.zw, evsmOccluderDepths.y, minVariance.y, kEvsmLightBleedingReduction);
-	return min(pos, neg);
-#endif
-}
+const Vec2 kPoissonDisk[4u] = {Vec2(-0.94201624, -0.39906216), Vec2(0.94558609, -0.76890725),
+							   Vec2(-0.094184101, -0.92938870), Vec2(0.34495938, 0.29387760)};
+const ANKI_RP F32 kPcfScale = 2.0f;
 
 // Fresnel term unreal
 // specular: The specular color aka F0
@@ -162,31 +111,49 @@ ANKI_RP F32 computeSpotFactor(ANKI_RP Vec3 l, ANKI_RP F32 outerCos, ANKI_RP F32 
 	return spotFactor;
 }
 
-U32 computeShadowSampleCount(const U32 COUNT, F32 zVSpace)
-{
-	const F32 MAX_DISTANCE = 5.0;
-
-	const F32 z = max(zVSpace, -MAX_DISTANCE);
-	F32 sampleCountf = F32(COUNT) + z * (F32(COUNT) / MAX_DISTANCE);
-	sampleCountf = max(sampleCountf, 1.0);
-	const U32 sampleCount = U32(sampleCountf);
-
-	return sampleCount;
-}
-
-ANKI_RP F32 computeShadowFactorSpotLight(SpotLight light, Vec3 worldPos, texture2D spotMap, sampler spotMapSampler)
+ANKI_RP F32 computeShadowFactorSpotLightPcf(SpotLight light, Vec3 worldPos, texture2D shadowTex,
+											samplerShadow shadowMapSampler, ANKI_RP F32 randFactor)
 {
 	const Vec4 texCoords4 = light.m_textureMatrix * Vec4(worldPos, 1.0);
 	const Vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
 
-	const Vec4 shadowMoments = textureLod(spotMap, spotMapSampler, texCoords3.xy, 0.0);
+	const Vec2 smTexelSize = 1.0 / Vec2(textureSize(shadowTex, 0).xy);
 
-	return evsmComputeShadowFactor(texCoords3.z, shadowMoments);
+	const F32 sinTheta = sin(randFactor * 2.0 * kPi);
+	const F32 cosTheta = cos(randFactor * 2.0 * kPi);
+
+	ANKI_RP F32 shadow = 0.0;
+	ANKI_UNROLL for(U32 i = 0u; i < 4u; ++i)
+	{
+		const Vec2 diskPoint = kPoissonDisk[i] * kPcfScale;
+
+		// Rotate the disk point
+		Vec2 rotatedDiskPoint;
+		rotatedDiskPoint.x = diskPoint.x * cosTheta - diskPoint.y * sinTheta;
+		rotatedDiskPoint.y = diskPoint.y * cosTheta + diskPoint.x * sinTheta;
+
+		// Offset calculation
+		const Vec2 newUv = texCoords3.xy + rotatedDiskPoint * smTexelSize;
+
+		shadow += textureLod(shadowTex, shadowMapSampler, Vec3(newUv, texCoords3.z), 0.0);
+	}
+
+	shadow /= 4.0;
+
+	return shadow;
+}
+
+ANKI_RP F32 computeShadowFactorSpotLight(SpotLight light, Vec3 worldPos, texture2D shadowTex,
+										 samplerShadow shadowMapSampler)
+{
+	const Vec4 texCoords4 = light.m_textureMatrix * Vec4(worldPos, 1.0);
+	const Vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
+	return textureLod(shadowTex, shadowMapSampler, texCoords3, 0.0);
 }
 
 // Compute the shadow factor of point (omni) lights.
-ANKI_RP F32 computeShadowFactorPointLight(PointLight light, Vec3 frag2Light, texture2D shadowMap,
-										  sampler shadowMapSampler)
+ANKI_RP F32 computeShadowFactorPointLightGeneric(PointLight light, Vec3 frag2Light, texture2D shadowMap,
+												 samplerShadow shadowMapSampler, ANKI_RP F32 randFactor, Bool pcf)
 {
 	const Vec3 dir = -frag2Light;
 	const Vec3 dirabs = abs(dir);
@@ -218,18 +185,56 @@ ANKI_RP F32 computeShadowFactorPointLight(PointLight light, Vec3 frag2Light, tex
 	uv += atlasOffset;
 
 	// Sample
-	const Vec4 shadowMoments = textureLod(shadowMap, shadowMapSampler, uv, 0.0);
+	ANKI_RP F32 shadow;
+	if(pcf)
+	{
+		const Vec2 smTexelSize = 1.0 / Vec2(textureSize(shadowMap, 0).xy);
 
-	// 3) Compare
-	//
-	const ANKI_RP F32 shadowFactor = evsmComputeShadowFactor(z, shadowMoments);
+		const F32 sinTheta = sin(randFactor * 2.0 * kPi);
+		const F32 cosTheta = cos(randFactor * 2.0 * kPi);
 
-	return shadowFactor;
+		shadow = 0.0;
+		ANKI_UNROLL for(U32 i = 0u; i < 4u; ++i)
+		{
+			const Vec2 diskPoint = kPoissonDisk[i] * kPcfScale;
+
+			// Rotate the disk point
+			Vec2 rotatedDiskPoint;
+			rotatedDiskPoint.x = diskPoint.x * cosTheta - diskPoint.y * sinTheta;
+			rotatedDiskPoint.y = diskPoint.y * cosTheta + diskPoint.x * sinTheta;
+
+			// Offset calculation
+			const Vec2 newUv = uv + rotatedDiskPoint * smTexelSize;
+
+			shadow += textureLod(shadowMap, shadowMapSampler, Vec3(newUv, z), 0.0);
+		}
+
+		shadow /= 4.0;
+	}
+	else
+	{
+		shadow = textureLod(shadowMap, shadowMapSampler, Vec3(uv, z), 0.0);
+	}
+
+	return shadow;
+}
+
+ANKI_RP F32 computeShadowFactorPointLight(PointLight light, Vec3 frag2Light, texture2D shadowMap,
+										  samplerShadow shadowMapSampler)
+{
+	return computeShadowFactorPointLightGeneric(light, frag2Light, shadowMap, shadowMapSampler, -1.0, false);
+}
+
+ANKI_RP F32 computeShadowFactorPointLightPcf(PointLight light, Vec3 frag2Light, texture2D shadowMap,
+											 samplerShadow shadowMapSampler, ANKI_RP F32 randFactor)
+{
+	return computeShadowFactorPointLightGeneric(light, frag2Light, shadowMap, shadowMapSampler, randFactor, true);
 }
 
 // Compute the shadow factor of a directional light
-ANKI_RP F32 computeShadowFactorDirLight(DirectionalLight light, U32 cascadeIdx, Vec3 worldPos, texture2D shadowMap,
-										sampler shadowMapSampler)
+ANKI_RP F32 computeShadowFactorDirLightGeneric(DirectionalLight light, U32 cascadeIdx, Vec3 worldPos,
+											   texture2D shadowMap, samplerShadow shadowMapSampler,
+											   ANKI_RP F32 randFactor, Bool pcf)
 {
 #define ANKI_FAST_CASCADES_WORKAROUND 1 // Doesn't make sense but it's super fast
 
@@ -255,11 +260,53 @@ ANKI_RP F32 computeShadowFactorDirLight(DirectionalLight light, U32 cascadeIdx, 
 #endif
 
 	const Vec4 texCoords4 = lightProjectionMat * Vec4(worldPos, 1.0);
-	const Vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
+	Vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
 
-	const Vec4 shadowMoments = textureLod(shadowMap, shadowMapSampler, texCoords3.xy, 0.0);
+	ANKI_RP F32 shadow;
+	if(pcf)
+	{
+		const Vec2 smTexelSize = 1.0 / Vec2(textureSize(shadowMap, 0).xy);
 
-	return evsmComputeShadowFactor(texCoords3.z, shadowMoments);
+		const F32 sinTheta = sin(randFactor * 2.0 * kPi);
+		const F32 cosTheta = cos(randFactor * 2.0 * kPi);
+
+		shadow = 0.0;
+		ANKI_UNROLL for(U32 i = 0u; i < 4u; ++i)
+		{
+			const Vec2 diskPoint = kPoissonDisk[i] * kPcfScale;
+
+			// Rotate the disk point
+			Vec2 rotatedDiskPoint;
+			rotatedDiskPoint.x = diskPoint.x * cosTheta - diskPoint.y * sinTheta;
+			rotatedDiskPoint.y = diskPoint.y * cosTheta + diskPoint.x * sinTheta;
+
+			// Offset calculation
+			Vec2 newUv = texCoords3.xy + rotatedDiskPoint * smTexelSize;
+
+			shadow += textureLod(shadowMap, shadowMapSampler, Vec3(newUv, texCoords3.z), 0.0);
+		}
+
+		shadow /= 4.0;
+	}
+	else
+	{
+		shadow = textureLod(shadowMap, shadowMapSampler, texCoords3, 0.0);
+	}
+
+	return shadow;
+}
+
+ANKI_RP F32 computeShadowFactorDirLight(DirectionalLight light, U32 cascadeIdx, Vec3 worldPos, texture2D shadowMap,
+										samplerShadow shadowMapSampler)
+{
+	return computeShadowFactorDirLightGeneric(light, cascadeIdx, worldPos, shadowMap, shadowMapSampler, -1.0, false);
+}
+
+ANKI_RP F32 computeShadowFactorDirLightPcf(DirectionalLight light, U32 cascadeIdx, Vec3 worldPos, texture2D shadowMap,
+										   samplerShadow shadowMapSampler, F32 randFactor)
+{
+	return computeShadowFactorDirLightGeneric(light, cascadeIdx, worldPos, shadowMap, shadowMapSampler, randFactor,
+											  true);
 }
 
 // Compute the shadow factor of a directional light
@@ -391,30 +438,6 @@ ANKI_RP Vec3 sampleGlobalIllumination(const Vec3 worldPos, const Vec3 normal, co
 	return irradiance;
 }
 
-U32 computeShadowCascadeIndex(F32 distance, F32 p, F32 effectiveShadowDistance, U32 shadowCascadeCount)
-{
-	const F32 shadowCascadeCountf = F32(shadowCascadeCount);
-	F32 idx = pow(distance / effectiveShadowDistance, 1.0f / p) * shadowCascadeCountf;
-	idx = min(idx, shadowCascadeCountf - 1.0f);
-	return U32(idx);
-}
-
-/// Bring the indices of the closest cascades and a factor to blend them. To visualize what's going on go to
-/// https://www.desmos.com/calculator/dwlbq2j55i
-UVec2 computeShadowCascadeIndex2(F32 distance, F32 p, F32 effectiveShadowDistance, U32 shadowCascadeCount,
-								 out F32 blendFactor)
-{
-	const F32 shadowCascadeCountf = F32(shadowCascadeCount);
-	const F32 idx = pow(distance / effectiveShadowDistance, 1.0f / p) * shadowCascadeCountf;
-
-	const U32 cascadeA = min(U32(idx), shadowCascadeCount - 1u);
-	const U32 cascadeB = min(cascadeA + 1u, shadowCascadeCount - 1u);
-
-	blendFactor = pow(fract(idx), 24.0);
-
-	return UVec2(cascadeA, cascadeB);
-}
-
 /// To play with it use https://www.shadertoy.com/view/sttSDf
 /// http://jcgt.org/published/0007/04/01/paper.pdf by Eric Heitz
 /// Input v: view direction
@@ -466,4 +489,44 @@ Vec3 sampleReflectionVector(Vec3 viewDir, Vec3 normal, F32 roughness, Vec2 unifo
 
 	// Transform reflected_direction back to the initial space.
 	return tbn * reflectedDirTbn;
+}
+
+/// Get the index of the cascade given the distance from zero.
+U32 computeShadowCascadeIndex(F32 distance, Vec4 cascadeDistances, U32 shadowCascadeCount)
+{
+	U32 cascade;
+	if(distance < cascadeDistances[0u])
+	{
+		cascade = 0u;
+	}
+	else if(distance < cascadeDistances[1u])
+	{
+		cascade = 1u;
+	}
+	else if(distance < cascadeDistances[2u])
+	{
+		cascade = 2u;
+	}
+	else
+	{
+		cascade = 3u;
+	}
+
+	return min(shadowCascadeCount - 1u, cascade);
+}
+
+/// Bring the indices of the closest cascades and a factor to blend them. To visualize what's going on go to:
+/// https://www.desmos.com/calculator/g1ibye6ebg
+UVec2 computeShadowCascadeIndex2(F32 distance, Vec4 cascadeDistances, U32 shadowCascadeCount, out ANKI_RP F32 factor)
+{
+	const U32 cascade = computeShadowCascadeIndex(distance, cascadeDistances, shadowCascadeCount);
+	const U32 nextCascade = min(cascade + 1u, shadowCascadeCount - 1u);
+
+	const F32 minDist = (cascade == 0u) ? 0.0f : cascadeDistances[cascade - 1u];
+	const F32 maxDist = cascadeDistances[cascade];
+
+	factor = (distance - minDist) / max(kEpsilonf, maxDist - minDist);
+	factor = pow(factor, 16.0f);
+
+	return UVec2(cascade, nextCascade);
 }

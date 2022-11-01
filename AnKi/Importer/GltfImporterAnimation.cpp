@@ -50,11 +50,12 @@ static void optimizeChannel(DynamicArrayRaii<GltfAnimKey<T>>& arr, const T& iden
 		}
 
 		DynamicArrayRaii<GltfAnimKey<T>> newArr(&arr.getMemoryPool());
-		for(U32 i = 0; i < arr.getSize() - 2; i += 2)
+		U32 it = 0;
+		while(true)
 		{
-			const GltfAnimKey<T>& left = arr[i];
-			const GltfAnimKey<T>& middle = arr[i + 1];
-			const GltfAnimKey<T>& right = arr[i + 2];
+			const GltfAnimKey<T>& left = arr[it];
+			const GltfAnimKey<T>& middle = arr[it + 1];
+			const GltfAnimKey<T>& right = arr[it + 2];
 
 			newArr.emplaceBack(left);
 
@@ -77,8 +78,18 @@ static void optimizeChannel(DynamicArrayRaii<GltfAnimKey<T>>& arr, const T& iden
 				}
 			}
 
-			newArr.emplaceBack(right);
+			it += 2;
+			if(it + 2 >= arr.getSize())
+			{
+				break;
+			}
 		}
+
+		for(; it < arr.getSize(); ++it)
+		{
+			newArr.emplaceBack(arr[it]);
+		}
+
 		ANKI_ASSERT(newArr.getSize() <= arr.getSize());
 
 		// Check if identity
@@ -353,18 +364,14 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 
 		// Only animate cameras for now
 		const cgltf_node& node = *channel.m_targetNode;
-		if((node.camera == nullptr) || node.name == nullptr)
+		if(node.camera == nullptr || node.name == nullptr)
 		{
 			continue;
 		}
 
-		// ANKI_CHECK(m_sceneFile.writeText("--[[\n"));
-
 		ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:tryFindSceneNode(\"%s\")\n", node.name));
 		ANKI_CHECK(m_sceneFile.writeTextf("getEventManager():newAnimationEvent(\"%s%s\", \"%s\", node)\n",
 										  m_rpath.cstr(), animFname.cstr(), node.name));
-
-		// ANKI_CHECK(m_sceneFile.writeText("--]]\n"));
 	}
 
 	return Error::kNone;

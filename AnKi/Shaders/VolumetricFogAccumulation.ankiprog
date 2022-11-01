@@ -9,7 +9,6 @@ ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 4u);
 
 #pragma anki start comp
 
-#include <AnKi/Shaders/Include/ClusteredShadingFunctions.h>
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #include <AnKi/Shaders/Common.glsl>
 

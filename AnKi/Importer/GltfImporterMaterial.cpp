@@ -4,9 +4,11 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Importer/GltfImporter.h>
+#include <AnKi/Importer/ImageImporter.h>
 #include <AnKi/Resource/ImageLoader.h>
 #include <AnKi/Util/WeakArray.h>
 #include <AnKi/Util/Xml.h>
+#include <AnKi/Util/Filesystem.h>
 
 namespace anki {
 
@@ -98,7 +100,56 @@ static Error findConstantColorsInImage(CString fname, Vec4& constantColor, BaseM
 	return Error::kNone;
 }
 
-Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracing)
+static Error importImage(BaseMemoryPool& pool, CString in, CString out, Bool alpha)
+{
+	ImageImporterConfig config;
+
+	config.m_pool = &pool;
+
+	Array<CString, 1> inputFnames = {in};
+	config.m_inputFilenames = inputFnames;
+
+	config.m_outFilename = out;
+	config.m_compressions = ImageBinaryDataCompression::kS3tc | ImageBinaryDataCompression::kAstc;
+	config.m_minMipmapDimension = 8;
+	config.m_noAlpha = !alpha;
+
+	StringRaii tmp(&pool);
+	if(getTempDirectory(tmp))
+	{
+		ANKI_IMPORTER_LOGE("getTempDirectory() failed");
+		return 1;
+	}
+	config.m_tempDirectory = tmp;
+
+#if ANKI_OS_WINDOWS
+	config.m_compressonatorFilename =
+		ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Windows64/Compressonator/compressonatorcli.exe";
+	config.m_astcencFilename = ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Windows64/astcenc-avx2.exe";
+#elif ANKI_OS_LINUX
+	config.m_compressonatorFilename = ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Linux64/Compressonator/compressonatorcli";
+	config.m_astcencFilename = ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Linux64/astcenc-avx2";
+#else
+#	error "Unupported"
+#endif
+
+	config.m_flipImage = false;
+
+	ANKI_IMPORTER_LOGV("Importing image \"%s\" as \"%s\"", in.cstr(), out.cstr());
+	ANKI_CHECK(importImage(config));
+
+	return Error::kNone;
+}
+
+static void fixImageUri(StringRaii& uri)
+{
+	uri.replaceAll(".tga", ".ankitex");
+	uri.replaceAll(".png", ".ankitex");
+	uri.replaceAll(".jpg", ".ankitex");
+	uri.replaceAll(".jpeg", ".ankitex");
+}
+
+Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracing) const
 {
 	StringRaii fname(m_pool);
 	fname.sprintf("%s%s", m_outDir.cstr(), computeMaterialResourceFilename(mtl).cstr());
@@ -139,6 +190,14 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 
 		const Bool constantAlpha = constantColor.w() >= 0.0f;
 		xml.replaceAll("%alphaTestMutator%", (constantAlpha) ? "0" : "1");
+
+		if(m_importTextures)
+		{
+			StringRaii out = m_outDir;
+			out.append(fname);
+			fixImageUri(out);
+			ANKI_CHECK(importImage(*m_pool, fname, out, !constantAlpha));
+		}
 	}
 	else
 	{
@@ -196,6 +255,7 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 	}
 
 	// Roughness
+	Bool bRoughnessMetalicTexture = false;
 	if(mtl.pbr_metallic_roughness.metallic_roughness_texture.texture && constantRoughness < 0.0f)
 	{
 		StringRaii uri(m_pool);
@@ -206,6 +266,8 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 					   StringRaii(m_pool).sprintf("<input name=\"m_roughnessTex\" value=\"%s\"/>", uri.cstr()));
 
 		xml.replaceAll("%roughnessTexMutator%", "1");
+
+		bRoughnessMetalicTexture = true;
 	}
 	else
 	{
@@ -230,6 +292,8 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 					   StringRaii(m_pool).sprintf("<input name=\"m_metallicTex\" value=\"%s\"/>", uri.cstr()));
 
 		xml.replaceAll("%metalTexMutator%", "1");
+
+		bRoughnessMetalicTexture = true;
 	}
 	else
 	{
@@ -241,6 +305,15 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 					   StringRaii(m_pool).sprintf("<input name=\"m_metallic\" value=\"%f\"/>", metalines));
 
 		xml.replaceAll("%metalTexMutator%", "0");
+	}
+
+	if(bRoughnessMetalicTexture && m_importTextures)
+	{
+		CString in = getTextureUri(mtl.pbr_metallic_roughness.metallic_roughness_texture);
+		StringRaii out = m_outDir;
+		out.append(in);
+		fixImageUri(out);
+		ANKI_CHECK(importImage(*m_pool, in, out, false));
 	}
 
 	// Normal texture
@@ -257,6 +330,15 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 						   StringRaii(m_pool).sprintf("<input name=\"m_normalTex\" value=\"%s\"/>", uri.cstr()));
 
 			xml.replaceAll("%normalTexMutator%", "1");
+
+			if(m_importTextures)
+			{
+				CString in = getTextureUri(mtl.normal_texture);
+				StringRaii out = m_outDir;
+				out.append(in);
+				fixImageUri(out);
+				ANKI_CHECK(importImage(*m_pool, in, out, false));
+			}
 		}
 		else
 		{
@@ -280,6 +362,15 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 					   StringRaii(m_pool).sprintf("<input name=\"m_emissiveTex\" value=\"%s\"/>", uri.cstr()));
 
 		xml.replaceAll("%emissiveTexMutator%", "1");
+
+		if(m_importTextures)
+		{
+			CString in = getTextureUri(mtl.emissive_texture);
+			StringRaii out = m_outDir;
+			out.append(in);
+			fixImageUri(out);
+			ANKI_CHECK(importImage(*m_pool, in, out, false));
+		}
 	}
 	else
 	{
@@ -329,10 +420,7 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 	}
 
 	// Replace texture extensions with .anki
-	xml.replaceAll(".tga", ".ankitex");
-	xml.replaceAll(".png", ".ankitex");
-	xml.replaceAll(".jpg", ".ankitex");
-	xml.replaceAll(".jpeg", ".ankitex");
+	fixImageUri(xml);
 
 	// Write file
 	File file;

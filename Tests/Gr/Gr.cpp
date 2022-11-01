@@ -3405,7 +3405,7 @@ void main()
 
 		BufferInitInfo inf;
 		inf.m_mapAccess = BufferMapAccessBit::kWrite;
-		inf.m_usage = BufferUsageBit::kSBT;
+		inf.m_usage = BufferUsageBit::kShaderBindingTable;
 		inf.m_size = sbtRecordSize * recordCount;
 
 		sbt = g_gr->newBuffer(inf);

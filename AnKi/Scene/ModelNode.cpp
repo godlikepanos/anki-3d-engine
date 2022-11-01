@@ -43,6 +43,10 @@ class ModelNode::RenderProxy
 {
 public:
 	ModelNode* m_node = nullptr;
+
+	/// Uncompresses the mesh positions to the local view. The scale should be uniform because it will be applied to
+	/// normals and tangents and non-uniform data will cause problems.
+	Mat4 m_compressedToModelTransform = Mat4::getIdentity();
 };
 
 ModelNode::ModelNode(SceneGraph* scene, CString name)
@@ -165,6 +169,7 @@ void ModelNode::initRenderComponents()
 
 	for(U32 patchIdx = 0; patchIdx < model->getModelPatches().getSize(); ++patchIdx)
 	{
+		const ModelPatch& modelPatch = model->getModelPatches()[patchIdx];
 		RenderComponent& rc = getNthComponentOfType<RenderComponent>(patchIdx);
 		rc.initRaster(
 			[](RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) {
@@ -174,10 +179,9 @@ void ModelNode::initRenderComponents()
 			},
 			&m_renderProxies[patchIdx], modelc.getRenderMergeKeys()[patchIdx]);
 
-		rc.setFlagsFromMaterial(model->getModelPatches()[patchIdx].getMaterial());
+		rc.setFlagsFromMaterial(modelPatch.getMaterial());
 
-		if(!!(model->getModelPatches()[patchIdx].getMaterial()->getRenderingTechniques()
-			  & RenderingTechniqueBit::kAllRt))
+		if(!!(modelPatch.getMaterial()->getRenderingTechniques() & RenderingTechniqueBit::kAllRt))
 		{
 			rc.initRayTracing(
 				[](U32 lod, const void* userData, RayTracingInstanceQueueElement& el) {
@@ -188,7 +192,15 @@ void ModelNode::initRenderComponents()
 				&m_renderProxies[patchIdx]);
 		}
 
-		m_renderProxies[patchIdx].m_node = this;
+		// Init the proxy
+		RenderProxy& proxy = m_renderProxies[patchIdx];
+		proxy.m_node = this;
+
+		const MeshResource& meshResource = *modelPatch.getMesh();
+		proxy.m_compressedToModelTransform.setTranslationPart(meshResource.getPositionsTranslation().xyz1());
+		proxy.m_compressedToModelTransform(0, 0) = meshResource.getPositionsScale();
+		proxy.m_compressedToModelTransform(1, 1) = meshResource.getPositionsScale();
+		proxy.m_compressedToModelTransform(2, 2) = meshResource.getPositionsScale();
 	}
 }
 
@@ -207,11 +219,24 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		const SkinComponent& skinc = getFirstComponentOfType<SkinComponent>();
 
 		// Transforms
+		auto computeTranform = [&](const Transform& trf) -> Mat3x4 {
+			if(skinc.isEnabled())
+			{
+				return Mat3x4(trf);
+			}
+			else
+			{
+				// Bake the decompression in the model matrix
+				const Mat4 m4 = Mat4(trf) * m_renderProxies[modelPatchIdx].m_compressedToModelTransform;
+				const Mat3x4 out(m4);
+				return out;
+			}
+		};
 		Array<Mat3x4, kMaxInstanceCount> trfs;
 		Array<Mat3x4, kMaxInstanceCount> prevTrfs;
 		const MoveComponent& movec = getFirstComponentOfType<MoveComponent>();
-		trfs[0] = Mat3x4(movec.getWorldTransform());
-		prevTrfs[0] = Mat3x4(movec.getPreviousWorldTransform());
+		trfs[0] = computeTranform(movec.getWorldTransform());
+		prevTrfs[0] = computeTranform(movec.getPreviousWorldTransform());
 		Bool moved = trfs[0] != prevTrfs[0];
 		for(U32 i = 1; i < instanceCount; ++i)
 		{
@@ -222,8 +247,8 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 			ANKI_ASSERT(otherNodeModelPatchIdx == modelPatchIdx);
 
 			const MoveComponent& otherNodeMovec = otherNode.getFirstComponentOfType<MoveComponent>();
-			trfs[i] = Mat3x4(otherNodeMovec.getWorldTransform());
-			prevTrfs[i] = Mat3x4(otherNodeMovec.getPreviousWorldTransform());
+			trfs[i] = computeTranform(otherNodeMovec.getWorldTransform());
+			prevTrfs[i] = computeTranform(otherNodeMovec.getPreviousWorldTransform());
 
 			moved = moved || (trfs[i] != prevTrfs[i]);
 		}
@@ -257,29 +282,38 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		cmdb->bindShaderProgram(modelInf.m_program);
 
 		// Uniforms
+		const Vec4 positionScaleAndTransform(
+			m_renderProxies[modelPatchIdx].m_compressedToModelTransform(0, 0),
+			m_renderProxies[modelPatchIdx].m_compressedToModelTransform.getTranslationPart().xyz());
 		RenderComponent::allocateAndSetupUniforms(
 			modelc.getModelResource()->getModelPatches()[modelPatchIdx].getMaterial(), ctx,
 			ConstWeakArray<Mat3x4>(&trfs[0], instanceCount), ConstWeakArray<Mat3x4>(&prevTrfs[0], instanceCount),
-			*ctx.m_stagingGpuAllocator);
+			*ctx.m_stagingGpuAllocator, positionScaleAndTransform);
 
-		// Set attributes
-		for(U i = 0; i < modelInf.m_vertexAttributeCount; ++i)
+		// Bind attributes & vertex buffers
+		for(VertexStreamId streamId :
+			EnumIterable<VertexStreamId>(VertexStreamId::kMeshRelatedFirst, VertexStreamId::kMeshRelatedCount))
 		{
-			const ModelVertexAttribute& attrib = modelInf.m_vertexAttributes[i];
-			ANKI_ASSERT(attrib.m_format != Format::kNone);
-			cmdb->setVertexAttribute(U32(attrib.m_location), attrib.m_bufferBinding, attrib.m_format,
-									 attrib.m_relativeOffset);
+			if(modelInf.m_vertexBufferOffsets[streamId] == kMaxPtrSize)
+			{
+				continue;
+			}
+
+			const U32 attribLocation = U32(streamId);
+			const U32 bufferBinding = U32(streamId);
+			const Format fmt = kMeshRelatedVertexStreamFormats[streamId];
+			const U32 relativeOffset = 0;
+			const U32 vertexStride = getFormatInfo(fmt).m_texelSize;
+
+			cmdb->setVertexAttribute(attribLocation, bufferBinding, fmt, relativeOffset);
+
+			cmdb->bindVertexBuffer(bufferBinding, getUnifiedGeometryMemoryPool().getVertexBuffer(),
+								   modelInf.m_vertexBufferOffsets[streamId], vertexStride, VertexStepRate::kVertex);
 		}
 
-		// Set vertex buffers
-		for(U32 i = 0; i < modelInf.m_vertexBufferBindingCount; ++i)
-		{
-			const ModelVertexBufferBinding& binding = modelInf.m_vertexBufferBindings[i];
-			cmdb->bindVertexBuffer(i, binding.m_buffer, binding.m_offset, binding.m_stride, VertexStepRate::kVertex);
-		}
-
-		// Index buffer
-		cmdb->bindIndexBuffer(modelInf.m_indexBuffer, modelInf.m_indexBufferOffset, IndexType::kU16);
+		// Bind index buffer
+		cmdb->bindIndexBuffer(getUnifiedGeometryMemoryPool().getVertexBuffer(), modelInf.m_indexBufferOffset,
+							  IndexType::kU16);
 
 		// Draw
 		cmdb->drawElements(PrimitiveTopology::kTriangles, modelInf.m_indexCount, instanceCount, modelInf.m_firstIndex,
@@ -399,18 +433,11 @@ void ModelNode::setupRayTracingInstanceQueueElement(U32 lod, U32 modelPatchIdx,
 	el.m_bottomLevelAccelerationStructure = info.m_bottomLevelAccelerationStructure.get();
 
 	const MoveComponent& movec = getFirstComponentOfType<MoveComponent>();
-	el.m_transform = Mat3x4(movec.getWorldTransform());
+
+	const Mat4 m4 = Mat4(movec.getWorldTransform()) * m_renderProxies[modelPatchIdx].m_compressedToModelTransform;
+	el.m_transform = Mat3x4(m4);
 
 	el.m_shaderGroupHandleIndex = info.m_shaderGroupHandleIndex;
-
-	// References
-	el.m_grObjectCount = info.m_grObjectReferences.getSize();
-	for(U32 i = 0; i < el.m_grObjectCount; ++i)
-	{
-		// const_cast hack follows. To avoid the const you could copy m_grObjectReferences[i] to a GrObjectPtr and then
-		// call get() on that. But that will cost 2 atomic operations
-		el.m_grObjects[i] = const_cast<GrObject*>(info.m_grObjectReferences[i].get());
-	}
 }
 
 } // end namespace anki

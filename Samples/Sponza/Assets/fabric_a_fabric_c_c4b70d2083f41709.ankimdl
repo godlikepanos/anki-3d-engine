@@ -1,8 +1,7 @@
 <model>
 	<modelPatches>
 		<modelPatch>
-			<mesh>Assets/fabric_a_lod0_945c29fc221550fb.ankimesh</mesh>
-			<mesh1>Assets/fabric_a_lod1_945c29fc221550fb.ankimesh</mesh1>
+			<mesh>Assets/fabric_a_945c29fc221550fb.ankimesh</mesh>
 			<material>Assets/fabric_c_c8bf70dee411d1bd.ankimtl</material>
 		</modelPatch>
 	</modelPatches>

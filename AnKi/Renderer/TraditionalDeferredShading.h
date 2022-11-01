@@ -57,6 +57,12 @@ public:
 	void drawLights(TraditionalDeferredLightShadingDrawInfo& info);
 
 private:
+	enum class ProxyType
+	{
+		kProxySphere,
+		kProxyCone
+	};
+
 	ShaderProgramResourcePtr m_lightProg;
 	Array<ShaderProgramPtr, 2> m_plightGrProg;
 	Array<ShaderProgramPtr, 2> m_slightGrProg;
@@ -67,13 +73,14 @@ private:
 
 	/// @name Meshes of light volumes.
 	/// @{
-	MeshResourcePtr m_plightMesh;
-	MeshResourcePtr m_slightMesh;
+	BufferPtr m_proxyVolumesBuffer;
 	/// @}
 
 	SamplerPtr m_shadowSampler;
 
-	static void bindVertexIndexBuffers(MeshResourcePtr& mesh, CommandBufferPtr& cmdb, U32& indexCount);
+	void bindVertexIndexBuffers(ProxyType proxyType, CommandBufferPtr& cmdb, U32& indexCount) const;
+
+	void createProxyMeshes();
 };
 /// @}
 } // end namespace anki

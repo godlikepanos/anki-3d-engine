@@ -68,15 +68,35 @@ ANKI_END_NAMESPACE
 #	define ScalarVec4 Vec4
 #	define ScalarMat3x4 Mat3x4
 #	define ScalarMat4 Mat4
+
+#	define constexpr const
 #endif
 
 //
-// Various
+// Constants
 //
 ANKI_BEGIN_NAMESPACE
 
+#if !defined(__cplusplus)
+constexpr F32 kEpsilonf = 0.000001f;
+constexpr F16 kEpsilonhf = 0.0001hf; // Divisions by this should be OK according to http://weitz.de/ieee/
+constexpr ANKI_RP F32 kEpsilonRp = F32(kEpsilonhf);
+
+constexpr U32 kMaxU32 = 0xFFFFFFFFu;
+constexpr F32 kMaxF32 = 3.402823e+38;
+constexpr F16 kMaxF16 = 65504.0hf;
+constexpr F16 kMinF16 = 0.00006104hf;
+
+constexpr F32 kPi = 3.14159265358979323846f;
+#endif
+
 /// The renderer will group drawcalls into instances up to this number.
-const U32 kMaxInstanceCount = 64u;
-const U32 kMaxLodCount = 3u;
+constexpr U32 kMaxInstanceCount = 64u;
+
+constexpr U32 kMaxLodCount = 3u;
+constexpr U32 kMaxShadowCascades = 4u;
+
+constexpr F32 kShadowsPolygonOffsetFactor = 1.25f;
+constexpr F32 kShadowsPolygonOffsetUnits = 2.75f;
 
 ANKI_END_NAMESPACE

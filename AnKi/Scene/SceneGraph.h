@@ -24,6 +24,7 @@ class ConfigSet;
 class PerspectiveCameraNode;
 class Octree;
 class UiManager;
+class UnifiedGeometryMemoryPool;
 
 /// @addtogroup scene
 /// @{
@@ -50,7 +51,7 @@ public:
 
 	Error init(AllocAlignedCallback allocCb, void* allocCbData, ThreadHive* threadHive, ResourceManager* resources,
 			   Input* input, ScriptManager* scriptManager, UiManager* uiManager, ConfigSet* config,
-			   const Timestamp* globalTimestamp);
+			   const Timestamp* globalTimestamp, UnifiedGeometryMemoryPool* unifiedGeometryMemPool);
 
 	Timestamp getGlobalTimestamp() const
 	{
@@ -236,6 +237,7 @@ private:
 	ScriptManager* m_scriptManager = nullptr;
 	UiManager* m_uiManager = nullptr;
 	ConfigSet* m_config = nullptr;
+	UnifiedGeometryMemoryPool* m_unifiedGeometryMemPool = nullptr;
 
 	mutable HeapMemoryPool m_pool;
 	mutable StackMemoryPool m_framePool;

@@ -13,6 +13,8 @@
 
 namespace anki {
 
+static Atomic<U32> g_tempFileIndex = {1}; // Used to create random names
+
 namespace {
 
 class SurfaceOrVolumeData
@@ -322,7 +324,8 @@ static Error resizeImage(CString inImageFilename, U32 outWidth, U32 outHeight, C
 	}
 
 	// Store
-	tmpFilename.sprintf("%s/AnKiImageImporter_%u.%s", tempDirectory.cstr(), U32(std::rand()), (hdr) ? "exr" : "png");
+	tmpFilename.sprintf("%s/AnKiImageImporter_%u.%s", tempDirectory.cstr(), g_tempFileIndex.fetchAdd(1),
+						(hdr) ? "exr" : "png");
 	ANKI_IMPORTER_LOGV("Will store: %s", tmpFilename.cstr());
 
 	if(!hdr)
@@ -615,7 +618,8 @@ static Error compressS3tc(BaseMemoryPool& pool, CString tempDirectory, CString c
 
 	// Create a PNG image to feed to the compressor
 	StringRaii tmpFilename(&pool);
-	tmpFilename.sprintf("%s/AnKiImageImporter_%u.%s", tempDirectory.cstr(), U32(std::rand()), (hdr) ? "exr" : "png");
+	tmpFilename.sprintf("%s/AnKiImageImporter_%u.%s", tempDirectory.cstr(), g_tempFileIndex.fetchAdd(1),
+						(hdr) ? "exr" : "png");
 	ANKI_IMPORTER_LOGV("Will store: %s", tmpFilename.cstr());
 	Bool saveTmpImageOk = false;
 	if(!hdr)
@@ -639,7 +643,7 @@ static Error compressS3tc(BaseMemoryPool& pool, CString tempDirectory, CString c
 
 	// Invoke the compressor process
 	StringRaii ddsFilename(&pool);
-	ddsFilename.sprintf("%s/AnKiImageImporter_%u.dds", tempDirectory.cstr(), U32(std::rand()));
+	ddsFilename.sprintf("%s/AnKiImageImporter_%u.dds", tempDirectory.cstr(), g_tempFileIndex.fetchAdd(1));
 	Process proc;
 	Array<CString, 5> args;
 	U32 argCount = 0;
@@ -649,8 +653,8 @@ static Error compressS3tc(BaseMemoryPool& pool, CString tempDirectory, CString c
 	args[argCount++] = tmpFilename;
 	args[argCount++] = ddsFilename;
 
-	ANKI_IMPORTER_LOGV("Will invoke process: compressonatorcli %s %s %s %s %s", args[0].cstr(), args[1].cstr(),
-					   args[2].cstr(), args[3].cstr(), args[4].cstr());
+	ANKI_IMPORTER_LOGV("Will invoke process: %s %s %s %s %s %s", compressonatorFilename.cstr(), args[0].cstr(),
+					   args[1].cstr(), args[2].cstr(), args[3].cstr(), args[4].cstr());
 	ANKI_CHECK(proc.start(compressonatorFilename, args));
 	CleanupFile ddsCleanup(&pool, ddsFilename);
 	ProcessStatus status;
@@ -727,7 +731,8 @@ static Error compressAstc(BaseMemoryPool& pool, CString tempDirectory, CString a
 
 	// Create a BMP image to feed to the astcebc
 	StringRaii tmpFilename(&pool);
-	tmpFilename.sprintf("%s/AnKiImageImporter_%u.%s", tempDirectory.cstr(), U32(std::rand()), (hdr) ? "exr" : "png");
+	tmpFilename.sprintf("%s/AnKiImageImporter_%u.%s", tempDirectory.cstr(), g_tempFileIndex.fetchAdd(1),
+						(hdr) ? "exr" : "png");
 	ANKI_IMPORTER_LOGV("Will store: %s", tmpFilename.cstr());
 	Bool saveTmpImageOk = false;
 	if(!hdr)
@@ -751,7 +756,7 @@ static Error compressAstc(BaseMemoryPool& pool, CString tempDirectory, CString a
 
 	// Invoke the compressor process
 	StringRaii astcFilename(&pool);
-	astcFilename.sprintf("%s/AnKiImageImporter_%u.astc", tempDirectory.cstr(), U32(std::rand()));
+	astcFilename.sprintf("%s/AnKiImageImporter_%u.astc", tempDirectory.cstr(), g_tempFileIndex.fetchAdd(1));
 	StringRaii blockStr(&pool);
 	blockStr.sprintf("%ux%u", blockSize.x(), blockSize.y());
 	Process proc;
@@ -763,7 +768,7 @@ static Error compressAstc(BaseMemoryPool& pool, CString tempDirectory, CString a
 	args[argCount++] = blockStr;
 	args[argCount++] = "-fast";
 
-	ANKI_IMPORTER_LOGV("Will invoke process: astcenc-avx2 %s %s %s %s %s", args[0].cstr(), args[1].cstr(),
+	ANKI_IMPORTER_LOGV("Will invoke process: %s %s %s %s %s %s", astcencFilename.cstr(), args[0].cstr(), args[1].cstr(),
 					   args[2].cstr(), args[3].cstr(), args[4].cstr());
 	ANKI_CHECK(proc.start(astcencFilename, args));
 

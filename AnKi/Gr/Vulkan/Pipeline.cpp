@@ -278,11 +278,7 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 	rastCi.polygonMode = convertFillMode(m_state.m_rasterizer.m_fillMode);
 	rastCi.cullMode = convertCullMode(m_state.m_rasterizer.m_cullMode);
 	rastCi.frontFace = (!m_defaultFb) ? VK_FRONT_FACE_CLOCKWISE : VK_FRONT_FACE_COUNTER_CLOCKWISE; // For viewport flip
-	rastCi.depthBiasEnable =
-		m_state.m_rasterizer.m_depthBiasConstantFactor != 0.0 && m_state.m_rasterizer.m_depthBiasSlopeFactor != 0.0;
-	rastCi.depthBiasConstantFactor = m_state.m_rasterizer.m_depthBiasConstantFactor;
-	rastCi.depthBiasClamp = 0.0;
-	rastCi.depthBiasSlopeFactor = m_state.m_rasterizer.m_depthBiasSlopeFactor;
+	rastCi.depthBiasEnable = m_state.m_rasterizer.m_depthBiasEnabled;
 	rastCi.lineWidth = 1.0;
 	ci.pRasterizationState = &rastCi;
 
@@ -381,10 +377,11 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 	dynCi.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 
 	// Almost all state is dynamic. Depth bias is static
-	static constexpr Array<VkDynamicState, 9> kDyn = {
+	static constexpr Array<VkDynamicState, 10> kDyn = {
 		{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_BLEND_CONSTANTS,
 		 VK_DYNAMIC_STATE_DEPTH_BOUNDS, VK_DYNAMIC_STATE_STENCIL_COMPARE_MASK, VK_DYNAMIC_STATE_STENCIL_WRITE_MASK,
-		 VK_DYNAMIC_STATE_STENCIL_REFERENCE, VK_DYNAMIC_STATE_LINE_WIDTH, VK_DYNAMIC_STATE_FRAGMENT_SHADING_RATE_KHR}};
+		 VK_DYNAMIC_STATE_STENCIL_REFERENCE, VK_DYNAMIC_STATE_LINE_WIDTH, VK_DYNAMIC_STATE_DEPTH_BIAS,
+		 VK_DYNAMIC_STATE_FRAGMENT_SHADING_RATE_KHR}};
 
 	dynCi.dynamicStateCount = kDyn.getSize();
 	dynCi.pDynamicStates = &kDyn[0];

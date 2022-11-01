@@ -34,6 +34,7 @@ const U32 kMaterialBindingLightVolume = 4u;
 const U32 kMaterialBindingClusterShadingUniforms = 5u;
 const U32 kMaterialBindingClusterShadingLights = 6u;
 const U32 kMaterialBindingClusters = 9u;
+const U32 kMaterialBindingShadowSampler = 10u;
 // End global bindings
 
 // Begin local bindings

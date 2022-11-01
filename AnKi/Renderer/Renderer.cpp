@@ -286,6 +286,12 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 
 		sinit.m_lodBias = scalingMipBias;
 		m_samplers.m_trilinearRepeatAnisoResolutionScalingBias = m_gr->newSampler(sinit);
+
+		sinit = {};
+		sinit.m_minMagFilter = SamplingFilter::kLinear;
+		sinit.m_mipmapFilter = SamplingFilter::kLinear;
+		sinit.m_compareOperation = CompareOperation::kLessEqual;
+		m_samplers.m_trilinearClampShadow = m_gr->newSampler(sinit);
 	}
 
 	for(U32 i = 0; i < m_jitterOffsets.getSize(); ++i)

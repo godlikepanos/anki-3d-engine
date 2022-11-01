@@ -12,7 +12,7 @@
 #include <AnKi/Collision/ConvexHullShape.h>
 #include <AnKi/Collision/Plane.h>
 #include <AnKi/Resource/Common.h>
-#include <AnKi/Shaders/Include/ClusteredShadingFunctions.h>
+#include <AnKi/Shaders/Include/Common.h>
 
 namespace anki {
 
@@ -76,14 +76,40 @@ public:
 	{
 		ANKI_ASSERT(type >= FrustumType::kFirst && type < FrustumType::kCount);
 		m_frustumType = type;
+		setNear(kDefaultNear);
+		setFar(kDefaultFar);
 		if(m_frustumType == FrustumType::kPerspective)
 		{
-			setPerspective(0.1f, 100.0f, toRad(45.0f), toRad(45.0f));
+			setFovX(kDefaultFovAngle);
+			setFovY(kDefaultFovAngle);
 		}
 		else
 		{
-			setOrthographic(0.1f, 100.0f, 5.0f, -5.0f, 5.0f, -5.0f);
+			setLeft(-5.0f);
+			setRight(5.0f);
+			setBottom(-1.0f);
+			setTop(1.0f);
 		}
+	}
+
+	void setPerspective(F32 near, F32 far, F32 fovX, F32 fovY)
+	{
+		ANKI_ASSERT(m_frustumType == FrustumType::kPerspective);
+		setNear(near);
+		setFar(far);
+		setFovX(fovX);
+		setFovY(fovY);
+	}
+
+	void setOrthographic(F32 near, F32 far, F32 right, F32 left, F32 top, F32 bottom)
+	{
+		ANKI_ASSERT(m_frustumType == FrustumType::kOrthographic);
+		setNear(near);
+		setFar(far);
+		setLeft(left);
+		setRight(right);
+		setTop(top);
+		setBottom(bottom);
 	}
 
 	FrustumType getFrustumType() const
@@ -92,36 +118,13 @@ public:
 		return m_frustumType;
 	}
 
-	void setPerspective(F32 near, F32 far, F32 fovX, F32 fovY)
-	{
-		ANKI_ASSERT(near > 0.0f && far > 0.0f && near < far);
-		ANKI_ASSERT(fovX > 0.0f && fovY > 0.0f && fovX < kPi && fovY < kPi);
-		ANKI_ASSERT(m_frustumType == FrustumType::kPerspective);
-		m_perspective.m_near = near;
-		m_perspective.m_far = far;
-		m_perspective.m_fovX = fovX;
-		m_perspective.m_fovY = fovY;
-		m_shapeMarkedForUpdate = true;
-	}
-
-	void setOrthographic(F32 near, F32 far, F32 right, F32 left, F32 top, F32 bottom)
-	{
-		ANKI_ASSERT(near > 0.0f && far > 0.0f && near < far);
-		ANKI_ASSERT(right > left && top > bottom);
-		ANKI_ASSERT(m_frustumType == FrustumType::kOrthographic);
-		m_ortho.m_near = near;
-		m_ortho.m_far = far;
-		m_ortho.m_right = right;
-		m_ortho.m_left = left;
-		m_ortho.m_top = top;
-		m_ortho.m_bottom = bottom;
-		m_shapeMarkedForUpdate = true;
-	}
-
 	void setNear(F32 near)
 	{
-		m_common.m_near = near;
-		m_shapeMarkedForUpdate = true;
+		if(ANKI_SCENE_ASSERT(near > 0.0f))
+		{
+			m_common.m_near = near;
+			m_shapeMarkedForUpdate = true;
+		}
 	}
 
 	F32 getNear() const
@@ -131,8 +134,11 @@ public:
 
 	void setFar(F32 far)
 	{
-		m_common.m_far = far;
-		m_shapeMarkedForUpdate = true;
+		if(ANKI_SCENE_ASSERT(far > 0.0f))
+		{
+			m_common.m_far = far;
+			m_shapeMarkedForUpdate = true;
+		}
 	}
 
 	F32 getFar() const
@@ -142,76 +148,88 @@ public:
 
 	void setFovX(F32 fovx)
 	{
-		ANKI_ASSERT(m_frustumType == FrustumType::kPerspective);
-		m_shapeMarkedForUpdate = true;
-		m_perspective.m_fovX = fovx;
+		if(ANKI_SCENE_ASSERT(m_frustumType == FrustumType::kPerspective)
+		   && ANKI_SCENE_ASSERT(fovx > 0.0f && fovx < kPi))
+		{
+			m_shapeMarkedForUpdate = true;
+			m_perspective.m_fovX = fovx;
+		}
 	}
 
 	F32 getFovX() const
 	{
-		ANKI_ASSERT(m_frustumType == FrustumType::kPerspective);
-		return m_perspective.m_fovX;
+		return (ANKI_SCENE_ASSERT(m_frustumType == FrustumType::kPerspective)) ? m_perspective.m_fovX : 0.0f;
 	}
 
 	void setFovY(F32 fovy)
 	{
-		ANKI_ASSERT(m_frustumType == FrustumType::kPerspective);
-		m_shapeMarkedForUpdate = true;
-		m_perspective.m_fovY = fovy;
+		if(ANKI_SCENE_ASSERT(m_frustumType == FrustumType::kPerspective)
+		   && ANKI_SCENE_ASSERT(fovy > 0.0f && fovy < kPi))
+		{
+			m_shapeMarkedForUpdate = true;
+			m_perspective.m_fovY = fovy;
+		}
 	}
 
 	F32 getFovY() const
 	{
-		ANKI_ASSERT(m_frustumType == FrustumType::kPerspective);
-		return m_perspective.m_fovY;
+		return (ANKI_SCENE_ASSERT(m_frustumType == FrustumType::kPerspective)) ? m_perspective.m_fovY : 0.0f;
 	}
 
 	F32 getLeft() const
 	{
-		ANKI_ASSERT(m_frustumType == FrustumType::kOrthographic);
-		return m_ortho.m_left;
+		return (ANKI_SCENE_ASSERT(m_frustumType == FrustumType::kOrthographic)) ? m_ortho.m_left : 0.0f;
 	}
 
 	void setLeft(F32 value)
 	{
-		ANKI_ASSERT(m_frustumType == FrustumType::kOrthographic);
-		m_ortho.m_left = value;
+		if(ANKI_SCENE_ASSERT(m_frustumType == FrustumType::kOrthographic))
+		{
+			m_shapeMarkedForUpdate = true;
+			m_ortho.m_left = value;
+		}
 	}
 
 	F32 getRight() const
 	{
-		ANKI_ASSERT(m_frustumType == FrustumType::kOrthographic);
-		return m_ortho.m_right;
+		return (ANKI_SCENE_ASSERT(m_frustumType == FrustumType::kOrthographic)) ? m_ortho.m_right : 0.0f;
 	}
 
 	void setRight(F32 value)
 	{
-		ANKI_ASSERT(m_frustumType == FrustumType::kOrthographic);
-		m_ortho.m_right = value;
+		if(ANKI_SCENE_ASSERT(m_frustumType == FrustumType::kOrthographic))
+		{
+			m_shapeMarkedForUpdate = true;
+			m_ortho.m_right = value;
+		}
 	}
 
 	F32 getTop() const
 	{
-		ANKI_ASSERT(m_frustumType == FrustumType::kOrthographic);
-		return m_ortho.m_top;
+		return (ANKI_SCENE_ASSERT(m_frustumType == FrustumType::kOrthographic)) ? m_ortho.m_top : 0.0f;
 	}
 
 	void setTop(F32 value)
 	{
-		ANKI_ASSERT(m_frustumType == FrustumType::kOrthographic);
-		m_ortho.m_top = value;
+		if(ANKI_SCENE_ASSERT(m_frustumType == FrustumType::kOrthographic))
+		{
+			m_shapeMarkedForUpdate = true;
+			m_ortho.m_top = value;
+		}
 	}
 
 	F32 getBottom() const
 	{
-		ANKI_ASSERT(m_frustumType == FrustumType::kOrthographic);
-		return m_ortho.m_bottom;
+		return (ANKI_SCENE_ASSERT(m_frustumType == FrustumType::kOrthographic)) ? m_ortho.m_bottom : 0.0f;
 	}
 
 	void setBottom(F32 value)
 	{
-		ANKI_ASSERT(m_frustumType == FrustumType::kOrthographic);
-		m_ortho.m_bottom = value;
+		if(ANKI_SCENE_ASSERT(m_frustumType == FrustumType::kOrthographic))
+		{
+			m_shapeMarkedForUpdate = true;
+			m_ortho.m_bottom = value;
+		}
 	}
 
 	const Transform& getWorldTransform() const
@@ -311,47 +329,26 @@ public:
 		}
 	}
 
-	/// Set how far to render shadows for this frustum or set to negative if you want to use the m_frustun's far.
-	void setEffectiveShadowDistance(F32 distance)
+	void setShadowCascadeDistance(U32 cascade, F32 distance)
 	{
-		m_effectiveShadowDistance = distance;
+		m_misc.m_shadowCascadeDistances[cascade] = distance;
+		m_miscMarkedForUpdate = true;
 	}
 
-	/// How far to render shadows for this frustum.
-	F32 getEffectiveShadowDistance() const
+	F32 getShadowCascadeDistance(U32 cascade) const
 	{
-		const F32 distance = (m_effectiveShadowDistance <= 0.0f) ? m_common.m_far : m_effectiveShadowDistance;
-		ANKI_ASSERT(distance > m_common.m_near && distance <= m_common.m_far);
-		return distance;
-	}
-
-	/// See computeShadowCascadeDistance()
-	void setShadowCascadesDistancePower(F32 power)
-	{
-		ANKI_ASSERT(power >= 1.0f);
-		m_shadowCascadesDistancePower = power;
-	}
-
-	/// See computeShadowCascadeDistance()
-	F32 getShadowCascadesDistancePower() const
-	{
-		return m_shadowCascadesDistancePower;
-	}
-
-	F32 computeShadowCascadeDistance(U32 cascadeIdx) const
-	{
-		return anki::computeShadowCascadeDistance(cascadeIdx, m_shadowCascadesDistancePower,
-												  getEffectiveShadowDistance(), getShadowCascadeCount());
+		return m_misc.m_shadowCascadeDistances[cascade];
 	}
 
 	[[nodiscard]] U32 getShadowCascadeCount() const
 	{
-		return m_shadowCascadeCount;
+		return m_misc.m_shadowCascadeCount;
 	}
 
 	void setShadowCascadeCount(U32 count)
 	{
-		m_shadowCascadeCount = U8(min(count, kMaxShadowCascades));
+		m_misc.m_shadowCascadeCount = U8(count);
+		m_miscMarkedForUpdate = true;
 	}
 
 	const ConvexHullShape& getPerspectiveBoundingShapeWorldSpace() const
@@ -374,15 +371,24 @@ public:
 	/// Set the lod distance. It doesn't interact with the far plane.
 	void setLodDistance(U32 lod, F32 maxDistance)
 	{
-		ANKI_ASSERT(maxDistance > 0.0f);
-		m_maxLodDistances[lod] = maxDistance;
+		m_misc.m_maxLodDistances[lod] = maxDistance;
+		m_miscMarkedForUpdate = true;
+	}
+
+	void setLodDistances(const Array<F32, kMaxLodCount>& distances)
+	{
+		for(U i = 0; i < m_misc.m_maxLodDistances.getSize(); ++i)
+		{
+			ANKI_ASSERT(distances[i] > m_common.m_near && distances[i] <= m_common.m_far);
+			m_misc.m_maxLodDistances[i] = distances[i];
+		}
 	}
 
 	/// See setLodDistance.
 	F32 getLodDistance(U32 lod) const
 	{
-		ANKI_ASSERT(m_maxLodDistances[lod] > 0.0f);
-		return m_maxLodDistances[lod];
+		ANKI_ASSERT(m_misc.m_maxLodDistances[lod] > 0.0f);
+		return m_misc.m_maxLodDistances[lod];
 	}
 
 private:
@@ -414,6 +420,10 @@ private:
 		Obb m_obbW; ///< Including shape
 	};
 
+	static constexpr F32 kDefaultNear = 0.1f;
+	static constexpr F32 kDefaultFar = 100.0f;
+	static constexpr F32 kDefaultFovAngle = toRad(45.0f);
+
 	SceneNode* m_node;
 
 	FrustumType m_frustumType = FrustumType::kCount;
@@ -439,15 +449,15 @@ private:
 	Array<Mat4, kPrevMatrixHistory> m_prevProjMats = {Mat4::getIdentity(), Mat4::getIdentity()};
 	Array<Mat4, kPrevMatrixHistory> m_prevViewProjMats = {Mat4::getIdentity(), Mat4::getIdentity()};
 
-	/// How far to render shadows for this frustum. If negative it's the m_frustum's far.
-	F32 m_effectiveShadowDistance = -1.0f;
+	class
+	{
+	public:
+		Array<F32, kMaxShadowCascades> m_shadowCascadeDistances = {};
 
-	/// Defines the the rate of the cascade distances
-	F32 m_shadowCascadesDistancePower = 1.0f;
+		Array<F32, kMaxLodCount - 1> m_maxLodDistances = {};
 
-	Array<F32, kMaxLodCount - 1> m_maxLodDistances = {};
-
-	U8 m_shadowCascadeCount = 0;
+		U8 m_shadowCascadeCount = 0;
+	} m_misc; ///< Misc stuff that this component just holds.
 
 	class
 	{
@@ -460,6 +470,7 @@ private:
 	FrustumComponentVisibilityTestFlag m_flags = FrustumComponentVisibilityTestFlag::kNone;
 	Bool m_shapeMarkedForUpdate : 1;
 	Bool m_trfMarkedForUpdate : 1;
+	Bool m_miscMarkedForUpdate : 1;
 
 	Bool updateInternal();
 };

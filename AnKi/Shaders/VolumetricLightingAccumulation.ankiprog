@@ -21,17 +21,18 @@ layout(local_size_x = kWorkgroupSize.x, local_size_y = kWorkgroupSize.y, local_s
 
 layout(set = 0, binding = 0) uniform sampler u_linearAnyRepeatSampler;
 layout(set = 0, binding = 1) uniform sampler u_linearAnyClampSampler;
+layout(set = 0, binding = 2) uniform samplerShadow u_linearAnyClampShadowSampler;
 
-layout(set = 0, binding = 2) writeonly uniform image3D u_volume;
-layout(set = 0, binding = 3) uniform texture2D u_noiseTex;
-layout(set = 0, binding = 4) uniform texture3D u_prevVolume;
+layout(set = 0, binding = 3) writeonly uniform image3D u_volume;
+layout(set = 0, binding = 4) uniform texture2D u_noiseTex;
+layout(set = 0, binding = 5) uniform texture3D u_prevVolume;
 
 #define CLUSTERED_SHADING_SET 0u
-#define CLUSTERED_SHADING_UNIFORMS_BINDING 5u
-#define CLUSTERED_SHADING_LIGHTS_BINDING 6u
-#define CLUSTERED_SHADING_GI_BINDING 9u
-#define CLUSTERED_SHADING_FOG_BINDING 11u
-#define CLUSTERED_SHADING_CLUSTERS_BINDING 12u
+#define CLUSTERED_SHADING_UNIFORMS_BINDING 6u
+#define CLUSTERED_SHADING_LIGHTS_BINDING 7u
+#define CLUSTERED_SHADING_GI_BINDING 10u
+#define CLUSTERED_SHADING_FOG_BINDING 12u
+#define CLUSTERED_SHADING_CLUSTERS_BINDING 13u
 #include <AnKi/Shaders/ClusteredShadingCommon.glsl>
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
 
@@ -108,14 +109,14 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 		F32 factor = phaseFunction(viewDir, dirLight.m_direction, kPhaseFunctionAnisotropy);
 
 #if ENABLE_SHADOWS
-		if(dirLight.m_cascadeCount > 0u && negativeZViewSpace < dirLight.m_effectiveShadowDistance)
+		if(dirLight.m_shadowCascadeCount > 0u
+		   && negativeZViewSpace < dirLight.m_shadowCascadeDistances[dirLight.m_shadowCascadeCount - 1u])
 		{
-			const U32 cascadeIdx =
-				computeShadowCascadeIndex(negativeZViewSpace, dirLight.m_shadowCascadesDistancePower,
-										  dirLight.m_effectiveShadowDistance, dirLight.m_cascadeCount);
+			const U32 cascadeIdx = computeShadowCascadeIndex(negativeZViewSpace, dirLight.m_shadowCascadeDistances,
+															 dirLight.m_shadowCascadeCount);
 
-			factor *=
-				computeShadowFactorDirLight(dirLight, cascadeIdx, worldPos, u_shadowAtlasTex, u_linearAnyClampSampler);
+			factor *= computeShadowFactorDirLight(dirLight, cascadeIdx, worldPos, u_shadowAtlasTex,
+												  u_linearAnyClampShadowSampler);
 		}
 #endif
 
@@ -137,7 +138,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 #if ENABLE_SHADOWS
 		if(light.m_shadowAtlasTileScale >= 0.0)
 		{
-			factor *= computeShadowFactorPointLight(light, frag2Light, u_shadowAtlasTex, u_linearAnyClampSampler);
+			factor *= computeShadowFactorPointLight(light, frag2Light, u_shadowAtlasTex, u_linearAnyClampShadowSampler);
 		}
 #endif
 
@@ -163,7 +164,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 #if ENABLE_SHADOWS
 		if(light.m_shadowLayer != kMaxU32)
 		{
-			factor *= computeShadowFactorSpotLight(light, worldPos, u_shadowAtlasTex, u_linearAnyClampSampler);
+			factor *= computeShadowFactorSpotLight(light, worldPos, u_shadowAtlasTex, u_linearAnyClampShadowSampler);
 		}
 #endif
 

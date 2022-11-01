@@ -1,7 +1,7 @@
 <model>
 	<modelPatches>
 		<modelPatch>
-			<mesh>Assets/rod_end_lod0_e8bfe2abf71f7057.ankimesh</mesh>
+			<mesh>Assets/rod_end_e8bfe2abf71f7057.ankimesh</mesh>
 			<material>Assets/flagpole_6c7e0eb8dd33b39e.ankimtl</material>
 		</modelPatch>
 	</modelPatches>

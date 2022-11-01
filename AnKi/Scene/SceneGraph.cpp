@@ -54,7 +54,8 @@ SceneGraph::~SceneGraph()
 
 Error SceneGraph::init(AllocAlignedCallback allocCb, void* allocCbData, ThreadHive* threadHive,
 					   ResourceManager* resources, Input* input, ScriptManager* scriptManager, UiManager* uiManager,
-					   ConfigSet* config, const Timestamp* globalTimestamp)
+					   ConfigSet* config, const Timestamp* globalTimestamp,
+					   UnifiedGeometryMemoryPool* unifiedGeometryMemPool)
 {
 	m_globalTimestamp = globalTimestamp;
 	m_threadHive = threadHive;
@@ -65,6 +66,7 @@ Error SceneGraph::init(AllocAlignedCallback allocCb, void* allocCbData, ThreadHi
 	m_scriptManager = scriptManager;
 	m_uiManager = uiManager;
 	m_config = config;
+	m_unifiedGeometryMemPool = unifiedGeometryMemPool;
 
 	m_pool.init(allocCb, allocCbData);
 	m_framePool.init(allocCb, allocCbData, 1 * 1024 * 1024);

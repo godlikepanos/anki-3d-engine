@@ -138,7 +138,7 @@ Error MyApp::sampleExtraInit()
 		BodyNode* body;
 		ANKI_CHECK(getSceneGraph().newSceneNode<BodyNode>("bmonkey_p2p", body));
 		ANKI_CHECK(body->getFirstComponentOfType<BodyComponent>().loadMeshResource(
-			"Assets/Suzanne_lod0_e3526e1428c0763c.ankimesh"));
+			"Assets/Suzanne_e3526e1428c0763c.ankimesh"));
 		body->getFirstComponentOfType<BodyComponent>().setWorldTransform(
 			Transform(Vec4(-0.0f, 4.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), 1.0f));
 		body->getFirstComponentOfType<BodyComponent>().setMass(2.0f);
@@ -171,7 +171,7 @@ Error MyApp::sampleExtraInit()
 			ANKI_CHECK(getSceneGraph().newSceneNode<BodyNode>(
 				StringRaii(&getMemoryPool()).sprintf("bmonkey_chain%u", i).toCString(), body));
 			ANKI_CHECK(body->getFirstComponentOfType<BodyComponent>().loadMeshResource(
-				"Assets/Suzanne_lod0_e3526e1428c0763c.ankimesh"));
+				"Assets/Suzanne_e3526e1428c0763c.ankimesh"));
 			body->getFirstComponentOfType<BodyComponent>().setWorldTransform(trf);
 			body->getFirstComponentOfType<BodyComponent>().setMass(1.0f);
 
@@ -305,7 +305,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 		ANKI_CHECK(getSceneGraph().newSceneNode<BodyNode>(
 			StringRaii(&getMemoryPool()).sprintf("bmonkey%u", instance++).toCString(), body));
 		ANKI_CHECK(body->getFirstComponentOfType<BodyComponent>().loadMeshResource(
-			"Assets/Suzanne_lod0_e3526e1428c0763c.ankimesh"));
+			"Assets/Suzanne_e3526e1428c0763c.ankimesh"));
 		body->getFirstComponentOfType<BodyComponent>().setWorldTransform(camTrf);
 		body->getFirstComponentOfType<BodyComponent>().setMass(1.0f);
 

@@ -8,7 +8,7 @@
 #include <AnKi/Collision/Plane.h>
 #include <AnKi/Collision/Functions.h>
 #include <AnKi/Resource/MeshBinary.h>
-#include <AnKi/Shaders/Include/ModelTypes.h>
+#include <AnKi/Shaders/Include/MeshTypes.h>
 #include <MeshOptimizer/meshoptimizer.h>
 
 namespace anki {
@@ -88,21 +88,6 @@ static Error checkAttribute(const cgltf_attribute& attrib)
 	{
 		ANKI_IMPORTER_LOGE("Zero vertex count");
 		return Error::kUserData;
-	}
-
-	return Error::kNone;
-}
-
-/// Align after laying a buffer in a file.
-static Error alignBufferInFile(PtrSize bufferSize, File& file)
-{
-	const PtrSize alignedBufferSize = getAlignedRoundUp(kMeshBinaryBufferAlignment, bufferSize);
-	const PtrSize extraBytes = alignedBufferSize - bufferSize;
-
-	for(U32 i = 0; i < extraBytes; ++i)
-	{
-		U8 value = 0;
-		ANKI_CHECK(file.write(&value, sizeof(value)));
 	}
 
 	return Error::kNone;
@@ -430,6 +415,20 @@ static Bool isConvex(const List<SubMesh>& submeshes)
 	return convex;
 }
 
+static void writeVertexAttribAndBufferInfoToHeader(VertexStreamId stream, MeshBinaryHeader& header,
+												   const Vec4& scale = Vec4(1.0f), const Vec4& translation = Vec4(0.0f))
+{
+	MeshBinaryVertexAttribute& attrib = header.m_vertexAttributes[stream];
+	attrib.m_bufferIndex = U32(stream);
+	attrib.m_format = kMeshRelatedVertexStreamFormats[stream];
+	attrib.m_relativeOffset = 0;
+	attrib.m_scale = {scale[0], scale[1], scale[2], scale[3]};
+	attrib.m_translation = {translation[0], translation[1], translation[2], translation[3]};
+
+	MeshBinaryVertexBuffer& buff = header.m_vertexBuffers[stream];
+	buff.m_vertexStride = getFormatInfo(attrib.m_format).m_texelSize;
+}
+
 U32 GltfImporter::getMeshTotalVertexCount(const cgltf_mesh& mesh)
 {
 	U32 totalVertexCount = 0;
@@ -443,20 +442,16 @@ U32 GltfImporter::getMeshTotalVertexCount(const cgltf_mesh& mesh)
 	return totalVertexCount;
 }
 
-Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFactor)
+Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 {
+	StringRaii meshName = computeMeshResourceFilename(mesh);
 	StringRaii fname(m_pool);
-	fname.sprintf("%s%s", m_outDir.cstr(), computeMeshResourceFilename(mesh, lod).cstr());
-	ANKI_IMPORTER_LOGV("Importing mesh (%s, decimate factor %f): %s",
-					   (m_optimizeMeshes) ? "optimize" : "WON'T optimize", decimateFactor, fname.cstr());
+	fname.sprintf("%s%s", m_outDir.cstr(), meshName.cstr());
+	ANKI_IMPORTER_LOGV("Importing mesh (%s): %s", (m_optimizeMeshes) ? "optimize" : "WON'T optimize", fname.cstr());
 
-	ListRaii<SubMesh> submeshes(m_pool);
-	U32 totalIndexCount = 0;
-	U32 totalVertexCount = 0;
+	Array<ListRaii<SubMesh>, kMaxLodCount> submeshes = {{{m_pool}, {m_pool}, {m_pool}}};
 	Vec3 aabbMin(kMaxF32);
 	Vec3 aabbMax(kMinF32);
-	F32 maxUvDistance = kMinF32;
-	F32 minUvDistance = kMaxF32;
 	Bool hasBoneWeights = false;
 
 	// Iterate primitives. Every primitive is a submesh
@@ -469,7 +464,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 			return Error::kUserData;
 		}
 
-		SubMesh& submesh = *submeshes.emplaceBack(m_pool);
+		SubMesh& submesh = *submeshes[0].emplaceBack(m_pool);
 
 		U minVertCount = kMaxU;
 		U maxVertCount = kMinU;
@@ -518,8 +513,6 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 				U32 count = 0;
 				ANKI_CHECK(checkAttribute<Vec2>(*attrib));
 				visitAccessor<Vec2>(*attrib->data, [&](const Vec2& uv) {
-					maxUvDistance = max(maxUvDistance, max(uv.x(), uv.y()));
-					minUvDistance = min(minUvDistance, min(uv.x(), uv.y()));
 					submesh.m_verts[count++].m_uv = uv;
 				});
 			}
@@ -601,7 +594,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 		// Re-index meshes now and
 		// - before the tanget calculation because that will create many unique verts
 		// - after normal fix because that will create verts with same attributes
-		if(m_optimizeMeshes || decimateFactor < 1.0f)
+		if(m_optimizeMeshes)
 		{
 			reindexSubmesh(submesh, m_pool);
 			vertCount = submesh.m_verts.getSize();
@@ -616,230 +609,206 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, U32 lod, F32 decimateFacto
 			optimizeSubmesh(submesh, m_pool);
 		}
 
-		// Simplify
-		if(decimateFactor < 1.0f)
-		{
-			decimateSubmesh(decimateFactor, submesh, m_pool);
-		}
-
 		// Finalize
 		if(submesh.m_indices.getSize() == 0 || submesh.m_verts.getSize() == 0)
 		{
-			// Digenerate
-			submeshes.popBack();
-		}
-		else
-		{
-			// Finalize
-			submesh.m_firstIdx = totalIndexCount;
-			submesh.m_idxCount = submesh.m_indices.getSize();
-			totalIndexCount += submesh.m_idxCount;
-			totalVertexCount += submesh.m_verts.getSize();
+			ANKI_UTIL_LOGE("Mesh degenerate: %s", meshName.cstr());
+			return Error::kUserData;
 		}
 	}
 
-	if(submeshes.getSize() == 0)
+	// Generate submeshes for the other LODs
+	ANKI_ASSERT(m_lodCount <= kMaxLodCount && m_lodCount > 0);
+	U32 maxLod = 0;
+	for(U32 lod = 1; lod < m_lodCount; ++lod)
 	{
-		ANKI_IMPORTER_LOGE("Mesh contains degenerate geometry");
-		return Error::kUserData;
-	}
-
-	// Find if it's a convex shape
-	const Bool convex = isConvex(submeshes);
-
-	// Chose the formats of the attributes
-	MeshBinaryHeader header;
-	memset(&header, 0, sizeof(header));
-	{
-		// Positions
-		MeshBinaryVertexAttribute& posa = header.m_vertexAttributes[VertexAttributeId::kPosition];
-		posa.m_bufferBinding = 0;
-		posa.m_format = Format::kR32G32B32_Sfloat;
-		posa.m_relativeOffset = 0;
-		posa.m_scale = 1.0f;
-
-		// Normals
-		MeshBinaryVertexAttribute& na = header.m_vertexAttributes[VertexAttributeId::kNormal];
-		na.m_bufferBinding = 1;
-		na.m_format = Format::kA2B10G10R10_Snorm_Pack32;
-		na.m_relativeOffset = 0;
-		na.m_scale = 1.0f;
-
-		// Tangents
-		MeshBinaryVertexAttribute& ta = header.m_vertexAttributes[VertexAttributeId::kTangent];
-		ta.m_bufferBinding = 1;
-		ta.m_format = Format::kA2B10G10R10_Snorm_Pack32;
-		ta.m_relativeOffset = sizeof(U32);
-		ta.m_scale = 1.0f;
-
-		// UVs
-		MeshBinaryVertexAttribute& uva = header.m_vertexAttributes[VertexAttributeId::kUv0];
-		uva.m_bufferBinding = 1;
-		uva.m_format = Format::kR32G32_Sfloat;
-		uva.m_relativeOffset = sizeof(U32) * 2;
-		uva.m_scale = 1.0f;
-
-		// Bone weight
-		if(hasBoneWeights)
+		if(skipMeshLod(mesh, lod))
 		{
-			MeshBinaryVertexAttribute& bidxa = header.m_vertexAttributes[VertexAttributeId::kBoneIndices];
-			bidxa.m_bufferBinding = 2;
-			bidxa.m_format = Format::kR8G8B8A8_Uint;
-			bidxa.m_relativeOffset = 0;
-			bidxa.m_scale = 1.0f;
-
-			MeshBinaryVertexAttribute& wa = header.m_vertexAttributes[VertexAttributeId::kBoneWeights];
-			wa.m_bufferBinding = 2;
-			wa.m_format = Format::kR8G8B8A8_Unorm;
-			wa.m_relativeOffset = sizeof(U8Vec4);
-			wa.m_scale = 1.0f;
+			break;
 		}
-	}
 
-	// Arange the attributes into vert buffers
-	{
-		// First buff has positions
-		header.m_vertexBuffers[0].m_vertexStride = sizeof(Vec3);
-		++header.m_vertexBufferCount;
-
-		// 2nd buff has normal + tangent + texcoords
-		header.m_vertexBuffers[1].m_vertexStride = sizeof(MainVertex);
-		++header.m_vertexBufferCount;
-
-		// 3rd has bone weights
-		if(hasBoneWeights)
+		for(const SubMesh& lod0Submesh : submeshes[0])
 		{
-			header.m_vertexBuffers[2].m_vertexStride = sizeof(BoneInfoVertex);
-			++header.m_vertexBufferCount;
+			SubMesh& newSubmesh = *submeshes[lod].pushBack(m_pool);
+			newSubmesh = lod0Submesh; // Copy LOD0 data to new submesh
+
+			decimateSubmesh(computeLodFactor(lod), newSubmesh, m_pool);
 		}
+
+		maxLod = lod;
 	}
 
-	// Write some other header stuff
-	{
-		memcpy(&header.m_magic[0], kMeshMagic, 8);
-		header.m_flags = MeshBinaryFlag::kNone;
-		if(convex)
-		{
-			header.m_flags |= MeshBinaryFlag::kConvex;
-		}
-		header.m_indexType = IndexType::kU16;
-		header.m_totalIndexCount = totalIndexCount;
-		header.m_totalVertexCount = totalVertexCount;
-		header.m_subMeshCount = U32(submeshes.getSize());
-		header.m_aabbMin = aabbMin;
-		header.m_aabbMax = aabbMax;
-	}
-
-	// Open file
+	// Start writing the file
 	File file;
 	ANKI_CHECK(file.open(fname.toCString(), FileOpenFlag::kWrite | FileOpenFlag::kBinary));
 
-	// Write header
-	ANKI_CHECK(file.write(&header, sizeof(header)));
+	// Populate the header
+	MeshBinaryHeader header;
+	memset(&header, 0, sizeof(header));
+	memcpy(&header.m_magic[0], kMeshMagic, 8);
 
-	// Write sub meshes
-	for(const SubMesh& in : submeshes)
+	header.m_flags = MeshBinaryFlag::kNone;
+	if(isConvex(submeshes[0]))
 	{
-		MeshBinarySubMesh out;
-		out.m_firstIndex = in.m_firstIdx;
-		out.m_indexCount = in.m_idxCount;
-		out.m_aabbMin = in.m_aabbMin;
-		out.m_aabbMax = in.m_aabbMax;
-
-		ANKI_CHECK(file.write(&out, sizeof(out)));
+		header.m_flags |= MeshBinaryFlag::kConvex;
 	}
+	header.m_indexType = IndexType::kU16;
+	header.m_subMeshCount = U32(submeshes[0].getSize());
+	header.m_aabbMin = aabbMin;
+	header.m_aabbMax = aabbMax;
+	header.m_lodCount = maxLod + 1;
 
-	// Write indices
-	U32 vertCount = 0;
-	for(const SubMesh& submesh : submeshes)
+	// Compute the pos scale and transform. The scale is uniform because it's applied to the model matrix of the object
+	F32 posScale = kMinF32;
+	for(U c = 0; c < 3; c++)
 	{
-		DynamicArrayRaii<U16> indices(m_pool);
-		indices.create(submesh.m_indices.getSize());
-		for(U32 i = 0; i < indices.getSize(); ++i)
-		{
-			const U32 idx = submesh.m_indices[i] + vertCount;
-			if(idx > kMaxU16)
-			{
-				ANKI_IMPORTER_LOGE("Only supports 16bit indices for now (%u): %s", idx, fname.cstr());
-				return Error::kUserData;
-			}
-
-			indices[i] = U16(idx);
-		}
-
-		ANKI_CHECK(file.write(&indices[0], indices.getSizeInBytes()));
-		vertCount += submesh.m_verts.getSize();
+		posScale = max(posScale, aabbMax[c] - aabbMin[c]);
 	}
+	posScale = (posScale < 1.0f) ? 1.0f : (1.0f / posScale);
+	const Vec3 posTranslation = -aabbMin;
 
-	ANKI_CHECK(alignBufferInFile(header.m_totalIndexCount * sizeof(U16), file));
-
-	// Write position vert buffer
-	for(const SubMesh& submesh : submeshes)
-	{
-		DynamicArrayRaii<Vec3> positions(m_pool);
-		positions.create(submesh.m_verts.getSize());
-		for(U32 v = 0; v < submesh.m_verts.getSize(); ++v)
-		{
-			positions[v] = submesh.m_verts[v].m_position;
-		}
-		ANKI_CHECK(file.write(&positions[0], positions.getSizeInBytes()));
-	}
-
-	ANKI_CHECK(alignBufferInFile(header.m_totalVertexCount * sizeof(Vec3), file));
-
-	// Write the 2nd vert buffer
-	for(const SubMesh& submesh : submeshes)
-	{
-		DynamicArrayRaii<MainVertex> verts(m_pool);
-		verts.create(submesh.m_verts.getSize());
-
-		for(U32 i = 0; i < verts.getSize(); ++i)
-		{
-			const Vec3& normal = submesh.m_verts[i].m_normal;
-			const Vec4& tangent = submesh.m_verts[i].m_tangent;
-			const Vec2& uv = submesh.m_verts[i].m_uv;
-
-			verts[i].m_normal = packColorToR10G10B10A2SNorm(normal.x(), normal.y(), normal.z(), 0.0f);
-			verts[i].m_tangent = packColorToR10G10B10A2SNorm(tangent.x(), tangent.y(), tangent.z(), tangent.w());
-			verts[i].m_uv0 = uv;
-		}
-
-		ANKI_CHECK(file.write(&verts[0], verts.getSizeInBytes()));
-	}
-
-	ANKI_CHECK(alignBufferInFile(header.m_totalVertexCount * sizeof(MainVertex), file));
-
-	// Write 3rd vert buffer
+	writeVertexAttribAndBufferInfoToHeader(VertexStreamId::kPosition, header, Vec4(1.0f / posScale),
+										   (-posTranslation).xyz1());
+	writeVertexAttribAndBufferInfoToHeader(VertexStreamId::kNormal, header);
+	writeVertexAttribAndBufferInfoToHeader(VertexStreamId::kTangent, header);
+	writeVertexAttribAndBufferInfoToHeader(VertexStreamId::kUv, header);
 	if(hasBoneWeights)
 	{
-		for(const SubMesh& submesh : submeshes)
+		writeVertexAttribAndBufferInfoToHeader(VertexStreamId::kBoneIds, header);
+		writeVertexAttribAndBufferInfoToHeader(VertexStreamId::kBoneWeights, header);
+	}
+
+	// Write sub meshes
+	DynamicArrayRaii<MeshBinarySubMesh> outSubmeshes(m_pool, U32(submeshes[0].getSize()));
+
+	for(U32 submeshIdx = 0; submeshIdx < outSubmeshes.getSize(); ++submeshIdx)
+	{
+		MeshBinarySubMesh& out = outSubmeshes[submeshIdx];
+		memset(&out, 0, sizeof(out));
+
+		for(U32 lod = 0; lod <= maxLod; ++lod)
 		{
-			DynamicArrayRaii<BoneInfoVertex> verts(m_pool);
-			verts.create(submesh.m_verts.getSize());
+			const SubMesh& inSubmesh = *(submeshes[lod].getBegin() + submeshIdx);
 
-			for(U32 i = 0; i < verts.getSize(); ++i)
+			if(lod == 0)
 			{
-				BoneInfoVertex vert;
-
-				for(U32 c = 0; c < 4; ++c)
-				{
-					if(submesh.m_verts[i].m_boneIds[c] > 0XFF)
-					{
-						ANKI_IMPORTER_LOGE("Only 256 bones are supported");
-						return Error::kUserData;
-					}
-
-					vert.m_boneIndices[c] = U8(submesh.m_verts[i].m_boneIds[c]);
-					vert.m_boneWeights[c] = U8(submesh.m_verts[i].m_boneWeights[c] * F32(kMaxU8));
-				}
-
-				verts[i] = vert;
+				out.m_aabbMin = inSubmesh.m_aabbMin;
+				out.m_aabbMax = inSubmesh.m_aabbMax;
 			}
 
-			ANKI_CHECK(file.write(&verts[0], verts.getSizeInBytes()));
+			out.m_firstIndices[lod] = header.m_totalIndexCounts[lod];
+			out.m_indexCounts[lod] = inSubmesh.m_indices.getSize();
+
+			header.m_totalIndexCounts[lod] += inSubmesh.m_indices.getSize();
+			header.m_totalVertexCounts[lod] += inSubmesh.m_verts.getSize();
+		}
+	}
+
+	ANKI_CHECK(file.write(&header, sizeof(header)));
+	ANKI_CHECK(file.write(&outSubmeshes[0], outSubmeshes.getSizeInBytes()));
+
+	// Write LODs
+	for(I32 lod = I32(maxLod); lod >= 0; --lod)
+	{
+		// Write index buffer
+		U32 vertCount = 0;
+		for(const SubMesh& submesh : submeshes[lod])
+		{
+			DynamicArrayRaii<U16> indices(m_pool, submesh.m_indices.getSize());
+			for(U32 i = 0; i < indices.getSize(); ++i)
+			{
+				const U32 idx = submesh.m_indices[i] + vertCount;
+				if(idx > kMaxU16)
+				{
+					ANKI_IMPORTER_LOGE("Only supports 16bit indices for now (%u): %s", idx, fname.cstr());
+					return Error::kUserData;
+				}
+
+				indices[i] = U16(idx);
+			}
+
+			ANKI_CHECK(file.write(&indices[0], indices.getSizeInBytes()));
+			vertCount += submesh.m_verts.getSize();
 		}
 
-		ANKI_CHECK(alignBufferInFile(header.m_totalVertexCount * sizeof(BoneInfoVertex), file));
+		// Write positions
+		for(const SubMesh& submesh : submeshes[lod])
+		{
+			DynamicArrayRaii<U16Vec3> positions(m_pool, submesh.m_verts.getSize());
+			for(U32 v = 0; v < submesh.m_verts.getSize(); ++v)
+			{
+				Vec3 localPos = (submesh.m_verts[v].m_position + posTranslation) * posScale;
+				localPos = localPos.clamp(0.0f, 1.0f);
+				localPos *= F32(kMaxU16);
+				localPos = localPos.round();
+				positions[v] = U16Vec3(localPos);
+			}
+
+			ANKI_CHECK(file.write(&positions[0], positions.getSizeInBytes()));
+		}
+
+		// Write normals
+		for(const SubMesh& submesh : submeshes[lod])
+		{
+			DynamicArrayRaii<U32> normals(m_pool, submesh.m_verts.getSize());
+			for(U32 v = 0; v < submesh.m_verts.getSize(); ++v)
+			{
+				normals[v] = packSnorm4x8(submesh.m_verts[v].m_normal.xyz0());
+			}
+
+			ANKI_CHECK(file.write(&normals[0], normals.getSizeInBytes()));
+		}
+
+		// Write tangent
+		for(const SubMesh& submesh : submeshes[lod])
+		{
+			DynamicArrayRaii<U32> tangents(m_pool, submesh.m_verts.getSize());
+			for(U32 v = 0; v < submesh.m_verts.getSize(); ++v)
+			{
+				tangents[v] = packSnorm4x8(submesh.m_verts[v].m_tangent);
+			}
+
+			ANKI_CHECK(file.write(&tangents[0], tangents.getSizeInBytes()));
+		}
+
+		// Write UV
+		for(const SubMesh& submesh : submeshes[lod])
+		{
+			DynamicArrayRaii<Vec2> uvs(m_pool, submesh.m_verts.getSize());
+			for(U32 v = 0; v < submesh.m_verts.getSize(); ++v)
+			{
+				uvs[v] = submesh.m_verts[v].m_uv;
+			}
+
+			ANKI_CHECK(file.write(&uvs[0], uvs.getSizeInBytes()));
+		}
+
+		if(hasBoneWeights)
+		{
+			// Bone IDs
+			for(const SubMesh& submesh : submeshes[lod])
+			{
+				DynamicArrayRaii<U8Vec4> boneids(m_pool, submesh.m_verts.getSize());
+				for(U32 v = 0; v < submesh.m_verts.getSize(); ++v)
+				{
+					boneids[v] = U8Vec4(submesh.m_verts[v].m_boneIds);
+				}
+
+				ANKI_CHECK(file.write(&boneids[0], boneids.getSizeInBytes()));
+			}
+
+			// Bone weights
+			for(const SubMesh& submesh : submeshes[lod])
+			{
+				DynamicArrayRaii<U32> boneWeights(m_pool, submesh.m_verts.getSize());
+				for(U32 v = 0; v < submesh.m_verts.getSize(); ++v)
+				{
+					boneWeights[v] = packSnorm4x8(submesh.m_verts[v].m_boneWeights);
+				}
+
+				ANKI_CHECK(file.write(&boneWeights[0], boneWeights.getSizeInBytes()));
+			}
+		}
 	}
 
 	return Error::kNone;

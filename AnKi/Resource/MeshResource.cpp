@@ -19,7 +19,7 @@ public:
 	MeshResourcePtr m_mesh;
 	MeshBinaryLoader m_loader;
 
-	LoadContext(const MeshResourcePtr& mesh, BaseMemoryPool* pool)
+	LoadContext(MeshResource* mesh, BaseMemoryPool* pool)
 		: m_mesh(mesh)
 		, m_loader(&mesh->getManager(), pool)
 	{
@@ -32,7 +32,7 @@ class MeshResource::LoadTask : public AsyncLoaderTask
 public:
 	MeshResource::LoadContext m_ctx;
 
-	LoadTask(const MeshResourcePtr& mesh)
+	LoadTask(MeshResource* mesh)
 		: m_ctx(mesh, &mesh->getManager().getAsyncLoader().getMemoryPool())
 	{
 	}
@@ -51,46 +51,52 @@ public:
 MeshResource::MeshResource(ResourceManager* manager)
 	: ResourceObject(manager)
 {
-	memset(&m_meshGpuDescriptor, 0, sizeof(m_meshGpuDescriptor));
 }
 
 MeshResource::~MeshResource()
 {
 	m_subMeshes.destroy(getMemoryPool());
-	m_vertexBufferInfos.destroy(getMemoryPool());
 
-	if(m_vertexBuffersOffset != kMaxPtrSize)
+	for(Lod& lod : m_lods)
 	{
-		getManager().getUnifiedGeometryMemoryPool().free(m_vertexBuffersSize, 4, m_vertexBuffersOffset);
+		if(lod.m_unifiedGeometryIndexBufferOffset != kMaxPtrSize)
+		{
+			const U32 alignment = getIndexSize(m_indexType);
+			const PtrSize size = lod.m_indexCount * PtrSize(alignment);
+			getManager().getUnifiedGeometryMemoryPool().free(size, alignment, lod.m_unifiedGeometryIndexBufferOffset);
+		}
+
+		for(VertexStreamId stream : EnumIterable(VertexStreamId::kMeshRelatedFirst, VertexStreamId::kMeshRelatedCount))
+		{
+			if(lod.m_unifiedGeometryVertBufferOffsets[stream] != kMaxPtrSize)
+			{
+				const U32 alignment = getFormatInfo(kMeshRelatedVertexStreamFormats[stream]).m_texelSize;
+				const PtrSize size = PtrSize(alignment) * lod.m_vertexCount;
+
+				getManager().getUnifiedGeometryMemoryPool().free(size, alignment,
+																 lod.m_unifiedGeometryVertBufferOffsets[stream]);
+			}
+		}
 	}
 
-	if(m_indexBufferOffset != kMaxPtrSize)
-	{
-		const PtrSize indexBufferSize = PtrSize(m_indexCount) * ((m_indexType == IndexType::kU32) ? 4 : 2);
-		getManager().getUnifiedGeometryMemoryPool().free(indexBufferSize, getIndexSize(m_indexType),
-														 m_indexBufferOffset);
-	}
-}
-
-Bool MeshResource::isCompatible(const MeshResource& other) const
-{
-	return hasBoneWeights() == other.hasBoneWeights() && getSubMeshCount() == other.getSubMeshCount();
+	m_lods.destroy(getMemoryPool());
 }
 
 Error MeshResource::load(const ResourceFilename& filename, Bool async)
 {
 	UniquePtr<LoadTask> task;
 	LoadContext* ctx;
-	LoadContext localCtx(MeshResourcePtr(this), &getTempMemoryPool());
+	LoadContext localCtx(this, &getTempMemoryPool());
 
 	StringRaii basename(&getTempMemoryPool());
 	getFilepathFilename(filename, basename);
 
 	const Bool rayTracingEnabled = getManager().getGrManager().getDeviceCapabilities().m_rayTracingEnabled;
+	BufferPtr unifiedGeometryBuffer = getManager().getUnifiedGeometryMemoryPool().getVertexBuffer();
 
 	if(async)
 	{
-		task.reset(getManager().getAsyncLoader().newTask<LoadTask>(MeshResourcePtr(this)));
+		task.reset(getManager().getAsyncLoader().newTask<LoadTask>(this));
 		ctx = &task->m_ctx;
 	}
 	else
@@ -104,156 +110,109 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	ANKI_CHECK(loader.load(filename));
 	const MeshBinaryHeader& header = loader.getHeader();
 
-	//
+	// Misc
+	m_indexType = header.m_indexType;
+	m_aabb.setMin(header.m_aabbMin);
+	m_aabb.setMax(header.m_aabbMax);
+	m_positionsScale = header.m_vertexAttributes[VertexStreamId::kPosition].m_scale[0];
+	m_positionsTranslation = Vec3(&header.m_vertexAttributes[VertexStreamId::kPosition].m_translation[0]);
+
 	// Submeshes
-	//
 	m_subMeshes.create(getMemoryPool(), header.m_subMeshCount);
 	for(U32 i = 0; i < m_subMeshes.getSize(); ++i)
 	{
-		m_subMeshes[i].m_firstIndex = loader.getSubMeshes()[i].m_firstIndex;
-		m_subMeshes[i].m_indexCount = loader.getSubMeshes()[i].m_indexCount;
+		m_subMeshes[i].m_firstIndices = loader.getSubMeshes()[i].m_firstIndices;
+		m_subMeshes[i].m_indexCounts = loader.getSubMeshes()[i].m_indexCounts;
 		m_subMeshes[i].m_aabb.setMin(loader.getSubMeshes()[i].m_aabbMin);
 		m_subMeshes[i].m_aabb.setMax(loader.getSubMeshes()[i].m_aabbMax);
 	}
 
-	//
-	// Index stuff
-	//
-	m_indexCount = header.m_totalIndexCount;
-	ANKI_ASSERT((m_indexCount % 3) == 0 && "Expecting triangles");
-	m_indexType = header.m_indexType;
-
-	const PtrSize indexBufferSize = PtrSize(m_indexCount) * ((m_indexType == IndexType::kU32) ? 4 : 2);
-	ANKI_CHECK(getManager().getUnifiedGeometryMemoryPool().allocate(indexBufferSize, getIndexSize(m_indexType),
-																	m_indexBufferOffset));
-
-	//
-	// Vertex stuff
-	//
-	m_vertexCount = header.m_totalVertexCount;
-	m_vertexBufferInfos.create(getMemoryPool(), header.m_vertexBufferCount);
-
-	m_vertexBuffersSize = 0;
-	for(U32 i = 0; i < header.m_vertexBufferCount; ++i)
+	// LODs
+	m_lods.create(getMemoryPool(), header.m_lodCount);
+	for(I32 l = I32(header.m_lodCount - 1); l >= 0; --l)
 	{
-		alignRoundUp(kMeshBinaryBufferAlignment, m_vertexBuffersSize);
+		Lod& lod = m_lods[l];
 
-		m_vertexBufferInfos[i].m_offset = m_vertexBuffersSize;
-		m_vertexBufferInfos[i].m_stride = header.m_vertexBuffers[i].m_vertexStride;
+		// Index stuff
+		lod.m_indexCount = header.m_totalIndexCounts[l];
+		ANKI_ASSERT((lod.m_indexCount % 3) == 0 && "Expecting triangles");
+		const PtrSize indexBufferSize = PtrSize(lod.m_indexCount) * getIndexSize(m_indexType);
+		ANKI_CHECK(getManager().getUnifiedGeometryMemoryPool().allocate(indexBufferSize, getIndexSize(m_indexType),
+																		lod.m_unifiedGeometryIndexBufferOffset));
 
-		m_vertexBuffersSize += m_vertexCount * m_vertexBufferInfos[i].m_stride;
-	}
-
-	ANKI_CHECK(getManager().getUnifiedGeometryMemoryPool().allocate(m_vertexBuffersSize, 4, m_vertexBuffersOffset));
-
-	// Readjust the individual offset now that we have a global offset
-	for(U32 i = 0; i < header.m_vertexBufferCount; ++i)
-	{
-		m_vertexBufferInfos[i].m_offset += m_vertexBuffersOffset;
-	}
-
-	for(VertexAttributeId attrib = VertexAttributeId::kFirst; attrib < VertexAttributeId::kCount; ++attrib)
-	{
-		AttribInfo& out = m_attributes[attrib];
-		const MeshBinaryVertexAttribute& in = header.m_vertexAttributes[attrib];
-
-		if(!!in.m_format)
+		// Vertex stuff
+		lod.m_vertexCount = header.m_totalVertexCounts[l];
+		for(VertexStreamId stream : EnumIterable(VertexStreamId::kMeshRelatedFirst, VertexStreamId::kMeshRelatedCount))
 		{
-			out.m_format = in.m_format;
-			out.m_relativeOffset = in.m_relativeOffset;
-			out.m_buffIdx = U8(in.m_bufferBinding);
-			ANKI_ASSERT(in.m_scale == 1.0f && "Not supported ATM");
+			if(header.m_vertexAttributes[stream].m_format == Format::kNone)
+			{
+				lod.m_unifiedGeometryVertBufferOffsets[stream] = kMaxPtrSize;
+				continue;
+			}
+
+			m_presentVertStreams |= VertexStreamMask(1 << stream);
+
+			const U32 texelSize = getFormatInfo(kMeshRelatedVertexStreamFormats[stream]).m_texelSize;
+			const PtrSize vertexBufferSize = PtrSize(lod.m_vertexCount) * texelSize;
+			const U32 alignment = 4;
+			ANKI_CHECK(getManager().getUnifiedGeometryMemoryPool().allocate(
+				vertexBufferSize, alignment, lod.m_unifiedGeometryVertBufferOffsets[stream]));
+		}
+
+		// BLAS
+		if(rayTracingEnabled)
+		{
+			AccelerationStructureInitInfo inf(
+				StringRaii(&getTempMemoryPool()).sprintf("%s_%s", "Blas", basename.cstr()));
+			inf.m_type = AccelerationStructureType::kBottomLevel;
+
+			inf.m_bottomLevel.m_indexBuffer = unifiedGeometryBuffer;
+			inf.m_bottomLevel.m_indexBufferOffset = lod.m_unifiedGeometryIndexBufferOffset;
+			inf.m_bottomLevel.m_indexCount = lod.m_indexCount;
+			inf.m_bottomLevel.m_indexType = m_indexType;
+			inf.m_bottomLevel.m_positionBuffer = unifiedGeometryBuffer;
+			inf.m_bottomLevel.m_positionBufferOffset =
+				lod.m_unifiedGeometryVertBufferOffsets[VertexStreamId::kPosition];
+			inf.m_bottomLevel.m_positionStride =
+				getFormatInfo(kMeshRelatedVertexStreamFormats[VertexStreamId::kPosition]).m_texelSize;
+			inf.m_bottomLevel.m_positionsFormat = kMeshRelatedVertexStreamFormats[VertexStreamId::kPosition];
+			inf.m_bottomLevel.m_positionCount = lod.m_vertexCount;
+
+			lod.m_blas = getManager().getGrManager().newAccelerationStructure(inf);
 		}
 	}
 
-	// Other
-	m_aabb.setMin(header.m_aabbMin);
-	m_aabb.setMax(header.m_aabbMax);
-	m_vertexBuffer = getManager().getUnifiedGeometryMemoryPool().getVertexBuffer();
-
-	//
 	// Clear the buffers
-	//
 	if(async)
 	{
-		CommandBufferInitInfo cmdbinit;
+		CommandBufferInitInfo cmdbinit("MeshResourceClear");
 		cmdbinit.m_flags = CommandBufferFlag::kSmallBatch | CommandBufferFlag::kGeneralWork;
 		CommandBufferPtr cmdb = getManager().getGrManager().newCommandBuffer(cmdbinit);
 
-		cmdb->fillBuffer(m_vertexBuffer, m_vertexBuffersOffset, m_vertexBuffersSize, 0);
-		cmdb->fillBuffer(m_vertexBuffer, m_indexBufferOffset, indexBufferSize, 0);
+		for(const Lod& lod : m_lods)
+		{
+			cmdb->fillBuffer(unifiedGeometryBuffer, lod.m_unifiedGeometryIndexBufferOffset,
+							 PtrSize(lod.m_indexCount) * getIndexSize(m_indexType), 0);
 
-		const BufferBarrierInfo barrier = {m_vertexBuffer.get(), BufferUsageBit::kTransferDestination,
+			for(VertexStreamId stream :
+				EnumIterable(VertexStreamId::kMeshRelatedFirst, VertexStreamId::kMeshRelatedCount))
+			{
+				if(header.m_vertexAttributes[stream].m_format != Format::kNone)
+				{
+					cmdb->fillBuffer(unifiedGeometryBuffer, lod.m_unifiedGeometryVertBufferOffsets[stream],
+									 PtrSize(lod.m_vertexCount)
+										 * getFormatInfo(kMeshRelatedVertexStreamFormats[stream]).m_texelSize,
+									 0);
+				}
+			}
+		}
+
+		const BufferBarrierInfo barrier = {unifiedGeometryBuffer.get(), BufferUsageBit::kTransferDestination,
 										   BufferUsageBit::kVertex, 0, kMaxPtrSize};
 
 		cmdb->setPipelineBarrier({}, {&barrier, 1}, {});
 
 		cmdb->flush();
-	}
-
-	//
-	// Create the BLAS
-	//
-	if(rayTracingEnabled)
-	{
-		AccelerationStructureInitInfo inf(StringRaii(&getTempMemoryPool()).sprintf("%s_%s", "Blas", basename.cstr()));
-		inf.m_type = AccelerationStructureType::kBottomLevel;
-
-		inf.m_bottomLevel.m_indexBuffer = m_vertexBuffer;
-		inf.m_bottomLevel.m_indexBufferOffset = m_indexBufferOffset;
-		inf.m_bottomLevel.m_indexCount = m_indexCount;
-		inf.m_bottomLevel.m_indexType = m_indexType;
-
-		U32 bufferIdx;
-		Format format;
-		U32 relativeOffset;
-		getVertexAttributeInfo(VertexAttributeId::kPosition, bufferIdx, format, relativeOffset);
-
-		BufferPtr buffer;
-		PtrSize offset;
-		PtrSize stride;
-		getVertexBufferInfo(bufferIdx, buffer, offset, stride);
-
-		inf.m_bottomLevel.m_positionBuffer = std::move(buffer);
-		inf.m_bottomLevel.m_positionBufferOffset = offset;
-		inf.m_bottomLevel.m_positionStride = U32(stride);
-		inf.m_bottomLevel.m_positionsFormat = format;
-		inf.m_bottomLevel.m_positionCount = m_vertexCount;
-
-		m_blas = getManager().getGrManager().newAccelerationStructure(inf);
-	}
-
-	// Fill the GPU descriptor
-	if(rayTracingEnabled)
-	{
-		m_meshGpuDescriptor.m_indexBufferPtr = m_vertexBuffer->getGpuAddress() + m_indexBufferOffset;
-
-		U32 bufferIdx;
-		Format format;
-		U32 relativeOffset;
-		getVertexAttributeInfo(VertexAttributeId::kPosition, bufferIdx, format, relativeOffset);
-		BufferPtr buffer;
-		PtrSize offset;
-		PtrSize stride;
-		getVertexBufferInfo(bufferIdx, buffer, offset, stride);
-		m_meshGpuDescriptor.m_vertexBufferPtrs[VertexAttributeBufferId::kPosition] = buffer->getGpuAddress() + offset;
-
-		getVertexAttributeInfo(VertexAttributeId::kNormal, bufferIdx, format, relativeOffset);
-		getVertexBufferInfo(bufferIdx, buffer, offset, stride);
-		m_meshGpuDescriptor.m_vertexBufferPtrs[VertexAttributeBufferId::kNormalTangentUv0] =
-			buffer->getGpuAddress() + offset;
-
-		if(hasBoneWeights())
-		{
-			getVertexAttributeInfo(VertexAttributeId::kBoneWeights, bufferIdx, format, relativeOffset);
-			getVertexBufferInfo(bufferIdx, buffer, offset, stride);
-			m_meshGpuDescriptor.m_vertexBufferPtrs[VertexAttributeBufferId::kBone] = buffer->getGpuAddress() + offset;
-		}
-
-		m_meshGpuDescriptor.m_indexCount = m_indexCount;
-		m_meshGpuDescriptor.m_vertexCount = m_vertexCount;
-		m_meshGpuDescriptor.m_aabbMin = header.m_aabbMin;
-		m_meshGpuDescriptor.m_aabbMax = header.m_aabbMax;
 	}
 
 	// Submit the loading task
@@ -275,88 +234,127 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 {
 	GrManager& gr = getManager().getGrManager();
 	TransferGpuAllocator& transferAlloc = getManager().getTransferGpuAllocator();
-	Array<TransferGpuAllocatorHandle, 2> handles;
+
+	Array<TransferGpuAllocatorHandle, kMaxLodCount*(U32(VertexStreamId::kMeshRelatedCount) + 1)> handles;
+	U32 handleCount = 0;
+
+	BufferPtr unifiedGeometryBuffer = getManager().getUnifiedGeometryMemoryPool().getVertexBuffer();
+	const BufferUsageBit unifiedGeometryBufferNonTransferUsage =
+		unifiedGeometryBuffer->getBufferUsage() ^ BufferUsageBit::kTransferDestination;
 
 	CommandBufferInitInfo cmdbinit;
 	cmdbinit.m_flags = CommandBufferFlag::kSmallBatch | CommandBufferFlag::kGeneralWork;
 	CommandBufferPtr cmdb = gr.newCommandBuffer(cmdbinit);
 
-	// Set barriers
-	const BufferBarrierInfo barrier = {m_vertexBuffer.get(), BufferUsageBit::kVertex,
+	// Set transfer to transfer barrier because of the clear that happened while sync loading
+	const BufferBarrierInfo barrier = {unifiedGeometryBuffer.get(), unifiedGeometryBufferNonTransferUsage,
 									   BufferUsageBit::kTransferDestination, 0, kMaxPtrSize};
 	cmdb->setPipelineBarrier({}, {&barrier, 1}, {});
 
-	// Write index buffer
+	// Upload index and vertex buffers
+	for(U32 lodIdx = 0; lodIdx < m_lods.getSize(); ++lodIdx)
 	{
-		const PtrSize indexBufferSize = PtrSize(m_indexCount) * ((m_indexType == IndexType::kU32) ? 4 : 2);
+		const Lod& lod = m_lods[lodIdx];
 
-		ANKI_CHECK(transferAlloc.allocate(indexBufferSize, handles[1]));
-		void* data = handles[1].getMappedMemory();
-		ANKI_ASSERT(data);
-
-		ANKI_CHECK(loader.storeIndexBuffer(data, indexBufferSize));
-
-		cmdb->copyBufferToBuffer(handles[1].getBuffer(), handles[1].getOffset(), m_vertexBuffer, m_indexBufferOffset,
-								 handles[1].getRange());
-	}
-
-	// Write vert buff
-	{
-		ANKI_CHECK(transferAlloc.allocate(m_vertexBuffersSize, handles[0]));
-		U8* data = static_cast<U8*>(handles[0].getMappedMemory());
-		ANKI_ASSERT(data);
-
-		// Load to staging
-		PtrSize offset = 0;
-		for(U32 i = 0; i < m_vertexBufferInfos.getSize(); ++i)
+		// Upload index buffer
 		{
-			alignRoundUp(kMeshBinaryBufferAlignment, offset);
-			ANKI_CHECK(
-				loader.storeVertexBuffer(i, data + offset, PtrSize(m_vertexBufferInfos[i].m_stride) * m_vertexCount));
+			TransferGpuAllocatorHandle& handle = handles[handleCount++];
+			const PtrSize indexBufferSize = PtrSize(lod.m_indexCount) * getIndexSize(m_indexType);
 
-			offset += PtrSize(m_vertexBufferInfos[i].m_stride) * m_vertexCount;
+			ANKI_CHECK(transferAlloc.allocate(indexBufferSize, handle));
+			void* data = handle.getMappedMemory();
+			ANKI_ASSERT(data);
+
+			ANKI_CHECK(loader.storeIndexBuffer(lodIdx, data, indexBufferSize));
+
+			cmdb->copyBufferToBuffer(handle.getBuffer(), handle.getOffset(), unifiedGeometryBuffer,
+									 lod.m_unifiedGeometryIndexBufferOffset, handle.getRange());
 		}
 
-		ANKI_ASSERT(offset == m_vertexBuffersSize);
+		// Upload vert buffers
+		for(VertexStreamId stream : EnumIterable(VertexStreamId::kMeshRelatedFirst, VertexStreamId::kMeshRelatedCount))
+		{
+			if(!(m_presentVertStreams & VertexStreamMask(1 << stream)))
+			{
+				continue;
+			}
 
-		// Copy
-		cmdb->copyBufferToBuffer(handles[0].getBuffer(), handles[0].getOffset(), m_vertexBuffer, m_vertexBuffersOffset,
-								 handles[0].getRange());
+			TransferGpuAllocatorHandle& handle = handles[handleCount++];
+			const PtrSize vertexBufferSize =
+				PtrSize(lod.m_vertexCount) * getFormatInfo(kMeshRelatedVertexStreamFormats[stream]).m_texelSize;
+
+			ANKI_CHECK(transferAlloc.allocate(vertexBufferSize, handle));
+			U8* data = static_cast<U8*>(handle.getMappedMemory());
+			ANKI_ASSERT(data);
+
+			// Load to staging
+			ANKI_CHECK(loader.storeVertexBuffer(lodIdx, U32(stream), data, vertexBufferSize));
+
+			// Copy
+			cmdb->copyBufferToBuffer(handle.getBuffer(), handle.getOffset(), unifiedGeometryBuffer,
+									 lod.m_unifiedGeometryVertBufferOffsets[stream], handle.getRange());
+		}
 	}
 
-	// Build the BLAS
 	if(gr.getDeviceCapabilities().m_rayTracingEnabled)
 	{
-		const BufferBarrierInfo buffBarrier = {m_vertexBuffer.get(), BufferUsageBit::kTransferDestination,
-											   BufferUsageBit::kAccelerationStructureBuild | BufferUsageBit::kVertex
-												   | BufferUsageBit::kIndex,
-											   0, kMaxPtrSize};
-		const AccelerationStructureBarrierInfo asBarrier = {m_blas.get(), AccelerationStructureUsageBit::kNone,
-															AccelerationStructureUsageBit::kBuild};
+		// Build BLASes
 
-		cmdb->setPipelineBarrier({}, {&buffBarrier, 1}, {&asBarrier, 1});
+		// Set the barriers
+		BufferBarrierInfo bufferBarrier;
+		bufferBarrier.m_buffer = unifiedGeometryBuffer.get();
+		bufferBarrier.m_offset = 0;
+		bufferBarrier.m_size = kMaxPtrSize;
+		bufferBarrier.m_previousUsage = BufferUsageBit::kTransferDestination;
+		bufferBarrier.m_nextUsage = unifiedGeometryBufferNonTransferUsage;
 
-		cmdb->buildAccelerationStructure(m_blas);
+		Array<AccelerationStructureBarrierInfo, kMaxLodCount> asBarriers;
+		for(U32 lodIdx = 0; lodIdx < m_lods.getSize(); ++lodIdx)
+		{
+			asBarriers[lodIdx].m_as = m_lods[lodIdx].m_blas.get();
+			asBarriers[lodIdx].m_previousUsage = AccelerationStructureUsageBit::kNone;
+			asBarriers[lodIdx].m_nextUsage = AccelerationStructureUsageBit::kBuild;
+		}
 
-		const AccelerationStructureBarrierInfo asBarrier2 = {m_blas.get(), AccelerationStructureUsageBit::kBuild,
-															 AccelerationStructureUsageBit::kAllRead};
+		cmdb->setPipelineBarrier({}, {&bufferBarrier, 1}, {&asBarriers[0], m_lods.getSize()});
 
-		cmdb->setPipelineBarrier({}, {}, {&asBarrier2, 1});
+		// Build BLASes
+		for(U32 lodIdx = 0; lodIdx < m_lods.getSize(); ++lodIdx)
+		{
+			cmdb->buildAccelerationStructure(m_lods[lodIdx].m_blas);
+		}
+
+		// Barriers again
+		for(U32 lodIdx = 0; lodIdx < m_lods.getSize(); ++lodIdx)
+		{
+			asBarriers[lodIdx].m_as = m_lods[lodIdx].m_blas.get();
+			asBarriers[lodIdx].m_previousUsage = AccelerationStructureUsageBit::kBuild;
+			asBarriers[lodIdx].m_nextUsage = AccelerationStructureUsageBit::kAllRead;
+		}
+
+		cmdb->setPipelineBarrier({}, {}, {&asBarriers[0], m_lods.getSize()});
 	}
 	else
 	{
-		const BufferBarrierInfo buffBarrier = {m_vertexBuffer.get(), BufferUsageBit::kTransferDestination,
-											   BufferUsageBit::kVertex | BufferUsageBit::kIndex, 0, kMaxPtrSize};
+		// Only set a barrier
+		BufferBarrierInfo bufferBarrier;
+		bufferBarrier.m_buffer = unifiedGeometryBuffer.get();
+		bufferBarrier.m_offset = 0;
+		bufferBarrier.m_size = kMaxPtrSize;
+		bufferBarrier.m_previousUsage = BufferUsageBit::kTransferDestination;
+		bufferBarrier.m_nextUsage = unifiedGeometryBufferNonTransferUsage;
 
-		cmdb->setPipelineBarrier({}, {&buffBarrier, 1}, {});
+		cmdb->setPipelineBarrier({}, {&bufferBarrier, 1}, {});
 	}
 
 	// Finalize
 	FencePtr fence;
 	cmdb->flush({}, &fence);
 
-	transferAlloc.release(handles[0], fence);
-	transferAlloc.release(handles[1], fence);
+	for(U32 i = 0; i < handleCount; ++i)
+	{
+		transferAlloc.release(handles[i], fence);
+	}
 
 	return Error::kNone;
 }

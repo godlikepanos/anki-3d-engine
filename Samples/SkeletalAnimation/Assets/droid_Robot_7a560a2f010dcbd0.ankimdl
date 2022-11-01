@@ -1,8 +1,0 @@
-<model>
-	<modelPatches>
-		<modelPatch>
-			<mesh>Assets/droid_lod0_30559463d0f81c57.ankimesh</mesh>
-			<material>Assets/Robot_a9af3c46eb28a7d4.ankimtl</material>
-		</modelPatch>
-	</modelPatches>
-</model>

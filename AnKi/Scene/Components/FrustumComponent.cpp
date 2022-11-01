@@ -16,12 +16,19 @@ FrustumComponent::FrustumComponent(SceneNode* node)
 	, m_node(node)
 	, m_shapeMarkedForUpdate(true)
 	, m_trfMarkedForUpdate(true)
+	, m_miscMarkedForUpdate(true)
 {
 	ANKI_ASSERT(&m_perspective.m_far == &m_ortho.m_far);
 	ANKI_ASSERT(node);
 
 	// Set some default values
 	setFrustumType(FrustumType::kPerspective);
+	for(U i = 0; i < m_misc.m_maxLodDistances.getSize(); ++i)
+	{
+		const F32 dist = (m_common.m_far - m_common.m_near) / F32(kMaxLodCount + 1);
+		m_misc.m_maxLodDistances[i] = m_common.m_near + dist * F32(i + 1);
+	}
+
 	updateInternal();
 }
 
@@ -51,6 +58,12 @@ Bool FrustumComponent::updateInternal()
 	if(m_shapeMarkedForUpdate)
 	{
 		updated = true;
+
+		// Fix user data
+		if(!ANKI_SCENE_ASSERT(m_common.m_far - m_common.m_near > 1.0_cm))
+		{
+			setFrustumType(m_frustumType);
+		}
 
 		if(m_frustumType == FrustumType::kPerspective)
 		{
@@ -109,12 +122,51 @@ Bool FrustumComponent::updateInternal()
 		m_viewMat = Mat3x4(m_trf.getInverse());
 	}
 
+	// Fixup the misc data
+	if(m_miscMarkedForUpdate)
+	{
+		updated = true;
+		const F32 frustumFraction = (m_common.m_far - m_common.m_near) / 100.0f;
+
+		for(U32 i = 0; i < m_misc.m_shadowCascadeCount; ++i)
+		{
+			if(!ANKI_SCENE_ASSERT(m_misc.m_shadowCascadeDistances[i] > m_common.m_near
+								  && m_misc.m_shadowCascadeDistances[i] <= m_common.m_far))
+			{
+				m_misc.m_shadowCascadeDistances[i] =
+					clamp(m_misc.m_shadowCascadeDistances[i], m_common.m_near + kEpsilonf, m_common.m_far);
+			}
+
+			if(i != 0
+			   && !ANKI_SCENE_ASSERT(m_misc.m_shadowCascadeDistances[i - 1] < m_misc.m_shadowCascadeDistances[i]))
+			{
+				m_misc.m_shadowCascadeDistances[i] = m_misc.m_shadowCascadeDistances[i - 1] + frustumFraction;
+			}
+		}
+
+		for(U32 i = 0; i < m_misc.m_maxLodDistances.getSize(); ++i)
+		{
+			if(!ANKI_SCENE_ASSERT(m_misc.m_maxLodDistances[i] > m_common.m_near
+								  && m_misc.m_maxLodDistances[i] <= m_common.m_far))
+			{
+				m_misc.m_maxLodDistances[i] =
+					clamp(m_misc.m_maxLodDistances[i], m_common.m_near + kEpsilonf, m_common.m_far);
+			}
+
+			if(i != 0 && !ANKI_SCENE_ASSERT(m_misc.m_maxLodDistances[i - 1] < m_misc.m_maxLodDistances[i]))
+			{
+				m_misc.m_maxLodDistances[i] = m_misc.m_maxLodDistances[i - 1] + frustumFraction;
+			}
+		}
+	}
+
 	// Updates that are affected by transform & shape updates
 	if(updated)
 	{
 		m_viewProjMat = m_projMat * Mat4(m_viewMat, Vec4(0.0f, 0.0f, 0.0f, 1.0f));
 		m_shapeMarkedForUpdate = false;
 		m_trfMarkedForUpdate = false;
+		m_miscMarkedForUpdate = false;
 
 		if(m_frustumType == FrustumType::kPerspective)
 		{

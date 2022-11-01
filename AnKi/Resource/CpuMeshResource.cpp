@@ -30,7 +30,7 @@ Error CpuMeshResource::load(const ResourceFilename& filename, [[maybe_unused]] B
 	DynamicArrayRaii<Vec3> tempPositions(&getMemoryPool());
 	DynamicArrayRaii<U32> tempIndices(&getMemoryPool());
 
-	ANKI_CHECK(loader.storeIndicesAndPosition(tempIndices, tempPositions));
+	ANKI_CHECK(loader.storeIndicesAndPosition(0, tempIndices, tempPositions));
 
 	m_indices = std::move(tempIndices);
 	m_positions = std::move(tempPositions);

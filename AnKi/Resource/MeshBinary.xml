@@ -2,14 +2,13 @@
 	<includes>
 		<include file="&lt;AnKi/Resource/Common.h&gt;"/>
 		<include file="&lt;AnKi/Math.h&gt;"/>
+		<include file="&lt;AnKi/Gr/Common.h&gt;"/>
 	</includes>
 
 	<doxygen_group name="resource"/>
 
 	<prefix_code><![CDATA[
-inline constexpr const char* kMeshMagic = "ANKIMES5";
-
-constexpr U32 kMeshBinaryBufferAlignment = 16;
+inline constexpr const char* kMeshMagic = "ANKIMES7";
 
 enum class MeshBinaryFlag : U32
 {
@@ -23,42 +22,43 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(MeshBinaryFlag)
 ]]></prefix_code>
 
 	<classes>
-		<class name="MeshBinaryVertexBuffer" comment="Vertex buffer info. The size of the buffer is m_vertexStride*MeshBinaryHeader::m_totalVertexCount aligned to kMeshBinaryBufferAlignment">
+		<class name="MeshBinaryVertexBuffer" comment="Vertex buffer info">
 			<members>
-				<member name="m_vertexStride" type="U32" comment="The size of the vertex"/>
+				<member name="m_vertexStride" type="U32" comment="The size of the vertex. It's zero if the buffer is not present"/>
 			</members>
 		</class>
 
 		<class name="MeshBinaryVertexAttribute" comment="Vertex attribute">
 			<members>
-				<member name="m_bufferBinding" type="U32"/>
+				<member name="m_bufferIndex" type="U32"/>
 				<member name="m_format" type="Format" comment="If the format is kNone then the attribute is not present"/>
 				<member name="m_relativeOffset" type="U32"/>
-				<member name="m_scale" type="F32"/>
+				<member name="m_scale" type="F32" array_size="4" comment="Attribute is compressed and needs to be scaled"/>
+				<member name="m_translation" type="F32" array_size="4" comment="Attribute is compressed and needs to be translated"/>
 			</members>
 		</class>
 
 		<class name="MeshBinarySubMesh">
 			<members>
-				<member name="m_firstIndex" type="U32"/>
-				<member name="m_indexCount" type="U32"/>
+				<member name="m_firstIndices" type="U32" array_size="kMaxLodCount"/>
+				<member name="m_indexCounts" type="U32" array_size="kMaxLodCount"/>
 				<member name="m_aabbMin" type="Vec3" comment="Bounding box min"/>
 				<member name="m_aabbMax" type="Vec3" comment="Bounding box max"/>
 			</members>
 		</class>
 
-		<class name="MeshBinaryHeader" comment="The 1st things that appears in a mesh binary. @note The index and vertex buffers are aligned to kMeshBinaryBufferAlignment bytes">
+		<class name="MeshBinaryHeader" comment="The 1st things that appears in a mesh binary">
 			<members>
 				<member name="m_magic" type="U8" array_size="8"/>
 				<member name="m_flags" type="MeshBinaryFlag"/>
-				<member name="m_vertexBuffers" type="MeshBinaryVertexBuffer" array_size="U32(VertexAttributeId::kCount)"/>
-				<member name="m_vertexBufferCount" type="U32"/>
-				<member name="m_vertexAttributes" type="MeshBinaryVertexAttribute" array_size="U32(VertexAttributeId::kCount)"/>
+				<member name="m_vertexBuffers" type="MeshBinaryVertexBuffer" array_size="kMaxVertexAttributes"/>
+				<member name="m_vertexAttributes" type="MeshBinaryVertexAttribute" array_size="kMaxVertexAttributes"/>
 				<member name="m_indexType" type="IndexType"/>
 				<member name="m_padding" type="U8" array_size="3"/>
-				<member name="m_totalIndexCount" type="U32"/>
-				<member name="m_totalVertexCount" type="U32"/>
+				<member name="m_totalIndexCounts" type="U32" array_size="kMaxLodCount"/>
+				<member name="m_totalVertexCounts" type="U32" array_size="kMaxLodCount"/>
 				<member name="m_subMeshCount" type="U32"/>
+				<member name="m_lodCount" type="U32"/>
 				<member name="m_aabbMin" type="Vec3" comment="Bounding box min"/>
 				<member name="m_aabbMax" type="Vec3" comment="Bounding box max"/>
 			</members>

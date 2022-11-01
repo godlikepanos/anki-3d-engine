@@ -323,7 +323,7 @@ VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask)
 		out |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR;
 	}
 
-	if(!!(usageMask & BufferUsageBit::kSBT))
+	if(!!(usageMask & BufferUsageBit::kShaderBindingTable))
 	{
 		out |= VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR;
 	}

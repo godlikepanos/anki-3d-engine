@@ -1,7 +1,7 @@
 <model>
 	<modelPatches>
 		<modelPatch>
-			<mesh>Assets/vase_hanger_lod0_2a18d1de31dd5e0d.ankimesh</mesh>
+			<mesh>Assets/vase_hanger_2a18d1de31dd5e0d.ankimesh</mesh>
 			<material>Assets/vase_hanging_c2d2b40b27cacd7d.ankimtl</material>
 		</modelPatch>
 	</modelPatches>

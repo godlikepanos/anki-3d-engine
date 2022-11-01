@@ -11,6 +11,7 @@
 #include <AnKi/Shaders/Include/ModelTypes.h>
 #include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
+#include <AnKi/Shaders/Include/MeshTypes.h>
 #include <AnKi/Shaders/Common.glsl>
 
 ANKI_BINDLESS_SET(kMaterialSetBindless)
@@ -30,20 +31,20 @@ ANKI_BINDLESS_SET(kMaterialSetBindless)
 //
 #if defined(ANKI_VERTEX_SHADER)
 
-layout(location = kVertexAttributeIdPosition) in Vec3 in_position;
+layout(location = kVertexStreamIdPosition) in Vec3 in_position;
 
 #	if ANKI_TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER
-layout(location = kVertexAttributeIdNormal) in ANKI_RP Vec3 in_normal;
-layout(location = kVertexAttributeIdTangent) in ANKI_RP Vec4 in_tangent;
+layout(location = kVertexStreamIdNormal) in ANKI_RP Vec3 in_normal;
+layout(location = kVertexStreamIdTangent) in ANKI_RP Vec4 in_tangent;
 #	endif
 
 #	if ANKI_TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER || ALPHA_TEST
-layout(location = kVertexAttributeIdUv0) in Vec2 in_uv;
+layout(location = kVertexStreamIdUv) in Vec2 in_uv;
 #	endif
 
 #	if ANKI_BONES
-layout(location = kVertexAttributeIdBoneWeights) in Vec4 in_boneWeights;
-layout(location = kVertexAttributeIdBoneIndices) in UVec4 in_boneIndices;
+layout(location = kVertexStreamIdBoneIds) in UVec4 in_boneIndices;
+layout(location = kVertexStreamIdBoneWeights) in Vec4 in_boneWeights;
 #	endif
 
 #endif // defined(ANKI_VERTEX_SHADER)

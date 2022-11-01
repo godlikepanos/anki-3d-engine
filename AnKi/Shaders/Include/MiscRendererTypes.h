@@ -9,31 +9,6 @@
 
 ANKI_BEGIN_NAMESPACE
 
-// EVSM
-#define ANKI_EVSM4 0 // 2 component EVSM or 4 component EVSM
-
-const F32 kEvsmPositiveConstant = 40.0f; // EVSM positive constant
-const F32 kEvsmNegativeConstant = 5.0f; // EVSM negative constant
-const F32 kEvsmBias = 0.01f;
-const F32 kEvsmLightBleedingReduction = 0.05f;
-
-struct EvsmResolveUniforms
-{
-	IVec2 m_viewportXY;
-	Vec2 m_viewportZW;
-
-	Vec2 m_uvScale;
-	Vec2 m_uvTranslation;
-
-	Vec2 m_uvMin;
-	Vec2 m_uvMax;
-
-	U32 m_blur;
-	U32 m_padding0;
-	U32 m_padding1;
-	U32 m_padding2;
-};
-
 // RT shadows
 const U32 kMaxRtShadowLayers = 8u;
 

@@ -21,7 +21,8 @@ public:
 	}
 };
 
-int main(int argc, char* argv[])
+ANKI_MAIN_FUNCTION(myMain)
+int myMain(int argc, char* argv[])
 {
 	Error err = Error::kNone;
 

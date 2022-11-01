@@ -10,14 +10,14 @@ namespace anki {
 class TileAllocator::Tile
 {
 public:
-	Timestamp m_lightTimestamp = 0; ///< The last timestamp the light got updated
-	Timestamp m_lastUsedTimestamp = 0; ///< The last timestamp this tile was used
+	Timestamp m_lightTimestamp = 0; ///< The last timestamp the light got updated.
+	Timestamp m_lastUsedTimestamp = 0; ///< The last timestamp this tile was used.
 	U64 m_lightUuid = 0;
 	U32 m_lightDrawcallCount = 0;
 	Array<U32, 4> m_viewport = {};
 	Array<U32, 4> m_subTiles = {kMaxU32, kMaxU32, kMaxU32, kMaxU32};
-	U32 m_superTile = kMaxU32;
-	U8 m_lightLod = 0;
+	U32 m_superTile = kMaxU32; ///< The parent.
+	U8 m_lightHierarchy = 0;
 	U8 m_lightFace = 0;
 };
 
@@ -37,68 +37,71 @@ TileAllocator::~TileAllocator()
 {
 	m_lightInfoToTileIdx.destroy(*m_pool);
 	m_allTiles.destroy(*m_pool);
-	m_lodFirstTileIndex.destroy(*m_pool);
+	m_firstTileIdxOfHierarchy.destroy(*m_pool);
 }
 
-void TileAllocator::init(HeapMemoryPool* pool, U32 tileCountX, U32 tileCountY, U32 lodCount, Bool enableCaching)
+void TileAllocator::init(HeapMemoryPool* pool, U32 tileCountX, U32 tileCountY, U32 hierarchyCount, Bool enableCaching)
 {
 	// Preconditions
 	ANKI_ASSERT(tileCountX > 0);
 	ANKI_ASSERT(tileCountY > 0);
-	ANKI_ASSERT(lodCount > 0);
+	ANKI_ASSERT(hierarchyCount > 0);
 
 	// Store some stuff
 	m_tileCountX = U16(tileCountX);
 	m_tileCountY = U16(tileCountY);
-	m_lodCount = U8(lodCount);
+	m_hierarchyCount = U8(hierarchyCount);
 	m_pool = pool;
 	m_cachingEnabled = enableCaching;
-	m_lodFirstTileIndex.create(*m_pool, lodCount + 1);
+	m_firstTileIdxOfHierarchy.create(*m_pool, hierarchyCount + 1);
 
 	// Create the tile array & index ranges
 	U32 tileCount = 0;
-	for(U32 lod = 0; lod < lodCount; ++lod)
+	for(U32 hierarchy = 0; hierarchy < hierarchyCount; ++hierarchy)
 	{
-		const U32 lodTileCountX = tileCountX >> lod;
-		const U32 lodTileCountY = tileCountY >> lod;
-		ANKI_ASSERT((lodTileCountX << lod) == tileCountX && "Every LOD should be power of 2 of its parent LOD");
-		ANKI_ASSERT((lodTileCountY << lod) == tileCountY && "Every LOD should be power of 2 of its parent LOD");
+		const U32 hierarchyTileCountX = tileCountX >> hierarchy;
+		const U32 hierarchyTileCountY = tileCountY >> hierarchy;
+		ANKI_ASSERT((hierarchyTileCountX << hierarchy) == tileCountX
+					&& "Every hierarchy should be power of 2 of its parent hierarchy");
+		ANKI_ASSERT((hierarchyTileCountY << hierarchy) == tileCountY
+					&& "Every hierarchy should be power of 2 of its parent hierarchy");
 
-		m_lodFirstTileIndex[lod] = tileCount;
+		m_firstTileIdxOfHierarchy[hierarchy] = tileCount;
 
-		tileCount += lodTileCountX * lodTileCountY;
+		tileCount += hierarchyTileCountX * hierarchyTileCountY;
 	}
 	ANKI_ASSERT(tileCount >= tileCountX * tileCountY);
 	m_allTiles.create(*m_pool, tileCount);
-	m_lodFirstTileIndex[lodCount] = tileCount - 1;
+	m_firstTileIdxOfHierarchy[hierarchyCount] = tileCount - 1;
 
 	// Init the tiles
 	U32 tileIdx = 0;
-	for(U32 lod = 0; lod < lodCount; ++lod)
+	for(U32 hierarchy = 0; hierarchy < hierarchyCount; ++hierarchy)
 	{
-		const U32 lodTileCountX = tileCountX >> lod;
-		const U32 lodTileCountY = tileCountY >> lod;
+		const U32 hierarchyTileCountX = tileCountX >> hierarchy;
+		const U32 hierarchyTileCountY = tileCountY >> hierarchy;
 
-		for(U32 y = 0; y < lodTileCountY; ++y)
+		for(U32 y = 0; y < hierarchyTileCountY; ++y)
 		{
-			for(U32 x = 0; x < lodTileCountX; ++x)
+			for(U32 x = 0; x < hierarchyTileCountX; ++x)
 			{
-				ANKI_ASSERT(tileIdx >= m_lodFirstTileIndex[lod] && tileIdx <= m_lodFirstTileIndex[lod + 1]);
+				ANKI_ASSERT(tileIdx >= m_firstTileIdxOfHierarchy[hierarchy]
+							&& tileIdx <= m_firstTileIdxOfHierarchy[hierarchy + 1]);
 				Tile& tile = m_allTiles[tileIdx];
 
-				tile.m_viewport[0] = x << lod;
-				tile.m_viewport[1] = y << lod;
-				tile.m_viewport[2] = 1 << lod;
-				tile.m_viewport[3] = 1 << lod;
+				tile.m_viewport[0] = x << hierarchy;
+				tile.m_viewport[1] = y << hierarchy;
+				tile.m_viewport[2] = 1 << hierarchy;
+				tile.m_viewport[3] = 1 << hierarchy;
 
-				if(lod > 0)
+				if(hierarchy > 0)
 				{
 					// Has sub tiles
 					for(U32 j = 0; j < 2; ++j)
 					{
 						for(U32 i = 0; i < 2; ++i)
 						{
-							const U32 subTileIdx = translateTileIdx((x << 1) + i, (y << 1) + j, lod - 1);
+							const U32 subTileIdx = translateTileIdx((x << 1) + i, (y << 1) + j, hierarchy - 1);
 							m_allTiles[subTileIdx].m_superTile = tileIdx;
 
 							tile.m_subTiles[j * 2 + i] = subTileIdx;
@@ -129,7 +132,7 @@ void TileAllocator::updateSubTiles(const Tile& updateFrom)
 		m_allTiles[idx].m_lastUsedTimestamp = updateFrom.m_lastUsedTimestamp;
 		m_allTiles[idx].m_lightUuid = updateFrom.m_lightUuid;
 		m_allTiles[idx].m_lightDrawcallCount = updateFrom.m_lightDrawcallCount;
-		m_allTiles[idx].m_lightLod = updateFrom.m_lightLod;
+		m_allTiles[idx].m_lightHierarchy = updateFrom.m_lightHierarchy;
 		m_allTiles[idx].m_lightFace = updateFrom.m_lightFace;
 
 		updateSubTiles(m_allTiles[idx]);
@@ -146,13 +149,13 @@ void TileAllocator::updateSuperTiles(const Tile& updateFrom)
 	}
 }
 
-Bool TileAllocator::searchTileRecursively(U32 crntTileIdx, U32 crntTileLod, U32 allocationLod, Timestamp crntTimestamp,
-										  U32& emptyTileIdx, U32& toKickTileIdx,
+Bool TileAllocator::searchTileRecursively(U32 crntTileIdx, U32 crntTileHierarchy, U32 allocationHierarchy,
+										  Timestamp crntTimestamp, U32& emptyTileIdx, U32& toKickTileIdx,
 										  Timestamp& tileToKickMinTimestamp) const
 {
 	const Tile& tile = m_allTiles[crntTileIdx];
 
-	if(crntTileLod == allocationLod)
+	if(crntTileHierarchy == allocationHierarchy)
 	{
 		// We may have a candidate
 
@@ -168,12 +171,12 @@ Bool TileAllocator::searchTileRecursively(U32 crntTileIdx, U32 crntTileLod, U32 
 	{
 		// Move down the hierarchy
 
-		ANKI_ASSERT(allocationLod < crntTileLod);
+		ANKI_ASSERT(allocationHierarchy < crntTileHierarchy);
 
 		for(const U32 idx : tile.m_subTiles)
 		{
-			const Bool done = searchTileRecursively(idx, crntTileLod >> 1, allocationLod, crntTimestamp, emptyTileIdx,
-													toKickTileIdx, tileToKickMinTimestamp);
+			const Bool done = searchTileRecursively(idx, crntTileHierarchy - 1, allocationHierarchy, crntTimestamp,
+													emptyTileIdx, toKickTileIdx, tileToKickMinTimestamp);
 
 			if(done)
 			{
@@ -218,7 +221,8 @@ Bool TileAllocator::evaluateCandidate(U32 tileIdx, Timestamp crntTimestamp, U32&
 }
 
 TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp, Timestamp lightTimestamp, U64 lightUuid,
-											U32 lightFace, U32 drawcallCount, U32 lod, Array<U32, 4>& tileViewport)
+											U32 lightFace, U32 drawcallCount, U32 hierarchy,
+											Array<U32, 4>& tileViewport)
 {
 	// Preconditions
 	ANKI_ASSERT(crntTimestamp > 0);
@@ -226,7 +230,7 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp, Timestamp l
 	ANKI_ASSERT(lightTimestamp <= crntTimestamp);
 	ANKI_ASSERT(lightUuid != 0);
 	ANKI_ASSERT(lightFace < 6);
-	ANKI_ASSERT(lod < m_lodCount);
+	ANKI_ASSERT(hierarchy < m_hierarchyCount);
 
 	// 1) Search if it's already cached
 	HashMapKey key;
@@ -239,19 +243,20 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp, Timestamp l
 		{
 			Tile& tile = m_allTiles[*it];
 
-			if(tile.m_lightUuid != lightUuid || tile.m_lightLod != lod || tile.m_lightFace != lightFace)
+			if(tile.m_lightUuid != lightUuid || tile.m_lightHierarchy != hierarchy || tile.m_lightFace != lightFace)
 			{
 				// Cache entry is wrong, remove it
 				m_lightInfoToTileIdx.erase(*m_pool, it);
 			}
 			else
 			{
-				// Same light & lod & face, found the cache entry.
+				// Same light & hierarchy & face, found the cache entry.
 
 				ANKI_ASSERT(tile.m_lastUsedTimestamp != crntTimestamp
 							&& "Trying to allocate the same thing twice in this timestamp?");
 
-				ANKI_ASSERT(tile.m_lightUuid == lightUuid && tile.m_lightLod == lod && tile.m_lightFace == lightFace);
+				ANKI_ASSERT(tile.m_lightUuid == lightUuid && tile.m_lightHierarchy == hierarchy
+							&& tile.m_lightFace == lightFace);
 
 				tileViewport = {tile.m_viewport[0], tile.m_viewport[1], tile.m_viewport[2], tile.m_viewport[3]};
 
@@ -274,12 +279,13 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp, Timestamp l
 	U32 emptyTileIdx = kMaxU32;
 	U32 toKickTileIdx = kMaxU32;
 	Timestamp tileToKickMinTimestamp = kMaxTimestamp;
-	const U32 maxLod = m_lodCount - 1;
-	if(lod == maxLod)
+	const U32 maxHierarchy = m_hierarchyCount - 1;
+	if(hierarchy == maxHierarchy)
 	{
-		// This search is simple, iterate the tiles of the max LOD
+		// This search is simple, iterate the tiles of the max hierarchy
 
-		for(U32 tileIdx = m_lodFirstTileIndex[maxLod]; tileIdx <= m_lodFirstTileIndex[maxLod + 1]; ++tileIdx)
+		for(U32 tileIdx = m_firstTileIdxOfHierarchy[maxHierarchy];
+			tileIdx <= m_firstTileIdxOfHierarchy[maxHierarchy + 1]; ++tileIdx)
 		{
 			const Bool done =
 				evaluateCandidate(tileIdx, crntTimestamp, emptyTileIdx, toKickTileIdx, tileToKickMinTimestamp);
@@ -294,10 +300,11 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp, Timestamp l
 	{
 		// Need to do a recursive search
 
-		for(U32 tileIdx = m_lodFirstTileIndex[maxLod]; tileIdx <= m_lodFirstTileIndex[maxLod + 1]; ++tileIdx)
+		for(U32 tileIdx = m_firstTileIdxOfHierarchy[maxHierarchy];
+			tileIdx <= m_firstTileIdxOfHierarchy[maxHierarchy + 1]; ++tileIdx)
 		{
-			const Bool done = searchTileRecursively(tileIdx, maxLod, lod, crntTimestamp, emptyTileIdx, toKickTileIdx,
-													tileToKickMinTimestamp);
+			const Bool done = searchTileRecursively(tileIdx, maxHierarchy, hierarchy, crntTimestamp, emptyTileIdx,
+													toKickTileIdx, tileToKickMinTimestamp);
 
 			if(done)
 			{
@@ -329,7 +336,7 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp, Timestamp l
 	allocatedTile.m_lastUsedTimestamp = crntTimestamp;
 	allocatedTile.m_lightUuid = lightUuid;
 	allocatedTile.m_lightDrawcallCount = drawcallCount;
-	allocatedTile.m_lightLod = U8(lod);
+	allocatedTile.m_lightHierarchy = U8(hierarchy);
 	allocatedTile.m_lightFace = U8(lightFace);
 
 	updateTileHierarchy(allocatedTile);

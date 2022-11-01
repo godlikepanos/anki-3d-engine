@@ -89,9 +89,22 @@ layout(set = kMaterialSetLocal, binding = kMaterialBindingPreviousBoneTransforms
 #pragma anki start vert
 
 // Globals (always in local space)
+#if ANKI_BONES
+Vec3 g_position = in_position * u_renderableGpuViews[gl_InstanceIndex].m_positionScaleF32AndTranslationVec3.x
+				  + u_renderableGpuViews[gl_InstanceIndex].m_positionScaleF32AndTranslationVec3.yzw;
+#else
 Vec3 g_position = in_position;
+#endif
+
 #if ANKI_TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER
+
+#	if ANKI_BONES
+Vec3 g_prevPosition = in_position * u_renderableGpuViews[gl_InstanceIndex].m_positionScaleF32AndTranslationVec3.x
+					  + u_renderableGpuViews[gl_InstanceIndex].m_positionScaleF32AndTranslationVec3.yzw;
+#	else
 Vec3 g_prevPosition = in_position;
+#	endif
+
 ANKI_RP Vec3 g_normal = in_normal;
 ANKI_RP Vec4 g_tangent = in_tangent;
 #endif
