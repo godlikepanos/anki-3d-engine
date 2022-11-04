@@ -1034,33 +1034,6 @@ public:
 	}
 };
 
-class TextureBarrierInfo
-{
-public:
-	Texture* m_texture = nullptr;
-	TextureUsageBit m_previousUsage = TextureUsageBit::kNone;
-	TextureUsageBit m_nextUsage = TextureUsageBit::kNone;
-	TextureSubresourceInfo m_subresource;
-};
-
-class BufferBarrierInfo
-{
-public:
-	Buffer* m_buffer = nullptr;
-	BufferUsageBit m_previousUsage = BufferUsageBit::kNone;
-	BufferUsageBit m_nextUsage = BufferUsageBit::kNone;
-	PtrSize m_offset = 0;
-	PtrSize m_size = 0;
-};
-
-class AccelerationStructureBarrierInfo
-{
-public:
-	AccelerationStructure* m_as = nullptr;
-	AccelerationStructureUsageBit m_previousUsage = AccelerationStructureUsageBit::kNone;
-	AccelerationStructureUsageBit m_nextUsage = AccelerationStructureUsageBit::kNone;
-};
-
 /// Compute max number of mipmaps for a 2D texture.
 U32 computeMaxMipmapCount2d(U32 w, U32 h, U32 minSizeOfLastMip = 1);
 

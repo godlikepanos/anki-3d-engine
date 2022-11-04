@@ -362,8 +362,8 @@ public:
 	void copyBufferToTextureViewInternal(const BufferPtr& buff, PtrSize offset, PtrSize range,
 										 const TextureViewPtr& texView);
 
-	void copyBufferToBufferInternal(const BufferPtr& src, PtrSize srcOffset, const BufferPtr& dst, PtrSize dstOffset,
-									PtrSize range);
+	void copyBufferToBufferInternal(const BufferPtr& src, const BufferPtr& dst,
+									ConstWeakArray<CopyBufferToBufferInfo> copies);
 
 	void buildAccelerationStructureInternal(const AccelerationStructurePtr& as);
 

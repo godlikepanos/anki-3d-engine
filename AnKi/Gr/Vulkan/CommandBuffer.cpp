@@ -349,11 +349,11 @@ void CommandBuffer::writeOcclusionQueriesResultToBuffer(ConstWeakArray<Occlusion
 	self.writeOcclusionQueriesResultToBufferInternal(queries, offset, buff);
 }
 
-void CommandBuffer::copyBufferToBuffer(const BufferPtr& src, PtrSize srcOffset, const BufferPtr& dst, PtrSize dstOffset,
-									   PtrSize range)
+void CommandBuffer::copyBufferToBuffer(const BufferPtr& src, const BufferPtr& dst,
+									   ConstWeakArray<CopyBufferToBufferInfo> copies)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.copyBufferToBufferInternal(src, srcOffset, dst, dstOffset, range);
+	self.copyBufferToBufferInternal(src, dst, copies);
 }
 
 void CommandBuffer::buildAccelerationStructure(const AccelerationStructurePtr& as)

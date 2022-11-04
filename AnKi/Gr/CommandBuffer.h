@@ -16,6 +16,41 @@ namespace anki {
 /// @addtogroup graphics
 /// @{
 
+class TextureBarrierInfo
+{
+public:
+	Texture* m_texture = nullptr;
+	TextureUsageBit m_previousUsage = TextureUsageBit::kNone;
+	TextureUsageBit m_nextUsage = TextureUsageBit::kNone;
+	TextureSubresourceInfo m_subresource;
+};
+
+class BufferBarrierInfo
+{
+public:
+	Buffer* m_buffer = nullptr;
+	BufferUsageBit m_previousUsage = BufferUsageBit::kNone;
+	BufferUsageBit m_nextUsage = BufferUsageBit::kNone;
+	PtrSize m_offset = 0;
+	PtrSize m_size = 0;
+};
+
+class AccelerationStructureBarrierInfo
+{
+public:
+	AccelerationStructure* m_as = nullptr;
+	AccelerationStructureUsageBit m_previousUsage = AccelerationStructureUsageBit::kNone;
+	AccelerationStructureUsageBit m_nextUsage = AccelerationStructureUsageBit::kNone;
+};
+
+class CopyBufferToBufferInfo
+{
+public:
+	PtrSize m_sourceOffset = 0;
+	PtrSize m_destinationOffset = 0;
+	PtrSize m_range = 0;
+};
+
 /// Command buffer initialization flags.
 enum class CommandBufferFlag : U8
 {
@@ -339,7 +374,17 @@ public:
 	/// @param dstOffset Offset in the destination buffer.
 	/// @param range Size to copy.
 	void copyBufferToBuffer(const BufferPtr& src, PtrSize srcOffset, const BufferPtr& dst, PtrSize dstOffset,
-							PtrSize range);
+							PtrSize range)
+	{
+		Array<CopyBufferToBufferInfo, 1> copies = {{srcOffset, dstOffset, range}};
+		copyBufferToBuffer(src, dst, copies);
+	}
+
+	/// Copy buffer to buffer.
+	/// @param[in] src Source buffer.
+	/// @param[out] dst Destination buffer.
+	/// @param copies Info on the copies.
+	void copyBufferToBuffer(const BufferPtr& src, const BufferPtr& dst, ConstWeakArray<CopyBufferToBufferInfo> copies);
 
 	/// Build the acceleration structure.
 	void buildAccelerationStructure(const AccelerationStructurePtr& as);

@@ -635,23 +635,31 @@ inline void CommandBufferImpl::bindShaderProgramInternal(const ShaderProgramPtr&
 #endif
 }
 
-inline void CommandBufferImpl::copyBufferToBufferInternal(const BufferPtr& src, PtrSize srcOffset, const BufferPtr& dst,
-														  PtrSize dstOffset, PtrSize range)
+inline void CommandBufferImpl::copyBufferToBufferInternal(const BufferPtr& src, const BufferPtr& dst,
+														  ConstWeakArray<CopyBufferToBufferInfo> copies)
 {
 	ANKI_ASSERT(static_cast<const BufferImpl&>(*src).usageValid(BufferUsageBit::kTransferSource));
 	ANKI_ASSERT(static_cast<const BufferImpl&>(*dst).usageValid(BufferUsageBit::kTransferDestination));
-	ANKI_ASSERT(srcOffset + range <= src->getSize());
-	ANKI_ASSERT(dstOffset + range <= dst->getSize());
+	ANKI_ASSERT(copies.getSize() > 0);
 
 	commandCommon();
 
-	VkBufferCopy region = {};
-	region.srcOffset = srcOffset;
-	region.dstOffset = dstOffset;
-	region.size = range;
+	DynamicArrayRaii<VkBufferCopy> vkCopies(m_pool, copies.getSize());
+
+	for(U32 i = 0; i < copies.getSize(); ++i)
+	{
+		const CopyBufferToBufferInfo& in = copies[i];
+		VkBufferCopy& out = vkCopies[i];
+		ANKI_ASSERT(in.m_sourceOffset + in.m_range <= src->getSize());
+		ANKI_ASSERT(in.m_destinationOffset + in.m_range <= dst->getSize());
+
+		out.srcOffset = in.m_sourceOffset;
+		out.dstOffset = in.m_destinationOffset;
+		out.size = in.m_range;
+	}
 
 	vkCmdCopyBuffer(m_handle, static_cast<const BufferImpl&>(*src).getHandle(),
-					static_cast<const BufferImpl&>(*dst).getHandle(), 1, &region);
+					static_cast<const BufferImpl&>(*dst).getHandle(), vkCopies.getSize(), &vkCopies[0]);
 
 	m_microCmdb->pushObjectRef(src);
 	m_microCmdb->pushObjectRef(dst);
