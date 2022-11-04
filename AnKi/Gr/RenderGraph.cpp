@@ -1345,7 +1345,7 @@ void RenderGraph::run() const
 									  pass.m_fbRenderArea[1], pass.m_fbRenderArea[2], pass.m_fbRenderArea[3]);
 			}
 
-			const U size = pass.m_secondLevelCmdbs.getSize();
+			const U32 size = pass.m_secondLevelCmdbs.getSize();
 			if(size == 0)
 			{
 				ctx.m_passIdx = passIdx;

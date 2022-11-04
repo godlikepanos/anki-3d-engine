@@ -243,22 +243,22 @@ inline constexpr U64 operator"" _U64(unsigned long long arg) noexcept
 
 /// @name Size user literals
 /// @{
-inline constexpr unsigned long long int operator""_B(unsigned long long int x)
+inline constexpr PtrSize operator""_B(unsigned long long int x)
 {
 	return x;
 }
 
-inline constexpr unsigned long long int operator""_KB(unsigned long long int x)
+inline constexpr PtrSize operator""_KB(unsigned long long int x)
 {
 	return x * 1024;
 }
 
-inline constexpr unsigned long long int operator""_MB(unsigned long long int x)
+inline constexpr PtrSize operator""_MB(unsigned long long int x)
 {
 	return x * (1024 * 1024);
 }
 
-inline constexpr unsigned long long int operator""_GB(unsigned long long int x)
+inline constexpr PtrSize operator""_GB(unsigned long long int x)
 {
 	return x * (1024 * 1024 * 1024);
 }

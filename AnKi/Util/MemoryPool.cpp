@@ -266,7 +266,7 @@ void StackMemoryPool::StackAllocatorBuilderInterface::freeChunk(Chunk* chunk)
 	m_parent->m_allocCb(m_parent->m_allocCbUserData, chunk, 0, 0);
 }
 
-void StackMemoryPool::StackAllocatorBuilderInterface::recycleChunk(Chunk& chunk)
+void StackMemoryPool::StackAllocatorBuilderInterface::recycleChunk([[maybe_unused]] Chunk& chunk)
 {
 	ANKI_ASSERT(chunk.m_chunkSize > 0);
 #if ANKI_MEM_EXTRA_CHECKS
