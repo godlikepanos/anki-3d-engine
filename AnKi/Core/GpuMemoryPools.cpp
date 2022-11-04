@@ -10,61 +10,22 @@
 
 namespace anki {
 
-UnifiedGeometryMemoryPool::~UnifiedGeometryMemoryPool()
-{
-	// Do nothing
-}
-
-Error UnifiedGeometryMemoryPool::init(HeapMemoryPool* pool, GrManager* gr, const ConfigSet& cfg)
+void UnifiedGeometryMemoryPool::init(HeapMemoryPool* pool, GrManager* gr, const ConfigSet& cfg)
 {
 	ANKI_ASSERT(pool && gr);
-	m_gr = gr;
 
-	// Create the GPU buffer.
-	BufferInitInfo bufferInit("Global vertex & index");
-	bufferInit.m_size = cfg.getCoreGlobalVertexMemorySize();
-	if(!isPowerOfTwo(bufferInit.m_size))
-	{
-		ANKI_CORE_LOGE("core_globalVertexMemorySize should be a power of two (because of the buddy allocator");
-		return Error::kUserData;
-	}
+	const PtrSize poolSize = cfg.getCoreGlobalVertexMemorySize();
 
-	bufferInit.m_usage = BufferUsageBit::kVertex | BufferUsageBit::kIndex | BufferUsageBit::kTransferDestination;
+	const Array classes = {1_KB, 8_KB, 32_KB, 128_KB, 512_KB, 4_MB, 8_MB, 16_MB, poolSize};
+
+	BufferUsageBit buffUsage = BufferUsageBit::kVertex | BufferUsageBit::kIndex | BufferUsageBit::kTransferDestination;
+
 	if(gr->getDeviceCapabilities().m_rayTracingEnabled)
 	{
-		bufferInit.m_usage |= BufferUsageBit::kAccelerationStructureBuild;
+		buffUsage |= BufferUsageBit::kAccelerationStructureBuild;
 	}
 
-	m_vertBuffer = gr->newBuffer(bufferInit);
-
-	// Init the rest
-	m_buddyAllocator.init(pool, __builtin_ctzll(bufferInit.m_size));
-
-	return Error::kNone;
-}
-
-Error UnifiedGeometryMemoryPool::allocate(PtrSize size, U32 alignment, PtrSize& offset)
-{
-	U32 offset32;
-	const Bool success = m_buddyAllocator.allocate(size, alignment, offset32);
-	if(ANKI_UNLIKELY(!success))
-	{
-		BuddyAllocatorBuilderStats stats;
-		m_buddyAllocator.getStats(stats);
-		ANKI_CORE_LOGE("Failed to allocate vertex memory of size %zu. The allocator has %zu (user requested %zu) out "
-					   "%zu allocated",
-					   size, stats.m_realAllocatedSize, stats.m_userAllocatedSize, m_vertBuffer->getSize());
-		return Error::kOutOfMemory;
-	}
-
-	offset = offset32;
-
-	return Error::kNone;
-}
-
-void UnifiedGeometryMemoryPool::free(PtrSize size, U32 alignment, PtrSize offset)
-{
-	m_buddyAllocator.free(U32(offset), size, alignment);
+	m_alloc.init(gr, pool, buffUsage, classes, poolSize, "UnifiedGeometry", false);
 }
 
 StagingGpuMemoryPool::~StagingGpuMemoryPool()

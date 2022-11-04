@@ -278,7 +278,7 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	// GPU mem
 	//
 	m_unifiedGometryMemPool = newInstance<UnifiedGeometryMemoryPool>(m_mainPool);
-	ANKI_CHECK(m_unifiedGometryMemPool->init(&m_mainPool, m_gr, *m_config));
+	m_unifiedGometryMemPool->init(&m_mainPool, m_gr, *m_config);
 
 	m_stagingMem = newInstance<StagingGpuMemoryPool>(m_mainPool);
 	ANKI_CHECK(m_stagingMem->init(m_gr, *m_config));
@@ -464,6 +464,7 @@ Error App::mainLoop()
 
 			m_gr->swapBuffers();
 			m_stagingMem->endFrame();
+			m_unifiedGometryMemPool->endFrame();
 
 			// Update the trace info with some async loader stats
 			U64 asyncTaskCount = m_resources->getAsyncLoader().getCompletedTaskCount();
@@ -509,14 +510,11 @@ Error App::mainLoop()
 				in.m_cpuFreeCount = m_memStats.m_freeCount.load();
 
 				const GrManagerStats grStats = m_gr->getStats();
-				BuddyAllocatorBuilderStats vertMemStats;
-				m_unifiedGometryMemPool->getMemoryStats(vertMemStats);
+				m_unifiedGometryMemPool->getStats(in.m_unifiedGometryExternalFragmentation,
+												  in.m_unifiedGeometryAllocated, in.m_unifiedGeometryTotal);
 
 				in.m_gpuDeviceMemoryAllocated = grStats.m_deviceMemoryAllocated;
 				in.m_gpuDeviceMemoryInUse = grStats.m_deviceMemoryInUse;
-				in.m_globalVertexAllocated = vertMemStats.m_realAllocatedSize;
-				in.m_globalVertexUsed = vertMemStats.m_userAllocatedSize;
-				in.m_globalVertexExternalFragmentation = vertMemStats.m_externalFragmentation;
 
 				in.m_drawableCount = rqueue.countAllRenderables();
 				in.m_vkCommandBufferCount = grStats.m_commandBufferCount;

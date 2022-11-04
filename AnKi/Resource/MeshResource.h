@@ -10,6 +10,7 @@
 #include <AnKi/Gr.h>
 #include <AnKi/Collision/Aabb.h>
 #include <AnKi/Shaders/Include/MeshTypes.h>
+#include <AnKi/Core/GpuMemoryPools.h>
 
 namespace anki {
 
@@ -54,7 +55,7 @@ public:
 	/// Get all info around vertex indices.
 	void getIndexBufferInfo(U32 lod, PtrSize& buffOffset, U32& indexCount, IndexType& indexType) const
 	{
-		buffOffset = m_lods[lod].m_unifiedGeometryIndexBufferOffset;
+		buffOffset = m_lods[lod].m_indexBufferAllocationToken.m_offset;
 		ANKI_ASSERT(isAligned(getIndexSize(m_indexType), buffOffset));
 		indexCount = m_lods[lod].m_indexCount;
 		indexType = m_indexType;
@@ -63,7 +64,7 @@ public:
 	/// Get vertex buffer info.
 	void getVertexStreamInfo(U32 lod, VertexStreamId stream, PtrSize& bufferOffset, U32& vertexCount) const
 	{
-		bufferOffset = m_lods[lod].m_unifiedGeometryVertBufferOffsets[stream];
+		bufferOffset = m_lods[lod].m_vertexBuffersAllocationToken[stream].m_offset;
 		vertexCount = m_lods[lod].m_vertexCount;
 	}
 
@@ -101,19 +102,13 @@ private:
 	class Lod
 	{
 	public:
-		PtrSize m_unifiedGeometryIndexBufferOffset = kMaxPtrSize;
-		Array<PtrSize, U32(VertexStreamId::kMeshRelatedCount)> m_unifiedGeometryVertBufferOffsets;
+		SegregatedListsGpuAllocatorToken m_indexBufferAllocationToken;
+		Array<SegregatedListsGpuAllocatorToken, U32(VertexStreamId::kMeshRelatedCount)> m_vertexBuffersAllocationToken;
 
 		U32 m_indexCount = 0;
 		U32 m_vertexCount = 0;
 
 		AccelerationStructurePtr m_blas;
-
-		Lod()
-		{
-			m_unifiedGeometryVertBufferOffsets.fill(m_unifiedGeometryVertBufferOffsets.getBegin(),
-													m_unifiedGeometryVertBufferOffsets.getEnd(), kMaxPtrSize);
-		}
 	};
 
 	class SubMesh

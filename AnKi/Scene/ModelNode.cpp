@@ -307,12 +307,12 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 
 			cmdb->setVertexAttribute(attribLocation, bufferBinding, fmt, relativeOffset);
 
-			cmdb->bindVertexBuffer(bufferBinding, getUnifiedGeometryMemoryPool().getVertexBuffer(),
+			cmdb->bindVertexBuffer(bufferBinding, getUnifiedGeometryMemoryPool().getBuffer(),
 								   modelInf.m_vertexBufferOffsets[streamId], vertexStride, VertexStepRate::kVertex);
 		}
 
 		// Bind index buffer
-		cmdb->bindIndexBuffer(getUnifiedGeometryMemoryPool().getVertexBuffer(), modelInf.m_indexBufferOffset,
+		cmdb->bindIndexBuffer(getUnifiedGeometryMemoryPool().getBuffer(), modelInf.m_indexBufferOffset,
 							  IndexType::kU16);
 
 		// Draw

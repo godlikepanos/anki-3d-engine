@@ -4,7 +4,8 @@ set(common_sources
 	RenderGraph.cpp
 	ShaderProgram.cpp
 	Utils/FrameGpuAllocator.cpp
-	Utils/Functions.cpp)
+	Utils/Functions.cpp
+	Utils/SegregatedListsGpuAllocator.cpp)
 
 set(common_headers
 	AccelerationStructure.h
@@ -30,7 +31,8 @@ set(common_headers
 	GrUpscaler.h
 	Utils/FrameGpuAllocator.h
 	Utils/Functions.h
-	Utils/InstantiationMacros.h)
+	Utils/InstantiationMacros.h
+	Utils/SegregatedListsGpuAllocator.h)
 
 if(VULKAN)
 	set(backend_sources

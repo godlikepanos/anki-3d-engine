@@ -36,6 +36,7 @@ class GrUpscalerInitInfo;
 #define ANKI_GR_LOGE(...) ANKI_LOG("GR", kError, __VA_ARGS__)
 #define ANKI_GR_LOGW(...) ANKI_LOG("GR", kWarning, __VA_ARGS__)
 #define ANKI_GR_LOGF(...) ANKI_LOG("GR", kFatal, __VA_ARGS__)
+#define ANKI_GR_LOGV(...) ANKI_LOG("GR", kVerbose, __VA_ARGS__)
 
 // Some constants
 constexpr U32 kMaxVertexAttributes = 8;

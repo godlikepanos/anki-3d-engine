@@ -8,7 +8,7 @@
 #include <AnKi/Core/Common.h>
 #include <AnKi/Gr/Buffer.h>
 #include <AnKi/Gr/Utils/FrameGpuAllocator.h>
-#include <AnKi/Util/BuddyAllocatorBuilder.h>
+#include <AnKi/Gr/Utils/SegregatedListsGpuAllocator.h>
 
 namespace anki {
 
@@ -26,30 +26,37 @@ public:
 
 	UnifiedGeometryMemoryPool(const UnifiedGeometryMemoryPool&) = delete; // Non-copyable
 
-	~UnifiedGeometryMemoryPool();
-
 	UnifiedGeometryMemoryPool& operator=(const UnifiedGeometryMemoryPool&) = delete; // Non-copyable
 
-	Error init(HeapMemoryPool* pool, GrManager* gr, const ConfigSet& cfg);
+	void init(HeapMemoryPool* pool, GrManager* gr, const ConfigSet& cfg);
 
-	Error allocate(PtrSize size, U32 alignment, PtrSize& offset);
-
-	void free(PtrSize size, U32 alignment, PtrSize offset);
-
-	const BufferPtr& getVertexBuffer() const
+	void allocate(PtrSize size, U32 alignment, SegregatedListsGpuAllocatorToken& token)
 	{
-		return m_vertBuffer;
+		m_alloc.allocate(size, alignment, token);
 	}
 
-	void getMemoryStats(BuddyAllocatorBuilderStats& stats) const
+	void free(const SegregatedListsGpuAllocatorToken& token)
 	{
-		m_buddyAllocator.getStats(stats);
+		m_alloc.free(token);
+	}
+
+	void endFrame()
+	{
+		m_alloc.endFrame();
+	}
+
+	const BufferPtr& getBuffer() const
+	{
+		return m_alloc.getGpuBuffer();
+	}
+
+	void getStats(F32& externalFragmentation, PtrSize& userAllocatedSize, PtrSize& totalSize) const
+	{
+		m_alloc.getStats(externalFragmentation, userAllocatedSize, totalSize);
 	}
 
 private:
-	GrManager* m_gr = nullptr;
-	BufferPtr m_vertBuffer;
-	BuddyAllocatorBuilder<32, Mutex> m_buddyAllocator;
+	SegregatedListsGpuAllocator m_alloc;
 };
 
 enum class StagingGpuMemoryType : U8

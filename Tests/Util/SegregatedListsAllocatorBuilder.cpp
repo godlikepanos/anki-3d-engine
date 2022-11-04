@@ -11,8 +11,7 @@ using namespace anki;
 
 static constexpr U32 kClassCount = 6;
 
-class SegregatedListsAllocatorBuilderChunk :
-	public SegregatedListsAllocatorBuilderChunkBase<SegregatedListsAllocatorBuilderChunk, kClassCount>
+class SegregatedListsAllocatorBuilderChunk : public SegregatedListsAllocatorBuilderChunkBase
 {
 };
 
@@ -22,14 +21,14 @@ public:
 	HeapMemoryPool m_pool = {allocAligned, nullptr};
 	static constexpr PtrSize kChunkSize = 100_MB;
 
-	static constexpr U32 getClassCount()
+	U32 getClassCount() const
 	{
 		return kClassCount;
 	}
 
 	void getClassInfo(U32 idx, PtrSize& size) const
 	{
-		static const Array<PtrSize, getClassCount()> classes = {512_KB, 1_MB, 5_MB, 10_MB, 30_MB, kChunkSize};
+		static const Array<PtrSize, kClassCount> classes = {512_KB, 1_MB, 5_MB, 10_MB, 30_MB, kChunkSize};
 		size = classes[idx];
 	}
 
@@ -57,7 +56,7 @@ public:
 };
 
 using SLAlloc = SegregatedListsAllocatorBuilder<SegregatedListsAllocatorBuilderChunk,
-												SegregatedListsAllocatorBuilderInterface, DummyMutex>;
+												SegregatedListsAllocatorBuilderInterface, Mutex>;
 
 template<typename TAlloc>
 static void printAllocatorBuilder(const TAlloc& sl)

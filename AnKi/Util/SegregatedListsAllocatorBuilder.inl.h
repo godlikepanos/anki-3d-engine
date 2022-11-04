@@ -18,7 +18,7 @@ U32 SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::findClass(PtrSiz
 {
 	ANKI_ASSERT(size > 0 && alignment > 0);
 
-	for(U32 i = 0; i < TInterface::getClassCount(); ++i)
+	for(U32 i = 0; i < m_interface.getClassCount(); ++i)
 	{
 		PtrSize maxSize;
 		m_interface.getClassInfo(i, maxSize);
@@ -113,7 +113,7 @@ void SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::placeFreeBlock(
 	U32 leftClass = kMaxU32;
 	U32 rightBlock = kMaxU32;
 	U32 rightClass = kMaxU32;
-	for(U32 classIdx = 0; classIdx < TInterface::getClassCount(); ++classIdx)
+	for(U32 classIdx = 0; classIdx < m_interface.getClassCount(); ++classIdx)
 	{
 		const DynamicArray<FreeBlock>& freeLists = chunk.m_freeLists[classIdx];
 
@@ -225,6 +225,7 @@ void SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::placeFreeBlock(
 
 	// Store the new block
 	const U32 newClassIdx = findClass(newBlock.m_size, 1);
+	ANKI_ASSERT(newClassIdx != kMaxU32);
 	chunk.m_freeLists[newClassIdx].emplaceBack(m_interface.getMemoryPool(), newBlock);
 
 	std::sort(chunk.m_freeLists[newClassIdx].getBegin(), chunk.m_freeLists[newClassIdx].getEnd(),
@@ -240,11 +241,13 @@ void SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::placeFreeBlock(
 		// Chunk completely free, delete it
 
 		U32 blockCount = 0;
-		for(U32 classIdx = 0; classIdx < TInterface::getClassCount(); ++classIdx)
+		for(U32 classIdx = 0; classIdx < m_interface.getClassCount(); ++classIdx)
 		{
 			blockCount += chunk.m_freeLists[classIdx].getSize();
 			chunk.m_freeLists[classIdx].destroy(m_interface.getMemoryPool());
 		}
+
+		chunk.m_freeLists.destroy(m_interface.getMemoryPool());
 
 		ANKI_ASSERT(blockCount == 1);
 
@@ -284,7 +287,7 @@ Error SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::allocate(PtrSi
 	{
 		classIdx = startingClassIdx;
 
-		while(classIdx < TInterface::getClassCount())
+		while(classIdx < m_interface.getClassCount())
 		{
 			// Find the best fit
 			for(FreeBlock& block : (*chunkIt)->m_freeLists[classIdx])
@@ -322,10 +325,12 @@ Error SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::allocate(PtrSi
 		PtrSize chunkSize;
 		TChunk* chunk;
 		ANKI_CHECK(m_interface.allocateChunk(chunk, chunkSize));
+		chunk->m_freeLists.resize(m_interface.getMemoryPool(), m_interface.getClassCount());
 
 		if(chunkSize < size)
 		{
 			ANKI_UTIL_LOGE("Chunk allocated can't fit the current allocation of %zu", origSize);
+			chunk->m_freeLists.destroy(m_interface.getMemoryPool());
 			m_interface.deleteChunk(chunk);
 			return Error::kOutOfMemory;
 		}
@@ -428,7 +433,7 @@ Error SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::validate() con
 						 chunk->m_totalSize);
 
 		PtrSize freeSize = 0;
-		for(U32 c = 0; c < TInterface::getClassCount(); ++c)
+		for(U32 c = 0; c < m_interface.getClassCount(); ++c)
 		{
 			for(U32 i = 0; i < chunk->m_freeLists[c].getSize(); ++i)
 			{
@@ -461,13 +466,13 @@ Error SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::validate() con
 	chunkIdx = 0;
 	for(const TChunk* chunk : m_chunks)
 	{
-		for(U32 c = 0; c < TInterface::getClassCount(); ++c)
+		for(U32 c = 0; c < m_interface.getClassCount(); ++c)
 		{
 			for(U32 i = 0; i < chunk->m_freeLists[c].getSize(); ++i)
 			{
 				const FreeBlock& crnt = chunk->m_freeLists[c][i];
 
-				for(U32 c2 = 0; c2 < TInterface::getClassCount(); ++c2)
+				for(U32 c2 = 0; c2 < m_interface.getClassCount(); ++c2)
 				{
 					for(U32 j = 0; j < chunk->m_freeLists[c2].getSize(); ++j)
 					{
@@ -524,7 +529,7 @@ void SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::printFreeBlocks
 		strList.pushBackSprintf("Chunk #%u, total size %zu, free size %zu\n", chunkCount, chunk->m_totalSize,
 								chunk->m_freeSize);
 
-		for(U32 c = 0; c < TInterface::getClassCount(); ++c)
+		for(U32 c = 0; c < m_interface.getClassCount(); ++c)
 		{
 			if(chunk->m_freeLists[c].getSize())
 			{
@@ -560,7 +565,7 @@ F32 SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::computeExternalF
 	{
 		PtrSize largestFreeBlockSize = 0;
 
-		for(U32 c = 0; c < TInterface::getClassCount(); ++c)
+		for(U32 c = 0; c < m_interface.getClassCount(); ++c)
 		{
 			for(const FreeBlock& block : chunk->m_freeLists[c])
 			{
@@ -590,7 +595,7 @@ F32 SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::computeExternalF
 	{
 		F64 quality = 0.0;
 
-		for(U32 c = 0; c < TInterface::getClassCount(); ++c)
+		for(U32 c = 0; c < m_interface.getClassCount(); ++c)
 		{
 			for(const FreeBlock& block : chunk->m_freeLists[c])
 			{

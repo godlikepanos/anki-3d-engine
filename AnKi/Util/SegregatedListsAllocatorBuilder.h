@@ -30,14 +30,13 @@ public:
 
 /// The base class for all user memory chunks of SegregatedListsAllocatorBuilder.
 /// @memberof SegregatedListsAllocatorBuilder
-template<typename TChunk, U32 kClassCount>
 class SegregatedListsAllocatorBuilderChunkBase
 {
-	template<typename TChunk_, typename TInterface, typename TLock>
+	template<typename TChunk, typename TInterface, typename TLock>
 	friend class SegregatedListsAllocatorBuilder;
 
 private:
-	Array<DynamicArray<detail::SegregatedListsAllocatorBuilderFreeBlock>, kClassCount> m_freeLists;
+	DynamicArray<DynamicArray<detail::SegregatedListsAllocatorBuilderFreeBlock>> m_freeLists;
 	PtrSize m_totalSize = 0;
 	PtrSize m_freeSize = 0;
 };
@@ -48,7 +47,7 @@ private:
 /// @tparam TInterface The interface that contains the following members:
 ///                    @code
 ///                    /// The number of classes
-///                    static constexpr U32 getClassCount();
+///                    U32 getClassCount() const;
 ///                    /// Max size for each class.
 ///                    void getClassInfo(U32 idx, PtrSize& size) const;
 ///                    /// Allocates a new user defined chunk of memory.
@@ -57,6 +56,8 @@ private:
 ///                    void deleteChunk(TChunk* chunk);
 ///                    /// Get an allocator for internal allocations of the builder.
 ///                    SomeMemoryPool& getMemoryPool() const;
+///                    /// Get the min alignment that will be required.
+///                    PtrSize getMinSizeAlignment() const;
 ///                    @endcode
 /// @tparam TLock User defined lock (eg Mutex).
 template<typename TChunk, typename TInterface, typename TLock>
@@ -95,6 +96,16 @@ public:
 
 	/// Adam Sawicki metric. 0.0 is no fragmentation, 1.0 is totally fragmented.
 	[[nodiscard]] F32 computeExternalFragmentationSawicki(PtrSize baseSize = 1) const;
+
+	TLock& getLock() const
+	{
+		return m_lock;
+	}
+
+	TInterface& getInterface()
+	{
+		return m_interface;
+	}
 
 private:
 	using FreeBlock = detail::SegregatedListsAllocatorBuilderFreeBlock;
