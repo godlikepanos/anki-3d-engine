@@ -28,6 +28,19 @@ void UnifiedGeometryMemoryPool::init(HeapMemoryPool* pool, GrManager* gr, const 
 	m_alloc.init(gr, pool, buffUsage, classes, poolSize, "UnifiedGeometry", false);
 }
 
+void GpuSceneMemoryPool::init(HeapMemoryPool* pool, GrManager* gr, const ConfigSet& cfg)
+{
+	ANKI_ASSERT(pool && gr);
+
+	const PtrSize poolSize = cfg.getCoreGpuSceneInitialSize();
+
+	const Array classes = {32_B, 64_B, 128_B, 256_B, poolSize};
+
+	BufferUsageBit buffUsage = BufferUsageBit::kAllStorage | BufferUsageBit::kTransferDestination;
+
+	m_alloc.init(gr, pool, buffUsage, classes, poolSize, "GpuScene", true);
+}
+
 StagingGpuMemoryPool::~StagingGpuMemoryPool()
 {
 	m_gr->finish();

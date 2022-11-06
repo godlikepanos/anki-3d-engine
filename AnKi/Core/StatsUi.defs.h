@@ -27,6 +27,9 @@ ANKI_STATS_UI_VALUE(PtrSize, gpuDeviceMemoryInUse, "Used", ValueFlag::kNone | Va
 ANKI_STATS_UI_VALUE(PtrSize, unifiedGeometryAllocated, "Unified geom allocated", ValueFlag::kNone | ValueFlag::kBytes)
 ANKI_STATS_UI_VALUE(PtrSize, unifiedGeometryTotal, "Unified geom total", ValueFlag::kNone | ValueFlag::kBytes)
 ANKI_STATS_UI_VALUE(F32, unifiedGometryExternalFragmentation, "Unified geom ext fragmentation", ValueFlag::kNone)
+ANKI_STATS_UI_VALUE(PtrSize, gpuSceneAllocated, "GPU scene allocated", ValueFlag::kNone | ValueFlag::kBytes)
+ANKI_STATS_UI_VALUE(PtrSize, gpuSceneTotal, "GPU scene total", ValueFlag::kNone | ValueFlag::kBytes)
+ANKI_STATS_UI_VALUE(F32, gpuSceneExternalFragmentation, "GPU scene ext fragmentation", ValueFlag::kNone)
 
 ANKI_STATS_UI_BEGIN_GROUP("Other")
 ANKI_STATS_UI_VALUE(U32, drawableCount, "Render queue drawbles", ValueFlag::kNone)

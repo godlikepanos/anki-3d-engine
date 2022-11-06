@@ -10,6 +10,7 @@ ANKI_CONFIG_VAR_PTR_SIZE(CoreStoragePerFrameMemorySize, 24_MB, 1_MB, 1_GB, "Stor
 ANKI_CONFIG_VAR_PTR_SIZE(CoreVertexPerFrameMemorySize, 12_MB, 1_MB, 1_GB, "Vertex staging buffer size")
 ANKI_CONFIG_VAR_PTR_SIZE(CoreTextureBufferPerFrameMemorySize, 1_MB, 1_MB, 1_GB, "Texture staging buffer size")
 ANKI_CONFIG_VAR_PTR_SIZE(CoreGlobalVertexMemorySize, 128_MB, 16_MB, 2_GB, "Global index and vertex buffer size")
+ANKI_CONFIG_VAR_PTR_SIZE(CoreGpuSceneInitialSize, 128_MB, 16_MB, 2_GB, "Global memory for the GPU scene")
 
 ANKI_CONFIG_VAR_BOOL(CoreMaliHwCounters, false, "Enable Mali counters")
 

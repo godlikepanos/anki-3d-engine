@@ -263,7 +263,7 @@ void SegregatedListsGpuAllocator::getStats(F32& externalFragmentation, PtrSize& 
 
 	externalFragmentation = m_builder->computeExternalFragmentation();
 	userAllocatedSize = m_allocatedSize;
-	totalSize = m_gpuBuffer->getSize();
+	totalSize = (m_gpuBuffer) ? m_gpuBuffer->getSize() : 0;
 }
 
 } // end namespace anki

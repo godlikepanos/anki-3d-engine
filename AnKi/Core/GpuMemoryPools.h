@@ -59,6 +59,47 @@ private:
 	SegregatedListsGpuAllocator m_alloc;
 };
 
+/// Memory pool for the GPU scene.
+class GpuSceneMemoryPool
+{
+public:
+	GpuSceneMemoryPool() = default;
+
+	GpuSceneMemoryPool(const GpuSceneMemoryPool&) = delete; // Non-copyable
+
+	GpuSceneMemoryPool& operator=(const GpuSceneMemoryPool&) = delete; // Non-copyable
+
+	void init(HeapMemoryPool* pool, GrManager* gr, const ConfigSet& cfg);
+
+	void allocate(PtrSize size, U32 alignment, SegregatedListsGpuAllocatorToken& token)
+	{
+		m_alloc.allocate(size, alignment, token);
+	}
+
+	void free(const SegregatedListsGpuAllocatorToken& token)
+	{
+		m_alloc.free(token);
+	}
+
+	void endFrame()
+	{
+		m_alloc.endFrame();
+	}
+
+	const BufferPtr& getBuffer() const
+	{
+		return m_alloc.getGpuBuffer();
+	}
+
+	void getStats(F32& externalFragmentation, PtrSize& userAllocatedSize, PtrSize& totalSize) const
+	{
+		m_alloc.getStats(externalFragmentation, userAllocatedSize, totalSize);
+	}
+
+private:
+	SegregatedListsGpuAllocator m_alloc;
+};
+
 enum class StagingGpuMemoryType : U8
 {
 	kUniform,

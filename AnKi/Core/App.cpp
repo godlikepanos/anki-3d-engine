@@ -134,6 +134,8 @@ void App::cleanup()
 	m_stagingMem = nullptr;
 	deleteInstance(m_mainPool, m_unifiedGometryMemPool);
 	m_unifiedGometryMemPool = nullptr;
+	deleteInstance(m_mainPool, m_gpuSceneMemPool);
+	m_gpuSceneMemPool = nullptr;
 	deleteInstance(m_mainPool, m_threadHive);
 	m_threadHive = nullptr;
 	deleteInstance(m_mainPool, m_maliHwCounters);
@@ -279,6 +281,9 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	//
 	m_unifiedGometryMemPool = newInstance<UnifiedGeometryMemoryPool>(m_mainPool);
 	m_unifiedGometryMemPool->init(&m_mainPool, m_gr, *m_config);
+
+	m_gpuSceneMemPool = newInstance<GpuSceneMemoryPool>(m_mainPool);
+	m_gpuSceneMemPool->init(&m_mainPool, m_gr, *m_config);
 
 	m_stagingMem = newInstance<StagingGpuMemoryPool>(m_mainPool);
 	ANKI_CHECK(m_stagingMem->init(m_gr, *m_config));
@@ -465,6 +470,7 @@ Error App::mainLoop()
 			m_gr->swapBuffers();
 			m_stagingMem->endFrame();
 			m_unifiedGometryMemPool->endFrame();
+			m_gpuSceneMemPool->endFrame();
 
 			// Update the trace info with some async loader stats
 			U64 asyncTaskCount = m_resources->getAsyncLoader().getCompletedTaskCount();
@@ -512,7 +518,8 @@ Error App::mainLoop()
 				const GrManagerStats grStats = m_gr->getStats();
 				m_unifiedGometryMemPool->getStats(in.m_unifiedGometryExternalFragmentation,
 												  in.m_unifiedGeometryAllocated, in.m_unifiedGeometryTotal);
-
+				m_gpuSceneMemPool->getStats(in.m_gpuSceneExternalFragmentation, in.m_gpuSceneAllocated,
+											in.m_gpuSceneTotal);
 				in.m_gpuDeviceMemoryAllocated = grStats.m_deviceMemoryAllocated;
 				in.m_gpuDeviceMemoryInUse = grStats.m_deviceMemoryInUse;
 
