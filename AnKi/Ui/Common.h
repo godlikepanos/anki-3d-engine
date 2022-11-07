@@ -16,6 +16,11 @@ namespace anki {
 
 // Forward
 class UiManager;
+class ResourceManager;
+class GrManager;
+class StagingGpuMemoryPool;
+class Input;
+class ResourceFilesystem;
 
 /// @addtogroup ui
 /// @{
@@ -33,6 +38,16 @@ ANKI_UI_OBJECT_FW(Font)
 ANKI_UI_OBJECT_FW(Canvas)
 ANKI_UI_OBJECT_FW(UiImmediateModeBuilder)
 #undef ANKI_UI_OBJECT
+
+class UiExternalSubsystems
+{
+public:
+	ResourceManager* m_resourceManager = nullptr;
+	ResourceFilesystem* m_resourceFilesystem = nullptr;
+	GrManager* m_grManager = nullptr;
+	StagingGpuMemoryPool* m_stagingGpuMemoryPool = nullptr;
+	Input* m_input = nullptr;
+};
 
 inline Vec2 toAnki(const ImVec2& v)
 {

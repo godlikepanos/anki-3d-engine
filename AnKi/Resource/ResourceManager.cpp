@@ -41,12 +41,7 @@ ResourceManager::~ResourceManager()
 Error ResourceManager::init(ResourceManagerInitInfo& init)
 {
 	ANKI_RESOURCE_LOGI("Initializing resource manager");
-
-	m_gr = init.m_gr;
-	m_physics = init.m_physics;
-	m_fs = init.m_resourceFs;
-	m_config = init.m_config;
-	m_unifiedGometryMemoryPool = init.m_unifiedGometryMemoryPool;
+	m_subsystems = init;
 
 	m_pool.init(init.m_allocCallback, init.m_allocCallbackData, "Resources");
 	m_tmpPool.init(init.m_allocCallback, init.m_allocCallbackData, 10_MB);
@@ -63,11 +58,12 @@ Error ResourceManager::init(ResourceManagerInitInfo& init)
 	m_asyncLoader->init(&m_pool);
 
 	m_transferGpuAlloc = newInstance<TransferGpuAllocator>(m_pool);
-	ANKI_CHECK(m_transferGpuAlloc->init(m_config->getRsrcTransferScratchMemorySize(), m_gr, &m_pool));
+	ANKI_CHECK(m_transferGpuAlloc->init(m_subsystems.m_config->getRsrcTransferScratchMemorySize(),
+										m_subsystems.m_grManager, &m_pool));
 
 	// Init the programs
 	m_shaderProgramSystem = newInstance<ShaderProgramResourceSystem>(m_pool, &m_pool);
-	ANKI_CHECK(m_shaderProgramSystem->init(*m_fs, *m_gr));
+	ANKI_CHECK(m_shaderProgramSystem->init(*m_subsystems.m_resourceFilesystem, *m_subsystems.m_grManager));
 
 	return Error::kNone;
 }

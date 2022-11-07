@@ -17,7 +17,7 @@ PlayerControllerComponent::PlayerControllerComponent(SceneNode* node)
 {
 	PhysicsPlayerControllerInitInfo init;
 	init.m_position = Vec3(0.0f);
-	m_player = node->getSceneGraph().getPhysicsWorld().newInstance<PhysicsPlayerController>(init);
+	m_player = getExternalSubsystems(*node).m_physicsWorld->newInstance<PhysicsPlayerController>(init);
 	m_player->setUserData(this);
 }
 

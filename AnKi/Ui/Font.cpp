@@ -31,7 +31,7 @@ Error Font::init(const CString& filename, ConstWeakArray<U32> fontHeights)
 
 	// Load font in memory
 	ResourceFilePtr file;
-	ANKI_CHECK(m_manager->getResourceManager().getFilesystem().openFile(filename, file));
+	ANKI_CHECK(getExternalSubsystems().m_resourceFilesystem->openFile(filename, file));
 	m_fontData.create(getMemoryPool(), U32(file->getSize()));
 	ANKI_CHECK(file->read(&m_fontData[0], file->getSize()));
 
@@ -70,7 +70,7 @@ void Font::createTexture(const void* data, U32 width, U32 height)
 
 	// Create and populate the buffer
 	const U32 buffSize = width * height * 4;
-	BufferPtr buff = m_manager->getGrManager().newBuffer(
+	BufferPtr buff = getExternalSubsystems().m_grManager->newBuffer(
 		BufferInitInfo(buffSize, BufferUsageBit::kTransferSource, BufferMapAccessBit::kWrite, "UI"));
 	void* mapped = buff->map(0, buffSize, BufferMapAccessBit::kWrite);
 	memcpy(mapped, data, buffSize);
@@ -86,20 +86,20 @@ void Font::createTexture(const void* data, U32 width, U32 height)
 		TextureUsageBit::kTransferDestination | TextureUsageBit::kSampledFragment | TextureUsageBit::kGenerateMipmaps;
 	texInit.m_mipmapCount = 1; // No mips because it will appear blurry with trilinear filtering
 
-	m_tex = m_manager->getGrManager().newTexture(texInit);
+	m_tex = getExternalSubsystems().m_grManager->newTexture(texInit);
 
 	// Create the whole texture view
-	m_texView = m_manager->getGrManager().newTextureView(TextureViewInitInfo(m_tex, "Font"));
+	m_texView = getExternalSubsystems().m_grManager->newTextureView(TextureViewInitInfo(m_tex, "Font"));
 	m_imFontAtlas->SetTexID(UiImageId(m_texView));
 
 	// Do the copy
 	constexpr TextureSurfaceInfo surf(0, 0, 0, 0);
 	CommandBufferInitInfo cmdbInit;
 	cmdbInit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
-	CommandBufferPtr cmdb = m_manager->getGrManager().newCommandBuffer(cmdbInit);
+	CommandBufferPtr cmdb = getExternalSubsystems().m_grManager->newCommandBuffer(cmdbInit);
 
 	TextureViewInitInfo viewInit(m_tex, surf, DepthStencilAspectBit::kNone, "TempFont");
-	TextureViewPtr tmpView = m_manager->getGrManager().newTextureView(viewInit);
+	TextureViewPtr tmpView = getExternalSubsystems().m_grManager->newTextureView(viewInit);
 
 	TextureBarrierInfo barrier = {m_tex.get(), TextureUsageBit::kNone, TextureUsageBit::kTransferDestination, surf};
 	cmdb->setPipelineBarrier({&barrier, 1}, {}, {});

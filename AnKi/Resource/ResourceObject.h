@@ -14,6 +14,7 @@ namespace anki {
 
 // Forward
 class XmlDocument;
+class GrManager;
 
 /// @addtogroup resource
 /// @{
@@ -22,17 +23,13 @@ class XmlDocument;
 class ResourceObject
 {
 	friend class ResourceManager;
+	template<typename>
+	friend class ResourcePtrDeleter;
 
 public:
 	ResourceObject(ResourceManager* manager);
 
 	virtual ~ResourceObject();
-
-	/// @privatesection
-	ResourceManager& getManager() const
-	{
-		return *m_manager;
-	}
 
 	HeapMemoryPool& getMemoryPool() const;
 	StackMemoryPool& getTempMemoryPool() const;
@@ -60,8 +57,6 @@ public:
 
 	// Internals:
 
-	ANKI_INTERNAL const ConfigSet& getConfig() const;
-
 	ANKI_INTERNAL void setFilename(const CString& fname)
 	{
 		ANKI_ASSERT(m_fname.isEmpty());
@@ -86,6 +81,14 @@ public:
 	ANKI_INTERNAL Error openFileReadAllText(const ResourceFilename& filename, StringRaii& file);
 
 	ANKI_INTERNAL Error openFileParseXml(const ResourceFilename& filename, XmlDocument& xml);
+
+protected:
+	ResourceManager& getManager() const
+	{
+		return *m_manager;
+	}
+
+	ResourceManagerExternalSubsystems& getExternalSubsystems() const;
 
 private:
 	ResourceManager* m_manager;

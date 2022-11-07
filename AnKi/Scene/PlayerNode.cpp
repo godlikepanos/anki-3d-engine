@@ -29,7 +29,7 @@ public:
 		updated = false;
 
 		PlayerControllerComponent& playerc = info.m_node->getFirstComponentOfType<PlayerControllerComponent>();
-		const Input& in = info.m_node->getSceneGraph().getInput();
+		const Input& in = *getExternalSubsystems(*info.m_node).m_input;
 		const F32 ang = toRad(7.0f);
 
 		F32 y = in.getMousePosition().y();
@@ -81,7 +81,7 @@ public:
 
 		PlayerControllerComponent& playerc = info.m_node->getFirstComponentOfType<PlayerControllerComponent>();
 		MoveComponent& move = info.m_node->getFirstComponentOfType<MoveComponent>();
-		const Input& in = info.m_node->getSceneGraph().getInput();
+		const Input& in = *getExternalSubsystems(*info.m_node).m_input;
 
 		const F32 speed = 0.5;
 

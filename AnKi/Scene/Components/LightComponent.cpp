@@ -28,8 +28,9 @@ LightComponent::LightComponent(SceneNode* node)
 	ANKI_ASSERT(m_uuid > 0);
 	m_point.m_radius = 1.0f;
 
-	if(node->getSceneGraph().getResourceManager().loadResource("EngineAssets/LightBulb.ankitex", m_pointDebugImage)
-	   || node->getSceneGraph().getResourceManager().loadResource("EngineAssets/SpotLight.ankitex", m_spotDebugImage))
+	if(getExternalSubsystems(*node).m_resourceManager->loadResource("EngineAssets/LightBulb.ankitex", m_pointDebugImage)
+	   || getExternalSubsystems(*node).m_resourceManager->loadResource("EngineAssets/SpotLight.ankitex",
+																	   m_spotDebugImage))
 	{
 		ANKI_SCENE_LOGF("Failed to load resources");
 	}

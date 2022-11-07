@@ -15,9 +15,7 @@
 namespace anki {
 
 // Forward
-class ResourceManager;
-class ConfigSet;
-class UnifiedGeometryMemoryPool;
+class SceneGraphExternalSubsystems;
 
 /// @addtogroup scene
 /// @{
@@ -25,6 +23,8 @@ class UnifiedGeometryMemoryPool;
 /// Interface class backbone of scene
 class SceneNode : public Hierarchy<SceneNode>, public IntrusiveListEnabled<SceneNode>
 {
+	friend class SceneComponent;
+
 public:
 	using Base = Hierarchy<SceneNode>;
 
@@ -52,9 +52,7 @@ public:
 		return *m_scene;
 	}
 
-	const ConfigSet& getConfig() const;
-
-	/// Return the name. It may be empty for nodes that we don't want to track
+	/// Return the name. It may be empty for nodes that we don't want to track.
 	CString getName() const
 	{
 		return (!m_name.isEmpty()) ? m_name.toCString() : CString();
@@ -73,8 +71,6 @@ public:
 	void setMarkedForDeletion();
 
 	Timestamp getGlobalTimestamp() const;
-
-	const UnifiedGeometryMemoryPool& getUnifiedGeometryMemoryPool() const;
 
 	Timestamp getComponentMaxTimestamp() const
 	{
@@ -264,6 +260,8 @@ public:
 	}
 
 protected:
+	SceneGraphExternalSubsystems& getExternalSubsystems() const;
+
 	/// Create and append a component to the components container. The SceneNode has the ownership.
 	template<typename TComponent>
 	TComponent* newComponent()
@@ -273,8 +271,6 @@ protected:
 		m_componentInfos.emplaceBack(getMemoryPool(), *comp);
 		return comp;
 	}
-
-	ResourceManager& getResourceManager();
 
 private:
 	/// This class packs a few info used by components.

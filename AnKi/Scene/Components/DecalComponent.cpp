@@ -17,7 +17,7 @@ DecalComponent::DecalComponent(SceneNode* node)
 	, m_node(node)
 {
 	ANKI_ASSERT(node);
-	if(node->getSceneGraph().getResourceManager().loadResource("EngineAssets/GreenDecal.ankitex", m_debugImage))
+	if(getExternalSubsystems(*m_node).m_resourceManager->loadResource("EngineAssets/GreenDecal.ankitex", m_debugImage))
 	{
 		ANKI_SCENE_LOGF("Failed to load resources");
 	}
@@ -31,7 +31,7 @@ Error DecalComponent::setLayer(CString texAtlasFname, CString texAtlasSubtexName
 {
 	Layer& l = m_layers[type];
 
-	ANKI_CHECK(m_node->getSceneGraph().getResourceManager().loadResource(texAtlasFname, l.m_atlas));
+	ANKI_CHECK(getExternalSubsystems(*m_node).m_resourceManager->loadResource(texAtlasFname, l.m_atlas));
 
 	ANKI_CHECK(l.m_atlas->getSubImageInfo(texAtlasSubtexName, &l.m_uv[0]));
 

@@ -118,6 +118,8 @@ protected:
 	/// Return the u between current time and when the event started
 	/// @return A number [0.0, 1.0]
 	Second getDelta(Second crntTime) const;
+
+	SceneGraphExternalSubsystems& getExternalSubsystems() const;
 };
 /// @}
 

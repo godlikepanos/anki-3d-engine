@@ -17,20 +17,10 @@ UiManager::~UiManager()
 {
 }
 
-Error UiManager::init(AllocAlignedCallback allocCallback, void* allocCallbackUserData, ResourceManager* resources,
-					  GrManager* gr, StagingGpuMemoryPool* gpuMem, Input* input)
+Error UiManager::init(UiManagerInitInfo& initInfo)
 {
-	ANKI_ASSERT(resources);
-	ANKI_ASSERT(gr);
-	ANKI_ASSERT(gpuMem);
-	ANKI_ASSERT(input);
-
-	m_pool.init(allocCallback, allocCallbackUserData);
-	m_resources = resources;
-	m_gr = gr;
-	m_gpuMem = gpuMem;
-	m_input = input;
-
+	m_pool.init(initInfo.m_allocCallback, initInfo.m_allocCallbackUserData);
+	m_subsystems = initInfo;
 	return Error::kNone;
 }
 

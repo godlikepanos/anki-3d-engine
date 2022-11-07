@@ -38,7 +38,7 @@ void PhysicsDebugNode::draw(RenderQueueDrawContext& ctx)
 	if(ctx.m_debugDraw)
 	{
 		m_physDbgDrawer.start(ctx.m_viewProjectionMatrix, ctx.m_commandBuffer, ctx.m_stagingGpuAllocator);
-		m_physDbgDrawer.drawWorld(getSceneGraph().getPhysicsWorld());
+		m_physDbgDrawer.drawWorld(*getExternalSubsystems().m_physicsWorld);
 		m_physDbgDrawer.end();
 	}
 }

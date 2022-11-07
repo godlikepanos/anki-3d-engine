@@ -28,7 +28,7 @@ Error ScriptEvent::init(Second startTime, Second duration, CString script)
 	Event::init(startTime, duration);
 
 	// Create the env
-	ANKI_CHECK(m_env.init(&getSceneGraph().getScriptManager()));
+	ANKI_CHECK(m_env.init(getExternalSubsystems().m_scriptManager));
 
 	// Do the rest
 	StringRaii extension(&getMemoryPool());
@@ -37,7 +37,7 @@ Error ScriptEvent::init(Second startTime, Second duration, CString script)
 	if(!extension.isEmpty() && extension == "lua")
 	{
 		// It's a file
-		ANKI_CHECK(getSceneGraph().getResourceManager().loadResource(script, m_scriptRsrc));
+		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(script, m_scriptRsrc));
 
 		// Exec the script
 		ANKI_CHECK(m_env.evalString(m_scriptRsrc->getSource()));

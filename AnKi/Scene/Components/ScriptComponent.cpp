@@ -29,7 +29,7 @@ ScriptComponent::~ScriptComponent()
 Error ScriptComponent::loadScriptResource(CString fname)
 {
 	// Load
-	ANKI_CHECK(m_node->getSceneGraph().getResourceManager().loadResource(fname, m_script));
+	ANKI_CHECK(getExternalSubsystems(*m_node).m_resourceManager->loadResource(fname, m_script));
 
 	// Create the env
 	if(m_env)
@@ -37,7 +37,7 @@ Error ScriptComponent::loadScriptResource(CString fname)
 		deleteInstance(m_node->getMemoryPool(), m_env);
 	}
 	m_env = newInstance<ScriptEnvironment>(m_node->getMemoryPool());
-	ANKI_CHECK(m_env->init(&m_node->getSceneGraph().getScriptManager()));
+	ANKI_CHECK(m_env->init(getExternalSubsystems(*m_node).m_scriptManager));
 
 	// Exec the script
 	ANKI_CHECK(m_env->evalString(m_script->getSource()));

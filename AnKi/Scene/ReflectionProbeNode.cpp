@@ -155,13 +155,15 @@ void ReflectionProbeNode::onShapeUpdate(ReflectionProbeComponent& reflc)
 	const Vec3 halfProbeSize = reflc.getBoxVolumeSize() / 2.0f;
 	F32 effectiveDistance = max(halfProbeSize.x(), halfProbeSize.y());
 	effectiveDistance = max(effectiveDistance, halfProbeSize.z());
-	effectiveDistance = max(effectiveDistance, getConfig().getSceneReflectionProbeEffectiveDistance());
+	effectiveDistance =
+		max(effectiveDistance, getExternalSubsystems().m_config->getSceneReflectionProbeEffectiveDistance());
 
 	// Update frustum components
 	iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) {
 		frc.setFar(effectiveDistance);
 		frc.setShadowCascadeDistance(
-			0, min(effectiveDistance, getConfig().getSceneReflectionProbeShadowEffectiveDistance()));
+			0,
+			min(effectiveDistance, getExternalSubsystems().m_config->getSceneReflectionProbeShadowEffectiveDistance()));
 
 		// Add something to avoid complains
 		frc.setLodDistances(

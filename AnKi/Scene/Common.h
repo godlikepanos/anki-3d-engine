@@ -11,6 +11,17 @@
 
 namespace anki {
 
+// Forward
+class ResourceManager;
+class Input;
+class ConfigSet;
+class UiManager;
+class UnifiedGeometryMemoryPool;
+class GpuSceneMemoryPool;
+class ScriptManager;
+class GrManager;
+class PhysicsWorld;
+
 /// @addtogroup scene
 /// @{
 
@@ -28,6 +39,22 @@ namespace anki {
 		} \
 		return ok; \
 	}))
+
+class SceneGraphExternalSubsystems
+{
+public:
+	ConfigSet* m_config = nullptr;
+	ThreadHive* m_threadHive = nullptr;
+	ResourceManager* m_resourceManager = nullptr;
+	Input* m_input = nullptr;
+	ScriptManager* m_scriptManager = nullptr;
+	UiManager* m_uiManager = nullptr;
+	GrManager* m_grManager = nullptr;
+	const Timestamp* m_globalTimestamp = nullptr;
+	PhysicsWorld* m_physicsWorld = nullptr;
+	UnifiedGeometryMemoryPool* m_unifiedGeometryMemPool = nullptr;
+	GpuSceneMemoryPool* m_gpuSceneMemoryPool = nullptr;
+};
 /// @}
 
 } // end namespace anki

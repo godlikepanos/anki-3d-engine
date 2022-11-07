@@ -149,7 +149,8 @@ void GlobalIlluminationProbeNode::onShapeUpdateOrProbeNeedsRendering()
 		// Compute effective distance
 		F32 effectiveDistance = max(gic.getBoxVolumeSize().x(), gic.getBoxVolumeSize().y());
 		effectiveDistance = max(effectiveDistance, gic.getBoxVolumeSize().z());
-		effectiveDistance = max(effectiveDistance, getConfig().getSceneReflectionProbeEffectiveDistance());
+		effectiveDistance =
+			max(effectiveDistance, getExternalSubsystems().m_config->getSceneReflectionProbeEffectiveDistance());
 
 		// Update frustum components
 		U count = 0;
@@ -160,7 +161,8 @@ void GlobalIlluminationProbeNode::onShapeUpdateOrProbeNeedsRendering()
 			frc.setWorldTransform(trf);
 			frc.setFar(effectiveDistance);
 			frc.setShadowCascadeDistance(
-				0, min(effectiveDistance, getConfig().getSceneReflectionProbeShadowEffectiveDistance()));
+				0, min(effectiveDistance,
+					   getExternalSubsystems().m_config->getSceneReflectionProbeShadowEffectiveDistance()));
 
 			// Add something to avoid complains
 			frc.setLodDistances(

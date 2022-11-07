@@ -36,7 +36,7 @@ Error Canvas::init(FontPtr font, U32 fontHeight, U32 width, U32 height)
 	resize(width, height);
 
 	// Create program
-	ANKI_CHECK(m_manager->getResourceManager().loadResource("ShaderBinaries/Ui.ankiprogbin", m_prog));
+	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource("ShaderBinaries/Ui.ankiprogbin", m_prog));
 
 	for(U32 i = 0; i < kShaderCount; ++i)
 	{
@@ -52,11 +52,11 @@ Error Canvas::init(FontPtr font, U32 fontHeight, U32 width, U32 height)
 	samplerInit.m_minMagFilter = SamplingFilter::kLinear;
 	samplerInit.m_mipmapFilter = SamplingFilter::kLinear;
 	samplerInit.m_addressing = SamplingAddressing::kRepeat;
-	m_linearLinearRepeatSampler = m_manager->getGrManager().newSampler(samplerInit);
+	m_linearLinearRepeatSampler = getExternalSubsystems().m_grManager->newSampler(samplerInit);
 
 	samplerInit.m_minMagFilter = SamplingFilter::kNearest;
 	samplerInit.m_mipmapFilter = SamplingFilter::kNearest;
-	m_nearestNearestRepeatSampler = m_manager->getGrManager().newSampler(samplerInit);
+	m_nearestNearestRepeatSampler = getExternalSubsystems().m_grManager->newSampler(samplerInit);
 
 	// Allocator
 	m_tempPool.init(getMemoryPool().getAllocationCallback(), getMemoryPool().getAllocationCallbackUserData(), 512_B);
@@ -104,7 +104,7 @@ Error Canvas::init(FontPtr font, U32 fontHeight, U32 width, U32 height)
 
 void Canvas::handleInput()
 {
-	const Input& in = m_manager->getInput();
+	const Input& in = *getExternalSubsystems().m_input;
 
 	// Begin
 	setImAllocator();
@@ -216,10 +216,10 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 			return;
 		}
 
-		ImDrawVert* verts = static_cast<ImDrawVert*>(
-			m_manager->getStagingGpuMemory().allocateFrame(verticesSize, StagingGpuMemoryType::kVertex, vertsToken));
-		ImDrawIdx* indices = static_cast<ImDrawIdx*>(
-			m_manager->getStagingGpuMemory().allocateFrame(indicesSize, StagingGpuMemoryType::kVertex, indicesToken));
+		ImDrawVert* verts = static_cast<ImDrawVert*>(getExternalSubsystems().m_stagingGpuMemoryPool->allocateFrame(
+			verticesSize, StagingGpuMemoryType::kVertex, vertsToken));
+		ImDrawIdx* indices = static_cast<ImDrawIdx*>(getExternalSubsystems().m_stagingGpuMemoryPool->allocateFrame(
+			indicesSize, StagingGpuMemoryType::kVertex, indicesToken));
 
 		for(I n = 0; n < drawData.CmdListsCount; ++n)
 		{

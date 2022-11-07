@@ -30,7 +30,7 @@ SkinComponent::~SkinComponent()
 
 Error SkinComponent::loadSkeletonResource(CString fname)
 {
-	ANKI_CHECK(m_node->getSceneGraph().getResourceManager().loadResource(fname, m_skeleton));
+	ANKI_CHECK(getExternalSubsystems(*m_node).m_resourceManager->loadResource(fname, m_skeleton));
 
 	m_boneTrfs[0].destroy(m_node->getMemoryPool());
 	m_boneTrfs[1].destroy(m_node->getMemoryPool());

@@ -30,7 +30,7 @@ void allocateAndPopulateDebugBox(StagingGpuMemoryPool& stagingGpuAllocator, Stag
 class DebugDrawer2
 {
 public:
-	Error init(ResourceManager* rsrcManager);
+	Error init(ResourceManager* rsrcManager, GrManager* gr);
 
 	Bool isInitialized() const
 	{

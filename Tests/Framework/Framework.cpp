@@ -290,9 +290,9 @@ ResourceManager* createResourceManager(ConfigSet* cfg, GrManager* gr, PhysicsWor
 	ANKI_TEST_EXPECT_NO_ERR(resourceFs->init(*cfg, allocAligned, nullptr));
 
 	ResourceManagerInitInfo rinit;
-	rinit.m_gr = gr;
-	rinit.m_physics = physics;
-	rinit.m_resourceFs = resourceFs;
+	rinit.m_grManager = gr;
+	rinit.m_physicsWorld = physics;
+	rinit.m_resourceFilesystem = resourceFs;
 	rinit.m_config = cfg;
 	rinit.m_allocCallback = allocAligned;
 	rinit.m_allocCallbackData = nullptr;

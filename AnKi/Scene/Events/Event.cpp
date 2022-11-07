@@ -43,8 +43,8 @@ void Event::setMarkedForDeletion()
 
 Second Event::getDelta(Second crntTime) const
 {
-	Second d = crntTime - m_startTime; // delta
-	Second dp = d / m_duration; // delta as persentage
+	const Second d = crntTime - m_startTime; // delta
+	const Second dp = d / m_duration; // delta as persentage
 	return dp;
 }
 
@@ -56,6 +56,11 @@ SceneGraph& Event::getSceneGraph()
 const SceneGraph& Event::getSceneGraph() const
 {
 	return m_manager->getSceneGraph();
+}
+
+SceneGraphExternalSubsystems& Event::getExternalSubsystems() const
+{
+	return m_manager->getSceneGraph().m_subsystems;
 }
 
 } // end namespace anki

@@ -27,7 +27,7 @@ BodyComponent::~BodyComponent()
 Error BodyComponent::loadMeshResource(CString meshFilename)
 {
 	m_body.reset(nullptr);
-	ANKI_CHECK(m_node->getSceneGraph().getResourceManager().loadResource(meshFilename, m_mesh));
+	ANKI_CHECK(getExternalSubsystems(*m_node).m_resourceManager->loadResource(meshFilename, m_mesh));
 
 	const Transform prevTransform = (m_body) ? m_body->getTransform() : m_trf;
 	const F32 prevMass = (m_body) ? m_body->getMass() : 0.0f;
@@ -36,7 +36,7 @@ Error BodyComponent::loadMeshResource(CString meshFilename)
 	init.m_mass = prevMass;
 	init.m_transform = prevTransform;
 	init.m_shape = m_mesh->getCollisionShape();
-	m_body = m_node->getSceneGraph().getPhysicsWorld().newInstance<PhysicsBody>(init);
+	m_body = getExternalSubsystems(*m_node).m_physicsWorld->newInstance<PhysicsBody>(init);
 	m_body->setUserData(this);
 
 	m_markedForUpdate = true;
@@ -67,7 +67,7 @@ void BodyComponent::setMass(F32 mass)
 			init.m_transform = prevTransform;
 			init.m_mass = mass;
 			init.m_shape = m_mesh->getCollisionShape();
-			m_body = m_node->getSceneGraph().getPhysicsWorld().newInstance<PhysicsBody>(init);
+			m_body = getExternalSubsystems(*m_node).m_physicsWorld->newInstance<PhysicsBody>(init);
 			m_body->setUserData(this);
 
 			m_markedForUpdate = true;

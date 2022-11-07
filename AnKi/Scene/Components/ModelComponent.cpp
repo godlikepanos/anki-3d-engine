@@ -29,7 +29,7 @@ Error ModelComponent::loadModelResource(CString filename)
 	m_dirty = true;
 
 	ModelResourcePtr rsrc;
-	ANKI_CHECK(m_node->getSceneGraph().getResourceManager().loadResource(filename, rsrc));
+	ANKI_CHECK(getExternalSubsystems(*m_node).m_resourceManager->loadResource(filename, rsrc));
 	m_model = std::move(rsrc);
 
 	m_modelPatchMergeKeys.destroy(m_node->getMemoryPool());

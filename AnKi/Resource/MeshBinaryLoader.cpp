@@ -8,11 +8,6 @@
 
 namespace anki {
 
-MeshBinaryLoader::MeshBinaryLoader(ResourceManager* manager)
-	: MeshBinaryLoader(manager, &manager->getTempMemoryPool())
-{
-}
-
 MeshBinaryLoader::~MeshBinaryLoader()
 {
 	m_subMeshes.destroy(*m_pool);
@@ -21,7 +16,7 @@ MeshBinaryLoader::~MeshBinaryLoader()
 Error MeshBinaryLoader::load(const ResourceFilename& filename)
 {
 	// Load header + submeshes
-	ANKI_CHECK(m_manager->getFilesystem().openFile(filename, m_file));
+	ANKI_CHECK(m_fs->openFile(filename, m_file));
 	ANKI_CHECK(m_file->read(&m_header, sizeof(m_header)));
 	ANKI_CHECK(checkHeader());
 	ANKI_CHECK(loadSubmeshes());

@@ -132,7 +132,7 @@ public:
 
 	PhysicsParticle(const PhysicsBodyInitInfo& init, SceneNode* node, ParticleEmitterComponent* component)
 	{
-		m_body = node->getSceneGraph().getPhysicsWorld().newInstance<PhysicsBody>(init);
+		m_body = getExternalSubsystems(*node).m_physicsWorld->newInstance<PhysicsBody>(init);
 		m_body->setUserData(component);
 		m_body->activate(false);
 		m_body->setMaterialGroup(PhysicsMaterialBit::kParticle);
@@ -212,12 +212,12 @@ Error ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	// Create the debug drawer
 	if(!m_dbgImage.isCreated())
 	{
-		ANKI_CHECK(m_node->getSceneGraph().getResourceManager().loadResource("EngineAssets/ParticleEmitter.ankitex",
-																			 m_dbgImage));
+		ANKI_CHECK(getExternalSubsystems(*m_node).m_resourceManager->loadResource(
+			"EngineAssets/ParticleEmitter.ankitex", m_dbgImage));
 	}
 
 	// Load
-	ANKI_CHECK(m_node->getSceneGraph().getResourceManager().loadResource(filename, m_particleEmitterResource));
+	ANKI_CHECK(getExternalSubsystems(*m_node).m_resourceManager->loadResource(filename, m_particleEmitterResource));
 	m_props = m_particleEmitterResource->getProperties();
 
 	// Cleanup
@@ -228,8 +228,9 @@ Error ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	m_simulationType = (m_props.m_usePhysicsEngine) ? SimulationType::kPhysicsEngine : SimulationType::kSimple;
 	if(m_simulationType == SimulationType::kPhysicsEngine)
 	{
-		PhysicsCollisionShapePtr collisionShape = m_node->getSceneGraph().getPhysicsWorld().newInstance<PhysicsSphere>(
-			m_props.m_particle.m_minInitialSize / 2.0f);
+		PhysicsCollisionShapePtr collisionShape =
+			getExternalSubsystems(*m_node).m_physicsWorld->newInstance<PhysicsSphere>(
+				m_props.m_particle.m_minInitialSize / 2.0f);
 
 		PhysicsBodyInitInfo binit;
 		binit.m_shape = std::move(collisionShape);

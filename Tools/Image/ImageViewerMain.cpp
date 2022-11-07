@@ -25,10 +25,10 @@ public:
 			},
 			this);
 
-		ANKI_CHECK_AND_IGNORE(getSceneGraph().getUiManager().newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf",
-																		 Array<U32, 1>{16}));
+		ANKI_CHECK_AND_IGNORE(getExternalSubsystems().m_uiManager->newInstance(
+			m_font, "EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{16}));
 
-		ANKI_CHECK_AND_IGNORE(getSceneGraph().getResourceManager().loadResource(
+		ANKI_CHECK_AND_IGNORE(getExternalSubsystems().m_resourceManager->loadResource(
 			"ShaderBinaries/UiVisualizeImage.ankiprogbin", m_imageProgram));
 	}
 
@@ -152,7 +152,7 @@ private:
 				TextureViewInitInfo viewInitInf(m_imageResource->getTexture());
 				viewInitInf.m_firstMipmap = m_crntMip;
 				viewInitInf.m_mipmapCount = 1;
-				m_textureView = getSceneGraph().getGrManager().newTextureView(viewInitInf);
+				m_textureView = getExternalSubsystems().m_grManager->newTextureView(viewInitInf);
 			}
 
 			ImGui::SameLine();

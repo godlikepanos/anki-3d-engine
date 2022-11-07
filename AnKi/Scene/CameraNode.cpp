@@ -62,29 +62,29 @@ void CameraNode::initCommon(FrustumType frustumType)
 	frc->setFrustumType(frustumType);
 	frc->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::kAll
 								   ^ FrustumComponentVisibilityTestFlag::kAllRayTracing);
-	frc->setLodDistance(0, getConfig().getLod0MaxDistance());
-	frc->setLodDistance(1, getConfig().getLod1MaxDistance());
-	frc->setShadowCascadeCount(getConfig().getSceneShadowCascadeCount());
+	frc->setLodDistance(0, getExternalSubsystems().m_config->getLod0MaxDistance());
+	frc->setLodDistance(1, getExternalSubsystems().m_config->getLod1MaxDistance());
+	frc->setShadowCascadeCount(getExternalSubsystems().m_config->getSceneShadowCascadeCount());
 
 	static_assert(kMaxShadowCascades == 4);
-	frc->setShadowCascadeDistance(0, getConfig().getSceneShadowCascade0Distance());
-	frc->setShadowCascadeDistance(1, getConfig().getSceneShadowCascade1Distance());
-	frc->setShadowCascadeDistance(2, getConfig().getSceneShadowCascade2Distance());
-	frc->setShadowCascadeDistance(3, getConfig().getSceneShadowCascade3Distance());
+	frc->setShadowCascadeDistance(0, getExternalSubsystems().m_config->getSceneShadowCascade0Distance());
+	frc->setShadowCascadeDistance(1, getExternalSubsystems().m_config->getSceneShadowCascade1Distance());
+	frc->setShadowCascadeDistance(2, getExternalSubsystems().m_config->getSceneShadowCascade2Distance());
+	frc->setShadowCascadeDistance(3, getExternalSubsystems().m_config->getSceneShadowCascade3Distance());
 
 	// Extended frustum for RT
-	if(getSceneGraph().getGrManager().getDeviceCapabilities().m_rayTracingEnabled
-	   && getConfig().getSceneRayTracedShadows())
+	if(getExternalSubsystems().m_grManager->getDeviceCapabilities().m_rayTracingEnabled
+	   && getExternalSubsystems().m_config->getSceneRayTracedShadows())
 	{
 		FrustumComponent* rtFrustumComponent = newComponent<FrustumComponent>();
 		rtFrustumComponent->setFrustumType(FrustumType::kOrthographic);
 		rtFrustumComponent->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::kRayTracingShadows);
 
-		const F32 dist = getConfig().getSceneRayTracingExtendedFrustumDistance();
+		const F32 dist = getExternalSubsystems().m_config->getSceneRayTracingExtendedFrustumDistance();
 
 		rtFrustumComponent->setOrthographic(0.1f, dist * 2.0f, dist, -dist, dist, -dist);
-		rtFrustumComponent->setLodDistance(0, getConfig().getLod0MaxDistance());
-		rtFrustumComponent->setLodDistance(1, getConfig().getLod1MaxDistance());
+		rtFrustumComponent->setLodDistance(0, getExternalSubsystems().m_config->getLod0MaxDistance());
+		rtFrustumComponent->setLodDistance(1, getExternalSubsystems().m_config->getLod1MaxDistance());
 	}
 }
 

@@ -317,9 +317,9 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	// Resources
 	//
 	ResourceManagerInitInfo rinit;
-	rinit.m_gr = m_gr;
-	rinit.m_physics = m_physics;
-	rinit.m_resourceFs = m_resourceFs;
+	rinit.m_grManager = m_gr;
+	rinit.m_physicsWorld = m_physics;
+	rinit.m_resourceFilesystem = m_resourceFs;
 	rinit.m_unifiedGometryMemoryPool = m_unifiedGometryMemPool;
 	rinit.m_config = m_config;
 	rinit.m_allocCallback = m_mainPool.getAllocationCallback();
@@ -331,9 +331,16 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	//
 	// UI
 	//
+	UiManagerInitInfo uiInitInfo;
+	uiInitInfo.m_allocCallback = m_mainPool.getAllocationCallback();
+	uiInitInfo.m_allocCallbackUserData = m_mainPool.getAllocationCallbackUserData();
+	uiInitInfo.m_grManager = m_gr;
+	uiInitInfo.m_input = m_input;
+	uiInitInfo.m_resourceFilesystem = m_resourceFs;
+	uiInitInfo.m_resourceManager = m_resources;
+	uiInitInfo.m_stagingGpuMemoryPool = m_stagingMem;
 	m_ui = newInstance<UiManager>(m_mainPool);
-	ANKI_CHECK(m_ui->init(m_mainPool.getAllocationCallback(), m_mainPool.getAllocationCallbackUserData(), m_resources,
-						  m_gr, m_stagingMem, m_input));
+	ANKI_CHECK(m_ui->init(uiInitInfo));
 
 	//
 	// Renderer
@@ -363,9 +370,21 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	//
 	m_scene = newInstance<SceneGraph>(m_mainPool);
 
-	ANKI_CHECK(m_scene->init(m_mainPool.getAllocationCallback(), m_mainPool.getAllocationCallbackUserData(),
-							 m_threadHive, m_resources, m_input, m_script, m_ui, m_config, &m_globalTimestamp,
-							 m_unifiedGometryMemPool));
+	SceneGraphInitInfo sceneInit;
+	sceneInit.m_allocCallback = m_mainPool.getAllocationCallback();
+	sceneInit.m_allocCallbackData = m_mainPool.getAllocationCallbackUserData();
+	sceneInit.m_config = m_config;
+	sceneInit.m_globalTimestamp = &m_globalTimestamp;
+	sceneInit.m_gpuSceneMemoryPool = m_gpuSceneMemPool;
+	sceneInit.m_input = m_input;
+	sceneInit.m_resourceManager = m_resources;
+	sceneInit.m_scriptManager = m_script;
+	sceneInit.m_threadHive = m_threadHive;
+	sceneInit.m_uiManager = m_ui;
+	sceneInit.m_unifiedGeometryMemPool = m_unifiedGometryMemPool;
+	sceneInit.m_grManager = m_gr;
+	sceneInit.m_physicsWorld = m_physics;
+	ANKI_CHECK(m_scene->init(sceneInit));
 
 	// Inform the script engine about some subsystems
 	m_script->setRenderer(m_renderer);

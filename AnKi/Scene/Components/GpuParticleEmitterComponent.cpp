@@ -31,17 +31,17 @@ Error GpuParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	// Create the debug drawer
 	if(!m_dbgImage.isCreated())
 	{
-		ANKI_CHECK(m_node->getSceneGraph().getResourceManager().loadResource("EngineAssets/ParticleEmitter.ankitex",
-																			 m_dbgImage));
+		ANKI_CHECK(getExternalSubsystems(*m_node).m_resourceManager->loadResource(
+			"EngineAssets/ParticleEmitter.ankitex", m_dbgImage));
 	}
 
 	// Load particle props
-	ANKI_CHECK(m_node->getSceneGraph().getResourceManager().loadResource(filename, m_particleEmitterResource));
+	ANKI_CHECK(getExternalSubsystems(*m_node).m_resourceManager->loadResource(filename, m_particleEmitterResource));
 	const ParticleEmitterProperties& inProps = m_particleEmitterResource->getProperties();
 	m_maxParticleCount = inProps.m_maxNumOfParticles;
 
 	// Create program
-	ANKI_CHECK(m_node->getSceneGraph().getResourceManager().loadResource(
+	ANKI_CHECK(getExternalSubsystems(*m_node).m_resourceManager->loadResource(
 		"ShaderBinaries/GpuParticlesSimulation.ankiprogbin", m_prog));
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variant);
@@ -54,7 +54,7 @@ Error GpuParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 		buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
 		buffInit.m_usage = BufferUsageBit::kUniformCompute;
 		buffInit.m_size = sizeof(GpuParticleEmitterProperties);
-		m_propsBuff = m_node->getSceneGraph().getGrManager().newBuffer(buffInit);
+		m_propsBuff = getExternalSubsystems(*m_node).m_grManager->newBuffer(buffInit);
 		GpuParticleEmitterProperties* props =
 			static_cast<GpuParticleEmitterProperties*>(m_propsBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 
@@ -80,7 +80,7 @@ Error GpuParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 		buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
 		buffInit.m_usage = BufferUsageBit::kAllStorage;
 		buffInit.m_size = sizeof(GpuParticle) * m_maxParticleCount;
-		m_particlesBuff = m_node->getSceneGraph().getGrManager().newBuffer(buffInit);
+		m_particlesBuff = getExternalSubsystems(*m_node).m_grManager->newBuffer(buffInit);
 
 		GpuParticle* particle =
 			static_cast<GpuParticle*>(m_particlesBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
@@ -100,7 +100,7 @@ Error GpuParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 		buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
 		buffInit.m_usage = BufferUsageBit::kAllStorage;
 		buffInit.m_size = sizeof(U32) + kMaxRandFactors * sizeof(F32);
-		m_randFactorsBuff = m_node->getSceneGraph().getGrManager().newBuffer(buffInit);
+		m_randFactorsBuff = getExternalSubsystems(*m_node).m_grManager->newBuffer(buffInit);
 
 		F32* randFactors = static_cast<F32*>(m_randFactorsBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 
@@ -121,7 +121,7 @@ Error GpuParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	{
 		SamplerInitInfo sinit("GpuParticles");
 		sinit.m_addressing = SamplingAddressing::kClamp;
-		m_nearestAnyClampSampler = m_node->getSceneGraph().getGrManager().newSampler(sinit);
+		m_nearestAnyClampSampler = getExternalSubsystems(*m_node).m_grManager->newSampler(sinit);
 	}
 
 	// Find the extend of the particles

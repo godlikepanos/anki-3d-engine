@@ -23,7 +23,7 @@ CpuMeshResource::~CpuMeshResource()
 
 Error CpuMeshResource::load(const ResourceFilename& filename, [[maybe_unused]] Bool async)
 {
-	MeshBinaryLoader loader(&getManager());
+	MeshBinaryLoader loader(getExternalSubsystems().m_resourceFilesystem, &getTempMemoryPool());
 
 	ANKI_CHECK(loader.load(filename));
 
@@ -37,7 +37,8 @@ Error CpuMeshResource::load(const ResourceFilename& filename, [[maybe_unused]] B
 
 	// Create the collision shape
 	const Bool convex = !!(loader.getHeader().m_flags & MeshBinaryFlag::kConvex);
-	m_physicsShape = getManager().getPhysicsWorld().newInstance<PhysicsTriangleSoup>(m_positions, m_indices, convex);
+	m_physicsShape =
+		getExternalSubsystems().m_physicsWorld->newInstance<PhysicsTriangleSoup>(m_positions, m_indices, convex);
 
 	return Error::kNone;
 }

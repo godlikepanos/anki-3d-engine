@@ -392,7 +392,7 @@ ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitIn
 			inf.m_shaderType = shaderType;
 			inf.m_binary = binary.m_codeBlocks[binaryVariant->m_codeBlockIndices[shaderType]].m_binary;
 			inf.m_constValues.setArray((constValueCount) ? constValues.getBegin() : nullptr, constValueCount);
-			ShaderPtr shader = getManager().getGrManager().newShader(inf);
+			ShaderPtr shader = getExternalSubsystems().m_grManager->newShader(inf);
 
 			const ShaderTypeBit shaderBit = ShaderTypeBit(1 << shaderType);
 			if(!!(shaderBit & ShaderTypeBit::kAllGraphics))
@@ -410,7 +410,7 @@ ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitIn
 		}
 
 		// Create the program
-		variant->m_prog = getManager().getGrManager().newShaderProgram(progInf);
+		variant->m_prog = getExternalSubsystems().m_grManager->newShaderProgram(progInf);
 	}
 	else
 	{

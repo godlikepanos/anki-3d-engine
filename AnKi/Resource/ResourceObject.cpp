@@ -32,14 +32,14 @@ StackMemoryPool& ResourceObject::getTempMemoryPool() const
 
 Error ResourceObject::openFile(const CString& filename, ResourceFilePtr& file)
 {
-	return m_manager->getFilesystem().openFile(filename, file);
+	return getExternalSubsystems().m_resourceFilesystem->openFile(filename, file);
 }
 
 Error ResourceObject::openFileReadAllText(const CString& filename, StringRaii& text)
 {
 	// Load file
 	ResourceFilePtr file;
-	ANKI_CHECK(m_manager->getFilesystem().openFile(filename, file));
+	ANKI_CHECK(getExternalSubsystems().m_resourceFilesystem->openFile(filename, file));
 
 	// Read string
 	ANKI_CHECK(file->readAllText(text));
@@ -57,9 +57,9 @@ Error ResourceObject::openFileParseXml(const CString& filename, XmlDocument& xml
 	return Error::kNone;
 }
 
-const ConfigSet& ResourceObject::getConfig() const
+ResourceManagerExternalSubsystems& ResourceObject::getExternalSubsystems() const
 {
-	return m_manager->getConfig();
+	return m_manager->m_subsystems;
 }
 
 } // end namespace anki

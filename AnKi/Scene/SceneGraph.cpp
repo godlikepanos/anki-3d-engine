@@ -52,29 +52,17 @@ SceneGraph::~SceneGraph()
 	}
 }
 
-Error SceneGraph::init(AllocAlignedCallback allocCb, void* allocCbData, ThreadHive* threadHive,
-					   ResourceManager* resources, Input* input, ScriptManager* scriptManager, UiManager* uiManager,
-					   ConfigSet* config, const Timestamp* globalTimestamp,
-					   UnifiedGeometryMemoryPool* unifiedGeometryMemPool)
+Error SceneGraph::init(const SceneGraphInitInfo& initInfo)
 {
-	m_globalTimestamp = globalTimestamp;
-	m_threadHive = threadHive;
-	m_resources = resources;
-	m_gr = &m_resources->getGrManager();
-	m_physics = &m_resources->getPhysicsWorld();
-	m_input = input;
-	m_scriptManager = scriptManager;
-	m_uiManager = uiManager;
-	m_config = config;
-	m_unifiedGeometryMemPool = unifiedGeometryMemPool;
+	m_subsystems = initInfo;
 
-	m_pool.init(allocCb, allocCbData);
-	m_framePool.init(allocCb, allocCbData, 1 * 1024 * 1024);
+	m_pool.init(initInfo.m_allocCallback, initInfo.m_allocCallbackData);
+	m_framePool.init(initInfo.m_allocCallback, initInfo.m_allocCallbackData, 1 * 1024 * 1024);
 
 	ANKI_CHECK(m_events.init(this));
 
 	m_octree = newInstance<Octree>(m_pool, &m_pool);
-	m_octree->init(m_sceneMin, m_sceneMax, m_config->getSceneOctreeMaxDepth());
+	m_octree->init(m_sceneMin, m_sceneMax, m_subsystems.m_config->getSceneOctreeMaxDepth());
 
 	// Init the default main camera
 	ANKI_CHECK(newSceneNode<PerspectiveCameraNode>("mainCamera", m_defaultMainCam));
@@ -87,7 +75,7 @@ Error SceneGraph::init(AllocAlignedCallback allocCb, void* allocCbData, ThreadHi
 	ANKI_CHECK(newSceneNode<PhysicsDebugNode>("_physicsDebugNode", pnode));
 
 	// Other
-	ANKI_CHECK(m_debugDrawer.init(&getResourceManager()));
+	ANKI_CHECK(m_debugDrawer.init(m_subsystems.m_resourceManager, m_subsystems.m_grManager));
 
 	return Error::kNone;
 }
@@ -183,7 +171,7 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 
 	m_stats.m_updateTime = HighRezTimer::getCurrentTime();
 
-	m_timestamp = *m_globalTimestamp;
+	m_timestamp = *m_subsystems.m_globalTimestamp;
 	ANKI_ASSERT(m_timestamp > 0);
 
 	// Reset the framepool
@@ -201,7 +189,7 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 	{
 		ANKI_TRACE_SCOPED_EVENT(SCENE_PHYSICS_UPDATE);
 		m_stats.m_physicsUpdate = HighRezTimer::getCurrentTime();
-		m_physics->update(crntTime - prevUpdateTime);
+		m_subsystems.m_physicsWorld->update(crntTime - prevUpdateTime);
 		m_stats.m_physicsUpdate = HighRezTimer::getCurrentTime() - m_stats.m_physicsUpdate;
 	}
 
@@ -217,7 +205,7 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 		updateCtx.m_prevUpdateTime = prevUpdateTime;
 		updateCtx.m_crntTime = crntTime;
 
-		for(U i = 0; i < m_threadHive->getThreadCount(); i++)
+		for(U i = 0; i < m_subsystems.m_threadHive->getThreadCount(); i++)
 		{
 			tasks[i] = ANKI_THREAD_HIVE_TASK(
 				{
@@ -229,8 +217,8 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 				&updateCtx, nullptr, nullptr);
 		}
 
-		m_threadHive->submitTasks(&tasks[0], m_threadHive->getThreadCount());
-		m_threadHive->waitAllTasks();
+		m_subsystems.m_threadHive->submitTasks(&tasks[0], m_subsystems.m_threadHive->getThreadCount());
+		m_subsystems.m_threadHive->waitAllTasks();
 	}
 
 	m_stats.m_updateTime = HighRezTimer::getCurrentTime() - m_stats.m_updateTime;

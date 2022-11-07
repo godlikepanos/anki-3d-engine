@@ -26,7 +26,7 @@ SkyboxComponent::~SkyboxComponent()
 
 void SkyboxComponent::setImage(CString filename)
 {
-	const Error err = m_node->getSceneGraph().getResourceManager().loadResource(filename, m_image);
+	const Error err = getExternalSubsystems(*m_node).m_resourceManager->loadResource(filename, m_image);
 	if(err)
 	{
 		ANKI_SCENE_LOGE("Setting skybox image failed. Ignoring error");

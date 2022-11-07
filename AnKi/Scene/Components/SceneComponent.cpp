@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Scene/Components/SceneComponent.h>
+#include <AnKi/Scene/SceneNode.h>
 
 namespace anki {
 
@@ -69,6 +70,11 @@ const SceneComponentRtti& SceneComponent::findClassRtti(U8 classId)
 	ANKI_ASSERT(classId < g_rttiCount);
 	ANKI_ASSERT(g_rttis[classId]);
 	return *g_rttis[classId];
+}
+
+SceneGraphExternalSubsystems& SceneComponent::getExternalSubsystems(const SceneNode& node)
+{
+	return node.getExternalSubsystems();
 }
 
 } // namespace anki

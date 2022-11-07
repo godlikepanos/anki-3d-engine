@@ -21,7 +21,7 @@ public:
 
 	LoadContext(MeshResource* mesh, BaseMemoryPool* pool)
 		: m_mesh(mesh)
-		, m_loader(&mesh->getManager(), pool)
+		, m_loader(mesh->getExternalSubsystems().m_resourceFilesystem, pool)
 	{
 	}
 };
@@ -59,11 +59,11 @@ MeshResource::~MeshResource()
 
 	for(Lod& lod : m_lods)
 	{
-		getManager().getUnifiedGeometryMemoryPool().free(lod.m_indexBufferAllocationToken);
+		getExternalSubsystems().m_unifiedGometryMemoryPool->free(lod.m_indexBufferAllocationToken);
 
 		for(VertexStreamId stream : EnumIterable(VertexStreamId::kMeshRelatedFirst, VertexStreamId::kMeshRelatedCount))
 		{
-			getManager().getUnifiedGeometryMemoryPool().free(lod.m_vertexBuffersAllocationToken[stream]);
+			getExternalSubsystems().m_unifiedGometryMemoryPool->free(lod.m_vertexBuffersAllocationToken[stream]);
 		}
 	}
 
@@ -79,7 +79,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	StringRaii basename(&getTempMemoryPool());
 	getFilepathFilename(filename, basename);
 
-	const Bool rayTracingEnabled = getManager().getGrManager().getDeviceCapabilities().m_rayTracingEnabled;
+	const Bool rayTracingEnabled = getExternalSubsystems().m_grManager->getDeviceCapabilities().m_rayTracingEnabled;
 
 	if(async)
 	{
@@ -124,8 +124,8 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		lod.m_indexCount = header.m_totalIndexCounts[l];
 		ANKI_ASSERT((lod.m_indexCount % 3) == 0 && "Expecting triangles");
 		const PtrSize indexBufferSize = PtrSize(lod.m_indexCount) * getIndexSize(m_indexType);
-		getManager().getUnifiedGeometryMemoryPool().allocate(indexBufferSize, getIndexSize(m_indexType),
-															 lod.m_indexBufferAllocationToken);
+		getExternalSubsystems().m_unifiedGometryMemoryPool->allocate(indexBufferSize, getIndexSize(m_indexType),
+																	 lod.m_indexBufferAllocationToken);
 
 		// Vertex stuff
 		lod.m_vertexCount = header.m_totalVertexCounts[l];
@@ -141,8 +141,8 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 			const U32 texelSize = getFormatInfo(kMeshRelatedVertexStreamFormats[stream]).m_texelSize;
 			const PtrSize vertexBufferSize = PtrSize(lod.m_vertexCount) * texelSize;
 			const U32 alignment = 4;
-			getManager().getUnifiedGeometryMemoryPool().allocate(vertexBufferSize, alignment,
-																 lod.m_vertexBuffersAllocationToken[stream]);
+			getExternalSubsystems().m_unifiedGometryMemoryPool->allocate(vertexBufferSize, alignment,
+																		 lod.m_vertexBuffersAllocationToken[stream]);
 		}
 
 		// BLAS
@@ -152,11 +152,11 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 				StringRaii(&getTempMemoryPool()).sprintf("%s_%s", "Blas", basename.cstr()));
 			inf.m_type = AccelerationStructureType::kBottomLevel;
 
-			inf.m_bottomLevel.m_indexBuffer = getManager().getUnifiedGeometryMemoryPool().getBuffer();
+			inf.m_bottomLevel.m_indexBuffer = getExternalSubsystems().m_unifiedGometryMemoryPool->getBuffer();
 			inf.m_bottomLevel.m_indexBufferOffset = lod.m_indexBufferAllocationToken.m_offset;
 			inf.m_bottomLevel.m_indexCount = lod.m_indexCount;
 			inf.m_bottomLevel.m_indexType = m_indexType;
-			inf.m_bottomLevel.m_positionBuffer = getManager().getUnifiedGeometryMemoryPool().getBuffer();
+			inf.m_bottomLevel.m_positionBuffer = getExternalSubsystems().m_unifiedGometryMemoryPool->getBuffer();
 			inf.m_bottomLevel.m_positionBufferOffset =
 				lod.m_vertexBuffersAllocationToken[VertexStreamId::kPosition].m_offset;
 			inf.m_bottomLevel.m_positionStride =
@@ -164,7 +164,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 			inf.m_bottomLevel.m_positionsFormat = kMeshRelatedVertexStreamFormats[VertexStreamId::kPosition];
 			inf.m_bottomLevel.m_positionCount = lod.m_vertexCount;
 
-			lod.m_blas = getManager().getGrManager().newAccelerationStructure(inf);
+			lod.m_blas = getExternalSubsystems().m_grManager->newAccelerationStructure(inf);
 		}
 	}
 
@@ -173,11 +173,11 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	{
 		CommandBufferInitInfo cmdbinit("MeshResourceClear");
 		cmdbinit.m_flags = CommandBufferFlag::kSmallBatch | CommandBufferFlag::kGeneralWork;
-		CommandBufferPtr cmdb = getManager().getGrManager().newCommandBuffer(cmdbinit);
+		CommandBufferPtr cmdb = getExternalSubsystems().m_grManager->newCommandBuffer(cmdbinit);
 
 		for(const Lod& lod : m_lods)
 		{
-			cmdb->fillBuffer(getManager().getUnifiedGeometryMemoryPool().getBuffer(),
+			cmdb->fillBuffer(getExternalSubsystems().m_unifiedGometryMemoryPool->getBuffer(),
 							 lod.m_indexBufferAllocationToken.m_offset,
 							 PtrSize(lod.m_indexCount) * getIndexSize(m_indexType), 0);
 
@@ -186,7 +186,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 			{
 				if(header.m_vertexAttributes[stream].m_format != Format::kNone)
 				{
-					cmdb->fillBuffer(getManager().getUnifiedGeometryMemoryPool().getBuffer(),
+					cmdb->fillBuffer(getExternalSubsystems().m_unifiedGometryMemoryPool->getBuffer(),
 									 lod.m_vertexBuffersAllocationToken[stream].m_offset,
 									 PtrSize(lod.m_vertexCount)
 										 * getFormatInfo(kMeshRelatedVertexStreamFormats[stream]).m_texelSize,
@@ -195,7 +195,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 			}
 		}
 
-		const BufferBarrierInfo barrier = {getManager().getUnifiedGeometryMemoryPool().getBuffer().get(),
+		const BufferBarrierInfo barrier = {getExternalSubsystems().m_unifiedGometryMemoryPool->getBuffer().get(),
 										   BufferUsageBit::kTransferDestination, BufferUsageBit::kVertex, 0,
 										   kMaxPtrSize};
 
@@ -221,13 +221,13 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 
 Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 {
-	GrManager& gr = getManager().getGrManager();
+	GrManager& gr = *getExternalSubsystems().m_grManager;
 	TransferGpuAllocator& transferAlloc = getManager().getTransferGpuAllocator();
 
 	Array<TransferGpuAllocatorHandle, kMaxLodCount*(U32(VertexStreamId::kMeshRelatedCount) + 1)> handles;
 	U32 handleCount = 0;
 
-	BufferPtr unifiedGeometryBuffer = getManager().getUnifiedGeometryMemoryPool().getBuffer();
+	BufferPtr unifiedGeometryBuffer = getExternalSubsystems().m_unifiedGometryMemoryPool->getBuffer();
 	const BufferUsageBit unifiedGeometryBufferNonTransferUsage =
 		unifiedGeometryBuffer->getBufferUsage() ^ BufferUsageBit::kTransferDestination;
 

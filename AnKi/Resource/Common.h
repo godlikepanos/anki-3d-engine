@@ -20,6 +20,9 @@ class ResourceFilesystem;
 template<typename Type>
 class ResourcePointer;
 class TransferGpuAllocatorHandle;
+class PhysicsWorld;
+class ConfigSet;
+class UnifiedGeometryMemoryPool;
 
 /// @addtogroup resource
 /// @{
@@ -55,6 +58,16 @@ using ResourcePtr = IntrusivePtr<T, ResourcePtrDeleter<T>>;
 
 /// An alias that denotes a ResourceFilesystem path.
 using ResourceFilename = CString;
+
+class ResourceManagerExternalSubsystems
+{
+public:
+	GrManager* m_grManager = nullptr;
+	PhysicsWorld* m_physicsWorld = nullptr;
+	ResourceFilesystem* m_resourceFilesystem = nullptr;
+	ConfigSet* m_config = nullptr;
+	UnifiedGeometryMemoryPool* m_unifiedGometryMemoryPool = nullptr;
+};
 /// @}
 
 } // end namespace anki

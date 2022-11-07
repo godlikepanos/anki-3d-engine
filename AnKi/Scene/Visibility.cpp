@@ -838,11 +838,11 @@ void SceneGraph::doVisibilityTests(SceneNode& fsn, SceneGraph& scene, RenderQueu
 {
 	ANKI_TRACE_SCOPED_EVENT(SCENE_VIS_TESTS);
 
-	ThreadHive& hive = scene.getThreadHive();
+	ThreadHive& hive = *scene.m_subsystems.m_threadHive;
 
 	VisibilityContext ctx;
 	ctx.m_scene = &scene;
-	ctx.m_earlyZDist = scene.getConfig().getSceneEarlyZDistance();
+	ctx.m_earlyZDist = scene.m_subsystems.m_config->getSceneEarlyZDistance();
 	const FrustumComponent& mainFrustum = fsn.getFirstComponentOfType<FrustumComponent>();
 	ctx.submitNewWork(mainFrustum, mainFrustum, rqueue, hive);
 

@@ -9,53 +9,31 @@
 
 namespace anki {
 
-// Forward
-class ResourceManager;
-class GrManager;
-class StagingGpuMemoryPool;
-class Input;
-
 /// @addtogroup ui
 /// @{
+
+class UiManagerInitInfo : public UiExternalSubsystems
+{
+public:
+	AllocAlignedCallback m_allocCallback = nullptr;
+	void* m_allocCallbackUserData = nullptr;
+};
 
 /// UI manager.
 class UiManager
 {
+	friend class UiObject;
+
 public:
 	UiManager();
 
 	~UiManager();
 
-	Error init(AllocAlignedCallback allocCallback, void* allocCallbackUserData, ResourceManager* resources,
-			   GrManager* gr, StagingGpuMemoryPool* gpuMem, Input* input);
+	Error init(UiManagerInitInfo& initInfo);
 
 	HeapMemoryPool& getMemoryPool() const
 	{
 		return m_pool;
-	}
-
-	ResourceManager& getResourceManager()
-	{
-		ANKI_ASSERT(m_resources);
-		return *m_resources;
-	}
-
-	GrManager& getGrManager()
-	{
-		ANKI_ASSERT(m_gr);
-		return *m_gr;
-	}
-
-	StagingGpuMemoryPool& getStagingGpuMemory()
-	{
-		ANKI_ASSERT(m_gpuMem);
-		return *m_gpuMem;
-	}
-
-	const Input& getInput() const
-	{
-		ANKI_ASSERT(m_input);
-		return *m_input;
 	}
 
 	/// Create a new UI object.
@@ -77,10 +55,7 @@ public:
 
 private:
 	mutable HeapMemoryPool m_pool;
-	ResourceManager* m_resources = nullptr;
-	GrManager* m_gr = nullptr;
-	StagingGpuMemoryPool* m_gpuMem = nullptr;
-	Input* m_input = nullptr;
+	UiExternalSubsystems m_subsystems;
 };
 /// @}
 

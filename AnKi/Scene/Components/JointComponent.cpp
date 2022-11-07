@@ -65,7 +65,7 @@ void JointComponent::newJoint(const Vec3& relPosFactor, F32 breakingImpulse, TAr
 	{
 		Vec3 relPos = computeLocalPivotFromFactors(bodyc->getPhysicsBody(), relPosFactor);
 
-		PhysicsJointPtr joint = m_node->getSceneGraph().getPhysicsWorld().newInstance<TJoint>(
+		PhysicsJointPtr joint = getExternalSubsystems(*m_node).m_physicsWorld->newInstance<TJoint>(
 			bodyc->getPhysicsBody(), relPos, std::forward<TArgs>(args)...);
 		joint->setBreakingImpulseThreshold(breakingImpulse);
 
@@ -98,7 +98,7 @@ void JointComponent::newPoint2PointJoint2(const Vec3& relPosFactorA, const Vec3&
 		Vec3 relPosA = computeLocalPivotFromFactors(bodycA->getPhysicsBody(), relPosFactorA);
 		Vec3 relPosB = computeLocalPivotFromFactors(bodycB->getPhysicsBody(), relPosFactorB);
 
-		PhysicsJointPtr joint = m_node->getSceneGraph().getPhysicsWorld().newInstance<PhysicsPoint2PointJoint>(
+		PhysicsJointPtr joint = getExternalSubsystems(*m_node).m_physicsWorld->newInstance<PhysicsPoint2PointJoint>(
 			bodycA->getPhysicsBody(), relPosA, bodycB->getPhysicsBody(), relPosB);
 		joint->setBreakingImpulseThreshold(breakingImpulse);
 

@@ -66,6 +66,8 @@ public:
 protected:
 	UiManager* m_manager;
 	mutable Atomic<I32> m_refcount = {0};
+
+	UiExternalSubsystems& getExternalSubsystems() const;
 };
 /// @}
 

@@ -78,7 +78,7 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 	ResourceFilePtr file;
 	ANKI_CHECK(openFile(filename, file));
 
-	ANKI_CHECK(loader.load(file, filename, getConfig().getRsrcMaxImageSize()));
+	ANKI_CHECK(loader.load(file, filename, getExternalSubsystems().m_config->getRsrcMaxImageSize()));
 
 	// Various sizes
 	init.m_width = loader.getWidth();
@@ -204,13 +204,13 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 	init.m_mipmapCount = U8(loader.getMipmapCount());
 
 	// Create the texture
-	m_tex = getManager().getGrManager().newTexture(init);
+	m_tex = getExternalSubsystems().m_grManager->newTexture(init);
 
 	// Transition it. TODO remove that eventually
 	{
 		CommandBufferInitInfo cmdbinit;
 		cmdbinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
-		CommandBufferPtr cmdb = getManager().getGrManager().newCommandBuffer(cmdbinit);
+		CommandBufferPtr cmdb = getExternalSubsystems().m_grManager->newCommandBuffer(cmdbinit);
 
 		TextureSubresourceInfo subresource;
 		subresource.m_faceCount = textureTypeIsCube(init.m_type) ? 6 : 1;
@@ -229,7 +229,7 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 	// Set the context
 	ctx->m_faces = faces;
 	ctx->m_layerCount = init.m_layerCount;
-	ctx->m_gr = &getManager().getGrManager();
+	ctx->m_gr = getExternalSubsystems().m_grManager;
 	ctx->m_trfAlloc = &getManager().getTransferGpuAllocator();
 	ctx->m_texType = init.m_type;
 	ctx->m_tex = m_tex;
@@ -249,7 +249,7 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 
 	// Create the texture view
 	TextureViewInitInfo viewInit(m_tex, "Rsrc");
-	m_texView = getManager().getGrManager().newTextureView(viewInit);
+	m_texView = getExternalSubsystems().m_grManager->newTextureView(viewInit);
 
 	return Error::kNone;
 }

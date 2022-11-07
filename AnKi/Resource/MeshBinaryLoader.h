@@ -26,13 +26,11 @@ namespace anki {
 class MeshBinaryLoader
 {
 public:
-	MeshBinaryLoader(ResourceManager* manager);
-
-	MeshBinaryLoader(ResourceManager* manager, BaseMemoryPool* pool)
-		: m_manager(manager)
+	MeshBinaryLoader(ResourceFilesystem* fs, BaseMemoryPool* pool)
+		: m_fs(fs)
 		, m_pool(pool)
 	{
-		ANKI_ASSERT(manager && pool);
+		ANKI_ASSERT(fs && pool);
 	}
 
 	~MeshBinaryLoader();
@@ -58,7 +56,7 @@ public:
 	}
 
 private:
-	ResourceManager* m_manager = nullptr;
+	ResourceFilesystem* m_fs = nullptr;
 	BaseMemoryPool* m_pool = nullptr;
 	ResourceFilePtr m_file;
 

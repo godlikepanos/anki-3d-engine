@@ -88,14 +88,9 @@ private:
 	}
 };
 
-class ResourceManagerInitInfo
+class ResourceManagerInitInfo : public ResourceManagerExternalSubsystems
 {
 public:
-	GrManager* m_gr = nullptr;
-	PhysicsWorld* m_physics = nullptr;
-	ResourceFilesystem* m_resourceFs = nullptr;
-	ConfigSet* m_config = nullptr;
-	UnifiedGeometryMemoryPool* m_unifiedGometryMemoryPool = nullptr;
 	AllocAlignedCallback m_allocCallback = 0;
 	void* m_allocCallbackData = nullptr;
 };
@@ -116,6 +111,7 @@ public \
 {
 	template<typename T>
 	friend class ResourcePtrDeleter;
+	friend class ResourceObject;
 
 public:
 	ResourceManager();
@@ -140,27 +136,9 @@ public:
 		return m_tmpPool;
 	}
 
-	ANKI_INTERNAL GrManager& getGrManager()
-	{
-		ANKI_ASSERT(m_gr);
-		return *m_gr;
-	}
-
 	ANKI_INTERNAL TransferGpuAllocator& getTransferGpuAllocator()
 	{
 		return *m_transferGpuAlloc;
-	}
-
-	ANKI_INTERNAL PhysicsWorld& getPhysicsWorld()
-	{
-		ANKI_ASSERT(m_physics);
-		return *m_physics;
-	}
-
-	ANKI_INTERNAL ResourceFilesystem& getFilesystem()
-	{
-		ANKI_ASSERT(m_fs);
-		return *m_fs;
 	}
 
 	template<typename T>
@@ -201,28 +179,12 @@ public:
 		return *m_shaderProgramSystem;
 	}
 
-	UnifiedGeometryMemoryPool& getUnifiedGeometryMemoryPool()
-	{
-		ANKI_ASSERT(m_unifiedGometryMemoryPool);
-		return *m_unifiedGometryMemoryPool;
-	}
-
-	const ConfigSet& getConfig() const
-	{
-		ANKI_ASSERT(m_config);
-		return *m_config;
-	}
-
 private:
-	GrManager* m_gr = nullptr;
-	PhysicsWorld* m_physics = nullptr;
-	ResourceFilesystem* m_fs = nullptr;
-	ConfigSet* m_config = nullptr;
+	ResourceManagerExternalSubsystems m_subsystems;
 	mutable HeapMemoryPool m_pool; ///< Mutable because it's thread-safe and is may be called by const methods.
 	mutable StackMemoryPool m_tmpPool; ///< Same as above.
 	AsyncLoader* m_asyncLoader = nullptr; ///< Async loading thread
 	ShaderProgramResourceSystem* m_shaderProgramSystem = nullptr;
-	UnifiedGeometryMemoryPool* m_unifiedGometryMemoryPool = nullptr;
 	U64 m_uuid = 0;
 	U64 m_loadRequestCount = 0;
 	TransferGpuAllocator* m_transferGpuAlloc = nullptr;

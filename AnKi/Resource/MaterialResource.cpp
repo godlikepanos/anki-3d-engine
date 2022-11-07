@@ -211,7 +211,7 @@ Error MaterialResource::parseShaderProgram(XmlElement shaderProgramEl, Bool asyn
 	CString shaderName;
 	ANKI_CHECK(shaderProgramEl.getAttributeText("name", shaderName));
 
-	if(!getManager().getGrManager().getDeviceCapabilities().m_rayTracingEnabled && shaderName.find("Rt") == 0)
+	if(!getExternalSubsystems().m_grManager->getDeviceCapabilities().m_rayTracingEnabled && shaderName.find("Rt") == 0)
 	{
 		// Skip RT programs when RT is disabled
 		return Error::kNone;

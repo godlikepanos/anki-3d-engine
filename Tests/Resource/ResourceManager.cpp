@@ -16,7 +16,7 @@ ANKI_TEST(Resource, ResourceManager)
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 
 	ResourceManagerInitInfo rinit;
-	rinit.m_gr = nullptr;
+	rinit.m_grManager = nullptr;
 	rinit.m_config = &config;
 	rinit.m_allocCallback = allocAligned;
 	rinit.m_allocCallbackData = nullptr;

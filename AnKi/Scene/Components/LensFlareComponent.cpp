@@ -25,7 +25,7 @@ LensFlareComponent::~LensFlareComponent()
 
 Error LensFlareComponent::loadImageResource(CString filename)
 {
-	return m_node->getSceneGraph().getResourceManager().loadResource(filename, m_image);
+	return getExternalSubsystems(*m_node).m_resourceManager->loadResource(filename, m_image);
 }
 
 } // end namespace anki

@@ -67,19 +67,9 @@ StackMemoryPool& SceneNode::getFrameMemoryPool() const
 	return m_scene->getFrameMemoryPool();
 }
 
-ResourceManager& SceneNode::getResourceManager()
+SceneGraphExternalSubsystems& SceneNode::getExternalSubsystems() const
 {
-	return m_scene->getResourceManager();
-}
-
-const ConfigSet& SceneNode::getConfig() const
-{
-	return m_scene->getConfig();
-}
-
-const UnifiedGeometryMemoryPool& SceneNode::getUnifiedGeometryMemoryPool() const
-{
-	return *m_scene->m_unifiedGeometryMemPool;
+	return m_scene->m_subsystems;
 }
 
 } // end namespace anki

@@ -17,14 +17,9 @@
 namespace anki {
 
 // Forward
-class ResourceManager;
 class CameraNode;
-class Input;
-class ConfigSet;
-class PerspectiveCameraNode;
 class Octree;
-class UiManager;
-class UnifiedGeometryMemoryPool;
+class PerspectiveCameraNode;
 
 /// @addtogroup scene
 /// @{
@@ -38,20 +33,26 @@ public:
 	Second m_physicsUpdate ANKI_DEBUG_CODE(= 0.0);
 };
 
+class SceneGraphInitInfo : public SceneGraphExternalSubsystems
+{
+public:
+	AllocAlignedCallback m_allocCallback = nullptr;
+	void* m_allocCallbackData = nullptr;
+};
+
 /// The scene graph that  all the scene entities
 class SceneGraph
 {
 	friend class SceneNode;
 	friend class UpdateSceneNodesTask;
+	friend class Event;
 
 public:
 	SceneGraph();
 
 	~SceneGraph();
 
-	Error init(AllocAlignedCallback allocCb, void* allocCbData, ThreadHive* threadHive, ResourceManager* resources,
-			   Input* input, ScriptManager* scriptManager, UiManager* uiManager, ConfigSet* config,
-			   const Timestamp* globalTimestamp, UnifiedGeometryMemoryPool* unifiedGeometryMemPool);
+	Error init(const SceneGraphInitInfo& initInfo);
 
 	Timestamp getGlobalTimestamp() const
 	{
@@ -99,11 +100,6 @@ public:
 	const EventManager& getEventManager() const
 	{
 		return m_events;
-	}
-
-	ThreadHive& getThreadHive()
-	{
-		return *m_threadHive;
 	}
 
 	Error update(Second prevUpdateTime, Second crntTime);
@@ -163,43 +159,6 @@ public:
 		return m_sceneMax;
 	}
 
-	ResourceManager& getResourceManager()
-	{
-		return *m_resources;
-	}
-
-	GrManager& getGrManager()
-	{
-		return *m_gr;
-	}
-
-	PhysicsWorld& getPhysicsWorld()
-	{
-		return *m_physics;
-	}
-
-	ScriptManager& getScriptManager()
-	{
-		ANKI_ASSERT(m_scriptManager);
-		return *m_scriptManager;
-	}
-
-	const PhysicsWorld& getPhysicsWorld() const
-	{
-		return *m_physics;
-	}
-
-	const Input& getInput() const
-	{
-		ANKI_ASSERT(m_input);
-		return *m_input;
-	}
-
-	UiManager& getUiManager()
-	{
-		return *m_uiManager;
-	}
-
 	U64 getNewUuid()
 	{
 		return m_nodesUuid.fetchAdd(1);
@@ -216,28 +175,12 @@ public:
 		return m_debugDrawer;
 	}
 
-	ANKI_INTERNAL const ConfigSet& getConfig()
-	{
-		ANKI_ASSERT(m_config);
-		return *m_config;
-	}
-
 private:
 	class UpdateSceneNodesCtx;
 
-	const Timestamp* m_globalTimestamp = nullptr;
 	Timestamp m_timestamp = 0; ///< Cached timestamp
 
-	// Sub-systems
-	ThreadHive* m_threadHive = nullptr;
-	ResourceManager* m_resources = nullptr;
-	GrManager* m_gr = nullptr;
-	PhysicsWorld* m_physics = nullptr;
-	Input* m_input = nullptr;
-	ScriptManager* m_scriptManager = nullptr;
-	UiManager* m_uiManager = nullptr;
-	ConfigSet* m_config = nullptr;
-	UnifiedGeometryMemoryPool* m_unifiedGeometryMemPool = nullptr;
+	SceneGraphExternalSubsystems m_subsystems;
 
 	mutable HeapMemoryPool m_pool;
 	mutable StackMemoryPool m_framePool;

@@ -115,6 +115,9 @@ public:
 
 	static const SceneComponentRtti& findClassRtti(U8 classId);
 
+protected:
+	static SceneGraphExternalSubsystems& getExternalSubsystems(const SceneNode& node);
+
 private:
 	Timestamp m_timestamp = 1; ///< Indicates when an update happened
 	U8 m_classId : 7; ///< Cache the type ID.

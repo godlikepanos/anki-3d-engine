@@ -78,7 +78,15 @@ ANKI_TEST(Ui, Ui)
 	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(gr, cfg));
 
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
-	ANKI_TEST_EXPECT_NO_ERR(ui->init(allocAligned, nullptr, resource, gr, stagingMem, in));
+	UiManagerInitInfo uiInitInfo;
+	uiInitInfo.m_allocCallback = allocAligned;
+	uiInitInfo.m_allocCallbackUserData = nullptr;
+	uiInitInfo.m_grManager = gr;
+	uiInitInfo.m_input = in;
+	uiInitInfo.m_resourceFilesystem = fs;
+	uiInitInfo.m_resourceManager = resource;
+	uiInitInfo.m_stagingGpuMemoryPool = stagingMem;
+	ANKI_TEST_EXPECT_NO_ERR(ui->init(uiInitInfo));
 
 	{
 		FontPtr font;

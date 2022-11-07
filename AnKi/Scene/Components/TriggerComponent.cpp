@@ -88,8 +88,8 @@ TriggerComponent::~TriggerComponent()
 
 void TriggerComponent::setSphereVolumeRadius(F32 radius)
 {
-	m_shape = m_node->getSceneGraph().getPhysicsWorld().newInstance<PhysicsSphere>(radius);
-	m_trigger = m_node->getSceneGraph().getPhysicsWorld().newInstance<PhysicsTrigger>(m_shape);
+	m_shape = getExternalSubsystems(*m_node).m_physicsWorld->newInstance<PhysicsSphere>(radius);
+	m_trigger = getExternalSubsystems(*m_node).m_physicsWorld->newInstance<PhysicsTrigger>(m_shape);
 	m_trigger->setUserData(this);
 	m_trigger->setContactProcessCallback(m_callbacks);
 }
