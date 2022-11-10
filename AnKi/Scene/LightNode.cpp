@@ -24,7 +24,7 @@ public:
 	{
 	}
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override
+	Error update(SceneComponentUpdateInfo& info, Bool& updated)
 	{
 		updated = false;
 
@@ -52,7 +52,7 @@ public:
 	{
 	}
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override
+	Error update(SceneComponentUpdateInfo& info, Bool& updated)
 	{
 		updated = false;
 
@@ -209,7 +209,7 @@ public:
 	{
 	}
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override
+	Error update(SceneComponentUpdateInfo& info, Bool& updated)
 	{
 		updated = false;
 
@@ -287,7 +287,7 @@ public:
 	{
 	}
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override
+	Error update(SceneComponentUpdateInfo& info, Bool& updated)
 	{
 		updated = false;
 		const MoveComponent& move = info.m_node->getComponentAt<MoveComponent>(0);

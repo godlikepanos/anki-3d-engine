@@ -21,7 +21,7 @@ public:
 	{
 	}
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override
+	Error update(SceneComponentUpdateInfo& info, Bool& updated)
 	{
 		updated = false;
 
@@ -48,7 +48,7 @@ public:
 	{
 	}
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override
+	Error update(SceneComponentUpdateInfo& info, Bool& updated)
 	{
 		updated = false;
 

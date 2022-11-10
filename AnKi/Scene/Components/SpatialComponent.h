@@ -110,8 +110,6 @@ public:
 		return m_alwaysVisible;
 	}
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
-
 private:
 	SceneNode* m_node;
 
@@ -133,10 +131,14 @@ private:
 
 	OctreePlaceable m_octreeInfo;
 
+	SegregatedListsGpuAllocatorToken m_gpuSceneAabb;
+
 	Bool m_markedForUpdate : 1;
 	Bool m_placed : 1;
 	Bool m_updateOctreeBounds : 1;
 	Bool m_alwaysVisible : 1;
+
+	Error update(SceneComponentUpdateInfo& info, Bool& updated);
 };
 /// @}
 

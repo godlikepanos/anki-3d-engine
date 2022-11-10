@@ -73,13 +73,6 @@ public:
 		el.m_debugDrawCallbackUserData = this;
 	}
 
-	Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated) override
-	{
-		updated = m_markedForUpdate;
-		m_markedForUpdate = false;
-		return Error::kNone;
-	}
-
 private:
 	SceneNode* m_node = nullptr;
 	U64 m_uuid = 0;
@@ -89,6 +82,13 @@ private:
 	Bool m_markedForUpdate : 1;
 
 	ImageResourcePtr m_debugImage;
+
+	Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated)
+	{
+		updated = m_markedForUpdate;
+		m_markedForUpdate = false;
+		return Error::kNone;
+	}
 
 	static void reflectionProbeQueueElementFeedbackCallback(Bool fillRenderQueuesOnNextFrame, void* userData)
 	{

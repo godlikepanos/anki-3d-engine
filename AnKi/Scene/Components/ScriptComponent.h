@@ -26,8 +26,6 @@ public:
 
 	Error loadScriptResource(CString fname);
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
-
 	Bool isEnabled() const
 	{
 		return m_script.isCreated();
@@ -37,6 +35,8 @@ private:
 	SceneNode* m_node;
 	ScriptResourcePtr m_script;
 	ScriptEnvironment* m_env = nullptr;
+
+	Error update(SceneComponentUpdateInfo& info, Bool& updated);
 };
 /// @}
 

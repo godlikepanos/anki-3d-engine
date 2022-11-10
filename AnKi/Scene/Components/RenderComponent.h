@@ -33,10 +33,7 @@ class RenderComponent : public SceneComponent
 	ANKI_SCENE_COMPONENT(RenderComponent)
 
 public:
-	RenderComponent(SceneNode* node)
-		: SceneComponent(node, getStaticClassId())
-	{
-	}
+	RenderComponent(SceneNode* node);
 
 	Bool isEnabled() const
 	{
@@ -114,6 +111,10 @@ private:
 	FillRayTracingInstanceQueueElementCallback m_rtCallback = nullptr;
 	const void* m_rtCallbackUserData = nullptr;
 	RenderComponentFlag m_flags = RenderComponentFlag::kNone;
+
+	SegregatedListsGpuAllocatorToken m_gpuSceneRenderableGpuView;
+
+	void onDestroy(SceneNode& node);
 };
 /// @}
 

@@ -257,7 +257,7 @@ Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 		else
 		{
 			componentUpdateInfo.m_node = &node;
-			err = comp.update(componentUpdateInfo, updated);
+			err = comp.updateReal(componentUpdateInfo, updated);
 		}
 
 		if(updated)

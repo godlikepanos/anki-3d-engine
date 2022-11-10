@@ -29,7 +29,7 @@ public:
 	{
 	}
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override
+	Error update(SceneComponentUpdateInfo& info, Bool& updated)
 	{
 		updated = false;
 		static_cast<ModelNode&>(*info.m_node).feedbackUpdate();

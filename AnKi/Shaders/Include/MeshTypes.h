@@ -57,6 +57,8 @@ inline constexpr Array<Format, U32(VertexStreamId::kMeshRelatedCount)> kMeshRela
 	Format::kR16G16B16_Unorm, Format::kR8G8B8A8_Snorm, Format::kR8G8B8A8_Snorm,
 	Format::kR32G32_Sfloat,   Format::kR8G8B8A8_Uint,  Format::kR8G8B8A8_Snorm};
 
+constexpr U32 kMaxVertexStreamIds = 6u;
+
 #else
 
 // For regular geometry
@@ -74,6 +76,8 @@ const U32 kVertexStreamIdParticleAlpha = 2u;
 const U32 kVertexStreamIdParticleLife = 3u;
 const U32 kVertexStreamIdParticleStartingLife = 4u;
 const U32 kVertexStreamIdParticlePreviousPosition = 5u;
+
+const U32 kMaxVertexStreamIds = 6u;
 #endif
 
 ANKI_END_NAMESPACE

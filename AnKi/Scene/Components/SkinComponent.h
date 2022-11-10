@@ -49,8 +49,6 @@ public:
 	/// Load the skeleton resource.
 	Error loadSkeletonResource(CString filename);
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
-
 	void playAnimation(U32 track, AnimationResourcePtr anim, const AnimationPlayInfo& info);
 
 	ConstWeakArray<Mat4> getBoneTransforms() const
@@ -107,6 +105,8 @@ private:
 	Second m_absoluteTime = 0.0;
 	U8 m_crntBoneTrfs = 0;
 	U8 m_prevBoneTrfs = 1;
+
+	Error update(SceneComponentUpdateInfo& info, Bool& updated);
 
 	void visitBones(const Bone& bone, const Mat4& parentTrf, const BitSet<128, U8>& bonesAnimated, Vec4& minExtend,
 					Vec4& maxExtend);

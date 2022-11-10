@@ -135,8 +135,6 @@ public:
 		m_shadow = x;
 	}
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
-
 	void setupPointLightQueueElement(PointLightQueueElement& el) const
 	{
 		ANKI_ASSERT(m_type == LightComponentType::kPoint);
@@ -221,6 +219,8 @@ private:
 
 	U8 m_shadow : 1;
 	U8 m_markedForUpdate : 1;
+
+	Error update(SceneComponentUpdateInfo& info, Bool& updated);
 
 	void draw(RenderQueueDrawContext& ctx) const;
 };

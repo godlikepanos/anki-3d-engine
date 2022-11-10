@@ -26,6 +26,10 @@ GlobalIlluminationProbeComponent::GlobalIlluminationProbeComponent(SceneNode* no
 	}
 }
 
+GlobalIlluminationProbeComponent::~GlobalIlluminationProbeComponent()
+{
+}
+
 void GlobalIlluminationProbeComponent::draw(RenderQueueDrawContext& ctx) const
 {
 	const Aabb box = getAabbWorldSpace();

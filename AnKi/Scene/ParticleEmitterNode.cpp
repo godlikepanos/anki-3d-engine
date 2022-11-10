@@ -22,7 +22,7 @@ public:
 	{
 	}
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override
+	Error update(SceneComponentUpdateInfo& info, Bool& updated)
 	{
 		updated = false; // Don't care about updates for this component
 
@@ -50,7 +50,7 @@ public:
 	{
 	}
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override
+	Error update(SceneComponentUpdateInfo& info, Bool& updated)
 	{
 		updated = false;
 		static_cast<ParticleEmitterNode&>(*info.m_node).onShapeUpdate();

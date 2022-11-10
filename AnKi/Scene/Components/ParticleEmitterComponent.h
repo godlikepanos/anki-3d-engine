@@ -30,8 +30,6 @@ public:
 
 	Error loadParticleEmitterResource(CString filename);
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
-
 	void setWorldTransform(const Transform& transform)
 	{
 		m_transform = transform;
@@ -92,6 +90,8 @@ private:
 	ImageResourcePtr m_dbgImage;
 
 	SimulationType m_simulationType = SimulationType::kUndefined;
+
+	Error update(SceneComponentUpdateInfo& info, Bool& updated);
 
 	template<typename TParticle>
 	void simulate(Second prevUpdateTime, Second crntTime, WeakArray<TParticle> particles);

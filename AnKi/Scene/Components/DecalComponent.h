@@ -61,19 +61,6 @@ public:
 		m_markedForUpdate = true;
 	}
 
-	/// Implements SceneComponent::update.
-	Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated) override
-	{
-		updated = m_markedForUpdate;
-		m_markedForUpdate = false;
-		if(updated)
-		{
-			updateInternal();
-		}
-
-		return Error::kNone;
-	}
-
 	const Mat4& getBiasProjectionViewMatrix() const
 	{
 		return m_biasProjViewMat;
@@ -151,6 +138,18 @@ private:
 	Error setLayer(CString texAtlasFname, CString texAtlasSubtexName, F32 blendFactor, LayerType type);
 
 	void updateInternal();
+
+	Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated)
+	{
+		updated = m_markedForUpdate;
+		m_markedForUpdate = false;
+		if(updated)
+		{
+			updateInternal();
+		}
+
+		return Error::kNone;
+	}
 
 	void draw(RenderQueueDrawContext& ctx) const;
 };

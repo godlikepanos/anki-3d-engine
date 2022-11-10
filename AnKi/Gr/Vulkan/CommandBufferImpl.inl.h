@@ -644,22 +644,11 @@ inline void CommandBufferImpl::copyBufferToBufferInternal(const BufferPtr& src, 
 
 	commandCommon();
 
-	DynamicArrayRaii<VkBufferCopy> vkCopies(m_pool, copies.getSize());
-
-	for(U32 i = 0; i < copies.getSize(); ++i)
-	{
-		const CopyBufferToBufferInfo& in = copies[i];
-		VkBufferCopy& out = vkCopies[i];
-		ANKI_ASSERT(in.m_sourceOffset + in.m_range <= src->getSize());
-		ANKI_ASSERT(in.m_destinationOffset + in.m_range <= dst->getSize());
-
-		out.srcOffset = in.m_sourceOffset;
-		out.dstOffset = in.m_destinationOffset;
-		out.size = in.m_range;
-	}
+	static_assert(sizeof(CopyBufferToBufferInfo) == sizeof(VkBufferCopy));
+	const VkBufferCopy* vkCopies = reinterpret_cast<const VkBufferCopy*>(&copies[0]);
 
 	vkCmdCopyBuffer(m_handle, static_cast<const BufferImpl&>(*src).getHandle(),
-					static_cast<const BufferImpl&>(*dst).getHandle(), vkCopies.getSize(), &vkCopies[0]);
+					static_cast<const BufferImpl&>(*dst).getHandle(), copies.getSize(), &vkCopies[0]);
 
 	m_microCmdb->pushObjectRef(src);
 	m_microCmdb->pushObjectRef(dst);

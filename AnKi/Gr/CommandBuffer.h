@@ -376,7 +376,7 @@ public:
 	void copyBufferToBuffer(const BufferPtr& src, PtrSize srcOffset, const BufferPtr& dst, PtrSize dstOffset,
 							PtrSize range)
 	{
-		Array<CopyBufferToBufferInfo, 1> copies = {{srcOffset, dstOffset, range}};
+		Array<CopyBufferToBufferInfo, 1> copies = {{{srcOffset, dstOffset, range}}};
 		copyBufferToBuffer(src, dst, copies);
 	}
 

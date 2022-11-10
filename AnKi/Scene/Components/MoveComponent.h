@@ -91,8 +91,6 @@ public:
 		return m_prevWTrf;
 	}
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
-
 	/// @name Mess with the local transform
 	/// @{
 	void rotateLocalX(F32 angleRad)
@@ -151,6 +149,9 @@ private:
 	/// Keep the previous transformation for checking if it moved
 	Transform m_prevWTrf = Transform::getIdentity();
 
+	SceneNode* m_node = nullptr;
+	SegregatedListsGpuAllocatorToken m_gpuSceneTransforms;
+
 	Bool m_markedForUpdate : 1;
 	Bool m_ignoreLocalTransform : 1;
 	Bool m_ignoreParentTransform : 1;
@@ -162,6 +163,10 @@ private:
 
 	/// Called every frame. It updates the @a m_wtrf if @a shouldUpdateWTrf is true. Then it moves to the children.
 	Bool updateWorldTransform(SceneNode& node);
+
+	Error update(SceneComponentUpdateInfo& info, Bool& updated);
+
+	void onDestroy(SceneNode& node);
 };
 /// @}
 

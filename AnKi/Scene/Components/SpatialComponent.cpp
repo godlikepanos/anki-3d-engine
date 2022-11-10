@@ -22,6 +22,8 @@ SpatialComponent::SpatialComponent(SceneNode* node)
 	ANKI_ASSERT(node);
 	m_octreeInfo.m_userData = this;
 	setAabbWorldSpace(Aabb(Vec3(-1.0f), Vec3(1.0f)));
+
+	getExternalSubsystems(*node).m_gpuSceneMemoryPool->allocate(sizeof(Vec3) * 2, alignof(F32), m_gpuSceneAabb);
 }
 
 SpatialComponent::~SpatialComponent()
@@ -32,6 +34,8 @@ SpatialComponent::~SpatialComponent()
 	}
 
 	m_convexHullPoints.destroy(m_node->getMemoryPool());
+
+	getExternalSubsystems(*m_node).m_gpuSceneMemoryPool->free(m_gpuSceneAabb);
 }
 
 void SpatialComponent::setConvexHullWorldSpace(const ConvexHullShape& hull)

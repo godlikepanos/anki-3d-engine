@@ -37,7 +37,7 @@ public:
 	/// Create a hinge joint on the BodyComponent of the SceneNode.
 	void newHingeJoint(const Vec3& relPosFactor, const Vec3& axis, F32 brakingImpulse = kMaxF32);
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
+	Error update(SceneComponentUpdateInfo& info, Bool& updated);
 
 private:
 	class JointNode;

@@ -292,13 +292,6 @@ public:
 		return true;
 	}
 
-	Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated) override
-	{
-		ANKI_ASSERT(info.m_node == m_node);
-		updated = updateInternal();
-		return Error::kNone;
-	}
-
 	void setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag bits);
 
 	FrustumComponentVisibilityTestFlag getEnabledVisibilityTests() const
@@ -473,6 +466,13 @@ private:
 	Bool m_miscMarkedForUpdate : 1;
 
 	Bool updateInternal();
+
+	Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated)
+	{
+		ANKI_ASSERT(info.m_node == m_node);
+		updated = updateInternal();
+		return Error::kNone;
+	}
 };
 /// @}
 

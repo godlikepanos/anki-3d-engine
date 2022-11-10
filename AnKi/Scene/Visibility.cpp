@@ -513,7 +513,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 					Bool updated;
 					SceneComponentUpdateInfo scUpdateInfo(0.0, 1.0);
 					scUpdateInfo.m_node = &node;
-					[[maybe_unused]] const Error err = cascadeFrustumComponents[i].update(scUpdateInfo, updated);
+					[[maybe_unused]] const Error err = cascadeFrustumComponents[i].updateReal(scUpdateInfo, updated);
 					ANKI_ASSERT(updated == true && !err);
 				}
 

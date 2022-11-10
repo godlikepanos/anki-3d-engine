@@ -15,6 +15,7 @@ MoveComponent::MoveComponent(SceneNode* node)
 	, m_ignoreLocalTransform(false)
 	, m_ignoreParentTransform(false)
 {
+	getExternalSubsystems(*node).m_gpuSceneMemoryPool->allocate(sizeof(Mat3x4) * 2, alignof(F32), m_gpuSceneTransforms);
 	markForUpdate();
 }
 
@@ -83,6 +84,11 @@ Bool MoveComponent::updateWorldTransform(SceneNode& node)
 	}
 
 	return dirty;
+}
+
+void MoveComponent::onDestroy(SceneNode& node)
+{
+	getExternalSubsystems(node).m_gpuSceneMemoryPool->free(m_gpuSceneTransforms);
 }
 
 } // end namespace anki

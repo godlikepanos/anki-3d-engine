@@ -57,8 +57,6 @@ public:
 		return m_body;
 	}
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
-
 	Bool isEnabled() const
 	{
 		return m_mesh.isCreated();
@@ -70,6 +68,8 @@ private:
 	PhysicsBodyPtr m_body;
 	Transform m_trf = Transform::getIdentity();
 	Bool m_markedForUpdate = true;
+
+	Error update(SceneComponentUpdateInfo& info, Bool& updated);
 };
 /// @}
 

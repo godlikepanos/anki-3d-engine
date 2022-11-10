@@ -22,11 +22,12 @@ SceneNode::~SceneNode()
 {
 	HeapMemoryPool& pool = getMemoryPool();
 
-	auto it = m_components.getBegin();
-	auto end = m_components.getEnd();
-	for(; it != end; ++it)
+	for(SceneComponent* comp : m_components)
 	{
-		deleteInstance(pool, *it);
+		comp->onDestroyReal(*this);
+		g_sceneComponentCallbacks.m_destructors[comp->getClassId()](*comp);
+
+		pool.free(comp);
 	}
 
 	Base::destroy(pool);

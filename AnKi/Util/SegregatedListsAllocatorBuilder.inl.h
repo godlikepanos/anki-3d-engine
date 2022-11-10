@@ -10,7 +10,10 @@ namespace anki {
 template<typename TChunk, typename TInterface, typename TLock>
 SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::~SegregatedListsAllocatorBuilder()
 {
-	ANKI_ASSERT(m_chunks.isEmpty() && "Forgot to free memory");
+	if(!m_chunks.isEmpty())
+	{
+		ANKI_UTIL_LOGE("Forgot to free memory");
+	}
 }
 
 template<typename TChunk, typename TInterface, typename TLock>

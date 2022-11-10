@@ -31,13 +31,6 @@ public:
 		return m_model;
 	}
 
-	Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated) override
-	{
-		updated = m_dirty;
-		m_dirty = false;
-		return Error::kNone;
-	}
-
 	ConstWeakArray<U64> getRenderMergeKeys() const
 	{
 		return m_modelPatchMergeKeys;
@@ -54,6 +47,13 @@ private:
 
 	DynamicArray<U64> m_modelPatchMergeKeys;
 	Bool m_dirty = true;
+
+	Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated)
+	{
+		updated = m_dirty;
+		m_dirty = false;
+		return Error::kNone;
+	}
 };
 /// @}
 

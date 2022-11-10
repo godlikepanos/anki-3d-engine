@@ -34,8 +34,6 @@ public:
 		return m_particleEmitterResource;
 	}
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
-
 	/// Callback that will be used by the GenericGpuComputeJobComponent
 	static void simulateCallback(GenericGpuComputeJobQueueElementContext& ctx, const void* userData)
 	{
@@ -87,6 +85,7 @@ private:
 
 	Bool m_markedForUpdate = true;
 
+	Error update(SceneComponentUpdateInfo& info, Bool& updated);
 	void simulate(GenericGpuComputeJobQueueElementContext& ctx) const;
 	void draw(RenderQueueDrawContext& ctx) const;
 };

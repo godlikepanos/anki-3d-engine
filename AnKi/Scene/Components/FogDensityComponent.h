@@ -113,13 +113,6 @@ public:
 		}
 	}
 
-	Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated) override
-	{
-		updated = m_markedForUpdate;
-		m_markedForUpdate = false;
-		return Error::kNone;
-	}
-
 private:
 	Vec3 m_aabbMin = Vec3(0.0f);
 
@@ -134,6 +127,13 @@ private:
 
 	Bool m_isBox : 1;
 	Bool m_markedForUpdate : 1;
+
+	Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated)
+	{
+		updated = m_markedForUpdate;
+		m_markedForUpdate = false;
+		return Error::kNone;
+	}
 };
 
 } // end namespace anki

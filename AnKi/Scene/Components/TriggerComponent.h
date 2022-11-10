@@ -26,8 +26,6 @@ public:
 
 	~TriggerComponent();
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
-
 	void setSphereVolumeRadius(F32 radius);
 
 	Transform getWorldTransform() const
@@ -68,6 +66,8 @@ private:
 	DynamicArray<BodyComponent*> m_bodiesInside;
 	DynamicArray<BodyComponent*> m_bodiesExit;
 	MyPhysicsTriggerProcessContactCallback* m_callbacks = nullptr;
+
+	Error update(SceneComponentUpdateInfo& info, Bool& updated);
 };
 /// @}
 

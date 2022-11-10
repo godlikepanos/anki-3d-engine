@@ -23,7 +23,7 @@ public:
 	{
 	}
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) final
+	Error update(SceneComponentUpdateInfo& info, Bool& updated)
 	{
 		updated = false;
 

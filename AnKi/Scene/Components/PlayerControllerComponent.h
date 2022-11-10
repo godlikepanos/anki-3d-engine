@@ -41,14 +41,6 @@ public:
 		m_player->moveToPosition(pos);
 	}
 
-	Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated) override
-	{
-		const Transform newTrf = m_player->getTransform();
-		updated = newTrf != m_trf;
-		m_trf = newTrf;
-		return Error::kNone;
-	}
-
 	PhysicsPlayerControllerPtr getPhysicsPlayerController() const
 	{
 		return m_player;
@@ -57,6 +49,14 @@ public:
 private:
 	PhysicsPlayerControllerPtr m_player;
 	Transform m_trf = Transform::getIdentity();
+
+	Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated)
+	{
+		const Transform newTrf = m_player->getTransform();
+		updated = newTrf != m_trf;
+		m_trf = newTrf;
+		return Error::kNone;
+	}
 };
 /// @}
 

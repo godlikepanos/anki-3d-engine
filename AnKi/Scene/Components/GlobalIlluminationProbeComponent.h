@@ -22,6 +22,8 @@ class GlobalIlluminationProbeComponent : public SceneComponent
 public:
 	GlobalIlluminationProbeComponent(SceneNode* node);
 
+	~GlobalIlluminationProbeComponent();
+
 	/// Set the bounding box size.
 	void setBoxVolumeSize(const Vec3& sizeXYZ)
 	{
@@ -104,13 +106,6 @@ public:
 		m_shapeDirty = true;
 	}
 
-	Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated) override
-	{
-		updated = m_shapeDirty;
-		m_shapeDirty = false;
-		return Error::kNone;
-	}
-
 private:
 	SceneNode* m_node;
 	U64 m_uuid;
@@ -146,6 +141,13 @@ private:
 	}
 
 	void draw(RenderQueueDrawContext& ctx) const;
+
+	Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated)
+	{
+		updated = m_shapeDirty;
+		m_shapeDirty = false;
+		return Error::kNone;
+	}
 };
 /// @}
 
