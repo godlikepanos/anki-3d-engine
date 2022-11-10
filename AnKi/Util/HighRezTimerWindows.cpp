@@ -31,31 +31,42 @@ public:
 	}
 };
 
-DummyInitTimer init;
+static DummyInitTimer g_init;
 
 } // namespace
-
-static U64 getMs()
-{
-	LARGE_INTEGER now;
-	QueryPerformanceCounter(&now);
-
-	now.QuadPart -= init.m_start.QuadPart;
-	now.QuadPart *= 1000;
-	now.QuadPart /= init.m_ticksPerSec.QuadPart;
-
-	return now.QuadPart;
-}
 
 void HighRezTimer::sleep(Second sec)
 {
 	Sleep(U32(sec * 1000.0));
 }
 
+U64 HighRezTimer::getCurrentTimeMs()
+{
+	LARGE_INTEGER now;
+	QueryPerformanceCounter(&now);
+
+	now.QuadPart -= g_init.m_start.QuadPart;
+	now.QuadPart *= 1000;
+	now.QuadPart /= g_init.m_ticksPerSec.QuadPart;
+
+	return now.QuadPart;
+}
+
+U64 HighRezTimer::getCurrentTimeUs()
+{
+	LARGE_INTEGER now;
+	QueryPerformanceCounter(&now);
+
+	now.QuadPart -= g_init.m_start.QuadPart;
+	now.QuadPart *= 1000000;
+	now.QuadPart /= g_init.m_ticksPerSec.QuadPart;
+
+	return now.QuadPart;
+}
+
 Second HighRezTimer::getCurrentTime()
 {
-	// Second(ticks) / 1000.0
-	return Second(getMs()) * 0.001;
+	return Second(getCurrentTimeUs()) / 1000000.0;
 }
 
 } // end namespace anki

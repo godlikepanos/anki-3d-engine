@@ -27,7 +27,7 @@ public:
 	}
 };
 
-StartTime startTime;
+static StartTime g_startTime;
 
 } // namespace
 
@@ -37,8 +37,7 @@ static U64 getNs()
 
 	timespec now;
 	clock_gettime(CLOCK_MONOTONIC, &now);
-	ticks =
-		static_cast<U64>(now.tv_sec - startTime.m_time.tv_sec) * 1000000000 + (now.tv_nsec - startTime.m_time.tv_nsec);
+	ticks = U64(now.tv_sec - g_startTime.m_time.tv_sec) * 1000000000 + (now.tv_nsec - g_startTime.m_time.tv_nsec);
 
 	return ticks;
 }
@@ -65,8 +64,17 @@ void HighRezTimer::sleep(Second sec)
 
 Second HighRezTimer::getCurrentTime()
 {
-	// Second(ticks) / 1000.0
-	return Second(getNs()) * 1e-9;
+	return Second(getNs()) / 1000000000.0;
+}
+
+U64 HighRezTimer::getCurrentTimeMs()
+{
+	return getNs() * 1000000;
+}
+
+U64 HighRezTimer::getCurrentTimeUs()
+{
+	return getNs() * 1000;
 }
 
 } // end namespace anki

@@ -28,6 +28,12 @@ public:
 	/// Get the current date's seconds
 	static Second getCurrentTime();
 
+	/// Get the current date's mili seconds
+	static U64 getCurrentTimeMs();
+
+	/// Get the current date's micro seconds
+	static U64 getCurrentTimeUs();
+
 	/// Micro sleep. The resolution is in nanoseconds.
 	static void sleep(Second seconds);
 

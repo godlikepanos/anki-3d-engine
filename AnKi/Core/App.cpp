@@ -498,7 +498,7 @@ Error App::mainLoop()
 
 			// Render
 			TexturePtr presentableTex = m_gr->acquireNextPresentableTexture();
-			m_renderer->setStatsEnabled(m_config->getCoreDisplayStats() > 0
+			m_renderer->setStatsEnabled(m_config->getCoreDisplayStats() > 0 || benchmarkMode
 #if ANKI_ENABLE_TRACE
 										|| TracerSingleton::get().getEnabled()
 #endif
@@ -508,7 +508,21 @@ Error App::mainLoop()
 			// Pause and sync async loader. That will force all tasks before the pause to finish in this frame.
 			m_resources->getAsyncLoader().pause();
 
+			// If we get stats exclude the time of GR because it forces some GPU-CPU serialization. We don't want to
+			// count that
+			Second grTime = 0.0;
+			if(ANKI_UNLIKELY(benchmarkMode || m_config->getCoreDisplayStats() > 0))
+			{
+				grTime = HighRezTimer::getCurrentTime();
+			}
+
 			m_gr->swapBuffers();
+
+			if(ANKI_UNLIKELY(benchmarkMode || m_config->getCoreDisplayStats() > 0))
+			{
+				grTime = HighRezTimer::getCurrentTime() - grTime;
+			}
+
 			m_stagingMem->endFrame();
 			m_unifiedGometryMemPool->endFrame();
 			m_gpuSceneMemPool->endFrame();
@@ -536,7 +550,7 @@ Error App::mainLoop()
 			// Benchmark stats
 			else
 			{
-				aggregatedCpuTime += frameTime;
+				aggregatedCpuTime += frameTime - grTime;
 				aggregatedGpuTime += m_renderer->getStats().m_renderingGpuTime;
 				++benchmarkFramesGathered;
 				if(benchmarkFramesGathered >= kBenchmarkFramesToGatherBeforeFlush)
@@ -555,7 +569,7 @@ Error App::mainLoop()
 			if(m_config->getCoreDisplayStats() > 0)
 			{
 				StatsUiInput in;
-				in.m_cpuFrameTime = frameTime;
+				in.m_cpuFrameTime = frameTime - grTime;
 				in.m_rendererTime = m_renderer->getStats().m_renderingCpuTime;
 				in.m_sceneUpdateTime = m_scene->getStats().m_updateTime;
 				in.m_visibilityTestsTime = m_scene->getStats().m_visibilityTestsTime;
