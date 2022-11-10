@@ -23,3 +23,6 @@ ANKI_CONFIG_VAR_U32(CoreJobThreadCount, max(2u, getCpuCoresCount() / 2u), 2u, 10
 ANKI_CONFIG_VAR_U32(CoreDisplayStats, 0, 0, 2, "Display stats, 0: None, 1: Simple, 2: Detailed")
 ANKI_CONFIG_VAR_BOOL(CoreClearCaches, false, "Clear all caches")
 ANKI_CONFIG_VAR_BOOL(CoreVerboseLog, false, "Verbose logging")
+ANKI_CONFIG_VAR_BOOL(CoreBenchmarkMode, false, "Run in a benchmark mode. Fixed timestep, unlimited target FPS")
+ANKI_CONFIG_VAR_U32(CoreBenchmarkModeFrameCount, 60 * 60 * 2, 1, kMaxU32,
+					"How many frames the benchmark will run before it quits")

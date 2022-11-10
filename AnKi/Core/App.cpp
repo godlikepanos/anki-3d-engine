@@ -223,6 +223,12 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 
 	ANKI_CORE_LOGI("Number of job threads: %u", m_config->getCoreJobThreadCount());
 
+	if(m_config->getCoreBenchmarkMode() && m_config->getGrVsync())
+	{
+		ANKI_CORE_LOGW("Vsync is enabled and benchmark mode as well. Will turn vsync off");
+		m_config->setGrVsync(false);
+	}
+
 	//
 	// Core tracer
 	//
@@ -450,6 +456,21 @@ Error App::mainLoop()
 	Second prevUpdateTime = HighRezTimer::getCurrentTime();
 	Second crntTime = prevUpdateTime;
 
+	// Benchmark mode stuff:
+	const Bool benchmarkMode = m_config->getCoreBenchmarkMode();
+	Second aggregatedCpuTime = 0.0;
+	Second aggregatedGpuTime = 0.0;
+	constexpr U32 kBenchmarkFramesToGatherBeforeFlush = 60;
+	U32 benchmarkFramesGathered = 0;
+	File benchmarkCsvFile;
+	StringRaii benchmarkCsvFileFilename(&m_mainPool);
+	if(benchmarkMode)
+	{
+		benchmarkCsvFileFilename.sprintf("%s/Benchmark.csv", m_settingsDir.cstr());
+		ANKI_CHECK(benchmarkCsvFile.open(benchmarkCsvFileFilename, FileOpenFlag::kWrite));
+		ANKI_CHECK(benchmarkCsvFile.writeText("CPU, GPU\n"));
+	}
+
 	while(!quit)
 	{
 		{
@@ -457,7 +478,8 @@ Error App::mainLoop()
 			const Second startTime = HighRezTimer::getCurrentTime();
 
 			prevUpdateTime = crntTime;
-			crntTime = HighRezTimer::getCurrentTime();
+			crntTime =
+				ANKI_LIKELY(!benchmarkMode) ? HighRezTimer::getCurrentTime() : (prevUpdateTime + 1.0_sec / 60.0_sec);
 
 			// Update
 			ANKI_CHECK(m_input->handleEvents());
@@ -502,11 +524,31 @@ Error App::mainLoop()
 			// Sleep
 			const Second endTime = HighRezTimer::getCurrentTime();
 			const Second frameTime = endTime - startTime;
-			const Second timerTick = 1.0 / Second(m_config->getCoreTargetFps());
-			if(frameTime < timerTick)
+			if(ANKI_LIKELY(!benchmarkMode))
 			{
-				ANKI_TRACE_SCOPED_EVENT(TIMER_TICK_SLEEP);
-				HighRezTimer::sleep(timerTick - frameTime);
+				const Second timerTick = 1.0_sec / Second(m_config->getCoreTargetFps());
+				if(frameTime < timerTick)
+				{
+					ANKI_TRACE_SCOPED_EVENT(TIMER_TICK_SLEEP);
+					HighRezTimer::sleep(timerTick - frameTime);
+				}
+			}
+			// Benchmark stats
+			else
+			{
+				aggregatedCpuTime += frameTime;
+				aggregatedGpuTime += m_renderer->getStats().m_renderingGpuTime;
+				++benchmarkFramesGathered;
+				if(benchmarkFramesGathered >= kBenchmarkFramesToGatherBeforeFlush)
+				{
+					aggregatedCpuTime = aggregatedCpuTime / Second(kBenchmarkFramesToGatherBeforeFlush) * 1000.0;
+					aggregatedGpuTime = aggregatedGpuTime / Second(kBenchmarkFramesToGatherBeforeFlush) * 1000.0;
+					ANKI_CHECK(benchmarkCsvFile.writeTextf("%f,%f\n", aggregatedCpuTime, aggregatedGpuTime));
+
+					benchmarkFramesGathered = 0;
+					aggregatedCpuTime = 0.0;
+					aggregatedGpuTime = 0.0;
+				}
 			}
 
 			// Stats
@@ -560,12 +602,25 @@ Error App::mainLoop()
 #endif
 
 			++m_globalTimestamp;
+
+			if(ANKI_UNLIKELY(benchmarkMode))
+			{
+				if(m_globalTimestamp >= m_config->getCoreBenchmarkModeFrameCount())
+				{
+					quit = true;
+				}
+			}
 		}
 
 #if ANKI_ENABLE_TRACE
 		static U64 frame = 1;
 		m_coreTracer->flushFrame(frame++);
 #endif
+	}
+
+	if(ANKI_UNLIKELY(benchmarkMode))
+	{
+		ANKI_CORE_LOGI("Benchmark file saved it: %s", benchmarkCsvFileFilename.cstr());
 	}
 
 	return Error::kNone;
