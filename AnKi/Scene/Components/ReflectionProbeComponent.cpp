@@ -55,13 +55,13 @@ void ReflectionProbeComponent::draw(RenderQueueDrawContext& ctx) const
 
 	m_node->getSceneGraph().getDebugDrawer().drawCubes(
 		ConstWeakArray<Mat4>(&mvp, 1), Vec4(0.0f, 0.0f, 1.0f, 1.0f), 1.0f,
-		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), 2.0f, *ctx.m_stagingGpuAllocator,
+		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), 2.0f, *ctx.m_rebarStagingPool,
 		ctx.m_commandBuffer);
 
 	m_node->getSceneGraph().getDebugDrawer().drawBillboardTextures(
 		ctx.m_projectionMatrix, ctx.m_viewMatrix, ConstWeakArray<Vec3>(&m_worldPos, 1), Vec4(1.0f),
 		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), m_debugImage->getTextureView(),
-		ctx.m_sampler, Vec2(0.75f), *ctx.m_stagingGpuAllocator, ctx.m_commandBuffer);
+		ctx.m_sampler, Vec2(0.75f), *ctx.m_rebarStagingPool, ctx.m_commandBuffer);
 
 	// Restore state
 	if(!enableDepthTest)

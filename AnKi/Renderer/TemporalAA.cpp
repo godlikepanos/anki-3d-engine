@@ -37,10 +37,10 @@ Error TemporalAA::initInternal()
 {
 	ANKI_R_LOGV("Initializing TAA");
 
-	ANKI_CHECK(m_r->getResourceManager().loadResource((getConfig().getRPreferCompute())
-														  ? "ShaderBinaries/TemporalAACompute.ankiprogbin"
-														  : "ShaderBinaries/TemporalAARaster.ankiprogbin",
-													  m_prog));
+	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
+		(getExternalSubsystems().m_config->getRPreferCompute()) ? "ShaderBinaries/TemporalAACompute.ankiprogbin"
+																: "ShaderBinaries/TemporalAARaster.ankiprogbin",
+		m_prog));
 
 	{
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
@@ -49,7 +49,7 @@ Error TemporalAA::initInternal()
 		variantInitInfo.addMutation("VARIANCE_CLIPPING", 1);
 		variantInitInfo.addMutation("YCBCR", 0);
 
-		if(getConfig().getRPreferCompute())
+		if(getExternalSubsystems().m_config->getRPreferCompute())
 		{
 			variantInitInfo.addConstant("kFramebufferSize",
 										UVec2(m_r->getInternalResolution().x(), m_r->getInternalResolution().y()));
@@ -63,8 +63,8 @@ Error TemporalAA::initInternal()
 	for(U i = 0; i < 2; ++i)
 	{
 		TextureUsageBit usage = TextureUsageBit::kSampledFragment | TextureUsageBit::kSampledCompute;
-		usage |= (getConfig().getRPreferCompute()) ? TextureUsageBit::kImageComputeWrite
-												   : TextureUsageBit::kFramebufferWrite;
+		usage |= (getExternalSubsystems().m_config->getRPreferCompute()) ? TextureUsageBit::kImageComputeWrite
+																		 : TextureUsageBit::kFramebufferWrite;
 
 		TextureInitInfo texinit =
 			m_r->create2DRenderTargetInitInfo(m_r->getInternalResolution().x(), m_r->getInternalResolution().y(),
@@ -75,8 +75,9 @@ Error TemporalAA::initInternal()
 
 	m_tonemappedRtDescr = m_r->create2DRenderTargetDescription(
 		m_r->getInternalResolution().x(), m_r->getInternalResolution().y(),
-		(getGrManager().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR8G8B8_Unorm
-																			  : Format::kR8G8B8A8_Unorm,
+		(getExternalSubsystems().m_grManager->getDeviceCapabilities().m_unalignedBbpTextureFormats)
+			? Format::kR8G8B8_Unorm
+			: Format::kR8G8B8A8_Unorm,
 		"TemporalAA Tonemapped");
 	m_tonemappedRtDescr.bake();
 
@@ -92,7 +93,7 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 
 	const U32 historyRtIdx = (m_r->getFrameCount() + 1) & 1;
 	const U32 renderRtIdx = !historyRtIdx;
-	const Bool preferCompute = getConfig().getRPreferCompute();
+	const Bool preferCompute = getExternalSubsystems().m_config->getRPreferCompute();
 
 	// Import RTs
 	if(ANKI_LIKELY(m_rtTexturesImportedOnce[historyRtIdx]))
@@ -154,7 +155,7 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 		rgraphCtx.bindColorTexture(0, 4, m_r->getMotionVectors().getMotionVectorsRt());
 		rgraphCtx.bindImage(0, 5, m_r->getTonemapping().getRt());
 
-		if(getConfig().getRPreferCompute())
+		if(getExternalSubsystems().m_config->getRPreferCompute())
 		{
 			rgraphCtx.bindImage(0, 6, m_runCtx.m_renderRt, TextureSubresourceInfo());
 			rgraphCtx.bindImage(0, 7, m_runCtx.m_tonemappedRt, TextureSubresourceInfo());

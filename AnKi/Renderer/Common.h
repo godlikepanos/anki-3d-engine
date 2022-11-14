@@ -35,7 +35,9 @@ class DirectionalLightQueueElement;
 class SpotLightQueueElement;
 class ReflectionProbeQueueElement;
 class DecalQueueElement;
-
+class ResourceManager;
+class RebarStagingGpuMemoryPool;
+class UiManager;
 class ShaderProgramResourceVariant;
 
 /// @addtogroup renderer
@@ -70,25 +72,37 @@ constexpr U32 kDownscaleBurDownTo = 32;
 inline constexpr Array<Format, kGBufferColorRenderTargetCount> kGBufferColorRenderTargetFormats = {
 	{Format::kR8G8B8A8_Unorm, Format::kR8G8B8A8_Unorm, Format::kA2B10G10R10_Unorm_Pack32, Format::kR16G16_Snorm}};
 
+class RendererExternalSubsystems
+{
+public:
+	ThreadHive* m_threadHive = nullptr;
+	ResourceManager* m_resourceManager = nullptr;
+	GrManager* m_grManager = nullptr;
+	RebarStagingGpuMemoryPool* m_rebarStagingPool = nullptr;
+	UiManager* m_uiManager = nullptr;
+	ConfigSet* m_config = nullptr;
+	Timestamp* m_globTimestamp = nullptr;
+};
+
 /// GPU buffers and textures that the clusterer refers to.
 class ClusteredShadingContext
 {
 public:
-	StagingGpuMemoryToken m_pointLightsToken;
+	RebarGpuMemoryToken m_pointLightsToken;
 	void* m_pointLightsAddress = nullptr;
-	StagingGpuMemoryToken m_spotLightsToken;
+	RebarGpuMemoryToken m_spotLightsToken;
 	void* m_spotLightsAddress = nullptr;
-	StagingGpuMemoryToken m_reflectionProbesToken;
+	RebarGpuMemoryToken m_reflectionProbesToken;
 	void* m_reflectionProbesAddress = nullptr;
-	StagingGpuMemoryToken m_decalsToken;
+	RebarGpuMemoryToken m_decalsToken;
 	void* m_decalsAddress = nullptr;
-	StagingGpuMemoryToken m_fogDensityVolumesToken;
+	RebarGpuMemoryToken m_fogDensityVolumesToken;
 	void* m_fogDensityVolumesAddress = nullptr;
-	StagingGpuMemoryToken m_globalIlluminationProbesToken;
+	RebarGpuMemoryToken m_globalIlluminationProbesToken;
 	void* m_globalIlluminationProbesAddress = nullptr;
-	StagingGpuMemoryToken m_clusteredShadingUniformsToken;
+	RebarGpuMemoryToken m_clusteredShadingUniformsToken;
 	void* m_clusteredShadingUniformsAddress = nullptr;
-	StagingGpuMemoryToken m_clustersToken;
+	RebarGpuMemoryToken m_clustersToken;
 	void* m_clustersAddress = nullptr;
 
 	BufferHandle m_clustersBufferHandle; ///< To track dependencies. Don't track all tokens, not worth it.

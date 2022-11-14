@@ -50,8 +50,9 @@ Error DepthDownscale::initInternal()
 	ANKI_R_LOGV("Initializing HiZ. Mip count %u, last mip size %ux%u", m_mipCount, m_lastMipSize.x(),
 				m_lastMipSize.y());
 
-	const Bool preferCompute = getConfig().getRPreferCompute();
-	const Bool supportsReductionSampler = getGrManager().getDeviceCapabilities().m_samplingFilterMinMax;
+	const Bool preferCompute = getExternalSubsystems().m_config->getRPreferCompute();
+	const Bool supportsReductionSampler =
+		getExternalSubsystems().m_grManager->getDeviceCapabilities().m_samplingFilterMinMax;
 
 	// Create RT descr
 	{
@@ -73,7 +74,8 @@ Error DepthDownscale::initInternal()
 	// Progs
 	if(preferCompute)
 	{
-		ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/DepthDownscaleCompute.ankiprogbin", m_prog));
+		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
+			"ShaderBinaries/DepthDownscaleCompute.ankiprogbin", m_prog));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 		variantInitInfo.addMutation("WAVE_OPERATIONS", 0);
@@ -84,7 +86,8 @@ Error DepthDownscale::initInternal()
 	}
 	else
 	{
-		ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/DepthDownscaleRaster.ankiprogbin", m_prog));
+		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
+			"ShaderBinaries/DepthDownscaleRaster.ankiprogbin", m_prog));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 		variantInitInfo.addMutation("REDUCTION_SAMPLER", supportsReductionSampler);
@@ -105,7 +108,7 @@ Error DepthDownscale::initInternal()
 		BufferInitInfo buffInit("HiZCounterBuffer");
 		buffInit.m_size = sizeof(U32);
 		buffInit.m_usage = BufferUsageBit::kStorageComputeWrite | BufferUsageBit::kTransferDestination;
-		m_counterBuffer = getGrManager().newBuffer(buffInit);
+		m_counterBuffer = getExternalSubsystems().m_grManager->newBuffer(buffInit);
 	}
 
 	// Client buffer
@@ -115,7 +118,7 @@ Error DepthDownscale::initInternal()
 		buffInit.m_mapAccess = BufferMapAccessBit::kRead;
 		buffInit.m_size = PtrSize(m_lastMipSize.y()) * PtrSize(m_lastMipSize.x()) * sizeof(F32);
 		buffInit.m_usage = BufferUsageBit::kStorageComputeWrite | BufferUsageBit::kStorageFragmentWrite;
-		m_clientBuffer = getGrManager().newBuffer(buffInit);
+		m_clientBuffer = getExternalSubsystems().m_grManager->newBuffer(buffInit);
 
 		m_clientBufferAddr = m_clientBuffer->map(0, buffInit.m_size, BufferMapAccessBit::kRead);
 
@@ -133,7 +136,7 @@ Error DepthDownscale::initInternal()
 		sinit.m_addressing = SamplingAddressing::kClamp;
 		sinit.m_mipmapFilter = SamplingFilter::kMax;
 		sinit.m_minMagFilter = SamplingFilter::kMax;
-		m_reductionSampler = getGrManager().newSampler(sinit);
+		m_reductionSampler = getExternalSubsystems().m_grManager->newSampler(sinit);
 	}
 
 	if(!preferCompute)
@@ -182,7 +185,7 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
-	if(getConfig().getRPreferCompute())
+	if(getExternalSubsystems().m_config->getRPreferCompute())
 	{
 		// Do it with compute
 

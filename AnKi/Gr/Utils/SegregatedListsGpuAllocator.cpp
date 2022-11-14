@@ -202,6 +202,7 @@ void SegregatedListsGpuAllocator::allocate(PtrSize size, U32 alignment, Segregat
 {
 	ANKI_ASSERT(isInitialized());
 	ANKI_ASSERT(size > 0 && alignment > 0 && isPowerOfTwo(alignment));
+	ANKI_ASSERT(token == SegregatedListsGpuAllocatorToken());
 
 	LockGuard lock(m_lock);
 
@@ -221,7 +222,7 @@ void SegregatedListsGpuAllocator::allocate(PtrSize size, U32 alignment, Segregat
 	m_allocatedSize += size;
 }
 
-void SegregatedListsGpuAllocator::free(const SegregatedListsGpuAllocatorToken& token)
+void SegregatedListsGpuAllocator::free(SegregatedListsGpuAllocatorToken& token)
 {
 	ANKI_ASSERT(isInitialized());
 
@@ -230,8 +231,12 @@ void SegregatedListsGpuAllocator::free(const SegregatedListsGpuAllocatorToken& t
 		return;
 	}
 
-	LockGuard lock(m_lock);
-	m_garbage[m_frame].emplaceBack(*m_pool, token);
+	{
+		LockGuard lock(m_lock);
+		m_garbage[m_frame].emplaceBack(*m_pool, token);
+	}
+
+	token = {};
 }
 
 void SegregatedListsGpuAllocator::endFrame()

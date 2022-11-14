@@ -35,17 +35,19 @@ Error RtShadows::initInternal()
 {
 	ANKI_R_LOGV("Initializing RT shadows");
 
-	m_useSvgf = getConfig().getRRtShadowsSvgf();
-	m_atrousPassCount = getConfig().getRRtShadowsSvgfAtrousPassCount();
+	m_useSvgf = getExternalSubsystems().m_config->getRRtShadowsSvgf();
+	m_atrousPassCount = getExternalSubsystems().m_config->getRRtShadowsSvgfAtrousPassCount();
 
-	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_blueNoiseImage));
+	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png",
+																	   m_blueNoiseImage));
 
 	// Ray gen program
 	{
-		ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/RtShadowsRayGen.ankiprogbin", m_rayGenProg));
+		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource("ShaderBinaries/RtShadowsRayGen.ankiprogbin",
+																		   m_rayGenProg));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_rayGenProg);
-		variantInitInfo.addMutation("RAYS_PER_PIXEL", getConfig().getRRtShadowsRaysPerPixel());
+		variantInitInfo.addMutation("RAYS_PER_PIXEL", getExternalSubsystems().m_config->getRRtShadowsRaysPerPixel());
 
 		const ShaderProgramResourceVariant* variant;
 		m_rayGenProg->getOrCreateVariant(variantInitInfo, variant);
@@ -55,7 +57,8 @@ Error RtShadows::initInternal()
 
 	// Miss prog
 	{
-		ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/RtShadowsMiss.ankiprogbin", m_missProg));
+		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource("ShaderBinaries/RtShadowsMiss.ankiprogbin",
+																		   m_missProg));
 		const ShaderProgramResourceVariant* variant;
 		m_missProg->getOrCreateVariant(variant);
 		m_missShaderGroupIdx = variant->getShaderGroupHandleIndex();
@@ -64,7 +67,8 @@ Error RtShadows::initInternal()
 	// Denoise program
 	if(!m_useSvgf)
 	{
-		ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/RtShadowsDenoise.ankiprogbin", m_denoiseProg));
+		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
+			"ShaderBinaries/RtShadowsDenoise.ankiprogbin", m_denoiseProg));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_denoiseProg);
 		variantInitInfo.addConstant("kOutImageSize",
 									UVec2(m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2));
@@ -84,8 +88,8 @@ Error RtShadows::initInternal()
 	// SVGF variance program
 	if(m_useSvgf)
 	{
-		ANKI_CHECK(
-			getResourceManager().loadResource("ShaderBinaries/RtShadowsSvgfVariance.ankiprogbin", m_svgfVarianceProg));
+		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
+			"ShaderBinaries/RtShadowsSvgfVariance.ankiprogbin", m_svgfVarianceProg));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_svgfVarianceProg);
 		variantInitInfo.addConstant("kFramebufferSize",
 									UVec2(m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2));
@@ -98,8 +102,8 @@ Error RtShadows::initInternal()
 	// SVGF atrous program
 	if(m_useSvgf)
 	{
-		ANKI_CHECK(
-			getResourceManager().loadResource("ShaderBinaries/RtShadowsSvgfAtrous.ankiprogbin", m_svgfAtrousProg));
+		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
+			"ShaderBinaries/RtShadowsSvgfAtrous.ankiprogbin", m_svgfAtrousProg));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_svgfAtrousProg);
 		variantInitInfo.addConstant("kFramebufferSize",
 									UVec2(m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2));
@@ -116,7 +120,8 @@ Error RtShadows::initInternal()
 
 	// Upscale program
 	{
-		ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/RtShadowsUpscale.ankiprogbin", m_upscaleProg));
+		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
+			"ShaderBinaries/RtShadowsUpscale.ankiprogbin", m_upscaleProg));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_upscaleProg);
 		variantInitInfo.addConstant("kOutImageSize",
 									UVec2(m_r->getInternalResolution().x(), m_r->getInternalResolution().y()));
@@ -127,8 +132,8 @@ Error RtShadows::initInternal()
 	}
 
 	// Debug program
-	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/RtShadowsVisualizeRenderTarget.ankiprogbin",
-												 m_visualizeRenderTargetsProg));
+	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
+		"ShaderBinaries/RtShadowsVisualizeRenderTarget.ankiprogbin", m_visualizeRenderTargetsProg));
 
 	// Quarter rez shadow RT
 	{
@@ -177,7 +182,8 @@ Error RtShadows::initInternal()
 	}
 
 	// Misc
-	m_sbtRecordSize = getAlignedRoundUp(getGrManager().getDeviceCapabilities().m_sbtRecordAlignment, m_sbtRecordSize);
+	m_sbtRecordSize = getAlignedRoundUp(
+		getExternalSubsystems().m_grManager->getDeviceCapabilities().m_sbtRecordAlignment, m_sbtRecordSize);
 
 	return Error::kNone;
 }
@@ -491,7 +497,7 @@ void RtShadows::runDenoise(const RenderingContext& ctx, RenderPassWorkContext& r
 
 	RtShadowsDenoiseUniforms unis;
 	unis.invViewProjMat = ctx.m_matrices.m_invertedViewProjectionJitter;
-	unis.time = F32(m_r->getGlobalTimestamp());
+	unis.time = F32(*getExternalSubsystems().m_globTimestamp);
 	cmdb->setPushConstants(&unis, sizeof(unis));
 
 	dispatchPPCompute(cmdb, 8, 8, m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2);
@@ -589,17 +595,17 @@ void RtShadows::buildSbt(RenderingContext& ctx)
 	const U32 instanceCount = instanceElements.getSize();
 	ANKI_ASSERT(instanceCount > 0);
 
-	const U32 shaderHandleSize = getGrManager().getDeviceCapabilities().m_shaderGroupHandleSize;
+	const U32 shaderHandleSize = getExternalSubsystems().m_grManager->getDeviceCapabilities().m_shaderGroupHandleSize;
 
 	const U32 extraSbtRecords = 1 + 1; // Raygen + miss
 
 	m_runCtx.m_hitGroupCount = instanceCount;
 
 	// Allocate SBT
-	StagingGpuMemoryToken token;
+	RebarGpuMemoryToken token;
 	U8* sbt = allocateStorage<U8*>(PtrSize(m_sbtRecordSize) * (instanceCount + extraSbtRecords), token);
 	[[maybe_unused]] const U8* sbtStart = sbt;
-	m_runCtx.m_sbtBuffer = token.m_buffer;
+	m_runCtx.m_sbtBuffer = getExternalSubsystems().m_rebarStagingPool->getBuffer();
 	m_runCtx.m_sbtOffset = token.m_offset;
 
 	// Set the miss and ray gen handles

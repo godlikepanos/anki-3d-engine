@@ -41,7 +41,7 @@ Error ProbeReflections::init()
 Error ProbeReflections::initInternal()
 {
 	// Init cache entries
-	m_cacheEntries.create(getMemoryPool(), getConfig().getRProbeRefectionMaxCachedProbes());
+	m_cacheEntries.create(getMemoryPool(), getExternalSubsystems().m_config->getRProbeRefectionMaxCachedProbes());
 
 	ANKI_CHECK(initGBuffer());
 	ANKI_CHECK(initLightShading());
@@ -50,7 +50,7 @@ Error ProbeReflections::initInternal()
 	ANKI_CHECK(initShadowMapping());
 
 	// Load split sum integration LUT
-	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/IblDfg.png", m_integrationLut));
+	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource("EngineAssets/IblDfg.png", m_integrationLut));
 
 	SamplerInitInfo sinit;
 	sinit.m_minMagFilter = SamplingFilter::kLinear;
@@ -58,14 +58,14 @@ Error ProbeReflections::initInternal()
 	sinit.m_minLod = 0.0;
 	sinit.m_maxLod = 1.0;
 	sinit.m_addressing = SamplingAddressing::kClamp;
-	m_integrationLutSampler = getGrManager().newSampler(sinit);
+	m_integrationLutSampler = getExternalSubsystems().m_grManager->newSampler(sinit);
 
 	return Error::kNone;
 }
 
 Error ProbeReflections::initGBuffer()
 {
-	m_gbuffer.m_tileSize = getConfig().getRProbeReflectionResolution();
+	m_gbuffer.m_tileSize = getExternalSubsystems().m_config->getRProbeReflectionResolution();
 
 	// Create RT descriptions
 	{
@@ -110,7 +110,7 @@ Error ProbeReflections::initGBuffer()
 
 Error ProbeReflections::initLightShading()
 {
-	m_lightShading.m_tileSize = getConfig().getRProbeReflectionResolution();
+	m_lightShading.m_tileSize = getExternalSubsystems().m_config->getRProbeReflectionResolution();
 	m_lightShading.m_mipCount = computeMaxMipmapCount2d(m_lightShading.m_tileSize, m_lightShading.m_tileSize, 8);
 
 	// Init cube arr
@@ -136,12 +136,12 @@ Error ProbeReflections::initLightShading()
 
 Error ProbeReflections::initIrradiance()
 {
-	m_irradiance.m_workgroupSize = getConfig().getRProbeReflectionIrradianceResolution();
+	m_irradiance.m_workgroupSize = getExternalSubsystems().m_config->getRProbeReflectionIrradianceResolution();
 
 	// Create prog
 	{
-		ANKI_CHECK(
-			m_r->getResourceManager().loadResource("ShaderBinaries/IrradianceDice.ankiprogbin", m_irradiance.m_prog));
+		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource("ShaderBinaries/IrradianceDice.ankiprogbin",
+																		   m_irradiance.m_prog));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_irradiance.m_prog);
 
@@ -160,7 +160,7 @@ Error ProbeReflections::initIrradiance()
 		BufferInitInfo init;
 		init.m_usage = BufferUsageBit::kAllStorage;
 		init.m_size = 6 * sizeof(Vec4);
-		m_irradiance.m_diceValuesBuff = getGrManager().newBuffer(init);
+		m_irradiance.m_diceValuesBuff = getExternalSubsystems().m_grManager->newBuffer(init);
 	}
 
 	return Error::kNone;
@@ -169,8 +169,8 @@ Error ProbeReflections::initIrradiance()
 Error ProbeReflections::initIrradianceToRefl()
 {
 	// Create program
-	ANKI_CHECK(m_r->getResourceManager().loadResource("ShaderBinaries/ApplyIrradianceToReflection.ankiprogbin",
-													  m_irradianceToRefl.m_prog));
+	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
+		"ShaderBinaries/ApplyIrradianceToReflection.ankiprogbin", m_irradianceToRefl.m_prog));
 
 	const ShaderProgramResourceVariant* variant;
 	m_irradianceToRefl.m_prog->getOrCreateVariant(ShaderProgramResourceVariantInitInfo(m_irradianceToRefl.m_prog),
@@ -182,7 +182,7 @@ Error ProbeReflections::initIrradianceToRefl()
 
 Error ProbeReflections::initShadowMapping()
 {
-	const U32 resolution = getConfig().getRProbeReflectionShadowMapResolution();
+	const U32 resolution = getExternalSubsystems().m_config->getRProbeReflectionShadowMapResolution();
 	ANKI_ASSERT(resolution > 8);
 
 	// RT descr
@@ -241,8 +241,8 @@ void ProbeReflections::prepareProbes(RenderingContext& ctx, ReflectionProbeQueue
 		ReflectionProbeQueueElement& probe = ctx.m_renderQueue->m_reflectionProbes[probeIdx];
 
 		// Find cache entry
-		const U32 cacheEntryIdx = findBestCacheEntry(probe.m_uuid, m_r->getGlobalTimestamp(), m_cacheEntries,
-													 m_probeUuidToCacheEntryIdx, getMemoryPool());
+		const U32 cacheEntryIdx = findBestCacheEntry(probe.m_uuid, *getExternalSubsystems().m_globTimestamp,
+													 m_cacheEntries, m_probeUuidToCacheEntryIdx, getMemoryPool());
 		if(ANKI_UNLIKELY(cacheEntryIdx == kMaxU32))
 		{
 			// Failed
@@ -284,7 +284,7 @@ void ProbeReflections::prepareProbes(RenderingContext& ctx, ReflectionProbeQueue
 
 		// Update the cache entry
 		m_cacheEntries[cacheEntryIdx].m_uuid = probe.m_uuid;
-		m_cacheEntries[cacheEntryIdx].m_lastUsedTimestamp = m_r->getGlobalTimestamp();
+		m_cacheEntries[cacheEntryIdx].m_lastUsedTimestamp = *getExternalSubsystems().m_globTimestamp;
 
 		// Update the probe
 		probe.m_textureArrayIndex = cacheEntryIdx;
@@ -425,7 +425,7 @@ void ProbeReflections::runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkCo
 	rgraphCtx.getRenderTargetState(m_ctx.m_lightShadingRt, subresource, texToBind);
 
 	TextureViewInitInfo viewInit(texToBind, subresource);
-	rgraphCtx.m_commandBuffer->generateMipmaps2d(getGrManager().newTextureView(viewInit));
+	rgraphCtx.m_commandBuffer->generateMipmaps2d(getExternalSubsystems().m_grManager->newTextureView(viewInit));
 }
 
 void ProbeReflections::runIrradiance(RenderPassWorkContext& rgraphCtx)

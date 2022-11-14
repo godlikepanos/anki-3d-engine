@@ -15,12 +15,6 @@
 
 namespace anki {
 
-// Forward
-class ConfigSet;
-class ResourceManager;
-class StagingGpuMemoryPool;
-class UiManager;
-
 /// @addtogroup renderer
 /// @{
 
@@ -73,8 +67,7 @@ public:
 	}
 
 	/// Init the renderer.
-	Error init(ThreadHive* hive, ResourceManager* resources, GrManager* gr, StagingGpuMemoryPool* stagingMem,
-			   UiManager* ui, HeapMemoryPool* pool, ConfigSet* config, Timestamp* globTimestamp, UVec2 swapchainSize);
+	Error init(const RendererExternalSubsystems& subsystems, HeapMemoryPool* pool, UVec2 swapchainSize);
 
 	/// This function does all the rendering stages and produces a final result.
 	Error populateRenderGraph(RenderingContext& ctx);
@@ -96,12 +89,6 @@ public:
 		return m_sceneDrawer;
 	}
 
-	UiManager& getUiManager()
-	{
-		ANKI_ASSERT(m_ui);
-		return *m_ui;
-	}
-
 	/// Create the init info for a 2D texture that will be used as a render target.
 	[[nodiscard]] TextureInitInfo create2DRenderTargetInitInfo(U32 w, U32 h, Format format, TextureUsageBit usage,
 															   CString name = {});
@@ -112,37 +99,6 @@ public:
 
 	[[nodiscard]] TexturePtr createAndClearRenderTarget(const TextureInitInfo& inf, TextureUsageBit initialUsage,
 														const ClearValue& clearVal = ClearValue());
-
-	GrManager& getGrManager()
-	{
-		return *m_gr;
-	}
-
-	HeapMemoryPool& getMemoryPool() const
-	{
-		return *m_pool;
-	}
-
-	ResourceManager& getResourceManager()
-	{
-		return *m_resources;
-	}
-
-	const ConfigSet& getConfig() const
-	{
-		ANKI_ASSERT(m_config);
-		return *m_config;
-	}
-
-	Timestamp getGlobalTimestamp() const
-	{
-		return *m_globTimestamp;
-	}
-
-	Timestamp* getGlobalTimestampPtr()
-	{
-		return m_globTimestamp;
-	}
 
 	/// Returns true if there were resources loaded or loading async tasks that got completed.
 	Bool resourcesLoaded() const
@@ -170,22 +126,14 @@ public:
 		return m_samplers;
 	}
 
-	StagingGpuMemoryPool& getStagingGpuMemory()
+	RendererExternalSubsystems& getExternalSubsystems()
 	{
-		ANKI_ASSERT(m_stagingMem);
-		return *m_stagingMem;
+		return m_subsystems;
 	}
 
-	ThreadHive& getThreadHive()
+	HeapMemoryPool& getMemoryPool() const
 	{
-		ANKI_ASSERT(m_threadHive);
-		return *m_threadHive;
-	}
-
-	const ThreadHive& getThreadHive() const
-	{
-		ANKI_ASSERT(m_threadHive);
-		return *m_threadHive;
+		return *m_pool;
 	}
 
 	U32 getTileSize() const
@@ -227,13 +175,7 @@ public:
 	/// @}
 
 private:
-	ResourceManager* m_resources = nullptr;
-	ThreadHive* m_threadHive = nullptr;
-	StagingGpuMemoryPool* m_stagingMem = nullptr;
-	GrManager* m_gr = nullptr;
-	UiManager* m_ui = nullptr;
-	Timestamp* m_globTimestamp = nullptr;
-	ConfigSet* m_config = nullptr;
+	RendererExternalSubsystems m_subsystems;
 	mutable HeapMemoryPool* m_pool = nullptr;
 
 	/// @name Rendering stages

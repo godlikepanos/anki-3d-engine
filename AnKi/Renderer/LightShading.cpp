@@ -63,7 +63,8 @@ Error LightShading::init()
 Error LightShading::initLightShading()
 {
 	// Load shaders and programs
-	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/LightShading.ankiprogbin", m_lightShading.m_prog));
+	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource("ShaderBinaries/LightShading.ankiprogbin",
+																	   m_lightShading.m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_lightShading.m_prog);
 	variantInitInfo.addConstant("kTileCount", m_r->getTileCounts());
@@ -90,7 +91,8 @@ Error LightShading::initLightShading()
 	m_lightShading.m_fbDescr.m_depthStencilAttachment.m_stencilLoadOperation = AttachmentLoadOperation::kDontCare;
 	m_lightShading.m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
 
-	if(getGrManager().getDeviceCapabilities().m_vrs && getConfig().getRVrs())
+	if(getExternalSubsystems().m_grManager->getDeviceCapabilities().m_vrs
+	   && getExternalSubsystems().m_config->getRVrs())
 	{
 		m_lightShading.m_fbDescr.m_shadingRateAttachmentTexelWidth = m_r->getVrsSriGeneration().getSriTexelDimension();
 		m_lightShading.m_fbDescr.m_shadingRateAttachmentTexelHeight = m_r->getVrsSriGeneration().getSriTexelDimension();
@@ -99,8 +101,8 @@ Error LightShading::initLightShading()
 	m_lightShading.m_fbDescr.bake();
 
 	// Debug visualization
-	ANKI_CHECK(
-		getResourceManager().loadResource("ShaderBinaries/VisualizeHdrRenderTarget.ankiprogbin", m_visualizeRtProg));
+	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
+		"ShaderBinaries/VisualizeHdrRenderTarget.ankiprogbin", m_visualizeRtProg));
 	m_visualizeRtProg->getOrCreateVariant(variant);
 	m_visualizeRtGrProg = variant->getProgram();
 
@@ -109,7 +111,8 @@ Error LightShading::initLightShading()
 
 Error LightShading::initSkybox()
 {
-	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/LightShadingSkybox.ankiprogbin", m_skybox.m_prog));
+	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource("ShaderBinaries/LightShadingSkybox.ankiprogbin",
+																	   m_skybox.m_prog));
 
 	for(U32 method = 0; method < 2; ++method)
 	{
@@ -127,7 +130,8 @@ Error LightShading::initSkybox()
 Error LightShading::initApplyFog()
 {
 	// Load shaders and programs
-	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/LightShadingApplyFog.ankiprogbin", m_applyFog.m_prog));
+	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
+		"ShaderBinaries/LightShadingApplyFog.ankiprogbin", m_applyFog.m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_applyFog.m_prog);
 	variantInitInfo.addConstant("kZSplitCount", m_r->getZSplitCount());
@@ -142,8 +146,8 @@ Error LightShading::initApplyFog()
 
 Error LightShading::initApplyIndirect()
 {
-	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/LightShadingApplyIndirect.ankiprogbin",
-												 m_applyIndirect.m_prog));
+	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
+		"ShaderBinaries/LightShadingApplyIndirect.ankiprogbin", m_applyIndirect.m_prog));
 	const ShaderProgramResourceVariant* variant;
 	m_applyIndirect.m_prog->getOrCreateVariant(variant);
 	m_applyIndirect.m_grProg = variant->getProgram();
@@ -156,7 +160,8 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 	cmdb->setViewport(0, 0, m_r->getInternalResolution().x(), m_r->getInternalResolution().y());
 
-	const Bool enableVrs = getGrManager().getDeviceCapabilities().m_vrs && getConfig().getRVrs();
+	const Bool enableVrs = getExternalSubsystems().m_grManager->getDeviceCapabilities().m_vrs
+						   && getExternalSubsystems().m_config->getRVrs();
 	if(enableVrs)
 	{
 		// Just set some low value, the attachment will take over
@@ -327,7 +332,8 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
-	const Bool enableVrs = getGrManager().getDeviceCapabilities().m_vrs && getConfig().getRVrs();
+	const Bool enableVrs = getExternalSubsystems().m_grManager->getDeviceCapabilities().m_vrs
+						   && getExternalSubsystems().m_config->getRVrs();
 	const Bool fbDescrHasVrs = m_lightShading.m_fbDescr.m_shadingRateAttachmentTexelWidth > 0;
 
 	if(enableVrs != fbDescrHasVrs)

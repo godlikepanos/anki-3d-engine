@@ -130,8 +130,8 @@ void App::cleanup()
 	m_resourceFs = nullptr;
 	deleteInstance(m_mainPool, m_physics);
 	m_physics = nullptr;
-	deleteInstance(m_mainPool, m_stagingMem);
-	m_stagingMem = nullptr;
+	deleteInstance(m_mainPool, m_rebarPool);
+	m_rebarPool = nullptr;
 	deleteInstance(m_mainPool, m_unifiedGometryMemPool);
 	m_unifiedGometryMemPool = nullptr;
 	deleteInstance(m_mainPool, m_gpuSceneMemPool);
@@ -291,8 +291,8 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	m_gpuSceneMemPool = newInstance<GpuSceneMemoryPool>(m_mainPool);
 	m_gpuSceneMemPool->init(&m_mainPool, m_gr, *m_config);
 
-	m_stagingMem = newInstance<StagingGpuMemoryPool>(m_mainPool);
-	ANKI_CHECK(m_stagingMem->init(m_gr, *m_config));
+	m_rebarPool = newInstance<RebarStagingGpuMemoryPool>(m_mainPool);
+	ANKI_CHECK(m_rebarPool->init(m_gr, *m_config));
 
 	//
 	// Physics
@@ -344,7 +344,7 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	uiInitInfo.m_input = m_input;
 	uiInitInfo.m_resourceFilesystem = m_resourceFs;
 	uiInitInfo.m_resourceManager = m_resources;
-	uiInitInfo.m_stagingGpuMemoryPool = m_stagingMem;
+	uiInitInfo.m_rebarPool = m_rebarPool;
 	m_ui = newInstance<UiManager>(m_mainPool);
 	ANKI_CHECK(m_ui->init(uiInitInfo));
 
@@ -357,9 +357,9 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	renderInit.m_allocCallbackUserData = m_mainPool.getAllocationCallbackUserData();
 	renderInit.m_threadHive = m_threadHive;
 	renderInit.m_resourceManager = m_resources;
-	renderInit.m_gr = m_gr;
-	renderInit.m_stagingMemory = m_stagingMem;
-	renderInit.m_ui = m_ui;
+	renderInit.m_grManager = m_gr;
+	renderInit.m_rebarStagingPool = m_rebarPool;
+	renderInit.m_uiManager = m_ui;
 	renderInit.m_config = m_config;
 	renderInit.m_globTimestamp = &m_globalTimestamp;
 	m_renderer = newInstance<MainRenderer>(m_mainPool);
@@ -523,7 +523,7 @@ Error App::mainLoop()
 				grTime = HighRezTimer::getCurrentTime() - grTime;
 			}
 
-			m_stagingMem->endFrame();
+			const PtrSize rebarMemUsed = m_rebarPool->endFrame();
 			m_unifiedGometryMemPool->endFrame();
 			m_gpuSceneMemPool->endFrame();
 
@@ -597,6 +597,7 @@ Error App::mainLoop()
 											in.m_gpuSceneTotal);
 				in.m_gpuDeviceMemoryAllocated = grStats.m_deviceMemoryAllocated;
 				in.m_gpuDeviceMemoryInUse = grStats.m_deviceMemoryInUse;
+				in.m_reBar = rebarMemUsed;
 
 				in.m_drawableCount = rqueue.countAllRenderables();
 				in.m_vkCommandBufferCount = grStats.m_commandBufferCount;

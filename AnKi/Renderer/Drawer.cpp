@@ -47,17 +47,18 @@ void RenderableDrawer::drawRange(RenderingTechnique technique, const RenderableD
 
 	// Allocate, set and bind global uniforms
 	{
-		StagingGpuMemoryToken globalUniformsToken;
+		RebarGpuMemoryToken globalUniformsToken;
 		MaterialGlobalUniforms* globalUniforms =
-			static_cast<MaterialGlobalUniforms*>(m_r->getStagingGpuMemory().allocateFrame(
-				sizeof(MaterialGlobalUniforms), StagingGpuMemoryType::kUniform, globalUniformsToken));
+			static_cast<MaterialGlobalUniforms*>(m_r->getExternalSubsystems().m_rebarStagingPool->allocateFrame(
+				sizeof(MaterialGlobalUniforms), globalUniformsToken));
 
 		globalUniforms->m_viewProjectionMatrix = args.m_viewProjectionMatrix;
 		globalUniforms->m_previousViewProjectionMatrix = args.m_previousViewProjectionMatrix;
 		globalUniforms->m_viewMatrix = args.m_viewMatrix;
 		globalUniforms->m_cameraTransform = args.m_cameraTransform;
 
-		cmdb->bindUniformBuffer(kMaterialSetGlobal, kMaterialBindingGlobalUniforms, globalUniformsToken.m_buffer,
+		cmdb->bindUniformBuffer(kMaterialSetGlobal, kMaterialBindingGlobalUniforms,
+								m_r->getExternalSubsystems().m_rebarStagingPool->getBuffer(),
 								globalUniformsToken.m_offset, globalUniformsToken.m_range);
 	}
 
@@ -72,7 +73,7 @@ void RenderableDrawer::drawRange(RenderingTechnique technique, const RenderableD
 	ctx.m_queueCtx.m_projectionMatrix = Mat4::getIdentity(); // TODO
 	ctx.m_queueCtx.m_previousViewProjectionMatrix = args.m_previousViewProjectionMatrix;
 	ctx.m_queueCtx.m_cameraTransform = args.m_cameraTransform;
-	ctx.m_queueCtx.m_stagingGpuAllocator = &m_r->getStagingGpuMemory();
+	ctx.m_queueCtx.m_rebarStagingPool = m_r->getExternalSubsystems().m_rebarStagingPool;
 	ctx.m_queueCtx.m_commandBuffer = cmdb;
 	ctx.m_queueCtx.m_key = RenderingKey(technique, 0, 1, false, false);
 	ctx.m_queueCtx.m_debugDraw = false;

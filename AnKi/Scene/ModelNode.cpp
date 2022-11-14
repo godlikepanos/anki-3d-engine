@@ -262,20 +262,18 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		if(skinc.isEnabled())
 		{
 			const U32 boneCount = skinc.getBoneTransforms().getSize();
-			StagingGpuMemoryToken token, tokenPrev;
-			void* trfs = ctx.m_stagingGpuAllocator->allocateFrame(boneCount * sizeof(Mat4),
-																  StagingGpuMemoryType::kStorage, token);
+			RebarGpuMemoryToken token, tokenPrev;
+			void* trfs = ctx.m_rebarStagingPool->allocateFrame(boneCount * sizeof(Mat4), token);
 			memcpy(trfs, &skinc.getBoneTransforms()[0], boneCount * sizeof(Mat4));
 
-			trfs = ctx.m_stagingGpuAllocator->allocateFrame(boneCount * sizeof(Mat4), StagingGpuMemoryType::kStorage,
-															tokenPrev);
+			trfs = ctx.m_rebarStagingPool->allocateFrame(boneCount * sizeof(Mat4), tokenPrev);
 			memcpy(trfs, &skinc.getPreviousFrameBoneTransforms()[0], boneCount * sizeof(Mat4));
 
-			cmdb->bindStorageBuffer(kMaterialSetLocal, kMaterialBindingBoneTransforms, token.m_buffer, token.m_offset,
-									token.m_range);
+			cmdb->bindStorageBuffer(kMaterialSetLocal, kMaterialBindingBoneTransforms,
+									ctx.m_rebarStagingPool->getBuffer(), token.m_offset, token.m_range);
 
-			cmdb->bindStorageBuffer(kMaterialSetLocal, kMaterialBindingPreviousBoneTransforms, tokenPrev.m_buffer,
-									tokenPrev.m_offset, tokenPrev.m_range);
+			cmdb->bindStorageBuffer(kMaterialSetLocal, kMaterialBindingPreviousBoneTransforms,
+									ctx.m_rebarStagingPool->getBuffer(), tokenPrev.m_offset, tokenPrev.m_range);
 		}
 
 		// Program
@@ -288,7 +286,7 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		RenderComponent::allocateAndSetupUniforms(
 			modelc.getModelResource()->getModelPatches()[modelPatchIdx].getMaterial(), ctx,
 			ConstWeakArray<Mat3x4>(&trfs[0], instanceCount), ConstWeakArray<Mat3x4>(&prevTrfs[0], instanceCount),
-			*ctx.m_stagingGpuAllocator, positionScaleAndTransform);
+			*ctx.m_rebarStagingPool, positionScaleAndTransform);
 
 		// Bind attributes & vertex buffers
 		for(VertexStreamId streamId :
@@ -353,7 +351,7 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 
 		getSceneGraph().getDebugDrawer().drawCubes(
 			ConstWeakArray<Mat4>(mvps, instanceCount), Vec4(1.0f, 0.0f, 1.0f, 1.0f), 2.0f,
-			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), 2.0f, *ctx.m_stagingGpuAllocator,
+			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), 2.0f, *ctx.m_rebarStagingPool,
 			cmdb);
 
 		deleteArray(*ctx.m_framePool, mvps, instanceCount);
@@ -401,12 +399,12 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 			getSceneGraph().getDebugDrawer().drawLines(
 				ConstWeakArray<Mat4>(&mvp, 1), Vec4(1.0f), 20.0f,
 				ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), lines,
-				*ctx.m_stagingGpuAllocator, cmdb);
+				*ctx.m_rebarStagingPool, cmdb);
 
 			getSceneGraph().getDebugDrawer().drawLines(
 				ConstWeakArray<Mat4>(&mvp, 1), Vec4(0.7f, 0.7f, 0.7f, 1.0f), 5.0f,
 				ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), chidlessLines,
-				*ctx.m_stagingGpuAllocator, cmdb);
+				*ctx.m_rebarStagingPool, cmdb);
 		}
 
 		// Restore state

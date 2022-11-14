@@ -26,20 +26,32 @@ SkinComponent::~SkinComponent()
 	m_boneTrfs[0].destroy(m_node->getMemoryPool());
 	m_boneTrfs[1].destroy(m_node->getMemoryPool());
 	m_animationTrfs.destroy(m_node->getMemoryPool());
+
+	getExternalSubsystems(*m_node).m_gpuSceneMemoryPool->free(m_crntBoneTransformsGpuSceneOffset);
+	getExternalSubsystems(*m_node).m_gpuSceneMemoryPool->free(m_prevBoneTransformsGpuSceneOffset);
 }
 
 Error SkinComponent::loadSkeletonResource(CString fname)
 {
 	ANKI_CHECK(getExternalSubsystems(*m_node).m_resourceManager->loadResource(fname, m_skeleton));
 
+	// Cleanup
 	m_boneTrfs[0].destroy(m_node->getMemoryPool());
 	m_boneTrfs[1].destroy(m_node->getMemoryPool());
 	m_animationTrfs.destroy(m_node->getMemoryPool());
+	getExternalSubsystems(*m_node).m_gpuSceneMemoryPool->free(m_crntBoneTransformsGpuSceneOffset);
+	getExternalSubsystems(*m_node).m_gpuSceneMemoryPool->free(m_prevBoneTransformsGpuSceneOffset);
 
-	m_boneTrfs[0].create(m_node->getMemoryPool(), m_skeleton->getBones().getSize(), Mat4::getIdentity());
-	m_boneTrfs[1].create(m_node->getMemoryPool(), m_skeleton->getBones().getSize(), Mat4::getIdentity());
-	m_animationTrfs.create(m_node->getMemoryPool(), m_skeleton->getBones().getSize(),
-						   {Vec3(0.0f), Quat::getIdentity(), 1.0f});
+	// Create
+	const U32 boneCount = m_skeleton->getBones().getSize();
+	m_boneTrfs[0].create(m_node->getMemoryPool(), boneCount, Mat4::getIdentity());
+	m_boneTrfs[1].create(m_node->getMemoryPool(), boneCount, Mat4::getIdentity());
+	m_animationTrfs.create(m_node->getMemoryPool(), boneCount, {Vec3(0.0f), Quat::getIdentity(), 1.0f});
+
+	getExternalSubsystems(*m_node).m_gpuSceneMemoryPool->allocate(sizeof(Mat4) * boneCount, 4,
+																  m_crntBoneTransformsGpuSceneOffset);
+	getExternalSubsystems(*m_node).m_gpuSceneMemoryPool->allocate(sizeof(Mat4) * boneCount, 4,
+																  m_prevBoneTransformsGpuSceneOffset);
 
 	return Error::kNone;
 }

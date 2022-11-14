@@ -18,9 +18,9 @@ namespace anki {
 class UiManager;
 class ResourceManager;
 class GrManager;
-class StagingGpuMemoryPool;
 class Input;
 class ResourceFilesystem;
+class RebarStagingGpuMemoryPool;
 
 /// @addtogroup ui
 /// @{
@@ -45,7 +45,7 @@ public:
 	ResourceManager* m_resourceManager = nullptr;
 	ResourceFilesystem* m_resourceFilesystem = nullptr;
 	GrManager* m_grManager = nullptr;
-	StagingGpuMemoryPool* m_stagingGpuMemoryPool = nullptr;
+	RebarStagingGpuMemoryPool* m_rebarPool = nullptr;
 	Input* m_input = nullptr;
 };
 

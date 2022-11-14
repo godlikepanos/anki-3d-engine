@@ -48,7 +48,7 @@ Error Dbg::init()
 
 void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 {
-	ANKI_ASSERT(getConfig().getRDbgEnabled());
+	ANKI_ASSERT(getExternalSubsystems().m_config->getRDbgEnabled());
 
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
@@ -68,7 +68,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	dctx.m_viewProjectionMatrix = ctx.m_renderQueue->m_viewProjectionMatrix;
 	dctx.m_projectionMatrix = ctx.m_renderQueue->m_projectionMatrix;
 	dctx.m_cameraTransform = ctx.m_renderQueue->m_cameraTransform;
-	dctx.m_stagingGpuAllocator = &m_r->getStagingGpuMemory();
+	dctx.m_rebarStagingPool = m_r->getExternalSubsystems().m_rebarStagingPool;
 	dctx.m_framePool = ctx.m_tempPool;
 	dctx.m_commandBuffer = cmdb;
 	dctx.m_sampler = m_r->getSamplers().m_trilinearRepeatAniso;
@@ -161,7 +161,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 
 void Dbg::populateRenderGraph(RenderingContext& ctx)
 {
-	if(!getConfig().getRDbgEnabled())
+	if(!getExternalSubsystems().m_config->getRDbgEnabled())
 	{
 		return;
 	}

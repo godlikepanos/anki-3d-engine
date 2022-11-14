@@ -106,6 +106,9 @@ private:
 	U8 m_crntBoneTrfs = 0;
 	U8 m_prevBoneTrfs = 1;
 
+	SegregatedListsGpuAllocatorToken m_crntBoneTransformsGpuSceneOffset;
+	SegregatedListsGpuAllocatorToken m_prevBoneTransformsGpuSceneOffset;
+
 	Error update(SceneComponentUpdateInfo& info, Bool& updated);
 
 	void visitBones(const Bone& bone, const Mat4& parentTrf, const BitSet<128, U8>& bonesAnimated, Vec4& minExtend,

@@ -21,6 +21,11 @@ public:
 	/// The offset in the SegregatedListsGpuAllocatorToken::getBuffer() buffer.
 	PtrSize m_offset = kMaxPtrSize;
 
+	Bool operator==(const SegregatedListsGpuAllocatorToken& b) const
+	{
+		return m_offset == b.m_offset && m_chunk == b.m_chunk && m_chunkOffset == b.m_chunkOffset && m_size == b.m_size;
+	}
+
 private:
 	void* m_chunk = nullptr;
 	PtrSize m_chunkOffset = kMaxPtrSize;
@@ -55,7 +60,7 @@ public:
 
 	/// Free memory.
 	/// @note It's thread-safe.
-	void free(const SegregatedListsGpuAllocatorToken& token);
+	void free(SegregatedListsGpuAllocatorToken& token);
 
 	/// @note It's thread-safe.
 	void endFrame();

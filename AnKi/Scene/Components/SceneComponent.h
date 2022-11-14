@@ -13,6 +13,7 @@ namespace anki {
 
 // Forward
 class SceneComponentUpdateInfo;
+class GpuSceneMicroPatch;
 
 /// @addtogroup scene
 /// @{
@@ -101,6 +102,8 @@ public:
 	const Second m_previousTime;
 	const Second m_currentTime;
 	const Second m_dt;
+	WeakArray<GpuSceneMicroPatch*> m_gpuSceneMicroPatches;
+	StackMemoryPool* m_framePool;
 
 	SceneComponentUpdateInfo(Second prevTime, Second crntTime)
 		: m_previousTime(prevTime)

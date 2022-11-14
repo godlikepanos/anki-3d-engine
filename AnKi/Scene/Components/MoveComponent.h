@@ -155,14 +155,12 @@ private:
 	Bool m_markedForUpdate : 1;
 	Bool m_ignoreLocalTransform : 1;
 	Bool m_ignoreParentTransform : 1;
+	Bool m_dirtyLastFrame : 1;
 
 	void markForUpdate()
 	{
 		m_markedForUpdate = true;
 	}
-
-	/// Called every frame. It updates the @a m_wtrf if @a shouldUpdateWTrf is true. Then it moves to the children.
-	Bool updateWorldTransform(SceneNode& node);
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated);
 

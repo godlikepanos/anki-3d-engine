@@ -232,11 +232,11 @@ void main()
 
 static NativeWindow* g_win = nullptr;
 static GrManager* g_gr = nullptr;
-static StagingGpuMemoryPool* stagingMem = nullptr;
+static RebarStagingGpuMemoryPool* stagingMem = nullptr;
 static Input* input = nullptr;
 
 #define COMMON_BEGIN() \
-	stagingMem = new StagingGpuMemoryPool(); \
+	stagingMem = new RebarStagingGpuMemoryPool(); \
 	ConfigSet cfg(allocAligned, nullptr); \
 	cfg.setWidth(WIDTH); \
 	cfg.setHeight(HEIGHT); \
@@ -268,17 +268,17 @@ static Input* input = nullptr;
 
 static void* setUniforms(PtrSize size, CommandBufferPtr& cmdb, U32 set, U32 binding)
 {
-	StagingGpuMemoryToken token;
-	void* ptr = stagingMem->allocateFrame(size, StagingGpuMemoryType::kUniform, token);
-	cmdb->bindUniformBuffer(set, binding, token.m_buffer, token.m_offset, token.m_range);
+	RebarGpuMemoryToken token;
+	void* ptr = stagingMem->allocateFrame(size, token);
+	cmdb->bindUniformBuffer(set, binding, stagingMem->getBuffer(), token.m_offset, token.m_range);
 	return ptr;
 }
 
 static void* setStorage(PtrSize size, CommandBufferPtr& cmdb, U32 set, U32 binding)
 {
-	StagingGpuMemoryToken token;
-	void* ptr = stagingMem->allocateFrame(size, StagingGpuMemoryType::kStorage, token);
-	cmdb->bindStorageBuffer(set, binding, token.m_buffer, token.m_offset, token.m_range);
+	RebarGpuMemoryToken token;
+	void* ptr = stagingMem->allocateFrame(size, token);
+	cmdb->bindStorageBuffer(set, binding, stagingMem->getBuffer(), token.m_offset, token.m_range);
 	return ptr;
 }
 

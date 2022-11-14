@@ -35,7 +35,7 @@ public:
 		m_alloc.allocate(size, alignment, token);
 	}
 
-	void free(const SegregatedListsGpuAllocatorToken& token)
+	void free(SegregatedListsGpuAllocatorToken& token)
 	{
 		m_alloc.free(token);
 	}
@@ -76,7 +76,7 @@ public:
 		m_alloc.allocate(size, alignment, token);
 	}
 
-	void free(const SegregatedListsGpuAllocatorToken& token)
+	void free(SegregatedListsGpuAllocatorToken& token)
 	{
 		m_alloc.free(token);
 	}
@@ -100,34 +100,20 @@ private:
 	SegregatedListsGpuAllocator m_alloc;
 };
 
-enum class StagingGpuMemoryType : U8
-{
-	kUniform,
-	kStorage,
-	kVertex,
-	kTexture,
-
-	kCount,
-	kFirst = 0,
-};
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(StagingGpuMemoryType)
-
 /// Token that gets returned when requesting for memory to write to a resource.
-class StagingGpuMemoryToken
+class RebarGpuMemoryToken
 {
 public:
-	BufferPtr m_buffer;
 	PtrSize m_offset = 0;
 	PtrSize m_range = 0;
-	StagingGpuMemoryType m_type = StagingGpuMemoryType::kCount;
 
-	StagingGpuMemoryToken() = default;
+	RebarGpuMemoryToken() = default;
 
-	~StagingGpuMemoryToken() = default;
+	~RebarGpuMemoryToken() = default;
 
-	Bool operator==(const StagingGpuMemoryToken& b) const
+	Bool operator==(const RebarGpuMemoryToken& b) const
 	{
-		return m_buffer == b.m_buffer && m_offset == b.m_offset && m_range == b.m_range && m_type == b.m_type;
+		return m_offset == b.m_offset && m_range == b.m_range;
 	}
 
 	void markUnused()
@@ -142,44 +128,43 @@ public:
 };
 
 /// Manages staging GPU memory.
-class StagingGpuMemoryPool
+class RebarStagingGpuMemoryPool
 {
 public:
-	StagingGpuMemoryPool() = default;
+	RebarStagingGpuMemoryPool() = default;
 
-	StagingGpuMemoryPool(const StagingGpuMemoryPool&) = delete; // Non-copyable
+	RebarStagingGpuMemoryPool(const RebarStagingGpuMemoryPool&) = delete; // Non-copyable
 
-	~StagingGpuMemoryPool();
+	~RebarStagingGpuMemoryPool();
 
-	StagingGpuMemoryPool& operator=(const StagingGpuMemoryPool&) = delete; // Non-copyable
+	RebarStagingGpuMemoryPool& operator=(const RebarStagingGpuMemoryPool&) = delete; // Non-copyable
 
 	Error init(GrManager* gr, const ConfigSet& cfg);
 
-	void endFrame();
+	PtrSize endFrame();
 
 	/// Allocate staging memory for various operations. The memory will be reclaimed at the begining of the
 	/// N-(kMaxFramesInFlight-1) frame.
-	void* allocateFrame(PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token);
+	void* allocateFrame(PtrSize size, RebarGpuMemoryToken& token);
 
 	/// Allocate staging memory for various operations. The memory will be reclaimed at the begining of the
 	/// N-(kMaxFramesInFlight-1) frame.
-	void* tryAllocateFrame(PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token);
+	void* tryAllocateFrame(PtrSize size, RebarGpuMemoryToken& token);
+
+	ANKI_PURE const BufferPtr& getBuffer() const
+	{
+		return m_buffer;
+	}
 
 private:
-	class PerFrameBuffer
-	{
-	public:
-		PtrSize m_size = 0;
-		BufferPtr m_buff;
-		U8* m_mappedMem = nullptr; ///< Cache it
-		FrameGpuAllocator m_alloc;
-	};
+	BufferPtr m_buffer;
+	U8* m_mappedMem = nullptr; ///< Cache it.
+	PtrSize m_bufferSize = 0; ///< Cache it.
+	Atomic<PtrSize> m_offset = {0};
+	PtrSize m_previousFrameEndOffset = 0;
+	U32 m_alignment = 0;
 
-	GrManager* m_gr = nullptr;
-	Array<PerFrameBuffer, U(StagingGpuMemoryType::kCount)> m_perFrameBuffers;
-
-	void initBuffer(StagingGpuMemoryType type, U32 alignment, PtrSize maxAllocSize, BufferUsageBit usage,
-					GrManager& gr);
+	U8 m_frameCount = 0;
 };
 /// @}
 

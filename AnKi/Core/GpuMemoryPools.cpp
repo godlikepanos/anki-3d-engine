@@ -41,111 +41,93 @@ void GpuSceneMemoryPool::init(HeapMemoryPool* pool, GrManager* gr, const ConfigS
 	m_alloc.init(gr, pool, buffUsage, classes, poolSize, "GpuScene", true);
 }
 
-StagingGpuMemoryPool::~StagingGpuMemoryPool()
+RebarStagingGpuMemoryPool::~RebarStagingGpuMemoryPool()
 {
-	m_gr->finish();
+	GrManager& gr = m_buffer->getManager();
 
-	for(auto& it : m_perFrameBuffers)
-	{
-		it.m_buff->unmap();
-		it.m_buff.reset(nullptr);
-	}
+	gr.finish();
+
+	m_buffer->unmap();
+	m_buffer.reset(nullptr);
 }
 
-Error StagingGpuMemoryPool::init(GrManager* gr, const ConfigSet& cfg)
+Error RebarStagingGpuMemoryPool::init(GrManager* gr, const ConfigSet& cfg)
 {
-	m_gr = gr;
+	BufferInitInfo buffInit("ReBar");
+	buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
+	buffInit.m_size = cfg.getCoreRebarGpuMemorySize();
+	buffInit.m_usage =
+		BufferUsageBit::kAllUniform | BufferUsageBit::kAllStorage | BufferUsageBit::kVertex | BufferUsageBit::kIndex;
+	m_buffer = gr->newBuffer(buffInit);
 
-	m_perFrameBuffers[StagingGpuMemoryType::kUniform].m_size = cfg.getCoreUniformPerFrameMemorySize();
-	m_perFrameBuffers[StagingGpuMemoryType::kStorage].m_size = cfg.getCoreStoragePerFrameMemorySize();
-	m_perFrameBuffers[StagingGpuMemoryType::kVertex].m_size = cfg.getCoreVertexPerFrameMemorySize();
-	m_perFrameBuffers[StagingGpuMemoryType::kTexture].m_size = cfg.getCoreTextureBufferPerFrameMemorySize();
+	m_bufferSize = buffInit.m_size;
 
-	initBuffer(StagingGpuMemoryType::kUniform, gr->getDeviceCapabilities().m_uniformBufferBindOffsetAlignment,
-			   gr->getDeviceCapabilities().m_uniformBufferMaxRange, BufferUsageBit::kAllUniform, *gr);
+	m_alignment = gr->getDeviceCapabilities().m_uniformBufferBindOffsetAlignment;
+	m_alignment = max(m_alignment, gr->getDeviceCapabilities().m_storageBufferBindOffsetAlignment);
+	m_alignment = max(m_alignment, gr->getDeviceCapabilities().m_sbtRecordAlignment);
 
-	initBuffer(StagingGpuMemoryType::kStorage,
-			   max(gr->getDeviceCapabilities().m_storageBufferBindOffsetAlignment,
-				   gr->getDeviceCapabilities().m_sbtRecordAlignment),
-			   gr->getDeviceCapabilities().m_storageBufferMaxRange,
-			   BufferUsageBit::kAllStorage | BufferUsageBit::kShaderBindingTable, *gr);
-
-	initBuffer(StagingGpuMemoryType::kVertex, 16, kMaxU32, BufferUsageBit::kVertex | BufferUsageBit::kIndex, *gr);
-
-	initBuffer(StagingGpuMemoryType::kTexture, gr->getDeviceCapabilities().m_textureBufferBindOffsetAlignment,
-			   gr->getDeviceCapabilities().m_textureBufferMaxRange, BufferUsageBit::kAllTexture, *gr);
+	m_mappedMem = static_cast<U8*>(m_buffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 
 	return Error::kNone;
 }
 
-void StagingGpuMemoryPool::initBuffer(StagingGpuMemoryType type, U32 alignment, PtrSize maxAllocSize,
-									  BufferUsageBit usage, GrManager& gr)
+void* RebarStagingGpuMemoryPool::allocateFrame(PtrSize size, RebarGpuMemoryToken& token)
 {
-	PerFrameBuffer& perframe = m_perFrameBuffers[type];
-
-	perframe.m_buff = gr.newBuffer(BufferInitInfo(perframe.m_size, usage, BufferMapAccessBit::kWrite, "Staging"));
-	perframe.m_alloc.init(perframe.m_size, alignment, maxAllocSize);
-	perframe.m_mappedMem = static_cast<U8*>(perframe.m_buff->map(0, perframe.m_size, BufferMapAccessBit::kWrite));
-}
-
-void* StagingGpuMemoryPool::allocateFrame(PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token)
-{
-	PerFrameBuffer& buff = m_perFrameBuffers[usage];
-	const Error err = buff.m_alloc.allocate(size, token.m_offset);
-	if(err)
+	void* address = tryAllocateFrame(size, token);
+	if(ANKI_UNLIKELY(address == nullptr))
 	{
-		ANKI_CORE_LOGF("Out of staging GPU memory. Usage: %u", U32(usage));
+		ANKI_CORE_LOGF("Out of ReBAR GPU memory");
 	}
 
-	token.m_buffer = buff.m_buff;
-	token.m_range = size;
-	token.m_type = usage;
-
-	return buff.m_mappedMem + token.m_offset;
+	return address;
 }
 
-void* StagingGpuMemoryPool::tryAllocateFrame(PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token)
+void* RebarStagingGpuMemoryPool::tryAllocateFrame(PtrSize origSize, RebarGpuMemoryToken& token)
 {
-	PerFrameBuffer& buff = m_perFrameBuffers[usage];
-	const Error err = buff.m_alloc.allocate(size, token.m_offset);
-	if(!err)
+	const PtrSize size = getAlignedRoundUp(m_alignment, origSize);
+	const PtrSize offset = m_offset.fetchAdd(size);
+
+	void* address;
+	if(ANKI_UNLIKELY(offset + origSize > m_bufferSize))
 	{
-		token.m_buffer = buff.m_buff;
-		token.m_range = size;
-		token.m_type = usage;
-		return buff.m_mappedMem + token.m_offset;
+		token = {};
+		address = nullptr;
 	}
 	else
 	{
-		token = {};
-		return nullptr;
+		address = m_mappedMem + offset;
+
+		token.m_offset = offset;
+		token.m_range = origSize;
 	}
+
+	return address;
 }
 
-void StagingGpuMemoryPool::endFrame()
+PtrSize RebarStagingGpuMemoryPool::endFrame()
 {
-	for(StagingGpuMemoryType usage : EnumIterable<StagingGpuMemoryType>())
+	const PtrSize crntOffset = m_offset.getNonAtomically();
+
+	PtrSize usedMemory;
+	if(crntOffset >= m_previousFrameEndOffset)
 	{
-		PerFrameBuffer& buff = m_perFrameBuffers[usage];
-
-		if(buff.m_mappedMem)
-		{
-			// Increase the counters
-			switch(usage)
-			{
-			case StagingGpuMemoryType::kUniform:
-				ANKI_TRACE_INC_COUNTER(STAGING_UNIFORMS_SIZE, buff.m_alloc.getUnallocatedMemorySize());
-				break;
-			case StagingGpuMemoryType::kStorage:
-				ANKI_TRACE_INC_COUNTER(STAGING_STORAGE_SIZE, buff.m_alloc.getUnallocatedMemorySize());
-				break;
-			default:
-				break;
-			}
-
-			buff.m_alloc.endFrame();
-		}
+		usedMemory = crntOffset - m_previousFrameEndOffset;
 	}
+	else
+	{
+		usedMemory = crntOffset;
+	}
+
+	m_previousFrameEndOffset = crntOffset;
+
+	m_frameCount = (m_frameCount + 1) % kMaxFramesInFlight;
+	if(m_frameCount == 0)
+	{
+		m_offset.setNonAtomically(0);
+	}
+
+	ANKI_TRACE_INC_COUNTER(ReBarUsedMemory, usedMemory);
+	return usedMemory;
 }
 
 } // end namespace anki

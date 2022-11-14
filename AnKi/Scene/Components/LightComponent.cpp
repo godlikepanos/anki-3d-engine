@@ -244,7 +244,7 @@ void LightComponent::draw(RenderQueueDrawContext& ctx) const
 	m_node->getSceneGraph().getDebugDrawer().drawBillboardTexture(
 		ctx.m_projectionMatrix, ctx.m_viewMatrix, m_worldtransform.getOrigin().xyz(), color.xyz1(),
 		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), imageResource->getTextureView(),
-		ctx.m_sampler, Vec2(0.75f), *ctx.m_stagingGpuAllocator, ctx.m_commandBuffer);
+		ctx.m_sampler, Vec2(0.75f), *ctx.m_rebarStagingPool, ctx.m_commandBuffer);
 
 	// Restore state
 	if(!enableDepthTest)

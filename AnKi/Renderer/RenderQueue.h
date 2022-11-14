@@ -41,7 +41,7 @@ public:
 	RenderingKey m_key;
 	CommandBufferPtr m_commandBuffer;
 	SamplerPtr m_sampler; ///< A trilinear sampler with anisotropy.
-	StagingGpuMemoryPool* m_stagingGpuAllocator ANKI_DEBUG_CODE(= nullptr);
+	RebarStagingGpuMemoryPool* m_rebarStagingPool ANKI_DEBUG_CODE(= nullptr);
 	StackMemoryPool* m_framePool = nullptr;
 	Bool m_debugDraw; ///< If true the drawcall should be drawing some kind of debug mesh.
 	BitSet<U(RenderQueueDebugDrawFlag::kCount), U32> m_debugDrawFlags = {false};
@@ -69,16 +69,14 @@ public:
 	{
 	}
 };
-
-static_assert(std::is_trivially_destructible<RenderableQueueElement>::value == true,
-			  "Should be trivially destructible");
+static_assert(std::is_trivially_destructible<RenderableQueueElement>::value == true);
 
 /// Context that contains variables for the GenericGpuComputeJobQueueElement.
 class GenericGpuComputeJobQueueElementContext final : public RenderingMatrices
 {
 public:
 	CommandBufferPtr m_commandBuffer;
-	StagingGpuMemoryPool* m_stagingGpuAllocator ANKI_DEBUG_CODE(= nullptr);
+	RebarStagingGpuMemoryPool* m_rebarStagingPool ANKI_DEBUG_CODE(= nullptr);
 };
 
 /// Callback for GenericGpuComputeJobQueueElement.
@@ -96,9 +94,7 @@ public:
 	{
 	}
 };
-
-static_assert(std::is_trivially_destructible<GenericGpuComputeJobQueueElement>::value == true,
-			  "Should be trivially destructible");
+static_assert(std::is_trivially_destructible<GenericGpuComputeJobQueueElement>::value == true);
 
 /// Point light render queue element.
 class PointLightQueueElement final
@@ -125,9 +121,7 @@ public:
 		return m_shadowRenderQueues[0] != nullptr;
 	}
 };
-
-static_assert(std::is_trivially_destructible<PointLightQueueElement>::value == true,
-			  "Should be trivially destructible");
+static_assert(std::is_trivially_destructible<PointLightQueueElement>::value == true);
 
 /// Spot light render queue element.
 class SpotLightQueueElement final
@@ -156,8 +150,7 @@ public:
 		return m_shadowRenderQueue != nullptr;
 	}
 };
-
-static_assert(std::is_trivially_destructible<SpotLightQueueElement>::value == true, "Should be trivially destructible");
+static_assert(std::is_trivially_destructible<SpotLightQueueElement>::value == true);
 
 /// Directional light render queue element.
 class DirectionalLightQueueElement final
@@ -188,9 +181,7 @@ public:
 		return isEnabled() && m_shadowCascadeCount > 0;
 	}
 };
-
-static_assert(std::is_trivially_destructible<DirectionalLightQueueElement>::value == true,
-			  "Should be trivially destructible");
+static_assert(std::is_trivially_destructible<DirectionalLightQueueElement>::value == true);
 
 /// Normally the visibility tests don't perform tests on the reflection probes because probes dont change that often.
 /// This callback will be used by the renderer to inform a reflection probe that on the next frame it will be rendererd.
@@ -216,9 +207,7 @@ public:
 	{
 	}
 };
-
-static_assert(std::is_trivially_destructible<ReflectionProbeQueueElement>::value == true,
-			  "Should be trivially destructible");
+static_assert(std::is_trivially_destructible<ReflectionProbeQueueElement>::value == true);
 
 /// See ReflectionProbeQueueElementFeedbackCallback for its purpose.
 using GlobalIlluminationProbeQueueElementFeedbackCallback = void (*)(Bool fillRenderQueuesOnNextFrame, void* userData,
@@ -257,9 +246,7 @@ public:
 		}
 	}
 };
-
-static_assert(std::is_trivially_destructible<GlobalIlluminationProbeQueueElement>::value == true,
-			  "Should be trivially destructible");
+static_assert(std::is_trivially_destructible<GlobalIlluminationProbeQueueElement>::value == true);
 
 /// Lens flare render queue element.
 class LensFlareQueueElement final
@@ -277,8 +264,7 @@ public:
 	{
 	}
 };
-
-static_assert(std::is_trivially_destructible<LensFlareQueueElement>::value == true, "Should be trivially destructible");
+static_assert(std::is_trivially_destructible<LensFlareQueueElement>::value == true);
 
 /// Decal render queue element.
 class DecalQueueElement final
@@ -303,8 +289,7 @@ public:
 	{
 	}
 };
-
-static_assert(std::is_trivially_destructible<DecalQueueElement>::value == true, "Should be trivially destructible");
+static_assert(std::is_trivially_destructible<DecalQueueElement>::value == true);
 
 /// Draw callback for drawing.
 using UiQueueElementDrawCallback = void (*)(CanvasPtr& canvas, void* userData);
@@ -320,8 +305,7 @@ public:
 	{
 	}
 };
-
-static_assert(std::is_trivially_destructible<UiQueueElement>::value == true, "Should be trivially destructible");
+static_assert(std::is_trivially_destructible<UiQueueElement>::value == true);
 
 /// Fog density queue element.
 class FogDensityQueueElement final
@@ -346,9 +330,7 @@ public:
 	{
 	}
 };
-
-static_assert(std::is_trivially_destructible<FogDensityQueueElement>::value == true,
-			  "Should be trivially destructible");
+static_assert(std::is_trivially_destructible<FogDensityQueueElement>::value == true);
 
 /// A callback to fill a coverage buffer.
 using FillCoverageBufferCallback = void (*)(void* userData, F32* depthValues, U32 width, U32 height);
@@ -366,9 +348,7 @@ public:
 	Array<GrObject*, 8> m_grObjects;
 	U32 m_grObjectCount;
 };
-
-static_assert(std::is_trivially_destructible<RayTracingInstanceQueueElement>::value == true,
-			  "Should be trivially destructible");
+static_assert(std::is_trivially_destructible<RayTracingInstanceQueueElement>::value == true);
 
 /// Skybox info.
 class SkyboxQueueElement final
@@ -389,8 +369,16 @@ public:
 		Vec3 m_diffuseColor;
 	} m_fog;
 };
+static_assert(std::is_trivially_destructible<SkyboxQueueElement>::value == true);
 
-static_assert(std::is_trivially_destructible<SkyboxQueueElement>::value == true, "Should be trivially destructible");
+class GpuSceneMicroPatch
+{
+public:
+	PtrSize m_gpuSceneBufferOffset;
+	void* m_dataToCopy;
+	PtrSize m_dataToCopySize;
+};
+static_assert(std::is_trivially_destructible<GpuSceneMicroPatch>::value == true);
 
 /// The render queue. This is what the renderer is fed to render.
 class RenderQueue : public RenderingMatrices
@@ -410,6 +398,7 @@ public:
 	WeakArray<UiQueueElement> m_uis;
 	WeakArray<GenericGpuComputeJobQueueElement> m_genericGpuComputeJobs;
 	WeakArray<RayTracingInstanceQueueElement> m_rayTracingInstances;
+	WeakArray<GpuSceneMicroPatch> m_gpuSceneMicroPatches;
 
 	/// Contains the ray tracing elements. The rest of the members are unused. It's separate to avoid multithreading
 	/// bugs.
@@ -437,7 +426,7 @@ public:
 	U32 countAllRenderables() const;
 };
 
-static_assert(std::is_trivially_destructible<RenderQueue>::value == true, "Should be trivially destructible");
+static_assert(std::is_trivially_destructible<RenderQueue>::value == true);
 /// @}
 
 } // end namespace anki

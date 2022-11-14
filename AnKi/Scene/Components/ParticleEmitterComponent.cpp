@@ -392,9 +392,8 @@ void ParticleEmitterComponent::draw(RenderQueueDrawContext& ctx) const
 	if(!ctx.m_debugDraw)
 	{
 		// Load verts
-		StagingGpuMemoryToken token;
-		void* gpuStorage = ctx.m_stagingGpuAllocator->allocateFrame(m_aliveParticleCount * kVertexSize,
-																	StagingGpuMemoryType::kVertex, token);
+		RebarGpuMemoryToken token;
+		void* gpuStorage = ctx.m_rebarStagingPool->allocateFrame(m_aliveParticleCount * kVertexSize, token);
 		memcpy(gpuStorage, m_verts, m_aliveParticleCount * kVertexSize);
 
 		// Program
@@ -408,12 +407,13 @@ void ParticleEmitterComponent::draw(RenderQueueDrawContext& ctx) const
 		cmdb->setVertexAttribute(U32(VertexAttributeId::ALPHA), 0, Format::kR32_Sfloat, sizeof(Vec3) + sizeof(F32));
 
 		// Vertex buff
-		cmdb->bindVertexBuffer(0, token.m_buffer, token.m_offset, kVertexSize, VertexStepRate::kInstance);
+		cmdb->bindVertexBuffer(0, ctx.m_rebarStagingPool->getBuffer(), token.m_offset, kVertexSize,
+							   VertexStepRate::kInstance);
 
 		// Uniforms
 		Array<Mat3x4, 1> trf = {Mat3x4::getIdentity()};
 		RenderComponent::allocateAndSetupUniforms(m_particleEmitterResource->getMaterial(), ctx, trf, trf,
-												  *ctx.m_stagingGpuAllocator);
+												  *ctx.m_rebarStagingPool);
 
 		// Draw
 		cmdb->drawArrays(PrimitiveTopology::kTriangleStrip, 4, m_aliveParticleCount, 0, 0);
@@ -443,14 +443,14 @@ void ParticleEmitterComponent::draw(RenderQueueDrawContext& ctx) const
 
 		m_node->getSceneGraph().getDebugDrawer().drawCubes(
 			ConstWeakArray<Mat4>(&mvp, 1), Vec4(1.0f, 0.0f, 1.0f, 1.0f), 2.0f,
-			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), 2.0f, *ctx.m_stagingGpuAllocator,
+			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), 2.0f, *ctx.m_rebarStagingPool,
 			cmdb);
 
 		const Vec3 pos = m_transform.getOrigin().xyz();
 		m_node->getSceneGraph().getDebugDrawer().drawBillboardTextures(
 			ctx.m_projectionMatrix, ctx.m_viewMatrix, ConstWeakArray<Vec3>(&pos, 1), Vec4(1.0f),
 			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), m_dbgImage->getTextureView(),
-			ctx.m_sampler, Vec2(0.75f), *ctx.m_stagingGpuAllocator, ctx.m_commandBuffer);
+			ctx.m_sampler, Vec2(0.75f), *ctx.m_rebarStagingPool, ctx.m_commandBuffer);
 
 		// Restore state
 		if(!enableDepthTest)

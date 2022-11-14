@@ -17,9 +17,10 @@ namespace anki {
 Error VolumetricFog::init()
 {
 	// Misc
-	const F32 qualityXY = getConfig().getRVolumetricLightingAccumulationQualityXY();
-	const F32 qualityZ = getConfig().getRVolumetricLightingAccumulationQualityZ();
-	m_finalZSplit = min(m_r->getZSplitCount() - 1, getConfig().getRVolumetricLightingAccumulationFinalZSplit());
+	const F32 qualityXY = getExternalSubsystems().m_config->getRVolumetricLightingAccumulationQualityXY();
+	const F32 qualityZ = getExternalSubsystems().m_config->getRVolumetricLightingAccumulationQualityZ();
+	m_finalZSplit = min(m_r->getZSplitCount() - 1,
+						getExternalSubsystems().m_config->getRVolumetricLightingAccumulationFinalZSplit());
 
 	m_volumeSize[0] = U32(F32(m_r->getTileCounts().x()) * qualityXY);
 	m_volumeSize[1] = U32(F32(m_r->getTileCounts().y()) * qualityXY);
@@ -28,7 +29,8 @@ Error VolumetricFog::init()
 	ANKI_R_LOGV("Initializing volumetric fog. Resolution %ux%ux%u", m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]);
 
 	// Shaders
-	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/VolumetricFogAccumulation.ankiprogbin", m_prog));
+	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
+		"ShaderBinaries/VolumetricFogAccumulation.ankiprogbin", m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addConstant("kVolumeSize", UVec3(m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]));

@@ -10,14 +10,14 @@
 
 namespace anki {
 
-GrManager& RendererObject::getGrManager()
+RendererExternalSubsystems& RendererObject::getExternalSubsystems()
 {
-	return m_r->getGrManager();
+	return m_r->getExternalSubsystems();
 }
 
-const GrManager& RendererObject::getGrManager() const
+const RendererExternalSubsystems& RendererObject::getExternalSubsystems() const
 {
-	return m_r->getGrManager();
+	return m_r->getExternalSubsystems();
 }
 
 HeapMemoryPool& RendererObject::getMemoryPool() const
@@ -25,22 +25,17 @@ HeapMemoryPool& RendererObject::getMemoryPool() const
 	return m_r->getMemoryPool();
 }
 
-ResourceManager& RendererObject::getResourceManager()
+void* RendererObject::allocateRebarStagingMemory(PtrSize size, RebarGpuMemoryToken& token)
 {
-	return m_r->getResourceManager();
+	return getExternalSubsystems().m_rebarStagingPool->allocateFrame(size, token);
 }
 
-void* RendererObject::allocateFrameStagingMemory(PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token)
-{
-	return m_r->getStagingGpuMemory().allocateFrame(size, usage, token);
-}
-
-void RendererObject::bindUniforms(CommandBufferPtr& cmdb, U32 set, U32 binding,
-								  const StagingGpuMemoryToken& token) const
+void RendererObject::bindUniforms(CommandBufferPtr& cmdb, U32 set, U32 binding, const RebarGpuMemoryToken& token) const
 {
 	if(!token.isUnused())
 	{
-		cmdb->bindUniformBuffer(set, binding, token.m_buffer, token.m_offset, token.m_range);
+		cmdb->bindUniformBuffer(set, binding, getExternalSubsystems().m_rebarStagingPool->getBuffer(), token.m_offset,
+								token.m_range);
 	}
 	else
 	{
@@ -48,11 +43,12 @@ void RendererObject::bindUniforms(CommandBufferPtr& cmdb, U32 set, U32 binding,
 	}
 }
 
-void RendererObject::bindStorage(CommandBufferPtr& cmdb, U32 set, U32 binding, const StagingGpuMemoryToken& token) const
+void RendererObject::bindStorage(CommandBufferPtr& cmdb, U32 set, U32 binding, const RebarGpuMemoryToken& token) const
 {
 	if(!token.isUnused())
 	{
-		cmdb->bindStorageBuffer(set, binding, token.m_buffer, token.m_offset, token.m_range);
+		cmdb->bindStorageBuffer(set, binding, getExternalSubsystems().m_rebarStagingPool->getBuffer(), token.m_offset,
+								token.m_range);
 	}
 	else
 	{
@@ -62,7 +58,7 @@ void RendererObject::bindStorage(CommandBufferPtr& cmdb, U32 set, U32 binding, c
 
 U32 RendererObject::computeNumberOfSecondLevelCommandBuffers(U32 drawcallCount) const
 {
-	const U32 drawcallsPerThread = drawcallCount / m_r->getThreadHive().getThreadCount();
+	const U32 drawcallsPerThread = drawcallCount / getExternalSubsystems().m_threadHive->getThreadCount();
 	U32 secondLevelCmdbCount;
 	if(drawcallsPerThread < kMinDrawcallsPerSecondaryCommandBuffer)
 	{
@@ -70,7 +66,7 @@ U32 RendererObject::computeNumberOfSecondLevelCommandBuffers(U32 drawcallCount) 
 	}
 	else
 	{
-		secondLevelCmdbCount = m_r->getThreadHive().getThreadCount();
+		secondLevelCmdbCount = getExternalSubsystems().m_threadHive->getThreadCount();
 	}
 
 	return secondLevelCmdbCount;
@@ -79,11 +75,6 @@ U32 RendererObject::computeNumberOfSecondLevelCommandBuffers(U32 drawcallCount) 
 void RendererObject::registerDebugRenderTarget(CString rtName)
 {
 	m_r->registerDebugRenderTarget(this, rtName);
-}
-
-const ConfigSet& RendererObject::getConfig() const
-{
-	return m_r->getConfig();
 }
 
 } // end namespace anki

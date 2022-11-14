@@ -24,9 +24,10 @@ VolumetricLightingAccumulation::~VolumetricLightingAccumulation()
 Error VolumetricLightingAccumulation::init()
 {
 	// Misc
-	const F32 qualityXY = getConfig().getRVolumetricLightingAccumulationQualityXY();
-	const F32 qualityZ = getConfig().getRVolumetricLightingAccumulationQualityZ();
-	m_finalZSplit = min(m_r->getZSplitCount() - 1, getConfig().getRVolumetricLightingAccumulationFinalZSplit());
+	const F32 qualityXY = getExternalSubsystems().m_config->getRVolumetricLightingAccumulationQualityXY();
+	const F32 qualityZ = getExternalSubsystems().m_config->getRVolumetricLightingAccumulationQualityZ();
+	m_finalZSplit = min(m_r->getZSplitCount() - 1,
+						getExternalSubsystems().m_config->getRVolumetricLightingAccumulationFinalZSplit());
 
 	m_volumeSize[0] = U32(F32(m_r->getTileCounts().x()) * qualityXY);
 	m_volumeSize[1] = U32(F32(m_r->getTileCounts().y()) * qualityXY);
@@ -41,10 +42,12 @@ Error VolumetricLightingAccumulation::init()
 		return Error::kUserData;
 	}
 
-	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_noiseImage));
+	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png",
+																	   m_noiseImage));
 
 	// Shaders
-	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/VolumetricLightingAccumulation.ankiprogbin", m_prog));
+	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
+		"ShaderBinaries/VolumetricLightingAccumulation.ankiprogbin", m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addMutation("ENABLE_SHADOWS", 1);

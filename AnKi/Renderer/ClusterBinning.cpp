@@ -30,7 +30,8 @@ Error ClusterBinning::init()
 {
 	ANKI_R_LOGV("Initializing clusterer binning");
 
-	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/ClusterBinning.ankiprogbin", m_prog));
+	ANKI_CHECK(
+		getExternalSubsystems().m_resourceManager->loadResource("ShaderBinaries/ClusterBinning.ankiprogbin", m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addConstant("kTileSize", m_r->getTileSize());
@@ -56,7 +57,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 	writeClustererBuffers(ctx);
 
 	ctx.m_clusteredShading.m_clustersBufferHandle = ctx.m_renderGraphDescr.importBuffer(
-		ctx.m_clusteredShading.m_clustersToken.m_buffer, BufferUsageBit::kNone,
+		m_r->getExternalSubsystems().m_rebarStagingPool->getBuffer(), BufferUsageBit::kNone,
 		ctx.m_clusteredShading.m_clustersToken.m_offset, ctx.m_clusteredShading.m_clustersToken.m_range);
 
 	const RenderQueue& rqueue = *ctx.m_renderQueue;
@@ -147,15 +148,15 @@ void ClusterBinning::writeClustererBuffers(RenderingContext& ctx)
 
 	// Allocate buffers
 	ClusteredShadingContext& cs = ctx.m_clusteredShading;
-	StagingGpuMemoryPool& stagingMem = m_r->getStagingGpuMemory();
+	RebarStagingGpuMemoryPool& stagingMem = *m_r->getExternalSubsystems().m_rebarStagingPool;
 
-	cs.m_clusteredShadingUniformsAddress = stagingMem.allocateFrame(
-		sizeof(ClusteredShadingUniforms), StagingGpuMemoryType::kUniform, cs.m_clusteredShadingUniformsToken);
+	cs.m_clusteredShadingUniformsAddress =
+		stagingMem.allocateFrame(sizeof(ClusteredShadingUniforms), cs.m_clusteredShadingUniformsToken);
 
 	if(rqueue.m_pointLights.getSize())
 	{
-		cs.m_pointLightsAddress = stagingMem.allocateFrame(rqueue.m_pointLights.getSize() * sizeof(PointLight),
-														   StagingGpuMemoryType::kUniform, cs.m_pointLightsToken);
+		cs.m_pointLightsAddress =
+			stagingMem.allocateFrame(rqueue.m_pointLights.getSize() * sizeof(PointLight), cs.m_pointLightsToken);
 	}
 	else
 	{
@@ -164,8 +165,8 @@ void ClusterBinning::writeClustererBuffers(RenderingContext& ctx)
 
 	if(rqueue.m_spotLights.getSize())
 	{
-		cs.m_spotLightsAddress = stagingMem.allocateFrame(rqueue.m_spotLights.getSize() * sizeof(SpotLight),
-														  StagingGpuMemoryType::kUniform, cs.m_spotLightsToken);
+		cs.m_spotLightsAddress =
+			stagingMem.allocateFrame(rqueue.m_spotLights.getSize() * sizeof(SpotLight), cs.m_spotLightsToken);
 	}
 	else
 	{
@@ -174,9 +175,8 @@ void ClusterBinning::writeClustererBuffers(RenderingContext& ctx)
 
 	if(rqueue.m_reflectionProbes.getSize())
 	{
-		cs.m_reflectionProbesAddress =
-			stagingMem.allocateFrame(rqueue.m_reflectionProbes.getSize() * sizeof(ReflectionProbe),
-									 StagingGpuMemoryType::kUniform, cs.m_reflectionProbesToken);
+		cs.m_reflectionProbesAddress = stagingMem.allocateFrame(
+			rqueue.m_reflectionProbes.getSize() * sizeof(ReflectionProbe), cs.m_reflectionProbesToken);
 	}
 	else
 	{
@@ -185,8 +185,7 @@ void ClusterBinning::writeClustererBuffers(RenderingContext& ctx)
 
 	if(rqueue.m_decals.getSize())
 	{
-		cs.m_decalsAddress = stagingMem.allocateFrame(rqueue.m_decals.getSize() * sizeof(Decal),
-													  StagingGpuMemoryType::kUniform, cs.m_decalsToken);
+		cs.m_decalsAddress = stagingMem.allocateFrame(rqueue.m_decals.getSize() * sizeof(Decal), cs.m_decalsToken);
 	}
 	else
 	{
@@ -195,9 +194,8 @@ void ClusterBinning::writeClustererBuffers(RenderingContext& ctx)
 
 	if(rqueue.m_fogDensityVolumes.getSize())
 	{
-		cs.m_fogDensityVolumesAddress =
-			stagingMem.allocateFrame(rqueue.m_fogDensityVolumes.getSize() * sizeof(FogDensityVolume),
-									 StagingGpuMemoryType::kUniform, cs.m_fogDensityVolumesToken);
+		cs.m_fogDensityVolumesAddress = stagingMem.allocateFrame(
+			rqueue.m_fogDensityVolumes.getSize() * sizeof(FogDensityVolume), cs.m_fogDensityVolumesToken);
 	}
 	else
 	{
@@ -206,22 +204,20 @@ void ClusterBinning::writeClustererBuffers(RenderingContext& ctx)
 
 	if(rqueue.m_giProbes.getSize())
 	{
-		cs.m_globalIlluminationProbesAddress =
-			stagingMem.allocateFrame(rqueue.m_giProbes.getSize() * sizeof(GlobalIlluminationProbe),
-									 StagingGpuMemoryType::kUniform, cs.m_globalIlluminationProbesToken);
+		cs.m_globalIlluminationProbesAddress = stagingMem.allocateFrame(
+			rqueue.m_giProbes.getSize() * sizeof(GlobalIlluminationProbe), cs.m_globalIlluminationProbesToken);
 	}
 	else
 	{
 		cs.m_globalIlluminationProbesToken.markUnused();
 	}
 
-	cs.m_clustersAddress =
-		stagingMem.allocateFrame(sizeof(Cluster) * m_clusterCount, StagingGpuMemoryType::kStorage, cs.m_clustersToken);
+	cs.m_clustersAddress = stagingMem.allocateFrame(sizeof(Cluster) * m_clusterCount, cs.m_clustersToken);
 }
 
 void ClusterBinning::writeClusterBuffersAsync()
 {
-	m_r->getThreadHive().submitTask(
+	m_r->getExternalSubsystems().m_threadHive->submitTask(
 		[](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
 		   [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
 			static_cast<ClusterBinning*>(userData)->writeClustererBuffersTask();

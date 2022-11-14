@@ -113,9 +113,9 @@ ANKI_TEST(Util, ClassAllocatorBuilder)
 
 	std::mt19937 gen(0);
 
-	const U SHIFT = 15;
-	std::discrete_distribution<U> dis(16 * SHIFT, 0.0, F32(SHIFT), [](F32 c) {
-		return exp2(-0.5 * c);
+	constexpr U kShift = 15;
+	std::discrete_distribution<U> dis(16 * kShift, 0.0f, F32(kShift), [](F32 c) {
+		return F32(exp2(-0.5 * c));
 	});
 
 	auto nextAllocSize = [&]() -> U {

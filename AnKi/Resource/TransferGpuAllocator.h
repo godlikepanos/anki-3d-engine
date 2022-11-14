@@ -189,19 +189,6 @@ private:
 		}
 	};
 
-	/// StackAllocatorBuilder doesn't need a lock. There is another lock.
-	class DummyMutex
-	{
-	public:
-		void lock()
-		{
-		}
-
-		void unlock()
-		{
-		}
-	};
-
 	class Pool
 	{
 	public:

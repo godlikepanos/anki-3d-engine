@@ -74,7 +74,7 @@ ANKI_TEST(Ui, Ui)
 	ResourceManager* resource = createResourceManager(&cfg, gr, physics, fs);
 	UiManager* ui = new UiManager();
 
-	StagingGpuMemoryPool* stagingMem = new StagingGpuMemoryPool();
+	RebarStagingGpuMemoryPool* stagingMem = new RebarStagingGpuMemoryPool();
 	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(gr, cfg));
 
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
@@ -85,7 +85,7 @@ ANKI_TEST(Ui, Ui)
 	uiInitInfo.m_input = in;
 	uiInitInfo.m_resourceFilesystem = fs;
 	uiInitInfo.m_resourceManager = resource;
-	uiInitInfo.m_stagingGpuMemoryPool = stagingMem;
+	uiInitInfo.m_rebarPool = stagingMem;
 	ANKI_TEST_EXPECT_NO_ERR(ui->init(uiInitInfo));
 
 	{

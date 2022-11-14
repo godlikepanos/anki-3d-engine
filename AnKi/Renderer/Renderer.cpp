@@ -93,20 +93,12 @@ Renderer::~Renderer()
 	m_currentDebugRtName.destroy(getMemoryPool());
 }
 
-Error Renderer::init(ThreadHive* hive, ResourceManager* resources, GrManager* gl, StagingGpuMemoryPool* stagingMem,
-					 UiManager* ui, HeapMemoryPool* pool, ConfigSet* config, Timestamp* globTimestamp,
-					 UVec2 swapchainSize)
+Error Renderer::init(const RendererExternalSubsystems& subsystems, HeapMemoryPool* pool, UVec2 swapchainSize)
 {
-	ANKI_TRACE_SCOPED_EVENT(R_INIT);
+	ANKI_TRACE_SCOPED_EVENT(RendererInit);
 
-	m_globTimestamp = globTimestamp;
-	m_threadHive = hive;
-	m_resources = resources;
-	m_gr = gl;
-	m_stagingMem = stagingMem;
-	m_ui = ui;
+	m_subsystems = subsystems;
 	m_pool = pool;
-	m_config = config;
 
 	const Error err = initInternal(swapchainSize);
 	if(err)
@@ -122,11 +114,11 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 	m_frameCount = 0;
 
 	// Set from the config
-	m_postProcessResolution = UVec2(Vec2(swapchainResolution) * m_config->getRRenderScaling());
+	m_postProcessResolution = UVec2(Vec2(swapchainResolution) * m_subsystems.m_config->getRRenderScaling());
 	alignRoundDown(2, m_postProcessResolution.x());
 	alignRoundDown(2, m_postProcessResolution.y());
 
-	m_internalResolution = UVec2(Vec2(m_postProcessResolution) * m_config->getRInternalRenderScaling());
+	m_internalResolution = UVec2(Vec2(m_postProcessResolution) * m_subsystems.m_config->getRInternalRenderScaling());
 	alignRoundDown(2, m_internalResolution.x());
 	alignRoundDown(2, m_internalResolution.y());
 
@@ -134,10 +126,10 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 				m_postProcessResolution.x(), m_postProcessResolution.y(), m_internalResolution.x(),
 				m_internalResolution.y());
 
-	m_tileSize = m_config->getRTileSize();
+	m_tileSize = m_subsystems.m_config->getRTileSize();
 	m_tileCounts.x() = (m_internalResolution.x() + m_tileSize - 1) / m_tileSize;
 	m_tileCounts.y() = (m_internalResolution.y() + m_tileSize - 1) / m_tileSize;
-	m_zSplitCount = m_config->getRZSplitCount();
+	m_zSplitCount = m_subsystems.m_config->getRZSplitCount();
 
 	// A few sanity checks
 	if(m_internalResolution.x() < 64 || m_internalResolution.y() < 64)
@@ -146,7 +138,8 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		return Error::kUserData;
 	}
 
-	ANKI_CHECK(m_resources->loadResource("ShaderBinaries/ClearTextureCompute.ankiprogbin", m_clearTexComputeProg));
+	ANKI_CHECK(m_subsystems.m_resourceManager->loadResource("ShaderBinaries/ClearTextureCompute.ankiprogbin",
+															m_clearTexComputeProg));
 
 	// Dummy resources
 	{
@@ -157,15 +150,15 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		TexturePtr tex = createAndClearRenderTarget(texinit, TextureUsageBit::kAllSampled);
 
 		TextureViewInitInfo viewinit(tex);
-		m_dummyTexView2d = getGrManager().newTextureView(viewinit);
+		m_dummyTexView2d = m_subsystems.m_grManager->newTextureView(viewinit);
 
 		texinit.m_depth = 4;
 		texinit.m_type = TextureType::k3D;
 		tex = createAndClearRenderTarget(texinit, TextureUsageBit::kAllSampled);
 		viewinit = TextureViewInitInfo(tex);
-		m_dummyTexView3d = getGrManager().newTextureView(viewinit);
+		m_dummyTexView3d = m_subsystems.m_grManager->newTextureView(viewinit);
 
-		m_dummyBuff = getGrManager().newBuffer(BufferInitInfo(
+		m_dummyBuff = m_subsystems.m_grManager->newBuffer(BufferInitInfo(
 			1024, BufferUsageBit::kAllUniform | BufferUsageBit::kAllStorage, BufferMapAccessBit::kNone, "Dummy"));
 	}
 
@@ -239,7 +232,8 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 	m_indirectDiffuse.reset(newInstance<IndirectDiffuse>(*m_pool, this));
 	ANKI_CHECK(m_indirectDiffuse->init());
 
-	if(getGrManager().getDeviceCapabilities().m_rayTracingEnabled && getConfig().getSceneRayTracedShadows())
+	if(m_subsystems.m_grManager->getDeviceCapabilities().m_rayTracingEnabled
+	   && m_subsystems.m_config->getSceneRayTracedShadows())
 	{
 		m_accelerationStructureBuilder.reset(newInstance<AccelerationStructureBuilder>(*m_pool, this));
 		ANKI_CHECK(m_accelerationStructureBuilder->init());
@@ -265,17 +259,17 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		sinit.m_addressing = SamplingAddressing::kClamp;
 		sinit.m_mipmapFilter = SamplingFilter::kNearest;
 		sinit.m_minMagFilter = SamplingFilter::kNearest;
-		m_samplers.m_nearestNearestClamp = m_gr->newSampler(sinit);
+		m_samplers.m_nearestNearestClamp = m_subsystems.m_grManager->newSampler(sinit);
 
 		sinit.m_minMagFilter = SamplingFilter::kLinear;
 		sinit.m_mipmapFilter = SamplingFilter::kLinear;
-		m_samplers.m_trilinearClamp = m_gr->newSampler(sinit);
+		m_samplers.m_trilinearClamp = m_subsystems.m_grManager->newSampler(sinit);
 
 		sinit.m_addressing = SamplingAddressing::kRepeat;
-		m_samplers.m_trilinearRepeat = m_gr->newSampler(sinit);
+		m_samplers.m_trilinearRepeat = m_subsystems.m_grManager->newSampler(sinit);
 
-		sinit.m_anisotropyLevel = m_config->getRTextureAnisotropy();
-		m_samplers.m_trilinearRepeatAniso = m_gr->newSampler(sinit);
+		sinit.m_anisotropyLevel = m_subsystems.m_config->getRTextureAnisotropy();
+		m_samplers.m_trilinearRepeatAniso = m_subsystems.m_grManager->newSampler(sinit);
 
 		F32 scalingMipBias = log2(F32(m_internalResolution.x()) / F32(m_postProcessResolution.x()));
 		if(getScale().getUsingGrUpscaler())
@@ -285,13 +279,13 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		}
 
 		sinit.m_lodBias = scalingMipBias;
-		m_samplers.m_trilinearRepeatAnisoResolutionScalingBias = m_gr->newSampler(sinit);
+		m_samplers.m_trilinearRepeatAnisoResolutionScalingBias = m_subsystems.m_grManager->newSampler(sinit);
 
 		sinit = {};
 		sinit.m_minMagFilter = SamplingFilter::kLinear;
 		sinit.m_mipmapFilter = SamplingFilter::kLinear;
 		sinit.m_compareOperation = CompareOperation::kLessEqual;
-		m_samplers.m_trilinearClampShadow = m_gr->newSampler(sinit);
+		m_samplers.m_trilinearClampShadow = m_subsystems.m_grManager->newSampler(sinit);
 	}
 
 	for(U32 i = 0; i < m_jitterOffsets.getSize(); ++i)
@@ -330,11 +324,11 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	ctx.m_matrices.m_unprojectionParameters = ctx.m_matrices.m_projection.extractPerspectiveUnprojectionParams();
 
 	// Check if resources got loaded
-	if(m_prevLoadRequestCount != m_resources->getLoadingRequestCount()
-	   || m_prevAsyncTasksCompleted != m_resources->getAsyncTaskCompletedCount())
+	if(m_prevLoadRequestCount != m_subsystems.m_resourceManager->getLoadingRequestCount()
+	   || m_prevAsyncTasksCompleted != m_subsystems.m_resourceManager->getAsyncTaskCompletedCount())
 	{
-		m_prevLoadRequestCount = m_resources->getLoadingRequestCount();
-		m_prevAsyncTasksCompleted = m_resources->getAsyncTaskCompletedCount();
+		m_prevLoadRequestCount = m_subsystems.m_resourceManager->getLoadingRequestCount();
+		m_prevAsyncTasksCompleted = m_subsystems.m_resourceManager->getAsyncTaskCompletedCount();
 		m_resourcesDirty = true;
 	}
 	else
@@ -471,7 +465,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 	}
 
 	// Create tex
-	TexturePtr tex = m_gr->newTexture(inf);
+	TexturePtr tex = m_subsystems.m_grManager->newTexture(inf);
 
 	// Clear all surfaces
 	CommandBufferInitInfo cmdbinit;
@@ -480,7 +474,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 	{
 		cmdbinit.m_flags |= CommandBufferFlag::kSmallBatch;
 	}
-	CommandBufferPtr cmdb = m_gr->newCommandBuffer(cmdbinit);
+	CommandBufferPtr cmdb = m_subsystems.m_grManager->newCommandBuffer(cmdbinit);
 
 	for(U32 mip = 0; mip < inf.m_mipmapCount; ++mip)
 	{
@@ -509,7 +503,8 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 							aspect |= DepthStencilAspectBit::kStencil;
 						}
 
-						TextureViewPtr view = getGrManager().newTextureView(TextureViewInitInfo(tex, surf, aspect));
+						TextureViewPtr view =
+							m_subsystems.m_grManager->newTextureView(TextureViewInitInfo(tex, surf, aspect));
 
 						fbInit.m_depthStencilAttachment.m_textureView = std::move(view);
 						fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kClear;
@@ -520,7 +515,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 					}
 					else
 					{
-						TextureViewPtr view = getGrManager().newTextureView(TextureViewInitInfo(tex, surf));
+						TextureViewPtr view = m_subsystems.m_grManager->newTextureView(TextureViewInitInfo(tex, surf));
 
 						fbInit.m_colorAttachmentCount = 1;
 						fbInit.m_colorAttachments[0].m_textureView = view;
@@ -529,7 +524,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 
 						colUsage[0] = TextureUsageBit::kFramebufferWrite;
 					}
-					FramebufferPtr fb = m_gr->newFramebuffer(fbInit);
+					FramebufferPtr fb = m_subsystems.m_grManager->newFramebuffer(fbInit);
 
 					TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kNone, TextureUsageBit::kFramebufferWrite,
 												  surf};
@@ -575,7 +570,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 
 					cmdb->setPushConstants(&clearVal.m_colorf[0], sizeof(clearVal.m_colorf));
 
-					TextureViewPtr view = getGrManager().newTextureView(TextureViewInitInfo(tex, surf));
+					TextureViewPtr view = m_subsystems.m_grManager->newTextureView(TextureViewInitInfo(tex, surf));
 					cmdb->bindImage(0, 0, view);
 
 					const TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kNone,
@@ -658,11 +653,11 @@ void Renderer::setCurrentDebugRenderTarget(CString rtName)
 Format Renderer::getHdrFormat() const
 {
 	Format out;
-	if(!m_config->getRHighQualityHdr())
+	if(!m_subsystems.m_config->getRHighQualityHdr())
 	{
 		out = Format::kB10G11R11_Ufloat_Pack32;
 	}
-	else if(m_gr->getDeviceCapabilities().m_unalignedBbpTextureFormats)
+	else if(m_subsystems.m_grManager->getDeviceCapabilities().m_unalignedBbpTextureFormats)
 	{
 		out = Format::kR16G16B16_Sfloat;
 	}

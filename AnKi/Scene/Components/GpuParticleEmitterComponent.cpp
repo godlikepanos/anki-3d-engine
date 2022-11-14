@@ -172,10 +172,9 @@ void GpuParticleEmitterComponent::simulate(GenericGpuComputeJobQueueElementConte
 	cmdb->bindStorageBuffer(1, 2, m_randFactorsBuff, 0, kMaxPtrSize);
 	cmdb->bindSampler(1, 3, m_nearestAnyClampSampler);
 
-	StagingGpuMemoryToken token;
-	GpuParticleSimulationState* unis =
-		static_cast<GpuParticleSimulationState*>(ctx.m_stagingGpuAllocator->allocateFrame(
-			sizeof(GpuParticleSimulationState), StagingGpuMemoryType::kUniform, token));
+	RebarGpuMemoryToken token;
+	GpuParticleSimulationState* unis = static_cast<GpuParticleSimulationState*>(
+		ctx.m_rebarStagingPool->allocateFrame(sizeof(GpuParticleSimulationState), token));
 
 	unis->m_viewProjMat = ctx.m_viewProjectionMatrix;
 	unis->m_unprojectionParams = ctx.m_projectionMatrix.extractPerspectiveUnprojectionParams();
@@ -184,7 +183,7 @@ void GpuParticleEmitterComponent::simulate(GenericGpuComputeJobQueueElementConte
 	unis->m_emitterPosition = m_worldPosition;
 	unis->m_emitterRotation = m_worldRotation;
 	unis->m_invViewRotation = Mat3x4(Vec3(0.0f), ctx.m_cameraTransform.getRotationPart());
-	cmdb->bindUniformBuffer(1, 4, token.m_buffer, token.m_offset, token.m_range);
+	cmdb->bindUniformBuffer(1, 4, ctx.m_rebarStagingPool->getBuffer(), token.m_offset, token.m_range);
 
 	// Dispatch
 	const U32 workgroupCount = (m_maxParticleCount + m_workgroupSizeX - 1) / m_workgroupSizeX;
@@ -211,7 +210,7 @@ void GpuParticleEmitterComponent::draw(RenderQueueDrawContext& ctx) const
 		static const Array<Mat3x4, 1> identity = {Mat3x4::getIdentity()};
 
 		RenderComponent::allocateAndSetupUniforms(m_particleEmitterResource->getMaterial(), ctx, identity, identity,
-												  *ctx.m_stagingGpuAllocator);
+												  *ctx.m_rebarStagingPool);
 
 		cmdb->bindStorageBuffer(kMaterialSetLocal, kMaterialBindingFirstNonStandardLocal, m_particlesBuff, 0,
 								kMaxPtrSize);
@@ -245,13 +244,13 @@ void GpuParticleEmitterComponent::draw(RenderQueueDrawContext& ctx) const
 
 		m_node->getSceneGraph().getDebugDrawer().drawCubes(
 			ConstWeakArray<Mat4>(&mvp, 1), Vec4(1.0f, 0.0f, 1.0f, 1.0f), 2.0f,
-			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), 2.0f, *ctx.m_stagingGpuAllocator,
+			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), 2.0f, *ctx.m_rebarStagingPool,
 			cmdb);
 
 		m_node->getSceneGraph().getDebugDrawer().drawBillboardTextures(
 			ctx.m_projectionMatrix, ctx.m_viewMatrix, ConstWeakArray<Vec3>(&m_worldPosition, 1), Vec4(1.0f),
 			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), m_dbgImage->getTextureView(),
-			ctx.m_sampler, Vec2(0.75f), *ctx.m_stagingGpuAllocator, ctx.m_commandBuffer);
+			ctx.m_sampler, Vec2(0.75f), *ctx.m_rebarStagingPool, ctx.m_commandBuffer);
 
 		// Restore state
 		if(!enableDepthTest)

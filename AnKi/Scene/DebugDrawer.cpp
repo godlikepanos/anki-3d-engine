@@ -13,11 +13,10 @@
 
 namespace anki {
 
-void allocateAndPopulateDebugBox(StagingGpuMemoryPool& stagingGpuAllocator, StagingGpuMemoryToken& vertsToken,
-								 StagingGpuMemoryToken& indicesToken, U32& indexCount)
+void allocateAndPopulateDebugBox(RebarStagingGpuMemoryPool& stagingGpuAllocator, RebarGpuMemoryToken& vertsToken,
+								 RebarGpuMemoryToken& indicesToken, U32& indexCount)
 {
-	Vec3* verts = static_cast<Vec3*>(
-		stagingGpuAllocator.allocateFrame(sizeof(Vec3) * 8, StagingGpuMemoryType::kVertex, vertsToken));
+	Vec3* verts = static_cast<Vec3*>(stagingGpuAllocator.allocateFrame(sizeof(Vec3) * 8, vertsToken));
 
 	constexpr F32 kSize = 1.0f;
 	verts[0] = Vec3(kSize, kSize, kSize); // front top right
@@ -30,8 +29,7 @@ void allocateAndPopulateDebugBox(StagingGpuMemoryPool& stagingGpuAllocator, Stag
 	verts[7] = Vec3(kSize, -kSize, -kSize); // back bottom right
 
 	constexpr U kIndexCount = 12 * 2;
-	U16* indices = static_cast<U16*>(
-		stagingGpuAllocator.allocateFrame(sizeof(U16) * kIndexCount, StagingGpuMemoryType::kVertex, indicesToken));
+	U16* indices = static_cast<U16*>(stagingGpuAllocator.allocateFrame(sizeof(U16) * kIndexCount, indicesToken));
 
 	U c = 0;
 	indices[c++] = 0;
@@ -139,12 +137,13 @@ Error DebugDrawer2::init(ResourceManager* rsrcManager, GrManager* gr)
 }
 
 void DebugDrawer2::drawCubes(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 lineSize, Bool ditherFailedDepth,
-							 F32 cubeSideSize, StagingGpuMemoryPool& stagingGpuAllocator, CommandBufferPtr& cmdb) const
+							 F32 cubeSideSize, RebarStagingGpuMemoryPool& stagingGpuAllocator,
+							 CommandBufferPtr& cmdb) const
 {
 	// Set the uniforms
-	StagingGpuMemoryToken unisToken;
-	Mat4* pmvps = static_cast<Mat4*>(stagingGpuAllocator.allocateFrame(sizeof(Mat4) * mvps.getSize() + sizeof(Vec4),
-																	   StagingGpuMemoryType::kUniform, unisToken));
+	RebarGpuMemoryToken unisToken;
+	Mat4* pmvps =
+		static_cast<Mat4*>(stagingGpuAllocator.allocateFrame(sizeof(Mat4) * mvps.getSize() + sizeof(Vec4), unisToken));
 
 	if(cubeSideSize == 2.0f)
 	{
@@ -171,7 +170,7 @@ void DebugDrawer2::drawCubes(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 l
 	cmdb->bindVertexBuffer(0, m_cubePositionsBuffer, 0, sizeof(Vec3));
 	cmdb->bindIndexBuffer(m_cubeIndicesBuffer, 0, IndexType::kU16);
 
-	cmdb->bindUniformBuffer(1, 0, unisToken.m_buffer, unisToken.m_offset, unisToken.m_range);
+	cmdb->bindUniformBuffer(1, 0, stagingGpuAllocator.getBuffer(), unisToken.m_offset, unisToken.m_range);
 
 	cmdb->setLineWidth(lineSize);
 	constexpr U kIndexCount = 12 * 2;
@@ -179,22 +178,22 @@ void DebugDrawer2::drawCubes(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 l
 }
 
 void DebugDrawer2::drawLines(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 lineSize, Bool ditherFailedDepth,
-							 ConstWeakArray<Vec3> linePositions, StagingGpuMemoryPool& stagingGpuAllocator,
+							 ConstWeakArray<Vec3> linePositions, RebarStagingGpuMemoryPool& stagingGpuAllocator,
 							 CommandBufferPtr& cmdb) const
 {
 	ANKI_ASSERT(mvps.getSize() > 0);
 	ANKI_ASSERT(linePositions.getSize() > 0 && (linePositions.getSize() % 2) == 0);
 
 	// Verts
-	StagingGpuMemoryToken vertsToken;
-	Vec3* verts = static_cast<Vec3*>(stagingGpuAllocator.allocateFrame(sizeof(Vec3) * linePositions.getSize(),
-																	   StagingGpuMemoryType::kVertex, vertsToken));
+	RebarGpuMemoryToken vertsToken;
+	Vec3* verts =
+		static_cast<Vec3*>(stagingGpuAllocator.allocateFrame(sizeof(Vec3) * linePositions.getSize(), vertsToken));
 	memcpy(verts, linePositions.getBegin(), linePositions.getSizeInBytes());
 
 	// Set the uniforms
-	StagingGpuMemoryToken unisToken;
-	Mat4* pmvps = static_cast<Mat4*>(stagingGpuAllocator.allocateFrame(sizeof(Mat4) * mvps.getSize() + sizeof(Vec4),
-																	   StagingGpuMemoryType::kUniform, unisToken));
+	RebarGpuMemoryToken unisToken;
+	Mat4* pmvps =
+		static_cast<Mat4*>(stagingGpuAllocator.allocateFrame(sizeof(Mat4) * mvps.getSize() + sizeof(Vec4), unisToken));
 
 	memcpy(pmvps, &mvps[0], mvps.getSizeInBytes());
 	Vec4* pcolor = reinterpret_cast<Vec4*>(pmvps + mvps.getSize());
@@ -210,9 +209,9 @@ void DebugDrawer2::drawLines(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 l
 	cmdb->bindShaderProgram(variant->getProgram());
 
 	cmdb->setVertexAttribute(0, 0, Format::kR32G32B32_Sfloat, 0);
-	cmdb->bindVertexBuffer(0, vertsToken.m_buffer, vertsToken.m_offset, sizeof(Vec3));
+	cmdb->bindVertexBuffer(0, stagingGpuAllocator.getBuffer(), vertsToken.m_offset, sizeof(Vec3));
 
-	cmdb->bindUniformBuffer(1, 0, unisToken.m_buffer, unisToken.m_offset, unisToken.m_range);
+	cmdb->bindUniformBuffer(1, 0, stagingGpuAllocator.getBuffer(), unisToken.m_offset, unisToken.m_range);
 
 	cmdb->setLineWidth(lineSize);
 	cmdb->drawArrays(PrimitiveTopology::kLines, linePositions.getSize(), mvps.getSize());
@@ -221,20 +220,18 @@ void DebugDrawer2::drawLines(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 l
 void DebugDrawer2::drawBillboardTextures(const Mat4& projMat, const Mat3x4& viewMat, ConstWeakArray<Vec3> positions,
 										 const Vec4& color, Bool ditherFailedDepth, TextureViewPtr tex,
 										 SamplerPtr sampler, Vec2 billboardSize,
-										 StagingGpuMemoryPool& stagingGpuAllocator, CommandBufferPtr& cmdb) const
+										 RebarStagingGpuMemoryPool& stagingGpuAllocator, CommandBufferPtr& cmdb) const
 {
-	StagingGpuMemoryToken positionsToken;
-	Vec3* verts = static_cast<Vec3*>(
-		stagingGpuAllocator.allocateFrame(sizeof(Vec3) * 4, StagingGpuMemoryType::kVertex, positionsToken));
+	RebarGpuMemoryToken positionsToken;
+	Vec3* verts = static_cast<Vec3*>(stagingGpuAllocator.allocateFrame(sizeof(Vec3) * 4, positionsToken));
 
 	verts[0] = Vec3(-0.5f, -0.5f, 0.0f);
 	verts[1] = Vec3(+0.5f, -0.5f, 0.0f);
 	verts[2] = Vec3(-0.5f, +0.5f, 0.0f);
 	verts[3] = Vec3(+0.5f, +0.5f, 0.0f);
 
-	StagingGpuMemoryToken uvsToken;
-	Vec2* uvs = static_cast<Vec2*>(
-		stagingGpuAllocator.allocateFrame(sizeof(Vec2) * 4, StagingGpuMemoryType::kVertex, uvsToken));
+	RebarGpuMemoryToken uvsToken;
+	Vec2* uvs = static_cast<Vec2*>(stagingGpuAllocator.allocateFrame(sizeof(Vec2) * 4, uvsToken));
 
 	uvs[0] = Vec2(0.0f, 0.0f);
 	uvs[1] = Vec2(1.0f, 0.0f);
@@ -242,9 +239,9 @@ void DebugDrawer2::drawBillboardTextures(const Mat4& projMat, const Mat3x4& view
 	uvs[3] = Vec2(1.0f, 1.0f);
 
 	// Set the uniforms
-	StagingGpuMemoryToken unisToken;
-	Mat4* pmvps = static_cast<Mat4*>(stagingGpuAllocator.allocateFrame(
-		sizeof(Mat4) * positions.getSize() + sizeof(Vec4), StagingGpuMemoryType::kUniform, unisToken));
+	RebarGpuMemoryToken unisToken;
+	Mat4* pmvps = static_cast<Mat4*>(
+		stagingGpuAllocator.allocateFrame(sizeof(Mat4) * positions.getSize() + sizeof(Vec4), unisToken));
 
 	const Mat4 camTrf = Mat4(viewMat, Vec4(0.0f, 0.0f, 0.0f, 1.0f)).getInverse();
 	const Vec3 zAxis = camTrf.getZAxis().xyz().getNormalized();
@@ -278,10 +275,10 @@ void DebugDrawer2::drawBillboardTextures(const Mat4& projMat, const Mat3x4& view
 
 	cmdb->setVertexAttribute(0, 0, Format::kR32G32B32_Sfloat, 0);
 	cmdb->setVertexAttribute(1, 1, Format::kR32G32_Sfloat, 0);
-	cmdb->bindVertexBuffer(0, positionsToken.m_buffer, positionsToken.m_offset, sizeof(Vec3));
-	cmdb->bindVertexBuffer(1, uvsToken.m_buffer, uvsToken.m_offset, sizeof(Vec2));
+	cmdb->bindVertexBuffer(0, stagingGpuAllocator.getBuffer(), positionsToken.m_offset, sizeof(Vec3));
+	cmdb->bindVertexBuffer(1, stagingGpuAllocator.getBuffer(), uvsToken.m_offset, sizeof(Vec2));
 
-	cmdb->bindUniformBuffer(1, 0, unisToken.m_buffer, unisToken.m_offset, unisToken.m_range);
+	cmdb->bindUniformBuffer(1, 0, stagingGpuAllocator.getBuffer(), unisToken.m_offset, unisToken.m_range);
 	cmdb->bindSampler(1, 1, sampler);
 	cmdb->bindTexture(1, 2, tex);
 

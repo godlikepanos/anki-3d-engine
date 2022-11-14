@@ -38,14 +38,16 @@ Error FinalComposite::initInternal()
 	m_fbDescr.bake();
 
 	// Progs
-	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/FinalComposite.ankiprogbin", m_prog));
+	ANKI_CHECK(
+		getExternalSubsystems().m_resourceManager->loadResource("ShaderBinaries/FinalComposite.ankiprogbin", m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-	variantInitInfo.addMutation("FILM_GRAIN", (getConfig().getRFilmGrainStrength() > 0.0) ? 1 : 0);
+	variantInitInfo.addMutation("FILM_GRAIN",
+								(getExternalSubsystems().m_config->getRFilmGrainStrength() > 0.0) ? 1 : 0);
 	variantInitInfo.addMutation("BLOOM_ENABLED", 1);
 	variantInitInfo.addConstant("kLutSize", U32(kLutSize));
 	variantInitInfo.addConstant("kFramebufferSize", m_r->getPostProcessResolution());
-	variantInitInfo.addConstant("kMotionBlurSamples", getConfig().getRMotionBlurSamples());
+	variantInitInfo.addConstant("kMotionBlurSamples", getExternalSubsystems().m_config->getRMotionBlurSamples());
 
 	for(U32 dbg = 0; dbg < 2; ++dbg)
 	{
@@ -55,8 +57,8 @@ Error FinalComposite::initInternal()
 		m_grProgs[dbg] = variant->getProgram();
 	}
 
-	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/VisualizeRenderTarget.ankiprogbin",
-												 m_defaultVisualizeRenderTargetProg));
+	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
+		"ShaderBinaries/VisualizeRenderTarget.ankiprogbin", m_defaultVisualizeRenderTargetProg));
 	const ShaderProgramResourceVariant* variant;
 	m_defaultVisualizeRenderTargetProg->getOrCreateVariant(variant);
 	m_defaultVisualizeRenderTargetGrProg = variant->getProgram();
@@ -78,7 +80,7 @@ Error FinalComposite::init()
 Error FinalComposite::loadColorGradingTextureImage(CString filename)
 {
 	m_lut.reset(nullptr);
-	ANKI_CHECK(getResourceManager().loadResource(filename, m_lut));
+	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(filename, m_lut));
 	ANKI_ASSERT(m_lut->getWidth() == kLutSize);
 	ANKI_ASSERT(m_lut->getHeight() == kLutSize);
 	ANKI_ASSERT(m_lut->getDepth() == kLutSize);
@@ -100,7 +102,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 
 	pass.newTextureDependency(ctx.m_outRenderTarget, TextureUsageBit::kFramebufferWrite);
 
-	if(getConfig().getRDbgEnabled())
+	if(getExternalSubsystems().m_config->getRDbgEnabled())
 	{
 		pass.newTextureDependency(m_r->getDbg().getRt(), TextureUsageBit::kSampledFragment);
 	}
@@ -128,7 +130,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	const Bool dbgEnabled = getConfig().getRDbgEnabled();
+	const Bool dbgEnabled = getExternalSubsystems().m_config->getRDbgEnabled();
 
 	Array<RenderTargetHandle, kMaxDebugRenderTargets> dbgRts;
 	ShaderProgramPtr optionalDebugProgram;
@@ -168,7 +170,8 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 			rgraphCtx.bindColorTexture(0, 8, m_r->getDbg().getRt());
 		}
 
-		const UVec4 pc(0, 0, floatBitsToUint(getConfig().getRFilmGrainStrength()), m_r->getFrameCount() & kMaxU32);
+		const UVec4 pc(0, 0, floatBitsToUint(getExternalSubsystems().m_config->getRFilmGrainStrength()),
+					   m_r->getFrameCount() & kMaxU32);
 		cmdb->setPushConstants(&pc, sizeof(pc));
 	}
 	else

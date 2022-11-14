@@ -15,8 +15,6 @@ namespace anki {
 /// Manages pre-allocated GPU memory for per frame usage.
 class FrameGpuAllocator
 {
-	friend class DynamicMemorySerializeCommand;
-
 public:
 	FrameGpuAllocator()
 	{

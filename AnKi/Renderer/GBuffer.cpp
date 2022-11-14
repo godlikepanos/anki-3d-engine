@@ -76,7 +76,8 @@ Error GBuffer::initInternal()
 	m_fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0f;
 	m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
 
-	if(getGrManager().getDeviceCapabilities().m_vrs && getConfig().getRVrs())
+	if(getExternalSubsystems().m_grManager->getDeviceCapabilities().m_vrs
+	   && getExternalSubsystems().m_config->getRVrs())
 	{
 		m_fbDescr.m_shadingRateAttachmentTexelWidth = m_r->getVrsSriGeneration().getSriTexelDimension();
 		m_fbDescr.m_shadingRateAttachmentTexelHeight = m_r->getVrsSriGeneration().getSriTexelDimension();
@@ -112,8 +113,9 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 
 	cmdb->setRasterizationOrder(RasterizationOrder::kRelaxed);
 
-	const Bool enableVrs =
-		getGrManager().getDeviceCapabilities().m_vrs && getConfig().getRVrs() && getConfig().getRGBufferVrs();
+	const Bool enableVrs = getExternalSubsystems().m_grManager->getDeviceCapabilities().m_vrs
+						   && getExternalSubsystems().m_config->getRVrs()
+						   && getExternalSubsystems().m_config->getRGBufferVrs();
 	if(enableVrs)
 	{
 		// Just set some low value, the attachment will take over
@@ -168,8 +170,9 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
-	const Bool enableVrs =
-		getGrManager().getDeviceCapabilities().m_vrs && getConfig().getRVrs() && getConfig().getRGBufferVrs();
+	const Bool enableVrs = getExternalSubsystems().m_grManager->getDeviceCapabilities().m_vrs
+						   && getExternalSubsystems().m_config->getRVrs()
+						   && getExternalSubsystems().m_config->getRGBufferVrs();
 	const Bool fbDescrHasVrs = m_fbDescr.m_shadingRateAttachmentTexelWidth > 0;
 
 	if(enableVrs != fbDescrHasVrs)

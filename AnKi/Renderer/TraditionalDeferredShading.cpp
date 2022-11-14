@@ -69,8 +69,8 @@ Error TraditionalDeferredLightShading::init()
 {
 	// Init progs
 	{
-		ANKI_CHECK(
-			getResourceManager().loadResource("ShaderBinaries/TraditionalDeferredShading.ankiprogbin", m_lightProg));
+		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
+			"ShaderBinaries/TraditionalDeferredShading.ankiprogbin", m_lightProg));
 
 		for(U32 specular = 0; specular <= 1; ++specular)
 		{
@@ -101,13 +101,13 @@ Error TraditionalDeferredLightShading::init()
 		inf.m_addressing = SamplingAddressing::kClamp;
 		inf.m_mipmapFilter = SamplingFilter::kBase;
 		inf.m_minMagFilter = SamplingFilter::kLinear;
-		m_shadowSampler = getGrManager().newSampler(inf);
+		m_shadowSampler = getExternalSubsystems().m_grManager->newSampler(inf);
 	}
 
 	// Skybox
 	{
-		ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/TraditionalDeferredShadingSkybox.ankiprogbin",
-													 m_skyboxProg));
+		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
+			"ShaderBinaries/TraditionalDeferredShadingSkybox.ankiprogbin", m_skyboxProg));
 
 		for(U32 i = 0; i < m_skyboxGrProgs.getSize(); ++i)
 		{
@@ -131,12 +131,12 @@ void TraditionalDeferredLightShading::createProxyMeshes()
 	buffInit.m_size = bufferSize;
 	buffInit.m_usage = BufferUsageBit::kTransferDestination | BufferUsageBit::kIndex | BufferUsageBit::kVertex;
 
-	m_proxyVolumesBuffer = getGrManager().newBuffer(buffInit);
+	m_proxyVolumesBuffer = getExternalSubsystems().m_grManager->newBuffer(buffInit);
 
 	buffInit.setName("TempTransfer");
 	buffInit.m_usage = BufferUsageBit::kTransferSource;
 	buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
-	BufferPtr transferBuffer = getGrManager().newBuffer(buffInit);
+	BufferPtr transferBuffer = getExternalSubsystems().m_grManager->newBuffer(buffInit);
 
 	U8* mappedMem = static_cast<U8*>(transferBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 
@@ -154,11 +154,11 @@ void TraditionalDeferredLightShading::createProxyMeshes()
 	CommandBufferInitInfo cmdbInit("Temp");
 	cmdbInit.m_flags = CommandBufferFlag::kSmallBatch | CommandBufferFlag::kGeneralWork;
 
-	CommandBufferPtr cmdb = getGrManager().newCommandBuffer(cmdbInit);
+	CommandBufferPtr cmdb = getExternalSubsystems().m_grManager->newCommandBuffer(cmdbInit);
 	cmdb->copyBufferToBuffer(transferBuffer, 0, m_proxyVolumesBuffer, 0, bufferSize);
 	cmdb->flush();
 
-	getGrManager().finish();
+	getExternalSubsystems().m_grManager->finish();
 }
 
 void TraditionalDeferredLightShading::bindVertexIndexBuffers(ProxyType proxyType, CommandBufferPtr& cmdb,

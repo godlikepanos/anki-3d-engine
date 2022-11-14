@@ -41,8 +41,7 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 				m_swapchainResolution.y());
 
 	m_r.reset(newInstance<Renderer>(m_pool));
-	ANKI_CHECK(m_r->init(inf.m_threadHive, inf.m_resourceManager, inf.m_gr, inf.m_stagingMemory, inf.m_ui, &m_pool,
-						 inf.m_config, inf.m_globTimestamp, m_swapchainResolution));
+	ANKI_CHECK(m_r->init(inf, &m_pool, m_swapchainResolution));
 
 	// Init other
 	if(!m_rDrawToDefaultFb)
@@ -58,8 +57,8 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 		alignRoundDown(2, resolution.y());
 		m_tmpRtDesc = m_r->create2DRenderTargetDescription(
 			resolution.x(), resolution.y(),
-			(m_r->getGrManager().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR8G8B8_Unorm
-																					   : Format::kR8G8B8A8_Unorm,
+			(inf.m_grManager->getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR8G8B8_Unorm
+																					: Format::kR8G8B8A8_Unorm,
 			"Final Composite");
 		m_tmpRtDesc.bake();
 
@@ -70,7 +69,7 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 		ANKI_R_LOGI("There will be a blit pass to the swapchain because render scaling is not 1.0");
 	}
 
-	m_rgraph = inf.m_gr->newRenderGraph();
+	m_rgraph = inf.m_grManager->newRenderGraph();
 
 	return Error::kNone;
 }
@@ -142,7 +141,7 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 
 	// Populate the 2nd level command buffers
 	Array<ThreadHiveTask, ThreadHive::kMaxThreads> tasks;
-	for(U i = 0; i < m_r->getThreadHive().getThreadCount(); ++i)
+	for(U i = 0; i < m_r->getExternalSubsystems().m_threadHive->getThreadCount(); ++i)
 	{
 		tasks[i].m_argument = this;
 		tasks[i].m_callback = [](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
@@ -153,8 +152,9 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 			self.m_rgraph->runSecondLevel(taskId);
 		};
 	}
-	m_r->getThreadHive().submitTasks(&tasks[0], m_r->getThreadHive().getThreadCount());
-	m_r->getThreadHive().waitAllTasks();
+	m_r->getExternalSubsystems().m_threadHive->submitTasks(&tasks[0],
+														   m_r->getExternalSubsystems().m_threadHive->getThreadCount());
+	m_r->getExternalSubsystems().m_threadHive->waitAllTasks();
 
 	// Populate 1st level command buffers
 	m_rgraph->run();

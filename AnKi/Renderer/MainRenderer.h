@@ -11,12 +11,6 @@
 
 namespace anki {
 
-// Forward
-class ResourceManager;
-class ConfigSet;
-class StagingGpuMemoryPool;
-class UiManager;
-
 /// @addtogroup renderer
 /// @{
 
@@ -29,21 +23,13 @@ public:
 	Second m_renderingGpuSubmitTimestamp ANKI_DEBUG_CODE(= -1.0);
 };
 
-class MainRendererInitInfo
+class MainRendererInitInfo : public RendererExternalSubsystems
 {
 public:
 	UVec2 m_swapchainSize = UVec2(0u);
 
 	AllocAlignedCallback m_allocCallback = nullptr;
 	void* m_allocCallbackUserData = nullptr;
-
-	ThreadHive* m_threadHive = nullptr;
-	ResourceManager* m_resourceManager = nullptr;
-	GrManager* m_gr = nullptr;
-	StagingGpuMemoryPool* m_stagingMemory = nullptr;
-	UiManager* m_ui = nullptr;
-	ConfigSet* m_config = nullptr;
-	Timestamp* m_globTimestamp = nullptr;
 };
 
 /// Main onscreen renderer

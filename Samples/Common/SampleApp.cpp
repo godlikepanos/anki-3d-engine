@@ -148,6 +148,28 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		mousePosOn1stClick = in.getMousePosition();
 	}
 
+	if(in.getKey(KeyCode::kF1) == 1)
+	{
+		static U mode = 0;
+		mode = (mode + 1) % 3;
+		if(mode == 0)
+		{
+			getConfig().setRDbgEnabled(false);
+		}
+		else if(mode == 1)
+		{
+			getConfig().setRDbgEnabled(true);
+			renderer.getDbg().setDepthTestEnabled(true);
+			renderer.getDbg().setDitheredDepthTestEnabled(false);
+		}
+		else
+		{
+			getConfig().setRDbgEnabled(true);
+			renderer.getDbg().setDepthTestEnabled(false);
+			renderer.getDbg().setDitheredDepthTestEnabled(true);
+		}
+	}
+
 	if(in.getMouseButton(MouseButton::kRight) || in.hasTouchDevice())
 	{
 		in.hideCursor(true);
@@ -158,32 +180,6 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		if(in.getKey(KeyCode::k1) == 1)
 		{
 			mover = &scene.getActiveCameraNode().getFirstComponentOfType<MoveComponent>();
-		}
-
-		if(in.getKey(KeyCode::kF1) == 1)
-		{
-			static U mode = 0;
-			mode = (mode + 1) % 3;
-			if(mode == 0)
-			{
-				getConfig().setRDbgEnabled(false);
-			}
-			else if(mode == 1)
-			{
-				getConfig().setRDbgEnabled(true);
-				renderer.getDbg().setDepthTestEnabled(true);
-				renderer.getDbg().setDitheredDepthTestEnabled(false);
-			}
-			else
-			{
-				getConfig().setRDbgEnabled(true);
-				renderer.getDbg().setDepthTestEnabled(false);
-				renderer.getDbg().setDitheredDepthTestEnabled(true);
-			}
-		}
-		if(in.getKey(KeyCode::kF2) == 1)
-		{
-			// renderer.getDbg().flipFlags(DbgFlag::SPATIAL_COMPONENT);
 		}
 
 		if(in.getKey(KeyCode::kUp))

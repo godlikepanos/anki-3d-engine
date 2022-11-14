@@ -25,7 +25,7 @@ class SceneGraph;
 class ScriptManager;
 class ResourceManager;
 class ResourceFilesystem;
-class StagingGpuMemoryPool;
+class RebarStagingGpuMemoryPool;
 class UnifiedGeometryMemoryPool;
 class UiManager;
 class UiQueueElement;
@@ -149,7 +149,7 @@ private:
 	MaliHwCounters* m_maliHwCounters = nullptr;
 	UnifiedGeometryMemoryPool* m_unifiedGometryMemPool = nullptr;
 	GpuSceneMemoryPool* m_gpuSceneMemPool = nullptr;
-	StagingGpuMemoryPool* m_stagingMem = nullptr;
+	RebarStagingGpuMemoryPool* m_rebarPool = nullptr;
 	PhysicsWorld* m_physics = nullptr;
 	ResourceFilesystem* m_resourceFs = nullptr;
 	ResourceManager* m_resources = nullptr;

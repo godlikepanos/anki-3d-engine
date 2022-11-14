@@ -23,7 +23,8 @@ RenderComponent::RenderComponent(SceneNode* node)
 
 void RenderComponent::allocateAndSetupUniforms(const MaterialResourcePtr& mtl, const RenderQueueDrawContext& ctx,
 											   ConstWeakArray<Mat3x4> transforms, ConstWeakArray<Mat3x4> prevTransforms,
-											   StagingGpuMemoryPool& alloc, const Vec4& positionScaleAndTranslation)
+											   RebarStagingGpuMemoryPool& alloc,
+											   const Vec4& positionScaleAndTranslation)
 {
 	ANKI_ASSERT(transforms.getSize() <= kMaxInstanceCount);
 	ANKI_ASSERT(prevTransforms.getSize() == transforms.getSize());
@@ -36,12 +37,13 @@ void RenderComponent::allocateAndSetupUniforms(const MaterialResourcePtr& mtl, c
 	const U32 renderableGpuViewsUboSize = sizeof(RenderableGpuView) * transforms.getSize();
 	if(renderableGpuViewsUboSize)
 	{
-		StagingGpuMemoryToken token;
-		RenderableGpuView* renderableGpuViews = static_cast<RenderableGpuView*>(
-			alloc.allocateFrame(renderableGpuViewsUboSize, StagingGpuMemoryType::kUniform, token));
+		RebarGpuMemoryToken token;
+		RenderableGpuView* renderableGpuViews =
+			static_cast<RenderableGpuView*>(alloc.allocateFrame(renderableGpuViewsUboSize, token));
 		ANKI_ASSERT(isAligned(alignof(RenderableGpuView), renderableGpuViews));
 
-		cmdb->bindUniformBuffer(set, kMaterialBindingRenderableGpuView, token.m_buffer, token.m_offset, token.m_range);
+		cmdb->bindUniformBuffer(set, kMaterialBindingRenderableGpuView, alloc.getBuffer(), token.m_offset,
+								token.m_range);
 
 		for(U32 i = 0; i < transforms.getSize(); ++i)
 		{
@@ -57,15 +59,13 @@ void RenderComponent::allocateAndSetupUniforms(const MaterialResourcePtr& mtl, c
 	// Local uniforms
 	const U32 localUniformsUboSize = U32(mtl->getPrefilledLocalUniforms().getSizeInBytes());
 
-	StagingGpuMemoryToken token;
+	RebarGpuMemoryToken token;
 	U8* const localUniformsBegin =
-		(localUniformsUboSize != 0)
-			? static_cast<U8*>(alloc.allocateFrame(localUniformsUboSize, StagingGpuMemoryType::kStorage, token))
-			: nullptr;
+		(localUniformsUboSize != 0) ? static_cast<U8*>(alloc.allocateFrame(localUniformsUboSize, token)) : nullptr;
 
 	if(localUniformsUboSize)
 	{
-		cmdb->bindStorageBuffer(set, kMaterialBindingLocalUniforms, token.m_buffer, token.m_offset, token.m_range);
+		cmdb->bindStorageBuffer(set, kMaterialBindingLocalUniforms, alloc.getBuffer(), token.m_offset, token.m_range);
 	}
 
 	// Iterate variables

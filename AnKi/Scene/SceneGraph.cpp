@@ -19,7 +19,7 @@
 
 namespace anki {
 
-const U NODE_UPDATE_BATCH = 10;
+constexpr U32 kUpdateNodeBatchSize = 10;
 
 class SceneGraph::UpdateSceneNodesCtx
 {
@@ -240,6 +240,7 @@ Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 
 	// Components update
 	SceneComponentUpdateInfo componentUpdateInfo(prevTime, crntTime);
+	componentUpdateInfo.m_framePool = &node.getFrameMemoryPool();
 
 	Timestamp componentTimestamp = 0;
 	Bool atLeastOneComponentUpdated = false;
@@ -307,7 +308,7 @@ Error SceneGraph::updateNodes(UpdateSceneNodesCtx& ctx) const
 	while(!quit && !err)
 	{
 		// Fetch a batch of scene nodes that don't have parent
-		Array<SceneNode*, NODE_UPDATE_BATCH> batch;
+		Array<SceneNode*, kUpdateNodeBatchSize> batch;
 		U batchSize = 0;
 
 		{

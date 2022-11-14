@@ -51,8 +51,8 @@ Error ShadowMapping::initInternal()
 {
 	// Init RT
 	{
-		m_tileResolution = getConfig().getRShadowMappingTileResolution();
-		m_tileCountBothAxis = getConfig().getRShadowMappingTileCountPerRowOrColumn();
+		m_tileResolution = getExternalSubsystems().m_config->getRShadowMappingTileResolution();
+		m_tileCountBothAxis = getExternalSubsystems().m_config->getRShadowMappingTileCountPerRowOrColumn();
 
 		ANKI_R_LOGV("Initializing shadowmapping. Atlas resolution %ux%u", m_tileResolution * m_tileCountBothAxis,
 					m_tileResolution * m_tileCountBothAxis);
@@ -75,8 +75,8 @@ Error ShadowMapping::initInternal()
 	m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kLoad;
 	m_fbDescr.bake();
 
-	ANKI_CHECK(
-		getResourceManager().loadResource("ShaderBinaries/ShadowmappingClearDepth.ankiprogbin", m_clearDepthProg));
+	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
+		"ShaderBinaries/ShadowmappingClearDepth.ankiprogbin", m_clearDepthProg));
 	const ShaderProgramResourceVariant* variant;
 	m_clearDepthProg->getOrCreateVariant(variant);
 	m_clearDepthGrProg = variant->getProgram();
@@ -119,7 +119,7 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("ShadowMapping");
 
 		pass.setFramebufferInfo(m_fbDescr, {}, m_runCtx.m_rt, {}, minx, miny, width, height);
-		ANKI_ASSERT(threadCountForPass && threadCountForPass <= m_r->getThreadHive().getThreadCount());
+		ANKI_ASSERT(threadCountForPass && threadCountForPass <= getExternalSubsystems().m_threadHive->getThreadCount());
 		pass.setWork(threadCountForPass, [this](RenderPassWorkContext& rgraphCtx) {
 			runShadowMapping(rgraphCtx);
 		});
@@ -153,7 +153,7 @@ void ShadowMapping::chooseDetail(const Vec4& cameraOrigin, const PointLightQueue
 								 U32& tileAllocatorHierarchy, U32& renderQueueElementsLod) const
 {
 	const F32 distFromTheCamera = (cameraOrigin - light.m_worldPosition.xyz0()).getLength() - light.m_radius;
-	if(distFromTheCamera < getConfig().getLod0MaxDistance())
+	if(distFromTheCamera < getExternalSubsystems().m_config->getLod0MaxDistance())
 	{
 		tileAllocatorHierarchy = kPointLightMaxTileAllocHierarchy;
 		renderQueueElementsLod = 0;
@@ -179,12 +179,12 @@ void ShadowMapping::chooseDetail(const Vec4& cameraOrigin, const SpotLightQueueE
 	const F32 V1len = V.dot(coneDir);
 	const F32 distFromTheCamera = cos(coneAngle) * sqrt(VlenSq - V1len * V1len) - V1len * sin(coneAngle);
 
-	if(distFromTheCamera < getConfig().getLod0MaxDistance())
+	if(distFromTheCamera < getExternalSubsystems().m_config->getLod0MaxDistance())
 	{
 		tileAllocatorHierarchy = kSpotLightMaxTileAllocHierarchy;
 		renderQueueElementsLod = 0;
 	}
-	else if(distFromTheCamera < getConfig().getLod1MaxDistance())
+	else if(distFromTheCamera < getExternalSubsystems().m_config->getLod1MaxDistance())
 	{
 		tileAllocatorHierarchy = max(kSpotLightMaxTileAllocHierarchy, 1u) - 1;
 		renderQueueElementsLod = kMaxLodCount - 1;
@@ -210,8 +210,8 @@ Bool ShadowMapping::allocateAtlasTiles(U64 lightUuid, U32 faceCount, const U64* 
 	for(U i = 0; i < faceCount; ++i)
 	{
 		Array<U32, 4> tileViewport;
-		subResults[i] = m_tileAlloc.allocate(m_r->getGlobalTimestamp(), faceTimestamps[i], lightUuid, faceIndices[i],
-											 drawcallsCount[i], hierarchies[i], tileViewport);
+		subResults[i] = m_tileAlloc.allocate(*getExternalSubsystems().m_globTimestamp, faceTimestamps[i], lightUuid,
+											 faceIndices[i], drawcallsCount[i], hierarchies[i], tileViewport);
 
 		if(subResults[i] == TileAllocatorResult::kAllocationFailed)
 		{
@@ -267,7 +267,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForPass
 	{
 		Array<U32, 4> tileViewport;
 		[[maybe_unused]] const TileAllocatorResult res = m_tileAlloc.allocate(
-			m_r->getGlobalTimestamp(), 1, kMaxU64, 0, 1, kPointLightMaxTileAllocHierarchy, tileViewport);
+			*getExternalSubsystems().m_globTimestamp, 1, kMaxU64, 0, 1, kPointLightMaxTileAllocHierarchy, tileViewport);
 
 		emptyTileViewport = UVec4(tileViewport);
 
@@ -307,7 +307,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForPass
 			{
 				// Cascade with drawcalls, will need tiles
 
-				timestamps[activeCascades] = m_r->getGlobalTimestamp(); // This light is always updated
+				timestamps[activeCascades] = *getExternalSubsystems().m_globTimestamp; // This light is always updated
 				cascadeIndices[activeCascades] = cascade;
 				drawcallCounts[activeCascades] = 1; // Doesn't matter
 
@@ -412,7 +412,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForPass
 
 			// Remove a few texels to avoid bilinear filtering bleeding
 			F32 texelsBorder;
-			if(getConfig().getRShadowMappingPcf())
+			if(getExternalSubsystems().m_config->getRShadowMappingPcf())
 			{
 				texelsBorder = 2.0f; // 2 texels
 			}

@@ -39,8 +39,8 @@ Error LensFlare::initInternal()
 
 Error LensFlare::initSprite()
 {
-	m_maxSpritesPerFlare = getConfig().getRLensFlareMaxSpritesPerFlare();
-	m_maxFlares = getConfig().getRLensFlareMaxFlares();
+	m_maxSpritesPerFlare = getExternalSubsystems().m_config->getRLensFlareMaxSpritesPerFlare();
+	m_maxFlares = getExternalSubsystems().m_config->getRLensFlareMaxFlares();
 
 	if(m_maxSpritesPerFlare < 1 || m_maxFlares < 1)
 	{
@@ -51,7 +51,8 @@ Error LensFlare::initSprite()
 	m_maxSprites = U16(m_maxSpritesPerFlare * m_maxFlares);
 
 	// Load prog
-	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/LensFlareSprite.ankiprogbin", m_realProg));
+	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource("ShaderBinaries/LensFlareSprite.ankiprogbin",
+																	   m_realProg));
 	const ShaderProgramResourceVariant* variant;
 	m_realProg->getOrCreateVariant(variant);
 	m_realGrProg = variant->getProgram();
@@ -61,14 +62,14 @@ Error LensFlare::initSprite()
 
 Error LensFlare::initOcclusion()
 {
-	GrManager& gr = getGrManager();
+	GrManager& gr = *getExternalSubsystems().m_grManager;
 
 	m_indirectBuff = gr.newBuffer(BufferInitInfo(m_maxFlares * sizeof(DrawArraysIndirectInfo),
 												 BufferUsageBit::kIndirectDraw | BufferUsageBit::kStorageComputeWrite,
 												 BufferMapAccessBit::kNone, "LensFlares"));
 
-	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/LensFlareUpdateIndirectInfo.ankiprogbin",
-												 m_updateIndirectBuffProg));
+	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
+		"ShaderBinaries/LensFlareUpdateIndirectInfo.ankiprogbin", m_updateIndirectBuffProg));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_updateIndirectBuffProg);
 	variantInitInfo.addConstant(

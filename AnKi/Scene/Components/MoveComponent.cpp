@@ -5,6 +5,7 @@
 
 #include <AnKi/Scene/Components/MoveComponent.h>
 #include <AnKi/Scene/SceneNode.h>
+#include <AnKi/Renderer/RenderQueue.h>
 
 namespace anki {
 
@@ -14,6 +15,7 @@ MoveComponent::MoveComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
 	, m_ignoreLocalTransform(false)
 	, m_ignoreParentTransform(false)
+	, m_dirtyLastFrame(true)
 {
 	getExternalSubsystems(*node).m_gpuSceneMemoryPool->allocate(sizeof(Mat3x4) * 2, alignof(F32), m_gpuSceneTransforms);
 	markForUpdate();
@@ -25,14 +27,12 @@ MoveComponent::~MoveComponent()
 
 Error MoveComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	updated = updateWorldTransform(*info.m_node);
-	return Error::kNone;
-}
-
-Bool MoveComponent::updateWorldTransform(SceneNode& node)
-{
-	m_prevWTrf = m_wtrf;
 	const Bool dirty = m_markedForUpdate;
+	updated = dirty;
+
+	SceneNode& node = *info.m_node;
+
+	m_prevWTrf = m_wtrf;
 
 	// If dirty then update world transform
 	if(dirty)
@@ -83,7 +83,25 @@ Bool MoveComponent::updateWorldTransform(SceneNode& node)
 		});
 	}
 
-	return dirty;
+	// Micro patch
+	if(dirty || m_dirtyLastFrame)
+	{
+		Mat3x4* trfs = newArray<Mat3x4>(*info.m_framePool, 2);
+		trfs[0] = Mat3x4(m_wtrf);
+		trfs[1] = Mat3x4(m_prevWTrf);
+
+		GpuSceneMicroPatch* patch = newInstance<GpuSceneMicroPatch>(*info.m_framePool);
+		patch->m_gpuSceneBufferOffset = m_gpuSceneTransforms.m_offset;
+		patch->m_dataToCopySize = sizeof(Mat3x4) * 2;
+		patch->m_dataToCopy = trfs;
+
+		GpuSceneMicroPatch** patchArray = newArray<GpuSceneMicroPatch*>(*info.m_framePool, 1);
+		info.m_gpuSceneMicroPatches = {patchArray, 1};
+	}
+
+	m_dirtyLastFrame = dirty;
+
+	return Error::kNone;
 }
 
 void MoveComponent::onDestroy(SceneNode& node)

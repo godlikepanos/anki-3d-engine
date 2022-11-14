@@ -108,9 +108,9 @@ Error IndirectDiffuseProbes::init()
 
 Error IndirectDiffuseProbes::initInternal()
 {
-	m_tileSize = getConfig().getRIndirectDiffuseProbeTileResolution();
-	m_cacheEntries.create(getMemoryPool(), getConfig().getRIndirectDiffuseProbeMaxCachedProbes());
-	m_maxVisibleProbes = getConfig().getRIndirectDiffuseProbeMaxVisibleProbes();
+	m_tileSize = getExternalSubsystems().m_config->getRIndirectDiffuseProbeTileResolution();
+	m_cacheEntries.create(getMemoryPool(), getExternalSubsystems().m_config->getRIndirectDiffuseProbeMaxCachedProbes());
+	m_maxVisibleProbes = getExternalSubsystems().m_config->getRIndirectDiffuseProbeMaxVisibleProbes();
 	ANKI_ASSERT(m_maxVisibleProbes <= kMaxVisibleGlobalIlluminationProbes);
 	ANKI_ASSERT(m_cacheEntries.getSize() >= m_maxVisibleProbes);
 
@@ -167,7 +167,7 @@ Error IndirectDiffuseProbes::initGBuffer()
 
 Error IndirectDiffuseProbes::initShadowMapping()
 {
-	const U32 resolution = getConfig().getRIndirectDiffuseProbeShadowMapResolution();
+	const U32 resolution = getExternalSubsystems().m_config->getRIndirectDiffuseProbeShadowMapResolution();
 	ANKI_ASSERT(resolution > 8);
 
 	// RT descr
@@ -209,8 +209,8 @@ Error IndirectDiffuseProbes::initLightShading()
 
 Error IndirectDiffuseProbes::initIrradiance()
 {
-	ANKI_CHECK(
-		m_r->getResourceManager().loadResource("ShaderBinaries/IrradianceDice.ankiprogbin", m_irradiance.m_prog));
+	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource("ShaderBinaries/IrradianceDice.ankiprogbin",
+																	   m_irradiance.m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_irradiance.m_prog);
 	variantInitInfo.addMutation("WORKGROUP_SIZE_XY", m_tileSize);
@@ -410,8 +410,8 @@ void IndirectDiffuseProbes::prepareProbes(InternalContext& giCtx)
 		GlobalIlluminationProbeQueueElement& probe = ctx.m_renderQueue->m_giProbes[probeIdx];
 
 		// Find cache entry
-		const U32 cacheEntryIdx = findBestCacheEntry(probe.m_uuid, m_r->getGlobalTimestamp(), m_cacheEntries,
-													 m_probeUuidToCacheEntryIdx, getMemoryPool());
+		const U32 cacheEntryIdx = findBestCacheEntry(probe.m_uuid, *getExternalSubsystems().m_globTimestamp,
+													 m_cacheEntries, m_probeUuidToCacheEntryIdx, getMemoryPool());
 		if(ANKI_UNLIKELY(cacheEntryIdx == kMaxU32))
 		{
 			// Failed
@@ -431,7 +431,7 @@ void IndirectDiffuseProbes::prepareProbes(InternalContext& giCtx)
 		{
 			// It's updated, early exit
 
-			entry.m_lastUsedTimestamp = m_r->getGlobalTimestamp();
+			entry.m_lastUsedTimestamp = *getExternalSubsystems().m_globTimestamp;
 			volumeRts[newListOfProbeCount] =
 				ctx.m_renderGraphDescr.importRenderTarget(entry.m_volumeTex, TextureUsageBit::kSampledFragment);
 			newListOfProbes[newListOfProbeCount++] = probe;
@@ -473,7 +473,7 @@ void IndirectDiffuseProbes::prepareProbes(InternalContext& giCtx)
 		}
 
 		// Update the cache entry
-		entry.m_lastUsedTimestamp = m_r->getGlobalTimestamp();
+		entry.m_lastUsedTimestamp = *getExternalSubsystems().m_globTimestamp;
 
 		// Init the cache entry textures
 		const Bool shouldInitTextures = !entry.m_volumeTex.isCreated() || entry.m_volumeSize != probe.m_cellCounts;

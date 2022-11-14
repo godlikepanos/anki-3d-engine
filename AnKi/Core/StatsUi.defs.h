@@ -30,6 +30,7 @@ ANKI_STATS_UI_VALUE(F32, unifiedGometryExternalFragmentation, "Unified geom ext 
 ANKI_STATS_UI_VALUE(PtrSize, gpuSceneAllocated, "GPU scene allocated", ValueFlag::kNone | ValueFlag::kBytes)
 ANKI_STATS_UI_VALUE(PtrSize, gpuSceneTotal, "GPU scene total", ValueFlag::kNone | ValueFlag::kBytes)
 ANKI_STATS_UI_VALUE(F32, gpuSceneExternalFragmentation, "GPU scene ext fragmentation", ValueFlag::kNone)
+ANKI_STATS_UI_VALUE(PtrSize, reBar, "ReBAR", ValueFlag::kBytes)
 
 ANKI_STATS_UI_BEGIN_GROUP("Other")
 ANKI_STATS_UI_VALUE(U32, drawableCount, "Render queue drawbles", ValueFlag::kNone)

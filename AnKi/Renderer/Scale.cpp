@@ -39,19 +39,19 @@ Scale::~Scale()
 Error Scale::init()
 {
 	const Bool needsScaling = m_r->getPostProcessResolution() != m_r->getInternalResolution();
-	const Bool needsSharpening = getConfig().getRSharpness() > 0.0f;
+	const Bool needsSharpening = getExternalSubsystems().m_config->getRSharpness() > 0.0f;
 	if(!needsScaling && !needsSharpening)
 	{
 		return Error::kNone;
 	}
 
-	const Bool preferCompute = getConfig().getRPreferCompute();
-	const U32 dlssQuality = getConfig().getRDlssQuality();
-	const U32 fsrQuality = getConfig().getRFsrQuality();
+	const Bool preferCompute = getExternalSubsystems().m_config->getRPreferCompute();
+	const U32 dlssQuality = getExternalSubsystems().m_config->getRDlssQuality();
+	const U32 fsrQuality = getExternalSubsystems().m_config->getRFsrQuality();
 
 	if(needsScaling)
 	{
-		if(dlssQuality > 0 && getGrManager().getDeviceCapabilities().m_dlss)
+		if(dlssQuality > 0 && getExternalSubsystems().m_grManager->getDeviceCapabilities().m_dlss)
 		{
 			m_upscalingMethod = UpscalingMethod::kGr;
 		}
@@ -85,7 +85,7 @@ Error Scale::init()
 		const CString shaderFname =
 			(preferCompute) ? "ShaderBinaries/BlitCompute.ankiprogbin" : "ShaderBinaries/BlitRaster.ankiprogbin";
 
-		ANKI_CHECK(getResourceManager().loadResource(shaderFname, m_scaleProg));
+		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(shaderFname, m_scaleProg));
 
 		const ShaderProgramResourceVariant* variant;
 		m_scaleProg->getOrCreateVariant(variant);
@@ -96,7 +96,7 @@ Error Scale::init()
 		const CString shaderFname =
 			(preferCompute) ? "ShaderBinaries/FsrCompute.ankiprogbin" : "ShaderBinaries/FsrRaster.ankiprogbin";
 
-		ANKI_CHECK(getResourceManager().loadResource(shaderFname, m_scaleProg));
+		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(shaderFname, m_scaleProg));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_scaleProg);
 		variantInitInfo.addMutation("SHARPEN", 0);
@@ -113,15 +113,15 @@ Error Scale::init()
 		inf.m_upscalerType = GrUpscalerType::kDlss2;
 		inf.m_qualityMode = GrUpscalerQualityMode(dlssQuality - 1);
 
-		m_grUpscaler = getGrManager().newGrUpscaler(inf);
+		m_grUpscaler = getExternalSubsystems().m_grManager->newGrUpscaler(inf);
 	}
 
 	// Sharpen programs
 	if(m_sharpenMethod == SharpenMethod::kRcas)
 	{
-		ANKI_CHECK(getResourceManager().loadResource((preferCompute) ? "ShaderBinaries/FsrCompute.ankiprogbin"
-																	 : "ShaderBinaries/FsrRaster.ankiprogbin",
-													 m_sharpenProg));
+		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
+			(preferCompute) ? "ShaderBinaries/FsrCompute.ankiprogbin" : "ShaderBinaries/FsrRaster.ankiprogbin",
+			m_sharpenProg));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_sharpenProg);
 		variantInitInfo.addMutation("SHARPEN", 1);
 		variantInitInfo.addMutation("FSR_QUALITY", 0);
@@ -133,9 +133,9 @@ Error Scale::init()
 	// Tonemapping programs
 	if(m_neeedsTonemapping)
 	{
-		ANKI_CHECK(getResourceManager().loadResource((preferCompute) ? "ShaderBinaries/TonemapCompute.ankiprogbin"
-																	 : "ShaderBinaries/TonemapRaster.ankiprogbin",
-													 m_tonemapProg));
+		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
+			(preferCompute) ? "ShaderBinaries/TonemapCompute.ankiprogbin" : "ShaderBinaries/TonemapRaster.ankiprogbin",
+			m_tonemapProg));
 		const ShaderProgramResourceVariant* variant;
 		m_tonemapProg->getOrCreateVariant(variant);
 		m_tonemapGrProg = variant->getProgram();
@@ -147,7 +147,7 @@ Error Scale::init()
 	{
 		format = m_r->getHdrFormat();
 	}
-	else if(getGrManager().getDeviceCapabilities().m_unalignedBbpTextureFormats)
+	else if(getExternalSubsystems().m_grManager->getDeviceCapabilities().m_unalignedBbpTextureFormats)
 	{
 		format = Format::kR8G8B8_Unorm;
 	}
@@ -162,7 +162,7 @@ Error Scale::init()
 
 	if(m_neeedsTonemapping)
 	{
-		const Format fmt = (getGrManager().getDeviceCapabilities().m_unalignedBbpTextureFormats)
+		const Format fmt = (getExternalSubsystems().m_grManager->getDeviceCapabilities().m_unalignedBbpTextureFormats)
 							   ? Format::kR8G8B8_Unorm
 							   : Format::kR8G8B8A8_Unorm;
 		m_tonemapedRtDescr = m_r->create2DRenderTargetDescription(
@@ -188,7 +188,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 	}
 
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
-	const Bool preferCompute = getConfig().getRPreferCompute();
+	const Bool preferCompute = getExternalSubsystems().m_config->getRPreferCompute();
 
 	// Step 1: Upscaling
 	if(m_upscalingMethod == UpscalingMethod::kGr)
@@ -323,7 +323,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 void Scale::runFsrOrBilinearScaling(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	const Bool preferCompute = getConfig().getRPreferCompute();
+	const Bool preferCompute = getExternalSubsystems().m_config->getRPreferCompute();
 	const RenderTargetHandle inRt = m_r->getTemporalAA().getTonemappedRt();
 	const RenderTargetHandle outRt = m_runCtx.m_upscaledTonemappedRt;
 
@@ -387,7 +387,7 @@ void Scale::runFsrOrBilinearScaling(RenderPassWorkContext& rgraphCtx)
 void Scale::runRcasSharpening(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	const Bool preferCompute = getConfig().getRPreferCompute();
+	const Bool preferCompute = getExternalSubsystems().m_config->getRPreferCompute();
 	const RenderTargetHandle inRt = m_runCtx.m_tonemappedRt;
 	const RenderTargetHandle outRt = m_runCtx.m_sharpenedRt;
 
@@ -412,7 +412,7 @@ void Scale::runRcasSharpening(RenderPassWorkContext& rgraphCtx)
 		UVec2 m_padding;
 	} pc;
 
-	F32 sharpness = getConfig().getRSharpness(); // [0, 1]
+	F32 sharpness = getExternalSubsystems().m_config->getRSharpness(); // [0, 1]
 	sharpness *= 3.0f; // [0, 3]
 	sharpness = 3.0f - sharpness; // [3, 0], RCAS translates 0 to max sharpness
 	FsrRcasCon(&pc.m_fsrConsts0[0], sharpness);
@@ -455,7 +455,7 @@ void Scale::runGrUpscaling(RenderingContext& ctx, RenderPassWorkContext& rgraphC
 void Scale::runTonemapping(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	const Bool preferCompute = getConfig().getRPreferCompute();
+	const Bool preferCompute = getExternalSubsystems().m_config->getRPreferCompute();
 	const RenderTargetHandle inRt = m_runCtx.m_upscaledHdrRt;
 	const RenderTargetHandle outRt = m_runCtx.m_tonemappedRt;
 
