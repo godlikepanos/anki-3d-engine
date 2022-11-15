@@ -102,8 +102,8 @@ private:
 	class Lod
 	{
 	public:
-		SegregatedListsGpuAllocatorToken m_indexBufferAllocationToken;
-		Array<SegregatedListsGpuAllocatorToken, U32(VertexStreamId::kMeshRelatedCount)> m_vertexBuffersAllocationToken;
+		SegregatedListsGpuMemoryPoolToken m_indexBufferAllocationToken;
+		Array<SegregatedListsGpuMemoryPoolToken, U32(VertexStreamId::kMeshRelatedCount)> m_vertexBuffersAllocationToken;
 
 		U32 m_indexCount = 0;
 		U32 m_vertexCount = 0;

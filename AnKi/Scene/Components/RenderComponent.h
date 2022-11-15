@@ -112,7 +112,7 @@ private:
 	const void* m_rtCallbackUserData = nullptr;
 	RenderComponentFlag m_flags = RenderComponentFlag::kNone;
 
-	SegregatedListsGpuAllocatorToken m_gpuSceneRenderableGpuView;
+	SegregatedListsGpuMemoryPoolToken m_gpuSceneRenderableGpuView;
 
 	void onDestroy(SceneNode& node);
 };

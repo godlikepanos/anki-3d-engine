@@ -106,8 +106,8 @@ private:
 	U8 m_crntBoneTrfs = 0;
 	U8 m_prevBoneTrfs = 1;
 
-	SegregatedListsGpuAllocatorToken m_crntBoneTransformsGpuSceneOffset;
-	SegregatedListsGpuAllocatorToken m_prevBoneTransformsGpuSceneOffset;
+	SegregatedListsGpuMemoryPoolToken m_crntBoneTransformsGpuSceneOffset;
+	SegregatedListsGpuMemoryPoolToken m_prevBoneTransformsGpuSceneOffset;
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated);
 

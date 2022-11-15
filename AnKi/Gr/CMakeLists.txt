@@ -3,9 +3,9 @@ set(common_sources
 	GrObject.cpp
 	RenderGraph.cpp
 	ShaderProgram.cpp
-	Utils/FrameGpuAllocator.cpp
+	Utils/StackGpuMemoryPool.cpp
 	Utils/Functions.cpp
-	Utils/SegregatedListsGpuAllocator.cpp)
+	Utils/SegregatedListsGpuMemoryPool.cpp)
 
 set(common_headers
 	AccelerationStructure.h
@@ -29,10 +29,10 @@ set(common_headers
 	TextureView.h
 	TimestampQuery.h
 	GrUpscaler.h
-	Utils/FrameGpuAllocator.h
+	Utils/StackGpuMemoryPool.h
 	Utils/Functions.h
 	Utils/InstantiationMacros.h
-	Utils/SegregatedListsGpuAllocator.h)
+	Utils/SegregatedListsGpuMemoryPool.h)
 
 if(VULKAN)
 	set(backend_sources

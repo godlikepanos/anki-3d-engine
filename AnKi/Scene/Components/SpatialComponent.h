@@ -131,7 +131,7 @@ private:
 
 	OctreePlaceable m_octreeInfo;
 
-	SegregatedListsGpuAllocatorToken m_gpuSceneAabb;
+	SegregatedListsGpuMemoryPoolToken m_gpuSceneAabb;
 
 	Bool m_markedForUpdate : 1;
 	Bool m_placed : 1;

@@ -21,7 +21,7 @@
 #include <AnKi/Gr/RenderGraph.h>
 #include <AnKi/Gr/GrUpscaler.h>
 
-#include <AnKi/Gr/Utils/FrameGpuAllocator.h>
+#include <AnKi/Gr/Utils/StackGpuMemoryPool.h>
 #include <AnKi/Gr/Utils/Functions.h>
 
 /// @defgroup graphics Graphics API abstraction

@@ -11,17 +11,17 @@ namespace anki {
 /// @addtogroup graphics
 /// @{
 
-/// The result of an allocation of SegregatedListsGpuAllocator.
-/// @memberof SegregatedListsGpuAllocator
-class SegregatedListsGpuAllocatorToken
+/// The result of an allocation of SegregatedListsGpuMemoryPool.
+/// @memberof SegregatedListsGpuMemoryPool
+class SegregatedListsGpuMemoryPoolToken
 {
-	friend class SegregatedListsGpuAllocator;
+	friend class SegregatedListsGpuMemoryPool;
 
 public:
-	/// The offset in the SegregatedListsGpuAllocatorToken::getBuffer() buffer.
+	/// The offset in the SegregatedListsGpuMemoryPoolToken::getBuffer() buffer.
 	PtrSize m_offset = kMaxPtrSize;
 
-	Bool operator==(const SegregatedListsGpuAllocatorToken& b) const
+	Bool operator==(const SegregatedListsGpuMemoryPoolToken& b) const
 	{
 		return m_offset == b.m_offset && m_chunk == b.m_chunk && m_chunkOffset == b.m_chunkOffset && m_size == b.m_size;
 	}
@@ -34,19 +34,19 @@ private:
 
 /// GPU memory allocator based on segregated lists. It allocates a GPU buffer with some initial size. If there is a need
 /// to grow it allocates a bigger buffer and copies contents of the old one to the new (CoW).
-class SegregatedListsGpuAllocator
+class SegregatedListsGpuMemoryPool
 {
 public:
-	SegregatedListsGpuAllocator() = default;
+	SegregatedListsGpuMemoryPool() = default;
 
-	~SegregatedListsGpuAllocator()
+	~SegregatedListsGpuMemoryPool()
 	{
 		destroy();
 	}
 
-	SegregatedListsGpuAllocator(const SegregatedListsGpuAllocator&) = delete;
+	SegregatedListsGpuMemoryPool(const SegregatedListsGpuMemoryPool&) = delete;
 
-	SegregatedListsGpuAllocator& operator=(const SegregatedListsGpuAllocator&) = delete;
+	SegregatedListsGpuMemoryPool& operator=(const SegregatedListsGpuMemoryPool&) = delete;
 
 	void init(GrManager* gr, BaseMemoryPool* pool, BufferUsageBit gpuBufferUsage,
 			  ConstWeakArray<PtrSize> classUpperSizes, PtrSize initialGpuBufferSize, CString bufferName,
@@ -56,11 +56,11 @@ public:
 
 	/// Allocate memory.
 	/// @note It's thread-safe.
-	void allocate(PtrSize size, U32 alignment, SegregatedListsGpuAllocatorToken& token);
+	void allocate(PtrSize size, U32 alignment, SegregatedListsGpuMemoryPoolToken& token);
 
 	/// Free memory.
 	/// @note It's thread-safe.
-	void free(SegregatedListsGpuAllocatorToken& token);
+	void free(SegregatedListsGpuMemoryPoolToken& token);
 
 	/// @note It's thread-safe.
 	void endFrame();
@@ -96,7 +96,7 @@ private:
 
 	DynamicArray<Chunk*> m_deletedChunks;
 
-	Array<DynamicArray<SegregatedListsGpuAllocatorToken>, kMaxFramesInFlight> m_garbage;
+	Array<DynamicArray<SegregatedListsGpuMemoryPoolToken>, kMaxFramesInFlight> m_garbage;
 	U8 m_frame = 0;
 	Bool m_allowCoWs = true;
 

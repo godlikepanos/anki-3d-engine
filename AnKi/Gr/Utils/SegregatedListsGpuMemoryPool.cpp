@@ -3,22 +3,22 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Gr/Utils/SegregatedListsGpuAllocator.h>
+#include <AnKi/Gr/Utils/SegregatedListsGpuMemoryPool.h>
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Gr/CommandBuffer.h>
 
 namespace anki {
 
-class SegregatedListsGpuAllocator::Chunk : public SegregatedListsAllocatorBuilderChunkBase
+class SegregatedListsGpuMemoryPool::Chunk : public SegregatedListsAllocatorBuilderChunkBase
 {
 public:
 	PtrSize m_offsetInGpuBuffer;
 };
 
-class SegregatedListsGpuAllocator::BuilderInterface
+class SegregatedListsGpuMemoryPool::BuilderInterface
 {
 public:
-	SegregatedListsGpuAllocator* m_parent = nullptr;
+	SegregatedListsGpuMemoryPool* m_parent = nullptr;
 
 	/// @name Interface methods
 	/// @{
@@ -54,9 +54,9 @@ public:
 	/// @}
 };
 
-void SegregatedListsGpuAllocator::init(GrManager* gr, BaseMemoryPool* pool, BufferUsageBit gpuBufferUsage,
-									   ConstWeakArray<PtrSize> classUpperSizes, PtrSize initialGpuBufferSize,
-									   CString bufferName, Bool allowCoWs)
+void SegregatedListsGpuMemoryPool::init(GrManager* gr, BaseMemoryPool* pool, BufferUsageBit gpuBufferUsage,
+										ConstWeakArray<PtrSize> classUpperSizes, PtrSize initialGpuBufferSize,
+										CString bufferName, Bool allowCoWs)
 {
 	ANKI_ASSERT(!isInitialized());
 	ANKI_ASSERT(gr && pool);
@@ -86,7 +86,7 @@ void SegregatedListsGpuAllocator::init(GrManager* gr, BaseMemoryPool* pool, Buff
 	m_allowCoWs = allowCoWs;
 }
 
-void SegregatedListsGpuAllocator::destroy()
+void SegregatedListsGpuMemoryPool::destroy()
 {
 	if(!isInitialized())
 	{
@@ -96,9 +96,9 @@ void SegregatedListsGpuAllocator::destroy()
 	m_gr->finish();
 	m_gr = nullptr;
 
-	for(DynamicArray<SegregatedListsGpuAllocatorToken>& arr : m_garbage)
+	for(DynamicArray<SegregatedListsGpuMemoryPoolToken>& arr : m_garbage)
 	{
-		for(const SegregatedListsGpuAllocatorToken& token : arr)
+		for(const SegregatedListsGpuMemoryPoolToken& token : arr)
 		{
 			m_builder->free(static_cast<Chunk*>(token.m_chunk), token.m_chunkOffset, token.m_size);
 		}
@@ -118,7 +118,7 @@ void SegregatedListsGpuAllocator::destroy()
 	m_deletedChunks.destroy(*m_pool);
 }
 
-Error SegregatedListsGpuAllocator::allocateChunk(Chunk*& newChunk, PtrSize& chunkSize)
+Error SegregatedListsGpuMemoryPool::allocateChunk(Chunk*& newChunk, PtrSize& chunkSize)
 {
 	ANKI_ASSERT(isInitialized());
 
@@ -154,7 +154,7 @@ Error SegregatedListsGpuAllocator::allocateChunk(Chunk*& newChunk, PtrSize& chun
 		BufferPtr newBuffer = m_gr->newBuffer(buffInit);
 
 		// Do the copy
-		CommandBufferInitInfo cmdbInit("SegregatedListsGpuAllocator CoW");
+		CommandBufferInitInfo cmdbInit("SegregatedListsGpuMemoryPool CoW");
 		cmdbInit.m_flags = CommandBufferFlag::kSmallBatch;
 		CommandBufferPtr cmdb = m_gr->newCommandBuffer(cmdbInit);
 
@@ -193,16 +193,16 @@ Error SegregatedListsGpuAllocator::allocateChunk(Chunk*& newChunk, PtrSize& chun
 	return Error::kNone;
 }
 
-void SegregatedListsGpuAllocator::deleteChunk(Chunk* chunk)
+void SegregatedListsGpuMemoryPool::deleteChunk(Chunk* chunk)
 {
 	m_deletedChunks.emplaceBack(*m_pool, chunk);
 }
 
-void SegregatedListsGpuAllocator::allocate(PtrSize size, U32 alignment, SegregatedListsGpuAllocatorToken& token)
+void SegregatedListsGpuMemoryPool::allocate(PtrSize size, U32 alignment, SegregatedListsGpuMemoryPoolToken& token)
 {
 	ANKI_ASSERT(isInitialized());
 	ANKI_ASSERT(size > 0 && alignment > 0 && isPowerOfTwo(alignment));
-	ANKI_ASSERT(token == SegregatedListsGpuAllocatorToken());
+	ANKI_ASSERT(token == SegregatedListsGpuMemoryPoolToken());
 
 	LockGuard lock(m_lock);
 
@@ -222,7 +222,7 @@ void SegregatedListsGpuAllocator::allocate(PtrSize size, U32 alignment, Segregat
 	m_allocatedSize += size;
 }
 
-void SegregatedListsGpuAllocator::free(SegregatedListsGpuAllocatorToken& token)
+void SegregatedListsGpuMemoryPool::free(SegregatedListsGpuMemoryPoolToken& token)
 {
 	ANKI_ASSERT(isInitialized());
 
@@ -239,7 +239,7 @@ void SegregatedListsGpuAllocator::free(SegregatedListsGpuAllocatorToken& token)
 	token = {};
 }
 
-void SegregatedListsGpuAllocator::endFrame()
+void SegregatedListsGpuMemoryPool::endFrame()
 {
 	ANKI_ASSERT(isInitialized());
 
@@ -248,7 +248,7 @@ void SegregatedListsGpuAllocator::endFrame()
 	m_frame = (m_frame + 1) % kMaxFramesInFlight;
 
 	// Throw out the garbage
-	for(SegregatedListsGpuAllocatorToken& token : m_garbage[m_frame])
+	for(SegregatedListsGpuMemoryPoolToken& token : m_garbage[m_frame])
 	{
 		m_builder->free(static_cast<Chunk*>(token.m_chunk), token.m_chunkOffset, token.m_size);
 
@@ -259,8 +259,8 @@ void SegregatedListsGpuAllocator::endFrame()
 	m_garbage[m_frame].destroy(*m_pool);
 }
 
-void SegregatedListsGpuAllocator::getStats(F32& externalFragmentation, PtrSize& userAllocatedSize,
-										   PtrSize& totalSize) const
+void SegregatedListsGpuMemoryPool::getStats(F32& externalFragmentation, PtrSize& userAllocatedSize,
+											PtrSize& totalSize) const
 {
 	ANKI_ASSERT(isInitialized());
 

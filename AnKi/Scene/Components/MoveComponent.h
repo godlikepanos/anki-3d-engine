@@ -149,8 +149,7 @@ private:
 	/// Keep the previous transformation for checking if it moved
 	Transform m_prevWTrf = Transform::getIdentity();
 
-	SceneNode* m_node = nullptr;
-	SegregatedListsGpuAllocatorToken m_gpuSceneTransforms;
+	SegregatedListsGpuMemoryPoolToken m_gpuSceneTransforms;
 
 	Bool m_markedForUpdate : 1;
 	Bool m_ignoreLocalTransform : 1;

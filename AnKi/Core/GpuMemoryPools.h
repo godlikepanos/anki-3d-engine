@@ -7,8 +7,8 @@
 
 #include <AnKi/Core/Common.h>
 #include <AnKi/Gr/Buffer.h>
-#include <AnKi/Gr/Utils/FrameGpuAllocator.h>
-#include <AnKi/Gr/Utils/SegregatedListsGpuAllocator.h>
+#include <AnKi/Gr/Utils/StackGpuMemoryPool.h>
+#include <AnKi/Gr/Utils/SegregatedListsGpuMemoryPool.h>
 
 namespace anki {
 
@@ -30,12 +30,12 @@ public:
 
 	void init(HeapMemoryPool* pool, GrManager* gr, const ConfigSet& cfg);
 
-	void allocate(PtrSize size, U32 alignment, SegregatedListsGpuAllocatorToken& token)
+	void allocate(PtrSize size, U32 alignment, SegregatedListsGpuMemoryPoolToken& token)
 	{
 		m_alloc.allocate(size, alignment, token);
 	}
 
-	void free(SegregatedListsGpuAllocatorToken& token)
+	void free(SegregatedListsGpuMemoryPoolToken& token)
 	{
 		m_alloc.free(token);
 	}
@@ -56,7 +56,7 @@ public:
 	}
 
 private:
-	SegregatedListsGpuAllocator m_alloc;
+	SegregatedListsGpuMemoryPool m_alloc;
 };
 
 /// Memory pool for the GPU scene.
@@ -71,12 +71,12 @@ public:
 
 	void init(HeapMemoryPool* pool, GrManager* gr, const ConfigSet& cfg);
 
-	void allocate(PtrSize size, U32 alignment, SegregatedListsGpuAllocatorToken& token)
+	void allocate(PtrSize size, U32 alignment, SegregatedListsGpuMemoryPoolToken& token)
 	{
 		m_alloc.allocate(size, alignment, token);
 	}
 
-	void free(SegregatedListsGpuAllocatorToken& token)
+	void free(SegregatedListsGpuMemoryPoolToken& token)
 	{
 		m_alloc.free(token);
 	}
@@ -97,7 +97,7 @@ public:
 	}
 
 private:
-	SegregatedListsGpuAllocator m_alloc;
+	SegregatedListsGpuMemoryPool m_alloc;
 };
 
 /// Token that gets returned when requesting for memory to write to a resource.

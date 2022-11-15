@@ -28,7 +28,7 @@ namespace anki {
 ///                    PtrSize getNextChunkGrowBias();
 ///                    Bool ignoreDeallocationErrors();
 ///                    Error allocateChunk(PtrSize size, TChunk*& out);
-///                    void freeChunk(TChunk* out);
+///                    void freeChunk(TChunk* chunk);
 ///                    void recycleChunk(TChunk& out);
 ///                    Atomic<U32>* getAllocationCount(); // It's optional
 ///                    @endcode
