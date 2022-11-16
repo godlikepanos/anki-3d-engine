@@ -124,6 +124,8 @@ void App::cleanup()
 	m_renderer = nullptr;
 	deleteInstance(m_mainPool, m_ui);
 	m_ui = nullptr;
+	deleteInstance(m_mainPool, m_gpuSceneMicroPatcher);
+	m_gpuSceneMicroPatcher = nullptr;
 	deleteInstance(m_mainPool, m_resources);
 	m_resources = nullptr;
 	deleteInstance(m_mainPool, m_resourceFs);
@@ -349,6 +351,12 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	ANKI_CHECK(m_ui->init(uiInitInfo));
 
 	//
+	// GPU scene
+	//
+	m_gpuSceneMicroPatcher = newInstance<GpuSceneMicroPatcher>(m_mainPool);
+	ANKI_CHECK(m_gpuSceneMicroPatcher->init(m_resources));
+
+	//
 	// Renderer
 	//
 	MainRendererInitInfo renderInit;
@@ -362,6 +370,8 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	renderInit.m_uiManager = m_ui;
 	renderInit.m_config = m_config;
 	renderInit.m_globTimestamp = &m_globalTimestamp;
+	renderInit.m_gpuScenePool = m_gpuSceneMemPool;
+	renderInit.m_gpuSceneMicroPatcher = m_gpuSceneMicroPatcher;
 	m_renderer = newInstance<MainRenderer>(m_mainPool);
 	ANKI_CHECK(m_renderer->init(renderInit));
 
@@ -382,6 +392,7 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	sceneInit.m_config = m_config;
 	sceneInit.m_globalTimestamp = &m_globalTimestamp;
 	sceneInit.m_gpuSceneMemoryPool = m_gpuSceneMemPool;
+	sceneInit.m_gpuSceneMicroPatcher = m_gpuSceneMicroPatcher;
 	sceneInit.m_input = m_input;
 	sceneInit.m_resourceManager = m_resources;
 	sceneInit.m_scriptManager = m_script;

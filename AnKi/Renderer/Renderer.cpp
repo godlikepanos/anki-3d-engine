@@ -343,6 +343,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_vrsSriGeneration->importRenderTargets(ctx);
 
 	// Populate render graph. WARNING Watch the order
+	gpuSceneCopy(ctx);
 	m_genericCompute->populateRenderGraph(ctx);
 	m_clusterBinning->populateRenderGraph(ctx);
 	if(m_accelerationStructureBuilder)
@@ -678,6 +679,23 @@ Format Renderer::getDepthNoStencilFormat() const
 	{
 		return Format::kD32_Sfloat;
 	}
+}
+
+void Renderer::gpuSceneCopy(RenderingContext& ctx)
+{
+	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+
+	m_runCtx.m_gpuSceneHandle = rgraph.importBuffer(m_subsystems.m_gpuScenePool->getBuffer(),
+													m_subsystems.m_gpuScenePool->getBuffer()->getBufferUsage());
+
+	ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("GPU scene patching");
+	rpass.newBufferDependency(m_runCtx.m_gpuSceneHandle, BufferUsageBit::kStorageComputeWrite);
+
+	rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+		m_subsystems.m_gpuSceneMicroPatcher->patchGpuScene(*m_subsystems.m_rebarStagingPool,
+														   *rgraphCtx.m_commandBuffer.get(),
+														   m_subsystems.m_gpuScenePool->getBuffer());
+	});
 }
 
 } // end namespace anki

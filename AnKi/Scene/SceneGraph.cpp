@@ -240,7 +240,8 @@ Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 
 	// Components update
 	SceneComponentUpdateInfo componentUpdateInfo(prevTime, crntTime);
-	componentUpdateInfo.m_framePool = &node.getFrameMemoryPool();
+	componentUpdateInfo.m_framePool = &m_framePool;
+	componentUpdateInfo.m_gpuSceneMicroPatcher = m_subsystems.m_gpuSceneMicroPatcher;
 
 	Timestamp componentTimestamp = 0;
 	Bool atLeastOneComponentUpdated = false;
@@ -297,7 +298,7 @@ Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 	return err;
 }
 
-Error SceneGraph::updateNodes(UpdateSceneNodesCtx& ctx) const
+Error SceneGraph::updateNodes(UpdateSceneNodesCtx& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(SCENE_NODES_UPDATE);
 

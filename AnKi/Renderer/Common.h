@@ -82,6 +82,8 @@ public:
 	UiManager* m_uiManager = nullptr;
 	ConfigSet* m_config = nullptr;
 	Timestamp* m_globTimestamp = nullptr;
+	GpuSceneMemoryPool* m_gpuScenePool = nullptr;
+	GpuSceneMicroPatcher* m_gpuSceneMicroPatcher = nullptr;
 };
 
 /// GPU buffers and textures that the clusterer refers to.

@@ -371,15 +371,6 @@ public:
 };
 static_assert(std::is_trivially_destructible<SkyboxQueueElement>::value == true);
 
-class GpuSceneMicroPatch
-{
-public:
-	PtrSize m_gpuSceneBufferOffset;
-	void* m_dataToCopy;
-	PtrSize m_dataToCopySize;
-};
-static_assert(std::is_trivially_destructible<GpuSceneMicroPatch>::value == true);
-
 /// The render queue. This is what the renderer is fed to render.
 class RenderQueue : public RenderingMatrices
 {
@@ -398,7 +389,6 @@ public:
 	WeakArray<UiQueueElement> m_uis;
 	WeakArray<GenericGpuComputeJobQueueElement> m_genericGpuComputeJobs;
 	WeakArray<RayTracingInstanceQueueElement> m_rayTracingInstances;
-	WeakArray<GpuSceneMicroPatch> m_gpuSceneMicroPatches;
 
 	/// Contains the ray tracing elements. The rest of the members are unused. It's separate to avoid multithreading
 	/// bugs.

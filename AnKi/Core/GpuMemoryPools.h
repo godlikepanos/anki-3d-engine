@@ -9,6 +9,7 @@
 #include <AnKi/Gr/Buffer.h>
 #include <AnKi/Gr/Utils/StackGpuMemoryPool.h>
 #include <AnKi/Gr/Utils/SegregatedListsGpuMemoryPool.h>
+#include <AnKi/Resource/ShaderProgramResource.h>
 
 namespace anki {
 
@@ -32,31 +33,31 @@ public:
 
 	void allocate(PtrSize size, U32 alignment, SegregatedListsGpuMemoryPoolToken& token)
 	{
-		m_alloc.allocate(size, alignment, token);
+		m_pool.allocate(size, alignment, token);
 	}
 
 	void free(SegregatedListsGpuMemoryPoolToken& token)
 	{
-		m_alloc.free(token);
+		m_pool.free(token);
 	}
 
 	void endFrame()
 	{
-		m_alloc.endFrame();
+		m_pool.endFrame();
 	}
 
 	const BufferPtr& getBuffer() const
 	{
-		return m_alloc.getGpuBuffer();
+		return m_pool.getGpuBuffer();
 	}
 
 	void getStats(F32& externalFragmentation, PtrSize& userAllocatedSize, PtrSize& totalSize) const
 	{
-		m_alloc.getStats(externalFragmentation, userAllocatedSize, totalSize);
+		m_pool.getStats(externalFragmentation, userAllocatedSize, totalSize);
 	}
 
 private:
-	SegregatedListsGpuMemoryPool m_alloc;
+	SegregatedListsGpuMemoryPool m_pool;
 };
 
 /// Memory pool for the GPU scene.
@@ -73,31 +74,31 @@ public:
 
 	void allocate(PtrSize size, U32 alignment, SegregatedListsGpuMemoryPoolToken& token)
 	{
-		m_alloc.allocate(size, alignment, token);
+		m_pool.allocate(size, alignment, token);
 	}
 
 	void free(SegregatedListsGpuMemoryPoolToken& token)
 	{
-		m_alloc.free(token);
+		m_pool.free(token);
 	}
 
 	void endFrame()
 	{
-		m_alloc.endFrame();
+		m_pool.endFrame();
 	}
 
 	const BufferPtr& getBuffer() const
 	{
-		return m_alloc.getGpuBuffer();
+		return m_pool.getGpuBuffer();
 	}
 
 	void getStats(F32& externalFragmentation, PtrSize& userAllocatedSize, PtrSize& totalSize) const
 	{
-		m_alloc.getStats(externalFragmentation, userAllocatedSize, totalSize);
+		m_pool.getStats(externalFragmentation, userAllocatedSize, totalSize);
 	}
 
 private:
-	SegregatedListsGpuMemoryPool m_alloc;
+	SegregatedListsGpuMemoryPool m_pool;
 };
 
 /// Token that gets returned when requesting for memory to write to a resource.
@@ -165,6 +166,40 @@ private:
 	U32 m_alignment = 0;
 
 	U8 m_frameCount = 0;
+};
+
+/// Creates the copy jobs that will patch the GPU Scene.
+class GpuSceneMicroPatcher
+{
+public:
+	GpuSceneMicroPatcher() = default;
+
+	GpuSceneMicroPatcher(const GpuSceneMicroPatcher&) = delete;
+
+	~GpuSceneMicroPatcher();
+
+	GpuSceneMicroPatcher& operator=(const GpuSceneMicroPatcher&) = delete;
+
+	Error init(ResourceManager* rsrc);
+
+	/// Copy data for the GPU scene to a staging buffer.
+	/// @note It's thread-safe.
+	void newCopy(StackMemoryPool& frameCpuPool, PtrSize gpuSceneDestOffset, PtrSize dataSize, const void* data);
+
+	/// Copy the data to the GPU scene buffer.
+	void patchGpuScene(RebarStagingGpuMemoryPool& rebarPool, CommandBuffer& cmdb, const BufferPtr& gpuSceneBuffer);
+
+private:
+	static constexpr U32 kDwordsPerPatch = 64;
+
+	class PatchHeader;
+
+	DynamicArray<PatchHeader> m_crntFramePatchHeaders;
+	DynamicArray<U32> m_crntFramePatchData;
+	Mutex m_mtx;
+
+	ShaderProgramResourcePtr m_copyProgram;
+	ShaderProgramPtr m_grProgram;
 };
 /// @}
 

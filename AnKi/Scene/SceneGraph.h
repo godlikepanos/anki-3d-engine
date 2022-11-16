@@ -215,8 +215,8 @@ private:
 	/// Delete the nodes that are marked for deletion
 	void deleteNodesMarkedForDeletion();
 
-	Error updateNodes(UpdateSceneNodesCtx& ctx) const;
-	[[nodiscard]] static Error updateNode(Second prevTime, Second crntTime, SceneNode& node);
+	Error updateNodes(UpdateSceneNodesCtx& ctx);
+	Error updateNode(Second prevTime, Second crntTime, SceneNode& node);
 
 	/// Do visibility tests.
 	static void doVisibilityTests(SceneNode& frustumable, SceneGraph& scene, RenderQueue& rqueue);

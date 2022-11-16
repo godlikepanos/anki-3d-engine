@@ -19,6 +19,7 @@ class ConfigSet;
 class UiManager;
 class UnifiedGeometryMemoryPool;
 class GpuSceneMemoryPool;
+class GpuSceneMicroPatcher;
 class ScriptManager;
 class GrManager;
 class PhysicsWorld;
@@ -55,6 +56,7 @@ public:
 	PhysicsWorld* m_physicsWorld = nullptr;
 	UnifiedGeometryMemoryPool* m_unifiedGeometryMemPool = nullptr;
 	GpuSceneMemoryPool* m_gpuSceneMemoryPool = nullptr;
+	GpuSceneMicroPatcher* m_gpuSceneMicroPatcher = nullptr;
 };
 /// @}
 

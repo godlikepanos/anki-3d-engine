@@ -32,6 +32,7 @@ class UiQueueElement;
 class RenderQueue;
 class MaliHwCounters;
 class GpuSceneMemoryPool;
+class GpuSceneMicroPatcher;
 
 /// The core class of the engine.
 class App
@@ -149,6 +150,7 @@ private:
 	MaliHwCounters* m_maliHwCounters = nullptr;
 	UnifiedGeometryMemoryPool* m_unifiedGometryMemPool = nullptr;
 	GpuSceneMemoryPool* m_gpuSceneMemPool = nullptr;
+	GpuSceneMicroPatcher* m_gpuSceneMicroPatcher = nullptr;
 	RebarStagingGpuMemoryPool* m_rebarPool = nullptr;
 	PhysicsWorld* m_physics = nullptr;
 	ResourceFilesystem* m_resourceFs = nullptr;

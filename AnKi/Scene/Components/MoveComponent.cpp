@@ -86,17 +86,11 @@ Error MoveComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	// Micro patch
 	if(dirty || m_dirtyLastFrame)
 	{
-		Mat3x4* trfs = newArray<Mat3x4>(*info.m_framePool, 2);
+		Array<Mat3x4, 2> trfs;
 		trfs[0] = Mat3x4(m_wtrf);
 		trfs[1] = Mat3x4(m_prevWTrf);
 
-		GpuSceneMicroPatch* patch = newInstance<GpuSceneMicroPatch>(*info.m_framePool);
-		patch->m_gpuSceneBufferOffset = m_gpuSceneTransforms.m_offset;
-		patch->m_dataToCopySize = sizeof(Mat3x4) * 2;
-		patch->m_dataToCopy = trfs;
-
-		GpuSceneMicroPatch** patchArray = newArray<GpuSceneMicroPatch*>(*info.m_framePool, 1);
-		info.m_gpuSceneMicroPatches = {patchArray, 1};
+		info.m_gpuSceneMicroPatcher->newCopy(*info.m_framePool, m_gpuSceneTransforms.m_offset, sizeof(trfs), &trfs[0]);
 	}
 
 	m_dirtyLastFrame = dirty;

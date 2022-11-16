@@ -221,7 +221,15 @@ private:
 	DynamicArray<DebugRtInfo> m_debugRts;
 	String m_currentDebugRtName;
 
+	class
+	{
+	public:
+		BufferHandle m_gpuSceneHandle;
+	} m_runCtx;
+
 	Error initInternal(UVec2 swapchainSize);
+
+	void gpuSceneCopy(RenderingContext& ctx);
 };
 /// @}
 

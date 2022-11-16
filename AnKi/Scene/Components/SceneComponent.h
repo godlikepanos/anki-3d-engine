@@ -13,7 +13,6 @@ namespace anki {
 
 // Forward
 class SceneComponentUpdateInfo;
-class GpuSceneMicroPatch;
 
 /// @addtogroup scene
 /// @{
@@ -98,12 +97,12 @@ private:
 class SceneComponentUpdateInfo
 {
 public:
-	SceneNode* m_node;
+	SceneNode* m_node = nullptr;
 	const Second m_previousTime;
 	const Second m_currentTime;
 	const Second m_dt;
-	WeakArray<GpuSceneMicroPatch*> m_gpuSceneMicroPatches;
-	StackMemoryPool* m_framePool;
+	StackMemoryPool* m_framePool = nullptr;
+	GpuSceneMicroPatcher* m_gpuSceneMicroPatcher = nullptr;
 
 	SceneComponentUpdateInfo(Second prevTime, Second crntTime)
 		: m_previousTime(prevTime)
