@@ -21,6 +21,8 @@ public:
 	/// The offset in the SegregatedListsGpuMemoryPoolToken::getBuffer() buffer.
 	PtrSize m_offset = kMaxPtrSize;
 
+	PtrSize m_size = kMaxPtrSize;
+
 	Bool operator==(const SegregatedListsGpuMemoryPoolToken& b) const
 	{
 		return m_offset == b.m_offset && m_chunk == b.m_chunk && m_chunkOffset == b.m_chunkOffset && m_size == b.m_size;
@@ -29,7 +31,6 @@ public:
 private:
 	void* m_chunk = nullptr;
 	PtrSize m_chunkOffset = kMaxPtrSize;
-	PtrSize m_size = kMaxPtrSize;
 };
 
 /// GPU memory allocator based on segregated lists. It allocates a GPU buffer with some initial size. If there is a need

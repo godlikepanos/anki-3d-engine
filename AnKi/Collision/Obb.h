@@ -18,7 +18,7 @@ namespace anki {
 class Obb
 {
 public:
-	static constexpr CollisionShapeType kClassType = CollisionShapeType::kOBB;
+	static constexpr CollisionShapeType kClassType = CollisionShapeType::kObb;
 
 	/// Will not initialize any memory, nothing.
 	Obb()

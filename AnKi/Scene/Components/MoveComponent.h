@@ -139,6 +139,12 @@ public:
 	}
 	/// @}
 
+	DwordOffset getTransformsGpuSceneOffset() const
+	{
+		ANKI_ASSERT((m_gpuSceneTransforms.m_offset % 4) == 0);
+		return DwordOffset(m_gpuSceneTransforms.m_offset / 4);
+	}
+
 private:
 	/// The transformation in local space
 	Transform m_ltrf = Transform::getIdentity();

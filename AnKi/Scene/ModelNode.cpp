@@ -192,6 +192,16 @@ void ModelNode::initRenderComponents()
 				&m_renderProxies[patchIdx]);
 		}
 
+		// Upload to GPU scene
+		RenderableGpuView2 view = {};
+		view.m_worldTransformsOffset = getFirstComponentOfType<MoveComponent>().getTransformsGpuSceneOffset();
+		view.m_aabbOffset = getFirstComponentOfType<SpatialComponent>().getAabbGpuSceneOffset();
+		view.m_uniformsOffset = getFirstComponentOfType<ModelComponent>().getUniformsGpuSceneOffset(patchIdx);
+		view.m_meshOffset =
+			getFirstComponentOfType<ModelComponent>().getMeshViewsGpuSceneOffset() + sizeof(MeshGpuView) / 4 * patchIdx;
+		getExternalSubsystems().m_gpuSceneMicroPatcher->newCopy(getFrameMemoryPool(), rc.getGpuSceneViewOffset() * 4,
+																sizeof(view), &view);
+
 		// Init the proxy
 		RenderProxy& proxy = m_renderProxies[patchIdx];
 		proxy.m_node = this;

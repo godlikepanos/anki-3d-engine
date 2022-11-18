@@ -187,6 +187,7 @@ public:
 	void newCopy(StackMemoryPool& frameCpuPool, PtrSize gpuSceneDestOffset, PtrSize dataSize, const void* data);
 
 	/// Copy the data to the GPU scene buffer.
+	/// @note Not thread-safe. Nothing else should be happening before calling it.
 	void patchGpuScene(RebarStagingGpuMemoryPool& rebarPool, CommandBuffer& cmdb, const BufferPtr& gpuSceneBuffer);
 
 private:

@@ -71,10 +71,10 @@ Error SpatialComponent::update([[maybe_unused]] SceneComponentUpdateInfo& info, 
 			// Compute the AABB
 			switch(m_collisionObjectType)
 			{
-			case CollisionShapeType::kAABB:
+			case CollisionShapeType::kAabb:
 				m_derivedAabb = m_aabb;
 				break;
-			case CollisionShapeType::kOBB:
+			case CollisionShapeType::kObb:
 				m_derivedAabb = computeAabb(m_obb);
 				break;
 			case CollisionShapeType::kSphere:
@@ -92,10 +92,19 @@ Error SpatialComponent::update([[maybe_unused]] SceneComponentUpdateInfo& info, 
 		else
 		{
 			m_node->getSceneGraph().getOctree().placeAlwaysVisible(&m_octreeInfo);
+
+			// Set something random
+			m_derivedAabb = Aabb(Vec3(-1.0f), Vec3(1.0f));
 		}
 
 		m_markedForUpdate = false;
 		m_placed = true;
+
+		// Update the GPU scene
+		Array<Vec3, 2> aabb;
+		aabb[0] = m_derivedAabb.getMin().xyz();
+		aabb[1] = m_derivedAabb.getMax().xyz();
+		info.m_gpuSceneMicroPatcher->newCopy(*info.m_framePool, m_gpuSceneAabb.m_offset, sizeof(aabb), &aabb[0]);
 	}
 
 	m_octreeInfo.reset();

@@ -9,20 +9,28 @@
 
 ANKI_BEGIN_NAMESPACE
 
+/// Offset in DWORDs
+#if defined(__cplusplus)
+using DwordOffset = U32;
+#else
+#	define DwordOffset U32
+#endif
+
+/// @note All offsets in DWORD
 struct RenderableGpuView2
 {
-	U32 m_worldTransformsOffset; ///< First is the crnt transform and the 2nd the previous
-	U32 m_aabbOffset;
-	U32 m_uniformsOffset;
-	U32 m_meshOffset;
-	U32 m_boneTransformsOffset;
-	U32 m_previousBoneTransformsOffset;
+	DwordOffset m_worldTransformsOffset; ///< First is the crnt transform and the 2nd the previous
+	DwordOffset m_aabbOffset;
+	DwordOffset m_uniformsOffset;
+	DwordOffset m_meshOffset;
+	DwordOffset m_boneTransformsOffset;
+	DwordOffset m_previousBoneTransformsOffset;
 };
 
 struct MeshGpuView
 {
-	Vec3 m_positionScale;
-	F32 m_positionTranslation;
+	Vec3 m_positionTranslation;
+	F32 m_positionScale;
 
 	U32 m_vertexOffsets[kMaxLodCount][kMaxVertexStreamIds];
 	U32 m_indexCounts[kMaxLodCount];

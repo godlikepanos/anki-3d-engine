@@ -8,7 +8,6 @@
 #include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Util/Logger.h>
-#include <AnKi/Shaders/Include/GpuSceneTypes.h>
 
 namespace anki {
 

@@ -16,7 +16,7 @@ namespace anki {
 class Aabb
 {
 public:
-	static constexpr CollisionShapeType kClassType = CollisionShapeType::kAABB;
+	static constexpr CollisionShapeType kClassType = CollisionShapeType::kAabb;
 
 	/// Will not initialize any memory, nothing.
 	Aabb()

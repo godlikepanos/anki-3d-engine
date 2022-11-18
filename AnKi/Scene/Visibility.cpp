@@ -54,10 +54,10 @@ static Bool spatialInsideFrustum(const FrustumComponent& frc, const SpatialCompo
 {
 	switch(spc.getCollisionShapeType())
 	{
-	case CollisionShapeType::kOBB:
+	case CollisionShapeType::kObb:
 		return frc.insideFrustum(spc.getCollisionShape<Obb>());
 		break;
-	case CollisionShapeType::kAABB:
+	case CollisionShapeType::kAabb:
 		return frc.insideFrustum(spc.getCollisionShape<Aabb>());
 		break;
 	case CollisionShapeType::kSphere:

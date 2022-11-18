@@ -41,6 +41,17 @@ public:
 		return m_model.isCreated();
 	}
 
+	DwordOffset getMeshViewsGpuSceneOffset() const
+	{
+		ANKI_ASSERT((m_gpuSceneMeshGpuViews.m_offset % 4) == 0);
+		return DwordOffset(m_gpuSceneMeshGpuViews.m_offset / 4);
+	}
+
+	DwordOffset getUniformsGpuSceneOffset(U32 meshPatchIdx) const
+	{
+		return m_gpuSceneUniformsOffsetPerPatch[meshPatchIdx];
+	}
+
 private:
 	SceneNode* m_node = nullptr;
 	ModelResourcePtr m_model;
@@ -48,12 +59,11 @@ private:
 	DynamicArray<U64> m_modelPatchMergeKeys;
 	Bool m_dirty = true;
 
-	Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated)
-	{
-		updated = m_dirty;
-		m_dirty = false;
-		return Error::kNone;
-	}
+	SegregatedListsGpuMemoryPoolToken m_gpuSceneMeshGpuViews;
+	SegregatedListsGpuMemoryPoolToken m_gpuSceneUniforms;
+	DynamicArray<DwordOffset> m_gpuSceneUniformsOffsetPerPatch;
+
+	Error update(SceneComponentUpdateInfo& info, Bool& updated);
 };
 /// @}
 

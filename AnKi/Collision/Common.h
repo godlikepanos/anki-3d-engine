@@ -35,9 +35,9 @@ enum class CollisionShapeType : U8
 	kPlane,
 	kLineSegment,
 	kRay,
-	kAABB,
+	kAabb,
 	kSphere,
-	kOBB,
+	kObb,
 	kConvexHull,
 	kCone,
 

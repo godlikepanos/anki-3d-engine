@@ -104,15 +104,20 @@ public:
 										 RebarStagingGpuMemoryPool& alloc,
 										 const Vec4& positionScaleAndTranslation = Vec4(1.0f, 0.0f, 0.0f, 0.0f));
 
+	DwordOffset getGpuSceneViewOffset() const
+	{
+		ANKI_ASSERT((m_gpuSceneRenderableGpuView.m_offset % 4) == 0);
+		return DwordOffset(m_gpuSceneRenderableGpuView.m_offset / 4);
+	}
+
 private:
 	RenderQueueDrawCallback m_callback = nullptr;
 	const void* m_userData = nullptr;
 	U64 m_mergeKey = kMaxU64;
 	FillRayTracingInstanceQueueElementCallback m_rtCallback = nullptr;
 	const void* m_rtCallbackUserData = nullptr;
-	RenderComponentFlag m_flags = RenderComponentFlag::kNone;
-
 	SegregatedListsGpuMemoryPoolToken m_gpuSceneRenderableGpuView;
+	RenderComponentFlag m_flags = RenderComponentFlag::kNone;
 
 	void onDestroy(SceneNode& node);
 };

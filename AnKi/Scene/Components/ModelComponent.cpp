@@ -22,6 +22,12 @@ ModelComponent::ModelComponent(SceneNode* node)
 ModelComponent::~ModelComponent()
 {
 	m_modelPatchMergeKeys.destroy(m_node->getMemoryPool());
+
+	GpuSceneMemoryPool& gpuScene = *getExternalSubsystems(*m_node).m_gpuSceneMemoryPool;
+	gpuScene.free(m_gpuSceneMeshGpuViews);
+	gpuScene.free(m_gpuSceneUniforms);
+
+	m_gpuSceneUniformsOffsetPerPatch.destroy(m_node->getMemoryPool());
 }
 
 Error ModelComponent::loadModelResource(CString filename)
@@ -31,11 +37,12 @@ Error ModelComponent::loadModelResource(CString filename)
 	ModelResourcePtr rsrc;
 	ANKI_CHECK(getExternalSubsystems(*m_node).m_resourceManager->loadResource(filename, rsrc));
 	m_model = std::move(rsrc);
+	const U32 modelPatchCount = m_model->getModelPatches().getSize();
 
 	m_modelPatchMergeKeys.destroy(m_node->getMemoryPool());
-	m_modelPatchMergeKeys.create(m_node->getMemoryPool(), m_model->getModelPatches().getSize());
+	m_modelPatchMergeKeys.create(m_node->getMemoryPool(), modelPatchCount);
 
-	for(U32 i = 0; i < m_model->getModelPatches().getSize(); ++i)
+	for(U32 i = 0; i < modelPatchCount; ++i)
 	{
 		Array<U64, 2> toHash;
 		toHash[0] = i;
@@ -43,6 +50,102 @@ Error ModelComponent::loadModelResource(CString filename)
 		m_modelPatchMergeKeys[i] = computeHash(&toHash[0], sizeof(toHash));
 	}
 
+	// GPU scene allocations
+	GpuSceneMemoryPool& gpuScene = *getExternalSubsystems(*m_node).m_gpuSceneMemoryPool;
+
+	gpuScene.free(m_gpuSceneMeshGpuViews);
+	gpuScene.allocate(sizeof(MeshGpuView) * m_modelPatchMergeKeys.getSize(), 4, m_gpuSceneMeshGpuViews);
+
+	U32 uniformsSize = 0;
+	m_gpuSceneUniformsOffsetPerPatch.resize(m_node->getMemoryPool(), modelPatchCount);
+	for(U32 i = 0; i < modelPatchCount; ++i)
+	{
+		m_gpuSceneUniformsOffsetPerPatch[i] = uniformsSize / 4;
+
+		const U32 size = U32(m_model->getModelPatches()[i].getMaterial()->getPrefilledLocalUniforms().getSizeInBytes());
+		ANKI_ASSERT((size % 4) == 0);
+		uniformsSize += size;
+	}
+
+	gpuScene.free(m_gpuSceneUniforms);
+	gpuScene.allocate(uniformsSize, 4, m_gpuSceneUniforms);
+
+	for(U32 i = 0; i < modelPatchCount; ++i)
+	{
+		m_gpuSceneUniformsOffsetPerPatch[i] += DwordOffset(m_gpuSceneUniforms.m_offset / 4);
+	}
+
+	return Error::kNone;
+}
+
+Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
+{
+	if(ANKI_UNLIKELY(m_dirty && m_model.isCreated()))
+	{
+		GpuSceneMicroPatcher& gpuScenePatcher = *getExternalSubsystems(*info.m_node).m_gpuSceneMicroPatcher;
+
+		// Upload the mesh views
+		const U32 modelPatchCount = m_model->getModelPatches().getSize();
+		DynamicArrayRaii<MeshGpuView> meshViews(info.m_framePool, modelPatchCount);
+		for(U32 i = 0; i < modelPatchCount; ++i)
+		{
+			MeshGpuView& view = meshViews[i];
+			const ModelPatch& patch = m_model->getModelPatches()[i];
+			const MeshResource& mesh = *patch.getMesh();
+
+			zeroMemory(view);
+			view.m_positionScale = mesh.getPositionsScale();
+			view.m_positionTranslation = mesh.getPositionsTranslation();
+
+			for(U32 l = 0; l < mesh.getLodCount(); ++l)
+			{
+				for(VertexStreamId stream = VertexStreamId::kPosition; stream <= VertexStreamId::kBoneWeights; ++stream)
+				{
+					if(!mesh.isVertexStreamPresent(stream))
+					{
+						continue;
+					}
+
+					PtrSize offset;
+					U32 vertCount;
+					mesh.getVertexStreamInfo(l, stream, offset, vertCount);
+
+					ANKI_ASSERT((offset % 4) == 0);
+					view.m_vertexOffsets[l][U32(stream)] = U32(offset / 4);
+				}
+
+				PtrSize offset;
+				U32 indexCount;
+				IndexType indexType;
+				mesh.getIndexBufferInfo(l, offset, indexCount, indexType);
+				view.m_indexOffsets[l] = U32(offset);
+				view.m_indexCounts[l] = indexCount;
+			}
+		}
+
+		gpuScenePatcher.newCopy(*info.m_framePool, m_gpuSceneMeshGpuViews.m_offset, meshViews.getSizeInBytes(),
+								&meshViews[0]);
+
+		// Upload the uniforms
+		DynamicArrayRaii<U32> allUniforms(info.m_framePool, U32(m_gpuSceneUniforms.m_size / 4));
+		U32 count = 0;
+		for(U32 i = 0; i < modelPatchCount; ++i)
+		{
+			const ModelPatch& patch = m_model->getModelPatches()[i];
+			const MaterialResource& mtl = *patch.getMaterial();
+			memcpy(&allUniforms[count], mtl.getPrefilledLocalUniforms().getBegin(),
+				   mtl.getPrefilledLocalUniforms().getSizeInBytes());
+
+			count += U32(mtl.getPrefilledLocalUniforms().getSizeInBytes() / 4);
+		}
+
+		ANKI_ASSERT(count * 4 == m_gpuSceneUniforms.m_size);
+		gpuScenePatcher.newCopy(*info.m_framePool, m_gpuSceneUniforms.m_offset, m_gpuSceneUniforms.m_size,
+								&allUniforms[0]);
+	}
+
+	updated = m_dirty;
+	m_dirty = false;
 	return Error::kNone;
 }
 
