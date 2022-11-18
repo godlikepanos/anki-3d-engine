@@ -1,0 +1,43 @@
+// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki start comp
+
+#include <AnKi/Shaders/Common.glsl>
+
+layout(local_size_x = 64) in;
+
+layout(binding = 0, std430) readonly buffer b_0
+{
+	UVec2 u_patchHeaders[];
+};
+
+layout(binding = 1, std430) readonly buffer b_1
+{
+	U32 u_srcBuffer[];
+};
+
+layout(binding = 2, std430) writeonly buffer b_2
+{
+	U32 u_dstBuffer[];
+};
+
+void main()
+{
+	const UVec2 header = u_patchHeaders[gl_WorkGroupID.x];
+	const U32 dwordCount = (header.x >> 26u) + 1u;
+
+	if(gl_LocalInvocationIndex >= dwordCount)
+	{
+		return;
+	}
+
+	const U32 srcDwordOffset = header.x & 0x3FFFFFFu;
+	const U32 dstDwordOffset = header.y;
+
+	u_dstBuffer[dstDwordOffset + gl_LocalInvocationIndex] = u_srcBuffer[srcDwordOffset + gl_LocalInvocationIndex];
+}
+
+#pragma anki end
