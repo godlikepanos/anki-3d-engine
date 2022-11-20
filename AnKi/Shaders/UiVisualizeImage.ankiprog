@@ -5,6 +5,8 @@
 
 #pragma anki mutator TEXTURE_TYPE 0 1
 
+#include <AnKi/Shaders/Common.glsl>
+
 layout(push_constant) uniform b_pc
 {
 	Vec4 u_transform; // x: x scale, y: y scale, z: x transl, w: y transl
@@ -13,7 +15,6 @@ layout(push_constant) uniform b_pc
 };
 
 #pragma anki start vert
-#include <AnKi/Shaders/Common.glsl>
 
 layout(location = 0) in Vec2 in_pos;
 layout(location = 1) in Vec4 in_col;
@@ -33,7 +34,6 @@ void main()
 #pragma anki end
 
 #pragma anki start frag
-#include <AnKi/Shaders/Common.glsl>
 
 layout(location = 0) in Vec2 in_uv;
 layout(location = 1) in Vec4 in_col;

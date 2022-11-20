@@ -100,7 +100,7 @@ struct MeshGpuDescriptor
 	Vec3 m_aabbMax;
 };
 
-const U32 kSizeof_MeshGpuDescriptor = 4u * ANKI_SIZEOF(UVec2) + 8u * ANKI_SIZEOF(F32);
+const U32 kSizeof_MeshGpuDescriptor = 4u * sizeof(UVec2) + 8u * sizeof(F32);
 const U32 kAlignof_MeshGpuDescriptor = 8u;
 ANKI_SHADER_STATIC_ASSERT(kSizeof_MeshGpuDescriptor == sizeof(MeshGpuDescriptor));
 
@@ -145,7 +145,7 @@ struct MaterialGpuDescriptor
 	F32 m_metalness;
 };
 
-const U32 kSizeof_MaterialGpuDescriptor = 8u * ANKI_SIZEOF(U16) + 3u * ANKI_SIZEOF(Vec3) + 2u * ANKI_SIZEOF(F32);
+const U32 kSizeof_MaterialGpuDescriptor = 8u * sizeof(U16) + 3u * sizeof(Vec3) + 2u * sizeof(F32);
 const U32 kAlignof_MaterialGpuDescriptor = 4u;
 ANKI_SHADER_STATIC_ASSERT(kSizeof_MaterialGpuDescriptor == sizeof(MaterialGpuDescriptor));
 

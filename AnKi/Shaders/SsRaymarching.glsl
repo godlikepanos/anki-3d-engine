@@ -70,7 +70,7 @@ void raymarch(Vec3 rayOrigin, // Ray origin in view space
 	// Check for view facing reflections [sakibsaikia]
 	const Vec3 viewDir = normalize(rayOrigin);
 	const F32 cameraContribution = 1.0 - smoothstep(0.25, 0.5, dot(-viewDir, rayDir));
-	ANKI_BRANCH if(cameraContribution <= 0.0)
+	[[branch]] if(cameraContribution <= 0.0)
 	{
 		return;
 	}
@@ -189,7 +189,7 @@ void raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
 
 	// Search
 	Vec3 origin;
-	ANKI_LOOP while(maxSteps-- != 0u)
+	[[dont_unroll]] while(maxSteps-- != 0u)
 	{
 		origin = start + dir * (F32(crntStep) * stepSize);
 

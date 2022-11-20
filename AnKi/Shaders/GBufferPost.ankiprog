@@ -3,10 +3,6 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(kTileCount, 0u);
-ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 2u);
-ANKI_SPECIALIZATION_CONSTANT_U32(kTileSize, 3u);
-
 #pragma anki start vert
 #include <AnKi/Shaders/QuadVert.glsl>
 #pragma anki end
@@ -14,6 +10,10 @@ ANKI_SPECIALIZATION_CONSTANT_U32(kTileSize, 3u);
 #pragma anki start frag
 #include <AnKi/Shaders/PackFunctions.glsl>
 #include <AnKi/Shaders/Functions.glsl>
+
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(kTileCount, 0u);
+ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 2u);
+ANKI_SPECIALIZATION_CONSTANT_U32(kTileSize, 3u);
 
 layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
 layout(set = 0, binding = 1) uniform texture2D u_depthTex;
@@ -58,7 +58,7 @@ void main()
 		discard;
 	}
 
-	ANKI_LOOP while(cluster.m_decalsMask != ExtendedClusterObjectMask(0))
+	[[dont_unroll]] while(cluster.m_decalsMask != ExtendedClusterObjectMask(0))
 	{
 		const I32 idx = findLSB2(cluster.m_decalsMask);
 		cluster.m_decalsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));

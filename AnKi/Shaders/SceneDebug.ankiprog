@@ -6,6 +6,8 @@
 #pragma anki mutator COLOR_TEXTURE 0 1
 #pragma anki mutator DITHERED_DEPTH_TEST 0 1
 
+#include <AnKi/Shaders/Common.glsl>
+
 ANKI_SPECIALIZATION_CONSTANT_U32(kInstanceCount, 0u);
 
 layout(set = 1, binding = 0, row_major) uniform u0_
@@ -15,7 +17,6 @@ layout(set = 1, binding = 0, row_major) uniform u0_
 };
 
 #pragma anki start vert
-#include <AnKi/Shaders/Common.glsl>
 
 layout(location = 0) in Vec3 in_position;
 #if COLOR_TEXTURE == 1
@@ -38,7 +39,6 @@ void main()
 #pragma anki end
 
 #pragma anki start frag
-#include <AnKi/Shaders/Common.glsl>
 #include <AnKi/Shaders/ImportanceSampling.glsl>
 
 #if COLOR_TEXTURE == 1

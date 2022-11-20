@@ -3,10 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(kInDepthMapSize, 0u);
-
 #pragma anki start comp
 #include <AnKi/Shaders/Common.glsl>
+
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(kInDepthMapSize, 0u);
 
 const U32 kWorkgroupSize = 8u;
 layout(local_size_x = kWorkgroupSize, local_size_y = kWorkgroupSize, local_size_z = 1) in;

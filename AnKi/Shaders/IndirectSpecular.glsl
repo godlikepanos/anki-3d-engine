@@ -109,7 +109,7 @@ void main()
 
 #if EXTRA_REJECTION
 	// Reject backfacing
-	ANKI_BRANCH if(ssrAttenuation > 0.0)
+	[[branch]] if(ssrAttenuation > 0.0)
 	{
 		const Vec3 hitNormal =
 			u_unis.m_normalMat
@@ -121,7 +121,7 @@ void main()
 	}
 
 	// Reject far from hit point
-	ANKI_BRANCH if(ssrAttenuation > 0.0)
+	[[branch]] if(ssrAttenuation > 0.0)
 	{
 		const F32 depth = textureLod(u_depthRt, u_trilinearClampSampler, hitPoint.xy, 0.0).r;
 		Vec4 viewPos4 = u_unis.m_invProjMat * Vec4(UV_TO_NDC(hitPoint.xy), depth, 1.0);
@@ -139,7 +139,7 @@ void main()
 
 	// Read the reflection
 	Vec3 outColor = Vec3(0.0);
-	ANKI_BRANCH if(ssrAttenuation > 0.0)
+	[[branch]] if(ssrAttenuation > 0.0)
 	{
 		// Reproject the UV because you are reading the previous frame
 		const Vec4 v4 = u_unis.m_prevViewProjMatMulInvViewProjMat * Vec4(UV_TO_NDC(hitPoint.xy), hitPoint.z, 1.0);
@@ -180,7 +180,7 @@ void main()
 	}
 
 	// Read probes
-	ANKI_BRANCH if(ssrAttenuation < 1.0)
+	[[branch]] if(ssrAttenuation < 1.0)
 	{
 #if defined(ANKI_COMPUTE_SHADER)
 		const Vec2 fragCoord = Vec2(gl_GlobalInvocationID.xy) + 0.5;
@@ -228,7 +228,7 @@ void main()
 			F32 totalBlendWeight = kEpsilonf;
 
 			// Loop probes
-			ANKI_LOOP while(cluster.m_reflectionProbesMask != 0u)
+			[[dont_unroll]] while(cluster.m_reflectionProbesMask != 0u)
 			{
 				const U32 idx = U32(findLSB2(cluster.m_reflectionProbesMask));
 				cluster.m_reflectionProbesMask &= ~(1u << idx);

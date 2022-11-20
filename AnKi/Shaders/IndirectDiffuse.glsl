@@ -5,7 +5,11 @@
 
 // Does SSGI and GI probe sampling
 
-ANKI_SPECIALIZATION_CONSTANT_U32(SAMPLE_COUNT, 6u);
+#include <AnKi/Shaders/Functions.glsl>
+#include <AnKi/Shaders/PackFunctions.glsl>
+#include <AnKi/Shaders/ImportanceSampling.glsl>
+#include <AnKi/Shaders/TonemappingFunctions.glsl>
+#include <AnKi/Shaders/Include/MiscRendererTypes.h>
 
 #define ENABLE_SSGI true
 #define ENABLE_PROBES true
@@ -13,11 +17,7 @@ ANKI_SPECIALIZATION_CONSTANT_U32(SAMPLE_COUNT, 6u);
 #define REPROJECT_LIGHTBUFFER false
 #define SSGI_PROBE_COMBINE(ssgiColor, probeColor) ((ssgiColor) + (probeColor))
 
-#include <AnKi/Shaders/Functions.glsl>
-#include <AnKi/Shaders/PackFunctions.glsl>
-#include <AnKi/Shaders/ImportanceSampling.glsl>
-#include <AnKi/Shaders/TonemappingFunctions.glsl>
-#include <AnKi/Shaders/Include/MiscRendererTypes.h>
+ANKI_SPECIALIZATION_CONSTANT_U32(SAMPLE_COUNT, 6u);
 
 #define CLUSTERED_SHADING_SET 0u
 #define CLUSTERED_SHADING_UNIFORMS_BINDING 0u
@@ -176,7 +176,7 @@ void main()
 			F32 totalBlendWeight = kEpsilonf;
 
 			// Loop probes
-			ANKI_LOOP while(cluster.m_giProbesMask != 0u)
+			[[dont_unroll]] while(cluster.m_giProbesMask != 0u)
 			{
 				const U32 idx = U32(findLSB2(cluster.m_giProbesMask));
 				cluster.m_giProbesMask &= ~(1u << idx);

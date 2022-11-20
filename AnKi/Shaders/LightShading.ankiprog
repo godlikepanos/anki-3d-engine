@@ -5,10 +5,6 @@
 
 #pragma anki mutator USE_SHADOW_LAYERS 0 1
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(kTileCount, 0u);
-ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 2u);
-ANKI_SPECIALIZATION_CONSTANT_U32(kTileSize, 3u);
-
 #pragma anki start vert
 #include <AnKi/Shaders/QuadVert.glsl>
 #pragma anki end
@@ -17,6 +13,10 @@ ANKI_SPECIALIZATION_CONSTANT_U32(kTileSize, 3u);
 #include <AnKi/Shaders/PackFunctions.glsl>
 #include <AnKi/Shaders/Functions.glsl>
 #include <AnKi/Shaders/RtShadows.glsl>
+
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(kTileCount, 0u);
+ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 2u);
+ANKI_SPECIALIZATION_CONSTANT_U32(kTileSize, 3u);
 
 #define CLUSTERED_SHADING_SET 0u
 #define CLUSTERED_SHADING_UNIFORMS_BINDING 0u
@@ -121,7 +121,7 @@ void main()
 	}
 
 	// Point lights
-	ANKI_LOOP while(cluster.m_pointLightsMask != ExtendedClusterObjectMask(0))
+	[[dont_unroll]] while(cluster.m_pointLightsMask != ExtendedClusterObjectMask(0))
 	{
 		const I32 idx = findLSB2(cluster.m_pointLightsMask);
 		cluster.m_pointLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
@@ -129,7 +129,7 @@ void main()
 
 		LIGHTING_COMMON_BRDF();
 
-		ANKI_BRANCH if(light.m_shadowAtlasTileScale >= 0.0)
+		[[branch]] if(light.m_shadowAtlasTileScale >= 0.0)
 		{
 #if USE_SHADOW_LAYERS
 			const ANKI_RP F32 shadow = resolvedSm[light.m_shadowLayer];
@@ -143,7 +143,7 @@ void main()
 	}
 
 	// Spot lights
-	ANKI_LOOP while(cluster.m_spotLightsMask != ExtendedClusterObjectMask(0))
+	[[dont_unroll]] while(cluster.m_spotLightsMask != ExtendedClusterObjectMask(0))
 	{
 		const I32 idx = findLSB2(cluster.m_spotLightsMask);
 		cluster.m_spotLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
@@ -153,7 +153,7 @@ void main()
 
 		const F32 spot = computeSpotFactor(l, light.m_outerCos, light.m_innerCos, light.m_direction);
 
-		ANKI_BRANCH if(light.m_shadowLayer != kMaxU32)
+		[[branch]] if(light.m_shadowLayer != kMaxU32)
 		{
 #if USE_SHADOW_LAYERS
 			const ANKI_RP F32 shadow = resolvedSm[light.m_shadowLayer];

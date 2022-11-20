@@ -3,13 +3,13 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#include <AnKi/Shaders/Common.glsl>
+
 #pragma anki mutator ORIENTATION 0 1 2 // 0: VERTICAL, 1: HORIZONTAL, 2: BOX
 #pragma anki mutator SAMPLE_COUNT 3 5 7 9 11 13 15
 #pragma anki mutator COLOR_COMPONENTS 4 3 1
 
 ANKI_SPECIALIZATION_CONSTANT_UVEC2(kTextureSize, 0u);
-
-#include <AnKi/Shaders/Common.glsl>
 
 #if ORIENTATION == 0
 #	define VERTICAL 1
@@ -83,7 +83,7 @@ void main()
 {
 	// Set UVs
 #if USE_COMPUTE
-	ANKI_BRANCH if(gl_GlobalInvocationID.x >= kTextureSize.x || gl_GlobalInvocationID.y >= kTextureSize.y)
+	[[branch]] if(gl_GlobalInvocationID.x >= kTextureSize.x || gl_GlobalInvocationID.y >= kTextureSize.y)
 	{
 		// Out of bounds
 		return;
@@ -113,7 +113,7 @@ void main()
 	Vec2 uvOffset = Vec2(0.0);
 	uvOffset.X_OR_Y = 1.5 * TEXEL_SIZE.X_OR_Y;
 
-	ANKI_UNROLL for(U32 i = 0u; i < (U32(SAMPLE_COUNT) - 1u) / 2u; ++i)
+	[[unroll]] for(U32 i = 0u; i < (U32(SAMPLE_COUNT) - 1u) / 2u; ++i)
 	{
 		sampleTex(uv + uvOffset, refDepth, color, weight);
 		sampleTex(uv - uvOffset, refDepth, color, weight);

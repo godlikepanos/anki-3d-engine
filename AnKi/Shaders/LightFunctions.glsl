@@ -123,7 +123,7 @@ ANKI_RP F32 computeShadowFactorSpotLightPcf(SpotLight light, Vec3 worldPos, text
 	const F32 cosTheta = cos(randFactor * 2.0 * kPi);
 
 	ANKI_RP F32 shadow = 0.0;
-	ANKI_UNROLL for(U32 i = 0u; i < 4u; ++i)
+	[[unroll]] for(U32 i = 0u; i < 4u; ++i)
 	{
 		const Vec2 diskPoint = kPoissonDisk[i] * kPcfScale;
 
@@ -194,7 +194,7 @@ ANKI_RP F32 computeShadowFactorPointLightGeneric(PointLight light, Vec3 frag2Lig
 		const F32 cosTheta = cos(randFactor * 2.0 * kPi);
 
 		shadow = 0.0;
-		ANKI_UNROLL for(U32 i = 0u; i < 4u; ++i)
+		[[unroll]] for(U32 i = 0u; i < 4u; ++i)
 		{
 			const Vec2 diskPoint = kPoissonDisk[i] * kPcfScale;
 
@@ -271,7 +271,7 @@ ANKI_RP F32 computeShadowFactorDirLightGeneric(DirectionalLight light, U32 casca
 		const F32 cosTheta = cos(randFactor * 2.0 * kPi);
 
 		shadow = 0.0;
-		ANKI_UNROLL for(U32 i = 0u; i < 4u; ++i)
+		[[unroll]] for(U32 i = 0u; i < 4u; ++i)
 		{
 			const Vec2 diskPoint = kPoissonDisk[i] * kPcfScale;
 
@@ -420,7 +420,7 @@ ANKI_RP Vec3 sampleGlobalIllumination(const Vec3 worldPos, const Vec3 normal, co
 
 	// Read the irradiance
 	ANKI_RP Vec3 irradiancePerDir[6u];
-	ANKI_UNROLL for(U32 dir = 0u; dir < 6u; ++dir)
+	[[unroll]] for(U32 dir = 0u; dir < 6u; ++dir)
 	{
 		// Point to the correct UV
 		Vec3 shiftedUVw = uvw;

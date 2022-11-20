@@ -7,12 +7,22 @@
 
 #pragma anki mutator ENABLE_SHADOWS 0 1
 
+#pragma anki start comp
+
+#include <AnKi/Shaders/Include/MiscRendererTypes.h>
+
+#define CLUSTERED_SHADING_SET 0u
+#define CLUSTERED_SHADING_UNIFORMS_BINDING 6u
+#define CLUSTERED_SHADING_LIGHTS_BINDING 7u
+#define CLUSTERED_SHADING_GI_BINDING 10u
+#define CLUSTERED_SHADING_FOG_BINDING 12u
+#define CLUSTERED_SHADING_CLUSTERS_BINDING 13u
+#include <AnKi/Shaders/ClusteredShadingCommon.glsl>
+
 ANKI_SPECIALIZATION_CONSTANT_UVEC3(kVolumeSize, 0u);
 ANKI_SPECIALIZATION_CONSTANT_UVEC2(kTileCount, 3u);
 ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 5u);
 ANKI_SPECIALIZATION_CONSTANT_U32(kFinalZSplit, 6u);
-
-#pragma anki start comp
 
 const F32 kPhaseFunctionAnisotropy = 0.3;
 
@@ -26,15 +36,6 @@ layout(set = 0, binding = 2) uniform samplerShadow u_linearAnyClampShadowSampler
 layout(set = 0, binding = 3) writeonly uniform image3D u_volume;
 layout(set = 0, binding = 4) uniform texture2D u_noiseTex;
 layout(set = 0, binding = 5) uniform texture3D u_prevVolume;
-
-#define CLUSTERED_SHADING_SET 0u
-#define CLUSTERED_SHADING_UNIFORMS_BINDING 6u
-#define CLUSTERED_SHADING_LIGHTS_BINDING 7u
-#define CLUSTERED_SHADING_GI_BINDING 10u
-#define CLUSTERED_SHADING_FOG_BINDING 12u
-#define CLUSTERED_SHADING_CLUSTERS_BINDING 13u
-#include <AnKi/Shaders/ClusteredShadingCommon.glsl>
-#include <AnKi/Shaders/Include/MiscRendererTypes.h>
 
 layout(push_constant, std140) uniform b_pc
 {
@@ -124,7 +125,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 	}
 
 	// Point lights
-	ANKI_LOOP while(cluster.m_pointLightsMask != ExtendedClusterObjectMask(0))
+	[[dont_unroll]] while(cluster.m_pointLightsMask != ExtendedClusterObjectMask(0))
 	{
 		const I32 idx = findLSB2(cluster.m_pointLightsMask);
 		cluster.m_pointLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
@@ -146,7 +147,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 	}
 
 	// Spot lights
-	ANKI_LOOP while(cluster.m_spotLightsMask != ExtendedClusterObjectMask(0))
+	[[dont_unroll]] while(cluster.m_spotLightsMask != ExtendedClusterObjectMask(0))
 	{
 		const I32 idx = findLSB2(cluster.m_spotLightsMask);
 		cluster.m_spotLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
@@ -193,7 +194,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 			diffIndirect = Vec3(0.0);
 
 			// Loop probes
-			ANKI_LOOP while(cluster.m_giProbesMask != 0u)
+			[[dont_unroll]] while(cluster.m_giProbesMask != 0u)
 			{
 				const U32 idx = U32(findLSB2(cluster.m_giProbesMask));
 				cluster.m_giProbesMask &= ~(1u << idx);
@@ -226,14 +227,14 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 		const F32 fogFactor = saturate((worldPos.y - u_fogUnis.m_minHeight) * u_fogUnis.m_oneOverMaxMinusMinHeight);
 		fogDensity = mix(u_fogUnis.m_densityAtMinHeight, u_fogUnis.m_densityAtMaxHeight, fogFactor);
 
-		ANKI_LOOP while(cluster.m_fogDensityVolumesMask != 0u)
+		[[dont_unroll]] while(cluster.m_fogDensityVolumesMask != 0u)
 		{
 			const U32 idx = U32(findLSB2(cluster.m_fogDensityVolumesMask));
 			cluster.m_fogDensityVolumesMask &= ~(1u << idx);
 			const FogDensityVolume vol = u_fogDensityVolumes[idx];
 
 			F32 factor;
-			ANKI_BRANCH if(vol.m_isBox == 1u)
+			[[branch]] if(vol.m_isBox == 1u)
 			{
 				factor = computeProbeBlendWeight(worldPos, vol.m_aabbMinOrSphereCenter,
 												 vol.m_aabbMaxOrSphereRadiusSquared, 0.2);

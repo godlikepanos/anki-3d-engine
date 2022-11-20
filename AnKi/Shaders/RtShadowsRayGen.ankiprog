@@ -103,7 +103,7 @@ void main()
 
 	// Dir light
 	const DirectionalLight dirLight = u_clusteredShading.m_directionalLight;
-	ANKI_BRANCH if(dirLight.m_active != 0u && dirLight.m_shadowCascadeCount > 0u)
+	[[branch]] if(dirLight.m_active != 0u && dirLight.m_shadowCascadeCount > 0u)
 	{
 		for(I32 i = 0; i < RAYS_PER_PIXEL; ++i)
 		{
@@ -111,7 +111,7 @@ void main()
 			const Vec3 rayDir = normalize(dirLightPos - worldPos);
 
 			const F32 lambertTerm = dot(rayDir, normal);
-			ANKI_BRANCH if(lambertTerm > 0.0)
+			[[branch]] if(lambertTerm > 0.0)
 			{
 				shadowFactors[dirLight.m_shadowLayer] += trace(worldPos, rayDir, 10000.0) / F32(RAYS_PER_PIXEL);
 			}
@@ -119,13 +119,13 @@ void main()
 	}
 
 	// Point lights
-	ANKI_LOOP while(cluster.m_pointLightsMask != ExtendedClusterObjectMask(0))
+	[[dont_unroll]] while(cluster.m_pointLightsMask != ExtendedClusterObjectMask(0))
 	{
 		const I32 idx = findLSB2(cluster.m_pointLightsMask);
 		cluster.m_pointLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
 		const PointLight light = u_pointLights2[idx];
 
-		ANKI_BRANCH if(light.m_shadowAtlasTileScale >= 0.0)
+		[[branch]] if(light.m_shadowAtlasTileScale >= 0.0)
 		{
 			for(I32 i = 0; i < RAYS_PER_PIXEL; ++i)
 			{
@@ -136,7 +136,7 @@ void main()
 
 				const Bool inside = distanceToLight < light.m_radius;
 				const F32 lambertTerm = dot(rayDir, normal);
-				ANKI_BRANCH if(inside && lambertTerm > 0.0)
+				[[branch]] if(inside && lambertTerm > 0.0)
 				{
 					shadowFactors[light.m_shadowLayer] +=
 						trace(worldPos, rayDir, distanceToLight) / F32(RAYS_PER_PIXEL);
@@ -146,13 +146,13 @@ void main()
 	}
 
 	// Spot lights
-	ANKI_LOOP while(cluster.m_spotLightsMask != ExtendedClusterObjectMask(0))
+	[[dont_unroll]] while(cluster.m_spotLightsMask != ExtendedClusterObjectMask(0))
 	{
 		const I32 idx = findLSB2(cluster.m_spotLightsMask);
 		cluster.m_spotLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
 		const SpotLight light = u_spotLights[idx];
 
-		ANKI_BRANCH if(light.m_shadowLayer != kMaxU32)
+		[[branch]] if(light.m_shadowLayer != kMaxU32)
 		{
 			for(I32 i = 0; i < RAYS_PER_PIXEL; ++i)
 			{
@@ -162,7 +162,7 @@ void main()
 				const Vec3 rayDir = toLight / distanceToLight; // normalize
 
 				const F32 lambertTerm = dot(rayDir, normal);
-				ANKI_BRANCH if(lambertTerm > 0.0)
+				[[branch]] if(lambertTerm > 0.0)
 				{
 					shadowFactors[light.m_shadowLayer] +=
 						trace(worldPos, rayDir, distanceToLight) / F32(RAYS_PER_PIXEL);
@@ -197,7 +197,7 @@ void main()
 
 	// Compute the moments that will give temporal variance
 	Vec2 moments = Vec2(0.0);
-	ANKI_UNROLL for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
+	[[unroll]] for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
 	{
 		moments.x += shadowFactors[i];
 	}

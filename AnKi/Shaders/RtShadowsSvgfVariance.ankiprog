@@ -3,13 +3,13 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(kFramebufferSize, 0u);
-
 #pragma anki start comp
 
 #include <AnKi/Shaders/RtShadows.glsl>
 #include <AnKi/Shaders/BilateralFilter.glsl>
 #include <AnKi/Shaders/Functions.glsl>
+
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(kFramebufferSize, 0u);
 
 const UVec2 kWorkgroupSize = UVec2(8, 8);
 layout(local_size_x = kWorkgroupSize.x, local_size_y = kWorkgroupSize.y, local_size_z = 1) in;
@@ -97,7 +97,7 @@ void main()
 
 				F32 shadowLayers[kMaxRtShadowLayers];
 				unpackRtShadows(textureLod(u_shadowsTex, u_nearestAnyClampSampler, sampleUv, 0.0), shadowLayers);
-				ANKI_UNROLL for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
+				[[unroll]] for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
 				{
 					sumShadowLayers[i] += shadowLayers[i] * w;
 				}
@@ -108,7 +108,7 @@ void main()
 
 		sumWeight += kEpsilonf;
 
-		ANKI_UNROLL for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
+		[[unroll]] for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
 		{
 			sumShadowLayers[i] /= sumWeight;
 		}

@@ -3,10 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#include <AnKi/Shaders/Functions.glsl>
+
 ANKI_SPECIALIZATION_CONSTANT_UVEC2(kViewport, 0u);
 ANKI_SPECIALIZATION_CONSTANT_UVEC2(kInputTextureSize, 2u);
-
-#include <AnKi/Shaders/Functions.glsl>
 
 layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 1) uniform ANKI_RP texture2D u_tex;
@@ -58,7 +58,7 @@ ANKI_RP Vec3 ssLensFlare(Vec2 uv)
 	ANKI_RP Vec3 result = Vec3(0.0);
 
 	// Sample ghosts
-	ANKI_UNROLL for(U32 i = 0u; i < kMaxGhosts; ++i)
+	[[unroll]] for(U32 i = 0u; i < kMaxGhosts; ++i)
 	{
 		const Vec2 offset = fract(flipUv + ghostVec * F32(i));
 

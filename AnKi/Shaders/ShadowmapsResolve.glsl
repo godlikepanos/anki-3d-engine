@@ -5,16 +5,16 @@
 
 #pragma anki mutator PCF 0 1
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(kFramebufferSize, 0u);
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(kTileCount, 2u);
-ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 4u);
-ANKI_SPECIALIZATION_CONSTANT_U32(kTileSize, 5u);
-
 #define CLUSTERED_SHADING_SET 0u
 #define CLUSTERED_SHADING_UNIFORMS_BINDING 0u
 #define CLUSTERED_SHADING_LIGHTS_BINDING 1u
 #define CLUSTERED_SHADING_CLUSTERS_BINDING 4u
 #include <AnKi/Shaders/ClusteredShadingCommon.glsl>
+
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(kFramebufferSize, 0u);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(kTileCount, 2u);
+ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 4u);
+ANKI_SPECIALIZATION_CONSTANT_U32(kTileSize, 5u);
 
 #define DEBUG_CASCADES 0
 
@@ -165,13 +165,13 @@ void main()
 	}
 
 	// Point lights
-	ANKI_LOOP while(cluster.m_pointLightsMask != ExtendedClusterObjectMask(0))
+	[[dont_unroll]] while(cluster.m_pointLightsMask != ExtendedClusterObjectMask(0))
 	{
 		const I32 idx = findLSB2(cluster.m_pointLightsMask);
 		cluster.m_pointLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
 		const PointLight light = u_pointLights2[idx];
 
-		ANKI_BRANCH if(light.m_shadowAtlasTileScale >= 0.0)
+		[[branch]] if(light.m_shadowAtlasTileScale >= 0.0)
 		{
 			const Vec3 frag2Light = light.m_position - worldPos;
 
@@ -187,13 +187,13 @@ void main()
 	}
 
 	// Spot lights
-	ANKI_LOOP while(cluster.m_spotLightsMask != ExtendedClusterObjectMask(0))
+	[[dont_unroll]] while(cluster.m_spotLightsMask != ExtendedClusterObjectMask(0))
 	{
 		const I32 idx = findLSB2(cluster.m_spotLightsMask);
 		cluster.m_spotLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
 		const SpotLight light = u_spotLights[idx];
 
-		ANKI_BRANCH if(light.m_shadowLayer != kMaxU32)
+		[[branch]] if(light.m_shadowLayer != kMaxU32)
 		{
 #if PCF
 			const ANKI_RP F32 shadowFactor = computeShadowFactorSpotLightPcf(light, worldPos, u_shadowAtlasTex,

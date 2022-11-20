@@ -256,7 +256,7 @@ out gl_PerVertex
 
 void main()
 {
-	gl_Position = Vec4(gl_VertexID);
+	gl_Position = Vec4(gl_VertexIndex);
 }
 #pragma anki end
 

@@ -9,9 +9,9 @@
 #pragma anki mutator KERNEL_SIZE 3 5 7 9 11
 #pragma anki mutator COLOR_COMPONENTS 4 3 1
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(kTextureSize, 0u);
-
 #include <AnKi/Shaders/GaussianBlurCommon.glsl>
+
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(kTextureSize, 0u);
 
 #if defined(ANKI_COMPUTE_SHADER)
 const UVec2 kWorkgroupSize = UVec2(8, 8);
@@ -60,7 +60,7 @@ void main()
 {
 	// Set UVs
 #if USE_COMPUTE
-	ANKI_BRANCH if(gl_GlobalInvocationID.x >= kTextureSize.x || gl_GlobalInvocationID.y >= kTextureSize.y)
+	[[branch]] if(gl_GlobalInvocationID.x >= kTextureSize.x || gl_GlobalInvocationID.y >= kTextureSize.y)
 	{
 		// Out of bounds
 		return;
@@ -87,7 +87,7 @@ void main()
 	Vec2 uvOffset = Vec2(0.0);
 	uvOffset.X_OR_Y = 1.5 * TEXEL_SIZE.X_OR_Y;
 
-	ANKI_UNROLL for(U32 i = 0u; i < kStepCount; ++i)
+	[[unroll]] for(U32 i = 0u; i < kStepCount; ++i)
 	{
 		COL_TYPE col = textureLod(u_tex, u_linearAnyClampSampler, uv + uvOffset, 0.0).TEX_FETCH;
 		col += textureLod(u_tex, u_linearAnyClampSampler, uv - uvOffset, 0.0).TEX_FETCH;

@@ -94,14 +94,14 @@ void main()
 	}
 
 	// Subgroup reduce
-	ANKI_UNROLL for(U32 f = 0u; f < 6u; ++f)
+	[[unroll]] for(U32 f = 0u; f < 6u; ++f)
 	{
 		resultFaces[f] = subgroupAdd(resultFaces[f]);
 	}
 
-	ANKI_BRANCH if(subgroupElect())
+	[[branch]] if(subgroupElect())
 	{
-		ANKI_UNROLL for(U32 f = 0u; f < 6u; ++f)
+		[[unroll]] for(U32 f = 0u; f < 6u; ++f)
 		{
 			s_integrationResults[f][gl_SubgroupID] = resultFaces[f];
 		}
@@ -111,9 +111,9 @@ void main()
 	barrier();
 
 	// Worgroup reduce
-	ANKI_BRANCH if(gl_LocalInvocationIndex == 0u)
+	[[branch]] if(gl_LocalInvocationIndex == 0u)
 	{
-		ANKI_UNROLL for(U32 f = 0u; f < 6u; ++f)
+		[[unroll]] for(U32 f = 0u; f < 6u; ++f)
 		{
 			for(U32 i = 1u; i < gl_NumSubgroups; ++i)
 			{
@@ -162,14 +162,14 @@ void main()
 	}
 
 	// Subgroup reduce
-	ANKI_UNROLL for(U32 f = 0u; f < 6u; ++f)
+	[[unroll]] for(U32 f = 0u; f < 6u; ++f)
 	{
 		resultFaces[f] = subgroupAdd(resultFaces[f]);
 	}
 
-	ANKI_BRANCH if(subgroupElect())
+	[[branch]] if(subgroupElect())
 	{
-		ANKI_UNROLL for(U32 f = 0u; f < 6u; ++f)
+		[[unroll]] for(U32 f = 0u; f < 6u; ++f)
 		{
 			s_integrationResults[f][gl_SubgroupID] = resultFaces[f];
 		}
@@ -179,9 +179,9 @@ void main()
 	barrier();
 
 	// Worgroup reduce
-	ANKI_BRANCH if(gl_LocalInvocationIndex == 0u)
+	[[branch]] if(gl_LocalInvocationIndex == 0u)
 	{
-		ANKI_UNROLL for(U32 f = 0u; f < 6u; ++f)
+		[[unroll]] for(U32 f = 0u; f < 6u; ++f)
 		{
 			for(U32 i = 1u; i < gl_NumSubgroups; ++i)
 			{

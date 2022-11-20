@@ -60,7 +60,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos)
 	Cluster cluster = getClusterFragCoord(gl_FragCoord.xyz);
 
 	// Point lights
-	ANKI_LOOP while(cluster.m_pointLightsMask != ExtendedClusterObjectMask(0))
+	[[dont_unroll]] while(cluster.m_pointLightsMask != ExtendedClusterObjectMask(0))
 	{
 		const I32 idx = findLSB2(cluster.m_pointLightsMask);
 		cluster.m_pointLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
@@ -85,7 +85,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos)
 	}
 
 	// Spot lights
-	ANKI_LOOP while(cluster.m_spotLightsMask != ExtendedClusterObjectMask(0))
+	[[dont_unroll]] while(cluster.m_spotLightsMask != ExtendedClusterObjectMask(0))
 	{
 		const I32 idx = findLSB2(cluster.m_spotLightsMask);
 		cluster.m_spotLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
@@ -104,7 +104,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos)
 		const F32 shadow = 1.0;
 #	else
 		F32 shadow = 1.0;
-		ANKI_BRANCH if(light.m_shadowLayer != kMaxU32)
+		[[branch]] if(light.m_shadowLayer != kMaxU32)
 		{
 			shadow = computeShadowFactorSpotLight(light, worldPos, u_shadowAtlasTex, u_shadowSampler);
 		}

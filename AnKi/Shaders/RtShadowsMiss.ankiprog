@@ -8,6 +8,8 @@
 
 #pragma anki start miss
 
+#include <AnKi/Shaders/Common.glsl>
+
 layout(location = 0) rayPayloadInEXT F32 g_payload;
 
 void main()

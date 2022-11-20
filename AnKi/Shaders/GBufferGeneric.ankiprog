@@ -119,7 +119,7 @@ void skinning()
 {
 	ANKI_RP Mat4 skinMat = u_boneTransforms[in_boneIndices[0]] * in_boneWeights[0];
 	ANKI_RP Mat4 prevSkinMat = u_prevFrameBoneTransforms[in_boneIndices[0]] * in_boneWeights[0];
-	ANKI_UNROLL for(U32 i = 1u; i < 4u; ++i)
+	[[unroll]] for(U32 i = 1u; i < 4u; ++i)
 	{
 		skinMat += u_boneTransforms[in_boneIndices[i]] * in_boneWeights[i];
 		prevSkinMat += u_prevFrameBoneTransforms[in_boneIndices[i]] * in_boneWeights[i];
@@ -259,7 +259,7 @@ Vec2 computeTextureCoordParallax(texture2D heightMap, sampler sampl, Vec2 uv, F3
 	U32 crntSample = 0u;
 
 	const U32 sampleCount = U32(sampleCountf);
-	ANKI_LOOP while(crntSample < sampleCount)
+	[[dont_unroll]] while(crntSample < sampleCount)
 	{
 		crntSampledHeight = textureGrad(heightMap, sampl, uv + crntOffset, dPdx, dPdy).r;
 

@@ -3,14 +3,14 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC3(kVolumeSize, 0u);
-ANKI_SPECIALIZATION_CONSTANT_U32(kFinalZSplit, 3u);
-ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 4u);
-
 #pragma anki start comp
 
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #include <AnKi/Shaders/Common.glsl>
+
+ANKI_SPECIALIZATION_CONSTANT_UVEC3(kVolumeSize, 0u);
+ANKI_SPECIALIZATION_CONSTANT_U32(kFinalZSplit, 3u);
+ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 4u);
 
 const UVec2 kWorkgroupSize = UVec2(8, 8);
 layout(local_size_x = kWorkgroupSize.x, local_size_y = kWorkgroupSize.y, local_size_z = 1) in;
@@ -34,7 +34,7 @@ void main()
 	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(kVolumeSize.xy);
 
 	ANKI_RP Vec4 colorAndDensityFront = Vec4(0.0);
-	ANKI_LOOP for(U32 i = 0u; i < kVolumeSize.z; ++i)
+	[[dont_unroll]] for(U32 i = 0u; i < kVolumeSize.z; ++i)
 	{
 		const ANKI_RP F32 fi = F32(i);
 

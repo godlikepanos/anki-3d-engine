@@ -18,7 +18,7 @@ layout(location = 1) flat out ANKI_RP Vec4 out_color;
 
 void main()
 {
-	const Vec2 position = UV_TO_NDC(Vec2(gl_VertexID & 1, gl_VertexID >> 1));
+	const Vec2 position = UV_TO_NDC(Vec2(gl_VertexIndex & 1, gl_VertexIndex >> 1));
 
 	const LensFlareSprite sprite = u_sprites[gl_InstanceIndex];
 

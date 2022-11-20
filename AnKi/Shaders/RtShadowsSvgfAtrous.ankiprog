@@ -5,13 +5,13 @@
 
 #pragma anki mutator LAST_PASS 0 1
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(kFramebufferSize, 0u);
-
 #pragma anki start comp
 
 #include <AnKi/Shaders/RtShadows.glsl>
 #include <AnKi/Shaders/BilateralFilter.glsl>
 #include <AnKi/Shaders/Functions.glsl>
+
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(kFramebufferSize, 0u);
 
 const UVec2 kWorkgroupSize = UVec2(8, 8);
 layout(local_size_x = kWorkgroupSize.x, local_size_y = kWorkgroupSize.y, local_size_z = 1) in;
@@ -45,7 +45,7 @@ Vec3 toViewspace(Vec2 uv, F32 depth)
 F32 computeShadowsLuma(F32 shadowLayers[kMaxRtShadowLayers])
 {
 	F32 l = 0.0;
-	ANKI_UNROLL for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
+	[[unroll]] for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
 	{
 		l += shadowLayers[i];
 	}
@@ -141,7 +141,7 @@ void main()
 			// w *= kKernelWeights[abs(offsetx)] * kKernelWeights[abs(offsety)];
 
 			// Sum
-			ANKI_UNROLL for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
+			[[unroll]] for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
 			{
 				sumShadowLayers[i] += shadowLayers[i] * w;
 			}
@@ -154,7 +154,7 @@ void main()
 	// Normalize
 	sumWeight += kEpsilonf;
 
-	ANKI_UNROLL for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
+	[[unroll]] for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
 	{
 		sumShadowLayers[i] /= sumWeight;
 	}

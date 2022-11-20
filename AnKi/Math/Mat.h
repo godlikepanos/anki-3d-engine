@@ -39,10 +39,10 @@ public:
 	static constexpr U kRowCount = kTRowCount; ///< Number of rows
 	static constexpr U kColumnCount = kTColumnCount; ///< Number of columns
 	static constexpr U kSize = kTRowCount * kTColumnCount; ///< Number of total elements
-	static constexpr Bool kHasSIMD = kTColumnCount == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
-	static constexpr Bool kHasMat4SIMD =
+	static constexpr Bool kHasSimd = kTColumnCount == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
+	static constexpr Bool kHasMat4Simd =
 		kTRowCount == 4 && kTColumnCount == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
-	static constexpr Bool kHasMat3x4SIMD =
+	static constexpr Bool kHasMat3x4Simd =
 		kTRowCount == 3 && kTColumnCount == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
 
 	/// @name Constructors
@@ -322,7 +322,7 @@ public:
 		return *this;
 	}
 
-	ANKI_ENABLE_METHOD(kTRowCount == kTColumnCount && !kHasMat4SIMD)
+	ANKI_ENABLE_METHOD(kTRowCount == kTColumnCount && !kHasMat4Simd)
 	TMat operator*(const TMat& b) const
 	{
 		TMat out;
@@ -342,7 +342,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(kHasMat4SIMD)
+	ANKI_ENABLE_METHOD(kHasMat4Simd)
 	TMat operator*(const TMat& b) const
 	{
 		TMat out;
@@ -496,7 +496,7 @@ public:
 
 	/// @name Operators with other types
 	/// @{
-	ANKI_ENABLE_METHOD(!kHasSIMD)
+	ANKI_ENABLE_METHOD(!kHasSimd)
 	ColumnVec operator*(const RowVec& v) const
 	{
 		const TMat& m = *this;
@@ -513,22 +513,44 @@ public:
 		return out;
 	}
 
-#if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(kHasSIMD)
+#if ANKI_SIMD_SSE
+	ANKI_ENABLE_METHOD(kHasMat4Simd)
+	ColumnVec operator*(const RowVec& v) const
+	{
+		__m128 a = _mm_mul_ps(m_simd[0], v.getSimd());
+		__m128 b = _mm_mul_ps(m_simd[1], v.getSimd());
+		__m128 c = _mm_mul_ps(m_simd[2], v.getSimd());
+		__m128 d = _mm_mul_ps(m_simd[3], v.getSimd());
+
+		a = _mm_hadd_ps(a, b);
+		c = _mm_hadd_ps(c, d);
+
+		return RowVec(_mm_hadd_ps(a, c));
+	}
+
+	ANKI_ENABLE_METHOD(kHasMat3x4Simd)
+	ColumnVec operator*(const RowVec& v) const
+	{
+		__m128 a = _mm_mul_ps(m_simd[0], v.getSimd());
+		__m128 b = _mm_mul_ps(m_simd[1], v.getSimd());
+		__m128 c = _mm_mul_ps(m_simd[2], v.getSimd());
+
+		a = _mm_hadd_ps(a, b);
+		const RowVec d(_mm_hadd_ps(a, c));
+
+		return ColumnVec(d[0], d[1], d[2] + d[3]);
+	}
+
+#else
+
+	ANKI_ENABLE_METHOD(kHasSimd)
 	ColumnVec operator*(const RowVec& v) const
 	{
 		ColumnVec out;
-#	if ANKI_SIMD_SSE
-		for(U i = 0; i < kTRowCount; i++)
-		{
-			_mm_store_ss(&out[i], _mm_dp_ps(m_simd[i], v.getSimd(), 0xF1));
-		}
-#	else
 		for(U i = 0; i < kTRowCount; i++)
 		{
 			out[i] = RowVec(m_simd[i]).dot(v);
 		}
-#	endif
 		return out;
 	}
 #endif
@@ -929,7 +951,7 @@ public:
 		setColumns(xAxis, yAxis, zAxis);
 	}
 
-	ANKI_ENABLE_METHOD(kTRowCount == kTColumnCount && !kHasSIMD)
+	ANKI_ENABLE_METHOD(kTRowCount == kTColumnCount && !kHasSimd)
 	void transpose()
 	{
 		for(U j = 0; j < kTRowCount; j++)
@@ -944,7 +966,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(kTRowCount == kTColumnCount && kHasSIMD)
+	ANKI_ENABLE_METHOD(kTRowCount == kTColumnCount && kHasSimd)
 	void transpose()
 	{
 #	if ANKI_SIMD_SSE
@@ -1164,7 +1186,7 @@ public:
 	}
 
 	/// Create a new matrix that is equivalent to Mat4(this)*Mat4(b)
-	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 4 && !kHasSIMD)
+	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 4 && !kHasSimd)
 	TMat combineTransformations(const TMat& b) const
 	{
 		const auto& a = *this;
@@ -1190,7 +1212,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 4 && kHasSIMD)
+	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 4 && kHasSimd)
 	TMat combineTransformations(const TMat& b) const
 	{
 		TMat c;

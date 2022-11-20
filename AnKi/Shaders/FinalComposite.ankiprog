@@ -7,10 +7,6 @@
 #pragma anki mutator BLOOM_ENABLED 0 1
 #pragma anki mutator DBG_ENABLED 0 1
 
-ANKI_SPECIALIZATION_CONSTANT_U32(kLutSize, 0u);
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(kFramebufferSize, 1u);
-ANKI_SPECIALIZATION_CONSTANT_U32(kMotionBlurSamples, 3u);
-
 #pragma anki start vert
 #include <AnKi/Shaders/QuadVert.glsl>
 #pragma anki end
@@ -19,6 +15,10 @@ ANKI_SPECIALIZATION_CONSTANT_U32(kMotionBlurSamples, 3u);
 #include <AnKi/Shaders/Common.glsl>
 #include <AnKi/Shaders/Functions.glsl>
 #include <AnKi/Shaders/MotionBlur.glsl>
+
+ANKI_SPECIALIZATION_CONSTANT_U32(kLutSize, 0u);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(kFramebufferSize, 1u);
+ANKI_SPECIALIZATION_CONSTANT_U32(kMotionBlurSamples, 3u);
 
 layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
 layout(set = 0, binding = 1) uniform sampler u_linearAnyClampSampler;

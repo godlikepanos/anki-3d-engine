@@ -7,14 +7,14 @@
 
 #pragma anki start comp
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(kOutImageSize, 0u);
-ANKI_SPECIALIZATION_CONSTANT_U32(kMinSampleCount, 2u);
-ANKI_SPECIALIZATION_CONSTANT_U32(kMaxSampleCount, 3u);
-
 #include <AnKi/Shaders/BilateralFilter.glsl>
 #include <AnKi/Shaders/PackFunctions.glsl>
 #include <AnKi/Shaders/RtShadows.glsl>
 #include <AnKi/Shaders/Functions.glsl>
+
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(kOutImageSize, 0u);
+ANKI_SPECIALIZATION_CONSTANT_U32(kMinSampleCount, 2u);
+ANKI_SPECIALIZATION_CONSTANT_U32(kMaxSampleCount, 3u);
 
 const UVec2 kWorkgroupSize = UVec2(8u, 8u);
 layout(local_size_x = kWorkgroupSize.x, local_size_y = kWorkgroupSize.y, local_size_z = 1) in;
@@ -138,7 +138,7 @@ void main()
 
 		w *= gaussianWeight(0.4, abs(F32(i)) / F32(sampleCount + 1u));
 
-		ANKI_UNROLL for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
+		[[unroll]] for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
 		{
 			shadowFactors[i] += localShadowFactors[i] * w;
 		}
@@ -147,7 +147,7 @@ void main()
 	}
 
 	// Write value
-	ANKI_UNROLL for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
+	[[unroll]] for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
 	{
 		shadowFactors[i] /= weight;
 	}

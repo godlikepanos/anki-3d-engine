@@ -46,7 +46,7 @@ ANKI_RP Vec3 motionBlur(texture2D motionVectorsRt, sampler motionVectorsRtSample
 	// Sample
 	const ANKI_RP F32 weight = 1.0 / sampleCountf;
 	ANKI_RP Vec3 outColor = textureLod(toBlurRt, toBlurRtSampler, uv, 0.0).rgb * weight;
-	ANKI_LOOP for(F32 s = 1.0; s < sampleCountf; s += 1.0)
+	[[dont_unroll]] for(F32 s = 1.0; s < sampleCountf; s += 1.0)
 	{
 		const F32 f = s / sampleCountf;
 		const Vec2 sampleUv = uv + velocity * f;

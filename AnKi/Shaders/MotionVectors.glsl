@@ -5,11 +5,11 @@
 
 // Calculates the motion vectors that will be used to sample from the previous frame
 
+#include <AnKi/Shaders/Functions.glsl>
+
 ANKI_SPECIALIZATION_CONSTANT_UVEC2(kFramebufferSize, 0u);
 const F32 kMaxRejectionDistance = 0.1; // In meters
 const F32 kMaxHistoryLength = 16.0;
-
-#include <AnKi/Shaders/Functions.glsl>
 
 layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 1) uniform texture2D u_currentDepthTex;

@@ -3,17 +3,17 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-ANKI_SPECIALIZATION_CONSTANT_U32(kTileSize, 0u);
-ANKI_SPECIALIZATION_CONSTANT_U32(kTileCountX, 1u);
-ANKI_SPECIALIZATION_CONSTANT_U32(kTileCountY, 2u);
-ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 3u);
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(kRenderingSize, 4u);
-
 #pragma anki start comp
 
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 #include <AnKi/Shaders/Common.glsl>
 #include <AnKi/Shaders/CollisionFunctions.glsl>
+
+ANKI_SPECIALIZATION_CONSTANT_U32(kTileSize, 0u);
+ANKI_SPECIALIZATION_CONSTANT_U32(kTileCountX, 1u);
+ANKI_SPECIALIZATION_CONSTANT_U32(kTileCountY, 2u);
+ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 3u);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(kRenderingSize, 4u);
 
 const U32 kWorkgroupSize = 64u;
 layout(local_size_x = kWorkgroupSize) in;

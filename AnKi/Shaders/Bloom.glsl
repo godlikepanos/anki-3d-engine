@@ -3,10 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(kViewport, 0u);
-
 #include <AnKi/Shaders/TonemappingFunctions.glsl>
 #include <AnKi/Shaders/Functions.glsl>
+
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(kViewport, 0u);
 
 layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 1) uniform ANKI_RP texture2D u_tex; ///< Its the IS RT

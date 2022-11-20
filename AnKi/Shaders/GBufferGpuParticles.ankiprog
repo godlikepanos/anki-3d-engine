@@ -48,20 +48,20 @@ layout(location = 2) out flat ANKI_RP Vec3 out_normal;
 
 void main()
 {
-	const GpuParticle part = u_particles[gl_VertexID / 2];
+	const GpuParticle part = u_particles[gl_VertexIndex / 2];
 
 	const Vec4 crntClipPos = u_globalUniforms.m_viewProjectionMatrix
 							 * Vec4(u_renderableGpuViews[0].m_worldTransform * Vec4(part.m_newWorldPosition, 1.0), 1.0);
 	const Vec4 prevClipPos = u_globalUniforms.m_viewProjectionMatrix
 							 * Vec4(u_renderableGpuViews[0].m_worldTransform * Vec4(part.m_oldWorldPosition, 1.0), 1.0);
 
-	gl_Position = ((gl_VertexID & 1) == 0) ? crntClipPos : prevClipPos;
+	gl_Position = ((gl_VertexIndex & 1) == 0) ? crntClipPos : prevClipPos;
 
 	const Vec2 crntNdc = crntClipPos.xy / crntClipPos.w;
 	const Vec2 prevNdc = prevClipPos.xy / prevClipPos.w;
 
 	// It's NDC_TO_UV(prevNdc) - NDC_TO_UV(crntNdc) or:
-	out_velocity = ((gl_VertexID & 1) == 0) ? Vec2(0.0) : (prevNdc - crntNdc) * 0.5;
+	out_velocity = ((gl_VertexIndex & 1) == 0) ? Vec2(0.0) : (prevNdc - crntNdc) * 0.5;
 
 	out_lifeFactor = saturate(1.0 - (part.m_life / part.m_startingLife));
 

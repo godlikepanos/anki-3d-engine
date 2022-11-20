@@ -24,7 +24,7 @@ out gl_PerVertex
 #if LIGHT_TYPE == DIR_LIGHT_TYPE
 void main()
 {
-	Vec2 uv = Vec2(gl_VertexID & 1, gl_VertexID >> 1) * 2.0;
+	Vec2 uv = Vec2(gl_VertexIndex & 1, gl_VertexIndex >> 1) * 2.0;
 	Vec2 pos = uv * 2.0 - 1.0;
 	gl_Position = Vec4(pos, 0.0, 1.0);
 }

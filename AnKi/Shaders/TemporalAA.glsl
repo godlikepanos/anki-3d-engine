@@ -6,13 +6,13 @@
 #pragma anki mutator VARIANCE_CLIPPING 0 1
 #pragma anki mutator YCBCR 0 1
 
-ANKI_SPECIALIZATION_CONSTANT_F32(kVarianceClippingGamma, 0u);
-ANKI_SPECIALIZATION_CONSTANT_F32(kBlendFactor, 1u);
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(kFramebufferSize, 2u);
-
 #include <AnKi/Shaders/Functions.glsl>
 #include <AnKi/Shaders/PackFunctions.glsl>
 #include <AnKi/Shaders/TonemappingFunctions.glsl>
+
+ANKI_SPECIALIZATION_CONSTANT_F32(kVarianceClippingGamma, 0u);
+ANKI_SPECIALIZATION_CONSTANT_F32(kBlendFactor, 1u);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(kFramebufferSize, 2u);
 
 layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 1) uniform texture2D u_depthRt;

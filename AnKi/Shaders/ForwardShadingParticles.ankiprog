@@ -45,7 +45,7 @@ layout(location = 2) out Vec3 out_worldPos;
 
 void main()
 {
-	out_uv = Vec2(gl_VertexID & 1, gl_VertexID >> 1);
+	out_uv = Vec2(gl_VertexIndex & 1, gl_VertexIndex >> 1);
 
 	out_worldPos = u_ankiGlobals.m_cameraTransform * Vec4((out_uv - 0.5) * in_scale, 0.0, 0.0) + in_position;
 	gl_Position = u_ankiGlobals.m_viewProjectionMatrix
