@@ -8,7 +8,7 @@
 #include <AnKi/Shaders/Include/ParticleTypes.h>
 #include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
-#include <AnKi/Shaders/Common.glsl>
+#include <AnKi/Shaders/Functions.glsl>
 
 #pragma anki reflect AnKiLocalUniforms
 #pragma anki struct AnKiLocalUniforms
@@ -50,10 +50,13 @@ void main()
 {
 	const GpuParticle part = u_particles[gl_VertexIndex / 2];
 
-	const Vec4 crntClipPos = u_globalUniforms.m_viewProjectionMatrix
-							 * Vec4(u_renderableGpuViews[0].m_worldTransform * Vec4(part.m_newWorldPosition, 1.0), 1.0);
-	const Vec4 prevClipPos = u_globalUniforms.m_viewProjectionMatrix
-							 * Vec4(u_renderableGpuViews[0].m_worldTransform * Vec4(part.m_oldWorldPosition, 1.0), 1.0);
+	Vec4 crntClipPos =
+		Vec4(transform(u_renderableGpuViews[0].m_worldTransform, Vec4(part.m_newWorldPosition, 1.0)), 1.0);
+	crntClipPos = u_globalUniforms.m_viewProjectionMatrix * crntClipPos;
+
+	Vec4 prevClipPos =
+		Vec4(transform(u_renderableGpuViews[0].m_worldTransform, Vec4(part.m_oldWorldPosition, 1.0)), 1.0);
+	prevClipPos = u_globalUniforms.m_viewProjectionMatrix * prevClipPos;
 
 	gl_Position = ((gl_VertexIndex & 1) == 0) ? crntClipPos : prevClipPos;
 

@@ -8,6 +8,7 @@
 #pragma anki mutator LIGHT 0 1
 
 #include <AnKi/Shaders/ForwardShadingCommon.glsl>
+#include <AnKi/Shaders/Functions.glsl>
 
 #pragma anki reflect AnKiLocalUniforms
 #pragma anki struct AnKiLocalUniforms
@@ -47,7 +48,7 @@ layout(location = 1) out Vec3 out_worldPosition;
 
 void main()
 {
-	out_worldPosition = u_renderableGpuViews[gl_InstanceIndex].m_worldTransform * Vec4(in_position, 1.0);
+	out_worldPosition = transform(u_renderableGpuViews[gl_InstanceIndex].m_worldTransform, Vec4(in_position, 1.0));
 
 	gl_Position = u_globalUniforms.m_viewProjectionMatrix * Vec4(out_worldPosition, 1.0);
 

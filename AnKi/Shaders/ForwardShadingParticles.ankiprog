@@ -48,8 +48,9 @@ void main()
 	out_uv = Vec2(gl_VertexIndex & 1, gl_VertexIndex >> 1);
 
 	out_worldPos = u_ankiGlobals.m_cameraTransform * Vec4((out_uv - 0.5) * in_scale, 0.0, 0.0) + in_position;
-	gl_Position = u_ankiGlobals.m_viewProjectionMatrix
-				  * Vec4(u_renderableGpuViews[0].m_worldTransform * Vec4(out_worldPos, 1.0), 1.0);
+
+	gl_Position = Vec4(transform(u_renderableGpuViews[0].m_worldTransform, Vec4(out_worldPos, 1.0)), 1.0);
+	gl_Position = u_ankiGlobals.m_viewProjectionMatrix * gl_Position;
 
 	out_alpha = in_alpha;
 }

@@ -6,6 +6,7 @@
 #pragma anki mutator ANKI_TECHNIQUE 3
 
 #include <AnKi/Shaders/ForwardShadingCommon.glsl>
+#include <AnKi/Shaders/Functions.glsl>
 
 struct PerDraw
 {
@@ -44,7 +45,7 @@ layout(location = 0) out F32 out_zVSpace;
 void main()
 {
 	const RenderableGpuView renderable = u_renderableGpuViews[0];
-	const Vec3 worldPos = renderable.m_worldTransform * Vec4(in_position, 1.0);
+	const Vec3 worldPos = transform(renderable.m_worldTransform, Vec4(in_position, 1.0));
 
 	gl_Position = u_global.m_viewProjectionMatrix * Vec4(worldPos, 1.0);
 

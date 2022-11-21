@@ -27,6 +27,7 @@
 #define REALLY_ALPHA_TEST (ALPHA_TEST && DIFFUSE_TEX)
 
 #include <AnKi/Shaders/GBufferCommon.glsl>
+#include <AnKi/Shaders/Functions.glsl>
 
 layout(set = kMaterialSetGlobal, binding = kMaterialBindingTrilinearRepeatSampler) uniform sampler u_globalSampler;
 
@@ -139,10 +140,11 @@ void skinning()
 #if ANKI_TECHNIQUE == RENDERING_TECHNIQUE_GBUFFER
 void positionUvNormalTangent()
 {
-	gl_Position = u_globalUniforms.m_viewProjectionMatrix
-				  * Vec4(u_renderableGpuViews[gl_InstanceIndex].m_worldTransform * Vec4(g_position, 1.0), 1.0);
-	out_normal = u_renderableGpuViews[gl_InstanceIndex].m_worldTransform * Vec4(g_normal, 0.0);
-	out_tangent = u_renderableGpuViews[gl_InstanceIndex].m_worldTransform * Vec4(g_tangent.xyz, 0.0);
+	gl_Position = Vec4(transform(u_renderableGpuViews[gl_InstanceIndex].m_worldTransform, Vec4(g_position, 1.0)), 1.0);
+	gl_Position = u_globalUniforms.m_viewProjectionMatrix * gl_Position;
+
+	out_normal = transform(u_renderableGpuViews[gl_InstanceIndex].m_worldTransform, Vec4(g_normal, 0.0));
+	out_tangent = transform(u_renderableGpuViews[gl_InstanceIndex].m_worldTransform, Vec4(g_tangent.xyz, 0.0));
 	out_bitangent = cross(out_normal, out_tangent) * g_tangent.w;
 	out_uv = g_uv;
 }
@@ -161,9 +163,9 @@ void parallax()
 	// const Mat3 invTbn = transpose(u_globalUniforms.m_viewRotationMatrix
 	//							  * u_renderableGpuViews[gl_InstanceIndex].m_worldRotation * Mat3(t, b, n));
 
-	const Vec3 viewPos = (u_globalUniforms.m_viewMatrix
-						  * Vec4(u_renderableGpuViews[gl_InstanceIndex].m_worldTransform * Vec4(g_position, 1.0), 1.0))
-							 .xyz;
+	const Vec4 v4 =
+		Vec4(transform(u_renderableGpuViews[gl_InstanceIndex].m_worldTransform, Vec4(g_position, 1.0)), 1.0);
+	const Vec3 viewPos = u_globalUniforms.m_viewMatrix * v4;
 	out_distFromTheCamera = viewPos.z;
 
 	out_eyeTangentSpace = invTbn * viewPos;
@@ -178,13 +180,14 @@ void velocity()
 
 #	if ANKI_VELOCITY
 	// Object is also moving
-	const Mat3x4 trf = u_renderableGpuViews[gl_InstanceIndex].m_previousWorldTransform;
+	const Vec4 trf[3] = u_renderableGpuViews[gl_InstanceIndex].m_previousWorldTransform;
 #	else
 	// Object is a skin that is not moving
-	const Mat3x4 trf = u_renderableGpuViews[gl_InstanceIndex].m_worldTransform;
+	const Vec4 trf[3] = u_renderableGpuViews[gl_InstanceIndex].m_worldTransform;
 #	endif
 
-	const Vec4 v4 = u_globalUniforms.m_previousViewProjectionMatrix * Vec4(trf * Vec4(prevLocalPos, 1.0), 1.0);
+	Vec4 v4 = Vec4(transform(trf, Vec4(prevLocalPos, 1.0)), 1.0);
+	v4 = u_globalUniforms.m_previousViewProjectionMatrix * v4;
 
 	out_prevClipXyw = v4.xyw;
 	out_crntClipXyw = gl_Position.xyw;
@@ -208,8 +211,8 @@ void main()
 	velocity();
 #	endif
 #else
-	gl_Position = u_globalUniforms.m_viewProjectionMatrix
-				  * Vec4(u_renderableGpuViews[gl_InstanceIndex].m_worldTransform * Vec4(g_position, 1.0), 1.0);
+	gl_Position = Vec4(transform(u_renderableGpuViews[gl_InstanceIndex].m_worldTransform, Vec4(g_position, 1.0)), 1.0);
+	gl_Position = u_globalUniforms.m_viewProjectionMatrix * gl_Position;
 
 #	if REALLY_ALPHA_TEST
 	out_uv = g_uv;
