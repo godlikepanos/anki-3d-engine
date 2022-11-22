@@ -14,8 +14,8 @@ namespace anki {
 /// @addtogroup shader_compiler
 /// @{
 
-constexpr const char* SHADER_BINARY_MAGIC = "ANKISDR8"; ///< WARNING: If changed change SHADER_BINARY_VERSION
-constexpr U32 SHADER_BINARY_VERSION = 8;
+inline constexpr const char* kShaderBinaryMagic = "ANKISDR8"; //! WARNING: If changed change kShaderBinaryVersion
+constexpr U32 kShaderBinaryVersion = 8;
 
 /// A wrapper over the POD ShaderProgramBinary class.
 /// @memberof ShaderProgramCompiler
@@ -72,7 +72,7 @@ Error ShaderProgramBinaryWrapper::deserializeFromAnyFile(TFile& file)
 
 	m_singleAllocation = true;
 
-	if(memcmp(SHADER_BINARY_MAGIC, &m_binary->m_magic[0], strlen(SHADER_BINARY_MAGIC)) != 0)
+	if(memcmp(kShaderBinaryMagic, &m_binary->m_magic[0], strlen(kShaderBinaryMagic)) != 0)
 	{
 		ANKI_SHADER_COMPILER_LOGE("Corrupted or wrong version of shader binary.");
 		return Error::kUserData;

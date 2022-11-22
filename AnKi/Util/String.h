@@ -889,7 +889,7 @@ public:
 		destroy();
 		if(!b.isEmpty())
 		{
-			create(b.getBegin(), b.getEnd() - 1);
+			create(b.getBegin(), b.getEnd());
 		}
 		return *this;
 	}

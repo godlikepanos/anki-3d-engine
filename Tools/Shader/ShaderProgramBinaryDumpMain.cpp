@@ -14,18 +14,18 @@ Options:
 -stats : Print performance statistics for all shaders. By default it doesn't
 )";
 
-static Error parseCommandLineArgs(int argc, char** argv, Bool& dumpStats, StringRaii& filename)
+static Error parseCommandLineArgs(WeakArray<char*> argv, Bool& dumpStats, StringRaii& filename)
 {
 	// Parse config
-	if(argc < 2)
+	if(argv.getSize() < 2)
 	{
 		return Error::kUserData;
 	}
 
 	dumpStats = false;
-	filename = argv[argc - 1];
+	filename = argv[argv.getSize() - 1];
 
-	for(I i = 1; i < argc - 1; i++)
+	for(U32 i = 1; i < argv.getSize() - 1; i++)
 	{
 		if(strcmp(argv[i], "-stats") == 0)
 		{
@@ -194,7 +194,7 @@ int main(int argc, char** argv)
 	HeapMemoryPool pool(allocAligned, nullptr);
 	StringRaii filename(&pool);
 	Bool dumpStats;
-	if(parseCommandLineArgs(argc, argv, dumpStats, filename))
+	if(parseCommandLineArgs(WeakArray<char*>(argv, argc), dumpStats, filename))
 	{
 		ANKI_LOGE(kUsage, argv[0]);
 		return 1;

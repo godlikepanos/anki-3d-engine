@@ -10,6 +10,10 @@
 
 #	include <AnKi/Math.h>
 
+#	define ANKI_HLSL 0
+#	define ANKI_GLSL 0
+#	define ANKI_CPP 1
+
 #	define ANKI_BEGIN_NAMESPACE namespace anki {
 #	define ANKI_END_NAMESPACE }
 #	define ANKI_SHADER_FUNC_INLINE inline
@@ -17,9 +21,7 @@
 #	define ANKI_SHADER_STATIC_ASSERT(cond_) static_assert(cond_)
 
 ANKI_BEGIN_NAMESPACE
-
 using Address = U64;
-
 using ScalarVec4 = Array<F32, 4>;
 using ScalarMat3x4 = Array<F32, 12>;
 using ScalarMat4 = Array<F32, 16>;
@@ -27,8 +29,121 @@ ANKI_END_NAMESPACE
 
 #	define ANKI_RP
 
+//! == HLSL ============================================================================================================
+#elif defined(__HLSL_VERSION)
+#	define ANKI_HLSL 1
+#	define ANKI_GLSL 0
+#	define ANKI_CPP 0
+
+#	define ANKI_BEGIN_NAMESPACE
+#	define ANKI_END_NAMESPACE
+#	define ANKI_SHADER_FUNC_INLINE
+
+#	define ANKI_SHADER_STATIC_ASSERT(cond_)
+
+#	define constexpr static const
+
+typedef float F32;
+constexpr uint kSizeof_F32 = 4u;
+typedef float2 Vec2;
+constexpr uint kSizeof_Vec2 = 8u;
+typedef float3 Vec3;
+constexpr uint kSizeof_Vec3 = 12u;
+typedef float4 Vec4;
+constexpr uint kSizeof_Vec4 = 16u;
+
+typedef float16_t F16;
+constexpr uint kSizeof_F16 = 2u;
+typedef float16_t2 HVec2;
+constexpr uint kSizeof_HVec2 = 4u;
+typedef float16_t3 HVec3;
+constexpr uint kSizeof_HVec3 = 6u;
+typedef float16_t4 HVec4;
+constexpr uint kSizeof_HVec4 = 8u;
+
+typedef uint16_t U16;
+constexpr uint kSizeof_U16 = 2u;
+typedef uint16_t2 U16Vec2;
+constexpr uint kSizeof_U16Vec2 = 4u;
+typedef uint16_t3 U16Vec3;
+constexpr uint kSizeof_U16Vec3 = 6u;
+typedef uint16_t4 U16Vec4;
+constexpr uint kSizeof_U16Vec4 = 8u;
+
+typedef int16_t I16;
+constexpr uint kSizeof_I16 = 2u;
+typedef int16_t2 I16Vec2;
+constexpr uint kSizeof_I16Vec2 = 4u;
+typedef int16_t3 I16Vec3;
+constexpr uint kSizeof_I16Vec3 = 6u;
+typedef int16_t4 I16Vec4;
+constexpr uint kSizeof_I16Vec4 = 8u;
+
+typedef uint U32;
+constexpr uint kSizeof_U32 = 4u;
+typedef uint32_t2 UVec2;
+constexpr uint kSizeof_UVec2 = 8u;
+typedef uint32_t3 UVec3;
+constexpr uint kSizeof_UVec3 = 12u;
+typedef uint32_t4 UVec4;
+constexpr uint kSizeof_UVec4 = 16u;
+
+typedef int I32;
+constexpr uint kSizeof_I32 = 4u;
+typedef int32_t2 IVec2;
+constexpr uint kSizeof_IVec2 = 8u;
+typedef int32_t3 IVec3;
+constexpr uint kSizeof_IVec3 = 12u;
+typedef int32_t4 IVec4;
+constexpr uint kSizeof_IVec4 = 16u;
+
+#	if ANKI_SUPPORTS_64BIT
+typedef uint64_t U64;
+constexpr uint kSizeof_U64 = 8u;
+typedef uint64_t2 U64Vec2;
+constexpr uint kSizeof_U64Vec2 = 16u;
+typedef uint64_t3 U64Vec3;
+constexpr uint kSizeof_U64Vec3 = 24u;
+typedef uint64_t4 U64Vec4;
+constexpr uint kSizeof_U64Vec4 = 32u;
+
+typedef int64_t I64;
+constexpr uint kSizeof_I64 = 8u;
+typedef int64_t2 I64Vec2;
+constexpr uint kSizeof_I64Vec2 = 16u;
+typedef int64_t3 I64Vec3;
+constexpr uint kSizeof_I64Vec3 = 24u;
+typedef int64_t4 I64Vec4;
+constexpr uint kSizeof_I64Vec4 = 32u;
+#	endif
+
+typedef float3x3 Mat3;
+
+typedef bool Bool;
+
+#	if 0
+typedef min16float RF32;
+typedef min16float2 RVec2;
+typedef min16float3 RVec3;
+typedef min16float4 RVec4;
+#	endif
+
+constexpr F32 kEpsilonf = 0.000001f;
+constexpr F16 kEpsilonhf = (F16)0.0001f; // Divisions by this should be OK according to http://weitz.de/ieee/
+
+constexpr U32 kMaxU32 = 0xFFFFFFFFu;
+constexpr F32 kMaxF32 = 3.402823e+38;
+constexpr F16 kMaxF16 = (F16)65504.0;
+constexpr F16 kMinF16 = (F16)0.00006104;
+
+constexpr F32 kPi = 3.14159265358979323846f;
+
 //! == GLSL ============================================================================================================
 #else
+#	define ANKI_HLSL 0
+#	define ANKI_GLSL 1
+#	define ANKI_CPP 0
+
 #	define ANKI_BEGIN_NAMESPACE
 #	define ANKI_END_NAMESPACE
 #	define ANKI_SHADER_FUNC_INLINE
@@ -281,12 +396,19 @@ Vec4 pow(Vec4 a, F32 b)
 {
 	return pow(a, Vec4(b));
 }
-#endif
 
-//! == Consts ==========================================================================================================
-ANKI_BEGIN_NAMESPACE
+Bool all(Bool b)
+{
+	return b;
+}
 
-#if !defined(__cplusplus)
+#	define saturate(x_) clamp((x_), 0.0, 1.0)
+#	define saturateRp(x) min(x, F32(kMaxF16))
+#	define mad(a_, b_, c_) fma((a_), (b_), (c_))
+#	define frac(x) fract(x)
+#	define lerp(a, b, t) mix(a, b, t)
+#	define atan2(x, y) atan(x, y)
+
 constexpr F32 kEpsilonf = 0.000001f;
 constexpr F16 kEpsilonhf = 0.0001hf; // Divisions by this should be OK according to http://weitz.de/ieee/
 constexpr ANKI_RP F32 kEpsilonRp = F32(kEpsilonhf);
@@ -298,6 +420,9 @@ constexpr F16 kMinF16 = 0.00006104hf;
 
 constexpr F32 kPi = 3.14159265358979323846f;
 #endif
+
+//! == Consts ==========================================================================================================
+ANKI_BEGIN_NAMESPACE
 
 /// The renderer will group drawcalls into instances up to this number.
 constexpr U32 kMaxInstanceCount = 64u;

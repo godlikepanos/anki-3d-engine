@@ -11,7 +11,7 @@
 Vec3 dither(Vec3 col, F32 C)
 {
 	Vec3 vDither = Vec3(dot(Vec2(171.0, 231.0), gl_FragCoord.xy));
-	vDither.rgb = fract(vDither.rgb / Vec3(103.0, 71.0, 97.0));
+	vDither.rgb = frac(vDither.rgb / Vec3(103.0, 71.0, 97.0));
 
 	col = col * (255.0 / C) + vDither.rgb;
 	col = floor(col) / 255.0;
@@ -23,7 +23,7 @@ Vec3 dither(Vec3 col, F32 C)
 F32 dither(F32 col, F32 C)
 {
 	F32 vDither = dot(Vec2(171.0, 231.0), gl_FragCoord.xy);
-	vDither = fract(vDither / 103.0);
+	vDither = frac(vDither / 103.0);
 
 	col = col * (255.0 / C) + vDither;
 	col = floor(col) / 255.0;
@@ -72,8 +72,8 @@ Vec4 projectPerspective(Vec4 vec, F32 m00, F32 m11, F32 m22, F32 m23)
 // Stolen from shadertoy.com/view/4tyGDD
 Vec4 textureCatmullRom4Samples(texture2D tex, sampler sampl, Vec2 uv, Vec2 texSize)
 {
-	const Vec2 halff = 2.0 * fract(0.5 * uv * texSize - 0.25) - 1.0;
-	const Vec2 f = fract(halff);
+	const Vec2 halff = 2.0 * frac(0.5 * uv * texSize - 0.25) - 1.0;
+	const Vec2 f = frac(halff);
 	const Vec2 sum0 = (2.0 * f - 3.5) * f + 0.5;
 	const Vec2 sum1 = (2.0 * f - 2.5) * f - 0.5;
 	Vec4 w = Vec4(f * sum0 + 1.0, f * sum1);
@@ -87,7 +87,11 @@ Vec4 textureCatmullRom4Samples(texture2D tex, sampler sampl, Vec2 uv, Vec2 texSi
 #endif
 
 // Stolen from shadertoy.com/view/4df3Dn
+#if ANKI_GLSL
 Vec4 textureBicubic(texture2D tex, sampler sampl, Vec2 uv, F32 lod, Vec2 texSize)
+#else
+Vec4 textureBicubic(Texture2D tex, SamplerState sampl, Vec2 uv, F32 lod, Vec2 texSize)
+#endif
 {
 #define w0(a) ((1.0 / 6.0) * ((a) * ((a) * (-(a) + 3.0) - 3.0) + 1.0))
 #define w1(a) ((1.0 / 6.0) * ((a) * (a) * (3.0 * (a)-6.0) + 4.0))
@@ -97,11 +101,15 @@ Vec4 textureBicubic(texture2D tex, sampler sampl, Vec2 uv, F32 lod, Vec2 texSize
 #define g1(a) (w2(a) + w3(a))
 #define h0(a) (-1.0 + w1(a) / (w0(a) + w1(a)))
 #define h1(a) (1.0 + w3(a) / (w2(a) + w3(a)))
-#define texSample(uv) textureLod(tex, sampl, uv, lod)
+#if ANKI_GLSL
+#	define texSample(uv) textureLod(tex, sampl, uv, lod)
+#else
+#	define texSample(uv) tex.SampleLevel(sampl, uv, lod)
+#endif
 
 	uv = uv * texSize + 0.5;
 	const Vec2 iuv = floor(uv);
-	const Vec2 fuv = fract(uv);
+	const Vec2 fuv = frac(uv);
 
 	const F32 g0x = g0(fuv.x);
 	const F32 g1x = g1(fuv.x);
@@ -130,9 +138,10 @@ Vec4 textureBicubic(texture2D tex, sampler sampl, Vec2 uv, F32 lod, Vec2 texSize
 
 F32 rand(Vec2 n)
 {
-	return 0.5 + 0.5 * fract(sin(dot(n, Vec2(12.9898, 78.233))) * 43758.5453);
+	return 0.5 + 0.5 * frac(sin(dot(n, Vec2(12.9898, 78.233))) * 43758.5453);
 }
 
+#if ANKI_GLSL
 Vec4 nearestDepthUpscale(Vec2 uv, texture2D depthFull, texture2D depthHalf, texture2D colorTex,
 						 sampler linearAnyClampSampler, Vec2 linearDepthCf, F32 depthThreshold)
 {
@@ -231,6 +240,7 @@ Vec4 bilateralUpsample(texture2D depthHigh, texture2D depthLow, texture2D colorL
 
 	return sum / normalize;
 }
+#endif
 
 Vec3 getCubemapDirection(const Vec2 norm, const U32 faceIdx)
 {
@@ -250,7 +260,7 @@ Vec2 convertCubeUvs(const Vec3 v, out F32 faceIndex)
 	F32 mag;
 	Vec2 uv;
 
-	if(all(greaterThanEqual(absV.zz, absV.xy)))
+	if(absV.z >= absV.x && absV.z >= absV.y)
 	{
 		faceIndex = (v.z < 0.0) ? 5.0 : 4.0;
 		uv = Vec2((v.z < 0.0) ? -v.x : v.x, -v.y);
@@ -279,7 +289,7 @@ Vec2 convertCubeUvsu(const Vec3 v, out U32 faceIndex)
 	F32 mag;
 	Vec2 uv;
 
-	if(all(greaterThanEqual(absV.zz, absV.xy)))
+	if(absV.z >= absV.x && absV.z >= absV.y)
 	{
 		faceIndex = (v.z < 0.0) ? 5u : 4u;
 		uv = Vec2((v.z < 0.0) ? -v.x : v.x, -v.y);
@@ -301,17 +311,20 @@ Vec2 convertCubeUvsu(const Vec3 v, out U32 faceIndex)
 	return 0.5 / mag * uv + 0.5;
 }
 
+#if ANKI_GLSL
 ANKI_RP Vec3 grayScale(const ANKI_RP Vec3 col)
 {
 	const ANKI_RP F32 grey = (col.r + col.g + col.b) * (1.0 / 3.0);
 	return Vec3(grey);
 }
+#endif
 
 Vec3 saturateColor(const Vec3 col, const F32 factor)
 {
 	const Vec3 lumCoeff = Vec3(0.2125, 0.7154, 0.0721);
-	const Vec3 intensity = Vec3(dot(col, lumCoeff));
-	return mix(intensity, col, factor);
+	const F32 d = dot(col, lumCoeff);
+	const Vec3 intensity = Vec3(d, d, d);
+	return lerp(intensity, col, factor);
 }
 
 Vec3 gammaCorrection(Vec3 gamma, Vec3 col)
@@ -319,6 +332,7 @@ Vec3 gammaCorrection(Vec3 gamma, Vec3 col)
 	return pow(col, 1.0 / gamma);
 }
 
+#if ANKI_GLSL
 // Can use 0.15 for sharpenFactor
 Vec3 readSharpen(texture2D tex, sampler sampl, Vec2 uv, F32 sharpenFactor, Bool detailed)
 {
@@ -348,9 +362,9 @@ Vec3 readErosion(texture2D tex, sampler sampl, const Vec2 uv)
 {
 	Vec3 minValue = textureLod(tex, sampl, uv, 0.0).rgb;
 
-#define ANKI_EROSION(x, y) \
-	col2 = textureLodOffset(sampler2D(tex, sampl), uv, 0.0, IVec2(x, y)).rgb; \
-	minValue = min(col2, minValue);
+#	define ANKI_EROSION(x, y) \
+		col2 = textureLodOffset(sampler2D(tex, sampl), uv, 0.0, IVec2(x, y)).rgb; \
+		minValue = min(col2, minValue);
 
 	Vec3 col2;
 	ANKI_EROSION(1, 1);
@@ -362,10 +376,11 @@ Vec3 readErosion(texture2D tex, sampler sampl, const Vec2 uv)
 	ANKI_EROSION(-1, 0);
 	ANKI_EROSION(0, -1);
 
-#undef ANKI_EROSION
+#	undef ANKI_EROSION
 
 	return minValue;
 }
+#endif
 
 // 5 color heatmap from a factor.
 Vec3 heatmap(const F32 factor)
@@ -375,19 +390,19 @@ Vec3 heatmap(const F32 factor)
 
 	if(intPart < 1.0)
 	{
-		return mix(Vec3(0.0, 0.0, 0.0), Vec3(0.0, 0.0, 1.0), fractional);
+		return lerp(Vec3(0.0, 0.0, 0.0), Vec3(0.0, 0.0, 1.0), fractional);
 	}
 	else if(intPart < 2.0)
 	{
-		return mix(Vec3(0.0, 0.0, 1.0), Vec3(0.0, 1.0, 0.0), fractional);
+		return lerp(Vec3(0.0, 0.0, 1.0), Vec3(0.0, 1.0, 0.0), fractional);
 	}
 	else if(intPart < 3.0)
 	{
-		return mix(Vec3(0.0, 1.0, 0.0), Vec3(1.0, 1.0, 0.0), fractional);
+		return lerp(Vec3(0.0, 1.0, 0.0), Vec3(1.0, 1.0, 0.0), fractional);
 	}
 	else
 	{
-		return mix(Vec3(1.0, 1.0, 0.0), Vec3(1.0, 0.0, 0.0), fractional);
+		return lerp(Vec3(1.0, 1.0, 0.0), Vec3(1.0, 0.0, 0.0), fractional);
 	}
 }
 
@@ -425,7 +440,7 @@ Bool incorrectColor(const Vec3 c)
 
 F32 areaElement(const F32 x, const F32 y)
 {
-	return atan(x * y, sqrt(x * x + y * y + 1.0));
+	return atan2(x * y, sqrt(x * x + y * y + 1.0));
 }
 
 // Compute the solid angle of a cube. Solid angle is the area of a sphere when projected into a cubemap. It's also the
@@ -433,7 +448,8 @@ F32 areaElement(const F32 x, const F32 y)
 // http://www.rorydriscoll.com/2012/01/15/cubemap-texel-solid-angle/
 F32 cubeCoordSolidAngle(Vec2 norm, F32 cubeFaceSize)
 {
-	const Vec2 invSize = Vec2(1.0 / cubeFaceSize);
+	const F32 s = 1.0f / cubeFaceSize;
+	const Vec2 invSize = Vec2(s, s);
 	const Vec2 v0 = norm - invSize;
 	const Vec2 v1 = norm + invSize;
 	return areaElement(v0.x, v0.y) - areaElement(v0.x, v1.y) - areaElement(v1.x, v0.y) + areaElement(v1.x, v1.y);
@@ -441,7 +457,7 @@ F32 cubeCoordSolidAngle(Vec2 norm, F32 cubeFaceSize)
 
 // A convenience function to skip out of bounds invocations on post-process compute shaders. Both the arguments should
 // be constexpr.
-#if defined(ANKI_COMPUTE_SHADER)
+#if defined(ANKI_COMPUTE_SHADER) && ANKI_GLSL
 Bool skipOutOfBoundsInvocations(UVec2 workgroupSize, UVec2 globalInvocationCount)
 {
 	if((globalInvocationCount.x % workgroupSize.x) != 0u || (globalInvocationCount.y % workgroupSize.y) != 0u)
@@ -480,7 +496,7 @@ Mat3 rotationFromDirection(Vec3 zAxis)
 #endif
 }
 
-#if defined(ANKI_COMPUTE_SHADER)
+#if defined(ANKI_COMPUTE_SHADER) && ANKI_GLSL
 // See getOptimalGlobalInvocationId8x8Amd
 U32 _ABfiM(U32 src, U32 ins, U32 bits)
 {
@@ -562,11 +578,12 @@ F32 gaussianWeight(F32 s, F32 x)
 	return p;
 }
 
+#if ANKI_GLSL
 Vec4 bilinearFiltering(texture2D tex, sampler nearestSampler, Vec2 uv, F32 lod, Vec2 textureSize)
 {
 	const Vec2 texelSize = 1.0 / textureSize;
 	const Vec2 unnormTexCoord = (uv * textureSize) - 0.5;
-	const Vec2 f = fract(unnormTexCoord);
+	const Vec2 f = frac(unnormTexCoord);
 	const Vec2 snapTexCoord = (floor(unnormTexCoord) + 0.5) / textureSize;
 	const Vec4 s1 = textureLod(tex, nearestSampler, uv, lod);
 	const Vec4 s2 = textureLod(tex, nearestSampler, uv + Vec2(texelSize.x, 0.0), lod);
@@ -574,12 +591,13 @@ Vec4 bilinearFiltering(texture2D tex, sampler nearestSampler, Vec2 uv, F32 lod, 
 	const Vec4 s4 = textureLod(tex, nearestSampler, uv + texelSize, lod);
 	return mix(mix(s1, s2, f.x), mix(s3, s4, f.x), f.y);
 }
+#endif
 
 // https://www.shadertoy.com/view/WsfBDf
 Vec3 animateBlueNoise(Vec3 inputBlueNoise, U32 frameIdx)
 {
 	const F32 goldenRatioConjugate = 0.61803398875;
-	return fract(inputBlueNoise + F32(frameIdx % 64u) * goldenRatioConjugate);
+	return frac(inputBlueNoise + F32(frameIdx % 64u) * goldenRatioConjugate);
 }
 
 #if defined(ANKI_FRAGMENT_SHADER)
@@ -594,7 +612,8 @@ F32 computeMipLevel(Vec2 normalizedUvs)
 }
 #endif
 
-#if defined(U64)
+#if ANKI_GLSL
+#	if ANKI_SUPPORTS_64BIT
 /// The regular findLSB in glslang has some issues since it invokes a builtin that is only supposed to be used with
 /// 32bit input. This is an alternative implementation but it expects that the input is not zero.
 I32 findLSB2(U64 v)
@@ -603,13 +622,14 @@ I32 findLSB2(U64 v)
 	const I32 lsb2 = findLSB(U32(v >> 32ul));
 	return (lsb1 >= 0) ? lsb1 : lsb2 + 32;
 }
-#endif
+#	endif
 
 /// Define an alternative findLSB to go in pair with the 64bit version.
 I32 findLSB2(U32 v)
 {
 	return findLSB(v);
 }
+#endif
 
 /// Encode the shading rate to be stored in an SRI. The rates should be power of two, can't be zero and can't exceed 4.
 /// So the possible values are 1,2,4
@@ -620,23 +640,23 @@ U32 encodeVrsRate(UVec2 rateXY)
 
 Vec3 visualizeVrsRate(UVec2 rate)
 {
-	if(rate == UVec2(1u))
+	if(all(rate == UVec2(1u, 1u)))
 	{
 		return Vec3(1.0, 0.0, 0.0);
 	}
-	else if(rate == UVec2(2u, 1u) || rate == UVec2(1u, 2u))
+	else if(all(rate == UVec2(2u, 1u)) || all(rate == UVec2(1u, 2u)))
 	{
 		return Vec3(1.0, 0.5, 0.0);
 	}
-	else if(rate == UVec2(2u) || rate == UVec2(4u, 1u) || rate == UVec2(1u, 4u))
+	else if(all(rate == UVec2(2u, 2u)) || all(rate == UVec2(4u, 1u)) || all(rate == UVec2(1u, 4u)))
 	{
 		return Vec3(1.0, 1.0, 0.0);
 	}
-	else if(rate == UVec2(4u, 2u) || rate == UVec2(2u, 4u))
+	else if(all(rate == UVec2(4u, 2u)) || all(rate == UVec2(2u, 4u)))
 	{
 		return Vec3(0.65, 1.0, 0.0);
 	}
-	else if(rate == UVec2(4u))
+	else if(all(rate == UVec2(4u, 4u)))
 	{
 		return Vec3(0.0, 1.0, 0.0);
 	}
@@ -658,41 +678,60 @@ UVec2 decodeVrsRate(U32 texel)
 /// 3D coordinates to equirectangular 2D coordinates.
 Vec2 equirectangularMapping(Vec3 v)
 {
-	Vec2 uv = Vec2(atan(v.z, v.x), asin(v.y));
-	uv *= vec2(0.1591, 0.3183);
+	Vec2 uv = Vec2(atan2(v.z, v.x), asin(v.y));
+	uv *= Vec2(0.1591, 0.3183);
 	uv += 0.5;
 	return uv;
 }
 
 Vec3 linearToSRgb(Vec3 linearRgb)
 {
-	linearRgb = max(Vec3(6.10352e-5), linearRgb);
-	return min(linearRgb * 12.92, pow(max(linearRgb, 0.00313067), Vec3(1.0 / 2.4)) * 1.055 - 0.055);
+	const F32 a = 6.10352e-5;
+	const F32 b = 1.0 / 2.4;
+	linearRgb = max(Vec3(a, a, a), linearRgb);
+	return min(linearRgb * 12.92, pow(max(linearRgb, 0.00313067), Vec3(b, b, b)) * 1.055 - 0.055);
 }
 
 Vec3 sRgbToLinear(Vec3 sRgb)
 {
+#if ANKI_GLSL
 	const bvec3 cutoff = lessThan(sRgb, Vec3(0.04045));
 	const Vec3 higher = pow((sRgb + 0.055) / 1.055, Vec3(2.4));
 	const Vec3 lower = sRgb / 12.92;
 	return mix(higher, lower, cutoff);
+#else
+	const bool3 cutoff = sRgb < Vec3(0.04045, 0.04045, 0.04045);
+	const Vec3 higher = pow((sRgb + 0.055) / 1.055, Vec3(2.4, 2.4, 2.4));
+	const Vec3 lower = sRgb / 12.92;
+	return lerp(higher, lower, cutoff);
+#endif
 }
 
+#if ANKI_GLSL
 ANKI_RP Vec3 filmGrain(ANKI_RP Vec3 color, Vec2 uv, ANKI_RP F32 strength, ANKI_RP F32 time)
 {
 	const F32 x = (uv.x + 4.0) * (uv.y + 4.0) * time;
 	const F32 grain = 1.0 - (mod((mod(x, 13.0) + 1.0) * (mod(x, 123.0) + 1.0), 0.01) - 0.005) * strength;
 	return color * grain;
 }
+#else
+template<typename TVec3, typename TFloat>
+TVec3 filmGrain(TVec3 color, Vec2 uv, TFloat strength, TFloat time)
+{
+	const TFloat x = (uv.x + 4.0) * (uv.y + 4.0) * time;
+	const TFloat grain = 1.0 - (mod((mod(x, 13.0) + 1.0) * (mod(x, 123.0) + 1.0), 0.01) - 0.005) * strength;
+	return color * grain;
+}
+#endif
 
 /// Sin approximation: https://www.desmos.com/calculator/svgcjfskne
-ANKI_RP F32 fastSin(ANKI_RP F32 x)
+F32 fastSin(F32 x)
 {
-	const ANKI_RP F32 k2Pi = 2.0 * kPi;
-	const ANKI_RP F32 kPiOver2 = kPi / 2.0;
+	const F32 k2Pi = 2.0 * kPi;
+	const F32 kPiOver2 = kPi / 2.0;
 
 	x = (x + kPiOver2) / (k2Pi) + 0.75;
-	x = fract(x);
+	x = frac(x);
 	x = x * 2.0 - 1.0;
 	x = x * abs(x) - x;
 	x *= 4.0;
@@ -700,7 +739,7 @@ ANKI_RP F32 fastSin(ANKI_RP F32 x)
 }
 
 /// Cos approximation
-ANKI_RP F32 fastCos(ANKI_RP F32 x)
+F32 fastCos(F32 x)
 {
 	return fastSin(x + kPi / 2.0);
 }

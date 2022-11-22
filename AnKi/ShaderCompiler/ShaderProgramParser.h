@@ -112,6 +112,7 @@ private:
 /// #pragma anki ray_type NUMBER
 /// #pragma anki reflect NAME
 /// #pragma anki skip_mutation MUTATOR0 VALUE0 MUTATOR1 VALUE1 [MUTATOR2 VALUE2 ...]
+/// #pragma anki hlsl // By default it's GLSL
 ///
 /// #pragma anki struct NAME
 /// #	pragma anki member [ANKI_RP] TYPE NAME [if MUTATOR_NAME is MUTATOR_VALUE]
@@ -176,6 +177,11 @@ public:
 		return m_ghostStructs;
 	}
 
+	Bool isHlsl() const
+	{
+		return m_hlsl;
+	}
+
 	/// Generates the common header that will be used by all AnKi shaders.
 	static void generateAnkiShaderHeader(ShaderType shaderType, const ShaderCompilerOptions& compilerOptions,
 										 StringRaii& header);
@@ -196,7 +202,7 @@ private:
 		}
 	};
 
-	static constexpr U32 MAX_INCLUDE_DEPTH = 8;
+	static constexpr U32 kMaxIncludeDepth = 8;
 
 	BaseMemoryPool* m_pool = nullptr;
 	StringRaii m_fname;
@@ -221,8 +227,10 @@ private:
 	DynamicArrayRaii<GhostStruct> m_ghostStructs = {m_pool};
 	Bool m_insideStruct = false;
 
+	Bool m_hlsl = false;
+
 	Error parseFile(CString fname, U32 depth);
-	Error parseLine(CString line, CString fname, Bool& foundPragmaOnce, U32 depth);
+	Error parseLine(CString line, CString fname, Bool& foundPragmaOnce, U32 depth, U32 lineNumber);
 	Error parseInclude(const StringRaii* begin, const StringRaii* end, CString line, CString fname, U32 depth);
 	Error parsePragmaMutator(const StringRaii* begin, const StringRaii* end, CString line, CString fname);
 	Error parsePragmaStart(const StringRaii* begin, const StringRaii* end, CString line, CString fname);
@@ -234,6 +242,7 @@ private:
 	Error parsePragmaStructBegin(const StringRaii* begin, const StringRaii* end, CString line, CString fname);
 	Error parsePragmaStructEnd(const StringRaii* begin, const StringRaii* end, CString line, CString fname);
 	Error parsePragmaMember(const StringRaii* begin, const StringRaii* end, CString line, CString fname);
+	Error parsePragmaHlsl(const StringRaii* begin, const StringRaii* end, CString line, CString fname);
 
 	void tokenizeLine(CString line, DynamicArrayRaii<StringRaii>& tokens) const;
 

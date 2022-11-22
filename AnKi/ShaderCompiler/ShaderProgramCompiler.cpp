@@ -6,6 +6,7 @@
 #include <AnKi/ShaderCompiler/ShaderProgramCompiler.h>
 #include <AnKi/ShaderCompiler/ShaderProgramParser.h>
 #include <AnKi/ShaderCompiler/Glslang.h>
+#include <AnKi/ShaderCompiler/Dxc.h>
 #include <AnKi/ShaderCompiler/ShaderProgramReflection.h>
 #include <AnKi/Util/Serializer.h>
 #include <AnKi/Util/HashMap.h>
@@ -180,8 +181,16 @@ static Error compileSpirv(ConstWeakArray<MutatorValue> mutation, const ShaderPro
 		}
 
 		// Compile
-		ANKI_CHECK(compilerGlslToSpirv(parserVariant.getSource(shaderType), shaderType, tempPool, spirv[shaderType],
-									   errorLog));
+		if(!parser.isHlsl())
+		{
+			ANKI_CHECK(compileGlslToSpirv(parserVariant.getSource(shaderType), shaderType, tempPool, spirv[shaderType],
+										  errorLog));
+		}
+		else
+		{
+			ANKI_CHECK(compileHlslToSpirv(parserVariant.getSource(shaderType), shaderType, tempPool, spirv[shaderType],
+										  errorLog));
+		}
 		ANKI_ASSERT(spirv[shaderType].getSize() > 0);
 	}
 
@@ -996,7 +1005,7 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 	binaryW.m_binary = newInstance<ShaderProgramBinary>(binaryPool);
 	ShaderProgramBinary& binary = *binaryW.m_binary;
 	binary = {};
-	memcpy(&binary.m_magic[0], SHADER_BINARY_MAGIC, 8);
+	memcpy(&binary.m_magic[0], kShaderBinaryMagic, 8);
 
 	// Parse source
 	ShaderProgramParser parser(fname, &fsystem, &tempPool, compilerOptions);

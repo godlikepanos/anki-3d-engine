@@ -13,11 +13,8 @@ namespace anki {
 /// @addtogroup shader_compiler
 /// @{
 
-/// Run glslang's preprocessor.
-Error preprocessGlsl(CString in, StringRaii& out);
-
-/// Compile glsl to SPIR-V.
-Error compileGlslToSpirv(CString src, ShaderType shaderType, BaseMemoryPool& tmpPool, DynamicArrayRaii<U8>& spirv,
+/// Compile HLSL to SPIR-V.
+Error compileHlslToSpirv(CString src, ShaderType shaderType, BaseMemoryPool& tmpPool, DynamicArrayRaii<U8>& spirv,
 						 StringRaii& errorMessage);
 /// @}
 

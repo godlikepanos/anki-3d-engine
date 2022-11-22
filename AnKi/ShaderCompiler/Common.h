@@ -19,6 +19,7 @@ namespace anki {
 #define ANKI_SHADER_COMPILER_LOGE(...) ANKI_LOG("SHCO", kError, __VA_ARGS__)
 #define ANKI_SHADER_COMPILER_LOGW(...) ANKI_LOG("SHCO", kWarning, __VA_ARGS__)
 #define ANKI_SHADER_COMPILER_LOGF(...) ANKI_LOG("SHCO", kFatal, __VA_ARGS__)
+#define ANKI_SHADER_COMPILER_LOGV(...) ANKI_LOG("SHCO", kVerbose, __VA_ARGS__)
 
 constexpr U32 kMaxShaderBinaryNameLength = 127;
 

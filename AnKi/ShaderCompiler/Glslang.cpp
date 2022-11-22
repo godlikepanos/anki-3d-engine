@@ -276,8 +276,8 @@ Error preprocessGlsl(CString in, StringRaii& out)
 	return Error::kNone;
 }
 
-Error compilerGlslToSpirv(CString src, ShaderType shaderType, BaseMemoryPool& tmpPool, DynamicArrayRaii<U8>& spirv,
-						  StringRaii& errorMessage)
+Error compileGlslToSpirv(CString src, ShaderType shaderType, BaseMemoryPool& tmpPool, DynamicArrayRaii<U8>& spirv,
+						 StringRaii& errorMessage)
 {
 #if ANKI_GLSLANG_DUMP
 	// Dump it
@@ -304,6 +304,7 @@ Error compilerGlslToSpirv(CString src, ShaderType shaderType, BaseMemoryPool& tm
 	shader.setStrings(&csrc[0], 1);
 	shader.setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_1);
 	shader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_4);
+	shader.setOverrideVersion(460);
 	if(!shader.parse(&GLSLANG_LIMITS, 100, false, messages))
 	{
 		createErrorLog(shader.getInfoLog(), src, tmpPool, errorMessage);

@@ -19,8 +19,7 @@ inline constexpr Array<CString, U32(ShaderType::kCount)> kShaderStageNames = {
 	{"VERTEX", "TESSELLATION_CONTROL", "TESSELLATION_EVALUATION", "GEOMETRY", "FRAGMENT", "COMPUTE", "RAY_GEN",
 	 "ANY_HIT", "CLOSEST_HIT", "MISS", "INTERSECTION", "CALLABLE"}};
 
-inline constexpr char kShaderHeader[] = R"(#version 460 core
-#define ANKI_%s_SHADER 1
+inline constexpr char kShaderHeader[] = R"(#define ANKI_%s_SHADER 1
 #define ANKI_PLATFORM_MOBILE %d
 #define ANKI_FORCE_FULL_FP_PRECISION %d
 
@@ -418,7 +417,7 @@ Error ShaderProgramParser::parseInclude(const StringRaii* begin, const StringRai
 	return Error::kNone;
 }
 
-Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPragmaOnce, U32 depth)
+Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPragmaOnce, U32 depth, U32 lineNumber)
 {
 	// Tokenize
 	DynamicArrayRaii<StringRaii> tokens(m_pool);
@@ -440,6 +439,8 @@ Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPra
 	{
 		// We _must_ have an #include
 		ANKI_CHECK(parseInclude(token + 1, end, line, fname, depth));
+
+		m_codeLines.pushBackSprintf("#line %u \"%s\"", lineNumber + 2, fname.cstr());
 	}
 	else if((token < end) && ((foundAloneHash && *token == "pragma") || *token == "#pragma"))
 	{
@@ -525,6 +526,10 @@ Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPra
 			{
 				ANKI_CHECK(checkActiveStruct());
 				ANKI_CHECK(parsePragmaMember(token + 1, end, line, fname));
+			}
+			else if(*token == "hlsl")
+			{
+				ANKI_CHECK(parsePragmaHlsl(token + 1, end, line, fname));
 			}
 			else
 			{
@@ -823,10 +828,25 @@ Error ShaderProgramParser::parsePragmaStructEnd(const StringRaii* begin, const S
 	return Error::kNone;
 }
 
+Error ShaderProgramParser::parsePragmaHlsl(const StringRaii* begin, const StringRaii* end, CString line, CString fname)
+{
+	ANKI_ASSERT(begin && end);
+
+	// Check tokens
+	if(begin != end)
+	{
+		ANKI_PP_ERROR_MALFORMED();
+	}
+
+	m_hlsl = true;
+
+	return Error::kNone;
+}
+
 Error ShaderProgramParser::parseFile(CString fname, U32 depth)
 {
 	// First check the depth
-	if(depth > MAX_INCLUDE_DEPTH)
+	if(depth > kMaxIncludeDepth)
 	{
 		ANKI_SHADER_COMPILER_LOGE("The include depth is too high. Probably circular includance");
 	}
@@ -838,25 +858,34 @@ Error ShaderProgramParser::parseFile(CString fname, U32 depth)
 	ANKI_CHECK(m_fsystem->readAllText(fname, txt));
 
 	StringListRaii lines(m_pool);
-	lines.splitString(txt.toCString(), '\n');
+	lines.splitString(txt.toCString(), '\n', true);
 	if(lines.getSize() < 1)
 	{
 		ANKI_SHADER_COMPILER_LOGE("Source is empty");
 	}
 
+	m_codeLines.pushBackSprintf("#line 0 \"%s\"", fname.cstr());
+
 	// Parse lines
+	U32 lineCount = 0;
 	for(const String& line : lines)
 	{
-		if(line.find("pragma") != String::kNpos || line.find("include") != String::kNpos)
+		if(line.isEmpty())
+		{
+			m_codeLines.pushBack(" ");
+		}
+		else if(line.find("pragma") != String::kNpos || line.find("include") != String::kNpos)
 		{
 			// Possibly a preprocessor directive we care
-			ANKI_CHECK(parseLine(line.toCString(), fname, foundPragmaOnce, depth));
+			ANKI_CHECK(parseLine(line.toCString(), fname, foundPragmaOnce, depth, lineCount));
 		}
 		else
 		{
 			// Just append the line
 			m_codeLines.pushBack(line.toCString());
 		}
+
+		++lineCount;
 	}
 
 	if(foundPragmaOnce)
@@ -914,6 +943,11 @@ Error ShaderProgramParser::parse()
 			ANKI_SHADER_COMPILER_LOGE("Forgot a \"pragma anki end\"");
 			return Error::kUserData;
 		}
+	}
+
+	if(!m_hlsl)
+	{
+		m_codeLines.pushFront(StringRaii(m_pool, "#extension  GL_GOOGLE_cpp_style_line_directive : enable"));
 	}
 
 	// Create the code lines
