@@ -8,6 +8,7 @@
 #include <AnKi/Util/Array.h>
 #include <AnKi/Util/String.h>
 #include <AnKi/Util/WeakArray.h>
+#include <AnKi/Util/Enum.h>
 
 // Forward
 struct reproc_t;
@@ -31,6 +32,15 @@ enum class ProcessKillSignal : U8
 	kForce
 };
 
+/// @memberof Process
+enum class ProcessOptions : U8
+{
+	kNone = 0,
+	kOpenStdout = 1 << 0,
+	kOpenStderr = 1 << 1,
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ProcessOptions)
+
 /// Executes external processes.
 class Process
 {
@@ -47,7 +57,8 @@ public:
 	/// @param executable The executable to start.
 	/// @param arguments The command line arguments.
 	/// @param environment The environment variables.
-	Error start(CString executable, ConstWeakArray<CString> arguments = {}, ConstWeakArray<CString> environment = {});
+	Error start(CString executable, ConstWeakArray<CString> arguments = {}, ConstWeakArray<CString> environment = {},
+				ProcessOptions options = ProcessOptions::kOpenStderr | ProcessOptions::kOpenStdout);
 
 	/// Wait for the process to finish.
 	/// @param timeout The time to wait. If it's negative wait forever.
@@ -70,6 +81,15 @@ public:
 	/// Cleanup a finished process. Call this if you want to start a new process again. Need to have waited before
 	/// calling destroy.
 	void destroy();
+
+	/// Call a process and wait.
+	/// @param executable The executable to start.
+	/// @param arguments The command line arguments.
+	/// @param stdOut Optional stdout.
+	/// @param stdErr Optional stderr.
+	/// @param exitCode Exit code.
+	static Error callProcess(CString executable, ConstWeakArray<CString> arguments, StringRaii* stdOut,
+							 StringRaii* stdErr, I32& exitCode);
 
 private:
 	reproc_t* m_handle = nullptr;

@@ -5,6 +5,7 @@
 
 #include <AnKi/Util/Process.h>
 #include <AnKi/Util/Array.h>
+#include <AnKi/Util/Thread.h>
 #if !ANKI_OS_ANDROID
 #	include <ThirdParty/Reproc/reproc/include/reproc/reproc.h>
 #endif
@@ -33,7 +34,8 @@ void Process::destroy()
 #endif
 }
 
-Error Process::start(CString executable, ConstWeakArray<CString> arguments, ConstWeakArray<CString> environment)
+Error Process::start(CString executable, ConstWeakArray<CString> arguments, ConstWeakArray<CString> environment,
+					 ProcessOptions options)
 {
 #if !ANKI_OS_ANDROID
 	ANKI_ASSERT(m_handle == nullptr && "Already started");
@@ -60,18 +62,22 @@ Error Process::start(CString executable, ConstWeakArray<CString> arguments, Cons
 	// Start process
 	m_handle = reproc_new();
 
-	reproc_options options = {};
+	reproc_options reprocOptions = {};
 
-	options.env.behavior = REPROC_ENV_EXTEND;
+	reprocOptions.env.behavior = REPROC_ENV_EXTEND;
 	if(environment.getSize())
 	{
-		options.env.extra = &env[0];
+		reprocOptions.env.extra = &env[0];
 	}
-	options.nonblocking = true;
+	reprocOptions.nonblocking = true;
 
-	options.redirect.err.type = REPROC_REDIRECT_PIPE;
+	reprocOptions.redirect.in.type = REPROC_REDIRECT_DISCARD;
+	reprocOptions.redirect.err.type =
+		(!!(options & ProcessOptions::kOpenStderr)) ? REPROC_REDIRECT_PIPE : REPROC_REDIRECT_DISCARD;
+	reprocOptions.redirect.out.type =
+		(!!(options & ProcessOptions::kOpenStdout)) ? REPROC_REDIRECT_PIPE : REPROC_REDIRECT_DISCARD;
 
-	I32 ret = reproc_start(m_handle, &args[0], options);
+	I32 ret = reproc_start(m_handle, &args[0], reprocOptions);
 	if(ret < 0)
 	{
 		ANKI_UTIL_LOGE("reproc_start() failed: %s", reproc_strerror(ret));
@@ -235,5 +241,40 @@ Error Process::readCommon(I32 reprocStream, StringRaii& text)
 	return Error::kNone;
 }
 #endif
+
+Error Process::callProcess(CString executable, ConstWeakArray<CString> arguments, StringRaii* stdOut,
+						   StringRaii* stdErr, I32& exitCode)
+{
+#if !ANKI_OS_ANDROID
+	ProcessOptions options = ProcessOptions::kNone;
+	options |= (stdOut) ? ProcessOptions::kOpenStdout : ProcessOptions::kNone;
+	options |= (stdErr) ? ProcessOptions::kOpenStderr : ProcessOptions::kNone;
+
+	Process proc;
+	ANKI_CHECK(proc.start(executable, arguments, {}, options));
+
+	ANKI_CHECK(proc.wait(-1.0, nullptr, &exitCode));
+
+	if(stdOut)
+	{
+		ANKI_CHECK(proc.readFromStdout(*stdOut));
+	}
+
+	if(stdErr)
+	{
+		ANKI_CHECK(proc.readFromStderr(*stdErr));
+	}
+
+	proc.destroy();
+#else
+	(void)executable;
+	(void)arguments;
+	(void)stdOut;
+	(void)stdErr;
+	(void)exitCode;
+#endif
+
+	return Error::kNone;
+}
 
 } // end namespace anki

@@ -7,6 +7,7 @@
 #include <AnKi/Util/Process.h>
 #include <AnKi/Util/Filesystem.h>
 #include <AnKi/Util/File.h>
+#include <AnKi/Util/HighRezTimer.h>
 
 namespace anki {
 
@@ -24,12 +25,12 @@ public:
 
 	~CleanupFile()
 	{
-		if(!m_fileToDelete.isEmpty())
+		if(!m_fileToDelete.isEmpty() && fileExists(m_fileToDelete))
 		{
-			const Error err = removeFile(m_fileToDelete);
-			if(!err)
+			// Loop until success because Windows antivirus may be keeping the file in use
+			while(std::remove(m_fileToDelete.cstr()))
 			{
-				ANKI_SHADER_COMPILER_LOGV("Deleted %s", m_fileToDelete.cstr());
+				HighRezTimer::sleep(1.0_ms);
 			}
 		}
 	}
@@ -77,15 +78,14 @@ static CString profile(ShaderType shaderType)
 Error compileHlslToSpirv(CString src, ShaderType shaderType, BaseMemoryPool& tmpPool, DynamicArrayRaii<U8>& spirv,
 						 StringRaii& errorMessage)
 {
-	srand(U32(time(0)));
-	const I32 r = rand();
+	const U64 rand = getRandom();
 
 	StringRaii tmpDir(&tmpPool);
 	ANKI_CHECK(getTempDirectory(tmpDir));
 
-	// Store src to a file
+	// Store HLSL to a file
 	StringRaii hlslFilename(&tmpPool);
-	hlslFilename.sprintf("%s/%d.hlsl", tmpDir.cstr(), r);
+	hlslFilename.sprintf("%s/%llu.hlsl", tmpDir.cstr(), rand);
 
 	File hlslFile;
 	ANKI_CHECK(hlslFile.open(hlslFilename, FileOpenFlag::kWrite));
@@ -95,9 +95,11 @@ Error compileHlslToSpirv(CString src, ShaderType shaderType, BaseMemoryPool& tmp
 
 	// Call DXC
 	StringRaii spvFilename(&tmpPool);
-	spvFilename.sprintf("%s/%d.spv", tmpDir.cstr(), r);
+	spvFilename.sprintf("%s/%llu.spv", tmpDir.cstr(), rand);
 
 	DynamicArrayRaii<StringRaii> dxcArgs(&tmpPool);
+	dxcArgs.emplaceBack(&tmpPool, "-Fo");
+	dxcArgs.emplaceBack(&tmpPool, spvFilename);
 	dxcArgs.emplaceBack(&tmpPool, "-Wall");
 	dxcArgs.emplaceBack(&tmpPool, "-Wextra");
 	dxcArgs.emplaceBack(&tmpPool, "-Wconversion");
@@ -109,8 +111,6 @@ Error compileHlslToSpirv(CString src, ShaderType shaderType, BaseMemoryPool& tmp
 	dxcArgs.emplaceBack(&tmpPool, "2021");
 	dxcArgs.emplaceBack(&tmpPool, "-E");
 	dxcArgs.emplaceBack(&tmpPool, "main");
-	dxcArgs.emplaceBack(&tmpPool, "-Fo");
-	dxcArgs.emplaceBack(&tmpPool, spvFilename);
 	dxcArgs.emplaceBack(&tmpPool, "-T");
 	dxcArgs.emplaceBack(&tmpPool, profile(shaderType));
 	dxcArgs.emplaceBack(&tmpPool, "-spirv");
@@ -123,26 +123,42 @@ Error compileHlslToSpirv(CString src, ShaderType shaderType, BaseMemoryPool& tmp
 		dxcArgs2[i] = dxcArgs[i];
 	}
 
-	Process proc;
-	ANKI_CHECK(proc.start(ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Windows64/dxc.exe", dxcArgs2));
-
-	I32 exitCode;
-	ProcessStatus status;
-	ANKI_CHECK(proc.wait(60.0_sec, &status, &exitCode));
-
-	if(!(status == ProcessStatus::kNotRunning && exitCode == 0))
+	while(true)
 	{
+		I32 exitCode;
+		StringRaii stdOut(&tmpPool);
+
+		// Run once without stdout or stderr. Because if you do the process library will crap out after a while
+		ANKI_CHECK(Process::callProcess(ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Windows64/dxc.exe", dxcArgs2, nullptr,
+										nullptr, exitCode));
+
 		if(exitCode != 0)
 		{
-			ANKI_CHECK(proc.readFromStderr(errorMessage));
-		}
+			// There was an error, run again just to get the stderr
+			ANKI_CHECK(Process::callProcess(ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Windows64/dxc.exe", dxcArgs2,
+											nullptr, &errorMessage, exitCode));
 
-		if(errorMessage.isEmpty())
+			if(!errorMessage.isEmpty()
+			   && errorMessage.find("The process cannot access the file because") != CString::kNpos)
+			{
+				// DXC might fail to read the HLSL because the antivirus might be having a lock on it. Try again
+				errorMessage.destroy();
+				HighRezTimer::sleep(1.0_ms);
+			}
+			else if(errorMessage.isEmpty())
+			{
+				errorMessage = "Unknown error";
+				return Error::kFunctionFailed;
+			}
+			else
+			{
+				return Error::kFunctionFailed;
+			}
+		}
+		else
 		{
-			errorMessage = "Unknown error";
+			break;
 		}
-
-		return Error::kFunctionFailed;
 	}
 
 	CleanupFile spvFileCleanup(&tmpPool, spvFilename);
@@ -152,6 +168,7 @@ Error compileHlslToSpirv(CString src, ShaderType shaderType, BaseMemoryPool& tmp
 	ANKI_CHECK(spvFile.open(spvFilename, FileOpenFlag::kRead));
 	spirv.resize(U32(spvFile.getSize()));
 	ANKI_CHECK(spvFile.read(&spirv[0], spirv.getSizeInBytes()));
+	spvFile.close();
 
 	return Error::kNone;
 }

@@ -75,7 +75,8 @@ Error removeFile(const CString& filename)
 	const int err = std::remove(filename.cstr());
 	if(err)
 	{
-		ANKI_UTIL_LOGE("Couldn't delete file: %s", filename.cstr());
+		ANKI_UTIL_LOGE("Couldn't delete file (%s): %s", strerror(errno), filename.cstr());
+		return Error::kFunctionFailed;
 	}
 
 	return Error::kNone;
