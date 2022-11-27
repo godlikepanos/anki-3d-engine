@@ -30,18 +30,18 @@ enum class VertexAttributeId : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexAttributeId)
 #else
-const U32 kVertexAttributeIdPosition = 0u;
-const U32 kVertexAttributeIdUv0 = 1u;
-const U32 kVertexAttributeIdUv1 = 2u;
-const U32 kVertexAttributeIdNormal = 3u;
-const U32 kVertexAttributeIdTangent = 4u;
-const U32 kVertexAttributeIdColor = 5u;
-const U32 kVertexAttributeIdBoneWeights = 6u;
-const U32 kVertexAttributeIdBoneIndices = 7u;
-const U32 kVertexAttributeIdCount = 8u;
+constexpr U32 kVertexAttributeIdPosition = 0u;
+constexpr U32 kVertexAttributeIdUv0 = 1u;
+constexpr U32 kVertexAttributeIdUv1 = 2u;
+constexpr U32 kVertexAttributeIdNormal = 3u;
+constexpr U32 kVertexAttributeIdTangent = 4u;
+constexpr U32 kVertexAttributeIdColor = 5u;
+constexpr U32 kVertexAttributeIdBoneWeights = 6u;
+constexpr U32 kVertexAttributeIdBoneIndices = 7u;
+constexpr U32 kVertexAttributeIdCount = 8u;
 
-const U32 kVertexAttributeIdScale = kVertexAttributeIdUv0; ///< Only for particles.
-const U32 kVertexAttributeIdAlpha = kVertexAttributeIdUv1; ///< Only for particles.
+constexpr U32 kVertexAttributeIdScale = kVertexAttributeIdUv0; ///< Only for particles.
+constexpr U32 kVertexAttributeIdAlpha = kVertexAttributeIdUv1; ///< Only for particles.
 #endif
 
 // Vertex buffers
@@ -56,10 +56,10 @@ enum class VertexAttributeBufferId : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexAttributeBufferId)
 #else
-const U32 kVertexAttributeBufferIdPosition = 0u;
-const U32 kVertexAttributeBufferIdNormalTangentUv0 = 1u;
-const U32 kVertexAttributeBufferIdBone = 2u;
-const U32 kVertexAttributeBufferIdCount = 3u;
+constexpr U32 kVertexAttributeBufferIdPosition = 0u;
+constexpr U32 kVertexAttributeBufferIdNormalTangentUv0 = 1u;
+constexpr U32 kVertexAttributeBufferIdBone = 2u;
+constexpr U32 kVertexAttributeBufferIdCount = 3u;
 #endif
 
 /// The main vertex that contains normals, tangents and UVs.
@@ -70,8 +70,8 @@ struct MainVertex
 	Vec2 m_uv0;
 };
 
-const U32 kSizeof_MainVertex = 4u * 4u;
-const U32 kAlignof_MainVertex = 4u;
+constexpr U32 kSizeof_MainVertex = 4u * 4u;
+constexpr U32 kAlignof_MainVertex = 4u;
 ANKI_SHADER_STATIC_ASSERT(kSizeof_MainVertex == sizeof(MainVertex));
 
 /// The vertex that contains the bone influences.
@@ -81,8 +81,8 @@ struct BoneInfoVertex
 	U8Vec4 m_boneWeights;
 };
 
-const U32 kSizeof_BoneInfoVertex = 8u;
-const U32 kAlignof_BoneInfoVertex = 1u;
+constexpr U32 kSizeof_BoneInfoVertex = 8u;
+constexpr U32 kAlignof_BoneInfoVertex = 1u;
 ANKI_SHADER_STATIC_ASSERT(kSizeof_BoneInfoVertex == sizeof(BoneInfoVertex));
 
 /// A structure that contains all the info of a geometry.
@@ -100,8 +100,8 @@ struct MeshGpuDescriptor
 	Vec3 m_aabbMax;
 };
 
-const U32 kSizeof_MeshGpuDescriptor = 4u * sizeof(UVec2) + 8u * sizeof(F32);
-const U32 kAlignof_MeshGpuDescriptor = 8u;
+constexpr U32 kSizeof_MeshGpuDescriptor = 4u * sizeof(UVec2) + 8u * sizeof(F32);
+constexpr U32 kAlignof_MeshGpuDescriptor = 8u;
 ANKI_SHADER_STATIC_ASSERT(kSizeof_MeshGpuDescriptor == sizeof(MeshGpuDescriptor));
 
 #if defined(__cplusplus)
@@ -120,15 +120,15 @@ enum class TextureChannelId : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(TextureChannelId)
 #else
-const U32 TEXTURE_CHANNEL_ID_DIFFUSE = 0u;
-const U32 TEXTURE_CHANNEL_ID_NORMAL = 1u;
-const U32 TEXTURE_CHANNEL_ID_ROUGHNESS_METALNESS = 2u;
-const U32 TEXTURE_CHANNEL_ID_EMISSION = 3u;
-const U32 TEXTURE_CHANNEL_ID_HEIGHT = 4u;
-const U32 TEXTURE_CHANNEL_ID_AUX_0 = 5u;
-const U32 TEXTURE_CHANNEL_ID_AUX_1 = 6u;
-const U32 TEXTURE_CHANNEL_ID_AUX_2 = 7u;
-const U32 TEXTURE_CHANNEL_ID_COUNT = 8u;
+constexpr U32 TEXTURE_CHANNEL_ID_DIFFUSE = 0u;
+constexpr U32 TEXTURE_CHANNEL_ID_NORMAL = 1u;
+constexpr U32 TEXTURE_CHANNEL_ID_ROUGHNESS_METALNESS = 2u;
+constexpr U32 TEXTURE_CHANNEL_ID_EMISSION = 3u;
+constexpr U32 TEXTURE_CHANNEL_ID_HEIGHT = 4u;
+constexpr U32 TEXTURE_CHANNEL_ID_AUX_0 = 5u;
+constexpr U32 TEXTURE_CHANNEL_ID_AUX_1 = 6u;
+constexpr U32 TEXTURE_CHANNEL_ID_AUX_2 = 7u;
+constexpr U32 TEXTURE_CHANNEL_ID_COUNT = 8u;
 #endif
 
 struct MaterialGpuDescriptor
@@ -145,8 +145,8 @@ struct MaterialGpuDescriptor
 	F32 m_metalness;
 };
 
-const U32 kSizeof_MaterialGpuDescriptor = 8u * sizeof(U16) + 3u * sizeof(Vec3) + 2u * sizeof(F32);
-const U32 kAlignof_MaterialGpuDescriptor = 4u;
+constexpr U32 kSizeof_MaterialGpuDescriptor = 8u * sizeof(U16) + 3u * sizeof(Vec3) + 2u * sizeof(F32);
+constexpr U32 kAlignof_MaterialGpuDescriptor = 4u;
 ANKI_SHADER_STATIC_ASSERT(kSizeof_MaterialGpuDescriptor == sizeof(MaterialGpuDescriptor));
 
 struct ModelGpuDescriptor

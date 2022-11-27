@@ -1,0 +1,357 @@
+// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki hlsl
+
+#pragma anki mutator ANKI_LOD 0 1 2
+#pragma anki mutator ANKI_VELOCITY 0 1
+#pragma anki mutator ANKI_TECHNIQUE 0 1 2
+#pragma anki mutator ANKI_BONES 0 1
+#pragma anki mutator DIFFUSE_TEX 0 1
+#pragma anki mutator SPECULAR_TEX 0 1
+#pragma anki mutator ROUGHNESS_TEX 0 1
+#pragma anki mutator METAL_TEX 0 1
+#pragma anki mutator NORMAL_TEX 0 1
+#pragma anki mutator PARALLAX 0 1
+#pragma anki mutator EMISSIVE_TEX 0 1
+#pragma anki mutator ALPHA_TEST 0 1
+
+#pragma anki skip_mutation ALPHA_TEST 1 DIFFUSE_TEX 0
+#pragma anki skip_mutation ANKI_VELOCITY 1 ANKI_TECHNIQUE 1
+#pragma anki skip_mutation ANKI_VELOCITY 1 ANKI_TECHNIQUE 2
+#pragma anki skip_mutation ANKI_LOD 1 ANKI_TECHNIQUE 1
+#pragma anki skip_mutation ANKI_LOD 2 ANKI_TECHNIQUE 1
+#pragma anki skip_mutation ANKI_LOD 1 ANKI_TECHNIQUE 2
+#pragma anki skip_mutation ANKI_LOD 2 ANKI_TECHNIQUE 2
+
+// Some defines the clear up things
+#define REALLY_ALPHA_TEST (ALPHA_TEST && DIFFUSE_TEX)
+#define UVS (ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER || REALLY_ALPHA_TEST)
+#define REALLY_VELOCITY ((ANKI_VELOCITY || ANKI_BONES) && ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER)
+#define REALLY_USING_PARALLAX \
+	(PARALLAX == 1 && ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER && ANKI_LOD == 0 && ALPHA_TEST == 0)
+
+#include <AnKi/Shaders/Include/MaterialTypes.h>
+#include <AnKi/Shaders/Include/GpuSceneTypes.h>
+#include <AnKi/Shaders/PackFunctions.hlsl>
+#include <AnKi/Shaders/Functions.hlsl>
+
+ANKI_BINDLESS_SET(kMaterialSetBindless)
+
+[[vk::binding(kMaterialBindingTrilinearRepeatSampler, kMaterialSetGlobal)]] SamplerState u_globalSampler;
+[[vk::binding(kMaterialBindingLocalUniforms, kMaterialSetLocal)]] StructuredBuffer<U32> u_localUniforms;
+[[vk::binding(kMaterialBindingRenderableGpuView, kMaterialSetLocal)]] StructuredBuffer<RenderableGpuView>
+	u_renderableGpuViews;
+[[vk::binding(kMaterialBindingGlobalUniforms, kMaterialSetGlobal)]] ConstantBuffer<MaterialGlobalUniforms>
+	u_globalUniforms;
+
+#if ANKI_BONES
+[[vk::binding(kMaterialBindingBoneTransforms, kMaterialSetLocal)]] StructuredBuffer<Mat4> u_boneTransforms;
+[[vk::binding(kMaterialBindingPreviousBoneTransforms, kMaterialSetLocal)]] StructuredBuffer<Mat4>
+	u_prevFrameBoneTransforms;
+#endif
+
+#pragma anki reflect AnKiLocalUniforms
+#pragma anki struct AnKiLocalUniforms
+#pragma anki member U32 m_normalTex if NORMAL_TEX is 1
+
+#pragma anki member Vec3 m_diffColor if DIFFUSE_TEX is 0
+#pragma anki member U32 m_diffTex if DIFFUSE_TEX is 1
+
+#pragma anki member F32 m_roughness if ROUGHNESS_TEX is 0
+#pragma anki member U32 m_roughnessTex if ROUGHNESS_TEX is 1
+
+#pragma anki member Vec3 m_specColor if SPECULAR_TEX is 0
+#pragma anki member U32 m_specTex if SPECULAR_TEX is 1
+
+#pragma anki member F32 m_metallic if METAL_TEX is 0
+#pragma anki member U32 m_metallicTex if METAL_TEX is 1
+
+#pragma anki member Vec3 m_emission if EMISSIVE_TEX is 0
+#pragma anki member U32 m_emissiveTex if EMISSIVE_TEX is 1
+
+#pragma anki member F32 m_heightmapScale if PARALLAX is 1
+#pragma anki member U32 m_heightTex if PARALLAX is 1
+
+#pragma anki member F32 m_subsurface
+#pragma anki struct end
+
+struct VertIn
+{
+	[[vk::location(VertexStreamId::kPosition)]] Vec3 m_position : POSITION;
+	U32 m_instanceId : SV_INSTANCEID;
+
+#if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER
+	[[vk::location(VertexStreamId::kNormal)]] RVec3 m_normal : NORMAL;
+	[[vk::location(VertexStreamId::kTangent)]] RVec4 m_tangent : TANGENT;
+#endif
+
+#if UVS
+	[[vk::location(VertexStreamId::kUv)]] Vec2 m_uv : TEXCOORD;
+#endif
+
+#if ANKI_BONES
+	[[vk::location(VertexStreamId::kBoneIds)]] UVec4 m_boneIndices : COLOR0;
+	[[vk::location(VertexStreamId::kBoneWeights)]] RVec4 m_boneWeights : COLOR1;
+#endif
+};
+
+struct VertOut
+{
+	Vec4 m_position : SV_POSITION;
+
+#if UVS
+	Vec2 m_uv : TEXCOORD;
+#endif
+
+#if REALLY_VELOCITY
+	Vec3 m_prevClipXyw : PREV_CLIP;
+	Vec3 m_crntClipXyw : CRNT_CLIP;
+#endif
+
+#if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER
+	RVec3 m_normal : NORMAL;
+	RVec3 m_tangent : TANGENT;
+	RVec3 m_bitangent : BINTANGENT;
+#endif
+};
+
+#if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER || ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER_EZ
+struct FragOut
+{
+	Vec4 m_color0 : SV_TARGET0;
+	Vec4 m_color1 : SV_TARGET1;
+	Vec4 m_color2 : SV_TARGET2;
+	Vec2 m_color3 : SV_TARGET3;
+};
+#endif
+
+#pragma anki start vert
+
+#if ANKI_BONES
+void skinning(VertIn input, inout Vec3 pos, inout Vec3 prevPos, inout RVec3 normal, inout RVec4 tangent)
+{
+	Mat4 skinMat = u_boneTransforms[input.m_boneIndices[0]] * input.m_boneWeights[0];
+	Mat4 prevSkinMat = u_prevFrameBoneTransforms[input.m_boneIndices[0]] * input.m_boneWeights[0];
+	[[unroll]] for(U32 i = 1u; i < 4u; ++i)
+	{
+		skinMat += u_boneTransforms[input.m_boneIndices[i]] * input.m_boneWeights[i];
+		prevSkinMat += u_prevFrameBoneTransforms[input.m_boneIndices[i]] * input.m_boneWeights[i];
+	}
+
+#	if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER
+	prevPos = mul(prevSkinMat, Vec4(pos, 1.0)).xyz;
+	tangent.xyz = mul(skinMat, Vec4(tangent.xyz, 0.0)).xyz;
+	normal = mul(skinMat, Vec4(normal, 0.0)).xyz;
+#	endif
+	ANKI_MAYBE_UNUSED(prevPos);
+	ANKI_MAYBE_UNUSED(tangent);
+	ANKI_MAYBE_UNUSED(normal);
+
+	pos = mul(skinMat, Vec4(pos, 1.0)).xyz;
+}
+#endif
+
+#if(ANKI_VELOCITY || ANKI_BONES) && ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER
+void velocity(RenderableGpuView view, Vec3 prevLocalPos, inout VertOut output)
+{
+#	if ANKI_VELOCITY
+	// Object is also moving
+	const Vec4 trf[3] = view.m_previousWorldTransform;
+#	else
+	// Object is a skin that is not moving
+	const Vec4 trf[3] = view.m_worldTransform;
+#	endif
+
+	Vec4 v4 = Vec4(transform(trf, Vec4(prevLocalPos, 1.0)), 1.0);
+	v4 = mul(u_globalUniforms.m_previousViewProjectionMatrix, v4);
+
+	output.m_prevClipXyw = v4.xyw;
+	output.m_crntClipXyw = output.m_position.xyw;
+}
+#endif
+
+VertOut main(VertIn input)
+{
+	const RenderableGpuView view = u_renderableGpuViews[input.m_instanceId];
+	VertOut output;
+
+	// All values in local space
+#if ANKI_BONES
+	Vec3 pos =
+		input.m_position * view.m_positionScaleF32AndTranslationVec3.x + view.m_positionScaleF32AndTranslationVec3.yzw;
+#else
+	Vec3 pos = input.m_position;
+#endif
+
+	Vec3 prevPos = pos;
+	ANKI_MAYBE_UNUSED(prevPos);
+
+#if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER
+	RVec3 normal = input.m_normal;
+	RVec4 tangent = input.m_tangent;
+#else
+	RVec3 normal = RVec3(0.0, 0.0, 0.0);
+	RVec4 tangent = RVec4(0.0, 0.0, 0.0, 0.0);
+	ANKI_MAYBE_UNUSED(normal);
+	ANKI_MAYBE_UNUSED(tangent);
+#endif
+
+#if UVS
+	output.m_uv = input.m_uv;
+#endif
+
+	// Do stuff
+#if ANKI_BONES
+	skinning(input, pos, prevPos, normal, tangent);
+#endif
+
+	output.m_position = Vec4(transform(view.m_worldTransform, Vec4(pos, 1.0)), 1.0);
+	output.m_position = mul(u_globalUniforms.m_viewProjectionMatrix, output.m_position);
+
+#if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER
+	output.m_normal = transform(view.m_worldTransform, Vec4(normal, 0.0));
+	output.m_tangent = transform(view.m_worldTransform, Vec4(tangent.xyz, 0.0));
+	output.m_bitangent = cross(output.m_normal, output.m_tangent) * tangent.w;
+#endif
+
+#if REALLY_VELOCITY
+	velocity(view, prevPos, output);
+#endif
+
+	return output;
+};
+
+#pragma anki end
+
+#pragma anki start frag
+
+void doAlphaTest(RF32 alpha)
+{
+	if(alpha == 0.0)
+	{
+		discard;
+	}
+}
+
+#if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_SHADOWS
+void main(VertOut input)
+{
+	ANKI_MAYBE_UNUSED(input);
+#	if REALLY_ALPHA_TEST
+	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(u_localUniforms, 0u);
+	const RVec4 diffColorA = u_bindlessTextures2dF32[localUniforms.m_diffTex].Sample(u_globalSampler, input.m_uv);
+	doAlphaTest(diffColorA.a);
+#	endif
+}
+#elif ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER_EZ
+FragOut main(VertOut input)
+{
+	ANKI_MAYBE_UNUSED(input);
+#	if REALLY_ALPHA_TEST
+	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(u_localUniforms, 0u);
+	const RVec4 diffColorA = u_bindlessTextures2dF32[localUniforms.m_diffTex].Sample(u_globalSampler, input.m_uv);
+	doAlphaTest(diffColorA.a);
+#	endif
+	return (FragOut)0;
+}
+#elif ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER
+// Do normal mapping
+RVec3 readNormalFromTexture(VertOut input, Texture2D<RVec4> map, SamplerState sampl, Vec2 texCoords)
+{
+	// First read the texture
+	const RVec3 nAtTangentspace = normalize((map.Sample(sampl, texCoords).rgb - 0.5) * 2.0);
+
+	const RVec3 n = normalize(input.m_normal);
+	const RVec3 t = normalize(input.m_tangent);
+	const RVec3 b = normalize(input.m_bitangent);
+
+	const RMat3 tbnMat = Mat3(t, b, n);
+
+	return mul(tbnMat, nAtTangentspace);
+}
+
+FragOut main(VertOut input)
+{
+	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(u_localUniforms, 0u);
+
+#	if REALLY_USING_PARALLAX
+	// TODO
+	const Vec2 uv = input.m_uv;
+#	else
+	const Vec2 uv = input.m_uv;
+#	endif
+	ANKI_MAYBE_UNUSED(uv);
+
+#	if DIFFUSE_TEX
+#		if REALLY_ALPHA_TEST
+	const RVec4 diffColorA = u_bindlessTextures2dF32[localUniforms.m_diffTex].Sample(u_globalSampler, uv);
+	doAlphaTest(diffColorA.a);
+	const RVec3 diffColor = diffColorA.rgb;
+#		else
+	const RVec3 diffColor = u_bindlessTextures2dF32[localUniforms.m_diffTex].Sample(u_globalSampler, uv).rgb;
+#		endif
+#	else
+	const RVec3 diffColor = localUniforms.m_diffColor;
+#	endif
+
+#	if SPECULAR_TEX
+	const RVec3 specColor = u_bindlessTextures2dF32[localUniforms.m_specTex].Sample(u_globalSampler, uv).rgb;
+#	else
+	const RVec3 specColor = localUniforms.m_specColor;
+#	endif
+
+#	if ROUGHNESS_TEX
+	const RF32 roughness = u_bindlessTextures2dF32[localUniforms.m_roughnessTex].Sample(u_globalSampler, uv).g;
+#	else
+	const RF32 roughness = localUniforms.m_roughness;
+#	endif
+
+#	if METAL_TEX
+	const RF32 metallic = u_bindlessTextures2dF32[localUniforms.m_metallicTex].Sample(u_globalSampler, uv).b;
+#	else
+	const RF32 metallic = localUniforms.m_metallic;
+#	endif
+
+#	if NORMAL_TEX
+	const RVec3 normal =
+		readNormalFromTexture(input, u_bindlessTextures2dF32[localUniforms.m_normalTex], u_globalSampler, uv);
+#	else
+	const RVec3 normal = normalize(input.m_normal);
+#	endif
+
+#	if EMISSIVE_TEX
+	const RVec3 emission = u_bindlessTextures2dF32[localUniforms.m_emissiveTex].Sample(u_globalSampler, uv).rgb;
+#	else
+	const RVec3 emission = localUniforms.m_emission;
+#	endif
+
+#	if ANKI_VELOCITY || ANKI_BONES
+	const Vec2 prevNdc = input.m_prevClipXyw.xy / input.m_prevClipXyw.z;
+	const Vec2 crntNdc = input.m_crntClipXyw.xy / input.m_crntClipXyw.z;
+
+	// It's NDC_TO_UV(prevNdc) - NDC_TO_UV(crntNdc) or:
+	const Vec2 velocity = (prevNdc - crntNdc) * 0.5;
+#	else
+	const Vec2 velocity = Vec2(1.0, 1.0);
+#	endif
+
+	GbufferInfo g;
+	g.m_diffuse = diffColor;
+	g.m_normal = normal;
+	g.m_f0 = specColor;
+	g.m_roughness = roughness;
+	g.m_subsurface = localUniforms.m_subsurface;
+	g.m_emission = emission;
+	g.m_metallic = metallic;
+	g.m_velocity = velocity;
+
+	FragOut output;
+	packGBuffer(g, output.m_color0, output.m_color1, output.m_color2, output.m_color3);
+	return output;
+}
+#endif
+
+#pragma anki end

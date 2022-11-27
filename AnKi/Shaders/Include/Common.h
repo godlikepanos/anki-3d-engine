@@ -40,8 +40,26 @@ ANKI_END_NAMESPACE
 #	define ANKI_SHADER_FUNC_INLINE
 
 #	define ANKI_SHADER_STATIC_ASSERT(cond_)
+#	define ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(enum_)
 
 #	define constexpr static const
+
+#	define ANKI_SUPPORTS_16BIT_TYPES 0
+#	define ANKI_SUPPORTS_64BIT_TYPES !ANKI_PLATFORM_MOBILE
+
+template<typename T>
+void maybeUnused(T a)
+{
+	a = a;
+}
+#	define ANKI_MAYBE_UNUSED(x) maybeUnused(x)
+
+#	define ANKI_BINDLESS_SET(s) \
+		[[vk::binding(0, s)]] Texture2D<uint4> u_bindlessTextures2dU32[kMaxBindlessTextures]; \
+		[[vk::binding(0, s)]] Texture2D<int4> u_bindlessTextures2dI32[kMaxBindlessTextures]; \
+		[[vk::binding(0, s)]] Texture2D<RVec4> u_bindlessTextures2dF32[kMaxBindlessTextures]; \
+		[[vk::binding(0, s)]] Texture2DArray<RVec4> u_bindlessTextures2dArrayF32[kMaxBindlessTextures]; \
+		[[vk::binding(1, s)]] Buffer<float4> u_bindlessTextureBuffersF32[kMaxBindlessReadonlyTextureBuffers];
 
 typedef float F32;
 constexpr uint kSizeof_F32 = 4u;
@@ -52,6 +70,7 @@ constexpr uint kSizeof_Vec3 = 12u;
 typedef float4 Vec4;
 constexpr uint kSizeof_Vec4 = 16u;
 
+#	if ANKI_SUPPORTS_16BIT_TYPES
 typedef float16_t F16;
 constexpr uint kSizeof_F16 = 2u;
 typedef float16_t2 HVec2;
@@ -78,6 +97,7 @@ typedef int16_t3 I16Vec3;
 constexpr uint kSizeof_I16Vec3 = 6u;
 typedef int16_t4 I16Vec4;
 constexpr uint kSizeof_I16Vec4 = 8u;
+#	endif
 
 typedef uint U32;
 constexpr uint kSizeof_U32 = 4u;
@@ -97,7 +117,7 @@ constexpr uint kSizeof_IVec3 = 12u;
 typedef int32_t4 IVec4;
 constexpr uint kSizeof_IVec4 = 16u;
 
-#	if ANKI_SUPPORTS_64BIT
+#	if ANKI_SUPPORTS_64BIT_TYPES
 typedef uint64_t U64;
 constexpr uint kSizeof_U64 = 8u;
 typedef uint64_t2 U64Vec2;
@@ -118,23 +138,37 @@ constexpr uint kSizeof_I64Vec4 = 32u;
 #	endif
 
 typedef float3x3 Mat3;
+typedef float4x4 Mat4;
+typedef float3x4 Mat3x4;
 
 typedef bool Bool;
 
-#	if 0
+#	if ANKI_FORCE_FULL_FP_PRECISION
+typedef float RF32;
+typedef float2 RVec2;
+typedef float3 RVec3;
+typedef float4 RVec4;
+typedef float3x3 RMat3;
+#	else
 typedef min16float RF32;
 typedef min16float2 RVec2;
 typedef min16float3 RVec3;
 typedef min16float4 RVec4;
+typedef min16float3x3 RMat3;
 #	endif
 
 constexpr F32 kEpsilonf = 0.000001f;
-constexpr F16 kEpsilonhf = (F16)0.0001f; // Divisions by this should be OK according to http://weitz.de/ieee/
+#	if ANKI_SUPPORTS_16BIT_TYPES
+constexpr F16 kEpsilonhf = (F16)0.0001f; // Divisions by this should be OK according to http://weitz.de/ieee
+#	endif
+constexpr RF32 kEpsilonRf = 0.0001f;
 
 constexpr U32 kMaxU32 = 0xFFFFFFFFu;
 constexpr F32 kMaxF32 = 3.402823e+38;
+#	if ANKI_SUPPORTS_16BIT_TYPES
 constexpr F16 kMaxF16 = (F16)65504.0;
 constexpr F16 kMinF16 = (F16)0.00006104;
+#	endif
 
 constexpr F32 kPi = 3.14159265358979323846f;
 
@@ -156,7 +190,7 @@ constexpr F32 kPi = 3.14159265358979323846f;
 
 #	define constexpr const
 
-#	define ANKI_SUPPORTS_64BIT !ANKI_PLATFORM_MOBILE
+#	define ANKI_SUPPORTS_64BIT_TYPES !ANKI_PLATFORM_MOBILE
 
 #	extension GL_EXT_control_flow_attributes : require
 #	extension GL_KHR_shader_subgroup_vote : require
@@ -178,7 +212,7 @@ constexpr F32 kPi = 3.14159265358979323846f;
 #	extension GL_EXT_shader_explicit_arithmetic_types_float16 : enable
 #	extension GL_EXT_shader_explicit_arithmetic_types_float32 : enable
 
-#	if ANKI_SUPPORTS_64BIT
+#	if ANKI_SUPPORTS_64BIT_TYPES
 #		extension GL_EXT_shader_explicit_arithmetic_types_int64 : enable
 #		extension GL_EXT_shader_explicit_arithmetic_types_float64 : enable
 #		extension GL_EXT_shader_atomic_int64 : enable
@@ -265,7 +299,7 @@ const uint kSizeof_ivec3 = 12u;
 #	define IVec4 ivec4
 const uint kSizeof_ivec4 = 16u;
 
-#	if ANKI_SUPPORTS_64BIT
+#	if ANKI_SUPPORTS_64BIT_TYPES
 #		define U64 uint64_t
 const uint kSizeof_uint64_t = 8u;
 #		define U64Vec2 u64vec2
@@ -296,7 +330,7 @@ const uint kSizeof_mat4x3 = 48u;
 
 #	define Bool bool
 
-#	if ANKI_SUPPORTS_64BIT
+#	if ANKI_SUPPORTS_64BIT_TYPES
 #		define Address U64
 #	else
 #		define Address UVec2
@@ -408,6 +442,11 @@ Bool all(Bool b)
 #	define frac(x) fract(x)
 #	define lerp(a, b, t) mix(a, b, t)
 #	define atan2(x, y) atan(x, y)
+
+float asfloat(uint u)
+{
+	return uintBitsToFloat(u);
+}
 
 constexpr F32 kEpsilonf = 0.000001f;
 constexpr F16 kEpsilonhf = 0.0001hf; // Divisions by this should be OK according to http://weitz.de/ieee/

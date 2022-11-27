@@ -515,6 +515,8 @@ Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPra
 				{
 					ANKI_CHECK(checkActiveStruct());
 					ANKI_CHECK(parsePragmaStructEnd(token + 1, end, line, fname));
+
+					m_codeLines.pushBackSprintf("#line %u \"%s\"", lineNumber, fname.cstr());
 				}
 				else
 				{
@@ -789,8 +791,8 @@ Error ShaderProgramParser::parsePragmaStructEnd(const StringRaii* begin, const S
 		for(U32 j = 0; j < componentCount; ++j)
 		{
 			StringRaii tmp(m_pool);
-			tmp.sprintf("%s(ssbo[%s_%s_OFFSETOF + offset + %uu])%s", (isIntegral) ? "" : "uintBitsToFloat",
-						structName.cstr(), m.m_name.cstr(), j, (j != componentCount - 1) ? "," : "");
+			tmp.sprintf("%s(ssbo[%s_%s_OFFSETOF + offset + %uu])%s", (isIntegral) ? "" : "asfloat", structName.cstr(),
+						m.m_name.cstr(), j, (j != componentCount - 1) ? "," : "");
 
 			values.append(tmp);
 		}
@@ -812,7 +814,8 @@ Error ShaderProgramParser::parsePragmaStructEnd(const StringRaii* begin, const S
 		m_codeLines.pushBack("#endif");
 	}
 
-	// Now define the structure LOAD
+	// Now define the structure LOAD in GLSL
+	m_codeLines.pushBack("#if ANKI_GLSL");
 	m_codeLines.pushBackSprintf("#define load%s(ssbo, offset) %s( \\", structName.cstr(), structName.cstr());
 	for(U32 i = 0; i < gstruct.m_members.getSize(); ++i)
 	{
@@ -820,6 +823,17 @@ Error ShaderProgramParser::parsePragmaStructEnd(const StringRaii* begin, const S
 		m_codeLines.pushBackSprintf("\t%s_%s_LOAD(ssbo, offset) \\", structName.cstr(), m.m_name.cstr());
 	}
 	m_codeLines.pushBack(")");
+
+	// Now define the structure LOAD in HLSL
+	m_codeLines.pushBack("#else");
+	m_codeLines.pushBackSprintf("#define load%s(ssbo, offset) { \\", structName.cstr());
+	for(U32 i = 0; i < gstruct.m_members.getSize(); ++i)
+	{
+		const Member& m = gstruct.m_members[i];
+		m_codeLines.pushBackSprintf("\t%s_%s_LOAD(ssbo, offset) \\", structName.cstr(), m.m_name.cstr());
+	}
+	m_codeLines.pushBack("}");
+	m_codeLines.pushBack("#endif");
 
 	// Define the actual struct
 	m_codeLines.pushBackSprintf("#define %s %s_", structName.cstr(), structName.cstr());

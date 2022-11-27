@@ -38,7 +38,7 @@ ANKI_RP Vec3 tonemapReinhard(ANKI_RP Vec3 color, ANKI_RP F32 saturation)
 {
 	const ANKI_RP F32 lum = computeLuminance(color);
 	const ANKI_RP F32 toneMappedLuminance = lum / (lum + 1.0);
-	return toneMappedLuminance * pow(color / lum, Vec3(saturation));
+	return toneMappedLuminance * pow(color / lum, Vec3(saturation, saturation, saturation));
 }
 
 // Uncharted 2 operator

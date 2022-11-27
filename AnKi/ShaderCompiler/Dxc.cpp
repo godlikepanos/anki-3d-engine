@@ -102,11 +102,12 @@ Error compileHlslToSpirv(CString src, ShaderType shaderType, BaseMemoryPool& tmp
 	dxcArgs.emplaceBack(&tmpPool, spvFilename);
 	dxcArgs.emplaceBack(&tmpPool, "-Wall");
 	dxcArgs.emplaceBack(&tmpPool, "-Wextra");
-	dxcArgs.emplaceBack(&tmpPool, "-Wconversion");
+	dxcArgs.emplaceBack(&tmpPool, "-Wno-conversion");
 	dxcArgs.emplaceBack(&tmpPool, "-Werror");
 	dxcArgs.emplaceBack(&tmpPool, "-Wfatal-errors");
+	dxcArgs.emplaceBack(&tmpPool, "-Wundef");
 	dxcArgs.emplaceBack(&tmpPool, "-Wno-unused-const-variable");
-	dxcArgs.emplaceBack(&tmpPool, "-enable-16bit-types");
+	// dxcArgs.emplaceBack(&tmpPool, "-enable-16bit-types");
 	dxcArgs.emplaceBack(&tmpPool, "-HV");
 	dxcArgs.emplaceBack(&tmpPool, "2021");
 	dxcArgs.emplaceBack(&tmpPool, "-E");
@@ -152,6 +153,7 @@ Error compileHlslToSpirv(CString src, ShaderType shaderType, BaseMemoryPool& tmp
 			}
 			else
 			{
+				// printf("%s\n", src.cstr());
 				return Error::kFunctionFailed;
 			}
 		}

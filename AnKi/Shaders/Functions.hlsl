@@ -5,33 +5,7 @@
 
 #pragma once
 
-#include <AnKi/Shaders/Common.glsl>
-
-#if defined(ANKI_FRAGMENT_SHADER)
-Vec3 dither(Vec3 col, F32 C)
-{
-	Vec3 vDither = Vec3(dot(Vec2(171.0, 231.0), gl_FragCoord.xy));
-	vDither.rgb = frac(vDither.rgb / Vec3(103.0, 71.0, 97.0));
-
-	col = col * (255.0 / C) + vDither.rgb;
-	col = floor(col) / 255.0;
-	col *= C;
-
-	return col;
-}
-
-F32 dither(F32 col, F32 C)
-{
-	F32 vDither = dot(Vec2(171.0, 231.0), gl_FragCoord.xy);
-	vDither = frac(vDither / 103.0);
-
-	col = col * (255.0 / C) + vDither;
-	col = floor(col) / 255.0;
-	col *= C;
-
-	return col;
-}
-#endif
+#include <AnKi/Shaders/Common.hlsl>
 
 // Convert to linear depth
 F32 linearizeDepth(F32 depth, F32 zNear, F32 zFar)
@@ -70,7 +44,7 @@ Vec4 projectPerspective(Vec4 vec, F32 m00, F32 m11, F32 m22, F32 m23)
 
 #if defined(ANKI_FRAGMENT_SHADER)
 // Stolen from shadertoy.com/view/4tyGDD
-Vec4 textureCatmullRom4Samples(texture2D tex, sampler sampl, Vec2 uv, Vec2 texSize)
+Vec4 textureCatmullRom4Samples(Texture2D tex, SamplerState sampl, Vec2 uv, Vec2 texSize)
 {
 	const Vec2 halff = 2.0 * frac(0.5 * uv * texSize - 0.25) - 1.0;
 	const Vec2 f = frac(halff);
@@ -81,17 +55,13 @@ Vec4 textureCatmullRom4Samples(texture2D tex, sampler sampl, Vec2 uv, Vec2 texSi
 						  (((-2.0 * f + 5.0) * f - 2.5) * f - 0.5) / (sum1 * texSize) + uv);
 	w.xz *= halff.x * halff.y > 0.0 ? 1.0 : -1.0;
 
-	return (texture(tex, sampl, pos.xy) * w.x + texture(tex, sampl, pos.zy) * w.z) * w.y
-		   + (texture(tex, sampl, pos.xw) * w.x + texture(tex, sampl, pos.zw) * w.z) * w.w;
+	return (tex.Sample(sampl, pos.xy) * w.x + tex.Sample(sampl, pos.zy) * w.z) * w.y
+		   + (tex.Sample(sampl, pos.xw) * w.x + tex.Sample(sampl, pos.zw) * w.z) * w.w;
 }
 #endif
 
 // Stolen from shadertoy.com/view/4df3Dn
-#if ANKI_GLSL
-Vec4 textureBicubic(texture2D tex, sampler sampl, Vec2 uv, F32 lod, Vec2 texSize)
-#else
 Vec4 textureBicubic(Texture2D tex, SamplerState sampl, Vec2 uv, F32 lod, Vec2 texSize)
-#endif
 {
 #define w0(a) ((1.0 / 6.0) * ((a) * ((a) * (-(a) + 3.0) - 3.0) + 1.0))
 #define w1(a) ((1.0 / 6.0) * ((a) * (a) * (3.0 * (a)-6.0) + 4.0))
@@ -101,11 +71,7 @@ Vec4 textureBicubic(Texture2D tex, SamplerState sampl, Vec2 uv, F32 lod, Vec2 te
 #define g1(a) (w2(a) + w3(a))
 #define h0(a) (-1.0 + w1(a) / (w0(a) + w1(a)))
 #define h1(a) (1.0 + w3(a) / (w2(a) + w3(a)))
-#if ANKI_GLSL
-#	define texSample(uv) textureLod(tex, sampl, uv, lod)
-#else
-#	define texSample(uv) tex.SampleLevel(sampl, uv, lod)
-#endif
+#define texSample(uv) tex.SampleLevel(sampl, uv, lod)
 
 	uv = uv * texSize + 0.5;
 	const Vec2 iuv = floor(uv);
@@ -141,31 +107,30 @@ F32 rand(Vec2 n)
 	return 0.5 + 0.5 * frac(sin(dot(n, Vec2(12.9898, 78.233))) * 43758.5453);
 }
 
-#if ANKI_GLSL
-Vec4 nearestDepthUpscale(Vec2 uv, texture2D depthFull, texture2D depthHalf, texture2D colorTex,
-						 sampler linearAnyClampSampler, Vec2 linearDepthCf, F32 depthThreshold)
+Vec4 nearestDepthUpscale(Vec2 uv, Texture2D depthFull, Texture2D depthHalf, Texture2D colorTex,
+						 SamplerState linearAnyClampSampler, Vec2 linearDepthCf, F32 depthThreshold)
 {
-	F32 fullDepth = textureLod(depthFull, linearAnyClampSampler, uv, 0.0).r; // Sampler not important.
+	F32 fullDepth = depthFull.SampleLevel(linearAnyClampSampler, uv, 0.0).r; // Sampler not important.
 	fullDepth = linearizeDepthOptimal(fullDepth, linearDepthCf.x, linearDepthCf.y);
 
-	Vec4 halfDepths = textureGather(sampler2D(depthHalf, linearAnyClampSampler), uv, 0); // Sampler not important.
+	Vec4 halfDepths = depthHalf.GatherRed(linearAnyClampSampler, uv); // Sampler not important.
 	halfDepths = linearizeDepthOptimal(halfDepths, linearDepthCf.x, linearDepthCf.y);
 
-	const Vec4 diffs = abs(Vec4(fullDepth) - halfDepths);
+	const Vec4 diffs = abs(Vec4(fullDepth, fullDepth, fullDepth, fullDepth) - halfDepths);
 	Vec4 color;
 
-	if(all(lessThan(diffs, Vec4(depthThreshold))))
+	if(all(diffs < Vec4(depthThreshold, depthThreshold, depthThreshold, depthThreshold)))
 	{
 		// No major discontinuites, sample with bilinear
-		color = textureLod(colorTex, linearAnyClampSampler, uv, 0.0);
+		color = colorTex.SampleLevel(linearAnyClampSampler, uv, 0.0);
 	}
 	else
 	{
 		// Some discontinuites, need to use the newUv
-		const Vec4 r = textureGather(sampler2D(colorTex, linearAnyClampSampler), uv, 0);
-		const Vec4 g = textureGather(sampler2D(colorTex, linearAnyClampSampler), uv, 1);
-		const Vec4 b = textureGather(sampler2D(colorTex, linearAnyClampSampler), uv, 2);
-		const Vec4 a = textureGather(sampler2D(colorTex, linearAnyClampSampler), uv, 3);
+		const Vec4 r = colorTex.GatherRed(linearAnyClampSampler, uv);
+		const Vec4 g = colorTex.GatherGreen(linearAnyClampSampler, uv);
+		const Vec4 b = colorTex.GatherBlue(linearAnyClampSampler, uv);
+		const Vec4 a = colorTex.GatherAlpha(linearAnyClampSampler, uv);
 
 		F32 minDiff = diffs.x;
 		U32 comp = 0u;
@@ -193,30 +158,30 @@ Vec4 nearestDepthUpscale(Vec2 uv, texture2D depthFull, texture2D depthHalf, text
 	return color;
 }
 
-F32 _calcDepthWeight(texture2D depthLow, sampler nearestAnyClamp, Vec2 uv, F32 ref, Vec2 linearDepthCf)
+F32 _calcDepthWeight(Texture2D depthLow, SamplerState nearestAnyClamp, Vec2 uv, F32 ref, Vec2 linearDepthCf)
 {
-	const F32 d = textureLod(depthLow, nearestAnyClamp, uv, 0.0).r;
+	const F32 d = depthLow.SampleLevel(nearestAnyClamp, uv, 0.0).r;
 	const F32 linearD = linearizeDepthOptimal(d, linearDepthCf.x, linearDepthCf.y);
 	return 1.0 / (kEpsilonf + abs(ref - linearD));
 }
 
-Vec4 _sampleAndWeight(texture2D depthLow, texture2D colorLow, sampler linearAnyClamp, sampler nearestAnyClamp,
+Vec4 _sampleAndWeight(Texture2D depthLow, Texture2D colorLow, SamplerState linearAnyClamp, SamplerState nearestAnyClamp,
 					  const Vec2 lowInvSize, Vec2 uv, const Vec2 offset, const F32 ref, const F32 weight,
 					  const Vec2 linearDepthCf, inout F32 normalize)
 {
 	uv += offset * lowInvSize;
 	const F32 dw = _calcDepthWeight(depthLow, nearestAnyClamp, uv, ref, linearDepthCf);
-	const Vec4 v = textureLod(colorLow, linearAnyClamp, uv, 0.0);
+	const Vec4 v = colorLow.SampleLevel(linearAnyClamp, uv, 0.0);
 	normalize += weight * dw;
 	return v * dw * weight;
 }
 
-Vec4 bilateralUpsample(texture2D depthHigh, texture2D depthLow, texture2D colorLow, sampler linearAnyClamp,
-					   sampler nearestAnyClamp, const Vec2 lowInvSize, const Vec2 uv, const Vec2 linearDepthCf)
+Vec4 bilateralUpsample(Texture2D depthHigh, Texture2D depthLow, Texture2D colorLow, SamplerState linearAnyClamp,
+					   SamplerState nearestAnyClamp, const Vec2 lowInvSize, const Vec2 uv, const Vec2 linearDepthCf)
 {
 	const Vec3 kWeights = Vec3(0.25, 0.125, 0.0625);
-	const F32 depthRef =
-		linearizeDepthOptimal(textureLod(depthHigh, nearestAnyClamp, uv, 0.0).r, linearDepthCf.x, linearDepthCf.y);
+	F32 depthRef = depthHigh.SampleLevel(nearestAnyClamp, uv, 0.0).r;
+	depthRef = linearizeDepthOptimal(depthRef, linearDepthCf.x, linearDepthCf.y);
 	F32 normalize = 0.0;
 
 	Vec4 sum = _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(0.0, 0.0),
@@ -240,7 +205,6 @@ Vec4 bilateralUpsample(texture2D depthHigh, texture2D depthLow, texture2D colorL
 
 	return sum / normalize;
 }
-#endif
 
 Vec3 getCubemapDirection(const Vec2 norm, const U32 faceIdx)
 {
@@ -311,13 +275,11 @@ Vec2 convertCubeUvsu(const Vec3 v, out U32 faceIndex)
 	return 0.5 / mag * uv + 0.5;
 }
 
-#if ANKI_GLSL
-ANKI_RP Vec3 grayScale(const ANKI_RP Vec3 col)
+RVec3 grayScale(const RVec3 col)
 {
-	const ANKI_RP F32 grey = (col.r + col.g + col.b) * (1.0 / 3.0);
-	return Vec3(grey);
+	const F32 grey = (col.r + col.g + col.b) * (1.0 / 3.0);
+	return RVec3(grey, grey, grey);
 }
-#endif
 
 Vec3 saturateColor(const Vec3 col, const F32 factor)
 {
@@ -332,39 +294,38 @@ Vec3 gammaCorrection(Vec3 gamma, Vec3 col)
 	return pow(col, 1.0 / gamma);
 }
 
-#if ANKI_GLSL
 // Can use 0.15 for sharpenFactor
-Vec3 readSharpen(texture2D tex, sampler sampl, Vec2 uv, F32 sharpenFactor, Bool detailed)
+Vec3 readSharpen(Texture2D tex, SamplerState sampl, Vec2 uv, F32 sharpenFactor, Bool detailed)
 {
-	Vec3 col = textureLod(tex, sampl, uv, 0.0).rgb;
+	Vec3 col = tex.SampleLevel(sampl, uv, 0.0).rgb;
 
-	Vec3 col2 = textureLodOffset(sampler2D(tex, sampl), uv, 0.0, IVec2(1, 1)).rgb;
-	col2 += textureLodOffset(sampler2D(tex, sampl), uv, 0.0, IVec2(-1, -1)).rgb;
-	col2 += textureLodOffset(sampler2D(tex, sampl), uv, 0.0, IVec2(1, -1)).rgb;
-	col2 += textureLodOffset(sampler2D(tex, sampl), uv, 0.0, IVec2(-1, 1)).rgb;
+	Vec3 col2 = tex.SampleLevel(sampl, uv, 0.0, IVec2(1, 1)).rgb;
+	col2 += tex.SampleLevel(sampl, uv, 0.0, IVec2(-1, -1)).rgb;
+	col2 += tex.SampleLevel(sampl, uv, 0.0, IVec2(1, -1)).rgb;
+	col2 += tex.SampleLevel(sampl, uv, 0.0, IVec2(-1, 1)).rgb;
 
 	F32 f = 4.0;
 	if(detailed)
 	{
-		col2 += textureLodOffset(sampler2D(tex, sampl), uv, 0.0, IVec2(0, 1)).rgb;
-		col2 += textureLodOffset(sampler2D(tex, sampl), uv, 0.0, IVec2(1, 0)).rgb;
-		col2 += textureLodOffset(sampler2D(tex, sampl), uv, 0.0, IVec2(-1, 0)).rgb;
-		col2 += textureLodOffset(sampler2D(tex, sampl), uv, 0.0, IVec2(0, -1)).rgb;
+		col2 += tex.SampleLevel(sampl, uv, 0.0, IVec2(0, 1)).rgb;
+		col2 += tex.SampleLevel(sampl, uv, 0.0, IVec2(1, 0)).rgb;
+		col2 += tex.SampleLevel(sampl, uv, 0.0, IVec2(-1, 0)).rgb;
+		col2 += tex.SampleLevel(sampl, uv, 0.0, IVec2(0, -1)).rgb;
 
 		f = 8.0;
 	}
 
 	col = col * (f * sharpenFactor + 1.0) - sharpenFactor * col2;
-	return max(Vec3(0.0), col);
+	return max(Vec3(0.0, 0.0, 0.0), col);
 }
 
-Vec3 readErosion(texture2D tex, sampler sampl, const Vec2 uv)
+Vec3 readErosion(Texture2D tex, SamplerState sampl, const Vec2 uv)
 {
-	Vec3 minValue = textureLod(tex, sampl, uv, 0.0).rgb;
+	Vec3 minValue = tex.SampleLevel(sampl, uv, 0.0).rgb;
 
-#	define ANKI_EROSION(x, y) \
-		col2 = textureLodOffset(sampler2D(tex, sampl), uv, 0.0, IVec2(x, y)).rgb; \
-		minValue = min(col2, minValue);
+#define ANKI_EROSION(x, y) \
+	col2 = tex.SampleLevel(sampl, uv, 0.0, IVec2(x, y)).rgb; \
+	minValue = min(col2, minValue);
 
 	Vec3 col2;
 	ANKI_EROSION(1, 1);
@@ -376,11 +337,10 @@ Vec3 readErosion(texture2D tex, sampler sampl, const Vec2 uv)
 	ANKI_EROSION(-1, 0);
 	ANKI_EROSION(0, -1);
 
-#	undef ANKI_EROSION
+#undef ANKI_EROSION
 
 	return minValue;
 }
-#endif
 
 // 5 color heatmap from a factor.
 Vec3 heatmap(const F32 factor)
@@ -579,7 +539,7 @@ F32 gaussianWeight(F32 s, F32 x)
 }
 
 #if ANKI_GLSL
-Vec4 bilinearFiltering(texture2D tex, sampler nearestSampler, Vec2 uv, F32 lod, Vec2 textureSize)
+Vec4 bilinearFiltering(Texture2D tex, SamplerState nearestSampler, Vec2 uv, F32 lod, Vec2 textureSize)
 {
 	const Vec2 texelSize = 1.0 / textureSize;
 	const Vec2 unnormTexCoord = (uv * textureSize) - 0.5;
@@ -605,8 +565,8 @@ Vec3 animateBlueNoise(Vec3 inputBlueNoise, U32 frameIdx)
 /// normalizedUvs is uv*textureResolution
 F32 computeMipLevel(Vec2 normalizedUvs)
 {
-	const Vec2 dx = dFdxCoarse(normalizedUvs);
-	const Vec2 dy = dFdyCoarse(normalizedUvs);
+	const Vec2 dx = ddx_coarse(normalizedUvs);
+	const Vec2 dy = ddy_coarse(normalizedUvs);
 	const F32 deltaMax2 = max(dot(dx, dx), dot(dy, dy));
 	return max(0.0, 0.5 * log2(deltaMax2));
 }

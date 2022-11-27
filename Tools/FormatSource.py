@@ -10,7 +10,7 @@ import subprocess
 import threading
 import multiprocessing
 
-file_extensions = ["h", "hpp", "c", "cpp", "glsl", "ankiprog"]
+file_extensions = ["h", "hpp", "c", "cpp", "glsl", "hlsl", "ankiprog"]
 directories = ["AnKi", "Tests", "Sandbox", "Tools", "Samples"]
 
 

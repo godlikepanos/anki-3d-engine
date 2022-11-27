@@ -32,7 +32,11 @@ struct MeshGpuView
 	Vec3 m_positionTranslation;
 	F32 m_positionScale;
 
+#if ANKI_GLSL
 	U32 m_vertexOffsets[kMaxLodCount][kMaxVertexStreamIds];
+#else
+	U32 m_vertexOffsets[kMaxLodCount][(U32)VertexStreamId::kCount];
+#endif
 	U32 m_indexCounts[kMaxLodCount];
 	U32 m_indexOffsets[kMaxLodCount];
 };

@@ -10,7 +10,7 @@
 ANKI_BEGIN_NAMESPACE
 
 // RT shadows
-const U32 kMaxRtShadowLayers = 8u;
+constexpr U32 kMaxRtShadowLayers = 8u;
 
 struct RtShadowsUniforms
 {
