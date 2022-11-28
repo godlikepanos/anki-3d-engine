@@ -307,6 +307,7 @@ Error compileGlslToSpirv(CString src, ShaderType shaderType, BaseMemoryPool& tmp
 	shader.setOverrideVersion(460);
 	if(!shader.parse(&GLSLANG_LIMITS, 100, false, messages))
 	{
+		// printf("%s\n", src.cstr());
 		createErrorLog(shader.getInfoLog(), src, tmpPool, errorMessage);
 		return Error::kUserData;
 	}

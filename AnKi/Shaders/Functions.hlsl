@@ -667,22 +667,12 @@ Vec3 sRgbToLinear(Vec3 sRgb)
 #endif
 }
 
-#if ANKI_GLSL
-ANKI_RP Vec3 filmGrain(ANKI_RP Vec3 color, Vec2 uv, ANKI_RP F32 strength, ANKI_RP F32 time)
+RVec3 filmGrain(RVec3 color, Vec2 uv, F32 strength, F32 time)
 {
 	const F32 x = (uv.x + 4.0) * (uv.y + 4.0) * time;
-	const F32 grain = 1.0 - (mod((mod(x, 13.0) + 1.0) * (mod(x, 123.0) + 1.0), 0.01) - 0.005) * strength;
+	const F32 grain = 1.0 - (fmod((fmod(x, 13.0) + 1.0) * (fmod(x, 123.0) + 1.0), 0.01) - 0.005) * strength;
 	return color * grain;
 }
-#else
-template<typename TVec3, typename TFloat>
-TVec3 filmGrain(TVec3 color, Vec2 uv, TFloat strength, TFloat time)
-{
-	const TFloat x = (uv.x + 4.0) * (uv.y + 4.0) * time;
-	const TFloat grain = 1.0 - (mod((mod(x, 13.0) + 1.0) * (mod(x, 123.0) + 1.0), 0.01) - 0.005) * strength;
-	return color * grain;
-}
-#endif
 
 /// Sin approximation: https://www.desmos.com/calculator/svgcjfskne
 F32 fastSin(F32 x)

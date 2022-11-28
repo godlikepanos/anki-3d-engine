@@ -3,86 +3,102 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki hlsl
+
 #pragma anki mutator FILM_GRAIN 0 1
 #pragma anki mutator BLOOM_ENABLED 0 1
 #pragma anki mutator DBG_ENABLED 0 1
 
 #pragma anki start vert
-#include <AnKi/Shaders/QuadVert.glsl>
+#include <AnKi/Shaders/QuadVert.hlsl>
 #pragma anki end
 
 #pragma anki start frag
-#include <AnKi/Shaders/Common.glsl>
-#include <AnKi/Shaders/Functions.glsl>
-#include <AnKi/Shaders/MotionBlur.glsl>
+#include <AnKi/Shaders/Functions.hlsl>
+#include <AnKi/Shaders/MotionBlur.hlsl>
 
 ANKI_SPECIALIZATION_CONSTANT_U32(kLutSize, 0u);
 ANKI_SPECIALIZATION_CONSTANT_UVEC2(kFramebufferSize, 1u);
 ANKI_SPECIALIZATION_CONSTANT_U32(kMotionBlurSamples, 3u);
 
-layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
-layout(set = 0, binding = 1) uniform sampler u_linearAnyClampSampler;
-layout(set = 0, binding = 2) uniform sampler u_trilinearRepeatSampler;
+[[vk::binding(0)]] SamplerState u_nearestAnyClampSampler;
+[[vk::binding(1)]] SamplerState u_linearAnyClampSampler;
+[[vk::binding(2)]] SamplerState u_trilinearRepeatSampler;
 
-layout(set = 0, binding = 3) uniform ANKI_RP texture2D u_lightShadingRt;
-layout(set = 0, binding = 4) uniform ANKI_RP texture2D u_ppsBloomLfRt;
-layout(set = 0, binding = 5) uniform ANKI_RP texture3D u_lut;
-layout(set = 0, binding = 6) uniform texture2D u_motionVectorsRt;
-layout(set = 0, binding = 7) uniform texture2D u_depthRt;
+[[vk::binding(3)]] Texture2D<RVec4> u_lightShadingRt;
+[[vk::binding(4)]] Texture2D<RVec4> u_ppsBloomLfRt;
+[[vk::binding(5)]] Texture3D<RVec4> u_lut;
+[[vk::binding(6)]] Texture2D u_motionVectorsRt;
+[[vk::binding(7)]] Texture2D u_depthRt;
 #if DBG_ENABLED
-layout(set = 0, binding = 8) uniform ANKI_RP texture2D u_dbgOutlineRt;
+[[vk::binding(8)]] Texture2D<RVec4> u_dbgOutlineRt;
 #endif
 
-layout(push_constant, std140) uniform b_pc
+struct PushConstants
 {
-	Vec2 u_padding0;
-	F32 u_filmGrainStrength;
-	U32 u_frameCount;
+	Vec2 m_padding0;
+	F32 m_filmGrainStrength;
+	U32 m_frameCount;
 };
 
-layout(location = 0) in Vec2 in_uv;
-layout(location = 0) out ANKI_RP Vec3 out_color;
+[[vk::push_constant]] ConstantBuffer<PushConstants> u_pc;
 
-ANKI_RP Vec3 colorGrading(ANKI_RP Vec3 color)
+struct VertOut
 {
-	const ANKI_RP Vec3 kLutScale = Vec3((F32(kLutSize) - 1.0) / F32(kLutSize));
-	const ANKI_RP Vec3 kLutOffset = Vec3(1.0 / (2.0 * F32(kLutSize)));
+	[[vk::location(0)]] Vec2 m_uv : TEXCOORD;
+};
 
-	color = min(color, Vec3(1.0));
-	const ANKI_RP Vec3 lutCoords = color * kLutScale + kLutOffset;
-	return textureLod(u_lut, u_trilinearRepeatSampler, lutCoords, 0.0).rgb;
+struct FragOut
+{
+	RVec3 m_color : SV_TARGET0;
+};
+
+RVec3 colorGrading(RVec3 color)
+{
+	constexpr RF32 kLutSizef = (RF32)kLutSize;
+	constexpr RVec3 kLutScale = ((kLutSizef - 1.0) / kLutSizef).xxx;
+	constexpr RVec3 kLutOffset = (1.0 / (2.0 * kLutSize)).xxx;
+
+	color = min(color, RVec3(1.0, 1.0, 1.0));
+	const RVec3 lutCoords = color * kLutScale + kLutOffset;
+	return u_lut.SampleLevel(u_trilinearRepeatSampler, lutCoords, 0.0).rgb;
 }
 
-void main()
+FragOut main(VertOut input)
 {
-	const Vec2 uv = in_uv;
+	const Vec2 uv = input.m_uv;
+	RVec3 outColor;
 
 	if(kMotionBlurSamples > 0u)
 	{
-		out_color = motionBlur(u_motionVectorsRt, u_nearestAnyClampSampler, u_lightShadingRt, Vec2(kFramebufferSize),
-							   u_linearAnyClampSampler, uv, kMotionBlurSamples);
+		outColor = motionBlur(u_motionVectorsRt, u_nearestAnyClampSampler, u_lightShadingRt, Vec2(kFramebufferSize),
+							  u_linearAnyClampSampler, uv, kMotionBlurSamples);
 	}
 	else
 	{
-		out_color = textureLod(u_lightShadingRt, u_linearAnyClampSampler, uv, 0.0).rgb;
+		outColor = u_lightShadingRt.SampleLevel(u_linearAnyClampSampler, uv, 0.0).rgb;
 	}
 
 #if BLOOM_ENABLED
-	const ANKI_RP Vec3 bloom = textureLod(u_ppsBloomLfRt, u_linearAnyClampSampler, uv, 0.0).rgb;
-	out_color += bloom;
+	const RVec3 bloom = u_ppsBloomLfRt.SampleLevel(u_linearAnyClampSampler, uv, 0.0).rgb;
+	outColor += bloom;
 #endif
 
-	out_color = colorGrading(out_color);
+	outColor = colorGrading(outColor);
 
 #if FILM_GRAIN
-	const ANKI_RP F32 dt = 1.0;
-	out_color = filmGrain(out_color, uv, u_filmGrainStrength, F32(u_frameCount % 0xFFFFu) * dt);
+	const F32 dt = 1.0;
+	outColor = filmGrain(outColor, uv, u_pc.m_filmGrainStrength, (F32)(u_pc.m_frameCount % 0xFFFFu) * dt);
 #endif
 
 #if DBG_ENABLED
-	const ANKI_RP Vec4 dbg = textureLod(u_dbgOutlineRt, u_linearAnyClampSampler, uv, 0.0);
-	out_color = mix(out_color, dbg.rgb, dbg.a);
+	const RVec4 dbg = u_dbgOutlineRt.SampleLevel(u_linearAnyClampSampler, uv, 0.0);
+	outColor = lerp(outColor, dbg.rgb, dbg.a);
 #endif
+
+	FragOut output;
+	output.m_color = outColor;
+	return output;
 }
 
 #pragma anki end

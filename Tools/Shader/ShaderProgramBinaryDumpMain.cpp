@@ -90,7 +90,7 @@ Error dumpStats(const ShaderProgramBinary& bin)
 #if ANKI_OS_LINUX
 				ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Linux64/MaliOfflineCompiler/malioc",
 #elif ANKI_OS_WINDOWS
-				ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Linux64/MaliOfflineCompiler/malioc.exe",
+				ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Windows64/MaliOfflineCompiler/malioc.exe",
 #else
 #	error "Not supported"
 #endif
