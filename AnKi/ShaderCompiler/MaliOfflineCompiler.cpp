@@ -13,31 +13,31 @@ namespace anki {
 
 static MaliOfflineCompilerHwUnit strToHwUnit(CString str)
 {
-	MaliOfflineCompilerHwUnit out = MaliOfflineCompilerHwUnit::NONE;
+	MaliOfflineCompilerHwUnit out = MaliOfflineCompilerHwUnit::kNone;
 
 	if(str.find("FMA") == 0)
 	{
-		out = MaliOfflineCompilerHwUnit::FMA;
+		out = MaliOfflineCompilerHwUnit::kFma;
 	}
 	else if(str.find("CVT") == 0)
 	{
-		out = MaliOfflineCompilerHwUnit::CVT;
+		out = MaliOfflineCompilerHwUnit::kCvt;
 	}
 	else if(str.find("SFU") == 0)
 	{
-		out = MaliOfflineCompilerHwUnit::SFU;
+		out = MaliOfflineCompilerHwUnit::kSfu;
 	}
 	else if(str.find("LS") == 0)
 	{
-		out = MaliOfflineCompilerHwUnit::LOAD_STORE;
+		out = MaliOfflineCompilerHwUnit::kLoadStore;
 	}
 	else if(str.find("V") == 0)
 	{
-		out = MaliOfflineCompilerHwUnit::VARYING;
+		out = MaliOfflineCompilerHwUnit::kVarying;
 	}
 	else if(str.find("T") == 0)
 	{
-		out = MaliOfflineCompilerHwUnit::TEXTURE;
+		out = MaliOfflineCompilerHwUnit::kTexture;
 	}
 	else
 	{
@@ -52,22 +52,22 @@ static CString hwUnitToStr(MaliOfflineCompilerHwUnit u)
 	CString out;
 	switch(u)
 	{
-	case MaliOfflineCompilerHwUnit::FMA:
+	case MaliOfflineCompilerHwUnit::kFma:
 		out = "FMA";
 		break;
-	case MaliOfflineCompilerHwUnit::CVT:
+	case MaliOfflineCompilerHwUnit::kCvt:
 		out = "CVT";
 		break;
-	case MaliOfflineCompilerHwUnit::SFU:
+	case MaliOfflineCompilerHwUnit::kSfu:
 		out = "SFU";
 		break;
-	case MaliOfflineCompilerHwUnit::LOAD_STORE:
+	case MaliOfflineCompilerHwUnit::kLoadStore:
 		out = "LS";
 		break;
-	case MaliOfflineCompilerHwUnit::VARYING:
+	case MaliOfflineCompilerHwUnit::kVarying:
 		out = "VAR";
 		break;
-	case MaliOfflineCompilerHwUnit::TEXTURE:
+	case MaliOfflineCompilerHwUnit::kTexture:
 		out = "TEX";
 		break;
 	default:
@@ -312,7 +312,7 @@ Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv,
 	StringRaii tmpDir(&tmpPool);
 	ANKI_CHECK(getTempDirectory(tmpDir));
 	StringRaii spirvFilename(&tmpPool);
-	spirvFilename.sprintf("%s/AnKiMaliocTmpSpirv_%" PRIu64 ".spv", tmpDir.cstr(), getRandom());
+	spirvFilename.sprintf("%s/AnKiMaliocInput_%" PRIu64 ".spv", tmpDir.cstr(), getRandom());
 
 	File spirvFile;
 	ANKI_CHECK(spirvFile.open(spirvFilename, FileOpenFlag::kWrite | FileOpenFlag::kBinary));

@@ -60,6 +60,11 @@ public:
 	Error start(CString executable, ConstWeakArray<CString> arguments = {}, ConstWeakArray<CString> environment = {},
 				ProcessOptions options = ProcessOptions::kOpenStderr | ProcessOptions::kOpenStdout);
 
+	/// Same as the other start().
+	Error start(CString executable, const DynamicArray<StringRaii>& arguments,
+				const DynamicArray<StringRaii>& environment,
+				ProcessOptions options = ProcessOptions::kOpenStderr | ProcessOptions::kOpenStdout);
+
 	/// Wait for the process to finish.
 	/// @param timeout The time to wait. If it's negative wait forever.
 	/// @param[out] status The exit status
@@ -92,9 +97,14 @@ public:
 							 StringRaii* stdErr, I32& exitCode);
 
 private:
+	static constexpr U32 kMaxArgs = 64;
+	static constexpr U32 kMaxEnv = 32;
+
 	reproc_t* m_handle = nullptr;
 
 	Error readCommon(I32 reprocStream, StringRaii& text);
+
+	Error startInternal(const Char* arguments[], const Char* environment[], ProcessOptions options);
 };
 /// @}
 

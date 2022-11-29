@@ -11,33 +11,6 @@
 
 namespace anki {
 
-namespace {
-
-class CleanupFile
-{
-public:
-	StringRaii m_fileToDelete;
-
-	CleanupFile(BaseMemoryPool* pool, CString filename)
-		: m_fileToDelete(pool, filename)
-	{
-	}
-
-	~CleanupFile()
-	{
-		if(!m_fileToDelete.isEmpty() && fileExists(m_fileToDelete))
-		{
-			// Loop until success because Windows antivirus may be keeping the file in use
-			while(std::remove(m_fileToDelete.cstr()))
-			{
-				HighRezTimer::sleep(1.0_ms);
-			}
-		}
-	}
-};
-
-} // end anonymous namespace
-
 static CString profile(ShaderType shaderType)
 {
 	switch(shaderType)

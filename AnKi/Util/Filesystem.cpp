@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Util/Filesystem.h>
+#include <AnKi/Util/HighRezTimer.h>
 
 namespace anki {
 
@@ -80,6 +81,19 @@ Error removeFile(const CString& filename)
 	}
 
 	return Error::kNone;
+}
+
+CleanupFile::~CleanupFile()
+{
+	if(!m_fileToDelete.isEmpty() && fileExists(m_fileToDelete))
+	{
+		// Loop until success because Windows antivirus may be keeping the file in use
+		while(std::remove(m_fileToDelete.cstr()) && m_tries > 0)
+		{
+			HighRezTimer::sleep(m_seepTimeBeforeNextTry);
+			--m_tries;
+		}
+	}
 }
 
 } // end namespace anki

@@ -304,9 +304,11 @@ ANKI_RP Vec3 readNormalFromTexture(ANKI_RP texture2D map, sampler sampl, highp V
 	const ANKI_RP Vec3 t = normalize(in_tangent);
 	const ANKI_RP Vec3 b = normalize(in_bitangent);
 
-	const ANKI_RP Mat3 tbnMat = Mat3(t, b, n);
-
-	return tbnMat * nAtTangentspace;
+	ANKI_RP Vec3 tbnMat[3u];
+	tbnMat[0] = Vec3(t.x, b.x, n.x);
+	tbnMat[1] = Vec3(t.y, b.y, n.y);
+	tbnMat[2] = Vec3(t.z, b.z, n.z);
+	return rotate(tbnMat, nAtTangentspace);
 }
 #endif
 

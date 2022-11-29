@@ -15,13 +15,13 @@ namespace anki {
 
 enum class MaliOfflineCompilerHwUnit : U8
 {
-	NONE,
-	FMA,
-	CVT,
-	SFU,
-	LOAD_STORE,
-	VARYING,
-	TEXTURE
+	kNone,
+	kFma,
+	kCvt,
+	kSfu,
+	kLoadStore,
+	kVarying,
+	kTexture
 };
 
 /// Mali offline compiler output.
@@ -35,7 +35,7 @@ public:
 	F32 m_loadStore = -1.0f;
 	F32 m_varying = -1.0f;
 	F32 m_texture = -1.0f;
-	MaliOfflineCompilerHwUnit m_boundUnit = MaliOfflineCompilerHwUnit::NONE;
+	MaliOfflineCompilerHwUnit m_boundUnit = MaliOfflineCompilerHwUnit::kNone;
 
 	U32 m_workRegisters = kMaxU32;
 	U32 m_spilling = 0;

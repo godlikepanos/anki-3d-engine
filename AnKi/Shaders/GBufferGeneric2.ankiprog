@@ -268,9 +268,12 @@ RVec3 readNormalFromTexture(VertOut input, Texture2D<RVec4> map, SamplerState sa
 	const RVec3 t = normalize(input.m_tangent);
 	const RVec3 b = normalize(input.m_bitangent);
 
-	const RMat3 tbnMat = Mat3(t, b, n);
+	RVec3 tbnMat[3u];
+	tbnMat[0] = RVec3(t.x, b.x, n.x);
+	tbnMat[1] = RVec3(t.y, b.y, n.y);
+	tbnMat[2] = RVec3(t.z, b.z, n.z);
 
-	return mul(tbnMat, nAtTangentspace);
+	return rotate(tbnMat, nAtTangentspace);
 }
 
 FragOut main(VertOut input)

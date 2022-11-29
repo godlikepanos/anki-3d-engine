@@ -1,0 +1,4 @@
+// This file contains a list of targets that would be dynamically loaded by RGA.
+// To add targets, simply list them in a new line after this comment, and RGA would load them while running.
+// For example, to add support for gfx999:
+// gfx999

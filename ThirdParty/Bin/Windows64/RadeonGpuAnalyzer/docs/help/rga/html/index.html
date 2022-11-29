@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Radeon GPU Analyzer (RGA) &mdash; Radeon GPU Analyzer 2.6.2 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Quickstart" href="quickstart.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="#" class="icon icon-home"> Radeon GPU Analyzer
+          </a>
+              <div class="version">
+                2.6.2
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="help_manual.html">Help Manual</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">Radeon GPU Analyzer</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home"></a> &raquo;</li>
+      <li>Radeon GPU Analyzer (RGA)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="radeon-gpu-analyzer-rga">
+<h1>Radeon GPU Analyzer (RGA)<a class="headerlink" href="#radeon-gpu-analyzer-rga" title="Permalink to this headline"></a></h1>
+<p>Radeon GPU Analyzer (RGA) GUI application is a compiler and code analysis tool.</p>
+<p>The GUI application works on top of the RGA command line tool, which supports a rich set of APIs including Vulkan™, DirectX11® and OpenGL®.</p>
+<p>This documentation will focus on the GUI application, which currently supports:</p>
+<ul class="simple">
+<li><p>Vulkan™ live-driver mode</p></li>
+<li><p>OpenCL™ Offline, on top of AMD’s LLVM-based Lightning compiler</p></li>
+</ul>
+<p>More information about the RGA command line tool can be found in its help manual (“-h” option), or on the <a class="reference external" href="https://github.com/GPUOpen-Tools/RGA">RGA Github page</a>.</p>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#installing-and-running-rga">Installing and Running RGA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#vulkan-mode">Vulkan® Mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#opencl-offline-mode">OpenCL™ Offline Mode</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="help_manual.html">Help Manual</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="help_manual.html#installing-and-running-rga">Installing and Running RGA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="help_manual.html#vulkan-mode">Vulkan® Mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="help_manual.html#opencl-offline-mode">OpenCL™ Offline Mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="help_manual.html#how-to">How To…</a></li>
+<li class="toctree-l2"><a class="reference internal" href="help_manual.html#keyboard-shortcuts">Keyboard Shortcuts</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<section id="disclaimer">
+<h2>DISCLAIMER<a class="headerlink" href="#disclaimer" title="Permalink to this headline"></a></h2>
+<p>The information contained herein is for informational purposes only, and is subject to change without notice. While every
+precaution has been taken in the preparation of this document, it may contain technical inaccuracies, omissions and typographical
+errors, and AMD is under no obligation to update or otherwise correct this information. Advanced Micro Devices, Inc. makes no
+representations or warranties with respect to the accuracy or completeness of the contents of this document, and assumes no
+liability of any kind, including the implied warranties of noninfringement, merchantability or fitness for particular purposes, with
+respect to the operation or use of AMD hardware, software or other products described herein. No license, including implied or
+arising by estoppel, to any intellectual property rights is granted by this document. Terms and limitations applicable to the purchase
+or use of AMD’s products are as set forth in a signed agreement between the parties or in AMD’s Standard Terms and Conditions
+of Sale.</p>
+<p>AMD, the AMD Arrow logo, Radeon, Ryzen, CrossFire, RDNA and combinations thereof are trademarks of Advanced Micro Devices, Inc. Other product names used in
+this publication are for identification purposes only and may be trademarks of their respective companies.
+© 2022 Advanced Micro Devices, Inc. All rights reserved.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="quickstart.html" class="btn btn-neutral float-right" title="Quickstart" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2017-2022, Advanced Micro Devices, Inc. All rights reserved..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

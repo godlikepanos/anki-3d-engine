@@ -1,0 +1,17 @@
+{
+    "file_format_version" : "1.0.0",
+    "layer" : {
+        "name": "VK_LAYER_RGA_pipeline_extraction",
+        "type": "GLOBAL",
+        "library_path": ".\\VK_LAYER_RGA_pipeline_extraction.dll",
+        "api_version": "1.0.70",
+        "implementation_version": "1",
+        "description": "RGA pipeline extraction layer.",
+        "enable_environment": {
+            "ENABLE_RGA_PIPELINE_EXTRACTION_LAYER": "1"
+        },
+        "disable_environment": {
+            "DISABLE_RGA_PIPELINE_EXTRACTION_LAYER": "1"
+        }
+    }
+}

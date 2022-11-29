@@ -34,15 +34,12 @@ void Process::destroy()
 #endif
 }
 
-Error Process::start(CString executable, ConstWeakArray<CString> arguments, ConstWeakArray<CString> environment,
-					 ProcessOptions options)
+Error Process::start(CString executable, const DynamicArray<StringRaii>& arguments,
+					 const DynamicArray<StringRaii>& environment, ProcessOptions options)
 {
-#if !ANKI_OS_ANDROID
-	ANKI_ASSERT(m_handle == nullptr && "Already started");
-
 	// Set args and env
-	Array<const Char*, 64> args;
-	Array<const Char*, 32> env;
+	Array<const Char*, kMaxArgs> args;
+	Array<const Char*, kMaxEnv> env;
 
 	args[0] = executable.cstr();
 	for(U32 i = 0; i < arguments.getSize(); ++i)
@@ -59,13 +56,46 @@ Error Process::start(CString executable, ConstWeakArray<CString> arguments, Cons
 	}
 	env[environment.getSize()] = nullptr;
 
+	return startInternal(&args[0], &env[0], options);
+}
+
+Error Process::start(CString executable, ConstWeakArray<CString> arguments, ConstWeakArray<CString> environment,
+					 ProcessOptions options)
+{
+	// Set args and env
+	Array<const Char*, kMaxArgs> args;
+	Array<const Char*, kMaxEnv> env;
+
+	args[0] = executable.cstr();
+	for(U32 i = 0; i < arguments.getSize(); ++i)
+	{
+		args[i + 1] = arguments[i].cstr();
+		ANKI_ASSERT(args[i + 1]);
+	}
+	args[arguments.getSize() + 1] = nullptr;
+
+	for(U32 i = 0; i < environment.getSize(); ++i)
+	{
+		env[i] = environment[i].cstr();
+		ANKI_ASSERT(env[i]);
+	}
+	env[environment.getSize()] = nullptr;
+
+	return startInternal(&args[0], &env[0], options);
+}
+
+Error Process::startInternal(const Char* args[], const Char* env[], ProcessOptions options)
+{
+#if !ANKI_OS_ANDROID
+	ANKI_ASSERT(m_handle == nullptr && "Already started");
+
 	// Start process
 	m_handle = reproc_new();
 
 	reproc_options reprocOptions = {};
 
 	reprocOptions.env.behavior = REPROC_ENV_EXTEND;
-	if(environment.getSize())
+	if(env[0] != nullptr)
 	{
 		reprocOptions.env.extra = &env[0];
 	}

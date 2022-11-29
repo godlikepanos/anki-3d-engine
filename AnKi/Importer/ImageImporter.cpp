@@ -134,30 +134,6 @@ public:
 	Array<U8, 3> m_dimZ;
 };
 
-/// Simple class to delete a file when it goes out of scope.
-class CleanupFile
-{
-public:
-	StringRaii m_fileToDelete;
-
-	CleanupFile(BaseMemoryPool* pool, CString filename)
-		: m_fileToDelete(pool, filename)
-	{
-	}
-
-	~CleanupFile()
-	{
-		if(!m_fileToDelete.isEmpty())
-		{
-			const Error err = removeFile(m_fileToDelete);
-			if(!err)
-			{
-				ANKI_IMPORTER_LOGV("Deleted %s", m_fileToDelete.cstr());
-			}
-		}
-	}
-};
-
 } // namespace
 
 static Error checkConfig(const ImageImporterConfig& config)

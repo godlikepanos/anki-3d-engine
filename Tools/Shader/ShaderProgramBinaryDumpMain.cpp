@@ -5,6 +5,7 @@
 
 #include <AnKi/ShaderCompiler/ShaderProgramCompiler.h>
 #include <AnKi/ShaderCompiler/MaliOfflineCompiler.h>
+#include <AnKi/ShaderCompiler/RadeonGpuAnalyzer.h>
 
 using namespace anki;
 
@@ -46,19 +47,33 @@ Error dumpStats(const ShaderProgramBinary& bin)
 	class Stats
 	{
 	public:
-		F64 m_fma;
-		F64 m_cvt;
-		F64 m_sfu;
-		F64 m_loadStore;
-		F64 m_varying;
-		F64 m_texture;
-		F64 m_workRegisters;
-		F64 m_fp16ArithmeticPercentage;
+		class
+		{
+		public:
+			F64 m_fma;
+			F64 m_cvt;
+			F64 m_sfu;
+			F64 m_loadStore;
+			F64 m_varying;
+			F64 m_texture;
+			F64 m_workRegisters;
+			F64 m_fp16ArithmeticPercentage;
+		} m_arm;
+
+		class
+		{
+		public:
+			F64 m_vgprCount;
+			F64 m_sgprCount;
+			F64 m_isaSize;
+		} m_amd;
 
 		Stats(F64 v)
 		{
-			m_fma = m_cvt = m_sfu = m_loadStore = m_varying = m_texture = m_workRegisters = m_fp16ArithmeticPercentage =
-				v;
+			m_arm.m_fma = m_arm.m_cvt = m_arm.m_sfu = m_arm.m_loadStore = m_arm.m_varying = m_arm.m_texture =
+				m_arm.m_workRegisters = m_arm.m_fp16ArithmeticPercentage = v;
+
+			m_amd.m_vgprCount = m_amd.m_sgprCount = m_amd.m_isaSize = v;
 		}
 	};
 
@@ -85,8 +100,9 @@ Error dumpStats(const ShaderProgramBinary& bin)
 
 			const ShaderProgramBinaryCodeBlock& codeBlock = bin.m_codeBlocks[variant.m_codeBlockIndices[shaderType]];
 
+			// Arm stats
 			MaliOfflineCompilerOut maliocOut;
-			const Error err = runMaliOfflineCompiler(
+			Error err = runMaliOfflineCompiler(
 #if ANKI_OS_LINUX
 				ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Linux64/MaliOfflineCompiler/malioc",
 #elif ANKI_OS_WINDOWS
@@ -112,34 +128,66 @@ Error dumpStats(const ShaderProgramBinary& bin)
 
 			++stage.m_count;
 
-			stage.m_avgStats.m_fma += maliocOut.m_fma;
-			stage.m_avgStats.m_cvt += maliocOut.m_cvt;
-			stage.m_avgStats.m_sfu += maliocOut.m_sfu;
-			stage.m_avgStats.m_loadStore += maliocOut.m_loadStore;
-			stage.m_avgStats.m_varying += maliocOut.m_varying;
-			stage.m_avgStats.m_texture += maliocOut.m_texture;
-			stage.m_avgStats.m_workRegisters += maliocOut.m_workRegisters;
-			stage.m_avgStats.m_fp16ArithmeticPercentage += maliocOut.m_fp16ArithmeticPercentage;
+			stage.m_avgStats.m_arm.m_fma += maliocOut.m_fma;
+			stage.m_avgStats.m_arm.m_cvt += maliocOut.m_cvt;
+			stage.m_avgStats.m_arm.m_sfu += maliocOut.m_sfu;
+			stage.m_avgStats.m_arm.m_loadStore += maliocOut.m_loadStore;
+			stage.m_avgStats.m_arm.m_varying += maliocOut.m_varying;
+			stage.m_avgStats.m_arm.m_texture += maliocOut.m_texture;
+			stage.m_avgStats.m_arm.m_workRegisters += maliocOut.m_workRegisters;
+			stage.m_avgStats.m_arm.m_fp16ArithmeticPercentage += maliocOut.m_fp16ArithmeticPercentage;
 
-			stage.m_maxStats.m_fma = max<F64>(stage.m_maxStats.m_fma, maliocOut.m_fma);
-			stage.m_maxStats.m_cvt = max<F64>(stage.m_maxStats.m_cvt, maliocOut.m_cvt);
-			stage.m_maxStats.m_sfu = max<F64>(stage.m_maxStats.m_sfu, maliocOut.m_sfu);
-			stage.m_maxStats.m_loadStore = max<F64>(stage.m_maxStats.m_loadStore, maliocOut.m_loadStore);
-			stage.m_maxStats.m_varying = max<F64>(stage.m_maxStats.m_varying, maliocOut.m_varying);
-			stage.m_maxStats.m_texture = max<F64>(stage.m_maxStats.m_texture, maliocOut.m_texture);
-			stage.m_maxStats.m_workRegisters = max<F64>(stage.m_maxStats.m_workRegisters, maliocOut.m_workRegisters);
-			stage.m_maxStats.m_fp16ArithmeticPercentage =
-				max<F64>(stage.m_maxStats.m_fp16ArithmeticPercentage, maliocOut.m_fp16ArithmeticPercentage);
+			stage.m_maxStats.m_arm.m_fma = max<F64>(stage.m_maxStats.m_arm.m_fma, maliocOut.m_fma);
+			stage.m_maxStats.m_arm.m_cvt = max<F64>(stage.m_maxStats.m_arm.m_cvt, maliocOut.m_cvt);
+			stage.m_maxStats.m_arm.m_sfu = max<F64>(stage.m_maxStats.m_arm.m_sfu, maliocOut.m_sfu);
+			stage.m_maxStats.m_arm.m_loadStore = max<F64>(stage.m_maxStats.m_arm.m_loadStore, maliocOut.m_loadStore);
+			stage.m_maxStats.m_arm.m_varying = max<F64>(stage.m_maxStats.m_arm.m_varying, maliocOut.m_varying);
+			stage.m_maxStats.m_arm.m_texture = max<F64>(stage.m_maxStats.m_arm.m_texture, maliocOut.m_texture);
+			stage.m_maxStats.m_arm.m_workRegisters =
+				max<F64>(stage.m_maxStats.m_arm.m_workRegisters, maliocOut.m_workRegisters);
+			stage.m_maxStats.m_arm.m_fp16ArithmeticPercentage =
+				max<F64>(stage.m_maxStats.m_arm.m_fp16ArithmeticPercentage, maliocOut.m_fp16ArithmeticPercentage);
 
-			stage.m_minStats.m_fma = min<F64>(stage.m_minStats.m_fma, maliocOut.m_fma);
-			stage.m_minStats.m_cvt = min<F64>(stage.m_minStats.m_cvt, maliocOut.m_cvt);
-			stage.m_minStats.m_sfu = min<F64>(stage.m_minStats.m_sfu, maliocOut.m_sfu);
-			stage.m_minStats.m_loadStore = min<F64>(stage.m_minStats.m_loadStore, maliocOut.m_loadStore);
-			stage.m_minStats.m_varying = min<F64>(stage.m_minStats.m_varying, maliocOut.m_varying);
-			stage.m_minStats.m_texture = min<F64>(stage.m_minStats.m_texture, maliocOut.m_texture);
-			stage.m_minStats.m_workRegisters = min<F64>(stage.m_minStats.m_workRegisters, maliocOut.m_workRegisters);
-			stage.m_minStats.m_fp16ArithmeticPercentage =
-				min<F64>(stage.m_minStats.m_fp16ArithmeticPercentage, maliocOut.m_fp16ArithmeticPercentage);
+			stage.m_minStats.m_arm.m_fma = min<F64>(stage.m_minStats.m_arm.m_fma, maliocOut.m_fma);
+			stage.m_minStats.m_arm.m_cvt = min<F64>(stage.m_minStats.m_arm.m_cvt, maliocOut.m_cvt);
+			stage.m_minStats.m_arm.m_sfu = min<F64>(stage.m_minStats.m_arm.m_sfu, maliocOut.m_sfu);
+			stage.m_minStats.m_arm.m_loadStore = min<F64>(stage.m_minStats.m_arm.m_loadStore, maliocOut.m_loadStore);
+			stage.m_minStats.m_arm.m_varying = min<F64>(stage.m_minStats.m_arm.m_varying, maliocOut.m_varying);
+			stage.m_minStats.m_arm.m_texture = min<F64>(stage.m_minStats.m_arm.m_texture, maliocOut.m_texture);
+			stage.m_minStats.m_arm.m_workRegisters =
+				min<F64>(stage.m_minStats.m_arm.m_workRegisters, maliocOut.m_workRegisters);
+			stage.m_minStats.m_arm.m_fp16ArithmeticPercentage =
+				min<F64>(stage.m_minStats.m_arm.m_fp16ArithmeticPercentage, maliocOut.m_fp16ArithmeticPercentage);
+
+			// AMD
+			RgaOutput rgaOut;
+			err = runRadeonGpuAnalyzer(
+#if ANKI_OS_LINUX
+				ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Linux64/RadeonGpuAnalyzer/rga",
+#elif ANKI_OS_WINDOWS
+				ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Windows64/RadeonGpuAnalyzer/rga.exe",
+#else
+#	error "Not supported"
+#endif
+				codeBlock.m_binary, shaderType, pool, rgaOut);
+
+			if(err)
+			{
+				ANKI_LOGE("Radeon GPU Analyzer compiler failed");
+				return Error::kFunctionFailed;
+			}
+
+			stage.m_avgStats.m_amd.m_vgprCount += F64(rgaOut.m_vgprCount);
+			stage.m_avgStats.m_amd.m_sgprCount += F64(rgaOut.m_sgprCount);
+			stage.m_avgStats.m_amd.m_isaSize += F64(rgaOut.m_isaSize);
+
+			stage.m_minStats.m_amd.m_vgprCount = min(stage.m_minStats.m_amd.m_vgprCount, F64(rgaOut.m_vgprCount));
+			stage.m_minStats.m_amd.m_sgprCount = min(stage.m_minStats.m_amd.m_sgprCount, F64(rgaOut.m_sgprCount));
+			stage.m_minStats.m_amd.m_isaSize = min(stage.m_minStats.m_amd.m_isaSize, F64(rgaOut.m_isaSize));
+
+			stage.m_maxStats.m_amd.m_vgprCount = max(stage.m_maxStats.m_amd.m_vgprCount, F64(rgaOut.m_vgprCount));
+			stage.m_maxStats.m_amd.m_sgprCount = max(stage.m_maxStats.m_amd.m_sgprCount, F64(rgaOut.m_sgprCount));
+			stage.m_maxStats.m_amd.m_isaSize = max(stage.m_maxStats.m_amd.m_isaSize, F64(rgaOut.m_isaSize));
 		}
 	}
 
@@ -152,18 +200,26 @@ Error dumpStats(const ShaderProgramBinary& bin)
 		}
 
 		printf("Stage %u\n", U32(shaderType));
-		printf("\tSpilling count %u\n", stage.m_spillingCount);
+		printf("  Arm shaders spilling regs %u\n", stage.m_spillingCount);
+
+		const F64 countf = F64(stage.m_count);
 
 		const Stats& avg = stage.m_avgStats;
-		printf("\tAvarage: Regs %f FMA %f CVT %f SFU %f LS %f VAR %f TEX %f FP16 %f%%\n",
-			   avg.m_workRegisters / F64(stage.m_count), avg.m_fma / F64(stage.m_count), avg.m_cvt / F64(stage.m_count),
-			   avg.m_sfu / F64(stage.m_count), avg.m_loadStore / F64(stage.m_count), avg.m_varying / F64(stage.m_count),
-			   avg.m_texture / F64(stage.m_count), avg.m_fp16ArithmeticPercentage / F64(stage.m_count));
+		printf("  Average:\n");
+		printf("    Arm: Regs %f FMA %f CVT %f SFU %f LS %f VAR %f TEX %f FP16 %f%%\n",
+			   avg.m_arm.m_workRegisters / countf, avg.m_arm.m_fma / countf, avg.m_arm.m_cvt / countf,
+			   avg.m_arm.m_sfu / countf, avg.m_arm.m_loadStore / countf, avg.m_arm.m_varying / countf,
+			   avg.m_arm.m_texture / countf, avg.m_arm.m_fp16ArithmeticPercentage / countf);
+		printf("    AMD: VGPR %f SGPR %f ISA size %f\n", avg.m_amd.m_vgprCount / countf, avg.m_amd.m_sgprCount / countf,
+			   avg.m_amd.m_isaSize / countf);
 
 		const Stats& maxs = stage.m_maxStats;
-		printf("\tMax: Regs %f FMA %f CVT %f SFU %f LS %f VAR %f TEX %f FP16 %f%%\n", maxs.m_workRegisters, maxs.m_fma,
-			   maxs.m_cvt, maxs.m_sfu, maxs.m_loadStore, maxs.m_varying, maxs.m_texture,
-			   maxs.m_fp16ArithmeticPercentage);
+		printf("  Max:\n");
+		printf("    Arm: Regs %f FMA %f CVT %f SFU %f LS %f VAR %f TEX %f FP16 %f%%\n", maxs.m_arm.m_workRegisters,
+			   maxs.m_arm.m_fma, maxs.m_arm.m_cvt, maxs.m_arm.m_sfu, maxs.m_arm.m_loadStore, maxs.m_arm.m_varying,
+			   maxs.m_arm.m_texture, maxs.m_arm.m_fp16ArithmeticPercentage);
+		printf("    AMD: VGPR %f SGPR %f ISA size %f\n", maxs.m_amd.m_vgprCount, maxs.m_amd.m_sgprCount,
+			   maxs.m_amd.m_isaSize);
 	}
 
 	return Error::kNone;

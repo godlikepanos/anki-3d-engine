@@ -744,7 +744,17 @@ F32 fastCos(F32 x)
 	return fastSin(x + kPi / 2.0);
 }
 
+/// Transform using a 3x4 matrix. mat is row major.
 Vec3 transform(Vec4 mat[3u], Vec4 v)
+{
+	const F32 a = dot(mat[0], v);
+	const F32 b = dot(mat[1], v);
+	const F32 c = dot(mat[2], v);
+	return Vec3(a, b, c);
+}
+
+/// Rotate using a 3x3 matrix. mat is row major.
+Vec3 rotate(Vec3 mat[3u], Vec3 v)
 {
 	const F32 a = dot(mat[0], v);
 	const F32 b = dot(mat[1], v);

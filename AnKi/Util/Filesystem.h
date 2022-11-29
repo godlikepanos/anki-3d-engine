@@ -75,6 +75,29 @@ Error getFileModificationTime(CString filename, U32& year, U32& month, U32& day,
 
 /// Get the path+filename of the currently running executable.
 Error getApplicationPath(StringRaii& path);
+
+/// A convenience class to delete a file when it goes out of scope. It tries multiple times because of Windows
+/// antivirus sometimes keeping a lock to the file.
+class CleanupFile
+{
+public:
+	StringRaii m_fileToDelete;
+	U32 m_tries = 3 * 1000; ///< Number of times to try delete the file.
+	Second m_seepTimeBeforeNextTry = 1.0_ms; ///< Time before the next try.
+
+	CleanupFile(BaseMemoryPool* pool, CString filename)
+		: m_fileToDelete(pool, filename)
+	{
+	}
+
+	CleanupFile(const StringRaii& filename)
+		: m_fileToDelete(filename)
+	{
+	}
+
+	/// Deletes the file.
+	~CleanupFile();
+};
 /// @}
 
 } // end namespace anki
