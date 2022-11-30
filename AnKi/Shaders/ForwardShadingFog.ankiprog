@@ -8,14 +8,6 @@
 #include <AnKi/Shaders/ForwardShadingCommon.glsl>
 #include <AnKi/Shaders/Functions.glsl>
 
-struct PerDraw
-{
-	Mat3x4 m_ankiTransform;
-	ANKI_RP Vec3 m_fogColor;
-	ANKI_RP F32 m_fogAlphaScale;
-	ANKI_RP F32 m_fogDistanceOfMaxThikness;
-};
-
 #pragma anki reflect AnKiLocalUniforms
 #pragma anki struct AnKiLocalUniforms
 #pragma anki member ANKI_RP Vec3 m_fogColor

@@ -611,6 +611,7 @@ Error MaterialResource::findBuiltinMutators(Program& prog)
 
 		++builtinMutatorCount;
 
+#if 0
 		// Find if the bindings are present
 		ConstWeakArray<ShaderProgramBinaryBlock> storageBlocks = prog.m_prog->getBinary().m_storageBlocks;
 		U foundCount = 0;
@@ -631,6 +632,7 @@ Error MaterialResource::findBuiltinMutators(Program& prog)
 							   bonesMutatorName.cstr());
 			return Error::kUserData;
 		}
+#endif
 
 		m_supportsSkinning = true;
 		prog.m_presentBuildinMutators |= U32(1 << BuiltinMutatorId::kBones);

@@ -101,6 +101,8 @@ void maybeUnused(T a)
 #	define ANKI_SPECIALIZATION_CONSTANT_VEC3(n, id) _ANKI_SCONST_X3(Vec3, F32, n, id)
 #	define ANKI_SPECIALIZATION_CONSTANT_VEC4(n, id) _ANKI_SCONST_X4(Vec4, F32, n, id)
 
+#	pragma pack_matrix(row_major)
+
 typedef float F32;
 constexpr uint kSizeof_F32 = 4u;
 typedef float2 Vec2;

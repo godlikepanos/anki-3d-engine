@@ -41,7 +41,7 @@ void RenderComponent::allocateAndSetupUniforms(const MaterialResourcePtr& mtl, c
 			static_cast<RenderableGpuView*>(alloc.allocateFrame(renderableGpuViewsUboSize, token));
 		ANKI_ASSERT(isAligned(alignof(RenderableGpuView), renderableGpuViews));
 
-		cmdb->bindUniformBuffer(set, kMaterialBindingRenderableGpuView, alloc.getBuffer(), token.m_offset,
+		cmdb->bindStorageBuffer(set, kMaterialBindingRenderableGpuView, alloc.getBuffer(), token.m_offset,
 								token.m_range);
 
 		for(U32 i = 0; i < transforms.getSize(); ++i)

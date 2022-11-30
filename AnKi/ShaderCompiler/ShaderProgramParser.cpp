@@ -543,8 +543,7 @@ Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPra
 		}
 		else
 		{
-			// Some other pragma
-			ANKI_SHADER_COMPILER_LOGW("Ignoring: %s", line.cstr());
+			// Some other pragma, ignore
 			m_codeLines.pushBack(line);
 		}
 	}
