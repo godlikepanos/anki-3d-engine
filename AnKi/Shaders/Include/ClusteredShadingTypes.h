@@ -35,17 +35,17 @@ constexpr U32 kMaxVisibleReflectionProbes = 16u;
 constexpr U32 kMaxVisibleGlobalIlluminationProbes = 8u;
 
 // Other consts
-constexpr ANKI_RP F32 kClusterObjectFrustumNearPlane = 0.1f / 4.0f; ///< Near plane of all clusterer object frustums.
-constexpr ANKI_RP F32 kSubsurfaceMin = 0.01f;
+constexpr RF32 kClusterObjectFrustumNearPlane = 0.1f / 4.0f; ///< Near plane of all clusterer object frustums.
+constexpr RF32 kSubsurfaceMin = 0.01f;
 
 /// Point light.
 struct PointLight
 {
 	Vec3 m_position; ///< Position in world space.
-	ANKI_RP F32 m_radius; ///< Radius
+	RF32 m_radius; ///< Radius
 
-	ANKI_RP Vec3 m_diffuseColor;
-	ANKI_RP F32 m_squareRadiusOverOne; ///< 1/(radius^2).
+	RVec3 m_diffuseColor;
+	RF32 m_squareRadiusOverOne; ///< 1/(radius^2).
 
 	Vec2 m_padding0;
 	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
@@ -64,15 +64,15 @@ struct SpotLight
 
 	Vec4 m_edgePoints[4u]; ///< Edge points in world space.
 
-	ANKI_RP Vec3 m_diffuseColor;
-	ANKI_RP F32 m_radius; ///< Max distance.
+	RVec3 m_diffuseColor;
+	RF32 m_radius; ///< Max distance.
 
-	ANKI_RP Vec3 m_direction; ///< Light direction.
-	ANKI_RP F32 m_squareRadiusOverOne; ///< 1/(radius^2).
+	RVec3 m_direction; ///< Light direction.
+	RF32 m_squareRadiusOverOne; ///< 1/(radius^2).
 
 	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
-	ANKI_RP F32 m_outerCos;
-	ANKI_RP F32 m_innerCos;
+	RF32 m_outerCos;
+	RF32 m_innerCos;
 	U32 m_padding1;
 
 	Mat4 m_textureMatrix;
@@ -85,15 +85,15 @@ struct SpotLightBinning
 {
 	Vec4 m_edgePoints[5u]; ///< Edge points in world space. Point 0 is the eye pos.
 
-	ANKI_RP Vec3 m_diffuseColor;
-	ANKI_RP F32 m_radius; ///< Max distance.
+	RVec3 m_diffuseColor;
+	RF32 m_radius; ///< Max distance.
 
-	ANKI_RP Vec3 m_direction; ///< Light direction.
-	ANKI_RP F32 m_squareRadiusOverOne; ///< 1/(radius^2).
+	RVec3 m_direction; ///< Light direction.
+	RF32 m_squareRadiusOverOne; ///< 1/(radius^2).
 
 	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
-	ANKI_RP F32 m_outerCos;
-	ANKI_RP F32 m_innerCos;
+	RF32 m_outerCos;
+	RF32 m_innerCos;
 	U32 m_padding0;
 
 	Mat4 m_textureMatrix;
@@ -105,10 +105,10 @@ ANKI_SHADER_STATIC_ASSERT(sizeof(SpotLight) == sizeof(SpotLightBinning));
 /// Directional light (sun).
 struct DirectionalLight
 {
-	ANKI_RP Vec3 m_diffuseColor;
+	RVec3 m_diffuseColor;
 	U32 m_shadowCascadeCount; ///< If it's zero then it doesn't cast shadow.
 
-	ANKI_RP Vec3 m_direction;
+	RVec3 m_direction;
 	U32 m_active;
 
 	Vec4 m_shadowCascadeDistances;
@@ -144,7 +144,7 @@ struct Decal
 
 	Vec4 m_normRoughnessUv;
 
-	ANKI_RP Vec4 m_blendFactors;
+	RVec4 m_blendFactors;
 
 	Mat4 m_textureMatrix;
 
@@ -163,7 +163,7 @@ struct FogDensityVolume
 	U32 m_isBox;
 
 	Vec3 m_aabbMaxOrSphereRadiusSquared;
-	ANKI_RP F32 m_density;
+	RF32 m_density;
 };
 constexpr U32 kSizeof_FogDensityVolume = 2u * sizeof(Vec4);
 ANKI_SHADER_STATIC_ASSERT(sizeof(FogDensityVolume) == kSizeof_FogDensityVolume);
@@ -180,7 +180,7 @@ struct GlobalIlluminationProbe
 	U32 m_textureIndex; ///< Index to the array of volume textures.
 	F32 m_halfTexelSizeU; ///< (1.0 / textureSize(texArr[textureIndex]).x) / 2.0
 	/// Used to calculate a factor that is zero when fragPos is close to AABB bounds and 1.0 at fadeDistance and less.
-	ANKI_RP F32 m_fadeDistance;
+	RF32 m_fadeDistance;
 	F32 m_padding2;
 };
 constexpr U32 kSizeof_GlobalIlluminationProbe = 3u * sizeof(Vec4);
@@ -256,7 +256,7 @@ constexpr U32 kSizeof_ClusteredShadingUniforms =
 ANKI_SHADER_STATIC_ASSERT(sizeof(ClusteredShadingUniforms) == kSizeof_ClusteredShadingUniforms);
 
 // Define the type of some cluster object masks
-#if !defined(__cplusplus)
+#if ANKI_GLSL
 #	if ANKI_CLUSTERED_SHADING_USE_64BIT
 #		define ExtendedClusterObjectMask U64
 #	else
@@ -264,9 +264,9 @@ ANKI_SHADER_STATIC_ASSERT(sizeof(ClusteredShadingUniforms) == kSizeof_ClusteredS
 #	endif
 #else
 #	if ANKI_CLUSTERED_SHADING_USE_64BIT
-using ExtendedClusterObjectMask = U64;
+typedef U64 ExtendedClusterObjectMask;
 #	else
-using ExtendedClusterObjectMask = U32;
+typedef U32 ExtendedClusterObjectMask;
 #	endif
 #endif
 

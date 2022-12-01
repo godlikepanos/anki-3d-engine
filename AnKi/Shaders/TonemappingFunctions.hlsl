@@ -16,7 +16,7 @@ T log10(T x)
 
 RVec3 computeLuminance(RVec3 color)
 {
-	return max(dot(RVec3(0.30, 0.59, 0.11), color), kEpsilonRf);
+	return max(dot(RVec3(0.30, 0.59, 0.11), color), kEpsilonRF32);
 }
 
 RF32 computeExposure(RF32 avgLum, RF32 threshold)
@@ -79,7 +79,7 @@ RVec3 tonemap(RVec3 color, RF32 exposure)
 RVec3 invertTonemap(RVec3 color, RF32 exposure)
 {
 	color = invertTonemapACESFilm(color);
-	color /= max(kEpsilonRf, exposure);
+	color /= max(kEpsilonRF32, exposure);
 	return color;
 }
 

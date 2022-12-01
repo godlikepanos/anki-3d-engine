@@ -25,6 +25,12 @@ using Address = U64;
 using ScalarVec4 = Array<F32, 4>;
 using ScalarMat3x4 = Array<F32, 12>;
 using ScalarMat4 = Array<F32, 16>;
+
+using RF32 = F32;
+using RVec2 = Vec2;
+using RVec3 = Vec3;
+using RVec4 = Vec4;
+using RMat3 = Mat3;
 ANKI_END_NAMESPACE
 
 #	define ANKI_RP
@@ -199,11 +205,11 @@ typedef min16float4 RVec4;
 typedef min16float3x3 RMat3;
 #	endif
 
-constexpr F32 kEpsilonf = 0.000001f;
+constexpr F32 kEpsilonF32 = 0.000001f;
 #	if ANKI_SUPPORTS_16BIT_TYPES
-constexpr F16 kEpsilonhf = (F16)0.0001f; // Divisions by this should be OK according to http://weitz.de/ieee
+constexpr F16 kEpsilonhF16 = (F16)0.0001f; // Divisions by this should be OK according to http://weitz.de/ieee
 #	endif
-constexpr RF32 kEpsilonRf = 0.0001f;
+constexpr RF32 kEpsilonRF32 = 0.0001f;
 
 constexpr U32 kMaxU32 = 0xFFFFFFFFu;
 constexpr F32 kMaxF32 = 3.402823e+38;
@@ -376,6 +382,20 @@ const uint kSizeof_mat4x3 = 48u;
 #		define Address U64
 #	else
 #		define Address UVec2
+#	endif
+
+#	if ANKI_FORCE_FULL_FP_PRECISION
+#		define RF32 F32
+#		define RVec2 Vec2
+#		define RVec3 Vec3
+#		define RVec4 Vec4
+#		define RMat3 Mat3
+#	else
+#		define RF32 mediump F32
+#		define RVec2 mediump Vec2
+#		define RVec3 mediump Vec3
+#		define RVec4 mediump Vec4
+#		define RMat3 mediump Mat3
 #	endif
 
 #	define _ANKI_CONCATENATE(a, b) a##b

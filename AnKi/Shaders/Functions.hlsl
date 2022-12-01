@@ -162,7 +162,7 @@ F32 _calcDepthWeight(Texture2D depthLow, SamplerState nearestAnyClamp, Vec2 uv, 
 {
 	const F32 d = depthLow.SampleLevel(nearestAnyClamp, uv, 0.0).r;
 	const F32 linearD = linearizeDepthOptimal(d, linearDepthCf.x, linearDepthCf.y);
-	return 1.0 / (kEpsilonf + abs(ref - linearD));
+	return 1.0 / (kEpsilonF32 + abs(ref - linearD));
 }
 
 Vec4 _sampleAndWeight(Texture2D depthLow, Texture2D colorLow, SamplerState linearAnyClamp, SamplerState nearestAnyClamp,
@@ -437,7 +437,7 @@ Mat3 rotationFromDirection(Vec3 zAxis)
 {
 #if 0
 	const Vec3 z = zAxis;
-	const Bool alignsWithXBasis = abs(z.x - 1.0) <= kEpsilonf; // aka z == Vec3(1.0, 0.0, 0.0)
+	const Bool alignsWithXBasis = abs(z.x - 1.0) <= kEpsilonF32; // aka z == Vec3(1.0, 0.0, 0.0)
 	Vec3 x = (alignsWithXBasis) ? Vec3(0.0, 0.0, 1.0) : Vec3(1.0, 0.0, 0.0);
 	const Vec3 y = normalize(cross(x, z));
 	x = normalize(cross(z, y));

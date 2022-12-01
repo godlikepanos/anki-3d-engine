@@ -35,12 +35,12 @@ struct IndirectDiffuseUniforms
 
 	Vec4 m_projectionMat;
 
-	ANKI_RP F32 m_radius; ///< In meters.
+	RF32 m_radius; ///< In meters.
 	U32 m_sampleCount;
-	ANKI_RP F32 m_sampleCountf;
-	ANKI_RP F32 m_ssaoBias;
+	RF32 m_sampleCountf;
+	RF32 m_ssaoBias;
 
-	ANKI_RP F32 m_ssaoStrength;
+	RF32 m_ssaoStrength;
 	F32 m_padding0;
 	F32 m_padding1;
 	F32 m_padding2;
@@ -63,7 +63,7 @@ struct IndirectDiffuseDenoiseUniforms
 struct LensFlareSprite
 {
 	Vec4 m_posScale; // xy: Position, zw: Scale
-	ANKI_RP Vec4 m_color;
+	RVec4 m_color;
 	Vec4 m_depthPad3;
 };
 
@@ -104,20 +104,20 @@ struct SsrUniforms
 // Vol fog
 struct VolumetricFogUniforms
 {
-	ANKI_RP Vec3 m_fogDiffuse;
-	ANKI_RP F32 m_fogScatteringCoeff;
+	RVec3 m_fogDiffuse;
+	RF32 m_fogScatteringCoeff;
 
-	ANKI_RP F32 m_fogAbsorptionCoeff;
-	ANKI_RP F32 m_near;
-	ANKI_RP F32 m_far;
+	RF32 m_fogAbsorptionCoeff;
+	RF32 m_near;
+	RF32 m_far;
 	F32 m_padding;
 };
 
 // Vol lighting
 struct VolumetricLightingUniforms
 {
-	ANKI_RP F32 m_densityAtMinHeight;
-	ANKI_RP F32 m_densityAtMaxHeight;
+	RF32 m_densityAtMinHeight;
+	RF32 m_densityAtMaxHeight;
 	F32 m_minHeight;
 	F32 m_oneOverMaxMinusMinHeight; // 1 / (maxHeight / minHeight)
 };
