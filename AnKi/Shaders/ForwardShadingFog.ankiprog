@@ -41,7 +41,7 @@ void main()
 
 	gl_Position = u_global.m_viewProjectionMatrix * Vec4(worldPos, 1.0);
 
-	const Vec3 viewPos = u_global.m_viewMatrix * Vec4(worldPos, 1.0);
+	const Vec3 viewPos = transform(u_global.m_viewTransform, Vec4(worldPos, 1.0));
 	out_zVSpace = viewPos.z;
 }
 

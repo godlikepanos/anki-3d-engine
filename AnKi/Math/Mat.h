@@ -1393,8 +1393,9 @@ public:
 	}
 
 	/// Create a new transform matrix position at eye and looking at refPoint.
-	template<U VEC_DIMS, ANKI_ENABLE(kTRowCount == 3 && kTColumnCount == 4 && VEC_DIMS >= 3)>
-	static TMat lookAt(const TVec<T, VEC_DIMS>& eye, const TVec<T, VEC_DIMS>& refPoint, const TVec<T, VEC_DIMS>& up)
+	template<U kVecDimensions, ANKI_ENABLE(kTRowCount == 3 && kTColumnCount == 4 && kVecDimensions >= 3)>
+	static TMat lookAt(const TVec<T, kVecDimensions>& eye, const TVec<T, kVecDimensions>& refPoint,
+					   const TVec<T, kVecDimensions>& up)
 	{
 		const TVec<T, 3> vdir = (refPoint.xyz() - eye.xyz()).getNormalized();
 		const TVec<T, 3> vup = (up.xyz() - vdir * up.xyz().dot(vdir)).getNormalized();
@@ -1405,8 +1406,9 @@ public:
 	}
 
 	/// Create a new transform matrix position at eye and looking at refPoint.
-	template<U VEC_DIMS, ANKI_ENABLE(kTRowCount == 4 && kTColumnCount == 4 && VEC_DIMS >= 3)>
-	static TMat lookAt(const TVec<T, VEC_DIMS>& eye, const TVec<T, VEC_DIMS>& refPoint, const TVec<T, VEC_DIMS>& up)
+	template<U kVecDimensions, ANKI_ENABLE(kTRowCount == 4 && kTColumnCount == 4 && kVecDimensions >= 3)>
+	static TMat lookAt(const TVec<T, kVecDimensions>& eye, const TVec<T, kVecDimensions>& refPoint,
+					   const TVec<T, kVecDimensions>& up)
 	{
 		const TVec<T, 4> vdir = (refPoint.xyz0() - eye.xyz0()).getNormalized();
 		const TVec<T, 4> vup = (up.xyz0() - vdir * up.xyz0().dot(vdir)).getNormalized();

@@ -3,83 +3,87 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki hlsl
+
 #pragma anki mutator ANKI_TECHNIQUE 3
 #pragma anki mutator ANIMATED_TEXTURE 0 1
 #pragma anki mutator LIGHT 0 1
 
-#include <AnKi/Shaders/ForwardShadingCommon.glsl>
+#include <AnKi/Shaders/ForwardShadingCommon.hlsl>
+
+struct VertIn
+{
+	[[vk::location(VertexStreamId::kParticlePosition)]] Vec3 m_position : POSITION;
+	[[vk::location(VertexStreamId::kParticleScale)]] RF32 m_scale : SCALE;
+	[[vk::location(VertexStreamId::kParticleAlpha)]] RF32 m_alpha : ALPHA;
+	U32 m_vertexId : SV_VERTEXID;
+};
+
+struct VertOut
+{
+	nointerpolation RF32 m_alpha : ALPHA;
+	Vec2 m_uv : TEXCOORD;
+	Vec3 m_worldPos : WORLD_POS;
+	Vec4 m_svPosition : SV_POSITION;
+};
 
 #pragma anki reflect AnKiLocalUniforms
 #pragma anki struct AnKiLocalUniforms
 #pragma anki member F32 m_animationPeriod if ANIMATED_TEXTURE is 1
-#pragma anki member ANKI_RP Vec4 m_colorScale
-#pragma anki member ANKI_RP Vec4 m_colorBias
+#pragma anki member Vec4 m_colorScale
+#pragma anki member Vec4 m_colorBias
 #pragma anki member U32 m_diffuseMap
 #pragma anki struct end
 
-layout(set = kMaterialSetGlobal, binding = kMaterialBindingGlobalUniforms) uniform b_ankiGlobalUniforms
-{
-	MaterialGlobalUniforms u_ankiGlobals;
-};
-
-layout(set = kMaterialSetGlobal, binding = kMaterialBindingTrilinearRepeatSampler) uniform sampler u_globalSampler;
-
-layout(set = kMaterialSetLocal, binding = kMaterialBindingLocalUniforms, std430) buffer b_localUniforms
-{
-	U32 u_localUniforms[];
-};
-
-layout(set = kMaterialSetLocal, binding = kMaterialBindingRenderableGpuView) uniform b_renderableGpuViews
-{
-	RenderableGpuView u_renderableGpuViews[1];
-};
+[[vk::binding(kMaterialBindingGlobalUniforms, kMaterialSetGlobal)]] ConstantBuffer<MaterialGlobalUniforms>
+	u_ankiGlobals;
+[[vk::binding(kMaterialBindingTrilinearRepeatSampler, kMaterialSetGlobal)]] SamplerState u_globalSampler;
+[[vk::binding(kMaterialBindingLocalUniforms, kMaterialSetLocal)]] StructuredBuffer<U32> u_localUniforms;
+[[vk::binding(kMaterialBindingRenderableGpuView, kMaterialSetLocal)]] StructuredBuffer<RenderableGpuView>
+	u_renderableGpuViews;
 
 #pragma anki start vert
 
-layout(location = kVertexStreamIdParticleScale) in F32 in_scale;
-layout(location = kVertexStreamIdParticleAlpha) in F32 in_alpha;
-
-layout(location = 0) flat out ANKI_RP F32 out_alpha;
-layout(location = 1) out Vec2 out_uv;
-layout(location = 2) out Vec3 out_worldPos;
-
-void main()
+VertOut main(VertIn input)
 {
-	out_uv = Vec2(gl_VertexIndex & 1, gl_VertexIndex >> 1);
+	VertOut output;
 
-	out_worldPos = u_ankiGlobals.m_cameraTransform * Vec4((out_uv - 0.5) * in_scale, 0.0, 0.0) + in_position;
+	output.m_uv = Vec2(input.m_vertexId & 1, input.m_vertexId >> 1);
 
-	gl_Position = Vec4(transform(u_renderableGpuViews[0].m_worldTransform, Vec4(out_worldPos, 1.0)), 1.0);
-	gl_Position = u_ankiGlobals.m_viewProjectionMatrix * gl_Position;
+	output.m_worldPos = transform(u_ankiGlobals.m_cameraTransform, Vec4((output.m_uv - 0.5) * input.m_scale, 0.0, 0.0))
+						+ input.m_position;
 
-	out_alpha = in_alpha;
+	output.m_svPosition = Vec4(transform(u_renderableGpuViews[0].m_worldTransform, Vec4(output.m_worldPos, 1.0)), 1.0);
+	output.m_svPosition = mul(u_ankiGlobals.m_viewProjectionMatrix, output.m_svPosition);
+
+	output.m_alpha = input.m_alpha;
+
+	return output;
 }
 #pragma anki end
 
 #pragma anki start frag
 
-layout(location = 0) flat in ANKI_RP F32 in_alpha;
-layout(location = 1) in Vec2 in_uv;
-layout(location = 2) in Vec3 in_worldPos;
-
-void main()
+FragOut main(VertOut input)
 {
+	FragOut output = (FragOut)0;
 	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(u_localUniforms, 0u);
 
 #if ANIMATED_TEXTURE == 1
-	ANKI_RP Vec4 texCol =
-		readAnimatedTextureRgba(u_bindlessTextures2dArrayF32[localUniforms.m_diffuseMap], u_globalSampler,
-								localUniforms.m_animationPeriod, in_uv, u_clusteredShading.m_time);
+	RVec4 texCol = readAnimatedTextureRgba(u_bindlessTextures2dArrayF32[localUniforms.m_diffuseMap], u_globalSampler,
+										   localUniforms.m_animationPeriod, input.m_uv, u_clusteredShading.m_time);
 #else
-	ANKI_RP Vec4 texCol = texture(u_bindlessTextures2dF32[localUniforms.m_diffuseMap], u_globalSampler, in_uv);
+	RVec4 texCol = u_bindlessTextures2dF32[localUniforms.m_diffuseMap].Sample(u_globalSampler, input.m_uv);
 #endif
 
 #if LIGHT
-	texCol.rgb = computeLightColorLow(texCol.rgb, in_worldPos);
+	texCol.rgb = computeLightColorLow(texCol.rgb, input.m_worldPos, input.m_svPosition);
 #endif
 
-	ANKI_RP Vec4 colScale = localUniforms.m_colorScale;
-	colScale.a *= in_alpha;
-	particleAlpha(texCol, colScale, localUniforms.m_colorBias);
+	RVec4 colScale = localUniforms.m_colorScale;
+	colScale.a *= input.m_alpha;
+	particleAlpha(texCol, colScale, localUniforms.m_colorBias, output);
+
+	return output;
 }
 #pragma anki end

@@ -14,8 +14,8 @@ struct MaterialGlobalUniforms
 {
 	Mat4 m_viewProjectionMatrix;
 	Mat4 m_previousViewProjectionMatrix;
-	Mat3x4 m_viewMatrix;
-	Mat3x4 m_cameraTransform;
+	Vec4 m_viewTransform[3];
+	Vec4 m_cameraTransform[3];
 };
 ANKI_SHADER_STATIC_ASSERT(sizeof(MaterialGlobalUniforms) == 14 * sizeof(Vec4));
 

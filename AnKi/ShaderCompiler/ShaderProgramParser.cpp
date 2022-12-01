@@ -615,19 +615,19 @@ Error ShaderProgramParser::parsePragmaMember(const StringRaii* begin, const Stri
 
 	const CString typeStr = *begin;
 	member.m_type = ShaderVariableDataType::kNone;
-	if(typeStr == "F32")
+	if(typeStr == "F32" || typeStr == "RF32")
 	{
 		member.m_type = ShaderVariableDataType::kF32;
 	}
-	else if(typeStr == "Vec2")
+	else if(typeStr == "Vec2" || typeStr == "RVec2")
 	{
 		member.m_type = ShaderVariableDataType::kVec2;
 	}
-	else if(typeStr == "Vec3")
+	else if(typeStr == "Vec3" || typeStr == "RVec3")
 	{
 		member.m_type = ShaderVariableDataType::kVec3;
 	}
-	else if(typeStr == "Vec4")
+	else if(typeStr == "Vec4" || typeStr == "Vec4")
 	{
 		member.m_type = ShaderVariableDataType::kVec4;
 	}

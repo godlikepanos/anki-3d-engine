@@ -54,8 +54,10 @@ void RenderableDrawer::drawRange(RenderingTechnique technique, const RenderableD
 
 		globalUniforms->m_viewProjectionMatrix = args.m_viewProjectionMatrix;
 		globalUniforms->m_previousViewProjectionMatrix = args.m_previousViewProjectionMatrix;
-		globalUniforms->m_viewMatrix = args.m_viewMatrix;
-		globalUniforms->m_cameraTransform = args.m_cameraTransform;
+		static_assert(sizeof(globalUniforms->m_viewTransform) == sizeof(args.m_viewMatrix));
+		memcpy(&globalUniforms->m_viewTransform, &args.m_viewMatrix, sizeof(args.m_viewMatrix));
+		static_assert(sizeof(globalUniforms->m_cameraTransform) == sizeof(args.m_cameraTransform));
+		memcpy(&globalUniforms->m_cameraTransform, &args.m_cameraTransform, sizeof(args.m_cameraTransform));
 
 		cmdb->bindUniformBuffer(kMaterialSetGlobal, kMaterialBindingGlobalUniforms,
 								m_r->getExternalSubsystems().m_rebarStagingPool->getBuffer(),
