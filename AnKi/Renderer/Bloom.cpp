@@ -205,7 +205,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			{
 				rgraphCtx.bindImage(0, 3, m_runCtx.m_upscaleRt, TextureSubresourceInfo());
 
-				dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_upscale.m_width, m_upscale.m_height);
+				dispatchPPCompute(cmdb, 8, 8, m_upscale.m_width, m_upscale.m_height);
 			}
 			else
 			{

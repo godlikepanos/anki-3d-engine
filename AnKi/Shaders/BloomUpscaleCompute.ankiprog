@@ -3,6 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki hlsl
+
 #pragma anki start comp
-#include <AnKi/Shaders/BloomUpscale.glsl>
+#include <AnKi/Shaders/BloomUpscale.hlsl>
 #pragma anki end

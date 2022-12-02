@@ -43,8 +43,6 @@ public:
 private:
 	static constexpr Format kRtPixelFormat = Format::kA2B10G10R10_Unorm_Pack32;
 
-	const Array<U32, 2> m_workgroupSize = {16, 16};
-
 	FramebufferDescription m_fbDescr;
 
 	class
