@@ -21,17 +21,17 @@ ANKI_SPECIALIZATION_CONSTANT_U32(kLutSize, 0u);
 ANKI_SPECIALIZATION_CONSTANT_UVEC2(kFramebufferSize, 1u);
 ANKI_SPECIALIZATION_CONSTANT_U32(kMotionBlurSamples, 3u);
 
-[[vk::binding(0)]] SamplerState u_nearestAnyClampSampler;
-[[vk::binding(1)]] SamplerState u_linearAnyClampSampler;
-[[vk::binding(2)]] SamplerState u_trilinearRepeatSampler;
+[[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
+[[vk::binding(1)]] SamplerState g_linearAnyClampSampler;
+[[vk::binding(2)]] SamplerState g_trilinearRepeatSampler;
 
-[[vk::binding(3)]] Texture2D<RVec4> u_lightShadingRt;
-[[vk::binding(4)]] Texture2D<RVec4> u_ppsBloomLfRt;
-[[vk::binding(5)]] Texture3D<RVec4> u_lut;
-[[vk::binding(6)]] Texture2D u_motionVectorsRt;
-[[vk::binding(7)]] Texture2D u_depthRt;
+[[vk::binding(3)]] Texture2D<RVec4> g_lightShadingRt;
+[[vk::binding(4)]] Texture2D<RVec4> g_ppsBloomLfRt;
+[[vk::binding(5)]] Texture3D<RVec4> g_lut;
+[[vk::binding(6)]] Texture2D g_motionVectorsRt;
+[[vk::binding(7)]] Texture2D g_depthRt;
 #if DBG_ENABLED
-[[vk::binding(8)]] Texture2D<RVec4> u_dbgOutlineRt;
+[[vk::binding(8)]] Texture2D<RVec4> g_dbgOutlineRt;
 #endif
 
 struct PushConstants
@@ -41,7 +41,7 @@ struct PushConstants
 	U32 m_frameCount;
 };
 
-[[vk::push_constant]] ConstantBuffer<PushConstants> u_pc;
+[[vk::push_constant]] ConstantBuffer<PushConstants> g_pc;
 
 struct VertOut
 {
@@ -61,7 +61,7 @@ RVec3 colorGrading(RVec3 color)
 
 	color = min(color, RVec3(1.0, 1.0, 1.0));
 	const RVec3 lutCoords = color * kLutScale + kLutOffset;
-	return u_lut.SampleLevel(u_trilinearRepeatSampler, lutCoords, 0.0).rgb;
+	return g_lut.SampleLevel(g_trilinearRepeatSampler, lutCoords, 0.0).rgb;
 }
 
 FragOut main(VertOut input)
@@ -71,16 +71,16 @@ FragOut main(VertOut input)
 
 	if(kMotionBlurSamples > 0u)
 	{
-		outColor = motionBlur(u_motionVectorsRt, u_nearestAnyClampSampler, u_lightShadingRt, Vec2(kFramebufferSize),
-							  u_linearAnyClampSampler, uv, kMotionBlurSamples);
+		outColor = motionBlur(g_motionVectorsRt, g_nearestAnyClampSampler, g_lightShadingRt, Vec2(kFramebufferSize),
+							  g_linearAnyClampSampler, uv, kMotionBlurSamples);
 	}
 	else
 	{
-		outColor = u_lightShadingRt.SampleLevel(u_linearAnyClampSampler, uv, 0.0).rgb;
+		outColor = g_lightShadingRt.SampleLevel(g_linearAnyClampSampler, uv, 0.0).rgb;
 	}
 
 #if BLOOM_ENABLED
-	const RVec3 bloom = u_ppsBloomLfRt.SampleLevel(u_linearAnyClampSampler, uv, 0.0).rgb;
+	const RVec3 bloom = g_ppsBloomLfRt.SampleLevel(g_linearAnyClampSampler, uv, 0.0).rgb;
 	outColor += bloom;
 #endif
 
@@ -88,11 +88,11 @@ FragOut main(VertOut input)
 
 #if FILM_GRAIN
 	const F32 dt = 1.0;
-	outColor = filmGrain(outColor, uv, u_pc.m_filmGrainStrength, (F32)(u_pc.m_frameCount % 0xFFFFu) * dt);
+	outColor = filmGrain(outColor, uv, g_pc.m_filmGrainStrength, (F32)(g_pc.m_frameCount % 0xFFFFu) * dt);
 #endif
 
 #if DBG_ENABLED
-	const RVec4 dbg = u_dbgOutlineRt.SampleLevel(u_linearAnyClampSampler, uv, 0.0);
+	const RVec4 dbg = g_dbgOutlineRt.SampleLevel(g_linearAnyClampSampler, uv, 0.0);
 	outColor = lerp(outColor, dbg.rgb, dbg.a);
 #endif
 

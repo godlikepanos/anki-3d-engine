@@ -68,11 +68,11 @@ void maybeUnused(T a)
 #	define ANKI_CONCATENATE(a, b) _ANKI_CONCATENATE(a, b)
 
 #	define ANKI_BINDLESS_SET(s) \
-		[[vk::binding(0, s)]] Texture2D<uint4> u_bindlessTextures2dU32[kMaxBindlessTextures]; \
-		[[vk::binding(0, s)]] Texture2D<int4> u_bindlessTextures2dI32[kMaxBindlessTextures]; \
-		[[vk::binding(0, s)]] Texture2D<RVec4> u_bindlessTextures2dF32[kMaxBindlessTextures]; \
-		[[vk::binding(0, s)]] Texture2DArray<RVec4> u_bindlessTextures2dArrayF32[kMaxBindlessTextures]; \
-		[[vk::binding(1, s)]] Buffer<float4> u_bindlessTextureBuffersF32[kMaxBindlessReadonlyTextureBuffers];
+		[[vk::binding(0, s)]] Texture2D<uint4> g_bindlessTextures2dU32[kMaxBindlessTextures]; \
+		[[vk::binding(0, s)]] Texture2D<int4> g_bindlessTextures2dI32[kMaxBindlessTextures]; \
+		[[vk::binding(0, s)]] Texture2D<RVec4> g_bindlessTextures2dF32[kMaxBindlessTextures]; \
+		[[vk::binding(0, s)]] Texture2DArray<RVec4> g_bindlessTextures2dArrayF32[kMaxBindlessTextures]; \
+		[[vk::binding(1, s)]] Buffer<float4> g_bindlessTextureBuffersF32[kMaxBindlessReadonlyTextureBuffers];
 
 #	define _ANKI_SCONST_X(type, n, id) [[vk::constant_id(id)]] const type n = (type)1;
 

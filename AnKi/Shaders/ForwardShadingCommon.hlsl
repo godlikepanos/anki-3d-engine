@@ -17,10 +17,10 @@ ANKI_BINDLESS_SET(kMaterialSetBindless)
 //
 #if defined(ANKI_FRAGMENT_SHADER)
 // Global resources
-[[vk::binding(kMaterialBindingLinearClampSampler, kMaterialSetGlobal)]] SamplerState u_linearAnyClampSampler;
-[[vk::binding(kMaterialBindingDepthRt, kMaterialSetGlobal)]] Texture2D u_gbufferDepthRt;
-[[vk::binding(kMaterialBindingLightVolume, kMaterialSetGlobal)]] Texture3D<RVec4> u_lightVol;
-[[vk::binding(kMaterialBindingShadowSampler, kMaterialSetGlobal)]] SamplerComparisonState u_shadowSampler;
+[[vk::binding(kMaterialBindingLinearClampSampler, kMaterialSetGlobal)]] SamplerState g_linearAnyClampSampler;
+[[vk::binding(kMaterialBindingDepthRt, kMaterialSetGlobal)]] Texture2D g_gbufferDepthTex;
+[[vk::binding(kMaterialBindingLightVolume, kMaterialSetGlobal)]] Texture3D<RVec4> g_lightVol;
+[[vk::binding(kMaterialBindingShadowSampler, kMaterialSetGlobal)]] SamplerComparisonState g_shadowSampler;
 #	define CLUSTERED_SHADING_SET kMaterialSetGlobal
 #	define CLUSTERED_SHADING_UNIFORMS_BINDING kMaterialBindingClusterShadingUniforms
 #	define CLUSTERED_SHADING_LIGHTS_BINDING kMaterialBindingClusterShadingLights
@@ -62,7 +62,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 	{
 		const I32 idx = firstbitlow2(cluster.m_pointLightsMask);
 		cluster.m_pointLightsMask &= ~((ExtendedClusterObjectMask)1 << (ExtendedClusterObjectMask)idx);
-		const PointLight light = u_pointLights2[idx];
+		const PointLight light = g_pointLights[idx];
 
 		const Vec3 diffC = diffCol * light.m_diffuseColor;
 
@@ -75,7 +75,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 		F32 shadow = 1.0;
 		if(light.m_shadowAtlasTileScale >= 0.0)
 		{
-			shadow = computeShadowFactorPointLight(light, frag2Light, u_shadowAtlasTex, u_shadowSampler);
+			shadow = computeShadowFactorPointLight(light, frag2Light, g_shadowAtlasTex, g_shadowSampler);
 		}
 #	endif
 
@@ -87,7 +87,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 	{
 		const I32 idx = firstbitlow2(cluster.m_spotLightsMask);
 		cluster.m_spotLightsMask &= ~((ExtendedClusterObjectMask)1 << (ExtendedClusterObjectMask)idx);
-		const SpotLight light = u_spotLights[idx];
+		const SpotLight light = g_spotLights[idx];
 
 		const Vec3 diffC = diffCol * light.m_diffuseColor;
 
@@ -104,7 +104,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 		F32 shadow = 1.0;
 		[[branch]] if(light.m_shadowLayer != kMaxU32)
 		{
-			shadow = computeShadowFactorSpotLight(light, worldPos, u_shadowAtlasTex, u_shadowSampler);
+			shadow = computeShadowFactorSpotLight(light, worldPos, g_shadowAtlasTex, g_shadowSampler);
 		}
 #	endif
 
@@ -119,13 +119,13 @@ RVec3 computeLightColorLow(RVec3 diffCol, RVec3 worldPos, Vec4 svPosition)
 {
 	ANKI_MAYBE_UNUSED(worldPos);
 
-	const Vec2 uv = svPosition.xy / u_clusteredShading.m_renderingSize;
-	const F32 linearDepth = linearizeDepth(svPosition.z, u_clusteredShading.m_near, u_clusteredShading.m_far);
+	const Vec2 uv = svPosition.xy / g_clusteredShading.m_renderingSize;
+	const F32 linearDepth = linearizeDepth(svPosition.z, g_clusteredShading.m_near, g_clusteredShading.m_far);
 	const F32 w =
-		linearDepth * (F32(u_clusteredShading.m_zSplitCount) / F32(u_clusteredShading.m_lightVolumeLastZSplit + 1u));
+		linearDepth * (F32(g_clusteredShading.m_zSplitCount) / F32(g_clusteredShading.m_lightVolumeLastZSplit + 1u));
 	const Vec3 uvw = Vec3(uv, w);
 
-	const RVec3 light = u_lightVol.SampleLevel(u_linearAnyClampSampler, uvw, 0.0).rgb;
+	const RVec3 light = g_lightVol.SampleLevel(g_linearAnyClampSampler, uvw, 0.0).rgb;
 	return diffuseLobe(diffCol) * light;
 }
 
@@ -137,14 +137,14 @@ void particleAlpha(RVec4 color, RVec4 scaleColor, RVec4 biasColor, out FragOut o
 void fog(RVec3 color, RF32 fogAlphaScale, RF32 fogDistanceOfMaxThikness, F32 zVSpace, Vec2 svPosition,
 		 out FragOut output)
 {
-	const Vec2 screenSize = 1.0 / u_clusteredShading.m_renderingSize;
+	const Vec2 screenSize = 1.0 / g_clusteredShading.m_renderingSize;
 
 	const Vec2 texCoords = svPosition * screenSize;
-	const F32 depth = u_gbufferDepthRt.Sample(u_linearAnyClampSampler, texCoords, 0.0).r;
+	const F32 depth = g_gbufferDepthTex.Sample(g_linearAnyClampSampler, texCoords, 0.0).r;
 	F32 zFeatherFactor;
 
 	const Vec4 fragPosVspace4 =
-		mul(u_clusteredShading.m_matrices.m_invertedProjectionJitter, Vec4(Vec3(uvToNdc(texCoords), depth), 1.0));
+		mul(g_clusteredShading.m_matrices.m_invertedProjectionJitter, Vec4(Vec3(uvToNdc(texCoords), depth), 1.0));
 	const F32 sceneZVspace = fragPosVspace4.z / fragPosVspace4.w;
 
 	const F32 diff = max(0.0, zVSpace - sceneZVspace);

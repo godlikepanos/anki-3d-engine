@@ -40,17 +40,17 @@
 
 ANKI_BINDLESS_SET(kMaterialSetBindless)
 
-[[vk::binding(kMaterialBindingTrilinearRepeatSampler, kMaterialSetGlobal)]] SamplerState u_globalSampler;
-[[vk::binding(kMaterialBindingLocalUniforms, kMaterialSetLocal)]] StructuredBuffer<U32> u_localUniforms;
+[[vk::binding(kMaterialBindingTrilinearRepeatSampler, kMaterialSetGlobal)]] SamplerState g_globalSampler;
+[[vk::binding(kMaterialBindingLocalUniforms, kMaterialSetLocal)]] StructuredBuffer<U32> g_localUniforms;
 [[vk::binding(kMaterialBindingRenderableGpuView, kMaterialSetLocal)]] StructuredBuffer<RenderableGpuView>
-	u_renderableGpuViews;
+	g_renderableGpuViews;
 [[vk::binding(kMaterialBindingGlobalUniforms, kMaterialSetGlobal)]] ConstantBuffer<MaterialGlobalUniforms>
-	u_globalUniforms;
+	g_globalUniforms;
 
 #if ANKI_BONES
-[[vk::binding(kMaterialBindingBoneTransforms, kMaterialSetLocal)]] StructuredBuffer<Mat4> u_boneTransforms;
+[[vk::binding(kMaterialBindingBoneTransforms, kMaterialSetLocal)]] StructuredBuffer<Mat4> g_boneTransforms;
 [[vk::binding(kMaterialBindingPreviousBoneTransforms, kMaterialSetLocal)]] StructuredBuffer<Mat4>
-	u_prevFrameBoneTransforms;
+	g_prevFrameBoneTransforms;
 #endif
 
 #pragma anki reflect AnKiLocalUniforms
@@ -133,12 +133,12 @@ struct FragOut
 #if ANKI_BONES
 void skinning(VertIn input, inout Vec3 pos, inout Vec3 prevPos, inout RVec3 normal, inout RVec4 tangent)
 {
-	Mat4 skinMat = u_boneTransforms[input.m_boneIndices[0]] * input.m_boneWeights[0];
-	Mat4 prevSkinMat = u_prevFrameBoneTransforms[input.m_boneIndices[0]] * input.m_boneWeights[0];
+	Mat4 skinMat = g_boneTransforms[input.m_boneIndices[0]] * input.m_boneWeights[0];
+	Mat4 prevSkinMat = g_prevFrameBoneTransforms[input.m_boneIndices[0]] * input.m_boneWeights[0];
 	[[unroll]] for(U32 i = 1u; i < 4u; ++i)
 	{
-		skinMat += u_boneTransforms[input.m_boneIndices[i]] * input.m_boneWeights[i];
-		prevSkinMat += u_prevFrameBoneTransforms[input.m_boneIndices[i]] * input.m_boneWeights[i];
+		skinMat += g_boneTransforms[input.m_boneIndices[i]] * input.m_boneWeights[i];
+		prevSkinMat += g_prevFrameBoneTransforms[input.m_boneIndices[i]] * input.m_boneWeights[i];
 	}
 
 #	if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER
@@ -166,7 +166,7 @@ void velocity(RenderableGpuView view, Vec3 prevLocalPos, inout VertOut output)
 #	endif
 
 	Vec4 v4 = Vec4(transform(trf, Vec4(prevLocalPos, 1.0)), 1.0);
-	v4 = mul(u_globalUniforms.m_previousViewProjectionMatrix, v4);
+	v4 = mul(g_globalUniforms.m_previousViewProjectionMatrix, v4);
 
 	output.m_prevClipXyw = v4.xyw;
 	output.m_crntClipXyw = output.m_position.xyw;
@@ -175,7 +175,7 @@ void velocity(RenderableGpuView view, Vec3 prevLocalPos, inout VertOut output)
 
 VertOut main(VertIn input)
 {
-	const RenderableGpuView view = u_renderableGpuViews[input.m_instanceId];
+	const RenderableGpuView view = g_renderableGpuViews[input.m_instanceId];
 	VertOut output;
 
 	// All values in local space
@@ -209,7 +209,7 @@ VertOut main(VertIn input)
 #endif
 
 	output.m_position = Vec4(transform(view.m_worldTransform, Vec4(pos, 1.0)), 1.0);
-	output.m_position = mul(u_globalUniforms.m_viewProjectionMatrix, output.m_position);
+	output.m_position = mul(g_globalUniforms.m_viewProjectionMatrix, output.m_position);
 
 #if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER
 	output.m_normal = transform(view.m_worldTransform, Vec4(normal, 0.0));
@@ -241,8 +241,8 @@ void main(VertOut input)
 {
 	ANKI_MAYBE_UNUSED(input);
 #	if REALLY_ALPHA_TEST
-	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(u_localUniforms, 0u);
-	const RVec4 diffColorA = u_bindlessTextures2dF32[localUniforms.m_diffTex].Sample(u_globalSampler, input.m_uv);
+	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_localUniforms, 0u);
+	const RVec4 diffColorA = g_bindlessTextures2dF32[localUniforms.m_diffTex].Sample(g_globalSampler, input.m_uv);
 	doAlphaTest(diffColorA.a);
 #	endif
 }
@@ -251,8 +251,8 @@ FragOut main(VertOut input)
 {
 	ANKI_MAYBE_UNUSED(input);
 #	if REALLY_ALPHA_TEST
-	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(u_localUniforms, 0u);
-	const RVec4 diffColorA = u_bindlessTextures2dF32[localUniforms.m_diffTex].Sample(u_globalSampler, input.m_uv);
+	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_localUniforms, 0u);
+	const RVec4 diffColorA = g_bindlessTextures2dF32[localUniforms.m_diffTex].Sample(g_globalSampler, input.m_uv);
 	doAlphaTest(diffColorA.a);
 #	endif
 	return (FragOut)0;
@@ -278,7 +278,7 @@ RVec3 readNormalFromTexture(VertOut input, Texture2D<RVec4> map, SamplerState sa
 
 FragOut main(VertOut input)
 {
-	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(u_localUniforms, 0u);
+	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_localUniforms, 0u);
 
 #	if REALLY_USING_PARALLAX
 	// TODO
@@ -290,43 +290,43 @@ FragOut main(VertOut input)
 
 #	if DIFFUSE_TEX
 #		if REALLY_ALPHA_TEST
-	const RVec4 diffColorA = u_bindlessTextures2dF32[localUniforms.m_diffTex].Sample(u_globalSampler, uv);
+	const RVec4 diffColorA = g_bindlessTextures2dF32[localUniforms.m_diffTex].Sample(g_globalSampler, uv);
 	doAlphaTest(diffColorA.a);
 	const RVec3 diffColor = diffColorA.rgb;
 #		else
-	const RVec3 diffColor = u_bindlessTextures2dF32[localUniforms.m_diffTex].Sample(u_globalSampler, uv).rgb;
+	const RVec3 diffColor = g_bindlessTextures2dF32[localUniforms.m_diffTex].Sample(g_globalSampler, uv).rgb;
 #		endif
 #	else
 	const RVec3 diffColor = localUniforms.m_diffColor;
 #	endif
 
 #	if SPECULAR_TEX
-	const RVec3 specColor = u_bindlessTextures2dF32[localUniforms.m_specTex].Sample(u_globalSampler, uv).rgb;
+	const RVec3 specColor = g_bindlessTextures2dF32[localUniforms.m_specTex].Sample(g_globalSampler, uv).rgb;
 #	else
 	const RVec3 specColor = localUniforms.m_specColor;
 #	endif
 
 #	if ROUGHNESS_TEX
-	const RF32 roughness = u_bindlessTextures2dF32[localUniforms.m_roughnessTex].Sample(u_globalSampler, uv).g;
+	const RF32 roughness = g_bindlessTextures2dF32[localUniforms.m_roughnessTex].Sample(g_globalSampler, uv).g;
 #	else
 	const RF32 roughness = localUniforms.m_roughness;
 #	endif
 
 #	if METAL_TEX
-	const RF32 metallic = u_bindlessTextures2dF32[localUniforms.m_metallicTex].Sample(u_globalSampler, uv).b;
+	const RF32 metallic = g_bindlessTextures2dF32[localUniforms.m_metallicTex].Sample(g_globalSampler, uv).b;
 #	else
 	const RF32 metallic = localUniforms.m_metallic;
 #	endif
 
 #	if NORMAL_TEX
 	const RVec3 normal =
-		readNormalFromTexture(input, u_bindlessTextures2dF32[localUniforms.m_normalTex], u_globalSampler, uv);
+		readNormalFromTexture(input, g_bindlessTextures2dF32[localUniforms.m_normalTex], g_globalSampler, uv);
 #	else
 	const RVec3 normal = normalize(input.m_normal);
 #	endif
 
 #	if EMISSIVE_TEX
-	const RVec3 emission = u_bindlessTextures2dF32[localUniforms.m_emissiveTex].Sample(u_globalSampler, uv).rgb;
+	const RVec3 emission = g_bindlessTextures2dF32[localUniforms.m_emissiveTex].Sample(g_globalSampler, uv).rgb;
 #	else
 	const RVec3 emission = localUniforms.m_emission;
 #	endif

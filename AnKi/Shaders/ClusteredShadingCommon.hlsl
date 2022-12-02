@@ -12,7 +12,7 @@
 //
 #if defined(CLUSTERED_SHADING_UNIFORMS_BINDING)
 [[vk::binding(CLUSTERED_SHADING_UNIFORMS_BINDING, CLUSTERED_SHADING_SET)]] ConstantBuffer<ClusteredShadingUniforms>
-	u_clusteredShading;
+	g_clusteredShading;
 #endif
 
 //
@@ -21,15 +21,15 @@
 #if defined(CLUSTERED_SHADING_LIGHTS_BINDING)
 [[vk::binding(CLUSTERED_SHADING_LIGHTS_BINDING, CLUSTERED_SHADING_SET)]] cbuffer b_pointLights
 {
-	PointLight u_pointLights2[kMaxVisiblePointLights];
+	PointLight g_pointLights[kMaxVisiblePointLights];
 };
 
 [[vk::binding(CLUSTERED_SHADING_LIGHTS_BINDING + 1u, CLUSTERED_SHADING_SET)]] cbuffer b_spotLights
 {
-	SpotLight u_spotLights[kMaxVisibleSpotLights];
+	SpotLight g_spotLights[kMaxVisibleSpotLights];
 };
 
-[[vk::binding(CLUSTERED_SHADING_LIGHTS_BINDING + 2u, CLUSTERED_SHADING_SET)]] Texture2D u_shadowAtlasTex;
+[[vk::binding(CLUSTERED_SHADING_LIGHTS_BINDING + 2u, CLUSTERED_SHADING_SET)]] Texture2D g_shadowAtlasTex;
 #endif
 
 //
@@ -38,11 +38,11 @@
 #if defined(CLUSTERED_SHADING_REFLECTIONS_BINDING)
 [[vk::binding(CLUSTERED_SHADING_REFLECTIONS_BINDING, CLUSTERED_SHADING_SET)]] cbuffer b_reflectionProbes
 {
-	ReflectionProbe u_reflectionProbes[kMaxVisibleReflectionProbes];
+	ReflectionProbe g_reflectionProbes[kMaxVisibleReflectionProbes];
 };
 
 [[vk::binding(CLUSTERED_SHADING_REFLECTIONS_BINDING + 1u, CLUSTERED_SHADING_SET)]] TextureCubeArray<RVec4>
-	u_reflectionsTex;
+	g_reflectionsTex;
 #endif
 
 //
@@ -51,12 +51,12 @@
 #if defined(CLUSTERED_SHADING_DECALS_BINDING)
 [[vk::binding(CLUSTERED_SHADING_DECALS_BINDING, CLUSTERED_SHADING_SET)]] cbuffer b_decals
 {
-	Decal u_decals2[kMaxVisibleDecals];
+	Decal g_decals[kMaxVisibleDecals];
 };
 
-[[vk::binding(CLUSTERED_SHADING_DECALS_BINDING + 1u, CLUSTERED_SHADING_SET)]] Texture2D<RVec4> u_diffuseDecalTex;
+[[vk::binding(CLUSTERED_SHADING_DECALS_BINDING + 1u, CLUSTERED_SHADING_SET)]] Texture2D<RVec4> g_diffuseDecalTex;
 [[vk::binding(CLUSTERED_SHADING_DECALS_BINDING + 2u, CLUSTERED_SHADING_SET)]] Texture2D<RVec4>
-	u_specularRoughnessDecalTex;
+	g_specularRoughnessDecalTex;
 #endif
 
 //
@@ -65,7 +65,7 @@
 #if defined(CLUSTERED_SHADING_FOG_BINDING)
 [[vk::binding(CLUSTERED_SHADING_FOG_BINDING, CLUSTERED_SHADING_SET)]] cbuffer b_fogDensityVolumes
 {
-	FogDensityVolume u_fogDensityVolumes[kMaxVisibleFogDensityVolumes];
+	FogDensityVolume g_fogDensityVolumes[kMaxVisibleFogDensityVolumes];
 };
 #endif
 
@@ -74,11 +74,11 @@
 //
 #if defined(CLUSTERED_SHADING_GI_BINDING)
 [[vk::binding(CLUSTERED_SHADING_GI_BINDING, CLUSTERED_SHADING_SET)]] Texture3D<RVec4>
-	u_globalIlluminationTextures[kMaxVisibleGlobalIlluminationProbes];
+	g_globalIlluminationTextures[kMaxVisibleGlobalIlluminationProbes];
 
 [[vk::binding(CLUSTERED_SHADING_GI_BINDING + 1u, CLUSTERED_SHADING_SET)]] cbuffer b_giProbes
 {
-	GlobalIlluminationProbe u_giProbes[kMaxVisibleGlobalIlluminationProbes];
+	GlobalIlluminationProbe g_giProbes[kMaxVisibleGlobalIlluminationProbes];
 };
 #endif
 
@@ -86,7 +86,7 @@
 // Cluster uniforms
 //
 #if defined(CLUSTERED_SHADING_CLUSTERS_BINDING)
-[[vk::binding(CLUSTERED_SHADING_CLUSTERS_BINDING, CLUSTERED_SHADING_SET)]] StructuredBuffer<Cluster> u_clusters;
+[[vk::binding(CLUSTERED_SHADING_CLUSTERS_BINDING, CLUSTERED_SHADING_SET)]] StructuredBuffer<Cluster> g_clusters;
 #endif
 
 // Debugging function
@@ -175,16 +175,16 @@ Cluster mergeClusters(Cluster tileCluster, Cluster zCluster)
 /// Get the final cluster after ORing and ANDing the masks.
 Cluster getClusterFragCoord(Vec3 fragCoord, U32 tileSize, UVec2 tileCounts, U32 zSplitCount, F32 a, F32 b)
 {
-	const Cluster tileCluster = u_clusters[computeTileClusterIndexFragCoord(fragCoord.xy, tileSize, tileCounts.x)];
+	const Cluster tileCluster = g_clusters[computeTileClusterIndexFragCoord(fragCoord.xy, tileSize, tileCounts.x)];
 	const Cluster zCluster =
-		u_clusters[computeZSplitClusterIndex(fragCoord.z, zSplitCount, a, b) + tileCounts.x * tileCounts.y];
+		g_clusters[computeZSplitClusterIndex(fragCoord.z, zSplitCount, a, b) + tileCounts.x * tileCounts.y];
 	return mergeClusters(tileCluster, zCluster);
 }
 
 Cluster getClusterFragCoord(Vec3 fragCoord)
 {
-	return getClusterFragCoord(fragCoord, u_clusteredShading.m_tileSize, u_clusteredShading.m_tileCounts,
-							   u_clusteredShading.m_zSplitCount, u_clusteredShading.m_zSplitMagic.x,
-							   u_clusteredShading.m_zSplitMagic.y);
+	return getClusterFragCoord(fragCoord, g_clusteredShading.m_tileSize, g_clusteredShading.m_tileCounts,
+							   g_clusteredShading.m_zSplitCount, g_clusteredShading.m_zSplitMagic.x,
+							   g_clusteredShading.m_zSplitMagic.y);
 }
 #endif

@@ -36,11 +36,11 @@ struct VertOut
 #pragma anki struct end
 
 [[vk::binding(kMaterialBindingGlobalUniforms, kMaterialSetGlobal)]] ConstantBuffer<MaterialGlobalUniforms>
-	u_ankiGlobals;
-[[vk::binding(kMaterialBindingTrilinearRepeatSampler, kMaterialSetGlobal)]] SamplerState u_globalSampler;
-[[vk::binding(kMaterialBindingLocalUniforms, kMaterialSetLocal)]] StructuredBuffer<U32> u_localUniforms;
+	g_ankiGlobals;
+[[vk::binding(kMaterialBindingTrilinearRepeatSampler, kMaterialSetGlobal)]] SamplerState g_globalSampler;
+[[vk::binding(kMaterialBindingLocalUniforms, kMaterialSetLocal)]] StructuredBuffer<U32> g_localUniforms;
 [[vk::binding(kMaterialBindingRenderableGpuView, kMaterialSetLocal)]] StructuredBuffer<RenderableGpuView>
-	u_renderableGpuViews;
+	g_renderableGpuViews;
 
 #pragma anki start vert
 
@@ -50,11 +50,11 @@ VertOut main(VertIn input)
 
 	output.m_uv = Vec2(input.m_vertexId & 1, input.m_vertexId >> 1);
 
-	output.m_worldPos = transform(u_ankiGlobals.m_cameraTransform, Vec4((output.m_uv - 0.5) * input.m_scale, 0.0, 0.0))
+	output.m_worldPos = transform(g_ankiGlobals.m_cameraTransform, Vec4((output.m_uv - 0.5) * input.m_scale, 0.0, 0.0))
 						+ input.m_position;
 
-	output.m_svPosition = Vec4(transform(u_renderableGpuViews[0].m_worldTransform, Vec4(output.m_worldPos, 1.0)), 1.0);
-	output.m_svPosition = mul(u_ankiGlobals.m_viewProjectionMatrix, output.m_svPosition);
+	output.m_svPosition = Vec4(transform(g_renderableGpuViews[0].m_worldTransform, Vec4(output.m_worldPos, 1.0)), 1.0);
+	output.m_svPosition = mul(g_ankiGlobals.m_viewProjectionMatrix, output.m_svPosition);
 
 	output.m_alpha = input.m_alpha;
 
@@ -67,13 +67,13 @@ VertOut main(VertIn input)
 FragOut main(VertOut input)
 {
 	FragOut output = (FragOut)0;
-	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(u_localUniforms, 0u);
+	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_localUniforms, 0u);
 
 #if ANIMATED_TEXTURE == 1
-	RVec4 texCol = readAnimatedTextureRgba(u_bindlessTextures2dArrayF32[localUniforms.m_diffuseMap], u_globalSampler,
-										   localUniforms.m_animationPeriod, input.m_uv, u_clusteredShading.m_time);
+	RVec4 texCol = readAnimatedTextureRgba(g_bindlessTextures2dArrayF32[localUniforms.m_diffuseMap], g_globalSampler,
+										   localUniforms.m_animationPeriod, input.m_uv, g_clusteredShading.m_time);
 #else
-	RVec4 texCol = u_bindlessTextures2dF32[localUniforms.m_diffuseMap].Sample(u_globalSampler, input.m_uv);
+	RVec4 texCol = g_bindlessTextures2dF32[localUniforms.m_diffuseMap].Sample(g_globalSampler, input.m_uv);
 #endif
 
 #if LIGHT
