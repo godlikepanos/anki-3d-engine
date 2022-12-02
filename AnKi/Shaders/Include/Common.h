@@ -60,6 +60,10 @@ void maybeUnused(T a)
 }
 #	define ANKI_MAYBE_UNUSED(x) maybeUnused(x)
 
+// Use a define because the [] annoyes clang-format
+#	define _ANKI_NUMTHREADS
+#	define ANKI_NUMTHREADS(x, y, z) _ANKI_NUMTHREADS[numthreads(x, y, z)]
+
 #	define _ANKI_CONCATENATE(a, b) a##b
 #	define ANKI_CONCATENATE(a, b) _ANKI_CONCATENATE(a, b)
 

@@ -77,7 +77,7 @@ Error Scale::init()
 	static constexpr Array<const Char*, U32(SharpenMethod::kCount)> sharpenMethodNames = {"none", "RCAS"};
 
 	ANKI_R_LOGV("Initializing upscaling. Upscaling method %s, sharpenning method %s",
-				upscalingMethodNames[U32(m_upscalingMethod)], sharpenMethodNames[U32(m_sharpenMethod)]);
+				upscalingMethodNames[m_upscalingMethod], sharpenMethodNames[m_sharpenMethod]);
 
 	// Scale programs
 	if(m_upscalingMethod == UpscalingMethod::kBilinear)

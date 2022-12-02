@@ -415,14 +415,12 @@ F32 cubeCoordSolidAngle(Vec2 norm, F32 cubeFaceSize)
 	return areaElement(v0.x, v0.y) - areaElement(v0.x, v1.y) - areaElement(v1.x, v0.y) + areaElement(v1.x, v1.y);
 }
 
-// A convenience function to skip out of bounds invocations on post-process compute shaders. Both the arguments should
-// be constexpr.
-#if defined(ANKI_COMPUTE_SHADER) && ANKI_GLSL
-Bool skipOutOfBoundsInvocations(UVec2 workgroupSize, UVec2 globalInvocationCount)
+/// A convenience function to skip out of bounds invocations on post-process compute shaders.
+Bool skipOutOfBoundsInvocations(UVec2 groupSize, UVec2 threadCount, UVec2 svDispatchThreadId)
 {
-	if((globalInvocationCount.x % workgroupSize.x) != 0u || (globalInvocationCount.y % workgroupSize.y) != 0u)
+	if((threadCount.x % groupSize.x) != 0u || (threadCount.y % groupSize.y) != 0u)
 	{
-		if(gl_GlobalInvocationID.x >= globalInvocationCount.x || gl_GlobalInvocationID.y >= globalInvocationCount.y)
+		if(svDispatchThreadId.x >= threadCount.x || svDispatchThreadId.y >= threadCount.y)
 		{
 			return true;
 		}
@@ -430,7 +428,6 @@ Bool skipOutOfBoundsInvocations(UVec2 workgroupSize, UVec2 globalInvocationCount
 
 	return false;
 }
-#endif
 
 // Create a matrix from some direction.
 Mat3 rotationFromDirection(Vec3 zAxis)
