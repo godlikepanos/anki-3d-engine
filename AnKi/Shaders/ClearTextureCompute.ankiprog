@@ -5,61 +5,61 @@
 
 // A slow compute program to clear an image with a contant color
 
+#pragma anki hlsl
+
 #pragma anki mutator TEXTURE_DIMENSIONS 2 3
 #pragma anki mutator COMPONENT_TYPE 0 1 // 0 is float, 1 is uint
 
 #pragma anki start comp
-#include <AnKi/Shaders/Common.glsl>
+#include <AnKi/Shaders/Common.hlsl>
 
-layout(local_size_x = 8, local_size_y = 8, local_size_z = (TEXTURE_DIMENSIONS == 2) ? 1 : 8) in;
-
-layout(push_constant) uniform pc_
+struct Uniforms
 {
 #if COMPONENT_TYPE == 0
-	Vec4 u_clearColor;
-#	define CLEAR_COLOR u_clearColor
+	Vec4 m_clearColor;
 #else
-	UVec4 u_uclearColor;
-#	define CLEAR_COLOR u_uclearColor
+	UVec4 m_clearColor;
 #endif
 };
 
+[[vk::push_constant]] ConstantBuffer<Uniforms> g_pc;
+
 #if TEXTURE_DIMENSIONS == 2
 #	if COMPONENT_TYPE == 0
-layout(set = 0, binding = 0) uniform writeonly image2D u_img2d;
-#		define IMAGE u_img2d
+[[vk::binding(0)]] RWTexture2D<Vec4> g_outUav;
 #	else
-layout(set = 0, binding = 0) uniform writeonly uimage2D u_uimg2d;
-#		define IMAGE u_uimg2d
+[[vk::binding(0)]] RWTexture2D<UVec4> g_outUav;
 #	endif
 #else
 #	if COMPONENT_TYPE == 0
-layout(set = 0, binding = 0) uniform writeonly image3D u_img3d;
-#		define IMAGE u_img3d
+[[vk::binding(0)]] RWTexture3D<Vec4> g_outUav;
 #	else
-layout(set = 0, binding = 0) uniform writeonly uimage3D u_uimg3d;
-#		define IMAGE u_uimg3d
+[[vk::binding(0)]] RWTexture3D<UVec4> g_outUav;
 #	endif
 #endif
 
-void main()
+ANKI_NUMTHREADS(8, 8, (TEXTURE_DIMENSIONS == 2) ? 1 : 8) void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
 #if TEXTURE_DIMENSIONS == 2
-	const UVec2 size = UVec2(imageSize(IMAGE));
-	if(gl_GlobalInvocationID.x >= size.x || gl_GlobalInvocationID.y >= size.y)
+	UVec2 texSize;
+	g_outUav.GetDimensions(texSize.x, texSize.y);
+
+	if(svDispatchThreadId.x >= texSize.x || svDispatchThreadId.y >= texSize.y)
 	{
 		return;
 	}
 
-	imageStore(IMAGE, IVec2(gl_GlobalInvocationID.xy), CLEAR_COLOR);
+	g_outUav[svDispatchThreadId.xy] = g_pc.m_clearColor;
 #else
-	const UVec3 size = UVec3(imageSize(IMAGE));
-	if(gl_GlobalInvocationID.x >= size.x || gl_GlobalInvocationID.y >= size.y || gl_GlobalInvocationID.z >= size.z)
+	UVec3 texSize;
+	g_outUav.GetDimensions(texSize.x, texSize.y, texSize.z);
+
+	if(svDispatchThreadId.x >= texSize.x || svDispatchThreadId.y >= texSize.y || svDispatchThreadId.z >= texSize.z)
 	{
 		return;
 	}
 
-	imageStore(IMAGE, IVec3(gl_GlobalInvocationID), CLEAR_COLOR);
+	g_outUav[svDispatchThreadId] = g_pc.m_clearColor;
 #endif
 }
 
