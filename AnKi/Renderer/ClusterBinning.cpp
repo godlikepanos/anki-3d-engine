@@ -78,12 +78,12 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 			cmdb->bindShaderProgram(m_grProg);
 			bindUniforms(cmdb, 0, 0, tokens.m_clusteredShadingUniformsToken);
 			bindStorage(cmdb, 0, 1, tokens.m_clustersToken);
-			bindUniforms(cmdb, 0, 2, tokens.m_pointLightsToken);
-			bindUniforms(cmdb, 0, 3, tokens.m_spotLightsToken);
-			bindUniforms(cmdb, 0, 4, tokens.m_reflectionProbesToken);
-			bindUniforms(cmdb, 0, 5, tokens.m_globalIlluminationProbesToken);
-			bindUniforms(cmdb, 0, 6, tokens.m_fogDensityVolumesToken);
-			bindUniforms(cmdb, 0, 7, tokens.m_decalsToken);
+			bindStorage(cmdb, 0, 2, tokens.m_pointLightsToken);
+			bindStorage(cmdb, 0, 3, tokens.m_spotLightsToken);
+			bindStorage(cmdb, 0, 4, tokens.m_reflectionProbesToken);
+			bindStorage(cmdb, 0, 5, tokens.m_globalIlluminationProbesToken);
+			bindStorage(cmdb, 0, 6, tokens.m_fogDensityVolumesToken);
+			bindStorage(cmdb, 0, 7, tokens.m_decalsToken);
 
 			const U32 sampleCount = 4;
 			const U32 sizex = m_tileCount * sampleCount;

@@ -37,6 +37,7 @@ constexpr U32 kMaxVisibleGlobalIlluminationProbes = 8u;
 // Other consts
 constexpr RF32 kClusterObjectFrustumNearPlane = 0.1f / 4.0f; ///< Near plane of all clusterer object frustums.
 constexpr RF32 kSubsurfaceMin = 0.01f;
+constexpr U32 kMaxZsplitCount = 128u;
 
 /// Point light.
 struct PointLight

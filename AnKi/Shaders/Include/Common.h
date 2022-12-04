@@ -74,7 +74,8 @@ void maybeUnused(T a)
 		[[vk::binding(0, s)]] Texture2DArray<RVec4> g_bindlessTextures2dArrayF32[kMaxBindlessTextures]; \
 		[[vk::binding(1, s)]] Buffer<float4> g_bindlessTextureBuffersF32[kMaxBindlessReadonlyTextureBuffers];
 
-#	define _ANKI_SCONST_X(type, n, id) [[vk::constant_id(id)]] const type n = (type)1;
+#	define _ANKI_SCONST_X(type, n, id) \
+		[[vk::constant_id(id)]] const type n = (type)1;
 
 #	define _ANKI_SCONST_X2(type, componentType, n, id) \
 		[[vk::constant_id(id + 0u)]] const componentType ANKI_CONCATENATE(_anki_const_0_2_, n) = (componentType)1; \
