@@ -50,10 +50,10 @@ VertOut main(VertIn input)
 
 	output.m_uv = Vec2(input.m_vertexId & 1, input.m_vertexId >> 1);
 
-	output.m_worldPos = transform(g_ankiGlobals.m_cameraTransform, Vec4((output.m_uv - 0.5) * input.m_scale, 0.0, 0.0))
-						+ input.m_position;
+	output.m_worldPos =
+		mul(g_ankiGlobals.m_cameraTransform, Vec4((output.m_uv - 0.5) * input.m_scale, 0.0, 0.0)) + input.m_position;
 
-	output.m_svPosition = Vec4(transform(g_renderableGpuViews[0].m_worldTransform, Vec4(output.m_worldPos, 1.0)), 1.0);
+	output.m_svPosition = Vec4(mul(g_renderableGpuViews[0].m_worldTransform, Vec4(output.m_worldPos, 1.0)), 1.0);
 	output.m_svPosition = mul(g_ankiGlobals.m_viewProjectionMatrix, output.m_svPosition);
 
 	output.m_alpha = input.m_alpha;

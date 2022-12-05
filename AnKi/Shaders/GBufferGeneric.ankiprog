@@ -137,8 +137,8 @@ void skinning(VertIn input, inout Vec3 pos, inout Vec3 prevPos, inout RVec3 norm
 	Mat4 prevSkinMat = g_prevFrameBoneTransforms[input.m_boneIndices[0]] * input.m_boneWeights[0];
 	[[unroll]] for(U32 i = 1u; i < 4u; ++i)
 	{
-		skinMat += g_boneTransforms[input.m_boneIndices[i]] * input.m_boneWeights[i];
-		prevSkinMat += g_prevFrameBoneTransforms[input.m_boneIndices[i]] * input.m_boneWeights[i];
+		skinMat = skinMat + g_boneTransforms[input.m_boneIndices[i]] * input.m_boneWeights[i];
+		prevSkinMat = prevSkinMat + g_prevFrameBoneTransforms[input.m_boneIndices[i]] * input.m_boneWeights[i];
 	}
 
 #	if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER
@@ -159,13 +159,13 @@ void velocity(RenderableGpuView view, Vec3 prevLocalPos, inout VertOut output)
 {
 #	if ANKI_VELOCITY
 	// Object is also moving
-	const Vec4 trf[3] = view.m_previousWorldTransform;
+	const Mat3x4 trf = view.m_previousWorldTransform;
 #	else
 	// Object is a skin that is not moving
-	const Vec4 trf[3] = view.m_worldTransform;
+	const Mat3x4 trf = view.m_worldTransform;
 #	endif
 
-	Vec4 v4 = Vec4(transform(trf, Vec4(prevLocalPos, 1.0)), 1.0);
+	Vec4 v4 = Vec4(mul(trf, Vec4(prevLocalPos, 1.0)), 1.0);
 	v4 = mul(g_globalUniforms.m_previousViewProjectionMatrix, v4);
 
 	output.m_prevClipXyw = v4.xyw;
@@ -208,12 +208,12 @@ VertOut main(VertIn input)
 	skinning(input, pos, prevPos, normal, tangent);
 #endif
 
-	output.m_position = Vec4(transform(view.m_worldTransform, Vec4(pos, 1.0)), 1.0);
+	output.m_position = Vec4(mul(view.m_worldTransform, Vec4(pos, 1.0)), 1.0);
 	output.m_position = mul(g_globalUniforms.m_viewProjectionMatrix, output.m_position);
 
 #if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER
-	output.m_normal = transform(view.m_worldTransform, Vec4(normal, 0.0));
-	output.m_tangent = transform(view.m_worldTransform, Vec4(tangent.xyz, 0.0));
+	output.m_normal = mul(view.m_worldTransform, Vec4(normal, 0.0));
+	output.m_tangent = mul(view.m_worldTransform, Vec4(tangent.xyz, 0.0));
 	output.m_bitangent = cross(output.m_normal, output.m_tangent) * tangent.w;
 #endif
 
@@ -268,12 +268,9 @@ RVec3 readNormalFromTexture(VertOut input, Texture2D<RVec4> map, SamplerState sa
 	const RVec3 t = normalize(input.m_tangent);
 	const RVec3 b = normalize(input.m_bitangent);
 
-	RVec3 tbnMat[3u];
-	tbnMat[0] = RVec3(t.x, b.x, n.x);
-	tbnMat[1] = RVec3(t.y, b.y, n.y);
-	tbnMat[2] = RVec3(t.z, b.z, n.z);
+	const RMat3 tbnMat = constructMatrixColumns(t, b, n);
 
-	return rotate(tbnMat, nAtTangentspace);
+	return mul(tbnMat, nAtTangentspace);
 }
 
 FragOut main(VertOut input)

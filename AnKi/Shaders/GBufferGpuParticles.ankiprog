@@ -57,12 +57,10 @@ VertOut main(VertIn input)
 	VertOut output;
 	const GpuParticle part = u_particles[input.m_svVertexId / 2];
 
-	Vec4 crntClipPos =
-		Vec4(transform(u_renderableGpuViews[0].m_worldTransform, Vec4(part.m_newWorldPosition, 1.0)), 1.0);
+	Vec4 crntClipPos = Vec4(mul(u_renderableGpuViews[0].m_worldTransform, Vec4(part.m_newWorldPosition, 1.0)), 1.0);
 	crntClipPos = mul(u_globalUniforms.m_viewProjectionMatrix, crntClipPos);
 
-	Vec4 prevClipPos =
-		Vec4(transform(u_renderableGpuViews[0].m_worldTransform, Vec4(part.m_oldWorldPosition, 1.0)), 1.0);
+	Vec4 prevClipPos = Vec4(mul(u_renderableGpuViews[0].m_worldTransform, Vec4(part.m_oldWorldPosition, 1.0)), 1.0);
 	prevClipPos = mul(u_globalUniforms.m_viewProjectionMatrix, prevClipPos);
 
 	output.m_svPosition = ((input.m_svVertexId & 1) == 0) ? crntClipPos : prevClipPos;
@@ -75,8 +73,9 @@ VertOut main(VertIn input)
 
 	output.m_lifeFactor = saturate(1.0 - (part.m_life / part.m_startingLife));
 
-	output.m_normal = normalize(Vec3(u_globalUniforms.m_cameraTransform[0][2], u_globalUniforms.m_cameraTransform[1][2],
-									 u_globalUniforms.m_cameraTransform[1][2]));
+	output.m_normal =
+		normalize(Vec3(u_globalUniforms.m_cameraTransform.m_row0[2], u_globalUniforms.m_cameraTransform.m_row1[2],
+					   u_globalUniforms.m_cameraTransform.m_row2[2]));
 
 	return output;
 }

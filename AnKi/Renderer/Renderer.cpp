@@ -691,7 +691,7 @@ void Renderer::gpuSceneCopy(RenderingContext& ctx)
 	ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("GPU scene patching");
 	rpass.newBufferDependency(m_runCtx.m_gpuSceneHandle, BufferUsageBit::kStorageComputeWrite);
 
-	rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+	rpass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 		m_subsystems.m_gpuSceneMicroPatcher->patchGpuScene(*m_subsystems.m_rebarStagingPool,
 														   *rgraphCtx.m_commandBuffer.get(),
 														   m_subsystems.m_gpuScenePool->getBuffer());

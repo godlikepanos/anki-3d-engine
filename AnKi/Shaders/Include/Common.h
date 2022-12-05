@@ -5,6 +5,8 @@
 
 #pragma once
 
+#define ANKI_SUPPORTS_64BIT_TYPES !ANKI_PLATFORM_MOBILE
+
 //! == C++ =============================================================================================================
 #if defined(__cplusplus)
 
@@ -51,7 +53,6 @@ ANKI_END_NAMESPACE
 #	define constexpr static const
 
 #	define ANKI_SUPPORTS_16BIT_TYPES 0
-#	define ANKI_SUPPORTS_64BIT_TYPES !ANKI_PLATFORM_MOBILE
 
 template<typename T>
 void maybeUnused(T a)
@@ -189,26 +190,174 @@ typedef int64_t4 I64Vec4;
 constexpr uint kSizeof_I64Vec4 = 32u;
 #	endif
 
-typedef float3x3 Mat3;
-typedef float4x4 Mat4;
-typedef float3x4 Mat3x4;
-
 typedef bool Bool;
+
+#	define _ANKI_DEFINE_OPERATOR_F32_ROWS3(mat, fl, op) \
+		mat operator op(fl f) \
+		{ \
+			mat o; \
+			o.m_row0 = m_row0 op f; \
+			o.m_row1 = m_row1 op f; \
+			o.m_row2 = m_row2 op f; \
+			return o; \
+		}
+
+#	define _ANKI_DEFINE_OPERATOR_F32_ROWS4(mat, fl, op) \
+		mat operator op(fl f) \
+		{ \
+			mat o; \
+			o.m_row0 = m_row0 op f; \
+			o.m_row1 = m_row1 op f; \
+			o.m_row2 = m_row2 op f; \
+			o.m_row3 = m_row3 op f; \
+			return o; \
+		}
+
+#	define _ANKI_DEFINE_OPERATOR_SELF_ROWS3(mat, op) \
+		mat operator op(mat b) \
+		{ \
+			mat o; \
+			o.m_row0 = m_row0 op b.m_row0; \
+			o.m_row1 = m_row1 op b.m_row1; \
+			o.m_row2 = m_row2 op b.m_row2; \
+			return o; \
+		}
+
+#	define _ANKI_DEFINE_OPERATOR_SELF_ROWS4(mat, op) \
+		mat operator op(mat b) \
+		{ \
+			mat o; \
+			o.m_row0 = m_row0 op b.m_row0; \
+			o.m_row1 = m_row1 op b.m_row1; \
+			o.m_row2 = m_row2 op b.m_row2; \
+			o.m_row3 = m_row3 op b.m_row3; \
+			return o; \
+		}
+
+#	define _ANKI_DEFINE_ALL_OPERATORS_ROWS3(mat, fl) \
+		_ANKI_DEFINE_OPERATOR_F32_ROWS3(mat, fl, +) \
+		_ANKI_DEFINE_OPERATOR_F32_ROWS3(mat, fl, -) \
+		_ANKI_DEFINE_OPERATOR_F32_ROWS3(mat, fl, *) \
+		_ANKI_DEFINE_OPERATOR_F32_ROWS3(mat, fl, /) \
+		_ANKI_DEFINE_OPERATOR_SELF_ROWS3(mat, +) \
+		_ANKI_DEFINE_OPERATOR_SELF_ROWS3(mat, -)
+
+#	define _ANKI_DEFINE_ALL_OPERATORS_ROWS4(mat, fl) \
+		_ANKI_DEFINE_OPERATOR_F32_ROWS4(mat, fl, +) \
+		_ANKI_DEFINE_OPERATOR_F32_ROWS4(mat, fl, -) \
+		_ANKI_DEFINE_OPERATOR_F32_ROWS4(mat, fl, *) \
+		_ANKI_DEFINE_OPERATOR_F32_ROWS4(mat, fl, /) \
+		_ANKI_DEFINE_OPERATOR_SELF_ROWS4(mat, +) \
+		_ANKI_DEFINE_OPERATOR_SELF_ROWS4(mat, -)
+
+struct Mat3
+{
+	Vec3 m_row0;
+	Vec3 m_row1;
+	Vec3 m_row2;
+
+	_ANKI_DEFINE_ALL_OPERATORS_ROWS3(Mat3, F32)
+};
+
+struct Mat4
+{
+	Vec4 m_row0;
+	Vec4 m_row1;
+	Vec4 m_row2;
+	Vec4 m_row3;
+
+	_ANKI_DEFINE_ALL_OPERATORS_ROWS4(Mat4, F32)
+};
+
+struct Mat3x4
+{
+	Vec4 m_row0;
+	Vec4 m_row1;
+	Vec4 m_row2;
+
+	_ANKI_DEFINE_ALL_OPERATORS_ROWS3(Mat3x4, F32)
+};
 
 #	if ANKI_FORCE_FULL_FP_PRECISION
 typedef float RF32;
 typedef float2 RVec2;
 typedef float3 RVec3;
 typedef float4 RVec4;
-typedef float3x3 RMat3;
+typedef Mat3 RMat3;
 #	else
 typedef min16float RF32;
 typedef min16float2 RVec2;
 typedef min16float3 RVec3;
 typedef min16float4 RVec4;
-typedef min16float3x3 RMat3;
+
+struct RMat3
+{
+	RVec3 m_row0;
+	RVec3 m_row1;
+	RVec3 m_row2;
+
+	_ANKI_DEFINE_ALL_OPERATORS_ROWS3(RMat3, RF32)
+};
 #	endif
 
+// Matrix functions
+Mat3 constructMatrixColumns(Vec3 c0, Vec3 c1, Vec3 c2)
+{
+	Mat3 m;
+	m.m_row0 = Vec3(c0.x, c1.x, c2.x);
+	m.m_row1 = Vec3(c0.y, c1.y, c2.y);
+	m.m_row2 = Vec3(c0.z, c1.z, c2.z);
+	return m;
+}
+
+RMat3 constructMatrixColumns(RVec3 c0, RVec3 c1, RVec3 c2)
+{
+	RMat3 m;
+	m.m_row0 = RVec3(c0.x, c1.x, c2.x);
+	m.m_row1 = RVec3(c0.y, c1.y, c2.y);
+	m.m_row2 = RVec3(c0.z, c1.z, c2.z);
+	return m;
+}
+
+Vec3 mul(Mat3 m, Vec3 v)
+{
+	const F32 a = dot(m.m_row0, v);
+	const F32 b = dot(m.m_row1, v);
+	const F32 c = dot(m.m_row2, v);
+	return Vec3(a, b, c);
+}
+
+RVec3 mul(RMat3 m, RVec3 v)
+{
+	const RF32 a = dot(m.m_row0, v);
+	const RF32 b = dot(m.m_row1, v);
+	const RF32 c = dot(m.m_row2, v);
+	return RVec3(a, b, c);
+}
+
+Vec4 mul(Mat4 m, Vec4 v)
+{
+	const F32 a = dot(m.m_row0, v);
+	const F32 b = dot(m.m_row1, v);
+	const F32 c = dot(m.m_row2, v);
+	const F32 d = dot(m.m_row3, v);
+	return Vec4(a, b, c, d);
+}
+
+Vec3 mul(Mat3x4 m, Vec4 v)
+{
+	const F32 a = dot(m.m_row0, v);
+	const F32 b = dot(m.m_row1, v);
+	const F32 c = dot(m.m_row2, v);
+	return Vec3(a, b, c);
+}
+
+Mat3 transpose(Mat3 m)
+{
+	return constructMatrixColumns(m.m_row0, m.m_row1, m.m_row2);
+}
+
+// Common constants
 constexpr F32 kEpsilonF32 = 0.000001f;
 #	if ANKI_SUPPORTS_16BIT_TYPES
 constexpr F16 kEpsilonhF16 = (F16)0.0001f; // Divisions by this should be OK according to http://weitz.de/ieee

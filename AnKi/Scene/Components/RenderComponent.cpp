@@ -46,9 +46,8 @@ void RenderComponent::allocateAndSetupUniforms(const MaterialResourcePtr& mtl, c
 
 		for(U32 i = 0; i < transforms.getSize(); ++i)
 		{
-			memcpy(&renderableGpuViews->m_worldTransform, &transforms[i], sizeof(renderableGpuViews->m_worldTransform));
-			memcpy(&renderableGpuViews->m_previousWorldTransform, &prevTransforms[i],
-				   sizeof(renderableGpuViews->m_previousWorldTransform));
+			renderableGpuViews->m_worldTransform = transforms[i];
+			renderableGpuViews->m_previousWorldTransform = prevTransforms[i];
 			renderableGpuViews->m_positionScaleF32AndTranslationVec3 = positionScaleAndTranslation;
 
 			++renderableGpuViews;

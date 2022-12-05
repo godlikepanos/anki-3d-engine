@@ -73,7 +73,7 @@ void main()
 
 	// Get normal
 	const Vec3 worldNormal = unpackNormalFromGBuffer(textureLod(u_gbufferRt2, u_linearAnyClampSampler, uv, 0.0));
-	const Vec3 viewNormal = transform(u_clusteredShading.m_matrices.m_view, Vec4(worldNormal, 0.0)).xyz;
+	const Vec3 viewNormal = (u_clusteredShading.m_matrices.m_view * Vec4(worldNormal, 0.0)).xyz;
 
 	// Get origin
 	const F32 depth = textureLod(u_depthRt, u_linearAnyClampSampler, uv, 0.0).r;
