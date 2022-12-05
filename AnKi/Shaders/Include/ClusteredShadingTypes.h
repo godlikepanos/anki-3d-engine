@@ -190,8 +190,13 @@ ANKI_SHADER_STATIC_ASSERT(sizeof(GlobalIlluminationProbe) == kSizeof_GlobalIllum
 /// Common matrices.
 struct CommonMatrices
 {
+#if ANKI_CPP
 	Mat3x4 m_cameraTransform;
 	Mat3x4 m_view;
+#else
+	Vec4 m_cameraTransform[3];
+	Vec4 m_view[3];
+#endif
 	Mat4 m_projection;
 	Mat4 m_viewProjection;
 

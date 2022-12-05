@@ -29,7 +29,7 @@ layout(set = kMaterialSetLocal, binding = kMaterialBindingLocalUniforms, std430)
 	U32 u_localUniforms[];
 };
 
-layout(set = kMaterialSetLocal, binding = kMaterialBindingRenderableGpuView) uniform b_renderableGpuViews
+layout(set = kMaterialSetLocal, binding = kMaterialBindingRenderableGpuView) buffer b_renderableGpuViews
 {
 	RenderableGpuView u_renderableGpuViews[1];
 };
