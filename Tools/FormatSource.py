@@ -9,6 +9,7 @@ import glob
 import subprocess
 import threading
 import multiprocessing
+import os
 
 file_extensions = ["h", "hpp", "c", "cpp", "glsl", "hlsl", "ankiprog"]
 directories = ["AnKi", "Tests", "Sandbox", "Tools", "Samples"]
@@ -30,7 +31,14 @@ def thread_callback(tid):
         if file_name is None:
             break
 
-        subprocess.check_call(["./ThirdParty/Bin/Windows64/clang-format.exe", "-sort-includes=false", "-i", file_name])
+        unused, file_extension = os.path.splitext(file_name)
+        if file_extension == ".hlsl" or file_extension == ".ankiprog":
+            style_file = "--style=file:.clang-format-hlsl"
+        else:
+            style_file = "--style=file:.clang-format"
+
+        subprocess.check_call(["./ThirdParty/Bin/Windows64/clang-format.exe",
+                              "-sort-includes=false", style_file, "-i", file_name])
 
 
 # Gather the filenames
