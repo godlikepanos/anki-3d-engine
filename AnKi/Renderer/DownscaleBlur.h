@@ -52,8 +52,6 @@ public:
 	}
 
 private:
-	const Array<U32, 2> m_workgroupSize = {16, 16};
-
 	U32 m_passCount = 0; ///< It's also the mip count of the m_rtTex.
 
 	TexturePtr m_rtTex;

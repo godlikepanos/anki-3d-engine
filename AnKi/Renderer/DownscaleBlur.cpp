@@ -189,7 +189,7 @@ void DownscaleBlur::run(U32 passIdx, RenderPassWorkContext& rgraphCtx)
 		sampleSubresource.m_firstMipmap = passIdx;
 		rgraphCtx.bindImage(0, 3, m_runCtx.m_rt, sampleSubresource);
 
-		dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], vpWidth, vpHeight);
+		dispatchPPCompute(cmdb, 8, 8, vpWidth, vpHeight);
 	}
 	else
 	{
