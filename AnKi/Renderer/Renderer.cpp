@@ -255,22 +255,26 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 
 	// Init samplers
 	{
-		SamplerInitInfo sinit("Renderer");
+		SamplerInitInfo sinit("NearestNearestClamp");
 		sinit.m_addressing = SamplingAddressing::kClamp;
 		sinit.m_mipmapFilter = SamplingFilter::kNearest;
 		sinit.m_minMagFilter = SamplingFilter::kNearest;
 		m_samplers.m_nearestNearestClamp = m_subsystems.m_grManager->newSampler(sinit);
 
+		sinit.setName("TrilinearClamp");
 		sinit.m_minMagFilter = SamplingFilter::kLinear;
 		sinit.m_mipmapFilter = SamplingFilter::kLinear;
 		m_samplers.m_trilinearClamp = m_subsystems.m_grManager->newSampler(sinit);
 
+		sinit.setName("TrilinearRepeat");
 		sinit.m_addressing = SamplingAddressing::kRepeat;
 		m_samplers.m_trilinearRepeat = m_subsystems.m_grManager->newSampler(sinit);
 
+		sinit.setName("TrilinearRepeatAniso");
 		sinit.m_anisotropyLevel = m_subsystems.m_config->getRTextureAnisotropy();
 		m_samplers.m_trilinearRepeatAniso = m_subsystems.m_grManager->newSampler(sinit);
 
+		sinit.setName("TrilinearRepeatAnisoRezScalingBias");
 		F32 scalingMipBias = log2(F32(m_internalResolution.x()) / F32(m_postProcessResolution.x()));
 		if(getScale().getUsingGrUpscaler())
 		{
@@ -282,6 +286,7 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		m_samplers.m_trilinearRepeatAnisoResolutionScalingBias = m_subsystems.m_grManager->newSampler(sinit);
 
 		sinit = {};
+		sinit.setName("TrilinearClampShadow");
 		sinit.m_minMagFilter = SamplingFilter::kLinear;
 		sinit.m_mipmapFilter = SamplingFilter::kLinear;
 		sinit.m_compareOperation = CompareOperation::kLessEqual;

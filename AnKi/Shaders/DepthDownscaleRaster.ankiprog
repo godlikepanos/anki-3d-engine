@@ -3,46 +3,45 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki hlsl
+
 #pragma anki mutator REDUCTION_SAMPLER 0 1
 
 #pragma anki start vert
-#include <AnKi/Shaders/QuadVert.glsl>
+#include <AnKi/Shaders/QuadVert.hlsl>
 #pragma anki end
 
 #pragma anki start frag
-#include <AnKi/Shaders/Common.glsl>
+#include <AnKi/Shaders/Common.hlsl>
 
-layout(location = 0) in Vec2 in_uv;
-layout(location = 0) out F32 out_depth;
+[[vk::binding(0)]] Texture2D g_inputTex;
+[[vk::binding(1)]] SamplerState g_sampler;
+[[vk::binding(2)]] RWStructuredBuffer<F32> g_clientBuff;
 
-layout(set = 0, binding = 0) uniform texture2D u_inputTex;
-layout(set = 0, binding = 1) uniform sampler u_sampler;
-
-layout(std430, set = 0, binding = 2) writeonly buffer b_cb
+struct Uniforms
 {
-	F32 u_clientBuf[];
+	Vec3 m_padding;
+	U32 m_lastMipWidth;
 };
+[[vk::push_constant]] ConstantBuffer<Uniforms> g_uniforms;
 
-layout(push_constant, std140) uniform b_pc
+F32 main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION): SV_TARGET0
 {
-	Vec3 u_padding;
-	U32 u_lastMipWidth;
-};
-
-void main()
-{
-#if !REDUCTION_SAMPLER
-	out_depth = textureLod(u_inputTex, u_sampler, in_uv, 0.0).x;
+	F32 output;
+#if REDUCTION_SAMPLER
+	output = g_inputTex.SampleLevel(g_sampler, uv, 0.0).x;
 #else
-	const Vec4 depths = textureGather(sampler2D(u_inputTex, u_sampler), in_uv, 0);
-	out_depth = max(depths.x, max(depths.y, max(depths.z, depths.w)));
+	const Vec4 depths = g_inputTex.GatherRed(g_sampler, uv);
+	output = max(depths.x, max(depths.y, max(depths.z, depths.w)));
 #endif
 
-	if(u_lastMipWidth != 0u)
+	if(g_uniforms.m_lastMipWidth != 0u)
 	{
-		const UVec2 p = UVec2(gl_FragCoord.xy);
-		const U32 idx = p.y * u_lastMipWidth + p.x;
-		u_clientBuf[idx] = out_depth;
+		const UVec2 p = UVec2(svPosition.xy);
+		const U32 idx = p.y * g_uniforms.m_lastMipWidth + p.x;
+		g_clientBuff[idx] = output;
 	}
+
+	return output;
 }
 #pragma anki end

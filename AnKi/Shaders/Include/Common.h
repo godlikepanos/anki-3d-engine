@@ -649,6 +649,11 @@ Bool all(Bool b)
 	return b;
 }
 
+Bool any(Bool b)
+{
+	return b;
+}
+
 #	define saturate(x_) clamp((x_), 0.0, 1.0)
 #	define saturateRp(x) min(x, F32(kMaxF16))
 #	define mad(a_, b_, c_) fma((a_), (b_), (c_))

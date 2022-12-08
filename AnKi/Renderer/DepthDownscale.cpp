@@ -97,7 +97,7 @@ Error DepthDownscale::initInternal()
 		m_grProg = variant->getProgram();
 
 		// 1st mip prog
-		variantInitInfo.addMutation("REDUCTION_SAMPLER", 0);
+		variantInitInfo.addMutation("REDUCTION_SAMPLER", 1);
 		m_prog->getOrCreateVariant(variantInitInfo, variant);
 		m_firstMipGrProg = variant->getProgram();
 	}
@@ -132,7 +132,7 @@ Error DepthDownscale::initInternal()
 	// Reduction sampler
 	if(!preferCompute && supportsReductionSampler)
 	{
-		SamplerInitInfo sinit("HiZReduction");
+		SamplerInitInfo sinit("HiZReductionMax");
 		sinit.m_addressing = SamplingAddressing::kClamp;
 		sinit.m_mipmapFilter = SamplingFilter::kMax;
 		sinit.m_minMagFilter = SamplingFilter::kMax;
