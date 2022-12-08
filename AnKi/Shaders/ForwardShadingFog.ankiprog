@@ -3,58 +3,61 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki hlsl
+
 #pragma anki mutator ANKI_TECHNIQUE 3
 
-#include <AnKi/Shaders/ForwardShadingCommon.glsl>
-#include <AnKi/Shaders/Functions.glsl>
+#include <AnKi/Shaders/ForwardShadingCommon.hlsl>
+#include <AnKi/Shaders/Functions.hlsl>
 
 #pragma anki reflect AnKiLocalUniforms
 #pragma anki struct AnKiLocalUniforms
-#pragma anki member ANKI_RP Vec3 m_fogColor
-#pragma anki member ANKI_RP F32 m_fogAlphaScale
-#pragma anki member ANKI_RP F32 m_fogDistanceOfMaxThikness
+#pragma anki member RVec3 m_fogColor
+#pragma anki member RF32 m_fogAlphaScale
+#pragma anki member RF32 m_fogDistanceOfMaxThikness
 #pragma anki struct end
 
-layout(set = kMaterialSetGlobal, binding = kMaterialBindingGlobalUniforms) uniform b_ankiGlobalUniforms
-{
-	MaterialGlobalUniforms u_global;
-};
+[[vk::binding(kMaterialBindingGlobalUniforms, kMaterialSetGlobal)]] ConstantBuffer<MaterialGlobalUniforms>
+	g_globalUniforms;
+[[vk::binding(kMaterialBindingRenderableGpuView, kMaterialSetLocal)]] StructuredBuffer<RenderableGpuView>
+	g_renderableGpuViews;
+[[vk::binding(kMaterialBindingLocalUniforms, kMaterialSetLocal)]] StructuredBuffer<U32> g_localUniforms;
 
-layout(set = kMaterialSetLocal, binding = kMaterialBindingRenderableGpuView) uniform b_renderableGpuViews
+struct VertOut
 {
-	RenderableGpuView u_renderableGpuViews[1];
-};
-
-layout(set = kMaterialSetLocal, binding = kMaterialBindingLocalUniforms, std430) buffer b_localUniforms
-{
-	U32 u_localUniforms[];
+	Vec4 m_svPosition : SV_POSITION;
+	[[vk::location(0)]] F32 m_zVSpace : ZVSPACE;
 };
 
 #pragma anki start vert
 
-layout(location = 0) out F32 out_zVSpace;
-
-void main()
+VertOut main([[vk::location(VertexStreamId::kParticlePosition)]] Vec3 vertPos : POSITION)
 {
-	const RenderableGpuView renderable = u_renderableGpuViews[0];
-	const Vec3 worldPos = renderable.m_worldTransform * Vec4(in_position, 1.0);
+	VertOut output;
 
-	gl_Position = u_global.m_viewProjectionMatrix * Vec4(worldPos, 1.0);
+	const RenderableGpuView renderable = g_renderableGpuViews[0];
+	const Vec3 worldPos = mul(renderable.m_worldTransform, Vec4(vertPos, 1.0));
 
-	const Vec3 viewPos = u_global.m_viewTransform * Vec4(worldPos, 1.0);
-	out_zVSpace = viewPos.z;
+	output.m_svPosition = mul(g_globalUniforms.m_viewProjectionMatrix, Vec4(worldPos, 1.0));
+
+	const Vec3 viewPos = mul(g_globalUniforms.m_viewTransform, Vec4(worldPos, 1.0));
+	output.m_zVSpace = viewPos.z;
+
+	return output;
 }
 
 #pragma anki end
 
 #pragma anki start frag
 
-layout(location = 0) in F32 in_zVSpace;
-
-void main()
+FragOut main(VertOut input)
 {
-	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(u_localUniforms, 0u);
+	FragOut output = (FragOut)0;
+	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_localUniforms, 0u);
 
-	fog(localUniforms.m_fogColor, localUniforms.m_fogAlphaScale, localUniforms.m_fogDistanceOfMaxThikness, in_zVSpace);
+	fog(localUniforms.m_fogColor, localUniforms.m_fogAlphaScale, localUniforms.m_fogDistanceOfMaxThikness,
+		input.m_svPosition, input.m_zVSpace, output);
+
+	return output;
 }
 #pragma anki end
