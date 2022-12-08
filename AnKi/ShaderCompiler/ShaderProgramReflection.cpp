@@ -795,7 +795,7 @@ Error SpirvReflector::constsReflection(DynamicArrayRaii<Const>& consts) const
 			const Bool err1 = idSame && (!nameSame || !typeSame);
 			if(err0 || err1)
 			{
-				ANKI_SHADER_COMPILER_LOGE("Linking error");
+				ANKI_SHADER_COMPILER_LOGE("Linking error: %s", newConst.m_name.cstr());
 				return Error::kUserData;
 			}
 
