@@ -5,76 +5,70 @@
 
 // The 1st reduction is average depth. The next reductions are max depth
 
+#pragma anki hlsl
+
 #pragma anki mutator WAVE_OPERATIONS 0 1
 
 #pragma anki start comp
-#include <AnKi/Shaders/Common.glsl>
+#include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
 
-layout(local_size_x = 256) in;
+[[vk::push_constant]] ConstantBuffer<DepthDownscaleUniforms> g_uniforms;
 
-layout(push_constant, std140) uniform b_pc
-{
-	DepthDownscaleUniforms u_unis;
-};
+[[vk::binding(0)]] RWTexture2D<Vec4> g_dstUavs[12u];
+[[vk::binding(1)]] globallycoherent RWTexture2D<Vec4> g_dstUav5;
+[[vk::binding(2)]] globallycoherent RWStructuredBuffer<U32> g_spdCounter;
+[[vk::binding(3)]] RWStructuredBuffer<F32> g_clientBuff;
 
-layout(set = 0, binding = 0) uniform image2D u_dstImages[12u];
-layout(set = 0, binding = 1) coherent uniform image2D u_dstImage5;
-
-layout(set = 0, binding = 2) coherent buffer b_atomic
-{
-	U32 u_spdCounter;
-};
-
-layout(std430, set = 0, binding = 3) writeonly buffer b_cb
-{
-	F32 u_clientBuf[];
-};
-
-layout(set = 0, binding = 4) uniform sampler u_linearAnyClampSampler;
-layout(set = 0, binding = 5) uniform texture2D u_srcTex;
+[[vk::binding(4)]] SamplerState u_linearAnyClampSampler;
+[[vk::binding(5)]] Texture2D g_srcTex;
 
 // Include SPD
 #define A_GPU 1
-#define A_GLSL 1
+#define A_HLSL 1
 #include <ThirdParty/FidelityFX/ffx_a.h>
 
-shared AU1 s_spdCounter;
-shared AF1 s_spdIntermediateR[16][16];
+groupshared AU1 s_spdCounter;
+groupshared AF1 s_spdIntermediateR[16][16];
 
 AF4 SpdLoadSourceImage(AU2 p, AU1 slice)
 {
-	const AF2 textureCoord = Vec2(p) * u_unis.m_srcTexSizeOverOne + u_unis.m_srcTexSizeOverOne;
-	return AF4(textureLod(u_srcTex, u_linearAnyClampSampler, textureCoord, 0.0).r, 0.0, 0.0, 0.0);
+	ANKI_MAYBE_UNUSED(slice);
+	const AF2 textureCoord = Vec2(p) * g_uniforms.m_srcTexSizeOverOne + g_uniforms.m_srcTexSizeOverOne;
+	return AF4(g_srcTex.SampleLevel(u_linearAnyClampSampler, textureCoord, 0.0).r, 0.0, 0.0, 0.0);
 }
 
 AF4 SpdLoad(AU2 p, AU1 slice)
 {
-	return AF4(imageLoad(u_dstImage5, IVec2(p)).r, 0.0, 0.0, 0.0);
+	ANKI_MAYBE_UNUSED(slice);
+	return AF4(g_dstUav5[UVec2(p)].r, 0.0, 0.0, 0.0);
 }
 
 void SpdStore(AU2 p, AF4 value, AU1 mip, AU1 slice)
 {
+	ANKI_MAYBE_UNUSED(slice);
+
 	if(mip == 5u)
 	{
-		imageStore(u_dstImage5, IVec2(p), Vec4(value.x, 0.0, 0.0, 0.0));
+		g_dstUav5[UVec2(p)] = Vec4(value.x, 0.0, 0.0, 0.0);
 	}
 	else
 	{
-		imageStore(u_dstImages[mip], IVec2(p), Vec4(value.x, 0.0, 0.0, 0.0));
+		g_dstUavs[mip][UVec2(p)] = Vec4(value.x, 0.0, 0.0, 0.0);
 	}
 
 	// Store the last mip to the buffer as well
-	if(mip == u_unis.m_mipmapCount - 1u)
+	if(mip == g_uniforms.m_mipmapCount - 1u)
 	{
-		const U32 idx = p.y * u_unis.m_lastMipWidth + p.x;
-		u_clientBuf[idx] = value.x;
+		const U32 idx = p.y * g_uniforms.m_lastMipWidth + p.x;
+		g_clientBuff[idx] = value.x;
 	}
 }
 
 void SpdIncreaseAtomicCounter(AU1 slice)
 {
-	s_spdCounter = atomicAdd(u_spdCounter, 1u);
+	ANKI_MAYBE_UNUSED(slice);
+	InterlockedAdd(g_spdCounter[0], 1u, s_spdCounter);
 }
 
 AU1 SpdGetAtomicCounter()
@@ -84,7 +78,8 @@ AU1 SpdGetAtomicCounter()
 
 void SpdResetAtomicCounter(AU1 slice)
 {
-	u_spdCounter = 0u;
+	ANKI_MAYBE_UNUSED(slice);
+	g_spdCounter[0] = 0u;
 }
 
 AF4 SpdLoadIntermediate(AU1 x, AU1 y)
@@ -111,12 +106,12 @@ AF4 SpdReduce4(AF4 v0, AF4 v1, AF4 v2, AF4 v3)
 
 #include <ThirdParty/FidelityFX/ffx_spd.h>
 
-void main()
+ANKI_NUMTHREADS(256, 1, 1) void main(UVec3 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX)
 {
 	const U32 slice = 0u;
-	const UVec2 offset = UVec2(0u);
-	SpdDownsample(AU2(gl_WorkGroupID.xy), AU1(gl_LocalInvocationIndex), AU1(u_unis.m_mipmapCount),
-				  AU1(u_unis.m_workgroupCount), slice, offset);
+	const UVec2 offset = UVec2(0, 0);
+	SpdDownsample(AU2(svGroupId.xy), AU1(svGroupIndex), AU1(g_uniforms.m_mipmapCount), AU1(g_uniforms.m_workgroupCount),
+				  slice, offset);
 }
 
 #pragma anki end
