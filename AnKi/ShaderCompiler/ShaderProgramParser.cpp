@@ -627,7 +627,7 @@ Error ShaderProgramParser::parsePragmaMember(const StringRaii* begin, const Stri
 	{
 		member.m_type = ShaderVariableDataType::kVec3;
 	}
-	else if(typeStr == "Vec4" || typeStr == "Vec4")
+	else if(typeStr == "Vec4" || typeStr == "RVec4")
 	{
 		member.m_type = ShaderVariableDataType::kVec4;
 	}

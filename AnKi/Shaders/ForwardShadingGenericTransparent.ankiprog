@@ -3,80 +3,81 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki hlsl
+
 #pragma anki mutator ANKI_TECHNIQUE 3
 #pragma anki mutator TEXTURE 0 1
 #pragma anki mutator LIGHT 0 1
 
-#include <AnKi/Shaders/ForwardShadingCommon.glsl>
-#include <AnKi/Shaders/Functions.glsl>
+#include <AnKi/Shaders/ForwardShadingCommon.hlsl>
+#include <AnKi/Shaders/Functions.hlsl>
 
 #pragma anki reflect AnKiLocalUniforms
 #pragma anki struct AnKiLocalUniforms
 #pragma anki member U32 m_texture if TEXTURE is 1
-#pragma anki member ANKI_RP Vec4 m_colorScale
-#pragma anki member ANKI_RP Vec4 m_colorBias
+#pragma anki member RVec4 m_colorScale
+#pragma anki member RVec4 m_colorBias
 #pragma anki struct end
 
-layout(set = kMaterialSetGlobal, binding = kMaterialBindingGlobalUniforms) uniform b_ankiGlobalUniforms
+[[vk::binding(kMaterialBindingGlobalUniforms, kMaterialSetGlobal)]] ConstantBuffer<MaterialGlobalUniforms>
+	g_globalUniforms;
+[[vk::binding(kMaterialBindingTrilinearRepeatSampler, kMaterialSetGlobal)]] SamplerState g_globalSampler;
+[[vk::binding(kMaterialBindingLocalUniforms, kMaterialSetLocal)]] StructuredBuffer<U32> g_localUniforms;
+[[vk::binding(kMaterialBindingRenderableGpuView, kMaterialSetLocal)]] StructuredBuffer<RenderableGpuView>
+	g_renderableGpuViews;
+
+struct VertIn
 {
-	MaterialGlobalUniforms u_ankiGlobals;
+	[[vk::location(VertexStreamId::kPosition)]] Vec3 m_modelPos : POSITION;
+	[[vk::location(VertexStreamId::kUv)]] Vec2 m_uv : TEXCOORD;
+	U32 m_svInstanceId : SV_INSTANCEID;
 };
 
-layout(set = kMaterialSetGlobal, binding = kMaterialBindingTrilinearRepeatSampler) uniform sampler u_globalSampler;
-
-layout(set = kMaterialSetLocal, binding = kMaterialBindingLocalUniforms, std430) buffer b_localUniforms
+struct VertOut
 {
-	U32 u_localUniforms[];
-};
-
-layout(set = kMaterialSetLocal, binding = kMaterialBindingRenderableGpuView) buffer b_renderableGpuViews
-{
-	RenderableGpuView u_renderableGpuViews[1];
-};
-
-layout(set = kMaterialSetGlobal, binding = kMaterialBindingGlobalUniforms) uniform b_globalUniforms
-{
-	MaterialGlobalUniforms u_globalUniforms;
+	[[vk::location(0)]] Vec2 m_uv : TEXCOORD;
+	[[vk::location(1)]] Vec3 m_worldPosition : WORLD_POSITION;
+	Vec4 m_svPosition : SV_POSITION;
 };
 
 #pragma anki start vert
 
-layout(location = kVertexStreamIdUv) in Vec2 in_uv;
-
-layout(location = 0) out Vec2 out_uv;
-layout(location = 1) out Vec3 out_worldPosition;
-
-void main()
+VertOut main(VertIn input)
 {
-	out_worldPosition = u_renderableGpuViews[gl_InstanceIndex].m_worldTransform * Vec4(in_position, 1.0);
+	VertOut output;
 
-	gl_Position = u_globalUniforms.m_viewProjectionMatrix * Vec4(out_worldPosition, 1.0);
+	output.m_worldPosition =
+		mul(g_renderableGpuViews[input.m_svInstanceId].m_worldTransform, Vec4(input.m_modelPos, 1.0));
 
-	out_uv = in_uv;
+	output.m_svPosition = mul(g_globalUniforms.m_viewProjectionMatrix, Vec4(output.m_worldPosition, 1.0));
+
+	output.m_uv = input.m_uv;
+
+	return output;
 }
 #pragma anki end
 
 #pragma anki start frag
 
-layout(location = 0) in Vec2 in_uv;
-layout(location = 1) in Vec3 in_worldPosition;
-
-void main()
+FragOut main(VertOut input)
 {
-	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(u_localUniforms, 0u);
+	ANKI_MAYBE_UNUSED(input);
+	FragOut output;
 
-	Vec4 color = Vec4(1.0);
+	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_localUniforms, 0u);
+
+	output.m_color = RVec4(1.0, 1.0, 1.0, 1.0);
 
 #if TEXTURE == 1
-	color = texture(u_bindlessTextures2dF32[localUniforms.m_texture], u_globalSampler, in_uv);
+	output.m_color = g_bindlessTextures2dF32[localUniforms.m_texture].Sample(g_globalSampler, input.m_uv);
 #endif
 
 #if LIGHT == 1
-	color.rgb = computeLightColorLow(color.rgb, in_worldPosition);
+	output.m_color.rgb = computeLightColorLow(output.m_color.rgb, input.m_worldPosition, input.m_svPosition);
 #endif
 
-	color = color * localUniforms.m_colorScale + localUniforms.m_colorBias;
+	output.m_color = output.m_color * localUniforms.m_colorScale + localUniforms.m_colorBias;
 
-	out_color = color;
+	return output;
 }
 #pragma anki end
