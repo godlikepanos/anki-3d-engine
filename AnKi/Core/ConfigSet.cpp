@@ -40,7 +40,7 @@ void ConfigSet::init(AllocAlignedCallback allocCb, void* allocCbUserData)
 	m_pool.init(allocCb, allocCbUserData);
 
 #define ANKI_CONFIG_VAR_NUMERIC(name, defaultValue, minValue, maxValue, description) \
-	ANKI_ASSERT(minValue <= maxValue && defaultValue >= minValue && defaultValue <= maxValue); \
+	ANKI_ASSERT((minValue) <= (maxValue) && (defaultValue) >= (minValue) && (defaultValue) <= (maxValue)); \
 	m_##name.m_name = #name; \
 	m_##name.m_description = description; \
 	m_##name.m_value = defaultValue; \
