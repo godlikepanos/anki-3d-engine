@@ -3,33 +3,22 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki hlsl
+
 #pragma anki start comp
 
-#include <AnKi/Shaders/Common.glsl>
+#include <AnKi/Shaders/Common.hlsl>
 
-layout(local_size_x = 64) in;
+[[vk::binding(0)]] StructuredBuffer<UVec2> g_patchHeaders;
+[[vk::binding(1)]] StructuredBuffer<U32> g_srcBuffer;
+[[vk::binding(2)]] RWStructuredBuffer<U32> g_dstBuffer;
 
-layout(binding = 0, std430) readonly buffer b_0
+ANKI_NUMTHREADS(64, 1, 1) void main(UVec3 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX)
 {
-	UVec2 u_patchHeaders[];
-};
-
-layout(binding = 1, std430) readonly buffer b_1
-{
-	U32 u_srcBuffer[];
-};
-
-layout(binding = 2, std430) writeonly buffer b_2
-{
-	U32 u_dstBuffer[];
-};
-
-void main()
-{
-	const UVec2 header = u_patchHeaders[gl_WorkGroupID.x];
+	const UVec2 header = g_patchHeaders[svGroupId.x];
 	const U32 dwordCount = (header.x >> 26u) + 1u;
 
-	if(gl_LocalInvocationIndex >= dwordCount)
+	if(svGroupIndex >= dwordCount)
 	{
 		return;
 	}
@@ -37,7 +26,7 @@ void main()
 	const U32 srcDwordOffset = header.x & 0x3FFFFFFu;
 	const U32 dstDwordOffset = header.y;
 
-	u_dstBuffer[dstDwordOffset + gl_LocalInvocationIndex] = u_srcBuffer[srcDwordOffset + gl_LocalInvocationIndex];
+	g_dstBuffer[dstDwordOffset + svGroupIndex] = g_srcBuffer[srcDwordOffset + svGroupIndex];
 }
 
 #pragma anki end
