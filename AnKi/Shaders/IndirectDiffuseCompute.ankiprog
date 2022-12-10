@@ -4,5 +4,5 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki start comp
-#include <AnKi/Shaders/IndirectDiffuse.glsl>
+#include <AnKi/Shaders/IndirectDiffuse.hlsl>
 #pragma anki end
