@@ -24,48 +24,28 @@ struct Uniforms
 };
 
 [[vk::push_constant]] ConstantBuffer<Uniforms> g_pc;
-
-struct CompIn
-{
-	UVec3 m_svDispatchThreadId : SV_DISPATCHTHREADID;
-};
-#else
-struct VertOut
-{
-	[[vk::location(0)]] Vec2 m_uv : TEXCOORD;
-	Vec4 m_svPosition : SV_POSITION;
-};
-
-struct FragOut
-{
-	RVec3 m_svTarget : SV_TARGET0;
-};
 #endif
 
 #if USE_COMPUTE
-ANKI_NUMTHREADS(8, 8, 1) void main(CompIn input)
+[numthreads(8, 8, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 #else
-FragOut main(VertOut input)
+RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 #endif
 {
 #if USE_COMPUTE
-	if(skipOutOfBoundsInvocations(UVec2(8, 8), g_pc.m_viewportSizeU, input.m_svDispatchThreadId.xy))
+	if(skipOutOfBoundsInvocations(UVec2(8, 8), g_pc.m_viewportSizeU, svDispatchThreadId.xy))
 	{
 		return;
 	}
 
-	const Vec2 uv = (Vec2(input.m_svDispatchThreadId.xy) + 0.5) / g_pc.m_viewportSize;
-#else
-	const Vec2 uv = input.m_uv;
+	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5) / g_pc.m_viewportSize;
 #endif
 
 	const RVec3 color = g_inputTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).rgb;
 
 #if USE_COMPUTE
-	g_outUav[input.m_svDispatchThreadId.xy] = RVec4(color, 0.0);
+	g_outUav[svDispatchThreadId.xy] = RVec4(color, 0.0);
 #else
-	FragOut output;
-	output.m_svTarget = color;
-	return output;
+	return color;
 #endif
 }

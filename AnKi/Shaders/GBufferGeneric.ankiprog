@@ -135,7 +135,7 @@ void skinning(VertIn input, inout Vec3 pos, inout Vec3 prevPos, inout RVec3 norm
 {
 	Mat4 skinMat = g_boneTransforms[input.m_boneIndices[0]] * input.m_boneWeights[0];
 	Mat4 prevSkinMat = g_prevFrameBoneTransforms[input.m_boneIndices[0]] * input.m_boneWeights[0];
-	[[unroll]] for(U32 i = 1u; i < 4u; ++i)
+	[unroll] for(U32 i = 1u; i < 4u; ++i)
 	{
 		skinMat = skinMat + g_boneTransforms[input.m_boneIndices[i]] * input.m_boneWeights[i];
 		prevSkinMat = prevSkinMat + g_prevFrameBoneTransforms[input.m_boneIndices[i]] * input.m_boneWeights[i];

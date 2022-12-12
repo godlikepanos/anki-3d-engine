@@ -48,9 +48,9 @@ Vec4 cheapProject(Vec4 point_)
 }
 
 #if defined(ANKI_COMPUTE_SHADER)
-ANKI_NUMTHREADS(8, 8, 1) void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
+[numthreads(8, 8, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 #else
-RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION): SV_TARGET0
+RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 #endif
 {
 #if defined(ANKI_COMPUTE_SHADER)
@@ -173,7 +173,7 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION
 			F32 totalBlendWeight = kEpsilonF32;
 
 			// Loop probes
-			[[loop]] while(cluster.m_giProbesMask != 0u)
+			[loop] while(cluster.m_giProbesMask != 0u)
 			{
 				const U32 idx = U32(firstbitlow2(cluster.m_giProbesMask));
 				cluster.m_giProbesMask &= ~(1u << idx);

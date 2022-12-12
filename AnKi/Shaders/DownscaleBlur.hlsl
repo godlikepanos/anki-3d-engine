@@ -27,9 +27,9 @@ struct Uniforms
 #endif
 
 #if defined(ANKI_COMPUTE_SHADER)
-ANKI_NUMTHREADS(8, 8, 1) void main(UVec4 svDispatchThreadId : SV_DISPATCHTHREADID)
+[numthreads(8, 8, 1)] void main(UVec4 svDispatchThreadId : SV_DISPATCHTHREADID)
 #else
-RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD): SV_TARGET0
+RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 #endif
 {
 #if defined(ANKI_COMPUTE_SHADER)

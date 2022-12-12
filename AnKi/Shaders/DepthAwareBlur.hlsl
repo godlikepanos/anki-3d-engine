@@ -58,10 +58,9 @@ void sampleTex(Vec2 uv, F32 refDepth, inout ColorType col, inout F32 weight)
 }
 
 #if defined(ANKI_COMPUTE_SHADER)
-ANKI_NUMTHREADS(THREADGROUP_SQRT_SIZE, THREADGROUP_SQRT_SIZE, 1)
-void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
+[numthreads(THREADGROUP_SQRT_SIZE, THREADGROUP_SQRT_SIZE, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 #else
-ColorType main([[vk::location(0)]] Vec2 uv : TEXCOORD): SV_TARGET0
+ColorType main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 #endif
 {
 	UVec2 textureSize;
@@ -70,7 +69,7 @@ ColorType main([[vk::location(0)]] Vec2 uv : TEXCOORD): SV_TARGET0
 
 	// Set UVs
 #if defined(ANKI_COMPUTE_SHADER)
-	[[branch]] if(svDispatchThreadId.x >= textureSize.x || svDispatchThreadId.y >= textureSize.y)
+	[branch] if(svDispatchThreadId.x >= textureSize.x || svDispatchThreadId.y >= textureSize.y)
 	{
 		// Out of bounds
 		return;
@@ -98,7 +97,7 @@ ColorType main([[vk::location(0)]] Vec2 uv : TEXCOORD): SV_TARGET0
 	Vec2 uvOffset = Vec2(0.0, 0.0);
 	uvOffset.X_OR_Y = 1.5 * texelSize.X_OR_Y;
 
-	[[unroll]] for(U32 i = 0u; i < (SAMPLE_COUNT - 1u) / 2u; ++i)
+	[unroll] for(U32 i = 0u; i < (SAMPLE_COUNT - 1u) / 2u; ++i)
 	{
 		sampleTex(uv + uvOffset, refDepth, color, weight);
 		sampleTex(uv - uvOffset, refDepth, color, weight);

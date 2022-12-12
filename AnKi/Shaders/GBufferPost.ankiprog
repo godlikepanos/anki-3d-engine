@@ -61,7 +61,7 @@ FragOut main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITI
 		discard;
 	}
 
-	[[loop]] while(cluster.m_decalsMask != 0)
+	[loop] while(cluster.m_decalsMask != 0)
 	{
 		const I32 idx = firstbitlow2(cluster.m_decalsMask);
 		cluster.m_decalsMask &= ~((ExtendedClusterObjectMask)1 << (ExtendedClusterObjectMask)idx);

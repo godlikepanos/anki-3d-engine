@@ -61,10 +61,6 @@ void maybeUnused(T a)
 }
 #	define ANKI_MAYBE_UNUSED(x) maybeUnused(x)
 
-// Use a define because the [] annoyes clang-format
-#	define _ANKI_NUMTHREADS
-#	define ANKI_NUMTHREADS(x, y, z) _ANKI_NUMTHREADS[numthreads(x, y, z)]
-
 #	define _ANKI_CONCATENATE(a, b) a##b
 #	define ANKI_CONCATENATE(a, b) _ANKI_CONCATENATE(a, b)
 
@@ -427,6 +423,9 @@ constexpr F32 kPi = 3.14159265358979323846f;
 		|| defined(ANKI_MISS_SHADER) || defined(ANKI_INTERSECTION_SHADER) || defined(ANKI_CALLABLE_SHADER)
 #		extension GL_EXT_ray_tracing : enable
 #	endif
+
+#	define unroll [unroll]
+#	define branch [branch]
 
 #	define F32 float
 const uint kSizeof_float = 4u;

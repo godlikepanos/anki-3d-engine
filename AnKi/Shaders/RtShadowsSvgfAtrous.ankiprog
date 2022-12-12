@@ -45,7 +45,7 @@ Vec3 toViewspace(Vec2 uv, F32 depth)
 F32 computeShadowsLuma(F32 shadowLayers[kMaxRtShadowLayers])
 {
 	F32 l = 0.0;
-	[[unroll]] for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
+	[unroll] for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
 	{
 		l += shadowLayers[i];
 	}
@@ -141,7 +141,7 @@ void main()
 			// w *= kKernelWeights[abs(offsetx)] * kKernelWeights[abs(offsety)];
 
 			// Sum
-			[[unroll]] for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
+			[unroll] for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
 			{
 				sumShadowLayers[i] += shadowLayers[i] * w;
 			}
@@ -154,7 +154,7 @@ void main()
 	// Normalize
 	sumWeight += kEpsilonf;
 
-	[[unroll]] for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
+	[unroll] for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
 	{
 		sumShadowLayers[i] /= sumWeight;
 	}

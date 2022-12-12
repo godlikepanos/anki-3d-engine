@@ -128,7 +128,7 @@ RF32 computeShadowFactorSpotLightPcf(SpotLight light, Vec3 worldPos, Texture2D s
 	const F32 cosTheta = cos(randFactor * 2.0 * kPi);
 
 	RF32 shadow = 0.0;
-	[[unroll]] for(U32 i = 0u; i < 4u; ++i)
+	[unroll] for(U32 i = 0u; i < 4u; ++i)
 	{
 		const Vec2 diskPoint = kPoissonDisk[i] * kPcfScale;
 
@@ -202,7 +202,7 @@ RF32 computeShadowFactorPointLightGeneric(PointLight light, Vec3 frag2Light, Tex
 		const F32 cosTheta = cos(randFactor * 2.0 * kPi);
 
 		shadow = 0.0;
-		[[unroll]] for(U32 i = 0u; i < 4u; ++i)
+		[unroll] for(U32 i = 0u; i < 4u; ++i)
 		{
 			const Vec2 diskPoint = kPoissonDisk[i] * kPcfScale;
 
@@ -281,7 +281,7 @@ RF32 computeShadowFactorDirLightGeneric(DirectionalLight light, U32 cascadeIdx, 
 		const F32 cosTheta = cos(randFactor * 2.0 * kPi);
 
 		shadow = 0.0;
-		[[unroll]] for(U32 i = 0u; i < 4u; ++i)
+		[unroll] for(U32 i = 0u; i < 4u; ++i)
 		{
 			const Vec2 diskPoint = kPoissonDisk[i] * kPcfScale;
 
@@ -431,7 +431,7 @@ RVec3 sampleGlobalIllumination(const Vec3 worldPos, const Vec3 normal, const Glo
 
 	// Read the irradiance
 	RVec3 irradiancePerDir[6u];
-	[[unroll]] for(U32 dir = 0u; dir < 6u; ++dir)
+	[unroll] for(U32 dir = 0u; dir < 6u; ++dir)
 	{
 		// Point to the correct UV
 		Vec3 shiftedUVw = uvw;

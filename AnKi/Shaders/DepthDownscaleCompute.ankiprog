@@ -106,7 +106,7 @@ AF4 SpdReduce4(AF4 v0, AF4 v1, AF4 v2, AF4 v3)
 
 #include <ThirdParty/FidelityFX/ffx_spd.h>
 
-ANKI_NUMTHREADS(256, 1, 1) void main(UVec3 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX)
+[numthreads(256, 1, 1)] void main(UVec3 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX)
 {
 	const U32 slice = 0u;
 	const UVec2 offset = UVec2(0, 0);

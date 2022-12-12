@@ -41,7 +41,7 @@ BraceWrapping:
   AfterExternBlock: false
   BeforeCatch:     true
   BeforeElse:      true
-  BeforeLambdaBody: false
+  BeforeLambdaBody: true
   BeforeWhile:     false
   IndentBraces:    false
   SplitEmptyFunction: true

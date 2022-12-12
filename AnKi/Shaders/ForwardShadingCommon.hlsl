@@ -58,10 +58,10 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 	Cluster cluster = getClusterFragCoord(svPosition.xyz);
 
 	// Point lights
-	[[loop]] while(cluster.m_pointLightsMask != (ExtendedClusterObjectMask)0)
+	[loop] while(cluster.m_pointLightsMask != 0)
 	{
 		const I32 idx = firstbitlow2(cluster.m_pointLightsMask);
-		cluster.m_pointLightsMask &= ~((ExtendedClusterObjectMask)1 << (ExtendedClusterObjectMask)idx);
+		cluster.m_pointLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
 		const PointLight light = g_pointLights[idx];
 
 		const Vec3 diffC = diffCol * light.m_diffuseColor;
@@ -83,10 +83,10 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 	}
 
 	// Spot lights
-	[[loop]] while(cluster.m_spotLightsMask != (ExtendedClusterObjectMask)0)
+	[loop] while(cluster.m_spotLightsMask != 0)
 	{
 		const I32 idx = firstbitlow2(cluster.m_spotLightsMask);
-		cluster.m_spotLightsMask &= ~((ExtendedClusterObjectMask)1 << (ExtendedClusterObjectMask)idx);
+		cluster.m_spotLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
 		const SpotLight light = g_spotLights[idx];
 
 		const Vec3 diffC = diffCol * light.m_diffuseColor;
@@ -102,7 +102,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 		const F32 shadow = 1.0;
 #	else
 		F32 shadow = 1.0;
-		[[branch]] if(light.m_shadowLayer != kMaxU32)
+		[branch] if(light.m_shadowLayer != kMaxU32)
 		{
 			shadow = computeShadowFactorSpotLight(light, worldPos, g_shadowAtlasTex, g_shadowSampler);
 		}

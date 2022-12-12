@@ -71,8 +71,8 @@ Bool isGiProbe(U32 objectIdx)
 	return objectIdx < g_unis.m_objectCountsUpTo[kClusterObjectTypeGlobalIlluminationProbe].x;
 }
 
-ANKI_NUMTHREADS(THREADGROUP_SIZE, 1, 1)
-void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID, U32 svGroupIdx : SV_GROUPINDEX)
+[numthreads(THREADGROUP_SIZE, 1, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID,
+											   U32 svGroupIdx : SV_GROUPINDEX)
 {
 	const U32 dispatchThreadIdX = min(svDispatchThreadId.x, kTileCount * kSampleCount);
 	const U32 tileIdx = dispatchThreadIdX / kSampleCount;

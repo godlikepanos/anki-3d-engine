@@ -97,7 +97,7 @@ void main()
 
 				F32 shadowLayers[kMaxRtShadowLayers];
 				unpackRtShadows(textureLod(u_shadowsTex, u_nearestAnyClampSampler, sampleUv, 0.0), shadowLayers);
-				[[unroll]] for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
+				[unroll] for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
 				{
 					sumShadowLayers[i] += shadowLayers[i] * w;
 				}
@@ -108,7 +108,7 @@ void main()
 
 		sumWeight += kEpsilonf;
 
-		[[unroll]] for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
+		[unroll] for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
 		{
 			sumShadowLayers[i] /= sumWeight;
 		}

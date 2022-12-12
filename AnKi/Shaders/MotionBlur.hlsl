@@ -46,7 +46,7 @@ RVec3 motionBlur(Texture2D motionVectorsRt, SamplerState motionVectorsRtSampler,
 	// Sample
 	const RF32 weight = 1.0 / sampleCountf;
 	RVec3 outColor = toBlurRt.SampleLevel(toBlurRtSampler, uv, 0.0).rgb * weight;
-	[[loop]] for(F32 s = 1.0; s < sampleCountf; s += 1.0)
+	[loop] for(F32 s = 1.0; s < sampleCountf; s += 1.0)
 	{
 		const F32 f = s / sampleCountf;
 		const Vec2 sampleUv = uv + velocity * f;

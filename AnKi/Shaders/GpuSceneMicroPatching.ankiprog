@@ -13,7 +13,7 @@
 [[vk::binding(1)]] StructuredBuffer<U32> g_srcBuffer;
 [[vk::binding(2)]] RWStructuredBuffer<U32> g_dstBuffer;
 
-ANKI_NUMTHREADS(64, 1, 1) void main(UVec3 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX)
+[numthreads(64, 1, 1)] void main(UVec3 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX)
 {
 	const UVec2 header = g_patchHeaders[svGroupId.x];
 	const U32 dwordCount = (header.x >> 26u) + 1u;

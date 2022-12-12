@@ -38,7 +38,7 @@ struct Uniforms
 #	endif
 #endif
 
-ANKI_NUMTHREADS(8, 8, (TEXTURE_DIMENSIONS == 2) ? 1 : 8) void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
+[numthreads(8, 8, (TEXTURE_DIMENSIONS == 2) ? 1 : 8)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
 #if TEXTURE_DIMENSIONS == 2
 	UVec2 texSize;

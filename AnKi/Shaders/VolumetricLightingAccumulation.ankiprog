@@ -234,7 +234,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 			const FogDensityVolume vol = u_fogDensityVolumes[idx];
 
 			F32 factor;
-			[[branch]] if(vol.m_isBox == 1u)
+			[branch] if(vol.m_isBox == 1u)
 			{
 				factor = computeProbeBlendWeight(worldPos, vol.m_aabbMinOrSphereCenter,
 												 vol.m_aabbMaxOrSphereRadiusSquared, 0.2);

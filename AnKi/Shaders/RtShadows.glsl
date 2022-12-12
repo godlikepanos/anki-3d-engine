@@ -33,7 +33,7 @@ void unpackRtShadows(UVec4 packed, out F32 shadowFactors[kMaxRtShadowLayers])
 
 void zeroRtShadowLayers(out F32 shadowFactors[kMaxRtShadowLayers])
 {
-	[[unroll]] for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
+	[unroll] for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
 	{
 		shadowFactors[i] = 0.0;
 	}

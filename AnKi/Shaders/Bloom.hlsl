@@ -20,22 +20,6 @@ struct Uniforms
 
 [[vk::push_constant]] ConstantBuffer<Uniforms> g_pc;
 
-struct CompIn
-{
-	UVec3 m_svDispatchThreadId : SV_DISPATCHTHREADID;
-};
-
-struct VertOut
-{
-	Vec4 m_position : SV_POSITION;
-	[[vk::location(0)]] Vec2 m_uv : TEXCOORD;
-};
-
-struct FragOut
-{
-	RVec3 m_svTarget : SV_TARGET0;
-};
-
 #if defined(ANKI_COMPUTE_SHADER)
 #	define THREADGROUP_SIZE_X 8
 #	define THREADGROUP_SIZE_Y 8
@@ -43,20 +27,18 @@ struct FragOut
 #endif
 
 #if defined(ANKI_COMPUTE_SHADER)
-ANKI_NUMTHREADS(THREADGROUP_SIZE_X, THREADGROUP_SIZE_Y, 1) void main(CompIn input)
+[numthreads(THREADGROUP_SIZE_X, THREADGROUP_SIZE_Y, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 #else
-FragOut main(VertOut input)
+RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 #endif
 {
 #if defined(ANKI_COMPUTE_SHADER)
-	if(skipOutOfBoundsInvocations(UVec2(THREADGROUP_SIZE_X, THREADGROUP_SIZE_Y), kViewport, input.m_svDispatchThreadId))
+	if(skipOutOfBoundsInvocations(UVec2(THREADGROUP_SIZE_X, THREADGROUP_SIZE_Y), kViewport, svDispatchThreadId))
 	{
 		return;
 	}
 
-	const Vec2 uv = (Vec2(input.m_svDispatchThreadId.xy) + 0.5) / Vec2(kViewport);
-#else
-	const Vec2 uv = input.m_uv;
+	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5) / Vec2(kViewport);
 #endif
 
 	RF32 weight = 1.0 / 5.0;
@@ -70,10 +52,8 @@ FragOut main(VertOut input)
 		tonemap(color, readExposureAndAverageLuminance().y, g_pc.m_thresholdScalePad2.x) * g_pc.m_thresholdScalePad2.y;
 
 #if defined(ANKI_COMPUTE_SHADER)
-	g_outUav[input.m_svDispatchThreadId.xy] = RVec4(color, 0.0);
+	g_outUav[svDispatchThreadId.xy] = RVec4(color, 0.0);
 #else
-	FragOut output;
-	output.m_svTarget = color;
-	return output;
+	return color;
 #endif
 }

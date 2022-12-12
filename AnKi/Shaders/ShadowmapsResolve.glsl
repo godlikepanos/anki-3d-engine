@@ -171,7 +171,7 @@ void main()
 		cluster.m_pointLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
 		const PointLight light = u_pointLights2[idx];
 
-		[[branch]] if(light.m_shadowAtlasTileScale >= 0.0)
+		[branch] if(light.m_shadowAtlasTileScale >= 0.0)
 		{
 			const Vec3 frag2Light = light.m_position - worldPos;
 
@@ -193,7 +193,7 @@ void main()
 		cluster.m_spotLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
 		const SpotLight light = u_spotLights[idx];
 
-		[[branch]] if(light.m_shadowLayer != kMaxU32)
+		[branch] if(light.m_shadowLayer != kMaxU32)
 		{
 #if PCF
 			const ANKI_RP F32 shadowFactor = computeShadowFactorSpotLightPcf(light, worldPos, u_shadowAtlasTex,

@@ -33,9 +33,9 @@ void main()
 	const U32 xStart = gl_LocalInvocationID.x * kPixelsPerTile.x;
 
 	F32 avgLum = 0.0;
-	[[unroll]] for(U32 y = 0u; y < kPixelsPerTile.y; ++y)
+	[unroll] for(U32 y = 0u; y < kPixelsPerTile.y; ++y)
 	{
-		[[unroll]] for(U32 x = 0u; x < kPixelsPerTile.x; ++x)
+		[unroll] for(U32 x = 0u; x < kPixelsPerTile.x; ++x)
 		{
 			const UVec2 uv = UVec2(xStart, yStart) + UVec2(x, y);
 			if(uv.x >= kInputTexSize.x || uv.y >= kInputTexSize.y)
@@ -76,7 +76,7 @@ void main()
 	}
 
 	// Write the result
-	[[branch]] if(gl_LocalInvocationIndex == 0u)
+	[branch] if(gl_LocalInvocationIndex == 0u)
 	{
 #if LOG_AVG
 		const F32 crntLum = exp(s_avgLum[0] * (1.0 / F32(kInputTexSize.x * kInputTexSize.y)));

@@ -24,7 +24,6 @@ ANKI_SPECIALIZATION_CONSTANT_U32(kMotionBlurSamples, 3u);
 [[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
 [[vk::binding(1)]] SamplerState g_linearAnyClampSampler;
 [[vk::binding(2)]] SamplerState g_trilinearRepeatSampler;
-
 [[vk::binding(3)]] Texture2D<RVec4> g_lightShadingRt;
 [[vk::binding(4)]] Texture2D<RVec4> g_ppsBloomLfRt;
 [[vk::binding(5)]] Texture3D<RVec4> g_lut;
@@ -43,19 +42,9 @@ struct PushConstants
 
 [[vk::push_constant]] ConstantBuffer<PushConstants> g_pc;
 
-struct VertOut
-{
-	[[vk::location(0)]] Vec2 m_uv : TEXCOORD;
-};
-
-struct FragOut
-{
-	RVec3 m_color : SV_TARGET0;
-};
-
 RVec3 colorGrading(RVec3 color)
 {
-	constexpr RF32 kLutSizef = (RF32)kLutSize;
+	constexpr RF32 kLutSizef = RF32(kLutSize);
 	constexpr RVec3 kLutScale = ((kLutSizef - 1.0) / kLutSizef).xxx;
 	constexpr RVec3 kLutOffset = (1.0 / (2.0 * kLutSize)).xxx;
 
@@ -64,9 +53,8 @@ RVec3 colorGrading(RVec3 color)
 	return g_lut.SampleLevel(g_trilinearRepeatSampler, lutCoords, 0.0).rgb;
 }
 
-FragOut main(VertOut input)
+RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 {
-	const Vec2 uv = input.m_uv;
 	RVec3 outColor;
 
 	if(kMotionBlurSamples > 0u)
@@ -88,7 +76,7 @@ FragOut main(VertOut input)
 
 #if FILM_GRAIN
 	const F32 dt = 1.0;
-	outColor = filmGrain(outColor, uv, g_pc.m_filmGrainStrength, (F32)(g_pc.m_frameCount % 0xFFFFu) * dt);
+	outColor = filmGrain(outColor, uv, g_pc.m_filmGrainStrength, F32(g_pc.m_frameCount % 0xFFFFu) * dt);
 #endif
 
 #if DBG_ENABLED
@@ -96,9 +84,7 @@ FragOut main(VertOut input)
 	outColor = lerp(outColor, dbg.rgb, dbg.a);
 #endif
 
-	FragOut output;
-	output.m_color = outColor;
-	return output;
+	return outColor;
 }
 
 #pragma anki end

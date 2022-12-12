@@ -146,7 +146,7 @@ U32 computeZSplitClusterIndex(F32 depth, U32 zSplitCount, F32 a, F32 b)
 /// Return the tile index.
 U32 computeTileClusterIndexFragCoord(Vec2 fragCoord, U32 tileSize, U32 tileCountX)
 {
-	const UVec2 tileXY = UVec2(fragCoord / (F32)tileSize);
+	const UVec2 tileXY = UVec2(fragCoord / F32(tileSize));
 	return tileXY.y * tileCountX + tileXY.x;
 }
 

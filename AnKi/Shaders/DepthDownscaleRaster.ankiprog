@@ -25,7 +25,7 @@ struct Uniforms
 };
 [[vk::push_constant]] ConstantBuffer<Uniforms> g_uniforms;
 
-F32 main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION): SV_TARGET0
+F32 main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 {
 	F32 output;
 #if REDUCTION_SAMPLER

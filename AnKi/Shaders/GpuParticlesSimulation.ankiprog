@@ -82,7 +82,7 @@ void initParticle(UVec3 svDispatchThreadId, out GpuParticle p)
 	p.m_velocity = acceleration * g_state.m_dt;
 }
 
-ANKI_NUMTHREADS(64, 1, 1) void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
+[numthreads(64, 1, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
 	const U32 particleIdx = svDispatchThreadId.x;
 	if(particleIdx >= g_props.m_particleCount)

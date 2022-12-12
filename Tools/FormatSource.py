@@ -10,9 +10,13 @@ import subprocess
 import threading
 import multiprocessing
 import os
+import tempfile
+import shutil
 
 file_extensions = ["h", "hpp", "c", "cpp", "glsl", "hlsl", "ankiprog"]
 directories = ["AnKi", "Tests", "Sandbox", "Tools", "Samples"]
+hlsl_semantics = ["TEXCOORD", "SV_POSITION", "SV_TARGET0",
+                  "SV_TARGET", "SV_DISPATCHTHREADID", "SV_GROUPINDEX", "SV_GROUPID"]
 
 
 def thread_callback(tid):
@@ -32,13 +36,51 @@ def thread_callback(tid):
             break
 
         unused, file_extension = os.path.splitext(file_name)
-        if file_extension == ".hlsl" or file_extension == ".ankiprog":
+        is_shader = file_extension == ".hlsl" or file_extension == ".ankiprog"
+
+        if is_shader:
+            # Read all text
+            file = open(file_name, mode="r", newline="\n")
+            file_txt = file.read()
+            file.close()
+
+            # Replace all semantics
+            for semantic in hlsl_semantics:
+                file_txt = file_txt.replace(": " + semantic, "__" + semantic)
+
+            # Write the new file
+            tmp_filefd, tmp_filename = tempfile.mkstemp()
+            with open(tmp_filename, "w", newline="\n") as f:
+                f.write(file_txt)
+                os.close(tmp_filefd)
+
+            orig_filename = file_name
+            file_name = tmp_filename
+
             style_file = "--style=file:.clang-format-hlsl"
         else:
             style_file = "--style=file:.clang-format"
 
         subprocess.check_call(["./ThirdParty/Bin/Windows64/clang-format.exe",
                               "-sort-includes=false", style_file, "-i", file_name])
+
+        if is_shader:
+            shutil.move(tmp_filename, orig_filename)
+            file_name = orig_filename
+
+            # Read all text
+            file = open(file_name, mode="r", newline="\n")
+            file_txt = file.read()
+            file.close()
+
+            # Replace all semantics
+            for semantic in hlsl_semantics:
+                file_txt = file_txt.replace("__" + semantic, ": " + semantic)
+
+            # Write the new file
+            file = open(file_name, mode="w", newline="\n")
+            file.write(file_txt)
+            file.close()
 
 
 # Gather the filenames

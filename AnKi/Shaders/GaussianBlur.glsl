@@ -60,7 +60,7 @@ void main()
 {
 	// Set UVs
 #if USE_COMPUTE
-	[[branch]] if(gl_GlobalInvocationID.x >= kTextureSize.x || gl_GlobalInvocationID.y >= kTextureSize.y)
+	[branch] if(gl_GlobalInvocationID.x >= kTextureSize.x || gl_GlobalInvocationID.y >= kTextureSize.y)
 	{
 		// Out of bounds
 		return;
@@ -87,7 +87,7 @@ void main()
 	Vec2 uvOffset = Vec2(0.0);
 	uvOffset.X_OR_Y = 1.5 * TEXEL_SIZE.X_OR_Y;
 
-	[[unroll]] for(U32 i = 0u; i < kStepCount; ++i)
+	[unroll] for(U32 i = 0u; i < kStepCount; ++i)
 	{
 		COL_TYPE col = textureLod(u_tex, u_linearAnyClampSampler, uv + uvOffset, 0.0).TEX_FETCH;
 		col += textureLod(u_tex, u_linearAnyClampSampler, uv - uvOffset, 0.0).TEX_FETCH;

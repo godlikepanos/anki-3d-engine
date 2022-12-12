@@ -21,22 +21,6 @@ constexpr F32 kHaloOpacity = 0.5;
 [[vk::binding(1)]] Texture2D<RVec4> g_inputTex;
 [[vk::binding(2)]] Texture2D<RVec3> g_lensDirtTex;
 
-struct CompIn
-{
-	UVec3 m_svDispatchThreadId : SV_DISPATCHTHREADID;
-};
-
-struct VertOut
-{
-	Vec4 m_position : SV_POSITION;
-	[[vk::location(0)]] Vec2 m_uv : TEXCOORD;
-};
-
-struct FragOut
-{
-	RVec3 m_svTarget : SV_TARGET0;
-};
-
 #if defined(ANKI_COMPUTE_SHADER)
 #	define THREADGROUP_SIZE_XY 8
 [[vk::binding(3)]] RWTexture2D<RVec4> g_outUav;
@@ -69,7 +53,7 @@ RVec3 ssLensFlare(Vec2 uv)
 	RVec3 result = Vec3(0.0, 0.0, 0.0);
 
 	// Sample ghosts
-	[[unroll]] for(U32 i = 0u; i < kMaxGhosts; ++i)
+	[unroll] for(U32 i = 0u; i < kMaxGhosts; ++i)
 	{
 		const Vec2 offset = frac(flipUv + ghostVec * F32(i));
 
@@ -107,30 +91,25 @@ RVec3 upscale(Vec2 uv)
 }
 
 #if defined(ANKI_COMPUTE_SHADER)
-ANKI_NUMTHREADS(THREADGROUP_SIZE_XY, THREADGROUP_SIZE_XY, 1) void main(CompIn input)
+[numthreads(THREADGROUP_SIZE_XY, THREADGROUP_SIZE_XY, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 #else
-FragOut main(VertOut input)
+RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 #endif
 {
 #if defined(ANKI_COMPUTE_SHADER)
-	if(skipOutOfBoundsInvocations(UVec2(THREADGROUP_SIZE_XY, THREADGROUP_SIZE_XY), kViewport,
-								  input.m_svDispatchThreadId))
+	if(skipOutOfBoundsInvocations(UVec2(THREADGROUP_SIZE_XY, THREADGROUP_SIZE_XY), kViewport, svDispatchThreadId))
 	{
 		return;
 	}
 
-	const Vec2 uv = (Vec2(input.m_svDispatchThreadId.xy) + 0.5) / Vec2(kViewport);
-#else
-	const Vec2 uv = input.m_uv;
+	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5) / Vec2(kViewport);
 #endif
 
 	const RVec3 outColor = ssLensFlare(uv) + upscale(uv);
 
 #if defined(ANKI_COMPUTE_SHADER)
-	g_outUav[input.m_svDispatchThreadId.xy] = RVec4(outColor, 0.0);
+	g_outUav[svDispatchThreadId.xy] = RVec4(outColor, 0.0);
 #else
-	FragOut output;
-	output.m_svTarget = outColor;
-	return output;
+	return outColor;
 #endif
 }

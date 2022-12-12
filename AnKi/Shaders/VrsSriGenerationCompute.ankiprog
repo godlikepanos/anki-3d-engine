@@ -135,7 +135,7 @@ void main()
 
 #if SHARED_MEMORY
 	// Store results in shared memory.
-	[[branch]] if(subgroupElect())
+	[branch] if(subgroupElect())
 	{
 		s_averageLuma[gl_SubgroupID] = averageLuma;
 		s_maxDerivative[gl_SubgroupID] = Vec2(maxDerivativeX, maxDerivativeY);
@@ -146,7 +146,7 @@ void main()
 #endif
 
 	// Write the result
-	[[branch]] if(gl_LocalInvocationIndex == 0u)
+	[branch] if(gl_LocalInvocationIndex == 0u)
 	{
 		// Get max across all subgroups.
 #if SHARED_MEMORY
