@@ -781,7 +781,7 @@ Error ShaderProgramParser::parsePragmaStructEnd(const StringRaii* begin, const S
 
 		// #	define XXX_SIZEOF
 		m_codeLines.pushBackSprintf("#\tdefine %s_%s_SIZEOF %uu", structName.cstr(), m.m_name.cstr(),
-									getShaderVariableDataTypeInfo(m.m_type).m_size / 4);
+									getShaderVariableDataTypeInfo(m.m_type).m_size);
 
 		// #	define XXX_LOAD()
 		const Bool isIntegral = getShaderVariableDataTypeInfo(m.m_type).m_isIntegral;
@@ -790,13 +790,13 @@ Error ShaderProgramParser::parsePragmaStructEnd(const StringRaii* begin, const S
 		for(U32 j = 0; j < componentCount; ++j)
 		{
 			StringRaii tmp(m_pool);
-			tmp.sprintf("%s(ssbo[%s_%s_OFFSETOF + offset + %uu])%s", (isIntegral) ? "" : "asfloat", structName.cstr(),
-						m.m_name.cstr(), j, (j != componentCount - 1) ? "," : "");
+			tmp.sprintf("buff.Load<%s>(%s_%s_OFFSETOF + (offset) + %uu)%s", (isIntegral) ? "U32" : "F32",
+						structName.cstr(), m.m_name.cstr(), j, (j != componentCount - 1) ? "," : "");
 
 			values.append(tmp);
 		}
 
-		m_codeLines.pushBackSprintf("#\tdefine %s_%s_LOAD(ssbo, offset) %s(%s)%s", structName.cstr(), m.m_name.cstr(),
+		m_codeLines.pushBackSprintf("#\tdefine %s_%s_LOAD(buff, offset) %s(%s)%s", structName.cstr(), m.m_name.cstr(),
 									getShaderVariableDataTypeInfo(m.m_type).m_name, values.cstr(),
 									(i != gstruct.m_members.getSize() - 1) ? "," : "");
 
@@ -807,32 +807,20 @@ Error ShaderProgramParser::parsePragmaStructEnd(const StringRaii* begin, const S
 		m_codeLines.pushBackSprintf("#\tdefine %s_%s_SIZEOF 0u", structName.cstr(), m.m_name.cstr());
 
 		// #	define XXX_LOAD()
-		m_codeLines.pushBackSprintf("#\tdefine %s_%s_LOAD(ssbo, offset)", structName.cstr(), m.m_name.cstr());
+		m_codeLines.pushBackSprintf("#\tdefine %s_%s_LOAD(buff, offset)", structName.cstr(), m.m_name.cstr());
 
 		// #endif
 		m_codeLines.pushBack("#endif");
 	}
 
-	// Now define the structure LOAD in GLSL
-	m_codeLines.pushBack("#if ANKI_GLSL");
-	m_codeLines.pushBackSprintf("#define load%s(ssbo, offset) %s( \\", structName.cstr(), structName.cstr());
-	for(U32 i = 0; i < gstruct.m_members.getSize(); ++i)
-	{
-		const Member& m = gstruct.m_members[i];
-		m_codeLines.pushBackSprintf("\t%s_%s_LOAD(ssbo, offset) \\", structName.cstr(), m.m_name.cstr());
-	}
-	m_codeLines.pushBack(")");
-
 	// Now define the structure LOAD in HLSL
-	m_codeLines.pushBack("#else");
-	m_codeLines.pushBackSprintf("#define load%s(ssbo, offset) { \\", structName.cstr());
+	m_codeLines.pushBackSprintf("#define load%s(buff, offset) { \\", structName.cstr());
 	for(U32 i = 0; i < gstruct.m_members.getSize(); ++i)
 	{
 		const Member& m = gstruct.m_members[i];
-		m_codeLines.pushBackSprintf("\t%s_%s_LOAD(ssbo, offset) \\", structName.cstr(), m.m_name.cstr());
+		m_codeLines.pushBackSprintf("\t%s_%s_LOAD(buff, offset) \\", structName.cstr(), m.m_name.cstr());
 	}
 	m_codeLines.pushBack("}");
-	m_codeLines.pushBack("#endif");
 
 	// Define the actual struct
 	m_codeLines.pushBackSprintf("#define %s %s_", structName.cstr(), structName.cstr());

@@ -26,15 +26,16 @@ constexpr U32 kMaterialSetLocal = 2u;
 // Begin global bindings
 constexpr U32 kMaterialBindingTrilinearRepeatSampler = 0u;
 constexpr U32 kMaterialBindingGlobalUniforms = 1u;
+constexpr U32 kMaterialBindingGpuScene = 2u;
 
 // For forward shading:
-constexpr U32 kMaterialBindingLinearClampSampler = 2u;
-constexpr U32 kMaterialBindingDepthRt = 3u;
-constexpr U32 kMaterialBindingLightVolume = 4u;
-constexpr U32 kMaterialBindingClusterShadingUniforms = 5u;
-constexpr U32 kMaterialBindingClusterShadingLights = 6u;
-constexpr U32 kMaterialBindingClusters = 9u;
-constexpr U32 kMaterialBindingShadowSampler = 10u;
+constexpr U32 kMaterialBindingLinearClampSampler = 3u;
+constexpr U32 kMaterialBindingDepthRt = 4u;
+constexpr U32 kMaterialBindingLightVolume = 5u;
+constexpr U32 kMaterialBindingClusterShadingUniforms = 6u;
+constexpr U32 kMaterialBindingClusterShadingLights = 7u;
+constexpr U32 kMaterialBindingClusters = 8u;
+constexpr U32 kMaterialBindingShadowSampler = 9u;
 // End global bindings
 
 // Begin local bindings

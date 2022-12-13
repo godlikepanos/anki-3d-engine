@@ -10,11 +10,7 @@
 ANKI_BEGIN_NAMESPACE
 
 /// Offset in DWORDs
-#if defined(__cplusplus)
-using DwordOffset = U32;
-#else
-#	define DwordOffset U32
-#endif
+typedef U32 DwordOffset;
 
 /// @note All offsets in DWORD
 struct RenderableGpuView2
@@ -32,11 +28,7 @@ struct MeshGpuView
 	Vec3 m_positionTranslation;
 	F32 m_positionScale;
 
-#if ANKI_GLSL
-	U32 m_vertexOffsets[kMaxLodCount][kMaxVertexStreamIds];
-#else
-	U32 m_vertexOffsets[kMaxLodCount][(U32)VertexStreamId::kCount];
-#endif
+	U32 m_vertexOffsets[kMaxLodCount][(U32)VertexStreamId::kMeshRelatedCount];
 	U32 m_indexCounts[kMaxLodCount];
 	U32 m_indexOffsets[kMaxLodCount];
 };

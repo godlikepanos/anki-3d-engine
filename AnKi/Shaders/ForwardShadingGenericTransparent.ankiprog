@@ -22,7 +22,7 @@
 [[vk::binding(kMaterialBindingGlobalUniforms, kMaterialSetGlobal)]] ConstantBuffer<MaterialGlobalUniforms>
 	g_globalUniforms;
 [[vk::binding(kMaterialBindingTrilinearRepeatSampler, kMaterialSetGlobal)]] SamplerState g_globalSampler;
-[[vk::binding(kMaterialBindingLocalUniforms, kMaterialSetLocal)]] StructuredBuffer<U32> g_localUniforms;
+[[vk::binding(kMaterialBindingLocalUniforms, kMaterialSetLocal)]] ByteAddressBuffer g_localUniforms;
 [[vk::binding(kMaterialBindingRenderableGpuView, kMaterialSetLocal)]] StructuredBuffer<RenderableGpuView>
 	g_renderableGpuViews;
 

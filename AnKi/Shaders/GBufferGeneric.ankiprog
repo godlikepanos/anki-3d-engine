@@ -41,7 +41,7 @@
 ANKI_BINDLESS_SET(kMaterialSetBindless)
 
 [[vk::binding(kMaterialBindingTrilinearRepeatSampler, kMaterialSetGlobal)]] SamplerState g_globalSampler;
-[[vk::binding(kMaterialBindingLocalUniforms, kMaterialSetLocal)]] StructuredBuffer<U32> g_localUniforms;
+[[vk::binding(kMaterialBindingLocalUniforms, kMaterialSetLocal)]] ByteAddressBuffer g_localUniforms;
 [[vk::binding(kMaterialBindingRenderableGpuView, kMaterialSetLocal)]] StructuredBuffer<RenderableGpuView>
 	g_renderableGpuViews;
 [[vk::binding(kMaterialBindingGlobalUniforms, kMaterialSetGlobal)]] ConstantBuffer<MaterialGlobalUniforms>
@@ -57,25 +57,25 @@ ANKI_BINDLESS_SET(kMaterialSetBindless)
 #pragma anki struct AnKiLocalUniforms
 #pragma anki member U32 m_normalTex if NORMAL_TEX is 1
 
-#pragma anki member Vec3 m_diffColor if DIFFUSE_TEX is 0
+#pragma anki member RVec3 m_diffColor if DIFFUSE_TEX is 0
 #pragma anki member U32 m_diffTex if DIFFUSE_TEX is 1
 
-#pragma anki member F32 m_roughness if ROUGHNESS_TEX is 0
+#pragma anki member RF32 m_roughness if ROUGHNESS_TEX is 0
 #pragma anki member U32 m_roughnessTex if ROUGHNESS_TEX is 1
 
-#pragma anki member Vec3 m_specColor if SPECULAR_TEX is 0
+#pragma anki member RVec3 m_specColor if SPECULAR_TEX is 0
 #pragma anki member U32 m_specTex if SPECULAR_TEX is 1
 
-#pragma anki member F32 m_metallic if METAL_TEX is 0
+#pragma anki member RF32 m_metallic if METAL_TEX is 0
 #pragma anki member U32 m_metallicTex if METAL_TEX is 1
 
-#pragma anki member Vec3 m_emission if EMISSIVE_TEX is 0
+#pragma anki member RVec3 m_emission if EMISSIVE_TEX is 0
 #pragma anki member U32 m_emissiveTex if EMISSIVE_TEX is 1
 
-#pragma anki member F32 m_heightmapScale if PARALLAX is 1
+#pragma anki member RF32 m_heightmapScale if PARALLAX is 1
 #pragma anki member U32 m_heightTex if PARALLAX is 1
 
-#pragma anki member F32 m_subsurface
+#pragma anki member RF32 m_subsurface
 #pragma anki struct end
 
 struct VertIn

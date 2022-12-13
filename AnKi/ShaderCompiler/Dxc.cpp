@@ -58,7 +58,7 @@ Error compileHlslToSpirv(CString src, ShaderType shaderType, BaseMemoryPool& tmp
 
 	// Store HLSL to a file
 	StringRaii hlslFilename(&tmpPool);
-	hlslFilename.sprintf("%s/%llu.hlsl", tmpDir.cstr(), rand);
+	hlslFilename.sprintf("%s/%" PRIu64 ".hlsl", tmpDir.cstr(), rand);
 
 	File hlslFile;
 	ANKI_CHECK(hlslFile.open(hlslFilename, FileOpenFlag::kWrite));
@@ -68,7 +68,7 @@ Error compileHlslToSpirv(CString src, ShaderType shaderType, BaseMemoryPool& tmp
 
 	// Call DXC
 	StringRaii spvFilename(&tmpPool);
-	spvFilename.sprintf("%s/%llu.spv", tmpDir.cstr(), rand);
+	spvFilename.sprintf("%s/%" PRIu64 ".spv", tmpDir.cstr(), rand);
 
 	DynamicArrayRaii<StringRaii> dxcArgs(&tmpPool);
 	dxcArgs.emplaceBack(&tmpPool, "-Fo");

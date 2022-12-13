@@ -21,7 +21,7 @@
 	g_globalUniforms;
 [[vk::binding(kMaterialBindingRenderableGpuView, kMaterialSetLocal)]] StructuredBuffer<RenderableGpuView>
 	g_renderableGpuViews;
-[[vk::binding(kMaterialBindingLocalUniforms, kMaterialSetLocal)]] StructuredBuffer<U32> g_localUniforms;
+[[vk::binding(kMaterialBindingLocalUniforms, kMaterialSetLocal)]] ByteAddressBuffer g_localUniforms;
 
 struct VertOut
 {
