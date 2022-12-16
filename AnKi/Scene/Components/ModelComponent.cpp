@@ -60,7 +60,7 @@ Error ModelComponent::loadModelResource(CString filename)
 	m_gpuSceneUniformsOffsetPerPatch.resize(m_node->getMemoryPool(), modelPatchCount);
 	for(U32 i = 0; i < modelPatchCount; ++i)
 	{
-		m_gpuSceneUniformsOffsetPerPatch[i] = uniformsSize / 4;
+		m_gpuSceneUniformsOffsetPerPatch[i] = uniformsSize;
 
 		const U32 size = U32(m_model->getModelPatches()[i].getMaterial()->getPrefilledLocalUniforms().getSizeInBytes());
 		ANKI_ASSERT((size % 4) == 0);
@@ -72,7 +72,7 @@ Error ModelComponent::loadModelResource(CString filename)
 
 	for(U32 i = 0; i < modelPatchCount; ++i)
 	{
-		m_gpuSceneUniformsOffsetPerPatch[i] += DwordOffset(m_gpuSceneUniforms.m_offset / 4);
+		m_gpuSceneUniformsOffsetPerPatch[i] += U32(m_gpuSceneUniforms.m_offset);
 	}
 
 	return Error::kNone;
@@ -110,16 +110,18 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 					U32 vertCount;
 					mesh.getVertexStreamInfo(l, stream, offset, vertCount);
 
-					ANKI_ASSERT((offset % 4) == 0);
-					view.m_vertexOffsets[l][U32(stream)] = U32(offset / 4);
+					const PtrSize elementSize = getFormatInfo(kMeshRelatedVertexStreamFormats[stream]).m_texelSize;
+
+					ANKI_ASSERT((offset % elementSize) == 0);
+					view.m_lods[l].m_vertexOffsets[U32(stream)] = U32(offset / elementSize);
 				}
 
 				PtrSize offset;
 				U32 indexCount;
 				IndexType indexType;
 				mesh.getIndexBufferInfo(l, offset, indexCount, indexType);
-				view.m_indexOffsets[l] = U32(offset);
-				view.m_indexCounts[l] = indexCount;
+				view.m_lods[l].m_indexOffset = U32(offset);
+				view.m_lods[l].m_indexCount = indexCount;
 			}
 		}
 

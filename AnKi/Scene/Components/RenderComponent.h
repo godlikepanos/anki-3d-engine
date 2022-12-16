@@ -104,10 +104,10 @@ public:
 										 RebarStagingGpuMemoryPool& alloc,
 										 const Vec4& positionScaleAndTranslation = Vec4(1.0f, 0.0f, 0.0f, 0.0f));
 
-	DwordOffset getGpuSceneViewOffset() const
+	U32 getGpuSceneViewOffset() const
 	{
 		ANKI_ASSERT((m_gpuSceneRenderableGpuView.m_offset % 4) == 0);
-		return DwordOffset(m_gpuSceneRenderableGpuView.m_offset / 4);
+		return U32(m_gpuSceneRenderableGpuView.m_offset);
 	}
 
 private:

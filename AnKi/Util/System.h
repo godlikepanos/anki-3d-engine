@@ -16,7 +16,7 @@ namespace anki {
 /// @{
 
 /// Get the number of CPU cores
-U32 getCpuCoresCount();
+ANKI_PURE U32 getCpuCoresCount();
 
 /// @internal
 void backtraceInternal(const Function<void(CString)>& lambda);

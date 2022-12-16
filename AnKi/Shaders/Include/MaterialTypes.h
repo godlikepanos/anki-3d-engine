@@ -46,6 +46,39 @@ constexpr U32 kMaterialBindingPreviousBoneTransforms = 3u;
 constexpr U32 kMaterialBindingFirstNonStandardLocal = 4u;
 // End local bindings
 
+/// @brief
+enum class MaterialSet : U32
+{
+	kBindless,
+	kGlobal
+};
+
+/// Bindings in the MaterialSet::kGlobal descriptor set.
+enum class MaterialBinding : U32
+{
+	kTrilinearRepeatSampler,
+	kGlobalUniforms,
+	kGpuScene,
+
+	// Texture buffer bindings pointing to universal geom buffer:
+	kUnifiedGeometry_R16G16B16_Unorm,
+	kUnifiedGeometry_R8G8B8A8_Snorm,
+	kUnifiedGeometry_R32G32_Sfloat,
+	kUnifiedGeometry_R8G8B8A8_Uint,
+
+	// For FW shading:
+	kLinearClampSampler,
+	kDepthRt,
+	kLightVolume,
+	kClusterShadingUniforms,
+	kClusterShadingLights,
+	kClusters,
+	kShadowSampler,
+
+	kCount,
+	kFirst = 0
+};
+
 // Techniques
 #define ANKI_RENDERING_TECHNIQUE_GBUFFER 0
 #define ANKI_RENDERING_TECHNIQUE_GBUFFER_EZ 1

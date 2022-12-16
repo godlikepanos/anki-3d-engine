@@ -198,8 +198,8 @@ void ModelNode::initRenderComponents()
 		view.m_aabbOffset = getFirstComponentOfType<SpatialComponent>().getAabbGpuSceneOffset();
 		view.m_uniformsOffset = getFirstComponentOfType<ModelComponent>().getUniformsGpuSceneOffset(patchIdx);
 		view.m_meshOffset =
-			getFirstComponentOfType<ModelComponent>().getMeshViewsGpuSceneOffset() + sizeof(MeshGpuView) / 4 * patchIdx;
-		getExternalSubsystems().m_gpuSceneMicroPatcher->newCopy(getFrameMemoryPool(), rc.getGpuSceneViewOffset() * 4,
+			getFirstComponentOfType<ModelComponent>().getMeshViewsGpuSceneOffset() + sizeof(MeshGpuView) * patchIdx;
+		getExternalSubsystems().m_gpuSceneMicroPatcher->newCopy(getFrameMemoryPool(), rc.getGpuSceneViewOffset(),
 																sizeof(view), &view);
 
 		// Init the proxy

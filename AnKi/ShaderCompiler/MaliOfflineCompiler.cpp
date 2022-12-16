@@ -115,16 +115,13 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 
 	// Execute
 	Process proc;
-	ANKI_CHECK(proc.start(maliocExecutable, args, {}));
+	ANKI_CHECK(proc.start(maliocExecutable, args, {}, ProcessOptions::kOpenStdout));
 	ProcessStatus status;
 	I32 exitCode;
 	ANKI_CHECK(proc.wait(-1.0, &status, &exitCode));
 	if(exitCode != 0)
 	{
-		StringRaii stderre(&tmpPool);
-		const Error err = proc.readFromStderr(stderre);
-		ANKI_SHADER_COMPILER_LOGE("Mali offline compiler failed with exit code %d. Stderr: %s", exitCode,
-								  (err || stderre.isEmpty()) ? "<no text>" : stderre.cstr());
+		ANKI_SHADER_COMPILER_LOGE("Mali offline compiler failed with exit code %d", exitCode);
 		return Error::kFunctionFailed;
 	}
 

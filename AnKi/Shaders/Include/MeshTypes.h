@@ -69,4 +69,14 @@ inline constexpr Array<Format, U32(VertexStreamId::kMeshRelatedCount)> kMeshRela
 	Format::kR32G32_Sfloat,   Format::kR8G8B8A8_Uint,  Format::kR8G8B8A8_Snorm};
 #endif
 
+struct UnpackedMeshVertex
+{
+	Vec3 m_position;
+	RVec3 m_normal;
+	RVec4 m_tangent;
+	Vec2 m_uv;
+	UVec4 m_boneIndices;
+	RVec4 m_boneWeights;
+};
+
 ANKI_END_NAMESPACE

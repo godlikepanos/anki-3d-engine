@@ -64,7 +64,7 @@ Error runRadeonGpuAnalyzer(CString rgaExecutable, ConstWeakArray<U8> spirv, Shad
 
 	{
 		Process proc;
-		ANKI_CHECK(proc.start(rgaExecutable, args, DynamicArrayRaii<StringRaii>(&tmpPool)));
+		ANKI_CHECK(proc.start(rgaExecutable, args, DynamicArrayRaii<StringRaii>(&tmpPool), ProcessOptions::kNone));
 
 		ProcessStatus status;
 		I32 exitCode;
@@ -72,10 +72,7 @@ Error runRadeonGpuAnalyzer(CString rgaExecutable, ConstWeakArray<U8> spirv, Shad
 
 		if(exitCode != 0)
 		{
-			StringRaii stderre(&tmpPool);
-			const Error err = proc.readFromStderr(stderre);
-			ANKI_SHADER_COMPILER_LOGE("RGA failed with exit code %d. Stderr: %s", exitCode,
-									  (err || stderre.isEmpty()) ? "<no text>" : stderre.cstr());
+			ANKI_SHADER_COMPILER_LOGE("RGA failed with exit code %d", exitCode);
 			return Error::kFunctionFailed;
 		}
 	}

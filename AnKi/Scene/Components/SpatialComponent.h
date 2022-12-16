@@ -110,10 +110,10 @@ public:
 		return m_alwaysVisible;
 	}
 
-	DwordOffset getAabbGpuSceneOffset() const
+	U32 getAabbGpuSceneOffset() const
 	{
 		ANKI_ASSERT((m_gpuSceneAabb.m_offset % 4) == 0);
-		return DwordOffset(m_gpuSceneAabb.m_offset / 4);
+		return U32(m_gpuSceneAabb.m_offset);
 	}
 
 private:

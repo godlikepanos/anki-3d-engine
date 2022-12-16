@@ -64,6 +64,8 @@ void maybeUnused(T a)
 #	define _ANKI_CONCATENATE(a, b) a##b
 #	define ANKI_CONCATENATE(a, b) _ANKI_CONCATENATE(a, b)
 
+#	define static_assert(x)
+
 #	define ANKI_BINDLESS_SET(s) \
 		[[vk::binding(0, s)]] Texture2D<uint4> g_bindlessTextures2dU32[kMaxBindlessTextures]; \
 		[[vk::binding(0, s)]] Texture2D<int4> g_bindlessTextures2dI32[kMaxBindlessTextures]; \

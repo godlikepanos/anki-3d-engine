@@ -139,10 +139,10 @@ public:
 	}
 	/// @}
 
-	DwordOffset getTransformsGpuSceneOffset() const
+	U32 getTransformsGpuSceneOffset() const
 	{
 		ANKI_ASSERT((m_gpuSceneTransforms.m_offset % 4) == 0);
-		return DwordOffset(m_gpuSceneTransforms.m_offset / 4);
+		return U32(m_gpuSceneTransforms.m_offset);
 	}
 
 private:
