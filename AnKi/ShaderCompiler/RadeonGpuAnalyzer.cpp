@@ -90,6 +90,7 @@ Error runRadeonGpuAnalyzer(CString rgaExecutable, ConstWeakArray<U8> spirv, Shad
 	StringRaii analysisText(&tmpPool);
 	ANKI_CHECK(analysisFile.readAllText(analysisText));
 	analysisText.replaceAll("\r", "");
+	analysisFile.close();
 
 	// Parse the text
 	StringListRaii lines(&tmpPool);

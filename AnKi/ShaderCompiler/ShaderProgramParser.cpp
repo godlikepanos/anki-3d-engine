@@ -784,20 +784,9 @@ Error ShaderProgramParser::parsePragmaStructEnd(const StringRaii* begin, const S
 									getShaderVariableDataTypeInfo(m.m_type).m_size);
 
 		// #	define XXX_LOAD()
-		const Bool isIntegral = getShaderVariableDataTypeInfo(m.m_type).m_isIntegral;
-		const U32 componentCount = getShaderVariableDataTypeInfo(m.m_type).m_size / sizeof(U32);
-		StringRaii values(m_pool);
-		for(U32 j = 0; j < componentCount; ++j)
-		{
-			StringRaii tmp(m_pool);
-			tmp.sprintf("buff.Load<%s>(%s_%s_OFFSETOF + (offset) + %uu)%s", (isIntegral) ? "U32" : "F32",
-						structName.cstr(), m.m_name.cstr(), j, (j != componentCount - 1) ? "," : "");
-
-			values.append(tmp);
-		}
-
-		m_codeLines.pushBackSprintf("#\tdefine %s_%s_LOAD(buff, offset) %s(%s)%s", structName.cstr(), m.m_name.cstr(),
-									getShaderVariableDataTypeInfo(m.m_type).m_name, values.cstr(),
+		m_codeLines.pushBackSprintf("#\tdefine %s_%s_LOAD(buff, offset) buff.Load<%s>(%s_%s_OFFSETOF + (offset))%s",
+									structName.cstr(), m.m_name.cstr(), getShaderVariableDataTypeInfo(m.m_type).m_name,
+									structName.cstr(), m.m_name.cstr(),
 									(i != gstruct.m_members.getSize() - 1) ? "," : "");
 
 		// #else

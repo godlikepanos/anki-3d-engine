@@ -46,13 +46,13 @@ ANKI_BINDLESS_SET(MaterialSet::kBindless)
 [[vk::binding(MaterialBinding::kGpuScene, MaterialSet::kGlobal)]] ByteAddressBuffer g_gpuScene;
 
 [[vk::binding(MaterialBinding::kUnifiedGeometry_R16G16B16_Unorm, MaterialSet::kGlobal)]] Buffer<Vec4>
-	g_unifiedGeom_R16G16B16_Unorm;
+	g_universalGeom_R16G16B16_Unorm;
 [[vk::binding(MaterialBinding::kUnifiedGeometry_R8G8B8A8_Snorm, MaterialSet::kGlobal)]] Buffer<Vec4>
-	g_unifiedGeom_R8G8B8A8_Snorm;
+	g_universalGeom_R8G8B8A8_Snorm;
 [[vk::binding(MaterialBinding::kUnifiedGeometry_R32G32_Sfloat, MaterialSet::kGlobal)]] Buffer<Vec2>
-	g_unifiedGeom_R32G32_Sfloat;
+	g_universalGeom_R32G32_Sfloat;
 [[vk::binding(MaterialBinding::kUnifiedGeometry_R8G8B8A8_Uint, MaterialSet::kGlobal)]] Buffer<UVec4>
-	g_unifiedGeom_R8G8B8A8_Uint;
+	g_universalGeom_R8G8B8A8_Uint;
 
 #pragma anki reflect AnKiLocalUniforms
 #pragma anki struct AnKiLocalUniforms
@@ -124,30 +124,21 @@ UnpackedMeshVertex loadVertex(MeshGpuView mesh, U32 lod)
 	MeshGpuViewLod mlod = mesh.m_lods[lod];
 
 	UnpackedMeshVertex v;
-	v.m_position = g_unifiedGeom_R16G16B16_Unorm[mlod.m_vertexOffsets[(U32)VertexStreamId::kPosition]];
+	v.m_position = g_universalGeom_R16G16B16_Unorm[mlod.m_vertexOffsets[(U32)VertexStreamId::kPosition]];
 #if ANKI_BONES
 	v.m_position = v.m_position * mesh.m_positionScale + mesh.m_positionTranslation;
 #endif
 
-	v.m_normal = g_unifiedGeom_R8G8B8A8_Snorm[mlod.m_vertexOffsets[(U32)VertexStreamId::kNormal]].xyz;
-	v.m_tangent = g_unifiedGeom_R8G8B8A8_Snorm[mlod.m_vertexOffsets[(U32)VertexStreamId::kTangent]];
-	v.m_uv = g_unifiedGeom_R32G32_Sfloat[mlod.m_vertexOffsets[(U32)VertexStreamId::kUv]];
+	v.m_normal = g_universalGeom_R8G8B8A8_Snorm[mlod.m_vertexOffsets[(U32)VertexStreamId::kNormal]].xyz;
+	v.m_tangent = g_universalGeom_R8G8B8A8_Snorm[mlod.m_vertexOffsets[(U32)VertexStreamId::kTangent]];
+	v.m_uv = g_universalGeom_R32G32_Sfloat[mlod.m_vertexOffsets[(U32)VertexStreamId::kUv]];
 
 #if ANKI_BONES
-	v.m_boneIndices = g_unifiedGeom_R8G8B8A8_Uint[mlod.m_vertexOffsets[(U32)VertexStreamId::kBoneIds]];
-	v.m_boneWeights = g_unifiedGeom_R8G8B8A8_Snorm[mlod.m_vertexOffsets[(U32)VertexStreamId::kBoneWeights]];
+	v.m_boneIndices = g_universalGeom_R8G8B8A8_Uint[mlod.m_vertexOffsets[(U32)VertexStreamId::kBoneIds]];
+	v.m_boneWeights = g_universalGeom_R8G8B8A8_Snorm[mlod.m_vertexOffsets[(U32)VertexStreamId::kBoneWeights]];
 #endif
 
 	return v;
-}
-
-Mat3x4 loadMatrix(U32 byteOffset)
-{
-	Mat3x4 m;
-	m.m_row0 = g_gpuScene.Load<Vec4>(byteOffset);
-	m.m_row1 = g_gpuScene.Load<Vec4>(byteOffset + sizeof(Vec4));
-	m.m_row2 = g_gpuScene.Load<Vec4>(byteOffset + sizeof(Vec4) * 2);
-	return m;
 }
 
 Mat3x4 loadBoneTransform(UnpackedMeshVertex vert, RenderableGpuView2 renderable, U32 index)
@@ -155,7 +146,7 @@ Mat3x4 loadBoneTransform(UnpackedMeshVertex vert, RenderableGpuView2 renderable,
 	const U32 boneIdx = vert.m_boneIndices[index];
 	U32 byteOffset = renderable.m_boneTransformsOffset;
 	byteOffset += boneIdx * sizeof(Mat3x4);
-	return loadMatrix(byteOffset);
+	return g_gpuScene.Load<Mat3x4>(byteOffset);
 }
 
 Mat3x4 loadPreviousBoneTransform(UnpackedMeshVertex vert, RenderableGpuView2 renderable, U32 index)
@@ -163,7 +154,7 @@ Mat3x4 loadPreviousBoneTransform(UnpackedMeshVertex vert, RenderableGpuView2 ren
 	const U32 boneIdx = vert.m_boneIndices[index];
 	U32 byteOffset = renderable.m_previousBoneTransformsOffset;
 	byteOffset += boneIdx * sizeof(Mat3x4);
-	return loadMatrix(byteOffset);
+	return g_gpuScene.Load<Mat3x4>(byteOffset);
 }
 
 UnpackedRenderableGpuViewInstance loadRenderableGpuViewInstance(VertIn input)
@@ -227,11 +218,11 @@ VertOut main(VertIn input)
 
 	const UnpackedRenderableGpuViewInstance instance = loadRenderableGpuViewInstance(input);
 	const RenderableGpuView2 renderable = g_gpuScene.Load<RenderableGpuView2>(instance.m_renderableGpuViewOffset);
-	const MeshGpuView mesh = g_gpuScene.Load<MeshGpuView>(renderable.m_meshOffset);
+	const MeshGpuView mesh = g_gpuScene.Load<MeshGpuView>(renderable.m_geometryOffset);
 	UnpackedMeshVertex vert = loadVertex(mesh, instance.m_lod);
 
-	const Mat3x4 worldTransform = loadMatrix(renderable.m_worldTransformsOffset);
-	const Mat3x4 prevWorldTransform = loadMatrix(renderable.m_worldTransformsOffset + sizeof(Mat3x4));
+	const Mat3x4 worldTransform = g_gpuScene.Load<Mat3x4>(renderable.m_worldTransformsOffset);
+	const Mat3x4 prevWorldTransform = g_gpuScene.Load<Mat3x4>(renderable.m_worldTransformsOffset + sizeof(Mat3x4));
 	ANKI_MAYBE_UNUSED(prevWorldTransform);
 
 #if UVS

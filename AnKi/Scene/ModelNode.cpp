@@ -197,7 +197,7 @@ void ModelNode::initRenderComponents()
 		view.m_worldTransformsOffset = getFirstComponentOfType<MoveComponent>().getTransformsGpuSceneOffset();
 		view.m_aabbOffset = getFirstComponentOfType<SpatialComponent>().getAabbGpuSceneOffset();
 		view.m_uniformsOffset = getFirstComponentOfType<ModelComponent>().getUniformsGpuSceneOffset(patchIdx);
-		view.m_meshOffset =
+		view.m_geometryOffset =
 			getFirstComponentOfType<ModelComponent>().getMeshViewsGpuSceneOffset() + sizeof(MeshGpuView) * patchIdx;
 		getExternalSubsystems().m_gpuSceneMicroPatcher->newCopy(getFrameMemoryPool(), rc.getGpuSceneViewOffset(),
 																sizeof(view), &view);

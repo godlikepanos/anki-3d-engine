@@ -92,8 +92,15 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 {
 	out = {};
 
+	// Tmp filename
+	StringRaii tmpDir(&tmpPool);
+	ANKI_CHECK(getTempDirectory(tmpDir));
+	const U64 rand = getRandom();
+	StringRaii analysisFilename(&tmpPool);
+	analysisFilename.sprintf("%s/AnKiMaliocOut_%llu.csv", tmpDir.cstr(), rand);
+
 	// Set the arguments
-	Array<CString, 3> args;
+	Array<CString, 5> args;
 
 	switch(shaderType)
 	{
@@ -113,26 +120,37 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 	args[1] = "--vulkan";
 	args[2] = spirvFilename;
 
+	args[3] = "-o";
+	args[4] = analysisFilename.cstr();
+
 	// Execute
-	Process proc;
-	ANKI_CHECK(proc.start(maliocExecutable, args, {}, ProcessOptions::kOpenStdout));
-	ProcessStatus status;
-	I32 exitCode;
-	ANKI_CHECK(proc.wait(-1.0, &status, &exitCode));
-	if(exitCode != 0)
 	{
-		ANKI_SHADER_COMPILER_LOGE("Mali offline compiler failed with exit code %d", exitCode);
-		return Error::kFunctionFailed;
+		Process proc;
+		ANKI_CHECK(proc.start(maliocExecutable, args, {}, ProcessOptions::kNone));
+		ProcessStatus status;
+		I32 exitCode;
+		ANKI_CHECK(proc.wait(-1.0, &status, &exitCode));
+		if(exitCode != 0)
+		{
+			ANKI_SHADER_COMPILER_LOGE("Mali offline compiler failed with exit code %d", exitCode);
+			return Error::kFunctionFailed;
+		}
 	}
 
-	// Get stdout
-	StringRaii stdouts(&tmpPool);
-	ANKI_CHECK(proc.readFromStdout(stdouts));
-	const std::string stdoutstl(stdouts.cstr());
+	CleanupFile rgaFileCleanup(analysisFilename);
+
+	// Read the output file
+	File analysisFile;
+	ANKI_CHECK(analysisFile.open(analysisFilename, FileOpenFlag::kRead));
+	StringRaii analysisText(&tmpPool);
+	ANKI_CHECK(analysisFile.readAllText(analysisText));
+	analysisText.replaceAll("\r", "");
+	analysisFile.close();
+	const std::string analysisTextStl(analysisText.cstr());
 
 	// Work registers
 	std::smatch match;
-	if(std::regex_search(stdoutstl, match, std::regex("Work registers: ([0-9]+)")))
+	if(std::regex_search(analysisTextStl, match, std::regex("Work registers: ([0-9]+)")))
 	{
 		ANKI_CHECK(CString(match[1].str().c_str()).toNumber(out.m_workRegisters));
 	}
@@ -149,7 +167,7 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 	{
 		// Add the instructions in position and varying variants
 
-		std::string stdoutstl2(stdouts.cstr());
+		std::string stdoutstl2(analysisText.cstr());
 
 		out.m_fma = 0.0;
 		out.m_cvt = 0.0;
@@ -191,7 +209,7 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 	}
 	else if(shaderType == ShaderType::kFragment)
 	{
-		if(std::regex_search(stdoutstl, match,
+		if(std::regex_search(analysisTextStl, match,
 							 std::regex("Total instruction cycles:\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
 										"\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
 										"\\s*" ANKI_FLOAT_REGEX "\\s*([A-Z]+)")))
@@ -218,7 +236,7 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 	{
 		ANKI_ASSERT(shaderType == ShaderType::kCompute);
 
-		if(std::regex_search(stdoutstl, match,
+		if(std::regex_search(analysisTextStl, match,
 							 std::regex("Total instruction cycles:\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
 										"\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
 										"\\s*([A-Z]+)")))
@@ -245,7 +263,7 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 
 	// Spilling
 	{
-		std::string stdoutstl2(stdouts.cstr());
+		std::string stdoutstl2(analysisText.cstr());
 
 		while(std::regex_search(stdoutstl2, match, std::regex("Stack spilling:\\s([0-9]+)")))
 		{
@@ -260,7 +278,7 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 
 	// FP16
 	{
-		std::string stdoutstl2(stdouts.cstr());
+		std::string stdoutstl2(analysisText.cstr());
 
 		U32 count = 0;
 		while(std::regex_search(stdoutstl2, match, std::regex("16-bit arithmetic:\\s(?:([0-9]+|N\\/A))")))
@@ -291,7 +309,7 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 	// Debug
 	if(false)
 	{
-		printf("%s\n", stdouts.cstr());
+		printf("%s\n", analysisText.cstr());
 		StringRaii str(&tmpPool);
 		out.toString(str);
 		printf("%s\n", str.cstr());

@@ -15,10 +15,13 @@ struct RenderableGpuView2
 	U32 m_worldTransformsOffset; ///< First is the crnt transform and the 2nd the previous
 	U32 m_aabbOffset;
 	U32 m_uniformsOffset;
-	U32 m_meshOffset;
+	U32 m_geometryOffset;
 	U32 m_boneTransformsOffset;
 	U32 m_previousBoneTransformsOffset;
+	U32 m_padding0;
+	U32 m_padding1;
 };
+static_assert(sizeof(RenderableGpuView2) == sizeof(Vec4) * 2);
 
 struct MeshGpuViewLod
 {

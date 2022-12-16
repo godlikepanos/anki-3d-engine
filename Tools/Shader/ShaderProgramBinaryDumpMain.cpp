@@ -104,7 +104,7 @@ Error dumpStats(const ShaderProgramBinary& bin)
 	ctx.m_pool = &pool;
 	ctx.m_bin = &bin;
 
-	ThreadHive hive(8, &pool);
+	ThreadHive hive(getCpuCoresCount(), &pool);
 
 	ThreadHiveTaskCallback callback = [](void* userData, [[maybe_unused]] U32 threadId,
 										 [[maybe_unused]] ThreadHive& hive,
