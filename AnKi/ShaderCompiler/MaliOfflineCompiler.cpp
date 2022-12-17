@@ -15,17 +15,9 @@ static MaliOfflineCompilerHwUnit strToHwUnit(CString str)
 {
 	MaliOfflineCompilerHwUnit out = MaliOfflineCompilerHwUnit::kNone;
 
-	if(str.find("FMA") == 0)
+	if(str.find("A") == 0)
 	{
 		out = MaliOfflineCompilerHwUnit::kFma;
-	}
-	else if(str.find("CVT") == 0)
-	{
-		out = MaliOfflineCompilerHwUnit::kCvt;
-	}
-	else if(str.find("SFU") == 0)
-	{
-		out = MaliOfflineCompilerHwUnit::kSfu;
 	}
 	else if(str.find("LS") == 0)
 	{

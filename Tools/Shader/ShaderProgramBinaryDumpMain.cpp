@@ -60,6 +60,7 @@ Error dumpStats(const ShaderProgramBinary& bin)
 			F64 m_texture;
 			F64 m_workRegisters;
 			F64 m_fp16ArithmeticPercentage;
+			F64 m_spillingCount;
 		} m_arm;
 
 		class
@@ -73,9 +74,31 @@ Error dumpStats(const ShaderProgramBinary& bin)
 		Stats(F64 v)
 		{
 			m_arm.m_fma = m_arm.m_cvt = m_arm.m_sfu = m_arm.m_loadStore = m_arm.m_varying = m_arm.m_texture =
-				m_arm.m_workRegisters = m_arm.m_fp16ArithmeticPercentage = v;
+				m_arm.m_workRegisters = m_arm.m_fp16ArithmeticPercentage = m_arm.m_spillingCount = v;
 
 			m_amd.m_vgprCount = m_amd.m_sgprCount = m_amd.m_isaSize = v;
+		}
+
+		Stats()
+			: Stats(0.0)
+		{
+		}
+
+		void op(const Stats& b, void (*func)(F64& a, F64 b))
+		{
+			func(m_arm.m_fma, b.m_arm.m_fma);
+			func(m_arm.m_cvt, b.m_arm.m_cvt);
+			func(m_arm.m_sfu, b.m_arm.m_sfu);
+			func(m_arm.m_loadStore, b.m_arm.m_loadStore);
+			func(m_arm.m_varying, b.m_arm.m_varying);
+			func(m_arm.m_texture, b.m_arm.m_texture);
+			func(m_arm.m_workRegisters, b.m_arm.m_workRegisters);
+			func(m_arm.m_fp16ArithmeticPercentage, b.m_arm.m_fp16ArithmeticPercentage);
+			func(m_arm.m_spillingCount, b.m_arm.m_spillingCount);
+
+			func(m_amd.m_vgprCount, b.m_amd.m_vgprCount);
+			func(m_amd.m_sgprCount, b.m_amd.m_sgprCount);
+			func(m_amd.m_isaSize, b.m_amd.m_isaSize);
 		}
 	};
 
@@ -92,19 +115,26 @@ Error dumpStats(const ShaderProgramBinary& bin)
 	class Ctx
 	{
 	public:
-		Array<StageStats, U32(ShaderType::kCount)> m_allStats;
-		Mutex m_allStatsMtx;
-		Atomic<U32> m_variantCount = {0};
 		HeapMemoryPool* m_pool = nullptr;
+		DynamicArrayRaii<Stats> m_spirvStats{m_pool};
+		DynamicArrayRaii<Atomic<U32>> m_spirvVisited{m_pool};
+		Atomic<U32> m_variantCount = {0};
 		const ShaderProgramBinary* m_bin = nullptr;
 		Atomic<I32> m_error = {0};
+
+		Ctx(HeapMemoryPool* pool)
+			: m_pool(pool)
+		{
+		}
 	};
 
-	Ctx ctx;
-	ctx.m_pool = &pool;
+	Ctx ctx(&pool);
 	ctx.m_bin = &bin;
+	ctx.m_spirvStats.create(bin.m_codeBlocks.getSize());
+	ctx.m_spirvVisited.create(bin.m_codeBlocks.getSize());
+	memset(ctx.m_spirvVisited.getBegin(), 0, ctx.m_spirvVisited.getSizeInBytes());
 
-	ThreadHive hive(getCpuCoresCount(), &pool);
+	ThreadHive hive(8, &pool);
 
 	ThreadHiveTaskCallback callback = [](void* userData, [[maybe_unused]] U32 threadId,
 										 [[maybe_unused]] ThreadHive& hive,
@@ -119,13 +149,22 @@ Error dumpStats(const ShaderProgramBinary& bin)
 
 			for(ShaderType shaderType : EnumIterable<ShaderType>())
 			{
-				if(variant.m_codeBlockIndices[shaderType] == kMaxU32)
+				const U32 codeblockIdx = variant.m_codeBlockIndices[shaderType];
+
+				if(codeblockIdx == kMaxU32)
 				{
 					continue;
 				}
 
-				const ShaderProgramBinaryCodeBlock& codeBlock =
-					ctx.m_bin->m_codeBlocks[variant.m_codeBlockIndices[shaderType]];
+				const Bool visited = ctx.m_spirvVisited[codeblockIdx].fetchAdd(1) != 0;
+				if(visited)
+				{
+					continue;
+				}
+
+				printf("%u\n", variantIdx);
+
+				const ShaderProgramBinaryCodeBlock& codeBlock = ctx.m_bin->m_codeBlocks[codeblockIdx];
 
 				// Arm stats
 				MaliOfflineCompilerOut maliocOut;
@@ -165,62 +204,22 @@ Error dumpStats(const ShaderProgramBinary& bin)
 					break;
 				}
 
-				// Appends stats
-				LockGuard lock(ctx.m_allStatsMtx);
+				// Write stats
+				Stats& stats = ctx.m_spirvStats[codeblockIdx];
 
-				StageStats& stage = ctx.m_allStats[shaderType];
+				stats.m_arm.m_fma = maliocOut.m_fma;
+				stats.m_arm.m_cvt = maliocOut.m_cvt;
+				stats.m_arm.m_sfu = maliocOut.m_sfu;
+				stats.m_arm.m_loadStore = maliocOut.m_loadStore;
+				stats.m_arm.m_varying = maliocOut.m_varying;
+				stats.m_arm.m_texture = maliocOut.m_texture;
+				stats.m_arm.m_workRegisters = maliocOut.m_workRegisters;
+				stats.m_arm.m_fp16ArithmeticPercentage = maliocOut.m_fp16ArithmeticPercentage;
+				stats.m_arm.m_spillingCount = (maliocOut.m_spilling) ? 1.0 : 0.0;
 
-				if(maliocOut.m_spilling)
-				{
-					++stage.m_spillingCount;
-				}
-
-				++stage.m_count;
-
-				stage.m_avgStats.m_arm.m_fma += maliocOut.m_fma;
-				stage.m_avgStats.m_arm.m_cvt += maliocOut.m_cvt;
-				stage.m_avgStats.m_arm.m_sfu += maliocOut.m_sfu;
-				stage.m_avgStats.m_arm.m_loadStore += maliocOut.m_loadStore;
-				stage.m_avgStats.m_arm.m_varying += maliocOut.m_varying;
-				stage.m_avgStats.m_arm.m_texture += maliocOut.m_texture;
-				stage.m_avgStats.m_arm.m_workRegisters += maliocOut.m_workRegisters;
-				stage.m_avgStats.m_arm.m_fp16ArithmeticPercentage += maliocOut.m_fp16ArithmeticPercentage;
-
-				stage.m_maxStats.m_arm.m_fma = max<F64>(stage.m_maxStats.m_arm.m_fma, maliocOut.m_fma);
-				stage.m_maxStats.m_arm.m_cvt = max<F64>(stage.m_maxStats.m_arm.m_cvt, maliocOut.m_cvt);
-				stage.m_maxStats.m_arm.m_sfu = max<F64>(stage.m_maxStats.m_arm.m_sfu, maliocOut.m_sfu);
-				stage.m_maxStats.m_arm.m_loadStore =
-					max<F64>(stage.m_maxStats.m_arm.m_loadStore, maliocOut.m_loadStore);
-				stage.m_maxStats.m_arm.m_varying = max<F64>(stage.m_maxStats.m_arm.m_varying, maliocOut.m_varying);
-				stage.m_maxStats.m_arm.m_texture = max<F64>(stage.m_maxStats.m_arm.m_texture, maliocOut.m_texture);
-				stage.m_maxStats.m_arm.m_workRegisters =
-					max<F64>(stage.m_maxStats.m_arm.m_workRegisters, maliocOut.m_workRegisters);
-				stage.m_maxStats.m_arm.m_fp16ArithmeticPercentage =
-					max<F64>(stage.m_maxStats.m_arm.m_fp16ArithmeticPercentage, maliocOut.m_fp16ArithmeticPercentage);
-
-				stage.m_minStats.m_arm.m_fma = min<F64>(stage.m_minStats.m_arm.m_fma, maliocOut.m_fma);
-				stage.m_minStats.m_arm.m_cvt = min<F64>(stage.m_minStats.m_arm.m_cvt, maliocOut.m_cvt);
-				stage.m_minStats.m_arm.m_sfu = min<F64>(stage.m_minStats.m_arm.m_sfu, maliocOut.m_sfu);
-				stage.m_minStats.m_arm.m_loadStore =
-					min<F64>(stage.m_minStats.m_arm.m_loadStore, maliocOut.m_loadStore);
-				stage.m_minStats.m_arm.m_varying = min<F64>(stage.m_minStats.m_arm.m_varying, maliocOut.m_varying);
-				stage.m_minStats.m_arm.m_texture = min<F64>(stage.m_minStats.m_arm.m_texture, maliocOut.m_texture);
-				stage.m_minStats.m_arm.m_workRegisters =
-					min<F64>(stage.m_minStats.m_arm.m_workRegisters, maliocOut.m_workRegisters);
-				stage.m_minStats.m_arm.m_fp16ArithmeticPercentage =
-					min<F64>(stage.m_minStats.m_arm.m_fp16ArithmeticPercentage, maliocOut.m_fp16ArithmeticPercentage);
-
-				stage.m_avgStats.m_amd.m_vgprCount += F64(rgaOut.m_vgprCount);
-				stage.m_avgStats.m_amd.m_sgprCount += F64(rgaOut.m_sgprCount);
-				stage.m_avgStats.m_amd.m_isaSize += F64(rgaOut.m_isaSize);
-
-				stage.m_minStats.m_amd.m_vgprCount = min(stage.m_minStats.m_amd.m_vgprCount, F64(rgaOut.m_vgprCount));
-				stage.m_minStats.m_amd.m_sgprCount = min(stage.m_minStats.m_amd.m_sgprCount, F64(rgaOut.m_sgprCount));
-				stage.m_minStats.m_amd.m_isaSize = min(stage.m_minStats.m_amd.m_isaSize, F64(rgaOut.m_isaSize));
-
-				stage.m_maxStats.m_amd.m_vgprCount = max(stage.m_maxStats.m_amd.m_vgprCount, F64(rgaOut.m_vgprCount));
-				stage.m_maxStats.m_amd.m_sgprCount = max(stage.m_maxStats.m_amd.m_sgprCount, F64(rgaOut.m_sgprCount));
-				stage.m_maxStats.m_amd.m_isaSize = max(stage.m_maxStats.m_amd.m_isaSize, F64(rgaOut.m_isaSize));
+				stats.m_amd.m_vgprCount = F64(rgaOut.m_vgprCount);
+				stats.m_amd.m_sgprCount = F64(rgaOut.m_sgprCount);
+				stats.m_amd.m_isaSize = F64(rgaOut.m_isaSize);
 			}
 
 			if(variantIdx > 0 && ((variantIdx + 1) % 32) == 0)
@@ -242,9 +241,40 @@ Error dumpStats(const ShaderProgramBinary& bin)
 		return Error::kFunctionFailed;
 	}
 
+	// Cather the results
+	Array<StageStats, U32(ShaderType::kCount)> allStageStats;
+	for(const ShaderProgramBinaryVariant& variant : bin.m_variants)
+	{
+		for(ShaderType stage : EnumIterable<ShaderType>())
+		{
+			if(variant.m_codeBlockIndices[stage] == kMaxU32)
+			{
+				continue;
+			}
+
+			const Stats& stats = ctx.m_spirvStats[variant.m_codeBlockIndices[stage]];
+			StageStats& allStats = allStageStats[stage];
+
+			++allStats.m_count;
+
+			allStats.m_avgStats.op(stats, [](F64& a, F64 b) {
+				a += b;
+			});
+
+			allStats.m_minStats.op(stats, [](F64& a, F64 b) {
+				a = min(a, b);
+			});
+
+			allStats.m_maxStats.op(stats, [](F64& a, F64 b) {
+				a = max(a, b);
+			});
+		}
+	}
+
+	// Print
 	for(ShaderType shaderType : EnumIterable<ShaderType>())
 	{
-		const StageStats& stage = ctx.m_allStats[shaderType];
+		const StageStats& stage = allStageStats[shaderType];
 		if(stage.m_count == 0)
 		{
 			continue;
