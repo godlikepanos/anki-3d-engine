@@ -11,6 +11,8 @@
 
 namespace anki {
 
+static Atomic<U32> g_nextFileId = {1};
+
 static MaliOfflineCompilerHwUnit strToHwUnit(CString str)
 {
 	MaliOfflineCompilerHwUnit out = MaliOfflineCompilerHwUnit::kNone;
@@ -79,17 +81,28 @@ void MaliOfflineCompilerOut::toString(StringRaii& str) const
 				hwUnitToStr(m_boundUnit).cstr(), m_fp16ArithmeticPercentage);
 }
 
-static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString spirvFilename, ShaderType shaderType,
-											BaseMemoryPool& tmpPool, MaliOfflineCompilerOut& out)
+Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv, ShaderType shaderType,
+							 BaseMemoryPool& tmpPool, MaliOfflineCompilerOut& out)
 {
 	out = {};
+	const U32 rand = g_nextFileId.fetchAdd(1) + getCurrentProcessId();
 
-	// Tmp filename
+	// Create temp file to dump the spirv
 	StringRaii tmpDir(&tmpPool);
 	ANKI_CHECK(getTempDirectory(tmpDir));
-	const U64 rand = getRandom();
+	StringRaii spirvFilename(&tmpPool);
+	spirvFilename.sprintf("%s/AnKiMaliocInputSpirv_%u.spv", tmpDir.cstr(), rand);
+
+	File spirvFile;
+	ANKI_CHECK(spirvFile.open(spirvFilename, FileOpenFlag::kWrite | FileOpenFlag::kBinary));
+	ANKI_CHECK(spirvFile.write(spirv.getBegin(), spirv.getSizeInBytes()));
+	spirvFile.close();
+
+	CleanupFile cleanupSpirvFile(spirvFilename);
+
+	// Tmp filename
 	StringRaii analysisFilename(&tmpPool);
-	analysisFilename.sprintf("%s/AnKiMaliocOut_%llu.csv", tmpDir.cstr(), rand);
+	analysisFilename.sprintf("%s/AnKiMaliocOut_%u.txt", tmpDir.cstr(), rand);
 
 	// Set the arguments
 	Array<CString, 5> args;
@@ -116,17 +129,12 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 	args[4] = analysisFilename.cstr();
 
 	// Execute
+	I32 exitCode;
+	ANKI_CHECK(Process::callProcess(maliocExecutable, args, nullptr, nullptr, exitCode));
+	if(exitCode != 0)
 	{
-		Process proc;
-		ANKI_CHECK(proc.start(maliocExecutable, args, {}, ProcessOptions::kNone));
-		ProcessStatus status;
-		I32 exitCode;
-		ANKI_CHECK(proc.wait(-1.0, &status, &exitCode));
-		if(exitCode != 0)
-		{
-			ANKI_SHADER_COMPILER_LOGE("Mali offline compiler failed with exit code %d", exitCode);
-			return Error::kFunctionFailed;
-		}
+		ANKI_SHADER_COMPILER_LOGE("Mali offline compiler failed with exit code %d", exitCode);
+		return Error::kFunctionFailed;
 	}
 
 	CleanupFile rgaFileCleanup(analysisFilename);
@@ -308,34 +316,6 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 	}
 
 	return Error::kNone;
-}
-
-Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv, ShaderType shaderType,
-							 BaseMemoryPool& tmpPool, MaliOfflineCompilerOut& out)
-{
-	ANKI_ASSERT(spirv.getSize() > 0);
-
-	// Create temp file to dump the spirv
-	StringRaii tmpDir(&tmpPool);
-	ANKI_CHECK(getTempDirectory(tmpDir));
-	StringRaii spirvFilename(&tmpPool);
-	spirvFilename.sprintf("%s/AnKiMaliocInput_%" PRIu64 ".spv", tmpDir.cstr(), getRandom());
-
-	File spirvFile;
-	ANKI_CHECK(spirvFile.open(spirvFilename, FileOpenFlag::kWrite | FileOpenFlag::kBinary));
-	Error err = spirvFile.write(spirv.getBegin(), spirv.getSizeInBytes());
-	spirvFile.close();
-
-	// Call malioc
-	if(!err)
-	{
-		err = runMaliOfflineCompilerInternal(maliocExecutable, spirvFilename, shaderType, tmpPool, out);
-	}
-
-	// Cleanup
-	const Error err2 = removeFile(spirvFilename);
-
-	return (err) ? err : err2;
 }
 
 } // end namespace anki

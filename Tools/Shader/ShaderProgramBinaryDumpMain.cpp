@@ -134,7 +134,7 @@ Error dumpStats(const ShaderProgramBinary& bin)
 	ctx.m_spirvVisited.create(bin.m_codeBlocks.getSize());
 	memset(ctx.m_spirvVisited.getBegin(), 0, ctx.m_spirvVisited.getSizeInBytes());
 
-	ThreadHive hive(8, &pool);
+	ThreadHive hive(getCpuCoresCount(), &pool);
 
 	ThreadHiveTaskCallback callback = [](void* userData, [[maybe_unused]] U32 threadId,
 										 [[maybe_unused]] ThreadHive& hive,
@@ -162,8 +162,6 @@ Error dumpStats(const ShaderProgramBinary& bin)
 					continue;
 				}
 
-				printf("%u\n", variantIdx);
-
 				const ShaderProgramBinaryCodeBlock& codeBlock = ctx.m_bin->m_codeBlocks[codeblockIdx];
 
 				// Arm stats
@@ -186,15 +184,16 @@ Error dumpStats(const ShaderProgramBinary& bin)
 				}
 
 				// AMD
-				RgaOutput rgaOut;
+				RgaOutput rgaOut = {};
+#if 0
 				err = runRadeonGpuAnalyzer(
-#if ANKI_OS_LINUX
+#	if ANKI_OS_LINUX
 					ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Linux64/RadeonGpuAnalyzer/rga",
-#elif ANKI_OS_WINDOWS
+#	elif ANKI_OS_WINDOWS
 					ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Windows64/RadeonGpuAnalyzer/rga.exe",
-#else
-#	error "Not supported"
-#endif
+#	else
+#		error "Not supported"
+#	endif
 					codeBlock.m_binary, shaderType, *ctx.m_pool, rgaOut);
 
 				if(err)
@@ -203,6 +202,7 @@ Error dumpStats(const ShaderProgramBinary& bin)
 					ctx.m_error.store(1);
 					break;
 				}
+#endif
 
 				// Write stats
 				Stats& stats = ctx.m_spirvStats[codeblockIdx];

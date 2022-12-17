@@ -8,6 +8,7 @@
 #include <AnKi/Util/Thread.h>
 #if !ANKI_OS_ANDROID
 #	include <ThirdParty/Reproc/reproc/include/reproc/reproc.h>
+#	include <ThirdParty/Subprocess/subprocess.h>
 #endif
 
 namespace anki {
@@ -276,26 +277,70 @@ Error Process::callProcess(CString executable, ConstWeakArray<CString> arguments
 						   StringRaii* stdErr, I32& exitCode)
 {
 #if !ANKI_OS_ANDROID
-	ProcessOptions options = ProcessOptions::kNone;
-	options |= (stdOut) ? ProcessOptions::kOpenStdout : ProcessOptions::kNone;
-	options |= (stdErr) ? ProcessOptions::kOpenStderr : ProcessOptions::kNone;
-
-	Process proc;
-	ANKI_CHECK(proc.start(executable, arguments, {}, options));
-
-	ANKI_CHECK(proc.wait(-1.0, nullptr, &exitCode));
-
-	if(stdOut)
+	if(true)
 	{
-		ANKI_CHECK(proc.readFromStdout(*stdOut));
-	}
+		ProcessOptions options = ProcessOptions::kNone;
+		options |= (stdOut) ? ProcessOptions::kOpenStdout : ProcessOptions::kNone;
+		options |= (stdErr) ? ProcessOptions::kOpenStderr : ProcessOptions::kNone;
 
-	if(stdErr)
+		Process proc;
+		ANKI_CHECK(proc.start(executable, arguments, {}, options));
+
+		ANKI_CHECK(proc.wait(-1.0, nullptr, &exitCode));
+
+		if(stdOut)
+		{
+			ANKI_CHECK(proc.readFromStdout(*stdOut));
+		}
+
+		if(stdErr)
+		{
+			ANKI_CHECK(proc.readFromStderr(*stdErr));
+		}
+
+		proc.destroy();
+	}
+	else
 	{
-		ANKI_CHECK(proc.readFromStderr(*stdErr));
-	}
+		Array<const char*, 128> args;
+		U32 count = 0;
+		args[count++] = executable.cstr();
+		for(U32 i = 0; i < arguments.getSize(); ++i)
+		{
+			args[count++] = arguments[i].cstr();
+		}
+		args[count] = nullptr;
 
-	proc.destroy();
+		const int options =
+			subprocess_option_inherit_environment | subprocess_option_no_window | subprocess_option_search_user_path;
+		struct subprocess_s subprocess;
+		int err = subprocess_create(&args[0], options, &subprocess);
+		if(err)
+		{
+			ANKI_UTIL_LOGE("subprocess_create() failed");
+			return Error::kFunctionFailed;
+		}
+
+		err = subprocess_join(&subprocess, &exitCode);
+		if(err)
+		{
+			ANKI_UTIL_LOGE("subprocess_join() failed");
+			subprocess_terminate(&subprocess);
+			return Error::kFunctionFailed;
+		}
+
+		if(stdOut)
+		{
+			ANKI_ASSERT(!"TODO");
+		}
+
+		if(stdErr)
+		{
+			ANKI_ASSERT(!"TODO");
+		}
+
+		subprocess_destroy(&subprocess);
+	}
 #else
 	(void)executable;
 	(void)arguments;
@@ -305,6 +350,15 @@ Error Process::callProcess(CString executable, ConstWeakArray<CString> arguments
 #endif
 
 	return Error::kNone;
+}
+
+U32 getCurrentProcessId()
+{
+#if ANKI_OS_WINDOWS
+	return GetCurrentProcessId();
+#elif ANKI_POSIX
+	return getpid();
+#endif
 }
 
 } // end namespace anki

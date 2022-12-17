@@ -106,6 +106,9 @@ private:
 
 	Error startInternal(const Char* arguments[], const Char* environment[], ProcessOptions options);
 };
+
+/// Get the current process ID.
+ANKI_PURE U32 getCurrentProcessId();
 /// @}
 
 } // end namespace anki
