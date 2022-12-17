@@ -29,15 +29,15 @@ class MaliOfflineCompilerOut
 {
 public:
 	// Instructions
-	F32 m_fma = -1.0f;
-	F32 m_cvt = -1.0f;
-	F32 m_sfu = -1.0f;
-	F32 m_loadStore = -1.0f;
-	F32 m_varying = -1.0f;
-	F32 m_texture = -1.0f;
+	F32 m_fma = 0.0f;
+	F32 m_cvt = 0.0f;
+	F32 m_sfu = 0.0f;
+	F32 m_loadStore = 0.0f;
+	F32 m_varying = 0.0f;
+	F32 m_texture = 0.0f;
 	MaliOfflineCompilerHwUnit m_boundUnit = MaliOfflineCompilerHwUnit::kNone;
 
-	U32 m_workRegisters = kMaxU32;
+	U32 m_workRegisters = 0;
 	U32 m_spilling = 0;
 	F32 m_fp16ArithmeticPercentage = 0.0f;
 

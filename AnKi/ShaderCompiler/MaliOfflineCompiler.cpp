@@ -17,7 +17,7 @@ static MaliOfflineCompilerHwUnit strToHwUnit(CString str)
 {
 	MaliOfflineCompilerHwUnit out = MaliOfflineCompilerHwUnit::kNone;
 
-	if(str.find("A") == 0)
+	if(str.find("FMA") == 0)
 	{
 		out = MaliOfflineCompilerHwUnit::kFma;
 	}
@@ -105,7 +105,7 @@ Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv,
 	analysisFilename.sprintf("%s/AnKiMaliocOut_%u.txt", tmpDir.cstr(), rand);
 
 	// Set the arguments
-	Array<CString, 5> args;
+	Array<CString, 6> args;
 
 	switch(shaderType)
 	{
@@ -122,11 +122,12 @@ Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv,
 		ANKI_ASSERT(0 && "Unhandled case");
 	}
 
-	args[1] = "--vulkan";
-	args[2] = spirvFilename;
+	args[1] = "-d";
+	args[2] = "--vulkan";
+	args[3] = spirvFilename;
 
-	args[3] = "-o";
-	args[4] = analysisFilename.cstr();
+	args[4] = "-o";
+	args[5] = analysisFilename.cstr();
 
 	// Execute
 	I32 exitCode;
@@ -147,6 +148,8 @@ Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv,
 	analysisText.replaceAll("\r", "");
 	analysisFile.close();
 	const std::string analysisTextStl(analysisText.cstr());
+
+	// printf("%d\n%s\n", (int)shaderType, analysisText.cstr());
 
 	// Work registers
 	std::smatch match;
@@ -169,39 +172,30 @@ Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv,
 
 		std::string stdoutstl2(analysisText.cstr());
 
-		out.m_fma = 0.0;
-		out.m_cvt = 0.0;
-		out.m_sfu = 0.0;
-		out.m_loadStore = 0.0;
-		out.m_texture = 0.0;
-
-		U32 count = 0;
+		U32 count2 = 0;
 		while(std::regex_search(stdoutstl2, match,
 								std::regex("Total instruction cycles:\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
 										   "\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
-										   "\\s*([A-Z]+)")))
+										   "\\s*" ANKI_FLOAT_REGEX "\\s*([A-Z]+)")))
 		{
-			ANKI_ASSERT(match.size() == 7);
-			Array<F32, 5> floats;
-			for(U32 i = 0; i < floats.getSize(); ++i)
-			{
-				ANKI_CHECK(CString(match[i + 1].str().c_str()).toNumber(floats[i]));
-			}
+			ANKI_ASSERT(match.size() == 8);
+			U32 count = 2;
+			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_fma));
+			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_cvt));
+			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_sfu));
+			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_loadStore));
+			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_texture));
 
-			out.m_fma += floats[0];
-			out.m_cvt += floats[1];
-			out.m_sfu += floats[2];
-			out.m_loadStore += floats[3];
-			out.m_texture += floats[4];
+			out.m_boundUnit = strToHwUnit(match[count++].str().c_str());
 
-			out.m_boundUnit = strToHwUnit(match[6].str().c_str());
+			ANKI_ASSERT(count == match.size());
 
 			// Advance
-			++count;
+			++count2;
 			stdoutstl2 = match.suffix();
 		}
 
-		if(count == 0)
+		if(count2 == 0)
 		{
 			ANKI_SHADER_COMPILER_LOGE("Error parsing instruction cycles");
 			return Error::kFunctionFailed;
@@ -212,11 +206,11 @@ Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv,
 		if(std::regex_search(analysisTextStl, match,
 							 std::regex("Total instruction cycles:\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
 										"\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
-										"\\s*" ANKI_FLOAT_REGEX "\\s*([A-Z]+)")))
+										"\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX "\\s*([A-Z]+)")))
 		{
-			ANKI_ASSERT(match.size() == 8);
+			ANKI_ASSERT(match.size() == 9);
 
-			U32 count = 1;
+			U32 count = 2;
 			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_fma));
 			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_cvt));
 			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_sfu));
@@ -225,6 +219,8 @@ Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv,
 			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_texture));
 
 			out.m_boundUnit = strToHwUnit(match[count++].str().c_str());
+
+			ANKI_ASSERT(count == match.size());
 		}
 		else
 		{
@@ -239,11 +235,11 @@ Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv,
 		if(std::regex_search(analysisTextStl, match,
 							 std::regex("Total instruction cycles:\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
 										"\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
-										"\\s*([A-Z]+)")))
+										"\\s*" ANKI_FLOAT_REGEX "\\s*([A-Z]+)")))
 		{
-			ANKI_ASSERT(match.size() == 7);
+			ANKI_ASSERT(match.size() == 8);
 
-			U32 count = 1;
+			U32 count = 2;
 			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_fma));
 			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_cvt));
 			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_sfu));
@@ -251,6 +247,8 @@ Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv,
 			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_texture));
 
 			out.m_boundUnit = strToHwUnit(match[count++].str().c_str());
+
+			ANKI_ASSERT(count == match.size());
 		}
 		else
 		{
