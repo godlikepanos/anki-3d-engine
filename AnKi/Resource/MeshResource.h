@@ -64,7 +64,8 @@ public:
 	/// Get vertex buffer info.
 	void getVertexStreamInfo(U32 lod, VertexStreamId stream, PtrSize& bufferOffset, U32& vertexCount) const
 	{
-		bufferOffset = m_lods[lod].m_vertexBuffersAllocationToken[stream].m_offset;
+		bufferOffset = m_lods[lod].m_vertexBuffersAllocationToken[stream].m_offset
+					   + m_lods[lod].m_fixedUniversalGeometryBufferOffset[stream];
 		vertexCount = m_lods[lod].m_vertexCount;
 	}
 
@@ -104,6 +105,7 @@ private:
 	public:
 		SegregatedListsGpuMemoryPoolToken m_indexBufferAllocationToken;
 		Array<SegregatedListsGpuMemoryPoolToken, U32(VertexStreamId::kMeshRelatedCount)> m_vertexBuffersAllocationToken;
+		Array<U8, U32(VertexStreamId::kMeshRelatedCount)> m_fixedUniversalGeometryBufferOffset = {};
 
 		U32 m_indexCount = 0;
 		U32 m_vertexCount = 0;
