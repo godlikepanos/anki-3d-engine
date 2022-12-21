@@ -734,14 +734,14 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 		// Write positions
 		for(const SubMesh& submesh : submeshes[lod])
 		{
-			DynamicArrayRaii<U16Vec3> positions(m_pool, submesh.m_verts.getSize());
+			DynamicArrayRaii<U16Vec4> positions(m_pool, submesh.m_verts.getSize());
 			for(U32 v = 0; v < submesh.m_verts.getSize(); ++v)
 			{
 				Vec3 localPos = (submesh.m_verts[v].m_position + posTranslation) * posScale;
 				localPos = localPos.clamp(0.0f, 1.0f);
 				localPos *= F32(kMaxU16);
 				localPos = localPos.round();
-				positions[v] = U16Vec3(localPos);
+				positions[v] = U16Vec4(localPos.xyz0());
 			}
 
 			ANKI_CHECK(file.write(&positions[0], positions.getSizeInBytes()));

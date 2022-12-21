@@ -314,8 +314,8 @@ Error MeshBinaryLoader::storeIndicesAndPosition(U32 lod, DynamicArrayRaii<U32>& 
 	// Store positions
 	{
 		const MeshBinaryVertexAttribute& attrib = m_header.m_vertexAttributes[VertexStreamId::kPosition];
-		DynamicArrayRaii<U16Vec3> tempPositions(m_pool, m_header.m_totalVertexCounts[lod]);
-		static_assert(kMeshRelatedVertexStreamFormats[VertexStreamId::kPosition] == Format::kR16G16B16_Unorm,
+		DynamicArrayRaii<U16Vec4> tempPositions(m_pool, m_header.m_totalVertexCounts[lod]);
+		static_assert(kMeshRelatedVertexStreamFormats[VertexStreamId::kPosition] == Format::kR16G16B16A16_Unorm,
 					  "Incorrect format");
 		ANKI_CHECK(storeVertexBuffer(lod, attrib.m_bufferIndex, &tempPositions[0], tempPositions.getSizeInBytes()));
 
@@ -323,7 +323,7 @@ Error MeshBinaryLoader::storeIndicesAndPosition(U32 lod, DynamicArrayRaii<U32>& 
 
 		for(U32 i = 0; i < tempPositions.getSize(); ++i)
 		{
-			positions[i] = Vec3(tempPositions[i]) / F32(kMaxU16);
+			positions[i] = Vec3(tempPositions[i].xyz()) / F32(kMaxU16);
 			positions[i] *= Vec3(&attrib.m_scale[0]);
 			positions[i] += Vec3(&attrib.m_translation[0]);
 		}
