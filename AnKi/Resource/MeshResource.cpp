@@ -147,13 +147,13 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 
 			// We need to align the actual offset to the texel size
 			const PtrSize remainder = lod.m_vertexBuffersAllocationToken[stream].m_offset % texelSize;
-			lod.m_fixedUniversalGeometryBufferOffset[stream] = U8(texelSize - remainder);
+			lod.m_fixedUnifiedGeometryBufferOffset[stream] = U8(texelSize - remainder);
 
 			ANKI_ASSERT(
-				(lod.m_vertexBuffersAllocationToken[stream].m_offset + lod.m_fixedUniversalGeometryBufferOffset[stream])
+				(lod.m_vertexBuffersAllocationToken[stream].m_offset + lod.m_fixedUnifiedGeometryBufferOffset[stream])
 					% texelSize
 				== 0);
-			ANKI_ASSERT(lod.m_fixedUniversalGeometryBufferOffset[stream] + PtrSize(lod.m_vertexCount) * texelSize
+			ANKI_ASSERT(lod.m_fixedUnifiedGeometryBufferOffset[stream] + PtrSize(lod.m_vertexCount) * texelSize
 						<= lod.m_vertexBuffersAllocationToken[stream].m_size);
 		}
 
@@ -171,7 +171,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 			inf.m_bottomLevel.m_positionBuffer = getExternalSubsystems().m_unifiedGometryMemoryPool->getBuffer();
 			inf.m_bottomLevel.m_positionBufferOffset =
 				lod.m_vertexBuffersAllocationToken[VertexStreamId::kPosition].m_offset
-				+ lod.m_fixedUniversalGeometryBufferOffset[VertexStreamId::kPosition];
+				+ lod.m_fixedUnifiedGeometryBufferOffset[VertexStreamId::kPosition];
 			inf.m_bottomLevel.m_positionStride =
 				getFormatInfo(kMeshRelatedVertexStreamFormats[VertexStreamId::kPosition]).m_texelSize;
 			inf.m_bottomLevel.m_positionsFormat = kMeshRelatedVertexStreamFormats[VertexStreamId::kPosition];
@@ -293,7 +293,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 			// Copy
 			cmdb->copyBufferToBuffer(handle.getBuffer(), handle.getOffset(), unifiedGeometryBuffer,
 									 lod.m_vertexBuffersAllocationToken[stream].m_offset
-										 + lod.m_fixedUniversalGeometryBufferOffset[stream],
+										 + lod.m_fixedUnifiedGeometryBufferOffset[stream],
 									 handle.getRange());
 		}
 	}

@@ -28,11 +28,11 @@ enum class VertexStreamId : U8
 
 	// For particles
 	kParticlePosition = 0,
+	kParticlePreviousPosition,
 	kParticleScale,
-	kParticleAlpha,
+	kParticleColor,
 	kParticleLife,
 	kParticleStartingLife,
-	kParticlePreviousPosition,
 
 	kParticleRelatedCount,
 	kParticleRelatedFirst = 0,
@@ -55,11 +55,11 @@ enum class VertexStreamMask : U8
 	kBoneWeights = 1 << 5,
 
 	kParticlePosition = 1 << 0,
-	kParticleScale = 1 << 1,
-	kParticleAlpha = 1 << 2,
-	kParticleLife = 1 << 3,
-	kParticleStartingLife = 1 << 4,
-	kParticlePreviousPosition = 1 << 5,
+	kParticlePreviousPosition = 1 << 1,
+	kParticleScale = 1 << 2,
+	kParticleColor = 1 << 3,
+	kParticleLife = 1 << 4,
+	kParticleStartingLife = 1 << 5,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexStreamMask)
 
@@ -67,6 +67,10 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexStreamMask)
 inline constexpr Array<Format, U32(VertexStreamId::kMeshRelatedCount)> kMeshRelatedVertexStreamFormats = {
 	Format::kR16G16B16A16_Unorm, Format::kR8G8B8A8_Snorm, Format::kR8G8B8A8_Snorm,
 	Format::kR32G32_Sfloat,      Format::kR8G8B8A8_Uint,  Format::kR8G8B8A8_Snorm};
+
+inline constexpr Array<Format, U32(VertexStreamId::kParticleRelatedCount)> kParticleRelatedVertexStreamFormats = {
+	Format::kR32G32B32_Sfloat,    Format::kR32G32B32_Sfloat, Format::kR32_Sfloat,
+	Format::kR32G32B32A32_Sfloat, Format::kR32_Sfloat,       Format::kR32_Sfloat};
 #endif
 
 struct UnpackedMeshVertex

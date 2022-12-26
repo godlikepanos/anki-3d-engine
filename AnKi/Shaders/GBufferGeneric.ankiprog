@@ -5,7 +5,6 @@
 
 #pragma anki hlsl
 
-#pragma anki mutator ANKI_LOD 0 1 2
 #pragma anki mutator ANKI_VELOCITY 0 1
 #pragma anki mutator ANKI_TECHNIQUE 0 1 2
 #pragma anki mutator ANKI_BONES 0 1
@@ -21,37 +20,18 @@
 #pragma anki skip_mutation ALPHA_TEST 1 DIFFUSE_TEX 0
 #pragma anki skip_mutation ANKI_VELOCITY 1 ANKI_TECHNIQUE 1
 #pragma anki skip_mutation ANKI_VELOCITY 1 ANKI_TECHNIQUE 2
-#pragma anki skip_mutation ANKI_LOD 1 ANKI_TECHNIQUE 1
-#pragma anki skip_mutation ANKI_LOD 2 ANKI_TECHNIQUE 1
-#pragma anki skip_mutation ANKI_LOD 1 ANKI_TECHNIQUE 2
-#pragma anki skip_mutation ANKI_LOD 2 ANKI_TECHNIQUE 2
 
 // Some defines the clear up things
 #define REALLY_ALPHA_TEST (ALPHA_TEST && DIFFUSE_TEX)
 #define UVS (ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER || REALLY_ALPHA_TEST)
 #define REALLY_VELOCITY ((ANKI_VELOCITY || ANKI_BONES) && ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER)
-#define REALLY_USING_PARALLAX \
-	(PARALLAX == 1 && ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER && ANKI_LOD == 0 && ALPHA_TEST == 0)
+#define REALLY_USING_PARALLAX (PARALLAX == 1 && ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER && ALPHA_TEST == 0)
 
 #include <AnKi/Shaders/Include/MaterialTypes.h>
-#include <AnKi/Shaders/Include/GpuSceneTypes.h>
+#include <AnKi/Shaders/Include/GpuSceneFunctions.h>
 #include <AnKi/Shaders/PackFunctions.hlsl>
 #include <AnKi/Shaders/Functions.hlsl>
-
-ANKI_BINDLESS_SET(kMaterialSetBindless)
-
-[[vk::binding(kMaterialBindingTrilinearRepeatSampler, kMaterialSetGlobal)]] SamplerState g_globalSampler;
-[[vk::binding(kMaterialBindingLocalUniforms, kMaterialSetLocal)]] ByteAddressBuffer g_localUniforms;
-[[vk::binding(kMaterialBindingRenderableGpuView, kMaterialSetLocal)]] StructuredBuffer<RenderableGpuView>
-	g_renderableGpuViews;
-[[vk::binding(kMaterialBindingGlobalUniforms, kMaterialSetGlobal)]] ConstantBuffer<MaterialGlobalUniforms>
-	g_globalUniforms;
-
-#if ANKI_BONES
-[[vk::binding(kMaterialBindingBoneTransforms, kMaterialSetLocal)]] StructuredBuffer<Mat4> g_boneTransforms;
-[[vk::binding(kMaterialBindingPreviousBoneTransforms, kMaterialSetLocal)]] StructuredBuffer<Mat4>
-	g_prevFrameBoneTransforms;
-#endif
+#include <AnKi/Shaders/MaterialShadersCommon.hlsl>
 
 #pragma anki reflect AnKiLocalUniforms
 #pragma anki struct AnKiLocalUniforms
@@ -80,22 +60,8 @@ ANKI_BINDLESS_SET(kMaterialSetBindless)
 
 struct VertIn
 {
-	[[vk::location(VertexStreamId::kPosition)]] Vec3 m_position : POSITION;
-	U32 m_instanceId : SV_INSTANCEID;
-
-#if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER
-	[[vk::location(VertexStreamId::kNormal)]] RVec3 m_normal : NORMAL;
-	[[vk::location(VertexStreamId::kTangent)]] RVec4 m_tangent : TANGENT;
-#endif
-
-#if UVS
-	[[vk::location(VertexStreamId::kUv)]] Vec2 m_uv : TEXCOORD;
-#endif
-
-#if ANKI_BONES
-	[[vk::location(VertexStreamId::kBoneIds)]] UVec4 m_boneIndices : COLOR0;
-	[[vk::location(VertexStreamId::kBoneWeights)]] RVec4 m_boneWeights : COLOR1;
-#endif
+	U32 m_svVertexId : SV_VERTEXID;
+	[[vk::location(0)]] PackedGpuSceneRenderableInstance m_gpuSceneRenderableInstance : INSTANCE;
 };
 
 struct VertOut
@@ -114,8 +80,14 @@ struct VertOut
 #if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER
 	RVec3 m_normal : NORMAL;
 	RVec3 m_tangent : TANGENT;
+#	if ANKI_PLATFORM_MOBILE
 	RVec3 m_bitangent : BINTANGENT;
+#	else
+	Vec3 m_bitangent : BINTANGENT; // For some reason RelaxedPrecision annoys nVidia
+#	endif
 #endif
+
+	nointerpolation U32 m_uniformsOffset : UNIS_OFFSET;
 };
 
 #if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER || ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER_EZ
@@ -130,15 +102,32 @@ struct FragOut
 
 #pragma anki start vert
 
-#if ANKI_BONES
-void skinning(VertIn input, inout Vec3 pos, inout Vec3 prevPos, inout RVec3 normal, inout RVec4 tangent)
+Mat3x4 loadBoneTransform(UnpackedMeshVertex vert, GpuSceneRenderable renderable, U32 index)
 {
-	Mat4 skinMat = g_boneTransforms[input.m_boneIndices[0]] * input.m_boneWeights[0];
-	Mat4 prevSkinMat = g_prevFrameBoneTransforms[input.m_boneIndices[0]] * input.m_boneWeights[0];
+	const U32 boneIdx = vert.m_boneIndices[index];
+	U32 byteOffset = renderable.m_boneTransformsOffset;
+	byteOffset += boneIdx * sizeof(Mat3x4);
+	return g_gpuScene.Load<Mat3x4>(byteOffset);
+}
+
+Mat3x4 loadPreviousBoneTransform(UnpackedMeshVertex vert, GpuSceneRenderable renderable, U32 index)
+{
+	const U32 boneIdx = vert.m_boneIndices[index];
+	U32 byteOffset = renderable.m_previousBoneTransformsOffset;
+	byteOffset += boneIdx * sizeof(Mat3x4);
+	return g_gpuScene.Load<Mat3x4>(byteOffset);
+}
+
+#if ANKI_BONES
+void skinning(UnpackedMeshVertex vert, GpuSceneRenderable renderable, inout Vec3 pos, inout Vec3 prevPos,
+			  inout RVec3 normal, inout RVec4 tangent)
+{
+	Mat3x4 skinMat = loadBoneTransform(vert, renderable, 0) * vert.m_boneWeights[0];
+	Mat3x4 prevSkinMat = loadPreviousBoneTransform(vert, renderable, 0) * vert.m_boneWeights[0];
 	[unroll] for(U32 i = 1u; i < 4u; ++i)
 	{
-		skinMat = skinMat + g_boneTransforms[input.m_boneIndices[i]] * input.m_boneWeights[i];
-		prevSkinMat = prevSkinMat + g_prevFrameBoneTransforms[input.m_boneIndices[i]] * input.m_boneWeights[i];
+		skinMat = skinMat + loadBoneTransform(vert, renderable, i) * vert.m_boneWeights[i];
+		prevSkinMat = prevSkinMat + loadPreviousBoneTransform(vert, renderable, i) * vert.m_boneWeights[i];
 	}
 
 #	if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER
@@ -155,14 +144,17 @@ void skinning(VertIn input, inout Vec3 pos, inout Vec3 prevPos, inout RVec3 norm
 #endif
 
 #if(ANKI_VELOCITY || ANKI_BONES) && ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER
-void velocity(RenderableGpuView view, Vec3 prevLocalPos, inout VertOut output)
+void velocity(Mat3x4 worldTransform, Mat3x4 prevWorldTransform, Vec3 prevLocalPos, inout VertOut output)
 {
+	ANKI_MAYBE_UNUSED(prevWorldTransform);
+	ANKI_MAYBE_UNUSED(worldTransform);
+
 #	if ANKI_VELOCITY
 	// Object is also moving
-	const Mat3x4 trf = view.m_previousWorldTransform;
+	const Mat3x4 trf = prevWorldTransform;
 #	else
 	// Object is a skin that is not moving
-	const Mat3x4 trf = view.m_worldTransform;
+	const Mat3x4 trf = worldTransform;
 #	endif
 
 	Vec4 v4 = Vec4(mul(trf, Vec4(prevLocalPos, 1.0)), 1.0);
@@ -175,50 +167,41 @@ void velocity(RenderableGpuView view, Vec3 prevLocalPos, inout VertOut output)
 
 VertOut main(VertIn input)
 {
-	const RenderableGpuView view = g_renderableGpuViews[input.m_instanceId];
 	VertOut output;
 
-	// All values in local space
-#if ANKI_BONES
-	Vec3 pos =
-		input.m_position * view.m_positionScaleF32AndTranslationVec3.x + view.m_positionScaleF32AndTranslationVec3.yzw;
-#else
-	Vec3 pos = input.m_position;
-#endif
+	const UnpackedGpuSceneRenderableInstance instance =
+		unpackRenderableGpuViewInstance(input.m_gpuSceneRenderableInstance);
+	const GpuSceneRenderable renderable = g_gpuScene.Load<GpuSceneRenderable>(instance.m_renderableOffset);
+	const GpuSceneMesh mesh = g_gpuScene.Load<GpuSceneMesh>(renderable.m_geometryOffset);
+	UnpackedMeshVertex vert = loadVertex(mesh, instance.m_lod, input.m_svVertexId, ANKI_BONES);
 
-	Vec3 prevPos = pos;
-	ANKI_MAYBE_UNUSED(prevPos);
-
-#if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER
-	RVec3 normal = input.m_normal;
-	RVec4 tangent = input.m_tangent;
-#else
-	RVec3 normal = RVec3(0.0, 0.0, 0.0);
-	RVec4 tangent = RVec4(0.0, 0.0, 0.0, 0.0);
-	ANKI_MAYBE_UNUSED(normal);
-	ANKI_MAYBE_UNUSED(tangent);
-#endif
+	const Mat3x4 worldTransform = g_gpuScene.Load<Mat3x4>(renderable.m_worldTransformsOffset);
+	const Mat3x4 prevWorldTransform = g_gpuScene.Load<Mat3x4>(renderable.m_worldTransformsOffset + sizeof(Mat3x4));
+	ANKI_MAYBE_UNUSED(prevWorldTransform);
 
 #if UVS
-	output.m_uv = input.m_uv;
+	output.m_uv = vert.m_uv;
 #endif
+	Vec3 prevPos = vert.m_position;
+	ANKI_MAYBE_UNUSED(prevPos);
+	output.m_uniformsOffset = renderable.m_uniformsOffset;
 
 	// Do stuff
 #if ANKI_BONES
-	skinning(input, pos, prevPos, normal, tangent);
+	skinning(vert, renderable, vert.m_position, prevPos, vert.m_normal, vert.m_tangent);
 #endif
 
-	output.m_position = Vec4(mul(view.m_worldTransform, Vec4(pos, 1.0)), 1.0);
+	output.m_position = Vec4(mul(worldTransform, Vec4(vert.m_position, 1.0)), 1.0);
 	output.m_position = mul(g_globalUniforms.m_viewProjectionMatrix, output.m_position);
 
 #if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER
-	output.m_normal = mul(view.m_worldTransform, Vec4(normal, 0.0));
-	output.m_tangent = mul(view.m_worldTransform, Vec4(tangent.xyz, 0.0));
-	output.m_bitangent = cross(output.m_normal, output.m_tangent) * tangent.w;
+	output.m_normal = mul(worldTransform, Vec4(vert.m_normal, 0.0));
+	output.m_tangent = mul(worldTransform, Vec4(vert.m_tangent.xyz, 0.0));
+	output.m_bitangent = cross(output.m_normal, output.m_tangent) * vert.m_tangent.w;
 #endif
 
 #if REALLY_VELOCITY
-	velocity(view, prevPos, output);
+	velocity(worldTransform, prevWorldTransform, prevPos, output);
 #endif
 
 	return output;
@@ -241,7 +224,7 @@ void main(VertOut input)
 {
 	ANKI_MAYBE_UNUSED(input);
 #	if REALLY_ALPHA_TEST
-	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_localUniforms, 0u);
+	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_gpuScene, input.m_uniformsOffset);
 	const RVec4 diffColorA = g_bindlessTextures2dF32[localUniforms.m_diffTex].Sample(g_globalSampler, input.m_uv);
 	doAlphaTest(diffColorA.a);
 #	endif
@@ -251,7 +234,7 @@ FragOut main(VertOut input)
 {
 	ANKI_MAYBE_UNUSED(input);
 #	if REALLY_ALPHA_TEST
-	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_localUniforms, 0u);
+	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_gpuScene, input.m_uniformsOffset);
 	const RVec4 diffColorA = g_bindlessTextures2dF32[localUniforms.m_diffTex].Sample(g_globalSampler, input.m_uv);
 	doAlphaTest(diffColorA.a);
 #	endif
@@ -275,7 +258,7 @@ RVec3 readNormalFromTexture(VertOut input, Texture2D<RVec4> map, SamplerState sa
 
 FragOut main(VertOut input)
 {
-	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_localUniforms, 0u);
+	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_gpuScene, input.m_uniformsOffset);
 
 #	if REALLY_USING_PARALLAX
 	// TODO

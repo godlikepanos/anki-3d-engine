@@ -10,13 +10,11 @@
 #include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 
+#if defined(GPU_SCENE) // TODO rm that eventually
+#	define FORWARD_SHADING 1
+#	include <AnKi/Shaders/MaterialShadersCommon.hlsl>
+#else
 ANKI_BINDLESS_SET(kMaterialSetBindless)
-
-//
-// Frag
-//
-#if defined(ANKI_FRAGMENT_SHADER)
-// Global resources
 [[vk::binding(kMaterialBindingLinearClampSampler, kMaterialSetGlobal)]] SamplerState g_linearAnyClampSampler;
 [[vk::binding(kMaterialBindingDepthRt, kMaterialSetGlobal)]] Texture2D g_gbufferDepthTex;
 [[vk::binding(kMaterialBindingLightVolume, kMaterialSetGlobal)]] Texture3D<RVec4> g_lightVol;
@@ -26,7 +24,12 @@ ANKI_BINDLESS_SET(kMaterialSetBindless)
 #	define CLUSTERED_SHADING_LIGHTS_BINDING kMaterialBindingClusterShadingLights
 #	define CLUSTERED_SHADING_CLUSTERS_BINDING kMaterialBindingClusters
 #	include <AnKi/Shaders/ClusteredShadingCommon.hlsl>
+#endif
 
+//
+// Frag
+//
+#if defined(ANKI_FRAGMENT_SHADER)
 struct FragOut
 {
 	RVec4 m_color : SV_TARGET0;

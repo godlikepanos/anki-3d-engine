@@ -84,6 +84,7 @@ public:
 	Timestamp* m_globTimestamp = nullptr;
 	GpuSceneMemoryPool* m_gpuScenePool = nullptr;
 	GpuSceneMicroPatcher* m_gpuSceneMicroPatcher = nullptr;
+	UnifiedGeometryMemoryPool* m_unifiedGometryMemoryPool = nullptr;
 };
 
 /// GPU buffers and textures that the clusterer refers to.

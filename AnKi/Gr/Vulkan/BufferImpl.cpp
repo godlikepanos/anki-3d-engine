@@ -383,14 +383,14 @@ VkBufferView BufferImpl::getOrCreateBufferView(Format fmt, PtrSize offset, PtrSi
 	{
 		ANKI_ASSERT(m_size >= offset);
 		range = m_size - offset;
+		range = getAlignedRoundDown(getFormatInfo(fmt).m_texelSize, range);
 	}
 
 	// Checks
 	ANKI_ASSERT(!!(m_usage & BufferUsageBit::kAllTexture));
 	ANKI_ASSERT(offset + range <= m_size);
 
-	ANKI_ASSERT(isAligned(getGrManagerImpl().getDeviceCapabilities().m_textureBufferBindOffsetAlignment,
-						  m_memHandle.m_offset + offset)
+	ANKI_ASSERT(isAligned(getGrManagerImpl().getDeviceCapabilities().m_textureBufferBindOffsetAlignment, offset)
 				&& "Offset not aligned");
 
 	ANKI_ASSERT((range % getFormatInfo(fmt).m_texelSize) == 0

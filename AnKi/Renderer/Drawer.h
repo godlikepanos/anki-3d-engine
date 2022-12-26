@@ -28,6 +28,9 @@ public:
 	Mat4 m_previousViewProjectionMatrix;
 
 	SamplerPtr m_sampler;
+	BufferPtr m_gpuSceneBuffer;
+	BufferPtr m_unifiedGeometryBuffer;
+
 	U32 m_minLod = 0;
 	U32 m_maxLod = kMaxLodCount - 1;
 };

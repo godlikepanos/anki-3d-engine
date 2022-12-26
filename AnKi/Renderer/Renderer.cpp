@@ -693,14 +693,17 @@ void Renderer::gpuSceneCopy(RenderingContext& ctx)
 	m_runCtx.m_gpuSceneHandle = rgraph.importBuffer(m_subsystems.m_gpuScenePool->getBuffer(),
 													m_subsystems.m_gpuScenePool->getBuffer()->getBufferUsage());
 
-	ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("GPU scene patching");
-	rpass.newBufferDependency(m_runCtx.m_gpuSceneHandle, BufferUsageBit::kStorageComputeWrite);
+	if(m_subsystems.m_gpuSceneMicroPatcher->patchingIsNeeded())
+	{
+		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("GPU scene patching");
+		rpass.newBufferDependency(m_runCtx.m_gpuSceneHandle, BufferUsageBit::kStorageComputeWrite);
 
-	rpass.setWork([this](RenderPassWorkContext& rgraphCtx) {
-		m_subsystems.m_gpuSceneMicroPatcher->patchGpuScene(*m_subsystems.m_rebarStagingPool,
-														   *rgraphCtx.m_commandBuffer.get(),
-														   m_subsystems.m_gpuScenePool->getBuffer());
-	});
+		rpass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+			m_subsystems.m_gpuSceneMicroPatcher->patchGpuScene(*m_subsystems.m_rebarStagingPool,
+															   *rgraphCtx.m_commandBuffer.get(),
+															   m_subsystems.m_gpuScenePool->getBuffer());
+		});
+	}
 }
 
 } // end namespace anki

@@ -18,9 +18,11 @@ MaliHwCounters::MaliHwCounters(BaseMemoryPool* pool)
 {
 	ANKI_ASSERT(pool);
 #if ANKI_HWCPIPE_ENABLE
-	hwcpipe::HWCPipe* hwc = newInstance<hwcpipe::HWCPipe>(*m_pool);
-	hwc->set_enabled_gpu_counters({hwcpipe::GpuCounter::GpuCycles, hwcpipe::GpuCounter::ExternalMemoryWriteBytes,
-								   hwcpipe::GpuCounter::ExternalMemoryReadBytes});
+	const hwcpipe::CpuCounterSet cpuCounters;
+	const hwcpipe::GpuCounterSet gpuCounters = {hwcpipe::GpuCounter::GpuCycles,
+												hwcpipe::GpuCounter::ExternalMemoryWriteBytes,
+												hwcpipe::GpuCounter::ExternalMemoryReadBytes};
+	hwcpipe::HWCPipe* hwc = newInstance<hwcpipe::HWCPipe>(*m_pool, cpuCounters, gpuCounters);
 
 	hwc->run();
 

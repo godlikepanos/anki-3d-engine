@@ -126,6 +126,9 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 
 		TextureSubresourceInfo subresource = TextureSubresourceInfo(DepthStencilAspectBit::kDepth);
 		pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kAllFramebuffer, subresource);
+
+		pass.newBufferDependency(m_r->getGpuSceneBufferHandle(),
+								 BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead);
 	}
 }
 
@@ -613,6 +616,8 @@ void ShadowMapping::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 		args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
 		args.m_sampler = m_r->getSamplers().m_trilinearRepeatAniso;
 		args.m_minLod = args.m_maxLod = work.m_renderQueueElementsLod;
+		args.m_gpuSceneBuffer = getExternalSubsystems().m_gpuScenePool->getBuffer();
+		args.m_unifiedGeometryBuffer = getExternalSubsystems().m_unifiedGometryMemoryPool->getBuffer();
 
 		m_r->getSceneDrawer().drawRange(RenderingTechnique::kShadow, args,
 										work.m_renderQueue->m_renderables.getBegin() + work.m_firstRenderableElement,

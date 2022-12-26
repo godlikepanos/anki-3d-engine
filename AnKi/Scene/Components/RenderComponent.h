@@ -85,6 +85,7 @@ public:
 		el.m_mergeKey = m_mergeKey;
 		el.m_distanceFromCamera = -1.0f;
 		el.m_lod = kMaxU8;
+		el.m_renderableOffset = U32(m_gpuSceneRenderable.m_offset);
 	}
 
 	void setupRayTracingInstanceQueueElement(U32 lod, RayTracingInstanceQueueElement& el) const
@@ -106,8 +107,8 @@ public:
 
 	U32 getGpuSceneViewOffset() const
 	{
-		ANKI_ASSERT((m_gpuSceneRenderableGpuView.m_offset % 4) == 0);
-		return U32(m_gpuSceneRenderableGpuView.m_offset);
+		ANKI_ASSERT((m_gpuSceneRenderable.m_offset % 4) == 0);
+		return U32(m_gpuSceneRenderable.m_offset);
 	}
 
 private:
@@ -116,7 +117,7 @@ private:
 	U64 m_mergeKey = kMaxU64;
 	FillRayTracingInstanceQueueElementCallback m_rtCallback = nullptr;
 	const void* m_rtCallbackUserData = nullptr;
-	SegregatedListsGpuMemoryPoolToken m_gpuSceneRenderableGpuView;
+	SegregatedListsGpuMemoryPoolToken m_gpuSceneRenderable;
 	RenderComponentFlag m_flags = RenderComponentFlag::kNone;
 
 	void onDestroy(SceneNode& node);

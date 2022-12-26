@@ -54,7 +54,7 @@ Error ModelComponent::loadModelResource(CString filename)
 	GpuSceneMemoryPool& gpuScene = *getExternalSubsystems(*m_node).m_gpuSceneMemoryPool;
 
 	gpuScene.free(m_gpuSceneMeshGpuViews);
-	gpuScene.allocate(sizeof(MeshGpuView) * m_modelPatchMergeKeys.getSize(), 4, m_gpuSceneMeshGpuViews);
+	gpuScene.allocate(sizeof(GpuSceneMesh) * m_modelPatchMergeKeys.getSize(), 4, m_gpuSceneMeshGpuViews);
 
 	U32 uniformsSize = 0;
 	m_gpuSceneUniformsOffsetPerPatch.resize(m_node->getMemoryPool(), modelPatchCount);
@@ -86,10 +86,10 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		// Upload the mesh views
 		const U32 modelPatchCount = m_model->getModelPatches().getSize();
-		DynamicArrayRaii<MeshGpuView> meshViews(info.m_framePool, modelPatchCount);
+		DynamicArrayRaii<GpuSceneMesh> meshViews(info.m_framePool, modelPatchCount);
 		for(U32 i = 0; i < modelPatchCount; ++i)
 		{
-			MeshGpuView& view = meshViews[i];
+			GpuSceneMesh& view = meshViews[i];
 			const ModelPatch& patch = m_model->getModelPatches()[i];
 			const MeshResource& mesh = *patch.getMesh();
 
@@ -122,6 +122,12 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 				mesh.getIndexBufferInfo(l, offset, indexCount, indexType);
 				view.m_lods[l].m_indexOffset = U32(offset);
 				view.m_lods[l].m_indexCount = indexCount;
+			}
+
+			// Copy the last LOD to the rest just in case
+			for(U32 l = mesh.getLodCount(); l < kMaxLodCount; ++l)
+			{
+				view.m_lods[l] = view.m_lods[l - 1];
 			}
 		}
 

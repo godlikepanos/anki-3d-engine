@@ -10,6 +10,9 @@
 #	include <ThirdParty/Reproc/reproc/include/reproc/reproc.h>
 #	include <ThirdParty/Subprocess/subprocess.h>
 #endif
+#if ANKI_POSIX
+#	include <unistd.h>
+#endif
 
 namespace anki {
 

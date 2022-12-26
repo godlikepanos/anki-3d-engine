@@ -145,6 +145,12 @@ public:
 		return U32(m_gpuSceneTransforms.m_offset);
 	}
 
+	/// It's valid after the component was updated.
+	Bool wasDirtyThisFrame() const
+	{
+		return m_dirtyThisFrame;
+	}
+
 private:
 	/// The transformation in local space
 	Transform m_ltrf = Transform::getIdentity();
@@ -160,7 +166,7 @@ private:
 	Bool m_markedForUpdate : 1;
 	Bool m_ignoreLocalTransform : 1;
 	Bool m_ignoreParentTransform : 1;
-	Bool m_dirtyLastFrame : 1;
+	Bool m_dirtyThisFrame : 1;
 
 	void markForUpdate()
 	{

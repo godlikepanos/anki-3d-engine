@@ -186,6 +186,13 @@ public:
 	/// @note It's thread-safe.
 	void newCopy(StackMemoryPool& frameCpuPool, PtrSize gpuSceneDestOffset, PtrSize dataSize, const void* data);
 
+	/// Check if there is a need to call patchGpuScene or if no copies are needed.
+	/// @note Not thread-safe. Nothing else should be happening before calling it.
+	Bool patchingIsNeeded() const
+	{
+		return m_crntFramePatchHeaders.getSize() > 0;
+	}
+
 	/// Copy the data to the GPU scene buffer.
 	/// @note Not thread-safe. Nothing else should be happening before calling it.
 	void patchGpuScene(RebarStagingGpuMemoryPool& rebarPool, CommandBuffer& cmdb, const BufferPtr& gpuSceneBuffer);

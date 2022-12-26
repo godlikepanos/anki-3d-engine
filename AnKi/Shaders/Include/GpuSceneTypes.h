@@ -10,7 +10,7 @@
 ANKI_BEGIN_NAMESPACE
 
 /// @note All offsets in bytes
-struct RenderableGpuView2
+struct GpuSceneRenderable
 {
 	U32 m_worldTransformsOffset; ///< First is the crnt transform and the 2nd the previous
 	U32 m_aabbOffset;
@@ -21,31 +21,40 @@ struct RenderableGpuView2
 	U32 m_padding0;
 	U32 m_padding1;
 };
-static_assert(sizeof(RenderableGpuView2) == sizeof(Vec4) * 2);
+static_assert(sizeof(GpuSceneRenderable) == sizeof(Vec4) * 2);
 
-struct MeshGpuViewLod
+struct GpuSceneMeshLod
 {
 	U32 m_vertexOffsets[(U32)VertexStreamId::kMeshRelatedCount];
 	U32 m_indexCount;
 	U32 m_indexOffset; // TODO Decide on its type
 };
-static_assert(sizeof(MeshGpuViewLod) == sizeof(Vec4) * 2);
+static_assert(sizeof(GpuSceneMeshLod) == sizeof(Vec4) * 2);
 
-struct MeshGpuView
+struct GpuSceneMesh
 {
-	MeshGpuViewLod m_lods[kMaxLodCount];
+	GpuSceneMeshLod m_lods[kMaxLodCount];
 
 	Vec3 m_positionTranslation;
 	F32 m_positionScale;
 };
+static_assert(sizeof(GpuSceneMesh) == sizeof(Vec4) * (kMaxLodCount * 2 + 1));
 
-struct UnpackedRenderableGpuViewInstance
+struct GpuSceneParticles
 {
-	U32 m_renderableGpuViewOffset;
+	U32 m_vertexOffsets[(U32)VertexStreamId::kParticleRelatedCount];
+	U32 m_padding0;
+	U32 m_padding1;
+};
+static_assert(sizeof(GpuSceneParticles) == sizeof(Vec4) * 2);
+
+struct UnpackedGpuSceneRenderableInstance
+{
+	U32 m_renderableOffset;
 	U32 m_lod;
 };
 
-typedef U32 PackedRenderableGpuViewInstance;
+typedef U32 PackedGpuSceneRenderableInstance;
 
 struct RenderableGpuView
 {

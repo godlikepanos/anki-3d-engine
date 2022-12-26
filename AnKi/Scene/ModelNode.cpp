@@ -193,14 +193,14 @@ void ModelNode::initRenderComponents()
 		}
 
 		// Upload to GPU scene
-		RenderableGpuView2 view = {};
-		view.m_worldTransformsOffset = getFirstComponentOfType<MoveComponent>().getTransformsGpuSceneOffset();
-		view.m_aabbOffset = getFirstComponentOfType<SpatialComponent>().getAabbGpuSceneOffset();
-		view.m_uniformsOffset = getFirstComponentOfType<ModelComponent>().getUniformsGpuSceneOffset(patchIdx);
-		view.m_geometryOffset =
-			getFirstComponentOfType<ModelComponent>().getMeshViewsGpuSceneOffset() + sizeof(MeshGpuView) * patchIdx;
+		GpuSceneRenderable renderable = {};
+		renderable.m_worldTransformsOffset = getFirstComponentOfType<MoveComponent>().getTransformsGpuSceneOffset();
+		renderable.m_aabbOffset = getFirstComponentOfType<SpatialComponent>().getAabbGpuSceneOffset();
+		renderable.m_uniformsOffset = getFirstComponentOfType<ModelComponent>().getUniformsGpuSceneOffset(patchIdx);
+		renderable.m_geometryOffset =
+			getFirstComponentOfType<ModelComponent>().getMeshViewsGpuSceneOffset() + sizeof(GpuSceneMesh) * patchIdx;
 		getExternalSubsystems().m_gpuSceneMicroPatcher->newCopy(getFrameMemoryPool(), rc.getGpuSceneViewOffset(),
-																sizeof(view), &view);
+																sizeof(renderable), &renderable);
 
 		// Init the proxy
 		RenderProxy& proxy = m_renderProxies[patchIdx];
@@ -228,26 +228,8 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		const ModelPatch& patch = modelc.getModelResource()->getModelPatches()[modelPatchIdx];
 		const SkinComponent& skinc = getFirstComponentOfType<SkinComponent>();
 
-		// Transforms
-		auto computeTranform = [&](const Transform& trf) -> Mat3x4 {
-			if(skinc.isEnabled())
-			{
-				return Mat3x4(trf);
-			}
-			else
-			{
-				// Bake the decompression in the model matrix
-				const Mat4 m4 = Mat4(trf) * m_renderProxies[modelPatchIdx].m_compressedToModelTransform;
-				const Mat3x4 out(m4);
-				return out;
-			}
-		};
-		Array<Mat3x4, kMaxInstanceCount> trfs;
-		Array<Mat3x4, kMaxInstanceCount> prevTrfs;
 		const MoveComponent& movec = getFirstComponentOfType<MoveComponent>();
-		trfs[0] = computeTranform(movec.getWorldTransform());
-		prevTrfs[0] = computeTranform(movec.getPreviousWorldTransform());
-		Bool moved = trfs[0] != prevTrfs[0];
+		Bool moved = movec.wasDirtyThisFrame();
 		for(U32 i = 1; i < instanceCount; ++i)
 		{
 			const ModelNode& otherNode = *static_cast<const RenderProxy*>(userData[i])->m_node;
@@ -257,67 +239,18 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 			ANKI_ASSERT(otherNodeModelPatchIdx == modelPatchIdx);
 
 			const MoveComponent& otherNodeMovec = otherNode.getFirstComponentOfType<MoveComponent>();
-			trfs[i] = computeTranform(otherNodeMovec.getWorldTransform());
-			prevTrfs[i] = computeTranform(otherNodeMovec.getPreviousWorldTransform());
 
-			moved = moved || (trfs[i] != prevTrfs[i]);
+			moved = moved || otherNodeMovec.wasDirtyThisFrame();
 		}
 
 		ctx.m_key.setVelocity(moved && ctx.m_key.getRenderingTechnique() == RenderingTechnique::kGBuffer);
 		ctx.m_key.setSkinned(skinc.isEnabled());
+
 		ModelRenderingInfo modelInf;
 		patch.getRenderingInfo(ctx.m_key, modelInf);
 
-		// Bones storage
-		if(skinc.isEnabled())
-		{
-			const U32 boneCount = skinc.getBoneTransforms().getSize();
-			RebarGpuMemoryToken token, tokenPrev;
-			void* trfs = ctx.m_rebarStagingPool->allocateFrame(boneCount * sizeof(Mat4), token);
-			memcpy(trfs, &skinc.getBoneTransforms()[0], boneCount * sizeof(Mat4));
-
-			trfs = ctx.m_rebarStagingPool->allocateFrame(boneCount * sizeof(Mat4), tokenPrev);
-			memcpy(trfs, &skinc.getPreviousFrameBoneTransforms()[0], boneCount * sizeof(Mat4));
-
-			cmdb->bindStorageBuffer(kMaterialSetLocal, kMaterialBindingBoneTransforms,
-									ctx.m_rebarStagingPool->getBuffer(), token.m_offset, token.m_range);
-
-			cmdb->bindStorageBuffer(kMaterialSetLocal, kMaterialBindingPreviousBoneTransforms,
-									ctx.m_rebarStagingPool->getBuffer(), tokenPrev.m_offset, tokenPrev.m_range);
-		}
-
 		// Program
 		cmdb->bindShaderProgram(modelInf.m_program);
-
-		// Uniforms
-		const Vec4 positionScaleAndTransform(
-			m_renderProxies[modelPatchIdx].m_compressedToModelTransform(0, 0),
-			m_renderProxies[modelPatchIdx].m_compressedToModelTransform.getTranslationPart().xyz());
-		RenderComponent::allocateAndSetupUniforms(
-			modelc.getModelResource()->getModelPatches()[modelPatchIdx].getMaterial(), ctx,
-			ConstWeakArray<Mat3x4>(&trfs[0], instanceCount), ConstWeakArray<Mat3x4>(&prevTrfs[0], instanceCount),
-			*ctx.m_rebarStagingPool, positionScaleAndTransform);
-
-		// Bind attributes & vertex buffers
-		for(VertexStreamId streamId :
-			EnumIterable<VertexStreamId>(VertexStreamId::kMeshRelatedFirst, VertexStreamId::kMeshRelatedCount))
-		{
-			if(modelInf.m_vertexBufferOffsets[streamId] == kMaxPtrSize)
-			{
-				continue;
-			}
-
-			const U32 attribLocation = U32(streamId);
-			const U32 bufferBinding = U32(streamId);
-			const Format fmt = kMeshRelatedVertexStreamFormats[streamId];
-			const U32 relativeOffset = 0;
-			const U32 vertexStride = getFormatInfo(fmt).m_texelSize;
-
-			cmdb->setVertexAttribute(attribLocation, bufferBinding, fmt, relativeOffset);
-
-			cmdb->bindVertexBuffer(bufferBinding, getExternalSubsystems().m_unifiedGeometryMemPool->getBuffer(),
-								   modelInf.m_vertexBufferOffsets[streamId], vertexStride, VertexStepRate::kVertex);
-		}
 
 		// Bind index buffer
 		cmdb->bindIndexBuffer(getExternalSubsystems().m_unifiedGeometryMemPool->getBuffer(),

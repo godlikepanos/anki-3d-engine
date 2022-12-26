@@ -9,18 +9,18 @@
 #pragma anki mutator ANIMATED_TEXTURE 0 1
 #pragma anki mutator LIGHT 0 1
 
+#define GPU_SCENE 1
 #include <AnKi/Shaders/ForwardShadingCommon.hlsl>
 
 struct VertIn
 {
-	[[vk::location(VertexStreamId::kParticlePosition)]] Vec3 m_position : POSITION;
-	[[vk::location(VertexStreamId::kParticleScale)]] RF32 m_scale : SCALE;
-	[[vk::location(VertexStreamId::kParticleAlpha)]] RF32 m_alpha : ALPHA;
-	U32 m_vertexId : SV_VERTEXID;
+	[[vk::location(0)]] PackedGpuSceneRenderableInstance m_gpuSceneRenderableInstance : INSTANCE;
+	U32 m_svVertexId : SV_VERTEXID;
 };
 
 struct VertOut
 {
+	nointerpolation U32 m_uniformsOffset : UNIS_OFFSET;
 	nointerpolation RF32 m_alpha : ALPHA;
 	Vec2 m_uv : TEXCOORD;
 	Vec3 m_worldPos : WORLD_POS;
@@ -35,28 +35,36 @@ struct VertOut
 #pragma anki member U32 m_diffuseMap
 #pragma anki struct end
 
-[[vk::binding(kMaterialBindingGlobalUniforms, kMaterialSetGlobal)]] ConstantBuffer<MaterialGlobalUniforms>
-	g_ankiGlobals;
-[[vk::binding(kMaterialBindingTrilinearRepeatSampler, kMaterialSetGlobal)]] SamplerState g_globalSampler;
-[[vk::binding(kMaterialBindingLocalUniforms, kMaterialSetLocal)]] ByteAddressBuffer g_localUniforms;
-[[vk::binding(kMaterialBindingRenderableGpuView, kMaterialSetLocal)]] StructuredBuffer<RenderableGpuView>
-	g_renderableGpuViews;
-
 #pragma anki start vert
 
 VertOut main(VertIn input)
 {
+	const U32 particleId = input.m_svVertexId / 6u;
+	const U32 vertexId = input.m_svVertexId % 6u;
+
+	const UnpackedGpuSceneRenderableInstance instance =
+		unpackRenderableGpuViewInstance(input.m_gpuSceneRenderableInstance);
+	const GpuSceneRenderable renderable = g_gpuScene.Load<GpuSceneRenderable>(instance.m_renderableOffset);
+	const GpuSceneParticles particles = g_gpuScene.Load<GpuSceneParticles>(renderable.m_geometryOffset);
+
+	U32 idx = particles.m_vertexOffsets[(U32)VertexStreamId::kParticlePosition] + particleId * sizeof(Vec3);
+	const Vec3 vertPos = g_gpuScene.Load<Vec3>(idx);
+	idx = particles.m_vertexOffsets[(U32)VertexStreamId::kParticleScale] + particleId * sizeof(F32);
+	const F32 vertScale = g_gpuScene.Load<F32>(idx);
+	idx = particles.m_vertexOffsets[(U32)VertexStreamId::kParticleColor] + particleId * sizeof(F32);
+	const F32 vertAlpha = g_gpuScene.Load<F32>(idx);
+
 	VertOut output;
 
-	output.m_uv = Vec2(input.m_vertexId & 1, input.m_vertexId >> 1);
+	output.m_uv = Vec2(vertexId & 1u, ((vertexId + 1u) / 3u) & 1u);
 
 	output.m_worldPos =
-		mul(g_ankiGlobals.m_cameraTransform, Vec4((output.m_uv - 0.5) * input.m_scale, 0.0, 0.0)) + input.m_position;
+		mul(g_globalUniforms.m_cameraTransform, Vec4((output.m_uv - 0.5) * vertScale, 0.0, 0.0)) + vertPos;
 
-	output.m_svPosition = Vec4(mul(g_renderableGpuViews[0].m_worldTransform, Vec4(output.m_worldPos, 1.0)), 1.0);
-	output.m_svPosition = mul(g_ankiGlobals.m_viewProjectionMatrix, output.m_svPosition);
+	output.m_svPosition = mul(g_globalUniforms.m_viewProjectionMatrix, Vec4(output.m_worldPos, 1.0));
 
-	output.m_alpha = input.m_alpha;
+	output.m_alpha = vertAlpha;
+	output.m_uniformsOffset = renderable.m_uniformsOffset;
 
 	return output;
 }
@@ -67,7 +75,8 @@ VertOut main(VertIn input)
 FragOut main(VertOut input)
 {
 	FragOut output = (FragOut)0;
-	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_localUniforms, 0u);
+	const AnKiLocalUniforms localUniforms =
+		loadAnKiLocalUniforms(g_gpuScene, WaveReadLaneFirst(input.m_uniformsOffset));
 
 #if ANIMATED_TEXTURE == 1
 	RVec4 texCol = readAnimatedTextureRgba(g_bindlessTextures2dArrayF32[localUniforms.m_diffuseMap], g_globalSampler,

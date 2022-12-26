@@ -357,6 +357,8 @@ void ProbeReflections::runGBuffer(RenderPassWorkContext& rgraphCtx)
 			args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care about prev mats
 			args.m_sampler = m_r->getSamplers().m_trilinearRepeat;
 			args.m_minLod = args.m_maxLod = kMaxLodCount - 1;
+			args.m_gpuSceneBuffer = getExternalSubsystems().m_gpuScenePool->getBuffer();
+			args.m_unifiedGeometryBuffer = getExternalSubsystems().m_unifiedGometryMemoryPool->getBuffer();
 
 			m_r->getSceneDrawer().drawRange(RenderingTechnique::kGBuffer, args,
 											rqueue.m_renderables.getBegin() + localStart,
@@ -544,6 +546,9 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 		TextureSubresourceInfo subresource(DepthStencilAspectBit::kDepth);
 		pass.newTextureDependency(m_ctx.m_gbufferDepthRt, TextureUsageBit::kAllFramebuffer, subresource);
+
+		pass.newBufferDependency(m_r->getGpuSceneBufferHandle(),
+								 BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead);
 	}
 
 	// Shadow pass. Optional
@@ -588,6 +593,9 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 		TextureSubresourceInfo subresource(DepthStencilAspectBit::kDepth);
 		pass.newTextureDependency(m_ctx.m_shadowMapRt, TextureUsageBit::kAllFramebuffer, subresource);
+
+		pass.newBufferDependency(m_r->getGpuSceneBufferHandle(),
+								 BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead);
 	}
 	else
 	{
@@ -735,6 +743,8 @@ void ProbeReflections::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 			args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
 			args.m_sampler = m_r->getSamplers().m_trilinearRepeatAniso;
 			args.m_minLod = args.m_maxLod = kMaxLodCount - 1;
+			args.m_gpuSceneBuffer = getExternalSubsystems().m_gpuScenePool->getBuffer();
+			args.m_unifiedGeometryBuffer = getExternalSubsystems().m_unifiedGometryMemoryPool->getBuffer();
 
 			m_r->getSceneDrawer().drawRange(RenderingTechnique::kShadow, args,
 											cascadeRenderQueue.m_renderables.getBegin() + localStart,

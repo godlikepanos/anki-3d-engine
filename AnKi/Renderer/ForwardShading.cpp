@@ -35,19 +35,21 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 		cmdb->setBlendFactors(0, BlendFactor::kSrcAlpha, BlendFactor::kOneMinusSrcAlpha);
 
 		const ClusteredShadingContext& rsrc = ctx.m_clusteredShading;
-		const U32 set = kMaterialSetGlobal;
-		cmdb->bindSampler(set, kMaterialBindingLinearClampSampler, m_r->getSamplers().m_trilinearClamp);
-		cmdb->bindSampler(set, kMaterialBindingShadowSampler, m_r->getSamplers().m_trilinearClampShadow);
+		const U32 set = U32(MaterialSet::kGlobal);
+		cmdb->bindSampler(set, U32(MaterialBinding::kLinearClampSampler), m_r->getSamplers().m_trilinearClamp);
+		cmdb->bindSampler(set, U32(MaterialBinding::kShadowSampler), m_r->getSamplers().m_trilinearClampShadow);
 
-		rgraphCtx.bindTexture(set, kMaterialBindingDepthRt, m_r->getDepthDownscale().getHiZRt(), kHiZHalfSurface);
-		rgraphCtx.bindColorTexture(set, kMaterialBindingLightVolume, m_r->getVolumetricLightingAccumulation().getRt());
+		rgraphCtx.bindTexture(set, U32(MaterialBinding::kDepthRt), m_r->getDepthDownscale().getHiZRt(),
+							  kHiZHalfSurface);
+		rgraphCtx.bindColorTexture(set, U32(MaterialBinding::kLightVolume),
+								   m_r->getVolumetricLightingAccumulation().getRt());
 
-		bindUniforms(cmdb, set, kMaterialBindingClusterShadingUniforms, rsrc.m_clusteredShadingUniformsToken);
-		bindUniforms(cmdb, set, kMaterialBindingClusterShadingLights, rsrc.m_pointLightsToken);
-		bindUniforms(cmdb, set, kMaterialBindingClusterShadingLights + 1, rsrc.m_spotLightsToken);
-		rgraphCtx.bindColorTexture(set, kMaterialBindingClusterShadingLights + 2,
+		bindUniforms(cmdb, set, U32(MaterialBinding::kClusterShadingUniforms), rsrc.m_clusteredShadingUniformsToken);
+		bindUniforms(cmdb, set, U32(MaterialBinding::kClusterShadingLights), rsrc.m_pointLightsToken);
+		bindUniforms(cmdb, set, U32(MaterialBinding::kClusterShadingLights) + 1, rsrc.m_spotLightsToken);
+		rgraphCtx.bindColorTexture(set, U32(MaterialBinding::kClusterShadingLights) + 2,
 								   m_r->getShadowMapping().getShadowmapRt());
-		bindStorage(cmdb, set, kMaterialBindingClusters, rsrc.m_clustersToken);
+		bindStorage(cmdb, set, U32(MaterialBinding::kClusters), rsrc.m_clustersToken);
 
 		RenderableDrawerArguments args;
 		args.m_viewMatrix = ctx.m_matrices.m_view;
@@ -55,6 +57,8 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 		args.m_viewProjectionMatrix = ctx.m_matrices.m_viewProjectionJitter;
 		args.m_previousViewProjectionMatrix = ctx.m_prevMatrices.m_viewProjectionJitter; // Not sure about that
 		args.m_sampler = m_r->getSamplers().m_trilinearRepeatAnisoResolutionScalingBias;
+		args.m_gpuSceneBuffer = getExternalSubsystems().m_gpuScenePool->getBuffer();
+		args.m_unifiedGeometryBuffer = getExternalSubsystems().m_unifiedGometryMemoryPool->getBuffer();
 
 		// Start drawing
 		m_r->getSceneDrawer().drawRange(RenderingTechnique::kForward, args,

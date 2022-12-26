@@ -15,7 +15,7 @@ MoveComponent::MoveComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
 	, m_ignoreLocalTransform(false)
 	, m_ignoreParentTransform(false)
-	, m_dirtyLastFrame(true)
+	, m_dirtyThisFrame(true)
 {
 	getExternalSubsystems(*node).m_gpuSceneMemoryPool->allocate(sizeof(Mat3x4) * 2, alignof(F32), m_gpuSceneTransforms);
 	markForUpdate();
@@ -84,7 +84,8 @@ Error MoveComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	}
 
 	// Micro patch
-	if(dirty || m_dirtyLastFrame)
+	const Bool dirtyLastFrame = m_dirtyThisFrame;
+	if(dirty || dirtyLastFrame)
 	{
 		Array<Mat3x4, 2> trfs;
 		trfs[0] = Mat3x4(m_wtrf);
@@ -93,7 +94,7 @@ Error MoveComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		info.m_gpuSceneMicroPatcher->newCopy(*info.m_framePool, m_gpuSceneTransforms.m_offset, sizeof(trfs), &trfs[0]);
 	}
 
-	m_dirtyLastFrame = dirty;
+	m_dirtyThisFrame = dirty;
 
 	return Error::kNone;
 }

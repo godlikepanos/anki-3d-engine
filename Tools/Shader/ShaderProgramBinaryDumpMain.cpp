@@ -14,10 +14,11 @@ using namespace anki;
 static const char* kUsage = R"(Dump the shader binary to stdout
 Usage: %s [options] input_shader_program_binary
 Options:
--stats : Print performance statistics for all shaders. By default it doesn't
+-stats      : Print performance statistics for all shaders. By default it doesn't
+-only-stats : Print only stats
 )";
 
-static Error parseCommandLineArgs(WeakArray<char*> argv, Bool& dumpStats, StringRaii& filename)
+static Error parseCommandLineArgs(WeakArray<char*> argv, Bool& dumpStats, Bool& dumpBinary, StringRaii& filename)
 {
 	// Parse config
 	if(argv.getSize() < 2)
@@ -26,12 +27,18 @@ static Error parseCommandLineArgs(WeakArray<char*> argv, Bool& dumpStats, String
 	}
 
 	dumpStats = false;
+	dumpBinary = true;
 	filename = argv[argv.getSize() - 1];
 
 	for(U32 i = 1; i < argv.getSize() - 1; i++)
 	{
-		if(strcmp(argv[i], "-stats") == 0)
+		if(CString(argv[i]) == "-stats")
 		{
+			dumpStats = true;
+		}
+		else if(CString(argv[i]) == "-only-stats")
+		{
+			dumpBinary = false;
 			dumpStats = true;
 		}
 	}
@@ -185,7 +192,7 @@ Error dumpStats(const ShaderProgramBinary& bin)
 
 				// AMD
 				RgaOutput rgaOut = {};
-#if 0
+#if 1
 				err = runRadeonGpuAnalyzer(
 #	if ANKI_OS_LINUX
 					ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Linux64/RadeonGpuAnalyzer/rga",
@@ -306,17 +313,20 @@ Error dumpStats(const ShaderProgramBinary& bin)
 	return Error::kNone;
 }
 
-Error dump(CString fname, Bool bDumpStats)
+Error dump(CString fname, Bool bDumpStats, Bool dumpBinary)
 {
 	HeapMemoryPool pool(allocAligned, nullptr);
 
 	ShaderProgramBinaryWrapper binw(&pool);
 	ANKI_CHECK(binw.deserializeFromFile(fname));
 
-	StringRaii txt(&pool);
-	dumpShaderProgramBinary(binw.getBinary(), txt);
+	if(dumpBinary)
+	{
+		StringRaii txt(&pool);
+		dumpShaderProgramBinary(binw.getBinary(), txt);
 
-	printf("%s\n", txt.cstr());
+		printf("%s\n", txt.cstr());
+	}
 
 	if(bDumpStats)
 	{
@@ -331,13 +341,14 @@ int main(int argc, char** argv)
 	HeapMemoryPool pool(allocAligned, nullptr);
 	StringRaii filename(&pool);
 	Bool dumpStats;
-	if(parseCommandLineArgs(WeakArray<char*>(argv, argc), dumpStats, filename))
+	Bool dumpBinary;
+	if(parseCommandLineArgs(WeakArray<char*>(argv, argc), dumpStats, dumpBinary, filename))
 	{
 		ANKI_LOGE(kUsage, argv[0]);
 		return 1;
 	}
 
-	const Error err = dump(filename, dumpStats);
+	const Error err = dump(filename, dumpStats, dumpBinary);
 	if(err)
 	{
 		ANKI_LOGE("Can't dump due to an error. Bye");

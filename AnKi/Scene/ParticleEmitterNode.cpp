@@ -100,6 +100,14 @@ Error ParticleEmitterNode::frameUpdate([[maybe_unused]] Second prevUpdateTime, [
 	{
 		RenderComponent& rc = getFirstComponentOfType<RenderComponent>();
 		rc.setFlagsFromMaterial(pec.getParticleEmitterResource()->getMaterial());
+
+		// GPU scene update
+		GpuSceneRenderable renderable = {};
+		renderable.m_worldTransformsOffset = getFirstComponentOfType<MoveComponent>().getTransformsGpuSceneOffset();
+		renderable.m_uniformsOffset = pec.getGpuSceneUniforms();
+		renderable.m_geometryOffset = pec.getGpuSceneParticlesOffset();
+		getExternalSubsystems().m_gpuSceneMicroPatcher->newCopy(getFrameMemoryPool(), rc.getGpuSceneViewOffset(),
+																sizeof(renderable), &renderable);
 	}
 
 	return Error::kNone;

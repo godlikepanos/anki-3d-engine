@@ -372,6 +372,7 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	renderInit.m_globTimestamp = &m_globalTimestamp;
 	renderInit.m_gpuScenePool = m_gpuSceneMemPool;
 	renderInit.m_gpuSceneMicroPatcher = m_gpuSceneMicroPatcher;
+	renderInit.m_unifiedGometryMemoryPool = m_unifiedGometryMemPool;
 	m_renderer = newInstance<MainRenderer>(m_mainPool);
 	ANKI_CHECK(m_renderer->init(renderInit));
 

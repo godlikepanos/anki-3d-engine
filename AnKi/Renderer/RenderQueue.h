@@ -61,6 +61,8 @@ public:
 	/// Unless m_mergeKey is zero.
 	U64 m_mergeKey;
 
+	U32 m_renderableOffset;
+
 	F32 m_distanceFromCamera; ///< Don't set this. Visibility will.
 
 	U8 m_lod; ///< Don't set this. Visibility will.

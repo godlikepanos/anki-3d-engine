@@ -154,6 +154,11 @@ public:
 	Format getHdrFormat() const;
 	Format getDepthNoStencilFormat() const;
 
+	BufferHandle getGpuSceneBufferHandle() const
+	{
+		return m_runCtx.m_gpuSceneHandle;
+	}
+
 	/// @name Debug render targets
 	/// @{
 

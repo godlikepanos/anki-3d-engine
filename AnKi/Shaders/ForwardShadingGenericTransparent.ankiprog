@@ -9,8 +9,8 @@
 #pragma anki mutator TEXTURE 0 1
 #pragma anki mutator LIGHT 0 1
 
+#define GPU_SCENE 1
 #include <AnKi/Shaders/ForwardShadingCommon.hlsl>
-#include <AnKi/Shaders/Functions.hlsl>
 
 #pragma anki reflect AnKiLocalUniforms
 #pragma anki struct AnKiLocalUniforms
@@ -19,25 +19,18 @@
 #pragma anki member RVec4 m_colorBias
 #pragma anki struct end
 
-[[vk::binding(kMaterialBindingGlobalUniforms, kMaterialSetGlobal)]] ConstantBuffer<MaterialGlobalUniforms>
-	g_globalUniforms;
-[[vk::binding(kMaterialBindingTrilinearRepeatSampler, kMaterialSetGlobal)]] SamplerState g_globalSampler;
-[[vk::binding(kMaterialBindingLocalUniforms, kMaterialSetLocal)]] ByteAddressBuffer g_localUniforms;
-[[vk::binding(kMaterialBindingRenderableGpuView, kMaterialSetLocal)]] StructuredBuffer<RenderableGpuView>
-	g_renderableGpuViews;
-
 struct VertIn
 {
-	[[vk::location(VertexStreamId::kPosition)]] Vec3 m_modelPos : POSITION;
-	[[vk::location(VertexStreamId::kUv)]] Vec2 m_uv : TEXCOORD;
-	U32 m_svInstanceId : SV_INSTANCEID;
+	[[vk::location(0)]] PackedGpuSceneRenderableInstance m_gpuSceneRenderableInstance : INSTANCE;
+	U32 m_svVertexId : SV_VERTEXID;
 };
 
 struct VertOut
 {
-	[[vk::location(0)]] Vec2 m_uv : TEXCOORD;
-	[[vk::location(1)]] Vec3 m_worldPosition : WORLD_POSITION;
+	Vec2 m_uv : TEXCOORD;
+	Vec3 m_worldPosition : WORLD_POSITION;
 	Vec4 m_svPosition : SV_POSITION;
+	nointerpolation U32 m_uniformsOffset : UNIFORMS_OFFSET;
 };
 
 #pragma anki start vert
@@ -46,12 +39,19 @@ VertOut main(VertIn input)
 {
 	VertOut output;
 
-	output.m_worldPosition =
-		mul(g_renderableGpuViews[input.m_svInstanceId].m_worldTransform, Vec4(input.m_modelPos, 1.0));
+	const UnpackedGpuSceneRenderableInstance instance =
+		unpackRenderableGpuViewInstance(input.m_gpuSceneRenderableInstance);
+	const GpuSceneRenderable renderable = g_gpuScene.Load<GpuSceneRenderable>(instance.m_renderableOffset);
+	const GpuSceneMesh mesh = g_gpuScene.Load<GpuSceneMesh>(renderable.m_geometryOffset);
+	const Mat3x4 worldTransform = g_gpuScene.Load<Mat3x4>(renderable.m_worldTransformsOffset);
+	const UnpackedMeshVertex vertex = loadVertex(mesh, instance.m_lod, input.m_svVertexId, false);
+
+	output.m_worldPosition = mul(worldTransform, Vec4(vertex.m_position, 1.0));
 
 	output.m_svPosition = mul(g_globalUniforms.m_viewProjectionMatrix, Vec4(output.m_worldPosition, 1.0));
 
-	output.m_uv = input.m_uv;
+	output.m_uv = vertex.m_uv;
+	output.m_uniformsOffset = renderable.m_uniformsOffset;
 
 	return output;
 }
@@ -64,7 +64,8 @@ FragOut main(VertOut input)
 	ANKI_MAYBE_UNUSED(input);
 	FragOut output;
 
-	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_localUniforms, 0u);
+	const AnKiLocalUniforms localUniforms =
+		loadAnKiLocalUniforms(g_gpuScene, WaveReadLaneFirst(input.m_uniformsOffset));
 
 	output.m_color = RVec4(1.0, 1.0, 1.0, 1.0);
 

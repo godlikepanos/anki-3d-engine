@@ -57,6 +57,16 @@ public:
 		return m_particleEmitterResource.isCreated();
 	}
 
+	U32 getGpuSceneParticlesOffset() const
+	{
+		return U32(m_gpuSceneParticles.m_offset);
+	}
+
+	U32 getGpuSceneUniforms() const
+	{
+		return U32(m_gpuSceneUniforms.m_offset);
+	}
+
 private:
 	class ParticleBase;
 	class SimpleParticle;
@@ -69,8 +79,6 @@ private:
 		kPhysicsEngine
 	};
 
-	static constexpr U32 kVertexSize = 5 * sizeof(F32);
-
 	SceneNode* m_node = nullptr;
 
 	ParticleEmitterProperties m_props;
@@ -80,21 +88,26 @@ private:
 	DynamicArray<PhysicsParticle> m_physicsParticles;
 	Second m_timeLeftForNextEmission = 0.0;
 	U32 m_aliveParticleCount = 0;
+	Bool m_resourceUpdated = true;
 
 	Transform m_transform = Transform::getIdentity();
 	Aabb m_worldBoundingVolume = Aabb(Vec3(-1.0f), Vec3(1.0f));
 
-	U32 m_vertBuffSize = 0;
-	void* m_verts = nullptr;
-
 	ImageResourcePtr m_dbgImage;
+
+	SegregatedListsGpuMemoryPoolToken m_gpuScenePositions;
+	SegregatedListsGpuMemoryPoolToken m_gpuSceneAlphas;
+	SegregatedListsGpuMemoryPoolToken m_gpuSceneScales;
+	SegregatedListsGpuMemoryPoolToken m_gpuSceneParticles;
+	SegregatedListsGpuMemoryPoolToken m_gpuSceneUniforms;
 
 	SimulationType m_simulationType = SimulationType::kUndefined;
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated);
 
 	template<typename TParticle>
-	void simulate(Second prevUpdateTime, Second crntTime, WeakArray<TParticle> particles);
+	void simulate(Second prevUpdateTime, Second crntTime, WeakArray<TParticle> particles, Vec3*& positions,
+				  F32*& scales, F32*& alphas);
 
 	void draw(RenderQueueDrawContext& ctx) const;
 };

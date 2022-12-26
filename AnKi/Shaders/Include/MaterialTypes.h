@@ -60,20 +60,23 @@ enum class MaterialBinding : U32
 	kGlobalUniforms,
 	kGpuScene,
 
-	// Texture buffer bindings pointing to universal geom buffer:
-	kUnifiedGeometry_R16G16B16_Unorm,
-	kUnifiedGeometry_R8G8B8A8_Snorm,
+	// Texture buffer bindings pointing to unified geom buffer:
+	kUnifiedGeometry_R32_Sfloat,
 	kUnifiedGeometry_R32G32_Sfloat,
+	kUnifiedGeometry_R32G32B32_Sfloat,
+	kUnifiedGeometry_R32G32B32A32_Sfloat,
+	kUnifiedGeometry_R16G16B16A16_Unorm,
+	kUnifiedGeometry_R8G8B8A8_Snorm,
 	kUnifiedGeometry_R8G8B8A8_Uint,
 
 	// For FW shading:
 	kLinearClampSampler,
+	kShadowSampler,
 	kDepthRt,
 	kLightVolume,
 	kClusterShadingUniforms,
 	kClusterShadingLights,
-	kClusters,
-	kShadowSampler,
+	kClusters = kClusterShadingLights + 3,
 
 	kCount,
 	kFirst = 0

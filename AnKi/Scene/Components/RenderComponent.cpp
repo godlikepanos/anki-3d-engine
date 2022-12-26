@@ -16,8 +16,8 @@ ANKI_SCENE_COMPONENT_STATICS(RenderComponent)
 RenderComponent::RenderComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
 {
-	getExternalSubsystems(*node).m_gpuSceneMemoryPool->allocate(sizeof(RenderableGpuView2), sizeof(U32),
-																m_gpuSceneRenderableGpuView);
+	getExternalSubsystems(*node).m_gpuSceneMemoryPool->allocate(sizeof(GpuSceneRenderable), sizeof(U32),
+																m_gpuSceneRenderable);
 }
 
 void RenderComponent::allocateAndSetupUniforms(const MaterialResourcePtr& mtl, const RenderQueueDrawContext& ctx,
@@ -117,7 +117,7 @@ void RenderComponent::allocateAndSetupUniforms(const MaterialResourcePtr& mtl, c
 
 void RenderComponent::onDestroy(SceneNode& node)
 {
-	getExternalSubsystems(node).m_gpuSceneMemoryPool->free(m_gpuSceneRenderableGpuView);
+	getExternalSubsystems(node).m_gpuSceneMemoryPool->free(m_gpuSceneRenderable);
 }
 
 } // end namespace anki
