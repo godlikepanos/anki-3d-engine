@@ -88,21 +88,21 @@ void* RebarStagingGpuMemoryPool::allocateFrame(PtrSize size, RebarGpuMemoryToken
 void* RebarStagingGpuMemoryPool::tryAllocateFrame(PtrSize origSize, RebarGpuMemoryToken& token)
 {
 	const PtrSize size = getAlignedRoundUp(m_alignment, origSize);
-	const PtrSize offset = m_offset.fetchAdd(size);
 
-	void* address;
-	if(ANKI_UNLIKELY(offset + origSize > m_bufferSize))
+	// Try in a loop because we may end up with an allocation its offset crosses the buffer's end
+	PtrSize offset;
+	Bool done = false;
+	do
 	{
-		token = {};
-		address = nullptr;
-	}
-	else
-	{
-		address = m_mappedMem + offset;
+		offset = m_offset.fetchAdd(size) % m_bufferSize;
+		const PtrSize end = (offset + origSize) % (m_bufferSize + 1);
 
-		token.m_offset = offset;
-		token.m_range = origSize;
-	}
+		done = offset < end;
+	} while(!done);
+
+	void* address = m_mappedMem + offset;
+	token.m_offset = offset;
+	token.m_range = origSize;
 
 	return address;
 }
@@ -111,22 +111,12 @@ PtrSize RebarStagingGpuMemoryPool::endFrame()
 {
 	const PtrSize crntOffset = m_offset.getNonAtomically();
 
-	PtrSize usedMemory;
-	if(crntOffset >= m_previousFrameEndOffset)
-	{
-		usedMemory = crntOffset - m_previousFrameEndOffset;
-	}
-	else
-	{
-		usedMemory = crntOffset;
-	}
-
+	const PtrSize usedMemory = crntOffset - m_previousFrameEndOffset;
 	m_previousFrameEndOffset = crntOffset;
 
-	m_frameCount = (m_frameCount + 1) % kMaxFramesInFlight;
-	if(m_frameCount == 0)
+	if(usedMemory >= PtrSize(0.8 * F64(m_bufferSize / kMaxFramesInFlight)))
 	{
-		m_offset.setNonAtomically(0);
+		ANKI_CORE_LOGW("Frame used more that 80% of its safe limit of ReBAR memory");
 	}
 
 	ANKI_TRACE_INC_COUNTER(ReBarUsedMemory, usedMemory);
