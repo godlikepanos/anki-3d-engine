@@ -362,6 +362,7 @@ constexpr F16 kEpsilonhF16 = (F16)0.0001f; // Divisions by this should be OK acc
 #	endif
 constexpr RF32 kEpsilonRF32 = 0.0001f;
 
+constexpr RF32 kMaxRF32 = 65504.0f; // Max half float value according to wikipedia
 constexpr U32 kMaxU32 = 0xFFFFFFFFu;
 constexpr F32 kMaxF32 = 3.402823e+38;
 #	if ANKI_SUPPORTS_16BIT_TYPES

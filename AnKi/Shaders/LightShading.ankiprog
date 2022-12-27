@@ -3,16 +3,18 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki hlsl
+
 #pragma anki mutator USE_SHADOW_LAYERS 0 1
 
 #pragma anki start vert
-#include <AnKi/Shaders/QuadVert.glsl>
+#include <AnKi/Shaders/QuadVert.hlsl>
 #pragma anki end
 
 #pragma anki start frag
-#include <AnKi/Shaders/PackFunctions.glsl>
-#include <AnKi/Shaders/Functions.glsl>
-#include <AnKi/Shaders/RtShadows.glsl>
+#include <AnKi/Shaders/PackFunctions.hlsl>
+#include <AnKi/Shaders/Functions.hlsl>
+#include <AnKi/Shaders/RtShadows.hlsl>
 
 ANKI_SPECIALIZATION_CONSTANT_UVEC2(kTileCount, 0u);
 ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 2u);
@@ -22,80 +24,75 @@ ANKI_SPECIALIZATION_CONSTANT_U32(kTileSize, 3u);
 #define CLUSTERED_SHADING_UNIFORMS_BINDING 0u
 #define CLUSTERED_SHADING_LIGHTS_BINDING 1u
 #define CLUSTERED_SHADING_CLUSTERS_BINDING 4u
-#include <AnKi/Shaders/ClusteredShadingCommon.glsl>
+#include <AnKi/Shaders/ClusteredShadingCommon.hlsl>
 
-layout(set = 0, binding = 5) uniform sampler u_nearestAnyClampSampler;
-layout(set = 0, binding = 6) uniform sampler u_trilinearClampSampler;
+[[vk::binding(5)]] uniform SamplerState g_nearestAnyClampSampler;
+[[vk::binding(6)]] uniform SamplerState g_trilinearClampSampler;
 
-layout(set = 0, binding = 7) uniform ANKI_RP texture2D u_gbuffer0Tex;
-layout(set = 0, binding = 8) uniform ANKI_RP texture2D u_gbuffer1Tex;
-layout(set = 0, binding = 9) uniform ANKI_RP texture2D u_gbuffer2Tex;
-layout(set = 0, binding = 10) uniform texture2D u_msDepthRt;
+[[vk::binding(7)]] uniform Texture2D<RVec4> g_gbuffer0Tex;
+[[vk::binding(8)]] uniform Texture2D<RVec4> g_gbuffer1Tex;
+[[vk::binding(9)]] uniform Texture2D<RVec4> g_gbuffer2Tex;
+[[vk::binding(10)]] uniform Texture2D g_depthTex;
 #if USE_SHADOW_LAYERS
-layout(set = 0, binding = 11) uniform utexture2D u_shadowLayersTex;
+[[vk::binding(11)]] uniform Texture2D<UVec4> g_shadowLayersTex;
 #else
-layout(set = 0, binding = 12) uniform ANKI_RP texture2D u_resolvedSm;
+[[vk::binding(12)]] uniform Texture2D<RVec4> g_resolvedShadowsTex;
 #endif
-
-layout(location = 0) in Vec2 in_uv;
-
-layout(location = 0) out ANKI_RP Vec3 out_color;
 
 // Common code for lighting
 #define LIGHTING_COMMON_BRDF() \
-	const ANKI_RP Vec3 frag2Light = light.m_position - worldPos; \
-	const ANKI_RP Vec3 l = normalize(frag2Light); \
-	const ANKI_RP Vec3 specC = specularIsotropicLobe(gbuffer, viewDir, l); \
-	const ANKI_RP Vec3 diffC = diffuseLobe(gbuffer.m_diffuse); \
-	const ANKI_RP F32 att = computeAttenuationFactor(light.m_squareRadiusOverOne, frag2Light); \
-	ANKI_RP F32 lambert = max(0.0, dot(gbuffer.m_normal, l));
+	const RVec3 frag2Light = light.m_position - worldPos; \
+	const RVec3 l = normalize(frag2Light); \
+	const RVec3 specC = specularIsotropicLobe(gbuffer, viewDir, l); \
+	const RVec3 diffC = diffuseLobe(gbuffer.m_diffuse); \
+	const RF32 att = computeAttenuationFactor(light.m_squareRadiusOverOne, frag2Light); \
+	RF32 lambert = max(0.0, dot(gbuffer.m_normal, l));
 
-void main()
+RVec3 main(Vec4 svPosition : SV_POSITION, Vec2 uv : TEXCOORD) : SV_TARGET0
 {
-	const F32 depth = textureLod(u_msDepthRt, u_nearestAnyClampSampler, in_uv, 0.0).r;
-	const Vec2 ndc = UV_TO_NDC(in_uv);
+	const F32 depth = g_depthTex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0).r;
+	const Vec2 ndc = uvToNdc(uv);
 
 	if(depth == 1.0)
 	{
-		out_color = Vec3(0.0);
-		return;
+		return RVec3(0.0, 0.0, 0.0);
 	}
 
 	// Get world position
-	const Vec4 worldPos4 = u_clusteredShading.m_matrices.m_invertedViewProjectionJitter * Vec4(ndc, depth, 1.0);
+	const Vec4 worldPos4 = mul(g_clusteredShading.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
 	// Get the cluster
-	Cluster cluster = getClusterFragCoord(Vec3(gl_FragCoord.xy, depth), kTileSize, kTileCount, kZSplitCount,
-										  u_clusteredShading.m_zSplitMagic.x, u_clusteredShading.m_zSplitMagic.y);
+	Cluster cluster = getClusterFragCoord(Vec3(svPosition.xy, depth), kTileSize, kTileCount, kZSplitCount,
+										  g_clusteredShading.m_zSplitMagic.x, g_clusteredShading.m_zSplitMagic.y);
 
-	// out_color = clusterHeatmap(cluster, 1u << kClusterObjectTypePointLight); return;
+	// return clusterHeatmap(cluster, 1u << kClusterObjectTypePointLight);
 
 	// Decode GBuffer
-	GbufferInfo gbuffer;
-	unpackGBufferNoVelocity(textureLod(u_gbuffer0Tex, u_nearestAnyClampSampler, in_uv, 0.0),
-							textureLod(u_gbuffer1Tex, u_nearestAnyClampSampler, in_uv, 0.0),
-							textureLod(u_gbuffer2Tex, u_nearestAnyClampSampler, in_uv, 0.0), gbuffer);
+	GbufferInfo gbuffer = (GbufferInfo)0;
+	unpackGBufferNoVelocity(g_gbuffer0Tex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0),
+							g_gbuffer1Tex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0),
+							g_gbuffer2Tex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0), gbuffer);
 	gbuffer.m_subsurface = max(gbuffer.m_subsurface, kSubsurfaceMin);
 
 	// SM
 #if USE_SHADOW_LAYERS
-	ANKI_RP F32 resolvedSm[kMaxRtShadowLayers];
-	unpackRtShadows(textureLod(u_shadowLayersTex, u_nearestAnyClampSampler, in_uv, 0.0), resolvedSm);
+	RF32 resolvedSm[kMaxRtShadowLayers];
+	unpackRtShadows(g_shadowLayersTex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0), resolvedSm);
 #else
-	ANKI_RP Vec4 resolvedSm = textureLod(u_resolvedSm, u_trilinearClampSampler, in_uv, 0.0);
+	RVec4 resolvedSm = g_resolvedShadowsTex.SampleLevel(g_trilinearClampSampler, uv, 0.0);
 	U32 resolvedSmIdx = 0u;
 #endif
 
 	// Ambient and emissive color
-	out_color = gbuffer.m_emission;
+	RVec3 outColor = gbuffer.m_emission;
 
 	// Dir light
-	const ANKI_RP Vec3 viewDir = normalize(u_clusteredShading.m_cameraPosition - worldPos);
-	const DirectionalLight dirLight = u_clusteredShading.m_directionalLight;
+	const RVec3 viewDir = normalize(g_clusteredShading.m_cameraPosition - worldPos);
+	const DirectionalLight dirLight = g_clusteredShading.m_directionalLight;
 	if(dirLight.m_active != 0u)
 	{
-		ANKI_RP F32 shadowFactor;
+		RF32 shadowFactor;
 		if(dirLight.m_shadowCascadeCount > 0u)
 		{
 #if USE_SHADOW_LAYERS
@@ -110,44 +107,44 @@ void main()
 			shadowFactor = 1.0;
 		}
 
-		const ANKI_RP Vec3 l = -dirLight.m_direction;
+		const RVec3 l = -dirLight.m_direction;
 
-		const ANKI_RP F32 lambert = max(gbuffer.m_subsurface, dot(l, gbuffer.m_normal));
+		const RF32 lambert = max(gbuffer.m_subsurface, dot(l, gbuffer.m_normal));
 
-		const ANKI_RP Vec3 diffC = diffuseLobe(gbuffer.m_diffuse);
-		const ANKI_RP Vec3 specC = specularIsotropicLobe(gbuffer, viewDir, l);
+		const RVec3 diffC = diffuseLobe(gbuffer.m_diffuse);
+		const RVec3 specC = specularIsotropicLobe(gbuffer, viewDir, l);
 
-		out_color += (diffC + specC) * dirLight.m_diffuseColor * (shadowFactor * lambert);
+		outColor += (diffC + specC) * dirLight.m_diffuseColor * (shadowFactor * lambert);
 	}
 
 	// Point lights
-	[[dont_unroll]] while(cluster.m_pointLightsMask != ExtendedClusterObjectMask(0))
+	[loop] while(cluster.m_pointLightsMask != 0)
 	{
-		const I32 idx = findLSB2(cluster.m_pointLightsMask);
+		const I32 idx = firstbitlow2(cluster.m_pointLightsMask);
 		cluster.m_pointLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
-		const PointLight light = u_pointLights2[idx];
+		const PointLight light = g_pointLights[idx];
 
 		LIGHTING_COMMON_BRDF();
 
 		[branch] if(light.m_shadowAtlasTileScale >= 0.0)
 		{
 #if USE_SHADOW_LAYERS
-			const ANKI_RP F32 shadow = resolvedSm[light.m_shadowLayer];
+			const RF32 shadow = resolvedSm[light.m_shadowLayer];
 #else
-			const ANKI_RP F32 shadow = resolvedSm[resolvedSmIdx++];
+			const RF32 shadow = resolvedSm[resolvedSmIdx++];
 #endif
 			lambert *= shadow;
 		}
 
-		out_color += (diffC + specC) * light.m_diffuseColor * (att * max(gbuffer.m_subsurface, lambert));
+		outColor += (diffC + specC) * light.m_diffuseColor * (att * max(gbuffer.m_subsurface, lambert));
 	}
 
 	// Spot lights
-	[[dont_unroll]] while(cluster.m_spotLightsMask != ExtendedClusterObjectMask(0))
+	[loop] while(cluster.m_spotLightsMask != 0)
 	{
-		const I32 idx = findLSB2(cluster.m_spotLightsMask);
+		const I32 idx = firstbitlow2(cluster.m_spotLightsMask);
 		cluster.m_spotLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
-		const SpotLight light = u_spotLights[idx];
+		const SpotLight light = g_spotLights[idx];
 
 		LIGHTING_COMMON_BRDF();
 
@@ -156,16 +153,17 @@ void main()
 		[branch] if(light.m_shadowLayer != kMaxU32)
 		{
 #if USE_SHADOW_LAYERS
-			const ANKI_RP F32 shadow = resolvedSm[light.m_shadowLayer];
+			const RF32 shadow = resolvedSm[light.m_shadowLayer];
 #else
-			const ANKI_RP F32 shadow = resolvedSm[resolvedSmIdx++];
+			const RF32 shadow = resolvedSm[resolvedSmIdx++];
 #endif
 			lambert *= shadow;
 		}
 
-		out_color += (diffC + specC) * light.m_diffuseColor * (att * spot * max(gbuffer.m_subsurface, lambert));
+		outColor += (diffC + specC) * light.m_diffuseColor * (att * spot * max(gbuffer.m_subsurface, lambert));
 	}
 
-	out_color = saturateRp(out_color);
+	outColor = min(outColor, RVec3(kMaxRF32, kMaxRF32, kMaxRF32));
+	return outColor;
 }
 #pragma anki end
