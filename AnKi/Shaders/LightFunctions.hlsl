@@ -100,7 +100,7 @@ RVec3 specularIsotropicLobe(GbufferInfo gbuffer, Vec3 viewDir, Vec3 frag2Light)
 	return F * (V * D);
 }
 
-Vec3 specularDFG(Vec3 F0, F32 roughness, Texture2D integrationLut, SamplerState integrationLutSampler, F32 NoV)
+Vec3 specularDFG(RVec3 F0, RF32 roughness, Texture2D<RVec4> integrationLut, SamplerState integrationLutSampler, F32 NoV)
 {
 	const Vec2 envBRDF = integrationLut.SampleLevel(integrationLutSampler, Vec2(roughness, NoV), 0.0).xy;
 	return lerp(envBRDF.xxx, envBRDF.yyy, F0);

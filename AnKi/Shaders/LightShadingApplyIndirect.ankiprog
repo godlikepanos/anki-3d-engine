@@ -3,92 +3,87 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki hlsl
+
 #pragma anki start vert
-#include <AnKi/Shaders/QuadVert.glsl>
+#include <AnKi/Shaders/QuadVert.hlsl>
 #pragma anki end
 
 #pragma anki start frag
-#include <AnKi/Shaders/BilateralFilter.glsl>
-#include <AnKi/Shaders/PackFunctions.glsl>
+#include <AnKi/Shaders/BilateralFilter.hlsl>
+#include <AnKi/Shaders/PackFunctions.hlsl>
 
-layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
-layout(set = 0, binding = 1) uniform sampler u_linearAnyClampSampler;
-layout(set = 0, binding = 2) uniform ANKI_RP texture2D u_quarterDiffuseIndirectTex;
-layout(set = 0, binding = 3) uniform ANKI_RP texture2D u_quarterSpecularIndirectTex;
-layout(set = 0, binding = 4) uniform texture2D u_quarterDepthTex;
-layout(set = 0, binding = 5) uniform texture2D u_fullDepthTex;
-layout(set = 0, binding = 6) uniform ANKI_RP texture2D u_gbuffer0Tex;
-layout(set = 0, binding = 7) uniform ANKI_RP texture2D u_gbuffer1Tex;
-layout(set = 0, binding = 8) uniform ANKI_RP texture2D u_gbuffer2Tex;
-layout(set = 0, binding = 9) uniform ANKI_RP texture2D u_integrationLut;
+[[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
+[[vk::binding(1)]] SamplerState g_linearAnyClampSampler;
+[[vk::binding(2)]] Texture2D<RVec4> g_quarterDiffuseIndirectTex;
+[[vk::binding(3)]] Texture2D<RVec4> g_quarterSpecularIndirectTex;
+[[vk::binding(4)]] Texture2D g_quarterDepthTex;
+[[vk::binding(5)]] Texture2D g_fullDepthTex;
+[[vk::binding(6)]] Texture2D<RVec4> g_gbuffer0Tex;
+[[vk::binding(7)]] Texture2D<RVec4> g_gbuffer1Tex;
+[[vk::binding(8)]] Texture2D<RVec4> g_gbuffer2Tex;
+[[vk::binding(9)]] Texture2D<RVec4> g_integrationLut;
 
 #define CLUSTERED_SHADING_SET 0u
 #define CLUSTERED_SHADING_UNIFORMS_BINDING 10u
-#include <AnKi/Shaders/ClusteredShadingCommon.glsl>
+#include <AnKi/Shaders/ClusteredShadingCommon.hlsl>
 
-layout(push_constant, std140) uniform b_pc
+struct Uniforms
 {
-	F32 u_near;
-	F32 u_far;
-	F32 u_padding0;
-	F32 u_padding1;
+	F32 m_near;
+	F32 m_far;
+	F32 m_padding0;
+	F32 m_padding1;
 };
 
-layout(location = 0) in Vec2 in_uv;
-layout(location = 0) out ANKI_RP Vec3 out_color;
+[[vk::push_constant]] ConstantBuffer<Uniforms> g_uniforms;
 
-void main()
+RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 {
 	// GBuffer
-	GbufferInfo gbuffer;
-	unpackGBufferNoVelocity(textureLod(u_gbuffer0Tex, u_nearestAnyClampSampler, in_uv, 0.0),
-							textureLod(u_gbuffer1Tex, u_nearestAnyClampSampler, in_uv, 0.0),
-							textureLod(u_gbuffer2Tex, u_nearestAnyClampSampler, in_uv, 0.0), gbuffer);
+	GbufferInfo gbuffer = (GbufferInfo)0;
+	unpackGBufferNoVelocity(g_gbuffer0Tex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0),
+							g_gbuffer1Tex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0),
+							g_gbuffer2Tex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0), gbuffer);
 
 	// Reference
-	const F32 depthCenter = textureLod(u_fullDepthTex, u_nearestAnyClampSampler, in_uv, 0.0).x;
+	const F32 depthCenter = g_fullDepthTex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0).x;
 	if(depthCenter == 1.0)
 	{
 		discard;
 	}
 
-	const F32 linearDepthCenter = linearizeDepth(depthCenter, u_near, u_far);
+	const F32 linearDepthCenter = linearizeDepth(depthCenter, g_uniforms.m_near, g_uniforms.m_far);
 
 	// Quad depths
-	Vec4 quarterDepths = textureGather(sampler2D(u_quarterDepthTex, u_nearestAnyClampSampler), in_uv, 0);
-	quarterDepths = linearizeDepth(quarterDepths, u_near, u_far);
+	Vec4 quarterDepths = g_quarterDepthTex.GatherRed(g_nearestAnyClampSampler, uv);
+	quarterDepths = linearizeDepth(quarterDepths, g_uniforms.m_near, g_uniforms.m_far);
 
 	// Diff
 	const Vec4 diffs = abs(quarterDepths - linearDepthCenter);
 	const F32 maxDiff = max(diffs.x, max(diffs.y, max(diffs.z, diffs.w)));
 
-	const F32 depthThreshold = 0.2 / (u_far - u_near);
+	const F32 depthThreshold = 0.2 / (g_uniforms.m_far - g_uniforms.m_near);
 
 	// Do a neareset depth upscale
-	ANKI_RP Vec3 diffuse = Vec3(0.0);
-	ANKI_RP Vec3 specular = Vec3(0.0);
+	RVec3 diffuse = RVec3(0.0, 0.0, 0.0);
+	RVec3 specular = RVec3(0.0, 0.0, 0.0);
 	if(maxDiff <= depthThreshold)
 	{
-		diffuse = textureLod(u_quarterDiffuseIndirectTex, u_linearAnyClampSampler, in_uv, 0.0).xyz;
-		specular = textureLod(u_quarterSpecularIndirectTex, u_linearAnyClampSampler, in_uv, 0.0).xyz;
+		diffuse = g_quarterDiffuseIndirectTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).xyz;
+		specular = g_quarterSpecularIndirectTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).xyz;
 	}
 	else
 	{
 		// Some discontinuites, need to pick the one closest to depth reference
 
-		const ANKI_RP Vec4 diffuseR =
-			textureGather(sampler2D(u_quarterDiffuseIndirectTex, u_linearAnyClampSampler), in_uv, 0);
-		const ANKI_RP Vec4 diffuseG =
-			textureGather(sampler2D(u_quarterDiffuseIndirectTex, u_linearAnyClampSampler), in_uv, 1);
-		const ANKI_RP Vec4 diffuseB =
-			textureGather(sampler2D(u_quarterDiffuseIndirectTex, u_linearAnyClampSampler), in_uv, 2);
+		const RVec4 diffuseR = g_quarterDiffuseIndirectTex.GatherRed(g_linearAnyClampSampler, uv);
+		const RVec4 diffuseG = g_quarterDiffuseIndirectTex.GatherGreen(g_linearAnyClampSampler, uv);
+		const RVec4 diffuseB = g_quarterDiffuseIndirectTex.GatherBlue(g_linearAnyClampSampler, uv);
 
-		const ANKI_RP Vec4 specularR =
-			textureGather(sampler2D(u_quarterSpecularIndirectTex, u_linearAnyClampSampler), in_uv, 0);
-		const ANKI_RP Vec4 specularG =
-			textureGather(sampler2D(u_quarterSpecularIndirectTex, u_linearAnyClampSampler), in_uv, 1);
-		const ANKI_RP Vec4 specularB =
-			textureGather(sampler2D(u_quarterSpecularIndirectTex, u_linearAnyClampSampler), in_uv, 2);
+		const RVec4 specularR = g_quarterSpecularIndirectTex.GatherRed(g_linearAnyClampSampler, uv);
+		const RVec4 specularG = g_quarterSpecularIndirectTex.GatherGreen(g_linearAnyClampSampler, uv);
+		const RVec4 specularB = g_quarterSpecularIndirectTex.GatherBlue(g_linearAnyClampSampler, uv);
 
 		F32 minDiff = diffs.x;
 		U32 comp = 0u;
@@ -113,15 +108,16 @@ void main()
 	diffuse *= gbuffer.m_diffuse;
 
 	// Do specular
-	const Vec2 ndc = UV_TO_NDC(in_uv);
-	const Vec4 worldPos4 = u_clusteredShading.m_matrices.m_invertedViewProjectionJitter * Vec4(ndc, depthCenter, 1.0);
+	const Vec2 ndc = uvToNdc(uv);
+	const Vec4 worldPos4 =
+		mul(g_clusteredShading.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depthCenter, 1.0));
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
-	const ANKI_RP Vec3 viewDir = normalize(u_clusteredShading.m_cameraPosition - worldPos);
+	const RVec3 viewDir = normalize(g_clusteredShading.m_cameraPosition - worldPos);
 	const F32 NoV = max(0.0, dot(gbuffer.m_normal, viewDir));
-	const Vec3 env = specularDFG(gbuffer.m_f0, gbuffer.m_roughness, u_integrationLut, u_linearAnyClampSampler, NoV);
+	const Vec3 env = specularDFG(gbuffer.m_f0, gbuffer.m_roughness, g_integrationLut, g_linearAnyClampSampler, NoV);
 	specular *= env;
 
 	// Writeout
-	out_color = saturateRp(diffuse + specular);
+	return min(diffuse + specular, RVec3(kMaxRF32, kMaxRF32, kMaxRF32));
 }
 #pragma anki end

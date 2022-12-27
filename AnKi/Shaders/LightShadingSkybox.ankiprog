@@ -3,72 +3,82 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki hlsl
+
 #pragma anki mutator METHOD 0 1 // 0: solid colod, 1: 2D image
 
 #pragma anki start vert
 
-#include <AnKi/Shaders/Common.glsl>
+#include <AnKi/Shaders/Common.hlsl>
 
-layout(location = 0) out Vec2 out_uv;
-
-void main()
+struct VertOut
 {
-	out_uv = Vec2(gl_VertexIndex & 1, gl_VertexIndex >> 1) * 2.0;
-	const Vec2 pos = out_uv * 2.0 - 1.0;
+	Vec4 m_position : SV_POSITION;
+	[[vk::location(0)]] Vec2 m_uv : TEXCOORD;
+};
 
-	gl_Position = Vec4(pos, 1.0, 1.0);
+VertOut main(U32 vertId : SV_VERTEXID)
+{
+	VertOut output;
+	output.m_uv = Vec2(vertId & 1, vertId >> 1) * 2.0;
+
+	output.m_position = Vec4(output.m_uv * 2.0 - 1.0, 1.0, 1.0);
+
+	return output;
 }
 
 #pragma anki end
 
 #pragma anki start frag
 
-#include <AnKi/Shaders/Functions.glsl>
-
-layout(location = 0) in Vec2 in_uv;
-layout(location = 0) out ANKI_RP Vec3 out_color;
+#include <AnKi/Shaders/Functions.hlsl>
 
 #if METHOD == 0
-layout(push_constant) uniform b_pc
+struct Uniforms
 {
-	ANKI_RP Vec3 u_solidColor;
-	F32 u_padding;
+	RVec3 m_solidColor;
+	F32 m_padding;
 };
-#else
-layout(binding = 0) uniform sampler u_trilinearAnySampler;
-layout(binding = 1) uniform ANKI_RP texture2D u_envMapTex;
 
-layout(push_constant, row_major) uniform b_pc
+[[vk::push_constant]] ConstantBuffer<Uniforms> g_uniforms;
+#else
+[[vk::binding(0)]] SamplerState g_trilinearAnySampler;
+[[vk::binding(1)]] Texture2D<RVec4> g_envMapTex;
+
+struct Uniforms
 {
-	Mat4 u_invertedViewProjectionJitterMat;
-	Vec3 u_cameraPos;
-	F32 u_padding;
+	Mat4 m_invertedViewProjectionJitterMat;
+	Vec3 m_cameraPos;
+	F32 m_padding;
 };
+
+[[vk::push_constant]] ConstantBuffer<Uniforms> g_uniforms;
 #endif
 
-void main()
+RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 {
 #if METHOD == 0
-	out_color = u_solidColor;
+	ANKI_MAYBE_UNUSED(uv);
+	return g_uniforms.m_solidColor;
 #else
 	const F32 depth = 1.0;
-	const Vec2 ndc = UV_TO_NDC(in_uv);
-	const Vec4 worldPos4 = u_invertedViewProjectionJitterMat * Vec4(ndc, depth, 1.0);
+	const Vec2 ndc = uvToNdc(uv);
+	const Vec4 worldPos4 = mul(g_uniforms.m_invertedViewProjectionJitterMat, Vec4(ndc, depth, 1.0));
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
-	const Vec3 eyeToFrag = normalize(worldPos - u_cameraPos);
+	const Vec3 eyeToFrag = normalize(worldPos - g_uniforms.m_cameraPos);
 
-	const Vec2 uv = equirectangularMapping(eyeToFrag);
+	const Vec2 uv3 = equirectangularMapping(eyeToFrag);
 
 	// When uv is close to the edge of the texture the other quads might be in the oposit coordinate. Then the
 	// derivatives will be huge causing the texture to use the highest mip and thus create a visible seam. To fix this
 	// find when the derivatives are large and do some manual work to fix it
-	const Vec2 dx = abs(dFdx(uv));
+	const Vec2 dx = abs(ddx_coarse(uv3));
 	const F32 maxD = max(dx.x, dx.y);
 
 	const F32 bias = (maxD > 0.9) ? -100.0f : 0.0f;
 
-	out_color = texture(u_envMapTex, u_trilinearAnySampler, uv, bias).rgb;
+	return g_envMapTex.SampleBias(g_trilinearAnySampler, uv3, bias).rgb;
 #endif
 }
 

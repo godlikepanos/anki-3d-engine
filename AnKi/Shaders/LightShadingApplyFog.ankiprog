@@ -3,51 +3,52 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki hlsl
+
 #pragma anki start vert
-#include <AnKi/Shaders/QuadVert.glsl>
+#include <AnKi/Shaders/QuadVert.hlsl>
 #pragma anki end
 
 #pragma anki start frag
 
-#include <AnKi/Shaders/Functions.glsl>
+#include <AnKi/Shaders/Functions.hlsl>
 
 ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 0u);
 ANKI_SPECIALIZATION_CONSTANT_U32(kFinalZSplit, 1u);
 
-layout(location = 0) in Vec2 in_uv;
-layout(location = 0) out ANKI_RP Vec4 out_color;
+[[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
+[[vk::binding(1)]] SamplerState g_linearAnyClampSampler;
+[[vk::binding(2)]] Texture2D g_depthRt;
+[[vk::binding(3)]] Texture3D<RVec4> g_fogVolume;
 
-layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
-layout(set = 0, binding = 1) uniform sampler u_linearAnyClampSampler;
-layout(set = 0, binding = 2) uniform texture2D u_depthRt;
-layout(set = 0, binding = 3) uniform texture3D u_fogVolume;
-
-layout(push_constant, std140, row_major) uniform b_pc
+struct Uniforms
 {
-	Vec2 u_padding;
-	F32 u_near;
-	F32 u_far;
+	Vec2 m_padding;
+	F32 m_near;
+	F32 m_far;
 };
 
-void main()
+[[vk::push_constant]] ConstantBuffer<Uniforms> g_uniforms;
+
+RVec4 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 {
 	Vec3 uvw;
 
 	// Compute W coordinate
-	const F32 depth = textureLod(u_depthRt, u_nearestAnyClampSampler, in_uv, 0.0).r;
-	const F32 linearDepth = linearizeDepth(depth, u_near, u_far);
+	const F32 depth = g_depthRt.SampleLevel(g_nearestAnyClampSampler, uv, 0.0).r;
+	const F32 linearDepth = linearizeDepth(depth, g_uniforms.m_near, g_uniforms.m_far);
 	uvw.z = linearDepth * (F32(kZSplitCount) / F32(kFinalZSplit + 1u));
 
 	// Compute UV coordinates
-	uvw.xy = in_uv;
+	uvw.xy = uv;
 
 	// Read the volume
-	const ANKI_RP Vec4 fogVals = textureLod(u_fogVolume, u_linearAnyClampSampler, uvw, 0.0);
-	const ANKI_RP Vec3 inScattering = fogVals.rgb;
-	const ANKI_RP F32 transmittance = fogVals.a;
+	const RVec4 fogVals = g_fogVolume.SampleLevel(g_linearAnyClampSampler, uvw, 0.0);
+	const RVec3 inScattering = fogVals.rgb;
+	const RF32 transmittance = fogVals.a;
 
 	// Apply the fog
-	out_color = Vec4(inScattering, transmittance);
+	return RVec4(inScattering, transmittance);
 }
 
 #pragma anki end
