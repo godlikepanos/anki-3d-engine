@@ -473,6 +473,7 @@ Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPra
 			// Must be a #pragma anki
 
 			++token;
+			Bool addLineBack = true;
 
 			if(*token == "mutator")
 			{
@@ -483,11 +484,13 @@ Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPra
 			{
 				ANKI_CHECK(checkNoActiveStruct());
 				ANKI_CHECK(parsePragmaStart(token + 1, end, line, fname));
+				addLineBack = false;
 			}
 			else if(*token == "end")
 			{
 				ANKI_CHECK(checkNoActiveStruct());
 				ANKI_CHECK(parsePragmaEnd(token + 1, end, line, fname));
+				addLineBack = false;
 			}
 			else if(*token == "skip_mutation")
 			{
@@ -538,8 +541,11 @@ Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPra
 				ANKI_PP_ERROR_MALFORMED();
 			}
 
-			// Add the line as a comment because of hashing of the source
-			m_codeLines.pushBackSprintf("//%s", line.cstr());
+			if(addLineBack)
+			{
+				// Add the line as a comment because of hashing of the source
+				m_codeLines.pushBackSprintf("//%s", line.cstr());
+			}
 		}
 		else
 		{

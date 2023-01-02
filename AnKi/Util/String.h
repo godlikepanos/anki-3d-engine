@@ -434,7 +434,7 @@ public:
 			ANKI_ASSERT(*it != '\0');
 		}
 
-		auto length = last - first;
+		const PtrSize length = last - first;
 		m_data.create(pool, length + 1);
 
 		memcpy(&m_data[0], first, length);

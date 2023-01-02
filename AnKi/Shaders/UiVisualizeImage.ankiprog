@@ -3,69 +3,79 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki hlsl
+
 #pragma anki mutator TEXTURE_TYPE 0 1
 
-#include <AnKi/Shaders/Common.glsl>
+#include <AnKi/Shaders/Common.hlsl>
 
-layout(push_constant) uniform b_pc
+struct Uniforms
 {
-	Vec4 u_transform; // x: x scale, y: y scale, z: x transl, w: y transl
-	Vec4 u_colorScale;
-	Vec4 u_depth; // Used in 3D textures.
+	Vec4 m_transform; // x: x scale, y: y scale, z: x transl, w: y transl
+	Vec4 m_colorScale;
+	Vec4 m_depth; // Used in 3D textures.
+};
+
+[[vk::push_constant]] ConstantBuffer<Uniforms> g_uniforms;
+
+struct VertIn
+{
+	[[vk::location(0)]] Vec2 m_position : POSITION;
+	[[vk::location(1)]] RVec4 m_color : COLOR;
+	[[vk::location(2)]] Vec2 m_uv : TEXCOORD;
+};
+
+struct VertOut
+{
+	Vec2 m_uv : TEXCOORD;
+	RVec4 m_color : COLOR;
+	Vec4 m_svPosition : SV_POSITION;
 };
 
 #pragma anki start vert
 
-layout(location = 0) in Vec2 in_pos;
-layout(location = 1) in Vec4 in_col;
-layout(location = 2) in Vec2 in_uv;
-
-layout(location = 0) out Vec2 out_uv;
-layout(location = 1) out Vec4 out_col;
-
-void main()
+VertOut main(VertIn input)
 {
-	out_uv = in_uv;
-	out_col = in_col;
+	VertOut output;
 
-	const Vec2 pos = u_transform.xy * in_pos + u_transform.zw;
-	gl_Position = Vec4(pos, 0.0, 1.0);
+	output.m_uv = input.m_uv;
+	output.m_color = input.m_color;
+
+	const Vec2 pos = g_uniforms.m_transform.xy * input.m_position + g_uniforms.m_transform.zw;
+	output.m_svPosition = Vec4(pos, 0.0, 1.0);
+
+	return output;
 }
 #pragma anki end
 
 #pragma anki start frag
 
-layout(location = 0) in Vec2 in_uv;
-layout(location = 1) in Vec4 in_col;
-
-layout(location = 0) out Vec4 out_col;
-
-layout(set = 0, binding = 0) uniform sampler u_trilinearRepeatSampler;
+[[vk::binding(0)]] SamplerState g_trilinearRepeatSampler;
 #if TEXTURE_TYPE == 0
-layout(set = 0, binding = 1) uniform texture2D u_tex2d;
+[[vk::binding(1)]] Texture2D<RVec4> g_tex2d;
 #else
-layout(set = 0, binding = 1) uniform texture3D u_tex3d;
+[[vk::binding(1)]] Texture3D<RVec4> g_tex3d;
 #endif
 
-void main()
+RVec4 main(VertOut input) : SV_TARGET0
 {
 #if TEXTURE_TYPE == 0
-	const Vec4 rgba = texture(u_tex2d, u_trilinearRepeatSampler, in_uv);
+	const RVec4 rgba = g_tex2d.Sample(g_trilinearRepeatSampler, input.m_uv);
 #else
-	const Vec4 rgba = texture(u_tex3d, u_trilinearRepeatSampler, Vec3(in_uv, u_depth.x));
+	const RVec4 rgba = g_tex3d.Sample(g_trilinearRepeatSampler, Vec3(input.m_uv, g_uniforms.m_depth.x));
 #endif
-	out_col.rgb = in_col.rgb * rgba.rgb * u_colorScale.rgb;
+	RVec3 outColor = input.m_color.rgb * rgba.rgb * g_uniforms.m_colorScale.rgb;
 
-	if(u_colorScale.a == 1.0)
+	if(g_uniforms.m_colorScale.a == 1.0)
 	{
 		// Draw a pattern to visualize alpha
-		F32 alphaPattern = ((U32(gl_FragCoord.x) / 16u) & 1u) == 1u ? 1.0 : 0.75;
-		alphaPattern *= ((U32(gl_FragCoord.y) / 16u) & 1u) == 1u ? 1.0 : 0.75;
+		F32 alphaPattern = ((U32(input.m_svPosition.x) / 16u) & 1u) == 1u ? 1.0 : 0.75;
+		alphaPattern *= ((U32(input.m_svPosition.y) / 16u) & 1u) == 1u ? 1.0 : 0.75;
 
-		out_col.rgb = mix(Vec3(alphaPattern), out_col.rgb, rgba.a);
+		outColor = lerp(Vec3(alphaPattern, alphaPattern, alphaPattern), outColor, rgba.a);
 	}
 
-	out_col.a = 1.0;
+	return RVec4(outColor, 1.0);
 }
 
 #pragma anki end
