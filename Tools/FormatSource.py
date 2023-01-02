@@ -12,6 +12,7 @@ import multiprocessing
 import os
 import tempfile
 import shutil
+import platform
 
 file_extensions = ["h", "hpp", "c", "cpp", "glsl", "hlsl", "ankiprog"]
 directories = ["AnKi", "Tests", "Sandbox", "Tools", "Samples"]
@@ -61,8 +62,12 @@ def thread_callback(tid):
         else:
             style_file = "--style=file:.clang-format"
 
-        subprocess.check_call(["./ThirdParty/Bin/Windows64/clang-format.exe",
-                              "-sort-includes=false", style_file, "-i", file_name])
+        if platform.system() == "Linux":
+            exe = "./ThirdParty/Bin/Linux64/clang-format"
+        else:
+            exe = "./ThirdParty/Bin/Windows64/clang-format.exe"
+
+        subprocess.check_call([exe, "-sort-includes=false", style_file, "-i", file_name])
 
         if is_shader:
             shutil.move(tmp_filename, orig_filename)

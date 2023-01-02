@@ -180,7 +180,7 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 		endTerminalColor = "";
 	}
 
-	fprintf(out, "%s[%s][%s]%s%s %s [%s:%d][%s][%s]%s\n", terminalColorBg, kMessageTypeTxt[U(info.m_type)],
+	fprintf(out, "%s[%s][%-4s]%s%s %s [%s:%d][%s][%s]%s\n", terminalColorBg, kMessageTypeTxt[U(info.m_type)],
 			info.m_subsystem ? info.m_subsystem : "N/A ", endTerminalColor, terminalColor, info.m_msg, info.m_file,
 			info.m_line, info.m_func, info.m_threadName, endTerminalColor);
 #elif ANKI_OS_WINDOWS

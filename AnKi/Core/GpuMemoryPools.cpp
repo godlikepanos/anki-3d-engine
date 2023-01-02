@@ -116,7 +116,7 @@ PtrSize RebarStagingGpuMemoryPool::endFrame()
 
 	if(usedMemory >= PtrSize(0.8 * F64(m_bufferSize / kMaxFramesInFlight)))
 	{
-		ANKI_CORE_LOGW("Frame used more that 80% of its safe limit of ReBAR memory");
+		ANKI_CORE_LOGW("Frame used more that 80%% of its safe limit of ReBAR memory");
 	}
 
 	ANKI_TRACE_INC_COUNTER(ReBarUsedMemory, usedMemory);

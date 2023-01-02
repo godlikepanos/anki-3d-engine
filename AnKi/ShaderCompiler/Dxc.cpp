@@ -11,6 +11,8 @@
 
 namespace anki {
 
+static Atomic<U32> g_nextFileId = {1};
+
 static CString profile(ShaderType shaderType)
 {
 	switch(shaderType)
@@ -51,7 +53,8 @@ static CString profile(ShaderType shaderType)
 Error compileHlslToSpirv(CString src, ShaderType shaderType, BaseMemoryPool& tmpPool, DynamicArrayRaii<U8>& spirv,
 						 StringRaii& errorMessage)
 {
-	const U64 rand = getRandom();
+	Array<U64, 3> toHash = {g_nextFileId.fetchAdd(1), getCurrentProcessId(), getRandom() & kMaxU32};
+	const U64 rand = computeHash(&toHash[0], sizeof(toHash));
 
 	StringRaii tmpDir(&tmpPool);
 	ANKI_CHECK(getTempDirectory(tmpDir));
@@ -102,15 +105,19 @@ Error compileHlslToSpirv(CString src, ShaderType shaderType, BaseMemoryPool& tmp
 		I32 exitCode;
 		StringRaii stdOut(&tmpPool);
 
+#if ANKI_OS_WINDOWS
+		CString dxcBin = ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Windows64/dxc.exe";
+#elif ANKI_OS_LINUX
+		CString dxcBin = ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Linux64/dxc";
+#endif
+
 		// Run once without stdout or stderr. Because if you do the process library will crap out after a while
-		ANKI_CHECK(Process::callProcess(ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Windows64/dxc.exe", dxcArgs2, nullptr,
-										nullptr, exitCode));
+		ANKI_CHECK(Process::callProcess(dxcBin, dxcArgs2, nullptr, nullptr, exitCode));
 
 		if(exitCode != 0)
 		{
 			// There was an error, run again just to get the stderr
-			ANKI_CHECK(Process::callProcess(ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Windows64/dxc.exe", dxcArgs2,
-											nullptr, &errorMessage, exitCode));
+			ANKI_CHECK(Process::callProcess(dxcBin, dxcArgs2, nullptr, &errorMessage, exitCode));
 
 			if(!errorMessage.isEmpty()
 			   && errorMessage.find("The process cannot access the file because") != CString::kNpos)
