@@ -87,7 +87,11 @@ struct DeferredVertexUniforms
 
 struct DeferredSkyboxUniforms
 {
+#if ANKI_GLSL
 	ANKI_RP Vec3 m_solidColor;
+#else
+	RVec3 m_solidColor;
+#endif
 	F32 m_padding1;
 
 	Vec2 m_inputTexUvScale;

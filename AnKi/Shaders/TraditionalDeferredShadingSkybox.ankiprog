@@ -3,55 +3,52 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki hlsl
+
 #pragma anki mutator METHOD 0 1 // 0: solid colod, 1: 2D image
 
 #pragma anki start vert
-#include <AnKi/Shaders/QuadVert.glsl>
+#include <AnKi/Shaders/QuadVert.hlsl>
 #pragma anki end
 
 #pragma anki start frag
 
-#include <AnKi/Shaders/Functions.glsl>
+#include <AnKi/Shaders/Functions.hlsl>
 #include <AnKi/Shaders/Include/TraditionalDeferredShadingTypes.h>
 
-layout(location = 0) in Vec2 in_uv;
-layout(location = 0) out ANKI_RP Vec3 out_color;
+[[vk::push_constant]] ConstantBuffer<DeferredSkyboxUniforms> g_unis;
 
-layout(push_constant, row_major, std140) uniform b_pc
-{
-	DeferredSkyboxUniforms u_unis;
-};
-
-layout(binding = 0) uniform sampler u_nearestAnyClampSampler;
-layout(binding = 1) uniform texture2D u_depthTex;
+[[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
+[[vk::binding(1)]] Texture2D g_depthTex;
 
 #if METHOD == 1
-layout(binding = 2) uniform sampler u_trilinearAnySampler;
-layout(binding = 3) uniform ANKI_RP texture2D u_envMapTex;
+[[vk::binding(2)]] SamplerState g_trilinearAnySampler;
+[[vk::binding(3)]] Texture2D<RVec4> g_envMapTex;
 #endif
 
-void main()
+RVec3 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 {
-	const Vec2 uvToRead = fma(Vec2(gl_FragCoord.xy), u_unis.m_inputTexUvScale, u_unis.m_inputTexUvBias);
+	const Vec2 uvToRead = mad(svPosition.xy, g_unis.m_inputTexUvScale, g_unis.m_inputTexUvBias);
 
-	const F32 depth = textureLod(u_depthTex, u_nearestAnyClampSampler, uvToRead, 0.0).r;
+	const F32 depth = g_depthTex.SampleLevel(g_nearestAnyClampSampler, uvToRead, 0.0).r;
 	if(depth != 1.0)
 	{
 		discard;
 	}
 
 #if METHOD == 0
-	out_color = u_unis.m_solidColor;
+	ANKI_MAYBE_UNUSED(uv);
+	return g_unis.m_solidColor;
 #else
 	const F32 depthFar = 1.0;
-	const Vec2 ndc = UV_TO_NDC(in_uv);
-	const Vec4 worldPos4 = u_unis.m_invertedViewProjectionMat * Vec4(ndc, depthFar, 1.0);
+	const Vec2 ndc = uvToNdc(uv);
+	const Vec4 worldPos4 = mul(g_unis.m_invertedViewProjectionMat, Vec4(ndc, depthFar, 1.0));
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
-	const Vec3 eyeToFrag = normalize(worldPos - u_unis.m_cameraPos);
+	const Vec3 eyeToFrag = normalize(worldPos - g_unis.m_cameraPos);
 
-	const Vec2 uv = equirectangularMapping(eyeToFrag);
-	out_color = texture(u_envMapTex, u_trilinearAnySampler, uv).rgb;
+	const Vec2 uv2 = equirectangularMapping(eyeToFrag);
+	return g_envMapTex.Sample(g_trilinearAnySampler, uv2).rgb;
 #endif
 }
 
