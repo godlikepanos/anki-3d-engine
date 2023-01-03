@@ -4,5 +4,5 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki start comp
-#include <AnKi/Shaders/MotionVectors.glsl>
+#include <AnKi/Shaders/MotionVectors.hlsl>
 #pragma anki end
