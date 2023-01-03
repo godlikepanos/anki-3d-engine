@@ -4,9 +4,9 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki start vert
-#include <AnKi/Shaders/QuadVert.glsl>
+#include <AnKi/Shaders/QuadVert.hlsl>
 #pragma anki end
 
 #pragma anki start frag
-#include <AnKi/Shaders/Tonemap.glsl>
+#include <AnKi/Shaders/Tonemap.hlsl>
 #pragma anki end

@@ -4,5 +4,5 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki start comp
-#include <AnKi/Shaders/Tonemap.glsl>
+#include <AnKi/Shaders/Tonemap.hlsl>
 #pragma anki end
