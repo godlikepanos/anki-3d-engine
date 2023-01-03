@@ -5,6 +5,8 @@
 
 // Classic deferred lighting shader
 
+#pragma anki hlsl
+
 #pragma anki mutator LIGHT_TYPE 0 1 2
 #pragma anki mutator SPECULAR 0 1
 
@@ -14,142 +16,132 @@
 
 // VERT
 #pragma anki start vert
-#include <AnKi/Shaders/Common.glsl>
-
-out gl_PerVertex
-{
-	Vec4 gl_Position;
-};
+#include <AnKi/Shaders/Common.hlsl>
 
 #if LIGHT_TYPE == DIR_LIGHT_TYPE
-void main()
+Vec4 main(U32 svVertexId : SV_VERTEXID) : SV_POSITION
 {
-	Vec2 uv = Vec2(gl_VertexIndex & 1, gl_VertexIndex >> 1) * 2.0;
-	Vec2 pos = uv * 2.0 - 1.0;
-	gl_Position = Vec4(pos, 0.0, 1.0);
+	const Vec2 uv = Vec2(svVertexId & 1, svVertexId >> 1) * 2.0;
+	const Vec2 pos = uv * 2.0 - 1.0;
+	return Vec4(pos, 0.0, 1.0);
 }
 #else
-layout(location = 0) in Vec3 in_position;
+[[vk::binding(0)]] ConstantBuffer<Mat4> g_mvp;
 
-layout(set = 0, binding = 0, row_major) uniform u0_
+Vec4 main([[vk::location(0)]] Vec3 position : POSITION) : SV_POSITION
 {
-	Mat4 u_mvp;
-};
-
-void main()
-{
-	gl_Position = u_mvp * Vec4(in_position, 1.0);
+	return mul(g_mvp, Vec4(position, 1.0));
 }
 #endif
 #pragma anki end
 
 // FRAG
 #pragma anki start frag
-#include <AnKi/Shaders/PackFunctions.glsl>
-#include <AnKi/Shaders/LightFunctions.glsl>
+#include <AnKi/Shaders/PackFunctions.hlsl>
+#include <AnKi/Shaders/LightFunctions.hlsl>
 #include <AnKi/Shaders/Include/TraditionalDeferredShadingTypes.h>
 
-layout(location = 0) out Vec3 out_color;
-
-layout(set = 0, binding = 1, row_major) uniform u1_
-{
+[[vk::binding(1)]] ConstantBuffer<
 #if LIGHT_TYPE == POINT_LIGHT_TYPE
-	DeferredPointLightUniforms u_unis;
+	DeferredPointLightUniforms
 #elif LIGHT_TYPE == SPOT_LIGHT_TYPE
-	DeferredSpotLightUniforms u_unis;
+	DeferredSpotLightUniforms
 #elif LIGHT_TYPE == DIR_LIGHT_TYPE
-	DeferredDirectionalLightUniforms u_unis;
+	DeferredDirectionalLightUniforms
 #else
 #	error See file
 #endif
-};
+	>
+	g_unis;
 
-layout(set = 0, binding = 2) uniform sampler u_msSampler;
-layout(set = 0, binding = 3) uniform texture2D u_msRt0;
-layout(set = 0, binding = 4) uniform texture2D u_msRt1;
-layout(set = 0, binding = 5) uniform texture2D u_msRt2;
-layout(set = 0, binding = 6) uniform texture2D u_msDepthRt;
+[[vk::binding(2)]] SamplerState g_gbufferSampler;
+[[vk::binding(3)]] Texture2D<RVec4> g_gbufferTex0;
+[[vk::binding(4)]] Texture2D<RVec4> g_gbufferTex1;
+[[vk::binding(5)]] Texture2D<RVec4> g_gbufferTex2;
+[[vk::binding(6)]] Texture2D g_depthTex;
 
 #if LIGHT_TYPE == DIR_LIGHT_TYPE
-layout(set = 0, binding = 7) uniform samplerShadow u_shadowMapSampler;
-layout(set = 0, binding = 8) uniform texture2D u_shadowMap;
+[[vk::binding(7)]] SamplerComparisonState g_shadowMapSampler;
+[[vk::binding(8)]] Texture2D<RVec4> g_shadowMap;
 #endif
 
-void main()
+RVec3 main(Vec4 svPosition : SV_POSITION) : SV_TARGET0
 {
 	// Compute UV coordinates
-	const Vec2 uvToRead = fma(Vec2(gl_FragCoord.xy), u_unis.m_inputTexUvScale, u_unis.m_inputTexUvBias);
-	const Vec2 uvToWrite = fma(Vec2(gl_FragCoord.xy), u_unis.m_fbUvScale, u_unis.m_fbUvBias);
+	const Vec2 uvToRead = mad(Vec2(svPosition.xy), g_unis.m_inputTexUvScale, g_unis.m_inputTexUvBias);
+	const Vec2 uvToWrite = mad(Vec2(svPosition.xy), g_unis.m_fbUvScale, g_unis.m_fbUvBias);
 
-	const F32 depth = textureLod(u_msDepthRt, u_msSampler, uvToRead, 0.0).r;
+	const F32 depth = g_depthTex.SampleLevel(g_gbufferSampler, uvToRead, 0.0).r;
 
 #if LIGHT_TYPE != DIR_LIGHT_TYPE
 	// Do manual depth test
-	if(gl_FragCoord.z < depth)
+	if(svPosition.z < depth)
 	{
 		discard;
 	}
 #endif
 
 	// Decode and process gbuffer
-	GbufferInfo gbuffer;
-	unpackGBufferNoVelocity(textureLod(u_msRt0, u_msSampler, uvToRead, 0.0),
-							textureLod(u_msRt1, u_msSampler, uvToRead, 0.0),
-							textureLod(u_msRt2, u_msSampler, uvToRead, 0.0), gbuffer);
+	GbufferInfo gbuffer = (GbufferInfo)0;
+	unpackGBufferNoVelocity(g_gbufferTex0.SampleLevel(g_gbufferSampler, uvToRead, 0.0),
+							g_gbufferTex1.SampleLevel(g_gbufferSampler, uvToRead, 0.0),
+							g_gbufferTex2.SampleLevel(g_gbufferSampler, uvToRead, 0.0), gbuffer);
 	gbuffer.m_subsurface = max(gbuffer.m_subsurface, kSubsurfaceMin * 8.0);
 
-	const Vec4 worldPos4 = u_unis.m_invViewProjMat * Vec4(UV_TO_NDC(uvToWrite), depth, 1.0);
+	const Vec4 worldPos4 = mul(g_unis.m_invViewProjMat, Vec4(uvToNdc(uvToWrite), depth, 1.0));
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
 	// Compute diff
 	const Vec3 diffC = diffuseLobe(gbuffer.m_diffuse);
 
 	// Compute spec
-	const Vec3 viewDir = normalize(u_unis.m_camPos - worldPos);
 #if LIGHT_TYPE == DIR_LIGHT_TYPE
-	const Vec3 l = -u_unis.m_lightDir;
+	const Vec3 l = -g_unis.m_lightDir;
 #else
-	const Vec3 frag2Light = u_unis.m_position - worldPos;
+	const Vec3 frag2Light = g_unis.m_position - worldPos;
 	const Vec3 l = normalize(frag2Light);
-	const F32 nol = max(0.0, dot(gbuffer.m_normal, l));
+	const RF32 nol = max(0.0, dot(gbuffer.m_normal, l));
 #endif
 
 #if SPECULAR == 1
+	const Vec3 viewDir = normalize(g_unis.m_camPos - worldPos);
 	const Vec3 specC = specularIsotropicLobe(gbuffer, viewDir, l);
 #else
-	const Vec3 specC = Vec3(0.0);
+	const Vec3 specC = Vec3(0.0, 0.0, 0.0);
 #endif
 
 	// Compute factors
 #if LIGHT_TYPE == POINT_LIGHT_TYPE
-	const F32 att = computeAttenuationFactor(u_unis.m_oneOverSquareRadius, frag2Light);
-	const F32 lambert = nol;
-	const F32 factor = att * max(lambert, gbuffer.m_subsurface);
+	const RF32 att = computeAttenuationFactor(g_unis.m_oneOverSquareRadius, frag2Light);
+	const RF32 lambert = nol;
+	const RF32 factor = att * max(lambert, gbuffer.m_subsurface);
 #elif LIGHT_TYPE == SPOT_LIGHT_TYPE
-	const F32 att = computeAttenuationFactor(u_unis.m_oneOverSquareRadius, frag2Light);
-	const F32 lambert = nol;
-	const F32 spot = computeSpotFactor(l, u_unis.m_outerCos, u_unis.m_innerCos, u_unis.m_lightDir);
-	const F32 factor = att * spot * max(lambert, gbuffer.m_subsurface);
+	const RF32 att = computeAttenuationFactor(g_unis.m_oneOverSquareRadius, frag2Light);
+	const RF32 lambert = nol;
+	const RF32 spot = computeSpotFactor(l, g_unis.m_outerCos, g_unis.m_innerCos, g_unis.m_lightDir);
+	const RF32 factor = att * spot * max(lambert, gbuffer.m_subsurface);
 #else
-	const F32 linearDepth = linearizeDepth(depth, u_unis.m_near, u_unis.m_far);
-	F32 shadowFactor;
-	if(linearDepth * (u_unis.m_far - u_unis.m_near) < u_unis.m_effectiveShadowDistance)
+	const F32 linearDepth = linearizeDepth(depth, g_unis.m_near, g_unis.m_far);
+	RF32 shadowFactor;
+	if(linearDepth * (g_unis.m_far - g_unis.m_near) < g_unis.m_effectiveShadowDistance)
 	{
 		// Acceptable distance
 
-		shadowFactor = computeShadowFactorDirLight(u_unis.m_lightMatrix, worldPos, u_shadowMap, u_shadowMapSampler);
+		shadowFactor = computeShadowFactorDirLight(g_unis.m_lightMatrix, worldPos, g_shadowMap, g_shadowMapSampler);
 	}
 	else
 	{
 		shadowFactor = 1.0;
 	}
 
-	const F32 lambert = dot(l, gbuffer.m_normal);
-	const F32 factor = shadowFactor * max(gbuffer.m_subsurface, lambert);
+	const RF32 lambert = dot(l, gbuffer.m_normal);
+	const RF32 factor = shadowFactor * max(gbuffer.m_subsurface, lambert);
 #endif
 
-	out_color = gbuffer.m_emission;
-	out_color += (specC + diffC) * u_unis.m_diffuseColor * factor;
+	RVec3 outColor = gbuffer.m_emission;
+	outColor += (specC + diffC) * g_unis.m_diffuseColor * factor;
+
+	return outColor;
 }
 
 #pragma anki end

@@ -320,7 +320,7 @@ RF32 computeShadowFactorDirLightPcf(DirectionalLight light, U32 cascadeIdx, Vec3
 }
 
 // Compute the shadow factor of a directional light
-RF32 computeShadowFactorDirLight(Mat4 lightProjectionMat, Vec3 worldPos, Texture2D shadowMap,
+RF32 computeShadowFactorDirLight(Mat4 lightProjectionMat, Vec3 worldPos, Texture2D<RVec4> shadowMap,
 								 SamplerComparisonState shadowMapSampler)
 {
 	const Vec4 texCoords4 = mul(lightProjectionMat, Vec4(worldPos, 1.0));
