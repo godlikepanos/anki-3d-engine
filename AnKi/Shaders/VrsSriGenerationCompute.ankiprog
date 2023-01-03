@@ -3,90 +3,98 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki hlsl
+
 #pragma anki mutator SRI_TEXEL_DIMENSION 8 16
 #pragma anki mutator SHARED_MEMORY 0 1
 #pragma anki mutator LIMIT_RATE_TO_2X2 0 1
 
 #pragma anki start comp
 
-#include <AnKi/Shaders/Functions.glsl>
-#include <AnKi/Shaders/TonemappingFunctions.glsl>
+#include <AnKi/Shaders/Functions.hlsl>
+#include <AnKi/Shaders/TonemappingFunctions.hlsl>
 
 // Find the maximum luma derivative in x and y, relative to the average luma of the block.
 // Each thread handles a 2x2 region when using 8x8 VRS tiles and a 2x4 region when using 16x16 VRS tiles.
 
-layout(set = 0, binding = 0) uniform ANKI_RP texture2D u_inputTex;
-layout(set = 0, binding = 1) uniform sampler u_nearestClampSampler;
+[[vk::binding(0)]] Texture2D<RVec4> g_inputTex;
+[[vk::binding(1)]] SamplerState g_nearestClampSampler;
 
 #if SRI_TEXEL_DIMENSION == 8
-const UVec2 kRegionSize = UVec2(2u, 2u);
+#	define REGION_SIZE_X 2
+#	define REGION_SIZE_Y 2
 #else
-const UVec2 kRegionSize = UVec2(2u, 4u);
+#	define REGION_SIZE_X 2
+#	define REGION_SIZE_Y 4
 #endif
 
-const UVec2 kWorkgroupSize = UVec2(SRI_TEXEL_DIMENSION) / kRegionSize;
-layout(local_size_x = kWorkgroupSize.x, local_size_y = kWorkgroupSize.y, local_size_z = 1) in;
+#define THREADGROUP_SIZE_X (SRI_TEXEL_DIMENSION / REGION_SIZE_X)
+#define THREADGROUP_SIZE_Y (SRI_TEXEL_DIMENSION / REGION_SIZE_Y)
 
-layout(set = 0, binding = 2) uniform writeonly uimage2D u_sriImg;
+[[vk::binding(2)]] RWTexture2D<U32> g_sriUav;
 
-layout(push_constant, std430) uniform b_pc
+struct Uniforms
 {
-	Vec2 u_oneOverViewportSize;
-	F32 u_threshold;
-	F32 u_padding0;
+	Vec2 m_oneOverViewportSize;
+	F32 m_threshold;
+	F32 m_padding0;
 };
+
+[[vk::push_constant]] ConstantBuffer<Uniforms> g_unis;
 
 #if SHARED_MEMORY
 // Ideally, we'd be able to calculate the min/max/average using subgroup operations, but there's no guarantee
 // subgroupSize is large enough so we need shared memory as a fallback. We need gl_NumSubgroups entries, but it is not a
 // constant, so estimate it assuming a subgroupSize of at least 8.
-const U32 kSharedMemoryEntries = kWorkgroupSize.x * kWorkgroupSize.y / 8u;
-shared F32 s_averageLuma[kSharedMemoryEntries];
-shared Vec2 s_maxDerivative[kSharedMemoryEntries];
+constexpr U32 kSharedMemoryEntries = THREADGROUP_SIZE_X * THREADGROUP_SIZE_Y / 8u;
+groupshared RF32 s_averageLuma[kSharedMemoryEntries];
+groupshared RVec2 s_maxDerivative[kSharedMemoryEntries];
 #endif
 
-F32 computeLuma(Vec3 color)
+RF32 computeLuma(RVec3 color)
 {
-	const F32 l = computeLuminance(color);
+	const RF32 l = computeLuminance(color);
 	return l / (1.0f + l);
 }
 
 #define sampleLuma(offsetX, offsetY) \
-	computeLuma(textureLodOffset(sampler2D(u_inputTex, u_nearestClampSampler), uv, 0.0, IVec2(offsetX, offsetY)).xyz)
+	computeLuma(g_inputTex.SampleLevel(g_nearestClampSampler, uv, 0.0, IVec2(offsetX, offsetY)).xyz)
 
-void main()
+[numthreads(THREADGROUP_SIZE_X, THREADGROUP_SIZE_Y, 1)] void
+main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID, U32 svGroupIndex : SV_GROUPINDEX, UVec3 svGroupID : SV_GROUPID)
 {
-	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) * Vec2(kRegionSize) + 0.5) * u_oneOverViewportSize;
+	const Vec2 uv =
+		(Vec2(svDispatchThreadId.xy) * Vec2(REGION_SIZE_X, REGION_SIZE_Y) + 0.5) * g_unis.m_oneOverViewportSize;
 
 #if SRI_TEXEL_DIMENSION == 8
 	// Get luminance.
 	//       l1.y
 	// l0.z  l0.w  l1.x
 	// l0.x  l0.y
-	Vec4 l0;
+	RVec4 l0;
 	l0.x = sampleLuma(0, 0);
 	l0.y = sampleLuma(1, 0);
 	l0.z = sampleLuma(0, 1);
 	l0.w = sampleLuma(1, 1);
 
-	Vec2 l1;
+	RVec2 l1;
 	l1.x = sampleLuma(2, 1);
 	l1.y = sampleLuma(1, 2);
 
 	// Calculate derivatives.
-	Vec2 a = Vec2(l0.y, l1.x);
-	Vec2 b = Vec2(l0.x, l0.w);
-	const Vec2 dx = abs(a - b);
+	RVec2 a = RVec2(l0.y, l1.x);
+	RVec2 b = RVec2(l0.x, l0.w);
+	const RVec2 dx = abs(a - b);
 
-	a = Vec2(l0.z, l1.y);
-	b = Vec2(l0.x, l0.w);
-	const Vec2 dy = abs(a - b);
+	a = RVec2(l0.z, l1.y);
+	b = RVec2(l0.x, l0.w);
+	const RVec2 dy = abs(a - b);
 
-	F32 maxDerivativeX = max(dx.x, dx.y);
-	F32 maxDerivativeY = max(dy.x, dy.y);
+	RF32 maxDerivativeX = max(dx.x, dx.y);
+	RF32 maxDerivativeY = max(dy.x, dy.y);
 
 	// Calculate average luma.
-	F32 averageLuma = (l0.x + l0.y + l0.z + l0.w) / 4.0;
+	RF32 averageLuma = (l0.x + l0.y + l0.z + l0.w) / 4.0;
 #else
 	// Get luminance.
 	//             l2.z
@@ -94,90 +102,89 @@ void main()
 	//       l1.x  l1.y
 	//       l0.z  l0.w  l2.x
 	//       l0.x  l0.y
-	Vec4 l0;
+	RVec4 l0;
 	l0.x = sampleLuma(0, 0);
 	l0.y = sampleLuma(1, 0);
 	l0.z = sampleLuma(0, 1);
 	l0.w = sampleLuma(1, 1);
 
-	Vec4 l1;
+	RVec4 l1;
 	l1.x = sampleLuma(0, 2);
 	l1.y = sampleLuma(1, 2);
 	l1.z = sampleLuma(0, 3);
 	l1.w = sampleLuma(1, 3);
 
-	Vec3 l2;
+	RVec3 l2;
 	l2.x = sampleLuma(2, 1);
 	l2.y = sampleLuma(-1, 3);
 	l2.z = sampleLuma(1, 4);
 
 	// Calculate derivatives.
-	Vec4 a = Vec4(l0.y, l2.x, l1.y, l2.y);
-	Vec4 b = Vec4(l0.x, l0.w, l1.x, l1.z);
-	const Vec4 dx = abs(a - b);
+	RVec4 a = RVec4(l0.y, l2.x, l1.y, l2.y);
+	RVec4 b = RVec4(l0.x, l0.w, l1.x, l1.z);
+	const RVec4 dx = abs(a - b);
 
-	a = Vec4(l0.z, l0.w, l1.z, l2.z);
-	b = Vec4(l0.x, l0.y, l1.x, l1.w);
-	const Vec4 dy = abs(a - b);
+	a = RVec4(l0.z, l0.w, l1.z, l2.z);
+	b = RVec4(l0.x, l0.y, l1.x, l1.w);
+	const RVec4 dy = abs(a - b);
 
-	F32 maxDerivativeX = max(max(dx.x, dx.y), max(dx.z, dx.w));
-	F32 maxDerivativeY = max(max(dy.x, dy.y), max(dy.z, dy.w));
+	RF32 maxDerivativeX = max(max(dx.x, dx.y), max(dx.z, dx.w));
+	RF32 maxDerivativeY = max(max(dy.x, dy.y), max(dy.z, dy.w));
 
 	// Calculate average luma.
-	const Vec4 sumL0L1 = l0 + l1;
-	F32 averageLuma = (sumL0L1.x + sumL0L1.y + sumL0L1.z + sumL0L1.w) / 8.0;
+	const RVec4 sumL0L1 = l0 + l1;
+	RF32 averageLuma = (sumL0L1.x + sumL0L1.y + sumL0L1.z + sumL0L1.w) / 8.0;
 #endif
 
 	// Share values in subgroup.
-	maxDerivativeX = subgroupMax(maxDerivativeX);
-	maxDerivativeY = subgroupMax(maxDerivativeY);
-	averageLuma = subgroupAdd(averageLuma);
+	maxDerivativeX = WaveActiveMax(maxDerivativeX);
+	maxDerivativeY = WaveActiveMax(maxDerivativeY);
+	averageLuma = WaveActiveSum(averageLuma);
 
 #if SHARED_MEMORY
 	// Store results in shared memory.
-	[branch] if(subgroupElect())
+	[branch] if(WaveIsFirstLane())
 	{
-		s_averageLuma[gl_SubgroupID] = averageLuma;
-		s_maxDerivative[gl_SubgroupID] = Vec2(maxDerivativeX, maxDerivativeY);
+		s_averageLuma[WaveGetLaneIndex()] = averageLuma;
+		s_maxDerivative[WaveGetLaneIndex()] = RVec2(maxDerivativeX, maxDerivativeY);
 	}
 
-	memoryBarrierShared();
-	barrier();
+	GroupMemoryBarrierWithGroupSync();
 #endif
 
 	// Write the result
-	[branch] if(gl_LocalInvocationIndex == 0u)
+	[branch] if(svGroupIndex == 0u)
 	{
 		// Get max across all subgroups.
 #if SHARED_MEMORY
 		averageLuma = s_averageLuma[0];
-		Vec2 maxDerivative = s_maxDerivative[0];
+		RVec2 maxDerivative = s_maxDerivative[0];
 
-		for(U32 i = 1u; i < gl_NumSubgroups; ++i)
+		for(U32 i = 1u; i < WaveGetLaneCount(); ++i)
 		{
 			averageLuma += s_averageLuma[i];
 			maxDerivative = max(maxDerivative, s_maxDerivative[i]);
 		}
 #else
-		const Vec2 maxDerivative = Vec2(maxDerivativeX, maxDerivativeY);
+		const RVec2 maxDerivative = RVec2(maxDerivativeX, maxDerivativeY);
 #endif
 
 		// Determine shading rate.
-		const F32 avgLuma = averageLuma / F32(kWorkgroupSize.x * kWorkgroupSize.y);
-		const Vec2 lumaDiff = maxDerivative / avgLuma;
-		const F32 threshold1 = u_threshold;
-		const F32 threshold2 = threshold1 * 0.4;
+		const RF32 avgLuma = averageLuma / RF32(THREADGROUP_SIZE_X * THREADGROUP_SIZE_Y);
+		const RVec2 lumaDiff = maxDerivative / avgLuma;
+		const RF32 threshold1 = g_unis.m_threshold;
+		const RF32 threshold2 = threshold1 * 0.4;
 
 		UVec2 rate;
 		rate.x = (lumaDiff.x > threshold1) ? 1u : ((lumaDiff.x > threshold2) ? 2u : 4u);
 		rate.y = (lumaDiff.y > threshold1) ? 1u : ((lumaDiff.y > threshold2) ? 2u : 4u);
 
 #if LIMIT_RATE_TO_2X2
-		rate = min(rate, UVec2(2u));
+		rate = min(rate, UVec2(2, 2));
 #endif
 
-		const UVec2 outTexelCoord = gl_WorkGroupID.xy;
-		imageStore(u_sriImg, IVec2(outTexelCoord), UVec4(encodeVrsRate(rate)));
+		const UVec2 outTexelCoord = svGroupID.xy;
+		g_sriUav[outTexelCoord] = encodeVrsRate(rate);
 	}
 }
 

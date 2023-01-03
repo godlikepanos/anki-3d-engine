@@ -3,23 +3,22 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki hlsl
+
 #pragma anki start vert
-#include <AnKi/Shaders/QuadVert.glsl>
+#include <AnKi/Shaders/QuadVert.hlsl>
 #pragma anki end
 
 #pragma anki start frag
-#include <AnKi/Shaders/Functions.glsl>
+#include <AnKi/Shaders/Functions.hlsl>
 
-layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
-layout(set = 0, binding = 1) uniform utexture2D u_inTex;
+[[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
+[[vk::binding(1)]] Texture2D<U32> g_inTex;
 
-layout(location = 0) in Vec2 in_uv;
-layout(location = 0) out Vec3 out_color;
-
-void main()
+Vec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 {
-	const U32 texel = textureLod(u_inTex, u_nearestAnyClampSampler, in_uv, 0.0).x;
+	const U32 texel = g_inTex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0);
 	const UVec2 rate = decodeVrsRate(texel);
-	out_color = visualizeVrsRate(rate);
+	return visualizeVrsRate(rate);
 }
 #pragma anki end
