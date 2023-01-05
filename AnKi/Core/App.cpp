@@ -647,7 +647,7 @@ Error App::mainLoop()
 
 	if(ANKI_UNLIKELY(benchmarkMode))
 	{
-		ANKI_CORE_LOGI("Benchmark file saved it: %s", benchmarkCsvFileFilename.cstr());
+		ANKI_CORE_LOGI("Benchmark file saved in: %s", benchmarkCsvFileFilename.cstr());
 	}
 
 	return Error::kNone;

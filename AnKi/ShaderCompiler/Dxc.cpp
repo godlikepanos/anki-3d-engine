@@ -109,6 +109,8 @@ Error compileHlslToSpirv(CString src, ShaderType shaderType, BaseMemoryPool& tmp
 		CString dxcBin = ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Windows64/dxc.exe";
 #elif ANKI_OS_LINUX
 		CString dxcBin = ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Linux64/dxc";
+#else
+		CString dxcBin = "N/A";
 #endif
 
 		// Run once without stdout or stderr. Because if you do the process library will crap out after a while
