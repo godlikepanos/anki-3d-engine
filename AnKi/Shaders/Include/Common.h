@@ -308,6 +308,7 @@ Mat3 constructMatrixColumns(Vec3 c0, Vec3 c1, Vec3 c2)
 	return m;
 }
 
+#	if !ANKI_FORCE_FULL_FP_PRECISION
 RMat3 constructMatrixColumns(RVec3 c0, RVec3 c1, RVec3 c2)
 {
 	RMat3 m;
@@ -316,6 +317,7 @@ RMat3 constructMatrixColumns(RVec3 c0, RVec3 c1, RVec3 c2)
 	m.m_row2 = RVec3(c0.z, c1.z, c2.z);
 	return m;
 }
+#	endif
 
 Vec3 mul(Mat3 m, Vec3 v)
 {
@@ -325,6 +327,7 @@ Vec3 mul(Mat3 m, Vec3 v)
 	return Vec3(a, b, c);
 }
 
+#	if !ANKI_FORCE_FULL_FP_PRECISION
 RVec3 mul(RMat3 m, RVec3 v)
 {
 	const RF32 a = dot(m.m_row0, v);
@@ -332,6 +335,7 @@ RVec3 mul(RMat3 m, RVec3 v)
 	const RF32 c = dot(m.m_row2, v);
 	return RVec3(a, b, c);
 }
+#	endif
 
 Vec4 mul(Mat4 m, Vec4 v)
 {

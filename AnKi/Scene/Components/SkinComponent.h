@@ -51,12 +51,12 @@ public:
 
 	void playAnimation(U32 track, AnimationResourcePtr anim, const AnimationPlayInfo& info);
 
-	ConstWeakArray<Mat4> getBoneTransforms() const
+	ConstWeakArray<Mat3x4> getBoneTransforms() const
 	{
 		return m_boneTrfs[m_crntBoneTrfs];
 	}
 
-	ConstWeakArray<Mat4> getPreviousFrameBoneTransforms() const
+	ConstWeakArray<Mat3x4> getPreviousFrameBoneTransforms() const
 	{
 		return m_boneTrfs[m_prevBoneTrfs];
 	}
@@ -74,6 +74,11 @@ public:
 	Bool isEnabled() const
 	{
 		return m_skeleton.isCreated();
+	}
+
+	U32 getBoneTransformsGpuSceneOffset() const
+	{
+		return U32(m_boneTransformsGpuSceneOffset.m_offset);
 	}
 
 private:
@@ -98,7 +103,7 @@ private:
 
 	SceneNode* m_node;
 	SkeletonResourcePtr m_skeleton;
-	Array<DynamicArray<Mat4>, 2> m_boneTrfs;
+	Array<DynamicArray<Mat3x4>, 2> m_boneTrfs;
 	DynamicArray<Trf> m_animationTrfs;
 	Aabb m_boneBoundingVolume = Aabb(Vec3(-1.0f), Vec3(1.0f));
 	Array<Track, kMaxAnimationTracks> m_tracks;
@@ -106,12 +111,11 @@ private:
 	U8 m_crntBoneTrfs = 0;
 	U8 m_prevBoneTrfs = 1;
 
-	SegregatedListsGpuMemoryPoolToken m_crntBoneTransformsGpuSceneOffset;
-	SegregatedListsGpuMemoryPoolToken m_prevBoneTransformsGpuSceneOffset;
+	SegregatedListsGpuMemoryPoolToken m_boneTransformsGpuSceneOffset;
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated);
 
-	void visitBones(const Bone& bone, const Mat4& parentTrf, const BitSet<128, U8>& bonesAnimated, Vec4& minExtend,
+	void visitBones(const Bone& bone, const Mat3x4& parentTrf, const BitSet<128, U8>& bonesAnimated, Vec4& minExtend,
 					Vec4& maxExtend);
 };
 /// @}

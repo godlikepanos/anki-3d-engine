@@ -168,7 +168,7 @@ void GpuSceneMicroPatcher::newCopy(StackMemoryPool& frameCpuPool, PtrSize gpuSce
 	LockGuard lock(m_mtx);
 	while(patchIt < patchEnd)
 	{
-		const U32 patchDwords = U32(patchEnd - patchIt);
+		const U32 patchDwords = min(kDwordsPerPatch, U32(patchEnd - patchIt));
 
 		PatchHeader& header = *m_crntFramePatchHeaders.emplaceBack(frameCpuPool);
 		ANKI_ASSERT(((patchDwords - 1) & 0b111111) == (patchDwords - 1));
@@ -182,8 +182,8 @@ void GpuSceneMicroPatcher::newCopy(StackMemoryPool& frameCpuPool, PtrSize gpuSce
 		m_crntFramePatchData.resize(frameCpuPool, srcOffset + patchDwords);
 		memcpy(&m_crntFramePatchData[srcOffset], patchIt, patchDwords * 4);
 
-		patchIt += kDwordsPerPatch;
-		gpuSceneDestDwordOffset += kDwordsPerPatch;
+		patchIt += patchDwords;
+		gpuSceneDestDwordOffset += patchDwords;
 	}
 }
 

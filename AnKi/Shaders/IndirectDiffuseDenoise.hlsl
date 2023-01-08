@@ -61,7 +61,7 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 
 	// Sample
 	RF32 weight = kEpsilonRF32;
-	RVec3 color = Vec3(0.0, 0.0, 0.0);
+	Vec3 color = Vec3(0.0, 0.0, 0.0); // Keep it full precision because it may go to inf
 
 	for(F32 i = -g_uniforms.m_sampleCountDiv2; i <= g_uniforms.m_sampleCountDiv2; i += 1.0)
 	{

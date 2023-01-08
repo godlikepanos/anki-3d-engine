@@ -17,9 +17,9 @@ struct GpuSceneRenderable
 	U32 m_uniformsOffset;
 	U32 m_geometryOffset;
 	U32 m_boneTransformsOffset;
-	U32 m_previousBoneTransformsOffset;
 	U32 m_padding0;
 	U32 m_padding1;
+	U32 m_padding2;
 };
 static_assert(sizeof(GpuSceneRenderable) == sizeof(Vec4) * 2);
 

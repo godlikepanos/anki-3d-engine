@@ -102,32 +102,35 @@ struct FragOut
 
 #pragma anki start vert
 
-Mat3x4 loadBoneTransform(UnpackedMeshVertex vert, GpuSceneRenderable renderable, U32 index)
+struct Mat3x4_2
+{
+	Mat3x4 m_a;
+	Mat3x4 m_b;
+};
+
+Mat3x4_2 loadBoneTransforms(UnpackedMeshVertex vert, GpuSceneRenderable renderable, U32 index)
 {
 	const U32 boneIdx = vert.m_boneIndices[index];
 	U32 byteOffset = renderable.m_boneTransformsOffset;
-	byteOffset += boneIdx * sizeof(Mat3x4);
-	return g_gpuScene.Load<Mat3x4>(byteOffset);
-}
-
-Mat3x4 loadPreviousBoneTransform(UnpackedMeshVertex vert, GpuSceneRenderable renderable, U32 index)
-{
-	const U32 boneIdx = vert.m_boneIndices[index];
-	U32 byteOffset = renderable.m_previousBoneTransformsOffset;
-	byteOffset += boneIdx * sizeof(Mat3x4);
-	return g_gpuScene.Load<Mat3x4>(byteOffset);
+	byteOffset += boneIdx * sizeof(Mat3x4) * 2;
+	return g_gpuScene.Load<Mat3x4_2>(byteOffset);
 }
 
 #if ANKI_BONES
 void skinning(UnpackedMeshVertex vert, GpuSceneRenderable renderable, inout Vec3 pos, inout Vec3 prevPos,
 			  inout RVec3 normal, inout RVec4 tangent)
 {
-	Mat3x4 skinMat = loadBoneTransform(vert, renderable, 0) * vert.m_boneWeights[0];
-	Mat3x4 prevSkinMat = loadPreviousBoneTransform(vert, renderable, 0) * vert.m_boneWeights[0];
+	Mat3x4_2 mats = loadBoneTransforms(vert, renderable, 0);
+
+	Mat3x4 skinMat = mats.m_a * vert.m_boneWeights[0];
+	Mat3x4 prevSkinMat = mats.m_b * vert.m_boneWeights[0];
+
 	[unroll] for(U32 i = 1u; i < 4u; ++i)
 	{
-		skinMat = skinMat + loadBoneTransform(vert, renderable, i) * vert.m_boneWeights[i];
-		prevSkinMat = prevSkinMat + loadPreviousBoneTransform(vert, renderable, i) * vert.m_boneWeights[i];
+		mats = loadBoneTransforms(vert, renderable, i);
+
+		skinMat = skinMat + mats.m_a * vert.m_boneWeights[i];
+		prevSkinMat = prevSkinMat + mats.m_b * vert.m_boneWeights[i];
 	}
 
 #	if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER

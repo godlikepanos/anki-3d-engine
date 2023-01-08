@@ -961,18 +961,19 @@ Error GltfImporter::writeSkeleton(const cgltf_skin& skin) const
 		ANKI_CHECK(file.writeText("boneTransform=\""));
 		Mat4 btrf(&boneMats[i][0]);
 		btrf.transpose();
-		for(U32 j = 0; j < 16; j++)
+		const Mat3x4 btrf3x4(btrf);
+		for(U32 j = 0; j < 12; j++)
 		{
-			ANKI_CHECK(file.writeTextf("%f ", btrf[j]));
+			ANKI_CHECK(file.writeTextf("%f ", btrf3x4[j]));
 		}
 		ANKI_CHECK(file.writeText("\" "));
 
 		// Transform
 		Transform trf;
 		ANKI_CHECK(getNodeTransform(boneNode, trf));
-		Mat4 mat{trf};
+		Mat3x4 mat(trf);
 		ANKI_CHECK(file.writeText("transform=\""));
-		for(U j = 0; j < 16; j++)
+		for(U j = 0; j < 12; j++)
 		{
 			ANKI_CHECK(file.writeTextf("%f ", mat[j]));
 		}

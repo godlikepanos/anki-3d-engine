@@ -31,12 +31,12 @@ public:
 		return m_name;
 	}
 
-	const Mat4& getTransform() const
+	const Mat3x4& getTransform() const
 	{
 		return m_transform;
 	}
 
-	const Mat4& getVertexTransform() const
+	const Mat3x4& getVertexTransform() const
 	{
 		return m_vertTrf;
 	}
@@ -59,8 +59,8 @@ public:
 private:
 	String m_name; ///< The name of the bone
 
-	Mat4 m_transform; ///< See the class notes.
-	Mat4 m_vertTrf;
+	Mat3x4 m_transform; ///< See the class notes.
+	Mat3x4 m_vertTrf;
 
 	U32 m_idx;
 
@@ -83,8 +83,8 @@ private:
 /// 	<bones>
 /// 		<bone>
 /// 			<name>X</name>
-/// 			<transform>16 floats</transform>
-/// 			<boneTransform>16 floats</boneTransform>
+/// 			<transform>12 floats</transform>
+/// 			<boneTransform>12 floats</boneTransform>
 /// 			[<parent>bone_name</parent>]
 /// 		<bone>
 ///         ...

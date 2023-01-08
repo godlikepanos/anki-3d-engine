@@ -27,8 +27,7 @@ SkinComponent::~SkinComponent()
 	m_boneTrfs[1].destroy(m_node->getMemoryPool());
 	m_animationTrfs.destroy(m_node->getMemoryPool());
 
-	getExternalSubsystems(*m_node).m_gpuSceneMemoryPool->free(m_crntBoneTransformsGpuSceneOffset);
-	getExternalSubsystems(*m_node).m_gpuSceneMemoryPool->free(m_prevBoneTransformsGpuSceneOffset);
+	getExternalSubsystems(*m_node).m_gpuSceneMemoryPool->free(m_boneTransformsGpuSceneOffset);
 }
 
 Error SkinComponent::loadSkeletonResource(CString fname)
@@ -39,19 +38,16 @@ Error SkinComponent::loadSkeletonResource(CString fname)
 	m_boneTrfs[0].destroy(m_node->getMemoryPool());
 	m_boneTrfs[1].destroy(m_node->getMemoryPool());
 	m_animationTrfs.destroy(m_node->getMemoryPool());
-	getExternalSubsystems(*m_node).m_gpuSceneMemoryPool->free(m_crntBoneTransformsGpuSceneOffset);
-	getExternalSubsystems(*m_node).m_gpuSceneMemoryPool->free(m_prevBoneTransformsGpuSceneOffset);
+	getExternalSubsystems(*m_node).m_gpuSceneMemoryPool->free(m_boneTransformsGpuSceneOffset);
 
 	// Create
 	const U32 boneCount = m_skeleton->getBones().getSize();
-	m_boneTrfs[0].create(m_node->getMemoryPool(), boneCount, Mat4::getIdentity());
-	m_boneTrfs[1].create(m_node->getMemoryPool(), boneCount, Mat4::getIdentity());
+	m_boneTrfs[0].create(m_node->getMemoryPool(), boneCount, Mat3x4::getIdentity());
+	m_boneTrfs[1].create(m_node->getMemoryPool(), boneCount, Mat3x4::getIdentity());
 	m_animationTrfs.create(m_node->getMemoryPool(), boneCount, {Vec3(0.0f), Quat::getIdentity(), 1.0f});
 
-	getExternalSubsystems(*m_node).m_gpuSceneMemoryPool->allocate(sizeof(Mat4) * boneCount, 4,
-																  m_crntBoneTransformsGpuSceneOffset);
-	getExternalSubsystems(*m_node).m_gpuSceneMemoryPool->allocate(sizeof(Mat4) * boneCount, 4,
-																  m_prevBoneTransformsGpuSceneOffset);
+	getExternalSubsystems(*m_node).m_gpuSceneMemoryPool->allocate(sizeof(Mat4) * boneCount * 2, 4,
+																  m_boneTransformsGpuSceneOffset);
 
 	return Error::kNone;
 }
@@ -188,11 +184,22 @@ Error SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		m_crntBoneTrfs = m_crntBoneTrfs ^ 1;
 
 		// Walk the bone hierarchy to add additional transforms
-		visitBones(m_skeleton->getRootBone(), Mat4::getIdentity(), bonesAnimated, minExtend, maxExtend);
+		visitBones(m_skeleton->getRootBone(), Mat3x4::getIdentity(), bonesAnimated, minExtend, maxExtend);
 
 		const Vec4 e(kEpsilonf, kEpsilonf, kEpsilonf, 0.0f);
 		m_boneBoundingVolume.setMin(minExtend - e);
 		m_boneBoundingVolume.setMax(maxExtend + e);
+
+		// Update the GPU scene
+		const U32 boneCount = m_skeleton->getBones().getSize();
+		DynamicArrayRaii<Mat3x4> trfs(info.m_framePool, boneCount * 2);
+		for(U32 i = 0; i < boneCount; ++i)
+		{
+			trfs[i * 2 + 0] = getBoneTransforms()[i];
+			trfs[i * 2 + 1] = getPreviousFrameBoneTransforms()[i];
+		}
+		info.m_gpuSceneMicroPatcher->newCopy(*info.m_framePool, m_boneTransformsGpuSceneOffset.m_offset,
+											 trfs.getSizeInBytes(), trfs.getBegin());
 	}
 	else
 	{
@@ -204,25 +211,25 @@ Error SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	return Error::kNone;
 }
 
-void SkinComponent::visitBones(const Bone& bone, const Mat4& parentTrf, const BitSet<128>& bonesAnimated,
+void SkinComponent::visitBones(const Bone& bone, const Mat3x4& parentTrf, const BitSet<128>& bonesAnimated,
 							   Vec4& minExtend, Vec4& maxExtend)
 {
-	Mat4 outMat;
+	Mat3x4 outMat;
 
 	if(bonesAnimated.get(bone.getIndex()))
 	{
 		const Trf& t = m_animationTrfs[bone.getIndex()];
-		outMat = parentTrf * Mat4(t.m_translation.xyz1(), Mat3(t.m_rotation), t.m_scale);
+		outMat = parentTrf.combineTransformations(Mat3x4(t.m_translation.xyz(), Mat3(t.m_rotation), t.m_scale));
 	}
 	else
 	{
-		outMat = parentTrf * bone.getTransform();
+		outMat = parentTrf.combineTransformations(bone.getTransform());
 	}
 
-	m_boneTrfs[m_crntBoneTrfs][bone.getIndex()] = outMat * bone.getVertexTransform();
+	m_boneTrfs[m_crntBoneTrfs][bone.getIndex()] = outMat.combineTransformations(bone.getVertexTransform());
 
 	// Update volume
-	const Vec4 bonePos = outMat * Vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	const Vec3 bonePos = outMat * Vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	minExtend = minExtend.min(bonePos.xyz0());
 	maxExtend = maxExtend.max(bonePos.xyz0());
 

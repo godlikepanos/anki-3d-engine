@@ -163,6 +163,7 @@ void ModelNode::initRenderComponents()
 {
 	const ModelComponent& modelc = getFirstComponentOfType<ModelComponent>();
 	const ModelResourcePtr& model = modelc.getModelResource();
+	const SkinComponent& skinc = getFirstComponentOfType<SkinComponent>();
 
 	ANKI_ASSERT(modelc.getModelResource()->getModelPatches().getSize() == countComponentsOfType<RenderComponent>());
 	ANKI_ASSERT(modelc.getModelResource()->getModelPatches().getSize() == m_renderProxies.getSize());
@@ -199,6 +200,11 @@ void ModelNode::initRenderComponents()
 		renderable.m_uniformsOffset = getFirstComponentOfType<ModelComponent>().getUniformsGpuSceneOffset(patchIdx);
 		renderable.m_geometryOffset =
 			getFirstComponentOfType<ModelComponent>().getMeshViewsGpuSceneOffset() + sizeof(GpuSceneMesh) * patchIdx;
+		if(skinc.isEnabled())
+		{
+			renderable.m_boneTransformsOffset = skinc.getBoneTransformsGpuSceneOffset();
+		}
+
 		getExternalSubsystems().m_gpuSceneMicroPatcher->newCopy(getFrameMemoryPool(), rc.getGpuSceneViewOffset(),
 																sizeof(renderable), &renderable);
 
@@ -316,12 +322,13 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 				ANKI_ASSERT(bone.getIndex() == i);
 				const Vec4 point(0.0f, 0.0f, 0.0f, 1.0f);
 				const Bone* parent = bone.getParent();
-				Mat4 m = (parent)
-							 ? skinc.getBoneTransforms()[parent->getIndex()] * parent->getVertexTransform().getInverse()
-							 : Mat4::getIdentity();
+				Mat4 m = (parent) ? Mat4(skinc.getBoneTransforms()[parent->getIndex()], Vec4(0.0f, 0.0f, 0.0f, 1.0f))
+										* Mat4(parent->getVertexTransform(), Vec4(0.0f, 0.0f, 0.0f, 1.0f)).getInverse()
+								  : Mat4::getIdentity();
 				const Vec3 a = (m * point).xyz();
 
-				m = skinc.getBoneTransforms()[i] * bone.getVertexTransform().getInverse();
+				m = Mat4(skinc.getBoneTransforms()[i], Vec4(0.0f, 0.0f, 0.0f, 1.0f))
+					* Mat4(bone.getVertexTransform(), Vec4(0.0f, 0.0f, 0.0f, 1.0f)).getInverse();
 				const Vec3 b = (m * point).xyz();
 
 				lines.emplaceBack(a);
