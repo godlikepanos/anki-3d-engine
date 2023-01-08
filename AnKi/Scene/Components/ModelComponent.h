@@ -41,10 +41,10 @@ public:
 		return m_model.isCreated();
 	}
 
-	U32 getMeshViewsGpuSceneOffset() const
+	U32 getGpuSceneMeshLodsOffset() const
 	{
 		ANKI_ASSERT((m_gpuSceneMeshGpuViews.m_offset % 4) == 0);
-		return U32(m_gpuSceneMeshGpuViews.m_offset);
+		return U32(m_gpuSceneMeshLods.m_offset);
 	}
 
 	U32 getUniformsGpuSceneOffset(U32 meshPatchIdx) const
@@ -59,7 +59,7 @@ private:
 	DynamicArray<U64> m_modelPatchMergeKeys;
 	Bool m_dirty = true;
 
-	SegregatedListsGpuMemoryPoolToken m_gpuSceneMeshGpuViews;
+	SegregatedListsGpuMemoryPoolToken m_gpuSceneMeshLods;
 	SegregatedListsGpuMemoryPoolToken m_gpuSceneUniforms;
 	DynamicArray<U32> m_gpuSceneUniformsOffsetPerPatch;
 

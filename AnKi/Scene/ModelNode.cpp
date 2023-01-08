@@ -198,8 +198,8 @@ void ModelNode::initRenderComponents()
 		renderable.m_worldTransformsOffset = getFirstComponentOfType<MoveComponent>().getTransformsGpuSceneOffset();
 		renderable.m_aabbOffset = getFirstComponentOfType<SpatialComponent>().getAabbGpuSceneOffset();
 		renderable.m_uniformsOffset = getFirstComponentOfType<ModelComponent>().getUniformsGpuSceneOffset(patchIdx);
-		renderable.m_geometryOffset =
-			getFirstComponentOfType<ModelComponent>().getMeshViewsGpuSceneOffset() + sizeof(GpuSceneMesh) * patchIdx;
+		renderable.m_geometryOffset = getFirstComponentOfType<ModelComponent>().getGpuSceneMeshLodsOffset()
+									  + sizeof(GpuSceneMeshLod) * kMaxLodCount * patchIdx;
 		if(skinc.isEnabled())
 		{
 			renderable.m_boneTransformsOffset = skinc.getBoneTransformsGpuSceneOffset();

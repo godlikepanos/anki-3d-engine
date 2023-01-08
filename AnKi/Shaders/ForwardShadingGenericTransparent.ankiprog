@@ -42,9 +42,10 @@ VertOut main(VertIn input)
 	const UnpackedGpuSceneRenderableInstance instance =
 		unpackRenderableGpuViewInstance(input.m_gpuSceneRenderableInstance);
 	const GpuSceneRenderable renderable = g_gpuScene.Load<GpuSceneRenderable>(instance.m_renderableOffset);
-	const GpuSceneMesh mesh = g_gpuScene.Load<GpuSceneMesh>(renderable.m_geometryOffset);
+	const GpuSceneMeshLod mesh =
+		g_gpuScene.Load<GpuSceneMeshLod>(renderable.m_geometryOffset * sizeof(GpuSceneMeshLod) * instance.m_lod);
 	const Mat3x4 worldTransform = g_gpuScene.Load<Mat3x4>(renderable.m_worldTransformsOffset);
-	const UnpackedMeshVertex vertex = loadVertex(mesh, instance.m_lod, input.m_svVertexId, false);
+	const UnpackedMeshVertex vertex = loadVertex(mesh, input.m_svVertexId, false);
 
 	output.m_worldPosition = mul(worldTransform, Vec4(vertex.m_position, 1.0));
 

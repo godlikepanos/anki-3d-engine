@@ -46,13 +46,11 @@ _ANKI_DEFINE_BINDING(R8G8B8A8_Uint, UVec4)
 #	include <AnKi/Shaders/ClusteredShadingCommon.hlsl>
 #endif
 
-UnpackedMeshVertex loadVertex(GpuSceneMesh mesh, U32 lod, U32 svVertexId, Bool bones)
+UnpackedMeshVertex loadVertex(GpuSceneMeshLod mlod, U32 svVertexId, Bool bones)
 {
-	GpuSceneMeshLod mlod = mesh.m_lods[lod];
-
 	UnpackedMeshVertex v;
 	v.m_position = g_unifiedGeom_R16G16B16A16_Unorm[mlod.m_vertexOffsets[(U32)VertexStreamId::kPosition] + svVertexId];
-	v.m_position = v.m_position * mesh.m_positionScale + mesh.m_positionTranslation;
+	v.m_position = v.m_position * mlod.m_positionScale + mlod.m_positionTranslation;
 
 	v.m_normal = g_unifiedGeom_R8G8B8A8_Snorm[mlod.m_vertexOffsets[(U32)VertexStreamId::kNormal] + svVertexId].xyz;
 	v.m_tangent = g_unifiedGeom_R8G8B8A8_Snorm[mlod.m_vertexOffsets[(U32)VertexStreamId::kTangent] + svVertexId];

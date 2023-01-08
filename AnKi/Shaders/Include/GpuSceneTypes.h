@@ -28,17 +28,11 @@ struct GpuSceneMeshLod
 	U32 m_vertexOffsets[(U32)VertexStreamId::kMeshRelatedCount];
 	U32 m_indexCount;
 	U32 m_indexOffset; // TODO Decide on its type
-};
-static_assert(sizeof(GpuSceneMeshLod) == sizeof(Vec4) * 2);
-
-struct GpuSceneMesh
-{
-	GpuSceneMeshLod m_lods[kMaxLodCount];
 
 	Vec3 m_positionTranslation;
 	F32 m_positionScale;
 };
-static_assert(sizeof(GpuSceneMesh) == sizeof(Vec4) * (kMaxLodCount * 2 + 1));
+static_assert(sizeof(GpuSceneMeshLod) == sizeof(Vec4) * 3);
 
 struct GpuSceneParticles
 {

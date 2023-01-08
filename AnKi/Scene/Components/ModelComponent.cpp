@@ -24,7 +24,7 @@ ModelComponent::~ModelComponent()
 	m_modelPatchMergeKeys.destroy(m_node->getMemoryPool());
 
 	GpuSceneMemoryPool& gpuScene = *getExternalSubsystems(*m_node).m_gpuSceneMemoryPool;
-	gpuScene.free(m_gpuSceneMeshGpuViews);
+	gpuScene.free(m_gpuSceneMeshLods);
 	gpuScene.free(m_gpuSceneUniforms);
 
 	m_gpuSceneUniformsOffsetPerPatch.destroy(m_node->getMemoryPool());
@@ -53,8 +53,8 @@ Error ModelComponent::loadModelResource(CString filename)
 	// GPU scene allocations
 	GpuSceneMemoryPool& gpuScene = *getExternalSubsystems(*m_node).m_gpuSceneMemoryPool;
 
-	gpuScene.free(m_gpuSceneMeshGpuViews);
-	gpuScene.allocate(sizeof(GpuSceneMesh) * m_modelPatchMergeKeys.getSize(), 4, m_gpuSceneMeshGpuViews);
+	gpuScene.free(m_gpuSceneMeshLods);
+	gpuScene.allocate(sizeof(GpuSceneMeshLod) * kMaxLodCount * m_modelPatchMergeKeys.getSize(), 4, m_gpuSceneMeshLods);
 
 	U32 uniformsSize = 0;
 	m_gpuSceneUniformsOffsetPerPatch.resize(m_node->getMemoryPool(), modelPatchCount);
@@ -86,19 +86,19 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		// Upload the mesh views
 		const U32 modelPatchCount = m_model->getModelPatches().getSize();
-		DynamicArrayRaii<GpuSceneMesh> meshViews(info.m_framePool, modelPatchCount);
+		DynamicArrayRaii<GpuSceneMeshLod> meshLods(info.m_framePool, modelPatchCount * kMaxLodCount);
 		for(U32 i = 0; i < modelPatchCount; ++i)
 		{
-			GpuSceneMesh& view = meshViews[i];
 			const ModelPatch& patch = m_model->getModelPatches()[i];
 			const MeshResource& mesh = *patch.getMesh();
 
-			zeroMemory(view);
-			view.m_positionScale = mesh.getPositionsScale();
-			view.m_positionTranslation = mesh.getPositionsTranslation();
-
 			for(U32 l = 0; l < mesh.getLodCount(); ++l)
 			{
+				GpuSceneMeshLod& meshLod = meshLods[i * kMaxLodCount + l];
+				meshLod = {};
+				meshLod.m_positionScale = mesh.getPositionsScale();
+				meshLod.m_positionTranslation = mesh.getPositionsTranslation();
+
 				for(VertexStreamId stream = VertexStreamId::kPosition; stream <= VertexStreamId::kBoneWeights; ++stream)
 				{
 					if(!mesh.isVertexStreamPresent(stream))
@@ -113,26 +113,26 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 					const PtrSize elementSize = getFormatInfo(kMeshRelatedVertexStreamFormats[stream]).m_texelSize;
 
 					ANKI_ASSERT((offset % elementSize) == 0);
-					view.m_lods[l].m_vertexOffsets[U32(stream)] = U32(offset / elementSize);
+					meshLod.m_vertexOffsets[U32(stream)] = U32(offset / elementSize);
 				}
 
 				PtrSize offset;
 				U32 indexCount;
 				IndexType indexType;
 				mesh.getIndexBufferInfo(l, offset, indexCount, indexType);
-				view.m_lods[l].m_indexOffset = U32(offset);
-				view.m_lods[l].m_indexCount = indexCount;
+				meshLod.m_indexOffset = U32(offset);
+				meshLod.m_indexCount = indexCount;
 			}
 
 			// Copy the last LOD to the rest just in case
 			for(U32 l = mesh.getLodCount(); l < kMaxLodCount; ++l)
 			{
-				view.m_lods[l] = view.m_lods[l - 1];
+				meshLods[i * kMaxLodCount + l] = meshLods[i * kMaxLodCount + (l - 1)];
 			}
 		}
 
-		gpuScenePatcher.newCopy(*info.m_framePool, m_gpuSceneMeshGpuViews.m_offset, meshViews.getSizeInBytes(),
-								&meshViews[0]);
+		gpuScenePatcher.newCopy(*info.m_framePool, m_gpuSceneMeshLods.m_offset, meshLods.getSizeInBytes(),
+								&meshLods[0]);
 
 		// Upload the uniforms
 		DynamicArrayRaii<U32> allUniforms(info.m_framePool, U32(m_gpuSceneUniforms.m_size / 4));
