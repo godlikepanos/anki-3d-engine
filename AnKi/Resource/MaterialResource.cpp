@@ -11,7 +11,7 @@
 namespace anki {
 
 inline constexpr Array<CString, U32(BuiltinMutatorId::kCount)> kBuiltinMutatorNames = {
-	{"NONE", "ANKI_TECHNIQUE", "ANKI_LOD", "ANKI_BONES", "ANKI_VELOCITY"}};
+	{"NONE", "ANKI_TECHNIQUE", "ANKI_BONES", "ANKI_VELOCITY"}};
 
 inline constexpr Array<CString, U(RenderingTechnique::kCount)> kTechniqueNames = {
 	{"GBuffer", "GBufferEarlyZ", "Shadow", "Forward", "RtShadow"}};
@@ -72,7 +72,7 @@ class MaterialResource::Program
 public:
 	ShaderProgramResourcePtr m_prog;
 
-	mutable Array4d<MaterialVariant, U(RenderingTechnique::kCount), kMaxLodCount, 2, 2> m_variantMatrix;
+	mutable Array3d<MaterialVariant, U(RenderingTechnique::kCount), 2, 2> m_variantMatrix;
 	mutable RWMutex m_variantMatrixMtx;
 
 	DynamicArray<PartialMutation> m_partialMutation; ///< Only with the non-builtins.
@@ -98,14 +98,11 @@ public:
 		m_prog = std::move(b.m_prog);
 		for(RenderingTechnique t : EnumIterable<RenderingTechnique>())
 		{
-			for(U32 l = 0; l < kMaxLodCount; ++l)
+			for(U32 skin = 0; skin < 2; ++skin)
 			{
-				for(U32 skin = 0; skin < 2; ++skin)
+				for(U32 vel = 0; vel < 2; ++vel)
 				{
-					for(U32 vel = 0; vel < 2; ++vel)
-					{
-						m_variantMatrix[t][skin][skin][vel] = std::move(b.m_variantMatrix[t][skin][skin][vel]);
-					}
+					m_variantMatrix[t][skin][vel] = std::move(b.m_variantMatrix[t][skin][vel]);
 				}
 			}
 		}
@@ -377,7 +374,6 @@ Error MaterialResource::createVars(Program& prog)
 #define ANKI_LOOP_END() }
 
 	ANKI_LOOP(kTechnique)
-	ANKI_LOOP(kLod)
 	ANKI_LOOP(kBones)
 	ANKI_LOOP(kVelocity)
 	{
@@ -435,7 +431,6 @@ Error MaterialResource::createVars(Program& prog)
 			}
 		}
 	}
-	ANKI_LOOP_END()
 	ANKI_LOOP_END()
 	ANKI_LOOP_END()
 	ANKI_LOOP_END()
@@ -561,33 +556,6 @@ Error MaterialResource::findBuiltinMutators(Program& prog)
 		return Error::kUserData;
 	}
 
-	// ANKI_LOD
-	CString lodMutatorName = kBuiltinMutatorNames[BuiltinMutatorId::kLod];
-	const ShaderProgramResourceMutator* lodMutator = prog.m_prog->tryFindMutator(lodMutatorName);
-	if(lodMutator)
-	{
-		if(lodMutator->m_values.getSize() > kMaxLodCount)
-		{
-			ANKI_RESOURCE_LOGE("Mutator %s should have at least %u values in the program", lodMutatorName.cstr(),
-							   U32(kMaxLodCount));
-			return Error::kUserData;
-		}
-
-		for(U32 i = 0; i < lodMutator->m_values.getSize(); ++i)
-		{
-			if(lodMutator->m_values[i] != MutatorValue(i))
-			{
-				ANKI_RESOURCE_LOGE("Values of the %s mutator in the program are not the expected",
-								   lodMutatorName.cstr());
-				return Error::kUserData;
-			}
-		}
-
-		prog.m_lodCount = U8(lodMutator->m_values.getSize());
-		++builtinMutatorCount;
-		prog.m_presentBuildinMutators |= U32(1 << BuiltinMutatorId::kLod);
-	}
-
 	// ANKI_BONES
 	CString bonesMutatorName = kBuiltinMutatorNames[BuiltinMutatorId::kBones];
 	const ShaderProgramResourceMutator* bonesMutator = prog.m_prog->tryFindMutator(bonesMutatorName);
@@ -610,29 +578,6 @@ Error MaterialResource::findBuiltinMutators(Program& prog)
 		}
 
 		++builtinMutatorCount;
-
-#if 0
-		// Find if the bindings are present
-		ConstWeakArray<ShaderProgramBinaryBlock> storageBlocks = prog.m_prog->getBinary().m_storageBlocks;
-		U foundCount = 0;
-		for(U32 i = 0; i < storageBlocks.getSize(); ++i)
-		{
-			const U32 binding = storageBlocks[i].m_binding;
-			const U32 set = storageBlocks[i].m_set;
-			if((binding == kMaterialBindingBoneTransforms || binding == kMaterialBindingPreviousBoneTransforms)
-			   && set == kMaterialSetLocal)
-			{
-				++foundCount;
-			}
-		}
-
-		if(foundCount != 2)
-		{
-			ANKI_RESOURCE_LOGE("The shader has %s mutation but not the storage buffers for the bone transforms",
-							   bonesMutatorName.cstr());
-			return Error::kUserData;
-		}
-#endif
 
 		m_supportsSkinning = true;
 		prog.m_presentBuildinMutators |= U32(1 << BuiltinMutatorId::kBones);
@@ -793,14 +738,6 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 	const Program& prog = m_programs[m_techniqueToProgram[key.getRenderingTechnique()]];
 
 	// Sanitize the key
-	key.setLod(min<U32>(prog.m_lodCount - 1, key.getLod()));
-
-	if(key.getRenderingTechnique() == RenderingTechnique::kGBufferEarlyZ
-	   || key.getRenderingTechnique() == RenderingTechnique::kShadow)
-	{
-		key.setLod(0);
-	}
-
 	if(!(prog.m_presentBuildinMutators & U32(BuiltinMutatorId::kVelocity)) && key.getVelocity())
 	{
 		// Particles set their own velocity
@@ -810,8 +747,7 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 	ANKI_ASSERT(!key.getSkinned() || !!(prog.m_presentBuildinMutators & U32(1 << BuiltinMutatorId::kBones)));
 	ANKI_ASSERT(!key.getVelocity() || !!(prog.m_presentBuildinMutators & U32(1 << BuiltinMutatorId::kVelocity)));
 
-	MaterialVariant& variant =
-		prog.m_variantMatrix[key.getRenderingTechnique()][key.getLod()][key.getSkinned()][key.getVelocity()];
+	MaterialVariant& variant = prog.m_variantMatrix[key.getRenderingTechnique()][key.getSkinned()][key.getVelocity()];
 
 	// Check if it's initialized
 	{
@@ -839,11 +775,6 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 	}
 
 	initInfo.addMutation(kBuiltinMutatorNames[BuiltinMutatorId::kTechnique], MutatorValue(key.getRenderingTechnique()));
-
-	if(!!(prog.m_presentBuildinMutators & U32(1 << BuiltinMutatorId::kLod)))
-	{
-		initInfo.addMutation(kBuiltinMutatorNames[BuiltinMutatorId::kLod], MutatorValue(key.getLod()));
-	}
 
 	if(!!(prog.m_presentBuildinMutators & U32(1 << BuiltinMutatorId::kBones)))
 	{

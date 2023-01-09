@@ -43,7 +43,7 @@ public:
 
 	U32 getGpuSceneMeshLodsOffset() const
 	{
-		ANKI_ASSERT((m_gpuSceneMeshGpuViews.m_offset % 4) == 0);
+		ANKI_ASSERT((m_gpuSceneMeshLods.m_offset % 4) == 0);
 		return U32(m_gpuSceneMeshLods.m_offset);
 	}
 

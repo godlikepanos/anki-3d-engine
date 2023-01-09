@@ -26,7 +26,6 @@ enum class BuiltinMutatorId : U8
 {
 	kNone = 0,
 	kTechnique,
-	kLod,
 	kBones,
 	kVelocity,
 
