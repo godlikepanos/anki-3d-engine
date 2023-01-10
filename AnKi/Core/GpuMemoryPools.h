@@ -164,8 +164,6 @@ private:
 	Atomic<PtrSize> m_offset = {0};
 	PtrSize m_previousFrameEndOffset = 0;
 	U32 m_alignment = 0;
-
-	U8 m_frameCount = 0;
 };
 
 /// Creates the copy jobs that will patch the GPU Scene.
