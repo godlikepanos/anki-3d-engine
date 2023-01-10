@@ -25,7 +25,7 @@ SceneNode::~SceneNode()
 	for(SceneComponent* comp : m_components)
 	{
 		comp->onDestroyReal(*this);
-		g_sceneComponentCallbacks.m_destructors[comp->getClassId()](*comp);
+		g_sceneComponentCallbacks.m_destructor[comp->getClassId()](*comp);
 
 		pool.free(comp);
 	}

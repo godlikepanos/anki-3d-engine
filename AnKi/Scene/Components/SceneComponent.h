@@ -20,28 +20,22 @@ class SceneComponentUpdateInfo;
 constexpr U32 kMaxSceneComponentClasses = 64;
 static_assert(kMaxSceneComponentClasses < 128, "It can oly be 7 bits because of SceneComponent::m_classId");
 
-using SceneComponentConstructorCallback = void (*)(SceneComponent& self, SceneNode& owner);
-using SceneComponentDestructorCallback = void (*)(SceneComponent& self);
-using SceneComponentOnDestroyCallback = void (*)(SceneComponent& self, SceneNode& owner);
-using SceneComponentUpdateCallback = Error (*)(SceneComponent& self, SceneComponentUpdateInfo& info, Bool& updated);
+#define ANKI_SCENE_COMPONENT_VIRTUAL(name, type) using SceneComponentCallback_##name = type;
+#include <AnKi/Scene/Components/SceneComponentVirtuals.defs.h>
 
 class SceneComponentVtable
 {
 public:
-	SceneComponentConstructorCallback m_constructor;
-	SceneComponentDestructorCallback m_destructor;
-	SceneComponentOnDestroyCallback m_onDestroy;
-	SceneComponentUpdateCallback m_update;
+#define ANKI_SCENE_COMPONENT_VIRTUAL(name, type) SceneComponentCallback_##name m_##name;
+#include <AnKi/Scene/Components/SceneComponentVirtuals.defs.h>
 };
 
 /// Callbacks live in their own arrays for better caching.
 class SceneComponentCallbacks
 {
 public:
-	SceneComponentConstructorCallback m_constructors[kMaxSceneComponentClasses];
-	SceneComponentDestructorCallback m_destructors[kMaxSceneComponentClasses];
-	SceneComponentOnDestroyCallback m_onDestroys[kMaxSceneComponentClasses];
-	SceneComponentUpdateCallback m_updates[kMaxSceneComponentClasses];
+#define ANKI_SCENE_COMPONENT_VIRTUAL(name, type) SceneComponentCallback_##name m_##name[kMaxSceneComponentClasses];
+#include <AnKi/Scene/Components/SceneComponentVirtuals.defs.h>
 };
 
 extern SceneComponentCallbacks g_sceneComponentCallbacks;
@@ -77,6 +71,10 @@ public:
 	{ \
 		return static_cast<className&>(self).update(info, updated); \
 	} \
+	static void _onOtherComponentRemovedOrAdded(SceneComponent& self, SceneComponent* other, Bool added) \
+	{ \
+		static_cast<className&>(self).onOtherComponentRemovedOrAdded(other, added); \
+	} \
 \
 public: \
 	static U8 getStaticClassId() \
@@ -88,9 +86,9 @@ private:
 
 /// Define the statics of a scene component.
 #define ANKI_SCENE_COMPONENT_STATICS(className) \
-	SceneComponentRtti className::_m_rtti( \
-		ANKI_STRINGIZE(className), sizeof(className), alignof(className), \
-		{className::_construct, className::_destruct, className::_onDestroy, className::_update});
+	SceneComponentRtti className::_m_rtti(ANKI_STRINGIZE(className), sizeof(className), alignof(className), \
+										  {className::_construct, className::_destruct, className::_onDestroy, \
+										   className::_update, className::_onOtherComponentRemovedOrAdded});
 
 /// Passed to SceneComponent::update.
 /// @memberof SceneComponent
@@ -141,12 +139,12 @@ public:
 
 	ANKI_INTERNAL void onDestroyReal(SceneNode& node)
 	{
-		g_sceneComponentCallbacks.m_onDestroys[m_classId](*this, node);
+		g_sceneComponentCallbacks.m_onDestroy[m_classId](*this, node);
 	}
 
 	ANKI_INTERNAL Error updateReal(SceneComponentUpdateInfo& info, Bool& updated)
 	{
-		return g_sceneComponentCallbacks.m_updates[m_classId](*this, info, updated);
+		return g_sceneComponentCallbacks.m_update[m_classId](*this, info, updated);
 	}
 
 	/// Don't call it directly.
@@ -173,6 +171,13 @@ protected:
 	{
 		updated = false;
 		return Error::kNone;
+	}
+
+	/// Called when a component is added or removed in the SceneNode.
+	/// @param other The component that was inserted.
+	/// @param added Was it inserted or removed?
+	void onOtherComponentRemovedOrAdded([[maybe_unused]] SceneComponent* other, [[maybe_unused]] Bool added)
+	{
 	}
 
 private:

@@ -31,10 +31,11 @@ SceneComponentRtti::SceneComponentRtti(const char* name, U32 size, U32 alignment
 	m_classId = kMaxU8;
 
 	g_rttis[g_sceneComponentClassCount] = this;
-	g_sceneComponentCallbacks.m_constructors[g_sceneComponentClassCount] = vtable.m_constructor;
-	g_sceneComponentCallbacks.m_destructors[g_sceneComponentClassCount] = vtable.m_destructor;
-	g_sceneComponentCallbacks.m_onDestroys[g_sceneComponentClassCount] = vtable.m_onDestroy;
-	g_sceneComponentCallbacks.m_updates[g_sceneComponentClassCount] = vtable.m_update;
+
+#define ANKI_SCENE_COMPONENT_VIRTUAL(name, type) \
+	g_sceneComponentCallbacks.m_##name[g_sceneComponentClassCount] = vtable.m_##name;
+#include <AnKi/Scene/Components/SceneComponentVirtuals.defs.h>
+
 	++g_sceneComponentClassCount;
 
 	// Sort everything because the IDs should be consistend between platforms and compilation builds
@@ -51,9 +52,11 @@ SceneComponentRtti::SceneComponentRtti(const char* name, U32 size, U32 alignment
 		for(U32 i = 0; i < g_sceneComponentClassCount; ++i)
 		{
 			temps[i].m_rrti = g_rttis[i];
-			temps[i].m_vtable = {g_sceneComponentCallbacks.m_constructors[i],
-								 g_sceneComponentCallbacks.m_destructors[i], g_sceneComponentCallbacks.m_onDestroys[i],
-								 g_sceneComponentCallbacks.m_updates[i]};
+			temps[i].m_vtable = {
+#define ANKI_SCENE_COMPONENT_VIRTUAL(name, type) g_sceneComponentCallbacks.m_##name[i]
+#define ANKI_SCENE_COMPONENT_VIRTUAL_SEPERATOR ,
+#include <AnKi/Scene/Components/SceneComponentVirtuals.defs.h>
+			};
 		}
 
 		std::sort(&temps[0], &temps[g_sceneComponentClassCount], [](const Temp& a, const Temp& b) {
@@ -70,10 +73,8 @@ SceneComponentRtti::SceneComponentRtti(const char* name, U32 size, U32 alignment
 		for(U32 i = 0; i < g_sceneComponentClassCount; ++i)
 		{
 			g_rttis[i] = temps[i].m_rrti;
-			g_sceneComponentCallbacks.m_constructors[i] = temps[i].m_vtable.m_constructor;
-			g_sceneComponentCallbacks.m_destructors[i] = temps[i].m_vtable.m_destructor;
-			g_sceneComponentCallbacks.m_onDestroys[i] = temps[i].m_vtable.m_onDestroy;
-			g_sceneComponentCallbacks.m_updates[i] = temps[i].m_vtable.m_update;
+#define ANKI_SCENE_COMPONENT_VIRTUAL(name, type) g_sceneComponentCallbacks.m_##name[i] = temps[i].m_vtable.m_##name;
+#include <AnKi/Scene/Components/SceneComponentVirtuals.defs.h>
 		}
 	}
 }
