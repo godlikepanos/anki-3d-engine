@@ -61,7 +61,7 @@ public:
 	}
 };
 
-ANKI_SCENE_COMPONENT_STATICS(PlayerNode::FeedbackComponent)
+ANKI_SCENE_COMPONENT_STATICS(PlayerNode::FeedbackComponent, -1.0f)
 
 /// Feedback component.
 class PlayerNode::FeedbackComponent2 final : public SceneComponent
@@ -116,7 +116,7 @@ public:
 	}
 };
 
-ANKI_SCENE_COMPONENT_STATICS(PlayerNode::FeedbackComponent2)
+ANKI_SCENE_COMPONENT_STATICS(PlayerNode::FeedbackComponent2, -1.0f)
 
 PlayerNode::PlayerNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)

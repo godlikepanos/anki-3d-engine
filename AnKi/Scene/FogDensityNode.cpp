@@ -34,7 +34,7 @@ public:
 	}
 };
 
-ANKI_SCENE_COMPONENT_STATICS(FogDensityNode::MoveFeedbackComponent)
+ANKI_SCENE_COMPONENT_STATICS(FogDensityNode::MoveFeedbackComponent, -1.0f)
 
 class FogDensityNode::DensityShapeFeedbackComponent : public SceneComponent
 {
@@ -60,7 +60,7 @@ public:
 	}
 };
 
-ANKI_SCENE_COMPONENT_STATICS(FogDensityNode::DensityShapeFeedbackComponent)
+ANKI_SCENE_COMPONENT_STATICS(FogDensityNode::DensityShapeFeedbackComponent, -1.0f)
 
 FogDensityNode::FogDensityNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)

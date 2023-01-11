@@ -11,7 +11,7 @@
 
 namespace anki {
 
-ANKI_SCENE_COMPONENT_STATICS(TriggerComponent)
+ANKI_SCENE_COMPONENT_STATICS(TriggerComponent, 40.0f)
 
 /// The callbacks execute before the TriggerComponent::update
 class TriggerComponent::MyPhysicsTriggerProcessContactCallback final : public PhysicsTriggerProcessContactCallback

@@ -39,7 +39,7 @@ public:
 	}
 };
 
-ANKI_SCENE_COMPONENT_STATICS(LightNode::OnMovedFeedbackComponent)
+ANKI_SCENE_COMPONENT_STATICS(LightNode::OnMovedFeedbackComponent, -1.0f)
 
 /// Feedback component.
 class LightNode::OnLightShapeUpdatedFeedbackComponent : public SceneComponent
@@ -67,7 +67,7 @@ public:
 	}
 };
 
-ANKI_SCENE_COMPONENT_STATICS(LightNode::OnLightShapeUpdatedFeedbackComponent)
+ANKI_SCENE_COMPONENT_STATICS(LightNode::OnLightShapeUpdatedFeedbackComponent, -1.0f)
 
 LightNode::LightNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
@@ -224,7 +224,7 @@ public:
 	}
 };
 
-ANKI_SCENE_COMPONENT_STATICS(SpotLightNode::OnFrustumUpdatedFeedbackComponent)
+ANKI_SCENE_COMPONENT_STATICS(SpotLightNode::OnFrustumUpdatedFeedbackComponent, -1.0f)
 
 SpotLightNode::SpotLightNode(SceneGraph* scene, CString name)
 	: LightNode(scene, name)
@@ -305,7 +305,7 @@ public:
 	}
 };
 
-ANKI_SCENE_COMPONENT_STATICS(DirectionalLightNode::FeedbackComponent)
+ANKI_SCENE_COMPONENT_STATICS(DirectionalLightNode::FeedbackComponent, -1.0f)
 
 DirectionalLightNode::DirectionalLightNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)

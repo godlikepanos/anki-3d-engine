@@ -10,7 +10,7 @@
 
 namespace anki {
 
-ANKI_SCENE_COMPONENT_STATICS(DecalComponent)
+ANKI_SCENE_COMPONENT_STATICS(DecalComponent, 100.0f)
 
 DecalComponent::DecalComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())

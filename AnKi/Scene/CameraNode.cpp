@@ -38,7 +38,7 @@ public:
 	}
 };
 
-ANKI_SCENE_COMPONENT_STATICS(CameraNode::MoveFeedbackComponent)
+ANKI_SCENE_COMPONENT_STATICS(CameraNode::MoveFeedbackComponent, -1.0f)
 
 CameraNode::CameraNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)

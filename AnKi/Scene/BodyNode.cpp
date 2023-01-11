@@ -40,7 +40,7 @@ public:
 	}
 };
 
-ANKI_SCENE_COMPONENT_STATICS(BodyNode::FeedbackComponent)
+ANKI_SCENE_COMPONENT_STATICS(BodyNode::FeedbackComponent, -1.0f)
 
 BodyNode::BodyNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)

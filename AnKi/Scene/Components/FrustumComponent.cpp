@@ -9,7 +9,7 @@
 
 namespace anki {
 
-ANKI_SCENE_COMPONENT_STATICS(FrustumComponent)
+ANKI_SCENE_COMPONENT_STATICS(FrustumComponent, -1.0f)
 
 FrustumComponent::FrustumComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())

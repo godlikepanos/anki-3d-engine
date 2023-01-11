@@ -39,7 +39,7 @@ public:
 	}
 };
 
-ANKI_SCENE_COMPONENT_STATICS(GlobalIlluminationProbeNode::MoveFeedbackComponent)
+ANKI_SCENE_COMPONENT_STATICS(GlobalIlluminationProbeNode::MoveFeedbackComponent, -1.0f)
 
 /// Feedback component
 class GlobalIlluminationProbeNode::ShapeFeedbackComponent : public SceneComponent
@@ -71,7 +71,7 @@ public:
 	}
 };
 
-ANKI_SCENE_COMPONENT_STATICS(GlobalIlluminationProbeNode::ShapeFeedbackComponent)
+ANKI_SCENE_COMPONENT_STATICS(GlobalIlluminationProbeNode::ShapeFeedbackComponent, -1.0f)
 
 GlobalIlluminationProbeNode::GlobalIlluminationProbeNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)

@@ -7,6 +7,6 @@
 
 namespace anki {
 
-ANKI_SCENE_COMPONENT_STATICS(UiComponent)
+ANKI_SCENE_COMPONENT_STATICS(UiComponent, 100.0f)
 
 } // end namespace anki

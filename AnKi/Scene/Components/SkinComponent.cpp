@@ -13,7 +13,7 @@
 
 namespace anki {
 
-ANKI_SCENE_COMPONENT_STATICS(SkinComponent)
+ANKI_SCENE_COMPONENT_STATICS(SkinComponent, 45.0f)
 
 SkinComponent::SkinComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())

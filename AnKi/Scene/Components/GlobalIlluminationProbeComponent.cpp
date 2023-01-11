@@ -11,7 +11,7 @@
 
 namespace anki {
 
-ANKI_SCENE_COMPONENT_STATICS(GlobalIlluminationProbeComponent)
+ANKI_SCENE_COMPONENT_STATICS(GlobalIlluminationProbeComponent, 100.0f)
 
 GlobalIlluminationProbeComponent::GlobalIlluminationProbeComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())

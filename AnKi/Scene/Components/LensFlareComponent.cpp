@@ -10,7 +10,7 @@
 
 namespace anki {
 
-ANKI_SCENE_COMPONENT_STATICS(LensFlareComponent)
+ANKI_SCENE_COMPONENT_STATICS(LensFlareComponent, 100.0f)
 
 LensFlareComponent::LensFlareComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())

@@ -12,7 +12,7 @@
 
 namespace anki {
 
-ANKI_SCENE_COMPONENT_STATICS(BodyComponent)
+ANKI_SCENE_COMPONENT_STATICS(BodyComponent, 10.0f)
 
 BodyComponent::BodyComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())

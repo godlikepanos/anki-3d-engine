@@ -7,6 +7,6 @@
 
 namespace anki {
 
-ANKI_SCENE_COMPONENT_STATICS(GenericGpuComputeJobComponent)
+ANKI_SCENE_COMPONENT_STATICS(GenericGpuComputeJobComponent, -1.0f)
 
 } // end namespace anki

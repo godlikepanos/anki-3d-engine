@@ -15,7 +15,7 @@
 
 namespace anki {
 
-ANKI_SCENE_COMPONENT_STATICS(LightComponent)
+ANKI_SCENE_COMPONENT_STATICS(LightComponent, 100.0f)
 
 LightComponent::LightComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())

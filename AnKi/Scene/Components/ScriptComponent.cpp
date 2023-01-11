@@ -12,7 +12,7 @@
 
 namespace anki {
 
-ANKI_SCENE_COMPONENT_STATICS(ScriptComponent)
+ANKI_SCENE_COMPONENT_STATICS(ScriptComponent, 0.0f)
 
 ScriptComponent::ScriptComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())

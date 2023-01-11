@@ -45,11 +45,12 @@ class SceneComponentRtti
 {
 public:
 	const char* m_className;
+	F32 m_updateWeight; ///< It give the order it will get updated compared to other components.
 	U16 m_classSize;
 	U8 m_classAlignment;
 	U8 m_classId;
 
-	SceneComponentRtti(const char* name, U32 size, U32 alignment, SceneComponentVtable vtable);
+	SceneComponentRtti(const char* name, F32 updateWeight, U32 size, U32 alignment, SceneComponentVtable vtable);
 };
 
 /// Define a scene component.
@@ -85,8 +86,9 @@ public: \
 private:
 
 /// Define the statics of a scene component.
-#define ANKI_SCENE_COMPONENT_STATICS(className) \
-	SceneComponentRtti className::_m_rtti(ANKI_STRINGIZE(className), sizeof(className), alignof(className), \
+#define ANKI_SCENE_COMPONENT_STATICS(className, updateWeight) \
+	SceneComponentRtti className::_m_rtti(ANKI_STRINGIZE(className), updateWeight, sizeof(className), \
+										  alignof(className), \
 										  {className::_construct, className::_destruct, className::_onDestroy, \
 										   className::_update, className::_onOtherComponentRemovedOrAdded});
 

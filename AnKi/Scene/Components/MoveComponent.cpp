@@ -9,7 +9,7 @@
 
 namespace anki {
 
-ANKI_SCENE_COMPONENT_STATICS(MoveComponent)
+ANKI_SCENE_COMPONENT_STATICS(MoveComponent, 30.0f)
 
 MoveComponent::MoveComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())

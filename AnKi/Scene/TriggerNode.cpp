@@ -37,7 +37,7 @@ public:
 	}
 };
 
-ANKI_SCENE_COMPONENT_STATICS(TriggerNode::MoveFeedbackComponent)
+ANKI_SCENE_COMPONENT_STATICS(TriggerNode::MoveFeedbackComponent, -1.0f)
 
 TriggerNode::TriggerNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)

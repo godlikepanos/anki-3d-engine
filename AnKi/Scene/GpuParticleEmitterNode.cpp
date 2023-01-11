@@ -38,7 +38,7 @@ public:
 	}
 };
 
-ANKI_SCENE_COMPONENT_STATICS(GpuParticleEmitterNode::MoveFeedbackComponent)
+ANKI_SCENE_COMPONENT_STATICS(GpuParticleEmitterNode::MoveFeedbackComponent, -1.0f)
 
 /// Feedback component
 class GpuParticleEmitterNode::ShapeFeedbackComponent : public SceneComponent
@@ -66,7 +66,7 @@ public:
 	}
 };
 
-ANKI_SCENE_COMPONENT_STATICS(GpuParticleEmitterNode::ShapeFeedbackComponent)
+ANKI_SCENE_COMPONENT_STATICS(GpuParticleEmitterNode::ShapeFeedbackComponent, -1.0f)
 
 GpuParticleEmitterNode::GpuParticleEmitterNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)

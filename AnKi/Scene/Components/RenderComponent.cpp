@@ -11,7 +11,7 @@
 
 namespace anki {
 
-ANKI_SCENE_COMPONENT_STATICS(RenderComponent)
+ANKI_SCENE_COMPONENT_STATICS(RenderComponent, 100.0f)
 
 RenderComponent::RenderComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())

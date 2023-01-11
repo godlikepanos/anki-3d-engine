@@ -12,7 +12,8 @@ static SceneComponentRtti* g_rttis[kMaxSceneComponentClasses] = {};
 SceneComponentCallbacks g_sceneComponentCallbacks;
 static U32 g_sceneComponentClassCount = 0;
 
-SceneComponentRtti::SceneComponentRtti(const char* name, U32 size, U32 alignment, SceneComponentVtable vtable)
+SceneComponentRtti::SceneComponentRtti(const char* name, F32 updateWeight, U32 size, U32 alignment,
+									   SceneComponentVtable vtable)
 {
 	if(g_sceneComponentClassCount >= kMaxSceneComponentClasses)
 	{
@@ -20,6 +21,8 @@ SceneComponentRtti::SceneComponentRtti(const char* name, U32 size, U32 alignment
 		printf("Reached maximum component count. Increase kMaxSceneComponentClasses\n");
 		exit(-1);
 	}
+
+	m_updateWeight = updateWeight;
 
 	m_className = name;
 	ANKI_ASSERT(size < getMaxNumericLimit<decltype(m_classSize)>());

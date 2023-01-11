@@ -40,7 +40,7 @@ public:
 	}
 };
 
-ANKI_SCENE_COMPONENT_STATICS(ReflectionProbeNode::MoveFeedbackComponent)
+ANKI_SCENE_COMPONENT_STATICS(ReflectionProbeNode::MoveFeedbackComponent, -1.0f)
 
 /// Feedback component
 class ReflectionProbeNode::ShapeFeedbackComponent : public SceneComponent
@@ -68,7 +68,7 @@ public:
 	}
 };
 
-ANKI_SCENE_COMPONENT_STATICS(ReflectionProbeNode::ShapeFeedbackComponent)
+ANKI_SCENE_COMPONENT_STATICS(ReflectionProbeNode::ShapeFeedbackComponent, -1.0f)
 
 ReflectionProbeNode::ReflectionProbeNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)

@@ -37,7 +37,7 @@ public:
 	}
 };
 
-ANKI_SCENE_COMPONENT_STATICS(ModelNode::FeedbackComponent)
+ANKI_SCENE_COMPONENT_STATICS(ModelNode::FeedbackComponent, -1.0f)
 
 class ModelNode::RenderProxy
 {

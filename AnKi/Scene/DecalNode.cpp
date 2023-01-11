@@ -35,7 +35,7 @@ public:
 	}
 };
 
-ANKI_SCENE_COMPONENT_STATICS(DecalNode::MoveFeedbackComponent)
+ANKI_SCENE_COMPONENT_STATICS(DecalNode::MoveFeedbackComponent, -1.0f)
 
 /// Decal feedback component.
 class DecalNode::ShapeFeedbackComponent : public SceneComponent
@@ -63,7 +63,7 @@ public:
 	}
 };
 
-ANKI_SCENE_COMPONENT_STATICS(DecalNode::ShapeFeedbackComponent)
+ANKI_SCENE_COMPONENT_STATICS(DecalNode::ShapeFeedbackComponent, -1.0f)
 
 DecalNode::DecalNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
