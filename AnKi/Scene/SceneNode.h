@@ -267,8 +267,16 @@ protected:
 	TComponent* newComponent()
 	{
 		TComponent* comp = newInstance<TComponent>(getMemoryPool(), this);
+
+		// Inform all other components that some component was added
+		for(SceneComponent* comp : m_components)
+		{
+			comp->onOtherComponentRemovedOrAddedReal(comp, true);
+		}
+
 		m_components.emplaceBack(getMemoryPool(), comp);
 		m_componentInfos.emplaceBack(getMemoryPool(), *comp);
+
 		return comp;
 	}
 

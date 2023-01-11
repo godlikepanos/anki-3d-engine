@@ -149,6 +149,12 @@ public:
 		return g_sceneComponentCallbacks.m_update[m_classId](*this, info, updated);
 	}
 
+	ANKI_INTERNAL void onOtherComponentRemovedOrAddedReal(SceneComponent* other, Bool added)
+	{
+		ANKI_ASSERT(other);
+		g_sceneComponentCallbacks.m_onOtherComponentRemovedOrAdded[m_classId](*this, other, added);
+	}
+
 	/// Don't call it directly.
 	ANKI_INTERNAL void setTimestamp(Timestamp timestamp)
 	{
@@ -175,7 +181,7 @@ protected:
 		return Error::kNone;
 	}
 
-	/// Called when a component is added or removed in the SceneNode.
+	/// Pseudo-virtual. Called when a component is added or removed in the SceneNode.
 	/// @param other The component that was inserted.
 	/// @param added Was it inserted or removed?
 	void onOtherComponentRemovedOrAdded([[maybe_unused]] SceneComponent* other, [[maybe_unused]] Bool added)
