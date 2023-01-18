@@ -140,8 +140,7 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 		}
 
 		ANKI_ASSERT(earlyZStart < earlyZEnd && earlyZEnd <= I32(earlyZCount));
-		m_r->getSceneDrawer().drawRange(RenderingTechnique::kGBufferEarlyZ, args,
-										ctx.m_renderQueue->m_earlyZRenderables.getBegin() + earlyZStart,
+		m_r->getSceneDrawer().drawRange(args, ctx.m_renderQueue->m_earlyZRenderables.getBegin() + earlyZStart,
 										ctx.m_renderQueue->m_earlyZRenderables.getBegin() + earlyZEnd, cmdb);
 
 		// Restore state for the color write
@@ -160,8 +159,7 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 		cmdb->setDepthCompareOperation(CompareOperation::kLessEqual);
 
 		ANKI_ASSERT(colorStart < colorEnd && colorEnd <= I32(ctx.m_renderQueue->m_renderables.getSize()));
-		m_r->getSceneDrawer().drawRange(RenderingTechnique::kGBuffer, args,
-										ctx.m_renderQueue->m_renderables.getBegin() + colorStart,
+		m_r->getSceneDrawer().drawRange(args, ctx.m_renderQueue->m_renderables.getBegin() + colorStart,
 										ctx.m_renderQueue->m_renderables.getBegin() + colorEnd, cmdb);
 	}
 }

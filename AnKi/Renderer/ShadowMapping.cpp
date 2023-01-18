@@ -615,11 +615,10 @@ void ShadowMapping::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 		args.m_viewProjectionMatrix = work.m_renderQueue->m_viewProjectionMatrix;
 		args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
 		args.m_sampler = m_r->getSamplers().m_trilinearRepeatAniso;
-		args.m_minLod = args.m_maxLod = work.m_renderQueueElementsLod;
 		args.m_gpuSceneBuffer = getExternalSubsystems().m_gpuScenePool->getBuffer();
 		args.m_unifiedGeometryBuffer = getExternalSubsystems().m_unifiedGometryMemoryPool->getBuffer();
 
-		m_r->getSceneDrawer().drawRange(RenderingTechnique::kShadow, args,
+		m_r->getSceneDrawer().drawRange(args,
 										work.m_renderQueue->m_renderables.getBegin() + work.m_firstRenderableElement,
 										work.m_renderQueue->m_renderables.getBegin() + work.m_firstRenderableElement
 											+ work.m_renderableElementCount,

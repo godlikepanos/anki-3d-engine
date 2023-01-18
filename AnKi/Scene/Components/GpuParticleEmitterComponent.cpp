@@ -6,7 +6,6 @@
 #include <AnKi/Scene/Components/GpuParticleEmitterComponent.h>
 #include <AnKi/Scene/SceneNode.h>
 #include <AnKi/Scene/SceneGraph.h>
-#include <AnKi/Scene/Components/RenderComponent.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Shaders/Include/ParticleTypes.h>
 
@@ -192,6 +191,8 @@ void GpuParticleEmitterComponent::simulate(GenericGpuComputeJobQueueElementConte
 
 void GpuParticleEmitterComponent::draw(RenderQueueDrawContext& ctx) const
 {
+	// TODO
+#if 0
 	if(ANKI_UNLIKELY(!m_particleEmitterResource.isCreated()))
 	{
 		return;
@@ -258,6 +259,7 @@ void GpuParticleEmitterComponent::draw(RenderQueueDrawContext& ctx) const
 			cmdb->setDepthCompareOperation(CompareOperation::kLess);
 		}
 	}
+#endif
 }
 
 Error GpuParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& updated)

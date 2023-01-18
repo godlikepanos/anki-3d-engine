@@ -72,7 +72,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	dctx.m_framePool = ctx.m_tempPool;
 	dctx.m_commandBuffer = cmdb;
 	dctx.m_sampler = m_r->getSamplers().m_trilinearRepeatAniso;
-	dctx.m_key = RenderingKey(RenderingTechnique::kForward, 0, 1, false, false);
+	dctx.m_key = RenderingKey(RenderingTechnique::kForward, 0, false, false);
 	dctx.m_debugDraw = true;
 	dctx.m_debugDrawFlags = m_debugDrawFlags;
 
@@ -83,6 +83,8 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	U32 start, end;
 	splitThreadedProblem(threadId, threadCount, problemSize, start, end);
 
+	// TODO
+#if 0
 	for(U32 i = start; i < end; ++i)
 	{
 		const RenderableQueueElement& el = ctx.m_renderQueue->m_renderables[i];
@@ -99,6 +101,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 			el.m_callback(dctx, a);
 		}
 	}
+#endif
 
 	// Draw probes
 	if(threadId == 0)

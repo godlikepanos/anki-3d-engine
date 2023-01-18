@@ -61,8 +61,7 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 		args.m_unifiedGeometryBuffer = getExternalSubsystems().m_unifiedGometryMemoryPool->getBuffer();
 
 		// Start drawing
-		m_r->getSceneDrawer().drawRange(RenderingTechnique::kForward, args,
-										ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + start,
+		m_r->getSceneDrawer().drawRange(args, ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + start,
 										ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + end, cmdb);
 
 		// Restore state

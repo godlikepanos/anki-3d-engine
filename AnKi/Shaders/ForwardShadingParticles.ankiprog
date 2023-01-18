@@ -14,7 +14,7 @@
 
 struct VertIn
 {
-	[[vk::location(0)]] PackedGpuSceneRenderableInstance m_gpuSceneRenderableInstance : INSTANCE;
+	[[vk::location(0)]] GpuSceneRenderablePacked m_gpuSceneRenderable : RENDERABLE;
 	U32 m_svVertexId : SV_VERTEXID;
 };
 
@@ -42,9 +42,7 @@ VertOut main(VertIn input)
 	const U32 particleId = input.m_svVertexId / 6u;
 	const U32 vertexId = input.m_svVertexId % 6u;
 
-	const UnpackedGpuSceneRenderableInstance instance =
-		unpackRenderableGpuViewInstance(input.m_gpuSceneRenderableInstance);
-	const GpuSceneRenderable renderable = g_gpuScene.Load<GpuSceneRenderable>(instance.m_renderableOffset);
+	const GpuSceneRenderable renderable = unpackGpuSceneRenderable(input.m_gpuSceneRenderable);
 	const GpuSceneParticles particles = g_gpuScene.Load<GpuSceneParticles>(renderable.m_geometryOffset);
 
 	U32 idx = particles.m_vertexOffsets[(U32)VertexStreamId::kParticlePosition] + particleId * sizeof(Vec3);

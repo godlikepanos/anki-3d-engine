@@ -18,31 +18,20 @@ namespace anki {
 class RenderableDrawer::Context
 {
 public:
-	RenderQueueDrawContext m_queueCtx;
+	CommandBufferPtr m_commandBuffer;
 
-	const RenderableQueueElement* m_renderableElement = nullptr;
+	RebarStagingGpuMemoryPool* m_rebarStagingPool = nullptr;
 
-	Array<RenderableQueueElement, kMaxInstanceCount> m_cachedRenderElements;
-	Array<U8, kMaxInstanceCount> m_cachedRenderElementLods;
-	Array<const void*, kMaxInstanceCount> m_userData;
+	Array<const RenderableQueueElement*, kMaxInstanceCount> m_cachedRenderElements;
 	U32 m_cachedRenderElementCount = 0;
-	U8 m_minLod = 0;
-	U8 m_maxLod = 0;
 };
-
-/// Check if the drawcalls can be merged.
-static Bool canMergeRenderableQueueElements(const RenderableQueueElement& a, const RenderableQueueElement& b)
-{
-	return a.m_callback == b.m_callback && a.m_mergeKey != 0 && a.m_mergeKey == b.m_mergeKey;
-}
 
 RenderableDrawer::~RenderableDrawer()
 {
 }
 
-void RenderableDrawer::drawRange(RenderingTechnique technique, const RenderableDrawerArguments& args,
-								 const RenderableQueueElement* begin, const RenderableQueueElement* end,
-								 CommandBufferPtr& cmdb)
+void RenderableDrawer::drawRange(const RenderableDrawerArguments& args, const RenderableQueueElement* begin,
+								 const RenderableQueueElement* end, CommandBufferPtr& cmdb)
 {
 	ANKI_ASSERT(begin && end && begin < end);
 
@@ -86,30 +75,17 @@ void RenderableDrawer::drawRange(RenderingTechnique technique, const RenderableD
 #undef _ANKI_BIND_TEXTURE_BUFFER
 
 	// Misc
-	cmdb->setVertexAttribute(0, 0, Format::kR32_Uint, 0);
+	cmdb->setVertexAttribute(0, 0, Format::kR32G32B32A32_Uint, 0);
+	cmdb->bindIndexBuffer(args.m_unifiedGeometryBuffer, 0, IndexType::kU16);
 
 	// Set a few things
 	Context ctx;
-	ctx.m_queueCtx.m_viewMatrix = args.m_viewMatrix;
-	ctx.m_queueCtx.m_viewProjectionMatrix = args.m_viewProjectionMatrix;
-	ctx.m_queueCtx.m_projectionMatrix = Mat4::getIdentity(); // TODO
-	ctx.m_queueCtx.m_previousViewProjectionMatrix = args.m_previousViewProjectionMatrix;
-	ctx.m_queueCtx.m_cameraTransform = args.m_cameraTransform;
-	ctx.m_queueCtx.m_rebarStagingPool = m_r->getExternalSubsystems().m_rebarStagingPool;
-	ctx.m_queueCtx.m_commandBuffer = cmdb;
-	ctx.m_queueCtx.m_key = RenderingKey(technique, 0, 1, false, false);
-	ctx.m_queueCtx.m_debugDraw = false;
-	ctx.m_queueCtx.m_sampler = args.m_sampler;
-
-	ANKI_ASSERT(args.m_minLod < kMaxLodCount && args.m_maxLod < kMaxLodCount && args.m_minLod <= args.m_maxLod);
-	ctx.m_minLod = U8(args.m_minLod);
-	ctx.m_maxLod = U8(args.m_maxLod);
+	ctx.m_rebarStagingPool = m_r->getExternalSubsystems().m_rebarStagingPool;
+	ctx.m_commandBuffer = cmdb;
 
 	for(; begin != end; ++begin)
 	{
-		ctx.m_renderableElement = begin;
-
-		drawSingle(ctx);
+		drawSingle(begin, ctx);
 	}
 
 	// Flush the last drawcall
@@ -118,29 +94,39 @@ void RenderableDrawer::drawRange(RenderingTechnique technique, const RenderableD
 
 void RenderableDrawer::flushDrawcall(Context& ctx)
 {
-	ctx.m_queueCtx.m_key.setLod(ctx.m_cachedRenderElementLods[0]);
-	ctx.m_queueCtx.m_key.setInstanceCount(ctx.m_cachedRenderElementCount);
+	CommandBufferPtr cmdb = ctx.m_commandBuffer;
 
 	// Instance buffer
 	RebarGpuMemoryToken token;
-	PackedGpuSceneRenderableInstance* instances =
-		static_cast<PackedGpuSceneRenderableInstance*>(ctx.m_queueCtx.m_rebarStagingPool->allocateFrame(
-			sizeof(PackedGpuSceneRenderableInstance) * ctx.m_cachedRenderElementCount, token));
+	GpuSceneRenderablePacked* instances = static_cast<GpuSceneRenderablePacked*>(ctx.m_rebarStagingPool->allocateFrame(
+		sizeof(GpuSceneRenderablePacked) * ctx.m_cachedRenderElementCount, token));
 	for(U32 i = 0; i < ctx.m_cachedRenderElementCount; ++i)
 	{
-		UnpackedGpuSceneRenderableInstance instance;
-		instance.m_lod = ctx.m_cachedRenderElementLods[0];
-		instance.m_renderableOffset = ctx.m_cachedRenderElements[i].m_renderableOffset;
-		instances[i] = packGpuSceneRenderableInstance(instance);
+		GpuSceneRenderable renderable = {};
+		renderable.m_worldTransformsOffset = ctx.m_cachedRenderElements[i]->m_worldTransformsOffset;
+		renderable.m_uniformsOffset = ctx.m_cachedRenderElements[i]->m_uniformsOffset;
+		renderable.m_geometryOffset = ctx.m_cachedRenderElements[i]->m_geometryOffset;
+		renderable.m_boneTransformsOffset = ctx.m_cachedRenderElements[i]->m_boneTransformsOffset;
+		instances[i] = packGpuSceneRenderable(renderable);
 	}
 
-	ctx.m_queueCtx.m_commandBuffer->bindVertexBuffer(0, ctx.m_queueCtx.m_rebarStagingPool->getBuffer(), token.m_offset,
-													 sizeof(PackedGpuSceneRenderableInstance),
-													 VertexStepRate::kInstance);
+	cmdb->bindVertexBuffer(0, ctx.m_rebarStagingPool->getBuffer(), token.m_offset, sizeof(GpuSceneRenderablePacked),
+						   VertexStepRate::kInstance);
 
-	// Draw
-	ctx.m_cachedRenderElements[0].m_callback(
-		ctx.m_queueCtx, ConstWeakArray<void*>(const_cast<void**>(&ctx.m_userData[0]), ctx.m_cachedRenderElementCount));
+	// Set state
+	const RenderableQueueElement& firstElement = *ctx.m_cachedRenderElements[0];
+	cmdb->bindShaderProgram(ShaderProgramPtr(firstElement.m_program));
+
+	if(firstElement.m_indexed)
+	{
+		cmdb->drawElements(firstElement.m_primitiveTopology, firstElement.m_indexCount, ctx.m_cachedRenderElementCount,
+						   firstElement.m_firstIndex);
+	}
+	else
+	{
+		cmdb->drawArrays(firstElement.m_primitiveTopology, firstElement.m_vertexCount, ctx.m_cachedRenderElementCount,
+						 firstElement.m_firstVertex);
+	}
 
 	// Rendered something, reset the cached transforms
 	if(ctx.m_cachedRenderElementCount > 1)
@@ -150,21 +136,16 @@ void RenderableDrawer::flushDrawcall(Context& ctx)
 	ctx.m_cachedRenderElementCount = 0;
 }
 
-void RenderableDrawer::drawSingle(Context& ctx)
+void RenderableDrawer::drawSingle(const RenderableQueueElement* renderEl, Context& ctx)
 {
 	if(ctx.m_cachedRenderElementCount == kMaxInstanceCount)
 	{
 		flushDrawcall(ctx);
 	}
 
-	const RenderableQueueElement& rqel = *ctx.m_renderableElement;
-
-	const U8 overridenLod = clamp(rqel.m_lod, ctx.m_minLod, ctx.m_maxLod);
-
 	const Bool shouldFlush =
 		ctx.m_cachedRenderElementCount > 0
-		&& (!canMergeRenderableQueueElements(ctx.m_cachedRenderElements[ctx.m_cachedRenderElementCount - 1], rqel)
-			|| ctx.m_cachedRenderElementLods[ctx.m_cachedRenderElementCount - 1] != overridenLod);
+		&& !ctx.m_cachedRenderElements[ctx.m_cachedRenderElementCount - 1]->canMergeWith(*renderEl);
 
 	if(shouldFlush)
 	{
@@ -172,9 +153,7 @@ void RenderableDrawer::drawSingle(Context& ctx)
 	}
 
 	// Cache the new one
-	ctx.m_cachedRenderElements[ctx.m_cachedRenderElementCount] = rqel;
-	ctx.m_cachedRenderElementLods[ctx.m_cachedRenderElementCount] = overridenLod;
-	ctx.m_userData[ctx.m_cachedRenderElementCount] = rqel.m_userData;
+	ctx.m_cachedRenderElements[ctx.m_cachedRenderElementCount] = renderEl;
 	++ctx.m_cachedRenderElementCount;
 }
 

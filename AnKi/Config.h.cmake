@@ -232,6 +232,24 @@ inline int __builtin_ctzll(unsigned long long x)
 #	define ANKI_INTERNAL [[deprecated("This is an AnKi internal interface. Don't use it")]]
 #endif
 
+// Macro that temporarily disable the ANKI_INTERNAL. It's needed in some cases where an ANKI_INTERNAL is called in a
+// header
+#if ANKI_COMPILER_MSVC
+#	define ANKI_CALL_INTERNAL(...) \
+	__pragma(warning(push)) \
+	__pragma(warning(disable:4996)) \
+	__VA_ARGS__ \
+	__pragma(warning(pop))
+#elif ANKI_COMPILER_GCC_COMPATIBLE
+#	define ANKI_CALL_INTERNAL(...) \
+	_Pragma("GCC diagnostic push") \
+	_Pragma("GCC diagnostic ignored \"-Wdeprecated-declarations\"") \
+	__VA_ARGS__ \
+	_Pragma("GCC diagnostic pop")
+#else
+#	define ANKI_CALL_INTERNAL(...)
+#endif
+
 // Define the main() function.
 namespace anki {
 void preMainInit();

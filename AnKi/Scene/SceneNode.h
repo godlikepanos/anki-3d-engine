@@ -269,9 +269,15 @@ protected:
 		TComponent* comp = newInstance<TComponent>(getMemoryPool(), this);
 
 		// Inform all other components that some component was added
-		for(SceneComponent* comp : m_components)
+		for(SceneComponent* other : m_components)
 		{
-			comp->onOtherComponentRemovedOrAddedReal(comp, true);
+			ANKI_CALL_INTERNAL(other->onOtherComponentRemovedOrAddedReal(comp, true));
+		}
+
+		// Inform the current component about others
+		for(SceneComponent* other : m_components)
+		{
+			ANKI_CALL_INTERNAL(comp->onOtherComponentRemovedOrAddedReal(other, true));
 		}
 
 		m_components.emplaceBack(getMemoryPool(), comp);

@@ -24,7 +24,6 @@
 #include <AnKi/Scene/SkyboxNode.h>
 
 #include <AnKi/Scene/Components/MoveComponent.h>
-#include <AnKi/Scene/Components/RenderComponent.h>
 #include <AnKi/Scene/Components/LensFlareComponent.h>
 #include <AnKi/Scene/Components/PlayerControllerComponent.h>
 #include <AnKi/Scene/Components/SkinComponent.h>

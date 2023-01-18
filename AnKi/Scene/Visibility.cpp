@@ -7,7 +7,7 @@
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Scene/Components/FrustumComponent.h>
 #include <AnKi/Scene/Components/LensFlareComponent.h>
-#include <AnKi/Scene/Components/RenderComponent.h>
+#include <AnKi/Scene/Components/ModelComponent.h>
 #include <AnKi/Scene/Components/ReflectionProbeComponent.h>
 #include <AnKi/Scene/Components/DecalComponent.h>
 #include <AnKi/Scene/Components/MoveComponent.h>
@@ -16,6 +16,7 @@
 #include <AnKi/Scene/Components/SpatialComponent.h>
 #include <AnKi/Scene/Components/GlobalIlluminationProbeComponent.h>
 #include <AnKi/Scene/Components/GenericGpuComputeJobComponent.h>
+#include <AnKi/Scene/Components/ParticleEmitterComponent.h>
 #include <AnKi/Scene/Components/UiComponent.h>
 #include <AnKi/Scene/Components/SkyboxComponent.h>
 #include <AnKi/Renderer/MainRenderer.h>
@@ -281,6 +282,10 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 	const Bool wantsEarlyZ =
 		!!(frustumFlags & FrustumComponentVisibilityTestFlag::kEarlyZ) && m_frcCtx->m_visCtx->m_earlyZDist > 0.0f;
 
+	const Bool testedNodeIsProbe =
+		testedNode.tryGetFirstComponentOfType<ReflectionProbeComponent>()
+		|| testedNode.tryGetFirstComponentOfType<GlobalIlluminationProbeComponent>(); // TODO hack for now
+
 	// Iterate
 	RenderQueueView& result = m_frcCtx->m_queueViews[taskId];
 	for(U i = 0; i < m_spatialToTestCount; ++i)
@@ -298,15 +303,18 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		// Check what components the frustum needs
 		Bool wantNode = false;
 
-		const RenderComponent* rc = nullptr;
-		wantNode |= !!(frustumFlags & FrustumComponentVisibilityTestFlag::kRenderComponents) && getComponent(node, rc);
+		const ModelComponent* modelc = nullptr;
+		wantNode |= !!(frustumFlags & FrustumComponentVisibilityTestFlag::kRenderComponents)
+					&& getComponent(node, modelc) && modelc->isEnabled();
 
 		wantNode |= !!(frustumFlags & FrustumComponentVisibilityTestFlag::kShadowCasterRenderComponents)
-					&& getComponent(node, rc) && !!(rc->getFlags() & RenderComponentFlag::kCastsShadow);
+					&& getComponent(node, modelc) && modelc->isEnabled() && modelc->getCastsShadow();
 
-		const RenderComponent* rtRc = nullptr;
-		wantNode |= !!(frustumFlags & FrustumComponentVisibilityTestFlag::kAllRayTracing) && getComponent(node, rtRc)
-					&& rtRc->getSupportsRayTracing();
+		// TODO ray tracing
+
+		const ParticleEmitterComponent* partemitc = nullptr;
+		wantNode |= !!(frustumFlags & FrustumComponentVisibilityTestFlag::kRenderComponents)
+					&& getComponent(node, partemitc) && partemitc->isEnabled();
 
 		const LightComponent* lc = nullptr;
 		wantNode |= !!(frustumFlags & FrustumComponentVisibilityTestFlag::kLights) && getComponent(node, lc);
@@ -360,46 +368,59 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		WeakArray<RenderQueue> nextQueues;
 		WeakArray<FrustumComponent> nextQueueFrustumComponents; // Optional
 
-		node.iterateComponentsOfType<RenderComponent>([&](const RenderComponent& rc) {
-			RenderableQueueElement* el;
-			if(!!(rc.getFlags() & RenderComponentFlag::kForwardShading))
-			{
-				el = result.m_forwardShadingRenderables.newElement(pool);
-			}
-			else
-			{
-				el = result.m_renderables.newElement(pool);
-			}
-
-			rc.setupRenderableQueueElement(*el);
-
-			// Compute distance from the frustum
+		if(modelc)
+		{
 			const Plane& nearPlane = primaryFrc.getViewPlanes()[FrustumPlaneType::kNear];
-			el->m_distanceFromCamera = !!(rc.getFlags() & RenderComponentFlag::kSortLast)
-										   ? primaryFrc.getFar()
-										   : max(0.0f, testPlane(nearPlane, spatialc->getAabbWorldSpace()));
+			const F32 distanceFromCamera = max(0.0f, testPlane(nearPlane, spatialc->getAabbWorldSpace()));
 
-			el->m_lod = computeLod(primaryFrc, el->m_distanceFromCamera);
+			const U8 lod = (testedNodeIsProbe) ? 0 : computeLod(primaryFrc, distanceFromCamera);
 
-			// Add to early Z
-			if(wantsEarlyZ && el->m_distanceFromCamera < m_frcCtx->m_visCtx->m_earlyZDist
-			   && !(rc.getFlags() & RenderComponentFlag::kForwardShading))
+			WeakArray<RenderableQueueElement> elements;
+			modelc->setupRenderableQueueElements(lod, RenderingTechnique::kGBuffer, pool, elements);
+			for(RenderableQueueElement& el : elements)
 			{
-				RenderableQueueElement* el2 = result.m_earlyZRenderables.newElement(pool);
-				*el2 = *el;
+				el.m_distanceFromCamera = distanceFromCamera;
+				*result.m_renderables.newElement(pool) = el;
 			}
 
-			// Add to RT
-			if(rtRc)
+			modelc->setupRenderableQueueElements(lod, RenderingTechnique::kForward, pool, elements);
+			for(RenderableQueueElement& el : elements)
 			{
-				RayTracingInstanceQueueElement* el = result.m_rayTracingInstances.newElement(pool);
-
-				// Compute the LOD
-				const Plane& nearPlane = primaryFrc.getViewPlanes()[FrustumPlaneType::kNear];
-				const F32 dist = testPlane(nearPlane, spatialc->getAabbWorldSpace());
-				rc.setupRayTracingInstanceQueueElement(computeLod(primaryFrc, dist), *el);
+				el.m_distanceFromCamera = distanceFromCamera;
+				*result.m_forwardShadingRenderables.newElement(pool) = el;
 			}
-		});
+
+			if(wantsEarlyZ && distanceFromCamera < m_frcCtx->m_visCtx->m_earlyZDist)
+			{
+				modelc->setupRenderableQueueElements(lod, RenderingTechnique::kGBufferEarlyZ, pool, elements);
+				for(RenderableQueueElement& el : elements)
+				{
+					el.m_distanceFromCamera = distanceFromCamera;
+					*result.m_earlyZRenderables.newElement(pool) = el;
+				}
+			}
+		}
+
+		if(partemitc)
+		{
+			const Plane& nearPlane = primaryFrc.getViewPlanes()[FrustumPlaneType::kNear];
+			const F32 distanceFromCamera = max(0.0f, testPlane(nearPlane, spatialc->getAabbWorldSpace()));
+
+			WeakArray<RenderableQueueElement> elements;
+			partemitc->setupRenderableQueueElements(RenderingTechnique::kGBuffer, pool, elements);
+			for(RenderableQueueElement& el : elements)
+			{
+				el.m_distanceFromCamera = distanceFromCamera;
+				*result.m_renderables.newElement(pool) = el;
+			}
+
+			partemitc->setupRenderableQueueElements(RenderingTechnique::kForward, pool, elements);
+			for(RenderableQueueElement& el : elements)
+			{
+				el.m_distanceFromCamera = distanceFromCamera;
+				*result.m_forwardShadingRenderables.newElement(pool) = el;
+			}
+		}
 
 		if(lc)
 		{
@@ -699,7 +720,7 @@ void CombineResultsTask::combine()
 		std::sort(results.m_renderables.getBegin(), results.m_renderables.getEnd(), MaterialDistanceSortFunctor());
 
 		std::sort(results.m_earlyZRenderables.getBegin(), results.m_earlyZRenderables.getEnd(),
-				  DistanceSortFunctor<RenderableQueueElement>());
+				  MaterialDistanceSortFunctor());
 
 		std::sort(results.m_forwardShadingRenderables.getBegin(), results.m_forwardShadingRenderables.getEnd(),
 				  RevDistanceSortFunctor<RenderableQueueElement>());

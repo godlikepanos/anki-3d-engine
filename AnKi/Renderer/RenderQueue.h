@@ -54,21 +54,50 @@ using RenderQueueDrawCallback = void (*)(RenderQueueDrawContext& ctx, ConstWeakA
 class RenderableQueueElement final
 {
 public:
-	RenderQueueDrawCallback m_callback;
-	const void* m_userData;
-
-	/// Elements with the same m_mergeKey and same m_callback may be merged and the m_callback will be called once.
-	/// Unless m_mergeKey is zero.
 	U64 m_mergeKey;
 
-	U32 m_renderableOffset;
+	ShaderProgram* m_program;
+
+	U32 m_worldTransformsOffset;
+	U32 m_uniformsOffset;
+	U32 m_geometryOffset;
+	U32 m_boneTransformsOffset;
+
+	union
+	{
+		U32 m_indexCount;
+		U32 m_vertexCount;
+	};
+
+	union
+	{
+		U32 m_firstIndex;
+		U32 m_firstVertex;
+	};
 
 	F32 m_distanceFromCamera; ///< Don't set this. Visibility will.
 
-	U8 m_lod; ///< Don't set this. Visibility will.
+	Bool m_indexed;
+	PrimitiveTopology m_primitiveTopology;
 
 	RenderableQueueElement()
 	{
+	}
+
+	void computeMergeKey()
+	{
+		Array<U64, 5> toHash;
+		toHash[0] = ptrToNumber(m_program);
+		toHash[1] = m_indexed;
+		toHash[2] = m_indexCount;
+		toHash[3] = m_firstIndex;
+		toHash[4] = U64(m_primitiveTopology);
+		m_mergeKey = computeHash(toHash.getBegin(), toHash.getSizeInBytes());
+	}
+
+	Bool canMergeWith(const RenderableQueueElement& b) const
+	{
+		return m_mergeKey != 0 && m_mergeKey == b.m_mergeKey;
 	}
 };
 static_assert(std::is_trivially_destructible<RenderableQueueElement>::value == true);

@@ -12,7 +12,6 @@ class SceneComponent;
 class FrustumComponent;
 class InstanceComponent;
 class MoveComponent;
-class RenderComponent;
 class SpatialComponent;
 class DecalComponent;
 class ReflectionProxyComponent;

@@ -26,24 +26,13 @@ public:
 
 	~ModelNode();
 
-	Error frameUpdate(Second prevUpdateTime, Second crntTime) override;
-
 private:
 	class FeedbackComponent;
 	class RenderProxy;
 
 	Aabb m_aabbLocal;
-	DynamicArray<RenderProxy> m_renderProxies; ///< The size matches the number of render components.
-
-	Bool m_deferredRenderComponentUpdate = false;
 
 	void feedbackUpdate();
-
-	void draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData, U32 modelPatchIdx) const;
-
-	void setupRayTracingInstanceQueueElement(U32 lod, U32 modelPatchIdx, RayTracingInstanceQueueElement& el) const;
-
-	void initRenderComponents();
 };
 /// @}
 

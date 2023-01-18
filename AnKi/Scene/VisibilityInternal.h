@@ -47,14 +47,7 @@ class MaterialDistanceSortFunctor
 public:
 	Bool operator()(const RenderableQueueElement& a, const RenderableQueueElement& b)
 	{
-		if(a.m_lod == b.m_lod)
-		{
-			return a.m_mergeKey < b.m_mergeKey;
-		}
-		else
-		{
-			return a.m_lod < b.m_lod;
-		}
+		return a.m_mergeKey < b.m_mergeKey;
 	}
 };
 

@@ -13,15 +13,13 @@ ANKI_BEGIN_NAMESPACE
 struct GpuSceneRenderable
 {
 	U32 m_worldTransformsOffset; ///< First is the crnt transform and the 2nd the previous
-	U32 m_aabbOffset;
 	U32 m_uniformsOffset;
 	U32 m_geometryOffset;
 	U32 m_boneTransformsOffset;
-	U32 m_padding0;
-	U32 m_padding1;
-	U32 m_padding2;
 };
-static_assert(sizeof(GpuSceneRenderable) == sizeof(Vec4) * 2);
+static_assert(sizeof(GpuSceneRenderable) == sizeof(Vec4) * 1);
+
+typedef UVec4 GpuSceneRenderablePacked;
 
 struct GpuSceneMeshLod
 {
@@ -41,14 +39,6 @@ struct GpuSceneParticles
 	U32 m_padding1;
 };
 static_assert(sizeof(GpuSceneParticles) == sizeof(Vec4) * 2);
-
-struct UnpackedGpuSceneRenderableInstance
-{
-	U32 m_renderableOffset;
-	U32 m_lod;
-};
-
-typedef U32 PackedGpuSceneRenderableInstance;
 
 struct RenderableGpuView
 {

@@ -14,6 +14,7 @@ namespace anki {
 
 // Forward
 class RenderQueueDrawContext;
+class RenderableQueueElement;
 
 /// @addtogroup scene
 /// @{
@@ -30,26 +31,9 @@ public:
 
 	Error loadParticleEmitterResource(CString filename);
 
-	void setWorldTransform(const Transform& transform)
-	{
-		m_transform = transform;
-	}
-
 	const Aabb& getAabbWorldSpace() const
 	{
 		return m_worldBoundingVolume;
-	}
-
-	ParticleEmitterResourcePtr getParticleEmitterResource() const
-	{
-		return m_particleEmitterResource;
-	}
-
-	/// RenderComponent callback. The userData is the component.
-	static void drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
-	{
-		ANKI_ASSERT(userData.getSize() == 1);
-		static_cast<const ParticleEmitterComponent*>(userData[0])->draw(ctx);
 	}
 
 	Bool isEnabled() const
@@ -57,15 +41,8 @@ public:
 		return m_particleEmitterResource.isCreated();
 	}
 
-	U32 getGpuSceneParticlesOffset() const
-	{
-		return U32(m_gpuSceneParticles.m_offset);
-	}
-
-	U32 getGpuSceneUniforms() const
-	{
-		return U32(m_gpuSceneUniforms.m_offset);
-	}
+	void setupRenderableQueueElements(RenderingTechnique technique, StackMemoryPool& tmpPool,
+									  WeakArray<RenderableQueueElement>& outRenderables) const;
 
 private:
 	class ParticleBase;
@@ -81,6 +58,8 @@ private:
 
 	SceneNode* m_node = nullptr;
 
+	MoveComponent* m_moveComponent = nullptr;
+
 	ParticleEmitterProperties m_props;
 
 	ParticleEmitterResourcePtr m_particleEmitterResource;
@@ -90,10 +69,7 @@ private:
 	U32 m_aliveParticleCount = 0;
 	Bool m_resourceUpdated = true;
 
-	Transform m_transform = Transform::getIdentity();
 	Aabb m_worldBoundingVolume = Aabb(Vec3(-1.0f), Vec3(1.0f));
-
-	ImageResourcePtr m_dbgImage;
 
 	SegregatedListsGpuMemoryPoolToken m_gpuScenePositions;
 	SegregatedListsGpuMemoryPoolToken m_gpuSceneAlphas;
@@ -109,7 +85,7 @@ private:
 	void simulate(Second prevUpdateTime, Second crntTime, WeakArray<TParticle> particles, Vec3*& positions,
 				  F32*& scales, F32*& alphas);
 
-	void draw(RenderQueueDrawContext& ctx) const;
+	void onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added);
 };
 /// @}
 

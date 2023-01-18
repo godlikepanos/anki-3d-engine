@@ -7,7 +7,6 @@
 #include <AnKi/Scene/Components/MoveComponent.h>
 #include <AnKi/Scene/Components/SpatialComponent.h>
 #include <AnKi/Scene/Components/ParticleEmitterComponent.h>
-#include <AnKi/Scene/Components/RenderComponent.h>
 
 namespace anki {
 
@@ -68,13 +67,10 @@ ParticleEmitterNode::ParticleEmitterNode(SceneGraph* scene, CString name)
 
 	newComponent<MoveFeedbackComponent>();
 
-	ParticleEmitterComponent* particleEmitterc = newComponent<ParticleEmitterComponent>();
+	newComponent<ParticleEmitterComponent>();
 
 	newComponent<ShapeFeedbackComponent>();
 	newComponent<SpatialComponent>();
-
-	RenderComponent* rcomp = newComponent<RenderComponent>();
-	rcomp->initRaster(ParticleEmitterComponent::drawCallback, particleEmitterc, 0); // No merging
 }
 
 ParticleEmitterNode::~ParticleEmitterNode()
@@ -83,7 +79,6 @@ ParticleEmitterNode::~ParticleEmitterNode()
 
 void ParticleEmitterNode::onMoveComponentUpdate(MoveComponent& move)
 {
-	getFirstComponentOfType<ParticleEmitterComponent>().setWorldTransform(move.getWorldTransform());
 	getFirstComponentOfType<SpatialComponent>().setSpatialOrigin(move.getWorldTransform().getOrigin().xyz());
 }
 
@@ -91,26 +86,6 @@ void ParticleEmitterNode::onShapeUpdate()
 {
 	const ParticleEmitterComponent& pec = getFirstComponentOfType<ParticleEmitterComponent>();
 	getFirstComponentOfType<SpatialComponent>().setAabbWorldSpace(pec.getAabbWorldSpace());
-}
-
-Error ParticleEmitterNode::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime)
-{
-	const ParticleEmitterComponent& pec = getFirstComponentOfType<ParticleEmitterComponent>();
-	if(pec.isEnabled())
-	{
-		RenderComponent& rc = getFirstComponentOfType<RenderComponent>();
-		rc.setFlagsFromMaterial(pec.getParticleEmitterResource()->getMaterial());
-
-		// GPU scene update
-		GpuSceneRenderable renderable = {};
-		renderable.m_worldTransformsOffset = getFirstComponentOfType<MoveComponent>().getTransformsGpuSceneOffset();
-		renderable.m_uniformsOffset = pec.getGpuSceneUniforms();
-		renderable.m_geometryOffset = pec.getGpuSceneParticlesOffset();
-		getExternalSubsystems().m_gpuSceneMicroPatcher->newCopy(getFrameMemoryPool(), rc.getGpuSceneViewOffset(),
-																sizeof(renderable), &renderable);
-	}
-
-	return Error::kNone;
 }
 
 } // end namespace anki

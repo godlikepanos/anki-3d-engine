@@ -45,6 +45,8 @@ def thread_callback(tid):
             file_txt = file.read()
             file.close()
 
+            original_file_hash = hash(file_txt) 
+
             # Replace all semantics
             for semantic in hlsl_semantics:
                 file_txt = file_txt.replace(": " + semantic, "__" + semantic)
@@ -70,11 +72,8 @@ def thread_callback(tid):
         subprocess.check_call([exe, "-sort-includes=false", style_file, "-i", file_name])
 
         if is_shader:
-            shutil.move(tmp_filename, orig_filename)
-            file_name = orig_filename
-
-            # Read all text
-            file = open(file_name, mode="r", newline="\n")
+            # Read tmp file
+            file = open(tmp_filename, mode="r", newline="\n")
             file_txt = file.read()
             file.close()
 
@@ -82,11 +81,16 @@ def thread_callback(tid):
             for semantic in hlsl_semantics:
                 file_txt = file_txt.replace("__" + semantic, ": " + semantic)
 
-            # Write the new file
-            file = open(file_name, mode="w", newline="\n")
-            file.write(file_txt)
-            file.close()
+            new_file_hash = hash(file_txt)
 
+            # Write formatted file
+            if new_file_hash != original_file_hash:
+                file = open(orig_filename, mode="w", newline="\n")
+                file.write(file_txt)
+                file.close()
+
+            # Cleanup
+            os.remove(tmp_filename)
 
 # Gather the filenames
 file_names = []

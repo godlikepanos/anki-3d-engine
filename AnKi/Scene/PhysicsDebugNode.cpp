@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Scene/PhysicsDebugNode.h>
-#include <AnKi/Scene/Components/RenderComponent.h>
 #include <AnKi/Scene/Components/SpatialComponent.h>
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Resource/ResourceManager.h>
@@ -15,6 +14,8 @@ PhysicsDebugNode::PhysicsDebugNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
 	, m_physDbgDrawer(&scene->getDebugDrawer())
 {
+	// TODO
+#if 0
 	RenderComponent* rcomp = newComponent<RenderComponent>();
 	rcomp->setFlags(RenderComponentFlag::kNone);
 	rcomp->initRaster(
@@ -22,6 +23,7 @@ PhysicsDebugNode::PhysicsDebugNode(SceneGraph* scene, CString name)
 			static_cast<PhysicsDebugNode*>(userData[0])->draw(ctx);
 		},
 		this, 0);
+#endif
 
 	SpatialComponent* scomp = newComponent<SpatialComponent>();
 	scomp->setUpdateOctreeBounds(false); // Don't mess with the bounds
@@ -35,12 +37,14 @@ PhysicsDebugNode::~PhysicsDebugNode()
 
 void PhysicsDebugNode::draw(RenderQueueDrawContext& ctx)
 {
+#if 0
 	if(ctx.m_debugDraw)
 	{
 		m_physDbgDrawer.start(ctx.m_viewProjectionMatrix, ctx.m_commandBuffer, ctx.m_rebarStagingPool);
 		m_physDbgDrawer.drawWorld(*getExternalSubsystems().m_physicsWorld);
 		m_physDbgDrawer.end();
 	}
+#endif
 }
 
 } // end namespace anki

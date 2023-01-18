@@ -61,7 +61,7 @@
 struct VertIn
 {
 	U32 m_svVertexId : SV_VERTEXID;
-	[[vk::location(0)]] PackedGpuSceneRenderableInstance m_gpuSceneRenderableInstance : INSTANCE;
+	[[vk::location(0)]] GpuSceneRenderablePacked m_gpuSceneRenderable : RENDERABLE;
 };
 
 struct VertOut
@@ -172,11 +172,8 @@ VertOut main(VertIn input)
 {
 	VertOut output;
 
-	const UnpackedGpuSceneRenderableInstance instance =
-		unpackRenderableGpuViewInstance(input.m_gpuSceneRenderableInstance);
-	const GpuSceneRenderable renderable = g_gpuScene.Load<GpuSceneRenderable>(instance.m_renderableOffset);
-	const GpuSceneMeshLod mesh =
-		g_gpuScene.Load<GpuSceneMeshLod>(renderable.m_geometryOffset + sizeof(GpuSceneMeshLod) * instance.m_lod);
+	const GpuSceneRenderable renderable = unpackGpuSceneRenderable(input.m_gpuSceneRenderable);
+	const GpuSceneMeshLod mesh = g_gpuScene.Load<GpuSceneMeshLod>(renderable.m_geometryOffset);
 	UnpackedMeshVertex vert = loadVertex(mesh, input.m_svVertexId, ANKI_BONES);
 
 	const Mat3x4 worldTransform = g_gpuScene.Load<Mat3x4>(renderable.m_worldTransformsOffset);

@@ -61,7 +61,8 @@ void CameraNode::initCommon(FrustumType frustumType)
 	FrustumComponent* frc = newComponent<FrustumComponent>();
 	frc->setFrustumType(frustumType);
 	frc->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::kAll
-								   ^ FrustumComponentVisibilityTestFlag::kAllRayTracing);
+								   ^ (FrustumComponentVisibilityTestFlag::kAllRayTracing
+									  | FrustumComponentVisibilityTestFlag::kShadowCasterRenderComponents));
 	frc->setLodDistance(0, getExternalSubsystems().m_config->getLod0MaxDistance());
 	frc->setLodDistance(1, getExternalSubsystems().m_config->getLod1MaxDistance());
 	frc->setShadowCascadeCount(getExternalSubsystems().m_config->getSceneShadowCascadeCount());

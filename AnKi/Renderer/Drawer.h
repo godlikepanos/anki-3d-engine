@@ -30,9 +30,6 @@ public:
 	SamplerPtr m_sampler;
 	BufferPtr m_gpuSceneBuffer;
 	BufferPtr m_unifiedGeometryBuffer;
-
-	U32 m_minLod = 0;
-	U32 m_maxLod = kMaxLodCount - 1;
 };
 
 /// It uses the render queue to batch and render.
@@ -48,8 +45,8 @@ public:
 
 	~RenderableDrawer();
 
-	void drawRange(RenderingTechnique technique, const RenderableDrawerArguments& args,
-				   const RenderableQueueElement* begin, const RenderableQueueElement* end, CommandBufferPtr& cmdb);
+	void drawRange(const RenderableDrawerArguments& args, const RenderableQueueElement* begin,
+				   const RenderableQueueElement* end, CommandBufferPtr& cmdb);
 
 private:
 	class Context;
@@ -58,7 +55,7 @@ private:
 
 	void flushDrawcall(Context& ctx);
 
-	void drawSingle(Context& ctx);
+	void drawSingle(const RenderableQueueElement* renderEl, Context& ctx);
 };
 /// @}
 

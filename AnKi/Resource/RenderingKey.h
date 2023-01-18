@@ -41,24 +41,22 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RenderingTechniqueBit)
 class RenderingKey
 {
 public:
-	RenderingKey(RenderingTechnique technique, U32 lod, U32 instanceCount, Bool skinned, Bool velocity)
+	RenderingKey(RenderingTechnique technique, U32 lod, Bool skinned, Bool velocity)
 		: m_technique(technique)
-		, m_lod(U8(lod))
-		, m_instanceCount(U8(instanceCount))
+		, m_lod(lod & 0b11)
 		, m_skinned(skinned)
 		, m_velocity(velocity)
 	{
-		ANKI_ASSERT(instanceCount <= kMaxInstanceCount && instanceCount != 0);
-		ANKI_ASSERT(lod <= kMaxLodCount);
+		ANKI_ASSERT(lod < kMaxLodCount);
 	}
 
 	RenderingKey()
-		: RenderingKey(RenderingTechnique::kFirst, 0, 1, false, false)
+		: RenderingKey(RenderingTechnique::kFirst, 0, false, false)
 	{
 	}
 
 	RenderingKey(const RenderingKey& b)
-		: RenderingKey(b.m_technique, b.m_lod, b.m_instanceCount, b.m_skinned, b.m_velocity)
+		: RenderingKey(b.m_technique, b.m_lod, b.m_skinned, b.m_velocity)
 	{
 	}
 
@@ -70,8 +68,8 @@ public:
 
 	Bool operator==(const RenderingKey& b) const
 	{
-		return m_technique == b.m_technique && m_lod == b.m_lod && m_instanceCount == b.m_instanceCount
-			   && m_skinned == b.m_skinned && m_velocity == b.m_velocity;
+		return m_technique == b.m_technique && m_lod == b.m_lod && m_skinned == b.m_skinned
+			   && m_velocity == b.m_velocity;
 	}
 
 	RenderingTechnique getRenderingTechnique() const
@@ -92,18 +90,7 @@ public:
 	void setLod(U32 lod)
 	{
 		ANKI_ASSERT(lod < kMaxLodCount);
-		m_lod = U8(lod);
-	}
-
-	U32 getInstanceCount() const
-	{
-		return m_instanceCount;
-	}
-
-	void setInstanceCount(U32 instanceCount)
-	{
-		ANKI_ASSERT(instanceCount <= kMaxInstanceCount && instanceCount > 0);
-		m_instanceCount = U8(instanceCount);
+		m_lod = lod & 0b11;
 	}
 
 	Bool getSkinned() const
@@ -128,12 +115,13 @@ public:
 
 private:
 	RenderingTechnique m_technique;
-	U8 m_lod;
-	U8 m_instanceCount;
-	Bool m_skinned;
-	Bool m_velocity;
+	U8 m_lod : 2;
+	Bool m_skinned : 1;
+	Bool m_velocity : 1;
+
+	static_assert(kMaxLodCount <= 3, "m_lod only reserves 2 bits so make sure all LODs will fit");
 };
 
-static_assert(sizeof(RenderingKey) == sizeof(U8) * 5, "RenderingKey needs to be packed because of hashing");
+static_assert(sizeof(RenderingKey) == sizeof(U8) * 2, "RenderingKey needs to be packed because of hashing");
 
 } // end namespace anki

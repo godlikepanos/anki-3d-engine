@@ -7,7 +7,6 @@
 #include <AnKi/Scene/Components/MoveComponent.h>
 #include <AnKi/Scene/Components/SpatialComponent.h>
 #include <AnKi/Scene/Components/GenericGpuComputeJobComponent.h>
-#include <AnKi/Scene/Components/RenderComponent.h>
 #include <AnKi/Scene/Components/GpuParticleEmitterComponent.h>
 
 namespace anki {
@@ -80,27 +79,10 @@ GpuParticleEmitterNode::GpuParticleEmitterNode(SceneGraph* scene, CString name)
 
 	GenericGpuComputeJobComponent* gpuComp = newComponent<GenericGpuComputeJobComponent>();
 	gpuComp->setCallback(GpuParticleEmitterComponent::simulateCallback, pec);
-
-	RenderComponent* rcomp = newComponent<RenderComponent>();
-	const U64 noMerging = 0;
-	rcomp->initRaster(GpuParticleEmitterComponent::drawCallback, pec, noMerging);
 }
 
 GpuParticleEmitterNode::~GpuParticleEmitterNode()
 {
-}
-
-Error GpuParticleEmitterNode::frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime)
-{
-	const GpuParticleEmitterComponent& pec = getFirstComponentOfType<GpuParticleEmitterComponent>();
-
-	if(pec.isEnabled())
-	{
-		RenderComponent& rc = getFirstComponentOfType<RenderComponent>();
-		rc.setFlagsFromMaterial(pec.getParticleEmitterResource()->getMaterial());
-	}
-
-	return Error::kNone;
 }
 
 void GpuParticleEmitterNode::onMoveComponentUpdate(const MoveComponent& movec)

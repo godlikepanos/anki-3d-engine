@@ -13,7 +13,7 @@
 #include <AnKi/Shaders/TonemappingFunctions.hlsl>
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
 
-#define ENABLE_SSGI false
+#define ENABLE_SSGI true
 #define ENABLE_PROBES true
 #define REMOVE_FIREFLIES false
 #define REPROJECT_LIGHTBUFFER false

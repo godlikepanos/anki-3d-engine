@@ -8,6 +8,7 @@
 #include <AnKi/Scene/Components/SceneComponent.h>
 #include <AnKi/Resource/Forward.h>
 #include <AnKi/Util/WeakArray.h>
+#include <AnKi/Renderer/RenderQueue.h>
 
 namespace anki {
 
@@ -31,39 +32,43 @@ public:
 		return m_model;
 	}
 
-	ConstWeakArray<U64> getRenderMergeKeys() const
-	{
-		return m_modelPatchMergeKeys;
-	}
-
 	Bool isEnabled() const
 	{
 		return m_model.isCreated();
 	}
 
-	U32 getGpuSceneMeshLodsOffset() const
+	Bool getCastsShadow() const
 	{
-		ANKI_ASSERT((m_gpuSceneMeshLods.m_offset % 4) == 0);
-		return U32(m_gpuSceneMeshLods.m_offset);
+		return m_castsShadow;
 	}
 
-	U32 getUniformsGpuSceneOffset(U32 meshPatchIdx) const
-	{
-		return m_gpuSceneUniformsOffsetPerPatch[meshPatchIdx];
-	}
+	void setupRenderableQueueElements(U32 lod, RenderingTechnique technique, StackMemoryPool& tmpPool,
+									  WeakArray<RenderableQueueElement>& outRenderables) const;
 
 private:
-	SceneNode* m_node = nullptr;
-	ModelResourcePtr m_model;
+	class PatchInfo
+	{
+	public:
+		U32 m_gpuSceneUniformsOffset;
+		RenderingTechniqueBit m_techniques;
+	};
 
-	DynamicArray<U64> m_modelPatchMergeKeys;
-	Bool m_dirty = true;
+	SceneNode* m_node = nullptr;
+	MoveComponent* m_moveComponent = nullptr;
+	SkinComponent* m_skinComponent = nullptr;
+	ModelResourcePtr m_model;
 
 	SegregatedListsGpuMemoryPoolToken m_gpuSceneMeshLods;
 	SegregatedListsGpuMemoryPoolToken m_gpuSceneUniforms;
-	DynamicArray<U32> m_gpuSceneUniformsOffsetPerPatch;
+	DynamicArray<PatchInfo> m_patchInfos;
+
+	Bool m_dirty = true;
+	Bool m_castsShadow = false;
+	RenderingTechniqueBit m_presentRenderingTechniques = RenderingTechniqueBit::kNone;
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated);
+
+	void onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added);
 };
 /// @}
 

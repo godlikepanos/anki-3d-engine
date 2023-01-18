@@ -6,7 +6,7 @@
 #include <AnKi/Scene/Components/ParticleEmitterComponent.h>
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Scene/SceneNode.h>
-#include <AnKi/Scene/Components/RenderComponent.h>
+#include <AnKi/Scene/Components/MoveComponent.h>
 #include <AnKi/Resource/ParticleEmitterResource.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Physics/PhysicsBody.h>
@@ -216,13 +216,6 @@ ParticleEmitterComponent::~ParticleEmitterComponent()
 
 Error ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 {
-	// Create the debug drawer
-	if(!m_dbgImage.isCreated())
-	{
-		ANKI_CHECK(getExternalSubsystems(*m_node).m_resourceManager->loadResource(
-			"EngineAssets/ParticleEmitter.ankitex", m_dbgImage));
-	}
-
 	// Load
 	ANKI_CHECK(getExternalSubsystems(*m_node).m_resourceManager->loadResource(filename, m_particleEmitterResource));
 	m_props = m_particleEmitterResource->getProperties();
@@ -411,7 +404,8 @@ void ParticleEmitterComponent::simulate(Second prevUpdateTime, Second crntTime, 
 				continue;
 			}
 
-			particle.revive(m_props, m_transform, crntTime);
+			particle.revive(
+				m_props, (m_moveComponent) ? m_moveComponent->getWorldTransform() : Transform::getIdentity(), crntTime);
 
 			// do the rest
 			++particleCount;
@@ -429,64 +423,52 @@ void ParticleEmitterComponent::simulate(Second prevUpdateTime, Second crntTime, 
 	}
 }
 
-void ParticleEmitterComponent::draw(RenderQueueDrawContext& ctx) const
+void ParticleEmitterComponent::setupRenderableQueueElements(RenderingTechnique technique, StackMemoryPool& tmpPool,
+															WeakArray<RenderableQueueElement>& outRenderables) const
 {
-	// Early exit
-	if(ANKI_UNLIKELY(m_aliveParticleCount == 0))
+	if(!(m_particleEmitterResource->getMaterial()->getRenderingTechniques() & RenderingTechniqueBit(1 << technique))
+	   || m_aliveParticleCount == 0)
 	{
+		outRenderables.setArray(nullptr, 0);
 		return;
 	}
 
-	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
+	RenderingKey key;
+	key.setRenderingTechnique(technique);
+	ShaderProgramPtr prog;
+	m_particleEmitterResource->getRenderingInfo(key, prog);
 
-	if(!ctx.m_debugDraw)
+	RenderableQueueElement* el = static_cast<RenderableQueueElement*>(
+		tmpPool.allocate(sizeof(RenderableQueueElement), alignof(RenderableQueueElement)));
+
+	el->m_mergeKey = 0; // Not mergable
+	el->m_program = prog.get();
+	el->m_worldTransformsOffset = m_moveComponent->getTransformsGpuSceneOffset();
+	el->m_uniformsOffset = U32(m_gpuSceneUniforms.m_offset);
+	el->m_geometryOffset = U32(m_gpuSceneParticles.m_offset);
+	el->m_boneTransformsOffset = 0;
+	el->m_vertexCount = 6 * m_aliveParticleCount;
+	el->m_firstVertex = 0;
+	el->m_indexed = false;
+	el->m_primitiveTopology = PrimitiveTopology::kTriangles;
+
+	outRenderables.setArray(el, 1);
+}
+
+void ParticleEmitterComponent::onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added)
+{
+	if(added)
 	{
-		// Program
-		ShaderProgramPtr prog;
-		m_particleEmitterResource->getRenderingInfo(ctx.m_key, prog);
-		cmdb->bindShaderProgram(prog);
-
-		// Draw
-		cmdb->drawArrays(PrimitiveTopology::kTriangles, 6 * m_aliveParticleCount);
+		if(other->getClassId() == MoveComponent::getStaticClassId())
+		{
+			m_moveComponent = static_cast<MoveComponent*>(other);
+		}
 	}
 	else
 	{
-		const Vec4 tsl = (m_worldBoundingVolume.getMin() + m_worldBoundingVolume.getMax()) / 2.0f;
-		const Vec4 scale = (m_worldBoundingVolume.getMax() - m_worldBoundingVolume.getMin()) / 2.0f;
-
-		// Set non uniform scale. Add a margin to avoid flickering
-		Mat3 nonUniScale = Mat3::getZero();
-		nonUniScale(0, 0) = scale.x();
-		nonUniScale(1, 1) = scale.y();
-		nonUniScale(2, 2) = scale.z();
-
-		const Mat4 mvp = ctx.m_viewProjectionMatrix * Mat4(tsl.xyz1(), Mat3::getIdentity() * nonUniScale, 1.0f);
-
-		const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDepthTestOn);
-		if(enableDepthTest)
+		if(m_moveComponent == other)
 		{
-			cmdb->setDepthCompareOperation(CompareOperation::kLess);
-		}
-		else
-		{
-			cmdb->setDepthCompareOperation(CompareOperation::kAlways);
-		}
-
-		m_node->getSceneGraph().getDebugDrawer().drawCubes(
-			ConstWeakArray<Mat4>(&mvp, 1), Vec4(1.0f, 0.0f, 1.0f, 1.0f), 2.0f,
-			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), 2.0f, *ctx.m_rebarStagingPool,
-			cmdb);
-
-		const Vec3 pos = m_transform.getOrigin().xyz();
-		m_node->getSceneGraph().getDebugDrawer().drawBillboardTextures(
-			ctx.m_projectionMatrix, ctx.m_viewMatrix, ConstWeakArray<Vec3>(&pos, 1), Vec4(1.0f),
-			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), m_dbgImage->getTextureView(),
-			ctx.m_sampler, Vec2(0.75f), *ctx.m_rebarStagingPool, ctx.m_commandBuffer);
-
-		// Restore state
-		if(!enableDepthTest)
-		{
-			cmdb->setDepthCompareOperation(CompareOperation::kLess);
+			m_moveComponent = nullptr;
 		}
 	}
 }

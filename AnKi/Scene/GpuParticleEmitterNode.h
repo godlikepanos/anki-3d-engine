@@ -20,8 +20,6 @@ public:
 
 	~GpuParticleEmitterNode();
 
-	Error frameUpdate(Second prevUpdateTime, Second crntTime) override;
-
 private:
 	class MoveFeedbackComponent;
 	class ShapeFeedbackComponent;
