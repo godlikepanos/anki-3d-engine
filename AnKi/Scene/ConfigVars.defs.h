@@ -11,7 +11,7 @@ ANKI_CONFIG_VAR_F32(Lod1MaxDistance, 40.0f, 2.0f, kMaxF32, "Distance that will b
 ANKI_CONFIG_VAR_U8(SceneShadowCascadeCount, (ANKI_PLATFORM_MOBILE) ? 2 : kMaxShadowCascades, 1, kMaxShadowCascades,
 				   "Max number of shadow cascades for directional lights")
 ANKI_CONFIG_VAR_F32(SceneShadowCascade0Distance, 18.0, 1.0, kMaxF32, "The distance of the 1st cascade")
-ANKI_CONFIG_VAR_F32(SceneShadowCascade1Distance, 40.0, 1.0, kMaxF32, "The distance of the 2nd cascade")
+ANKI_CONFIG_VAR_F32(SceneShadowCascade1Distance, 70.0, 1.0, kMaxF32, "The distance of the 2nd cascade")
 ANKI_CONFIG_VAR_F32(SceneShadowCascade2Distance, 80.0, 1.0, kMaxF32, "The distance of the 3rd cascade")
 ANKI_CONFIG_VAR_F32(SceneShadowCascade3Distance, 200.0, 1.0, kMaxF32, "The distance of the 4th cascade")
 

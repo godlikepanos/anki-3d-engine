@@ -15,7 +15,7 @@ ANKI_CONFIG_VAR_PTR_SIZE(GrDiskShaderCacheMaxSize, 128_MB, 1_MB, 1_GB, "Max size
 ANKI_CONFIG_VAR_BOOL(GrRayTracing, false, "Try enabling ray tracing")
 ANKI_CONFIG_VAR_BOOL(Gr64bitAtomics, true, "Enable or not 64bit atomics")
 ANKI_CONFIG_VAR_BOOL(GrSamplerFilterMinMax, true, "Enable or not min/max sample filtering")
-ANKI_CONFIG_VAR_BOOL(GrVrs, false, "Enable or not VRS")
+ANKI_CONFIG_VAR_BOOL(GrVrs, true, "Enable or not VRS")
 ANKI_CONFIG_VAR_BOOL(GrAsyncCompute, true, "Enable or not async compute")
 
 ANKI_CONFIG_VAR_U8(GrVkMinor, 1, 1, 1, "Vulkan minor version")

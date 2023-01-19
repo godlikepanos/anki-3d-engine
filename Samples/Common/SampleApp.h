@@ -12,6 +12,12 @@ class SampleApp : public anki::App
 public:
 	anki::ConfigSet m_config;
 
+	anki::CanvasPtr m_canvas;
+
+	anki::Second m_timesOfLastTouchEvent = 0.0f;
+	static constexpr anki::Second kIdleTime = 4.0;
+	class anki::AnimationEvent* m_cameraAnimationEvent = nullptr;
+
 	anki::Error init(int argc, char** argv, anki::CString sampleName);
 	anki::Error userMainLoop(anki::Bool& quit, anki::Second elapsedTime) override;
 

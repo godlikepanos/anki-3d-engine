@@ -16,7 +16,7 @@ StatsUi::~StatsUi()
 
 Error StatsUi::init()
 {
-	ANKI_CHECK(m_manager->newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{24}));
+	ANKI_CHECK(m_manager->newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{42}));
 
 	return Error::kNone;
 }
@@ -77,7 +77,7 @@ void StatsUi::setStats(const StatsUiInput& input, StatsUiDetail detail)
 
 void StatsUi::build(CanvasPtr canvas)
 {
-	canvas->pushFont(m_font, 24);
+	canvas->pushFont(m_font, 42);
 
 	const Vec4 oldWindowColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
 	ImGui::GetStyle().Colors[ImGuiCol_WindowBg].w = 0.3f;

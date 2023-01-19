@@ -4,8 +4,120 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Samples/Common/SampleApp.h>
+#include <AnKi/Scene/Events/AnimationEvent.h>
 
 using namespace anki;
+
+class ButtonsUiNode : public SceneNode
+{
+public:
+	FontPtr m_font;
+	Renderer* m_renderer = nullptr;
+	ConfigSet* m_config = nullptr;
+
+	Bool m_vrs = true;
+	Bool m_lsVis = false;
+	Bool m_giVis = false;
+	Bool m_reflVis = false;
+
+	ButtonsUiNode(SceneGraph* scene, CString name)
+		: SceneNode(scene, name)
+	{
+		SpatialComponent* spatialc = newComponent<SpatialComponent>();
+		spatialc->setAlwaysVisible(true);
+
+		UiComponent* uic = newComponent<UiComponent>();
+		uic->init(
+			[](CanvasPtr& canvas, void* ud) {
+				static_cast<ButtonsUiNode*>(ud)->draw(canvas);
+			},
+			this);
+
+		ANKI_CHECK_AND_IGNORE(getSceneGraph().getUiManager().newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf",
+																		 Array<U32, 1>{42}));
+	}
+
+	void draw(CanvasPtr& canvas)
+	{
+		if(!m_renderer->getGrManager().getDeviceCapabilities().m_vrs)
+		{
+			return;
+		}
+
+		const Vec4 oldWindowColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
+		ImGui::GetStyle().Colors[ImGuiCol_WindowBg].w = 0.3f;
+		
+		ImGui::Begin("VrsButtons", nullptr,
+					 ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove
+						 | ImGuiWindowFlags_AlwaysAutoResize);
+
+		canvas->pushFont(m_font, 42);
+
+		ImGui::SetWindowPos(Vec2(canvas->getWidth() - ImGui::GetWindowWidth() - 5.0f, 5.0f));
+		ImGui::SetWindowSize(Vec2(230.0f, 450.0f));
+
+		if(m_config->getRVrs())
+		{
+			//ImGui::Text("VRS visualization: ");
+			//ImGui::SameLine();
+
+			if(ImGui::Checkbox("Light Shading", &m_lsVis))
+			{
+				m_giVis = m_reflVis = false;
+			}
+
+			ImGui::SameLine();
+			ImGui::Spacing();
+			ImGui::SameLine();
+
+			if(ImGui::Checkbox("Global Illumination", &m_giVis))
+			{
+				m_lsVis = m_reflVis = false;
+			}
+
+			ImGui::SameLine();
+			ImGui::Spacing();
+			ImGui::SameLine();
+
+			if(ImGui::Checkbox("Reflections", &m_reflVis))
+			{
+				m_lsVis = m_giVis = false;
+			}
+
+			ImGui::SameLine();
+			ImGui::Spacing();
+			ImGui::SameLine();
+		}
+
+		if(ImGui::Checkbox("VRS", &m_vrs))
+		{
+		}
+
+		m_config->setRVrs(m_vrs);
+
+		if(m_config->getRVrs() && m_lsVis)
+		{
+			m_renderer->setCurrentDebugRenderTarget("VrsSri");
+		}
+		else if(m_config->getRVrs() && m_giVis)
+		{
+			m_renderer->setCurrentDebugRenderTarget("IndirectDiffuseVrsSri");
+		}
+		else if(m_config->getRVrs() && m_reflVis)
+		{
+			m_renderer->setCurrentDebugRenderTarget("VrsSriDownscaled");
+		}
+		else
+		{
+			m_renderer->setCurrentDebugRenderTarget("");
+		}
+
+		canvas->popFont();
+		ImGui::End();
+
+		ImGui::GetStyle().Colors[ImGuiCol_WindowBg] = oldWindowColor;
+	}
+};
 
 Error SampleApp::init(int argc, char** argv, CString sampleName)
 {
@@ -36,6 +148,12 @@ Error SampleApp::init(int argc, char** argv, CString sampleName)
 	ANKI_CHECK(App::init(&m_config, allocAligned, nullptr));
 
 	ANKI_CHECK(sampleExtraInit());
+
+	ButtonsUiNode* node;
+	getSceneGraph().newSceneNode("VrsButtons", node);
+	node->m_renderer = &getMainRenderer().getOffscreenRenderer();
+	node->m_config = &m_config;
+	node->m_vrs = m_config.getRVrs();
 
 	return Error::kNone;
 }
@@ -271,7 +389,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		for(TouchPointer touch : EnumIterable<TouchPointer>())
 		{
 			if(rotateCameraTouch == TouchPointer::kCount && in.getTouchPointer(touch) == 1
-			   && in.getTouchPointerNdcPosition(touch).x() > 0.1f)
+			   && in.getTouchPointerNdcPosition(touch).x() > 0.1f && in.getTouchPointerNdcPosition(touch).y() < 0.8f)
 			{
 				rotateCameraTouch = touch;
 				rotateEventInitialPos = in.getTouchPointerNdcPosition(touch) * getWindow().getAspectRatio();
@@ -288,7 +406,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		{
 			Vec2 velocity =
 				in.getTouchPointerNdcPosition(rotateCameraTouch) * getWindow().getAspectRatio() - rotateEventInitialPos;
-			velocity *= 0.3f;
+			velocity *= 0.1f;
 
 			Euler angles(mover->getLocalRotation().getRotationPart());
 			angles.x() += velocity.y() * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
@@ -303,7 +421,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		for(TouchPointer touch : EnumIterable<TouchPointer>())
 		{
 			if(moveCameraTouch == TouchPointer::kCount && in.getTouchPointer(touch) == 1
-			   && in.getTouchPointerNdcPosition(touch).x() < -0.1f)
+			   && in.getTouchPointerNdcPosition(touch).x() < -0.1f && in.getTouchPointerNdcPosition(touch).y() < 0.8f)
 			{
 				moveCameraTouch = touch;
 				moveEventInitialPos = in.getTouchPointerNdcPosition(touch) * getWindow().getAspectRatio();
@@ -324,6 +442,27 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 			mover->moveLocalX(moveDistance * velocity.x());
 			mover->moveLocalZ(moveDistance * -velocity.y());
+		}
+
+		// Camera fly mode
+		if(moveCameraTouch != TouchPointer::kCount || rotateCameraTouch != TouchPointer::kCount)
+		{
+			m_timesOfLastTouchEvent = kIdleTime;
+
+			if(m_cameraAnimationEvent)
+			{
+				m_cameraAnimationEvent->setMarkedForDeletion();
+				m_cameraAnimationEvent = nullptr;
+			}
+		}
+
+		m_timesOfLastTouchEvent -= elapsedTime;
+
+		if(m_timesOfLastTouchEvent < 0.0 && m_cameraAnimationEvent == nullptr)
+		{
+			scene.getEventManager().newEvent(m_cameraAnimationEvent,
+											 "Assets/Camera.001Action.003_67159cf18109479.ankianim", "Camera.001",
+											 &scene.getActiveCameraNode());
 		}
 	}
 	else
