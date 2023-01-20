@@ -34,7 +34,7 @@ public:
 			this);
 
 		ANKI_CHECK_AND_IGNORE(getSceneGraph().getUiManager().newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf",
-																		 Array<U32, 1>{42}));
+																		 Array<U32, 1>{46}));
 	}
 
 	void draw(CanvasPtr& canvas)
@@ -46,14 +46,14 @@ public:
 
 		const Vec4 oldWindowColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
 		ImGui::GetStyle().Colors[ImGuiCol_WindowBg].w = 0.3f;
-		
+
 		ImGui::Begin("VrsButtons", nullptr,
 					 ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove
 						 | ImGuiWindowFlags_AlwaysAutoResize);
 
-		canvas->pushFont(m_font, 42);
+		canvas->pushFont(m_font, 46);
 
-		ImGui::SetWindowPos(Vec2(canvas->getWidth() - ImGui::GetWindowWidth() - 5.0f, 5.0f));
+		ImGui::SetWindowPos(Vec2(canvas->getWidth() - ImGui::GetWindowWidth() - 105.0f, 55.0f));
 		ImGui::SetWindowSize(Vec2(230.0f, 450.0f));
 
 		if(m_config->getRVrs())
@@ -68,6 +68,8 @@ public:
 
 			ImGui::SameLine();
 			ImGui::Spacing();
+            ImGui::SameLine();
+            ImGui::Spacing();
 			ImGui::SameLine();
 
 			if(ImGui::Checkbox("Global Illumination", &m_giVis))
@@ -77,6 +79,8 @@ public:
 
 			ImGui::SameLine();
 			ImGui::Spacing();
+            ImGui::SameLine();
+            ImGui::Spacing();
 			ImGui::SameLine();
 
 			if(ImGui::Checkbox("Reflections", &m_reflVis))
@@ -86,6 +90,8 @@ public:
 
 			ImGui::SameLine();
 			ImGui::Spacing();
+            ImGui::SameLine();
+            ImGui::Spacing();
 			ImGui::SameLine();
 		}
 
@@ -389,7 +395,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		for(TouchPointer touch : EnumIterable<TouchPointer>())
 		{
 			if(rotateCameraTouch == TouchPointer::kCount && in.getTouchPointer(touch) == 1
-			   && in.getTouchPointerNdcPosition(touch).x() > 0.1f && in.getTouchPointerNdcPosition(touch).y() < 0.8f)
+			   && in.getTouchPointerNdcPosition(touch).x() > 0.1f && in.getTouchPointerNdcPosition(touch).y() < 0.6f)
 			{
 				rotateCameraTouch = touch;
 				rotateEventInitialPos = in.getTouchPointerNdcPosition(touch) * getWindow().getAspectRatio();
@@ -421,7 +427,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		for(TouchPointer touch : EnumIterable<TouchPointer>())
 		{
 			if(moveCameraTouch == TouchPointer::kCount && in.getTouchPointer(touch) == 1
-			   && in.getTouchPointerNdcPosition(touch).x() < -0.1f && in.getTouchPointerNdcPosition(touch).y() < 0.8f)
+			   && in.getTouchPointerNdcPosition(touch).x() < -0.1f && in.getTouchPointerNdcPosition(touch).y() < 0.6f)
 			{
 				moveCameraTouch = touch;
 				moveEventInitialPos = in.getTouchPointerNdcPosition(touch) * getWindow().getAspectRatio();
