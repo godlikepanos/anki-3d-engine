@@ -457,12 +457,12 @@ if(NOT MSVC)
 		-Wno-class-memaccess
 		-Wunused-variable)
 
-	set(CMAKE_CXX_STANDARD 17)
+	set(CMAKE_CXX_STANDARD 20)
 else()
 	string(REPLACE "/W3" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
 
 	add_compile_options(
-		/std:c++17
+		/std:c++20
 		/W4
 		/wd4324
 		/wd4456
