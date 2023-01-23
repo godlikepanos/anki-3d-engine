@@ -12,8 +12,6 @@
 
 namespace anki {
 
-ANKI_SCENE_COMPONENT_STATICS(SkyboxComponent, 100.0f)
-
 SkyboxComponent::SkyboxComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
 	, m_node(node)

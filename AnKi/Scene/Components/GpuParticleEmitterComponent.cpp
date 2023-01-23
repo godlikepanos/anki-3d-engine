@@ -11,8 +11,6 @@
 
 namespace anki {
 
-ANKI_SCENE_COMPONENT_STATICS(GpuParticleEmitterComponent, 40.0f)
-
 GpuParticleEmitterComponent::GpuParticleEmitterComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
 	, m_node(node)

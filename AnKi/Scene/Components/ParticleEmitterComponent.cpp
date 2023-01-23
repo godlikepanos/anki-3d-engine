@@ -17,8 +17,6 @@
 
 namespace anki {
 
-ANKI_SCENE_COMPONENT_STATICS(ParticleEmitterComponent, 40.0f)
-
 static Vec3 getRandom(const Vec3& min, const Vec3& max)
 {
 	Vec3 out;

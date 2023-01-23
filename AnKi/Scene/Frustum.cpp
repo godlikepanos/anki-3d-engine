@@ -3,42 +3,52 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Scene/Components/FrustumComponent.h>
-#include <AnKi/Scene/SceneNode.h>
+#include <AnKi/Scene/Frustum.h>
 #include <AnKi/Collision/Functions.h>
 
 namespace anki {
 
-FrustumComponent::FrustumComponent(SceneNode* node)
-	: SceneComponent(node, getStaticClassId())
-	, m_node(node)
-	, m_shapeMarkedForUpdate(true)
-	, m_trfMarkedForUpdate(true)
-	, m_miscMarkedForUpdate(true)
+Frustum::Frustum()
 {
-	ANKI_ASSERT(&m_perspective.m_far == &m_ortho.m_far);
-	ANKI_ASSERT(node);
-
 	// Set some default values
-	setFrustumType(FrustumType::kPerspective);
-	for(U i = 0; i < m_misc.m_maxLodDistances.getSize(); ++i)
+	init(FrustumType::kPerspective, nullptr);
+	for(U i = 0; i < m_maxLodDistances.getSize(); ++i)
 	{
 		const F32 dist = (m_common.m_far - m_common.m_near) / F32(kMaxLodCount + 1);
-		m_misc.m_maxLodDistances[i] = m_common.m_near + dist * F32(i + 1);
+		m_maxLodDistances[i] = m_common.m_near + dist * F32(i + 1);
 	}
 
-	updateInternal();
+	update(true, Transform::getIdentity());
 }
 
-FrustumComponent::~FrustumComponent()
+Frustum::~Frustum()
 {
-	m_coverageBuff.m_depthMap.destroy(m_node->getMemoryPool());
+	m_depthMap.destroy(*m_pool);
 }
 
-Bool FrustumComponent::updateInternal()
+void Frustum::init(FrustumType type, HeapMemoryPool* pool)
 {
-	ANKI_ASSERT(m_frustumType != FrustumType::kCount);
+	ANKI_ASSERT(type < FrustumType::kCount);
+	m_pool = pool;
+	m_frustumType = type;
+	setNear(kDefaultNear);
+	setFar(kDefaultFar);
+	if(m_frustumType == FrustumType::kPerspective)
+	{
+		setFovX(kDefaultFovAngle);
+		setFovY(kDefaultFovAngle);
+	}
+	else
+	{
+		setLeft(-5.0f);
+		setRight(5.0f);
+		setBottom(-1.0f);
+		setTop(1.0f);
+	}
+}
 
+Bool Frustum::update(Bool worldTransformUpdated, const Transform& worldTransform)
+{
 	Bool updated = false;
 
 	for(U32 i = kPrevMatrixHistory - 1; i != 0; --i)
@@ -56,12 +66,6 @@ Bool FrustumComponent::updateInternal()
 	if(m_shapeMarkedForUpdate)
 	{
 		updated = true;
-
-		// Fix user data
-		if(!ANKI_SCENE_ASSERT(m_common.m_far - m_common.m_near > 1.0_cm))
-		{
-			setFrustumType(m_frustumType);
-		}
 
 		if(m_frustumType == FrustumType::kPerspective)
 		{
@@ -114,10 +118,10 @@ Bool FrustumComponent::updateInternal()
 	}
 
 	// Update transform related things
-	if(m_trfMarkedForUpdate)
+	if(worldTransformUpdated)
 	{
 		updated = true;
-		m_viewMat = Mat3x4(m_trf.getInverse());
+		m_viewMat = Mat3x4(worldTransform.getInverse());
 	}
 
 	// Fixup the misc data
@@ -126,34 +130,30 @@ Bool FrustumComponent::updateInternal()
 		updated = true;
 		const F32 frustumFraction = (m_common.m_far - m_common.m_near) / 100.0f;
 
-		for(U32 i = 0; i < m_misc.m_shadowCascadeCount; ++i)
+		for(U32 i = 0; i < m_shadowCascadeCount; ++i)
 		{
-			if(!ANKI_SCENE_ASSERT(m_misc.m_shadowCascadeDistances[i] > m_common.m_near
-								  && m_misc.m_shadowCascadeDistances[i] <= m_common.m_far))
+			if(m_shadowCascadeDistances[i] <= m_common.m_near || m_shadowCascadeDistances[i] > m_common.m_far)
 			{
-				m_misc.m_shadowCascadeDistances[i] =
-					clamp(m_misc.m_shadowCascadeDistances[i], m_common.m_near + kEpsilonf, m_common.m_far);
+				m_shadowCascadeDistances[i] =
+					clamp(m_shadowCascadeDistances[i], m_common.m_near + kEpsilonf, m_common.m_far);
 			}
 
-			if(i != 0
-			   && !ANKI_SCENE_ASSERT(m_misc.m_shadowCascadeDistances[i - 1] < m_misc.m_shadowCascadeDistances[i]))
+			if(i != 0 && m_shadowCascadeDistances[i - 1] > m_shadowCascadeDistances[i])
 			{
-				m_misc.m_shadowCascadeDistances[i] = m_misc.m_shadowCascadeDistances[i - 1] + frustumFraction;
+				m_shadowCascadeDistances[i] = m_shadowCascadeDistances[i - 1] + frustumFraction;
 			}
 		}
 
-		for(U32 i = 0; i < m_misc.m_maxLodDistances.getSize(); ++i)
+		for(U32 i = 0; i < m_maxLodDistances.getSize(); ++i)
 		{
-			if(!ANKI_SCENE_ASSERT(m_misc.m_maxLodDistances[i] > m_common.m_near
-								  && m_misc.m_maxLodDistances[i] <= m_common.m_far))
+			if(m_maxLodDistances[i] <= m_common.m_near || m_maxLodDistances[i] > m_common.m_far)
 			{
-				m_misc.m_maxLodDistances[i] =
-					clamp(m_misc.m_maxLodDistances[i], m_common.m_near + kEpsilonf, m_common.m_far);
+				m_maxLodDistances[i] = clamp(m_maxLodDistances[i], m_common.m_near + kEpsilonf, m_common.m_far);
 			}
 
-			if(i != 0 && !ANKI_SCENE_ASSERT(m_misc.m_maxLodDistances[i - 1] < m_misc.m_maxLodDistances[i]))
+			if(i != 0 && m_maxLodDistances[i - 1] > m_maxLodDistances[i])
 			{
-				m_misc.m_maxLodDistances[i] = m_misc.m_maxLodDistances[i - 1] + frustumFraction;
+				m_maxLodDistances[i] = m_maxLodDistances[i - 1] + frustumFraction;
 			}
 		}
 	}
@@ -163,64 +163,44 @@ Bool FrustumComponent::updateInternal()
 	{
 		m_viewProjMat = m_projMat * Mat4(m_viewMat, Vec4(0.0f, 0.0f, 0.0f, 1.0f));
 		m_shapeMarkedForUpdate = false;
-		m_trfMarkedForUpdate = false;
 		m_miscMarkedForUpdate = false;
 
 		if(m_frustumType == FrustumType::kPerspective)
 		{
-			m_perspective.m_edgesW[0] = m_trf.getOrigin();
-			m_perspective.m_edgesW[1] = m_trf.transform(m_perspective.m_edgesL[0]);
-			m_perspective.m_edgesW[2] = m_trf.transform(m_perspective.m_edgesL[1]);
-			m_perspective.m_edgesW[3] = m_trf.transform(m_perspective.m_edgesL[2]);
-			m_perspective.m_edgesW[4] = m_trf.transform(m_perspective.m_edgesL[3]);
+			m_perspective.m_edgesW[0] = worldTransform.getOrigin();
+			m_perspective.m_edgesW[1] = worldTransform.transform(m_perspective.m_edgesL[0]);
+			m_perspective.m_edgesW[2] = worldTransform.transform(m_perspective.m_edgesL[1]);
+			m_perspective.m_edgesW[3] = worldTransform.transform(m_perspective.m_edgesL[2]);
+			m_perspective.m_edgesW[4] = worldTransform.transform(m_perspective.m_edgesL[3]);
 
 			m_perspective.m_hull = ConvexHullShape(&m_perspective.m_edgesW[0], m_perspective.m_edgesW.getSize());
 		}
 		else
 		{
-			m_ortho.m_obbW = m_ortho.m_obbL.getTransformed(m_trf);
+			m_ortho.m_obbW = m_ortho.m_obbL.getTransformed(worldTransform);
 		}
 
 		for(FrustumPlaneType planeId : EnumIterable<FrustumPlaneType>())
 		{
-			m_viewPlanesW[planeId] = m_viewPlanesL[planeId].getTransformed(m_trf);
+			m_viewPlanesW[planeId] = m_viewPlanesL[planeId].getTransformed(worldTransform);
 		}
 	}
 
 	return updated;
 }
 
-void FrustumComponent::fillCoverageBufferCallback(void* userData, F32* depthValues, U32 width, U32 height)
+void Frustum::setCoverageBuffer(F32* depths, U32 width, U32 height)
 {
-	ANKI_ASSERT(userData && depthValues && width > 0 && height > 0);
-	FrustumComponent& self = *static_cast<FrustumComponent*>(userData);
-
-	self.m_coverageBuff.m_depthMap.destroy(self.m_node->getMemoryPool());
-	self.m_coverageBuff.m_depthMap.create(self.m_node->getMemoryPool(), width * height);
-	memcpy(&self.m_coverageBuff.m_depthMap[0], depthValues, self.m_coverageBuff.m_depthMap.getSizeInBytes());
-
-	self.m_coverageBuff.m_depthMapWidth = width;
-	self.m_coverageBuff.m_depthMapHeight = height;
-}
-
-void FrustumComponent::setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag bits)
-{
-	m_flags = FrustumComponentVisibilityTestFlag::kNone;
-	m_flags |= bits;
-
-#if ANKI_ENABLE_ASSERTIONS
-	if(!!(m_flags & FrustumComponentVisibilityTestFlag::kRenderComponents)
-	   || !!(m_flags & FrustumComponentVisibilityTestFlag::kShadowCasterRenderComponents))
+	const U32 elemCount = width * height;
+	if(m_depthMap.getSize() != elemCount) [[unlikely]]
 	{
-		if((m_flags & FrustumComponentVisibilityTestFlag::kRenderComponents)
-		   == (m_flags & FrustumComponentVisibilityTestFlag::kShadowCasterRenderComponents))
-		{
-			ANKI_ASSERT(0 && "Cannot have them both");
-		}
+		m_depthMap.resize(*m_pool, elemCount);
 	}
 
-	// TODO
-#endif
+	if(depths && elemCount > 0) [[likely]]
+	{
+		memcpy(m_depthMap.getBegin(), depths, elemCount * sizeof(F32));
+	}
 }
 
 } // end namespace anki

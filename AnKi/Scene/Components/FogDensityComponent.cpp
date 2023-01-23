@@ -7,6 +7,4 @@
 
 namespace anki {
 
-ANKI_SCENE_COMPONENT_STATICS(FogDensityComponent, 100.0f)
-
 } // end namespace anki

@@ -10,8 +10,6 @@
 
 namespace anki {
 
-ANKI_SCENE_COMPONENT_STATICS(PlayerControllerComponent, 10.0f)
-
 PlayerControllerComponent::PlayerControllerComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
 {

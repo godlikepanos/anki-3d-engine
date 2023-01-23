@@ -13,8 +13,6 @@
 
 namespace anki {
 
-ANKI_SCENE_COMPONENT_STATICS(ModelComponent, 40.0f)
-
 ModelComponent::ModelComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
 	, m_node(node)

@@ -36,7 +36,7 @@ class PhysicsWorld;
 #define ANKI_SCENE_ASSERT(expression) \
 	ANKI_LIKELY(std::invoke([&]() -> Bool { \
 		const Bool ok = (expression); \
-		if(ANKI_UNLIKELY(!ok)) \
+		if(!ok) [[unlikely]] \
 		{ \
 			ANKI_SCENE_LOGE("Expression failed: " #expression); \
 		} \

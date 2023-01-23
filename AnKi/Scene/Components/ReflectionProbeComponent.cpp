@@ -11,8 +11,6 @@
 
 namespace anki {
 
-ANKI_SCENE_COMPONENT_STATICS(ReflectionProbeComponent, 100.0f)
-
 ReflectionProbeComponent::ReflectionProbeComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
 	, m_node(node)

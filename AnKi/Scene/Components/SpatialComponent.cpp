@@ -9,8 +9,6 @@
 
 namespace anki {
 
-ANKI_SCENE_COMPONENT_STATICS(SpatialComponent, 50.0f)
-
 SpatialComponent::SpatialComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
 	, m_node(node)

@@ -10,8 +10,6 @@
 
 namespace anki {
 
-ANKI_SCENE_COMPONENT_STATICS(JointComponent, 20.0f)
-
 class JointComponent::JointNode : public IntrusiveListEnabled<JointNode>
 {
 public:
