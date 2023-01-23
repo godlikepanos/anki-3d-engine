@@ -232,7 +232,10 @@ if(NOT MSVC)
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINKER_FLAGS}")
 else()
 	#ProcessorCount(PC)
-	add_compile_options(/MP)
+	add_compile_options(
+		/MP
+		/EHsc # Disable exceptions
+		/GR-) # Disable RTTI
 
 	if(${CMAKE_BUILD_TYPE} STREQUAL "Release" OR ${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
 		#add_definitions(/Ox)
@@ -240,7 +243,8 @@ else()
 
 	add_definitions(
 		-D_CRT_SECURE_NO_WARNINGS=1 # Disable some string function warnings
-		-D_ITERATOR_DEBUG_LEVEL=0)
+		-D_ITERATOR_DEBUG_LEVEL=0
+		-D_HAS_EXCEPTIONS=0)
 
 	# Full paths in compiler diagnostics else you can't click on visual studio have it open the file+line
 	add_compile_options(/FC)
