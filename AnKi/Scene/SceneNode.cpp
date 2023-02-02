@@ -110,7 +110,7 @@ void SceneNode::newComponentInternal(SceneComponent* newc)
 	});
 }
 
-Bool SceneNode::updateTransform(StackMemoryPool& framePool)
+Bool SceneNode::updateTransform()
 {
 	const Bool needsUpdate = m_localTransformDirty;
 	m_localTransformDirty = false;

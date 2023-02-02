@@ -382,7 +382,7 @@ public:
 		return m_transformUpdatedThisFrame;
 	}
 
-	ANKI_INTERNAL Bool updateTransform(StackMemoryPool& framePool);
+	ANKI_INTERNAL Bool updateTransform();
 
 	/// Create and append a component to the components container. The SceneNode has the ownership.
 	template<typename TComponent>

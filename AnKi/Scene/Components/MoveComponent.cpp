@@ -10,7 +10,7 @@ namespace anki {
 
 Error MoveComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	updated = info.m_node->updateTransform(*info.m_framePool);
+	updated = info.m_node->updateTransform();
 	return Error::kNone;
 }
 
