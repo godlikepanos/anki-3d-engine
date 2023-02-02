@@ -62,7 +62,7 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 
 LuaUserDataTypeInfo luaUserDataTypeInfoWeakArraySceneNodePtr = {
-	7110278196161092882, "WeakArraySceneNodePtr", LuaUserData::computeSizeForGarbageCollected<WeakArraySceneNodePtr>(),
+	8988847561917421475, "WeakArraySceneNodePtr", LuaUserData::computeSizeForGarbageCollected<WeakArraySceneNodePtr>(),
 	nullptr, nullptr};
 
 template<>
@@ -78,7 +78,7 @@ static inline int pwrapWeakArraySceneNodePtrgetSize(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -120,7 +120,7 @@ static inline int pwrapWeakArraySceneNodePtrgetAt(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -135,7 +135,7 @@ static inline int pwrapWeakArraySceneNodePtrgetAt(lua_State* l)
 
 	// Pop arguments
 	U32 arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
+	if(LuaBinder::checkNumber(l, 2, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -144,7 +144,7 @@ static inline int pwrapWeakArraySceneNodePtrgetAt(lua_State* l)
 	SceneNode* ret = (*self)[arg0];
 
 	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
+	if(ret == nullptr) [[unlikely]]
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
@@ -182,7 +182,7 @@ static inline void wrapWeakArraySceneNodePtr(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoWeakArrayBodyComponentPtr = {
-	118929358173584287, "WeakArrayBodyComponentPtr",
+	5209394581921762338, "WeakArrayBodyComponentPtr",
 	LuaUserData::computeSizeForGarbageCollected<WeakArrayBodyComponentPtr>(), nullptr, nullptr};
 
 template<>
@@ -198,7 +198,7 @@ static inline int pwrapWeakArrayBodyComponentPtrgetSize(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -240,7 +240,7 @@ static inline int pwrapWeakArrayBodyComponentPtrgetAt(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -255,7 +255,7 @@ static inline int pwrapWeakArrayBodyComponentPtrgetAt(lua_State* l)
 
 	// Pop arguments
 	U32 arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
+	if(LuaBinder::checkNumber(l, 2, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -264,7 +264,7 @@ static inline int pwrapWeakArrayBodyComponentPtrgetAt(lua_State* l)
 	BodyComponent* ret = (*self)[arg0];
 
 	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
+	if(ret == nullptr) [[unlikely]]
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
@@ -301,7 +301,7 @@ static inline void wrapWeakArrayBodyComponentPtr(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoLightComponent = {-3021807084594420768, "LightComponent",
+LuaUserDataTypeInfo luaUserDataTypeInfoLightComponent = {5670978318611005682, "LightComponent",
 														 LuaUserData::computeSizeForGarbageCollected<LightComponent>(),
 														 nullptr, nullptr};
 
@@ -318,7 +318,7 @@ static inline int pwrapLightComponentsetDiffuseColor(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -333,7 +333,7 @@ static inline int pwrapLightComponentsetDiffuseColor(lua_State* l)
 
 	// Pop arguments
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
-	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec4, ud)))
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec4, ud)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -367,7 +367,7 @@ static inline int pwrapLightComponentgetDiffuseColor(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -413,7 +413,7 @@ static inline int pwrapLightComponentsetRadius(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -428,7 +428,7 @@ static inline int pwrapLightComponentsetRadius(lua_State* l)
 
 	// Pop arguments
 	F32 arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
+	if(LuaBinder::checkNumber(l, 2, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -459,7 +459,7 @@ static inline int pwrapLightComponentgetRadius(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -501,7 +501,7 @@ static inline int pwrapLightComponentsetDistance(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -516,7 +516,7 @@ static inline int pwrapLightComponentsetDistance(lua_State* l)
 
 	// Pop arguments
 	F32 arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
+	if(LuaBinder::checkNumber(l, 2, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -547,7 +547,7 @@ static inline int pwrapLightComponentgetDistance(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -589,7 +589,7 @@ static inline int pwrapLightComponentsetInnerAngle(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -604,7 +604,7 @@ static inline int pwrapLightComponentsetInnerAngle(lua_State* l)
 
 	// Pop arguments
 	F32 arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
+	if(LuaBinder::checkNumber(l, 2, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -635,7 +635,7 @@ static inline int pwrapLightComponentgetInnerAngle(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -677,7 +677,7 @@ static inline int pwrapLightComponentsetOuterAngle(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -692,7 +692,7 @@ static inline int pwrapLightComponentsetOuterAngle(lua_State* l)
 
 	// Pop arguments
 	F32 arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
+	if(LuaBinder::checkNumber(l, 2, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -723,7 +723,7 @@ static inline int pwrapLightComponentgetOuterAngle(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -765,7 +765,7 @@ static inline int pwrapLightComponentsetShadowEnabled(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -780,7 +780,7 @@ static inline int pwrapLightComponentsetShadowEnabled(lua_State* l)
 
 	// Pop arguments
 	Bool arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
+	if(LuaBinder::checkNumber(l, 2, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -811,7 +811,7 @@ static inline int pwrapLightComponentgetShadowEnabled(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -865,7 +865,7 @@ static inline void wrapLightComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoDecalComponent = {-130913183004368362, "DecalComponent",
+LuaUserDataTypeInfo luaUserDataTypeInfoDecalComponent = {-4915794881101818883, "DecalComponent",
 														 LuaUserData::computeSizeForGarbageCollected<DecalComponent>(),
 														 nullptr, nullptr};
 
@@ -882,7 +882,7 @@ static inline int pwrapDecalComponentloadDiffuseImageResource(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 3)))
+	if(LuaBinder::checkArgsCount(l, 3)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -897,13 +897,13 @@ static inline int pwrapDecalComponentloadDiffuseImageResource(lua_State* l)
 
 	// Pop arguments
 	const char* arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
+	if(LuaBinder::checkString(l, 2, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
 
 	F32 arg1;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 3, arg1)))
+	if(LuaBinder::checkNumber(l, 3, arg1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -934,7 +934,7 @@ static inline int pwrapDecalComponentloadRoughnessMetalnessImageResource(lua_Sta
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 3)))
+	if(LuaBinder::checkArgsCount(l, 3)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -949,13 +949,13 @@ static inline int pwrapDecalComponentloadRoughnessMetalnessImageResource(lua_Sta
 
 	// Pop arguments
 	const char* arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
+	if(LuaBinder::checkString(l, 2, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
 
 	F32 arg1;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 3, arg1)))
+	if(LuaBinder::checkNumber(l, 3, arg1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -986,7 +986,7 @@ static inline int pwrapDecalComponentsetBoxVolumeSize(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -1001,7 +1001,7 @@ static inline int pwrapDecalComponentsetBoxVolumeSize(lua_State* l)
 
 	// Pop arguments
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec3;
-	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec3, ud)))
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec3, ud)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -1040,7 +1040,7 @@ static inline void wrapDecalComponent(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoLensFlareComponent = {
-	-8152894503350255257, "LensFlareComponent", LuaUserData::computeSizeForGarbageCollected<LensFlareComponent>(),
+	-4069330488930513131, "LensFlareComponent", LuaUserData::computeSizeForGarbageCollected<LensFlareComponent>(),
 	nullptr, nullptr};
 
 template<>
@@ -1056,7 +1056,7 @@ static inline int pwrapLensFlareComponentloadImageResource(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -1071,7 +1071,7 @@ static inline int pwrapLensFlareComponentloadImageResource(lua_State* l)
 
 	// Pop arguments
 	const char* arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
+	if(LuaBinder::checkString(l, 2, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -1102,7 +1102,7 @@ static inline int pwrapLensFlareComponentsetFirstFlareSize(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -1117,7 +1117,7 @@ static inline int pwrapLensFlareComponentsetFirstFlareSize(lua_State* l)
 
 	// Pop arguments
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec2;
-	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec2, ud)))
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec2, ud)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -1151,7 +1151,7 @@ static inline int pwrapLensFlareComponentsetColorMultiplier(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -1166,7 +1166,7 @@ static inline int pwrapLensFlareComponentsetColorMultiplier(lua_State* l)
 
 	// Pop arguments
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
-	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec4, ud)))
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec4, ud)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -1203,7 +1203,7 @@ static inline void wrapLensFlareComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoBodyComponent = {-1251082752265953360, "BodyComponent",
+LuaUserDataTypeInfo luaUserDataTypeInfoBodyComponent = {1298545909797032317, "BodyComponent",
 														LuaUserData::computeSizeForGarbageCollected<BodyComponent>(),
 														nullptr, nullptr};
 
@@ -1220,7 +1220,7 @@ static inline int pwrapBodyComponentloadMeshResource(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -1235,7 +1235,7 @@ static inline int pwrapBodyComponentloadMeshResource(lua_State* l)
 
 	// Pop arguments
 	const char* arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
+	if(LuaBinder::checkString(l, 2, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -1266,7 +1266,7 @@ static inline int pwrapBodyComponentteleportTo(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -1281,7 +1281,7 @@ static inline int pwrapBodyComponentteleportTo(lua_State* l)
 
 	// Pop arguments
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoTransform;
-	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoTransform, ud)))
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoTransform, ud)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -1318,7 +1318,7 @@ static inline void wrapBodyComponent(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoTriggerComponent = {
-	-4739357357431049439, "TriggerComponent", LuaUserData::computeSizeForGarbageCollected<TriggerComponent>(), nullptr,
+	6686607448428640558, "TriggerComponent", LuaUserData::computeSizeForGarbageCollected<TriggerComponent>(), nullptr,
 	nullptr};
 
 template<>
@@ -1334,7 +1334,7 @@ static inline int pwrapTriggerComponentgetBodyComponentsEnter(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -1382,7 +1382,7 @@ static inline int pwrapTriggerComponentgetBodyComponentsInside(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -1430,7 +1430,7 @@ static inline int pwrapTriggerComponentgetBodyComponentsExit(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -1482,7 +1482,7 @@ static inline void wrapTriggerComponent(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoFogDensityComponent = {
-	-3730305996270873174, "FogDensityComponent", LuaUserData::computeSizeForGarbageCollected<FogDensityComponent>(),
+	8003141963331043348, "FogDensityComponent", LuaUserData::computeSizeForGarbageCollected<FogDensityComponent>(),
 	nullptr, nullptr};
 
 template<>
@@ -1498,7 +1498,7 @@ static inline int pwrapFogDensityComponentsetBoxVolumeSize(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -1513,7 +1513,7 @@ static inline int pwrapFogDensityComponentsetBoxVolumeSize(lua_State* l)
 
 	// Pop arguments
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec3;
-	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec3, ud)))
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec3, ud)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -1547,7 +1547,7 @@ static inline int pwrapFogDensityComponentsetSphereVolumeRadius(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -1562,7 +1562,7 @@ static inline int pwrapFogDensityComponentsetSphereVolumeRadius(lua_State* l)
 
 	// Pop arguments
 	F32 arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
+	if(LuaBinder::checkNumber(l, 2, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -1593,7 +1593,7 @@ static inline int pwrapFogDensityComponentsetDensity(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -1608,7 +1608,7 @@ static inline int pwrapFogDensityComponentsetDensity(lua_State* l)
 
 	// Pop arguments
 	F32 arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
+	if(LuaBinder::checkNumber(l, 2, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -1639,7 +1639,7 @@ static inline int pwrapFogDensityComponentgetDensity(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -1686,7 +1686,7 @@ static inline void wrapFogDensityComponent(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoCameraComponent = {
-	4619118000795542359, "CameraComponent", LuaUserData::computeSizeForGarbageCollected<CameraComponent>(), nullptr,
+	3087376900579495893, "CameraComponent", LuaUserData::computeSizeForGarbageCollected<CameraComponent>(), nullptr,
 	nullptr};
 
 template<>
@@ -1702,7 +1702,7 @@ static inline int pwrapCameraComponentsetPerspective(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 5)))
+	if(LuaBinder::checkArgsCount(l, 5)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -1717,25 +1717,25 @@ static inline int pwrapCameraComponentsetPerspective(lua_State* l)
 
 	// Pop arguments
 	F32 arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
+	if(LuaBinder::checkNumber(l, 2, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
 
 	F32 arg1;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 3, arg1)))
+	if(LuaBinder::checkNumber(l, 3, arg1)) [[unlikely]]
 	{
 		return -1;
 	}
 
 	F32 arg2;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 4, arg2)))
+	if(LuaBinder::checkNumber(l, 4, arg2)) [[unlikely]]
 	{
 		return -1;
 	}
 
 	F32 arg3;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 5, arg3)))
+	if(LuaBinder::checkNumber(l, 5, arg3)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -1766,7 +1766,7 @@ static inline int pwrapCameraComponentsetShadowCascadeDistance(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 3)))
+	if(LuaBinder::checkArgsCount(l, 3)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -1781,13 +1781,13 @@ static inline int pwrapCameraComponentsetShadowCascadeDistance(lua_State* l)
 
 	// Pop arguments
 	U32 arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
+	if(LuaBinder::checkNumber(l, 2, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
 
 	F32 arg1;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 3, arg1)))
+	if(LuaBinder::checkNumber(l, 3, arg1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -1818,7 +1818,7 @@ static inline int pwrapCameraComponentgetShadowCascadeDistance(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -1833,7 +1833,7 @@ static inline int pwrapCameraComponentgetShadowCascadeDistance(lua_State* l)
 
 	// Pop arguments
 	U32 arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
+	if(LuaBinder::checkNumber(l, 2, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -1871,7 +1871,7 @@ static inline void wrapCameraComponent(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoGlobalIlluminationProbeComponent = {
-	9017352854304236008, "GlobalIlluminationProbeComponent",
+	-7863050135302457088, "GlobalIlluminationProbeComponent",
 	LuaUserData::computeSizeForGarbageCollected<GlobalIlluminationProbeComponent>(), nullptr, nullptr};
 
 template<>
@@ -1887,7 +1887,7 @@ static inline int pwrapGlobalIlluminationProbeComponentsetBoxVolumeSize(lua_Stat
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -1902,7 +1902,7 @@ static inline int pwrapGlobalIlluminationProbeComponentsetBoxVolumeSize(lua_Stat
 
 	// Pop arguments
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec3;
-	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec3, ud)))
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec3, ud)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -1936,7 +1936,7 @@ static inline int pwrapGlobalIlluminationProbeComponentsetCellSize(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -1951,7 +1951,7 @@ static inline int pwrapGlobalIlluminationProbeComponentsetCellSize(lua_State* l)
 
 	// Pop arguments
 	F32 arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
+	if(LuaBinder::checkNumber(l, 2, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -1982,7 +1982,7 @@ static inline int pwrapGlobalIlluminationProbeComponentgetCellSize(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -2024,7 +2024,7 @@ static inline int pwrapGlobalIlluminationProbeComponentsetFadeDistance(lua_State
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -2039,7 +2039,7 @@ static inline int pwrapGlobalIlluminationProbeComponentsetFadeDistance(lua_State
 
 	// Pop arguments
 	F32 arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
+	if(LuaBinder::checkNumber(l, 2, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -2070,7 +2070,7 @@ static inline int pwrapGlobalIlluminationProbeComponentgetFadeDistance(lua_State
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -2118,7 +2118,7 @@ static inline void wrapGlobalIlluminationProbeComponent(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoReflectionProbeComponent = {
-	3077051473667221328, "ReflectionProbeComponent",
+	582898353018309459, "ReflectionProbeComponent",
 	LuaUserData::computeSizeForGarbageCollected<ReflectionProbeComponent>(), nullptr, nullptr};
 
 template<>
@@ -2134,7 +2134,7 @@ static inline int pwrapReflectionProbeComponentsetBoxVolumeSize(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -2149,7 +2149,7 @@ static inline int pwrapReflectionProbeComponentsetBoxVolumeSize(lua_State* l)
 
 	// Pop arguments
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec3;
-	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec3, ud)))
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec3, ud)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -2183,7 +2183,7 @@ static inline int pwrapReflectionProbeComponentgetBoxVolumeSize(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -2234,7 +2234,7 @@ static inline void wrapReflectionProbeComponent(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoParticleEmitterComponent = {
-	-1830161350295998241, "ParticleEmitterComponent",
+	-4412464247555148996, "ParticleEmitterComponent",
 	LuaUserData::computeSizeForGarbageCollected<ParticleEmitterComponent>(), nullptr, nullptr};
 
 template<>
@@ -2250,7 +2250,7 @@ static inline int pwrapParticleEmitterComponentloadParticleEmitterResource(lua_S
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -2265,7 +2265,7 @@ static inline int pwrapParticleEmitterComponentloadParticleEmitterResource(lua_S
 
 	// Pop arguments
 	const char* arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
+	if(LuaBinder::checkString(l, 2, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -2298,7 +2298,7 @@ static inline void wrapParticleEmitterComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoModelComponent = {9721030252478263, "ModelComponent",
+LuaUserDataTypeInfo luaUserDataTypeInfoModelComponent = {7768065277385870937, "ModelComponent",
 														 LuaUserData::computeSizeForGarbageCollected<ModelComponent>(),
 														 nullptr, nullptr};
 
@@ -2315,7 +2315,7 @@ static inline int pwrapModelComponentloadModelResource(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -2330,7 +2330,7 @@ static inline int pwrapModelComponentloadModelResource(lua_State* l)
 
 	// Pop arguments
 	const char* arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
+	if(LuaBinder::checkString(l, 2, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -2362,7 +2362,7 @@ static inline void wrapModelComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoSkinComponent = {7088584368847256773, "SkinComponent",
+LuaUserDataTypeInfo luaUserDataTypeInfoSkinComponent = {-4747244509403670288, "SkinComponent",
 														LuaUserData::computeSizeForGarbageCollected<SkinComponent>(),
 														nullptr, nullptr};
 
@@ -2379,7 +2379,7 @@ static inline int pwrapSkinComponentloadSkeletonResource(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -2394,7 +2394,7 @@ static inline int pwrapSkinComponentloadSkeletonResource(lua_State* l)
 
 	// Pop arguments
 	const char* arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
+	if(LuaBinder::checkString(l, 2, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -2427,7 +2427,7 @@ static inline void wrapSkinComponent(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoSkyboxComponent = {
-	-8224921000767654655, "SkyboxComponent", LuaUserData::computeSizeForGarbageCollected<SkyboxComponent>(), nullptr,
+	6821227574667958939, "SkyboxComponent", LuaUserData::computeSizeForGarbageCollected<SkyboxComponent>(), nullptr,
 	nullptr};
 
 template<>
@@ -2443,7 +2443,7 @@ static inline int pwrapSkyboxComponentsetSolidColor(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -2458,7 +2458,7 @@ static inline int pwrapSkyboxComponentsetSolidColor(lua_State* l)
 
 	// Pop arguments
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec3;
-	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec3, ud)))
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec3, ud)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -2492,7 +2492,7 @@ static inline int pwrapSkyboxComponentloadImageResource(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -2507,7 +2507,7 @@ static inline int pwrapSkyboxComponentloadImageResource(lua_State* l)
 
 	// Pop arguments
 	const char* arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
+	if(LuaBinder::checkString(l, 2, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -2538,7 +2538,7 @@ static inline int pwrapSkyboxComponentsetMinFogDensity(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -2553,7 +2553,7 @@ static inline int pwrapSkyboxComponentsetMinFogDensity(lua_State* l)
 
 	// Pop arguments
 	F32 arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
+	if(LuaBinder::checkNumber(l, 2, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -2584,7 +2584,7 @@ static inline int pwrapSkyboxComponentsetMaxFogDensity(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -2599,7 +2599,7 @@ static inline int pwrapSkyboxComponentsetMaxFogDensity(lua_State* l)
 
 	// Pop arguments
 	F32 arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
+	if(LuaBinder::checkNumber(l, 2, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -2630,7 +2630,7 @@ static inline int pwrapSkyboxComponentsetHeightOfMinFogDensity(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -2645,7 +2645,7 @@ static inline int pwrapSkyboxComponentsetHeightOfMinFogDensity(lua_State* l)
 
 	// Pop arguments
 	F32 arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
+	if(LuaBinder::checkNumber(l, 2, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -2676,7 +2676,7 @@ static inline int pwrapSkyboxComponentsetHeightOfMaxFogDensity(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -2691,7 +2691,7 @@ static inline int pwrapSkyboxComponentsetHeightOfMaxFogDensity(lua_State* l)
 
 	// Pop arguments
 	F32 arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
+	if(LuaBinder::checkNumber(l, 2, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -2729,7 +2729,7 @@ static inline void wrapSkyboxComponent(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode = {
-	5955067152810202589, "SceneNode", LuaUserData::computeSizeForGarbageCollected<SceneNode>(), nullptr, nullptr};
+	9124540061713759619, "SceneNode", LuaUserData::computeSizeForGarbageCollected<SceneNode>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<SceneNode>()
@@ -2744,7 +2744,7 @@ static inline int pwrapSceneNodegetName(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -2786,7 +2786,7 @@ static inline int pwrapSceneNodeaddChild(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -2801,7 +2801,7 @@ static inline int pwrapSceneNodeaddChild(lua_State* l)
 
 	// Pop arguments
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoSceneNode, ud)))
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoSceneNode, ud)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -2835,7 +2835,7 @@ static inline int pwrapSceneNodesetMarkedForDeletion(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -2874,7 +2874,7 @@ static inline int pwrapSceneNodenewLightComponent(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -2891,7 +2891,7 @@ static inline int pwrapSceneNodenewLightComponent(lua_State* l)
 	LightComponent* ret = self->newComponent<LightComponent>();
 
 	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
+	if(ret == nullptr) [[unlikely]]
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
@@ -2926,7 +2926,7 @@ static inline int pwrapSceneNodenewLensFlareComponent(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -2943,7 +2943,7 @@ static inline int pwrapSceneNodenewLensFlareComponent(lua_State* l)
 	LensFlareComponent* ret = self->newComponent<LensFlareComponent>();
 
 	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
+	if(ret == nullptr) [[unlikely]]
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
@@ -2978,7 +2978,7 @@ static inline int pwrapSceneNodenewDecalComponent(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -2995,7 +2995,7 @@ static inline int pwrapSceneNodenewDecalComponent(lua_State* l)
 	DecalComponent* ret = self->newComponent<DecalComponent>();
 
 	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
+	if(ret == nullptr) [[unlikely]]
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
@@ -3030,7 +3030,7 @@ static inline int pwrapSceneNodenewTriggerComponent(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -3047,7 +3047,7 @@ static inline int pwrapSceneNodenewTriggerComponent(lua_State* l)
 	TriggerComponent* ret = self->newComponent<TriggerComponent>();
 
 	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
+	if(ret == nullptr) [[unlikely]]
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
@@ -3082,7 +3082,7 @@ static inline int pwrapSceneNodenewFogDensityComponent(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -3099,7 +3099,7 @@ static inline int pwrapSceneNodenewFogDensityComponent(lua_State* l)
 	FogDensityComponent* ret = self->newComponent<FogDensityComponent>();
 
 	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
+	if(ret == nullptr) [[unlikely]]
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
@@ -3134,7 +3134,7 @@ static inline int pwrapSceneNodenewCameraComponent(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -3151,7 +3151,7 @@ static inline int pwrapSceneNodenewCameraComponent(lua_State* l)
 	CameraComponent* ret = self->newComponent<CameraComponent>();
 
 	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
+	if(ret == nullptr) [[unlikely]]
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
@@ -3186,7 +3186,7 @@ static inline int pwrapSceneNodenewGlobalIlluminationProbeComponent(lua_State* l
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -3203,7 +3203,7 @@ static inline int pwrapSceneNodenewGlobalIlluminationProbeComponent(lua_State* l
 	GlobalIlluminationProbeComponent* ret = self->newComponent<GlobalIlluminationProbeComponent>();
 
 	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
+	if(ret == nullptr) [[unlikely]]
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
@@ -3238,7 +3238,7 @@ static inline int pwrapSceneNodenewReflectionProbeComponent(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -3255,7 +3255,7 @@ static inline int pwrapSceneNodenewReflectionProbeComponent(lua_State* l)
 	ReflectionProbeComponent* ret = self->newComponent<ReflectionProbeComponent>();
 
 	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
+	if(ret == nullptr) [[unlikely]]
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
@@ -3290,7 +3290,7 @@ static inline int pwrapSceneNodenewBodyComponent(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -3307,7 +3307,7 @@ static inline int pwrapSceneNodenewBodyComponent(lua_State* l)
 	BodyComponent* ret = self->newComponent<BodyComponent>();
 
 	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
+	if(ret == nullptr) [[unlikely]]
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
@@ -3342,7 +3342,7 @@ static inline int pwrapSceneNodenewParticleEmitterComponent(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -3359,7 +3359,7 @@ static inline int pwrapSceneNodenewParticleEmitterComponent(lua_State* l)
 	ParticleEmitterComponent* ret = self->newComponent<ParticleEmitterComponent>();
 
 	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
+	if(ret == nullptr) [[unlikely]]
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
@@ -3394,7 +3394,7 @@ static inline int pwrapSceneNodenewModelComponent(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -3411,7 +3411,7 @@ static inline int pwrapSceneNodenewModelComponent(lua_State* l)
 	ModelComponent* ret = self->newComponent<ModelComponent>();
 
 	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
+	if(ret == nullptr) [[unlikely]]
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
@@ -3446,7 +3446,7 @@ static inline int pwrapSceneNodenewSkinComponent(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -3463,7 +3463,7 @@ static inline int pwrapSceneNodenewSkinComponent(lua_State* l)
 	SkinComponent* ret = self->newComponent<SkinComponent>();
 
 	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
+	if(ret == nullptr) [[unlikely]]
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
@@ -3498,7 +3498,7 @@ static inline int pwrapSceneNodenewSkyboxComponent(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -3515,7 +3515,7 @@ static inline int pwrapSceneNodenewSkyboxComponent(lua_State* l)
 	SkyboxComponent* ret = self->newComponent<SkyboxComponent>();
 
 	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
+	if(ret == nullptr) [[unlikely]]
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
@@ -3568,7 +3568,7 @@ static inline void wrapSceneNode(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoSceneGraph = {
-	-8580260492604332730, "SceneGraph", LuaUserData::computeSizeForGarbageCollected<SceneGraph>(), nullptr, nullptr};
+	5999111666026890816, "SceneGraph", LuaUserData::computeSizeForGarbageCollected<SceneGraph>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<SceneGraph>()
@@ -3583,7 +3583,7 @@ static inline int pwrapSceneGraphnewSceneNode(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -3598,7 +3598,7 @@ static inline int pwrapSceneGraphnewSceneNode(lua_State* l)
 
 	// Pop arguments
 	const char* arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
+	if(LuaBinder::checkString(l, 2, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -3607,7 +3607,7 @@ static inline int pwrapSceneGraphnewSceneNode(lua_State* l)
 	SceneNode* ret = newSceneNode<SceneNode>(self, arg0);
 
 	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
+	if(ret == nullptr) [[unlikely]]
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
@@ -3642,7 +3642,7 @@ static inline int pwrapSceneGraphsetActiveCameraNode(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -3657,7 +3657,7 @@ static inline int pwrapSceneGraphsetActiveCameraNode(lua_State* l)
 
 	// Pop arguments
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoSceneNode, ud)))
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoSceneNode, ud)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -3691,7 +3691,7 @@ static inline int pwrapSceneGraphtryFindSceneNode(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -3706,7 +3706,7 @@ static inline int pwrapSceneGraphtryFindSceneNode(lua_State* l)
 
 	// Pop arguments
 	const char* arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
+	if(LuaBinder::checkString(l, 2, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -3715,7 +3715,7 @@ static inline int pwrapSceneGraphtryFindSceneNode(lua_State* l)
 	SceneNode* ret = self->tryFindSceneNode(arg0);
 
 	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
+	if(ret == nullptr) [[unlikely]]
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
@@ -3753,7 +3753,7 @@ static inline void wrapSceneGraph(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoEvent = {5877707491774978394, "Event",
+LuaUserDataTypeInfo luaUserDataTypeInfoEvent = {-2885284505354732005, "Event",
 												LuaUserData::computeSizeForGarbageCollected<Event>(), nullptr, nullptr};
 
 template<>
@@ -3769,7 +3769,7 @@ static inline int pwrapEventgetAssociatedSceneNodes(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -3819,7 +3819,7 @@ static inline void wrapEvent(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoLightEvent = {
-	221116287991623252, "LightEvent", LuaUserData::computeSizeForGarbageCollected<LightEvent>(), nullptr, nullptr};
+	-8308593196594063279, "LightEvent", LuaUserData::computeSizeForGarbageCollected<LightEvent>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<LightEvent>()
@@ -3834,7 +3834,7 @@ static inline int pwrapLightEventsetIntensityMultiplier(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -3849,7 +3849,7 @@ static inline int pwrapLightEventsetIntensityMultiplier(lua_State* l)
 
 	// Pop arguments
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
-	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec4, ud)))
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec4, ud)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -3883,7 +3883,7 @@ static inline int pwrapLightEventsetFrequency(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 3)))
+	if(LuaBinder::checkArgsCount(l, 3)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -3898,13 +3898,13 @@ static inline int pwrapLightEventsetFrequency(lua_State* l)
 
 	// Pop arguments
 	F32 arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
+	if(LuaBinder::checkNumber(l, 2, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
 
 	F32 arg1;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 3, arg1)))
+	if(LuaBinder::checkNumber(l, 3, arg1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -3938,7 +3938,7 @@ static inline void wrapLightEvent(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoScriptEvent = {
-	323925577686700128, "ScriptEvent", LuaUserData::computeSizeForGarbageCollected<ScriptEvent>(), nullptr, nullptr};
+	-54958046451346668, "ScriptEvent", LuaUserData::computeSizeForGarbageCollected<ScriptEvent>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<ScriptEvent>()
@@ -3954,7 +3954,7 @@ static inline void wrapScriptEvent(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoJitterMoveEvent = {
-	6678393020922142826, "JitterMoveEvent", LuaUserData::computeSizeForGarbageCollected<JitterMoveEvent>(), nullptr,
+	9071214740308213692, "JitterMoveEvent", LuaUserData::computeSizeForGarbageCollected<JitterMoveEvent>(), nullptr,
 	nullptr};
 
 template<>
@@ -3970,7 +3970,7 @@ static inline int pwrapJitterMoveEventsetPositionLimits(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 3)))
+	if(LuaBinder::checkArgsCount(l, 3)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -3985,7 +3985,7 @@ static inline int pwrapJitterMoveEventsetPositionLimits(lua_State* l)
 
 	// Pop arguments
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
-	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec4, ud)))
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec4, ud)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -3994,7 +3994,7 @@ static inline int pwrapJitterMoveEventsetPositionLimits(lua_State* l)
 	const Vec4& arg0(*iarg0);
 
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
-	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 3, luaUserDataTypeInfoVec4, ud)))
+	if(LuaBinder::checkUserData(l, 3, luaUserDataTypeInfoVec4, ud)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -4029,7 +4029,7 @@ static inline void wrapJitterMoveEvent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoAnimationEvent = {7511215324953354044, "AnimationEvent",
+LuaUserDataTypeInfo luaUserDataTypeInfoAnimationEvent = {5192963052567685288, "AnimationEvent",
 														 LuaUserData::computeSizeForGarbageCollected<AnimationEvent>(),
 														 nullptr, nullptr};
 
@@ -4046,9 +4046,8 @@ static inline void wrapAnimationEvent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoEventManager = {-7702163411345910132, "EventManager",
-													   LuaUserData::computeSizeForGarbageCollected<EventManager>(),
-													   nullptr, nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoEventManager = {
+	7976132695223049259, "EventManager", LuaUserData::computeSizeForGarbageCollected<EventManager>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<EventManager>()
@@ -4063,7 +4062,7 @@ static inline int pwrapEventManagernewLightEvent(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 4)))
+	if(LuaBinder::checkArgsCount(l, 4)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -4078,19 +4077,19 @@ static inline int pwrapEventManagernewLightEvent(lua_State* l)
 
 	// Pop arguments
 	F32 arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
+	if(LuaBinder::checkNumber(l, 2, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
 
 	F32 arg1;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 3, arg1)))
+	if(LuaBinder::checkNumber(l, 3, arg1)) [[unlikely]]
 	{
 		return -1;
 	}
 
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 4, luaUserDataTypeInfoSceneNode, ud)))
+	if(LuaBinder::checkUserData(l, 4, luaUserDataTypeInfoSceneNode, ud)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -4102,7 +4101,7 @@ static inline int pwrapEventManagernewLightEvent(lua_State* l)
 	LightEvent* ret = newEvent<LightEvent>(self, arg0, arg1, arg2);
 
 	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
+	if(ret == nullptr) [[unlikely]]
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
@@ -4137,7 +4136,7 @@ static inline int pwrapEventManagernewScriptEvent(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 4)))
+	if(LuaBinder::checkArgsCount(l, 4)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -4152,19 +4151,19 @@ static inline int pwrapEventManagernewScriptEvent(lua_State* l)
 
 	// Pop arguments
 	F32 arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
+	if(LuaBinder::checkNumber(l, 2, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
 
 	F32 arg1;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 3, arg1)))
+	if(LuaBinder::checkNumber(l, 3, arg1)) [[unlikely]]
 	{
 		return -1;
 	}
 
 	const char* arg2;
-	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 4, arg2)))
+	if(LuaBinder::checkString(l, 4, arg2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -4173,7 +4172,7 @@ static inline int pwrapEventManagernewScriptEvent(lua_State* l)
 	ScriptEvent* ret = newEvent<ScriptEvent>(self, arg0, arg1, arg2);
 
 	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
+	if(ret == nullptr) [[unlikely]]
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
@@ -4208,7 +4207,7 @@ static inline int pwrapEventManagernewJitterMoveEvent(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 4)))
+	if(LuaBinder::checkArgsCount(l, 4)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -4223,19 +4222,19 @@ static inline int pwrapEventManagernewJitterMoveEvent(lua_State* l)
 
 	// Pop arguments
 	F32 arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
+	if(LuaBinder::checkNumber(l, 2, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
 
 	F32 arg1;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 3, arg1)))
+	if(LuaBinder::checkNumber(l, 3, arg1)) [[unlikely]]
 	{
 		return -1;
 	}
 
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 4, luaUserDataTypeInfoSceneNode, ud)))
+	if(LuaBinder::checkUserData(l, 4, luaUserDataTypeInfoSceneNode, ud)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -4247,7 +4246,7 @@ static inline int pwrapEventManagernewJitterMoveEvent(lua_State* l)
 	JitterMoveEvent* ret = newEvent<JitterMoveEvent>(self, arg0, arg1, arg2);
 
 	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
+	if(ret == nullptr) [[unlikely]]
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
@@ -4282,7 +4281,7 @@ static inline int pwrapEventManagernewAnimationEvent(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 4)))
+	if(LuaBinder::checkArgsCount(l, 4)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -4297,19 +4296,19 @@ static inline int pwrapEventManagernewAnimationEvent(lua_State* l)
 
 	// Pop arguments
 	const char* arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
+	if(LuaBinder::checkString(l, 2, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
 
 	const char* arg1;
-	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 3, arg1)))
+	if(LuaBinder::checkString(l, 3, arg1)) [[unlikely]]
 	{
 		return -1;
 	}
 
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 4, luaUserDataTypeInfoSceneNode, ud)))
+	if(LuaBinder::checkUserData(l, 4, luaUserDataTypeInfoSceneNode, ud)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -4321,7 +4320,7 @@ static inline int pwrapEventManagernewAnimationEvent(lua_State* l)
 	AnimationEvent* ret = newEvent<AnimationEvent>(self, arg0, arg1, arg2);
 
 	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
+	if(ret == nullptr) [[unlikely]]
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
@@ -4367,7 +4366,7 @@ static inline int pwrapgetSceneGraph(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 0)))
+	if(LuaBinder::checkArgsCount(l, 0)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -4376,7 +4375,7 @@ static inline int pwrapgetSceneGraph(lua_State* l)
 	SceneGraph* ret = getSceneGraph(l);
 
 	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
+	if(ret == nullptr) [[unlikely]]
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
@@ -4411,7 +4410,7 @@ static inline int pwrapgetEventManager(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 0)))
+	if(LuaBinder::checkArgsCount(l, 0)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -4420,7 +4419,7 @@ static inline int pwrapgetEventManager(lua_State* l)
 	EventManager* ret = getEventManager(l);
 
 	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
+	if(ret == nullptr) [[unlikely]]
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
@@ -4446,6 +4445,43 @@ static int wrapgetEventManager(lua_State* l)
 
 	lua_error(l);
 	return 0;
+}
+
+LuaUserDataTypeInfo luaUserDataTypeInfoLightComponentType = {540078929639746313, "LightComponentType", 0, nullptr,
+															 nullptr};
+
+template<>
+const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<LightComponentType>()
+{
+	return luaUserDataTypeInfoLightComponentType;
+}
+
+/// Wrap enum LightComponentType.
+static inline void wrapLightComponentType(lua_State* l)
+{
+	lua_newtable(l);
+	lua_setglobal(l, luaUserDataTypeInfoLightComponentType.m_typeName);
+	lua_getglobal(l, luaUserDataTypeInfoLightComponentType.m_typeName);
+
+	lua_pushstring(l, "kPoint");
+	ANKI_ASSERT(LightComponentType(lua_Number(LightComponentType::kPoint)) == LightComponentType::kPoint
+				&& "Can't map the enumerant to a lua_Number");
+	lua_pushnumber(l, lua_Number(LightComponentType::kPoint));
+	lua_settable(l, -3);
+
+	lua_pushstring(l, "kSpot");
+	ANKI_ASSERT(LightComponentType(lua_Number(LightComponentType::kSpot)) == LightComponentType::kSpot
+				&& "Can't map the enumerant to a lua_Number");
+	lua_pushnumber(l, lua_Number(LightComponentType::kSpot));
+	lua_settable(l, -3);
+
+	lua_pushstring(l, "kDirectional");
+	ANKI_ASSERT(LightComponentType(lua_Number(LightComponentType::kDirectional)) == LightComponentType::kDirectional
+				&& "Can't map the enumerant to a lua_Number");
+	lua_pushnumber(l, lua_Number(LightComponentType::kDirectional));
+	lua_settable(l, -3);
+
+	lua_settop(l, 0);
 }
 
 /// Wrap the module.
@@ -4476,6 +4512,7 @@ void wrapModuleScene(lua_State* l)
 	wrapEventManager(l);
 	LuaBinder::pushLuaCFunc(l, "getSceneGraph", wrapgetSceneGraph);
 	LuaBinder::pushLuaCFunc(l, "getEventManager", wrapgetEventManager);
+	wrapLightComponentType(l);
 }
 
 } // end namespace anki

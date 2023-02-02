@@ -63,6 +63,14 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 ]]></head>
 
+	<enums>
+		<enum name="LightComponentType">
+			<enumerant name="kPoint"/>
+			<enumerant name="kSpot"/>
+			<enumerant name="kDirectional"/>
+		</enum>
+	</enums>
+	
 	<classes>
 		<!-- Other -->
 		<class name="WeakArraySceneNodePtr">

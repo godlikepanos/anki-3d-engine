@@ -35,6 +35,8 @@ def parse_commandline():
 
 def type_sig(value):
     """ Calculate the signature of a type """
+    if not isinstance(value, str):
+        raise Exception("Expecting string")
     return hash(value)
 
 
@@ -117,7 +119,7 @@ def ret(ret_el):
     (type, is_ref, is_ptr, is_const) = parse_type_decl(type_txt)
 
     if is_ptr:
-        wglue("if(ANKI_UNLIKELY(ret == nullptr))")
+        wglue("if(ret == nullptr) [[unlikely]]")
         wglue("{")
         ident(1)
         wglue("lua_pushstring(l, \"Glue code returned nullptr\");")
@@ -133,7 +135,7 @@ def ret(ret_el):
     elif type == "char" or type == "CString":
         wglue("lua_pushstring(l, &ret[0]);")
     elif type == "Error":
-        wglue("if(ANKI_UNLIKELY(ret))")
+        wglue("if(ret) [[unlikely]]")
         wglue("{")
         ident(1)
         wglue("lua_pushstring(l, \"Glue code returned an error\");")
@@ -175,7 +177,7 @@ def arg(arg_txt, stack_index, index):
 
     if type_is_bool(type) or type_is_number(type):
         wglue("%s arg%d;" % (type, index))
-        wglue("if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, %d, arg%d)))" % (stack_index, index))
+        wglue("if(LuaBinder::checkNumber(l, %d, arg%d)) [[unlikely]]" % (stack_index, index))
         wglue("{")
         ident(1)
         wglue("return -1;")
@@ -183,7 +185,7 @@ def arg(arg_txt, stack_index, index):
         wglue("}")
     elif type == "char" or type == "CString":
         wglue("const char* arg%d;" % index)
-        wglue("if(ANKI_UNLIKELY(LuaBinder::checkString(l, %d, arg%d)))" % (stack_index, index))
+        wglue("if(LuaBinder::checkString(l, %d, arg%d)) [[unlikely]]" % (stack_index, index))
         wglue("{")
         ident(1)
         wglue("return -1;")
@@ -191,7 +193,7 @@ def arg(arg_txt, stack_index, index):
         wglue("}")
     else:
         wglue("extern LuaUserDataTypeInfo luaUserDataTypeInfo%s;" % type)
-        wglue("if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, %d, luaUserDataTypeInfo%s, ud)))" % (stack_index, type))
+        wglue("if(LuaBinder::checkUserData(l, %d, luaUserDataTypeInfo%s, ud)) [[unlikely]]" % (stack_index, type))
         wglue("{")
         ident(1)
         wglue("return -1;")
@@ -253,7 +255,7 @@ def check_args(args_el, bias):
     else:
         count = bias
 
-    wglue("if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, %d)))" % count)
+    wglue("if(LuaBinder::checkArgsCount(l, %d)) [[unlikely]]" % count)
     wglue("{")
     ident(1)
     wglue("return -1;")
@@ -541,7 +543,7 @@ def destructor(class_name):
 
     check_args(None, 1)
 
-    wglue("if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfo%s, ud)))" % class_name)
+    wglue("if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfo%s, ud)) [[unlikely]]" % class_name)
     wglue("{")
     ident(1)
     wglue("return -1;")
@@ -747,6 +749,58 @@ def function(func_el):
     wglue("")
 
 
+def enum(enum_el):
+    enum_name = enum_el.get("name")
+
+    # Write the type info
+    wglue("LuaUserDataTypeInfo luaUserDataTypeInfo%s = {" % enum_name)
+    ident(1)
+    wglue("%d, \"%s\", 0, nullptr, nullptr" % (type_sig(enum_name), enum_name))
+    ident(-1)
+    wglue("};")
+    wglue("")
+
+    # Specialize the getDataTypeInfoFor
+    wglue("template<>")
+    wglue("const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<%s>()" % enum_name)
+    wglue("{")
+    ident(1)
+    wglue("return luaUserDataTypeInfo%s;" % enum_name)
+    ident(-1)
+    wglue("}")
+    wglue("")
+
+    # Start declaration
+    wglue("/// Wrap enum %s." % enum_name)
+    wglue("static inline void wrap%s(lua_State* l)" % enum_name)
+    wglue("{")
+    ident(1)
+
+    wglue("lua_newtable(l);")  # Push new table
+    wglue("lua_setglobal(l, luaUserDataTypeInfo%s.m_typeName);" % enum_name)  # Pop and make global
+    wglue("lua_getglobal(l, luaUserDataTypeInfo%s.m_typeName);" % enum_name)  # Push the table again
+    wglue("")
+
+    # Now the table is at the top of the stack
+
+    for enumerant_el in enum_el.iter("enumerant"):
+        enumerant_name = enumerant_el.get("name")
+
+        wglue("lua_pushstring(l, \"%s\");" % enumerant_name)  # Push key
+        wglue("ANKI_ASSERT(%s(lua_Number(%s::%s)) == %s::%s && \"Can't map the enumerant to a lua_Number\");" %
+              (enum_name, enum_name, enumerant_name, enum_name, enumerant_name))
+        wglue("lua_pushnumber(l, lua_Number(%s::%s));" % (enum_name, enumerant_name))  # Push value
+        wglue("lua_settable(l, -3);")  # Do table[key]=value and pop 2. The table is at the top of the stack
+        wglue("")
+
+    # Done
+    wglue("lua_settop(l, 0);")
+
+    ident(-1)
+    wglue("}")
+    wglue("")
+
+
 def main():
     """ Main function """
 
@@ -780,6 +834,13 @@ def main():
                 function(f)
                 func_names.append(f.get("name"))
 
+        # Enums
+        enum_names = []
+        for enums in root.iter("enums"):
+            for enum_el in enums.iter("enum"):
+                enum(enum_el)
+                enum_names.append(enum_el.get("name"))
+
         # Wrap function
         wglue("/// Wrap the module.")
         wglue("void wrapModule%s(lua_State* l)" % get_base_fname(filename))
@@ -789,6 +850,8 @@ def main():
             wglue("wrap%s(l);" % class_name)
         for func_name in func_names:
             wglue("LuaBinder::pushLuaCFunc(l, \"%s\", wrap%s);" % (func_name, func_name))
+        for enum_name in enum_names:
+            wglue("wrap%s(l);" % enum_name)
         ident(-1)
         wglue("}")
         wglue("")
