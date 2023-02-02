@@ -3,6 +3,7 @@
 *.h text eol=lf
 *.hpp text eol=lf
 *.glsl text eol=lf
+*.hlsl text eol=lf
 *.lua text eol=lf
 *.py text eol=lf
 *.cmake text eol=lf
@@ -19,4 +20,4 @@
 
 # Github stats
 ThirdParty/** linguist-vendored
-*.ankiprog linguist-language=GLSL
+*.ankiprog linguist-language=HLSL
