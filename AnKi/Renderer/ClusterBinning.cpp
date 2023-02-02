@@ -322,31 +322,15 @@ void ClusterBinning::writeClustererBuffersTask()
 	{
 		Decal* decals = static_cast<Decal*>(cs.m_decalsAddress);
 
-		TextureView* diffuseAtlas = nullptr;
-		TextureView* specularRoughnessAtlas = nullptr;
 		for(U32 i = 0; i < rqueue.m_decals.getSize(); ++i)
 		{
 			const DecalQueueElement& in = rqueue.m_decals[i];
 			Decal& out = decals[i];
 
-			if((diffuseAtlas != nullptr && diffuseAtlas != in.m_diffuseAtlas)
-			   || (specularRoughnessAtlas != nullptr && specularRoughnessAtlas != in.m_specularRoughnessAtlas))
-			{
-				ANKI_R_LOGF("All decals should have the same tex atlas");
-			}
-
-			diffuseAtlas = in.m_diffuseAtlas;
-			specularRoughnessAtlas = in.m_specularRoughnessAtlas;
-
-			// Diff
-			Vec4 uv = in.m_diffuseAtlasUv;
-			out.m_diffuseUv = Vec4(uv.x(), uv.y(), uv.z() - uv.x(), uv.w() - uv.y());
-			out.m_blendFactors[0] = in.m_diffuseAtlasBlendFactor;
-
-			// Other
-			uv = in.m_specularRoughnessAtlasUv;
-			out.m_normRoughnessUv = Vec4(uv.x(), uv.y(), uv.z() - uv.x(), uv.w() - uv.y());
-			out.m_blendFactors[1] = in.m_specularRoughnessAtlasBlendFactor;
+			out.m_diffuseTexture = in.m_diffuseBindlessTextureIndex;
+			out.m_roughnessMetalnessTexture = in.m_roughnessMetalnessBindlessTextureIndex;
+			out.m_diffuseBlendFactor = in.m_diffuseBlendFactor;
+			out.m_roughnessMetalnessFactor = in.m_roughnessMetalnessBlendFactor;
 
 			// bias * proj_l * view
 			out.m_textureMatrix = in.m_textureMatrix;
@@ -356,10 +340,6 @@ void ClusterBinning::writeClustererBuffersTask()
 			out.m_invertedTransform = trf.getInverse();
 			out.m_obbExtend = in.m_obbExtend;
 		}
-
-		ANKI_ASSERT(diffuseAtlas || specularRoughnessAtlas);
-		ctx.m_clusteredShading.m_diffuseDecalTextureView.reset(diffuseAtlas);
-		ctx.m_clusteredShading.m_specularRoughnessDecalTextureView.reset(specularRoughnessAtlas);
 	}
 
 	// Fog volumes

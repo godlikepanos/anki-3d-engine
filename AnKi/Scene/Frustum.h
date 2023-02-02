@@ -15,7 +15,7 @@ namespace anki {
 /// @addtogroup scene
 /// @{
 
-/// TODO
+/// A helper class that represents a frustum.
 class Frustum
 {
 public:
@@ -55,7 +55,7 @@ public:
 	{
 		ANKI_ASSERT(near > kEpsilonf);
 		m_common.m_near = near;
-		m_shapeMarkedForUpdate = true;
+		m_shapeDirty = true;
 	}
 
 	F32 getNear() const
@@ -67,7 +67,7 @@ public:
 	{
 		ANKI_ASSERT(far > kEpsilonf);
 		m_common.m_far = far;
-		m_shapeMarkedForUpdate = true;
+		m_shapeDirty = true;
 	}
 
 	F32 getFar() const
@@ -78,7 +78,7 @@ public:
 	void setFovX(F32 fovx)
 	{
 		ANKI_ASSERT(m_frustumType == FrustumType::kPerspective && fovx > 0.0f && fovx < kPi);
-		m_shapeMarkedForUpdate = true;
+		m_shapeDirty = true;
 		m_perspective.m_fovX = fovx;
 	}
 
@@ -91,7 +91,7 @@ public:
 	void setFovY(F32 fovy)
 	{
 		ANKI_ASSERT(m_frustumType == FrustumType::kPerspective && fovy > 0.0f && fovy < kPi);
-		m_shapeMarkedForUpdate = true;
+		m_shapeDirty = true;
 		m_perspective.m_fovY = fovy;
 	}
 
@@ -110,7 +110,7 @@ public:
 	void setLeft(F32 value)
 	{
 		ANKI_ASSERT(m_frustumType == FrustumType::kOrthographic);
-		m_shapeMarkedForUpdate = true;
+		m_shapeDirty = true;
 		m_ortho.m_left = value;
 	}
 
@@ -123,7 +123,7 @@ public:
 	void setRight(F32 value)
 	{
 		ANKI_ASSERT(m_frustumType == FrustumType::kOrthographic);
-		m_shapeMarkedForUpdate = true;
+		m_shapeDirty = true;
 		m_ortho.m_right = value;
 	}
 
@@ -136,7 +136,7 @@ public:
 	void setTop(F32 value)
 	{
 		ANKI_ASSERT(m_frustumType == FrustumType::kOrthographic);
-		m_shapeMarkedForUpdate = true;
+		m_shapeDirty = true;
 		m_ortho.m_top = value;
 	}
 
@@ -149,7 +149,7 @@ public:
 	void setBottom(F32 value)
 	{
 		ANKI_ASSERT(m_frustumType == FrustumType::kOrthographic);
-		m_shapeMarkedForUpdate = true;
+		m_shapeDirty = true;
 		m_ortho.m_bottom = value;
 	}
 
@@ -227,7 +227,7 @@ public:
 	void setShadowCascadeDistance(U32 cascade, F32 distance)
 	{
 		m_shadowCascadeDistances[cascade] = distance;
-		m_miscMarkedForUpdate = true;
+		m_miscDirty = true;
 	}
 
 	F32 getShadowCascadeDistance(U32 cascade) const
@@ -244,7 +244,7 @@ public:
 	{
 		ANKI_ASSERT(count <= kMaxShadowCascades);
 		m_shadowCascadeCount = U8(count);
-		m_miscMarkedForUpdate = true;
+		m_miscDirty = true;
 	}
 
 	const ConvexHullShape& getPerspectiveBoundingShapeWorldSpace() const
@@ -268,7 +268,7 @@ public:
 	void setLodDistance(U32 lod, F32 maxDistance)
 	{
 		m_maxLodDistances[lod] = maxDistance;
-		m_miscMarkedForUpdate = true;
+		m_miscDirty = true;
 	}
 
 	void setLodDistances(const Array<F32, kMaxLodCount>& distances)
@@ -287,7 +287,35 @@ public:
 		return m_maxLodDistances[lod];
 	}
 
-	Bool update(Bool worldTransformUpdated, const Transform& worldTransform);
+	void setWorldTransform(const Transform& worldTransform)
+	{
+		m_worldTransform = worldTransform;
+		m_worldTransformDirty = true;
+	}
+
+	const Transform& getWorldTransform() const
+	{
+		return m_worldTransform;
+	}
+
+	F32 getEarlyZDistance() const
+	{
+		return m_earlyZDistance;
+	}
+
+	void setEarlyZDistance(F32 dist)
+	{
+		ANKI_ASSERT(dist > 0.0f);
+		m_earlyZDistance = dist;
+	}
+
+	Bool update();
+
+	/// Get the precalculated rotations of each of the 6 frustums of an omnidirectional source (eg a point light).
+	static const Array<Mat3x4, 6>& getOmnidirectionalFrustumRotations()
+	{
+		return m_omnidirectionalRotations;
+	}
 
 private:
 	class Common
@@ -335,6 +363,8 @@ private:
 	Array<Plane, U32(FrustumPlaneType::kCount)> m_viewPlanesL;
 	Array<Plane, U32(FrustumPlaneType::kCount)> m_viewPlanesW;
 
+	Transform m_worldTransform = Transform::getIdentity();
+
 	Mat4 m_projMat = Mat4::getIdentity(); ///< Projection matrix
 	Mat3x4 m_viewMat = Mat3x4::getIdentity(); ///< View matrix
 	Mat4 m_viewProjMat = Mat4::getIdentity(); ///< View projection matrix
@@ -347,6 +377,8 @@ private:
 	Array<F32, kMaxShadowCascades> m_shadowCascadeDistances = {};
 	Array<F32, kMaxLodCount - 1> m_maxLodDistances = {};
 
+	F32 m_earlyZDistance = 0.0f;
+
 	// Coverage buffer stuff
 	DynamicArray<F32> m_depthMap;
 	U32 m_depthMapWidth = 0;
@@ -356,8 +388,11 @@ private:
 
 	U8 m_shadowCascadeCount = 0;
 
-	Bool m_shapeMarkedForUpdate : 1 = true;
-	Bool m_miscMarkedForUpdate : 1 = true;
+	Bool m_shapeDirty : 1 = true;
+	Bool m_miscDirty : 1 = true;
+	Bool m_worldTransformDirty : 1 = true;
+
+	static Array<Mat3x4, 6> m_omnidirectionalRotations;
 };
 /// @}
 

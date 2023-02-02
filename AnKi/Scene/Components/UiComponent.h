@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Scene/Components/SceneComponent.h>
+#include <AnKi/Scene/Spatial.h>
 #include <AnKi/Renderer/RenderQueue.h>
 
 namespace anki {
@@ -21,7 +22,10 @@ class UiComponent : public SceneComponent
 public:
 	UiComponent(SceneNode* node)
 		: SceneComponent(node, getStaticClassId())
+		, m_spatial(this)
 	{
+		m_spatial.setAlwaysVisible(true);
+		m_spatial.setUpdatesOctreeBounds(false);
 	}
 
 	void init(UiQueueElementDrawCallback callback, void* userData)
@@ -43,6 +47,9 @@ public:
 private:
 	UiQueueElementDrawCallback m_drawCallback = nullptr;
 	void* m_userData = nullptr;
+	Spatial m_spatial;
+
+	Error updateReal(SceneComponentUpdateInfo& info, Bool& updated);
 };
 /// @}
 

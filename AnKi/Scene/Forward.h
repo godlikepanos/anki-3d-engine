@@ -9,18 +9,8 @@ namespace anki {
 
 // Components
 class SceneComponent;
-class FrustumComponent;
-class InstanceComponent;
-class MoveComponent;
-class SpatialComponent;
-class DecalComponent;
-class ReflectionProxyComponent;
-class ReflectionProbeComponent;
-class FogDensityComponent;
-class SkinComponent;
-class ParticleEmitterComponent;
-class GpuParticleEmitterComponent;
-class ModelComponent;
+#define ANKI_DEFINE_SCENE_COMPONENT(name, updateOrder) class name##Component;
+#include <AnKi/Scene/Components/SceneComponentClasses.defs.h>
 
 // Nodes
 class SceneNode;

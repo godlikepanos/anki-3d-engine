@@ -13,17 +13,49 @@ namespace anki {
 LensFlareComponent::LensFlareComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
 	, m_node(node)
+	, m_spatial(this)
 {
-	ANKI_ASSERT(node);
 }
 
 LensFlareComponent::~LensFlareComponent()
 {
+	m_spatial.removeFromOctree(m_node->getSceneGraph().getOctree());
 }
 
-Error LensFlareComponent::loadImageResource(CString filename)
+void LensFlareComponent::loadImageResource(CString filename)
 {
-	return getExternalSubsystems(*m_node).m_resourceManager->loadResource(filename, m_image);
+	ImageResourcePtr image;
+	const Error err = getExternalSubsystems(*m_node).m_resourceManager->loadResource(filename, image);
+	if(err)
+	{
+		ANKI_SCENE_LOGE("Failed to load lens flare image");
+		return;
+	}
+
+	m_image = std::move(image);
+}
+
+Error LensFlareComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
+{
+	updated = m_dirty || info.m_node->movedThisFrame();
+
+	if(updated)
+	{
+		m_dirty = false;
+
+		m_worldPosition = info.m_node->getWorldTransform().getOrigin().xyz();
+
+		const Aabb aabb(m_worldPosition - (kAabbSize / 2.0f), m_worldPosition + (kAabbSize / 2.0f));
+		m_spatial.setBoundingShape(aabb);
+		m_spatial.update(info.m_node->getSceneGraph().getOctree());
+	}
+
+	return Error::kNone;
+}
+
+void LensFlareComponent::onDestroy(SceneNode& node)
+{
+	m_spatial.removeFromOctree(node.getSceneGraph().getOctree());
 }
 
 } // end namespace anki

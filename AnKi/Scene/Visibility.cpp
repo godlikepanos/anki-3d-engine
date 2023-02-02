@@ -5,7 +5,6 @@
 
 #include <AnKi/Scene/VisibilityInternal.h>
 #include <AnKi/Scene/SceneGraph.h>
-#include <AnKi/Scene/Components/FrustumComponent.h>
 #include <AnKi/Scene/Components/LensFlareComponent.h>
 #include <AnKi/Scene/Components/ModelComponent.h>
 #include <AnKi/Scene/Components/ReflectionProbeComponent.h>
@@ -13,12 +12,11 @@
 #include <AnKi/Scene/Components/MoveComponent.h>
 #include <AnKi/Scene/Components/FogDensityComponent.h>
 #include <AnKi/Scene/Components/LightComponent.h>
-#include <AnKi/Scene/Components/SpatialComponent.h>
 #include <AnKi/Scene/Components/GlobalIlluminationProbeComponent.h>
-#include <AnKi/Scene/Components/GenericGpuComputeJobComponent.h>
 #include <AnKi/Scene/Components/ParticleEmitterComponent.h>
 #include <AnKi/Scene/Components/UiComponent.h>
 #include <AnKi/Scene/Components/SkyboxComponent.h>
+#include <AnKi/Scene/Components/CameraComponent.h>
 #include <AnKi/Renderer/MainRenderer.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/ThreadHive.h>
@@ -26,7 +24,7 @@
 
 namespace anki {
 
-static U8 computeLod(const FrustumComponent& frc, F32 distanceFromTheNearPlane)
+static U8 computeLod(const Frustum& frustum, F32 distanceFromTheNearPlane)
 {
 	static_assert(kMaxLodCount == 3, "Wrong assumption");
 	U8 lod;
@@ -35,11 +33,11 @@ static U8 computeLod(const FrustumComponent& frc, F32 distanceFromTheNearPlane)
 		// In RT objects may fall behind the camera, use the max LOD on those
 		lod = 2;
 	}
-	else if(distanceFromTheNearPlane <= frc.getLodDistance(0))
+	else if(distanceFromTheNearPlane <= frustum.getLodDistance(0))
 	{
 		lod = 0;
 	}
-	else if(distanceFromTheNearPlane <= frc.getLodDistance(1))
+	else if(distanceFromTheNearPlane <= frustum.getLodDistance(1))
 	{
 		lod = 1;
 	}
@@ -51,58 +49,65 @@ static U8 computeLod(const FrustumComponent& frc, F32 distanceFromTheNearPlane)
 	return lod;
 }
 
-static Bool spatialInsideFrustum(const FrustumComponent& frc, const SpatialComponent& spc)
+static FrustumFlags getLightFrustumFlags()
 {
-	switch(spc.getCollisionShapeType())
-	{
-	case CollisionShapeType::kObb:
-		return frc.insideFrustum(spc.getCollisionShape<Obb>());
-		break;
-	case CollisionShapeType::kAabb:
-		return frc.insideFrustum(spc.getCollisionShape<Aabb>());
-		break;
-	case CollisionShapeType::kSphere:
-		return frc.insideFrustum(spc.getCollisionShape<Sphere>());
-		break;
-	case CollisionShapeType::kConvexHull:
-		return frc.insideFrustum(spc.getCollisionShape<ConvexHullShape>());
-		break;
-	default:
-		ANKI_ASSERT(0);
-		return false;
-	}
+	FrustumFlags flags;
+	flags.m_gatherShadowCasterModelComponents = true;
+	return flags;
 }
 
-/// Used to silent warnings
-template<typename TComponent>
-Bool getComponent(SceneNode& node, TComponent*& comp)
+static FrustumFlags getProbeFrustumFlags()
 {
-	comp = node.tryGetFirstComponentOfType<TComponent>();
-	return comp != nullptr;
+	FrustumFlags flags;
+	flags.m_gatherModelComponents = true;
+	flags.m_gatherLightComponents = true;
+	flags.m_gatherSkyComponents = true;
+	return flags;
 }
 
-void VisibilityContext::submitNewWork(const FrustumComponent& frc, const FrustumComponent& primaryFrustum,
+static FrustumFlags getCameraFrustumFlags()
+{
+	FrustumFlags flags;
+	flags.m_gatherModelComponents = true;
+	flags.m_gatherParticleComponents = true;
+	flags.m_gatherProbeComponents = true;
+	flags.m_gatherLightComponents = true;
+	flags.m_gatherLensFlareComponents = true;
+	flags.m_gatherDecalComponents = true;
+	flags.m_gatherFogDensityComponents = true;
+	flags.m_gatherUiComponents = true;
+	flags.m_gatherSkyComponents = true;
+	flags.m_coverageBuffer = true;
+	flags.m_earlyZ = true;
+	flags.m_nonDirectionalLightsCastShadow = true;
+	return flags;
+}
+
+static FrustumFlags getCameraExtendedFrustumFlags()
+{
+	FrustumFlags flags;
+	flags.m_gatherModelComponents = true;
+	flags.m_gatherLightComponents = true;
+	flags.m_gatherSkyComponents = true;
+	return flags;
+}
+
+void VisibilityContext::submitNewWork(const VisibilityFrustum& frustum, const VisibilityFrustum& primaryFrustum,
 									  RenderQueue& rqueue, ThreadHive& hive)
 {
 	ANKI_TRACE_SCOPED_EVENT(SCENE_VIS_SUBMIT_WORK);
 
-	// Check enabled and make sure that the results are null (this can happen on multiple on circular viewing)
-	if(ANKI_UNLIKELY(frc.getEnabledVisibilityTests() == FrustumComponentVisibilityTestFlag::kNone))
+	rqueue.m_cameraTransform = Mat3x4(frustum.m_frustum->getWorldTransform());
+	rqueue.m_viewMatrix = frustum.m_frustum->getViewMatrix();
+	rqueue.m_projectionMatrix = frustum.m_frustum->getProjectionMatrix();
+	rqueue.m_viewProjectionMatrix = frustum.m_frustum->getViewProjectionMatrix();
+	rqueue.m_previousViewProjectionMatrix = frustum.m_frustum->getPreviousViewProjectionMatrix();
+	rqueue.m_cameraNear = frustum.m_frustum->getNear();
+	rqueue.m_cameraFar = frustum.m_frustum->getFar();
+	if(frustum.m_frustum->getFrustumType() == FrustumType::kPerspective)
 	{
-		return;
-	}
-
-	rqueue.m_cameraTransform = Mat3x4(frc.getWorldTransform());
-	rqueue.m_viewMatrix = frc.getViewMatrix();
-	rqueue.m_projectionMatrix = frc.getProjectionMatrix();
-	rqueue.m_viewProjectionMatrix = frc.getViewProjectionMatrix();
-	rqueue.m_previousViewProjectionMatrix = frc.getPreviousViewProjectionMatrix();
-	rqueue.m_cameraNear = frc.getNear();
-	rqueue.m_cameraFar = frc.getFar();
-	if(frc.getFrustumType() == FrustumType::kPerspective)
-	{
-		rqueue.m_cameraFovX = frc.getFovX();
-		rqueue.m_cameraFovY = frc.getFovY();
+		rqueue.m_cameraFovX = frustum.m_frustum->getFovX();
+		rqueue.m_cameraFovY = frustum.m_frustum->getFovY();
 	}
 	else
 	{
@@ -113,26 +118,26 @@ void VisibilityContext::submitNewWork(const FrustumComponent& frc, const Frustum
 
 	// Check if this frc was tested before
 	{
-		LockGuard<Mutex> l(m_mtx);
+		LockGuard<Mutex> l(m_testedFrustumsMtx);
 
 		// Check if already in the list
-		for(const FrustumComponent* x : m_testedFrcs)
+		for(const Frustum* x : m_testedFrustums)
 		{
-			if(x == &frc)
+			if(x == frustum.m_frustum)
 			{
 				return;
 			}
 		}
 
 		// Not there, push it
-		m_testedFrcs.pushBack(pool, &frc);
+		m_testedFrustums.pushBack(pool, frustum.m_frustum);
 	}
 
 	// Prepare the ctx
 	FrustumVisibilityContext* frcCtx = newInstance<FrustumVisibilityContext>(pool);
 	frcCtx->m_visCtx = this;
-	frcCtx->m_frc = &frc;
-	frcCtx->m_primaryFrustum = &primaryFrustum;
+	frcCtx->m_frustum = frustum;
+	frcCtx->m_primaryFrustum = primaryFrustum;
 	frcCtx->m_queueViews.create(pool, hive.getThreadCount());
 	frcCtx->m_visTestsSignalSem = hive.newSemaphore(1);
 	frcCtx->m_renderQueue = &rqueue;
@@ -142,7 +147,7 @@ void VisibilityContext::submitNewWork(const FrustumComponent& frc, const Frustum
 
 	// Software rasterizer task
 	ThreadHiveSemaphore* prepareRasterizerSem = nullptr;
-	if(!!(frc.getEnabledVisibilityTests() & FrustumComponentVisibilityTestFlag::kOccluders) && frc.hasCoverageBuffer())
+	if(frustum.m_coverageBuffer && frustum.m_frustum->hasCoverageBuffer())
 	{
 		// Gather triangles task
 		ThreadHiveTask fillDepthTask =
@@ -154,10 +159,12 @@ void VisibilityContext::submitNewWork(const FrustumComponent& frc, const Frustum
 		prepareRasterizerSem = fillDepthTask.m_signalSemaphore;
 	}
 
-	if(!!(frc.getEnabledVisibilityTests() & FrustumComponentVisibilityTestFlag::kOccluders))
+	if(frustum.m_coverageBuffer)
 	{
-		rqueue.m_fillCoverageBufferCallback = FrustumComponent::fillCoverageBufferCallback;
-		rqueue.m_fillCoverageBufferCallbackUserData = static_cast<void*>(const_cast<FrustumComponent*>(&frc));
+		rqueue.m_fillCoverageBufferCallback = [](void* ud, F32* depthValues, U32 width, U32 height) {
+			static_cast<Frustum*>(ud)->setCoverageBuffer(depthValues, width, height);
+		};
+		rqueue.m_fillCoverageBufferCallbackUserData = static_cast<Frustum*>(frustum.m_frustum);
 	}
 
 	// Gather visibles from the octree. No need to signal anything because it will spawn new tasks
@@ -183,7 +190,7 @@ void FillRasterizerWithCoverageTask::fill()
 	ConstWeakArray<F32> depthBuff;
 	U32 width;
 	U32 height;
-	m_frcCtx->m_frc->getCoverageBufferInfo(depthBuff, width, height);
+	m_frcCtx->m_frustum.m_frustum->getCoverageBufferInfo(depthBuff, width, height);
 	ANKI_ASSERT(width > 0 && height > 0 && depthBuff.getSize() > 0);
 
 	// Init the rasterizer
@@ -191,8 +198,9 @@ void FillRasterizerWithCoverageTask::fill()
 	{
 		m_frcCtx->m_r = newInstance<SoftwareRasterizer>(pool);
 		m_frcCtx->m_r->init(&pool);
-		m_frcCtx->m_r->prepare(Mat4(m_frcCtx->m_frc->getPreviousViewMatrix(1), Vec4(0.0f, 0.0f, 0.0f, 1.0f)),
-							   m_frcCtx->m_frc->getPreviousProjectionMatrix(1), width, height);
+		m_frcCtx->m_r->prepare(
+			Mat4(m_frcCtx->m_frustum.m_frustum->getPreviousViewMatrix(1), Vec4(0.0f, 0.0f, 0.0f, 1.0f)),
+			m_frcCtx->m_frustum.m_frustum->getPreviousProjectionMatrix(1), width, height);
 
 		// Do the work
 		m_frcCtx->m_r->fillDepthBuffer(depthBuff);
@@ -209,7 +217,7 @@ void GatherVisiblesFromOctreeTask::gather(ThreadHive& hive)
 	m_frcCtx->m_visCtx->m_scene->getOctree().walkTree(
 		testIdx,
 		[&](const Aabb& box) {
-			Bool visible = m_frcCtx->m_frc->insideFrustum(box);
+			Bool visible = m_frcCtx->m_frustum.m_frustum->insideFrustum(box);
 			if(visible && m_frcCtx->m_r)
 			{
 				visible = m_frcCtx->m_r->visibilityTest(box);
@@ -219,11 +227,11 @@ void GatherVisiblesFromOctreeTask::gather(ThreadHive& hive)
 		},
 		[&](void* placeableUserData) {
 			ANKI_ASSERT(placeableUserData);
-			SpatialComponent* scomp = static_cast<SpatialComponent*>(placeableUserData);
+			Spatial* spatial = static_cast<Spatial*>(placeableUserData);
 
 			ANKI_ASSERT(m_spatialCount < m_spatials.getSize());
 
-			m_spatials[m_spatialCount++] = scomp;
+			m_spatials[m_spatialCount++] = spatial;
 
 			if(m_spatialCount == m_spatials.getSize())
 			{
@@ -267,132 +275,62 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 {
 	ANKI_TRACE_SCOPED_EVENT(SCENE_VIS_TEST);
 
-	const FrustumComponent& testedFrc = *m_frcCtx->m_frc;
-	const FrustumComponentVisibilityTestFlag frustumFlags = testedFrc.getEnabledVisibilityTests();
-	ANKI_ASSERT(frustumFlags != FrustumComponentVisibilityTestFlag::kNone);
-	ANKI_ASSERT(m_frcCtx->m_primaryFrustum);
-	const FrustumComponent& primaryFrc = *m_frcCtx->m_primaryFrustum;
+	const Frustum& testedFrustum = *m_frcCtx->m_frustum.m_frustum;
+	ANKI_ASSERT(m_frcCtx->m_primaryFrustum.m_frustum);
+	const FrustumFlags frustumFlags = m_frcCtx->m_frustum;
+	const Frustum& primaryFrustum = *m_frcCtx->m_primaryFrustum.m_frustum;
 
-	const SceneNode& testedNode = testedFrc.getSceneNode();
 	StackMemoryPool& pool = m_frcCtx->m_visCtx->m_scene->getFrameMemoryPool();
 
-	Timestamp& timestamp = m_frcCtx->m_queueViews[taskId].m_timestamp;
-	timestamp = testedNode.getComponentMaxTimestamp();
+	const Bool wantsEarlyZ = m_frcCtx->m_frustum.m_earlyZ && testedFrustum.getEarlyZDistance() > 0.0f;
 
-	const Bool wantsEarlyZ =
-		!!(frustumFlags & FrustumComponentVisibilityTestFlag::kEarlyZ) && m_frcCtx->m_visCtx->m_earlyZDist > 0.0f;
-
-	const Bool testedNodeIsProbe =
-		testedNode.tryGetFirstComponentOfType<ReflectionProbeComponent>()
-		|| testedNode.tryGetFirstComponentOfType<GlobalIlluminationProbeComponent>(); // TODO hack for now
+	WeakArray<RenderQueue> nextQueues;
+	WeakArray<VisibilityFrustum> nextFrustums;
 
 	// Iterate
 	RenderQueueView& result = m_frcCtx->m_queueViews[taskId];
 	for(U i = 0; i < m_spatialToTestCount; ++i)
 	{
-		SpatialComponent* spatialC = m_spatialsToTest[i];
-		ANKI_ASSERT(spatialC);
-		SceneNode& node = spatialC->getSceneNode();
+		Spatial* spatial = m_spatialsToTest[i];
+		ANKI_ASSERT(spatial);
+		SceneComponent& comp = spatial->getSceneComponent();
+		const Aabb& aabb = spatial->getAabbWorldSpace();
 
-		// Skip if it is the same
-		if(ANKI_UNLIKELY(&testedNode == &node))
+		auto isInside = [&] {
+			return spatial->getAlwaysVisible() || (testedFrustum.insideFrustum(aabb) && testAgainstRasterizer(aabb));
+		};
+
+		if(comp.getClassId() == ModelComponent::getStaticClassId())
 		{
-			continue;
-		}
+			const ModelComponent& modelc = static_cast<ModelComponent&>(comp);
+			if(!modelc.isEnabled() || (frustumFlags.m_gatherShadowCasterModelComponents && !modelc.getCastsShadow())
+			   || !isInside())
+			{
+				continue;
+			}
 
-		// Check what components the frustum needs
-		Bool wantNode = false;
-
-		const ModelComponent* modelc = nullptr;
-		wantNode |= !!(frustumFlags & FrustumComponentVisibilityTestFlag::kRenderComponents)
-					&& getComponent(node, modelc) && modelc->isEnabled();
-
-		wantNode |= !!(frustumFlags & FrustumComponentVisibilityTestFlag::kShadowCasterRenderComponents)
-					&& getComponent(node, modelc) && modelc->isEnabled() && modelc->getCastsShadow();
-
-		// TODO ray tracing
-
-		const ParticleEmitterComponent* partemitc = nullptr;
-		wantNode |= !!(frustumFlags & FrustumComponentVisibilityTestFlag::kRenderComponents)
-					&& getComponent(node, partemitc) && partemitc->isEnabled();
-
-		const LightComponent* lc = nullptr;
-		wantNode |= !!(frustumFlags & FrustumComponentVisibilityTestFlag::kLights) && getComponent(node, lc);
-
-		const LensFlareComponent* lfc = nullptr;
-		wantNode |= !!(frustumFlags & FrustumComponentVisibilityTestFlag::kLensFlares) && getComponent(node, lfc);
-
-		const ReflectionProbeComponent* reflc = nullptr;
-		wantNode |=
-			!!(frustumFlags & FrustumComponentVisibilityTestFlag::kReflectionProbes) && getComponent(node, reflc);
-
-		DecalComponent* decalc = nullptr;
-		wantNode |= !!(frustumFlags & FrustumComponentVisibilityTestFlag::kDecals) && getComponent(node, decalc);
-
-		const FogDensityComponent* fogc = nullptr;
-		wantNode |=
-			!!(frustumFlags & FrustumComponentVisibilityTestFlag::kFogDensityVolumes) && getComponent(node, fogc);
-
-		GlobalIlluminationProbeComponent* giprobec = nullptr;
-		wantNode |= !!(frustumFlags & FrustumComponentVisibilityTestFlag::kGlobalIlluminationProbes)
-					&& getComponent(node, giprobec);
-
-		GenericGpuComputeJobComponent* computec = nullptr;
-		wantNode |=
-			!!(frustumFlags & FrustumComponentVisibilityTestFlag::kGenericComputeJobs) && getComponent(node, computec);
-
-		UiComponent* uic = nullptr;
-		wantNode |= !!(frustumFlags & FrustumComponentVisibilityTestFlag::kUi) && getComponent(node, uic);
-
-		SkyboxComponent* skyboxc = nullptr;
-		wantNode |= !!(frustumFlags & FrustumComponentVisibilityTestFlag::kSkybox) && getComponent(node, skyboxc);
-
-		if(ANKI_UNLIKELY(!wantNode))
-		{
-			// Skip node
-			continue;
-		}
-
-		const SpatialComponent* spatialc = node.tryGetFirstComponentOfType<SpatialComponent>();
-		if(ANKI_UNLIKELY(spatialc == nullptr))
-		{
-			continue;
-		}
-
-		if(!spatialc->getAlwaysVisible()
-		   && (!spatialInsideFrustum(testedFrc, *spatialc) || !testAgainstRasterizer(spatialc->getAabbWorldSpace())))
-		{
-			continue;
-		}
-
-		WeakArray<RenderQueue> nextQueues;
-		WeakArray<FrustumComponent> nextQueueFrustumComponents; // Optional
-
-		if(modelc)
-		{
-			const Plane& nearPlane = primaryFrc.getViewPlanes()[FrustumPlaneType::kNear];
-			const F32 distanceFromCamera = max(0.0f, testPlane(nearPlane, spatialc->getAabbWorldSpace()));
-
-			const U8 lod = (testedNodeIsProbe) ? 0 : computeLod(primaryFrc, distanceFromCamera);
+			const Plane& nearPlane = primaryFrustum.getViewPlanes()[FrustumPlaneType::kNear];
+			const F32 distanceFromCamera = max(0.0f, testPlane(nearPlane, aabb));
+			const U8 lod = computeLod(primaryFrustum, distanceFromCamera);
 
 			WeakArray<RenderableQueueElement> elements;
-			modelc->setupRenderableQueueElements(lod, RenderingTechnique::kGBuffer, pool, elements);
+			modelc.setupRenderableQueueElements(lod, RenderingTechnique::kGBuffer, pool, elements);
 			for(RenderableQueueElement& el : elements)
 			{
 				el.m_distanceFromCamera = distanceFromCamera;
 				*result.m_renderables.newElement(pool) = el;
 			}
 
-			modelc->setupRenderableQueueElements(lod, RenderingTechnique::kForward, pool, elements);
+			modelc.setupRenderableQueueElements(lod, RenderingTechnique::kForward, pool, elements);
 			for(RenderableQueueElement& el : elements)
 			{
 				el.m_distanceFromCamera = distanceFromCamera;
 				*result.m_forwardShadingRenderables.newElement(pool) = el;
 			}
 
-			if(wantsEarlyZ && distanceFromCamera < m_frcCtx->m_visCtx->m_earlyZDist)
+			if(wantsEarlyZ && distanceFromCamera < testedFrustum.getEarlyZDistance())
 			{
-				modelc->setupRenderableQueueElements(lod, RenderingTechnique::kGBufferEarlyZ, pool, elements);
+				modelc.setupRenderableQueueElements(lod, RenderingTechnique::kGBufferEarlyZ, pool, elements);
 				for(RenderableQueueElement& el : elements)
 				{
 					el.m_distanceFromCamera = distanceFromCamera;
@@ -400,65 +338,76 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 				}
 			}
 		}
-
-		if(partemitc)
+		else if(comp.getClassId() == ParticleEmitterComponent::getStaticClassId())
 		{
-			const Plane& nearPlane = primaryFrc.getViewPlanes()[FrustumPlaneType::kNear];
-			const F32 distanceFromCamera = max(0.0f, testPlane(nearPlane, spatialc->getAabbWorldSpace()));
+			const ParticleEmitterComponent& partemitc = static_cast<ParticleEmitterComponent&>(comp);
+			if(!frustumFlags.m_gatherParticleComponents || !partemitc.isEnabled() || !isInside())
+			{
+				continue;
+			}
+
+			const Plane& nearPlane = primaryFrustum.getViewPlanes()[FrustumPlaneType::kNear];
+			const F32 distanceFromCamera = max(0.0f, testPlane(nearPlane, aabb));
 
 			WeakArray<RenderableQueueElement> elements;
-			partemitc->setupRenderableQueueElements(RenderingTechnique::kGBuffer, pool, elements);
+			partemitc.setupRenderableQueueElements(RenderingTechnique::kGBuffer, pool, elements);
 			for(RenderableQueueElement& el : elements)
 			{
 				el.m_distanceFromCamera = distanceFromCamera;
 				*result.m_renderables.newElement(pool) = el;
 			}
 
-			partemitc->setupRenderableQueueElements(RenderingTechnique::kForward, pool, elements);
+			partemitc.setupRenderableQueueElements(RenderingTechnique::kForward, pool, elements);
 			for(RenderableQueueElement& el : elements)
 			{
 				el.m_distanceFromCamera = distanceFromCamera;
 				*result.m_forwardShadingRenderables.newElement(pool) = el;
 			}
 		}
-
-		if(lc)
+		else if(comp.getClassId() == LightComponent::getStaticClassId())
 		{
+			const LightComponent& lightc = static_cast<LightComponent&>(comp);
+			if(!frustumFlags.m_gatherLightComponents
+			   || (lightc.getLightComponentType() != LightComponentType::kDirectional && !isInside()))
+			{
+				continue;
+			}
+
 			// Check if it casts shadow
-			Bool castsShadow = lc->getShadowEnabled();
-			if(castsShadow && lc->getLightComponentType() != LightComponentType::kDirectional)
+			Bool castsShadow = lightc.getShadowEnabled();
+			if(castsShadow && lightc.getLightComponentType() != LightComponentType::kDirectional)
 			{
 				// Extra check
 
 				// Compute distance from the frustum
-				const Plane& nearPlane = primaryFrc.getViewPlanes()[FrustumPlaneType::kNear];
-				const F32 distFromFrustum = max(0.0f, testPlane(nearPlane, spatialc->getAabbWorldSpace()));
+				const Plane& nearPlane = primaryFrustum.getViewPlanes()[FrustumPlaneType::kNear];
+				const F32 distFromFrustum = max(0.0f, testPlane(nearPlane, aabb));
 
 				const F32 shadowEffectiveDistance =
-					(primaryFrc.getShadowCascadeCount() > 0)
-						? primaryFrc.getShadowCascadeDistance(primaryFrc.getShadowCascadeCount() - 1)
-						: primaryFrc.getFar();
+					(primaryFrustum.getShadowCascadeCount() > 0)
+						? primaryFrustum.getShadowCascadeDistance(primaryFrustum.getShadowCascadeCount() - 1)
+						: primaryFrustum.getFar();
 				castsShadow = distFromFrustum < shadowEffectiveDistance;
 			}
 
-			switch(lc->getLightComponentType())
+			switch(lightc.getLightComponentType())
 			{
 			case LightComponentType::kPoint:
 			{
 				PointLightQueueElement* el = result.m_pointLights.newElement(pool);
-				lc->setupPointLightQueueElement(*el);
+				lightc.setupPointLightQueueElement(*el);
 
-				if(castsShadow && !!(frustumFlags & FrustumComponentVisibilityTestFlag::kPointLightShadowsEnabled))
+				if(castsShadow && frustumFlags.m_nonDirectionalLightsCastShadow)
 				{
-					RenderQueue* a = newArray<RenderQueue>(pool, 6);
-					nextQueues = WeakArray<RenderQueue>(a, 6);
+					nextQueues = WeakArray<RenderQueue>(newArray<RenderQueue>(pool, 6), 6);
+					nextFrustums = WeakArray<VisibilityFrustum>(newArray<VisibilityFrustum>(pool, 6), 6);
 
-					el->m_shadowRenderQueues[0] = &nextQueues[0];
-					el->m_shadowRenderQueues[1] = &nextQueues[1];
-					el->m_shadowRenderQueues[2] = &nextQueues[2];
-					el->m_shadowRenderQueues[3] = &nextQueues[3];
-					el->m_shadowRenderQueues[4] = &nextQueues[4];
-					el->m_shadowRenderQueues[5] = &nextQueues[5];
+					for(U32 f = 0; f < 6; ++f)
+					{
+						el->m_shadowRenderQueues[f] = &nextQueues[f];
+						nextFrustums[f].m_frustum = &lightc.getFrustums()[f];
+						static_cast<FrustumFlags&>(nextFrustums[f]) = getLightFrustumFlags();
+					}
 				}
 				else
 				{
@@ -470,13 +419,16 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			case LightComponentType::kSpot:
 			{
 				SpotLightQueueElement* el = result.m_spotLights.newElement(pool);
-				lc->setupSpotLightQueueElement(*el);
+				lightc.setupSpotLightQueueElement(*el);
 
-				if(castsShadow && !!(frustumFlags & FrustumComponentVisibilityTestFlag::kSpotLightShadowsEnabled))
+				if(castsShadow && frustumFlags.m_nonDirectionalLightsCastShadow)
 				{
-					RenderQueue* a = newInstance<RenderQueue>(pool);
-					nextQueues = WeakArray<RenderQueue>(a, 1);
-					el->m_shadowRenderQueue = a;
+					nextQueues = WeakArray<RenderQueue>(newInstance<RenderQueue>(pool), 1);
+					el->m_shadowRenderQueue = &nextQueues[0];
+
+					nextFrustums = WeakArray<VisibilityFrustum>(newInstance<VisibilityFrustum>(pool), 1);
+					nextFrustums[0].m_frustum = &lightc.getFrustums()[0];
+					static_cast<FrustumFlags&>(nextFrustums[0]) = getLightFrustumFlags();
 				}
 				else
 				{
@@ -487,58 +439,52 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			}
 			case LightComponentType::kDirectional:
 			{
-				ANKI_ASSERT(lc->getShadowEnabled() == true && "Only with shadow for now");
+				ANKI_ASSERT(lightc.getShadowEnabled() == true && "Only with shadow for now");
 
-				U32 cascadeCount = max(testedFrc.getShadowCascadeCount(), U32(castsShadow));
+				U32 cascadeCount = max(testedFrustum.getShadowCascadeCount(), U32(castsShadow));
 				if(!castsShadow)
 				{
 					cascadeCount = 0;
 				}
 				else
 				{
-					cascadeCount = max<U32>(testedFrc.getShadowCascadeCount(), 1);
+					cascadeCount = max<U32>(testedFrustum.getShadowCascadeCount(), 1);
 				}
 				ANKI_ASSERT(cascadeCount <= kMaxShadowCascades);
 
 				// Create some dummy frustum components and initialize them
-				WeakArray<FrustumComponent> cascadeFrustumComponents(
-					(cascadeCount) ? static_cast<FrustumComponent*>(
-						pool.allocate(cascadeCount * sizeof(FrustumComponent), alignof(FrustumComponent)))
-								   : nullptr,
-					cascadeCount);
-				for(U32 i = 0; i < cascadeCount; ++i)
+				WeakArray<Frustum> frustums;
+				if(cascadeCount)
 				{
-					::new(&cascadeFrustumComponents[i]) FrustumComponent(&node);
-					cascadeFrustumComponents[i].setFrustumType(FrustumType::kOrthographic);
+					nextQueues = WeakArray<RenderQueue>(newArray<RenderQueue>(pool, cascadeCount), cascadeCount);
+					nextFrustums =
+						WeakArray<VisibilityFrustum>(newArray<VisibilityFrustum>(pool, cascadeCount), cascadeCount);
+					frustums = WeakArray<Frustum>(newArray<Frustum>(pool, cascadeCount), cascadeCount);
 				}
 
-				lc->setupDirectionalLightQueueElement(testedFrc, result.m_directionalLight, cascadeFrustumComponents);
-
-				nextQueues = WeakArray<RenderQueue>(
-					(cascadeCount) ? newArray<RenderQueue>(pool, cascadeCount) : nullptr, cascadeCount);
 				for(U32 i = 0; i < cascadeCount; ++i)
 				{
+					nextFrustums[i].m_frustum = &frustums[i];
+					static_cast<FrustumFlags&>(nextFrustums[i]) = getLightFrustumFlags();
+
+					frustums[i].init(FrustumType::kOrthographic, nullptr);
+
 					result.m_directionalLight.m_shadowRenderQueues[i] = &nextQueues[i];
 				}
+
+				lightc.setupDirectionalLightQueueElement(testedFrustum, result.m_directionalLight, frustums);
 
 				// Despite the fact that it's the same light it will have different properties if viewed by different
 				// cameras. If the renderer finds the same UUID it will think it's cached and use wrong shadow tiles.
 				// That's why we need to change its UUID and bind it to the frustum that is currently viewing the light
-				result.m_directionalLight.m_uuid = testedNode.getUuid();
+				result.m_directionalLight.m_uuid = ptrToNumber(&testedFrustum);
 
 				// Manually update the dummy components
 				for(U32 i = 0; i < cascadeCount; ++i)
 				{
-					cascadeFrustumComponents[i].setEnabledVisibilityTests(
-						FrustumComponentVisibilityTestFlag::kShadowCasterRenderComponents);
-					Bool updated;
-					SceneComponentUpdateInfo scUpdateInfo(0.0, 1.0);
-					scUpdateInfo.m_node = &node;
-					[[maybe_unused]] const Error err = cascadeFrustumComponents[i].updateReal(scUpdateInfo, updated);
-					ANKI_ASSERT(updated == true && !err);
+					[[maybe_unused]] Bool updated = frustums[i].update();
+					ANKI_ASSERT(updated);
 				}
-
-				nextQueueFrustumComponents = cascadeFrustumComponents;
 
 				break;
 			}
@@ -546,111 +492,139 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 				ANKI_ASSERT(0);
 			}
 		}
-
-		if(lfc && lfc->isLoaded())
+		else if(comp.getClassId() == LensFlareComponent::getStaticClassId())
 		{
+			const LensFlareComponent& flarec = static_cast<LensFlareComponent&>(comp);
+
+			if(!frustumFlags.m_gatherLensFlareComponents || !isInside() || !flarec.isEnabled())
+			{
+				continue;
+			}
+
 			LensFlareQueueElement* el = result.m_lensFlares.newElement(pool);
-			lfc->setupLensFlareQueueElement(*el);
+			flarec.setupLensFlareQueueElement(*el);
 		}
-
-		if(reflc)
+		else if(comp.getClassId() == ReflectionProbeComponent::getStaticClassId())
 		{
+			if(!frustumFlags.m_gatherProbeComponents || !isInside())
+			{
+				continue;
+			}
+
+			ReflectionProbeComponent& reflc = static_cast<ReflectionProbeComponent&>(comp);
+
 			ReflectionProbeQueueElement* el = result.m_reflectionProbes.newElement(pool);
-			reflc->setupReflectionProbeQueueElement(*el);
+			reflc.setupReflectionProbeQueueElement(*el);
 
-			if(reflc->getMarkedForRendering())
+			if(reflc.getMarkedForRendering())
 			{
-				RenderQueue* a = newArray<RenderQueue>(pool, 6);
-				nextQueues = WeakArray<RenderQueue>(a, 6);
+				nextQueues = WeakArray<RenderQueue>(newArray<RenderQueue>(pool, 6), 6);
+				nextFrustums = WeakArray<VisibilityFrustum>(newArray<VisibilityFrustum>(pool, 6), 6);
 
-				el->m_renderQueues[0] = &nextQueues[0];
-				el->m_renderQueues[1] = &nextQueues[1];
-				el->m_renderQueues[2] = &nextQueues[2];
-				el->m_renderQueues[3] = &nextQueues[3];
-				el->m_renderQueues[4] = &nextQueues[4];
-				el->m_renderQueues[5] = &nextQueues[5];
+				for(U32 i = 0; i < 6; ++i)
+				{
+					el->m_renderQueues[i] = &nextQueues[i];
+					nextFrustums[i].m_frustum = &reflc.getFrustums()[i];
+					static_cast<FrustumFlags&>(nextFrustums[i]) = getProbeFrustumFlags();
+				}
 			}
 			else
 			{
-				el->m_renderQueues = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
+				memset(&el->m_renderQueues[0], 0, sizeof(el->m_renderQueues));
 			}
 		}
-
-		if(decalc)
+		else if(comp.getClassId() == DecalComponent::getStaticClassId())
 		{
+			if(!frustumFlags.m_gatherDecalComponents || !isInside())
+			{
+				continue;
+			}
+
+			const DecalComponent& decalc = static_cast<DecalComponent&>(comp);
 			DecalQueueElement* el = result.m_decals.newElement(pool);
-			decalc->setupDecalQueueElement(*el);
+			decalc.setupDecalQueueElement(*el);
 		}
-
-		if(fogc)
+		else if(comp.getClassId() == FogDensityComponent::getStaticClassId())
 		{
-			FogDensityQueueElement* el = result.m_fogDensityVolumes.newElement(pool);
-			fogc->setupFogDensityQueueElement(*el);
-		}
-
-		if(giprobec)
-		{
-			GlobalIlluminationProbeQueueElement* el = result.m_giProbes.newElement(pool);
-			giprobec->setupGlobalIlluminationProbeQueueElement(*el);
-
-			if(giprobec->getMarkedForRendering())
+			if(!frustumFlags.m_gatherFogDensityComponents || !isInside())
 			{
-				RenderQueue* a = newArray<RenderQueue>(pool, 6);
-				nextQueues = WeakArray<RenderQueue>(a, 6);
+				continue;
+			}
 
-				el->m_renderQueues[0] = &nextQueues[0];
-				el->m_renderQueues[1] = &nextQueues[1];
-				el->m_renderQueues[2] = &nextQueues[2];
-				el->m_renderQueues[3] = &nextQueues[3];
-				el->m_renderQueues[4] = &nextQueues[4];
-				el->m_renderQueues[5] = &nextQueues[5];
+			const FogDensityComponent& fogc = static_cast<FogDensityComponent&>(comp);
+
+			FogDensityQueueElement* el = result.m_fogDensityVolumes.newElement(pool);
+			fogc.setupFogDensityQueueElement(*el);
+		}
+		else if(comp.getClassId() == GlobalIlluminationProbeComponent::getStaticClassId())
+		{
+			if(!frustumFlags.m_gatherProbeComponents || !isInside())
+			{
+				continue;
+			}
+
+			GlobalIlluminationProbeComponent& giprobec = static_cast<GlobalIlluminationProbeComponent&>(comp);
+
+			GlobalIlluminationProbeQueueElement* el = result.m_giProbes.newElement(pool);
+			giprobec.setupGlobalIlluminationProbeQueueElement(*el);
+
+			if(giprobec.getMarkedForRendering())
+			{
+				nextQueues = WeakArray<RenderQueue>(newArray<RenderQueue>(pool, 6), 6);
+				nextFrustums = WeakArray<VisibilityFrustum>(newArray<VisibilityFrustum>(pool, 6), 6);
+
+				for(U32 i = 0; i < 6; ++i)
+				{
+					el->m_renderQueues[i] = &nextQueues[i];
+					nextFrustums[i].m_frustum = &giprobec.getFrustums()[i];
+					static_cast<FrustumFlags&>(nextFrustums[i]) = getProbeFrustumFlags();
+				}
 			}
 			else
 			{
-				el->m_renderQueues = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
+				memset(&el->m_renderQueues[0], 0, sizeof(el->m_renderQueues));
 			}
 		}
-
-		if(computec)
+		else if(comp.getClassId() == UiComponent::getStaticClassId())
 		{
-			GenericGpuComputeJobQueueElement* el = result.m_genericGpuComputeJobs.newElement(pool);
-			computec->setupGenericGpuComputeJobQueueElement(*el);
-		}
+			if(!frustumFlags.m_gatherUiComponents || !isInside())
+			{
+				continue;
+			}
 
-		if(uic)
-		{
+			const UiComponent& uic = static_cast<UiComponent&>(comp);
 			UiQueueElement* el = result.m_uis.newElement(pool);
-			uic->setupUiQueueElement(*el);
+			uic.setupUiQueueElement(*el);
 		}
-
-		if(skyboxc)
+		else if(comp.getClassId() == SkyboxComponent::getStaticClassId())
 		{
-			skyboxc->setupSkyboxQueueElement(result.m_skybox);
+			if(!frustumFlags.m_gatherSkyComponents || !isInside())
+			{
+				continue;
+			}
+
+			const SkyboxComponent& skyboxc = static_cast<SkyboxComponent&>(comp);
+			skyboxc.setupSkyboxQueueElement(result.m_skybox);
 			result.m_skyboxSet = true;
+		}
+		else
+		{
+			ANKI_ASSERT(0);
 		}
 
 		// Add more frustums to the list
 		if(nextQueues.getSize() > 0)
 		{
-			U32 count = 0;
-
-			if(ANKI_LIKELY(nextQueueFrustumComponents.getSize() == 0))
+			ANKI_ASSERT(nextFrustums.getSize() == nextQueues.getSize());
+			for(U32 i = 0; i < nextQueues.getSize(); ++i)
 			{
-				node.iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) {
-					m_frcCtx->m_visCtx->submitNewWork(frc, primaryFrc, nextQueues[count++], hive);
-				});
-			}
-			else
-			{
-				for(FrustumComponent& frc : nextQueueFrustumComponents)
-				{
-					m_frcCtx->m_visCtx->submitNewWork(frc, primaryFrc, nextQueues[count++], hive);
-				}
+				m_frcCtx->m_visCtx->submitNewWork(nextFrustums[i], m_frcCtx->m_primaryFrustum, nextQueues[i], hive);
 			}
 		}
 
 		// Update timestamp
-		timestamp = max(timestamp, node.getComponentMaxTimestamp());
+		Timestamp& timestamp = m_frcCtx->m_queueViews[taskId].m_timestamp;
+		timestamp = max(timestamp, comp.getTimestamp());
 	} // end for
 }
 
@@ -711,8 +685,7 @@ void CombineResultsTask::combine()
 
 #undef ANKI_VIS_COMBINE
 
-	const Bool isShadowFrustum = !!(m_frcCtx->m_frc->getEnabledVisibilityTests()
-									& FrustumComponentVisibilityTestFlag::kShadowCasterRenderComponents);
+	const Bool isShadowFrustum = m_frcCtx->m_frustum.m_gatherShadowCasterModelComponents;
 
 	// Sort some of the arrays
 	if(!isShadowFrustum)
@@ -855,7 +828,7 @@ void CombineResultsTask::combineQueueElements(StackMemoryPool& pool,
 	}
 }
 
-void SceneGraph::doVisibilityTests(SceneNode& fsn, SceneGraph& scene, RenderQueue& rqueue)
+void SceneGraph::doVisibilityTests(SceneNode& camera, SceneGraph& scene, RenderQueue& rqueue)
 {
 	ANKI_TRACE_SCOPED_EVENT(SCENE_VIS_TESTS);
 
@@ -863,23 +836,24 @@ void SceneGraph::doVisibilityTests(SceneNode& fsn, SceneGraph& scene, RenderQueu
 
 	VisibilityContext ctx;
 	ctx.m_scene = &scene;
-	ctx.m_earlyZDist = scene.m_subsystems.m_config->getSceneEarlyZDistance();
-	const FrustumComponent& mainFrustum = fsn.getFirstComponentOfType<FrustumComponent>();
-	ctx.submitNewWork(mainFrustum, mainFrustum, rqueue, hive);
+	CameraComponent& camerac = camera.getFirstComponentOfType<CameraComponent>();
+	VisibilityFrustum visFrustum;
+	visFrustum.m_frustum = &camerac.getFrustum();
+	static_cast<FrustumFlags&>(visFrustum) = getCameraFrustumFlags();
+	ctx.submitNewWork(visFrustum, visFrustum, rqueue, hive);
 
-	const FrustumComponent* extendedFrustum = fsn.tryGetNthComponentOfType<FrustumComponent>(1);
-	if(extendedFrustum)
+	if(camerac.getHasExtendedFrustum())
 	{
-		// This is the frustum for RT.
-		ANKI_ASSERT(
-			!(extendedFrustum->getEnabledVisibilityTests() & ~FrustumComponentVisibilityTestFlag::kAllRayTracing));
+		VisibilityFrustum evisFrustum;
+		evisFrustum.m_frustum = &camerac.getExtendedFrustum();
+		static_cast<FrustumFlags&>(evisFrustum) = getCameraExtendedFrustumFlags();
 
 		rqueue.m_rayTracingQueue = newInstance<RenderQueue>(scene.getFrameMemoryPool());
-		ctx.submitNewWork(*extendedFrustum, mainFrustum, *rqueue.m_rayTracingQueue, hive);
+		ctx.submitNewWork(evisFrustum, visFrustum, *rqueue.m_rayTracingQueue, hive);
 	}
 
 	hive.waitAllTasks();
-	ctx.m_testedFrcs.destroy(scene.getFrameMemoryPool());
+	ctx.m_testedFrustums.destroy(scene.getFrameMemoryPool());
 }
 
 } // end namespace anki

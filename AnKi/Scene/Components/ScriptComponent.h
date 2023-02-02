@@ -24,7 +24,7 @@ public:
 
 	~ScriptComponent();
 
-	Error loadScriptResource(CString fname);
+	void loadScriptResource(CString fname);
 
 	Bool isEnabled() const
 	{

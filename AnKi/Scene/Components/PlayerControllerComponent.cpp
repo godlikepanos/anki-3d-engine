@@ -14,9 +14,25 @@ PlayerControllerComponent::PlayerControllerComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
 {
 	PhysicsPlayerControllerInitInfo init;
-	init.m_position = Vec3(0.0f);
+	init.m_position = node->getWorldTransform().getOrigin().xyz();
 	m_player = getExternalSubsystems(*node).m_physicsWorld->newInstance<PhysicsPlayerController>(init);
 	m_player->setUserData(this);
+
+	node->setIgnoreParentTransform(true);
+}
+
+Error PlayerControllerComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
+{
+	const Transform newTrf = m_player->getTransform();
+	updated = newTrf != m_trf;
+
+	if(updated)
+	{
+		m_trf = newTrf;
+		info.m_node->setLocalTransform(newTrf);
+	}
+
+	return Error::kNone;
 }
 
 } // end namespace anki

@@ -8,7 +8,6 @@
 #include <AnKi/Scene/Octree.h>
 #include <AnKi/Collision.h>
 
-
 namespace anki {
 
 /// @addtogroup scene
@@ -19,9 +18,10 @@ class Spatial
 {
 public:
 	Spatial(SceneComponent* owner)
+		: m_owner(owner)
 	{
 		ANKI_ASSERT(owner);
-		m_octreeInfo.m_userData = owner;
+		m_octreeInfo.m_userData = this;
 	}
 
 	Spatial(const Spatial&) = delete;
@@ -32,6 +32,16 @@ public:
 	}
 
 	Spatial& operator=(const Spatial&) = delete;
+
+	const SceneComponent& getSceneComponent() const
+	{
+		return *m_owner;
+	}
+
+	SceneComponent& getSceneComponent()
+	{
+		return *m_owner;
+	}
 
 	const Aabb& getAabbWorldSpace() const
 	{
@@ -58,14 +68,14 @@ public:
 	}
 
 	template<typename TCollisionShape>
-	void update(Octree& octree, const TCollisionShape& shape)
+	void setBoundingShape(const TCollisionShape& shape)
 	{
 		m_aabb = computeAabb(shape);
-		updateCommon(octree);
+		m_dirty = true;
 	}
 
 	template<typename TVec>
-	void update(Octree& octree, ConstWeakArray<TVec> points)
+	void setBoundingShape(ConstWeakArray<TVec> points)
 	{
 		ANKI_ASSERT(pointCount > 0);
 		TVec min(kMaxF32), max(kMinF32);
@@ -76,7 +86,31 @@ public:
 		}
 		m_aabb.setMin(min.xyz());
 		m_aabb.setMax(max.xyz());
-		updateCommon(octree);
+		m_dirty = true;
+	}
+
+	Bool update(Octree& octree)
+	{
+		const Bool updated = m_dirty;
+
+		if(m_dirty)
+		{
+			if(!m_alwaysVisible) [[likely]]
+			{
+				octree.place(m_aabb, &m_octreeInfo, m_updatesOctreeBounds);
+			}
+			else
+			{
+				octree.placeAlwaysVisible(&m_octreeInfo);
+			}
+
+			m_placed = true;
+			m_dirty = false;
+		}
+
+		ANKI_ASSERT(m_placed);
+		m_octreeInfo.reset();
+		return updated;
 	}
 
 	void removeFromOctree(Octree& octree)
@@ -85,6 +119,7 @@ public:
 		{
 			octree.remove(m_octreeInfo);
 			m_placed = false;
+			m_dirty = true;
 		}
 	}
 
@@ -93,31 +128,19 @@ private:
 
 	OctreePlaceable m_octreeInfo;
 
+	SceneComponent* m_owner;
+
 	Bool m_placed : 1 = false;
 	Bool m_updatesOctreeBounds : 1 = true;
 	Bool m_alwaysVisible : 1 = false;
-
-	void updateCommon(Octree& octree)
-	{
-		if(!m_alwaysVisible) [[likely]]
-		{
-			octree.place(m_aabb, &m_octreeInfo, m_updatesOctreeBounds);
-		}
-		else
-		{
-			octree.placeAlwaysVisible(&m_octreeInfo);
-		}
-
-		m_placed = true;
-		m_octreeInfo.reset();
-	}
+	Bool m_dirty : 1 = true;
 };
 
 template<>
-void Spatial::update<Aabb>(Octree& octree, const Aabb& shape)
+inline void Spatial::setBoundingShape<Aabb>(const Aabb& shape)
 {
 	m_aabb = shape;
-	updateCommon(octree);
+	m_dirty = true;
 }
 /// @}
 

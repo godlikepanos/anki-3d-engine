@@ -16,7 +16,9 @@ namespace anki {
 ModelComponent::ModelComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
 	, m_node(node)
+	, m_spatial(this)
 {
+	getExternalSubsystems(*node).m_gpuSceneMemoryPool->allocate(sizeof(Mat3x4) * 2, alignof(F32), m_gpuSceneTransforms);
 }
 
 ModelComponent::~ModelComponent()
@@ -24,20 +26,27 @@ ModelComponent::~ModelComponent()
 	GpuSceneMemoryPool& gpuScene = *getExternalSubsystems(*m_node).m_gpuSceneMemoryPool;
 	gpuScene.free(m_gpuSceneMeshLods);
 	gpuScene.free(m_gpuSceneUniforms);
+	gpuScene.free(m_gpuSceneTransforms);
 
 	m_patchInfos.destroy(m_node->getMemoryPool());
+
+	m_spatial.removeFromOctree(m_node->getSceneGraph().getOctree());
 }
 
-Error ModelComponent::loadModelResource(CString filename)
+void ModelComponent::loadModelResource(CString filename)
 {
+	ModelResourcePtr rsrc;
+	const Error err = getExternalSubsystems(*m_node).m_resourceManager->loadResource(filename, rsrc);
+	if(err)
+	{
+		ANKI_SCENE_LOGE("Failed to load model resource");
+		return;
+	}
+
 	m_dirty = true;
 
-	ModelResourcePtr rsrc;
-	ANKI_CHECK(getExternalSubsystems(*m_node).m_resourceManager->loadResource(filename, rsrc));
 	m_model = std::move(rsrc);
 	const U32 modelPatchCount = m_model->getModelPatches().getSize();
-
-	m_castsShadow = false;
 
 	// GPU scene allocations
 	GpuSceneMemoryPool& gpuScene = *getExternalSubsystems(*m_node).m_gpuSceneMemoryPool;
@@ -66,6 +75,7 @@ Error ModelComponent::loadModelResource(CString filename)
 
 	// Some other per-patch init
 	m_presentRenderingTechniques = RenderingTechniqueBit::kNone;
+	m_castsShadow = false;
 	for(U32 i = 0; i < modelPatchCount; ++i)
 	{
 		m_patchInfos[i].m_techniques = m_model->getModelPatches()[i].getMaterial()->getRenderingTechniques();
@@ -74,13 +84,27 @@ Error ModelComponent::loadModelResource(CString filename)
 
 		m_presentRenderingTechniques |= m_model->getModelPatches()[i].getMaterial()->getRenderingTechniques();
 	}
-
-	return Error::kNone;
 }
 
 Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	if(ANKI_UNLIKELY(m_dirty && m_model.isCreated()))
+	if(!isEnabled()) [[unlikely]]
+	{
+		updated = false;
+		return Error::kNone;
+	}
+
+	const Bool resourceUpdated = m_dirty;
+	m_dirty = false;
+	const Bool moved = info.m_node->movedThisFrame() || m_firstTimeUpdate;
+	const Bool movedLastFrame = m_movedLastFrame || m_firstTimeUpdate;
+	m_firstTimeUpdate = false;
+	m_movedLastFrame = moved;
+
+	updated = resourceUpdated || moved || movedLastFrame;
+
+	// Upload mesh LODs and uniforms
+	if(resourceUpdated) [[unlikely]]
 	{
 		GpuSceneMicroPatcher& gpuScenePatcher = *getExternalSubsystems(*info.m_node).m_gpuSceneMicroPatcher;
 
@@ -152,8 +176,36 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 								&allUniforms[0]);
 	}
 
-	updated = m_dirty;
-	m_dirty = false;
+	// Upload transforms
+	if(moved || movedLastFrame) [[unlikely]]
+	{
+		Array<Mat3x4, 2> trfs;
+		trfs[0] = Mat3x4(info.m_node->getWorldTransform());
+		trfs[1] = Mat3x4(info.m_node->getPreviousWorldTransform());
+
+		getExternalSubsystems(*info.m_node)
+			.m_gpuSceneMicroPatcher->newCopy(*info.m_framePool, m_gpuSceneTransforms.m_offset, sizeof(trfs), &trfs[0]);
+	}
+
+	// Spatial update
+	if(moved || resourceUpdated || m_skinComponent) [[unlikely]]
+	{
+		Aabb aabbLocal;
+		if(m_skinComponent == nullptr) [[likely]]
+		{
+			aabbLocal = m_model->getBoundingVolume();
+		}
+		else
+		{
+			aabbLocal = m_skinComponent->getBoneBoundingVolumeLocalSpace();
+		}
+
+		const Aabb aabbWorld = aabbLocal.getTransformed(info.m_node->getWorldTransform());
+
+		m_spatial.setBoundingShape(aabbWorld);
+		m_spatial.update(info.m_node->getSceneGraph().getOctree());
+	}
+
 	return Error::kNone;
 }
 
@@ -161,7 +213,6 @@ void ModelComponent::setupRenderableQueueElements(U32 lod, RenderingTechnique te
 												  WeakArray<RenderableQueueElement>& outRenderables) const
 {
 	ANKI_ASSERT(isEnabled());
-	ANKI_ASSERT(m_moveComponent);
 
 	outRenderables.setArray(nullptr, 0);
 
@@ -189,7 +240,7 @@ void ModelComponent::setupRenderableQueueElements(U32 lod, RenderingTechnique te
 	outRenderables.setArray(renderables, renderableCount);
 
 	// Fill renderables
-	const Bool moved = m_moveComponent->wasDirtyThisFrame() && technique == RenderingTechnique::kGBuffer;
+	const Bool moved = m_node->movedThisFrame() && technique == RenderingTechnique::kGBuffer;
 	const Bool hasSkin = m_skinComponent != nullptr && m_skinComponent->isEnabled();
 
 	RenderingKey key;
@@ -214,7 +265,7 @@ void ModelComponent::setupRenderableQueueElements(U32 lod, RenderingTechnique te
 		patch.getRenderingInfo(key, modelInf);
 
 		queueElem.m_program = modelInf.m_program.get();
-		queueElem.m_worldTransformsOffset = m_moveComponent->getTransformsGpuSceneOffset();
+		queueElem.m_worldTransformsOffset = U32(m_gpuSceneTransforms.m_offset);
 		queueElem.m_uniformsOffset = m_patchInfos[i].m_gpuSceneUniformsOffset;
 		queueElem.m_geometryOffset =
 			U32(m_gpuSceneMeshLods.m_offset + sizeof(GpuSceneMeshLod) * (kMaxLodCount * i + lod));
@@ -234,27 +285,20 @@ void ModelComponent::onOtherComponentRemovedOrAdded(SceneComponent* other, Bool 
 {
 	ANKI_ASSERT(other);
 
-	if(added)
+	if(other->getClassId() != SkinComponent::getStaticClassId())
 	{
-		if(other->getClassId() == MoveComponent::getStaticClassId())
-		{
-			m_moveComponent = static_cast<MoveComponent*>(other);
-		}
-		else if(other->getClassId() == SkinComponent::getStaticClassId())
-		{
-			m_skinComponent = static_cast<SkinComponent*>(other);
-		}
+		return;
 	}
-	else
+
+	if(added && m_skinComponent != nullptr)
 	{
-		if(other == m_moveComponent)
-		{
-			m_moveComponent = nullptr;
-		}
-		else if(other == m_skinComponent)
-		{
-			m_skinComponent = nullptr;
-		}
+		m_skinComponent = static_cast<SkinComponent*>(other);
+		m_dirty = true;
+	}
+	else if(other == m_skinComponent)
+	{
+		m_skinComponent = nullptr;
+		m_dirty = true;
 	}
 }
 

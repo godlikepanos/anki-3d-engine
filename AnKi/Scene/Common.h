@@ -34,14 +34,14 @@ class PhysicsWorld;
 #define ANKI_SCENE_LOGF(...) ANKI_LOG("SCEN", kFatal, __VA_ARGS__)
 
 #define ANKI_SCENE_ASSERT(expression) \
-	ANKI_LIKELY(std::invoke([&]() -> Bool { \
+	std::invoke([&]() -> Bool { \
 		const Bool ok = (expression); \
 		if(!ok) [[unlikely]] \
 		{ \
 			ANKI_SCENE_LOGE("Expression failed: " #expression); \
 		} \
 		return ok; \
-	}))
+	})
 
 class SceneGraphExternalSubsystems
 {

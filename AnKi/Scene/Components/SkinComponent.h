@@ -47,7 +47,7 @@ public:
 	~SkinComponent();
 
 	/// Load the skeleton resource.
-	Error loadSkeletonResource(CString filename);
+	void loadSkeletonResource(CString filename);
 
 	void playAnimation(U32 track, AnimationResourcePtr anim, const AnimationPlayInfo& info);
 
@@ -110,6 +110,8 @@ private:
 	Second m_absoluteTime = 0.0;
 	U8 m_crntBoneTrfs = 0;
 	U8 m_prevBoneTrfs = 1;
+
+	Bool m_forceFullUpdate = true;
 
 	SegregatedListsGpuMemoryPoolToken m_boneTransformsGpuSceneOffset;
 

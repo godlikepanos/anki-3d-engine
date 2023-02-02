@@ -24,23 +24,38 @@ ScriptComponent::~ScriptComponent()
 	deleteInstance(m_node->getMemoryPool(), m_env);
 }
 
-Error ScriptComponent::loadScriptResource(CString fname)
+void ScriptComponent::loadScriptResource(CString fname)
 {
 	// Load
-	ANKI_CHECK(getExternalSubsystems(*m_node).m_resourceManager->loadResource(fname, m_script));
+	ScriptResourcePtr rsrc;
+	Error err = getExternalSubsystems(*m_node).m_resourceManager->loadResource(fname, rsrc);
 
 	// Create the env
-	if(m_env)
+	ScriptEnvironment* newEnv = nullptr;
+	if(!err)
 	{
-		deleteInstance(m_node->getMemoryPool(), m_env);
+		newEnv = newInstance<ScriptEnvironment>(m_node->getMemoryPool());
+		err = newEnv->init(getExternalSubsystems(*m_node).m_scriptManager);
 	}
-	m_env = newInstance<ScriptEnvironment>(m_node->getMemoryPool());
-	ANKI_CHECK(m_env->init(getExternalSubsystems(*m_node).m_scriptManager));
 
 	// Exec the script
-	ANKI_CHECK(m_env->evalString(m_script->getSource()));
+	if(!err)
+	{
+		err = newEnv->evalString(m_script->getSource());
+	}
 
-	return Error::kNone;
+	// Error
+	if(err)
+	{
+		ANKI_SCENE_LOGE("Failed to load the script");
+		deleteInstance(m_node->getMemoryPool(), newEnv);
+	}
+	else
+	{
+		m_script = std::move(rsrc);
+		deleteInstance(m_node->getMemoryPool(), m_env);
+		m_env = newEnv;
+	}
 }
 
 Error ScriptComponent::update(SceneComponentUpdateInfo& info, Bool& updated)

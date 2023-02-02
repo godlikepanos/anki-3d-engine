@@ -141,11 +141,10 @@ ANKI_SHADER_STATIC_ASSERT(sizeof(ReflectionProbe) == kSizeof_ReflectionProbe);
 /// Decal.
 struct Decal
 {
-	Vec4 m_diffuseUv;
-
-	Vec4 m_normRoughnessUv;
-
-	RVec4 m_blendFactors;
+	U32 m_diffuseTexture;
+	U32 m_roughnessMetalnessTexture;
+	RF32 m_diffuseBlendFactor;
+	RF32 m_roughnessMetalnessFactor;
 
 	Mat4 m_textureMatrix;
 
@@ -154,7 +153,7 @@ struct Decal
 	Vec3 m_obbExtend;
 	F32 m_padding0;
 };
-constexpr U32 kSizeof_Decal = 4u * sizeof(Vec4) + 2u * sizeof(Mat4);
+constexpr U32 kSizeof_Decal = 2u * sizeof(Vec4) + 2u * sizeof(Mat4);
 ANKI_SHADER_STATIC_ASSERT(sizeof(Decal) == kSizeof_Decal);
 
 /// Fog density volume.

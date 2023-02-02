@@ -16,18 +16,26 @@ BodyComponent::BodyComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
 	, m_node(node)
 {
+	node->setIgnoreParentTransform(true);
 }
 
 BodyComponent::~BodyComponent()
 {
 }
 
-Error BodyComponent::loadMeshResource(CString meshFilename)
+void BodyComponent::loadMeshResource(CString meshFilename)
 {
-	m_body.reset(nullptr);
-	ANKI_CHECK(getExternalSubsystems(*m_node).m_resourceManager->loadResource(meshFilename, m_mesh));
+	CpuMeshResourcePtr rsrc;
+	const Error err = getExternalSubsystems(*m_node).m_resourceManager->loadResource(meshFilename, rsrc);
+	if(err)
+	{
+		ANKI_SCENE_LOGE("Failed to load mesh");
+		return;
+	}
 
-	const Transform prevTransform = (m_body) ? m_body->getTransform() : m_trf;
+	m_mesh = std::move(rsrc);
+
+	const Transform prevTransform = m_node->getWorldTransform();
 	const F32 prevMass = (m_body) ? m_body->getMass() : 0.0f;
 
 	PhysicsBodyInitInfo init;
@@ -36,9 +44,9 @@ Error BodyComponent::loadMeshResource(CString meshFilename)
 	init.m_shape = m_mesh->getCollisionShape();
 	m_body = getExternalSubsystems(*m_node).m_physicsWorld->newInstance<PhysicsBody>(init);
 	m_body->setUserData(this);
+	m_body->setTransform(m_node->getWorldTransform());
 
-	m_markedForUpdate = true;
-	return Error::kNone;
+	m_dirty = true;
 }
 
 CString BodyComponent::getMeshResourceFilename() const
@@ -48,9 +56,8 @@ CString BodyComponent::getMeshResourceFilename() const
 
 void BodyComponent::setMass(F32 mass)
 {
-	if(mass < 0.0f)
+	if(!ANKI_SCENE_ASSERT(mass >= 0.0f))
 	{
-		ANKI_SCENE_LOGW("Attempting to set a negative mass");
 		mass = 0.0f;
 	}
 
@@ -60,15 +67,16 @@ void BodyComponent::setMass(F32 mass)
 		{
 			// Will become from static to dynamic or the opposite, re-create the body
 
-			const Transform prevTransform = getWorldTransform();
+			const Transform& prevTransform = m_body->getTransform();
 			PhysicsBodyInitInfo init;
 			init.m_transform = prevTransform;
 			init.m_mass = mass;
 			init.m_shape = m_mesh->getCollisionShape();
 			m_body = getExternalSubsystems(*m_node).m_physicsWorld->newInstance<PhysicsBody>(init);
 			m_body->setUserData(this);
+			m_body->setTransform(m_node->getWorldTransform());
 
-			m_markedForUpdate = true;
+			m_dirty = true;
 		}
 		else
 		{
@@ -81,15 +89,15 @@ void BodyComponent::setMass(F32 mass)
 	}
 }
 
-Error BodyComponent::update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated)
+Error BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	updated = m_markedForUpdate;
-	m_markedForUpdate = false;
+	updated = m_dirty;
+	m_dirty = false;
 
-	if(m_body && m_body->getTransform() != m_trf)
+	if(m_body && m_body->getTransform() != info.m_node->getWorldTransform())
 	{
 		updated = true;
-		m_trf = m_body->getTransform();
+		info.m_node->setLocalTransform(m_body->getTransform());
 	}
 
 	return Error::kNone;

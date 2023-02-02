@@ -86,19 +86,33 @@ TriggerComponent::~TriggerComponent()
 
 void TriggerComponent::setSphereVolumeRadius(F32 radius)
 {
+	// Need to re-create it
 	m_shape = getExternalSubsystems(*m_node).m_physicsWorld->newInstance<PhysicsSphere>(radius);
 	m_trigger = getExternalSubsystems(*m_node).m_physicsWorld->newInstance<PhysicsTrigger>(m_shape);
 	m_trigger->setUserData(this);
 	m_trigger->setContactProcessCallback(m_callbacks);
+	m_trigger->setTransform(m_node->getWorldTransform());
 }
 
-Error TriggerComponent::update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated)
+Error TriggerComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	updated = m_callbacks->m_updated;
-	m_callbacks->m_updated = false;
-	m_callbacks->m_enterUpdated = false;
-	m_callbacks->m_insideUpdated = false;
-	m_callbacks->m_exitUpdated = false;
+	updated = false;
+
+	if(m_trigger.isCreated()) [[likely]]
+	{
+		updated = m_callbacks->m_updated;
+		m_callbacks->m_updated = false;
+		m_callbacks->m_enterUpdated = false;
+		m_callbacks->m_insideUpdated = false;
+		m_callbacks->m_exitUpdated = false;
+
+		if(info.m_node->movedThisFrame() && m_trigger.isCreated())
+		{
+			updated = true;
+			m_trigger->setTransform(info.m_node->getWorldTransform());
+		}
+	}
+
 	return Error::kNone;
 }
 

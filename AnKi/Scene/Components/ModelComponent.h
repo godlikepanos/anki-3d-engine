@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Scene/Components/SceneComponent.h>
+#include <AnKi/Scene/Spatial.h>
 #include <AnKi/Resource/Forward.h>
 #include <AnKi/Util/WeakArray.h>
 #include <AnKi/Renderer/RenderQueue.h>
@@ -25,7 +26,7 @@ public:
 
 	~ModelComponent();
 
-	Error loadModelResource(CString filename);
+	void loadModelResource(CString filename);
 
 	const ModelResourcePtr& getModelResource() const
 	{
@@ -54,16 +55,21 @@ private:
 	};
 
 	SceneNode* m_node = nullptr;
-	MoveComponent* m_moveComponent = nullptr;
 	SkinComponent* m_skinComponent = nullptr;
+	Spatial m_spatial;
+
 	ModelResourcePtr m_model;
 
 	SegregatedListsGpuMemoryPoolToken m_gpuSceneMeshLods;
 	SegregatedListsGpuMemoryPoolToken m_gpuSceneUniforms;
+	SegregatedListsGpuMemoryPoolToken m_gpuSceneTransforms;
 	DynamicArray<PatchInfo> m_patchInfos;
 
-	Bool m_dirty = true;
-	Bool m_castsShadow = false;
+	Bool m_dirty : 1 = true;
+	Bool m_castsShadow : 1 = false;
+	Bool m_movedLastFrame : 1 = true;
+	Bool m_firstTimeUpdate : 1 = true; ///< Extra flag in case the component is added in a node that hasn't been moved.
+
 	RenderingTechniqueBit m_presentRenderingTechniques = RenderingTechniqueBit::kNone;
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated);

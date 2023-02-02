@@ -6,6 +6,8 @@
 #pragma once
 
 #include <AnKi/Scene/Components/SceneComponent.h>
+#include <AnKi/Scene/Frustum.h>
+#include <AnKi/Scene/Spatial.h>
 #include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Collision/Aabb.h>
 
@@ -27,19 +29,14 @@ public:
 	/// Set the bounding box size.
 	void setBoxVolumeSize(const Vec3& sizeXYZ)
 	{
-		m_halfBoxSize = sizeXYZ / 2.0f;
+		m_halfSize = sizeXYZ / 2.0f;
 		updateMembers();
 		m_shapeDirty = true;
 	}
 
 	Vec3 getBoxVolumeSize() const
 	{
-		return m_halfBoxSize * 2.0f;
-	}
-
-	Aabb getAabbWorldSpace() const
-	{
-		return Aabb(-m_halfBoxSize + m_worldPosition, m_halfBoxSize + m_worldPosition);
+		return m_halfSize * 2.0f;
 	}
 
 	/// Set the cell size in meters.
@@ -75,10 +72,14 @@ public:
 	/// Get the cell position that will be rendered this frame.
 	Vec3 getRenderPosition() const
 	{
-		ANKI_ASSERT(m_renderPosition > -m_halfBoxSize + m_worldPosition
-					&& m_renderPosition < m_halfBoxSize + m_worldPosition);
+		ANKI_ASSERT(m_renderPosition > -m_halfSize + m_worldPos && m_renderPosition < m_halfSize + m_worldPos);
 		ANKI_ASSERT(m_markedForRendering);
 		return m_renderPosition;
+	}
+
+	WeakArray<Frustum> getFrustums()
+	{
+		return m_frustums;
 	}
 
 	void setupGlobalIlluminationProbeQueueElement(GlobalIlluminationProbeQueueElement& el)
@@ -86,39 +87,32 @@ public:
 		el.m_uuid = m_uuid;
 		el.m_feedbackCallback = giProbeQueueElementFeedbackCallback;
 		el.m_feedbackCallbackUserData = this;
-		el.m_debugDrawCallback = [](RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) {
-			ANKI_ASSERT(userData.getSize() == 1);
-			static_cast<const GlobalIlluminationProbeComponent*>(userData[0])->draw(ctx);
-		};
+		el.m_debugDrawCallback = nullptr;
 		el.m_debugDrawCallbackUserData = this;
 		el.m_renderQueues = {};
-		el.m_aabbMin = -m_halfBoxSize + m_worldPosition;
-		el.m_aabbMax = m_halfBoxSize + m_worldPosition;
+		el.m_aabbMin = -m_halfSize + m_worldPos;
+		el.m_aabbMax = m_halfSize + m_worldPos;
 		el.m_cellCounts = m_cellCounts;
 		el.m_totalCellCount = m_cellCounts.x() * m_cellCounts.y() * m_cellCounts.z();
-		el.m_cellSizes = (m_halfBoxSize * 2.0f) / Vec3(m_cellCounts);
+		el.m_cellSizes = (m_halfSize * 2.0f) / Vec3(m_cellCounts);
 		el.m_fadeDistance = m_fadeDistance;
 	}
 
-	void setWorldPosition(const Vec3& pos)
-	{
-		m_worldPosition = pos;
-		m_shapeDirty = true;
-	}
-
 private:
-	SceneNode* m_node;
 	U64 m_uuid;
-	Vec3 m_halfBoxSize = Vec3(0.5f);
-	Vec3 m_worldPosition = Vec3(0.0f);
+	Vec3 m_halfSize = Vec3(0.5f);
+	Vec3 m_worldPos = Vec3(0.0f);
 	Vec3 m_renderPosition = Vec3(0.0f);
 	UVec3 m_cellCounts = UVec3(2u);
 	F32 m_cellSize = 4.0f; ///< Cell size in meters.
 	F32 m_fadeDistance = 0.2f;
-	Bool m_markedForRendering : 1;
-	Bool m_shapeDirty : 1;
 
-	ImageResourcePtr m_debugImage;
+	Array<Frustum, 6> m_frustums;
+
+	Spatial m_spatial;
+
+	Bool m_markedForRendering : 1 = false;
+	Bool m_shapeDirty : 1 = true;
 
 	static void giProbeQueueElementFeedbackCallback(Bool fillRenderQueuesOnNextFrame, void* userData,
 													const Vec4& eyeWorldPosition)
@@ -126,8 +120,8 @@ private:
 		ANKI_ASSERT(userData);
 		GlobalIlluminationProbeComponent& self = *static_cast<GlobalIlluminationProbeComponent*>(userData);
 		ANKI_ASSERT(!(fillRenderQueuesOnNextFrame
-					  && (eyeWorldPosition.xyz() < -self.m_halfBoxSize + self.m_worldPosition
-						  || eyeWorldPosition.xyz() > self.m_halfBoxSize + self.m_worldPosition)));
+					  && (eyeWorldPosition.xyz() < -self.m_halfSize + self.m_worldPos
+						  || eyeWorldPosition.xyz() > self.m_halfSize + self.m_worldPos)));
 		self.m_markedForRendering = fillRenderQueuesOnNextFrame;
 		self.m_renderPosition = eyeWorldPosition.xyz();
 	}
@@ -135,19 +129,14 @@ private:
 	/// Recalc come values.
 	void updateMembers()
 	{
-		const Vec3 dist = m_halfBoxSize * 2.0f;
+		const Vec3 dist = m_halfSize * 2.0f;
 		m_cellCounts = UVec3(dist / m_cellSize);
 		m_cellCounts = m_cellCounts.max(UVec3(1));
 	}
 
-	void draw(RenderQueueDrawContext& ctx) const;
+	Error update(SceneComponentUpdateInfo& info, Bool& updated);
 
-	Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated)
-	{
-		updated = m_shapeDirty;
-		m_shapeDirty = false;
-		return Error::kNone;
-	}
+	void onDestroy(SceneNode& node);
 };
 /// @}
 

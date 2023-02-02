@@ -5,7 +5,6 @@
 
 #include <AnKi/Scene/Events/JitterMoveEvent.h>
 #include <AnKi/Scene/SceneNode.h>
-#include <AnKi/Scene/Components/MoveComponent.h>
 #include <AnKi/Util/Functions.h>
 
 namespace anki {
@@ -15,10 +14,7 @@ Error JitterMoveEvent::init(Second startTime, Second duration, SceneNode* node)
 	ANKI_ASSERT(node);
 	Event::init(startTime, duration);
 	m_associatedNodes.emplaceBack(getMemoryPool(), node);
-
-	const MoveComponent& move = node->getFirstComponentOfType<MoveComponent>();
-
-	m_originalPos = move.getLocalTransform().getOrigin();
+	m_originalPos = node->getWorldTransform().getOrigin();
 
 	return Error::kNone;
 }
@@ -38,15 +34,13 @@ Error JitterMoveEvent::update([[maybe_unused]] Second prevUpdateTime, Second crn
 {
 	SceneNode* node = m_associatedNodes[0];
 
-	MoveComponent& move = node->getFirstComponentOfType<MoveComponent>();
-
-	Transform trf = move.getLocalTransform();
+	Transform trf = node->getLocalTransform();
 
 	F32 factor = F32(sin(getDelta(crntTime) * kPi));
 
 	trf.getOrigin() = linearInterpolate(m_originalPos, m_newPos, factor);
 
-	move.setLocalTransform(trf);
+	node->setLocalTransform(trf);
 
 	return Error::kNone;
 }

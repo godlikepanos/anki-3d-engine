@@ -62,7 +62,7 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 
 LuaUserDataTypeInfo luaUserDataTypeInfoWeakArraySceneNodePtr = {
-	2932583432340840328, "WeakArraySceneNodePtr", LuaUserData::computeSizeForGarbageCollected<WeakArraySceneNodePtr>(),
+	7110278196161092882, "WeakArraySceneNodePtr", LuaUserData::computeSizeForGarbageCollected<WeakArraySceneNodePtr>(),
 	nullptr, nullptr};
 
 template<>
@@ -182,7 +182,7 @@ static inline void wrapWeakArraySceneNodePtr(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoWeakArrayBodyComponentPtr = {
-	7416622643466936580, "WeakArrayBodyComponentPtr",
+	118929358173584287, "WeakArrayBodyComponentPtr",
 	LuaUserData::computeSizeForGarbageCollected<WeakArrayBodyComponentPtr>(), nullptr, nullptr};
 
 template<>
@@ -301,405 +301,7 @@ static inline void wrapWeakArrayBodyComponentPtr(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoMoveComponent = {-1620086387227254862, "MoveComponent",
-														LuaUserData::computeSizeForGarbageCollected<MoveComponent>(),
-														nullptr, nullptr};
-
-template<>
-const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<MoveComponent>()
-{
-	return luaUserDataTypeInfoMoveComponent;
-}
-
-/// Pre-wrap method MoveComponent::setLocalOrigin.
-static inline int pwrapMoveComponentsetLocalOrigin(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoMoveComponent, ud))
-	{
-		return -1;
-	}
-
-	MoveComponent* self = ud->getData<MoveComponent>();
-
-	// Pop arguments
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
-	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec4, ud)))
-	{
-		return -1;
-	}
-
-	Vec4* iarg0 = ud->getData<Vec4>();
-	const Vec4& arg0(*iarg0);
-
-	// Call the method
-	self->setLocalOrigin(arg0);
-
-	return 0;
-}
-
-/// Wrap method MoveComponent::setLocalOrigin.
-static int wrapMoveComponentsetLocalOrigin(lua_State* l)
-{
-	int res = pwrapMoveComponentsetLocalOrigin(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Pre-wrap method MoveComponent::getLocalOrigin.
-static inline int pwrapMoveComponentgetLocalOrigin(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoMoveComponent, ud))
-	{
-		return -1;
-	}
-
-	MoveComponent* self = ud->getData<MoveComponent>();
-
-	// Call the method
-	const Vec4& ret = self->getLocalOrigin();
-
-	// Push return value
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "Vec4");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
-	ud->initPointed(&luaUserDataTypeInfoVec4, &ret);
-
-	return 1;
-}
-
-/// Wrap method MoveComponent::getLocalOrigin.
-static int wrapMoveComponentgetLocalOrigin(lua_State* l)
-{
-	int res = pwrapMoveComponentgetLocalOrigin(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Pre-wrap method MoveComponent::setLocalRotation.
-static inline int pwrapMoveComponentsetLocalRotation(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoMoveComponent, ud))
-	{
-		return -1;
-	}
-
-	MoveComponent* self = ud->getData<MoveComponent>();
-
-	// Pop arguments
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoMat3x4;
-	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoMat3x4, ud)))
-	{
-		return -1;
-	}
-
-	Mat3x4* iarg0 = ud->getData<Mat3x4>();
-	const Mat3x4& arg0(*iarg0);
-
-	// Call the method
-	self->setLocalRotation(arg0);
-
-	return 0;
-}
-
-/// Wrap method MoveComponent::setLocalRotation.
-static int wrapMoveComponentsetLocalRotation(lua_State* l)
-{
-	int res = pwrapMoveComponentsetLocalRotation(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Pre-wrap method MoveComponent::getLocalRotation.
-static inline int pwrapMoveComponentgetLocalRotation(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoMoveComponent, ud))
-	{
-		return -1;
-	}
-
-	MoveComponent* self = ud->getData<MoveComponent>();
-
-	// Call the method
-	const Mat3x4& ret = self->getLocalRotation();
-
-	// Push return value
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "Mat3x4");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoMat3x4;
-	ud->initPointed(&luaUserDataTypeInfoMat3x4, &ret);
-
-	return 1;
-}
-
-/// Wrap method MoveComponent::getLocalRotation.
-static int wrapMoveComponentgetLocalRotation(lua_State* l)
-{
-	int res = pwrapMoveComponentgetLocalRotation(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Pre-wrap method MoveComponent::setLocalScale.
-static inline int pwrapMoveComponentsetLocalScale(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoMoveComponent, ud))
-	{
-		return -1;
-	}
-
-	MoveComponent* self = ud->getData<MoveComponent>();
-
-	// Pop arguments
-	F32 arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
-	{
-		return -1;
-	}
-
-	// Call the method
-	self->setLocalScale(arg0);
-
-	return 0;
-}
-
-/// Wrap method MoveComponent::setLocalScale.
-static int wrapMoveComponentsetLocalScale(lua_State* l)
-{
-	int res = pwrapMoveComponentsetLocalScale(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Pre-wrap method MoveComponent::getLocalScale.
-static inline int pwrapMoveComponentgetLocalScale(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoMoveComponent, ud))
-	{
-		return -1;
-	}
-
-	MoveComponent* self = ud->getData<MoveComponent>();
-
-	// Call the method
-	F32 ret = self->getLocalScale();
-
-	// Push return value
-	lua_pushnumber(l, lua_Number(ret));
-
-	return 1;
-}
-
-/// Wrap method MoveComponent::getLocalScale.
-static int wrapMoveComponentgetLocalScale(lua_State* l)
-{
-	int res = pwrapMoveComponentgetLocalScale(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Pre-wrap method MoveComponent::setLocalTransform.
-static inline int pwrapMoveComponentsetLocalTransform(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoMoveComponent, ud))
-	{
-		return -1;
-	}
-
-	MoveComponent* self = ud->getData<MoveComponent>();
-
-	// Pop arguments
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoTransform;
-	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoTransform, ud)))
-	{
-		return -1;
-	}
-
-	Transform* iarg0 = ud->getData<Transform>();
-	const Transform& arg0(*iarg0);
-
-	// Call the method
-	self->setLocalTransform(arg0);
-
-	return 0;
-}
-
-/// Wrap method MoveComponent::setLocalTransform.
-static int wrapMoveComponentsetLocalTransform(lua_State* l)
-{
-	int res = pwrapMoveComponentsetLocalTransform(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Pre-wrap method MoveComponent::getLocalTransform.
-static inline int pwrapMoveComponentgetLocalTransform(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoMoveComponent, ud))
-	{
-		return -1;
-	}
-
-	MoveComponent* self = ud->getData<MoveComponent>();
-
-	// Call the method
-	const Transform& ret = self->getLocalTransform();
-
-	// Push return value
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "Transform");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoTransform;
-	ud->initPointed(&luaUserDataTypeInfoTransform, &ret);
-
-	return 1;
-}
-
-/// Wrap method MoveComponent::getLocalTransform.
-static int wrapMoveComponentgetLocalTransform(lua_State* l)
-{
-	int res = pwrapMoveComponentgetLocalTransform(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Wrap class MoveComponent.
-static inline void wrapMoveComponent(lua_State* l)
-{
-	LuaBinder::createClass(l, &luaUserDataTypeInfoMoveComponent);
-	LuaBinder::pushLuaCFuncMethod(l, "setLocalOrigin", wrapMoveComponentsetLocalOrigin);
-	LuaBinder::pushLuaCFuncMethod(l, "getLocalOrigin", wrapMoveComponentgetLocalOrigin);
-	LuaBinder::pushLuaCFuncMethod(l, "setLocalRotation", wrapMoveComponentsetLocalRotation);
-	LuaBinder::pushLuaCFuncMethod(l, "getLocalRotation", wrapMoveComponentgetLocalRotation);
-	LuaBinder::pushLuaCFuncMethod(l, "setLocalScale", wrapMoveComponentsetLocalScale);
-	LuaBinder::pushLuaCFuncMethod(l, "getLocalScale", wrapMoveComponentgetLocalScale);
-	LuaBinder::pushLuaCFuncMethod(l, "setLocalTransform", wrapMoveComponentsetLocalTransform);
-	LuaBinder::pushLuaCFuncMethod(l, "getLocalTransform", wrapMoveComponentgetLocalTransform);
-	lua_settop(l, 0);
-}
-
-LuaUserDataTypeInfo luaUserDataTypeInfoLightComponent = {-4595315366869427277, "LightComponent",
+LuaUserDataTypeInfo luaUserDataTypeInfoLightComponent = {-3021807084594420768, "LightComponent",
 														 LuaUserData::computeSizeForGarbageCollected<LightComponent>(),
 														 nullptr, nullptr};
 
@@ -1263,7 +865,7 @@ static inline void wrapLightComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoDecalComponent = {740153017412343544, "DecalComponent",
+LuaUserDataTypeInfo luaUserDataTypeInfoDecalComponent = {-130913183004368362, "DecalComponent",
 														 LuaUserData::computeSizeForGarbageCollected<DecalComponent>(),
 														 nullptr, nullptr};
 
@@ -1273,14 +875,14 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<DecalComponent>()
 	return luaUserDataTypeInfoDecalComponent;
 }
 
-/// Pre-wrap method DecalComponent::setDiffuseDecal.
-static inline int pwrapDecalComponentsetDiffuseDecal(lua_State* l)
+/// Pre-wrap method DecalComponent::loadDiffuseImageResource.
+static inline int pwrapDecalComponentloadDiffuseImageResource(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 4)))
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 3)))
 	{
 		return -1;
 	}
@@ -1300,37 +902,22 @@ static inline int pwrapDecalComponentsetDiffuseDecal(lua_State* l)
 		return -1;
 	}
 
-	const char* arg1;
-	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 3, arg1)))
-	{
-		return -1;
-	}
-
-	F32 arg2;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 4, arg2)))
+	F32 arg1;
+	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 3, arg1)))
 	{
 		return -1;
 	}
 
 	// Call the method
-	Error ret = self->setDiffuseDecal(arg0, arg1, arg2);
+	self->loadDiffuseImageResource(arg0, arg1);
 
-	// Push return value
-	if(ANKI_UNLIKELY(ret))
-	{
-		lua_pushstring(l, "Glue code returned an error");
-		return -1;
-	}
-
-	lua_pushnumber(l, lua_Number(!!ret));
-
-	return 1;
+	return 0;
 }
 
-/// Wrap method DecalComponent::setDiffuseDecal.
-static int wrapDecalComponentsetDiffuseDecal(lua_State* l)
+/// Wrap method DecalComponent::loadDiffuseImageResource.
+static int wrapDecalComponentloadDiffuseImageResource(lua_State* l)
 {
-	int res = pwrapDecalComponentsetDiffuseDecal(l);
+	int res = pwrapDecalComponentloadDiffuseImageResource(l);
 	if(res >= 0)
 	{
 		return res;
@@ -1340,14 +927,14 @@ static int wrapDecalComponentsetDiffuseDecal(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method DecalComponent::setSpecularRoughnessDecal.
-static inline int pwrapDecalComponentsetSpecularRoughnessDecal(lua_State* l)
+/// Pre-wrap method DecalComponent::loadRoughnessMetalnessImageResource.
+static inline int pwrapDecalComponentloadRoughnessMetalnessImageResource(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 4)))
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 3)))
 	{
 		return -1;
 	}
@@ -1367,37 +954,22 @@ static inline int pwrapDecalComponentsetSpecularRoughnessDecal(lua_State* l)
 		return -1;
 	}
 
-	const char* arg1;
-	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 3, arg1)))
-	{
-		return -1;
-	}
-
-	F32 arg2;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 4, arg2)))
+	F32 arg1;
+	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 3, arg1)))
 	{
 		return -1;
 	}
 
 	// Call the method
-	Error ret = self->setSpecularRoughnessDecal(arg0, arg1, arg2);
+	self->loadRoughnessMetalnessImageResource(arg0, arg1);
 
-	// Push return value
-	if(ANKI_UNLIKELY(ret))
-	{
-		lua_pushstring(l, "Glue code returned an error");
-		return -1;
-	}
-
-	lua_pushnumber(l, lua_Number(!!ret));
-
-	return 1;
+	return 0;
 }
 
-/// Wrap method DecalComponent::setSpecularRoughnessDecal.
-static int wrapDecalComponentsetSpecularRoughnessDecal(lua_State* l)
+/// Wrap method DecalComponent::loadRoughnessMetalnessImageResource.
+static int wrapDecalComponentloadRoughnessMetalnessImageResource(lua_State* l)
 {
-	int res = pwrapDecalComponentsetSpecularRoughnessDecal(l);
+	int res = pwrapDecalComponentloadRoughnessMetalnessImageResource(l);
 	if(res >= 0)
 	{
 		return res;
@@ -1460,14 +1032,15 @@ static int wrapDecalComponentsetBoxVolumeSize(lua_State* l)
 static inline void wrapDecalComponent(lua_State* l)
 {
 	LuaBinder::createClass(l, &luaUserDataTypeInfoDecalComponent);
-	LuaBinder::pushLuaCFuncMethod(l, "setDiffuseDecal", wrapDecalComponentsetDiffuseDecal);
-	LuaBinder::pushLuaCFuncMethod(l, "setSpecularRoughnessDecal", wrapDecalComponentsetSpecularRoughnessDecal);
+	LuaBinder::pushLuaCFuncMethod(l, "loadDiffuseImageResource", wrapDecalComponentloadDiffuseImageResource);
+	LuaBinder::pushLuaCFuncMethod(l, "loadRoughnessMetalnessImageResource",
+								  wrapDecalComponentloadRoughnessMetalnessImageResource);
 	LuaBinder::pushLuaCFuncMethod(l, "setBoxVolumeSize", wrapDecalComponentsetBoxVolumeSize);
 	lua_settop(l, 0);
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoLensFlareComponent = {
-	-2298395752528036249, "LensFlareComponent", LuaUserData::computeSizeForGarbageCollected<LensFlareComponent>(),
+	-8152894503350255257, "LensFlareComponent", LuaUserData::computeSizeForGarbageCollected<LensFlareComponent>(),
 	nullptr, nullptr};
 
 template<>
@@ -1504,18 +1077,9 @@ static inline int pwrapLensFlareComponentloadImageResource(lua_State* l)
 	}
 
 	// Call the method
-	Error ret = self->loadImageResource(arg0);
+	self->loadImageResource(arg0);
 
-	// Push return value
-	if(ANKI_UNLIKELY(ret))
-	{
-		lua_pushstring(l, "Glue code returned an error");
-		return -1;
-	}
-
-	lua_pushnumber(l, lua_Number(!!ret));
-
-	return 1;
+	return 0;
 }
 
 /// Wrap method LensFlareComponent::loadImageResource.
@@ -1639,7 +1203,7 @@ static inline void wrapLensFlareComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoBodyComponent = {5546317979946767184, "BodyComponent",
+LuaUserDataTypeInfo luaUserDataTypeInfoBodyComponent = {-1251082752265953360, "BodyComponent",
 														LuaUserData::computeSizeForGarbageCollected<BodyComponent>(),
 														nullptr, nullptr};
 
@@ -1677,18 +1241,9 @@ static inline int pwrapBodyComponentloadMeshResource(lua_State* l)
 	}
 
 	// Call the method
-	Error ret = self->loadMeshResource(arg0);
+	self->loadMeshResource(arg0);
 
-	// Push return value
-	if(ANKI_UNLIKELY(ret))
-	{
-		lua_pushstring(l, "Glue code returned an error");
-		return -1;
-	}
-
-	lua_pushnumber(l, lua_Number(!!ret));
-
-	return 1;
+	return 0;
 }
 
 /// Wrap method BodyComponent::loadMeshResource.
@@ -1704,8 +1259,8 @@ static int wrapBodyComponentloadMeshResource(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method BodyComponent::setWorldTransform.
-static inline int pwrapBodyComponentsetWorldTransform(lua_State* l)
+/// Pre-wrap method BodyComponent::teleportTo.
+static inline int pwrapBodyComponentteleportTo(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -1735,63 +1290,15 @@ static inline int pwrapBodyComponentsetWorldTransform(lua_State* l)
 	const Transform& arg0(*iarg0);
 
 	// Call the method
-	self->setWorldTransform(arg0);
+	self->teleportTo(arg0);
 
 	return 0;
 }
 
-/// Wrap method BodyComponent::setWorldTransform.
-static int wrapBodyComponentsetWorldTransform(lua_State* l)
+/// Wrap method BodyComponent::teleportTo.
+static int wrapBodyComponentteleportTo(lua_State* l)
 {
-	int res = pwrapBodyComponentsetWorldTransform(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Pre-wrap method BodyComponent::getWorldTransform.
-static inline int pwrapBodyComponentgetWorldTransform(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoBodyComponent, ud))
-	{
-		return -1;
-	}
-
-	BodyComponent* self = ud->getData<BodyComponent>();
-
-	// Call the method
-	Transform ret = self->getWorldTransform();
-
-	// Push return value
-	size = LuaUserData::computeSizeForGarbageCollected<Transform>();
-	voidp = lua_newuserdata(l, size);
-	luaL_setmetatable(l, "Transform");
-	ud = static_cast<LuaUserData*>(voidp);
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoTransform;
-	ud->initGarbageCollected(&luaUserDataTypeInfoTransform);
-	::new(ud->getData<Transform>()) Transform(std::move(ret));
-
-	return 1;
-}
-
-/// Wrap method BodyComponent::getWorldTransform.
-static int wrapBodyComponentgetWorldTransform(lua_State* l)
-{
-	int res = pwrapBodyComponentgetWorldTransform(l);
+	int res = pwrapBodyComponentteleportTo(l);
 	if(res >= 0)
 	{
 		return res;
@@ -1806,13 +1313,12 @@ static inline void wrapBodyComponent(lua_State* l)
 {
 	LuaBinder::createClass(l, &luaUserDataTypeInfoBodyComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "loadMeshResource", wrapBodyComponentloadMeshResource);
-	LuaBinder::pushLuaCFuncMethod(l, "setWorldTransform", wrapBodyComponentsetWorldTransform);
-	LuaBinder::pushLuaCFuncMethod(l, "getWorldTransform", wrapBodyComponentgetWorldTransform);
+	LuaBinder::pushLuaCFuncMethod(l, "teleportTo", wrapBodyComponentteleportTo);
 	lua_settop(l, 0);
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoTriggerComponent = {
-	2156310951712001431, "TriggerComponent", LuaUserData::computeSizeForGarbageCollected<TriggerComponent>(), nullptr,
+	-4739357357431049439, "TriggerComponent", LuaUserData::computeSizeForGarbageCollected<TriggerComponent>(), nullptr,
 	nullptr};
 
 template<>
@@ -1976,7 +1482,7 @@ static inline void wrapTriggerComponent(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoFogDensityComponent = {
-	5865180144883120478, "FogDensityComponent", LuaUserData::computeSizeForGarbageCollected<FogDensityComponent>(),
+	-3730305996270873174, "FogDensityComponent", LuaUserData::computeSizeForGarbageCollected<FogDensityComponent>(),
 	nullptr, nullptr};
 
 template<>
@@ -2179,18 +1685,18 @@ static inline void wrapFogDensityComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoFrustumComponent = {
-	7838666232094395179, "FrustumComponent", LuaUserData::computeSizeForGarbageCollected<FrustumComponent>(), nullptr,
+LuaUserDataTypeInfo luaUserDataTypeInfoCameraComponent = {
+	4619118000795542359, "CameraComponent", LuaUserData::computeSizeForGarbageCollected<CameraComponent>(), nullptr,
 	nullptr};
 
 template<>
-const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<FrustumComponent>()
+const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<CameraComponent>()
 {
-	return luaUserDataTypeInfoFrustumComponent;
+	return luaUserDataTypeInfoCameraComponent;
 }
 
-/// Pre-wrap method FrustumComponent::setPerspective.
-static inline int pwrapFrustumComponentsetPerspective(lua_State* l)
+/// Pre-wrap method CameraComponent::setPerspective.
+static inline int pwrapCameraComponentsetPerspective(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -2202,12 +1708,12 @@ static inline int pwrapFrustumComponentsetPerspective(lua_State* l)
 	}
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoFrustumComponent, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoCameraComponent, ud))
 	{
 		return -1;
 	}
 
-	FrustumComponent* self = ud->getData<FrustumComponent>();
+	CameraComponent* self = ud->getData<CameraComponent>();
 
 	// Pop arguments
 	F32 arg0;
@@ -2240,10 +1746,10 @@ static inline int pwrapFrustumComponentsetPerspective(lua_State* l)
 	return 0;
 }
 
-/// Wrap method FrustumComponent::setPerspective.
-static int wrapFrustumComponentsetPerspective(lua_State* l)
+/// Wrap method CameraComponent::setPerspective.
+static int wrapCameraComponentsetPerspective(lua_State* l)
 {
-	int res = pwrapFrustumComponentsetPerspective(l);
+	int res = pwrapCameraComponentsetPerspective(l);
 	if(res >= 0)
 	{
 		return res;
@@ -2253,8 +1759,8 @@ static int wrapFrustumComponentsetPerspective(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method FrustumComponent::setShadowCascadeDistance.
-static inline int pwrapFrustumComponentsetShadowCascadeDistance(lua_State* l)
+/// Pre-wrap method CameraComponent::setShadowCascadeDistance.
+static inline int pwrapCameraComponentsetShadowCascadeDistance(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -2266,12 +1772,12 @@ static inline int pwrapFrustumComponentsetShadowCascadeDistance(lua_State* l)
 	}
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoFrustumComponent, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoCameraComponent, ud))
 	{
 		return -1;
 	}
 
-	FrustumComponent* self = ud->getData<FrustumComponent>();
+	CameraComponent* self = ud->getData<CameraComponent>();
 
 	// Pop arguments
 	U32 arg0;
@@ -2292,10 +1798,10 @@ static inline int pwrapFrustumComponentsetShadowCascadeDistance(lua_State* l)
 	return 0;
 }
 
-/// Wrap method FrustumComponent::setShadowCascadeDistance.
-static int wrapFrustumComponentsetShadowCascadeDistance(lua_State* l)
+/// Wrap method CameraComponent::setShadowCascadeDistance.
+static int wrapCameraComponentsetShadowCascadeDistance(lua_State* l)
 {
-	int res = pwrapFrustumComponentsetShadowCascadeDistance(l);
+	int res = pwrapCameraComponentsetShadowCascadeDistance(l);
 	if(res >= 0)
 	{
 		return res;
@@ -2305,8 +1811,8 @@ static int wrapFrustumComponentsetShadowCascadeDistance(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method FrustumComponent::getShadowCascadeDistance.
-static inline int pwrapFrustumComponentgetShadowCascadeDistance(lua_State* l)
+/// Pre-wrap method CameraComponent::getShadowCascadeDistance.
+static inline int pwrapCameraComponentgetShadowCascadeDistance(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -2318,12 +1824,12 @@ static inline int pwrapFrustumComponentgetShadowCascadeDistance(lua_State* l)
 	}
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoFrustumComponent, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoCameraComponent, ud))
 	{
 		return -1;
 	}
 
-	FrustumComponent* self = ud->getData<FrustumComponent>();
+	CameraComponent* self = ud->getData<CameraComponent>();
 
 	// Pop arguments
 	U32 arg0;
@@ -2341,10 +1847,10 @@ static inline int pwrapFrustumComponentgetShadowCascadeDistance(lua_State* l)
 	return 1;
 }
 
-/// Wrap method FrustumComponent::getShadowCascadeDistance.
-static int wrapFrustumComponentgetShadowCascadeDistance(lua_State* l)
+/// Wrap method CameraComponent::getShadowCascadeDistance.
+static int wrapCameraComponentgetShadowCascadeDistance(lua_State* l)
 {
-	int res = pwrapFrustumComponentgetShadowCascadeDistance(l);
+	int res = pwrapCameraComponentgetShadowCascadeDistance(l);
 	if(res >= 0)
 	{
 		return res;
@@ -2354,18 +1860,18 @@ static int wrapFrustumComponentgetShadowCascadeDistance(lua_State* l)
 	return 0;
 }
 
-/// Wrap class FrustumComponent.
-static inline void wrapFrustumComponent(lua_State* l)
+/// Wrap class CameraComponent.
+static inline void wrapCameraComponent(lua_State* l)
 {
-	LuaBinder::createClass(l, &luaUserDataTypeInfoFrustumComponent);
-	LuaBinder::pushLuaCFuncMethod(l, "setPerspective", wrapFrustumComponentsetPerspective);
-	LuaBinder::pushLuaCFuncMethod(l, "setShadowCascadeDistance", wrapFrustumComponentsetShadowCascadeDistance);
-	LuaBinder::pushLuaCFuncMethod(l, "getShadowCascadeDistance", wrapFrustumComponentgetShadowCascadeDistance);
+	LuaBinder::createClass(l, &luaUserDataTypeInfoCameraComponent);
+	LuaBinder::pushLuaCFuncMethod(l, "setPerspective", wrapCameraComponentsetPerspective);
+	LuaBinder::pushLuaCFuncMethod(l, "setShadowCascadeDistance", wrapCameraComponentsetShadowCascadeDistance);
+	LuaBinder::pushLuaCFuncMethod(l, "getShadowCascadeDistance", wrapCameraComponentgetShadowCascadeDistance);
 	lua_settop(l, 0);
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoGlobalIlluminationProbeComponent = {
-	8598207783043270175, "GlobalIlluminationProbeComponent",
+	9017352854304236008, "GlobalIlluminationProbeComponent",
 	LuaUserData::computeSizeForGarbageCollected<GlobalIlluminationProbeComponent>(), nullptr, nullptr};
 
 template<>
@@ -2612,7 +2118,7 @@ static inline void wrapGlobalIlluminationProbeComponent(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoReflectionProbeComponent = {
-	2833571482117312123, "ReflectionProbeComponent",
+	3077051473667221328, "ReflectionProbeComponent",
 	LuaUserData::computeSizeForGarbageCollected<ReflectionProbeComponent>(), nullptr, nullptr};
 
 template<>
@@ -2728,7 +2234,7 @@ static inline void wrapReflectionProbeComponent(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoParticleEmitterComponent = {
-	-6166671610891958399, "ParticleEmitterComponent",
+	-1830161350295998241, "ParticleEmitterComponent",
 	LuaUserData::computeSizeForGarbageCollected<ParticleEmitterComponent>(), nullptr, nullptr};
 
 template<>
@@ -2765,18 +2271,9 @@ static inline int pwrapParticleEmitterComponentloadParticleEmitterResource(lua_S
 	}
 
 	// Call the method
-	Error ret = self->loadParticleEmitterResource(arg0);
+	self->loadParticleEmitterResource(arg0);
 
-	// Push return value
-	if(ANKI_UNLIKELY(ret))
-	{
-		lua_pushstring(l, "Glue code returned an error");
-		return -1;
-	}
-
-	lua_pushnumber(l, lua_Number(!!ret));
-
-	return 1;
+	return 0;
 }
 
 /// Wrap method ParticleEmitterComponent::loadParticleEmitterResource.
@@ -2801,81 +2298,7 @@ static inline void wrapParticleEmitterComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoGpuParticleEmitterComponent = {
-	6131347001832418908, "GpuParticleEmitterComponent",
-	LuaUserData::computeSizeForGarbageCollected<GpuParticleEmitterComponent>(), nullptr, nullptr};
-
-template<>
-const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<GpuParticleEmitterComponent>()
-{
-	return luaUserDataTypeInfoGpuParticleEmitterComponent;
-}
-
-/// Pre-wrap method GpuParticleEmitterComponent::loadParticleEmitterResource.
-static inline int pwrapGpuParticleEmitterComponentloadParticleEmitterResource(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoGpuParticleEmitterComponent, ud))
-	{
-		return -1;
-	}
-
-	GpuParticleEmitterComponent* self = ud->getData<GpuParticleEmitterComponent>();
-
-	// Pop arguments
-	const char* arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
-	{
-		return -1;
-	}
-
-	// Call the method
-	Error ret = self->loadParticleEmitterResource(arg0);
-
-	// Push return value
-	if(ANKI_UNLIKELY(ret))
-	{
-		lua_pushstring(l, "Glue code returned an error");
-		return -1;
-	}
-
-	lua_pushnumber(l, lua_Number(!!ret));
-
-	return 1;
-}
-
-/// Wrap method GpuParticleEmitterComponent::loadParticleEmitterResource.
-static int wrapGpuParticleEmitterComponentloadParticleEmitterResource(lua_State* l)
-{
-	int res = pwrapGpuParticleEmitterComponentloadParticleEmitterResource(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Wrap class GpuParticleEmitterComponent.
-static inline void wrapGpuParticleEmitterComponent(lua_State* l)
-{
-	LuaBinder::createClass(l, &luaUserDataTypeInfoGpuParticleEmitterComponent);
-	LuaBinder::pushLuaCFuncMethod(l, "loadParticleEmitterResource",
-								  wrapGpuParticleEmitterComponentloadParticleEmitterResource);
-	lua_settop(l, 0);
-}
-
-LuaUserDataTypeInfo luaUserDataTypeInfoModelComponent = {5260828216114469509, "ModelComponent",
+LuaUserDataTypeInfo luaUserDataTypeInfoModelComponent = {9721030252478263, "ModelComponent",
 														 LuaUserData::computeSizeForGarbageCollected<ModelComponent>(),
 														 nullptr, nullptr};
 
@@ -2913,18 +2336,9 @@ static inline int pwrapModelComponentloadModelResource(lua_State* l)
 	}
 
 	// Call the method
-	Error ret = self->loadModelResource(arg0);
+	self->loadModelResource(arg0);
 
-	// Push return value
-	if(ANKI_UNLIKELY(ret))
-	{
-		lua_pushstring(l, "Glue code returned an error");
-		return -1;
-	}
-
-	lua_pushnumber(l, lua_Number(!!ret));
-
-	return 1;
+	return 0;
 }
 
 /// Wrap method ModelComponent::loadModelResource.
@@ -2948,7 +2362,7 @@ static inline void wrapModelComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoSkinComponent = {2239714295110433902, "SkinComponent",
+LuaUserDataTypeInfo luaUserDataTypeInfoSkinComponent = {7088584368847256773, "SkinComponent",
 														LuaUserData::computeSizeForGarbageCollected<SkinComponent>(),
 														nullptr, nullptr};
 
@@ -2986,18 +2400,9 @@ static inline int pwrapSkinComponentloadSkeletonResource(lua_State* l)
 	}
 
 	// Call the method
-	Error ret = self->loadSkeletonResource(arg0);
+	self->loadSkeletonResource(arg0);
 
-	// Push return value
-	if(ANKI_UNLIKELY(ret))
-	{
-		lua_pushstring(l, "Glue code returned an error");
-		return -1;
-	}
-
-	lua_pushnumber(l, lua_Number(!!ret));
-
-	return 1;
+	return 0;
 }
 
 /// Wrap method SkinComponent::loadSkeletonResource.
@@ -3022,7 +2427,7 @@ static inline void wrapSkinComponent(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoSkyboxComponent = {
-	-5753471164249885311, "SkyboxComponent", LuaUserData::computeSizeForGarbageCollected<SkyboxComponent>(), nullptr,
+	-8224921000767654655, "SkyboxComponent", LuaUserData::computeSizeForGarbageCollected<SkyboxComponent>(), nullptr,
 	nullptr};
 
 template<>
@@ -3080,8 +2485,8 @@ static int wrapSkyboxComponentsetSolidColor(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method SkyboxComponent::setImage.
-static inline int pwrapSkyboxComponentsetImage(lua_State* l)
+/// Pre-wrap method SkyboxComponent::loadImageResource.
+static inline int pwrapSkyboxComponentloadImageResource(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -3108,15 +2513,15 @@ static inline int pwrapSkyboxComponentsetImage(lua_State* l)
 	}
 
 	// Call the method
-	self->setImage(arg0);
+	self->loadImageResource(arg0);
 
 	return 0;
 }
 
-/// Wrap method SkyboxComponent::setImage.
-static int wrapSkyboxComponentsetImage(lua_State* l)
+/// Wrap method SkyboxComponent::loadImageResource.
+static int wrapSkyboxComponentloadImageResource(lua_State* l)
 {
-	int res = pwrapSkyboxComponentsetImage(l);
+	int res = pwrapSkyboxComponentloadImageResource(l);
 	if(res >= 0)
 	{
 		return res;
@@ -3315,7 +2720,7 @@ static inline void wrapSkyboxComponent(lua_State* l)
 {
 	LuaBinder::createClass(l, &luaUserDataTypeInfoSkyboxComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "setSolidColor", wrapSkyboxComponentsetSolidColor);
-	LuaBinder::pushLuaCFuncMethod(l, "setImage", wrapSkyboxComponentsetImage);
+	LuaBinder::pushLuaCFuncMethod(l, "loadImageResource", wrapSkyboxComponentloadImageResource);
 	LuaBinder::pushLuaCFuncMethod(l, "setMinFogDensity", wrapSkyboxComponentsetMinFogDensity);
 	LuaBinder::pushLuaCFuncMethod(l, "setMaxFogDensity", wrapSkyboxComponentsetMaxFogDensity);
 	LuaBinder::pushLuaCFuncMethod(l, "setHeightOfMinFogDensity", wrapSkyboxComponentsetHeightOfMinFogDensity);
@@ -3324,7 +2729,7 @@ static inline void wrapSkyboxComponent(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode = {
-	-296763319637754850, "SceneNode", LuaUserData::computeSizeForGarbageCollected<SceneNode>(), nullptr, nullptr};
+	5955067152810202589, "SceneNode", LuaUserData::computeSizeForGarbageCollected<SceneNode>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<SceneNode>()
@@ -3462,8 +2867,8 @@ static int wrapSceneNodesetMarkedForDeletion(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method SceneNode::tryGetFirstComponentOfType<MoveComponent>.
-static inline int pwrapSceneNodegetMoveComponent(lua_State* l)
+/// Pre-wrap method SceneNode::newComponent<LightComponent>.
+static inline int pwrapSceneNodenewLightComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -3483,59 +2888,7 @@ static inline int pwrapSceneNodegetMoveComponent(lua_State* l)
 	SceneNode* self = ud->getData<SceneNode>();
 
 	// Call the method
-	MoveComponent* ret = self->tryGetFirstComponentOfType<MoveComponent>();
-
-	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
-	{
-		lua_pushstring(l, "Glue code returned nullptr");
-		return -1;
-	}
-
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "MoveComponent");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoMoveComponent;
-	ud->initPointed(&luaUserDataTypeInfoMoveComponent, ret);
-
-	return 1;
-}
-
-/// Wrap method SceneNode::tryGetFirstComponentOfType<MoveComponent>.
-static int wrapSceneNodegetMoveComponent(lua_State* l)
-{
-	int res = pwrapSceneNodegetMoveComponent(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Pre-wrap method SceneNode::tryGetFirstComponentOfType<LightComponent>.
-static inline int pwrapSceneNodegetLightComponent(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneNode, ud))
-	{
-		return -1;
-	}
-
-	SceneNode* self = ud->getData<SceneNode>();
-
-	// Call the method
-	LightComponent* ret = self->tryGetFirstComponentOfType<LightComponent>();
+	LightComponent* ret = self->newComponent<LightComponent>();
 
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
@@ -3553,10 +2906,10 @@ static inline int pwrapSceneNodegetLightComponent(lua_State* l)
 	return 1;
 }
 
-/// Wrap method SceneNode::tryGetFirstComponentOfType<LightComponent>.
-static int wrapSceneNodegetLightComponent(lua_State* l)
+/// Wrap method SceneNode::newComponent<LightComponent>.
+static int wrapSceneNodenewLightComponent(lua_State* l)
 {
-	int res = pwrapSceneNodegetLightComponent(l);
+	int res = pwrapSceneNodenewLightComponent(l);
 	if(res >= 0)
 	{
 		return res;
@@ -3566,8 +2919,8 @@ static int wrapSceneNodegetLightComponent(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method SceneNode::tryGetFirstComponentOfType<LensFlareComponent>.
-static inline int pwrapSceneNodegetLensFlareComponent(lua_State* l)
+/// Pre-wrap method SceneNode::newComponent<LensFlareComponent>.
+static inline int pwrapSceneNodenewLensFlareComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -3587,7 +2940,7 @@ static inline int pwrapSceneNodegetLensFlareComponent(lua_State* l)
 	SceneNode* self = ud->getData<SceneNode>();
 
 	// Call the method
-	LensFlareComponent* ret = self->tryGetFirstComponentOfType<LensFlareComponent>();
+	LensFlareComponent* ret = self->newComponent<LensFlareComponent>();
 
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
@@ -3605,10 +2958,10 @@ static inline int pwrapSceneNodegetLensFlareComponent(lua_State* l)
 	return 1;
 }
 
-/// Wrap method SceneNode::tryGetFirstComponentOfType<LensFlareComponent>.
-static int wrapSceneNodegetLensFlareComponent(lua_State* l)
+/// Wrap method SceneNode::newComponent<LensFlareComponent>.
+static int wrapSceneNodenewLensFlareComponent(lua_State* l)
 {
-	int res = pwrapSceneNodegetLensFlareComponent(l);
+	int res = pwrapSceneNodenewLensFlareComponent(l);
 	if(res >= 0)
 	{
 		return res;
@@ -3618,8 +2971,8 @@ static int wrapSceneNodegetLensFlareComponent(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method SceneNode::tryGetFirstComponentOfType<DecalComponent>.
-static inline int pwrapSceneNodegetDecalComponent(lua_State* l)
+/// Pre-wrap method SceneNode::newComponent<DecalComponent>.
+static inline int pwrapSceneNodenewDecalComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -3639,7 +2992,7 @@ static inline int pwrapSceneNodegetDecalComponent(lua_State* l)
 	SceneNode* self = ud->getData<SceneNode>();
 
 	// Call the method
-	DecalComponent* ret = self->tryGetFirstComponentOfType<DecalComponent>();
+	DecalComponent* ret = self->newComponent<DecalComponent>();
 
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
@@ -3657,10 +3010,10 @@ static inline int pwrapSceneNodegetDecalComponent(lua_State* l)
 	return 1;
 }
 
-/// Wrap method SceneNode::tryGetFirstComponentOfType<DecalComponent>.
-static int wrapSceneNodegetDecalComponent(lua_State* l)
+/// Wrap method SceneNode::newComponent<DecalComponent>.
+static int wrapSceneNodenewDecalComponent(lua_State* l)
 {
-	int res = pwrapSceneNodegetDecalComponent(l);
+	int res = pwrapSceneNodenewDecalComponent(l);
 	if(res >= 0)
 	{
 		return res;
@@ -3670,8 +3023,8 @@ static int wrapSceneNodegetDecalComponent(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method SceneNode::tryGetFirstComponentOfType<TriggerComponent>.
-static inline int pwrapSceneNodegetTriggerComponent(lua_State* l)
+/// Pre-wrap method SceneNode::newComponent<TriggerComponent>.
+static inline int pwrapSceneNodenewTriggerComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -3691,7 +3044,7 @@ static inline int pwrapSceneNodegetTriggerComponent(lua_State* l)
 	SceneNode* self = ud->getData<SceneNode>();
 
 	// Call the method
-	TriggerComponent* ret = self->tryGetFirstComponentOfType<TriggerComponent>();
+	TriggerComponent* ret = self->newComponent<TriggerComponent>();
 
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
@@ -3709,10 +3062,10 @@ static inline int pwrapSceneNodegetTriggerComponent(lua_State* l)
 	return 1;
 }
 
-/// Wrap method SceneNode::tryGetFirstComponentOfType<TriggerComponent>.
-static int wrapSceneNodegetTriggerComponent(lua_State* l)
+/// Wrap method SceneNode::newComponent<TriggerComponent>.
+static int wrapSceneNodenewTriggerComponent(lua_State* l)
 {
-	int res = pwrapSceneNodegetTriggerComponent(l);
+	int res = pwrapSceneNodenewTriggerComponent(l);
 	if(res >= 0)
 	{
 		return res;
@@ -3722,8 +3075,8 @@ static int wrapSceneNodegetTriggerComponent(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method SceneNode::tryGetFirstComponentOfType<FogDensityComponent>.
-static inline int pwrapSceneNodegetFogDensityComponent(lua_State* l)
+/// Pre-wrap method SceneNode::newComponent<FogDensityComponent>.
+static inline int pwrapSceneNodenewFogDensityComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -3743,7 +3096,7 @@ static inline int pwrapSceneNodegetFogDensityComponent(lua_State* l)
 	SceneNode* self = ud->getData<SceneNode>();
 
 	// Call the method
-	FogDensityComponent* ret = self->tryGetFirstComponentOfType<FogDensityComponent>();
+	FogDensityComponent* ret = self->newComponent<FogDensityComponent>();
 
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
@@ -3761,10 +3114,10 @@ static inline int pwrapSceneNodegetFogDensityComponent(lua_State* l)
 	return 1;
 }
 
-/// Wrap method SceneNode::tryGetFirstComponentOfType<FogDensityComponent>.
-static int wrapSceneNodegetFogDensityComponent(lua_State* l)
+/// Wrap method SceneNode::newComponent<FogDensityComponent>.
+static int wrapSceneNodenewFogDensityComponent(lua_State* l)
 {
-	int res = pwrapSceneNodegetFogDensityComponent(l);
+	int res = pwrapSceneNodenewFogDensityComponent(l);
 	if(res >= 0)
 	{
 		return res;
@@ -3774,8 +3127,8 @@ static int wrapSceneNodegetFogDensityComponent(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method SceneNode::tryGetFirstComponentOfType<FrustumComponent>.
-static inline int pwrapSceneNodegetFrustumComponent(lua_State* l)
+/// Pre-wrap method SceneNode::newComponent<CameraComponent>.
+static inline int pwrapSceneNodenewCameraComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -3795,7 +3148,7 @@ static inline int pwrapSceneNodegetFrustumComponent(lua_State* l)
 	SceneNode* self = ud->getData<SceneNode>();
 
 	// Call the method
-	FrustumComponent* ret = self->tryGetFirstComponentOfType<FrustumComponent>();
+	CameraComponent* ret = self->newComponent<CameraComponent>();
 
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
@@ -3806,17 +3159,17 @@ static inline int pwrapSceneNodegetFrustumComponent(lua_State* l)
 
 	voidp = lua_newuserdata(l, sizeof(LuaUserData));
 	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "FrustumComponent");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoFrustumComponent;
-	ud->initPointed(&luaUserDataTypeInfoFrustumComponent, ret);
+	luaL_setmetatable(l, "CameraComponent");
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoCameraComponent;
+	ud->initPointed(&luaUserDataTypeInfoCameraComponent, ret);
 
 	return 1;
 }
 
-/// Wrap method SceneNode::tryGetFirstComponentOfType<FrustumComponent>.
-static int wrapSceneNodegetFrustumComponent(lua_State* l)
+/// Wrap method SceneNode::newComponent<CameraComponent>.
+static int wrapSceneNodenewCameraComponent(lua_State* l)
 {
-	int res = pwrapSceneNodegetFrustumComponent(l);
+	int res = pwrapSceneNodenewCameraComponent(l);
 	if(res >= 0)
 	{
 		return res;
@@ -3826,8 +3179,8 @@ static int wrapSceneNodegetFrustumComponent(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method SceneNode::tryGetFirstComponentOfType<GlobalIlluminationProbeComponent>.
-static inline int pwrapSceneNodegetGlobalIlluminationProbeComponent(lua_State* l)
+/// Pre-wrap method SceneNode::newComponent<GlobalIlluminationProbeComponent>.
+static inline int pwrapSceneNodenewGlobalIlluminationProbeComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -3847,7 +3200,7 @@ static inline int pwrapSceneNodegetGlobalIlluminationProbeComponent(lua_State* l
 	SceneNode* self = ud->getData<SceneNode>();
 
 	// Call the method
-	GlobalIlluminationProbeComponent* ret = self->tryGetFirstComponentOfType<GlobalIlluminationProbeComponent>();
+	GlobalIlluminationProbeComponent* ret = self->newComponent<GlobalIlluminationProbeComponent>();
 
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
@@ -3865,10 +3218,10 @@ static inline int pwrapSceneNodegetGlobalIlluminationProbeComponent(lua_State* l
 	return 1;
 }
 
-/// Wrap method SceneNode::tryGetFirstComponentOfType<GlobalIlluminationProbeComponent>.
-static int wrapSceneNodegetGlobalIlluminationProbeComponent(lua_State* l)
+/// Wrap method SceneNode::newComponent<GlobalIlluminationProbeComponent>.
+static int wrapSceneNodenewGlobalIlluminationProbeComponent(lua_State* l)
 {
-	int res = pwrapSceneNodegetGlobalIlluminationProbeComponent(l);
+	int res = pwrapSceneNodenewGlobalIlluminationProbeComponent(l);
 	if(res >= 0)
 	{
 		return res;
@@ -3878,8 +3231,8 @@ static int wrapSceneNodegetGlobalIlluminationProbeComponent(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method SceneNode::tryGetFirstComponentOfType<ReflectionProbeComponent>.
-static inline int pwrapSceneNodegetReflectionProbeComponent(lua_State* l)
+/// Pre-wrap method SceneNode::newComponent<ReflectionProbeComponent>.
+static inline int pwrapSceneNodenewReflectionProbeComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -3899,7 +3252,7 @@ static inline int pwrapSceneNodegetReflectionProbeComponent(lua_State* l)
 	SceneNode* self = ud->getData<SceneNode>();
 
 	// Call the method
-	ReflectionProbeComponent* ret = self->tryGetFirstComponentOfType<ReflectionProbeComponent>();
+	ReflectionProbeComponent* ret = self->newComponent<ReflectionProbeComponent>();
 
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
@@ -3917,10 +3270,10 @@ static inline int pwrapSceneNodegetReflectionProbeComponent(lua_State* l)
 	return 1;
 }
 
-/// Wrap method SceneNode::tryGetFirstComponentOfType<ReflectionProbeComponent>.
-static int wrapSceneNodegetReflectionProbeComponent(lua_State* l)
+/// Wrap method SceneNode::newComponent<ReflectionProbeComponent>.
+static int wrapSceneNodenewReflectionProbeComponent(lua_State* l)
 {
-	int res = pwrapSceneNodegetReflectionProbeComponent(l);
+	int res = pwrapSceneNodenewReflectionProbeComponent(l);
 	if(res >= 0)
 	{
 		return res;
@@ -3930,8 +3283,8 @@ static int wrapSceneNodegetReflectionProbeComponent(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method SceneNode::tryGetFirstComponentOfType<BodyComponent>.
-static inline int pwrapSceneNodegetBodyComponent(lua_State* l)
+/// Pre-wrap method SceneNode::newComponent<BodyComponent>.
+static inline int pwrapSceneNodenewBodyComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -3951,7 +3304,7 @@ static inline int pwrapSceneNodegetBodyComponent(lua_State* l)
 	SceneNode* self = ud->getData<SceneNode>();
 
 	// Call the method
-	BodyComponent* ret = self->tryGetFirstComponentOfType<BodyComponent>();
+	BodyComponent* ret = self->newComponent<BodyComponent>();
 
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
@@ -3969,10 +3322,10 @@ static inline int pwrapSceneNodegetBodyComponent(lua_State* l)
 	return 1;
 }
 
-/// Wrap method SceneNode::tryGetFirstComponentOfType<BodyComponent>.
-static int wrapSceneNodegetBodyComponent(lua_State* l)
+/// Wrap method SceneNode::newComponent<BodyComponent>.
+static int wrapSceneNodenewBodyComponent(lua_State* l)
 {
-	int res = pwrapSceneNodegetBodyComponent(l);
+	int res = pwrapSceneNodenewBodyComponent(l);
 	if(res >= 0)
 	{
 		return res;
@@ -3982,8 +3335,8 @@ static int wrapSceneNodegetBodyComponent(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method SceneNode::tryGetFirstComponentOfType<ParticleEmitterComponent>.
-static inline int pwrapSceneNodegetParticleEmitterComponent(lua_State* l)
+/// Pre-wrap method SceneNode::newComponent<ParticleEmitterComponent>.
+static inline int pwrapSceneNodenewParticleEmitterComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -4003,7 +3356,7 @@ static inline int pwrapSceneNodegetParticleEmitterComponent(lua_State* l)
 	SceneNode* self = ud->getData<SceneNode>();
 
 	// Call the method
-	ParticleEmitterComponent* ret = self->tryGetFirstComponentOfType<ParticleEmitterComponent>();
+	ParticleEmitterComponent* ret = self->newComponent<ParticleEmitterComponent>();
 
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
@@ -4021,10 +3374,10 @@ static inline int pwrapSceneNodegetParticleEmitterComponent(lua_State* l)
 	return 1;
 }
 
-/// Wrap method SceneNode::tryGetFirstComponentOfType<ParticleEmitterComponent>.
-static int wrapSceneNodegetParticleEmitterComponent(lua_State* l)
+/// Wrap method SceneNode::newComponent<ParticleEmitterComponent>.
+static int wrapSceneNodenewParticleEmitterComponent(lua_State* l)
 {
-	int res = pwrapSceneNodegetParticleEmitterComponent(l);
+	int res = pwrapSceneNodenewParticleEmitterComponent(l);
 	if(res >= 0)
 	{
 		return res;
@@ -4034,8 +3387,8 @@ static int wrapSceneNodegetParticleEmitterComponent(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method SceneNode::tryGetFirstComponentOfType<GpuParticleEmitterComponent>.
-static inline int pwrapSceneNodegetGpuParticleEmitterComponent(lua_State* l)
+/// Pre-wrap method SceneNode::newComponent<ModelComponent>.
+static inline int pwrapSceneNodenewModelComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -4055,59 +3408,7 @@ static inline int pwrapSceneNodegetGpuParticleEmitterComponent(lua_State* l)
 	SceneNode* self = ud->getData<SceneNode>();
 
 	// Call the method
-	GpuParticleEmitterComponent* ret = self->tryGetFirstComponentOfType<GpuParticleEmitterComponent>();
-
-	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
-	{
-		lua_pushstring(l, "Glue code returned nullptr");
-		return -1;
-	}
-
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "GpuParticleEmitterComponent");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoGpuParticleEmitterComponent;
-	ud->initPointed(&luaUserDataTypeInfoGpuParticleEmitterComponent, ret);
-
-	return 1;
-}
-
-/// Wrap method SceneNode::tryGetFirstComponentOfType<GpuParticleEmitterComponent>.
-static int wrapSceneNodegetGpuParticleEmitterComponent(lua_State* l)
-{
-	int res = pwrapSceneNodegetGpuParticleEmitterComponent(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Pre-wrap method SceneNode::tryGetFirstComponentOfType<ModelComponent>.
-static inline int pwrapSceneNodegetModelComponent(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneNode, ud))
-	{
-		return -1;
-	}
-
-	SceneNode* self = ud->getData<SceneNode>();
-
-	// Call the method
-	ModelComponent* ret = self->tryGetFirstComponentOfType<ModelComponent>();
+	ModelComponent* ret = self->newComponent<ModelComponent>();
 
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
@@ -4125,10 +3426,10 @@ static inline int pwrapSceneNodegetModelComponent(lua_State* l)
 	return 1;
 }
 
-/// Wrap method SceneNode::tryGetFirstComponentOfType<ModelComponent>.
-static int wrapSceneNodegetModelComponent(lua_State* l)
+/// Wrap method SceneNode::newComponent<ModelComponent>.
+static int wrapSceneNodenewModelComponent(lua_State* l)
 {
-	int res = pwrapSceneNodegetModelComponent(l);
+	int res = pwrapSceneNodenewModelComponent(l);
 	if(res >= 0)
 	{
 		return res;
@@ -4138,8 +3439,8 @@ static int wrapSceneNodegetModelComponent(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method SceneNode::tryGetFirstComponentOfType<SkinComponent>.
-static inline int pwrapSceneNodegetSkinComponent(lua_State* l)
+/// Pre-wrap method SceneNode::newComponent<SkinComponent>.
+static inline int pwrapSceneNodenewSkinComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -4159,7 +3460,7 @@ static inline int pwrapSceneNodegetSkinComponent(lua_State* l)
 	SceneNode* self = ud->getData<SceneNode>();
 
 	// Call the method
-	SkinComponent* ret = self->tryGetFirstComponentOfType<SkinComponent>();
+	SkinComponent* ret = self->newComponent<SkinComponent>();
 
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
@@ -4177,10 +3478,10 @@ static inline int pwrapSceneNodegetSkinComponent(lua_State* l)
 	return 1;
 }
 
-/// Wrap method SceneNode::tryGetFirstComponentOfType<SkinComponent>.
-static int wrapSceneNodegetSkinComponent(lua_State* l)
+/// Wrap method SceneNode::newComponent<SkinComponent>.
+static int wrapSceneNodenewSkinComponent(lua_State* l)
 {
-	int res = pwrapSceneNodegetSkinComponent(l);
+	int res = pwrapSceneNodenewSkinComponent(l);
 	if(res >= 0)
 	{
 		return res;
@@ -4190,8 +3491,8 @@ static int wrapSceneNodegetSkinComponent(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method SceneNode::tryGetFirstComponentOfType<SkyboxComponent>.
-static inline int pwrapSceneNodegetSkyboxComponent(lua_State* l)
+/// Pre-wrap method SceneNode::newComponent<SkyboxComponent>.
+static inline int pwrapSceneNodenewSkyboxComponent(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -4211,7 +3512,7 @@ static inline int pwrapSceneNodegetSkyboxComponent(lua_State* l)
 	SceneNode* self = ud->getData<SceneNode>();
 
 	// Call the method
-	SkyboxComponent* ret = self->tryGetFirstComponentOfType<SkyboxComponent>();
+	SkyboxComponent* ret = self->newComponent<SkyboxComponent>();
 
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
@@ -4229,10 +3530,10 @@ static inline int pwrapSceneNodegetSkyboxComponent(lua_State* l)
 	return 1;
 }
 
-/// Wrap method SceneNode::tryGetFirstComponentOfType<SkyboxComponent>.
-static int wrapSceneNodegetSkyboxComponent(lua_State* l)
+/// Wrap method SceneNode::newComponent<SkyboxComponent>.
+static int wrapSceneNodenewSkyboxComponent(lua_State* l)
 {
-	int res = pwrapSceneNodegetSkyboxComponent(l);
+	int res = pwrapSceneNodenewSkyboxComponent(l);
 	if(res >= 0)
 	{
 		return res;
@@ -4249,919 +3550,25 @@ static inline void wrapSceneNode(lua_State* l)
 	LuaBinder::pushLuaCFuncMethod(l, "getName", wrapSceneNodegetName);
 	LuaBinder::pushLuaCFuncMethod(l, "addChild", wrapSceneNodeaddChild);
 	LuaBinder::pushLuaCFuncMethod(l, "setMarkedForDeletion", wrapSceneNodesetMarkedForDeletion);
-	LuaBinder::pushLuaCFuncMethod(l, "getMoveComponent", wrapSceneNodegetMoveComponent);
-	LuaBinder::pushLuaCFuncMethod(l, "getLightComponent", wrapSceneNodegetLightComponent);
-	LuaBinder::pushLuaCFuncMethod(l, "getLensFlareComponent", wrapSceneNodegetLensFlareComponent);
-	LuaBinder::pushLuaCFuncMethod(l, "getDecalComponent", wrapSceneNodegetDecalComponent);
-	LuaBinder::pushLuaCFuncMethod(l, "getTriggerComponent", wrapSceneNodegetTriggerComponent);
-	LuaBinder::pushLuaCFuncMethod(l, "getFogDensityComponent", wrapSceneNodegetFogDensityComponent);
-	LuaBinder::pushLuaCFuncMethod(l, "getFrustumComponent", wrapSceneNodegetFrustumComponent);
-	LuaBinder::pushLuaCFuncMethod(l, "getGlobalIlluminationProbeComponent",
-								  wrapSceneNodegetGlobalIlluminationProbeComponent);
-	LuaBinder::pushLuaCFuncMethod(l, "getReflectionProbeComponent", wrapSceneNodegetReflectionProbeComponent);
-	LuaBinder::pushLuaCFuncMethod(l, "getBodyComponent", wrapSceneNodegetBodyComponent);
-	LuaBinder::pushLuaCFuncMethod(l, "getParticleEmitterComponent", wrapSceneNodegetParticleEmitterComponent);
-	LuaBinder::pushLuaCFuncMethod(l, "getGpuParticleEmitterComponent", wrapSceneNodegetGpuParticleEmitterComponent);
-	LuaBinder::pushLuaCFuncMethod(l, "getModelComponent", wrapSceneNodegetModelComponent);
-	LuaBinder::pushLuaCFuncMethod(l, "getSkinComponent", wrapSceneNodegetSkinComponent);
-	LuaBinder::pushLuaCFuncMethod(l, "getSkyboxComponent", wrapSceneNodegetSkyboxComponent);
-	lua_settop(l, 0);
-}
-
-LuaUserDataTypeInfo luaUserDataTypeInfoModelNode = {
-	809850193274775486, "ModelNode", LuaUserData::computeSizeForGarbageCollected<ModelNode>(), nullptr, nullptr};
-
-template<>
-const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<ModelNode>()
-{
-	return luaUserDataTypeInfoModelNode;
-}
-
-/// Pre-wrap method ModelNode::getSceneNodeBase.
-static inline int pwrapModelNodegetSceneNodeBase(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoModelNode, ud))
-	{
-		return -1;
-	}
-
-	ModelNode* self = ud->getData<ModelNode>();
-
-	// Call the method
-	SceneNode& ret = *self;
-
-	// Push return value
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "SceneNode");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	ud->initPointed(&luaUserDataTypeInfoSceneNode, &ret);
-
-	return 1;
-}
-
-/// Wrap method ModelNode::getSceneNodeBase.
-static int wrapModelNodegetSceneNodeBase(lua_State* l)
-{
-	int res = pwrapModelNodegetSceneNodeBase(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Wrap class ModelNode.
-static inline void wrapModelNode(lua_State* l)
-{
-	LuaBinder::createClass(l, &luaUserDataTypeInfoModelNode);
-	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapModelNodegetSceneNodeBase);
-	lua_settop(l, 0);
-}
-
-LuaUserDataTypeInfo luaUserDataTypeInfoPerspectiveCameraNode = {
-	-1537597433130477556, "PerspectiveCameraNode", LuaUserData::computeSizeForGarbageCollected<PerspectiveCameraNode>(),
-	nullptr, nullptr};
-
-template<>
-const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<PerspectiveCameraNode>()
-{
-	return luaUserDataTypeInfoPerspectiveCameraNode;
-}
-
-/// Pre-wrap method PerspectiveCameraNode::getSceneNodeBase.
-static inline int pwrapPerspectiveCameraNodegetSceneNodeBase(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoPerspectiveCameraNode, ud))
-	{
-		return -1;
-	}
-
-	PerspectiveCameraNode* self = ud->getData<PerspectiveCameraNode>();
-
-	// Call the method
-	SceneNode& ret = *self;
-
-	// Push return value
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "SceneNode");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	ud->initPointed(&luaUserDataTypeInfoSceneNode, &ret);
-
-	return 1;
-}
-
-/// Wrap method PerspectiveCameraNode::getSceneNodeBase.
-static int wrapPerspectiveCameraNodegetSceneNodeBase(lua_State* l)
-{
-	int res = pwrapPerspectiveCameraNodegetSceneNodeBase(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Wrap class PerspectiveCameraNode.
-static inline void wrapPerspectiveCameraNode(lua_State* l)
-{
-	LuaBinder::createClass(l, &luaUserDataTypeInfoPerspectiveCameraNode);
-	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapPerspectiveCameraNodegetSceneNodeBase);
-	lua_settop(l, 0);
-}
-
-LuaUserDataTypeInfo luaUserDataTypeInfoPointLightNode = {-29245873346871954, "PointLightNode",
-														 LuaUserData::computeSizeForGarbageCollected<PointLightNode>(),
-														 nullptr, nullptr};
-
-template<>
-const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<PointLightNode>()
-{
-	return luaUserDataTypeInfoPointLightNode;
-}
-
-/// Pre-wrap method PointLightNode::getSceneNodeBase.
-static inline int pwrapPointLightNodegetSceneNodeBase(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoPointLightNode, ud))
-	{
-		return -1;
-	}
-
-	PointLightNode* self = ud->getData<PointLightNode>();
-
-	// Call the method
-	SceneNode& ret = *self;
-
-	// Push return value
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "SceneNode");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	ud->initPointed(&luaUserDataTypeInfoSceneNode, &ret);
-
-	return 1;
-}
-
-/// Wrap method PointLightNode::getSceneNodeBase.
-static int wrapPointLightNodegetSceneNodeBase(lua_State* l)
-{
-	int res = pwrapPointLightNodegetSceneNodeBase(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Wrap class PointLightNode.
-static inline void wrapPointLightNode(lua_State* l)
-{
-	LuaBinder::createClass(l, &luaUserDataTypeInfoPointLightNode);
-	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapPointLightNodegetSceneNodeBase);
-	lua_settop(l, 0);
-}
-
-LuaUserDataTypeInfo luaUserDataTypeInfoSpotLightNode = {-6340019612898178938, "SpotLightNode",
-														LuaUserData::computeSizeForGarbageCollected<SpotLightNode>(),
-														nullptr, nullptr};
-
-template<>
-const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<SpotLightNode>()
-{
-	return luaUserDataTypeInfoSpotLightNode;
-}
-
-/// Pre-wrap method SpotLightNode::getSceneNodeBase.
-static inline int pwrapSpotLightNodegetSceneNodeBase(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSpotLightNode, ud))
-	{
-		return -1;
-	}
-
-	SpotLightNode* self = ud->getData<SpotLightNode>();
-
-	// Call the method
-	SceneNode& ret = *self;
-
-	// Push return value
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "SceneNode");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	ud->initPointed(&luaUserDataTypeInfoSceneNode, &ret);
-
-	return 1;
-}
-
-/// Wrap method SpotLightNode::getSceneNodeBase.
-static int wrapSpotLightNodegetSceneNodeBase(lua_State* l)
-{
-	int res = pwrapSpotLightNodegetSceneNodeBase(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Wrap class SpotLightNode.
-static inline void wrapSpotLightNode(lua_State* l)
-{
-	LuaBinder::createClass(l, &luaUserDataTypeInfoSpotLightNode);
-	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapSpotLightNodegetSceneNodeBase);
-	lua_settop(l, 0);
-}
-
-LuaUserDataTypeInfo luaUserDataTypeInfoDirectionalLightNode = {
-	-650419786319643186, "DirectionalLightNode", LuaUserData::computeSizeForGarbageCollected<DirectionalLightNode>(),
-	nullptr, nullptr};
-
-template<>
-const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<DirectionalLightNode>()
-{
-	return luaUserDataTypeInfoDirectionalLightNode;
-}
-
-/// Pre-wrap method DirectionalLightNode::getSceneNodeBase.
-static inline int pwrapDirectionalLightNodegetSceneNodeBase(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoDirectionalLightNode, ud))
-	{
-		return -1;
-	}
-
-	DirectionalLightNode* self = ud->getData<DirectionalLightNode>();
-
-	// Call the method
-	SceneNode& ret = *self;
-
-	// Push return value
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "SceneNode");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	ud->initPointed(&luaUserDataTypeInfoSceneNode, &ret);
-
-	return 1;
-}
-
-/// Wrap method DirectionalLightNode::getSceneNodeBase.
-static int wrapDirectionalLightNodegetSceneNodeBase(lua_State* l)
-{
-	int res = pwrapDirectionalLightNodegetSceneNodeBase(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Wrap class DirectionalLightNode.
-static inline void wrapDirectionalLightNode(lua_State* l)
-{
-	LuaBinder::createClass(l, &luaUserDataTypeInfoDirectionalLightNode);
-	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapDirectionalLightNodegetSceneNodeBase);
-	lua_settop(l, 0);
-}
-
-LuaUserDataTypeInfo luaUserDataTypeInfoStaticCollisionNode = {
-	-3227727713593992698, "StaticCollisionNode", LuaUserData::computeSizeForGarbageCollected<StaticCollisionNode>(),
-	nullptr, nullptr};
-
-template<>
-const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<StaticCollisionNode>()
-{
-	return luaUserDataTypeInfoStaticCollisionNode;
-}
-
-/// Pre-wrap method StaticCollisionNode::getSceneNodeBase.
-static inline int pwrapStaticCollisionNodegetSceneNodeBase(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoStaticCollisionNode, ud))
-	{
-		return -1;
-	}
-
-	StaticCollisionNode* self = ud->getData<StaticCollisionNode>();
-
-	// Call the method
-	SceneNode& ret = *self;
-
-	// Push return value
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "SceneNode");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	ud->initPointed(&luaUserDataTypeInfoSceneNode, &ret);
-
-	return 1;
-}
-
-/// Wrap method StaticCollisionNode::getSceneNodeBase.
-static int wrapStaticCollisionNodegetSceneNodeBase(lua_State* l)
-{
-	int res = pwrapStaticCollisionNodegetSceneNodeBase(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Wrap class StaticCollisionNode.
-static inline void wrapStaticCollisionNode(lua_State* l)
-{
-	LuaBinder::createClass(l, &luaUserDataTypeInfoStaticCollisionNode);
-	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapStaticCollisionNodegetSceneNodeBase);
-	lua_settop(l, 0);
-}
-
-LuaUserDataTypeInfo luaUserDataTypeInfoParticleEmitterNode = {
-	6918622436947614437, "ParticleEmitterNode", LuaUserData::computeSizeForGarbageCollected<ParticleEmitterNode>(),
-	nullptr, nullptr};
-
-template<>
-const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<ParticleEmitterNode>()
-{
-	return luaUserDataTypeInfoParticleEmitterNode;
-}
-
-/// Pre-wrap method ParticleEmitterNode::getSceneNodeBase.
-static inline int pwrapParticleEmitterNodegetSceneNodeBase(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoParticleEmitterNode, ud))
-	{
-		return -1;
-	}
-
-	ParticleEmitterNode* self = ud->getData<ParticleEmitterNode>();
-
-	// Call the method
-	SceneNode& ret = *self;
-
-	// Push return value
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "SceneNode");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	ud->initPointed(&luaUserDataTypeInfoSceneNode, &ret);
-
-	return 1;
-}
-
-/// Wrap method ParticleEmitterNode::getSceneNodeBase.
-static int wrapParticleEmitterNodegetSceneNodeBase(lua_State* l)
-{
-	int res = pwrapParticleEmitterNodegetSceneNodeBase(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Wrap class ParticleEmitterNode.
-static inline void wrapParticleEmitterNode(lua_State* l)
-{
-	LuaBinder::createClass(l, &luaUserDataTypeInfoParticleEmitterNode);
-	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapParticleEmitterNodegetSceneNodeBase);
-	lua_settop(l, 0);
-}
-
-LuaUserDataTypeInfo luaUserDataTypeInfoGpuParticleEmitterNode = {
-	-6059315858530946064, "GpuParticleEmitterNode",
-	LuaUserData::computeSizeForGarbageCollected<GpuParticleEmitterNode>(), nullptr, nullptr};
-
-template<>
-const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<GpuParticleEmitterNode>()
-{
-	return luaUserDataTypeInfoGpuParticleEmitterNode;
-}
-
-/// Pre-wrap method GpuParticleEmitterNode::getSceneNodeBase.
-static inline int pwrapGpuParticleEmitterNodegetSceneNodeBase(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoGpuParticleEmitterNode, ud))
-	{
-		return -1;
-	}
-
-	GpuParticleEmitterNode* self = ud->getData<GpuParticleEmitterNode>();
-
-	// Call the method
-	SceneNode& ret = *self;
-
-	// Push return value
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "SceneNode");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	ud->initPointed(&luaUserDataTypeInfoSceneNode, &ret);
-
-	return 1;
-}
-
-/// Wrap method GpuParticleEmitterNode::getSceneNodeBase.
-static int wrapGpuParticleEmitterNodegetSceneNodeBase(lua_State* l)
-{
-	int res = pwrapGpuParticleEmitterNodegetSceneNodeBase(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Wrap class GpuParticleEmitterNode.
-static inline void wrapGpuParticleEmitterNode(lua_State* l)
-{
-	LuaBinder::createClass(l, &luaUserDataTypeInfoGpuParticleEmitterNode);
-	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapGpuParticleEmitterNodegetSceneNodeBase);
-	lua_settop(l, 0);
-}
-
-LuaUserDataTypeInfo luaUserDataTypeInfoReflectionProbeNode = {
-	512701379852882043, "ReflectionProbeNode", LuaUserData::computeSizeForGarbageCollected<ReflectionProbeNode>(),
-	nullptr, nullptr};
-
-template<>
-const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<ReflectionProbeNode>()
-{
-	return luaUserDataTypeInfoReflectionProbeNode;
-}
-
-/// Pre-wrap method ReflectionProbeNode::getSceneNodeBase.
-static inline int pwrapReflectionProbeNodegetSceneNodeBase(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoReflectionProbeNode, ud))
-	{
-		return -1;
-	}
-
-	ReflectionProbeNode* self = ud->getData<ReflectionProbeNode>();
-
-	// Call the method
-	SceneNode& ret = *self;
-
-	// Push return value
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "SceneNode");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	ud->initPointed(&luaUserDataTypeInfoSceneNode, &ret);
-
-	return 1;
-}
-
-/// Wrap method ReflectionProbeNode::getSceneNodeBase.
-static int wrapReflectionProbeNodegetSceneNodeBase(lua_State* l)
-{
-	int res = pwrapReflectionProbeNodegetSceneNodeBase(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Wrap class ReflectionProbeNode.
-static inline void wrapReflectionProbeNode(lua_State* l)
-{
-	LuaBinder::createClass(l, &luaUserDataTypeInfoReflectionProbeNode);
-	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapReflectionProbeNodegetSceneNodeBase);
-	lua_settop(l, 0);
-}
-
-LuaUserDataTypeInfo luaUserDataTypeInfoDecalNode = {
-	5216427613143872435, "DecalNode", LuaUserData::computeSizeForGarbageCollected<DecalNode>(), nullptr, nullptr};
-
-template<>
-const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<DecalNode>()
-{
-	return luaUserDataTypeInfoDecalNode;
-}
-
-/// Pre-wrap method DecalNode::getSceneNodeBase.
-static inline int pwrapDecalNodegetSceneNodeBase(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoDecalNode, ud))
-	{
-		return -1;
-	}
-
-	DecalNode* self = ud->getData<DecalNode>();
-
-	// Call the method
-	SceneNode& ret = *self;
-
-	// Push return value
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "SceneNode");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	ud->initPointed(&luaUserDataTypeInfoSceneNode, &ret);
-
-	return 1;
-}
-
-/// Wrap method DecalNode::getSceneNodeBase.
-static int wrapDecalNodegetSceneNodeBase(lua_State* l)
-{
-	int res = pwrapDecalNodegetSceneNodeBase(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Wrap class DecalNode.
-static inline void wrapDecalNode(lua_State* l)
-{
-	LuaBinder::createClass(l, &luaUserDataTypeInfoDecalNode);
-	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapDecalNodegetSceneNodeBase);
-	lua_settop(l, 0);
-}
-
-LuaUserDataTypeInfo luaUserDataTypeInfoTriggerNode = {
-	5997852190170793979, "TriggerNode", LuaUserData::computeSizeForGarbageCollected<TriggerNode>(), nullptr, nullptr};
-
-template<>
-const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<TriggerNode>()
-{
-	return luaUserDataTypeInfoTriggerNode;
-}
-
-/// Pre-wrap method TriggerNode::getSceneNodeBase.
-static inline int pwrapTriggerNodegetSceneNodeBase(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoTriggerNode, ud))
-	{
-		return -1;
-	}
-
-	TriggerNode* self = ud->getData<TriggerNode>();
-
-	// Call the method
-	SceneNode& ret = *self;
-
-	// Push return value
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "SceneNode");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	ud->initPointed(&luaUserDataTypeInfoSceneNode, &ret);
-
-	return 1;
-}
-
-/// Wrap method TriggerNode::getSceneNodeBase.
-static int wrapTriggerNodegetSceneNodeBase(lua_State* l)
-{
-	int res = pwrapTriggerNodegetSceneNodeBase(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Wrap class TriggerNode.
-static inline void wrapTriggerNode(lua_State* l)
-{
-	LuaBinder::createClass(l, &luaUserDataTypeInfoTriggerNode);
-	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapTriggerNodegetSceneNodeBase);
-	lua_settop(l, 0);
-}
-
-LuaUserDataTypeInfo luaUserDataTypeInfoFogDensityNode = {-6018324113689458139, "FogDensityNode",
-														 LuaUserData::computeSizeForGarbageCollected<FogDensityNode>(),
-														 nullptr, nullptr};
-
-template<>
-const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<FogDensityNode>()
-{
-	return luaUserDataTypeInfoFogDensityNode;
-}
-
-/// Pre-wrap method FogDensityNode::getSceneNodeBase.
-static inline int pwrapFogDensityNodegetSceneNodeBase(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoFogDensityNode, ud))
-	{
-		return -1;
-	}
-
-	FogDensityNode* self = ud->getData<FogDensityNode>();
-
-	// Call the method
-	SceneNode& ret = *self;
-
-	// Push return value
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "SceneNode");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	ud->initPointed(&luaUserDataTypeInfoSceneNode, &ret);
-
-	return 1;
-}
-
-/// Wrap method FogDensityNode::getSceneNodeBase.
-static int wrapFogDensityNodegetSceneNodeBase(lua_State* l)
-{
-	int res = pwrapFogDensityNodegetSceneNodeBase(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Wrap class FogDensityNode.
-static inline void wrapFogDensityNode(lua_State* l)
-{
-	LuaBinder::createClass(l, &luaUserDataTypeInfoFogDensityNode);
-	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapFogDensityNodegetSceneNodeBase);
-	lua_settop(l, 0);
-}
-
-LuaUserDataTypeInfo luaUserDataTypeInfoGlobalIlluminationProbeNode = {
-	-4557094370355935221, "GlobalIlluminationProbeNode",
-	LuaUserData::computeSizeForGarbageCollected<GlobalIlluminationProbeNode>(), nullptr, nullptr};
-
-template<>
-const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<GlobalIlluminationProbeNode>()
-{
-	return luaUserDataTypeInfoGlobalIlluminationProbeNode;
-}
-
-/// Pre-wrap method GlobalIlluminationProbeNode::getSceneNodeBase.
-static inline int pwrapGlobalIlluminationProbeNodegetSceneNodeBase(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoGlobalIlluminationProbeNode, ud))
-	{
-		return -1;
-	}
-
-	GlobalIlluminationProbeNode* self = ud->getData<GlobalIlluminationProbeNode>();
-
-	// Call the method
-	SceneNode& ret = *self;
-
-	// Push return value
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "SceneNode");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	ud->initPointed(&luaUserDataTypeInfoSceneNode, &ret);
-
-	return 1;
-}
-
-/// Wrap method GlobalIlluminationProbeNode::getSceneNodeBase.
-static int wrapGlobalIlluminationProbeNodegetSceneNodeBase(lua_State* l)
-{
-	int res = pwrapGlobalIlluminationProbeNodegetSceneNodeBase(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Wrap class GlobalIlluminationProbeNode.
-static inline void wrapGlobalIlluminationProbeNode(lua_State* l)
-{
-	LuaBinder::createClass(l, &luaUserDataTypeInfoGlobalIlluminationProbeNode);
-	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapGlobalIlluminationProbeNodegetSceneNodeBase);
-	lua_settop(l, 0);
-}
-
-LuaUserDataTypeInfo luaUserDataTypeInfoSkyboxNode = {
-	-487731404906855306, "SkyboxNode", LuaUserData::computeSizeForGarbageCollected<SkyboxNode>(), nullptr, nullptr};
-
-template<>
-const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<SkyboxNode>()
-{
-	return luaUserDataTypeInfoSkyboxNode;
-}
-
-/// Pre-wrap method SkyboxNode::getSceneNodeBase.
-static inline int pwrapSkyboxNodegetSceneNodeBase(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSkyboxNode, ud))
-	{
-		return -1;
-	}
-
-	SkyboxNode* self = ud->getData<SkyboxNode>();
-
-	// Call the method
-	SceneNode& ret = *self;
-
-	// Push return value
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "SceneNode");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	ud->initPointed(&luaUserDataTypeInfoSceneNode, &ret);
-
-	return 1;
-}
-
-/// Wrap method SkyboxNode::getSceneNodeBase.
-static int wrapSkyboxNodegetSceneNodeBase(lua_State* l)
-{
-	int res = pwrapSkyboxNodegetSceneNodeBase(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Wrap class SkyboxNode.
-static inline void wrapSkyboxNode(lua_State* l)
-{
-	LuaBinder::createClass(l, &luaUserDataTypeInfoSkyboxNode);
-	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapSkyboxNodegetSceneNodeBase);
+	LuaBinder::pushLuaCFuncMethod(l, "newLightComponent", wrapSceneNodenewLightComponent);
+	LuaBinder::pushLuaCFuncMethod(l, "newLensFlareComponent", wrapSceneNodenewLensFlareComponent);
+	LuaBinder::pushLuaCFuncMethod(l, "newDecalComponent", wrapSceneNodenewDecalComponent);
+	LuaBinder::pushLuaCFuncMethod(l, "newTriggerComponent", wrapSceneNodenewTriggerComponent);
+	LuaBinder::pushLuaCFuncMethod(l, "newFogDensityComponent", wrapSceneNodenewFogDensityComponent);
+	LuaBinder::pushLuaCFuncMethod(l, "newCameraComponent", wrapSceneNodenewCameraComponent);
+	LuaBinder::pushLuaCFuncMethod(l, "newGlobalIlluminationProbeComponent",
+								  wrapSceneNodenewGlobalIlluminationProbeComponent);
+	LuaBinder::pushLuaCFuncMethod(l, "newReflectionProbeComponent", wrapSceneNodenewReflectionProbeComponent);
+	LuaBinder::pushLuaCFuncMethod(l, "newBodyComponent", wrapSceneNodenewBodyComponent);
+	LuaBinder::pushLuaCFuncMethod(l, "newParticleEmitterComponent", wrapSceneNodenewParticleEmitterComponent);
+	LuaBinder::pushLuaCFuncMethod(l, "newModelComponent", wrapSceneNodenewModelComponent);
+	LuaBinder::pushLuaCFuncMethod(l, "newSkinComponent", wrapSceneNodenewSkinComponent);
+	LuaBinder::pushLuaCFuncMethod(l, "newSkyboxComponent", wrapSceneNodenewSkyboxComponent);
 	lua_settop(l, 0);
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoSceneGraph = {
-	-3165171856408475527, "SceneGraph", LuaUserData::computeSizeForGarbageCollected<SceneGraph>(), nullptr, nullptr};
+	-8580260492604332730, "SceneGraph", LuaUserData::computeSizeForGarbageCollected<SceneGraph>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<SceneGraph>()
@@ -5169,8 +3576,8 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<SceneGraph>()
 	return luaUserDataTypeInfoSceneGraph;
 }
 
-/// Pre-wrap method SceneGraph::newPerspectiveCameraNode.
-static inline int pwrapSceneGraphnewPerspectiveCameraNode(lua_State* l)
+/// Pre-wrap method SceneGraph::newSceneNode.
+static inline int pwrapSceneGraphnewSceneNode(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -5197,7 +3604,7 @@ static inline int pwrapSceneGraphnewPerspectiveCameraNode(lua_State* l)
 	}
 
 	// Call the method
-	PerspectiveCameraNode* ret = newSceneNode<PerspectiveCameraNode>(self, arg0);
+	SceneNode* ret = newSceneNode<SceneNode>(self, arg0);
 
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
@@ -5208,725 +3615,17 @@ static inline int pwrapSceneGraphnewPerspectiveCameraNode(lua_State* l)
 
 	voidp = lua_newuserdata(l, sizeof(LuaUserData));
 	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "PerspectiveCameraNode");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoPerspectiveCameraNode;
-	ud->initPointed(&luaUserDataTypeInfoPerspectiveCameraNode, ret);
+	luaL_setmetatable(l, "SceneNode");
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
+	ud->initPointed(&luaUserDataTypeInfoSceneNode, ret);
 
 	return 1;
 }
 
-/// Wrap method SceneGraph::newPerspectiveCameraNode.
-static int wrapSceneGraphnewPerspectiveCameraNode(lua_State* l)
+/// Wrap method SceneGraph::newSceneNode.
+static int wrapSceneGraphnewSceneNode(lua_State* l)
 {
-	int res = pwrapSceneGraphnewPerspectiveCameraNode(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Pre-wrap method SceneGraph::newModelNode.
-static inline int pwrapSceneGraphnewModelNode(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneGraph, ud))
-	{
-		return -1;
-	}
-
-	SceneGraph* self = ud->getData<SceneGraph>();
-
-	// Pop arguments
-	const char* arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
-	{
-		return -1;
-	}
-
-	// Call the method
-	ModelNode* ret = newSceneNode<ModelNode>(self, arg0);
-
-	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
-	{
-		lua_pushstring(l, "Glue code returned nullptr");
-		return -1;
-	}
-
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "ModelNode");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoModelNode;
-	ud->initPointed(&luaUserDataTypeInfoModelNode, ret);
-
-	return 1;
-}
-
-/// Wrap method SceneGraph::newModelNode.
-static int wrapSceneGraphnewModelNode(lua_State* l)
-{
-	int res = pwrapSceneGraphnewModelNode(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Pre-wrap method SceneGraph::newPointLightNode.
-static inline int pwrapSceneGraphnewPointLightNode(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneGraph, ud))
-	{
-		return -1;
-	}
-
-	SceneGraph* self = ud->getData<SceneGraph>();
-
-	// Pop arguments
-	const char* arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
-	{
-		return -1;
-	}
-
-	// Call the method
-	PointLightNode* ret = newSceneNode<PointLightNode>(self, arg0);
-
-	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
-	{
-		lua_pushstring(l, "Glue code returned nullptr");
-		return -1;
-	}
-
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "PointLightNode");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoPointLightNode;
-	ud->initPointed(&luaUserDataTypeInfoPointLightNode, ret);
-
-	return 1;
-}
-
-/// Wrap method SceneGraph::newPointLightNode.
-static int wrapSceneGraphnewPointLightNode(lua_State* l)
-{
-	int res = pwrapSceneGraphnewPointLightNode(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Pre-wrap method SceneGraph::newSpotLightNode.
-static inline int pwrapSceneGraphnewSpotLightNode(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneGraph, ud))
-	{
-		return -1;
-	}
-
-	SceneGraph* self = ud->getData<SceneGraph>();
-
-	// Pop arguments
-	const char* arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
-	{
-		return -1;
-	}
-
-	// Call the method
-	SpotLightNode* ret = newSceneNode<SpotLightNode>(self, arg0);
-
-	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
-	{
-		lua_pushstring(l, "Glue code returned nullptr");
-		return -1;
-	}
-
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "SpotLightNode");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoSpotLightNode;
-	ud->initPointed(&luaUserDataTypeInfoSpotLightNode, ret);
-
-	return 1;
-}
-
-/// Wrap method SceneGraph::newSpotLightNode.
-static int wrapSceneGraphnewSpotLightNode(lua_State* l)
-{
-	int res = pwrapSceneGraphnewSpotLightNode(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Pre-wrap method SceneGraph::newDirectionalLightNode.
-static inline int pwrapSceneGraphnewDirectionalLightNode(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneGraph, ud))
-	{
-		return -1;
-	}
-
-	SceneGraph* self = ud->getData<SceneGraph>();
-
-	// Pop arguments
-	const char* arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
-	{
-		return -1;
-	}
-
-	// Call the method
-	DirectionalLightNode* ret = newSceneNode<DirectionalLightNode>(self, arg0);
-
-	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
-	{
-		lua_pushstring(l, "Glue code returned nullptr");
-		return -1;
-	}
-
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "DirectionalLightNode");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoDirectionalLightNode;
-	ud->initPointed(&luaUserDataTypeInfoDirectionalLightNode, ret);
-
-	return 1;
-}
-
-/// Wrap method SceneGraph::newDirectionalLightNode.
-static int wrapSceneGraphnewDirectionalLightNode(lua_State* l)
-{
-	int res = pwrapSceneGraphnewDirectionalLightNode(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Pre-wrap method SceneGraph::newStaticCollisionNode.
-static inline int pwrapSceneGraphnewStaticCollisionNode(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneGraph, ud))
-	{
-		return -1;
-	}
-
-	SceneGraph* self = ud->getData<SceneGraph>();
-
-	// Pop arguments
-	const char* arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
-	{
-		return -1;
-	}
-
-	// Call the method
-	StaticCollisionNode* ret = newSceneNode<StaticCollisionNode>(self, arg0);
-
-	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
-	{
-		lua_pushstring(l, "Glue code returned nullptr");
-		return -1;
-	}
-
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "StaticCollisionNode");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoStaticCollisionNode;
-	ud->initPointed(&luaUserDataTypeInfoStaticCollisionNode, ret);
-
-	return 1;
-}
-
-/// Wrap method SceneGraph::newStaticCollisionNode.
-static int wrapSceneGraphnewStaticCollisionNode(lua_State* l)
-{
-	int res = pwrapSceneGraphnewStaticCollisionNode(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Pre-wrap method SceneGraph::newParticleEmitterNode.
-static inline int pwrapSceneGraphnewParticleEmitterNode(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneGraph, ud))
-	{
-		return -1;
-	}
-
-	SceneGraph* self = ud->getData<SceneGraph>();
-
-	// Pop arguments
-	const char* arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
-	{
-		return -1;
-	}
-
-	// Call the method
-	ParticleEmitterNode* ret = newSceneNode<ParticleEmitterNode>(self, arg0);
-
-	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
-	{
-		lua_pushstring(l, "Glue code returned nullptr");
-		return -1;
-	}
-
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "ParticleEmitterNode");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoParticleEmitterNode;
-	ud->initPointed(&luaUserDataTypeInfoParticleEmitterNode, ret);
-
-	return 1;
-}
-
-/// Wrap method SceneGraph::newParticleEmitterNode.
-static int wrapSceneGraphnewParticleEmitterNode(lua_State* l)
-{
-	int res = pwrapSceneGraphnewParticleEmitterNode(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Pre-wrap method SceneGraph::newGpuParticleEmitterNode.
-static inline int pwrapSceneGraphnewGpuParticleEmitterNode(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneGraph, ud))
-	{
-		return -1;
-	}
-
-	SceneGraph* self = ud->getData<SceneGraph>();
-
-	// Pop arguments
-	const char* arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
-	{
-		return -1;
-	}
-
-	// Call the method
-	GpuParticleEmitterNode* ret = newSceneNode<GpuParticleEmitterNode>(self, arg0);
-
-	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
-	{
-		lua_pushstring(l, "Glue code returned nullptr");
-		return -1;
-	}
-
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "GpuParticleEmitterNode");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoGpuParticleEmitterNode;
-	ud->initPointed(&luaUserDataTypeInfoGpuParticleEmitterNode, ret);
-
-	return 1;
-}
-
-/// Wrap method SceneGraph::newGpuParticleEmitterNode.
-static int wrapSceneGraphnewGpuParticleEmitterNode(lua_State* l)
-{
-	int res = pwrapSceneGraphnewGpuParticleEmitterNode(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Pre-wrap method SceneGraph::newReflectionProbeNode.
-static inline int pwrapSceneGraphnewReflectionProbeNode(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneGraph, ud))
-	{
-		return -1;
-	}
-
-	SceneGraph* self = ud->getData<SceneGraph>();
-
-	// Pop arguments
-	const char* arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
-	{
-		return -1;
-	}
-
-	// Call the method
-	ReflectionProbeNode* ret = newSceneNode<ReflectionProbeNode>(self, arg0);
-
-	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
-	{
-		lua_pushstring(l, "Glue code returned nullptr");
-		return -1;
-	}
-
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "ReflectionProbeNode");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoReflectionProbeNode;
-	ud->initPointed(&luaUserDataTypeInfoReflectionProbeNode, ret);
-
-	return 1;
-}
-
-/// Wrap method SceneGraph::newReflectionProbeNode.
-static int wrapSceneGraphnewReflectionProbeNode(lua_State* l)
-{
-	int res = pwrapSceneGraphnewReflectionProbeNode(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Pre-wrap method SceneGraph::newDecalNode.
-static inline int pwrapSceneGraphnewDecalNode(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneGraph, ud))
-	{
-		return -1;
-	}
-
-	SceneGraph* self = ud->getData<SceneGraph>();
-
-	// Pop arguments
-	const char* arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
-	{
-		return -1;
-	}
-
-	// Call the method
-	DecalNode* ret = newSceneNode<DecalNode>(self, arg0);
-
-	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
-	{
-		lua_pushstring(l, "Glue code returned nullptr");
-		return -1;
-	}
-
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "DecalNode");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoDecalNode;
-	ud->initPointed(&luaUserDataTypeInfoDecalNode, ret);
-
-	return 1;
-}
-
-/// Wrap method SceneGraph::newDecalNode.
-static int wrapSceneGraphnewDecalNode(lua_State* l)
-{
-	int res = pwrapSceneGraphnewDecalNode(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Pre-wrap method SceneGraph::newTriggerNode.
-static inline int pwrapSceneGraphnewTriggerNode(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneGraph, ud))
-	{
-		return -1;
-	}
-
-	SceneGraph* self = ud->getData<SceneGraph>();
-
-	// Pop arguments
-	const char* arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
-	{
-		return -1;
-	}
-
-	// Call the method
-	TriggerNode* ret = newSceneNode<TriggerNode>(self, arg0);
-
-	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
-	{
-		lua_pushstring(l, "Glue code returned nullptr");
-		return -1;
-	}
-
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "TriggerNode");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoTriggerNode;
-	ud->initPointed(&luaUserDataTypeInfoTriggerNode, ret);
-
-	return 1;
-}
-
-/// Wrap method SceneGraph::newTriggerNode.
-static int wrapSceneGraphnewTriggerNode(lua_State* l)
-{
-	int res = pwrapSceneGraphnewTriggerNode(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Pre-wrap method SceneGraph::newGlobalIlluminationProbeNode.
-static inline int pwrapSceneGraphnewGlobalIlluminationProbeNode(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneGraph, ud))
-	{
-		return -1;
-	}
-
-	SceneGraph* self = ud->getData<SceneGraph>();
-
-	// Pop arguments
-	const char* arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
-	{
-		return -1;
-	}
-
-	// Call the method
-	GlobalIlluminationProbeNode* ret = newSceneNode<GlobalIlluminationProbeNode>(self, arg0);
-
-	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
-	{
-		lua_pushstring(l, "Glue code returned nullptr");
-		return -1;
-	}
-
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "GlobalIlluminationProbeNode");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoGlobalIlluminationProbeNode;
-	ud->initPointed(&luaUserDataTypeInfoGlobalIlluminationProbeNode, ret);
-
-	return 1;
-}
-
-/// Wrap method SceneGraph::newGlobalIlluminationProbeNode.
-static int wrapSceneGraphnewGlobalIlluminationProbeNode(lua_State* l)
-{
-	int res = pwrapSceneGraphnewGlobalIlluminationProbeNode(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Pre-wrap method SceneGraph::newSkyboxNode.
-static inline int pwrapSceneGraphnewSkyboxNode(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneGraph, ud))
-	{
-		return -1;
-	}
-
-	SceneGraph* self = ud->getData<SceneGraph>();
-
-	// Pop arguments
-	const char* arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
-	{
-		return -1;
-	}
-
-	// Call the method
-	SkyboxNode* ret = newSceneNode<SkyboxNode>(self, arg0);
-
-	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
-	{
-		lua_pushstring(l, "Glue code returned nullptr");
-		return -1;
-	}
-
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "SkyboxNode");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoSkyboxNode;
-	ud->initPointed(&luaUserDataTypeInfoSkyboxNode, ret);
-
-	return 1;
-}
-
-/// Wrap method SceneGraph::newSkyboxNode.
-static int wrapSceneGraphnewSkyboxNode(lua_State* l)
-{
-	int res = pwrapSceneGraphnewSkyboxNode(l);
+	int res = pwrapSceneGraphnewSceneNode(l);
 	if(res >= 0)
 	{
 		return res;
@@ -6048,25 +3747,13 @@ static int wrapSceneGraphtryFindSceneNode(lua_State* l)
 static inline void wrapSceneGraph(lua_State* l)
 {
 	LuaBinder::createClass(l, &luaUserDataTypeInfoSceneGraph);
-	LuaBinder::pushLuaCFuncMethod(l, "newPerspectiveCameraNode", wrapSceneGraphnewPerspectiveCameraNode);
-	LuaBinder::pushLuaCFuncMethod(l, "newModelNode", wrapSceneGraphnewModelNode);
-	LuaBinder::pushLuaCFuncMethod(l, "newPointLightNode", wrapSceneGraphnewPointLightNode);
-	LuaBinder::pushLuaCFuncMethod(l, "newSpotLightNode", wrapSceneGraphnewSpotLightNode);
-	LuaBinder::pushLuaCFuncMethod(l, "newDirectionalLightNode", wrapSceneGraphnewDirectionalLightNode);
-	LuaBinder::pushLuaCFuncMethod(l, "newStaticCollisionNode", wrapSceneGraphnewStaticCollisionNode);
-	LuaBinder::pushLuaCFuncMethod(l, "newParticleEmitterNode", wrapSceneGraphnewParticleEmitterNode);
-	LuaBinder::pushLuaCFuncMethod(l, "newGpuParticleEmitterNode", wrapSceneGraphnewGpuParticleEmitterNode);
-	LuaBinder::pushLuaCFuncMethod(l, "newReflectionProbeNode", wrapSceneGraphnewReflectionProbeNode);
-	LuaBinder::pushLuaCFuncMethod(l, "newDecalNode", wrapSceneGraphnewDecalNode);
-	LuaBinder::pushLuaCFuncMethod(l, "newTriggerNode", wrapSceneGraphnewTriggerNode);
-	LuaBinder::pushLuaCFuncMethod(l, "newGlobalIlluminationProbeNode", wrapSceneGraphnewGlobalIlluminationProbeNode);
-	LuaBinder::pushLuaCFuncMethod(l, "newSkyboxNode", wrapSceneGraphnewSkyboxNode);
+	LuaBinder::pushLuaCFuncMethod(l, "newSceneNode", wrapSceneGraphnewSceneNode);
 	LuaBinder::pushLuaCFuncMethod(l, "setActiveCameraNode", wrapSceneGraphsetActiveCameraNode);
 	LuaBinder::pushLuaCFuncMethod(l, "tryFindSceneNode", wrapSceneGraphtryFindSceneNode);
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoEvent = {-327249927871287227, "Event",
+LuaUserDataTypeInfo luaUserDataTypeInfoEvent = {5877707491774978394, "Event",
 												LuaUserData::computeSizeForGarbageCollected<Event>(), nullptr, nullptr};
 
 template<>
@@ -6132,7 +3819,7 @@ static inline void wrapEvent(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoLightEvent = {
-	5617532305066010971, "LightEvent", LuaUserData::computeSizeForGarbageCollected<LightEvent>(), nullptr, nullptr};
+	221116287991623252, "LightEvent", LuaUserData::computeSizeForGarbageCollected<LightEvent>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<LightEvent>()
@@ -6251,7 +3938,7 @@ static inline void wrapLightEvent(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoScriptEvent = {
-	7471457449365359232, "ScriptEvent", LuaUserData::computeSizeForGarbageCollected<ScriptEvent>(), nullptr, nullptr};
+	323925577686700128, "ScriptEvent", LuaUserData::computeSizeForGarbageCollected<ScriptEvent>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<ScriptEvent>()
@@ -6267,7 +3954,7 @@ static inline void wrapScriptEvent(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoJitterMoveEvent = {
-	-3678566306512249386, "JitterMoveEvent", LuaUserData::computeSizeForGarbageCollected<JitterMoveEvent>(), nullptr,
+	6678393020922142826, "JitterMoveEvent", LuaUserData::computeSizeForGarbageCollected<JitterMoveEvent>(), nullptr,
 	nullptr};
 
 template<>
@@ -6342,7 +4029,7 @@ static inline void wrapJitterMoveEvent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoAnimationEvent = {-6310232758572032520, "AnimationEvent",
+LuaUserDataTypeInfo luaUserDataTypeInfoAnimationEvent = {7511215324953354044, "AnimationEvent",
 														 LuaUserData::computeSizeForGarbageCollected<AnimationEvent>(),
 														 nullptr, nullptr};
 
@@ -6359,8 +4046,9 @@ static inline void wrapAnimationEvent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoEventManager = {
-	7795657307788131623, "EventManager", LuaUserData::computeSizeForGarbageCollected<EventManager>(), nullptr, nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoEventManager = {-7702163411345910132, "EventManager",
+													   LuaUserData::computeSizeForGarbageCollected<EventManager>(),
+													   nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<EventManager>()
@@ -6765,36 +4453,20 @@ void wrapModuleScene(lua_State* l)
 {
 	wrapWeakArraySceneNodePtr(l);
 	wrapWeakArrayBodyComponentPtr(l);
-	wrapMoveComponent(l);
 	wrapLightComponent(l);
 	wrapDecalComponent(l);
 	wrapLensFlareComponent(l);
 	wrapBodyComponent(l);
 	wrapTriggerComponent(l);
 	wrapFogDensityComponent(l);
-	wrapFrustumComponent(l);
+	wrapCameraComponent(l);
 	wrapGlobalIlluminationProbeComponent(l);
 	wrapReflectionProbeComponent(l);
 	wrapParticleEmitterComponent(l);
-	wrapGpuParticleEmitterComponent(l);
 	wrapModelComponent(l);
 	wrapSkinComponent(l);
 	wrapSkyboxComponent(l);
 	wrapSceneNode(l);
-	wrapModelNode(l);
-	wrapPerspectiveCameraNode(l);
-	wrapPointLightNode(l);
-	wrapSpotLightNode(l);
-	wrapDirectionalLightNode(l);
-	wrapStaticCollisionNode(l);
-	wrapParticleEmitterNode(l);
-	wrapGpuParticleEmitterNode(l);
-	wrapReflectionProbeNode(l);
-	wrapDecalNode(l);
-	wrapTriggerNode(l);
-	wrapFogDensityNode(l);
-	wrapGlobalIlluminationProbeNode(l);
-	wrapSkyboxNode(l);
 	wrapSceneGraph(l);
 	wrapEvent(l);
 	wrapLightEvent(l);

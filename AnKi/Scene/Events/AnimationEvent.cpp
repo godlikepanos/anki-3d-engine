@@ -6,7 +6,6 @@
 #include <AnKi/Scene/Events/AnimationEvent.h>
 #include <AnKi/Scene/SceneNode.h>
 #include <AnKi/Scene/SceneGraph.h>
-#include <AnKi/Scene/Components/MoveComponent.h>
 #include <AnKi/Resource/ResourceManager.h>
 
 namespace anki {
@@ -44,7 +43,7 @@ Error AnimationEvent::init(CString animationFilename, CString channelName, Scene
 	return Error::kNone;
 }
 
-Error AnimationEvent::update([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime)
+Error AnimationEvent::update([[maybe_unused]] Second prevUpdateTime, Second crntTime)
 {
 	Vec3 pos;
 	Quat rot;
@@ -56,8 +55,7 @@ Error AnimationEvent::update([[maybe_unused]] Second prevUpdateTime, [[maybe_unu
 	trf.setRotation(Mat3x4(Vec3(0.0f), rot));
 	trf.setScale(scale);
 
-	MoveComponent& move = m_associatedNodes[0]->getFirstComponentOfType<MoveComponent>();
-	move.setLocalTransform(trf);
+	m_associatedNodes[0]->setLocalTransform(trf);
 
 	return Error::kNone;
 }

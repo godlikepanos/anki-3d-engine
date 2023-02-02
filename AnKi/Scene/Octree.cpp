@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Scene/Octree.h>
-#include <AnKi/Scene/Components/FrustumComponent.h>
 #include <AnKi/Collision/Aabb.h>
 #include <AnKi/Collision/Functions.h>
 #include <AnKi/Util/ThreadHive.h>

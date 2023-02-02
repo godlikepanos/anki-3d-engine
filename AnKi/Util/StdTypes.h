@@ -289,6 +289,11 @@ inline constexpr Second operator""_ns(long double x)
 
 /// @name Distance user literals
 /// @{
+inline constexpr F32 operator""_m(long double x)
+{
+	return F32(x);
+}
+
 inline constexpr F32 operator""_dm(long double x)
 {
 	return F32(x) / 10.0f;

@@ -8,6 +8,14 @@
 
 namespace anki {
 
+Array<Mat3x4, 6> Frustum::m_omnidirectionalRotations = {
+	Mat3x4(Vec3(0.0f), Mat3(Euler(0.0f, -kPi / 2.0f, 0.0f)) * Mat3(Euler(0.0f, 0.0f, kPi))),
+	Mat3x4(Vec3(0.0f), Mat3(Euler(0.0f, kPi / 2.0f, 0.0f)) * Mat3(Euler(0.0f, 0.0f, kPi))),
+	Mat3x4(Vec3(0.0f), Mat3(Euler(kPi / 2.0f, 0.0f, 0.0f))),
+	Mat3x4(Vec3(0.0f), Mat3(Euler(-kPi / 2.0f, 0.0f, 0.0f))),
+	Mat3x4(Vec3(0.0f), Mat3(Euler(0.0f, kPi, 0.0f)) * Mat3(Euler(0.0f, 0.0f, kPi))),
+	Mat3x4(Vec3(0.0f), Mat3(Euler(0.0f, 0.0f, kPi)))};
+
 Frustum::Frustum()
 {
 	// Set some default values
@@ -18,7 +26,7 @@ Frustum::Frustum()
 		m_maxLodDistances[i] = m_common.m_near + dist * F32(i + 1);
 	}
 
-	update(true, Transform::getIdentity());
+	update();
 }
 
 Frustum::~Frustum()
@@ -47,7 +55,7 @@ void Frustum::init(FrustumType type, HeapMemoryPool* pool)
 	}
 }
 
-Bool Frustum::update(Bool worldTransformUpdated, const Transform& worldTransform)
+Bool Frustum::update()
 {
 	Bool updated = false;
 
@@ -63,7 +71,7 @@ Bool Frustum::update(Bool worldTransformUpdated, const Transform& worldTransform
 	m_prevProjMats[0] = m_projMat;
 
 	// Update the shape
-	if(m_shapeMarkedForUpdate)
+	if(m_shapeDirty)
 	{
 		updated = true;
 
@@ -118,14 +126,14 @@ Bool Frustum::update(Bool worldTransformUpdated, const Transform& worldTransform
 	}
 
 	// Update transform related things
-	if(worldTransformUpdated)
+	if(m_worldTransformDirty)
 	{
 		updated = true;
-		m_viewMat = Mat3x4(worldTransform.getInverse());
+		m_viewMat = Mat3x4(m_worldTransform.getInverse());
 	}
 
 	// Fixup the misc data
-	if(m_miscMarkedForUpdate)
+	if(m_miscDirty)
 	{
 		updated = true;
 		const F32 frustumFraction = (m_common.m_far - m_common.m_near) / 100.0f;
@@ -162,27 +170,28 @@ Bool Frustum::update(Bool worldTransformUpdated, const Transform& worldTransform
 	if(updated)
 	{
 		m_viewProjMat = m_projMat * Mat4(m_viewMat, Vec4(0.0f, 0.0f, 0.0f, 1.0f));
-		m_shapeMarkedForUpdate = false;
-		m_miscMarkedForUpdate = false;
+		m_shapeDirty = false;
+		m_miscDirty = false;
+		m_worldTransformDirty = false;
 
 		if(m_frustumType == FrustumType::kPerspective)
 		{
-			m_perspective.m_edgesW[0] = worldTransform.getOrigin();
-			m_perspective.m_edgesW[1] = worldTransform.transform(m_perspective.m_edgesL[0]);
-			m_perspective.m_edgesW[2] = worldTransform.transform(m_perspective.m_edgesL[1]);
-			m_perspective.m_edgesW[3] = worldTransform.transform(m_perspective.m_edgesL[2]);
-			m_perspective.m_edgesW[4] = worldTransform.transform(m_perspective.m_edgesL[3]);
+			m_perspective.m_edgesW[0] = m_worldTransform.getOrigin();
+			m_perspective.m_edgesW[1] = m_worldTransform.transform(m_perspective.m_edgesL[0]);
+			m_perspective.m_edgesW[2] = m_worldTransform.transform(m_perspective.m_edgesL[1]);
+			m_perspective.m_edgesW[3] = m_worldTransform.transform(m_perspective.m_edgesL[2]);
+			m_perspective.m_edgesW[4] = m_worldTransform.transform(m_perspective.m_edgesL[3]);
 
 			m_perspective.m_hull = ConvexHullShape(&m_perspective.m_edgesW[0], m_perspective.m_edgesW.getSize());
 		}
 		else
 		{
-			m_ortho.m_obbW = m_ortho.m_obbL.getTransformed(worldTransform);
+			m_ortho.m_obbW = m_ortho.m_obbL.getTransformed(m_worldTransform);
 		}
 
 		for(FrustumPlaneType planeId : EnumIterable<FrustumPlaneType>())
 		{
-			m_viewPlanesW[planeId] = m_viewPlanesL[planeId].getTransformed(worldTransform);
+			m_viewPlanesW[planeId] = m_viewPlanesL[planeId].getTransformed(m_worldTransform);
 		}
 	}
 
@@ -191,6 +200,7 @@ Bool Frustum::update(Bool worldTransformUpdated, const Transform& worldTransform
 
 void Frustum::setCoverageBuffer(F32* depths, U32 width, U32 height)
 {
+	ANKI_ASSERT(m_pool);
 	const U32 elemCount = width * height;
 	if(m_depthMap.getSize() != elemCount) [[unlikely]]
 	{

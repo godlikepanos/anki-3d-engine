@@ -390,7 +390,7 @@ template<typename T, typename TMemPool, typename... TArgs>
 [[nodiscard]] T* newInstance(TMemPool& pool, TArgs&&... args)
 {
 	T* ptr = static_cast<T*>(pool.allocate(sizeof(T), alignof(T)));
-	if(ANKI_LIKELY(ptr))
+	if(ptr) [[likely]]
 	{
 		callConstructor(*ptr, std::forward<TArgs>(args)...);
 	}
@@ -403,7 +403,7 @@ template<typename T, typename TMemPool>
 [[nodiscard]] T* newArray(TMemPool& pool, PtrSize n)
 {
 	T* ptr = static_cast<T*>(pool.allocate(n * sizeof(T), alignof(T)));
-	if(ANKI_LIKELY(ptr))
+	if(ptr) [[likely]]
 	{
 		for(PtrSize i = 0; i < n; i++)
 		{
@@ -419,7 +419,7 @@ template<typename T, typename TMemPool>
 [[nodiscard]] T* newArray(TMemPool& pool, PtrSize n, const T& copy)
 {
 	T* ptr = static_cast<T*>(pool.allocate(n * sizeof(T), alignof(T)));
-	if(ANKI_LIKELY(ptr))
+	if(ptr) [[likely]]
 	{
 		for(PtrSize i = 0; i < n; i++)
 		{
@@ -444,7 +444,7 @@ void newArray(TMemPool& pool, PtrSize n, WeakArray<T, TSize>& out)
 template<typename T, typename TMemPool>
 void deleteInstance(TMemPool& pool, T* ptr)
 {
-	if(ANKI_LIKELY(ptr != nullptr))
+	if(ptr != nullptr) [[likely]]
 	{
 		callDestructor(*ptr);
 		pool.free(ptr);
@@ -455,7 +455,7 @@ void deleteInstance(TMemPool& pool, T* ptr)
 template<typename T, typename TMemPool>
 void deleteArray(TMemPool& pool, T* arr, PtrSize n)
 {
-	if(ANKI_LIKELY(arr != nullptr))
+	if(arr != nullptr) [[likely]]
 	{
 		for(PtrSize i = 0; i < n; i++)
 		{

@@ -21,16 +21,6 @@ class PlayerControllerComponent : public SceneComponent
 public:
 	PlayerControllerComponent(SceneNode* node);
 
-	const Transform& getWorldTransform() const
-	{
-		return m_trf;
-	}
-
-	void setWorldTransform(const Transform& trf)
-	{
-		m_player->moveToPosition(trf.getOrigin().xyz());
-	}
-
 	void setVelocity(F32 forwardSpeed, F32 strafeSpeed, F32 jumpSpeed, const Vec4& forwardDir)
 	{
 		m_player->setVelocity(forwardSpeed, strafeSpeed, jumpSpeed, forwardDir);
@@ -41,22 +31,11 @@ public:
 		m_player->moveToPosition(pos);
 	}
 
-	PhysicsPlayerControllerPtr getPhysicsPlayerController() const
-	{
-		return m_player;
-	}
-
 private:
 	PhysicsPlayerControllerPtr m_player;
 	Transform m_trf = Transform::getIdentity();
 
-	Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated)
-	{
-		const Transform newTrf = m_player->getTransform();
-		updated = newTrf != m_trf;
-		m_trf = newTrf;
-		return Error::kNone;
-	}
+	Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated);
 };
 /// @}
 

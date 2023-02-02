@@ -24,7 +24,7 @@ public:
 
 	~BodyComponent();
 
-	Error loadMeshResource(CString meshFilename);
+	void loadMeshResource(CString meshFilename);
 
 	CString getMeshResourceFilename() const;
 
@@ -33,23 +33,6 @@ public:
 	F32 getMass() const
 	{
 		return (m_body) ? m_body->getMass() : 0.0f;
-	}
-
-	void setWorldTransform(const Transform& trf)
-	{
-		if(m_body)
-		{
-			m_body->setTransform(trf);
-		}
-		else
-		{
-			m_trf = trf;
-		}
-	}
-
-	Transform getWorldTransform() const
-	{
-		return (m_body) ? m_body->getTransform() : m_trf;
 	}
 
 	PhysicsBodyPtr getPhysicsBody() const
@@ -62,12 +45,16 @@ public:
 		return m_mesh.isCreated();
 	}
 
+	void teleportTo(const Transform& trf)
+	{
+		m_body->setTransform(trf);
+	}
+
 private:
 	SceneNode* m_node = nullptr;
 	CpuMeshResourcePtr m_mesh;
 	PhysicsBodyPtr m_body;
-	Transform m_trf = Transform::getIdentity();
-	Bool m_markedForUpdate = true;
+	Bool m_dirty = true;
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated);
 };

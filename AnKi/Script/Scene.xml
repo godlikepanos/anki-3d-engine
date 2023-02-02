@@ -92,43 +92,6 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 		</class>
 
 		<!-- Components -->
-		<class name="MoveComponent">
-			<methods>
-				<method name="setLocalOrigin">
-					<args>
-						<arg>const Vec4&amp;</arg>
-					</args>
-				</method>
-				<method name="getLocalOrigin">
-					<return>const Vec4&amp;</return>
-				</method>
-				<method name="setLocalRotation">
-					<args>
-						<arg>const Mat3x4&amp;</arg>
-					</args>
-				</method>
-				<method name="getLocalRotation">
-					<return>const Mat3x4&amp;</return>
-				</method>
-				<method name="setLocalScale">
-					<args>
-						<arg>F32</arg>
-					</args>
-				</method>
-				<method name="getLocalScale">
-					<return>F32</return>
-				</method>
-				<method name="setLocalTransform">
-					<args>
-						<arg>const Transform&amp;</arg>
-					</args>
-				</method>
-				<method name="getLocalTransform">
-					<return>const Transform&amp;</return>
-				</method>
-			</methods>
-		</class>
-
 		<class name="LightComponent">
 			<methods>
 				<method name="setDiffuseColor">
@@ -184,21 +147,17 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 
 		<class name="DecalComponent">
 			<methods>
-				<method name="setDiffuseDecal">
+				<method name="loadDiffuseImageResource">
 					<args>
-						<arg>CString</arg>
 						<arg>CString</arg>
 						<arg>F32</arg>
 					</args>
-					<return>Error</return>
 				</method>
-				<method name="setSpecularRoughnessDecal">
+				<method name="loadRoughnessMetalnessImageResource">
 					<args>
-						<arg>CString</arg>
 						<arg>CString</arg>
 						<arg>F32</arg>
 					</args>
-					<return>Error</return>
 				</method>
 				<method name="setBoxVolumeSize">
 					<args>
@@ -214,7 +173,6 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 					<args>
 						<arg>CString</arg>
 					</args>
-					<return>Error</return>
 				</method>
 				<method name="setFirstFlareSize">
 					<args>
@@ -235,15 +193,11 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 					<args>
 						<arg>CString</arg>
 					</args>
-					<return>Error</return>
 				</method>
-				<method name="setWorldTransform">
+				<method name="teleportTo">
 					<args>
 						<arg>const Transform&amp;</arg>
 					</args>
-				</method>
-				<method name="getWorldTransform">
-					<return>Transform</return>
 				</method>
 			</methods>
 		</class>
@@ -285,7 +239,7 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 			</methods>
 		</class>
 
-		<class name="FrustumComponent">
+		<class name="CameraComponent">
 			<methods>
 				<method name="setPerspective">
 					<args>
@@ -355,18 +309,6 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 					<args>
 						<arg>CString</arg>
 					</args>
-					<return>Error</return>
-				</method>
-			</methods>
-		</class>
-
-		<class name="GpuParticleEmitterComponent">
-			<methods>
-				<method name="loadParticleEmitterResource">
-					<args>
-						<arg>CString</arg>
-					</args>
-					<return>Error</return>
 				</method>
 			</methods>
 		</class>
@@ -377,7 +319,6 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 					<args>
 						<arg>CString</arg>
 					</args>
-					<return>Error</return>
 				</method>
 			</methods>
 		</class>
@@ -388,7 +329,6 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 					<args>
 						<arg>CString</arg>
 					</args>
-					<return>Error</return>
 				</method>
 			</methods>
 		</class>
@@ -400,7 +340,7 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 						<arg>Vec3</arg>
 					</args>
 				</method>
-				<method name="setImage">
+				<method name="loadImageResource">
 					<args>
 						<arg>CString</arg>
 					</args>
@@ -440,257 +380,55 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 					</args>
 				</method>
 				<method name="setMarkedForDeletion"></method>
-				<method name="tryGetFirstComponentOfType&lt;MoveComponent&gt;" alias="getMoveComponent">
-					<return>MoveComponent*</return>
-				</method>
-				<method name="tryGetFirstComponentOfType&lt;LightComponent&gt;" alias="getLightComponent">
+				<method name="newComponent&lt;LightComponent&gt;" alias="newLightComponent">
 					<return>LightComponent*</return>
 				</method>
-				<method name="tryGetFirstComponentOfType&lt;LensFlareComponent&gt;" alias="getLensFlareComponent">
+				<method name="newComponent&lt;LensFlareComponent&gt;" alias="newLensFlareComponent">
 					<return>LensFlareComponent*</return>
 				</method>
-				<method name="tryGetFirstComponentOfType&lt;DecalComponent&gt;" alias="getDecalComponent">
+				<method name="newComponent&lt;DecalComponent&gt;" alias="newDecalComponent">
 					<return>DecalComponent*</return>
 				</method>
-				<method name="tryGetFirstComponentOfType&lt;TriggerComponent&gt;" alias="getTriggerComponent">
+				<method name="newComponent&lt;TriggerComponent&gt;" alias="newTriggerComponent">
 					<return>TriggerComponent*</return>
 				</method>
-				<method name="tryGetFirstComponentOfType&lt;FogDensityComponent&gt;" alias="getFogDensityComponent">
+				<method name="newComponent&lt;FogDensityComponent&gt;" alias="newFogDensityComponent">
 					<return>FogDensityComponent*</return>
 				</method>
-				<method name="tryGetFirstComponentOfType&lt;FrustumComponent&gt;" alias="getFrustumComponent">
-					<return>FrustumComponent*</return>
+				<method name="newComponent&lt;CameraComponent&gt;" alias="newCameraComponent">
+					<return>CameraComponent*</return>
 				</method>
-				<method name="tryGetFirstComponentOfType&lt;GlobalIlluminationProbeComponent&gt;" alias="getGlobalIlluminationProbeComponent">
+				<method name="newComponent&lt;GlobalIlluminationProbeComponent&gt;" alias="newGlobalIlluminationProbeComponent">
 					<return>GlobalIlluminationProbeComponent*</return>
 				</method>
-				<method name="tryGetFirstComponentOfType&lt;ReflectionProbeComponent&gt;" alias="getReflectionProbeComponent">
+				<method name="newComponent&lt;ReflectionProbeComponent&gt;" alias="newReflectionProbeComponent">
 					<return>ReflectionProbeComponent*</return>
 				</method>
-				<method name="tryGetFirstComponentOfType&lt;BodyComponent&gt;" alias="getBodyComponent">
+				<method name="newComponent&lt;BodyComponent&gt;" alias="newBodyComponent">
 					<return>BodyComponent*</return>
 				</method>
-				<method name="tryGetFirstComponentOfType&lt;ParticleEmitterComponent&gt;" alias="getParticleEmitterComponent">
+				<method name="newComponent&lt;ParticleEmitterComponent&gt;" alias="newParticleEmitterComponent">
 					<return>ParticleEmitterComponent*</return>
 				</method>
-				<method name="tryGetFirstComponentOfType&lt;GpuParticleEmitterComponent&gt;" alias="getGpuParticleEmitterComponent">
-					<return>GpuParticleEmitterComponent*</return>
-				</method>
-				<method name="tryGetFirstComponentOfType&lt;ModelComponent&gt;" alias="getModelComponent">
+				<method name="newComponent&lt;ModelComponent&gt;" alias="newModelComponent">
 					<return>ModelComponent*</return>
 				</method>
-				<method name="tryGetFirstComponentOfType&lt;SkinComponent&gt;" alias="getSkinComponent">
+				<method name="newComponent&lt;SkinComponent&gt;" alias="newSkinComponent">
 					<return>SkinComponent*</return>
 				</method>
-				<method name="tryGetFirstComponentOfType&lt;SkyboxComponent&gt;" alias="getSkyboxComponent">
+				<method name="newComponent&lt;SkyboxComponent&gt;" alias="newSkyboxComponent">
 					<return>SkyboxComponent*</return>
-				</method>
-			</methods>
-		</class>
-		<class name="ModelNode">
-			<methods>
-				<method name="getSceneNodeBase">
-					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
-					<return>SceneNode&amp;</return>
-				</method>
-			</methods>
-		</class>
-		<class name="PerspectiveCameraNode">
-			<methods>
-				<method name="getSceneNodeBase">
-					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
-					<return>SceneNode&amp;</return>
-				</method>
-			</methods>
-		</class>
-		<class name="PointLightNode">
-			<methods>
-				<method name="getSceneNodeBase">
-					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
-					<return>SceneNode&amp;</return>
-				</method>
-			</methods>
-		</class>
-		<class name="SpotLightNode">
-			<methods>
-				<method name="getSceneNodeBase">
-					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
-					<return>SceneNode&amp;</return>
-				</method>
-			</methods>
-		</class>
-		<class name="DirectionalLightNode">
-			<methods>
-				<method name="getSceneNodeBase">
-					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
-					<return>SceneNode&amp;</return>
-				</method>
-			</methods>
-		</class>
-		<class name="StaticCollisionNode">
-			<methods>
-				<method name="getSceneNodeBase">
-					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
-					<return>SceneNode&amp;</return>
-				</method>
-			</methods>
-		</class>
-		<class name="ParticleEmitterNode">
-			<methods>
-				<method name="getSceneNodeBase">
-					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
-					<return>SceneNode&amp;</return>
-				</method>
-			</methods>
-		</class>
-		<class name="GpuParticleEmitterNode">
-			<methods>
-				<method name="getSceneNodeBase">
-					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
-					<return>SceneNode&amp;</return>
-				</method>
-			</methods>
-		</class>
-		<class name="ReflectionProbeNode">
-			<methods>
-				<method name="getSceneNodeBase">
-					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
-					<return>SceneNode&amp;</return>
-				</method>
-			</methods>
-		</class>
-		<class name="DecalNode">
-			<methods>
-				<method name="getSceneNodeBase">
-					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
-					<return>SceneNode&amp;</return>
-				</method>
-			</methods>
-		</class>
-		<class name="TriggerNode">
-			<methods>
-				<method name="getSceneNodeBase">
-					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
-					<return>SceneNode&amp;</return>
-				</method>
-			</methods>
-		</class>
-		<class name="FogDensityNode">
-			<methods>
-				<method name="getSceneNodeBase">
-					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
-					<return>SceneNode&amp;</return>
-				</method>
-			</methods>
-		</class>
-		<class name="GlobalIlluminationProbeNode">
-			<methods>
-				<method name="getSceneNodeBase">
-					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
-					<return>SceneNode&amp;</return>
-				</method>
-			</methods>
-		</class>
-		<class name="SkyboxNode">
-			<methods>
-				<method name="getSceneNodeBase">
-					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
-					<return>SceneNode&amp;</return>
 				</method>
 			</methods>
 		</class>
 		<class name="SceneGraph">
 			<methods>
-				<method name="newPerspectiveCameraNode">
-					<overrideCall><![CDATA[PerspectiveCameraNode* ret = newSceneNode<PerspectiveCameraNode>(self, arg0);]]></overrideCall>
+				<method name="newSceneNode">
+					<overrideCall><![CDATA[SceneNode* ret = newSceneNode<SceneNode>(self, arg0);]]></overrideCall>
 					<args>
 						<arg>CString</arg>
 					</args>
-					<return>PerspectiveCameraNode*</return>
-				</method>
-				<method name="newModelNode">
-					<overrideCall><![CDATA[ModelNode* ret = newSceneNode<ModelNode>(self, arg0);]]></overrideCall>
-					<args>
-						<arg>CString</arg>
-					</args>
-					<return>ModelNode*</return>
-				</method>
-				<method name="newPointLightNode">
-					<overrideCall><![CDATA[PointLightNode* ret = newSceneNode<PointLightNode>(self, arg0);]]></overrideCall>
-					<args>
-						<arg>CString</arg>
-					</args>
-					<return>PointLightNode*</return>
-				</method>
-				<method name="newSpotLightNode">
-					<overrideCall><![CDATA[SpotLightNode* ret = newSceneNode<SpotLightNode>(self, arg0);]]></overrideCall>
-					<args>
-						<arg>CString</arg>
-					</args>
-					<return>SpotLightNode*</return>
-				</method>
-				<method name="newDirectionalLightNode">
-					<overrideCall><![CDATA[DirectionalLightNode* ret = newSceneNode<DirectionalLightNode>(self, arg0);]]></overrideCall>
-					<args>
-						<arg>CString</arg>
-					</args>
-					<return>DirectionalLightNode*</return>
-				</method>
-				<method name="newStaticCollisionNode">
-					<overrideCall><![CDATA[StaticCollisionNode* ret = newSceneNode<StaticCollisionNode>(self, arg0);]]></overrideCall>
-					<args>
-						<arg>CString</arg>
-					</args>
-					<return>StaticCollisionNode*</return>
-				</method>
-				<method name="newParticleEmitterNode">
-					<overrideCall><![CDATA[ParticleEmitterNode* ret = newSceneNode<ParticleEmitterNode>(self, arg0);]]></overrideCall>
-					<args>
-						<arg>CString</arg>
-					</args>
-					<return>ParticleEmitterNode*</return>
-				</method>
-				<method name="newGpuParticleEmitterNode">
-					<overrideCall><![CDATA[GpuParticleEmitterNode* ret = newSceneNode<GpuParticleEmitterNode>(self, arg0);]]></overrideCall>
-					<args>
-						<arg>CString</arg>
-					</args>
-					<return>GpuParticleEmitterNode*</return>
-				</method>
-				<method name="newReflectionProbeNode">
-					<overrideCall><![CDATA[ReflectionProbeNode* ret = newSceneNode<ReflectionProbeNode>(self, arg0);]]></overrideCall>
-					<args>
-						<arg>CString</arg>
-					</args>
-					<return>ReflectionProbeNode*</return>
-				</method>
-				<method name="newDecalNode">
-					<overrideCall><![CDATA[DecalNode* ret = newSceneNode<DecalNode>(self, arg0);]]></overrideCall>
-					<args>
-						<arg>CString</arg>
-					</args>
-					<return>DecalNode*</return>
-				</method>
-				<method name="newTriggerNode">
-					<overrideCall><![CDATA[TriggerNode* ret = newSceneNode<TriggerNode>(self, arg0);]]></overrideCall>
-					<args>
-						<arg>CString</arg>
-					</args>
-					<return>TriggerNode*</return>
-				</method>
-				<method name="newGlobalIlluminationProbeNode">
-					<overrideCall><![CDATA[GlobalIlluminationProbeNode* ret = newSceneNode<GlobalIlluminationProbeNode>(self, arg0);]]></overrideCall>
-					<args>
-						<arg>CString</arg>
-					</args>
-					<return>GlobalIlluminationProbeNode*</return>
-				</method>
-				<method name="newSkyboxNode">
-					<overrideCall><![CDATA[SkyboxNode* ret = newSceneNode<SkyboxNode>(self, arg0);]]></overrideCall>
-					<args>
-						<arg>CString</arg>
-					</args>
-					<return>SkyboxNode*</return>
+					<return>SceneNode*</return>
 				</method>
 				<method name="setActiveCameraNode">
 					<args>

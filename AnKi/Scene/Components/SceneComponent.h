@@ -118,7 +118,7 @@ class SceneComponent
 {
 public:
 	/// Construct the scene component.
-	SceneComponent(SceneNode* node, U8 classId, Bool isFeedbackComponent = false);
+	SceneComponent(SceneNode* node, U8 classId);
 
 	U8 getClassId() const
 	{
@@ -130,14 +130,14 @@ public:
 		return m_timestamp;
 	}
 
-	Bool isFeedbackComponent() const
-	{
-		return m_feedbackComponent;
-	}
-
 	static const SceneComponentRtti& findClassRtti(CString className);
 
 	static const SceneComponentRtti& getClassRtti(U8 classId);
+
+	const SceneComponentRtti& getClassRtti() const
+	{
+		return getClassRtti(m_classId);
+	}
 
 	ANKI_INTERNAL void onDestroyReal(SceneNode& node)
 	{
@@ -164,7 +164,7 @@ public:
 	}
 
 protected:
-	static SceneGraphExternalSubsystems& getExternalSubsystems(const SceneNode& node);
+	ANKI_PURE static SceneGraphExternalSubsystems& getExternalSubsystems(const SceneNode& node);
 
 	/// Pseudo-virtual
 	void onDestroy([[maybe_unused]] SceneNode& node)
@@ -190,8 +190,7 @@ protected:
 
 private:
 	Timestamp m_timestamp = 1; ///< Indicates when an update happened
-	U8 m_classId : 7; ///< Cache the type ID.
-	U8 m_feedbackComponent : 1;
+	U8 m_classId; ///< Cache the type ID.
 };
 /// @}
 

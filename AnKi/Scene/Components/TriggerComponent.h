@@ -28,19 +28,6 @@ public:
 
 	void setSphereVolumeRadius(F32 radius);
 
-	Transform getWorldTransform() const
-	{
-		return (m_trigger.isCreated()) ? m_trigger->getTransform() : Transform::getIdentity();
-	}
-
-	void setWorldTransform(const Transform& trf)
-	{
-		if(m_trigger.isCreated())
-		{
-			m_trigger->setTransform(trf);
-		}
-	}
-
 	WeakArray<BodyComponent*> getBodyComponentsEnter()
 	{
 		return WeakArray<BodyComponent*>(m_bodiesEnter);

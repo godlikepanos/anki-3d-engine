@@ -82,9 +82,8 @@ SceneComponentRtti::SceneComponentRtti(const char* name, F32 updateWeight, U32 s
 	}
 }
 
-SceneComponent::SceneComponent([[maybe_unused]] SceneNode* node, U8 classId, Bool isFeedbackComponent)
-	: m_classId(classId & 0x7F)
-	, m_feedbackComponent(isFeedbackComponent)
+SceneComponent::SceneComponent([[maybe_unused]] SceneNode* node, U8 classId)
+	: m_classId(classId)
 {
 	ANKI_ASSERT(classId < g_sceneComponentClassCount);
 }

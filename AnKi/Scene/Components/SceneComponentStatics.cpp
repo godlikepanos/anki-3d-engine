@@ -7,10 +7,7 @@
 #include <AnKi/Scene/Components/CameraComponent.h>
 #include <AnKi/Scene/Components/DecalComponent.h>
 #include <AnKi/Scene/Components/FogDensityComponent.h>
-#include <AnKi/Scene/Components/FrustumComponent.h>
-#include <AnKi/Scene/Components/GenericGpuComputeJobComponent.h>
 #include <AnKi/Scene/Components/GlobalIlluminationProbeComponent.h>
-#include <AnKi/Scene/Components/GpuParticleEmitterComponent.h>
 #include <AnKi/Scene/Components/JointComponent.h>
 #include <AnKi/Scene/Components/LensFlareComponent.h>
 #include <AnKi/Scene/Components/LightComponent.h>
@@ -22,7 +19,6 @@
 #include <AnKi/Scene/Components/ScriptComponent.h>
 #include <AnKi/Scene/Components/SkinComponent.h>
 #include <AnKi/Scene/Components/SkyboxComponent.h>
-#include <AnKi/Scene/Components/SpatialComponent.h>
 #include <AnKi/Scene/Components/TriggerComponent.h>
 #include <AnKi/Scene/Components/UiComponent.h>
 

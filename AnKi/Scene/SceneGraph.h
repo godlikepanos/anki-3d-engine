@@ -17,9 +17,7 @@
 namespace anki {
 
 // Forward
-class CameraNode;
 class Octree;
-class PerspectiveCameraNode;
 
 /// @addtogroup scene
 /// @{
@@ -159,6 +157,8 @@ public:
 		return m_sceneMax;
 	}
 
+	/// Get a unique UUID.
+	/// @note It's thread-safe.
 	U64 getNewUuid()
 	{
 		return m_nodesUuid.fetchAdd(1);
@@ -191,7 +191,7 @@ private:
 
 	SceneNode* m_mainCam = nullptr;
 	Timestamp m_activeCameraChangeTimestamp = 0;
-	PerspectiveCameraNode* m_defaultMainCam = nullptr;
+	SceneNode* m_defaultMainCam = nullptr;
 
 	EventManager m_events;
 

@@ -77,9 +77,6 @@ public:
 		return m_userData;
 	}
 
-protected:
-	PhysicsWorld* m_world = nullptr;
-
 	PhysicsWorld& getWorld()
 	{
 		return *m_world;
@@ -89,6 +86,9 @@ protected:
 	{
 		return *m_world;
 	}
+
+protected:
+	PhysicsWorld* m_world = nullptr;
 
 	void retain() const
 	{

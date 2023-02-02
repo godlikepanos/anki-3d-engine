@@ -28,9 +28,19 @@ SkinComponent::~SkinComponent()
 	getExternalSubsystems(*m_node).m_gpuSceneMemoryPool->free(m_boneTransformsGpuSceneOffset);
 }
 
-Error SkinComponent::loadSkeletonResource(CString fname)
+void SkinComponent::loadSkeletonResource(CString fname)
 {
-	ANKI_CHECK(getExternalSubsystems(*m_node).m_resourceManager->loadResource(fname, m_skeleton));
+	SkeletonResourcePtr rsrc;
+	const Error err = getExternalSubsystems(*m_node).m_resourceManager->loadResource(fname, rsrc);
+	if(err)
+	{
+		ANKI_SCENE_LOGE("Failed to load skeleton");
+		return;
+	}
+
+	m_forceFullUpdate = true;
+
+	m_skeleton = std::move(rsrc);
 
 	// Cleanup
 	m_boneTrfs[0].destroy(m_node->getMemoryPool());
@@ -46,8 +56,6 @@ Error SkinComponent::loadSkeletonResource(CString fname)
 
 	getExternalSubsystems(*m_node).m_gpuSceneMemoryPool->allocate(sizeof(Mat4) * boneCount * 2, 4,
 																  m_boneTransformsGpuSceneOffset);
-
-	return Error::kNone;
 }
 
 void SkinComponent::playAnimation(U32 track, AnimationResourcePtr anim, const AnimationPlayInfo& info)
@@ -174,7 +182,8 @@ Error SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	}
 
 	// Always update the 1st time
-	updated = updated || (m_absoluteTime == 0.0);
+	updated = updated || m_forceFullUpdate;
+	m_forceFullUpdate = false;
 
 	if(updated)
 	{

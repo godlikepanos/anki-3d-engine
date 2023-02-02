@@ -303,14 +303,10 @@ class DecalQueueElement final
 public:
 	RenderQueueDrawCallback m_debugDrawCallback;
 	const void* m_debugDrawCallbackUserData;
-	/// Totaly unsafe but we can't have a smart ptr in here since there will be no deletion.
-	TextureView* m_diffuseAtlas;
-	/// Totaly unsafe but we can't have a smart ptr in here since there will be no deletion.
-	TextureView* m_specularRoughnessAtlas;
-	Vec4 m_diffuseAtlasUv;
-	Vec4 m_specularRoughnessAtlasUv;
-	F32 m_diffuseAtlasBlendFactor;
-	F32 m_specularRoughnessAtlasBlendFactor;
+	U32 m_diffuseBindlessTextureIndex;
+	U32 m_roughnessMetalnessBindlessTextureIndex;
+	F32 m_diffuseBlendFactor;
+	F32 m_roughnessMetalnessBlendFactor;
 	Mat4 m_textureMatrix;
 	Vec3 m_obbCenter;
 	Vec3 m_obbExtend;

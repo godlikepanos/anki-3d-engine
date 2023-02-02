@@ -96,14 +96,9 @@ void GBufferPost::run(const RenderingContext& ctx, RenderPassWorkContext& rgraph
 
 	bindUniforms(cmdb, 0, 3, rsrc.m_clusteredShadingUniformsToken);
 	bindUniforms(cmdb, 0, 4, rsrc.m_decalsToken);
+	bindStorage(cmdb, 0, 5, rsrc.m_clustersToken);
 
-	cmdb->bindTexture(0, 5,
-					  (rsrc.m_diffuseDecalTextureView) ? rsrc.m_diffuseDecalTextureView : m_r->getDummyTextureView2d());
-	cmdb->bindTexture(0, 6,
-					  (rsrc.m_specularRoughnessDecalTextureView) ? rsrc.m_specularRoughnessDecalTextureView
-																 : m_r->getDummyTextureView2d());
-
-	bindStorage(cmdb, 0, 7, rsrc.m_clustersToken);
+	cmdb->bindAllBindless(1);
 
 	// Draw
 	cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);

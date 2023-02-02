@@ -24,14 +24,14 @@ public:
 	{
 	}
 
-	TEuler(const T x_, const T y_, const T z_)
+	constexpr TEuler(const T x_, const T y_, const T z_)
 	{
-		x() = x_;
-		y() = y_;
-		z() = z_;
+		m_vec.m_x = x_;
+		m_vec.m_y = y_;
+		m_vec.m_z = z_;
 	}
 
-	TEuler(const TEuler& b)
+	constexpr TEuler(const TEuler& b)
 	{
 		x() = b.x();
 		y() = b.y();

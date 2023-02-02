@@ -755,7 +755,7 @@ def main():
 
     for filename in filenames:
         out_filename = get_base_fname(filename) + ".cpp"
-        out_file = open(out_filename, "w")
+        out_file = open(out_filename, "w", newline="\n")
 
         tree = et.parse(filename)
         root = tree.getroot()

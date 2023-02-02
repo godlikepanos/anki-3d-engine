@@ -6,13 +6,50 @@
 #include <AnKi/Scene/Components/CameraComponent.h>
 #include <AnKi/Scene/Components/MoveComponent.h>
 #include <AnKi/Scene/SceneNode.h>
+#include <AnKi/Gr/GrManager.h>
+#include <AnKi/Core/ConfigSet.h>
 
 namespace anki {
 
 CameraComponent::CameraComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
 {
+	const ConfigSet& config = *getExternalSubsystems(*node).m_config;
+
+	// Init main frustum
 	m_frustum.init(FrustumType::kPerspective, &node->getMemoryPool());
+
+	m_frustum.setLodDistance(0, config.getLod0MaxDistance());
+	m_frustum.setLodDistance(1, config.getLod1MaxDistance());
+	m_frustum.setShadowCascadeCount(config.getSceneShadowCascadeCount());
+
+	static_assert(kMaxShadowCascades == 4);
+	m_frustum.setShadowCascadeDistance(0, config.getSceneShadowCascade0Distance());
+	m_frustum.setShadowCascadeDistance(1, config.getSceneShadowCascade1Distance());
+	m_frustum.setShadowCascadeDistance(2, config.getSceneShadowCascade2Distance());
+	m_frustum.setShadowCascadeDistance(3, config.getSceneShadowCascade3Distance());
+
+	m_frustum.setWorldTransform(node->getWorldTransform());
+
+	m_frustum.setEarlyZDistance(config.getSceneEarlyZDistance());
+
+	m_frustum.update();
+
+	// Init extended frustum
+	m_usesExtendedFrustum = getExternalSubsystems(*node).m_grManager->getDeviceCapabilities().m_rayTracingEnabled
+							&& config.getSceneRayTracedShadows();
+
+	if(m_usesExtendedFrustum)
+	{
+		m_extendedFrustum.init(FrustumType::kOrthographic, &node->getMemoryPool());
+
+		const F32 dist = config.getSceneRayTracingExtendedFrustumDistance();
+
+		m_extendedFrustum.setOrthographic(0.1f, dist * 2.0f, dist, -dist, dist, -dist);
+		m_extendedFrustum.setWorldTransform(computeExtendedFrustumTransform(node->getWorldTransform()));
+
+		m_extendedFrustum.update();
+	}
 }
 
 CameraComponent::~CameraComponent()
@@ -21,42 +58,35 @@ CameraComponent::~CameraComponent()
 
 Error CameraComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	if(m_moveComponent) [[likely]]
+	if(info.m_node->movedThisFrame())
 	{
-		updated = m_frustum.update(m_moveComponent->wasDirtyThisFrame(), m_moveComponent->getWorldTransform());
+		m_frustum.setWorldTransform(info.m_node->getWorldTransform());
+
+		if(m_usesExtendedFrustum)
+		{
+			m_extendedFrustum.setWorldTransform(computeExtendedFrustumTransform(info.m_node->getWorldTransform()));
+		}
 	}
-	else
+
+	updated = m_frustum.update();
+
+	if(m_usesExtendedFrustum)
 	{
-		updated = m_frustum.update(true, Transform::getIdentity());
+		updated = updated || m_extendedFrustum.update();
 	}
 
 	return Error::kNone;
 }
 
-void CameraComponent::onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added)
+Transform CameraComponent::computeExtendedFrustumTransform(const Transform& cameraTransform) const
 {
-	if(other->getClassId() != MoveComponent::getStaticClassId())
-	{
-		return;
-	}
+	const F32 far = m_extendedFrustum.getFar();
+	Transform extendedFrustumTransform = Transform::getIdentity();
+	Vec3 newOrigin = cameraTransform.getOrigin().xyz();
+	newOrigin.z() += far / 2.0f;
+	extendedFrustumTransform.setOrigin(newOrigin.xyz0());
 
-	MoveComponent* movec = static_cast<MoveComponent*>(other);
-	if(added)
-	{
-		m_moveComponent = movec;
-	}
-	else if(m_moveComponent == movec)
-	{
-		m_moveComponent = nullptr;
-	}
-}
-
-void CameraComponent::fillCoverage(void* userData, F32* depthValues, U32 width, U32 height)
-{
-	ANKI_ASSERT(userData && depthValues && width > 0 && height > 0);
-
-	CameraComponent& self = *static_cast<CameraComponent*>(userData);
-	self.m_frustum.setCoverageBuffer(depthValues, width, height);
+	return extendedFrustumTransform;
 }
 
 } // end namespace anki

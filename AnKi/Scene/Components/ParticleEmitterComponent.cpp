@@ -196,7 +196,9 @@ public:
 ParticleEmitterComponent::ParticleEmitterComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
 	, m_node(node)
+	, m_spatial(this)
 {
+	getExternalSubsystems(*node).m_gpuSceneMemoryPool->allocate(sizeof(Mat3x4), alignof(F32), m_gpuSceneTransform);
 }
 
 ParticleEmitterComponent::~ParticleEmitterComponent()
@@ -210,12 +212,24 @@ ParticleEmitterComponent::~ParticleEmitterComponent()
 	gpuScenePool.free(m_gpuSceneAlphas);
 	gpuScenePool.free(m_gpuSceneParticles);
 	gpuScenePool.free(m_gpuSceneUniforms);
+	gpuScenePool.free(m_gpuSceneTransform);
+
+	m_spatial.removeFromOctree(m_node->getSceneGraph().getOctree());
 }
 
-Error ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
+void ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 {
 	// Load
-	ANKI_CHECK(getExternalSubsystems(*m_node).m_resourceManager->loadResource(filename, m_particleEmitterResource));
+	ParticleEmitterResourcePtr rsrc;
+	const Error err = getExternalSubsystems(*m_node).m_resourceManager->loadResource(filename, rsrc);
+	if(err)
+	{
+		ANKI_SCENE_LOGE("Failed to load particle emitter");
+		return;
+	}
+
+	m_particleEmitterResource = std::move(rsrc);
+
 	m_props = m_particleEmitterResource->getProperties();
 	m_resourceUpdated = true;
 
@@ -259,13 +273,11 @@ Error ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	gpuScenePool.allocate(sizeof(GpuSceneParticles), alignof(U32), m_gpuSceneParticles);
 	gpuScenePool.allocate(m_particleEmitterResource->getMaterial()->getPrefilledLocalUniforms().getSizeInBytes(),
 						  alignof(U32), m_gpuSceneUniforms);
-
-	return Error::kNone;
 }
 
 Error ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	if(ANKI_UNLIKELY(!m_particleEmitterResource.isCreated()))
+	if(!m_particleEmitterResource.isCreated()) [[unlikely]]
 	{
 		updated = false;
 		return Error::kNone;
@@ -276,17 +288,21 @@ Error ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 	F32* scales;
 	F32* alphas;
 
+	Aabb aabbWorld;
 	if(m_simulationType == SimulationType::kSimple)
 	{
 		simulate(info.m_previousTime, info.m_currentTime, WeakArray<SimpleParticle>(m_simpleParticles), positions,
-				 scales, alphas);
+				 scales, alphas, aabbWorld);
 	}
 	else
 	{
 		ANKI_ASSERT(m_simulationType == SimulationType::kPhysicsEngine);
 		simulate(info.m_previousTime, info.m_currentTime, WeakArray<PhysicsParticle>(m_physicsParticles), positions,
-				 scales, alphas);
+				 scales, alphas, aabbWorld);
 	}
+
+	m_spatial.setBoundingShape(aabbWorld);
+	m_spatial.update(info.m_node->getSceneGraph().getOctree());
 
 	// Upload to the GPU scene
 	GpuSceneMicroPatcher& patcher = *info.m_gpuSceneMicroPatcher;
@@ -318,7 +334,7 @@ Error ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 
 template<typename TParticle>
 void ParticleEmitterComponent::simulate(Second prevUpdateTime, Second crntTime, WeakArray<TParticle> particles,
-										Vec3*& positions, F32*& scales, F32*& alphas)
+										Vec3*& positions, F32*& scales, F32*& alphas, Aabb& aabbWorld)
 {
 	// - Deactivate the dead particles
 	// - Calc the AABB
@@ -379,11 +395,11 @@ void ParticleEmitterComponent::simulate(Second prevUpdateTime, Second crntTime, 
 		ANKI_ASSERT(maxParticleSize > 0.0f);
 		const Vec3 min = aabbMin - maxParticleSize;
 		const Vec3 max = aabbMax + maxParticleSize;
-		m_worldBoundingVolume = Aabb(min, max);
+		aabbWorld = Aabb(min, max);
 	}
 	else
 	{
-		m_worldBoundingVolume = Aabb(Vec3(0.0f), Vec3(0.001f));
+		aabbWorld = Aabb(Vec3(0.0f), Vec3(0.001f));
 		positions = nullptr;
 		alphas = scales = nullptr;
 	}
@@ -402,8 +418,7 @@ void ParticleEmitterComponent::simulate(Second prevUpdateTime, Second crntTime, 
 				continue;
 			}
 
-			particle.revive(
-				m_props, (m_moveComponent) ? m_moveComponent->getWorldTransform() : Transform::getIdentity(), crntTime);
+			particle.revive(m_props, m_node->getWorldTransform(), crntTime);
 
 			// do the rest
 			++particleCount;
@@ -441,7 +456,7 @@ void ParticleEmitterComponent::setupRenderableQueueElements(RenderingTechnique t
 
 	el->m_mergeKey = 0; // Not mergable
 	el->m_program = prog.get();
-	el->m_worldTransformsOffset = m_moveComponent->getTransformsGpuSceneOffset();
+	el->m_worldTransformsOffset = 0;
 	el->m_uniformsOffset = U32(m_gpuSceneUniforms.m_offset);
 	el->m_geometryOffset = U32(m_gpuSceneParticles.m_offset);
 	el->m_boneTransformsOffset = 0;
@@ -451,24 +466,6 @@ void ParticleEmitterComponent::setupRenderableQueueElements(RenderingTechnique t
 	el->m_primitiveTopology = PrimitiveTopology::kTriangles;
 
 	outRenderables.setArray(el, 1);
-}
-
-void ParticleEmitterComponent::onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added)
-{
-	if(added)
-	{
-		if(other->getClassId() == MoveComponent::getStaticClassId())
-		{
-			m_moveComponent = static_cast<MoveComponent*>(other);
-		}
-	}
-	else
-	{
-		if(m_moveComponent == other)
-		{
-			m_moveComponent = nullptr;
-		}
-	}
 }
 
 } // end namespace anki

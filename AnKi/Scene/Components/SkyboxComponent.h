@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Scene/Components/SceneComponent.h>
+#include <AnKi/Scene/Spatial.h>
 #include <AnKi/Resource/Forward.h>
 #include <AnKi/Math.h>
 
@@ -40,7 +41,7 @@ public:
 		m_color = color.max(Vec3(0.0f));
 	}
 
-	void setImage(CString filename);
+	void loadImageResource(CString filename);
 
 	void setMinFogDensity(F32 density)
 	{
@@ -118,6 +119,7 @@ public:
 
 private:
 	SceneNode* m_node;
+	Spatial m_spatial;
 	SkyboxType m_type = SkyboxType::kSolidColor;
 	Vec3 m_color = Vec3(0.0f, 0.0f, 0.5f);
 	ImageResourcePtr m_image;
@@ -134,6 +136,8 @@ private:
 		F32 m_absorptionCoeff = 0.02f;
 		Vec3 m_diffuseColor = Vec3(1.0f);
 	} m_fog;
+
+	Error update(SceneComponentUpdateInfo& info, Bool& updated);
 };
 /// @}
 

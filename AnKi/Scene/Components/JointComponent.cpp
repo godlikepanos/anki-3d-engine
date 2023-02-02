@@ -19,17 +19,16 @@ public:
 
 JointComponent::~JointComponent()
 {
-	removeAllJoints();
 }
 
-void JointComponent::removeAllJoints()
+void JointComponent::onDestroy(SceneNode& node)
 {
 	while(!m_jointList.isEmpty())
 	{
-		JointNode* node = &m_jointList.getFront();
+		JointNode* jnode = &m_jointList.getFront();
 		m_jointList.popFront();
 
-		deleteInstance(m_node->getMemoryPool(), node);
+		deleteInstance(node.getMemoryPool(), jnode);
 	}
 }
 
@@ -57,7 +56,7 @@ Vec3 JointComponent::computeLocalPivotFromFactors(const PhysicsBodyPtr& body, co
 template<typename TJoint, typename... TArgs>
 void JointComponent::newJoint(const Vec3& relPosFactor, F32 breakingImpulse, TArgs&&... args)
 {
-	BodyComponent* bodyc = m_node->tryGetFirstComponentOfType<BodyComponent>();
+	BodyComponent* bodyc = m_bodyc;
 
 	if(bodyc)
 	{
@@ -84,7 +83,7 @@ void JointComponent::newPoint2PointJoint(const Vec3& relPosFactor, F32 breakingI
 
 void JointComponent::newPoint2PointJoint2(const Vec3& relPosFactorA, const Vec3& relPosFactorB, F32 breakingImpulse)
 {
-	BodyComponent* bodycA = m_node->tryGetFirstComponentOfType<BodyComponent>();
+	BodyComponent* bodycA = m_bodyc;
 	BodyComponent* bodycB = nullptr;
 	if(m_node->getParent())
 	{
@@ -118,18 +117,16 @@ void JointComponent::newHingeJoint(const Vec3& relPosFactor, const Vec3& axis, F
 
 Error JointComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	ANKI_ASSERT(info.m_node == m_node);
-
 	// Iterate the joints and check if the connected scene node is not the parent of this node anymore.
 	while(true)
 	{
 		Bool erasedOne = false;
-		for(JointNode& otherNode : m_jointList)
+		for(JointNode& joint : m_jointList)
 		{
-			if(otherNode.m_parentNode != info.m_node->getParent() || otherNode.m_joint->isBroken())
+			if(joint.m_parentNode != info.m_node->getParent() || joint.m_joint->isBroken())
 			{
-				m_jointList.erase(&otherNode);
-				deleteInstance(info.m_node->getMemoryPool(), &otherNode);
+				m_jointList.erase(&joint);
+				deleteInstance(info.m_node->getMemoryPool(), &joint);
 				erasedOne = true;
 				updated = true;
 				break;
@@ -143,6 +140,33 @@ Error JointComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	}
 
 	return Error::kNone;
+}
+
+void JointComponent::onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added)
+{
+	if(other->getClassId() != BodyComponent::getStaticClassId())
+	{
+		return;
+	}
+
+	BodyComponent* bodyc = static_cast<BodyComponent*>(other);
+
+	Bool jointListInvalid = false;
+	if(added && m_bodyc == nullptr)
+	{
+		m_bodyc = bodyc;
+		jointListInvalid = true;
+	}
+	else if(bodyc == m_bodyc)
+	{
+		m_bodyc = nullptr;
+		jointListInvalid = true;
+	}
+
+	if(jointListInvalid)
+	{
+		onDestroy(*m_node);
+	}
 }
 
 } // end namespace anki

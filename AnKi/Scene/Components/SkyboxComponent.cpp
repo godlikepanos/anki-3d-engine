@@ -15,24 +15,34 @@ namespace anki {
 SkyboxComponent::SkyboxComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
 	, m_node(node)
+	, m_spatial(this)
 {
+	m_spatial.setAlwaysVisible(true);
+	m_spatial.setUpdatesOctreeBounds(false);
 }
 
 SkyboxComponent::~SkyboxComponent()
 {
 }
 
-void SkyboxComponent::setImage(CString filename)
+void SkyboxComponent::loadImageResource(CString filename)
 {
-	const Error err = getExternalSubsystems(*m_node).m_resourceManager->loadResource(filename, m_image);
+	ImageResourcePtr img;
+	const Error err = getExternalSubsystems(*m_node).m_resourceManager->loadResource(filename, img);
 	if(err)
 	{
 		ANKI_SCENE_LOGE("Setting skybox image failed. Ignoring error");
+		return;
 	}
-	else
-	{
-		m_type = SkyboxType::kImage2D;
-	}
+
+	m_image = std::move(img);
+	m_type = SkyboxType::kImage2D;
+}
+
+Error SkyboxComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
+{
+	updated = m_spatial.update(info.m_node->getSceneGraph().getOctree());
+	return Error::kNone;
 }
 
 void SkyboxComponent::setupSkyboxQueueElement(SkyboxQueueElement& queueElement) const

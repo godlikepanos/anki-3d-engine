@@ -19,9 +19,9 @@ ANKI_CONFIG_VAR_U32(SceneOctreeMaxDepth, 5, 2, 10, "The max depth of the octree"
 ANKI_CONFIG_VAR_F32(SceneEarlyZDistance, (ANKI_PLATFORM_MOBILE) ? 0.0f : 10.0f, 0.0f, kMaxF32,
 					"Objects with distance lower than that will be used in early Z")
 
-ANKI_CONFIG_VAR_F32(SceneReflectionProbeEffectiveDistance, 256.0f, 1.0f, kMaxF32, "How far reflection probes can look")
-ANKI_CONFIG_VAR_F32(SceneReflectionProbeShadowEffectiveDistance, 32.0f, 1.0f, kMaxF32,
-					"How far to render shadows for reflection probes")
+ANKI_CONFIG_VAR_F32(SceneProbeEffectiveDistance, 256.0f, 1.0f, kMaxF32, "How far various probes can render")
+ANKI_CONFIG_VAR_F32(SceneProbeShadowEffectiveDistance, 32.0f, 1.0f, kMaxF32,
+					"How far to render shadows for the various probes")
 
 ANKI_CONFIG_VAR_BOOL(SceneRayTracedShadows, true, "Enable or not ray traced shadows. Ignored if RT is not supported")
 ANKI_CONFIG_VAR_F32(SceneRayTracingExtendedFrustumDistance, 100.0f, 10.0f, 10000.0f,

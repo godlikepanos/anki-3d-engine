@@ -234,8 +234,7 @@ else()
 	#ProcessorCount(PC)
 	add_compile_options(
 		/MP
-		/EHsc # Disable exceptions
-		/GR-) # Disable RTTI
+		/EHsc) # Disable exceptions
 
 	if(${CMAKE_BUILD_TYPE} STREQUAL "Release" OR ${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
 		#add_definitions(/Ox)

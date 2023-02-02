@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Scene/Components/SceneComponent.h>
+#include <AnKi/Scene/Spatial.h>
 #include <AnKi/Resource/ImageAtlasResource.h>
 #include <AnKi/Collision/Obb.h>
 #include <AnKi/Renderer/RenderQueue.h>
@@ -27,21 +28,21 @@ public:
 
 	~DecalComponent();
 
-	Error setDiffuseDecal(CString texAtlasFname, CString texAtlasSubtexName, F32 blendFactor)
+	void loadDiffuseImageResource(CString fname, F32 blendFactor)
 	{
-		return setLayer(texAtlasFname, texAtlasSubtexName, blendFactor, LayerType::kDiffuse);
+		setLayer(fname, blendFactor, LayerType::kDiffuse);
 	}
 
-	Error setSpecularRoughnessDecal(CString texAtlasFname, CString texAtlasSubtexName, F32 blendFactor)
+	void loadRoughnessMetalnessImageResource(CString fname, F32 blendFactor)
 	{
-		return setLayer(texAtlasFname, texAtlasSubtexName, blendFactor, LayerType::kSpecularRoughness);
+		setLayer(fname, blendFactor, LayerType::kRoughnessMetalness);
 	}
 
 	/// Update the internal structures.
 	void setBoxVolumeSize(const Vec3& sizeXYZ)
 	{
 		m_boxSize = sizeXYZ;
-		m_markedForUpdate = true;
+		m_dirty = true;
 	}
 
 	const Vec3& getBoxVolumeSize() const
@@ -49,64 +50,18 @@ public:
 		return m_boxSize;
 	}
 
-	const Obb& getBoundingVolumeWorldSpace() const
+	void setupDecalQueueElement(DecalQueueElement& el) const
 	{
-		return m_obb;
-	}
-
-	void setWorldTransform(const Transform& trf)
-	{
-		ANKI_ASSERT(trf.getScale() == 1.0f);
-		m_trf = trf;
-		m_markedForUpdate = true;
-	}
-
-	const Mat4& getBiasProjectionViewMatrix() const
-	{
-		return m_biasProjViewMat;
-	}
-
-	void getDiffuseAtlasInfo(Vec4& uv, TexturePtr& tex, F32& blendFactor) const
-	{
-		uv = m_layers[LayerType::kDiffuse].m_uv;
-		tex = m_layers[LayerType::kDiffuse].m_atlas->getTexture();
-		blendFactor = m_layers[LayerType::kDiffuse].m_blendFactor;
-	}
-
-	void getSpecularRoughnessAtlasInfo(Vec4& uv, TexturePtr& tex, F32& blendFactor) const
-	{
-		uv = m_layers[LayerType::kSpecularRoughness].m_uv;
-		if(m_layers[LayerType::kSpecularRoughness].m_atlas)
-		{
-			tex = m_layers[LayerType::kSpecularRoughness].m_atlas->getTexture();
-		}
-		else
-		{
-			tex.reset(nullptr);
-		}
-		blendFactor = m_layers[LayerType::kSpecularRoughness].m_blendFactor;
-	}
-
-	void setupDecalQueueElement(DecalQueueElement& el)
-	{
-		el.m_diffuseAtlas = (m_layers[LayerType::kDiffuse].m_atlas)
-								? m_layers[LayerType::kDiffuse].m_atlas->getTextureView().get()
-								: nullptr;
-		el.m_specularRoughnessAtlas = (m_layers[LayerType::kSpecularRoughness].m_atlas)
-										  ? m_layers[LayerType::kSpecularRoughness].m_atlas->getTextureView().get()
-										  : nullptr;
-		el.m_diffuseAtlasUv = m_layers[LayerType::kDiffuse].m_uv;
-		el.m_specularRoughnessAtlasUv = m_layers[LayerType::kSpecularRoughness].m_uv;
-		el.m_diffuseAtlasBlendFactor = m_layers[LayerType::kDiffuse].m_blendFactor;
-		el.m_specularRoughnessAtlasBlendFactor = m_layers[LayerType::kSpecularRoughness].m_blendFactor;
+		ANKI_ASSERT(isEnabled());
+		el.m_diffuseBindlessTextureIndex = m_layers[LayerType::kDiffuse].m_bindlessTextureIndex;
+		el.m_roughnessMetalnessBindlessTextureIndex = m_layers[LayerType::kRoughnessMetalness].m_bindlessTextureIndex;
+		el.m_diffuseBlendFactor = m_layers[LayerType::kDiffuse].m_blendFactor;
+		el.m_roughnessMetalnessBlendFactor = m_layers[LayerType::kRoughnessMetalness].m_blendFactor;
 		el.m_textureMatrix = m_biasProjViewMat;
 		el.m_obbCenter = m_obb.getCenter().xyz();
 		el.m_obbExtend = m_obb.getExtend().xyz();
 		el.m_obbRotation = m_obb.getRotation().getRotationPart();
-		el.m_debugDrawCallback = [](RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) {
-			ANKI_ASSERT(userData.getSize() == 1);
-			static_cast<const DecalComponent*>(userData[0])->draw(ctx);
-		};
+		el.m_debugDrawCallback = nullptr;
 		el.m_debugDrawCallbackUserData = this;
 	}
 
@@ -114,44 +69,31 @@ private:
 	enum class LayerType : U8
 	{
 		kDiffuse,
-		kSpecularRoughness,
+		kRoughnessMetalness,
 		kCount
 	};
 
 	class Layer
 	{
 	public:
-		ImageAtlasResourcePtr m_atlas;
-		Vec4 m_uv = Vec4(0.0f);
+		ImageResourcePtr m_image;
 		F32 m_blendFactor = 0.0f;
+		U32 m_bindlessTextureIndex = kMaxU32;
 	};
 
-	SceneNode* m_node = nullptr;
+	SceneNode* m_node;
+	Spatial m_spatial;
+
 	Array<Layer, U(LayerType::kCount)> m_layers;
 	Mat4 m_biasProjViewMat = Mat4::getIdentity();
 	Vec3 m_boxSize = Vec3(1.0f);
-	Transform m_trf = Transform::getIdentity();
 	Obb m_obb = Obb(Vec4(0.0f), Mat3x4::getIdentity(), Vec4(0.5f, 0.5f, 0.5f, 0.0f));
-	ImageResourcePtr m_debugImage;
-	Bool m_markedForUpdate = true;
 
-	Error setLayer(CString texAtlasFname, CString texAtlasSubtexName, F32 blendFactor, LayerType type);
+	Bool m_dirty = true;
 
-	void updateInternal();
+	void setLayer(CString fname, F32 blendFactor, LayerType type);
 
-	Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated)
-	{
-		updated = m_markedForUpdate;
-		m_markedForUpdate = false;
-		if(updated)
-		{
-			updateInternal();
-		}
-
-		return Error::kNone;
-	}
-
-	void draw(RenderQueueDrawContext& ctx) const;
+	Error update(SceneComponentUpdateInfo& info, Bool& updated);
 };
 /// @}
 

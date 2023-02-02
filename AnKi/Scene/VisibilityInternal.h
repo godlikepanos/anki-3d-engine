@@ -7,8 +7,9 @@
 
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Scene/SoftwareRasterizer.h>
-#include <AnKi/Scene/Components/FrustumComponent.h>
 #include <AnKi/Scene/Octree.h>
+#include <AnKi/Scene/Frustum.h>
+#include <AnKi/Scene/Spatial.h>
 #include <AnKi/Util/Thread.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Renderer/RenderQueue.h>
@@ -110,6 +111,31 @@ public:
 
 static_assert(std::is_trivially_destructible<RenderQueueView>::value == true, "Should be trivially destructible");
 
+class FrustumFlags
+{
+public:
+	Bool m_gatherModelComponents : 1 = false;
+	Bool m_gatherShadowCasterModelComponents : 1 = false;
+	Bool m_gatherParticleComponents : 1 = false;
+	Bool m_gatherProbeComponents : 1 = false;
+	Bool m_gatherLightComponents : 1 = false;
+	Bool m_gatherLensFlareComponents : 1 = false;
+	Bool m_gatherDecalComponents : 1 = false;
+	Bool m_gatherFogDensityComponents : 1 = false;
+	Bool m_gatherUiComponents : 1 = false;
+	Bool m_gatherSkyComponents : 1 = false;
+
+	Bool m_coverageBuffer : 1 = false;
+	Bool m_earlyZ : 1 = false;
+	Bool m_nonDirectionalLightsCastShadow : 1 = false;
+};
+
+class VisibilityFrustum : public FrustumFlags
+{
+public:
+	Frustum* m_frustum = nullptr;
+};
+
 /// Data common for all tasks.
 class VisibilityContext
 {
@@ -117,12 +143,10 @@ public:
 	SceneGraph* m_scene = nullptr;
 	Atomic<U32> m_testsCount = {0};
 
-	F32 m_earlyZDist = -1.0f; ///< Cache this.
+	List<const Frustum*> m_testedFrustums;
+	Mutex m_testedFrustumsMtx;
 
-	List<const FrustumComponent*> m_testedFrcs;
-	Mutex m_mtx;
-
-	void submitNewWork(const FrustumComponent& frc, const FrustumComponent& primaryFrustum, RenderQueue& result,
+	void submitNewWork(const VisibilityFrustum& frustum, const VisibilityFrustum& primaryFrustum, RenderQueue& result,
 					   ThreadHive& hive);
 };
 
@@ -133,8 +157,8 @@ class FrustumVisibilityContext
 public:
 	VisibilityContext* m_visCtx = nullptr;
 
-	const FrustumComponent* m_frc = nullptr; ///< This is the frustum to be tested.
-	const FrustumComponent* m_primaryFrustum = nullptr; ///< This is the primary camera frustum.
+	VisibilityFrustum m_frustum; ///< This is the frustum to be tested.
+	VisibilityFrustum m_primaryFrustum; ///< This is the primary camera frustum.
 
 	// S/W rasterizer members
 	SoftwareRasterizer* m_r = nullptr;
@@ -181,7 +205,7 @@ public:
 	void gather(ThreadHive& hive);
 
 private:
-	Array<SpatialComponent*, kMaxSpatialsPerVisTest> m_spatials;
+	Array<Spatial*, kMaxSpatialsPerVisTest> m_spatials;
 	U32 m_spatialCount = 0;
 
 	/// Submit tasks to test the m_spatials.
@@ -196,7 +220,7 @@ class VisibilityTestTask
 public:
 	FrustumVisibilityContext* m_frcCtx = nullptr;
 
-	Array<SpatialComponent*, kMaxSpatialsPerVisTest> m_spatialsToTest;
+	Array<Spatial*, kMaxSpatialsPerVisTest> m_spatialsToTest;
 	U32 m_spatialToTestCount = 0;
 
 	VisibilityTestTask(FrustumVisibilityContext* frcCtx)

@@ -5,11 +5,15 @@
 
 #pragma once
 
+#include <AnKi/Scene/Components/SceneComponent.h>
+#include <AnKi/Scene/Spatial.h>
 #include <AnKi/Math.h>
 #include <AnKi/Renderer/RenderQueue.h>
-#include <AnKi/Scene/Components/SceneComponent.h>
 
 namespace anki {
+
+// Forward
+class Frustum;
 
 /// @addtogroup scene
 /// @{
@@ -32,31 +36,13 @@ class LightComponent : public SceneComponent
 public:
 	LightComponent(SceneNode* node);
 
-	~LightComponent()
-	{
-	}
+	~LightComponent();
 
-	void setLightComponentType(LightComponentType type)
-	{
-		ANKI_ASSERT(type >= LightComponentType::kFirst && type < LightComponentType::kCount);
-		m_type = type;
-		m_markedForUpdate = true;
-	}
+	void setLightComponentType(LightComponentType type);
 
 	LightComponentType getLightComponentType() const
 	{
 		return m_type;
-	}
-
-	void setWorldTransform(const Transform& trf)
-	{
-		m_worldtransform = trf;
-		m_markedForUpdate = true;
-	}
-
-	const Transform& getWorldTransform() const
-	{
-		return m_worldtransform;
 	}
 
 	const Vec4& getDiffuseColor() const
@@ -133,19 +119,23 @@ public:
 	void setShadowEnabled(const Bool x)
 	{
 		m_shadow = x;
+		m_markedForUpdate = true;
+	}
+
+	ANKI_INTERNAL WeakArray<Frustum> getFrustums() const
+	{
+		ANKI_ASSERT(m_shadow);
+		return WeakArray<Frustum>(m_frustums, m_frustumCount);
 	}
 
 	void setupPointLightQueueElement(PointLightQueueElement& el) const
 	{
 		ANKI_ASSERT(m_type == LightComponentType::kPoint);
 		el.m_uuid = m_uuid;
-		el.m_worldPosition = m_worldtransform.getOrigin().xyz();
+		el.m_worldPosition = m_worldTransform.getOrigin().xyz();
 		el.m_radius = m_point.m_radius;
 		el.m_diffuseColor = m_diffColor.xyz();
-		el.m_debugDrawCallback = [](RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) {
-			ANKI_ASSERT(userData.getSize() == 1);
-			static_cast<const LightComponent*>(userData[0])->draw(ctx);
-		};
+		el.m_debugDrawCallback = nullptr;
 		el.m_debugDrawCallbackUserData = this;
 		el.m_shadowLayer = kMaxU8;
 	}
@@ -154,34 +144,29 @@ public:
 	{
 		ANKI_ASSERT(m_type == LightComponentType::kSpot);
 		el.m_uuid = m_uuid;
-		el.m_worldTransform = Mat4(m_worldtransform);
+		el.m_worldTransform = Mat4(m_worldTransform);
 		el.m_textureMatrix = m_spot.m_textureMat;
 		el.m_distance = m_spot.m_distance;
 		el.m_outerAngle = m_spot.m_outerAngle;
 		el.m_innerAngle = m_spot.m_innerAngle;
 		el.m_diffuseColor = m_diffColor.xyz();
 		el.m_edgePoints = m_spot.m_edgePointsWspace;
-		el.m_debugDrawCallback = [](RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) {
-			ANKI_ASSERT(userData.getSize() == 1);
-			static_cast<const LightComponent*>(userData[0])->draw(ctx);
-		};
+		el.m_debugDrawCallback = nullptr;
 		el.m_debugDrawCallbackUserData = this;
 		el.m_shadowLayer = kMaxU8;
 	}
 
 	/// Setup a directional queue element.
-	/// @param[in] frustumComp The frustum that is looking that directional light. Used to calculate the cascades.
+	/// @param[in] cameraFrustum The frustum that is looking that directional light. Used to calculate the cascades.
 	/// @param[out] el The queue element to fill out.
-	/// @param[out] cascadeFrustumComponents Fill those frustums as well. The size of this array is the count of the
-	///             cascades.
-	void setupDirectionalLightQueueElement(const FrustumComponent& frustumComp, DirectionalLightQueueElement& el,
-										   WeakArray<FrustumComponent> cascadeFrustumComponents) const;
+	/// @param[out] cascadeFrustums Fill those frustums as well. The size of this array is the count of the cascades.
+	void setupDirectionalLightQueueElement(const Frustum& cameraFrustum, DirectionalLightQueueElement& el,
+										   WeakArray<Frustum> cascadeFrustums) const;
 
 private:
-	SceneNode* m_node = nullptr;
 	U64 m_uuid;
 	Vec4 m_diffColor = Vec4(0.5f);
-	Transform m_worldtransform = Transform::getIdentity();
+	Transform m_worldTransform = Transform::getIdentity();
 
 	class Point
 	{
@@ -212,17 +197,20 @@ private:
 	Spot m_spot;
 	Dir m_dir;
 
-	ImageResourcePtr m_pointDebugImage;
-	ImageResourcePtr m_spotDebugImage;
+	Spatial m_spatial;
+
+	Frustum* m_frustums = nullptr;
 
 	LightComponentType m_type;
 
-	U8 m_shadow : 1;
-	U8 m_markedForUpdate : 1;
+	U8 m_shadow : 1 = false;
+	U8 m_markedForUpdate : 1 = true;
+	U8 m_forceFullUpdate : 1 = true;
+	U8 m_frustumCount : 4 = 0; ///< The size of m_frustums array.
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated);
 
-	void draw(RenderQueueDrawContext& ctx) const;
+	void onDestroyReal(SceneNode& node);
 };
 /// @}
 

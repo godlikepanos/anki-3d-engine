@@ -33,7 +33,7 @@
 #endif
 
 //
-// Reflection probes (3)
+// Reflection probes (2)
 //
 #if defined(CLUSTERED_SHADING_REFLECTIONS_BINDING)
 [[vk::binding(CLUSTERED_SHADING_REFLECTIONS_BINDING, CLUSTERED_SHADING_SET)]] cbuffer b_reflectionProbes
@@ -46,17 +46,13 @@
 #endif
 
 //
-// Decal uniforms (3)
+// Decal uniforms (1)
 //
 #if defined(CLUSTERED_SHADING_DECALS_BINDING)
 [[vk::binding(CLUSTERED_SHADING_DECALS_BINDING, CLUSTERED_SHADING_SET)]] cbuffer b_decals
 {
 	Decal g_decals[kMaxVisibleDecals];
 };
-
-[[vk::binding(CLUSTERED_SHADING_DECALS_BINDING + 1u, CLUSTERED_SHADING_SET)]] Texture2D<RVec4> g_diffuseDecalTex;
-[[vk::binding(CLUSTERED_SHADING_DECALS_BINDING + 2u, CLUSTERED_SHADING_SET)]] Texture2D<RVec4>
-	g_specularRoughnessDecalTex;
 #endif
 
 //

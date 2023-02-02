@@ -175,11 +175,11 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		in.hideCursor(true);
 
 		// move the camera
-		static MoveComponent* mover = &scene.getActiveCameraNode().getFirstComponentOfType<MoveComponent>();
+		static SceneNode* mover = &scene.getActiveCameraNode();
 
 		if(in.getKey(KeyCode::k1) == 1)
 		{
-			mover = &scene.getActiveCameraNode().getFirstComponentOfType<MoveComponent>();
+			mover = &scene.getActiveCameraNode();
 		}
 
 		if(in.getKey(KeyCode::kUp))

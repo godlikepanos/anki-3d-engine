@@ -4,11 +4,8 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Scene/SceneGraph.h>
-#include <AnKi/Scene/CameraNode.h>
-#include <AnKi/Scene/PhysicsDebugNode.h>
-#include <AnKi/Scene/ModelNode.h>
 #include <AnKi/Scene/Octree.h>
-#include <AnKi/Scene/Components/FrustumComponent.h>
+#include <AnKi/Scene/Components/CameraComponent.h>
 #include <AnKi/Physics/PhysicsWorld.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Renderer/MainRenderer.h>
@@ -65,14 +62,10 @@ Error SceneGraph::init(const SceneGraphInitInfo& initInfo)
 	m_octree->init(m_sceneMin, m_sceneMax, m_subsystems.m_config->getSceneOctreeMaxDepth());
 
 	// Init the default main camera
-	ANKI_CHECK(newSceneNode<PerspectiveCameraNode>("mainCamera", m_defaultMainCam));
-	m_defaultMainCam->getFirstComponentOfType<FrustumComponent>().setPerspective(0.1f, 1000.0f, toRad(60.0f),
-																				 (1080.0f / 1920.0f) * toRad(60.0f));
+	ANKI_CHECK(newSceneNode<SceneNode>("mainCamera", m_defaultMainCam));
+	CameraComponent* camc = m_defaultMainCam->newComponent<CameraComponent>();
+	camc->setPerspective(0.1f, 1000.0f, toRad(60.0f), (1080.0f / 1920.0f) * toRad(60.0f));
 	m_mainCam = m_defaultMainCam;
-
-	// Create a special node for debugging the physics world
-	PhysicsDebugNode* pnode;
-	ANKI_CHECK(newSceneNode<PhysicsDebugNode>("_physicsDebugNode", pnode));
 
 	// Other
 	ANKI_CHECK(m_debugDrawer.init(m_subsystems.m_resourceManager, m_subsystems.m_grManager));
@@ -243,31 +236,21 @@ Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 	componentUpdateInfo.m_framePool = &m_framePool;
 	componentUpdateInfo.m_gpuSceneMicroPatcher = m_subsystems.m_gpuSceneMicroPatcher;
 
-	Timestamp componentTimestamp = 0;
 	Bool atLeastOneComponentUpdated = false;
-	node.iterateComponents([&](SceneComponent& comp, Bool isFeedbackComponent) {
+	node.iterateComponents([&](SceneComponent& comp) {
 		if(err)
 		{
 			return;
 		}
 
+		componentUpdateInfo.m_node = &node;
 		Bool updated = false;
-		if(!atLeastOneComponentUpdated && isFeedbackComponent)
-		{
-			// Skip feedback component if prior components didn't got updated
-		}
-		else
-		{
-			componentUpdateInfo.m_node = &node;
-			err = comp.updateReal(componentUpdateInfo, updated);
-		}
+		err = comp.updateReal(componentUpdateInfo, updated);
 
 		if(updated)
 		{
 			ANKI_TRACE_INC_COUNTER(SCENE_COMPONENTS_UPDATED, 1);
 			comp.setTimestamp(node.getSceneGraph().m_timestamp);
-			componentTimestamp = max(componentTimestamp, node.getSceneGraph().m_timestamp);
-			ANKI_ASSERT(componentTimestamp > 0);
 			atLeastOneComponentUpdated = true;
 		}
 	});
@@ -283,9 +266,9 @@ Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 	// Frame update
 	if(!err)
 	{
-		if(componentTimestamp != 0)
+		if(atLeastOneComponentUpdated)
 		{
-			node.setComponentMaxTimestamp(componentTimestamp);
+			node.setComponentMaxTimestamp(node.getSceneGraph().m_timestamp);
 		}
 		else
 		{
