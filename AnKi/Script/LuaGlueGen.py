@@ -10,8 +10,9 @@ import optparse
 import xml.etree.ElementTree as et
 
 # Globals
-identation_level = 0
-out_file = None
+g_identation_level = 0
+g_out_file = None
+g_enum_names = []
 
 
 def parse_commandline():
@@ -47,22 +48,26 @@ def get_base_fname(path):
 
 def wglue(txt):
     """ Write glue code to the output """
-    global out_file
-    global identation_level
-    out_file.write("%s%s\n" % ("\t" * identation_level, txt))
+    global g_out_file
+    global g_identation_level
+    g_out_file.write("%s%s\n" % ("\t" * g_identation_level, txt))
 
 
 def ident(number):
     """ Increase or recrease identation for the wglue """
-    global identation_level
-    identation_level += number
+    global g_identation_level
+    g_identation_level += number
 
 
 def type_is_bool(type):
     """ Check if a type is boolean """
-
     return type == "Bool" or type == "bool"
 
+
+def type_is_enum(type):
+    """ Check if a type string is an enum """
+    global g_enum_names
+    return type in g_enum_names
 
 def type_is_number(type):
     """ Check if a type is number """
@@ -191,7 +196,17 @@ def arg(arg_txt, stack_index, index):
         wglue("return -1;")
         ident(-1)
         wglue("}")
+    elif type_is_enum(type):
+        wglue("lua_Number arg%dTmp;" % index)
+        wglue("if(LuaBinder::checkNumber(l, %d, arg%dTmp)) [[unlikely]]" % (stack_index, index))
+        wglue("{")
+        ident(1)
+        wglue("return -1;")
+        ident(-1)
+        wglue("}")
+        wglue("const %s arg%d = %s(arg%dTmp);" % (type, index, type, index))
     else:
+        # Must be user type
         wglue("extern LuaUserDataTypeInfo luaUserDataTypeInfo%s;" % type)
         wglue("if(LuaBinder::checkUserData(l, %d, luaUserDataTypeInfo%s, ud)) [[unlikely]]" % (stack_index, type))
         wglue("{")
@@ -804,12 +819,12 @@ def enum(enum_el):
 def main():
     """ Main function """
 
-    global out_file
+    global g_out_file
     filenames = parse_commandline()
 
     for filename in filenames:
         out_filename = get_base_fname(filename) + ".cpp"
-        out_file = open(out_filename, "w", newline="\n")
+        g_out_file = open(out_filename, "w", newline="\n")
 
         tree = et.parse(filename)
         root = tree.getroot()
@@ -819,6 +834,13 @@ def main():
         if head is not None:
             wglue("%s" % head.text)
             wglue("")
+
+        # Enums (First because others use the g_enum_names)
+        global g_enum_names
+        for enums in root.iter("enums"):
+            for enum_el in enums.iter("enum"):
+                enum(enum_el)
+                g_enum_names.append(enum_el.get("name"))
 
         # Classes
         class_names = []
@@ -834,13 +856,6 @@ def main():
                 function(f)
                 func_names.append(f.get("name"))
 
-        # Enums
-        enum_names = []
-        for enums in root.iter("enums"):
-            for enum_el in enums.iter("enum"):
-                enum(enum_el)
-                enum_names.append(enum_el.get("name"))
-
         # Wrap function
         wglue("/// Wrap the module.")
         wglue("void wrapModule%s(lua_State* l)" % get_base_fname(filename))
@@ -850,7 +865,7 @@ def main():
             wglue("wrap%s(l);" % class_name)
         for func_name in func_names:
             wglue("LuaBinder::pushLuaCFunc(l, \"%s\", wrap%s);" % (func_name, func_name))
-        for enum_name in enum_names:
+        for enum_name in g_enum_names:
             wglue("wrap%s(l);" % enum_name)
         ident(-1)
         wglue("}")
@@ -862,7 +877,7 @@ def main():
             wglue("%s" % tail.text)
             wglue("")
 
-        out_file.close()
+        g_out_file.close()
 
 
 if __name__ == "__main__":

@@ -102,6 +102,11 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 		<!-- Components -->
 		<class name="LightComponent">
 			<methods>
+				<method name="setLightComponentType">
+					<args>
+						<arg>LightComponentType</arg>
+					</args>
+				</method>
 				<method name="setDiffuseColor">
 					<args>
 						<arg>const Vec4&amp;</arg>
