@@ -31,6 +31,11 @@ public:
 		m_player->moveToPosition(pos);
 	}
 
+	PhysicsPlayerController& getPhysicsPlayerController()
+	{
+		return *m_player;
+	}
+
 private:
 	PhysicsPlayerControllerPtr m_player;
 	Transform m_trf = Transform::getIdentity();

@@ -116,50 +116,45 @@ Error MyApp::sampleExtraInit()
 	if(1)
 	{
 		SceneNode& cam = getSceneGraph().getActiveCameraNode();
-		cam.getFirstComponentOfType<MoveComponent>().setLocalTransform(
-			Transform(Vec4(0.0, 0.0, 5.0, 0.0), Mat3x4::getIdentity(), 1.0));
+		cam.setLocalTransform(Transform(Vec4(0.0, 0.0, 5.0, 0.0), Mat3x4::getIdentity(), 1.0));
 
-		PlayerNode* player;
+		SceneNode* player;
 		ANKI_CHECK(getSceneGraph().newSceneNode("player", player));
-		PlayerControllerComponent& pcomp = player->getFirstComponentOfType<PlayerControllerComponent>();
-		pcomp.moveToPosition(Vec3(0.0f, 2.5f, 0.0f));
-		pcomp.getPhysicsPlayerController()->setMaterialMask(PhysicsMaterialBit::kStaticGeometry);
+		PlayerControllerComponent* playerc = player->newComponent<PlayerControllerComponent>();
+		playerc->moveToPosition(Vec3(0.0f, 2.5f, 0.0f));
+		playerc->getPhysicsPlayerController().setMaterialMask(PhysicsMaterialBit::kStaticGeometry);
 
 		player->addChild(&cam);
 	}
 
 	// Create a body component with joint
 	{
-		ModelNode* monkey;
-		ANKI_CHECK(getSceneGraph().newSceneNode<ModelNode>("monkey_p2p", monkey));
-		ANKI_CHECK(monkey->getFirstComponentOfType<ModelComponent>().loadModelResource(
-			"Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl"));
+		SceneNode* monkey;
+		ANKI_CHECK(getSceneGraph().newSceneNode("monkey_p2p", monkey));
+		ModelComponent* modelc = monkey->newComponent<ModelComponent>();
+		modelc->loadModelResource("Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl");
 
-		BodyNode* body;
-		ANKI_CHECK(getSceneGraph().newSceneNode<BodyNode>("bmonkey_p2p", body));
-		ANKI_CHECK(body->getFirstComponentOfType<BodyComponent>().loadMeshResource(
-			"Assets/Suzanne_e3526e1428c0763c.ankimesh"));
-		body->getFirstComponentOfType<BodyComponent>().setWorldTransform(
-			Transform(Vec4(-0.0f, 4.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), 1.0f));
-		body->getFirstComponentOfType<BodyComponent>().setMass(2.0f);
+		BodyComponent* bodyc = monkey->newComponent<BodyComponent>();
+		bodyc->loadMeshResource("Assets/Suzanne_e3526e1428c0763c.ankimesh");
+		bodyc->teleportTo(Transform(Vec4(-0.0f, 4.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), 1.0f));
+		bodyc->setMass(2.0f);
 
-		body->addChild(monkey);
-
-		body->getFirstComponentOfType<JointComponent>().newHingeJoint(Vec3(0.2f, 1.0f, 0.0f), Vec3(1, 0, 0));
+		JointComponent* jointc = monkey->newComponent<JointComponent>();
+		jointc->newHingeJoint(Vec3(0.2f, 1.0f, 0.0f), Vec3(1, 0, 0));
 	}
 
 	// Create a chain
 	{
 		const U LINKS = 5;
 
-		BodyNode* prevBody = nullptr;
+		SceneNode* prevBody = nullptr;
 		for(U32 i = 0; i < LINKS; ++i)
 		{
-			ModelNode* monkey;
-			ANKI_CHECK(getSceneGraph().newSceneNode<ModelNode>(
+			SceneNode* monkey;
+			ANKI_CHECK(getSceneGraph().newSceneNode(
 				StringRaii(&getMemoryPool()).sprintf("monkey_chain%u", i).toCString(), monkey));
-			ANKI_CHECK(monkey->getFirstComponentOfType<ModelComponent>().loadModelResource(
-				"Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl"));
+			monkey->newComponent<ModelComponent>()->loadModelResource(
+				"Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl");
 
 			Transform trf(Vec4(-4.3f, 12.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), 1.0f);
 			trf.getOrigin().y() -= F32(i) * 1.25f;
@@ -167,38 +162,33 @@ Error MyApp::sampleExtraInit()
 
 			// monkey->getFirstComponentOfType<MoveComponent>().setLocalTransform(trf);
 
-			BodyNode* body;
-			ANKI_CHECK(getSceneGraph().newSceneNode<BodyNode>(
-				StringRaii(&getMemoryPool()).sprintf("bmonkey_chain%u", i).toCString(), body));
-			ANKI_CHECK(body->getFirstComponentOfType<BodyComponent>().loadMeshResource(
-				"Assets/Suzanne_e3526e1428c0763c.ankimesh"));
-			body->getFirstComponentOfType<BodyComponent>().setWorldTransform(trf);
-			body->getFirstComponentOfType<BodyComponent>().setMass(1.0f);
+			BodyComponent* bodyc = monkey->newComponent<BodyComponent>();
+			bodyc->teleportTo(trf);
+			bodyc->setMass(1.0f);
 
 			// Create joint
-			JointComponent& jointc = body->getFirstComponentOfType<JointComponent>();
+			JointComponent* jointc = monkey->newComponent<JointComponent>();
 			if(prevBody == nullptr)
 			{
-				jointc.newPoint2PointJoint(Vec3(0, 1, 0));
+				jointc->newPoint2PointJoint(Vec3(0, 1, 0));
 			}
 			else
 			{
-				prevBody->addChild(body);
-				jointc.newPoint2PointJoint2(Vec3(0, 1.0, 0), Vec3(0, -1.0, 0));
+				prevBody->addChild(monkey);
+				jointc->newPoint2PointJoint2(Vec3(0, 1.0, 0), Vec3(0, -1.0, 0));
 			}
 
-			body->addChild(monkey);
-			prevBody = body;
+			prevBody = monkey;
 		}
 	}
 
 	// Trigger
 	{
-		TriggerNode* node;
+		SceneNode* node;
 		ANKI_CHECK(getSceneGraph().newSceneNode("trigger", node));
-		node->getFirstComponentOfType<TriggerComponent>().setSphereVolumeRadius(1.8f);
-		node->getFirstComponentOfType<TriggerComponent>().setWorldTransform(
-			Transform(Vec4(1.0f, 0.5f, 0.0f, 0.0f), Mat3x4::getIdentity(), 1.0f));
+		TriggerComponent* triggerc = node->newComponent<TriggerComponent>();
+		triggerc->setSphereVolumeRadius(1.8f);
+		node->setLocalTransform(Transform(Vec4(1.0f, 0.5f, 0.0f, 0.0f), Mat3x4::getIdentity(), 1.0f));
 	}
 
 	getInput().lockCursor(true);
@@ -291,37 +281,30 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 
 		static U32 instance = 0;
 
-		Transform camTrf =
-			getSceneGraph().getActiveCameraNode().getFirstComponentOfType<MoveComponent>().getWorldTransform();
+		Transform camTrf = getSceneGraph().getActiveCameraNode().getWorldTransform();
 
-		ModelNode* monkey;
-		ANKI_CHECK(getSceneGraph().newSceneNode<ModelNode>(
+		SceneNode* monkey;
+		ANKI_CHECK(getSceneGraph().newSceneNode(
 			StringRaii(&getMemoryPool()).sprintf("monkey%u", instance++).toCString(), monkey));
-		ANKI_CHECK(monkey->getFirstComponentOfType<ModelComponent>().loadModelResource(
-			"Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl"));
+		ModelComponent* modelc = monkey->newComponent<ModelComponent>();
+		modelc->loadModelResource("Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl");
 		// monkey->getFirstComponentOfType<MoveComponent>().setLocalTransform(camTrf);
 
-		BodyNode* body;
-		ANKI_CHECK(getSceneGraph().newSceneNode<BodyNode>(
-			StringRaii(&getMemoryPool()).sprintf("bmonkey%u", instance++).toCString(), body));
-		ANKI_CHECK(body->getFirstComponentOfType<BodyComponent>().loadMeshResource(
-			"Assets/Suzanne_e3526e1428c0763c.ankimesh"));
-		body->getFirstComponentOfType<BodyComponent>().setWorldTransform(camTrf);
-		body->getFirstComponentOfType<BodyComponent>().setMass(1.0f);
+		BodyComponent* bodyc = monkey->newComponent<BodyComponent>();
+		bodyc->loadMeshResource("Assets/Suzanne_e3526e1428c0763c.ankimesh");
+		bodyc->teleportTo(camTrf);
+		bodyc->setMass(1.0f);
 
-		PhysicsBodyPtr pbody = body->getFirstComponentOfType<BodyComponent>().getPhysicsBody();
+		PhysicsBodyPtr pbody = bodyc->getPhysicsBody();
 		pbody->applyForce(camTrf.getRotation().getZAxis().xyz() * -1500.0f, Vec3(0.0f, 0.0f, 0.0f));
 
-		body->addChild(monkey);
-
 		// Create the destruction event
-		ANKI_CHECK(createDestructionEvent(body));
+		ANKI_CHECK(createDestructionEvent(monkey));
 	}
 
 	if(getInput().getMouseButton(MouseButton::kRight) == 1)
 	{
-		Transform camTrf =
-			getSceneGraph().getActiveCameraNode().getFirstComponentOfType<MoveComponent>().getWorldTransform();
+		Transform camTrf = getSceneGraph().getActiveCameraNode().getWorldTransform();
 		Vec3 from = camTrf.getOrigin().xyz();
 		Vec3 to = from + -camTrf.getRotation().getZAxis() * 100.0f;
 
@@ -347,24 +330,19 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 
 			// Create an obj
 			static U32 id = 0;
-			ModelNode* monkey;
+			SceneNode* monkey;
 			ANKI_CHECK(getSceneGraph().newSceneNode(
 				StringRaii(&getSceneGraph().getFrameMemoryPool()).sprintf("decal%u", id++).toCString(), monkey));
-			ANKI_CHECK(monkey->getFirstComponentOfType<ModelComponent>().loadModelResource(
-				"Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl"));
-			monkey->getFirstComponentOfType<MoveComponent>().setLocalTransform(trf);
+			ModelComponent* modelc = monkey->newComponent<ModelComponent>();
+			modelc->loadModelResource("Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl");
+			monkey->setLocalTransform(trf);
 
 			ANKI_CHECK(createDestructionEvent(monkey));
 
 #if 1
 			// Create some particles
-			ParticleEmitterNode* particles;
-			ANKI_CHECK(getSceneGraph().newSceneNode(
-				StringRaii(&getSceneGraph().getFrameMemoryPool()).sprintf("parts%u", id++).toCString(), particles));
-			ANKI_CHECK(particles->getFirstComponentOfType<ParticleEmitterComponent>().loadParticleEmitterResource(
-				"Assets/Smoke.ankipart"));
-			particles->getFirstComponentOfType<MoveComponent>().setLocalTransform(trf);
-			ANKI_CHECK(createDestructionEvent(particles));
+			ParticleEmitterComponent* partc = monkey->newComponent<ParticleEmitterComponent>();
+			partc->loadParticleEmitterResource("Assets/Smoke.ankipart");
 #endif
 
 			// Create some fog volumes
@@ -374,13 +352,13 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 				StringRaii name(&getSceneGraph().getFrameMemoryPool());
 				name.sprintf("fog%u", id++);
 
-				FogDensityNode* fogNode;
+				SceneNode* fogNode;
 				ANKI_CHECK(getSceneGraph().newSceneNode(name.toCString(), fogNode));
-				FogDensityComponent& fogComp = fogNode->getFirstComponentOfType<FogDensityComponent>();
-				fogComp.setSphereVolumeRadius(2.1f);
-				fogComp.setDensity(15.0f);
+				FogDensityComponent* fogComp = fogNode->newComponent<FogDensityComponent>();
+				fogComp->setSphereVolumeRadius(2.1f);
+				fogComp->setDensity(15.0f);
 
-				fogNode->getFirstComponentOfType<MoveComponent>().setLocalTransform(trf);
+				fogNode->setLocalTransform(trf);
 
 				ANKI_CHECK(createDestructionEvent(fogNode));
 				ANKI_CHECK(createFogVolumeFadeEvent(fogNode));

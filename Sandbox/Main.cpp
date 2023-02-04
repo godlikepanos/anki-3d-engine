@@ -100,15 +100,15 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 	}
 
 	// move the camera
-	static MoveComponent* mover = &scene.getActiveCameraNode().getFirstComponentOfType<MoveComponent>();
+	static SceneNode* mover = &scene.getActiveCameraNode();
 
 	if(in.getKey(KeyCode::k1))
 	{
-		mover = scene.getActiveCameraNode().tryGetFirstComponentOfType<MoveComponent>();
+		mover = &scene.getActiveCameraNode();
 	}
 	if(in.getKey(KeyCode::k2))
 	{
-		mover = &scene.findSceneNode("Point.018_Orientation").getFirstComponentOfType<MoveComponent>();
+		mover = &scene.findSceneNode("Point.018_Orientation");
 	}
 
 	if(in.getKey(KeyCode::kL) == 1)
@@ -179,7 +179,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 		if(in.getKey(KeyCode::k1) == 1)
 		{
-			mover = &scene.getActiveCameraNode().getFirstComponentOfType<MoveComponent>();
+			mover = &scene.getActiveCameraNode();
 		}
 
 		if(in.getKey(KeyCode::kF1) == 1)

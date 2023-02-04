@@ -566,11 +566,10 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 				gpuParticles = true;
 			}
 
-			ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:new%sParticleEmitterNode(\"%s\")\n",
-											  (gpuParticles) ? "Gpu" : "", getNodeName(node).cstr()));
+			ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:newSceneNode(\"%s\")\n", getNodeName(node).cstr()));
 
-			ANKI_CHECK(m_sceneFile.writeTextf("comp = node:getSceneNodeBase():get%sParticleEmitterComponent()\n",
-											  (gpuParticles) ? "Gpu" : ""));
+			ANKI_CHECK(
+				m_sceneFile.writeTextf("comp = node:new%sParticleEmitterComponent()\n", (gpuParticles) ? "Gpu" : ""));
 			ANKI_CHECK(m_sceneFile.writeTextf("comp:loadParticleEmitterResource(\"%s\")\n", fname.cstr()));
 
 			Transform localTrf;
@@ -582,8 +581,8 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 		{
 			// Atmosphere
 
-			ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:newSkyboxNode(\"%s\")\n", getNodeName(node).cstr()));
-			ANKI_CHECK(m_sceneFile.writeText("comp = node:getSceneNodeBase():getSkyboxComponent()\n"));
+			ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:newSceneNode(\"%s\")\n", getNodeName(node).cstr()));
+			ANKI_CHECK(m_sceneFile.writeText("comp = node:newSkyboxComponent()\n"));
 
 			if((it = extras.find("skybox_solid_color")) != extras.getEnd())
 			{
@@ -615,7 +614,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			}
 			else if((it = extras.find("skybox_image")) != extras.getEnd())
 			{
-				ANKI_CHECK(m_sceneFile.writeTextf("comp:setImage(\"%s\")\n", it->cstr()));
+				ANKI_CHECK(m_sceneFile.writeTextf("comp:loadImageResource(\"%s\")\n", it->cstr()));
 			}
 
 			if((it = extras.find("fog_min_density")) != extras.getEnd())
@@ -652,10 +651,9 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 		}
 		else if((it = extras.find("collision")) != extras.getEnd() && (*it == "true" || *it == "1"))
 		{
-			ANKI_CHECK(
-				m_sceneFile.writeTextf("\nnode = scene:newStaticCollisionNode(\"%s\")\n", getNodeName(node).cstr()));
+			ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:newSceneNode(\"%s\")\n", getNodeName(node).cstr()));
 
-			ANKI_CHECK(m_sceneFile.writeText("comp = scene:getSceneNodeBase():getBodyComponent()\n"));
+			ANKI_CHECK(m_sceneFile.writeText("comp = scene:newBodyComponent()\n"));
 			const StringRaii meshFname = computeMeshResourceFilename(*node.mesh);
 			ANKI_CHECK(m_sceneFile.writeTextf("comp:loadMeshResource(\"%s%s\")\n", m_rpath.cstr(), meshFname.cstr()));
 
@@ -672,10 +670,9 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 
 			const Vec3 boxSize = scale * 2.0f;
 
-			ANKI_CHECK(
-				m_sceneFile.writeTextf("\nnode = scene:newReflectionProbeNode(\"%s\")\n", getNodeName(node).cstr()));
+			ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:newSceneNode(\"%s\")\n", getNodeName(node).cstr()));
 
-			ANKI_CHECK(m_sceneFile.writeText("comp = node:getSceneNodeBase():getReflectionProbeComponent()\n"));
+			ANKI_CHECK(m_sceneFile.writeText("comp = node:newReflectionProbeComponent()\n"));
 			ANKI_CHECK(m_sceneFile.writeTextf("comp:setBoxVolumeSize(Vec3.new(%f, %f, %f))\n", boxSize.x(), boxSize.y(),
 											  boxSize.z()));
 
@@ -703,9 +700,8 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 				ANKI_CHECK(it->toNumber(cellSize));
 			}
 
-			ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:newGlobalIlluminationProbeNode(\"%s\")\n",
-											  getNodeName(node).cstr()));
-			ANKI_CHECK(m_sceneFile.writeText("comp = node:getSceneNodeBase():getGlobalIlluminationProbeComponent()\n"));
+			ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:newSceneNode(\"%s\")\n", getNodeName(node).cstr()));
+			ANKI_CHECK(m_sceneFile.writeText("comp = node:newGlobalIlluminationProbeComponent()\n"));
 			ANKI_CHECK(m_sceneFile.writeTextf("comp:setBoxVolumeSize(Vec3.new(%f, %f, %f))\n", boxSize.x(), boxSize.y(),
 											  boxSize.z()));
 
@@ -760,19 +756,19 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 				ANKI_CHECK(it->toNumber(specularRougnessMetallicFactor));
 			}
 
-			ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:newDecalNode(\"%s\")\n", getNodeName(node).cstr()));
-			ANKI_CHECK(m_sceneFile.writeText("comp = node:getSceneNodeBase():getDecalComponent()\n"));
+			ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:newSceneNode(\"%s\")\n", getNodeName(node).cstr()));
+			ANKI_CHECK(m_sceneFile.writeText("comp = node:newDecalComponent()\n"));
 			if(diffuseAtlas)
 			{
-				ANKI_CHECK(m_sceneFile.writeTextf("comp:setDiffuseDecal(\"%s\", \"%s\", %f)\n", diffuseAtlas.cstr(),
-												  diffuseSubtexture.cstr(), diffuseFactor));
+				ANKI_CHECK(m_sceneFile.writeTextf("comp:loadDiffuseImageResource(\"%s\", %f)\n", diffuseAtlas.cstr(),
+												  diffuseFactor));
 			}
 
 			if(specularRougnessMetallicAtlas)
 			{
-				ANKI_CHECK(m_sceneFile.writeTextf(
-					"comp:setSpecularRoughnessDecal(\"%s\", \"%s\", %f)\n", specularRougnessMetallicAtlas.cstr(),
-					specularRougnessMetallicSubtexture.cstr(), specularRougnessMetallicFactor));
+				ANKI_CHECK(m_sceneFile.writeTextf("comp:loadRoughnessMetallnessTexture(\"%s\", %f)\n",
+												  specularRougnessMetallicAtlas.cstr(),
+												  specularRougnessMetallicFactor));
 			}
 
 			Vec3 tsl;
@@ -811,10 +807,9 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 
 			if(selfCollision)
 			{
-				ANKI_CHECK(m_sceneFile.writeTextf("node2 = scene:newStaticCollisionNode(\"%s_cl\")\n",
-												  getNodeName(node).cstr()));
+				ANKI_CHECK(m_sceneFile.writeTextf("node = scene:newSceneNode(\"%s_cl\")\n", getNodeName(node).cstr()));
 
-				ANKI_CHECK(m_sceneFile.writeText("comp = node2:getSceneNodeBase():getBodyComponent()\n"));
+				ANKI_CHECK(m_sceneFile.writeText("comp = node:newBodyComponent()\n"));
 
 				const StringRaii meshFname = computeMeshResourceFilename(*node.mesh);
 
@@ -863,7 +858,7 @@ Error GltfImporter::writeTransform(const Transform& trf)
 
 	ANKI_CHECK(m_sceneFile.writeTextf("trf:setScale(%f)\n", trf.getScale()));
 
-	ANKI_CHECK(m_sceneFile.writeText("node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)\n"));
+	ANKI_CHECK(m_sceneFile.writeText("node:setLocalTransform(trf)\n"));
 
 	return Error::kNone;
 }
@@ -1015,8 +1010,8 @@ Error GltfImporter::writeLight(const cgltf_node& node, const HashMapRaii<CString
 		return Error::kUserData;
 	}
 
-	ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:new%sLightNode(\"%s\")\n", lightTypeStr.cstr(), nodeName.cstr()));
-	ANKI_CHECK(m_sceneFile.writeText("lcomp = node:getSceneNodeBase():getLightComponent()\n"));
+	ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:newSceneNode(\"%s\")\n", nodeName.cstr()));
+	ANKI_CHECK(m_sceneFile.writeText("lcomp = node:newLightComponent()\n"));
 
 	Vec3 color(light.color[0], light.color[1], light.color[2]);
 	color *= light.intensity;
@@ -1074,7 +1069,7 @@ Error GltfImporter::writeLight(const cgltf_node& node, const HashMapRaii<CString
 	auto lensFlaresFname = extras.find("lens_flare");
 	if(lensFlaresFname != extras.getEnd())
 	{
-		ANKI_CHECK(m_sceneFile.writeTextf("lfcomp = node:getSceneNodeBase():getLensFlareComponent()\n"));
+		ANKI_CHECK(m_sceneFile.writeTextf("lfcomp = node:newLensFlareComponent()\n"));
 		ANKI_CHECK(m_sceneFile.writeTextf("lfcomp:loadImageResource(\"%s\")\n", lensFlaresFname->cstr()));
 
 		auto lsSpriteSize = extras.find("lens_flare_first_sprite_size");
@@ -1104,7 +1099,7 @@ Error GltfImporter::writeLight(const cgltf_node& node, const HashMapRaii<CString
 	auto lightEventFrequency = extras.find("light_event_frequency");
 	if(lightEventIntensity != extras.getEnd() || lightEventFrequency != extras.getEnd())
 	{
-		ANKI_CHECK(m_sceneFile.writeText("event = events:newLightEvent(0.0, -1.0, node:getSceneNodeBase())\n"));
+		ANKI_CHECK(m_sceneFile.writeText("event = events:newLightEvent(0.0, -1.0, node)\n"));
 
 		if(lightEventIntensity != extras.getEnd())
 		{
@@ -1139,11 +1134,11 @@ Error GltfImporter::writeCamera(const cgltf_node& node,
 	const cgltf_camera_perspective& cam = node.camera->data.perspective;
 	ANKI_IMPORTER_LOGV("Importing camera %s", getNodeName(node).cstr());
 
-	ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:newPerspectiveCameraNode(\"%s\")\n", getNodeName(node).cstr()));
+	ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:newSceneNode(\"%s\")\n", getNodeName(node).cstr()));
 	ANKI_CHECK(m_sceneFile.writeText("scene:setActiveCameraNode(node:getSceneNodeBase())\n"));
-	ANKI_CHECK(m_sceneFile.writeText("frustumc = node:getSceneNodeBase():getFrustumComponent()\n"));
+	ANKI_CHECK(m_sceneFile.writeText("comp = node:newCameraComponent()\n"));
 
-	ANKI_CHECK(m_sceneFile.writeTextf("frustumc:setPerspective(%f, %f, getMainRenderer():getAspectRatio() * %f, %f)\n",
+	ANKI_CHECK(m_sceneFile.writeTextf("comp:setPerspective(%f, %f, getMainRenderer():getAspectRatio() * %f, %f)\n",
 									  cam.znear, cam.zfar, cam.yfov, cam.yfov));
 
 	return Error::kNone;
@@ -1158,14 +1153,14 @@ Error GltfImporter::writeModelNode(const cgltf_node& node, const HashMapRaii<CSt
 
 	const StringRaii modelFname = computeModelResourceFilename(*node.mesh);
 
-	ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:newModelNode(\"%s\")\n", getNodeName(node).cstr()));
-	ANKI_CHECK(m_sceneFile.writeTextf("node:getSceneNodeBase():getModelComponent():loadModelResource(\"%s%s\")\n",
-									  m_rpath.cstr(), modelFname.cstr()));
+	ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:newSceneComponent(\"%s\")\n", getNodeName(node).cstr()));
+	ANKI_CHECK(m_sceneFile.writeTextf("node:newModelComponent():loadModelResource(\"%s%s\")\n", m_rpath.cstr(),
+									  modelFname.cstr()));
 
 	if(node.skin)
 	{
-		ANKI_CHECK(m_sceneFile.writeTextf("node:getSceneNodeBase():getSkinComponent():loadSkeletonResource(\"%s%s\")\n",
-										  m_rpath.cstr(), computeSkeletonResourceFilename(*node.skin).cstr()));
+		ANKI_CHECK(m_sceneFile.writeTextf("node:newSkinComponent():loadSkeletonResource(\"%s%s\")\n", m_rpath.cstr(),
+										  computeSkeletonResourceFilename(*node.skin).cstr()));
 	}
 
 	return Error::kNone;

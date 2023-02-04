@@ -15,9 +15,6 @@ public:
 	TextureViewerUiNode(SceneGraph* scene, CString name)
 		: SceneNode(scene, name)
 	{
-		SpatialComponent* spatialc = newComponent<SpatialComponent>();
-		spatialc->setAlwaysVisible(true);
-
 		UiComponent* uic = newComponent<UiComponent>();
 		uic->init(
 			[](CanvasPtr& canvas, void* ud) {
