@@ -53,7 +53,7 @@ public:
 
 		canvas->pushFont(m_font, 46);
 
-		ImGui::SetWindowPos(Vec2(canvas->getWidth() - ImGui::GetWindowWidth() - 105.0f, 55.0f));
+		ImGui::SetWindowPos(Vec2(canvas->getWidth() - ImGui::GetWindowWidth() - 195.0f, 55.0f));
 		ImGui::SetWindowSize(Vec2(230.0f, 450.0f));
 
 		if(m_config->getRVrs())
