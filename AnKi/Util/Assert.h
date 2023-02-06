@@ -22,7 +22,7 @@ void akassert(const char* exprTxt, const char* file, int line, const char* func)
 #	define ANKI_ASSERT(x) \
 		do \
 		{ \
-			if(ANKI_UNLIKELY(!(x))) \
+			if(!(x)) [[unlikely]] \
 			{ \
 				anki::akassert(#x, ANKI_FILE, __LINE__, ANKI_FUNC); \
 				ANKI_UNREACHABLE(); \

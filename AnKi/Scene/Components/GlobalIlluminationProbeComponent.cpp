@@ -75,8 +75,10 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 
 		const Aabb aabb(-m_halfSize + m_worldPos, m_halfSize + m_worldPos);
 		m_spatial.setBoundingShape(aabb);
-		m_spatial.update(info.m_node->getSceneGraph().getOctree());
 	}
+
+	const Bool spatialUpdated = m_spatial.update(info.m_node->getSceneGraph().getOctree());
+	updated = updated || spatialUpdated;
 
 	return Error::kNone;
 }

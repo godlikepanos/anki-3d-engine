@@ -34,9 +34,10 @@ Error FogDensityComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			const Sphere sphere(m_worldPos, m_sphereRadius);
 			m_spatial.setBoundingShape(sphere);
 		}
-
-		m_spatial.update(info.m_node->getSceneGraph().getOctree());
 	}
+
+	const Bool spatialUpdated = m_spatial.update(info.m_node->getSceneGraph().getOctree());
+	updated = updated || spatialUpdated;
 
 	return Error::kNone;
 }

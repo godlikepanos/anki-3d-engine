@@ -47,8 +47,10 @@ Error LensFlareComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		const Aabb aabb(m_worldPosition - (kAabbSize / 2.0f), m_worldPosition + (kAabbSize / 2.0f));
 		m_spatial.setBoundingShape(aabb);
-		m_spatial.update(info.m_node->getSceneGraph().getOctree());
 	}
+
+	const Bool spatialUpdated = m_spatial.update(info.m_node->getSceneGraph().getOctree());
+	updated = updated || spatialUpdated;
 
 	return Error::kNone;
 }

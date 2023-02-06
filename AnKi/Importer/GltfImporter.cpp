@@ -1012,6 +1012,7 @@ Error GltfImporter::writeLight(const cgltf_node& node, const HashMapRaii<CString
 
 	ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:newSceneNode(\"%s\")\n", nodeName.cstr()));
 	ANKI_CHECK(m_sceneFile.writeText("lcomp = node:newLightComponent()\n"));
+	ANKI_CHECK(m_sceneFile.writeTextf("lcomp:setLightComponentType(LightComponentType.k%s)\n", lightTypeStr.cstr()));
 
 	Vec3 color(light.color[0], light.color[1], light.color[2]);
 	color *= light.intensity;
@@ -1135,7 +1136,7 @@ Error GltfImporter::writeCamera(const cgltf_node& node,
 	ANKI_IMPORTER_LOGV("Importing camera %s", getNodeName(node).cstr());
 
 	ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:newSceneNode(\"%s\")\n", getNodeName(node).cstr()));
-	ANKI_CHECK(m_sceneFile.writeText("scene:setActiveCameraNode(node:getSceneNodeBase())\n"));
+	ANKI_CHECK(m_sceneFile.writeText("scene:setActiveCameraNode(node)\n"));
 	ANKI_CHECK(m_sceneFile.writeText("comp = node:newCameraComponent()\n"));
 
 	ANKI_CHECK(m_sceneFile.writeTextf("comp:setPerspective(%f, %f, getMainRenderer():getAspectRatio() * %f, %f)\n",
@@ -1153,7 +1154,7 @@ Error GltfImporter::writeModelNode(const cgltf_node& node, const HashMapRaii<CSt
 
 	const StringRaii modelFname = computeModelResourceFilename(*node.mesh);
 
-	ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:newSceneComponent(\"%s\")\n", getNodeName(node).cstr()));
+	ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:newSceneNode(\"%s\")\n", getNodeName(node).cstr()));
 	ANKI_CHECK(m_sceneFile.writeTextf("node:newModelComponent():loadModelResource(\"%s%s\")\n", m_rpath.cstr(),
 									  modelFname.cstr()));
 

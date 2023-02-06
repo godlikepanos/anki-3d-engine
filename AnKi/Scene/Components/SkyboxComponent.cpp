@@ -23,6 +23,7 @@ SkyboxComponent::SkyboxComponent(SceneNode* node)
 
 SkyboxComponent::~SkyboxComponent()
 {
+	m_spatial.removeFromOctree(m_node->getSceneGraph().getOctree());
 }
 
 void SkyboxComponent::loadImageResource(CString filename)

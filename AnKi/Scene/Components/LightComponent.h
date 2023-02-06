@@ -210,7 +210,7 @@ private:
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated);
 
-	void onDestroyReal(SceneNode& node);
+	void onDestroy(SceneNode& node);
 };
 /// @}
 

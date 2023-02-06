@@ -85,10 +85,17 @@ Error ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 
 		Aabb aabbWorld(-m_halfSize + m_worldPos, m_halfSize + m_worldPos);
 		m_spatial.setBoundingShape(aabbWorld);
-		m_spatial.update(info.m_node->getSceneGraph().getOctree());
 	}
 
+	const Bool spatialUpdated = m_spatial.update(info.m_node->getSceneGraph().getOctree());
+	updated = updated || spatialUpdated;
+
 	return Error::kNone;
+}
+
+void ReflectionProbeComponent::onDestroy(SceneNode& node)
+{
+	m_spatial.removeFromOctree(node.getSceneGraph().getOctree());
 }
 
 } // end namespace anki

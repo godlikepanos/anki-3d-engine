@@ -71,10 +71,11 @@ Error DecalComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		const Vec4 extend(halfBoxSize.x(), halfBoxSize.y(), halfBoxSize.z(), 0.0f);
 		const Obb obbL(center, Mat3x4::getIdentity(), extend);
 		m_obb = obbL.getTransformed(info.m_node->getWorldTransform());
-
 		m_spatial.setBoundingShape(m_obb);
-		m_spatial.update(info.m_node->getSceneGraph().getOctree());
 	}
+
+	const Bool spatialUpdated = m_spatial.update(info.m_node->getSceneGraph().getOctree());
+	updated = updated || spatialUpdated;
 
 	return Error::kNone;
 }

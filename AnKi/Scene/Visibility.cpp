@@ -289,6 +289,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 	// Iterate
 	RenderQueueView& result = m_frcCtx->m_queueViews[taskId];
+	[[maybe_unused]] U32 visibleCount = 0;
 	for(U i = 0; i < m_spatialToTestCount; ++i)
 	{
 		Spatial* spatial = m_spatialsToTest[i];
@@ -303,8 +304,8 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		if(comp.getClassId() == ModelComponent::getStaticClassId())
 		{
 			const ModelComponent& modelc = static_cast<ModelComponent&>(comp);
-			if(!modelc.isEnabled() || (frustumFlags.m_gatherShadowCasterModelComponents && !modelc.getCastsShadow())
-			   || !isInside())
+			const Bool isShadowFrustum = frustumFlags.m_gatherShadowCasterModelComponents;
+			if(!modelc.isEnabled() || (isShadowFrustum && !modelc.getCastsShadow()) || !isInside())
 			{
 				continue;
 			}
@@ -314,7 +315,8 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			const U8 lod = computeLod(primaryFrustum, distanceFromCamera);
 
 			WeakArray<RenderableQueueElement> elements;
-			modelc.setupRenderableQueueElements(lod, RenderingTechnique::kGBuffer, pool, elements);
+			modelc.setupRenderableQueueElements(
+				lod, (isShadowFrustum) ? RenderingTechnique::kShadow : RenderingTechnique::kGBuffer, pool, elements);
 			for(RenderableQueueElement& el : elements)
 			{
 				el.m_distanceFromCamera = distanceFromCamera;
@@ -535,12 +537,13 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		}
 		else if(comp.getClassId() == DecalComponent::getStaticClassId())
 		{
-			if(!frustumFlags.m_gatherDecalComponents || !isInside())
+			const DecalComponent& decalc = static_cast<DecalComponent&>(comp);
+
+			if(!frustumFlags.m_gatherDecalComponents || !isInside() || !decalc.isEnabled())
 			{
 				continue;
 			}
 
-			const DecalComponent& decalc = static_cast<DecalComponent&>(comp);
 			DecalQueueElement* el = result.m_decals.newElement(pool);
 			decalc.setupDecalQueueElement(*el);
 		}
@@ -622,10 +625,18 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			}
 		}
 
+		++visibleCount;
+
 		// Update timestamp
 		Timestamp& timestamp = m_frcCtx->m_queueViews[taskId].m_timestamp;
+		ANKI_ASSERT(comp.getTimestamp() > 0);
 		timestamp = max(timestamp, comp.getTimestamp());
 	} // end for
+
+	if(visibleCount)
+	{
+		ANKI_ASSERT(m_frcCtx->m_queueViews[taskId].m_timestamp > 0);
+	}
 }
 
 void CombineResultsTask::combine()

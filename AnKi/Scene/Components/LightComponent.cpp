@@ -69,7 +69,6 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	{
 		const Sphere sphere(m_worldTransform.getOrigin(), m_point.m_radius);
 		m_spatial.setBoundingShape(sphere);
-		m_spatial.update(info.m_node->getSceneGraph().getOctree());
 
 		if(m_shadow)
 		{
@@ -128,9 +127,7 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			worldPoints[i] = m_spot.m_edgePointsWspace[i].xyz();
 		}
 		worldPoints[4] = m_worldTransform.getOrigin().xyz();
-
 		m_spatial.setBoundingShape(ConstWeakArray<Vec3>(worldPoints));
-		m_spatial.update(info.m_node->getSceneGraph().getOctree());
 
 		if(m_shadow)
 		{
@@ -168,8 +165,10 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	{
 		// Update the scene bounds always
 		info.m_node->getSceneGraph().getOctree().getActualSceneBounds(m_dir.m_sceneMin, m_dir.m_sceneMax);
-		updated = updated || m_spatial.update(info.m_node->getSceneGraph().getOctree());
 	}
+
+	const Bool spatialUpdated = m_spatial.update(info.m_node->getSceneGraph().getOctree());
+	updated = updated || spatialUpdated;
 
 	return Error::kNone;
 }
@@ -330,9 +329,10 @@ void LightComponent::setupDirectionalLightQueueElement(const Frustum& primaryFru
 	}
 }
 
-void LightComponent::onDestroyReal(SceneNode& node)
+void LightComponent::onDestroy(SceneNode& node)
 {
 	deleteArray(node.getMemoryPool(), m_frustums, m_frustumCount);
+	m_spatial.removeFromOctree(node.getSceneGraph().getOctree());
 }
 
 } // end namespace anki

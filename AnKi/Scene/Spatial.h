@@ -13,7 +13,7 @@ namespace anki {
 /// @addtogroup scene
 /// @{
 
-/// XXX
+/// A class that assists with visibility testing.
 class Spatial
 {
 public:
@@ -77,7 +77,7 @@ public:
 	template<typename TVec>
 	void setBoundingShape(ConstWeakArray<TVec> points)
 	{
-		ANKI_ASSERT(pointCount > 0);
+		ANKI_ASSERT(points.getSize() > 0);
 		TVec min(kMaxF32), max(kMinF32);
 		for(const TVec& point : points)
 		{
@@ -89,6 +89,8 @@ public:
 		m_dirty = true;
 	}
 
+	/// Should be called each frame.
+	/// @return True if updated.
 	Bool update(Octree& octree)
 	{
 		const Bool updated = m_dirty;

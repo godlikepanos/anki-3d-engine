@@ -393,6 +393,14 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 					</args>
 				</method>
 				<method name="setMarkedForDeletion"></method>
+				<method name="setLocalTransform">
+					<args>
+						<arg>const Transform&amp;</arg>
+					</args>
+				</method>
+				<method name="getLocalTransform">
+					<return>const Transform&amp;</return>
+				</method>
 				<method name="newComponent&lt;LightComponent&gt;" alias="newLightComponent">
 					<return>LightComponent*</return>
 				</method>

@@ -203,8 +203,10 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		const Aabb aabbWorld = aabbLocal.getTransformed(info.m_node->getWorldTransform());
 
 		m_spatial.setBoundingShape(aabbWorld);
-		m_spatial.update(info.m_node->getSceneGraph().getOctree());
 	}
+
+	const Bool spatialUpdated = m_spatial.update(info.m_node->getSceneGraph().getOctree());
+	updated = updated || spatialUpdated;
 
 	return Error::kNone;
 }

@@ -50,6 +50,8 @@ private:
 	Spatial m_spatial;
 
 	Error updateReal(SceneComponentUpdateInfo& info, Bool& updated);
+
+	void onDestroy(SceneNode& node);
 };
 /// @}
 

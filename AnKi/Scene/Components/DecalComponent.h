@@ -28,6 +28,12 @@ public:
 
 	~DecalComponent();
 
+	Bool isEnabled() const
+	{
+		return m_layers[LayerType::kDiffuse].m_bindlessTextureIndex != kMaxU32
+			   || m_layers[LayerType::kRoughnessMetalness].m_bindlessTextureIndex != kMaxU32;
+	}
+
 	void loadDiffuseImageResource(CString fname, F32 blendFactor)
 	{
 		setLayer(fname, blendFactor, LayerType::kDiffuse);

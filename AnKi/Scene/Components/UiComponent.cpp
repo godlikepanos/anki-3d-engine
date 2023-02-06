@@ -15,4 +15,9 @@ Error UiComponent::updateReal(SceneComponentUpdateInfo& info, Bool& updated)
 	return Error::kNone;
 }
 
+void UiComponent::onDestroy(SceneNode& node)
+{
+	m_spatial.removeFromOctree(node.getSceneGraph().getOctree());
+}
+
 } // end namespace anki

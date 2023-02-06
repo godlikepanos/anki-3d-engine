@@ -201,6 +201,8 @@ Bool Frustum::update()
 void Frustum::setCoverageBuffer(F32* depths, U32 width, U32 height)
 {
 	ANKI_ASSERT(m_pool);
+	ANKI_ASSERT(depths && width > 0 && height > 0);
+
 	const U32 elemCount = width * height;
 	if(m_depthMap.getSize() != elemCount) [[unlikely]]
 	{
@@ -211,6 +213,9 @@ void Frustum::setCoverageBuffer(F32* depths, U32 width, U32 height)
 	{
 		memcpy(m_depthMap.getBegin(), depths, elemCount * sizeof(F32));
 	}
+
+	m_depthMapWidth = width;
+	m_depthMapHeight = height;
 }
 
 } // end namespace anki

@@ -76,6 +76,8 @@ private:
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated);
 
+	void onDestroy(SceneNode& node);
+
 	static void reflectionProbeQueueElementFeedbackCallback(Bool fillRenderQueuesOnNextFrame, void* userData)
 	{
 		ANKI_ASSERT(userData);

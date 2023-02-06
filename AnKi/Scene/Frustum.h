@@ -214,6 +214,7 @@ public:
 			depthBuff = ConstWeakArray<F32>(&m_depthMap[0], m_depthMap.getSize());
 			width = m_depthMapWidth;
 			height = m_depthMapHeight;
+			ANKI_ASSERT(width > 0 && height > 0);
 		}
 		else
 		{
