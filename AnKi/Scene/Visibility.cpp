@@ -469,8 +469,6 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 					nextFrustums[i].m_frustum = &frustums[i];
 					static_cast<FrustumFlags&>(nextFrustums[i]) = getLightFrustumFlags();
 
-					frustums[i].init(FrustumType::kOrthographic, nullptr);
-
 					result.m_directionalLight.m_shadowRenderQueues[i] = &nextQueues[i];
 				}
 
@@ -480,13 +478,6 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 				// cameras. If the renderer finds the same UUID it will think it's cached and use wrong shadow tiles.
 				// That's why we need to change its UUID and bind it to the frustum that is currently viewing the light
 				result.m_directionalLight.m_uuid = ptrToNumber(&testedFrustum);
-
-				// Manually update the dummy components
-				for(U32 i = 0; i < cascadeCount; ++i)
-				{
-					[[maybe_unused]] Bool updated = frustums[i].update();
-					ANKI_ASSERT(updated);
-				}
 
 				break;
 			}

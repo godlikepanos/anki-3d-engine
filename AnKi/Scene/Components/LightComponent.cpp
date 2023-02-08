@@ -316,9 +316,11 @@ void LightComponent::setupDirectionalLightQueueElement(const Frustum& primaryFru
 			const F32 bottom = plane.getOffset();
 
 			Frustum& cascadeFrustum = cascadeFrustums[i];
+			cascadeFrustum.init(FrustumType::kOrthographic, nullptr);
 			cascadeFrustum.setOrthographic(kClusterObjectFrustumNearPlane, far, right, left, top, bottom);
 			cascadeFrustum.setWorldTransform(cascadeTransform);
-			cascadeFrustum.update();
+			[[maybe_unused]] const Bool updated = cascadeFrustum.update();
+			ANKI_ASSERT(updated);
 		}
 	}
 	else
