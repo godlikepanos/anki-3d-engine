@@ -73,8 +73,6 @@ public:
 		el.m_firstFlareSize = m_firstFlareSize;
 		el.m_colorMultiplier = m_colorMul;
 		el.m_textureView = m_image->getTextureView().get();
-		el.m_userData = this;
-		el.m_drawCallback = nullptr;
 	}
 
 private:

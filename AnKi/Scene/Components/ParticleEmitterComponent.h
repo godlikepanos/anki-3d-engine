@@ -14,7 +14,6 @@
 namespace anki {
 
 // Forward
-class RenderQueueDrawContext;
 class RenderableQueueElement;
 
 /// @addtogroup scene

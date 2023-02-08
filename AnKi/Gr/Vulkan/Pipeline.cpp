@@ -383,7 +383,7 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 		 VK_DYNAMIC_STATE_STENCIL_REFERENCE, VK_DYNAMIC_STATE_LINE_WIDTH, VK_DYNAMIC_STATE_DEPTH_BIAS,
 		 VK_DYNAMIC_STATE_FRAGMENT_SHADING_RATE_KHR}};
 
-	dynCi.dynamicStateCount = kDyn.getSize();
+	dynCi.dynamicStateCount = (m_vrsCapable) ? kDyn.getSize() : (kDyn.getSize() - 1);
 	dynCi.pDynamicStates = &kDyn[0];
 	ci.pDynamicState = &dynCi;
 

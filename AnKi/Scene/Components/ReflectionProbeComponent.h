@@ -58,8 +58,6 @@ public:
 		el.m_aabbMin = -m_halfSize + m_worldPos;
 		el.m_aabbMax = m_halfSize + m_worldPos;
 		el.m_textureArrayIndex = kMaxU32;
-		el.m_debugDrawCallback = nullptr;
-		el.m_debugDrawCallbackUserData = this;
 	}
 
 private:

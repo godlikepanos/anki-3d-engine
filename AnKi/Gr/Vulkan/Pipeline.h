@@ -393,6 +393,11 @@ public:
 		m_pipelineStatisticsEnabled = enable;
 	}
 
+	void setVrsCapable(Bool capable)
+	{
+		m_vrsCapable = capable;
+	}
+
 	/// Flush state
 	void flush(U64& pipelineHash, Bool& stateDirty)
 	{
@@ -427,30 +432,19 @@ private:
 	class DirtyBits
 	{
 	public:
-		Bool m_prog : 1;
-		Bool m_rpass : 1;
-		Bool m_inputAssembler : 1;
-		Bool m_rasterizer : 1;
-		Bool m_depth : 1;
-		Bool m_stencil : 1;
-		Bool m_color : 1;
+		Bool m_prog : 1 = true;
+		Bool m_rpass : 1 = true;
+		Bool m_inputAssembler : 1 = true;
+		Bool m_rasterizer : 1 = true;
+		Bool m_depth : 1 = true;
+		Bool m_stencil : 1 = true;
+		Bool m_color : 1 = true;
 
 		// Vertex
 		BitSet<kMaxVertexAttributes, U8> m_attribs = {true};
 		BitSet<kMaxVertexAttributes, U8> m_vertBindings = {true};
 
 		BitSet<kMaxColorRenderTargets, U8> m_colAttachments = {true};
-
-		DirtyBits()
-			: m_prog(true)
-			, m_rpass(true)
-			, m_inputAssembler(true)
-			, m_rasterizer(true)
-			, m_depth(true)
-			, m_stencil(true)
-			, m_color(true)
-		{
-		}
 	} m_dirty;
 
 	class SetBits
@@ -465,9 +459,9 @@ private:
 	BitSet<kMaxColorRenderTargets, U8> m_shaderColorAttachmentWritemask = {false};
 
 	// Renderpass info
-	Bool m_fbDepth = false;
-	Bool m_fbStencil = false;
-	Bool m_defaultFb = false;
+	Bool m_fbDepth : 1 = false;
+	Bool m_fbStencil : 1 = false;
+	Bool m_defaultFb : 1 = false;
 	BitSet<kMaxColorRenderTargets, U8> m_fbColorAttachmentMask = {false};
 
 	class Hashes
@@ -512,7 +506,8 @@ private:
 		VkPipelineRasterizationStateRasterizationOrderAMD m_rasterOrder;
 	} m_ci;
 
-	Bool m_pipelineStatisticsEnabled = false;
+	Bool m_pipelineStatisticsEnabled : 1 = false;
+	Bool m_vrsCapable : 1 = false;
 
 	Bool updateHashes();
 	void updateSuperHash();

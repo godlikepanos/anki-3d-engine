@@ -67,8 +67,6 @@ public:
 		el.m_obbCenter = m_obb.getCenter().xyz();
 		el.m_obbExtend = m_obb.getExtend().xyz();
 		el.m_obbRotation = m_obb.getRotation().getRotationPart();
-		el.m_debugDrawCallback = nullptr;
-		el.m_debugDrawCallbackUserData = this;
 	}
 
 private:

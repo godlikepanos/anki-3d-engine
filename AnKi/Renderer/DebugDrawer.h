@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <AnKi/Scene/Common.h>
+#include <AnKi/Renderer/Common.h>
 #include <AnKi/Math.h>
 #include <AnKi/Gr.h>
 #include <AnKi/Physics/PhysicsDrawer.h>
@@ -15,7 +15,6 @@
 namespace anki {
 
 // Forward
-class RenderQueueDrawContext;
 class RebarStagingGpuMemoryPool;
 class RebarGpuMemoryToken;
 

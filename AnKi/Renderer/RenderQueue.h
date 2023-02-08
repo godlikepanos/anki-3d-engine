@@ -26,30 +26,6 @@ public:
 	Mat4 m_previousViewProjectionMatrix;
 };
 
-/// Some options that can be used as hints in debug drawcalls.
-enum class RenderQueueDebugDrawFlag : U32
-{
-	kDepthTestOn,
-	kDitheredDepthTestOn,
-	kCount
-};
-
-/// Context that contains variables for drawing and will be passed to RenderQueueDrawCallback.
-class RenderQueueDrawContext final : public RenderingMatrices
-{
-public:
-	RenderingKey m_key;
-	CommandBufferPtr m_commandBuffer;
-	SamplerPtr m_sampler; ///< A trilinear sampler with anisotropy.
-	RebarStagingGpuMemoryPool* m_rebarStagingPool ANKI_DEBUG_CODE(= nullptr);
-	StackMemoryPool* m_framePool = nullptr;
-	Bool m_debugDraw; ///< If true the drawcall should be drawing some kind of debug mesh.
-	BitSet<U(RenderQueueDebugDrawFlag::kCount), U32> m_debugDrawFlags = {false};
-};
-
-/// Draw callback for drawing.
-using RenderQueueDrawCallback = void (*)(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData);
-
 /// Render queue element that contains info on items that populate the G-buffer or the forward shading buffer etc.
 class RenderableQueueElement final
 {
@@ -76,6 +52,9 @@ public:
 	};
 
 	F32 m_distanceFromCamera; ///< Don't set this. Visibility will.
+
+	Vec3 m_aabbMin;
+	Vec3 m_aabbMax;
 
 	Bool m_indexed;
 	PrimitiveTopology m_primitiveTopology;
@@ -136,8 +115,6 @@ public:
 	F32 m_radius;
 	Vec3 m_diffuseColor;
 	Array<RenderQueue*, 6> m_shadowRenderQueues;
-	RenderQueueDrawCallback m_debugDrawCallback;
-	const void* m_debugDrawCallbackUserData;
 
 	Array<Vec2, 6> m_shadowAtlasTileOffsets; ///< Renderer internal.
 	F32 m_shadowAtlasTileSize; ///< Renderer internal.
@@ -167,8 +144,6 @@ public:
 	Vec3 m_diffuseColor;
 	Array<Vec3, 4> m_edgePoints;
 	RenderQueue* m_shadowRenderQueue;
-	RenderQueueDrawCallback m_debugDrawCallback;
-	const void* m_debugDrawCallbackUserData;
 
 	U8 m_shadowLayer; ///< Renderer internal.
 
@@ -189,8 +164,6 @@ class DirectionalLightQueueElement final
 public:
 	Array<Mat4, kMaxShadowCascades> m_textureMatrices;
 	Array<RenderQueue*, kMaxShadowCascades> m_shadowRenderQueues;
-	RenderQueueDrawCallback m_drawCallback;
-	const void* m_drawCallbackUserData;
 	U64 m_uuid; ///< Zero means that there is no dir light
 	Vec3 m_diffuseColor;
 	Vec3 m_direction;
@@ -226,8 +199,6 @@ public:
 	U64 m_uuid;
 	ReflectionProbeQueueElementFeedbackCallback m_feedbackCallback;
 	void* m_feedbackCallbackUserData;
-	RenderQueueDrawCallback m_debugDrawCallback;
-	const void* m_debugDrawCallbackUserData;
 	Array<RenderQueue*, 6> m_renderQueues;
 	Vec3 m_worldPosition;
 	Vec3 m_aabbMin;
@@ -251,8 +222,6 @@ public:
 	U64 m_uuid;
 	GlobalIlluminationProbeQueueElementFeedbackCallback m_feedbackCallback;
 	void* m_feedbackCallbackUserData;
-	RenderQueueDrawCallback m_debugDrawCallback;
-	const void* m_debugDrawCallbackUserData;
 	Array<RenderQueue*, 6> m_renderQueues;
 	Vec3 m_aabbMin;
 	Vec3 m_aabbMax;
@@ -285,8 +254,6 @@ class LensFlareQueueElement final
 public:
 	/// Totaly unsafe but we can't have a smart ptr in here since there will be no deletion.
 	const TextureView* m_textureView;
-	const void* m_userData;
-	RenderQueueDrawCallback m_drawCallback;
 	Vec3 m_worldPosition;
 	Vec2 m_firstFlareSize;
 	Vec4 m_colorMultiplier;
@@ -301,8 +268,6 @@ static_assert(std::is_trivially_destructible<LensFlareQueueElement>::value == tr
 class DecalQueueElement final
 {
 public:
-	RenderQueueDrawCallback m_debugDrawCallback;
-	const void* m_debugDrawCallbackUserData;
 	U32 m_diffuseBindlessTextureIndex;
 	U32 m_roughnessMetalnessBindlessTextureIndex;
 	F32 m_diffuseBlendFactor;

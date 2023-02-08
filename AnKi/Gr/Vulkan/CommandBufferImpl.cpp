@@ -60,6 +60,8 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 		state.init(m_pool);
 	}
 
+	m_state.setVrsCapable(getGrManagerImpl().getDeviceCapabilities().m_vrs);
+
 	return Error::kNone;
 }
 

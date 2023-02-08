@@ -464,6 +464,8 @@ void ParticleEmitterComponent::setupRenderableQueueElements(RenderingTechnique t
 	el->m_firstVertex = 0;
 	el->m_indexed = false;
 	el->m_primitiveTopology = PrimitiveTopology::kTriangles;
+	el->m_aabbMin = m_spatial.getAabbWorldSpace().getMin().xyz();
+	el->m_aabbMax = m_spatial.getAabbWorldSpace().getMax().xyz();
 
 	outRenderables.setArray(el, 1);
 }

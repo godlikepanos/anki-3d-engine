@@ -87,8 +87,6 @@ public:
 		el.m_uuid = m_uuid;
 		el.m_feedbackCallback = giProbeQueueElementFeedbackCallback;
 		el.m_feedbackCallbackUserData = this;
-		el.m_debugDrawCallback = nullptr;
-		el.m_debugDrawCallbackUserData = this;
 		el.m_renderQueues = {};
 		el.m_aabbMin = -m_halfSize + m_worldPos;
 		el.m_aabbMax = m_halfSize + m_worldPos;

@@ -181,8 +181,6 @@ void LightComponent::setupDirectionalLightQueueElement(const Frustum& primaryFru
 
 	const U32 shadowCascadeCount = cascadeFrustums.getSize();
 
-	el.m_drawCallback = nullptr;
-	el.m_drawCallbackUserData = this;
 	el.m_uuid = m_uuid;
 	el.m_diffuseColor = m_diffColor.xyz();
 	el.m_direction = -m_worldTransform.getRotation().getZAxis().xyz();

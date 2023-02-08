@@ -135,8 +135,6 @@ public:
 		el.m_worldPosition = m_worldTransform.getOrigin().xyz();
 		el.m_radius = m_point.m_radius;
 		el.m_diffuseColor = m_diffColor.xyz();
-		el.m_debugDrawCallback = nullptr;
-		el.m_debugDrawCallbackUserData = this;
 		el.m_shadowLayer = kMaxU8;
 	}
 
@@ -151,8 +149,6 @@ public:
 		el.m_innerAngle = m_spot.m_innerAngle;
 		el.m_diffuseColor = m_diffColor.xyz();
 		el.m_edgePoints = m_spot.m_edgePointsWspace;
-		el.m_debugDrawCallback = nullptr;
-		el.m_debugDrawCallbackUserData = this;
 		el.m_shadowLayer = kMaxU8;
 	}
 

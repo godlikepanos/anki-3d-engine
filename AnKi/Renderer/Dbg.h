@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Renderer/RendererObject.h>
+#include <AnKi/Renderer/DebugDrawer.h>
 #include <AnKi/Gr.h>
 #include <AnKi/Util/Enum.h>
 #include <AnKi/Renderer/RenderQueue.h>
@@ -35,38 +36,48 @@ public:
 
 	Bool getDepthTestEnabled() const
 	{
-		return m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDepthTestOn);
+		return m_depthTestOn;
 	}
 
 	void setDepthTestEnabled(Bool enable)
 	{
-		m_debugDrawFlags.set(RenderQueueDebugDrawFlag::kDepthTestOn, enable);
+		m_depthTestOn = enable;
 	}
 
 	void switchDepthTestEnabled()
 	{
-		m_debugDrawFlags.flip(RenderQueueDebugDrawFlag::kDepthTestOn);
+		m_depthTestOn = !m_depthTestOn;
 	}
 
 	Bool getDitheredDepthTestEnabled() const
 	{
-		return m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn);
+		return m_ditheredDepthTestOn;
 	}
 
 	void setDitheredDepthTestEnabled(Bool enable)
 	{
-		m_debugDrawFlags.set(RenderQueueDebugDrawFlag::kDitheredDepthTestOn, enable);
+		m_ditheredDepthTestOn = enable;
 	}
 
 	void switchDitheredDepthTestEnabled()
 	{
-		m_debugDrawFlags.flip(RenderQueueDebugDrawFlag::kDitheredDepthTestOn);
+		m_ditheredDepthTestOn = !m_ditheredDepthTestOn;
 	}
 
 private:
 	RenderTargetDescription m_rtDescr;
 	FramebufferDescription m_fbDescr;
-	BitSet<U(RenderQueueDebugDrawFlag::kCount), U32> m_debugDrawFlags = {false};
+
+	DebugDrawer2 m_drawer;
+
+	ImageResourcePtr m_giProbeImage;
+	ImageResourcePtr m_pointLightImage;
+	ImageResourcePtr m_spotLightImage;
+	ImageResourcePtr m_decalImage;
+	ImageResourcePtr m_reflectionImage;
+
+	Bool m_depthTestOn : 1 = false;
+	Bool m_ditheredDepthTestOn : 1 = false;
 
 	class
 	{

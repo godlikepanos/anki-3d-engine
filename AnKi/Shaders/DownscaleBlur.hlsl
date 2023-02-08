@@ -23,7 +23,7 @@ struct Uniforms
 [[vk::push_constant]] ConstantBuffer<Uniforms> g_uniforms;
 
 #if defined(ANKI_COMPUTE_SHADER)
-[[vk::binding(3)]] RWTexture2D<RVec3> g_outUav;
+[[vk::binding(3)]] RWTexture2D<RVec4> g_outUav;
 #endif
 
 #if defined(ANKI_COMPUTE_SHADER)
@@ -58,7 +58,7 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 	}
 
 #if defined(ANKI_COMPUTE_SHADER)
-	g_outUav[svDispatchThreadId.xy] = output;
+	g_outUav[svDispatchThreadId.xy] = RVec4(output, 1.0);
 #else
 	return output;
 #endif

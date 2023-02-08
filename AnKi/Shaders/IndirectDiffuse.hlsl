@@ -36,7 +36,7 @@ ANKI_SPECIALIZATION_CONSTANT_U32(kSampleCount, 0u);
 [[vk::binding(10)]] Texture2D g_historyLengthTex;
 
 #if defined(ANKI_COMPUTE_SHADER)
-[[vk::binding(11)]] RWTexture2D<RVec3> g_outUav;
+[[vk::binding(11)]] RWTexture2D<RVec4> g_outUav;
 #endif
 
 [[vk::push_constant]] ConstantBuffer<IndirectDiffuseUniforms> g_uniforms;
@@ -230,7 +230,7 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION
 
 	// Store color
 #if defined(ANKI_COMPUTE_SHADER)
-	g_outUav[svDispatchThreadId.xy] = outColor;
+	g_outUav[svDispatchThreadId.xy] = RVec4(outColor, 0.0f);
 #else
 	return outColor;
 #endif

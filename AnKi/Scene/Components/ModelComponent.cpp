@@ -277,6 +277,9 @@ void ModelComponent::setupRenderableQueueElements(U32 lod, RenderingTechnique te
 		queueElem.m_indexed = true;
 		queueElem.m_primitiveTopology = PrimitiveTopology::kTriangles;
 
+		queueElem.m_aabbMin = m_spatial.getAabbWorldSpace().getMin().xyz();
+		queueElem.m_aabbMax = m_spatial.getAabbWorldSpace().getMax().xyz();
+
 		queueElem.computeMergeKey();
 
 		++renderableCount;

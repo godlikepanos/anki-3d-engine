@@ -43,6 +43,14 @@ Error Dbg::init()
 	m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
 	m_fbDescr.bake();
 
+	ResourceManager& rsrcManager = *getExternalSubsystems().m_resourceManager;
+	ANKI_CHECK(m_drawer.init(&rsrcManager, getExternalSubsystems().m_grManager));
+	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/GiProbe.ankitex", m_giProbeImage));
+	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/LightBulb.ankitex", m_pointLightImage));
+	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/SpotLight.ankitex", m_spotLightImage));
+	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/GreenDecal.ankitex", m_decalImage));
+	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/Mirror.ankitex", m_reflectionImage));
+
 	return Error::kNone;
 }
 
@@ -56,25 +64,12 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	cmdb->setViewport(0, 0, m_r->getInternalResolution().x(), m_r->getInternalResolution().y());
 	cmdb->setDepthWrite(false);
 
-	cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
+	cmdb->bindSampler(0, 1, m_r->getSamplers().m_nearestNearestClamp);
 
-	rgraphCtx.bindTexture(0, 1, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+	rgraphCtx.bindTexture(0, 2, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
 	cmdb->setBlendFactors(0, BlendFactor::kSrcAlpha, BlendFactor::kOneMinusSrcAlpha);
-
-	// Set the context
-	RenderQueueDrawContext dctx;
-	dctx.m_viewMatrix = ctx.m_renderQueue->m_viewMatrix;
-	dctx.m_viewProjectionMatrix = ctx.m_renderQueue->m_viewProjectionMatrix;
-	dctx.m_projectionMatrix = ctx.m_renderQueue->m_projectionMatrix;
-	dctx.m_cameraTransform = ctx.m_renderQueue->m_cameraTransform;
-	dctx.m_rebarStagingPool = m_r->getExternalSubsystems().m_rebarStagingPool;
-	dctx.m_framePool = ctx.m_tempPool;
-	dctx.m_commandBuffer = cmdb;
-	dctx.m_sampler = m_r->getSamplers().m_trilinearRepeatAniso;
-	dctx.m_key = RenderingKey(RenderingTechnique::kForward, 0, false, false);
-	dctx.m_debugDraw = true;
-	dctx.m_debugDrawFlags = m_debugDrawFlags;
+	cmdb->setDepthCompareOperation((m_depthTestOn) ? CompareOperation::kLess : CompareOperation::kAlways);
 
 	// Draw renderables
 	const U32 threadId = rgraphCtx.m_currentSecondLevelCommandBufferIndex;
@@ -83,71 +78,49 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	U32 start, end;
 	splitThreadedProblem(threadId, threadCount, problemSize, start, end);
 
-	// TODO
-#if 0
+	RebarStagingGpuMemoryPool& rebar = *getExternalSubsystems().m_rebarStagingPool;
+
+	// Renderables
 	for(U32 i = start; i < end; ++i)
 	{
 		const RenderableQueueElement& el = ctx.m_renderQueue->m_renderables[i];
-		Array<void*, 1> a = {const_cast<void*>(el.m_userData)};
-		el.m_callback(dctx, a);
+
+		const Vec3 tsl = (el.m_aabbMin + el.m_aabbMax) / 2.0f;
+		constexpr F32 kMargin = 0.1f;
+		const Vec3 scale = (el.m_aabbMax - el.m_aabbMin + kMargin) / 2.0f;
+
+		// Set non uniform scale. Add a margin to avoid flickering
+		Mat3 nonUniScale = Mat3::getZero();
+
+		nonUniScale(0, 0) = scale.x();
+		nonUniScale(1, 1) = scale.y();
+		nonUniScale(2, 2) = scale.z();
+
+		const Mat4 mvp = ctx.m_matrices.m_viewProjection * Mat4(tsl.xyz1(), Mat3::getIdentity() * nonUniScale, 1.0f);
+
+		m_drawer.drawCube(mvp, Vec4(1.0f, 0.0f, 1.0f, 1.0f), 2.0f, m_ditheredDepthTestOn, 2.0f, rebar, cmdb);
 	}
 
-	// Draw forward shaded
+	// Forward shaded renderables
 	if(threadId == 0)
 	{
 		for(const RenderableQueueElement& el : ctx.m_renderQueue->m_forwardShadingRenderables)
 		{
-			Array<void*, 1> a = {const_cast<void*>(el.m_userData)};
-			el.m_callback(dctx, a);
-		}
-	}
-#endif
+			const Vec3 tsl = (el.m_aabbMin + el.m_aabbMax) / 2.0f;
+			constexpr F32 kMargin = 0.1f;
+			const Vec3 scale = (el.m_aabbMax - el.m_aabbMin + kMargin) / 2.0f;
 
-	// Draw probes
-	if(threadId == 0)
-	{
-		for(const GlobalIlluminationProbeQueueElement& el : ctx.m_renderQueue->m_giProbes)
-		{
-			Array<void*, 1> a = {const_cast<void*>(el.m_debugDrawCallbackUserData)};
-			el.m_debugDrawCallback(dctx, a);
-		}
-	}
+			// Set non uniform scale. Add a margin to avoid flickering
+			Mat3 nonUniScale = Mat3::getZero();
 
-	// Draw lights
-	if(threadId == 0)
-	{
-		U32 count = ctx.m_renderQueue->m_pointLights.getSize();
-		while(count--)
-		{
-			const PointLightQueueElement& el = ctx.m_renderQueue->m_pointLights[count];
-			Array<void*, 1> a = {const_cast<void*>(el.m_debugDrawCallbackUserData)};
-			el.m_debugDrawCallback(dctx, a);
-		}
+			nonUniScale(0, 0) = scale.x();
+			nonUniScale(1, 1) = scale.y();
+			nonUniScale(2, 2) = scale.z();
 
-		for(const SpotLightQueueElement& el : ctx.m_renderQueue->m_spotLights)
-		{
-			Array<void*, 1> a = {const_cast<void*>(el.m_debugDrawCallbackUserData)};
-			el.m_debugDrawCallback(dctx, a);
-		}
-	}
+			const Mat4 mvp =
+				ctx.m_matrices.m_viewProjection * Mat4(tsl.xyz1(), Mat3::getIdentity() * nonUniScale, 1.0f);
 
-	// Decals
-	if(threadId == 0)
-	{
-		for(const DecalQueueElement& el : ctx.m_renderQueue->m_decals)
-		{
-			Array<void*, 1> a = {const_cast<void*>(el.m_debugDrawCallbackUserData)};
-			el.m_debugDrawCallback(dctx, a);
-		}
-	}
-
-	// Reflection probes
-	if(threadId == 0)
-	{
-		for(const ReflectionProbeQueueElement& el : ctx.m_renderQueue->m_reflectionProbes)
-		{
-			Array<void*, 1> a = {const_cast<void*>(el.m_debugDrawCallbackUserData)};
-			el.m_debugDrawCallback(dctx, a);
+			m_drawer.drawCube(mvp, Vec4(1.0f, 0.0f, 1.0f, 1.0f), 2.0f, m_ditheredDepthTestOn, 2.0f, rebar, cmdb);
 		}
 	}
 
@@ -156,10 +129,107 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	{
 		for(const GlobalIlluminationProbeQueueElement& el : ctx.m_renderQueue->m_giProbes)
 		{
-			Array<void*, 1> a = {const_cast<void*>(el.m_debugDrawCallbackUserData)};
-			el.m_debugDrawCallback(dctx, a);
+			const Vec3 tsl = (el.m_aabbMax + el.m_aabbMin) / 2.0f;
+			const Vec3 scale = (tsl - el.m_aabbMin);
+
+			// Set non uniform scale.
+			Mat3 rot = Mat3::getIdentity();
+			rot(0, 0) *= scale.x();
+			rot(1, 1) *= scale.y();
+			rot(2, 2) *= scale.z();
+
+			const Mat4 mvp = ctx.m_matrices.m_viewProjection * Mat4(tsl.xyz1(), rot, 1.0f);
+
+			m_drawer.drawCubes(ConstWeakArray<Mat4>(&mvp, 1), Vec4(0.729f, 0.635f, 0.196f, 1.0f), 1.0f,
+							   m_ditheredDepthTestOn, 2.0f, rebar, cmdb);
+
+			m_drawer.drawBillboardTextures(ctx.m_matrices.m_projection, ctx.m_matrices.m_view,
+										   ConstWeakArray<Vec3>(&tsl, 1), Vec4(1.0f), m_ditheredDepthTestOn,
+										   m_giProbeImage->getTextureView(), m_r->getSamplers().m_trilinearRepeatAniso,
+										   Vec2(0.75f), rebar, cmdb);
 		}
 	}
+
+	// Lights
+	if(threadId == 0)
+	{
+		for(const PointLightQueueElement& el : ctx.m_renderQueue->m_pointLights)
+		{
+			Vec3 color = el.m_diffuseColor.xyz();
+			color /= max(max(color.x(), color.y()), color.z());
+
+			m_drawer.drawBillboardTexture(ctx.m_matrices.m_projection, ctx.m_matrices.m_view, el.m_worldPosition,
+										  color.xyz1(), m_ditheredDepthTestOn, m_pointLightImage->getTextureView(),
+										  m_r->getSamplers().m_trilinearRepeatAniso, Vec2(0.75f), rebar, cmdb);
+		}
+
+		for(const SpotLightQueueElement& el : ctx.m_renderQueue->m_spotLights)
+		{
+			Vec3 color = el.m_diffuseColor.xyz();
+			color /= max(max(color.x(), color.y()), color.z());
+
+			m_drawer.drawBillboardTexture(ctx.m_matrices.m_projection, ctx.m_matrices.m_view,
+										  el.m_worldTransform.getTranslationPart().xyz(), color.xyz1(),
+										  m_ditheredDepthTestOn, m_spotLightImage->getTextureView(),
+										  m_r->getSamplers().m_trilinearRepeatAniso, Vec2(0.75f), rebar, cmdb);
+		}
+	}
+
+	// Decals
+	if(threadId == 0)
+	{
+		for(const DecalQueueElement& el : ctx.m_renderQueue->m_decals)
+		{
+			const Mat3 rot = el.m_obbRotation;
+			const Vec4 tsl = el.m_obbCenter.xyz1();
+			const Vec3 scale = el.m_obbExtend;
+
+			Mat3 nonUniScale = Mat3::getZero();
+			nonUniScale(0, 0) = scale.x();
+			nonUniScale(1, 1) = scale.y();
+			nonUniScale(2, 2) = scale.z();
+
+			const Mat4 mvp = ctx.m_matrices.m_viewProjection * Mat4(tsl, rot * nonUniScale, 1.0f);
+
+			m_drawer.drawCubes(ConstWeakArray<Mat4>(&mvp, 1), Vec4(0.0f, 1.0f, 0.0f, 1.0f), 1.0f, m_ditheredDepthTestOn,
+							   2.0f, rebar, cmdb);
+
+			const Vec3 pos = el.m_obbCenter;
+			m_drawer.drawBillboardTextures(ctx.m_matrices.m_projection, ctx.m_matrices.m_view,
+										   ConstWeakArray<Vec3>(&pos, 1), Vec4(1.0f), m_ditheredDepthTestOn,
+										   m_decalImage->getTextureView(), m_r->getSamplers().m_trilinearRepeatAniso,
+										   Vec2(0.75f), rebar, cmdb);
+		}
+	}
+
+	// Reflection probes
+	if(threadId == 0)
+	{
+		for(const ReflectionProbeQueueElement& el : ctx.m_renderQueue->m_reflectionProbes)
+		{
+			const Vec3 tsl = el.m_worldPosition;
+			const Vec3 scale = (el.m_aabbMax - el.m_aabbMin);
+
+			// Set non uniform scale.
+			Mat3 rot = Mat3::getIdentity();
+			rot(0, 0) *= scale.x();
+			rot(1, 1) *= scale.y();
+			rot(2, 2) *= scale.z();
+
+			const Mat4 mvp = ctx.m_matrices.m_viewProjection * Mat4(tsl.xyz1(), rot, 1.0f);
+
+			m_drawer.drawCubes(ConstWeakArray<Mat4>(&mvp, 1), Vec4(0.0f, 0.0f, 1.0f, 1.0f), 1.0f, m_ditheredDepthTestOn,
+							   2.0f, rebar, cmdb);
+
+			m_drawer.drawBillboardTextures(ctx.m_matrices.m_projection, ctx.m_matrices.m_view,
+										   ConstWeakArray<Vec3>(&el.m_worldPosition, 1), Vec4(1.0f),
+										   m_ditheredDepthTestOn, m_reflectionImage->getTextureView(),
+										   m_r->getSamplers().m_trilinearRepeatAniso, Vec2(0.75f), rebar, cmdb);
+		}
+	}
+
+	// Restore state
+	cmdb->setDepthCompareOperation(CompareOperation::kLess);
 }
 
 void Dbg::populateRenderGraph(RenderingContext& ctx)

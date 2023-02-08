@@ -18,7 +18,7 @@
 
 #if defined(ANKI_COMPUTE_SHADER)
 #	define THREAD_GROUP_SIZE_SQRT 8
-[[vk::binding(3)]] RWTexture2D<RVec3> g_outUav;
+[[vk::binding(3)]] RWTexture2D<RVec4> g_outUav;
 #endif
 
 [[vk::push_constant]] ConstantBuffer<IndirectDiffuseDenoiseUniforms> g_uniforms;
@@ -52,10 +52,10 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 	if(depthCenter == 1.0)
 	{
 #if defined(ANKI_COMPUTE_SHADER)
-		g_outUav[svDispatchThreadId.xy] = RVec3(0.0, 0.0, 0.0);
+		g_outUav[svDispatchThreadId.xy] = 0.0f;
 		return;
 #else
-		return RVec3(0.0, 0.0, 0.0);
+		return 0.0f;
 #endif
 	}
 
@@ -85,7 +85,7 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 	color /= weight;
 
 #if defined(ANKI_COMPUTE_SHADER)
-	g_outUav[svDispatchThreadId.xy] = color;
+	g_outUav[svDispatchThreadId.xy] = RVec4(color, 0.0f);
 #else
 	return color;
 #endif

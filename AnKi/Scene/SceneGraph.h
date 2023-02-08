@@ -7,7 +7,6 @@
 
 #include <AnKi/Scene/Common.h>
 #include <AnKi/Scene/SceneNode.h>
-#include <AnKi/Scene/DebugDrawer.h>
 #include <AnKi/Math.h>
 #include <AnKi/Util/HashMap.h>
 #include <AnKi/Core/App.h>
@@ -170,11 +169,6 @@ public:
 		return *m_octree;
 	}
 
-	const DebugDrawer2& getDebugDrawer() const
-	{
-		return m_debugDrawer;
-	}
-
 private:
 	class UpdateSceneNodesCtx;
 
@@ -205,8 +199,6 @@ private:
 	Atomic<U64> m_nodesUuid = {1};
 
 	SceneGraphStats m_stats;
-
-	DebugDrawer2 m_debugDrawer;
 
 	/// Put a node in the appropriate containers
 	Error registerNode(SceneNode* node);

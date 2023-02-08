@@ -67,9 +67,6 @@ Error SceneGraph::init(const SceneGraphInitInfo& initInfo)
 	camc->setPerspective(0.1f, 1000.0f, toRad(60.0f), (1080.0f / 1920.0f) * toRad(60.0f));
 	m_mainCam = m_defaultMainCam;
 
-	// Other
-	ANKI_CHECK(m_debugDrawer.init(m_subsystems.m_resourceManager, m_subsystems.m_grManager));
-
 	return Error::kNone;
 }
 
