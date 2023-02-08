@@ -49,6 +49,17 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 
 		m_worldPos = info.m_node->getWorldTransform().getOrigin().xyz();
 
+		const Aabb aabb(-m_halfSize + m_worldPos, m_halfSize + m_worldPos);
+		m_spatial.setBoundingShape(aabb);
+	}
+
+	const Bool spatialUpdated = m_spatial.update(info.m_node->getSceneGraph().getOctree());
+	updated = updated || spatialUpdated;
+
+	if(m_markedForRendering) [[unlikely]]
+	{
+		updated = true;
+
 		F32 effectiveDistance = max(m_halfSize.x(), m_halfSize.y());
 		effectiveDistance = max(effectiveDistance, m_halfSize.z());
 		effectiveDistance =
@@ -60,7 +71,7 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 		for(U32 i = 0; i < 6; ++i)
 		{
 			m_frustums[i].setWorldTransform(
-				Transform(m_worldPos.xyz0(), Frustum::getOmnidirectionalFrustumRotations()[i], 1.0f));
+				Transform(m_renderPosition.xyz0(), Frustum::getOmnidirectionalFrustumRotations()[i], 1.0f));
 
 			m_frustums[i].setFar(effectiveDistance);
 			m_frustums[i].setShadowCascadeDistance(0, shadowCascadeDistance);
@@ -72,13 +83,7 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 
 			m_frustums[i].update();
 		}
-
-		const Aabb aabb(-m_halfSize + m_worldPos, m_halfSize + m_worldPos);
-		m_spatial.setBoundingShape(aabb);
 	}
-
-	const Bool spatialUpdated = m_spatial.update(info.m_node->getSceneGraph().getOctree());
-	updated = updated || spatialUpdated;
 
 	return Error::kNone;
 }
