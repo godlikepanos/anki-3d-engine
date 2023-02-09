@@ -295,12 +295,13 @@ void ModelComponent::onOtherComponentRemovedOrAdded(SceneComponent* other, Bool 
 		return;
 	}
 
-	if(added && m_skinComponent != nullptr)
+	const Bool alreadyHasSkinComponent = m_skinComponent != nullptr;
+	if(added && !alreadyHasSkinComponent)
 	{
 		m_skinComponent = static_cast<SkinComponent*>(other);
 		m_dirty = true;
 	}
-	else if(other == m_skinComponent)
+	else if(!added && other == m_skinComponent)
 	{
 		m_skinComponent = nullptr;
 		m_dirty = true;
