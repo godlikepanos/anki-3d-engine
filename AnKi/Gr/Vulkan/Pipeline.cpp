@@ -425,7 +425,7 @@ void PipelineFactory::destroy()
 
 void PipelineFactory::getOrCreatePipeline(PipelineStateTracker& state, Pipeline& ppline, Bool& stateDirty)
 {
-	ANKI_TRACE_SCOPED_EVENT(VK_PIPELINE_GET_OR_CREATE);
+	ANKI_TRACE_SCOPED_EVENT(VkPipelineGetOrCreate);
 
 	U64 hash;
 	state.flush(hash, stateDirty);
@@ -443,7 +443,7 @@ void PipelineFactory::getOrCreatePipeline(PipelineStateTracker& state, Pipeline&
 		if(it != m_pplines.getEnd())
 		{
 			ppline.m_handle = (*it).m_handle;
-			ANKI_TRACE_INC_COUNTER(VK_PIPELINES_CACHE_HIT, 1);
+			ANKI_TRACE_INC_COUNTER(VkPipelineCacheHit, 1);
 			return;
 		}
 	}
@@ -465,7 +465,7 @@ void PipelineFactory::getOrCreatePipeline(PipelineStateTracker& state, Pipeline&
 	const VkGraphicsPipelineCreateInfo& ci = state.updatePipelineCreateInfo();
 
 	{
-		ANKI_TRACE_SCOPED_EVENT(VK_PIPELINE_CREATE);
+		ANKI_TRACE_SCOPED_EVENT(VkPipelineCreate);
 
 #if ANKI_PLATFORM_MOBILE
 		if(m_globalCreatePipelineMtx)
@@ -484,7 +484,7 @@ void PipelineFactory::getOrCreatePipeline(PipelineStateTracker& state, Pipeline&
 #endif
 	}
 
-	ANKI_TRACE_INC_COUNTER(VK_PIPELINES_CACHE_MISS, 1);
+	ANKI_TRACE_INC_COUNTER(VkPipelineCacheMiss, 1);
 
 	m_pplines.emplace(*m_pool, hash, pp);
 	ppline.m_handle = pp.m_handle;

@@ -150,7 +150,7 @@ void App::cleanup()
 	m_window = nullptr;
 
 #if ANKI_ENABLE_TRACE
-	m_heapAlloc.deleteInstance(m_coreTracer);
+	deleteInstance(m_mainPool, m_coreTracer);
 	m_coreTracer = nullptr;
 #endif
 
@@ -235,8 +235,8 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	// Core tracer
 	//
 #if ANKI_ENABLE_TRACE
-	m_coreTracer = m_heapAlloc.newInstance<CoreTracer>();
-	ANKI_CHECK(m_coreTracer->init(m_heapAlloc, m_settingsDir));
+	m_coreTracer = newInstance<CoreTracer>(m_mainPool);
+	ANKI_CHECK(m_coreTracer->init(&m_mainPool, m_settingsDir));
 #endif
 
 	//
@@ -486,7 +486,7 @@ Error App::mainLoop()
 	while(!quit)
 	{
 		{
-			ANKI_TRACE_SCOPED_EVENT(FRAME);
+			ANKI_TRACE_SCOPED_EVENT(Frame);
 			const Second startTime = HighRezTimer::getCurrentTime();
 
 			prevUpdateTime = crntTime;
@@ -541,7 +541,7 @@ Error App::mainLoop()
 
 			// Update the trace info with some async loader stats
 			U64 asyncTaskCount = m_resources->getAsyncLoader().getCompletedTaskCount();
-			ANKI_TRACE_INC_COUNTER(RESOURCE_ASYNC_TASKS, asyncTaskCount - m_resourceCompletedAsyncTaskCount);
+			ANKI_TRACE_INC_COUNTER(RsrcAsyncTasks, asyncTaskCount - m_resourceCompletedAsyncTaskCount);
 			m_resourceCompletedAsyncTaskCount = asyncTaskCount;
 
 			// Now resume the loader
@@ -555,7 +555,7 @@ Error App::mainLoop()
 				const Second timerTick = 1.0_sec / Second(m_config->getCoreTargetFps());
 				if(frameTime < timerTick)
 				{
-					ANKI_TRACE_SCOPED_EVENT(TIMER_TICK_SLEEP);
+					ANKI_TRACE_SCOPED_EVENT(TimerTickSleep);
 					HighRezTimer::sleep(timerTick - frameTime);
 				}
 			}
@@ -623,7 +623,7 @@ Error App::mainLoop()
 #if ANKI_ENABLE_TRACE
 			if(m_renderer->getStats().m_renderingGpuTime >= 0.0)
 			{
-				ANKI_TRACE_CUSTOM_EVENT(GPU_TIME, m_renderer->getStats().m_renderingGpuSubmitTimestamp,
+				ANKI_TRACE_CUSTOM_EVENT(Gpu, m_renderer->getStats().m_renderingGpuSubmitTimestamp,
 										m_renderer->getStats().m_renderingGpuTime);
 			}
 #endif

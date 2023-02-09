@@ -157,7 +157,7 @@ void SceneGraph::deleteNodesMarkedForDeletion()
 Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 {
 	ANKI_ASSERT(m_mainCam);
-	ANKI_TRACE_SCOPED_EVENT(SCENE_UPDATE);
+	ANKI_TRACE_SCOPED_EVENT(SceneUpdate);
 
 	m_stats.m_updateTime = HighRezTimer::getCurrentTime();
 
@@ -169,7 +169,7 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 
 	// Delete stuff
 	{
-		ANKI_TRACE_SCOPED_EVENT(SCENE_MARKED_FOR_DELETION);
+		ANKI_TRACE_SCOPED_EVENT(SceneRemoveMarkedForDeletion);
 		const Bool fullCleanup = m_objectsMarkedForDeletionCount.load() != 0;
 		m_events.deleteEventsMarkedForDeletion(fullCleanup);
 		deleteNodesMarkedForDeletion();
@@ -177,14 +177,14 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 
 	// Update
 	{
-		ANKI_TRACE_SCOPED_EVENT(SCENE_PHYSICS_UPDATE);
+		ANKI_TRACE_SCOPED_EVENT(ScenePhysics);
 		m_stats.m_physicsUpdate = HighRezTimer::getCurrentTime();
 		m_subsystems.m_physicsWorld->update(crntTime - prevUpdateTime);
 		m_stats.m_physicsUpdate = HighRezTimer::getCurrentTime() - m_stats.m_physicsUpdate;
 	}
 
 	{
-		ANKI_TRACE_SCOPED_EVENT(SCENE_NODES_UPDATE);
+		ANKI_TRACE_SCOPED_EVENT(SceneNodesUpdate);
 		ANKI_CHECK(m_events.updateAllEvents(prevUpdateTime, crntTime));
 
 		// Then the rest
@@ -224,7 +224,7 @@ void SceneGraph::doVisibilityTests(RenderQueue& rqueue)
 
 Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 {
-	ANKI_TRACE_INC_COUNTER(SCENE_NODES_UPDATED, 1);
+	ANKI_TRACE_INC_COUNTER(SceneNodeUpdated, 1);
 
 	Error err = Error::kNone;
 
@@ -246,7 +246,7 @@ Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 
 		if(updated)
 		{
-			ANKI_TRACE_INC_COUNTER(SCENE_COMPONENTS_UPDATED, 1);
+			ANKI_TRACE_INC_COUNTER(SceneComponentUpdated, 1);
 			comp.setTimestamp(node.getSceneGraph().m_timestamp);
 			atLeastOneComponentUpdated = true;
 		}
@@ -280,7 +280,7 @@ Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 
 Error SceneGraph::updateNodes(UpdateSceneNodesCtx& ctx)
 {
-	ANKI_TRACE_SCOPED_EVENT(SCENE_NODES_UPDATE);
+	ANKI_TRACE_SCOPED_EVENT(SceneNodeUpdate);
 
 	IntrusiveList<SceneNode>::ConstIterator end = m_nodes.getEnd();
 

@@ -416,7 +416,7 @@ Error DescriptorSetFactory::DSAllocator::createNewPool()
 	// Create
 	VkDescriptorPool pool;
 	ANKI_VK_CHECK(vkCreateDescriptorPool(m_layoutEntry->m_factory->m_dev, &ci, nullptr, &pool));
-	ANKI_TRACE_INC_COUNTER(VK_DESCRIPTOR_POOL_CREATE, 1);
+	ANKI_TRACE_INC_COUNTER(VkDescriptorPoolCreate, 1);
 
 	// Push back
 	m_pools.resize(*m_layoutEntry->m_factory->m_pool, m_pools.getSize() + 1);
@@ -499,7 +499,7 @@ Error DescriptorSetFactory::DSAllocator::newSet(U64 hash,
 		VkDescriptorSet handle;
 		[[maybe_unused]] VkResult rez = vkAllocateDescriptorSets(m_layoutEntry->m_factory->m_dev, &ci, &handle);
 		ANKI_ASSERT(rez == VK_SUCCESS && "That allocation can't fail");
-		ANKI_TRACE_INC_COUNTER(VK_DESCRIPTOR_SET_CREATE, 1);
+		ANKI_TRACE_INC_COUNTER(VkDescriptorSetCreate, 1);
 
 		out = newInstance<DS>(*m_layoutEntry->m_factory->m_pool);
 		out->m_handle = handle;
@@ -1113,7 +1113,7 @@ Error DescriptorSetFactory::newDescriptorSet(StackMemoryPool& tmpPool, Descripto
 											 Bool& dirty, Array<PtrSize, kMaxBindingsPerDescriptorSet>& dynamicOffsets,
 											 U32& dynamicOffsetCount)
 {
-	ANKI_TRACE_SCOPED_EVENT(VK_DESCRIPTOR_SET_GET_OR_CREATE);
+	ANKI_TRACE_SCOPED_EVENT(VkDescriptorSetGetOrCreate);
 
 	U64 hash;
 	Bool bindlessDSet;

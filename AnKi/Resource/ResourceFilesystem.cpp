@@ -27,25 +27,25 @@ public:
 
 	Error read(void* buff, PtrSize size) override
 	{
-		ANKI_TRACE_SCOPED_EVENT(RSRC_FILE_READ);
+		ANKI_TRACE_SCOPED_EVENT(RsrcFileRead);
 		return m_file.read(buff, size);
 	}
 
 	Error readAllText(StringRaii& out) override
 	{
-		ANKI_TRACE_SCOPED_EVENT(RSRC_FILE_READ);
+		ANKI_TRACE_SCOPED_EVENT(RsrcFileRead);
 		return m_file.readAllText(out);
 	}
 
 	Error readU32(U32& u) override
 	{
-		ANKI_TRACE_SCOPED_EVENT(RSRC_FILE_READ);
+		ANKI_TRACE_SCOPED_EVENT(RsrcFileRead);
 		return m_file.readU32(u);
 	}
 
 	Error readF32(F32& f) override
 	{
-		ANKI_TRACE_SCOPED_EVENT(RSRC_FILE_READ);
+		ANKI_TRACE_SCOPED_EVENT(RsrcFileRead);
 		return m_file.readF32(f);
 	}
 
@@ -130,7 +130,7 @@ public:
 
 	Error read(void* buff, PtrSize size) override
 	{
-		ANKI_TRACE_SCOPED_EVENT(RSRC_FILE_READ);
+		ANKI_TRACE_SCOPED_EVENT(RsrcFileRead);
 
 		I64 readSize = unzReadCurrentFile(m_archive, buff, U32(size));
 

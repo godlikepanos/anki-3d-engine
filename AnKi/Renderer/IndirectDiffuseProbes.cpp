@@ -227,7 +227,7 @@ Error IndirectDiffuseProbes::initIrradiance()
 
 void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 {
-	ANKI_TRACE_SCOPED_EVENT(R_GI);
+	ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
 
 	InternalContext* giCtx = newInstance<InternalContext>(*rctx.m_tempPool);
 	m_giCtx = giCtx;
@@ -548,7 +548,7 @@ void IndirectDiffuseProbes::prepareProbes(InternalContext& giCtx)
 void IndirectDiffuseProbes::runGBufferInThread(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx) const
 {
 	ANKI_ASSERT(giCtx.m_probeToUpdateThisFrame);
-	ANKI_TRACE_SCOPED_EVENT(R_GI);
+	ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
 
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	const GlobalIlluminationProbeQueueElement& probe = *giCtx.m_probeToUpdateThisFrame;
@@ -600,7 +600,7 @@ void IndirectDiffuseProbes::runGBufferInThread(RenderPassWorkContext& rgraphCtx,
 void IndirectDiffuseProbes::runShadowmappingInThread(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx) const
 {
 	ANKI_ASSERT(giCtx.m_probeToUpdateThisFrame);
-	ANKI_TRACE_SCOPED_EVENT(R_GI);
+	ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
 
 	const GlobalIlluminationProbeQueueElement& probe = *giCtx.m_probeToUpdateThisFrame;
 
@@ -654,7 +654,7 @@ void IndirectDiffuseProbes::runShadowmappingInThread(RenderPassWorkContext& rgra
 
 void IndirectDiffuseProbes::runLightShading(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx)
 {
-	ANKI_TRACE_SCOPED_EVENT(R_GI);
+	ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
 
 	ANKI_ASSERT(giCtx.m_probeToUpdateThisFrame);
 	const GlobalIlluminationProbeQueueElement& probe = *giCtx.m_probeToUpdateThisFrame;
@@ -703,7 +703,7 @@ void IndirectDiffuseProbes::runLightShading(RenderPassWorkContext& rgraphCtx, In
 
 void IndirectDiffuseProbes::runIrradiance(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx)
 {
-	ANKI_TRACE_SCOPED_EVENT(R_GI);
+	ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
 
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	ANKI_ASSERT(giCtx.m_probeToUpdateThisFrame);

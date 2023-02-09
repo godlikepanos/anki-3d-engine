@@ -20,7 +20,7 @@ AccelerationStructureImpl::~AccelerationStructureImpl()
 
 Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 {
-	ANKI_TRACE_SCOPED_EVENT(VK_INIT_ACC_STRUCT);
+	ANKI_TRACE_SCOPED_EVENT(VkInitAccStruct);
 
 	ANKI_ASSERT(inf.isValid());
 	m_type = inf.m_type;

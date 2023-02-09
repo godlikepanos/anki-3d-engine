@@ -352,7 +352,7 @@ inline void Octree::walkTreeInternal(Leaf& leaf, U32 testId, TTestAabbFunc testF
 		}
 	}
 
-	ANKI_TRACE_INC_COUNTER(OCTREE_VISIBLE_LEAFS, visibleLeafs);
+	ANKI_TRACE_INC_COUNTER(SceneOctreeVisibleLeafs, visibleLeafs);
 }
 /// @}
 

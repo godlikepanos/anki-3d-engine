@@ -64,7 +64,7 @@ Error TransferGpuAllocator::init(PtrSize maxSize, GrManager* gr, HeapMemoryPool*
 
 Error TransferGpuAllocator::allocate(PtrSize size, TransferGpuAllocatorHandle& handle)
 {
-	ANKI_TRACE_SCOPED_EVENT(RSRC_ALLOCATE_TRANSFER);
+	ANKI_TRACE_SCOPED_EVENT(RsrcAllocateTransfer);
 
 	const PtrSize poolSize = m_maxAllocSize / kPoolCount;
 
@@ -85,7 +85,7 @@ Error TransferGpuAllocator::allocate(PtrSize size, TransferGpuAllocatorHandle& h
 		pool = &m_pools[m_crntPool];
 
 		{
-			ANKI_TRACE_SCOPED_EVENT(RSRC_WAIT_TRANSFER);
+			ANKI_TRACE_SCOPED_EVENT(RsrcWaitTransfer);
 
 			// Wait for all memory to be released
 			while(pool->m_pendingReleases != 0)

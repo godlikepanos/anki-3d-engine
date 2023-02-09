@@ -86,7 +86,7 @@ Error ShadowMapping::initInternal()
 
 void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 {
-	ANKI_TRACE_SCOPED_EVENT(R_SM);
+	ANKI_TRACE_SCOPED_EVENT(RSm);
 
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
@@ -578,7 +578,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForPass
 void ShadowMapping::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 {
 	ANKI_ASSERT(m_runCtx.m_workItems.getSize());
-	ANKI_TRACE_SCOPED_EVENT(R_SM);
+	ANKI_TRACE_SCOPED_EVENT(RSm);
 
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	const U threadIdx = rgraphCtx.m_currentSecondLevelCommandBufferIndex;

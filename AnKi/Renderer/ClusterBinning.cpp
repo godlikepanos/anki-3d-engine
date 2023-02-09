@@ -101,7 +101,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 
 void ClusterBinning::writeClustererBuffers(RenderingContext& ctx)
 {
-	ANKI_TRACE_SCOPED_EVENT(R_WRITE_CLUSTER_SHADING_OBJECTS);
+	ANKI_TRACE_SCOPED_EVENT(RWriteClusterShadingObjects);
 
 	// Check limits
 	RenderQueue& rqueue = *ctx.m_renderQueue;
@@ -227,7 +227,7 @@ void ClusterBinning::writeClusterBuffersAsync()
 
 void ClusterBinning::writeClustererBuffersTask()
 {
-	ANKI_TRACE_SCOPED_EVENT(R_WRITE_CLUSTER_SHADING_OBJECTS);
+	ANKI_TRACE_SCOPED_EVENT(RWriteClusterShadingObjects);
 
 	RenderingContext& ctx = *m_runCtx.m_ctx;
 	ClusteredShadingContext& cs = ctx.m_clusteredShading;

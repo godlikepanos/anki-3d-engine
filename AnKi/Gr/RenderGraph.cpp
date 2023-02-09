@@ -295,7 +295,7 @@ RenderGraph* RenderGraph::newInstance(GrManager* manager)
 
 void RenderGraph::reset()
 {
-	ANKI_TRACE_SCOPED_EVENT(GR_RENDER_GRAPH_RESET);
+	ANKI_TRACE_SCOPED_EVENT(GrRenderGraphReset);
 
 	if(!m_ctx)
 	{
@@ -1208,7 +1208,7 @@ void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr)
 
 void RenderGraph::compileNewGraph(const RenderGraphDescription& descr, StackMemoryPool& pool)
 {
-	ANKI_TRACE_SCOPED_EVENT(GR_RENDER_GRAPH_COMPILE);
+	ANKI_TRACE_SCOPED_EVENT(GrRenderGraphCompile);
 
 	// Init the context
 	BakeContext& ctx = *newContext(descr, pool);
@@ -1254,7 +1254,7 @@ AccelerationStructurePtr RenderGraph::getAs(AccelerationStructureHandle handle) 
 
 void RenderGraph::runSecondLevel(U32 threadIdx)
 {
-	ANKI_TRACE_SCOPED_EVENT(GR_RENDER_GRAPH_2ND_LEVEL);
+	ANKI_TRACE_SCOPED_EVENT(GrRenderGraph2ndLevel);
 	ANKI_ASSERT(m_ctx);
 
 	RenderPassWorkContext ctx;
@@ -1277,7 +1277,7 @@ void RenderGraph::runSecondLevel(U32 threadIdx)
 			ANKI_ASSERT(ctx.m_commandBuffer.isCreated());
 
 			{
-				ANKI_TRACE_SCOPED_EVENT(GR_RENDER_GRAPH_CALLBACK);
+				ANKI_TRACE_SCOPED_EVENT(GrRenderGraphCallback);
 				p.m_callback(ctx);
 			}
 
@@ -1288,7 +1288,7 @@ void RenderGraph::runSecondLevel(U32 threadIdx)
 
 void RenderGraph::run() const
 {
-	ANKI_TRACE_SCOPED_EVENT(GR_RENDER_GRAPH_RUN);
+	ANKI_TRACE_SCOPED_EVENT(GrRenderGraphRun);
 	ANKI_ASSERT(m_ctx);
 
 	RenderPassWorkContext ctx;
@@ -1351,7 +1351,7 @@ void RenderGraph::run() const
 				ctx.m_passIdx = passIdx;
 				ctx.m_batchIdx = pass.m_batchIdx;
 
-				ANKI_TRACE_SCOPED_EVENT(GR_RENDER_GRAPH_CALLBACK);
+				ANKI_TRACE_SCOPED_EVENT(GrRenderGraphCallback);
 				pass.m_callback(ctx);
 			}
 			else
@@ -1375,7 +1375,7 @@ void RenderGraph::run() const
 
 void RenderGraph::flush()
 {
-	ANKI_TRACE_SCOPED_EVENT(GR_RENDER_GRAPH_FLUSH);
+	ANKI_TRACE_SCOPED_EVENT(GrRenderGraphFlush);
 
 	for(U32 i = 0; i < m_ctx->m_graphicsCmdbs.getSize(); ++i)
 	{

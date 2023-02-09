@@ -748,7 +748,7 @@ void CommandBufferImpl::setPipelineBarrierInternal(
 						 (bufferBarriers.getSize()) ? &bufferBarriers[0] : nullptr, imageBarriers.getSize(),
 						 (imageBarriers.getSize()) ? &imageBarriers[0] : nullptr);
 
-	ANKI_TRACE_INC_COUNTER(VK_PIPELINE_BARRIERS, 1);
+	ANKI_TRACE_INC_COUNTER(VkBarrier, 1);
 }
 
 } // end namespace anki

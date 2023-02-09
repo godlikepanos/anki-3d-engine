@@ -190,7 +190,7 @@ Error RtShadows::initInternal()
 
 void RtShadows::populateRenderGraph(RenderingContext& ctx)
 {
-	ANKI_TRACE_SCOPED_EVENT(R_RT_SHADOWS);
+	ANKI_TRACE_SCOPED_EVENT(RRtShadows);
 
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 

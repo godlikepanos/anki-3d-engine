@@ -253,7 +253,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		ci.stage.module = shaderImpl.m_handle;
 		ci.stage.pSpecializationInfo = shaderImpl.getSpecConstInfo();
 
-		ANKI_TRACE_SCOPED_EVENT(VK_PIPELINE_CREATE);
+		ANKI_TRACE_SCOPED_EVENT(VkPipelineCreate);
 		ANKI_VK_CHECK(vkCreateComputePipelines(getDevice(), getGrManagerImpl().getPipelineCache(), 1, &ci, nullptr,
 											   &m_compute.m_ppline));
 		getGrManagerImpl().printPipelineShaderInfo(m_compute.m_ppline, getName(), ShaderTypeBit::kCompute);
@@ -339,7 +339,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		ci.layout = m_pplineLayout.getHandle();
 
 		{
-			ANKI_TRACE_SCOPED_EVENT(VK_PIPELINE_CREATE);
+			ANKI_TRACE_SCOPED_EVENT(VkPipelineCreate);
 			ANKI_VK_CHECK(vkCreateRayTracingPipelinesKHR(
 				getDevice(), VK_NULL_HANDLE, getGrManagerImpl().getPipelineCache(), 1, &ci, nullptr, &m_rt.m_ppline));
 		}

@@ -25,7 +25,7 @@ inline MicroSemaphore::MicroSemaphore(SemaphoreFactory* f, MicroFencePtr fence, 
 	ci.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 	ci.pNext = &typeCreateInfo;
 
-	ANKI_TRACE_INC_COUNTER(VK_SEMAPHORE_CREATE, 1);
+	ANKI_TRACE_INC_COUNTER(VkSemaphoreCreate, 1);
 	ANKI_VK_CHECKF(vkCreateSemaphore(m_factory->m_dev, &ci, nullptr, &m_handle));
 }
 

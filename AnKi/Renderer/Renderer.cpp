@@ -95,7 +95,7 @@ Renderer::~Renderer()
 
 Error Renderer::init(const RendererExternalSubsystems& subsystems, HeapMemoryPool* pool, UVec2 swapchainSize)
 {
-	ANKI_TRACE_SCOPED_EVENT(RendererInit);
+	ANKI_TRACE_SCOPED_EVENT(RInit);
 
 	m_subsystems = subsystems;
 	m_pool = pool;

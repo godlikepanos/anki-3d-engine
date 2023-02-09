@@ -1212,7 +1212,7 @@ void GrManagerImpl::freeCallback(void* userData, void* ptr)
 
 TexturePtr GrManagerImpl::acquireNextPresentableTexture()
 {
-	ANKI_TRACE_SCOPED_EVENT(VK_ACQUIRE_IMAGE);
+	ANKI_TRACE_SCOPED_EVENT(VkAcquireImage);
 
 	LockGuard<Mutex> lock(m_globalMtx);
 
@@ -1256,7 +1256,7 @@ TexturePtr GrManagerImpl::acquireNextPresentableTexture()
 
 void GrManagerImpl::endFrame()
 {
-	ANKI_TRACE_SCOPED_EVENT(VK_PRESENT);
+	ANKI_TRACE_SCOPED_EVENT(VkPresent);
 
 	LockGuard<Mutex> lock(m_globalMtx);
 
@@ -1423,7 +1423,7 @@ void GrManagerImpl::flushCommandBuffer(MicroCommandBufferPtr cmdb, Bool cmdbRend
 		}
 
 		// Submit
-		ANKI_TRACE_SCOPED_EVENT(VK_QUEUE_SUBMIT);
+		ANKI_TRACE_SCOPED_EVENT(VkQueueSubmit);
 		ANKI_VK_CHECKF(vkQueueSubmit(m_queues[cmdb->getVulkanQueueType()], 1, &submit, fence->getHandle()));
 
 		if(wait)

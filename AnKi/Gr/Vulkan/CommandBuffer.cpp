@@ -13,7 +13,7 @@ namespace anki {
 
 CommandBuffer* CommandBuffer::newInstance(GrManager* manager, const CommandBufferInitInfo& init)
 {
-	ANKI_TRACE_SCOPED_EVENT(VK_NEW_CCOMMAND_BUFFER);
+	ANKI_TRACE_SCOPED_EVENT(VkNewCommandBuffer);
 	CommandBufferImpl* impl = anki::newInstance<CommandBufferImpl>(manager->getMemoryPool(), manager, init.getName());
 	const Error err = impl->init(init);
 	if(err)

@@ -294,7 +294,7 @@ void SoftwareRasterizer::rasterizeTriangle(const Vec4* tri)
 
 Bool SoftwareRasterizer::visibilityTest(const Aabb& aabb) const
 {
-	ANKI_TRACE_SCOPED_EVENT(SCENE_RASTERIZER_TEST);
+	ANKI_TRACE_SCOPED_EVENT(SceneRasterizerTest);
 	Bool inside = visibilityTestInternal(aabb);
 
 	return inside;

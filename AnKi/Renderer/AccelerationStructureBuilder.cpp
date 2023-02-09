@@ -12,7 +12,7 @@ namespace anki {
 
 void AccelerationStructureBuilder::populateRenderGraph(RenderingContext& ctx)
 {
-	ANKI_TRACE_SCOPED_EVENT(R_TLAS);
+	ANKI_TRACE_SCOPED_EVENT(RTlas);
 
 	// Get some things
 	ANKI_ASSERT(ctx.m_renderQueue->m_rayTracingQueue);
@@ -57,7 +57,7 @@ void AccelerationStructureBuilder::populateRenderGraph(RenderingContext& ctx)
 	m_runCtx.m_tlasHandle = rgraph.importAccelerationStructure(m_runCtx.m_tlas, AccelerationStructureUsageBit::kNone);
 	ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("BuildTlas");
 	rpass.setWork([this](RenderPassWorkContext& rgraphCtx) {
-		ANKI_TRACE_SCOPED_EVENT(R_TLAS);
+		ANKI_TRACE_SCOPED_EVENT(RTlas);
 		rgraphCtx.m_commandBuffer->buildAccelerationStructure(m_runCtx.m_tlas);
 	});
 

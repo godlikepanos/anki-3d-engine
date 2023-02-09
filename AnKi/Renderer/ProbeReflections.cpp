@@ -323,7 +323,7 @@ void ProbeReflections::prepareProbes(RenderingContext& ctx, ReflectionProbeQueue
 void ProbeReflections::runGBuffer(RenderPassWorkContext& rgraphCtx)
 {
 	ANKI_ASSERT(m_ctx.m_probe);
-	ANKI_TRACE_SCOPED_EVENT(R_CUBE_REFL);
+	ANKI_TRACE_SCOPED_EVENT(RCubeRefl);
 	const ReflectionProbeQueueElement& probe = *m_ctx.m_probe;
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
@@ -371,7 +371,7 @@ void ProbeReflections::runGBuffer(RenderPassWorkContext& rgraphCtx)
 void ProbeReflections::runLightShading(U32 faceIdx, const RenderingContext& rctx, RenderPassWorkContext& rgraphCtx)
 {
 	ANKI_ASSERT(faceIdx <= 6);
-	ANKI_TRACE_SCOPED_EVENT(R_CUBE_REFL);
+	ANKI_TRACE_SCOPED_EVENT(RCubeRefl);
 
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
@@ -416,7 +416,7 @@ void ProbeReflections::runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkCo
 	ANKI_ASSERT(faceIdx < 6);
 	ANKI_ASSERT(m_ctx.m_cacheEntryIdx < m_cacheEntries.getSize());
 
-	ANKI_TRACE_SCOPED_EVENT(R_CUBE_REFL);
+	ANKI_TRACE_SCOPED_EVENT(RCubeRefl);
 
 	TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, m_ctx.m_cacheEntryIdx));
 	subresource.m_mipmapCount = m_lightShading.m_mipCount;
@@ -430,7 +430,7 @@ void ProbeReflections::runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkCo
 
 void ProbeReflections::runIrradiance(RenderPassWorkContext& rgraphCtx)
 {
-	ANKI_TRACE_SCOPED_EVENT(R_CUBE_REFL);
+	ANKI_TRACE_SCOPED_EVENT(RCubeRefl);
 	const U32 cacheEntryIdx = m_ctx.m_cacheEntryIdx;
 	ANKI_ASSERT(cacheEntryIdx < m_cacheEntries.getSize());
 
@@ -454,7 +454,7 @@ void ProbeReflections::runIrradiance(RenderPassWorkContext& rgraphCtx)
 
 void ProbeReflections::runIrradianceToRefl(RenderPassWorkContext& rgraphCtx)
 {
-	ANKI_TRACE_SCOPED_EVENT(R_CUBE_REFL);
+	ANKI_TRACE_SCOPED_EVENT(RCubeRefl);
 
 	const U32 cacheEntryIdx = m_ctx.m_cacheEntryIdx;
 	ANKI_ASSERT(cacheEntryIdx < m_cacheEntries.getSize());
@@ -482,7 +482,7 @@ void ProbeReflections::runIrradianceToRefl(RenderPassWorkContext& rgraphCtx)
 
 void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 {
-	ANKI_TRACE_SCOPED_EVENT(R_CUBE_REFL);
+	ANKI_TRACE_SCOPED_EVENT(RCubeRefl);
 
 #if ANKI_EXTRA_CHECKS
 	m_ctx = {};
@@ -700,7 +700,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 void ProbeReflections::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 {
 	ANKI_ASSERT(m_ctx.m_probe);
-	ANKI_TRACE_SCOPED_EVENT(R_CUBE_REFL);
+	ANKI_TRACE_SCOPED_EVENT(RCubeRefl);
 
 	I32 start, end;
 	U32 startu, endu;

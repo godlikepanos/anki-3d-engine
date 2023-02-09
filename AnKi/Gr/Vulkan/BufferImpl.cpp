@@ -197,7 +197,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 
 	// Bind mem to buffer
 	{
-		ANKI_TRACE_SCOPED_EVENT(VK_BIND_OBJECT);
+		ANKI_TRACE_SCOPED_EVENT(VkBindObject);
 		ANKI_VK_CHECK(vkBindBufferMemory(getDevice(), m_handle, m_memHandle.m_memory, m_memHandle.m_offset));
 	}
 

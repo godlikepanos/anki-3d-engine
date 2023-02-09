@@ -95,7 +95,7 @@ static FrustumFlags getCameraExtendedFrustumFlags()
 void VisibilityContext::submitNewWork(const VisibilityFrustum& frustum, const VisibilityFrustum& primaryFrustum,
 									  RenderQueue& rqueue, ThreadHive& hive)
 {
-	ANKI_TRACE_SCOPED_EVENT(SCENE_VIS_SUBMIT_WORK);
+	ANKI_TRACE_SCOPED_EVENT(SceneVisSubmitWork);
 
 	rqueue.m_cameraTransform = Mat3x4(frustum.m_frustum->getWorldTransform());
 	rqueue.m_viewMatrix = frustum.m_frustum->getViewMatrix();
@@ -182,7 +182,7 @@ void VisibilityContext::submitNewWork(const VisibilityFrustum& frustum, const Vi
 
 void FillRasterizerWithCoverageTask::fill()
 {
-	ANKI_TRACE_SCOPED_EVENT(SCENE_VIS_FILL_DEPTH);
+	ANKI_TRACE_SCOPED_EVENT(SceneVisFillDepth);
 
 	StackMemoryPool& pool = m_frcCtx->m_visCtx->m_scene->getFrameMemoryPool();
 
@@ -209,7 +209,7 @@ void FillRasterizerWithCoverageTask::fill()
 
 void GatherVisiblesFromOctreeTask::gather(ThreadHive& hive)
 {
-	ANKI_TRACE_SCOPED_EVENT(SCENE_VIS_OCTREE);
+	ANKI_TRACE_SCOPED_EVENT(SceneVisOctreeGather);
 
 	U32 testIdx = m_frcCtx->m_visCtx->m_testsCount.fetchAdd(1);
 
@@ -273,7 +273,7 @@ void GatherVisiblesFromOctreeTask::flush(ThreadHive& hive)
 
 void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 {
-	ANKI_TRACE_SCOPED_EVENT(SCENE_VIS_TEST);
+	ANKI_TRACE_SCOPED_EVENT(SceneVisTest);
 
 	const Frustum& testedFrustum = *m_frcCtx->m_frustum.m_frustum;
 	ANKI_ASSERT(m_frcCtx->m_primaryFrustum.m_frustum);
@@ -633,7 +633,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 void CombineResultsTask::combine()
 {
-	ANKI_TRACE_SCOPED_EVENT(SCENE_VIS_COMBINE_RESULTS);
+	ANKI_TRACE_SCOPED_EVENT(SceneVisCombine);
 
 	StackMemoryPool& pool = m_frcCtx->m_visCtx->m_scene->getFrameMemoryPool();
 	RenderQueue& results = *m_frcCtx->m_renderQueue;
@@ -833,7 +833,7 @@ void CombineResultsTask::combineQueueElements(StackMemoryPool& pool,
 
 void SceneGraph::doVisibilityTests(SceneNode& camera, SceneGraph& scene, RenderQueue& rqueue)
 {
-	ANKI_TRACE_SCOPED_EVENT(SCENE_VIS_TESTS);
+	ANKI_TRACE_SCOPED_EVENT(SceneVisTests);
 
 	ThreadHive& hive = *scene.m_subsystems.m_threadHive;
 

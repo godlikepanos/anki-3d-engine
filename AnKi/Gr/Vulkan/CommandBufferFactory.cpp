@@ -39,7 +39,7 @@ MicroCommandBuffer::~MicroCommandBuffer()
 
 void MicroCommandBuffer::reset()
 {
-	ANKI_TRACE_SCOPED_EVENT(VK_COMMAND_BUFFER_RESET);
+	ANKI_TRACE_SCOPED_EVENT(VkCommandBufferReset);
 
 	ANKI_ASSERT(m_refcount.load() == 0);
 	ANKI_ASSERT(!m_fence.isCreated());
@@ -130,7 +130,7 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 		ci.level = (secondLevel) ? VK_COMMAND_BUFFER_LEVEL_SECONDARY : VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 		ci.commandBufferCount = 1;
 
-		ANKI_TRACE_INC_COUNTER(VK_COMMAND_BUFFER_CREATE, 1);
+		ANKI_TRACE_INC_COUNTER(VkCommandBufferCreate, 1);
 		VkCommandBuffer cmdb;
 		ANKI_VK_CHECK(vkAllocateCommandBuffers(m_factory->m_dev, &ci, &cmdb));
 

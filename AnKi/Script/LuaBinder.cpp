@@ -114,7 +114,7 @@ void* LuaBinder::luaAllocCallback(void* userData, void* ptr, PtrSize osize, PtrS
 
 Error LuaBinder::evalString(lua_State* state, const CString& str)
 {
-	ANKI_TRACE_SCOPED_EVENT(LUA_EXEC);
+	ANKI_TRACE_SCOPED_EVENT(LuaExec);
 
 	Error err = Error::kNone;
 	int e = luaL_dostring(state, &str[0]);

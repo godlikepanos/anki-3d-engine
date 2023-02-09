@@ -39,7 +39,7 @@ void UiStage::draw(U32 width, U32 height, RenderingContext& ctx, CommandBufferPt
 		return;
 	}
 
-	ANKI_TRACE_SCOPED_EVENT(UI_RENDER);
+	ANKI_TRACE_SCOPED_EVENT(RUi);
 
 	m_canvas->handleInput();
 	m_canvas->beginBuilding();

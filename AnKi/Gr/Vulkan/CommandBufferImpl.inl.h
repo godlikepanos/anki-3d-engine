@@ -105,7 +105,7 @@ inline void CommandBufferImpl::setImageBarrier(VkPipelineStageFlags srcStage, Vk
 	inf.subresourceRange = range;
 
 	vkCmdPipelineBarrier(m_handle, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &inf);
-	ANKI_TRACE_INC_COUNTER(VK_PIPELINE_BARRIERS, 1);
+	ANKI_TRACE_INC_COUNTER(VkBarrier, 1);
 }
 
 inline void CommandBufferImpl::drawArraysInternal(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 first,
@@ -530,7 +530,7 @@ inline void CommandBufferImpl::drawcallCommon()
 	}
 #endif
 
-	ANKI_TRACE_INC_COUNTER(GR_DRAWCALLS, 1);
+	ANKI_TRACE_INC_COUNTER(VkDrawcall, 1);
 }
 
 inline void CommandBufferImpl::fillBufferInternal(const BufferPtr& buff, PtrSize offset, PtrSize size, U32 value)

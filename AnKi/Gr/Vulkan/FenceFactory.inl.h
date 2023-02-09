@@ -15,7 +15,7 @@ inline MicroFence::MicroFence(FenceFactory* f)
 	VkFenceCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 
-	ANKI_TRACE_INC_COUNTER(VK_FENCE_CREATE, 1);
+	ANKI_TRACE_INC_COUNTER(VkFenceCreate, 1);
 	ANKI_VK_CHECKF(vkCreateFence(m_factory->m_dev, &ci, nullptr, &m_handle));
 }
 

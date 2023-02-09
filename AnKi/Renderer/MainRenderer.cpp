@@ -76,7 +76,7 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 
 Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 {
-	ANKI_TRACE_SCOPED_EVENT(RENDER);
+	ANKI_TRACE_SCOPED_EVENT(Render);
 
 	m_stats.m_renderingCpuTime = (m_statsEnabled) ? HighRezTimer::getCurrentTime() : -1.0;
 
