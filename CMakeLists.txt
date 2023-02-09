@@ -1,8 +1,10 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.10)
 
+message("++ CMake version ${CMAKE_VERSION}")
+
 include(ProcessorCount)
 
-PROJECT(AnKi)
+project(AnKi)
 
 ################################################################################
 # Funcs                                                                        #

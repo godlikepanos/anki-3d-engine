@@ -306,7 +306,7 @@ public:
 
 	void setEarlyZDistance(F32 dist)
 	{
-		ANKI_ASSERT(dist > 0.0f);
+		ANKI_ASSERT(dist >= 0.0f);
 		m_earlyZDistance = dist;
 	}
 

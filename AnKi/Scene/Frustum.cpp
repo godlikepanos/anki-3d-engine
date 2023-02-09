@@ -169,10 +169,11 @@ Bool Frustum::update()
 	// Updates that are affected by transform & shape updates
 	if(updated)
 	{
-		m_viewProjMat = m_projMat * Mat4(m_viewMat, Vec4(0.0f, 0.0f, 0.0f, 1.0f));
 		m_shapeDirty = false;
 		m_miscDirty = false;
 		m_worldTransformDirty = false;
+
+		m_viewProjMat = m_projMat * Mat4(m_viewMat, Vec4(0.0f, 0.0f, 0.0f, 1.0f));
 
 		if(m_frustumType == FrustumType::kPerspective)
 		{
