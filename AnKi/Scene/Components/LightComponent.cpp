@@ -86,7 +86,6 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 												 kPi / 2.0f);
 					m_frustums[i].setWorldTransform(Transform(m_worldTransform.getOrigin(),
 															  Frustum::getOmnidirectionalFrustumRotations()[i], 1.0f));
-					m_frustums[i].update();
 				}
 			}
 
@@ -103,8 +102,6 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 					m_frustums[i].setWorldTransform(Transform(m_worldTransform.getOrigin(),
 															  Frustum::getOmnidirectionalFrustumRotations()[i], 1.0f));
 				}
-
-				m_frustums[i].update();
 			}
 		}
 	}
@@ -142,7 +139,6 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 				m_frustums[0].setPerspective(kClusterObjectFrustumNearPlane, m_spot.m_distance, m_spot.m_outerAngle,
 											 m_spot.m_outerAngle);
 				m_frustums[0].setWorldTransform(m_worldTransform);
-				m_frustums[0].update();
 			}
 
 			// Update the frustum
@@ -157,8 +153,6 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			{
 				m_frustums[0].setWorldTransform(m_worldTransform);
 			}
-
-			m_frustums[0].update();
 		}
 	}
 	else if(m_type == LightComponentType::kDirectional)
@@ -169,6 +163,15 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 	const Bool spatialUpdated = m_spatial.update(info.m_node->getSceneGraph().getOctree());
 	updated = updated || spatialUpdated;
+
+	if(m_shadow)
+	{
+		for(U32 i = 0; i < m_frustumCount; ++i)
+		{
+			const Bool frustumUpdated = m_frustums[i].update();
+			updated = updated || frustumUpdated;
+		}
+	}
 
 	return Error::kNone;
 }

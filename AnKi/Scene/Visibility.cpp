@@ -289,7 +289,6 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 	// Iterate
 	RenderQueueView& result = m_frcCtx->m_queueViews[taskId];
-	[[maybe_unused]] U32 visibleCount = 0;
 	for(U i = 0; i < m_spatialToTestCount; ++i)
 	{
 		Spatial* spatial = m_spatialsToTest[i];
@@ -616,17 +615,19 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			}
 		}
 
-		++visibleCount;
-
 		// Update timestamp
-		Timestamp& timestamp = m_frcCtx->m_queueViews[taskId].m_timestamp;
 		ANKI_ASSERT(comp.getTimestamp() > 0);
-		timestamp = max(timestamp, comp.getTimestamp());
+		m_frcCtx->m_queueViews[taskId].m_timestamp =
+			max(m_frcCtx->m_queueViews[taskId].m_timestamp, comp.getTimestamp());
 	} // end for
 
-	if(visibleCount)
+	if(testedFrustum.getUpdatedThisFrame())
 	{
-		ANKI_ASSERT(m_frcCtx->m_queueViews[taskId].m_timestamp > 0);
+		m_frcCtx->m_queueViews[taskId].m_timestamp = m_frcCtx->m_visCtx->m_scene->getGlobalTimestamp();
+	}
+	else
+	{
+		m_frcCtx->m_queueViews[taskId].m_timestamp = max<Timestamp>(m_frcCtx->m_queueViews[taskId].m_timestamp, 1);
 	}
 }
 

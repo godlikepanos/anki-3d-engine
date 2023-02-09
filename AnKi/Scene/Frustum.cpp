@@ -195,6 +195,8 @@ Bool Frustum::update()
 		}
 	}
 
+	m_updatedThisFrame = updated;
+
 	return updated;
 }
 

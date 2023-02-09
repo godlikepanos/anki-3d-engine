@@ -72,7 +72,8 @@ Error CameraComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 	if(m_usesExtendedFrustum)
 	{
-		updated = updated || m_extendedFrustum.update();
+		const Bool extendedUpdated = m_extendedFrustum.update();
+		updated = updated || extendedUpdated;
 	}
 
 	return Error::kNone;

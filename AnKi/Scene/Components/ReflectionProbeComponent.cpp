@@ -40,19 +40,10 @@ Error ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 	m_dirty = false;
 	updated = moved || shapeUpdated;
 
-	if(moved) [[unlikely]]
+	if(updated) [[unlikely]]
 	{
 		m_worldPos = info.m_node->getWorldTransform().getOrigin().xyz();
 
-		for(U32 i = 0; i < 6; ++i)
-		{
-			m_frustums[i].setWorldTransform(
-				Transform(m_worldPos.xyz0(), Frustum::getOmnidirectionalFrustumRotations()[i], 1.0f));
-		}
-	}
-
-	if(shapeUpdated) [[unlikely]]
-	{
 		F32 effectiveDistance = max(m_halfSize.x(), m_halfSize.y());
 		effectiveDistance = max(effectiveDistance, m_halfSize.z());
 		effectiveDistance =
@@ -63,6 +54,9 @@ Error ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 
 		for(U32 i = 0; i < 6; ++i)
 		{
+			m_frustums[i].setWorldTransform(
+				Transform(m_worldPos.xyz0(), Frustum::getOmnidirectionalFrustumRotations()[i], 1.0f));
+
 			m_frustums[i].setFar(effectiveDistance);
 			m_frustums[i].setShadowCascadeDistance(0, shadowCascadeDistance);
 
@@ -71,24 +65,22 @@ Error ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 			m_frustums[i].setLodDistances({effectiveDistance - 3.0f * kEpsilonf, effectiveDistance - 2.0f * kEpsilonf,
 										   effectiveDistance - 1.0f * kEpsilonf});
 		}
-	}
 
-	if(updated) [[unlikely]]
-	{
 		// Set a new UUID to force the renderer to update the probe
 		m_uuid = info.m_node->getSceneGraph().getNewUuid();
 
-		for(U32 i = 0; i < 6; ++i)
-		{
-			m_frustums[i].update();
-		}
-
-		Aabb aabbWorld(-m_halfSize + m_worldPos, m_halfSize + m_worldPos);
+		const Aabb aabbWorld(-m_halfSize + m_worldPos, m_halfSize + m_worldPos);
 		m_spatial.setBoundingShape(aabbWorld);
 	}
 
 	const Bool spatialUpdated = m_spatial.update(info.m_node->getSceneGraph().getOctree());
 	updated = updated || spatialUpdated;
+
+	for(U32 i = 0; i < 6; ++i)
+	{
+		const Bool frustumUpdated = m_frustums[i].update();
+		updated = updated || frustumUpdated;
+	}
 
 	return Error::kNone;
 }

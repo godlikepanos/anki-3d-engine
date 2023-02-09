@@ -310,6 +310,11 @@ public:
 		m_earlyZDistance = dist;
 	}
 
+	Bool getUpdatedThisFrame() const
+	{
+		return m_updatedThisFrame;
+	}
+
 	Bool update();
 
 	/// Get the precalculated rotations of each of the 6 frustums of an omnidirectional source (eg a point light).
@@ -392,6 +397,7 @@ private:
 	Bool m_shapeDirty : 1 = true;
 	Bool m_miscDirty : 1 = true;
 	Bool m_worldTransformDirty : 1 = true;
+	Bool m_updatedThisFrame : 1 = true;
 
 	static Array<Mat3x4, 6> m_omnidirectionalRotations;
 };

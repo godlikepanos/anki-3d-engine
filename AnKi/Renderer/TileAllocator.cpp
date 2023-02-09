@@ -261,7 +261,7 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp, Timestamp l
 				tileViewport = {tile.m_viewport[0], tile.m_viewport[1], tile.m_viewport[2], tile.m_viewport[3]};
 
 				const Bool needsReRendering =
-					tile.m_lightDrawcallCount != drawcallCount || tile.m_lightTimestamp != lightTimestamp;
+					tile.m_lightDrawcallCount != drawcallCount || tile.m_lightTimestamp < lightTimestamp;
 
 				tile.m_lightTimestamp = lightTimestamp;
 				tile.m_lastUsedTimestamp = crntTimestamp;

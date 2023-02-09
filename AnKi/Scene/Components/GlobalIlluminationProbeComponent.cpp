@@ -53,9 +53,6 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 		m_spatial.setBoundingShape(aabb);
 	}
 
-	const Bool spatialUpdated = m_spatial.update(info.m_node->getSceneGraph().getOctree());
-	updated = updated || spatialUpdated;
-
 	if(m_markedForRendering) [[unlikely]]
 	{
 		updated = true;
@@ -80,10 +77,17 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 			// and that causes the sky to bleed to GI rendering
 			m_frustums[i].setLodDistances({effectiveDistance - 3.0f * kEpsilonf, effectiveDistance - 2.0f * kEpsilonf,
 										   effectiveDistance - 1.0f * kEpsilonf});
-
-			m_frustums[i].update();
 		}
 	}
+
+	for(U32 i = 0; i < 6; ++i)
+	{
+		const Bool frustumUpdated = m_frustums[i].update();
+		updated = updated || frustumUpdated;
+	}
+
+	const Bool spatialUpdated = m_spatial.update(info.m_node->getSceneGraph().getOctree());
+	updated = updated || spatialUpdated;
 
 	return Error::kNone;
 }
