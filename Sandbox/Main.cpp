@@ -125,17 +125,17 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		mode = (mode + 1) % 3;
 		if(mode == 0)
 		{
-			getConfig().setRDbgEnabled(false);
+			getConfig().setRDbg(false);
 		}
 		else if(mode == 1)
 		{
-			getConfig().setRDbgEnabled(true);
+			getConfig().setRDbg(true);
 			renderer.getDbg().setDepthTestEnabled(true);
 			renderer.getDbg().setDitheredDepthTestEnabled(false);
 		}
 		else
 		{
-			getConfig().setRDbgEnabled(true);
+			getConfig().setRDbg(true);
 			renderer.getDbg().setDepthTestEnabled(false);
 			renderer.getDbg().setDitheredDepthTestEnabled(true);
 		}
@@ -188,17 +188,17 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 			mode = (mode + 1) % 3;
 			if(mode == 0)
 			{
-				getConfig().setRDbgEnabled(false);
+				getConfig().setRDbg(false);
 			}
 			else if(mode == 1)
 			{
-				getConfig().setRDbgEnabled(true);
+				getConfig().setRDbg(true);
 				renderer.getDbg().setDepthTestEnabled(true);
 				renderer.getDbg().setDitheredDepthTestEnabled(false);
 			}
 			else
 			{
-				getConfig().setRDbgEnabled(true);
+				getConfig().setRDbg(true);
 				renderer.getDbg().setDepthTestEnabled(false);
 				renderer.getDbg().setDitheredDepthTestEnabled(true);
 			}

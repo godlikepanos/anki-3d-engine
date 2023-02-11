@@ -26,6 +26,8 @@ public:
 
 	void loadMeshResource(CString meshFilename);
 
+	void setMeshFromModelComponent(U32 patchIndex = 0);
+
 	CString getMeshResourceFilename() const;
 
 	void setMass(F32 mass);
@@ -45,18 +47,18 @@ public:
 		return m_mesh.isCreated();
 	}
 
-	void teleportTo(const Transform& trf)
-	{
-		m_body->setTransform(trf);
-	}
+	void teleportTo(const Transform& trf);
 
 private:
 	SceneNode* m_node = nullptr;
+	ModelComponent* m_modelc = nullptr;
 	CpuMeshResourcePtr m_mesh;
 	PhysicsBodyPtr m_body;
 	Bool m_dirty = true;
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated);
+
+	void onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added);
 };
 /// @}
 

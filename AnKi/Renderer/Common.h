@@ -85,6 +85,7 @@ public:
 	GpuSceneMemoryPool* m_gpuScenePool = nullptr;
 	GpuSceneMicroPatcher* m_gpuSceneMicroPatcher = nullptr;
 	UnifiedGeometryMemoryPool* m_unifiedGometryMemoryPool = nullptr;
+	PhysicsWorld* m_physicsWorld = nullptr; ///< For debug drawing.
 };
 
 /// GPU buffers and textures that the clusterer refers to.

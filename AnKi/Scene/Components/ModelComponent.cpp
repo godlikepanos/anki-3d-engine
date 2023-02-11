@@ -197,7 +197,8 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		}
 		else
 		{
-			aabbLocal = m_skinComponent->getBoneBoundingVolumeLocalSpace();
+			aabbLocal =
+				m_skinComponent->getBoneBoundingVolumeLocalSpace().getCompoundShape(m_model->getBoundingVolume());
 		}
 
 		const Aabb aabbWorld = aabbLocal.getTransformed(info.m_node->getWorldTransform());

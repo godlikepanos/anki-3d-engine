@@ -566,15 +566,17 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 				gpuParticles = true;
 			}
 
-			ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:newSceneNode(\"%s\")\n", getNodeName(node).cstr()));
+			if(!gpuParticles) // TODO Re-enable GPU particles
+			{
+				ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:newSceneNode(\"%s\")\n", getNodeName(node).cstr()));
 
-			ANKI_CHECK(
-				m_sceneFile.writeTextf("comp = node:new%sParticleEmitterComponent()\n", (gpuParticles) ? "Gpu" : ""));
-			ANKI_CHECK(m_sceneFile.writeTextf("comp:loadParticleEmitterResource(\"%s\")\n", fname.cstr()));
+				ANKI_CHECK(m_sceneFile.writeTextf("comp = node:newParticleEmitterComponent()\n"));
+				ANKI_CHECK(m_sceneFile.writeTextf("comp:loadParticleEmitterResource(\"%s\")\n", fname.cstr()));
 
-			Transform localTrf;
-			ANKI_CHECK(getNodeTransform(node, localTrf));
-			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
+				Transform localTrf;
+				ANKI_CHECK(getNodeTransform(node, localTrf));
+				ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
+			}
 		}
 		else if(stringsExist(extras, {"skybox_solid_color", "skybox_image", "fog_min_density", "fog_max_density",
 									  "fog_height_of_min_density", "fog_height_of_max_density"}))
@@ -807,15 +809,12 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 
 			if(selfCollision)
 			{
-				ANKI_CHECK(m_sceneFile.writeTextf("node = scene:newSceneNode(\"%s_cl\")\n", getNodeName(node).cstr()));
-
 				ANKI_CHECK(m_sceneFile.writeText("comp = node:newBodyComponent()\n"));
 
 				const StringRaii meshFname = computeMeshResourceFilename(*node.mesh);
 
-				ANKI_CHECK(
-					m_sceneFile.writeTextf("comp:loadMeshResource(\"%s%s\")\n", m_rpath.cstr(), meshFname.cstr()));
-				ANKI_CHECK(m_sceneFile.writeText("comp:setWorldTransform(trf)\n"));
+				ANKI_CHECK(m_sceneFile.writeText("comp:setMeshFromModelComponent()\n"));
+				ANKI_CHECK(m_sceneFile.writeText("comp:teleportTo(trf)\n"));
 			}
 		}
 	}

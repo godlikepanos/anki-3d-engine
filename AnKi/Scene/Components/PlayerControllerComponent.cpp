@@ -23,13 +23,13 @@ PlayerControllerComponent::PlayerControllerComponent(SceneNode* node)
 
 Error PlayerControllerComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	const Transform newTrf = m_player->getTransform();
-	updated = newTrf != m_trf;
+	const Vec3 newPos = m_player->getTransform().getOrigin().xyz();
+	updated = newPos != m_worldPos;
 
 	if(updated)
 	{
-		m_trf = newTrf;
-		info.m_node->setLocalTransform(newTrf);
+		m_worldPos = newPos;
+		info.m_node->setLocalOrigin(newPos.xyz0());
 	}
 
 	return Error::kNone;

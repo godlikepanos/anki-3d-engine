@@ -69,6 +69,7 @@ private:
 	FramebufferDescription m_fbDescr;
 
 	DebugDrawer2 m_drawer;
+	PhysicsDebugDrawer m_physicsDrawer{&m_drawer};
 
 	ImageResourcePtr m_giProbeImage;
 	ImageResourcePtr m_pointLightImage;

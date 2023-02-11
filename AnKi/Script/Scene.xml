@@ -207,6 +207,7 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 						<arg>CString</arg>
 					</args>
 				</method>
+				<method name="setMeshFromModelComponent"></method>
 				<method name="teleportTo">
 					<args>
 						<arg>const Transform&amp;</arg>
@@ -393,6 +394,31 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 					</args>
 				</method>
 				<method name="setMarkedForDeletion"></method>
+
+				<method name="setLocalOrigin">
+					<args>
+						<arg>const Vec4&amp;</arg>
+					</args>
+				</method>
+				<method name="getLocalOrigin">
+					<return>const Vec4&amp;</return>
+				</method>
+				<method name="setLocalRotation">
+					<args>
+						<arg>const Mat3x4&amp;</arg>
+					</args>
+				</method>
+				<method name="getLocalRotation">
+					<return>const Mat3x4&amp;</return>
+				</method>
+				<method name="setLocalScale">
+					<args>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="getLocalScale">
+					<return>F32</return>
+				</method>
 				<method name="setLocalTransform">
 					<args>
 						<arg>const Transform&amp;</arg>
@@ -401,6 +427,7 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 				<method name="getLocalTransform">
 					<return>const Transform&amp;</return>
 				</method>
+				
 				<method name="newComponent&lt;LightComponent&gt;" alias="newLightComponent">
 					<return>LightComponent*</return>
 				</method>
@@ -439,6 +466,46 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 				</method>
 				<method name="newComponent&lt;SkyboxComponent&gt;" alias="newSkyboxComponent">
 					<return>SkyboxComponent*</return>
+				</method>
+
+				<method name="getFirstComponentOfType&lt;LightComponent&gt;" alias="getFirstLightComponent">
+					<return>LightComponent&amp;</return>
+				</method>
+				<method name="getFirstComponentOfType&lt;LensFlareComponent&gt;" alias="getFirstLensFlareComponent">
+					<return>LensFlareComponent&amp;</return>
+				</method>
+				<method name="getFirstComponentOfType&lt;DecalComponent&gt;" alias="getFirstDecalComponent">
+					<return>DecalComponent&amp;</return>
+				</method>
+				<method name="getFirstComponentOfType&lt;TriggerComponent&gt;" alias="getFirstTriggerComponent">
+					<return>TriggerComponent&amp;</return>
+				</method>
+				<method name="getFirstComponentOfType&lt;FogDensityComponent&gt;" alias="getFirstFogDensityComponent">
+					<return>FogDensityComponent&amp;</return>
+				</method>
+				<method name="getFirstComponentOfType&lt;CameraComponent&gt;" alias="getFirstCameraComponent">
+					<return>CameraComponent&amp;</return>
+				</method>
+				<method name="getFirstComponentOfType&lt;GlobalIlluminationProbeComponent&gt;" alias="getFirstGlobalIlluminationProbeComponent">
+					<return>GlobalIlluminationProbeComponent&amp;</return>
+				</method>
+				<method name="getFirstComponentOfType&lt;ReflectionProbeComponent&gt;" alias="getFirstReflectionProbeComponent">
+					<return>ReflectionProbeComponent&amp;</return>
+				</method>
+				<method name="getFirstComponentOfType&lt;BodyComponent&gt;" alias="getFirstBodyComponent">
+					<return>BodyComponent&amp;</return>
+				</method>
+				<method name="getFirstComponentOfType&lt;ParticleEmitterComponent&gt;" alias="getFirstParticleEmitterComponent">
+					<return>ParticleEmitterComponent&amp;</return>
+				</method>
+				<method name="getFirstComponentOfType&lt;ModelComponent&gt;" alias="getFirstModelComponent">
+					<return>ModelComponent&amp;</return>
+				</method>
+				<method name="getFirstComponentOfType&lt;SkinComponent&gt;" alias="getFirstSkinComponent">
+					<return>SkinComponent&amp;</return>
+				</method>
+				<method name="getFirstComponentOfType&lt;SkyboxComponent&gt;" alias="getFirstSkyboxComponent">
+					<return>SkyboxComponent&amp;</return>
 				</method>
 			</methods>
 		</class>

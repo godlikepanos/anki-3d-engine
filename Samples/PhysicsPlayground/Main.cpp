@@ -38,15 +38,15 @@ radius = 3.5
 function update(event, prevTime, crntTime)
 	node = event:getAssociatedSceneNodes():getAt(0)
 	-- logi(string.format("Will fade fog for %s", node:getName()))
-	fogComponent = node:getFogDensityComponent()
+	fogComponent = node:getFirstFogDensityComponent()
 
 	dt = crntTime - prevTime
 	density = density - 4.0 * dt
 	radius = radius + 0.5 * dt
 
-	pos = node:getMoveComponent():getLocalOrigin()
+	pos = node:getLocalOrigin()
 	pos:setY(pos:getY() - 1.1 * dt)
-	node:getMoveComponent():setLocalOrigin(pos)
+	node:setLocalOrigin(pos)
 
 	if density <= 0.0 or radius <= 0.0 then
 		event:getAssociatedSceneNodes():getAt(0):setMarkedForDeletion()
@@ -116,7 +116,7 @@ Error MyApp::sampleExtraInit()
 	if(1)
 	{
 		SceneNode& cam = getSceneGraph().getActiveCameraNode();
-		cam.setLocalTransform(Transform(Vec4(0.0, 0.0, 5.0, 0.0), Mat3x4::getIdentity(), 1.0));
+		cam.setLocalTransform(Transform(Vec4(0.0, 2.0, 5.0, 0.0), Mat3x4::getIdentity(), 1.0));
 
 		SceneNode* player;
 		ANKI_CHECK(getSceneGraph().newSceneNode("player", player));
@@ -163,6 +163,7 @@ Error MyApp::sampleExtraInit()
 			// monkey->getFirstComponentOfType<MoveComponent>().setLocalTransform(trf);
 
 			BodyComponent* bodyc = monkey->newComponent<BodyComponent>();
+			bodyc->setMeshFromModelComponent();
 			bodyc->teleportTo(trf);
 			bodyc->setMass(1.0f);
 
@@ -253,26 +254,84 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 		mode = (mode + 1) % 3;
 		if(mode == 0)
 		{
-			getConfig().setRDbgEnabled(false);
+			getConfig().setRDbg(false);
 		}
 		else if(mode == 1)
 		{
-			getConfig().setRDbgEnabled(true);
+			getConfig().setRDbg(true);
 			getMainRenderer().getDbg().setDepthTestEnabled(true);
 			getMainRenderer().getDbg().setDitheredDepthTestEnabled(false);
 		}
 		else
 		{
-			getConfig().setRDbgEnabled(true);
+			getConfig().setRDbg(true);
 			getMainRenderer().getDbg().setDepthTestEnabled(false);
 			getMainRenderer().getDbg().setDitheredDepthTestEnabled(true);
 		}
 	}
 
-	if(getInput().getKey(KeyCode::kR))
+	// Move player
 	{
 		SceneNode& player = getSceneGraph().findSceneNode("player");
-		player.getFirstComponentOfType<PlayerControllerComponent>().moveToPosition(Vec3(0.0f, 2.0f, 0.0f));
+		PlayerControllerComponent& playerc = player.getFirstComponentOfType<PlayerControllerComponent>();
+
+		if(getInput().getKey(KeyCode::kR))
+		{
+			player.getFirstComponentOfType<PlayerControllerComponent>().moveToPosition(Vec3(0.0f, 2.0f, 0.0f));
+		}
+
+		constexpr F32 ang = toRad(7.0f);
+
+		F32 y = getInput().getMousePosition().y();
+		F32 x = getInput().getMousePosition().x();
+		if(y != 0.0 || x != 0.0)
+		{
+			// Set origin
+			Vec4 origin = player.getWorldTransform().getOrigin();
+			// origin.y() += 1.9f;
+
+			// Set rotation
+			Mat3x4 rot(Vec3(0.0f), Euler(ang * y * 11.25f, ang * x * -20.0f, 0.0f));
+
+			rot = player.getLocalRotation().combineTransformations(rot);
+
+			Vec3 newz = rot.getColumn(2).getNormalized();
+			Vec3 newx = Vec3(0.0, 1.0, 0.0).cross(newz);
+			Vec3 newy = newz.cross(newx);
+			rot.setColumns(newx, newy, newz, Vec3(0.0));
+			rot.reorthogonalize();
+
+			// Update move
+			player.setLocalTransform(Transform(origin, rot, 1.0));
+		}
+
+		const F32 speed = 0.5;
+		Vec4 moveVec(0.0);
+		if(getInput().getKey(KeyCode::kW))
+		{
+			moveVec.z() += 1.0f;
+		}
+
+		if(getInput().getKey(KeyCode::kA))
+		{
+			moveVec.x() -= 1.0f;
+		}
+
+		if(getInput().getKey(KeyCode::kS))
+		{
+			moveVec.z() -= 1.0f;
+		}
+
+		if(getInput().getKey(KeyCode::kD))
+		{
+			moveVec.x() += 1.0f;
+		}
+
+		Vec4 dir = -player.getLocalRotation().getZAxis().xyz0();
+		dir.y() = 0.0f;
+		dir.normalize();
+
+		playerc.setVelocity(moveVec.z() * speed, moveVec.x() * speed, 0.0, dir);
 	}
 
 	if(getInput().getMouseButton(MouseButton::kLeft) == 1)
@@ -285,13 +344,13 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 
 		SceneNode* monkey;
 		ANKI_CHECK(getSceneGraph().newSceneNode(
-			StringRaii(&getMemoryPool()).sprintf("monkey%u", instance++).toCString(), monkey));
+			StringRaii(&getMemoryPool()).sprintf("FireMonkey%u", instance++).toCString(), monkey));
 		ModelComponent* modelc = monkey->newComponent<ModelComponent>();
 		modelc->loadModelResource("Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl");
 		// monkey->getFirstComponentOfType<MoveComponent>().setLocalTransform(camTrf);
 
 		BodyComponent* bodyc = monkey->newComponent<BodyComponent>();
-		bodyc->loadMeshResource("Assets/Suzanne_e3526e1428c0763c.ankimesh");
+		bodyc->setMeshFromModelComponent();
 		bodyc->teleportTo(camTrf);
 		bodyc->setMass(1.0f);
 

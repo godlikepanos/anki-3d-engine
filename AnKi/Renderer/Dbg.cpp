@@ -14,6 +14,7 @@
 #include <AnKi/Util/Enum.h>
 #include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Collision/ConvexHullShape.h>
+#include <AnKi/Physics/PhysicsWorld.h>
 
 namespace anki {
 
@@ -56,7 +57,7 @@ Error Dbg::init()
 
 void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 {
-	ANKI_ASSERT(getExternalSubsystems().m_config->getRDbgEnabled());
+	ANKI_ASSERT(getExternalSubsystems().m_config->getRDbg());
 
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
@@ -228,13 +229,20 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 		}
 	}
 
+	if(threadId == (threadCount - 1) && getExternalSubsystems().m_config->getRDbgPhysics())
+	{
+		m_physicsDrawer.start(ctx.m_matrices.m_viewProjection, cmdb, &rebar);
+		m_physicsDrawer.drawWorld(*getExternalSubsystems().m_physicsWorld);
+		m_physicsDrawer.end();
+	}
+
 	// Restore state
 	cmdb->setDepthCompareOperation(CompareOperation::kLess);
 }
 
 void Dbg::populateRenderGraph(RenderingContext& ctx)
 {
-	if(!getExternalSubsystems().m_config->getRDbgEnabled())
+	if(!getExternalSubsystems().m_config->getRDbg())
 	{
 		return;
 	}

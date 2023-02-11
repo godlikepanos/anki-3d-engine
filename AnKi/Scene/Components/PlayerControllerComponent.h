@@ -38,7 +38,7 @@ public:
 
 private:
 	PhysicsPlayerControllerPtr m_player;
-	Transform m_trf = Transform::getIdentity();
+	Vec3 m_worldPos = Vec3(0.0f);
 
 	Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated);
 };

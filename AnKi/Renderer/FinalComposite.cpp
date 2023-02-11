@@ -102,7 +102,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 
 	pass.newTextureDependency(ctx.m_outRenderTarget, TextureUsageBit::kFramebufferWrite);
 
-	if(getExternalSubsystems().m_config->getRDbgEnabled())
+	if(getExternalSubsystems().m_config->getRDbg())
 	{
 		pass.newTextureDependency(m_r->getDbg().getRt(), TextureUsageBit::kSampledFragment);
 	}
@@ -130,7 +130,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	const Bool dbgEnabled = getExternalSubsystems().m_config->getRDbgEnabled();
+	const Bool dbgEnabled = getExternalSubsystems().m_config->getRDbg();
 
 	Array<RenderTargetHandle, kMaxDebugRenderTargets> dbgRts;
 	ShaderProgramPtr optionalDebugProgram;
