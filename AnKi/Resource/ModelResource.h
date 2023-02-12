@@ -40,6 +40,8 @@ class ModelRayTracingInfo
 public:
 	AccelerationStructurePtr m_bottomLevelAccelerationStructure;
 	U32 m_shaderGroupHandleIndex;
+
+	PtrSize m_indexBufferOffset;
 };
 
 /// Model patch class. Its very important class and it binds a material with a mesh.

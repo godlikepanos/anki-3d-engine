@@ -42,6 +42,8 @@ void ModelPatch::getRayTracingInfo(const RenderingKey& key, ModelRayTracingInfo&
 	const U32 meshLod = min<U32>(key.getLod(), m_meshLodCount - 1);
 	info.m_bottomLevelAccelerationStructure = m_mesh->getBottomLevelAccelerationStructure(meshLod);
 
+	info.m_indexBufferOffset = m_lodInfos[meshLod].m_indexBufferOffset + 2_PtrSize * m_lodInfos[meshLod].m_firstIndex;
+
 	// Material
 	const MaterialVariant& variant = m_mtl->getOrCreateVariant(key);
 	info.m_shaderGroupHandleIndex = variant.getRtShaderGroupHandleIndex();

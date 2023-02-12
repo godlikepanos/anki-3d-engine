@@ -86,7 +86,7 @@ static FrustumFlags getCameraFrustumFlags()
 static FrustumFlags getCameraExtendedFrustumFlags()
 {
 	FrustumFlags flags;
-	flags.m_gatherModelComponents = true;
+	flags.m_gatherRayTracingModelComponents = true;
 	flags.m_gatherLightComponents = true;
 	flags.m_gatherSkyComponents = true;
 	return flags;
@@ -336,6 +336,17 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 				{
 					el.m_distanceFromCamera = distanceFromCamera;
 					*result.m_earlyZRenderables.newElement(pool) = el;
+				}
+			}
+
+			if(frustumFlags.m_gatherRayTracingModelComponents)
+			{
+				WeakArray<RayTracingInstanceQueueElement> rtElements;
+				modelc.setupRayTracingInstanceQueueElements(lod, RenderingTechnique::kRtShadow, pool, rtElements);
+
+				for(RayTracingInstanceQueueElement& el : rtElements)
+				{
+					*result.m_rayTracingInstances.newElement(pool) = el;
 				}
 			}
 		}

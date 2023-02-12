@@ -46,6 +46,9 @@ public:
 	void setupRenderableQueueElements(U32 lod, RenderingTechnique technique, StackMemoryPool& tmpPool,
 									  WeakArray<RenderableQueueElement>& outRenderables) const;
 
+	void setupRayTracingInstanceQueueElements(U32 lod, RenderingTechnique technique, StackMemoryPool& tmpPool,
+											  WeakArray<RayTracingInstanceQueueElement>& outRenderables) const;
+
 private:
 	class PatchInfo
 	{

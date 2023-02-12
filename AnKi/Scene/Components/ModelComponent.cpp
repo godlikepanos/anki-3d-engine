@@ -287,6 +287,72 @@ void ModelComponent::setupRenderableQueueElements(U32 lod, RenderingTechnique te
 	}
 }
 
+void ModelComponent::setupRayTracingInstanceQueueElements(U32 lod, RenderingTechnique technique,
+														  StackMemoryPool& tmpPool,
+														  WeakArray<RayTracingInstanceQueueElement>& outInstances) const
+{
+	ANKI_ASSERT(isEnabled());
+
+	outInstances.setArray(nullptr, 0);
+
+	const RenderingTechniqueBit requestedRenderingTechniqueMask = RenderingTechniqueBit(1 << technique);
+	if(!(m_presentRenderingTechniques & requestedRenderingTechniqueMask))
+	{
+		return;
+	}
+
+	// Allocate instances
+	U32 instanceCount = 0;
+	for(U32 i = 0; i < m_patchInfos.getSize(); ++i)
+	{
+		instanceCount += !!(m_patchInfos[i].m_techniques & requestedRenderingTechniqueMask);
+	}
+
+	if(instanceCount == 0)
+	{
+		return;
+	}
+
+	RayTracingInstanceQueueElement* instances = static_cast<RayTracingInstanceQueueElement*>(tmpPool.allocate(
+		sizeof(RayTracingInstanceQueueElement) * instanceCount, alignof(RayTracingInstanceQueueElement)));
+
+	outInstances.setArray(instances, instanceCount);
+
+	RenderingKey key;
+	key.setLod(lod);
+	key.setRenderingTechnique(technique);
+
+	instanceCount = 0;
+	for(U32 i = 0; i < m_patchInfos.getSize(); ++i)
+	{
+		if(!(m_patchInfos[i].m_techniques & requestedRenderingTechniqueMask))
+		{
+			continue;
+		}
+
+		RayTracingInstanceQueueElement& queueElem = instances[instanceCount];
+
+		const ModelPatch& patch = m_model->getModelPatches()[i];
+
+		ModelRayTracingInfo modelInf;
+		patch.getRayTracingInfo(key, modelInf);
+
+		queueElem.m_bottomLevelAccelerationStructure = modelInf.m_bottomLevelAccelerationStructure.get();
+		queueElem.m_shaderGroupHandleIndex = modelInf.m_shaderGroupHandleIndex;
+		queueElem.m_worldTransformsOffset = U32(m_gpuSceneTransforms.m_offset);
+		queueElem.m_uniformsOffset = m_patchInfos[i].m_gpuSceneUniformsOffset;
+		queueElem.m_geometryOffset =
+			U32(m_gpuSceneMeshLods.m_offset + sizeof(GpuSceneMeshLod) * (kMaxLodCount * i + lod));
+		queueElem.m_indexBufferOffset = U32(modelInf.m_indexBufferOffset);
+
+		const Transform positionTransform(patch.getMesh()->getPositionsTranslation().xyz0(), Mat3x4::getIdentity(),
+										  patch.getMesh()->getPositionsScale());
+		queueElem.m_transform = Mat3x4(m_node->getWorldTransform()).combineTransformations(Mat3x4(positionTransform));
+
+		++instanceCount;
+	}
+}
+
 void ModelComponent::onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added)
 {
 	ANKI_ASSERT(other);

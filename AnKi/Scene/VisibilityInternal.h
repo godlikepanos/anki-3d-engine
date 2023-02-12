@@ -116,6 +116,7 @@ class FrustumFlags
 public:
 	Bool m_gatherModelComponents : 1 = false;
 	Bool m_gatherShadowCasterModelComponents : 1 = false;
+	Bool m_gatherRayTracingModelComponents : 1 = false;
 	Bool m_gatherParticleComponents : 1 = false;
 	Bool m_gatherProbeComponents : 1 = false;
 	Bool m_gatherLightComponents : 1 = false;

@@ -239,6 +239,11 @@ inline constexpr U64 operator"" _U64(unsigned long long arg) noexcept
 {
 	return U64(arg);
 }
+
+inline constexpr PtrSize operator"" _PtrSize(unsigned long long arg) noexcept
+{
+	return PtrSize(arg);
+}
 /// @}
 
 /// @name Size user literals

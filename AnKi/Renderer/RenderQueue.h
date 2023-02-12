@@ -334,11 +334,13 @@ public:
 	AccelerationStructure* m_bottomLevelAccelerationStructure;
 	U32 m_shaderGroupHandleIndex;
 
-	Mat3x4 m_transform; // TODO rm when you'll add the RenderableGpuView
+	U32 m_worldTransformsOffset;
+	U32 m_uniformsOffset;
+	U32 m_geometryOffset;
 
-	/// This points to the GR objects used by this element. Use this to add a refcount to avoid accidential deletions.
-	Array<GrObject*, 8> m_grObjects;
-	U32 m_grObjectCount;
+	U32 m_indexBufferOffset;
+
+	Mat3x4 m_transform;
 };
 static_assert(std::is_trivially_destructible<RayTracingInstanceQueueElement>::value == true);
 
