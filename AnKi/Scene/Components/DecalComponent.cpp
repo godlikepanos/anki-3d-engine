@@ -12,8 +12,8 @@ namespace anki {
 
 DecalComponent::DecalComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
-	, m_spatial(this)
 	, m_node(node)
+	, m_spatial(this)
 {
 }
 

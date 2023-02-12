@@ -24,6 +24,7 @@ public:
 
 	Array<const RenderableQueueElement*, kMaxInstanceCount> m_cachedRenderElements;
 	U32 m_cachedRenderElementCount = 0;
+	ShaderProgram* m_lastBoundShaderProgram = nullptr;
 };
 
 RenderableDrawer::~RenderableDrawer()
@@ -115,7 +116,12 @@ void RenderableDrawer::flushDrawcall(Context& ctx)
 
 	// Set state
 	const RenderableQueueElement& firstElement = *ctx.m_cachedRenderElements[0];
-	cmdb->bindShaderProgram(ShaderProgramPtr(firstElement.m_program));
+
+	if(firstElement.m_program != ctx.m_lastBoundShaderProgram)
+	{
+		cmdb->bindShaderProgram(ShaderProgramPtr(firstElement.m_program));
+		ctx.m_lastBoundShaderProgram = firstElement.m_program;
+	}
 
 	if(firstElement.m_indexed)
 	{
