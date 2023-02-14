@@ -129,6 +129,7 @@ public:
 	Bool m_coverageBuffer : 1 = false;
 	Bool m_earlyZ : 1 = false;
 	Bool m_nonDirectionalLightsCastShadow : 1 = false;
+	Bool m_directionalLightsCastShadow : 1 = false;
 };
 
 class VisibilityFrustum : public FrustumFlags

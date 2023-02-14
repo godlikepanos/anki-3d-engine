@@ -320,7 +320,8 @@ VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask)
 
 	if(!!(usageMask & PrivateBufferUsageBit::kAccelerationStructure))
 	{
-		out |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR;
+		out |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR
+			   | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
 	}
 
 	if(!!(usageMask & BufferUsageBit::kShaderBindingTable))

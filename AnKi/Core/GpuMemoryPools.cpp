@@ -64,8 +64,8 @@ Error RebarStagingGpuMemoryPool::init(GrManager* gr, const ConfigSet& cfg)
 	BufferInitInfo buffInit("ReBar");
 	buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
 	buffInit.m_size = cfg.getCoreRebarGpuMemorySize();
-	buffInit.m_usage =
-		BufferUsageBit::kAllUniform | BufferUsageBit::kAllStorage | BufferUsageBit::kVertex | BufferUsageBit::kIndex;
+	buffInit.m_usage = BufferUsageBit::kAllUniform | BufferUsageBit::kAllStorage | BufferUsageBit::kVertex
+					   | BufferUsageBit::kIndex | BufferUsageBit::kShaderBindingTable;
 	m_buffer = gr->newBuffer(buffInit);
 
 	m_bufferSize = buffInit.m_size;

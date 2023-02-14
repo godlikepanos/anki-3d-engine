@@ -16,9 +16,11 @@ import platform
 
 file_extensions = ["h", "hpp", "c", "cpp", "glsl", "hlsl", "ankiprog"]
 directories = ["AnKi", "Tests", "Sandbox", "Tools", "Samples"]
-hlsl_semantics = ["TEXCOORD", "SV_POSITION", "SV_TARGET0",
-                  "SV_TARGET", "SV_DISPATCHTHREADID", "SV_GROUPINDEX", "SV_GROUPID"]
-
+hlsl_semantics = ["TEXCOORD", "SV_POSITION", "SV_TARGET0", "SV_TARGET", "SV_DISPATCHTHREADID", "SV_GROUPINDEX",
+                  "SV_GROUPID"]
+hlsl_attribs = ["[shader(\"closesthit\")]", "[shader(\"anyhit\")]", "[shader(\"raygeneration\")]", "[shader(\"miss\")]",
+                "[raypayload]"]
+hlsl_attribs_fake = ["__ak_chit__", "__ak_ahit__", "__ak_rgen__", "__ak_miss__", "[[raypayload]]"]
 
 def thread_callback(tid):
     """ Call clang-format """
@@ -51,6 +53,9 @@ def thread_callback(tid):
             for semantic in hlsl_semantics:
                 file_txt = file_txt.replace(": " + semantic, "__" + semantic)
 
+            for i in range(0, len(hlsl_attribs)):
+                file_txt = file_txt.replace(hlsl_attribs[i], hlsl_attribs_fake[i])
+
             # Write the new file
             tmp_filefd, tmp_filename = tempfile.mkstemp()
             with open(tmp_filename, "w", newline="\n") as f:
@@ -80,6 +85,9 @@ def thread_callback(tid):
             # Replace all semantics
             for semantic in hlsl_semantics:
                 file_txt = file_txt.replace("__" + semantic, ": " + semantic)
+
+            for i in range(0, len(hlsl_attribs)):
+                file_txt = file_txt.replace(hlsl_attribs_fake[i], hlsl_attribs[i])
 
             new_file_hash = hash(file_txt)
 

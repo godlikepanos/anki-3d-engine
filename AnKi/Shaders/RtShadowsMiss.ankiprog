@@ -3,17 +3,16 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki hlsl
 #pragma anki library RtShadows
 #pragma anki ray_type 0
 
 #pragma anki start miss
 
-#include <AnKi/Shaders/Common.glsl>
+#include <AnKi/Shaders/RtShadows.hlsl>
 
-layout(location = 0) rayPayloadInEXT F32 g_payload;
-
-void main()
+[shader("miss")] void main(inout RayPayload payload)
 {
-	g_payload = 1.0;
+	payload.m_shadowFactor = 1.0;
 }
 #pragma anki end

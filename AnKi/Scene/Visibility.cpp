@@ -62,6 +62,7 @@ static FrustumFlags getProbeFrustumFlags()
 	flags.m_gatherModelComponents = true;
 	flags.m_gatherLightComponents = true;
 	flags.m_gatherSkyComponents = true;
+	flags.m_directionalLightsCastShadow = true;
 	return flags;
 }
 
@@ -80,6 +81,7 @@ static FrustumFlags getCameraFrustumFlags()
 	flags.m_coverageBuffer = true;
 	flags.m_earlyZ = true;
 	flags.m_nonDirectionalLightsCastShadow = true;
+	flags.m_directionalLightsCastShadow = true;
 	return flags;
 }
 
@@ -451,16 +453,14 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			}
 			case LightComponentType::kDirectional:
 			{
-				ANKI_ASSERT(lightc.getShadowEnabled() == true && "Only with shadow for now");
-
-				U32 cascadeCount = max(testedFrustum.getShadowCascadeCount(), U32(castsShadow));
-				if(!castsShadow)
+				U32 cascadeCount;
+				if(!castsShadow || !frustumFlags.m_directionalLightsCastShadow)
 				{
 					cascadeCount = 0;
 				}
 				else
 				{
-					cascadeCount = max<U32>(testedFrustum.getShadowCascadeCount(), 1);
+					cascadeCount = testedFrustum.getShadowCascadeCount();
 				}
 				ANKI_ASSERT(cascadeCount <= kMaxShadowCascades);
 

@@ -10,7 +10,7 @@
 
 constexpr F32 kRtShadowsMaxHistoryLength = 16.0;
 
-UVec4 packRtShadows(F32 shadowFactors[kMaxRtShadowLayers])
+UVec4 packRtShadows(RF32 shadowFactors[kMaxRtShadowLayers])
 {
 	const U32 a = newPackUnorm4x8(Vec4(shadowFactors[0], shadowFactors[1], shadowFactors[2], shadowFactors[3]));
 	const U32 b = newPackUnorm4x8(Vec4(shadowFactors[4], shadowFactors[5], shadowFactors[6], shadowFactors[7]));
@@ -38,3 +38,13 @@ void zeroRtShadowLayers(out RF32 shadowFactors[kMaxRtShadowLayers])
 		shadowFactors[i] = 0.0;
 	}
 }
+
+struct [raypayload] RayPayload
+{
+	F32 m_shadowFactor : write(caller, anyhit, miss): read(caller);
+};
+
+struct Barycentrics
+{
+	Vec2 m_value;
+};
