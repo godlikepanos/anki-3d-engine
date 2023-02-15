@@ -61,13 +61,8 @@ enum class MaterialBinding : U32
 	kGpuScene,
 
 	// Texture buffer bindings pointing to unified geom buffer:
-	kUnifiedGeometry_R32_Sfloat,
-	kUnifiedGeometry_R32G32_Sfloat,
-	kUnifiedGeometry_R32G32B32_Sfloat,
-	kUnifiedGeometry_R32G32B32A32_Sfloat,
-	kUnifiedGeometry_R16G16B16A16_Unorm,
-	kUnifiedGeometry_R8G8B8A8_Snorm,
-	kUnifiedGeometry_R8G8B8A8_Uint,
+#define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType) kUnifiedGeometry_##fmt,
+#include <AnKi/Shaders/Include/UnifiedGeometryTypes.defs.h>
 
 	// For FW shading:
 	kLinearClampSampler,

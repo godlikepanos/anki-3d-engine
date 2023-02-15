@@ -17,7 +17,7 @@
 		
 		<shaderProgram name="RtShadowsHit">
 			<mutation>
-				<mutator name="ALPHA_TEXTURE" value="0"/>
+				<mutator name="ALPHA_TEXTURE" value="1"/>
 			</mutation>
 		</shaderProgram>
 

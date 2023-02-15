@@ -11,15 +11,58 @@
 #pragma anki mutator ALPHA_TEXTURE 0 1
 
 #include <AnKi/Shaders/RtShadows.hlsl>
+#include <AnKi/Shaders/MaterialShadersCommon.hlsl>
+
+#pragma anki reflect AnKiLocalUniforms
+#pragma anki struct AnKiLocalUniforms
+#pragma anki member U32 m_diffTex if ALPHA_TEXTURE is 1
+#pragma anki struct end
 
 #pragma anki start ahit
+
+#if ALPHA_TEXTURE
+[[vk::shader_record_ext]] ConstantBuffer<GpuSceneRenderable> g_gpuSceneRenderable;
+#endif
 
 [shader("anyhit")] void main(inout RayPayload payload, in Barycentrics barycentrics)
 {
 	ANKI_MAYBE_UNUSED(payload);
 	ANKI_MAYBE_UNUSED(barycentrics);
 
+#if ALPHA_TEXTURE
+	payload.m_shadowFactor = 1.0;
+
+	const Vec3 bary =
+		Vec3(1.0f - barycentrics.m_value.x - barycentrics.m_value.y, barycentrics.m_value.x, barycentrics.m_value.y);
+
+	const GpuSceneMeshLod mesh = g_gpuScene.Load<GpuSceneMeshLod>(g_gpuSceneRenderable.m_geometryOffset);
+
+	const U32 idx0 = g_unifiedGeom_R16_Uint[mesh.m_indexBufferOffset + PrimitiveIndex() * 3 + 0];
+	const U32 idx1 = g_unifiedGeom_R16_Uint[mesh.m_indexBufferOffset + PrimitiveIndex() * 3 + 1];
+	const U32 idx2 = g_unifiedGeom_R16_Uint[mesh.m_indexBufferOffset + PrimitiveIndex() * 3 + 2];
+
+	const UnpackedMeshVertex vert0 = loadVertex(mesh, idx0, false);
+	const UnpackedMeshVertex vert1 = loadVertex(mesh, idx1, false);
+	const UnpackedMeshVertex vert2 = loadVertex(mesh, idx2, false);
+
+	const Vec2 uv = vert0.m_uv * bary.x + vert1.m_uv * bary.y + vert2.m_uv * bary.z;
+
+	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_gpuScene, g_gpuSceneRenderable.m_uniformsOffset);
+	const RVec4 diffColorA = g_bindlessTextures2dF32[localUniforms.m_diffTex].SampleLevel(g_globalSampler, uv, 0.0);
+
+	if(diffColorA.a < 1.0)
+	{
+		payload.m_shadowFactor = 0.0;
+		AcceptHitAndEndSearch();
+	}
+	else
+	{
+		IgnoreHit();
+	}
+#else
+	payload.m_shadowFactor = 0.0;
 	AcceptHitAndEndSearch();
+#endif
 }
 #pragma anki end
 

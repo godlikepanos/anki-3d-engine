@@ -25,7 +25,7 @@ struct GpuSceneMeshLod
 {
 	U32 m_vertexOffsets[(U32)VertexStreamId::kMeshRelatedCount];
 	U32 m_indexCount;
-	U32 m_indexOffset; // TODO Decide on its type
+	U32 m_indexBufferOffset; // In sizeof(indexType)
 
 	Vec3 m_positionTranslation;
 	F32 m_positionScale;

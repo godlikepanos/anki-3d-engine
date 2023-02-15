@@ -798,6 +798,8 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 				addRequest<const cgltf_skin*>(node.skin, m_skinImportRequests);
 			}
 
+			addRequest<const cgltf_mesh*>(node.mesh, m_modelImportRequests);
+
 			HashMapRaii<CString, StringRaii>::Iterator it2;
 			const Bool selfCollision = (it2 = extras.find("collision_mesh")) != extras.getEnd() && *it2 == "self";
 

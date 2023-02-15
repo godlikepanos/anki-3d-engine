@@ -13,6 +13,8 @@
 #include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Shaders/Include/MaterialTypes.h>
+#include <AnKi/Shaders/Include/GpuSceneTypes.h>
 
 namespace anki {
 
@@ -441,31 +443,59 @@ void RtShadows::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCt
 
 	cmdb->bindShaderProgram(m_rtLibraryGrProg);
 
-	bindUniforms(cmdb, 0, 0, rsrc.m_clusteredShadingUniformsToken);
+	// Allocate, set and bind global uniforms
+	{
+		RebarGpuMemoryToken globalUniformsToken;
+		MaterialGlobalUniforms* globalUniforms =
+			static_cast<MaterialGlobalUniforms*>(getExternalSubsystems().m_rebarStagingPool->allocateFrame(
+				sizeof(MaterialGlobalUniforms), globalUniformsToken));
 
-	bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
-	bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
-	rgraphCtx.bindColorTexture(0, 3, m_r->getShadowMapping().getShadowmapRt());
+		memset(globalUniforms, 0, sizeof(*globalUniforms)); // Don't care for now
 
-	bindStorage(cmdb, 0, 4, rsrc.m_clustersToken);
+		cmdb->bindUniformBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGlobalUniforms),
+								getExternalSubsystems().m_rebarStagingPool->getBuffer(), globalUniformsToken.m_offset,
+								globalUniformsToken.m_range);
+	}
 
-	cmdb->bindSampler(0, 5, m_r->getSamplers().m_trilinearRepeat);
+	// More globals
+	cmdb->bindAllBindless(U32(MaterialSet::kBindless));
+	cmdb->bindSampler(U32(MaterialSet::kGlobal), U32(MaterialBinding::kTrilinearRepeatSampler),
+					  m_r->getSamplers().m_trilinearRepeat);
+	cmdb->bindStorageBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGpuScene),
+							getExternalSubsystems().m_gpuScenePool->getBuffer(), 0, kMaxPtrSize);
 
-	rgraphCtx.bindImage(0, 6, m_runCtx.m_intermediateShadowsRts[0]);
+#define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType) \
+	cmdb->bindReadOnlyTextureBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kUnifiedGeometry_##fmt), \
+									getExternalSubsystems().m_unifiedGometryMemoryPool->getBuffer(), 0, kMaxPtrSize, \
+									Format::k##fmt);
+#include <AnKi/Shaders/Include/UnifiedGeometryTypes.defs.h>
 
-	rgraphCtx.bindColorTexture(0, 7, m_runCtx.m_historyRt);
-	cmdb->bindSampler(0, 8, m_r->getSamplers().m_trilinearClamp);
-	cmdb->bindSampler(0, 9, m_r->getSamplers().m_nearestNearestClamp);
-	rgraphCtx.bindTexture(0, 10, m_r->getDepthDownscale().getHiZRt(), kHiZHalfSurface);
-	rgraphCtx.bindColorTexture(0, 11, m_r->getMotionVectors().getMotionVectorsRt());
-	rgraphCtx.bindColorTexture(0, 12, m_r->getMotionVectors().getHistoryLengthRt());
-	rgraphCtx.bindColorTexture(0, 13, m_r->getGBuffer().getColorRt(2));
-	rgraphCtx.bindAccelerationStructure(0, 14, m_r->getAccelerationStructureBuilder().getAccelerationStructureHandle());
-	rgraphCtx.bindColorTexture(0, 15, m_runCtx.m_prevMomentsRt);
-	rgraphCtx.bindImage(0, 16, m_runCtx.m_currentMomentsRt);
-	cmdb->bindTexture(0, 17, m_blueNoiseImage->getTextureView());
+	constexpr U32 kSet = 2;
 
-	cmdb->bindAllBindless(1);
+	bindUniforms(cmdb, kSet, 0, rsrc.m_clusteredShadingUniformsToken);
+
+	bindUniforms(cmdb, kSet, 1, rsrc.m_pointLightsToken);
+	bindUniforms(cmdb, kSet, 2, rsrc.m_spotLightsToken);
+	rgraphCtx.bindColorTexture(kSet, 3, m_r->getShadowMapping().getShadowmapRt());
+
+	bindStorage(cmdb, kSet, 4, rsrc.m_clustersToken);
+
+	cmdb->bindSampler(kSet, 5, m_r->getSamplers().m_trilinearRepeat);
+
+	rgraphCtx.bindImage(kSet, 6, m_runCtx.m_intermediateShadowsRts[0]);
+
+	rgraphCtx.bindColorTexture(kSet, 7, m_runCtx.m_historyRt);
+	cmdb->bindSampler(kSet, 8, m_r->getSamplers().m_trilinearClamp);
+	cmdb->bindSampler(kSet, 9, m_r->getSamplers().m_nearestNearestClamp);
+	rgraphCtx.bindTexture(kSet, 10, m_r->getDepthDownscale().getHiZRt(), kHiZHalfSurface);
+	rgraphCtx.bindColorTexture(kSet, 11, m_r->getMotionVectors().getMotionVectorsRt());
+	rgraphCtx.bindColorTexture(kSet, 12, m_r->getMotionVectors().getHistoryLengthRt());
+	rgraphCtx.bindColorTexture(kSet, 13, m_r->getGBuffer().getColorRt(2));
+	rgraphCtx.bindAccelerationStructure(kSet, 14,
+										m_r->getAccelerationStructureBuilder().getAccelerationStructureHandle());
+	rgraphCtx.bindColorTexture(kSet, 15, m_runCtx.m_prevMomentsRt);
+	rgraphCtx.bindImage(kSet, 16, m_runCtx.m_currentMomentsRt);
+	cmdb->bindTexture(kSet, 17, m_blueNoiseImage->getTextureView());
 
 	RtShadowsUniforms unis;
 	for(U32 i = 0; i < kMaxRtShadowLayers; ++i)
@@ -623,7 +653,14 @@ void RtShadows::buildSbt(RenderingContext& ctx)
 
 		// Init SBT record
 		memcpy(sbt, &shaderGroupHandles[element.m_shaderGroupHandleIndex * shaderHandleSize], shaderHandleSize);
-		// TODO add some reference to the RenderableGpuView
+
+		ANKI_ASSERT(shaderHandleSize + sizeof(GpuSceneRenderable) <= m_sbtRecordSize);
+		GpuSceneRenderable* shaderRecord = reinterpret_cast<GpuSceneRenderable*>(sbt + shaderHandleSize);
+		shaderRecord->m_worldTransformsOffset = element.m_worldTransformsOffset;
+		shaderRecord->m_uniformsOffset = element.m_uniformsOffset;
+		shaderRecord->m_geometryOffset = element.m_geometryOffset;
+		shaderRecord->m_boneTransformsOffset = 0;
+
 		sbt += m_sbtRecordSize;
 	}
 

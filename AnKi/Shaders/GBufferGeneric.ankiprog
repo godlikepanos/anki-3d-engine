@@ -35,10 +35,11 @@
 
 #pragma anki reflect AnKiLocalUniforms
 #pragma anki struct AnKiLocalUniforms
-#pragma anki member U32 m_normalTex if NORMAL_TEX is 1
 
 #pragma anki member RVec3 m_diffColor if DIFFUSE_TEX is 0
 #pragma anki member U32 m_diffTex if DIFFUSE_TEX is 1
+
+#pragma anki member U32 m_normalTex if NORMAL_TEX is 1
 
 #pragma anki member RF32 m_roughness if ROUGHNESS_TEX is 0
 #pragma anki member U32 m_roughnessTex if ROUGHNESS_TEX is 1
@@ -56,6 +57,7 @@
 #pragma anki member U32 m_heightTex if PARALLAX is 1
 
 #pragma anki member RF32 m_subsurface
+
 #pragma anki struct end
 
 struct VertIn

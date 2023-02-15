@@ -14,37 +14,37 @@
 #include <AnKi/Shaders/ImportanceSampling.hlsl>
 #include <AnKi/Shaders/PackFunctions.hlsl>
 #include <AnKi/Shaders/RtShadows.hlsl>
+#include <AnKi/Shaders/MaterialShadersCommon.hlsl>
 
-#define CLUSTERED_SHADING_SET 0u
+#define SET 2u
+
+#define CLUSTERED_SHADING_SET SET
 #define CLUSTERED_SHADING_UNIFORMS_BINDING 0u
 #define CLUSTERED_SHADING_LIGHTS_BINDING 1u
 #define CLUSTERED_SHADING_CLUSTERS_BINDING 4u
 #include <AnKi/Shaders/ClusteredShadingCommon.hlsl>
 
 // Used by the hit shaders. When changing the binding you need to update other shaders
-[[vk::binding(5)]] SamplerState g_trilinearRepeatSampler;
+[[vk::binding(5, SET)]] SamplerState g_trilinearRepeatSampler;
 
-[[vk::binding(6)]] RWTexture2D<UVec4> g_shadowsImage;
-[[vk::binding(7)]] Texture2D<UVec4> g_historyShadowsTex;
-[[vk::binding(8)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(9)]] SamplerState g_nearestAnyClampSampler;
-[[vk::binding(10)]] Texture2D g_depthRt;
-[[vk::binding(11)]] Texture2D g_motionVectorsRt;
-[[vk::binding(12)]] Texture2D g_historyLengthTex;
-[[vk::binding(13)]] Texture2D g_normalRt;
-[[vk::binding(14)]] RaytracingAccelerationStructure g_tlas;
-[[vk::binding(15)]] Texture2D g_prevMomentsTex;
-[[vk::binding(16)]] RWTexture2D<Vec4> g_momentsImage;
-[[vk::binding(17)]] Texture2D g_blueNoiseTex;
-
-ANKI_BINDLESS_SET(1); // Used by the hit shaders
+[[vk::binding(6, SET)]] RWTexture2D<UVec4> g_shadowsImage;
+[[vk::binding(7, SET)]] Texture2D<UVec4> g_historyShadowsTex;
+[[vk::binding(8, SET)]] SamplerState g_linearAnyClampSampler;
+[[vk::binding(9, SET)]] SamplerState g_nearestAnyClampSampler;
+[[vk::binding(10, SET)]] Texture2D g_depthRt;
+[[vk::binding(11, SET)]] Texture2D g_motionVectorsRt;
+[[vk::binding(12, SET)]] Texture2D g_historyLengthTex;
+[[vk::binding(13, SET)]] Texture2D g_normalRt;
+[[vk::binding(14, SET)]] RaytracingAccelerationStructure g_tlas;
+[[vk::binding(15, SET)]] Texture2D g_prevMomentsTex;
+[[vk::binding(16, SET)]] RWTexture2D<Vec4> g_momentsImage;
+[[vk::binding(17, SET)]] Texture2D g_blueNoiseTex;
 
 [[vk::push_constant]] ConstantBuffer<RtShadowsUniforms> g_unis;
 
 F32 trace(const Vec3 rayOrigin, const Vec3 rayDir, F32 tMax)
 {
-	const U32 flags =
-		RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH | RAY_FLAG_SKIP_CLOSEST_HIT_SHADER;
+	const U32 flags = RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH | RAY_FLAG_SKIP_CLOSEST_HIT_SHADER;
 	const U32 cullMask = 0xFFu;
 	const U32 sbtRecordOffset = 0u;
 	const U32 sbtRecordStride = 0u;
@@ -55,7 +55,8 @@ F32 trace(const Vec3 rayOrigin, const Vec3 rayDir, F32 tMax)
 	ray.Direction = rayDir;
 	ray.TMax = tMax;
 
-	RayPayload payload = (RayPayload)0;
+	RayPayload payload;
+	payload.m_shadowFactor = 0.0;
 	TraceRay(g_tlas, flags, cullMask, sbtRecordOffset, sbtRecordStride, missIndex, ray, payload);
 
 	return payload.m_shadowFactor;

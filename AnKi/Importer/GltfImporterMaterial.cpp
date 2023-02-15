@@ -47,7 +47,7 @@ inline constexpr const Char* kMaterialTemplate = R"(<!-- This file is auto gener
 inline constexpr const Char* kRtMaterialTemplate = R"(
 		<shaderProgram name="RtShadowsHit">
 			<mutation>
-				<mutator name="ALPHA_TEXTURE" value="0"/>
+				<mutator name="ALPHA_TEXTURE" value="%rtAlphaTestMutator%"/>
 			</mutation>
 		</shaderProgram>
 )";
@@ -175,6 +175,7 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 	}
 
 	// Diffuse
+	Bool alphaTested = false;
 	if(mtl.pbr_metallic_roughness.base_color_texture.texture)
 	{
 		const CString fname = getTextureUri(mtl.pbr_metallic_roughness.base_color_texture);
@@ -190,6 +191,7 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 
 		const Bool constantAlpha = constantColor.w() >= 0.0f;
 		xml.replaceAll("%alphaTestMutator%", (constantAlpha) ? "0" : "1");
+		alphaTested = !constantAlpha;
 
 		if(m_importTextures)
 		{
@@ -209,6 +211,8 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl, Bool writeRayTracin
 		xml.replaceAll("%diffTexMutator%", "0");
 		xml.replaceAll("%alphaTestMutator%", "0");
 	}
+
+	xml.replaceAll("%rtAlphaTestMutator%", (alphaTested) ? "1" : "0");
 
 	// Specular color (freshnel)
 	{

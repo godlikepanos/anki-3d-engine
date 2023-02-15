@@ -40,7 +40,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 		geom.geometry.triangles.indexType = convertIndexType(inf.m_bottomLevel.m_indexType);
 		geom.geometry.triangles.indexData.deviceAddress =
 			inf.m_bottomLevel.m_indexBuffer->getGpuAddress() + inf.m_bottomLevel.m_indexBufferOffset;
-		geom.flags = VK_GEOMETRY_OPAQUE_BIT_KHR; // TODO
+		geom.flags = 0; // VK_GEOMETRY_OPAQUE_BIT_KHR; // TODO
 
 		// Geom build info
 		VkAccelerationStructureBuildGeometryInfoKHR& buildInfo = m_buildInfo;

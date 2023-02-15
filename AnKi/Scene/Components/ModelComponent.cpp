@@ -140,11 +140,14 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 					meshLod.m_vertexOffsets[U32(stream)] = U32(offset / elementSize);
 				}
 
-				PtrSize offset;
+				U32 firstIndex;
 				U32 indexCount;
+				Aabb aabb;
+				mesh.getSubMeshInfo(l, i, firstIndex, indexCount, aabb);
+				PtrSize offset;
 				IndexType indexType;
 				mesh.getIndexBufferInfo(l, offset, indexCount, indexType);
-				meshLod.m_indexOffset = U32(offset);
+				meshLod.m_indexBufferOffset = U32(offset) / getIndexSize(indexType) + firstIndex;
 				meshLod.m_indexCount = indexCount;
 			}
 

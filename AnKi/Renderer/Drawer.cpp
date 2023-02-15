@@ -61,19 +61,10 @@ void RenderableDrawer::drawRange(const RenderableDrawerArguments& args, const Re
 	cmdb->bindStorageBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGpuScene), args.m_gpuSceneBuffer, 0,
 							kMaxPtrSize);
 
-#define _ANKI_BIND_TEXTURE_BUFFER(format) \
-	cmdb->bindReadOnlyTextureBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kUnifiedGeometry_##format), \
-									args.m_unifiedGeometryBuffer, 0, kMaxPtrSize, Format::k##format)
-
-	_ANKI_BIND_TEXTURE_BUFFER(R32_Sfloat);
-	_ANKI_BIND_TEXTURE_BUFFER(R32G32_Sfloat);
-	_ANKI_BIND_TEXTURE_BUFFER(R32G32B32_Sfloat);
-	_ANKI_BIND_TEXTURE_BUFFER(R32G32B32A32_Sfloat);
-	_ANKI_BIND_TEXTURE_BUFFER(R16G16B16A16_Unorm);
-	_ANKI_BIND_TEXTURE_BUFFER(R8G8B8A8_Snorm);
-	_ANKI_BIND_TEXTURE_BUFFER(R8G8B8A8_Uint);
-
-#undef _ANKI_BIND_TEXTURE_BUFFER
+#define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType) \
+	cmdb->bindReadOnlyTextureBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kUnifiedGeometry_##fmt), \
+									args.m_unifiedGeometryBuffer, 0, kMaxPtrSize, Format::k##fmt);
+#include <AnKi/Shaders/Include/UnifiedGeometryTypes.defs.h>
 
 	// Misc
 	cmdb->setVertexAttribute(0, 0, Format::kR32G32B32A32_Uint, 0);

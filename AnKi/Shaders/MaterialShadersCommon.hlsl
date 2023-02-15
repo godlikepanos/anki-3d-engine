@@ -19,19 +19,10 @@ ANKI_BINDLESS_SET(MaterialSet::kBindless)
 [[vk::binding(MaterialBinding::kGpuScene, MaterialSet::kGlobal)]] ByteAddressBuffer g_gpuScene;
 
 // Unified geom:
-#define _ANKI_DEFINE_BINDING(format, type) \
-	[[vk::binding(MaterialBinding::kUnifiedGeometry_##format, MaterialSet::kGlobal)]] Buffer<type> \
-		g_unifiedGeom_##format;
-
-_ANKI_DEFINE_BINDING(R32_Sfloat, F32)
-_ANKI_DEFINE_BINDING(R32G32_Sfloat, Vec2)
-_ANKI_DEFINE_BINDING(R32G32B32_Sfloat, Vec3)
-_ANKI_DEFINE_BINDING(R32G32B32A32_Sfloat, Vec4)
-_ANKI_DEFINE_BINDING(R16G16B16A16_Unorm, Vec4)
-_ANKI_DEFINE_BINDING(R8G8B8A8_Snorm, Vec4)
-_ANKI_DEFINE_BINDING(R8G8B8A8_Uint, UVec4)
-
-#undef _ANKI_DEFINE_BINDING
+#define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType) \
+	[[vk::binding(MaterialBinding::kUnifiedGeometry_##fmt, MaterialSet::kGlobal)]] Buffer<shaderType> \
+		g_unifiedGeom_##fmt;
+#include <AnKi/Shaders/Include/UnifiedGeometryTypes.defs.h>
 
 // FW shading specific
 #if defined(FORWARD_SHADING)
