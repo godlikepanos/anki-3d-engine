@@ -52,8 +52,6 @@ ANKI_END_NAMESPACE
 
 #	define constexpr static const
 
-#	define ANKI_SUPPORTS_16BIT_TYPES 0
-
 template<typename T>
 void maybeUnused(T a)
 {

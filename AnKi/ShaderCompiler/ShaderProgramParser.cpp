@@ -536,6 +536,10 @@ Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPra
 			{
 				ANKI_CHECK(parsePragmaHlsl(token + 1, end, line, fname));
 			}
+			else if(*token == "16bit")
+			{
+				ANKI_CHECK(parsePragma16bit(token + 1, end, line, fname));
+			}
 			else
 			{
 				ANKI_PP_ERROR_MALFORMED();
@@ -839,6 +843,21 @@ Error ShaderProgramParser::parsePragmaHlsl(const StringRaii* begin, const String
 	return Error::kNone;
 }
 
+Error ShaderProgramParser::parsePragma16bit(const StringRaii* begin, const StringRaii* end, CString line, CString fname)
+{
+	ANKI_ASSERT(begin && end);
+
+	// Check tokens
+	if(begin != end)
+	{
+		ANKI_PP_ERROR_MALFORMED();
+	}
+
+	m_16bitTypes = true;
+
+	return Error::kNone;
+}
+
 Error ShaderProgramParser::parseFile(CString fname, U32 depth)
 {
 	// First check the depth
@@ -943,7 +962,7 @@ Error ShaderProgramParser::parse()
 
 	if(!m_hlsl)
 	{
-		m_codeLines.pushFront(StringRaii(m_pool, "#extension  GL_GOOGLE_cpp_style_line_directive : enable"));
+		m_codeLines.pushFront(StringRaii(m_pool, "#extension GL_GOOGLE_cpp_style_line_directive : enable"));
 	}
 
 	// Create the code lines
@@ -1016,6 +1035,14 @@ Error ShaderProgramParser::generateVariant(ConstWeakArray<MutatorValue> mutation
 		// Create the final source without the bindings
 		StringRaii finalSource(m_pool);
 		finalSource.append(header);
+		if(m_16bitTypes)
+		{
+			finalSource.append("#define ANKI_SUPPORTS_16BIT_TYPES 1\n");
+		}
+		else
+		{
+			finalSource.append("#define ANKI_SUPPORTS_16BIT_TYPES 0\n");
+		}
 		finalSource.append(mutatorDefines);
 		finalSource.append(m_codeSource);
 

@@ -113,6 +113,7 @@ private:
 /// #pragma anki reflect NAME
 /// #pragma anki skip_mutation MUTATOR0 VALUE0 MUTATOR1 VALUE1 [MUTATOR2 VALUE2 ...]
 /// #pragma anki hlsl // By default it's GLSL
+/// #pragma anki 16bit // Works only in HLSL. Gain 16bit types but loose min16xxx types
 ///
 /// #pragma anki struct NAME
 /// #	pragma anki member [ANKI_RP] TYPE NAME [if MUTATOR_NAME is MUTATOR_VALUE]
@@ -182,6 +183,11 @@ public:
 		return m_hlsl;
 	}
 
+	Bool compileWith16bitTypes() const
+	{
+		return m_16bitTypes;
+	}
+
 	/// Generates the common header that will be used by all AnKi shaders.
 	static void generateAnkiShaderHeader(ShaderType shaderType, const ShaderCompilerOptions& compilerOptions,
 										 StringRaii& header);
@@ -228,6 +234,7 @@ private:
 	Bool m_insideStruct = false;
 
 	Bool m_hlsl = false;
+	Bool m_16bitTypes = false;
 
 	Error parseFile(CString fname, U32 depth);
 	Error parseLine(CString line, CString fname, Bool& foundPragmaOnce, U32 depth, U32 lineNumber);
@@ -243,6 +250,7 @@ private:
 	Error parsePragmaStructEnd(const StringRaii* begin, const StringRaii* end, CString line, CString fname);
 	Error parsePragmaMember(const StringRaii* begin, const StringRaii* end, CString line, CString fname);
 	Error parsePragmaHlsl(const StringRaii* begin, const StringRaii* end, CString line, CString fname);
+	Error parsePragma16bit(const StringRaii* begin, const StringRaii* end, CString line, CString fname);
 
 	void tokenizeLine(CString line, DynamicArrayRaii<StringRaii>& tokens) const;
 

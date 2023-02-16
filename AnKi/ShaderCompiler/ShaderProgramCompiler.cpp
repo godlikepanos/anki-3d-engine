@@ -188,8 +188,8 @@ static Error compileSpirv(ConstWeakArray<MutatorValue> mutation, const ShaderPro
 		}
 		else
 		{
-			ANKI_CHECK(compileHlslToSpirv(parserVariant.getSource(shaderType), shaderType, tempPool, spirv[shaderType],
-										  errorLog));
+			ANKI_CHECK(compileHlslToSpirv(parserVariant.getSource(shaderType), shaderType,
+										  parser.compileWith16bitTypes(), tempPool, spirv[shaderType], errorLog));
 		}
 		ANKI_ASSERT(spirv[shaderType].getSize() > 0);
 	}

@@ -50,8 +50,8 @@ static CString profile(ShaderType shaderType)
 	return "";
 }
 
-Error compileHlslToSpirv(CString src, ShaderType shaderType, BaseMemoryPool& tmpPool, DynamicArrayRaii<U8>& spirv,
-						 StringRaii& errorMessage)
+Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16bitTypes, BaseMemoryPool& tmpPool,
+						 DynamicArrayRaii<U8>& spirv, StringRaii& errorMessage)
 {
 	Array<U64, 3> toHash = {g_nextFileId.fetchAdd(1), getCurrentProcessId(), getRandom() & kMaxU32};
 	const U64 rand = computeHash(&toHash[0], sizeof(toHash));
@@ -83,7 +83,6 @@ Error compileHlslToSpirv(CString src, ShaderType shaderType, BaseMemoryPool& tmp
 	dxcArgs.emplaceBack(&tmpPool, "-Wfatal-errors");
 	dxcArgs.emplaceBack(&tmpPool, "-Wundef");
 	dxcArgs.emplaceBack(&tmpPool, "-Wno-unused-const-variable");
-	// dxcArgs.emplaceBack(&tmpPool, "-enable-16bit-types");
 	dxcArgs.emplaceBack(&tmpPool, "-HV");
 	dxcArgs.emplaceBack(&tmpPool, "2021");
 	dxcArgs.emplaceBack(&tmpPool, "-E");
@@ -93,6 +92,11 @@ Error compileHlslToSpirv(CString src, ShaderType shaderType, BaseMemoryPool& tmp
 	dxcArgs.emplaceBack(&tmpPool, "-spirv");
 	dxcArgs.emplaceBack(&tmpPool, "-fspv-target-env=vulkan1.1spirv1.4");
 	dxcArgs.emplaceBack(&tmpPool, hlslFilename);
+
+	if(compileWith16bitTypes)
+	{
+		dxcArgs.emplaceBack(&tmpPool, "-enable-16bit-types");
+	}
 
 	DynamicArrayRaii<CString> dxcArgs2(&tmpPool, dxcArgs.getSize());
 	for(U32 i = 0; i < dxcArgs.getSize(); ++i)
