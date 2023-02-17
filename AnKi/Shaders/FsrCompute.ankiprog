@@ -4,5 +4,5 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki start comp
-#include <AnKi/Shaders/Fsr.glsl>
+#include <AnKi/Shaders/Fsr.hlsl>
 #pragma anki end

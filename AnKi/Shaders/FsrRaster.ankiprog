@@ -3,10 +3,12 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki hlsl
+
 #pragma anki start vert
-#include <AnKi/Shaders/QuadVert.glsl>
+#include <AnKi/Shaders/QuadVert.hlsl>
 #pragma anki end
 
 #pragma anki start frag
-#include <AnKi/Shaders/Fsr.glsl>
+#include <AnKi/Shaders/Fsr.hlsl>
 #pragma anki end
