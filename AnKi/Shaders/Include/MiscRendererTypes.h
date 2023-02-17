@@ -110,7 +110,10 @@ struct VolumetricFogUniforms
 	RF32 m_fogAbsorptionCoeff;
 	RF32 m_near;
 	RF32 m_far;
-	F32 m_padding;
+	F32 m_zSplitCountf;
+
+	UVec3 m_volumeSize;
+	F32 m_maxZSplitsToProcessf;
 };
 
 // Vol lighting

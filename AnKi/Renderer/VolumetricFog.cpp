@@ -33,10 +33,6 @@ Error VolumetricFog::init()
 		"ShaderBinaries/VolumetricFogAccumulation.ankiprogbin", m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-	variantInitInfo.addConstant("kVolumeSize", UVec3(m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]));
-	variantInitInfo.addConstant("kZSplitCount", m_r->getZSplitCount());
-	variantInitInfo.addConstant("kFinalZSplit", m_finalZSplit);
-
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProg = variant->getProgram();
@@ -81,6 +77,9 @@ void VolumetricFog::populateRenderGraph(RenderingContext& ctx)
 		regs.m_fogAbsorptionCoeff = el.m_fog.m_absorptionCoeff;
 		regs.m_near = ctx.m_renderQueue->m_cameraNear;
 		regs.m_far = ctx.m_renderQueue->m_cameraFar;
+		regs.m_zSplitCountf = F32(m_r->getZSplitCount());
+		regs.m_volumeSize = UVec3(m_volumeSize);
+		regs.m_maxZSplitsToProcessf = F32(m_finalZSplit + 1);
 
 		cmdb->setPushConstants(&regs, sizeof(regs));
 
