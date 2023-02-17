@@ -51,10 +51,6 @@ Error VolumetricLightingAccumulation::init()
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addMutation("ENABLE_SHADOWS", 1);
-	variantInitInfo.addConstant("kVolumeSize", UVec3(m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]));
-	variantInitInfo.addConstant("kTileCount", UVec2(m_r->getTileCounts().x(), m_r->getTileCounts().y()));
-	variantInitInfo.addConstant("kZSplitCount", m_r->getZSplitCount());
-	variantInitInfo.addConstant("kFinalZSplit", m_finalZSplit);
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
@@ -144,6 +140,8 @@ void VolumetricLightingAccumulation::run(const RenderingContext& ctx, RenderPass
 		unis.m_densityAtMinHeight = queueEl.m_fog.m_maxDensity;
 		unis.m_densityAtMaxHeight = queueEl.m_fog.m_minDensity;
 	}
+	unis.m_volumeSize = UVec3(m_volumeSize);
+	unis.m_maxZSplitsToProcessf = F32(m_finalZSplit + 1);
 	cmdb->setPushConstants(&unis, sizeof(unis));
 
 	dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_workgroupSize[2], m_volumeSize[0],

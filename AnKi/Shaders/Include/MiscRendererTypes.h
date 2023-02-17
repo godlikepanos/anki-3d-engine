@@ -120,6 +120,9 @@ struct VolumetricLightingUniforms
 	RF32 m_densityAtMaxHeight;
 	F32 m_minHeight;
 	F32 m_oneOverMaxMinusMinHeight; // 1 / (maxHeight / minHeight)
+
+	UVec3 m_volumeSize;
+	F32 m_maxZSplitsToProcessf;
 };
 
 ANKI_END_NAMESPACE

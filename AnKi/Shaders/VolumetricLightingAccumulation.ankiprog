@@ -5,6 +5,8 @@
 
 // This shader accumulates the lighting for every cluster fraction
 
+#pragma anki hlsl
+
 #pragma anki mutator ENABLE_SHADOWS 0 1
 
 #pragma anki start comp
@@ -17,37 +19,26 @@
 #define CLUSTERED_SHADING_GI_BINDING 10u
 #define CLUSTERED_SHADING_FOG_BINDING 12u
 #define CLUSTERED_SHADING_CLUSTERS_BINDING 13u
-#include <AnKi/Shaders/ClusteredShadingCommon.glsl>
+#include <AnKi/Shaders/ClusteredShadingCommon.hlsl>
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC3(kVolumeSize, 0u);
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(kTileCount, 3u);
-ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 5u);
-ANKI_SPECIALIZATION_CONSTANT_U32(kFinalZSplit, 6u);
+constexpr F32 kPhaseFunctionAnisotropy = 0.3;
 
-const F32 kPhaseFunctionAnisotropy = 0.3;
+[[vk::binding(0)]] SamplerState g_linearAnyRepeatSampler;
+[[vk::binding(1)]] SamplerState g_linearAnyClampSampler;
+[[vk::binding(2)]] SamplerComparisonState g_linearAnyClampShadowSampler;
 
-const UVec3 kWorkgroupSize = UVec3(8, 8, 8);
-layout(local_size_x = kWorkgroupSize.x, local_size_y = kWorkgroupSize.y, local_size_z = kWorkgroupSize.z) in;
+[[vk::binding(3)]] RWTexture3D<Vec4> g_volume;
+[[vk::binding(4)]] Texture2D g_noiseTex;
+[[vk::binding(5)]] Texture3D g_prevVolume;
 
-layout(set = 0, binding = 0) uniform sampler u_linearAnyRepeatSampler;
-layout(set = 0, binding = 1) uniform sampler u_linearAnyClampSampler;
-layout(set = 0, binding = 2) uniform samplerShadow u_linearAnyClampShadowSampler;
+[[vk::push_constant]] ConstantBuffer<VolumetricLightingUniforms> g_fogUnis;
 
-layout(set = 0, binding = 3) writeonly uniform image3D u_volume;
-layout(set = 0, binding = 4) uniform texture2D u_noiseTex;
-layout(set = 0, binding = 5) uniform texture3D u_prevVolume;
-
-layout(push_constant, std140) uniform b_pc
-{
-	VolumetricLightingUniforms u_fogUnis;
-};
-
-Vec3 g_globalInvocationID = Vec3(gl_GlobalInvocationID);
+static Vec3 g_svDispatchThreadId;
 
 Vec3 readRand()
 {
-	Vec3 random = textureLod(u_noiseTex, u_linearAnyRepeatSampler, (g_globalInvocationID.xy + 0.5) / 64.0, 0.0).rgb;
-	random = animateBlueNoise(random, u_clusteredShading.m_frame);
+	Vec3 random = g_noiseTex.SampleLevel(g_linearAnyRepeatSampler, (g_svDispatchThreadId.xy + 0.5) / 64.0, 0.0).rgb;
+	random = animateBlueNoise(random, g_clusteredShading.m_frame);
 
 	return random;
 }
@@ -55,25 +46,26 @@ Vec3 readRand()
 Vec3 worldPosInsideClusterAndZViewSpace(Vec3 relativePos, out F32 negativeZViewSpace, out Vec3 uvw)
 {
 	// Compute the linear depth
-	const F32 maxLinearDepth = F32(kFinalZSplit + 1u) / F32(kZSplitCount);
-	const F32 linearDepthFraction = maxLinearDepth / F32(kVolumeSize.z);
-	const F32 linearDepthNear = g_globalInvocationID.z * linearDepthFraction;
-	const F32 linearDepthFar = (g_globalInvocationID.z + 1.0) * linearDepthFraction;
-	const F32 linearDepth = mix(linearDepthNear, linearDepthFar, relativePos.z);
+	const F32 maxLinearDepth = g_fogUnis.m_maxZSplitsToProcessf / F32(g_clusteredShading.m_zSplitCount);
+	const F32 linearDepthFraction = maxLinearDepth / F32(g_fogUnis.m_volumeSize.z);
+	const F32 linearDepthNear = g_svDispatchThreadId.z * linearDepthFraction;
+	const F32 linearDepthFar = (g_svDispatchThreadId.z + 1.0) * linearDepthFraction;
+	const F32 linearDepth = lerp(linearDepthNear, linearDepthFar, relativePos.z);
 	uvw.z = linearDepth;
 
 	// Z view space
 	negativeZViewSpace =
-		linearDepth * (u_clusteredShading.m_far - u_clusteredShading.m_near) + u_clusteredShading.m_near;
+		linearDepth * (g_clusteredShading.m_far - g_clusteredShading.m_near) + g_clusteredShading.m_near;
 	const F32 zViewSpace = -negativeZViewSpace;
 
 	// Get the position in view space
-	const Vec2 uv = mix(g_globalInvocationID.xy, g_globalInvocationID.xy + 1.0, relativePos.xy) / Vec2(kVolumeSize.xy);
+	const Vec2 uv =
+		lerp(g_svDispatchThreadId.xy, g_svDispatchThreadId.xy + 1.0, relativePos.xy) / Vec2(g_fogUnis.m_volumeSize.xy);
 	uvw.xy = uv;
-	const Vec2 xyViewSpace = UV_TO_NDC(uv) * u_clusteredShading.m_matrices.m_unprojectionParameters.xy * zViewSpace;
+	const Vec2 xyViewSpace = uvToNdc(uv) * g_clusteredShading.m_matrices.m_unprojectionParameters.xy * zViewSpace;
 
 	// Get the final world pos
-	const Vec3 worldPos = u_clusteredShading.m_matrices.m_cameraTransform * Vec4(xyViewSpace, zViewSpace, 1.0);
+	const Vec3 worldPos = mul(g_clusteredShading.m_matrices.m_cameraTransform, Vec4(xyViewSpace, zViewSpace, 1.0));
 
 	return worldPos;
 }
@@ -100,11 +92,13 @@ F32 phaseFunction(Vec3 viewDir, Vec3 lightDir, F32 g)
 
 Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpace)
 {
-	Vec3 color = Vec3(0.0);
-	const Vec3 viewDir = normalize(u_clusteredShading.m_cameraPosition - worldPos);
+	ANKI_MAYBE_UNUSED(negativeZViewSpace);
+
+	Vec3 color = 0.0;
+	const Vec3 viewDir = normalize(g_clusteredShading.m_cameraPosition - worldPos);
 
 	// Dir light
-	const DirectionalLight dirLight = u_clusteredShading.m_directionalLight;
+	const DirectionalLight dirLight = g_clusteredShading.m_directionalLight;
 	if(dirLight.m_active != 0u)
 	{
 		F32 factor = phaseFunction(viewDir, dirLight.m_direction, kPhaseFunctionAnisotropy);
@@ -116,8 +110,8 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 			const U32 cascadeIdx = computeShadowCascadeIndex(negativeZViewSpace, dirLight.m_shadowCascadeDistances,
 															 dirLight.m_shadowCascadeCount);
 
-			factor *= computeShadowFactorDirLight(dirLight, cascadeIdx, worldPos, u_shadowAtlasTex,
-												  u_linearAnyClampShadowSampler);
+			factor *= computeShadowFactorDirLight(dirLight, cascadeIdx, worldPos, g_shadowAtlasTex,
+												  g_linearAnyClampShadowSampler);
 		}
 #endif
 
@@ -125,11 +119,11 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 	}
 
 	// Point lights
-	[[dont_unroll]] while(cluster.m_pointLightsMask != ExtendedClusterObjectMask(0))
+	[loop] while(cluster.m_pointLightsMask != ExtendedClusterObjectMask(0))
 	{
-		const I32 idx = findLSB2(cluster.m_pointLightsMask);
+		const I32 idx = firstbitlow2(cluster.m_pointLightsMask);
 		cluster.m_pointLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
-		const PointLight light = u_pointLights2[idx];
+		const PointLight light = g_pointLights[idx];
 
 		const Vec3 frag2Light = light.m_position - worldPos;
 		F32 factor = computeAttenuationFactor(light.m_squareRadiusOverOne, frag2Light);
@@ -139,7 +133,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 #if ENABLE_SHADOWS
 		if(light.m_shadowAtlasTileScale >= 0.0)
 		{
-			factor *= computeShadowFactorPointLight(light, frag2Light, u_shadowAtlasTex, u_linearAnyClampShadowSampler);
+			factor *= computeShadowFactorPointLight(light, frag2Light, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
 		}
 #endif
 
@@ -147,11 +141,11 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 	}
 
 	// Spot lights
-	[[dont_unroll]] while(cluster.m_spotLightsMask != ExtendedClusterObjectMask(0))
+	[loop] while(cluster.m_spotLightsMask != ExtendedClusterObjectMask(0))
 	{
-		const I32 idx = findLSB2(cluster.m_spotLightsMask);
+		const I32 idx = firstbitlow2(cluster.m_spotLightsMask);
 		cluster.m_spotLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
-		const SpotLight light = u_spotLights[idx];
+		const SpotLight light = g_spotLights[idx];
 
 		const Vec3 frag2Light = light.m_position - worldPos;
 		F32 factor = computeAttenuationFactor(light.m_squareRadiusOverOne, frag2Light);
@@ -165,7 +159,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 #if ENABLE_SHADOWS
 		if(light.m_shadowLayer != kMaxU32)
 		{
-			factor *= computeShadowFactorSpotLight(light, worldPos, u_shadowAtlasTex, u_linearAnyClampShadowSampler);
+			factor *= computeShadowFactorSpotLight(light, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
 		}
 #endif
 
@@ -176,29 +170,29 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 	{
 		Vec3 diffIndirect;
 
-		if(bitCount(cluster.m_giProbesMask) == 1)
+		if(countbits(cluster.m_giProbesMask) == 1)
 		{
 			// Only one probe, do a fast path without blend weight
 
-			const GlobalIlluminationProbe probe = u_giProbes[findLSB2(cluster.m_giProbesMask)];
+			const GlobalIlluminationProbe probe = g_giProbes[firstbitlow2(cluster.m_giProbesMask)];
 
 			// Sample
-			diffIndirect = sampleGlobalIllumination(worldPos, viewDir, probe, u_globalIlluminationTextures,
-													u_linearAnyClampSampler);
+			diffIndirect = sampleGlobalIllumination(worldPos, viewDir, probe, g_globalIlluminationTextures,
+													g_linearAnyClampSampler);
 		}
 		else
 		{
 			// Zero or more than one probes, do a slow path that blends them together
 
-			F32 totalBlendWeight = kEpsilonf;
-			diffIndirect = Vec3(0.0);
+			F32 totalBlendWeight = kEpsilonF32;
+			diffIndirect = 0.0;
 
 			// Loop probes
-			[[dont_unroll]] while(cluster.m_giProbesMask != 0u)
+			[loop] while(cluster.m_giProbesMask != 0u)
 			{
-				const U32 idx = U32(findLSB2(cluster.m_giProbesMask));
+				const U32 idx = U32(firstbitlow2(cluster.m_giProbesMask));
 				cluster.m_giProbesMask &= ~(1u << idx);
-				const GlobalIlluminationProbe probe = u_giProbes[idx];
+				const GlobalIlluminationProbe probe = g_giProbes[idx];
 
 				// Compute blend weight
 				const F32 blendWeight =
@@ -206,8 +200,8 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 				totalBlendWeight += blendWeight;
 
 				// Sample
-				const Vec3 c = sampleGlobalIllumination(worldPos, viewDir, probe, u_globalIlluminationTextures,
-														u_linearAnyClampSampler);
+				const Vec3 c = sampleGlobalIllumination(worldPos, viewDir, probe, g_globalIlluminationTextures,
+														g_linearAnyClampSampler);
 				diffIndirect += c * blendWeight;
 			}
 
@@ -224,14 +218,14 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 	F32 fogDensity = 0.0;
 	{
 		// Calculate the constant density
-		const F32 fogFactor = saturate((worldPos.y - u_fogUnis.m_minHeight) * u_fogUnis.m_oneOverMaxMinusMinHeight);
-		fogDensity = mix(u_fogUnis.m_densityAtMinHeight, u_fogUnis.m_densityAtMaxHeight, fogFactor);
+		const F32 fogFactor = saturate((worldPos.y - g_fogUnis.m_minHeight) * g_fogUnis.m_oneOverMaxMinusMinHeight);
+		fogDensity = lerp(g_fogUnis.m_densityAtMinHeight, g_fogUnis.m_densityAtMaxHeight, fogFactor);
 
-		[[dont_unroll]] while(cluster.m_fogDensityVolumesMask != 0u)
+		[loop] while(cluster.m_fogDensityVolumesMask != 0u)
 		{
-			const U32 idx = U32(findLSB2(cluster.m_fogDensityVolumesMask));
+			const U32 idx = U32(firstbitlow2(cluster.m_fogDensityVolumesMask));
 			cluster.m_fogDensityVolumesMask &= ~(1u << idx);
-			const FogDensityVolume vol = u_fogDensityVolumes[idx];
+			const FogDensityVolume vol = g_fogDensityVolumes[idx];
 
 			F32 factor;
 			[branch] if(vol.m_isBox == 1u)
@@ -254,12 +248,14 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 	return Vec4(color, fogDensity);
 }
 
-void main()
+[numthreads(8, 8, 8)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
-	if(any(greaterThanEqual(gl_GlobalInvocationID.xyz, kVolumeSize)))
+	if(any(svDispatchThreadId >= g_fogUnis.m_volumeSize))
 	{
 		return;
 	}
+
+	g_svDispatchThreadId = svDispatchThreadId;
 
 	// Find a random pos inside the cluster
 	F32 negativeZViewSpace;
@@ -267,12 +263,12 @@ void main()
 	const Vec3 worldPos = worldPosInsideClusterAndZViewSpace(readRand(), negativeZViewSpace, uvw);
 
 	// Get the cluster
-	const UVec2 tileIdxXY = UVec2(uvw.xy * Vec2(kTileCount));
-	const U32 tileIdx = tileIdxXY.y * kTileCount.x + tileIdxXY.x;
-	Cluster cluster = u_clusters[tileIdx];
+	const UVec2 tileIdxXY = UVec2(uvw.xy * Vec2(g_clusteredShading.m_tileCounts));
+	const U32 tileIdx = tileIdxXY.y * g_clusteredShading.m_tileCounts.x + tileIdxXY.x;
+	Cluster cluster = g_clusters[tileIdx];
 
-	const U32 zSplitIdx = U32(uvw.z * F32(kZSplitCount));
-	const Cluster split = u_clusters[kTileCount.x * kTileCount.y + zSplitIdx];
+	const U32 zSplitIdx = U32(uvw.z * F32(g_clusteredShading.m_zSplitCount));
+	const Cluster split = g_clusters[g_clusteredShading.m_tileCounts.x * g_clusteredShading.m_tileCounts.y + zSplitIdx];
 
 	cluster.m_pointLightsMask |= split.m_pointLightsMask;
 	cluster.m_spotLightsMask |= split.m_spotLightsMask;
@@ -285,25 +281,26 @@ void main()
 	// Read the prev result
 	{
 		// Better get a new world pos in the center of the cluster. Using worldPos creates noisy results
-		const Vec3 midWPos = worldPosInsideCluster(Vec3(0.5));
+		const Vec3 midWPos = worldPosInsideCluster(Vec3(0.5, 0.5, 0.5));
 
 		// Project
-		const Vec4 prevClipPos4 = u_clusteredShading.m_previousMatrices.m_viewProjection * Vec4(midWPos, 1.0);
+		const Vec4 prevClipPos4 = mul(g_clusteredShading.m_previousMatrices.m_viewProjection, Vec4(midWPos, 1.0));
 		const Vec3 prevClipPos = prevClipPos4.xyz / prevClipPos4.w;
 
 		// Read prev
-		if(all(greaterThan(prevClipPos.xy, Vec2(-1.0))) && all(lessThan(prevClipPos.xy, Vec2(1.0))))
+		if(all(prevClipPos.xy > -1.0) && all(prevClipPos.xy < 1.0))
 		{
-			const F32 linearDepth = linearizeDepth(prevClipPos.z, u_clusteredShading.m_near, u_clusteredShading.m_far);
+			const F32 linearDepth = linearizeDepth(prevClipPos.z, g_clusteredShading.m_near, g_clusteredShading.m_far);
 			const Vec3 uvw =
-				Vec3(NDC_TO_UV(prevClipPos.xy), linearDepth * (F32(kZSplitCount) / F32(kFinalZSplit + 1u)));
-			const Vec4 history = textureLod(u_prevVolume, u_linearAnyClampSampler, uvw, 0.0);
-			lightAndFog = mix(history, lightAndFog, 1.0 / 16.0);
+				Vec3(ndcToUv(prevClipPos.xy),
+					 linearDepth * (F32(g_clusteredShading.m_zSplitCount) / g_fogUnis.m_maxZSplitsToProcessf));
+			const Vec4 history = g_prevVolume.SampleLevel(g_linearAnyClampSampler, uvw, 0.0);
+			lightAndFog = lerp(history, lightAndFog, 1.0 / 16.0);
 		}
 	}
 
 	// Write result
-	imageStore(u_volume, IVec3(gl_GlobalInvocationID), lightAndFog);
+	g_volume[svDispatchThreadId] = lightAndFog;
 }
 
 #pragma anki end
