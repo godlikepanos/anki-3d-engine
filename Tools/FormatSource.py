@@ -11,16 +11,18 @@ import threading
 import multiprocessing
 import os
 import tempfile
-import shutil
 import platform
 
 file_extensions = ["h", "hpp", "c", "cpp", "glsl", "hlsl", "ankiprog"]
 directories = ["AnKi", "Tests", "Sandbox", "Tools", "Samples"]
-hlsl_semantics = ["TEXCOORD", "SV_POSITION", "SV_TARGET0", "SV_TARGET", "SV_DISPATCHTHREADID", "SV_GROUPINDEX",
-                  "SV_GROUPID"]
+hlsl_semantics = ["TEXCOORD", "SV_POSITION", "SV_TARGET0", "SV_TARGET1", "SV_TARGET2", "SV_TARGET3", "SV_TARGET4",
+                  "SV_TARGET5", "SV_TARGET6", "SV_TARGET7", "SV_DISPATCHTHREADID", "SV_GROUPINDEX", "SV_GROUPID",
+                  "SV_GROUPTHREADID"]
 hlsl_attribs = ["[shader(\"closesthit\")]", "[shader(\"anyhit\")]", "[shader(\"raygeneration\")]", "[shader(\"miss\")]",
                 "[raypayload]"]
-hlsl_attribs_fake = ["__ak_chit__", "__ak_ahit__", "__ak_rgen__", "__ak_miss__", "[[raypayload]]"]
+hlsl_attribs_fake = ["______shaderclosesthit", "______shaderanyhit", "______shaderraygeneration", "______shadermiss",
+                     "[[raypaylo]]"]
+
 
 def thread_callback(tid):
     """ Call clang-format """
@@ -47,7 +49,7 @@ def thread_callback(tid):
             file_txt = file.read()
             file.close()
 
-            original_file_hash = hash(file_txt) 
+            original_file_hash = hash(file_txt)
 
             # Replace all semantics
             for semantic in hlsl_semantics:
@@ -99,6 +101,7 @@ def thread_callback(tid):
 
             # Cleanup
             os.remove(tmp_filename)
+
 
 # Gather the filenames
 file_names = []
