@@ -148,17 +148,15 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 		cmdb->bindShaderProgram(m_grProg);
 
 		cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
-		rgraphCtx.bindTexture(0, 1, m_r->getGBuffer().getDepthRt(),
-							  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
-		rgraphCtx.bindColorTexture(0, 2, m_r->getLightShading().getRt());
-		rgraphCtx.bindColorTexture(0, 3, m_runCtx.m_historyRt);
-		rgraphCtx.bindColorTexture(0, 4, m_r->getMotionVectors().getMotionVectorsRt());
-		rgraphCtx.bindImage(0, 5, m_r->getTonemapping().getRt());
+		rgraphCtx.bindColorTexture(0, 1, m_r->getLightShading().getRt());
+		rgraphCtx.bindColorTexture(0, 2, m_runCtx.m_historyRt);
+		rgraphCtx.bindColorTexture(0, 3, m_r->getMotionVectors().getMotionVectorsRt());
+		rgraphCtx.bindImage(0, 4, m_r->getTonemapping().getRt());
 
 		if(getExternalSubsystems().m_config->getRPreferCompute())
 		{
-			rgraphCtx.bindImage(0, 6, m_runCtx.m_renderRt, TextureSubresourceInfo());
-			rgraphCtx.bindImage(0, 7, m_runCtx.m_tonemappedRt, TextureSubresourceInfo());
+			rgraphCtx.bindImage(0, 5, m_runCtx.m_renderRt, TextureSubresourceInfo());
+			rgraphCtx.bindImage(0, 6, m_runCtx.m_tonemappedRt, TextureSubresourceInfo());
 
 			dispatchPPCompute(cmdb, 8, 8, m_r->getInternalResolution().x(), m_r->getInternalResolution().y());
 		}

@@ -4,5 +4,5 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki start comp
-#include <AnKi/Shaders/TemporalAA.glsl>
+#include <AnKi/Shaders/TemporalAA.hlsl>
 #pragma anki end
