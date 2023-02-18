@@ -4,5 +4,5 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki start comp
-#include <AnKi/Shaders/ShadowmapsResolve.glsl>
+#include <AnKi/Shaders/ShadowmapsResolve.hlsl>
 #pragma anki end
