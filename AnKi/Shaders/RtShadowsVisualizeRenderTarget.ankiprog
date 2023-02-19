@@ -3,33 +3,32 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki hlsl
+
 #pragma anki mutator LAYER_GROUP 0 1 2
 
 #pragma anki start vert
-#include <AnKi/Shaders/QuadVert.glsl>
+#include <AnKi/Shaders/QuadVert.hlsl>
 #pragma anki end
 
 #pragma anki start frag
-#include <AnKi/Shaders/RtShadows.glsl>
+#include <AnKi/Shaders/RtShadows.hlsl>
 
-layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
-layout(set = 0, binding = 1) uniform utexture2D u_inTex;
+[[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
+[[vk::binding(1)]] Texture2D<UVec4> g_inTex;
 
-layout(location = 0) in Vec2 in_uv;
-layout(location = 0) out Vec3 out_color;
-
-void main()
+Vec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 {
-	const UVec4 packed = textureLod(u_inTex, u_nearestAnyClampSampler, in_uv, 0.0);
-	F32 shadowFactors[kMaxRtShadowLayers];
+	const UVec4 packed = g_inTex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0);
+	RF32 shadowFactors[kMaxRtShadowLayers];
 	unpackRtShadows(packed, shadowFactors);
 
 #if LAYER_GROUP == 0
-	out_color = Vec3(shadowFactors[0], shadowFactors[1], shadowFactors[2]);
+	return Vec3(shadowFactors[0], shadowFactors[1], shadowFactors[2]);
 #elif LAYER_GROUP == 1
-	out_color = Vec3(shadowFactors[3], shadowFactors[4], shadowFactors[5]);
+	return Vec3(shadowFactors[3], shadowFactors[4], shadowFactors[5]);
 #else
-	out_color = Vec3(shadowFactors[6], shadowFactors[7], 0.0);
+	return Vec3(shadowFactors[6], shadowFactors[7], 0.0);
 #endif
 }
 #pragma anki end
