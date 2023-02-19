@@ -682,7 +682,7 @@ constexpr F16 kMinF16 = 0.00006104hf;
 constexpr F32 kPi = 3.14159265358979323846f;
 #endif
 
-//! == Consts ==========================================================================================================
+//! == Common ==========================================================================================================
 ANKI_BEGIN_NAMESPACE
 
 /// The renderer will group drawcalls into instances up to this number.
@@ -693,5 +693,86 @@ constexpr U32 kMaxShadowCascades = 4u;
 
 constexpr F32 kShadowsPolygonOffsetFactor = 1.25f;
 constexpr F32 kShadowsPolygonOffsetUnits = 2.75f;
+
+struct DrawIndirectInfo
+{
+	U32 m_vertexCount;
+	U32 m_instanceCount;
+	U32 m_firstVertex;
+	U32 m_firstInstance;
+
+#if defined(__cplusplus)
+	DrawIndirectInfo()
+		: m_vertexCount(kMaxU32)
+		, m_instanceCount(1)
+		, m_firstVertex(0)
+		, m_firstInstance(0)
+	{
+	}
+
+	DrawIndirectInfo(const DrawIndirectInfo&) = default;
+
+	DrawIndirectInfo(U32 count, U32 instanceCount, U32 first, U32 baseInstance)
+		: m_vertexCount(count)
+		, m_instanceCount(instanceCount)
+		, m_firstVertex(first)
+		, m_firstInstance(baseInstance)
+	{
+	}
+
+	Bool operator==(const DrawIndirectInfo& b) const
+	{
+		return m_vertexCount == b.m_vertexCount && m_instanceCount == b.m_instanceCount
+			   && m_firstVertex == b.m_firstVertex && m_firstInstance == b.m_firstInstance;
+	}
+
+	Bool operator!=(const DrawIndirectInfo& b) const
+	{
+		return !(operator==(b));
+	}
+#endif
+};
+
+struct DrawIndexedIndirectInfo
+{
+	U32 m_indexCount;
+	U32 m_instanceCount;
+	U32 m_firstIndex;
+	I32 m_vertexOffset;
+	U32 m_firstInstance;
+
+#if defined(__cplusplus)
+	DrawIndexedIndirectInfo()
+		: m_indexCount(kMaxU32)
+		, m_instanceCount(1)
+		, m_firstIndex(0)
+		, m_vertexOffset(0)
+		, m_firstInstance(0)
+	{
+	}
+
+	DrawIndexedIndirectInfo(const DrawIndexedIndirectInfo&) = default;
+
+	DrawIndexedIndirectInfo(U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance)
+		: m_indexCount(count)
+		, m_instanceCount(instanceCount)
+		, m_firstIndex(firstIndex)
+		, m_vertexOffset(baseVertex)
+		, m_firstInstance(baseInstance)
+	{
+	}
+
+	Bool operator==(const DrawIndexedIndirectInfo& b) const
+	{
+		return m_indexCount == b.m_indexCount && m_instanceCount == b.m_instanceCount && m_firstIndex == b.m_firstIndex
+			   && m_vertexOffset == b.m_vertexOffset && m_firstInstance == b.m_firstInstance;
+	}
+
+	Bool operator!=(const DrawIndexedIndirectInfo& b) const
+	{
+		return !(operator==(b));
+	}
+#endif
+};
 
 ANKI_END_NAMESPACE

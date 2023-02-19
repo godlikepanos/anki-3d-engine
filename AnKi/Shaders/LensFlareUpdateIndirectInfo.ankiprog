@@ -3,76 +3,60 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki hlsl
+
 #pragma anki start comp
-#include <AnKi/Shaders/Common.glsl>
+#include <AnKi/Shaders/Common.hlsl>
 
 ANKI_SPECIALIZATION_CONSTANT_UVEC2(kInDepthMapSize, 0u);
+#define THREAD_COUNT_SQRT 8
 
-const U32 kWorkgroupSize = 8u;
-layout(local_size_x = kWorkgroupSize, local_size_y = kWorkgroupSize, local_size_z = 1) in;
+[[vk::push_constant]] ConstantBuffer<Mat4> g_mvp;
+[[vk::binding(0)]] StructuredBuffer<Vec4> g_flarePositions;
+[[vk::binding(1)]] RWStructuredBuffer<DrawIndirectInfo> g_indirectInfo;
+[[vk::binding(2)]] SamplerState g_nearestAnyClampSampler;
+[[vk::binding(3)]] Texture2D g_depthMap;
 
-struct DrawArraysIndirectInfo
-{
-	U32 count;
-	U32 instanceCount;
-	U32 first;
-	U32 baseInstance;
-};
+groupshared U32 s_maxDepth;
 
-layout(set = 0, binding = 0, std430, row_major) readonly buffer b_lf
-{
-	Mat4 u_mvp;
-	Vec4 u_flarePositions[];
-};
-
-layout(set = 0, binding = 1, std430) writeonly buffer b_indirectInfo
-{
-	DrawArraysIndirectInfo u_indirectInfo[];
-};
-
-layout(set = 0, binding = 2) uniform sampler u_nearestAnyClampSampler;
-layout(set = 0, binding = 3) uniform texture2D u_depthMap;
-
-shared U32 s_maxDepth;
-
-void main()
+[numthreads(THREAD_COUNT_SQRT, THREAD_COUNT_SQRT, 1)] void
+main(U32 svGroupIndex : SV_GROUPINDEX, UVec3 svGroupThreadId : SV_GROUPTHREADID, UVec3 svGroupId : SV_GROUPID)
 {
 	// Init the s_maxDepth
-	if(gl_LocalInvocationIndex == 0u)
+	if(svGroupIndex == 0u)
 	{
 		s_maxDepth = 0u;
 	}
-	memoryBarrierShared();
-	barrier();
+
+	GroupMemoryBarrierWithGroupSync();
 
 	// Project the flare
-	const U32 flareIdx = gl_WorkGroupID.x;
-	const Vec4 posClip = u_mvp * u_flarePositions[flareIdx];
+	const U32 flareIdx = svGroupId.x;
+	const Vec4 posClip = mul(g_mvp, g_flarePositions[flareIdx]);
 	const Vec3 posNdc = posClip.xyz / posClip.w;
 	const F32 depth = posNdc.z;
 
 	// Compute the UVs to sample the depth map
-	// Belongs to [-kWorkgroupSize, kWorkgroupSize]
-	const Vec2 displacement = Vec2(gl_LocalInvocationID.xy) - Vec2(kWorkgroupSize / 2u);
+	// Belongs to [-THREAD_COUNT_SQRT, THREAD_COUNT_SQRT]
+	const Vec2 displacement = Vec2(svGroupThreadId.xy) - (THREAD_COUNT_SQRT / 2u);
 	const Vec2 texelSize = 1.0 / Vec2(kInDepthMapSize);
-	const Vec2 uv = NDC_TO_UV(posNdc.xy) + displacement * texelSize;
+	const Vec2 uv = ndcToUv(posNdc.xy) + displacement * texelSize;
 
 	// Sample and store depth
-	const F32 refDepth = textureLod(u_depthMap, u_nearestAnyClampSampler, uv, 0.0).r;
-	atomicMax(s_maxDepth, U32(refDepth * F32(kMaxU32)));
+	const F32 refDepth = g_depthMap.SampleLevel(g_nearestAnyClampSampler, uv, 0.0).r;
+	InterlockedMax(s_maxDepth, U32(refDepth * F32(kMaxU32)));
 
 	// Sync
-	memoryBarrierShared();
-	barrier();
+	GroupMemoryBarrierWithGroupSync();
 
-	if(gl_LocalInvocationIndex == 0u)
+	if(svGroupIndex == 0u)
 	{
 		const F32 refDepth2 = F32(s_maxDepth) / F32(kMaxU32);
-		u_indirectInfo[flareIdx].count = (depth > refDepth2) ? 0u : 4u;
+		g_indirectInfo[flareIdx].m_vertexCount = (depth > refDepth2) ? 0u : 4u;
 
-		u_indirectInfo[flareIdx].instanceCount = 1u;
-		u_indirectInfo[flareIdx].first = 0u;
-		u_indirectInfo[flareIdx].baseInstance = 0u;
+		g_indirectInfo[flareIdx].m_instanceCount = 1u;
+		g_indirectInfo[flareIdx].m_firstVertex = 0u;
+		g_indirectInfo[flareIdx].m_firstInstance = 0u;
 	}
 }
 #pragma anki end

@@ -64,7 +64,7 @@ Error LensFlare::initOcclusion()
 {
 	GrManager& gr = *getExternalSubsystems().m_grManager;
 
-	m_indirectBuff = gr.newBuffer(BufferInitInfo(m_maxFlares * sizeof(DrawArraysIndirectInfo),
+	m_indirectBuff = gr.newBuffer(BufferInitInfo(m_maxFlares * sizeof(DrawIndirectInfo),
 												 BufferUsageBit::kIndirectDraw | BufferUsageBit::kStorageComputeWrite,
 												 BufferMapAccessBit::kNone, "LensFlares"));
 
@@ -89,11 +89,10 @@ void LensFlare::updateIndirectInfo(const RenderingContext& ctx, RenderPassWorkCo
 
 	cmdb->bindShaderProgram(m_updateIndirectBuffGrProg);
 
-	// Write flare info
-	Vec4* flarePositions = allocateAndBindStorage<Vec4*>(sizeof(Mat4) + count * sizeof(Vec4), cmdb, 0, 0);
-	*reinterpret_cast<Mat4*>(flarePositions) = ctx.m_matrices.m_viewProjectionJitter;
-	flarePositions += 4;
+	cmdb->setPushConstants(&ctx.m_matrices.m_viewProjectionJitter, sizeof(ctx.m_matrices.m_viewProjectionJitter));
 
+	// Write flare info
+	Vec4* flarePositions = allocateAndBindStorage<Vec4*>(count * sizeof(Vec4), cmdb, 0, 0);
 	for(U32 i = 0; i < count; ++i)
 	{
 		*flarePositions = Vec4(ctx.m_renderQueue->m_lensFlares[i].m_worldPosition, 1.0f);
@@ -185,8 +184,7 @@ void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBufferPtr& cmd
 		cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearRepeat);
 		cmdb->bindTexture(0, 2, TextureViewPtr(const_cast<TextureView*>(flareEl.m_textureView)));
 
-		cmdb->drawArraysIndirect(PrimitiveTopology::kTriangleStrip, 1, i * sizeof(DrawArraysIndirectInfo),
-								 m_indirectBuff);
+		cmdb->drawArraysIndirect(PrimitiveTopology::kTriangleStrip, 1, i * sizeof(DrawIndirectInfo), m_indirectBuff);
 	}
 
 	// Restore state
