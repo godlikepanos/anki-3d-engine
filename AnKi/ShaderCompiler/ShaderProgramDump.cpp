@@ -7,6 +7,7 @@
 #include <AnKi/Util/Serializer.h>
 #include <AnKi/Util/StringList.h>
 #include <SpirvCross/spirv_glsl.hpp>
+#include <Glslang/External/spirv-tools/include/spirv-tools/libspirv.h>
 
 namespace anki {
 
@@ -42,7 +43,8 @@ static void disassembleBlock(const ShaderProgramBinaryBlock& block, StringListRa
 	}
 }
 
-void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringRaii& humanReadable)
+void dumpShaderProgramBinary(const ShaderDumpOptions& options, const ShaderProgramBinary& binary,
+							 StringRaii& humanReadable)
 {
 	BaseMemoryPool& pool = humanReadable.getMemoryPool();
 	StringListRaii lines(&pool);
@@ -171,23 +173,58 @@ void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringRaii& huma
 	U32 count = 0;
 	for(const ShaderProgramBinaryCodeBlock& code : binary.m_codeBlocks)
 	{
-		spirv_cross::CompilerGLSL::Options options;
-		options.vulkan_semantics = true;
-		options.version = 460;
+		lines.pushBackSprintf(ANKI_TAB "#bin%05u \n", count++);
 
-		const unsigned int* spvb = reinterpret_cast<const unsigned int*>(code.m_binary.getBegin());
-		ANKI_ASSERT((code.m_binary.getSize() % (sizeof(unsigned int))) == 0);
-		std::vector<unsigned int> spv(spvb, spvb + code.m_binary.getSize() / sizeof(unsigned int));
-		spirv_cross::CompilerGLSL compiler(spv);
-		compiler.set_common_options(options);
+		if(options.m_writeGlsl)
+		{
+			spirv_cross::CompilerGLSL::Options options;
+			options.vulkan_semantics = true;
+			options.version = 460;
 
-		std::string glsl = compiler.compile();
-		StringListRaii sourceLines(&pool);
-		sourceLines.splitString(glsl.c_str(), '\n');
-		StringRaii newGlsl(&pool);
-		sourceLines.join("\n" ANKI_TAB ANKI_TAB, newGlsl);
+			const unsigned int* spvb = reinterpret_cast<const unsigned int*>(code.m_binary.getBegin());
+			ANKI_ASSERT((code.m_binary.getSize() % (sizeof(unsigned int))) == 0);
+			std::vector<unsigned int> spv(spvb, spvb + code.m_binary.getSize() / sizeof(unsigned int));
+			spirv_cross::CompilerGLSL compiler(spv);
+			compiler.set_common_options(options);
 
-		lines.pushBackSprintf(ANKI_TAB "#bin%05u \n" ANKI_TAB ANKI_TAB "%s\n", count++, newGlsl.cstr());
+			std::string glsl = compiler.compile();
+			StringListRaii sourceLines(&pool);
+			sourceLines.splitString(glsl.c_str(), '\n');
+			StringRaii newGlsl(&pool);
+			sourceLines.join("\n" ANKI_TAB ANKI_TAB, newGlsl);
+
+			lines.pushBackSprintf(ANKI_TAB ANKI_TAB "%s\n", newGlsl.cstr());
+		}
+
+		if(options.m_writeSpirv)
+		{
+			spv_context context = spvContextCreate(SPV_ENV_UNIVERSAL_1_5);
+
+			const U32 disOptions = SPV_BINARY_TO_TEXT_OPTION_FRIENDLY_NAMES | SPV_BINARY_TO_TEXT_OPTION_NO_HEADER;
+			spv_text text = nullptr;
+
+			const spv_result_t error = spvBinaryToText(context, reinterpret_cast<const U32*>(code.m_binary.getBegin()),
+													   code.m_binary.getSizeInBytes() / 4, disOptions, &text, nullptr);
+
+			spvContextDestroy(context);
+
+			if(!error)
+			{
+				StringListRaii spvlines(&pool);
+				spvlines.splitString(text->str, '\n');
+
+				StringRaii final(&pool);
+				spvlines.join("\n" ANKI_TAB ANKI_TAB, final);
+
+				lines.pushBackSprintf(ANKI_TAB ANKI_TAB "%s\n", final.cstr());
+			}
+			else
+			{
+				lines.pushBackSprintf(ANKI_TAB ANKI_TAB "*error in spiv-dis*\n");
+			}
+
+			spvTextDestroy(text);
+		}
 	}
 
 	lines.pushBack("\n**SHADER VARIANTS**\n");

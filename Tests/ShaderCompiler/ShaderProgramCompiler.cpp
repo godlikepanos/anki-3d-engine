@@ -143,7 +143,8 @@ void main()
 
 #if 1
 	StringRaii dis(&pool);
-	dumpShaderProgramBinary(binary.getBinary(), dis);
+	ShaderDumpOptions options;
+	dumpShaderProgramBinary(options, binary.getBinary(), dis);
 	ANKI_LOGI("Binary disassembly:\n%s\n", dis.cstr());
 #endif
 }
@@ -338,7 +339,8 @@ void main()
 
 #if 1
 	StringRaii dis(&pool);
-	dumpShaderProgramBinary(binary.getBinary(), dis);
+	ShaderDumpOptions options;
+	dumpShaderProgramBinary(options, binary.getBinary(), dis);
 	ANKI_LOGI("Binary disassembly:\n%s\n", dis.cstr());
 #endif
 }

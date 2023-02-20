@@ -11,8 +11,16 @@ namespace anki {
 /// @addtogroup shader_compiler
 /// @{
 
+class ShaderDumpOptions
+{
+public:
+	Bool m_writeGlsl = true;
+	Bool m_writeSpirv = false;
+};
+
 /// Create a human readable representation of the shader binary.
-void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringRaii& humanReadable);
+void dumpShaderProgramBinary(const ShaderDumpOptions& options, const ShaderProgramBinary& binary,
+							 StringRaii& humanReadable);
 /// @}
 
 } // end namespace anki

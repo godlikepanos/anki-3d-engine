@@ -14,11 +14,14 @@ using namespace anki;
 static const char* kUsage = R"(Dump the shader binary to stdout
 Usage: %s [options] input_shader_program_binary
 Options:
--stats      : Print performance statistics for all shaders. By default it doesn't
--only-stats : Print only stats
+-stats     : Print performance statistics for all shaders. By default it doesn't
+-no-binary : Don't print the binary
+-no-glsl   : Don't print GLSL
+-spirv     : Print SPIR-V
 )";
 
-static Error parseCommandLineArgs(WeakArray<char*> argv, Bool& dumpStats, Bool& dumpBinary, StringRaii& filename)
+static Error parseCommandLineArgs(WeakArray<char*> argv, Bool& dumpStats, Bool& dumpBinary, Bool& glsl, Bool& spirv,
+								  StringRaii& filename)
 {
 	// Parse config
 	if(argv.getSize() < 2)
@@ -28,6 +31,8 @@ static Error parseCommandLineArgs(WeakArray<char*> argv, Bool& dumpStats, Bool& 
 
 	dumpStats = false;
 	dumpBinary = true;
+	glsl = true;
+	spirv = false;
 	filename = argv[argv.getSize() - 1];
 
 	for(U32 i = 1; i < argv.getSize() - 1; i++)
@@ -36,10 +41,18 @@ static Error parseCommandLineArgs(WeakArray<char*> argv, Bool& dumpStats, Bool& 
 		{
 			dumpStats = true;
 		}
-		else if(CString(argv[i]) == "-only-stats")
+		else if(CString(argv[i]) == "-no-binary")
 		{
 			dumpBinary = false;
 			dumpStats = true;
+		}
+		else if(CString(argv[i]) == "-no-glsl")
+		{
+			glsl = false;
+		}
+		else if(CString(argv[i]) == "-spirv")
+		{
+			spirv = true;
 		}
 	}
 
@@ -313,7 +326,7 @@ Error dumpStats(const ShaderProgramBinary& bin)
 	return Error::kNone;
 }
 
-Error dump(CString fname, Bool bDumpStats, Bool dumpBinary)
+Error dump(CString fname, Bool bDumpStats, Bool dumpBinary, Bool glsl, Bool spirv)
 {
 	HeapMemoryPool pool(allocAligned, nullptr);
 
@@ -322,8 +335,12 @@ Error dump(CString fname, Bool bDumpStats, Bool dumpBinary)
 
 	if(dumpBinary)
 	{
+		ShaderDumpOptions options;
+		options.m_writeGlsl = glsl;
+		options.m_writeSpirv = spirv;
+
 		StringRaii txt(&pool);
-		dumpShaderProgramBinary(binw.getBinary(), txt);
+		dumpShaderProgramBinary(options, binw.getBinary(), txt);
 
 		printf("%s\n", txt.cstr());
 	}
@@ -342,13 +359,15 @@ int main(int argc, char** argv)
 	StringRaii filename(&pool);
 	Bool dumpStats;
 	Bool dumpBinary;
-	if(parseCommandLineArgs(WeakArray<char*>(argv, argc), dumpStats, dumpBinary, filename))
+	Bool glsl;
+	Bool spirv;
+	if(parseCommandLineArgs(WeakArray<char*>(argv, argc), dumpStats, dumpBinary, glsl, spirv, filename))
 	{
 		ANKI_LOGE(kUsage, argv[0]);
 		return 1;
 	}
 
-	const Error err = dump(filename, dumpStats, dumpBinary);
+	const Error err = dump(filename, dumpStats, dumpBinary, glsl, spirv);
 	if(err)
 	{
 		ANKI_LOGE("Can't dump due to an error. Bye");
