@@ -19,6 +19,7 @@ public:
 	Bool m_lsVis = false;
 	Bool m_giVis = false;
 	Bool m_reflVis = false;
+	Second* m_timesOfLastTouchEvent = nullptr;
 
 	ButtonsUiNode(SceneGraph* scene, CString name)
 		: SceneNode(scene, name)
@@ -64,6 +65,7 @@ public:
 			if(ImGui::Checkbox("Light Shading", &m_lsVis))
 			{
 				m_giVis = m_reflVis = false;
+				*m_timesOfLastTouchEvent = SampleApp::kIdleTime;
 			}
 
 			ImGui::SameLine();
@@ -75,6 +77,7 @@ public:
 			if(ImGui::Checkbox("Global Illumination", &m_giVis))
 			{
 				m_lsVis = m_reflVis = false;
+				*m_timesOfLastTouchEvent = SampleApp::kIdleTime;
 			}
 
 			ImGui::SameLine();
@@ -86,6 +89,7 @@ public:
 			if(ImGui::Checkbox("Reflections", &m_reflVis))
 			{
 				m_lsVis = m_giVis = false;
+				*m_timesOfLastTouchEvent = SampleApp::kIdleTime;
 			}
 
 			ImGui::SameLine();
@@ -97,6 +101,7 @@ public:
 
 		if(ImGui::Checkbox("VRS", &m_vrs))
 		{
+			*m_timesOfLastTouchEvent = SampleApp::kIdleTime;
 		}
 
 		m_config->setRVrs(m_vrs);
@@ -160,6 +165,7 @@ Error SampleApp::init(int argc, char** argv, CString sampleName)
 	node->m_renderer = &getMainRenderer().getOffscreenRenderer();
 	node->m_config = &m_config;
 	node->m_vrs = m_config.getRVrs();
+	node->m_timesOfLastTouchEvent = &m_timesOfLastTouchEvent;
 
 	return Error::kNone;
 }
