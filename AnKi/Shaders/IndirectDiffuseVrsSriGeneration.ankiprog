@@ -3,58 +3,73 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki hlsl
+
 #pragma anki mutator SRI_TEXEL_DIMENSION 8 16
 #pragma anki mutator SHARED_MEMORY 0 1
 #pragma anki mutator LIMIT_RATE_TO_2X2 0 1
 
 #pragma anki start comp
 
-#include <AnKi/Shaders/Functions.glsl>
+#include <AnKi/Shaders/Functions.hlsl>
 
-layout(set = 0, binding = 0) uniform texture2D u_inputTex;
-layout(set = 0, binding = 1) uniform sampler u_nearestClampSampler;
+[[vk::binding(0)]] Texture2D g_inputTex;
+[[vk::binding(1)]] SamplerState g_nearestClampSampler;
 
 #if SRI_TEXEL_DIMENSION == 8
-const UVec2 kRegionSize = UVec2(2u, 2u);
+#	define REGION_SIZE_X 2
+#	define REGION_SIZE_Y 2
 #else
-const UVec2 kRegionSize = UVec2(2u, 4u);
+#	define REGION_SIZE_X 2
+#	define REGION_SIZE_Y 4
 #endif
 
-const UVec2 kWorkgroupSize = UVec2(SRI_TEXEL_DIMENSION) / kRegionSize;
-layout(local_size_x = kWorkgroupSize.x, local_size_y = kWorkgroupSize.y, local_size_z = 1) in;
+#define THREAD_GROUP_SIZE_X (SRI_TEXEL_DIMENSION / REGION_SIZE_X)
+#define THREAD_GROUP_SIZE_Y (SRI_TEXEL_DIMENSION / REGION_SIZE_Y)
 
-layout(set = 0, binding = 2) uniform writeonly uimage2D u_sriImg;
+[[vk::binding(2)]] RWTexture2D<UVec4> g_sriImg;
 
-layout(push_constant, std140, row_major) uniform b_pc
+struct Uniforms
 {
-	Vec2 u_oneOverViewportSize;
-	F32 u_thresholdMeters;
-	F32 u_padding0;
-	Mat4 u_invertedProjectionJitter;
+	Vec2 m_oneOverViewportSize;
+	F32 m_thresholdMeters;
+	F32 m_padding0;
+	Mat4 m_invertedProjectionJitter;
 };
+
+[[vk::push_constant]] ConstantBuffer<Uniforms> g_unis;
 
 #if SHARED_MEMORY
 // Ideally, we'd be able to calculate the min/max/average using subgroup operations, but there's no guarantee
 // subgroupSize is large enough so we need shared memory as a fallback. We need gl_NumSubgroups entries, but it is not a
 // constant, so estimate it assuming a subgroupSize of at least 8.
-const U32 kSharedMemoryEntries = kWorkgroupSize.x * kWorkgroupSize.y / 8u;
-shared Vec2 s_maxDerivative[kSharedMemoryEntries];
+constexpr U32 kSharedMemoryEntries = THREAD_GROUP_SIZE_X * THREAD_GROUP_SIZE_Y / 8u;
+groupshared Vec2 s_maxDerivative[kSharedMemoryEntries];
+groupshared U32 s_waveIndexInsideThreadGroup;
 #endif
 
 F32 sampleViewPositionZ(Vec2 uv, I32 offsetX, I32 offsetY)
 {
-	uv += Vec2(offsetX, offsetY) * u_oneOverViewportSize;
-	const Vec2 ndc = UV_TO_NDC(uv);
-	const F32 depth = textureLod(sampler2D(u_inputTex, u_nearestClampSampler), uv, 0.0).x;
+	uv += Vec2(offsetX, offsetY) * g_unis.m_oneOverViewportSize;
+	const Vec2 ndc = uvToNdc(uv);
+	const F32 depth = g_inputTex.SampleLevel(g_nearestClampSampler, uv, 0.0).x;
 
-	const Vec4 v4 = u_invertedProjectionJitter * Vec4(ndc, depth, 1.0);
+	const Vec4 v4 = mul(g_unis.m_invertedProjectionJitter, Vec4(ndc, depth, 1.0));
 	return v4.z / v4.w;
 }
 
-void main()
+[numthreads(THREAD_GROUP_SIZE_X, THREAD_GROUP_SIZE_Y, 1)] void
+main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID, U32 svGroupIndex : SV_GROUPINDEX, UVec3 svGroupId : SV_GROUPID)
 {
-	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) * Vec2(kRegionSize) + 0.5) * u_oneOverViewportSize;
-	const Vec2 ndc = UV_TO_NDC(uv);
+#if SHARED_MEMORY
+	U32 wavesPerThreadGroup;
+	U32 waveIndexInsideThreadGroup;
+	ANKI_COMPUTE_WAVE_INDEX_INSIDE_THREADGROUP(svGroupIndex, s_waveIndexInsideThreadGroup, waveIndexInsideThreadGroup,
+											   wavesPerThreadGroup);
+#endif
+
+	const Vec2 uv =
+		(Vec2(svDispatchThreadId.xy) * Vec2(REGION_SIZE_X, REGION_SIZE_Y) + 0.5) * g_unis.m_oneOverViewportSize;
 
 #if SRI_TEXEL_DIMENSION == 8
 	// Get positions
@@ -108,28 +123,27 @@ void main()
 	F32 maxDerivativeY = max(max(dy.x, dy.y), max(dy.z, dy.w));
 #endif
 
-	maxDerivativeX = subgroupMax(maxDerivativeX);
-	maxDerivativeY = subgroupMax(maxDerivativeY);
+	maxDerivativeX = WaveActiveMax(maxDerivativeX);
+	maxDerivativeY = WaveActiveMax(maxDerivativeY);
 
 #if SHARED_MEMORY
 	// Store results in shared memory.
-	[branch] if(subgroupElect())
+	[branch] if(WaveIsFirstLane())
 	{
-		s_maxDerivative[gl_SubgroupID] = Vec2(maxDerivativeX, maxDerivativeY);
+		s_maxDerivative[waveIndexInsideThreadGroup] = Vec2(maxDerivativeX, maxDerivativeY);
 	}
 
-	memoryBarrierShared();
-	barrier();
+	GroupMemoryBarrierWithGroupSync();
 #endif
 
 	// Write the result
-	[branch] if(gl_LocalInvocationIndex == 0u)
+	[branch] if(svGroupIndex == 0u)
 	{
 		// Get max across all subgroups.
 #if SHARED_MEMORY
 		Vec2 maxDerivative = s_maxDerivative[0];
 
-		for(U32 i = 1u; i < gl_NumSubgroups; ++i)
+		for(U32 i = 1u; i < wavesPerThreadGroup; ++i)
 		{
 			maxDerivative = max(maxDerivative, s_maxDerivative[i]);
 		}
@@ -138,7 +152,7 @@ void main()
 #endif
 
 		// Determine shading rate.
-		const F32 threshold1 = u_thresholdMeters;
+		const F32 threshold1 = g_unis.m_thresholdMeters;
 		const F32 threshold2 = threshold1 * 0.4;
 
 		UVec2 rate;
@@ -146,11 +160,11 @@ void main()
 		rate.y = (maxDerivative.y > threshold1) ? 1u : ((maxDerivative.y > threshold2) ? 2u : 4u);
 
 #if LIMIT_RATE_TO_2X2
-		rate = min(rate, UVec2(2u));
+		rate = min(rate, UVec2(2u, 2u));
 #endif
 
-		const UVec2 outTexelCoord = gl_WorkGroupID.xy;
-		imageStore(u_sriImg, IVec2(outTexelCoord), UVec4(encodeVrsRate(rate)));
+		const UVec2 outTexelCoord = svGroupId.xy;
+		g_sriImg[outTexelCoord] = UVec4(encodeVrsRate(rate), 0, 0, 0);
 	}
 }
 

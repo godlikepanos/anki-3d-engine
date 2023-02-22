@@ -49,6 +49,7 @@ struct Uniforms
 constexpr U32 kSharedMemoryEntries = THREADGROUP_SIZE_X * THREADGROUP_SIZE_Y / 8u;
 groupshared RF32 s_averageLuma[kSharedMemoryEntries];
 groupshared RVec2 s_maxDerivative[kSharedMemoryEntries];
+groupshared U32 s_waveIndexInsideThreadGroup;
 #endif
 
 RF32 computeLuma(RVec3 color)
@@ -63,6 +64,13 @@ RF32 computeLuma(RVec3 color)
 [numthreads(THREADGROUP_SIZE_X, THREADGROUP_SIZE_Y, 1)] void
 main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID, U32 svGroupIndex : SV_GROUPINDEX, UVec3 svGroupID : SV_GROUPID)
 {
+#if SHARED_MEMORY
+	U32 wavesPerThreadGroup;
+	U32 waveIndexInsideThreadGroup;
+	ANKI_COMPUTE_WAVE_INDEX_INSIDE_THREADGROUP(svGroupIndex, s_waveIndexInsideThreadGroup, waveIndexInsideThreadGroup,
+											   wavesPerThreadGroup);
+#endif
+
 	const Vec2 uv =
 		(Vec2(svDispatchThreadId.xy) * Vec2(REGION_SIZE_X, REGION_SIZE_Y) + 0.5) * g_unis.m_oneOverViewportSize;
 
@@ -145,8 +153,8 @@ main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID, U32 svGroupIndex : SV_GROUP
 	// Store results in shared memory.
 	[branch] if(WaveIsFirstLane())
 	{
-		s_averageLuma[WaveGetLaneIndex()] = averageLuma;
-		s_maxDerivative[WaveGetLaneIndex()] = RVec2(maxDerivativeX, maxDerivativeY);
+		s_averageLuma[waveIndexInsideThreadGroup] = averageLuma;
+		s_maxDerivative[waveIndexInsideThreadGroup] = RVec2(maxDerivativeX, maxDerivativeY);
 	}
 
 	GroupMemoryBarrierWithGroupSync();
@@ -160,7 +168,7 @@ main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID, U32 svGroupIndex : SV_GROUP
 		averageLuma = s_averageLuma[0];
 		RVec2 maxDerivative = s_maxDerivative[0];
 
-		for(U32 i = 1u; i < WaveGetLaneCount(); ++i)
+		for(U32 i = 1u; i < wavesPerThreadGroup; ++i)
 		{
 			averageLuma += s_averageLuma[i];
 			maxDerivative = max(maxDerivative, s_maxDerivative[i]);

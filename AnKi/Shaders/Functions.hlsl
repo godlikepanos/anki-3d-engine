@@ -687,3 +687,30 @@ F32 fastCos(F32 x)
 {
 	return fastSin(x + kPi / 2.0);
 }
+
+#if defined(ANKI_COMPUTE_SHADER)
+/// HLSL doesn't have SubgroupID so compute it. It's a macro because we can't have functions that InterlockedAdd on
+/// local variables (the compiler can't see it's groupshared).
+/// @param svGroupIndex Self explanatory.
+/// @param tmpGroupsharedU32Var A U32 groupshared variable that will help with the calculation.
+/// @param waveIndexInsideThreadgroup The SubgroupID.
+/// @param wavesPerThreadGroup Also calculate that in case some GPUs manage to mess this up.
+#	define ANKI_COMPUTE_WAVE_INDEX_INSIDE_THREADGROUP(svGroupIndex, tmpGroupsharedU32Var, waveIndexInsideThreadgroup, \
+													   wavesPerThreadGroup) \
+		do \
+		{ \
+			if(svGroupIndex == 0) \
+			{ \
+				tmpGroupsharedU32Var = 0; \
+			} \
+			GroupMemoryBarrierWithGroupSync(); \
+			waveIndexInsideThreadgroup = 0; \
+			if(WaveIsFirstLane()) \
+			{ \
+				InterlockedAdd(tmpGroupsharedU32Var, 1, waveIndexInsideThreadgroup); \
+			} \
+			GroupMemoryBarrierWithGroupSync(); \
+			wavesPerThreadGroup = tmpGroupsharedU32Var; \
+			waveIndexInsideThreadgroup = WaveReadLaneFirst(waveIndexInsideThreadgroup); \
+		} while(false)
+#endif

@@ -5,6 +5,8 @@
 
 // Compute the irradiance given a light shading result. The irradiance will be stored in an ambient dice.
 
+#pragma anki hlsl
+
 #pragma anki mutator WORKGROUP_SIZE_XY 8 16 32
 #pragma anki mutator LIGHT_SHADING_TEX 0 1 // 0: texture2D, 1: textureCubeArray
 #pragma anki mutator STORE_LOCATION 0 1 // 0: in a 3D texture, 1: In an SSBO
@@ -12,82 +14,90 @@
 
 #pragma anki start comp
 
-#include <AnKi/Shaders/Functions.glsl>
-#include <AnKi/Shaders/PackFunctions.glsl>
-#include <AnKi/Shaders/LightFunctions.glsl>
+#include <AnKi/Shaders/Functions.hlsl>
+#include <AnKi/Shaders/PackFunctions.hlsl>
+#include <AnKi/Shaders/LightFunctions.hlsl>
 
 #define DEBUG_MODE 0 // 0: disable, 1: different color per dice face, 2: different color per cell
 
-const U32 kWorkgroupSize = U32(WORKGROUP_SIZE_XY) * U32(WORKGROUP_SIZE_XY);
+constexpr U32 kWorkgroupSize = U32(WORKGROUP_SIZE_XY) * U32(WORKGROUP_SIZE_XY);
 
-layout(local_size_x = WORKGROUP_SIZE_XY, local_size_y = WORKGROUP_SIZE_XY, local_size_z = 1) in;
-
-layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
+[[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
 #if LIGHT_SHADING_TEX == 0
-layout(set = 0, binding = 1) uniform texture2D u_lightShadingTex2d;
+[[vk::binding(1)]] Texture2D g_lightShadingTex2d;
 #else
-layout(set = 0, binding = 1) uniform ANKI_RP textureCube u_lightShadingTexCube;
+[[vk::binding(1)]] TextureCube<RVec4> g_lightShadingTexCube;
 #endif
 
 #if SECOND_BOUNCE == 1
-layout(set = 0, binding = 2) uniform texture2D u_gbufferTex[3u];
+[[vk::binding(2)]] Texture2D g_gbufferTex[3u];
 #endif
 
 #if STORE_LOCATION == 0
-layout(set = 0, binding = 3) uniform writeonly image3D u_irradianceVolume;
+[[vk::binding(3)]] RWTexture3D<Vec4> g_irradianceVolume;
 
-layout(push_constant, std140) uniform b_pc
+struct Uniforms
 {
-	IVec3 u_volumeTexel;
-	I32 u_nextTexelOffsetInU;
+	IVec3 m_volumeTexel;
+	I32 m_nextTexelOffsetInU;
 };
+
+[[vk::push_constant]] ConstantBuffer<Uniforms> g_uniforms;
 #else
-layout(set = 0, binding = 3) writeonly buffer b_ssbo1
+struct BufferOut
 {
-	ANKI_RP Vec4 u_irradianceDisceResults[6u];
+	RVec4 m_val[6u];
 };
+
+[[vk::binding(3)]] RWStructuredBuffer<BufferOut> g_irradianceDisceResults;
 #endif
 
-shared Vec3 s_integrationResults[6u][kWorkgroupSize / 8u];
+constexpr U32 kMinWaveSize = 8u;
+groupshared Vec3 s_integrationResults[6u][kWorkgroupSize / kMinWaveSize];
+groupshared U32 s_waveIndexInsideThreadGroup;
 
-ANKI_RP Vec3 sampleLightShadingTexture(const U32 face)
+RVec3 sampleLightShadingTexture(const U32 face, UVec3 svGroupThreadId)
 {
 #if LIGHT_SHADING_TEX == 0
-	const Vec2 INPUT_TEXTURES_SIZE = Vec2(U32(WORKGROUP_SIZE_XY) * 6u, U32(WORKGROUP_SIZE_XY));
-	const Vec2 uv = (Vec2(gl_LocalInvocationID.x + U32(WORKGROUP_SIZE_XY) * face, gl_LocalInvocationID.y) + 0.5)
-					/ INPUT_TEXTURES_SIZE;
+	const Vec2 kInputTexSize = Vec2(U32(WORKGROUP_SIZE_XY) * 6u, U32(WORKGROUP_SIZE_XY));
+	const Vec2 uv = (Vec2(svGroupThreadId.x + U32(WORKGROUP_SIZE_XY) * face, svGroupThreadId.y) + 0.5) / kInputTexSize;
 
-	return textureLod(u_lightShadingTex2d, u_nearestAnyClampSampler, uv, 0.0).rgb;
+	return g_lightShadingTex2d.SampleLevel(g_nearestAnyClampSampler, uv, 0.0).rgb;
 #else
-	const Vec2 uv = (Vec2(gl_LocalInvocationID.x, gl_LocalInvocationID.y) + 0.5) / F32(WORKGROUP_SIZE_XY);
-	const Vec2 ndc = UV_TO_NDC(uv);
+	const Vec2 uv = (Vec2(svGroupThreadId.x, svGroupThreadId.y) + 0.5) / F32(WORKGROUP_SIZE_XY);
+	const Vec2 ndc = uvToNdc(uv);
 	const Vec3 cubeUvw = getCubemapDirection(ndc, face);
 
-	return textureLod(u_lightShadingTexCube, u_nearestAnyClampSampler, cubeUvw, 0.0).rgb;
+	return g_lightShadingTexCube.SampleLevel(g_nearestAnyClampSampler, cubeUvw, 0.0).rgb;
 #endif
 }
 
-void main()
+[numthreads(WORKGROUP_SIZE_XY, WORKGROUP_SIZE_XY, 1)] void main(UVec3 svGroupThreadId : SV_GROUPTHREADID,
+																U32 svGroupIndex : SV_GROUPINDEX)
 {
+	U32 wavesPerThreadGroup;
+	U32 waveIndexInsideThreadGroup;
+	ANKI_COMPUTE_WAVE_INDEX_INSIDE_THREADGROUP(svGroupIndex, s_waveIndexInsideThreadGroup, waveIndexInsideThreadGroup,
+											   wavesPerThreadGroup);
 	const F32 workgroupSizeXYf = F32(WORKGROUP_SIZE_XY);
 
 	// Compute the NDC used in cubeCoordSolidAngle
-	const Vec2 faceUv = (Vec2(gl_LocalInvocationID.xy) + 0.5) / workgroupSizeXYf;
-	const Vec2 ndc = UV_TO_NDC(faceUv);
+	const Vec2 faceUv = (Vec2(svGroupThreadId.xy) + 0.5) / workgroupSizeXYf;
+	const Vec2 ndc = uvToNdc(faceUv);
 
 	// Compute result for a pixel
 	Vec3 resultFaces[6u];
 	for(U32 f = 0u; f < 6u; ++f)
 	{
 		// Get the direction of the dice face
-		const Vec3 diceDir = getCubemapDirection(Vec2(0.0), f);
+		const Vec3 diceDir = getCubemapDirection(Vec2(0.0, 0.0), f);
 
 		const Vec3 r = getCubemapDirection(ndc, f);
 
 		// Compute integral part
-		const ANKI_RP F32 lambert = max(0.0, dot(r, diceDir));
-		const ANKI_RP Vec3 lightShading = sampleLightShadingTexture(f);
-		const ANKI_RP Vec3 irradiance = lightShading * lambert * cubeCoordSolidAngle(ndc, workgroupSizeXYf);
+		const RF32 lambert = max(0.0, dot(r, diceDir));
+		const RVec3 lightShading = sampleLightShadingTexture(f, svGroupThreadId);
+		const RVec3 irradiance = lightShading * lambert * cubeCoordSolidAngle(ndc, workgroupSizeXYf);
 
 		// Store
 		resultFaces[f] = irradiance;
@@ -96,65 +106,63 @@ void main()
 	// Subgroup reduce
 	[unroll] for(U32 f = 0u; f < 6u; ++f)
 	{
-		resultFaces[f] = subgroupAdd(resultFaces[f]);
+		resultFaces[f] = WaveActiveSum(resultFaces[f]);
 	}
 
-	[branch] if(subgroupElect())
+	[branch] if(WaveIsFirstLane())
 	{
 		[unroll] for(U32 f = 0u; f < 6u; ++f)
 		{
-			s_integrationResults[f][gl_SubgroupID] = resultFaces[f];
+			s_integrationResults[f][waveIndexInsideThreadGroup] = resultFaces[f];
 		}
 	}
 
-	memoryBarrierBuffer();
-	barrier();
+	GroupMemoryBarrierWithGroupSync();
 
 	// Worgroup reduce
-	[branch] if(gl_LocalInvocationIndex == 0u)
+	[branch] if(svGroupIndex == 0u)
 	{
 		[unroll] for(U32 f = 0u; f < 6u; ++f)
 		{
-			for(U32 i = 1u; i < gl_NumSubgroups; ++i)
+			for(U32 i = 1u; i < wavesPerThreadGroup; ++i)
 			{
 				s_integrationResults[f][0] += s_integrationResults[f][i];
 			}
 		}
 	}
 
-	memoryBarrierShared();
-	barrier();
+	GroupMemoryBarrierWithGroupSync();
 
 #if SECOND_BOUNCE == 1
 	// Initialize again for the 2nd bounce
 	for(U32 f = 0u; f < 6u; ++f)
 	{
 		// Get the direction of the dice face
-		const Vec3 diceDir = getCubemapDirection(Vec2(0.0), f);
+		const Vec3 diceDir = getCubemapDirection(Vec2(0.0, 0.0), f);
 
 		const Vec3 r = getCubemapDirection(ndc, f);
 
 		// Compute integral part
-		const ANKI_RP F32 lambert = max(0.0, dot(r, diceDir));
+		const RF32 lambert = max(0.0, dot(r, diceDir));
 
 		// Read the gbuffer
-		Vec2 gbufferUv = (Vec2(gl_LocalInvocationID.xy) + 0.5) / workgroupSizeXYf;
+		Vec2 gbufferUv = (Vec2(svGroupThreadId.xy) + 0.5) / workgroupSizeXYf;
 		gbufferUv.x *= 1.0 / 6.0;
 		gbufferUv.x += (1.0 / 6.0) * F32(f);
-		GbufferInfo gbuffer;
-		unpackGBufferNoVelocity(textureLod(u_gbufferTex[0u], u_nearestAnyClampSampler, gbufferUv, 0.0),
-								textureLod(u_gbufferTex[1u], u_nearestAnyClampSampler, gbufferUv, 0.0),
-								textureLod(u_gbufferTex[2u], u_nearestAnyClampSampler, gbufferUv, 0.0), gbuffer);
+		GbufferInfo gbuffer = (GbufferInfo)0;
+		unpackGBufferNoVelocity(g_gbufferTex[0u].SampleLevel(g_nearestAnyClampSampler, gbufferUv, 0.0),
+								g_gbufferTex[1u].SampleLevel(g_nearestAnyClampSampler, gbufferUv, 0.0),
+								g_gbufferTex[2u].SampleLevel(g_nearestAnyClampSampler, gbufferUv, 0.0), gbuffer);
 
 		// Sample irradiance
-		ANKI_RP Vec3 firstBounceIrradiance = sampleAmbientDice(
+		RVec3 firstBounceIrradiance = sampleAmbientDice(
 			s_integrationResults[0][0], s_integrationResults[1][0], s_integrationResults[2][0],
 			s_integrationResults[3][0], s_integrationResults[4][0], s_integrationResults[5][0], gbuffer.m_normal);
 		firstBounceIrradiance = gbuffer.m_diffuse * firstBounceIrradiance;
 
 		// Compute 2nd bounce
-		const ANKI_RP Vec3 lightShading = sampleLightShadingTexture(f);
-		const ANKI_RP Vec3 irradiance =
+		const RVec3 lightShading = sampleLightShadingTexture(f, svGroupThreadId);
+		const RVec3 irradiance =
 			(firstBounceIrradiance + lightShading * lambert) * cubeCoordSolidAngle(ndc, workgroupSizeXYf);
 
 		// Store
@@ -164,60 +172,61 @@ void main()
 	// Subgroup reduce
 	[unroll] for(U32 f = 0u; f < 6u; ++f)
 	{
-		resultFaces[f] = subgroupAdd(resultFaces[f]);
+		resultFaces[f] = WaveActiveSum(resultFaces[f]);
 	}
 
-	[branch] if(subgroupElect())
+	[branch] if(WaveIsFirstLane())
 	{
 		[unroll] for(U32 f = 0u; f < 6u; ++f)
 		{
-			s_integrationResults[f][gl_SubgroupID] = resultFaces[f];
+			s_integrationResults[f][waveIndexInsideThreadGroup] = resultFaces[f];
 		}
 	}
 
-	memoryBarrierBuffer();
-	barrier();
+	GroupMemoryBarrierWithGroupSync();
 
 	// Worgroup reduce
-	[branch] if(gl_LocalInvocationIndex == 0u)
+	[branch] if(svGroupIndex == 0u)
 	{
 		[unroll] for(U32 f = 0u; f < 6u; ++f)
 		{
-			for(U32 i = 1u; i < gl_NumSubgroups; ++i)
+			for(U32 i = 1u; i < wavesPerThreadGroup; ++i)
 			{
 				s_integrationResults[f][0] += s_integrationResults[f][i];
 			}
 		}
 	}
 
-	memoryBarrierShared();
-	barrier();
+	GroupMemoryBarrierWithGroupSync();
 #endif
 
 	// Store the results
-	if(gl_LocalInvocationIndex < 6u)
+	if(svGroupIndex < 6u)
 	{
-		const U32 f = gl_LocalInvocationIndex;
+		const U32 f = svGroupIndex;
 
 #if DEBUG_MODE == 0
-		ANKI_RP Vec3 irradiance = s_integrationResults[f][0];
-		const ANKI_RP Vec3 toStoreValue = irradiance;
+		RVec3 irradiance = s_integrationResults[f][0];
+		const RVec3 toStoreValue = irradiance;
 #elif DEBUG_MODE == 1
-		const ANKI_RP Vec3 toStoreValue = colorPerCubeFace(f);
+		const RVec3 toStoreValue = colorPerCubeFace(f);
 #else
-		const UVec3 volumeSize = UVec3(imageSize(u_irradianceVolume));
+		UVec3 volumeSize;
+		g_irradianceVolume.GetDimensions(volumeSize.x, volumeSize.y, volumeSize.z);
+
 		const UVec3 subvolumeSize = UVec3(volumeSize.x / 6u, volumeSize.y, volumeSize.z);
-		const U32 cellIdx =
-			u_volumeTexel.z * subvolumeSize.x * subvolumeSize.y + u_volumeTexel.y * subvolumeSize.x + u_volumeTexel.x;
-		const ANKI_RP F32 headmapFactor = F32(cellIdx) / F32(subvolumeSize.x * subvolumeSize.y * subvolumeSize.z);
-		const ANKI_RP Vec3 toStoreValue = heatmap(headmapFactor);
+		const U32 cellIdx = g_uniforms.m_volumeTexel.z * subvolumeSize.x * subvolumeSize.y
+							+ g_uniforms.m_volumeTexel.y * subvolumeSize.x + g_uniforms.m_volumeTexel.x;
+		const RF32 headmapFactor = F32(cellIdx) / F32(subvolumeSize.x * subvolumeSize.y * subvolumeSize.z);
+		const RVec3 toStoreValue = heatmap(headmapFactor);
 #endif
 
 #if STORE_LOCATION == 0
-		const IVec3 storeUvw = IVec3(u_volumeTexel.x + I32(f) * u_nextTexelOffsetInU, u_volumeTexel.y, u_volumeTexel.z);
-		imageStore(u_irradianceVolume, storeUvw, Vec4(toStoreValue, 0.0));
+		const UVec3 storeUvw = UVec3(g_uniforms.m_volumeTexel.x + I32(f) * g_uniforms.m_nextTexelOffsetInU,
+									 g_uniforms.m_volumeTexel.y, g_uniforms.m_volumeTexel.z);
+		g_irradianceVolume[storeUvw] = Vec4(toStoreValue, 0.0);
 #else
-		u_irradianceDisceResults[f] = toStoreValue.xyzx;
+		g_irradianceDisceResults[0].m_val[f] = toStoreValue.xyzx;
 #endif
 	}
 }
