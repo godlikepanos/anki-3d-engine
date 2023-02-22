@@ -3,59 +3,54 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki hlsl
+
 #pragma anki start comp
-#include <AnKi/Shaders/PackFunctions.glsl>
-#include <AnKi/Shaders/LightFunctions.glsl>
+#include <AnKi/Shaders/PackFunctions.hlsl>
+#include <AnKi/Shaders/LightFunctions.hlsl>
 
-layout(local_size_x = 8, local_size_y = 8, local_size_z = 6) in;
+[[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
+[[vk::binding(1)]] Texture2D g_gbufferTex[3u];
+[[vk::binding(2)]] StructuredBuffer<RVec4> g_irradianceDice;
+[[vk::binding(3)]] RWTexture2D<RVec4> g_cubeTex[6u];
 
-layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
-layout(set = 0, binding = 1) uniform texture2D u_gbufferTex[3u];
-
-layout(set = 0, binding = 2) buffer readonly b_ssbo
+[numthreads(8, 8, 6)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID,
+								UVec3 svGroupThreadId : SV_GROUPTHREADID)
 {
-	ANKI_RP Vec4 u_irradianceDice[6u];
-};
-
-layout(set = 0, binding = 3) uniform ANKI_RP imageCube u_cubeTex;
-
-void main()
-{
-	const UVec2 cubeSizeu = UVec2(imageSize(u_cubeTex));
+	UVec2 cubeSizeu;
+	g_cubeTex[0].GetDimensions(cubeSizeu.x, cubeSizeu.y);
 	const Vec2 cubeSize = Vec2(cubeSizeu);
-	const UVec2 globalInvocationID = min(gl_GlobalInvocationID.xy, cubeSizeu - 1u);
+	const UVec2 dispatchThreadId = min(svDispatchThreadId.xy, cubeSizeu - 1u);
 
-	const U32 faceIdx = gl_LocalInvocationID.z;
+	const U32 faceIdx = svGroupThreadId.z;
 
 	// Compute the UVs to read the gbuffer from
-	Vec2 sampleUv = (Vec2(globalInvocationID) + 0.5) / Vec2(cubeSize);
+	Vec2 sampleUv = (Vec2(dispatchThreadId) + 0.5) / Vec2(cubeSize);
 	sampleUv.x *= (1.0 / 6.0);
 	sampleUv.x += (1.0 / 6.0) * F32(faceIdx);
 
 	// Read the gbuffer
-	GbufferInfo gbuffer;
-	unpackGBufferNoVelocity(textureLod(u_gbufferTex[0u], u_nearestAnyClampSampler, sampleUv, 0.0),
-							textureLod(u_gbufferTex[1u], u_nearestAnyClampSampler, sampleUv, 0.0),
-							textureLod(u_gbufferTex[2u], u_nearestAnyClampSampler, sampleUv, 0.0), gbuffer);
+	GbufferInfo gbuffer = (GbufferInfo)0;
+	unpackGBufferNoVelocity(g_gbufferTex[0u].SampleLevel(g_nearestAnyClampSampler, sampleUv, 0.0),
+							g_gbufferTex[1u].SampleLevel(g_nearestAnyClampSampler, sampleUv, 0.0),
+							g_gbufferTex[2u].SampleLevel(g_nearestAnyClampSampler, sampleUv, 0.0), gbuffer);
 
 	// Sample
-	const ANKI_RP Vec3 irradiance = sampleAmbientDice(
-		u_irradianceDice[0u].xyz, u_irradianceDice[1u].xyz, u_irradianceDice[2u].xyz, u_irradianceDice[3u].xyz,
-		u_irradianceDice[4u].xyz, u_irradianceDice[5u].xyz, gbuffer.m_normal);
+	const RVec3 irradiance = sampleAmbientDice(g_irradianceDice[0u].xyz, g_irradianceDice[1u].xyz,
+											   g_irradianceDice[2u].xyz, g_irradianceDice[3u].xyz,
+											   g_irradianceDice[4u].xyz, g_irradianceDice[5u].xyz, gbuffer.m_normal);
 
 	// Compute the indirect term
-	const ANKI_RP Vec3 indirect = gbuffer.m_diffuse * irradiance;
+	const RVec3 indirect = gbuffer.m_diffuse * irradiance;
 
 	// Read the prev color and apply indirect
-	const IVec3 coords = IVec3(globalInvocationID, faceIdx);
-	const ANKI_RP Vec3 prevColor = imageLoad(u_cubeTex, coords).xyz;
-	const ANKI_RP Vec3 prevColorWithIndirectDiffuse = prevColor + gbuffer.m_diffuse * indirect;
+	const RVec3 prevColor = g_cubeTex[faceIdx][dispatchThreadId].xyz;
+	const RVec3 prevColorWithIndirectDiffuse = prevColor + gbuffer.m_diffuse * indirect;
 
 	// Barrier just in case
-	memoryBarrierImage();
-	barrier();
+	GroupMemoryBarrierWithGroupSync();
 
 	// Write it back
-	imageStore(u_cubeTex, coords, Vec4(prevColorWithIndirectDiffuse, 0.0));
+	g_cubeTex[faceIdx][dispatchThreadId] = RVec4(prevColorWithIndirectDiffuse, 0.0);
 }
 #pragma anki end

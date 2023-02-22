@@ -472,10 +472,14 @@ void ProbeReflections::runIrradianceToRefl(RenderPassWorkContext& rgraphCtx)
 
 	cmdb->bindStorageBuffer(0, 2, m_irradiance.m_diceValuesBuff, 0, m_irradiance.m_diceValuesBuff->getSize());
 
-	TextureSubresourceInfo subresource;
-	subresource.m_faceCount = 6;
-	subresource.m_firstLayer = cacheEntryIdx;
-	rgraphCtx.bindImage(0, 3, m_ctx.m_lightShadingRt, subresource);
+	for(U8 f = 0; f < 6; ++f)
+	{
+		TextureSubresourceInfo subresource;
+		subresource.m_faceCount = 1;
+		subresource.m_firstFace = f;
+		subresource.m_firstLayer = cacheEntryIdx;
+		rgraphCtx.bindImage(0, 3, m_ctx.m_lightShadingRt, subresource, f);
+	}
 
 	dispatchPPCompute(cmdb, 8, 8, m_lightShading.m_tileSize, m_lightShading.m_tileSize);
 }
