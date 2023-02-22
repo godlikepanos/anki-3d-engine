@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <AnKi/Shaders/Common.glsl>
+#include <AnKi/Shaders/Common.hlsl>
 
 // Find the intersection of a ray and a AABB when the ray is inside the AABB
 void rayAabbIntersectionInside2d(Vec2 rayOrigin, Vec2 rayDir, Vec2 aabbMin, Vec2 aabbMax, out F32 t)
@@ -62,9 +62,11 @@ void raymarch(Vec3 rayOrigin, // Ray origin in view space
 			  Vec2 uv, // UV the ray starts
 			  F32 depthRef, // Depth the ray starts
 			  Mat4 projMat, // Projection matrix
-			  U32 randFrom0To3, U32 maxIterations, texture2D hizTex, sampler hizSampler, U32 hizMipCount,
+			  U32 randFrom0To3, U32 maxIterations, Texture2D hizTex, SamplerState hizSampler, U32 hizMipCount,
 			  UVec2 hizMip0Size, out Vec3 hitPoint, out F32 attenuation)
 {
+	ANKI_MAYBE_UNUSED(uv);
+	ANKI_MAYBE_UNUSED(depthRef);
 	attenuation = 0.0;
 
 	// Check for view facing reflections [sakibsaikia]
@@ -76,7 +78,7 @@ void raymarch(Vec3 rayOrigin, // Ray origin in view space
 	}
 
 	// Dither and set starting pos
-	const F32 bayerMat[4] = F32[](1.0, 4.0, 2.0, 3.0);
+	const F32 bayerMat[4] = {1.0, 4.0, 2.0, 3.0};
 	const Vec3 p0 = rayOrigin + rayDir * (tmin * bayerMat[randFrom0To3]);
 
 	// p1
@@ -84,12 +86,12 @@ void raymarch(Vec3 rayOrigin, // Ray origin in view space
 	const Vec3 p1 = rayOrigin + rayDir * tmax;
 
 	// Compute start & end in clip space (well not clip space since x,y are in [0, 1])
-	Vec4 v4 = projMat * Vec4(p0, 1.0);
+	Vec4 v4 = mul(projMat, Vec4(p0, 1.0));
 	Vec3 start = v4.xyz / v4.w;
-	start.xy = NDC_TO_UV(start.xy);
-	v4 = projMat * Vec4(p1, 1.0);
+	start.xy = ndcToUv(start.xy);
+	v4 = mul(projMat, Vec4(p1, 1.0));
 	Vec3 end = v4.xyz / v4.w;
-	end.xy = NDC_TO_UV(end.xy);
+	end.xy = ndcToUv(end.xy);
 
 	// Ray
 	Vec3 origin = start;
@@ -104,9 +106,9 @@ void raymarch(Vec3 rayOrigin, // Ray origin in view space
 		stepToNextCell(origin, dir, U32(mipLevel), hizMip0Size, newOrigin);
 		origin = newOrigin;
 
-		if(all(greaterThan(origin.xy, Vec2(0.0))) && all(lessThan(origin.xy, Vec2(1.0))))
+		if(all(origin.xy > Vec2(0.0, 0.0)) && all(origin.xy < Vec2(1.0, 1.0)))
 		{
-			const F32 newDepth = textureLod(hizTex, hizSampler, origin.xy, F32(mipLevel)).r;
+			const F32 newDepth = hizTex.SampleLevel(hizSampler, origin.xy, F32(mipLevel)).r;
 
 			if(origin.z < newDepth)
 			{
@@ -148,8 +150,8 @@ void raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
 						 F32 depthRef, // Depth the ray starts
 						 Mat4 projMat, // Projection matrix
 						 U32 maxSteps, // The max iterations of the base algorithm
-						 texture2D depthTex, // Depth tex
-						 sampler depthSampler, // Sampler for depthTex
+						 Texture2D depthTex, // Depth tex
+						 SamplerState depthSampler, // Sampler for depthTex
 						 F32 depthLod, // LOD to pass to the textureLod
 						 UVec2 depthTexSize, // Size of the depthTex
 						 U32 initialStepIncrement, // Initial step increment
@@ -168,14 +170,13 @@ void raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
 	}
 
 	// Start point
-	const Vec3 p0 = rayOrigin;
 	const Vec3 start = Vec3(uv, depthRef);
 
 	// Project end point
 	const Vec3 p1 = rayOrigin + rayDir * 0.1;
-	const Vec4 end4 = projMat * Vec4(p1, 1.0);
+	const Vec4 end4 = mul(projMat, Vec4(p1, 1.0));
 	Vec3 end = end4.xyz / end4.w;
-	end.xy = NDC_TO_UV(end.xy);
+	end.xy = ndcToUv(end.xy);
 
 	// Compute the ray and step size
 	Vec3 dir = end - start;
@@ -189,7 +190,7 @@ void raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
 
 	// Search
 	Vec3 origin;
-	[[dont_unroll]] while(maxSteps-- != 0u)
+	[loop] while(maxSteps-- != 0u)
 	{
 		origin = start + dir * (F32(crntStep) * stepSize);
 
@@ -199,7 +200,7 @@ void raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
 			break;
 		}
 
-		const F32 depth = textureLod(depthTex, depthSampler, origin.xy, depthLod).r;
+		const F32 depth = depthTex.SampleLevel(depthSampler, origin.xy, depthLod).r;
 		const Bool hit = origin.z - depth >= 0.0;
 		if(!hit)
 		{
