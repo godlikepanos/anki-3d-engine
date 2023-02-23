@@ -3,8 +3,6 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki hlsl
-
 #pragma anki mutator BLUR_ORIENTATION 0 1 // 0: in X axis, 1: in Y axis
 
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>

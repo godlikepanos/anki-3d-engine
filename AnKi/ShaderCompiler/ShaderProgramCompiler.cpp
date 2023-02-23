@@ -5,7 +5,6 @@
 
 #include <AnKi/ShaderCompiler/ShaderProgramCompiler.h>
 #include <AnKi/ShaderCompiler/ShaderProgramParser.h>
-#include <AnKi/ShaderCompiler/Glslang.h>
 #include <AnKi/ShaderCompiler/Dxc.h>
 #include <AnKi/ShaderCompiler/ShaderProgramReflection.h>
 #include <AnKi/Util/Serializer.h>
@@ -181,16 +180,8 @@ static Error compileSpirv(ConstWeakArray<MutatorValue> mutation, const ShaderPro
 		}
 
 		// Compile
-		if(!parser.isHlsl())
-		{
-			ANKI_CHECK(compileGlslToSpirv(parserVariant.getSource(shaderType), shaderType, tempPool, spirv[shaderType],
-										  errorLog));
-		}
-		else
-		{
-			ANKI_CHECK(compileHlslToSpirv(parserVariant.getSource(shaderType), shaderType,
-										  parser.compileWith16bitTypes(), tempPool, spirv[shaderType], errorLog));
-		}
+		ANKI_CHECK(compileHlslToSpirv(parserVariant.getSource(shaderType), shaderType, parser.compileWith16bitTypes(),
+									  tempPool, spirv[shaderType], errorLog));
 		ANKI_ASSERT(spirv[shaderType].getSize() > 0);
 	}
 
@@ -316,7 +307,7 @@ static void compileVariantAsync(ConstWeakArray<MutatorValue> mutation, const Sha
 			const Error prevErr = ctx.m_err->exchange(err._getCode());
 			if(!prevErr)
 			{
-				ANKI_SHADER_COMPILER_LOGE("GLSL compilation failed:\n%s", errorLog.cstr());
+				ANKI_SHADER_COMPILER_LOGE("Shader compilation failed:\n%s", errorLog.cstr());
 			}
 		}
 

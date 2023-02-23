@@ -3,8 +3,6 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki hlsl
-
 #pragma anki mutator VARIANCE_CLIPPING 0 1
 #pragma anki mutator YCBCR 0 1
 

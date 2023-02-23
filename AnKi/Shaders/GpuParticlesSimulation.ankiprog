@@ -5,8 +5,6 @@
 
 // This shader does a particle simulation
 
-#pragma anki hlsl
-
 #pragma anki start comp
 
 #include <AnKi/Shaders/Include/ParticleTypes.h>

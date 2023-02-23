@@ -112,7 +112,6 @@ private:
 /// #pragma anki ray_type NUMBER
 /// #pragma anki reflect NAME
 /// #pragma anki skip_mutation MUTATOR0 VALUE0 MUTATOR1 VALUE1 [MUTATOR2 VALUE2 ...]
-/// #pragma anki hlsl // By default it's GLSL
 /// #pragma anki 16bit // Works only in HLSL. Gain 16bit types but loose min16xxx types
 ///
 /// #pragma anki struct NAME
@@ -178,11 +177,6 @@ public:
 		return m_ghostStructs;
 	}
 
-	Bool isHlsl() const
-	{
-		return m_hlsl;
-	}
-
 	Bool compileWith16bitTypes() const
 	{
 		return m_16bitTypes;
@@ -233,7 +227,6 @@ private:
 	DynamicArrayRaii<GhostStruct> m_ghostStructs = {m_pool};
 	Bool m_insideStruct = false;
 
-	Bool m_hlsl = false;
 	Bool m_16bitTypes = false;
 
 	Error parseFile(CString fname, U32 depth);
@@ -249,7 +242,6 @@ private:
 	Error parsePragmaStructBegin(const StringRaii* begin, const StringRaii* end, CString line, CString fname);
 	Error parsePragmaStructEnd(const StringRaii* begin, const StringRaii* end, CString line, CString fname);
 	Error parsePragmaMember(const StringRaii* begin, const StringRaii* end, CString line, CString fname);
-	Error parsePragmaHlsl(const StringRaii* begin, const StringRaii* end, CString line, CString fname);
 	Error parsePragma16bit(const StringRaii* begin, const StringRaii* end, CString line, CString fname);
 
 	void tokenizeLine(CString line, DynamicArrayRaii<StringRaii>& tokens) const;

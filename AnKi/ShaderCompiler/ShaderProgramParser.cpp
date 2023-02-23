@@ -532,10 +532,6 @@ Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPra
 				ANKI_CHECK(checkActiveStruct());
 				ANKI_CHECK(parsePragmaMember(token + 1, end, line, fname));
 			}
-			else if(*token == "hlsl")
-			{
-				ANKI_CHECK(parsePragmaHlsl(token + 1, end, line, fname));
-			}
 			else if(*token == "16bit")
 			{
 				ANKI_CHECK(parsePragma16bit(token + 1, end, line, fname));
@@ -828,21 +824,6 @@ Error ShaderProgramParser::parsePragmaStructEnd(const StringRaii* begin, const S
 	return Error::kNone;
 }
 
-Error ShaderProgramParser::parsePragmaHlsl(const StringRaii* begin, const StringRaii* end, CString line, CString fname)
-{
-	ANKI_ASSERT(begin && end);
-
-	// Check tokens
-	if(begin != end)
-	{
-		ANKI_PP_ERROR_MALFORMED();
-	}
-
-	m_hlsl = true;
-
-	return Error::kNone;
-}
-
 Error ShaderProgramParser::parsePragma16bit(const StringRaii* begin, const StringRaii* end, CString line, CString fname)
 {
 	ANKI_ASSERT(begin && end);
@@ -958,11 +939,6 @@ Error ShaderProgramParser::parse()
 			ANKI_SHADER_COMPILER_LOGE("Forgot a \"pragma anki end\"");
 			return Error::kUserData;
 		}
-	}
-
-	if(!m_hlsl)
-	{
-		m_codeLines.pushFront(StringRaii(m_pool, "#extension GL_GOOGLE_cpp_style_line_directive : enable"));
 	}
 
 	// Create the code lines

@@ -5,8 +5,6 @@
 
 // A slow compute program to clear an image with a contant color
 
-#pragma anki hlsl
-
 #pragma anki mutator TEXTURE_DIMENSIONS 2 3
 #pragma anki mutator COMPONENT_TYPE 0 1 // 0 is float, 1 is uint
 

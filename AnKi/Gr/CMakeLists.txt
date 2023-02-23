@@ -139,15 +139,15 @@ add_library(AnKiGr ${backend_sources} ${backend_headers})
 target_compile_definitions(AnKiGr PRIVATE -DANKI_SOURCE_FILE)
 target_link_libraries(AnKiGr AnKiCore AnKiSpirvCross AnKiGrCommon ${extra_libs})
 
-# Copy DLSS files to Bin
+# Copy DLSS files to Binaries
 if(ANKI_DLSS)
 	get_target_property(lib_type AnKiNgx TYPE)
 	if("${lib_type}" STREQUAL "SHARED_LIBRARY")
 		get_target_property(ANKINGX_DLL AnKiNgx IMPORTED_LOCATION)
 		add_custom_command(
 			TARGET AnKiGr
-			COMMENT "Dependant DLLs copy ${ANKINGX_DLL} ${CMAKE_BINARY_DIR}/Bin"
-			COMMAND ${CMAKE_COMMAND} -E copy_if_different "${ANKINGX_DLL}" "${CMAKE_BINARY_DIR}/Bin")
+			COMMENT "Dependant DLLs copy ${ANKINGX_DLL} ${CMAKE_BINARY_DIR}/Binaries"
+			COMMAND ${CMAKE_COMMAND} -E copy_if_different "${ANKINGX_DLL}" "${CMAKE_BINARY_DIR}/Binaries")
 	else()
 		get_property(__NGX_DLLS_LIST TARGET AnKiNgx PROPERTY ANKINGX_EXTRA_DLLS)
 		foreach(dll_path ${__NGX_DLLS_LIST})
@@ -155,8 +155,8 @@ if(ANKI_DLSS)
 			foreach(dll_file ${dll_files})
 				add_custom_command(
 				TARGET AnKiGr
-				COMMENT "NGX DLL copy ${dll_file} ${CMAKE_BINARY_DIR}/Bin\n"
-				COMMAND ${CMAKE_COMMAND} -E copy_if_different "${dll_file}" "${CMAKE_BINARY_DIR}/Bin")
+				COMMENT "NGX DLL copy ${dll_file} ${CMAKE_BINARY_DIR}/Binaries\n"
+				COMMAND ${CMAKE_COMMAND} -E copy_if_different "${dll_file}" "${CMAKE_BINARY_DIR}/Binaries")
 			endforeach()
 		endforeach()
 	endif()

@@ -6,7 +6,6 @@
 #include <AnKi/Gr.h>
 #include <AnKi/ShaderCompiler.h>
 #include <AnKi/ShaderCompiler/ShaderProgramParser.h>
-#include <AnKi/ShaderCompiler/Glslang.h>
 #include <Tests/Framework/Framework.h>
 
 namespace anki {
@@ -21,7 +20,9 @@ inline ShaderPtr createShader(CString src, ShaderType type, GrManager& gr,
 	header.append(src);
 	DynamicArrayRaii<U8> spirv(&pool);
 	StringRaii errorLog(&pool);
-	ANKI_TEST_EXPECT_NO_ERR(compileGlslToSpirv(header, type, pool, spirv, errorLog));
+
+	ANKI_ASSERT(!"TODO");
+	// ANKI_TEST_EXPECT_NO_ERR(compileGlslToSpirv(header, type, pool, spirv, errorLog));
 
 	ShaderInitInfo initInf(type, spirv);
 	initInf.m_constValues = specVals;

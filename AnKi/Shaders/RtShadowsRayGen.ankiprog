@@ -3,8 +3,6 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki hlsl
-
 #pragma anki mutator RAYS_PER_PIXEL 1 2 4 8
 #pragma anki library RtShadows
 #pragma anki ray_type 0

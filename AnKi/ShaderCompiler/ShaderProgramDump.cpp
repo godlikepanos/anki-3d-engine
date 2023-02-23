@@ -7,7 +7,7 @@
 #include <AnKi/Util/Serializer.h>
 #include <AnKi/Util/StringList.h>
 #include <SpirvCross/spirv_glsl.hpp>
-#include <Glslang/External/spirv-tools/include/spirv-tools/libspirv.h>
+#include <ThirdParty/SpirvTools/include/spirv-tools/libspirv.h>
 
 namespace anki {
 

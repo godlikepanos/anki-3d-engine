@@ -3,8 +3,6 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki hlsl
-
 #pragma anki mutator FILM_GRAIN 0 1
 #pragma anki mutator BLOOM_ENABLED 0 1
 #pragma anki mutator DBG_ENABLED 0 1

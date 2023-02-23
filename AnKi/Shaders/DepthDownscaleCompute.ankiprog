@@ -5,8 +5,6 @@
 
 // The 1st reduction is average depth. The next reductions are max depth
 
-#pragma anki hlsl
-
 #pragma anki mutator WAVE_OPERATIONS 0 1
 
 #pragma anki start comp

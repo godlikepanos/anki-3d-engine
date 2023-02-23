@@ -5,8 +5,6 @@
 
 // This shader accumulates the lighting for every cluster fraction
 
-#pragma anki hlsl
-
 #pragma anki mutator ENABLE_SHADOWS 0 1
 
 #pragma anki start comp

@@ -5,8 +5,6 @@
 
 // Calculates the motion vectors that will be used to sample from the previous frame
 
-#pragma anki hlsl
-
 #include <AnKi/Shaders/Functions.hlsl>
 
 ANKI_SPECIALIZATION_CONSTANT_UVEC2(kFramebufferSize, 0u);

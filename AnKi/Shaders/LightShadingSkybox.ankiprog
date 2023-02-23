@@ -3,8 +3,6 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki hlsl
-
 #pragma anki mutator METHOD 0 1 // 0: solid colod, 1: 2D image
 
 #pragma anki start vert

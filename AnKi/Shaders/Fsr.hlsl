@@ -3,7 +3,6 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki hlsl
 #pragma anki 16bit
 #pragma anki mutator SHARPEN 0 1
 #pragma anki mutator FSR_QUALITY 0 1

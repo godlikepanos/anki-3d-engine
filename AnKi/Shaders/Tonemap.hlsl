@@ -5,8 +5,6 @@
 
 // Does tonemapping
 
-#pragma anki hlsl
-
 #include <AnKi/Shaders/Functions.hlsl>
 #include <AnKi/Shaders/TonemappingFunctions.hlsl>
 

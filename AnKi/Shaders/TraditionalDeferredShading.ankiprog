@@ -5,8 +5,6 @@
 
 // Classic deferred lighting shader
 
-#pragma anki hlsl
-
 #pragma anki mutator LIGHT_TYPE 0 1 2
 #pragma anki mutator SPECULAR 0 1
 

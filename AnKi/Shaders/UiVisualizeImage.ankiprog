@@ -3,8 +3,6 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki hlsl
-
 #pragma anki mutator TEXTURE_TYPE 0 1
 
 #include <AnKi/Shaders/Common.hlsl>

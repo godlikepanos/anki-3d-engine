@@ -5,8 +5,6 @@
 
 // Does SSGI and GI probe sampling
 
-#pragma anki hlsl
-
 #include <AnKi/Shaders/Functions.hlsl>
 #include <AnKi/Shaders/PackFunctions.hlsl>
 #include <AnKi/Shaders/ImportanceSampling.hlsl>

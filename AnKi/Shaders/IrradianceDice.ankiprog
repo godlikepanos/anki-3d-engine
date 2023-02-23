@@ -5,8 +5,6 @@
 
 // Compute the irradiance given a light shading result. The irradiance will be stored in an ambient dice.
 
-#pragma anki hlsl
-
 #pragma anki mutator WORKGROUP_SIZE_XY 8 16 32
 #pragma anki mutator LIGHT_SHADING_TEX 0 1 // 0: texture2D, 1: textureCubeArray
 #pragma anki mutator STORE_LOCATION 0 1 // 0: in a 3D texture, 1: In an SSBO

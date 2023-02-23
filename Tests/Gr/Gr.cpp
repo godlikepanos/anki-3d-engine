@@ -13,7 +13,6 @@
 #include <AnKi/Util/HighRezTimer.h>
 #include <AnKi/Core/GpuMemoryPools.h>
 #include <AnKi/Resource/TransferGpuAllocator.h>
-#include <AnKi/ShaderCompiler/Glslang.h>
 #include <AnKi/ShaderCompiler/ShaderProgramParser.h>
 #include <AnKi/Collision/Aabb.h>
 #include <ctime>

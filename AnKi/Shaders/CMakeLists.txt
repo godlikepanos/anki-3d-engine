@@ -15,7 +15,7 @@ if(ANDROID)
 	# Copy to the Android assets
 	set(out_dir "${CMAKE_BINARY_DIR}/../../../../../assets/ShaderBinaries")
 else()
-	set(out_dir "${CMAKE_BINARY_DIR}/Bin/ShaderBinaries")
+	set(out_dir "${CMAKE_BINARY_DIR}/Binaries/ShaderBinaries")
 endif()
 
 if(ANDROID OR ARM)

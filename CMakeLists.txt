@@ -13,15 +13,15 @@ project(AnKi)
 function(anki_install_executable EXE)
 	if(NOT ANDROID)
 		add_custom_command(TARGET ${EXE} POST_BUILD
-			COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/Bin
-			COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${EXE}> ${CMAKE_BINARY_DIR}/Bin)
+			COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/Binaries
+			COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${EXE}> ${CMAKE_BINARY_DIR}/Binaries)
 	endif()
 endfunction()
 
 macro(anki_new_executable)
 	if(NOT ANDROID)
 		add_executable(${ARGV})
-		set_target_properties(${ARGV0} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Bin)
+		set_target_properties(${ARGV0} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Binaries)
 	else()
 		set(_SKIP TRUE)
 		foreach(ARG ${ARGV})
@@ -297,9 +297,9 @@ if(SDL)
 endif()
 
 # glslang
-message("++ Configuring glslang")
-add_subdirectory(ThirdParty/Glslang)
-message("++ End configuring glslang")
+message("++ Configuring SPIRV-tools")
+add_subdirectory(ThirdParty/SpirvTools)
+message("++ End configuring SPIRV-tools")
 
 if(LINUX OR WINDOWS)
 	message("++ Configuring reproc")
