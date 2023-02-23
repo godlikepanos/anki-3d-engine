@@ -5,7 +5,7 @@
 
 ANKI_CONFIG_VAR_GROUP(R)
 
-ANKI_CONFIG_VAR_U8(RTextureAnisotropy, ((ANKI_PLATFORM_MOBILE) ? 1 : 8), 1, 16,
+ANKI_CONFIG_VAR_U8(RTextureAnisotropy, ((ANKI_PLATFORM_MOBILE) ? 8 : 8), 1, 16,
 				   "Texture anisotropy for the main passes")
 ANKI_CONFIG_VAR_U32(RTileSize, 64, 8, 256, "Tile lighting tile size")
 ANKI_CONFIG_VAR_U32(RZSplitCount, 64, 8, 1024, "Clusterer number of Z splits")
@@ -15,7 +15,7 @@ ANKI_CONFIG_VAR_BOOL(RHighQualityHdr, !ANKI_PLATFORM_MOBILE,
 
 ANKI_CONFIG_VAR_F32(RInternalRenderScaling, 1.0f, 0.5f, 1.0f,
 					"A factor over the requested swapchain resolution. Applies to all passes up to TAA")
-ANKI_CONFIG_VAR_F32(RRenderScaling, 1.0f, 0.5f, 8.0f,
+ANKI_CONFIG_VAR_F32(RRenderScaling, 1.25f, 0.5f, 8.0f,
 					"A factor over the requested swapchain resolution. Applies to post-processing and UI")
 
 ANKI_CONFIG_VAR_F32(RVolumetricLightingAccumulationQualityXY, 4.0f, 1.0f, 16.0f,
@@ -35,11 +35,11 @@ ANKI_CONFIG_VAR_BOOL(RVrsLimitTo2x2, false, "If true the max rate will be 2x2")
 
 // SSR
 ANKI_CONFIG_VAR_U32(RSsrFirstStepPixels, 32, 1, 256, "The 1st step in ray marching")
-ANKI_CONFIG_VAR_U32(RSsrDepthLod, ((ANKI_PLATFORM_MOBILE) ? 2 : 0), 0, 1000,
+ANKI_CONFIG_VAR_U32(RSsrDepthLod, ((ANKI_PLATFORM_MOBILE) ? 1 : 0), 0, 1000,
 					"Texture LOD of the depth texture that will be raymarched")
 ANKI_CONFIG_VAR_U32(RSsrMaxSteps, 64, 1, 256, "Max SSR raymarching steps")
 ANKI_CONFIG_VAR_BOOL(RSsrStochastic, false, "Stochastic reflections")
-ANKI_CONFIG_VAR_F32(RSsrRoughnessCutoff, ((ANKI_PLATFORM_MOBILE) ? 0.7f : 1.0f), 0.0f, 1.0f,
+ANKI_CONFIG_VAR_F32(RSsrRoughnessCutoff, ((ANKI_PLATFORM_MOBILE) ? 0.9f : 1.0f), 0.0f, 1.0f,
 					"Materials with roughness higher that this value will fallback to probe reflections")
 
 // GI probes
@@ -50,12 +50,12 @@ ANKI_CONFIG_VAR_U32(RIndirectDiffuseProbeMaxCachedProbes, 16, 4, 2048, "Max cach
 ANKI_CONFIG_VAR_U32(RIndirectDiffuseProbeMaxVisibleProbes, 8, 1, 256, "Max visible GI probes")
 
 // GI
-ANKI_CONFIG_VAR_U32(RIndirectDiffuseSsgiSampleCount, 8, 1, 1024, "SSGI sample count")
+ANKI_CONFIG_VAR_U32(RIndirectDiffuseSsgiSampleCount, 12, 1, 1024, "SSGI sample count")
 ANKI_CONFIG_VAR_F32(RIndirectDiffuseSsgiRadius, 2.0f, 0.1f, 100.0f, "SSGI radius in meters")
 ANKI_CONFIG_VAR_U32(RIndirectDiffuseDenoiseSampleCount, 4, 1, 128, "Indirect diffuse denoise sample count")
 ANKI_CONFIG_VAR_F32(RIndirectDiffuseSsaoStrength, 2.5f, 0.1f, 10.0f, "SSAO strength")
 ANKI_CONFIG_VAR_F32(RIndirectDiffuseSsaoBias, -0.1f, -10.0f, 10.0f, "SSAO bias")
-ANKI_CONFIG_VAR_F32(RIndirectDiffuseVrsDistanceThreshold, 0.01f, 0.00001f, 10.0f,
+ANKI_CONFIG_VAR_F32(RIndirectDiffuseVrsDistanceThreshold, 0.04f, 0.00001f, 10.0f,
 					"The meters that control the VRS SRI generation")
 
 // Shadows
@@ -63,7 +63,7 @@ ANKI_CONFIG_VAR_U32(RShadowMappingTileResolution, ((ANKI_PLATFORM_MOBILE) ? 128 
 					"Shadowmapping tile resolution")
 ANKI_CONFIG_VAR_U32(RShadowMappingTileCountPerRowOrColumn, 32, 1, 256,
 					"Shadowmapping atlas will have this number squared number of tiles")
-ANKI_CONFIG_VAR_U32(RShadowMappingPcf, ((ANKI_PLATFORM_MOBILE) ? 0 : 1), 0, 1, "Shadow PCF (0: off, 1: on)")
+ANKI_CONFIG_VAR_U32(RShadowMappingPcf, ((ANKI_PLATFORM_MOBILE) ? 1 : 1), 0, 1, "Shadow PCF (0: off, 1: on)")
 
 // Probe reflections
 ANKI_CONFIG_VAR_U32(RProbeReflectionResolution, 128, 4, 2048, "Reflection probe face resolution")
@@ -82,7 +82,7 @@ ANKI_CONFIG_VAR_U8(RLensFlareMaxFlares, 16, 8, 255, "Max flare count")
 ANKI_CONFIG_VAR_F32(RBloomThreshold, 2.5f, 0.0f, 256.0f, "Bloom threshold")
 ANKI_CONFIG_VAR_F32(RBloomScale, 2.5f, 0.0f, 256.0f, "Bloom scale")
 
-ANKI_CONFIG_VAR_BOOL(RSmResolveQuarterRez, ANKI_PLATFORM_MOBILE, "Shadowmapping resolve quality")
+ANKI_CONFIG_VAR_BOOL(RSmResolveQuarterRez, 0, "Shadowmapping resolve quality")
 
 ANKI_CONFIG_VAR_BOOL(RRtShadowsSvgf, false, "Enable or not RT shadows SVGF")
 ANKI_CONFIG_VAR_U8(RRtShadowsSvgfAtrousPassCount, 3, 1, 20, "Number of atrous passes of SVGF")
@@ -90,4 +90,4 @@ ANKI_CONFIG_VAR_U32(RRtShadowsRaysPerPixel, 1, 1, 8, "Number of shadow rays per 
 
 ANKI_CONFIG_VAR_U8(RFsrQuality, 1, 0, 2, "0: Use bilinear, 1: FSR low quality, 2: FSR high quality")
 ANKI_CONFIG_VAR_U8(RDlssQuality, 2, 0, 3, "0: Disabled, 1: Performance, 2: Balanced, 3: Quality")
-ANKI_CONFIG_VAR_F32(RSharpness, ((ANKI_PLATFORM_MOBILE) ? 0.0f : 0.8f), 0.0f, 1.0f, "Sharpen the image. It's a factor")
+ANKI_CONFIG_VAR_F32(RSharpness, ((ANKI_PLATFORM_MOBILE) ? 0.8f : 0.8f), 0.0f, 1.0f, "Sharpen the image. It's a factor")

@@ -252,7 +252,7 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	//
 	// ThreadPool
 	//
-	m_threadHive = newInstance<ThreadHive>(m_mainPool, m_config->getCoreJobThreadCount(), &m_mainPool, true);
+	m_threadHive = newInstance<ThreadHive>(m_mainPool, m_config->getCoreJobThreadCount(), &m_mainPool, false);
 
 	//
 	// Graphics API
