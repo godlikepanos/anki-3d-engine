@@ -1,0 +1,32 @@
+Revision history for Effcee
+
+v2020.0-dev 2020-06-16
+ - Start v2020.0-dev
+
+v2019.1 2020-06-16
+ - Build/CI/release updates
+   - GitHub repo: switch to 'main' branch, instead of 'master'
+   - Respect CMAKE_INSTALL_LIBDIR in installed Cmake files
+   - Travis-CI: On macOS run brew update first
+ - Fixes:
+   - protect make_unique with namespace
+
+v2019.0 2019-09-18
+ - Add optional tool effcee-fuzz to help run fuzzer cases.
+ - Build updates
+   - Add Bazel build rules
+   - Add Clang warning -Wextra-semi
+   - Require Python3
+   - Fix MinGW cross-compile
+   - Fix tests to work with latest googletest
+ - Fixes:
+   - Fail parsing checks when regular expressions are invalid.
+   - #23: Avoid StringPiece::as_string to enhance portability.
+
+v2018.1 2018-10-05
+ - Require CMake 3.1 or later
+ - Require C++11
+ - Travis-CI testing uses stock clang, instead of clang-3.6 (which is old by now)
+
+v2018.0 2018-10-05
+ - Mature enough for production use by third party projects such as DXC and SPIRV-Tools.
