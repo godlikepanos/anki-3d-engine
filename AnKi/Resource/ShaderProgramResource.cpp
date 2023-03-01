@@ -11,7 +11,6 @@
 #include <AnKi/Util/Filesystem.h>
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Core/ConfigSet.h>
-#include <AnKi/ShaderCompiler/MaliOfflineCompiler.h>
 
 namespace anki {
 

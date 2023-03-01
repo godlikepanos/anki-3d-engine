@@ -142,8 +142,7 @@ Error XmlDocument::parse(CString xmlText)
 {
 	if(m_doc.Parse(&xmlText[0]))
 	{
-		ANKI_UTIL_LOGE("Cannot parse file. Reason: %s",
-					   ((m_doc.GetErrorStr1() == nullptr) ? "unknown" : m_doc.GetErrorStr1()));
+		ANKI_UTIL_LOGE("Cannot parse file. Reason: %s", ((m_doc.ErrorStr() == nullptr) ? "unknown" : m_doc.ErrorStr()));
 
 		return Error::kUserData;
 	}

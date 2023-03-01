@@ -19,8 +19,8 @@ namespace anki {
 LightComponent::LightComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
 	, m_uuid(node->getSceneGraph().getNewUuid())
-	, m_type(LightComponentType::kPoint)
 	, m_spatial(this)
+	, m_type(LightComponentType::kPoint)
 {
 	ANKI_ASSERT(m_uuid > 0);
 	m_point.m_radius = 1.0f;
