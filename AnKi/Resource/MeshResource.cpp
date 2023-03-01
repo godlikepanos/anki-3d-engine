@@ -59,11 +59,12 @@ MeshResource::~MeshResource()
 
 	for(Lod& lod : m_lods)
 	{
-		getExternalSubsystems().m_unifiedGometryMemoryPool->free(lod.m_indexBufferAllocationToken);
+		getExternalSubsystems().m_unifiedGometryMemoryPool->deferredFree(lod.m_indexBufferAllocationToken);
 
 		for(VertexStreamId stream : EnumIterable(VertexStreamId::kMeshRelatedFirst, VertexStreamId::kMeshRelatedCount))
 		{
-			getExternalSubsystems().m_unifiedGometryMemoryPool->free(lod.m_vertexBuffersAllocationToken[stream]);
+			getExternalSubsystems().m_unifiedGometryMemoryPool->deferredFree(
+				lod.m_vertexBuffersAllocationToken[stream]);
 		}
 	}
 

@@ -7,6 +7,7 @@
 
 #include <AnKi/Scene/Common.h>
 #include <AnKi/Scene/SceneNode.h>
+#include <AnKi/Scene/ContiguousArrayAllocator.h>
 #include <AnKi/Math.h>
 #include <AnKi/Util/HashMap.h>
 #include <AnKi/Core/App.h>
@@ -43,6 +44,7 @@ class SceneGraph
 	friend class SceneNode;
 	friend class UpdateSceneNodesTask;
 	friend class Event;
+	friend class AllGpuSceneContiguousArrays;
 
 public:
 	SceneGraph();
@@ -169,6 +171,11 @@ public:
 		return *m_octree;
 	}
 
+	ANKI_INTERNAL AllGpuSceneContiguousArrays& getAllGpuSceneContiguousArrays()
+	{
+		return m_gpuSceneAllocators;
+	}
+
 private:
 	class UpdateSceneNodesCtx;
 
@@ -199,6 +206,8 @@ private:
 	Atomic<U64> m_nodesUuid = {1};
 
 	SceneGraphStats m_stats;
+
+	AllGpuSceneContiguousArrays m_gpuSceneAllocators;
 
 	/// Put a node in the appropriate containers
 	Error registerNode(SceneNode* node);

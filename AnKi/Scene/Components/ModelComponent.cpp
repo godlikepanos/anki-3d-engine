@@ -18,15 +18,26 @@ ModelComponent::ModelComponent(SceneNode* node)
 	, m_node(node)
 	, m_spatial(this)
 {
-	getExternalSubsystems(*node).m_gpuSceneMemoryPool->allocate(sizeof(Mat3x4) * 2, alignof(F32), m_gpuSceneTransforms);
+	m_gpuSceneTransformsOffset = U32(
+		node->getSceneGraph().getAllGpuSceneContiguousArrays().allocate(GpuSceneContiguousArrayType::kTransformPairs));
 }
 
 ModelComponent::~ModelComponent()
 {
 	GpuSceneMemoryPool& gpuScene = *getExternalSubsystems(*m_node).m_gpuSceneMemoryPool;
-	gpuScene.free(m_gpuSceneMeshLods);
-	gpuScene.free(m_gpuSceneUniforms);
-	gpuScene.free(m_gpuSceneTransforms);
+	gpuScene.deferredFree(m_gpuSceneUniforms);
+
+	for(const PatchInfo& patch : m_patchInfos)
+	{
+		if(patch.m_gpuSceneMeshLodsOffset != kMaxU32)
+		{
+			m_node->getSceneGraph().getAllGpuSceneContiguousArrays().deferredFree(
+				GpuSceneContiguousArrayType::kMeshLods, patch.m_gpuSceneMeshLodsOffset);
+		}
+	}
+
+	m_node->getSceneGraph().getAllGpuSceneContiguousArrays().deferredFree(GpuSceneContiguousArrayType::kTransformPairs,
+																		  m_gpuSceneTransformsOffset);
 
 	m_patchInfos.destroy(m_node->getMemoryPool());
 
@@ -51,11 +62,23 @@ void ModelComponent::loadModelResource(CString filename)
 	// GPU scene allocations
 	GpuSceneMemoryPool& gpuScene = *getExternalSubsystems(*m_node).m_gpuSceneMemoryPool;
 
-	gpuScene.free(m_gpuSceneMeshLods);
-	gpuScene.allocate(sizeof(GpuSceneMeshLod) * kMaxLodCount * modelPatchCount, 4, m_gpuSceneMeshLods);
+	for(const PatchInfo& patch : m_patchInfos)
+	{
+		if(patch.m_gpuSceneMeshLodsOffset != kMaxU32)
+		{
+			m_node->getSceneGraph().getAllGpuSceneContiguousArrays().deferredFree(
+				GpuSceneContiguousArrayType::kMeshLods, patch.m_gpuSceneMeshLodsOffset);
+		}
+	}
+
+	m_patchInfos.resize(m_node->getMemoryPool(), modelPatchCount);
+	for(U32 i = 0; i < modelPatchCount; ++i)
+	{
+		m_patchInfos[i].m_gpuSceneMeshLodsOffset = U32(
+			m_node->getSceneGraph().getAllGpuSceneContiguousArrays().allocate(GpuSceneContiguousArrayType::kMeshLods));
+	}
 
 	U32 uniformsSize = 0;
-	m_patchInfos.resize(m_node->getMemoryPool(), modelPatchCount);
 	for(U32 i = 0; i < modelPatchCount; ++i)
 	{
 		m_patchInfos[i].m_gpuSceneUniformsOffset = uniformsSize;
@@ -65,7 +88,7 @@ void ModelComponent::loadModelResource(CString filename)
 		uniformsSize += size;
 	}
 
-	gpuScene.free(m_gpuSceneUniforms);
+	gpuScene.deferredFree(m_gpuSceneUniforms);
 	gpuScene.allocate(uniformsSize, 4, m_gpuSceneUniforms);
 
 	for(U32 i = 0; i < modelPatchCount; ++i)
@@ -110,15 +133,16 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		// Upload the mesh views
 		const U32 modelPatchCount = m_model->getModelPatches().getSize();
-		DynamicArrayRaii<GpuSceneMeshLod> meshLods(info.m_framePool, modelPatchCount * kMaxLodCount);
 		for(U32 i = 0; i < modelPatchCount; ++i)
 		{
 			const ModelPatch& patch = m_model->getModelPatches()[i];
 			const MeshResource& mesh = *patch.getMesh();
 
+			Array<GpuSceneMeshLod, kMaxLodCount> meshLods;
+
 			for(U32 l = 0; l < mesh.getLodCount(); ++l)
 			{
-				GpuSceneMeshLod& meshLod = meshLods[i * kMaxLodCount + l];
+				GpuSceneMeshLod& meshLod = meshLods[l];
 				meshLod = {};
 				meshLod.m_positionScale = mesh.getPositionsScale();
 				meshLod.m_positionTranslation = mesh.getPositionsTranslation();
@@ -154,12 +178,12 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			// Copy the last LOD to the rest just in case
 			for(U32 l = mesh.getLodCount(); l < kMaxLodCount; ++l)
 			{
-				meshLods[i * kMaxLodCount + l] = meshLods[i * kMaxLodCount + (l - 1)];
+				meshLods[l] = meshLods[l - 1];
 			}
-		}
 
-		gpuScenePatcher.newCopy(*info.m_framePool, m_gpuSceneMeshLods.m_offset, meshLods.getSizeInBytes(),
-								&meshLods[0]);
+			gpuScenePatcher.newCopy(*info.m_framePool, m_patchInfos[i].m_gpuSceneMeshLodsOffset,
+									meshLods.getSizeInBytes(), &meshLods[0]);
+		}
 
 		// Upload the uniforms
 		DynamicArrayRaii<U32> allUniforms(info.m_framePool, U32(m_gpuSceneUniforms.m_size / 4));
@@ -187,7 +211,7 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		trfs[1] = Mat3x4(info.m_node->getPreviousWorldTransform());
 
 		getExternalSubsystems(*info.m_node)
-			.m_gpuSceneMicroPatcher->newCopy(*info.m_framePool, m_gpuSceneTransforms.m_offset, sizeof(trfs), &trfs[0]);
+			.m_gpuSceneMicroPatcher->newCopy(*info.m_framePool, m_gpuSceneTransformsOffset, sizeof(trfs), &trfs[0]);
 	}
 
 	// Spatial update
@@ -271,10 +295,9 @@ void ModelComponent::setupRenderableQueueElements(U32 lod, RenderingTechnique te
 		patch.getRenderingInfo(key, modelInf);
 
 		queueElem.m_program = modelInf.m_program.get();
-		queueElem.m_worldTransformsOffset = U32(m_gpuSceneTransforms.m_offset);
+		queueElem.m_worldTransformsOffset = m_gpuSceneTransformsOffset;
 		queueElem.m_uniformsOffset = m_patchInfos[i].m_gpuSceneUniformsOffset;
-		queueElem.m_geometryOffset =
-			U32(m_gpuSceneMeshLods.m_offset + sizeof(GpuSceneMeshLod) * (kMaxLodCount * i + lod));
+		queueElem.m_geometryOffset = m_patchInfos[i].m_gpuSceneMeshLodsOffset + lod * sizeof(GpuSceneMeshLod);
 		queueElem.m_boneTransformsOffset = (hasSkin) ? m_skinComponent->getBoneTransformsGpuSceneOffset() : 0;
 		queueElem.m_indexCount = modelInf.m_indexCount;
 		queueElem.m_firstIndex = U32(modelInf.m_indexBufferOffset / 2 + modelInf.m_firstIndex);
@@ -342,10 +365,9 @@ void ModelComponent::setupRayTracingInstanceQueueElements(U32 lod, RenderingTech
 
 		queueElem.m_bottomLevelAccelerationStructure = modelInf.m_bottomLevelAccelerationStructure.get();
 		queueElem.m_shaderGroupHandleIndex = modelInf.m_shaderGroupHandleIndex;
-		queueElem.m_worldTransformsOffset = U32(m_gpuSceneTransforms.m_offset);
+		queueElem.m_worldTransformsOffset = m_gpuSceneTransformsOffset;
 		queueElem.m_uniformsOffset = m_patchInfos[i].m_gpuSceneUniformsOffset;
-		queueElem.m_geometryOffset =
-			U32(m_gpuSceneMeshLods.m_offset + sizeof(GpuSceneMeshLod) * (kMaxLodCount * i + lod));
+		queueElem.m_geometryOffset = m_patchInfos[i].m_gpuSceneMeshLodsOffset + lod * sizeof(GpuSceneMeshLod);
 		queueElem.m_indexBufferOffset = U32(modelInf.m_indexBufferOffset);
 
 		const Transform positionTransform(patch.getMesh()->getPositionsTranslation().xyz0(), Mat3x4::getIdentity(),

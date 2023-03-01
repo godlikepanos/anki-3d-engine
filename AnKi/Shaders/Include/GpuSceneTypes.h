@@ -32,13 +32,13 @@ struct GpuSceneMeshLod
 };
 static_assert(sizeof(GpuSceneMeshLod) == sizeof(Vec4) * 3);
 
-struct GpuSceneParticles
+struct GpuSceneParticleEmitter
 {
 	U32 m_vertexOffsets[(U32)VertexStreamId::kParticleRelatedCount];
 	U32 m_padding0;
 	U32 m_padding1;
 };
-static_assert(sizeof(GpuSceneParticles) == sizeof(Vec4) * 2);
+static_assert(sizeof(GpuSceneParticleEmitter) == sizeof(Vec4) * 2);
 
 struct RenderableGpuView
 {

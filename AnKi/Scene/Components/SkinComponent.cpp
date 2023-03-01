@@ -25,7 +25,7 @@ SkinComponent::~SkinComponent()
 	m_boneTrfs[1].destroy(m_node->getMemoryPool());
 	m_animationTrfs.destroy(m_node->getMemoryPool());
 
-	getExternalSubsystems(*m_node).m_gpuSceneMemoryPool->free(m_boneTransformsGpuSceneOffset);
+	getExternalSubsystems(*m_node).m_gpuSceneMemoryPool->deferredFree(m_boneTransformsGpuSceneOffset);
 }
 
 void SkinComponent::loadSkeletonResource(CString fname)
@@ -46,7 +46,7 @@ void SkinComponent::loadSkeletonResource(CString fname)
 	m_boneTrfs[0].destroy(m_node->getMemoryPool());
 	m_boneTrfs[1].destroy(m_node->getMemoryPool());
 	m_animationTrfs.destroy(m_node->getMemoryPool());
-	getExternalSubsystems(*m_node).m_gpuSceneMemoryPool->free(m_boneTransformsGpuSceneOffset);
+	getExternalSubsystems(*m_node).m_gpuSceneMemoryPool->deferredFree(m_boneTransformsGpuSceneOffset);
 
 	// Create
 	const U32 boneCount = m_skeleton->getBones().getSize();

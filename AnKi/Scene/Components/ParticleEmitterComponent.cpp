@@ -198,7 +198,6 @@ ParticleEmitterComponent::ParticleEmitterComponent(SceneNode* node)
 	, m_node(node)
 	, m_spatial(this)
 {
-	getExternalSubsystems(*node).m_gpuSceneMemoryPool->allocate(sizeof(Mat3x4), alignof(F32), m_gpuSceneTransform);
 }
 
 ParticleEmitterComponent::~ParticleEmitterComponent()
@@ -207,12 +206,16 @@ ParticleEmitterComponent::~ParticleEmitterComponent()
 	m_physicsParticles.destroy(m_node->getMemoryPool());
 
 	GpuSceneMemoryPool& gpuScenePool = *getExternalSubsystems(*m_node).m_gpuSceneMemoryPool;
-	gpuScenePool.free(m_gpuScenePositions);
-	gpuScenePool.free(m_gpuSceneScales);
-	gpuScenePool.free(m_gpuSceneAlphas);
-	gpuScenePool.free(m_gpuSceneParticles);
-	gpuScenePool.free(m_gpuSceneUniforms);
-	gpuScenePool.free(m_gpuSceneTransform);
+	gpuScenePool.deferredFree(m_gpuScenePositions);
+	gpuScenePool.deferredFree(m_gpuSceneScales);
+	gpuScenePool.deferredFree(m_gpuSceneAlphas);
+	gpuScenePool.deferredFree(m_gpuSceneUniforms);
+
+	if(m_gpuSceneParticleEmitterOffset != kMaxU32)
+	{
+		m_node->getSceneGraph().getAllGpuSceneContiguousArrays().deferredFree(
+			GpuSceneContiguousArrayType::kParticleEmitters, m_gpuSceneParticleEmitterOffset);
+	}
 
 	m_spatial.removeFromOctree(m_node->getSceneGraph().getOctree());
 }
@@ -237,11 +240,16 @@ void ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	m_simpleParticles.destroy(m_node->getMemoryPool());
 	m_physicsParticles.destroy(m_node->getMemoryPool());
 	GpuSceneMemoryPool& gpuScenePool = *getExternalSubsystems(*m_node).m_gpuSceneMemoryPool;
-	gpuScenePool.free(m_gpuScenePositions);
-	gpuScenePool.free(m_gpuSceneScales);
-	gpuScenePool.free(m_gpuSceneAlphas);
-	gpuScenePool.free(m_gpuSceneParticles);
-	gpuScenePool.free(m_gpuSceneUniforms);
+	gpuScenePool.deferredFree(m_gpuScenePositions);
+	gpuScenePool.deferredFree(m_gpuSceneScales);
+	gpuScenePool.deferredFree(m_gpuSceneAlphas);
+	gpuScenePool.deferredFree(m_gpuSceneUniforms);
+
+	if(m_gpuSceneParticleEmitterOffset != kMaxU32)
+	{
+		m_node->getSceneGraph().getAllGpuSceneContiguousArrays().deferredFree(
+			GpuSceneContiguousArrayType::kParticleEmitters, m_gpuSceneParticleEmitterOffset);
+	}
 
 	// Init particles
 	m_simulationType = (m_props.m_usePhysicsEngine) ? SimulationType::kPhysicsEngine : SimulationType::kSimple;
@@ -270,9 +278,11 @@ void ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	gpuScenePool.allocate(sizeof(Vec3) * m_props.m_maxNumOfParticles, alignof(F32), m_gpuScenePositions);
 	gpuScenePool.allocate(sizeof(F32) * m_props.m_maxNumOfParticles, alignof(F32), m_gpuSceneAlphas);
 	gpuScenePool.allocate(sizeof(F32) * m_props.m_maxNumOfParticles, alignof(F32), m_gpuSceneScales);
-	gpuScenePool.allocate(sizeof(GpuSceneParticles), alignof(U32), m_gpuSceneParticles);
 	gpuScenePool.allocate(m_particleEmitterResource->getMaterial()->getPrefilledLocalUniforms().getSizeInBytes(),
 						  alignof(U32), m_gpuSceneUniforms);
+
+	m_gpuSceneParticleEmitterOffset = U32(m_node->getSceneGraph().getAllGpuSceneContiguousArrays().allocate(
+		GpuSceneContiguousArrayType::kParticleEmitters));
 }
 
 Error ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
@@ -316,12 +326,13 @@ Error ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 
 	if(m_resourceUpdated)
 	{
-		GpuSceneParticles particles = {};
+		GpuSceneParticleEmitter particles = {};
 		particles.m_vertexOffsets[U32(VertexStreamId::kParticlePosition)] = U32(m_gpuScenePositions.m_offset);
 		particles.m_vertexOffsets[U32(VertexStreamId::kParticleColor)] = U32(m_gpuSceneAlphas.m_offset);
 		particles.m_vertexOffsets[U32(VertexStreamId::kParticleScale)] = U32(m_gpuSceneScales.m_offset);
 
-		patcher.newCopy(*info.m_framePool, m_gpuSceneParticles.m_offset, sizeof(GpuSceneParticles), &particles);
+		patcher.newCopy(*info.m_framePool, m_gpuSceneParticleEmitterOffset, sizeof(GpuSceneParticleEmitter),
+						&particles);
 
 		patcher.newCopy(*info.m_framePool, m_gpuSceneUniforms.m_offset,
 						m_particleEmitterResource->getMaterial()->getPrefilledLocalUniforms().getSizeInBytes(),
@@ -458,7 +469,7 @@ void ParticleEmitterComponent::setupRenderableQueueElements(RenderingTechnique t
 	el->m_program = prog.get();
 	el->m_worldTransformsOffset = 0;
 	el->m_uniformsOffset = U32(m_gpuSceneUniforms.m_offset);
-	el->m_geometryOffset = U32(m_gpuSceneParticles.m_offset);
+	el->m_geometryOffset = m_gpuSceneParticleEmitterOffset;
 	el->m_boneTransformsOffset = 0;
 	el->m_vertexCount = 6 * m_aliveParticleCount;
 	el->m_firstVertex = 0;

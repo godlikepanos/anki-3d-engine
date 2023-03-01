@@ -222,7 +222,7 @@ void SegregatedListsGpuMemoryPool::allocate(PtrSize size, U32 alignment, Segrega
 	m_allocatedSize += size;
 }
 
-void SegregatedListsGpuMemoryPool::free(SegregatedListsGpuMemoryPoolToken& token)
+void SegregatedListsGpuMemoryPool::deferredFree(SegregatedListsGpuMemoryPoolToken& token)
 {
 	ANKI_ASSERT(isInitialized());
 

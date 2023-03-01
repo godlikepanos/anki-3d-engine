@@ -41,7 +41,7 @@ VertOut main(VertIn input)
 	const U32 vertexId = input.m_svVertexId % 6u;
 
 	const GpuSceneRenderable renderable = unpackGpuSceneRenderable(input.m_gpuSceneRenderable);
-	const GpuSceneParticles particles = g_gpuScene.Load<GpuSceneParticles>(renderable.m_geometryOffset);
+	const GpuSceneParticleEmitter particles = g_gpuScene.Load<GpuSceneParticleEmitter>(renderable.m_geometryOffset);
 
 	U32 idx = particles.m_vertexOffsets[(U32)VertexStreamId::kParticlePosition] + particleId * sizeof(Vec3);
 	const Vec3 vertPos = g_gpuScene.Load<Vec3>(idx);

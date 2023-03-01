@@ -59,9 +59,9 @@ public:
 	/// @note It's thread-safe.
 	void allocate(PtrSize size, U32 alignment, SegregatedListsGpuMemoryPoolToken& token);
 
-	/// Free memory.
+	/// Free memory a few frames down the line.
 	/// @note It's thread-safe.
-	void free(SegregatedListsGpuMemoryPoolToken& token);
+	void deferredFree(SegregatedListsGpuMemoryPoolToken& token);
 
 	/// @note It's thread-safe.
 	void endFrame();
@@ -76,6 +76,12 @@ public:
 
 	/// @note It's thread-safe.
 	void getStats(F32& externalFragmentation, PtrSize& userAllocatedSize, PtrSize& totalSize) const;
+
+	GrManager& getGrManager()
+	{
+		ANKI_ASSERT(m_gr);
+		return *m_gr;
+	}
 
 private:
 	class BuilderInterface;

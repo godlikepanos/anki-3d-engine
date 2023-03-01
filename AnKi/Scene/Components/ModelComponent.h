@@ -53,7 +53,8 @@ private:
 	class PatchInfo
 	{
 	public:
-		U32 m_gpuSceneUniformsOffset;
+		U32 m_gpuSceneUniformsOffset = kMaxU32;
+		U32 m_gpuSceneMeshLodsOffset = kMaxU32;
 		RenderingTechniqueBit m_techniques;
 	};
 
@@ -63,9 +64,8 @@ private:
 
 	ModelResourcePtr m_model;
 
-	SegregatedListsGpuMemoryPoolToken m_gpuSceneMeshLods;
 	SegregatedListsGpuMemoryPoolToken m_gpuSceneUniforms;
-	SegregatedListsGpuMemoryPoolToken m_gpuSceneTransforms;
+	U32 m_gpuSceneTransformsOffset = kMaxU32;
 	DynamicArray<PatchInfo> m_patchInfos;
 
 	Bool m_dirty : 1 = true;

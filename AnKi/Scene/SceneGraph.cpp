@@ -47,6 +47,8 @@ SceneGraph::~SceneGraph()
 	{
 		deleteInstance(m_pool, m_octree);
 	}
+
+	m_gpuSceneAllocators.destroy();
 }
 
 Error SceneGraph::init(const SceneGraphInitInfo& initInfo)
@@ -66,6 +68,8 @@ Error SceneGraph::init(const SceneGraphInitInfo& initInfo)
 	CameraComponent* camc = m_defaultMainCam->newComponent<CameraComponent>();
 	camc->setPerspective(0.1f, 1000.0f, toRad(60.0f), (1080.0f / 1920.0f) * toRad(60.0f));
 	m_mainCam = m_defaultMainCam;
+
+	m_gpuSceneAllocators.init(this);
 
 	return Error::kNone;
 }
@@ -158,6 +162,8 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 {
 	ANKI_ASSERT(m_mainCam);
 	ANKI_TRACE_SCOPED_EVENT(SceneUpdate);
+
+	m_gpuSceneAllocators.endFrame();
 
 	m_stats.m_updateTime = HighRezTimer::getCurrentTime();
 

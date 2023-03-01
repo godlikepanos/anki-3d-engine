@@ -36,9 +36,9 @@ public:
 		m_pool.allocate(size, alignment, token);
 	}
 
-	void free(SegregatedListsGpuMemoryPoolToken& token)
+	void deferredFree(SegregatedListsGpuMemoryPoolToken& token)
 	{
-		m_pool.free(token);
+		m_pool.deferredFree(token);
 	}
 
 	void endFrame()
@@ -77,9 +77,9 @@ public:
 		m_pool.allocate(size, alignment, token);
 	}
 
-	void free(SegregatedListsGpuMemoryPoolToken& token)
+	void deferredFree(SegregatedListsGpuMemoryPoolToken& token)
 	{
-		m_pool.free(token);
+		m_pool.deferredFree(token);
 	}
 
 	void endFrame()
@@ -95,6 +95,11 @@ public:
 	void getStats(F32& externalFragmentation, PtrSize& userAllocatedSize, PtrSize& totalSize) const
 	{
 		m_pool.getStats(externalFragmentation, userAllocatedSize, totalSize);
+	}
+
+	GrManager& getGrManager()
+	{
+		return m_pool.getGrManager();
 	}
 
 private:

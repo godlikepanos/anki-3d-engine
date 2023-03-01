@@ -33,7 +33,7 @@ void UnifiedGeometryMemoryPool::init(HeapMemoryPool* pool, GrManager* gr, const 
 	// Allocate something dummy to force creating the GPU buffer
 	SegregatedListsGpuMemoryPoolToken token;
 	allocate(16, 4, token);
-	free(token);
+	deferredFree(token);
 }
 
 void GpuSceneMemoryPool::init(HeapMemoryPool* pool, GrManager* gr, const ConfigSet& cfg)
