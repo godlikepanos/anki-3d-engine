@@ -27,6 +27,9 @@ LightComponent::LightComponent(SceneNode* node)
 
 	setLightComponentType(LightComponentType::kPoint);
 	m_worldTransform = node->getWorldTransform();
+
+	m_gpuSceneLightOffset =
+		node->getSceneGraph().getAllGpuSceneContiguousArrays().allocate(GpuSceneContiguousArrayType::kLights);
 }
 
 LightComponent::~LightComponent()
@@ -104,6 +107,21 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 				}
 			}
 		}
+
+		// Upload to the GPU scene
+		GpuScenePointLight gpuLight;
+		gpuLight.m_position = m_worldTransform.getOrigin().xyz();
+		gpuLight.m_radius = m_point.m_radius;
+		gpuLight.m_diffuseColor = m_diffColor.xyz();
+		gpuLight.m_squareRadiusOverOne = 1.0f / (m_point.m_radius * m_point.m_radius);
+		gpuLight.m_shadowLayer = 0; // Don't know this at this point.
+		gpuLight.m_shadowAtlasTileScale = 0.0f; // Don't know this at this point.
+		for(U32 i = 0; i < 6; ++i)
+		{
+			gpuLight.m_shadowAtlasTileOffsets[i] = Vec4(0.0f); // Don't know this at this point.
+		}
+		GpuSceneMicroPatcher& gpuScenePatcher = *getExternalSubsystems(*info.m_node).m_gpuSceneMicroPatcher;
+		gpuScenePatcher.newCopy(*info.m_framePool, m_gpuSceneLightOffset, sizeof(gpuLight), &gpuLight);
 	}
 	else if(updated && m_type == LightComponentType::kSpot)
 	{
@@ -154,6 +172,24 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 				m_frustums[0].setWorldTransform(m_worldTransform);
 			}
 		}
+
+		// Upload to the GPU scene
+		GpuSceneSpotLight gpuLight;
+		gpuLight.m_position = m_worldTransform.getOrigin().xyz();
+		for(U32 i = 0; i < 4; ++i)
+		{
+			gpuLight.m_edgePoints[i] = m_spot.m_edgePointsWspace[i].xyz0();
+		}
+		gpuLight.m_diffuseColor = m_diffColor.xyz();
+		gpuLight.m_radius = m_spot.m_distance;
+		gpuLight.m_direction = -m_worldTransform.getRotation().getZAxis();
+		gpuLight.m_squareRadiusOverOne = 1.0f / (m_spot.m_distance * m_spot.m_distance);
+		gpuLight.m_shadowLayer = 1; // Don't know this at this point.
+		gpuLight.m_outerCos = cos(m_spot.m_outerAngle / 2.0f);
+		gpuLight.m_innerCos = cos(m_spot.m_innerAngle / 2.0f);
+		gpuLight.m_textureMatrix = Mat4::getIdentity(); // Don't know this at this point.
+		GpuSceneMicroPatcher& gpuScenePatcher = *getExternalSubsystems(*info.m_node).m_gpuSceneMicroPatcher;
+		gpuScenePatcher.newCopy(*info.m_framePool, m_gpuSceneLightOffset, sizeof(gpuLight), &gpuLight);
 	}
 	else if(m_type == LightComponentType::kDirectional)
 	{
@@ -336,6 +372,12 @@ void LightComponent::onDestroy(SceneNode& node)
 {
 	deleteArray(node.getMemoryPool(), m_frustums, m_frustumCount);
 	m_spatial.removeFromOctree(node.getSceneGraph().getOctree());
+
+	if(m_gpuSceneLightOffset != kMaxU32)
+	{
+		node.getSceneGraph().getAllGpuSceneContiguousArrays().deferredFree(GpuSceneContiguousArrayType::kLights,
+																		   m_gpuSceneLightOffset);
+	}
 }
 
 } // end namespace anki

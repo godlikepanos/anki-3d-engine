@@ -79,14 +79,8 @@ public:
 
 	void setInnerAngle(F32 ang)
 	{
-		m_spot.m_innerAngleCos = cos(ang / 2.0f);
 		m_spot.m_innerAngle = ang;
 		m_markedForUpdate = true;
-	}
-
-	F32 getInnerAngleCos() const
-	{
-		return m_spot.m_innerAngleCos;
 	}
 
 	F32 getInnerAngle() const
@@ -96,7 +90,6 @@ public:
 
 	void setOuterAngle(F32 ang)
 	{
-		m_spot.m_outerAngleCos = cos(ang / 2.0f);
 		m_spot.m_outerAngle = ang;
 		m_markedForUpdate = true;
 	}
@@ -104,11 +97,6 @@ public:
 	F32 getOuterAngle() const
 	{
 		return m_spot.m_outerAngle;
-	}
-
-	F32 getOuterAngleCos() const
-	{
-		return m_spot.m_outerAngleCos;
 	}
 
 	Bool getShadowEnabled() const
@@ -177,8 +165,6 @@ private:
 		F32 m_distance = 1.0f;
 		F32 m_outerAngle = toRad(30.0f);
 		F32 m_innerAngle = toRad(15.0f);
-		F32 m_outerAngleCos = cos(m_outerAngle / 2.0f);
-		F32 m_innerAngleCos = cos(m_innerAngle / 2.0f);
 		Array<Vec3, 4> m_edgePointsWspace = {};
 	};
 
@@ -196,6 +182,8 @@ private:
 	Spatial m_spatial;
 
 	Frustum* m_frustums = nullptr;
+
+	U32 m_gpuSceneLightOffset = kMaxU32;
 
 	LightComponentType m_type;
 

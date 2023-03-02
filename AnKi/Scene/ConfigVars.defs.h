@@ -32,3 +32,4 @@ ANKI_CONFIG_VAR_U32(SceneMinGpuSceneTransforms, 8 * 1024, 8, 100 * 1024,
 ANKI_CONFIG_VAR_U32(SceneMinGpuSceneMeshes, 8 * 1024, 8, 100 * 1024, "The min number of meshes stored in the GPU scene")
 ANKI_CONFIG_VAR_U32(SceneMinGpuSceneParticleEmitters, 1 * 1024, 8, 100 * 1024,
 					"The min number of particle emitters stored in the GPU scene")
+ANKI_CONFIG_VAR_U32(SceneMinGpuSceneLights, 2 * 1024, 8, 100 * 1024, "The min number of lights stored in the GPU scene")

@@ -40,6 +40,48 @@ struct GpuSceneParticleEmitter
 };
 static_assert(sizeof(GpuSceneParticleEmitter) == sizeof(Vec4) * 2);
 
+/// Point light.
+struct GpuScenePointLight
+{
+	Vec3 m_position; ///< Position in world space.
+	RF32 m_radius; ///< Radius
+
+	RVec3 m_diffuseColor;
+	RF32 m_squareRadiusOverOne; ///< 1/(radius^2).
+
+	Vec2 m_padding0;
+	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
+	F32 m_shadowAtlasTileScale; ///< UV scale for all tiles.
+
+	Vec4 m_shadowAtlasTileOffsets[6u]; ///< It's a array of Vec2 but because of padding round it up.
+};
+constexpr U32 kSizeof_GpuScenePointLight = 9u * sizeof(Vec4);
+static_assert(sizeof(GpuScenePointLight) == kSizeof_GpuScenePointLight);
+
+/// Spot light.
+struct GpuSceneSpotLight
+{
+	Vec3 m_position;
+	F32 m_padding0;
+
+	Vec4 m_edgePoints[4u]; ///< Edge points in world space.
+
+	RVec3 m_diffuseColor;
+	RF32 m_radius; ///< Max distance.
+
+	RVec3 m_direction; ///< Light direction.
+	RF32 m_squareRadiusOverOne; ///< 1/(radius^2).
+
+	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
+	RF32 m_outerCos;
+	RF32 m_innerCos;
+	U32 m_padding1;
+
+	Mat4 m_textureMatrix;
+};
+constexpr U32 kSizeof_GpuSceneSpotLight = 12u * sizeof(Vec4);
+static_assert(sizeof(GpuSceneSpotLight) == kSizeof_GpuSceneSpotLight);
+
 struct RenderableGpuView
 {
 	Mat3x4 m_worldTransform;

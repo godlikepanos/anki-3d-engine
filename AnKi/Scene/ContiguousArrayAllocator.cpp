@@ -113,28 +113,17 @@ void AllGpuSceneContiguousArrays::init(SceneGraph* scene)
 	const ConfigSet& cfg = *scene->m_subsystems.m_config;
 	constexpr F32 kGrowRate = 2.0;
 
-	U32 arraySize =
-		cfg.getSceneMinGpuSceneTransforms() / m_componentCount[GpuSceneContiguousArrayType::kTransformPairs];
-	m_allocs[GpuSceneContiguousArrayType::kTransformPairs].init(
-		arraySize,
-		m_componentSize[GpuSceneContiguousArrayType::kTransformPairs]
-			* m_componentCount[GpuSceneContiguousArrayType::kTransformPairs],
-		kGrowRate);
+	const Array<U32, U32(GpuSceneContiguousArrayType::kCount)> minElementCount = {
+		cfg.getSceneMinGpuSceneTransforms(), cfg.getSceneMinGpuSceneMeshes(), cfg.getSceneMinGpuSceneParticleEmitters(),
+		cfg.getSceneMinGpuSceneLights()};
 
-	arraySize = cfg.getSceneMinGpuSceneMeshes() / m_componentCount[GpuSceneContiguousArrayType::kMeshLods];
-	m_allocs[GpuSceneContiguousArrayType::kMeshLods].init(
-		arraySize,
-		m_componentSize[GpuSceneContiguousArrayType::kMeshLods]
-			* m_componentCount[GpuSceneContiguousArrayType::kMeshLods],
-		kGrowRate);
+	for(GpuSceneContiguousArrayType type : EnumIterable<GpuSceneContiguousArrayType>())
+	{
+		const U32 initialArraySize = minElementCount[type] / m_componentCount[type];
+		const U16 elementSize = m_componentSize[type] * m_componentCount[type];
 
-	arraySize =
-		cfg.getSceneMinGpuSceneParticleEmitters() / m_componentCount[GpuSceneContiguousArrayType::kParticleEmitters];
-	m_allocs[GpuSceneContiguousArrayType::kParticleEmitters].init(
-		arraySize,
-		m_componentSize[GpuSceneContiguousArrayType::kParticleEmitters]
-			* m_componentCount[GpuSceneContiguousArrayType::kParticleEmitters],
-		kGrowRate);
+		m_allocs[type].init(initialArraySize, elementSize, kGrowRate);
+	}
 }
 
 void AllGpuSceneContiguousArrays::destroy()
