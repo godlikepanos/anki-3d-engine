@@ -251,6 +251,7 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	nwinit.m_stencilBits = 0;
 	nwinit.m_fullscreenDesktopRez = m_config->getWindowFullscreen() > 0;
 	nwinit.m_exclusiveFullscreen = m_config->getWindowFullscreen() == 2;
+	nwinit.m_targetFps = m_config->getCoreTargetFps();
 	ANKI_CHECK(NativeWindow::newInstance(nwinit, m_window));
 
 	//

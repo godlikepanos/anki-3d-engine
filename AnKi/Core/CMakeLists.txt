@@ -44,7 +44,7 @@ if(SDL)
 
 	set(extra_libs ${extra_libs} SDL2-static)
 elseif(ANDROID)
-	set(extra_libs log android AnKiAndroidNativeGlue AnKiHwcPipe)
+	set(extra_libs log android nativewindow AnKiAndroidNativeGlue AnKiHwcPipe)
 elseif(WINDOWS)
 	set(extra_libs version Imm32 Winmm DbgHelp)
 endif()

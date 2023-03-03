@@ -94,6 +94,11 @@ Error NativeWindowAndroid::init([[maybe_unused]] const NativeWindowInitInfo& ini
 
 	m_nativeWindow = g_androidApp->window;
 
+	if(init.m_targetFps)
+	{
+		ANativeWindow_setFrameRate(m_nativeWindow, init.m_targetFps, ANATIVEWINDOW_FRAME_RATE_COMPATIBILITY_DEFAULT);
+	}
+
 	// Set some stuff
 	m_width = ANativeWindow_getWidth(g_androidApp->window);
 	m_height = ANativeWindow_getHeight(g_androidApp->window);

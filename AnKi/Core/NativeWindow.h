@@ -25,6 +25,7 @@ public:
 	U32 m_depthBits = 0;
 	U32 m_stencilBits = 0;
 	U32 m_samplesCount = 0;
+	U32 m_targetFps = 0;
 	static constexpr Bool m_doubleBuffer = true;
 	/// Create a fullscreen window with the desktop's resolution
 	Bool m_fullscreenDesktopRez = false;
