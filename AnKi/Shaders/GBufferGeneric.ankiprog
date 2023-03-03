@@ -316,7 +316,7 @@ FragOut main(VertOut input)
 	const Vec2 prevNdc = input.m_prevClipXyw.xy / input.m_prevClipXyw.z;
 	const Vec2 crntNdc = input.m_crntClipXyw.xy / input.m_crntClipXyw.z;
 
-	// It's NDC_TO_UV(prevNdc) - NDC_TO_UV(crntNdc) or:
+	// It's ndcToUv(prevNdc) - ndcToUv(crntNdc) or:
 	const Vec2 velocity = (prevNdc - crntNdc) * 0.5;
 #	else
 	const Vec2 velocity = Vec2(1.0, 1.0);

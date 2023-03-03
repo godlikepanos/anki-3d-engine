@@ -10,21 +10,8 @@
 #include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 
-#if defined(GPU_SCENE) // TODO rm that eventually
-#	define FORWARD_SHADING 1
-#	include <AnKi/Shaders/MaterialShadersCommon.hlsl>
-#else
-ANKI_BINDLESS_SET(kMaterialSetBindless)
-[[vk::binding(kMaterialBindingLinearClampSampler, kMaterialSetGlobal)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(kMaterialBindingDepthRt, kMaterialSetGlobal)]] Texture2D g_gbufferDepthTex;
-[[vk::binding(kMaterialBindingLightVolume, kMaterialSetGlobal)]] Texture3D<RVec4> g_lightVol;
-[[vk::binding(kMaterialBindingShadowSampler, kMaterialSetGlobal)]] SamplerComparisonState g_shadowSampler;
-#	define CLUSTERED_SHADING_SET kMaterialSetGlobal
-#	define CLUSTERED_SHADING_UNIFORMS_BINDING kMaterialBindingClusterShadingUniforms
-#	define CLUSTERED_SHADING_LIGHTS_BINDING kMaterialBindingClusterShadingLights
-#	define CLUSTERED_SHADING_CLUSTERS_BINDING kMaterialBindingClusters
-#	include <AnKi/Shaders/ClusteredShadingCommon.hlsl>
-#endif
+#define FORWARD_SHADING 1
+#include <AnKi/Shaders/MaterialShadersCommon.hlsl>
 
 //
 // Frag

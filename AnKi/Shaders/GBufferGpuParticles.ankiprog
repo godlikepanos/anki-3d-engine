@@ -5,10 +5,7 @@
 
 #pragma anki mutator ANKI_TECHNIQUE 0 1
 
-#include <AnKi/Shaders/Include/ParticleTypes.h>
-#include <AnKi/Shaders/Include/MaterialTypes.h>
-#include <AnKi/Shaders/Include/GpuSceneTypes.h>
-#include <AnKi/Shaders/Functions.hlsl>
+#include <AnKi/Shaders/MaterialShadersCommon.hlsl>
 
 #pragma anki reflect AnKiLocalUniforms
 #pragma anki struct AnKiLocalUniforms
@@ -20,23 +17,17 @@
 #pragma anki member RVec3 m_finalEmission
 #pragma anki struct end
 
-[[vk::binding(kMaterialBindingLocalUniforms, kMaterialSetLocal)]] ByteAddressBuffer u_localUniforms;
-[[vk::binding(kMaterialBindingRenderableGpuView, kMaterialSetLocal)]] StructuredBuffer<RenderableGpuView>
-	u_renderableGpuViews;
-[[vk::binding(kMaterialBindingGlobalUniforms, kMaterialSetGlobal)]] ConstantBuffer<MaterialGlobalUniforms>
-	u_globalUniforms;
-[[vk::binding(kMaterialBindingFirstNonStandardLocal, kMaterialSetLocal)]] StructuredBuffer<GpuParticle> u_particles;
-
 struct VertIn
 {
 	U32 m_svVertexId : SV_VERTEXID;
+	[[vk::location(0)]] GpuSceneRenderablePacked m_gpuSceneRenderable : RENDERABLE;
 };
 
 struct VertOut
 {
-	Vec2 m_velocity : VELOCITY;
-	nointerpolation RF32 m_lifeFactor : LIFE;
-	nointerpolation RVec3 m_normal : NORMAL;
+	nointerpolation Vec2 m_velocity : VELOCITY;
+	nointerpolation RF32 m_lifeFactor : LIFE_FACTOR;
+	nointerpolation U32 m_uniformsOffset : UNIFORMS_OFFSET;
 	Vec4 m_svPosition : SV_POSITION;
 };
 
@@ -53,27 +44,38 @@ struct FragOut
 VertOut main(VertIn input)
 {
 	VertOut output;
-	const GpuParticle part = u_particles[input.m_svVertexId / 2];
 
-	Vec4 crntClipPos = Vec4(mul(u_renderableGpuViews[0].m_worldTransform, Vec4(part.m_newWorldPosition, 1.0)), 1.0);
-	crntClipPos = mul(u_globalUniforms.m_viewProjectionMatrix, crntClipPos);
+	const GpuSceneRenderable renderable = unpackGpuSceneRenderable(input.m_gpuSceneRenderable);
+	const GpuSceneParticleEmitter particles = g_gpuScene.Load<GpuSceneParticleEmitter>(renderable.m_geometryOffset);
 
-	Vec4 prevClipPos = Vec4(mul(u_renderableGpuViews[0].m_worldTransform, Vec4(part.m_oldWorldPosition, 1.0)), 1.0);
-	prevClipPos = mul(u_globalUniforms.m_viewProjectionMatrix, prevClipPos);
+	// Read vertex
+	const U32 particleId = input.m_svVertexId;
+	U32 offset = particles.m_vertexOffsets[(U32)VertexStreamId::kParticlePosition] + particleId * sizeof(Vec3);
+	const Vec3 pos = g_gpuScene.Load<Vec3>(offset);
 
-	output.m_svPosition = ((input.m_svVertexId & 1) == 0) ? crntClipPos : prevClipPos;
+	offset = particles.m_vertexOffsets[(U32)VertexStreamId::kParticlePreviousPosition] + particleId * sizeof(Vec3);
+	const Vec3 prevPos = g_gpuScene.Load<Vec3>(offset);
 
-	const Vec2 crntNdc = crntClipPos.xy / crntClipPos.w;
+	offset = particles.m_vertexOffsets[(U32)VertexStreamId::kParticleLife] + particleId * sizeof(F32);
+	const F32 life = g_gpuScene.Load<F32>(offset);
+
+	offset = particles.m_vertexOffsets[(U32)VertexStreamId::kParticleStartingLife] + particleId * sizeof(F32);
+	const F32 startingLife = g_gpuScene.Load<F32>(offset);
+
+	// Position
+	const Vec4 clipPos = mul(g_globalUniforms.m_viewProjectionMatrix, Vec4(pos, 1.0));
+	const Vec4 prevClipPos = mul(g_globalUniforms.m_viewProjectionMatrix, Vec4(prevPos, 1.0));
+
+	output.m_svPosition = clipPos;
+
+	// Velocity
+	const Vec2 ndc = clipPos.xy / clipPos.w;
 	const Vec2 prevNdc = prevClipPos.xy / prevClipPos.w;
+	output.m_velocity = (prevNdc - ndc) * 0.5; // It's the opt ver of: ndcToUv(prevNdc) - ndcToUv(ndc)
 
-	// It's NDC_TO_UV(prevNdc) - NDC_TO_UV(crntNdc) or:
-	output.m_velocity = ((input.m_svVertexId & 1) == 0) ? Vec2(0.0, 0.0) : (prevNdc - crntNdc) * 0.5;
-
-	output.m_lifeFactor = saturate(1.0 - (part.m_life / part.m_startingLife));
-
-	output.m_normal =
-		normalize(Vec3(u_globalUniforms.m_cameraTransform.m_row0[2], u_globalUniforms.m_cameraTransform.m_row1[2],
-					   u_globalUniforms.m_cameraTransform.m_row2[2]));
+	// Misc
+	output.m_lifeFactor = saturate(1.0 - (life / startingLife));
+	output.m_uniformsOffset = renderable.m_uniformsOffset;
 
 	return output;
 }
@@ -85,11 +87,14 @@ VertOut main(VertIn input)
 FragOut main(VertOut input)
 {
 	FragOut output;
-	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(u_localUniforms, 0u);
+	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_gpuScene, input.m_uniformsOffset);
 
 	GbufferInfo g;
 	g.m_diffuse = localUniforms.m_diffColor;
-	g.m_normal = input.m_normal;
+
+	const Mat3x4 camTrf = g_globalUniforms.m_cameraTransform;
+	g.m_normal = normalize(Vec3(camTrf.m_row0[2], camTrf.m_row1[2], camTrf.m_row2[2]));
+
 	g.m_f0 = localUniforms.m_specColor;
 	g.m_roughness = localUniforms.m_roughness;
 	g.m_subsurface = 0.0;

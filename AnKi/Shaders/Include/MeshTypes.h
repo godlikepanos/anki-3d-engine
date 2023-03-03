@@ -33,6 +33,7 @@ enum class VertexStreamId : U8
 	kParticleColor,
 	kParticleLife,
 	kParticleStartingLife,
+	kParticleVelocity,
 
 	kParticleRelatedCount,
 	kParticleRelatedFirst = 0,
@@ -60,6 +61,7 @@ enum class VertexStreamMask : U8
 	kParticleColor = 1 << 3,
 	kParticleLife = 1 << 4,
 	kParticleStartingLife = 1 << 5,
+	kParticleVelocity = 1 << 6,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexStreamMask)
 
@@ -69,8 +71,8 @@ inline constexpr Array<Format, U32(VertexStreamId::kMeshRelatedCount)> kMeshRela
 	Format::kR32G32_Sfloat,      Format::kR8G8B8A8_Uint,  Format::kR8G8B8A8_Snorm};
 
 inline constexpr Array<Format, U32(VertexStreamId::kParticleRelatedCount)> kParticleRelatedVertexStreamFormats = {
-	Format::kR32G32B32_Sfloat,    Format::kR32G32B32_Sfloat, Format::kR32_Sfloat,
-	Format::kR32G32B32A32_Sfloat, Format::kR32_Sfloat,       Format::kR32_Sfloat};
+	Format::kR32G32B32_Sfloat, Format::kR32G32B32_Sfloat, Format::kR32_Sfloat,      Format::kR32G32B32A32_Sfloat,
+	Format::kR32_Sfloat,       Format::kR32_Sfloat,       Format::kR32G32B32_Sfloat};
 #endif
 
 struct UnpackedMeshVertex

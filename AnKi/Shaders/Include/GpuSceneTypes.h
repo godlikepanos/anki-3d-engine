@@ -36,7 +36,6 @@ struct GpuSceneParticleEmitter
 {
 	U32 m_vertexOffsets[(U32)VertexStreamId::kParticleRelatedCount];
 	U32 m_padding0;
-	U32 m_padding1;
 };
 static_assert(sizeof(GpuSceneParticleEmitter) == sizeof(Vec4) * 2);
 
@@ -81,12 +80,5 @@ struct GpuSceneSpotLight
 };
 constexpr U32 kSizeof_GpuSceneSpotLight = 12u * sizeof(Vec4);
 static_assert(sizeof(GpuSceneSpotLight) == kSizeof_GpuSceneSpotLight);
-
-struct RenderableGpuView
-{
-	Mat3x4 m_worldTransform;
-	Mat3x4 m_previousWorldTransform;
-	Vec4 m_positionScaleF32AndTranslationVec3; ///< The scale and translation that uncompress positions.
-};
 
 ANKI_END_NAMESPACE

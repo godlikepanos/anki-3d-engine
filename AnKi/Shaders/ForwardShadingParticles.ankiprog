@@ -7,7 +7,6 @@
 #pragma anki mutator ANIMATED_TEXTURE 0 1
 #pragma anki mutator LIGHT 0 1
 
-#define GPU_SCENE 1
 #include <AnKi/Shaders/ForwardShadingCommon.hlsl>
 
 struct VertIn

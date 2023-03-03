@@ -15,31 +15,37 @@
 #pragma anki member RF32 m_fogDistanceOfMaxThikness
 #pragma anki struct end
 
-[[vk::binding(kMaterialBindingGlobalUniforms, kMaterialSetGlobal)]] ConstantBuffer<MaterialGlobalUniforms>
-	g_globalUniforms;
-[[vk::binding(kMaterialBindingRenderableGpuView, kMaterialSetLocal)]] StructuredBuffer<RenderableGpuView>
-	g_renderableGpuViews;
-[[vk::binding(kMaterialBindingLocalUniforms, kMaterialSetLocal)]] ByteAddressBuffer g_localUniforms;
+struct VertIn
+{
+	[[vk::location(0)]] GpuSceneRenderablePacked m_gpuSceneRenderable : RENDERABLE;
+	U32 m_svVertexId : SV_VERTEXID;
+};
 
 struct VertOut
 {
 	Vec4 m_svPosition : SV_POSITION;
-	[[vk::location(0)]] F32 m_zVSpace : ZVSPACE;
+	F32 m_zVSpace : ZVSPACE;
+	nointerpolation U32 m_uniformsOffset : UNIFORMS;
 };
 
 #pragma anki start vert
 
-VertOut main([[vk::location(VertexStreamId::kParticlePosition)]] Vec3 vertPos : POSITION)
+VertOut main(VertIn input)
 {
 	VertOut output;
 
-	const RenderableGpuView renderable = g_renderableGpuViews[0];
-	const Vec3 worldPos = mul(renderable.m_worldTransform, Vec4(vertPos, 1.0));
+	const GpuSceneRenderable renderable = unpackGpuSceneRenderable(input.m_gpuSceneRenderable);
+	const GpuSceneMeshLod mesh = g_gpuScene.Load<GpuSceneMeshLod>(renderable.m_geometryOffset);
+	const Mat3x4 worldTransform = g_gpuScene.Load<Mat3x4>(renderable.m_worldTransformsOffset);
+	const UnpackedMeshVertex vertex = loadVertex(mesh, input.m_svVertexId, false);
 
+	const Vec3 worldPos = mul(worldTransform, Vec4(vertex.m_position, 1.0));
 	output.m_svPosition = mul(g_globalUniforms.m_viewProjectionMatrix, Vec4(worldPos, 1.0));
 
 	const Vec3 viewPos = mul(g_globalUniforms.m_viewTransform, Vec4(worldPos, 1.0));
 	output.m_zVSpace = viewPos.z;
+
+	output.m_uniformsOffset = renderable.m_uniformsOffset;
 
 	return output;
 }
@@ -51,7 +57,7 @@ VertOut main([[vk::location(VertexStreamId::kParticlePosition)]] Vec3 vertPos : 
 FragOut main(VertOut input)
 {
 	FragOut output = (FragOut)0;
-	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_localUniforms, 0u);
+	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_gpuScene, input.m_uniformsOffset);
 
 	fog(localUniforms.m_fogColor, localUniforms.m_fogAlphaScale, localUniforms.m_fogDistanceOfMaxThikness,
 		input.m_svPosition, input.m_zVSpace, output);
