@@ -149,10 +149,10 @@ U32 findBestCacheEntry(U64 uuid, Timestamp crntTimestamp, const TCacheEntryArray
 
 	// First, try to see if the UUID is in the cache
 	auto it = map.find(uuid);
-	if(ANKI_LIKELY(it != map.getEnd()))
+	if(it != map.getEnd()) [[likely]]
 	{
 		const U32 cacheEntryIdx = *it;
-		if(ANKI_LIKELY(entries[cacheEntryIdx].m_uuid == uuid))
+		if(entries[cacheEntryIdx].m_uuid == uuid)
 		{
 			// Found it
 			return cacheEntryIdx;
@@ -170,7 +170,7 @@ U32 findBestCacheEntry(U64 uuid, Timestamp crntTimestamp, const TCacheEntryArray
 	Timestamp cacheEntryIdxToKickMinTimestamp = kMaxTimestamp;
 	for(U32 cacheEntryIdx = 0; cacheEntryIdx < entries.getSize(); ++cacheEntryIdx)
 	{
-		if(entries[cacheEntryIdx].m_uuid == 0)
+		if(entries[cacheEntryIdx].m_uuid == 0) [[likely]]
 		{
 			// Found an empty
 			emptyCacheEntryIdx = cacheEntryIdx;

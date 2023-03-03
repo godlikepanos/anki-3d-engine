@@ -136,7 +136,7 @@ static_assert(!(BufferUsageBit::kAll & PrivateBufferUsageBit::kAllPrivate), "Upd
 	do \
 	{ \
 		VkResult rez; \
-		if(ANKI_UNLIKELY((rez = (x)) < 0)) \
+		if((rez = (x)) < 0) [[unlikely]] \
 		{ \
 			ANKI_VK_LOGF("Vulkan function failed (VkResult: %s): %s", vkResultToString(rez), #x); \
 		} \
@@ -147,7 +147,7 @@ static_assert(!(BufferUsageBit::kAll & PrivateBufferUsageBit::kAllPrivate), "Upd
 	do \
 	{ \
 		VkResult rez; \
-		if(ANKI_UNLIKELY((rez = (x)) < 0)) \
+		if((rez = (x)) < 0) [[unlikely]] \
 		{ \
 			ANKI_VK_LOGE("Vulkan function failed (VkResult: %s): %s", vkResultToString(rez), #x); \
 			return Error::kFunctionFailed; \

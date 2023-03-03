@@ -38,7 +38,7 @@ void Thread::start(void* userData, ThreadCallback callback, const ThreadCoreAffi
 		return numberToPtr<void*>(err._getCode());
 	};
 
-	if(ANKI_UNLIKELY(pthread_create(&m_handle, &attr, pthreadCallback, this)))
+	if(pthread_create(&m_handle, &attr, pthreadCallback, this)) [[unlikely]]
 	{
 		ANKI_UTIL_LOGF("pthread_create() failed");
 	}
@@ -54,7 +54,7 @@ void Thread::start(void* userData, ThreadCallback callback, const ThreadCoreAffi
 Error Thread::join()
 {
 	void* out;
-	if(ANKI_UNLIKELY(pthread_join(m_handle, &out)))
+	if(pthread_join(m_handle, &out)) [[unlikely]]
 	{
 		ANKI_UTIL_LOGF("pthread_join() failed");
 	}

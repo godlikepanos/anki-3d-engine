@@ -269,7 +269,7 @@ Error SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::allocate(PtrSi
 
 	// Find starting class
 	const U32 startingClassIdx = findClass(size, alignment);
-	if(ANKI_UNLIKELY(startingClassIdx == kMaxU32))
+	if(startingClassIdx == kMaxU32) [[unlikely]]
 	{
 		ANKI_UTIL_LOGE("Couldn't find class for allocation of size %zu", origSize);
 		return Error::kOutOfMemory;
@@ -417,7 +417,7 @@ Error SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock>::validate() con
 #define ANKI_SLAB_ASSERT(x, ...) \
 	do \
 	{ \
-		if(ANKI_UNLIKELY(!(x))) \
+		if(!(x)) [[unlikely]] \
 		{ \
 			ANKI_UTIL_LOGE(__VA_ARGS__); \
 			ANKI_DEBUG_BREAK(); \

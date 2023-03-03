@@ -307,7 +307,7 @@ void SparseArray<T, TConfig>::validate() const
 template<typename T, typename TConfig>
 typename TConfig::Index SparseArray<T, TConfig>::findInternal(Index idx) const
 {
-	if(ANKI_UNLIKELY(m_elementCount == 0))
+	if(m_elementCount == 0) [[unlikely]]
 	{
 		return getMaxNumericLimit<Index>();
 	}

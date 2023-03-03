@@ -96,7 +96,7 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 	const Bool preferCompute = getExternalSubsystems().m_config->getRPreferCompute();
 
 	// Import RTs
-	if(ANKI_LIKELY(m_rtTexturesImportedOnce[historyRtIdx]))
+	if(m_rtTexturesImportedOnce[historyRtIdx]) [[likely]]
 	{
 		m_runCtx.m_historyRt = rgraph.importRenderTarget(m_rtTextures[historyRtIdx]);
 	}

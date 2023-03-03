@@ -165,7 +165,7 @@ void MicroObjectRecycler<T>::adjustAliveObjectCount()
 		readyObjects += obj.m_fenceDone;
 	}
 
-	if(ANKI_LIKELY(m_requests < m_maxRequestsPerAdjustment))
+	if(m_requests < m_maxRequestsPerAdjustment) [[likely]]
 	{
 		// Not enough requests for a recycle
 		m_minCacheSizePerRequest = min(m_minCacheSizePerRequest, readyObjects);

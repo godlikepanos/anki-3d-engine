@@ -165,8 +165,6 @@
 
 // Some compiler attributes
 #if ANKI_COMPILER_GCC_COMPATIBLE
-#	define ANKI_LIKELY(x) __builtin_expect(!!(x), 1)
-#	define ANKI_UNLIKELY(x) __builtin_expect(!!(x), 0)
 #	define ANKI_RESTRICT __restrict
 #	define ANKI_FORCE_INLINE __attribute__((always_inline))
 #	define ANKI_DONT_INLINE __attribute__((noinline))
@@ -178,8 +176,6 @@
 #	define ANKI_CHECK_FORMAT(fmtArgIdx, firstArgIdx) __attribute__((format(printf, fmtArgIdx + 1, firstArgIdx + 1))) // On methods you need to include "this"
 #	define ANKI_PURE __attribute__((pure))
 #else
-#	define ANKI_LIKELY(x) (x)
-#	define ANKI_UNLIKELY(x) (x)
 #	define ANKI_RESTRICT
 #	define ANKI_FORCE_INLINE
 #	define ANKI_DONT_INLINE

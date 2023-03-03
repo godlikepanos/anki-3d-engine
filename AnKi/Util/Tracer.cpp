@@ -45,7 +45,7 @@ Tracer::~Tracer()
 Tracer::ThreadLocal& Tracer::getThreadLocal()
 {
 	ThreadLocal* out = m_threadLocal;
-	if(ANKI_UNLIKELY(out == nullptr))
+	if(out == nullptr) [[unlikely]]
 	{
 		out = newInstance<ThreadLocal>(*m_pool);
 		out->m_tid = Thread::getCurrentThreadId();

@@ -96,7 +96,7 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 	//
 	// Set default state
 	//
-	if(ANKI_UNLIKELY(m_state.m_mayContainUnsetState))
+	if(m_state.m_mayContainUnsetState) [[unlikely]]
 	{
 		m_state.m_mayContainUnsetState = false;
 

@@ -60,8 +60,8 @@ public:
 		}
 
 		// Reject if they are both static
-		if(ANKI_UNLIKELY(fobj0->getMaterialGroup() == PhysicsMaterialBit::kStaticGeometry
-						 && fobj1->getMaterialGroup() == PhysicsMaterialBit::kStaticGeometry))
+		if(fobj0->getMaterialGroup() == PhysicsMaterialBit::kStaticGeometry
+		   && fobj1->getMaterialGroup() == PhysicsMaterialBit::kStaticGeometry) [[unlikely]]
 		{
 			return false;
 		}

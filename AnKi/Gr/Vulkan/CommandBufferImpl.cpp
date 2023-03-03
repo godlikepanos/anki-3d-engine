@@ -649,13 +649,13 @@ void CommandBufferImpl::setPipelineBarrierInternal(
 					&& "GENERATE_MIPMAPS should be alone");
 		ANKI_ASSERT(impl.isSubresourceValid(subresource));
 
-		if(ANKI_UNLIKELY(subresource.m_firstMipmap > 0 && nextUsage == TextureUsageBit::kGenerateMipmaps))
+		if(subresource.m_firstMipmap > 0 && nextUsage == TextureUsageBit::kGenerateMipmaps) [[unlikely]]
 		{
 			// This transition happens inside CommandBufferImpl::generateMipmapsX. No need to do something
 			continue;
 		}
 
-		if(ANKI_UNLIKELY(nextUsage == TextureUsageBit::kGenerateMipmaps))
+		if(nextUsage == TextureUsageBit::kGenerateMipmaps) [[unlikely]]
 		{
 			// The transition of the non zero mip levels happens inside CommandBufferImpl::generateMipmapsX so limit the
 			// subresource

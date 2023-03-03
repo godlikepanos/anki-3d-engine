@@ -179,7 +179,14 @@ public:
 	/// Check if it is an error.
 	explicit operator Bool() const
 	{
-		return ANKI_UNLIKELY(m_code != kNone);
+		if(m_code != kNone) [[unlikely]]
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 	}
 
 	/// @privatesection

@@ -88,7 +88,7 @@ public:
 	GenericPoolAllocator(AllocAlignedCallback allocCb, void* allocCbUserData, TArgs&&... args)
 	{
 		m_pool = static_cast<TPool*>(allocCb(allocCbUserData, nullptr, sizeof(TPool), alignof(TPool)));
-		if(ANKI_UNLIKELY(!m_pool))
+		if(!m_pool) [[unlikely]]
 		{
 			ANKI_UTIL_LOGF("Out of memory");
 		}
@@ -145,7 +145,7 @@ public:
 		PtrSize alignment = (hint != nullptr) ? *static_cast<const PtrSize*>(hint) : alignof(value_type);
 
 		void* out = m_pool->allocate(size, alignment);
-		if(ANKI_UNLIKELY(out == nullptr))
+		if(out == nullptr) [[unlikely]]
 		{
 			ANKI_UTIL_LOGF("Out of memory");
 		}

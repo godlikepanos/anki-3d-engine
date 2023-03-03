@@ -493,8 +493,7 @@ Error App::mainLoop()
 			const Second startTime = HighRezTimer::getCurrentTime();
 
 			prevUpdateTime = crntTime;
-			crntTime =
-				ANKI_LIKELY(!benchmarkMode) ? HighRezTimer::getCurrentTime() : (prevUpdateTime + 1.0_sec / 60.0_sec);
+			crntTime = (!benchmarkMode) ? HighRezTimer::getCurrentTime() : (prevUpdateTime + 1.0_sec / 60.0_sec);
 
 			// Update
 			ANKI_CHECK(m_input->handleEvents());
@@ -526,14 +525,14 @@ Error App::mainLoop()
 			// If we get stats exclude the time of GR because it forces some GPU-CPU serialization. We don't want to
 			// count that
 			Second grTime = 0.0;
-			if(ANKI_UNLIKELY(benchmarkMode || m_config->getCoreDisplayStats() > 0))
+			if(benchmarkMode || m_config->getCoreDisplayStats() > 0) [[unlikely]]
 			{
 				grTime = HighRezTimer::getCurrentTime();
 			}
 
 			m_gr->swapBuffers();
 
-			if(ANKI_UNLIKELY(benchmarkMode || m_config->getCoreDisplayStats() > 0))
+			if(benchmarkMode || m_config->getCoreDisplayStats() > 0) [[unlikely]]
 			{
 				grTime = HighRezTimer::getCurrentTime() - grTime;
 			}
@@ -553,7 +552,7 @@ Error App::mainLoop()
 			// Sleep
 			const Second endTime = HighRezTimer::getCurrentTime();
 			const Second frameTime = endTime - startTime;
-			if(ANKI_LIKELY(!benchmarkMode))
+			if(!benchmarkMode) [[likely]]
 			{
 				const Second timerTick = 1.0_sec / Second(m_config->getCoreTargetFps());
 				if(frameTime < timerTick)
@@ -633,7 +632,7 @@ Error App::mainLoop()
 
 			++m_globalTimestamp;
 
-			if(ANKI_UNLIKELY(benchmarkMode))
+			if(benchmarkMode) [[unlikely]]
 			{
 				if(m_globalTimestamp >= m_config->getCoreBenchmarkModeFrameCount())
 				{
@@ -648,7 +647,7 @@ Error App::mainLoop()
 #endif
 	}
 
-	if(ANKI_UNLIKELY(benchmarkMode))
+	if(benchmarkMode) [[unlikely]]
 	{
 		ANKI_CORE_LOGI("Benchmark file saved in: %s", benchmarkCsvFileFilename.cstr());
 	}

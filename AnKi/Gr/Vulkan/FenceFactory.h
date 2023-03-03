@@ -51,7 +51,7 @@ public:
 	void wait()
 	{
 		const Bool timeout = !clientWait(kMaxSecond);
-		if(ANKI_UNLIKELY(timeout))
+		if(timeout) [[unlikely]]
 		{
 			ANKI_VK_LOGF("Waiting for a fence timed out");
 		}

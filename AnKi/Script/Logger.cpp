@@ -16,14 +16,14 @@ static inline int pwraplogi(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
 
 	// Pop arguments
 	const char* arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 1, arg0)))
+	if(LuaBinder::checkString(l, 1, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -54,14 +54,14 @@ static inline int pwraploge(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
 
 	// Pop arguments
 	const char* arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 1, arg0)))
+	if(LuaBinder::checkString(l, 1, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -92,14 +92,14 @@ static inline int pwraplogw(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
 
 	// Pop arguments
 	const char* arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 1, arg0)))
+	if(LuaBinder::checkString(l, 1, arg0)) [[unlikely]]
 	{
 		return -1;
 	}

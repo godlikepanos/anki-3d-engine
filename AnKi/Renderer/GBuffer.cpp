@@ -201,7 +201,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 		rts[i] = m_runCtx.m_colorRts[i];
 	}
 
-	if(ANKI_LIKELY(m_runCtx.m_crntFrameDepthRt.isValid()))
+	if(m_runCtx.m_crntFrameDepthRt.isValid()) [[likely]]
 	{
 		// Already imported once
 		m_runCtx.m_crntFrameDepthRt =

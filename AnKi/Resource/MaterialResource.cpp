@@ -752,7 +752,7 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 	// Check if it's initialized
 	{
 		RLockGuard<RWMutex> lock(prog.m_variantMatrixMtx);
-		if(ANKI_LIKELY(variant.m_prog.isCreated()))
+		if(variant.m_prog.isCreated()) [[likely]]
 		{
 			return variant;
 		}

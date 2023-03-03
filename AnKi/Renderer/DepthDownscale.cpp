@@ -244,7 +244,7 @@ void DepthDownscale::runCompute(RenderPassWorkContext& rgraphCtx)
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
 	// Zero the counter buffer before everything else
-	if(ANKI_UNLIKELY(!m_counterBufferZeroed))
+	if(!m_counterBufferZeroed) [[unlikely]]
 	{
 		m_counterBufferZeroed = true;
 

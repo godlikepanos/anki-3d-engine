@@ -63,7 +63,7 @@ public:
 
 	T* newElement(StackMemoryPool& pool)
 	{
-		if(ANKI_UNLIKELY(m_elementCount + 1 > m_elementStorage))
+		if(m_elementCount + 1 > m_elementStorage) [[unlikely]]
 		{
 			m_elementStorage = max(kInitialStorage, m_elementStorage * kStorageGrowRate);
 

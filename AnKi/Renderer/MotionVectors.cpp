@@ -78,7 +78,7 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 	const U32 writeHistoryLenTexIdx = m_r->getFrameCount() & 1;
 	const U32 readHistoryLenTexIdx = !writeHistoryLenTexIdx;
 
-	if(ANKI_LIKELY(m_historyLengthTexturesImportedOnce))
+	if(m_historyLengthTexturesImportedOnce) [[likely]]
 	{
 		m_runCtx.m_historyLengthWriteRtHandle =
 			rgraph.importRenderTarget(m_historyLengthTextures[writeHistoryLenTexIdx]);

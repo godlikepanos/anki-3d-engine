@@ -91,7 +91,7 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	// Import
-	if(ANKI_LIKELY(m_rtImportedOnce))
+	if(m_rtImportedOnce) [[likely]]
 	{
 		m_runCtx.m_rt = rgraph.importRenderTarget(m_atlasTex);
 	}

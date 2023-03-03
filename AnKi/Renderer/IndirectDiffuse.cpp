@@ -210,7 +210,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 		// Create RTs
 		const U32 readRtIdx = m_r->getFrameCount() & 1;
 		const U32 writeRtIdx = !readRtIdx;
-		if(ANKI_LIKELY(m_rtsImportedOnce))
+		if(m_rtsImportedOnce) [[likely]]
 		{
 			m_runCtx.m_mainRtHandles[0] = rgraph.importRenderTarget(m_rts[readRtIdx]);
 			m_runCtx.m_mainRtHandles[1] = rgraph.importRenderTarget(m_rts[writeRtIdx]);

@@ -389,7 +389,7 @@ inline void CommandBufferImpl::pushSecondLevelCommandBuffersInternal(ConstWeakAr
 
 	m_subpassContents = VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS;
 
-	if(ANKI_UNLIKELY(m_rpCommandCount == 0))
+	if(m_rpCommandCount == 0) [[unlikely]]
 	{
 		beginRenderPassInternal();
 	}
@@ -419,7 +419,7 @@ inline void CommandBufferImpl::drawcallCommon()
 
 	m_subpassContents = VK_SUBPASS_CONTENTS_INLINE;
 
-	if(ANKI_UNLIKELY(m_rpCommandCount == 0) && !secondLevel())
+	if(m_rpCommandCount == 0 && !secondLevel())
 	{
 		beginRenderPassInternal();
 	}
@@ -470,7 +470,7 @@ inline void CommandBufferImpl::drawcallCommon()
 	}
 
 	// Flush viewport
-	if(ANKI_UNLIKELY(m_viewportDirty))
+	if(m_viewportDirty) [[unlikely]]
 	{
 		const Bool flipvp = flipViewport();
 
@@ -490,7 +490,7 @@ inline void CommandBufferImpl::drawcallCommon()
 	}
 
 	// Flush scissor
-	if(ANKI_UNLIKELY(m_scissorDirty))
+	if(m_scissorDirty) [[unlikely]]
 	{
 		const Bool flipvp = flipViewport();
 

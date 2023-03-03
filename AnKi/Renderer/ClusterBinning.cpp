@@ -61,9 +61,9 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 		ctx.m_clusteredShading.m_clustersToken.m_offset, ctx.m_clusteredShading.m_clustersToken.m_range);
 
 	const RenderQueue& rqueue = *ctx.m_renderQueue;
-	if(ANKI_LIKELY(rqueue.m_pointLights.getSize() || rqueue.m_spotLights.getSize() || rqueue.m_decals.getSize()
-				   || rqueue.m_reflectionProbes.getSize() || rqueue.m_fogDensityVolumes.getSize()
-				   || rqueue.m_giProbes.getSize()))
+	if(rqueue.m_pointLights.getSize() || rqueue.m_spotLights.getSize() || rqueue.m_decals.getSize()
+	   || rqueue.m_reflectionProbes.getSize() || rqueue.m_fogDensityVolumes.getSize() || rqueue.m_giProbes.getSize())
+		[[likely]]
 	{
 		RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Cluster Binning");
@@ -105,41 +105,41 @@ void ClusterBinning::writeClustererBuffers(RenderingContext& ctx)
 
 	// Check limits
 	RenderQueue& rqueue = *ctx.m_renderQueue;
-	if(ANKI_UNLIKELY(rqueue.m_pointLights.getSize() > kMaxVisiblePointLights))
+	if(rqueue.m_pointLights.getSize() > kMaxVisiblePointLights) [[unlikely]]
 	{
 		ANKI_R_LOGW("Visible point lights exceed the max value by %u",
 					rqueue.m_pointLights.getSize() - kMaxVisiblePointLights);
 		rqueue.m_pointLights.setArray(rqueue.m_pointLights.getBegin(), kMaxVisiblePointLights);
 	}
 
-	if(ANKI_UNLIKELY(rqueue.m_spotLights.getSize() > kMaxVisibleSpotLights))
+	if(rqueue.m_spotLights.getSize() > kMaxVisibleSpotLights) [[unlikely]]
 	{
 		ANKI_R_LOGW("Visible spot lights exceed the max value by %u",
 					rqueue.m_spotLights.getSize() - kMaxVisibleSpotLights);
 		rqueue.m_spotLights.setArray(rqueue.m_spotLights.getBegin(), kMaxVisibleSpotLights);
 	}
 
-	if(ANKI_UNLIKELY(rqueue.m_decals.getSize() > kMaxVisibleDecals))
+	if(rqueue.m_decals.getSize() > kMaxVisibleDecals) [[unlikely]]
 	{
 		ANKI_R_LOGW("Visible decals exceed the max value by %u", rqueue.m_decals.getSize() - kMaxVisibleDecals);
 		rqueue.m_decals.setArray(rqueue.m_decals.getBegin(), kMaxVisibleDecals);
 	}
 
-	if(ANKI_UNLIKELY(rqueue.m_fogDensityVolumes.getSize() > kMaxVisibleFogDensityVolumes))
+	if(rqueue.m_fogDensityVolumes.getSize() > kMaxVisibleFogDensityVolumes) [[unlikely]]
 	{
 		ANKI_R_LOGW("Visible fog volumes exceed the max value by %u",
 					rqueue.m_fogDensityVolumes.getSize() - kMaxVisibleFogDensityVolumes);
 		rqueue.m_fogDensityVolumes.setArray(rqueue.m_fogDensityVolumes.getBegin(), kMaxVisibleFogDensityVolumes);
 	}
 
-	if(ANKI_UNLIKELY(rqueue.m_reflectionProbes.getSize() > kMaxVisibleReflectionProbes))
+	if(rqueue.m_reflectionProbes.getSize() > kMaxVisibleReflectionProbes) [[unlikely]]
 	{
 		ANKI_R_LOGW("Visible reflection probes exceed the max value by %u",
 					rqueue.m_reflectionProbes.getSize() - kMaxVisibleReflectionProbes);
 		rqueue.m_reflectionProbes.setArray(rqueue.m_reflectionProbes.getBegin(), kMaxVisibleReflectionProbes);
 	}
 
-	if(ANKI_UNLIKELY(rqueue.m_giProbes.getSize() > kMaxVisibleGlobalIlluminationProbes))
+	if(rqueue.m_giProbes.getSize() > kMaxVisibleGlobalIlluminationProbes) [[unlikely]]
 	{
 		ANKI_R_LOGW("Visible GI probes exceed the max value by %u",
 					rqueue.m_giProbes.getSize() - kMaxVisibleGlobalIlluminationProbes);

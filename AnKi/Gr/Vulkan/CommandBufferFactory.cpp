@@ -120,7 +120,7 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 
 	MicroCommandBuffer* out = recycler.findToReuse();
 
-	if(ANKI_UNLIKELY(out == nullptr))
+	if(out == nullptr) [[unlikely]]
 	{
 		// Create a new one
 
@@ -235,7 +235,7 @@ Error CommandBufferFactory::newCommandBuffer(ThreadId tid, CommandBufferFlag cmd
 			alloc = (it != m_threadAllocs.getEnd()) ? (*it) : nullptr;
 		}
 
-		if(ANKI_UNLIKELY(alloc == nullptr))
+		if(alloc == nullptr) [[unlikely]]
 		{
 			WLockGuard<RWMutex> lock(m_threadAllocMtx);
 

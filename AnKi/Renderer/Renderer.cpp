@@ -627,7 +627,7 @@ void Renderer::registerDebugRenderTarget(RendererObject* obj, CString rtName)
 Bool Renderer::getCurrentDebugRenderTarget(Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
 										   ShaderProgramPtr& optionalShaderProgram)
 {
-	if(ANKI_LIKELY(m_currentDebugRtName.isEmpty()))
+	if(m_currentDebugRtName.isEmpty()) [[likely]]
 	{
 		return false;
 	}

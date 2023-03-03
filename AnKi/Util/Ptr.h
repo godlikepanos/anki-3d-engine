@@ -431,7 +431,7 @@ private:
 		if(m_ptr)
 		{
 			auto count = m_ptr->release();
-			if(ANKI_UNLIKELY(count == 1))
+			if(count == 1) [[unlikely]]
 			{
 				TDeleter deleter;
 				deleter(m_ptr);

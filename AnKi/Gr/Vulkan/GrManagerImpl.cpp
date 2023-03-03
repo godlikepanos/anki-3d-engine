@@ -1151,7 +1151,7 @@ Error GrManagerImpl::initMemory()
 void* GrManagerImpl::allocateCallback(void* userData, size_t size, size_t alignment,
 									  VkSystemAllocationScope allocationScope)
 {
-	if(ANKI_UNLIKELY(size == 0))
+	if(size == 0) [[unlikely]]
 	{
 		return nullptr;
 	}

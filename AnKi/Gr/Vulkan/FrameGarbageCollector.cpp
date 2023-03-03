@@ -16,7 +16,7 @@ FrameGarbageCollector::~FrameGarbageCollector()
 
 void FrameGarbageCollector::collectGarbage()
 {
-	if(ANKI_LIKELY(m_frames.isEmpty()))
+	if(m_frames.isEmpty()) [[likely]]
 	{
 		return;
 	}

@@ -383,7 +383,7 @@ Error File::writeText(CString text)
 	ANKI_ASSERT((m_flags & FileOpenFlag::kBinary) == FileOpenFlag::kNone);
 
 	const PtrSize writeSize = text.getLength();
-	if(ANKI_UNLIKELY(writeSize == 0))
+	if(writeSize == 0) [[unlikely]]
 	{
 		return Error::kNone;
 	}

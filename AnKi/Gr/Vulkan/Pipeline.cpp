@@ -430,7 +430,7 @@ void PipelineFactory::getOrCreatePipeline(PipelineStateTracker& state, Pipeline&
 	U64 hash;
 	state.flush(hash, stateDirty);
 
-	if(ANKI_UNLIKELY(!stateDirty))
+	if(!stateDirty) [[unlikely]]
 	{
 		ppline.m_handle = VK_NULL_HANDLE;
 		return;

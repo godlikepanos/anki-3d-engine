@@ -208,7 +208,7 @@ void AnimationResource::interpolate(U32 channelIndex, Second time, Vec3& pos, Qu
 	rot = Quat::getIdentity();
 	scale = 1.0f;
 
-	if(ANKI_UNLIKELY(time < m_startTime))
+	if(time < m_startTime) [[unlikely]]
 	{
 		return;
 	}

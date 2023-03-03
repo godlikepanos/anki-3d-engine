@@ -112,7 +112,7 @@ GrManagerStats GrManager::getStats() const
 	type##Ptr GrManager::new##type(const type##InitInfo& init) \
 	{ \
 		type##Ptr ptr(type::newInstance(this, init)); \
-		if(ANKI_UNLIKELY(!ptr.isCreated())) \
+		if(!ptr.isCreated()) [[unlikely]] \
 		{ \
 			ANKI_VK_LOGF("Failed to create a " ANKI_STRINGIZE(type) " object"); \
 		} \
@@ -123,7 +123,7 @@ GrManagerStats GrManager::getStats() const
 	type##Ptr GrManager::new##type() \
 	{ \
 		type##Ptr ptr(type::newInstance(this)); \
-		if(ANKI_UNLIKELY(!ptr.isCreated())) \
+		if(!ptr.isCreated()) [[unlikely]] \
 		{ \
 			ANKI_VK_LOGF("Failed to create a " ANKI_STRINGIZE(type) " object"); \
 		} \

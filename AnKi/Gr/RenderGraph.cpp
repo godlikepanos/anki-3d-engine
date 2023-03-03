@@ -378,7 +378,7 @@ TexturePtr RenderGraph::getOrCreateRenderTarget(const TextureInitInfo& initInf, 
 	// Find a cache entry
 	RenderTargetCacheEntry* entry = nullptr;
 	auto it = m_renderTargetCache.find(hash);
-	if(ANKI_UNLIKELY(it == m_renderTargetCache.getEnd()))
+	if(it == m_renderTargetCache.getEnd()) [[unlikely]]
 	{
 		// Didn't found the entry, create a new one
 
@@ -887,7 +887,7 @@ void RenderGraph::initBatches()
 			batch.m_cmdb = cmdb.get();
 
 			// Maybe write a timestamp
-			if(ANKI_UNLIKELY(setTimestamp))
+			if(setTimestamp) [[unlikely]]
 			{
 				setTimestamp = false;
 				TimestampQueryPtr query = getManager().newTimestampQuery();
@@ -1379,7 +1379,7 @@ void RenderGraph::flush()
 
 	for(U32 i = 0; i < m_ctx->m_graphicsCmdbs.getSize(); ++i)
 	{
-		if(ANKI_UNLIKELY(m_ctx->m_gatherStatistics && i == m_ctx->m_graphicsCmdbs.getSize() - 1))
+		if(m_ctx->m_gatherStatistics && i == m_ctx->m_graphicsCmdbs.getSize() - 1) [[unlikely]]
 		{
 			// Write a timestamp before the last flush
 

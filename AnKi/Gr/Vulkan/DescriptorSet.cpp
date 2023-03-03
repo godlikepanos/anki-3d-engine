@@ -751,7 +751,7 @@ Error DSLayoutCacheEntry::getOrCreateDSAllocator(DescriptorSetFactory::DSAllocat
 
 	// Get or create thread-local
 	DescriptorSetFactory::ThreadLocal* threadLocal = DescriptorSetFactory::m_threadLocal;
-	if(ANKI_UNLIKELY(threadLocal == nullptr))
+	if(threadLocal == nullptr) [[unlikely]]
 	{
 		threadLocal = newInstance<DescriptorSetFactory::ThreadLocal>(*m_factory->m_pool);
 		DescriptorSetFactory::m_threadLocal = threadLocal;
@@ -761,14 +761,14 @@ Error DSLayoutCacheEntry::getOrCreateDSAllocator(DescriptorSetFactory::DSAllocat
 	}
 
 	// Get or create the allocator
-	if(ANKI_UNLIKELY(m_index >= threadLocal->m_allocators.getSize()))
+	if(m_index >= threadLocal->m_allocators.getSize()) [[unlikely]]
 	{
 		threadLocal->m_allocators.resize(*m_factory->m_pool, m_index + 1, nullptr);
 		alloc = newInstance<DescriptorSetFactory::DSAllocator>(*m_factory->m_pool, this);
 		ANKI_CHECK(alloc->init());
 		threadLocal->m_allocators[m_index] = alloc;
 	}
-	else if(ANKI_UNLIKELY(threadLocal->m_allocators[m_index] == nullptr))
+	else if(threadLocal->m_allocators[m_index] == nullptr) [[unlikely]]
 	{
 		alloc = newInstance<DescriptorSetFactory::DSAllocator>(*m_factory->m_pool, this);
 		ANKI_CHECK(alloc->init());
@@ -793,7 +793,7 @@ AnyBinding& DescriptorSetState::getBindingToPopulate(U32 bindingIdx, U32 arrayId
 	m_bindingSet.set(bindingIdx);
 	extended.m_arraySize = (!bindingIsSet) ? 0 : extended.m_arraySize;
 
-	if(ANKI_LIKELY(arrayIdx == 0 && extended.m_arraySize <= 1))
+	if(arrayIdx == 0 && extended.m_arraySize <= 1) [[likely]]
 	{
 		// Array idx is zero, most common case
 		out = &extended.m_single;

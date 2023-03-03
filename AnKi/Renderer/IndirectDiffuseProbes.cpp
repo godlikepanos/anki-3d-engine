@@ -388,7 +388,7 @@ void IndirectDiffuseProbes::prepareProbes(InternalContext& giCtx)
 	RenderingContext& ctx = *giCtx.m_ctx;
 	giCtx.m_probeToUpdateThisFrame = nullptr;
 
-	if(ANKI_UNLIKELY(ctx.m_renderQueue->m_giProbes.getSize() == 0))
+	if(ctx.m_renderQueue->m_giProbes.getSize() == 0) [[unlikely]]
 	{
 		return;
 	}
@@ -418,7 +418,7 @@ void IndirectDiffuseProbes::prepareProbes(InternalContext& giCtx)
 		// Find cache entry
 		const U32 cacheEntryIdx = findBestCacheEntry(probe.m_uuid, *getExternalSubsystems().m_globTimestamp,
 													 m_cacheEntries, m_probeUuidToCacheEntryIdx, getMemoryPool());
-		if(ANKI_UNLIKELY(cacheEntryIdx == kMaxU32))
+		if(cacheEntryIdx == kMaxU32) [[unlikely]]
 		{
 			// Failed
 			ANKI_R_LOGW("There is not enough space in the indirect lighting atlas for more probes. "
@@ -433,7 +433,7 @@ void IndirectDiffuseProbes::prepareProbes(InternalContext& giCtx)
 									 || entry.m_probeAabbMax != probe.m_aabbMax;
 		const Bool needsUpdate = cacheEntryDirty || entry.m_renderedCells < probe.m_totalCellCount;
 
-		if(ANKI_LIKELY(!needsUpdate))
+		if(!needsUpdate) [[likely]]
 		{
 			// It's updated, early exit
 

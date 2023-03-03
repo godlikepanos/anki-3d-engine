@@ -70,7 +70,7 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes)
 	PtrSize alignment = getAlignedRoundUp(alignmentBytes, sizeof(void*));
 	int err = posix_memalign(&out, alignment, size);
 
-	if(ANKI_LIKELY(!err))
+	if(!err) [[likely]]
 	{
 		ANKI_ASSERT(out != nullptr);
 		// Make sure it's aligned
@@ -214,7 +214,7 @@ void* HeapMemoryPool::allocate(PtrSize size, PtrSize alignment)
 
 void HeapMemoryPool::free(void* ptr)
 {
-	if(ANKI_UNLIKELY(ptr == nullptr))
+	if(ptr == nullptr) [[unlikely]]
 	{
 		return;
 	}
@@ -243,7 +243,7 @@ Error StackMemoryPool::StackAllocatorBuilderInterface::allocateChunk(PtrSize siz
 
 	void* mem = m_parent->m_allocCb(m_parent->m_allocCbUserData, nullptr, fullChunkSize, kMaxAlignment);
 
-	if(ANKI_LIKELY(mem))
+	if(mem) [[likely]]
 	{
 		out = static_cast<Chunk*>(mem);
 #if ANKI_MEM_EXTRA_CHECKS
@@ -316,7 +316,7 @@ void* StackMemoryPool::allocate(PtrSize size, PtrSize alignment)
 
 void StackMemoryPool::free(void* ptr)
 {
-	if(ANKI_UNLIKELY(ptr == nullptr))
+	if(ptr == nullptr) [[unlikely]]
 	{
 		return;
 	}

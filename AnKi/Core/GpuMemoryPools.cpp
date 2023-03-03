@@ -82,7 +82,7 @@ Error RebarStagingGpuMemoryPool::init(GrManager* gr, const ConfigSet& cfg)
 void* RebarStagingGpuMemoryPool::allocateFrame(PtrSize size, RebarGpuMemoryToken& token)
 {
 	void* address = tryAllocateFrame(size, token);
-	if(ANKI_UNLIKELY(address == nullptr))
+	if(address == nullptr) [[unlikely]]
 	{
 		ANKI_CORE_LOGF("Out of ReBAR GPU memory");
 	}

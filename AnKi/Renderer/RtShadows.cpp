@@ -201,7 +201,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 
 	// Import RTs
 	{
-		if(ANKI_UNLIKELY(!m_rtsImportedOnce))
+		if(!m_rtsImportedOnce) [[unlikely]]
 		{
 			m_runCtx.m_historyRt = rgraph.importRenderTarget(m_historyRt, TextureUsageBit::kSampledFragment);
 

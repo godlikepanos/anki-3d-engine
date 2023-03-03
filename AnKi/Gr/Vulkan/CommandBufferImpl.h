@@ -441,7 +441,7 @@ private:
 #endif
 		m_empty = false;
 
-		if(ANKI_UNLIKELY(!m_beganRecording))
+		if(!m_beganRecording) [[unlikely]]
 		{
 			beginRecording();
 			m_beganRecording = true;

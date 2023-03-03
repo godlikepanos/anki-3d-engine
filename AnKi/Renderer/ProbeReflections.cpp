@@ -223,7 +223,7 @@ void ProbeReflections::prepareProbes(RenderingContext& ctx, ReflectionProbeQueue
 	probeToUpdateThisFrame = nullptr;
 	probeToUpdateThisFrameCacheEntryIdx = kMaxU32;
 
-	if(ANKI_UNLIKELY(ctx.m_renderQueue->m_reflectionProbes.getSize() == 0))
+	if(ctx.m_renderQueue->m_reflectionProbes.getSize() == 0) [[unlikely]]
 	{
 		return;
 	}
@@ -243,7 +243,7 @@ void ProbeReflections::prepareProbes(RenderingContext& ctx, ReflectionProbeQueue
 		// Find cache entry
 		const U32 cacheEntryIdx = findBestCacheEntry(probe.m_uuid, *getExternalSubsystems().m_globTimestamp,
 													 m_cacheEntries, m_probeUuidToCacheEntryIdx, getMemoryPool());
-		if(ANKI_UNLIKELY(cacheEntryIdx == kMaxU32))
+		if(cacheEntryIdx == kMaxU32) [[unlikely]]
 		{
 			// Failed
 			ANKI_R_LOGW("There is not enough space in the indirect lighting atlas for more probes. "
@@ -255,7 +255,7 @@ void ProbeReflections::prepareProbes(RenderingContext& ctx, ReflectionProbeQueue
 
 		// Check if we _should_ and _can_ update the probe
 		const Bool needsUpdate = !probeFoundInCache;
-		if(ANKI_UNLIKELY(needsUpdate))
+		if(needsUpdate) [[unlikely]]
 		{
 			const Bool canUpdateThisFrame = probeToUpdateThisFrame == nullptr && probe.m_renderQueues[0] != nullptr;
 			const Bool canUpdateNextFrame = !foundProbeToUpdateNextFrame;
