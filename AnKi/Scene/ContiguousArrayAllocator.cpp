@@ -114,8 +114,10 @@ void AllGpuSceneContiguousArrays::init(SceneGraph* scene)
 	constexpr F32 kGrowRate = 2.0;
 
 	const Array<U32, U32(GpuSceneContiguousArrayType::kCount)> minElementCount = {
-		cfg.getSceneMinGpuSceneTransforms(), cfg.getSceneMinGpuSceneMeshes(), cfg.getSceneMinGpuSceneParticleEmitters(),
-		cfg.getSceneMinGpuSceneLights()};
+		cfg.getSceneMinGpuSceneTransforms(),       cfg.getSceneMinGpuSceneMeshes(),
+		cfg.getSceneMinGpuSceneParticleEmitters(), cfg.getSceneMinGpuSceneLights(),
+		cfg.getSceneMinGpuSceneReflectionProbes(), cfg.getSceneMinGpuSceneGlobalIlluminationProbes(),
+		cfg.getSceneMinGpuSceneDecals(),           cfg.getSceneMinGpuSceneFogDensityVolumes()};
 
 	for(GpuSceneContiguousArrayType type : EnumIterable<GpuSceneContiguousArrayType>())
 	{

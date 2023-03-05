@@ -93,11 +93,15 @@ private:
 	Vec3 m_boxSize = Vec3(1.0f);
 	Obb m_obb = Obb(Vec4(0.0f), Mat3x4::getIdentity(), Vec4(0.5f, 0.5f, 0.5f, 0.0f));
 
+	U32 m_gpuSceneDecalOffset = kMaxU32;
+
 	Bool m_dirty = true;
 
 	void setLayer(CString fname, F32 blendFactor, LayerType type);
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated);
+
+	void onDestroy(SceneNode& node);
 };
 /// @}
 

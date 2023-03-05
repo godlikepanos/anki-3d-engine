@@ -65,6 +65,8 @@ private:
 	Vec3 m_worldPos = Vec3(kMaxF32);
 	Vec3 m_halfSize = Vec3(1.0f);
 
+	U32 m_gpuSceneOffset = kMaxU32;
+
 	Spatial m_spatial;
 
 	Array<Frustum, 6> m_frustums;

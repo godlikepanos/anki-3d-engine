@@ -81,4 +81,67 @@ struct GpuSceneSpotLight
 constexpr U32 kSizeof_GpuSceneSpotLight = 12u * sizeof(Vec4);
 static_assert(sizeof(GpuSceneSpotLight) == kSizeof_GpuSceneSpotLight);
 
+/// Representation of a reflection probe.
+struct GpuSceneReflectionProbe
+{
+	Vec3 m_position; ///< Position of the probe in world space.
+	F32 m_cubemapIndex; ///< Index in the cubemap array texture.
+
+	Vec3 m_aabbMin;
+	F32 m_padding0;
+
+	Vec3 m_aabbMax;
+	F32 m_padding1;
+};
+constexpr U32 kSizeof_GpuSceneReflectionProbe = 3u * sizeof(Vec4);
+static_assert(sizeof(GpuSceneReflectionProbe) == kSizeof_GpuSceneReflectionProbe);
+
+/// Global illumination probe
+struct GpuSceneGlobalIlluminationProbe
+{
+	Vec3 m_aabbMin;
+	F32 m_padding0;
+
+	Vec3 m_aabbMax;
+	F32 m_padding1;
+
+	U32 m_textureIndex; ///< Index to the array of volume textures.
+	F32 m_halfTexelSizeU; ///< (1.0 / textureSize(texArr[textureIndex]).x) / 2.0
+	/// Used to calculate a factor that is zero when fragPos is close to AABB bounds and 1.0 at fadeDistance and less.
+	RF32 m_fadeDistance;
+	F32 m_padding2;
+};
+constexpr U32 kSizeof_GpuSceneGlobalIlluminationProbe = 3u * sizeof(Vec4);
+static_assert(sizeof(GpuSceneGlobalIlluminationProbe) == kSizeof_GpuSceneGlobalIlluminationProbe);
+
+/// Decal.
+struct GpuSceneDecal
+{
+	U32 m_diffuseTexture;
+	U32 m_roughnessMetalnessTexture;
+	RF32 m_diffuseBlendFactor;
+	RF32 m_roughnessMetalnessFactor;
+
+	Mat4 m_textureMatrix;
+
+	Mat4 m_invertedTransform;
+
+	Vec3 m_obbExtend;
+	F32 m_padding0;
+};
+constexpr U32 kSizeof_GpuSceneDecal = 2u * sizeof(Vec4) + 2u * sizeof(Mat4);
+static_assert(sizeof(GpuSceneDecal) == kSizeof_GpuSceneDecal);
+
+/// Fog density volume.
+struct GpuSceneFogDensityVolume
+{
+	Vec3 m_aabbMinOrSphereCenter;
+	U32 m_isBox;
+
+	Vec3 m_aabbMaxOrSphereRadiusSquared;
+	RF32 m_density;
+};
+constexpr U32 kSizeof_GpuSceneFogDensityVolume = 2u * sizeof(Vec4);
+static_assert(sizeof(GpuSceneFogDensityVolume) == kSizeof_GpuSceneFogDensityVolume);
+
 ANKI_END_NAMESPACE

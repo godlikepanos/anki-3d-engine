@@ -15,11 +15,19 @@ DecalComponent::DecalComponent(SceneNode* node)
 	, m_node(node)
 	, m_spatial(this)
 {
+	m_gpuSceneDecalOffset =
+		U32(node->getSceneGraph().getAllGpuSceneContiguousArrays().allocate(GpuSceneContiguousArrayType::kDecals));
 }
 
 DecalComponent::~DecalComponent()
 {
 	m_spatial.removeFromOctree(m_node->getSceneGraph().getOctree());
+}
+
+void DecalComponent::onDestroy(SceneNode& node)
+{
+	node.getSceneGraph().getAllGpuSceneContiguousArrays().deferredFree(GpuSceneContiguousArrayType::kDecals,
+																	   m_gpuSceneDecalOffset);
 }
 
 void DecalComponent::setLayer(CString fname, F32 blendFactor, LayerType type)
@@ -72,6 +80,22 @@ Error DecalComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		const Obb obbL(center, Mat3x4::getIdentity(), extend);
 		m_obb = obbL.getTransformed(info.m_node->getWorldTransform());
 		m_spatial.setBoundingShape(m_obb);
+
+		// Upload to the GPU scene
+		GpuSceneDecal gpuDecal;
+		gpuDecal.m_diffuseTexture = m_layers[LayerType::kDiffuse].m_bindlessTextureIndex;
+		gpuDecal.m_roughnessMetalnessTexture = m_layers[LayerType::kRoughnessMetalness].m_bindlessTextureIndex;
+		gpuDecal.m_diffuseBlendFactor = m_layers[LayerType::kDiffuse].m_blendFactor;
+		gpuDecal.m_roughnessMetalnessFactor = m_layers[LayerType::kRoughnessMetalness].m_blendFactor;
+		gpuDecal.m_textureMatrix = m_biasProjViewMat;
+
+		const Mat4 trf(m_obb.getCenter().xyz1(), m_obb.getRotation().getRotationPart(), 1.0f);
+		gpuDecal.m_invertedTransform = trf.getInverse();
+
+		gpuDecal.m_obbExtend = m_obb.getExtend().xyz();
+
+		getExternalSubsystems(*info.m_node)
+			.m_gpuSceneMicroPatcher->newCopy(*info.m_framePool, m_gpuSceneDecalOffset, sizeof(gpuDecal), &gpuDecal);
 	}
 
 	const Bool spatialUpdated = m_spatial.update(info.m_node->getSceneGraph().getOctree());

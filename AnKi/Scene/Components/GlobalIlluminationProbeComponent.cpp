@@ -25,6 +25,9 @@ GlobalIlluminationProbeComponent::GlobalIlluminationProbeComponent(SceneNode* no
 		m_frustums[i].setShadowCascadeCount(1);
 		m_frustums[i].update();
 	}
+
+	m_gpuSceneOffset = U32(node->getSceneGraph().getAllGpuSceneContiguousArrays().allocate(
+		GpuSceneContiguousArrayType::kGlobalIlluminationProbes));
 }
 
 GlobalIlluminationProbeComponent::~GlobalIlluminationProbeComponent()
@@ -34,6 +37,9 @@ GlobalIlluminationProbeComponent::~GlobalIlluminationProbeComponent()
 void GlobalIlluminationProbeComponent::onDestroy(SceneNode& node)
 {
 	m_spatial.removeFromOctree(node.getSceneGraph().getOctree());
+
+	node.getSceneGraph().getAllGpuSceneContiguousArrays().deferredFree(
+		GpuSceneContiguousArrayType::kGlobalIlluminationProbes, m_gpuSceneOffset);
 }
 
 Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
@@ -51,6 +57,17 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 
 		const Aabb aabb(-m_halfSize + m_worldPos, m_halfSize + m_worldPos);
 		m_spatial.setBoundingShape(aabb);
+
+		// Upload to the GPU scene
+		GpuSceneGlobalIlluminationProbe gpuProbe;
+		gpuProbe.m_aabbMin = aabb.getMin().xyz();
+		gpuProbe.m_aabbMax = aabb.getMax().xyz();
+		gpuProbe.m_textureIndex = 0; // Unknown at this point
+		gpuProbe.m_halfTexelSizeU = 1.0f / F32(m_cellCounts.y()) / 2.0f;
+		gpuProbe.m_fadeDistance = m_fadeDistance;
+
+		getExternalSubsystems(*info.m_node)
+			.m_gpuSceneMicroPatcher->newCopy(*info.m_framePool, m_gpuSceneOffset, sizeof(gpuProbe), &gpuProbe);
 	}
 
 	if(m_markedForRendering) [[unlikely]]

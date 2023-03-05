@@ -24,11 +24,7 @@ class FogDensityComponent : public SceneComponent
 public:
 	static constexpr F32 kMinShapeSize = 1.0_cm;
 
-	FogDensityComponent(SceneNode* node)
-		: SceneComponent(node, getStaticClassId())
-		, m_spatial(this)
-	{
-	}
+	FogDensityComponent(SceneNode* node);
 
 	void setBoxVolumeSize(Vec3 sizeXYZ)
 	{
@@ -71,6 +67,7 @@ public:
 	void setDensity(F32 d)
 	{
 		ANKI_ASSERT(d >= 0.0f);
+		m_dirty = true;
 		m_density = d;
 	}
 
@@ -109,8 +106,10 @@ private:
 	Vec3 m_worldPos = Vec3(0.0f);
 	F32 m_density = 1.0f;
 
-	Bool m_isBox : 1 = true;
-	Bool m_dirty : 1 = true;
+	U32 m_gpuSceneOffset = kMaxU32;
+
+	Bool m_isBox = true;
+	Bool m_dirty = true;
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated);
 

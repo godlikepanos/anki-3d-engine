@@ -33,3 +33,10 @@ ANKI_CONFIG_VAR_U32(SceneMinGpuSceneMeshes, 8 * 1024, 8, 100 * 1024, "The min nu
 ANKI_CONFIG_VAR_U32(SceneMinGpuSceneParticleEmitters, 1 * 1024, 8, 100 * 1024,
 					"The min number of particle emitters stored in the GPU scene")
 ANKI_CONFIG_VAR_U32(SceneMinGpuSceneLights, 2 * 1024, 8, 100 * 1024, "The min number of lights stored in the GPU scene")
+ANKI_CONFIG_VAR_U32(SceneMinGpuSceneReflectionProbes, 128, 8, 100 * 1024,
+					"The min number of reflection probes stored in the GPU scene")
+ANKI_CONFIG_VAR_U32(SceneMinGpuSceneGlobalIlluminationProbes, 128, 8, 100 * 1024,
+					"The min number of GI probes stored in the GPU scene")
+ANKI_CONFIG_VAR_U32(SceneMinGpuSceneDecals, 2 * 1024, 8, 100 * 1024, "The min number of decals stored in the GPU scene")
+ANKI_CONFIG_VAR_U32(SceneMinGpuSceneFogDensityVolumes, 512, 8, 100 * 1024,
+					"The min number fog density volumes stored in the GPU scene")

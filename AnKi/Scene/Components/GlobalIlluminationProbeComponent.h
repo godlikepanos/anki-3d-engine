@@ -105,6 +105,8 @@ private:
 	F32 m_cellSize = 4.0f; ///< Cell size in meters.
 	F32 m_fadeDistance = 0.2f;
 
+	U32 m_gpuSceneOffset = kMaxU32;
+
 	Array<Frustum, 6> m_frustums;
 
 	Spatial m_spatial;

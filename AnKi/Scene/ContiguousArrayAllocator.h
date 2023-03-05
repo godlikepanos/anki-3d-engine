@@ -19,6 +19,10 @@ enum class GpuSceneContiguousArrayType : U8
 	kMeshLods,
 	kParticleEmitters,
 	kLights,
+	kReflectionProbes,
+	kGlobalIlluminationProbes,
+	kDecals,
+	kFogDensityVolumes,
 
 	kCount,
 	kFirst = 0
@@ -105,10 +109,17 @@ private:
 
 	U8 m_frame = 0;
 
-	static constexpr Array<U8, U32(GpuSceneContiguousArrayType::kCount)> m_componentCount = {2, kMaxLodCount, 1, 1};
+	static constexpr Array<U8, U32(GpuSceneContiguousArrayType::kCount)> m_componentCount = {
+		2, kMaxLodCount, 1, 1, 1, 1, 1, 1};
 	static constexpr Array<U8, U32(GpuSceneContiguousArrayType::kCount)> m_componentSize = {
-		sizeof(Mat3x4), sizeof(GpuSceneMeshLod), sizeof(GpuSceneParticleEmitter),
-		max<U8>(sizeof(GpuScenePointLight), sizeof(GpuSceneSpotLight))};
+		sizeof(Mat3x4),
+		sizeof(GpuSceneMeshLod),
+		sizeof(GpuSceneParticleEmitter),
+		max<U8>(sizeof(GpuScenePointLight), sizeof(GpuSceneSpotLight)),
+		sizeof(GpuSceneReflectionProbe),
+		sizeof(GpuSceneGlobalIlluminationProbe),
+		sizeof(GpuSceneDecal),
+		sizeof(GpuSceneFogDensityVolume)};
 };
 /// @}
 

@@ -27,6 +27,9 @@ ReflectionProbeComponent::ReflectionProbeComponent(SceneNode* node)
 		m_frustums[i].setShadowCascadeCount(1);
 		m_frustums[i].update();
 	}
+
+	m_gpuSceneOffset = U32(node->getSceneGraph().getAllGpuSceneContiguousArrays().allocate(
+		GpuSceneContiguousArrayType::kReflectionProbes));
 }
 
 ReflectionProbeComponent::~ReflectionProbeComponent()
@@ -71,6 +74,15 @@ Error ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 
 		const Aabb aabbWorld(-m_halfSize + m_worldPos, m_halfSize + m_worldPos);
 		m_spatial.setBoundingShape(aabbWorld);
+
+		// Upload to the GPU scene
+		GpuSceneReflectionProbe gpuProbe;
+		gpuProbe.m_position = m_worldPos;
+		gpuProbe.m_cubemapIndex = 0; // Unknown at this point
+		gpuProbe.m_aabbMin = aabbWorld.getMin().xyz();
+		gpuProbe.m_aabbMax = aabbWorld.getMax().xyz();
+		getExternalSubsystems(*info.m_node)
+			.m_gpuSceneMicroPatcher->newCopy(*info.m_framePool, m_gpuSceneOffset, sizeof(gpuProbe), &gpuProbe);
 	}
 
 	const Bool spatialUpdated = m_spatial.update(info.m_node->getSceneGraph().getOctree());
@@ -88,6 +100,9 @@ Error ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 void ReflectionProbeComponent::onDestroy(SceneNode& node)
 {
 	m_spatial.removeFromOctree(node.getSceneGraph().getOctree());
+
+	node.getSceneGraph().getAllGpuSceneContiguousArrays().deferredFree(GpuSceneContiguousArrayType::kParticleEmitters,
+																	   m_gpuSceneOffset);
 }
 
 } // end namespace anki

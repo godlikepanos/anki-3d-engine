@@ -29,7 +29,7 @@ LightComponent::LightComponent(SceneNode* node)
 	m_worldTransform = node->getWorldTransform();
 
 	m_gpuSceneLightOffset =
-		node->getSceneGraph().getAllGpuSceneContiguousArrays().allocate(GpuSceneContiguousArrayType::kLights);
+		U32(node->getSceneGraph().getAllGpuSceneContiguousArrays().allocate(GpuSceneContiguousArrayType::kLights));
 }
 
 LightComponent::~LightComponent()
