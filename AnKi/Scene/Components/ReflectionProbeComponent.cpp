@@ -101,7 +101,7 @@ void ReflectionProbeComponent::onDestroy(SceneNode& node)
 {
 	m_spatial.removeFromOctree(node.getSceneGraph().getOctree());
 
-	node.getSceneGraph().getAllGpuSceneContiguousArrays().deferredFree(GpuSceneContiguousArrayType::kParticleEmitters,
+	node.getSceneGraph().getAllGpuSceneContiguousArrays().deferredFree(GpuSceneContiguousArrayType::kReflectionProbes,
 																	   m_gpuSceneOffset);
 }
 

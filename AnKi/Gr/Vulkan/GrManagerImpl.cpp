@@ -418,54 +418,71 @@ Error GrManagerImpl::initInstance()
 
 	// Create the physical device
 	//
-	uint32_t count = 0;
-	ANKI_VK_CHECK(vkEnumeratePhysicalDevices(m_instance, &count, nullptr));
-	ANKI_VK_LOGI("Number of physical devices: %u", count);
-	if(count < 1)
 	{
-		ANKI_VK_LOGE("Wrong number of physical devices");
-		return Error::kFunctionFailed;
-	}
+		uint32_t count = 0;
+		ANKI_VK_CHECK(vkEnumeratePhysicalDevices(m_instance, &count, nullptr));
+		if(count < 1)
+		{
+			ANKI_VK_LOGE("Wrong number of physical devices");
+			return Error::kFunctionFailed;
+		}
 
-	// Find the correct physical device
-	{
 		DynamicArrayRaii<VkPhysicalDevice> physicalDevices(&m_pool, count);
 		ANKI_VK_CHECK(vkEnumeratePhysicalDevices(m_instance, &count, &physicalDevices[0]));
 
-		VkPhysicalDevice firstChoice = VK_NULL_HANDLE;
-		VkPhysicalDevice secondChoice = VK_NULL_HANDLE;
+		class Dev
+		{
+		public:
+			VkPhysicalDevice m_pdev;
+			VkPhysicalDeviceProperties2 m_vkProps;
+		};
+
+		DynamicArrayRaii<Dev> devs(&m_pool, count);
 		for(U32 devIdx = 0; devIdx < count; ++devIdx)
 		{
-			VkPhysicalDeviceProperties2 props = {};
-			props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-			vkGetPhysicalDeviceProperties2(physicalDevices[devIdx], &props);
-
-			if(props.properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
-			{
-				// Found it
-				firstChoice = physicalDevices[devIdx];
-			}
-			else if(props.properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU)
-			{
-				secondChoice = physicalDevices[devIdx];
-			}
+			devs[devIdx].m_pdev = physicalDevices[devIdx];
+			devs[devIdx].m_vkProps.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+			vkGetPhysicalDeviceProperties2(physicalDevices[devIdx], &devs[devIdx].m_vkProps);
 		}
 
-		if(firstChoice != VK_NULL_HANDLE)
+		// Sort the devices with the most powerful first
+		std::sort(devs.getBegin(), devs.getEnd(), [](const Dev& a, const Dev& b) {
+			if(a.m_vkProps.properties.deviceType != b.m_vkProps.properties.deviceType)
+			{
+				auto findDeviceTypeWeight = [](VkPhysicalDeviceType type) {
+					switch(type)
+					{
+					case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+						return 1.0;
+					case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+						return 2.0;
+					default:
+						return 0.0;
+					}
+				};
+
+				// Put descrete GPUs first
+				return findDeviceTypeWeight(a.m_vkProps.properties.deviceType)
+					   > findDeviceTypeWeight(b.m_vkProps.properties.deviceType);
+			}
+			else
+			{
+				return a.m_vkProps.properties.apiVersion >= b.m_vkProps.properties.apiVersion;
+			}
+		});
+
+		const U32 chosenPhysDevIdx = min<U32>(m_config->getGrDevice(), devs.getSize() - 1);
+
+		ANKI_VK_LOGI("Physical devices:");
+		for(U32 devIdx = 0; devIdx < count; ++devIdx)
 		{
-			m_capabilities.m_discreteGpu = true;
-			m_physicalDevice = firstChoice;
+			ANKI_VK_LOGI((devIdx == chosenPhysDevIdx) ? "\t(Selected) %s" : "\t%s",
+						 devs[devIdx].m_vkProps.properties.deviceName);
 		}
-		else if(secondChoice != VK_NULL_HANDLE)
-		{
-			m_capabilities.m_discreteGpu = false;
-			m_physicalDevice = secondChoice;
-		}
-		else
-		{
-			ANKI_VK_LOGE("Couldn't find a suitable descrete or integrated physical device");
-			return Error::kFunctionFailed;
-		}
+
+		m_capabilities.m_discreteGpu =
+			devs[chosenPhysDevIdx].m_vkProps.properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
+		m_physicalDevice = devs[chosenPhysDevIdx].m_pdev;
 	}
 
 	m_rtPipelineProps.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
@@ -1574,7 +1591,7 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 													stats.resourceUsage.numUsedSgprs));
 		}
 
-		ANKI_VK_LOGI("Pipeline \"%s\" (0x%016" PRIx64 ") stats: %s", name.cstr(), hash, str.cstr());
+		ANKI_VK_LOGV("Pipeline \"%s\" (0x%016" PRIx64 ") stats: %s", name.cstr(), hash, str.cstr());
 
 		// Flush the file just in case
 		ANKI_CHECK(m_shaderStatsFile.flush());
