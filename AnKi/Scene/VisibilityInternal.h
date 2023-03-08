@@ -173,6 +173,9 @@ public:
 
 	// Gather results members
 	RenderQueue* m_renderQueue = nullptr;
+
+	Atomic<U32> m_reflectionProbesForRefreshCount = {0};
+	ReflectionProbeQueueElementForRefresh* m_reflectionProbeForRefresh = nullptr;
 };
 
 /// ThreadHive task to set the depth map of the S/W rasterizer.

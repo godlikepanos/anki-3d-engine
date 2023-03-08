@@ -13,7 +13,6 @@ namespace anki {
 
 ReflectionProbeComponent::ReflectionProbeComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
-	, m_uuid(node->getSceneGraph().getNewUuid())
 	, m_spatial(this)
 {
 	m_worldPos = node->getWorldTransform().getOrigin().xyz();
@@ -43,8 +42,33 @@ Error ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 	m_dirty = false;
 	updated = moved || shapeUpdated;
 
+	if(shapeUpdated && !m_reflectionTex) [[unlikely]]
+	{
+		TextureInitInfo texInit("ReflectionProbe");
+		texInit.m_format =
+			(getExternalSubsystems(*info.m_node).m_grManager->getDeviceCapabilities().m_unalignedBbpTextureFormats)
+				? Format::kR16G16B16_Sfloat
+				: Format::kR16G16B16A16_Sfloat;
+		texInit.m_width = getExternalSubsystems(*info.m_node).m_config->getSceneReflectionProbeResolution();
+		texInit.m_height = texInit.m_width;
+		texInit.m_mipmapCount = U8(computeMaxMipmapCount2d(texInit.m_width, texInit.m_height, 8));
+		texInit.m_type = TextureType::kCube;
+		texInit.m_usage = TextureUsageBit::kAllSampled | TextureUsageBit::kImageComputeWrite
+						  | TextureUsageBit::kImageComputeRead | TextureUsageBit::kAllFramebuffer
+						  | TextureUsageBit::kGenerateMipmaps;
+
+		m_reflectionTex = getExternalSubsystems(*info.m_node).m_grManager->newTexture(texInit);
+
+		TextureViewInitInfo viewInit(m_reflectionTex, "ReflectionPRobe");
+		m_reflectionView = getExternalSubsystems(*info.m_node).m_grManager->newTextureView(viewInit);
+
+		m_reflectionTexBindlessIndex = m_reflectionView->getOrCreateBindlessTextureIndex();
+	}
+
 	if(updated) [[unlikely]]
 	{
+		m_reflectionNeedsRefresh = true;
+
 		m_worldPos = info.m_node->getWorldTransform().getOrigin().xyz();
 
 		F32 effectiveDistance = max(m_halfSize.x(), m_halfSize.y());
@@ -69,22 +93,20 @@ Error ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 										   effectiveDistance - 1.0f * kEpsilonf});
 		}
 
-		// Set a new UUID to force the renderer to update the probe
-		m_uuid = info.m_node->getSceneGraph().getNewUuid();
-
 		const Aabb aabbWorld(-m_halfSize + m_worldPos, m_halfSize + m_worldPos);
 		m_spatial.setBoundingShape(aabbWorld);
 
 		// Upload to the GPU scene
 		GpuSceneReflectionProbe gpuProbe;
 		gpuProbe.m_position = m_worldPos;
-		gpuProbe.m_cubemapIndex = 0; // Unknown at this point
+		gpuProbe.m_cubeTexture = m_reflectionTexBindlessIndex;
 		gpuProbe.m_aabbMin = aabbWorld.getMin().xyz();
 		gpuProbe.m_aabbMax = aabbWorld.getMax().xyz();
 		getExternalSubsystems(*info.m_node)
 			.m_gpuSceneMicroPatcher->newCopy(*info.m_framePool, m_gpuSceneOffset, sizeof(gpuProbe), &gpuProbe);
 	}
 
+	// Update spatial and frustums
 	const Bool spatialUpdated = m_spatial.update(info.m_node->getSceneGraph().getOctree());
 	updated = updated || spatialUpdated;
 

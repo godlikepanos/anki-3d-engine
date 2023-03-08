@@ -516,24 +516,29 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 			ReflectionProbeComponent& reflc = static_cast<ReflectionProbeComponent&>(comp);
 
-			ReflectionProbeQueueElement* el = result.m_reflectionProbes.newElement(pool);
-			reflc.setupReflectionProbeQueueElement(*el);
-
-			if(reflc.getMarkedForRendering())
+			if(reflc.getReflectionNeedsRefresh() && m_frcCtx->m_reflectionProbesForRefreshCount.fetchAdd(1) == 0)
 			{
+				ReflectionProbeQueueElementForRefresh* el = newInstance<ReflectionProbeQueueElementForRefresh>(pool);
+				m_frcCtx->m_reflectionProbeForRefresh = el;
+
+				reflc.setupReflectionProbeQueueElementForRefresh(*el);
+				reflc.setReflectionNeedsRefresh(false);
+
 				nextQueues = WeakArray<RenderQueue>(newArray<RenderQueue>(pool, 6), 6);
 				nextFrustums = WeakArray<VisibilityFrustum>(newArray<VisibilityFrustum>(pool, 6), 6);
 
 				for(U32 i = 0; i < 6; ++i)
 				{
 					el->m_renderQueues[i] = &nextQueues[i];
+
 					nextFrustums[i].m_frustum = &reflc.getFrustums()[i];
 					static_cast<FrustumFlags&>(nextFrustums[i]) = getProbeFrustumFlags();
 				}
 			}
-			else
+			else if(!reflc.getReflectionNeedsRefresh())
 			{
-				memset(&el->m_renderQueues[0], 0, sizeof(el->m_renderQueues));
+				ReflectionProbeQueueElement* el = result.m_reflectionProbes.newElement(pool);
+				reflc.setupReflectionProbeQueueElement(*el);
 			}
 		}
 		else if(comp.getClassId() == DecalComponent::getStaticClassId())
@@ -684,6 +689,10 @@ void CombineResultsTask::combine()
 	ANKI_VIS_COMBINE(RayTracingInstanceQueueElement, m_rayTracingInstances);
 	ANKI_VIS_COMBINE(UiQueueElement, m_uis);
 
+#undef ANKI_VIS_COMBINE
+
+	results.m_reflectionProbeForRefresh = m_frcCtx->m_reflectionProbeForRefresh;
+
 	for(U32 i = 0; i < threadCount; ++i)
 	{
 		if(m_frcCtx->m_queueViews[i].m_directionalLight.m_uuid != 0)
@@ -696,8 +705,6 @@ void CombineResultsTask::combine()
 			results.m_skybox = m_frcCtx->m_queueViews[i].m_skybox;
 		}
 	}
-
-#undef ANKI_VIS_COMBINE
 
 	const Bool isShadowFrustum = m_frcCtx->m_frustum.m_gatherShadowCasterModelComponents;
 

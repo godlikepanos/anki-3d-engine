@@ -31,12 +31,14 @@ constexpr Vec2 kNoiseTexSize = 64.0;
 #define CLUSTERED_SHADING_SET 0u
 #define CLUSTERED_SHADING_UNIFORMS_BINDING 11u
 #define CLUSTERED_SHADING_REFLECTIONS_BINDING 12u
-#define CLUSTERED_SHADING_CLUSTERS_BINDING 14u
+#define CLUSTERED_SHADING_CLUSTERS_BINDING 13u
 #include <AnKi/Shaders/ClusteredShadingCommon.hlsl>
 
 #if defined(ANKI_COMPUTE_SHADER)
-[[vk::binding(15)]] RWTexture2D<RVec4> g_outUav;
+[[vk::binding(14)]] RWTexture2D<RVec4> g_outUav;
 #endif
+
+ANKI_BINDLESS_SET(1)
 
 #if defined(ANKI_COMPUTE_SHADER)
 [numthreads(8, 8, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
@@ -203,7 +205,8 @@ RVec3 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 
 		Vec3 probeColor = 0.0;
 
-		if(countbits(cluster.m_reflectionProbesMask) == 1)
+		const U32 oneProbe = WaveActiveAllTrue(countbits(cluster.m_reflectionProbesMask) == 1);
+		if(oneProbe)
 		{
 			// Only one probe, do a fast path without blend weight
 
@@ -211,8 +214,9 @@ RVec3 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 
 			// Sample
 			const Vec3 cubeUv = intersectProbe(worldPos, reflDir, probe.m_aabbMin, probe.m_aabbMax, probe.m_position);
-			const Vec4 cubeArrUv = Vec4(cubeUv, probe.m_cubemapIndex);
-			probeColor = g_reflectionsTex.SampleLevel(g_trilinearClampSampler, cubeArrUv, reflLod).rgb;
+			probeColor = g_bindlessTexturesCubeF32[probe.m_cubeTexture]
+							 .SampleLevel(g_trilinearClampSampler, cubeUv, reflLod)
+							 .rgb;
 		}
 		else
 		{
@@ -234,8 +238,9 @@ RVec3 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 				// Sample reflections
 				const Vec3 cubeUv =
 					intersectProbe(worldPos, reflDir, probe.m_aabbMin, probe.m_aabbMax, probe.m_position);
-				const Vec4 cubeArrUv = Vec4(cubeUv, probe.m_cubemapIndex);
-				const Vec3 c = g_reflectionsTex.SampleLevel(g_trilinearClampSampler, cubeArrUv, reflLod).rgb;
+				const Vec3 c = g_bindlessTexturesCubeF32[NonUniformResourceIndex(probe.m_cubeTexture)]
+								   .SampleLevel(g_trilinearClampSampler, cubeUv, reflLod)
+								   .rgb;
 				probeColor += c * blendWeight;
 			}
 

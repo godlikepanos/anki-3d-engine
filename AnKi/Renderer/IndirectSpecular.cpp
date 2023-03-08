@@ -153,7 +153,10 @@ void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
 			min(getExternalSubsystems().m_config->getRSsrDepthLod() + 1, m_r->getDepthDownscale().getMipmapCount());
 		ppass->newTextureDependency(m_r->getDepthDownscale().getHiZRt(), readUsage, hizSubresource);
 
-		ppass->newTextureDependency(m_r->getProbeReflections().getReflectionRt(), readUsage);
+		if(m_r->getProbeReflections().getHasCurrentlyRefreshedReflectionRt())
+		{
+			ppass->newTextureDependency(m_r->getProbeReflections().getCurrentlyRefreshedReflectionRt(), readUsage);
+		}
 
 		ppass->newTextureDependency(m_r->getMotionVectors().getMotionVectorsRt(), readUsage);
 		ppass->newTextureDependency(m_r->getMotionVectors().getHistoryLengthRt(), readUsage);
@@ -210,12 +213,13 @@ void IndirectSpecular::run(const RenderingContext& ctx, RenderPassWorkContext& r
 	const ClusteredShadingContext& binning = ctx.m_clusteredShading;
 	bindUniforms(cmdb, 0, 11, binning.m_clusteredShadingUniformsToken);
 	bindUniforms(cmdb, 0, 12, binning.m_reflectionProbesToken);
-	rgraphCtx.bindColorTexture(0, 13, m_r->getProbeReflections().getReflectionRt());
-	bindStorage(cmdb, 0, 14, binning.m_clustersToken);
+	bindStorage(cmdb, 0, 13, binning.m_clustersToken);
+
+	cmdb->bindAllBindless(1);
 
 	if(getExternalSubsystems().m_config->getRPreferCompute())
 	{
-		rgraphCtx.bindImage(0, 15, m_runCtx.m_rts[kWrite], TextureSubresourceInfo());
+		rgraphCtx.bindImage(0, 14, m_runCtx.m_rts[kWrite], TextureSubresourceInfo());
 
 		dispatchPPCompute(cmdb, 8, 8, m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2);
 	}

@@ -18,7 +18,7 @@ class alignas(4) TextureInitInfo : public GrBaseInitInfo
 public:
 	U32 m_width = 0;
 	U32 m_height = 0;
-	U32 m_depth = 1; //< Relevant only for 3D textures.
+	U32 m_depth = 1; ///< Relevant only for 3D textures.
 	U32 m_layerCount = 1; ///< Relevant only for texture arrays.
 
 	Format m_format = Format::kNone;

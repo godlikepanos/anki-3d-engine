@@ -127,7 +127,7 @@ ANKI_SHADER_STATIC_ASSERT(kMaxShadowCascades == 4u); // Because m_shadowCascadeD
 struct ReflectionProbe
 {
 	Vec3 m_position; ///< Position of the probe in world space.
-	F32 m_cubemapIndex; ///< Index in the cubemap array texture.
+	U32 m_cubeTexture; ///< Bindless index of the reflection texture.
 
 	Vec3 m_aabbMin;
 	F32 m_padding0;

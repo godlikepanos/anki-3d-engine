@@ -311,7 +311,7 @@ void ClusterBinning::writeClustererBuffersTask()
 			ReflectionProbe& out = probes[i];
 
 			out.m_position = in.m_worldPosition;
-			out.m_cubemapIndex = F32(in.m_textureArrayIndex);
+			out.m_cubeTexture = in.m_textureBindlessIndex;
 			out.m_aabbMin = in.m_aabbMin;
 			out.m_aabbMax = in.m_aabbMax;
 		}

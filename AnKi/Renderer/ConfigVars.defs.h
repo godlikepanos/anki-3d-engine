@@ -67,9 +67,7 @@ ANKI_CONFIG_VAR_U32(RShadowMappingTileCountPerRowOrColumn, 32, 1, 256,
 ANKI_CONFIG_VAR_U32(RShadowMappingPcf, ((ANKI_PLATFORM_MOBILE) ? 0 : 1), 0, 1, "Shadow PCF (0: off, 1: on)")
 
 // Probe reflections
-ANKI_CONFIG_VAR_U32(RProbeReflectionResolution, 128, 4, 2048, "Reflection probe face resolution")
 ANKI_CONFIG_VAR_U32(RProbeReflectionIrradianceResolution, 16, 4, 2048, "Reflection probe irradiance resolution")
-ANKI_CONFIG_VAR_U32(RProbeRefectionMaxCachedProbes, 32, 4, 256, "Max cached number of reflection probes")
 ANKI_CONFIG_VAR_U32(RProbeReflectionShadowMapResolution, 64, 4, 2048, "Reflection probe shadow resolution")
 
 // Final composite

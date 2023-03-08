@@ -187,29 +187,29 @@ public:
 };
 static_assert(std::is_trivially_destructible<DirectionalLightQueueElement>::value == true);
 
-/// Normally the visibility tests don't perform tests on the reflection probes because probes dont change that often.
-/// This callback will be used by the renderer to inform a reflection probe that on the next frame it will be rendererd.
-/// In that case the visibility tests should fill the render queues of the probe.
-using ReflectionProbeQueueElementFeedbackCallback = void (*)(Bool fillRenderQueuesOnNextFrame, void* userData);
-
 /// Reflection probe render queue element.
 class ReflectionProbeQueueElement final
 {
 public:
-	U64 m_uuid;
-	ReflectionProbeQueueElementFeedbackCallback m_feedbackCallback;
-	void* m_feedbackCallbackUserData;
-	Array<RenderQueue*, 6> m_renderQueues;
 	Vec3 m_worldPosition;
 	Vec3 m_aabbMin;
 	Vec3 m_aabbMax;
-	U32 m_textureArrayIndex; ///< Renderer internal.
+	U32 m_textureBindlessIndex;
 
 	ReflectionProbeQueueElement()
 	{
 	}
 };
 static_assert(std::is_trivially_destructible<ReflectionProbeQueueElement>::value == true);
+
+/// Contains info for a reflection probe that the renderer will have to refresh.
+class ReflectionProbeQueueElementForRefresh final
+{
+public:
+	Array<RenderQueue*, 6> m_renderQueues;
+	Vec3 m_worldPosition;
+	Texture* m_reflectionTexture;
+};
 
 /// See ReflectionProbeQueueElementFeedbackCallback for its purpose.
 using GlobalIlluminationProbeQueueElementFeedbackCallback = void (*)(Bool fillRenderQueuesOnNextFrame, void* userData,
@@ -400,6 +400,8 @@ public:
 
 	FillCoverageBufferCallback m_fillCoverageBufferCallback = nullptr;
 	void* m_fillCoverageBufferCallbackUserData = nullptr;
+
+	ReflectionProbeQueueElementForRefresh* m_reflectionProbeForRefresh = nullptr;
 
 	RenderQueue()
 	{

@@ -33,13 +33,13 @@ U32 RenderQueue::countAllRenderables() const
 		}
 	}
 
-	for(const ReflectionProbeQueueElement& probe : m_reflectionProbes)
+	if(m_reflectionProbeForRefresh)
 	{
 		for(U i = 0; i < 6; ++i)
 		{
-			if(probe.m_renderQueues[i])
+			if(m_reflectionProbeForRefresh->m_renderQueues[i])
 			{
-				drawableCount += probe.m_renderQueues[i]->countAllRenderables();
+				drawableCount += m_reflectionProbeForRefresh->m_renderQueues[i]->countAllRenderables();
 			}
 		}
 	}

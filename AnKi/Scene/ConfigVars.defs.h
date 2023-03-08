@@ -27,6 +27,9 @@ ANKI_CONFIG_VAR_BOOL(SceneRayTracedShadows, true, "Enable or not ray traced shad
 ANKI_CONFIG_VAR_F32(SceneRayTracingExtendedFrustumDistance, 100.0f, 10.0f, 10000.0f,
 					"Every object that its distance from the camera is bellow that value will take part in ray tracing")
 
+ANKI_CONFIG_VAR_U32(SceneReflectionProbeResolution, 128, 8, 2048, "The resolution of the reflection probe's reflection")
+
+// GPU scene
 ANKI_CONFIG_VAR_U32(SceneMinGpuSceneTransforms, 8 * 1024, 8, 100 * 1024,
 					"The min number of transforms stored in the GPU scene")
 ANKI_CONFIG_VAR_U32(SceneMinGpuSceneMeshes, 8 * 1024, 8, 100 * 1024, "The min number of meshes stored in the GPU scene")

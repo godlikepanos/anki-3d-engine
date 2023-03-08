@@ -40,9 +40,6 @@
 {
 	ReflectionProbe g_reflectionProbes[kMaxVisibleReflectionProbes];
 };
-
-[[vk::binding(CLUSTERED_SHADING_REFLECTIONS_BINDING + 1u, CLUSTERED_SHADING_SET)]] TextureCubeArray<RVec4>
-	g_reflectionsTex;
 #endif
 
 //
