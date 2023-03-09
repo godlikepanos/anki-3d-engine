@@ -35,7 +35,7 @@ public:
 			this);
 
 		ANKI_CHECK_AND_IGNORE(getSceneGraph().getUiManager().newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf",
-																		 Array<U32, 1>{46}));
+																		 Array<U32, 1>{52}));
 	}
 
 	void draw(CanvasPtr& canvas)
@@ -47,20 +47,23 @@ public:
 
 		const Vec4 oldWindowColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
 		ImGui::GetStyle().Colors[ImGuiCol_WindowBg].w = 0.3f;
+		ImGui::GetStyle().ItemSpacing = Vec2(16.0f, 32.0f);
+		ImGui::GetStyle().TouchExtraPadding = ImGui::GetStyle().ItemSpacing;
+		// printf("%f %f\n", ImGui::GetStyle().ItemSpacing.x, ImGui::GetStyle().ItemSpacing.y);
 
 		ImGui::Begin("VrsButtons", nullptr,
 					 ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove
 						 | ImGuiWindowFlags_AlwaysAutoResize);
 
-		canvas->pushFont(m_font, 46);
+		canvas->pushFont(m_font, 52);
 
-		ImGui::SetWindowPos(Vec2(canvas->getWidth() - ImGui::GetWindowWidth() - 195.0f, 55.0f));
+		ImGui::SetWindowPos(Vec2(canvas->getWidth() - ImGui::GetWindowWidth() - 195.0f, 60.0f));
 		ImGui::SetWindowSize(Vec2(230.0f, 450.0f));
 
 		if(m_config->getRVrs())
 		{
-			//ImGui::Text("VRS visualization: ");
-			//ImGui::SameLine();
+			// ImGui::Text("VRS visualization: ");
+			// ImGui::SameLine();
 
 			if(ImGui::Checkbox("Light Shading", &m_lsVis))
 			{
@@ -70,8 +73,8 @@ public:
 
 			ImGui::SameLine();
 			ImGui::Spacing();
-            ImGui::SameLine();
-            ImGui::Spacing();
+			ImGui::SameLine();
+			ImGui::Spacing();
 			ImGui::SameLine();
 
 			if(ImGui::Checkbox("Global Illumination", &m_giVis))
@@ -82,8 +85,8 @@ public:
 
 			ImGui::SameLine();
 			ImGui::Spacing();
-            ImGui::SameLine();
-            ImGui::Spacing();
+			ImGui::SameLine();
+			ImGui::Spacing();
 			ImGui::SameLine();
 
 			if(ImGui::Checkbox("Reflections", &m_reflVis))
@@ -94,8 +97,8 @@ public:
 
 			ImGui::SameLine();
 			ImGui::Spacing();
-            ImGui::SameLine();
-            ImGui::Spacing();
+			ImGui::SameLine();
+			ImGui::Spacing();
 			ImGui::SameLine();
 		}
 

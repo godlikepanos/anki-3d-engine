@@ -16,7 +16,7 @@ StatsUi::~StatsUi()
 
 Error StatsUi::init()
 {
-	ANKI_CHECK(m_manager->newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{46}));
+	ANKI_CHECK(m_manager->newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{52}));
 
 	return Error::kNone;
 }
@@ -77,14 +77,14 @@ void StatsUi::setStats(const StatsUiInput& input, StatsUiDetail detail)
 
 void StatsUi::build(CanvasPtr canvas)
 {
-	canvas->pushFont(m_font, 46);
+	canvas->pushFont(m_font, 52);
 
 	const Vec4 oldWindowColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
 	ImGui::GetStyle().Colors[ImGuiCol_WindowBg].w = 0.3f;
 
 	if(ImGui::Begin("Stats", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize))
 	{
-		ImGui::SetWindowPos(Vec2(65.0f, 45.0f));
+		ImGui::SetWindowPos(Vec2(65.0f, 65.0f));
 		ImGui::SetWindowSize(Vec2(230.0f, 450.0f));
 
 		auto writeText = [this](const Value& v, const Char* text, ValueFlag flags, Bool isFloat) {

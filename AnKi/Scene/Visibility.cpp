@@ -352,7 +352,8 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		}
 
 		if(!spatialc->getAlwaysVisible()
-		   && (!spatialInsideFrustum(testedFrc, *spatialc) /* || !testAgainstRasterizer(spatialc->getAabbWorldSpace())*/))
+		   && (!spatialInsideFrustum(testedFrc,
+									 *spatialc) /* || !testAgainstRasterizer(spatialc->getAabbWorldSpace())*/))
 		{
 			continue;
 		}
