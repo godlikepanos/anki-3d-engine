@@ -417,8 +417,7 @@ RVec3 sampleAmbientDice(RVec3 posx, RVec3 negx, RVec3 posy, RVec3 negy, RVec3 po
 
 // Sample the irradiance term from the clipmap
 RVec3 sampleGlobalIllumination(const Vec3 worldPos, const Vec3 normal, const GlobalIlluminationProbe probe,
-							   Texture3D<RVec4> textures[kMaxVisibleGlobalIlluminationProbes],
-							   SamplerState linearAnyClampSampler)
+							   Texture3D<RVec4> tex, SamplerState linearAnyClampSampler)
 {
 	// Find the UVW
 	Vec3 uvw = (worldPos - probe.m_aabbMin) / (probe.m_aabbMax - probe.m_aabbMin);
@@ -437,9 +436,7 @@ RVec3 sampleGlobalIllumination(const Vec3 worldPos, const Vec3 normal, const Glo
 		Vec3 shiftedUVw = uvw;
 		shiftedUVw.x += (1.0 / 6.0) * F32(dir);
 
-		irradiancePerDir[dir] = textures[NonUniformResourceIndex(probe.m_textureIndex)]
-									.SampleLevel(linearAnyClampSampler, shiftedUVw, 0.0)
-									.rgb;
+		irradiancePerDir[dir] = tex.SampleLevel(linearAnyClampSampler, shiftedUVw, 0.0).rgb;
 	}
 
 	// Sample the irradiance

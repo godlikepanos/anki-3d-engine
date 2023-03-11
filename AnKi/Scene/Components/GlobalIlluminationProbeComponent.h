@@ -63,20 +63,6 @@ public:
 		m_fadeDistance = max(0.0f, dist);
 	}
 
-	/// Returns true if it's marked for update this frame.
-	Bool getMarkedForRendering() const
-	{
-		return m_markedForRendering;
-	}
-
-	/// Get the cell position that will be rendered this frame.
-	Vec3 getRenderPosition() const
-	{
-		ANKI_ASSERT(m_renderPosition > -m_halfSize + m_worldPos && m_renderPosition < m_halfSize + m_worldPos);
-		ANKI_ASSERT(m_markedForRendering);
-		return m_renderPosition;
-	}
-
 	WeakArray<Frustum> getFrustums()
 	{
 		return m_frustums;
@@ -84,26 +70,45 @@ public:
 
 	void setupGlobalIlluminationProbeQueueElement(GlobalIlluminationProbeQueueElement& el)
 	{
-		el.m_uuid = m_uuid;
-		el.m_feedbackCallback = giProbeQueueElementFeedbackCallback;
-		el.m_feedbackCallbackUserData = this;
-		el.m_renderQueues = {};
 		el.m_aabbMin = -m_halfSize + m_worldPos;
 		el.m_aabbMax = m_halfSize + m_worldPos;
 		el.m_cellCounts = m_cellCounts;
-		el.m_totalCellCount = m_cellCounts.x() * m_cellCounts.y() * m_cellCounts.z();
+		el.m_totalCellCount = m_totalCellCount;
 		el.m_cellSizes = (m_halfSize * 2.0f) / Vec3(m_cellCounts);
 		el.m_fadeDistance = m_fadeDistance;
+		el.m_volumeTextureBindlessIndex = m_volTexBindlessIdx;
+	}
+
+	void setupGlobalIlluminationProbeQueueElementForRefresh(GlobalIlluminationProbeQueueElementForRefresh& el)
+	{
+		ANKI_ASSERT(m_cellIdxToRefresh < m_totalCellCount);
+		el.m_volumeTexture = m_volTex.get();
+		unflatten3dArrayIndex(m_cellCounts.x(), m_cellCounts.y(), m_cellCounts.z(), m_cellIdxToRefresh,
+							  el.m_cellToRefresh.x(), el.m_cellToRefresh.y(), el.m_cellToRefresh.z());
+		el.m_cellCounts = m_cellCounts;
+	}
+
+	Bool needsRefresh() const
+	{
+		return m_cellIdxToRefresh < m_totalCellCount;
+	}
+
+	void progressRefresh()
+	{
+		++m_cellIdxToRefresh;
 	}
 
 private:
-	U64 m_uuid;
 	Vec3 m_halfSize = Vec3(0.5f);
 	Vec3 m_worldPos = Vec3(0.0f);
-	Vec3 m_renderPosition = Vec3(0.0f);
 	UVec3 m_cellCounts = UVec3(2u);
+	U32 m_totalCellCount = 8u;
 	F32 m_cellSize = 4.0f; ///< Cell size in meters.
 	F32 m_fadeDistance = 0.2f;
+
+	TexturePtr m_volTex;
+	TextureViewPtr m_volView;
+	U32 m_volTexBindlessIdx = 0;
 
 	U32 m_gpuSceneOffset = kMaxU32;
 
@@ -111,20 +116,11 @@ private:
 
 	Spatial m_spatial;
 
-	Bool m_markedForRendering : 1 = false;
-	Bool m_shapeDirty : 1 = true;
+	ShaderProgramResourcePtr m_clearTextureProg;
 
-	static void giProbeQueueElementFeedbackCallback(Bool fillRenderQueuesOnNextFrame, void* userData,
-													const Vec4& eyeWorldPosition)
-	{
-		ANKI_ASSERT(userData);
-		GlobalIlluminationProbeComponent& self = *static_cast<GlobalIlluminationProbeComponent*>(userData);
-		ANKI_ASSERT(!(fillRenderQueuesOnNextFrame
-					  && (eyeWorldPosition.xyz() < -self.m_halfSize + self.m_worldPos
-						  || eyeWorldPosition.xyz() > self.m_halfSize + self.m_worldPos)));
-		self.m_markedForRendering = fillRenderQueuesOnNextFrame;
-		self.m_renderPosition = eyeWorldPosition.xyz();
-	}
+	U32 m_cellIdxToRefresh = 0;
+
+	Bool m_shapeDirty = true;
 
 	/// Recalc come values.
 	void updateMembers()
@@ -132,6 +128,7 @@ private:
 		const Vec3 dist = m_halfSize * 2.0f;
 		m_cellCounts = UVec3(dist / m_cellSize);
 		m_cellCounts = m_cellCounts.max(UVec3(1));
+		m_totalCellCount = m_cellCounts.x() * m_cellCounts.y() * m_cellCounts.z();
 	}
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated);

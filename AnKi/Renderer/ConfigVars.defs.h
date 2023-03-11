@@ -47,8 +47,6 @@ ANKI_CONFIG_VAR_F32(RSsrRoughnessCutoff, ((ANKI_PLATFORM_MOBILE) ? 0.7f : 1.0f),
 ANKI_CONFIG_VAR_U32(RIndirectDiffuseProbeTileResolution, ((ANKI_PLATFORM_MOBILE) ? 16 : 32), 8, 32,
 					"GI tile resolution")
 ANKI_CONFIG_VAR_U32(RIndirectDiffuseProbeShadowMapResolution, 128, 4, 2048, "GI shadowmap resolution")
-ANKI_CONFIG_VAR_U32(RIndirectDiffuseProbeMaxCachedProbes, 16, 4, 2048, "Max cached probes")
-ANKI_CONFIG_VAR_U32(RIndirectDiffuseProbeMaxVisibleProbes, 8, 1, 256, "Max visible GI probes")
 
 // GI
 ANKI_CONFIG_VAR_U32(RIndirectDiffuseSsgiSampleCount, 8, 1, 1024, "SSGI sample count")

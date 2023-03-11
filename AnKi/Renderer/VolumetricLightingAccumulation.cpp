@@ -92,7 +92,11 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 
 	pass.newBufferDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::kStorageComputeRead);
 
-	m_r->getIndirectDiffuseProbes().setRenderGraphDependencies(ctx, pass, TextureUsageBit::kSampledCompute);
+	if(m_r->getIndirectDiffuseProbes().hasCurrentlyRefreshedVolumeRt())
+	{
+		pass.newTextureDependency(m_r->getIndirectDiffuseProbes().getCurrentlyRefreshedVolumeRt(),
+								  TextureUsageBit::kSampledCompute);
+	}
 }
 
 void VolumetricLightingAccumulation::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
@@ -118,11 +122,12 @@ void VolumetricLightingAccumulation::run(const RenderingContext& ctx, RenderPass
 	bindUniforms(cmdb, 0, 8, rsrc.m_spotLightsToken);
 	rgraphCtx.bindColorTexture(0, 9, m_r->getShadowMapping().getShadowmapRt());
 
-	m_r->getIndirectDiffuseProbes().bindVolumeTextures(ctx, rgraphCtx, 0, 10);
-	bindUniforms(cmdb, 0, 11, rsrc.m_globalIlluminationProbesToken);
+	bindUniforms(cmdb, 0, 10, rsrc.m_globalIlluminationProbesToken);
 
-	bindUniforms(cmdb, 0, 12, rsrc.m_fogDensityVolumesToken);
-	bindStorage(cmdb, 0, 13, rsrc.m_clustersToken);
+	bindUniforms(cmdb, 0, 11, rsrc.m_fogDensityVolumesToken);
+	bindStorage(cmdb, 0, 12, rsrc.m_clustersToken);
+
+	cmdb->bindAllBindless(1);
 
 	VolumetricLightingUniforms unis;
 	const SkyboxQueueElement& queueEl = ctx.m_renderQueue->m_skybox;

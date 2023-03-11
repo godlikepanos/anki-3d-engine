@@ -33,7 +33,7 @@
 #endif
 
 //
-// Reflection probes (2)
+// Reflection probes (1)
 //
 #if defined(CLUSTERED_SHADING_REFLECTIONS_BINDING)
 [[vk::binding(CLUSTERED_SHADING_REFLECTIONS_BINDING, CLUSTERED_SHADING_SET)]] cbuffer b_reflectionProbes
@@ -63,13 +63,10 @@
 #endif
 
 //
-// GI (2)
+// GI (1)
 //
 #if defined(CLUSTERED_SHADING_GI_BINDING)
-[[vk::binding(CLUSTERED_SHADING_GI_BINDING, CLUSTERED_SHADING_SET)]] Texture3D<RVec4>
-	g_globalIlluminationTextures[kMaxVisibleGlobalIlluminationProbes];
-
-[[vk::binding(CLUSTERED_SHADING_GI_BINDING + 1u, CLUSTERED_SHADING_SET)]] cbuffer b_giProbes
+[[vk::binding(CLUSTERED_SHADING_GI_BINDING, CLUSTERED_SHADING_SET)]] cbuffer b_giProbes
 {
 	GlobalIlluminationProbe g_giProbes[kMaxVisibleGlobalIlluminationProbes];
 };

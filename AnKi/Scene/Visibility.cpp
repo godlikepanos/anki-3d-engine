@@ -574,13 +574,18 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 			GlobalIlluminationProbeComponent& giprobec = static_cast<GlobalIlluminationProbeComponent&>(comp);
 
-			GlobalIlluminationProbeQueueElement* el = result.m_giProbes.newElement(pool);
-			giprobec.setupGlobalIlluminationProbeQueueElement(*el);
-
-			if(giprobec.getMarkedForRendering())
+			if(giprobec.needsRefresh() && m_frcCtx->m_giProbesForRefreshCount.fetchAdd(1) == 0)
 			{
 				nextQueues = WeakArray<RenderQueue>(newArray<RenderQueue>(pool, 6), 6);
 				nextFrustums = WeakArray<VisibilityFrustum>(newArray<VisibilityFrustum>(pool, 6), 6);
+
+				GlobalIlluminationProbeQueueElementForRefresh* el =
+					newInstance<GlobalIlluminationProbeQueueElementForRefresh>(pool);
+
+				m_frcCtx->m_giProbeForRefresh = el;
+
+				giprobec.setupGlobalIlluminationProbeQueueElementForRefresh(*el);
+				giprobec.progressRefresh();
 
 				for(U32 i = 0; i < 6; ++i)
 				{
@@ -589,10 +594,9 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 					static_cast<FrustumFlags&>(nextFrustums[i]) = getProbeFrustumFlags();
 				}
 			}
-			else
-			{
-				memset(&el->m_renderQueues[0], 0, sizeof(el->m_renderQueues));
-			}
+
+			GlobalIlluminationProbeQueueElement* el = result.m_giProbes.newElement(pool);
+			giprobec.setupGlobalIlluminationProbeQueueElement(*el);
 		}
 		else if(comp.getClassId() == UiComponent::getStaticClassId())
 		{
@@ -692,6 +696,7 @@ void CombineResultsTask::combine()
 #undef ANKI_VIS_COMBINE
 
 	results.m_reflectionProbeForRefresh = m_frcCtx->m_reflectionProbeForRefresh;
+	results.m_giProbeForRefresh = m_frcCtx->m_giProbeForRefresh;
 
 	for(U32 i = 0; i < threadCount; ++i)
 	{

@@ -40,6 +40,11 @@ void akassert(const char* exprTxt, const char* file, int line, const char* func)
 		printf("%.2u: %s\n", count++, symbol.cstr());
 	});
 
+#	if ANKI_OS_WINDOWS
+	Array<Char, 512> msg;
+	snprintf(msg.getBegin(), msg.getSize(), "%s\n\n%s:%d %s", exprTxt, file, line, func);
+	MessageBoxA(nullptr, msg.getBegin(), "Assertion", MB_OK | MB_ICONWARNING);
+#	endif
 	ANKI_DEBUG_BREAK();
 }
 

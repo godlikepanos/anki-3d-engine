@@ -105,7 +105,7 @@ struct GpuSceneGlobalIlluminationProbe
 	Vec3 m_aabbMax;
 	F32 m_padding1;
 
-	U32 m_textureIndex; ///< Index to the array of volume textures.
+	U32 m_volumeTexture; ///< Bindless index of the irradiance volume texture.
 	F32 m_halfTexelSizeU; ///< (1.0 / textureSize(texArr[textureIndex]).x) / 2.0
 	/// Used to calculate a factor that is zero when fragPos is close to AABB bounds and 1.0 at fadeDistance and less.
 	RF32 m_fadeDistance;

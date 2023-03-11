@@ -120,7 +120,8 @@ ANKI_WINBASEAPI BOOL ANKI_WINAPI GetConsoleScreenBufferInfo(HANDLE hConsoleOutpu
 															PCONSOLE_SCREEN_BUFFER_INFO lpConsoleScreenBufferInfo);
 ANKI_WINBASEAPI BOOL ANKI_WINAPI SetConsoleTextAttribute(HANDLE hConsoleOutput, WORD wAttributes);
 ANKI_WINBASEAPI VOID ANKI_WINAPI GetSystemInfo(LPSYSTEM_INFO lpSystemInfo);
-ANKI_WINBASEAPI DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize);
+ANKI_WINBASEAPI DWORD ANKI_WINAPI GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize);
+ANKI_WINBASEAPI int ANKI_WINAPI MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType);
 
 #undef ANKI_WINBASEAPI
 #undef ANKI_DECLARE_HANDLE
@@ -154,6 +155,9 @@ constexpr WORD FOREGROUND_INTENSITY = 0x0008;
 constexpr WORD BACKGROUND_BLUE = 0x0010;
 constexpr WORD BACKGROUND_GREEN = 0x0020;
 constexpr WORD BACKGROUND_RED = 0x0040;
+
+constexpr WORD MB_OK = 0x00000000L;
+constexpr WORD MB_ICONWARNING = 0x00000030L;
 
 // Types
 typedef union _LARGE_INTEGER
@@ -449,6 +453,11 @@ inline VOID GetSystemInfo(LPSYSTEM_INFO lpSystemInfo)
 inline DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 {
 	return ::GetModuleFileNameA(hModule, lpFilename, nSize);
+}
+
+inline int MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType)
+{
+	return ::MessageBoxA(hWnd, lpText, lpCaption, uType);
 }
 
 } // end namespace anki

@@ -547,8 +547,12 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 	{
 		out = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 	}
+	else
+	{
+		// No idea so play it safe
+		out = VK_IMAGE_LAYOUT_GENERAL;
+	}
 
-	ANKI_ASSERT(out != VK_IMAGE_LAYOUT_MAX_ENUM);
 	return out;
 }
 

@@ -15,8 +15,8 @@
 #define CLUSTERED_SHADING_UNIFORMS_BINDING 6u
 #define CLUSTERED_SHADING_LIGHTS_BINDING 7u
 #define CLUSTERED_SHADING_GI_BINDING 10u
-#define CLUSTERED_SHADING_FOG_BINDING 12u
-#define CLUSTERED_SHADING_CLUSTERS_BINDING 13u
+#define CLUSTERED_SHADING_FOG_BINDING 11u
+#define CLUSTERED_SHADING_CLUSTERS_BINDING 12u
 #include <AnKi/Shaders/ClusteredShadingCommon.hlsl>
 
 constexpr F32 kPhaseFunctionAnisotropy = 0.3;
@@ -30,6 +30,8 @@ constexpr F32 kPhaseFunctionAnisotropy = 0.3;
 [[vk::binding(5)]] Texture3D g_prevVolume;
 
 [[vk::push_constant]] ConstantBuffer<VolumetricLightingUniforms> g_fogUnis;
+
+ANKI_BINDLESS_SET(1)
 
 static Vec3 g_svDispatchThreadId;
 
@@ -168,15 +170,16 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 	{
 		Vec3 diffIndirect;
 
-		if(countbits(cluster.m_giProbesMask) == 1)
+		const U32 oneProbe = WaveActiveAllTrue(countbits(cluster.m_giProbesMask) == 1);
+		if(oneProbe)
 		{
 			// Only one probe, do a fast path without blend weight
 
 			const GlobalIlluminationProbe probe = g_giProbes[firstbitlow2(cluster.m_giProbesMask)];
 
 			// Sample
-			diffIndirect = sampleGlobalIllumination(worldPos, viewDir, probe, g_globalIlluminationTextures,
-													g_linearAnyClampSampler);
+			diffIndirect = sampleGlobalIllumination(
+				worldPos, viewDir, probe, g_bindlessTextures3dF32[probe.m_volumeTexture], g_linearAnyClampSampler);
 		}
 		else
 		{
@@ -198,8 +201,9 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 				totalBlendWeight += blendWeight;
 
 				// Sample
-				const Vec3 c = sampleGlobalIllumination(worldPos, viewDir, probe, g_globalIlluminationTextures,
-														g_linearAnyClampSampler);
+				const Vec3 c = sampleGlobalIllumination(
+					worldPos, viewDir, probe, g_bindlessTextures3dF32[NonUniformResourceIndex(probe.m_volumeTexture)],
+					g_linearAnyClampSampler);
 				diffIndirect += c * blendWeight;
 			}
 

@@ -22,20 +22,22 @@ ANKI_SPECIALIZATION_CONSTANT_U32(kSampleCount, 0u);
 #define CLUSTERED_SHADING_SET 0u
 #define CLUSTERED_SHADING_UNIFORMS_BINDING 0u
 #define CLUSTERED_SHADING_GI_BINDING 1u
-#define CLUSTERED_SHADING_CLUSTERS_BINDING 3u
+#define CLUSTERED_SHADING_CLUSTERS_BINDING 2u
 #include <AnKi/Shaders/ClusteredShadingCommon.hlsl>
 
-[[vk::binding(4)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(5)]] Texture2D<RVec4> g_gbufferRt2;
-[[vk::binding(6)]] Texture2D g_depthTex;
-[[vk::binding(7)]] Texture2D<RVec4> g_lightBufferRt;
-[[vk::binding(8)]] Texture2D<RVec4> g_historyTex;
-[[vk::binding(9)]] Texture2D g_motionVectorsTex;
-[[vk::binding(10)]] Texture2D g_historyLengthTex;
+[[vk::binding(3)]] SamplerState g_linearAnyClampSampler;
+[[vk::binding(4)]] Texture2D<RVec4> g_gbufferRt2;
+[[vk::binding(5)]] Texture2D g_depthTex;
+[[vk::binding(6)]] Texture2D<RVec4> g_lightBufferRt;
+[[vk::binding(7)]] Texture2D<RVec4> g_historyTex;
+[[vk::binding(8)]] Texture2D g_motionVectorsTex;
+[[vk::binding(9)]] Texture2D g_historyLengthTex;
 
 #if defined(ANKI_COMPUTE_SHADER)
-[[vk::binding(11)]] RWTexture2D<RVec4> g_outUav;
+[[vk::binding(10)]] RWTexture2D<RVec4> g_outUav;
 #endif
+
+ANKI_BINDLESS_SET(1)
 
 [[vk::push_constant]] ConstantBuffer<IndirectDiffuseUniforms> g_uniforms;
 
@@ -154,15 +156,16 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION
 		// Get the cluster
 		Cluster cluster = getClusterFragCoord(Vec3(fragCoord * 2.0, depth));
 
-		if(countbits(cluster.m_giProbesMask) == 1)
+		const U32 oneProbe = WaveActiveAllTrue(countbits(cluster.m_giProbesMask) == 1);
+		if(oneProbe)
 		{
 			// All subgroups point to the same probe and there is only one probe, do a fast path without blend weight
 
 			const GlobalIlluminationProbe probe = g_giProbes[firstbitlow2(cluster.m_giProbesMask)];
 
 			// Sample
-			probeColor = sampleGlobalIllumination(worldPos, worldNormal, probe, g_globalIlluminationTextures,
-												  g_linearAnyClampSampler);
+			probeColor = sampleGlobalIllumination(
+				worldPos, worldNormal, probe, g_bindlessTextures3dF32[probe.m_volumeTexture], g_linearAnyClampSampler);
 		}
 		else
 		{
@@ -183,8 +186,9 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION
 				totalBlendWeight += blendWeight;
 
 				// Sample
-				const RVec3 c = sampleGlobalIllumination(worldPos, worldNormal, probe, g_globalIlluminationTextures,
-														 g_linearAnyClampSampler);
+				const RVec3 c = sampleGlobalIllumination(
+					worldPos, worldNormal, probe,
+					g_bindlessTextures3dF32[NonUniformResourceIndex(probe.m_volumeTexture)], g_linearAnyClampSampler);
 				probeColor += c * blendWeight;
 			}
 

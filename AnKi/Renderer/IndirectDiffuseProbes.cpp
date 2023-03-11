@@ -13,40 +13,22 @@
 
 namespace anki {
 
-/// Given a cell index compute its world position.
-static Vec3 computeProbeCellPosition(U32 cellIdx, const GlobalIlluminationProbeQueueElement& probe)
-{
-	ANKI_ASSERT(cellIdx < probe.m_totalCellCount);
-
-	UVec3 cellCoords;
-	unflatten3dArrayIndex(probe.m_cellCounts.z(), probe.m_cellCounts.y(), probe.m_cellCounts.x(), cellIdx,
-						  cellCoords.z(), cellCoords.y(), cellCoords.x());
-
-	const Vec3 halfCellSize = probe.m_cellSizes / 2.0f;
-	const Vec3 cellPos = Vec3(cellCoords) * probe.m_cellSizes + halfCellSize + probe.m_aabbMin;
-	ANKI_ASSERT(cellPos < probe.m_aabbMax);
-
-	return cellPos;
-}
-
 class IndirectDiffuseProbes::InternalContext
 {
 public:
-	IndirectDiffuseProbes* m_gi ANKI_DEBUG_CODE(= numberToPtr<IndirectDiffuseProbes*>(1));
-	RenderingContext* m_ctx ANKI_DEBUG_CODE(= numberToPtr<RenderingContext*>(1));
+	IndirectDiffuseProbes* m_gi = nullptr;
+	RenderingContext* m_ctx = nullptr;
 
-	GlobalIlluminationProbeQueueElement*
-		m_probeToUpdateThisFrame ANKI_DEBUG_CODE(= numberToPtr<GlobalIlluminationProbeQueueElement*>(1));
-	UVec3 m_cellOfTheProbeToUpdateThisFrame ANKI_DEBUG_CODE(= UVec3(kMaxU32));
+	GlobalIlluminationProbeQueueElementForRefresh* m_probeToUpdateThisFrame = nullptr;
 
 	Array<RenderTargetHandle, kGBufferColorRenderTargetCount> m_gbufferColorRts;
 	RenderTargetHandle m_gbufferDepthRt;
 	RenderTargetHandle m_shadowsRt;
 	RenderTargetHandle m_lightShadingRt;
-	WeakArray<RenderTargetHandle> m_irradianceProbeRts;
+	RenderTargetHandle m_irradianceVolume;
 
-	U32 m_gbufferDrawcallCount ANKI_DEBUG_CODE(= kMaxU32);
-	U32 m_smDrawcallCount ANKI_DEBUG_CODE(= kMaxU32);
+	U32 m_gbufferDrawcallCount = kMaxU32;
+	U32 m_smDrawcallCount = kMaxU32;
 
 	static void foo()
 	{
@@ -56,43 +38,17 @@ public:
 
 IndirectDiffuseProbes::~IndirectDiffuseProbes()
 {
-	m_cacheEntries.destroy(getMemoryPool());
-	m_probeUuidToCacheEntryIdx.destroy(getMemoryPool());
 }
 
-const RenderTargetHandle&
-IndirectDiffuseProbes::getVolumeRenderTarget(const GlobalIlluminationProbeQueueElement& probe) const
+RenderTargetHandle IndirectDiffuseProbes::getCurrentlyRefreshedVolumeRt() const
 {
-	ANKI_ASSERT(m_giCtx);
-	ANKI_ASSERT(&probe >= &m_giCtx->m_ctx->m_renderQueue->m_giProbes.getFront()
-				&& &probe <= &m_giCtx->m_ctx->m_renderQueue->m_giProbes.getBack());
-	const U32 idx = U32(&probe - &m_giCtx->m_ctx->m_renderQueue->m_giProbes.getFront());
-	return m_giCtx->m_irradianceProbeRts[idx];
+	ANKI_ASSERT(m_giCtx && m_giCtx->m_irradianceVolume.isValid());
+	return m_giCtx->m_irradianceVolume;
 }
 
-void IndirectDiffuseProbes::setRenderGraphDependencies(const RenderingContext& ctx, RenderPassDescriptionBase& pass,
-													   TextureUsageBit usage) const
+Bool IndirectDiffuseProbes::hasCurrentlyRefreshedVolumeRt() const
 {
-	for(U32 idx = 0; idx < ctx.m_renderQueue->m_giProbes.getSize(); ++idx)
-	{
-		pass.newTextureDependency(getVolumeRenderTarget(ctx.m_renderQueue->m_giProbes[idx]), usage);
-	}
-}
-
-void IndirectDiffuseProbes::bindVolumeTextures(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx, U32 set,
-											   U32 binding) const
-{
-	for(U32 idx = 0; idx < kMaxVisibleGlobalIlluminationProbes; ++idx)
-	{
-		if(idx < ctx.m_renderQueue->m_giProbes.getSize())
-		{
-			rgraphCtx.bindColorTexture(set, binding, getVolumeRenderTarget(ctx.m_renderQueue->m_giProbes[idx]), idx);
-		}
-		else
-		{
-			rgraphCtx.m_commandBuffer->bindTexture(set, binding, m_r->getDummyTextureView3d(), idx);
-		}
-	}
+	return m_giCtx != nullptr;
 }
 
 Error IndirectDiffuseProbes::init()
@@ -109,10 +65,6 @@ Error IndirectDiffuseProbes::init()
 Error IndirectDiffuseProbes::initInternal()
 {
 	m_tileSize = getExternalSubsystems().m_config->getRIndirectDiffuseProbeTileResolution();
-	m_cacheEntries.create(getMemoryPool(), getExternalSubsystems().m_config->getRIndirectDiffuseProbeMaxCachedProbes());
-	m_maxVisibleProbes = getExternalSubsystems().m_config->getRIndirectDiffuseProbeMaxVisibleProbes();
-	ANKI_ASSERT(m_maxVisibleProbes <= kMaxVisibleGlobalIlluminationProbes);
-	ANKI_ASSERT(m_cacheEntries.getSize() >= m_maxVisibleProbes);
 
 	ANKI_CHECK(initGBuffer());
 	ANKI_CHECK(initLightShading());
@@ -229,20 +181,18 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
 
+	if(rctx.m_renderQueue->m_giProbeForRefresh == nullptr) [[likely]]
+	{
+		m_giCtx = nullptr;
+		return;
+	}
+
 	InternalContext* giCtx = newInstance<InternalContext>(*rctx.m_tempPool);
 	m_giCtx = giCtx;
 	giCtx->m_gi = this;
 	giCtx->m_ctx = &rctx;
+	giCtx->m_probeToUpdateThisFrame = rctx.m_renderQueue->m_giProbeForRefresh;
 	RenderGraphDescription& rgraph = rctx.m_renderGraphDescr;
-
-	// Prepare the probes
-	prepareProbes(*giCtx);
-	const Bool haveProbeToRender = giCtx->m_probeToUpdateThisFrame != nullptr;
-	if(!haveProbeToRender)
-	{
-		// Early exit
-		return;
-	}
 
 	// Compute task counts for some of the passes
 	U32 gbufferTaskCount, smTaskCount;
@@ -365,6 +315,9 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 
 	// Irradiance pass. First & 2nd bounce
 	{
+		m_giCtx->m_irradianceVolume = rgraph.importRenderTarget(
+			TexturePtr(m_giCtx->m_probeToUpdateThisFrame->m_volumeTexture), TextureUsageBit::kNone);
+
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("GI IR");
 
 		pass.setWork([this, giCtx](RenderPassWorkContext& rgraphCtx) {
@@ -378,170 +331,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 			pass.newTextureDependency(giCtx->m_gbufferColorRts[i], TextureUsageBit::kSampledCompute);
 		}
 
-		const U32 probeIdx = U32(giCtx->m_probeToUpdateThisFrame - &giCtx->m_ctx->m_renderQueue->m_giProbes.getFront());
-		pass.newTextureDependency(giCtx->m_irradianceProbeRts[probeIdx], TextureUsageBit::kImageComputeWrite);
-	}
-}
-
-void IndirectDiffuseProbes::prepareProbes(InternalContext& giCtx)
-{
-	RenderingContext& ctx = *giCtx.m_ctx;
-	giCtx.m_probeToUpdateThisFrame = nullptr;
-
-	if(ctx.m_renderQueue->m_giProbes.getSize() == 0) [[unlikely]]
-	{
-		return;
-	}
-
-	// Iterate the probes and:
-	// - Find a probe to update this frame
-	// - Find a probe to update next frame
-	// - Find the cache entries for each probe
-	DynamicArray<GlobalIlluminationProbeQueueElement> newListOfProbes;
-	newListOfProbes.create(*ctx.m_tempPool, ctx.m_renderQueue->m_giProbes.getSize());
-	DynamicArray<RenderTargetHandle> volumeRts;
-	volumeRts.create(*ctx.m_tempPool, ctx.m_renderQueue->m_giProbes.getSize());
-	U32 newListOfProbeCount = 0;
-	Bool foundProbeToUpdateNextFrame = false;
-	for(U32 probeIdx = 0; probeIdx < ctx.m_renderQueue->m_giProbes.getSize(); ++probeIdx)
-	{
-		if(newListOfProbeCount + 1 >= m_maxVisibleProbes)
-		{
-			ANKI_R_LOGW("Can't have more that %u visible probes. Increase the r_giMaxVisibleProbes or (somehow) "
-						"decrease the visible probes",
-						m_maxVisibleProbes);
-			break;
-		}
-
-		GlobalIlluminationProbeQueueElement& probe = ctx.m_renderQueue->m_giProbes[probeIdx];
-
-		// Find cache entry
-		const U32 cacheEntryIdx = findBestCacheEntry(probe.m_uuid, *getExternalSubsystems().m_globTimestamp,
-													 m_cacheEntries, m_probeUuidToCacheEntryIdx, getMemoryPool());
-		if(cacheEntryIdx == kMaxU32) [[unlikely]]
-		{
-			// Failed
-			ANKI_R_LOGW("There is not enough space in the indirect lighting atlas for more probes. "
-						"Increase the r_giMaxCachedProbes or (somehow) decrease the visible probes");
-			continue;
-		}
-
-		CacheEntry& entry = m_cacheEntries[cacheEntryIdx];
-
-		const Bool cacheEntryDirty = entry.m_uuid != probe.m_uuid || entry.m_volumeSize != probe.m_cellCounts
-									 || entry.m_probeAabbMin != probe.m_aabbMin
-									 || entry.m_probeAabbMax != probe.m_aabbMax;
-		const Bool needsUpdate = cacheEntryDirty || entry.m_renderedCells < probe.m_totalCellCount;
-
-		if(!needsUpdate) [[likely]]
-		{
-			// It's updated, early exit
-
-			entry.m_lastUsedTimestamp = *getExternalSubsystems().m_globTimestamp;
-			volumeRts[newListOfProbeCount] =
-				ctx.m_renderGraphDescr.importRenderTarget(entry.m_volumeTex, TextureUsageBit::kSampledFragment);
-			newListOfProbes[newListOfProbeCount++] = probe;
-			continue;
-		}
-
-		// It needs update
-
-		const Bool canUpdateThisFrame = giCtx.m_probeToUpdateThisFrame == nullptr && probe.m_renderQueues[0] != nullptr;
-		const Bool canUpdateNextFrame = !foundProbeToUpdateNextFrame;
-
-		if(!canUpdateThisFrame && canUpdateNextFrame)
-		{
-			// Probe will (possibly) be updated next frame, inform the probe
-
-			foundProbeToUpdateNextFrame = true;
-
-			const U32 cellToRender = (cacheEntryDirty) ? 0 : entry.m_renderedCells;
-			const Vec3 cellPos = computeProbeCellPosition(cellToRender, probe);
-			probe.m_feedbackCallback(true, probe.m_feedbackCallbackUserData, cellPos.xyz0());
-			continue;
-		}
-		else if(!canUpdateThisFrame)
-		{
-			// Can't be updated this frame so remove it from the list
-			continue;
-		}
-
-		// All good, can use this probe in this frame
-
-		if(cacheEntryDirty)
-		{
-			entry.m_renderedCells = 0;
-			entry.m_uuid = probe.m_uuid;
-			entry.m_probeAabbMin = probe.m_aabbMin;
-			entry.m_probeAabbMax = probe.m_aabbMax;
-			entry.m_volumeSize = probe.m_cellCounts;
-			m_probeUuidToCacheEntryIdx.emplace(getMemoryPool(), probe.m_uuid, cacheEntryIdx);
-		}
-
-		// Update the cache entry
-		entry.m_lastUsedTimestamp = *getExternalSubsystems().m_globTimestamp;
-
-		// Init the cache entry textures
-		const Bool shouldInitTextures = !entry.m_volumeTex.isCreated() || entry.m_volumeSize != probe.m_cellCounts;
-		if(shouldInitTextures)
-		{
-			TextureInitInfo texInit("GiProbeVolume");
-			texInit.m_type = TextureType::k3D;
-			texInit.m_format = m_r->getHdrFormat();
-			texInit.m_width = probe.m_cellCounts.x() * 6;
-			texInit.m_height = probe.m_cellCounts.y();
-			texInit.m_depth = probe.m_cellCounts.z();
-			texInit.m_usage = TextureUsageBit::kAllCompute | TextureUsageBit::kAllSampled;
-
-			entry.m_volumeTex = m_r->createAndClearRenderTarget(texInit, TextureUsageBit::kSampledFragment);
-		}
-
-		// Compute the render position
-		const U32 cellToRender = entry.m_renderedCells++;
-		ANKI_ASSERT(cellToRender < probe.m_totalCellCount);
-		unflatten3dArrayIndex(probe.m_cellCounts.z(), probe.m_cellCounts.y(), probe.m_cellCounts.x(), cellToRender,
-							  giCtx.m_cellOfTheProbeToUpdateThisFrame.z(), giCtx.m_cellOfTheProbeToUpdateThisFrame.y(),
-							  giCtx.m_cellOfTheProbeToUpdateThisFrame.x());
-
-		// Inform probe about its next frame
-		if(entry.m_renderedCells == probe.m_totalCellCount)
-		{
-			// Don't gather renderables next frame if it's done
-			probe.m_feedbackCallback(false, probe.m_feedbackCallbackUserData, Vec4(0.0f));
-		}
-		else if(!foundProbeToUpdateNextFrame)
-		{
-			// Gather rendederables from the same probe next frame
-			foundProbeToUpdateNextFrame = true;
-			const Vec3 cellPos = computeProbeCellPosition(entry.m_renderedCells, probe);
-			probe.m_feedbackCallback(true, probe.m_feedbackCallbackUserData, cellPos.xyz0());
-		}
-
-		// Push the probe to the new list
-		giCtx.m_probeToUpdateThisFrame = &newListOfProbes[newListOfProbeCount];
-		newListOfProbes[newListOfProbeCount] = probe;
-		volumeRts[newListOfProbeCount] =
-			ctx.m_renderGraphDescr.importRenderTarget(entry.m_volumeTex, TextureUsageBit::kSampledFragment);
-		++newListOfProbeCount;
-	}
-
-	// Replace the probe list in the queue
-	if(newListOfProbeCount > 0)
-	{
-		GlobalIlluminationProbeQueueElement* firstProbe;
-		U32 probeCount, storage;
-		newListOfProbes.moveAndReset(firstProbe, probeCount, storage);
-		ctx.m_renderQueue->m_giProbes = WeakArray<GlobalIlluminationProbeQueueElement>(firstProbe, newListOfProbeCount);
-
-		RenderTargetHandle* firstRt;
-		volumeRts.moveAndReset(firstRt, probeCount, storage);
-		m_giCtx->m_irradianceProbeRts = WeakArray<RenderTargetHandle>(firstRt, newListOfProbeCount);
-	}
-	else
-	{
-		ctx.m_renderQueue->m_giProbes = WeakArray<GlobalIlluminationProbeQueueElement>();
-		newListOfProbes.destroy(*ctx.m_tempPool);
-		volumeRts.destroy(*ctx.m_tempPool);
+		pass.newTextureDependency(m_giCtx->m_irradianceVolume, TextureUsageBit::kImageComputeWrite);
 	}
 }
 
@@ -551,7 +341,7 @@ void IndirectDiffuseProbes::runGBufferInThread(RenderPassWorkContext& rgraphCtx,
 	ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
 
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	const GlobalIlluminationProbeQueueElement& probe = *giCtx.m_probeToUpdateThisFrame;
+	const GlobalIlluminationProbeQueueElementForRefresh& probe = *giCtx.m_probeToUpdateThisFrame;
 
 	I32 start, end;
 	U32 startu, endu;
@@ -602,7 +392,7 @@ void IndirectDiffuseProbes::runShadowmappingInThread(RenderPassWorkContext& rgra
 	ANKI_ASSERT(giCtx.m_probeToUpdateThisFrame);
 	ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
 
-	const GlobalIlluminationProbeQueueElement& probe = *giCtx.m_probeToUpdateThisFrame;
+	const GlobalIlluminationProbeQueueElementForRefresh& probe = *giCtx.m_probeToUpdateThisFrame;
 
 	I32 start, end;
 	U32 startu, endu;
@@ -657,7 +447,7 @@ void IndirectDiffuseProbes::runLightShading(RenderPassWorkContext& rgraphCtx, In
 	ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
 
 	ANKI_ASSERT(giCtx.m_probeToUpdateThisFrame);
-	const GlobalIlluminationProbeQueueElement& probe = *giCtx.m_probeToUpdateThisFrame;
+	const GlobalIlluminationProbeQueueElementForRefresh& probe = *giCtx.m_probeToUpdateThisFrame;
 
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
@@ -707,8 +497,7 @@ void IndirectDiffuseProbes::runIrradiance(RenderPassWorkContext& rgraphCtx, Inte
 
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	ANKI_ASSERT(giCtx.m_probeToUpdateThisFrame);
-	const GlobalIlluminationProbeQueueElement& probe = *giCtx.m_probeToUpdateThisFrame;
-	const U32 probeIdx = U32(&probe - &giCtx.m_ctx->m_renderQueue->m_giProbes.getFront());
+	const GlobalIlluminationProbeQueueElementForRefresh& probe = *giCtx.m_probeToUpdateThisFrame;
 
 	cmdb->bindShaderProgram(m_irradiance.m_grProg);
 
@@ -721,7 +510,7 @@ void IndirectDiffuseProbes::runIrradiance(RenderPassWorkContext& rgraphCtx, Inte
 		rgraphCtx.bindColorTexture(0, 2, giCtx.m_gbufferColorRts[i], i);
 	}
 
-	rgraphCtx.bindImage(0, 3, giCtx.m_irradianceProbeRts[probeIdx], TextureSubresourceInfo());
+	rgraphCtx.bindImage(0, 3, giCtx.m_irradianceVolume, TextureSubresourceInfo());
 
 	class
 	{
@@ -730,8 +519,7 @@ void IndirectDiffuseProbes::runIrradiance(RenderPassWorkContext& rgraphCtx, Inte
 		I32 m_nextTexelOffsetInU;
 	} unis;
 
-	unis.m_volumeTexel = IVec3(giCtx.m_cellOfTheProbeToUpdateThisFrame.x(), giCtx.m_cellOfTheProbeToUpdateThisFrame.y(),
-							   giCtx.m_cellOfTheProbeToUpdateThisFrame.z());
+	unis.m_volumeTexel = IVec3(probe.m_cellToRefresh.x(), probe.m_cellToRefresh.y(), probe.m_cellToRefresh.z());
 	unis.m_nextTexelOffsetInU = probe.m_cellCounts.x();
 	cmdb->setPushConstants(&unis, sizeof(unis));
 

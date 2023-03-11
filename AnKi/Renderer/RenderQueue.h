@@ -211,24 +211,17 @@ public:
 	Texture* m_reflectionTexture;
 };
 
-/// See ReflectionProbeQueueElementFeedbackCallback for its purpose.
-using GlobalIlluminationProbeQueueElementFeedbackCallback = void (*)(Bool fillRenderQueuesOnNextFrame, void* userData,
-																	 const Vec4& eyeWorldPosition);
-
 // Probe for global illumination.
 class GlobalIlluminationProbeQueueElement final
 {
 public:
-	U64 m_uuid;
-	GlobalIlluminationProbeQueueElementFeedbackCallback m_feedbackCallback;
-	void* m_feedbackCallbackUserData;
-	Array<RenderQueue*, 6> m_renderQueues;
 	Vec3 m_aabbMin;
 	Vec3 m_aabbMax;
 	UVec3 m_cellCounts;
 	U32 m_totalCellCount;
 	Vec3 m_cellSizes; ///< The cells might not be cubes so have different sizes per dimension.
 	F32 m_fadeDistance;
+	U32 m_volumeTextureBindlessIndex;
 
 	GlobalIlluminationProbeQueueElement()
 	{
@@ -247,6 +240,20 @@ public:
 	}
 };
 static_assert(std::is_trivially_destructible<GlobalIlluminationProbeQueueElement>::value == true);
+
+/// Contains info for a GI probe that the renderer will have to refresh.
+class GlobalIlluminationProbeQueueElementForRefresh final
+{
+public:
+	Array<RenderQueue*, 6> m_renderQueues;
+	Texture* m_volumeTexture;
+	UVec3 m_cellToRefresh;
+	UVec3 m_cellCounts;
+
+	GlobalIlluminationProbeQueueElementForRefresh()
+	{
+	}
+};
 
 /// Lens flare render queue element.
 class LensFlareQueueElement final
@@ -402,6 +409,7 @@ public:
 	void* m_fillCoverageBufferCallbackUserData = nullptr;
 
 	ReflectionProbeQueueElementForRefresh* m_reflectionProbeForRefresh = nullptr;
+	GlobalIlluminationProbeQueueElementForRefresh* m_giProbeForRefresh = nullptr;
 
 	RenderQueue()
 	{

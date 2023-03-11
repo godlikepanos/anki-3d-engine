@@ -250,7 +250,11 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 
 		prpass->newTextureDependency(m_runCtx.m_mainRtHandles[kWrite], writeUsage);
 
-		m_r->getIndirectDiffuseProbes().setRenderGraphDependencies(ctx, *prpass, readUsage);
+		if(m_r->getIndirectDiffuseProbes().hasCurrentlyRefreshedVolumeRt())
+		{
+			prpass->newTextureDependency(m_r->getIndirectDiffuseProbes().getCurrentlyRefreshedVolumeRt(), readUsage);
+		}
+
 		prpass->newTextureDependency(m_r->getGBuffer().getColorRt(2), readUsage);
 		TextureSubresourceInfo hizSubresource;
 		hizSubresource.m_mipmapCount = 1;
@@ -266,25 +270,26 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 
 			const ClusteredShadingContext& binning = ctx.m_clusteredShading;
 			bindUniforms(cmdb, 0, 0, binning.m_clusteredShadingUniformsToken);
-			m_r->getIndirectDiffuseProbes().bindVolumeTextures(ctx, rgraphCtx, 0, 1);
-			bindUniforms(cmdb, 0, 2, binning.m_globalIlluminationProbesToken);
-			bindStorage(cmdb, 0, 3, binning.m_clustersToken);
+			bindUniforms(cmdb, 0, 1, binning.m_globalIlluminationProbesToken);
+			bindStorage(cmdb, 0, 2, binning.m_clustersToken);
 
-			cmdb->bindSampler(0, 4, m_r->getSamplers().m_trilinearClamp);
-			rgraphCtx.bindColorTexture(0, 5, m_r->getGBuffer().getColorRt(2));
+			cmdb->bindSampler(0, 3, m_r->getSamplers().m_trilinearClamp);
+			rgraphCtx.bindColorTexture(0, 4, m_r->getGBuffer().getColorRt(2));
 
 			TextureSubresourceInfo hizSubresource;
 			hizSubresource.m_mipmapCount = 1;
-			rgraphCtx.bindTexture(0, 6, m_r->getDepthDownscale().getHiZRt(), hizSubresource);
-			rgraphCtx.bindColorTexture(0, 7, m_r->getDownscaleBlur().getRt());
-			rgraphCtx.bindColorTexture(0, 8, m_runCtx.m_mainRtHandles[kRead]);
-			rgraphCtx.bindColorTexture(0, 9, m_r->getMotionVectors().getMotionVectorsRt());
-			rgraphCtx.bindColorTexture(0, 10, m_r->getMotionVectors().getHistoryLengthRt());
+			rgraphCtx.bindTexture(0, 5, m_r->getDepthDownscale().getHiZRt(), hizSubresource);
+			rgraphCtx.bindColorTexture(0, 6, m_r->getDownscaleBlur().getRt());
+			rgraphCtx.bindColorTexture(0, 7, m_runCtx.m_mainRtHandles[kRead]);
+			rgraphCtx.bindColorTexture(0, 8, m_r->getMotionVectors().getMotionVectorsRt());
+			rgraphCtx.bindColorTexture(0, 9, m_r->getMotionVectors().getHistoryLengthRt());
 
 			if(getExternalSubsystems().m_config->getRPreferCompute())
 			{
-				rgraphCtx.bindImage(0, 11, m_runCtx.m_mainRtHandles[kWrite]);
+				rgraphCtx.bindImage(0, 10, m_runCtx.m_mainRtHandles[kWrite]);
 			}
+
+			cmdb->bindAllBindless(1);
 
 			// Bind uniforms
 			IndirectDiffuseUniforms unis;
