@@ -9,7 +9,7 @@
 
 #include <AnKi/Shaders/Common.hlsl>
 
-[[vk::binding(kTonemappingBinding)]] globallycoherent RWTexture2D<RVec4> g_tonemappingUav;
+[[vk::binding(kTonemappingBinding)]] RWTexture2D<RVec4> g_tonemappingUav;
 
 void writeExposureAndAverageLuminance(RF32 exposure, RF32 avgLuminance)
 {
