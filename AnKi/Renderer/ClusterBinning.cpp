@@ -411,17 +411,18 @@ void ClusterBinning::writeClustererBuffersTask()
 		unis.m_tileSize = m_r->getTileSize();
 		unis.m_lightVolumeLastZSplit = m_r->getVolumetricLightingAccumulation().getFinalZSplit();
 
-		unis.m_objectCountsUpTo[kClusterObjectTypePointLight].x() = rqueue.m_pointLights.getSize();
-		unis.m_objectCountsUpTo[kClusterObjectTypeSpotLight].x() =
-			unis.m_objectCountsUpTo[kClusterObjectTypeSpotLight - 1].x() + rqueue.m_spotLights.getSize();
-		unis.m_objectCountsUpTo[kClusterObjectTypeDecal].x() =
-			unis.m_objectCountsUpTo[kClusterObjectTypeDecal - 1].x() + rqueue.m_decals.getSize();
-		unis.m_objectCountsUpTo[kClusterObjectTypeFogDensityVolume].x() =
-			unis.m_objectCountsUpTo[kClusterObjectTypeFogDensityVolume - 1].x() + rqueue.m_fogDensityVolumes.getSize();
-		unis.m_objectCountsUpTo[kClusterObjectTypeReflectionProbe].x() =
-			unis.m_objectCountsUpTo[kClusterObjectTypeReflectionProbe - 1].x() + rqueue.m_reflectionProbes.getSize();
-		unis.m_objectCountsUpTo[kClusterObjectTypeGlobalIlluminationProbe].x() =
-			unis.m_objectCountsUpTo[kClusterObjectTypeGlobalIlluminationProbe - 1].x() + rqueue.m_giProbes.getSize();
+		unis.m_objectCountsUpTo[ClusterObjectType::kPointLight].x() = rqueue.m_pointLights.getSize();
+		unis.m_objectCountsUpTo[ClusterObjectType::kSpotLight].x() =
+			unis.m_objectCountsUpTo[ClusterObjectType::kSpotLight - 1].x() + rqueue.m_spotLights.getSize();
+		unis.m_objectCountsUpTo[ClusterObjectType::kDecal].x() =
+			unis.m_objectCountsUpTo[ClusterObjectType::kDecal - 1].x() + rqueue.m_decals.getSize();
+		unis.m_objectCountsUpTo[ClusterObjectType::kFogDensityVolume].x() =
+			unis.m_objectCountsUpTo[ClusterObjectType::kFogDensityVolume - 1].x()
+			+ rqueue.m_fogDensityVolumes.getSize();
+		unis.m_objectCountsUpTo[ClusterObjectType::kReflectionProbe].x() =
+			unis.m_objectCountsUpTo[ClusterObjectType::kReflectionProbe - 1].x() + rqueue.m_reflectionProbes.getSize();
+		unis.m_objectCountsUpTo[ClusterObjectType::kGlobalIlluminationProbe].x() =
+			unis.m_objectCountsUpTo[ClusterObjectType::kGlobalIlluminationProbe - 1].x() + rqueue.m_giProbes.getSize();
 
 		unis.m_reflectionProbesMipCount = F32(m_r->getProbeReflections().getReflectionTextureMipmapCount());
 

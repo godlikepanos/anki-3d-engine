@@ -24,17 +24,17 @@ ANKI_SPECIALIZATION_CONSTANT_U32(kTileSize, 3u);
 #define CLUSTERED_SHADING_CLUSTERS_BINDING 4u
 #include <AnKi/Shaders/ClusteredShadingCommon.hlsl>
 
-[[vk::binding(5)]] uniform SamplerState g_nearestAnyClampSampler;
-[[vk::binding(6)]] uniform SamplerState g_trilinearClampSampler;
+[[vk::binding(5)]] SamplerState g_nearestAnyClampSampler;
+[[vk::binding(6)]] SamplerState g_trilinearClampSampler;
 
-[[vk::binding(7)]] uniform Texture2D<RVec4> g_gbuffer0Tex;
-[[vk::binding(8)]] uniform Texture2D<RVec4> g_gbuffer1Tex;
-[[vk::binding(9)]] uniform Texture2D<RVec4> g_gbuffer2Tex;
-[[vk::binding(10)]] uniform Texture2D g_depthTex;
+[[vk::binding(7)]] Texture2D<RVec4> g_gbuffer0Tex;
+[[vk::binding(8)]] Texture2D<RVec4> g_gbuffer1Tex;
+[[vk::binding(9)]] Texture2D<RVec4> g_gbuffer2Tex;
+[[vk::binding(10)]] Texture2D g_depthTex;
 #if USE_SHADOW_LAYERS
-[[vk::binding(11)]] uniform Texture2D<UVec4> g_shadowLayersTex;
+[[vk::binding(11)]] Texture2D<UVec4> g_shadowLayersTex;
 #else
-[[vk::binding(12)]] uniform Texture2D<RVec4> g_resolvedShadowsTex;
+[[vk::binding(12)]] Texture2D<RVec4> g_resolvedShadowsTex;
 #endif
 
 // Common code for lighting
@@ -64,7 +64,7 @@ RVec3 main(Vec4 svPosition : SV_POSITION, Vec2 uv : TEXCOORD) : SV_TARGET0
 	Cluster cluster = getClusterFragCoord(Vec3(svPosition.xy, depth), kTileSize, kTileCount, kZSplitCount,
 										  g_clusteredShading.m_zSplitMagic.x, g_clusteredShading.m_zSplitMagic.y);
 
-	// return clusterHeatmap(cluster, 1u << kClusterObjectTypePointLight);
+	// return clusterHeatmap(cluster, 1u << (U32)ClusterObjectType::kPointLight);
 
 	// Decode GBuffer
 	GbufferInfo gbuffer = (GbufferInfo)0;

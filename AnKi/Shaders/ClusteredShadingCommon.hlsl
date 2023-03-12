@@ -85,37 +85,37 @@ Vec3 clusterHeatmap(Cluster cluster, U32 objectTypeMask)
 	U32 maxObjects = 0u;
 	I32 count = 0;
 
-	if((objectTypeMask & (1u << kClusterObjectTypePointLight)) != 0u)
+	if((objectTypeMask & (1u << (U32)ClusterObjectType::kPointLight)) != 0u)
 	{
 		maxObjects += kMaxVisiblePointLights;
 		count += I32(countbits(cluster.m_pointLightsMask));
 	}
 
-	if((objectTypeMask & (1u << kClusterObjectTypeSpotLight)) != 0u)
+	if((objectTypeMask & (1u << (U32)ClusterObjectType::kSpotLight)) != 0u)
 	{
 		maxObjects += kMaxVisibleSpotLights;
 		count += I32(countbits(cluster.m_spotLightsMask));
 	}
 
-	if((objectTypeMask & (1u << kClusterObjectTypeDecal)) != 0u)
+	if((objectTypeMask & (1u << (U32)ClusterObjectType::kDecal)) != 0u)
 	{
 		maxObjects += kMaxVisibleDecals;
 		count += I32(countbits(cluster.m_decalsMask));
 	}
 
-	if((objectTypeMask & (1u << kClusterObjectTypeFogDensityVolume)) != 0u)
+	if((objectTypeMask & (1u << (U32)ClusterObjectType::kFogDensityVolume)) != 0u)
 	{
 		maxObjects += kMaxVisibleFogDensityVolumes;
 		count += countbits(cluster.m_fogDensityVolumesMask);
 	}
 
-	if((objectTypeMask & (1u << kClusterObjectTypeReflectionProbe)) != 0u)
+	if((objectTypeMask & (1u << (U32)ClusterObjectType::kReflectionProbe)) != 0u)
 	{
 		maxObjects += kMaxVisibleReflectionProbes;
 		count += countbits(cluster.m_reflectionProbesMask);
 	}
 
-	if((objectTypeMask & (1u << kClusterObjectTypeGlobalIlluminationProbe)) != 0u)
+	if((objectTypeMask & (1u << (U32)ClusterObjectType::kGlobalIlluminationProbe)) != 0u)
 	{
 		maxObjects += kMaxVisibleGlobalIlluminationProbes;
 		count += countbits(cluster.m_giProbesMask);
