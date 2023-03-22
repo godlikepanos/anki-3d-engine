@@ -5,6 +5,7 @@
 
 #include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Renderer/Renderer.h>
+#include <AnKi/Renderer/PackVisibleClusteredObjects.h>
 #include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
 #include <AnKi/Renderer/ProbeReflections.h>
@@ -56,47 +57,50 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 	m_runCtx.m_ctx = &ctx;
 	writeClustererBuffers(ctx);
 
-	ctx.m_clusteredShading.m_clustersBufferHandle = ctx.m_renderGraphDescr.importBuffer(
+	m_runCtx.m_rebarHandle = ctx.m_renderGraphDescr.importBuffer(
 		m_r->getExternalSubsystems().m_rebarStagingPool->getBuffer(), BufferUsageBit::kNone,
-		ctx.m_clusteredShading.m_clustersToken.m_offset, ctx.m_clusteredShading.m_clustersToken.m_range);
+		m_runCtx.m_clustersToken.m_offset, m_runCtx.m_clustersToken.m_range);
 
 	const RenderQueue& rqueue = *ctx.m_renderQueue;
-	if(rqueue.m_pointLights.getSize() || rqueue.m_spotLights.getSize() || rqueue.m_decals.getSize()
-	   || rqueue.m_reflectionProbes.getSize() || rqueue.m_fogDensityVolumes.getSize() || rqueue.m_giProbes.getSize())
-		[[likely]]
+	if(rqueue.m_pointLights.getSize() == 0 && rqueue.m_spotLights.getSize() == 0 && rqueue.m_decals.getSize() == 0
+	   && rqueue.m_reflectionProbes.getSize() == 0 && rqueue.m_fogDensityVolumes.getSize() == 0
+	   && rqueue.m_giProbes.getSize() == 0) [[unlikely]]
 	{
-		RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
-		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Cluster Binning");
-
-		pass.newBufferDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::kStorageComputeWrite);
-
-		pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
-			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-
-			const ClusteredShadingContext& tokens = ctx.m_clusteredShading;
-
-			cmdb->bindShaderProgram(m_grProg);
-			bindUniforms(cmdb, 0, 0, tokens.m_clusteredShadingUniformsToken);
-			bindStorage(cmdb, 0, 1, tokens.m_clustersToken);
-			bindStorage(cmdb, 0, 2, tokens.m_pointLightsToken);
-			bindStorage(cmdb, 0, 3, tokens.m_spotLightsToken);
-			bindStorage(cmdb, 0, 4, tokens.m_reflectionProbesToken);
-			bindStorage(cmdb, 0, 5, tokens.m_globalIlluminationProbesToken);
-			bindStorage(cmdb, 0, 6, tokens.m_fogDensityVolumesToken);
-			bindStorage(cmdb, 0, 7, tokens.m_decalsToken);
-
-			const U32 sampleCount = 4;
-			const U32 sizex = m_tileCount * sampleCount;
-			const RenderQueue& rqueue = *ctx.m_renderQueue;
-			U32 clusterObjectCounts = rqueue.m_pointLights.getSize();
-			clusterObjectCounts += rqueue.m_spotLights.getSize();
-			clusterObjectCounts += rqueue.m_reflectionProbes.getSize();
-			clusterObjectCounts += rqueue.m_giProbes.getSize();
-			clusterObjectCounts += rqueue.m_fogDensityVolumes.getSize();
-			clusterObjectCounts += rqueue.m_decals.getSize();
-			cmdb->dispatchCompute((sizex + 64 - 1) / 64, clusterObjectCounts, 1);
-		});
+		return;
 	}
+
+	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Cluster Binning");
+
+	pass.newBufferDependency(m_r->getPackVisibleClusteredObjects().getClusteredObjectsRenderGraphHandle(),
+							 BufferUsageBit::kStorageComputeRead);
+
+	pass.newBufferDependency(m_runCtx.m_rebarHandle, BufferUsageBit::kStorageComputeWrite);
+
+	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+		CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+
+		cmdb->bindShaderProgram(m_grProg);
+
+		bindUniforms(cmdb, 0, 0, m_runCtx.m_clusteredShadingUniformsToken);
+		bindStorage(cmdb, 0, 1, m_runCtx.m_clustersToken);
+
+		for(ClusteredObjectType type : EnumIterable<ClusteredObjectType>())
+		{
+			m_r->getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, U32(type) + 2, type);
+		}
+
+		const U32 sampleCount = 4;
+		const U32 sizex = m_tileCount * sampleCount;
+		const RenderQueue& rqueue = *ctx.m_renderQueue;
+		U32 clusterObjectCounts = rqueue.m_pointLights.getSize();
+		clusterObjectCounts += rqueue.m_spotLights.getSize();
+		clusterObjectCounts += rqueue.m_reflectionProbes.getSize();
+		clusterObjectCounts += rqueue.m_giProbes.getSize();
+		clusterObjectCounts += rqueue.m_fogDensityVolumes.getSize();
+		clusterObjectCounts += rqueue.m_decals.getSize();
+		cmdb->dispatchCompute((sizex + 64 - 1) / 64, clusterObjectCounts, 1);
+	});
 }
 
 void ClusterBinning::writeClustererBuffers(RenderingContext& ctx)
@@ -147,72 +151,9 @@ void ClusterBinning::writeClustererBuffers(RenderingContext& ctx)
 	}
 
 	// Allocate buffers
-	ClusteredShadingContext& cs = ctx.m_clusteredShading;
 	RebarStagingGpuMemoryPool& stagingMem = *m_r->getExternalSubsystems().m_rebarStagingPool;
-
-	cs.m_clusteredShadingUniformsAddress =
-		stagingMem.allocateFrame(sizeof(ClusteredShadingUniforms), cs.m_clusteredShadingUniformsToken);
-
-	if(rqueue.m_pointLights.getSize())
-	{
-		cs.m_pointLightsAddress =
-			stagingMem.allocateFrame(rqueue.m_pointLights.getSize() * sizeof(PointLight), cs.m_pointLightsToken);
-	}
-	else
-	{
-		cs.m_pointLightsToken.markUnused();
-	}
-
-	if(rqueue.m_spotLights.getSize())
-	{
-		cs.m_spotLightsAddress =
-			stagingMem.allocateFrame(rqueue.m_spotLights.getSize() * sizeof(SpotLight), cs.m_spotLightsToken);
-	}
-	else
-	{
-		cs.m_spotLightsToken.markUnused();
-	}
-
-	if(rqueue.m_reflectionProbes.getSize())
-	{
-		cs.m_reflectionProbesAddress = stagingMem.allocateFrame(
-			rqueue.m_reflectionProbes.getSize() * sizeof(ReflectionProbe), cs.m_reflectionProbesToken);
-	}
-	else
-	{
-		cs.m_reflectionProbesToken.markUnused();
-	}
-
-	if(rqueue.m_decals.getSize())
-	{
-		cs.m_decalsAddress = stagingMem.allocateFrame(rqueue.m_decals.getSize() * sizeof(Decal), cs.m_decalsToken);
-	}
-	else
-	{
-		cs.m_decalsToken.markUnused();
-	}
-
-	if(rqueue.m_fogDensityVolumes.getSize())
-	{
-		cs.m_fogDensityVolumesAddress = stagingMem.allocateFrame(
-			rqueue.m_fogDensityVolumes.getSize() * sizeof(FogDensityVolume), cs.m_fogDensityVolumesToken);
-	}
-	else
-	{
-		cs.m_fogDensityVolumesToken.markUnused();
-	}
-
-	if(rqueue.m_giProbes.getSize())
-	{
-		cs.m_globalIlluminationProbesAddress = stagingMem.allocateFrame(
-			rqueue.m_giProbes.getSize() * sizeof(GlobalIlluminationProbe), cs.m_globalIlluminationProbesToken);
-	}
-	else
-	{
-		cs.m_globalIlluminationProbesToken.markUnused();
-	}
-
-	cs.m_clustersAddress = stagingMem.allocateFrame(sizeof(Cluster) * m_clusterCount, cs.m_clustersToken);
+	stagingMem.allocateFrame(sizeof(ClusteredShadingUniforms), m_runCtx.m_clusteredShadingUniformsToken);
+	stagingMem.allocateFrame(sizeof(Cluster) * m_clusterCount, m_runCtx.m_clustersToken);
 }
 
 void ClusterBinning::writeClusterBuffersAsync()
@@ -230,165 +171,13 @@ void ClusterBinning::writeClustererBuffersTask()
 	ANKI_TRACE_SCOPED_EVENT(RWriteClusterShadingObjects);
 
 	RenderingContext& ctx = *m_runCtx.m_ctx;
-	ClusteredShadingContext& cs = ctx.m_clusteredShading;
 	const RenderQueue& rqueue = *ctx.m_renderQueue;
-
-	// Point lights
-	if(rqueue.m_pointLights.getSize())
-	{
-		PointLight* lights = static_cast<PointLight*>(cs.m_pointLightsAddress);
-
-		for(U32 i = 0; i < rqueue.m_pointLights.getSize(); ++i)
-		{
-			PointLight& out = lights[i];
-			const PointLightQueueElement& in = rqueue.m_pointLights[i];
-
-			out.m_position = in.m_worldPosition;
-			out.m_diffuseColor = in.m_diffuseColor;
-			out.m_radius = in.m_radius;
-			out.m_squareRadiusOverOne = 1.0f / (in.m_radius * in.m_radius);
-
-			if(in.m_shadowRenderQueues[0] == nullptr)
-			{
-				out.m_shadowAtlasTileScale = -1.0f;
-				out.m_shadowLayer = kMaxU32;
-			}
-			else
-			{
-				out.m_shadowLayer = in.m_shadowLayer;
-				out.m_shadowAtlasTileScale = in.m_shadowAtlasTileSize;
-				for(U32 f = 0; f < 6; ++f)
-				{
-					out.m_shadowAtlasTileOffsets[f] = Vec4(in.m_shadowAtlasTileOffsets[f], 0.0f, 0.0f);
-				}
-			}
-		}
-	}
-
-	// Spot lights
-	if(rqueue.m_spotLights.getSize())
-	{
-		SpotLight* lights = static_cast<SpotLight*>(cs.m_spotLightsAddress);
-
-		for(U32 i = 0; i < rqueue.m_spotLights.getSize(); ++i)
-		{
-			const SpotLightQueueElement& in = rqueue.m_spotLights[i];
-			SpotLight& out = lights[i];
-
-			out.m_position = in.m_worldTransform.getTranslationPart().xyz();
-			for(U32 j = 0; j < 4; ++j)
-			{
-				out.m_edgePoints[j] = in.m_edgePoints[j].xyz0();
-			}
-			out.m_diffuseColor = in.m_diffuseColor;
-			out.m_radius = in.m_distance;
-			out.m_squareRadiusOverOne = 1.0f / (in.m_distance * in.m_distance);
-			out.m_shadowLayer = (in.hasShadow()) ? in.m_shadowLayer : kMaxU32;
-			out.m_direction = -in.m_worldTransform.getRotationPart().getZAxis();
-			out.m_outerCos = cos(in.m_outerAngle / 2.0f);
-			out.m_innerCos = cos(in.m_innerAngle / 2.0f);
-
-			if(in.hasShadow())
-			{
-				// bias * proj_l * view_l
-				out.m_textureMatrix = in.m_textureMatrix;
-			}
-			else
-			{
-				out.m_textureMatrix = Mat4::getIdentity();
-			}
-		}
-	}
-
-	// Reflection probes
-	if(rqueue.m_reflectionProbes.getSize())
-	{
-		ReflectionProbe* probes = static_cast<ReflectionProbe*>(cs.m_reflectionProbesAddress);
-
-		for(U32 i = 0; i < rqueue.m_reflectionProbes.getSize(); ++i)
-		{
-			const ReflectionProbeQueueElement& in = rqueue.m_reflectionProbes[i];
-			ReflectionProbe& out = probes[i];
-
-			out.m_position = in.m_worldPosition;
-			out.m_cubeTexture = in.m_textureBindlessIndex;
-			out.m_aabbMin = in.m_aabbMin;
-			out.m_aabbMax = in.m_aabbMax;
-		}
-	}
-
-	// Decals
-	if(rqueue.m_decals.getSize())
-	{
-		Decal* decals = static_cast<Decal*>(cs.m_decalsAddress);
-
-		for(U32 i = 0; i < rqueue.m_decals.getSize(); ++i)
-		{
-			const DecalQueueElement& in = rqueue.m_decals[i];
-			Decal& out = decals[i];
-
-			out.m_diffuseTexture = in.m_diffuseBindlessTextureIndex;
-			out.m_roughnessMetalnessTexture = in.m_roughnessMetalnessBindlessTextureIndex;
-			out.m_diffuseBlendFactor = in.m_diffuseBlendFactor;
-			out.m_roughnessMetalnessFactor = in.m_roughnessMetalnessBlendFactor;
-
-			// bias * proj_l * view
-			out.m_textureMatrix = in.m_textureMatrix;
-
-			// Transform
-			const Mat4 trf(in.m_obbCenter.xyz1(), in.m_obbRotation, 1.0f);
-			out.m_invertedTransform = trf.getInverse();
-			out.m_obbExtend = in.m_obbExtend;
-		}
-	}
-
-	// Fog volumes
-	if(rqueue.m_fogDensityVolumes.getSize())
-	{
-		FogDensityVolume* volumes = static_cast<FogDensityVolume*>(cs.m_fogDensityVolumesAddress);
-
-		for(U32 i = 0; i < rqueue.m_fogDensityVolumes.getSize(); ++i)
-		{
-			const FogDensityQueueElement& in = rqueue.m_fogDensityVolumes[i];
-			FogDensityVolume& out = volumes[i];
-
-			out.m_density = in.m_density;
-			if(in.m_isBox)
-			{
-				out.m_isBox = 1;
-				out.m_aabbMinOrSphereCenter = in.m_aabbMin;
-				out.m_aabbMaxOrSphereRadiusSquared = in.m_aabbMax;
-			}
-			else
-			{
-				out.m_isBox = 0;
-				out.m_aabbMinOrSphereCenter = in.m_sphereCenter;
-				out.m_aabbMaxOrSphereRadiusSquared = Vec3(in.m_sphereRadius * in.m_sphereRadius);
-			}
-		}
-	}
-
-	// GI
-	if(rqueue.m_giProbes.getSize())
-	{
-		GlobalIlluminationProbe* probes = static_cast<GlobalIlluminationProbe*>(cs.m_globalIlluminationProbesAddress);
-
-		for(U32 i = 0; i < rqueue.m_giProbes.getSize(); ++i)
-		{
-			const GlobalIlluminationProbeQueueElement& in = rqueue.m_giProbes[i];
-			GlobalIlluminationProbe& out = probes[i];
-
-			out.m_aabbMin = in.m_aabbMin;
-			out.m_aabbMax = in.m_aabbMax;
-			out.m_volumeTexture = in.m_volumeTextureBindlessIndex;
-			out.m_halfTexelSizeU = 1.0f / F32(F32(in.m_cellCounts.x()) * 6.0f) / 2.0f;
-			out.m_fadeDistance = in.m_fadeDistance;
-		}
-	}
 
 	// General uniforms
 	{
-		ClusteredShadingUniforms& unis = *static_cast<ClusteredShadingUniforms*>(cs.m_clusteredShadingUniformsAddress);
+		ClusteredShadingUniforms& unis = *reinterpret_cast<ClusteredShadingUniforms*>(
+			m_r->getExternalSubsystems().m_rebarStagingPool->getBufferMappedAddress()
+			+ m_runCtx.m_clusteredShadingUniformsToken.m_offset);
 
 		unis.m_renderingSize = Vec2(F32(m_r->getInternalResolution().x()), F32(m_r->getInternalResolution().y()));
 
@@ -411,18 +200,20 @@ void ClusterBinning::writeClustererBuffersTask()
 		unis.m_tileSize = m_r->getTileSize();
 		unis.m_lightVolumeLastZSplit = m_r->getVolumetricLightingAccumulation().getFinalZSplit();
 
-		unis.m_objectCountsUpTo[ClusterObjectType::kPointLight].x() = rqueue.m_pointLights.getSize();
-		unis.m_objectCountsUpTo[ClusterObjectType::kSpotLight].x() =
-			unis.m_objectCountsUpTo[ClusterObjectType::kSpotLight - 1].x() + rqueue.m_spotLights.getSize();
-		unis.m_objectCountsUpTo[ClusterObjectType::kDecal].x() =
-			unis.m_objectCountsUpTo[ClusterObjectType::kDecal - 1].x() + rqueue.m_decals.getSize();
-		unis.m_objectCountsUpTo[ClusterObjectType::kFogDensityVolume].x() =
-			unis.m_objectCountsUpTo[ClusterObjectType::kFogDensityVolume - 1].x()
+		unis.m_objectCountsUpTo[ClusteredObjectType::kPointLight].x() = rqueue.m_pointLights.getSize();
+		unis.m_objectCountsUpTo[ClusteredObjectType::kSpotLight].x() =
+			unis.m_objectCountsUpTo[ClusteredObjectType::kSpotLight - 1].x() + rqueue.m_spotLights.getSize();
+		unis.m_objectCountsUpTo[ClusteredObjectType::kDecal].x() =
+			unis.m_objectCountsUpTo[ClusteredObjectType::kDecal - 1].x() + rqueue.m_decals.getSize();
+		unis.m_objectCountsUpTo[ClusteredObjectType::kFogDensityVolume].x() =
+			unis.m_objectCountsUpTo[ClusteredObjectType::kFogDensityVolume - 1].x()
 			+ rqueue.m_fogDensityVolumes.getSize();
-		unis.m_objectCountsUpTo[ClusterObjectType::kReflectionProbe].x() =
-			unis.m_objectCountsUpTo[ClusterObjectType::kReflectionProbe - 1].x() + rqueue.m_reflectionProbes.getSize();
-		unis.m_objectCountsUpTo[ClusterObjectType::kGlobalIlluminationProbe].x() =
-			unis.m_objectCountsUpTo[ClusterObjectType::kGlobalIlluminationProbe - 1].x() + rqueue.m_giProbes.getSize();
+		unis.m_objectCountsUpTo[ClusteredObjectType::kReflectionProbe].x() =
+			unis.m_objectCountsUpTo[ClusteredObjectType::kReflectionProbe - 1].x()
+			+ rqueue.m_reflectionProbes.getSize();
+		unis.m_objectCountsUpTo[ClusteredObjectType::kGlobalIlluminationProbe].x() =
+			unis.m_objectCountsUpTo[ClusteredObjectType::kGlobalIlluminationProbe - 1].x()
+			+ rqueue.m_giProbes.getSize();
 
 		unis.m_reflectionProbesMipCount = F32(m_r->getProbeReflections().getReflectionTextureMipmapCount());
 
@@ -457,7 +248,9 @@ void ClusterBinning::writeClustererBuffersTask()
 	}
 
 	// Zero the memory because atomics will happen
-	memset(cs.m_clustersAddress, 0, sizeof(Cluster) * m_clusterCount);
+	U8* clustersAddress =
+		m_r->getExternalSubsystems().m_rebarStagingPool->getBufferMappedAddress() + m_runCtx.m_clustersToken.m_offset;
+	memset(clustersAddress, 0, sizeof(Cluster) * m_clusterCount);
 }
 
 } // end namespace anki

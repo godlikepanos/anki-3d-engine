@@ -12,6 +12,8 @@
 #include <AnKi/Renderer/ProbeReflections.h>
 #include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Renderer/VrsSriGeneration.h>
+#include <AnKi/Renderer/ClusterBinning.h>
+#include <AnKi/Renderer/PackVisibleClusteredObjects.h>
 #include <AnKi/Core/ConfigSet.h>
 
 namespace anki {
@@ -210,10 +212,9 @@ void IndirectSpecular::run(const RenderingContext& ctx, RenderPassWorkContext& r
 	cmdb->bindSampler(0, 9, m_r->getSamplers().m_trilinearRepeat);
 	cmdb->bindTexture(0, 10, m_noiseImage->getTextureView());
 
-	const ClusteredShadingContext& binning = ctx.m_clusteredShading;
-	bindUniforms(cmdb, 0, 11, binning.m_clusteredShadingUniformsToken);
-	bindUniforms(cmdb, 0, 12, binning.m_reflectionProbesToken);
-	bindStorage(cmdb, 0, 13, binning.m_clustersToken);
+	bindUniforms(cmdb, 0, 11, m_r->getClusterBinning().getClusteredUniformsRebarToken());
+	m_r->getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 12, ClusteredObjectType::kReflectionProbe);
+	bindStorage(cmdb, 0, 13, m_r->getClusterBinning().getClustersRebarToken());
 
 	cmdb->bindAllBindless(1);
 

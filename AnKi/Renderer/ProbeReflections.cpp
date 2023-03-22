@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Renderer/ProbeReflections.h>
+#include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/LightShading.h>
 #include <AnKi/Renderer/FinalComposite.h>
 #include <AnKi/Renderer/GBuffer.h>

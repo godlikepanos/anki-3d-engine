@@ -26,8 +26,8 @@ GlobalIlluminationProbeComponent::GlobalIlluminationProbeComponent(SceneNode* no
 		m_frustums[i].update();
 	}
 
-	m_gpuSceneOffset = U32(node->getSceneGraph().getAllGpuSceneContiguousArrays().allocate(
-		GpuSceneContiguousArrayType::kGlobalIlluminationProbes));
+	m_gpuSceneIndex = node->getSceneGraph().getAllGpuSceneContiguousArrays().allocate(
+		GpuSceneContiguousArrayType::kGlobalIlluminationProbes);
 
 	const Error err = getExternalSubsystems(*node).m_resourceManager->loadResource(
 		"ShaderBinaries/ClearTextureCompute.ankiprogbin", m_clearTextureProg);
@@ -46,7 +46,7 @@ void GlobalIlluminationProbeComponent::onDestroy(SceneNode& node)
 	m_spatial.removeFromOctree(node.getSceneGraph().getOctree());
 
 	node.getSceneGraph().getAllGpuSceneContiguousArrays().deferredFree(
-		GpuSceneContiguousArrayType::kGlobalIlluminationProbes, m_gpuSceneOffset);
+		GpuSceneContiguousArrayType::kGlobalIlluminationProbes, m_gpuSceneIndex);
 }
 
 Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
@@ -125,11 +125,14 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 		gpuProbe.m_aabbMin = aabb.getMin().xyz();
 		gpuProbe.m_aabbMax = aabb.getMax().xyz();
 		gpuProbe.m_volumeTexture = m_volTexBindlessIdx;
-		gpuProbe.m_halfTexelSizeU = 1.0f / F32(m_cellCounts.y()) / 2.0f;
+		gpuProbe.m_halfTexelSizeU = 1.0f / (F32(m_cellCounts.y()) * 6.0f) / 2.0f;
 		gpuProbe.m_fadeDistance = m_fadeDistance;
 
+		const PtrSize offset = m_gpuSceneIndex * sizeof(GpuSceneGlobalIlluminationProbe)
+							   + info.m_node->getSceneGraph().getAllGpuSceneContiguousArrays().getArrayBase(
+								   GpuSceneContiguousArrayType::kGlobalIlluminationProbes);
 		getExternalSubsystems(*info.m_node)
-			.m_gpuSceneMicroPatcher->newCopy(*info.m_framePool, m_gpuSceneOffset, sizeof(gpuProbe), &gpuProbe);
+			.m_gpuSceneMicroPatcher->newCopy(*info.m_framePool, offset, sizeof(gpuProbe), &gpuProbe);
 	}
 
 	if(needsRefresh()) [[unlikely]]

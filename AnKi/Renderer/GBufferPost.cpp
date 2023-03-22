@@ -7,6 +7,8 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/RenderQueue.h>
+#include <AnKi/Renderer/PackVisibleClusteredObjects.h>
+#include <AnKi/Renderer/ClusterBinning.h>
 
 namespace anki {
 
@@ -63,8 +65,8 @@ void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 	// Create pass
 	GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("GBuffPost");
 
-	rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
-		run(ctx, rgraphCtx);
+	rpass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+		run(rgraphCtx);
 	});
 
 	rpass.setFramebufferInfo(m_fbDescr, {m_r->getGBuffer().getColorRt(0), m_r->getGBuffer().getColorRt(1)});
@@ -73,12 +75,12 @@ void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 	rpass.newTextureDependency(m_r->getGBuffer().getColorRt(1), TextureUsageBit::kAllFramebuffer);
 	rpass.newTextureDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::kSampledFragment,
 							   TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
-	rpass.newBufferDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::kStorageFragmentRead);
+	rpass.newBufferDependency(m_r->getClusterBinning().getClustersRenderGraphHandle(),
+							  BufferUsageBit::kStorageFragmentRead);
 }
 
-void GBufferPost::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
+void GBufferPost::run(RenderPassWorkContext& rgraphCtx)
 {
-	const ClusteredShadingContext& rsrc = ctx.m_clusteredShading;
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
 	cmdb->setViewport(0, 0, m_r->getInternalResolution().x(), m_r->getInternalResolution().y());
@@ -94,9 +96,11 @@ void GBufferPost::run(const RenderingContext& ctx, RenderPassWorkContext& rgraph
 
 	cmdb->bindSampler(0, 2, m_r->getSamplers().m_trilinearRepeat);
 
-	bindUniforms(cmdb, 0, 3, rsrc.m_clusteredShadingUniformsToken);
-	bindUniforms(cmdb, 0, 4, rsrc.m_decalsToken);
-	bindStorage(cmdb, 0, 5, rsrc.m_clustersToken);
+	bindUniforms(cmdb, 0, 3, m_r->getClusterBinning().getClusteredUniformsRebarToken());
+
+	m_r->getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 4, ClusteredObjectType::kDecal);
+
+	bindStorage(cmdb, 0, 5, m_r->getClusterBinning().getClustersRebarToken());
 
 	cmdb->bindAllBindless(1);
 

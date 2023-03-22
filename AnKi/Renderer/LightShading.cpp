@@ -17,6 +17,8 @@
 #include <AnKi/Renderer/RtShadows.h>
 #include <AnKi/Renderer/IndirectDiffuse.h>
 #include <AnKi/Renderer/VrsSriGeneration.h>
+#include <AnKi/Renderer/ClusterBinning.h>
+#include <AnKi/Renderer/PackVisibleClusteredObjects.h>
 #include <AnKi/Core/ConfigSet.h>
 
 namespace anki {
@@ -175,14 +177,13 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		cmdb->setDepthWrite(false);
 
 		// Bind all
-		const ClusteredShadingContext& binning = ctx.m_clusteredShading;
-		bindUniforms(cmdb, 0, 0, binning.m_clusteredShadingUniformsToken);
+		bindUniforms(cmdb, 0, 0, m_r->getClusterBinning().getClusteredUniformsRebarToken());
 
-		bindUniforms(cmdb, 0, 1, binning.m_pointLightsToken);
-		bindUniforms(cmdb, 0, 2, binning.m_spotLightsToken);
+		m_r->getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 1, ClusteredObjectType::kPointLight);
+		m_r->getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 2, ClusteredObjectType::kSpotLight);
 		rgraphCtx.bindColorTexture(0, 3, m_r->getShadowMapping().getShadowmapRt());
 
-		bindStorage(cmdb, 0, 4, binning.m_clustersToken);
+		bindStorage(cmdb, 0, 4, m_r->getClusterBinning().getClustersRebarToken());
 
 		cmdb->bindSampler(0, 5, m_r->getSamplers().m_nearestNearestClamp);
 		cmdb->bindSampler(0, 6, m_r->getSamplers().m_trilinearClamp);
@@ -223,8 +224,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		rgraphCtx.bindColorTexture(0, 8, m_r->getGBuffer().getColorRt(2));
 		cmdb->bindTexture(0, 9, m_r->getProbeReflections().getIntegrationLut());
 
-		const ClusteredShadingContext& binning = ctx.m_clusteredShading;
-		bindUniforms(cmdb, 0, 10, binning.m_clusteredShadingUniformsToken);
+		bindUniforms(cmdb, 0, 10, m_r->getClusterBinning().getClusteredUniformsRebarToken());
 
 		const Vec4 pc(ctx.m_renderQueue->m_cameraNear, ctx.m_renderQueue->m_cameraFar, 0.0f, 0.0f);
 		cmdb->setPushConstants(&pc, sizeof(pc));
@@ -399,7 +399,8 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	{
 		pass.newTextureDependency(m_r->getShadowmapsResolve().getRt(), readUsage);
 	}
-	pass.newBufferDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::kStorageFragmentRead);
+	pass.newBufferDependency(m_r->getClusterBinning().getClustersRenderGraphHandle(),
+							 BufferUsageBit::kStorageFragmentRead);
 
 	// Apply indirect
 	pass.newTextureDependency(m_r->getIndirectDiffuse().getRt(), readUsage);

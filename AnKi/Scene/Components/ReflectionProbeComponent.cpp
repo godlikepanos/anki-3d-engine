@@ -27,8 +27,8 @@ ReflectionProbeComponent::ReflectionProbeComponent(SceneNode* node)
 		m_frustums[i].update();
 	}
 
-	m_gpuSceneOffset = U32(node->getSceneGraph().getAllGpuSceneContiguousArrays().allocate(
-		GpuSceneContiguousArrayType::kReflectionProbes));
+	m_gpuSceneIndex =
+		node->getSceneGraph().getAllGpuSceneContiguousArrays().allocate(GpuSceneContiguousArrayType::kReflectionProbes);
 }
 
 ReflectionProbeComponent::~ReflectionProbeComponent()
@@ -102,8 +102,12 @@ Error ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 		gpuProbe.m_cubeTexture = m_reflectionTexBindlessIndex;
 		gpuProbe.m_aabbMin = aabbWorld.getMin().xyz();
 		gpuProbe.m_aabbMax = aabbWorld.getMax().xyz();
+
+		const PtrSize offset = m_gpuSceneIndex * sizeof(GpuSceneReflectionProbe)
+							   + info.m_node->getSceneGraph().getAllGpuSceneContiguousArrays().getArrayBase(
+								   GpuSceneContiguousArrayType::kReflectionProbes);
 		getExternalSubsystems(*info.m_node)
-			.m_gpuSceneMicroPatcher->newCopy(*info.m_framePool, m_gpuSceneOffset, sizeof(gpuProbe), &gpuProbe);
+			.m_gpuSceneMicroPatcher->newCopy(*info.m_framePool, offset, sizeof(gpuProbe), &gpuProbe);
 	}
 
 	// Update spatial and frustums
@@ -124,7 +128,7 @@ void ReflectionProbeComponent::onDestroy(SceneNode& node)
 	m_spatial.removeFromOctree(node.getSceneGraph().getOctree());
 
 	node.getSceneGraph().getAllGpuSceneContiguousArrays().deferredFree(GpuSceneContiguousArrayType::kReflectionProbes,
-																	   m_gpuSceneOffset);
+																	   m_gpuSceneIndex);
 }
 
 } // end namespace anki

@@ -54,7 +54,7 @@ private:
 	{
 	public:
 		U32 m_gpuSceneUniformsOffset = kMaxU32;
-		U32 m_gpuSceneMeshLodsOffset = kMaxU32;
+		U32 m_gpuSceneMeshLodsIndex = kMaxU32;
 		RenderingTechniqueBit m_techniques;
 	};
 
@@ -65,7 +65,7 @@ private:
 	ModelResourcePtr m_model;
 
 	SegregatedListsGpuMemoryPoolToken m_gpuSceneUniforms;
-	U32 m_gpuSceneTransformsOffset = kMaxU32;
+	U32 m_gpuSceneTransformsIndex = kMaxU32;
 	DynamicArray<PatchInfo> m_patchInfos;
 
 	Bool m_dirty : 1 = true;

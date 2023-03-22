@@ -64,7 +64,7 @@ RVec3 main(Vec4 svPosition : SV_POSITION, Vec2 uv : TEXCOORD) : SV_TARGET0
 	Cluster cluster = getClusterFragCoord(Vec3(svPosition.xy, depth), kTileSize, kTileCount, kZSplitCount,
 										  g_clusteredShading.m_zSplitMagic.x, g_clusteredShading.m_zSplitMagic.y);
 
-	// return clusterHeatmap(cluster, 1u << (U32)ClusterObjectType::kPointLight);
+	// return clusterHeatmap(cluster, 1u << (U32)ClusteredObjectType::kPointLight);
 
 	// Decode GBuffer
 	GbufferInfo gbuffer = (GbufferInfo)0;

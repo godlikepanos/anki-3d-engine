@@ -48,13 +48,10 @@ struct GpuScenePointLight
 	RVec3 m_diffuseColor;
 	RF32 m_squareRadiusOverOne; ///< 1/(radius^2).
 
-	Vec2 m_padding0;
-	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
-	F32 m_shadowAtlasTileScale; ///< UV scale for all tiles.
-
-	Vec4 m_shadowAtlasTileOffsets[6u]; ///< It's a array of Vec2 but because of padding round it up.
+	Vec3 m_padding;
+	U32 m_shadow;
 };
-constexpr U32 kSizeof_GpuScenePointLight = 9u * sizeof(Vec4);
+constexpr U32 kSizeof_GpuScenePointLight = 3u * sizeof(Vec4);
 static_assert(sizeof(GpuScenePointLight) == kSizeof_GpuScenePointLight);
 
 /// Spot light.
@@ -71,14 +68,12 @@ struct GpuSceneSpotLight
 	RVec3 m_direction; ///< Light direction.
 	RF32 m_squareRadiusOverOne; ///< 1/(radius^2).
 
-	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
+	U32 m_shadow;
 	RF32 m_outerCos;
 	RF32 m_innerCos;
 	U32 m_padding1;
-
-	Mat4 m_textureMatrix;
 };
-constexpr U32 kSizeof_GpuSceneSpotLight = 12u * sizeof(Vec4);
+constexpr U32 kSizeof_GpuSceneSpotLight = 8u * sizeof(Vec4);
 static_assert(sizeof(GpuSceneSpotLight) == kSizeof_GpuSceneSpotLight);
 
 /// Representation of a reflection probe.

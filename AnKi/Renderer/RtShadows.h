@@ -120,7 +120,7 @@ public:
 
 	Error initInternal();
 
-	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
+	void run(RenderPassWorkContext& rgraphCtx);
 	void runDenoise(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 	void runSvgfVariance(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 	void runSvgfAtrous(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);

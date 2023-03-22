@@ -11,6 +11,7 @@
 #if defined(__cplusplus)
 
 #	include <AnKi/Math.h>
+#	include <AnKi/Gr/Common.h>
 
 #	define ANKI_HLSL 0
 #	define ANKI_GLSL 0
@@ -20,7 +21,7 @@
 #	define ANKI_END_NAMESPACE }
 #	define ANKI_SHADER_FUNC_INLINE inline
 
-#	define ANKI_SHADER_STATIC_ASSERT(cond_) static_assert(cond_)
+#	define ANKI_ARRAY(type, size, name) Array<type, U32(size)> name
 
 ANKI_BEGIN_NAMESPACE
 using Address = U64;
@@ -47,7 +48,8 @@ ANKI_END_NAMESPACE
 #	define ANKI_END_NAMESPACE
 #	define ANKI_SHADER_FUNC_INLINE
 
-#	define ANKI_SHADER_STATIC_ASSERT(cond_)
+#	define ANKI_ARRAY(type, size, name) type name[(U32)size]
+
 #	define ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(enum_)
 
 #	define constexpr static const

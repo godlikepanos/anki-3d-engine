@@ -8,6 +8,8 @@
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/ShadowMapping.h>
 #include <AnKi/Renderer/DepthDownscale.h>
+#include <AnKi/Renderer/ClusterBinning.h>
+#include <AnKi/Renderer/PackVisibleClusteredObjects.h>
 #include <AnKi/Core/ConfigSet.h>
 
 namespace anki {
@@ -72,8 +74,8 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 	{
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("ResolveShadows");
 
-		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
-			run(ctx, rgraphCtx);
+		rpass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+			run(rgraphCtx);
 		});
 
 		rpass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kImageComputeWrite);
@@ -82,15 +84,16 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 								   TextureUsageBit::kSampledCompute, TextureSurfaceInfo(0, 0, 0, 0));
 		rpass.newTextureDependency(m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::kSampledCompute);
 
-		rpass.newBufferDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::kStorageComputeRead);
+		rpass.newBufferDependency(m_r->getClusterBinning().getClustersRenderGraphHandle(),
+								  BufferUsageBit::kStorageComputeRead);
 	}
 	else
 	{
 		GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("ResolveShadows");
 		rpass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_rt});
 
-		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
-			run(ctx, rgraphCtx);
+		rpass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+			run(rgraphCtx);
 		});
 
 		rpass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite);
@@ -99,22 +102,22 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 								   TextureUsageBit::kSampledFragment, TextureSurfaceInfo(0, 0, 0, 0));
 		rpass.newTextureDependency(m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::kSampledFragment);
 
-		rpass.newBufferDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::kStorageFragmentRead);
+		rpass.newBufferDependency(m_r->getClusterBinning().getClustersRenderGraphHandle(),
+								  BufferUsageBit::kStorageFragmentRead);
 	}
 }
 
-void ShadowmapsResolve::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
+void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	const ClusteredShadingContext& rsrc = ctx.m_clusteredShading;
 
 	cmdb->bindShaderProgram(m_grProg);
 
-	bindUniforms(cmdb, 0, 0, rsrc.m_clusteredShadingUniformsToken);
-	bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
-	bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
+	bindUniforms(cmdb, 0, 0, m_r->getClusterBinning().getClusteredUniformsRebarToken());
+	m_r->getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 1, ClusteredObjectType::kPointLight);
+	m_r->getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 2, ClusteredObjectType::kSpotLight);
 	rgraphCtx.bindColorTexture(0, 3, m_r->getShadowMapping().getShadowmapRt());
-	bindStorage(cmdb, 0, 4, rsrc.m_clustersToken);
+	bindStorage(cmdb, 0, 4, m_r->getClusterBinning().getClustersRebarToken());
 
 	cmdb->bindSampler(0, 5, m_r->getSamplers().m_trilinearClamp);
 	cmdb->bindSampler(0, 6, m_r->getSamplers().m_trilinearClampShadow);

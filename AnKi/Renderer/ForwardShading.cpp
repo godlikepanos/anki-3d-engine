@@ -11,6 +11,9 @@
 #include <AnKi/Renderer/ShadowMapping.h>
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/LensFlare.h>
+#include <AnKi/Renderer/ClusterBinning.h>
+#include <AnKi/Renderer/PackVisibleClusteredObjects.h>
+#include <AnKi/Renderer/LensFlare.h>
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
 #include <AnKi/Shaders/Include/MaterialTypes.h>
 
@@ -34,7 +37,6 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 		cmdb->setDepthWrite(false);
 		cmdb->setBlendFactors(0, BlendFactor::kSrcAlpha, BlendFactor::kOneMinusSrcAlpha);
 
-		const ClusteredShadingContext& rsrc = ctx.m_clusteredShading;
 		const U32 set = U32(MaterialSet::kGlobal);
 		cmdb->bindSampler(set, U32(MaterialBinding::kLinearClampSampler), m_r->getSamplers().m_trilinearClamp);
 		cmdb->bindSampler(set, U32(MaterialBinding::kShadowSampler), m_r->getSamplers().m_trilinearClampShadow);
@@ -44,12 +46,15 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 		rgraphCtx.bindColorTexture(set, U32(MaterialBinding::kLightVolume),
 								   m_r->getVolumetricLightingAccumulation().getRt());
 
-		bindUniforms(cmdb, set, U32(MaterialBinding::kClusterShadingUniforms), rsrc.m_clusteredShadingUniformsToken);
-		bindUniforms(cmdb, set, U32(MaterialBinding::kClusterShadingLights), rsrc.m_pointLightsToken);
-		bindUniforms(cmdb, set, U32(MaterialBinding::kClusterShadingLights) + 1, rsrc.m_spotLightsToken);
+		bindUniforms(cmdb, set, U32(MaterialBinding::kClusterShadingUniforms),
+					 m_r->getClusterBinning().getClusteredUniformsRebarToken());
+		m_r->getPackVisibleClusteredObjects().bindClusteredObjectBuffer(
+			cmdb, set, U32(MaterialBinding::kClusterShadingLights), ClusteredObjectType::kPointLight);
+		m_r->getPackVisibleClusteredObjects().bindClusteredObjectBuffer(
+			cmdb, set, U32(MaterialBinding::kClusterShadingLights) + 1, ClusteredObjectType::kSpotLight);
 		rgraphCtx.bindColorTexture(set, U32(MaterialBinding::kClusterShadingLights) + 2,
 								   m_r->getShadowMapping().getShadowmapRt());
-		bindStorage(cmdb, set, U32(MaterialBinding::kClusters), rsrc.m_clustersToken);
+		bindStorage(cmdb, set, U32(MaterialBinding::kClusters), m_r->getClusterBinning().getClustersRebarToken());
 
 		RenderableDrawerArguments args;
 		args.m_viewMatrix = ctx.m_matrices.m_view;

@@ -16,12 +16,13 @@ ANKI_SPECIALIZATION_CONSTANT_UVEC2(kRenderingSize, 4u);
 
 [[vk::binding(0)]] ConstantBuffer<ClusteredShadingUniforms> g_unis;
 [[vk::binding(1)]] RWStructuredBuffer<Cluster> g_clusters;
+
 [[vk::binding(2)]] StructuredBuffer<PointLight> g_pointLights;
 [[vk::binding(3)]] StructuredBuffer<SpotLightBinning> g_spotLights;
-[[vk::binding(4)]] StructuredBuffer<ReflectionProbe> g_reflectionProbes;
-[[vk::binding(5)]] StructuredBuffer<GlobalIlluminationProbe> g_giProbes;
-[[vk::binding(6)]] StructuredBuffer<FogDensityVolume> g_fogVolumes;
-[[vk::binding(7)]] StructuredBuffer<Decal> g_decals;
+[[vk::binding(4)]] StructuredBuffer<Decal> g_decals;
+[[vk::binding(5)]] StructuredBuffer<FogDensityVolume> g_fogVolumes;
+[[vk::binding(6)]] StructuredBuffer<ReflectionProbe> g_reflectionProbes;
+[[vk::binding(7)]] StructuredBuffer<GlobalIlluminationProbe> g_giProbes;
 
 #define THREADGROUP_SIZE 64
 constexpr U32 kTileCount = kTileCountX * kTileCountY;
@@ -41,32 +42,32 @@ groupshared ExtendedClusterObjectMask s_zSplitMasks[kMaxZsplitCount];
 
 Bool isPointLight(U32 objectIdx)
 {
-	return objectIdx < g_unis.m_objectCountsUpTo[(U32)ClusterObjectType::kPointLight].x;
+	return objectIdx < g_unis.m_objectCountsUpTo[(U32)ClusteredObjectType::kPointLight].x;
 }
 
 Bool isSpotLight(U32 objectIdx)
 {
-	return objectIdx < g_unis.m_objectCountsUpTo[(U32)ClusterObjectType::kSpotLight].x;
+	return objectIdx < g_unis.m_objectCountsUpTo[(U32)ClusteredObjectType::kSpotLight].x;
 }
 
 Bool isDecal(U32 objectIdx)
 {
-	return objectIdx < g_unis.m_objectCountsUpTo[(U32)ClusterObjectType::kDecal].x;
+	return objectIdx < g_unis.m_objectCountsUpTo[(U32)ClusteredObjectType::kDecal].x;
 }
 
 Bool isFogVolume(U32 objectIdx)
 {
-	return objectIdx < g_unis.m_objectCountsUpTo[(U32)ClusterObjectType::kFogDensityVolume].x;
+	return objectIdx < g_unis.m_objectCountsUpTo[(U32)ClusteredObjectType::kFogDensityVolume].x;
 }
 
 Bool isReflectionProbe(U32 objectIdx)
 {
-	return objectIdx < g_unis.m_objectCountsUpTo[(U32)ClusterObjectType::kReflectionProbe].x;
+	return objectIdx < g_unis.m_objectCountsUpTo[(U32)ClusteredObjectType::kReflectionProbe].x;
 }
 
 Bool isGiProbe(U32 objectIdx)
 {
-	return objectIdx < g_unis.m_objectCountsUpTo[(U32)ClusterObjectType::kGlobalIlluminationProbe].x;
+	return objectIdx < g_unis.m_objectCountsUpTo[(U32)ClusteredObjectType::kGlobalIlluminationProbe].x;
 }
 
 [numthreads(THREADGROUP_SIZE, 1, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID,
@@ -118,7 +119,7 @@ Bool isGiProbe(U32 objectIdx)
 	// Spot light
 	else if(isSpotLight(clustererObjectIdx))
 	{
-		objectArrayIdx = clustererObjectIdx - g_unis.m_objectCountsUpTo[(U32)ClusterObjectType::kSpotLight - 1u].x;
+		objectArrayIdx = clustererObjectIdx - g_unis.m_objectCountsUpTo[(U32)ClusteredObjectType::kSpotLight - 1u].x;
 		const SpotLightBinning light = g_spotLights[objectArrayIdx];
 
 		t0 = 10000.0;
@@ -156,7 +157,7 @@ Bool isGiProbe(U32 objectIdx)
 	// Decal
 	else if(isDecal(clustererObjectIdx))
 	{
-		objectArrayIdx = clustererObjectIdx - g_unis.m_objectCountsUpTo[(U32)ClusterObjectType::kDecal - 1u].x;
+		objectArrayIdx = clustererObjectIdx - g_unis.m_objectCountsUpTo[(U32)ClusteredObjectType::kDecal - 1u].x;
 		const Decal decal = g_decals[objectArrayIdx];
 
 		collides = testRayObb(rayOrigin, rayDir, decal.m_obbExtend, decal.m_invertedTransform, t0, t1);
@@ -165,7 +166,7 @@ Bool isGiProbe(U32 objectIdx)
 	else if(isFogVolume(clustererObjectIdx))
 	{
 		objectArrayIdx =
-			clustererObjectIdx - g_unis.m_objectCountsUpTo[(U32)ClusterObjectType::kFogDensityVolume - 1u].x;
+			clustererObjectIdx - g_unis.m_objectCountsUpTo[(U32)ClusteredObjectType::kFogDensityVolume - 1u].x;
 		const FogDensityVolume vol = g_fogVolumes[objectArrayIdx];
 
 		if(vol.m_isBox != 0u)
@@ -183,7 +184,7 @@ Bool isGiProbe(U32 objectIdx)
 	else if(isReflectionProbe(clustererObjectIdx))
 	{
 		objectArrayIdx =
-			clustererObjectIdx - g_unis.m_objectCountsUpTo[(U32)ClusterObjectType::kReflectionProbe - 1u].x;
+			clustererObjectIdx - g_unis.m_objectCountsUpTo[(U32)ClusteredObjectType::kReflectionProbe - 1u].x;
 		const ReflectionProbe probe = g_reflectionProbes[objectArrayIdx];
 
 		collides = testRayAabb(rayOrigin, rayDir, probe.m_aabbMin, probe.m_aabbMax, t0, t1);
@@ -192,7 +193,7 @@ Bool isGiProbe(U32 objectIdx)
 	else
 	{
 		objectArrayIdx =
-			clustererObjectIdx - g_unis.m_objectCountsUpTo[(U32)ClusterObjectType::kGlobalIlluminationProbe - 1u].x;
+			clustererObjectIdx - g_unis.m_objectCountsUpTo[(U32)ClusteredObjectType::kGlobalIlluminationProbe - 1u].x;
 		const GlobalIlluminationProbe probe = g_giProbes[objectArrayIdx];
 
 		collides = testRayAabb(rayOrigin, rayDir, probe.m_aabbMin, probe.m_aabbMax, t0, t1);

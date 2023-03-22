@@ -58,7 +58,7 @@ public:
 	void setRadius(F32 x)
 	{
 		m_point.m_radius = x;
-		m_markedForUpdate = true;
+		m_shapeUpdated = true;
 	}
 
 	F32 getRadius() const
@@ -69,7 +69,7 @@ public:
 	void setDistance(F32 x)
 	{
 		m_spot.m_distance = x;
-		m_markedForUpdate = true;
+		m_shapeUpdated = true;
 	}
 
 	F32 getDistance() const
@@ -80,7 +80,7 @@ public:
 	void setInnerAngle(F32 ang)
 	{
 		m_spot.m_innerAngle = ang;
-		m_markedForUpdate = true;
+		m_shapeUpdated = true;
 	}
 
 	F32 getInnerAngle() const
@@ -91,7 +91,7 @@ public:
 	void setOuterAngle(F32 ang)
 	{
 		m_spot.m_outerAngle = ang;
-		m_markedForUpdate = true;
+		m_shapeUpdated = true;
 	}
 
 	F32 getOuterAngle() const
@@ -107,7 +107,7 @@ public:
 	void setShadowEnabled(const Bool x)
 	{
 		m_shadow = x;
-		m_markedForUpdate = true;
+		m_shapeUpdated = true;
 	}
 
 	ANKI_INTERNAL WeakArray<Frustum> getFrustums() const
@@ -124,6 +124,8 @@ public:
 		el.m_radius = m_point.m_radius;
 		el.m_diffuseColor = m_diffColor.xyz();
 		el.m_shadowLayer = kMaxU8;
+		ANKI_ASSERT(m_gpuSceneLightIndex != kMaxU32);
+		el.m_index = m_gpuSceneLightIndex;
 	}
 
 	void setupSpotLightQueueElement(SpotLightQueueElement& el) const
@@ -138,6 +140,8 @@ public:
 		el.m_diffuseColor = m_diffColor.xyz();
 		el.m_edgePoints = m_spot.m_edgePointsWspace;
 		el.m_shadowLayer = kMaxU8;
+		ANKI_ASSERT(m_gpuSceneLightIndex != kMaxU32);
+		el.m_index = m_gpuSceneLightIndex;
 	}
 
 	/// Setup a directional queue element.
@@ -148,6 +152,7 @@ public:
 										   WeakArray<Frustum> cascadeFrustums) const;
 
 private:
+	SceneNode* m_node;
 	U64 m_uuid;
 	Vec4 m_diffColor = Vec4(0.5f);
 	Transform m_worldTransform = Transform::getIdentity();
@@ -183,13 +188,13 @@ private:
 
 	Frustum* m_frustums = nullptr;
 
-	U32 m_gpuSceneLightOffset = kMaxU32;
+	U32 m_gpuSceneLightIndex = kMaxU32;
 
 	LightComponentType m_type;
 
 	U8 m_shadow : 1 = false;
-	U8 m_markedForUpdate : 1 = true;
-	U8 m_forceFullUpdate : 1 = true;
+	U8 m_shapeUpdated : 1 = true;
+	U8 m_typeChanged : 1 = true;
 	U8 m_frustumCount : 4 = 0; ///< The size of m_frustums array.
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated);

@@ -28,6 +28,11 @@ public:
 		return m_offset == b.m_offset && m_chunk == b.m_chunk && m_chunkOffset == b.m_chunkOffset && m_size == b.m_size;
 	}
 
+	Bool isValid() const
+	{
+		return m_chunk != nullptr;
+	}
+
 private:
 	void* m_chunk = nullptr;
 	PtrSize m_chunkOffset = kMaxPtrSize;

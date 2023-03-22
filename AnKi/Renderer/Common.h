@@ -88,30 +88,6 @@ public:
 	PhysicsWorld* m_physicsWorld = nullptr; ///< For debug drawing.
 };
 
-/// GPU buffers and textures that the clusterer refers to.
-class ClusteredShadingContext
-{
-public:
-	RebarGpuMemoryToken m_pointLightsToken;
-	void* m_pointLightsAddress = nullptr;
-	RebarGpuMemoryToken m_spotLightsToken;
-	void* m_spotLightsAddress = nullptr;
-	RebarGpuMemoryToken m_reflectionProbesToken;
-	void* m_reflectionProbesAddress = nullptr;
-	RebarGpuMemoryToken m_decalsToken;
-	void* m_decalsAddress = nullptr;
-	RebarGpuMemoryToken m_fogDensityVolumesToken;
-	void* m_fogDensityVolumesAddress = nullptr;
-	RebarGpuMemoryToken m_globalIlluminationProbesToken;
-	void* m_globalIlluminationProbesAddress = nullptr;
-	RebarGpuMemoryToken m_clusteredShadingUniformsToken;
-	void* m_clusteredShadingUniformsAddress = nullptr;
-	RebarGpuMemoryToken m_clustersToken;
-	void* m_clustersAddress = nullptr;
-
-	BufferHandle m_clustersBufferHandle; ///< To track dependencies. Don't track all tokens, not worth it.
-};
-
 /// Rendering context.
 class RenderingContext
 {
@@ -126,8 +102,6 @@ public:
 
 	/// The render target that the Renderer will populate.
 	RenderTargetHandle m_outRenderTarget;
-
-	ClusteredShadingContext m_clusteredShading;
 
 	RenderingContext(StackMemoryPool* pool)
 		: m_tempPool(pool)

@@ -19,7 +19,7 @@ void AllGpuSceneContiguousArrays::ContiguousArrayAllocator::destroy(GpuSceneMemo
 	}
 }
 
-AllGpuSceneContiguousArrays::ContiguousArrayAllocator::Index
+AllGpuSceneContiguousArrays::Index
 AllGpuSceneContiguousArrays::ContiguousArrayAllocator::allocateObject(GpuSceneMemoryPool* gpuScene,
 																	  HeapMemoryPool* cpuPool)
 {
@@ -30,7 +30,7 @@ AllGpuSceneContiguousArrays::ContiguousArrayAllocator::allocateObject(GpuSceneMe
 	if(m_poolToken.m_offset == kMaxPtrSize)
 	{
 		// Initialize
-		const U32 alignment = sizeof(U32);
+		const U32 alignment = gpuScene->getGrManager().getDeviceCapabilities().m_storageBufferBindOffsetAlignment;
 		gpuScene->allocate(m_objectSize * m_initialArraySize, alignment, m_poolToken);
 		m_nextSlotIndex = 0;
 
@@ -114,10 +114,15 @@ void AllGpuSceneContiguousArrays::init(SceneGraph* scene)
 	constexpr F32 kGrowRate = 2.0;
 
 	const Array<U32, U32(GpuSceneContiguousArrayType::kCount)> minElementCount = {
-		cfg.getSceneMinGpuSceneTransforms(),       cfg.getSceneMinGpuSceneMeshes(),
-		cfg.getSceneMinGpuSceneParticleEmitters(), cfg.getSceneMinGpuSceneLights(),
-		cfg.getSceneMinGpuSceneReflectionProbes(), cfg.getSceneMinGpuSceneGlobalIlluminationProbes(),
-		cfg.getSceneMinGpuSceneDecals(),           cfg.getSceneMinGpuSceneFogDensityVolumes()};
+		cfg.getSceneMinGpuSceneTransforms(),
+		cfg.getSceneMinGpuSceneMeshes(),
+		cfg.getSceneMinGpuSceneParticleEmitters(),
+		cfg.getSceneMinGpuSceneLights(),
+		cfg.getSceneMinGpuSceneLights(),
+		cfg.getSceneMinGpuSceneReflectionProbes(),
+		cfg.getSceneMinGpuSceneGlobalIlluminationProbes(),
+		cfg.getSceneMinGpuSceneDecals(),
+		cfg.getSceneMinGpuSceneFogDensityVolumes()};
 
 	for(GpuSceneContiguousArrayType type : EnumIterable<GpuSceneContiguousArrayType>())
 	{
@@ -136,18 +141,14 @@ void AllGpuSceneContiguousArrays::destroy()
 	}
 }
 
-PtrSize AllGpuSceneContiguousArrays::allocate(GpuSceneContiguousArrayType type)
+AllGpuSceneContiguousArrays::Index AllGpuSceneContiguousArrays::allocate(GpuSceneContiguousArrayType type)
 {
 	const U32 idx = m_allocs[type].allocateObject(m_scene->m_subsystems.m_gpuSceneMemoryPool, &m_scene->m_pool);
-	return PtrSize(idx) * m_componentCount[type] * m_componentSize[type] + m_allocs[type].m_poolToken.m_offset;
+	return idx;
 }
 
-void AllGpuSceneContiguousArrays::deferredFree(GpuSceneContiguousArrayType type, PtrSize offset)
+void AllGpuSceneContiguousArrays::deferredFree(GpuSceneContiguousArrayType type, Index idx)
 {
-	ANKI_ASSERT(offset >= m_allocs[type].m_poolToken.m_offset);
-	offset -= m_allocs[type].m_poolToken.m_offset;
-	ANKI_ASSERT((offset % (m_componentCount[type] * m_componentSize[type])) == 0);
-	const U32 idx = U32(offset / (m_componentCount[type] * m_componentSize[type]));
 	m_allocs[type].deferredFree(m_frame, &m_scene->m_pool, idx);
 }
 

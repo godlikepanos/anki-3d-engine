@@ -120,6 +120,8 @@ public:
 	F32 m_shadowAtlasTileSize; ///< Renderer internal.
 	U8 m_shadowLayer; ///< Renderer internal.
 
+	U32 m_index;
+
 	PointLightQueueElement()
 	{
 	}
@@ -146,6 +148,8 @@ public:
 	RenderQueue* m_shadowRenderQueue;
 
 	U8 m_shadowLayer; ///< Renderer internal.
+
+	U32 m_index;
 
 	SpotLightQueueElement()
 	{
@@ -196,6 +200,8 @@ public:
 	Vec3 m_aabbMax;
 	U32 m_textureBindlessIndex;
 
+	U32 m_index;
+
 	ReflectionProbeQueueElement()
 	{
 	}
@@ -222,6 +228,8 @@ public:
 	Vec3 m_cellSizes; ///< The cells might not be cubes so have different sizes per dimension.
 	F32 m_fadeDistance;
 	U32 m_volumeTextureBindlessIndex;
+
+	U32 m_index;
 
 	GlobalIlluminationProbeQueueElement()
 	{
@@ -284,6 +292,8 @@ public:
 	Vec3 m_obbExtend;
 	Mat3 m_obbRotation;
 
+	U32 m_index;
+
 	DecalQueueElement()
 	{
 	}
@@ -323,6 +333,7 @@ public:
 	};
 
 	F32 m_density;
+	U32 m_index;
 	Bool m_isBox;
 
 	FogDensityQueueElement()
@@ -410,6 +421,9 @@ public:
 
 	ReflectionProbeQueueElementForRefresh* m_reflectionProbeForRefresh = nullptr;
 	GlobalIlluminationProbeQueueElementForRefresh* m_giProbeForRefresh = nullptr;
+
+	Array<PtrSize, U32(ClusteredObjectType::kCount)> m_clustererObjectsArrayOffsets = {};
+	Array<PtrSize, U32(ClusteredObjectType::kCount)> m_clustererObjectsArrayRanges = {};
 
 	RenderQueue()
 	{

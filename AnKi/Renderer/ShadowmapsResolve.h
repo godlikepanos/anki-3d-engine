@@ -59,7 +59,7 @@ public:
 
 	Error initInternal();
 
-	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
+	void run(RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 

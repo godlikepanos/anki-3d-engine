@@ -72,7 +72,7 @@ struct MainVertex
 
 constexpr U32 kSizeof_MainVertex = 4u * 4u;
 constexpr U32 kAlignof_MainVertex = 4u;
-ANKI_SHADER_STATIC_ASSERT(kSizeof_MainVertex == sizeof(MainVertex));
+static_assert(kSizeof_MainVertex == sizeof(MainVertex));
 
 /// The vertex that contains the bone influences.
 struct BoneInfoVertex
@@ -83,7 +83,7 @@ struct BoneInfoVertex
 
 constexpr U32 kSizeof_BoneInfoVertex = 8u;
 constexpr U32 kAlignof_BoneInfoVertex = 1u;
-ANKI_SHADER_STATIC_ASSERT(kSizeof_BoneInfoVertex == sizeof(BoneInfoVertex));
+static_assert(kSizeof_BoneInfoVertex == sizeof(BoneInfoVertex));
 
 /// A structure that contains all the info of a geometry.
 struct MeshGpuDescriptor
@@ -102,7 +102,7 @@ struct MeshGpuDescriptor
 
 constexpr U32 kSizeof_MeshGpuDescriptor = 4u * sizeof(UVec2) + 8u * sizeof(F32);
 constexpr U32 kAlignof_MeshGpuDescriptor = 8u;
-ANKI_SHADER_STATIC_ASSERT(kSizeof_MeshGpuDescriptor == sizeof(MeshGpuDescriptor));
+static_assert(kSizeof_MeshGpuDescriptor == sizeof(MeshGpuDescriptor));
 
 #if defined(__cplusplus)
 enum class TextureChannelId : U8
@@ -147,7 +147,7 @@ struct MaterialGpuDescriptor
 
 constexpr U32 kSizeof_MaterialGpuDescriptor = 8u * sizeof(U16) + 3u * sizeof(Vec3) + 2u * sizeof(F32);
 constexpr U32 kAlignof_MaterialGpuDescriptor = 4u;
-ANKI_SHADER_STATIC_ASSERT(kSizeof_MaterialGpuDescriptor == sizeof(MaterialGpuDescriptor));
+static_assert(kSizeof_MaterialGpuDescriptor == sizeof(MaterialGpuDescriptor));
 
 struct ModelGpuDescriptor
 {

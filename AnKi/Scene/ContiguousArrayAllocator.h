@@ -18,7 +18,8 @@ enum class GpuSceneContiguousArrayType : U8
 	kTransformPairs,
 	kMeshLods,
 	kParticleEmitters,
-	kLights,
+	kPointLights,
+	kSpotLights,
 	kReflectionProbes,
 	kGlobalIlluminationProbes,
 	kDecals,
@@ -33,14 +34,36 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(GpuSceneContiguousArrayType)
 class AllGpuSceneContiguousArrays
 {
 public:
+	using Index = U32;
+
 	void init(SceneGraph* scene);
 
 	void destroy();
 
-	PtrSize allocate(GpuSceneContiguousArrayType type);
+	/// @note Thread-safe against allocate(), deferredFree() and endFrame()
+	Index allocate(GpuSceneContiguousArrayType type);
 
-	void deferredFree(GpuSceneContiguousArrayType type, PtrSize offset);
+	/// @note It's not thread-safe
+	PtrSize getArrayBase(GpuSceneContiguousArrayType type) const
+	{
+		return m_allocs[type].getArrayBase();
+	}
 
+	/// @note It's not thread-safe
+	U32 getElementCount(GpuSceneContiguousArrayType type) const
+	{
+		return m_allocs[type].getElementCount();
+	}
+
+	constexpr static U32 getElementSize(GpuSceneContiguousArrayType type)
+	{
+		return m_componentSize[type] * m_componentCount[type];
+	}
+
+	/// @note Thread-safe against allocate(), deferredFree() and endFrame()
+	void deferredFree(GpuSceneContiguousArrayType type, Index idx);
+
+	/// @note Thread-safe against allocate(), deferredFree() and endFrame()
 	void endFrame();
 
 private:
@@ -51,8 +74,6 @@ private:
 		friend class AllGpuSceneContiguousArrays;
 
 	public:
-		using Index = U32;
-
 		~ContiguousArrayAllocator()
 		{
 			ANKI_ASSERT(m_nextSlotIndex == 0 && "Forgot to deallocate");
@@ -87,6 +108,17 @@ private:
 		/// @note It's thread-safe against itself, deferredFree and allocateObject.
 		void collectGarbage(U32 newFrameIdx, GpuSceneMemoryPool* gpuScene, HeapMemoryPool* cpuPool);
 
+		PtrSize getArrayBase() const
+		{
+			ANKI_ASSERT(m_poolToken.isValid());
+			return m_poolToken.m_offset;
+		}
+
+		U32 getElementCount() const
+		{
+			return m_nextSlotIndex;
+		}
+
 	private:
 		SegregatedListsGpuMemoryPoolToken m_poolToken;
 
@@ -94,7 +126,7 @@ private:
 
 		Array<DynamicArray<Index>, kMaxFramesInFlight> m_garbage;
 
-		SpinLock m_mtx;
+		mutable SpinLock m_mtx;
 
 		F32 m_growRate = 2.0;
 		U32 m_initialArraySize = 0;
@@ -110,12 +142,13 @@ private:
 	U8 m_frame = 0;
 
 	static constexpr Array<U8, U32(GpuSceneContiguousArrayType::kCount)> m_componentCount = {
-		2, kMaxLodCount, 1, 1, 1, 1, 1, 1};
+		2, kMaxLodCount, 1, 1, 1, 1, 1, 1, 1};
 	static constexpr Array<U8, U32(GpuSceneContiguousArrayType::kCount)> m_componentSize = {
 		sizeof(Mat3x4),
 		sizeof(GpuSceneMeshLod),
 		sizeof(GpuSceneParticleEmitter),
-		max<U8>(sizeof(GpuScenePointLight), sizeof(GpuSceneSpotLight)),
+		sizeof(GpuScenePointLight),
+		sizeof(GpuSceneSpotLight),
 		sizeof(GpuSceneReflectionProbe),
 		sizeof(GpuSceneGlobalIlluminationProbe),
 		sizeof(GpuSceneDecal),

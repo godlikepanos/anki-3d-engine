@@ -10,6 +10,8 @@
 #include <AnKi/Renderer/DownscaleBlur.h>
 #include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Renderer/IndirectDiffuseProbes.h>
+#include <AnKi/Renderer/ClusterBinning.h>
+#include <AnKi/Renderer/PackVisibleClusteredObjects.h>
 #include <AnKi/Core/ConfigSet.h>
 
 namespace anki {
@@ -268,10 +270,10 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 			cmdb->bindShaderProgram(m_main.m_grProg);
 
-			const ClusteredShadingContext& binning = ctx.m_clusteredShading;
-			bindUniforms(cmdb, 0, 0, binning.m_clusteredShadingUniformsToken);
-			bindUniforms(cmdb, 0, 1, binning.m_globalIlluminationProbesToken);
-			bindStorage(cmdb, 0, 2, binning.m_clustersToken);
+			bindUniforms(cmdb, 0, 0, m_r->getClusterBinning().getClusteredUniformsRebarToken());
+			m_r->getPackVisibleClusteredObjects().bindClusteredObjectBuffer(
+				cmdb, 0, 1, ClusteredObjectType::kGlobalIlluminationProbe);
+			bindStorage(cmdb, 0, 2, m_r->getClusterBinning().getClustersRebarToken());
 
 			cmdb->bindSampler(0, 3, m_r->getSamplers().m_trilinearClamp);
 			rgraphCtx.bindColorTexture(0, 4, m_r->getGBuffer().getColorRt(2));

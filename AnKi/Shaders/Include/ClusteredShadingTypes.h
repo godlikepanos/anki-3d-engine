@@ -5,14 +5,14 @@
 
 #pragma once
 
-#include <AnKi/Shaders/Include/Common.h>
+#include <AnKi/Shaders/Include/GpuSceneTypes.h>
 
 #define ANKI_CLUSTERED_SHADING_USE_64BIT ANKI_SUPPORTS_64BIT_TYPES
 
 ANKI_BEGIN_NAMESPACE
 
 // Enum of clusterer object types
-enum class ClusterObjectType : U32
+enum class ClusteredObjectType : U32
 {
 	kPointLight,
 	kSpotLight,
@@ -24,7 +24,7 @@ enum class ClusterObjectType : U32
 	kCount,
 	kFirst = 0
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ClusterObjectType)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ClusteredObjectType)
 
 // Limits
 #if ANKI_CLUSTERED_SHADING_USE_64BIT
@@ -130,67 +130,16 @@ static_assert(sizeof(DirectionalLight) == kSizeof_DirectionalLight);
 static_assert(kMaxShadowCascades == 4u); // Because m_shadowCascadeDistances is a Vec4
 
 /// Representation of a reflection probe.
-struct ReflectionProbe
-{
-	Vec3 m_position; ///< Position of the probe in world space.
-	U32 m_cubeTexture; ///< Bindless index of the reflection texture.
-
-	Vec3 m_aabbMin;
-	F32 m_padding0;
-
-	Vec3 m_aabbMax;
-	F32 m_padding1;
-};
-constexpr U32 kSizeof_ReflectionProbe = 3u * sizeof(Vec4);
-static_assert(sizeof(ReflectionProbe) == kSizeof_ReflectionProbe);
+typedef GpuSceneReflectionProbe ReflectionProbe;
 
 /// Decal.
-struct Decal
-{
-	U32 m_diffuseTexture;
-	U32 m_roughnessMetalnessTexture;
-	RF32 m_diffuseBlendFactor;
-	RF32 m_roughnessMetalnessFactor;
-
-	Mat4 m_textureMatrix;
-
-	Mat4 m_invertedTransform;
-
-	Vec3 m_obbExtend;
-	F32 m_padding0;
-};
-constexpr U32 kSizeof_Decal = 2u * sizeof(Vec4) + 2u * sizeof(Mat4);
-static_assert(sizeof(Decal) == kSizeof_Decal);
+typedef GpuSceneDecal Decal;
 
 /// Fog density volume.
-struct FogDensityVolume
-{
-	Vec3 m_aabbMinOrSphereCenter;
-	U32 m_isBox;
-
-	Vec3 m_aabbMaxOrSphereRadiusSquared;
-	RF32 m_density;
-};
-constexpr U32 kSizeof_FogDensityVolume = 2u * sizeof(Vec4);
-static_assert(sizeof(FogDensityVolume) == kSizeof_FogDensityVolume);
+typedef GpuSceneFogDensityVolume FogDensityVolume;
 
 /// Global illumination probe
-struct GlobalIlluminationProbe
-{
-	Vec3 m_aabbMin;
-	F32 m_padding0;
-
-	Vec3 m_aabbMax;
-	F32 m_padding1;
-
-	U32 m_volumeTexture; ///< Bindless index of the irradiance volume texture.
-	F32 m_halfTexelSizeU; ///< (1.0 / textureSize(texArr[textureIndex]).x) / 2.0
-	/// Used to calculate a factor that is zero when fragPos is close to AABB bounds and 1.0 at fadeDistance and less.
-	RF32 m_fadeDistance;
-	F32 m_padding2;
-};
-constexpr U32 kSizeof_GlobalIlluminationProbe = 3u * sizeof(Vec4);
-static_assert(sizeof(GlobalIlluminationProbe) == kSizeof_GlobalIlluminationProbe);
+typedef GpuSceneGlobalIlluminationProbe GlobalIlluminationProbe;
 
 /// Common matrices.
 struct CommonMatrices
@@ -256,13 +205,13 @@ struct ClusteredShadingUniforms
 
 	/// This are some additive counts used to map a flat index to the index of the specific object
 #if defined(__cplusplus)
-	Array<UVec4, U32(ClusterObjectType::kCount)> m_objectCountsUpTo;
+	Array<UVec4, U32(ClusteredObjectType::kCount)> m_objectCountsUpTo;
 #else
-	UVec4 m_objectCountsUpTo[(U32)ClusterObjectType::kCount];
+	UVec4 m_objectCountsUpTo[(U32)ClusteredObjectType::kCount];
 #endif
 };
 constexpr U32 kSizeof_ClusteredShadingUniforms =
-	(6u + (U32)ClusterObjectType::kCount) * sizeof(Vec4) + 2u * sizeof(CommonMatrices) + sizeof(DirectionalLight);
+	(6u + (U32)ClusteredObjectType::kCount) * sizeof(Vec4) + 2u * sizeof(CommonMatrices) + sizeof(DirectionalLight);
 static_assert(sizeof(ClusteredShadingUniforms) == kSizeof_ClusteredShadingUniforms);
 
 // Define the type of some cluster object masks
@@ -308,5 +257,17 @@ static_assert(sizeof(Cluster) == kSizeof_Cluster);
 constexpr U32 kSizeof_Cluster = 2u * sizeof(Vec4);
 static_assert(sizeof(Cluster) == kSizeof_Cluster);
 #endif
+
+constexpr ANKI_ARRAY(U32, ClusteredObjectType::kCount, kClusteredObjectSizes) = {
+	sizeof(PointLight),       sizeof(SpotLight),       sizeof(Decal),
+	sizeof(FogDensityVolume), sizeof(ReflectionProbe), sizeof(GlobalIlluminationProbe)};
+
+constexpr ANKI_ARRAY(U32, ClusteredObjectType::kCount, kMaxVisibleClusteredObjects) = {
+#if ANKI_CLUSTERED_SHADING_USE_64BIT
+	64, 64, 64,
+#else
+	32, 32, 32,
+#endif
+	16, 16, 16};
 
 ANKI_END_NAMESPACE

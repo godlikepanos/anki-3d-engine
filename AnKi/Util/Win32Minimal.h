@@ -158,6 +158,7 @@ constexpr WORD BACKGROUND_RED = 0x0040;
 
 constexpr WORD MB_OK = 0x00000000L;
 constexpr WORD MB_ICONWARNING = 0x00000030L;
+constexpr WORD MB_ICONERROR = 0x00000010L;
 
 // Types
 typedef union _LARGE_INTEGER

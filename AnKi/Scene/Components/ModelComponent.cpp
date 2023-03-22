@@ -18,7 +18,7 @@ ModelComponent::ModelComponent(SceneNode* node)
 	, m_node(node)
 	, m_spatial(this)
 {
-	m_gpuSceneTransformsOffset = U32(
+	m_gpuSceneTransformsIndex = U32(
 		node->getSceneGraph().getAllGpuSceneContiguousArrays().allocate(GpuSceneContiguousArrayType::kTransformPairs));
 }
 
@@ -29,15 +29,15 @@ ModelComponent::~ModelComponent()
 
 	for(const PatchInfo& patch : m_patchInfos)
 	{
-		if(patch.m_gpuSceneMeshLodsOffset != kMaxU32)
+		if(patch.m_gpuSceneMeshLodsIndex != kMaxU32)
 		{
 			m_node->getSceneGraph().getAllGpuSceneContiguousArrays().deferredFree(
-				GpuSceneContiguousArrayType::kMeshLods, patch.m_gpuSceneMeshLodsOffset);
+				GpuSceneContiguousArrayType::kMeshLods, patch.m_gpuSceneMeshLodsIndex);
 		}
 	}
 
 	m_node->getSceneGraph().getAllGpuSceneContiguousArrays().deferredFree(GpuSceneContiguousArrayType::kTransformPairs,
-																		  m_gpuSceneTransformsOffset);
+																		  m_gpuSceneTransformsIndex);
 
 	m_patchInfos.destroy(m_node->getMemoryPool());
 
@@ -64,17 +64,17 @@ void ModelComponent::loadModelResource(CString filename)
 
 	for(const PatchInfo& patch : m_patchInfos)
 	{
-		if(patch.m_gpuSceneMeshLodsOffset != kMaxU32)
+		if(patch.m_gpuSceneMeshLodsIndex != kMaxU32)
 		{
 			m_node->getSceneGraph().getAllGpuSceneContiguousArrays().deferredFree(
-				GpuSceneContiguousArrayType::kMeshLods, patch.m_gpuSceneMeshLodsOffset);
+				GpuSceneContiguousArrayType::kMeshLods, patch.m_gpuSceneMeshLodsIndex);
 		}
 	}
 
 	m_patchInfos.resize(m_node->getMemoryPool(), modelPatchCount);
 	for(U32 i = 0; i < modelPatchCount; ++i)
 	{
-		m_patchInfos[i].m_gpuSceneMeshLodsOffset = U32(
+		m_patchInfos[i].m_gpuSceneMeshLodsIndex = U32(
 			m_node->getSceneGraph().getAllGpuSceneContiguousArrays().allocate(GpuSceneContiguousArrayType::kMeshLods));
 	}
 
@@ -181,8 +181,10 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 				meshLods[l] = meshLods[l - 1];
 			}
 
-			gpuScenePatcher.newCopy(*info.m_framePool, m_patchInfos[i].m_gpuSceneMeshLodsOffset,
-									meshLods.getSizeInBytes(), &meshLods[0]);
+			const PtrSize offset = m_patchInfos[i].m_gpuSceneMeshLodsIndex * sizeof(meshLods)
+								   + info.m_node->getSceneGraph().getAllGpuSceneContiguousArrays().getArrayBase(
+									   GpuSceneContiguousArrayType::kMeshLods);
+			gpuScenePatcher.newCopy(*info.m_framePool, offset, meshLods.getSizeInBytes(), &meshLods[0]);
 		}
 
 		// Upload the uniforms
@@ -210,8 +212,11 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		trfs[0] = Mat3x4(info.m_node->getWorldTransform());
 		trfs[1] = Mat3x4(info.m_node->getPreviousWorldTransform());
 
+		const PtrSize offset = m_gpuSceneTransformsIndex * sizeof(trfs)
+							   + info.m_node->getSceneGraph().getAllGpuSceneContiguousArrays().getArrayBase(
+								   GpuSceneContiguousArrayType::kTransformPairs);
 		getExternalSubsystems(*info.m_node)
-			.m_gpuSceneMicroPatcher->newCopy(*info.m_framePool, m_gpuSceneTransformsOffset, sizeof(trfs), &trfs[0]);
+			.m_gpuSceneMicroPatcher->newCopy(*info.m_framePool, offset, sizeof(trfs), &trfs[0]);
 	}
 
 	// Spatial update
@@ -294,10 +299,15 @@ void ModelComponent::setupRenderableQueueElements(U32 lod, RenderingTechnique te
 		ModelRenderingInfo modelInf;
 		patch.getRenderingInfo(key, modelInf);
 
+		AllGpuSceneContiguousArrays& gpuArrays = m_node->getSceneGraph().getAllGpuSceneContiguousArrays();
+
 		queueElem.m_program = modelInf.m_program.get();
-		queueElem.m_worldTransformsOffset = m_gpuSceneTransformsOffset;
+		queueElem.m_worldTransformsOffset = U32(m_gpuSceneTransformsIndex * sizeof(Mat3x4) * 2
+												+ gpuArrays.getArrayBase(GpuSceneContiguousArrayType::kTransformPairs));
 		queueElem.m_uniformsOffset = m_patchInfos[i].m_gpuSceneUniformsOffset;
-		queueElem.m_geometryOffset = m_patchInfos[i].m_gpuSceneMeshLodsOffset + lod * sizeof(GpuSceneMeshLod);
+		queueElem.m_geometryOffset = m_patchInfos[i].m_gpuSceneMeshLodsIndex * sizeof(GpuSceneMeshLod) * kMaxLodCount
+									 + lod * sizeof(GpuSceneMeshLod);
+		queueElem.m_geometryOffset += U32(gpuArrays.getArrayBase(GpuSceneContiguousArrayType::kMeshLods));
 		queueElem.m_boneTransformsOffset = (hasSkin) ? m_skinComponent->getBoneTransformsGpuSceneOffset() : 0;
 		queueElem.m_indexCount = modelInf.m_indexCount;
 		queueElem.m_firstIndex = U32(modelInf.m_indexBufferOffset / 2 + modelInf.m_firstIndex);
@@ -360,14 +370,19 @@ void ModelComponent::setupRayTracingInstanceQueueElements(U32 lod, RenderingTech
 
 		const ModelPatch& patch = m_model->getModelPatches()[i];
 
+		AllGpuSceneContiguousArrays& gpuArrays = m_node->getSceneGraph().getAllGpuSceneContiguousArrays();
+
 		ModelRayTracingInfo modelInf;
 		patch.getRayTracingInfo(key, modelInf);
 
 		queueElem.m_bottomLevelAccelerationStructure = modelInf.m_bottomLevelAccelerationStructure.get();
 		queueElem.m_shaderGroupHandleIndex = modelInf.m_shaderGroupHandleIndex;
-		queueElem.m_worldTransformsOffset = m_gpuSceneTransformsOffset;
+		queueElem.m_worldTransformsOffset = U32(m_gpuSceneTransformsIndex * sizeof(Mat3x4) * 2
+												+ gpuArrays.getArrayBase(GpuSceneContiguousArrayType::kTransformPairs));
 		queueElem.m_uniformsOffset = m_patchInfos[i].m_gpuSceneUniformsOffset;
-		queueElem.m_geometryOffset = m_patchInfos[i].m_gpuSceneMeshLodsOffset + lod * sizeof(GpuSceneMeshLod);
+		queueElem.m_geometryOffset = m_patchInfos[i].m_gpuSceneMeshLodsIndex * sizeof(GpuSceneMeshLod) * kMaxLodCount
+									 + lod * sizeof(GpuSceneMeshLod);
+		queueElem.m_geometryOffset += U32(gpuArrays.getArrayBase(GpuSceneContiguousArrayType::kMeshLods));
 		queueElem.m_indexBufferOffset = U32(modelInf.m_indexBufferOffset);
 
 		const Transform positionTransform(patch.getMesh()->getPositionsTranslation().xyz0(), Mat3x4::getIdentity(),

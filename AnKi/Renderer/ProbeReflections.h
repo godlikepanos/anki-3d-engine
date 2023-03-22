@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/RendererObject.h>
 #include <AnKi/Renderer/TraditionalDeferredShading.h>
 #include <AnKi/Resource/ImageResource.h>

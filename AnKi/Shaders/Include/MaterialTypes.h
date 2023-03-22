@@ -17,7 +17,7 @@ struct MaterialGlobalUniforms
 	Mat3x4 m_viewTransform;
 	Mat3x4 m_cameraTransform;
 };
-ANKI_SHADER_STATIC_ASSERT(sizeof(MaterialGlobalUniforms) == 14 * sizeof(Vec4));
+static_assert(sizeof(MaterialGlobalUniforms) == 14 * sizeof(Vec4));
 
 constexpr U32 kMaterialSetBindless = 0u;
 constexpr U32 kMaterialSetGlobal = 1u;

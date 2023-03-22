@@ -43,7 +43,7 @@ void akassert(const char* exprTxt, const char* file, int line, const char* func)
 #	if ANKI_OS_WINDOWS
 	Array<Char, 512> msg;
 	snprintf(msg.getBegin(), msg.getSize(), "%s\n\n%s:%d %s", exprTxt, file, line, func);
-	MessageBoxA(nullptr, msg.getBegin(), "Assertion", MB_OK | MB_ICONWARNING);
+	MessageBoxA(nullptr, msg.getBegin(), "Assert failed", MB_OK | MB_ICONERROR);
 #	endif
 	ANKI_DEBUG_BREAK();
 }

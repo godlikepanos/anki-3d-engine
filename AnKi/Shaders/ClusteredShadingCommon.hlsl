@@ -19,16 +19,8 @@
 // Light uniforms (3)
 //
 #if defined(CLUSTERED_SHADING_LIGHTS_BINDING)
-[[vk::binding(CLUSTERED_SHADING_LIGHTS_BINDING, CLUSTERED_SHADING_SET)]] cbuffer b_pointLights
-{
-	PointLight g_pointLights[kMaxVisiblePointLights];
-};
-
-[[vk::binding(CLUSTERED_SHADING_LIGHTS_BINDING + 1u, CLUSTERED_SHADING_SET)]] cbuffer b_spotLights
-{
-	SpotLight g_spotLights[kMaxVisibleSpotLights];
-};
-
+[[vk::binding(CLUSTERED_SHADING_LIGHTS_BINDING, CLUSTERED_SHADING_SET)]] StructuredBuffer<PointLight> g_pointLights;
+[[vk::binding(CLUSTERED_SHADING_LIGHTS_BINDING + 1u, CLUSTERED_SHADING_SET)]] StructuredBuffer<SpotLight> g_spotLights;
 [[vk::binding(CLUSTERED_SHADING_LIGHTS_BINDING + 2u, CLUSTERED_SHADING_SET)]] Texture2D g_shadowAtlasTex;
 #endif
 
@@ -36,40 +28,31 @@
 // Reflection probes (1)
 //
 #if defined(CLUSTERED_SHADING_REFLECTIONS_BINDING)
-[[vk::binding(CLUSTERED_SHADING_REFLECTIONS_BINDING, CLUSTERED_SHADING_SET)]] cbuffer b_reflectionProbes
-{
-	ReflectionProbe g_reflectionProbes[kMaxVisibleReflectionProbes];
-};
+[[vk::binding(CLUSTERED_SHADING_REFLECTIONS_BINDING, CLUSTERED_SHADING_SET)]] StructuredBuffer<ReflectionProbe>
+	g_reflectionProbes;
 #endif
 
 //
 // Decal uniforms (1)
 //
 #if defined(CLUSTERED_SHADING_DECALS_BINDING)
-[[vk::binding(CLUSTERED_SHADING_DECALS_BINDING, CLUSTERED_SHADING_SET)]] cbuffer b_decals
-{
-	Decal g_decals[kMaxVisibleDecals];
-};
+[[vk::binding(CLUSTERED_SHADING_DECALS_BINDING, CLUSTERED_SHADING_SET)]] StructuredBuffer<Decal> g_decals;
 #endif
 
 //
 // Fog density uniforms (1)
 //
 #if defined(CLUSTERED_SHADING_FOG_BINDING)
-[[vk::binding(CLUSTERED_SHADING_FOG_BINDING, CLUSTERED_SHADING_SET)]] cbuffer b_fogDensityVolumes
-{
-	FogDensityVolume g_fogDensityVolumes[kMaxVisibleFogDensityVolumes];
-};
+[[vk::binding(CLUSTERED_SHADING_FOG_BINDING, CLUSTERED_SHADING_SET)]] StructuredBuffer<FogDensityVolume>
+	g_fogDensityVolumes;
 #endif
 
 //
 // GI (1)
 //
 #if defined(CLUSTERED_SHADING_GI_BINDING)
-[[vk::binding(CLUSTERED_SHADING_GI_BINDING, CLUSTERED_SHADING_SET)]] cbuffer b_giProbes
-{
-	GlobalIlluminationProbe g_giProbes[kMaxVisibleGlobalIlluminationProbes];
-};
+[[vk::binding(CLUSTERED_SHADING_GI_BINDING, CLUSTERED_SHADING_SET)]] StructuredBuffer<GlobalIlluminationProbe>
+	g_giProbes;
 #endif
 
 //
@@ -85,37 +68,37 @@ Vec3 clusterHeatmap(Cluster cluster, U32 objectTypeMask)
 	U32 maxObjects = 0u;
 	I32 count = 0;
 
-	if((objectTypeMask & (1u << (U32)ClusterObjectType::kPointLight)) != 0u)
+	if((objectTypeMask & (1u << (U32)ClusteredObjectType::kPointLight)) != 0u)
 	{
 		maxObjects += kMaxVisiblePointLights;
 		count += I32(countbits(cluster.m_pointLightsMask));
 	}
 
-	if((objectTypeMask & (1u << (U32)ClusterObjectType::kSpotLight)) != 0u)
+	if((objectTypeMask & (1u << (U32)ClusteredObjectType::kSpotLight)) != 0u)
 	{
 		maxObjects += kMaxVisibleSpotLights;
 		count += I32(countbits(cluster.m_spotLightsMask));
 	}
 
-	if((objectTypeMask & (1u << (U32)ClusterObjectType::kDecal)) != 0u)
+	if((objectTypeMask & (1u << (U32)ClusteredObjectType::kDecal)) != 0u)
 	{
 		maxObjects += kMaxVisibleDecals;
 		count += I32(countbits(cluster.m_decalsMask));
 	}
 
-	if((objectTypeMask & (1u << (U32)ClusterObjectType::kFogDensityVolume)) != 0u)
+	if((objectTypeMask & (1u << (U32)ClusteredObjectType::kFogDensityVolume)) != 0u)
 	{
 		maxObjects += kMaxVisibleFogDensityVolumes;
 		count += countbits(cluster.m_fogDensityVolumesMask);
 	}
 
-	if((objectTypeMask & (1u << (U32)ClusterObjectType::kReflectionProbe)) != 0u)
+	if((objectTypeMask & (1u << (U32)ClusteredObjectType::kReflectionProbe)) != 0u)
 	{
 		maxObjects += kMaxVisibleReflectionProbes;
 		count += countbits(cluster.m_reflectionProbesMask);
 	}
 
-	if((objectTypeMask & (1u << (U32)ClusterObjectType::kGlobalIlluminationProbe)) != 0u)
+	if((objectTypeMask & (1u << (U32)ClusteredObjectType::kGlobalIlluminationProbe)) != 0u)
 	{
 		maxObjects += kMaxVisibleGlobalIlluminationProbes;
 		count += countbits(cluster.m_giProbesMask);
@@ -143,7 +126,7 @@ U32 computeTileClusterIndexFragCoord(Vec2 fragCoord, U32 tileSize, U32 tileCount
 /// Merge the tiles with z splits into a single cluster.
 Cluster mergeClusters(Cluster tileCluster, Cluster zCluster)
 {
-//#define ANKI_OR_MASKS(x) subgroupOr(x)
+// #define ANKI_OR_MASKS(x) subgroupOr(x)
 #define ANKI_OR_MASKS(x) (x)
 
 	Cluster outCluster;

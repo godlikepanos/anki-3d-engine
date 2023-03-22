@@ -67,7 +67,7 @@ private:
 	SegregatedListsGpuMemoryPoolToken m_gpuSceneAlphas;
 	SegregatedListsGpuMemoryPoolToken m_gpuSceneScales;
 	SegregatedListsGpuMemoryPoolToken m_gpuSceneUniforms;
-	U32 m_gpuSceneParticleEmitterOffset = kMaxU32;
+	U32 m_gpuSceneIndex = kMaxU32;
 
 	Bool m_resourceUpdated = true;
 	SimulationType m_simulationType = SimulationType::kUndefined;

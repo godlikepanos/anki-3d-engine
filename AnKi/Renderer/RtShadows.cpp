@@ -11,6 +11,8 @@
 #include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/RenderQueue.h>
+#include <AnKi/Renderer/ClusterBinning.h>
+#include <AnKi/Renderer/PackVisibleClusteredObjects.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Shaders/Include/MaterialTypes.h>
@@ -249,8 +251,8 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	// RT shadows pass
 	{
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("RtShadows");
-		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
-			run(ctx, rgraphCtx);
+		rpass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+			run(rgraphCtx);
 		});
 
 		rpass.newTextureDependency(m_runCtx.m_historyRt, TextureUsageBit::kSampledTraceRays);
@@ -266,7 +268,8 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(m_runCtx.m_prevMomentsRt, TextureUsageBit::kSampledTraceRays);
 		rpass.newTextureDependency(m_runCtx.m_currentMomentsRt, TextureUsageBit::kImageTraceRaysWrite);
 
-		rpass.newBufferDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::kStorageTraceRaysRead);
+		rpass.newBufferDependency(m_r->getClusterBinning().getClustersRenderGraphHandle(),
+								  BufferUsageBit::kStorageTraceRaysRead);
 	}
 
 	// Denoise pass horizontal
@@ -436,10 +439,9 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	}
 }
 
-void RtShadows::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
+void RtShadows::run(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	const ClusteredShadingContext& rsrc = ctx.m_clusteredShading;
 
 	cmdb->bindShaderProgram(m_rtLibraryGrProg);
 
@@ -472,13 +474,13 @@ void RtShadows::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCt
 
 	constexpr U32 kSet = 2;
 
-	bindUniforms(cmdb, kSet, 0, rsrc.m_clusteredShadingUniformsToken);
+	bindUniforms(cmdb, kSet, 0, m_r->getClusterBinning().getClusteredUniformsRebarToken());
 
-	bindUniforms(cmdb, kSet, 1, rsrc.m_pointLightsToken);
-	bindUniforms(cmdb, kSet, 2, rsrc.m_spotLightsToken);
+	m_r->getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, kSet, 1, ClusteredObjectType::kPointLight);
+	m_r->getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, kSet, 2, ClusteredObjectType::kSpotLight);
 	rgraphCtx.bindColorTexture(kSet, 3, m_r->getShadowMapping().getShadowmapRt());
 
-	bindStorage(cmdb, kSet, 4, rsrc.m_clustersToken);
+	bindStorage(cmdb, kSet, 4, m_r->getClusterBinning().getClustersRebarToken());
 
 	cmdb->bindSampler(kSet, 5, m_r->getSamplers().m_trilinearRepeat);
 

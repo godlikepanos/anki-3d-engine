@@ -128,4 +128,23 @@ struct VolumetricLightingUniforms
 	F32 m_maxZSplitsToProcessf;
 };
 
+// Pack visible clusterer objects
+struct PointLightExtra
+{
+	Vec2 m_padding0;
+	U32 m_shadowLayer;
+	F32 m_shadowAtlasTileScale;
+
+	Vec4 m_shadowAtlasTileOffsets[6u];
+};
+
+// Pack visible clusterer objects
+struct SpotLightExtra
+{
+	Vec3 m_padding;
+	U32 m_shadowLayer;
+
+	Mat4 m_textureMatrix;
+};
+
 ANKI_END_NAMESPACE

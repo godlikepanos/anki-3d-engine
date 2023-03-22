@@ -162,6 +162,11 @@ public:
 		return m_buffer;
 	}
 
+	U8* getBufferMappedAddress()
+	{
+		return m_mappedMem;
+	}
+
 private:
 	BufferPtr m_buffer;
 	U8* m_mappedMem = nullptr; ///< Cache it.

@@ -331,6 +331,8 @@ inline BufferHandle RenderGraphDescription::importBuffer(BufferPtr buff, BufferU
 		ANKI_ASSERT((offset + range) <= buff->getSize());
 	}
 
+	ANKI_ASSERT(range > 0);
+
 	for([[maybe_unused]] const Buffer& bb : m_buffers)
 	{
 		ANKI_ASSERT((bb.m_importedBuff != buff || !bufferRangeOverlaps(bb.m_offset, bb.m_range, offset, range))

@@ -42,6 +42,7 @@
 #include <AnKi/Renderer/Scale.h>
 #include <AnKi/Renderer/IndirectDiffuse.h>
 #include <AnKi/Renderer/VrsSriGeneration.h>
+#include <AnKi/Renderer/PackVisibleClusteredObjects.h>
 
 namespace anki {
 
@@ -253,6 +254,9 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 	m_clusterBinning.reset(newInstance<ClusterBinning>(*m_pool, this));
 	ANKI_CHECK(m_clusterBinning->init());
 
+	m_packVisibleClustererObjects.reset(newInstance<PackVisibleClusteredObjects>(*m_pool, this));
+	ANKI_CHECK(m_packVisibleClustererObjects->init());
+
 	// Init samplers
 	{
 		SamplerInitInfo sinit("NearestNearestClamp");
@@ -349,6 +353,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 
 	// Populate render graph. WARNING Watch the order
 	gpuSceneCopy(ctx);
+	m_packVisibleClustererObjects->populateRenderGraph(ctx);
 	m_genericCompute->populateRenderGraph(ctx);
 	m_clusterBinning->populateRenderGraph(ctx);
 	if(m_accelerationStructureBuilder)

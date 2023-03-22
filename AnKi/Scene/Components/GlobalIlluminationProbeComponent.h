@@ -77,6 +77,7 @@ public:
 		el.m_cellSizes = (m_halfSize * 2.0f) / Vec3(m_cellCounts);
 		el.m_fadeDistance = m_fadeDistance;
 		el.m_volumeTextureBindlessIndex = m_volTexBindlessIdx;
+		el.m_index = m_gpuSceneIndex;
 	}
 
 	void setupGlobalIlluminationProbeQueueElementForRefresh(GlobalIlluminationProbeQueueElementForRefresh& el)
@@ -110,7 +111,7 @@ private:
 	TextureViewPtr m_volView;
 	U32 m_volTexBindlessIdx = 0;
 
-	U32 m_gpuSceneOffset = kMaxU32;
+	U32 m_gpuSceneIndex = kMaxU32;
 
 	Array<Frustum, 6> m_frustums;
 

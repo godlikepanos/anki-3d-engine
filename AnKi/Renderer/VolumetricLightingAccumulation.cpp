@@ -7,6 +7,8 @@
 #include <AnKi/Renderer/ShadowMapping.h>
 #include <AnKi/Renderer/IndirectDiffuseProbes.h>
 #include <AnKi/Renderer/Renderer.h>
+#include <AnKi/Renderer/ClusterBinning.h>
+#include <AnKi/Renderer/PackVisibleClusteredObjects.h>
 #include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Core/ConfigSet.h>
 
@@ -90,7 +92,8 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 	pass.newTextureDependency(m_runCtx.m_rts[1], TextureUsageBit::kImageComputeWrite);
 	pass.newTextureDependency(m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::kSampledCompute);
 
-	pass.newBufferDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::kStorageComputeRead);
+	pass.newBufferDependency(m_r->getClusterBinning().getClustersRenderGraphHandle(),
+							 BufferUsageBit::kStorageComputeRead);
 
 	if(m_r->getIndirectDiffuseProbes().hasCurrentlyRefreshedVolumeRt())
 	{
@@ -102,7 +105,6 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 void VolumetricLightingAccumulation::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	const ClusteredShadingContext& rsrc = ctx.m_clusteredShading;
 
 	cmdb->bindShaderProgram(m_grProg);
 
@@ -117,15 +119,17 @@ void VolumetricLightingAccumulation::run(const RenderingContext& ctx, RenderPass
 
 	rgraphCtx.bindColorTexture(0, 5, m_runCtx.m_rts[0]);
 
-	bindUniforms(cmdb, 0, 6, rsrc.m_clusteredShadingUniformsToken);
-	bindUniforms(cmdb, 0, 7, rsrc.m_pointLightsToken);
-	bindUniforms(cmdb, 0, 8, rsrc.m_spotLightsToken);
+	bindUniforms(cmdb, 0, 6, m_r->getClusterBinning().getClusteredUniformsRebarToken());
+	m_r->getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 7, ClusteredObjectType::kPointLight);
+	m_r->getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 8, ClusteredObjectType::kSpotLight);
 	rgraphCtx.bindColorTexture(0, 9, m_r->getShadowMapping().getShadowmapRt());
 
-	bindUniforms(cmdb, 0, 10, rsrc.m_globalIlluminationProbesToken);
+	m_r->getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 10,
+																	ClusteredObjectType::kGlobalIlluminationProbe);
 
-	bindUniforms(cmdb, 0, 11, rsrc.m_fogDensityVolumesToken);
-	bindStorage(cmdb, 0, 12, rsrc.m_clustersToken);
+	m_r->getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 11,
+																	ClusteredObjectType::kFogDensityVolume);
+	bindStorage(cmdb, 0, 12, m_r->getClusterBinning().getClustersRebarToken());
 
 	cmdb->bindAllBindless(1);
 

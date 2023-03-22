@@ -18,6 +18,7 @@ namespace anki {
 
 LightComponent::LightComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
+	, m_node(node)
 	, m_uuid(node->getSceneGraph().getNewUuid())
 	, m_spatial(this)
 	, m_type(LightComponentType::kPoint)
@@ -27,9 +28,6 @@ LightComponent::LightComponent(SceneNode* node)
 
 	setLightComponentType(LightComponentType::kPoint);
 	m_worldTransform = node->getWorldTransform();
-
-	m_gpuSceneLightOffset =
-		U32(node->getSceneGraph().getAllGpuSceneContiguousArrays().allocate(GpuSceneContiguousArrayType::kLights));
 }
 
 LightComponent::~LightComponent()
@@ -39,9 +37,8 @@ LightComponent::~LightComponent()
 void LightComponent::setLightComponentType(LightComponentType type)
 {
 	ANKI_ASSERT(type >= LightComponentType::kFirst && type < LightComponentType::kCount);
-	m_type = type;
-	m_markedForUpdate = true;
-	m_forceFullUpdate = true;
+	m_shapeUpdated = true;
+	m_typeChanged = type != m_type;
 
 	if(type == LightComponentType::kDirectional)
 	{
@@ -53,15 +50,38 @@ void LightComponent::setLightComponentType(LightComponentType type)
 		m_spatial.setAlwaysVisible(false);
 		m_spatial.setUpdatesOctreeBounds(true);
 	}
+
+	if(m_typeChanged && m_gpuSceneLightIndex != kMaxU32)
+	{
+		m_node->getSceneGraph().getAllGpuSceneContiguousArrays().deferredFree(
+			(m_type == LightComponentType::kPoint) ? GpuSceneContiguousArrayType::kPointLights
+												   : GpuSceneContiguousArrayType::kSpotLights,
+			m_gpuSceneLightIndex);
+		m_gpuSceneLightIndex = kMaxU32;
+	}
+
+	if(m_gpuSceneLightIndex == kMaxU32 && type == LightComponentType::kPoint)
+	{
+		m_gpuSceneLightIndex = m_node->getSceneGraph().getAllGpuSceneContiguousArrays().allocate(
+			GpuSceneContiguousArrayType::kPointLights);
+	}
+	else if(m_gpuSceneLightIndex == kMaxU32 && type == LightComponentType::kSpot)
+	{
+		m_gpuSceneLightIndex =
+			m_node->getSceneGraph().getAllGpuSceneContiguousArrays().allocate(GpuSceneContiguousArrayType::kSpotLights);
+	}
+
+	m_type = type;
 }
 
 Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	const Bool moveUpdated = info.m_node->movedThisFrame() || m_forceFullUpdate;
-	const Bool shapeUpdated = m_markedForUpdate || m_forceFullUpdate;
-	updated = moveUpdated || shapeUpdated;
-	m_markedForUpdate = false;
-	m_forceFullUpdate = false;
+	const Bool typeChanged = m_typeChanged;
+	const Bool moveUpdated = info.m_node->movedThisFrame() || typeChanged;
+	const Bool shapeUpdated = m_shapeUpdated || typeChanged;
+	updated = moveUpdated || shapeUpdated || typeChanged;
+	m_shapeUpdated = false;
+	m_typeChanged = false;
 
 	if(moveUpdated)
 	{
@@ -114,14 +134,12 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuLight.m_radius = m_point.m_radius;
 		gpuLight.m_diffuseColor = m_diffColor.xyz();
 		gpuLight.m_squareRadiusOverOne = 1.0f / (m_point.m_radius * m_point.m_radius);
-		gpuLight.m_shadowLayer = 0; // Don't know this at this point.
-		gpuLight.m_shadowAtlasTileScale = 0.0f; // Don't know this at this point.
-		for(U32 i = 0; i < 6; ++i)
-		{
-			gpuLight.m_shadowAtlasTileOffsets[i] = Vec4(0.0f); // Don't know this at this point.
-		}
+		gpuLight.m_shadow = m_shadow;
 		GpuSceneMicroPatcher& gpuScenePatcher = *getExternalSubsystems(*info.m_node).m_gpuSceneMicroPatcher;
-		gpuScenePatcher.newCopy(*info.m_framePool, m_gpuSceneLightOffset, sizeof(gpuLight), &gpuLight);
+		const PtrSize offset = m_gpuSceneLightIndex * sizeof(GpuScenePointLight)
+							   + info.m_node->getSceneGraph().getAllGpuSceneContiguousArrays().getArrayBase(
+								   GpuSceneContiguousArrayType::kPointLights);
+		gpuScenePatcher.newCopy(*info.m_framePool, offset, sizeof(gpuLight), &gpuLight);
 	}
 	else if(updated && m_type == LightComponentType::kSpot)
 	{
@@ -184,12 +202,14 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuLight.m_radius = m_spot.m_distance;
 		gpuLight.m_direction = -m_worldTransform.getRotation().getZAxis();
 		gpuLight.m_squareRadiusOverOne = 1.0f / (m_spot.m_distance * m_spot.m_distance);
-		gpuLight.m_shadowLayer = 1; // Don't know this at this point.
+		gpuLight.m_shadow = m_shadow;
 		gpuLight.m_outerCos = cos(m_spot.m_outerAngle / 2.0f);
 		gpuLight.m_innerCos = cos(m_spot.m_innerAngle / 2.0f);
-		gpuLight.m_textureMatrix = Mat4::getIdentity(); // Don't know this at this point.
 		GpuSceneMicroPatcher& gpuScenePatcher = *getExternalSubsystems(*info.m_node).m_gpuSceneMicroPatcher;
-		gpuScenePatcher.newCopy(*info.m_framePool, m_gpuSceneLightOffset, sizeof(gpuLight), &gpuLight);
+		const PtrSize offset = m_gpuSceneLightIndex * sizeof(GpuSceneSpotLight)
+							   + info.m_node->getSceneGraph().getAllGpuSceneContiguousArrays().getArrayBase(
+								   GpuSceneContiguousArrayType::kSpotLights);
+		gpuScenePatcher.newCopy(*info.m_framePool, offset, sizeof(gpuLight), &gpuLight);
 	}
 	else if(m_type == LightComponentType::kDirectional)
 	{
@@ -373,10 +393,22 @@ void LightComponent::onDestroy(SceneNode& node)
 	deleteArray(node.getMemoryPool(), m_frustums, m_frustumCount);
 	m_spatial.removeFromOctree(node.getSceneGraph().getOctree());
 
-	if(m_gpuSceneLightOffset != kMaxU32)
+	if(m_gpuSceneLightIndex != kMaxU32)
 	{
-		node.getSceneGraph().getAllGpuSceneContiguousArrays().deferredFree(GpuSceneContiguousArrayType::kLights,
-																		   m_gpuSceneLightOffset);
+		if(m_type == LightComponentType::kPoint)
+		{
+			node.getSceneGraph().getAllGpuSceneContiguousArrays().deferredFree(
+				GpuSceneContiguousArrayType::kPointLights, m_gpuSceneLightIndex);
+		}
+		else if(m_type == LightComponentType::kSpot)
+		{
+			node.getSceneGraph().getAllGpuSceneContiguousArrays().deferredFree(GpuSceneContiguousArrayType::kSpotLights,
+																			   m_gpuSceneLightIndex);
+		}
+		else
+		{
+			ANKI_ASSERT(0);
+		}
 	}
 }
 
