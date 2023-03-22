@@ -14,7 +14,7 @@ ANKI_TEST(Util, Tracer)
 	HeapMemoryPool alloc(allocAligned, nullptr);
 	CoreTracer tracer;
 	ANKI_TEST_EXPECT_NO_ERR(tracer.init(&alloc, "./"));
-	TracerSingleton::get().setEnabled(true);
+	Tracer::getSingleton().setEnabled(true);
 
 	// 1st frame
 	tracer.flushFrame(0);

@@ -212,9 +212,19 @@ void cleanupGetAndroidCommandLineArguments(void* ptr)
 }
 #endif
 
-void preMainInit()
+// The 1st thing that executes before main
+void preMain()
 {
+	Logger::allocateSingleton();
+	ANKI_UTIL_LOGV("Pre main executed. This should be the 1st message");
 	Thread::setCurrentThreadName("Main");
+}
+
+// The last thing that executes after main
+void postMain()
+{
+	ANKI_UTIL_LOGV("Post main executed. This should be the last message");
+	Logger::freeSingleton();
 }
 
 } // end namespace anki

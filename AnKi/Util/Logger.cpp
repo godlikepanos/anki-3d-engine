@@ -69,7 +69,7 @@ void Logger::write(const Char* file, int line, const Char* func, const Char* sub
 				   const Char* threadName, const Char* msg)
 {
 	// Note: m_verbosityEnabled is not accessed in a thread-safe way. It doesn't really matter though
-	if(type == LoggerMessageType::kVerbose && !m_verbosityEnabled)
+	if(type == LoggerMessageType::kVerbose && !m_verbosityEnabled) [[likely]]
 	{
 		return;
 	}

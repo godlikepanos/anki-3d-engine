@@ -51,14 +51,12 @@ using LoggerMessageHandlerCallback = void (*)(void*, const LoggerMessageInfo& in
 /// thread safe.
 /// To add a new signal:
 /// @code logger.addMessageHandler((void*)obj, &function) @endcode
-class Logger
+class Logger : public MakeSingleton<Logger>
 {
+	template<typename>
+	friend class MakeSingleton;
+
 public:
-	/// Initialize the logger and add the default message handler
-	Logger();
-
-	~Logger();
-
 	/// Add a new message handler.
 	void addMessageHandler(void* data, LoggerMessageHandlerCallback callback);
 
@@ -89,18 +87,6 @@ private:
 	public:
 		void* m_data = nullptr;
 		LoggerMessageHandlerCallback m_callback = nullptr;
-
-		Handler() = default;
-
-		Handler(const Handler&) = default;
-
-		Handler(void* data, LoggerMessageHandlerCallback callback)
-			: m_data(data)
-			, m_callback(callback)
-		{
-		}
-
-		Handler& operator=(const Handler&) = default;
 	};
 
 	Mutex m_mutex; ///< For thread safety
@@ -108,16 +94,19 @@ private:
 	U32 m_handlersCount = 0;
 	Bool m_verbosityEnabled = false;
 
+	/// Initialize the logger and add the default message handler
+	Logger();
+
+	~Logger();
+
 	static void defaultSystemMessageHandler(void*, const LoggerMessageInfo& info);
 	static void fileMessageHandler(void* file, const LoggerMessageInfo& info);
 };
 
-using LoggerSingleton = Singleton<Logger>;
-
 #define ANKI_LOG(subsystem_, t, ...) \
 	do \
 	{ \
-		LoggerSingleton::get().writeFormated(ANKI_FILE, __LINE__, ANKI_FUNC, subsystem_, LoggerMessageType::t, \
+		Logger::getSingleton().writeFormated(ANKI_FILE, __LINE__, ANKI_FUNC, subsystem_, LoggerMessageType::t, \
 											 Thread::getCurrentThreadName(), __VA_ARGS__); \
 	} while(false)
 /// @}

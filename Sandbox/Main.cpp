@@ -53,7 +53,7 @@ Error MyApp::init(int argc, char* argv[])
 	{
 		m_profile = true;
 		m_config.setCoreTargetFps(240);
-		TracerSingleton::get().setEnabled(true);
+		Tracer::getSingleton().setEnabled(true);
 	}
 
 	// Load scene
@@ -159,7 +159,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kF11) == 1)
 	{
-		TracerSingleton::get().setEnabled(!TracerSingleton::get().getEnabled());
+		Tracer::getSingleton().setEnabled(!Tracer::getSingleton().getEnabled());
 	}
 
 #if !PLAYER
@@ -273,7 +273,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 		if(in.getKey(KeyCode::kF12) == 1 && ANKI_ENABLE_TRACE)
 		{
-			TracerSingleton::get().setEnabled(!TracerSingleton::get().getEnabled());
+			Tracer::getSingleton().setEnabled(!Tracer::getSingleton().getEnabled());
 		}
 
 		const Vec2 velocity = in.getMousePosition() - mousePosOn1stClick;

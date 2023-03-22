@@ -174,7 +174,7 @@ Error App::init(ConfigSet* config, AllocAlignedCallback allocCb, void* allocCbUs
 
 Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 {
-	LoggerSingleton::get().enableVerbosity(m_config->getCoreVerboseLog());
+	Logger::getSingleton().enableVerbosity(m_config->getCoreVerboseLog());
 
 	setSignalHandlers();
 
@@ -514,7 +514,7 @@ Error App::mainLoop()
 			TexturePtr presentableTex = m_gr->acquireNextPresentableTexture();
 			m_renderer->setStatsEnabled(m_config->getCoreDisplayStats() > 0 || benchmarkMode
 #if ANKI_ENABLE_TRACE
-										|| TracerSingleton::get().getEnabled()
+										|| Tracer::getSingleton().getEnabled()
 #endif
 			);
 			ANKI_CHECK(m_renderer->render(rqueue, presentableTex));

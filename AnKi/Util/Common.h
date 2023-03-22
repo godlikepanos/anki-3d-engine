@@ -13,5 +13,6 @@ namespace anki {
 #define ANKI_UTIL_LOGE(...) ANKI_LOG("UTIL", kError, __VA_ARGS__)
 #define ANKI_UTIL_LOGW(...) ANKI_LOG("UTIL", kWarning, __VA_ARGS__)
 #define ANKI_UTIL_LOGF(...) ANKI_LOG("UTIL", kFatal, __VA_ARGS__)
+#define ANKI_UTIL_LOGV(...) ANKI_LOG("UTIL", kVerbose, __VA_ARGS__)
 
 } // end namespace anki

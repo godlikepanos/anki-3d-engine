@@ -77,7 +77,7 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 		}
 		else if(strcmp(argv[i], "-v") == 0)
 		{
-			LoggerSingleton::get().enableVerbosity(true);
+			Logger::getSingleton().enableVerbosity(true);
 		}
 		else if(strcmp(argv[i], "-rpath") == 0)
 		{

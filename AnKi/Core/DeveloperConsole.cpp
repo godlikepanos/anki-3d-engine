@@ -9,7 +9,7 @@ namespace anki {
 
 DeveloperConsole::~DeveloperConsole()
 {
-	LoggerSingleton::get().removeMessageHandler(this, loggerCallback);
+	Logger::getSingleton().removeMessageHandler(this, loggerCallback);
 
 	while(!m_logItems.isEmpty())
 	{
@@ -28,7 +28,7 @@ Error DeveloperConsole::init(ScriptManager* scriptManager)
 	ANKI_CHECK(m_manager->newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{16}));
 
 	// Add a new callback to the logger
-	LoggerSingleton::get().addMessageHandler(this, loggerCallback);
+	Logger::getSingleton().addMessageHandler(this, loggerCallback);
 
 	ANKI_CHECK(m_scriptEnv.init(scriptManager));
 

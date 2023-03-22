@@ -101,7 +101,7 @@ CoreTracer::~CoreTracer()
 	m_counterNames.destroy(*m_pool);
 
 	// Destroy the tracer
-	TracerSingleton::destroy();
+	Tracer::freeSingleton();
 }
 
 Error CoreTracer::init(HeapMemoryPool* pool, CString directory)
@@ -109,9 +109,9 @@ Error CoreTracer::init(HeapMemoryPool* pool, CString directory)
 	ANKI_ASSERT(pool);
 	m_pool = pool;
 
-	TracerSingleton::init(m_pool);
+	Tracer::allocateSingleton(m_pool);
 	const Bool enableTracer = getenv("ANKI_CORE_TRACER_ENABLED") && getenv("ANKI_CORE_TRACER_ENABLED")[0] == '1';
-	TracerSingleton::get().setEnabled(enableTracer);
+	Tracer::getSingleton().setEnabled(enableTracer);
 	ANKI_CORE_LOGI("Tracing is %s from the beginning", (enableTracer) ? "enabled" : "disabled");
 
 	m_thread.start(this, [](ThreadCallbackInfo& info) -> Error {
@@ -305,7 +305,7 @@ void CoreTracer::flushFrame(U64 frame)
 	ctx.m_frame = frame;
 	ctx.m_self = this;
 
-	TracerSingleton::get().flush(
+	Tracer::getSingleton().flush(
 		[](void* ud, ThreadId tid, ConstWeakArray<TracerEvent> events, ConstWeakArray<TracerCounter> counters) {
 			Ctx& ctx = *static_cast<Ctx*>(ud);
 			CoreTracer& self = *ctx.m_self;

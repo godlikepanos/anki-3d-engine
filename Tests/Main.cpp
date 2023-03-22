@@ -13,12 +13,7 @@ int myMain(int argc, char** argv)
 {
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 
-	// Call a few singletons to avoid memory leak confusion
-	LoggerSingleton::get();
-
 	int exitcode = getTesterSingleton().run(argc, argv);
-
-	LoggerSingleton::destroy();
 
 	deleteTesterSingleton();
 

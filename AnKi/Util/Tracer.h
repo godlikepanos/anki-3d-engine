@@ -58,17 +58,13 @@ using TracerFlushCallback = void (*)(void* userData, ThreadId tid, ConstWeakArra
 									 ConstWeakArray<TracerCounter> counters);
 
 /// Tracer.
-class Tracer
+class Tracer : public MakeSingleton<Tracer>
 {
+	template<typename>
+	friend class MakeSingleton;
+
 public:
-	Tracer(BaseMemoryPool* pool)
-		: m_pool(pool)
-	{
-	}
-
 	Tracer(const Tracer&) = delete; // Non-copyable
-
-	~Tracer();
 
 	Tracer& operator=(const Tracer&) = delete; // Non-copyable
 
@@ -117,6 +113,13 @@ private:
 
 	Bool m_enabled = false;
 
+	Tracer(BaseMemoryPool* pool)
+		: m_pool(pool)
+	{
+	}
+
+	~Tracer();
+
 	/// Get the thread local ThreadLocal structure.
 	/// @note Thread-safe.
 	ThreadLocal& getThreadLocal();
@@ -125,16 +128,13 @@ private:
 	Chunk& getOrCreateChunk(ThreadLocal& tlocal);
 };
 
-/// The global tracer.
-using TracerSingleton = SingletonInit<Tracer>;
-
 /// Scoped tracer event.
 class TracerScopedEvent
 {
 public:
 	TracerScopedEvent(const char* name)
 		: m_name(name)
-		, m_tracer(&TracerSingleton::get())
+		, m_tracer(&Tracer::getSingleton())
 	{
 		m_handle = m_tracer->beginEvent();
 	}
@@ -153,9 +153,9 @@ private:
 #if ANKI_ENABLE_TRACE
 #	define ANKI_TRACE_SCOPED_EVENT(name_) TracerScopedEvent _tse##name_(ANKI_STRINGIZE(ANKI_CONCATENATE(t, name_)))
 #	define ANKI_TRACE_CUSTOM_EVENT(name_, start_, duration_) \
-		TracerSingleton::get().addCustomEvent(ANKI_STRINGIZE(ANKI_CONCATENATE(t, name_)), start_, duration_)
+		Tracer::getSingleton().addCustomEvent(ANKI_STRINGIZE(ANKI_CONCATENATE(t, name_)), start_, duration_)
 #	define ANKI_TRACE_INC_COUNTER(name_, val_) \
-		TracerSingleton::get().incrementCounter(ANKI_STRINGIZE(ANKI_CONCATENATE(c, name_)), val_)
+		Tracer::getSingleton().incrementCounter(ANKI_STRINGIZE(ANKI_CONCATENATE(c, name_)), val_)
 #else
 #	define ANKI_TRACE_SCOPED_EVENT(name_) ((void)0)
 #	define ANKI_TRACE_CUSTOM_EVENT(name_, start_, duration_) ((void)0)

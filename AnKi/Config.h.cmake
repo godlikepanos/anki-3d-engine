@@ -248,7 +248,8 @@ inline int __builtin_ctzll(unsigned long long x)
 
 // Define the main() function.
 namespace anki {
-void preMainInit();
+void preMain();
+void postMain();
 }
 #if ANKI_OS_ANDROID
 extern "C" {
@@ -267,20 +268,23 @@ void cleanupGetAndroidCommandLineArguments(void* ptr);
 	extern "C" void android_main(android_app* app) \
 	{ \
 		anki::g_androidApp = app; \
-		preMainInit(); \
+		preMain(); \
 		char** argv; \
 		int argc; \
 		void* cleanupToken = anki::getAndroidCommandLineArguments(argc, argv); \
 		myMain(argc, argv); \
 		anki::cleanupGetAndroidCommandLineArguments(cleanupToken); \
+		postMain(); \
 	}
 #else
 #	define ANKI_MAIN_FUNCTION(myMain) \
 	int myMain(int argc, char* argv[]); \
 	int main(int argc, char* argv[]) \
 	{ \
-		preMainInit(); \
-		return myMain(argc, argv); \
+		preMain(); \
+		const int exitCode = myMain(argc, argv); \
+		postMain(); \
+		return exitCode; \
 	}
 #endif
 /// @}

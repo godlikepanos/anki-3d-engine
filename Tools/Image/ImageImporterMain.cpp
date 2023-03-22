@@ -195,7 +195,7 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 		}
 		else if(CString(argv[i]) == "-v")
 		{
-			LoggerSingleton::get().enableVerbosity(true);
+			Logger::getSingleton().enableVerbosity(true);
 		}
 		else if(CString(argv[i]) == "-to-linear")
 		{

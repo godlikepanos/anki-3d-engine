@@ -247,7 +247,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 		if(in.getKey(KeyCode::kF12) == 1 && ANKI_ENABLE_TRACE)
 		{
-			TracerSingleton::get().setEnabled(!TracerSingleton::get().getEnabled());
+			Tracer::getSingleton().setEnabled(!Tracer::getSingleton().getEnabled());
 		}
 
 		const Vec2 velocity = in.getMousePosition() - mousePosOn1stClick;
