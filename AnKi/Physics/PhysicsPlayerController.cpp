@@ -8,8 +8,8 @@
 
 namespace anki {
 
-PhysicsPlayerController::PhysicsPlayerController(PhysicsWorld* world, const PhysicsPlayerControllerInitInfo& init)
-	: PhysicsFilteredObject(kClassType, world)
+PhysicsPlayerController::PhysicsPlayerController(const PhysicsPlayerControllerInitInfo& init)
+	: PhysicsFilteredObject(kClassType)
 {
 	const btTransform trf = toBt(Transform(init.m_position.xyz0(), Mat3x4::getIdentity(), 1.0f));
 
@@ -37,7 +37,7 @@ PhysicsPlayerController::~PhysicsPlayerController()
 
 void PhysicsPlayerController::registerToWorld()
 {
-	btDynamicsWorld& btworld = getWorld().getBtWorld();
+	btDynamicsWorld& btworld = PhysicsWorld::getSingleton().getBtWorld();
 	btworld.addCollisionObject(m_ghostObject.get(), btBroadphaseProxy::CharacterFilter,
 							   btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter);
 	btworld.addAction(m_controller.get());
@@ -45,8 +45,8 @@ void PhysicsPlayerController::registerToWorld()
 
 void PhysicsPlayerController::unregisterFromWorld()
 {
-	getWorld().getBtWorld().removeAction(m_controller.get());
-	getWorld().getBtWorld().removeCollisionObject(m_ghostObject.get());
+	PhysicsWorld::getSingleton().getBtWorld().removeAction(m_controller.get());
+	PhysicsWorld::getSingleton().getBtWorld().removeCollisionObject(m_ghostObject.get());
 }
 
 void PhysicsPlayerController::moveToPositionForReal()
@@ -56,10 +56,12 @@ void PhysicsPlayerController::moveToPositionForReal()
 		return;
 	}
 
-	getWorld().getBtWorld().getBroadphase()->getOverlappingPairCache()->cleanProxyFromPairs(
-		m_ghostObject->getBroadphaseHandle(), getWorld().getBtWorld().getDispatcher());
+	btDynamicsWorld& btworld = PhysicsWorld::getSingleton().getBtWorld();
 
-	m_controller->reset(&getWorld().getBtWorld());
+	btworld.getBroadphase()->getOverlappingPairCache()->cleanProxyFromPairs(m_ghostObject->getBroadphaseHandle(),
+																			btworld.getDispatcher());
+
+	m_controller->reset(&btworld);
 	m_controller->warp(toBt(m_moveToPosition));
 
 	m_moveToPosition.x() = kMaxF32;

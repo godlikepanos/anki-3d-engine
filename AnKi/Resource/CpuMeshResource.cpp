@@ -37,8 +37,7 @@ Error CpuMeshResource::load(const ResourceFilename& filename, [[maybe_unused]] B
 
 	// Create the collision shape
 	const Bool convex = !!(loader.getHeader().m_flags & MeshBinaryFlag::kConvex);
-	m_physicsShape =
-		getExternalSubsystems().m_physicsWorld->newInstance<PhysicsTriangleSoup>(m_positions, m_indices, convex);
+	m_physicsShape = PhysicsWorld::getSingleton().newInstance<PhysicsTriangleSoup>(m_positions, m_indices, convex);
 
 	return Error::kNone;
 }

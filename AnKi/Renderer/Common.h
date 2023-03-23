@@ -85,7 +85,6 @@ public:
 	GpuSceneMemoryPool* m_gpuScenePool = nullptr;
 	GpuSceneMicroPatcher* m_gpuSceneMicroPatcher = nullptr;
 	UnifiedGeometryMemoryPool* m_unifiedGometryMemoryPool = nullptr;
-	PhysicsWorld* m_physicsWorld = nullptr; ///< For debug drawing.
 };
 
 /// Rendering context.

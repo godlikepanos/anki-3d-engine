@@ -9,33 +9,33 @@
 
 namespace anki {
 
-PhysicsJoint::PhysicsJoint(PhysicsWorld* world, JointType type)
-	: PhysicsObject(kClassType, world)
+PhysicsJoint::PhysicsJoint(JointType type)
+	: PhysicsObject(kClassType)
 	, m_type(type)
 {
 }
 
 void PhysicsJoint::registerToWorld()
 {
-	getWorld().getBtWorld().addConstraint(getJoint());
+	PhysicsWorld::getSingleton().getBtWorld().addConstraint(getJoint());
 }
 
 void PhysicsJoint::unregisterFromWorld()
 {
-	getWorld().getBtWorld().removeConstraint(getJoint());
+	PhysicsWorld::getSingleton().getBtWorld().removeConstraint(getJoint());
 }
 
-PhysicsPoint2PointJoint::PhysicsPoint2PointJoint(PhysicsWorld* world, PhysicsBodyPtr bodyA, const Vec3& relPos)
-	: PhysicsJoint(world, JointType::kP2P)
+PhysicsPoint2PointJoint::PhysicsPoint2PointJoint(PhysicsBodyPtr bodyA, const Vec3& relPos)
+	: PhysicsJoint(JointType::kP2P)
 {
 	m_bodyA = std::move(bodyA);
 	m_p2p.init(*m_bodyA->getBtBody(), toBt(relPos));
 	getJoint()->setUserConstraintPtr(static_cast<PhysicsObject*>(this));
 }
 
-PhysicsPoint2PointJoint::PhysicsPoint2PointJoint(PhysicsWorld* world, PhysicsBodyPtr bodyA, const Vec3& relPosA,
-												 PhysicsBodyPtr bodyB, const Vec3& relPosB)
-	: PhysicsJoint(world, JointType::kP2P)
+PhysicsPoint2PointJoint::PhysicsPoint2PointJoint(PhysicsBodyPtr bodyA, const Vec3& relPosA, PhysicsBodyPtr bodyB,
+												 const Vec3& relPosB)
+	: PhysicsJoint(JointType::kP2P)
 {
 	ANKI_ASSERT(bodyA != bodyB);
 	m_bodyA = std::move(bodyA);
@@ -50,8 +50,8 @@ PhysicsPoint2PointJoint::~PhysicsPoint2PointJoint()
 	m_p2p.destroy();
 }
 
-PhysicsHingeJoint::PhysicsHingeJoint(PhysicsWorld* world, PhysicsBodyPtr bodyA, const Vec3& relPos, const Vec3& axis)
-	: PhysicsJoint(world, JointType::kHinge)
+PhysicsHingeJoint::PhysicsHingeJoint(PhysicsBodyPtr bodyA, const Vec3& relPos, const Vec3& axis)
+	: PhysicsJoint(JointType::kHinge)
 {
 	m_bodyA = std::move(bodyA);
 	m_hinge.init(*m_bodyA->getBtBody(), toBt(relPos), toBt(axis));

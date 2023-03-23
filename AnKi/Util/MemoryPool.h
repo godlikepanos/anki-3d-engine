@@ -170,6 +170,21 @@ private:
 #endif
 };
 
+/// The default global memory pool.
+class DefaultHeapMemoryPool : public HeapMemoryPool, public MakeSingleton<DefaultHeapMemoryPool>
+{
+	template<typename>
+	friend class MakeSingleton;
+
+private:
+	DefaultHeapMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData)
+		: HeapMemoryPool(allocCb, allocCbUserData, "DefaultMemPool")
+	{
+	}
+
+	~DefaultHeapMemoryPool() = default;
+};
+
 /// Thread safe memory pool. It's a preallocated memory pool that is used for memory allocations on top of that
 /// preallocated memory. It is mainly used by fast stack allocators
 class StackMemoryPool : public BaseMemoryPool
@@ -376,6 +391,31 @@ public:
 
 private:
 	mutable Atomic<I32> m_refcount = {0};
+};
+
+template<typename TMemoryPool>
+class SingletonMemoryPoolWrapper
+{
+public:
+	TMemoryPool* operator&()
+	{
+		return &TMemoryPool::getSingleton();
+	}
+
+	operator TMemoryPool&()
+	{
+		return TMemoryPool::getSingleton();
+	}
+
+	void* allocate(PtrSize size, PtrSize alignmentBytes)
+	{
+		return TMemoryPool::getSingleton().allocate(size, alignmentBytes);
+	}
+
+	void free(void* ptr)
+	{
+		TMemoryPool::getSingleton().free(ptr);
+	}
 };
 
 inline void* BaseMemoryPool::allocate(PtrSize size, PtrSize alignmentBytes)

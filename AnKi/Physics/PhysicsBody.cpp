@@ -9,8 +9,8 @@
 
 namespace anki {
 
-PhysicsBody::PhysicsBody(PhysicsWorld* world, const PhysicsBodyInitInfo& init)
-	: PhysicsFilteredObject(kClassType, world)
+PhysicsBody::PhysicsBody(const PhysicsBodyInitInfo& init)
+	: PhysicsFilteredObject(kClassType)
 {
 	ANKI_ASSERT(init.m_mass >= 0.0f);
 
@@ -66,12 +66,12 @@ void PhysicsBody::setMass(F32 mass)
 
 void PhysicsBody::registerToWorld()
 {
-	getWorld().getBtWorld().addRigidBody(m_body.get());
+	PhysicsWorld::getSingleton().getBtWorld().addRigidBody(m_body.get());
 }
 
 void PhysicsBody::unregisterFromWorld()
 {
-	getWorld().getBtWorld().removeRigidBody(m_body.get());
+	PhysicsWorld::getSingleton().getBtWorld().removeRigidBody(m_body.get());
 }
 
 } // end namespace anki

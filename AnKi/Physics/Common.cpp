@@ -16,8 +16,7 @@ void PhysicsPtrDeleter::operator()(PhysicsObject* ptr)
 		return;
 	}
 
-	PhysicsWorld& world = ptr->getWorld();
-	world.destroyObject(ptr);
+	PhysicsWorld::getSingleton().destroyObject(ptr);
 }
 
 } // end namespace anki

@@ -370,7 +370,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 		RayCast ray(from, to, PhysicsMaterialBit::kAll & (~PhysicsMaterialBit::kParticle));
 		ray.m_firstHit = true;
 
-		getPhysicsWorld().rayCast(ray);
+		PhysicsWorld::getSingleton().rayCast(ray);
 
 		if(ray.m_hit)
 		{

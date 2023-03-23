@@ -279,19 +279,13 @@ GrManager* createGrManager(ConfigSet* cfg, NativeWindow* win)
 	return gr;
 }
 
-ResourceManager* createResourceManager(ConfigSet* cfg, GrManager* gr, PhysicsWorld*& physics,
-									   ResourceFilesystem*& resourceFs)
+ResourceManager* createResourceManager(ConfigSet* cfg, GrManager* gr, ResourceFilesystem*& resourceFs)
 {
-	physics = new PhysicsWorld();
-
-	ANKI_TEST_EXPECT_NO_ERR(physics->init(allocAligned, nullptr));
-
 	resourceFs = new ResourceFilesystem();
 	ANKI_TEST_EXPECT_NO_ERR(resourceFs->init(*cfg, allocAligned, nullptr));
 
 	ResourceManagerInitInfo rinit;
 	rinit.m_grManager = gr;
-	rinit.m_physicsWorld = physics;
 	rinit.m_resourceFilesystem = resourceFs;
 	rinit.m_config = cfg;
 	rinit.m_allocCallback = allocAligned;

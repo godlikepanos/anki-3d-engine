@@ -55,7 +55,7 @@ private:
 	ClassWrapper<btKinematicCharacterController> m_controller;
 	Vec3 m_moveToPosition = Vec3(kMaxF32);
 
-	PhysicsPlayerController(PhysicsWorld* world, const PhysicsPlayerControllerInitInfo& init);
+	PhysicsPlayerController(const PhysicsPlayerControllerInitInfo& init);
 
 	~PhysicsPlayerController();
 

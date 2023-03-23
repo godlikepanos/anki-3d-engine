@@ -20,7 +20,6 @@ class NativeWindow;
 class Input;
 class GrManager;
 class MainRenderer;
-class PhysicsWorld;
 class SceneGraph;
 class ScriptManager;
 class ResourceManager;
@@ -115,11 +114,6 @@ public:
 		return *m_script;
 	}
 
-	PhysicsWorld& getPhysicsWorld()
-	{
-		return *m_physics;
-	}
-
 	NativeWindow& getWindow()
 	{
 		return *m_window;
@@ -152,7 +146,6 @@ private:
 	GpuSceneMemoryPool* m_gpuSceneMemPool = nullptr;
 	GpuSceneMicroPatcher* m_gpuSceneMicroPatcher = nullptr;
 	RebarStagingGpuMemoryPool* m_rebarPool = nullptr;
-	PhysicsWorld* m_physics = nullptr;
 	ResourceFilesystem* m_resourceFs = nullptr;
 	ResourceManager* m_resources = nullptr;
 	UiManager* m_ui = nullptr;

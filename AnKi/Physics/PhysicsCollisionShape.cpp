@@ -8,11 +8,11 @@
 
 namespace anki {
 
-PhysicsSphere::PhysicsSphere(PhysicsWorld* world, F32 radius)
-	: PhysicsCollisionShape(world, ShapeType::kSphere)
+PhysicsSphere::PhysicsSphere(F32 radius)
+	: PhysicsCollisionShape(ShapeType::kSphere)
 {
 	m_sphere.init(radius);
-	m_sphere->setMargin(getWorld().getCollisionMargin());
+	m_sphere->setMargin(PhysicsWorld::getSingleton().getCollisionMargin());
 	m_sphere->setUserPointer(static_cast<PhysicsObject*>(this));
 }
 
@@ -21,11 +21,11 @@ PhysicsSphere::~PhysicsSphere()
 	m_sphere.destroy();
 }
 
-PhysicsBox::PhysicsBox(PhysicsWorld* world, const Vec3& extend)
-	: PhysicsCollisionShape(world, ShapeType::kBox)
+PhysicsBox::PhysicsBox(const Vec3& extend)
+	: PhysicsCollisionShape(ShapeType::kBox)
 {
 	m_box.init(toBt(extend));
-	m_box->setMargin(getWorld().getCollisionMargin());
+	m_box->setMargin(PhysicsWorld::getSingleton().getCollisionMargin());
 	m_box->setUserPointer(static_cast<PhysicsObject*>(this));
 }
 
@@ -34,9 +34,8 @@ PhysicsBox::~PhysicsBox()
 	m_box.destroy();
 }
 
-PhysicsTriangleSoup::PhysicsTriangleSoup(PhysicsWorld* world, ConstWeakArray<Vec3> positions,
-										 ConstWeakArray<U32> indices, Bool convex)
-	: PhysicsCollisionShape(world, ShapeType::kTrimesh)
+PhysicsTriangleSoup::PhysicsTriangleSoup(ConstWeakArray<Vec3> positions, ConstWeakArray<U32> indices, Bool convex)
+	: PhysicsCollisionShape(ShapeType::kTrimesh)
 {
 	if(!convex)
 	{
@@ -52,13 +51,13 @@ PhysicsTriangleSoup::PhysicsTriangleSoup(PhysicsWorld* world, ConstWeakArray<Vec
 
 		// Create the dynamic shape
 		m_triMesh.m_dynamic.init(m_mesh.get());
-		m_triMesh.m_dynamic->setMargin(getWorld().getCollisionMargin());
+		m_triMesh.m_dynamic->setMargin(PhysicsWorld::getSingleton().getCollisionMargin());
 		m_triMesh.m_dynamic->updateBound();
 		m_triMesh.m_dynamic->setUserPointer(static_cast<PhysicsObject*>(this));
 
 		// And the static one
 		m_triMesh.m_static.init(m_mesh.get(), true);
-		m_triMesh.m_static->setMargin(getWorld().getCollisionMargin());
+		m_triMesh.m_static->setMargin(PhysicsWorld::getSingleton().getCollisionMargin());
 		m_triMesh.m_static->setUserPointer(static_cast<PhysicsObject*>(this));
 	}
 	else
@@ -66,7 +65,7 @@ PhysicsTriangleSoup::PhysicsTriangleSoup(PhysicsWorld* world, ConstWeakArray<Vec
 		m_type = ShapeType::kConvex; // Fake the type
 
 		m_convex.init(&positions[0][0], I32(positions.getSize()), U32(sizeof(Vec3)));
-		m_convex->setMargin(getWorld().getCollisionMargin());
+		m_convex->setMargin(PhysicsWorld::getSingleton().getCollisionMargin());
 		m_convex->setUserPointer(static_cast<PhysicsObject*>(this));
 	}
 }

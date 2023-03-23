@@ -232,7 +232,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	if(threadId == (threadCount - 1) && getExternalSubsystems().m_config->getRDbgPhysics())
 	{
 		m_physicsDrawer.start(ctx.m_matrices.m_viewProjection, cmdb, &rebar);
-		m_physicsDrawer.drawWorld(*getExternalSubsystems().m_physicsWorld);
+		m_physicsDrawer.drawWorld(PhysicsWorld::getSingleton());
 		m_physicsDrawer.end();
 	}
 

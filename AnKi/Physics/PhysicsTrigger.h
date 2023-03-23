@@ -67,7 +67,7 @@ private:
 
 	U64 m_processContactsFrame = 0;
 
-	PhysicsTrigger(PhysicsWorld* world, PhysicsCollisionShapePtr shape);
+	PhysicsTrigger(PhysicsCollisionShapePtr shape);
 
 	~PhysicsTrigger();
 

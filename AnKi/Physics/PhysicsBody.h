@@ -123,7 +123,7 @@ private:
 
 	F32 m_mass = 1.0f;
 
-	PhysicsBody(PhysicsWorld* world, const PhysicsBodyInitInfo& init);
+	PhysicsBody(const PhysicsBodyInitInfo& init);
 
 	~PhysicsBody();
 

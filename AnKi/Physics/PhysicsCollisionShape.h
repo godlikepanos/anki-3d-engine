@@ -57,8 +57,8 @@ protected:
 
 	ShapeType m_type;
 
-	PhysicsCollisionShape(PhysicsWorld* world, ShapeType type)
-		: PhysicsObject(kClassType, world)
+	PhysicsCollisionShape(ShapeType type)
+		: PhysicsObject(kClassType)
 		, m_type(type)
 	{
 	}
@@ -103,7 +103,7 @@ class PhysicsSphere final : public PhysicsCollisionShape
 	ANKI_PHYSICS_OBJECT(PhysicsObjectType::kCollisionShape)
 
 private:
-	PhysicsSphere(PhysicsWorld* world, F32 radius);
+	PhysicsSphere(F32 radius);
 
 	~PhysicsSphere();
 };
@@ -114,7 +114,7 @@ class PhysicsBox final : public PhysicsCollisionShape
 	ANKI_PHYSICS_OBJECT(PhysicsObjectType::kCollisionShape)
 
 private:
-	PhysicsBox(PhysicsWorld* world, const Vec3& extend);
+	PhysicsBox(const Vec3& extend);
 
 	~PhysicsBox();
 };
@@ -125,7 +125,7 @@ class PhysicsConvexHull final : public PhysicsCollisionShape
 	ANKI_PHYSICS_OBJECT(PhysicsObjectType::kCollisionShape)
 
 private:
-	PhysicsConvexHull(PhysicsWorld* world, const Vec3* positions, U32 positionsCount, U32 positionsStride);
+	PhysicsConvexHull(const Vec3* positions, U32 positionsCount, U32 positionsStride);
 
 	~PhysicsConvexHull();
 };
@@ -138,8 +138,7 @@ class PhysicsTriangleSoup final : public PhysicsCollisionShape
 private:
 	ClassWrapper<btTriangleMesh> m_mesh;
 
-	PhysicsTriangleSoup(PhysicsWorld* world, ConstWeakArray<Vec3> positions, ConstWeakArray<U32> indices,
-						Bool convex = false);
+	PhysicsTriangleSoup(ConstWeakArray<Vec3> positions, ConstWeakArray<U32> indices, Bool convex = false);
 
 	~PhysicsTriangleSoup();
 };

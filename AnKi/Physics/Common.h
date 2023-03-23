@@ -8,6 +8,7 @@
 #include <AnKi/Util/StdTypes.h>
 #include <AnKi/Util/Enum.h>
 #include <AnKi/Util/Ptr.h>
+#include <AnKi/Util/MemoryPool.h>
 #include <AnKi/Math.h>
 
 #if ANKI_COMPILER_GCC_COMPATIBLE
@@ -43,6 +44,20 @@ namespace anki {
 #define ANKI_PHYS_LOGE(...) ANKI_LOG("PHYS", kError, __VA_ARGS__)
 #define ANKI_PHYS_LOGW(...) ANKI_LOG("PHYS", kWarning, __VA_ARGS__)
 #define ANKI_PHYS_LOGF(...) ANKI_LOG("PHYS", kFatal, __VA_ARGS__)
+
+class PhysicsMemoryPool : public HeapMemoryPool, public MakeSingleton<PhysicsMemoryPool>
+{
+	template<typename>
+	friend class MakeSingleton;
+
+private:
+	PhysicsMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData)
+		: HeapMemoryPool(allocCb, allocCbUserData, "PhysicsMemPool")
+	{
+	}
+
+	~PhysicsMemoryPool() = default;
+};
 
 // Forward
 class PhysicsObject;

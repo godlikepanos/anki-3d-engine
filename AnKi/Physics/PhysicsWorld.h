@@ -37,19 +37,19 @@ public:
 };
 
 /// The master container for all physics related stuff.
-class PhysicsWorld
+class PhysicsWorld : public MakeSingleton<PhysicsWorld>
 {
-public:
-	PhysicsWorld();
-	~PhysicsWorld();
+	template<typename>
+	friend class MakeSingleton;
 
+public:
 	Error init(AllocAlignedCallback allocCb, void* allocCbData);
 
 	template<typename T, typename... TArgs>
 	PhysicsPtr<T> newInstance(TArgs&&... args)
 	{
-		T* obj = static_cast<T*>(m_pool.allocate(sizeof(T), alignof(T)));
-		callConstructor(*obj, this, std::forward<TArgs>(args)...);
+		T* obj = static_cast<T*>(PhysicsMemoryPool::getSingleton().allocate(sizeof(T), alignof(T)));
+		callConstructor(*obj, std::forward<TArgs>(args)...);
 		{
 			LockGuard<Mutex> lock(m_markedMtx);
 			m_markedForCreation.pushBack(obj);
@@ -63,11 +63,6 @@ public:
 
 	/// Do the update.
 	void update(Second dt);
-
-	HeapMemoryPool& getMemoryPool()
-	{
-		return m_pool;
-	}
 
 	StackMemoryPool& getTempMemoryPool()
 	{
@@ -107,7 +102,6 @@ private:
 	class MyOverlapFilterCallback;
 	class MyRaycastCallback;
 
-	HeapMemoryPool m_pool;
 	StackMemoryPool m_tmpPool;
 
 	ClassWrapper<btDbvtBroadphase> m_broadphase;
@@ -127,6 +121,10 @@ private:
 #if ANKI_ENABLE_ASSERTIONS
 	Atomic<I32> m_objectsCreatedCount = {0};
 #endif
+
+	PhysicsWorld();
+
+	~PhysicsWorld();
 
 	void destroyMarkedForDeletion();
 };

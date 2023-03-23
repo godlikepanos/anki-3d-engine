@@ -130,8 +130,7 @@ void App::cleanup()
 	m_resources = nullptr;
 	deleteInstance(m_mainPool, m_resourceFs);
 	m_resourceFs = nullptr;
-	deleteInstance(m_mainPool, m_physics);
-	m_physics = nullptr;
+	PhysicsWorld::freeSingleton();
 	deleteInstance(m_mainPool, m_rebarPool);
 	m_rebarPool = nullptr;
 	deleteInstance(m_mainPool, m_unifiedGometryMemPool);
@@ -301,8 +300,9 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	//
 	// Physics
 	//
-	m_physics = newInstance<PhysicsWorld>(m_mainPool);
-	ANKI_CHECK(m_physics->init(m_mainPool.getAllocationCallback(), m_mainPool.getAllocationCallbackUserData()));
+	PhysicsWorld::allocateSingleton();
+	ANKI_CHECK(PhysicsWorld::getSingleton().init(m_mainPool.getAllocationCallback(),
+												 m_mainPool.getAllocationCallbackUserData()));
 
 	//
 	// Resource FS
@@ -328,7 +328,6 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	//
 	ResourceManagerInitInfo rinit;
 	rinit.m_grManager = m_gr;
-	rinit.m_physicsWorld = m_physics;
 	rinit.m_resourceFilesystem = m_resourceFs;
 	rinit.m_unifiedGometryMemoryPool = m_unifiedGometryMemPool;
 	rinit.m_config = m_config;
@@ -375,7 +374,6 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	renderInit.m_gpuScenePool = m_gpuSceneMemPool;
 	renderInit.m_gpuSceneMicroPatcher = m_gpuSceneMicroPatcher;
 	renderInit.m_unifiedGometryMemoryPool = m_unifiedGometryMemPool;
-	renderInit.m_physicsWorld = m_physics;
 	m_renderer = newInstance<MainRenderer>(m_mainPool);
 	ANKI_CHECK(m_renderer->init(renderInit));
 
@@ -404,7 +402,6 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	sceneInit.m_uiManager = m_ui;
 	sceneInit.m_unifiedGeometryMemPool = m_unifiedGometryMemPool;
 	sceneInit.m_grManager = m_gr;
-	sceneInit.m_physicsWorld = m_physics;
 	ANKI_CHECK(m_scene->init(sceneInit));
 
 	// Inform the script engine about some subsystems

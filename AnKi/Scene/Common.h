@@ -54,7 +54,6 @@ public:
 	UiManager* m_uiManager = nullptr;
 	GrManager* m_grManager = nullptr;
 	const Timestamp* m_globalTimestamp = nullptr;
-	PhysicsWorld* m_physicsWorld = nullptr;
 	UnifiedGeometryMemoryPool* m_unifiedGeometryMemPool = nullptr;
 	GpuSceneMemoryPool* m_gpuSceneMemoryPool = nullptr;
 	GpuSceneMicroPatcher* m_gpuSceneMicroPatcher = nullptr;

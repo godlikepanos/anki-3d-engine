@@ -55,7 +55,7 @@ protected:
 
 	JointType m_type;
 
-	PhysicsJoint(PhysicsWorld* world, JointType type);
+	PhysicsJoint(JointType type);
 
 	void registerToWorld() override;
 	void unregisterFromWorld() override;
@@ -91,10 +91,9 @@ class PhysicsPoint2PointJoint : public PhysicsJoint
 	ANKI_PHYSICS_OBJECT(PhysicsObjectType::kJoint)
 
 private:
-	PhysicsPoint2PointJoint(PhysicsWorld* world, PhysicsBodyPtr bodyA, const Vec3& relPos);
+	PhysicsPoint2PointJoint(PhysicsBodyPtr bodyA, const Vec3& relPos);
 
-	PhysicsPoint2PointJoint(PhysicsWorld* world, PhysicsBodyPtr bodyA, const Vec3& relPosA, PhysicsBodyPtr bodyB,
-							const Vec3& relPosB);
+	PhysicsPoint2PointJoint(PhysicsBodyPtr bodyA, const Vec3& relPosA, PhysicsBodyPtr bodyB, const Vec3& relPosB);
 
 	~PhysicsPoint2PointJoint();
 };
@@ -105,10 +104,10 @@ class PhysicsHingeJoint : public PhysicsJoint
 	ANKI_PHYSICS_OBJECT(PhysicsObjectType::kJoint)
 
 private:
-	PhysicsHingeJoint(PhysicsWorld* world, PhysicsBodyPtr bodyA, const Vec3& relPos, const Vec3& axis);
+	PhysicsHingeJoint(PhysicsBodyPtr bodyA, const Vec3& relPos, const Vec3& axis);
 
-	PhysicsHingeJoint(PhysicsWorld* world, PhysicsBodyPtr bodyA, const Vec3& relPosA, const Vec3& axisA,
-					  PhysicsBodyPtr bodyB, const Vec3& relPosB, const Vec3& axisB);
+	PhysicsHingeJoint(PhysicsBodyPtr bodyA, const Vec3& relPosA, const Vec3& axisA, PhysicsBodyPtr bodyB,
+					  const Vec3& relPosB, const Vec3& axisB);
 
 	~PhysicsHingeJoint();
 };

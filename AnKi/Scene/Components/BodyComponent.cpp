@@ -44,7 +44,7 @@ void BodyComponent::loadMeshResource(CString meshFilename)
 	init.m_mass = prevMass;
 	init.m_transform = prevTransform;
 	init.m_shape = m_mesh->getCollisionShape();
-	m_body = getExternalSubsystems(*m_node).m_physicsWorld->newInstance<PhysicsBody>(init);
+	m_body = PhysicsWorld::getSingleton().newInstance<PhysicsBody>(init);
 	m_body->setUserData(this);
 	m_body->setTransform(m_node->getWorldTransform());
 
@@ -87,7 +87,7 @@ void BodyComponent::setMass(F32 mass)
 		init.m_transform = prevTransform;
 		init.m_mass = mass;
 		init.m_shape = m_mesh->getCollisionShape();
-		m_body = getExternalSubsystems(*m_node).m_physicsWorld->newInstance<PhysicsBody>(init);
+		m_body = PhysicsWorld::getSingleton().newInstance<PhysicsBody>(init);
 		m_body->setUserData(this);
 
 		m_dirty = true;

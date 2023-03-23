@@ -69,9 +69,8 @@ ANKI_TEST(Ui, Ui)
 	Input* in;
 	ANKI_TEST_EXPECT_NO_ERR(Input::newInstance(allocAligned, nullptr, win, in));
 	GrManager* gr = createGrManager(&cfg, win);
-	PhysicsWorld* physics;
 	ResourceFilesystem* fs;
-	ResourceManager* resource = createResourceManager(&cfg, gr, physics, fs);
+	ResourceManager* resource = createResourceManager(&cfg, gr, fs);
 	UiManager* ui = new UiManager();
 
 	RebarStagingGpuMemoryPool* stagingMem = new RebarStagingGpuMemoryPool();
@@ -164,7 +163,6 @@ ANKI_TEST(Ui, Ui)
 	delete ui;
 	delete stagingMem;
 	delete resource;
-	delete physics;
 	delete fs;
 	GrManager::deleteInstance(gr);
 	Input::deleteInstance(in);

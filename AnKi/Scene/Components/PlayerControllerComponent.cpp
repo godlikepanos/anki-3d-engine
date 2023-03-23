@@ -15,7 +15,7 @@ PlayerControllerComponent::PlayerControllerComponent(SceneNode* node)
 {
 	PhysicsPlayerControllerInitInfo init;
 	init.m_position = node->getWorldTransform().getOrigin().xyz();
-	m_player = getExternalSubsystems(*node).m_physicsWorld->newInstance<PhysicsPlayerController>(init);
+	m_player = PhysicsWorld::getSingleton().newInstance<PhysicsPlayerController>(init);
 	m_player->setUserData(this);
 
 	node->setIgnoreParentTransform(true);

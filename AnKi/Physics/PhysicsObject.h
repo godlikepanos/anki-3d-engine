@@ -50,11 +50,9 @@ class PhysicsObject : public IntrusiveListEnabled<PhysicsObject>
 	ANKI_PHYSICS_OBJECT_FRIENDS
 
 public:
-	PhysicsObject(PhysicsObjectType type, PhysicsWorld* world)
-		: m_world(world)
-		, m_type(type)
+	PhysicsObject(PhysicsObjectType type)
+		: m_type(type)
 	{
-		ANKI_ASSERT(m_world);
 	}
 
 	virtual ~PhysicsObject()
@@ -77,19 +75,7 @@ public:
 		return m_userData;
 	}
 
-	PhysicsWorld& getWorld()
-	{
-		return *m_world;
-	}
-
-	const PhysicsWorld& getWorld() const
-	{
-		return *m_world;
-	}
-
 protected:
-	PhysicsWorld* m_world = nullptr;
-
 	void retain() const
 	{
 		m_refcount.fetchAdd(1);
@@ -100,19 +86,16 @@ protected:
 		return m_refcount.fetchSub(1);
 	}
 
-	HeapMemoryPool& getMemoryPool();
-
 private:
+	mutable Atomic<I32> m_refcount = {0};
+	void* m_userData = nullptr;
+
+	PhysicsObjectType m_type;
 	Bool m_registered = false;
 
 	virtual void registerToWorld() = 0;
 
 	virtual void unregisterFromWorld() = 0;
-
-private:
-	mutable Atomic<I32> m_refcount = {0};
-	PhysicsObjectType m_type;
-	void* m_userData = nullptr;
 };
 
 /// This is a factor that will decide if two filtered objects will be checked for collision.
@@ -148,8 +131,8 @@ class PhysicsFilteredObject : public PhysicsObject
 public:
 	ANKI_PHYSICS_OBJECT_FRIENDS
 
-	PhysicsFilteredObject(PhysicsObjectType type, PhysicsWorld* world)
-		: PhysicsObject(type, world)
+	PhysicsFilteredObject(PhysicsObjectType type)
+		: PhysicsObject(type)
 	{
 	}
 

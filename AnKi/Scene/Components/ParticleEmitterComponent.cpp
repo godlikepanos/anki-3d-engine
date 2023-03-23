@@ -130,7 +130,7 @@ public:
 
 	PhysicsParticle(const PhysicsBodyInitInfo& init, SceneNode* node, ParticleEmitterComponent* component)
 	{
-		m_body = getExternalSubsystems(*node).m_physicsWorld->newInstance<PhysicsBody>(init);
+		m_body = PhysicsWorld::getSingleton().newInstance<PhysicsBody>(init);
 		m_body->setUserData(component);
 		m_body->activate(false);
 		m_body->setMaterialGroup(PhysicsMaterialBit::kParticle);
@@ -256,8 +256,7 @@ void ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	if(m_simulationType == SimulationType::kPhysicsEngine)
 	{
 		PhysicsCollisionShapePtr collisionShape =
-			getExternalSubsystems(*m_node).m_physicsWorld->newInstance<PhysicsSphere>(
-				m_props.m_particle.m_minInitialSize / 2.0f);
+			PhysicsWorld::getSingleton().newInstance<PhysicsSphere>(m_props.m_particle.m_minInitialSize / 2.0f);
 
 		PhysicsBodyInitInfo binit;
 		binit.m_shape = std::move(collisionShape);

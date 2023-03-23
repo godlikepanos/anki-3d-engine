@@ -21,14 +21,9 @@ PhysicsFilteredObject::~PhysicsFilteredObject()
 
 		if(pair->shouldDelete())
 		{
-			deleteInstance(getMemoryPool(), pair);
+			deleteInstance(PhysicsMemoryPool::getSingleton(), pair);
 		}
 	}
-}
-
-HeapMemoryPool& PhysicsObject::getMemoryPool()
-{
-	return m_world->getMemoryPool();
 }
 
 } // end namespace anki
