@@ -17,7 +17,6 @@ namespace anki {
 // Forward
 class Renderer;
 class ResourceManager;
-class ConfigSet;
 
 /// @addtogroup renderer
 /// @{

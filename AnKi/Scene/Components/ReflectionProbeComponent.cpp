@@ -49,7 +49,7 @@ Error ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 			(getExternalSubsystems(*info.m_node).m_grManager->getDeviceCapabilities().m_unalignedBbpTextureFormats)
 				? Format::kR16G16B16_Sfloat
 				: Format::kR16G16B16A16_Sfloat;
-		texInit.m_width = getExternalSubsystems(*info.m_node).m_config->getSceneReflectionProbeResolution();
+		texInit.m_width = ConfigSet::getSingleton().getSceneReflectionProbeResolution();
 		texInit.m_height = texInit.m_width;
 		texInit.m_mipmapCount = U8(computeMaxMipmapCount2d(texInit.m_width, texInit.m_height, 8));
 		texInit.m_type = TextureType::kCube;
@@ -73,11 +73,10 @@ Error ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 
 		F32 effectiveDistance = max(m_halfSize.x(), m_halfSize.y());
 		effectiveDistance = max(effectiveDistance, m_halfSize.z());
-		effectiveDistance =
-			max(effectiveDistance, getExternalSubsystems(*info.m_node).m_config->getSceneProbeEffectiveDistance());
+		effectiveDistance = max(effectiveDistance, ConfigSet::getSingleton().getSceneProbeEffectiveDistance());
 
-		const F32 shadowCascadeDistance = min(
-			effectiveDistance, getExternalSubsystems(*info.m_node).m_config->getSceneProbeShadowEffectiveDistance());
+		const F32 shadowCascadeDistance =
+			min(effectiveDistance, ConfigSet::getSingleton().getSceneProbeShadowEffectiveDistance());
 
 		for(U32 i = 0; i < 6; ++i)
 		{

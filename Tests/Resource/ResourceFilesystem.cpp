@@ -10,11 +10,11 @@ ANKI_TEST(Resource, ResourceFilesystem)
 {
 	printf("Test requires the Data dir\n");
 
-	ConfigSet config(allocAligned, nullptr);
+	ConfigSet::allocateSingleton(allocAligned, nullptr);
 
 	HeapMemoryPool pool(allocAligned, nullptr);
 	ResourceFilesystem fs;
-	ANKI_TEST_EXPECT_NO_ERR(fs.init(config, allocAligned, nullptr));
+	ANKI_TEST_EXPECT_NO_ERR(fs.init(allocAligned, nullptr));
 
 	{
 		ANKI_TEST_EXPECT_NO_ERR(fs.addNewPath("Tests/Data/Dir/../Dir/", StringListRaii(&pool)));

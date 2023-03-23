@@ -16,7 +16,6 @@ namespace anki {
 // Forward
 class ResourceManager;
 class Input;
-class ConfigSet;
 class UiManager;
 class UnifiedGeometryMemoryPool;
 class GpuSceneMemoryPool;
@@ -46,7 +45,6 @@ class PhysicsWorld;
 class SceneGraphExternalSubsystems
 {
 public:
-	ConfigSet* m_config = nullptr;
 	ThreadHive* m_threadHive = nullptr;
 	ResourceManager* m_resourceManager = nullptr;
 	Input* m_input = nullptr;

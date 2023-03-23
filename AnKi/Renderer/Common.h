@@ -80,7 +80,6 @@ public:
 	GrManager* m_grManager = nullptr;
 	RebarStagingGpuMemoryPool* m_rebarStagingPool = nullptr;
 	UiManager* m_uiManager = nullptr;
-	ConfigSet* m_config = nullptr;
 	Timestamp* m_globTimestamp = nullptr;
 	GpuSceneMemoryPool* m_gpuScenePool = nullptr;
 	GpuSceneMicroPatcher* m_gpuSceneMicroPatcher = nullptr;

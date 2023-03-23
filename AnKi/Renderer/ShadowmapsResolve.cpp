@@ -31,7 +31,7 @@ Error ShadowmapsResolve::init()
 
 Error ShadowmapsResolve::initInternal()
 {
-	m_quarterRez = getExternalSubsystems().m_config->getRSmResolveQuarterRez();
+	m_quarterRez = ConfigSet::getSingleton().getRSmResolveQuarterRez();
 	const U32 width = m_r->getInternalResolution().x() / (m_quarterRez + 1);
 	const U32 height = m_r->getInternalResolution().y() / (m_quarterRez + 1);
 
@@ -46,15 +46,15 @@ Error ShadowmapsResolve::initInternal()
 
 	// Prog
 	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
-		(getExternalSubsystems().m_config->getRPreferCompute()) ? "ShaderBinaries/ShadowmapsResolveCompute.ankiprogbin"
-																: "ShaderBinaries/ShadowmapsResolveRaster.ankiprogbin",
+		(ConfigSet::getSingleton().getRPreferCompute()) ? "ShaderBinaries/ShadowmapsResolveCompute.ankiprogbin"
+														: "ShaderBinaries/ShadowmapsResolveRaster.ankiprogbin",
 		m_prog));
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addConstant("kFramebufferSize", UVec2(width, height));
 	variantInitInfo.addConstant("kTileCount", m_r->getTileCounts());
 	variantInitInfo.addConstant("kZSplitCount", m_r->getZSplitCount());
 	variantInitInfo.addConstant("kTileSize", m_r->getTileSize());
-	variantInitInfo.addMutation("PCF", getExternalSubsystems().m_config->getRShadowMappingPcf());
+	variantInitInfo.addMutation("PCF", ConfigSet::getSingleton().getRShadowMappingPcf());
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProg = variant->getProgram();
@@ -70,7 +70,7 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
 
-	if(getExternalSubsystems().m_config->getRPreferCompute())
+	if(ConfigSet::getSingleton().getRPreferCompute())
 	{
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("ResolveShadows");
 
@@ -135,7 +135,7 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx)
 	}
 	cmdb->bindTexture(0, 9, m_noiseImage->getTextureView());
 
-	if(getExternalSubsystems().m_config->getRPreferCompute())
+	if(ConfigSet::getSingleton().getRPreferCompute())
 	{
 		rgraphCtx.bindImage(0, 10, m_runCtx.m_rt, TextureSubresourceInfo());
 		dispatchPPCompute(cmdb, 8, 8, m_rtDescr.m_width, m_rtDescr.m_height);

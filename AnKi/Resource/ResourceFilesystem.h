@@ -13,9 +13,6 @@
 
 namespace anki {
 
-// Forward
-class ConfigSet;
-
 /// @addtogroup resource
 /// @{
 
@@ -92,7 +89,7 @@ public:
 
 	ResourceFilesystem& operator=(const ResourceFilesystem&) = delete; // Non-copyable
 
-	Error init(const ConfigSet& config, AllocAlignedCallback allocCallback, void* allocCallbackUserData);
+	Error init(AllocAlignedCallback allocCallback, void* allocCallbackUserData);
 
 	/// Search the path list to find the file. Then open the file for reading. It's thread-safe.
 	Error openFile(const ResourceFilename& filename, ResourceFilePtr& file);

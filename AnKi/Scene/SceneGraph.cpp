@@ -61,7 +61,7 @@ Error SceneGraph::init(const SceneGraphInitInfo& initInfo)
 	ANKI_CHECK(m_events.init(this));
 
 	m_octree = newInstance<Octree>(m_pool, &m_pool);
-	m_octree->init(m_sceneMin, m_sceneMax, m_subsystems.m_config->getSceneOctreeMaxDepth());
+	m_octree->init(m_sceneMin, m_sceneMax, ConfigSet::getSingleton().getSceneOctreeMaxDepth());
 
 	// Init the default main camera
 	ANKI_CHECK(newSceneNode<SceneNode>("mainCamera", m_defaultMainCam));

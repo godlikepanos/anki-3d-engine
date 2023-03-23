@@ -81,7 +81,7 @@ Error VrsSriGeneration::initInternal()
 		variantInit.addMutation("SHARED_MEMORY", 1);
 	}
 
-	variantInit.addMutation("LIMIT_RATE_TO_2X2", getExternalSubsystems().m_config->getRVrsLimitTo2x2());
+	variantInit.addMutation("LIMIT_RATE_TO_2X2", ConfigSet::getSingleton().getRVrsLimitTo2x2());
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInit, variant);
@@ -118,8 +118,8 @@ void VrsSriGeneration::getDebugRenderTarget(CString rtName, Array<RenderTargetHa
 
 void VrsSriGeneration::importRenderTargets(RenderingContext& ctx)
 {
-	const Bool enableVrs = getExternalSubsystems().m_grManager->getDeviceCapabilities().m_vrs
-						   && getExternalSubsystems().m_config->getRVrs();
+	const Bool enableVrs =
+		getExternalSubsystems().m_grManager->getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs();
 	if(!enableVrs)
 	{
 		return;
@@ -141,8 +141,8 @@ void VrsSriGeneration::importRenderTargets(RenderingContext& ctx)
 
 void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 {
-	const Bool enableVrs = getExternalSubsystems().m_grManager->getDeviceCapabilities().m_vrs
-						   && getExternalSubsystems().m_config->getRVrs();
+	const Bool enableVrs =
+		getExternalSubsystems().m_grManager->getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs();
 	if(!enableVrs)
 	{
 		return;
@@ -165,8 +165,8 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindColorTexture(0, 0, m_r->getLightShading().getRt());
 			cmdb->bindSampler(0, 1, m_r->getSamplers().m_nearestNearestClamp);
 			rgraphCtx.bindImage(0, 2, m_runCtx.m_rt);
-			const Vec4 pc(1.0f / Vec2(m_r->getInternalResolution()),
-						  getExternalSubsystems().m_config->getRVrsThreshold(), 0.0f);
+			const Vec4 pc(1.0f / Vec2(m_r->getInternalResolution()), ConfigSet::getSingleton().getRVrsThreshold(),
+						  0.0f);
 			cmdb->setPushConstants(&pc, sizeof(pc));
 
 			const U32 fakeWorkgroupSizeXorY = m_sriTexelDimension;

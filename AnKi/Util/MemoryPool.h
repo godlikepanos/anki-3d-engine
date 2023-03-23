@@ -171,18 +171,18 @@ private:
 };
 
 /// The default global memory pool.
-class DefaultHeapMemoryPool : public HeapMemoryPool, public MakeSingleton<DefaultHeapMemoryPool>
+class DefaultMemoryPool : public HeapMemoryPool, public MakeSingleton<DefaultMemoryPool>
 {
 	template<typename>
 	friend class MakeSingleton;
 
 private:
-	DefaultHeapMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData)
+	DefaultMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData)
 		: HeapMemoryPool(allocCb, allocCbUserData, "DefaultMemPool")
 	{
 	}
 
-	~DefaultHeapMemoryPool() = default;
+	~DefaultMemoryPool() = default;
 };
 
 /// Thread safe memory pool. It's a preallocated memory pool that is used for memory allocations on top of that

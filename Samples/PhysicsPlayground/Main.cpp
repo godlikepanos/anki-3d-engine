@@ -245,7 +245,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 
 	if(getInput().getKey(KeyCode::kJ) == 1)
 	{
-		m_config.setRVrs(!m_config.getRVrs());
+		ConfigSet::getSingleton().setRVrs(!ConfigSet::getSingleton().getRVrs());
 	}
 
 	if(getInput().getKey(KeyCode::kF1) == 1)
@@ -254,17 +254,17 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 		mode = (mode + 1) % 3;
 		if(mode == 0)
 		{
-			getConfig().setRDbg(false);
+			ConfigSet::getSingleton().setRDbg(false);
 		}
 		else if(mode == 1)
 		{
-			getConfig().setRDbg(true);
+			ConfigSet::getSingleton().setRDbg(true);
 			getMainRenderer().getDbg().setDepthTestEnabled(true);
 			getMainRenderer().getDbg().setDitheredDepthTestEnabled(false);
 		}
 		else
 		{
-			getConfig().setRDbg(true);
+			ConfigSet::getSingleton().setRDbg(true);
 			getMainRenderer().getDbg().setDepthTestEnabled(false);
 			getMainRenderer().getDbg().setDitheredDepthTestEnabled(true);
 		}

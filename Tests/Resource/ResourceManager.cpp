@@ -11,13 +11,12 @@
 ANKI_TEST(Resource, ResourceManager)
 {
 	// Create
-	ConfigSet config;
+	ConfigSet::allocateSingleton(allocAligned, nullptr);
 
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 
 	ResourceManagerInitInfo rinit;
 	rinit.m_grManager = nullptr;
-	rinit.m_config = &config;
 	rinit.m_allocCallback = allocAligned;
 	rinit.m_allocCallbackData = nullptr;
 	ResourceManager* resources = alloc.newInstance<ResourceManager>();

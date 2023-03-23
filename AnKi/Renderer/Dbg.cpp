@@ -57,7 +57,7 @@ Error Dbg::init()
 
 void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 {
-	ANKI_ASSERT(getExternalSubsystems().m_config->getRDbg());
+	ANKI_ASSERT(ConfigSet::getSingleton().getRDbg());
 
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
@@ -229,7 +229,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 		}
 	}
 
-	if(threadId == (threadCount - 1) && getExternalSubsystems().m_config->getRDbgPhysics())
+	if(threadId == (threadCount - 1) && ConfigSet::getSingleton().getRDbgPhysics())
 	{
 		m_physicsDrawer.start(ctx.m_matrices.m_viewProjection, cmdb, &rebar);
 		m_physicsDrawer.drawWorld(PhysicsWorld::getSingleton());
@@ -242,7 +242,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 
 void Dbg::populateRenderGraph(RenderingContext& ctx)
 {
-	if(!getExternalSubsystems().m_config->getRDbg())
+	if(!ConfigSet::getSingleton().getRDbg())
 	{
 		return;
 	}

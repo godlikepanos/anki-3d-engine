@@ -115,11 +115,11 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 	m_frameCount = 0;
 
 	// Set from the config
-	m_postProcessResolution = UVec2(Vec2(swapchainResolution) * m_subsystems.m_config->getRRenderScaling());
+	m_postProcessResolution = UVec2(Vec2(swapchainResolution) * ConfigSet::getSingleton().getRRenderScaling());
 	alignRoundDown(2, m_postProcessResolution.x());
 	alignRoundDown(2, m_postProcessResolution.y());
 
-	m_internalResolution = UVec2(Vec2(m_postProcessResolution) * m_subsystems.m_config->getRInternalRenderScaling());
+	m_internalResolution = UVec2(Vec2(m_postProcessResolution) * ConfigSet::getSingleton().getRInternalRenderScaling());
 	alignRoundDown(2, m_internalResolution.x());
 	alignRoundDown(2, m_internalResolution.y());
 
@@ -127,10 +127,10 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 				m_postProcessResolution.x(), m_postProcessResolution.y(), m_internalResolution.x(),
 				m_internalResolution.y());
 
-	m_tileSize = m_subsystems.m_config->getRTileSize();
+	m_tileSize = ConfigSet::getSingleton().getRTileSize();
 	m_tileCounts.x() = (m_internalResolution.x() + m_tileSize - 1) / m_tileSize;
 	m_tileCounts.y() = (m_internalResolution.y() + m_tileSize - 1) / m_tileSize;
-	m_zSplitCount = m_subsystems.m_config->getRZSplitCount();
+	m_zSplitCount = ConfigSet::getSingleton().getRZSplitCount();
 
 	// A few sanity checks
 	if(m_internalResolution.x() < 64 || m_internalResolution.y() < 64)
@@ -234,7 +234,7 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 	ANKI_CHECK(m_indirectDiffuse->init());
 
 	if(m_subsystems.m_grManager->getDeviceCapabilities().m_rayTracingEnabled
-	   && m_subsystems.m_config->getSceneRayTracedShadows())
+	   && ConfigSet::getSingleton().getSceneRayTracedShadows())
 	{
 		m_accelerationStructureBuilder.reset(newInstance<AccelerationStructureBuilder>(*m_pool, this));
 		ANKI_CHECK(m_accelerationStructureBuilder->init());
@@ -275,7 +275,7 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		m_samplers.m_trilinearRepeat = m_subsystems.m_grManager->newSampler(sinit);
 
 		sinit.setName("TrilinearRepeatAniso");
-		sinit.m_anisotropyLevel = m_subsystems.m_config->getRTextureAnisotropy();
+		sinit.m_anisotropyLevel = ConfigSet::getSingleton().getRTextureAnisotropy();
 		m_samplers.m_trilinearRepeatAniso = m_subsystems.m_grManager->newSampler(sinit);
 
 		sinit.setName("TrilinearRepeatAnisoRezScalingBias");
@@ -664,7 +664,7 @@ void Renderer::setCurrentDebugRenderTarget(CString rtName)
 Format Renderer::getHdrFormat() const
 {
 	Format out;
-	if(!m_subsystems.m_config->getRHighQualityHdr())
+	if(!ConfigSet::getSingleton().getRHighQualityHdr())
 	{
 		out = Format::kB10G11R11_Ufloat_Pack32;
 	}

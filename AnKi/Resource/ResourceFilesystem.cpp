@@ -207,14 +207,14 @@ ResourceFilesystem::~ResourceFilesystem()
 	m_cacheDir.destroy(m_pool);
 }
 
-Error ResourceFilesystem::init(const ConfigSet& config, AllocAlignedCallback allocCallback, void* allocCallbackUserData)
+Error ResourceFilesystem::init(AllocAlignedCallback allocCallback, void* allocCallbackUserData)
 {
 	m_pool.init(allocCallback, allocCallbackUserData);
 	StringListRaii paths(&m_pool);
-	paths.splitString(config.getRsrcDataPaths(), ':');
+	paths.splitString(ConfigSet::getSingleton().getRsrcDataPaths(), ':');
 
 	StringListRaii excludedStrings(&m_pool);
-	excludedStrings.splitString(config.getRsrcDataPathExcludedStrings(), ':');
+	excludedStrings.splitString(ConfigSet::getSingleton().getRsrcDataPathExcludedStrings(), ':');
 
 	// Workaround the fact that : is used in drives in Windows
 #if ANKI_OS_WINDOWS

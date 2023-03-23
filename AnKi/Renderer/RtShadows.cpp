@@ -39,8 +39,8 @@ Error RtShadows::initInternal()
 {
 	ANKI_R_LOGV("Initializing RT shadows");
 
-	m_useSvgf = getExternalSubsystems().m_config->getRRtShadowsSvgf();
-	m_atrousPassCount = getExternalSubsystems().m_config->getRRtShadowsSvgfAtrousPassCount();
+	m_useSvgf = ConfigSet::getSingleton().getRRtShadowsSvgf();
+	m_atrousPassCount = ConfigSet::getSingleton().getRRtShadowsSvgfAtrousPassCount();
 
 	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png",
 																	   m_blueNoiseImage));
@@ -51,7 +51,7 @@ Error RtShadows::initInternal()
 																		   m_rayGenProg));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_rayGenProg);
-		variantInitInfo.addMutation("RAYS_PER_PIXEL", getExternalSubsystems().m_config->getRRtShadowsRaysPerPixel());
+		variantInitInfo.addMutation("RAYS_PER_PIXEL", ConfigSet::getSingleton().getRRtShadowsRaysPerPixel());
 
 		const ShaderProgramResourceVariant* variant;
 		m_rayGenProg->getOrCreateVariant(variantInitInfo, variant);

@@ -6,9 +6,14 @@
 #pragma once
 
 #include <AnKi/Util/StdTypes.h>
+#include <AnKi/Util/Assert.h>
 #include <utility>
 
 namespace anki {
+
+#if ANKI_ENABLE_ASSERTIONS
+extern I32 g_singletonsAllocated;
+#endif
 
 /// @addtogroup util_patterns
 /// @{
@@ -24,26 +29,37 @@ public:
 	}
 
 	template<typename... TArgs>
-	static void allocateSingleton(TArgs&&... args)
+	static T& allocateSingleton(TArgs&&... args)
 	{
-		if(m_global == nullptr)
-		{
-			m_global = new T(std::forward<TArgs>(args)...);
-		}
+		ANKI_ASSERT(m_global == nullptr);
+		m_global = new T(std::forward<TArgs>(args)...);
+
+#if ANKI_ENABLE_ASSERTIONS
+		++g_singletonsAllocated;
+#endif
+
+		return *m_global;
 	}
 
 	static void freeSingleton()
 	{
+		ANKI_ASSERT(m_global);
+
 		delete m_global;
 		m_global = nullptr;
+#if ANKI_ENABLE_ASSERTIONS
+		--g_singletonsAllocated;
+#endif
+	}
+
+	static Bool isAllocated()
+	{
+		return m_global != nullptr;
 	}
 
 private:
-	static T* m_global;
+	static inline T* m_global = nullptr;
 };
-
-template<typename T>
-T* MakeSingleton<T>::m_global = nullptr;
 /// @}
 
 } // end namespace anki

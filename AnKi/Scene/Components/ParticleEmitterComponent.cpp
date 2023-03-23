@@ -128,7 +128,7 @@ class ParticleEmitterComponent::PhysicsParticle : public ParticleEmitterComponen
 public:
 	PhysicsBodyPtr m_body;
 
-	PhysicsParticle(const PhysicsBodyInitInfo& init, SceneNode* node, ParticleEmitterComponent* component)
+	PhysicsParticle(const PhysicsBodyInitInfo& init, ParticleEmitterComponent* component)
 	{
 		m_body = PhysicsWorld::getSingleton().newInstance<PhysicsBody>(init);
 		m_body->setUserData(component);
@@ -265,7 +265,7 @@ void ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 		for(U32 i = 0; i < m_props.m_maxNumOfParticles; i++)
 		{
 			binit.m_mass = getRandomRange(m_props.m_particle.m_minMass, m_props.m_particle.m_maxMass);
-			m_physicsParticles.emplaceBack(m_node->getMemoryPool(), binit, m_node, this);
+			m_physicsParticles.emplaceBack(m_node->getMemoryPool(), binit, this);
 		}
 	}
 	else

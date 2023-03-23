@@ -10,7 +10,6 @@
 #include <AnKi/Scene/ContiguousArrayAllocator.h>
 #include <AnKi/Math.h>
 #include <AnKi/Util/HashMap.h>
-#include <AnKi/Core/App.h>
 #include <AnKi/Scene/Events/EventManager.h>
 #include <AnKi/Resource/Common.h>
 
@@ -18,6 +17,7 @@ namespace anki {
 
 // Forward
 class Octree;
+class RenderQueue;
 
 /// @addtogroup scene
 /// @{

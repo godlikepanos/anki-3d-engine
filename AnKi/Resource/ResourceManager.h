@@ -13,7 +13,6 @@
 namespace anki {
 
 // Forward
-class ConfigSet;
 class GrManager;
 class PhysicsWorld;
 class ResourceManager;

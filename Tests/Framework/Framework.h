@@ -224,9 +224,9 @@ void initConfig(ConfigSet& cfg);
 
 NativeWindow* createWindow(ConfigSet& cfg);
 
-GrManager* createGrManager(ConfigSet* cfg, NativeWindow* win);
+GrManager* createGrManager(NativeWindow* win);
 
-ResourceManager* createResourceManager(ConfigSet* cfg, GrManager* gr, ResourceFilesystem*& resourceFs);
+ResourceManager* createResourceManager(GrManager* gr, ResourceFilesystem*& resourceFs);
 
 /// Stolen from https://en.cppreference.com/w/cpp/algorithm/random_shuffle because std::random_suffle got deprecated
 template<class TRandomIt>

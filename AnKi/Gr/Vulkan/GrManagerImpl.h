@@ -30,7 +30,6 @@ namespace anki {
 
 // Forward
 class TextureFallbackUploader;
-class ConfigSet;
 
 /// @addtogroup vulkan
 /// @{

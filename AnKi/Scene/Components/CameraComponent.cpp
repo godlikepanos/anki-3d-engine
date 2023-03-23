@@ -14,7 +14,7 @@ namespace anki {
 CameraComponent::CameraComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
 {
-	const ConfigSet& config = *getExternalSubsystems(*node).m_config;
+	const ConfigSet& config = ConfigSet::getSingleton();
 
 	// Init main frustum
 	m_frustum.init(FrustumType::kPerspective, &node->getMemoryPool());

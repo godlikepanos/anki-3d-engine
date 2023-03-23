@@ -50,7 +50,7 @@ Error DepthDownscale::initInternal()
 	ANKI_R_LOGV("Initializing HiZ. Mip count %u, last mip size %ux%u", m_mipCount, m_lastMipSize.x(),
 				m_lastMipSize.y());
 
-	const Bool preferCompute = getExternalSubsystems().m_config->getRPreferCompute();
+	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
 	const Bool supportsReductionSampler =
 		getExternalSubsystems().m_grManager->getDeviceCapabilities().m_samplingFilterMinMax;
 
@@ -185,7 +185,7 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
-	if(getExternalSubsystems().m_config->getRPreferCompute())
+	if(ConfigSet::getSingleton().getRPreferCompute())
 	{
 		// Do it with compute
 

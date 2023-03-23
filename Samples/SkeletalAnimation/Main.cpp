@@ -31,7 +31,7 @@ public:
 			.getFirstComponentOfType<SkinComponent>()
 			.playAnimation(0, m_floatAnim, animInfo);
 
-		getConfig().setRBloomThreshold(5.0f);
+		ConfigSet::getSingleton().setRBloomThreshold(5.0f);
 		return Error::kNone;
 	}
 

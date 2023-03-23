@@ -9,11 +9,11 @@
 
 ANKI_TEST(Gr, TextureBuffer)
 {
-	ConfigSet cfg(allocAligned, nullptr);
+	ConfigSet& cfg = ConfigSet::allocateSingleton(allocAligned, nullptr);
 	cfg.setGrValidation(true);
 
 	NativeWindow* win = createWindow(cfg);
-	GrManager* gr = createGrManager(&cfg, win);
+	GrManager* gr = createGrManager(win);
 
 	{
 		const CString shaderSrc = R"(

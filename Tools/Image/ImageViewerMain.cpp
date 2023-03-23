@@ -264,7 +264,7 @@ private:
 class MyApp : public App
 {
 public:
-	Error init(ConfigSet* config, int argc, char** argv, [[maybe_unused]] CString appName)
+	Error init(int argc, char** argv, [[maybe_unused]] CString appName)
 	{
 		if(argc < 2)
 		{
@@ -275,13 +275,13 @@ public:
 		HeapMemoryPool pool(allocAligned, nullptr);
 		StringRaii mainDataPath(&pool, ANKI_SOURCE_DIRECTORY);
 
-		config->setWindowFullscreen(false);
-		config->setRsrcDataPaths(mainDataPath);
-		config->setGrValidation(false);
-		config->setGrDebugMarkers(false);
-		ANKI_CHECK(config->setFromCommandLineArguments(argc - 2, argv + 2));
+		ConfigSet::getSingleton().setWindowFullscreen(false);
+		ConfigSet::getSingleton().setRsrcDataPaths(mainDataPath);
+		ConfigSet::getSingleton().setGrValidation(false);
+		ConfigSet::getSingleton().setGrDebugMarkers(false);
+		ANKI_CHECK(ConfigSet::getSingleton().setFromCommandLineArguments(argc - 2, argv + 2));
 
-		ANKI_CHECK(App::init(config, allocAligned, nullptr));
+		ANKI_CHECK(App::init(allocAligned, nullptr));
 
 		// Load the texture
 		ImageResourcePtr image;
@@ -318,9 +318,8 @@ int main(int argc, char* argv[])
 {
 	Error err = Error::kNone;
 
-	ConfigSet config(allocAligned, nullptr);
 	MyApp* app = new MyApp;
-	err = app->init(&config, argc, argv, "Texture Viewer");
+	err = app->init(argc, argv, "Texture Viewer");
 	if(!err)
 	{
 		err = app->mainLoop();

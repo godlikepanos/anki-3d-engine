@@ -110,7 +110,7 @@ void AllGpuSceneContiguousArrays::init(SceneGraph* scene)
 {
 	m_scene = scene;
 
-	const ConfigSet& cfg = *scene->m_subsystems.m_config;
+	const ConfigSet& cfg = ConfigSet::getSingleton();
 	constexpr F32 kGrowRate = 2.0;
 
 	const Array<U32, U32(GpuSceneContiguousArrayType::kCount)> minElementCount = {

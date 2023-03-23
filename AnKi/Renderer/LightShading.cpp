@@ -93,8 +93,7 @@ Error LightShading::initLightShading()
 	m_lightShading.m_fbDescr.m_depthStencilAttachment.m_stencilLoadOperation = AttachmentLoadOperation::kDontCare;
 	m_lightShading.m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
 
-	if(getExternalSubsystems().m_grManager->getDeviceCapabilities().m_vrs
-	   && getExternalSubsystems().m_config->getRVrs())
+	if(getExternalSubsystems().m_grManager->getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs())
 	{
 		m_lightShading.m_fbDescr.m_shadingRateAttachmentTexelWidth = m_r->getVrsSriGeneration().getSriTexelDimension();
 		m_lightShading.m_fbDescr.m_shadingRateAttachmentTexelHeight = m_r->getVrsSriGeneration().getSriTexelDimension();
@@ -162,8 +161,8 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 	cmdb->setViewport(0, 0, m_r->getInternalResolution().x(), m_r->getInternalResolution().y());
 
-	const Bool enableVrs = getExternalSubsystems().m_grManager->getDeviceCapabilities().m_vrs
-						   && getExternalSubsystems().m_config->getRVrs();
+	const Bool enableVrs =
+		getExternalSubsystems().m_grManager->getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs();
 	if(enableVrs)
 	{
 		// Just set some low value, the attachment will take over
@@ -332,8 +331,8 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
-	const Bool enableVrs = getExternalSubsystems().m_grManager->getDeviceCapabilities().m_vrs
-						   && getExternalSubsystems().m_config->getRVrs();
+	const Bool enableVrs =
+		getExternalSubsystems().m_grManager->getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs();
 	const Bool fbDescrHasVrs = m_lightShading.m_fbDescr.m_shadingRateAttachmentTexelWidth > 0;
 
 	if(enableVrs != fbDescrHasVrs)

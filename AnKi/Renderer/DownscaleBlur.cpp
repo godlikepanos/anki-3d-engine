@@ -36,7 +36,7 @@ Error DownscaleBlur::initInternal()
 	const UVec2 rez = m_r->getPostProcessResolution() / 2;
 	ANKI_R_LOGV("Initializing downscale pyramid. Resolution %ux%u, mip count %u", rez.x(), rez.y(), m_passCount);
 
-	const Bool preferCompute = getExternalSubsystems().m_config->getRPreferCompute();
+	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
 
 	// Create the miped texture
 	TextureInitInfo texinit =
@@ -92,7 +92,7 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 													"Down/Blur #4", "Down/Blur #5", "Down/Blur #6", "Down/Blur #7"};
 	const RenderTargetHandle inRt =
 		(m_r->getScale().hasUpscaledHdrRt()) ? m_r->getScale().getUpscaledHdrRt() : m_r->getScale().getTonemappedRt();
-	if(getExternalSubsystems().m_config->getRPreferCompute())
+	if(ConfigSet::getSingleton().getRPreferCompute())
 	{
 		for(U32 i = 0; i < m_passCount; ++i)
 		{
@@ -183,7 +183,7 @@ void DownscaleBlur::run(U32 passIdx, RenderPassWorkContext& rgraphCtx)
 	const UVec4 fbSize(vpWidth, vpHeight, revertTonemap, 0);
 	cmdb->setPushConstants(&fbSize, sizeof(fbSize));
 
-	if(getExternalSubsystems().m_config->getRPreferCompute())
+	if(ConfigSet::getSingleton().getRPreferCompute())
 	{
 		TextureSubresourceInfo sampleSubresource;
 		sampleSubresource.m_firstMipmap = passIdx;

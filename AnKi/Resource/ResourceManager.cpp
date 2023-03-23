@@ -58,7 +58,7 @@ Error ResourceManager::init(ResourceManagerInitInfo& init)
 	m_asyncLoader->init(&m_pool);
 
 	m_transferGpuAlloc = newInstance<TransferGpuAllocator>(m_pool);
-	ANKI_CHECK(m_transferGpuAlloc->init(m_subsystems.m_config->getRsrcTransferScratchMemorySize(),
+	ANKI_CHECK(m_transferGpuAlloc->init(ConfigSet::getSingleton().getRsrcTransferScratchMemorySize(),
 										m_subsystems.m_grManager, &m_pool));
 
 	// Init the programs

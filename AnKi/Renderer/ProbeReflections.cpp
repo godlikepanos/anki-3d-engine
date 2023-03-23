@@ -62,7 +62,7 @@ Error ProbeReflections::initInternal()
 
 Error ProbeReflections::initGBuffer()
 {
-	m_gbuffer.m_tileSize = getExternalSubsystems().m_config->getSceneReflectionProbeResolution();
+	m_gbuffer.m_tileSize = ConfigSet::getSingleton().getSceneReflectionProbeResolution();
 
 	// Create RT descriptions
 	{
@@ -107,7 +107,7 @@ Error ProbeReflections::initGBuffer()
 
 Error ProbeReflections::initLightShading()
 {
-	m_lightShading.m_tileSize = getExternalSubsystems().m_config->getSceneReflectionProbeResolution();
+	m_lightShading.m_tileSize = ConfigSet::getSingleton().getSceneReflectionProbeResolution();
 	m_lightShading.m_mipCount = computeMaxMipmapCount2d(m_lightShading.m_tileSize, m_lightShading.m_tileSize, 8);
 
 	for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
@@ -129,7 +129,7 @@ Error ProbeReflections::initLightShading()
 
 Error ProbeReflections::initIrradiance()
 {
-	m_irradiance.m_workgroupSize = getExternalSubsystems().m_config->getRProbeReflectionIrradianceResolution();
+	m_irradiance.m_workgroupSize = ConfigSet::getSingleton().getRProbeReflectionIrradianceResolution();
 
 	// Create prog
 	{
@@ -175,7 +175,7 @@ Error ProbeReflections::initIrradianceToRefl()
 
 Error ProbeReflections::initShadowMapping()
 {
-	const U32 resolution = getExternalSubsystems().m_config->getRProbeReflectionShadowMapResolution();
+	const U32 resolution = ConfigSet::getSingleton().getRProbeReflectionShadowMapResolution();
 	ANKI_ASSERT(resolution > 8);
 
 	// RT descr

@@ -38,8 +38,8 @@ Error TemporalAA::initInternal()
 	ANKI_R_LOGV("Initializing TAA");
 
 	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
-		(getExternalSubsystems().m_config->getRPreferCompute()) ? "ShaderBinaries/TemporalAACompute.ankiprogbin"
-																: "ShaderBinaries/TemporalAARaster.ankiprogbin",
+		(ConfigSet::getSingleton().getRPreferCompute()) ? "ShaderBinaries/TemporalAACompute.ankiprogbin"
+														: "ShaderBinaries/TemporalAARaster.ankiprogbin",
 		m_prog));
 
 	{
@@ -49,7 +49,7 @@ Error TemporalAA::initInternal()
 		variantInitInfo.addMutation("VARIANCE_CLIPPING", 1);
 		variantInitInfo.addMutation("YCBCR", 0);
 
-		if(getExternalSubsystems().m_config->getRPreferCompute())
+		if(ConfigSet::getSingleton().getRPreferCompute())
 		{
 			variantInitInfo.addConstant("kFramebufferSize",
 										UVec2(m_r->getInternalResolution().x(), m_r->getInternalResolution().y()));
@@ -63,8 +63,8 @@ Error TemporalAA::initInternal()
 	for(U i = 0; i < 2; ++i)
 	{
 		TextureUsageBit usage = TextureUsageBit::kSampledFragment | TextureUsageBit::kSampledCompute;
-		usage |= (getExternalSubsystems().m_config->getRPreferCompute()) ? TextureUsageBit::kImageComputeWrite
-																		 : TextureUsageBit::kFramebufferWrite;
+		usage |= (ConfigSet::getSingleton().getRPreferCompute()) ? TextureUsageBit::kImageComputeWrite
+																 : TextureUsageBit::kFramebufferWrite;
 
 		TextureInitInfo texinit =
 			m_r->create2DRenderTargetInitInfo(m_r->getInternalResolution().x(), m_r->getInternalResolution().y(),
@@ -93,7 +93,7 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 
 	const U32 historyRtIdx = (m_r->getFrameCount() + 1) & 1;
 	const U32 renderRtIdx = !historyRtIdx;
-	const Bool preferCompute = getExternalSubsystems().m_config->getRPreferCompute();
+	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
 
 	// Import RTs
 	if(m_rtTexturesImportedOnce[historyRtIdx]) [[likely]]
@@ -153,7 +153,7 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 		rgraphCtx.bindColorTexture(0, 3, m_r->getMotionVectors().getMotionVectorsRt());
 		rgraphCtx.bindImage(0, 4, m_r->getTonemapping().getRt());
 
-		if(getExternalSubsystems().m_config->getRPreferCompute())
+		if(ConfigSet::getSingleton().getRPreferCompute())
 		{
 			rgraphCtx.bindImage(0, 5, m_runCtx.m_renderRt, TextureSubresourceInfo());
 			rgraphCtx.bindImage(0, 6, m_runCtx.m_tonemappedRt, TextureSubresourceInfo());

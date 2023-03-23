@@ -13,9 +13,6 @@
 
 namespace anki {
 
-// Forward
-class ConfigSet;
-
 /// @addtogroup core
 /// @{
 
@@ -29,7 +26,7 @@ public:
 
 	UnifiedGeometryMemoryPool& operator=(const UnifiedGeometryMemoryPool&) = delete; // Non-copyable
 
-	void init(HeapMemoryPool* pool, GrManager* gr, const ConfigSet& cfg);
+	void init(HeapMemoryPool* pool, GrManager* gr);
 
 	void allocate(PtrSize size, U32 alignment, SegregatedListsGpuMemoryPoolToken& token)
 	{
@@ -70,7 +67,7 @@ public:
 
 	GpuSceneMemoryPool& operator=(const GpuSceneMemoryPool&) = delete; // Non-copyable
 
-	void init(HeapMemoryPool* pool, GrManager* gr, const ConfigSet& cfg);
+	void init(HeapMemoryPool* pool, GrManager* gr);
 
 	void allocate(PtrSize size, U32 alignment, SegregatedListsGpuMemoryPoolToken& token)
 	{
@@ -145,7 +142,7 @@ public:
 
 	RebarStagingGpuMemoryPool& operator=(const RebarStagingGpuMemoryPool&) = delete; // Non-copyable
 
-	Error init(GrManager* gr, const ConfigSet& cfg);
+	Error init(GrManager* gr);
 
 	PtrSize endFrame();
 

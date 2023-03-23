@@ -57,7 +57,7 @@ public:
 
 ANKI_TEST(Ui, Ui)
 {
-	ConfigSet cfg;
+	ConfigSet& cfg = ConfigSet::allocateSingleton(allocAligned, nullptr);
 	initConfig(cfg);
 	cfg.setGrVsync(true);
 	cfg.setGrValidation(false);
@@ -68,13 +68,13 @@ ANKI_TEST(Ui, Ui)
 	NativeWindow* win = createWindow(cfg);
 	Input* in;
 	ANKI_TEST_EXPECT_NO_ERR(Input::newInstance(allocAligned, nullptr, win, in));
-	GrManager* gr = createGrManager(&cfg, win);
+	GrManager* gr = createGrManager(win);
 	ResourceFilesystem* fs;
-	ResourceManager* resource = createResourceManager(&cfg, gr, fs);
+	ResourceManager* resource = createResourceManager(gr, fs);
 	UiManager* ui = new UiManager();
 
 	RebarStagingGpuMemoryPool* stagingMem = new RebarStagingGpuMemoryPool();
-	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(gr, cfg));
+	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(gr));
 
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 	UiManagerInitInfo uiInitInfo;

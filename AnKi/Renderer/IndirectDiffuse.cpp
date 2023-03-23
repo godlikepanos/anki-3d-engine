@@ -37,7 +37,7 @@ Error IndirectDiffuse::initInternal()
 
 	ANKI_R_LOGV("Initializing indirect diffuse. Resolution %ux%u", size.x(), size.y());
 
-	const Bool preferCompute = getExternalSubsystems().m_config->getRPreferCompute();
+	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
 
 	// Init textures
 	TextureUsageBit usage = TextureUsageBit::kAllSampled;
@@ -57,7 +57,7 @@ Error IndirectDiffuse::initInternal()
 
 	// Init VRS SRI generation
 	const Bool enableVrs = getExternalSubsystems().m_grManager->getDeviceCapabilities().m_vrs
-						   && getExternalSubsystems().m_config->getRVrs() && !preferCompute;
+						   && ConfigSet::getSingleton().getRVrs() && !preferCompute;
 	if(enableVrs)
 	{
 		m_vrs.m_sriTexelDimension =
@@ -94,7 +94,7 @@ Error IndirectDiffuse::initInternal()
 			variantInit.addMutation("SHARED_MEMORY", 1);
 		}
 
-		variantInit.addMutation("LIMIT_RATE_TO_2X2", getExternalSubsystems().m_config->getRVrsLimitTo2x2());
+		variantInit.addMutation("LIMIT_RATE_TO_2X2", ConfigSet::getSingleton().getRVrsLimitTo2x2());
 
 		const ShaderProgramResourceVariant* variant;
 		m_vrs.m_prog->getOrCreateVariant(variantInit, variant);
@@ -145,9 +145,9 @@ Error IndirectDiffuse::initInternal()
 void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
-	const Bool preferCompute = getExternalSubsystems().m_config->getRPreferCompute();
+	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
 	const Bool enableVrs = getExternalSubsystems().m_grManager->getDeviceCapabilities().m_vrs
-						   && getExternalSubsystems().m_config->getRVrs() && !preferCompute;
+						   && ConfigSet::getSingleton().getRVrs() && !preferCompute;
 	const Bool fbDescrHasVrs = m_main.m_fbDescr.m_shadingRateAttachmentTexelWidth > 0;
 
 	if(!preferCompute && enableVrs != fbDescrHasVrs)
@@ -197,8 +197,8 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 				Mat4 m_invertedProjectionJitter;
 			} pc;
 
-			pc.m_v4 = Vec4(1.0f / Vec2(viewport),
-						   getExternalSubsystems().m_config->getRIndirectDiffuseVrsDistanceThreshold(), 0.0f);
+			pc.m_v4 =
+				Vec4(1.0f / Vec2(viewport), ConfigSet::getSingleton().getRIndirectDiffuseVrsDistanceThreshold(), 0.0f);
 			pc.m_invertedProjectionJitter = ctx.m_matrices.m_invertedProjectionJitter;
 
 			cmdb->setPushConstants(&pc, sizeof(pc));
@@ -286,7 +286,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindColorTexture(0, 8, m_r->getMotionVectors().getMotionVectorsRt());
 			rgraphCtx.bindColorTexture(0, 9, m_r->getMotionVectors().getHistoryLengthRt());
 
-			if(getExternalSubsystems().m_config->getRPreferCompute())
+			if(ConfigSet::getSingleton().getRPreferCompute())
 			{
 				rgraphCtx.bindImage(0, 10, m_runCtx.m_mainRtHandles[kWrite]);
 			}
@@ -299,14 +299,14 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			unis.m_viewportSizef = Vec2(unis.m_viewportSize);
 			const Mat4& pmat = ctx.m_matrices.m_projection;
 			unis.m_projectionMat = Vec4(pmat(0, 0), pmat(1, 1), pmat(2, 2), pmat(2, 3));
-			unis.m_radius = getExternalSubsystems().m_config->getRIndirectDiffuseSsgiRadius();
-			unis.m_sampleCount = getExternalSubsystems().m_config->getRIndirectDiffuseSsgiSampleCount();
+			unis.m_radius = ConfigSet::getSingleton().getRIndirectDiffuseSsgiRadius();
+			unis.m_sampleCount = ConfigSet::getSingleton().getRIndirectDiffuseSsgiSampleCount();
 			unis.m_sampleCountf = F32(unis.m_sampleCount);
-			unis.m_ssaoBias = getExternalSubsystems().m_config->getRIndirectDiffuseSsaoBias();
-			unis.m_ssaoStrength = getExternalSubsystems().m_config->getRIndirectDiffuseSsaoStrength();
+			unis.m_ssaoBias = ConfigSet::getSingleton().getRIndirectDiffuseSsaoBias();
+			unis.m_ssaoStrength = ConfigSet::getSingleton().getRIndirectDiffuseSsaoStrength();
 			cmdb->setPushConstants(&unis, sizeof(unis));
 
-			if(getExternalSubsystems().m_config->getRPreferCompute())
+			if(ConfigSet::getSingleton().getRPreferCompute())
 			{
 				dispatchPPCompute(cmdb, 8, 8, unis.m_viewportSize.x(), unis.m_viewportSize.y());
 			}
@@ -367,7 +367,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			hizSubresource.m_mipmapCount = 1;
 			rgraphCtx.bindTexture(0, 2, m_r->getDepthDownscale().getHiZRt(), hizSubresource);
 
-			if(getExternalSubsystems().m_config->getRPreferCompute())
+			if(ConfigSet::getSingleton().getRPreferCompute())
 			{
 				rgraphCtx.bindImage(0, 3, m_runCtx.m_mainRtHandles[!readIdx]);
 			}
@@ -376,12 +376,12 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			unis.m_invertedViewProjectionJitterMat = ctx.m_matrices.m_invertedViewProjectionJitter;
 			unis.m_viewportSize = m_r->getInternalResolution() / 2u;
 			unis.m_viewportSizef = Vec2(unis.m_viewportSize);
-			unis.m_sampleCountDiv2 = F32(getExternalSubsystems().m_config->getRIndirectDiffuseDenoiseSampleCount());
+			unis.m_sampleCountDiv2 = F32(ConfigSet::getSingleton().getRIndirectDiffuseDenoiseSampleCount());
 			unis.m_sampleCountDiv2 = max(1.0f, std::round(unis.m_sampleCountDiv2 / 2.0f));
 
 			cmdb->setPushConstants(&unis, sizeof(unis));
 
-			if(getExternalSubsystems().m_config->getRPreferCompute())
+			if(ConfigSet::getSingleton().getRPreferCompute())
 			{
 				dispatchPPCompute(cmdb, 8, 8, unis.m_viewportSize.x(), unis.m_viewportSize.y());
 			}

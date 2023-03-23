@@ -26,10 +26,10 @@ VolumetricLightingAccumulation::~VolumetricLightingAccumulation()
 Error VolumetricLightingAccumulation::init()
 {
 	// Misc
-	const F32 qualityXY = getExternalSubsystems().m_config->getRVolumetricLightingAccumulationQualityXY();
-	const F32 qualityZ = getExternalSubsystems().m_config->getRVolumetricLightingAccumulationQualityZ();
-	m_finalZSplit = min(m_r->getZSplitCount() - 1,
-						getExternalSubsystems().m_config->getRVolumetricLightingAccumulationFinalZSplit());
+	const F32 qualityXY = ConfigSet::getSingleton().getRVolumetricLightingAccumulationQualityXY();
+	const F32 qualityZ = ConfigSet::getSingleton().getRVolumetricLightingAccumulationQualityZ();
+	m_finalZSplit =
+		min(m_r->getZSplitCount() - 1, ConfigSet::getSingleton().getRVolumetricLightingAccumulationFinalZSplit());
 
 	m_volumeSize[0] = U32(F32(m_r->getTileCounts().x()) * qualityXY);
 	m_volumeSize[1] = U32(F32(m_r->getTileCounts().y()) * qualityXY);

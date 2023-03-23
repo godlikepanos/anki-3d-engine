@@ -39,8 +39,8 @@ Error LensFlare::initInternal()
 
 Error LensFlare::initSprite()
 {
-	m_maxSpritesPerFlare = getExternalSubsystems().m_config->getRLensFlareMaxSpritesPerFlare();
-	m_maxFlares = getExternalSubsystems().m_config->getRLensFlareMaxFlares();
+	m_maxSpritesPerFlare = ConfigSet::getSingleton().getRLensFlareMaxSpritesPerFlare();
+	m_maxFlares = ConfigSet::getSingleton().getRLensFlareMaxFlares();
 
 	if(m_maxSpritesPerFlare < 1 || m_maxFlares < 1)
 	{

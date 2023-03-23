@@ -51,8 +51,8 @@ Error ShadowMapping::initInternal()
 {
 	// Init RT
 	{
-		m_tileResolution = getExternalSubsystems().m_config->getRShadowMappingTileResolution();
-		m_tileCountBothAxis = getExternalSubsystems().m_config->getRShadowMappingTileCountPerRowOrColumn();
+		m_tileResolution = ConfigSet::getSingleton().getRShadowMappingTileResolution();
+		m_tileCountBothAxis = ConfigSet::getSingleton().getRShadowMappingTileCountPerRowOrColumn();
 
 		ANKI_R_LOGV("Initializing shadowmapping. Atlas resolution %ux%u", m_tileResolution * m_tileCountBothAxis,
 					m_tileResolution * m_tileCountBothAxis);
@@ -156,7 +156,7 @@ void ShadowMapping::chooseDetail(const Vec4& cameraOrigin, const PointLightQueue
 								 U32& tileAllocatorHierarchy, U32& renderQueueElementsLod) const
 {
 	const F32 distFromTheCamera = (cameraOrigin - light.m_worldPosition.xyz0()).getLength() - light.m_radius;
-	if(distFromTheCamera < getExternalSubsystems().m_config->getLod0MaxDistance())
+	if(distFromTheCamera < ConfigSet::getSingleton().getLod0MaxDistance())
 	{
 		tileAllocatorHierarchy = kPointLightMaxTileAllocHierarchy;
 		renderQueueElementsLod = 0;
@@ -182,12 +182,12 @@ void ShadowMapping::chooseDetail(const Vec4& cameraOrigin, const SpotLightQueueE
 	const F32 V1len = V.dot(coneDir);
 	const F32 distFromTheCamera = cos(coneAngle) * sqrt(VlenSq - V1len * V1len) - V1len * sin(coneAngle);
 
-	if(distFromTheCamera < getExternalSubsystems().m_config->getLod0MaxDistance())
+	if(distFromTheCamera < ConfigSet::getSingleton().getLod0MaxDistance())
 	{
 		tileAllocatorHierarchy = kSpotLightMaxTileAllocHierarchy;
 		renderQueueElementsLod = 0;
 	}
-	else if(distFromTheCamera < getExternalSubsystems().m_config->getLod1MaxDistance())
+	else if(distFromTheCamera < ConfigSet::getSingleton().getLod1MaxDistance())
 	{
 		tileAllocatorHierarchy = max(kSpotLightMaxTileAllocHierarchy, 1u) - 1;
 		renderQueueElementsLod = kMaxLodCount - 1;
@@ -415,7 +415,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForPass
 
 			// Remove a few texels to avoid bilinear filtering bleeding
 			F32 texelsBorder;
-			if(getExternalSubsystems().m_config->getRShadowMappingPcf())
+			if(ConfigSet::getSingleton().getRShadowMappingPcf())
 			{
 				texelsBorder = 2.0f; // 2 texels
 			}

@@ -14,7 +14,6 @@ namespace anki {
 
 // Forward
 class CoreTracer;
-class ConfigSet;
 class ThreadHive;
 class NativeWindow;
 class Input;
@@ -41,8 +40,7 @@ public:
 	virtual ~App();
 
 	/// Initialize the application.
-	/// @param[in,out] config The config. Needs to be alive as long as the app is alive.
-	Error init(ConfigSet* config, AllocAlignedCallback allocCb, void* allocCbUserData);
+	Error init(AllocAlignedCallback allocCb, void* allocCbUserData);
 
 	const String& getSettingsDirectory() const
 	{
@@ -77,16 +75,6 @@ public:
 	{
 		// Do nothing
 		return Error::kNone;
-	}
-
-	const ConfigSet& getConfig() const
-	{
-		return *m_config;
-	}
-
-	ConfigSet& getConfig()
-	{
-		return *m_config;
 	}
 
 	Input& getInput()
@@ -133,7 +121,6 @@ private:
 	HeapMemoryPool m_mainPool;
 
 	// Sybsystems
-	ConfigSet* m_config = nullptr;
 #if ANKI_ENABLE_TRACE
 	CoreTracer* m_coreTracer = nullptr;
 #endif

@@ -235,18 +235,18 @@ static RebarStagingGpuMemoryPool* stagingMem = nullptr;
 static Input* input = nullptr;
 
 #define COMMON_BEGIN() \
-	stagingMem = new RebarStagingGpuMemoryPool(); \
-	ConfigSet cfg(allocAligned, nullptr); \
+	ConfigSet& cfg = ConfigSet::allocateSingleton(allocAligned, nullptr); \
 	cfg.setWidth(WIDTH); \
 	cfg.setHeight(HEIGHT); \
 	cfg.setGrValidation(true); \
 	cfg.setGrVsync(false); \
 	cfg.setGrRayTracing(true); \
 	cfg.setGrDebugMarkers(true); \
+	stagingMem = new RebarStagingGpuMemoryPool(); \
 	g_win = createWindow(cfg); \
 	ANKI_TEST_EXPECT_NO_ERR(Input::newInstance(allocAligned, nullptr, g_win, input)); \
-	g_gr = createGrManager(&cfg, g_win); \
-	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(g_gr, cfg)); \
+	g_gr = createGrManager(g_win); \
+	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(g_gr)); \
 	TransferGpuAllocator* transfAlloc = new TransferGpuAllocator(); \
 	ANKI_TEST_EXPECT_NO_ERR(transfAlloc->init(128_MB, g_gr, &g_gr->getMemoryPool())); \
 	while(true) \
@@ -261,6 +261,7 @@ static Input* input = nullptr;
 	GrManager::deleteInstance(g_gr); \
 	Input::deleteInstance(input); \
 	NativeWindow::deleteInstance(g_win); \
+	ConfigSet::freeSingleton(); \
 	g_win = nullptr; \
 	g_gr = nullptr; \
 	stagingMem = nullptr;

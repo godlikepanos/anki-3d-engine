@@ -259,7 +259,7 @@ NativeWindow* createWindow(ConfigSet& cfg)
 	return win;
 }
 
-GrManager* createGrManager(ConfigSet* cfg, NativeWindow* win)
+GrManager* createGrManager(NativeWindow* win)
 {
 	GrManagerInitInfo inf;
 	inf.m_allocCallback = allocAligned;
@@ -271,7 +271,6 @@ GrManager* createGrManager(ConfigSet* cfg, NativeWindow* win)
 		return nullptr;
 	}
 	inf.m_cacheDirectory = home;
-	inf.m_config = cfg;
 	inf.m_window = win;
 	GrManager* gr;
 	ANKI_TEST_EXPECT_NO_ERR(GrManager::newInstance(inf, gr));
@@ -279,15 +278,14 @@ GrManager* createGrManager(ConfigSet* cfg, NativeWindow* win)
 	return gr;
 }
 
-ResourceManager* createResourceManager(ConfigSet* cfg, GrManager* gr, ResourceFilesystem*& resourceFs)
+ResourceManager* createResourceManager(GrManager* gr, ResourceFilesystem*& resourceFs)
 {
 	resourceFs = new ResourceFilesystem();
-	ANKI_TEST_EXPECT_NO_ERR(resourceFs->init(*cfg, allocAligned, nullptr));
+	ANKI_TEST_EXPECT_NO_ERR(resourceFs->init(allocAligned, nullptr));
 
 	ResourceManagerInitInfo rinit;
 	rinit.m_grManager = gr;
 	rinit.m_resourceFilesystem = resourceFs;
-	rinit.m_config = cfg;
 	rinit.m_allocCallback = allocAligned;
 	rinit.m_allocCallbackData = nullptr;
 	ResourceManager* resources = new ResourceManager();

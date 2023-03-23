@@ -12,11 +12,11 @@
 
 namespace anki {
 
-void UnifiedGeometryMemoryPool::init(HeapMemoryPool* pool, GrManager* gr, const ConfigSet& cfg)
+void UnifiedGeometryMemoryPool::init(HeapMemoryPool* pool, GrManager* gr)
 {
 	ANKI_ASSERT(pool && gr);
 
-	const PtrSize poolSize = cfg.getCoreGlobalVertexMemorySize();
+	const PtrSize poolSize = ConfigSet::getSingleton().getCoreGlobalVertexMemorySize();
 
 	const Array classes = {1_KB, 8_KB, 32_KB, 128_KB, 512_KB, 4_MB, 8_MB, 16_MB, poolSize};
 
@@ -36,11 +36,11 @@ void UnifiedGeometryMemoryPool::init(HeapMemoryPool* pool, GrManager* gr, const 
 	deferredFree(token);
 }
 
-void GpuSceneMemoryPool::init(HeapMemoryPool* pool, GrManager* gr, const ConfigSet& cfg)
+void GpuSceneMemoryPool::init(HeapMemoryPool* pool, GrManager* gr)
 {
 	ANKI_ASSERT(pool && gr);
 
-	const PtrSize poolSize = cfg.getCoreGpuSceneInitialSize();
+	const PtrSize poolSize = ConfigSet::getSingleton().getCoreGpuSceneInitialSize();
 
 	const Array classes = {32_B, 64_B, 128_B, 256_B, poolSize};
 
@@ -59,11 +59,11 @@ RebarStagingGpuMemoryPool::~RebarStagingGpuMemoryPool()
 	m_buffer.reset(nullptr);
 }
 
-Error RebarStagingGpuMemoryPool::init(GrManager* gr, const ConfigSet& cfg)
+Error RebarStagingGpuMemoryPool::init(GrManager* gr)
 {
 	BufferInitInfo buffInit("ReBar");
 	buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
-	buffInit.m_size = cfg.getCoreRebarGpuMemorySize();
+	buffInit.m_size = ConfigSet::getSingleton().getCoreRebarGpuMemorySize();
 	buffInit.m_usage = BufferUsageBit::kAllUniform | BufferUsageBit::kAllStorage | BufferUsageBit::kVertex
 					   | BufferUsageBit::kIndex | BufferUsageBit::kShaderBindingTable;
 	m_buffer = gr->newBuffer(buffInit);

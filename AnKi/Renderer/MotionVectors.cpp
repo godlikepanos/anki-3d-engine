@@ -31,8 +31,8 @@ Error MotionVectors::initInternal()
 
 	// Prog
 	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
-		(getExternalSubsystems().m_config->getRPreferCompute()) ? "ShaderBinaries/MotionVectorsCompute.ankiprogbin"
-																: "ShaderBinaries/MotionVectorsRaster.ankiprogbin",
+		(ConfigSet::getSingleton().getRPreferCompute()) ? "ShaderBinaries/MotionVectorsCompute.ankiprogbin"
+														: "ShaderBinaries/MotionVectorsRaster.ankiprogbin",
 		m_prog));
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addConstant("kFramebufferSize",
@@ -47,7 +47,7 @@ Error MotionVectors::initInternal()
 	m_motionVectorsRtDescr.bake();
 
 	TextureUsageBit historyLengthUsage = TextureUsageBit::kAllSampled;
-	if(getExternalSubsystems().m_config->getRPreferCompute())
+	if(ConfigSet::getSingleton().getRPreferCompute())
 	{
 		historyLengthUsage |= TextureUsageBit::kImageComputeWrite;
 	}
@@ -97,7 +97,7 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 	RenderPassDescriptionBase* ppass;
 	TextureUsageBit readUsage;
 	TextureUsageBit writeUsage;
-	if(getExternalSubsystems().m_config->getRPreferCompute())
+	if(ConfigSet::getSingleton().getRPreferCompute())
 	{
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("MotionVectors");
 
@@ -153,13 +153,13 @@ void MotionVectors::run(const RenderingContext& ctx, RenderPassWorkContext& rgra
 	pc->m_viewProjectionInvMat = ctx.m_matrices.m_invertedViewProjectionJitter;
 	pc->m_prevViewProjectionInvMat = ctx.m_prevMatrices.m_invertedViewProjectionJitter;
 
-	if(getExternalSubsystems().m_config->getRPreferCompute())
+	if(ConfigSet::getSingleton().getRPreferCompute())
 	{
 		rgraphCtx.bindImage(0, 6, m_runCtx.m_motionVectorsRtHandle, TextureSubresourceInfo());
 		rgraphCtx.bindImage(0, 7, m_runCtx.m_historyLengthWriteRtHandle, TextureSubresourceInfo());
 	}
 
-	if(getExternalSubsystems().m_config->getRPreferCompute())
+	if(ConfigSet::getSingleton().getRPreferCompute())
 	{
 		dispatchPPCompute(cmdb, 8, 8, m_r->getInternalResolution().x(), m_r->getInternalResolution().y());
 	}

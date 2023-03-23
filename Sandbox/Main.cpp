@@ -17,7 +17,6 @@ class MyApp : public App
 {
 public:
 	Bool m_profile = false;
-	ConfigSet m_config;
 
 	Error init(int argc, char* argv[]);
 	Error userMainLoop(Bool& quit, Second elapsedTime) override;
@@ -36,15 +35,14 @@ Error MyApp::init(int argc, char* argv[])
 #endif
 
 	// Config
-	m_config.init(allocAligned, nullptr);
 #if ANKI_OS_ANDROID
 	ANKI_CHECK(m_config.setFromCommandLineArguments(argc - 1, argv + 1));
 #else
-	ANKI_CHECK(m_config.setFromCommandLineArguments(argc - 2, argv + 2));
+	ANKI_CHECK(ConfigSet::getSingleton().setFromCommandLineArguments(argc - 2, argv + 2));
 #endif
 
 	// Init super class
-	ANKI_CHECK(App::init(&m_config, allocAligned, nullptr));
+	ANKI_CHECK(App::init(allocAligned, nullptr));
 
 	// Other init
 	ResourceManager& resources = getResourceManager();
@@ -52,7 +50,7 @@ Error MyApp::init(int argc, char* argv[])
 	if(getenv("PROFILE"))
 	{
 		m_profile = true;
-		m_config.setCoreTargetFps(240);
+		ConfigSet::getSingleton().setCoreTargetFps(240);
 		Tracer::getSingleton().setEnabled(true);
 	}
 
@@ -125,17 +123,17 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		mode = (mode + 1) % 3;
 		if(mode == 0)
 		{
-			getConfig().setRDbg(false);
+			ConfigSet::getSingleton().setRDbg(false);
 		}
 		else if(mode == 1)
 		{
-			getConfig().setRDbg(true);
+			ConfigSet::getSingleton().setRDbg(true);
 			renderer.getDbg().setDepthTestEnabled(true);
 			renderer.getDbg().setDitheredDepthTestEnabled(false);
 		}
 		else
 		{
-			getConfig().setRDbg(true);
+			ConfigSet::getSingleton().setRDbg(true);
 			renderer.getDbg().setDepthTestEnabled(false);
 			renderer.getDbg().setDitheredDepthTestEnabled(true);
 		}
@@ -188,17 +186,17 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 			mode = (mode + 1) % 3;
 			if(mode == 0)
 			{
-				getConfig().setRDbg(false);
+				ConfigSet::getSingleton().setRDbg(false);
 			}
 			else if(mode == 1)
 			{
-				getConfig().setRDbg(true);
+				ConfigSet::getSingleton().setRDbg(true);
 				renderer.getDbg().setDepthTestEnabled(true);
 				renderer.getDbg().setDitheredDepthTestEnabled(false);
 			}
 			else
 			{
-				getConfig().setRDbg(true);
+				ConfigSet::getSingleton().setRDbg(true);
 				renderer.getDbg().setDepthTestEnabled(false);
 				renderer.getDbg().setDitheredDepthTestEnabled(true);
 			}
@@ -409,7 +407,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kJ) == 1)
 	{
-		m_config.setRVrs(!m_config.getRVrs());
+		ConfigSet::getSingleton().setRVrs(!ConfigSet::getSingleton().getRVrs());
 	}
 
 	if(in.getEvent(InputEvent::kWindowClosed))

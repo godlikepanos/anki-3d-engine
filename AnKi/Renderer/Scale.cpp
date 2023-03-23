@@ -39,15 +39,15 @@ Scale::~Scale()
 Error Scale::init()
 {
 	const Bool needsScaling = m_r->getPostProcessResolution() != m_r->getInternalResolution();
-	const Bool needsSharpening = getExternalSubsystems().m_config->getRSharpness() > 0.0f;
+	const Bool needsSharpening = ConfigSet::getSingleton().getRSharpness() > 0.0f;
 	if(!needsScaling && !needsSharpening)
 	{
 		return Error::kNone;
 	}
 
-	const Bool preferCompute = getExternalSubsystems().m_config->getRPreferCompute();
-	const U32 dlssQuality = getExternalSubsystems().m_config->getRDlssQuality();
-	const U32 fsrQuality = getExternalSubsystems().m_config->getRFsrQuality();
+	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
+	const U32 dlssQuality = ConfigSet::getSingleton().getRDlssQuality();
+	const U32 fsrQuality = ConfigSet::getSingleton().getRFsrQuality();
 
 	if(needsScaling)
 	{
@@ -188,7 +188,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 	}
 
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
-	const Bool preferCompute = getExternalSubsystems().m_config->getRPreferCompute();
+	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
 
 	// Step 1: Upscaling
 	if(m_upscalingMethod == UpscalingMethod::kGr)
@@ -323,7 +323,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 void Scale::runFsrOrBilinearScaling(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	const Bool preferCompute = getExternalSubsystems().m_config->getRPreferCompute();
+	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
 	const RenderTargetHandle inRt = m_r->getTemporalAA().getTonemappedRt();
 	const RenderTargetHandle outRt = m_runCtx.m_upscaledTonemappedRt;
 
@@ -387,7 +387,7 @@ void Scale::runFsrOrBilinearScaling(RenderPassWorkContext& rgraphCtx)
 void Scale::runRcasSharpening(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	const Bool preferCompute = getExternalSubsystems().m_config->getRPreferCompute();
+	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
 	const RenderTargetHandle inRt = m_runCtx.m_tonemappedRt;
 	const RenderTargetHandle outRt = m_runCtx.m_sharpenedRt;
 
@@ -412,7 +412,7 @@ void Scale::runRcasSharpening(RenderPassWorkContext& rgraphCtx)
 		UVec2 m_padding;
 	} pc;
 
-	F32 sharpness = getExternalSubsystems().m_config->getRSharpness(); // [0, 1]
+	F32 sharpness = ConfigSet::getSingleton().getRSharpness(); // [0, 1]
 	sharpness *= 3.0f; // [0, 3]
 	sharpness = 3.0f - sharpness; // [3, 0], RCAS translates 0 to max sharpness
 	FsrRcasCon(&pc.m_fsrConsts0[0], sharpness);
@@ -455,7 +455,7 @@ void Scale::runGrUpscaling(RenderingContext& ctx, RenderPassWorkContext& rgraphC
 void Scale::runTonemapping(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	const Bool preferCompute = getExternalSubsystems().m_config->getRPreferCompute();
+	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
 	const RenderTargetHandle inRt = m_runCtx.m_upscaledHdrRt;
 	const RenderTargetHandle outRt = m_runCtx.m_tonemappedRt;
 

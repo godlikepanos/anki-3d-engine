@@ -12,7 +12,6 @@
 namespace anki {
 
 // Forward
-class ConfigSet;
 class NativeWindow;
 
 /// @addtogroup graphics
@@ -27,7 +26,6 @@ public:
 
 	CString m_cacheDirectory;
 
-	ConfigSet* m_config = nullptr;
 	NativeWindow* m_window = nullptr;
 };
 
@@ -104,22 +102,11 @@ public:
 		return m_uuidIndex.fetchAdd(1);
 	}
 
-	ANKI_INTERNAL const ConfigSet& getConfig() const
-	{
-		return *m_config;
-	}
-
-	ANKI_INTERNAL ConfigSet& getConfig()
-	{
-		return *m_config;
-	}
-
 protected:
 	/// Keep it first to get deleted last. It's mutable because its methods are thread-safe and we want to use it in
 	/// const methods.
 	mutable HeapMemoryPool m_pool;
 
-	ConfigSet* m_config = nullptr;
 	String m_cacheDir;
 	Atomic<U64> m_uuidIndex = {1};
 	GpuDeviceCapabilities m_capabilities;

@@ -10,8 +10,6 @@
 class SampleApp : public anki::App
 {
 public:
-	anki::ConfigSet m_config;
-
 	anki::Error init(int argc, char** argv, anki::CString sampleName);
 	anki::Error userMainLoop(anki::Bool& quit, anki::Second elapsedTime) override;
 

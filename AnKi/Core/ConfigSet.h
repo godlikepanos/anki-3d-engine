@@ -8,6 +8,7 @@
 #include <AnKi/Core/Common.h>
 #include <AnKi/Util/List.h>
 #include <AnKi/Util/String.h>
+#include <AnKi/Util/Singleton.h>
 #include <AnKi/Math/Functions.h>
 
 namespace anki {
@@ -16,26 +17,15 @@ namespace anki {
 /// @{
 
 /// A storage of configuration variables.
-class ConfigSet
+class ConfigSet : public MakeSingleton<ConfigSet>
 {
+	template<typename>
+	friend class MakeSingleton;
+
 public:
-	/// @note Need to call init() if using this constructor.
-	ConfigSet()
-	{
-	}
-
-	ConfigSet(AllocAlignedCallback allocCb, void* allocCbUserData)
-	{
-		init(allocCb, allocCbUserData);
-	}
-
 	ConfigSet(const ConfigSet& b) = delete; // Non-copyable
 
-	~ConfigSet();
-
 	ConfigSet& operator=(const ConfigSet& b) = delete; // Non-copyable
-
-	void init(AllocAlignedCallback allocCb, void* allocCbUserData);
 
 	Error loadFromFile(CString filename);
 
@@ -143,6 +133,15 @@ private:
 #define ANKI_CONFIG_VAR_BOOL(name, defaultValue, description) BoolVar m_##name;
 #define ANKI_CONFIG_VAR_STRING(name, defaultValue, description) StringVar m_##name;
 #include <AnKi/Core/AllConfigVars.defs.h>
+
+	ConfigSet(AllocAlignedCallback allocCb, void* allocCbUserData)
+	{
+		init(allocCb, allocCbUserData);
+	}
+
+	~ConfigSet();
+
+	void init(AllocAlignedCallback allocCb, void* allocCbUserData);
 
 	Bool isInitialized() const
 	{

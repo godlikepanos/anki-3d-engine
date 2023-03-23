@@ -42,12 +42,11 @@ Error FinalComposite::initInternal()
 		getExternalSubsystems().m_resourceManager->loadResource("ShaderBinaries/FinalComposite.ankiprogbin", m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-	variantInitInfo.addMutation("FILM_GRAIN",
-								(getExternalSubsystems().m_config->getRFilmGrainStrength() > 0.0) ? 1 : 0);
+	variantInitInfo.addMutation("FILM_GRAIN", (ConfigSet::getSingleton().getRFilmGrainStrength() > 0.0) ? 1 : 0);
 	variantInitInfo.addMutation("BLOOM_ENABLED", 1);
 	variantInitInfo.addConstant("kLutSize", U32(kLutSize));
 	variantInitInfo.addConstant("kFramebufferSize", m_r->getPostProcessResolution());
-	variantInitInfo.addConstant("kMotionBlurSamples", getExternalSubsystems().m_config->getRMotionBlurSamples());
+	variantInitInfo.addConstant("kMotionBlurSamples", ConfigSet::getSingleton().getRMotionBlurSamples());
 
 	for(U32 dbg = 0; dbg < 2; ++dbg)
 	{
@@ -102,7 +101,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 
 	pass.newTextureDependency(ctx.m_outRenderTarget, TextureUsageBit::kFramebufferWrite);
 
-	if(getExternalSubsystems().m_config->getRDbg())
+	if(ConfigSet::getSingleton().getRDbg())
 	{
 		pass.newTextureDependency(m_r->getDbg().getRt(), TextureUsageBit::kSampledFragment);
 	}
@@ -130,7 +129,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	const Bool dbgEnabled = getExternalSubsystems().m_config->getRDbg();
+	const Bool dbgEnabled = ConfigSet::getSingleton().getRDbg();
 
 	Array<RenderTargetHandle, kMaxDebugRenderTargets> dbgRts;
 	ShaderProgramPtr optionalDebugProgram;
@@ -170,7 +169,7 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 			rgraphCtx.bindColorTexture(0, 8, m_r->getDbg().getRt());
 		}
 
-		const UVec4 pc(0, 0, floatBitsToUint(getExternalSubsystems().m_config->getRFilmGrainStrength()),
+		const UVec4 pc(0, 0, floatBitsToUint(ConfigSet::getSingleton().getRFilmGrainStrength()),
 					   m_r->getFrameCount() & kMaxU32);
 		cmdb->setPushConstants(&pc, sizeof(pc));
 	}

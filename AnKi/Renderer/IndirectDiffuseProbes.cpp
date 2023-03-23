@@ -64,7 +64,7 @@ Error IndirectDiffuseProbes::init()
 
 Error IndirectDiffuseProbes::initInternal()
 {
-	m_tileSize = getExternalSubsystems().m_config->getRIndirectDiffuseProbeTileResolution();
+	m_tileSize = ConfigSet::getSingleton().getRIndirectDiffuseProbeTileResolution();
 
 	ANKI_CHECK(initGBuffer());
 	ANKI_CHECK(initLightShading());
@@ -119,7 +119,7 @@ Error IndirectDiffuseProbes::initGBuffer()
 
 Error IndirectDiffuseProbes::initShadowMapping()
 {
-	const U32 resolution = getExternalSubsystems().m_config->getRIndirectDiffuseProbeShadowMapResolution();
+	const U32 resolution = ConfigSet::getSingleton().getRIndirectDiffuseProbeShadowMapResolution();
 	ANKI_ASSERT(resolution > 8);
 
 	// RT descr

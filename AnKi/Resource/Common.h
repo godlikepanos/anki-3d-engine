@@ -21,7 +21,6 @@ template<typename Type>
 class ResourcePointer;
 class TransferGpuAllocatorHandle;
 class PhysicsWorld;
-class ConfigSet;
 class UnifiedGeometryMemoryPool;
 
 /// @addtogroup resource
@@ -64,7 +63,6 @@ class ResourceManagerExternalSubsystems
 public:
 	GrManager* m_grManager = nullptr;
 	ResourceFilesystem* m_resourceFilesystem = nullptr;
-	ConfigSet* m_config = nullptr;
 	UnifiedGeometryMemoryPool* m_unifiedGometryMemoryPool = nullptr;
 };
 /// @}

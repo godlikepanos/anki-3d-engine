@@ -78,7 +78,7 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 	ResourceFilePtr file;
 	ANKI_CHECK(openFile(filename, file));
 
-	ANKI_CHECK(loader.load(file, filename, getExternalSubsystems().m_config->getRsrcMaxImageSize()));
+	ANKI_CHECK(loader.load(file, filename, ConfigSet::getSingleton().getRsrcMaxImageSize()));
 
 	// Various sizes
 	init.m_width = loader.getWidth();

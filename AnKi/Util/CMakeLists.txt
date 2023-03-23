@@ -17,7 +17,8 @@ set(sources
 	Xml.cpp
 	F16.cpp
 	Process.cpp
-	Thread.cpp)
+	Thread.cpp
+	Singleton.cpp)
 
 if(LINUX OR ANDROID OR MACOS)
 	set(sources ${sources}

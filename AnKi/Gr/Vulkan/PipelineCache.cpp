@@ -10,11 +10,10 @@
 
 namespace anki {
 
-Error PipelineCache::init(VkDevice dev, VkPhysicalDevice pdev, CString cacheDir, const ConfigSet& cfg,
-						  HeapMemoryPool& pool)
+Error PipelineCache::init(VkDevice dev, VkPhysicalDevice pdev, CString cacheDir, HeapMemoryPool& pool)
 {
 	ANKI_ASSERT(cacheDir && dev && pdev);
-	m_dumpSize = cfg.getGrDiskShaderCacheMaxSize();
+	m_dumpSize = ConfigSet::getSingleton().getGrDiskShaderCacheMaxSize();
 	m_dumpFilename.sprintf(pool, "%s/VkPipelineCache", &cacheDir[0]);
 
 	// Try read the pipeline cache file.
