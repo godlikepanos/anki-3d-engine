@@ -7,8 +7,8 @@
 #include <Tests/Framework/Framework.h>
 #include <Tests/Gr/GrCommon.h>
 #include <AnKi/Gr.h>
-#include <AnKi/Core/NativeWindow.h>
-#include <AnKi/Input/Input.h>
+#include <AnKi/Window/NativeWindow.h>
+#include <AnKi/Window/Input.h>
 #include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Util/HighRezTimer.h>
 #include <AnKi/Core/GpuMemoryPools.h>
@@ -244,7 +244,7 @@ static Input* input = nullptr;
 	cfg.setGrDebugMarkers(true); \
 	stagingMem = new RebarStagingGpuMemoryPool(); \
 	g_win = createWindow(cfg); \
-	ANKI_TEST_EXPECT_NO_ERR(Input::newInstance(allocAligned, nullptr, g_win, input)); \
+	ANKI_TEST_EXPECT_NO_ERR(Input::allocateSingleton().init()); \
 	g_gr = createGrManager(g_win); \
 	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(g_gr)); \
 	TransferGpuAllocator* transfAlloc = new TransferGpuAllocator(); \
@@ -259,8 +259,8 @@ static Input* input = nullptr;
 	delete transfAlloc; \
 	delete stagingMem; \
 	GrManager::deleteInstance(g_gr); \
-	Input::deleteInstance(input); \
-	NativeWindow::deleteInstance(g_win); \
+	Input::freeSingleton(); \
+	NativeWindow::freeSingleton(); \
 	ConfigSet::freeSingleton(); \
 	g_win = nullptr; \
 	g_gr = nullptr; \

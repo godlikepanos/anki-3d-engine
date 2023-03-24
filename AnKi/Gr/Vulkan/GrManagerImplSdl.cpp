@@ -5,8 +5,8 @@
 
 #include <AnKi/Gr/Vulkan/GrManagerImpl.h>
 #include <AnKi/Gr/GrManager.h>
-#include <AnKi/Core/NativeWindow.h>
-#include <AnKi/Core/NativeWindowSdl.h>
+#include <AnKi/Window/NativeWindow.h>
+#include <AnKi/Window/NativeWindowSdl.h>
 #include <SDL_syswm.h>
 #include <SDL_vulkan.h>
 
@@ -17,9 +17,10 @@
 
 namespace anki {
 
-Error GrManagerImpl::initSurface(const GrManagerInitInfo& init)
+Error GrManagerImpl::initSurface()
 {
-	if(!SDL_Vulkan_CreateSurface(static_cast<NativeWindowSdl*>(init.m_window)->m_window, m_instance, &m_surface))
+	if(!SDL_Vulkan_CreateSurface(static_cast<NativeWindowSdl&>(NativeWindow::getSingleton()).m_sdlWindow, m_instance,
+								 &m_surface))
 	{
 		ANKI_VK_LOGE("SDL_Vulkan_CreateSurface() failed: %s", SDL_GetError());
 		return Error::kFunctionFailed;

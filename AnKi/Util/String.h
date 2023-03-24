@@ -833,7 +833,7 @@ public:
 	using MemoryPool = TMemPool;
 
 	/// Create with pool.
-	BaseStringRaii(const MemoryPool& pool)
+	BaseStringRaii(const MemoryPool& pool = MemoryPool())
 		: Base()
 		, m_pool(pool)
 	{

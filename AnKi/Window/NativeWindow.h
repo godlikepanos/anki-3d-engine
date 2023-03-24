@@ -5,8 +5,7 @@
 
 #pragma once
 
-#include <AnKi/Core/Common.h>
-#include <AnKi/Util/StdTypes.h>
+#include <AnKi/Window/Common.h>
 #include <AnKi/Util/Array.h>
 #include <AnKi/Util/String.h>
 
@@ -16,9 +15,6 @@ namespace anki {
 class NativeWindowInitInfo
 {
 public:
-	AllocAlignedCallback m_allocCallback = nullptr;
-	void* m_allocCallbackUserData = nullptr;
-
 	U32 m_width = 1920;
 	U32 m_height = 1080;
 	Array<U32, 4> m_rgbaBits = {8, 8, 8, 0};
@@ -35,12 +31,13 @@ public:
 };
 
 /// Native window.
-class NativeWindow
+class NativeWindow : public MakeSingleton<NativeWindow>
 {
-public:
-	static Error newInstance(const NativeWindowInitInfo& initInfo, NativeWindow*& nativeWindow);
+	template<typename>
+	friend class MakeSingleton;
 
-	static void deleteInstance(NativeWindow* nativeWindow);
+public:
+	Error init(const NativeWindowInitInfo& inf);
 
 	U32 getWidth() const
 	{
@@ -63,8 +60,6 @@ protected:
 	U32 m_width = 0;
 	U32 m_height = 0;
 
-	HeapMemoryPool m_pool;
-
 	NativeWindow()
 	{
 	}
@@ -73,5 +68,12 @@ protected:
 	{
 	}
 };
+
+template<>
+template<>
+NativeWindow& MakeSingleton<NativeWindow>::allocateSingleton<>();
+
+template<>
+void MakeSingleton<NativeWindow>::freeSingleton();
 
 } // end namespace anki

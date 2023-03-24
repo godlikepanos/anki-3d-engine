@@ -8,7 +8,7 @@
 #include <AnKi/Gr/gl/RenderingThread.h>
 #include <AnKi/Gr/gl/GlState.h>
 #include <AnKi/Core/Config.h>
-#include <AnKi/Core/NativeWindow.h>
+#include <AnKi/Window/NativeWindow.h>
 
 namespace anki {
 

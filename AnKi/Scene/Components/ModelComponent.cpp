@@ -305,8 +305,9 @@ void ModelComponent::setupRenderableQueueElements(U32 lod, RenderingTechnique te
 		queueElem.m_worldTransformsOffset = U32(m_gpuSceneTransformsIndex * sizeof(Mat3x4) * 2
 												+ gpuArrays.getArrayBase(GpuSceneContiguousArrayType::kTransformPairs));
 		queueElem.m_uniformsOffset = m_patchInfos[i].m_gpuSceneUniformsOffset;
-		queueElem.m_geometryOffset = m_patchInfos[i].m_gpuSceneMeshLodsIndex * sizeof(GpuSceneMeshLod) * kMaxLodCount
-									 + lod * sizeof(GpuSceneMeshLod);
+		queueElem.m_geometryOffset =
+			U32(m_patchInfos[i].m_gpuSceneMeshLodsIndex * sizeof(GpuSceneMeshLod) * kMaxLodCount
+				+ lod * sizeof(GpuSceneMeshLod));
 		queueElem.m_geometryOffset += U32(gpuArrays.getArrayBase(GpuSceneContiguousArrayType::kMeshLods));
 		queueElem.m_boneTransformsOffset = (hasSkin) ? m_skinComponent->getBoneTransformsGpuSceneOffset() : 0;
 		queueElem.m_indexCount = modelInf.m_indexCount;
@@ -380,8 +381,9 @@ void ModelComponent::setupRayTracingInstanceQueueElements(U32 lod, RenderingTech
 		queueElem.m_worldTransformsOffset = U32(m_gpuSceneTransformsIndex * sizeof(Mat3x4) * 2
 												+ gpuArrays.getArrayBase(GpuSceneContiguousArrayType::kTransformPairs));
 		queueElem.m_uniformsOffset = m_patchInfos[i].m_gpuSceneUniformsOffset;
-		queueElem.m_geometryOffset = m_patchInfos[i].m_gpuSceneMeshLodsIndex * sizeof(GpuSceneMeshLod) * kMaxLodCount
-									 + lod * sizeof(GpuSceneMeshLod);
+		queueElem.m_geometryOffset =
+			U32(m_patchInfos[i].m_gpuSceneMeshLodsIndex * sizeof(GpuSceneMeshLod) * kMaxLodCount
+				+ lod * sizeof(GpuSceneMeshLod));
 		queueElem.m_geometryOffset += U32(gpuArrays.getArrayBase(GpuSceneContiguousArrayType::kMeshLods));
 		queueElem.m_indexBufferOffset = U32(modelInf.m_indexBufferOffset);
 

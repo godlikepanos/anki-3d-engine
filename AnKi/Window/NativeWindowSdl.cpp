@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Core/NativeWindowSdl.h>
+#include <AnKi/Window/NativeWindowSdl.h>
 #include <AnKi/Util/Logger.h>
 #if ANKI_GR_BACKEND_VULKAN
 #	include <SDL_vulkan.h>
@@ -11,70 +11,65 @@
 
 namespace anki {
 
-Error NativeWindow::newInstance(const NativeWindowInitInfo& initInfo, NativeWindow*& nativeWindow)
+template<>
+template<>
+NativeWindow& MakeSingleton<NativeWindow>::allocateSingleton<>()
 {
-	NativeWindowSdl* sdlwin = static_cast<NativeWindowSdl*>(initInfo.m_allocCallback(
-		initInfo.m_allocCallbackUserData, nullptr, sizeof(NativeWindowSdl), alignof(NativeWindowSdl)));
-	callConstructor(*sdlwin);
+	ANKI_ASSERT(m_global == nullptr);
+	m_global = new NativeWindowSdl();
+#if ANKI_ENABLE_ASSERTIONS
+	++g_singletonsAllocated;
+#endif
+	return *m_global;
+}
 
-	const Error err = sdlwin->init(initInfo);
-	if(err)
+template<>
+void MakeSingleton<NativeWindow>::freeSingleton()
+{
+	if(m_global)
 	{
-		callDestructor(*sdlwin);
-		initInfo.m_allocCallback(initInfo.m_allocCallbackUserData, sdlwin, 0, 0);
-		nativeWindow = nullptr;
-		return err;
-	}
-	else
-	{
-		nativeWindow = sdlwin;
-		return Error::kNone;
+		delete static_cast<NativeWindowSdl*>(m_global);
+		m_global = nullptr;
+#if ANKI_ENABLE_ASSERTIONS
+		--g_singletonsAllocated;
+#endif
 	}
 }
 
-void NativeWindow::deleteInstance(NativeWindow* window)
+Error NativeWindow::init(const NativeWindowInitInfo& inf)
 {
-	if(window)
-	{
-		NativeWindowSdl* self = static_cast<NativeWindowSdl*>(window);
-		AllocAlignedCallback callback = self->m_pool.getAllocationCallback();
-		void* userData = self->m_pool.getAllocationCallbackUserData();
-		callDestructor(*self);
-		callback(userData, self, 0, 0);
-	}
+	return static_cast<NativeWindowSdl*>(this)->initSdl(inf);
 }
 
 void NativeWindow::setWindowTitle(CString title)
 {
 	NativeWindowSdl* self = static_cast<NativeWindowSdl*>(this);
-	SDL_SetWindowTitle(self->m_window, title.cstr());
+	SDL_SetWindowTitle(self->m_sdlWindow, title.cstr());
 }
 
 NativeWindowSdl::~NativeWindowSdl()
 {
-	if(m_window)
+	if(m_sdlWindow)
 	{
-		SDL_DestroyWindow(m_window);
+		SDL_DestroyWindow(m_sdlWindow);
 	}
 
 	SDL_QuitSubSystem(kInitSubsystems);
 	SDL_Quit();
 }
 
-Error NativeWindowSdl::init(const NativeWindowInitInfo& init)
+Error NativeWindowSdl::initSdl(const NativeWindowInitInfo& init)
 {
-	m_pool.init(init.m_allocCallback, init.m_allocCallbackUserData);
-
 	if(SDL_Init(kInitSubsystems) != 0)
 	{
-		ANKI_CORE_LOGE("SDL_Init() failed: %s", SDL_GetError());
+		ANKI_WIND_LOGE("SDL_Init() failed: %s", SDL_GetError());
 		return Error::kFunctionFailed;
 	}
 
 #if ANKI_GR_BACKEND_VULKAN
 	if(SDL_Vulkan_LoadLibrary(nullptr))
 	{
-		ANKI_CORE_LOGE("SDL_Vulkan_LoadLibrary() failed: %s", SDL_GetError());
+		ANKI_WIND_LOGE("SDL_Vulkan_LoadLibrary() failed: %s", SDL_GetError());
 		return Error::kFunctionFailed;
 	}
 #endif
@@ -82,7 +77,7 @@ Error NativeWindowSdl::init(const NativeWindowInitInfo& init)
 	//
 	// Set GL attributes
 	//
-	ANKI_CORE_LOGI("Creating SDL window. SDL version %u.%u", SDL_MAJOR_VERSION, SDL_MINOR_VERSION);
+	ANKI_WIND_LOGI("Creating SDL window. SDL version %u.%u", SDL_MAJOR_VERSION, SDL_MINOR_VERSION);
 
 	//
 	// Create window
@@ -113,7 +108,7 @@ Error NativeWindowSdl::init(const NativeWindowInitInfo& init)
 		SDL_DisplayMode mode;
 		if(SDL_GetDesktopDisplayMode(0, &mode))
 		{
-			ANKI_CORE_LOGE("SDL_GetDesktopDisplayMode() failed: %s", SDL_GetError());
+			ANKI_WIND_LOGE("SDL_GetDesktopDisplayMode() failed: %s", SDL_GetError());
 			return Error::kFunctionFailed;
 		}
 
@@ -126,23 +121,23 @@ Error NativeWindowSdl::init(const NativeWindowInitInfo& init)
 		m_height = init.m_height;
 	}
 
-	m_window =
+	m_sdlWindow =
 		SDL_CreateWindow(&init.m_title[0], SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, m_width, m_height, flags);
 
-	if(m_window == nullptr)
+	if(m_sdlWindow == nullptr)
 	{
-		ANKI_CORE_LOGE("SDL_CreateWindow() failed");
+		ANKI_WIND_LOGE("SDL_CreateWindow() failed");
 		return Error::kFunctionFailed;
 	}
 
 	// Final check
 	{
 		int w, h;
-		SDL_GetWindowSize(m_window, &w, &h);
+		SDL_GetWindowSize(m_sdlWindow, &w, &h);
 		ANKI_ASSERT(m_width == U32(w) && m_height == U32(h));
 	}
 
-	ANKI_CORE_LOGI("SDL window created");
+	ANKI_WIND_LOGI("SDL window created");
 	return Error::kNone;
 }
 

@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <AnKi/Core/NativeWindow.h>
+#include <AnKi/Window/NativeWindow.h>
 #include <SDL.h>
 
 namespace anki {
@@ -14,11 +14,11 @@ namespace anki {
 class NativeWindowSdl : public NativeWindow
 {
 public:
-	SDL_Window* m_window = nullptr;
+	SDL_Window* m_sdlWindow = nullptr;
 
 	~NativeWindowSdl();
 
-	Error init(const NativeWindowInitInfo& init);
+	Error initSdl(const NativeWindowInitInfo& init);
 
 private:
 	static constexpr U32 kInitSubsystems =

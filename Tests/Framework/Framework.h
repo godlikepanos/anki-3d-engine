@@ -9,6 +9,7 @@
 #include <AnKi/Math.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Core.h>
+#include <AnKi/Window.h>
 #include <AnKi/Gr.h>
 #include <AnKi/Resource.h>
 #include <AnKi/Physics.h>

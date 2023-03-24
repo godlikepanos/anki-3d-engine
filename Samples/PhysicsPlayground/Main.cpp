@@ -192,9 +192,9 @@ Error MyApp::sampleExtraInit()
 		node->setLocalTransform(Transform(Vec4(1.0f, 0.5f, 0.0f, 0.0f), Mat3x4::getIdentity(), 1.0f));
 	}
 
-	getInput().lockCursor(true);
-	getInput().hideCursor(true);
-	getInput().moveCursor(Vec2(0.0f));
+	Input::getSingleton().lockCursor(true);
+	Input::getSingleton().hideCursor(true);
+	Input::getSingleton().moveCursor(Vec2(0.0f));
 
 	return Error::kNone;
 }
@@ -204,18 +204,18 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 	// ANKI_CHECK(SampleApp::userMainLoop(quit));
 	Renderer& renderer = getMainRenderer().getOffscreenRenderer();
 
-	if(getInput().getKey(KeyCode::kEscape))
+	if(Input::getSingleton().getKey(KeyCode::kEscape))
 	{
 		quit = true;
 	}
 
-	if(getInput().getKey(KeyCode::kH) == 1)
+	if(Input::getSingleton().getKey(KeyCode::kH) == 1)
 	{
 		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "RtShadows") ? ""
 																									 : "RtShadows");
 	}
 
-	if(getInput().getKey(KeyCode::kP) == 1)
+	if(Input::getSingleton().getKey(KeyCode::kP) == 1)
 	{
 		static U32 idx = 3;
 		++idx;
@@ -238,17 +238,17 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 		}
 	}
 
-	if(getInput().getKey(KeyCode::kL) == 1)
+	if(Input::getSingleton().getKey(KeyCode::kL) == 1)
 	{
 		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "Bloom") ? "" : "Bloom");
 	}
 
-	if(getInput().getKey(KeyCode::kJ) == 1)
+	if(Input::getSingleton().getKey(KeyCode::kJ) == 1)
 	{
 		ConfigSet::getSingleton().setRVrs(!ConfigSet::getSingleton().getRVrs());
 	}
 
-	if(getInput().getKey(KeyCode::kF1) == 1)
+	if(Input::getSingleton().getKey(KeyCode::kF1) == 1)
 	{
 		static U mode = 0;
 		mode = (mode + 1) % 3;
@@ -275,15 +275,15 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 		SceneNode& player = getSceneGraph().findSceneNode("player");
 		PlayerControllerComponent& playerc = player.getFirstComponentOfType<PlayerControllerComponent>();
 
-		if(getInput().getKey(KeyCode::kR))
+		if(Input::getSingleton().getKey(KeyCode::kR))
 		{
 			player.getFirstComponentOfType<PlayerControllerComponent>().moveToPosition(Vec3(0.0f, 2.0f, 0.0f));
 		}
 
 		constexpr F32 ang = toRad(7.0f);
 
-		F32 y = getInput().getMousePosition().y();
-		F32 x = getInput().getMousePosition().x();
+		F32 y = Input::getSingleton().getMousePosition().y();
+		F32 x = Input::getSingleton().getMousePosition().x();
 		if(y != 0.0 || x != 0.0)
 		{
 			// Set origin
@@ -307,22 +307,22 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 
 		const F32 speed = 0.5;
 		Vec4 moveVec(0.0);
-		if(getInput().getKey(KeyCode::kW))
+		if(Input::getSingleton().getKey(KeyCode::kW))
 		{
 			moveVec.z() += 1.0f;
 		}
 
-		if(getInput().getKey(KeyCode::kA))
+		if(Input::getSingleton().getKey(KeyCode::kA))
 		{
 			moveVec.x() -= 1.0f;
 		}
 
-		if(getInput().getKey(KeyCode::kS))
+		if(Input::getSingleton().getKey(KeyCode::kS))
 		{
 			moveVec.z() -= 1.0f;
 		}
 
-		if(getInput().getKey(KeyCode::kD))
+		if(Input::getSingleton().getKey(KeyCode::kD))
 		{
 			moveVec.x() += 1.0f;
 		}
@@ -334,7 +334,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 		playerc.setVelocity(moveVec.z() * speed, moveVec.x() * speed, 0.0, dir);
 	}
 
-	if(getInput().getMouseButton(MouseButton::kLeft) == 1)
+	if(Input::getSingleton().getMouseButton(MouseButton::kLeft) == 1)
 	{
 		ANKI_LOGI("Firing a monkey");
 
@@ -361,7 +361,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 		ANKI_CHECK(createDestructionEvent(monkey));
 	}
 
-	if(getInput().getMouseButton(MouseButton::kRight) == 1)
+	if(Input::getSingleton().getMouseButton(MouseButton::kRight) == 1)
 	{
 		Transform camTrf = getSceneGraph().getActiveCameraNode().getWorldTransform();
 		Vec3 from = camTrf.getOrigin().xyz();

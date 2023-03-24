@@ -245,14 +245,14 @@ void initConfig(ConfigSet& cfg)
 NativeWindow* createWindow(ConfigSet& cfg)
 {
 	NativeWindowInitInfo inf;
-	inf.m_allocCallback = allocAligned;
 	inf.m_width = cfg.getWidth();
 	inf.m_height = cfg.getHeight();
 	inf.m_title = "AnKi unit tests";
-	NativeWindow* win;
-	const Error err = NativeWindow::newInstance(inf, win);
+	NativeWindow* win = &NativeWindow::allocateSingleton();
+	const Error err = NativeWindow::getSingleton().init(inf);
 	if(err)
 	{
+		NativeWindow::freeSingleton();
 		return nullptr;
 	}
 
@@ -271,7 +271,6 @@ GrManager* createGrManager(NativeWindow* win)
 		return nullptr;
 	}
 	inf.m_cacheDirectory = home;
-	inf.m_window = win;
 	GrManager* gr;
 	ANKI_TEST_EXPECT_NO_ERR(GrManager::newInstance(inf, gr));
 

@@ -48,7 +48,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	SceneGraph& scene = getSceneGraph();
 	Renderer& renderer = getMainRenderer().getOffscreenRenderer();
-	Input& in = getInput();
+	Input& in = Input::getSingleton();
 
 	if(in.getKey(KeyCode::kEscape))
 	{
@@ -270,7 +270,8 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 			   && in.getTouchPointerNdcPosition(touch).x() > 0.1f)
 			{
 				rotateCameraTouch = touch;
-				rotateEventInitialPos = in.getTouchPointerNdcPosition(touch) * getWindow().getAspectRatio();
+				rotateEventInitialPos =
+					in.getTouchPointerNdcPosition(touch) * NativeWindow::getSingleton().getAspectRatio();
 				break;
 			}
 		}
@@ -283,7 +284,8 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		if(rotateCameraTouch != TouchPointer::kCount && in.getTouchPointer(rotateCameraTouch) > 1)
 		{
 			Vec2 velocity =
-				in.getTouchPointerNdcPosition(rotateCameraTouch) * getWindow().getAspectRatio() - rotateEventInitialPos;
+				in.getTouchPointerNdcPosition(rotateCameraTouch) * NativeWindow::getSingleton().getAspectRatio()
+				- rotateEventInitialPos;
 			velocity *= 0.3f;
 
 			Euler angles(mover->getLocalRotation().getRotationPart());
@@ -302,7 +304,8 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 			   && in.getTouchPointerNdcPosition(touch).x() < -0.1f)
 			{
 				moveCameraTouch = touch;
-				moveEventInitialPos = in.getTouchPointerNdcPosition(touch) * getWindow().getAspectRatio();
+				moveEventInitialPos =
+					in.getTouchPointerNdcPosition(touch) * NativeWindow::getSingleton().getAspectRatio();
 				break;
 			}
 		}
@@ -315,7 +318,8 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		if(moveCameraTouch != TouchPointer::kCount && in.getTouchPointer(moveCameraTouch) > 0)
 		{
 			Vec2 velocity =
-				in.getTouchPointerNdcPosition(moveCameraTouch) * getWindow().getAspectRatio() - moveEventInitialPos;
+				in.getTouchPointerNdcPosition(moveCameraTouch) * NativeWindow::getSingleton().getAspectRatio()
+				- moveEventInitialPos;
 			velocity *= 2.0f;
 
 			mover->moveLocalX(moveDistance * velocity.x());

@@ -23,16 +23,16 @@ template<typename T>
 class MakeSingleton
 {
 public:
-	static T& getSingleton()
+	ANKI_PURE static T& getSingleton()
 	{
 		return *m_global;
 	}
 
 	template<typename... TArgs>
-	static T& allocateSingleton(TArgs&&... args)
+	static T& allocateSingleton(TArgs... args)
 	{
 		ANKI_ASSERT(m_global == nullptr);
-		m_global = new T(std::forward<TArgs>(args)...);
+		m_global = new T(args...);
 
 #if ANKI_ENABLE_ASSERTIONS
 		++g_singletonsAllocated;
@@ -43,13 +43,14 @@ public:
 
 	static void freeSingleton()
 	{
-		ANKI_ASSERT(m_global);
-
-		delete m_global;
-		m_global = nullptr;
+		if(m_global)
+		{
+			delete m_global;
+			m_global = nullptr;
 #if ANKI_ENABLE_ASSERTIONS
-		--g_singletonsAllocated;
+			--g_singletonsAllocated;
 #endif
+		}
 	}
 
 	static Bool isAllocated()

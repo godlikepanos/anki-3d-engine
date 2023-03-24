@@ -76,5 +76,5 @@ void main()
 	}
 
 	GrManager::deleteInstance(gr);
-	NativeWindow::deleteInstance(win);
+	NativeWindow::freeSingleton();
 }

@@ -11,7 +11,7 @@
 #include <AnKi/Scene.h>
 #include <AnKi/Renderer.h>
 #include <AnKi/Script.h>
-#include <AnKi/Input.h>
+#include <AnKi/Window.h>
 #include <AnKi/Resource.h>
 #include <AnKi/Physics.h>
 #include <AnKi/Gr.h>

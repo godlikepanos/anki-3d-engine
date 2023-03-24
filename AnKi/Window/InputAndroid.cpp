@@ -3,49 +3,42 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Input/InputAndroid.h>
-#include <AnKi/Core/NativeWindowAndroid.h>
+#include <AnKi/Window/InputAndroid.h>
+#include <AnKi/Window/NativeWindowAndroid.h>
 #include <AnKi/Util/Logger.h>
 
 namespace anki {
 
-Error Input::newInstance(AllocAlignedCallback allocCallback, void* allocCallbackUserData, NativeWindow* nativeWindow,
-						 Input*& input)
+template<>
+template<>
+Input& MakeSingleton<Input>::allocateSingleton<>()
 {
-	ANKI_ASSERT(allocCallback && nativeWindow);
+	ANKI_ASSERT(m_global == nullptr);
+	m_global = new InputAndroid;
 
-	InputAndroid* ainput = static_cast<InputAndroid*>(
-		allocCallback(allocCallbackUserData, nullptr, sizeof(InputAndroid), alignof(InputAndroid)));
-	callConstructor(*ainput);
+#if ANKI_ENABLE_ASSERTIONS
+	++g_singletonsAllocated;
+#endif
 
-	ainput->m_pool.init(allocCallback, allocCallbackUserData);
-	ainput->m_nativeWindow = nativeWindow;
+	return *m_global;
+}
 
-	const Error err = ainput->init();
-	if(err)
+template<>
+void MakeSingleton<Input>::freeSingleton()
+{
+	if(m_global)
 	{
-		callDestructor(*ainput);
-		allocCallback(allocCallbackUserData, ainput, 0, 0);
-		input = nullptr;
-		return err;
-	}
-	else
-	{
-		input = ainput;
-		return Error::kNone;
+		delete static_cast<InputAndroid*>(m_global);
+		m_global = nullptr;
+#if ANKI_ENABLE_ASSERTIONS
+		--g_singletonsAllocated;
+#endif
 	}
 }
 
-void Input::deleteInstance(Input* input)
+Error Input::init()
 {
-	if(input)
-	{
-		InputAndroid* self = static_cast<InputAndroid*>(input);
-		AllocAlignedCallback callback = self->m_pool.getAllocationCallback();
-		void* userData = self->m_pool.getAllocationCallbackUserData();
-		callDestructor(*self);
-		callback(userData, self, 0, 0);
-	}
+	return static_cast<InputAndroid*>(this)->initInternal();
 }
 
 Error Input::handleEvents()
@@ -77,7 +70,8 @@ void Input::moveCursor(const Vec2& posNdc)
 {
 	m_mousePosNdc = posNdc;
 	m_mousePosWin =
-		UVec2((posNdc * 0.5f + 0.5f) * Vec2(F32(m_nativeWindow->getWidth()), F32(m_nativeWindow->getHeight())));
+		UVec2((posNdc * 0.5f + 0.5f)
+			  * Vec2(F32(NativeWindow::getSingleton().getWidth()), F32(NativeWindow::getSingleton().getHeight())));
 }
 
 void Input::hideCursor(Bool hide)
@@ -90,9 +84,8 @@ Bool Input::hasTouchDevice() const
 	return true;
 }
 
-Error InputAndroid::init()
+Error InputAndroid::initInternal()
 {
-	ANKI_ASSERT(m_nativeWindow);
 	g_androidApp->userData = this;
 
 	g_androidApp->onAppCmd = [](android_app* app, int32_t cmd) {
@@ -151,8 +144,8 @@ int InputAndroid::handleAndroidInput(android_app* app, AInputEvent* event)
 
 				m_touchPointerPosWin[id] = UVec2(U32(x), U32(y));
 
-				m_touchPointerPosNdc[id].x() = F32(x) / F32(m_nativeWindow->getWidth()) * 2.0f - 1.0f;
-				m_touchPointerPosNdc[id].y() = -(F32(y) / F32(m_nativeWindow->getHeight()) * 2.0f - 1.0f);
+				m_touchPointerPosNdc[id].x() = F32(x) / F32(NativeWindow::getSingleton().getWidth()) * 2.0f - 1.0f;
+				m_touchPointerPosNdc[id].y() = -(F32(y) / F32(NativeWindow::getSingleton().getHeight()) * 2.0f - 1.0f);
 
 				if(pressValue == 0 || pressValue == 1)
 				{

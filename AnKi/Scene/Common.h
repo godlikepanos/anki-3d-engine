@@ -47,7 +47,6 @@ class SceneGraphExternalSubsystems
 public:
 	ThreadHive* m_threadHive = nullptr;
 	ResourceManager* m_resourceManager = nullptr;
-	Input* m_input = nullptr;
 	ScriptManager* m_scriptManager = nullptr;
 	UiManager* m_uiManager = nullptr;
 	GrManager* m_grManager = nullptr;

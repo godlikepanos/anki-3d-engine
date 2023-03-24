@@ -3,9 +3,9 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Input/Input.h>
-#include <AnKi/Input/InputSdl.h>
-#include <AnKi/Core/NativeWindowSdl.h>
+#include <AnKi/Window/Input.h>
+#include <AnKi/Window/InputSdl.h>
+#include <AnKi/Window/NativeWindowSdl.h>
 #include <AnKi/Util/Logger.h>
 #include <SDL.h>
 
@@ -40,7 +40,7 @@ static KeyCode sdlKeytoAnKi(SDL_Keycode sdlk)
 	case SDLK_##sdl: \
 		akk = KeyCode::k##ak; \
 		break;
-#include <AnKi/Input/KeyCode.defs.h>
+#include <AnKi/Window/KeyCode.defs.h>
 #undef ANKI_KEY_CODE
 	}
 
@@ -48,43 +48,36 @@ static KeyCode sdlKeytoAnKi(SDL_Keycode sdlk)
 	return akk;
 }
 
-Error Input::newInstance(AllocAlignedCallback allocCallback, void* allocCallbackUserData, NativeWindow* nativeWindow,
-						 Input*& input)
+template<>
+template<>
+Input& MakeSingleton<Input>::allocateSingleton<>()
 {
-	ANKI_ASSERT(allocCallback && nativeWindow);
+	ANKI_ASSERT(m_global == nullptr);
+	m_global = new InputSdl;
 
-	InputSdl* sdlinput =
-		static_cast<InputSdl*>(allocCallback(allocCallbackUserData, nullptr, sizeof(InputSdl), alignof(InputSdl)));
-	callConstructor(*sdlinput);
+#if ANKI_ENABLE_ASSERTIONS
+	++g_singletonsAllocated;
+#endif
 
-	sdlinput->m_pool.init(allocCallback, allocCallbackUserData);
-	sdlinput->m_nativeWindow = nativeWindow;
+	return *m_global;
+}
 
-	const Error err = sdlinput->init();
-	if(err)
+template<>
+void MakeSingleton<Input>::freeSingleton()
+{
+	if(m_global)
 	{
-		callDestructor(*sdlinput);
-		allocCallback(allocCallbackUserData, sdlinput, 0, 0);
-		input = nullptr;
-		return err;
-	}
-	else
-	{
-		input = sdlinput;
-		return Error::kNone;
+		delete static_cast<InputSdl*>(m_global);
+		m_global = nullptr;
+#if ANKI_ENABLE_ASSERTIONS
+		--g_singletonsAllocated;
+#endif
 	}
 }
 
-void Input::deleteInstance(Input* input)
+Error Input::init()
 {
-	if(input)
-	{
-		InputSdl* self = static_cast<InputSdl*>(input);
-		AllocAlignedCallback callback = self->m_pool.getAllocationCallback();
-		void* userData = self->m_pool.getAllocationCallbackUserData();
-		callDestructor(*self);
-		callback(userData, self, 0, 0);
-	}
+	return static_cast<InputSdl*>(this)->initInternal();
 }
 
 Error Input::handleEvents()
@@ -97,10 +90,10 @@ void Input::moveCursor(const Vec2& pos)
 {
 	if(pos != m_mousePosNdc)
 	{
-		const I32 x = I32(F32(m_nativeWindow->getWidth()) * (pos.x() * 0.5f + 0.5f));
-		const I32 y = I32(F32(m_nativeWindow->getHeight()) * (-pos.y() * 0.5f + 0.5f));
+		const I32 x = I32(F32(NativeWindow::getSingleton().getWidth()) * (pos.x() * 0.5f + 0.5f));
+		const I32 y = I32(F32(NativeWindow::getSingleton().getHeight()) * (-pos.y() * 0.5f + 0.5f));
 
-		SDL_WarpMouseInWindow(static_cast<NativeWindowSdl*>(m_nativeWindow)->m_window, x, y);
+		SDL_WarpMouseInWindow(static_cast<NativeWindowSdl&>(NativeWindow::getSingleton()).m_sdlWindow, x, y);
 
 		// SDL doesn't generate a SDL_MOUSEMOTION event if the cursor is outside the window. Push that event
 		SDL_Event event;
@@ -122,18 +115,14 @@ Bool Input::hasTouchDevice() const
 	return false;
 }
 
-Error InputSdl::init()
+Error InputSdl::initInternal()
 {
-	ANKI_ASSERT(m_nativeWindow);
-
 	// Call once to clear first events
 	return handleEvents();
 }
 
 Error InputSdl::handleEventsInternal()
 {
-	ANKI_ASSERT(m_nativeWindow != nullptr);
-
 	m_textInput[0] = '\0';
 
 	// add the times a key is being pressed
@@ -192,8 +181,8 @@ Error InputSdl::handleEventsInternal()
 		case SDL_MOUSEMOTION:
 			m_mousePosWin.x() = event.button.x;
 			m_mousePosWin.y() = event.button.y;
-			m_mousePosNdc.x() = F32(event.button.x) / F32(m_nativeWindow->getWidth()) * 2.0f - 1.0f;
-			m_mousePosNdc.y() = -(F32(event.button.y) / F32(m_nativeWindow->getHeight()) * 2.0f - 1.0f);
+			m_mousePosNdc.x() = F32(event.button.x) / F32(NativeWindow::getSingleton().getWidth()) * 2.0f - 1.0f;
+			m_mousePosNdc.y() = -(F32(event.button.y) / F32(NativeWindow::getSingleton().getHeight()) * 2.0f - 1.0f);
 			break;
 		case SDL_QUIT:
 			addEvent(InputEvent::kWindowClosed);

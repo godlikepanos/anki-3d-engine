@@ -120,8 +120,8 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	ANKI_VK_LOGI("Initializing Vulkan backend");
 
 	ANKI_CHECK(initInstance());
-	ANKI_CHECK(initSurface(init));
-	ANKI_CHECK(initDevice(init));
+	ANKI_CHECK(initSurface());
+	ANKI_CHECK(initDevice());
 
 	for(VulkanQueueType qtype : EnumIterable<VulkanQueueType>())
 	{
@@ -564,7 +564,7 @@ Error GrManagerImpl::initInstance()
 	return Error::kNone;
 }
 
-Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
+Error GrManagerImpl::initDevice()
 {
 	uint32_t count = 0;
 	vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &count, nullptr);

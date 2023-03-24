@@ -5,4 +5,5 @@
 
 #pragma once
 
-#include <AnKi/Input/Input.h>
+#include <AnKi/Window/Input.h>
+#include <AnKi/Window/NativeWindow.h>

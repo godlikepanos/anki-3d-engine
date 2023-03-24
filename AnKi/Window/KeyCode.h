@@ -15,7 +15,7 @@ enum class KeyCode
 	kUnknown = 0,
 
 #define ANKI_KEY_CODE(ak, sdl) k##ak,
-#include <AnKi/Input/KeyCode.defs.h>
+#include <AnKi/Window/KeyCode.defs.h>
 #undef ANKI_KEY_CODE
 
 	kCount,

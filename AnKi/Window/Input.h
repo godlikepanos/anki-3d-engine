@@ -9,13 +9,9 @@
 #include <AnKi/Util/Singleton.h>
 #include <AnKi/Util/Array.h>
 #include <AnKi/Util/String.h>
-#include <AnKi/Input/KeyCode.h>
+#include <AnKi/Window/KeyCode.h>
 
 namespace anki {
-
-// Forward
-class InputImpl;
-class NativeWindow;
 
 enum class InputEvent : U8
 {
@@ -27,15 +23,13 @@ enum class InputEvent : U8
 
 /// Handle the input and other events
 /// @note All positions are in NDC space
-class Input
+class Input : public MakeSingleton<Input>
 {
-	ANKI_FRIEND_CALL_CONSTRUCTOR_AND_DESTRUCTOR
+	template<typename>
+	friend class MakeSingleton;
 
 public:
-	static Error newInstance(AllocAlignedCallback allocCallback, void* allocCallbackUserData,
-							 NativeWindow* nativeWindow, Input*& input);
-
-	static void deleteInstance(Input* input);
+	Error init();
 
 	U32 getKey(KeyCode i) const
 	{
@@ -135,9 +129,6 @@ public:
 	Bool hasTouchDevice() const;
 
 protected:
-	NativeWindow* m_nativeWindow = nullptr;
-	HeapMemoryPool m_pool;
-
 	/// Shows the current key state
 	/// - 0 times: unpressed
 	/// - 1 times: pressed once
@@ -165,9 +156,16 @@ protected:
 		reset();
 	}
 
-	~Input()
+	virtual ~Input()
 	{
 	}
 };
+
+template<>
+template<>
+Input& MakeSingleton<Input>::allocateSingleton<>();
+
+template<>
+void MakeSingleton<Input>::freeSingleton();
 
 } // end namespace anki

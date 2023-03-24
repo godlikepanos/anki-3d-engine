@@ -58,7 +58,7 @@ ANKI_CONFIG_VAR_F32(RIndirectDiffuseVrsDistanceThreshold, 0.01f, 0.00001f, 10.0f
 					"The meters that control the VRS SRI generation")
 
 // Shadows
-ANKI_CONFIG_VAR_U32(RShadowMappingTileResolution, ((ANKI_PLATFORM_MOBILE) ? 64 : 256), 16, 2048,
+ANKI_CONFIG_VAR_U32(RShadowMappingTileResolution, ((ANKI_PLATFORM_MOBILE) ? 128 : 256), 16, 2048,
 					"Shadowmapping tile resolution")
 ANKI_CONFIG_VAR_U32(RShadowMappingTileCountPerRowOrColumn, 32, 1, 256,
 					"Shadowmapping atlas will have this number squared number of tiles")

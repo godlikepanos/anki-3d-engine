@@ -7,5 +7,4 @@
 
 #include <AnKi/Core/App.h>
 #include <AnKi/Core/ConfigSet.h>
-#include <AnKi/Core/NativeWindow.h>
 #include <AnKi/Core/CoreTracer.h>

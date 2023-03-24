@@ -5,20 +5,20 @@
 
 #pragma once
 
-#include <AnKi/Input.h>
-#include <AnKi/Input/KeyCode.h>
+#include <AnKi/Window/NativeWindow.h>
 #include <android_native_app_glue.h>
 
 namespace anki {
 
-/// Android input implementation
-class InputAndroid : public Input
+/// Native window implementation for Android
+class NativeWindowAndroid : public NativeWindow
 {
 public:
-	Error init();
+	ANativeWindow* m_nativeWindowAndroid = nullptr;
 
-	void handleAndroidEvents(android_app* app, int32_t cmd);
-	int handleAndroidInput(android_app* app, AInputEvent* event);
+	~NativeWindowAndroid();
+
+	Error initInternal(const NativeWindowInitInfo& init);
 };
 
 } // end namespace anki

@@ -36,7 +36,7 @@ Error MyApp::init(int argc, char* argv[])
 
 	// Config
 #if ANKI_OS_ANDROID
-	ANKI_CHECK(m_config.setFromCommandLineArguments(argc - 1, argv + 1));
+	ANKI_CHECK(ConfigSet::getSingleton().setFromCommandLineArguments(argc - 1, argv + 1));
 #else
 	ANKI_CHECK(ConfigSet::getSingleton().setFromCommandLineArguments(argc - 2, argv + 2));
 #endif
@@ -88,7 +88,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 	quit = false;
 
 	SceneGraph& scene = getSceneGraph();
-	Input& in = getInput();
+	Input& in = Input::getSingleton();
 	Renderer& renderer = getMainRenderer().getOffscreenRenderer();
 
 	if(in.getKey(KeyCode::kEscape))
@@ -294,7 +294,8 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 			   && in.getTouchPointerNdcPosition(touch).x() > 0.1f)
 			{
 				rotateCameraTouch = touch;
-				rotateEventInitialPos = in.getTouchPointerNdcPosition(touch) * getWindow().getAspectRatio();
+				rotateEventInitialPos =
+					in.getTouchPointerNdcPosition(touch) * NativeWindow::getSingleton().getAspectRatio();
 				break;
 			}
 		}
@@ -307,7 +308,8 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		if(rotateCameraTouch != TouchPointer::kCount && in.getTouchPointer(rotateCameraTouch) > 1)
 		{
 			Vec2 velocity =
-				in.getTouchPointerNdcPosition(rotateCameraTouch) * getWindow().getAspectRatio() - rotateEventInitialPos;
+				in.getTouchPointerNdcPosition(rotateCameraTouch) * NativeWindow::getSingleton().getAspectRatio()
+				- rotateEventInitialPos;
 			velocity *= 0.3f;
 
 			Euler angles(mover->getLocalRotation().getRotationPart());
@@ -326,7 +328,8 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 			   && in.getTouchPointerNdcPosition(touch).x() < -0.1f)
 			{
 				moveCameraTouch = touch;
-				moveEventInitialPos = in.getTouchPointerNdcPosition(touch) * getWindow().getAspectRatio();
+				moveEventInitialPos =
+					in.getTouchPointerNdcPosition(touch) * NativeWindow::getSingleton().getAspectRatio();
 				break;
 			}
 		}
@@ -339,7 +342,8 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		if(moveCameraTouch != TouchPointer::kCount && in.getTouchPointer(moveCameraTouch) > 0)
 		{
 			Vec2 velocity =
-				in.getTouchPointerNdcPosition(moveCameraTouch) * getWindow().getAspectRatio() - moveEventInitialPos;
+				in.getTouchPointerNdcPosition(moveCameraTouch) * NativeWindow::getSingleton().getAspectRatio()
+				- moveEventInitialPos;
 			velocity *= 2.0f;
 
 			mover->moveLocalX(moveDistance * velocity.x());

@@ -7,8 +7,8 @@
 
 #include <AnKi/Gr/gl/GrManagerImpl.h>
 #include <AnKi/Gr/GrManager.h>
-#include <AnKi/Core/NativeWindow.h>
-#include <AnKi/Core/NativeWindowSdl.h>
+#include <AnKi/Window/NativeWindow.h>
+#include <AnKi/Window/NativeWindowSdl.h>
 #include <AnKi/Core/Config.h>
 #include <SDL.h>
 #include <GL/glew.h>

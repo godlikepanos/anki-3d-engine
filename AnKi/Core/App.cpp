@@ -16,9 +16,9 @@
 #include <AnKi/Core/CoreTracer.h>
 #include <AnKi/Core/DeveloperConsole.h>
 #include <AnKi/Core/StatsUi.h>
-#include <AnKi/Core/NativeWindow.h>
+#include <AnKi/Window/NativeWindow.h>
 #include <AnKi/Core/MaliHwCounters.h>
-#include <AnKi/Input/Input.h>
+#include <AnKi/Window/Input.h>
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Resource/ResourceManager.h>
@@ -145,10 +145,8 @@ void App::cleanup()
 	m_maliHwCounters = nullptr;
 	GrManager::deleteInstance(m_gr);
 	m_gr = nullptr;
-	Input::deleteInstance(m_input);
-	m_input = nullptr;
-	NativeWindow::deleteInstance(m_window);
-	m_window = nullptr;
+	Input::freeSingleton();
+	NativeWindow::freeSingleton();
 
 #if ANKI_ENABLE_TRACE
 	deleteInstance(m_mainPool, m_coreTracer);
@@ -157,8 +155,10 @@ void App::cleanup()
 
 	ConfigSet::freeSingleton();
 
-	m_settingsDir.destroy(m_mainPool);
-	m_cacheDir.destroy(m_mainPool);
+	m_settingsDir.destroy();
+	m_cacheDir.destroy();
+
+	CoreMemoryPool::freeSingleton();
 }
 
 Error App::init(AllocAlignedCallback allocCb, void* allocCbUserData)
@@ -180,6 +180,8 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	setSignalHandlers();
 
 	initMemoryCallbacks(allocCb, allocCbUserData);
+	CoreMemoryPool::allocateSingleton(allocCb, allocCbUserData);
+
 	m_mainPool.init(allocCb, allocCbUserData, "Core");
 
 	ANKI_CHECK(initDirs());
@@ -244,8 +246,6 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	// Window
 	//
 	NativeWindowInitInfo nwinit;
-	nwinit.m_allocCallback = m_mainPool.getAllocationCallback();
-	nwinit.m_allocCallbackUserData = m_mainPool.getAllocationCallbackUserData();
 	nwinit.m_width = ConfigSet::getSingleton().getWidth();
 	nwinit.m_height = ConfigSet::getSingleton().getHeight();
 	nwinit.m_depthBits = 0;
@@ -253,13 +253,14 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	nwinit.m_fullscreenDesktopRez = ConfigSet::getSingleton().getWindowFullscreen() > 0;
 	nwinit.m_exclusiveFullscreen = ConfigSet::getSingleton().getWindowFullscreen() == 2;
 	nwinit.m_targetFps = ConfigSet::getSingleton().getCoreTargetFps();
-	ANKI_CHECK(NativeWindow::newInstance(nwinit, m_window));
+	NativeWindow::allocateSingleton();
+	ANKI_CHECK(NativeWindow::getSingleton().init(nwinit));
 
 	//
 	// Input
 	//
-	ANKI_CHECK(Input::newInstance(m_mainPool.getAllocationCallback(), m_mainPool.getAllocationCallbackUserData(),
-								  m_window, m_input));
+	Input::allocateSingleton();
+	ANKI_CHECK(Input::getSingleton().init());
 
 	//
 	// ThreadPool
@@ -275,7 +276,6 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	grInit.m_allocCallback = m_mainPool.getAllocationCallback();
 	grInit.m_allocCallbackUserData = m_mainPool.getAllocationCallbackUserData();
 	grInit.m_cacheDirectory = m_cacheDir.toCString();
-	grInit.m_window = m_window;
 
 	ANKI_CHECK(GrManager::newInstance(grInit, m_gr));
 
@@ -345,7 +345,6 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	uiInitInfo.m_allocCallback = m_mainPool.getAllocationCallback();
 	uiInitInfo.m_allocCallbackUserData = m_mainPool.getAllocationCallbackUserData();
 	uiInitInfo.m_grManager = m_gr;
-	uiInitInfo.m_input = m_input;
 	uiInitInfo.m_resourceFilesystem = m_resourceFs;
 	uiInitInfo.m_resourceManager = m_resources;
 	uiInitInfo.m_rebarPool = m_rebarPool;
@@ -362,7 +361,8 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	// Renderer
 	//
 	MainRendererInitInfo renderInit;
-	renderInit.m_swapchainSize = UVec2(m_window->getWidth(), m_window->getHeight());
+	renderInit.m_swapchainSize =
+		UVec2(NativeWindow::getSingleton().getWidth(), NativeWindow::getSingleton().getHeight());
 	renderInit.m_allocCallback = m_mainPool.getAllocationCallback();
 	renderInit.m_allocCallbackUserData = m_mainPool.getAllocationCallbackUserData();
 	renderInit.m_threadHive = m_threadHive;
@@ -394,7 +394,6 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	sceneInit.m_globalTimestamp = &m_globalTimestamp;
 	sceneInit.m_gpuSceneMemoryPool = m_gpuSceneMemPool;
 	sceneInit.m_gpuSceneMicroPatcher = m_gpuSceneMicroPatcher;
-	sceneInit.m_input = m_input;
 	sceneInit.m_resourceManager = m_resources;
 	sceneInit.m_scriptManager = m_script;
 	sceneInit.m_threadHive = m_threadHive;
@@ -425,9 +424,9 @@ Error App::initDirs()
 	StringRaii home(&m_mainPool);
 	ANKI_CHECK(getHomeDirectory(home));
 
-	m_settingsDir.sprintf(m_mainPool, "%s/.anki", &home[0]);
+	m_settingsDir.sprintf("%s/.anki", &home[0]);
 #else
-	m_settingsDir.sprintf(m_mainPool, "%s/.anki", g_androidApp->activity->internalDataPath);
+	m_settingsDir.sprintf("%s/.anki", g_androidApp->activity->internalDataPath);
 #endif
 
 	if(!directoryExists(m_settingsDir.toCString()))
@@ -441,18 +440,18 @@ Error App::initDirs()
 	}
 
 	// Cache
-	m_cacheDir.sprintf(m_mainPool, "%s/cache", &m_settingsDir[0]);
+	m_cacheDir.sprintf("%s/cache", &m_settingsDir[0]);
 
 	const Bool cacheDirExists = directoryExists(m_cacheDir.toCString());
 	if(ConfigSet::getSingleton().getCoreClearCaches() && cacheDirExists)
 	{
-		ANKI_CORE_LOGI("Will delete the cache dir and start fresh: %s", &m_cacheDir[0]);
+		ANKI_CORE_LOGI("Will delete the cache dir and start fresh: %s", m_cacheDir.cstr());
 		ANKI_CHECK(removeDirectory(m_cacheDir.toCString(), m_mainPool));
 		ANKI_CHECK(createDirectory(m_cacheDir.toCString()));
 	}
 	else if(!cacheDirExists)
 	{
-		ANKI_CORE_LOGI("Will create cache dir: %s", &m_cacheDir[0]);
+		ANKI_CORE_LOGI("Will create cache dir: %s", m_cacheDir.cstr());
 		ANKI_CHECK(createDirectory(m_cacheDir.toCString()));
 	}
 
@@ -492,7 +491,7 @@ Error App::mainLoop()
 			crntTime = (!benchmarkMode) ? HighRezTimer::getCurrentTime() : (prevUpdateTime + 1.0_sec / 60.0_sec);
 
 			// Update
-			ANKI_CHECK(m_input->handleEvents());
+			ANKI_CHECK(Input::getSingleton().handleEvents());
 
 			// User update
 			ANKI_CHECK(userMainLoop(quit, crntTime - prevUpdateTime));

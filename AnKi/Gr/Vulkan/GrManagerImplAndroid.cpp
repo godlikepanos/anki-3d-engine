@@ -5,15 +5,15 @@
 
 #include <AnKi/Gr/Vulkan/GrManagerImpl.h>
 #include <AnKi/Gr/GrManager.h>
-#include <AnKi/Core/NativeWindowAndroid.h>
+#include <AnKi/Window/NativeWindowAndroid.h>
 
 namespace anki {
 
-Error GrManagerImpl::initSurface(const GrManagerInitInfo& init)
+Error GrManagerImpl::initSurface()
 {
 	VkAndroidSurfaceCreateInfoKHR createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR;
-	createInfo.window = static_cast<NativeWindowAndroid*>(init.m_window)->m_nativeWindow;
+	createInfo.window = static_cast<NativeWindowAndroid&>(NativeWindow::getSingleton()).m_nativeWindowAndroid;
 
 	ANKI_VK_CHECK(vkCreateAndroidSurfaceKHR(m_instance, &createInfo, nullptr, &m_surface));
 

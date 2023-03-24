@@ -39,7 +39,7 @@ Logger::~Logger()
 void Logger::addMessageHandler(void* data, LoggerMessageHandlerCallback callback)
 {
 	LockGuard<Mutex> lock(m_mutex);
-	m_handlers[m_handlersCount++] = Handler(data, callback);
+	m_handlers[m_handlersCount++] = Handler{data, callback};
 }
 
 void Logger::removeMessageHandler(void* data, LoggerMessageHandlerCallback callback)

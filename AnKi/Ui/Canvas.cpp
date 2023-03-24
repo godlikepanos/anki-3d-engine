@@ -8,7 +8,7 @@
 #include <AnKi/Ui/UiManager.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Core/GpuMemoryPools.h>
-#include <AnKi/Input/Input.h>
+#include <AnKi/Window/Input.h>
 #include <AnKi/Gr/Sampler.h>
 #include <AnKi/Gr/GrManager.h>
 
@@ -104,7 +104,7 @@ Error Canvas::init(FontPtr font, U32 fontHeight, U32 width, U32 height)
 
 void Canvas::handleInput()
 {
-	const Input& in = *getExternalSubsystems().m_input;
+	const Input& in = Input::getSingleton();
 
 	// Begin
 	setImAllocator();

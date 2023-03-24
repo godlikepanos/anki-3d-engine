@@ -1,0 +1,16 @@
+file(GLOB_RECURSE headers *.h)
+
+if(ANKI_HEADLESS)
+	set(sources InputDummy.cpp)
+	set(sources ${sources} NativeWindowHeadless.cpp)
+elseif(SDL)
+	set(sources InputSdl.cpp)
+	set(sources ${sources} NativeWindowSdl.cpp)
+elseif(ANDROID)
+	set(sources InputAndroid.cpp)
+	set(sources ${sources} NativeWindowAndroid.cpp)
+endif()
+
+add_library(AnKiWindow ${sources} ${headers})
+target_compile_definitions(AnKiWindow PRIVATE -DANKI_SOURCE_FILE)
+target_link_libraries(AnKiWindow AnKiCore AnKiImGui)

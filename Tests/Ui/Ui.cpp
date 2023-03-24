@@ -7,7 +7,7 @@
 #include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Util/HighRezTimer.h>
 #include <AnKi/Ui.h>
-#include <AnKi/Input.h>
+#include <AnKi/Window.h>
 #include <AnKi/Core/GpuMemoryPools.h>
 
 using namespace anki;
@@ -66,8 +66,7 @@ ANKI_TEST(Ui, Ui)
 	cfg.setRsrcDataPaths("EngineAssets");
 
 	NativeWindow* win = createWindow(cfg);
-	Input* in;
-	ANKI_TEST_EXPECT_NO_ERR(Input::newInstance(allocAligned, nullptr, win, in));
+	ANKI_TEST_EXPECT_NO_ERR(Input::allocateSingleton().init());
 	GrManager* gr = createGrManager(win);
 	ResourceFilesystem* fs;
 	ResourceManager* resource = createResourceManager(gr, fs);
@@ -81,7 +80,6 @@ ANKI_TEST(Ui, Ui)
 	uiInitInfo.m_allocCallback = allocAligned;
 	uiInitInfo.m_allocCallbackUserData = nullptr;
 	uiInitInfo.m_grManager = gr;
-	uiInitInfo.m_input = in;
 	uiInitInfo.m_resourceFilesystem = fs;
 	uiInitInfo.m_resourceManager = resource;
 	uiInitInfo.m_rebarPool = stagingMem;
@@ -100,12 +98,12 @@ ANKI_TEST(Ui, Ui)
 		Bool done = false;
 		while(!done)
 		{
-			ANKI_TEST_EXPECT_NO_ERR(in->handleEvents());
+			ANKI_TEST_EXPECT_NO_ERR(Input::getSingleton().handleEvents());
 			HighRezTimer timer;
 			timer.start();
 
 			canvas->handleInput();
-			if(in->getKey(KeyCode::kEscape))
+			if(Input::getSingleton().getKey(KeyCode::kEscape))
 			{
 				done = true;
 			}
@@ -165,6 +163,6 @@ ANKI_TEST(Ui, Ui)
 	delete resource;
 	delete fs;
 	GrManager::deleteInstance(gr);
-	Input::deleteInstance(in);
-	NativeWindow::deleteInstance(win);
+	Input::freeSingleton();
+	NativeWindow::freeSingleton();
 }

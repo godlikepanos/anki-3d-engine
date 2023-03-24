@@ -4,19 +4,19 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Gr/Vulkan/GrManagerImpl.h>
-#include <AnKi/Core/NativeWindow.h>
+#include <AnKi/Window/NativeWindow.h>
 
 namespace anki {
 
-Error GrManagerImpl::initSurface(const GrManagerInitInfo& init)
+Error GrManagerImpl::initSurface()
 {
 	VkHeadlessSurfaceCreateInfoEXT createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_HEADLESS_SURFACE_CREATE_INFO_EXT;
 
 	ANKI_VK_CHECK(vkCreateHeadlessSurfaceEXT(m_instance, &createInfo, nullptr, &m_surface));
 
-	m_nativeWindowWidth = init.m_window->getWidth();
-	m_nativeWindowHeight = init.m_window->getHeight();
+	m_nativeWindowWidth = NativeWindow::getSingleton().getWidth();
+	m_nativeWindowHeight = NativeWindow::getSingleton().getHeight();
 
 	return Error::kNone;
 }

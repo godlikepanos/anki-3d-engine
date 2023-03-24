@@ -5,8 +5,7 @@
 
 #pragma once
 
-#include <AnKi/Input.h>
-#include <AnKi/Input/KeyCode.h>
+#include <AnKi/Window/Input.h>
 #include <SDL_keycode.h>
 #include <unordered_map>
 
@@ -16,7 +15,7 @@ namespace anki {
 class InputSdl : public Input
 {
 public:
-	Error init();
+	Error initInternal();
 	Error handleEventsInternal();
 };
 

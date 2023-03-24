@@ -37,7 +37,7 @@ public:
 
 	Error userMainLoop(Bool& quit, Second elapsedTime) override
 	{
-		if(getInput().getKey(KeyCode::kZ) == 1)
+		if(Input::getSingleton().getKey(KeyCode::kZ) == 1)
 		{
 			AnimationPlayInfo animInfo;
 			animInfo.m_startTime = 0.5;

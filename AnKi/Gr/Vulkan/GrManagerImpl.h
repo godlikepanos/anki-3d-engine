@@ -333,8 +333,8 @@ private:
 
 	Error initInternal(const GrManagerInitInfo& init);
 	Error initInstance();
-	Error initSurface(const GrManagerInitInfo& init);
-	Error initDevice(const GrManagerInitInfo& init);
+	Error initSurface();
+	Error initDevice();
 	Error initMemory();
 
 #if ANKI_GR_MANAGER_DEBUG_MEMMORY

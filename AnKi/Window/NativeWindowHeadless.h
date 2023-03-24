@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <AnKi/Core/NativeWindow.h>
+#include <AnKi/Window/NativeWindow.h>
 
 namespace anki {
 

@@ -291,7 +291,7 @@ public:
 		StringRaii title(&pool);
 		title.sprintf("%s %u x %u Mips %u Format %s", argv[1], image->getWidth(), image->getHeight(),
 					  image->getTexture()->getMipmapCount(), getFormatInfo(image->getTexture()->getFormat()).m_name);
-		getWindow().setWindowTitle(title);
+		NativeWindow::getSingleton().setWindowTitle(title);
 
 		// Create the node
 		SceneGraph& scene = getSceneGraph();
@@ -304,7 +304,7 @@ public:
 
 	Error userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime) override
 	{
-		Input& input = getInput();
+		Input& input = Input::getSingleton();
 		if(input.getKey(KeyCode::kEscape))
 		{
 			quit = true;

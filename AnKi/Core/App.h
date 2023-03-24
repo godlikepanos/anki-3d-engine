@@ -15,8 +15,6 @@ namespace anki {
 // Forward
 class CoreTracer;
 class ThreadHive;
-class NativeWindow;
-class Input;
 class GrManager;
 class MainRenderer;
 class SceneGraph;
@@ -77,11 +75,6 @@ public:
 		return Error::kNone;
 	}
 
-	Input& getInput()
-	{
-		return *m_input;
-	}
-
 	SceneGraph& getSceneGraph()
 	{
 		return *m_scene;
@@ -102,11 +95,6 @@ public:
 		return *m_script;
 	}
 
-	NativeWindow& getWindow()
-	{
-		return *m_window;
-	}
-
 	void setDisplayDeveloperConsole(Bool display)
 	{
 		m_consoleEnabled = display;
@@ -124,8 +112,6 @@ private:
 #if ANKI_ENABLE_TRACE
 	CoreTracer* m_coreTracer = nullptr;
 #endif
-	NativeWindow* m_window = nullptr;
-	Input* m_input = nullptr;
 	ThreadHive* m_threadHive = nullptr;
 	GrManager* m_gr = nullptr;
 	MaliHwCounters* m_maliHwCounters = nullptr;
@@ -145,8 +131,8 @@ private:
 	UiImmediateModeBuilderPtr m_console;
 	Bool m_consoleEnabled = false;
 	Timestamp m_globalTimestamp = 1;
-	String m_settingsDir; ///< The path that holds the configuration
-	String m_cacheDir; ///< This is used as a cache
+	CoreString m_settingsDir; ///< The path that holds the configuration
+	CoreString m_cacheDir; ///< This is used as a cache
 	U64 m_resourceCompletedAsyncTaskCount = 0;
 
 	class MemStats

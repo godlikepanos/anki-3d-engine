@@ -25,8 +25,6 @@ public:
 	void* m_allocCallbackUserData = nullptr;
 
 	CString m_cacheDirectory;
-
-	NativeWindow* m_window = nullptr;
 };
 
 /// Graphics statistics.
