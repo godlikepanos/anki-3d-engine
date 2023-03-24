@@ -45,7 +45,6 @@ public:
 	ResourceManager* m_resourceManager = nullptr;
 	ResourceFilesystem* m_resourceFilesystem = nullptr;
 	GrManager* m_grManager = nullptr;
-	RebarStagingGpuMemoryPool* m_rebarPool = nullptr;
 };
 
 inline Vec2 toAnki(const ImVec2& v)

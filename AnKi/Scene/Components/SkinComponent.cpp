@@ -25,7 +25,7 @@ SkinComponent::~SkinComponent()
 	m_boneTrfs[1].destroy(m_node->getMemoryPool());
 	m_animationTrfs.destroy(m_node->getMemoryPool());
 
-	getExternalSubsystems(*m_node).m_gpuSceneMemoryPool->deferredFree(m_boneTransformsGpuSceneOffset);
+	GpuSceneMemoryPool::getSingleton().deferredFree(m_boneTransformsGpuSceneOffset);
 }
 
 void SkinComponent::loadSkeletonResource(CString fname)
@@ -46,7 +46,7 @@ void SkinComponent::loadSkeletonResource(CString fname)
 	m_boneTrfs[0].destroy(m_node->getMemoryPool());
 	m_boneTrfs[1].destroy(m_node->getMemoryPool());
 	m_animationTrfs.destroy(m_node->getMemoryPool());
-	getExternalSubsystems(*m_node).m_gpuSceneMemoryPool->deferredFree(m_boneTransformsGpuSceneOffset);
+	GpuSceneMemoryPool::getSingleton().deferredFree(m_boneTransformsGpuSceneOffset);
 
 	// Create
 	const U32 boneCount = m_skeleton->getBones().getSize();
@@ -54,8 +54,7 @@ void SkinComponent::loadSkeletonResource(CString fname)
 	m_boneTrfs[1].create(m_node->getMemoryPool(), boneCount, Mat3x4::getIdentity());
 	m_animationTrfs.create(m_node->getMemoryPool(), boneCount, {Vec3(0.0f), Quat::getIdentity(), 1.0f});
 
-	getExternalSubsystems(*m_node).m_gpuSceneMemoryPool->allocate(sizeof(Mat4) * boneCount * 2, 4,
-																  m_boneTransformsGpuSceneOffset);
+	GpuSceneMemoryPool::getSingleton().allocate(sizeof(Mat4) * boneCount * 2, 4, m_boneTransformsGpuSceneOffset);
 }
 
 void SkinComponent::playAnimation(U32 track, AnimationResourcePtr anim, const AnimationPlayInfo& info)
@@ -205,8 +204,8 @@ Error SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			trfs[i * 2 + 0] = getBoneTransforms()[i];
 			trfs[i * 2 + 1] = getPreviousFrameBoneTransforms()[i];
 		}
-		info.m_gpuSceneMicroPatcher->newCopy(*info.m_framePool, m_boneTransformsGpuSceneOffset.m_offset,
-											 trfs.getSizeInBytes(), trfs.getBegin());
+		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_boneTransformsGpuSceneOffset.m_offset,
+													 trfs.getSizeInBytes(), trfs.getBegin());
 	}
 	else
 	{

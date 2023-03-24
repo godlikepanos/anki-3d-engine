@@ -872,7 +872,7 @@ void SceneGraph::doVisibilityTests(SceneNode& camera, SceneGraph& scene, RenderQ
 {
 	ANKI_TRACE_SCOPED_EVENT(SceneVisTests);
 
-	ThreadHive& hive = *scene.m_subsystems.m_threadHive;
+	ThreadHive& hive = CoreThreadHive::getSingleton();
 
 	VisibilityContext ctx;
 	ctx.m_scene = &scene;

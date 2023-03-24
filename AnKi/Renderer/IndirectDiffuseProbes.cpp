@@ -373,8 +373,6 @@ void IndirectDiffuseProbes::runGBufferInThread(RenderPassWorkContext& rgraphCtx,
 			args.m_viewProjectionMatrix = rqueue.m_viewProjectionMatrix;
 			args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
 			args.m_sampler = m_r->getSamplers().m_trilinearRepeat;
-			args.m_gpuSceneBuffer = getExternalSubsystems().m_gpuScenePool->getBuffer();
-			args.m_unifiedGeometryBuffer = getExternalSubsystems().m_unifiedGometryMemoryPool->getBuffer();
 
 			m_r->getSceneDrawer().drawRange(args, rqueue.m_renderables.getBegin() + localStart,
 											rqueue.m_renderables.getBegin() + localEnd, cmdb);
@@ -431,8 +429,6 @@ void IndirectDiffuseProbes::runShadowmappingInThread(RenderPassWorkContext& rgra
 			args.m_viewProjectionMatrix = cascadeRenderQueue.m_viewProjectionMatrix;
 			args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
 			args.m_sampler = m_r->getSamplers().m_trilinearRepeatAniso;
-			args.m_gpuSceneBuffer = getExternalSubsystems().m_gpuScenePool->getBuffer();
-			args.m_unifiedGeometryBuffer = getExternalSubsystems().m_unifiedGometryMemoryPool->getBuffer();
 
 			m_r->getSceneDrawer().drawRange(args, cascadeRenderQueue.m_renderables.getBegin() + localStart,
 											cascadeRenderQueue.m_renderables.getBegin() + localEnd, cmdb);

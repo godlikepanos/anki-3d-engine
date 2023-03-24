@@ -45,15 +45,11 @@ class PhysicsWorld;
 class SceneGraphExternalSubsystems
 {
 public:
-	ThreadHive* m_threadHive = nullptr;
 	ResourceManager* m_resourceManager = nullptr;
 	ScriptManager* m_scriptManager = nullptr;
 	UiManager* m_uiManager = nullptr;
 	GrManager* m_grManager = nullptr;
 	const Timestamp* m_globalTimestamp = nullptr;
-	UnifiedGeometryMemoryPool* m_unifiedGeometryMemPool = nullptr;
-	GpuSceneMemoryPool* m_gpuSceneMemoryPool = nullptr;
-	GpuSceneMicroPatcher* m_gpuSceneMicroPatcher = nullptr;
 };
 /// @}
 

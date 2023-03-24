@@ -17,16 +17,17 @@ namespace anki {
 /// @{
 
 /// Manages vertex and index memory for the whole application.
-class UnifiedGeometryMemoryPool
+class UnifiedGeometryMemoryPool : public MakeSingleton<UnifiedGeometryMemoryPool>
 {
-public:
-	UnifiedGeometryMemoryPool() = default;
+	template<typename>
+	friend class MakeSingleton;
 
+public:
 	UnifiedGeometryMemoryPool(const UnifiedGeometryMemoryPool&) = delete; // Non-copyable
 
 	UnifiedGeometryMemoryPool& operator=(const UnifiedGeometryMemoryPool&) = delete; // Non-copyable
 
-	void init(HeapMemoryPool* pool, GrManager* gr);
+	void init(GrManager* gr);
 
 	void allocate(PtrSize size, U32 alignment, SegregatedListsGpuMemoryPoolToken& token)
 	{
@@ -55,19 +56,24 @@ public:
 
 private:
 	SegregatedListsGpuMemoryPool m_pool;
+
+	UnifiedGeometryMemoryPool() = default;
+
+	~UnifiedGeometryMemoryPool() = default;
 };
 
 /// Memory pool for the GPU scene.
-class GpuSceneMemoryPool
+class GpuSceneMemoryPool : public MakeSingleton<GpuSceneMemoryPool>
 {
-public:
-	GpuSceneMemoryPool() = default;
+	template<typename>
+	friend class MakeSingleton;
 
+public:
 	GpuSceneMemoryPool(const GpuSceneMemoryPool&) = delete; // Non-copyable
 
 	GpuSceneMemoryPool& operator=(const GpuSceneMemoryPool&) = delete; // Non-copyable
 
-	void init(HeapMemoryPool* pool, GrManager* gr);
+	void init(GrManager* gr);
 
 	void allocate(PtrSize size, U32 alignment, SegregatedListsGpuMemoryPoolToken& token)
 	{
@@ -101,6 +107,10 @@ public:
 
 private:
 	SegregatedListsGpuMemoryPool m_pool;
+
+	GpuSceneMemoryPool() = default;
+
+	~GpuSceneMemoryPool() = default;
 };
 
 /// Token that gets returned when requesting for memory to write to a resource.
@@ -131,18 +141,19 @@ public:
 };
 
 /// Manages staging GPU memory.
-class RebarStagingGpuMemoryPool
+class RebarStagingGpuMemoryPool : public MakeSingleton<RebarStagingGpuMemoryPool>
 {
-public:
-	RebarStagingGpuMemoryPool() = default;
+	template<typename>
+	friend class MakeSingleton;
 
+public:
 	RebarStagingGpuMemoryPool(const RebarStagingGpuMemoryPool&) = delete; // Non-copyable
 
 	~RebarStagingGpuMemoryPool();
 
 	RebarStagingGpuMemoryPool& operator=(const RebarStagingGpuMemoryPool&) = delete; // Non-copyable
 
-	Error init(GrManager* gr);
+	void init(GrManager* gr);
 
 	PtrSize endFrame();
 
@@ -171,17 +182,18 @@ private:
 	Atomic<PtrSize> m_offset = {0};
 	PtrSize m_previousFrameEndOffset = 0;
 	U32 m_alignment = 0;
+
+	RebarStagingGpuMemoryPool() = default;
 };
 
 /// Creates the copy jobs that will patch the GPU Scene.
-class GpuSceneMicroPatcher
+class GpuSceneMicroPatcher : public MakeSingleton<GpuSceneMicroPatcher>
 {
+	template<typename>
+	friend class MakeSingleton;
+
 public:
-	GpuSceneMicroPatcher() = default;
-
 	GpuSceneMicroPatcher(const GpuSceneMicroPatcher&) = delete;
-
-	~GpuSceneMicroPatcher();
 
 	GpuSceneMicroPatcher& operator=(const GpuSceneMicroPatcher&) = delete;
 
@@ -200,7 +212,7 @@ public:
 
 	/// Copy the data to the GPU scene buffer.
 	/// @note Not thread-safe. Nothing else should be happening before calling it.
-	void patchGpuScene(RebarStagingGpuMemoryPool& rebarPool, CommandBuffer& cmdb, const BufferPtr& gpuSceneBuffer);
+	void patchGpuScene(CommandBuffer& cmdb);
 
 private:
 	static constexpr U32 kDwordsPerPatch = 64;
@@ -213,6 +225,10 @@ private:
 
 	ShaderProgramResourcePtr m_copyProgram;
 	ShaderProgramPtr m_grProgram;
+
+	GpuSceneMicroPatcher() = default;
+
+	~GpuSceneMicroPatcher();
 };
 /// @}
 

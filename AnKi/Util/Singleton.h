@@ -23,7 +23,7 @@ template<typename T>
 class MakeSingleton
 {
 public:
-	ANKI_PURE static T& getSingleton()
+	ANKI_FORCE_INLINE static T& getSingleton()
 	{
 		return *m_global;
 	}

@@ -126,21 +126,16 @@ void App::cleanup()
 	m_renderer = nullptr;
 	deleteInstance(m_mainPool, m_ui);
 	m_ui = nullptr;
-	deleteInstance(m_mainPool, m_gpuSceneMicroPatcher);
-	m_gpuSceneMicroPatcher = nullptr;
+	GpuSceneMicroPatcher::freeSingleton();
 	deleteInstance(m_mainPool, m_resources);
 	m_resources = nullptr;
 	deleteInstance(m_mainPool, m_resourceFs);
 	m_resourceFs = nullptr;
 	PhysicsWorld::freeSingleton();
-	deleteInstance(m_mainPool, m_rebarPool);
-	m_rebarPool = nullptr;
-	deleteInstance(m_mainPool, m_unifiedGometryMemPool);
-	m_unifiedGometryMemPool = nullptr;
-	deleteInstance(m_mainPool, m_gpuSceneMemPool);
-	m_gpuSceneMemPool = nullptr;
-	deleteInstance(m_mainPool, m_threadHive);
-	m_threadHive = nullptr;
+	RebarStagingGpuMemoryPool::freeSingleton();
+	UnifiedGeometryMemoryPool::freeSingleton();
+	GpuSceneMemoryPool::freeSingleton();
+	CoreThreadHive::freeSingleton();
 	deleteInstance(m_mainPool, m_maliHwCounters);
 	m_maliHwCounters = nullptr;
 	GrManager::deleteInstance(m_gr);
@@ -266,8 +261,8 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	// ThreadPool
 	//
 	const Bool pinThreads = !ANKI_OS_ANDROID;
-	m_threadHive =
-		newInstance<ThreadHive>(m_mainPool, ConfigSet::getSingleton().getCoreJobThreadCount(), &m_mainPool, pinThreads);
+	CoreThreadHive::allocateSingleton(ConfigSet::getSingleton().getCoreJobThreadCount(),
+									  &CoreMemoryPool::getSingleton(), pinThreads);
 
 	//
 	// Graphics API
@@ -291,14 +286,9 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	//
 	// GPU mem
 	//
-	m_unifiedGometryMemPool = newInstance<UnifiedGeometryMemoryPool>(m_mainPool);
-	m_unifiedGometryMemPool->init(&m_mainPool, m_gr);
-
-	m_gpuSceneMemPool = newInstance<GpuSceneMemoryPool>(m_mainPool);
-	m_gpuSceneMemPool->init(&m_mainPool, m_gr);
-
-	m_rebarPool = newInstance<RebarStagingGpuMemoryPool>(m_mainPool);
-	ANKI_CHECK(m_rebarPool->init(m_gr));
+	UnifiedGeometryMemoryPool::allocateSingleton().init(m_gr);
+	GpuSceneMemoryPool::allocateSingleton().init(m_gr);
+	RebarStagingGpuMemoryPool::allocateSingleton().init(m_gr);
 
 	//
 	// Physics
@@ -331,7 +321,6 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	ResourceManagerInitInfo rinit;
 	rinit.m_grManager = m_gr;
 	rinit.m_resourceFilesystem = m_resourceFs;
-	rinit.m_unifiedGometryMemoryPool = m_unifiedGometryMemPool;
 	rinit.m_allocCallback = m_mainPool.getAllocationCallback();
 	rinit.m_allocCallbackData = m_mainPool.getAllocationCallbackUserData();
 	m_resources = newInstance<ResourceManager>(m_mainPool);
@@ -347,15 +336,13 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	uiInitInfo.m_grManager = m_gr;
 	uiInitInfo.m_resourceFilesystem = m_resourceFs;
 	uiInitInfo.m_resourceManager = m_resources;
-	uiInitInfo.m_rebarPool = m_rebarPool;
 	m_ui = newInstance<UiManager>(m_mainPool);
 	ANKI_CHECK(m_ui->init(uiInitInfo));
 
 	//
 	// GPU scene
 	//
-	m_gpuSceneMicroPatcher = newInstance<GpuSceneMicroPatcher>(m_mainPool);
-	ANKI_CHECK(m_gpuSceneMicroPatcher->init(m_resources));
+	ANKI_CHECK(GpuSceneMicroPatcher::allocateSingleton().init(m_resources));
 
 	//
 	// Renderer
@@ -365,15 +352,10 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 		UVec2(NativeWindow::getSingleton().getWidth(), NativeWindow::getSingleton().getHeight());
 	renderInit.m_allocCallback = m_mainPool.getAllocationCallback();
 	renderInit.m_allocCallbackUserData = m_mainPool.getAllocationCallbackUserData();
-	renderInit.m_threadHive = m_threadHive;
 	renderInit.m_resourceManager = m_resources;
 	renderInit.m_grManager = m_gr;
-	renderInit.m_rebarStagingPool = m_rebarPool;
 	renderInit.m_uiManager = m_ui;
 	renderInit.m_globTimestamp = &m_globalTimestamp;
-	renderInit.m_gpuScenePool = m_gpuSceneMemPool;
-	renderInit.m_gpuSceneMicroPatcher = m_gpuSceneMicroPatcher;
-	renderInit.m_unifiedGometryMemoryPool = m_unifiedGometryMemPool;
 	m_renderer = newInstance<MainRenderer>(m_mainPool);
 	ANKI_CHECK(m_renderer->init(renderInit));
 
@@ -392,13 +374,9 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	sceneInit.m_allocCallback = m_mainPool.getAllocationCallback();
 	sceneInit.m_allocCallbackData = m_mainPool.getAllocationCallbackUserData();
 	sceneInit.m_globalTimestamp = &m_globalTimestamp;
-	sceneInit.m_gpuSceneMemoryPool = m_gpuSceneMemPool;
-	sceneInit.m_gpuSceneMicroPatcher = m_gpuSceneMicroPatcher;
 	sceneInit.m_resourceManager = m_resources;
 	sceneInit.m_scriptManager = m_script;
-	sceneInit.m_threadHive = m_threadHive;
 	sceneInit.m_uiManager = m_ui;
-	sceneInit.m_unifiedGeometryMemPool = m_unifiedGometryMemPool;
 	sceneInit.m_grManager = m_gr;
 	ANKI_CHECK(m_scene->init(sceneInit));
 
@@ -532,9 +510,9 @@ Error App::mainLoop()
 				grTime = HighRezTimer::getCurrentTime() - grTime;
 			}
 
-			const PtrSize rebarMemUsed = m_rebarPool->endFrame();
-			m_unifiedGometryMemPool->endFrame();
-			m_gpuSceneMemPool->endFrame();
+			const PtrSize rebarMemUsed = RebarStagingGpuMemoryPool::getSingleton().endFrame();
+			UnifiedGeometryMemoryPool::getSingleton().endFrame();
+			GpuSceneMemoryPool::getSingleton().endFrame();
 
 			// Update the trace info with some async loader stats
 			U64 asyncTaskCount = m_resources->getAsyncLoader().getCompletedTaskCount();
@@ -600,10 +578,10 @@ Error App::mainLoop()
 				in.m_cpuFreeCount = m_memStats.m_freeCount.load();
 
 				const GrManagerStats grStats = m_gr->getStats();
-				m_unifiedGometryMemPool->getStats(in.m_unifiedGometryExternalFragmentation,
-												  in.m_unifiedGeometryAllocated, in.m_unifiedGeometryTotal);
-				m_gpuSceneMemPool->getStats(in.m_gpuSceneExternalFragmentation, in.m_gpuSceneAllocated,
-											in.m_gpuSceneTotal);
+				UnifiedGeometryMemoryPool::getSingleton().getStats(
+					in.m_unifiedGometryExternalFragmentation, in.m_unifiedGeometryAllocated, in.m_unifiedGeometryTotal);
+				GpuSceneMemoryPool::getSingleton().getStats(in.m_gpuSceneExternalFragmentation, in.m_gpuSceneAllocated,
+															in.m_gpuSceneTotal);
 				in.m_gpuDeviceMemoryAllocated = grStats.m_deviceMemoryAllocated;
 				in.m_gpuDeviceMemoryInUse = grStats.m_deviceMemoryInUse;
 				in.m_reBar = rebarMemUsed;

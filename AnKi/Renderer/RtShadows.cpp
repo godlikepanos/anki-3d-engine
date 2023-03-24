@@ -449,13 +449,13 @@ void RtShadows::run(RenderPassWorkContext& rgraphCtx)
 	{
 		RebarGpuMemoryToken globalUniformsToken;
 		MaterialGlobalUniforms* globalUniforms =
-			static_cast<MaterialGlobalUniforms*>(getExternalSubsystems().m_rebarStagingPool->allocateFrame(
+			static_cast<MaterialGlobalUniforms*>(RebarStagingGpuMemoryPool::getSingleton().allocateFrame(
 				sizeof(MaterialGlobalUniforms), globalUniformsToken));
 
 		memset(globalUniforms, 0, sizeof(*globalUniforms)); // Don't care for now
 
 		cmdb->bindUniformBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGlobalUniforms),
-								getExternalSubsystems().m_rebarStagingPool->getBuffer(), globalUniformsToken.m_offset,
+								RebarStagingGpuMemoryPool::getSingleton().getBuffer(), globalUniformsToken.m_offset,
 								globalUniformsToken.m_range);
 	}
 
@@ -464,11 +464,11 @@ void RtShadows::run(RenderPassWorkContext& rgraphCtx)
 	cmdb->bindSampler(U32(MaterialSet::kGlobal), U32(MaterialBinding::kTrilinearRepeatSampler),
 					  m_r->getSamplers().m_trilinearRepeat);
 	cmdb->bindStorageBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGpuScene),
-							getExternalSubsystems().m_gpuScenePool->getBuffer(), 0, kMaxPtrSize);
+							GpuSceneMemoryPool::getSingleton().getBuffer(), 0, kMaxPtrSize);
 
 #define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType) \
 	cmdb->bindReadOnlyTextureBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kUnifiedGeometry_##fmt), \
-									getExternalSubsystems().m_unifiedGometryMemoryPool->getBuffer(), 0, kMaxPtrSize, \
+									UnifiedGeometryMemoryPool::getSingleton().getBuffer(), 0, kMaxPtrSize, \
 									Format::k##fmt);
 #include <AnKi/Shaders/Include/UnifiedGeometryTypes.defs.h>
 
@@ -637,7 +637,7 @@ void RtShadows::buildSbt(RenderingContext& ctx)
 	RebarGpuMemoryToken token;
 	U8* sbt = allocateStorage<U8*>(PtrSize(m_sbtRecordSize) * (instanceCount + extraSbtRecords), token);
 	[[maybe_unused]] const U8* sbtStart = sbt;
-	m_runCtx.m_sbtBuffer = getExternalSubsystems().m_rebarStagingPool->getBuffer();
+	m_runCtx.m_sbtBuffer = RebarStagingGpuMemoryPool::getSingleton().getBuffer();
 	m_runCtx.m_sbtOffset = token.m_offset;
 
 	// Set the miss and ray gen handles

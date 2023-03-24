@@ -201,7 +201,7 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 		updateCtx.m_prevUpdateTime = prevUpdateTime;
 		updateCtx.m_crntTime = crntTime;
 
-		for(U i = 0; i < m_subsystems.m_threadHive->getThreadCount(); i++)
+		for(U i = 0; i < CoreThreadHive::getSingleton().getThreadCount(); i++)
 		{
 			tasks[i] = ANKI_THREAD_HIVE_TASK(
 				{
@@ -213,8 +213,8 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 				&updateCtx, nullptr, nullptr);
 		}
 
-		m_subsystems.m_threadHive->submitTasks(&tasks[0], m_subsystems.m_threadHive->getThreadCount());
-		m_subsystems.m_threadHive->waitAllTasks();
+		CoreThreadHive::getSingleton().submitTasks(&tasks[0], CoreThreadHive::getSingleton().getThreadCount());
+		CoreThreadHive::getSingleton().waitAllTasks();
 	}
 
 	m_stats.m_updateTime = HighRezTimer::getCurrentTime() - m_stats.m_updateTime;
@@ -237,7 +237,6 @@ Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 	// Components update
 	SceneComponentUpdateInfo componentUpdateInfo(prevTime, crntTime);
 	componentUpdateInfo.m_framePool = &m_framePool;
-	componentUpdateInfo.m_gpuSceneMicroPatcher = m_subsystems.m_gpuSceneMicroPatcher;
 
 	Bool atLeastOneComponentUpdated = false;
 	node.iterateComponents([&](SceneComponent& comp) {

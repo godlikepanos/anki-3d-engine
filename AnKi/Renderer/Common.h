@@ -75,15 +75,10 @@ inline constexpr Array<Format, kGBufferColorRenderTargetCount> kGBufferColorRend
 class RendererExternalSubsystems
 {
 public:
-	ThreadHive* m_threadHive = nullptr;
 	ResourceManager* m_resourceManager = nullptr;
 	GrManager* m_grManager = nullptr;
-	RebarStagingGpuMemoryPool* m_rebarStagingPool = nullptr;
 	UiManager* m_uiManager = nullptr;
 	Timestamp* m_globTimestamp = nullptr;
-	GpuSceneMemoryPool* m_gpuScenePool = nullptr;
-	GpuSceneMicroPatcher* m_gpuSceneMicroPatcher = nullptr;
-	UnifiedGeometryMemoryPool* m_unifiedGometryMemoryPool = nullptr;
 };
 
 /// Rendering context.

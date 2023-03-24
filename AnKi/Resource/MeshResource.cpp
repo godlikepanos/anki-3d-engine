@@ -59,12 +59,11 @@ MeshResource::~MeshResource()
 
 	for(Lod& lod : m_lods)
 	{
-		getExternalSubsystems().m_unifiedGometryMemoryPool->deferredFree(lod.m_indexBufferAllocationToken);
+		UnifiedGeometryMemoryPool::getSingleton().deferredFree(lod.m_indexBufferAllocationToken);
 
 		for(VertexStreamId stream : EnumIterable(VertexStreamId::kMeshRelatedFirst, VertexStreamId::kMeshRelatedCount))
 		{
-			getExternalSubsystems().m_unifiedGometryMemoryPool->deferredFree(
-				lod.m_vertexBuffersAllocationToken[stream]);
+			UnifiedGeometryMemoryPool::getSingleton().deferredFree(lod.m_vertexBuffersAllocationToken[stream]);
 		}
 	}
 
@@ -125,8 +124,8 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		lod.m_indexCount = header.m_totalIndexCounts[l];
 		ANKI_ASSERT((lod.m_indexCount % 3) == 0 && "Expecting triangles");
 		const PtrSize indexBufferSize = PtrSize(lod.m_indexCount) * getIndexSize(m_indexType);
-		getExternalSubsystems().m_unifiedGometryMemoryPool->allocate(indexBufferSize, getIndexSize(m_indexType),
-																	 lod.m_indexBufferAllocationToken);
+		UnifiedGeometryMemoryPool::getSingleton().allocate(indexBufferSize, getIndexSize(m_indexType),
+														   lod.m_indexBufferAllocationToken);
 
 		// Vertex stuff
 		lod.m_vertexCount = header.m_totalVertexCounts[l];
@@ -143,8 +142,8 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 			const U32 alignment = max(4u, nextPowerOfTwo(texelSize));
 			const PtrSize vertexBufferSize = PtrSize(lod.m_vertexCount) * texelSize + alignment;
 
-			getExternalSubsystems().m_unifiedGometryMemoryPool->allocate(vertexBufferSize, alignment,
-																		 lod.m_vertexBuffersAllocationToken[stream]);
+			UnifiedGeometryMemoryPool::getSingleton().allocate(vertexBufferSize, alignment,
+															   lod.m_vertexBuffersAllocationToken[stream]);
 
 			// We need to align the actual offset to the texel size
 			const PtrSize remainder = lod.m_vertexBuffersAllocationToken[stream].m_offset % texelSize;
@@ -165,11 +164,11 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 				StringRaii(&getTempMemoryPool()).sprintf("%s_%s", "Blas", basename.cstr()));
 			inf.m_type = AccelerationStructureType::kBottomLevel;
 
-			inf.m_bottomLevel.m_indexBuffer = getExternalSubsystems().m_unifiedGometryMemoryPool->getBuffer();
+			inf.m_bottomLevel.m_indexBuffer = UnifiedGeometryMemoryPool::getSingleton().getBuffer();
 			inf.m_bottomLevel.m_indexBufferOffset = lod.m_indexBufferAllocationToken.m_offset;
 			inf.m_bottomLevel.m_indexCount = lod.m_indexCount;
 			inf.m_bottomLevel.m_indexType = m_indexType;
-			inf.m_bottomLevel.m_positionBuffer = getExternalSubsystems().m_unifiedGometryMemoryPool->getBuffer();
+			inf.m_bottomLevel.m_positionBuffer = UnifiedGeometryMemoryPool::getSingleton().getBuffer();
 			inf.m_bottomLevel.m_positionBufferOffset =
 				lod.m_vertexBuffersAllocationToken[VertexStreamId::kPosition].m_offset
 				+ lod.m_fixedUnifiedGeometryBufferOffset[VertexStreamId::kPosition];
@@ -191,7 +190,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 
 		for(const Lod& lod : m_lods)
 		{
-			cmdb->fillBuffer(getExternalSubsystems().m_unifiedGometryMemoryPool->getBuffer(),
+			cmdb->fillBuffer(UnifiedGeometryMemoryPool::getSingleton().getBuffer(),
 							 lod.m_indexBufferAllocationToken.m_offset,
 							 PtrSize(lod.m_indexCount) * getIndexSize(m_indexType), 0);
 
@@ -200,14 +199,14 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 			{
 				if(header.m_vertexAttributes[stream].m_format != Format::kNone)
 				{
-					cmdb->fillBuffer(getExternalSubsystems().m_unifiedGometryMemoryPool->getBuffer(),
+					cmdb->fillBuffer(UnifiedGeometryMemoryPool::getSingleton().getBuffer(),
 									 lod.m_vertexBuffersAllocationToken[stream].m_offset,
 									 lod.m_vertexBuffersAllocationToken[stream].m_size, 0);
 				}
 			}
 		}
 
-		const BufferBarrierInfo barrier = {getExternalSubsystems().m_unifiedGometryMemoryPool->getBuffer().get(),
+		const BufferBarrierInfo barrier = {UnifiedGeometryMemoryPool::getSingleton().getBuffer().get(),
 										   BufferUsageBit::kTransferDestination, BufferUsageBit::kVertex, 0,
 										   kMaxPtrSize};
 
@@ -239,7 +238,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 	Array<TransferGpuAllocatorHandle, kMaxLodCount*(U32(VertexStreamId::kMeshRelatedCount) + 1)> handles;
 	U32 handleCount = 0;
 
-	BufferPtr unifiedGeometryBuffer = getExternalSubsystems().m_unifiedGometryMemoryPool->getBuffer();
+	BufferPtr unifiedGeometryBuffer = UnifiedGeometryMemoryPool::getSingleton().getBuffer();
 	const BufferUsageBit unifiedGeometryBufferNonTransferUsage =
 		unifiedGeometryBuffer->getBufferUsage() ^ BufferUsageBit::kTransferDestination;
 

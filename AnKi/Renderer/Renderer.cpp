@@ -695,18 +695,16 @@ void Renderer::gpuSceneCopy(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
-	m_runCtx.m_gpuSceneHandle = rgraph.importBuffer(m_subsystems.m_gpuScenePool->getBuffer(),
-													m_subsystems.m_gpuScenePool->getBuffer()->getBufferUsage());
+	m_runCtx.m_gpuSceneHandle = rgraph.importBuffer(GpuSceneMemoryPool::getSingleton().getBuffer(),
+													GpuSceneMemoryPool::getSingleton().getBuffer()->getBufferUsage());
 
-	if(m_subsystems.m_gpuSceneMicroPatcher->patchingIsNeeded())
+	if(GpuSceneMicroPatcher::getSingleton().patchingIsNeeded())
 	{
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("GPU scene patching");
 		rpass.newBufferDependency(m_runCtx.m_gpuSceneHandle, BufferUsageBit::kStorageComputeWrite);
 
 		rpass.setWork([this](RenderPassWorkContext& rgraphCtx) {
-			m_subsystems.m_gpuSceneMicroPatcher->patchGpuScene(*m_subsystems.m_rebarStagingPool,
-															   *rgraphCtx.m_commandBuffer.get(),
-															   m_subsystems.m_gpuScenePool->getBuffer());
+			GpuSceneMicroPatcher::getSingleton().patchGpuScene(*rgraphCtx.m_commandBuffer.get());
 		});
 	}
 }

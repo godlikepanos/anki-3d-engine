@@ -64,8 +64,7 @@ Error FogDensityComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		const PtrSize offset = m_gpuSceneIndex * sizeof(GpuSceneFogDensityVolume)
 							   + info.m_node->getSceneGraph().getAllGpuSceneContiguousArrays().getArrayBase(
 								   GpuSceneContiguousArrayType::kFogDensityVolumes);
-		getExternalSubsystems(*info.m_node)
-			.m_gpuSceneMicroPatcher->newCopy(*info.m_framePool, offset, sizeof(gpuVolume), &gpuVolume);
+		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, offset, sizeof(gpuVolume), &gpuVolume);
 	}
 
 	const Bool spatialUpdated = m_spatial.update(info.m_node->getSceneGraph().getOctree());

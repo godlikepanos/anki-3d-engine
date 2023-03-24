@@ -62,8 +62,6 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 		args.m_viewProjectionMatrix = ctx.m_matrices.m_viewProjectionJitter;
 		args.m_previousViewProjectionMatrix = ctx.m_prevMatrices.m_viewProjectionJitter; // Not sure about that
 		args.m_sampler = m_r->getSamplers().m_trilinearRepeatAnisoResolutionScalingBias;
-		args.m_gpuSceneBuffer = getExternalSubsystems().m_gpuScenePool->getBuffer();
-		args.m_unifiedGeometryBuffer = getExternalSubsystems().m_unifiedGometryMemoryPool->getBuffer();
 
 		// Start drawing
 		m_r->getSceneDrawer().drawRange(args, ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + start,

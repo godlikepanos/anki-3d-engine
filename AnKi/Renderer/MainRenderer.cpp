@@ -141,7 +141,7 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 
 	// Populate the 2nd level command buffers
 	Array<ThreadHiveTask, ThreadHive::kMaxThreads> tasks;
-	for(U i = 0; i < m_r->getExternalSubsystems().m_threadHive->getThreadCount(); ++i)
+	for(U i = 0; i < CoreThreadHive::getSingleton().getThreadCount(); ++i)
 	{
 		tasks[i].m_argument = this;
 		tasks[i].m_callback = [](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
@@ -152,9 +152,8 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 			self.m_rgraph->runSecondLevel(taskId);
 		};
 	}
-	m_r->getExternalSubsystems().m_threadHive->submitTasks(&tasks[0],
-														   m_r->getExternalSubsystems().m_threadHive->getThreadCount());
-	m_r->getExternalSubsystems().m_threadHive->waitAllTasks();
+	CoreThreadHive::getSingleton().submitTasks(&tasks[0], CoreThreadHive::getSingleton().getThreadCount());
+	CoreThreadHive::getSingleton().waitAllTasks();
 
 	// Populate 1st level command buffers
 	m_rgraph->run();

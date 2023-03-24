@@ -119,7 +119,7 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("ShadowMapping");
 
 		pass.setFramebufferInfo(m_fbDescr, {}, m_runCtx.m_rt, {}, minx, miny, width, height);
-		ANKI_ASSERT(threadCountForPass && threadCountForPass <= getExternalSubsystems().m_threadHive->getThreadCount());
+		ANKI_ASSERT(threadCountForPass && threadCountForPass <= CoreThreadHive::getSingleton().getThreadCount());
 		pass.setWork(threadCountForPass, [this](RenderPassWorkContext& rgraphCtx) {
 			runShadowMapping(rgraphCtx);
 		});
@@ -615,8 +615,6 @@ void ShadowMapping::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 		args.m_viewProjectionMatrix = work.m_renderQueue->m_viewProjectionMatrix;
 		args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
 		args.m_sampler = m_r->getSamplers().m_trilinearRepeatAniso;
-		args.m_gpuSceneBuffer = getExternalSubsystems().m_gpuScenePool->getBuffer();
-		args.m_unifiedGeometryBuffer = getExternalSubsystems().m_unifiedGometryMemoryPool->getBuffer();
 
 		m_r->getSceneDrawer().drawRange(args,
 										work.m_renderQueue->m_renderables.getBegin() + work.m_firstRenderableElement,

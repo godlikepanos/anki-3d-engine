@@ -28,8 +28,6 @@ public:
 	Mat4 m_previousViewProjectionMatrix;
 
 	SamplerPtr m_sampler;
-	BufferPtr m_gpuSceneBuffer;
-	BufferPtr m_unifiedGeometryBuffer;
 };
 
 /// It uses the render queue to batch and render.

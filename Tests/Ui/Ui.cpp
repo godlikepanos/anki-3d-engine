@@ -72,8 +72,7 @@ ANKI_TEST(Ui, Ui)
 	ResourceManager* resource = createResourceManager(gr, fs);
 	UiManager* ui = new UiManager();
 
-	RebarStagingGpuMemoryPool* stagingMem = new RebarStagingGpuMemoryPool();
-	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(gr));
+	RebarStagingGpuMemoryPool::allocateSingleton().init(gr);
 
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 	UiManagerInitInfo uiInitInfo;
@@ -82,7 +81,6 @@ ANKI_TEST(Ui, Ui)
 	uiInitInfo.m_grManager = gr;
 	uiInitInfo.m_resourceFilesystem = fs;
 	uiInitInfo.m_resourceManager = resource;
-	uiInitInfo.m_rebarPool = stagingMem;
 	ANKI_TEST_EXPECT_NO_ERR(ui->init(uiInitInfo));
 
 	{
@@ -147,7 +145,7 @@ ANKI_TEST(Ui, Ui)
 			cmdb->flush();
 
 			gr->swapBuffers();
-			stagingMem->endFrame();
+			RebarStagingGpuMemoryPool::getSingleton().endFrame();
 
 			timer.stop();
 			const F32 TICK = 1.0f / 30.0f;
@@ -159,7 +157,7 @@ ANKI_TEST(Ui, Ui)
 	}
 
 	delete ui;
-	delete stagingMem;
+	RebarStagingGpuMemoryPool::freeSingleton();
 	delete resource;
 	delete fs;
 	GrManager::deleteInstance(gr);

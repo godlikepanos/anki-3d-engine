@@ -63,7 +63,6 @@ class ResourceManagerExternalSubsystems
 public:
 	GrManager* m_grManager = nullptr;
 	ResourceFilesystem* m_resourceFilesystem = nullptr;
-	UnifiedGeometryMemoryPool* m_unifiedGometryMemoryPool = nullptr;
 };
 /// @}
 

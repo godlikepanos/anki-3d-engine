@@ -126,8 +126,6 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 	args.m_viewProjectionMatrix = ctx.m_matrices.m_viewProjectionJitter;
 	args.m_previousViewProjectionMatrix = ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection;
 	args.m_sampler = m_r->getSamplers().m_trilinearRepeatAnisoResolutionScalingBias;
-	args.m_gpuSceneBuffer = getExternalSubsystems().m_gpuScenePool->getBuffer();
-	args.m_unifiedGeometryBuffer = getExternalSubsystems().m_unifiedGometryMemoryPool->getBuffer();
 
 	// First do early Z (if needed)
 	if(earlyZStart < earlyZEnd)

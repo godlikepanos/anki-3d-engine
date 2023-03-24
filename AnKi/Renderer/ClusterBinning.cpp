@@ -58,8 +58,8 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 	writeClustererBuffers(ctx);
 
 	m_runCtx.m_rebarHandle = ctx.m_renderGraphDescr.importBuffer(
-		m_r->getExternalSubsystems().m_rebarStagingPool->getBuffer(), BufferUsageBit::kNone,
-		m_runCtx.m_clustersToken.m_offset, m_runCtx.m_clustersToken.m_range);
+		RebarStagingGpuMemoryPool::getSingleton().getBuffer(), BufferUsageBit::kNone, m_runCtx.m_clustersToken.m_offset,
+		m_runCtx.m_clustersToken.m_range);
 
 	const RenderQueue& rqueue = *ctx.m_renderQueue;
 	if(rqueue.m_pointLights.getSize() == 0 && rqueue.m_spotLights.getSize() == 0 && rqueue.m_decals.getSize() == 0
@@ -151,14 +151,14 @@ void ClusterBinning::writeClustererBuffers(RenderingContext& ctx)
 	}
 
 	// Allocate buffers
-	RebarStagingGpuMemoryPool& stagingMem = *m_r->getExternalSubsystems().m_rebarStagingPool;
-	stagingMem.allocateFrame(sizeof(ClusteredShadingUniforms), m_runCtx.m_clusteredShadingUniformsToken);
-	stagingMem.allocateFrame(sizeof(Cluster) * m_clusterCount, m_runCtx.m_clustersToken);
+	RebarStagingGpuMemoryPool::getSingleton().allocateFrame(sizeof(ClusteredShadingUniforms),
+															m_runCtx.m_clusteredShadingUniformsToken);
+	RebarStagingGpuMemoryPool::getSingleton().allocateFrame(sizeof(Cluster) * m_clusterCount, m_runCtx.m_clustersToken);
 }
 
 void ClusterBinning::writeClusterBuffersAsync()
 {
-	m_r->getExternalSubsystems().m_threadHive->submitTask(
+	CoreThreadHive::getSingleton().submitTask(
 		[](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
 		   [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
 			static_cast<ClusterBinning*>(userData)->writeClustererBuffersTask();
@@ -176,7 +176,7 @@ void ClusterBinning::writeClustererBuffersTask()
 	// General uniforms
 	{
 		ClusteredShadingUniforms& unis = *reinterpret_cast<ClusteredShadingUniforms*>(
-			m_r->getExternalSubsystems().m_rebarStagingPool->getBufferMappedAddress()
+			RebarStagingGpuMemoryPool::getSingleton().getBufferMappedAddress()
 			+ m_runCtx.m_clusteredShadingUniformsToken.m_offset);
 
 		unis.m_renderingSize = Vec2(F32(m_r->getInternalResolution().x()), F32(m_r->getInternalResolution().y()));
@@ -249,7 +249,7 @@ void ClusterBinning::writeClustererBuffersTask()
 
 	// Zero the memory because atomics will happen
 	U8* clustersAddress =
-		m_r->getExternalSubsystems().m_rebarStagingPool->getBufferMappedAddress() + m_runCtx.m_clustersToken.m_offset;
+		RebarStagingGpuMemoryPool::getSingleton().getBufferMappedAddress() + m_runCtx.m_clustersToken.m_offset;
 	memset(clustersAddress, 0, sizeof(Cluster) * m_clusterCount);
 }
 

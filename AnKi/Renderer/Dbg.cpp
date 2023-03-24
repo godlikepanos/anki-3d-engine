@@ -79,8 +79,6 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	U32 start, end;
 	splitThreadedProblem(threadId, threadCount, problemSize, start, end);
 
-	RebarStagingGpuMemoryPool& rebar = *getExternalSubsystems().m_rebarStagingPool;
-
 	// Renderables
 	for(U32 i = start; i < end; ++i)
 	{
@@ -99,7 +97,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 
 		const Mat4 mvp = ctx.m_matrices.m_viewProjection * Mat4(tsl.xyz1(), Mat3::getIdentity() * nonUniScale, 1.0f);
 
-		m_drawer.drawCube(mvp, Vec4(1.0f, 0.0f, 1.0f, 1.0f), 2.0f, m_ditheredDepthTestOn, 2.0f, rebar, cmdb);
+		m_drawer.drawCube(mvp, Vec4(1.0f, 0.0f, 1.0f, 1.0f), 2.0f, m_ditheredDepthTestOn, 2.0f, cmdb);
 	}
 
 	// Forward shaded renderables
@@ -121,7 +119,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 			const Mat4 mvp =
 				ctx.m_matrices.m_viewProjection * Mat4(tsl.xyz1(), Mat3::getIdentity() * nonUniScale, 1.0f);
 
-			m_drawer.drawCube(mvp, Vec4(1.0f, 0.0f, 1.0f, 1.0f), 2.0f, m_ditheredDepthTestOn, 2.0f, rebar, cmdb);
+			m_drawer.drawCube(mvp, Vec4(1.0f, 0.0f, 1.0f, 1.0f), 2.0f, m_ditheredDepthTestOn, 2.0f, cmdb);
 		}
 	}
 
@@ -142,12 +140,12 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 			const Mat4 mvp = ctx.m_matrices.m_viewProjection * Mat4(tsl.xyz1(), rot, 1.0f);
 
 			m_drawer.drawCubes(ConstWeakArray<Mat4>(&mvp, 1), Vec4(0.729f, 0.635f, 0.196f, 1.0f), 1.0f,
-							   m_ditheredDepthTestOn, 2.0f, rebar, cmdb);
+							   m_ditheredDepthTestOn, 2.0f, cmdb);
 
 			m_drawer.drawBillboardTextures(ctx.m_matrices.m_projection, ctx.m_matrices.m_view,
 										   ConstWeakArray<Vec3>(&tsl, 1), Vec4(1.0f), m_ditheredDepthTestOn,
 										   m_giProbeImage->getTextureView(), m_r->getSamplers().m_trilinearRepeatAniso,
-										   Vec2(0.75f), rebar, cmdb);
+										   Vec2(0.75f), cmdb);
 		}
 	}
 
@@ -161,7 +159,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 
 			m_drawer.drawBillboardTexture(ctx.m_matrices.m_projection, ctx.m_matrices.m_view, el.m_worldPosition,
 										  color.xyz1(), m_ditheredDepthTestOn, m_pointLightImage->getTextureView(),
-										  m_r->getSamplers().m_trilinearRepeatAniso, Vec2(0.75f), rebar, cmdb);
+										  m_r->getSamplers().m_trilinearRepeatAniso, Vec2(0.75f), cmdb);
 		}
 
 		for(const SpotLightQueueElement& el : ctx.m_renderQueue->m_spotLights)
@@ -172,7 +170,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 			m_drawer.drawBillboardTexture(ctx.m_matrices.m_projection, ctx.m_matrices.m_view,
 										  el.m_worldTransform.getTranslationPart().xyz(), color.xyz1(),
 										  m_ditheredDepthTestOn, m_spotLightImage->getTextureView(),
-										  m_r->getSamplers().m_trilinearRepeatAniso, Vec2(0.75f), rebar, cmdb);
+										  m_r->getSamplers().m_trilinearRepeatAniso, Vec2(0.75f), cmdb);
 		}
 	}
 
@@ -193,13 +191,13 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 			const Mat4 mvp = ctx.m_matrices.m_viewProjection * Mat4(tsl, rot * nonUniScale, 1.0f);
 
 			m_drawer.drawCubes(ConstWeakArray<Mat4>(&mvp, 1), Vec4(0.0f, 1.0f, 0.0f, 1.0f), 1.0f, m_ditheredDepthTestOn,
-							   2.0f, rebar, cmdb);
+							   2.0f, cmdb);
 
 			const Vec3 pos = el.m_obbCenter;
 			m_drawer.drawBillboardTextures(ctx.m_matrices.m_projection, ctx.m_matrices.m_view,
 										   ConstWeakArray<Vec3>(&pos, 1), Vec4(1.0f), m_ditheredDepthTestOn,
 										   m_decalImage->getTextureView(), m_r->getSamplers().m_trilinearRepeatAniso,
-										   Vec2(0.75f), rebar, cmdb);
+										   Vec2(0.75f), cmdb);
 		}
 	}
 
@@ -220,18 +218,18 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 			const Mat4 mvp = ctx.m_matrices.m_viewProjection * Mat4(tsl.xyz1(), rot, 1.0f);
 
 			m_drawer.drawCubes(ConstWeakArray<Mat4>(&mvp, 1), Vec4(0.0f, 0.0f, 1.0f, 1.0f), 1.0f, m_ditheredDepthTestOn,
-							   2.0f, rebar, cmdb);
+							   2.0f, cmdb);
 
 			m_drawer.drawBillboardTextures(ctx.m_matrices.m_projection, ctx.m_matrices.m_view,
 										   ConstWeakArray<Vec3>(&el.m_worldPosition, 1), Vec4(1.0f),
 										   m_ditheredDepthTestOn, m_reflectionImage->getTextureView(),
-										   m_r->getSamplers().m_trilinearRepeatAniso, Vec2(0.75f), rebar, cmdb);
+										   m_r->getSamplers().m_trilinearRepeatAniso, Vec2(0.75f), cmdb);
 		}
 	}
 
 	if(threadId == (threadCount - 1) && ConfigSet::getSingleton().getRDbgPhysics())
 	{
-		m_physicsDrawer.start(ctx.m_matrices.m_viewProjection, cmdb, &rebar);
+		m_physicsDrawer.start(ctx.m_matrices.m_viewProjection, cmdb);
 		m_physicsDrawer.drawWorld(PhysicsWorld::getSingleton());
 		m_physicsDrawer.end();
 	}

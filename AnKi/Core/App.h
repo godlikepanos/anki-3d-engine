@@ -14,21 +14,16 @@ namespace anki {
 
 // Forward
 class CoreTracer;
-class ThreadHive;
 class GrManager;
 class MainRenderer;
 class SceneGraph;
 class ScriptManager;
 class ResourceManager;
 class ResourceFilesystem;
-class RebarStagingGpuMemoryPool;
-class UnifiedGeometryMemoryPool;
 class UiManager;
 class UiQueueElement;
 class RenderQueue;
 class MaliHwCounters;
-class GpuSceneMemoryPool;
-class GpuSceneMicroPatcher;
 
 /// The core class of the engine.
 class App
@@ -48,11 +43,6 @@ public:
 	const String& getCacheDirectory() const
 	{
 		return m_cacheDir;
-	}
-
-	ThreadHive& getThreadHive()
-	{
-		return *m_threadHive;
 	}
 
 	HeapMemoryPool& getMemoryPool()
@@ -112,13 +102,8 @@ private:
 #if ANKI_ENABLE_TRACE
 	CoreTracer* m_coreTracer = nullptr;
 #endif
-	ThreadHive* m_threadHive = nullptr;
 	GrManager* m_gr = nullptr;
 	MaliHwCounters* m_maliHwCounters = nullptr;
-	UnifiedGeometryMemoryPool* m_unifiedGometryMemPool = nullptr;
-	GpuSceneMemoryPool* m_gpuSceneMemPool = nullptr;
-	GpuSceneMicroPatcher* m_gpuSceneMicroPatcher = nullptr;
-	RebarStagingGpuMemoryPool* m_rebarPool = nullptr;
 	ResourceFilesystem* m_resourceFs = nullptr;
 	ResourceManager* m_resources = nullptr;
 	UiManager* m_ui = nullptr;

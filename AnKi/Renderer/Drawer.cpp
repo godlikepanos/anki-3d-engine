@@ -20,8 +20,6 @@ class RenderableDrawer::Context
 public:
 	CommandBufferPtr m_commandBuffer;
 
-	RebarStagingGpuMemoryPool* m_rebarStagingPool = nullptr;
-
 	Array<const RenderableQueueElement*, kMaxInstanceCount> m_cachedRenderElements;
 	U32 m_cachedRenderElementCount = 0;
 	ShaderProgram* m_lastBoundShaderProgram = nullptr;
@@ -40,7 +38,7 @@ void RenderableDrawer::drawRange(const RenderableDrawerArguments& args, const Re
 	{
 		RebarGpuMemoryToken globalUniformsToken;
 		MaterialGlobalUniforms* globalUniforms =
-			static_cast<MaterialGlobalUniforms*>(m_r->getExternalSubsystems().m_rebarStagingPool->allocateFrame(
+			static_cast<MaterialGlobalUniforms*>(RebarStagingGpuMemoryPool::getSingleton().allocateFrame(
 				sizeof(MaterialGlobalUniforms), globalUniformsToken));
 
 		globalUniforms->m_viewProjectionMatrix = args.m_viewProjectionMatrix;
@@ -51,28 +49,28 @@ void RenderableDrawer::drawRange(const RenderableDrawerArguments& args, const Re
 		memcpy(&globalUniforms->m_cameraTransform, &args.m_cameraTransform, sizeof(args.m_cameraTransform));
 
 		cmdb->bindUniformBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGlobalUniforms),
-								m_r->getExternalSubsystems().m_rebarStagingPool->getBuffer(),
-								globalUniformsToken.m_offset, globalUniformsToken.m_range);
+								RebarStagingGpuMemoryPool::getSingleton().getBuffer(), globalUniformsToken.m_offset,
+								globalUniformsToken.m_range);
 	}
 
 	// More globals
 	cmdb->bindAllBindless(U32(MaterialSet::kBindless));
 	cmdb->bindSampler(U32(MaterialSet::kGlobal), U32(MaterialBinding::kTrilinearRepeatSampler), args.m_sampler);
-	cmdb->bindStorageBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGpuScene), args.m_gpuSceneBuffer, 0,
-							kMaxPtrSize);
+	cmdb->bindStorageBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGpuScene),
+							GpuSceneMemoryPool::getSingleton().getBuffer(), 0, kMaxPtrSize);
 
 #define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType) \
 	cmdb->bindReadOnlyTextureBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kUnifiedGeometry_##fmt), \
-									args.m_unifiedGeometryBuffer, 0, kMaxPtrSize, Format::k##fmt);
+									UnifiedGeometryMemoryPool::getSingleton().getBuffer(), 0, kMaxPtrSize, \
+									Format::k##fmt);
 #include <AnKi/Shaders/Include/UnifiedGeometryTypes.defs.h>
 
 	// Misc
 	cmdb->setVertexAttribute(0, 0, Format::kR32G32B32A32_Uint, 0);
-	cmdb->bindIndexBuffer(args.m_unifiedGeometryBuffer, 0, IndexType::kU16);
+	cmdb->bindIndexBuffer(UnifiedGeometryMemoryPool::getSingleton().getBuffer(), 0, IndexType::kU16);
 
 	// Set a few things
 	Context ctx;
-	ctx.m_rebarStagingPool = m_r->getExternalSubsystems().m_rebarStagingPool;
 	ctx.m_commandBuffer = cmdb;
 
 	for(; begin != end; ++begin)
@@ -90,8 +88,9 @@ void RenderableDrawer::flushDrawcall(Context& ctx)
 
 	// Instance buffer
 	RebarGpuMemoryToken token;
-	GpuSceneRenderablePacked* instances = static_cast<GpuSceneRenderablePacked*>(ctx.m_rebarStagingPool->allocateFrame(
-		sizeof(GpuSceneRenderablePacked) * ctx.m_cachedRenderElementCount, token));
+	GpuSceneRenderablePacked* instances =
+		static_cast<GpuSceneRenderablePacked*>(RebarStagingGpuMemoryPool::getSingleton().allocateFrame(
+			sizeof(GpuSceneRenderablePacked) * ctx.m_cachedRenderElementCount, token));
 	for(U32 i = 0; i < ctx.m_cachedRenderElementCount; ++i)
 	{
 		GpuSceneRenderable renderable = {};
@@ -102,8 +101,8 @@ void RenderableDrawer::flushDrawcall(Context& ctx)
 		instances[i] = packGpuSceneRenderable(renderable);
 	}
 
-	cmdb->bindVertexBuffer(0, ctx.m_rebarStagingPool->getBuffer(), token.m_offset, sizeof(GpuSceneRenderablePacked),
-						   VertexStepRate::kInstance);
+	cmdb->bindVertexBuffer(0, RebarStagingGpuMemoryPool::getSingleton().getBuffer(), token.m_offset,
+						   sizeof(GpuSceneRenderablePacked), VertexStepRate::kInstance);
 
 	// Set state
 	const RenderableQueueElement& firstElement = *ctx.m_cachedRenderElements[0];

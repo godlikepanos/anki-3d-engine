@@ -24,8 +24,7 @@ ModelComponent::ModelComponent(SceneNode* node)
 
 ModelComponent::~ModelComponent()
 {
-	GpuSceneMemoryPool& gpuScene = *getExternalSubsystems(*m_node).m_gpuSceneMemoryPool;
-	gpuScene.deferredFree(m_gpuSceneUniforms);
+	GpuSceneMemoryPool::getSingleton().deferredFree(m_gpuSceneUniforms);
 
 	for(const PatchInfo& patch : m_patchInfos)
 	{
@@ -60,8 +59,6 @@ void ModelComponent::loadModelResource(CString filename)
 	const U32 modelPatchCount = m_model->getModelPatches().getSize();
 
 	// GPU scene allocations
-	GpuSceneMemoryPool& gpuScene = *getExternalSubsystems(*m_node).m_gpuSceneMemoryPool;
-
 	for(const PatchInfo& patch : m_patchInfos)
 	{
 		if(patch.m_gpuSceneMeshLodsIndex != kMaxU32)
@@ -88,8 +85,8 @@ void ModelComponent::loadModelResource(CString filename)
 		uniformsSize += size;
 	}
 
-	gpuScene.deferredFree(m_gpuSceneUniforms);
-	gpuScene.allocate(uniformsSize, 4, m_gpuSceneUniforms);
+	GpuSceneMemoryPool::getSingleton().deferredFree(m_gpuSceneUniforms);
+	GpuSceneMemoryPool::getSingleton().allocate(uniformsSize, 4, m_gpuSceneUniforms);
 
 	for(U32 i = 0; i < modelPatchCount; ++i)
 	{
@@ -129,8 +126,6 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	// Upload mesh LODs and uniforms
 	if(resourceUpdated) [[unlikely]]
 	{
-		GpuSceneMicroPatcher& gpuScenePatcher = *getExternalSubsystems(*info.m_node).m_gpuSceneMicroPatcher;
-
 		// Upload the mesh views
 		const U32 modelPatchCount = m_model->getModelPatches().getSize();
 		for(U32 i = 0; i < modelPatchCount; ++i)
@@ -184,7 +179,8 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			const PtrSize offset = m_patchInfos[i].m_gpuSceneMeshLodsIndex * sizeof(meshLods)
 								   + info.m_node->getSceneGraph().getAllGpuSceneContiguousArrays().getArrayBase(
 									   GpuSceneContiguousArrayType::kMeshLods);
-			gpuScenePatcher.newCopy(*info.m_framePool, offset, meshLods.getSizeInBytes(), &meshLods[0]);
+			GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, offset, meshLods.getSizeInBytes(),
+														 &meshLods[0]);
 		}
 
 		// Upload the uniforms
@@ -201,8 +197,8 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		}
 
 		ANKI_ASSERT(count * 4 == m_gpuSceneUniforms.m_size);
-		gpuScenePatcher.newCopy(*info.m_framePool, m_gpuSceneUniforms.m_offset, m_gpuSceneUniforms.m_size,
-								&allUniforms[0]);
+		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneUniforms.m_offset,
+													 m_gpuSceneUniforms.m_size, &allUniforms[0]);
 	}
 
 	// Upload transforms
@@ -215,8 +211,7 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		const PtrSize offset = m_gpuSceneTransformsIndex * sizeof(trfs)
 							   + info.m_node->getSceneGraph().getAllGpuSceneContiguousArrays().getArrayBase(
 								   GpuSceneContiguousArrayType::kTransformPairs);
-		getExternalSubsystems(*info.m_node)
-			.m_gpuSceneMicroPatcher->newCopy(*info.m_framePool, offset, sizeof(trfs), &trfs[0]);
+		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, offset, sizeof(trfs), &trfs[0]);
 	}
 
 	// Spatial update

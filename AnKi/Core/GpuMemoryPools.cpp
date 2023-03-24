@@ -12,9 +12,9 @@
 
 namespace anki {
 
-void UnifiedGeometryMemoryPool::init(HeapMemoryPool* pool, GrManager* gr)
+void UnifiedGeometryMemoryPool::init(GrManager* gr)
 {
-	ANKI_ASSERT(pool && gr);
+	ANKI_ASSERT(gr);
 
 	const PtrSize poolSize = ConfigSet::getSingleton().getCoreGlobalVertexMemorySize();
 
@@ -28,7 +28,7 @@ void UnifiedGeometryMemoryPool::init(HeapMemoryPool* pool, GrManager* gr)
 		buffUsage |= BufferUsageBit::kAccelerationStructureBuild;
 	}
 
-	m_pool.init(gr, pool, buffUsage, classes, poolSize, "UnifiedGeometry", false);
+	m_pool.init(gr, &CoreMemoryPool::getSingleton(), buffUsage, classes, poolSize, "UnifiedGeometry", false);
 
 	// Allocate something dummy to force creating the GPU buffer
 	SegregatedListsGpuMemoryPoolToken token;
@@ -36,9 +36,9 @@ void UnifiedGeometryMemoryPool::init(HeapMemoryPool* pool, GrManager* gr)
 	deferredFree(token);
 }
 
-void GpuSceneMemoryPool::init(HeapMemoryPool* pool, GrManager* gr)
+void GpuSceneMemoryPool::init(GrManager* gr)
 {
-	ANKI_ASSERT(pool && gr);
+	ANKI_ASSERT(gr);
 
 	const PtrSize poolSize = ConfigSet::getSingleton().getCoreGpuSceneInitialSize();
 
@@ -46,7 +46,7 @@ void GpuSceneMemoryPool::init(HeapMemoryPool* pool, GrManager* gr)
 
 	BufferUsageBit buffUsage = BufferUsageBit::kAllStorage | BufferUsageBit::kTransferDestination;
 
-	m_pool.init(gr, pool, buffUsage, classes, poolSize, "GpuScene", true);
+	m_pool.init(gr, &CoreMemoryPool::getSingleton(), buffUsage, classes, poolSize, "GpuScene", true);
 }
 
 RebarStagingGpuMemoryPool::~RebarStagingGpuMemoryPool()
@@ -59,7 +59,7 @@ RebarStagingGpuMemoryPool::~RebarStagingGpuMemoryPool()
 	m_buffer.reset(nullptr);
 }
 
-Error RebarStagingGpuMemoryPool::init(GrManager* gr)
+void RebarStagingGpuMemoryPool::init(GrManager* gr)
 {
 	BufferInitInfo buffInit("ReBar");
 	buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
@@ -75,8 +75,6 @@ Error RebarStagingGpuMemoryPool::init(GrManager* gr)
 	m_alignment = max(m_alignment, gr->getDeviceCapabilities().m_sbtRecordAlignment);
 
 	m_mappedMem = static_cast<U8*>(m_buffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
-
-	return Error::kNone;
 }
 
 void* RebarStagingGpuMemoryPool::allocateFrame(PtrSize size, RebarGpuMemoryToken& token)
@@ -187,8 +185,7 @@ void GpuSceneMicroPatcher::newCopy(StackMemoryPool& frameCpuPool, PtrSize gpuSce
 	}
 }
 
-void GpuSceneMicroPatcher::patchGpuScene(RebarStagingGpuMemoryPool& rebarPool, CommandBuffer& cmdb,
-										 const BufferPtr& gpuSceneBuffer)
+void GpuSceneMicroPatcher::patchGpuScene(CommandBuffer& cmdb)
 {
 	if(m_crntFramePatchHeaders.getSize() == 0)
 	{
@@ -201,16 +198,19 @@ void GpuSceneMicroPatcher::patchGpuScene(RebarStagingGpuMemoryPool& rebarPool, C
 	ANKI_TRACE_INC_COUNTER(GpuSceneMicroPatchUploadData, m_crntFramePatchData.getSizeInBytes());
 
 	RebarGpuMemoryToken headersToken;
-	void* mapped = rebarPool.allocateFrame(m_crntFramePatchHeaders.getSizeInBytes(), headersToken);
+	void* mapped =
+		RebarStagingGpuMemoryPool::getSingleton().allocateFrame(m_crntFramePatchHeaders.getSizeInBytes(), headersToken);
 	memcpy(mapped, &m_crntFramePatchHeaders[0], m_crntFramePatchHeaders.getSizeInBytes());
 
 	RebarGpuMemoryToken dataToken;
-	mapped = rebarPool.allocateFrame(m_crntFramePatchData.getSizeInBytes(), dataToken);
+	mapped = RebarStagingGpuMemoryPool::getSingleton().allocateFrame(m_crntFramePatchData.getSizeInBytes(), dataToken);
 	memcpy(mapped, &m_crntFramePatchData[0], m_crntFramePatchData.getSizeInBytes());
 
-	cmdb.bindStorageBuffer(0, 0, rebarPool.getBuffer(), headersToken.m_offset, headersToken.m_range);
-	cmdb.bindStorageBuffer(0, 1, rebarPool.getBuffer(), dataToken.m_offset, dataToken.m_range);
-	cmdb.bindStorageBuffer(0, 2, gpuSceneBuffer, 0, kMaxPtrSize);
+	cmdb.bindStorageBuffer(0, 0, RebarStagingGpuMemoryPool::getSingleton().getBuffer(), headersToken.m_offset,
+						   headersToken.m_range);
+	cmdb.bindStorageBuffer(0, 1, RebarStagingGpuMemoryPool::getSingleton().getBuffer(), dataToken.m_offset,
+						   dataToken.m_range);
+	cmdb.bindStorageBuffer(0, 2, GpuSceneMemoryPool::getSingleton().getBuffer(), 0, kMaxPtrSize);
 
 	cmdb.bindShaderProgram(m_grProgram);
 

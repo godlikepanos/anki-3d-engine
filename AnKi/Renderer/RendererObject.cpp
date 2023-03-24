@@ -27,14 +27,14 @@ HeapMemoryPool& RendererObject::getMemoryPool() const
 
 void* RendererObject::allocateRebarStagingMemory(PtrSize size, RebarGpuMemoryToken& token)
 {
-	return getExternalSubsystems().m_rebarStagingPool->allocateFrame(size, token);
+	return RebarStagingGpuMemoryPool::getSingleton().allocateFrame(size, token);
 }
 
 void RendererObject::bindUniforms(CommandBufferPtr& cmdb, U32 set, U32 binding, const RebarGpuMemoryToken& token) const
 {
 	if(!token.isUnused())
 	{
-		cmdb->bindUniformBuffer(set, binding, getExternalSubsystems().m_rebarStagingPool->getBuffer(), token.m_offset,
+		cmdb->bindUniformBuffer(set, binding, RebarStagingGpuMemoryPool::getSingleton().getBuffer(), token.m_offset,
 								token.m_range);
 	}
 	else
@@ -47,7 +47,7 @@ void RendererObject::bindStorage(CommandBufferPtr& cmdb, U32 set, U32 binding, c
 {
 	if(!token.isUnused())
 	{
-		cmdb->bindStorageBuffer(set, binding, getExternalSubsystems().m_rebarStagingPool->getBuffer(), token.m_offset,
+		cmdb->bindStorageBuffer(set, binding, RebarStagingGpuMemoryPool::getSingleton().getBuffer(), token.m_offset,
 								token.m_range);
 	}
 	else
@@ -58,7 +58,7 @@ void RendererObject::bindStorage(CommandBufferPtr& cmdb, U32 set, U32 binding, c
 
 U32 RendererObject::computeNumberOfSecondLevelCommandBuffers(U32 drawcallCount) const
 {
-	const U32 drawcallsPerThread = drawcallCount / getExternalSubsystems().m_threadHive->getThreadCount();
+	const U32 drawcallsPerThread = drawcallCount / CoreThreadHive::getSingleton().getThreadCount();
 	U32 secondLevelCmdbCount;
 	if(drawcallsPerThread < kMinDrawcallsPerSecondaryCommandBuffer)
 	{
@@ -66,7 +66,7 @@ U32 RendererObject::computeNumberOfSecondLevelCommandBuffers(U32 drawcallCount) 
 	}
 	else
 	{
-		secondLevelCmdbCount = getExternalSubsystems().m_threadHive->getThreadCount();
+		secondLevelCmdbCount = CoreThreadHive::getSingleton().getThreadCount();
 	}
 
 	return secondLevelCmdbCount;

@@ -131,8 +131,7 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 		const PtrSize offset = m_gpuSceneIndex * sizeof(GpuSceneGlobalIlluminationProbe)
 							   + info.m_node->getSceneGraph().getAllGpuSceneContiguousArrays().getArrayBase(
 								   GpuSceneContiguousArrayType::kGlobalIlluminationProbes);
-		getExternalSubsystems(*info.m_node)
-			.m_gpuSceneMicroPatcher->newCopy(*info.m_framePool, offset, sizeof(gpuProbe), &gpuProbe);
+		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, offset, sizeof(gpuProbe), &gpuProbe);
 	}
 
 	if(needsRefresh()) [[unlikely]]

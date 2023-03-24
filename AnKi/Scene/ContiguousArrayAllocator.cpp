@@ -10,28 +10,29 @@
 
 namespace anki {
 
-void AllGpuSceneContiguousArrays::ContiguousArrayAllocator::destroy(GpuSceneMemoryPool* gpuScene,
-																	HeapMemoryPool* cpuPool)
+void AllGpuSceneContiguousArrays::ContiguousArrayAllocator::destroy(HeapMemoryPool* cpuPool)
 {
 	for(U32 i = 0; i < kMaxFramesInFlight; ++i)
 	{
-		collectGarbage(i, gpuScene, cpuPool);
+		collectGarbage(i, cpuPool);
 	}
 }
 
 AllGpuSceneContiguousArrays::Index
-AllGpuSceneContiguousArrays::ContiguousArrayAllocator::allocateObject(GpuSceneMemoryPool* gpuScene,
-																	  HeapMemoryPool* cpuPool)
+AllGpuSceneContiguousArrays::ContiguousArrayAllocator::allocateObject(HeapMemoryPool* cpuPool)
 {
-	ANKI_ASSERT(gpuScene && cpuPool);
+	ANKI_ASSERT(cpuPool);
 
 	LockGuard lock(m_mtx);
 
 	if(m_poolToken.m_offset == kMaxPtrSize)
 	{
 		// Initialize
-		const U32 alignment = gpuScene->getGrManager().getDeviceCapabilities().m_storageBufferBindOffsetAlignment;
-		gpuScene->allocate(m_objectSize * m_initialArraySize, alignment, m_poolToken);
+		const U32 alignment = GpuSceneMemoryPool::getSingleton()
+								  .getGrManager()
+								  .getDeviceCapabilities()
+								  .m_storageBufferBindOffsetAlignment;
+		GpuSceneMemoryPool::getSingleton().allocate(m_objectSize * m_initialArraySize, alignment, m_poolToken);
 		m_nextSlotIndex = 0;
 
 		m_freeSlotStack.create(*cpuPool, m_initialArraySize);
@@ -64,11 +65,9 @@ void AllGpuSceneContiguousArrays::ContiguousArrayAllocator::deferredFree(U32 crn
 	m_garbage[crntFrameIdx].emplaceBack(*cpuPool, index);
 }
 
-void AllGpuSceneContiguousArrays::ContiguousArrayAllocator::collectGarbage(U32 newFrameIdx,
-																		   GpuSceneMemoryPool* gpuScene,
-																		   HeapMemoryPool* cpuPool)
+void AllGpuSceneContiguousArrays::ContiguousArrayAllocator::collectGarbage(U32 newFrameIdx, HeapMemoryPool* cpuPool)
 {
-	ANKI_ASSERT(gpuScene && cpuPool);
+	ANKI_ASSERT(cpuPool);
 
 	LockGuard lock(m_mtx);
 
@@ -101,7 +100,7 @@ void AllGpuSceneContiguousArrays::ContiguousArrayAllocator::collectGarbage(U32 n
 	else if(allocatedSlots == 0)
 	{
 		ANKI_ASSERT(m_nextSlotIndex == 0);
-		gpuScene->deferredFree(m_poolToken);
+		GpuSceneMemoryPool::getSingleton().deferredFree(m_poolToken);
 		m_freeSlotStack.destroy(*cpuPool);
 	}
 }
@@ -137,13 +136,13 @@ void AllGpuSceneContiguousArrays::destroy()
 {
 	for(GpuSceneContiguousArrayType type : EnumIterable<GpuSceneContiguousArrayType>())
 	{
-		m_allocs[type].destroy(m_scene->m_subsystems.m_gpuSceneMemoryPool, &m_scene->m_pool);
+		m_allocs[type].destroy(&m_scene->m_pool);
 	}
 }
 
 AllGpuSceneContiguousArrays::Index AllGpuSceneContiguousArrays::allocate(GpuSceneContiguousArrayType type)
 {
-	const U32 idx = m_allocs[type].allocateObject(m_scene->m_subsystems.m_gpuSceneMemoryPool, &m_scene->m_pool);
+	const U32 idx = m_allocs[type].allocateObject(&m_scene->m_pool);
 	return idx;
 }
 
@@ -158,7 +157,7 @@ void AllGpuSceneContiguousArrays::endFrame()
 
 	for(GpuSceneContiguousArrayType type : EnumIterable<GpuSceneContiguousArrayType>())
 	{
-		m_allocs[type].collectGarbage(m_frame, m_scene->m_subsystems.m_gpuSceneMemoryPool, &m_scene->m_pool);
+		m_allocs[type].collectGarbage(m_frame, &m_scene->m_pool);
 	}
 }
 

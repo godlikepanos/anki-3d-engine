@@ -94,11 +94,11 @@ private:
 			m_initialArraySize = initialArraySize;
 		}
 
-		void destroy(GpuSceneMemoryPool* gpuScene, HeapMemoryPool* cpuPool);
+		void destroy(HeapMemoryPool* cpuPool);
 
 		/// Allocate a new object and return its index in the array.
 		/// @note It's thread-safe against itself, deferredFree and endFrame.
-		Index allocateObject(GpuSceneMemoryPool* gpuScene, HeapMemoryPool* cpuPool);
+		Index allocateObject(HeapMemoryPool* cpuPool);
 
 		/// Safely free an index allocated by allocateObject.
 		/// @note It's thread-safe against itself, allocateObject and endFrame.
@@ -106,7 +106,7 @@ private:
 
 		/// Call this every frame.
 		/// @note It's thread-safe against itself, deferredFree and allocateObject.
-		void collectGarbage(U32 newFrameIdx, GpuSceneMemoryPool* gpuScene, HeapMemoryPool* cpuPool);
+		void collectGarbage(U32 newFrameIdx, HeapMemoryPool* cpuPool);
 
 		PtrSize getArrayBase() const
 		{

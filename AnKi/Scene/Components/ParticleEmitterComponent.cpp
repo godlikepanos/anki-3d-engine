@@ -205,7 +205,7 @@ ParticleEmitterComponent::~ParticleEmitterComponent()
 	m_simpleParticles.destroy(m_node->getMemoryPool());
 	m_physicsParticles.destroy(m_node->getMemoryPool());
 
-	GpuSceneMemoryPool& gpuScenePool = *getExternalSubsystems(*m_node).m_gpuSceneMemoryPool;
+	GpuSceneMemoryPool& gpuScenePool = GpuSceneMemoryPool::getSingleton();
 	gpuScenePool.deferredFree(m_gpuScenePositions);
 	gpuScenePool.deferredFree(m_gpuSceneScales);
 	gpuScenePool.deferredFree(m_gpuSceneAlphas);
@@ -239,7 +239,7 @@ void ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	// Cleanup
 	m_simpleParticles.destroy(m_node->getMemoryPool());
 	m_physicsParticles.destroy(m_node->getMemoryPool());
-	GpuSceneMemoryPool& gpuScenePool = *getExternalSubsystems(*m_node).m_gpuSceneMemoryPool;
+	GpuSceneMemoryPool& gpuScenePool = GpuSceneMemoryPool::getSingleton();
 	gpuScenePool.deferredFree(m_gpuScenePositions);
 	gpuScenePool.deferredFree(m_gpuSceneScales);
 	gpuScenePool.deferredFree(m_gpuSceneAlphas);
@@ -314,7 +314,7 @@ Error ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 	m_spatial.update(info.m_node->getSceneGraph().getOctree());
 
 	// Upload to the GPU scene
-	GpuSceneMicroPatcher& patcher = *info.m_gpuSceneMicroPatcher;
+	GpuSceneMicroPatcher& patcher = GpuSceneMicroPatcher::getSingleton();
 	if(m_aliveParticleCount > 0)
 	{
 		patcher.newCopy(*info.m_framePool, m_gpuScenePositions.m_offset, sizeof(Vec3) * m_aliveParticleCount,

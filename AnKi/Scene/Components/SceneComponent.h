@@ -102,7 +102,6 @@ public:
 	const Second m_currentTime;
 	const Second m_dt;
 	StackMemoryPool* m_framePool = nullptr;
-	GpuSceneMicroPatcher* m_gpuSceneMicroPatcher = nullptr;
 
 	SceneComponentUpdateInfo(Second prevTime, Second crntTime)
 		: m_previousTime(prevTime)

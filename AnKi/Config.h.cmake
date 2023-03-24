@@ -175,14 +175,25 @@
 #	define ANKI_PREFETCH_MEMORY(addr) __builtin_prefetch(addr)
 #	define ANKI_CHECK_FORMAT(fmtArgIdx, firstArgIdx) __attribute__((format(printf, fmtArgIdx + 1, firstArgIdx + 1))) // On methods you need to include "this"
 #	define ANKI_PURE __attribute__((pure))
-#else
+#elif ANKI_COMPILER_MSVC
 #	define ANKI_RESTRICT
-#	define ANKI_FORCE_INLINE
+#	define ANKI_FORCE_INLINE __forceinline
 #	define ANKI_DONT_INLINE
 #	define ANKI_UNUSED
 #	define ANKI_COLD
 #	define ANKI_HOT
 #	define ANKI_UNREACHABLE() __assume(false)
+#	define ANKI_PREFETCH_MEMORY(addr) (void)(addr)
+#	define ANKI_CHECK_FORMAT(fmtArgIdx, firstArgIdx)
+#	define ANKI_PURE
+#else
+#	define ANKI_RESTRICT
+#	define ANKI_FORCE_INLINE 
+#	define ANKI_DONT_INLINE
+#	define ANKI_UNUSED
+#	define ANKI_COLD
+#	define ANKI_HOT
+#	define ANKI_UNREACHABLE() 
 #	define ANKI_PREFETCH_MEMORY(addr) (void)(addr)
 #	define ANKI_CHECK_FORMAT(fmtArgIdx, firstArgIdx)
 #	define ANKI_PURE

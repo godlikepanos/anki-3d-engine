@@ -97,8 +97,7 @@ Error DecalComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		const PtrSize offset = m_gpuSceneIndex * sizeof(GpuSceneDecal)
 							   + info.m_node->getSceneGraph().getAllGpuSceneContiguousArrays().getArrayBase(
 								   GpuSceneContiguousArrayType::kDecals);
-		getExternalSubsystems(*info.m_node)
-			.m_gpuSceneMicroPatcher->newCopy(*info.m_framePool, offset, sizeof(gpuDecal), &gpuDecal);
+		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, offset, sizeof(gpuDecal), &gpuDecal);
 	}
 
 	const Bool spatialUpdated = m_spatial.update(info.m_node->getSceneGraph().getOctree());

@@ -135,11 +135,10 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuLight.m_diffuseColor = m_diffColor.xyz();
 		gpuLight.m_squareRadiusOverOne = 1.0f / (m_point.m_radius * m_point.m_radius);
 		gpuLight.m_shadow = m_shadow;
-		GpuSceneMicroPatcher& gpuScenePatcher = *getExternalSubsystems(*info.m_node).m_gpuSceneMicroPatcher;
 		const PtrSize offset = m_gpuSceneLightIndex * sizeof(GpuScenePointLight)
 							   + info.m_node->getSceneGraph().getAllGpuSceneContiguousArrays().getArrayBase(
 								   GpuSceneContiguousArrayType::kPointLights);
-		gpuScenePatcher.newCopy(*info.m_framePool, offset, sizeof(gpuLight), &gpuLight);
+		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, offset, sizeof(gpuLight), &gpuLight);
 	}
 	else if(updated && m_type == LightComponentType::kSpot)
 	{
@@ -205,11 +204,10 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuLight.m_shadow = m_shadow;
 		gpuLight.m_outerCos = cos(m_spot.m_outerAngle / 2.0f);
 		gpuLight.m_innerCos = cos(m_spot.m_innerAngle / 2.0f);
-		GpuSceneMicroPatcher& gpuScenePatcher = *getExternalSubsystems(*info.m_node).m_gpuSceneMicroPatcher;
 		const PtrSize offset = m_gpuSceneLightIndex * sizeof(GpuSceneSpotLight)
 							   + info.m_node->getSceneGraph().getAllGpuSceneContiguousArrays().getArrayBase(
 								   GpuSceneContiguousArrayType::kSpotLights);
-		gpuScenePatcher.newCopy(*info.m_framePool, offset, sizeof(gpuLight), &gpuLight);
+		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, offset, sizeof(gpuLight), &gpuLight);
 	}
 	else if(m_type == LightComponentType::kDirectional)
 	{

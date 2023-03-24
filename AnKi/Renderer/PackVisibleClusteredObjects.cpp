@@ -121,18 +121,17 @@ void PackVisibleClusteredObjects::dispatchType(WeakArray<TRenderQueueElement> ar
 		}
 	}
 
-	cmdb->bindStorageBuffer(0, 0, getExternalSubsystems().m_gpuScenePool->getBuffer(),
+	cmdb->bindStorageBuffer(0, 0, GpuSceneMemoryPool::getSingleton().getBuffer(),
 							rqueue.m_clustererObjectsArrayOffsets[kType], rqueue.m_clustererObjectsArrayRanges[kType]);
 
 	cmdb->bindStorageBuffer(0, 1, m_allClustererObjects, m_structureBufferOffsets[kType],
 							array.getSize() * sizeof(TClustererType));
 
-	cmdb->bindStorageBuffer(0, 2, getExternalSubsystems().m_rebarStagingPool->getBuffer(), token.m_offset,
-							token.m_range);
+	cmdb->bindStorageBuffer(0, 2, RebarStagingGpuMemoryPool::getSingleton().getBuffer(), token.m_offset, token.m_range);
 
 	if constexpr(std::is_same_v<TClustererType, PointLight> || std::is_same_v<TClustererType, SpotLight>)
 	{
-		cmdb->bindStorageBuffer(0, 3, getExternalSubsystems().m_rebarStagingPool->getBuffer(), extrasToken.m_offset,
+		cmdb->bindStorageBuffer(0, 3, RebarStagingGpuMemoryPool::getSingleton().getBuffer(), extrasToken.m_offset,
 								extrasToken.m_range);
 	}
 

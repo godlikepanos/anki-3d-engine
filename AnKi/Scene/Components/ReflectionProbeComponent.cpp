@@ -105,8 +105,7 @@ Error ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 		const PtrSize offset = m_gpuSceneIndex * sizeof(GpuSceneReflectionProbe)
 							   + info.m_node->getSceneGraph().getAllGpuSceneContiguousArrays().getArrayBase(
 								   GpuSceneContiguousArrayType::kReflectionProbes);
-		getExternalSubsystems(*info.m_node)
-			.m_gpuSceneMicroPatcher->newCopy(*info.m_framePool, offset, sizeof(gpuProbe), &gpuProbe);
+		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, offset, sizeof(gpuProbe), &gpuProbe);
 	}
 
 	// Update spatial and frustums
