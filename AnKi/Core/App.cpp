@@ -136,8 +136,7 @@ void App::cleanup()
 	UnifiedGeometryMemoryPool::freeSingleton();
 	GpuSceneMemoryPool::freeSingleton();
 	CoreThreadHive::freeSingleton();
-	deleteInstance(m_mainPool, m_maliHwCounters);
-	m_maliHwCounters = nullptr;
+	MaliHwCounters::freeSingleton();
 	GrManager::deleteInstance(m_gr);
 	m_gr = nullptr;
 	Input::freeSingleton();
@@ -278,7 +277,7 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	if(m_gr->getDeviceCapabilities().m_gpuVendor == GpuVendor::kArm
 	   && ConfigSet::getSingleton().getCoreMaliHwCounters())
 	{
-		m_maliHwCounters = newInstance<MaliHwCounters>(m_mainPool, &m_mainPool);
+		MaliHwCounters::allocateSingleton();
 	}
 
 	//
@@ -562,10 +561,10 @@ Error App::mainLoop()
 
 				in.m_gpuFrameTime = m_renderer->getStats().m_renderingGpuTime;
 
-				if(m_maliHwCounters)
+				if(MaliHwCounters::isAllocated())
 				{
 					MaliHwCountersOut out;
-					m_maliHwCounters->sample(out);
+					MaliHwCounters::getSingleton().sample(out);
 					in.m_gpuActiveCycles = out.m_gpuActive;
 					in.m_gpuReadBandwidth = out.m_readBandwidth;
 					in.m_gpuWriteBandwidth = out.m_writeBandwidth;

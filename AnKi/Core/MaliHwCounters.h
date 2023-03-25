@@ -24,22 +24,24 @@ public:
 };
 
 /// Sample HW counters for Mali GPUs.
-class MaliHwCounters
+class MaliHwCounters : public MakeSingleton<MaliHwCounters>
 {
+	template<typename>
+	friend class MakeSingleton;
+
 public:
-	MaliHwCounters(BaseMemoryPool* pool);
-
 	MaliHwCounters(const MaliHwCounters&) = delete; // Non-copyable
-
-	~MaliHwCounters();
 
 	MaliHwCounters& operator=(const MaliHwCounters&) = delete; // Non-copyable
 
 	void sample(MaliHwCountersOut& out);
 
 private:
-	BaseMemoryPool* m_pool = nullptr;
 	void* m_impl = nullptr;
+
+	MaliHwCounters();
+
+	~MaliHwCounters();
 };
 /// @}
 

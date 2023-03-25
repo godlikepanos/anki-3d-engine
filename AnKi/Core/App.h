@@ -22,7 +22,6 @@ class ResourceFilesystem;
 class UiManager;
 class UiQueueElement;
 class RenderQueue;
-class MaliHwCounters;
 
 /// The core class of the engine.
 class App
@@ -99,7 +98,6 @@ private:
 
 	// Sybsystems
 	GrManager* m_gr = nullptr;
-	MaliHwCounters* m_maliHwCounters = nullptr;
 	ResourceFilesystem* m_resourceFs = nullptr;
 	ResourceManager* m_resources = nullptr;
 	UiManager* m_ui = nullptr;
