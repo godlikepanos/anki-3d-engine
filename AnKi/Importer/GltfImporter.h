@@ -157,7 +157,7 @@ private:
 
 	StringRaii fixFilename(CString in) const
 	{
-		StringRaii out(m_pool, in);
+		StringRaii out(in, m_pool);
 		out.replaceAll("|", "_");
 		out.replaceAll(" ", "_");
 		return out;

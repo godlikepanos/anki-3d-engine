@@ -273,7 +273,7 @@ public:
 		}
 
 		HeapMemoryPool pool(allocAligned, nullptr);
-		StringRaii mainDataPath(&pool, ANKI_SOURCE_DIRECTORY);
+		StringRaii mainDataPath(ANKI_SOURCE_DIRECTORY, &pool);
 
 		ConfigSet::getSingleton().setWindowFullscreen(false);
 		ConfigSet::getSingleton().setRsrcDataPaths(mainDataPath);

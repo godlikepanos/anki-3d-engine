@@ -32,7 +32,7 @@ static const U64 kShaderHeaderHash = computeHash(kShaderHeader, sizeof(kShaderHe
 ShaderProgramParser::ShaderProgramParser(CString fname, ShaderProgramFilesystemInterface* fsystem, BaseMemoryPool* pool,
 										 const ShaderCompilerOptions& compilerOptions)
 	: m_pool(pool)
-	, m_fname(pool, fname)
+	, m_fname(fname, pool)
 	, m_fsystem(fsystem)
 	, m_compilerOptions(compilerOptions)
 {
@@ -46,7 +46,7 @@ void ShaderProgramParser::tokenizeLine(CString line, DynamicArrayRaii<StringRaii
 {
 	ANKI_ASSERT(line.getLength() > 0);
 
-	StringRaii l(m_pool, line);
+	StringRaii l(line, m_pool);
 
 	// Replace all tabs with spaces
 	for(char& c : l)
@@ -64,7 +64,7 @@ void ShaderProgramParser::tokenizeLine(CString line, DynamicArrayRaii<StringRaii
 	// Create the array
 	for(const String& s : spaceTokens)
 	{
-		tokens.emplaceBack(m_pool, s);
+		tokens.emplaceBack(s, m_pool);
 	}
 }
 

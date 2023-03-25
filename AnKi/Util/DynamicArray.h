@@ -330,14 +330,14 @@ public:
 	using typename Base::Size;
 	using MemoryPool = TMemPool;
 
-	DynamicArrayRaii(const MemoryPool& pool)
+	DynamicArrayRaii(const MemoryPool& pool = MemoryPool())
 		: Base()
 		, m_pool(pool)
 	{
 	}
 
 	/// And resize
-	DynamicArrayRaii(const MemoryPool& pool, Size size)
+	DynamicArrayRaii(Size size, const MemoryPool& pool = MemoryPool())
 		: Base()
 		, m_pool(pool)
 	{
@@ -345,7 +345,7 @@ public:
 	}
 
 	/// With default value
-	DynamicArrayRaii(const MemoryPool& pool, Size size, const T& v)
+	DynamicArrayRaii(Size size, const T& v, const MemoryPool& pool = MemoryPool())
 		: Base()
 		, m_pool(pool)
 	{

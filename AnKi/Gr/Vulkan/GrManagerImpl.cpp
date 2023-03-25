@@ -231,7 +231,7 @@ Error GrManagerImpl::initInstance()
 
 		if(layerCount)
 		{
-			DynamicArrayRaii<VkLayerProperties> layerProps(&m_pool, layerCount);
+			DynamicArrayRaii<VkLayerProperties> layerProps(layerCount, &m_pool);
 			vkEnumerateInstanceLayerProperties(&layerCount, &layerProps[0]);
 
 			ANKI_VK_LOGV("Found the following instance layers:");
@@ -426,7 +426,7 @@ Error GrManagerImpl::initInstance()
 			return Error::kFunctionFailed;
 		}
 
-		DynamicArrayRaii<VkPhysicalDevice> physicalDevices(&m_pool, count);
+		DynamicArrayRaii<VkPhysicalDevice> physicalDevices(count, &m_pool);
 		ANKI_VK_CHECK(vkEnumeratePhysicalDevices(m_instance, &count, &physicalDevices[0]));
 
 		class Dev
@@ -436,7 +436,7 @@ Error GrManagerImpl::initInstance()
 			VkPhysicalDeviceProperties2 m_vkProps;
 		};
 
-		DynamicArrayRaii<Dev> devs(&m_pool, count);
+		DynamicArrayRaii<Dev> devs(count, &m_pool);
 		for(U32 devIdx = 0; devIdx < count; ++devIdx)
 		{
 			devs[devIdx].m_pdev = physicalDevices[devIdx];
@@ -1613,7 +1613,7 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 		pplineInf.pipeline = ppline;
 		U32 executableCount = 0;
 		ANKI_VK_CHECK(vkGetPipelineExecutablePropertiesKHR(m_device, &pplineInf, &executableCount, nullptr));
-		DynamicArrayRaii<VkPipelineExecutablePropertiesKHR> executableProps(&m_pool, executableCount);
+		DynamicArrayRaii<VkPipelineExecutablePropertiesKHR> executableProps(executableCount, &m_pool);
 		for(VkPipelineExecutablePropertiesKHR& prop : executableProps)
 		{
 			prop = {};
@@ -1635,7 +1635,7 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 			exeInf.pipeline = ppline;
 			U32 statCount = 0;
 			vkGetPipelineExecutableStatisticsKHR(m_device, &exeInf, &statCount, nullptr);
-			DynamicArrayRaii<VkPipelineExecutableStatisticKHR> stats(&m_pool, statCount);
+			DynamicArrayRaii<VkPipelineExecutableStatisticKHR> stats(statCount, &m_pool);
 			for(VkPipelineExecutableStatisticKHR& s : stats)
 			{
 				s = {};

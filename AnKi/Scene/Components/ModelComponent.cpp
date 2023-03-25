@@ -184,7 +184,7 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		}
 
 		// Upload the uniforms
-		DynamicArrayRaii<U32> allUniforms(info.m_framePool, U32(m_gpuSceneUniforms.m_size / 4));
+		DynamicArrayRaii<U32> allUniforms(U32(m_gpuSceneUniforms.m_size / 4), info.m_framePool);
 		U32 count = 0;
 		for(U32 i = 0; i < modelPatchCount; ++i)
 		{

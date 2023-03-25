@@ -199,7 +199,7 @@ Error walkDirectoryTreeInternal(const CString& dir, const Function<Error(const C
 
 Error getApplicationPath(StringRaii& out)
 {
-	DynamicArrayRaii<Char> buff(&out.getMemoryPool(), 1024);
+	DynamicArrayRaii<Char> buff(1024, &out.getMemoryPool());
 
 	const DWORD result = GetModuleFileNameA(nullptr, &buff[0], buff.getSize());
 	DWORD lastError = GetLastError();

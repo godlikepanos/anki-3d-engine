@@ -13,7 +13,6 @@
 namespace anki {
 
 // Forward
-class CoreTracer;
 class GrManager;
 class MainRenderer;
 class SceneGraph;
@@ -99,9 +98,6 @@ private:
 	HeapMemoryPool m_mainPool;
 
 	// Sybsystems
-#if ANKI_ENABLE_TRACE
-	CoreTracer* m_coreTracer = nullptr;
-#endif
 	GrManager* m_gr = nullptr;
 	MaliHwCounters* m_maliHwCounters = nullptr;
 	ResourceFilesystem* m_resourceFs = nullptr;

@@ -198,7 +198,7 @@ Error SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		// Update the GPU scene
 		const U32 boneCount = m_skeleton->getBones().getSize();
-		DynamicArrayRaii<Mat3x4> trfs(info.m_framePool, boneCount * 2);
+		DynamicArrayRaii<Mat3x4> trfs(boneCount * 2, info.m_framePool);
 		for(U32 i = 0; i < boneCount; ++i)
 		{
 			trfs[i * 2 + 0] = getBoneTransforms()[i];

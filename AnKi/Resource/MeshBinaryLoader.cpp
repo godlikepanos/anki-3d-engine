@@ -314,7 +314,7 @@ Error MeshBinaryLoader::storeIndicesAndPosition(U32 lod, DynamicArrayRaii<U32>& 
 	// Store positions
 	{
 		const MeshBinaryVertexAttribute& attrib = m_header.m_vertexAttributes[VertexStreamId::kPosition];
-		DynamicArrayRaii<U16Vec4> tempPositions(m_pool, m_header.m_totalVertexCounts[lod]);
+		DynamicArrayRaii<U16Vec4> tempPositions(m_header.m_totalVertexCounts[lod], m_pool);
 		static_assert(kMeshRelatedVertexStreamFormats[VertexStreamId::kPosition] == Format::kR16G16B16A16_Unorm,
 					  "Incorrect format");
 		ANKI_CHECK(storeVertexBuffer(lod, attrib.m_bufferIndex, &tempPositions[0], tempPositions.getSizeInBytes()));

@@ -16,15 +16,14 @@ namespace anki {
 /// @{
 
 /// A system that sits on top of the tracer and processes the counters and events.
-class CoreTracer
+class CoreTracer : public MakeSingleton<CoreTracer>
 {
+	template<typename>
+	friend class MakeSingleton;
+
 public:
-	CoreTracer();
-
-	~CoreTracer();
-
 	/// @param directory The directory to store the trace and counters.
-	Error init(HeapMemoryPool* pool, CString directory);
+	Error init(CString directory);
 
 	/// It will flush everything.
 	void flushFrame(U64 frame);
@@ -33,19 +32,21 @@ private:
 	class ThreadWorkItem;
 	class PerFrameCounters;
 
-	HeapMemoryPool* m_pool = nullptr;
-
 	Thread m_thread;
 	ConditionVariable m_cvar;
 	Mutex m_mtx;
 
-	DynamicArray<String> m_counterNames;
+	CoreDynamicArray<CoreString> m_counterNames;
 	IntrusiveList<PerFrameCounters> m_frameCounters;
 
 	IntrusiveList<ThreadWorkItem> m_workItems; ///< Items for the thread to process.
 	File m_traceJsonFile;
 	File m_countersCsvFile;
 	Bool m_quit = false;
+
+	CoreTracer();
+
+	~CoreTracer();
 
 	Error threadWorker();
 

@@ -394,7 +394,7 @@ inline void CommandBufferImpl::pushSecondLevelCommandBuffersInternal(ConstWeakAr
 		beginRenderPassInternal();
 	}
 
-	DynamicArrayRaii<VkCommandBuffer> handles(m_pool, cmdbs.getSize());
+	DynamicArrayRaii<VkCommandBuffer> handles(cmdbs.getSize(), m_pool);
 	for(U32 i = 0; i < cmdbs.getSize(); ++i)
 	{
 		ANKI_ASSERT(static_cast<const CommandBufferImpl&>(*cmdbs[i]).m_finalized);

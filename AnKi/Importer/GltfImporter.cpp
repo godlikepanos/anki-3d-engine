@@ -437,7 +437,7 @@ Error GltfImporter::getExtras(const cgltf_extras& extras, HashMapRaii<CString, S
 		auto it2 = it;
 		++it2;
 
-		out.emplace(it->toCString(), StringRaii(m_pool, it2->toCString()));
+		out.emplace(it->toCString(), StringRaii(it2->toCString(), m_pool));
 		++it;
 		++it;
 	}

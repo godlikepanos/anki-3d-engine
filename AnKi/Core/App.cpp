@@ -144,8 +144,7 @@ void App::cleanup()
 	NativeWindow::freeSingleton();
 
 #if ANKI_ENABLE_TRACE
-	deleteInstance(m_mainPool, m_coreTracer);
-	m_coreTracer = nullptr;
+	CoreTracer::freeSingleton();
 #endif
 
 	ConfigSet::freeSingleton();
@@ -233,8 +232,7 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	// Core tracer
 	//
 #if ANKI_ENABLE_TRACE
-	m_coreTracer = newInstance<CoreTracer>(m_mainPool);
-	ANKI_CHECK(m_coreTracer->init(&m_mainPool, m_settingsDir));
+	ANKI_CHECK(CoreTracer::allocateSingleton().init(m_settingsDir));
 #endif
 
 	//
@@ -617,7 +615,7 @@ Error App::mainLoop()
 
 #if ANKI_ENABLE_TRACE
 		static U64 frame = 1;
-		m_coreTracer->flushFrame(frame++);
+		CoreTracer::getSingleton().flushFrame(frame++);
 #endif
 	}
 

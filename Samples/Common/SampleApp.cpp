@@ -15,7 +15,7 @@ Error SampleApp::init(int argc, char** argv, CString sampleName)
 	ConfigSet::getSingleton().setWindowFullscreen(true);
 
 #if !ANKI_OS_ANDROID
-	StringRaii mainDataPath(&pool, ANKI_SOURCE_DIRECTORY);
+	StringRaii mainDataPath(ANKI_SOURCE_DIRECTORY, &pool);
 	StringRaii assetsDataPath(&pool);
 	assetsDataPath.sprintf("%s/Samples/%s", ANKI_SOURCE_DIRECTORY, sampleName.cstr());
 

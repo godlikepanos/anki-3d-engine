@@ -8,6 +8,7 @@
 #include <AnKi/Config.h>
 #include <AnKi/Util/StdTypes.h>
 #include <AnKi/Util/MemoryPool.h>
+#include <AnKi/Util/DynamicArray.h>
 #include <AnKi/Util/ThreadHive.h>
 
 namespace anki {
@@ -44,5 +45,8 @@ public:
 };
 
 using CoreString = BaseStringRaii<SingletonMemoryPoolWrapper<CoreMemoryPool>>;
+
+template<typename T>
+using CoreDynamicArray = DynamicArrayRaii<T, U32, SingletonMemoryPoolWrapper<CoreMemoryPool>>;
 
 } // end namespace anki

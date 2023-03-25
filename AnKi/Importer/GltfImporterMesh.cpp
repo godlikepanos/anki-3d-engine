@@ -211,7 +211,7 @@ static void decimateSubmesh(F32 factor, SubMesh& submesh, BaseMemoryPool* pool)
 	}
 
 	// Decimate
-	DynamicArrayRaii<U32> newIndices(pool, submesh.m_indices.getSize());
+	DynamicArrayRaii<U32> newIndices(submesh.m_indices.getSize(), pool);
 	newIndices.resize(U32(meshopt_simplify(&newIndices[0], &submesh.m_indices[0], submesh.m_indices.getSize(),
 										   &submesh.m_verts[0].m_position.x(), submesh.m_verts.getSize(),
 										   sizeof(TempVertex), targetIndexCount, 1e-2f)));
@@ -679,7 +679,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 	}
 
 	// Write sub meshes
-	DynamicArrayRaii<MeshBinarySubMesh> outSubmeshes(m_pool, U32(submeshes[0].getSize()));
+	DynamicArrayRaii<MeshBinarySubMesh> outSubmeshes(U32(submeshes[0].getSize()), m_pool);
 
 	for(U32 submeshIdx = 0; submeshIdx < outSubmeshes.getSize(); ++submeshIdx)
 	{
@@ -714,7 +714,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 		U32 vertCount = 0;
 		for(const SubMesh& submesh : submeshes[lod])
 		{
-			DynamicArrayRaii<U16> indices(m_pool, submesh.m_indices.getSize());
+			DynamicArrayRaii<U16> indices(submesh.m_indices.getSize(), m_pool);
 			for(U32 i = 0; i < indices.getSize(); ++i)
 			{
 				const U32 idx = submesh.m_indices[i] + vertCount;
@@ -734,7 +734,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 		// Write positions
 		for(const SubMesh& submesh : submeshes[lod])
 		{
-			DynamicArrayRaii<U16Vec4> positions(m_pool, submesh.m_verts.getSize());
+			DynamicArrayRaii<U16Vec4> positions(submesh.m_verts.getSize(), m_pool);
 			for(U32 v = 0; v < submesh.m_verts.getSize(); ++v)
 			{
 				Vec3 localPos = (submesh.m_verts[v].m_position + posTranslation) * posScale;
@@ -750,7 +750,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 		// Write normals
 		for(const SubMesh& submesh : submeshes[lod])
 		{
-			DynamicArrayRaii<U32> normals(m_pool, submesh.m_verts.getSize());
+			DynamicArrayRaii<U32> normals(submesh.m_verts.getSize(), m_pool);
 			for(U32 v = 0; v < submesh.m_verts.getSize(); ++v)
 			{
 				normals[v] = packSnorm4x8(submesh.m_verts[v].m_normal.xyz0());
@@ -762,7 +762,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 		// Write tangent
 		for(const SubMesh& submesh : submeshes[lod])
 		{
-			DynamicArrayRaii<U32> tangents(m_pool, submesh.m_verts.getSize());
+			DynamicArrayRaii<U32> tangents(submesh.m_verts.getSize(), m_pool);
 			for(U32 v = 0; v < submesh.m_verts.getSize(); ++v)
 			{
 				tangents[v] = packSnorm4x8(submesh.m_verts[v].m_tangent);
@@ -774,7 +774,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 		// Write UV
 		for(const SubMesh& submesh : submeshes[lod])
 		{
-			DynamicArrayRaii<Vec2> uvs(m_pool, submesh.m_verts.getSize());
+			DynamicArrayRaii<Vec2> uvs(submesh.m_verts.getSize(), m_pool);
 			for(U32 v = 0; v < submesh.m_verts.getSize(); ++v)
 			{
 				uvs[v] = submesh.m_verts[v].m_uv;
@@ -788,7 +788,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 			// Bone IDs
 			for(const SubMesh& submesh : submeshes[lod])
 			{
-				DynamicArrayRaii<U8Vec4> boneids(m_pool, submesh.m_verts.getSize());
+				DynamicArrayRaii<U8Vec4> boneids(submesh.m_verts.getSize(), m_pool);
 				for(U32 v = 0; v < submesh.m_verts.getSize(); ++v)
 				{
 					boneids[v] = U8Vec4(submesh.m_verts[v].m_boneIds);
@@ -800,7 +800,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 			// Bone weights
 			for(const SubMesh& submesh : submeshes[lod])
 			{
-				DynamicArrayRaii<U32> boneWeights(m_pool, submesh.m_verts.getSize());
+				DynamicArrayRaii<U32> boneWeights(submesh.m_verts.getSize(), m_pool);
 				for(U32 v = 0; v < submesh.m_verts.getSize(); ++v)
 				{
 					boneWeights[v] = packSnorm4x8(submesh.m_verts[v].m_boneWeights);

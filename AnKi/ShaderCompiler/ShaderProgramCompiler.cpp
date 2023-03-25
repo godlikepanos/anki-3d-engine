@@ -784,8 +784,8 @@ static Error doGhostStructReflection(const StringList& symbolsToReflect,
 
 	// Add the ghost structs to binary structs
 	const U32 nonGhostStructCount = binary.m_structs.getSize();
-	DynamicArrayRaii<ShaderProgramBinaryStruct> structs(&binaryPool,
-														nonGhostStructCount + ghostStructIndices.getSize());
+	DynamicArrayRaii<ShaderProgramBinaryStruct> structs(nonGhostStructCount + ghostStructIndices.getSize(),
+														&binaryPool);
 
 	for(U32 i = 0; i < binary.m_structs.getSize(); ++i)
 	{
@@ -799,7 +799,7 @@ static Error doGhostStructReflection(const StringList& symbolsToReflect,
 
 		ANKI_CHECK(Refl::setName(in.m_name, out.m_name));
 
-		DynamicArrayRaii<ShaderProgramBinaryStructMember> members(&binaryPool, in.m_members.getSize());
+		DynamicArrayRaii<ShaderProgramBinaryStructMember> members(in.m_members.getSize(), &binaryPool);
 		for(U32 j = 0; j < in.m_members.getSize(); ++j)
 		{
 			const ShaderProgramParserMember& inMember = in.m_members[j];
@@ -1054,11 +1054,11 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 	if(parser.getMutators().getSize() > 0)
 	{
 		// Initialize
-		DynamicArrayRaii<MutatorValue> mutationValues(&tempPool, parser.getMutators().getSize());
-		DynamicArrayRaii<U32> dials(&tempPool, parser.getMutators().getSize(), 0);
+		DynamicArrayRaii<MutatorValue> mutationValues(parser.getMutators().getSize(), &tempPool);
+		DynamicArrayRaii<U32> dials(parser.getMutators().getSize(), 0, &tempPool);
 		DynamicArrayRaii<ShaderProgramBinaryVariant> variants(&binaryPool);
 		DynamicArrayRaii<ShaderProgramBinaryCodeBlock> codeBlocks(&binaryPool);
-		DynamicArrayRaii<ShaderProgramBinaryMutation> mutations(&binaryPool, mutationCount);
+		DynamicArrayRaii<ShaderProgramBinaryMutation> mutations(mutationCount, &binaryPool);
 		DynamicArrayRaii<U64> codeBlockHashes(&tempPool);
 		HashMapRaii<U64, U32> mutationHashToIdx(&tempPool);
 

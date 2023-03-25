@@ -86,7 +86,7 @@ public:
 	Second m_seepTimeBeforeNextTry = 1.0_ms; ///< Time before the next try.
 
 	CleanupFile(BaseMemoryPool* pool, CString filename)
-		: m_fileToDelete(pool, filename)
+		: m_fileToDelete(filename, pool)
 	{
 	}
 

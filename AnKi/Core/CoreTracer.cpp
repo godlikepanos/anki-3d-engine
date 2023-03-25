@@ -33,28 +33,17 @@ static void getSpreadsheetColumnName(U32 column, Array<char, 3>& arr)
 class CoreTracer::ThreadWorkItem : public IntrusiveListEnabled<ThreadWorkItem>
 {
 public:
-	DynamicArrayRaii<TracerEvent> m_events;
-	DynamicArrayRaii<TracerCounter> m_counters;
+	CoreDynamicArray<TracerEvent> m_events;
+	CoreDynamicArray<TracerCounter> m_counters;
 	ThreadId m_tid;
 	U64 m_frame;
-
-	ThreadWorkItem(HeapMemoryPool* pool)
-		: m_events(pool)
-		, m_counters(pool)
-	{
-	}
 };
 
 class CoreTracer::PerFrameCounters : public IntrusiveListEnabled<PerFrameCounters>
 {
 public:
-	DynamicArrayRaii<TracerCounter> m_counters;
+	CoreDynamicArray<TracerCounter> m_counters;
 	U64 m_frame;
-
-	PerFrameCounters(HeapMemoryPool* pool)
-		: m_counters(pool)
-	{
-	}
 };
 
 CoreTracer::CoreTracer()
@@ -85,31 +74,22 @@ CoreTracer::~CoreTracer()
 	while(!m_frameCounters.isEmpty())
 	{
 		PerFrameCounters* frame = m_frameCounters.popBack();
-		deleteInstance(*m_pool, frame);
+		deleteInstance(CoreMemoryPool::getSingleton(), frame);
 	}
 
 	while(!m_workItems.isEmpty())
 	{
 		ThreadWorkItem* item = m_workItems.popBack();
-		deleteInstance(*m_pool, item);
+		deleteInstance(CoreMemoryPool::getSingleton(), item);
 	}
-
-	for(String& s : m_counterNames)
-	{
-		s.destroy(*m_pool);
-	}
-	m_counterNames.destroy(*m_pool);
 
 	// Destroy the tracer
 	Tracer::freeSingleton();
 }
 
-Error CoreTracer::init(HeapMemoryPool* pool, CString directory)
+Error CoreTracer::init(CString directory)
 {
-	ANKI_ASSERT(pool);
-	m_pool = pool;
-
-	Tracer::allocateSingleton(m_pool);
+	Tracer::allocateSingleton(&CoreMemoryPool::getSingleton());
 	const Bool enableTracer = getenv("ANKI_CORE_TRACER_ENABLED") && getenv("ANKI_CORE_TRACER_ENABLED")[0] == '1';
 	Tracer::getSingleton().setEnabled(enableTracer);
 	ANKI_CORE_LOGI("Tracing is %s from the beginning", (enableTracer) ? "enabled" : "disabled");
@@ -119,15 +99,14 @@ Error CoreTracer::init(HeapMemoryPool* pool, CString directory)
 	});
 
 	std::tm tm = getLocalTime();
-	StringRaii fname(m_pool);
+	CoreString fname;
 	fname.sprintf("%s/%d%02d%02d-%02d%02d_", directory.cstr(), tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour,
 				  tm.tm_min);
 
-	ANKI_CHECK(m_traceJsonFile.open(StringRaii(m_pool).sprintf("%strace.json", fname.cstr()), FileOpenFlag::kWrite));
+	ANKI_CHECK(m_traceJsonFile.open(CoreString().sprintf("%strace.json", fname.cstr()), FileOpenFlag::kWrite));
 	ANKI_CHECK(m_traceJsonFile.writeText("[\n"));
 
-	ANKI_CHECK(
-		m_countersCsvFile.open(StringRaii(m_pool).sprintf("%scounters.csv", fname.cstr()), FileOpenFlag::kWrite));
+	ANKI_CHECK(m_countersCsvFile.open(CoreString().sprintf("%scounters.csv", fname.cstr()), FileOpenFlag::kWrite));
 
 	return Error::kNone;
 }
@@ -171,7 +150,7 @@ Error CoreTracer::threadWorker()
 				gatherCounters(*item);
 			}
 
-			deleteInstance(*m_pool, item);
+			deleteInstance(CoreMemoryPool::getSingleton(), item);
 		}
 	}
 
@@ -214,7 +193,7 @@ void CoreTracer::gatherCounters(ThreadWorkItem& item)
 	});
 
 	// Merge same
-	DynamicArrayRaii<TracerCounter> mergedCounters(m_pool);
+	CoreDynamicArray<TracerCounter> mergedCounters;
 	for(U32 i = 0; i < item.m_counters.getSize(); ++i)
 	{
 		if(mergedCounters.getSize() == 0 || mergedCounters.getBack().m_name != item.m_counters[i].m_name)
@@ -248,7 +227,7 @@ void CoreTracer::gatherCounters(ThreadWorkItem& item)
 
 		if(!found)
 		{
-			m_counterNames.emplaceBack(*m_pool, *m_pool, counter.m_name);
+			m_counterNames.emplaceBack(counter.m_name);
 			addedCounterName = true;
 		}
 	}
@@ -262,7 +241,7 @@ void CoreTracer::gatherCounters(ThreadWorkItem& item)
 	if(m_frameCounters.isEmpty() || m_frameCounters.getBack().m_frame != item.m_frame)
 	{
 		// Create new frame
-		PerFrameCounters* newPerFrame = newInstance<PerFrameCounters>(*m_pool, m_pool);
+		PerFrameCounters* newPerFrame = newInstance<PerFrameCounters>(CoreMemoryPool::getSingleton());
 		newPerFrame->m_counters = std::move(mergedCounters);
 		newPerFrame->m_frame = item.m_frame;
 		m_frameCounters.pushBack(newPerFrame);
@@ -310,7 +289,7 @@ void CoreTracer::flushFrame(U64 frame)
 			Ctx& ctx = *static_cast<Ctx*>(ud);
 			CoreTracer& self = *ctx.m_self;
 
-			ThreadWorkItem* item = newInstance<ThreadWorkItem>(*self.m_pool, self.m_pool);
+			ThreadWorkItem* item = newInstance<ThreadWorkItem>(CoreMemoryPool::getSingleton());
 			item->m_tid = tid;
 			item->m_frame = ctx.m_frame;
 

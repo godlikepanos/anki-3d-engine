@@ -74,31 +74,31 @@ Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16b
 	spvFilename.sprintf("%s/%" PRIu64 ".spv", tmpDir.cstr(), rand);
 
 	DynamicArrayRaii<StringRaii> dxcArgs(&tmpPool);
-	dxcArgs.emplaceBack(&tmpPool, "-Fo");
-	dxcArgs.emplaceBack(&tmpPool, spvFilename);
-	dxcArgs.emplaceBack(&tmpPool, "-Wall");
-	dxcArgs.emplaceBack(&tmpPool, "-Wextra");
-	dxcArgs.emplaceBack(&tmpPool, "-Wno-conversion");
-	dxcArgs.emplaceBack(&tmpPool, "-Werror");
-	dxcArgs.emplaceBack(&tmpPool, "-Wfatal-errors");
-	dxcArgs.emplaceBack(&tmpPool, "-Wundef");
-	dxcArgs.emplaceBack(&tmpPool, "-Wno-unused-const-variable");
-	dxcArgs.emplaceBack(&tmpPool, "-HV");
-	dxcArgs.emplaceBack(&tmpPool, "2021");
-	dxcArgs.emplaceBack(&tmpPool, "-E");
-	dxcArgs.emplaceBack(&tmpPool, "main");
-	dxcArgs.emplaceBack(&tmpPool, "-T");
-	dxcArgs.emplaceBack(&tmpPool, profile(shaderType));
-	dxcArgs.emplaceBack(&tmpPool, "-spirv");
-	dxcArgs.emplaceBack(&tmpPool, "-fspv-target-env=vulkan1.1spirv1.4");
-	dxcArgs.emplaceBack(&tmpPool, hlslFilename);
+	dxcArgs.emplaceBack("-Fo", &tmpPool);
+	dxcArgs.emplaceBack(spvFilename, &tmpPool);
+	dxcArgs.emplaceBack("-Wall", &tmpPool);
+	dxcArgs.emplaceBack("-Wextra", &tmpPool);
+	dxcArgs.emplaceBack("-Wno-conversion", &tmpPool);
+	dxcArgs.emplaceBack("-Werror", &tmpPool);
+	dxcArgs.emplaceBack("-Wfatal-errors", &tmpPool);
+	dxcArgs.emplaceBack("-Wundef", &tmpPool);
+	dxcArgs.emplaceBack("-Wno-unused-const-variable", &tmpPool);
+	dxcArgs.emplaceBack("-HV", &tmpPool);
+	dxcArgs.emplaceBack("2021", &tmpPool);
+	dxcArgs.emplaceBack("-E", &tmpPool);
+	dxcArgs.emplaceBack("main", &tmpPool);
+	dxcArgs.emplaceBack("-T", &tmpPool);
+	dxcArgs.emplaceBack(profile(shaderType), &tmpPool);
+	dxcArgs.emplaceBack("-spirv", &tmpPool);
+	dxcArgs.emplaceBack("-fspv-target-env=vulkan1.1spirv1.4", &tmpPool);
+	dxcArgs.emplaceBack(hlslFilename);
 
 	if(compileWith16bitTypes)
 	{
-		dxcArgs.emplaceBack(&tmpPool, "-enable-16bit-types");
+		dxcArgs.emplaceBack("-enable-16bit-types", &tmpPool);
 	}
 
-	DynamicArrayRaii<CString> dxcArgs2(&tmpPool, dxcArgs.getSize());
+	DynamicArrayRaii<CString> dxcArgs2(dxcArgs.getSize(), &tmpPool);
 	for(U32 i = 0; i < dxcArgs.getSize(); ++i)
 	{
 		dxcArgs2[i] = dxcArgs[i];
