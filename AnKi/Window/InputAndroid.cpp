@@ -11,7 +11,7 @@ namespace anki {
 
 template<>
 template<>
-Input& MakeSingleton<Input>::allocateSingleton<>()
+Input& MakeSingletonPtr<Input>::allocateSingleton<>()
 {
 	ANKI_ASSERT(m_global == nullptr);
 	m_global = new InputAndroid;
@@ -24,7 +24,7 @@ Input& MakeSingleton<Input>::allocateSingleton<>()
 }
 
 template<>
-void MakeSingleton<Input>::freeSingleton()
+void MakeSingletonPtr<Input>::freeSingleton()
 {
 	if(m_global)
 	{

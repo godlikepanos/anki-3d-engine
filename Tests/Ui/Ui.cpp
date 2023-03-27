@@ -87,7 +87,7 @@ ANKI_TEST(Ui, Ui)
 		CanvasPtr canvas;
 		ANKI_TEST_EXPECT_NO_ERR(ui->newInstance(canvas, font, 20, win->getWidth(), win->getHeight()));
 
-		IntrusivePtr<Label, UiObjectDeleter<Label>> label;
+		IntrusivePtr<Label, UiObjectDeleter> label;
 		ANKI_TEST_EXPECT_NO_ERR(ui->newInstance(label));
 
 		Bool done = false;

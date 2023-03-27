@@ -50,7 +50,7 @@ static KeyCode sdlKeytoAnKi(SDL_Keycode sdlk)
 
 template<>
 template<>
-Input& MakeSingleton<Input>::allocateSingleton<>()
+Input& MakeSingletonPtr<Input>::allocateSingleton<>()
 {
 	ANKI_ASSERT(m_global == nullptr);
 	m_global = new InputSdl;
@@ -63,7 +63,7 @@ Input& MakeSingleton<Input>::allocateSingleton<>()
 }
 
 template<>
-void MakeSingleton<Input>::freeSingleton()
+void MakeSingletonPtr<Input>::freeSingleton()
 {
 	if(m_global)
 	{

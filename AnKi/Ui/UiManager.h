@@ -30,7 +30,7 @@ public:
 
 	/// Create a new UI object.
 	template<typename T, typename Y, typename... Args>
-	Error newInstance(IntrusivePtr<Y, UiObjectDeleter<Y>>& ptr, Args&&... args)
+	Error newInstance(IntrusivePtr<Y, UiObjectDeleter>& ptr, Args&&... args)
 	{
 		T* p = anki::newInstance<T>(UiMemoryPool::getSingleton());
 		ptr.reset(static_cast<Y*>(p));
@@ -39,7 +39,7 @@ public:
 
 	/// Create a new UI object.
 	template<typename T, typename... Args>
-	Error newInstance(IntrusivePtr<T, UiObjectDeleter<T>>& ptr, Args&&... args)
+	Error newInstance(IntrusivePtr<T, UiObjectDeleter>& ptr, Args&&... args)
 	{
 		ptr.reset(anki::newInstance<T>(UiMemoryPool::getSingleton()));
 		return ptr->init(args...);

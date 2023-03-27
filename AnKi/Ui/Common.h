@@ -43,27 +43,22 @@ private:
 
 ANKI_DEFINE_SUBMODULE_UTIL_CONTAINERS(Ui, UiMemoryPool)
 
-template<typename T>
 class UiObjectDeleter
 {
 public:
-	void operator()(T* x)
-	{
-		static_cast<UiObject*>(x)->~UiObject();
-		UiMemoryPool::getSingleton().free(x);
-	}
+	void operator()(UiObject* x);
 };
 
 #define ANKI_UI_OBJECT_FW(className) \
 	class className; \
-	using className##Ptr = IntrusivePtr<className, UiObjectDeleter<className>>;
+	using className##Ptr = IntrusivePtr<className, UiObjectDeleter>;
 
 ANKI_UI_OBJECT_FW(Font)
 ANKI_UI_OBJECT_FW(Canvas)
 ANKI_UI_OBJECT_FW(UiImmediateModeBuilder)
 #undef ANKI_UI_OBJECT
 
-using UiObjectPtr = IntrusivePtr<UiObject, UiObjectDeleter<UiObject>>;
+using UiObjectPtr = IntrusivePtr<UiObject, UiObjectDeleter>;
 
 class UiExternalSubsystems
 {

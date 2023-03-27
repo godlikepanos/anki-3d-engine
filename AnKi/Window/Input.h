@@ -23,10 +23,10 @@ enum class InputEvent : U8
 
 /// Handle the input and other events
 /// @note All positions are in NDC space
-class Input : public MakeSingleton<Input>
+class Input : public MakeSingletonPtr<Input>
 {
 	template<typename>
-	friend class MakeSingleton;
+	friend class MakeSingletonPtr;
 
 public:
 	Error init();
@@ -163,9 +163,9 @@ protected:
 
 template<>
 template<>
-Input& MakeSingleton<Input>::allocateSingleton<>();
+Input& MakeSingletonPtr<Input>::allocateSingleton<>();
 
 template<>
-void MakeSingleton<Input>::freeSingleton();
+void MakeSingletonPtr<Input>::freeSingleton();
 
 } // end namespace anki

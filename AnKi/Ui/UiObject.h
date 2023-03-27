@@ -15,9 +15,6 @@ namespace anki {
 /// The base of all UI objects.
 class UiObject
 {
-	template<typename>
-	friend class UiObjectDeleter;
-
 public:
 	virtual ~UiObject() = default;
 

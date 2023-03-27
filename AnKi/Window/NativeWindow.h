@@ -31,10 +31,10 @@ public:
 };
 
 /// Native window.
-class NativeWindow : public MakeSingleton<NativeWindow>
+class NativeWindow : public MakeSingletonPtr<NativeWindow>
 {
 	template<typename>
-	friend class MakeSingleton;
+	friend class MakeSingletonPtr;
 
 public:
 	Error init(const NativeWindowInitInfo& inf);
@@ -71,9 +71,9 @@ protected:
 
 template<>
 template<>
-NativeWindow& MakeSingleton<NativeWindow>::allocateSingleton<>();
+NativeWindow& MakeSingletonPtr<NativeWindow>::allocateSingleton<>();
 
 template<>
-void MakeSingleton<NativeWindow>::freeSingleton();
+void MakeSingletonPtr<NativeWindow>::freeSingleton();
 
 } // end namespace anki

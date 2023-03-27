@@ -13,7 +13,7 @@ namespace anki {
 
 template<>
 template<>
-NativeWindow& MakeSingleton<NativeWindow>::allocateSingleton<>()
+NativeWindow& MakeSingletonPtr<NativeWindow>::allocateSingleton<>()
 {
 	ANKI_ASSERT(m_global == nullptr);
 	m_global = new NativeWindowSdl();
@@ -24,7 +24,7 @@ NativeWindow& MakeSingleton<NativeWindow>::allocateSingleton<>()
 }
 
 template<>
-void MakeSingleton<NativeWindow>::freeSingleton()
+void MakeSingletonPtr<NativeWindow>::freeSingleton()
 {
 	if(m_global)
 	{
