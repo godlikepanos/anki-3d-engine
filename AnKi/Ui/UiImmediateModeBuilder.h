@@ -16,14 +16,9 @@ namespace anki {
 class UiImmediateModeBuilder : public UiObject
 {
 public:
-	UiImmediateModeBuilder(UiManager* manager)
-		: UiObject(manager)
-	{
-	}
+	UiImmediateModeBuilder() = default;
 
-	virtual ~UiImmediateModeBuilder()
-	{
-	}
+	~UiImmediateModeBuilder() = default;
 
 	virtual void build(CanvasPtr ctx) = 0;
 

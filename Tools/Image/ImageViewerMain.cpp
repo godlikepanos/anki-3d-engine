@@ -22,8 +22,8 @@ public:
 			},
 			this);
 
-		ANKI_CHECK_AND_IGNORE(getExternalSubsystems().m_uiManager->newInstance(
-			m_font, "EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{16}));
+		ANKI_CHECK_AND_IGNORE(
+			UiManager::getSingleton().newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{16}));
 
 		ANKI_CHECK_AND_IGNORE(ResourceManager::getSingleton().loadResource(
 			"ShaderBinaries/UiVisualizeImage.ankiprogbin", m_imageProgram));

@@ -14,18 +14,11 @@
 
 namespace anki {
 
-Canvas::Canvas(UiManager* manager)
-	: UiObject(manager)
-{
-}
-
 Canvas::~Canvas()
 {
 	if(m_imCtx)
 	{
-		setImAllocator();
 		ImGui::DestroyContext(m_imCtx);
-		unsetImAllocator();
 	}
 }
 
@@ -58,11 +51,7 @@ Error Canvas::init(FontPtr font, U32 fontHeight, U32 width, U32 height)
 	samplerInit.m_mipmapFilter = SamplingFilter::kNearest;
 	m_nearestNearestRepeatSampler = getExternalSubsystems().m_grManager->newSampler(samplerInit);
 
-	// Allocator
-	m_tempPool.init(getMemoryPool().getAllocationCallback(), getMemoryPool().getAllocationCallbackUserData(), 512_B);
-
 	// Create the context
-	setImAllocator();
 	m_imCtx = ImGui::CreateContext(font->getImFontAtlas());
 	ImGui::SetCurrentContext(m_imCtx);
 	ImGui::GetIO().IniFilename = nullptr;
@@ -97,7 +86,6 @@ Error Canvas::init(FontPtr font, U32 fontHeight, U32 width, U32 height)
 #undef ANKI_HANDLE
 
 	ImGui::SetCurrentContext(nullptr);
-	unsetImAllocator();
 
 	return Error::kNone;
 }
@@ -107,7 +95,6 @@ void Canvas::handleInput()
 	const Input& in = Input::getSingleton();
 
 	// Begin
-	setImAllocator();
 	ImGui::SetCurrentContext(m_imCtx);
 	ImGuiIO& io = ImGui::GetIO();
 
@@ -166,12 +153,10 @@ void Canvas::handleInput()
 
 	// End
 	ImGui::SetCurrentContext(nullptr);
-	unsetImAllocator();
 }
 
 void Canvas::beginBuilding()
 {
-	setImAllocator();
 	ImGui::SetCurrentContext(m_imCtx);
 
 	ImGuiIO& io = ImGui::GetIO();
@@ -184,7 +169,7 @@ void Canvas::beginBuilding()
 
 void Canvas::pushFont(const FontPtr& font, U32 fontHeight)
 {
-	m_references.pushBack(m_tempPool, IntrusivePtr<UiObject>(const_cast<Font*>(font.get())));
+	m_references.pushBack(UiObjectPtr(const_cast<Font*>(font.get())));
 	ImGui::PushFont(&font->getImFont(fontHeight));
 }
 
@@ -195,8 +180,7 @@ void Canvas::appendToCommandBuffer(CommandBufferPtr cmdb)
 	// Done
 	ImGui::SetCurrentContext(nullptr);
 
-	m_references.destroy(m_tempPool);
-	m_tempPool.reset();
+	m_references.destroy();
 }
 
 void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)

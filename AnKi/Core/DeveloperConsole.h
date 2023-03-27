@@ -19,10 +19,7 @@ namespace anki {
 class DeveloperConsole : public UiImmediateModeBuilder
 {
 public:
-	DeveloperConsole(UiManager* ui)
-		: UiImmediateModeBuilder(ui)
-	{
-	}
+	DeveloperConsole() = default;
 
 	~DeveloperConsole();
 
@@ -39,8 +36,8 @@ private:
 		const Char* m_file;
 		const Char* m_func;
 		const Char* m_subsystem;
-		String m_threadName;
-		String m_msg;
+		UiString m_threadName;
+		UiString m_msg;
 		I32 m_line;
 		LoggerMessageType m_type;
 	};

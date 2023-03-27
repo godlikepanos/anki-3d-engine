@@ -20,42 +20,42 @@ public:
 };
 
 /// UI manager.
-class UiManager
+class UiManager : public MakeSingleton<UiManager>
 {
-	friend class UiObject;
+	template<typename>
+	friend class MakeSingleton;
 
 public:
-	UiManager();
-
-	~UiManager();
-
 	Error init(UiManagerInitInfo& initInfo);
-
-	HeapMemoryPool& getMemoryPool() const
-	{
-		return m_pool;
-	}
 
 	/// Create a new UI object.
 	template<typename T, typename Y, typename... Args>
-	Error newInstance(IntrusivePtr<Y>& ptr, Args&&... args)
+	Error newInstance(IntrusivePtr<Y, UiObjectDeleter<Y>>& ptr, Args&&... args)
 	{
-		T* p = anki::newInstance<T>(m_pool, this);
+		T* p = anki::newInstance<T>(UiMemoryPool::getSingleton());
 		ptr.reset(static_cast<Y*>(p));
 		return p->init(args...);
 	}
 
 	/// Create a new UI object.
 	template<typename T, typename... Args>
-	Error newInstance(IntrusivePtr<T>& ptr, Args&&... args)
+	Error newInstance(IntrusivePtr<T, UiObjectDeleter<T>>& ptr, Args&&... args)
 	{
-		ptr.reset(anki::newInstance<T>(m_pool, this));
+		ptr.reset(anki::newInstance<T>(UiMemoryPool::getSingleton()));
 		return ptr->init(args...);
 	}
 
+	UiExternalSubsystems& getExternalSubsystems()
+	{
+		return m_subsystems;
+	}
+
 private:
-	mutable HeapMemoryPool m_pool;
 	UiExternalSubsystems m_subsystems;
+
+	UiManager();
+
+	~UiManager();
 };
 /// @}
 

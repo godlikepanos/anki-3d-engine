@@ -69,7 +69,7 @@ ANKI_TEST(Ui, Ui)
 	ANKI_TEST_EXPECT_NO_ERR(Input::allocateSingleton().init());
 	GrManager* gr = createGrManager(win);
 	createResourceManager(gr);
-	UiManager* ui = new UiManager();
+	UiManager* ui = &UiManager::allocateSingleton();
 
 	RebarStagingGpuMemoryPool::allocateSingleton().init(gr);
 
@@ -87,7 +87,7 @@ ANKI_TEST(Ui, Ui)
 		CanvasPtr canvas;
 		ANKI_TEST_EXPECT_NO_ERR(ui->newInstance(canvas, font, 20, win->getWidth(), win->getHeight()));
 
-		IntrusivePtr<Label> label;
+		IntrusivePtr<Label, UiObjectDeleter<Label>> label;
 		ANKI_TEST_EXPECT_NO_ERR(ui->newInstance(label));
 
 		Bool done = false;
@@ -153,7 +153,7 @@ ANKI_TEST(Ui, Ui)
 		}
 	}
 
-	delete ui;
+	UiManager::freeSingleton();
 	RebarStagingGpuMemoryPool::freeSingleton();
 	ResourceManager::freeSingleton();
 	GrManager::deleteInstance(gr);

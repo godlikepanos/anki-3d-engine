@@ -16,11 +16,8 @@ namespace anki {
 
 // Forward
 class UiManager;
-class ResourceManager;
 class GrManager;
-class Input;
-class ResourceFilesystem;
-class RebarStagingGpuMemoryPool;
+class UiObject;
 
 /// @addtogroup ui
 /// @{
@@ -30,14 +27,43 @@ class RebarStagingGpuMemoryPool;
 #define ANKI_UI_LOGW(...) ANKI_LOG("UI", kWarning, __VA_ARGS__)
 #define ANKI_UI_LOGF(...) ANKI_LOG("UI", kFatal, __VA_ARGS__)
 
-#define ANKI_UI_OBJECT_FW(name_) \
-	class name_; \
-	using name_##Ptr = IntrusivePtr<name_>;
+class UiMemoryPool : public HeapMemoryPool, public MakeSingleton<UiMemoryPool>
+{
+	template<typename>
+	friend class MakeSingleton;
+
+private:
+	UiMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData)
+		: HeapMemoryPool(allocCb, allocCbUserData, "UiMemPool")
+	{
+	}
+
+	~UiMemoryPool() = default;
+};
+
+ANKI_DEFINE_SUBMODULE_UTIL_CONTAINERS(Ui, UiMemoryPool)
+
+template<typename T>
+class UiObjectDeleter
+{
+public:
+	void operator()(T* x)
+	{
+		static_cast<UiObject*>(x)->~UiObject();
+		UiMemoryPool::getSingleton().free(x);
+	}
+};
+
+#define ANKI_UI_OBJECT_FW(className) \
+	class className; \
+	using className##Ptr = IntrusivePtr<className, UiObjectDeleter<className>>;
 
 ANKI_UI_OBJECT_FW(Font)
 ANKI_UI_OBJECT_FW(Canvas)
 ANKI_UI_OBJECT_FW(UiImmediateModeBuilder)
 #undef ANKI_UI_OBJECT
+
+using UiObjectPtr = IntrusivePtr<UiObject, UiObjectDeleter<UiObject>>;
 
 class UiExternalSubsystems
 {

@@ -76,7 +76,6 @@ class RendererExternalSubsystems
 {
 public:
 	GrManager* m_grManager = nullptr;
-	UiManager* m_uiManager = nullptr;
 	Timestamp* m_globTimestamp = nullptr;
 };
 

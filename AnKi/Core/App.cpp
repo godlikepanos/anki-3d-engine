@@ -124,8 +124,7 @@ void App::cleanup()
 	m_script = nullptr;
 	deleteInstance(m_mainPool, m_renderer);
 	m_renderer = nullptr;
-	deleteInstance(m_mainPool, m_ui);
-	m_ui = nullptr;
+	UiManager::freeSingleton();
 	GpuSceneMicroPatcher::freeSingleton();
 	ResourceManager::freeSingleton();
 	PhysicsWorld::freeSingleton();
@@ -319,8 +318,7 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	uiInitInfo.m_allocCallback = m_mainPool.getAllocationCallback();
 	uiInitInfo.m_allocCallbackUserData = m_mainPool.getAllocationCallbackUserData();
 	uiInitInfo.m_grManager = m_gr;
-	m_ui = newInstance<UiManager>(m_mainPool);
-	ANKI_CHECK(m_ui->init(uiInitInfo));
+	ANKI_CHECK(UiManager::allocateSingleton().init(uiInitInfo));
 
 	//
 	// GPU scene
@@ -336,7 +334,6 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	renderInit.m_allocCallback = m_mainPool.getAllocationCallback();
 	renderInit.m_allocCallbackUserData = m_mainPool.getAllocationCallbackUserData();
 	renderInit.m_grManager = m_gr;
-	renderInit.m_uiManager = m_ui;
 	renderInit.m_globTimestamp = &m_globalTimestamp;
 	m_renderer = newInstance<MainRenderer>(m_mainPool);
 	ANKI_CHECK(m_renderer->init(renderInit));
@@ -357,7 +354,6 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	sceneInit.m_allocCallbackData = m_mainPool.getAllocationCallbackUserData();
 	sceneInit.m_globalTimestamp = &m_globalTimestamp;
 	sceneInit.m_scriptManager = m_script;
-	sceneInit.m_uiManager = m_ui;
 	sceneInit.m_grManager = m_gr;
 	ANKI_CHECK(m_scene->init(sceneInit));
 
@@ -368,8 +364,8 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	//
 	// Misc
 	//
-	ANKI_CHECK(m_ui->newInstance<StatsUi>(m_statsUi));
-	ANKI_CHECK(m_ui->newInstance<DeveloperConsole>(m_console, m_script));
+	ANKI_CHECK(UiManager::getSingleton().newInstance<StatsUi>(m_statsUi));
+	ANKI_CHECK(UiManager::getSingleton().newInstance<DeveloperConsole>(m_console, m_script));
 
 	ANKI_CORE_LOGI("Application initialized");
 

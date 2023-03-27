@@ -16,26 +16,20 @@ namespace anki {
 
 Font::~Font()
 {
-	setImAllocator();
 	m_imFontAtlas.destroy();
-	unsetImAllocator();
-
-	m_fonts.destroy(getMemoryPool());
-	m_fontData.destroy(getMemoryPool());
 }
 
 Error Font::init(const CString& filename, ConstWeakArray<U32> fontHeights)
 {
-	setImAllocator();
 	m_imFontAtlas.init();
 
 	// Load font in memory
 	ResourceFilePtr file;
 	ANKI_CHECK(ResourceManager::getSingleton().getFilesystem().openFile(filename, file));
-	m_fontData.create(getMemoryPool(), U32(file->getSize()));
+	m_fontData.create(U32(file->getSize()));
 	ANKI_CHECK(file->read(&m_fontData[0], file->getSize()));
 
-	m_fonts.create(getMemoryPool(), U32(fontHeights.getSize()));
+	m_fonts.create(U32(fontHeights.getSize()));
 
 	// Bake font
 	ImFontConfig cfg;
@@ -60,7 +54,6 @@ Error Font::init(const CString& filename, ConstWeakArray<U32> fontHeights)
 	m_imFontAtlas->GetTexDataAsRGBA32(&img, &width, &height);
 	createTexture(img, width, height);
 
-	unsetImAllocator();
 	return Error::kNone;
 }
 

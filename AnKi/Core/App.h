@@ -17,7 +17,6 @@ class GrManager;
 class MainRenderer;
 class SceneGraph;
 class ScriptManager;
-class UiManager;
 class UiQueueElement;
 class RenderQueue;
 
@@ -91,7 +90,6 @@ private:
 
 	// Sybsystems
 	GrManager* m_gr = nullptr;
-	UiManager* m_ui = nullptr;
 	MainRenderer* m_renderer = nullptr;
 	SceneGraph* m_scene = nullptr;
 	ScriptManager* m_script = nullptr;

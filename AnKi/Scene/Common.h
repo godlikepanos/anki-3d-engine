@@ -46,7 +46,6 @@ class SceneGraphExternalSubsystems
 {
 public:
 	ScriptManager* m_scriptManager = nullptr;
-	UiManager* m_uiManager = nullptr;
 	GrManager* m_grManager = nullptr;
 	const Timestamp* m_globalTimestamp = nullptr;
 };

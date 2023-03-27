@@ -8,14 +8,9 @@
 
 namespace anki {
 
-HeapMemoryPool& UiObject::getMemoryPool() const
-{
-	return m_manager->getMemoryPool();
-}
-
 UiExternalSubsystems& UiObject::getExternalSubsystems() const
 {
-	return m_manager->m_subsystems;
+	return UiManager::getSingleton().getExternalSubsystems();
 }
 
 } // end namespace anki

@@ -37,10 +37,7 @@ enum class StatsUiDetail : U8
 class StatsUi : public UiImmediateModeBuilder
 {
 public:
-	StatsUi(UiManager* ui)
-		: UiImmediateModeBuilder(ui)
-	{
-	}
+	StatsUi() = default;
 
 	~StatsUi();
 
