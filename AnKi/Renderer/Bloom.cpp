@@ -44,10 +44,10 @@ Error Bloom::initExposure()
 	m_exposure.m_rtDescr.bake();
 
 	// init shaders
-	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource((ConfigSet::getSingleton().getRPreferCompute())
-																		   ? "ShaderBinaries/BloomCompute.ankiprogbin"
-																		   : "ShaderBinaries/BloomRaster.ankiprogbin",
-																	   m_exposure.m_prog));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource((ConfigSet::getSingleton().getRPreferCompute())
+																? "ShaderBinaries/BloomCompute.ankiprogbin"
+																: "ShaderBinaries/BloomRaster.ankiprogbin",
+															m_exposure.m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_exposure.m_prog);
 	if(ConfigSet::getSingleton().getRPreferCompute())
@@ -73,10 +73,10 @@ Error Bloom::initUpscale()
 	m_upscale.m_rtDescr.bake();
 
 	// init shaders
-	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
-		(ConfigSet::getSingleton().getRPreferCompute()) ? "ShaderBinaries/BloomUpscaleCompute.ankiprogbin"
-														: "ShaderBinaries/BloomUpscaleRaster.ankiprogbin",
-		m_upscale.m_prog));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource((ConfigSet::getSingleton().getRPreferCompute())
+																? "ShaderBinaries/BloomUpscaleCompute.ankiprogbin"
+																: "ShaderBinaries/BloomUpscaleRaster.ankiprogbin",
+															m_upscale.m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_upscale.m_prog);
 	variantInitInfo.addConstant("kInputTextureSize", UVec2(m_exposure.m_width, m_exposure.m_height));
@@ -90,8 +90,8 @@ Error Bloom::initUpscale()
 	m_upscale.m_grProg = variant->getProgram();
 
 	// Textures
-	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource("EngineAssets/LensDirt.ankitex",
-																	   m_upscale.m_lensDirtImage));
+	ANKI_CHECK(
+		ResourceManager::getSingleton().loadResource("EngineAssets/LensDirt.ankitex", m_upscale.m_lensDirtImage));
 
 	return Error::kNone;
 }

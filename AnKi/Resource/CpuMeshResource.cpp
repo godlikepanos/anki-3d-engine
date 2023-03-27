@@ -10,30 +10,12 @@
 
 namespace anki {
 
-CpuMeshResource::CpuMeshResource(ResourceManager* manager)
-	: ResourceObject(manager)
-{
-}
-
-CpuMeshResource::~CpuMeshResource()
-{
-	m_indices.destroy(getMemoryPool());
-	m_positions.destroy(getMemoryPool());
-}
-
 Error CpuMeshResource::load(const ResourceFilename& filename, [[maybe_unused]] Bool async)
 {
-	MeshBinaryLoader loader(getExternalSubsystems().m_resourceFilesystem, &getTempMemoryPool());
+	MeshBinaryLoader loader(&ResourceMemoryPool::getSingleton());
 
 	ANKI_CHECK(loader.load(filename));
-
-	DynamicArrayRaii<Vec3> tempPositions(&getMemoryPool());
-	DynamicArrayRaii<U32> tempIndices(&getMemoryPool());
-
-	ANKI_CHECK(loader.storeIndicesAndPosition(0, tempIndices, tempPositions));
-
-	m_indices = std::move(tempIndices);
-	m_positions = std::move(tempPositions);
+	ANKI_CHECK(loader.storeIndicesAndPosition(0, m_indices, m_positions));
 
 	// Create the collision shape
 	const Bool convex = !!(loader.getHeader().m_flags & MeshBinaryFlag::kConvex);

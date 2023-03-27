@@ -221,13 +221,14 @@ extern void deleteTesterSingleton();
 /// Check error code.
 #define ANKI_TEST_EXPECT_ERR(x_, y_) ANKI_TEST_EXPECT_EQ_IMPL(__FILE__, __LINE__, __func__, x_, y_)
 
+// TODO glob: Cleanup all these
 void initConfig(ConfigSet& cfg);
 
 NativeWindow* createWindow(ConfigSet& cfg);
 
 GrManager* createGrManager(NativeWindow* win);
 
-ResourceManager* createResourceManager(GrManager* gr, ResourceFilesystem*& resourceFs);
+ResourceManager* createResourceManager(GrManager* gr);
 
 /// Stolen from https://en.cppreference.com/w/cpp/algorithm/random_shuffle because std::random_suffle got deprecated
 template<class TRandomIt>

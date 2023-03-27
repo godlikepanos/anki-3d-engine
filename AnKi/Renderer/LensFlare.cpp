@@ -51,8 +51,7 @@ Error LensFlare::initSprite()
 	m_maxSprites = U16(m_maxSpritesPerFlare * m_maxFlares);
 
 	// Load prog
-	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource("ShaderBinaries/LensFlareSprite.ankiprogbin",
-																	   m_realProg));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/LensFlareSprite.ankiprogbin", m_realProg));
 	const ShaderProgramResourceVariant* variant;
 	m_realProg->getOrCreateVariant(variant);
 	m_realGrProg = variant->getProgram();
@@ -68,8 +67,8 @@ Error LensFlare::initOcclusion()
 												 BufferUsageBit::kIndirectDraw | BufferUsageBit::kStorageComputeWrite,
 												 BufferMapAccessBit::kNone, "LensFlares"));
 
-	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
-		"ShaderBinaries/LensFlareUpdateIndirectInfo.ankiprogbin", m_updateIndirectBuffProg));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/LensFlareUpdateIndirectInfo.ankiprogbin",
+															m_updateIndirectBuffProg));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_updateIndirectBuffProg);
 	variantInitInfo.addConstant(

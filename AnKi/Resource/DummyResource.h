@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Resource/ResourceObject.h>
+#include <AnKi/Resource/ResourceManager.h>
 
 namespace anki {
 
@@ -16,16 +17,13 @@ namespace anki {
 class DummyResource : public ResourceObject
 {
 public:
-	DummyResource(ResourceManager* manager)
-		: ResourceObject(manager)
-	{
-	}
+	DummyResource() = default;
 
 	~DummyResource()
 	{
 		if(m_memory)
 		{
-			getMemoryPool().free(m_memory);
+			ResourceMemoryPool::getSingleton().free(m_memory);
 		}
 	}
 
@@ -34,10 +32,10 @@ public:
 		Error err = Error::kNone;
 		if(filename.find("error") == CString::kNpos)
 		{
-			m_memory = getMemoryPool().allocate(128, 1);
-			void* tempMem = getTempMemoryPool().allocate(128, 1);
+			m_memory = ResourceMemoryPool::getSingleton().allocate(128, 1);
+			void* tempMem = ResourceMemoryPool::getSingleton().allocate(128, 1);
 
-			getTempMemoryPool().free(tempMem);
+			ResourceMemoryPool::getSingleton().free(tempMem);
 		}
 		else
 		{

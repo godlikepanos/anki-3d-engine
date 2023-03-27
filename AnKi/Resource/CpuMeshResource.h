@@ -20,9 +20,9 @@ class CpuMeshResource : public ResourceObject
 {
 public:
 	/// Default constructor
-	CpuMeshResource(ResourceManager* manager);
+	CpuMeshResource() = default;
 
-	~CpuMeshResource();
+	~CpuMeshResource() = default;
 
 	/// Load from a mesh file
 	Error load(const ResourceFilename& filename, Bool async);
@@ -43,8 +43,8 @@ public:
 	}
 
 private:
-	DynamicArray<Vec3> m_positions;
-	DynamicArray<U32> m_indices;
+	ResourceDynamicArray<Vec3> m_positions;
+	ResourceDynamicArray<U32> m_indices;
 	PhysicsCollisionShapePtr m_physicsShape;
 };
 /// @}

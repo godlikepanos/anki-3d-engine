@@ -9,37 +9,16 @@
 
 namespace anki {
 
-ResourceObject::ResourceObject(ResourceManager* manager)
-	: m_manager(manager)
-	, m_refcount(0)
-{
-}
-
-ResourceObject::~ResourceObject()
-{
-	m_fname.destroy(getMemoryPool());
-}
-
-HeapMemoryPool& ResourceObject::getMemoryPool() const
-{
-	return m_manager->getMemoryPool();
-}
-
-StackMemoryPool& ResourceObject::getTempMemoryPool() const
-{
-	return m_manager->getTempMemoryPool();
-}
-
 Error ResourceObject::openFile(const CString& filename, ResourceFilePtr& file)
 {
-	return getExternalSubsystems().m_resourceFilesystem->openFile(filename, file);
+	return ResourceManager::getSingleton().getFilesystem().openFile(filename, file);
 }
 
-Error ResourceObject::openFileReadAllText(const CString& filename, StringRaii& text)
+Error ResourceObject::openFileReadAllText(const CString& filename, ResourceString& text)
 {
 	// Load file
 	ResourceFilePtr file;
-	ANKI_CHECK(getExternalSubsystems().m_resourceFilesystem->openFile(filename, file));
+	ANKI_CHECK(ResourceManager::getSingleton().getFilesystem().openFile(filename, file));
 
 	// Read string
 	ANKI_CHECK(file->readAllText(text));
@@ -49,17 +28,12 @@ Error ResourceObject::openFileReadAllText(const CString& filename, StringRaii& t
 
 Error ResourceObject::openFileParseXml(const CString& filename, XmlDocument& xml)
 {
-	StringRaii txt(&xml.getMemoryPool());
+	ResourceString txt;
 	ANKI_CHECK(openFileReadAllText(filename, txt));
 
 	ANKI_CHECK(xml.parse(txt.toCString()));
 
 	return Error::kNone;
-}
-
-ResourceManagerExternalSubsystems& ResourceObject::getExternalSubsystems() const
-{
-	return m_manager->m_subsystems;
 }
 
 } // end namespace anki

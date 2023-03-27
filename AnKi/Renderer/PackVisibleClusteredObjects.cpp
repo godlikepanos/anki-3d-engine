@@ -23,8 +23,8 @@ PackVisibleClusteredObjects::~PackVisibleClusteredObjects()
 
 Error PackVisibleClusteredObjects::init()
 {
-	ANKI_CHECK(m_r->getExternalSubsystems().m_resourceManager->loadResource(
-		"ShaderBinaries/PackVisibleClusteredObjects.ankiprogbin", m_packProg));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/PackVisibleClusteredObjects.ankiprogbin",
+															m_packProg));
 
 	U32 maxWaveSize = m_r->getExternalSubsystems().m_grManager->getDeviceCapabilities().m_maxSubgroupSize;
 	if(maxWaveSize == 16 || maxWaveSize == 32)

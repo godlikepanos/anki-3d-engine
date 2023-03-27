@@ -68,8 +68,7 @@ ANKI_TEST(Ui, Ui)
 	NativeWindow* win = createWindow(cfg);
 	ANKI_TEST_EXPECT_NO_ERR(Input::allocateSingleton().init());
 	GrManager* gr = createGrManager(win);
-	ResourceFilesystem* fs;
-	ResourceManager* resource = createResourceManager(gr, fs);
+	createResourceManager(gr);
 	UiManager* ui = new UiManager();
 
 	RebarStagingGpuMemoryPool::allocateSingleton().init(gr);
@@ -79,8 +78,6 @@ ANKI_TEST(Ui, Ui)
 	uiInitInfo.m_allocCallback = allocAligned;
 	uiInitInfo.m_allocCallbackUserData = nullptr;
 	uiInitInfo.m_grManager = gr;
-	uiInitInfo.m_resourceFilesystem = fs;
-	uiInitInfo.m_resourceManager = resource;
 	ANKI_TEST_EXPECT_NO_ERR(ui->init(uiInitInfo));
 
 	{
@@ -158,8 +155,7 @@ ANKI_TEST(Ui, Ui)
 
 	delete ui;
 	RebarStagingGpuMemoryPool::freeSingleton();
-	delete resource;
-	delete fs;
+	ResourceManager::freeSingleton();
 	GrManager::deleteInstance(gr);
 	Input::freeSingleton();
 	NativeWindow::freeSingleton();

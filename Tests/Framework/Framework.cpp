@@ -277,21 +277,16 @@ GrManager* createGrManager(NativeWindow* win)
 	return gr;
 }
 
-ResourceManager* createResourceManager(GrManager* gr, ResourceFilesystem*& resourceFs)
+ResourceManager* createResourceManager(GrManager* gr)
 {
-	resourceFs = new ResourceFilesystem();
-	ANKI_TEST_EXPECT_NO_ERR(resourceFs->init(allocAligned, nullptr));
-
 	ResourceManagerInitInfo rinit;
 	rinit.m_grManager = gr;
-	rinit.m_resourceFilesystem = resourceFs;
 	rinit.m_allocCallback = allocAligned;
 	rinit.m_allocCallbackData = nullptr;
-	ResourceManager* resources = new ResourceManager();
 
-	ANKI_TEST_EXPECT_NO_ERR(resources->init(rinit));
+	ANKI_TEST_EXPECT_NO_ERR(ResourceManager::allocateSingleton().init(rinit));
 
-	return resources;
+	return &ResourceManager::getSingleton();
 }
 
 } // end namespace anki

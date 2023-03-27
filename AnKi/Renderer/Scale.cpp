@@ -85,7 +85,7 @@ Error Scale::init()
 		const CString shaderFname =
 			(preferCompute) ? "ShaderBinaries/BlitCompute.ankiprogbin" : "ShaderBinaries/BlitRaster.ankiprogbin";
 
-		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(shaderFname, m_scaleProg));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource(shaderFname, m_scaleProg));
 
 		const ShaderProgramResourceVariant* variant;
 		m_scaleProg->getOrCreateVariant(variant);
@@ -96,7 +96,7 @@ Error Scale::init()
 		const CString shaderFname =
 			(preferCompute) ? "ShaderBinaries/FsrCompute.ankiprogbin" : "ShaderBinaries/FsrRaster.ankiprogbin";
 
-		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(shaderFname, m_scaleProg));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource(shaderFname, m_scaleProg));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_scaleProg);
 		variantInitInfo.addMutation("SHARPEN", 0);
@@ -119,7 +119,7 @@ Error Scale::init()
 	// Sharpen programs
 	if(m_sharpenMethod == SharpenMethod::kRcas)
 	{
-		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource(
 			(preferCompute) ? "ShaderBinaries/FsrCompute.ankiprogbin" : "ShaderBinaries/FsrRaster.ankiprogbin",
 			m_sharpenProg));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_sharpenProg);
@@ -133,7 +133,7 @@ Error Scale::init()
 	// Tonemapping programs
 	if(m_neeedsTonemapping)
 	{
-		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource(
 			(preferCompute) ? "ShaderBinaries/TonemapCompute.ankiprogbin" : "ShaderBinaries/TonemapRaster.ankiprogbin",
 			m_tonemapProg));
 		const ShaderProgramResourceVariant* variant;

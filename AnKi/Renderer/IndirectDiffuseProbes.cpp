@@ -161,8 +161,8 @@ Error IndirectDiffuseProbes::initLightShading()
 
 Error IndirectDiffuseProbes::initIrradiance()
 {
-	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource("ShaderBinaries/IrradianceDice.ankiprogbin",
-																	   m_irradiance.m_prog));
+	ANKI_CHECK(
+		ResourceManager::getSingleton().loadResource("ShaderBinaries/IrradianceDice.ankiprogbin", m_irradiance.m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_irradiance.m_prog);
 	variantInitInfo.addMutation("WORKGROUP_SIZE_XY", m_tileSize);

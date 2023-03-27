@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Resource/TransferGpuAllocator.h>
+#include <AnKi/Resource/ResourceFilesystem.h>
 #include <AnKi/Util/List.h>
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/String.h>
@@ -37,7 +38,7 @@ protected:
 	~TypeResourceManager()
 	{
 		ANKI_ASSERT(m_ptrs.isEmpty() && "Forgot to delete some resources");
-		m_ptrs.destroy(*m_pool);
+		m_ptrs.destroy();
 	}
 
 	Type* findLoadedResource(const CString& filename)
@@ -49,26 +50,19 @@ protected:
 	void registerResource(Type* ptr)
 	{
 		ANKI_ASSERT(find(ptr->getFilename()) == m_ptrs.getEnd());
-		m_ptrs.pushBack(*m_pool, ptr);
+		m_ptrs.pushBack(ptr);
 	}
 
 	void unregisterResource(Type* ptr)
 	{
 		auto it = find(ptr->getFilename());
 		ANKI_ASSERT(it != m_ptrs.end());
-		m_ptrs.erase(*m_pool, it);
-	}
-
-	void init(HeapMemoryPool* pool)
-	{
-		ANKI_ASSERT(pool);
-		m_pool = pool;
+		m_ptrs.erase(it);
 	}
 
 private:
-	using Container = List<Type*>;
+	using Container = ResourceList<Type*>;
 
-	HeapMemoryPool* m_pool = nullptr;
 	Container m_ptrs;
 
 	typename Container::Iterator find(const CString& filename)
@@ -95,7 +89,7 @@ public:
 };
 
 /// Resource manager. It holds a few global variables
-class ResourceManager:
+class ResourceManager : public MakeSingleton<ResourceManager>,
 
 #define ANKI_INSTANTIATE_RESOURCE(rsrc_, ptr_) \
 public \
@@ -112,11 +106,10 @@ public \
 	friend class ResourcePtrDeleter;
 	friend class ResourceObject;
 
+	template<typename>
+	friend class MakeSingleton;
+
 public:
-	ResourceManager();
-
-	~ResourceManager();
-
 	Error init(ResourceManagerInitInfo& init);
 
 	/// Load a resource.
@@ -124,16 +117,6 @@ public:
 	Error loadResource(const CString& filename, ResourcePtr<T>& out, Bool async = true);
 
 	// Internals:
-
-	ANKI_INTERNAL HeapMemoryPool& getMemoryPool() const
-	{
-		return m_pool;
-	}
-
-	ANKI_INTERNAL StackMemoryPool& getTempMemoryPool() const
-	{
-		return m_tmpPool;
-	}
 
 	ANKI_INTERNAL TransferGpuAllocator& getTransferGpuAllocator()
 	{
@@ -173,20 +156,34 @@ public:
 	ANKI_INTERNAL U64 getAsyncTaskCompletedCount() const;
 
 	/// Return the container of program libraries.
-	const ShaderProgramResourceSystem& getShaderProgramResourceSystem() const
+	ANKI_INTERNAL const ShaderProgramResourceSystem& getShaderProgramResourceSystem() const
 	{
 		return *m_shaderProgramSystem;
 	}
 
+	ANKI_INTERNAL ResourceFilesystem& getFilesystem()
+	{
+		return *m_fs;
+	}
+
+	ResourceManagerExternalSubsystems& getExternalSubsystems()
+	{
+		return m_subsystems;
+	}
+
 private:
 	ResourceManagerExternalSubsystems m_subsystems;
-	mutable HeapMemoryPool m_pool; ///< Mutable because it's thread-safe and is may be called by const methods.
-	mutable StackMemoryPool m_tmpPool; ///< Same as above.
+	ResourceFilesystem* m_fs = nullptr;
 	AsyncLoader* m_asyncLoader = nullptr; ///< Async loading thread
 	ShaderProgramResourceSystem* m_shaderProgramSystem = nullptr;
+	TransferGpuAllocator* m_transferGpuAlloc = nullptr;
+
 	U64 m_uuid = 0;
 	U64 m_loadRequestCount = 0;
-	TransferGpuAllocator* m_transferGpuAlloc = nullptr;
+
+	ResourceManager();
+
+	~ResourceManager();
 };
 /// @}
 

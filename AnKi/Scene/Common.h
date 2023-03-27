@@ -45,7 +45,6 @@ class PhysicsWorld;
 class SceneGraphExternalSubsystems
 {
 public:
-	ResourceManager* m_resourceManager = nullptr;
 	ScriptManager* m_scriptManager = nullptr;
 	UiManager* m_uiManager = nullptr;
 	GrManager* m_grManager = nullptr;

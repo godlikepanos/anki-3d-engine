@@ -499,7 +499,7 @@ public:
 	using MemoryPool = TMemPool;
 
 	/// Construct using a mem pool.
-	ListRaii(const MemoryPool& pool)
+	ListRaii(const MemoryPool& pool = MemoryPool())
 		: Base()
 		, m_pool(pool)
 	{

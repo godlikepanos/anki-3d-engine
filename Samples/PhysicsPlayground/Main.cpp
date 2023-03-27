@@ -109,7 +109,7 @@ public:
 Error MyApp::sampleExtraInit()
 {
 	ScriptResourcePtr script;
-	ANKI_CHECK(getResourceManager().loadResource("Assets/Scene.lua", script));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("Assets/Scene.lua", script));
 	ANKI_CHECK(getScriptManager().evalString(script->getSource()));
 
 	// Create the player

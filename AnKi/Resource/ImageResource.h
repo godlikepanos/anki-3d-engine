@@ -20,10 +20,7 @@ namespace anki {
 class ImageResource : public ResourceObject
 {
 public:
-	ImageResource(ResourceManager* manager)
-		: ResourceObject(manager)
-	{
-	}
+	ImageResource() = default;
 
 	~ImageResource();
 

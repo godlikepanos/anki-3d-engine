@@ -16,7 +16,7 @@ MeshBinaryLoader::~MeshBinaryLoader()
 Error MeshBinaryLoader::load(const ResourceFilename& filename)
 {
 	// Load header + submeshes
-	ANKI_CHECK(m_fs->openFile(filename, m_file));
+	ANKI_CHECK(ResourceManager::getSingleton().getFilesystem().openFile(filename, m_file));
 	ANKI_CHECK(m_file->read(&m_header, sizeof(m_header)));
 	ANKI_CHECK(checkHeader());
 	ANKI_CHECK(loadSubmeshes());
@@ -288,8 +288,8 @@ Error MeshBinaryLoader::storeVertexBuffer(U32 lod, U32 bufferIdx, void* ptr, Ptr
 	return Error::kNone;
 }
 
-Error MeshBinaryLoader::storeIndicesAndPosition(U32 lod, DynamicArrayRaii<U32>& indices,
-												DynamicArrayRaii<Vec3>& positions)
+Error MeshBinaryLoader::storeIndicesAndPosition(U32 lod, ResourceDynamicArray<U32>& indices,
+												ResourceDynamicArray<Vec3>& positions)
 {
 	ANKI_ASSERT(isLoaded());
 	ANKI_ASSERT(lod < m_header.m_lodCount);

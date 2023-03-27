@@ -13,13 +13,11 @@ ANKI_TEST(Resource, ResourceManager)
 	// Create
 	ConfigSet::allocateSingleton(allocAligned, nullptr);
 
-	HeapAllocator<U8> alloc(allocAligned, nullptr);
-
 	ResourceManagerInitInfo rinit;
 	rinit.m_grManager = nullptr;
 	rinit.m_allocCallback = allocAligned;
 	rinit.m_allocCallbackData = nullptr;
-	ResourceManager* resources = alloc.newInstance<ResourceManager>();
+	ResourceManager* resources = &ResourceManager::allocateSingleton();
 	ANKI_TEST_EXPECT_NO_ERR(resources->init(rinit));
 
 	// Very simple
@@ -79,5 +77,5 @@ ANKI_TEST(Resource, ResourceManager)
 	}
 
 	// Delete
-	alloc.deleteInstance(resources);
+	ResourceManager::freeSingleton();
 }

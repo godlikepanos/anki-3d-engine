@@ -37,7 +37,7 @@ Error ScriptEvent::init(Second startTime, Second duration, CString script)
 	if(!extension.isEmpty() && extension == "lua")
 	{
 		// It's a file
-		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(script, m_scriptRsrc));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource(script, m_scriptRsrc));
 
 		// Exec the script
 		ANKI_CHECK(m_env.evalString(m_scriptRsrc->getSource()));

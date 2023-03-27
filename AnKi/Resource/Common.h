@@ -5,8 +5,6 @@
 
 #pragma once
 
-#include <AnKi/Util/DynamicArray.h>
-#include <AnKi/Util/String.h>
 #include <AnKi/Util/Ptr.h>
 #include <AnKi/Gr/Common.h>
 #include <AnKi/Shaders/Include/ModelTypes.h>
@@ -31,6 +29,22 @@ class UnifiedGeometryMemoryPool;
 #define ANKI_RESOURCE_LOGW(...) ANKI_LOG("RSRC", kWarning, __VA_ARGS__)
 #define ANKI_RESOURCE_LOGF(...) ANKI_LOG("RSRC", kFatal, __VA_ARGS__)
 #define ANKI_RESOURCE_LOGV(...) ANKI_LOG("RSRC", kVerbose, __VA_ARGS__)
+
+class ResourceMemoryPool : public HeapMemoryPool, public MakeSingleton<ResourceMemoryPool>
+{
+	template<typename>
+	friend class MakeSingleton;
+
+private:
+	ResourceMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData)
+		: HeapMemoryPool(allocCb, allocCbUserData, "ResourceMemPool")
+	{
+	}
+
+	~ResourceMemoryPool() = default;
+};
+
+ANKI_DEFINE_SUBMODULE_UTIL_CONTAINERS(Resource, ResourceMemoryPool)
 
 /// Deleter for ResourcePtr.
 template<typename T>
@@ -62,7 +76,6 @@ class ResourceManagerExternalSubsystems
 {
 public:
 	GrManager* m_grManager = nullptr;
-	ResourceFilesystem* m_resourceFilesystem = nullptr;
 };
 /// @}
 

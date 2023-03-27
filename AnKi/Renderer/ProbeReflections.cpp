@@ -47,7 +47,7 @@ Error ProbeReflections::initInternal()
 	ANKI_CHECK(initShadowMapping());
 
 	// Load split sum integration LUT
-	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource("EngineAssets/IblDfg.png", m_integrationLut));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/IblDfg.png", m_integrationLut));
 
 	SamplerInitInfo sinit;
 	sinit.m_minMagFilter = SamplingFilter::kLinear;
@@ -133,8 +133,8 @@ Error ProbeReflections::initIrradiance()
 
 	// Create prog
 	{
-		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource("ShaderBinaries/IrradianceDice.ankiprogbin",
-																		   m_irradiance.m_prog));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/IrradianceDice.ankiprogbin",
+																m_irradiance.m_prog));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_irradiance.m_prog);
 
@@ -162,8 +162,8 @@ Error ProbeReflections::initIrradiance()
 Error ProbeReflections::initIrradianceToRefl()
 {
 	// Create program
-	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
-		"ShaderBinaries/ApplyIrradianceToReflection.ankiprogbin", m_irradianceToRefl.m_prog));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/ApplyIrradianceToReflection.ankiprogbin",
+															m_irradianceToRefl.m_prog));
 
 	const ShaderProgramResourceVariant* variant;
 	m_irradianceToRefl.m_prog->getOrCreateVariant(ShaderProgramResourceVariantInitInfo(m_irradianceToRefl.m_prog),

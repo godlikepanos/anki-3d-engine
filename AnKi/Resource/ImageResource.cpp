@@ -15,18 +15,12 @@ namespace anki {
 class ImageResource::LoadingContext
 {
 public:
-	ImageLoader m_loader;
+	ImageLoader m_loader{&ResourceMemoryPool::getSingleton()};
 	U32 m_faces = 0;
 	U32 m_layerCount = 0;
 	GrManager* m_gr ANKI_DEBUG_CODE(= nullptr);
-	TransferGpuAllocator* m_trfAlloc ANKI_DEBUG_CODE(= nullptr);
 	TextureType m_texType;
 	TexturePtr m_tex;
-
-	LoadingContext(BaseMemoryPool* pool)
-		: m_loader(pool)
-	{
-	}
 };
 
 /// Image upload async task.
@@ -34,11 +28,6 @@ class ImageResource::TexUploadTask : public AsyncLoaderTask
 {
 public:
 	ImageResource::LoadingContext m_ctx;
-
-	TexUploadTask(BaseMemoryPool* pool)
-		: m_ctx(pool)
-	{
-	}
 
 	Error operator()([[maybe_unused]] AsyncLoaderTaskContext& ctx) final
 	{
@@ -54,11 +43,11 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 {
 	TexUploadTask* task;
 	LoadingContext* ctx;
-	LoadingContext localCtx(&getTempMemoryPool());
+	LoadingContext localCtx;
 
 	if(async)
 	{
-		task = getManager().getAsyncLoader().newTask<TexUploadTask>(&getManager().getAsyncLoader().getMemoryPool());
+		task = ResourceManager::getSingleton().getAsyncLoader().newTask<TexUploadTask>();
 		ctx = &task->m_ctx;
 	}
 	else
@@ -68,7 +57,7 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 	}
 	ImageLoader& loader = ctx->m_loader;
 
-	StringRaii filenameExt(&getTempMemoryPool());
+	StringRaii filenameExt(&ResourceMemoryPool::getSingleton());
 	getFilepathFilename(filename, filenameExt);
 
 	TextureInitInfo init(filenameExt);
@@ -204,13 +193,14 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 	init.m_mipmapCount = U8(loader.getMipmapCount());
 
 	// Create the texture
-	m_tex = getExternalSubsystems().m_grManager->newTexture(init);
+	m_tex = ResourceManager::getSingleton().getExternalSubsystems().m_grManager->newTexture(init);
 
 	// Transition it. TODO remove that eventually
 	{
 		CommandBufferInitInfo cmdbinit;
 		cmdbinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
-		CommandBufferPtr cmdb = getExternalSubsystems().m_grManager->newCommandBuffer(cmdbinit);
+		CommandBufferPtr cmdb =
+			ResourceManager::getSingleton().getExternalSubsystems().m_grManager->newCommandBuffer(cmdbinit);
 
 		TextureSubresourceInfo subresource;
 		subresource.m_faceCount = textureTypeIsCube(init.m_type) ? 6 : 1;
@@ -229,15 +219,14 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 	// Set the context
 	ctx->m_faces = faces;
 	ctx->m_layerCount = init.m_layerCount;
-	ctx->m_gr = getExternalSubsystems().m_grManager;
-	ctx->m_trfAlloc = &getManager().getTransferGpuAllocator();
+	ctx->m_gr = ResourceManager::getSingleton().getExternalSubsystems().m_grManager;
 	ctx->m_texType = init.m_type;
 	ctx->m_tex = m_tex;
 
 	// Upload the data
 	if(async)
 	{
-		getManager().getAsyncLoader().submitTask(task);
+		ResourceManager::getSingleton().getAsyncLoader().submitTask(task);
 	}
 	else
 	{
@@ -249,7 +238,7 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 
 	// Create the texture view
 	TextureViewInitInfo viewInit(m_tex, "Rsrc");
-	m_texView = getExternalSubsystems().m_grManager->newTextureView(viewInit);
+	m_texView = ResourceManager::getSingleton().getExternalSubsystems().m_grManager->newTextureView(viewInit);
 
 	return Error::kNone;
 }
@@ -324,7 +313,7 @@ Error ImageResource::load(LoadingContext& ctx)
 
 			ANKI_ASSERT(allocationSize >= surfOrVolSize);
 			TransferGpuAllocatorHandle& handle = handles[handleCount++];
-			ANKI_CHECK(ctx.m_trfAlloc->allocate(allocationSize, handle));
+			ANKI_CHECK(ResourceManager::getSingleton().getTransferGpuAllocator().allocate(allocationSize, handle));
 			void* data = handle.getMappedMemory();
 			ANKI_ASSERT(data);
 
@@ -374,7 +363,7 @@ Error ImageResource::load(LoadingContext& ctx)
 
 		for(U i = 0; i < handleCount; ++i)
 		{
-			ctx.m_trfAlloc->release(handles[i], fence);
+			ResourceManager::getSingleton().getTransferGpuAllocator().release(handles[i], fence);
 		}
 		cmdb.reset(nullptr);
 	}

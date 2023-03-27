@@ -44,32 +44,23 @@ private:
 class AnimationChannel
 {
 public:
-	String m_name;
+	ResourceString m_name;
 
 	I32 m_boneIndex = -1; ///< For skeletal animations
 
-	DynamicArray<AnimationKeyframe<Vec3>> m_positions;
-	DynamicArray<AnimationKeyframe<Quat>> m_rotations;
-	DynamicArray<AnimationKeyframe<F32>> m_scales;
-	DynamicArray<AnimationKeyframe<F32>> m_cameraFovs;
-
-	void destroy(HeapMemoryPool& pool)
-	{
-		m_name.destroy(pool);
-		m_positions.destroy(pool);
-		m_rotations.destroy(pool);
-		m_scales.destroy(pool);
-		m_cameraFovs.destroy(pool);
-	}
+	ResourceDynamicArray<AnimationKeyframe<Vec3>> m_positions;
+	ResourceDynamicArray<AnimationKeyframe<Quat>> m_rotations;
+	ResourceDynamicArray<AnimationKeyframe<F32>> m_scales;
+	ResourceDynamicArray<AnimationKeyframe<F32>> m_cameraFovs;
 };
 
 /// Animation consists of keyframe data.
 class AnimationResource : public ResourceObject
 {
 public:
-	AnimationResource(ResourceManager* manager);
+	AnimationResource() = default;
 
-	~AnimationResource();
+	~AnimationResource() = default;
 
 	Error load(const ResourceFilename& filename, Bool async);
 
@@ -95,7 +86,7 @@ public:
 	void interpolate(U32 channelIndex, Second time, Vec3& position, Quat& rotation, F32& scale) const;
 
 private:
-	DynamicArray<AnimationChannel> m_channels;
+	ResourceDynamicArray<AnimationChannel> m_channels;
 	Second m_duration;
 	Second m_startTime;
 };

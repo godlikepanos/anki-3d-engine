@@ -5,6 +5,7 @@
 
 #include <AnKi/Resource/ShaderProgramResourceSystem.h>
 #include <AnKi/Resource/ResourceFilesystem.h>
+#include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/ShaderCompiler/ShaderProgramCompiler.h>
@@ -16,22 +17,16 @@
 
 namespace anki {
 
-U64 ShaderProgramRaytracingLibrary::generateShaderGroupGroupHash(CString resourceFilename, U64 mutationHash,
-																 HeapMemoryPool& pool)
+U64 ShaderProgramRaytracingLibrary::generateShaderGroupGroupHash(CString resourceFilename, U64 mutationHash)
 {
 	ANKI_ASSERT(resourceFilename.getLength() > 0);
-	StringRaii basename(&pool);
+	StringRaii basename(&ResourceMemoryPool::getSingleton());
 	getFilepathFilename(resourceFilename, basename);
 	const U64 hash = appendHash(basename.cstr(), basename.getLength(), mutationHash);
 	return hash;
 }
 
-ShaderProgramResourceSystem::~ShaderProgramResourceSystem()
-{
-	m_rtLibraries.destroy(*m_pool);
-}
-
-Error ShaderProgramResourceSystem::init(ResourceFilesystem& fs, GrManager& gr)
+Error ShaderProgramResourceSystem::init(GrManager& gr)
 {
 	if(!gr.getDeviceCapabilities().m_rayTracingEnabled)
 	{
@@ -39,7 +34,7 @@ Error ShaderProgramResourceSystem::init(ResourceFilesystem& fs, GrManager& gr)
 	}
 
 	// Create RT pipeline libraries
-	const Error err = createRayTracingPrograms(fs, gr, *m_pool, m_rtLibraries);
+	const Error err = createRayTracingPrograms(gr, m_rtLibraries);
 	if(err)
 	{
 		ANKI_RESOURCE_LOGE("Failed to create ray tracing programs");
@@ -48,8 +43,8 @@ Error ShaderProgramResourceSystem::init(ResourceFilesystem& fs, GrManager& gr)
 	return err;
 }
 
-Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceFilesystem& fs, GrManager& gr, HeapMemoryPool& pool,
-															DynamicArray<ShaderProgramRaytracingLibrary>& outLibs)
+Error ShaderProgramResourceSystem::createRayTracingPrograms(
+	GrManager& gr, ResourceDynamicArray<ShaderProgramRaytracingLibrary>& outLibs)
 {
 	ANKI_RESOURCE_LOGI("Creating ray tracing programs");
 	U32 rtProgramCount = 0;
@@ -74,11 +69,10 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceFilesystem& 
 	class Lib
 	{
 	public:
-		HeapMemoryPool* m_pool = nullptr;
 		GrManager* m_gr;
-		StringRaii m_name = {m_pool};
-		DynamicArrayRaii<Shader> m_shaders = {m_pool};
-		DynamicArrayRaii<ShaderGroup> m_shaderGroups = {m_pool};
+		ResourceString m_name;
+		ResourceDynamicArray<Shader> m_shaders;
+		ResourceDynamicArray<ShaderGroup> m_shaderGroups;
 		ShaderTypeBit m_presentStages = ShaderTypeBit::kNone;
 		U32 m_rayTypeCount = 0;
 		BitSet<64> m_rayTypeMask = {false};
@@ -86,11 +80,9 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceFilesystem& 
 		U32 m_missShaderGroupCount = 0;
 		U32 m_hitShaderGroupCount = 0;
 
-		Lib(HeapMemoryPool* pool, GrManager* gr)
-			: m_pool(pool)
-			, m_gr(gr)
+		Lib(GrManager* gr)
+			: m_gr(gr)
 		{
-			ANKI_ASSERT(pool);
 		}
 
 		U32 addShader(const ShaderProgramBinaryCodeBlock& codeBlock, CString progName, ShaderType shaderType)
@@ -123,8 +115,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceFilesystem& 
 
 		void addGroup(CString filename, U64 mutationHash, U32 rayGen, U32 miss, U32 chit, U32 ahit)
 		{
-			const U64 groupHash =
-				ShaderProgramRaytracingLibrary::generateShaderGroupGroupHash(filename, mutationHash, *m_pool);
+			const U64 groupHash = ShaderProgramRaytracingLibrary::generateShaderGroupGroupHash(filename, mutationHash);
 #if ANKI_ENABLE_ASSERTIONS
 			for(const ShaderGroup& group : m_shaderGroups)
 			{
@@ -156,11 +147,11 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceFilesystem& 
 		}
 	};
 
-	DynamicArrayRaii<Lib> libs(&pool);
+	ResourceDynamicArray<Lib> libs;
 
-	ANKI_CHECK(fs.iterateAllFilenames([&](CString filename) -> Error {
+	ANKI_CHECK(ResourceManager::getSingleton().getFilesystem().iterateAllFilenames([&](CString filename) -> Error {
 		// Check file extension
-		StringRaii extension(&pool);
+		StringRaii extension(&ResourceMemoryPool::getSingleton());
 		getFilepathExtension(filename, extension);
 		const Char binExtension[] = "ankiprogbin";
 		if(extension.getLength() != sizeof(binExtension) - 1 || extension != binExtension)
@@ -176,8 +167,8 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceFilesystem& 
 
 		// Get the binary
 		ResourceFilePtr file;
-		ANKI_CHECK(fs.openFile(filename, file));
-		ShaderProgramBinaryWrapper binaryw(&pool);
+		ANKI_CHECK(ResourceManager::getSingleton().getFilesystem().openFile(filename, file));
+		ShaderProgramBinaryWrapper binaryw(&ResourceMemoryPool::getSingleton());
 		ANKI_CHECK(binaryw.deserializeFromAnyFile(*file));
 		const ShaderProgramBinary& binary = binaryw.getBinary();
 
@@ -194,7 +185,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceFilesystem& 
 		}
 
 		// Create the program name
-		StringRaii progName(&pool);
+		StringRaii progName(&ResourceMemoryPool::getSingleton());
 		getFilepathFilename(filename, progName);
 
 		// Find or create the lib
@@ -211,7 +202,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceFilesystem& 
 
 			if(lib == nullptr)
 			{
-				libs.emplaceBack(&pool, &gr);
+				libs.emplaceBack(&gr);
 				lib = &libs.getBack();
 				lib->m_name.create(CString(&binary.m_libraryName[0]));
 			}
@@ -371,14 +362,12 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceFilesystem& 
 	// See the ShaderProgram class for info.
 	if(libs.getSize() != 0)
 	{
-		outLibs.create(pool, libs.getSize());
+		outLibs.create(libs.getSize());
 
 		for(U32 libIdx = 0; libIdx < libs.getSize(); ++libIdx)
 		{
 			ShaderProgramRaytracingLibrary& outLib = outLibs[libIdx];
 			const Lib& inLib = libs[libIdx];
-
-			outLib.m_pool = &pool;
 
 			if(inLib.m_presentStages
 			   != (ShaderTypeBit::kRayGen | ShaderTypeBit::kMiss | ShaderTypeBit::kClosestHit | ShaderTypeBit::kAnyHit))
@@ -393,12 +382,12 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceFilesystem& 
 				return Error::kUserData;
 			}
 
-			outLib.m_libraryName.create(pool, inLib.m_name);
+			outLib.m_libraryName.create(inLib.m_name);
 			outLib.m_rayTypeCount = inLib.m_rayTypeCount;
 
-			DynamicArrayRaii<RayTracingHitGroup> initInfoHitGroups(&pool);
-			DynamicArrayRaii<ShaderPtr> missShaders(&pool);
-			DynamicArrayRaii<ShaderPtr> rayGenShaders(&pool);
+			ResourceDynamicArray<RayTracingHitGroup> initInfoHitGroups;
+			ResourceDynamicArray<ShaderPtr> missShaders;
+			ResourceDynamicArray<ShaderPtr> rayGenShaders;
 
 			// Add the hitgroups to the init info
 			for(U32 shaderGroupIdx = 0; shaderGroupIdx < inLib.m_shaderGroups.getSize(); ++shaderGroupIdx)
@@ -426,7 +415,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceFilesystem& 
 					// The hit shaders are after ray gen and miss shaders
 					const U32 idx =
 						inLib.m_rayGenShaderGroupCount + inLib.m_missShaderGroupCount + initInfoHitGroups.getSize() - 1;
-					outLib.m_resourceHashToShaderGroupHandleIndex.emplace(pool, inShaderGroup.m_hitGroupHash, idx);
+					outLib.m_resourceHashToShaderGroupHandleIndex.emplace(inShaderGroup.m_hitGroupHash, idx);
 				}
 				else if(inShaderGroup.m_miss < kMaxU32)
 				{
@@ -439,7 +428,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceFilesystem& 
 
 					// The miss shaders are after ray gen
 					const U32 idx = inLib.m_rayGenShaderGroupCount + missShaders.getSize() - 1;
-					outLib.m_resourceHashToShaderGroupHandleIndex.emplace(pool, inShaderGroup.m_hitGroupHash, idx);
+					outLib.m_resourceHashToShaderGroupHandleIndex.emplace(inShaderGroup.m_hitGroupHash, idx);
 				}
 				else
 				{
@@ -452,7 +441,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceFilesystem& 
 
 					// Ray gen shaders are first
 					const U32 idx = rayGenShaders.getSize() - 1;
-					outLib.m_resourceHashToShaderGroupHandleIndex.emplace(pool, inShaderGroup.m_hitGroupHash, idx);
+					outLib.m_resourceHashToShaderGroupHandleIndex.emplace(inShaderGroup.m_hitGroupHash, idx);
 				}
 			} // end for all groups
 

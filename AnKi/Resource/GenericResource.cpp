@@ -7,23 +7,13 @@
 
 namespace anki {
 
-GenericResource::GenericResource(ResourceManager* manager)
-	: ResourceObject(manager)
-{
-}
-
-GenericResource::~GenericResource()
-{
-	m_data.destroy(getMemoryPool());
-}
-
 Error GenericResource::load(const ResourceFilename& filename, [[maybe_unused]] Bool async)
 {
 	ResourceFilePtr file;
 	ANKI_CHECK(openFile(filename, file));
 
 	const U32 size = U32(file->getSize());
-	m_data.create(getMemoryPool(), size);
+	m_data.create(size);
 	ANKI_CHECK(file->read(&m_data[0], size));
 
 	return Error::kNone;

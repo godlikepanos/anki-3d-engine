@@ -22,29 +22,18 @@ ShaderProgramResourceVariant::~ShaderProgramResourceVariant()
 {
 }
 
-ShaderProgramResource::ShaderProgramResource(ResourceManager* manager)
-	: ResourceObject(manager)
-	, m_binary(&getMemoryPool())
+ShaderProgramResource::ShaderProgramResource()
+	: m_binary(&ResourceMemoryPool::getSingleton())
 {
 }
 
 ShaderProgramResource::~ShaderProgramResource()
 {
-	m_mutators.destroy(getMemoryPool());
-
-	for(ShaderProgramResourceConstant& c : m_consts)
-	{
-		c.m_name.destroy(getMemoryPool());
-	}
-	m_consts.destroy(getMemoryPool());
-	m_constBinaryMapping.destroy(getMemoryPool());
-
 	for(auto it : m_variants)
 	{
 		ShaderProgramResourceVariant* variant = &(*it);
-		deleteInstance(getMemoryPool(), variant);
+		deleteInstance(ResourceMemoryPool::getSingleton(), variant);
 	}
-	m_variants.destroy(getMemoryPool());
 }
 
 Error ShaderProgramResource::load(const ResourceFilename& filename, [[maybe_unused]] Bool async)
@@ -58,7 +47,7 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, [[maybe_unus
 	// Create the mutators
 	if(binary.m_mutators.getSize() > 0)
 	{
-		m_mutators.create(getMemoryPool(), binary.m_mutators.getSize());
+		m_mutators.create(binary.m_mutators.getSize());
 
 		for(U32 i = 0; i < binary.m_mutators.getSize(); ++i)
 		{
@@ -90,7 +79,7 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, [[maybe_unus
 			mapping.m_constsIdx = m_consts.getSize();
 		}
 
-		m_constBinaryMapping.emplaceBack(getMemoryPool(), mapping);
+		m_constBinaryMapping.emplaceBack(mapping);
 
 		// Skip if const is there
 		if(componentIdx > 0)
@@ -99,8 +88,8 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, [[maybe_unus
 		}
 
 		// Create new one
-		ShaderProgramResourceConstant& in = *m_consts.emplaceBack(getMemoryPool());
-		in.m_name.create(getMemoryPool(), name);
+		ShaderProgramResourceConstant& in = *m_consts.emplaceBack();
+		in.m_name.create(name);
 		in.m_index = m_consts.getSize() - 1;
 
 		if(componentCount == 1)
@@ -253,7 +242,7 @@ void ShaderProgramResource::getOrCreateVariant(const ShaderProgramResourceVarian
 	ShaderProgramResourceVariant* v = createNewVariant(info);
 	if(v)
 	{
-		m_variants.emplace(getMemoryPool(), hash, v);
+		m_variants.emplace(hash, v);
 	}
 	variant = v;
 }
@@ -294,7 +283,8 @@ ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitIn
 		binaryVariant = &binary.m_variants[0];
 	}
 	ANKI_ASSERT(binaryVariant);
-	ShaderProgramResourceVariant* variant = newInstance<ShaderProgramResourceVariant>(getMemoryPool());
+	ShaderProgramResourceVariant* variant =
+		newInstance<ShaderProgramResourceVariant>(ResourceMemoryPool::getSingleton());
 	variant->m_binaryVariant = binaryVariant;
 
 	// Set the constant values
@@ -371,7 +361,7 @@ ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitIn
 	if(!!(m_shaderStages & (ShaderTypeBit::kAllGraphics | ShaderTypeBit::kCompute)))
 	{
 		// Create the program name
-		StringRaii progName(&getTempMemoryPool());
+		StringRaii progName(&ResourceMemoryPool::getSingleton());
 		getFilepathFilename(getFilename(), progName);
 		char* cprogName = const_cast<char*>(progName.cstr());
 		if(progName.getLength() > kMaxGrObjectNameLength)
@@ -391,7 +381,7 @@ ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitIn
 			inf.m_shaderType = shaderType;
 			inf.m_binary = binary.m_codeBlocks[binaryVariant->m_codeBlockIndices[shaderType]].m_binary;
 			inf.m_constValues.setArray((constValueCount) ? constValues.getBegin() : nullptr, constValueCount);
-			ShaderPtr shader = getExternalSubsystems().m_grManager->newShader(inf);
+			ShaderPtr shader = ResourceManager::getSingleton().getExternalSubsystems().m_grManager->newShader(inf);
 
 			const ShaderTypeBit shaderBit = ShaderTypeBit(1 << shaderType);
 			if(!!(shaderBit & ShaderTypeBit::kAllGraphics))
@@ -409,7 +399,8 @@ ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitIn
 		}
 
 		// Create the program
-		variant->m_prog = getExternalSubsystems().m_grManager->newShaderProgram(progInf);
+		variant->m_prog =
+			ResourceManager::getSingleton().getExternalSubsystems().m_grManager->newShaderProgram(progInf);
 	}
 	else
 	{
@@ -419,7 +410,8 @@ ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitIn
 		CString libName = &binary.m_libraryName[0];
 		ANKI_ASSERT(libName.getLength() > 0);
 
-		const ShaderProgramResourceSystem& progSystem = getManager().getShaderProgramResourceSystem();
+		const ShaderProgramResourceSystem& progSystem =
+			ResourceManager::getSingleton().getShaderProgramResourceSystem();
 		const ShaderProgramRaytracingLibrary* foundLib = nullptr;
 		for(const ShaderProgramRaytracingLibrary& lib : progSystem.getRayTracingLibraries())
 		{

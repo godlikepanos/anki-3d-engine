@@ -46,8 +46,6 @@ public:
 
 	~AsyncLoader();
 
-	void init(HeapMemoryPool* pool);
-
 	/// Submit a task.
 	void submitTask(AsyncLoaderTask* task);
 
@@ -55,7 +53,7 @@ public:
 	template<typename TTask, typename... TArgs>
 	TTask* newTask(TArgs&&... args)
 	{
-		return newInstance<TTask>(*m_pool, std::forward<TArgs>(args)...);
+		return newInstance<TTask>(ResourceMemoryPool::getSingleton(), std::forward<TArgs>(args)...);
 	}
 
 	/// Create and submit a new asynchronous loading task.
@@ -72,11 +70,6 @@ public:
 	/// Resume the async loading.
 	void resume();
 
-	HeapMemoryPool& getMemoryPool() const
-	{
-		return *m_pool;
-	}
-
 	/// Get the total number of completed tasks.
 	U64 getCompletedTaskCount() const
 	{
@@ -84,7 +77,6 @@ public:
 	}
 
 private:
-	mutable HeapMemoryPool* m_pool = nullptr;
 	Thread m_thread;
 	Barrier m_barrier = {2};
 

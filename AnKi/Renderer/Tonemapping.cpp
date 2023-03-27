@@ -29,8 +29,8 @@ Error Tonemapping::initInternal()
 	ANKI_R_LOGV("Initializing tonemapping. Resolution %ux%u", width, height);
 
 	// Create program
-	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
-		"ShaderBinaries/TonemappingAverageLuminance.ankiprogbin", m_prog));
+	ANKI_CHECK(
+		ResourceManager::getSingleton().loadResource("ShaderBinaries/TonemappingAverageLuminance.ankiprogbin", m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addConstant("kInputTexSize", UVec2(width, height));

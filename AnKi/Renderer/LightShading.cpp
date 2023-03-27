@@ -65,8 +65,8 @@ Error LightShading::init()
 Error LightShading::initLightShading()
 {
 	// Load shaders and programs
-	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource("ShaderBinaries/LightShading.ankiprogbin",
-																	   m_lightShading.m_prog));
+	ANKI_CHECK(
+		ResourceManager::getSingleton().loadResource("ShaderBinaries/LightShading.ankiprogbin", m_lightShading.m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_lightShading.m_prog);
 	variantInitInfo.addConstant("kTileCount", m_r->getTileCounts());
@@ -102,8 +102,8 @@ Error LightShading::initLightShading()
 	m_lightShading.m_fbDescr.bake();
 
 	// Debug visualization
-	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
-		"ShaderBinaries/VisualizeHdrRenderTarget.ankiprogbin", m_visualizeRtProg));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/VisualizeHdrRenderTarget.ankiprogbin",
+															m_visualizeRtProg));
 	m_visualizeRtProg->getOrCreateVariant(variant);
 	m_visualizeRtGrProg = variant->getProgram();
 
@@ -112,8 +112,8 @@ Error LightShading::initLightShading()
 
 Error LightShading::initSkybox()
 {
-	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource("ShaderBinaries/LightShadingSkybox.ankiprogbin",
-																	   m_skybox.m_prog));
+	ANKI_CHECK(
+		ResourceManager::getSingleton().loadResource("ShaderBinaries/LightShadingSkybox.ankiprogbin", m_skybox.m_prog));
 
 	for(U32 method = 0; method < 2; ++method)
 	{
@@ -131,8 +131,8 @@ Error LightShading::initSkybox()
 Error LightShading::initApplyFog()
 {
 	// Load shaders and programs
-	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
-		"ShaderBinaries/LightShadingApplyFog.ankiprogbin", m_applyFog.m_prog));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/LightShadingApplyFog.ankiprogbin",
+															m_applyFog.m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_applyFog.m_prog);
 	variantInitInfo.addConstant("kZSplitCount", m_r->getZSplitCount());
@@ -147,8 +147,8 @@ Error LightShading::initApplyFog()
 
 Error LightShading::initApplyIndirect()
 {
-	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
-		"ShaderBinaries/LightShadingApplyIndirect.ankiprogbin", m_applyIndirect.m_prog));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/LightShadingApplyIndirect.ankiprogbin",
+															m_applyIndirect.m_prog));
 	const ShaderProgramResourceVariant* variant;
 	m_applyIndirect.m_prog->getOrCreateVariant(variant);
 	m_applyIndirect.m_grProg = variant->getProgram();

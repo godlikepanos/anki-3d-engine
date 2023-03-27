@@ -46,7 +46,7 @@ ModelComponent::~ModelComponent()
 void ModelComponent::loadModelResource(CString filename)
 {
 	ModelResourcePtr rsrc;
-	const Error err = getExternalSubsystems(*m_node).m_resourceManager->loadResource(filename, rsrc);
+	const Error err = ResourceManager::getSingleton().loadResource(filename, rsrc);
 	if(err)
 	{
 		ANKI_SCENE_LOGE("Failed to load model resource");

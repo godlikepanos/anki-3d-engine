@@ -103,9 +103,9 @@ public:
 class ParticleEmitterResource : public ResourceObject, private ParticleEmitterProperties
 {
 public:
-	ParticleEmitterResource(ResourceManager* manager);
+	ParticleEmitterResource() = default;
 
-	~ParticleEmitterResource();
+	~ParticleEmitterResource() = default;
 
 	const ParticleEmitterProperties& getProperties() const
 	{

@@ -75,7 +75,7 @@ public:
 	mutable Array3d<MaterialVariant, U(RenderingTechnique::kCount), 2, 2> m_variantMatrix;
 	mutable RWMutex m_variantMatrixMtx;
 
-	DynamicArray<PartialMutation> m_partialMutation; ///< Only with the non-builtins.
+	ResourceDynamicArray<PartialMutation> m_partialMutation; ///< Only with the non-builtins.
 
 	U32 m_presentBuildinMutators = 0;
 	U32 m_localUniformsStructIdx = 0; ///< Struct index in the program binary.
@@ -114,30 +114,14 @@ public:
 	}
 };
 
-MaterialResource::MaterialResource(ResourceManager* manager)
-	: ResourceObject(manager)
+MaterialResource::MaterialResource()
 {
 	memset(m_techniqueToProgram.getBegin(), 0xFF, m_techniqueToProgram.getSizeInBytes());
 }
 
 MaterialResource::~MaterialResource()
 {
-	for(Program& p : m_programs)
-	{
-		p.m_partialMutation.destroy(getMemoryPool());
-	}
-
-	m_textures.destroy(getMemoryPool());
-
-	for(MaterialVariable& var : m_vars)
-	{
-		var.m_name.destroy(getMemoryPool());
-	}
-
-	m_vars.destroy(getMemoryPool());
-	m_programs.destroy(getMemoryPool());
-
-	getMemoryPool().free(m_prefilledLocalUniforms);
+	ResourceMemoryPool::getSingleton().free(m_prefilledLocalUniforms);
 }
 
 const MaterialVariable* MaterialResource::tryFindVariableInternal(CString name) const
@@ -155,7 +139,7 @@ const MaterialVariable* MaterialResource::tryFindVariableInternal(CString name) 
 
 Error MaterialResource::load(const ResourceFilename& filename, Bool async)
 {
-	XmlDocument doc(&getTempMemoryPool());
+	XmlDocument doc(&ResourceMemoryPool::getSingleton());
 	XmlElement el;
 	ANKI_CHECK(openFileParseXml(filename, doc));
 
@@ -208,17 +192,18 @@ Error MaterialResource::parseShaderProgram(XmlElement shaderProgramEl, Bool asyn
 	CString shaderName;
 	ANKI_CHECK(shaderProgramEl.getAttributeText("name", shaderName));
 
-	if(!getExternalSubsystems().m_grManager->getDeviceCapabilities().m_rayTracingEnabled && shaderName.find("Rt") == 0)
+	if(!ResourceManager::getSingleton().getExternalSubsystems().m_grManager->getDeviceCapabilities().m_rayTracingEnabled
+	   && shaderName.find("Rt") == 0)
 	{
 		// Skip RT programs when RT is disabled
 		return Error::kNone;
 	}
 
-	StringRaii fname(&getTempMemoryPool());
+	ResourceString fname;
 	fname.sprintf("ShaderBinaries/%s.ankiprogbin", shaderName.cstr());
 
-	Program& prog = *m_programs.emplaceBack(getMemoryPool());
-	ANKI_CHECK(getManager().loadResource(fname, prog.m_prog, async));
+	Program& prog = *m_programs.emplaceBack();
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource(fname, prog.m_prog, async));
 
 	// <mutation>
 	XmlElement mutatorsEl;
@@ -333,8 +318,8 @@ Error MaterialResource::createVars(Program& prog)
 				}
 
 				// All good, add it
-				var = m_vars.emplaceBack(getMemoryPool());
-				var->m_name.create(getMemoryPool(), memberName);
+				var = m_vars.emplaceBack();
+				var->m_name.create(memberName);
 				var->m_offsetInLocalUniforms = offsetof;
 				var->m_dataType = member.m_type;
 
@@ -424,8 +409,8 @@ Error MaterialResource::createVars(Program& prog)
 				}
 
 				// All good, add it
-				var = m_vars.emplaceBack(getMemoryPool());
-				var->m_name.create(getMemoryPool(), opaqueName);
+				var = m_vars.emplaceBack();
+				var->m_name.create(opaqueName);
 				var->m_opaqueBinding = opaque.m_binding;
 				var->m_dataType = opaque.m_type;
 			}
@@ -450,7 +435,7 @@ Error MaterialResource::parseMutators(XmlElement mutatorsEl, Program& prog)
 	ANKI_CHECK(mutatorEl.getSiblingElementsCount(mutatorCount));
 	++mutatorCount;
 	ANKI_ASSERT(mutatorCount > 0);
-	prog.m_partialMutation.create(getMemoryPool(), mutatorCount);
+	prog.m_partialMutation.create(mutatorCount);
 	mutatorCount = 0;
 
 	do
@@ -645,9 +630,9 @@ Error MaterialResource::parseInput(XmlElement inputEl, Bool async, BitSet<128>& 
 	{
 		CString texfname;
 		ANKI_CHECK(inputEl.getAttributeText("value", texfname));
-		ANKI_CHECK(getManager().loadResource(texfname, foundVar->m_image, async));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource(texfname, foundVar->m_image, async));
 
-		m_textures.emplaceBack(getMemoryPool(), foundVar->m_image->getTexture());
+		m_textures.emplaceBack(foundVar->m_image->getTexture());
 	}
 	else if(foundVar->m_dataType == ShaderVariableDataType::kU32)
 	{
@@ -670,7 +655,7 @@ Error MaterialResource::parseInput(XmlElement inputEl, Bool async, BitSet<128>& 
 		// If it has letters it's a texture
 		if(containsAlpharithmetic)
 		{
-			ANKI_CHECK(getManager().loadResource(value, foundVar->m_image, async));
+			ANKI_CHECK(ResourceManager::getSingleton().loadResource(value, foundVar->m_image, async));
 
 			foundVar->m_U32 = foundVar->m_image->getTextureView()->getOrCreateBindlessTextureIndex();
 		}
@@ -705,7 +690,7 @@ void MaterialResource::prefillLocalUniforms()
 		return;
 	}
 
-	m_prefilledLocalUniforms = getMemoryPool().allocate(m_localUniformsSize, 1);
+	m_prefilledLocalUniforms = ResourceMemoryPool::getSingleton().allocate(m_localUniformsSize, 1);
 	memset(m_prefilledLocalUniforms, 0, m_localUniformsSize);
 
 	for(const MaterialVariable& var : m_vars)

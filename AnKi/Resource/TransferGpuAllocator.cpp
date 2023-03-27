@@ -13,7 +13,7 @@ namespace anki {
 
 Error TransferGpuAllocator::StackAllocatorBuilderInterface::allocateChunk(PtrSize size, Chunk*& out)
 {
-	out = newInstance<Chunk>(*m_parent->m_pool);
+	out = newInstance<Chunk>(ResourceMemoryPool::getSingleton());
 
 	BufferInitInfo bufferInit(size, BufferUsageBit::kTransferSource, BufferMapAccessBit::kWrite, "Transfer");
 	out->m_buffer = m_parent->m_gr->newBuffer(bufferInit);
@@ -29,7 +29,7 @@ void TransferGpuAllocator::StackAllocatorBuilderInterface::freeChunk(Chunk* chun
 
 	chunk->m_buffer->unmap();
 
-	deleteInstance(*m_parent->m_pool, chunk);
+	deleteInstance(ResourceMemoryPool::getSingleton(), chunk);
 }
 
 TransferGpuAllocator::TransferGpuAllocator()
@@ -41,14 +41,12 @@ TransferGpuAllocator::~TransferGpuAllocator()
 	for(Pool& pool : m_pools)
 	{
 		ANKI_ASSERT(pool.m_pendingReleases == 0);
-		pool.m_fences.destroy(*m_pool);
+		pool.m_fences.destroy(ResourceMemoryPool::getSingleton());
 	}
 }
 
-Error TransferGpuAllocator::init(PtrSize maxSize, GrManager* gr, HeapMemoryPool* pool)
+Error TransferGpuAllocator::init(PtrSize maxSize, GrManager* gr)
 {
-	ANKI_ASSERT(pool);
-	m_pool = pool;
 	m_gr = gr;
 
 	m_maxAllocSize = getAlignedRoundUp(kChunkInitialSize * kPoolCount, maxSize);
@@ -101,7 +99,7 @@ Error TransferGpuAllocator::allocate(PtrSize size, TransferGpuAllocatorHandle& h
 				const Bool done = fence->clientWait(kMaxFenceWaitTime);
 				if(done)
 				{
-					pool->m_fences.popFront(*m_pool);
+					pool->m_fences.popFront(ResourceMemoryPool::getSingleton());
 				}
 			}
 		}
@@ -135,7 +133,7 @@ Error TransferGpuAllocator::allocate(PtrSize size, TransferGpuAllocatorHandle& h
 			if(fenceDone)
 			{
 				auto nextIt = it + 1;
-				p.m_fences.erase(*m_pool, it);
+				p.m_fences.erase(ResourceMemoryPool::getSingleton(), it);
 				it = nextIt;
 			}
 			else
@@ -158,7 +156,7 @@ void TransferGpuAllocator::release(TransferGpuAllocatorHandle& handle, FencePtr 
 	{
 		LockGuard<Mutex> lock(m_mtx);
 
-		pool.m_fences.pushBack(*m_pool, fence);
+		pool.m_fences.pushBack(ResourceMemoryPool::getSingleton(), fence);
 
 		ANKI_ASSERT(pool.m_pendingReleases > 0);
 		--pool.m_pendingReleases;

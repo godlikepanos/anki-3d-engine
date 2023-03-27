@@ -44,7 +44,7 @@ Error Dbg::init()
 	m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
 	m_fbDescr.bake();
 
-	ResourceManager& rsrcManager = *getExternalSubsystems().m_resourceManager;
+	ResourceManager& rsrcManager = ResourceManager::getSingleton();
 	ANKI_CHECK(m_drawer.init(&rsrcManager, getExternalSubsystems().m_grManager));
 	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/GiProbe.ankitex", m_giProbeImage));
 	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/LightBulb.ankitex", m_pointLightImage));

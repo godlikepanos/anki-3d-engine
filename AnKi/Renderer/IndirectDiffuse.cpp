@@ -69,7 +69,7 @@ Error IndirectDiffuse::initInternal()
 			m_r->create2DRenderTargetDescription(rez.x(), rez.y(), Format::kR8_Uint, "IndirectDiffuseVrsSri");
 		m_vrs.m_rtHandle.bake();
 
-		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource(
 			"ShaderBinaries/IndirectDiffuseVrsSriGeneration.ankiprogbin", m_vrs.m_prog));
 
 		ShaderProgramResourceVariantInitInfo variantInit(m_vrs.m_prog);
@@ -100,7 +100,7 @@ Error IndirectDiffuse::initInternal()
 		m_vrs.m_prog->getOrCreateVariant(variantInit, variant);
 		m_vrs.m_grProg = variant->getProgram();
 
-		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource(
 			"ShaderBinaries/VrsSriVisualizeRenderTarget.ankiprogbin", m_vrs.m_visualizeProg));
 		m_vrs.m_visualizeProg->getOrCreateVariant(variant);
 		m_vrs.m_visualizeGrProg = variant->getProgram();
@@ -108,7 +108,7 @@ Error IndirectDiffuse::initInternal()
 
 	// Init SSGI+probes pass
 	{
-		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource(
 			(preferCompute) ? "ShaderBinaries/IndirectDiffuseCompute.ankiprogbin"
 							: "ShaderBinaries/IndirectDiffuseRaster.ankiprogbin",
 			m_main.m_prog));
@@ -123,7 +123,7 @@ Error IndirectDiffuse::initInternal()
 		m_denoise.m_fbDescr.m_colorAttachmentCount = 1;
 		m_denoise.m_fbDescr.bake();
 
-		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource(
 			(preferCompute) ? "ShaderBinaries/IndirectDiffuseDenoiseCompute.ankiprogbin"
 							: "ShaderBinaries/IndirectDiffuseDenoiseRaster.ankiprogbin",
 			m_denoise.m_prog));

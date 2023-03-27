@@ -232,7 +232,7 @@ public:
 	using MemoryPool = TMemPool;
 
 	/// Default constructor.
-	HashMapRaii(const TMemPool& pool)
+	HashMapRaii(const MemoryPool& pool = MemoryPool())
 		: m_pool(pool)
 	{
 	}

@@ -57,8 +57,8 @@ Error VrsSriGeneration::initInternal()
 	m_downscaledSriTex = m_r->createAndClearRenderTarget(sriInitInfo, TextureUsageBit::kFramebufferShadingRate);
 
 	// Load programs
-	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
-		"ShaderBinaries/VrsSriGenerationCompute.ankiprogbin", m_prog));
+	ANKI_CHECK(
+		ResourceManager::getSingleton().loadResource("ShaderBinaries/VrsSriGenerationCompute.ankiprogbin", m_prog));
 	ShaderProgramResourceVariantInitInfo variantInit(m_prog);
 	variantInit.addMutation("SRI_TEXEL_DIMENSION", m_sriTexelDimension);
 
@@ -87,13 +87,13 @@ Error VrsSriGeneration::initInternal()
 	m_prog->getOrCreateVariant(variantInit, variant);
 	m_grProg = variant->getProgram();
 
-	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
-		"ShaderBinaries/VrsSriVisualizeRenderTarget.ankiprogbin", m_visualizeProg));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/VrsSriVisualizeRenderTarget.ankiprogbin",
+															m_visualizeProg));
 	m_visualizeProg->getOrCreateVariant(variant);
 	m_visualizeGrProg = variant->getProgram();
 
-	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource("ShaderBinaries/VrsSriDownscale.ankiprogbin",
-																	   m_downscaleProg));
+	ANKI_CHECK(
+		ResourceManager::getSingleton().loadResource("ShaderBinaries/VrsSriDownscale.ankiprogbin", m_downscaleProg));
 	m_downscaleProg->getOrCreateVariant(variant);
 	m_downscaleGrProg = variant->getProgram();
 

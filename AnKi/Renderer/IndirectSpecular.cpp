@@ -39,8 +39,7 @@ Error IndirectSpecular::initInternal()
 
 	ANKI_R_LOGV("Initializing indirect specular. Resolution %ux%u", size.x(), size.y());
 
-	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png",
-																	   m_noiseImage));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_noiseImage));
 
 	// Create RT
 	TextureUsageBit usage = TextureUsageBit::kAllSampled;
@@ -57,10 +56,10 @@ Error IndirectSpecular::initInternal()
 	m_fbDescr.bake();
 
 	// Create shader
-	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
-		(ConfigSet::getSingleton().getRPreferCompute()) ? "ShaderBinaries/IndirectSpecularCompute.ankiprogbin"
-														: "ShaderBinaries/IndirectSpecularRaster.ankiprogbin",
-		m_prog));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource((ConfigSet::getSingleton().getRPreferCompute())
+																? "ShaderBinaries/IndirectSpecularCompute.ankiprogbin"
+																: "ShaderBinaries/IndirectSpecularRaster.ankiprogbin",
+															m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInit(m_prog);
 	variantInit.addMutation("EXTRA_REJECTION", false);

@@ -44,12 +44,11 @@ Error VolumetricLightingAccumulation::init()
 		return Error::kUserData;
 	}
 
-	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png",
-																	   m_noiseImage));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_noiseImage));
 
 	// Shaders
-	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
-		"ShaderBinaries/VolumetricLightingAccumulation.ankiprogbin", m_prog));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/VolumetricLightingAccumulation.ankiprogbin",
+															m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addMutation("ENABLE_SHADOWS", 1);

@@ -45,10 +45,10 @@ Error ShadowmapsResolve::initInternal()
 	m_fbDescr.bake();
 
 	// Prog
-	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
-		(ConfigSet::getSingleton().getRPreferCompute()) ? "ShaderBinaries/ShadowmapsResolveCompute.ankiprogbin"
-														: "ShaderBinaries/ShadowmapsResolveRaster.ankiprogbin",
-		m_prog));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource((ConfigSet::getSingleton().getRPreferCompute())
+																? "ShaderBinaries/ShadowmapsResolveCompute.ankiprogbin"
+																: "ShaderBinaries/ShadowmapsResolveRaster.ankiprogbin",
+															m_prog));
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addConstant("kFramebufferSize", UVec2(width, height));
 	variantInitInfo.addConstant("kTileCount", m_r->getTileCounts());
@@ -59,8 +59,7 @@ Error ShadowmapsResolve::initInternal()
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProg = variant->getProgram();
 
-	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png",
-																	   m_noiseImage));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_noiseImage));
 
 	return Error::kNone;
 }

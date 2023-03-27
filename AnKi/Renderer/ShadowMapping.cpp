@@ -75,8 +75,8 @@ Error ShadowMapping::initInternal()
 	m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kLoad;
 	m_fbDescr.bake();
 
-	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
-		"ShaderBinaries/ShadowmappingClearDepth.ankiprogbin", m_clearDepthProg));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/ShadowmappingClearDepth.ankiprogbin",
+															m_clearDepthProg));
 	const ShaderProgramResourceVariant* variant;
 	m_clearDepthProg->getOrCreateVariant(variant);
 	m_clearDepthGrProg = variant->getProgram();

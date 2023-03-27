@@ -36,7 +36,7 @@ void DecalComponent::setLayer(CString fname, F32 blendFactor, LayerType type)
 
 	ImageResourcePtr rsrc;
 
-	const Error err = getExternalSubsystems(*m_node).m_resourceManager->loadResource(fname, rsrc);
+	const Error err = ResourceManager::getSingleton().loadResource(fname, rsrc);
 	if(err)
 	{
 		ANKI_SCENE_LOGE("Failed to load image");

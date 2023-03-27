@@ -197,7 +197,7 @@ public:
 
 	GpuSceneMicroPatcher& operator=(const GpuSceneMicroPatcher&) = delete;
 
-	Error init(ResourceManager* rsrc);
+	Error init();
 
 	/// Copy data for the GPU scene to a staging buffer.
 	/// @note It's thread-safe.

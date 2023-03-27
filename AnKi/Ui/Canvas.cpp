@@ -36,7 +36,7 @@ Error Canvas::init(FontPtr font, U32 fontHeight, U32 width, U32 height)
 	resize(width, height);
 
 	// Create program
-	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource("ShaderBinaries/Ui.ankiprogbin", m_prog));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/Ui.ankiprogbin", m_prog));
 
 	for(U32 i = 0; i < kShaderCount; ++i)
 	{

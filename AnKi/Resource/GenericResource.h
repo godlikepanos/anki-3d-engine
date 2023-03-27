@@ -17,9 +17,9 @@ namespace anki {
 class GenericResource : public ResourceObject
 {
 public:
-	GenericResource(ResourceManager* manager);
+	GenericResource() = default;
 
-	~GenericResource();
+	~GenericResource() = default;
 
 	Error load(const ResourceFilename& filename, Bool async);
 
@@ -29,7 +29,7 @@ public:
 	}
 
 private:
-	DynamicArray<U8> m_data;
+	ResourceDynamicArray<U8> m_data;
 };
 /// @}
 

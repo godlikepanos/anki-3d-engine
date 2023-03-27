@@ -478,22 +478,4 @@ Error File::readAllText(BaseMemoryPool& pool, String& out)
 	return err;
 }
 
-Error File::readAllText(StringRaii& out)
-{
-	Error err = Error::kNone;
-	PtrSize size = getSize();
-
-	if(size != 0)
-	{
-		out.create('?', size);
-		err = read(&out[0], size);
-	}
-	else
-	{
-		err = Error::kFunctionFailed;
-	}
-
-	return err;
-}
-
 } // end namespace anki

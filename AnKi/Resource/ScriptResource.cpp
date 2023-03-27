@@ -8,17 +8,12 @@
 
 namespace anki {
 
-ScriptResource::~ScriptResource()
-{
-	m_source.destroy(getMemoryPool());
-}
-
 Error ScriptResource::load(const ResourceFilename& filename, [[maybe_unused]] Bool async)
 {
 	ResourceFilePtr file;
 	ANKI_CHECK(openFile(filename, file));
 
-	StringRaii src(&getMemoryPool());
+	ResourceString src;
 	ANKI_CHECK(file->readAllText(src));
 	m_source = std::move(src);
 

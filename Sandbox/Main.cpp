@@ -45,7 +45,7 @@ Error MyApp::init(int argc, char* argv[])
 	ANKI_CHECK(App::init(allocAligned, nullptr));
 
 	// Other init
-	ResourceManager& resources = getResourceManager();
+	ResourceManager& resources = ResourceManager::getSingleton();
 
 	if(getenv("PROFILE"))
 	{

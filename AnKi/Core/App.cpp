@@ -127,10 +127,7 @@ void App::cleanup()
 	deleteInstance(m_mainPool, m_ui);
 	m_ui = nullptr;
 	GpuSceneMicroPatcher::freeSingleton();
-	deleteInstance(m_mainPool, m_resources);
-	m_resources = nullptr;
-	deleteInstance(m_mainPool, m_resourceFs);
-	m_resourceFs = nullptr;
+	ResourceManager::freeSingleton();
 	PhysicsWorld::freeSingleton();
 	RebarStagingGpuMemoryPool::freeSingleton();
 	UnifiedGeometryMemoryPool::freeSingleton();
@@ -295,7 +292,7 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 												 m_mainPool.getAllocationCallbackUserData()));
 
 	//
-	// Resource FS
+	// Resources
 	//
 #if !ANKI_OS_ANDROID
 	// Add the location of the executable where the shaders are supposed to be
@@ -309,20 +306,11 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	ConfigSet::getSingleton().setRsrcDataPaths(shadersPath);
 #endif
 
-	m_resourceFs = newInstance<ResourceFilesystem>(m_mainPool);
-	ANKI_CHECK(m_resourceFs->init(m_mainPool.getAllocationCallback(), m_mainPool.getAllocationCallbackUserData()));
-
-	//
-	// Resources
-	//
 	ResourceManagerInitInfo rinit;
 	rinit.m_grManager = m_gr;
-	rinit.m_resourceFilesystem = m_resourceFs;
 	rinit.m_allocCallback = m_mainPool.getAllocationCallback();
 	rinit.m_allocCallbackData = m_mainPool.getAllocationCallbackUserData();
-	m_resources = newInstance<ResourceManager>(m_mainPool);
-
-	ANKI_CHECK(m_resources->init(rinit));
+	ANKI_CHECK(ResourceManager::allocateSingleton().init(rinit));
 
 	//
 	// UI
@@ -331,15 +319,13 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	uiInitInfo.m_allocCallback = m_mainPool.getAllocationCallback();
 	uiInitInfo.m_allocCallbackUserData = m_mainPool.getAllocationCallbackUserData();
 	uiInitInfo.m_grManager = m_gr;
-	uiInitInfo.m_resourceFilesystem = m_resourceFs;
-	uiInitInfo.m_resourceManager = m_resources;
 	m_ui = newInstance<UiManager>(m_mainPool);
 	ANKI_CHECK(m_ui->init(uiInitInfo));
 
 	//
 	// GPU scene
 	//
-	ANKI_CHECK(GpuSceneMicroPatcher::allocateSingleton().init(m_resources));
+	ANKI_CHECK(GpuSceneMicroPatcher::allocateSingleton().init());
 
 	//
 	// Renderer
@@ -349,7 +335,6 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 		UVec2(NativeWindow::getSingleton().getWidth(), NativeWindow::getSingleton().getHeight());
 	renderInit.m_allocCallback = m_mainPool.getAllocationCallback();
 	renderInit.m_allocCallbackUserData = m_mainPool.getAllocationCallbackUserData();
-	renderInit.m_resourceManager = m_resources;
 	renderInit.m_grManager = m_gr;
 	renderInit.m_uiManager = m_ui;
 	renderInit.m_globTimestamp = &m_globalTimestamp;
@@ -371,7 +356,6 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	sceneInit.m_allocCallback = m_mainPool.getAllocationCallback();
 	sceneInit.m_allocCallbackData = m_mainPool.getAllocationCallbackUserData();
 	sceneInit.m_globalTimestamp = &m_globalTimestamp;
-	sceneInit.m_resourceManager = m_resources;
 	sceneInit.m_scriptManager = m_script;
 	sceneInit.m_uiManager = m_ui;
 	sceneInit.m_grManager = m_gr;
@@ -490,7 +474,7 @@ Error App::mainLoop()
 			ANKI_CHECK(m_renderer->render(rqueue, presentableTex));
 
 			// Pause and sync async loader. That will force all tasks before the pause to finish in this frame.
-			m_resources->getAsyncLoader().pause();
+			ResourceManager::getSingleton().getAsyncLoader().pause();
 
 			// If we get stats exclude the time of GR because it forces some GPU-CPU serialization. We don't want to
 			// count that
@@ -512,12 +496,12 @@ Error App::mainLoop()
 			GpuSceneMemoryPool::getSingleton().endFrame();
 
 			// Update the trace info with some async loader stats
-			U64 asyncTaskCount = m_resources->getAsyncLoader().getCompletedTaskCount();
+			U64 asyncTaskCount = ResourceManager::getSingleton().getAsyncLoader().getCompletedTaskCount();
 			ANKI_TRACE_INC_COUNTER(RsrcAsyncTasks, asyncTaskCount - m_resourceCompletedAsyncTaskCount);
 			m_resourceCompletedAsyncTaskCount = asyncTaskCount;
 
 			// Now resume the loader
-			m_resources->getAsyncLoader().resume();
+			ResourceManager::getSingleton().getAsyncLoader().resume();
 
 			// Sleep
 			const Second endTime = HighRezTimer::getCurrentTime();

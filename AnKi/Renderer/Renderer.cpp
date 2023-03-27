@@ -139,7 +139,7 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		return Error::kUserData;
 	}
 
-	ANKI_CHECK(m_subsystems.m_resourceManager->loadResource("ShaderBinaries/ClearTextureCompute.ankiprogbin",
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/ClearTextureCompute.ankiprogbin",
 															m_clearTexComputeProg));
 
 	// Dummy resources
@@ -333,11 +333,11 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	ctx.m_matrices.m_unprojectionParameters = ctx.m_matrices.m_projection.extractPerspectiveUnprojectionParams();
 
 	// Check if resources got loaded
-	if(m_prevLoadRequestCount != m_subsystems.m_resourceManager->getLoadingRequestCount()
-	   || m_prevAsyncTasksCompleted != m_subsystems.m_resourceManager->getAsyncTaskCompletedCount())
+	if(m_prevLoadRequestCount != ResourceManager::getSingleton().getLoadingRequestCount()
+	   || m_prevAsyncTasksCompleted != ResourceManager::getSingleton().getAsyncTaskCompletedCount())
 	{
-		m_prevLoadRequestCount = m_subsystems.m_resourceManager->getLoadingRequestCount();
-		m_prevAsyncTasksCompleted = m_subsystems.m_resourceManager->getAsyncTaskCompletedCount();
+		m_prevLoadRequestCount = ResourceManager::getSingleton().getLoadingRequestCount();
+		m_prevAsyncTasksCompleted = ResourceManager::getSingleton().getAsyncTaskCompletedCount();
 		m_resourcesDirty = true;
 	}
 	else
@@ -703,7 +703,7 @@ void Renderer::gpuSceneCopy(RenderingContext& ctx)
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("GPU scene patching");
 		rpass.newBufferDependency(m_runCtx.m_gpuSceneHandle, BufferUsageBit::kStorageComputeWrite);
 
-		rpass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+		rpass.setWork([](RenderPassWorkContext& rgraphCtx) {
 			GpuSceneMicroPatcher::getSingleton().patchGpuScene(*rgraphCtx.m_commandBuffer.get());
 		});
 	}

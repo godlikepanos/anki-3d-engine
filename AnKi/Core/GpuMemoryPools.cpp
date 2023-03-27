@@ -139,9 +139,10 @@ GpuSceneMicroPatcher::~GpuSceneMicroPatcher()
 	static_assert(sizeof(PatchHeader) == 8);
 }
 
-Error GpuSceneMicroPatcher::init(ResourceManager* rsrc)
+Error GpuSceneMicroPatcher::init()
 {
-	ANKI_CHECK(rsrc->loadResource("ShaderBinaries/GpuSceneMicroPatching.ankiprogbin", m_copyProgram));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/GpuSceneMicroPatching.ankiprogbin",
+															m_copyProgram));
 	const ShaderProgramResourceVariant* variant;
 	m_copyProgram->getOrCreateVariant(variant);
 	m_grProgram = variant->getProgram();

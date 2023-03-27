@@ -42,13 +42,13 @@ Error RtShadows::initInternal()
 	m_useSvgf = ConfigSet::getSingleton().getRRtShadowsSvgf();
 	m_atrousPassCount = ConfigSet::getSingleton().getRRtShadowsSvgfAtrousPassCount();
 
-	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png",
-																	   m_blueNoiseImage));
+	ANKI_CHECK(
+		ResourceManager::getSingleton().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_blueNoiseImage));
 
 	// Ray gen program
 	{
-		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource("ShaderBinaries/RtShadowsRayGen.ankiprogbin",
-																		   m_rayGenProg));
+		ANKI_CHECK(
+			ResourceManager::getSingleton().loadResource("ShaderBinaries/RtShadowsRayGen.ankiprogbin", m_rayGenProg));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_rayGenProg);
 		variantInitInfo.addMutation("RAYS_PER_PIXEL", ConfigSet::getSingleton().getRRtShadowsRaysPerPixel());
@@ -61,8 +61,8 @@ Error RtShadows::initInternal()
 
 	// Miss prog
 	{
-		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource("ShaderBinaries/RtShadowsMiss.ankiprogbin",
-																		   m_missProg));
+		ANKI_CHECK(
+			ResourceManager::getSingleton().loadResource("ShaderBinaries/RtShadowsMiss.ankiprogbin", m_missProg));
 		const ShaderProgramResourceVariant* variant;
 		m_missProg->getOrCreateVariant(variant);
 		m_missShaderGroupIdx = variant->getShaderGroupHandleIndex();
@@ -71,8 +71,8 @@ Error RtShadows::initInternal()
 	// Denoise program
 	if(!m_useSvgf)
 	{
-		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
-			"ShaderBinaries/RtShadowsDenoise.ankiprogbin", m_denoiseProg));
+		ANKI_CHECK(
+			ResourceManager::getSingleton().loadResource("ShaderBinaries/RtShadowsDenoise.ankiprogbin", m_denoiseProg));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_denoiseProg);
 		variantInitInfo.addConstant("kOutImageSize",
 									UVec2(m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2));
@@ -92,8 +92,8 @@ Error RtShadows::initInternal()
 	// SVGF variance program
 	if(m_useSvgf)
 	{
-		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
-			"ShaderBinaries/RtShadowsSvgfVariance.ankiprogbin", m_svgfVarianceProg));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/RtShadowsSvgfVariance.ankiprogbin",
+																m_svgfVarianceProg));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_svgfVarianceProg);
 		variantInitInfo.addConstant("kFramebufferSize",
 									UVec2(m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2));
@@ -106,8 +106,8 @@ Error RtShadows::initInternal()
 	// SVGF atrous program
 	if(m_useSvgf)
 	{
-		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
-			"ShaderBinaries/RtShadowsSvgfAtrous.ankiprogbin", m_svgfAtrousProg));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/RtShadowsSvgfAtrous.ankiprogbin",
+																m_svgfAtrousProg));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_svgfAtrousProg);
 		variantInitInfo.addConstant("kFramebufferSize",
 									UVec2(m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2));
@@ -124,8 +124,8 @@ Error RtShadows::initInternal()
 
 	// Upscale program
 	{
-		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
-			"ShaderBinaries/RtShadowsUpscale.ankiprogbin", m_upscaleProg));
+		ANKI_CHECK(
+			ResourceManager::getSingleton().loadResource("ShaderBinaries/RtShadowsUpscale.ankiprogbin", m_upscaleProg));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_upscaleProg);
 		variantInitInfo.addConstant("kOutImageSize",
 									UVec2(m_r->getInternalResolution().x(), m_r->getInternalResolution().y()));
@@ -136,8 +136,8 @@ Error RtShadows::initInternal()
 	}
 
 	// Debug program
-	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
-		"ShaderBinaries/RtShadowsVisualizeRenderTarget.ankiprogbin", m_visualizeRenderTargetsProg));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/RtShadowsVisualizeRenderTarget.ankiprogbin",
+															m_visualizeRenderTargetsProg));
 
 	// Quarter rez shadow RT
 	{

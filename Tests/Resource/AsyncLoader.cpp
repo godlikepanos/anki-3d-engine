@@ -107,13 +107,11 @@ ANKI_TEST(Resource, AsyncLoader)
 	// Simple create destroy
 	{
 		AsyncLoader a;
-		a.init(&pool);
 	}
 
 	// Simple task that will finish
 	{
 		AsyncLoader a;
-		a.init(&pool);
 		Barrier barrier(2);
 
 		a.submitNewTask<Task>(0.0f, &barrier, nullptr);
@@ -123,7 +121,6 @@ ANKI_TEST(Resource, AsyncLoader)
 	// Many tasks that will finish
 	{
 		AsyncLoader a;
-		a.init(&pool);
 		Barrier barrier(2);
 		Atomic<U32> counter = {0};
 		const U COUNT = 100;
@@ -148,7 +145,6 @@ ANKI_TEST(Resource, AsyncLoader)
 	// Many tasks that will _not_ finish
 	{
 		AsyncLoader a;
-		a.init(&pool);
 
 		for(U i = 0; i < 100; i++)
 		{
@@ -159,7 +155,6 @@ ANKI_TEST(Resource, AsyncLoader)
 	// Tasks that allocate
 	{
 		AsyncLoader a;
-		a.init(&pool);
 		Barrier barrier(2);
 
 		for(U i = 0; i < 10; i++)
@@ -180,7 +175,6 @@ ANKI_TEST(Resource, AsyncLoader)
 	// Tasks that allocate and never finished
 	{
 		AsyncLoader a;
-		a.init(&pool);
 
 		for(U i = 0; i < 10; i++)
 		{
@@ -191,7 +185,6 @@ ANKI_TEST(Resource, AsyncLoader)
 	// Pause/resume
 	{
 		AsyncLoader a;
-		a.init(&pool);
 		Atomic<U32> counter(0);
 		Barrier barrier(2);
 
@@ -217,7 +210,6 @@ ANKI_TEST(Resource, AsyncLoader)
 	// Pause/resume
 	{
 		AsyncLoader a;
-		a.init(&pool);
 		Atomic<U32> counter(0);
 		Barrier barrier(2);
 
@@ -252,7 +244,6 @@ ANKI_TEST(Resource, AsyncLoader)
 	// Fuzzy test
 	{
 		AsyncLoader a;
-		a.init(&pool);
 		Barrier barrier(2);
 		Atomic<U32> counter = {0};
 

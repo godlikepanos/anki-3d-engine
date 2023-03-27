@@ -25,7 +25,7 @@ LensFlareComponent::~LensFlareComponent()
 void LensFlareComponent::loadImageResource(CString filename)
 {
 	ImageResourcePtr image;
-	const Error err = getExternalSubsystems(*m_node).m_resourceManager->loadResource(filename, image);
+	const Error err = ResourceManager::getSingleton().loadResource(filename, image);
 	if(err)
 	{
 		ANKI_SCENE_LOGE("Failed to load lens flare image");

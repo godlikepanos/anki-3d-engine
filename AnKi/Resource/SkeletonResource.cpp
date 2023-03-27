@@ -4,24 +4,15 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Resource/SkeletonResource.h>
+#include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Util/Xml.h>
 #include <AnKi/Util/StringList.h>
 
 namespace anki {
 
-SkeletonResource::~SkeletonResource()
-{
-	for(Bone& b : m_bones)
-	{
-		b.destroy(getMemoryPool());
-	}
-
-	m_bones.destroy(getMemoryPool());
-}
-
 Error SkeletonResource::load(const ResourceFilename& filename, [[maybe_unused]] Bool async)
 {
-	XmlDocument doc(&getTempMemoryPool());
+	XmlDocument doc(&ResourceMemoryPool::getSingleton());
 	ANKI_CHECK(openFileParseXml(filename, doc));
 
 	XmlElement rootEl;
@@ -37,9 +28,9 @@ Error SkeletonResource::load(const ResourceFilename& filename, [[maybe_unused]] 
 	ANKI_CHECK(boneEl.getSiblingElementsCount(boneCount));
 	++boneCount;
 
-	m_bones.create(getMemoryPool(), boneCount);
+	m_bones.create(boneCount);
 
-	StringListRaii boneParents(&getMemoryPool());
+	ResourceStringList boneParents;
 
 	// Load every bone
 	boneCount = 0;
@@ -51,7 +42,7 @@ Error SkeletonResource::load(const ResourceFilename& filename, [[maybe_unused]] 
 		// name
 		CString name;
 		ANKI_CHECK(boneEl.getAttributeText("name", name));
-		bone.m_name.create(getMemoryPool(), name);
+		bone.m_name.create(name);
 
 		// transform
 		ANKI_CHECK(boneEl.getAttributeNumbers("transform", bone.m_transform));

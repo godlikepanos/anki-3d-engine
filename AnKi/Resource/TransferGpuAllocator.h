@@ -111,7 +111,7 @@ public:
 
 	~TransferGpuAllocator();
 
-	Error init(PtrSize maxSize, GrManager* gr, HeapMemoryPool* pool);
+	Error init(PtrSize maxSize, GrManager* gr);
 
 	/// Allocate some transfer memory. If there is not enough memory it will block until some is releaced. It's
 	/// threadsafe.
@@ -145,7 +145,7 @@ private:
 	class StackAllocatorBuilderInterface
 	{
 	public:
-		TransferGpuAllocator* m_parent = nullptr;
+		TransferGpuAllocator* m_parent = nullptr; // TODO glob: maybe rm
 
 		// The rest of the functions implement the StackAllocatorBuilder TInterface.
 
@@ -197,8 +197,7 @@ private:
 		U32 m_pendingReleases = 0;
 	};
 
-	HeapMemoryPool* m_pool = nullptr;
-	GrManager* m_gr = nullptr;
+	GrManager* m_gr = nullptr; // TODO glob: rm
 	PtrSize m_maxAllocSize = 0;
 
 	Mutex m_mtx; ///< Protect all members bellow.

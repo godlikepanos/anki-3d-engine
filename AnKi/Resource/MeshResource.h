@@ -25,7 +25,7 @@ class MeshResource : public ResourceObject
 {
 public:
 	/// Default constructor
-	MeshResource(ResourceManager* manager);
+	MeshResource();
 
 	~MeshResource();
 
@@ -121,8 +121,8 @@ private:
 		Aabb m_aabb;
 	};
 
-	DynamicArray<SubMesh> m_subMeshes;
-	DynamicArray<Lod> m_lods;
+	ResourceDynamicArray<SubMesh> m_subMeshes;
+	ResourceDynamicArray<Lod> m_lods;
 	Aabb m_aabb;
 	IndexType m_indexType;
 	VertexStreamMask m_presentVertStreams = VertexStreamMask::kNone;

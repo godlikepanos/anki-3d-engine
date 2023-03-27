@@ -26,11 +26,10 @@ namespace anki {
 class MeshBinaryLoader
 {
 public:
-	MeshBinaryLoader(ResourceFilesystem* fs, BaseMemoryPool* pool)
-		: m_fs(fs)
-		, m_pool(pool)
+	MeshBinaryLoader(BaseMemoryPool* pool)
+		: m_pool(pool)
 	{
-		ANKI_ASSERT(fs && pool);
+		ANKI_ASSERT(pool);
 	}
 
 	~MeshBinaryLoader();
@@ -42,7 +41,7 @@ public:
 	Error storeVertexBuffer(U32 lod, U32 bufferIdx, void* ptr, PtrSize size);
 
 	/// Instead of calling storeIndexBuffer and storeVertexBuffer use this method to get those buffers into the CPU.
-	Error storeIndicesAndPosition(U32 lod, DynamicArrayRaii<U32>& indices, DynamicArrayRaii<Vec3>& positions);
+	Error storeIndicesAndPosition(U32 lod, ResourceDynamicArray<U32>& indices, ResourceDynamicArray<Vec3>& positions);
 
 	const MeshBinaryHeader& getHeader() const
 	{
@@ -56,7 +55,6 @@ public:
 	}
 
 private:
-	ResourceFilesystem* m_fs = nullptr;
 	BaseMemoryPool* m_pool = nullptr;
 	ResourceFilePtr m_file;
 

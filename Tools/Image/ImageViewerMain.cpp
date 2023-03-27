@@ -25,7 +25,7 @@ public:
 		ANKI_CHECK_AND_IGNORE(getExternalSubsystems().m_uiManager->newInstance(
 			m_font, "EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{16}));
 
-		ANKI_CHECK_AND_IGNORE(getExternalSubsystems().m_resourceManager->loadResource(
+		ANKI_CHECK_AND_IGNORE(ResourceManager::getSingleton().loadResource(
 			"ShaderBinaries/UiVisualizeImage.ankiprogbin", m_imageProgram));
 	}
 
@@ -285,7 +285,7 @@ public:
 
 		// Load the texture
 		ImageResourcePtr image;
-		ANKI_CHECK(getResourceManager().loadResource(argv[1], image, false));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource(argv[1], image, false));
 
 		// Change window name
 		StringRaii title(&pool);

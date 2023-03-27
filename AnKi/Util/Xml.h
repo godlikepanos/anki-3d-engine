@@ -190,6 +190,7 @@ private:
 };
 
 /// XML document.
+// TODO glob: add the allocator in a template just like the other containers
 class XmlDocument
 {
 public:

@@ -23,6 +23,11 @@ class HashMap;
 template<typename, typename, typename, typename, typename>
 class HashMapRaii;
 
+template<typename TKey>
+class DefaultHasher;
+
+class HashMapSparseArrayConfig;
+
 template<typename T>
 class Hierarchy;
 
@@ -40,6 +45,9 @@ class String;
 
 template<typename>
 class BaseStringRaii;
+
+template<typename>
+class BaseStringListRaii;
 
 class ThreadHive;
 
@@ -62,5 +70,19 @@ template<typename, typename, typename>
 class DynamicArrayRaii;
 
 class F16;
+
+/// This macro defines typedefs for all the common containers that take a memory pool using a singleton memory pool
+/// memory pool.
+#define ANKI_DEFINE_SUBMODULE_UTIL_CONTAINERS(submoduleName, singletonMemoryPool) \
+	using submoduleName##MemPoolWrapper = SingletonMemoryPoolWrapper<singletonMemoryPool>; \
+	using submoduleName##String = BaseStringRaii<submoduleName##MemPoolWrapper>; \
+	template<typename T> \
+	using submoduleName##DynamicArray = DynamicArrayRaii<T, U32, submoduleName##MemPoolWrapper>; \
+	template<typename TKey, typename TValue> \
+	using submoduleName##HashMap = \
+		HashMapRaii<TKey, TValue, DefaultHasher<TKey>, HashMapSparseArrayConfig, submoduleName##MemPoolWrapper>; \
+	template<typename T> \
+	using submoduleName##List = ListRaii<T, submoduleName##MemPoolWrapper>; \
+	using submoduleName##StringList = BaseStringListRaii<submoduleName##MemPoolWrapper>;
 
 } // end namespace anki

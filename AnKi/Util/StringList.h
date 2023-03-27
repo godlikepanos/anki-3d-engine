@@ -106,7 +106,7 @@ public:
 	using MemoryPool = TMemPool;
 
 	/// Create using a mem pool.
-	BaseStringListRaii(const MemoryPool& pool)
+	BaseStringListRaii(const MemoryPool& pool = MemoryPool())
 		: Base()
 		, m_pool(pool)
 	{

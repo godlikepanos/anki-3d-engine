@@ -1010,10 +1010,10 @@ Error SpirvReflector::performSpirvReflection(Array<ConstWeakArray<U8>, U32(Shade
 		for(U32 j = 0; j < s.m_members.getSize(); ++j)
 		{
 			const StructMember& sm = s.m_members[j];
-			ANKI_CHECK(interface.visitStructMember(i, s.m_name, j, sm.m_name, sm.m_type,
-												   (sm.m_structIndex != kMaxU32) ? structs[sm.m_structIndex].m_name.toCString()
-																				 : CString(),
-												   sm.m_offset, sm.m_arraySize));
+			ANKI_CHECK(interface.visitStructMember(
+				i, s.m_name, j, sm.m_name, sm.m_type,
+				(sm.m_structIndex != kMaxU32) ? structs[sm.m_structIndex].m_name.toCString() : CString(), sm.m_offset,
+				sm.m_arraySize));
 		}
 	}
 

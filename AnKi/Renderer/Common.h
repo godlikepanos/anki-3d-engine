@@ -75,7 +75,6 @@ inline constexpr Array<Format, kGBufferColorRenderTargetCount> kGBufferColorRend
 class RendererExternalSubsystems
 {
 public:
-	ResourceManager* m_resourceManager = nullptr;
 	GrManager* m_grManager = nullptr;
 	UiManager* m_uiManager = nullptr;
 	Timestamp* m_globTimestamp = nullptr;

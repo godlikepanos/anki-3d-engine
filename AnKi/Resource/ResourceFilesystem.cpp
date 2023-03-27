@@ -20,18 +20,13 @@ class CResourceFile final : public ResourceFile
 public:
 	File m_file;
 
-	CResourceFile(HeapMemoryPool* pool)
-		: ResourceFile(pool)
-	{
-	}
-
 	Error read(void* buff, PtrSize size) override
 	{
 		ANKI_TRACE_SCOPED_EVENT(RsrcFileRead);
 		return m_file.read(buff, size);
 	}
 
-	Error readAllText(StringRaii& out) override
+	Error readAllText(ResourceString& out) override
 	{
 		ANKI_TRACE_SCOPED_EVENT(RsrcFileRead);
 		return m_file.readAllText(out);
@@ -66,11 +61,6 @@ class ZipResourceFile final : public ResourceFile
 public:
 	unzFile m_archive = nullptr;
 	PtrSize m_size = 0;
-
-	ZipResourceFile(HeapMemoryPool* pool)
-		: ResourceFile(pool)
-	{
-	}
 
 	~ZipResourceFile()
 	{
@@ -143,7 +133,7 @@ public:
 		return Error::kNone;
 	}
 
-	Error readAllText(StringRaii& out) override
+	Error readAllText(ResourceString& out) override
 	{
 		ANKI_ASSERT(m_size);
 		out.create('?', m_size);
@@ -197,28 +187,19 @@ public:
 
 ResourceFilesystem::~ResourceFilesystem()
 {
-	for(Path& p : m_paths)
-	{
-		p.m_files.destroy(m_pool);
-		p.m_path.destroy(m_pool);
-	}
-
-	m_paths.destroy(m_pool);
-	m_cacheDir.destroy(m_pool);
 }
 
-Error ResourceFilesystem::init(AllocAlignedCallback allocCallback, void* allocCallbackUserData)
+Error ResourceFilesystem::init()
 {
-	m_pool.init(allocCallback, allocCallbackUserData);
-	StringListRaii paths(&m_pool);
+	ResourceStringList paths;
 	paths.splitString(ConfigSet::getSingleton().getRsrcDataPaths(), ':');
 
-	StringListRaii excludedStrings(&m_pool);
+	ResourceStringList excludedStrings;
 	excludedStrings.splitString(ConfigSet::getSingleton().getRsrcDataPathExcludedStrings(), ':');
 
 	// Workaround the fact that : is used in drives in Windows
 #if ANKI_OS_WINDOWS
-	StringListRaii paths2(&m_pool);
+	ResourceStringList paths2;
 	StringListRaii::Iterator it = paths.getBegin();
 	while(it != paths.getEnd())
 	{
@@ -260,7 +241,7 @@ Error ResourceFilesystem::init(AllocAlignedCallback allocCallback, void* allocCa
 	return Error::kNone;
 }
 
-Error ResourceFilesystem::addNewPath(const CString& filepath, const StringListRaii& excludedStrings)
+Error ResourceFilesystem::addNewPath(const CString& filepath, const ResourceStringList& excludedStrings)
 {
 	ANKI_RESOURCE_LOGV("Adding new resource path: %s", filepath.cstr());
 
@@ -316,7 +297,7 @@ Error ResourceFilesystem::addNewPath(const CString& filepath, const StringListRa
 			const Bool itsADir = info.uncompressed_size == 0;
 			if(!itsADir && !rejectPath(&filename[0]))
 			{
-				path.m_files.pushBackSprintf(m_pool, "%s", &filename[0]);
+				path.m_files.pushBackSprintf("%s", &filename[0]);
 				++fileCount;
 			}
 		} while(unzGoToNextFile(zfile) == UNZ_OK);
@@ -329,15 +310,16 @@ Error ResourceFilesystem::addNewPath(const CString& filepath, const StringListRa
 	{
 		// It's simple directory
 
-		ANKI_CHECK(walkDirectoryTree(filepath, m_pool, [&, this](const CString& fname, Bool isDir) -> Error {
-			if(!isDir && !rejectPath(fname))
-			{
-				path.m_files.pushBackSprintf(m_pool, "%s", fname.cstr());
-				++fileCount;
-			}
+		ANKI_CHECK(walkDirectoryTree(filepath, ResourceMemoryPool::getSingleton(),
+									 [&, this](const CString& fname, Bool isDir) -> Error {
+										 if(!isDir && !rejectPath(fname))
+										 {
+											 path.m_files.pushBackSprintf("%s", fname.cstr());
+											 ++fileCount;
+										 }
 
-			return Error::kNone;
-		}));
+										 return Error::kNone;
+									 }));
 	}
 
 	ANKI_ASSERT(path.m_files.getSize() == fileCount);
@@ -347,8 +329,8 @@ Error ResourceFilesystem::addNewPath(const CString& filepath, const StringListRa
 	}
 	else
 	{
-		path.m_path.sprintf(m_pool, "%s", &filepath[0]);
-		m_paths.emplaceFront(m_pool, std::move(path));
+		path.m_path.sprintf("%s", &filepath[0]);
+		m_paths.emplaceFront(std::move(path));
 
 		ANKI_RESOURCE_LOGI("Added new data path \"%s\" that contains %u files", &filepath[0], fileCount);
 	}
@@ -372,7 +354,7 @@ Error ResourceFilesystem::openFile(const ResourceFilename& filename, ResourceFil
 	if(err)
 	{
 		ANKI_RESOURCE_LOGE("Resource file not found: %s", filename.cstr());
-		deleteInstance(m_pool, rfile);
+		deleteInstance(ResourceMemoryPool::getSingleton(), rfile);
 	}
 	else
 	{
@@ -400,17 +382,17 @@ Error ResourceFilesystem::openFileInternal(const ResourceFilename& filename, Res
 			// Found
 			if(p.m_isArchive)
 			{
-				ZipResourceFile* file = newInstance<ZipResourceFile>(m_pool, &m_pool);
+				ZipResourceFile* file = newInstance<ZipResourceFile>(ResourceMemoryPool::getSingleton());
 				rfile = file;
 
 				ANKI_CHECK(file->open(p.m_path.toCString(), filename));
 			}
 			else
 			{
-				StringRaii newFname(&m_pool);
+				ResourceString newFname;
 				newFname.sprintf("%s/%s", &p.m_path[0], &filename[0]);
 
-				CResourceFile* file = newInstance<CResourceFile>(m_pool, &m_pool);
+				CResourceFile* file = newInstance<CResourceFile>(ResourceMemoryPool::getSingleton());
 				rfile = file;
 				ANKI_CHECK(file->m_file.open(newFname, FileOpenFlag::kRead));
 
@@ -429,7 +411,7 @@ Error ResourceFilesystem::openFileInternal(const ResourceFilename& filename, Res
 	// File not found? On Win/Linux try to find it outside the resource dirs. On Android try the archive
 	if(!rfile)
 	{
-		CResourceFile* file = newInstance<CResourceFile>(m_pool, &m_pool);
+		CResourceFile* file = newInstance<CResourceFile>(ResourceMemoryPool::getSingleton());
 		rfile = file;
 
 		FileOpenFlag openFlags = FileOpenFlag::kRead;

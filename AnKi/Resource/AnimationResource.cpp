@@ -8,21 +8,6 @@
 
 namespace anki {
 
-AnimationResource::AnimationResource(ResourceManager* manager)
-	: ResourceObject(manager)
-{
-}
-
-AnimationResource::~AnimationResource()
-{
-	for(AnimationChannel& ch : m_channels)
-	{
-		ch.destroy(getMemoryPool());
-	}
-
-	m_channels.destroy(getMemoryPool());
-}
-
 Error AnimationResource::load(const ResourceFilename& filename, [[maybe_unused]] Bool async)
 {
 	XmlElement el;
@@ -31,7 +16,7 @@ Error AnimationResource::load(const ResourceFilename& filename, [[maybe_unused]]
 	Second maxTime = kMinSecond;
 
 	// Document
-	XmlDocument doc(&getTempMemoryPool());
+	XmlDocument doc(&ResourceMemoryPool::getSingleton());
 	ANKI_CHECK(openFileParseXml(filename, doc));
 	XmlElement rootel;
 	ANKI_CHECK(doc.getChildElement("animation", rootel));
@@ -55,7 +40,7 @@ Error AnimationResource::load(const ResourceFilename& filename, [[maybe_unused]]
 		ANKI_RESOURCE_LOGE("Didn't found any channels");
 		return Error::kUserData;
 	}
-	m_channels.create(getMemoryPool(), channelCount);
+	m_channels.create(channelCount);
 
 	// For all channels
 	channelCount = 0;
@@ -66,7 +51,7 @@ Error AnimationResource::load(const ResourceFilename& filename, [[maybe_unused]]
 		// <name>
 		CString strtmp;
 		ANKI_CHECK(chEl.getAttributeText("name", strtmp));
-		ch.m_name.create(getMemoryPool(), strtmp);
+		ch.m_name.create(strtmp);
 
 		XmlElement keysEl, keyEl;
 
@@ -79,7 +64,7 @@ Error AnimationResource::load(const ResourceFilename& filename, [[maybe_unused]]
 			U32 count = 0;
 			ANKI_CHECK(keyEl.getSiblingElementsCount(count));
 			++count;
-			ch.m_positions.create(getMemoryPool(), count);
+			ch.m_positions.create(count);
 
 			count = 0;
 			do
@@ -114,7 +99,7 @@ Error AnimationResource::load(const ResourceFilename& filename, [[maybe_unused]]
 			U32 count = 0;
 			ANKI_CHECK(keyEl.getSiblingElementsCount(count));
 			++count;
-			ch.m_rotations.create(getMemoryPool(), count);
+			ch.m_rotations.create(count);
 
 			count = 0;
 			do
@@ -149,7 +134,7 @@ Error AnimationResource::load(const ResourceFilename& filename, [[maybe_unused]]
 			U32 count = 0;
 			ANKI_CHECK(keyEl.getSiblingElementsCount(count));
 			++count;
-			ch.m_scales.create(getMemoryPool(), count);
+			ch.m_scales.create(count);
 
 			count = 0;
 			do
@@ -179,17 +164,17 @@ Error AnimationResource::load(const ResourceFilename& filename, [[maybe_unused]]
 		// Remove identity vectors
 		if(identPosCount == ch.m_positions.getSize())
 		{
-			ch.m_positions.destroy(getMemoryPool());
+			ch.m_positions.destroy();
 		}
 
 		if(identRotCount == ch.m_rotations.getSize())
 		{
-			ch.m_rotations.destroy(getMemoryPool());
+			ch.m_rotations.destroy();
 		}
 
 		if(identScaleCount == ch.m_scales.getSize())
 		{
-			ch.m_scales.destroy(getMemoryPool());
+			ch.m_scales.destroy();
 		}
 
 		// Move to next channel

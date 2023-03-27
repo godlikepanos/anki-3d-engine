@@ -17,8 +17,6 @@ class GrManager;
 class MainRenderer;
 class SceneGraph;
 class ScriptManager;
-class ResourceManager;
-class ResourceFilesystem;
 class UiManager;
 class UiQueueElement;
 class RenderQueue;
@@ -73,11 +71,6 @@ public:
 		return *m_renderer;
 	}
 
-	ResourceManager& getResourceManager()
-	{
-		return *m_resources;
-	}
-
 	ScriptManager& getScriptManager()
 	{
 		return *m_script;
@@ -94,12 +87,10 @@ public:
 	}
 
 private:
-	HeapMemoryPool m_mainPool;
+	HeapMemoryPool m_mainPool; // TODO glob: rm
 
 	// Sybsystems
 	GrManager* m_gr = nullptr;
-	ResourceFilesystem* m_resourceFs = nullptr;
-	ResourceManager* m_resources = nullptr;
 	UiManager* m_ui = nullptr;
 	MainRenderer* m_renderer = nullptr;
 	SceneGraph* m_scene = nullptr;

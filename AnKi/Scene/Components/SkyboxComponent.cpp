@@ -29,7 +29,7 @@ SkyboxComponent::~SkyboxComponent()
 void SkyboxComponent::loadImageResource(CString filename)
 {
 	ImageResourcePtr img;
-	const Error err = getExternalSubsystems(*m_node).m_resourceManager->loadResource(filename, img);
+	const Error err = ResourceManager::getSingleton().loadResource(filename, img);
 	if(err)
 	{
 		ANKI_SCENE_LOGE("Setting skybox image failed. Ignoring error");

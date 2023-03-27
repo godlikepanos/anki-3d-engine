@@ -28,7 +28,7 @@ BodyComponent::~BodyComponent()
 void BodyComponent::loadMeshResource(CString meshFilename)
 {
 	CpuMeshResourcePtr rsrc;
-	const Error err = getExternalSubsystems(*m_node).m_resourceManager->loadResource(meshFilename, rsrc);
+	const Error err = ResourceManager::getSingleton().loadResource(meshFilename, rsrc);
 	if(err)
 	{
 		ANKI_SCENE_LOGE("Failed to load mesh");

@@ -27,12 +27,7 @@ class ResourceObject
 	friend class ResourcePtrDeleter;
 
 public:
-	ResourceObject(ResourceManager* manager);
-
-	virtual ~ResourceObject();
-
-	HeapMemoryPool& getMemoryPool() const;
-	StackMemoryPool& getTempMemoryPool() const;
+	virtual ~ResourceObject() = default;
 
 	void retain() const
 	{
@@ -60,7 +55,7 @@ public:
 	ANKI_INTERNAL void setFilename(const CString& fname)
 	{
 		ANKI_ASSERT(m_fname.isEmpty());
-		m_fname.create(getMemoryPool(), fname);
+		m_fname.create(fname);
 	}
 
 	ANKI_INTERNAL void setUuid(U64 uuid)
@@ -78,22 +73,13 @@ public:
 
 	ANKI_INTERNAL Error openFile(const ResourceFilename& filename, ResourceFilePtr& file);
 
-	ANKI_INTERNAL Error openFileReadAllText(const ResourceFilename& filename, StringRaii& file);
+	ANKI_INTERNAL Error openFileReadAllText(const ResourceFilename& filename, ResourceString& file);
 
 	ANKI_INTERNAL Error openFileParseXml(const ResourceFilename& filename, XmlDocument& xml);
 
-protected:
-	ResourceManager& getManager() const
-	{
-		return *m_manager;
-	}
-
-	ResourceManagerExternalSubsystems& getExternalSubsystems() const;
-
 private:
-	ResourceManager* m_manager;
-	mutable Atomic<I32> m_refcount;
-	String m_fname; ///< Unique resource name.
+	mutable Atomic<I32> m_refcount = {0};
+	ResourceString m_fname; ///< Unique resource name.
 	U64 m_uuid = 0;
 };
 /// @}

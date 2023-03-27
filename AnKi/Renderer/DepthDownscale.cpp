@@ -74,8 +74,8 @@ Error DepthDownscale::initInternal()
 	// Progs
 	if(preferCompute)
 	{
-		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
-			"ShaderBinaries/DepthDownscaleCompute.ankiprogbin", m_prog));
+		ANKI_CHECK(
+			ResourceManager::getSingleton().loadResource("ShaderBinaries/DepthDownscaleCompute.ankiprogbin", m_prog));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 		variantInitInfo.addMutation("WAVE_OPERATIONS", 0);
@@ -86,8 +86,8 @@ Error DepthDownscale::initInternal()
 	}
 	else
 	{
-		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
-			"ShaderBinaries/DepthDownscaleRaster.ankiprogbin", m_prog));
+		ANKI_CHECK(
+			ResourceManager::getSingleton().loadResource("ShaderBinaries/DepthDownscaleRaster.ankiprogbin", m_prog));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 		variantInitInfo.addMutation("REDUCTION_SAMPLER", supportsReductionSampler);

@@ -42,8 +42,6 @@ ANKI_UI_OBJECT_FW(UiImmediateModeBuilder)
 class UiExternalSubsystems
 {
 public:
-	ResourceManager* m_resourceManager = nullptr;
-	ResourceFilesystem* m_resourceFilesystem = nullptr;
 	GrManager* m_grManager = nullptr;
 };
 

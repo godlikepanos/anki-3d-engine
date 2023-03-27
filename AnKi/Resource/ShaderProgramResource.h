@@ -54,7 +54,7 @@ public:
 class ShaderProgramResourceConstant
 {
 public:
-	String m_name;
+	ResourceString m_name;
 	ShaderVariableDataType m_dataType = ShaderVariableDataType::kNone;
 	U32 m_index = kMaxU32;
 };
@@ -183,7 +183,7 @@ private:
 class ShaderProgramResource : public ResourceObject
 {
 public:
-	ShaderProgramResource(ResourceManager* manager);
+	ShaderProgramResource();
 
 	~ShaderProgramResource();
 
@@ -256,8 +256,8 @@ private:
 
 	ShaderProgramBinaryWrapper m_binary;
 
-	DynamicArray<Const> m_consts;
-	DynamicArray<Mutator> m_mutators;
+	ResourceDynamicArray<Const> m_consts;
+	ResourceDynamicArray<Mutator> m_mutators;
 
 	class ConstMapping
 	{
@@ -266,9 +266,9 @@ private:
 		U32 m_constsIdx = 0; ///< Index in m_consts
 	};
 
-	DynamicArray<ConstMapping> m_constBinaryMapping;
+	ResourceDynamicArray<ConstMapping> m_constBinaryMapping;
 
-	mutable HashMap<U64, ShaderProgramResourceVariant*> m_variants;
+	mutable ResourceHashMap<U64, ShaderProgramResourceVariant*> m_variants;
 	mutable RWMutex m_mtx;
 
 	ShaderTypeBit m_shaderStages = ShaderTypeBit::kNone;

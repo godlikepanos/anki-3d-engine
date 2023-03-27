@@ -69,8 +69,8 @@ Error TraditionalDeferredLightShading::init()
 {
 	// Init progs
 	{
-		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
-			"ShaderBinaries/TraditionalDeferredShading.ankiprogbin", m_lightProg));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/TraditionalDeferredShading.ankiprogbin",
+																m_lightProg));
 
 		for(U32 specular = 0; specular <= 1; ++specular)
 		{
@@ -106,7 +106,7 @@ Error TraditionalDeferredLightShading::init()
 
 	// Skybox
 	{
-		ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource(
 			"ShaderBinaries/TraditionalDeferredShadingSkybox.ankiprogbin", m_skyboxProg));
 
 		for(U32 i = 0; i < m_skyboxGrProgs.getSize(); ++i)

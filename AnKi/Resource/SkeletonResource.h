@@ -26,7 +26,7 @@ public:
 
 	~Bone() = default;
 
-	const String& getName() const
+	CString getName() const
 	{
 		return m_name;
 	}
@@ -57,7 +57,7 @@ public:
 	}
 
 private:
-	String m_name; ///< The name of the bone
+	ResourceString m_name; ///< The name of the bone
 
 	Mat3x4 m_transform; ///< See the class notes.
 	Mat3x4 m_vertTrf;
@@ -67,11 +67,6 @@ private:
 	Bone* m_parent = nullptr;
 	Array<Bone*, kMaxChildrenPerBone> m_children = {};
 	U8 m_childrenCount = 0;
-
-	void destroy(HeapMemoryPool& pool)
-	{
-		m_name.destroy(pool);
-	}
 };
 
 /// It contains the bones with their position and hierarchy
@@ -94,12 +89,9 @@ private:
 class SkeletonResource : public ResourceObject
 {
 public:
-	SkeletonResource(ResourceManager* manager)
-		: ResourceObject(manager)
-	{
-	}
+	SkeletonResource() = default;
 
-	~SkeletonResource();
+	~SkeletonResource() = default;
 
 	/// Load file
 	Error load(const ResourceFilename& filename, Bool async);
@@ -129,7 +121,7 @@ public:
 	}
 
 private:
-	DynamicArray<Bone> m_bones;
+	ResourceDynamicArray<Bone> m_bones;
 	U32 m_rootBoneIdx = kMaxU32;
 };
 /// @}

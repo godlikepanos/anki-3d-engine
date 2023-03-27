@@ -18,7 +18,7 @@ AnimationEvent::AnimationEvent(EventManager* manager)
 Error AnimationEvent::init(CString animationFilename, CString channelName, SceneNode* movableSceneNode)
 {
 	ANKI_ASSERT(movableSceneNode);
-	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(animationFilename, m_anim));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource(animationFilename, m_anim));
 
 	m_channelIndex = 0;
 	for(const AnimationChannel& channel : m_anim->getChannels())

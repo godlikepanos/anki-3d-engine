@@ -109,7 +109,7 @@ public:
 	}
 
 protected:
-	String m_name;
+	ResourceString m_name;
 	U32 m_offsetInLocalUniforms = kMaxU32;
 	U32 m_opaqueBinding = kMaxU32; ///< Binding for textures and samplers.
 	ShaderVariableDataType m_dataType = ShaderVariableDataType::kNone;
@@ -217,7 +217,7 @@ private:
 class MaterialResource : public ResourceObject
 {
 public:
-	MaterialResource(ResourceManager* manager);
+	MaterialResource();
 
 	~MaterialResource();
 
@@ -270,16 +270,16 @@ private:
 
 	class Program;
 
-	DynamicArray<Program> m_programs;
+	ResourceDynamicArray<Program> m_programs;
 
 	Array<U8, U(RenderingTechnique::kCount)> m_techniqueToProgram;
 	RenderingTechniqueBit m_techniquesMask = RenderingTechniqueBit::kNone;
 
-	DynamicArray<MaterialVariable> m_vars;
+	ResourceDynamicArray<MaterialVariable> m_vars;
 
 	Bool m_supportsSkinning = false;
 
-	DynamicArray<TexturePtr> m_textures;
+	ResourceDynamicArray<TexturePtr> m_textures;
 
 	void* m_prefilledLocalUniforms = nullptr;
 	U32 m_localUniformsSize = 0;

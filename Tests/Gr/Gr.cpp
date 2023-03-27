@@ -248,7 +248,7 @@ static Input* input = nullptr;
 	RebarStagingGpuMemoryPool::allocateSingleton().init(g_gr); \
 	stagingMem = &RebarStagingGpuMemoryPool::getSingleton(); \
 	TransferGpuAllocator* transfAlloc = new TransferGpuAllocator(); \
-	ANKI_TEST_EXPECT_NO_ERR(transfAlloc->init(128_MB, g_gr, &g_gr->getMemoryPool())); \
+	ANKI_TEST_EXPECT_NO_ERR(transfAlloc->init(128_MB, g_gr)); \
 	while(true) \
 	{
 

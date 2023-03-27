@@ -9,20 +9,9 @@
 
 namespace anki {
 
-ImageAtlasResource::ImageAtlasResource(ResourceManager* manager)
-	: ResourceObject(manager)
-{
-}
-
-ImageAtlasResource::~ImageAtlasResource()
-{
-	m_subTexes.destroy(getMemoryPool());
-	m_subTexNames.destroy(getMemoryPool());
-}
-
 Error ImageAtlasResource::load(const ResourceFilename& filename, Bool async)
 {
-	XmlDocument doc(&getTempMemoryPool());
+	XmlDocument doc(&ResourceMemoryPool::getSingleton());
 	ANKI_CHECK(openFileParseXml(filename, doc));
 
 	XmlElement rootel, el;
@@ -38,7 +27,7 @@ Error ImageAtlasResource::load(const ResourceFilename& filename, Bool async)
 	ANKI_CHECK(rootel.getChildElement("image", el));
 	CString texFname;
 	ANKI_CHECK(el.getText(texFname));
-	ANKI_CHECK(getManager().loadResource<ImageResource>(texFname, m_image, async));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource<ImageResource>(texFname, m_image, async));
 
 	m_size[0] = m_image->getWidth();
 	m_size[1] = m_image->getHeight();
@@ -85,8 +74,8 @@ Error ImageAtlasResource::load(const ResourceFilename& filename, Bool async)
 	} while(subTexEl);
 
 	// Allocate
-	m_subTexNames.create(getMemoryPool(), namesSize);
-	m_subTexes.create(getMemoryPool(), subTexesCount);
+	m_subTexNames.create(namesSize);
+	m_subTexes.create(subTexesCount);
 
 	// Iterate again and populate
 	subTexesCount = 0;

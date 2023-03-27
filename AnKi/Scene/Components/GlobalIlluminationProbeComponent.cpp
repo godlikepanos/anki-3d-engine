@@ -29,8 +29,8 @@ GlobalIlluminationProbeComponent::GlobalIlluminationProbeComponent(SceneNode* no
 	m_gpuSceneIndex = node->getSceneGraph().getAllGpuSceneContiguousArrays().allocate(
 		GpuSceneContiguousArrayType::kGlobalIlluminationProbes);
 
-	const Error err = getExternalSubsystems(*node).m_resourceManager->loadResource(
-		"ShaderBinaries/ClearTextureCompute.ankiprogbin", m_clearTextureProg);
+	const Error err = ResourceManager::getSingleton().loadResource("ShaderBinaries/ClearTextureCompute.ankiprogbin",
+																   m_clearTextureProg);
 	if(err)
 	{
 		ANKI_LOGF("Failed to load shader");

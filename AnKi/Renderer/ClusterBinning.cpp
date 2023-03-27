@@ -31,8 +31,7 @@ Error ClusterBinning::init()
 {
 	ANKI_R_LOGV("Initializing clusterer binning");
 
-	ANKI_CHECK(
-		getExternalSubsystems().m_resourceManager->loadResource("ShaderBinaries/ClusterBinning.ankiprogbin", m_prog));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/ClusterBinning.ankiprogbin", m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addConstant("kTileSize", m_r->getTileSize());

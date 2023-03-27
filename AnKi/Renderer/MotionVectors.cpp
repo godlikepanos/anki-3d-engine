@@ -30,10 +30,10 @@ Error MotionVectors::initInternal()
 	ANKI_R_LOGV("Initializing motion vectors");
 
 	// Prog
-	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
-		(ConfigSet::getSingleton().getRPreferCompute()) ? "ShaderBinaries/MotionVectorsCompute.ankiprogbin"
-														: "ShaderBinaries/MotionVectorsRaster.ankiprogbin",
-		m_prog));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource((ConfigSet::getSingleton().getRPreferCompute())
+																? "ShaderBinaries/MotionVectorsCompute.ankiprogbin"
+																: "ShaderBinaries/MotionVectorsRaster.ankiprogbin",
+															m_prog));
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addConstant("kFramebufferSize",
 								UVec2(m_r->getInternalResolution().x(), m_r->getInternalResolution().y()));

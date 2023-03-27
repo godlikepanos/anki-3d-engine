@@ -90,7 +90,24 @@ public:
 	Error readAllText(BaseMemoryPool& pool, String& out);
 
 	/// Read all the contents of a text file. If the file is not rewined it will probably fail.
-	Error readAllText(StringRaii& out);
+	template<typename TMemPool = MemoryPoolPtrWrapper<BaseMemoryPool>> // TODO glob: maybe change that
+	Error readAllText(BaseStringRaii<TMemPool>& out)
+	{
+		Error err = Error::kNone;
+		PtrSize size = getSize();
+
+		if(size != 0)
+		{
+			out.create('?', size);
+			err = read(&out[0], size);
+		}
+		else
+		{
+			err = Error::kFunctionFailed;
+		}
+
+		return err;
+	}
 
 	/// Read 32bit unsigned integer. Set the endianness if the file's endianness is different from the machine's.
 	Error readU32(U32& u);

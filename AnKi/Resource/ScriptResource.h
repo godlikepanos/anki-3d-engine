@@ -16,12 +16,9 @@ namespace anki {
 class ScriptResource : public ResourceObject
 {
 public:
-	ScriptResource(ResourceManager* manager)
-		: ResourceObject(manager)
-	{
-	}
+	ScriptResource() = default;
 
-	~ScriptResource();
+	~ScriptResource() = default;
 
 	Error load(const ResourceFilename& filename, Bool async);
 
@@ -31,7 +28,7 @@ public:
 	}
 
 private:
-	String m_source;
+	ResourceString m_source;
 };
 /// @}
 

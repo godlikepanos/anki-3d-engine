@@ -38,8 +38,7 @@ Error FinalComposite::initInternal()
 	m_fbDescr.bake();
 
 	// Progs
-	ANKI_CHECK(
-		getExternalSubsystems().m_resourceManager->loadResource("ShaderBinaries/FinalComposite.ankiprogbin", m_prog));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/FinalComposite.ankiprogbin", m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addMutation("FILM_GRAIN", (ConfigSet::getSingleton().getRFilmGrainStrength() > 0.0) ? 1 : 0);
@@ -56,8 +55,8 @@ Error FinalComposite::initInternal()
 		m_grProgs[dbg] = variant->getProgram();
 	}
 
-	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(
-		"ShaderBinaries/VisualizeRenderTarget.ankiprogbin", m_defaultVisualizeRenderTargetProg));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/VisualizeRenderTarget.ankiprogbin",
+															m_defaultVisualizeRenderTargetProg));
 	const ShaderProgramResourceVariant* variant;
 	m_defaultVisualizeRenderTargetProg->getOrCreateVariant(variant);
 	m_defaultVisualizeRenderTargetGrProg = variant->getProgram();
@@ -79,7 +78,7 @@ Error FinalComposite::init()
 Error FinalComposite::loadColorGradingTextureImage(CString filename)
 {
 	m_lut.reset(nullptr);
-	ANKI_CHECK(getExternalSubsystems().m_resourceManager->loadResource(filename, m_lut));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource(filename, m_lut));
 	ANKI_ASSERT(m_lut->getWidth() == kLutSize);
 	ANKI_ASSERT(m_lut->getHeight() == kLutSize);
 	ANKI_ASSERT(m_lut->getDepth() == kLutSize);

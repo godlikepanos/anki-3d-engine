@@ -28,7 +28,7 @@ void ScriptComponent::loadScriptResource(CString fname)
 {
 	// Load
 	ScriptResourcePtr rsrc;
-	Error err = getExternalSubsystems(*m_node).m_resourceManager->loadResource(fname, rsrc);
+	Error err = ResourceManager::getSingleton().loadResource(fname, rsrc);
 
 	// Create the env
 	ScriptEnvironment* newEnv = nullptr;
