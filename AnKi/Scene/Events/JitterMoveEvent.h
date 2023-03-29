@@ -17,12 +17,6 @@ namespace anki {
 class JitterMoveEvent : public Event
 {
 public:
-	/// Constructor
-	JitterMoveEvent(EventManager* manager)
-		: Event(manager)
-	{
-	}
-
 	Error init(Second startTime, Second duration, SceneNode* movableSceneNode);
 
 	/// Implements Event::update

@@ -14,14 +14,13 @@ namespace anki {
 
 ScriptComponent::ScriptComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
-	, m_node(node)
 {
 	ANKI_ASSERT(node);
 }
 
 ScriptComponent::~ScriptComponent()
 {
-	deleteInstance(m_node->getMemoryPool(), m_env);
+	deleteInstance(SceneMemoryPool::getSingleton(), m_env);
 }
 
 void ScriptComponent::loadScriptResource(CString fname)
@@ -34,8 +33,7 @@ void ScriptComponent::loadScriptResource(CString fname)
 	ScriptEnvironment* newEnv = nullptr;
 	if(!err)
 	{
-		newEnv = newInstance<ScriptEnvironment>(m_node->getMemoryPool());
-		err = newEnv->init(getExternalSubsystems(*m_node).m_scriptManager);
+		newEnv = newInstance<ScriptEnvironment>(SceneMemoryPool::getSingleton());
 	}
 
 	// Exec the script
@@ -48,19 +46,18 @@ void ScriptComponent::loadScriptResource(CString fname)
 	if(err)
 	{
 		ANKI_SCENE_LOGE("Failed to load the script");
-		deleteInstance(m_node->getMemoryPool(), newEnv);
+		deleteInstance(SceneMemoryPool::getSingleton(), newEnv);
 	}
 	else
 	{
 		m_script = std::move(rsrc);
-		deleteInstance(m_node->getMemoryPool(), m_env);
+		deleteInstance(SceneMemoryPool::getSingleton(), m_env);
 		m_env = newEnv;
 	}
 }
 
 Error ScriptComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	ANKI_ASSERT(info.m_node == m_node);
 	updated = false;
 	if(m_env == nullptr)
 	{

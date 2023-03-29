@@ -111,9 +111,4 @@ const SceneComponentRtti& SceneComponent::getClassRtti(U8 classId)
 	return *g_rttis[classId];
 }
 
-SceneGraphExternalSubsystems& SceneComponent::getExternalSubsystems(const SceneNode& node)
-{
-	return node.getExternalSubsystems();
-}
-
 } // namespace anki

@@ -13,16 +13,16 @@ FogDensityComponent::FogDensityComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
 	, m_spatial(this)
 {
-	m_gpuSceneIndex = node->getSceneGraph().getAllGpuSceneContiguousArrays().allocate(
+	m_gpuSceneIndex = SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().allocate(
 		GpuSceneContiguousArrayType::kFogDensityVolumes);
 }
 
-void FogDensityComponent::onDestroy(SceneNode& node)
+FogDensityComponent ::~FogDensityComponent()
 {
-	m_spatial.removeFromOctree(node.getSceneGraph().getOctree());
+	m_spatial.removeFromOctree(SceneGraph::getSingleton().getOctree());
 
-	node.getSceneGraph().getAllGpuSceneContiguousArrays().deferredFree(GpuSceneContiguousArrayType::kFogDensityVolumes,
-																	   m_gpuSceneIndex);
+	SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().deferredFree(
+		GpuSceneContiguousArrayType::kFogDensityVolumes, m_gpuSceneIndex);
 }
 
 Error FogDensityComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
@@ -62,12 +62,12 @@ Error FogDensityComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuVolume.m_density = m_density;
 
 		const PtrSize offset = m_gpuSceneIndex * sizeof(GpuSceneFogDensityVolume)
-							   + info.m_node->getSceneGraph().getAllGpuSceneContiguousArrays().getArrayBase(
+							   + SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().getArrayBase(
 								   GpuSceneContiguousArrayType::kFogDensityVolumes);
 		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, offset, sizeof(gpuVolume), &gpuVolume);
 	}
 
-	const Bool spatialUpdated = m_spatial.update(info.m_node->getSceneGraph().getOctree());
+	const Bool spatialUpdated = m_spatial.update(SceneGraph::getSingleton().getOctree());
 	updated = updated || spatialUpdated;
 
 	return Error::kNone;

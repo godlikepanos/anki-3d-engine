@@ -529,7 +529,7 @@ void RtShadows::runDenoise(const RenderingContext& ctx, RenderPassWorkContext& r
 
 	RtShadowsDenoiseUniforms unis;
 	unis.invViewProjMat = ctx.m_matrices.m_invertedViewProjectionJitter;
-	unis.time = F32(*getExternalSubsystems().m_globTimestamp);
+	unis.time = F32(GlobalFrameIndex::getSingleton().m_value);
 	cmdb->setPushConstants(&unis, sizeof(unis));
 
 	dispatchPPCompute(cmdb, 8, 8, m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2);

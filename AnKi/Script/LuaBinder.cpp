@@ -35,6 +35,11 @@ static int luaPanic(lua_State* l)
 
 LuaBinder::LuaBinder()
 {
+	m_l = lua_newstate(luaAllocCallback, this);
+	luaL_openlibs(m_l);
+	lua_atpanic(m_l, &luaPanic);
+
+	wrapModules(m_l);
 }
 
 LuaBinder::~LuaBinder()
@@ -43,37 +48,20 @@ LuaBinder::~LuaBinder()
 	{
 		lua_close(m_l);
 	}
-	m_userDataSigToDataInfo.destroy(*m_pool);
 }
 
-Error LuaBinder::init(HeapMemoryPool* pool, LuaBinderOtherSystems* otherSystems)
-{
-	ANKI_ASSERT(otherSystems && pool);
-	m_otherSystems = otherSystems;
-	m_pool = pool;
-
-	m_l = lua_newstate(luaAllocCallback, this);
-	luaL_openlibs(m_l);
-	lua_atpanic(m_l, &luaPanic);
-
-	wrapModules(m_l);
-
-	return Error::kNone;
-}
-
-void* LuaBinder::luaAllocCallback(void* userData, void* ptr, PtrSize osize, PtrSize nsize)
+void* LuaBinder::luaAllocCallback([[maybe_unused]] void* userData, void* ptr, PtrSize osize, PtrSize nsize)
 {
 	ANKI_ASSERT(userData);
 
 #if 1
-	LuaBinder& binder = *reinterpret_cast<LuaBinder*>(userData);
 	void* out = nullptr;
 
 	if(nsize == 0)
 	{
 		if(ptr != nullptr)
 		{
-			binder.m_pool->free(ptr);
+			ScriptMemoryPool::getSingleton().free(ptr);
 		}
 	}
 	else
@@ -82,7 +70,7 @@ void* LuaBinder::luaAllocCallback(void* userData, void* ptr, PtrSize osize, PtrS
 
 		if(ptr == nullptr)
 		{
-			out = binder.m_pool->allocate(nsize, 16);
+			out = ScriptMemoryPool::getSingleton().allocate(nsize, 16);
 		}
 		else if(nsize <= osize)
 		{
@@ -92,9 +80,9 @@ void* LuaBinder::luaAllocCallback(void* userData, void* ptr, PtrSize osize, PtrS
 		{
 			// realloc
 
-			out = binder.m_pool->allocate(nsize, 16);
+			out = ScriptMemoryPool::getSingleton().allocate(nsize, 16);
 			memcpy(out, ptr, osize);
-			binder.m_pool->free(ptr);
+			ScriptMemoryPool::getSingleton().free(ptr);
 		}
 	}
 #else
@@ -146,7 +134,7 @@ void LuaBinder::createClass(lua_State* l, const LuaUserDataTypeInfo* typeInfo)
 	lua_getallocf(l, &ud);
 	ANKI_ASSERT(ud);
 	LuaBinder& binder = *static_cast<LuaBinder*>(ud);
-	binder.m_userDataSigToDataInfo.emplace(*binder.m_pool, typeInfo->m_signature, typeInfo);
+	binder.m_userDataSigToDataInfo.emplace(typeInfo->m_signature, typeInfo);
 }
 
 void LuaBinder::pushLuaCFuncMethod(lua_State* l, const char* name, lua_CFunction luafunc)
@@ -251,26 +239,6 @@ Error LuaBinder::checkArgsCount(lua_State* l, I argsCount)
 	}
 
 	return Error::kNone;
-}
-
-void* LuaBinder::luaAlloc(lua_State* l, size_t size, U32 alignment)
-{
-	void* ud;
-	lua_getallocf(l, &ud);
-	ANKI_ASSERT(ud);
-	LuaBinder* binder = static_cast<LuaBinder*>(ud);
-
-	return binder->m_pool->allocate(size, alignment);
-}
-
-void LuaBinder::luaFree(lua_State* l, void* ptr)
-{
-	void* ud;
-	lua_getallocf(l, &ud);
-	ANKI_ASSERT(ud);
-	LuaBinder* binder = static_cast<LuaBinder*>(ud);
-
-	binder->m_pool->free(ptr);
 }
 
 void LuaBinder::serializeGlobals(lua_State* l, LuaBinderSerializeGlobalsCallback& callback)

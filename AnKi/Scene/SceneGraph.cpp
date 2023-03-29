@@ -45,22 +45,21 @@ SceneGraph::~SceneGraph()
 
 	if(m_octree)
 	{
-		deleteInstance(m_pool, m_octree);
+		deleteInstance(SceneMemoryPool::getSingleton(), m_octree);
 	}
 
 	m_gpuSceneAllocators.destroy();
+
+	SceneMemoryPool::freeSingleton();
 }
 
-Error SceneGraph::init(const SceneGraphInitInfo& initInfo)
+Error SceneGraph::init(AllocAlignedCallback allocCallback, void* allocCallbackData)
 {
-	m_subsystems = initInfo;
+	SceneMemoryPool::allocateSingleton(allocCallback, allocCallbackData);
 
-	m_pool.init(initInfo.m_allocCallback, initInfo.m_allocCallbackData);
-	m_framePool.init(initInfo.m_allocCallback, initInfo.m_allocCallbackData, 1 * 1024 * 1024);
+	m_framePool.init(allocCallback, allocCallbackData, 1 * 1024 * 1024);
 
-	ANKI_CHECK(m_events.init(this));
-
-	m_octree = newInstance<Octree>(m_pool, &m_pool);
+	m_octree = newInstance<Octree>(SceneMemoryPool::getSingleton());
 	m_octree->init(m_sceneMin, m_sceneMax, ConfigSet::getSingleton().getSceneOctreeMaxDepth());
 
 	// Init the default main camera
@@ -69,7 +68,7 @@ Error SceneGraph::init(const SceneGraphInitInfo& initInfo)
 	camc->setPerspective(0.1f, 1000.0f, toRad(60.0f), (1080.0f / 1920.0f) * toRad(60.0f));
 	m_mainCam = m_defaultMainCam;
 
-	m_gpuSceneAllocators.init(this);
+	m_gpuSceneAllocators.init();
 
 	return Error::kNone;
 }
@@ -87,7 +86,7 @@ Error SceneGraph::registerNode(SceneNode* node)
 			return Error::kUserData;
 		}
 
-		m_nodesDict.emplace(m_pool, node->getName(), node);
+		m_nodesDict.emplace(node->getName(), node);
 	}
 
 	// Add to vector
@@ -113,7 +112,7 @@ void SceneGraph::unregisterNode(SceneNode* node)
 	{
 		auto it = m_nodesDict.find(node->getName());
 		ANKI_ASSERT(it != m_nodesDict.getEnd());
-		m_nodesDict.erase(m_pool, it);
+		m_nodesDict.erase(it);
 	}
 }
 
@@ -147,7 +146,7 @@ void SceneGraph::deleteNodesMarkedForDeletion()
 			{
 				// Delete node
 				unregisterNode(&node);
-				deleteInstance(m_pool, &node);
+				deleteInstance(SceneMemoryPool::getSingleton(), &node);
 				m_objectsMarkedForDeletionCount.fetchSub(1);
 				found = true;
 				break;
@@ -166,9 +165,6 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 	m_gpuSceneAllocators.endFrame();
 
 	m_stats.m_updateTime = HighRezTimer::getCurrentTime();
-
-	m_timestamp = *m_subsystems.m_globalTimestamp;
-	ANKI_ASSERT(m_timestamp > 0);
 
 	// Reset the framepool
 	m_framePool.reset();
@@ -252,7 +248,7 @@ Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 		if(updated)
 		{
 			ANKI_TRACE_INC_COUNTER(SceneComponentUpdated, 1);
-			comp.setTimestamp(node.getSceneGraph().m_timestamp);
+			comp.setTimestamp(GlobalFrameIndex::getSingleton().m_value);
 			atLeastOneComponentUpdated = true;
 		}
 	});
@@ -270,7 +266,7 @@ Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 	{
 		if(atLeastOneComponentUpdated)
 		{
-			node.setComponentMaxTimestamp(node.getSceneGraph().m_timestamp);
+			node.setComponentMaxTimestamp(GlobalFrameIndex::getSingleton().m_value);
 		}
 		else
 		{

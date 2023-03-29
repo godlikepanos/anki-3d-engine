@@ -49,9 +49,9 @@ private:
 	SceneNode* m_node;
 	PhysicsCollisionShapePtr m_shape;
 	PhysicsTriggerPtr m_trigger;
-	DynamicArray<BodyComponent*> m_bodiesEnter;
-	DynamicArray<BodyComponent*> m_bodiesInside;
-	DynamicArray<BodyComponent*> m_bodiesExit;
+	SceneDynamicArray<BodyComponent*> m_bodiesEnter;
+	SceneDynamicArray<BodyComponent*> m_bodiesInside;
+	SceneDynamicArray<BodyComponent*> m_bodiesExit;
 	MyPhysicsTriggerProcessContactCallback* m_callbacks = nullptr;
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated);

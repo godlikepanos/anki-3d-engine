@@ -46,7 +46,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 	constexpr F32 MOUSE_SENSITIVITY = 5.0f;
 	quit = false;
 
-	SceneGraph& scene = getSceneGraph();
+	SceneGraph& scene = SceneGraph::getSingleton();
 	Renderer& renderer = getMainRenderer().getOffscreenRenderer();
 	Input& in = Input::getSingleton();
 

@@ -12,14 +12,13 @@ namespace anki {
 
 LensFlareComponent::LensFlareComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
-	, m_node(node)
 	, m_spatial(this)
 {
 }
 
 LensFlareComponent::~LensFlareComponent()
 {
-	m_spatial.removeFromOctree(m_node->getSceneGraph().getOctree());
+	m_spatial.removeFromOctree(SceneGraph::getSingleton().getOctree());
 }
 
 void LensFlareComponent::loadImageResource(CString filename)
@@ -49,15 +48,15 @@ Error LensFlareComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		m_spatial.setBoundingShape(aabb);
 	}
 
-	const Bool spatialUpdated = m_spatial.update(info.m_node->getSceneGraph().getOctree());
+	const Bool spatialUpdated = m_spatial.update(SceneGraph::getSingleton().getOctree());
 	updated = updated || spatialUpdated;
 
 	return Error::kNone;
 }
 
-void LensFlareComponent::onDestroy(SceneNode& node)
+void LensFlareComponent::onDestroy([[maybe_unused]] SceneNode& node)
 {
-	m_spatial.removeFromOctree(node.getSceneGraph().getOctree());
+	m_spatial.removeFromOctree(SceneGraph::getSingleton().getOctree());
 }
 
 } // end namespace anki

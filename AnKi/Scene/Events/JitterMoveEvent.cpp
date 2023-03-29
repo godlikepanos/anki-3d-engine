@@ -13,7 +13,7 @@ Error JitterMoveEvent::init(Second startTime, Second duration, SceneNode* node)
 {
 	ANKI_ASSERT(node);
 	Event::init(startTime, duration);
-	m_associatedNodes.emplaceBack(getMemoryPool(), node);
+	m_associatedNodes.emplaceBack(node);
 	m_originalPos = node->getWorldTransform().getOrigin();
 
 	return Error::kNone;

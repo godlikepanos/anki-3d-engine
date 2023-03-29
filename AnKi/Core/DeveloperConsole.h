@@ -23,7 +23,7 @@ public:
 
 	~DeveloperConsole();
 
-	Error init(ScriptManager* scriptManager);
+	Error init();
 
 	void build(CanvasPtr ctx) override;
 

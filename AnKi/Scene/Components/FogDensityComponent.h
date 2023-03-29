@@ -26,6 +26,8 @@ public:
 
 	FogDensityComponent(SceneNode* node);
 
+	~FogDensityComponent();
+
 	void setBoxVolumeSize(Vec3 sizeXYZ)
 	{
 		sizeXYZ = sizeXYZ.max(Vec3(kMinShapeSize));
@@ -114,8 +116,6 @@ private:
 	Bool m_dirty = true;
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated);
-
-	void onDestroy(SceneNode& node);
 };
 
 } // end namespace anki

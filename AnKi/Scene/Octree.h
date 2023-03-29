@@ -40,10 +40,7 @@ class Octree
 	friend class OctreePlaceable;
 
 public:
-	Octree(HeapMemoryPool* pool)
-		: m_pool(pool)
-	{
-	}
+	Octree() = default;
 
 	Octree(const Octree&) = delete; // Non-copyable
 
@@ -198,7 +195,6 @@ private:
 	};
 	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS_FRIEND(LeafMask)
 
-	HeapMemoryPool* m_pool;
 	U32 m_maxDepth = 0;
 	Vec3 m_sceneAabbMin = Vec3(0.0f);
 	Vec3 m_sceneAabbMax = Vec3(0.0f);
@@ -217,38 +213,38 @@ private:
 
 	Leaf* newLeaf()
 	{
-		return m_leafAlloc.newInstance(*m_pool);
+		return m_leafAlloc.newInstance(SceneMemoryPool::getSingleton());
 	}
 
 	void releaseLeaf(Leaf* leaf)
 	{
-		m_leafAlloc.deleteInstance(*m_pool, leaf);
+		m_leafAlloc.deleteInstance(SceneMemoryPool::getSingleton(), leaf);
 	}
 
 	PlaceableNode* newPlaceableNode(OctreePlaceable* placeable)
 	{
 		ANKI_ASSERT(placeable);
-		PlaceableNode* out = m_placeableNodeAlloc.newInstance(*m_pool);
+		PlaceableNode* out = m_placeableNodeAlloc.newInstance(SceneMemoryPool::getSingleton());
 		out->m_placeable = placeable;
 		return out;
 	}
 
 	void releasePlaceableNode(PlaceableNode* placeable)
 	{
-		m_placeableNodeAlloc.deleteInstance(*m_pool, placeable);
+		m_placeableNodeAlloc.deleteInstance(SceneMemoryPool::getSingleton(), placeable);
 	}
 
 	LeafNode* newLeafNode(Leaf* leaf)
 	{
 		ANKI_ASSERT(leaf);
-		LeafNode* out = m_leafNodeAlloc.newInstance(*m_pool);
+		LeafNode* out = m_leafNodeAlloc.newInstance(SceneMemoryPool::getSingleton());
 		out->m_leaf = leaf;
 		return out;
 	}
 
 	void releaseLeafNode(LeafNode* node)
 	{
-		m_leafNodeAlloc.deleteInstance(*m_pool, node);
+		m_leafNodeAlloc.deleteInstance(SceneMemoryPool::getSingleton(), node);
 	}
 
 	void placeRecursive(const Aabb& volume, OctreePlaceable* placeable, Leaf* parent, U32 depth);

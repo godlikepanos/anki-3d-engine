@@ -32,7 +32,6 @@ public:
 	}
 
 private:
-	SceneNode* m_node;
 	ScriptResourcePtr m_script;
 	ScriptEnvironment* m_env = nullptr;
 

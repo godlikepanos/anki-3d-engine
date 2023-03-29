@@ -133,8 +133,6 @@ private:
 	}
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated);
-
-	void onDestroy(SceneNode& node);
 };
 /// @}
 

@@ -9,15 +9,15 @@
 
 namespace anki {
 
-Error UiComponent::updateReal(SceneComponentUpdateInfo& info, Bool& updated)
+UiComponent ::~UiComponent()
 {
-	updated = m_spatial.update(info.m_node->getSceneGraph().getOctree());
-	return Error::kNone;
+	m_spatial.removeFromOctree(SceneGraph::getSingleton().getOctree());
 }
 
-void UiComponent::onDestroy(SceneNode& node)
+Error UiComponent::updateReal([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated)
 {
-	m_spatial.removeFromOctree(node.getSceneGraph().getOctree());
+	updated = m_spatial.update(SceneGraph::getSingleton().getOctree());
+	return Error::kNone;
 }
 
 } // end namespace anki

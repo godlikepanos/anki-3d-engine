@@ -21,31 +21,16 @@ public:
 	EventManager();
 	~EventManager();
 
-	Error init(SceneGraph* scene);
-
-	SceneGraph& getSceneGraph()
-	{
-		return *m_scene;
-	}
-
-	const SceneGraph& getSceneGraph() const
-	{
-		return *m_scene;
-	}
-
-	HeapMemoryPool& getMemoryPool() const;
-	StackMemoryPool& getFrameMemoryPool() const;
-
 	/// Create a new event
 	/// @note It's thread-safe against itself.
 	template<typename T, typename... Args>
 	Error newEvent(T*& event, Args... args)
 	{
-		event = newInstance<T>(getMemoryPool(), this);
+		event = newInstance<T>(SceneMemoryPool::getSingleton());
 		Error err = event->init(std::forward<Args>(args)...);
 		if(err)
 		{
-			deleteInstance(getMemoryPool(), event);
+			deleteInstance(SceneMemoryPool::getSingleton(), event);
 		}
 		else
 		{
@@ -65,8 +50,6 @@ public:
 	void markEventForDeletion(Event* event);
 
 private:
-	SceneGraph* m_scene = nullptr;
-
 	IntrusiveList<Event> m_events;
 	IntrusiveList<Event> m_eventsMarkedForDeletion;
 	Mutex m_mtx;

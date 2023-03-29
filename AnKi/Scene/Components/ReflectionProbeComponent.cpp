@@ -19,7 +19,7 @@ ReflectionProbeComponent::ReflectionProbeComponent(SceneNode* node)
 
 	for(U32 i = 0; i < 6; ++i)
 	{
-		m_frustums[i].init(FrustumType::kPerspective, &node->getMemoryPool());
+		m_frustums[i].init(FrustumType::kPerspective);
 		m_frustums[i].setPerspective(kClusterObjectFrustumNearPlane, 100.0f, kPi / 2.0f, kPi / 2.0f);
 		m_frustums[i].setWorldTransform(
 			Transform(m_worldPos.xyz0(), Frustum::getOmnidirectionalFrustumRotations()[i], 1.0f));
@@ -27,12 +27,16 @@ ReflectionProbeComponent::ReflectionProbeComponent(SceneNode* node)
 		m_frustums[i].update();
 	}
 
-	m_gpuSceneIndex =
-		node->getSceneGraph().getAllGpuSceneContiguousArrays().allocate(GpuSceneContiguousArrayType::kReflectionProbes);
+	m_gpuSceneIndex = SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().allocate(
+		GpuSceneContiguousArrayType::kReflectionProbes);
 }
 
 ReflectionProbeComponent::~ReflectionProbeComponent()
 {
+	m_spatial.removeFromOctree(SceneGraph::getSingleton().getOctree());
+
+	SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().deferredFree(
+		GpuSceneContiguousArrayType::kReflectionProbes, m_gpuSceneIndex);
 }
 
 Error ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
@@ -102,13 +106,13 @@ Error ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 		gpuProbe.m_aabbMax = aabbWorld.getMax().xyz();
 
 		const PtrSize offset = m_gpuSceneIndex * sizeof(GpuSceneReflectionProbe)
-							   + info.m_node->getSceneGraph().getAllGpuSceneContiguousArrays().getArrayBase(
+							   + SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().getArrayBase(
 								   GpuSceneContiguousArrayType::kReflectionProbes);
 		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, offset, sizeof(gpuProbe), &gpuProbe);
 	}
 
 	// Update spatial and frustums
-	const Bool spatialUpdated = m_spatial.update(info.m_node->getSceneGraph().getOctree());
+	const Bool spatialUpdated = m_spatial.update(SceneGraph::getSingleton().getOctree());
 	updated = updated || spatialUpdated;
 
 	for(U32 i = 0; i < 6; ++i)
@@ -118,14 +122,6 @@ Error ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 	}
 
 	return Error::kNone;
-}
-
-void ReflectionProbeComponent::onDestroy(SceneNode& node)
-{
-	m_spatial.removeFromOctree(node.getSceneGraph().getOctree());
-
-	node.getSceneGraph().getAllGpuSceneContiguousArrays().deferredFree(GpuSceneContiguousArrayType::kReflectionProbes,
-																	   m_gpuSceneIndex);
 }
 
 } // end namespace anki

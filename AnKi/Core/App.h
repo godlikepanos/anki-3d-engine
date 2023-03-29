@@ -13,10 +13,7 @@
 namespace anki {
 
 // Forward
-class GrManager;
 class MainRenderer;
-class SceneGraph;
-class ScriptManager;
 class UiQueueElement;
 class RenderQueue;
 
@@ -45,11 +42,6 @@ public:
 		return m_mainPool;
 	}
 
-	Timestamp getGlobalTimestamp() const
-	{
-		return m_globalTimestamp;
-	}
-
 	/// Run the main loop.
 	Error mainLoop();
 
@@ -60,19 +52,9 @@ public:
 		return Error::kNone;
 	}
 
-	SceneGraph& getSceneGraph()
-	{
-		return *m_scene;
-	}
-
 	MainRenderer& getMainRenderer()
 	{
 		return *m_renderer;
-	}
-
-	ScriptManager& getScriptManager()
-	{
-		return *m_script;
 	}
 
 	void setDisplayDeveloperConsole(Bool display)
@@ -90,14 +72,11 @@ private:
 
 	// Sybsystems
 	MainRenderer* m_renderer = nullptr;
-	SceneGraph* m_scene = nullptr;
-	ScriptManager* m_script = nullptr;
 
 	// Misc
 	UiImmediateModeBuilderPtr m_statsUi;
 	UiImmediateModeBuilderPtr m_console;
 	Bool m_consoleEnabled = false;
-	Timestamp m_globalTimestamp = 1;
 	CoreString m_settingsDir; ///< The path that holds the configuration
 	CoreString m_cacheDir; ///< This is used as a cache
 	U64 m_resourceCompletedAsyncTaskCount = 0;

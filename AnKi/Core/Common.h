@@ -44,9 +44,12 @@ public:
 	}
 };
 
-using CoreString = BaseStringRaii<SingletonMemoryPoolWrapper<CoreMemoryPool>>;
+class GlobalFrameIndex : public MakeSingleton<GlobalFrameIndex>
+{
+public:
+	Timestamp m_value = 1;
+};
 
-template<typename T>
-using CoreDynamicArray = DynamicArrayRaii<T, U32, SingletonMemoryPoolWrapper<CoreMemoryPool>>;
+ANKI_DEFINE_SUBMODULE_UTIL_CONTAINERS(Core, CoreMemoryPool)
 
 } // end namespace anki

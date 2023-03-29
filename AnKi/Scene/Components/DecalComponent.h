@@ -86,7 +86,6 @@ private:
 		U32 m_bindlessTextureIndex = kMaxU32;
 	};
 
-	SceneNode* m_node;
 	Spatial m_spatial;
 
 	Array<Layer, U(LayerType::kCount)> m_layers;
@@ -101,8 +100,6 @@ private:
 	void setLayer(CString fname, F32 blendFactor, LayerType type);
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated);
-
-	void onDestroy(SceneNode& node);
 };
 /// @}
 

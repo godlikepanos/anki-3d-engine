@@ -18,7 +18,7 @@ GlobalIlluminationProbeComponent::GlobalIlluminationProbeComponent(SceneNode* no
 {
 	for(U32 i = 0; i < 6; ++i)
 	{
-		m_frustums[i].init(FrustumType::kPerspective, &node->getMemoryPool());
+		m_frustums[i].init(FrustumType::kPerspective);
 		m_frustums[i].setPerspective(kClusterObjectFrustumNearPlane, 100.0f, kPi / 2.0f, kPi / 2.0f);
 		m_frustums[i].setWorldTransform(
 			Transform(node->getWorldTransform().getOrigin(), Frustum::getOmnidirectionalFrustumRotations()[i], 1.0f));
@@ -26,7 +26,7 @@ GlobalIlluminationProbeComponent::GlobalIlluminationProbeComponent(SceneNode* no
 		m_frustums[i].update();
 	}
 
-	m_gpuSceneIndex = node->getSceneGraph().getAllGpuSceneContiguousArrays().allocate(
+	m_gpuSceneIndex = SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().allocate(
 		GpuSceneContiguousArrayType::kGlobalIlluminationProbes);
 
 	const Error err = ResourceManager::getSingleton().loadResource("ShaderBinaries/ClearTextureCompute.ankiprogbin",
@@ -39,13 +39,9 @@ GlobalIlluminationProbeComponent::GlobalIlluminationProbeComponent(SceneNode* no
 
 GlobalIlluminationProbeComponent::~GlobalIlluminationProbeComponent()
 {
-}
+	m_spatial.removeFromOctree(SceneGraph::getSingleton().getOctree());
 
-void GlobalIlluminationProbeComponent::onDestroy(SceneNode& node)
-{
-	m_spatial.removeFromOctree(node.getSceneGraph().getOctree());
-
-	node.getSceneGraph().getAllGpuSceneContiguousArrays().deferredFree(
+	SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().deferredFree(
 		GpuSceneContiguousArrayType::kGlobalIlluminationProbes, m_gpuSceneIndex);
 }
 
@@ -128,7 +124,7 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 		gpuProbe.m_fadeDistance = m_fadeDistance;
 
 		const PtrSize offset = m_gpuSceneIndex * sizeof(GpuSceneGlobalIlluminationProbe)
-							   + info.m_node->getSceneGraph().getAllGpuSceneContiguousArrays().getArrayBase(
+							   + SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().getArrayBase(
 								   GpuSceneContiguousArrayType::kGlobalIlluminationProbes);
 		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, offset, sizeof(gpuProbe), &gpuProbe);
 	}
@@ -173,7 +169,7 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 		updated = updated || frustumUpdated;
 	}
 
-	const Bool spatialUpdated = m_spatial.update(info.m_node->getSceneGraph().getOctree());
+	const Bool spatialUpdated = m_spatial.update(SceneGraph::getSingleton().getOctree());
 	updated = updated || spatialUpdated;
 
 	return Error::kNone;

@@ -23,7 +23,7 @@ function onKilled(event, prevTime, crntTime)
 end
 	)";
 	ScriptEvent* event;
-	ANKI_CHECK(node->getSceneGraph().getEventManager().newEvent(event, -1, 10.0, script));
+	ANKI_CHECK(SceneGraph::getSingleton().getEventManager().newEvent(event, -1, 10.0, script));
 	event->addAssociatedSceneNode(node);
 
 	return Error::kNone;
@@ -63,7 +63,7 @@ function onKilled(event, prevTime, crntTime)
 end
 	)";
 	ScriptEvent* event;
-	ANKI_CHECK(node->getSceneGraph().getEventManager().newEvent(event, -1, 10.0, script));
+	ANKI_CHECK(SceneGraph::getSingleton().getEventManager().newEvent(event, -1, 10.0, script));
 	event->addAssociatedSceneNode(node);
 
 	return Error::kNone;
@@ -110,16 +110,16 @@ Error MyApp::sampleExtraInit()
 {
 	ScriptResourcePtr script;
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("Assets/Scene.lua", script));
-	ANKI_CHECK(getScriptManager().evalString(script->getSource()));
+	ANKI_CHECK(ScriptManager::getSingleton().evalString(script->getSource()));
 
 	// Create the player
 	if(1)
 	{
-		SceneNode& cam = getSceneGraph().getActiveCameraNode();
+		SceneNode& cam = SceneGraph::getSingleton().getActiveCameraNode();
 		cam.setLocalTransform(Transform(Vec4(0.0, 2.0, 5.0, 0.0), Mat3x4::getIdentity(), 1.0));
 
 		SceneNode* player;
-		ANKI_CHECK(getSceneGraph().newSceneNode("player", player));
+		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode("player", player));
 		PlayerControllerComponent* playerc = player->newComponent<PlayerControllerComponent>();
 		playerc->moveToPosition(Vec3(0.0f, 2.5f, 0.0f));
 		playerc->getPhysicsPlayerController().setMaterialMask(PhysicsMaterialBit::kStaticGeometry);
@@ -130,7 +130,7 @@ Error MyApp::sampleExtraInit()
 	// Create a body component with joint
 	{
 		SceneNode* monkey;
-		ANKI_CHECK(getSceneGraph().newSceneNode("monkey_p2p", monkey));
+		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode("monkey_p2p", monkey));
 		ModelComponent* modelc = monkey->newComponent<ModelComponent>();
 		modelc->loadModelResource("Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl");
 
@@ -151,7 +151,7 @@ Error MyApp::sampleExtraInit()
 		for(U32 i = 0; i < LINKS; ++i)
 		{
 			SceneNode* monkey;
-			ANKI_CHECK(getSceneGraph().newSceneNode(
+			ANKI_CHECK(SceneGraph::getSingleton().newSceneNode(
 				StringRaii(&getMemoryPool()).sprintf("monkey_chain%u", i).toCString(), monkey));
 			monkey->newComponent<ModelComponent>()->loadModelResource(
 				"Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl");
@@ -186,7 +186,7 @@ Error MyApp::sampleExtraInit()
 	// Trigger
 	{
 		SceneNode* node;
-		ANKI_CHECK(getSceneGraph().newSceneNode("trigger", node));
+		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode("trigger", node));
 		TriggerComponent* triggerc = node->newComponent<TriggerComponent>();
 		triggerc->setSphereVolumeRadius(1.8f);
 		node->setLocalTransform(Transform(Vec4(1.0f, 0.5f, 0.0f, 0.0f), Mat3x4::getIdentity(), 1.0f));
@@ -272,7 +272,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 
 	// Move player
 	{
-		SceneNode& player = getSceneGraph().findSceneNode("player");
+		SceneNode& player = SceneGraph::getSingleton().findSceneNode("player");
 		PlayerControllerComponent& playerc = player.getFirstComponentOfType<PlayerControllerComponent>();
 
 		if(Input::getSingleton().getKey(KeyCode::kR))
@@ -340,10 +340,10 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 
 		static U32 instance = 0;
 
-		Transform camTrf = getSceneGraph().getActiveCameraNode().getWorldTransform();
+		Transform camTrf = SceneGraph::getSingleton().getActiveCameraNode().getWorldTransform();
 
 		SceneNode* monkey;
-		ANKI_CHECK(getSceneGraph().newSceneNode(
+		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode(
 			StringRaii(&getMemoryPool()).sprintf("FireMonkey%u", instance++).toCString(), monkey));
 		ModelComponent* modelc = monkey->newComponent<ModelComponent>();
 		modelc->loadModelResource("Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl");
@@ -363,7 +363,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 
 	if(Input::getSingleton().getMouseButton(MouseButton::kRight) == 1)
 	{
-		Transform camTrf = getSceneGraph().getActiveCameraNode().getWorldTransform();
+		Transform camTrf = SceneGraph::getSingleton().getActiveCameraNode().getWorldTransform();
 		Vec3 from = camTrf.getOrigin().xyz();
 		Vec3 to = from + -camTrf.getRotation().getZAxis() * 100.0f;
 
@@ -390,8 +390,9 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 			// Create an obj
 			static U32 id = 0;
 			SceneNode* monkey;
-			ANKI_CHECK(getSceneGraph().newSceneNode(
-				StringRaii(&getSceneGraph().getFrameMemoryPool()).sprintf("decal%u", id++).toCString(), monkey));
+			ANKI_CHECK(SceneGraph::getSingleton().newSceneNode(
+				StringRaii(&SceneGraph::getSingleton().getFrameMemoryPool()).sprintf("decal%u", id++).toCString(),
+				monkey));
 			ModelComponent* modelc = monkey->newComponent<ModelComponent>();
 			modelc->loadModelResource("Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl");
 			monkey->setLocalTransform(trf);
@@ -408,11 +409,11 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 			for(U i = 0; i < 1; ++i)
 			{
 				static int id = 0;
-				StringRaii name(&getSceneGraph().getFrameMemoryPool());
+				StringRaii name(&SceneGraph::getSingleton().getFrameMemoryPool());
 				name.sprintf("fog%u", id++);
 
 				SceneNode* fogNode;
-				ANKI_CHECK(getSceneGraph().newSceneNode(name.toCString(), fogNode));
+				ANKI_CHECK(SceneGraph::getSingleton().newSceneNode(name.toCString(), fogNode));
 				FogDensityComponent* fogComp = fogNode->newComponent<FogDensityComponent>();
 				fogComp->setSphereVolumeRadius(2.1f);
 				fogComp->setDensity(15.0f);
@@ -427,7 +428,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 
 	if(0)
 	{
-		SceneNode& node = getSceneGraph().findSceneNode("trigger");
+		SceneNode& node = SceneGraph::getSingleton().findSceneNode("trigger");
 		TriggerComponent& comp = node.getFirstComponentOfType<TriggerComponent>();
 
 		for(U32 i = 0; i < comp.getBodyComponentsEnter().getSize(); ++i)

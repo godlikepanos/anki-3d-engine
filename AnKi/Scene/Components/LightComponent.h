@@ -152,7 +152,6 @@ public:
 										   WeakArray<Frustum> cascadeFrustums) const;
 
 private:
-	SceneNode* m_node;
 	U64 m_uuid;
 	Vec4 m_diffColor = Vec4(0.5f);
 	Transform m_worldTransform = Transform::getIdentity();
@@ -198,8 +197,6 @@ private:
 	U8 m_frustumCount : 4 = 0; ///< The size of m_frustums array.
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated);
-
-	void onDestroy(SceneNode& node);
 };
 /// @}
 

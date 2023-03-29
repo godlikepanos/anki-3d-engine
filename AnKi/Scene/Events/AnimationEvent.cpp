@@ -10,11 +10,6 @@
 
 namespace anki {
 
-AnimationEvent::AnimationEvent(EventManager* manager)
-	: Event(manager)
-{
-}
-
 Error AnimationEvent::init(CString animationFilename, CString channelName, SceneNode* movableSceneNode)
 {
 	ANKI_ASSERT(movableSceneNode);
@@ -38,7 +33,7 @@ Error AnimationEvent::init(CString animationFilename, CString channelName, Scene
 
 	Event::init(m_anim->getStartingTime(), m_anim->getDuration());
 	m_reanimate = true;
-	m_associatedNodes.emplaceBack(getMemoryPool(), movableSceneNode);
+	m_associatedNodes.emplaceBack(movableSceneNode);
 
 	return Error::kNone;
 }

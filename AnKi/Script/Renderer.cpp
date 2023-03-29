@@ -16,7 +16,7 @@ static MainRenderer* getMainRenderer(lua_State* l)
 	LuaBinder* binder = nullptr;
 	lua_getallocf(l, reinterpret_cast<void**>(&binder));
 
-	MainRenderer* r = binder->getOtherSystems().m_renderer;
+	MainRenderer* r = nullptr; // TODO glob: fix it
 	ANKI_ASSERT(r);
 	return r;
 }

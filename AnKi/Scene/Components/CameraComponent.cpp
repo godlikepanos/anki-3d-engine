@@ -17,7 +17,7 @@ CameraComponent::CameraComponent(SceneNode* node)
 	const ConfigSet& config = ConfigSet::getSingleton();
 
 	// Init main frustum
-	m_frustum.init(FrustumType::kPerspective, &node->getMemoryPool());
+	m_frustum.init(FrustumType::kPerspective);
 
 	m_frustum.setLodDistance(0, config.getLod0MaxDistance());
 	m_frustum.setLodDistance(1, config.getLod1MaxDistance());
@@ -41,7 +41,7 @@ CameraComponent::CameraComponent(SceneNode* node)
 
 	if(m_usesExtendedFrustum)
 	{
-		m_extendedFrustum.init(FrustumType::kOrthographic, &node->getMemoryPool());
+		m_extendedFrustum.init(FrustumType::kOrthographic);
 
 		const F32 dist = config.getSceneRayTracingExtendedFrustumDistance();
 

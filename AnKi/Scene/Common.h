@@ -32,6 +32,22 @@ class PhysicsWorld;
 #define ANKI_SCENE_LOGW(...) ANKI_LOG("SCEN", kWarning, __VA_ARGS__)
 #define ANKI_SCENE_LOGF(...) ANKI_LOG("SCEN", kFatal, __VA_ARGS__)
 
+class SceneMemoryPool : public HeapMemoryPool, public MakeSingleton<SceneMemoryPool>
+{
+	template<typename>
+	friend class MakeSingleton;
+
+private:
+	SceneMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData)
+		: HeapMemoryPool(allocCb, allocCbUserData, "SceneMemPool")
+	{
+	}
+
+	~SceneMemoryPool() = default;
+};
+
+ANKI_DEFINE_SUBMODULE_UTIL_CONTAINERS(Scene, SceneMemoryPool)
+
 #define ANKI_SCENE_ASSERT(expression) \
 	std::invoke([&]() -> Bool { \
 		const Bool ok = (expression); \
@@ -41,13 +57,6 @@ class PhysicsWorld;
 		} \
 		return ok; \
 	})
-
-class SceneGraphExternalSubsystems
-{
-public:
-	ScriptManager* m_scriptManager = nullptr;
-	const Timestamp* m_globalTimestamp = nullptr;
-};
 /// @}
 
 } // end namespace anki

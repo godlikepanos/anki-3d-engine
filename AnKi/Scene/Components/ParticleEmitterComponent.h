@@ -58,8 +58,8 @@ private:
 	Spatial m_spatial;
 
 	ParticleEmitterResourcePtr m_particleEmitterResource;
-	DynamicArray<SimpleParticle> m_simpleParticles;
-	DynamicArray<PhysicsParticle> m_physicsParticles;
+	SceneDynamicArray<SimpleParticle> m_simpleParticles;
+	SceneDynamicArray<PhysicsParticle> m_physicsParticles;
 	Second m_timeLeftForNextEmission = 0.0;
 	U32 m_aliveParticleCount = 0;
 

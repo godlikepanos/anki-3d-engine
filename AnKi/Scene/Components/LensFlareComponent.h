@@ -80,7 +80,6 @@ private:
 
 	Vec4 m_colorMul = Vec4(1.0f); ///< Color multiplier.
 
-	SceneNode* m_node;
 	ImageResourcePtr m_image; ///< Array of textures.
 
 	Spatial m_spatial;

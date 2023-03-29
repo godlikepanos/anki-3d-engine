@@ -17,8 +17,6 @@ namespace anki {
 class AnimationEvent : public Event
 {
 public:
-	AnimationEvent(EventManager* manager);
-
 	Error init(CString animationFilename, CString channel, SceneNode* movableSceneNode);
 
 	/// Implements Event::update

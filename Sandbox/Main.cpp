@@ -61,7 +61,7 @@ Error MyApp::init(int argc, char* argv[])
 #else
 	ANKI_CHECK(resources.loadResource(argv[1], script));
 #endif
-	ANKI_CHECK(getScriptManager().evalString(script->getSource()));
+	ANKI_CHECK(ScriptManager::getSingleton().evalString(script->getSource()));
 
 	// ANKI_CHECK(renderer.getFinalComposite().loadColorGradingTexture(
 	//	"textures/color_gradient_luts/forge_lut.ankitex"));
@@ -87,7 +87,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 {
 	quit = false;
 
-	SceneGraph& scene = getSceneGraph();
+	SceneGraph& scene = SceneGraph::getSingleton();
 	Input& in = Input::getSingleton();
 	Renderer& renderer = getMainRenderer().getOffscreenRenderer();
 
@@ -419,7 +419,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		quit = true;
 	}
 
-	if(m_profile && getGlobalTimestamp() == 1000)
+	if(m_profile && GlobalFrameIndex::getSingleton().m_value == 1000)
 	{
 		quit = true;
 		return Error::kNone;

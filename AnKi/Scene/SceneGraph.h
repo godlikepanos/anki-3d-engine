@@ -31,37 +31,19 @@ public:
 	Second m_physicsUpdate ANKI_DEBUG_CODE(= 0.0);
 };
 
-class SceneGraphInitInfo : public SceneGraphExternalSubsystems
-{
-public:
-	AllocAlignedCallback m_allocCallback = nullptr;
-	void* m_allocCallbackData = nullptr;
-};
-
 /// The scene graph that  all the scene entities
-class SceneGraph
+class SceneGraph : public MakeSingleton<SceneGraph>
 {
+	template<typename>
+	friend class MakeSingleton;
+
 	friend class SceneNode;
 	friend class UpdateSceneNodesTask;
 	friend class Event;
 	friend class AllGpuSceneContiguousArrays;
 
 public:
-	SceneGraph();
-
-	~SceneGraph();
-
-	Error init(const SceneGraphInitInfo& initInfo);
-
-	Timestamp getGlobalTimestamp() const
-	{
-		return m_timestamp;
-	}
-
-	HeapMemoryPool& getMemoryPool() const
-	{
-		return m_pool;
-	}
+	Error init(AllocAlignedCallback allocCallback, void* allocCallbackData);
 
 	StackMemoryPool& getFrameMemoryPool() const
 	{
@@ -80,7 +62,7 @@ public:
 	void setActiveCameraNode(SceneNode* cam)
 	{
 		m_mainCam = cam;
-		m_activeCameraChangeTimestamp = getGlobalTimestamp();
+		m_activeCameraChangeTimestamp = GlobalFrameIndex::getSingleton().m_value;
 	}
 	Timestamp getActiveCameraNodeChangeTimestamp() const
 	{
@@ -179,16 +161,11 @@ public:
 private:
 	class UpdateSceneNodesCtx;
 
-	Timestamp m_timestamp = 0; ///< Cached timestamp
-
-	SceneGraphExternalSubsystems m_subsystems;
-
-	mutable HeapMemoryPool m_pool;
 	mutable StackMemoryPool m_framePool;
 
 	IntrusiveList<SceneNode> m_nodes;
 	U32 m_nodesCount = 0;
-	HashMap<CString, SceneNode*> m_nodesDict;
+	GrHashMap<CString, SceneNode*> m_nodesDict;
 
 	SceneNode* m_mainCam = nullptr;
 	Timestamp m_activeCameraChangeTimestamp = 0;
@@ -209,6 +186,10 @@ private:
 
 	AllGpuSceneContiguousArrays m_gpuSceneAllocators;
 
+	SceneGraph();
+
+	~SceneGraph();
+
 	/// Put a node in the appropriate containers
 	Error registerNode(SceneNode* node);
 	void unregisterNode(SceneNode* node);
@@ -228,7 +209,7 @@ inline Error SceneGraph::newSceneNode(const CString& name, Node*& node, Args&&..
 {
 	Error err = Error::kNone;
 
-	node = newInstance<Node>(m_pool, this, name);
+	node = newInstance<Node>(SceneMemoryPool::getSingleton(), name);
 	if(node)
 	{
 		err = node->init(std::forward<Args>(args)...);
@@ -249,7 +230,7 @@ inline Error SceneGraph::newSceneNode(const CString& name, Node*& node, Args&&..
 
 		if(node)
 		{
-			deleteInstance(m_pool, node);
+			deleteInstance(SceneMemoryPool::getSingleton(), node);
 			node = nullptr;
 		}
 	}

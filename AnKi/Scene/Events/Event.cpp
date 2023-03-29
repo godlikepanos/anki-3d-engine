@@ -10,16 +10,6 @@
 
 namespace anki {
 
-Event::Event(EventManager* manager)
-	: m_manager(manager)
-{
-}
-
-Event::~Event()
-{
-	m_associatedNodes.destroy(getMemoryPool());
-}
-
 void Event::init(Second startTime, Second duration)
 {
 	m_startTime = startTime;
@@ -31,16 +21,6 @@ void Event::init(Second startTime, Second duration)
 	}
 }
 
-HeapMemoryPool& Event::getMemoryPool() const
-{
-	return m_manager->getSceneGraph().getMemoryPool();
-}
-
-void Event::setMarkedForDeletion()
-{
-	m_manager->markEventForDeletion(this);
-}
-
 Second Event::getDelta(Second crntTime) const
 {
 	const Second d = crntTime - m_startTime; // delta
@@ -48,19 +28,9 @@ Second Event::getDelta(Second crntTime) const
 	return dp;
 }
 
-SceneGraph& Event::getSceneGraph()
+void Event::setMarkedForDeletion()
 {
-	return m_manager->getSceneGraph();
-}
-
-const SceneGraph& Event::getSceneGraph() const
-{
-	return m_manager->getSceneGraph();
-}
-
-SceneGraphExternalSubsystems& Event::getExternalSubsystems() const
-{
-	return m_manager->getSceneGraph().m_subsystems;
+	SceneGraph::getSingleton().getEventManager().markEventForDeletion(this);
 }
 
 } // end namespace anki

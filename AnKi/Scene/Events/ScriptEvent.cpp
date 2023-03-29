@@ -13,25 +13,20 @@
 
 namespace anki {
 
-ScriptEvent::ScriptEvent(EventManager* manager)
-	: Event(manager)
+ScriptEvent::ScriptEvent()
 {
 }
 
 ScriptEvent::~ScriptEvent()
 {
-	m_script.destroy(getMemoryPool());
 }
 
 Error ScriptEvent::init(Second startTime, Second duration, CString script)
 {
 	Event::init(startTime, duration);
 
-	// Create the env
-	ANKI_CHECK(m_env.init(getExternalSubsystems().m_scriptManager));
-
 	// Do the rest
-	StringRaii extension(&getMemoryPool());
+	StringRaii extension(&SceneMemoryPool::getSingleton());
 	getFilepathExtension(script, extension);
 
 	if(!extension.isEmpty() && extension == "lua")
@@ -45,7 +40,7 @@ Error ScriptEvent::init(Second startTime, Second duration, CString script)
 	else
 	{
 		// It's a string
-		m_script.create(getMemoryPool(), script);
+		m_script = script;
 
 		// Exec the script
 		ANKI_CHECK(m_env.evalString(m_script.toCString()));

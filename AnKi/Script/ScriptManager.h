@@ -9,38 +9,16 @@
 
 namespace anki {
 
-// Forward
-class SceneGraph;
-class MainRenderer;
-
 /// @addtogroup script
 /// @{
 
 /// The scripting manager.
-class ScriptManager
+class ScriptManager : public MakeSingleton<ScriptManager>
 {
+	template<typename>
+	friend class MakeSingleton;
+
 public:
-	ScriptManager();
-	~ScriptManager();
-
-	/// Create the script manager.
-	Error init(AllocAlignedCallback allocCb, void* allocCbData);
-
-	void setRenderer(MainRenderer* renderer)
-	{
-		m_otherSystems.m_renderer = renderer;
-	}
-
-	void setSceneGraph(SceneGraph* scene)
-	{
-		m_otherSystems.m_sceneGraph = scene;
-	}
-
-	LuaBinderOtherSystems& getOtherSystems()
-	{
-		return m_otherSystems;
-	}
-
 	/// Expose a variable to the scripting engine.
 	template<typename T>
 	void exposeVariable(const char* name, T* y)
@@ -61,16 +39,22 @@ public:
 		return m_lua;
 	}
 
-	ANKI_INTERNAL HeapMemoryPool& getMemoryPool() const
-	{
-		return m_pool;
-	}
-
 private:
-	LuaBinderOtherSystems m_otherSystems;
-	mutable HeapMemoryPool m_pool;
+	class PoolInit
+	{
+	public:
+		PoolInit(AllocAlignedCallback allocCb, void* allocCbData);
+
+		~PoolInit();
+	};
+
+	PoolInit m_poolInit;
 	LuaBinder m_lua;
 	Mutex n_luaMtx;
+
+	ScriptManager(AllocAlignedCallback allocCb, void* allocCbData);
+
+	~ScriptManager();
 };
 /// @}
 

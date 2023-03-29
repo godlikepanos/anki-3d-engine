@@ -36,7 +36,7 @@ class AllGpuSceneContiguousArrays
 public:
 	using Index = U32;
 
-	void init(SceneGraph* scene);
+	void init();
 
 	void destroy();
 
@@ -94,19 +94,19 @@ private:
 			m_initialArraySize = initialArraySize;
 		}
 
-		void destroy(HeapMemoryPool* cpuPool);
+		void destroy();
 
 		/// Allocate a new object and return its index in the array.
 		/// @note It's thread-safe against itself, deferredFree and endFrame.
-		Index allocateObject(HeapMemoryPool* cpuPool);
+		Index allocateObject();
 
 		/// Safely free an index allocated by allocateObject.
 		/// @note It's thread-safe against itself, allocateObject and endFrame.
-		void deferredFree(U32 crntFrameIdx, HeapMemoryPool* cpuPool, Index index);
+		void deferredFree(U32 crntFrameIdx, Index index);
 
 		/// Call this every frame.
 		/// @note It's thread-safe against itself, deferredFree and allocateObject.
-		void collectGarbage(U32 newFrameIdx, HeapMemoryPool* cpuPool);
+		void collectGarbage(U32 newFrameIdx);
 
 		PtrSize getArrayBase() const
 		{
@@ -122,9 +122,9 @@ private:
 	private:
 		SegregatedListsGpuMemoryPoolToken m_poolToken;
 
-		DynamicArray<Index> m_freeSlotStack;
+		SceneDynamicArray<Index> m_freeSlotStack;
 
-		Array<DynamicArray<Index>, kMaxFramesInFlight> m_garbage;
+		Array<SceneDynamicArray<Index>, kMaxFramesInFlight> m_garbage;
 
 		mutable SpinLock m_mtx;
 
@@ -134,8 +134,6 @@ private:
 
 		U32 m_nextSlotIndex = 0;
 	};
-
-	SceneGraph* m_scene = nullptr;
 
 	Array<ContiguousArrayAllocator, U32(GpuSceneContiguousArrayType::kCount)> m_allocs;
 

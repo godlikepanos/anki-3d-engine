@@ -163,8 +163,6 @@ public:
 	}
 
 protected:
-	ANKI_PURE static SceneGraphExternalSubsystems& getExternalSubsystems(const SceneNode& node);
-
 	/// Pseudo-virtual
 	void onDestroy([[maybe_unused]] SceneNode& node)
 	{

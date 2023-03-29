@@ -12,8 +12,8 @@ class TextureViewerUiNode : public SceneNode
 public:
 	ImageResourcePtr m_imageResource;
 
-	TextureViewerUiNode(SceneGraph* scene, CString name)
-		: SceneNode(scene, name)
+	TextureViewerUiNode(CString name)
+		: SceneNode(name)
 	{
 		UiComponent* uic = newComponent<UiComponent>();
 		uic->init(
@@ -118,7 +118,7 @@ private:
 
 		// Mips combo
 		{
-			StringListRaii mipLabels(&getFrameMemoryPool());
+			UiStringList mipLabels;
 			for(U32 mip = 0; mip < grTex.getMipmapCount(); ++mip)
 			{
 				mipLabels.pushBackSprintf("Mip %u (%u x %u)", mip, grTex.getWidth() >> mip, grTex.getHeight() >> mip);
@@ -158,7 +158,7 @@ private:
 		// Depth
 		if(grTex.getTextureType() == TextureType::k3D)
 		{
-			StringListRaii labels(&getFrameMemoryPool());
+			UiStringList labels;
 			for(U32 d = 0; d < grTex.getDepth(); ++d)
 			{
 				labels.pushBackSprintf("Depth %u", d);
@@ -294,9 +294,8 @@ public:
 		NativeWindow::getSingleton().setWindowTitle(title);
 
 		// Create the node
-		SceneGraph& scene = getSceneGraph();
 		TextureViewerUiNode* node;
-		ANKI_CHECK(scene.newSceneNode("TextureViewer", node));
+		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode("TextureViewer", node));
 		node->m_imageResource = std::move(image);
 
 		return Error::kNone;

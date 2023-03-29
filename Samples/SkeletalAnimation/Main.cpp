@@ -18,7 +18,7 @@ public:
 	{
 		ScriptResourcePtr script;
 		ANKI_CHECK(ResourceManager::getSingleton().loadResource("Assets/Scene.lua", script));
-		ANKI_CHECK(getScriptManager().evalString(script->getSource()));
+		ANKI_CHECK(ScriptManager::getSingleton().evalString(script->getSource()));
 
 		ANKI_CHECK(
 			ResourceManager::getSingleton().loadResource("Assets/float.001_ccb9eb33e30c8fa4.ankianim", m_floatAnim));
@@ -27,7 +27,7 @@ public:
 		AnimationPlayInfo animInfo;
 		animInfo.m_startTime = 2.0;
 		animInfo.m_repeatTimes = -1.0;
-		getSceneGraph()
+		SceneGraph::getSingleton()
 			.findSceneNode("droid.001")
 			.getFirstComponentOfType<SkinComponent>()
 			.playAnimation(0, m_floatAnim, animInfo);
@@ -45,7 +45,7 @@ public:
 			animInfo.m_repeatTimes = 3.0;
 			animInfo.m_blendInTime = 0.5;
 			animInfo.m_blendOutTime = 0.35;
-			getSceneGraph()
+			SceneGraph::getSingleton()
 				.findSceneNode("droid.001")
 				.getFirstComponentOfType<SkinComponent>()
 				.playAnimation(1, m_waveAnim, animInfo);

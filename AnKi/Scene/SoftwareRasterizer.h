@@ -19,22 +19,6 @@ namespace anki {
 class SoftwareRasterizer
 {
 public:
-	SoftwareRasterizer()
-	{
-	}
-
-	~SoftwareRasterizer()
-	{
-		m_zbuffer.destroy(*m_pool);
-	}
-
-	/// Initialize.
-	void init(BaseMemoryPool* pool)
-	{
-		ANKI_ASSERT(pool);
-		m_pool = pool;
-	}
-
 	/// Prepare for rendering. Call it before every draw.
 	void prepare(const Mat4& mv, const Mat4& p, U32 width, U32 height);
 
@@ -55,7 +39,6 @@ public:
 	Bool visibilityTest(const Aabb& aabb) const;
 
 private:
-	BaseMemoryPool* m_pool = nullptr;
 	Mat4 m_mv; ///< ModelView.
 	Mat4 m_p; ///< Projection.
 	Mat4 m_mvp;
@@ -63,7 +46,7 @@ private:
 	Array<Plane, 6> m_planesW; ///< In world space.
 	U32 m_width;
 	U32 m_height;
-	DynamicArray<Atomic<U32>> m_zbuffer;
+	SceneDynamicArray<Atomic<U32>> m_zbuffer;
 
 	/// @param tri In clip space.
 	void rasterizeTriangle(const Vec4* tri);

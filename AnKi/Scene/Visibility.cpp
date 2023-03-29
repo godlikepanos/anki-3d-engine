@@ -199,7 +199,6 @@ void FillRasterizerWithCoverageTask::fill()
 	if(true)
 	{
 		m_frcCtx->m_r = newInstance<SoftwareRasterizer>(pool);
-		m_frcCtx->m_r->init(&pool);
 		m_frcCtx->m_r->prepare(
 			Mat4(m_frcCtx->m_frustum.m_frustum->getPreviousViewMatrix(1), Vec4(0.0f, 0.0f, 0.0f, 1.0f)),
 			m_frcCtx->m_frustum.m_frustum->getPreviousProjectionMatrix(1), width, height);
@@ -643,7 +642,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 	if(testedFrustum.getUpdatedThisFrame())
 	{
-		m_frcCtx->m_queueViews[taskId].m_timestamp = m_frcCtx->m_visCtx->m_scene->getGlobalTimestamp();
+		m_frcCtx->m_queueViews[taskId].m_timestamp = GlobalFrameIndex::getSingleton().m_value;
 	}
 	else
 	{

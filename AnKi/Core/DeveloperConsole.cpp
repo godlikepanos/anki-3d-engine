@@ -19,7 +19,7 @@ DeveloperConsole::~DeveloperConsole()
 	}
 }
 
-Error DeveloperConsole::init(ScriptManager* scriptManager)
+Error DeveloperConsole::init()
 {
 	zeroMemory(m_inputText);
 
@@ -27,8 +27,6 @@ Error DeveloperConsole::init(ScriptManager* scriptManager)
 
 	// Add a new callback to the logger
 	Logger::getSingleton().addMessageHandler(this, loggerCallback);
-
-	ANKI_CHECK(m_scriptEnv.init(scriptManager));
 
 	return Error::kNone;
 }

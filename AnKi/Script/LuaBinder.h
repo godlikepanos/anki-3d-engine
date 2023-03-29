@@ -137,15 +137,6 @@ public:
 	virtual void write(const void* data, PtrSize dataSize) = 0;
 };
 
-/// A list of systems that the LuaBinder should be aware of.
-/// @memberof LuaBinder
-class LuaBinderOtherSystems
-{
-public:
-	SceneGraph* m_sceneGraph;
-	MainRenderer* m_renderer;
-};
-
 /// Lua binder class. A wrapper on top of LUA
 class LuaBinder
 {
@@ -158,23 +149,10 @@ public:
 
 	LuaBinder& operator=(const LuaBinder&) = delete; // Non-copyable
 
-	Error init(HeapMemoryPool* pool, LuaBinderOtherSystems* otherSystems);
-
 	lua_State* getLuaState()
 	{
 		ANKI_ASSERT(m_l);
 		return m_l;
-	}
-
-	HeapMemoryPool& getMemoryPool() const
-	{
-		return *m_pool;
-	}
-
-	LuaBinderOtherSystems& getOtherSystems()
-	{
-		ANKI_ASSERT(m_otherSystems);
-		return *m_otherSystems;
 	}
 
 	/// Expose a variable to the lua state
@@ -250,17 +228,9 @@ public:
 	/// typeName. That is supposed to be faster.
 	static Error checkUserData(lua_State* l, I32 stackIdx, const LuaUserDataTypeInfo& typeInfo, LuaUserData*& out);
 
-	/// Allocate memory.
-	static void* luaAlloc(lua_State* l, size_t size, U32 alignment);
-
-	/// Free memory.
-	static void luaFree(lua_State* l, void* ptr);
-
 private:
-	LuaBinderOtherSystems* m_otherSystems;
-	HeapMemoryPool* m_pool = nullptr;
 	lua_State* m_l = nullptr;
-	HashMap<I64, const LuaUserDataTypeInfo*> m_userDataSigToDataInfo;
+	ScriptHashMap<I64, const LuaUserDataTypeInfo*> m_userDataSigToDataInfo;
 
 	static void* luaAllocCallback(void* userData, void* ptr, PtrSize osize, PtrSize nsize);
 

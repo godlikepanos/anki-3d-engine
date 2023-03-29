@@ -23,7 +23,7 @@ SkyboxComponent::SkyboxComponent(SceneNode* node)
 
 SkyboxComponent::~SkyboxComponent()
 {
-	m_spatial.removeFromOctree(m_node->getSceneGraph().getOctree());
+	m_spatial.removeFromOctree(SceneGraph::getSingleton().getOctree());
 }
 
 void SkyboxComponent::loadImageResource(CString filename)
@@ -40,9 +40,9 @@ void SkyboxComponent::loadImageResource(CString filename)
 	m_type = SkyboxType::kImage2D;
 }
 
-Error SkyboxComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
+Error SkyboxComponent::update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated)
 {
-	updated = m_spatial.update(info.m_node->getSceneGraph().getOctree());
+	updated = m_spatial.update(SceneGraph::getSingleton().getOctree());
 	return Error::kNone;
 }
 

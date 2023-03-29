@@ -103,8 +103,8 @@ private:
 
 	SceneNode* m_node;
 	SkeletonResourcePtr m_skeleton;
-	Array<DynamicArray<Mat3x4>, 2> m_boneTrfs;
-	DynamicArray<Trf> m_animationTrfs;
+	Array<SceneDynamicArray<Mat3x4>, 2> m_boneTrfs;
+	SceneDynamicArray<Trf> m_animationTrfs;
 	Aabb m_boneBoundingVolume = Aabb(Vec3(-1.0f), Vec3(1.0f));
 	Array<Track, kMaxAnimationTracks> m_tracks;
 	Second m_absoluteTime = 0.0;

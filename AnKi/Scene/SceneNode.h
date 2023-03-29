@@ -31,7 +31,7 @@ public:
 	/// The one and only constructor.
 	/// @param scene The owner scene.
 	/// @param name The unique name of the node. If it's empty the the node is not searchable.
-	SceneNode(SceneGraph* scene, CString name);
+	SceneNode(CString name);
 
 	/// Unregister node
 	virtual ~SceneNode();
@@ -40,16 +40,6 @@ public:
 	Error init()
 	{
 		return Error::kNone;
-	}
-
-	SceneGraph& getSceneGraph()
-	{
-		return *m_scene;
-	}
-
-	const SceneGraph& getSceneGraph() const
-	{
-		return *m_scene;
 	}
 
 	/// Return the name. It may be empty for nodes that we don't want to track.
@@ -70,8 +60,6 @@ public:
 
 	void setMarkedForDeletion();
 
-	Timestamp getGlobalTimestamp() const;
-
 	Timestamp getComponentMaxTimestamp() const
 	{
 		return m_maxComponentTimestamp;
@@ -83,13 +71,9 @@ public:
 		m_maxComponentTimestamp = maxComponentTimestamp;
 	}
 
-	HeapMemoryPool& getMemoryPool() const;
-
-	StackMemoryPool& getFrameMemoryPool() const;
-
 	void addChild(SceneNode* obj)
 	{
-		Base::addChild(getMemoryPool(), obj);
+		Base::addChild(SceneMemoryPool::getSingleton(), obj);
 	}
 
 	/// This is called by the scenegraph every frame after all component updates. By default it does nothing.
@@ -388,20 +372,16 @@ public:
 	template<typename TComponent>
 	TComponent* newComponent()
 	{
-		TComponent* comp = newInstance<TComponent>(getMemoryPool(), this);
+		TComponent* comp = newInstance<TComponent>(SceneMemoryPool::getSingleton(), this);
 		newComponentInternal(comp);
 		return comp;
 	}
 
-protected:
-	SceneGraphExternalSubsystems& getExternalSubsystems() const;
-
 private:
-	SceneGraph* m_scene = nullptr;
 	U64 m_uuid;
-	String m_name; ///< A unique name.
+	SceneString m_name; ///< A unique name.
 
-	DynamicArray<SceneComponent*> m_components;
+	GrDynamicArray<SceneComponent*> m_components;
 
 	U32 m_componentTypeMask = 0;
 

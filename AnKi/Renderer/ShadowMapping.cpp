@@ -213,7 +213,7 @@ Bool ShadowMapping::allocateAtlasTiles(U64 lightUuid, U32 faceCount, const U64* 
 	for(U i = 0; i < faceCount; ++i)
 	{
 		Array<U32, 4> tileViewport;
-		subResults[i] = m_tileAlloc.allocate(*getExternalSubsystems().m_globTimestamp, faceTimestamps[i], lightUuid,
+		subResults[i] = m_tileAlloc.allocate(GlobalFrameIndex::getSingleton().m_value, faceTimestamps[i], lightUuid,
 											 faceIndices[i], drawcallsCount[i], hierarchies[i], tileViewport);
 
 		if(subResults[i] == TileAllocatorResult::kAllocationFailed)
@@ -270,7 +270,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForPass
 	{
 		Array<U32, 4> tileViewport;
 		[[maybe_unused]] const TileAllocatorResult res = m_tileAlloc.allocate(
-			*getExternalSubsystems().m_globTimestamp, 1, kMaxU64, 0, 1, kPointLightMaxTileAllocHierarchy, tileViewport);
+			GlobalFrameIndex::getSingleton().m_value, 1, kMaxU64, 0, 1, kPointLightMaxTileAllocHierarchy, tileViewport);
 
 		emptyTileViewport = UVec4(tileViewport);
 
@@ -310,7 +310,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForPass
 			{
 				// Cascade with drawcalls, will need tiles
 
-				timestamps[activeCascades] = *getExternalSubsystems().m_globTimestamp; // This light is always updated
+				timestamps[activeCascades] = GlobalFrameIndex::getSingleton().m_value; // This light is always updated
 				cascadeIndices[activeCascades] = cascade;
 				drawcallCounts[activeCascades] = 1; // Doesn't matter
 

@@ -53,8 +53,6 @@ private:
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated);
 
-	void onDestroy(SceneNode& node);
-
 	void onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added);
 };
 /// @}

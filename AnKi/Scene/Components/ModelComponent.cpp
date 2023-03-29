@@ -18,8 +18,8 @@ ModelComponent::ModelComponent(SceneNode* node)
 	, m_node(node)
 	, m_spatial(this)
 {
-	m_gpuSceneTransformsIndex = U32(
-		node->getSceneGraph().getAllGpuSceneContiguousArrays().allocate(GpuSceneContiguousArrayType::kTransformPairs));
+	m_gpuSceneTransformsIndex = U32(SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().allocate(
+		GpuSceneContiguousArrayType::kTransformPairs));
 }
 
 ModelComponent::~ModelComponent()
@@ -30,17 +30,15 @@ ModelComponent::~ModelComponent()
 	{
 		if(patch.m_gpuSceneMeshLodsIndex != kMaxU32)
 		{
-			m_node->getSceneGraph().getAllGpuSceneContiguousArrays().deferredFree(
+			SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().deferredFree(
 				GpuSceneContiguousArrayType::kMeshLods, patch.m_gpuSceneMeshLodsIndex);
 		}
 	}
 
-	m_node->getSceneGraph().getAllGpuSceneContiguousArrays().deferredFree(GpuSceneContiguousArrayType::kTransformPairs,
-																		  m_gpuSceneTransformsIndex);
+	SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().deferredFree(
+		GpuSceneContiguousArrayType::kTransformPairs, m_gpuSceneTransformsIndex);
 
-	m_patchInfos.destroy(m_node->getMemoryPool());
-
-	m_spatial.removeFromOctree(m_node->getSceneGraph().getOctree());
+	m_spatial.removeFromOctree(SceneGraph::getSingleton().getOctree());
 }
 
 void ModelComponent::loadModelResource(CString filename)
@@ -63,16 +61,17 @@ void ModelComponent::loadModelResource(CString filename)
 	{
 		if(patch.m_gpuSceneMeshLodsIndex != kMaxU32)
 		{
-			m_node->getSceneGraph().getAllGpuSceneContiguousArrays().deferredFree(
+			SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().deferredFree(
 				GpuSceneContiguousArrayType::kMeshLods, patch.m_gpuSceneMeshLodsIndex);
 		}
 	}
 
-	m_patchInfos.resize(m_node->getMemoryPool(), modelPatchCount);
+	m_patchInfos.resize(modelPatchCount);
 	for(U32 i = 0; i < modelPatchCount; ++i)
 	{
-		m_patchInfos[i].m_gpuSceneMeshLodsIndex = U32(
-			m_node->getSceneGraph().getAllGpuSceneContiguousArrays().allocate(GpuSceneContiguousArrayType::kMeshLods));
+		m_patchInfos[i].m_gpuSceneMeshLodsIndex =
+			U32(SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().allocate(
+				GpuSceneContiguousArrayType::kMeshLods));
 	}
 
 	U32 uniformsSize = 0;
@@ -177,7 +176,7 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			}
 
 			const PtrSize offset = m_patchInfos[i].m_gpuSceneMeshLodsIndex * sizeof(meshLods)
-								   + info.m_node->getSceneGraph().getAllGpuSceneContiguousArrays().getArrayBase(
+								   + SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().getArrayBase(
 									   GpuSceneContiguousArrayType::kMeshLods);
 			GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, offset, meshLods.getSizeInBytes(),
 														 &meshLods[0]);
@@ -209,7 +208,7 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		trfs[1] = Mat3x4(info.m_node->getPreviousWorldTransform());
 
 		const PtrSize offset = m_gpuSceneTransformsIndex * sizeof(trfs)
-							   + info.m_node->getSceneGraph().getAllGpuSceneContiguousArrays().getArrayBase(
+							   + SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().getArrayBase(
 								   GpuSceneContiguousArrayType::kTransformPairs);
 		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, offset, sizeof(trfs), &trfs[0]);
 	}
@@ -233,7 +232,7 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		m_spatial.setBoundingShape(aabbWorld);
 	}
 
-	const Bool spatialUpdated = m_spatial.update(info.m_node->getSceneGraph().getOctree());
+	const Bool spatialUpdated = m_spatial.update(SceneGraph::getSingleton().getOctree());
 	updated = updated || spatialUpdated;
 
 	return Error::kNone;
@@ -294,7 +293,7 @@ void ModelComponent::setupRenderableQueueElements(U32 lod, RenderingTechnique te
 		ModelRenderingInfo modelInf;
 		patch.getRenderingInfo(key, modelInf);
 
-		AllGpuSceneContiguousArrays& gpuArrays = m_node->getSceneGraph().getAllGpuSceneContiguousArrays();
+		AllGpuSceneContiguousArrays& gpuArrays = SceneGraph::getSingleton().getAllGpuSceneContiguousArrays();
 
 		queueElem.m_program = modelInf.m_program.get();
 		queueElem.m_worldTransformsOffset = U32(m_gpuSceneTransformsIndex * sizeof(Mat3x4) * 2
@@ -366,7 +365,7 @@ void ModelComponent::setupRayTracingInstanceQueueElements(U32 lod, RenderingTech
 
 		const ModelPatch& patch = m_model->getModelPatches()[i];
 
-		AllGpuSceneContiguousArrays& gpuArrays = m_node->getSceneGraph().getAllGpuSceneContiguousArrays();
+		AllGpuSceneContiguousArrays& gpuArrays = SceneGraph::getSingleton().getAllGpuSceneContiguousArrays();
 
 		ModelRayTracingInfo modelInf;
 		patch.getRayTracingInfo(key, modelInf);

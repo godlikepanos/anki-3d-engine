@@ -91,8 +91,6 @@ private:
 	Bool m_reflectionNeedsRefresh = true;
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated);
-
-	void onDestroy(SceneNode& node);
 };
 /// @}
 

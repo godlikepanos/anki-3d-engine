@@ -23,7 +23,7 @@ public:
 
 	~Frustum();
 
-	void init(FrustumType type, HeapMemoryPool* pool);
+	void init(FrustumType type);
 
 	void setPerspective(F32 near, F32 far, F32 fovX, F32 fovY)
 	{
@@ -356,8 +356,6 @@ private:
 	static constexpr F32 kDefaultFar = 100.0f;
 	static constexpr F32 kDefaultFovAngle = toRad(45.0f);
 
-	HeapMemoryPool* m_pool = nullptr;
-
 	union
 	{
 		Perspective m_perspective;
@@ -386,7 +384,7 @@ private:
 	F32 m_earlyZDistance = 0.0f;
 
 	// Coverage buffer stuff
-	DynamicArray<F32> m_depthMap;
+	SceneDynamicArray<F32> m_depthMap;
 	U32 m_depthMapWidth = 0;
 	U32 m_depthMapHeight = 0;
 

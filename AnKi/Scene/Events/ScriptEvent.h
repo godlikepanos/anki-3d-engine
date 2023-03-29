@@ -29,7 +29,7 @@ namespace anki {
 class ScriptEvent : public Event
 {
 public:
-	ScriptEvent(EventManager* manager);
+	ScriptEvent();
 
 	~ScriptEvent();
 
@@ -42,7 +42,7 @@ public:
 
 private:
 	ScriptResourcePtr m_scriptRsrc;
-	String m_script;
+	SceneString m_script;
 	ScriptEnvironment m_env;
 };
 /// @}

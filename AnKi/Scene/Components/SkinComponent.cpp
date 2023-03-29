@@ -21,10 +21,6 @@ SkinComponent::SkinComponent(SceneNode* node)
 
 SkinComponent::~SkinComponent()
 {
-	m_boneTrfs[0].destroy(m_node->getMemoryPool());
-	m_boneTrfs[1].destroy(m_node->getMemoryPool());
-	m_animationTrfs.destroy(m_node->getMemoryPool());
-
 	GpuSceneMemoryPool::getSingleton().deferredFree(m_boneTransformsGpuSceneOffset);
 }
 
@@ -43,16 +39,16 @@ void SkinComponent::loadSkeletonResource(CString fname)
 	m_skeleton = std::move(rsrc);
 
 	// Cleanup
-	m_boneTrfs[0].destroy(m_node->getMemoryPool());
-	m_boneTrfs[1].destroy(m_node->getMemoryPool());
-	m_animationTrfs.destroy(m_node->getMemoryPool());
+	m_boneTrfs[0].destroy();
+	m_boneTrfs[1].destroy();
+	m_animationTrfs.destroy();
 	GpuSceneMemoryPool::getSingleton().deferredFree(m_boneTransformsGpuSceneOffset);
 
 	// Create
 	const U32 boneCount = m_skeleton->getBones().getSize();
-	m_boneTrfs[0].create(m_node->getMemoryPool(), boneCount, Mat3x4::getIdentity());
-	m_boneTrfs[1].create(m_node->getMemoryPool(), boneCount, Mat3x4::getIdentity());
-	m_animationTrfs.create(m_node->getMemoryPool(), boneCount, {Vec3(0.0f), Quat::getIdentity(), 1.0f});
+	m_boneTrfs[0].create(boneCount, Mat3x4::getIdentity());
+	m_boneTrfs[1].create(boneCount, Mat3x4::getIdentity());
+	m_animationTrfs.create(boneCount, {Vec3(0.0f), Quat::getIdentity(), 1.0f});
 
 	GpuSceneMemoryPool::getSingleton().allocate(sizeof(Mat4) * boneCount * 2, 4, m_boneTransformsGpuSceneOffset);
 }

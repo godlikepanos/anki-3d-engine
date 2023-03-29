@@ -18,8 +18,7 @@ namespace anki {
 
 LightComponent::LightComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
-	, m_node(node)
-	, m_uuid(node->getSceneGraph().getNewUuid())
+	, m_uuid(SceneGraph::getSingleton().getNewUuid())
 	, m_spatial(this)
 	, m_type(LightComponentType::kPoint)
 {
@@ -32,6 +31,26 @@ LightComponent::LightComponent(SceneNode* node)
 
 LightComponent::~LightComponent()
 {
+	deleteArray(SceneMemoryPool::getSingleton(), m_frustums, m_frustumCount);
+	m_spatial.removeFromOctree(SceneGraph::getSingleton().getOctree());
+
+	if(m_gpuSceneLightIndex != kMaxU32)
+	{
+		if(m_type == LightComponentType::kPoint)
+		{
+			SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().deferredFree(
+				GpuSceneContiguousArrayType::kPointLights, m_gpuSceneLightIndex);
+		}
+		else if(m_type == LightComponentType::kSpot)
+		{
+			SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().deferredFree(
+				GpuSceneContiguousArrayType::kSpotLights, m_gpuSceneLightIndex);
+		}
+		else
+		{
+			ANKI_ASSERT(0);
+		}
+	}
 }
 
 void LightComponent::setLightComponentType(LightComponentType type)
@@ -53,7 +72,7 @@ void LightComponent::setLightComponentType(LightComponentType type)
 
 	if(m_typeChanged && m_gpuSceneLightIndex != kMaxU32)
 	{
-		m_node->getSceneGraph().getAllGpuSceneContiguousArrays().deferredFree(
+		SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().deferredFree(
 			(m_type == LightComponentType::kPoint) ? GpuSceneContiguousArrayType::kPointLights
 												   : GpuSceneContiguousArrayType::kSpotLights,
 			m_gpuSceneLightIndex);
@@ -62,13 +81,13 @@ void LightComponent::setLightComponentType(LightComponentType type)
 
 	if(m_gpuSceneLightIndex == kMaxU32 && type == LightComponentType::kPoint)
 	{
-		m_gpuSceneLightIndex = m_node->getSceneGraph().getAllGpuSceneContiguousArrays().allocate(
+		m_gpuSceneLightIndex = SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().allocate(
 			GpuSceneContiguousArrayType::kPointLights);
 	}
 	else if(m_gpuSceneLightIndex == kMaxU32 && type == LightComponentType::kSpot)
 	{
-		m_gpuSceneLightIndex =
-			m_node->getSceneGraph().getAllGpuSceneContiguousArrays().allocate(GpuSceneContiguousArrayType::kSpotLights);
+		m_gpuSceneLightIndex = SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().allocate(
+			GpuSceneContiguousArrayType::kSpotLights);
 	}
 
 	m_type = type;
@@ -98,13 +117,13 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			if(m_frustums == nullptr || m_frustumCount != 6) [[unlikely]]
 			{
 				// Allocate, initialize and update the frustums, just do everything to avoid bugs
-				deleteArray(info.m_node->getMemoryPool(), m_frustums, m_frustumCount);
-				m_frustums = newArray<Frustum>(info.m_node->getMemoryPool(), 6);
+				deleteArray(SceneMemoryPool::getSingleton(), m_frustums, m_frustumCount);
+				m_frustums = newArray<Frustum>(SceneMemoryPool::getSingleton(), 6);
 				m_frustumCount = 6;
 
 				for(U32 i = 0; i < 6; i++)
 				{
-					m_frustums[i].init(FrustumType::kPerspective, &info.m_node->getMemoryPool());
+					m_frustums[i].init(FrustumType::kPerspective);
 					m_frustums[i].setPerspective(kClusterObjectFrustumNearPlane, m_point.m_radius, kPi / 2.0f,
 												 kPi / 2.0f);
 					m_frustums[i].setWorldTransform(Transform(m_worldTransform.getOrigin(),
@@ -136,7 +155,7 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuLight.m_squareRadiusOverOne = 1.0f / (m_point.m_radius * m_point.m_radius);
 		gpuLight.m_shadow = m_shadow;
 		const PtrSize offset = m_gpuSceneLightIndex * sizeof(GpuScenePointLight)
-							   + info.m_node->getSceneGraph().getAllGpuSceneContiguousArrays().getArrayBase(
+							   + SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().getArrayBase(
 								   GpuSceneContiguousArrayType::kPointLights);
 		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, offset, sizeof(gpuLight), &gpuLight);
 	}
@@ -166,11 +185,11 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			if(m_frustums == nullptr || m_frustumCount != 1) [[unlikely]]
 			{
 				// Allocate, initialize and update the frustums, just do everything to avoid bugs
-				deleteArray(info.m_node->getMemoryPool(), m_frustums, m_frustumCount);
-				m_frustums = newArray<Frustum>(info.m_node->getMemoryPool(), 1);
+				deleteArray(SceneMemoryPool::getSingleton(), m_frustums, m_frustumCount);
+				m_frustums = newArray<Frustum>(SceneMemoryPool::getSingleton(), 1);
 				m_frustumCount = 1;
 
-				m_frustums[0].init(FrustumType::kPerspective, &info.m_node->getMemoryPool());
+				m_frustums[0].init(FrustumType::kPerspective);
 				m_frustums[0].setPerspective(kClusterObjectFrustumNearPlane, m_spot.m_distance, m_spot.m_outerAngle,
 											 m_spot.m_outerAngle);
 				m_frustums[0].setWorldTransform(m_worldTransform);
@@ -205,17 +224,17 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuLight.m_outerCos = cos(m_spot.m_outerAngle / 2.0f);
 		gpuLight.m_innerCos = cos(m_spot.m_innerAngle / 2.0f);
 		const PtrSize offset = m_gpuSceneLightIndex * sizeof(GpuSceneSpotLight)
-							   + info.m_node->getSceneGraph().getAllGpuSceneContiguousArrays().getArrayBase(
+							   + SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().getArrayBase(
 								   GpuSceneContiguousArrayType::kSpotLights);
 		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, offset, sizeof(gpuLight), &gpuLight);
 	}
 	else if(m_type == LightComponentType::kDirectional)
 	{
 		// Update the scene bounds always
-		info.m_node->getSceneGraph().getOctree().getActualSceneBounds(m_dir.m_sceneMin, m_dir.m_sceneMax);
+		SceneGraph::getSingleton().getOctree().getActualSceneBounds(m_dir.m_sceneMin, m_dir.m_sceneMax);
 	}
 
-	const Bool spatialUpdated = m_spatial.update(info.m_node->getSceneGraph().getOctree());
+	const Bool spatialUpdated = m_spatial.update(SceneGraph::getSingleton().getOctree());
 	updated = updated || spatialUpdated;
 
 	if(m_shadow)
@@ -373,7 +392,7 @@ void LightComponent::setupDirectionalLightQueueElement(const Frustum& primaryFru
 			const F32 bottom = plane.getOffset();
 
 			Frustum& cascadeFrustum = cascadeFrustums[i];
-			cascadeFrustum.init(FrustumType::kOrthographic, nullptr);
+			cascadeFrustum.init(FrustumType::kOrthographic);
 			cascadeFrustum.setOrthographic(kClusterObjectFrustumNearPlane, far, right, left, top, bottom);
 			cascadeFrustum.setWorldTransform(cascadeTransform);
 			[[maybe_unused]] const Bool updated = cascadeFrustum.update();
@@ -383,30 +402,6 @@ void LightComponent::setupDirectionalLightQueueElement(const Frustum& primaryFru
 	else
 	{
 		ANKI_ASSERT(!"TODO");
-	}
-}
-
-void LightComponent::onDestroy(SceneNode& node)
-{
-	deleteArray(node.getMemoryPool(), m_frustums, m_frustumCount);
-	m_spatial.removeFromOctree(node.getSceneGraph().getOctree());
-
-	if(m_gpuSceneLightIndex != kMaxU32)
-	{
-		if(m_type == LightComponentType::kPoint)
-		{
-			node.getSceneGraph().getAllGpuSceneContiguousArrays().deferredFree(
-				GpuSceneContiguousArrayType::kPointLights, m_gpuSceneLightIndex);
-		}
-		else if(m_type == LightComponentType::kSpot)
-		{
-			node.getSceneGraph().getAllGpuSceneContiguousArrays().deferredFree(GpuSceneContiguousArrayType::kSpotLights,
-																			   m_gpuSceneLightIndex);
-		}
-		else
-		{
-			ANKI_ASSERT(0);
-		}
 	}
 }
 

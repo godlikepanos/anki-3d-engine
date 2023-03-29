@@ -24,23 +24,6 @@ EventManager::~EventManager()
 	deleteEventsMarkedForDeletion(false);
 }
 
-Error EventManager::init(SceneGraph* scene)
-{
-	ANKI_ASSERT(scene);
-	m_scene = scene;
-	return Error::kNone;
-}
-
-HeapMemoryPool& EventManager::getMemoryPool() const
-{
-	return m_scene->getMemoryPool();
-}
-
-StackMemoryPool& EventManager::getFrameMemoryPool() const
-{
-	return m_scene->getFrameMemoryPool();
-}
-
 Error EventManager::updateAllEvents(Second prevUpdateTime, Second crntTime)
 {
 	Error err = Error::kNone;
@@ -128,7 +111,7 @@ void EventManager::deleteEventsMarkedForDeletion(Bool fullCleanup)
 	if(fullCleanup)
 	{
 		// Gather in an array because we can't call setMarkedForDeletion while iterating m_events
-		DynamicArrayRaii<Event*> markedForDeletion(&getFrameMemoryPool());
+		DynamicArrayRaii<Event*> markedForDeletion(&SceneGraph::getSingleton().getFrameMemoryPool());
 		for(Event& event : m_events)
 		{
 			for(SceneNode* node : event.m_associatedNodes)
@@ -153,7 +136,7 @@ void EventManager::deleteEventsMarkedForDeletion(Bool fullCleanup)
 		Event* event = &m_eventsMarkedForDeletion.getFront();
 		m_eventsMarkedForDeletion.popFront();
 
-		deleteInstance(getMemoryPool(), event);
+		deleteInstance(SceneMemoryPool::getSingleton(), event);
 	}
 }
 

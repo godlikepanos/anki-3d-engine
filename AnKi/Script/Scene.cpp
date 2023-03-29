@@ -48,9 +48,7 @@ static SceneGraph* getSceneGraph(lua_State* l)
 	LuaBinder* binder = nullptr;
 	lua_getallocf(l, reinterpret_cast<void**>(&binder));
 
-	SceneGraph* scene = binder->getOtherSystems().m_sceneGraph;
-	ANKI_ASSERT(scene);
-	return scene;
+	return &SceneGraph::getSingleton();
 }
 
 static EventManager* getEventManager(lua_State* l)

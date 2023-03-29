@@ -19,7 +19,7 @@ Array<Mat3x4, 6> Frustum::m_omnidirectionalRotations = {
 Frustum::Frustum()
 {
 	// Set some default values
-	init(FrustumType::kPerspective, nullptr);
+	init(FrustumType::kPerspective);
 	for(U i = 0; i < m_maxLodDistances.getSize(); ++i)
 	{
 		const F32 dist = (m_common.m_far - m_common.m_near) / F32(kMaxLodCount + 1);
@@ -31,13 +31,11 @@ Frustum::Frustum()
 
 Frustum::~Frustum()
 {
-	m_depthMap.destroy(*m_pool);
 }
 
-void Frustum::init(FrustumType type, HeapMemoryPool* pool)
+void Frustum::init(FrustumType type)
 {
 	ANKI_ASSERT(type < FrustumType::kCount);
-	m_pool = pool;
 	m_frustumType = type;
 	setNear(kDefaultNear);
 	setFar(kDefaultFar);
@@ -203,13 +201,12 @@ Bool Frustum::update()
 
 void Frustum::setCoverageBuffer(F32* depths, U32 width, U32 height)
 {
-	ANKI_ASSERT(m_pool);
 	ANKI_ASSERT(depths && width > 0 && height > 0);
 
 	const U32 elemCount = width * height;
 	if(m_depthMap.getSize() != elemCount) [[unlikely]]
 	{
-		m_depthMap.resize(*m_pool, elemCount);
+		m_depthMap.resize(elemCount);
 	}
 
 	if(depths && elemCount > 0) [[likely]]

@@ -19,16 +19,12 @@ public:
 
 JointComponent::~JointComponent()
 {
-}
-
-void JointComponent::onDestroy(SceneNode& node)
-{
 	while(!m_jointList.isEmpty())
 	{
 		JointNode* jnode = &m_jointList.getFront();
 		m_jointList.popFront();
 
-		deleteInstance(node.getMemoryPool(), jnode);
+		deleteInstance(SceneMemoryPool::getSingleton(), jnode);
 	}
 }
 
@@ -66,7 +62,7 @@ void JointComponent::newJoint(const Vec3& relPosFactor, F32 breakingImpulse, TAr
 																				 std::forward<TArgs>(args)...);
 		joint->setBreakingImpulseThreshold(breakingImpulse);
 
-		JointNode* newNode = newInstance<JointNode>(m_node->getMemoryPool());
+		JointNode* newNode = newInstance<JointNode>(SceneMemoryPool::getSingleton());
 		newNode->m_joint = std::move(joint);
 		m_jointList.pushBack(newNode);
 	}
@@ -99,7 +95,7 @@ void JointComponent::newPoint2PointJoint2(const Vec3& relPosFactorA, const Vec3&
 			bodycA->getPhysicsBody(), relPosA, bodycB->getPhysicsBody(), relPosB);
 		joint->setBreakingImpulseThreshold(breakingImpulse);
 
-		JointNode* newNode = newInstance<JointNode>(m_node->getMemoryPool());
+		JointNode* newNode = newInstance<JointNode>(SceneMemoryPool::getSingleton());
 		newNode->m_joint = std::move(joint);
 		newNode->m_parentNode = m_node->getParent();
 		m_jointList.pushBack(newNode);
@@ -126,7 +122,7 @@ Error JointComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			if(joint.m_parentNode != info.m_node->getParent() || joint.m_joint->isBroken())
 			{
 				m_jointList.erase(&joint);
-				deleteInstance(info.m_node->getMemoryPool(), &joint);
+				deleteInstance(SceneMemoryPool::getSingleton(), &joint);
 				erasedOne = true;
 				updated = true;
 				break;

@@ -17,12 +17,6 @@ namespace anki {
 class LightEvent : public Event
 {
 public:
-	/// Create
-	LightEvent(EventManager* manager)
-		: Event(manager)
-	{
-	}
-
 	Error init(Second startTime, Second duration, SceneNode* light);
 
 	/// Implements Event::update

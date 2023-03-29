@@ -12,22 +12,18 @@ namespace anki {
 
 DecalComponent::DecalComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
-	, m_node(node)
 	, m_spatial(this)
 {
 	m_gpuSceneIndex =
-		node->getSceneGraph().getAllGpuSceneContiguousArrays().allocate(GpuSceneContiguousArrayType::kDecals);
+		SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().allocate(GpuSceneContiguousArrayType::kDecals);
 }
 
 DecalComponent::~DecalComponent()
 {
-	m_spatial.removeFromOctree(m_node->getSceneGraph().getOctree());
-}
+	m_spatial.removeFromOctree(SceneGraph::getSingleton().getOctree());
 
-void DecalComponent::onDestroy(SceneNode& node)
-{
-	node.getSceneGraph().getAllGpuSceneContiguousArrays().deferredFree(GpuSceneContiguousArrayType::kDecals,
-																	   m_gpuSceneIndex);
+	SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().deferredFree(GpuSceneContiguousArrayType::kDecals,
+																			 m_gpuSceneIndex);
 }
 
 void DecalComponent::setLayer(CString fname, F32 blendFactor, LayerType type)
@@ -95,12 +91,12 @@ Error DecalComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuDecal.m_obbExtend = m_obb.getExtend().xyz();
 
 		const PtrSize offset = m_gpuSceneIndex * sizeof(GpuSceneDecal)
-							   + info.m_node->getSceneGraph().getAllGpuSceneContiguousArrays().getArrayBase(
+							   + SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().getArrayBase(
 								   GpuSceneContiguousArrayType::kDecals);
 		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, offset, sizeof(gpuDecal), &gpuDecal);
 	}
 
-	const Bool spatialUpdated = m_spatial.update(info.m_node->getSceneGraph().getOctree());
+	const Bool spatialUpdated = m_spatial.update(SceneGraph::getSingleton().getOctree());
 	updated = updated || spatialUpdated;
 
 	return Error::kNone;

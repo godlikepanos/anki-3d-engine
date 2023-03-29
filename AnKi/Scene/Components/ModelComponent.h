@@ -66,7 +66,7 @@ private:
 
 	SegregatedListsGpuMemoryPoolToken m_gpuSceneUniforms;
 	U32 m_gpuSceneTransformsIndex = kMaxU32;
-	DynamicArray<PatchInfo> m_patchInfos;
+	SceneDynamicArray<PatchInfo> m_patchInfos;
 
 	Bool m_dirty : 1 = true;
 	Bool m_castsShadow : 1 = false;

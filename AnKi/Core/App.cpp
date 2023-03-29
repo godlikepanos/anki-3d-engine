@@ -118,10 +118,8 @@ void App::cleanup()
 	m_statsUi.reset(nullptr);
 	m_console.reset(nullptr);
 
-	deleteInstance(m_mainPool, m_scene);
-	m_scene = nullptr;
-	deleteInstance(m_mainPool, m_script);
-	m_script = nullptr;
+	SceneGraph::freeSingleton();
+	ScriptManager::freeSingleton();
 	deleteInstance(m_mainPool, m_renderer);
 	m_renderer = nullptr;
 	UiManager::freeSingleton();
@@ -141,6 +139,7 @@ void App::cleanup()
 	CoreTracer::freeSingleton();
 #endif
 
+	GlobalFrameIndex::freeSingleton();
 	ConfigSet::freeSingleton();
 
 	m_settingsDir.destroy();
@@ -221,6 +220,8 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 		ANKI_CORE_LOGW("Vsync is enabled and benchmark mode as well. Will turn vsync off");
 		ConfigSet::getSingleton().setGrVsync(false);
 	}
+
+	GlobalFrameIndex::allocateSingleton();
 
 	//
 	// Core tracer
@@ -325,37 +326,25 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 		UVec2(NativeWindow::getSingleton().getWidth(), NativeWindow::getSingleton().getHeight());
 	renderInit.m_allocCallback = m_mainPool.getAllocationCallback();
 	renderInit.m_allocCallbackUserData = m_mainPool.getAllocationCallbackUserData();
-	renderInit.m_globTimestamp = &m_globalTimestamp;
 	m_renderer = newInstance<MainRenderer>(m_mainPool);
 	ANKI_CHECK(m_renderer->init(renderInit));
 
 	//
 	// Script
 	//
-	m_script = newInstance<ScriptManager>(m_mainPool);
-	ANKI_CHECK(m_script->init(m_mainPool.getAllocationCallback(), m_mainPool.getAllocationCallbackUserData()));
+	ScriptManager::allocateSingleton(m_mainPool.getAllocationCallback(), m_mainPool.getAllocationCallbackUserData());
 
 	//
 	// Scene
 	//
-	m_scene = newInstance<SceneGraph>(m_mainPool);
-
-	SceneGraphInitInfo sceneInit;
-	sceneInit.m_allocCallback = m_mainPool.getAllocationCallback();
-	sceneInit.m_allocCallbackData = m_mainPool.getAllocationCallbackUserData();
-	sceneInit.m_globalTimestamp = &m_globalTimestamp;
-	sceneInit.m_scriptManager = m_script;
-	ANKI_CHECK(m_scene->init(sceneInit));
-
-	// Inform the script engine about some subsystems
-	m_script->setRenderer(m_renderer);
-	m_script->setSceneGraph(m_scene);
+	ANKI_CHECK(SceneGraph::allocateSingleton().init(m_mainPool.getAllocationCallback(),
+													m_mainPool.getAllocationCallbackUserData()));
 
 	//
 	// Misc
 	//
 	ANKI_CHECK(UiManager::getSingleton().newInstance<StatsUi>(m_statsUi));
-	ANKI_CHECK(UiManager::getSingleton().newInstance<DeveloperConsole>(m_console, m_script));
+	ANKI_CHECK(UiManager::getSingleton().newInstance<DeveloperConsole>(m_console));
 
 	ANKI_CORE_LOGI("Application initialized");
 
@@ -441,10 +430,10 @@ Error App::mainLoop()
 			// User update
 			ANKI_CHECK(userMainLoop(quit, crntTime - prevUpdateTime));
 
-			ANKI_CHECK(m_scene->update(prevUpdateTime, crntTime));
+			ANKI_CHECK(SceneGraph::getSingleton().update(prevUpdateTime, crntTime));
 
 			RenderQueue rqueue;
-			m_scene->doVisibilityTests(rqueue);
+			SceneGraph::getSingleton().doVisibilityTests(rqueue);
 
 			// Inject stats UI
 			DynamicArrayRaii<UiQueueElement> newUiElementArr(&m_mainPool);
@@ -525,9 +514,9 @@ Error App::mainLoop()
 				StatsUiInput in;
 				in.m_cpuFrameTime = frameTime - grTime;
 				in.m_rendererTime = m_renderer->getStats().m_renderingCpuTime;
-				in.m_sceneUpdateTime = m_scene->getStats().m_updateTime;
-				in.m_visibilityTestsTime = m_scene->getStats().m_visibilityTestsTime;
-				in.m_physicsTime = m_scene->getStats().m_physicsUpdate;
+				in.m_sceneUpdateTime = SceneGraph::getSingleton().getStats().m_updateTime;
+				in.m_visibilityTestsTime = SceneGraph::getSingleton().getStats().m_visibilityTestsTime;
+				in.m_physicsTime = SceneGraph::getSingleton().getStats().m_physicsUpdate;
 
 				in.m_gpuFrameTime = m_renderer->getStats().m_renderingGpuTime;
 
@@ -571,11 +560,12 @@ Error App::mainLoop()
 			}
 #endif
 
-			++m_globalTimestamp;
+			++GlobalFrameIndex::getSingleton().m_value;
 
 			if(benchmarkMode) [[unlikely]]
 			{
-				if(m_globalTimestamp >= ConfigSet::getSingleton().getCoreBenchmarkModeFrameCount())
+				if(GlobalFrameIndex::getSingleton().m_value
+				   >= ConfigSet::getSingleton().getCoreBenchmarkModeFrameCount())
 				{
 					quit = true;
 				}

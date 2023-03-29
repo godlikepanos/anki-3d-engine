@@ -10,13 +10,12 @@
 
 namespace anki {
 
-SceneNode::SceneNode(SceneGraph* scene, CString name)
-	: m_scene(scene)
-	, m_uuid(scene->getNewUuid())
+SceneNode::SceneNode(CString name)
+	: m_uuid(SceneGraph::getSingleton().getNewUuid())
 {
 	if(name)
 	{
-		m_name.create(getMemoryPool(), name);
+		m_name = name;
 	}
 
 	// Add the implicit MoveComponent
@@ -25,19 +24,15 @@ SceneNode::SceneNode(SceneGraph* scene, CString name)
 
 SceneNode::~SceneNode()
 {
-	HeapMemoryPool& pool = getMemoryPool();
-
 	for(SceneComponent* comp : m_components)
 	{
 		comp->onDestroyReal(*this);
 		g_sceneComponentCallbacks.m_destructor[comp->getClassId()](*comp);
 
-		pool.free(comp);
+		SceneMemoryPool::getSingleton().free(comp);
 	}
 
-	Base::destroy(pool);
-	m_name.destroy(pool);
-	m_components.destroy(pool);
+	Base::destroy(SceneMemoryPool::getSingleton());
 }
 
 void SceneNode::setMarkedForDeletion()
@@ -46,35 +41,13 @@ void SceneNode::setMarkedForDeletion()
 	if(!getMarkedForDeletion())
 	{
 		m_markedForDeletion = true;
-		m_scene->increaseObjectsMarkedForDeletion();
+		SceneGraph::getSingleton().increaseObjectsMarkedForDeletion();
 	}
 
 	[[maybe_unused]] const Error err = visitChildren([](SceneNode& obj) -> Error {
 		obj.setMarkedForDeletion();
 		return Error::kNone;
 	});
-}
-
-Timestamp SceneNode::getGlobalTimestamp() const
-{
-	return m_scene->getGlobalTimestamp();
-}
-
-HeapMemoryPool& SceneNode::getMemoryPool() const
-{
-	ANKI_ASSERT(m_scene);
-	return m_scene->getMemoryPool();
-}
-
-StackMemoryPool& SceneNode::getFrameMemoryPool() const
-{
-	ANKI_ASSERT(m_scene);
-	return m_scene->getFrameMemoryPool();
-}
-
-SceneGraphExternalSubsystems& SceneNode::getExternalSubsystems() const
-{
-	return m_scene->m_subsystems;
 }
 
 void SceneNode::newComponentInternal(SceneComponent* newc)
@@ -93,7 +66,7 @@ void SceneNode::newComponentInternal(SceneComponent* newc)
 		newc->onOtherComponentRemovedOrAddedReal(other, true);
 	}
 
-	m_components.emplaceBack(getMemoryPool(), newc);
+	m_components.emplaceBack(newc);
 
 	// Sort based on update weight
 	std::sort(m_components.getBegin(), m_components.getEnd(), [](const SceneComponent* a, const SceneComponent* b) {

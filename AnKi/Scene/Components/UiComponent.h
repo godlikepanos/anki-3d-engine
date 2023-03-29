@@ -28,6 +28,8 @@ public:
 		m_spatial.setUpdatesOctreeBounds(false);
 	}
 
+	~UiComponent();
+
 	void init(UiQueueElementDrawCallback callback, void* userData)
 	{
 		ANKI_ASSERT(callback != nullptr);
@@ -50,8 +52,6 @@ private:
 	Spatial m_spatial;
 
 	Error updateReal(SceneComponentUpdateInfo& info, Bool& updated);
-
-	void onDestroy(SceneNode& node);
 };
 /// @}
 
