@@ -55,8 +55,8 @@ public:
 
 protected:
 	/// Construct.
-	Sampler(GrManager* manager, CString name)
-		: GrObject(manager, kClassType, name)
+	Sampler(CString name)
+		: GrObject(kClassType, name)
 	{
 	}
 
@@ -67,7 +67,7 @@ protected:
 
 private:
 	/// Allocate and initialize a new instance.
-	[[nodiscard]] static Sampler* newInstance(GrManager* manager, const SamplerInitInfo& init);
+	[[nodiscard]] static Sampler* newInstance(const SamplerInitInfo& init);
 };
 /// @}
 

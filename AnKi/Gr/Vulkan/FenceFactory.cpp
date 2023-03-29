@@ -9,12 +9,14 @@ namespace anki {
 
 void FenceFactory::destroy()
 {
+	LockGuard<Mutex> lock(m_mtx);
+
 	for(MicroFence* fence : m_fences)
 	{
-		deleteInstance(*m_pool, fence);
+		deleteInstance(GrMemoryPool::getSingleton(), fence);
 	}
 
-	m_fences.destroy(*m_pool);
+	m_fences.destroy();
 }
 
 MicroFence* FenceFactory::newFence()
@@ -27,13 +29,13 @@ MicroFence* FenceFactory::newFence()
 		for(U32 i = 0; i < m_fences.getSize(); ++i)
 		{
 			VkResult status;
-			ANKI_VK_CHECKF(status = vkGetFenceStatus(m_dev, m_fences[i]->getHandle()));
+			ANKI_VK_CHECKF(status = vkGetFenceStatus(getVkDevice(), m_fences[i]->getHandle()));
 			if(status == VK_SUCCESS)
 			{
 				out = m_fences[i];
 
 				// Pop it
-				m_fences.erase(*m_pool, m_fences.getBegin() + i);
+				m_fences.erase(m_fences.getBegin() + i);
 				break;
 			}
 			else if(status != VK_NOT_READY)
@@ -52,7 +54,7 @@ MicroFence* FenceFactory::newFence()
 
 			++m_aliveFenceCount;
 
-			if(m_aliveFenceCount > MAX_ALIVE_FENCES)
+			if(m_aliveFenceCount > kMaxAliveFences)
 			{
 				ANKI_VK_LOGW("Too many alive fences (%u). You may run out of file descriptors", m_aliveFenceCount);
 			}
@@ -62,12 +64,12 @@ MicroFence* FenceFactory::newFence()
 	if(out == nullptr)
 	{
 		// Create a new one
-		out = anki::newInstance<MicroFence>(*m_pool, this);
+		out = anki::newInstance<MicroFence>(GrMemoryPool::getSingleton(), this);
 	}
 	else
 	{
 		// Recycle
-		ANKI_VK_CHECKF(vkResetFences(m_dev, 1, &out->getHandle()));
+		ANKI_VK_CHECKF(vkResetFences(getVkDevice(), 1, &out->getHandle()));
 	}
 
 	ANKI_ASSERT(out->m_refcount.getNonAtomically() == 0);
@@ -79,7 +81,7 @@ void FenceFactory::deleteFence(MicroFence* fence)
 	ANKI_ASSERT(fence);
 
 	LockGuard<Mutex> lock(m_mtx);
-	m_fences.emplaceBack(*m_pool, fence);
+	m_fences.emplaceBack(fence);
 }
 
 } // end namespace anki

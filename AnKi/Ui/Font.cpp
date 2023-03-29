@@ -63,7 +63,7 @@ void Font::createTexture(const void* data, U32 width, U32 height)
 
 	// Create and populate the buffer
 	const U32 buffSize = width * height * 4;
-	BufferPtr buff = getExternalSubsystems().m_grManager->newBuffer(
+	BufferPtr buff = GrManager::getSingleton().newBuffer(
 		BufferInitInfo(buffSize, BufferUsageBit::kTransferSource, BufferMapAccessBit::kWrite, "UI"));
 	void* mapped = buff->map(0, buffSize, BufferMapAccessBit::kWrite);
 	memcpy(mapped, data, buffSize);
@@ -79,20 +79,20 @@ void Font::createTexture(const void* data, U32 width, U32 height)
 		TextureUsageBit::kTransferDestination | TextureUsageBit::kSampledFragment | TextureUsageBit::kGenerateMipmaps;
 	texInit.m_mipmapCount = 1; // No mips because it will appear blurry with trilinear filtering
 
-	m_tex = getExternalSubsystems().m_grManager->newTexture(texInit);
+	m_tex = GrManager::getSingleton().newTexture(texInit);
 
 	// Create the whole texture view
-	m_texView = getExternalSubsystems().m_grManager->newTextureView(TextureViewInitInfo(m_tex, "Font"));
+	m_texView = GrManager::getSingleton().newTextureView(TextureViewInitInfo(m_tex, "Font"));
 	m_imFontAtlas->SetTexID(UiImageId(m_texView));
 
 	// Do the copy
 	constexpr TextureSurfaceInfo surf(0, 0, 0, 0);
 	CommandBufferInitInfo cmdbInit;
 	cmdbInit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
-	CommandBufferPtr cmdb = getExternalSubsystems().m_grManager->newCommandBuffer(cmdbInit);
+	CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
 
 	TextureViewInitInfo viewInit(m_tex, surf, DepthStencilAspectBit::kNone, "TempFont");
-	TextureViewPtr tmpView = getExternalSubsystems().m_grManager->newTextureView(viewInit);
+	TextureViewPtr tmpView = GrManager::getSingleton().newTextureView(viewInit);
 
 	TextureBarrierInfo barrier = {m_tex.get(), TextureUsageBit::kNone, TextureUsageBit::kTransferDestination, surf};
 	cmdb->setPipelineBarrier({&barrier, 1}, {}, {});

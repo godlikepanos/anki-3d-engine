@@ -72,7 +72,6 @@ if(VULKAN)
 		Vulkan/TextureViewImpl.cpp
 		Vulkan/TimestampQuery.cpp
 		Vulkan/TimestampQueryImpl.cpp
-		Vulkan/VulkanObject.cpp
 		Vulkan/FrameGarbageCollector.cpp
 		Vulkan/GrUpscaler.cpp
 		Vulkan/GrUpscalerImpl.cpp)
@@ -81,12 +80,10 @@ if(VULKAN)
 		Vulkan/AccelerationStructureImpl.h
 		Vulkan/BufferImpl.h
 		Vulkan/CommandBufferFactory.h
-		Vulkan/CommandBufferFactory.inl.h
 		Vulkan/CommandBufferImpl.h
 		Vulkan/CommandBufferImpl.inl.h
 		Vulkan/Common.h
 		Vulkan/DeferredBarrierFactory.h
-		Vulkan/DeferredBarrierFactory.inl.h
 		Vulkan/DescriptorSet.h
 		Vulkan/FenceFactory.h
 		Vulkan/FenceFactory.inl.h
@@ -112,7 +109,6 @@ if(VULKAN)
 		Vulkan/TextureImpl.h
 		Vulkan/TextureViewImpl.h
 		Vulkan/TimestampQueryImpl.h
-		Vulkan/VulkanObject.h
 		Vulkan/GrUpscalerImpl.h)
 
 	if(ANKI_HEADLESS)

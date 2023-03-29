@@ -51,8 +51,7 @@ Error DepthDownscale::initInternal()
 				m_lastMipSize.y());
 
 	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
-	const Bool supportsReductionSampler =
-		getExternalSubsystems().m_grManager->getDeviceCapabilities().m_samplingFilterMinMax;
+	const Bool supportsReductionSampler = GrManager::getSingleton().getDeviceCapabilities().m_samplingFilterMinMax;
 
 	// Create RT descr
 	{
@@ -108,7 +107,7 @@ Error DepthDownscale::initInternal()
 		BufferInitInfo buffInit("HiZCounterBuffer");
 		buffInit.m_size = sizeof(U32);
 		buffInit.m_usage = BufferUsageBit::kStorageComputeWrite | BufferUsageBit::kTransferDestination;
-		m_counterBuffer = getExternalSubsystems().m_grManager->newBuffer(buffInit);
+		m_counterBuffer = GrManager::getSingleton().newBuffer(buffInit);
 	}
 
 	// Client buffer
@@ -118,7 +117,7 @@ Error DepthDownscale::initInternal()
 		buffInit.m_mapAccess = BufferMapAccessBit::kRead;
 		buffInit.m_size = PtrSize(m_lastMipSize.y()) * PtrSize(m_lastMipSize.x()) * sizeof(F32);
 		buffInit.m_usage = BufferUsageBit::kStorageComputeWrite | BufferUsageBit::kStorageFragmentWrite;
-		m_clientBuffer = getExternalSubsystems().m_grManager->newBuffer(buffInit);
+		m_clientBuffer = GrManager::getSingleton().newBuffer(buffInit);
 
 		m_clientBufferAddr = m_clientBuffer->map(0, buffInit.m_size, BufferMapAccessBit::kRead);
 
@@ -136,7 +135,7 @@ Error DepthDownscale::initInternal()
 		sinit.m_addressing = SamplingAddressing::kClamp;
 		sinit.m_mipmapFilter = SamplingFilter::kMax;
 		sinit.m_minMagFilter = SamplingFilter::kMax;
-		m_reductionSampler = getExternalSubsystems().m_grManager->newSampler(sinit);
+		m_reductionSampler = GrManager::getSingleton().newSampler(sinit);
 	}
 
 	if(!preferCompute)

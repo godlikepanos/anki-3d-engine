@@ -81,13 +81,6 @@ private:
 	}
 };
 
-class ResourceManagerInitInfo : public ResourceManagerExternalSubsystems
-{
-public:
-	AllocAlignedCallback m_allocCallback = 0;
-	void* m_allocCallbackData = nullptr;
-};
-
 /// Resource manager. It holds a few global variables
 class ResourceManager : public MakeSingleton<ResourceManager>,
 
@@ -110,7 +103,7 @@ public \
 	friend class MakeSingleton;
 
 public:
-	Error init(ResourceManagerInitInfo& init);
+	Error init(AllocAlignedCallback allocCallback, void* allocCallbackData);
 
 	/// Load a resource.
 	template<typename T>
@@ -166,13 +159,7 @@ public:
 		return *m_fs;
 	}
 
-	ResourceManagerExternalSubsystems& getExternalSubsystems()
-	{
-		return m_subsystems;
-	}
-
 private:
-	ResourceManagerExternalSubsystems m_subsystems;
 	ResourceFilesystem* m_fs = nullptr;
 	AsyncLoader* m_asyncLoader = nullptr; ///< Async loading thread
 	ShaderProgramResourceSystem* m_shaderProgramSystem = nullptr;

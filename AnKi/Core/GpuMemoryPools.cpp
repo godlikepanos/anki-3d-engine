@@ -12,10 +12,8 @@
 
 namespace anki {
 
-void UnifiedGeometryMemoryPool::init(GrManager* gr)
+void UnifiedGeometryMemoryPool::init()
 {
-	ANKI_ASSERT(gr);
-
 	const PtrSize poolSize = ConfigSet::getSingleton().getCoreGlobalVertexMemorySize();
 
 	const Array classes = {1_KB, 8_KB, 32_KB, 128_KB, 512_KB, 4_MB, 8_MB, 16_MB, poolSize};
@@ -23,12 +21,12 @@ void UnifiedGeometryMemoryPool::init(GrManager* gr)
 	BufferUsageBit buffUsage = BufferUsageBit::kVertex | BufferUsageBit::kIndex | BufferUsageBit::kTransferDestination
 							   | (BufferUsageBit::kAllTexture & BufferUsageBit::kAllRead);
 
-	if(gr->getDeviceCapabilities().m_rayTracingEnabled)
+	if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled)
 	{
 		buffUsage |= BufferUsageBit::kAccelerationStructureBuild;
 	}
 
-	m_pool.init(gr, &CoreMemoryPool::getSingleton(), buffUsage, classes, poolSize, "UnifiedGeometry", false);
+	m_pool.init(buffUsage, classes, poolSize, "UnifiedGeometry", false);
 
 	// Allocate something dummy to force creating the GPU buffer
 	SegregatedListsGpuMemoryPoolToken token;
@@ -36,43 +34,40 @@ void UnifiedGeometryMemoryPool::init(GrManager* gr)
 	deferredFree(token);
 }
 
-void GpuSceneMemoryPool::init(GrManager* gr)
+void GpuSceneMemoryPool::init()
 {
-	ANKI_ASSERT(gr);
-
 	const PtrSize poolSize = ConfigSet::getSingleton().getCoreGpuSceneInitialSize();
 
 	const Array classes = {32_B, 64_B, 128_B, 256_B, poolSize};
 
 	BufferUsageBit buffUsage = BufferUsageBit::kAllStorage | BufferUsageBit::kTransferDestination;
 
-	m_pool.init(gr, &CoreMemoryPool::getSingleton(), buffUsage, classes, poolSize, "GpuScene", true);
+	m_pool.init(buffUsage, classes, poolSize, "GpuScene", true);
 }
 
 RebarStagingGpuMemoryPool::~RebarStagingGpuMemoryPool()
 {
-	GrManager& gr = m_buffer->getManager();
-
-	gr.finish();
+	GrManager::getSingleton().finish();
 
 	m_buffer->unmap();
 	m_buffer.reset(nullptr);
 }
 
-void RebarStagingGpuMemoryPool::init(GrManager* gr)
+void RebarStagingGpuMemoryPool::init()
 {
 	BufferInitInfo buffInit("ReBar");
 	buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
 	buffInit.m_size = ConfigSet::getSingleton().getCoreRebarGpuMemorySize();
 	buffInit.m_usage = BufferUsageBit::kAllUniform | BufferUsageBit::kAllStorage | BufferUsageBit::kVertex
 					   | BufferUsageBit::kIndex | BufferUsageBit::kShaderBindingTable;
-	m_buffer = gr->newBuffer(buffInit);
+	m_buffer = GrManager::getSingleton().newBuffer(buffInit);
 
 	m_bufferSize = buffInit.m_size;
 
-	m_alignment = gr->getDeviceCapabilities().m_uniformBufferBindOffsetAlignment;
-	m_alignment = max(m_alignment, gr->getDeviceCapabilities().m_storageBufferBindOffsetAlignment);
-	m_alignment = max(m_alignment, gr->getDeviceCapabilities().m_sbtRecordAlignment);
+	m_alignment = GrManager::getSingleton().getDeviceCapabilities().m_uniformBufferBindOffsetAlignment;
+	m_alignment =
+		max(m_alignment, GrManager::getSingleton().getDeviceCapabilities().m_storageBufferBindOffsetAlignment);
+	m_alignment = max(m_alignment, GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment);
 
 	m_mappedMem = static_cast<U8*>(m_buffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 }

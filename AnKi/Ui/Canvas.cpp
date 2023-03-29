@@ -45,11 +45,11 @@ Error Canvas::init(FontPtr font, U32 fontHeight, U32 width, U32 height)
 	samplerInit.m_minMagFilter = SamplingFilter::kLinear;
 	samplerInit.m_mipmapFilter = SamplingFilter::kLinear;
 	samplerInit.m_addressing = SamplingAddressing::kRepeat;
-	m_linearLinearRepeatSampler = getExternalSubsystems().m_grManager->newSampler(samplerInit);
+	m_linearLinearRepeatSampler = GrManager::getSingleton().newSampler(samplerInit);
 
 	samplerInit.m_minMagFilter = SamplingFilter::kNearest;
 	samplerInit.m_mipmapFilter = SamplingFilter::kNearest;
-	m_nearestNearestRepeatSampler = getExternalSubsystems().m_grManager->newSampler(samplerInit);
+	m_nearestNearestRepeatSampler = GrManager::getSingleton().newSampler(samplerInit);
 
 	// Create the context
 	m_imCtx = ImGui::CreateContext(font->getImFontAtlas());

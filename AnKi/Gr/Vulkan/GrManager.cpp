@@ -22,52 +22,45 @@
 
 namespace anki {
 
+template<>
+template<>
+GrManager& MakeSingletonPtr<GrManager>::allocateSingleton<>()
+{
+	ANKI_ASSERT(m_global == nullptr);
+	m_global = new GrManagerImpl;
+
+#if ANKI_ENABLE_ASSERTIONS
+	++g_singletonsAllocated;
+#endif
+
+	return *m_global;
+}
+
+template<>
+void MakeSingletonPtr<GrManager>::freeSingleton()
+{
+	if(m_global)
+	{
+		delete static_cast<GrManagerImpl*>(m_global);
+		m_global = nullptr;
+#if ANKI_ENABLE_ASSERTIONS
+		--g_singletonsAllocated;
+#endif
+	}
+}
+
 GrManager::GrManager()
 {
 }
 
 GrManager::~GrManager()
 {
-	// Destroy in reverse order
-	m_cacheDir.destroy(m_pool);
 }
 
-Error GrManager::newInstance(GrManagerInitInfo& init, GrManager*& gr)
+Error GrManager::init(GrManagerInitInfo& inf)
 {
-	GrManagerImpl* impl = static_cast<GrManagerImpl*>(
-		init.m_allocCallback(init.m_allocCallbackUserData, nullptr, sizeof(GrManagerImpl), alignof(GrManagerImpl)));
-	callConstructor(*impl);
-
-	// Init
-	impl->m_pool.init(init.m_allocCallback, init.m_allocCallbackUserData);
-	impl->m_cacheDir.create(impl->m_pool, init.m_cacheDirectory);
-	Error err = impl->init(init);
-
-	if(err)
-	{
-		callDestructor(*impl);
-		init.m_allocCallback(init.m_allocCallbackUserData, impl, 0, 0);
-		gr = nullptr;
-	}
-	else
-	{
-		gr = impl;
-	}
-
-	return err;
-}
-
-void GrManager::deleteInstance(GrManager* gr)
-{
-	if(gr == nullptr)
-	{
-		return;
-	}
-
-	AllocAlignedCallback callback = gr->m_pool.getAllocationCallback();
-	void* userData = gr->m_pool.getAllocationCallbackUserData();
-	gr->~GrManager();
-	callback(userData, gr, 0, 0);
+	ANKI_VK_SELF(GrManagerImpl);
+	return self.init(inf);
 }
 
 TexturePtr GrManager::acquireNextPresentableTexture()
@@ -111,7 +104,7 @@ GrManagerStats GrManager::getStats() const
 #define ANKI_NEW_GR_OBJECT(type) \
 	type##Ptr GrManager::new##type(const type##InitInfo& init) \
 	{ \
-		type##Ptr ptr(type::newInstance(this, init)); \
+		type##Ptr ptr(type::newInstance(init)); \
 		if(!ptr.isCreated()) [[unlikely]] \
 		{ \
 			ANKI_VK_LOGF("Failed to create a " ANKI_STRINGIZE(type) " object"); \
@@ -122,7 +115,7 @@ GrManagerStats GrManager::getStats() const
 #define ANKI_NEW_GR_OBJECT_NO_INIT_INFO(type) \
 	type##Ptr GrManager::new##type() \
 	{ \
-		type##Ptr ptr(type::newInstance(this)); \
+		type##Ptr ptr(type::newInstance()); \
 		if(!ptr.isCreated()) [[unlikely]] \
 		{ \
 			ANKI_VK_LOGF("Failed to create a " ANKI_STRINGIZE(type) " object"); \

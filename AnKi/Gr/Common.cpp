@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Gr/Common.h>
+#include <AnKi/Gr/GrObject.h>
 #include <AnKi/Math.h>
 
 namespace anki {
@@ -17,6 +18,11 @@ inline constexpr ShaderVariableDataTypeInfo kShaderVariableDataTypeInfos[] = {
 #undef ANKI_SVDT_MACRO
 #undef ANKI_SVDT_MACRO_OPAQUE
 };
+
+void GrObjectDeleter::operator()(GrObject* ptr)
+{
+	deleteInstance(GrMemoryPool::getSingleton(), ptr);
+}
 
 const ShaderVariableDataTypeInfo& getShaderVariableDataTypeInfo(ShaderVariableDataType type)
 {

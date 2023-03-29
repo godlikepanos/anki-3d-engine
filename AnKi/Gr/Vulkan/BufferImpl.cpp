@@ -12,13 +12,13 @@ BufferImpl::~BufferImpl()
 {
 	ANKI_ASSERT(!m_mapped);
 
-	BufferGarbage* garbage = anki::newInstance<BufferGarbage>(getMemoryPool());
+	BufferGarbage* garbage = anki::newInstance<BufferGarbage>(GrMemoryPool::getSingleton());
 	garbage->m_bufferHandle = m_handle;
 	garbage->m_memoryHandle = m_memHandle;
 
 	if(m_views.getSize())
 	{
-		garbage->m_viewHandles.create(getMemoryPool(), U32(m_views.getSize()));
+		garbage->m_viewHandles.create(U32(m_views.getSize()));
 
 		U32 count = 0;
 		for(auto it : m_views)
@@ -41,8 +41,6 @@ BufferImpl::~BufferImpl()
 		ANKI_VK_LOGW("Buffer needed invalidation but you never invalidated: %s", getName().cstr());
 	}
 #endif
-
-	m_views.destroy(getMemoryPool());
 }
 
 Error BufferImpl::init(const BufferInitInfo& inf)
@@ -78,12 +76,12 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	ci.queueFamilyIndexCount = getGrManagerImpl().getQueueFamilies().getSize();
 	ci.pQueueFamilyIndices = &getGrManagerImpl().getQueueFamilies()[0];
 	ci.sharingMode = (ci.queueFamilyIndexCount > 1) ? VK_SHARING_MODE_CONCURRENT : VK_SHARING_MODE_EXCLUSIVE;
-	ANKI_VK_CHECK(vkCreateBuffer(getDevice(), &ci, nullptr, &m_handle));
+	ANKI_VK_CHECK(vkCreateBuffer(getVkDevice(), &ci, nullptr, &m_handle));
 	getGrManagerImpl().trySetVulkanHandleName(inf.getName(), VK_OBJECT_TYPE_BUFFER, m_handle);
 
 	// Get mem requirements
 	VkMemoryRequirements req;
-	vkGetBufferMemoryRequirements(getDevice(), m_handle, &req);
+	vkGetBufferMemoryRequirements(getVkDevice(), m_handle, &req);
 	U32 memIdx = kMaxU32;
 	const Bool isDiscreteGpu = getGrManagerImpl().getDeviceCapabilities().m_discreteGpu;
 
@@ -198,7 +196,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	// Bind mem to buffer
 	{
 		ANKI_TRACE_SCOPED_EVENT(VkBindObject);
-		ANKI_VK_CHECK(vkBindBufferMemory(getDevice(), m_handle, m_memHandle.m_memory, m_memHandle.m_offset));
+		ANKI_VK_CHECK(vkBindBufferMemory(getVkDevice(), m_handle, m_memHandle.m_memory, m_memHandle.m_offset));
 	}
 
 	// Get GPU buffer address
@@ -207,7 +205,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 		VkBufferDeviceAddressInfoKHR info = {};
 		info.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO_KHR;
 		info.buffer = m_handle;
-		m_gpuAddress = vkGetBufferDeviceAddressKHR(getDevice(), &info);
+		m_gpuAddress = vkGetBufferDeviceAddressKHR(getVkDevice(), &info);
 
 		if(m_gpuAddress == 0)
 		{
@@ -445,9 +443,9 @@ VkBufferView BufferImpl::getOrCreateBufferView(Format fmt, PtrSize offset, PtrSi
 	viewCreateInfo.range = range;
 
 	VkBufferView view;
-	ANKI_VK_CHECKF(vkCreateBufferView(getDevice(), &viewCreateInfo, nullptr, &view));
+	ANKI_VK_CHECKF(vkCreateBufferView(getVkDevice(), &viewCreateInfo, nullptr, &view));
 
-	m_views.emplace(getMemoryPool(), hash, view);
+	m_views.emplace(hash, view);
 
 	return view;
 }

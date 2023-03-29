@@ -14,21 +14,19 @@ FramebufferImpl::~FramebufferImpl()
 {
 	if(m_fbHandle)
 	{
-		vkDestroyFramebuffer(getDevice(), m_fbHandle, nullptr);
+		vkDestroyFramebuffer(getVkDevice(), m_fbHandle, nullptr);
 	}
 
 	for(auto it : m_renderpassHandles)
 	{
 		VkRenderPass rpass = it;
 		ANKI_ASSERT(rpass);
-		vkDestroyRenderPass(getDevice(), rpass, nullptr);
+		vkDestroyRenderPass(getVkDevice(), rpass, nullptr);
 	}
-
-	m_renderpassHandles.destroy(getMemoryPool());
 
 	if(m_compatibleRenderpassHandle)
 	{
-		vkDestroyRenderPass(getDevice(), m_compatibleRenderpassHandle, nullptr);
+		vkDestroyRenderPass(getVkDevice(), m_compatibleRenderpassHandle, nullptr);
 	}
 }
 
@@ -54,7 +52,7 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 
 	// Create a renderpass.
 	initRpassCreateInfo(init);
-	ANKI_VK_CHECK(vkCreateRenderPass2KHR(getDevice(), &m_rpassCi, nullptr, &m_compatibleRenderpassHandle));
+	ANKI_VK_CHECK(vkCreateRenderPass2KHR(getVkDevice(), &m_rpassCi, nullptr, &m_compatibleRenderpassHandle));
 	getGrManagerImpl().trySetVulkanHandleName(init.getName(), VK_OBJECT_TYPE_RENDER_PASS, m_compatibleRenderpassHandle);
 
 	// Create the FB
@@ -175,7 +173,7 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 	ci.pAttachments = &imgViews[0];
 	ANKI_ASSERT(count == ci.attachmentCount);
 
-	ANKI_VK_CHECK(vkCreateFramebuffer(getDevice(), &ci, nullptr, &m_fbHandle));
+	ANKI_VK_CHECK(vkCreateFramebuffer(getVkDevice(), &ci, nullptr, &m_fbHandle));
 	getGrManagerImpl().trySetVulkanHandleName(init.getName(), VK_OBJECT_TYPE_FRAMEBUFFER, m_fbHandle);
 
 	return Error::kNone;
@@ -373,10 +371,10 @@ VkRenderPass FramebufferImpl::getRenderPassHandle(const Array<VkImageLayout, kMa
 				subpassDescr.pNext = &sriAttachmentInfo;
 			}
 
-			ANKI_VK_CHECKF(vkCreateRenderPass2KHR(getDevice(), &ci, nullptr, &out));
+			ANKI_VK_CHECKF(vkCreateRenderPass2KHR(getVkDevice(), &ci, nullptr, &out));
 			getGrManagerImpl().trySetVulkanHandleName(getName(), VK_OBJECT_TYPE_RENDER_PASS, out);
 
-			m_renderpassHandles.emplace(getMemoryPool(), hash, out);
+			m_renderpassHandles.emplace(hash, out);
 		}
 	}
 

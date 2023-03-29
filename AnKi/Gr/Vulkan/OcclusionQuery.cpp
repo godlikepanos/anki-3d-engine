@@ -9,13 +9,13 @@
 
 namespace anki {
 
-OcclusionQuery* OcclusionQuery::newInstance(GrManager* manager)
+OcclusionQuery* OcclusionQuery::newInstance()
 {
-	OcclusionQueryImpl* impl = anki::newInstance<OcclusionQueryImpl>(manager->getMemoryPool(), manager, "N/A");
+	OcclusionQueryImpl* impl = anki::newInstance<OcclusionQueryImpl>(GrMemoryPool::getSingleton(), "N/A");
 	const Error err = impl->init();
 	if(err)
 	{
-		deleteInstance(manager->getMemoryPool(), impl);
+		deleteInstance(GrMemoryPool::getSingleton(), impl);
 		impl = nullptr;
 	}
 	return impl;

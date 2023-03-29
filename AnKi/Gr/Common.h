@@ -39,6 +39,22 @@ class GrUpscalerInitInfo;
 #define ANKI_GR_LOGF(...) ANKI_LOG("GR", kFatal, __VA_ARGS__)
 #define ANKI_GR_LOGV(...) ANKI_LOG("GR", kVerbose, __VA_ARGS__)
 
+class GrMemoryPool : public HeapMemoryPool, public MakeSingleton<GrMemoryPool>
+{
+	template<typename>
+	friend class MakeSingleton;
+
+private:
+	GrMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData)
+		: HeapMemoryPool(allocCb, allocCbUserData, "GrMemPool")
+	{
+	}
+
+	~GrMemoryPool() = default;
+};
+
+ANKI_DEFINE_SUBMODULE_UTIL_CONTAINERS(Gr, GrMemoryPool)
+
 // Some constants
 constexpr U32 kMaxVertexAttributes = 8;
 constexpr U32 kMaxColorRenderTargets = 4;
@@ -52,9 +68,15 @@ constexpr U32 kMaxBindlessReadonlyTextureBuffers = 512;
 /// The number of commands in a command buffer that make it a small batch command buffer.
 constexpr U32 kCommandBufferSmallBatchMaxCommands = 100;
 
+class GrObjectDeleter
+{
+public:
+	void operator()(GrObject* ptr);
+};
+
 /// Smart pointer for resources.
 template<typename T>
-using GrObjectPtrT = IntrusivePtr<T, DefaultPtrDeleter<GrObject>>;
+using GrObjectPtrT = IntrusivePtr<T, GrObjectDeleter>;
 
 using GrObjectPtr = GrObjectPtrT<GrObject>;
 

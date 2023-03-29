@@ -20,8 +20,8 @@ namespace anki {
 class TextureGarbage : public IntrusiveListEnabled<TextureGarbage>
 {
 public:
-	DynamicArray<VkImageView> m_viewHandles;
-	DynamicArray<U32> m_bindlessIndices;
+	GrDynamicArray<VkImageView> m_viewHandles;
+	GrDynamicArray<U32> m_bindlessIndices;
 	VkImage m_imageHandle = VK_NULL_HANDLE;
 	GpuMemoryHandle m_memoryHandle;
 };
@@ -31,7 +31,7 @@ class BufferGarbage : public IntrusiveListEnabled<BufferGarbage>
 {
 public:
 	VkBuffer m_bufferHandle = VK_NULL_HANDLE;
-	DynamicArray<VkBufferView> m_viewHandles;
+	GrDynamicArray<VkBufferView> m_viewHandles;
 	GpuMemoryHandle m_memoryHandle;
 };
 
@@ -44,9 +44,8 @@ public:
 
 	~FrameGarbageCollector();
 
-	void init(GrManagerImpl* gr)
+	void init()
 	{
-		m_gr = gr;
 #if ANKI_EXTRA_CHECKS
 		m_initialized = true;
 #endif
@@ -72,8 +71,6 @@ private:
 		IntrusiveList<BufferGarbage> m_bufferGarbage;
 		MicroFencePtr m_fence;
 	};
-
-	GrManagerImpl* m_gr = nullptr;
 
 	Mutex m_mtx;
 	IntrusiveList<FrameGarbage> m_frames;

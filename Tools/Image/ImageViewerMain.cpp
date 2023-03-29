@@ -149,7 +149,7 @@ private:
 				TextureViewInitInfo viewInitInf(m_imageResource->getTexture());
 				viewInitInf.m_firstMipmap = m_crntMip;
 				viewInitInf.m_mipmapCount = 1;
-				m_textureView = getExternalSubsystems().m_grManager->newTextureView(viewInitInf);
+				m_textureView = GrManager::getSingleton().newTextureView(viewInitInf);
 			}
 
 			ImGui::SameLine();

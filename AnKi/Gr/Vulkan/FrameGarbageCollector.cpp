@@ -21,8 +21,7 @@ void FrameGarbageCollector::collectGarbage()
 		return;
 	}
 
-	const VkDevice dev = m_gr->getDevice();
-	HeapMemoryPool& pool = m_gr->getMemoryPool();
+	const VkDevice dev = getVkDevice();
 
 	IntrusiveList<FrameGarbage> newFrames;
 	while(!m_frames.isEmpty())
@@ -47,13 +46,11 @@ void FrameGarbageCollector::collectGarbage()
 			{
 				vkDestroyImageView(dev, viewHandle, nullptr);
 			}
-			textureGarbage->m_viewHandles.destroy(pool);
 
 			for(U32 bindlessIndex : textureGarbage->m_bindlessIndices)
 			{
-				m_gr->getDescriptorSetFactory().unbindBindlessTexture(bindlessIndex);
+				getGrManagerImpl().getDescriptorSetFactory().unbindBindlessTexture(bindlessIndex);
 			}
-			textureGarbage->m_bindlessIndices.destroy(pool);
 
 			if(textureGarbage->m_imageHandle)
 			{
@@ -62,10 +59,10 @@ void FrameGarbageCollector::collectGarbage()
 
 			if(textureGarbage->m_memoryHandle)
 			{
-				m_gr->getGpuMemoryManager().freeMemory(textureGarbage->m_memoryHandle);
+				getGrManagerImpl().getGpuMemoryManager().freeMemory(textureGarbage->m_memoryHandle);
 			}
 
-			deleteInstance(pool, textureGarbage);
+			deleteInstance(GrMemoryPool::getSingleton(), textureGarbage);
 		}
 
 		// Dispose buffer garbage
@@ -77,7 +74,6 @@ void FrameGarbageCollector::collectGarbage()
 			{
 				vkDestroyBufferView(dev, view, nullptr);
 			}
-			bufferGarbage->m_viewHandles.destroy(pool);
 
 			if(bufferGarbage->m_bufferHandle)
 			{
@@ -86,13 +82,13 @@ void FrameGarbageCollector::collectGarbage()
 
 			if(bufferGarbage->m_memoryHandle)
 			{
-				m_gr->getGpuMemoryManager().freeMemory(bufferGarbage->m_memoryHandle);
+				getGrManagerImpl().getGpuMemoryManager().freeMemory(bufferGarbage->m_memoryHandle);
 			}
 
-			deleteInstance(pool, bufferGarbage);
+			deleteInstance(GrMemoryPool::getSingleton(), bufferGarbage);
 		}
 
-		deleteInstance(pool, &frame);
+		deleteInstance(GrMemoryPool::getSingleton(), &frame);
 	}
 
 	m_frames = std::move(newFrames);
@@ -106,7 +102,7 @@ FrameGarbageCollector::FrameGarbage& FrameGarbageCollector::getFrame()
 	}
 	else
 	{
-		FrameGarbage* newGarbage = newInstance<FrameGarbage>(m_gr->getMemoryPool());
+		FrameGarbage* newGarbage = newInstance<FrameGarbage>(GrMemoryPool::getSingleton());
 		m_frames.pushBack(newGarbage);
 	}
 

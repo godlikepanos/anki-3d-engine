@@ -60,8 +60,8 @@ protected:
 	GrUpscalerType m_upscalerType = GrUpscalerType::kCount;
 
 	/// Construct.
-	GrUpscaler(GrManager* manager, CString name)
-		: GrObject(manager, kClassType, name)
+	GrUpscaler(CString name)
+		: GrObject(kClassType, name)
 	{
 	}
 
@@ -72,7 +72,7 @@ protected:
 
 private:
 	/// Allocate and initialize a new instance.
-	[[nodiscard]] static GrUpscaler* newInstance(GrManager* manager, const GrUpscalerInitInfo& initInfo);
+	[[nodiscard]] static GrUpscaler* newInstance(const GrUpscalerInitInfo& initInfo);
 };
 /// @}
 

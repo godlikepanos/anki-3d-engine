@@ -51,7 +51,7 @@ Error Scale::init()
 
 	if(needsScaling)
 	{
-		if(dlssQuality > 0 && getExternalSubsystems().m_grManager->getDeviceCapabilities().m_dlss)
+		if(dlssQuality > 0 && GrManager::getSingleton().getDeviceCapabilities().m_dlss)
 		{
 			m_upscalingMethod = UpscalingMethod::kGr;
 		}
@@ -113,7 +113,7 @@ Error Scale::init()
 		inf.m_upscalerType = GrUpscalerType::kDlss2;
 		inf.m_qualityMode = GrUpscalerQualityMode(dlssQuality - 1);
 
-		m_grUpscaler = getExternalSubsystems().m_grManager->newGrUpscaler(inf);
+		m_grUpscaler = GrManager::getSingleton().newGrUpscaler(inf);
 	}
 
 	// Sharpen programs
@@ -147,7 +147,7 @@ Error Scale::init()
 	{
 		format = m_r->getHdrFormat();
 	}
-	else if(getExternalSubsystems().m_grManager->getDeviceCapabilities().m_unalignedBbpTextureFormats)
+	else if(GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats)
 	{
 		format = Format::kR8G8B8_Unorm;
 	}
@@ -162,7 +162,7 @@ Error Scale::init()
 
 	if(m_neeedsTonemapping)
 	{
-		const Format fmt = (getExternalSubsystems().m_grManager->getDeviceCapabilities().m_unalignedBbpTextureFormats)
+		const Format fmt = (GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats)
 							   ? Format::kR8G8B8_Unorm
 							   : Format::kR8G8B8A8_Unorm;
 		m_tonemapedRtDescr = m_r->create2DRenderTargetDescription(

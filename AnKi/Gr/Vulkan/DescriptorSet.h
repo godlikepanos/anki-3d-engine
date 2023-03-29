@@ -361,7 +361,7 @@ public:
 	DescriptorSetFactory() = default;
 	~DescriptorSetFactory();
 
-	Error init(HeapMemoryPool* pool, VkDevice dev, U32 bindlessTextureCount, U32 bindlessTextureBuffers);
+	Error init(U32 bindlessTextureCount, U32 bindlessTextureBuffers);
 
 	void destroy();
 
@@ -397,14 +397,12 @@ private:
 	class ThreadLocal;
 
 	static thread_local ThreadLocal* m_threadLocal;
-	DynamicArray<ThreadLocal*> m_allThreadLocals;
+	GrDynamicArray<ThreadLocal*> m_allThreadLocals;
 	Mutex m_allThreadLocalsMtx;
 
-	HeapMemoryPool* m_pool = nullptr;
-	VkDevice m_dev = VK_NULL_HANDLE;
 	U64 m_frameCount = 0;
 
-	DynamicArray<DSLayoutCacheEntry*> m_caches;
+	GrDynamicArray<DSLayoutCacheEntry*> m_caches;
 	SpinLock m_cachesMtx; ///< Not a mutex because after a while there will be no reason to lock
 
 	BindlessDescriptorSet* m_bindless = nullptr;

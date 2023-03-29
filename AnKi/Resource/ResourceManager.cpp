@@ -41,13 +41,11 @@ ResourceManager::~ResourceManager()
 	ResourceMemoryPool::freeSingleton();
 }
 
-Error ResourceManager::init(ResourceManagerInitInfo& init)
+Error ResourceManager::init(AllocAlignedCallback allocCallback, void* allocCallbackData)
 {
 	ANKI_RESOURCE_LOGI("Initializing resource manager");
 
-	ResourceMemoryPool::allocateSingleton(init.m_allocCallback, init.m_allocCallbackData);
-
-	m_subsystems = init;
+	ResourceMemoryPool::allocateSingleton(allocCallback, allocCallbackData);
 
 	m_fs = newInstance<ResourceFilesystem>(ResourceMemoryPool::getSingleton());
 	ANKI_CHECK(m_fs->init());
@@ -56,12 +54,11 @@ Error ResourceManager::init(ResourceManagerInitInfo& init)
 	m_asyncLoader = newInstance<AsyncLoader>(ResourceMemoryPool::getSingleton());
 
 	m_transferGpuAlloc = newInstance<TransferGpuAllocator>(ResourceMemoryPool::getSingleton());
-	ANKI_CHECK(m_transferGpuAlloc->init(ConfigSet::getSingleton().getRsrcTransferScratchMemorySize(),
-										m_subsystems.m_grManager));
+	ANKI_CHECK(m_transferGpuAlloc->init(ConfigSet::getSingleton().getRsrcTransferScratchMemorySize()));
 
 	// Init the programs
 	m_shaderProgramSystem = newInstance<ShaderProgramResourceSystem>(ResourceMemoryPool::getSingleton());
-	ANKI_CHECK(m_shaderProgramSystem->init(*m_subsystems.m_grManager));
+	ANKI_CHECK(m_shaderProgramSystem->init());
 
 	return Error::kNone;
 }

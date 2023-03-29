@@ -89,7 +89,6 @@ private:
 	HeapMemoryPool m_mainPool; // TODO glob: rm
 
 	// Sybsystems
-	GrManager* m_gr = nullptr;
 	MainRenderer* m_renderer = nullptr;
 	SceneGraph* m_scene = nullptr;
 	ScriptManager* m_script = nullptr;

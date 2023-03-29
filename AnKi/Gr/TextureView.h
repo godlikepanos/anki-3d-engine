@@ -97,8 +97,8 @@ protected:
 	TextureSubresourceInfo m_subresource;
 
 	/// Construct.
-	TextureView(GrManager* manager, CString name)
-		: GrObject(manager, kClassType, name)
+	TextureView(CString name)
+		: GrObject(kClassType, name)
 	{
 		m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kNone;
 
@@ -127,7 +127,7 @@ protected:
 
 private:
 	/// Allocate and initialize a new instance.
-	[[nodiscard]] static TextureView* newInstance(GrManager* manager, const TextureViewInitInfo& init);
+	[[nodiscard]] static TextureView* newInstance(const TextureViewInitInfo& init);
 };
 /// @}
 

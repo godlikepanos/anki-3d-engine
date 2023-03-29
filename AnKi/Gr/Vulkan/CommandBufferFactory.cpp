@@ -23,13 +23,19 @@ static VulkanQueueType getQueueTypeFromCommandBufferFlags(CommandBufferFlag flag
 	}
 }
 
+void MicroCommandBufferPtrDeleter::operator()(MicroCommandBuffer* ptr)
+{
+	ANKI_ASSERT(ptr);
+	ptr->m_threadAlloc->deleteCommandBuffer(ptr);
+}
+
 MicroCommandBuffer::~MicroCommandBuffer()
 {
 	reset();
 
 	if(m_handle)
 	{
-		vkFreeCommandBuffers(m_threadAlloc->m_factory->m_dev, m_threadAlloc->m_pools[m_queue], 1, &m_handle);
+		vkFreeCommandBuffers(getVkDevice(), m_threadAlloc->m_pools[m_queue], 1, &m_handle);
 		m_handle = {};
 
 		[[maybe_unused]] const U32 count = m_threadAlloc->m_factory->m_createdCmdBufferCount.fetchSub(1);
@@ -46,7 +52,7 @@ void MicroCommandBuffer::reset()
 
 	for(GrObjectType type : EnumIterable<GrObjectType>())
 	{
-		m_objectRefs[type].destroy(m_fastPool);
+		m_objectRefs[type].destroy();
 	}
 
 	m_fastPool.reset();
@@ -66,20 +72,7 @@ Error CommandBufferThreadAllocator::init()
 		ci.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 		ci.queueFamilyIndex = m_factory->m_queueFamilies[qtype];
 
-		ANKI_VK_CHECK(vkCreateCommandPool(m_factory->m_dev, &ci, nullptr, &m_pools[qtype]));
-	}
-
-	for(U32 secondLevel = 0; secondLevel < 2; ++secondLevel)
-	{
-		for(U32 smallBatch = 0; smallBatch < 2; ++smallBatch)
-		{
-			for(VulkanQueueType queue : EnumIterable<VulkanQueueType>())
-			{
-				MicroObjectRecycler<MicroCommandBuffer>& recycler = m_recyclers[secondLevel][smallBatch][queue];
-
-				recycler.init(m_factory->m_pool);
-			}
-		}
+		ANKI_VK_CHECK(vkCreateCommandPool(getVkDevice(), &ci, nullptr, &m_pools[qtype]));
 	}
 
 	return Error::kNone;
@@ -102,7 +95,7 @@ void CommandBufferThreadAllocator::destroy()
 	{
 		if(pool)
 		{
-			vkDestroyCommandPool(m_factory->m_dev, pool, nullptr);
+			vkDestroyCommandPool(getVkDevice(), pool, nullptr);
 			pool = VK_NULL_HANDLE;
 		}
 	}
@@ -132,12 +125,17 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 
 		ANKI_TRACE_INC_COUNTER(VkCommandBufferCreate, 1);
 		VkCommandBuffer cmdb;
-		ANKI_VK_CHECK(vkAllocateCommandBuffers(m_factory->m_dev, &ci, &cmdb));
+		ANKI_VK_CHECK(vkAllocateCommandBuffers(getVkDevice(), &ci, &cmdb));
 
-		MicroCommandBuffer* newCmdb = newInstance<MicroCommandBuffer>(getMemoryPool(), this);
+		MicroCommandBuffer* newCmdb = newInstance<MicroCommandBuffer>(GrMemoryPool::getSingleton(), this);
 
-		newCmdb->m_fastPool.init(m_factory->m_pool->getAllocationCallback(),
-								 m_factory->m_pool->getAllocationCallbackUserData(), 256_KB, 2.0f);
+		newCmdb->m_fastPool.init(GrMemoryPool::getSingleton().getAllocationCallback(),
+								 GrMemoryPool::getSingleton().getAllocationCallbackUserData(), 256_KB, 2.0f);
+
+		for(DynamicArrayRaii<GrObjectPtr>& arr : newCmdb->m_objectRefs)
+		{
+			arr = DynamicArrayRaii<GrObjectPtr>(&newCmdb->m_fastPool);
+		}
 
 		newCmdb->m_handle = cmdb;
 		newCmdb->m_flags = cmdbFlags;
@@ -171,16 +169,6 @@ void CommandBufferThreadAllocator::deleteCommandBuffer(MicroCommandBuffer* ptr)
 	m_recyclers[secondLevel][smallBatch][ptr->m_queue].recycle(ptr);
 }
 
-Error CommandBufferFactory::init(HeapMemoryPool* pool, VkDevice dev, const VulkanQueueFamilies& queueFamilies)
-{
-	ANKI_ASSERT(pool && dev);
-
-	m_pool = pool;
-	m_dev = dev;
-	m_queueFamilies = queueFamilies;
-	return Error::kNone;
-}
-
 void CommandBufferFactory::destroy()
 {
 	// First trim the caches for all recyclers. This will release the primaries and populate the recyclers of
@@ -202,10 +190,10 @@ void CommandBufferFactory::destroy()
 	for(CommandBufferThreadAllocator* talloc : m_threadAllocs)
 	{
 		talloc->destroy();
-		deleteInstance(*m_pool, talloc);
+		deleteInstance(GrMemoryPool::getSingleton(), talloc);
 	}
 
-	m_threadAllocs.destroy(*m_pool);
+	m_threadAllocs.destroy();
 }
 
 Error CommandBufferFactory::newCommandBuffer(ThreadId tid, CommandBufferFlag cmdbFlags, MicroCommandBufferPtr& ptr)
@@ -245,9 +233,9 @@ Error CommandBufferFactory::newCommandBuffer(ThreadId tid, CommandBufferFlag cmd
 
 			if(alloc == nullptr)
 			{
-				alloc = newInstance<CommandBufferThreadAllocator>(*m_pool, this, tid);
+				alloc = newInstance<CommandBufferThreadAllocator>(GrMemoryPool::getSingleton(), this, tid);
 
-				m_threadAllocs.resize(*m_pool, m_threadAllocs.getSize() + 1);
+				m_threadAllocs.resize(m_threadAllocs.getSize() + 1);
 				m_threadAllocs[m_threadAllocs.getSize() - 1] = alloc;
 
 				// Sort for fast find

@@ -6,7 +6,6 @@
 #pragma once
 
 #include <AnKi/Gr/Framebuffer.h>
-#include <AnKi/Gr/Vulkan/VulkanObject.h>
 #include <AnKi/Gr/Vulkan/SwapchainFactory.h>
 #include <AnKi/Util/HashMap.h>
 #include <AnKi/Util/BitSet.h>
@@ -20,11 +19,11 @@ class FramebufferAttachmentInfo;
 /// @{
 
 /// Framebuffer implementation.
-class FramebufferImpl final : public Framebuffer, public VulkanObject<Framebuffer, FramebufferImpl>
+class FramebufferImpl final : public Framebuffer
 {
 public:
-	FramebufferImpl(GrManager* manager, CString name)
-		: Framebuffer(manager, name)
+	FramebufferImpl(CString name)
+		: Framebuffer(name)
 	{
 	}
 
@@ -132,7 +131,7 @@ private:
 
 	// VK objects
 	VkRenderPass m_compatibleRenderpassHandle = VK_NULL_HANDLE; ///< Compatible renderpass. Good for pipeline creation.
-	HashMap<U64, VkRenderPass> m_renderpassHandles;
+	GrHashMap<U64, VkRenderPass> m_renderpassHandles;
 	RWMutex m_renderpassHandlesMtx;
 	VkFramebuffer m_fbHandle = VK_NULL_HANDLE;
 

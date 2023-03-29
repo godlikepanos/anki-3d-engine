@@ -75,7 +75,7 @@ void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
-	const Bool enableVrs = getExternalSubsystems().m_grManager->getDeviceCapabilities().m_vrs
+	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs
 						   && ConfigSet::getSingleton().getRVrs() && !preferCompute;
 	const Bool fbDescrHasVrs = m_fbDescr.m_shadingRateAttachmentTexelWidth > 0;
 

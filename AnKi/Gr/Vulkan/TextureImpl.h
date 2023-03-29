@@ -6,7 +6,6 @@
 #pragma once
 
 #include <AnKi/Gr/Texture.h>
-#include <AnKi/Gr/Vulkan/VulkanObject.h>
 #include <AnKi/Gr/Vulkan/GpuMemoryManager.h>
 #include <AnKi/Gr/Utils/Functions.h>
 #include <AnKi/Gr/Vulkan/SamplerFactory.h>
@@ -76,7 +75,7 @@ private:
 };
 
 /// Texture container.
-class TextureImpl final : public Texture, public VulkanObject<Texture, TextureImpl>
+class TextureImpl final : public Texture
 {
 public:
 	VkImage m_imageHandle = VK_NULL_HANDLE;
@@ -88,8 +87,8 @@ public:
 	VkImageViewCreateInfo m_viewCreateInfoTemplate;
 	VkImageViewASTCDecodeModeEXT m_astcDecodeMode;
 
-	TextureImpl(GrManager* manager, CString name)
-		: Texture(manager, name)
+	TextureImpl(CString name)
+		: Texture(name)
 	{
 	}
 
@@ -187,7 +186,7 @@ public:
 	const MicroImageView& getOrCreateView(const TextureSubresourceInfo& subresource) const;
 
 private:
-	mutable HashMap<TextureSubresourceInfo, MicroImageView> m_viewsMap;
+	mutable GrHashMap<TextureSubresourceInfo, MicroImageView> m_viewsMap;
 	mutable RWMutex m_viewsMapMtx;
 
 	/// This is a special optimization for textures that have only one surface. In this case we don't need to go through

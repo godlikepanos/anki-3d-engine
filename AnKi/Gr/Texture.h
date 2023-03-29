@@ -254,8 +254,8 @@ protected:
 	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::kNone;
 
 	/// Construct.
-	Texture(GrManager* manager, CString name)
-		: GrObject(manager, kClassType, name)
+	Texture(CString name)
+		: GrObject(kClassType, name)
 	{
 	}
 
@@ -266,7 +266,7 @@ protected:
 
 private:
 	/// Allocate and initialize a new instance.
-	[[nodiscard]] static Texture* newInstance(GrManager* manager, const TextureInitInfo& init);
+	[[nodiscard]] static Texture* newInstance(const TextureInitInfo& init);
 };
 /// @}
 

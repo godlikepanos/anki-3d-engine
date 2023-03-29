@@ -28,10 +28,7 @@ AllGpuSceneContiguousArrays::ContiguousArrayAllocator::allocateObject(HeapMemory
 	if(m_poolToken.m_offset == kMaxPtrSize)
 	{
 		// Initialize
-		const U32 alignment = GpuSceneMemoryPool::getSingleton()
-								  .getGrManager()
-								  .getDeviceCapabilities()
-								  .m_storageBufferBindOffsetAlignment;
+		const U32 alignment = GrManager::getSingleton().getDeviceCapabilities().m_storageBufferBindOffsetAlignment;
 		GpuSceneMemoryPool::getSingleton().allocate(m_objectSize * m_initialArraySize, alignment, m_poolToken);
 		m_nextSlotIndex = 0;
 

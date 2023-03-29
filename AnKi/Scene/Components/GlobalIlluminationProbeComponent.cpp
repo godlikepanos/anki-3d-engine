@@ -56,10 +56,9 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 	if(m_shapeDirty) [[unlikely]]
 	{
 		TextureInitInfo texInit("GiProbe");
-		texInit.m_format =
-			(getExternalSubsystems(*info.m_node).m_grManager->getDeviceCapabilities().m_unalignedBbpTextureFormats)
-				? Format::kR16G16B16_Sfloat
-				: Format::kR16G16B16A16_Sfloat;
+		texInit.m_format = (GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats)
+							   ? Format::kR16G16B16_Sfloat
+							   : Format::kR16G16B16A16_Sfloat;
 		texInit.m_width = m_cellCounts.x() * 6;
 		texInit.m_height = m_cellCounts.y();
 		texInit.m_depth = m_cellCounts.z();
@@ -67,10 +66,10 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 		texInit.m_usage =
 			TextureUsageBit::kAllSampled | TextureUsageBit::kImageComputeWrite | TextureUsageBit::kImageComputeRead;
 
-		m_volTex = getExternalSubsystems(*info.m_node).m_grManager->newTexture(texInit);
+		m_volTex = GrManager::getSingleton().newTexture(texInit);
 
 		TextureViewInitInfo viewInit(m_volTex, "GiProbe");
-		m_volView = getExternalSubsystems(*info.m_node).m_grManager->newTextureView(viewInit);
+		m_volView = GrManager::getSingleton().newTextureView(viewInit);
 
 		m_volTexBindlessIdx = m_volView->getOrCreateBindlessTextureIndex();
 
@@ -83,7 +82,7 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 
 		CommandBufferInitInfo cmdbInit("ClearGIVol");
 		cmdbInit.m_flags = CommandBufferFlag::kSmallBatch | CommandBufferFlag::kGeneralWork;
-		CommandBufferPtr cmdb = getExternalSubsystems(*info.m_node).m_grManager->newCommandBuffer(cmdbInit);
+		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
 
 		TextureBarrierInfo texBarrier;
 		texBarrier.m_previousUsage = TextureUsageBit::kNone;

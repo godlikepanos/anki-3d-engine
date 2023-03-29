@@ -20,14 +20,13 @@ inline void MicroObjectRecycler<T>::destroy()
 		ANKI_ASSERT(mobj);
 		ANKI_ASSERT(!mobj->getFence());
 
-		auto& pool = mobj->getMemoryPool();
-		deleteInstance(pool, mobj);
+		deleteInstance(GrMemoryPool::getSingleton(), mobj);
 #if ANKI_EXTRA_CHECKS
 		--m_createdAndNotRecycled;
 #endif
 	}
 
-	m_objects.destroy(*m_pool);
+	m_objects.destroy();
 	ANKI_ASSERT(m_createdAndNotRecycled == 0 && "Destroying the recycler while objects have not recycled yet");
 }
 
@@ -49,7 +48,7 @@ inline T* MicroObjectRecycler<T>::findToReuse()
 		{
 			out = m_objects[i].m_microObject;
 			m_objects[i] = m_objects[m_objects.getSize() - 1];
-			m_objects.popBack(*m_pool);
+			m_objects.popBack();
 
 			break;
 		}
@@ -86,7 +85,7 @@ void MicroObjectRecycler<T>::recycle(T* mobj)
 		mobj->onFenceDone();
 	}
 
-	m_objects.emplaceBack(*m_pool, obj);
+	m_objects.emplaceBack(obj);
 	checkDoneFences();
 	trimCacheInternal(m_readyObjectsAfterTrim);
 }
@@ -115,7 +114,7 @@ void MicroObjectRecycler<T>::checkDoneFences()
 template<typename T>
 void MicroObjectRecycler<T>::trimCacheInternal(U32 aliveObjectCountAfterTrim)
 {
-	DynamicArray<Object> aliveObjects;
+	GrDynamicArray<Object> aliveObjects;
 
 	for(Object& obj : m_objects)
 	{
@@ -125,18 +124,17 @@ void MicroObjectRecycler<T>::trimCacheInternal(U32 aliveObjectCountAfterTrim)
 		if(inUseByTheGpu)
 		{
 			// Can't delete it for sure
-			aliveObjects.emplaceBack(*m_pool, obj);
+			aliveObjects.emplaceBack(obj);
 		}
 		else if(aliveObjectCountAfterTrim > 0)
 		{
 			// Need to keep a few alive for recycling
-			aliveObjects.emplaceBack(*m_pool, obj);
+			aliveObjects.emplaceBack(obj);
 			--aliveObjectCountAfterTrim;
 		}
 		else
 		{
-			auto& pool = mobj.getMemoryPool();
-			deleteInstance(pool, &mobj);
+			deleteInstance(GrMemoryPool::getSingleton(), &mobj);
 #if ANKI_EXTRA_CHECKS
 			--m_createdAndNotRecycled;
 #endif
@@ -146,13 +144,13 @@ void MicroObjectRecycler<T>::trimCacheInternal(U32 aliveObjectCountAfterTrim)
 	if(aliveObjects.getSize() > 0)
 	{
 		// Some alive, store the alive
-		m_objects.destroy(*m_pool);
+		m_objects.destroy();
 		m_objects = std::move(aliveObjects);
 	}
 	else if(aliveObjects.getSize() == 0 && m_objects.getSize() > 0)
 	{
 		// All dead, destroy the array
-		m_objects.destroy(*m_pool);
+		m_objects.destroy();
 	}
 }
 

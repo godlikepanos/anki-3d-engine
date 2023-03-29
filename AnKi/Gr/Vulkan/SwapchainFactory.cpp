@@ -21,27 +21,26 @@ MicroSwapchain::MicroSwapchain(SwapchainFactory* factory)
 
 MicroSwapchain::~MicroSwapchain()
 {
-	const VkDevice dev = m_factory->m_gr->getDevice();
-
-	m_textures.destroy(getMemoryPool());
+	m_textures.destroy();
 
 	if(m_swapchain)
 	{
-		vkDestroySwapchainKHR(dev, m_swapchain, nullptr);
+		vkDestroySwapchainKHR(getVkDevice(), m_swapchain, nullptr);
 		m_swapchain = {};
 	}
 }
 
 Error MicroSwapchain::initInternal()
 {
-	const VkDevice dev = m_factory->m_gr->getDevice();
+	const VkDevice dev = getVkDevice();
+	const VkPhysicalDevice pdev = getGrManagerImpl().getPhysicalDevice();
 
 	// Get the surface size
 	VkSurfaceCapabilitiesKHR surfaceProperties;
 	U32 surfaceWidth = 0, surfaceHeight = 0;
 	{
-		ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_factory->m_gr->getPhysicalDevice(),
-																m_factory->m_gr->getSurface(), &surfaceProperties));
+		ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(getGrManagerImpl().getPhysicalDevice(),
+																getGrManagerImpl().getSurface(), &surfaceProperties));
 
 #if ANKI_WINDOWING_SYSTEM_HEADLESS
 		if(surfaceProperties.currentExtent.width != kMaxU32 || surfaceProperties.currentExtent.height != kMaxU32)
@@ -67,13 +66,13 @@ Error MicroSwapchain::initInternal()
 	VkColorSpaceKHR colorspace = VK_COLOR_SPACE_MAX_ENUM_KHR;
 	{
 		uint32_t formatCount;
-		ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(m_factory->m_gr->getPhysicalDevice(),
-														   m_factory->m_gr->getSurface(), &formatCount, nullptr));
+		ANKI_VK_CHECK(
+			vkGetPhysicalDeviceSurfaceFormatsKHR(pdev, getGrManagerImpl().getSurface(), &formatCount, nullptr));
 
-		DynamicArrayRaii<VkSurfaceFormatKHR> formats(&getMemoryPool());
+		GrDynamicArray<VkSurfaceFormatKHR> formats;
 		formats.create(formatCount);
-		ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(m_factory->m_gr->getPhysicalDevice(),
-														   m_factory->m_gr->getSurface(), &formatCount, &formats[0]));
+		ANKI_VK_CHECK(
+			vkGetPhysicalDeviceSurfaceFormatsKHR(pdev, getGrManagerImpl().getSurface(), &formatCount, &formats[0]));
 
 		ANKI_VK_LOGV("Supported surface formats:");
 		Format akSurfaceFormat = Format::kNone;
@@ -122,12 +121,11 @@ Error MicroSwapchain::initInternal()
 	VkPresentModeKHR presentModeSecondChoice = VK_PRESENT_MODE_MAX_ENUM_KHR;
 	{
 		uint32_t presentModeCount;
-		vkGetPhysicalDeviceSurfacePresentModesKHR(m_factory->m_gr->getPhysicalDevice(), m_factory->m_gr->getSurface(),
-												  &presentModeCount, nullptr);
+		vkGetPhysicalDeviceSurfacePresentModesKHR(pdev, getGrManagerImpl().getSurface(), &presentModeCount, nullptr);
 		presentModeCount = min(presentModeCount, 4u);
 		Array<VkPresentModeKHR, 4> presentModes;
-		vkGetPhysicalDeviceSurfacePresentModesKHR(m_factory->m_gr->getPhysicalDevice(), m_factory->m_gr->getSurface(),
-												  &presentModeCount, &presentModes[0]);
+		vkGetPhysicalDeviceSurfacePresentModesKHR(pdev, getGrManagerImpl().getSurface(), &presentModeCount,
+												  &presentModes[0]);
 
 		if(m_factory->m_vsync)
 		{
@@ -193,7 +191,7 @@ Error MicroSwapchain::initInternal()
 
 		VkSwapchainCreateInfoKHR ci = {};
 		ci.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-		ci.surface = m_factory->m_gr->getSurface();
+		ci.surface = getGrManagerImpl().getSurface();
 		ci.minImageCount = kMaxFramesInFlight;
 		ci.imageFormat = surfaceFormat;
 		ci.imageColorSpace = colorspace;
@@ -201,8 +199,8 @@ Error MicroSwapchain::initInternal()
 		ci.imageExtent.height = surfaceHeight;
 		ci.imageArrayLayers = 1;
 		ci.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
-		ci.queueFamilyIndexCount = m_factory->m_gr->getQueueFamilies().getSize();
-		ci.pQueueFamilyIndices = &m_factory->m_gr->getQueueFamilies()[0];
+		ci.queueFamilyIndexCount = getGrManagerImpl().getQueueFamilies().getSize();
+		ci.pQueueFamilyIndices = &getGrManagerImpl().getQueueFamilies()[0];
 		ci.imageSharingMode = (ci.queueFamilyIndexCount > 1) ? VK_SHARING_MODE_CONCURRENT : VK_SHARING_MODE_EXCLUSIVE;
 		ci.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
 		ci.compositeAlpha = compositeAlpha;
@@ -222,7 +220,7 @@ Error MicroSwapchain::initInternal()
 			ANKI_VK_LOGI("Requested a swapchain with %u images but got one with %u", kMaxFramesInFlight, count);
 		}
 
-		m_textures.create(getMemoryPool(), count);
+		m_textures.create(count);
 
 		ANKI_VK_LOGI("Created a swapchain. Image count: %u, present mode: %u, size: %ux%u, vsync: %u", count,
 					 presentMode, surfaceWidth, surfaceHeight, U32(m_factory->m_vsync));
@@ -241,19 +239,13 @@ Error MicroSwapchain::initInternal()
 						   | TextureUsageBit::kPresent;
 			init.m_type = TextureType::k2D;
 
-			TextureImpl* tex =
-				newInstance<TextureImpl>(m_factory->m_gr->getMemoryPool(), m_factory->m_gr, init.getName());
+			TextureImpl* tex = newInstance<TextureImpl>(GrMemoryPool::getSingleton(), init.getName());
 			m_textures[i].reset(tex);
 			ANKI_CHECK(tex->initExternal(images[i], init));
 		}
 	}
 
 	return Error::kNone;
-}
-
-HeapMemoryPool& MicroSwapchain::getMemoryPool()
-{
-	return m_factory->m_gr->getMemoryPool();
 }
 
 MicroSwapchainPtr SwapchainFactory::newInstance()
@@ -265,15 +257,7 @@ MicroSwapchainPtr SwapchainFactory::newInstance()
 	[[maybe_unused]] MicroSwapchain* dummy = m_recycler.findToReuse();
 	ANKI_ASSERT(dummy == nullptr);
 
-	return MicroSwapchainPtr(anki::newInstance<MicroSwapchain>(m_gr->getMemoryPool(), this));
-}
-
-void SwapchainFactory::init(GrManagerImpl* manager, Bool vsync)
-{
-	ANKI_ASSERT(manager);
-	m_gr = manager;
-	m_vsync = vsync;
-	m_recycler.init(&m_gr->getMemoryPool());
+	return MicroSwapchainPtr(anki::newInstance<MicroSwapchain>(GrMemoryPool::getSingleton(), this));
 }
 
 } // end namespace anki

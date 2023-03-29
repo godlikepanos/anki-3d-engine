@@ -6,7 +6,6 @@
 #pragma once
 
 #include <AnKi/Gr/Sampler.h>
-#include <AnKi/Gr/Vulkan/VulkanObject.h>
 #include <AnKi/Gr/Vulkan/SamplerFactory.h>
 
 namespace anki {
@@ -15,13 +14,13 @@ namespace anki {
 /// @{
 
 /// Vulkan implementation of Sampler.
-class SamplerImpl final : public Sampler, public VulkanObject<Sampler, SamplerImpl>
+class SamplerImpl final : public Sampler
 {
 public:
 	MicroSamplerPtr m_sampler;
 
-	SamplerImpl(GrManager* manager, CString name)
-		: Sampler(manager, name)
+	SamplerImpl(CString name)
+		: Sampler(name)
 	{
 	}
 

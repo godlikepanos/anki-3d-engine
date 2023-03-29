@@ -16,7 +16,7 @@ Error TransferGpuAllocator::StackAllocatorBuilderInterface::allocateChunk(PtrSiz
 	out = newInstance<Chunk>(ResourceMemoryPool::getSingleton());
 
 	BufferInitInfo bufferInit(size, BufferUsageBit::kTransferSource, BufferMapAccessBit::kWrite, "Transfer");
-	out->m_buffer = m_parent->m_gr->newBuffer(bufferInit);
+	out->m_buffer = GrManager::getSingleton().newBuffer(bufferInit);
 
 	out->m_mappedBuffer = out->m_buffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
 
@@ -45,10 +45,8 @@ TransferGpuAllocator::~TransferGpuAllocator()
 	}
 }
 
-Error TransferGpuAllocator::init(PtrSize maxSize, GrManager* gr)
+Error TransferGpuAllocator::init(PtrSize maxSize)
 {
-	m_gr = gr;
-
 	m_maxAllocSize = getAlignedRoundUp(kChunkInitialSize * kPoolCount, maxSize);
 	ANKI_RESOURCE_LOGI("Will use %zuMB of memory for transfer scratch", m_maxAllocSize / PtrSize(1_MB));
 

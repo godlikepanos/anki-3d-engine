@@ -35,13 +35,6 @@ public:
 	PipelineLayoutFactory() = default;
 	~PipelineLayoutFactory() = default;
 
-	void init(HeapMemoryPool* pool, VkDevice dev)
-	{
-		ANKI_ASSERT(pool);
-		m_pool = pool;
-		m_dev = dev;
-	}
-
 	void destroy();
 
 	/// @note It's thread-safe.
@@ -49,10 +42,7 @@ public:
 							PipelineLayout& layout);
 
 private:
-	HeapMemoryPool* m_pool = nullptr;
-	VkDevice m_dev = VK_NULL_HANDLE;
-
-	HashMap<U64, VkPipelineLayout> m_layouts;
+	GrHashMap<U64, VkPipelineLayout> m_layouts;
 	Mutex m_layoutsMtx;
 };
 /// @}

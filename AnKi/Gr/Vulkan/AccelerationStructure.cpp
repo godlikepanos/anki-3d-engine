@@ -9,14 +9,14 @@
 
 namespace anki {
 
-AccelerationStructure* AccelerationStructure::newInstance(GrManager* manager, const AccelerationStructureInitInfo& init)
+AccelerationStructure* AccelerationStructure::newInstance(const AccelerationStructureInitInfo& init)
 {
 	AccelerationStructureImpl* impl =
-		anki::newInstance<AccelerationStructureImpl>(manager->getMemoryPool(), manager, init.getName());
+		anki::newInstance<AccelerationStructureImpl>(GrMemoryPool::getSingleton(), init.getName());
 	const Error err = impl->init(init);
 	if(err)
 	{
-		deleteInstance(manager->getMemoryPool(), impl);
+		deleteInstance(GrMemoryPool::getSingleton(), impl);
 		impl = nullptr;
 	}
 	return impl;

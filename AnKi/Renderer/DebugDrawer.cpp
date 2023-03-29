@@ -63,16 +63,16 @@ void allocateAndPopulateDebugBox(RebarGpuMemoryToken& vertsToken, RebarGpuMemory
 	indexCount = kIndexCount;
 }
 
-Error DebugDrawer2::init(ResourceManager* rsrcManager, GrManager* gr)
+Error DebugDrawer2::init()
 {
-	ANKI_CHECK(rsrcManager->loadResource("ShaderBinaries/SceneDebug.ankiprogbin", m_prog));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/SceneDebug.ankiprogbin", m_prog));
 
 	{
 		BufferInitInfo bufferInit("DebugCube");
 		bufferInit.m_usage = BufferUsageBit::kVertex;
 		bufferInit.m_size = sizeof(Vec3) * 8;
 		bufferInit.m_mapAccess = BufferMapAccessBit::kWrite;
-		m_cubePositionsBuffer = gr->newBuffer(bufferInit);
+		m_cubePositionsBuffer = GrManager::getSingleton().newBuffer(bufferInit);
 
 		Vec3* verts = static_cast<Vec3*>(m_cubePositionsBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 
@@ -97,7 +97,7 @@ Error DebugDrawer2::init(ResourceManager* rsrcManager, GrManager* gr)
 		bufferInit.m_usage = BufferUsageBit::kVertex;
 		bufferInit.m_size = sizeof(U16) * kIndexCount;
 		bufferInit.m_mapAccess = BufferMapAccessBit::kWrite;
-		m_cubeIndicesBuffer = gr->newBuffer(bufferInit);
+		m_cubeIndicesBuffer = GrManager::getSingleton().newBuffer(bufferInit);
 
 		U16* indices = static_cast<U16*>(m_cubeIndicesBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 

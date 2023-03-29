@@ -36,8 +36,8 @@ CameraComponent::CameraComponent(SceneNode* node)
 	m_frustum.update();
 
 	// Init extended frustum
-	m_usesExtendedFrustum = getExternalSubsystems(*node).m_grManager->getDeviceCapabilities().m_rayTracingEnabled
-							&& config.getSceneRayTracedShadows();
+	m_usesExtendedFrustum =
+		GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && config.getSceneRayTracedShadows();
 
 	if(m_usesExtendedFrustum)
 	{

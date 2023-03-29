@@ -6,7 +6,6 @@
 #pragma once
 
 #include <AnKi/Gr/OcclusionQuery.h>
-#include <AnKi/Gr/Vulkan/VulkanObject.h>
 #include <AnKi/Gr/Vulkan/QueryFactory.h>
 
 namespace anki {
@@ -15,13 +14,13 @@ namespace anki {
 /// @{
 
 /// Occlusion query.
-class OcclusionQueryImpl final : public OcclusionQuery, public VulkanObject<OcclusionQuery, OcclusionQueryImpl>
+class OcclusionQueryImpl final : public OcclusionQuery
 {
 public:
 	MicroQuery m_handle = {};
 
-	OcclusionQueryImpl(GrManager* manager, CString name)
-		: OcclusionQuery(manager, name)
+	OcclusionQueryImpl(CString name)
+		: OcclusionQuery(name)
 	{
 	}
 

@@ -33,12 +33,12 @@ Error VrsSriGeneration::init()
 
 Error VrsSriGeneration::initInternal()
 {
-	if(!getExternalSubsystems().m_grManager->getDeviceCapabilities().m_vrs)
+	if(!GrManager::getSingleton().getDeviceCapabilities().m_vrs)
 	{
 		return Error::kNone;
 	}
 
-	m_sriTexelDimension = getExternalSubsystems().m_grManager->getDeviceCapabilities().m_minShadingRateImageTexelSize;
+	m_sriTexelDimension = GrManager::getSingleton().getDeviceCapabilities().m_minShadingRateImageTexelSize;
 	ANKI_ASSERT(m_sriTexelDimension == 8 || m_sriTexelDimension == 16);
 	const UVec2 rez = (m_r->getInternalResolution() + m_sriTexelDimension - 1) / m_sriTexelDimension;
 
@@ -62,15 +62,13 @@ Error VrsSriGeneration::initInternal()
 	ShaderProgramResourceVariantInitInfo variantInit(m_prog);
 	variantInit.addMutation("SRI_TEXEL_DIMENSION", m_sriTexelDimension);
 
-	if(m_sriTexelDimension == 16
-	   && getExternalSubsystems().m_grManager->getDeviceCapabilities().m_minSubgroupSize >= 32)
+	if(m_sriTexelDimension == 16 && GrManager::getSingleton().getDeviceCapabilities().m_minSubgroupSize >= 32)
 	{
 		// Algorithm's workgroup size is 32, GPU's subgroup size is min 32 -> each workgroup has 1 subgroup -> No need
 		// for shared mem
 		variantInit.addMutation("SHARED_MEMORY", 0);
 	}
-	else if(m_sriTexelDimension == 8
-			&& getExternalSubsystems().m_grManager->getDeviceCapabilities().m_minSubgroupSize >= 16)
+	else if(m_sriTexelDimension == 8 && GrManager::getSingleton().getDeviceCapabilities().m_minSubgroupSize >= 16)
 	{
 		// Algorithm's workgroup size is 16, GPU's subgroup size is min 16 -> each workgroup has 1 subgroup -> No need
 		// for shared mem
@@ -119,7 +117,7 @@ void VrsSriGeneration::getDebugRenderTarget(CString rtName, Array<RenderTargetHa
 void VrsSriGeneration::importRenderTargets(RenderingContext& ctx)
 {
 	const Bool enableVrs =
-		getExternalSubsystems().m_grManager->getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs();
+		GrManager::getSingleton().getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs();
 	if(!enableVrs)
 	{
 		return;
@@ -142,7 +140,7 @@ void VrsSriGeneration::importRenderTargets(RenderingContext& ctx)
 void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 {
 	const Bool enableVrs =
-		getExternalSubsystems().m_grManager->getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs();
+		GrManager::getSingleton().getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs();
 	if(!enableVrs)
 	{
 		return;

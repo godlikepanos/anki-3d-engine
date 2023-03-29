@@ -9,13 +9,13 @@
 
 namespace anki {
 
-GrUpscaler* GrUpscaler::newInstance(GrManager* manager, const GrUpscalerInitInfo& initInfo)
+GrUpscaler* GrUpscaler::newInstance(const GrUpscalerInitInfo& initInfo)
 {
-	GrUpscalerImpl* impl = anki::newInstance<GrUpscalerImpl>(manager->getMemoryPool(), manager, initInfo.getName());
+	GrUpscalerImpl* impl = anki::newInstance<GrUpscalerImpl>(GrMemoryPool::getSingleton(), initInfo.getName());
 	const Error err = impl->initInternal(initInfo);
 	if(err)
 	{
-		deleteInstance(manager->getMemoryPool(), impl);
+		deleteInstance(GrMemoryPool::getSingleton(), impl);
 		impl = nullptr;
 	}
 	return impl;

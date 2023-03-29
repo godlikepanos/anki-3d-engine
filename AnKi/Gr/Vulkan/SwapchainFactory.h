@@ -26,7 +26,7 @@ class MicroSwapchain
 public:
 	VkSwapchainKHR m_swapchain = {};
 
-	DynamicArray<TexturePtr> m_textures;
+	GrDynamicArray<TexturePtr> m_textures;
 
 	MicroSwapchain(SwapchainFactory* factory);
 
@@ -46,8 +46,6 @@ public:
 	{
 		return m_refcount.load();
 	}
-
-	HeapMemoryPool& getMemoryPool();
 
 	void setFence(MicroFencePtr fence)
 	{
@@ -106,7 +104,10 @@ class SwapchainFactory
 	friend class MicroSwapchain;
 
 public:
-	void init(GrManagerImpl* manager, Bool vsync);
+	void init(Bool vsync)
+	{
+		m_vsync = vsync;
+	}
 
 	void destroy()
 	{
@@ -116,7 +117,6 @@ public:
 	MicroSwapchainPtr newInstance();
 
 private:
-	GrManagerImpl* m_gr = nullptr;
 	Bool m_vsync = false;
 	MicroObjectRecycler<MicroSwapchain> m_recycler;
 };

@@ -133,8 +133,7 @@ void App::cleanup()
 	GpuSceneMemoryPool::freeSingleton();
 	CoreThreadHive::freeSingleton();
 	MaliHwCounters::freeSingleton();
-	GrManager::deleteInstance(m_gr);
-	m_gr = nullptr;
+	GrManager::freeSingleton();
 	Input::freeSingleton();
 	NativeWindow::freeSingleton();
 
@@ -264,13 +263,12 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	grInit.m_allocCallback = m_mainPool.getAllocationCallback();
 	grInit.m_allocCallbackUserData = m_mainPool.getAllocationCallbackUserData();
 	grInit.m_cacheDirectory = m_cacheDir.toCString();
-
-	ANKI_CHECK(GrManager::newInstance(grInit, m_gr));
+	ANKI_CHECK(GrManager::allocateSingleton().init(grInit));
 
 	//
 	// Mali HW counters
 	//
-	if(m_gr->getDeviceCapabilities().m_gpuVendor == GpuVendor::kArm
+	if(GrManager::getSingleton().getDeviceCapabilities().m_gpuVendor == GpuVendor::kArm
 	   && ConfigSet::getSingleton().getCoreMaliHwCounters())
 	{
 		MaliHwCounters::allocateSingleton();
@@ -279,9 +277,9 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	//
 	// GPU mem
 	//
-	UnifiedGeometryMemoryPool::allocateSingleton().init(m_gr);
-	GpuSceneMemoryPool::allocateSingleton().init(m_gr);
-	RebarStagingGpuMemoryPool::allocateSingleton().init(m_gr);
+	UnifiedGeometryMemoryPool::allocateSingleton().init();
+	GpuSceneMemoryPool::allocateSingleton().init();
+	RebarStagingGpuMemoryPool::allocateSingleton().init();
 
 	//
 	// Physics
@@ -305,20 +303,14 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	ConfigSet::getSingleton().setRsrcDataPaths(shadersPath);
 #endif
 
-	ResourceManagerInitInfo rinit;
-	rinit.m_grManager = m_gr;
-	rinit.m_allocCallback = m_mainPool.getAllocationCallback();
-	rinit.m_allocCallbackData = m_mainPool.getAllocationCallbackUserData();
-	ANKI_CHECK(ResourceManager::allocateSingleton().init(rinit));
+	ANKI_CHECK(ResourceManager::allocateSingleton().init(m_mainPool.getAllocationCallback(),
+														 m_mainPool.getAllocationCallbackUserData()));
 
 	//
 	// UI
 	//
-	UiManagerInitInfo uiInitInfo;
-	uiInitInfo.m_allocCallback = m_mainPool.getAllocationCallback();
-	uiInitInfo.m_allocCallbackUserData = m_mainPool.getAllocationCallbackUserData();
-	uiInitInfo.m_grManager = m_gr;
-	ANKI_CHECK(UiManager::allocateSingleton().init(uiInitInfo));
+	ANKI_CHECK(UiManager::allocateSingleton().init(m_mainPool.getAllocationCallback(),
+												   m_mainPool.getAllocationCallbackUserData()));
 
 	//
 	// GPU scene
@@ -333,7 +325,6 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 		UVec2(NativeWindow::getSingleton().getWidth(), NativeWindow::getSingleton().getHeight());
 	renderInit.m_allocCallback = m_mainPool.getAllocationCallback();
 	renderInit.m_allocCallbackUserData = m_mainPool.getAllocationCallbackUserData();
-	renderInit.m_grManager = m_gr;
 	renderInit.m_globTimestamp = &m_globalTimestamp;
 	m_renderer = newInstance<MainRenderer>(m_mainPool);
 	ANKI_CHECK(m_renderer->init(renderInit));
@@ -354,7 +345,6 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	sceneInit.m_allocCallbackData = m_mainPool.getAllocationCallbackUserData();
 	sceneInit.m_globalTimestamp = &m_globalTimestamp;
 	sceneInit.m_scriptManager = m_script;
-	sceneInit.m_grManager = m_gr;
 	ANKI_CHECK(m_scene->init(sceneInit));
 
 	// Inform the script engine about some subsystems
@@ -461,7 +451,7 @@ Error App::mainLoop()
 			injectUiElements(newUiElementArr, rqueue);
 
 			// Render
-			TexturePtr presentableTex = m_gr->acquireNextPresentableTexture();
+			TexturePtr presentableTex = GrManager::getSingleton().acquireNextPresentableTexture();
 			m_renderer->setStatsEnabled(ConfigSet::getSingleton().getCoreDisplayStats() > 0 || benchmarkMode
 #if ANKI_ENABLE_TRACE
 										|| Tracer::getSingleton().getEnabled()
@@ -480,7 +470,7 @@ Error App::mainLoop()
 				grTime = HighRezTimer::getCurrentTime();
 			}
 
-			m_gr->swapBuffers();
+			GrManager::getSingleton().swapBuffers();
 
 			if(benchmarkMode || ConfigSet::getSingleton().getCoreDisplayStats() > 0) [[unlikely]]
 			{
@@ -554,7 +544,7 @@ Error App::mainLoop()
 				in.m_cpuAllocationCount = m_memStats.m_allocCount.load();
 				in.m_cpuFreeCount = m_memStats.m_freeCount.load();
 
-				const GrManagerStats grStats = m_gr->getStats();
+				const GrManagerStats grStats = GrManager::getSingleton().getStats();
 				UnifiedGeometryMemoryPool::getSingleton().getStats(
 					in.m_unifiedGometryExternalFragmentation, in.m_unifiedGeometryAllocated, in.m_unifiedGeometryTotal);
 				GpuSceneMemoryPool::getSingleton().getStats(in.m_gpuSceneExternalFragmentation, in.m_gpuSceneAllocated,

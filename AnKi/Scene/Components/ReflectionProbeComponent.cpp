@@ -45,10 +45,9 @@ Error ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 	if(shapeUpdated && !m_reflectionTex) [[unlikely]]
 	{
 		TextureInitInfo texInit("ReflectionProbe");
-		texInit.m_format =
-			(getExternalSubsystems(*info.m_node).m_grManager->getDeviceCapabilities().m_unalignedBbpTextureFormats)
-				? Format::kR16G16B16_Sfloat
-				: Format::kR16G16B16A16_Sfloat;
+		texInit.m_format = (GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats)
+							   ? Format::kR16G16B16_Sfloat
+							   : Format::kR16G16B16A16_Sfloat;
 		texInit.m_width = ConfigSet::getSingleton().getSceneReflectionProbeResolution();
 		texInit.m_height = texInit.m_width;
 		texInit.m_mipmapCount = U8(computeMaxMipmapCount2d(texInit.m_width, texInit.m_height, 8));
@@ -57,10 +56,10 @@ Error ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 						  | TextureUsageBit::kImageComputeRead | TextureUsageBit::kAllFramebuffer
 						  | TextureUsageBit::kGenerateMipmaps;
 
-		m_reflectionTex = getExternalSubsystems(*info.m_node).m_grManager->newTexture(texInit);
+		m_reflectionTex = GrManager::getSingleton().newTexture(texInit);
 
 		TextureViewInitInfo viewInit(m_reflectionTex, "ReflectionPRobe");
-		m_reflectionView = getExternalSubsystems(*info.m_node).m_grManager->newTextureView(viewInit);
+		m_reflectionView = GrManager::getSingleton().newTextureView(viewInit);
 
 		m_reflectionTexBindlessIndex = m_reflectionView->getOrCreateBindlessTextureIndex();
 	}

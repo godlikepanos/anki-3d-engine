@@ -27,7 +27,7 @@ public:
 
 	UnifiedGeometryMemoryPool& operator=(const UnifiedGeometryMemoryPool&) = delete; // Non-copyable
 
-	void init(GrManager* gr);
+	void init();
 
 	void allocate(PtrSize size, U32 alignment, SegregatedListsGpuMemoryPoolToken& token)
 	{
@@ -73,7 +73,7 @@ public:
 
 	GpuSceneMemoryPool& operator=(const GpuSceneMemoryPool&) = delete; // Non-copyable
 
-	void init(GrManager* gr);
+	void init();
 
 	void allocate(PtrSize size, U32 alignment, SegregatedListsGpuMemoryPoolToken& token)
 	{
@@ -98,11 +98,6 @@ public:
 	void getStats(F32& externalFragmentation, PtrSize& userAllocatedSize, PtrSize& totalSize) const
 	{
 		m_pool.getStats(externalFragmentation, userAllocatedSize, totalSize);
-	}
-
-	GrManager& getGrManager()
-	{
-		return m_pool.getGrManager();
 	}
 
 private:
@@ -153,7 +148,7 @@ public:
 
 	RebarStagingGpuMemoryPool& operator=(const RebarStagingGpuMemoryPool&) = delete; // Non-copyable
 
-	void init(GrManager* gr);
+	void init();
 
 	PtrSize endFrame();
 

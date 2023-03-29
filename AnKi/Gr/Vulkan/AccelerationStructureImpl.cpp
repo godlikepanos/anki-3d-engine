@@ -10,11 +10,11 @@ namespace anki {
 
 AccelerationStructureImpl::~AccelerationStructureImpl()
 {
-	m_topLevelInfo.m_blas.destroy(getMemoryPool());
+	m_topLevelInfo.m_blas.destroy();
 
 	if(m_handle)
 	{
-		vkDestroyAccelerationStructureKHR(getDevice(), m_handle, nullptr);
+		vkDestroyAccelerationStructureKHR(getGrManagerImpl().getDevice(), m_handle, nullptr);
 	}
 }
 
@@ -24,6 +24,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 
 	ANKI_ASSERT(inf.isValid());
 	m_type = inf.m_type;
+	const VkDevice vkdev = getGrManagerImpl().getDevice();
 
 	if(m_type == AccelerationStructureType::kBottomLevel)
 	{
@@ -55,15 +56,15 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 		VkAccelerationStructureBuildSizesInfoKHR buildSizes = {};
 		const U32 primitiveCount = inf.m_bottomLevel.m_indexCount / 3;
 		buildSizes.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
-		vkGetAccelerationStructureBuildSizesKHR(getDevice(), VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
-												&buildInfo, &primitiveCount, &buildSizes);
+		vkGetAccelerationStructureBuildSizesKHR(vkdev, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &buildInfo,
+												&primitiveCount, &buildSizes);
 		m_scratchBufferSize = U32(buildSizes.buildScratchSize);
 
 		// Create the buffer that holds the AS memory
 		BufferInitInfo bufferInit(inf.getName());
 		bufferInit.m_usage = PrivateBufferUsageBit::kAccelerationStructure;
 		bufferInit.m_size = buildSizes.accelerationStructureSize;
-		m_asBuffer = getManager().newBuffer(bufferInit);
+		m_asBuffer = getGrManagerImpl().newBuffer(bufferInit);
 
 		// Create the AS
 		VkAccelerationStructureCreateInfoKHR asCi = {};
@@ -73,13 +74,13 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 		asCi.offset = 0;
 		asCi.size = buildSizes.accelerationStructureSize;
 		asCi.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-		ANKI_VK_CHECK(vkCreateAccelerationStructureKHR(getDevice(), &asCi, nullptr, &m_handle));
+		ANKI_VK_CHECK(vkCreateAccelerationStructureKHR(vkdev, &asCi, nullptr, &m_handle));
 
 		// Get its address
 		VkAccelerationStructureDeviceAddressInfoKHR addressInfo = {};
 		addressInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
 		addressInfo.accelerationStructure = m_handle;
-		m_deviceAddress = vkGetAccelerationStructureDeviceAddressKHR(getDevice(), &addressInfo);
+		m_deviceAddress = vkGetAccelerationStructureDeviceAddressKHR(vkdev, &addressInfo);
 
 		// Almost finalize the build info
 		buildInfo.dstAccelerationStructure = m_handle;
@@ -90,13 +91,13 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 	else
 	{
 		// Create the instances buffer
-		m_topLevelInfo.m_blas.resizeStorage(getMemoryPool(), inf.m_topLevel.m_instances.getSize());
+		m_topLevelInfo.m_blas.resizeStorage(inf.m_topLevel.m_instances.getSize());
 
 		BufferInitInfo buffInit("AS instances");
 		buffInit.m_size = sizeof(VkAccelerationStructureInstanceKHR) * inf.m_topLevel.m_instances.getSize();
 		buffInit.m_usage = PrivateBufferUsageBit::kAccelerationStructure;
 		buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
-		m_topLevelInfo.m_instancesBuffer = getManager().newBuffer(buffInit);
+		m_topLevelInfo.m_instancesBuffer = getGrManagerImpl().newBuffer(buffInit);
 
 		VkAccelerationStructureInstanceKHR* instances = static_cast<VkAccelerationStructureInstanceKHR*>(
 			m_topLevelInfo.m_instancesBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
@@ -116,7 +117,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 			ANKI_ASSERT(outInst.accelerationStructureReference != 0);
 
 			// Hold the reference
-			m_topLevelInfo.m_blas.emplaceBack(getMemoryPool(), inf.m_topLevel.m_instances[i].m_bottomLevel);
+			m_topLevelInfo.m_blas.emplaceBack(inf.m_topLevel.m_instances[i].m_bottomLevel);
 		}
 
 		m_topLevelInfo.m_instancesBuffer->flush(0, kMaxPtrSize);
@@ -144,15 +145,15 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 		VkAccelerationStructureBuildSizesInfoKHR buildSizes = {};
 		const U32 instanceCount = inf.m_topLevel.m_instances.getSize();
 		buildSizes.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
-		vkGetAccelerationStructureBuildSizesKHR(getDevice(), VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
-												&buildInfo, &instanceCount, &buildSizes);
+		vkGetAccelerationStructureBuildSizesKHR(vkdev, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &buildInfo,
+												&instanceCount, &buildSizes);
 		m_scratchBufferSize = U32(buildSizes.buildScratchSize);
 
 		// Create the buffer that holds the AS memory
 		BufferInitInfo bufferInit(inf.getName());
 		bufferInit.m_usage = PrivateBufferUsageBit::kAccelerationStructure;
 		bufferInit.m_size = buildSizes.accelerationStructureSize;
-		m_asBuffer = getManager().newBuffer(bufferInit);
+		m_asBuffer = getGrManagerImpl().newBuffer(bufferInit);
 
 		// Create the AS
 		VkAccelerationStructureCreateInfoKHR asCi = {};
@@ -162,7 +163,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 		asCi.offset = 0;
 		asCi.size = buildSizes.accelerationStructureSize;
 		asCi.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
-		ANKI_VK_CHECK(vkCreateAccelerationStructureKHR(getDevice(), &asCi, nullptr, &m_handle));
+		ANKI_VK_CHECK(vkCreateAccelerationStructureKHR(vkdev, &asCi, nullptr, &m_handle));
 
 		// Almost finalize the build info
 		buildInfo.dstAccelerationStructure = m_handle;

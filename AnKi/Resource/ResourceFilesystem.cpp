@@ -311,7 +311,7 @@ Error ResourceFilesystem::addNewPath(const CString& filepath, const ResourceStri
 		// It's simple directory
 
 		ANKI_CHECK(walkDirectoryTree(filepath, ResourceMemoryPool::getSingleton(),
-									 [&, this](const CString& fname, Bool isDir) -> Error {
+									 [&](const CString& fname, Bool isDir) -> Error {
 										 if(!isDir && !rejectPath(fname))
 										 {
 											 path.m_files.pushBackSprintf("%s", fname.cstr());

@@ -186,8 +186,8 @@ Error RtShadows::initInternal()
 	}
 
 	// Misc
-	m_sbtRecordSize = getAlignedRoundUp(
-		getExternalSubsystems().m_grManager->getDeviceCapabilities().m_sbtRecordAlignment, m_sbtRecordSize);
+	m_sbtRecordSize =
+		getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment, m_sbtRecordSize);
 
 	return Error::kNone;
 }
@@ -627,7 +627,7 @@ void RtShadows::buildSbt(RenderingContext& ctx)
 	const U32 instanceCount = instanceElements.getSize();
 	ANKI_ASSERT(instanceCount > 0);
 
-	const U32 shaderHandleSize = getExternalSubsystems().m_grManager->getDeviceCapabilities().m_shaderGroupHandleSize;
+	const U32 shaderHandleSize = GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize;
 
 	const U32 extraSbtRecords = 1 + 1; // Raygen + miss
 

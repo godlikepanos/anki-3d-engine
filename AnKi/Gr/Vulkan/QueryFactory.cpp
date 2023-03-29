@@ -44,14 +44,14 @@ Error QueryFactory::newQuery(MicroQuery& handle)
 	if(chunk == nullptr)
 	{
 		// Create new chunk
-		chunk = newInstance<Chunk>(*m_pool);
+		chunk = newInstance<Chunk>(GrMemoryPool::getSingleton());
 
 		VkQueryPoolCreateInfo ci = {};
 		ci.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
 		ci.queryType = m_poolType;
 		ci.queryCount = kMaxSuballocationsPerQueryChunk;
 
-		ANKI_VK_CHECK(vkCreateQueryPool(m_dev, &ci, nullptr, &chunk->m_pool));
+		ANKI_VK_CHECK(vkCreateQueryPool(getVkDevice(), &ci, nullptr, &chunk->m_pool));
 		m_chunks.pushBack(chunk);
 	}
 
@@ -91,10 +91,10 @@ void QueryFactory::deleteQuery(MicroQuery& handle)
 		// Delete the chunk
 
 		ANKI_ASSERT(chunk->m_allocatedMask.getAny());
-		vkDestroyQueryPool(m_dev, chunk->m_pool, nullptr);
+		vkDestroyQueryPool(getVkDevice(), chunk->m_pool, nullptr);
 
 		m_chunks.erase(chunk);
-		deleteInstance(*m_pool, chunk);
+		deleteInstance(GrMemoryPool::getSingleton(), chunk);
 	}
 	else
 	{

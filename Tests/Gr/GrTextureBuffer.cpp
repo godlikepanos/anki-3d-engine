@@ -75,6 +75,6 @@ void main()
 		storageBuff->unmap();
 	}
 
-	GrManager::deleteInstance(gr);
+	GrManager::freeSingleton();
 	NativeWindow::freeSingleton();
 }

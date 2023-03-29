@@ -4,11 +4,22 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Gr/Vulkan/Common.h>
+#include <AnKi/Gr/Vulkan/GrManagerImpl.h>
 
 #define VOLK_IMPLEMENTATION
 #include <Volk/volk.h>
 
 namespace anki {
+
+GrManagerImpl& getGrManagerImpl()
+{
+	return static_cast<GrManagerImpl&>(GrManager::getSingleton());
+}
+
+VkDevice getVkDevice()
+{
+	return getGrManagerImpl().getDevice();
+}
 
 VkCompareOp convertCompareOp(CompareOperation ak)
 {

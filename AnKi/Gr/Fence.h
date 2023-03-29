@@ -27,8 +27,8 @@ public:
 
 protected:
 	/// Construct.
-	Fence(GrManager* manager, CString name)
-		: GrObject(manager, kClassType, name)
+	Fence(CString name)
+		: GrObject(kClassType, name)
 	{
 	}
 
@@ -39,7 +39,7 @@ protected:
 
 private:
 	/// Allocate and initialize a new instance.
-	[[nodiscard]] static Fence* newInstance(GrManager* manager);
+	[[nodiscard]] static Fence* newInstance();
 };
 /// @}
 

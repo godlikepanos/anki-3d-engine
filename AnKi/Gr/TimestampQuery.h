@@ -25,8 +25,8 @@ public:
 
 protected:
 	/// Construct.
-	TimestampQuery(GrManager* manager, CString name)
-		: GrObject(manager, kClassType, name)
+	TimestampQuery(CString name)
+		: GrObject(kClassType, name)
 	{
 	}
 
@@ -37,7 +37,7 @@ protected:
 
 private:
 	/// Allocate and initialize a new instance.
-	[[nodiscard]] static TimestampQuery* newInstance(GrManager* manager);
+	[[nodiscard]] static TimestampQuery* newInstance();
 };
 /// @}
 

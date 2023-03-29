@@ -56,12 +56,11 @@ Error IndirectDiffuse::initInternal()
 	}
 
 	// Init VRS SRI generation
-	const Bool enableVrs = getExternalSubsystems().m_grManager->getDeviceCapabilities().m_vrs
+	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs
 						   && ConfigSet::getSingleton().getRVrs() && !preferCompute;
 	if(enableVrs)
 	{
-		m_vrs.m_sriTexelDimension =
-			getExternalSubsystems().m_grManager->getDeviceCapabilities().m_minShadingRateImageTexelSize;
+		m_vrs.m_sriTexelDimension = GrManager::getSingleton().getDeviceCapabilities().m_minShadingRateImageTexelSize;
 		ANKI_ASSERT(m_vrs.m_sriTexelDimension == 8 || m_vrs.m_sriTexelDimension == 16);
 
 		const UVec2 rez = (size + m_vrs.m_sriTexelDimension - 1) / m_vrs.m_sriTexelDimension;
@@ -75,15 +74,14 @@ Error IndirectDiffuse::initInternal()
 		ShaderProgramResourceVariantInitInfo variantInit(m_vrs.m_prog);
 		variantInit.addMutation("SRI_TEXEL_DIMENSION", m_vrs.m_sriTexelDimension);
 
-		if(m_vrs.m_sriTexelDimension == 16
-		   && getExternalSubsystems().m_grManager->getDeviceCapabilities().m_minSubgroupSize >= 32)
+		if(m_vrs.m_sriTexelDimension == 16 && GrManager::getSingleton().getDeviceCapabilities().m_minSubgroupSize >= 32)
 		{
 			// Algorithm's workgroup size is 32, GPU's subgroup size is min 32 -> each workgroup has 1 subgroup -> No
 			// need for shared mem
 			variantInit.addMutation("SHARED_MEMORY", 0);
 		}
 		else if(m_vrs.m_sriTexelDimension == 8
-				&& getExternalSubsystems().m_grManager->getDeviceCapabilities().m_minSubgroupSize >= 16)
+				&& GrManager::getSingleton().getDeviceCapabilities().m_minSubgroupSize >= 16)
 		{
 			// Algorithm's workgroup size is 16, GPU's subgroup size is min 16 -> each workgroup has 1 subgroup -> No
 			// need for shared mem
@@ -146,7 +144,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
-	const Bool enableVrs = getExternalSubsystems().m_grManager->getDeviceCapabilities().m_vrs
+	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs
 						   && ConfigSet::getSingleton().getRVrs() && !preferCompute;
 	const Bool fbDescrHasVrs = m_main.m_fbDescr.m_shadingRateAttachmentTexelWidth > 0;
 

@@ -26,15 +26,15 @@ U64 ShaderProgramRaytracingLibrary::generateShaderGroupGroupHash(CString resourc
 	return hash;
 }
 
-Error ShaderProgramResourceSystem::init(GrManager& gr)
+Error ShaderProgramResourceSystem::init()
 {
-	if(!gr.getDeviceCapabilities().m_rayTracingEnabled)
+	if(!GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled)
 	{
 		return Error::kNone;
 	}
 
 	// Create RT pipeline libraries
-	const Error err = createRayTracingPrograms(gr, m_rtLibraries);
+	const Error err = createRayTracingPrograms(m_rtLibraries);
 	if(err)
 	{
 		ANKI_RESOURCE_LOGE("Failed to create ray tracing programs");
@@ -44,7 +44,7 @@ Error ShaderProgramResourceSystem::init(GrManager& gr)
 }
 
 Error ShaderProgramResourceSystem::createRayTracingPrograms(
-	GrManager& gr, ResourceDynamicArray<ShaderProgramRaytracingLibrary>& outLibs)
+	ResourceDynamicArray<ShaderProgramRaytracingLibrary>& outLibs)
 {
 	ANKI_RESOURCE_LOGI("Creating ray tracing programs");
 	U32 rtProgramCount = 0;
@@ -69,7 +69,6 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(
 	class Lib
 	{
 	public:
-		GrManager* m_gr;
 		ResourceString m_name;
 		ResourceDynamicArray<Shader> m_shaders;
 		ResourceDynamicArray<ShaderGroup> m_shaderGroups;
@@ -79,11 +78,6 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(
 		U32 m_rayGenShaderGroupCount = 0;
 		U32 m_missShaderGroupCount = 0;
 		U32 m_hitShaderGroupCount = 0;
-
-		Lib(GrManager* gr)
-			: m_gr(gr)
-		{
-		}
 
 		U32 addShader(const ShaderProgramBinaryCodeBlock& codeBlock, CString progName, ShaderType shaderType)
 		{
@@ -104,7 +98,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(
 				ShaderInitInfo inf(progName);
 				inf.m_shaderType = shaderType;
 				inf.m_binary = codeBlock.m_binary;
-				shader->m_shader = m_gr->newShader(inf);
+				shader->m_shader = GrManager::getSingleton().newShader(inf);
 				shader->m_hash = codeBlock.m_hash;
 
 				m_presentStages |= ShaderTypeBit(1 << shaderType);
@@ -202,7 +196,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(
 
 			if(lib == nullptr)
 			{
-				libs.emplaceBack(&gr);
+				libs.emplaceBack();
 				lib = &libs.getBack();
 				lib->m_name.create(CString(&binary.m_libraryName[0]));
 			}
@@ -450,7 +444,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(
 			inf.m_rayTracingShaders.m_rayGenShaders = rayGenShaders;
 			inf.m_rayTracingShaders.m_missShaders = missShaders;
 			inf.m_rayTracingShaders.m_hitGroups = initInfoHitGroups;
-			outLib.m_program = gr.newShaderProgram(inf);
+			outLib.m_program = GrManager::getSingleton().newShaderProgram(inf);
 
 			++rtProgramCount;
 		}

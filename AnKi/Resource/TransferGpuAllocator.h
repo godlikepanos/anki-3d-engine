@@ -111,7 +111,7 @@ public:
 
 	~TransferGpuAllocator();
 
-	Error init(PtrSize maxSize, GrManager* gr);
+	Error init(PtrSize maxSize);
 
 	/// Allocate some transfer memory. If there is not enough memory it will block until some is releaced. It's
 	/// threadsafe.
@@ -197,7 +197,6 @@ private:
 		U32 m_pendingReleases = 0;
 	};
 
-	GrManager* m_gr = nullptr; // TODO glob: rm
 	PtrSize m_maxAllocSize = 0;
 
 	Mutex m_mtx; ///< Protect all members bellow.

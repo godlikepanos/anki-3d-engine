@@ -9,9 +9,9 @@
 
 namespace anki {
 
-Fence* Fence::newInstance(GrManager* manager)
+Fence* Fence::newInstance()
 {
-	return anki::newInstance<FenceImpl>(manager->getMemoryPool(), manager, "N/A");
+	return anki::newInstance<FenceImpl>(GrMemoryPool::getSingleton(), "N/A");
 }
 
 Bool Fence::clientWait(Second seconds)

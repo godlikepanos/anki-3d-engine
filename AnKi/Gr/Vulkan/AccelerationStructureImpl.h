@@ -6,7 +6,6 @@
 #pragma once
 
 #include <AnKi/Gr/AccelerationStructure.h>
-#include <AnKi/Gr/Vulkan/VulkanObject.h>
 #include <AnKi/Gr/Vulkan/GpuMemoryManager.h>
 
 namespace anki {
@@ -15,13 +14,11 @@ namespace anki {
 /// @{
 
 /// AccelerationStructure implementation.
-class AccelerationStructureImpl final :
-	public AccelerationStructure,
-	public VulkanObject<AccelerationStructure, AccelerationStructureImpl>
+class AccelerationStructureImpl final : public AccelerationStructure
 {
 public:
-	AccelerationStructureImpl(GrManager* manager, CString name)
-		: AccelerationStructure(manager, name)
+	AccelerationStructureImpl(CString name)
+		: AccelerationStructure(name)
 	{
 	}
 
@@ -65,7 +62,7 @@ private:
 	{
 	public:
 		BufferPtr m_instancesBuffer;
-		DynamicArray<AccelerationStructurePtr> m_blas;
+		GrDynamicArray<AccelerationStructurePtr> m_blas;
 	};
 
 	BufferPtr m_asBuffer;

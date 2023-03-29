@@ -60,12 +60,6 @@ ANKI_UI_OBJECT_FW(UiImmediateModeBuilder)
 
 using UiObjectPtr = IntrusivePtr<UiObject, UiObjectDeleter>;
 
-class UiExternalSubsystems
-{
-public:
-	GrManager* m_grManager = nullptr;
-};
-
 inline Vec2 toAnki(const ImVec2& v)
 {
 	return Vec2(v.x, v.y);

@@ -13,12 +13,8 @@ ANKI_TEST(Resource, ResourceManager)
 	// Create
 	ConfigSet::allocateSingleton(allocAligned, nullptr);
 
-	ResourceManagerInitInfo rinit;
-	rinit.m_grManager = nullptr;
-	rinit.m_allocCallback = allocAligned;
-	rinit.m_allocCallbackData = nullptr;
 	ResourceManager* resources = &ResourceManager::allocateSingleton();
-	ANKI_TEST_EXPECT_NO_ERR(resources->init(rinit));
+	ANKI_TEST_EXPECT_NO_ERR(resources->init(allocAligned, nullptr));
 
 	// Very simple
 	{

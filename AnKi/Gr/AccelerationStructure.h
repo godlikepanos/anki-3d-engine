@@ -125,8 +125,8 @@ protected:
 	AccelerationStructureType m_type = AccelerationStructureType::kCount;
 
 	/// Construct.
-	AccelerationStructure(GrManager* manager, CString name)
-		: GrObject(manager, kClassType, name)
+	AccelerationStructure(CString name)
+		: GrObject(kClassType, name)
 	{
 	}
 
@@ -137,8 +137,7 @@ protected:
 
 private:
 	/// Allocate and initialize a new instance.
-	[[nodiscard]] static AccelerationStructure* newInstance(GrManager* manager,
-															const AccelerationStructureInitInfo& init);
+	[[nodiscard]] static AccelerationStructure* newInstance(const AccelerationStructureInitInfo& init);
 };
 /// @}
 

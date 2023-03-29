@@ -22,19 +22,9 @@ public:
 	{
 	}
 
-	MicroObjectRecycler(HeapMemoryPool* pool)
-	{
-		init(pool);
-	}
-
 	~MicroObjectRecycler()
 	{
 		destroy();
-	}
-
-	void init(HeapMemoryPool* pool)
-	{
-		m_pool = pool;
 	}
 
 	/// It's thread-safe.
@@ -67,8 +57,7 @@ private:
 		Bool m_fenceDone;
 	};
 
-	HeapMemoryPool* m_pool = nullptr;
-	DynamicArray<Object> m_objects;
+	GrDynamicArray<Object> m_objects;
 	Mutex m_mtx;
 
 	// Begin trim cache adjustment vars

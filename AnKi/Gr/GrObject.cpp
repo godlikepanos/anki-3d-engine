@@ -8,9 +8,8 @@
 
 namespace anki {
 
-GrObject::GrObject(GrManager* manager, GrObjectType type, CString name)
-	: m_manager(manager)
-	, m_uuid(m_manager->getNewUuid())
+GrObject::GrObject(GrObjectType type, CString name)
+	: m_uuid(GrManager::getSingleton().getNewUuid())
 	, m_refcount(0)
 	, m_type(type)
 {
@@ -19,7 +18,7 @@ GrObject::GrObject(GrManager* manager, GrObjectType type, CString name)
 		name = "N/A";
 	}
 
-	m_name = static_cast<Char*>(manager->getMemoryPool().allocate(name.getLength() + 1, alignof(Char)));
+	m_name = static_cast<Char*>(GrMemoryPool::getSingleton().allocate(name.getLength() + 1, alignof(Char)));
 	memcpy(m_name, &name[0], name.getLength() + 1);
 }
 
@@ -27,13 +26,8 @@ GrObject::~GrObject()
 {
 	if(m_name)
 	{
-		m_manager->getMemoryPool().free(m_name);
+		GrMemoryPool::getSingleton().free(m_name);
 	}
-}
-
-HeapMemoryPool& GrObject::getMemoryPool() const
-{
-	return m_manager->getMemoryPool();
 }
 
 } // end namespace anki

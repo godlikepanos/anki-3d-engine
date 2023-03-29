@@ -407,6 +407,7 @@ public:
 				(*this)[i] = b[i];
 			}
 		}
+		m_pool = b.m_pool;
 		return *this;
 	}
 

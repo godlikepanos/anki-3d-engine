@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Gr/Vulkan/GpuMemoryManager.h>
+#include <AnKi/Gr/Vulkan/GrManagerImpl.h>
 
 namespace anki {
 
@@ -34,13 +35,13 @@ Error GpuMemoryManagerInterface::allocateChunk(U32 classIdx, GpuMemoryManagerChu
 	}
 
 	VkDeviceMemory memHandle;
-	if(vkAllocateMemory(m_parent->m_dev, &ci, nullptr, &memHandle) != VK_SUCCESS) [[unlikely]]
+	if(vkAllocateMemory(getVkDevice(), &ci, nullptr, &memHandle) != VK_SUCCESS) [[unlikely]]
 	{
 		ANKI_VK_LOGF("Out of GPU memory. Mem type index %u, size %zu", m_memTypeIdx,
 					 m_classInfos[classIdx].m_suballocationSize);
 	}
 
-	chunk = newInstance<GpuMemoryManagerChunk>(*m_parent->m_pool);
+	chunk = newInstance<GpuMemoryManagerChunk>(GrMemoryPool::getSingleton());
 	chunk->m_handle = memHandle;
 	chunk->m_size = m_classInfos[classIdx].m_chunkSize;
 
@@ -56,15 +57,15 @@ void GpuMemoryManagerInterface::freeChunk(GpuMemoryManagerChunk* chunk)
 
 	if(chunk->m_mappedAddress)
 	{
-		vkUnmapMemory(m_parent->m_dev, chunk->m_handle);
+		vkUnmapMemory(getVkDevice(), chunk->m_handle);
 	}
 
-	vkFreeMemory(m_parent->m_dev, chunk->m_handle, nullptr);
+	vkFreeMemory(getVkDevice(), chunk->m_handle, nullptr);
 
 	ANKI_ASSERT(m_allocatedMemory >= chunk->m_size);
 	m_allocatedMemory -= chunk->m_size;
 
-	deleteInstance(*m_parent->m_pool, chunk);
+	deleteInstance(GrMemoryPool::getSingleton(), chunk);
 }
 
 GpuMemoryManager::~GpuMemoryManager()
@@ -74,14 +75,11 @@ GpuMemoryManager::~GpuMemoryManager()
 void GpuMemoryManager::destroy()
 {
 	ANKI_VK_LOGV("Destroying memory manager");
-	m_callocs.destroy(*m_pool);
+	m_callocs.destroy();
 }
 
-void GpuMemoryManager::init(VkPhysicalDevice pdev, VkDevice dev, HeapMemoryPool* pool, Bool exposeBufferGpuAddress)
+void GpuMemoryManager::init(Bool exposeBufferGpuAddress)
 {
-	ANKI_ASSERT(pool && pdev);
-	ANKI_ASSERT(dev);
-
 	// Print some info
 	ANKI_VK_LOGV("Initializing memory manager");
 	for(const GpuMemoryManagerClassInfo& c : kClasses)
@@ -93,7 +91,7 @@ void GpuMemoryManager::init(VkPhysicalDevice pdev, VkDevice dev, HeapMemoryPool*
 	// Image buffer granularity
 	{
 		VkPhysicalDeviceProperties props;
-		vkGetPhysicalDeviceProperties(pdev, &props);
+		vkGetPhysicalDeviceProperties(getGrManagerImpl().getPhysicalDevice(), &props);
 		m_bufferImageGranularity = U32(props.limits.bufferImageGranularity);
 		ANKI_ASSERT(m_bufferImageGranularity > 0 && isPowerOfTwo(m_bufferImageGranularity));
 
@@ -116,12 +114,9 @@ void GpuMemoryManager::init(VkPhysicalDevice pdev, VkDevice dev, HeapMemoryPool*
 		}
 	}
 
-	vkGetPhysicalDeviceMemoryProperties(pdev, &m_memoryProperties);
+	vkGetPhysicalDeviceMemoryProperties(getGrManagerImpl().getPhysicalDevice(), &m_memoryProperties);
 
-	m_pool = pool;
-	m_dev = dev;
-
-	m_callocs.create(*pool, m_memoryProperties.memoryTypeCount);
+	m_callocs.create(m_memoryProperties.memoryTypeCount);
 	for(U32 memTypeIdx = 0; memTypeIdx < m_callocs.getSize(); ++memTypeIdx)
 	{
 		GpuMemoryManagerInterface& iface = m_callocs[memTypeIdx].getInterface();
@@ -157,7 +152,7 @@ void GpuMemoryManager::init(VkPhysicalDevice pdev, VkDevice dev, HeapMemoryPool*
 		}
 
 		// The interface is initialized, init the builder
-		m_callocs[memTypeIdx].init(m_pool);
+		m_callocs[memTypeIdx].init(&GrMemoryPool::getSingleton());
 	}
 }
 
@@ -191,7 +186,7 @@ void GpuMemoryManager::allocateMemoryDedicated(U32 memTypeIdx, PtrSize size, VkI
 	memoryAllocateInfo.memoryTypeIndex = memTypeIdx;
 
 	VkDeviceMemory mem;
-	ANKI_VK_CHECKF(vkAllocateMemory(m_dev, &memoryAllocateInfo, nullptr, &mem));
+	ANKI_VK_CHECKF(vkAllocateMemory(getVkDevice(), &memoryAllocateInfo, nullptr, &mem));
 
 	handle.m_memory = mem;
 	handle.m_offset = 0;
@@ -209,7 +204,7 @@ void GpuMemoryManager::freeMemory(GpuMemoryHandle& handle)
 
 	if(handle.isDedicated())
 	{
-		vkFreeMemory(m_dev, handle.m_memory, nullptr);
+		vkFreeMemory(getVkDevice(), handle.m_memory, nullptr);
 		[[maybe_unused]] const PtrSize prevSize = m_dedicatedAllocatedMemory.fetchSub(handle.m_size);
 		ANKI_ASSERT(prevSize >= handle.m_size);
 
@@ -234,7 +229,7 @@ void* GpuMemoryManager::getMappedAddress(GpuMemoryHandle& handle)
 
 	if(handle.m_chunk->m_mappedAddress == nullptr)
 	{
-		ANKI_VK_CHECKF(vkMapMemory(m_dev, handle.m_chunk->m_handle, 0, handle.m_chunk->m_size, 0,
+		ANKI_VK_CHECKF(vkMapMemory(getVkDevice(), handle.m_chunk->m_handle, 0, handle.m_chunk->m_size, 0,
 								   &handle.m_chunk->m_mappedAddress));
 	}
 

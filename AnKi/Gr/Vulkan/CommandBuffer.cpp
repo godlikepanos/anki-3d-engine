@@ -11,14 +11,14 @@
 
 namespace anki {
 
-CommandBuffer* CommandBuffer::newInstance(GrManager* manager, const CommandBufferInitInfo& init)
+CommandBuffer* CommandBuffer::newInstance(const CommandBufferInitInfo& init)
 {
 	ANKI_TRACE_SCOPED_EVENT(VkNewCommandBuffer);
-	CommandBufferImpl* impl = anki::newInstance<CommandBufferImpl>(manager->getMemoryPool(), manager, init.getName());
+	CommandBufferImpl* impl = anki::newInstance<CommandBufferImpl>(GrMemoryPool::getSingleton(), init.getName());
 	const Error err = impl->init(init);
 	if(err)
 	{
-		deleteInstance(manager->getMemoryPool(), impl);
+		deleteInstance(GrMemoryPool::getSingleton(), impl);
 		impl = nullptr;
 	}
 	return impl;
@@ -38,15 +38,14 @@ void CommandBuffer::flush(ConstWeakArray<FencePtr> waitFences, FencePtr* signalF
 		}
 
 		MicroSemaphorePtr signalSemaphore;
-		self.getGrManagerImpl().flushCommandBuffer(
+		getGrManagerImpl().flushCommandBuffer(
 			self.getMicroCommandBuffer(), self.renderedToDefaultFramebuffer(),
 			WeakArray<MicroSemaphorePtr>(waitSemaphores.getBegin(), waitFences.getSize()),
 			(signalFence) ? &signalSemaphore : nullptr);
 
 		if(signalFence)
 		{
-			FenceImpl* fenceImpl =
-				anki::newInstance<FenceImpl>(self.getGrManagerImpl().getMemoryPool(), &getManager(), "SignalFence");
+			FenceImpl* fenceImpl = anki::newInstance<FenceImpl>(GrMemoryPool::getSingleton(), "SignalFence");
 			fenceImpl->m_semaphore = signalSemaphore;
 			signalFence->reset(fenceImpl);
 		}

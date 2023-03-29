@@ -71,12 +71,6 @@ using ResourcePtr = IntrusivePtr<T, ResourcePtrDeleter<T>>;
 
 /// An alias that denotes a ResourceFilesystem path.
 using ResourceFilename = CString;
-
-class ResourceManagerExternalSubsystems
-{
-public:
-	GrManager* m_grManager = nullptr;
-};
 /// @}
 
 } // end namespace anki

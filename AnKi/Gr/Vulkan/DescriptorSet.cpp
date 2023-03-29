@@ -21,7 +21,7 @@ class DescriptorSetFactory::BindlessDescriptorSet
 public:
 	~BindlessDescriptorSet();
 
-	Error init(HeapMemoryPool* pool, VkDevice dev, const U32 bindlessTextureCount, U32 bindlessImageCount);
+	Error init(const U32 bindlessTextureCount, U32 bindlessImageCount);
 
 	/// Bind a sampled image.
 	/// @note It's thread-safe.
@@ -58,20 +58,18 @@ public:
 	}
 
 private:
-	HeapMemoryPool* m_memPool = nullptr;
-	VkDevice m_dev = VK_NULL_HANDLE;
 	VkDescriptorSetLayout m_layout = VK_NULL_HANDLE;
 	VkDescriptorPool m_dsPool = VK_NULL_HANDLE;
 	VkDescriptorSet m_dset = VK_NULL_HANDLE;
 	Mutex m_mtx;
 
-	DynamicArray<U16> m_freeTexIndices;
-	DynamicArray<U16> m_freeTexelBufferIndices;
+	GrDynamicArray<U16> m_freeTexIndices;
+	GrDynamicArray<U16> m_freeTexelBufferIndices;
 
 	U16 m_freeTexIndexCount = kMaxU16;
 	U16 m_freeTexelBufferIndexCount = kMaxU16;
 
-	void unbindCommon(U32 idx, DynamicArray<U16>& freeIndices, U16& freeIndexCount);
+	void unbindCommon(U32 idx, GrDynamicArray<U16>& freeIndices, U16& freeIndexCount);
 };
 
 /// Descriptor set internal class.
@@ -117,12 +115,12 @@ public:
 private:
 	const DSLayoutCacheEntry* m_layoutEntry; ///< Know your father.
 
-	DynamicArray<VkDescriptorPool> m_pools;
+	GrDynamicArray<VkDescriptorPool> m_pools;
 	U32 m_lastPoolDSCount = 0;
 	U32 m_lastPoolFreeDSCount = 0;
 
 	IntrusiveList<DS> m_list; ///< At the left of the list are the least used sets.
-	HashMap<U64, DS*> m_hashmap;
+	GrHashMap<U64, DS*> m_hashmap;
 
 	[[nodiscard]] const DS* tryFindSet(U64 hash);
 	Error newSet(U64 hash, const Array<AnyBindingExtended, kMaxBindingsPerDescriptorSet>& bindings,
@@ -134,7 +132,7 @@ private:
 class alignas(ANKI_CACHE_LINE_SIZE) DescriptorSetFactory::ThreadLocal
 {
 public:
-	DynamicArray<DSAllocator*> m_allocators;
+	GrDynamicArray<DSAllocator*> m_allocators;
 };
 
 /// Cache entry. It's built around a specific descriptor set layout.
@@ -178,28 +176,20 @@ DescriptorSetFactory::BindlessDescriptorSet::~BindlessDescriptorSet()
 
 	if(m_dsPool)
 	{
-		vkDestroyDescriptorPool(m_dev, m_dsPool, nullptr);
+		vkDestroyDescriptorPool(getVkDevice(), m_dsPool, nullptr);
 		m_dsPool = VK_NULL_HANDLE;
 		m_dset = VK_NULL_HANDLE;
 	}
 
 	if(m_layout)
 	{
-		vkDestroyDescriptorSetLayout(m_dev, m_layout, nullptr);
+		vkDestroyDescriptorSetLayout(getVkDevice(), m_layout, nullptr);
 		m_layout = VK_NULL_HANDLE;
 	}
-
-	m_freeTexIndices.destroy(*m_memPool);
-	m_freeTexelBufferIndices.destroy(*m_memPool);
 }
 
-Error DescriptorSetFactory::BindlessDescriptorSet::init(HeapMemoryPool* pool, VkDevice dev, U32 bindlessTextureCount,
-														U32 bindlessTextureBuffers)
+Error DescriptorSetFactory::BindlessDescriptorSet::init(U32 bindlessTextureCount, U32 bindlessTextureBuffers)
 {
-	ANKI_ASSERT(dev);
-	m_memPool = pool;
-	m_dev = dev;
-
 	// Create the layout
 	{
 		Array<VkDescriptorSetLayoutBinding, 2> bindings = {};
@@ -230,7 +220,7 @@ Error DescriptorSetFactory::BindlessDescriptorSet::init(HeapMemoryPool* pool, Vk
 		ci.pBindings = &bindings[0];
 		ci.pNext = &extraInfos;
 
-		ANKI_VK_CHECK(vkCreateDescriptorSetLayout(m_dev, &ci, nullptr, &m_layout));
+		ANKI_VK_CHECK(vkCreateDescriptorSetLayout(getVkDevice(), &ci, nullptr, &m_layout));
 	}
 
 	// Create the pool
@@ -248,7 +238,7 @@ Error DescriptorSetFactory::BindlessDescriptorSet::init(HeapMemoryPool* pool, Vk
 		ci.pPoolSizes = &sizes[0];
 		ci.flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT_EXT;
 
-		ANKI_VK_CHECK(vkCreateDescriptorPool(m_dev, &ci, nullptr, &m_dsPool));
+		ANKI_VK_CHECK(vkCreateDescriptorPool(getVkDevice(), &ci, nullptr, &m_dsPool));
 	}
 
 	// Create the descriptor set
@@ -259,12 +249,12 @@ Error DescriptorSetFactory::BindlessDescriptorSet::init(HeapMemoryPool* pool, Vk
 		ci.descriptorSetCount = 1;
 		ci.pSetLayouts = &m_layout;
 
-		ANKI_VK_CHECK(vkAllocateDescriptorSets(m_dev, &ci, &m_dset));
+		ANKI_VK_CHECK(vkAllocateDescriptorSets(getVkDevice(), &ci, &m_dset));
 	}
 
 	// Init the free arrays
 	{
-		m_freeTexIndices.create(*m_memPool, bindlessTextureCount);
+		m_freeTexIndices.create(bindlessTextureCount);
 		m_freeTexIndexCount = U16(m_freeTexIndices.getSize());
 
 		for(U32 i = 0; i < m_freeTexIndices.getSize(); ++i)
@@ -272,7 +262,7 @@ Error DescriptorSetFactory::BindlessDescriptorSet::init(HeapMemoryPool* pool, Vk
 			m_freeTexIndices[i] = U16(m_freeTexIndices.getSize() - i - 1);
 		}
 
-		m_freeTexelBufferIndices.create(*m_memPool, bindlessTextureBuffers);
+		m_freeTexelBufferIndices.create(bindlessTextureBuffers);
 		m_freeTexelBufferIndexCount = U16(m_freeTexelBufferIndices.getSize());
 
 		for(U32 i = 0; i < m_freeTexelBufferIndices.getSize(); ++i)
@@ -312,7 +302,7 @@ U32 DescriptorSetFactory::BindlessDescriptorSet::bindTexture(const VkImageView v
 	write.dstArrayElement = idx;
 	write.pImageInfo = &imageInf;
 
-	vkUpdateDescriptorSets(m_dev, 1, &write, 0, nullptr);
+	vkUpdateDescriptorSets(getVkDevice(), 1, &write, 0, nullptr);
 
 	return idx;
 }
@@ -339,12 +329,12 @@ U32 DescriptorSetFactory::BindlessDescriptorSet::bindUniformTexelBuffer(VkBuffer
 	write.dstArrayElement = idx;
 	write.pTexelBufferView = &view;
 
-	vkUpdateDescriptorSets(m_dev, 1, &write, 0, nullptr);
+	vkUpdateDescriptorSets(getVkDevice(), 1, &write, 0, nullptr);
 
 	return idx;
 }
 
-void DescriptorSetFactory::BindlessDescriptorSet::unbindCommon(U32 idx, DynamicArray<U16>& freeIndices,
+void DescriptorSetFactory::BindlessDescriptorSet::unbindCommon(U32 idx, GrDynamicArray<U16>& freeIndices,
 															   U16& freeIndexCount)
 {
 	LockGuard<Mutex> lock(m_mtx);
@@ -367,23 +357,18 @@ void DescriptorSetFactory::BindlessDescriptorSet::unbindCommon(U32 idx, DynamicA
 
 DescriptorSetFactory::DSAllocator::~DSAllocator()
 {
-	HeapMemoryPool& pool = *m_layoutEntry->m_factory->m_pool;
-
 	while(!m_list.isEmpty())
 	{
 		DS* ds = &m_list.getFront();
 		m_list.popFront();
 
-		deleteInstance(pool, ds);
+		deleteInstance(GrMemoryPool::getSingleton(), ds);
 	}
 
 	for(VkDescriptorPool pool : m_pools)
 	{
-		vkDestroyDescriptorPool(m_layoutEntry->m_factory->m_dev, pool, nullptr);
+		vkDestroyDescriptorPool(getVkDevice(), pool, nullptr);
 	}
-	m_pools.destroy(pool);
-
-	m_hashmap.destroy(pool);
 }
 
 Error DescriptorSetFactory::DSAllocator::init()
@@ -415,11 +400,11 @@ Error DescriptorSetFactory::DSAllocator::createNewPool()
 
 	// Create
 	VkDescriptorPool pool;
-	ANKI_VK_CHECK(vkCreateDescriptorPool(m_layoutEntry->m_factory->m_dev, &ci, nullptr, &pool));
+	ANKI_VK_CHECK(vkCreateDescriptorPool(getVkDevice(), &ci, nullptr, &pool));
 	ANKI_TRACE_INC_COUNTER(VkDescriptorPoolCreate, 1);
 
 	// Push back
-	m_pools.resize(*m_layoutEntry->m_factory->m_pool, m_pools.getSize() + 1);
+	m_pools.resize(m_pools.getSize() + 1);
 	m_pools[m_pools.getSize() - 1] = pool;
 
 	return Error::kNone;
@@ -466,11 +451,11 @@ Error DescriptorSetFactory::DSAllocator::newSet(U64 hash,
 			// Found something, recycle
 			auto it2 = m_hashmap.find(set->m_hash);
 			ANKI_ASSERT(it2 != m_hashmap.getEnd());
-			m_hashmap.erase(*m_layoutEntry->m_factory->m_pool, it2);
+			m_hashmap.erase(it2);
 			m_list.erase(set);
 
 			m_list.pushBack(set);
-			m_hashmap.emplace(*m_layoutEntry->m_factory->m_pool, hash, set);
+			m_hashmap.emplace(hash, set);
 
 			out = set;
 			break;
@@ -497,14 +482,14 @@ Error DescriptorSetFactory::DSAllocator::newSet(U64 hash,
 		ci.descriptorSetCount = 1;
 
 		VkDescriptorSet handle;
-		[[maybe_unused]] VkResult rez = vkAllocateDescriptorSets(m_layoutEntry->m_factory->m_dev, &ci, &handle);
+		[[maybe_unused]] VkResult rez = vkAllocateDescriptorSets(getVkDevice(), &ci, &handle);
 		ANKI_ASSERT(rez == VK_SUCCESS && "That allocation can't fail");
 		ANKI_TRACE_INC_COUNTER(VkDescriptorSetCreate, 1);
 
-		out = newInstance<DS>(*m_layoutEntry->m_factory->m_pool);
+		out = newInstance<DS>(GrMemoryPool::getSingleton());
 		out->m_handle = handle;
 
-		m_hashmap.emplace(*m_layoutEntry->m_factory->m_pool, hash, out);
+		m_hashmap.emplace(hash, out);
 		m_list.pushBack(out);
 	}
 
@@ -658,15 +643,15 @@ void DescriptorSetFactory::DSAllocator::writeSet(
 	}
 
 	// Write
-	vkUpdateDescriptorSets(m_layoutEntry->m_factory->m_dev, writeInfos.getSize(),
-						   (writeInfos.getSize() > 0) ? &writeInfos[0] : nullptr, 0, nullptr);
+	vkUpdateDescriptorSets(getVkDevice(), writeInfos.getSize(), (writeInfos.getSize() > 0) ? &writeInfos[0] : nullptr,
+						   0, nullptr);
 }
 
 DSLayoutCacheEntry::~DSLayoutCacheEntry()
 {
 	if(m_layoutHandle)
 	{
-		vkDestroyDescriptorSetLayout(m_factory->m_dev, m_layoutHandle, nullptr);
+		vkDestroyDescriptorSetLayout(getVkDevice(), m_layoutHandle, nullptr);
 	}
 }
 
@@ -704,7 +689,7 @@ Error DSLayoutCacheEntry::init(const DescriptorBinding* bindings, U32 bindingCou
 	ci.bindingCount = bindingCount;
 	ci.pBindings = &vkBindings[0];
 
-	ANKI_VK_CHECK(vkCreateDescriptorSetLayout(m_factory->m_dev, &ci, nullptr, &m_layoutHandle));
+	ANKI_VK_CHECK(vkCreateDescriptorSetLayout(getVkDevice(), &ci, nullptr, &m_layoutHandle));
 
 	// Create the pool info
 	U32 poolSizeCount = 0;
@@ -753,24 +738,24 @@ Error DSLayoutCacheEntry::getOrCreateDSAllocator(DescriptorSetFactory::DSAllocat
 	DescriptorSetFactory::ThreadLocal* threadLocal = DescriptorSetFactory::m_threadLocal;
 	if(threadLocal == nullptr) [[unlikely]]
 	{
-		threadLocal = newInstance<DescriptorSetFactory::ThreadLocal>(*m_factory->m_pool);
+		threadLocal = newInstance<DescriptorSetFactory::ThreadLocal>(GrMemoryPool::getSingleton());
 		DescriptorSetFactory::m_threadLocal = threadLocal;
 
 		LockGuard<Mutex> lock(m_factory->m_allThreadLocalsMtx);
-		m_factory->m_allThreadLocals.emplaceBack(*m_factory->m_pool, threadLocal);
+		m_factory->m_allThreadLocals.emplaceBack(threadLocal);
 	}
 
 	// Get or create the allocator
 	if(m_index >= threadLocal->m_allocators.getSize()) [[unlikely]]
 	{
-		threadLocal->m_allocators.resize(*m_factory->m_pool, m_index + 1, nullptr);
-		alloc = newInstance<DescriptorSetFactory::DSAllocator>(*m_factory->m_pool, this);
+		threadLocal->m_allocators.resize(m_index + 1, nullptr);
+		alloc = newInstance<DescriptorSetFactory::DSAllocator>(GrMemoryPool::getSingleton(), this);
 		ANKI_CHECK(alloc->init());
 		threadLocal->m_allocators[m_index] = alloc;
 	}
 	else if(threadLocal->m_allocators[m_index] == nullptr) [[unlikely]]
 	{
-		alloc = newInstance<DescriptorSetFactory::DSAllocator>(*m_factory->m_pool, this);
+		alloc = newInstance<DescriptorSetFactory::DSAllocator>(GrMemoryPool::getSingleton(), this);
 		ANKI_CHECK(alloc->init());
 		threadLocal->m_allocators[m_index] = alloc;
 	}
@@ -980,15 +965,10 @@ DescriptorSetFactory::~DescriptorSetFactory()
 {
 }
 
-Error DescriptorSetFactory::init(HeapMemoryPool* pool, VkDevice dev, U32 bindlessTextureCount,
-								 U32 bindlessTextureBuffers)
+Error DescriptorSetFactory::init(U32 bindlessTextureCount, U32 bindlessTextureBuffers)
 {
-	ANKI_ASSERT(pool);
-	m_pool = pool;
-	m_dev = dev;
-
-	m_bindless = newInstance<BindlessDescriptorSet>(*m_pool);
-	ANKI_CHECK(m_bindless->init(pool, dev, bindlessTextureCount, bindlessTextureBuffers));
+	m_bindless = newInstance<BindlessDescriptorSet>(GrMemoryPool::getSingleton());
+	ANKI_CHECK(m_bindless->init(bindlessTextureCount, bindlessTextureBuffers));
 	m_bindlessTextureCount = bindlessTextureCount;
 	m_bindlessUniformTexelBufferCount = bindlessTextureBuffers;
 
@@ -1001,25 +981,22 @@ void DescriptorSetFactory::destroy()
 	{
 		for(DSAllocator* alloc : threadLocal->m_allocators)
 		{
-			deleteInstance(*m_pool, alloc);
+			deleteInstance(GrMemoryPool::getSingleton(), alloc);
 		}
 
-		threadLocal->m_allocators.destroy(*m_pool);
-		deleteInstance(*m_pool, threadLocal);
+		deleteInstance(GrMemoryPool::getSingleton(), threadLocal);
 	}
-
-	m_allThreadLocals.destroy(*m_pool);
+	m_allThreadLocals.destroy();
 
 	for(DSLayoutCacheEntry* l : m_caches)
 	{
-		deleteInstance(*m_pool, l);
+		deleteInstance(GrMemoryPool::getSingleton(), l);
 	}
-
-	m_caches.destroy(*m_pool);
+	m_caches.destroy();
 
 	if(m_bindless)
 	{
-		deleteInstance(*m_pool, m_bindless);
+		deleteInstance(GrMemoryPool::getSingleton(), m_bindless);
 	}
 }
 
@@ -1095,10 +1072,10 @@ Error DescriptorSetFactory::newDescriptorSetLayout(const DescriptorSetLayoutInit
 
 		if(cache == nullptr)
 		{
-			cache = newInstance<DSLayoutCacheEntry>(*m_pool, this, m_caches.getSize());
+			cache = newInstance<DSLayoutCacheEntry>(GrMemoryPool::getSingleton(), this, m_caches.getSize());
 			ANKI_CHECK(cache->init(bindings.getBegin(), bindingCount, hash));
 
-			m_caches.emplaceBack(*m_pool, cache);
+			m_caches.emplaceBack(cache);
 		}
 
 		// Set the layout

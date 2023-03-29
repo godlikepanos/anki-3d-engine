@@ -44,7 +44,7 @@ void AccelerationStructureBuilder::populateRenderGraph(RenderingContext& ctx)
 	AccelerationStructureInitInfo initInf("MainTlas");
 	initInf.m_type = AccelerationStructureType::kTopLevel;
 	initInf.m_topLevel.m_instances = instances;
-	m_runCtx.m_tlas = getExternalSubsystems().m_grManager->newAccelerationStructure(initInf);
+	m_runCtx.m_tlas = GrManager::getSingleton().newAccelerationStructure(initInf);
 
 	// Need a cleanup
 	for(U32 instanceIdx = 0; instanceIdx < instanceCount; ++instanceIdx)

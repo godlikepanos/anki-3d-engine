@@ -57,8 +57,8 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 		alignRoundDown(2, resolution.y());
 		m_tmpRtDesc = m_r->create2DRenderTargetDescription(
 			resolution.x(), resolution.y(),
-			(inf.m_grManager->getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR8G8B8_Unorm
-																					: Format::kR8G8B8A8_Unorm,
+			(GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR8G8B8_Unorm
+																							 : Format::kR8G8B8A8_Unorm,
 			"Final Composite");
 		m_tmpRtDesc.bake();
 
@@ -69,7 +69,7 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 		ANKI_R_LOGI("There will be a blit pass to the swapchain because render scaling is not 1.0");
 	}
 
-	m_rgraph = inf.m_grManager->newRenderGraph();
+	m_rgraph = GrManager::getSingleton().newRenderGraph();
 
 	return Error::kNone;
 }

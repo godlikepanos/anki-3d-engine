@@ -73,8 +73,8 @@ public:
 
 protected:
 	/// Construct.
-	ShaderProgram(GrManager* manager, CString name)
-		: GrObject(manager, kClassType, name)
+	ShaderProgram(CString name)
+		: GrObject(kClassType, name)
 	{
 	}
 
@@ -85,7 +85,7 @@ protected:
 
 private:
 	/// Allocate and initialize a new instance.
-	[[nodiscard]] static ShaderProgram* newInstance(GrManager* manager, const ShaderProgramInitInfo& init);
+	[[nodiscard]] static ShaderProgram* newInstance(const ShaderProgramInitInfo& init);
 };
 /// @}
 

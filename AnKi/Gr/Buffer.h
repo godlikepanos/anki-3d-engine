@@ -113,8 +113,8 @@ protected:
 	U64 m_gpuAddress = 0;
 
 	/// Construct.
-	Buffer(GrManager* manager, CString name)
-		: GrObject(manager, kClassType, name)
+	Buffer(CString name)
+		: GrObject(kClassType, name)
 	{
 	}
 
@@ -125,7 +125,7 @@ protected:
 
 private:
 	/// Allocate and initialize a new instance.
-	[[nodiscard]] static Buffer* newInstance(GrManager* manager, const BufferInitInfo& init);
+	[[nodiscard]] static Buffer* newInstance(const BufferInitInfo& init);
 };
 /// @}
 

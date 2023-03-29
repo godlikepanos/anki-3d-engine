@@ -410,17 +410,25 @@ public:
 	}
 };
 
+PipelineFactory::PipelineFactory()
+{
+}
+
+PipelineFactory::~PipelineFactory()
+{
+}
+
 void PipelineFactory::destroy()
 {
 	for(auto it : m_pplines)
 	{
 		if(it.m_handle)
 		{
-			vkDestroyPipeline(m_dev, it.m_handle, nullptr);
+			vkDestroyPipeline(getVkDevice(), it.m_handle, nullptr);
 		}
 	}
 
-	m_pplines.destroy(*m_pool);
+	m_pplines.destroy();
 }
 
 void PipelineFactory::getOrCreatePipeline(PipelineStateTracker& state, Pipeline& ppline, Bool& stateDirty)
@@ -474,7 +482,7 @@ void PipelineFactory::getOrCreatePipeline(PipelineStateTracker& state, Pipeline&
 		}
 #endif
 
-		ANKI_VK_CHECKF(vkCreateGraphicsPipelines(m_dev, m_pplineCache, 1, &ci, nullptr, &pp.m_handle));
+		ANKI_VK_CHECKF(vkCreateGraphicsPipelines(getVkDevice(), m_pplineCache, 1, &ci, nullptr, &pp.m_handle));
 
 #if ANKI_PLATFORM_MOBILE
 		if(m_globalCreatePipelineMtx)
@@ -486,12 +494,12 @@ void PipelineFactory::getOrCreatePipeline(PipelineStateTracker& state, Pipeline&
 
 	ANKI_TRACE_INC_COUNTER(VkPipelineCacheMiss, 1);
 
-	m_pplines.emplace(*m_pool, hash, pp);
+	m_pplines.emplace(hash, pp);
 	ppline.m_handle = pp.m_handle;
 
 	// Print shader info
-	state.m_state.m_prog->getGrManagerImpl().printPipelineShaderInfo(pp.m_handle, state.m_state.m_prog->getName(),
-																	 state.m_state.m_prog->getStages(), hash);
+	getGrManagerImpl().printPipelineShaderInfo(pp.m_handle, state.m_state.m_prog->getName(),
+											   state.m_state.m_prog->getStages(), hash);
 }
 
 } // end namespace anki

@@ -437,8 +437,8 @@ public:
 
 protected:
 	/// Construct.
-	CommandBuffer(GrManager* manager, CString name)
-		: GrObject(manager, kClassType, name)
+	CommandBuffer(CString name)
+		: GrObject(kClassType, name)
 	{
 	}
 
@@ -449,7 +449,7 @@ protected:
 
 private:
 	/// Allocate and initialize a new instance.
-	[[nodiscard]] static CommandBuffer* newInstance(GrManager* manager, const CommandBufferInitInfo& init);
+	[[nodiscard]] static CommandBuffer* newInstance(const CommandBufferInitInfo& init);
 };
 /// @}
 

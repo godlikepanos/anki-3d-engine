@@ -533,24 +533,17 @@ private:
 class PipelineFactory
 {
 public:
-	PipelineFactory()
-	{
-	}
+	PipelineFactory();
 
-	~PipelineFactory()
-	{
-	}
+	~PipelineFactory();
 
-	void init(HeapMemoryPool* pool, VkDevice dev, VkPipelineCache pplineCache
+	void init(VkPipelineCache pplineCache
 #if ANKI_PLATFORM_MOBILE
 			  ,
 			  Mutex* globalCreatePipelineMtx
 #endif
 	)
 	{
-		ANKI_ASSERT(pool);
-		m_pool = pool;
-		m_dev = dev;
 		m_pplineCache = pplineCache;
 #if ANKI_PLATFORM_MOBILE
 		m_globalCreatePipelineMtx = globalCreatePipelineMtx;
@@ -566,11 +559,9 @@ private:
 	class PipelineInternal;
 	class Hasher;
 
-	HeapMemoryPool* m_pool = nullptr;
-	VkDevice m_dev = VK_NULL_HANDLE;
 	VkPipelineCache m_pplineCache = VK_NULL_HANDLE;
 
-	HashMap<U64, PipelineInternal, Hasher> m_pplines;
+	GrHashMap<U64, PipelineInternal, Hasher> m_pplines;
 	RWMutex m_pplinesMtx;
 #if ANKI_PLATFORM_MOBILE
 	Mutex* m_globalCreatePipelineMtx = nullptr;

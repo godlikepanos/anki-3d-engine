@@ -19,23 +19,22 @@ UiManager::~UiManager()
 	UiMemoryPool::freeSingleton();
 }
 
-Error UiManager::init(UiManagerInitInfo& initInfo)
+Error UiManager::init(AllocAlignedCallback allocCallback, void* allocCallbackData)
 {
-	UiMemoryPool::allocateSingleton(initInfo.m_allocCallback, initInfo.m_allocCallbackUserData);
-	m_subsystems = initInfo;
+	UiMemoryPool::allocateSingleton(allocCallback, allocCallbackData);
 
-	auto allocCallback = [](size_t size, [[maybe_unused]] void* userData) -> void* {
+	auto imguiAllocCallback = [](size_t size, [[maybe_unused]] void* userData) -> void* {
 		return UiMemoryPool::getSingleton().allocate(size, 16);
 	};
 
-	auto freeCallback = [](void* ptr, [[maybe_unused]] void* userData) -> void {
+	auto imguiFreeCallback = [](void* ptr, [[maybe_unused]] void* userData) -> void {
 		if(ptr)
 		{
 			UiMemoryPool::getSingleton().free(ptr);
 		}
 	};
 
-	ImGui::SetAllocatorFunctions(allocCallback, freeCallback, nullptr);
+	ImGui::SetAllocatorFunctions(imguiAllocCallback, imguiFreeCallback, nullptr);
 
 	return Error::kNone;
 }

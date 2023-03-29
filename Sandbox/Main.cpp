@@ -440,6 +440,7 @@ int myMain(int argc, char* argv[])
 		err = app->mainLoop();
 	}
 
+	delete app;
 	if(err)
 	{
 		ANKI_LOGE("Error reported. See previous messages");
@@ -448,7 +449,6 @@ int myMain(int argc, char* argv[])
 	{
 		ANKI_LOGI("Bye!!");
 	}
-	delete app;
 
 	return 0;
 }

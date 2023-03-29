@@ -16,21 +16,18 @@ ShaderProgramImpl::~ShaderProgramImpl()
 	if(m_graphics.m_pplineFactory)
 	{
 		m_graphics.m_pplineFactory->destroy();
-		deleteInstance(getMemoryPool(), m_graphics.m_pplineFactory);
+		deleteInstance(GrMemoryPool::getSingleton(), m_graphics.m_pplineFactory);
 	}
 
 	if(m_compute.m_ppline)
 	{
-		vkDestroyPipeline(getDevice(), m_compute.m_ppline, nullptr);
+		vkDestroyPipeline(getVkDevice(), m_compute.m_ppline, nullptr);
 	}
 
 	if(m_rt.m_ppline)
 	{
-		vkDestroyPipeline(getDevice(), m_rt.m_ppline, nullptr);
+		vkDestroyPipeline(getVkDevice(), m_rt.m_ppline, nullptr);
 	}
-
-	m_shaders.destroy(getMemoryPool());
-	m_rt.m_allHandles.destroy(getMemoryPool());
 }
 
 Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
@@ -39,10 +36,10 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 
 	// Create the shader references
 	//
-	HashMapRaii<U64, U32> shaderUuidToMShadersIdx(&getMemoryPool()); // Shader UUID to m_shaders idx
+	GrHashMap<U64, U32> shaderUuidToMShadersIdx; // Shader UUID to m_shaders idx
 	if(inf.m_computeShader)
 	{
-		m_shaders.emplaceBack(getMemoryPool(), inf.m_computeShader);
+		m_shaders.emplaceBack(inf.m_computeShader);
 	}
 	else if(inf.m_graphicsShaders[ShaderType::kVertex])
 	{
@@ -50,7 +47,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		{
 			if(s)
 			{
-				m_shaders.emplaceBack(getMemoryPool(), s);
+				m_shaders.emplaceBack(s);
 			}
 		}
 	}
@@ -58,18 +55,17 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	{
 		// Ray tracing
 
-		m_shaders.resizeStorage(getMemoryPool(), inf.m_rayTracingShaders.m_rayGenShaders.getSize()
-													 + inf.m_rayTracingShaders.m_missShaders.getSize()
-													 + 1); // Plus at least one hit shader
+		m_shaders.resizeStorage(inf.m_rayTracingShaders.m_rayGenShaders.getSize()
+								+ inf.m_rayTracingShaders.m_missShaders.getSize() + 1); // Plus at least one hit shader
 
 		for(const ShaderPtr& s : inf.m_rayTracingShaders.m_rayGenShaders)
 		{
-			m_shaders.emplaceBack(getMemoryPool(), s);
+			m_shaders.emplaceBack(s);
 		}
 
 		for(const ShaderPtr& s : inf.m_rayTracingShaders.m_missShaders)
 		{
-			m_shaders.emplaceBack(getMemoryPool(), s);
+			m_shaders.emplaceBack(s);
 		}
 
 		m_rt.m_missShaderCount = inf.m_rayTracingShaders.m_missShaders.getSize();
@@ -82,7 +78,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 				if(it == shaderUuidToMShadersIdx.getEnd())
 				{
 					shaderUuidToMShadersIdx.emplace(group.m_anyHitShader->getUuid(), m_shaders.getSize());
-					m_shaders.emplaceBack(getMemoryPool(), group.m_anyHitShader);
+					m_shaders.emplaceBack(group.m_anyHitShader);
 				}
 			}
 
@@ -92,7 +88,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 				if(it == shaderUuidToMShadersIdx.getEnd())
 				{
 					shaderUuidToMShadersIdx.emplace(group.m_closestHitShader->getUuid(), m_shaders.getSize());
-					m_shaders.emplaceBack(getMemoryPool(), group.m_closestHitShader);
+					m_shaders.emplaceBack(group.m_closestHitShader);
 				}
 			}
 		}
@@ -221,9 +217,8 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	//
 	if(graphicsProg)
 	{
-		m_graphics.m_pplineFactory = anki::newInstance<PipelineFactory>(getMemoryPool());
-		m_graphics.m_pplineFactory->init(&getMemoryPool(), getGrManagerImpl().getDevice(),
-										 getGrManagerImpl().getPipelineCache()
+		m_graphics.m_pplineFactory = anki::newInstance<PipelineFactory>(GrMemoryPool::getSingleton());
+		m_graphics.m_pplineFactory->init(getGrManagerImpl().getPipelineCache()
 #if ANKI_PLATFORM_MOBILE
 											 ,
 										 getGrManagerImpl().getGlobalCreatePipelineMutex()
@@ -254,7 +249,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		ci.stage.pSpecializationInfo = shaderImpl.getSpecConstInfo();
 
 		ANKI_TRACE_SCOPED_EVENT(VkPipelineCreate);
-		ANKI_VK_CHECK(vkCreateComputePipelines(getDevice(), getGrManagerImpl().getPipelineCache(), 1, &ci, nullptr,
+		ANKI_VK_CHECK(vkCreateComputePipelines(getVkDevice(), getGrManagerImpl().getPipelineCache(), 1, &ci, nullptr,
 											   &m_compute.m_ppline));
 		getGrManagerImpl().printPipelineShaderInfo(m_compute.m_ppline, getName(), ShaderTypeBit::kCompute);
 	}
@@ -264,7 +259,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	if(!!(m_stages & ShaderTypeBit::kAllRayTracing))
 	{
 		// Create shaders
-		DynamicArrayRaii<VkPipelineShaderStageCreateInfo> stages(m_shaders.getSize(), &getMemoryPool());
+		GrDynamicArray<VkPipelineShaderStageCreateInfo> stages(m_shaders.getSize());
 		for(U32 i = 0; i < stages.getSize(); ++i)
 		{
 			const ShaderImpl& impl = static_cast<const ShaderImpl&>(*m_shaders[i]);
@@ -289,7 +284,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		U32 groupCount = inf.m_rayTracingShaders.m_rayGenShaders.getSize()
 						 + inf.m_rayTracingShaders.m_missShaders.getSize()
 						 + inf.m_rayTracingShaders.m_hitGroups.getSize();
-		DynamicArrayRaii<VkRayTracingShaderGroupCreateInfoKHR> groups(groupCount, defaultGroup, &getMemoryPool());
+		GrDynamicArray<VkRayTracingShaderGroupCreateInfoKHR> groups(groupCount, defaultGroup);
 
 		// 1st group is the ray gen
 		groupCount = 0;
@@ -341,14 +336,14 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		{
 			ANKI_TRACE_SCOPED_EVENT(VkPipelineCreate);
 			ANKI_VK_CHECK(vkCreateRayTracingPipelinesKHR(
-				getDevice(), VK_NULL_HANDLE, getGrManagerImpl().getPipelineCache(), 1, &ci, nullptr, &m_rt.m_ppline));
+				getVkDevice(), VK_NULL_HANDLE, getGrManagerImpl().getPipelineCache(), 1, &ci, nullptr, &m_rt.m_ppline));
 		}
 
 		// Get RT handles
 		const U32 handleArraySize =
 			getGrManagerImpl().getPhysicalDeviceRayTracingProperties().shaderGroupHandleSize * groupCount;
-		m_rt.m_allHandles.create(getMemoryPool(), handleArraySize, 0);
-		ANKI_VK_CHECK(vkGetRayTracingShaderGroupHandlesKHR(getDevice(), m_rt.m_ppline, 0, groupCount, handleArraySize,
+		m_rt.m_allHandles.create(handleArraySize, 0);
+		ANKI_VK_CHECK(vkGetRayTracingShaderGroupHandlesKHR(getVkDevice(), m_rt.m_ppline, 0, groupCount, handleArraySize,
 														   &m_rt.m_allHandles[0]));
 	}
 

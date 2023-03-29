@@ -74,10 +74,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	StringRaii basename(&ResourceMemoryPool::getSingleton());
 	getFilepathFilename(filename, basename);
 
-	const Bool rayTracingEnabled = ResourceManager::getSingleton()
-									   .getExternalSubsystems()
-									   .m_grManager->getDeviceCapabilities()
-									   .m_rayTracingEnabled;
+	const Bool rayTracingEnabled = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled;
 
 	if(async)
 	{
@@ -174,8 +171,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 			inf.m_bottomLevel.m_positionsFormat = kMeshRelatedVertexStreamFormats[VertexStreamId::kPosition];
 			inf.m_bottomLevel.m_positionCount = lod.m_vertexCount;
 
-			lod.m_blas =
-				ResourceManager::getSingleton().getExternalSubsystems().m_grManager->newAccelerationStructure(inf);
+			lod.m_blas = GrManager::getSingleton().newAccelerationStructure(inf);
 		}
 	}
 
@@ -184,8 +180,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	{
 		CommandBufferInitInfo cmdbinit("MeshResourceClear");
 		cmdbinit.m_flags = CommandBufferFlag::kSmallBatch | CommandBufferFlag::kGeneralWork;
-		CommandBufferPtr cmdb =
-			ResourceManager::getSingleton().getExternalSubsystems().m_grManager->newCommandBuffer(cmdbinit);
+		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbinit);
 
 		for(const Lod& lod : m_lods)
 		{
@@ -231,7 +226,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 
 Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 {
-	GrManager& gr = *ResourceManager::getSingleton().getExternalSubsystems().m_grManager;
+	GrManager& gr = GrManager::getSingleton();
 	TransferGpuAllocator& transferAlloc = ResourceManager::getSingleton().getTransferGpuAllocator();
 
 	Array<TransferGpuAllocatorHandle, kMaxLodCount*(U32(VertexStreamId::kMeshRelatedCount) + 1)> handles;

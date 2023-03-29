@@ -18,7 +18,6 @@ public:
 	ImageLoader m_loader{&ResourceMemoryPool::getSingleton()};
 	U32 m_faces = 0;
 	U32 m_layerCount = 0;
-	GrManager* m_gr ANKI_DEBUG_CODE(= nullptr);
 	TextureType m_texType;
 	TexturePtr m_tex;
 };
@@ -193,14 +192,13 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 	init.m_mipmapCount = U8(loader.getMipmapCount());
 
 	// Create the texture
-	m_tex = ResourceManager::getSingleton().getExternalSubsystems().m_grManager->newTexture(init);
+	m_tex = GrManager::getSingleton().newTexture(init);
 
 	// Transition it. TODO remove that eventually
 	{
 		CommandBufferInitInfo cmdbinit;
 		cmdbinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
-		CommandBufferPtr cmdb =
-			ResourceManager::getSingleton().getExternalSubsystems().m_grManager->newCommandBuffer(cmdbinit);
+		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbinit);
 
 		TextureSubresourceInfo subresource;
 		subresource.m_faceCount = textureTypeIsCube(init.m_type) ? 6 : 1;
@@ -219,7 +217,6 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 	// Set the context
 	ctx->m_faces = faces;
 	ctx->m_layerCount = init.m_layerCount;
-	ctx->m_gr = ResourceManager::getSingleton().getExternalSubsystems().m_grManager;
 	ctx->m_texType = init.m_type;
 	ctx->m_tex = m_tex;
 
@@ -238,7 +235,7 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 
 	// Create the texture view
 	TextureViewInitInfo viewInit(m_tex, "Rsrc");
-	m_texView = ResourceManager::getSingleton().getExternalSubsystems().m_grManager->newTextureView(viewInit);
+	m_texView = GrManager::getSingleton().newTextureView(viewInit);
 
 	return Error::kNone;
 }
@@ -254,7 +251,7 @@ Error ImageResource::load(LoadingContext& ctx)
 
 		CommandBufferInitInfo ci;
 		ci.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
-		CommandBufferPtr cmdb = ctx.m_gr->newCommandBuffer(ci);
+		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(ci);
 
 		// Set the barriers of the batch
 		Array<TextureBarrierInfo, kMaxCopiesBeforeFlush> barriers;
@@ -330,7 +327,8 @@ Error ImageResource::load(LoadingContext& ctx)
 				subresource = TextureSubresourceInfo(TextureSurfaceInfo(mip, 0, face, layer));
 			}
 
-			TextureViewPtr tmpView = ctx.m_gr->newTextureView(TextureViewInitInfo(ctx.m_tex, subresource, "RsrcTmp"));
+			TextureViewPtr tmpView =
+				GrManager::getSingleton().newTextureView(TextureViewInitInfo(ctx.m_tex, subresource, "RsrcTmp"));
 
 			cmdb->copyBufferToTextureView(handle.getBuffer(), handle.getOffset(), handle.getRange(), tmpView);
 		}

@@ -76,11 +76,11 @@ class F16;
 #define ANKI_DEFINE_SUBMODULE_UTIL_CONTAINERS(submoduleName, singletonMemoryPool) \
 	using submoduleName##MemPoolWrapper = SingletonMemoryPoolWrapper<singletonMemoryPool>; \
 	using submoduleName##String = BaseStringRaii<submoduleName##MemPoolWrapper>; \
-	template<typename T> \
-	using submoduleName##DynamicArray = DynamicArrayRaii<T, U32, submoduleName##MemPoolWrapper>; \
-	template<typename TKey, typename TValue> \
+	template<typename T, typename TSize = U32> \
+	using submoduleName##DynamicArray = DynamicArrayRaii<T, TSize, submoduleName##MemPoolWrapper>; \
+	template<typename TKey, typename TValue, typename THasher = DefaultHasher<TKey>> \
 	using submoduleName##HashMap = \
-		HashMapRaii<TKey, TValue, DefaultHasher<TKey>, HashMapSparseArrayConfig, submoduleName##MemPoolWrapper>; \
+		HashMapRaii<TKey, TValue, THasher, HashMapSparseArrayConfig, submoduleName##MemPoolWrapper>; \
 	template<typename T> \
 	using submoduleName##List = ListRaii<T, submoduleName##MemPoolWrapper>; \
 	using submoduleName##StringList = BaseStringListRaii<submoduleName##MemPoolWrapper>;

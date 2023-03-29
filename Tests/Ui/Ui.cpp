@@ -71,14 +71,9 @@ ANKI_TEST(Ui, Ui)
 	createResourceManager(gr);
 	UiManager* ui = &UiManager::allocateSingleton();
 
-	RebarStagingGpuMemoryPool::allocateSingleton().init(gr);
+	RebarStagingGpuMemoryPool::allocateSingleton().init();
 
-	HeapAllocator<U8> alloc(allocAligned, nullptr);
-	UiManagerInitInfo uiInitInfo;
-	uiInitInfo.m_allocCallback = allocAligned;
-	uiInitInfo.m_allocCallbackUserData = nullptr;
-	uiInitInfo.m_grManager = gr;
-	ANKI_TEST_EXPECT_NO_ERR(ui->init(uiInitInfo));
+	ANKI_TEST_EXPECT_NO_ERR(ui->init(allocAligned, nullptr));
 
 	{
 		FontPtr font;
@@ -156,7 +151,7 @@ ANKI_TEST(Ui, Ui)
 	UiManager::freeSingleton();
 	RebarStagingGpuMemoryPool::freeSingleton();
 	ResourceManager::freeSingleton();
-	GrManager::deleteInstance(gr);
+	GrManager::freeSingleton();
 	Input::freeSingleton();
 	NativeWindow::freeSingleton();
 }

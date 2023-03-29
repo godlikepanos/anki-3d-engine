@@ -46,8 +46,6 @@ public:
 		return m_refcount.fetchSub(1);
 	}
 
-	HeapMemoryPool& getMemoryPool();
-
 	void wait()
 	{
 		const Bool timeout = !clientWait(kMaxSecond);
@@ -85,21 +83,13 @@ class FenceFactory
 
 public:
 	/// Limit the alive fences to avoid having too many file descriptors used in Linux.
-	static constexpr U32 MAX_ALIVE_FENCES = 32;
+	static constexpr U32 kMaxAliveFences = 32;
 
-	FenceFactory()
-	{
-	}
+	FenceFactory() = default;
 
 	~FenceFactory()
 	{
-	}
-
-	void init(HeapMemoryPool* pool, VkDevice dev)
-	{
-		ANKI_ASSERT(pool && dev);
-		m_pool = pool;
-		m_dev = dev;
+		ANKI_ASSERT(m_fences.getSize() == 0);
 	}
 
 	void destroy();
@@ -111,9 +101,7 @@ public:
 	}
 
 private:
-	HeapMemoryPool* m_pool = nullptr;
-	VkDevice m_dev = VK_NULL_HANDLE;
-	DynamicArray<MicroFence*> m_fences;
+	GrDynamicArray<MicroFence*> m_fences;
 	U32 m_aliveFenceCount = 0;
 	Mutex m_mtx;
 

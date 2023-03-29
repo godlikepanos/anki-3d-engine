@@ -9,13 +9,13 @@
 
 namespace anki {
 
-Sampler* Sampler::newInstance(GrManager* manager, const SamplerInitInfo& init)
+Sampler* Sampler::newInstance(const SamplerInitInfo& init)
 {
-	SamplerImpl* impl = anki::newInstance<SamplerImpl>(manager->getMemoryPool(), manager, init.getName());
+	SamplerImpl* impl = anki::newInstance<SamplerImpl>(GrMemoryPool::getSingleton(), init.getName());
 	const Error err = impl->init(init);
 	if(err)
 	{
-		deleteInstance(manager->getMemoryPool(), impl);
+		deleteInstance(GrMemoryPool::getSingleton(), impl);
 		impl = nullptr;
 	}
 	return impl;

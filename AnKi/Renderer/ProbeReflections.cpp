@@ -55,7 +55,7 @@ Error ProbeReflections::initInternal()
 	sinit.m_minLod = 0.0;
 	sinit.m_maxLod = 1.0;
 	sinit.m_addressing = SamplingAddressing::kClamp;
-	m_integrationLutSampler = getExternalSubsystems().m_grManager->newSampler(sinit);
+	m_integrationLutSampler = GrManager::getSingleton().newSampler(sinit);
 
 	return Error::kNone;
 }
@@ -153,7 +153,7 @@ Error ProbeReflections::initIrradiance()
 		BufferInitInfo init;
 		init.m_usage = BufferUsageBit::kAllStorage;
 		init.m_size = 6 * sizeof(Vec4);
-		m_irradiance.m_diceValuesBuff = getExternalSubsystems().m_grManager->newBuffer(init);
+		m_irradiance.m_diceValuesBuff = GrManager::getSingleton().newBuffer(init);
 	}
 
 	return Error::kNone;
@@ -295,7 +295,7 @@ void ProbeReflections::runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkCo
 	rgraphCtx.getRenderTargetState(m_ctx.m_lightShadingRt, subresource, texToBind);
 
 	TextureViewInitInfo viewInit(texToBind, subresource);
-	rgraphCtx.m_commandBuffer->generateMipmaps2d(getExternalSubsystems().m_grManager->newTextureView(viewInit));
+	rgraphCtx.m_commandBuffer->generateMipmaps2d(GrManager::getSingleton().newTextureView(viewInit));
 }
 
 void ProbeReflections::runIrradiance(RenderPassWorkContext& rgraphCtx)

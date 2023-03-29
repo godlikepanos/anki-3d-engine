@@ -25,25 +25,20 @@ public:
 
 ShaderImpl::~ShaderImpl()
 {
-	for(auto& x : m_bindings)
-	{
-		x.destroy(getMemoryPool());
-	}
-
 	if(m_handle)
 	{
-		vkDestroyShaderModule(getDevice(), m_handle, nullptr);
+		vkDestroyShaderModule(getVkDevice(), m_handle, nullptr);
 	}
 
 	if(m_specConstInfo.pMapEntries)
 	{
-		deleteArray(getMemoryPool(), const_cast<VkSpecializationMapEntry*>(m_specConstInfo.pMapEntries),
+		deleteArray(GrMemoryPool::getSingleton(), const_cast<VkSpecializationMapEntry*>(m_specConstInfo.pMapEntries),
 					m_specConstInfo.mapEntryCount);
 	}
 
 	if(m_specConstInfo.pData)
 	{
-		deleteArray(getMemoryPool(), static_cast<I32*>(const_cast<void*>(m_specConstInfo.pData)),
+		deleteArray(GrMemoryPool::getSingleton(), static_cast<I32*>(const_cast<void*>(m_specConstInfo.pData)),
 					m_specConstInfo.dataSize / sizeof(I32));
 	}
 }
@@ -70,7 +65,7 @@ Error ShaderImpl::init(const ShaderInitInfo& inf)
 	VkShaderModuleCreateInfo ci = {VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO, nullptr, 0, inf.m_binary.getSize(),
 								   reinterpret_cast<const uint32_t*>(&inf.m_binary[0])};
 
-	ANKI_VK_CHECK(vkCreateShaderModule(getDevice(), &ci, nullptr, &m_handle));
+	ANKI_VK_CHECK(vkCreateShaderModule(getVkDevice(), &ci, nullptr, &m_handle));
 
 	// Get reflection info
 	SpecConstsVector specConstIds;
@@ -82,9 +77,9 @@ Error ShaderImpl::init(const ShaderInitInfo& inf)
 		const U32 constCount = U32(specConstIds.m_vec.size());
 
 		m_specConstInfo.mapEntryCount = constCount;
-		m_specConstInfo.pMapEntries = newArray<VkSpecializationMapEntry>(getMemoryPool(), constCount);
+		m_specConstInfo.pMapEntries = newArray<VkSpecializationMapEntry>(GrMemoryPool::getSingleton(), constCount);
 		m_specConstInfo.dataSize = constCount * sizeof(U32);
-		m_specConstInfo.pData = newArray<U32>(getMemoryPool(), constCount);
+		m_specConstInfo.pData = newArray<U32>(GrMemoryPool::getSingleton(), constCount);
 
 		U32 count = 0;
 		for(const spirv_cross::SpecializationConstant& sconst : specConstIds.m_vec)
@@ -203,7 +198,7 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 	{
 		if(counts[set])
 		{
-			m_bindings[set].create(getMemoryPool(), counts[set]);
+			m_bindings[set].create(counts[set]);
 			memcpy(&m_bindings[set][0], &descriptors[set][0], counts[set] * sizeof(DescriptorBinding));
 		}
 	}

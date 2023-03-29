@@ -512,7 +512,7 @@ void CommandBufferImpl::buildAccelerationStructureInternal(const AccelerationStr
 	BufferInitInfo bufferInit;
 	bufferInit.m_usage = PrivateBufferUsageBit::kAccelerationStructureBuildScratch;
 	bufferInit.m_size = asImpl.getBuildScratchBufferSize();
-	BufferPtr scratchBuff = getManager().newBuffer(bufferInit);
+	BufferPtr scratchBuff = getGrManagerImpl().newBuffer(bufferInit);
 
 	// Create the build info
 	VkAccelerationStructureBuildGeometryInfoKHR buildInfo;

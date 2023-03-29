@@ -23,9 +23,23 @@ class MicroDeferredBarrier
 	friend class MicroDeferredBarrierPtrDeleter;
 
 public:
-	MicroDeferredBarrier(DeferredBarrierFactory* factory);
+	MicroDeferredBarrier(DeferredBarrierFactory* factory)
+		: m_factory(factory)
+	{
+		ANKI_ASSERT(factory);
+		VkEventCreateInfo ci = {};
+		ci.sType = VK_STRUCTURE_TYPE_EVENT_CREATE_INFO;
+		ANKI_VK_CHECKF(vkCreateEvent(getVkDevice(), &ci, nullptr, &m_handle));
+	}
 
-	~MicroDeferredBarrier();
+	~MicroDeferredBarrier()
+	{
+		if(m_handle)
+		{
+			vkDestroyEvent(getVkDevice(), m_handle, nullptr);
+			m_handle = VK_NULL_HANDLE;
+		}
+	}
 
 	const VkEvent& getHandle() const
 	{
@@ -47,8 +61,6 @@ public:
 	{
 		return m_refcount.load();
 	}
-
-	HeapMemoryPool& getMemoryPool();
 
 	void setFence(MicroFencePtr& f)
 	{
@@ -98,29 +110,35 @@ public:
 
 	DeferredBarrierFactory& operator=(const DeferredBarrierFactory&) = delete; // Non-copyable
 
-	void init(HeapMemoryPool* pool, VkDevice dev)
-	{
-		ANKI_ASSERT(pool && dev);
-		m_pool = pool;
-		m_dev = dev;
-	}
-
 	void destroy()
 	{
 		m_recycler.destroy();
 	}
 
-	MicroDeferredBarrierPtr newInstance();
+	MicroDeferredBarrierPtr newInstance()
+	{
+		MicroDeferredBarrier* out = m_recycler.findToReuse();
+
+		if(out == nullptr)
+		{
+			// Create a new one
+			out = anki::newInstance<MicroDeferredBarrier>(GrMemoryPool::getSingleton(), this);
+		}
+
+		return MicroDeferredBarrierPtr(out);
+	}
 
 private:
-	HeapMemoryPool* m_pool = nullptr;
-	VkDevice m_dev = VK_NULL_HANDLE;
 	MicroObjectRecycler<MicroDeferredBarrier> m_recycler;
 
 	void destroyBarrier(MicroDeferredBarrier* barrier);
 };
+
+inline void MicroDeferredBarrierPtrDeleter::operator()(MicroDeferredBarrier* s)
+{
+	ANKI_ASSERT(s);
+	s->m_factory->m_recycler.recycle(s);
+}
 /// @}
 
 } // end namespace anki
-
-#include <AnKi/Gr/Vulkan/DeferredBarrierFactory.inl.h>

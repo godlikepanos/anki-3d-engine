@@ -74,7 +74,7 @@ public:
 
 	~ShaderProgramResourceSystem() = default;
 
-	Error init(GrManager& gr);
+	Error init();
 
 	ConstWeakArray<ShaderProgramRaytracingLibrary> getRayTracingLibraries() const
 	{
@@ -84,7 +84,7 @@ public:
 private:
 	ResourceDynamicArray<ShaderProgramRaytracingLibrary> m_rtLibraries;
 
-	static Error createRayTracingPrograms(GrManager& gr, ResourceDynamicArray<ShaderProgramRaytracingLibrary>& outLibs);
+	static Error createRayTracingPrograms(ResourceDynamicArray<ShaderProgramRaytracingLibrary>& outLibs);
 };
 /// @}
 

@@ -81,25 +81,13 @@ class SamplerFactory
 	friend class MicroSampler;
 
 public:
-	SamplerFactory()
-	{
-	}
-
-	~SamplerFactory()
-	{
-		ANKI_ASSERT(m_gr == nullptr && "Forgot to call destroy()");
-	}
-
-	void init(GrManagerImpl* gr);
-
 	void destroy();
 
 	/// Create a new sampler. It's thread-safe.
 	Error newInstance(const SamplerInitInfo& inf, MicroSamplerPtr& psampler);
 
 private:
-	GrManagerImpl* m_gr = nullptr;
-	HashMap<U64, MicroSampler*> m_map;
+	GrHashMap<U64, MicroSampler*> m_map;
 	Mutex m_mtx;
 };
 /// @}

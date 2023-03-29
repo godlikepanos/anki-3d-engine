@@ -61,11 +61,9 @@ Error LensFlare::initSprite()
 
 Error LensFlare::initOcclusion()
 {
-	GrManager& gr = *getExternalSubsystems().m_grManager;
-
-	m_indirectBuff = gr.newBuffer(BufferInitInfo(m_maxFlares * sizeof(DrawIndirectInfo),
-												 BufferUsageBit::kIndirectDraw | BufferUsageBit::kStorageComputeWrite,
-												 BufferMapAccessBit::kNone, "LensFlares"));
+	m_indirectBuff = GrManager::getSingleton().newBuffer(BufferInitInfo(
+		m_maxFlares * sizeof(DrawIndirectInfo), BufferUsageBit::kIndirectDraw | BufferUsageBit::kStorageComputeWrite,
+		BufferMapAccessBit::kNone, "LensFlares"));
 
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/LensFlareUpdateIndirectInfo.ankiprogbin",
 															m_updateIndirectBuffProg));

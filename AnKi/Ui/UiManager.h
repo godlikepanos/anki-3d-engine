@@ -12,13 +12,6 @@ namespace anki {
 /// @addtogroup ui
 /// @{
 
-class UiManagerInitInfo : public UiExternalSubsystems
-{
-public:
-	AllocAlignedCallback m_allocCallback = nullptr;
-	void* m_allocCallbackUserData = nullptr;
-};
-
 /// UI manager.
 class UiManager : public MakeSingleton<UiManager>
 {
@@ -26,7 +19,7 @@ class UiManager : public MakeSingleton<UiManager>
 	friend class MakeSingleton;
 
 public:
-	Error init(UiManagerInitInfo& initInfo);
+	Error init(AllocAlignedCallback allocCallback, void* allocCallbackData);
 
 	/// Create a new UI object.
 	template<typename T, typename Y, typename... Args>
@@ -45,14 +38,7 @@ public:
 		return ptr->init(args...);
 	}
 
-	UiExternalSubsystems& getExternalSubsystems()
-	{
-		return m_subsystems;
-	}
-
 private:
-	UiExternalSubsystems m_subsystems;
-
 	UiManager();
 
 	~UiManager();

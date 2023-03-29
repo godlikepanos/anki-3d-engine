@@ -45,6 +45,9 @@ class GrManagerImpl;
 #define ANKI_VK_SELF(class_) class_& self = *static_cast<class_*>(this)
 #define ANKI_VK_SELF_CONST(class_) const class_& self = *static_cast<const class_*>(this)
 
+ANKI_PURE GrManagerImpl& getGrManagerImpl();
+ANKI_PURE VkDevice getVkDevice();
+
 enum class DescriptorType : U8
 {
 	kCombinedTextureSampler,

@@ -26,20 +26,15 @@ inline MicroSemaphore::MicroSemaphore(SemaphoreFactory* f, MicroFencePtr fence, 
 	ci.pNext = &typeCreateInfo;
 
 	ANKI_TRACE_INC_COUNTER(VkSemaphoreCreate, 1);
-	ANKI_VK_CHECKF(vkCreateSemaphore(m_factory->m_dev, &ci, nullptr, &m_handle));
+	ANKI_VK_CHECKF(vkCreateSemaphore(getVkDevice(), &ci, nullptr, &m_handle));
 }
 
 inline MicroSemaphore::~MicroSemaphore()
 {
 	if(m_handle)
 	{
-		vkDestroySemaphore(m_factory->m_dev, m_handle, nullptr);
+		vkDestroySemaphore(getVkDevice(), m_handle, nullptr);
 	}
-}
-
-inline HeapMemoryPool& MicroSemaphore::getMemoryPool()
-{
-	return *m_factory->m_pool;
 }
 
 inline Bool MicroSemaphore::clientWait(Second seconds)
@@ -59,7 +54,7 @@ inline Bool MicroSemaphore::clientWait(Second seconds)
 	const U64 ns = U64(nsf);
 
 	VkResult res;
-	ANKI_VK_CHECKF(res = vkWaitSemaphoresKHR(m_factory->m_dev, &waitInfo, ns));
+	ANKI_VK_CHECKF(res = vkWaitSemaphoresKHR(getVkDevice(), &waitInfo, ns));
 
 	return res != VK_TIMEOUT;
 }
@@ -86,7 +81,7 @@ inline MicroSemaphorePtr SemaphoreFactory::newInstance(MicroFencePtr fence, Bool
 	if(out == nullptr)
 	{
 		// Create a new one
-		out = anki::newInstance<MicroSemaphore>(*m_pool, this, fence, isTimeline);
+		out = anki::newInstance<MicroSemaphore>(GrMemoryPool::getSingleton(), this, fence, isTimeline);
 	}
 	else
 	{

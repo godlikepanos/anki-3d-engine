@@ -151,15 +151,15 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		TexturePtr tex = createAndClearRenderTarget(texinit, TextureUsageBit::kAllSampled);
 
 		TextureViewInitInfo viewinit(tex);
-		m_dummyTexView2d = m_subsystems.m_grManager->newTextureView(viewinit);
+		m_dummyTexView2d = GrManager::getSingleton().newTextureView(viewinit);
 
 		texinit.m_depth = 4;
 		texinit.m_type = TextureType::k3D;
 		tex = createAndClearRenderTarget(texinit, TextureUsageBit::kAllSampled);
 		viewinit = TextureViewInitInfo(tex);
-		m_dummyTexView3d = m_subsystems.m_grManager->newTextureView(viewinit);
+		m_dummyTexView3d = GrManager::getSingleton().newTextureView(viewinit);
 
-		m_dummyBuff = m_subsystems.m_grManager->newBuffer(BufferInitInfo(
+		m_dummyBuff = GrManager::getSingleton().newBuffer(BufferInitInfo(
 			1024, BufferUsageBit::kAllUniform | BufferUsageBit::kAllStorage, BufferMapAccessBit::kNone, "Dummy"));
 	}
 
@@ -233,7 +233,7 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 	m_indirectDiffuse.reset(newInstance<IndirectDiffuse>(*m_pool, this));
 	ANKI_CHECK(m_indirectDiffuse->init());
 
-	if(m_subsystems.m_grManager->getDeviceCapabilities().m_rayTracingEnabled
+	if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled
 	   && ConfigSet::getSingleton().getSceneRayTracedShadows())
 	{
 		m_accelerationStructureBuilder.reset(newInstance<AccelerationStructureBuilder>(*m_pool, this));
@@ -263,20 +263,20 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		sinit.m_addressing = SamplingAddressing::kClamp;
 		sinit.m_mipmapFilter = SamplingFilter::kNearest;
 		sinit.m_minMagFilter = SamplingFilter::kNearest;
-		m_samplers.m_nearestNearestClamp = m_subsystems.m_grManager->newSampler(sinit);
+		m_samplers.m_nearestNearestClamp = GrManager::getSingleton().newSampler(sinit);
 
 		sinit.setName("TrilinearClamp");
 		sinit.m_minMagFilter = SamplingFilter::kLinear;
 		sinit.m_mipmapFilter = SamplingFilter::kLinear;
-		m_samplers.m_trilinearClamp = m_subsystems.m_grManager->newSampler(sinit);
+		m_samplers.m_trilinearClamp = GrManager::getSingleton().newSampler(sinit);
 
 		sinit.setName("TrilinearRepeat");
 		sinit.m_addressing = SamplingAddressing::kRepeat;
-		m_samplers.m_trilinearRepeat = m_subsystems.m_grManager->newSampler(sinit);
+		m_samplers.m_trilinearRepeat = GrManager::getSingleton().newSampler(sinit);
 
 		sinit.setName("TrilinearRepeatAniso");
 		sinit.m_anisotropyLevel = ConfigSet::getSingleton().getRTextureAnisotropy();
-		m_samplers.m_trilinearRepeatAniso = m_subsystems.m_grManager->newSampler(sinit);
+		m_samplers.m_trilinearRepeatAniso = GrManager::getSingleton().newSampler(sinit);
 
 		sinit.setName("TrilinearRepeatAnisoRezScalingBias");
 		F32 scalingMipBias = log2(F32(m_internalResolution.x()) / F32(m_postProcessResolution.x()));
@@ -287,14 +287,14 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		}
 
 		sinit.m_lodBias = scalingMipBias;
-		m_samplers.m_trilinearRepeatAnisoResolutionScalingBias = m_subsystems.m_grManager->newSampler(sinit);
+		m_samplers.m_trilinearRepeatAnisoResolutionScalingBias = GrManager::getSingleton().newSampler(sinit);
 
 		sinit = {};
 		sinit.setName("TrilinearClampShadow");
 		sinit.m_minMagFilter = SamplingFilter::kLinear;
 		sinit.m_mipmapFilter = SamplingFilter::kLinear;
 		sinit.m_compareOperation = CompareOperation::kLessEqual;
-		m_samplers.m_trilinearClampShadow = m_subsystems.m_grManager->newSampler(sinit);
+		m_samplers.m_trilinearClampShadow = GrManager::getSingleton().newSampler(sinit);
 	}
 
 	for(U32 i = 0; i < m_jitterOffsets.getSize(); ++i)
@@ -476,7 +476,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 	}
 
 	// Create tex
-	TexturePtr tex = m_subsystems.m_grManager->newTexture(inf);
+	TexturePtr tex = GrManager::getSingleton().newTexture(inf);
 
 	// Clear all surfaces
 	CommandBufferInitInfo cmdbinit;
@@ -485,7 +485,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 	{
 		cmdbinit.m_flags |= CommandBufferFlag::kSmallBatch;
 	}
-	CommandBufferPtr cmdb = m_subsystems.m_grManager->newCommandBuffer(cmdbinit);
+	CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbinit);
 
 	for(U32 mip = 0; mip < inf.m_mipmapCount; ++mip)
 	{
@@ -515,7 +515,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 						}
 
 						TextureViewPtr view =
-							m_subsystems.m_grManager->newTextureView(TextureViewInitInfo(tex, surf, aspect));
+							GrManager::getSingleton().newTextureView(TextureViewInitInfo(tex, surf, aspect));
 
 						fbInit.m_depthStencilAttachment.m_textureView = std::move(view);
 						fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kClear;
@@ -526,7 +526,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 					}
 					else
 					{
-						TextureViewPtr view = m_subsystems.m_grManager->newTextureView(TextureViewInitInfo(tex, surf));
+						TextureViewPtr view = GrManager::getSingleton().newTextureView(TextureViewInitInfo(tex, surf));
 
 						fbInit.m_colorAttachmentCount = 1;
 						fbInit.m_colorAttachments[0].m_textureView = view;
@@ -535,7 +535,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 
 						colUsage[0] = TextureUsageBit::kFramebufferWrite;
 					}
-					FramebufferPtr fb = m_subsystems.m_grManager->newFramebuffer(fbInit);
+					FramebufferPtr fb = GrManager::getSingleton().newFramebuffer(fbInit);
 
 					TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kNone, TextureUsageBit::kFramebufferWrite,
 												  surf};
@@ -581,7 +581,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 
 					cmdb->setPushConstants(&clearVal.m_colorf[0], sizeof(clearVal.m_colorf));
 
-					TextureViewPtr view = m_subsystems.m_grManager->newTextureView(TextureViewInitInfo(tex, surf));
+					TextureViewPtr view = GrManager::getSingleton().newTextureView(TextureViewInitInfo(tex, surf));
 					cmdb->bindImage(0, 0, view);
 
 					const TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kNone,
@@ -668,7 +668,7 @@ Format Renderer::getHdrFormat() const
 	{
 		out = Format::kB10G11R11_Ufloat_Pack32;
 	}
-	else if(m_subsystems.m_grManager->getDeviceCapabilities().m_unalignedBbpTextureFormats)
+	else if(GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats)
 	{
 		out = Format::kR16G16B16_Sfloat;
 	}

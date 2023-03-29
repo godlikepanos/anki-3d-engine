@@ -260,37 +260,19 @@ void FramebufferDescription::bake()
 	ANKI_ASSERT(m_hash != 0 && m_hash != 1);
 }
 
-RenderGraph::RenderGraph(GrManager* manager, CString name)
-	: GrObject(manager, kClassType, name)
+RenderGraph::RenderGraph(CString name)
+	: GrObject(kClassType, name)
 {
-	ANKI_ASSERT(manager);
 }
 
 RenderGraph::~RenderGraph()
 {
 	ANKI_ASSERT(m_ctx == nullptr);
-
-	while(!m_renderTargetCache.isEmpty())
-	{
-		auto it = m_renderTargetCache.getBegin();
-		RenderTargetCacheEntry& entry = *it;
-		entry.m_textures.destroy(getMemoryPool());
-		m_renderTargetCache.erase(getMemoryPool(), it);
-	}
-
-	m_fbCache.destroy(getMemoryPool());
-
-	for(auto& it : m_importedRenderTargets)
-	{
-		it.m_surfOrVolLastUsages.destroy(getMemoryPool());
-	}
-
-	m_importedRenderTargets.destroy(getMemoryPool());
 }
 
-RenderGraph* RenderGraph::newInstance(GrManager* manager)
+RenderGraph* RenderGraph::newInstance()
 {
-	return anki::newInstance<RenderGraph>(manager->getMemoryPool(), manager, "N/A");
+	return anki::newInstance<RenderGraph>(GrMemoryPool::getSingleton(), "N/A");
 }
 
 void RenderGraph::reset()
@@ -329,8 +311,8 @@ void RenderGraph::reset()
 			else
 			{
 				// Not found, create
-				it = m_importedRenderTargets.emplace(getMemoryPool(), hash);
-				it->m_surfOrVolLastUsages.create(getMemoryPool(), surfOrVolumeCount);
+				it = m_importedRenderTargets.emplace(hash);
+				it->m_surfOrVolLastUsages.create(surfOrVolumeCount);
 			}
 
 			// Update the usage
@@ -382,7 +364,7 @@ TexturePtr RenderGraph::getOrCreateRenderTarget(const TextureInitInfo& initInf, 
 	{
 		// Didn't found the entry, create a new one
 
-		auto it2 = m_renderTargetCache.emplace(getMemoryPool(), hash);
+		auto it2 = m_renderTargetCache.emplace(hash);
 		entry = &(*it2);
 	}
 	else
@@ -404,10 +386,10 @@ TexturePtr RenderGraph::getOrCreateRenderTarget(const TextureInitInfo& initInf, 
 	{
 		// Create it
 
-		tex = getManager().newTexture(initInf);
+		tex = GrManager::getSingleton().newTexture(initInf);
 
 		ANKI_ASSERT(entry->m_texturesInUse == entry->m_textures.getSize());
-		entry->m_textures.resize(getMemoryPool(), entry->m_textures.getSize() + 1);
+		entry->m_textures.resize(entry->m_textures.getSize() + 1);
 		entry->m_textures[entry->m_textures.getSize() - 1] = tex;
 		++entry->m_texturesInUse;
 	}
@@ -477,7 +459,7 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(const FramebufferDescription&
 			// Create texture view
 			TextureViewInitInfo viewInit(m_ctx->m_rts[rtHandles[i].m_idx].m_texture,
 										 TextureSubresourceInfo(inAtt.m_surface), "RenderGraph");
-			TextureViewPtr view = getManager().newTextureView(viewInit);
+			TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
 
 			outAtt.m_textureView = std::move(view);
 		}
@@ -496,7 +478,7 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(const FramebufferDescription&
 			// Create texture view
 			TextureViewInitInfo viewInit(m_ctx->m_rts[rtHandles[kMaxColorRenderTargets].m_idx].m_texture,
 										 TextureSubresourceInfo(inAtt.m_surface, inAtt.m_aspect), "RenderGraph");
-			TextureViewPtr view = getManager().newTextureView(viewInit);
+			TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
 
 			outAtt.m_textureView = std::move(view);
 		}
@@ -505,7 +487,7 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(const FramebufferDescription&
 		{
 			TextureViewInitInfo viewInit(m_ctx->m_rts[rtHandles[kMaxColorRenderTargets + 1].m_idx].m_texture,
 										 fbDescr.m_shadingRateAttachmentSurface, "RenderGraph SRI");
-			TextureViewPtr view = getManager().newTextureView(viewInit);
+			TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
 
 			fbInit.m_shadingRateImage.m_texelWidth = fbDescr.m_shadingRateAttachmentTexelWidth;
 			fbInit.m_shadingRateImage.m_texelHeight = fbDescr.m_shadingRateAttachmentTexelHeight;
@@ -516,8 +498,8 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(const FramebufferDescription&
 		fbInit.setName(name);
 
 		// Create
-		fb = getManager().newFramebuffer(fbInit);
-		m_fbCache.emplace(getMemoryPool(), hash, fb);
+		fb = GrManager::getSingleton().newFramebuffer(fbInit);
+		m_fbCache.emplace(hash, fb);
 	}
 
 	return fb;
@@ -880,7 +862,7 @@ void RenderGraph::initBatches()
 		{
 			CommandBufferInitInfo cmdbInit;
 			cmdbInit.m_flags = CommandBufferFlag::kGeneralWork;
-			CommandBufferPtr cmdb = getManager().newCommandBuffer(cmdbInit);
+			CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
 
 			m_ctx->m_graphicsCmdbs.emplaceBack(*m_ctx->m_pool, cmdb);
 
@@ -890,7 +872,7 @@ void RenderGraph::initBatches()
 			if(setTimestamp) [[unlikely]]
 			{
 				setTimestamp = false;
-				TimestampQueryPtr query = getManager().newTimestampQuery();
+				TimestampQueryPtr query = GrManager::getSingleton().newTimestampQuery();
 				TimestampQuery* pQuery = query.get();
 				cmdb->resetTimestampQueries({&pQuery, 1});
 				cmdb->writeTimestamp(query);
@@ -1267,7 +1249,7 @@ void RenderGraph::runSecondLevel(U32 threadIdx)
 		if(threadIdx < size)
 		{
 			ANKI_ASSERT(!p.m_secondLevelCmdbs[threadIdx].isCreated());
-			p.m_secondLevelCmdbs[threadIdx] = getManager().newCommandBuffer(p.m_secondLevelCmdbInitInfo);
+			p.m_secondLevelCmdbs[threadIdx] = GrManager::getSingleton().newCommandBuffer(p.m_secondLevelCmdbInitInfo);
 
 			ctx.m_commandBuffer = p.m_secondLevelCmdbs[threadIdx];
 			ctx.m_secondLevelCommandBufferCount = size;
@@ -1383,7 +1365,7 @@ void RenderGraph::flush()
 		{
 			// Write a timestamp before the last flush
 
-			TimestampQueryPtr query = getManager().newTimestampQuery();
+			TimestampQueryPtr query = GrManager::getSingleton().newTimestampQuery();
 			TimestampQuery* pQuery = query.get();
 			m_ctx->m_graphicsCmdbs[i]->resetTimestampQueries({&pQuery, 1});
 			m_ctx->m_graphicsCmdbs[i]->writeTimestamp(query);
@@ -1428,10 +1410,10 @@ void RenderGraph::periodicCleanup()
 			rtsCleanedCount += entry.m_textures.getSize() - entry.m_texturesInUse;
 
 			// New array
-			DynamicArray<TexturePtr> newArray;
+			GrDynamicArray<TexturePtr> newArray;
 			if(entry.m_texturesInUse > 0)
 			{
-				newArray.create(getMemoryPool(), entry.m_texturesInUse);
+				newArray.create(entry.m_texturesInUse);
 			}
 
 			// Populate the new array
@@ -1441,7 +1423,7 @@ void RenderGraph::periodicCleanup()
 			}
 
 			// Destroy the old array and the rest of the textures
-			entry.m_textures.destroy(getMemoryPool());
+			entry.m_textures.destroy();
 
 			// Move new array
 			entry.m_textures = std::move(newArray);

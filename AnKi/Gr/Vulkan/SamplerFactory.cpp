@@ -12,7 +12,7 @@ MicroSampler::~MicroSampler()
 {
 	if(m_handle)
 	{
-		vkDestroySampler(m_factory->m_gr->getDevice(), m_handle, nullptr);
+		vkDestroySampler(getVkDevice(), m_handle, nullptr);
 	}
 }
 
@@ -33,7 +33,7 @@ Error MicroSampler::init(const SamplerInitInfo& inf)
 	else
 	{
 		ANKI_ASSERT(inf.m_minMagFilter == SamplingFilter::kMax || inf.m_minMagFilter == SamplingFilter::kMin);
-		ANKI_ASSERT(m_factory->m_gr->getDeviceCapabilities().m_samplingFilterMinMax);
+		ANKI_ASSERT(getGrManagerImpl().getDeviceCapabilities().m_samplingFilterMinMax);
 		ci.minFilter = VK_FILTER_LINEAR;
 	}
 
@@ -106,43 +106,26 @@ Error MicroSampler::init(const SamplerInitInfo& inf)
 	}
 
 	// Create
-	ANKI_VK_CHECK(vkCreateSampler(m_factory->m_gr->getDevice(), &ci, nullptr, &m_handle));
-	m_factory->m_gr->trySetVulkanHandleName(inf.getName(), VK_OBJECT_TYPE_SAMPLER, m_handle);
+	ANKI_VK_CHECK(vkCreateSampler(getVkDevice(), &ci, nullptr, &m_handle));
+	getGrManagerImpl().trySetVulkanHandleName(inf.getName(), VK_OBJECT_TYPE_SAMPLER, m_handle);
 
 	return Error::kNone;
 }
 
-void SamplerFactory::init(GrManagerImpl* gr)
-{
-	ANKI_ASSERT(gr);
-	ANKI_ASSERT(!m_gr);
-	m_gr = gr;
-}
-
 void SamplerFactory::destroy()
 {
-	if(!m_gr)
-	{
-		return;
-	}
-
-	HeapMemoryPool& pool = m_gr->getMemoryPool();
 	for(auto it : m_map)
 	{
 		MicroSampler* const sampler = it;
 		ANKI_ASSERT(sampler->getRefcount() == 0 && "Someone still holds a reference to a sampler");
-		deleteInstance(pool, sampler);
+		deleteInstance(GrMemoryPool::getSingleton(), sampler);
 	}
 
-	m_map.destroy(pool);
-
-	m_gr = nullptr;
+	m_map.destroy();
 }
 
 Error SamplerFactory::newInstance(const SamplerInitInfo& inf, MicroSamplerPtr& psampler)
 {
-	ANKI_ASSERT(m_gr);
-
 	Error err = Error::kNone;
 	MicroSampler* out = nullptr;
 	const U64 hash = inf.computeHash();
@@ -159,19 +142,17 @@ Error SamplerFactory::newInstance(const SamplerInitInfo& inf, MicroSamplerPtr& p
 	{
 		// Create a new one
 
-		HeapMemoryPool& pool = m_gr->getMemoryPool();
-
-		out = anki::newInstance<MicroSampler>(pool, this);
+		out = anki::newInstance<MicroSampler>(GrMemoryPool::getSingleton(), this);
 		err = out->init(inf);
 
 		if(err)
 		{
-			deleteInstance(pool, out);
+			deleteInstance(GrMemoryPool::getSingleton(), out);
 			out = nullptr;
 		}
 		else
 		{
-			m_map.emplace(pool, hash, out);
+			m_map.emplace(hash, out);
 		}
 	}
 

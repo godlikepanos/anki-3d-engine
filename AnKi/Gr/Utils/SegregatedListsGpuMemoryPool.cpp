@@ -42,32 +42,28 @@ public:
 		m_parent->deleteChunk(chunk);
 	}
 
-	BaseMemoryPool& getMemoryPool() const
-	{
-		return *m_parent->m_pool;
-	}
-
 	static constexpr PtrSize getMinSizeAlignment()
 	{
 		return 4;
 	}
+
+	BaseMemoryPool& getMemoryPool() const
+	{
+		return GrMemoryPool::getSingleton();
+	}
 	/// @}
 };
 
-void SegregatedListsGpuMemoryPool::init(GrManager* gr, BaseMemoryPool* pool, BufferUsageBit gpuBufferUsage,
-										ConstWeakArray<PtrSize> classUpperSizes, PtrSize initialGpuBufferSize,
-										CString bufferName, Bool allowCoWs)
+void SegregatedListsGpuMemoryPool::init(BufferUsageBit gpuBufferUsage, ConstWeakArray<PtrSize> classUpperSizes,
+										PtrSize initialGpuBufferSize, CString bufferName, Bool allowCoWs)
 {
 	ANKI_ASSERT(!isInitialized());
-	ANKI_ASSERT(gr && pool);
-	m_gr = gr;
-	m_pool = pool;
 
 	ANKI_ASSERT(gpuBufferUsage != BufferUsageBit::kNone);
 	m_bufferUsage = gpuBufferUsage;
 
 	ANKI_ASSERT(classUpperSizes.getSize() > 0);
-	m_classes.create(*m_pool, classUpperSizes.getSize());
+	m_classes.create(classUpperSizes.getSize());
 	for(U32 i = 0; i < m_classes.getSize(); ++i)
 	{
 		m_classes[i] = classUpperSizes[i];
@@ -76,9 +72,9 @@ void SegregatedListsGpuMemoryPool::init(GrManager* gr, BaseMemoryPool* pool, Buf
 	ANKI_ASSERT(initialGpuBufferSize > 0);
 	m_initialBufferSize = initialGpuBufferSize;
 
-	m_bufferName.create(*m_pool, bufferName);
+	m_bufferName.create(bufferName);
 
-	m_builder = newInstance<Builder>(*m_pool);
+	m_builder = newInstance<Builder>(GrMemoryPool::getSingleton());
 	m_builder->getInterface().m_parent = this;
 
 	m_frame = 0;
@@ -93,29 +89,23 @@ void SegregatedListsGpuMemoryPool::destroy()
 		return;
 	}
 
-	m_gr->finish();
-	m_gr = nullptr;
+	GrManager::getSingleton().finish();
 
-	for(DynamicArray<SegregatedListsGpuMemoryPoolToken>& arr : m_garbage)
+	for(GrDynamicArray<SegregatedListsGpuMemoryPoolToken>& arr : m_garbage)
 	{
 		for(const SegregatedListsGpuMemoryPoolToken& token : arr)
 		{
 			m_builder->free(static_cast<Chunk*>(token.m_chunk), token.m_chunkOffset, token.m_size);
 		}
-
-		arr.destroy(*m_pool);
 	}
 
-	m_classes.destroy(*m_pool);
-	deleteInstance(*m_pool, m_builder);
+	deleteInstance(GrMemoryPool::getSingleton(), m_builder);
 	m_gpuBuffer.reset(nullptr);
-	m_bufferName.destroy(*m_pool);
 
 	for(Chunk* chunk : m_deletedChunks)
 	{
-		deleteInstance(*m_pool, chunk);
+		deleteInstance(GrMemoryPool::getSingleton(), chunk);
 	}
-	m_deletedChunks.destroy(*m_pool);
 }
 
 Error SegregatedListsGpuMemoryPool::allocateChunk(Chunk*& newChunk, PtrSize& chunkSize)
@@ -129,9 +119,9 @@ Error SegregatedListsGpuMemoryPool::allocateChunk(Chunk*& newChunk, PtrSize& chu
 		BufferInitInfo buffInit(m_bufferName);
 		buffInit.m_size = m_initialBufferSize;
 		buffInit.m_usage = m_bufferUsage | BufferUsageBit::kAllTransfer;
-		m_gpuBuffer = m_gr->newBuffer(buffInit);
+		m_gpuBuffer = GrManager::getSingleton().newBuffer(buffInit);
 
-		newChunk = newInstance<Chunk>(*m_pool);
+		newChunk = newInstance<Chunk>(GrMemoryPool::getSingleton());
 		newChunk->m_offsetInGpuBuffer = 0;
 	}
 	else if(m_deletedChunks.getSize() > 0)
@@ -139,7 +129,7 @@ Error SegregatedListsGpuMemoryPool::allocateChunk(Chunk*& newChunk, PtrSize& chu
 		// We already have a deleted chunk, use that
 
 		newChunk = m_deletedChunks.getBack();
-		m_deletedChunks.popBack(*m_pool);
+		m_deletedChunks.popBack();
 	}
 	else if(m_allowCoWs)
 	{
@@ -151,12 +141,12 @@ Error SegregatedListsGpuMemoryPool::allocateChunk(Chunk*& newChunk, PtrSize& chu
 		BufferInitInfo buffInit(m_bufferName);
 		buffInit.m_size = m_gpuBuffer->getSize() * 2;
 		buffInit.m_usage = m_bufferUsage | BufferUsageBit::kAllTransfer;
-		BufferPtr newBuffer = m_gr->newBuffer(buffInit);
+		BufferPtr newBuffer = GrManager::getSingleton().newBuffer(buffInit);
 
 		// Do the copy
 		CommandBufferInitInfo cmdbInit("SegregatedListsGpuMemoryPool CoW");
 		cmdbInit.m_flags = CommandBufferFlag::kSmallBatch;
-		CommandBufferPtr cmdb = m_gr->newCommandBuffer(cmdbInit);
+		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
 
 		Array<BufferBarrierInfo, 2> barriers;
 		barriers[0].m_buffer = m_gpuBuffer.get();
@@ -176,7 +166,7 @@ Error SegregatedListsGpuMemoryPool::allocateChunk(Chunk*& newChunk, PtrSize& chu
 		cmdb->flush();
 
 		// Create the new chunk
-		newChunk = newInstance<Chunk>(*m_pool);
+		newChunk = newInstance<Chunk>(GrMemoryPool::getSingleton());
 		newChunk->m_offsetInGpuBuffer = m_gpuBuffer->getSize();
 
 		// Switch the buffers
@@ -195,7 +185,7 @@ Error SegregatedListsGpuMemoryPool::allocateChunk(Chunk*& newChunk, PtrSize& chu
 
 void SegregatedListsGpuMemoryPool::deleteChunk(Chunk* chunk)
 {
-	m_deletedChunks.emplaceBack(*m_pool, chunk);
+	m_deletedChunks.emplaceBack(chunk);
 }
 
 void SegregatedListsGpuMemoryPool::allocate(PtrSize size, U32 alignment, SegregatedListsGpuMemoryPoolToken& token)
@@ -233,7 +223,7 @@ void SegregatedListsGpuMemoryPool::deferredFree(SegregatedListsGpuMemoryPoolToke
 
 	{
 		LockGuard lock(m_lock);
-		m_garbage[m_frame].emplaceBack(*m_pool, token);
+		m_garbage[m_frame].emplaceBack(token);
 	}
 
 	token = {};
@@ -256,7 +246,7 @@ void SegregatedListsGpuMemoryPool::endFrame()
 		m_allocatedSize -= token.m_size;
 	}
 
-	m_garbage[m_frame].destroy(*m_pool);
+	m_garbage[m_frame].destroy();
 }
 
 void SegregatedListsGpuMemoryPool::getStats(F32& externalFragmentation, PtrSize& userAllocatedSize,

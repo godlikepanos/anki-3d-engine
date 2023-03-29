@@ -31,8 +31,6 @@ public:
 protected:
 	UiObject() = default;
 
-	UiExternalSubsystems& getExternalSubsystems() const;
-
 private:
 	mutable Atomic<I32> m_refcount = {0};
 };

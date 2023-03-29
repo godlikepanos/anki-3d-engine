@@ -271,21 +271,15 @@ GrManager* createGrManager(NativeWindow* win)
 		return nullptr;
 	}
 	inf.m_cacheDirectory = home;
-	GrManager* gr;
-	ANKI_TEST_EXPECT_NO_ERR(GrManager::newInstance(inf, gr));
+	GrManager* gr = &GrManager::allocateSingleton();
+	ANKI_TEST_EXPECT_NO_ERR(gr->init(inf));
 
 	return gr;
 }
 
 ResourceManager* createResourceManager(GrManager* gr)
 {
-	ResourceManagerInitInfo rinit;
-	rinit.m_grManager = gr;
-	rinit.m_allocCallback = allocAligned;
-	rinit.m_allocCallbackData = nullptr;
-
-	ANKI_TEST_EXPECT_NO_ERR(ResourceManager::allocateSingleton().init(rinit));
-
+	ANKI_TEST_EXPECT_NO_ERR(ResourceManager::allocateSingleton().init(allocAligned, nullptr));
 	return &ResourceManager::getSingleton();
 }
 

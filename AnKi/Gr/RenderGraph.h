@@ -132,7 +132,7 @@ public:
 		TexturePtr tex = getTexture(handle);
 		TextureViewInitInfo viewInit(tex, "TmpRenderGraph"); // Use the whole texture
 		getRenderTargetState(handle, viewInit, tex);
-		return m_commandBuffer->getManager().newTextureView(viewInit);
+		return GrManager::getSingleton().newTextureView(viewInit);
 	}
 
 	/// Convenience method.
@@ -142,7 +142,7 @@ public:
 		TexturePtr tex;
 		getRenderTargetState(handle, subresource, tex);
 		TextureViewInitInfo viewInit(tex, subresource, "TmpRenderGraph");
-		TextureViewPtr view = m_commandBuffer->getManager().newTextureView(viewInit);
+		TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
 		m_commandBuffer->bindTextureAndSampler(set, binding, view, sampler);
 	}
 
@@ -152,7 +152,7 @@ public:
 		TexturePtr tex;
 		getRenderTargetState(handle, subresource, tex);
 		TextureViewInitInfo viewInit(tex, subresource, "TmpRenderGraph");
-		TextureViewPtr view = m_commandBuffer->getManager().newTextureView(viewInit);
+		TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
 		m_commandBuffer->bindTexture(set, binding, view);
 	}
 
@@ -162,7 +162,7 @@ public:
 		TexturePtr tex = getTexture(handle);
 		TextureViewInitInfo viewInit(tex); // Use the whole texture
 		getRenderTargetState(handle, viewInit, tex);
-		TextureViewPtr view = m_commandBuffer->getManager().newTextureView(viewInit);
+		TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
 		m_commandBuffer->bindTextureAndSampler(set, binding, view, sampler);
 	}
 
@@ -172,7 +172,7 @@ public:
 		TexturePtr tex = getTexture(handle);
 		TextureViewInitInfo viewInit(tex); // Use the whole texture
 		getRenderTargetState(handle, viewInit, tex);
-		TextureViewPtr view = m_commandBuffer->getManager().newTextureView(viewInit);
+		TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
 		m_commandBuffer->bindTexture(set, binding, view, arrayIdx);
 	}
 
@@ -183,7 +183,7 @@ public:
 		TexturePtr tex;
 		getRenderTargetState(handle, subresource, tex);
 		TextureViewInitInfo viewInit(tex, subresource, "TmpRenderGraph");
-		TextureViewPtr view = m_commandBuffer->getManager().newTextureView(viewInit);
+		TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
 		m_commandBuffer->bindImage(set, binding, view, arrayIdx);
 	}
 
@@ -199,7 +199,7 @@ public:
 		const TextureSubresourceInfo subresource;
 		getRenderTargetState(handle, subresource, tex);
 		TextureViewInitInfo viewInit(tex, subresource, "TmpRenderGraph");
-		TextureViewPtr view = m_commandBuffer->getManager().newTextureView(viewInit);
+		TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
 		m_commandBuffer->bindImage(set, binding, view, arrayIdx);
 	}
 
@@ -701,7 +701,7 @@ private:
 	class RenderTargetCacheEntry
 	{
 	public:
-		DynamicArray<TexturePtr> m_textures;
+		GrDynamicArray<TexturePtr> m_textures;
 		U32 m_texturesInUse = 0;
 	};
 
@@ -709,12 +709,12 @@ private:
 	class ImportedRenderTargetInfo
 	{
 	public:
-		DynamicArray<TextureUsageBit> m_surfOrVolLastUsages; ///< Last TextureUsageBit of the imported RT.
+		GrDynamicArray<TextureUsageBit> m_surfOrVolLastUsages; ///< Last TextureUsageBit of the imported RT.
 	};
 
-	HashMap<U64, RenderTargetCacheEntry> m_renderTargetCache; ///< Non-imported render targets.
-	HashMap<U64, FramebufferPtr> m_fbCache; ///< Framebuffer cache.
-	HashMap<U64, ImportedRenderTargetInfo> m_importedRenderTargets;
+	GrHashMap<U64, RenderTargetCacheEntry> m_renderTargetCache; ///< Non-imported render targets.
+	GrHashMap<U64, FramebufferPtr> m_fbCache; ///< Framebuffer cache.
+	GrHashMap<U64, ImportedRenderTargetInfo> m_importedRenderTargets;
 
 	BakeContext* m_ctx = nullptr;
 	U64 m_version = 0;
@@ -728,11 +728,11 @@ private:
 		U8 m_nextTimestamp = 0;
 	} m_statistics;
 
-	RenderGraph(GrManager* manager, CString name);
+	RenderGraph(CString name);
 
 	~RenderGraph();
 
-	[[nodiscard]] static RenderGraph* newInstance(GrManager* manager);
+	[[nodiscard]] static RenderGraph* newInstance();
 
 	BakeContext* newContext(const RenderGraphDescription& descr, StackMemoryPool& pool);
 	void initRenderPassesAndSetDeps(const RenderGraphDescription& descr, StackMemoryPool& pool);

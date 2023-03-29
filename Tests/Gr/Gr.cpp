@@ -245,10 +245,10 @@ static Input* input = nullptr;
 	g_win = createWindow(cfg); \
 	ANKI_TEST_EXPECT_NO_ERR(Input::allocateSingleton().init()); \
 	g_gr = createGrManager(g_win); \
-	RebarStagingGpuMemoryPool::allocateSingleton().init(g_gr); \
+	RebarStagingGpuMemoryPool::allocateSingleton().init(); \
 	stagingMem = &RebarStagingGpuMemoryPool::getSingleton(); \
 	TransferGpuAllocator* transfAlloc = new TransferGpuAllocator(); \
-	ANKI_TEST_EXPECT_NO_ERR(transfAlloc->init(128_MB, g_gr)); \
+	ANKI_TEST_EXPECT_NO_ERR(transfAlloc->init(128_MB)); \
 	while(true) \
 	{
 
@@ -258,7 +258,7 @@ static Input* input = nullptr;
 	g_gr->finish(); \
 	delete transfAlloc; \
 	RebarStagingGpuMemoryPool::freeSingleton(); \
-	GrManager::deleteInstance(g_gr); \
+	GrManager::freeSingleton(); \
 	Input::freeSingleton(); \
 	NativeWindow::freeSingleton(); \
 	ConfigSet::freeSingleton(); \

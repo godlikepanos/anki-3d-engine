@@ -26,7 +26,7 @@ Error PackVisibleClusteredObjects::init()
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/PackVisibleClusteredObjects.ankiprogbin",
 															m_packProg));
 
-	U32 maxWaveSize = m_r->getExternalSubsystems().m_grManager->getDeviceCapabilities().m_maxSubgroupSize;
+	U32 maxWaveSize = GrManager::getSingleton().getDeviceCapabilities().m_maxSubgroupSize;
 	if(maxWaveSize == 16 || maxWaveSize == 32)
 	{
 		m_threadGroupSize = maxWaveSize;
@@ -49,8 +49,7 @@ Error PackVisibleClusteredObjects::init()
 	U32 offset = 0;
 	for(ClusteredObjectType type = ClusteredObjectType::kFirst; type < ClusteredObjectType::kCount; ++type)
 	{
-		alignRoundUp(getExternalSubsystems().m_grManager->getDeviceCapabilities().m_storageBufferBindOffsetAlignment,
-					 offset);
+		alignRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_storageBufferBindOffsetAlignment, offset);
 		m_structureBufferOffsets[type] = offset;
 		offset += kMaxVisibleClusteredObjects[type] * kClusteredObjectSizes[type];
 	}
@@ -58,7 +57,7 @@ Error PackVisibleClusteredObjects::init()
 	BufferInitInfo buffInit("ClusterObjects");
 	buffInit.m_size = offset;
 	buffInit.m_usage = BufferUsageBit::kAllCompute | BufferUsageBit::kAllGraphics;
-	m_allClustererObjects = m_r->getExternalSubsystems().m_grManager->newBuffer(buffInit);
+	m_allClustererObjects = GrManager::getSingleton().newBuffer(buffInit);
 
 	return Error::kNone;
 }

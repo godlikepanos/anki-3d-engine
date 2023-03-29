@@ -28,7 +28,7 @@ void allocateAndPopulateDebugBox(RebarGpuMemoryToken& vertsToken, RebarGpuMemory
 class DebugDrawer2
 {
 public:
-	Error init(ResourceManager* rsrcManager, GrManager* gr);
+	Error init();
 
 	Bool isInitialized() const
 	{

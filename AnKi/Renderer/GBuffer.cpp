@@ -76,7 +76,7 @@ Error GBuffer::initInternal()
 	m_fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0f;
 	m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
 
-	if(getExternalSubsystems().m_grManager->getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs())
+	if(GrManager::getSingleton().getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs())
 	{
 		m_fbDescr.m_shadingRateAttachmentTexelWidth = m_r->getVrsSriGeneration().getSriTexelDimension();
 		m_fbDescr.m_shadingRateAttachmentTexelHeight = m_r->getVrsSriGeneration().getSriTexelDimension();
@@ -112,7 +112,7 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 
 	cmdb->setRasterizationOrder(RasterizationOrder::kRelaxed);
 
-	const Bool enableVrs = getExternalSubsystems().m_grManager->getDeviceCapabilities().m_vrs
+	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs
 						   && ConfigSet::getSingleton().getRVrs() && ConfigSet::getSingleton().getRGBufferVrs();
 	if(enableVrs)
 	{
@@ -166,7 +166,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
-	const Bool enableVrs = getExternalSubsystems().m_grManager->getDeviceCapabilities().m_vrs
+	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs
 						   && ConfigSet::getSingleton().getRVrs() && ConfigSet::getSingleton().getRGBufferVrs();
 	const Bool fbDescrHasVrs = m_fbDescr.m_shadingRateAttachmentTexelWidth > 0;
 

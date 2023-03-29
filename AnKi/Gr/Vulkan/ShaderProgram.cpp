@@ -10,13 +10,13 @@
 
 namespace anki {
 
-ShaderProgram* ShaderProgram::newInstance(GrManager* manager, const ShaderProgramInitInfo& init)
+ShaderProgram* ShaderProgram::newInstance(const ShaderProgramInitInfo& init)
 {
-	ShaderProgramImpl* impl = anki::newInstance<ShaderProgramImpl>(manager->getMemoryPool(), manager, init.getName());
+	ShaderProgramImpl* impl = anki::newInstance<ShaderProgramImpl>(GrMemoryPool::getSingleton(), init.getName());
 	const Error err = impl->init(init);
 	if(err)
 	{
-		deleteInstance(manager->getMemoryPool(), impl);
+		deleteInstance(GrMemoryPool::getSingleton(), impl);
 		impl = nullptr;
 	}
 	return impl;

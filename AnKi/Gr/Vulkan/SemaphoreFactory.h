@@ -34,8 +34,6 @@ public:
 		return m_handle;
 	}
 
-	HeapMemoryPool& getMemoryPool();
-
 	void retain() const
 	{
 		m_refcount.fetchAdd(1);
@@ -123,15 +121,6 @@ class SemaphoreFactory
 	friend class MicroSemaphorePtrDeleter;
 
 public:
-	void init(HeapMemoryPool* pool, VkDevice dev)
-	{
-		ANKI_ASSERT(dev);
-		m_pool = pool;
-		m_dev = dev;
-		m_binaryRecycler.init(m_pool);
-		m_timelineRecycler.init(m_pool);
-	}
-
 	void destroy()
 	{
 		m_binaryRecycler.destroy();
@@ -141,8 +130,6 @@ public:
 	MicroSemaphorePtr newInstance(MicroFencePtr fence, Bool isTimeline);
 
 private:
-	HeapMemoryPool* m_pool = nullptr;
-	VkDevice m_dev = VK_NULL_HANDLE;
 	MicroObjectRecycler<MicroSemaphore> m_binaryRecycler;
 	MicroObjectRecycler<MicroSemaphore> m_timelineRecycler;
 };

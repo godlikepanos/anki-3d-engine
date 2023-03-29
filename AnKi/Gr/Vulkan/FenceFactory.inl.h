@@ -16,7 +16,7 @@ inline MicroFence::MicroFence(FenceFactory* f)
 	ci.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 
 	ANKI_TRACE_INC_COUNTER(VkFenceCreate, 1);
-	ANKI_VK_CHECKF(vkCreateFence(m_factory->m_dev, &ci, nullptr, &m_handle));
+	ANKI_VK_CHECKF(vkCreateFence(getVkDevice(), &ci, nullptr, &m_handle));
 }
 
 inline MicroFence::~MicroFence()
@@ -24,20 +24,15 @@ inline MicroFence::~MicroFence()
 	if(m_handle)
 	{
 		ANKI_ASSERT(done());
-		vkDestroyFence(m_factory->m_dev, m_handle, nullptr);
+		vkDestroyFence(getVkDevice(), m_handle, nullptr);
 	}
-}
-
-inline HeapMemoryPool& MicroFence::getMemoryPool()
-{
-	return *m_factory->m_pool;
 }
 
 inline Bool MicroFence::done() const
 {
 	ANKI_ASSERT(m_handle);
 	VkResult status;
-	ANKI_VK_CHECKF(status = vkGetFenceStatus(m_factory->m_dev, m_handle));
+	ANKI_VK_CHECKF(status = vkGetFenceStatus(getVkDevice(), m_handle));
 	return status == VK_SUCCESS;
 }
 
@@ -56,7 +51,7 @@ inline Bool MicroFence::clientWait(Second seconds)
 		const F64 nsf = 1e+9 * seconds;
 		const U64 ns = U64(nsf);
 		VkResult res;
-		ANKI_VK_CHECKF(res = vkWaitForFences(m_factory->m_dev, 1, &m_handle, true, ns));
+		ANKI_VK_CHECKF(res = vkWaitForFences(getVkDevice(), 1, &m_handle, true, ns));
 
 		return res != VK_TIMEOUT;
 	}

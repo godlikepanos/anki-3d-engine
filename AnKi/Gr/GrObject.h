@@ -39,7 +39,7 @@ enum class GrObjectType : U8
 class GrObject
 {
 public:
-	GrObject(GrManager* manager, GrObjectType type, CString name);
+	GrObject(GrObjectType type, CString name);
 
 	GrObject(const GrObject&) = delete; // Non-copyable
 
@@ -51,18 +51,6 @@ public:
 	{
 		return m_type;
 	}
-
-	GrManager& getManager()
-	{
-		return *m_manager;
-	}
-
-	const GrManager& getManager() const
-	{
-		return *m_manager;
-	}
-
-	HeapMemoryPool& getMemoryPool() const;
 
 	void retain() const
 	{
@@ -87,7 +75,6 @@ public:
 	}
 
 private:
-	GrManager* m_manager;
 	Char* m_name = nullptr;
 	U64 m_uuid;
 	mutable Atomic<I32> m_refcount;

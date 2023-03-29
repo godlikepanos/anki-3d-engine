@@ -119,8 +119,8 @@ public:
 
 protected:
 	/// Construct.
-	Framebuffer(GrManager* manager, CString name)
-		: GrObject(manager, kClassType, name)
+	Framebuffer(CString name)
+		: GrObject(kClassType, name)
 	{
 	}
 
@@ -130,7 +130,7 @@ protected:
 	}
 
 private:
-	[[nodiscard]] static Framebuffer* newInstance(GrManager* manager, const FramebufferInitInfo& init);
+	[[nodiscard]] static Framebuffer* newInstance(const FramebufferInitInfo& init);
 };
 /// @}
 

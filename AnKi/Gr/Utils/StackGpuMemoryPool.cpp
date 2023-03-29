@@ -25,22 +25,15 @@ public:
 class StackGpuMemoryPool::BuilderInterface
 {
 public:
-	GrManager* m_gr = nullptr;
-	BaseMemoryPool* m_cpuPool = nullptr;
 	PtrSize m_initialSize = 0;
 	F64 m_scale = 0.0;
 	PtrSize m_bias = 0;
-	String m_bufferName;
+	GrString m_bufferName;
 	U32 m_alignment = 0;
 	BufferUsageBit m_bufferUsage = BufferUsageBit::kNone;
 	BufferMapAccessBit m_bufferMap = BufferMapAccessBit::kNone;
 	U8 m_chunkCount = 0;
 	Bool m_allowToGrow = false;
-
-	~BuilderInterface()
-	{
-		m_bufferName.destroy(*m_cpuPool);
-	}
 
 	// Builder interface stuff:
 	U32 getMaxAlignment() const
@@ -76,13 +69,13 @@ public:
 			return Error::kOutOfMemory;
 		}
 
-		Chunk* chunk = newInstance<Chunk>(*m_cpuPool);
+		Chunk* chunk = newInstance<Chunk>(GrMemoryPool::getSingleton());
 
 		BufferInitInfo buffInit(m_bufferName);
 		buffInit.m_size = size;
 		buffInit.m_usage = m_bufferUsage;
 		buffInit.m_mapAccess = m_bufferMap;
-		chunk->m_buffer = m_gr->newBuffer(buffInit);
+		chunk->m_buffer = GrManager::getSingleton().newBuffer(buffInit);
 
 		if(!!m_bufferMap)
 		{
@@ -102,7 +95,7 @@ public:
 			chunk->m_buffer->unmap();
 		}
 
-		deleteInstance(*m_cpuPool, chunk);
+		deleteInstance(GrMemoryPool::getSingleton(), chunk);
 	}
 
 	void recycleChunk([[maybe_unused]] Chunk& out)
@@ -120,27 +113,24 @@ StackGpuMemoryPool::~StackGpuMemoryPool()
 {
 	if(m_builder)
 	{
-		BaseMemoryPool* cpuPool = m_builder->getInterface().m_cpuPool;
-		deleteInstance(*cpuPool, m_builder);
+		deleteInstance(GrMemoryPool::getSingleton(), m_builder);
 	}
 }
 
-void StackGpuMemoryPool::init(GrManager* gr, BaseMemoryPool* cpuPool, PtrSize initialSize, F64 nextChunkGrowScale,
-							  PtrSize nextChunkGrowBias, U32 alignment, BufferUsageBit bufferUsage,
-							  BufferMapAccessBit bufferMapping, Bool allowToGrow, CString bufferName)
+void StackGpuMemoryPool::init(PtrSize initialSize, F64 nextChunkGrowScale, PtrSize nextChunkGrowBias, U32 alignment,
+							  BufferUsageBit bufferUsage, BufferMapAccessBit bufferMapping, Bool allowToGrow,
+							  CString bufferName)
 {
 	ANKI_ASSERT(m_builder == nullptr);
 	ANKI_ASSERT(initialSize > 0 && alignment > 0);
 	ANKI_ASSERT(nextChunkGrowScale >= 1.0 && nextChunkGrowBias > 0);
 
-	m_builder = newInstance<Builder>(*cpuPool);
+	m_builder = newInstance<Builder>(GrMemoryPool::getSingleton());
 	BuilderInterface& inter = m_builder->getInterface();
-	inter.m_gr = gr;
-	inter.m_cpuPool = cpuPool;
 	inter.m_initialSize = initialSize;
 	inter.m_scale = nextChunkGrowScale;
 	inter.m_bias = nextChunkGrowBias;
-	inter.m_bufferName.create(*cpuPool, bufferName);
+	inter.m_bufferName.create(bufferName);
 	inter.m_alignment = alignment;
 	inter.m_bufferUsage = bufferUsage;
 	inter.m_bufferMap = bufferMapping;

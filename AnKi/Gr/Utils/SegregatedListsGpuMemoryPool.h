@@ -54,9 +54,8 @@ public:
 
 	SegregatedListsGpuMemoryPool& operator=(const SegregatedListsGpuMemoryPool&) = delete;
 
-	void init(GrManager* gr, BaseMemoryPool* pool, BufferUsageBit gpuBufferUsage,
-			  ConstWeakArray<PtrSize> classUpperSizes, PtrSize initialGpuBufferSize, CString bufferName,
-			  Bool allowCoWs);
+	void init(BufferUsageBit gpuBufferUsage, ConstWeakArray<PtrSize> classUpperSizes, PtrSize initialGpuBufferSize,
+			  CString bufferName, Bool allowCoWs);
 
 	void destroy();
 
@@ -82,23 +81,15 @@ public:
 	/// @note It's thread-safe.
 	void getStats(F32& externalFragmentation, PtrSize& userAllocatedSize, PtrSize& totalSize) const;
 
-	GrManager& getGrManager()
-	{
-		ANKI_ASSERT(m_gr);
-		return *m_gr;
-	}
-
 private:
 	class BuilderInterface;
 	class Chunk;
 	using Builder = SegregatedListsAllocatorBuilder<Chunk, BuilderInterface, DummyMutex>;
 
-	GrManager* m_gr = nullptr;
-	mutable BaseMemoryPool* m_pool = nullptr;
 	BufferUsageBit m_bufferUsage = BufferUsageBit::kNone;
-	DynamicArray<PtrSize> m_classes;
+	GrDynamicArray<PtrSize> m_classes;
 	PtrSize m_initialBufferSize = 0;
-	String m_bufferName;
+	GrString m_bufferName;
 
 	mutable Mutex m_lock;
 
@@ -106,9 +97,9 @@ private:
 	BufferPtr m_gpuBuffer;
 	PtrSize m_allocatedSize = 0;
 
-	DynamicArray<Chunk*> m_deletedChunks;
+	GrDynamicArray<Chunk*> m_deletedChunks;
 
-	Array<DynamicArray<SegregatedListsGpuMemoryPoolToken>, kMaxFramesInFlight> m_garbage;
+	Array<GrDynamicArray<SegregatedListsGpuMemoryPoolToken>, kMaxFramesInFlight> m_garbage;
 	U8 m_frame = 0;
 	Bool m_allowCoWs = true;
 
@@ -117,7 +108,7 @@ private:
 
 	Bool isInitialized() const
 	{
-		return m_gr != nullptr;
+		return m_bufferUsage != BufferUsageBit::kNone;
 	}
 };
 /// @}

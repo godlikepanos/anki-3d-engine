@@ -101,7 +101,7 @@ Error TraditionalDeferredLightShading::init()
 		inf.m_addressing = SamplingAddressing::kClamp;
 		inf.m_mipmapFilter = SamplingFilter::kBase;
 		inf.m_minMagFilter = SamplingFilter::kLinear;
-		m_shadowSampler = getExternalSubsystems().m_grManager->newSampler(inf);
+		m_shadowSampler = GrManager::getSingleton().newSampler(inf);
 	}
 
 	// Skybox
@@ -131,12 +131,12 @@ void TraditionalDeferredLightShading::createProxyMeshes()
 	buffInit.m_size = bufferSize;
 	buffInit.m_usage = BufferUsageBit::kTransferDestination | BufferUsageBit::kIndex | BufferUsageBit::kVertex;
 
-	m_proxyVolumesBuffer = getExternalSubsystems().m_grManager->newBuffer(buffInit);
+	m_proxyVolumesBuffer = GrManager::getSingleton().newBuffer(buffInit);
 
 	buffInit.setName("TempTransfer");
 	buffInit.m_usage = BufferUsageBit::kTransferSource;
 	buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
-	BufferPtr transferBuffer = getExternalSubsystems().m_grManager->newBuffer(buffInit);
+	BufferPtr transferBuffer = GrManager::getSingleton().newBuffer(buffInit);
 
 	U8* mappedMem = static_cast<U8*>(transferBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 
@@ -154,11 +154,11 @@ void TraditionalDeferredLightShading::createProxyMeshes()
 	CommandBufferInitInfo cmdbInit("Temp");
 	cmdbInit.m_flags = CommandBufferFlag::kSmallBatch | CommandBufferFlag::kGeneralWork;
 
-	CommandBufferPtr cmdb = getExternalSubsystems().m_grManager->newCommandBuffer(cmdbInit);
+	CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
 	cmdb->copyBufferToBuffer(transferBuffer, 0, m_proxyVolumesBuffer, 0, bufferSize);
 	cmdb->flush();
 
-	getExternalSubsystems().m_grManager->finish();
+	GrManager::getSingleton().finish();
 }
 
 void TraditionalDeferredLightShading::bindVertexIndexBuffers(ProxyType proxyType, CommandBufferPtr& cmdb,

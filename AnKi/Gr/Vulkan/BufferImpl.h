@@ -6,7 +6,6 @@
 #pragma once
 
 #include <AnKi/Gr/Buffer.h>
-#include <AnKi/Gr/Vulkan/VulkanObject.h>
 #include <AnKi/Gr/Vulkan/GpuMemoryManager.h>
 #include <AnKi/Util/HashMap.h>
 
@@ -16,13 +15,11 @@ namespace anki {
 /// @{
 
 /// Buffer implementation
-class BufferImpl final : public Buffer, public VulkanObject<Buffer, BufferImpl>
+class BufferImpl final : public Buffer
 {
 public:
-	BufferImpl(GrManager* manager, CString name)
-		: Buffer(manager, name)
-		, m_needsFlush(false)
-		, m_needsInvalidate(false)
+	BufferImpl(CString name)
+		: Buffer(name)
 	{
 	}
 
@@ -69,7 +66,7 @@ public:
 		if(m_needsFlush)
 		{
 			VkMappedMemoryRange vkrange = setVkMappedMemoryRange(offset, range);
-			ANKI_VK_CHECKF(vkFlushMappedMemoryRanges(getDevice(), 1, &vkrange));
+			ANKI_VK_CHECKF(vkFlushMappedMemoryRanges(getVkDevice(), 1, &vkrange));
 #if ANKI_EXTRA_CHECKS
 			m_flushCount.fetchAdd(1);
 #endif
@@ -82,7 +79,7 @@ public:
 		if(m_needsInvalidate)
 		{
 			VkMappedMemoryRange vkrange = setVkMappedMemoryRange(offset, range);
-			ANKI_VK_CHECKF(vkInvalidateMappedMemoryRanges(getDevice(), 1, &vkrange));
+			ANKI_VK_CHECKF(vkInvalidateMappedMemoryRanges(getVkDevice(), 1, &vkrange));
 #if ANKI_EXTRA_CHECKS
 			m_invalidateCount.fetchAdd(1);
 #endif
@@ -99,10 +96,10 @@ private:
 	VkMemoryPropertyFlags m_memoryFlags = 0;
 	PtrSize m_actualSize = 0;
 	PtrSize m_mappedMemoryRangeAlignment = 0; ///< Cache this value.
-	Bool m_needsFlush : 1;
-	Bool m_needsInvalidate : 1;
+	Bool m_needsFlush : 1 = false;
+	Bool m_needsInvalidate : 1 = false;
 
-	mutable HashMap<U64, VkBufferView> m_views; ///< Only for texture buffers.
+	mutable GrHashMap<U64, VkBufferView> m_views; ///< Only for texture buffers.
 	mutable RWMutex m_viewsMtx;
 
 #if ANKI_EXTRA_CHECKS
