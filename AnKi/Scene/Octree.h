@@ -91,8 +91,10 @@ public:
 	template<typename TTestAabbFunc, typename TNewPlaceableFunc>
 	void walkTree(U32 testId, TTestAabbFunc testFunc, TNewPlaceableFunc newPlaceableFunc)
 	{
-		ANKI_ASSERT(m_rootLeaf);
-		walkTreeInternal(*m_rootLeaf, testId, testFunc, newPlaceableFunc);
+		if(m_rootLeaf) [[likely]]
+		{
+			walkTreeInternal(*m_rootLeaf, testId, testFunc, newPlaceableFunc);
+		}
 	}
 
 	/// Debug draw.

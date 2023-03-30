@@ -22,9 +22,9 @@ Error Tonemapping::init()
 
 Error Tonemapping::initInternal()
 {
-	m_inputTexMip = m_r->getDownscaleBlur().getMipmapCount() - 2;
-	const U32 width = m_r->getDownscaleBlur().getPassWidth(m_inputTexMip);
-	const U32 height = m_r->getDownscaleBlur().getPassHeight(m_inputTexMip);
+	m_inputTexMip = getRenderer().getDownscaleBlur().getMipmapCount() - 2;
+	const U32 width = getRenderer().getDownscaleBlur().getPassWidth(m_inputTexMip);
+	const U32 height = getRenderer().getDownscaleBlur().getPassHeight(m_inputTexMip);
 
 	ANKI_R_LOGV("Initializing tonemapping. Resolution %ux%u", width, height);
 
@@ -44,10 +44,11 @@ Error Tonemapping::initInternal()
 	// automatic image transitions
 	const TextureUsageBit usage = TextureUsageBit::kAllImage;
 	const TextureInitInfo texinit =
-		m_r->create2DRenderTargetInitInfo(1, 1, Format::kR16G16_Sfloat, usage, "ExposureAndAvgLum1x1");
+		getRenderer().create2DRenderTargetInitInfo(1, 1, Format::kR16G16_Sfloat, usage, "ExposureAndAvgLum1x1");
 	ClearValue clearValue;
 	clearValue.m_colorf = {0.5f, 0.5f, 0.5f, 0.5f};
-	m_exposureAndAvgLuminance1x1 = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::kAllImage, clearValue);
+	m_exposureAndAvgLuminance1x1 =
+		getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kAllImage, clearValue);
 
 	return Error::kNone;
 }
@@ -74,14 +75,15 @@ void Tonemapping::populateRenderGraph(RenderingContext& ctx)
 
 		TextureSubresourceInfo inputTexSubresource;
 		inputTexSubresource.m_firstMipmap = m_inputTexMip;
-		rgraphCtx.bindTexture(0, 0, m_r->getDownscaleBlur().getRt(), inputTexSubresource);
+		rgraphCtx.bindTexture(0, 0, getRenderer().getDownscaleBlur().getRt(), inputTexSubresource);
 
 		cmdb->dispatchCompute(1, 1, 1);
 	});
 
 	TextureSubresourceInfo inputTexSubresource;
 	inputTexSubresource.m_firstMipmap = m_inputTexMip;
-	pass.newTextureDependency(m_r->getDownscaleBlur().getRt(), TextureUsageBit::kSampledCompute, inputTexSubresource);
+	pass.newTextureDependency(getRenderer().getDownscaleBlur().getRt(), TextureUsageBit::kSampledCompute,
+							  inputTexSubresource);
 }
 
 } // end namespace anki

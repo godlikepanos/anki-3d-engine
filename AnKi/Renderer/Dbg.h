@@ -20,7 +20,7 @@ namespace anki {
 class Dbg : public RendererObject
 {
 public:
-	Dbg(Renderer* r);
+	Dbg();
 
 	~Dbg();
 

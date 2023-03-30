@@ -17,14 +17,11 @@ namespace anki {
 class MotionVectors : public RendererObject
 {
 public:
-	MotionVectors(Renderer* renderer)
-		: RendererObject(renderer)
+	MotionVectors()
 	{
 		registerDebugRenderTarget("MotionVectors");
 		registerDebugRenderTarget("MotionVectorsHistoryLength");
 	}
-
-	~MotionVectors();
 
 	Error init();
 

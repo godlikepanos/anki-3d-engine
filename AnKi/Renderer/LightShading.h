@@ -17,9 +17,10 @@ namespace anki {
 class LightShading : public RendererObject
 {
 public:
-	LightShading(Renderer* r);
-
-	~LightShading();
+	LightShading()
+	{
+		registerDebugRenderTarget("LightShading");
+	}
 
 	Error init();
 

@@ -16,9 +16,7 @@ static MainRenderer* getMainRenderer(lua_State* l)
 	LuaBinder* binder = nullptr;
 	lua_getallocf(l, reinterpret_cast<void**>(&binder));
 
-	MainRenderer* r = nullptr; // TODO glob: fix it
-	ANKI_ASSERT(r);
-	return r;
+	return &MainRenderer::getSingleton();
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoMainRenderer = {-6365712250974230727, "MainRenderer",

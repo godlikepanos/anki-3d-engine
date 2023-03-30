@@ -16,12 +16,9 @@ namespace anki {
 class ForwardShading : public RendererObject
 {
 public:
-	ForwardShading(Renderer* r)
-		: RendererObject(r)
-	{
-	}
+	ForwardShading() = default;
 
-	~ForwardShading();
+	~ForwardShading() = default;
 
 	Error init()
 	{

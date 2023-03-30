@@ -18,14 +18,11 @@ namespace anki {
 class IndirectDiffuse : public RendererObject
 {
 public:
-	IndirectDiffuse(Renderer* r)
-		: RendererObject(r)
+	IndirectDiffuse()
 	{
 		registerDebugRenderTarget("IndirectDiffuse");
 		registerDebugRenderTarget("IndirectDiffuseVrsSri");
 	}
-
-	~IndirectDiffuse();
 
 	Error init();
 

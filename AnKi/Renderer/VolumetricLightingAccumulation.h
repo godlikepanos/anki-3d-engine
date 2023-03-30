@@ -16,9 +16,6 @@ namespace anki {
 class VolumetricLightingAccumulation : public RendererObject
 {
 public:
-	VolumetricLightingAccumulation(Renderer* r);
-	~VolumetricLightingAccumulation();
-
 	Error init();
 
 	/// Populate the rendergraph.

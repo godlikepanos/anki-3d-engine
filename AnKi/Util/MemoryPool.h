@@ -418,6 +418,17 @@ public:
 	}
 };
 
+template<typename TMemoryPool>
+class SingletonMemoryPoolDeleter
+{
+public:
+	template<typename T>
+	void operator()(T* x)
+	{
+		deleteInstance<T>(TMemoryPool::getSingleton(), x);
+	}
+};
+
 inline void* BaseMemoryPool::allocate(PtrSize size, PtrSize alignmentBytes)
 {
 	void* out = nullptr;

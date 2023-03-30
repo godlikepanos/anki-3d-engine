@@ -17,10 +17,6 @@ namespace anki {
 class PackVisibleClusteredObjects : public RendererObject
 {
 public:
-	PackVisibleClusteredObjects(Renderer* r);
-
-	~PackVisibleClusteredObjects();
-
 	Error init();
 
 	void populateRenderGraph(RenderingContext& ctx);

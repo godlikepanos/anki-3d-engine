@@ -215,7 +215,8 @@ static Error work(const CmdLineArgs& info)
 	return Error::kNone;
 }
 
-int main(int argc, char** argv)
+ANKI_MAIN_FUNCTION(myMain)
+int myMain(int argc, char** argv)
 {
 	CmdLineArgs info;
 	if(parseCommandLineArgs(argc, argv, info))

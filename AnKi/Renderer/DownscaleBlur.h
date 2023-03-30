@@ -16,12 +16,9 @@ namespace anki {
 class DownscaleBlur : public RendererObject
 {
 public:
-	DownscaleBlur(Renderer* r)
-		: RendererObject(r)
-	{
-	}
+	DownscaleBlur() = default;
 
-	~DownscaleBlur();
+	~DownscaleBlur() = default;
 
 	Error init();
 
@@ -56,7 +53,7 @@ private:
 
 	TexturePtr m_rtTex;
 
-	DynamicArray<FramebufferDescription> m_fbDescrs;
+	RendererDynamicArray<FramebufferDescription> m_fbDescrs;
 
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;

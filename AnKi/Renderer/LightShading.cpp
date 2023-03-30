@@ -23,16 +23,6 @@
 
 namespace anki {
 
-LightShading::LightShading(Renderer* r)
-	: RendererObject(r)
-{
-	registerDebugRenderTarget("LightShading");
-}
-
-LightShading::~LightShading()
-{
-}
-
 Error LightShading::init()
 {
 	ANKI_R_LOGV("Initializing light shading");
@@ -69,9 +59,9 @@ Error LightShading::initLightShading()
 		ResourceManager::getSingleton().loadResource("ShaderBinaries/LightShading.ankiprogbin", m_lightShading.m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_lightShading.m_prog);
-	variantInitInfo.addConstant("kTileCount", m_r->getTileCounts());
-	variantInitInfo.addConstant("kZSplitCount", m_r->getZSplitCount());
-	variantInitInfo.addConstant("kTileSize", m_r->getTileSize());
+	variantInitInfo.addConstant("kTileCount", getRenderer().getTileCounts());
+	variantInitInfo.addConstant("kZSplitCount", getRenderer().getZSplitCount());
+	variantInitInfo.addConstant("kTileSize", getRenderer().getTileSize());
 	const ShaderProgramResourceVariant* variant;
 
 	variantInitInfo.addMutation("USE_SHADOW_LAYERS", 0);
@@ -83,8 +73,9 @@ Error LightShading::initLightShading()
 	m_lightShading.m_grProg[1] = variant->getProgram();
 
 	// Create RT descr
-	m_lightShading.m_rtDescr = m_r->create2DRenderTargetDescription(
-		m_r->getInternalResolution().x(), m_r->getInternalResolution().y(), m_r->getHdrFormat(), "Light Shading");
+	m_lightShading.m_rtDescr = getRenderer().create2DRenderTargetDescription(
+		getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
+		getRenderer().getHdrFormat(), "Light Shading");
 	m_lightShading.m_rtDescr.bake();
 
 	// Create FB descr
@@ -95,8 +86,10 @@ Error LightShading::initLightShading()
 
 	if(GrManager::getSingleton().getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs())
 	{
-		m_lightShading.m_fbDescr.m_shadingRateAttachmentTexelWidth = m_r->getVrsSriGeneration().getSriTexelDimension();
-		m_lightShading.m_fbDescr.m_shadingRateAttachmentTexelHeight = m_r->getVrsSriGeneration().getSriTexelDimension();
+		m_lightShading.m_fbDescr.m_shadingRateAttachmentTexelWidth =
+			getRenderer().getVrsSriGeneration().getSriTexelDimension();
+		m_lightShading.m_fbDescr.m_shadingRateAttachmentTexelHeight =
+			getRenderer().getVrsSriGeneration().getSriTexelDimension();
 	}
 
 	m_lightShading.m_fbDescr.bake();
@@ -135,8 +128,8 @@ Error LightShading::initApplyFog()
 															m_applyFog.m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_applyFog.m_prog);
-	variantInitInfo.addConstant("kZSplitCount", m_r->getZSplitCount());
-	variantInitInfo.addConstant("kFinalZSplit", m_r->getVolumetricFog().getFinalClusterInZ());
+	variantInitInfo.addConstant("kZSplitCount", getRenderer().getZSplitCount());
+	variantInitInfo.addConstant("kFinalZSplit", getRenderer().getVolumetricFog().getFinalClusterInZ());
 
 	const ShaderProgramResourceVariant* variant;
 	m_applyFog.m_prog->getOrCreateVariant(variantInitInfo, variant);
@@ -159,7 +152,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-	cmdb->setViewport(0, 0, m_r->getInternalResolution().x(), m_r->getInternalResolution().y());
+	cmdb->setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 
 	const Bool enableVrs =
 		GrManager::getSingleton().getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs();
@@ -172,33 +165,35 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 	// Do light shading first
 	if(rgraphCtx.m_currentSecondLevelCommandBufferIndex == 0)
 	{
-		cmdb->bindShaderProgram(m_lightShading.m_grProg[m_r->getRtShadowsEnabled()]);
+		cmdb->bindShaderProgram(m_lightShading.m_grProg[getRenderer().getRtShadowsEnabled()]);
 		cmdb->setDepthWrite(false);
 
 		// Bind all
-		bindUniforms(cmdb, 0, 0, m_r->getClusterBinning().getClusteredUniformsRebarToken());
+		bindUniforms(cmdb, 0, 0, getRenderer().getClusterBinning().getClusteredUniformsRebarToken());
 
-		m_r->getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 1, ClusteredObjectType::kPointLight);
-		m_r->getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 2, ClusteredObjectType::kSpotLight);
-		rgraphCtx.bindColorTexture(0, 3, m_r->getShadowMapping().getShadowmapRt());
+		getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 1,
+																				 ClusteredObjectType::kPointLight);
+		getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 2,
+																				 ClusteredObjectType::kSpotLight);
+		rgraphCtx.bindColorTexture(0, 3, getRenderer().getShadowMapping().getShadowmapRt());
 
-		bindStorage(cmdb, 0, 4, m_r->getClusterBinning().getClustersRebarToken());
+		bindStorage(cmdb, 0, 4, getRenderer().getClusterBinning().getClustersRebarToken());
 
-		cmdb->bindSampler(0, 5, m_r->getSamplers().m_nearestNearestClamp);
-		cmdb->bindSampler(0, 6, m_r->getSamplers().m_trilinearClamp);
-		rgraphCtx.bindColorTexture(0, 7, m_r->getGBuffer().getColorRt(0));
-		rgraphCtx.bindColorTexture(0, 8, m_r->getGBuffer().getColorRt(1));
-		rgraphCtx.bindColorTexture(0, 9, m_r->getGBuffer().getColorRt(2));
-		rgraphCtx.bindTexture(0, 10, m_r->getGBuffer().getDepthRt(),
+		cmdb->bindSampler(0, 5, getRenderer().getSamplers().m_nearestNearestClamp);
+		cmdb->bindSampler(0, 6, getRenderer().getSamplers().m_trilinearClamp);
+		rgraphCtx.bindColorTexture(0, 7, getRenderer().getGBuffer().getColorRt(0));
+		rgraphCtx.bindColorTexture(0, 8, getRenderer().getGBuffer().getColorRt(1));
+		rgraphCtx.bindColorTexture(0, 9, getRenderer().getGBuffer().getColorRt(2));
+		rgraphCtx.bindTexture(0, 10, getRenderer().getGBuffer().getDepthRt(),
 							  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
-		if(m_r->getRtShadowsEnabled())
+		if(getRenderer().getRtShadowsEnabled())
 		{
-			rgraphCtx.bindColorTexture(0, 11, m_r->getRtShadows().getRt());
+			rgraphCtx.bindColorTexture(0, 11, getRenderer().getRtShadows().getRt());
 		}
 		else
 		{
-			rgraphCtx.bindColorTexture(0, 12, m_r->getShadowmapsResolve().getRt());
+			rgraphCtx.bindColorTexture(0, 12, getRenderer().getShadowmapsResolve().getRt());
 		}
 
 		// Draw
@@ -211,19 +206,19 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		cmdb->setDepthWrite(false);
 		cmdb->bindShaderProgram(m_applyIndirect.m_grProg);
 
-		cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
-		cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);
-		rgraphCtx.bindColorTexture(0, 2, m_r->getIndirectDiffuse().getRt());
-		rgraphCtx.bindColorTexture(0, 3, m_r->getIndirectSpecular().getRt());
-		rgraphCtx.bindColorTexture(0, 4, m_r->getDepthDownscale().getHiZRt());
-		rgraphCtx.bindTexture(0, 5, m_r->getGBuffer().getDepthRt(),
+		cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp);
+		cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp);
+		rgraphCtx.bindColorTexture(0, 2, getRenderer().getIndirectDiffuse().getRt());
+		rgraphCtx.bindColorTexture(0, 3, getRenderer().getIndirectSpecular().getRt());
+		rgraphCtx.bindColorTexture(0, 4, getRenderer().getDepthDownscale().getHiZRt());
+		rgraphCtx.bindTexture(0, 5, getRenderer().getGBuffer().getDepthRt(),
 							  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
-		rgraphCtx.bindColorTexture(0, 6, m_r->getGBuffer().getColorRt(0));
-		rgraphCtx.bindColorTexture(0, 7, m_r->getGBuffer().getColorRt(1));
-		rgraphCtx.bindColorTexture(0, 8, m_r->getGBuffer().getColorRt(2));
-		cmdb->bindTexture(0, 9, m_r->getProbeReflections().getIntegrationLut());
+		rgraphCtx.bindColorTexture(0, 6, getRenderer().getGBuffer().getColorRt(0));
+		rgraphCtx.bindColorTexture(0, 7, getRenderer().getGBuffer().getColorRt(1));
+		rgraphCtx.bindColorTexture(0, 8, getRenderer().getGBuffer().getColorRt(2));
+		cmdb->bindTexture(0, 9, getRenderer().getProbeReflections().getIntegrationLut());
 
-		bindUniforms(cmdb, 0, 10, m_r->getClusterBinning().getClusteredUniformsRebarToken());
+		bindUniforms(cmdb, 0, 10, getRenderer().getClusterBinning().getClusteredUniformsRebarToken());
 
 		const Vec4 pc(ctx.m_renderQueue->m_cameraNear, ctx.m_renderQueue->m_cameraFar, 0.0f, 0.0f);
 		cmdb->setPushConstants(&pc, sizeof(pc));
@@ -267,7 +262,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 			cmdb->setPushConstants(&pc, sizeof(pc));
 
-			cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearRepeatAnisoResolutionScalingBias);
+			cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeatAnisoResolutionScalingBias);
 			cmdb->bindTexture(0, 1,
 							  TextureViewPtr(const_cast<TextureView*>(ctx.m_renderQueue->m_skybox.m_skyboxTexture)));
 		}
@@ -284,12 +279,12 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		cmdb->bindShaderProgram(m_applyFog.m_grProg);
 
 		// Bind all
-		cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
-		cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);
+		cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp);
+		cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp);
 
-		rgraphCtx.bindTexture(0, 2, m_r->getGBuffer().getDepthRt(),
+		rgraphCtx.bindTexture(0, 2, getRenderer().getGBuffer().getDepthRt(),
 							  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
-		rgraphCtx.bindColorTexture(0, 3, m_r->getVolumetricFog().getRt());
+		rgraphCtx.bindColorTexture(0, 3, getRenderer().getVolumetricFog().getRt());
 
 		class PushConsts
 		{
@@ -318,7 +313,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		cmdb->setVrsRate(VrsRate::k2x2);
 	}
 
-	m_r->getForwardShading().run(ctx, rgraphCtx);
+	getRenderer().getForwardShading().run(ctx, rgraphCtx);
 
 	if(enableVrs)
 	{
@@ -342,9 +337,9 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 		if(enableVrs)
 		{
 			m_lightShading.m_fbDescr.m_shadingRateAttachmentTexelWidth =
-				m_r->getVrsSriGeneration().getSriTexelDimension();
+				getRenderer().getVrsSriGeneration().getSriTexelDimension();
 			m_lightShading.m_fbDescr.m_shadingRateAttachmentTexelHeight =
-				m_r->getVrsSriGeneration().getSriTexelDimension();
+				getRenderer().getVrsSriGeneration().getSriTexelDimension();
 		}
 		else
 		{
@@ -361,7 +356,7 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	RenderTargetHandle sriRt;
 	if(enableVrs)
 	{
-		sriRt = m_r->getVrsSriGeneration().getSriRt();
+		sriRt = getRenderer().getVrsSriGeneration().getSriRt();
 	}
 
 	// Create pass
@@ -371,7 +366,7 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 				 [this, &ctx](RenderPassWorkContext& rgraphCtx) {
 					 run(ctx, rgraphCtx);
 				 });
-	pass.setFramebufferInfo(m_lightShading.m_fbDescr, {m_runCtx.m_rt}, m_r->getGBuffer().getDepthRt(), sriRt);
+	pass.setFramebufferInfo(m_lightShading.m_fbDescr, {m_runCtx.m_rt}, getRenderer().getGBuffer().getDepthRt(), sriRt);
 
 	const TextureUsageBit readUsage = TextureUsageBit::kSampledFragment;
 
@@ -383,34 +378,34 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 
 	// Light shading
 	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite);
-	pass.newTextureDependency(m_r->getGBuffer().getColorRt(0), readUsage);
-	pass.newTextureDependency(m_r->getGBuffer().getColorRt(1), readUsage);
-	pass.newTextureDependency(m_r->getGBuffer().getColorRt(2), readUsage);
-	pass.newTextureDependency(m_r->getGBuffer().getDepthRt(),
+	pass.newTextureDependency(getRenderer().getGBuffer().getColorRt(0), readUsage);
+	pass.newTextureDependency(getRenderer().getGBuffer().getColorRt(1), readUsage);
+	pass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), readUsage);
+	pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(),
 							  TextureUsageBit::kSampledFragment | TextureUsageBit::kFramebufferRead,
 							  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
-	pass.newTextureDependency(m_r->getShadowMapping().getShadowmapRt(), readUsage);
-	if(m_r->getRtShadowsEnabled())
+	pass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), readUsage);
+	if(getRenderer().getRtShadowsEnabled())
 	{
-		pass.newTextureDependency(m_r->getRtShadows().getRt(), readUsage);
+		pass.newTextureDependency(getRenderer().getRtShadows().getRt(), readUsage);
 	}
 	else
 	{
-		pass.newTextureDependency(m_r->getShadowmapsResolve().getRt(), readUsage);
+		pass.newTextureDependency(getRenderer().getShadowmapsResolve().getRt(), readUsage);
 	}
-	pass.newBufferDependency(m_r->getClusterBinning().getClustersRenderGraphHandle(),
+	pass.newBufferDependency(getRenderer().getClusterBinning().getClustersRenderGraphHandle(),
 							 BufferUsageBit::kStorageFragmentRead);
 
 	// Apply indirect
-	pass.newTextureDependency(m_r->getIndirectDiffuse().getRt(), readUsage);
-	pass.newTextureDependency(m_r->getDepthDownscale().getHiZRt(), readUsage);
-	pass.newTextureDependency(m_r->getIndirectSpecular().getRt(), readUsage);
+	pass.newTextureDependency(getRenderer().getIndirectDiffuse().getRt(), readUsage);
+	pass.newTextureDependency(getRenderer().getDepthDownscale().getHiZRt(), readUsage);
+	pass.newTextureDependency(getRenderer().getIndirectSpecular().getRt(), readUsage);
 
 	// Fog
-	pass.newTextureDependency(m_r->getVolumetricFog().getRt(), readUsage);
+	pass.newTextureDependency(getRenderer().getVolumetricFog().getRt(), readUsage);
 
 	// For forward shading
-	m_r->getForwardShading().setDependencies(ctx, pass);
+	getRenderer().getForwardShading().setDependencies(ctx, pass);
 }
 
 void LightShading::getDebugRenderTarget([[maybe_unused]] CString rtName,

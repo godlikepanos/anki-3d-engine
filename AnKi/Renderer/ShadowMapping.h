@@ -12,6 +12,10 @@
 
 namespace anki {
 
+// Forward
+class PointLightQueueElement;
+class SpotLightQueueElement;
+
 /// @addtogroup renderer
 /// @{
 
@@ -19,13 +23,6 @@ namespace anki {
 class ShadowMapping : public RendererObject
 {
 public:
-	ShadowMapping(Renderer* r)
-		: RendererObject(r)
-	{
-	}
-
-	~ShadowMapping();
-
 	Error init();
 
 	/// Populate the rendergraph.

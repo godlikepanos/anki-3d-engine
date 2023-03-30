@@ -16,7 +16,7 @@ namespace anki {
 class ClusterBinning : public RendererObject
 {
 public:
-	ClusterBinning(Renderer* r);
+	ClusterBinning();
 
 	~ClusterBinning();
 

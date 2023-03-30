@@ -32,10 +32,6 @@ public:
 	U32 m_renderQueueElementsLod;
 };
 
-ShadowMapping::~ShadowMapping()
-{
-}
-
 Error ShadowMapping::init()
 {
 	const Error err = initInternal();
@@ -60,16 +56,16 @@ Error ShadowMapping::initInternal()
 		// RT
 		const TextureUsageBit usage =
 			TextureUsageBit::kSampledFragment | TextureUsageBit::kSampledCompute | TextureUsageBit::kAllFramebuffer;
-		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(m_tileResolution * m_tileCountBothAxis,
-																	m_tileResolution * m_tileCountBothAxis,
-																	Format::kD16_Unorm, usage, "ShadowAtlas");
+		TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(m_tileResolution * m_tileCountBothAxis,
+																			 m_tileResolution * m_tileCountBothAxis,
+																			 Format::kD16_Unorm, usage, "ShadowAtlas");
 		ClearValue clearVal;
 		clearVal.m_colorf[0] = 1.0f;
-		m_atlasTex = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::kSampledFragment, clearVal);
+		m_atlasTex = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSampledFragment, clearVal);
 	}
 
 	// Tiles
-	m_tileAlloc.init(&getMemoryPool(), m_tileCountBothAxis, m_tileCountBothAxis, kTileAllocHierarchyCount, true);
+	m_tileAlloc.init(m_tileCountBothAxis, m_tileCountBothAxis, kTileAllocHierarchyCount, true);
 
 	m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
 	m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kLoad;
@@ -127,7 +123,7 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 		TextureSubresourceInfo subresource = TextureSubresourceInfo(DepthStencilAspectBit::kDepth);
 		pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kAllFramebuffer, subresource);
 
-		pass.newBufferDependency(m_r->getGpuSceneBufferHandle(),
+		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(),
 								 BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead);
 	}
 }
@@ -614,13 +610,13 @@ void ShadowMapping::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 		args.m_cameraTransform = Mat3x4::getIdentity(); // Don't care
 		args.m_viewProjectionMatrix = work.m_renderQueue->m_viewProjectionMatrix;
 		args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
-		args.m_sampler = m_r->getSamplers().m_trilinearRepeatAniso;
+		args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAniso;
 
-		m_r->getSceneDrawer().drawRange(args,
-										work.m_renderQueue->m_renderables.getBegin() + work.m_firstRenderableElement,
-										work.m_renderQueue->m_renderables.getBegin() + work.m_firstRenderableElement
-											+ work.m_renderableElementCount,
-										cmdb);
+		getRenderer().getSceneDrawer().drawRange(
+			args, work.m_renderQueue->m_renderables.getBegin() + work.m_firstRenderableElement,
+			work.m_renderQueue->m_renderables.getBegin() + work.m_firstRenderableElement
+				+ work.m_renderableElementCount,
+			cmdb);
 	}
 }
 

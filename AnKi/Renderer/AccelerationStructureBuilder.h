@@ -16,15 +16,6 @@ namespace anki {
 class AccelerationStructureBuilder : public RendererObject
 {
 public:
-	AccelerationStructureBuilder(Renderer* r)
-		: RendererObject(r)
-	{
-	}
-
-	~AccelerationStructureBuilder()
-	{
-	}
-
 	Error init()
 	{
 		return Error::kNone;

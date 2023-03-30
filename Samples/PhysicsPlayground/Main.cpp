@@ -152,7 +152,7 @@ Error MyApp::sampleExtraInit()
 		{
 			SceneNode* monkey;
 			ANKI_CHECK(SceneGraph::getSingleton().newSceneNode(
-				StringRaii(&getMemoryPool()).sprintf("monkey_chain%u", i).toCString(), monkey));
+				StringRaii(&DefaultMemoryPool::getSingleton()).sprintf("monkey_chain%u", i).toCString(), monkey));
 			monkey->newComponent<ModelComponent>()->loadModelResource(
 				"Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl");
 
@@ -202,7 +202,7 @@ Error MyApp::sampleExtraInit()
 Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 {
 	// ANKI_CHECK(SampleApp::userMainLoop(quit));
-	Renderer& renderer = getMainRenderer().getOffscreenRenderer();
+	Renderer& renderer = MainRenderer::getSingleton().getOffscreenRenderer();
 
 	if(Input::getSingleton().getKey(KeyCode::kEscape))
 	{
@@ -259,14 +259,14 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 		else if(mode == 1)
 		{
 			ConfigSet::getSingleton().setRDbg(true);
-			getMainRenderer().getDbg().setDepthTestEnabled(true);
-			getMainRenderer().getDbg().setDitheredDepthTestEnabled(false);
+			MainRenderer::getSingleton().getDbg().setDepthTestEnabled(true);
+			MainRenderer::getSingleton().getDbg().setDitheredDepthTestEnabled(false);
 		}
 		else
 		{
 			ConfigSet::getSingleton().setRDbg(true);
-			getMainRenderer().getDbg().setDepthTestEnabled(false);
-			getMainRenderer().getDbg().setDitheredDepthTestEnabled(true);
+			MainRenderer::getSingleton().getDbg().setDepthTestEnabled(false);
+			MainRenderer::getSingleton().getDbg().setDitheredDepthTestEnabled(true);
 		}
 	}
 
@@ -344,7 +344,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 
 		SceneNode* monkey;
 		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode(
-			StringRaii(&getMemoryPool()).sprintf("FireMonkey%u", instance++).toCString(), monkey));
+			StringRaii(&DefaultMemoryPool::getSingleton()).sprintf("FireMonkey%u", instance++).toCString(), monkey));
 		ModelComponent* modelc = monkey->newComponent<ModelComponent>();
 		modelc->loadModelResource("Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl");
 		// monkey->getFirstComponentOfType<MoveComponent>().setLocalTransform(camTrf);

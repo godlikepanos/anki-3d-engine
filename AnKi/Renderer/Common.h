@@ -13,12 +13,6 @@
 
 namespace anki {
 
-#define ANKI_R_LOGI(...) ANKI_LOG("REND", kNormal, __VA_ARGS__)
-#define ANKI_R_LOGE(...) ANKI_LOG("REND", kError, __VA_ARGS__)
-#define ANKI_R_LOGW(...) ANKI_LOG("REND", kWarning, __VA_ARGS__)
-#define ANKI_R_LOGF(...) ANKI_LOG("REND", kFatal, __VA_ARGS__)
-#define ANKI_R_LOGV(...) ANKI_LOG("REND", kVerbose, __VA_ARGS__)
-
 // Forward
 #define ANKI_RENDERER_OBJECT_DEF(a, b) class a;
 #include <AnKi/Renderer/RendererObject.defs.h>
@@ -26,22 +20,32 @@ namespace anki {
 
 class Renderer;
 class RendererObject;
-class DebugDrawer;
-
 class RenderQueue;
-class RenderableQueueElement;
-class PointLightQueueElement;
-class DirectionalLightQueueElement;
-class SpotLightQueueElement;
-class ReflectionProbeQueueElement;
-class DecalQueueElement;
-class ResourceManager;
-class RebarStagingGpuMemoryPool;
-class UiManager;
-class ShaderProgramResourceVariant;
 
 /// @addtogroup renderer
 /// @{
+
+#define ANKI_R_LOGI(...) ANKI_LOG("REND", kNormal, __VA_ARGS__)
+#define ANKI_R_LOGE(...) ANKI_LOG("REND", kError, __VA_ARGS__)
+#define ANKI_R_LOGW(...) ANKI_LOG("REND", kWarning, __VA_ARGS__)
+#define ANKI_R_LOGF(...) ANKI_LOG("REND", kFatal, __VA_ARGS__)
+#define ANKI_R_LOGV(...) ANKI_LOG("REND", kVerbose, __VA_ARGS__)
+
+class RendererMemoryPool : public HeapMemoryPool, public MakeSingleton<RendererMemoryPool>
+{
+	template<typename>
+	friend class MakeSingleton;
+
+private:
+	RendererMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData)
+		: HeapMemoryPool(allocCb, allocCbUserData, "RendererMemPool")
+	{
+	}
+
+	~RendererMemoryPool() = default;
+};
+
+ANKI_DEFINE_SUBMODULE_UTIL_CONTAINERS(Renderer, RendererMemoryPool)
 
 /// Don't create second level command buffers if they contain more drawcalls than this constant.
 constexpr U32 kMinDrawcallsPerSecondaryCommandBuffer = 16;
@@ -71,11 +75,6 @@ constexpr U32 kDownscaleBurDownTo = 32;
 
 inline constexpr Array<Format, kGBufferColorRenderTargetCount> kGBufferColorRenderTargetFormats = {
 	{Format::kR8G8B8A8_Unorm, Format::kR8G8B8A8_Unorm, Format::kA2B10G10R10_Unorm_Pack32, Format::kR16G16_Snorm}};
-
-class RendererExternalSubsystems
-{
-public:
-};
 
 /// Rendering context.
 class RenderingContext

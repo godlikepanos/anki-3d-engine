@@ -16,8 +16,11 @@ namespace anki {
 class VrsSriGeneration : public RendererObject
 {
 public:
-	VrsSriGeneration(Renderer* r);
-	~VrsSriGeneration();
+	VrsSriGeneration()
+	{
+		registerDebugRenderTarget("VrsSri");
+		registerDebugRenderTarget("VrsSriDownscaled");
+	}
 
 	Error init();
 

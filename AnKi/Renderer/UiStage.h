@@ -7,6 +7,7 @@
 
 #include <AnKi/Renderer/RendererObject.h>
 #include <AnKi/Ui/Canvas.h>
+#include <AnKi/Ui/Font.h>
 
 namespace anki {
 
@@ -17,9 +18,6 @@ namespace anki {
 class UiStage : public RendererObject
 {
 public:
-	UiStage(Renderer* r);
-	~UiStage();
-
 	Error init();
 
 	void draw(U32 width, U32 height, RenderingContext& ctx, CommandBufferPtr& cmdb);

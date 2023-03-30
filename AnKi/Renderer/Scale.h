@@ -16,13 +16,6 @@ namespace anki {
 class Scale : public RendererObject
 {
 public:
-	Scale(Renderer* r)
-		: RendererObject(r)
-	{
-	}
-
-	~Scale();
-
 	Error init();
 
 	void populateRenderGraph(RenderingContext& ctx);

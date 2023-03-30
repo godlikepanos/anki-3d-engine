@@ -12,15 +12,6 @@
 
 namespace anki {
 
-PackVisibleClusteredObjects::PackVisibleClusteredObjects(Renderer* r)
-	: RendererObject(r)
-{
-}
-
-PackVisibleClusteredObjects::~PackVisibleClusteredObjects()
-{
-}
-
 Error PackVisibleClusteredObjects::init()
 {
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/PackVisibleClusteredObjects.ankiprogbin",
@@ -148,7 +139,7 @@ void PackVisibleClusteredObjects::populateRenderGraph(RenderingContext& ctx)
 
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("PackClusterObjects");
 
-	pass.newBufferDependency(m_r->getGpuSceneBufferHandle(), BufferUsageBit::kStorageComputeRead);
+	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageComputeRead);
 
 	m_allClustererObjectsHandle = rgraph.importBuffer(m_allClustererObjects, BufferUsageBit::kNone);
 	pass.newBufferDependency(m_allClustererObjectsHandle, BufferUsageBit::kStorageComputeWrite);

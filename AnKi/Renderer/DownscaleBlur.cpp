@@ -11,11 +11,6 @@
 
 namespace anki {
 
-DownscaleBlur::~DownscaleBlur()
-{
-	m_fbDescrs.destroy(getMemoryPool());
-}
-
 Error DownscaleBlur::init()
 {
 	const Error err = initInternal();
@@ -29,18 +24,18 @@ Error DownscaleBlur::init()
 
 Error DownscaleBlur::initInternal()
 {
-	m_passCount = computeMaxMipmapCount2d(m_r->getPostProcessResolution().x(), m_r->getPostProcessResolution().y(),
-										  kDownscaleBurDownTo)
+	m_passCount = computeMaxMipmapCount2d(getRenderer().getPostProcessResolution().x(),
+										  getRenderer().getPostProcessResolution().y(), kDownscaleBurDownTo)
 				  - 1;
 
-	const UVec2 rez = m_r->getPostProcessResolution() / 2;
+	const UVec2 rez = getRenderer().getPostProcessResolution() / 2;
 	ANKI_R_LOGV("Initializing downscale pyramid. Resolution %ux%u, mip count %u", rez.x(), rez.y(), m_passCount);
 
 	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
 
 	// Create the miped texture
 	TextureInitInfo texinit =
-		m_r->create2DRenderTargetDescription(rez.x(), rez.y(), m_r->getHdrFormat(), "DownscaleBlur");
+		getRenderer().create2DRenderTargetDescription(rez.x(), rez.y(), getRenderer().getHdrFormat(), "DownscaleBlur");
 	texinit.m_usage = TextureUsageBit::kSampledFragment | TextureUsageBit::kSampledCompute;
 	if(preferCompute)
 	{
@@ -51,12 +46,12 @@ Error DownscaleBlur::initInternal()
 		texinit.m_usage |= TextureUsageBit::kFramebufferWrite;
 	}
 	texinit.m_mipmapCount = U8(m_passCount);
-	m_rtTex = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::kSampledCompute);
+	m_rtTex = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSampledCompute);
 
 	// FB descr
 	if(!preferCompute)
 	{
-		m_fbDescrs.create(getMemoryPool(), m_passCount);
+		m_fbDescrs.create(m_passCount);
 		for(U32 pass = 0; pass < m_passCount; ++pass)
 		{
 			m_fbDescrs[pass].m_colorAttachmentCount = 1;
@@ -90,8 +85,9 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 	// Create passes
 	static constexpr Array<CString, 8> passNames = {"DownBlur #0",  "Down/Blur #1", "Down/Blur #2", "Down/Blur #3",
 													"Down/Blur #4", "Down/Blur #5", "Down/Blur #6", "Down/Blur #7"};
-	const RenderTargetHandle inRt =
-		(m_r->getScale().hasUpscaledHdrRt()) ? m_r->getScale().getUpscaledHdrRt() : m_r->getScale().getTonemappedRt();
+	const RenderTargetHandle inRt = (getRenderer().getScale().hasUpscaledHdrRt())
+										? getRenderer().getScale().getUpscaledHdrRt()
+										: getRenderer().getScale().getTonemappedRt();
 	if(ConfigSet::getSingleton().getRPreferCompute())
 	{
 		for(U32 i = 0; i < m_passCount; ++i)
@@ -162,7 +158,7 @@ void DownscaleBlur::run(U32 passIdx, RenderPassWorkContext& rgraphCtx)
 	const U32 vpWidth = m_rtTex->getWidth() >> passIdx;
 	const U32 vpHeight = m_rtTex->getHeight() >> passIdx;
 
-	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
+	cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp);
 
 	if(passIdx > 0)
 	{
@@ -172,14 +168,15 @@ void DownscaleBlur::run(U32 passIdx, RenderPassWorkContext& rgraphCtx)
 	}
 	else
 	{
-		const RenderTargetHandle inRt = (m_r->getScale().hasUpscaledHdrRt()) ? m_r->getScale().getUpscaledHdrRt()
-																			 : m_r->getScale().getTonemappedRt();
+		const RenderTargetHandle inRt = (getRenderer().getScale().hasUpscaledHdrRt())
+											? getRenderer().getScale().getUpscaledHdrRt()
+											: getRenderer().getScale().getTonemappedRt();
 		rgraphCtx.bindColorTexture(0, 1, inRt);
 	}
 
-	rgraphCtx.bindImage(0, 2, m_r->getTonemapping().getRt());
+	rgraphCtx.bindImage(0, 2, getRenderer().getTonemapping().getRt());
 
-	const Bool revertTonemap = passIdx == 0 && !m_r->getScale().hasUpscaledHdrRt();
+	const Bool revertTonemap = passIdx == 0 && !getRenderer().getScale().hasUpscaledHdrRt();
 	const UVec4 fbSize(vpWidth, vpHeight, revertTonemap, 0);
 	cmdb->setPushConstants(&fbSize, sizeof(fbSize));
 

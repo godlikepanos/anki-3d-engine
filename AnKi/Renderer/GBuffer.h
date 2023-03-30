@@ -17,8 +17,7 @@ namespace anki {
 class GBuffer : public RendererObject
 {
 public:
-	GBuffer(Renderer* r)
-		: RendererObject(r)
+	GBuffer()
 	{
 		registerDebugRenderTarget("GBufferNormals");
 		registerDebugRenderTarget("GBufferAlbedo");

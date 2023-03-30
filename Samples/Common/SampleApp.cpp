@@ -47,7 +47,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 	quit = false;
 
 	SceneGraph& scene = SceneGraph::getSingleton();
-	Renderer& renderer = getMainRenderer().getOffscreenRenderer();
+	Renderer& renderer = MainRenderer::getSingleton().getOffscreenRenderer();
 	Input& in = Input::getSingleton();
 
 	if(in.getKey(KeyCode::kEscape))

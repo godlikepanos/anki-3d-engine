@@ -17,13 +17,6 @@ namespace anki {
 class GenericCompute : public RendererObject
 {
 public:
-	GenericCompute(Renderer* r)
-		: RendererObject(r)
-	{
-	}
-
-	~GenericCompute();
-
 	Error init()
 	{
 		return Error::kNone;

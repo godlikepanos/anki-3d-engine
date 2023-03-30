@@ -660,12 +660,23 @@ void CombineResultsTask::combine()
 	// Compute the timestamp
 	const U32 threadCount = m_frcCtx->m_queueViews.getSize();
 	results.m_shadowRenderablesLastUpdateTimestamp = 0;
+	U32 renderableCount = 0;
 	for(U32 i = 0; i < threadCount; ++i)
 	{
 		results.m_shadowRenderablesLastUpdateTimestamp =
 			max(results.m_shadowRenderablesLastUpdateTimestamp, m_frcCtx->m_queueViews[i].m_timestamp);
+
+		renderableCount += m_frcCtx->m_queueViews[i].m_renderables.m_elementCount;
 	}
-	ANKI_ASSERT(results.m_shadowRenderablesLastUpdateTimestamp);
+
+	if(renderableCount)
+	{
+		ANKI_ASSERT(results.m_shadowRenderablesLastUpdateTimestamp);
+	}
+	else
+	{
+		ANKI_ASSERT(results.m_shadowRenderablesLastUpdateTimestamp == 0);
+	}
 
 #define ANKI_VIS_COMBINE(t_, member_) \
 	{ \

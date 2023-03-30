@@ -10,17 +10,6 @@
 
 namespace anki {
 
-VrsSriGeneration::VrsSriGeneration(Renderer* r)
-	: RendererObject(r)
-{
-	registerDebugRenderTarget("VrsSri");
-	registerDebugRenderTarget("VrsSriDownscaled");
-}
-
-VrsSriGeneration::~VrsSriGeneration()
-{
-}
-
 Error VrsSriGeneration::init()
 {
 	const Error err = initInternal();
@@ -40,7 +29,7 @@ Error VrsSriGeneration::initInternal()
 
 	m_sriTexelDimension = GrManager::getSingleton().getDeviceCapabilities().m_minShadingRateImageTexelSize;
 	ANKI_ASSERT(m_sriTexelDimension == 8 || m_sriTexelDimension == 16);
-	const UVec2 rez = (m_r->getInternalResolution() + m_sriTexelDimension - 1) / m_sriTexelDimension;
+	const UVec2 rez = (getRenderer().getInternalResolution() + m_sriTexelDimension - 1) / m_sriTexelDimension;
 
 	ANKI_R_LOGV("Intializing VRS SRI generation. SRI resolution %ux%u", rez.x(), rez.y());
 
@@ -48,13 +37,15 @@ Error VrsSriGeneration::initInternal()
 	const TextureUsageBit texUsage =
 		TextureUsageBit::kFramebufferShadingRate | TextureUsageBit::kImageComputeWrite | TextureUsageBit::kAllSampled;
 	TextureInitInfo sriInitInfo =
-		m_r->create2DRenderTargetInitInfo(rez.x(), rez.y(), Format::kR8_Uint, texUsage, "VrsSri");
-	m_sriTex = m_r->createAndClearRenderTarget(sriInitInfo, TextureUsageBit::kFramebufferShadingRate);
+		getRenderer().create2DRenderTargetInitInfo(rez.x(), rez.y(), Format::kR8_Uint, texUsage, "VrsSri");
+	m_sriTex = getRenderer().createAndClearRenderTarget(sriInitInfo, TextureUsageBit::kFramebufferShadingRate);
 
-	const UVec2 rezDownscaled = (m_r->getInternalResolution() / 2 + m_sriTexelDimension - 1) / m_sriTexelDimension;
-	sriInitInfo = m_r->create2DRenderTargetInitInfo(rezDownscaled.x(), rezDownscaled.y(), Format::kR8_Uint, texUsage,
-													"VrsSriDownscaled");
-	m_downscaledSriTex = m_r->createAndClearRenderTarget(sriInitInfo, TextureUsageBit::kFramebufferShadingRate);
+	const UVec2 rezDownscaled =
+		(getRenderer().getInternalResolution() / 2 + m_sriTexelDimension - 1) / m_sriTexelDimension;
+	sriInitInfo = getRenderer().create2DRenderTargetInitInfo(rezDownscaled.x(), rezDownscaled.y(), Format::kR8_Uint,
+															 texUsage, "VrsSriDownscaled");
+	m_downscaledSriTex =
+		getRenderer().createAndClearRenderTarget(sriInitInfo, TextureUsageBit::kFramebufferShadingRate);
 
 	// Load programs
 	ANKI_CHECK(
@@ -153,23 +144,23 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("VRS SRI generation");
 
 		pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kImageComputeWrite);
-		pass.newTextureDependency(m_r->getLightShading().getRt(), TextureUsageBit::kSampledCompute);
+		pass.newTextureDependency(getRenderer().getLightShading().getRt(), TextureUsageBit::kSampledCompute);
 
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
 			cmdb->bindShaderProgram(m_grProg);
 
-			rgraphCtx.bindColorTexture(0, 0, m_r->getLightShading().getRt());
-			cmdb->bindSampler(0, 1, m_r->getSamplers().m_nearestNearestClamp);
+			rgraphCtx.bindColorTexture(0, 0, getRenderer().getLightShading().getRt());
+			cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_nearestNearestClamp);
 			rgraphCtx.bindImage(0, 2, m_runCtx.m_rt);
-			const Vec4 pc(1.0f / Vec2(m_r->getInternalResolution()), ConfigSet::getSingleton().getRVrsThreshold(),
-						  0.0f);
+			const Vec4 pc(1.0f / Vec2(getRenderer().getInternalResolution()),
+						  ConfigSet::getSingleton().getRVrsThreshold(), 0.0f);
 			cmdb->setPushConstants(&pc, sizeof(pc));
 
 			const U32 fakeWorkgroupSizeXorY = m_sriTexelDimension;
-			dispatchPPCompute(cmdb, fakeWorkgroupSizeXorY, fakeWorkgroupSizeXorY, m_r->getInternalResolution().x(),
-							  m_r->getInternalResolution().y());
+			dispatchPPCompute(cmdb, fakeWorkgroupSizeXorY, fakeWorkgroupSizeXorY,
+							  getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 		});
 	}
 
@@ -182,14 +173,14 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 			const UVec2 rezDownscaled =
-				(m_r->getInternalResolution() / 2 + m_sriTexelDimension - 1) / m_sriTexelDimension;
+				(getRenderer().getInternalResolution() / 2 + m_sriTexelDimension - 1) / m_sriTexelDimension;
 
 			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
 			cmdb->bindShaderProgram(m_downscaleGrProg);
 
 			rgraphCtx.bindColorTexture(0, 0, m_runCtx.m_rt);
-			cmdb->bindSampler(0, 1, m_r->getSamplers().m_nearestNearestClamp);
+			cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_nearestNearestClamp);
 			rgraphCtx.bindImage(0, 2, m_runCtx.m_downscaledRt);
 			const Vec4 pc(1.0f / Vec2(rezDownscaled), 0.0f, 0.0f);
 			cmdb->setPushConstants(&pc, sizeof(pc));

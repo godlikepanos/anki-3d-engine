@@ -17,8 +17,9 @@ namespace anki {
 class FinalComposite : public RendererObject
 {
 public:
-	FinalComposite(Renderer* r);
-	~FinalComposite();
+	FinalComposite() = default;
+
+	~FinalComposite() = default;
 
 	Error init();
 

@@ -161,6 +161,15 @@ public:
 private:
 	class UpdateSceneNodesCtx;
 
+	class InitMemPoolDummy
+	{
+	public:
+		~InitMemPoolDummy()
+		{
+			SceneMemoryPool::freeSingleton();
+		}
+	} m_initMemPoolDummy;
+
 	mutable StackMemoryPool m_framePool;
 
 	IntrusiveList<SceneNode> m_nodes;

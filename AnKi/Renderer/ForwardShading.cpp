@@ -19,10 +19,6 @@
 
 namespace anki {
 
-ForwardShading::~ForwardShading()
-{
-}
-
 void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
@@ -38,34 +34,37 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 		cmdb->setBlendFactors(0, BlendFactor::kSrcAlpha, BlendFactor::kOneMinusSrcAlpha);
 
 		const U32 set = U32(MaterialSet::kGlobal);
-		cmdb->bindSampler(set, U32(MaterialBinding::kLinearClampSampler), m_r->getSamplers().m_trilinearClamp);
-		cmdb->bindSampler(set, U32(MaterialBinding::kShadowSampler), m_r->getSamplers().m_trilinearClampShadow);
+		cmdb->bindSampler(set, U32(MaterialBinding::kLinearClampSampler), getRenderer().getSamplers().m_trilinearClamp);
+		cmdb->bindSampler(set, U32(MaterialBinding::kShadowSampler),
+						  getRenderer().getSamplers().m_trilinearClampShadow);
 
-		rgraphCtx.bindTexture(set, U32(MaterialBinding::kDepthRt), m_r->getDepthDownscale().getHiZRt(),
+		rgraphCtx.bindTexture(set, U32(MaterialBinding::kDepthRt), getRenderer().getDepthDownscale().getHiZRt(),
 							  kHiZHalfSurface);
 		rgraphCtx.bindColorTexture(set, U32(MaterialBinding::kLightVolume),
-								   m_r->getVolumetricLightingAccumulation().getRt());
+								   getRenderer().getVolumetricLightingAccumulation().getRt());
 
 		bindUniforms(cmdb, set, U32(MaterialBinding::kClusterShadingUniforms),
-					 m_r->getClusterBinning().getClusteredUniformsRebarToken());
-		m_r->getPackVisibleClusteredObjects().bindClusteredObjectBuffer(
+					 getRenderer().getClusterBinning().getClusteredUniformsRebarToken());
+		getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(
 			cmdb, set, U32(MaterialBinding::kClusterShadingLights), ClusteredObjectType::kPointLight);
-		m_r->getPackVisibleClusteredObjects().bindClusteredObjectBuffer(
+		getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(
 			cmdb, set, U32(MaterialBinding::kClusterShadingLights) + 1, ClusteredObjectType::kSpotLight);
 		rgraphCtx.bindColorTexture(set, U32(MaterialBinding::kClusterShadingLights) + 2,
-								   m_r->getShadowMapping().getShadowmapRt());
-		bindStorage(cmdb, set, U32(MaterialBinding::kClusters), m_r->getClusterBinning().getClustersRebarToken());
+								   getRenderer().getShadowMapping().getShadowmapRt());
+		bindStorage(cmdb, set, U32(MaterialBinding::kClusters),
+					getRenderer().getClusterBinning().getClustersRebarToken());
 
 		RenderableDrawerArguments args;
 		args.m_viewMatrix = ctx.m_matrices.m_view;
 		args.m_cameraTransform = ctx.m_matrices.m_cameraTransform;
 		args.m_viewProjectionMatrix = ctx.m_matrices.m_viewProjectionJitter;
 		args.m_previousViewProjectionMatrix = ctx.m_prevMatrices.m_viewProjectionJitter; // Not sure about that
-		args.m_sampler = m_r->getSamplers().m_trilinearRepeatAnisoResolutionScalingBias;
+		args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAnisoResolutionScalingBias;
 
 		// Start drawing
-		m_r->getSceneDrawer().drawRange(args, ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + start,
-										ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + end, cmdb);
+		getRenderer().getSceneDrawer().drawRange(args,
+												 ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + start,
+												 ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + end, cmdb);
 
 		// Restore state
 		cmdb->setDepthWrite(true);
@@ -74,18 +73,20 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 
 	if(threadId == threadCount - 1 && ctx.m_renderQueue->m_lensFlares.getSize())
 	{
-		m_r->getLensFlare().runDrawFlares(ctx, cmdb);
+		getRenderer().getLensFlare().runDrawFlares(ctx, cmdb);
 	}
 }
 
 void ForwardShading::setDependencies(const RenderingContext& ctx, GraphicsRenderPassDescription& pass)
 {
-	pass.newTextureDependency(m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::kSampledFragment, kHiZHalfSurface);
-	pass.newTextureDependency(m_r->getVolumetricLightingAccumulation().getRt(), TextureUsageBit::kSampledFragment);
+	pass.newTextureDependency(getRenderer().getDepthDownscale().getHiZRt(), TextureUsageBit::kSampledFragment,
+							  kHiZHalfSurface);
+	pass.newTextureDependency(getRenderer().getVolumetricLightingAccumulation().getRt(),
+							  TextureUsageBit::kSampledFragment);
 
 	if(ctx.m_renderQueue->m_lensFlares.getSize())
 	{
-		pass.newBufferDependency(m_r->getLensFlare().getIndirectDrawBuffer(), BufferUsageBit::kIndirectDraw);
+		pass.newBufferDependency(getRenderer().getLensFlare().getIndirectDrawBuffer(), BufferUsageBit::kIndirectDraw);
 	}
 }
 

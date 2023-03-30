@@ -18,13 +18,6 @@ namespace anki {
 class LensFlare : public RendererObject
 {
 public:
-	LensFlare(Renderer* r)
-		: RendererObject(r)
-	{
-	}
-
-	~LensFlare();
-
 	Error init();
 
 	void runDrawFlares(const RenderingContext& ctx, CommandBufferPtr& cmdb);

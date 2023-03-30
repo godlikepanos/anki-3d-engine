@@ -16,13 +16,6 @@ namespace anki {
 class GBufferPost : public RendererObject
 {
 public:
-	GBufferPost(Renderer* r)
-		: RendererObject(r)
-	{
-	}
-
-	~GBufferPost();
-
 	Error init();
 
 	/// Populate the rendergraph.

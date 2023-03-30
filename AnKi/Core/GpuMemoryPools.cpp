@@ -43,6 +43,11 @@ void GpuSceneMemoryPool::init()
 	BufferUsageBit buffUsage = BufferUsageBit::kAllStorage | BufferUsageBit::kTransferDestination;
 
 	m_pool.init(buffUsage, classes, poolSize, "GpuScene", true);
+
+	// Allocate something dummy to force creating the GPU buffer
+	SegregatedListsGpuMemoryPoolToken token;
+	allocate(16, 4, token);
+	deferredFree(token);
 }
 
 RebarStagingGpuMemoryPool::~RebarStagingGpuMemoryPool()

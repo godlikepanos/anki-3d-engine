@@ -20,10 +20,6 @@ class ProbeReflections : public RendererObject
 	friend class IrTask;
 
 public:
-	ProbeReflections(Renderer* r);
-
-	~ProbeReflections();
-
 	Error init();
 
 	/// Populate the rendergraph.
@@ -72,11 +68,6 @@ private:
 		U32 m_mipCount = 0;
 		Array<FramebufferDescription, 6> m_fbDescr;
 		TraditionalDeferredLightShading m_deferred;
-
-		LS(Renderer* r)
-			: m_deferred(r)
-		{
-		}
 	} m_lightShading; ///< Light shading.
 
 	class

@@ -16,15 +16,6 @@ namespace anki {
 class VolumetricFog : public RendererObject
 {
 public:
-	VolumetricFog(Renderer* r)
-		: RendererObject(r)
-	{
-	}
-
-	~VolumetricFog()
-	{
-	}
-
 	Error init();
 
 	/// Populate the rendergraph.

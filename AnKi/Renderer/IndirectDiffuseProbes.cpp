@@ -36,10 +36,6 @@ public:
 	}
 };
 
-IndirectDiffuseProbes::~IndirectDiffuseProbes()
-{
-}
-
 RenderTargetHandle IndirectDiffuseProbes::getCurrentlyRefreshedVolumeRt() const
 {
 	ANKI_ASSERT(m_giCtx && m_giCtx->m_irradianceVolume.isValid());
@@ -78,7 +74,7 @@ Error IndirectDiffuseProbes::initGBuffer()
 {
 	// Create RT descriptions
 	{
-		RenderTargetDescription texinit = m_r->create2DRenderTargetDescription(
+		RenderTargetDescription texinit = getRenderer().create2DRenderTargetDescription(
 			m_tileSize * 6, m_tileSize, kGBufferColorRenderTargetFormats[0], "GI GBuffer");
 
 		// Create color RT descriptions
@@ -86,13 +82,12 @@ Error IndirectDiffuseProbes::initGBuffer()
 		{
 			texinit.m_format = kGBufferColorRenderTargetFormats[i];
 			m_gbuffer.m_colorRtDescrs[i] = texinit;
-			m_gbuffer.m_colorRtDescrs[i].setName(
-				StringRaii(&getMemoryPool()).sprintf("GI GBuff Col #%u", i).toCString());
+			m_gbuffer.m_colorRtDescrs[i].setName(RendererString().sprintf("GI GBuff Col #%u", i).toCString());
 			m_gbuffer.m_colorRtDescrs[i].bake();
 		}
 
 		// Create depth RT
-		texinit.m_format = m_r->getDepthNoStencilFormat();
+		texinit.m_format = getRenderer().getDepthNoStencilFormat();
 		texinit.setName("GI GBuff Depth");
 		m_gbuffer.m_depthRtDescr = texinit;
 		m_gbuffer.m_depthRtDescr.bake();
@@ -123,8 +118,8 @@ Error IndirectDiffuseProbes::initShadowMapping()
 	ANKI_ASSERT(resolution > 8);
 
 	// RT descr
-	m_shadowMapping.m_rtDescr =
-		m_r->create2DRenderTargetDescription(resolution * 6, resolution, m_r->getDepthNoStencilFormat(), "GI SM");
+	m_shadowMapping.m_rtDescr = getRenderer().create2DRenderTargetDescription(
+		resolution * 6, resolution, getRenderer().getDepthNoStencilFormat(), "GI SM");
 	m_shadowMapping.m_rtDescr.bake();
 
 	// FB descr
@@ -141,8 +136,8 @@ Error IndirectDiffuseProbes::initLightShading()
 {
 	// Init RT descr
 	{
-		m_lightShading.m_rtDescr =
-			m_r->create2DRenderTargetDescription(m_tileSize * 6, m_tileSize, m_r->getHdrFormat(), "GI LS");
+		m_lightShading.m_rtDescr = getRenderer().create2DRenderTargetDescription(m_tileSize * 6, m_tileSize,
+																				 getRenderer().getHdrFormat(), "GI LS");
 		m_lightShading.m_rtDescr.bake();
 	}
 
@@ -238,7 +233,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 		TextureSubresourceInfo subresource(DepthStencilAspectBit::kDepth);
 		pass.newTextureDependency(giCtx->m_gbufferDepthRt, TextureUsageBit::kAllFramebuffer, subresource);
 
-		pass.newBufferDependency(m_r->getGpuSceneBufferHandle(),
+		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(),
 								 BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead);
 	}
 
@@ -278,7 +273,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 		TextureSubresourceInfo subresource(DepthStencilAspectBit::kDepth);
 		pass.newTextureDependency(giCtx->m_shadowsRt, TextureUsageBit::kAllFramebuffer, subresource);
 
-		pass.newBufferDependency(m_r->getGpuSceneBufferHandle(),
+		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(),
 								 BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead);
 	}
 	else
@@ -372,10 +367,10 @@ void IndirectDiffuseProbes::runGBufferInThread(RenderPassWorkContext& rgraphCtx,
 			args.m_cameraTransform = Mat3x4::getIdentity(); // Don't care
 			args.m_viewProjectionMatrix = rqueue.m_viewProjectionMatrix;
 			args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
-			args.m_sampler = m_r->getSamplers().m_trilinearRepeat;
+			args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat;
 
-			m_r->getSceneDrawer().drawRange(args, rqueue.m_renderables.getBegin() + localStart,
-											rqueue.m_renderables.getBegin() + localEnd, cmdb);
+			getRenderer().getSceneDrawer().drawRange(args, rqueue.m_renderables.getBegin() + localStart,
+													 rqueue.m_renderables.getBegin() + localEnd, cmdb);
 		}
 
 		drawcallCount += faceDrawcallCount;
@@ -428,10 +423,10 @@ void IndirectDiffuseProbes::runShadowmappingInThread(RenderPassWorkContext& rgra
 			args.m_cameraTransform = Mat3x4::getIdentity(); // Don't care
 			args.m_viewProjectionMatrix = cascadeRenderQueue.m_viewProjectionMatrix;
 			args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
-			args.m_sampler = m_r->getSamplers().m_trilinearRepeatAniso;
+			args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAniso;
 
-			m_r->getSceneDrawer().drawRange(args, cascadeRenderQueue.m_renderables.getBegin() + localStart,
-											cascadeRenderQueue.m_renderables.getBegin() + localEnd, cmdb);
+			getRenderer().getSceneDrawer().drawRange(args, cascadeRenderQueue.m_renderables.getBegin() + localStart,
+													 cascadeRenderQueue.m_renderables.getBegin() + localEnd, cmdb);
 		}
 	}
 
@@ -498,7 +493,7 @@ void IndirectDiffuseProbes::runIrradiance(RenderPassWorkContext& rgraphCtx, Inte
 	cmdb->bindShaderProgram(m_irradiance.m_grProg);
 
 	// Bind resources
-	cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
+	cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp);
 	rgraphCtx.bindColorTexture(0, 1, giCtx.m_lightShadingRt);
 
 	for(U32 i = 0; i < kGBufferColorRenderTargetCount - 1; ++i)

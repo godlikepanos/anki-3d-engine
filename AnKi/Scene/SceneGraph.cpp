@@ -49,8 +49,6 @@ SceneGraph::~SceneGraph()
 	}
 
 	m_gpuSceneAllocators.destroy();
-
-	SceneMemoryPool::freeSingleton();
 }
 
 Error SceneGraph::init(AllocAlignedCallback allocCallback, void* allocCallbackData)

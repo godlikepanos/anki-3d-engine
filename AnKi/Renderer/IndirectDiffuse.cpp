@@ -16,10 +16,6 @@
 
 namespace anki {
 
-IndirectDiffuse::~IndirectDiffuse()
-{
-}
-
 Error IndirectDiffuse::init()
 {
 	const Error err = initInternal();
@@ -32,8 +28,9 @@ Error IndirectDiffuse::init()
 
 Error IndirectDiffuse::initInternal()
 {
-	const UVec2 size = m_r->getInternalResolution() / 2;
-	ANKI_ASSERT((m_r->getInternalResolution() % 2) == UVec2(0u) && "Needs to be dividable for proper upscaling");
+	const UVec2 size = getRenderer().getInternalResolution() / 2;
+	ANKI_ASSERT((getRenderer().getInternalResolution() % 2) == UVec2(0u)
+				&& "Needs to be dividable for proper upscaling");
 
 	ANKI_R_LOGV("Initializing indirect diffuse. Resolution %ux%u", size.x(), size.y());
 
@@ -43,11 +40,11 @@ Error IndirectDiffuse::initInternal()
 	TextureUsageBit usage = TextureUsageBit::kAllSampled;
 
 	usage |= (preferCompute) ? TextureUsageBit::kImageComputeWrite : TextureUsageBit::kFramebufferWrite;
-	TextureInitInfo texInit =
-		m_r->create2DRenderTargetInitInfo(size.x(), size.y(), m_r->getHdrFormat(), usage, "IndirectDiffuse #1");
-	m_rts[0] = m_r->createAndClearRenderTarget(texInit, TextureUsageBit::kAllSampled);
+	TextureInitInfo texInit = getRenderer().create2DRenderTargetInitInfo(
+		size.x(), size.y(), getRenderer().getHdrFormat(), usage, "IndirectDiffuse #1");
+	m_rts[0] = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kAllSampled);
 	texInit.setName("IndirectDiffuse #2");
-	m_rts[1] = m_r->createAndClearRenderTarget(texInit, TextureUsageBit::kAllSampled);
+	m_rts[1] = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kAllSampled);
 
 	if(!preferCompute)
 	{
@@ -65,7 +62,7 @@ Error IndirectDiffuse::initInternal()
 
 		const UVec2 rez = (size + m_vrs.m_sriTexelDimension - 1) / m_vrs.m_sriTexelDimension;
 		m_vrs.m_rtHandle =
-			m_r->create2DRenderTargetDescription(rez.x(), rez.y(), Format::kR8_Uint, "IndirectDiffuseVrsSri");
+			getRenderer().create2DRenderTargetDescription(rez.x(), rez.y(), Format::kR8_Uint, "IndirectDiffuseVrsSri");
 		m_vrs.m_rtHandle.bake();
 
 		ANKI_CHECK(ResourceManager::getSingleton().loadResource(
@@ -174,18 +171,18 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("IndirectDiffuse VRS SRI gen");
 
 		pass.newTextureDependency(m_runCtx.m_sriRt, TextureUsageBit::kImageComputeWrite);
-		pass.newTextureDependency(m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::kSampledCompute,
+		pass.newTextureDependency(getRenderer().getDepthDownscale().getHiZRt(), TextureUsageBit::kSampledCompute,
 								  kHiZHalfSurface);
 
 		pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
-			const UVec2 viewport = m_r->getInternalResolution() / 2u;
+			const UVec2 viewport = getRenderer().getInternalResolution() / 2u;
 
 			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
 			cmdb->bindShaderProgram(m_vrs.m_grProg);
 
-			rgraphCtx.bindTexture(0, 0, m_r->getDepthDownscale().getHiZRt(), kHiZHalfSurface);
-			cmdb->bindSampler(0, 1, m_r->getSamplers().m_nearestNearestClamp);
+			rgraphCtx.bindTexture(0, 0, getRenderer().getDepthDownscale().getHiZRt(), kHiZHalfSurface);
+			cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_nearestNearestClamp);
 			rgraphCtx.bindImage(0, 2, m_runCtx.m_sriRt);
 
 			class
@@ -208,7 +205,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 	// SSGI+probes
 	{
 		// Create RTs
-		const U32 readRtIdx = m_r->getFrameCount() & 1;
+		const U32 readRtIdx = getRenderer().getFrameCount() & 1;
 		const U32 writeRtIdx = !readRtIdx;
 		if(m_rtsImportedOnce) [[likely]]
 		{
@@ -250,39 +247,40 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 
 		prpass->newTextureDependency(m_runCtx.m_mainRtHandles[kWrite], writeUsage);
 
-		if(m_r->getIndirectDiffuseProbes().hasCurrentlyRefreshedVolumeRt())
+		if(getRenderer().getIndirectDiffuseProbes().hasCurrentlyRefreshedVolumeRt())
 		{
-			prpass->newTextureDependency(m_r->getIndirectDiffuseProbes().getCurrentlyRefreshedVolumeRt(), readUsage);
+			prpass->newTextureDependency(getRenderer().getIndirectDiffuseProbes().getCurrentlyRefreshedVolumeRt(),
+										 readUsage);
 		}
 
-		prpass->newTextureDependency(m_r->getGBuffer().getColorRt(2), readUsage);
+		prpass->newTextureDependency(getRenderer().getGBuffer().getColorRt(2), readUsage);
 		TextureSubresourceInfo hizSubresource;
 		hizSubresource.m_mipmapCount = 1;
-		prpass->newTextureDependency(m_r->getDepthDownscale().getHiZRt(), readUsage, hizSubresource);
-		prpass->newTextureDependency(m_r->getDownscaleBlur().getRt(), readUsage);
-		prpass->newTextureDependency(m_r->getMotionVectors().getMotionVectorsRt(), readUsage);
-		prpass->newTextureDependency(m_r->getMotionVectors().getHistoryLengthRt(), readUsage);
+		prpass->newTextureDependency(getRenderer().getDepthDownscale().getHiZRt(), readUsage, hizSubresource);
+		prpass->newTextureDependency(getRenderer().getDownscaleBlur().getRt(), readUsage);
+		prpass->newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(), readUsage);
+		prpass->newTextureDependency(getRenderer().getMotionVectors().getHistoryLengthRt(), readUsage);
 		prpass->newTextureDependency(m_runCtx.m_mainRtHandles[kRead], readUsage);
 
 		prpass->setWork([this, &ctx, enableVrs](RenderPassWorkContext& rgraphCtx) {
 			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 			cmdb->bindShaderProgram(m_main.m_grProg);
 
-			bindUniforms(cmdb, 0, 0, m_r->getClusterBinning().getClusteredUniformsRebarToken());
-			m_r->getPackVisibleClusteredObjects().bindClusteredObjectBuffer(
+			bindUniforms(cmdb, 0, 0, getRenderer().getClusterBinning().getClusteredUniformsRebarToken());
+			getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(
 				cmdb, 0, 1, ClusteredObjectType::kGlobalIlluminationProbe);
-			bindStorage(cmdb, 0, 2, m_r->getClusterBinning().getClustersRebarToken());
+			bindStorage(cmdb, 0, 2, getRenderer().getClusterBinning().getClustersRebarToken());
 
-			cmdb->bindSampler(0, 3, m_r->getSamplers().m_trilinearClamp);
-			rgraphCtx.bindColorTexture(0, 4, m_r->getGBuffer().getColorRt(2));
+			cmdb->bindSampler(0, 3, getRenderer().getSamplers().m_trilinearClamp);
+			rgraphCtx.bindColorTexture(0, 4, getRenderer().getGBuffer().getColorRt(2));
 
 			TextureSubresourceInfo hizSubresource;
 			hizSubresource.m_mipmapCount = 1;
-			rgraphCtx.bindTexture(0, 5, m_r->getDepthDownscale().getHiZRt(), hizSubresource);
-			rgraphCtx.bindColorTexture(0, 6, m_r->getDownscaleBlur().getRt());
+			rgraphCtx.bindTexture(0, 5, getRenderer().getDepthDownscale().getHiZRt(), hizSubresource);
+			rgraphCtx.bindColorTexture(0, 6, getRenderer().getDownscaleBlur().getRt());
 			rgraphCtx.bindColorTexture(0, 7, m_runCtx.m_mainRtHandles[kRead]);
-			rgraphCtx.bindColorTexture(0, 8, m_r->getMotionVectors().getMotionVectorsRt());
-			rgraphCtx.bindColorTexture(0, 9, m_r->getMotionVectors().getHistoryLengthRt());
+			rgraphCtx.bindColorTexture(0, 8, getRenderer().getMotionVectors().getMotionVectorsRt());
+			rgraphCtx.bindColorTexture(0, 9, getRenderer().getMotionVectors().getHistoryLengthRt());
 
 			if(ConfigSet::getSingleton().getRPreferCompute())
 			{
@@ -293,7 +291,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 
 			// Bind uniforms
 			IndirectDiffuseUniforms unis;
-			unis.m_viewportSize = m_r->getInternalResolution() / 2u;
+			unis.m_viewportSize = getRenderer().getInternalResolution() / 2u;
 			unis.m_viewportSizef = Vec2(unis.m_viewportSize);
 			const Mat4& pmat = ctx.m_matrices.m_projection;
 			unis.m_projectionMat = Vec4(pmat(0, 0), pmat(1, 1), pmat(2, 2), pmat(2, 3));
@@ -352,18 +350,18 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 
 		TextureSubresourceInfo hizSubresource;
 		hizSubresource.m_mipmapCount = 1;
-		prpass->newTextureDependency(m_r->getDepthDownscale().getHiZRt(), readUsage, hizSubresource);
+		prpass->newTextureDependency(getRenderer().getDepthDownscale().getHiZRt(), readUsage, hizSubresource);
 		prpass->newTextureDependency(m_runCtx.m_mainRtHandles[!readIdx], writeUsage);
 
 		prpass->setWork([this, &ctx, dir, readIdx](RenderPassWorkContext& rgraphCtx) {
 			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 			cmdb->bindShaderProgram(m_denoise.m_grProgs[dir]);
 
-			cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
+			cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp);
 			rgraphCtx.bindColorTexture(0, 1, m_runCtx.m_mainRtHandles[readIdx]);
 			TextureSubresourceInfo hizSubresource;
 			hizSubresource.m_mipmapCount = 1;
-			rgraphCtx.bindTexture(0, 2, m_r->getDepthDownscale().getHiZRt(), hizSubresource);
+			rgraphCtx.bindTexture(0, 2, getRenderer().getDepthDownscale().getHiZRt(), hizSubresource);
 
 			if(ConfigSet::getSingleton().getRPreferCompute())
 			{
@@ -372,7 +370,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 
 			IndirectDiffuseDenoiseUniforms unis;
 			unis.m_invertedViewProjectionJitterMat = ctx.m_matrices.m_invertedViewProjectionJitter;
-			unis.m_viewportSize = m_r->getInternalResolution() / 2u;
+			unis.m_viewportSize = getRenderer().getInternalResolution() / 2u;
 			unis.m_viewportSizef = Vec2(unis.m_viewportSize);
 			unis.m_sampleCountDiv2 = F32(ConfigSet::getSingleton().getRIndirectDiffuseDenoiseSampleCount());
 			unis.m_sampleCountDiv2 = max(1.0f, std::round(unis.m_sampleCountDiv2 / 2.0f));

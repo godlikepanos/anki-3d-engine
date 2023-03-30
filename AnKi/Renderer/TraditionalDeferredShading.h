@@ -46,10 +46,6 @@ public:
 class TraditionalDeferredLightShading : public RendererObject
 {
 public:
-	TraditionalDeferredLightShading(Renderer* r);
-
-	~TraditionalDeferredLightShading();
-
 	Error init();
 
 	/// Run the light shading. It will iterate over the lights and draw them. It doesn't bind anything related to

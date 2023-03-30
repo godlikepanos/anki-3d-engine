@@ -80,26 +80,16 @@ static Vec2 generateJitter(U32 frame)
 }
 
 Renderer::Renderer()
-	: m_sceneDrawer(this)
 {
 }
 
 Renderer::~Renderer()
 {
-	for(DebugRtInfo& info : m_debugRts)
-	{
-		info.m_rtName.destroy(getMemoryPool());
-	}
-	m_debugRts.destroy(getMemoryPool());
-	m_currentDebugRtName.destroy(getMemoryPool());
 }
 
-Error Renderer::init(const RendererExternalSubsystems& subsystems, HeapMemoryPool* pool, UVec2 swapchainSize)
+Error Renderer::init(UVec2 swapchainSize)
 {
 	ANKI_TRACE_SCOPED_EVENT(RInit);
-
-	m_subsystems = subsystems;
-	m_pool = pool;
 
 	const Error err = initInternal(swapchainSize);
 	if(err)
@@ -164,97 +154,99 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 	}
 
 	// Init the stages. Careful with the order!!!!!!!!!!
-	m_genericCompute.reset(newInstance<GenericCompute>(*m_pool, this));
+	m_genericCompute.reset(newInstance<GenericCompute>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_genericCompute->init());
 
-	m_volumetricLightingAccumulation.reset(newInstance<VolumetricLightingAccumulation>(*m_pool, this));
+	m_volumetricLightingAccumulation.reset(
+		newInstance<VolumetricLightingAccumulation>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_volumetricLightingAccumulation->init());
 
-	m_indirectDiffuseProbes.reset(newInstance<IndirectDiffuseProbes>(*m_pool, this));
+	m_indirectDiffuseProbes.reset(newInstance<IndirectDiffuseProbes>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_indirectDiffuseProbes->init());
 
-	m_probeReflections.reset(newInstance<ProbeReflections>(*m_pool, this));
+	m_probeReflections.reset(newInstance<ProbeReflections>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_probeReflections->init());
 
-	m_vrsSriGeneration.reset(newInstance<VrsSriGeneration>(*m_pool, this));
+	m_vrsSriGeneration.reset(newInstance<VrsSriGeneration>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_vrsSriGeneration->init());
 
-	m_scale.reset(newInstance<Scale>(*m_pool, this));
+	m_scale.reset(newInstance<Scale>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_scale->init());
 
-	m_gbuffer.reset(newInstance<GBuffer>(*m_pool, this));
+	m_gbuffer.reset(newInstance<GBuffer>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_gbuffer->init());
 
-	m_gbufferPost.reset(newInstance<GBufferPost>(*m_pool, this));
+	m_gbufferPost.reset(newInstance<GBufferPost>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_gbufferPost->init());
 
-	m_shadowMapping.reset(newInstance<ShadowMapping>(*m_pool, this));
+	m_shadowMapping.reset(newInstance<ShadowMapping>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_shadowMapping->init());
 
-	m_volumetricFog.reset(newInstance<VolumetricFog>(*m_pool, this));
+	m_volumetricFog.reset(newInstance<VolumetricFog>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_volumetricFog->init());
 
-	m_lightShading.reset(newInstance<LightShading>(*m_pool, this));
+	m_lightShading.reset(newInstance<LightShading>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_lightShading->init());
 
-	m_depthDownscale.reset(newInstance<DepthDownscale>(*m_pool, this));
+	m_depthDownscale.reset(newInstance<DepthDownscale>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_depthDownscale->init());
 
-	m_forwardShading.reset(newInstance<ForwardShading>(*m_pool, this));
+	m_forwardShading.reset(newInstance<ForwardShading>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_forwardShading->init());
 
-	m_lensFlare.reset(newInstance<LensFlare>(*m_pool, this));
+	m_lensFlare.reset(newInstance<LensFlare>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_lensFlare->init());
 
-	m_downscaleBlur.reset(newInstance<DownscaleBlur>(*m_pool, this));
+	m_downscaleBlur.reset(newInstance<DownscaleBlur>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_downscaleBlur->init());
 
-	m_indirectSpecular.reset(newInstance<IndirectSpecular>(*m_pool, this));
+	m_indirectSpecular.reset(newInstance<IndirectSpecular>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_indirectSpecular->init());
 
-	m_tonemapping.reset(newInstance<Tonemapping>(*m_pool, this));
+	m_tonemapping.reset(newInstance<Tonemapping>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_tonemapping->init());
 
-	m_temporalAA.reset(newInstance<TemporalAA>(*m_pool, this));
+	m_temporalAA.reset(newInstance<TemporalAA>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_temporalAA->init());
 
-	m_bloom.reset(newInstance<Bloom>(*m_pool, this));
+	m_bloom.reset(newInstance<Bloom>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_bloom->init());
 
-	m_finalComposite.reset(newInstance<FinalComposite>(*m_pool, this));
+	m_finalComposite.reset(newInstance<FinalComposite>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_finalComposite->init());
 
-	m_dbg.reset(newInstance<Dbg>(*m_pool, this));
+	m_dbg.reset(newInstance<Dbg>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_dbg->init());
 
-	m_uiStage.reset(newInstance<UiStage>(*m_pool, this));
+	m_uiStage.reset(newInstance<UiStage>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_uiStage->init());
 
-	m_indirectDiffuse.reset(newInstance<IndirectDiffuse>(*m_pool, this));
+	m_indirectDiffuse.reset(newInstance<IndirectDiffuse>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_indirectDiffuse->init());
 
 	if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled
 	   && ConfigSet::getSingleton().getSceneRayTracedShadows())
 	{
-		m_accelerationStructureBuilder.reset(newInstance<AccelerationStructureBuilder>(*m_pool, this));
+		m_accelerationStructureBuilder.reset(
+			newInstance<AccelerationStructureBuilder>(RendererMemoryPool::getSingleton()));
 		ANKI_CHECK(m_accelerationStructureBuilder->init());
 
-		m_rtShadows.reset(newInstance<RtShadows>(*m_pool, this));
+		m_rtShadows.reset(newInstance<RtShadows>(RendererMemoryPool::getSingleton()));
 		ANKI_CHECK(m_rtShadows->init());
 	}
 	else
 	{
-		m_shadowmapsResolve.reset(newInstance<ShadowmapsResolve>(*m_pool, this));
+		m_shadowmapsResolve.reset(newInstance<ShadowmapsResolve>(RendererMemoryPool::getSingleton()));
 		ANKI_CHECK(m_shadowmapsResolve->init());
 	}
 
-	m_motionVectors.reset(newInstance<MotionVectors>(*m_pool, this));
+	m_motionVectors.reset(newInstance<MotionVectors>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_motionVectors->init());
 
-	m_clusterBinning.reset(newInstance<ClusterBinning>(*m_pool, this));
+	m_clusterBinning.reset(newInstance<ClusterBinning>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_clusterBinning->init());
 
-	m_packVisibleClustererObjects.reset(newInstance<PackVisibleClusteredObjects>(*m_pool, this));
+	m_packVisibleClustererObjects.reset(newInstance<PackVisibleClusteredObjects>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_packVisibleClustererObjects->init());
 
 	// Init samplers
@@ -624,9 +616,9 @@ void Renderer::registerDebugRenderTarget(RendererObject* obj, CString rtName)
 	ANKI_ASSERT(obj);
 	DebugRtInfo inf;
 	inf.m_obj = obj;
-	inf.m_rtName.create(getMemoryPool(), rtName);
+	inf.m_rtName = rtName;
 
-	m_debugRts.emplaceBack(getMemoryPool(), std::move(inf));
+	m_debugRts.emplaceBack(std::move(inf));
 }
 
 Bool Renderer::getCurrentDebugRenderTarget(Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
@@ -653,11 +645,11 @@ Bool Renderer::getCurrentDebugRenderTarget(Array<RenderTargetHandle, kMaxDebugRe
 
 void Renderer::setCurrentDebugRenderTarget(CString rtName)
 {
-	m_currentDebugRtName.destroy(getMemoryPool());
+	m_currentDebugRtName.destroy();
 
 	if(!rtName.isEmpty() && rtName.getLength() > 0)
 	{
-		m_currentDebugRtName.create(getMemoryPool(), rtName);
+		m_currentDebugRtName = rtName;
 	}
 }
 

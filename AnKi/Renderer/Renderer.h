@@ -67,7 +67,7 @@ public:
 	}
 
 	/// Init the renderer.
-	Error init(const RendererExternalSubsystems& subsystems, HeapMemoryPool* pool, UVec2 swapchainSize);
+	Error init(UVec2 swapchainSize);
 
 	/// This function does all the rendering stages and produces a final result.
 	Error populateRenderGraph(RenderingContext& ctx);
@@ -126,16 +126,6 @@ public:
 		return m_samplers;
 	}
 
-	RendererExternalSubsystems& getExternalSubsystems()
-	{
-		return m_subsystems;
-	}
-
-	HeapMemoryPool& getMemoryPool() const
-	{
-		return *m_pool;
-	}
-
 	U32 getTileSize() const
 	{
 		return m_tileSize;
@@ -180,12 +170,9 @@ public:
 	/// @}
 
 private:
-	RendererExternalSubsystems m_subsystems;
-	mutable HeapMemoryPool* m_pool = nullptr;
-
 	/// @name Rendering stages
 	/// @{
-#define ANKI_RENDERER_OBJECT_DEF(a, b) UniquePtr<a> m_##b;
+#define ANKI_RENDERER_OBJECT_DEF(a, b) UniquePtr<a, SingletonMemoryPoolDeleter<RendererMemoryPool>> m_##b;
 #include <AnKi/Renderer/RendererObject.defs.h>
 #undef ANKI_RENDERER_OBJECT_DEF
 	/// @}
@@ -221,10 +208,10 @@ private:
 	{
 	public:
 		RendererObject* m_obj;
-		String m_rtName;
+		RendererString m_rtName;
 	};
-	DynamicArray<DebugRtInfo> m_debugRts;
-	String m_currentDebugRtName;
+	RendererDynamicArray<DebugRtInfo> m_debugRts;
+	RendererString m_currentDebugRtName;
 
 	class
 	{

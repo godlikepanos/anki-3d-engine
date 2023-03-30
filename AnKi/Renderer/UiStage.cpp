@@ -12,21 +12,12 @@
 
 namespace anki {
 
-UiStage::UiStage(Renderer* r)
-	: RendererObject(r)
-{
-}
-
-UiStage::~UiStage()
-{
-}
-
 Error UiStage::init()
 {
 	ANKI_CHECK(
 		UiManager::getSingleton().newInstance(m_font, "EngineAssets/UbuntuRegular.ttf", Array<U32, 3>{12, 16, 20}));
-	ANKI_CHECK(UiManager::getSingleton().newInstance(m_canvas, m_font, 12, m_r->getPostProcessResolution().x(),
-													 m_r->getPostProcessResolution().y()));
+	ANKI_CHECK(UiManager::getSingleton().newInstance(m_canvas, m_font, 12, getRenderer().getPostProcessResolution().x(),
+													 getRenderer().getPostProcessResolution().y()));
 
 	return Error::kNone;
 }

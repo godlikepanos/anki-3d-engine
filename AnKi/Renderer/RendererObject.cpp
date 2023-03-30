@@ -5,24 +5,15 @@
 
 #include <AnKi/Renderer/RendererObject.h>
 #include <AnKi/Renderer/Renderer.h>
+#include <AnKi/Renderer/MainRenderer.h>
 #include <AnKi/Util/Enum.h>
 #include <AnKi/Util/ThreadHive.h>
 
 namespace anki {
 
-RendererExternalSubsystems& RendererObject::getExternalSubsystems()
+Renderer& RendererObject::getRenderer()
 {
-	return m_r->getExternalSubsystems();
-}
-
-const RendererExternalSubsystems& RendererObject::getExternalSubsystems() const
-{
-	return m_r->getExternalSubsystems();
-}
-
-HeapMemoryPool& RendererObject::getMemoryPool() const
-{
-	return m_r->getMemoryPool();
+	return MainRenderer::getSingleton().getOffscreenRenderer();
 }
 
 void* RendererObject::allocateRebarStagingMemory(PtrSize size, RebarGpuMemoryToken& token)
@@ -39,7 +30,8 @@ void RendererObject::bindUniforms(CommandBufferPtr& cmdb, U32 set, U32 binding, 
 	}
 	else
 	{
-		cmdb->bindUniformBuffer(set, binding, m_r->getDummyBuffer(), 0, m_r->getDummyBuffer()->getSize());
+		cmdb->bindUniformBuffer(set, binding, getRenderer().getDummyBuffer(), 0,
+								getRenderer().getDummyBuffer()->getSize());
 	}
 }
 
@@ -52,7 +44,8 @@ void RendererObject::bindStorage(CommandBufferPtr& cmdb, U32 set, U32 binding, c
 	}
 	else
 	{
-		cmdb->bindStorageBuffer(set, binding, m_r->getDummyBuffer(), 0, m_r->getDummyBuffer()->getSize());
+		cmdb->bindStorageBuffer(set, binding, getRenderer().getDummyBuffer(), 0,
+								getRenderer().getDummyBuffer()->getSize());
 	}
 }
 
@@ -74,7 +67,7 @@ U32 RendererObject::computeNumberOfSecondLevelCommandBuffers(U32 drawcallCount) 
 
 void RendererObject::registerDebugRenderTarget(CString rtName)
 {
-	m_r->registerDebugRenderTarget(this, rtName);
+	getRenderer().registerDebugRenderTarget(this, rtName);
 }
 
 } // end namespace anki

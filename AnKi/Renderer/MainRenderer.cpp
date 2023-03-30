@@ -26,11 +26,16 @@ MainRenderer::MainRenderer()
 MainRenderer::~MainRenderer()
 {
 	ANKI_R_LOGI("Destroying main renderer");
+
+	deleteInstance(RendererMemoryPool::getSingleton(), m_r);
+
+	RendererMemoryPool::freeSingleton();
 }
 
 Error MainRenderer::init(const MainRendererInitInfo& inf)
 {
-	m_pool.init(inf.m_allocCallback, inf.m_allocCallbackUserData, "MainRenderer");
+	RendererMemoryPool::allocateSingleton(inf.m_allocCallback, inf.m_allocCallbackUserData);
+
 	m_framePool.init(inf.m_allocCallback, inf.m_allocCallbackUserData, 10_MB, 1.0f);
 
 	// Init renderer and manipulate the width/height
@@ -40,8 +45,8 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 	ANKI_R_LOGI("Initializing main renderer. Swapchain resolution %ux%u", m_swapchainResolution.x(),
 				m_swapchainResolution.y());
 
-	m_r.reset(newInstance<Renderer>(m_pool));
-	ANKI_CHECK(m_r->init(inf, &m_pool, m_swapchainResolution));
+	m_r = newInstance<Renderer>(RendererMemoryPool::getSingleton());
+	ANKI_CHECK(m_r->init(m_swapchainResolution));
 
 	// Init other
 	if(!m_rDrawToDefaultFb)

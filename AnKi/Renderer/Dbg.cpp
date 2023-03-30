@@ -18,8 +18,7 @@
 
 namespace anki {
 
-Dbg::Dbg(Renderer* r)
-	: RendererObject(r)
+Dbg::Dbg()
 {
 }
 
@@ -32,8 +31,9 @@ Error Dbg::init()
 	ANKI_R_LOGV("Initializing DBG");
 
 	// RT descr
-	m_rtDescr = m_r->create2DRenderTargetDescription(m_r->getInternalResolution().x(), m_r->getInternalResolution().y(),
-													 Format::kR8G8B8A8_Unorm, "Dbg");
+	m_rtDescr = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x(),
+															  getRenderer().getInternalResolution().y(),
+															  Format::kR8G8B8A8_Unorm, "Dbg");
 	m_rtDescr.bake();
 
 	// Create FB descr
@@ -62,12 +62,13 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
 	// Set common state
-	cmdb->setViewport(0, 0, m_r->getInternalResolution().x(), m_r->getInternalResolution().y());
+	cmdb->setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 	cmdb->setDepthWrite(false);
 
-	cmdb->bindSampler(0, 1, m_r->getSamplers().m_nearestNearestClamp);
+	cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_nearestNearestClamp);
 
-	rgraphCtx.bindTexture(0, 2, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+	rgraphCtx.bindTexture(0, 2, getRenderer().getGBuffer().getDepthRt(),
+						  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
 	cmdb->setBlendFactors(0, BlendFactor::kSrcAlpha, BlendFactor::kOneMinusSrcAlpha);
 	cmdb->setDepthCompareOperation((m_depthTestOn) ? CompareOperation::kLess : CompareOperation::kAlways);
@@ -144,8 +145,8 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 
 			m_drawer.drawBillboardTextures(ctx.m_matrices.m_projection, ctx.m_matrices.m_view,
 										   ConstWeakArray<Vec3>(&tsl, 1), Vec4(1.0f), m_ditheredDepthTestOn,
-										   m_giProbeImage->getTextureView(), m_r->getSamplers().m_trilinearRepeatAniso,
-										   Vec2(0.75f), cmdb);
+										   m_giProbeImage->getTextureView(),
+										   getRenderer().getSamplers().m_trilinearRepeatAniso, Vec2(0.75f), cmdb);
 		}
 	}
 
@@ -159,7 +160,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 
 			m_drawer.drawBillboardTexture(ctx.m_matrices.m_projection, ctx.m_matrices.m_view, el.m_worldPosition,
 										  color.xyz1(), m_ditheredDepthTestOn, m_pointLightImage->getTextureView(),
-										  m_r->getSamplers().m_trilinearRepeatAniso, Vec2(0.75f), cmdb);
+										  getRenderer().getSamplers().m_trilinearRepeatAniso, Vec2(0.75f), cmdb);
 		}
 
 		for(const SpotLightQueueElement& el : ctx.m_renderQueue->m_spotLights)
@@ -170,7 +171,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 			m_drawer.drawBillboardTexture(ctx.m_matrices.m_projection, ctx.m_matrices.m_view,
 										  el.m_worldTransform.getTranslationPart().xyz(), color.xyz1(),
 										  m_ditheredDepthTestOn, m_spotLightImage->getTextureView(),
-										  m_r->getSamplers().m_trilinearRepeatAniso, Vec2(0.75f), cmdb);
+										  getRenderer().getSamplers().m_trilinearRepeatAniso, Vec2(0.75f), cmdb);
 		}
 	}
 
@@ -196,8 +197,8 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 			const Vec3 pos = el.m_obbCenter;
 			m_drawer.drawBillboardTextures(ctx.m_matrices.m_projection, ctx.m_matrices.m_view,
 										   ConstWeakArray<Vec3>(&pos, 1), Vec4(1.0f), m_ditheredDepthTestOn,
-										   m_decalImage->getTextureView(), m_r->getSamplers().m_trilinearRepeatAniso,
-										   Vec2(0.75f), cmdb);
+										   m_decalImage->getTextureView(),
+										   getRenderer().getSamplers().m_trilinearRepeatAniso, Vec2(0.75f), cmdb);
 		}
 	}
 
@@ -223,7 +224,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 			m_drawer.drawBillboardTextures(ctx.m_matrices.m_projection, ctx.m_matrices.m_view,
 										   ConstWeakArray<Vec3>(&el.m_worldPosition, 1), Vec4(1.0f),
 										   m_ditheredDepthTestOn, m_reflectionImage->getTextureView(),
-										   m_r->getSamplers().m_trilinearRepeatAniso, Vec2(0.75f), cmdb);
+										   getRenderer().getSamplers().m_trilinearRepeatAniso, Vec2(0.75f), cmdb);
 		}
 	}
 
@@ -258,10 +259,10 @@ void Dbg::populateRenderGraph(RenderingContext& ctx)
 					 run(rgraphCtx, ctx);
 				 });
 
-	pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_rt}, m_r->getGBuffer().getDepthRt());
+	pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_rt}, getRenderer().getGBuffer().getDepthRt());
 
 	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite);
-	pass.newTextureDependency(m_r->getGBuffer().getDepthRt(),
+	pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(),
 							  TextureUsageBit::kSampledFragment | TextureUsageBit::kFramebufferRead);
 }
 

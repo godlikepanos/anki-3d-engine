@@ -19,15 +19,12 @@ namespace anki {
 class RtShadows : public RendererObject
 {
 public:
-	RtShadows(Renderer* r)
-		: RendererObject(r)
+	RtShadows()
 	{
 		registerDebugRenderTarget("RtShadows");
 		registerDebugRenderTarget("RtShadows1");
 		registerDebugRenderTarget("RtShadows2");
 	}
-
-	~RtShadows();
 
 	Error init();
 

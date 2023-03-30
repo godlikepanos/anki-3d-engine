@@ -89,7 +89,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	SceneGraph& scene = SceneGraph::getSingleton();
 	Input& in = Input::getSingleton();
-	Renderer& renderer = getMainRenderer().getOffscreenRenderer();
+	Renderer& renderer = MainRenderer::getSingleton().getOffscreenRenderer();
 
 	if(in.getKey(KeyCode::kEscape))
 	{

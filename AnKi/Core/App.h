@@ -13,7 +13,6 @@
 namespace anki {
 
 // Forward
-class MainRenderer;
 class UiQueueElement;
 class RenderQueue;
 
@@ -37,11 +36,6 @@ public:
 		return m_cacheDir;
 	}
 
-	HeapMemoryPool& getMemoryPool()
-	{
-		return m_mainPool;
-	}
-
 	/// Run the main loop.
 	Error mainLoop();
 
@@ -50,11 +44,6 @@ public:
 	{
 		// Do nothing
 		return Error::kNone;
-	}
-
-	MainRenderer& getMainRenderer()
-	{
-		return *m_renderer;
 	}
 
 	void setDisplayDeveloperConsole(Bool display)
@@ -68,11 +57,6 @@ public:
 	}
 
 private:
-	HeapMemoryPool m_mainPool; // TODO glob: rm
-
-	// Sybsystems
-	MainRenderer* m_renderer = nullptr;
-
 	// Misc
 	UiImmediateModeBuilderPtr m_statsUi;
 	UiImmediateModeBuilderPtr m_console;
@@ -102,7 +86,7 @@ private:
 	void cleanup();
 
 	/// Inject a new UI element in the render queue for displaying various stuff.
-	void injectUiElements(DynamicArrayRaii<UiQueueElement>& elements, RenderQueue& rqueue);
+	void injectUiElements(CoreDynamicArray<UiQueueElement>& elements, RenderQueue& rqueue);
 
 	void setSignalHandlers();
 };

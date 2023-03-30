@@ -16,10 +16,6 @@ namespace anki {
 class TemporalAA : public RendererObject
 {
 public:
-	TemporalAA(Renderer* r);
-
-	~TemporalAA();
-
 	Error init();
 
 	void populateRenderGraph(RenderingContext& ctx);

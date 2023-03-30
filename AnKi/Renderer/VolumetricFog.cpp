@@ -19,11 +19,11 @@ Error VolumetricFog::init()
 	// Misc
 	const F32 qualityXY = ConfigSet::getSingleton().getRVolumetricLightingAccumulationQualityXY();
 	const F32 qualityZ = ConfigSet::getSingleton().getRVolumetricLightingAccumulationQualityZ();
-	m_finalZSplit =
-		min(m_r->getZSplitCount() - 1, ConfigSet::getSingleton().getRVolumetricLightingAccumulationFinalZSplit());
+	m_finalZSplit = min(getRenderer().getZSplitCount() - 1,
+						ConfigSet::getSingleton().getRVolumetricLightingAccumulationFinalZSplit());
 
-	m_volumeSize[0] = U32(F32(m_r->getTileCounts().x()) * qualityXY);
-	m_volumeSize[1] = U32(F32(m_r->getTileCounts().y()) * qualityXY);
+	m_volumeSize[0] = U32(F32(getRenderer().getTileCounts().x()) * qualityXY);
+	m_volumeSize[1] = U32(F32(getRenderer().getTileCounts().y()) * qualityXY);
 	m_volumeSize[2] = U32(F32(m_finalZSplit + 1) * qualityZ);
 
 	ANKI_R_LOGV("Initializing volumetric fog. Resolution %ux%ux%u", m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]);
@@ -40,8 +40,8 @@ Error VolumetricFog::init()
 	m_workgroupSize[1] = variant->getWorkgroupSizes()[1];
 
 	// RT descr
-	m_rtDescr =
-		m_r->create2DRenderTargetDescription(m_volumeSize[0], m_volumeSize[1], Format::kR16G16B16A16_Sfloat, "Fog");
+	m_rtDescr = getRenderer().create2DRenderTargetDescription(m_volumeSize[0], m_volumeSize[1],
+															  Format::kR16G16B16A16_Sfloat, "Fog");
 	m_rtDescr.m_depth = m_volumeSize[2];
 	m_rtDescr.m_type = TextureType::k3D;
 	m_rtDescr.bake();
@@ -58,15 +58,16 @@ void VolumetricFog::populateRenderGraph(RenderingContext& ctx)
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Vol fog");
 
 	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kImageComputeWrite);
-	pass.newTextureDependency(m_r->getVolumetricLightingAccumulation().getRt(), TextureUsageBit::kSampledCompute);
+	pass.newTextureDependency(getRenderer().getVolumetricLightingAccumulation().getRt(),
+							  TextureUsageBit::kSampledCompute);
 
 	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) -> void {
 		CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
 		cmdb->bindShaderProgram(m_grProg);
 
-		cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
-		rgraphCtx.bindColorTexture(0, 1, m_r->getVolumetricLightingAccumulation().getRt());
+		cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp);
+		rgraphCtx.bindColorTexture(0, 1, getRenderer().getVolumetricLightingAccumulation().getRt());
 
 		rgraphCtx.bindImage(0, 2, m_runCtx.m_rt, TextureSubresourceInfo());
 
@@ -77,7 +78,7 @@ void VolumetricFog::populateRenderGraph(RenderingContext& ctx)
 		regs.m_fogAbsorptionCoeff = el.m_fog.m_absorptionCoeff;
 		regs.m_near = ctx.m_renderQueue->m_cameraNear;
 		regs.m_far = ctx.m_renderQueue->m_cameraFar;
-		regs.m_zSplitCountf = F32(m_r->getZSplitCount());
+		regs.m_zSplitCountf = F32(getRenderer().getZSplitCount());
 		regs.m_volumeSize = UVec3(m_volumeSize);
 		regs.m_maxZSplitsToProcessf = F32(m_finalZSplit + 1);
 

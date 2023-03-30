@@ -16,13 +16,10 @@ namespace anki {
 class IndirectSpecular : public RendererObject
 {
 public:
-	IndirectSpecular(Renderer* r)
-		: RendererObject(r)
+	IndirectSpecular()
 	{
 		registerDebugRenderTarget("SSR");
 	}
-
-	~IndirectSpecular();
 
 	Error init();
 

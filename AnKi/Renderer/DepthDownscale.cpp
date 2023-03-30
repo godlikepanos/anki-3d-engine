@@ -33,14 +33,12 @@ DepthDownscale::~DepthDownscale()
 	{
 		m_clientBuffer->unmap();
 	}
-
-	m_fbDescrs.destroy(getMemoryPool());
 }
 
 Error DepthDownscale::initInternal()
 {
-	const U32 width = m_r->getInternalResolution().x() >> 1;
-	const U32 height = m_r->getInternalResolution().y() >> 1;
+	const U32 width = getRenderer().getInternalResolution().x() >> 1;
+	const U32 height = getRenderer().getInternalResolution().y() >> 1;
 
 	m_mipCount = computeMaxMipmapCount2d(width, height, hHierachicalZMinHeight);
 
@@ -65,9 +63,10 @@ Error DepthDownscale::initInternal()
 			usage |= TextureUsageBit::kFramebufferWrite;
 		}
 
-		TextureInitInfo texInit = m_r->create2DRenderTargetInitInfo(width, height, Format::kR32_Sfloat, usage, "HiZ");
+		TextureInitInfo texInit =
+			getRenderer().create2DRenderTargetInitInfo(width, height, Format::kR32_Sfloat, usage, "HiZ");
 		texInit.m_mipmapCount = U8(m_mipCount);
-		m_hizTex = m_r->createAndClearRenderTarget(texInit, TextureUsageBit::kSampledFragment);
+		m_hizTex = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kSampledFragment);
 	}
 
 	// Progs
@@ -140,7 +139,7 @@ Error DepthDownscale::initInternal()
 
 	if(!preferCompute)
 	{
-		m_fbDescrs.create(getMemoryPool(), m_mipCount);
+		m_fbDescrs.create(m_mipCount);
 		for(U32 mip = 0; mip < m_mipCount; ++mip)
 		{
 			FramebufferDescription& fbDescr = m_fbDescrs[mip];
@@ -190,7 +189,7 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("HiZ");
 
-		pass.newTextureDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::kSampledCompute,
+		pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSampledCompute,
 								  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
 		for(U32 mip = 0; mip < m_mipCount; ++mip)
@@ -217,7 +216,7 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 
 			if(mip == 0)
 			{
-				pass.newTextureDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::kSampledFragment,
+				pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSampledFragment,
 										  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 			}
 			else
@@ -259,14 +258,15 @@ void DepthDownscale::runCompute(RenderPassWorkContext& rgraphCtx)
 	varAU2(dispatchThreadGroupCountXY);
 	varAU2(workGroupOffset); // needed if Left and Top are not 0,0
 	varAU2(numWorkGroupsAndMips);
-	varAU4(rectInfo) = initAU4(0, 0, m_r->getInternalResolution().x(), m_r->getInternalResolution().y());
+	varAU4(rectInfo) =
+		initAU4(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 	SpdSetup(dispatchThreadGroupCountXY, workGroupOffset, numWorkGroupsAndMips, rectInfo);
 	SpdSetup(dispatchThreadGroupCountXY, workGroupOffset, numWorkGroupsAndMips, rectInfo, m_mipCount);
 
 	DepthDownscaleUniforms pc;
 	pc.m_workgroupCount = numWorkGroupsAndMips[0];
 	pc.m_mipmapCount = numWorkGroupsAndMips[1];
-	pc.m_srcTexSizeOverOne = 1.0f / Vec2(m_r->getInternalResolution());
+	pc.m_srcTexSizeOverOne = 1.0f / Vec2(getRenderer().getInternalResolution());
 	pc.m_lastMipWidth = m_lastMipSize.x();
 
 	cmdb->setPushConstants(&pc, sizeof(pc));
@@ -304,8 +304,9 @@ void DepthDownscale::runCompute(RenderPassWorkContext& rgraphCtx)
 	cmdb->bindStorageBuffer(0, 2, m_counterBuffer, 0, kMaxPtrSize);
 	cmdb->bindStorageBuffer(0, 3, m_clientBuffer, 0, kMaxPtrSize);
 
-	cmdb->bindSampler(0, 4, m_r->getSamplers().m_trilinearClamp);
-	rgraphCtx.bindTexture(0, 5, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+	cmdb->bindSampler(0, 4, getRenderer().getSamplers().m_trilinearClamp);
+	rgraphCtx.bindTexture(0, 5, getRenderer().getGBuffer().getDepthRt(),
+						  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
 	cmdb->dispatchCompute(dispatchThreadGroupCountXY[0], dispatchThreadGroupCountXY[1], 1);
 }
@@ -316,10 +317,10 @@ void DepthDownscale::runGraphics(U32 mip, RenderPassWorkContext& rgraphCtx)
 
 	if(mip == 0)
 	{
-		rgraphCtx.bindTexture(0, 0, m_r->getGBuffer().getDepthRt(),
+		rgraphCtx.bindTexture(0, 0, getRenderer().getGBuffer().getDepthRt(),
 							  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
-		cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);
+		cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp);
 
 		cmdb->bindShaderProgram(m_firstMipGrProg);
 	}
@@ -335,7 +336,7 @@ void DepthDownscale::runGraphics(U32 mip, RenderPassWorkContext& rgraphCtx)
 		}
 		else
 		{
-			cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);
+			cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp);
 		}
 
 		cmdb->bindShaderProgram(m_grProg);
@@ -346,7 +347,7 @@ void DepthDownscale::runGraphics(U32 mip, RenderPassWorkContext& rgraphCtx)
 	const UVec4 pc((mip != m_mipCount - 1) ? 0 : m_lastMipSize.x());
 	cmdb->setPushConstants(&pc, sizeof(pc));
 
-	const UVec2 size = (m_r->getInternalResolution() / 2) >> mip;
+	const UVec2 size = (getRenderer().getInternalResolution() / 2) >> mip;
 	cmdb->setViewport(0, 0, size.x(), size.y());
 	cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
 }

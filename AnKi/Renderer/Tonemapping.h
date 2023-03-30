@@ -16,11 +16,6 @@ namespace anki {
 class Tonemapping : public RendererObject
 {
 public:
-	Tonemapping(Renderer* r)
-		: RendererObject(r)
-	{
-	}
-
 	Error init();
 
 	void importRenderTargets(RenderingContext& ctx);

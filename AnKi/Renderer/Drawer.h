@@ -13,6 +13,7 @@ namespace anki {
 
 // Forward
 class Renderer;
+class RenderableQueueElement;
 
 /// @addtogroup renderer
 /// @{
@@ -36,10 +37,7 @@ class RenderableDrawer
 	friend class RenderTask;
 
 public:
-	RenderableDrawer(Renderer* r)
-		: m_r(r)
-	{
-	}
+	RenderableDrawer() = default;
 
 	~RenderableDrawer();
 
@@ -48,8 +46,6 @@ public:
 
 private:
 	class Context;
-
-	Renderer* m_r;
 
 	void flushDrawcall(Context& ctx);
 

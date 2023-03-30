@@ -10,10 +10,6 @@
 
 namespace anki {
 
-GenericCompute::~GenericCompute()
-{
-}
-
 void GenericCompute::populateRenderGraph(RenderingContext& ctx)
 {
 	if(ctx.m_renderQueue->m_genericGpuComputeJobs.getSize() == 0)
@@ -27,7 +23,7 @@ void GenericCompute::populateRenderGraph(RenderingContext& ctx)
 		run(ctx, rgraphCtx);
 	});
 
-	pass.newTextureDependency(m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::kSampledCompute);
+	pass.newTextureDependency(getRenderer().getDepthDownscale().getHiZRt(), TextureUsageBit::kSampledCompute);
 }
 
 void GenericCompute::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
@@ -44,7 +40,7 @@ void GenericCompute::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 	elementCtx.m_cameraTransform = ctx.m_matrices.m_cameraTransform;
 
 	// Bind some state
-	rgraphCtx.bindColorTexture(0, 0, m_r->getDepthDownscale().getHiZRt());
+	rgraphCtx.bindColorTexture(0, 0, getRenderer().getDepthDownscale().getHiZRt());
 
 	for(const GenericGpuComputeJobQueueElement& element : ctx.m_renderQueue->m_genericGpuComputeJobs)
 	{

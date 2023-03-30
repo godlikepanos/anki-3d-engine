@@ -18,7 +18,7 @@ namespace anki {
 class Bloom : public RendererObject
 {
 public:
-	Bloom(Renderer* r);
+	Bloom();
 
 	~Bloom();
 

@@ -18,10 +18,7 @@ namespace anki {
 class DepthDownscale : public RendererObject
 {
 public:
-	DepthDownscale(Renderer* r)
-		: RendererObject(r)
-	{
-	}
+	DepthDownscale() = default;
 
 	~DepthDownscale();
 
@@ -69,7 +66,7 @@ private:
 
 	SamplerPtr m_reductionSampler;
 
-	DynamicArray<FramebufferDescription> m_fbDescrs;
+	RendererDynamicArray<FramebufferDescription> m_fbDescrs;
 
 	UVec2 m_lastMipSize;
 	U32 m_mipCount = 0;

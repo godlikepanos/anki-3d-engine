@@ -16,16 +16,6 @@
 
 namespace anki {
 
-ProbeReflections::ProbeReflections(Renderer* r)
-	: RendererObject(r)
-	, m_lightShading(r)
-{
-}
-
-ProbeReflections::~ProbeReflections()
-{
-}
-
 Error ProbeReflections::init()
 {
 	const Error err = initInternal();
@@ -66,7 +56,7 @@ Error ProbeReflections::initGBuffer()
 
 	// Create RT descriptions
 	{
-		RenderTargetDescription texinit = m_r->create2DRenderTargetDescription(
+		RenderTargetDescription texinit = getRenderer().create2DRenderTargetDescription(
 			m_gbuffer.m_tileSize * 6, m_gbuffer.m_tileSize, kGBufferColorRenderTargetFormats[0], "CubeRefl GBuffer");
 
 		// Create color RT descriptions
@@ -74,13 +64,12 @@ Error ProbeReflections::initGBuffer()
 		{
 			texinit.m_format = kGBufferColorRenderTargetFormats[i];
 			m_gbuffer.m_colorRtDescrs[i] = texinit;
-			m_gbuffer.m_colorRtDescrs[i].setName(
-				StringRaii(&getMemoryPool()).sprintf("CubeRefl GBuff Col #%u", i).toCString());
+			m_gbuffer.m_colorRtDescrs[i].setName(RendererString().sprintf("CubeRefl GBuff Col #%u", i).toCString());
 			m_gbuffer.m_colorRtDescrs[i].bake();
 		}
 
 		// Create depth RT
-		texinit.m_format = m_r->getDepthNoStencilFormat();
+		texinit.m_format = getRenderer().getDepthNoStencilFormat();
 		texinit.setName("CubeRefl GBuff Depth");
 		m_gbuffer.m_depthRtDescr = texinit;
 		m_gbuffer.m_depthRtDescr.bake();
@@ -179,8 +168,8 @@ Error ProbeReflections::initShadowMapping()
 	ANKI_ASSERT(resolution > 8);
 
 	// RT descr
-	m_shadowMapping.m_rtDescr =
-		m_r->create2DRenderTargetDescription(resolution * 6, resolution, m_r->getDepthNoStencilFormat(), "CubeRefl SM");
+	m_shadowMapping.m_rtDescr = getRenderer().create2DRenderTargetDescription(
+		resolution * 6, resolution, getRenderer().getDepthNoStencilFormat(), "CubeRefl SM");
 	m_shadowMapping.m_rtDescr.bake();
 
 	// FB descr
@@ -228,10 +217,10 @@ void ProbeReflections::runGBuffer(RenderPassWorkContext& rgraphCtx)
 			args.m_cameraTransform = rqueue.m_cameraTransform;
 			args.m_viewProjectionMatrix = rqueue.m_viewProjectionMatrix;
 			args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care about prev mats
-			args.m_sampler = m_r->getSamplers().m_trilinearRepeat;
+			args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat;
 
-			m_r->getSceneDrawer().drawRange(args, rqueue.m_renderables.getBegin() + localStart,
-											rqueue.m_renderables.getBegin() + localEnd, cmdb);
+			getRenderer().getSceneDrawer().drawRange(args, rqueue.m_renderables.getBegin() + localStart,
+													 rqueue.m_renderables.getBegin() + localEnd, cmdb);
 		}
 	}
 
@@ -307,7 +296,7 @@ void ProbeReflections::runIrradiance(RenderPassWorkContext& rgraphCtx)
 	cmdb->bindShaderProgram(m_irradiance.m_grProg);
 
 	// Bind stuff
-	cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
+	cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp);
 
 	TextureSubresourceInfo subresource;
 	subresource.m_faceCount = 6;
@@ -328,7 +317,7 @@ void ProbeReflections::runIrradianceToRefl(RenderPassWorkContext& rgraphCtx)
 	cmdb->bindShaderProgram(m_irradianceToRefl.m_grProg);
 
 	// Bind resources
-	cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
+	cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp);
 
 	rgraphCtx.bindColorTexture(0, 1, m_ctx.m_gbufferColorRts[0], 0);
 	rgraphCtx.bindColorTexture(0, 1, m_ctx.m_gbufferColorRts[1], 1);
@@ -400,7 +389,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		TextureSubresourceInfo subresource(DepthStencilAspectBit::kDepth);
 		pass.newTextureDependency(m_ctx.m_gbufferDepthRt, TextureUsageBit::kAllFramebuffer, subresource);
 
-		pass.newBufferDependency(m_r->getGpuSceneBufferHandle(),
+		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(),
 								 BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead);
 	}
 
@@ -447,7 +436,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		TextureSubresourceInfo subresource(DepthStencilAspectBit::kDepth);
 		pass.newTextureDependency(m_ctx.m_shadowMapRt, TextureUsageBit::kAllFramebuffer, subresource);
 
-		pass.newBufferDependency(m_r->getGpuSceneBufferHandle(),
+		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(),
 								 BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead);
 	}
 	else
@@ -592,10 +581,10 @@ void ProbeReflections::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 			args.m_cameraTransform = Mat3x4::getIdentity(); // Don't care
 			args.m_viewProjectionMatrix = cascadeRenderQueue.m_viewProjectionMatrix;
 			args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
-			args.m_sampler = m_r->getSamplers().m_trilinearRepeatAniso;
+			args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAniso;
 
-			m_r->getSceneDrawer().drawRange(args, cascadeRenderQueue.m_renderables.getBegin() + localStart,
-											cascadeRenderQueue.m_renderables.getBegin() + localEnd, cmdb);
+			getRenderer().getSceneDrawer().drawRange(args, cascadeRenderQueue.m_renderables.getBegin() + localStart,
+													 cascadeRenderQueue.m_renderables.getBegin() + localEnd, cmdb);
 		}
 	}
 }

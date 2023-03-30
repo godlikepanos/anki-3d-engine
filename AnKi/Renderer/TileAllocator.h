@@ -24,7 +24,7 @@ enum class TileAllocatorResult : U32
 class TileAllocator
 {
 public:
-	TileAllocator() = default;
+	TileAllocator();
 
 	TileAllocator(const TileAllocator&) = delete; // Non-copyable
 
@@ -33,7 +33,7 @@ public:
 	TileAllocator& operator=(const TileAllocator&) = delete; // Non-copyable
 
 	/// Initialize the allocator.
-	void init(HeapMemoryPool* pool, U32 tileCountX, U32 tileCountY, U32 hierarchyCount, Bool enableCaching);
+	void init(U32 tileCountX, U32 tileCountY, U32 hierarchyCount, Bool enableCaching);
 
 	/// Allocate some tiles.
 	/// @param hierarchy If it's 0 it chooses the smallest tile.
@@ -50,11 +50,10 @@ private:
 	/// A HashMap key.
 	class HashMapKey;
 
-	HeapMemoryPool* m_pool = nullptr;
-	DynamicArray<Tile> m_allTiles;
-	DynamicArray<U32> m_firstTileIdxOfHierarchy;
+	RendererDynamicArray<Tile> m_allTiles;
+	RendererDynamicArray<U32> m_firstTileIdxOfHierarchy;
 
-	HashMap<HashMapKey, U32> m_lightInfoToTileIdx;
+	RendererHashMap<HashMapKey, U32> m_lightInfoToTileIdx;
 
 	U16 m_tileCountX = 0; ///< Tile count for hierarchy 0
 	U16 m_tileCountY = 0; ///< Tile count for hierarchy 0

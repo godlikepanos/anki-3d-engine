@@ -18,13 +18,10 @@ namespace anki {
 class ShadowmapsResolve : public RendererObject
 {
 public:
-	ShadowmapsResolve(Renderer* r)
-		: RendererObject(r)
+	ShadowmapsResolve()
 	{
 		registerDebugRenderTarget("ResolvedShadows");
 	}
-
-	~ShadowmapsResolve();
 
 	Error init();
 

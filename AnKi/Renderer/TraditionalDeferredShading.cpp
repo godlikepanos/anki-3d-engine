@@ -56,15 +56,6 @@ inline constexpr U16 kConeIndices[] = {0, 1,  2, 2,  1,  3,  3,  1,  4,  4,  1, 
 									   2, 13, 0, 0,  13, 12, 3,  13, 2,  4,  13, 3,  5,  13, 4,  6,  13, 5,
 									   7, 13, 6, 12, 13, 11, 11, 13, 10, 10, 13, 9,  9,  13, 8,  7,  8,  13};
 
-TraditionalDeferredLightShading::TraditionalDeferredLightShading(Renderer* r)
-	: RendererObject(r)
-{
-}
-
-TraditionalDeferredLightShading::~TraditionalDeferredLightShading()
-{
-}
-
 Error TraditionalDeferredLightShading::init()
 {
 	// Init progs
@@ -208,13 +199,13 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 
 		cmdb->bindShaderProgram(m_skyboxGrProgs[!isSolidColor]);
 
-		cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
+		cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp);
 		rgraphCtx.bindTexture(0, 1, info.m_gbufferDepthRenderTarget,
 							  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
 		if(!isSolidColor)
 		{
-			cmdb->bindSampler(0, 2, m_r->getSamplers().m_trilinearRepeatAniso);
+			cmdb->bindSampler(0, 2, getRenderer().getSamplers().m_trilinearRepeatAniso);
 			cmdb->bindTexture(0, 3, TextureViewPtr(const_cast<TextureView*>(info.m_skybox->m_skyboxTexture)));
 		}
 
@@ -234,7 +225,7 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 		cmdb->setBlendFactors(0, BlendFactor::kOne, BlendFactor::kOne);
 
 		// NOTE: Use nearest sampler because we don't want the result to sample the near tiles
-		cmdb->bindSampler(0, 2, m_r->getSamplers().m_nearestNearestClamp);
+		cmdb->bindSampler(0, 2, getRenderer().getSamplers().m_nearestNearestClamp);
 
 		rgraphCtx.bindColorTexture(0, 3, info.m_gbufferRenderTargets[0]);
 		rgraphCtx.bindColorTexture(0, 4, info.m_gbufferRenderTargets[1]);

@@ -18,8 +18,7 @@
 
 namespace anki {
 
-ClusterBinning::ClusterBinning(Renderer* r)
-	: RendererObject(r)
+ClusterBinning::ClusterBinning()
 {
 }
 
@@ -34,19 +33,19 @@ Error ClusterBinning::init()
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/ClusterBinning.ankiprogbin", m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-	variantInitInfo.addConstant("kTileSize", m_r->getTileSize());
-	variantInitInfo.addConstant("kTileCountX", m_r->getTileCounts().x());
-	variantInitInfo.addConstant("kTileCountY", m_r->getTileCounts().y());
-	variantInitInfo.addConstant("kZSplitCount", m_r->getZSplitCount());
-	variantInitInfo.addConstant("kRenderingSize",
-								UVec2(m_r->getInternalResolution().x(), m_r->getInternalResolution().y()));
+	variantInitInfo.addConstant("kTileSize", getRenderer().getTileSize());
+	variantInitInfo.addConstant("kTileCountX", getRenderer().getTileCounts().x());
+	variantInitInfo.addConstant("kTileCountY", getRenderer().getTileCounts().y());
+	variantInitInfo.addConstant("kZSplitCount", getRenderer().getZSplitCount());
+	variantInitInfo.addConstant(
+		"kRenderingSize", UVec2(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y()));
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProg = variant->getProgram();
 
-	m_tileCount = m_r->getTileCounts().x() * m_r->getTileCounts().y();
-	m_clusterCount = m_tileCount + m_r->getZSplitCount();
+	m_tileCount = getRenderer().getTileCounts().x() * getRenderer().getTileCounts().y();
+	m_clusterCount = m_tileCount + getRenderer().getZSplitCount();
 
 	return Error::kNone;
 }
@@ -71,7 +70,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Cluster Binning");
 
-	pass.newBufferDependency(m_r->getPackVisibleClusteredObjects().getClusteredObjectsRenderGraphHandle(),
+	pass.newBufferDependency(getRenderer().getPackVisibleClusteredObjects().getClusteredObjectsRenderGraphHandle(),
 							 BufferUsageBit::kStorageComputeRead);
 
 	pass.newBufferDependency(m_runCtx.m_rebarHandle, BufferUsageBit::kStorageComputeWrite);
@@ -86,7 +85,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 
 		for(ClusteredObjectType type : EnumIterable<ClusteredObjectType>())
 		{
-			m_r->getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, U32(type) + 2, type);
+			getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, U32(type) + 2, type);
 		}
 
 		const U32 sampleCount = 4;
@@ -178,10 +177,11 @@ void ClusterBinning::writeClustererBuffersTask()
 			RebarStagingGpuMemoryPool::getSingleton().getBufferMappedAddress()
 			+ m_runCtx.m_clusteredShadingUniformsToken.m_offset);
 
-		unis.m_renderingSize = Vec2(F32(m_r->getInternalResolution().x()), F32(m_r->getInternalResolution().y()));
+		unis.m_renderingSize =
+			Vec2(F32(getRenderer().getInternalResolution().x()), F32(getRenderer().getInternalResolution().y()));
 
 		unis.m_time = F32(HighRezTimer::getCurrentTime());
-		unis.m_frame = m_r->getFrameCount() & kMaxU32;
+		unis.m_frame = getRenderer().getFrameCount() & kMaxU32;
 
 		Plane nearPlane;
 		extractClipPlane(rqueue.m_viewProjectionMatrix, FrustumPlaneType::kNear, nearPlane);
@@ -190,14 +190,15 @@ void ClusterBinning::writeClustererBuffersTask()
 		unis.m_far = rqueue.m_cameraFar;
 		unis.m_cameraPosition = rqueue.m_cameraTransform.getTranslationPart().xyz();
 
-		unis.m_tileCounts = m_r->getTileCounts();
-		unis.m_zSplitCount = m_r->getZSplitCount();
-		unis.m_zSplitCountOverFrustumLength = F32(m_r->getZSplitCount()) / (rqueue.m_cameraFar - rqueue.m_cameraNear);
+		unis.m_tileCounts = getRenderer().getTileCounts();
+		unis.m_zSplitCount = getRenderer().getZSplitCount();
+		unis.m_zSplitCountOverFrustumLength =
+			F32(getRenderer().getZSplitCount()) / (rqueue.m_cameraFar - rqueue.m_cameraNear);
 		unis.m_zSplitMagic.x() =
-			(rqueue.m_cameraNear - rqueue.m_cameraFar) / (rqueue.m_cameraNear * F32(m_r->getZSplitCount()));
-		unis.m_zSplitMagic.y() = rqueue.m_cameraFar / (rqueue.m_cameraNear * F32(m_r->getZSplitCount()));
-		unis.m_tileSize = m_r->getTileSize();
-		unis.m_lightVolumeLastZSplit = m_r->getVolumetricLightingAccumulation().getFinalZSplit();
+			(rqueue.m_cameraNear - rqueue.m_cameraFar) / (rqueue.m_cameraNear * F32(getRenderer().getZSplitCount()));
+		unis.m_zSplitMagic.y() = rqueue.m_cameraFar / (rqueue.m_cameraNear * F32(getRenderer().getZSplitCount()));
+		unis.m_tileSize = getRenderer().getTileSize();
+		unis.m_lightVolumeLastZSplit = getRenderer().getVolumetricLightingAccumulation().getFinalZSplit();
 
 		unis.m_objectCountsUpTo[ClusteredObjectType::kPointLight].x() = rqueue.m_pointLights.getSize();
 		unis.m_objectCountsUpTo[ClusteredObjectType::kSpotLight].x() =
@@ -214,7 +215,7 @@ void ClusterBinning::writeClustererBuffersTask()
 			unis.m_objectCountsUpTo[ClusteredObjectType::kGlobalIlluminationProbe - 1].x()
 			+ rqueue.m_giProbes.getSize();
 
-		unis.m_reflectionProbesMipCount = F32(m_r->getProbeReflections().getReflectionTextureMipmapCount());
+		unis.m_reflectionProbesMipCount = F32(getRenderer().getProbeReflections().getReflectionTextureMipmapCount());
 
 		unis.m_matrices = ctx.m_matrices;
 		unis.m_previousMatrices = ctx.m_prevMatrices;

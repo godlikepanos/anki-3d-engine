@@ -13,15 +13,6 @@
 
 namespace anki {
 
-TemporalAA::TemporalAA(Renderer* r)
-	: RendererObject(r)
-{
-}
-
-TemporalAA::~TemporalAA()
-{
-}
-
 Error TemporalAA::init()
 {
 	const Error err = initInternal();
@@ -51,8 +42,8 @@ Error TemporalAA::initInternal()
 
 		if(ConfigSet::getSingleton().getRPreferCompute())
 		{
-			variantInitInfo.addConstant("kFramebufferSize",
-										UVec2(m_r->getInternalResolution().x(), m_r->getInternalResolution().y()));
+			variantInitInfo.addConstant("kFramebufferSize", UVec2(getRenderer().getInternalResolution().x(),
+																  getRenderer().getInternalResolution().y()));
 		}
 
 		const ShaderProgramResourceVariant* variant;
@@ -66,15 +57,15 @@ Error TemporalAA::initInternal()
 		usage |= (ConfigSet::getSingleton().getRPreferCompute()) ? TextureUsageBit::kImageComputeWrite
 																 : TextureUsageBit::kFramebufferWrite;
 
-		TextureInitInfo texinit =
-			m_r->create2DRenderTargetInitInfo(m_r->getInternalResolution().x(), m_r->getInternalResolution().y(),
-											  m_r->getHdrFormat(), usage, "TemporalAA");
+		TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(
+			getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
+			getRenderer().getHdrFormat(), usage, "TemporalAA");
 
-		m_rtTextures[i] = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::kSampledFragment);
+		m_rtTextures[i] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSampledFragment);
 	}
 
-	m_tonemappedRtDescr = m_r->create2DRenderTargetDescription(
-		m_r->getInternalResolution().x(), m_r->getInternalResolution().y(),
+	m_tonemappedRtDescr = getRenderer().create2DRenderTargetDescription(
+		getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
 		(GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR8G8B8_Unorm
 																						 : Format::kR8G8B8A8_Unorm,
 		"TemporalAA Tonemapped");
@@ -90,7 +81,7 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
-	const U32 historyRtIdx = (m_r->getFrameCount() + 1) & 1;
+	const U32 historyRtIdx = (getRenderer().getFrameCount() + 1) & 1;
 	const U32 renderRtIdx = !historyRtIdx;
 	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
 
@@ -135,33 +126,35 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 		prpass = &pass;
 	}
 
-	prpass->newTextureDependency(m_r->getGBuffer().getDepthRt(), readUsage,
+	prpass->newTextureDependency(getRenderer().getGBuffer().getDepthRt(), readUsage,
 								 TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
-	prpass->newTextureDependency(m_r->getLightShading().getRt(), readUsage);
+	prpass->newTextureDependency(getRenderer().getLightShading().getRt(), readUsage);
 	prpass->newTextureDependency(m_runCtx.m_historyRt, readUsage);
-	prpass->newTextureDependency(m_r->getMotionVectors().getMotionVectorsRt(), readUsage);
+	prpass->newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(), readUsage);
 
 	prpass->setWork([this](RenderPassWorkContext& rgraphCtx) {
 		CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
 		cmdb->bindShaderProgram(m_grProg);
 
-		cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
-		rgraphCtx.bindColorTexture(0, 1, m_r->getLightShading().getRt());
+		cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp);
+		rgraphCtx.bindColorTexture(0, 1, getRenderer().getLightShading().getRt());
 		rgraphCtx.bindColorTexture(0, 2, m_runCtx.m_historyRt);
-		rgraphCtx.bindColorTexture(0, 3, m_r->getMotionVectors().getMotionVectorsRt());
-		rgraphCtx.bindImage(0, 4, m_r->getTonemapping().getRt());
+		rgraphCtx.bindColorTexture(0, 3, getRenderer().getMotionVectors().getMotionVectorsRt());
+		rgraphCtx.bindImage(0, 4, getRenderer().getTonemapping().getRt());
 
 		if(ConfigSet::getSingleton().getRPreferCompute())
 		{
 			rgraphCtx.bindImage(0, 5, m_runCtx.m_renderRt, TextureSubresourceInfo());
 			rgraphCtx.bindImage(0, 6, m_runCtx.m_tonemappedRt, TextureSubresourceInfo());
 
-			dispatchPPCompute(cmdb, 8, 8, m_r->getInternalResolution().x(), m_r->getInternalResolution().y());
+			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(),
+							  getRenderer().getInternalResolution().y());
 		}
 		else
 		{
-			cmdb->setViewport(0, 0, m_r->getInternalResolution().x(), m_r->getInternalResolution().y());
+			cmdb->setViewport(0, 0, getRenderer().getInternalResolution().x(),
+							  getRenderer().getInternalResolution().y());
 
 			cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
 		}

@@ -18,10 +18,6 @@
 
 namespace anki {
 
-IndirectSpecular::~IndirectSpecular()
-{
-}
-
 Error IndirectSpecular::init()
 {
 	const Error err = initInternal();
@@ -34,7 +30,7 @@ Error IndirectSpecular::init()
 
 Error IndirectSpecular::initInternal()
 {
-	const UVec2 size = m_r->getInternalResolution() / 2;
+	const UVec2 size = getRenderer().getInternalResolution() / 2;
 	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
 
 	ANKI_R_LOGV("Initializing indirect specular. Resolution %ux%u", size.x(), size.y());
@@ -47,10 +43,10 @@ Error IndirectSpecular::initInternal()
 	usage |= (preferCompute) ? TextureUsageBit::kImageComputeWrite : TextureUsageBit::kFramebufferWrite;
 
 	TextureInitInfo texInit =
-		m_r->create2DRenderTargetInitInfo(size.x(), size.y(), m_r->getHdrFormat(), usage, "SSR #1");
-	m_rts[0] = m_r->createAndClearRenderTarget(texInit, TextureUsageBit::kAllSampled);
+		getRenderer().create2DRenderTargetInitInfo(size.x(), size.y(), getRenderer().getHdrFormat(), usage, "SSR #1");
+	m_rts[0] = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kAllSampled);
 	texInit.setName("SSR #2");
-	m_rts[1] = m_r->createAndClearRenderTarget(texInit, TextureUsageBit::kAllSampled);
+	m_rts[1] = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kAllSampled);
 
 	m_fbDescr.m_colorAttachmentCount = 1;
 	m_fbDescr.bake();
@@ -80,7 +76,7 @@ void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
 	const Bool fbDescrHasVrs = m_fbDescr.m_shadingRateAttachmentTexelWidth > 0;
 
 	// Create/import RTs
-	const U32 readRtIdx = m_r->getFrameCount() & 1;
+	const U32 readRtIdx = getRenderer().getFrameCount() & 1;
 	const U32 writeRtIdx = !readRtIdx;
 	if(m_rtsImportedOnce) [[likely]]
 	{
@@ -101,8 +97,8 @@ void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
 
 		if(enableVrs)
 		{
-			m_fbDescr.m_shadingRateAttachmentTexelWidth = m_r->getVrsSriGeneration().getSriTexelDimension();
-			m_fbDescr.m_shadingRateAttachmentTexelHeight = m_r->getVrsSriGeneration().getSriTexelDimension();
+			m_fbDescr.m_shadingRateAttachmentTexelWidth = getRenderer().getVrsSriGeneration().getSriTexelDimension();
+			m_fbDescr.m_shadingRateAttachmentTexelHeight = getRenderer().getVrsSriGeneration().getSriTexelDimension();
 		}
 		else
 		{
@@ -130,7 +126,7 @@ void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("SSR");
 			pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_rts[kWrite]}, {},
-									(enableVrs) ? m_r->getVrsSriGeneration().getDownscaledSriRt()
+									(enableVrs) ? getRenderer().getVrsSriGeneration().getDownscaledSriRt()
 												: RenderTargetHandle());
 
 			ppass = &pass;
@@ -139,28 +135,29 @@ void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
 
 			if(enableVrs)
 			{
-				ppass->newTextureDependency(m_r->getVrsSriGeneration().getDownscaledSriRt(),
+				ppass->newTextureDependency(getRenderer().getVrsSriGeneration().getDownscaledSriRt(),
 											TextureUsageBit::kFramebufferShadingRate);
 			}
 		}
 
 		ppass->newTextureDependency(m_runCtx.m_rts[kWrite], writeUsage);
 		ppass->newTextureDependency(m_runCtx.m_rts[kRead], readUsage);
-		ppass->newTextureDependency(m_r->getGBuffer().getColorRt(1), readUsage);
-		ppass->newTextureDependency(m_r->getGBuffer().getColorRt(2), readUsage);
+		ppass->newTextureDependency(getRenderer().getGBuffer().getColorRt(1), readUsage);
+		ppass->newTextureDependency(getRenderer().getGBuffer().getColorRt(2), readUsage);
 
 		TextureSubresourceInfo hizSubresource;
 		hizSubresource.m_mipmapCount =
-			min(ConfigSet::getSingleton().getRSsrDepthLod() + 1, m_r->getDepthDownscale().getMipmapCount());
-		ppass->newTextureDependency(m_r->getDepthDownscale().getHiZRt(), readUsage, hizSubresource);
+			min(ConfigSet::getSingleton().getRSsrDepthLod() + 1, getRenderer().getDepthDownscale().getMipmapCount());
+		ppass->newTextureDependency(getRenderer().getDepthDownscale().getHiZRt(), readUsage, hizSubresource);
 
-		if(m_r->getProbeReflections().getHasCurrentlyRefreshedReflectionRt())
+		if(getRenderer().getProbeReflections().getHasCurrentlyRefreshedReflectionRt())
 		{
-			ppass->newTextureDependency(m_r->getProbeReflections().getCurrentlyRefreshedReflectionRt(), readUsage);
+			ppass->newTextureDependency(getRenderer().getProbeReflections().getCurrentlyRefreshedReflectionRt(),
+										readUsage);
 		}
 
-		ppass->newTextureDependency(m_r->getMotionVectors().getMotionVectorsRt(), readUsage);
-		ppass->newTextureDependency(m_r->getMotionVectors().getHistoryLengthRt(), readUsage);
+		ppass->newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(), readUsage);
+		ppass->newTextureDependency(getRenderer().getMotionVectors().getHistoryLengthRt(), readUsage);
 
 		ppass->setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 			run(ctx, rgraphCtx);
@@ -174,16 +171,17 @@ void IndirectSpecular::run(const RenderingContext& ctx, RenderPassWorkContext& r
 	cmdb->bindShaderProgram(m_grProg);
 
 	const U32 depthLod =
-		min(ConfigSet::getSingleton().getRSsrDepthLod(), m_r->getDepthDownscale().getMipmapCount() - 1);
+		min(ConfigSet::getSingleton().getRSsrDepthLod(), getRenderer().getDepthDownscale().getMipmapCount() - 1);
 
 	// Bind uniforms
 	SsrUniforms* unis = allocateAndBindUniforms<SsrUniforms*>(sizeof(SsrUniforms), cmdb, 0, 0);
-	unis->m_depthBufferSize = m_r->getInternalResolution() >> (depthLod + 1);
-	unis->m_framebufferSize = UVec2(m_r->getInternalResolution().x(), m_r->getInternalResolution().y()) / 2;
-	unis->m_frameCount = m_r->getFrameCount() & kMaxU32;
-	unis->m_depthMipCount = m_r->getDepthDownscale().getMipmapCount();
+	unis->m_depthBufferSize = getRenderer().getInternalResolution() >> (depthLod + 1);
+	unis->m_framebufferSize =
+		UVec2(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y()) / 2;
+	unis->m_frameCount = getRenderer().getFrameCount() & kMaxU32;
+	unis->m_depthMipCount = getRenderer().getDepthDownscale().getMipmapCount();
 	unis->m_maxSteps = ConfigSet::getSingleton().getRSsrMaxSteps();
-	unis->m_lightBufferMipCount = m_r->getDownscaleBlur().getMipmapCount();
+	unis->m_lightBufferMipCount = getRenderer().getDownscaleBlur().getMipmapCount();
 	unis->m_firstStepPixels = ConfigSet::getSingleton().getRSsrFirstStepPixels();
 	unis->m_prevViewProjMatMulInvViewProjMat =
 		ctx.m_prevMatrices.m_viewProjection * ctx.m_matrices.m_viewProjectionJitter.getInverse();
@@ -193,27 +191,28 @@ void IndirectSpecular::run(const RenderingContext& ctx, RenderPassWorkContext& r
 	unis->m_roughnessCutoff = ConfigSet::getSingleton().getRSsrRoughnessCutoff();
 
 	// Bind all
-	cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);
+	cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp);
 
-	rgraphCtx.bindColorTexture(0, 2, m_r->getGBuffer().getColorRt(1));
-	rgraphCtx.bindColorTexture(0, 3, m_r->getGBuffer().getColorRt(2));
+	rgraphCtx.bindColorTexture(0, 2, getRenderer().getGBuffer().getColorRt(1));
+	rgraphCtx.bindColorTexture(0, 3, getRenderer().getGBuffer().getColorRt(2));
 
 	TextureSubresourceInfo hizSubresource;
 	hizSubresource.m_mipmapCount = depthLod + 1;
-	rgraphCtx.bindTexture(0, 4, m_r->getDepthDownscale().getHiZRt(), hizSubresource);
+	rgraphCtx.bindTexture(0, 4, getRenderer().getDepthDownscale().getHiZRt(), hizSubresource);
 
-	rgraphCtx.bindColorTexture(0, 5, m_r->getDownscaleBlur().getRt());
+	rgraphCtx.bindColorTexture(0, 5, getRenderer().getDownscaleBlur().getRt());
 
 	rgraphCtx.bindColorTexture(0, 6, m_runCtx.m_rts[kRead]);
-	rgraphCtx.bindColorTexture(0, 7, m_r->getMotionVectors().getMotionVectorsRt());
-	rgraphCtx.bindColorTexture(0, 8, m_r->getMotionVectors().getHistoryLengthRt());
+	rgraphCtx.bindColorTexture(0, 7, getRenderer().getMotionVectors().getMotionVectorsRt());
+	rgraphCtx.bindColorTexture(0, 8, getRenderer().getMotionVectors().getHistoryLengthRt());
 
-	cmdb->bindSampler(0, 9, m_r->getSamplers().m_trilinearRepeat);
+	cmdb->bindSampler(0, 9, getRenderer().getSamplers().m_trilinearRepeat);
 	cmdb->bindTexture(0, 10, m_noiseImage->getTextureView());
 
-	bindUniforms(cmdb, 0, 11, m_r->getClusterBinning().getClusteredUniformsRebarToken());
-	m_r->getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 12, ClusteredObjectType::kReflectionProbe);
-	bindStorage(cmdb, 0, 13, m_r->getClusterBinning().getClustersRebarToken());
+	bindUniforms(cmdb, 0, 11, getRenderer().getClusterBinning().getClusteredUniformsRebarToken());
+	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 12,
+																			 ClusteredObjectType::kReflectionProbe);
+	bindStorage(cmdb, 0, 13, getRenderer().getClusterBinning().getClustersRebarToken());
 
 	cmdb->bindAllBindless(1);
 
@@ -221,11 +220,13 @@ void IndirectSpecular::run(const RenderingContext& ctx, RenderPassWorkContext& r
 	{
 		rgraphCtx.bindImage(0, 14, m_runCtx.m_rts[kWrite], TextureSubresourceInfo());
 
-		dispatchPPCompute(cmdb, 8, 8, m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2);
+		dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x() / 2,
+						  getRenderer().getInternalResolution().y() / 2);
 	}
 	else
 	{
-		cmdb->setViewport(0, 0, m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2);
+		cmdb->setViewport(0, 0, getRenderer().getInternalResolution().x() / 2,
+						  getRenderer().getInternalResolution().y() / 2);
 
 		cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
 	}

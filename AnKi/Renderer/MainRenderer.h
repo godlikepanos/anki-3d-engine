@@ -23,7 +23,7 @@ public:
 	Second m_renderingGpuSubmitTimestamp ANKI_DEBUG_CODE(= -1.0);
 };
 
-class MainRendererInitInfo : public RendererExternalSubsystems
+class MainRendererInitInfo
 {
 public:
 	UVec2 m_swapchainSize = UVec2(0u);
@@ -33,13 +33,12 @@ public:
 };
 
 /// Main onscreen renderer
-class MainRenderer
+class MainRenderer : public MakeSingleton<MainRenderer>
 {
+	template<typename>
+	friend class MakeSingleton;
+
 public:
-	MainRenderer();
-
-	~MainRenderer();
-
 	Error init(const MainRendererInitInfo& inf);
 
 	Error render(RenderQueue& rqueue, TexturePtr presentTex);
@@ -69,10 +68,9 @@ public:
 	}
 
 private:
-	HeapMemoryPool m_pool;
 	StackMemoryPool m_framePool;
 
-	UniquePtr<Renderer> m_r;
+	Renderer* m_r = nullptr;
 	Bool m_rDrawToDefaultFb = false;
 
 	ShaderProgramResourcePtr m_blitProg;
@@ -93,6 +91,10 @@ private:
 		const RenderingContext* m_ctx = nullptr;
 		Atomic<U32> m_secondaryTaskId = {0};
 	} m_runCtx;
+
+	MainRenderer();
+
+	~MainRenderer();
 };
 /// @}
 

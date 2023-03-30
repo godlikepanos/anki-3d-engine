@@ -21,14 +21,6 @@ namespace anki {
 class IndirectDiffuseProbes : public RendererObject
 {
 public:
-	IndirectDiffuseProbes(Renderer* r)
-		: RendererObject(r)
-		, m_lightShading(r)
-	{
-	}
-
-	~IndirectDiffuseProbes();
-
 	Error init();
 
 	/// Populate the rendergraph.
@@ -62,11 +54,6 @@ private:
 		RenderTargetDescription m_rtDescr;
 		FramebufferDescription m_fbDescr;
 		TraditionalDeferredLightShading m_deferred;
-
-		LS(Renderer* r)
-			: m_deferred(r)
-		{
-		}
 	} m_lightShading; ///< Light shading.
 
 	class

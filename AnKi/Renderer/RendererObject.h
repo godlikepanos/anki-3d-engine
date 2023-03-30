@@ -25,16 +25,9 @@ class ResourceManager;
 class RendererObject
 {
 public:
-	RendererObject(Renderer* r)
-		: m_r(r)
-	{
-	}
+	RendererObject() = default;
 
-	virtual ~RendererObject()
-	{
-	}
-
-	HeapMemoryPool& getMemoryPool() const;
+	virtual ~RendererObject() = default;
 
 	virtual void getDebugRenderTarget([[maybe_unused]] CString rtName,
 									  [[maybe_unused]] Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
@@ -44,11 +37,7 @@ public:
 	}
 
 protected:
-	Renderer* m_r; ///< Know your father
-
-	ANKI_PURE RendererExternalSubsystems& getExternalSubsystems();
-
-	ANKI_PURE const RendererExternalSubsystems& getExternalSubsystems() const;
+	static Renderer& getRenderer();
 
 	void* allocateRebarStagingMemory(PtrSize size, RebarGpuMemoryToken& token);
 

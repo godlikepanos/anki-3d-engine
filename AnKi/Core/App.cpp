@@ -120,8 +120,7 @@ void App::cleanup()
 
 	SceneGraph::freeSingleton();
 	ScriptManager::freeSingleton();
-	deleteInstance(m_mainPool, m_renderer);
-	m_renderer = nullptr;
+	MainRenderer::freeSingleton();
 	UiManager::freeSingleton();
 	GpuSceneMicroPatcher::freeSingleton();
 	ResourceManager::freeSingleton();
@@ -146,6 +145,7 @@ void App::cleanup()
 	m_cacheDir.destroy();
 
 	CoreMemoryPool::freeSingleton();
+	DefaultMemoryPool::freeSingleton();
 }
 
 Error App::init(AllocAlignedCallback allocCb, void* allocCbUserData)
@@ -167,9 +167,17 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	setSignalHandlers();
 
 	initMemoryCallbacks(allocCb, allocCbUserData);
-	CoreMemoryPool::allocateSingleton(allocCb, allocCbUserData);
 
-	m_mainPool.init(allocCb, allocCbUserData, "Core");
+	if(DefaultMemoryPool::isAllocated())
+	{
+		// Re-cerate it with the new callbacks
+
+		ANKI_ASSERT(DefaultMemoryPool::getSingleton().getAllocationCount() == 0);
+		DefaultMemoryPool::freeSingleton();
+		DefaultMemoryPool::allocateSingleton(allocCb, allocCbUserData);
+	}
+
+	CoreMemoryPool::allocateSingleton(allocCb, allocCbUserData);
 
 	ANKI_CHECK(initDirs());
 
@@ -261,8 +269,8 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	// Graphics API
 	//
 	GrManagerInitInfo grInit;
-	grInit.m_allocCallback = m_mainPool.getAllocationCallback();
-	grInit.m_allocCallbackUserData = m_mainPool.getAllocationCallbackUserData();
+	grInit.m_allocCallback = allocCb;
+	grInit.m_allocCallbackUserData = allocCbUserData;
 	grInit.m_cacheDirectory = m_cacheDir.toCString();
 	ANKI_CHECK(GrManager::allocateSingleton().init(grInit));
 
@@ -286,32 +294,29 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	// Physics
 	//
 	PhysicsWorld::allocateSingleton();
-	ANKI_CHECK(PhysicsWorld::getSingleton().init(m_mainPool.getAllocationCallback(),
-												 m_mainPool.getAllocationCallbackUserData()));
+	ANKI_CHECK(PhysicsWorld::getSingleton().init(allocCb, allocCbUserData));
 
 	//
 	// Resources
 	//
 #if !ANKI_OS_ANDROID
 	// Add the location of the executable where the shaders are supposed to be
-	StringRaii executableFname(&m_mainPool);
+	StringRaii executableFname(&CoreMemoryPool::getSingleton());
 	ANKI_CHECK(getApplicationPath(executableFname));
 	ANKI_CORE_LOGI("Executable path is: %s", executableFname.cstr());
-	StringRaii shadersPath(&m_mainPool);
+	StringRaii shadersPath(&CoreMemoryPool::getSingleton());
 	getParentFilepath(executableFname, shadersPath);
 	shadersPath.append(":");
 	shadersPath.append(ConfigSet::getSingleton().getRsrcDataPaths());
 	ConfigSet::getSingleton().setRsrcDataPaths(shadersPath);
 #endif
 
-	ANKI_CHECK(ResourceManager::allocateSingleton().init(m_mainPool.getAllocationCallback(),
-														 m_mainPool.getAllocationCallbackUserData()));
+	ANKI_CHECK(ResourceManager::allocateSingleton().init(allocCb, allocCbUserData));
 
 	//
 	// UI
 	//
-	ANKI_CHECK(UiManager::allocateSingleton().init(m_mainPool.getAllocationCallback(),
-												   m_mainPool.getAllocationCallbackUserData()));
+	ANKI_CHECK(UiManager::allocateSingleton().init(allocCb, allocCbUserData));
 
 	//
 	// GPU scene
@@ -324,21 +329,19 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	MainRendererInitInfo renderInit;
 	renderInit.m_swapchainSize =
 		UVec2(NativeWindow::getSingleton().getWidth(), NativeWindow::getSingleton().getHeight());
-	renderInit.m_allocCallback = m_mainPool.getAllocationCallback();
-	renderInit.m_allocCallbackUserData = m_mainPool.getAllocationCallbackUserData();
-	m_renderer = newInstance<MainRenderer>(m_mainPool);
-	ANKI_CHECK(m_renderer->init(renderInit));
+	renderInit.m_allocCallback = allocCb;
+	renderInit.m_allocCallbackUserData = allocCbUserData;
+	ANKI_CHECK(MainRenderer::allocateSingleton().init(renderInit));
 
 	//
 	// Script
 	//
-	ScriptManager::allocateSingleton(m_mainPool.getAllocationCallback(), m_mainPool.getAllocationCallbackUserData());
+	ScriptManager::allocateSingleton(allocCb, allocCbUserData);
 
 	//
 	// Scene
 	//
-	ANKI_CHECK(SceneGraph::allocateSingleton().init(m_mainPool.getAllocationCallback(),
-													m_mainPool.getAllocationCallbackUserData()));
+	ANKI_CHECK(SceneGraph::allocateSingleton().init(allocCb, allocCbUserData));
 
 	//
 	// Misc
@@ -355,7 +358,7 @@ Error App::initDirs()
 {
 	// Settings path
 #if !ANKI_OS_ANDROID
-	StringRaii home(&m_mainPool);
+	StringRaii home(&CoreMemoryPool::getSingleton());
 	ANKI_CHECK(getHomeDirectory(home));
 
 	m_settingsDir.sprintf("%s/.anki", &home[0]);
@@ -380,7 +383,7 @@ Error App::initDirs()
 	if(ConfigSet::getSingleton().getCoreClearCaches() && cacheDirExists)
 	{
 		ANKI_CORE_LOGI("Will delete the cache dir and start fresh: %s", m_cacheDir.cstr());
-		ANKI_CHECK(removeDirectory(m_cacheDir.toCString(), m_mainPool));
+		ANKI_CHECK(removeDirectory(m_cacheDir.toCString(), CoreMemoryPool::getSingleton()));
 		ANKI_CHECK(createDirectory(m_cacheDir.toCString()));
 	}
 	else if(!cacheDirExists)
@@ -407,7 +410,7 @@ Error App::mainLoop()
 	constexpr U32 kBenchmarkFramesToGatherBeforeFlush = 60;
 	U32 benchmarkFramesGathered = 0;
 	File benchmarkCsvFile;
-	StringRaii benchmarkCsvFileFilename(&m_mainPool);
+	CoreString benchmarkCsvFileFilename;
 	if(benchmarkMode)
 	{
 		benchmarkCsvFileFilename.sprintf("%s/Benchmark.csv", m_settingsDir.cstr());
@@ -436,17 +439,18 @@ Error App::mainLoop()
 			SceneGraph::getSingleton().doVisibilityTests(rqueue);
 
 			// Inject stats UI
-			DynamicArrayRaii<UiQueueElement> newUiElementArr(&m_mainPool);
+			CoreDynamicArray<UiQueueElement> newUiElementArr;
 			injectUiElements(newUiElementArr, rqueue);
 
 			// Render
 			TexturePtr presentableTex = GrManager::getSingleton().acquireNextPresentableTexture();
-			m_renderer->setStatsEnabled(ConfigSet::getSingleton().getCoreDisplayStats() > 0 || benchmarkMode
+			MainRenderer::getSingleton().setStatsEnabled(ConfigSet::getSingleton().getCoreDisplayStats() > 0
+														 || benchmarkMode
 #if ANKI_ENABLE_TRACE
-										|| Tracer::getSingleton().getEnabled()
+														 || Tracer::getSingleton().getEnabled()
 #endif
 			);
-			ANKI_CHECK(m_renderer->render(rqueue, presentableTex));
+			ANKI_CHECK(MainRenderer::getSingleton().render(rqueue, presentableTex));
 
 			// Pause and sync async loader. That will force all tasks before the pause to finish in this frame.
 			ResourceManager::getSingleton().getAsyncLoader().pause();
@@ -494,7 +498,7 @@ Error App::mainLoop()
 			else
 			{
 				aggregatedCpuTime += frameTime - grTime;
-				aggregatedGpuTime += m_renderer->getStats().m_renderingGpuTime;
+				aggregatedGpuTime += MainRenderer::getSingleton().getStats().m_renderingGpuTime;
 				++benchmarkFramesGathered;
 				if(benchmarkFramesGathered >= kBenchmarkFramesToGatherBeforeFlush)
 				{
@@ -513,12 +517,12 @@ Error App::mainLoop()
 			{
 				StatsUiInput in;
 				in.m_cpuFrameTime = frameTime - grTime;
-				in.m_rendererTime = m_renderer->getStats().m_renderingCpuTime;
+				in.m_rendererTime = MainRenderer::getSingleton().getStats().m_renderingCpuTime;
 				in.m_sceneUpdateTime = SceneGraph::getSingleton().getStats().m_updateTime;
 				in.m_visibilityTestsTime = SceneGraph::getSingleton().getStats().m_visibilityTestsTime;
 				in.m_physicsTime = SceneGraph::getSingleton().getStats().m_physicsUpdate;
 
-				in.m_gpuFrameTime = m_renderer->getStats().m_renderingGpuTime;
+				in.m_gpuFrameTime = MainRenderer::getSingleton().getStats().m_renderingGpuTime;
 
 				if(MaliHwCounters::isAllocated())
 				{
@@ -586,7 +590,7 @@ Error App::mainLoop()
 	return Error::kNone;
 }
 
-void App::injectUiElements(DynamicArrayRaii<UiQueueElement>& newUiElementArr, RenderQueue& rqueue)
+void App::injectUiElements(CoreDynamicArray<UiQueueElement>& newUiElementArr, RenderQueue& rqueue)
 {
 	const U32 originalCount = rqueue.m_uis.getSize();
 	if(ConfigSet::getSingleton().getCoreDisplayStats() > 0 || m_consoleEnabled)

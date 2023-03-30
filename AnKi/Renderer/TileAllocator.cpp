@@ -33,14 +33,15 @@ public:
 	}
 };
 
-TileAllocator::~TileAllocator()
+TileAllocator::TileAllocator()
 {
-	m_lightInfoToTileIdx.destroy(*m_pool);
-	m_allTiles.destroy(*m_pool);
-	m_firstTileIdxOfHierarchy.destroy(*m_pool);
 }
 
-void TileAllocator::init(HeapMemoryPool* pool, U32 tileCountX, U32 tileCountY, U32 hierarchyCount, Bool enableCaching)
+TileAllocator::~TileAllocator()
+{
+}
+
+void TileAllocator::init(U32 tileCountX, U32 tileCountY, U32 hierarchyCount, Bool enableCaching)
 {
 	// Preconditions
 	ANKI_ASSERT(tileCountX > 0);
@@ -51,9 +52,8 @@ void TileAllocator::init(HeapMemoryPool* pool, U32 tileCountX, U32 tileCountY, U
 	m_tileCountX = U16(tileCountX);
 	m_tileCountY = U16(tileCountY);
 	m_hierarchyCount = U8(hierarchyCount);
-	m_pool = pool;
 	m_cachingEnabled = enableCaching;
-	m_firstTileIdxOfHierarchy.create(*m_pool, hierarchyCount + 1);
+	m_firstTileIdxOfHierarchy.create(hierarchyCount + 1);
 
 	// Create the tile array & index ranges
 	U32 tileCount = 0;
@@ -71,7 +71,7 @@ void TileAllocator::init(HeapMemoryPool* pool, U32 tileCountX, U32 tileCountY, U
 		tileCount += hierarchyTileCountX * hierarchyTileCountY;
 	}
 	ANKI_ASSERT(tileCount >= tileCountX * tileCountY);
-	m_allTiles.create(*m_pool, tileCount);
+	m_allTiles.create(tileCount);
 	m_firstTileIdxOfHierarchy[hierarchyCount] = tileCount - 1;
 
 	// Init the tiles
@@ -246,7 +246,7 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp, Timestamp l
 			if(tile.m_lightUuid != lightUuid || tile.m_lightHierarchy != hierarchy || tile.m_lightFace != lightFace)
 			{
 				// Cache entry is wrong, remove it
-				m_lightInfoToTileIdx.erase(*m_pool, it);
+				m_lightInfoToTileIdx.erase(it);
 			}
 			else
 			{
@@ -344,7 +344,7 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp, Timestamp l
 	// Update the cache
 	if(m_cachingEnabled)
 	{
-		m_lightInfoToTileIdx.emplace(*m_pool, key, allocatedTileIdx);
+		m_lightInfoToTileIdx.emplace(key, allocatedTileIdx);
 	}
 
 	// Return
@@ -366,7 +366,7 @@ void TileAllocator::invalidateCache(U64 lightUuid, U32 lightFace)
 	auto it = m_lightInfoToTileIdx.find(key);
 	if(it != m_lightInfoToTileIdx.getEnd())
 	{
-		m_lightInfoToTileIdx.erase(*m_pool, it);
+		m_lightInfoToTileIdx.erase(it);
 	}
 }
 
