@@ -5,13 +5,12 @@
 
 namespace anki {
 
-template<typename T>
-template<typename TMemPool>
-void Hierarchy<T>::destroy(TMemPool& pool)
+template<typename T, typename TMemoryPool>
+void Hierarchy<T, TMemoryPool>::destroy()
 {
 	if(m_parent != nullptr)
 	{
-		m_parent->removeChild(pool, getSelf());
+		m_parent->removeChild(getSelf());
 		m_parent = nullptr;
 	}
 
@@ -24,12 +23,11 @@ void Hierarchy<T>::destroy(TMemPool& pool)
 		child->m_parent = nullptr;
 	}
 
-	m_children.destroy(pool);
+	m_children.destroy();
 }
 
-template<typename T>
-template<typename TMemPool>
-void Hierarchy<T>::addChild(TMemPool& pool, Value* child)
+template<typename T, typename TMemoryPool>
+void Hierarchy<T, TMemoryPool>::addChild(Value* child)
 {
 	ANKI_ASSERT(child != nullptr && "Null arg");
 	ANKI_ASSERT(child != getSelf() && "Cannot put itself");
@@ -38,12 +36,11 @@ void Hierarchy<T>::addChild(TMemPool& pool, Value* child)
 	ANKI_ASSERT(findChild(child) == m_children.getEnd() && "Already has that child");
 
 	child->m_parent = getSelf();
-	m_children.emplaceBack(pool, child);
+	m_children.emplaceBack(child);
 }
 
-template<typename T>
-template<typename TMemPool>
-void Hierarchy<T>::removeChild(TMemPool& pool, Value* child)
+template<typename T, typename TMemoryPool>
+void Hierarchy<T, TMemoryPool>::removeChild(Value* child)
 {
 	ANKI_ASSERT(child != nullptr && "Null arg");
 	ANKI_ASSERT(child->m_parent == getSelf() && "Child has other parent");
@@ -52,13 +49,13 @@ void Hierarchy<T>::removeChild(TMemPool& pool, Value* child)
 
 	ANKI_ASSERT(it != m_children.getEnd() && "Child not found");
 
-	m_children.erase(pool, it);
+	m_children.erase(it);
 	child->m_parent = nullptr;
 }
 
-template<typename T>
+template<typename T, typename TMemoryPool>
 template<typename VisitorFunc>
-Error Hierarchy<T>::visitChildren(VisitorFunc vis)
+Error Hierarchy<T, TMemoryPool>::visitChildren(VisitorFunc vis)
 {
 	Error err = Error::kNone;
 	typename Container::Iterator it = m_children.getBegin();
@@ -75,9 +72,9 @@ Error Hierarchy<T>::visitChildren(VisitorFunc vis)
 	return err;
 }
 
-template<typename T>
+template<typename T, typename TMemoryPool>
 template<typename VisitorFunc>
-Error Hierarchy<T>::visitThisAndChildren(VisitorFunc vis)
+Error Hierarchy<T, TMemoryPool>::visitThisAndChildren(VisitorFunc vis)
 {
 	Error err = vis(*getSelf());
 
@@ -89,9 +86,9 @@ Error Hierarchy<T>::visitThisAndChildren(VisitorFunc vis)
 	return err;
 }
 
-template<typename T>
+template<typename T, typename TMemoryPool>
 template<typename VisitorFunc>
-Error Hierarchy<T>::visitTree(VisitorFunc vis)
+Error Hierarchy<T, TMemoryPool>::visitTree(VisitorFunc vis)
 {
 	// Move to root
 	Value* root = getSelf();
@@ -103,9 +100,9 @@ Error Hierarchy<T>::visitTree(VisitorFunc vis)
 	return root->visitThisAndChildren(vis);
 }
 
-template<typename T>
+template<typename T, typename TMemoryPool>
 template<typename VisitorFunc>
-Error Hierarchy<T>::visitChildrenMaxDepth(I maxDepth, VisitorFunc vis)
+Error Hierarchy<T, TMemoryPool>::visitChildrenMaxDepth(I maxDepth, VisitorFunc vis)
 {
 	ANKI_ASSERT(maxDepth >= 0);
 	Error err = Error::kNone;

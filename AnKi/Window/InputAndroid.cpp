@@ -74,7 +74,7 @@ void Input::moveCursor(const Vec2& posNdc)
 			  * Vec2(F32(NativeWindow::getSingleton().getWidth()), F32(NativeWindow::getSingleton().getHeight())));
 }
 
-void Input::hideCursor(Bool hide)
+void Input::hideCursor([[maybe_unused]] Bool hide)
 {
 	// do nothing
 }
@@ -101,7 +101,7 @@ Error InputAndroid::initInternal()
 	return Error::kNone;
 }
 
-void InputAndroid::handleAndroidEvents(android_app* app, int32_t cmd)
+void InputAndroid::handleAndroidEvents([[maybe_unused]] android_app* app, int32_t cmd)
 {
 	switch(cmd)
 	{
@@ -112,7 +112,7 @@ void InputAndroid::handleAndroidEvents(android_app* app, int32_t cmd)
 	}
 }
 
-int InputAndroid::handleAndroidInput(android_app* app, AInputEvent* event)
+int InputAndroid::handleAndroidInput([[maybe_unused]] android_app* app, AInputEvent* event)
 {
 	const I32 type = AInputEvent_getType(event);
 	const I32 source = AInputEvent_getSource(event);

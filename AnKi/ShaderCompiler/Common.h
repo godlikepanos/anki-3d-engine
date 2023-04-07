@@ -29,7 +29,7 @@ using MutatorValue = I32; ///< The type of the mutator value
 class ShaderProgramFilesystemInterface
 {
 public:
-	virtual Error readAllText(CString filename, StringRaii& txt) = 0;
+	virtual Error readAllText(CString filename, String& txt) = 0;
 };
 
 /// This controls if the compilation will continue after the parsing stage.

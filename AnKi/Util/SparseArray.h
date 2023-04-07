@@ -19,7 +19,7 @@ namespace anki {
 template<typename TValuePointer, typename TValueReference, typename TSparseArrayPtr>
 class SparseArrayIterator
 {
-	template<typename, typename>
+	template<typename, typename, typename>
 	friend class SparseArray;
 
 private:
@@ -188,7 +188,8 @@ public:
 /// @tparam T The type of the valut it will hold.
 /// @tparam TConfig A class that has configuration required by the SparseArray. See SparseArrayDefaultConfig for
 /// details.
-template<typename T, typename TConfig = SparseArrayDefaultConfig>
+template<typename T, typename TMemoryPool = SingletonMemoryPoolWrapper<DefaultMemoryPool>,
+		 typename TConfig = SparseArrayDefaultConfig>
 class SparseArray
 {
 	template<typename, typename, typename>
@@ -202,17 +203,24 @@ public:
 	using ConstIterator = SparseArrayIterator<const T*, const T&, const SparseArray*>;
 	using Index = typename Config::Index;
 
-	SparseArray() = default;
-
-	SparseArray(const Config& config)
-		: m_config(config)
+	SparseArray(const TMemoryPool& pool = TMemoryPool())
+		: m_pool(pool)
 	{
 	}
 
-	/// Non-copyable.
-	SparseArray(const SparseArray&) = delete;
+	SparseArray(const Config& config, const TMemoryPool& pool = TMemoryPool())
+		: m_pool(pool)
+		, m_config(config)
+	{
+	}
 
-	/// Move constructor.
+	/// Copy.
+	SparseArray(const SparseArray& b)
+	{
+		*this = b;
+	}
+
+	/// Move.
 	SparseArray(SparseArray&& b)
 	{
 		*this = std::move(b);
@@ -221,25 +229,23 @@ public:
 	/// Destroy.
 	~SparseArray()
 	{
-		ANKI_ASSERT(m_elements == nullptr && m_metadata == nullptr && "Forgot to call destroy");
+		destroy();
 	}
 
-	/// Non-copyable.
-	SparseArray& operator=(const SparseArray&) = delete;
+	/// Copy.
+	SparseArray& operator=(const SparseArray& b);
 
 	/// Move operator.
 	SparseArray& operator=(SparseArray&& b)
 	{
-		ANKI_ASSERT(m_elements == nullptr && m_metadata == nullptr && "Forgot to call destroy");
+		destroy();
 
 		m_elements = b.m_elements;
 		m_metadata = b.m_metadata;
 		m_elementCount = b.m_elementCount;
 		m_capacity = b.m_capacity;
 		m_config = std::move(b.m_config);
-#if ANKI_EXTRA_CHECKS
-		++m_iteratorVer;
-#endif
+		invalidateIterators();
 
 		b.resetMembers();
 
@@ -327,12 +333,11 @@ public:
 	}
 
 	/// Destroy the array and free its elements.
-	template<typename TMemPool>
-	void destroy(TMemPool& pool);
+	void destroy();
 
 	/// Set a value to an index.
-	template<typename TMemPool, typename... TArgs>
-	Iterator emplace(TMemPool& pool, Index idx, TArgs&&... args);
+	template<typename... TArgs>
+	Iterator emplace(Index idx, TArgs&&... args);
 
 	/// Get an iterator.
 	Iterator find(Index idx)
@@ -357,15 +362,10 @@ public:
 	}
 
 	/// Remove an element.
-	template<typename TMemPool>
-	void erase(TMemPool& pool, Iterator it);
+	void erase(Iterator it);
 
 	/// Check the validity of the array.
 	void validate() const;
-
-	/// Create a copy of this.
-	template<typename TMemPool>
-	void clone(TMemPool& pool, SparseArray& b) const;
 
 	const Config& getConfig() const
 	{
@@ -381,6 +381,7 @@ protected:
 		Bool m_alive;
 	};
 
+	TMemoryPool m_pool;
 	Value* m_elements = nullptr;
 	Metadata* m_metadata = nullptr;
 	Index m_elementCount = 0;
@@ -418,12 +419,10 @@ protected:
 
 	/// Insert a value. This method will move the val to a new place.
 	/// @return One if the idx was a new element or zero if the idx was there already.
-	template<typename TMemPool>
-	Index insert(TMemPool& pool, Index idx, Value& val);
+	Index insert(Index idx, Value& val);
 
 	/// Grow the storage and re-insert.
-	template<typename TMemPool>
-	void grow(TMemPool& pool);
+	void grow();
 
 	/// Compute the distance between a desired position and the current one. This method does a trick with capacity to
 	/// account for wrapped positions.
@@ -481,8 +480,8 @@ protected:
 		return (pos >= m_capacity) ? getMaxNumericLimit<Index>() : pos;
 	}
 
-	template<typename TMemPool, typename... TArgs>
-	void emplaceInternal(TMemPool& pool, Index idx, TArgs&&... args);
+	template<typename... TArgs>
+	void emplaceInternal(Index idx, TArgs&&... args);
 
 	void destroyElement(Value& v)
 	{

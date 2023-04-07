@@ -7,10 +7,10 @@
 
 namespace anki {
 
-template<PtrSize kTObjectSize, U32 kTObjectAlignment, U32 kTObjectsPerChunk, typename TIndexType>
-template<typename T, typename TMemPool, typename... TArgs>
-T* ObjectAllocator<kTObjectSize, kTObjectAlignment, kTObjectsPerChunk, TIndexType>::newInstance(TMemPool& pool,
-																								TArgs&&... args)
+template<PtrSize kTObjectSize, U32 kTObjectAlignment, typename TMemoryPool, U32 kTObjectsPerChunk, typename TIndexType>
+template<typename T, typename... TArgs>
+T* ObjectAllocator<kTObjectSize, kTObjectAlignment, TMemoryPool, kTObjectsPerChunk, TIndexType>::newInstance(
+	TArgs&&... args)
 {
 	static_assert(alignof(T) <= kObjectAlignment, "Wrong object alignment");
 	static_assert(sizeof(T) <= kObjectSize, "Wrong object size");
@@ -37,7 +37,7 @@ T* ObjectAllocator<kTObjectSize, kTObjectAlignment, kTObjectsPerChunk, TIndexTyp
 		// Need to create a new chunk
 
 		// Create the chunk
-		chunk = anki::newInstance<Chunk>(pool);
+		chunk = anki::newInstance<Chunk>(m_pool);
 		chunk->m_unusedCount = kObjectsPerChunk;
 
 		for(U32 i = 0; i < kObjectsPerChunk; ++i)
@@ -70,10 +70,10 @@ T* ObjectAllocator<kTObjectSize, kTObjectAlignment, kTObjectsPerChunk, TIndexTyp
 	return out;
 }
 
-template<PtrSize kTObjectSize, U32 kTObjectAlignment, U32 kTObjectsPerChunk, typename TIndexType>
-template<typename T, typename TMemPool>
-void ObjectAllocator<kTObjectSize, kTObjectAlignment, kTObjectsPerChunk, TIndexType>::deleteInstance(TMemPool& pool,
-																									 T* obj)
+template<PtrSize kTObjectSize, U32 kTObjectAlignment, typename TMemoryPool, U32 kTObjectsPerChunk, typename TIndexType>
+template<typename T>
+void ObjectAllocator<kTObjectSize, kTObjectAlignment, TMemoryPool, kTObjectsPerChunk, TIndexType>::deleteInstance(
+	T* obj)
 {
 	static_assert(alignof(T) <= kObjectAlignment, "Wrong object alignment");
 	static_assert(sizeof(T) <= kObjectSize, "Wrong object size");
@@ -126,7 +126,7 @@ void ObjectAllocator<kTObjectSize, kTObjectAlignment, kTObjectsPerChunk, TIndexT
 					chunk->m_next->m_prev = chunk->m_prev;
 				}
 
-				anki::deleteInstance(pool, chunk);
+				anki::deleteInstance(m_pool, chunk);
 			}
 
 			break;

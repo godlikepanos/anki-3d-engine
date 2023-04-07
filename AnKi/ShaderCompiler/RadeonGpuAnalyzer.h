@@ -21,12 +21,11 @@ public:
 	U32 m_sgprCount;
 	U32 m_isaSize;
 
-	void toString(StringRaii& str) const;
+	void toString(String& str) const;
 };
 
 /// Run the mali offline compiler and get some info back.
-Error runRadeonGpuAnalyzer(CString rgaExecutable, ConstWeakArray<U8> spirv, ShaderType shaderType,
-						   BaseMemoryPool& tmpPool, RgaOutput& out);
+Error runRadeonGpuAnalyzer(CString rgaExecutable, ConstWeakArray<U8> spirv, ShaderType shaderType, RgaOutput& out);
 /// @}
 
 } // end namespace anki

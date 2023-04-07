@@ -30,13 +30,20 @@ public:
 
 /// The base class for all user memory chunks of SegregatedListsAllocatorBuilder.
 /// @memberof SegregatedListsAllocatorBuilder
+template<typename TMemoryPool>
 class SegregatedListsAllocatorBuilderChunkBase
 {
-	template<typename TChunk, typename TInterface, typename TLock>
+	template<typename, typename, typename, typename>
 	friend class SegregatedListsAllocatorBuilder;
 
+protected:
+	SegregatedListsAllocatorBuilderChunkBase(const TMemoryPool& pool = TMemoryPool())
+		: m_freeLists(pool)
+	{
+	}
+
 private:
-	DynamicArray<DynamicArray<detail::SegregatedListsAllocatorBuilderFreeBlock>> m_freeLists;
+	DynamicArray<DynamicArray<detail::SegregatedListsAllocatorBuilderFreeBlock, TMemoryPool>, TMemoryPool> m_freeLists;
 	PtrSize m_totalSize = 0;
 	PtrSize m_freeSize = 0;
 };
@@ -54,17 +61,18 @@ private:
 ///                    Error allocateChunk(TChunk*& newChunk, PtrSize& chunkSize);
 ///                    /// Deletes a chunk.
 ///                    void deleteChunk(TChunk* chunk);
-///                    /// Get an allocator for internal allocations of the builder.
-///                    SomeMemoryPool& getMemoryPool() const;
 ///                    /// Get the min alignment that will be required.
 ///                    PtrSize getMinSizeAlignment() const;
 ///                    @endcode
 /// @tparam TLock User defined lock (eg Mutex).
-template<typename TChunk, typename TInterface, typename TLock>
+template<typename TChunk, typename TInterface, typename TLock, typename TMemoryPool>
 class SegregatedListsAllocatorBuilder
 {
 public:
-	SegregatedListsAllocatorBuilder() = default;
+	SegregatedListsAllocatorBuilder(const TMemoryPool& pool = TMemoryPool())
+		: m_chunks(pool)
+	{
+	}
 
 	~SegregatedListsAllocatorBuilder();
 
@@ -89,7 +97,7 @@ public:
 	Error validate() const;
 
 	/// Print debug info.
-	void printFreeBlocks(StringListRaii& strList) const;
+	void printFreeBlocks(StringList& strList) const;
 
 	/// It's 1-(largestBlockOfFreeMemory/totalFreeMemory). 0.0 is no fragmentation, 1.0 is totally fragmented.
 	[[nodiscard]] F32 computeExternalFragmentation(PtrSize baseSize = 1) const;
@@ -113,9 +121,14 @@ private:
 
 	TInterface m_interface; ///< The interface.
 
-	DynamicArray<TChunk*> m_chunks;
+	DynamicArray<TChunk*, TMemoryPool> m_chunks;
 
 	mutable TLock m_lock;
+
+	TMemoryPool& getMemoryPool()
+	{
+		return m_chunks.getMemoryPool();
+	}
 
 	U32 findClass(PtrSize size, PtrSize alignment) const;
 

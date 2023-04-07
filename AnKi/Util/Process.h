@@ -61,8 +61,7 @@ public:
 				ProcessOptions options = ProcessOptions::kOpenStderr | ProcessOptions::kOpenStdout);
 
 	/// Same as the other start().
-	Error start(CString executable, const DynamicArray<StringRaii>& arguments,
-				const DynamicArray<StringRaii>& environment,
+	Error start(CString executable, const DynamicArray<String>& arguments, const DynamicArray<String>& environment,
 				ProcessOptions options = ProcessOptions::kOpenStderr | ProcessOptions::kOpenStdout);
 
 	/// Wait for the process to finish.
@@ -78,10 +77,10 @@ public:
 	Error kill(ProcessKillSignal k);
 
 	/// Read from stdout.
-	Error readFromStdout(StringRaii& text);
+	Error readFromStdout(String& text);
 
 	/// Read from stderr.
-	Error readFromStderr(StringRaii& text);
+	Error readFromStderr(String& text);
 
 	/// Cleanup a finished process. Call this if you want to start a new process again. Need to have waited before
 	/// calling destroy.
@@ -93,8 +92,8 @@ public:
 	/// @param stdOut Optional stdout.
 	/// @param stdErr Optional stderr.
 	/// @param exitCode Exit code.
-	static Error callProcess(CString executable, ConstWeakArray<CString> arguments, StringRaii* stdOut,
-							 StringRaii* stdErr, I32& exitCode);
+	static Error callProcess(CString executable, ConstWeakArray<CString> arguments, String* stdOut, String* stdErr,
+							 I32& exitCode);
 
 private:
 	static constexpr U32 kMaxArgs = 64;
@@ -102,7 +101,7 @@ private:
 
 	reproc_t* m_handle = nullptr;
 
-	Error readCommon(I32 reprocStream, StringRaii& text);
+	Error readCommon(I32 reprocStream, String& text);
 
 	Error startInternal(const Char* arguments[], const Char* environment[], ProcessOptions options);
 };

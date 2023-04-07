@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Util/MemoryPool.h>
+#include <AnKi/Util/Hash.h>
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/SparseArray.h>
 
@@ -25,39 +26,15 @@ public:
 	}
 };
 
-/// Specialization for U64 keys.
-template<>
-class DefaultHasher<U64>
-{
-public:
-	U64 operator()(const U64 a) const
-	{
-		return a;
-	}
-};
+/// Specialization for some fundamental types.
+template<typename T>
+concept IsFundamentalOrPointer = std::is_fundamental_v<T> || std::is_pointer_v<T>;
 
-/// Specialization for I64 keys.
-template<>
-class DefaultHasher<I64>
+template<IsFundamentalOrPointer TKey>
+class DefaultHasher<TKey>
 {
 public:
-	U64 operator()(const I64 a) const
-	{
-		union
-		{
-			U64 u64;
-			I64 i64;
-		};
-		i64 = a;
-		return u64;
-	}
-};
-
-template<>
-class DefaultHasher<U32>
-{
-public:
-	U64 operator()(const U32 a) const
+	U64 operator()(const TKey a) const
 	{
 		return computeHash(&a, sizeof(a));
 	}
@@ -88,12 +65,13 @@ public:
 
 /// Hash map template.
 template<typename TKey, typename TValue, typename THasher = DefaultHasher<TKey>,
+		 typename TMemoryPool = SingletonMemoryPoolWrapper<DefaultMemoryPool>,
 		 typename TSparseArrayConfig = HashMapSparseArrayConfig>
 class HashMap
 {
 public:
 	// Typedefs
-	using SparseArrayType = SparseArray<TValue, TSparseArrayConfig>;
+	using SparseArrayType = SparseArray<TValue, TMemoryPool, TSparseArrayConfig>;
 	using Value = TValue;
 	using Key = TKey;
 	using Hasher = THasher;
@@ -101,7 +79,10 @@ public:
 	using ConstIterator = typename SparseArrayType::ConstIterator;
 
 	/// Default constructor.
-	HashMap() = default;
+	HashMap(const TMemoryPool& pool = TMemoryPool())
+		: m_sparseArr(pool)
+	{
+	}
 
 	/// Move.
 	HashMap(HashMap&& b)
@@ -109,16 +90,25 @@ public:
 		*this = std::move(b);
 	}
 
-	/// You need to manually destroy the map.
-	/// @see HashMap::destroy
-	~HashMap()
+	/// Copy.
+	HashMap(const HashMap& b)
+		: m_sparseArr(b.m_sparseArr)
 	{
 	}
+
+	~HashMap() = default;
 
 	/// Move.
 	HashMap& operator=(HashMap&& b)
 	{
 		m_sparseArr = std::move(b.m_sparseArr);
+		return *this;
+	}
+
+	/// Move.
+	HashMap& operator=(const HashMap& b)
+	{
+		m_sparseArr = b.m_sparseArr;
 		return *this;
 	}
 
@@ -182,25 +172,23 @@ public:
 	}
 
 	/// Destroy the list.
-	template<typename TMemPool>
-	void destroy(TMemPool& pool)
+	void destroy()
 	{
-		m_sparseArr.destroy(pool);
+		m_sparseArr.destroy();
 	}
 
 	/// Construct an element inside the map.
-	template<typename TMemPool, typename... TArgs>
-	Iterator emplace(TMemPool& pool, const TKey& key, TArgs&&... args)
+	template<typename... TArgs>
+	Iterator emplace(const TKey& key, TArgs&&... args)
 	{
 		const U64 hash = THasher()(key);
-		return m_sparseArr.emplace(pool, hash, std::forward<TArgs>(args)...);
+		return m_sparseArr.emplace(hash, std::forward<TArgs>(args)...);
 	}
 
 	/// Erase element.
-	template<typename TMemPool>
-	void erase(TMemPool& pool, Iterator it)
+	void erase(Iterator it)
 	{
-		m_sparseArr.erase(pool, it);
+		m_sparseArr.erase(it);
 	}
 
 	/// Find a value using a key.
@@ -219,86 +207,6 @@ public:
 
 protected:
 	SparseArrayType m_sparseArr;
-};
-
-/// Hash map template with automatic cleanup.
-template<typename TKey, typename TValue, typename THasher = DefaultHasher<TKey>,
-		 typename TSparseArrayConfig = HashMapSparseArrayConfig,
-		 typename TMemPool = MemoryPoolPtrWrapper<BaseMemoryPool>>
-class HashMapRaii : public HashMap<TKey, TValue, THasher, TSparseArrayConfig>
-{
-public:
-	using Base = HashMap<TKey, TValue, THasher, TSparseArrayConfig>;
-	using MemoryPool = TMemPool;
-
-	/// Default constructor.
-	HashMapRaii(const MemoryPool& pool = MemoryPool())
-		: m_pool(pool)
-	{
-	}
-
-	/// Move.
-	HashMapRaii(HashMapRaii&& b)
-	{
-		*this = std::move(b);
-	}
-
-	/// Copy.
-	HashMapRaii(const HashMapRaii& b)
-		: Base()
-	{
-		copy(b);
-	}
-
-	/// Destructor.
-	~HashMapRaii()
-	{
-		destroy();
-	}
-
-	/// Move.
-	HashMapRaii& operator=(HashMapRaii&& b)
-	{
-		std::move(*static_cast<HashMapRaii>(this));
-		m_pool = std::move(b.m_pool);
-		return *this;
-	}
-
-	/// Copy.
-	HashMapRaii& operator=(const HashMapRaii& b)
-	{
-		copy(b);
-		return *this;
-	}
-
-	/// Construct an element inside the map.
-	template<typename... TArgs>
-	typename Base::Iterator emplace(const TKey& key, TArgs&&... args)
-	{
-		return Base::emplace(m_pool, key, std::forward<TArgs>(args)...);
-	}
-
-	/// Erase element.
-	void erase(typename Base::Iterator it)
-	{
-		Base::erase(m_pool, it);
-	}
-
-	/// Clean up the map.
-	void destroy()
-	{
-		Base::destroy(m_pool);
-	}
-
-private:
-	MemoryPool m_pool;
-
-	void copy(const HashMapRaii& b)
-	{
-		destroy();
-		m_pool = b.m_pool;
-		b.m_sparseArr.clone(m_pool, Base::m_sparseArr);
-	}
 };
 /// @}
 

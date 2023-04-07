@@ -61,7 +61,7 @@ private:
 	PhysicsCollisionShapePtr m_shape;
 	ClassWrapper<btGhostObject> m_ghostShape;
 
-	DynamicArray<PhysicsTriggerFilteredPair*> m_pairs;
+	PhysicsDynamicArray<PhysicsTriggerFilteredPair*> m_pairs;
 
 	PhysicsTriggerProcessContactCallback* m_contactCallback = nullptr;
 

@@ -1661,7 +1661,7 @@ ANKI_TEST(Gr, RenderGraph)
 		TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, 0));
 
 		GraphicsRenderPassDescription& pass =
-			descr.newGraphicsRenderPass(StringRaii(&pool).sprintf("GI lp%u", faceIdx).toCString());
+			descr.newGraphicsRenderPass(String().sprintf("GI lp%u", faceIdx).toCString());
 		pass.newTextureDependency(giGiLightRt, TextureUsageBit::kFramebufferWrite, subresource);
 		pass.newTextureDependency(giGbuffNormRt, TextureUsageBit::kSampledFragment);
 		pass.newTextureDependency(giGbuffDepthRt, TextureUsageBit::kSampledFragment);
@@ -1673,7 +1673,7 @@ ANKI_TEST(Gr, RenderGraph)
 		for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
 		{
 			GraphicsRenderPassDescription& pass =
-				descr.newGraphicsRenderPass(StringRaii(&pool).sprintf("GI mip%u", faceIdx).toCString());
+				descr.newGraphicsRenderPass(String().sprintf("GI mip%u", faceIdx).toCString());
 
 			for(U32 mip = 0; mip < GI_MIP_COUNT; ++mip)
 			{
@@ -2626,17 +2626,16 @@ void main()
 }
 		)";
 
-		HeapMemoryPool pool(allocAligned, nullptr);
-		StringRaii fragSrc(&pool);
+		String fragSrc;
 		if(useRayTracing)
 		{
-			fragSrc.append("#define USE_RAY_TRACING 1\n");
+			fragSrc += "#define USE_RAY_TRACING 1\n";
 		}
 		else
 		{
-			fragSrc.append("#define USE_RAY_TRACING 0\n");
+			fragSrc += "#define USE_RAY_TRACING 0\n";
 		}
-		fragSrc.append(src);
+		fragSrc += src;
 		prog = createProgram(VERT_QUAD_STRIP_SRC, fragSrc, *g_gr);
 	}
 
@@ -3144,7 +3143,7 @@ F32 scatteringPdfLambertian(Vec3 normal, Vec3 scatteredDir)
 			;
 #undef MAGIC_MACRO
 
-		StringRaii commonSrc(&pool);
+		String commonSrc;
 		commonSrc.sprintf(commonSrcPart.cstr(), rtTypesStr.cstr());
 
 		const CString lambertianSrc = R"(
@@ -3353,28 +3352,25 @@ void main()
 	imageStore(u_outImg, IVec2(gl_LaunchIDEXT.xy), Vec4(outColor, 0.0));
 })";
 
-		ShaderPtr lambertianShader =
-			createShader(StringRaii(&pool).sprintf("%s\n%s", commonSrc.cstr(), lambertianSrc.cstr()),
-						 ShaderType::kClosestHit, *g_gr);
-		ShaderPtr lambertianRoomShader =
-			createShader(StringRaii(&pool).sprintf("%s\n%s", commonSrc.cstr(), lambertianRoomSrc.cstr()),
-						 ShaderType::kClosestHit, *g_gr);
-		ShaderPtr emissiveShader = createShader(
-			StringRaii(&pool).sprintf("%s\n%s", commonSrc.cstr(), emissiveSrc.cstr()), ShaderType::kClosestHit, *g_gr);
+		ShaderPtr lambertianShader = createShader(String().sprintf("%s\n%s", commonSrc.cstr(), lambertianSrc.cstr()),
+												  ShaderType::kClosestHit, *g_gr);
+		ShaderPtr lambertianRoomShader = createShader(
+			String().sprintf("%s\n%s", commonSrc.cstr(), lambertianRoomSrc.cstr()), ShaderType::kClosestHit, *g_gr);
+		ShaderPtr emissiveShader = createShader(String().sprintf("%s\n%s", commonSrc.cstr(), emissiveSrc.cstr()),
+												ShaderType::kClosestHit, *g_gr);
 
-		ShaderPtr shadowAhitShader = createShader(
-			StringRaii(&pool).sprintf("%s\n%s", commonSrc.cstr(), shadowAhitSrc.cstr()), ShaderType::kAnyHit, *g_gr);
-		ShaderPtr shadowChitShader =
-			createShader(StringRaii(&pool).sprintf("%s\n%s", commonSrc.cstr(), shadowChitSrc.cstr()),
-						 ShaderType::kClosestHit, *g_gr);
-		ShaderPtr missShader = createShader(StringRaii(&pool).sprintf("%s\n%s", commonSrc.cstr(), missSrc.cstr()),
-											ShaderType::kMiss, *g_gr);
+		ShaderPtr shadowAhitShader = createShader(String().sprintf("%s\n%s", commonSrc.cstr(), shadowAhitSrc.cstr()),
+												  ShaderType::kAnyHit, *g_gr);
+		ShaderPtr shadowChitShader = createShader(String().sprintf("%s\n%s", commonSrc.cstr(), shadowChitSrc.cstr()),
+												  ShaderType::kClosestHit, *g_gr);
+		ShaderPtr missShader =
+			createShader(String().sprintf("%s\n%s", commonSrc.cstr(), missSrc.cstr()), ShaderType::kMiss, *g_gr);
 
-		ShaderPtr shadowMissShader = createShader(
-			StringRaii(&pool).sprintf("%s\n%s", commonSrc.cstr(), shadowMissSrc.cstr()), ShaderType::kMiss, *g_gr);
+		ShaderPtr shadowMissShader =
+			createShader(String().sprintf("%s\n%s", commonSrc.cstr(), shadowMissSrc.cstr()), ShaderType::kMiss, *g_gr);
 
-		ShaderPtr rayGenShader = createShader(StringRaii(&pool).sprintf("%s\n%s", commonSrc.cstr(), rayGenSrc.cstr()),
-											  ShaderType::kRayGen, *g_gr);
+		ShaderPtr rayGenShader =
+			createShader(String().sprintf("%s\n%s", commonSrc.cstr(), rayGenSrc.cstr()), ShaderType::kRayGen, *g_gr);
 
 		Array<RayTracingHitGroup, 4> hitGroups;
 		hitGroups[0].m_closestHitShader = lambertianShader;
@@ -3669,11 +3665,10 @@ void main()
 	memset(values, 0, info.m_size);
 
 	// Pre-create some CPU result buffers
-	HeapMemoryPool pool(allocAligned, nullptr);
-	DynamicArrayRaii<U32> atomicsBufferCpu(&pool);
-	atomicsBufferCpu.create(ARRAY_SIZE);
-	DynamicArrayRaii<U32> expectedResultsBufferCpu(&pool);
-	expectedResultsBufferCpu.create(ARRAY_SIZE);
+	DynamicArray<U32> atomicsBufferCpu;
+	atomicsBufferCpu.resize(ARRAY_SIZE);
+	DynamicArray<U32> expectedResultsBufferCpu;
+	expectedResultsBufferCpu.resize(ARRAY_SIZE);
 	for(U32 i = 0; i < ARRAY_SIZE; ++i)
 	{
 		const U32 localInvocation = i % 8;

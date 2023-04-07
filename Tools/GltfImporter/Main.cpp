@@ -24,11 +24,10 @@ Options:
 class CmdLineArgs
 {
 public:
-	HeapMemoryPool m_pool = {allocAligned, nullptr};
-	StringRaii m_inputFname = {&m_pool};
-	StringRaii m_outDir = {&m_pool};
-	StringRaii m_rpath = {&m_pool};
-	StringRaii m_texRpath = {&m_pool};
+	String m_inputFname;
+	String m_outDir;
+	String m_rpath;
+	String m_texRpath;
 	Bool m_optimizeMeshes = true;
 	Bool m_optimizeAnimations = true;
 	Bool m_importTextures = false;
@@ -49,7 +48,7 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 		return Error::kUserData;
 	}
 
-	info.m_inputFname.create(argv[1]);
+	info.m_inputFname = argv[1];
 	info.m_outDir.sprintf("%s/", argv[2]);
 
 	for(I i = 3; i < argc; i++)
@@ -67,7 +66,7 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 				}
 				else
 				{
-					info.m_texRpath.create("");
+					info.m_texRpath = "";
 				}
 			}
 			else
@@ -92,7 +91,7 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 				}
 				else
 				{
-					info.m_rpath.create("");
+					info.m_rpath = "";
 				}
 			}
 			else
@@ -221,6 +220,17 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 ANKI_MAIN_FUNCTION(myMain)
 int myMain(int argc, char** argv)
 {
+	class Cleanup
+	{
+	public:
+		~Cleanup()
+		{
+			DefaultMemoryPool::freeSingleton();
+		}
+	};
+
+	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
+
 	CmdLineArgs cmdArgs;
 	if(parseCommandLineArgs(argc, argv, cmdArgs))
 	{
@@ -228,22 +238,21 @@ int myMain(int argc, char** argv)
 		return 1;
 	}
 
-	HeapMemoryPool pool(allocAligned, nullptr);
-	StringRaii comment(&pool);
+	String comment;
 	for(I32 i = 0; i < argc; ++i)
 	{
 		if(i != 0)
 		{
-			comment.append(" ");
+			comment += " ";
 		}
 
 		if(CString(argv[i]).getLength())
 		{
-			comment.append(argv[i]);
+			comment += argv[i];
 		}
 		else
 		{
-			comment.append("\"\"");
+			comment += "\"\"";
 		}
 	}
 
@@ -261,7 +270,7 @@ int myMain(int argc, char** argv)
 	initInfo.m_comment = comment;
 	initInfo.m_importTextures = cmdArgs.m_importTextures;
 
-	GltfImporter importer(&pool);
+	GltfImporter importer(&DefaultMemoryPool::getSingleton());
 	if(importer.init(initInfo))
 	{
 		return 1;

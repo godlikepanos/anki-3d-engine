@@ -21,7 +21,7 @@ Options:
 )";
 
 static Error parseCommandLineArgs(WeakArray<char*> argv, Bool& dumpStats, Bool& dumpBinary, Bool& glsl, Bool& spirv,
-								  StringRaii& filename)
+								  String& filename)
 {
 	// Parse config
 	if(argv.getSize() < 2)
@@ -61,8 +61,6 @@ static Error parseCommandLineArgs(WeakArray<char*> argv, Bool& dumpStats, Bool& 
 
 Error dumpStats(const ShaderProgramBinary& bin)
 {
-	HeapMemoryPool pool(allocAligned, nullptr);
-
 	printf("\nOffline compilers stats:\n");
 	fflush(stdout);
 
@@ -135,26 +133,20 @@ Error dumpStats(const ShaderProgramBinary& bin)
 	class Ctx
 	{
 	public:
-		HeapMemoryPool* m_pool = nullptr;
-		DynamicArrayRaii<Stats> m_spirvStats{m_pool};
-		DynamicArrayRaii<Atomic<U32>> m_spirvVisited{m_pool};
+		DynamicArray<Stats> m_spirvStats;
+		DynamicArray<Atomic<U32>> m_spirvVisited;
 		Atomic<U32> m_variantCount = {0};
 		const ShaderProgramBinary* m_bin = nullptr;
 		Atomic<I32> m_error = {0};
-
-		Ctx(HeapMemoryPool* pool)
-			: m_pool(pool)
-		{
-		}
 	};
 
-	Ctx ctx(&pool);
+	Ctx ctx;
 	ctx.m_bin = &bin;
-	ctx.m_spirvStats.create(bin.m_codeBlocks.getSize());
-	ctx.m_spirvVisited.create(bin.m_codeBlocks.getSize());
+	ctx.m_spirvStats.resize(bin.m_codeBlocks.getSize());
+	ctx.m_spirvVisited.resize(bin.m_codeBlocks.getSize(), 0);
 	memset(ctx.m_spirvVisited.getBegin(), 0, ctx.m_spirvVisited.getSizeInBytes());
 
-	ThreadHive hive(getCpuCoresCount(), &pool);
+	ThreadHive hive(getCpuCoresCount());
 
 	ThreadHiveTaskCallback callback = [](void* userData, [[maybe_unused]] U32 threadId,
 										 [[maybe_unused]] ThreadHive& hive,
@@ -194,7 +186,7 @@ Error dumpStats(const ShaderProgramBinary& bin)
 #else
 #	error "Not supported"
 #endif
-					codeBlock.m_binary, shaderType, *ctx.m_pool, maliocOut);
+					codeBlock.m_binary, shaderType, maliocOut);
 
 				if(err)
 				{
@@ -214,7 +206,7 @@ Error dumpStats(const ShaderProgramBinary& bin)
 #	else
 #		error "Not supported"
 #	endif
-					codeBlock.m_binary, shaderType, *ctx.m_pool, rgaOut);
+					codeBlock.m_binary, shaderType, rgaOut);
 
 				if(err)
 				{
@@ -328,9 +320,7 @@ Error dumpStats(const ShaderProgramBinary& bin)
 
 Error dump(CString fname, Bool bDumpStats, Bool dumpBinary, Bool glsl, Bool spirv)
 {
-	HeapMemoryPool pool(allocAligned, nullptr);
-
-	ShaderProgramBinaryWrapper binw(&pool);
+	ShaderProgramBinaryWrapper binw(&DefaultMemoryPool::getSingleton());
 	ANKI_CHECK(binw.deserializeFromFile(fname));
 
 	if(dumpBinary)
@@ -339,7 +329,7 @@ Error dump(CString fname, Bool bDumpStats, Bool dumpBinary, Bool glsl, Bool spir
 		options.m_writeGlsl = glsl;
 		options.m_writeSpirv = spirv;
 
-		StringRaii txt(&pool);
+		String txt;
 		dumpShaderProgramBinary(options, binw.getBinary(), txt);
 
 		printf("%s\n", txt.cstr());
@@ -353,10 +343,21 @@ Error dump(CString fname, Bool bDumpStats, Bool dumpBinary, Bool glsl, Bool spir
 	return Error::kNone;
 }
 
-int main(int argc, char** argv)
+ANKI_MAIN_FUNCTION(myMain)
+int myMain(int argc, char** argv)
 {
-	HeapMemoryPool pool(allocAligned, nullptr);
-	StringRaii filename(&pool);
+	class Dummy
+	{
+	public:
+		~Dummy()
+		{
+			DefaultMemoryPool::freeSingleton();
+		}
+	} dummy;
+
+	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
+
+	String filename;
 	Bool dumpStats;
 	Bool dumpBinary;
 	Bool glsl;

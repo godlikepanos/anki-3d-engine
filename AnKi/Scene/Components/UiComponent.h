@@ -51,7 +51,7 @@ private:
 	void* m_userData = nullptr;
 	Spatial m_spatial;
 
-	Error updateReal(SceneComponentUpdateInfo& info, Bool& updated);
+	Error update(SceneComponentUpdateInfo& info, Bool& updated);
 };
 /// @}
 

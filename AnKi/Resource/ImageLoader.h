@@ -18,7 +18,12 @@ class ImageLoaderSurface
 public:
 	U32 m_width;
 	U32 m_height;
-	DynamicArray<U8, PtrSize> m_data;
+	DynamicArray<U8, MemoryPoolPtrWrapper<BaseMemoryPool>, PtrSize> m_data;
+
+	ImageLoaderSurface(MemoryPoolPtrWrapper<BaseMemoryPool> pool)
+		: m_data(pool)
+	{
+	}
 };
 
 /// An image volume
@@ -29,7 +34,12 @@ public:
 	U32 m_width;
 	U32 m_height;
 	U32 m_depth;
-	DynamicArray<U8, PtrSize> m_data;
+	DynamicArray<U8, MemoryPoolPtrWrapper<BaseMemoryPool>, PtrSize> m_data;
+
+	ImageLoaderVolume(MemoryPoolPtrWrapper<BaseMemoryPool> pool)
+		: m_data(pool)
+	{
+	}
 };
 
 /// Loads bitmaps from regular system files or resource files. Supported formats are .tga and .ankitex.
@@ -37,15 +47,13 @@ class ImageLoader
 {
 public:
 	ImageLoader(BaseMemoryPool* pool)
-		: m_pool(pool)
+		: m_surfaces(pool)
+		, m_volumes(pool)
 	{
 		ANKI_ASSERT(pool);
 	}
 
-	~ImageLoader()
-	{
-		destroy();
-	}
+	~ImageLoader() = default;
 
 	ImageBinaryColorFormat getColorFormat() const
 	{
@@ -115,13 +123,11 @@ private:
 	class RsrcFile;
 	class SystemFile;
 
-	BaseMemoryPool* m_pool = nullptr;
-
 	/// [mip][depth or face or layer]. Loader doesn't support cube arrays ATM so face and layer won't be used at the
 	/// same time.
-	DynamicArray<ImageLoaderSurface> m_surfaces;
+	DynamicArray<ImageLoaderSurface, MemoryPoolPtrWrapper<BaseMemoryPool>> m_surfaces;
 
-	DynamicArray<ImageLoaderVolume> m_volumes;
+	DynamicArray<ImageLoaderVolume, MemoryPoolPtrWrapper<BaseMemoryPool>> m_volumes;
 
 	U32 m_mipmapCount = 0;
 	U32 m_width = 0;
@@ -136,22 +142,22 @@ private:
 	void destroy();
 
 	static Error loadUncompressedTga(FileInterface& fs, U32& width, U32& height, U32& bpp,
-									 DynamicArray<U8, PtrSize>& data, BaseMemoryPool& pool);
+									 DynamicArray<U8, MemoryPoolPtrWrapper<BaseMemoryPool>, PtrSize>& data);
 
 	static Error loadCompressedTga(FileInterface& fs, U32& width, U32& height, U32& bpp,
-								   DynamicArray<U8, PtrSize>& data, BaseMemoryPool& pool);
+								   DynamicArray<U8, MemoryPoolPtrWrapper<BaseMemoryPool>, PtrSize>& data);
 
-	static Error loadTga(FileInterface& fs, U32& width, U32& height, U32& bpp, DynamicArray<U8, PtrSize>& data,
-						 BaseMemoryPool& pool);
+	static Error loadTga(FileInterface& fs, U32& width, U32& height, U32& bpp,
+						 DynamicArray<U8, MemoryPoolPtrWrapper<BaseMemoryPool>, PtrSize>& data);
 
-	static Error loadStb(Bool isFloat, FileInterface& fs, U32& width, U32& height, DynamicArray<U8, PtrSize>& data,
-						 BaseMemoryPool& pool);
+	static Error loadStb(Bool isFloat, FileInterface& fs, U32& width, U32& height,
+						 DynamicArray<U8, MemoryPoolPtrWrapper<BaseMemoryPool>, PtrSize>& data);
 
 	static Error loadAnkiImage(FileInterface& file, U32 maxImageSize, ImageBinaryDataCompression& preferredCompression,
-							   DynamicArray<ImageLoaderSurface>& surfaces, DynamicArray<ImageLoaderVolume>& volumes,
-							   BaseMemoryPool& pool, U32& width, U32& height, U32& depth, U32& layerCount,
-							   U32& mipCount, ImageBinaryType& imageType, ImageBinaryColorFormat& colorFormat,
-							   UVec2& astcBlockSize);
+							   DynamicArray<ImageLoaderSurface, MemoryPoolPtrWrapper<BaseMemoryPool>>& surfaces,
+							   DynamicArray<ImageLoaderVolume, MemoryPoolPtrWrapper<BaseMemoryPool>>& volumes,
+							   U32& width, U32& height, U32& depth, U32& layerCount, U32& mipCount,
+							   ImageBinaryType& imageType, ImageBinaryColorFormat& colorFormat, UVec2& astcBlockSize);
 
 	Error loadInternal(FileInterface& file, const CString& filename, U32 maxImageSize);
 };

@@ -12,10 +12,6 @@
 
 namespace anki {
 
-// Forward
-class XmlDocument;
-class GrManager;
-
 /// @addtogroup resource
 /// @{
 
@@ -55,7 +51,7 @@ public:
 	ANKI_INTERNAL void setFilename(const CString& fname)
 	{
 		ANKI_ASSERT(m_fname.isEmpty());
-		m_fname.create(fname);
+		m_fname = fname;
 	}
 
 	ANKI_INTERNAL void setUuid(U64 uuid)
@@ -75,7 +71,7 @@ public:
 
 	ANKI_INTERNAL Error openFileReadAllText(const ResourceFilename& filename, ResourceString& file);
 
-	ANKI_INTERNAL Error openFileParseXml(const ResourceFilename& filename, XmlDocument& xml);
+	ANKI_INTERNAL Error openFileParseXml(const ResourceFilename& filename, ResourceXmlDocument& xml);
 
 private:
 	mutable Atomic<I32> m_refcount = {0};

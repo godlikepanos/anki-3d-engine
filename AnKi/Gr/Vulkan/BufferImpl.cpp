@@ -18,7 +18,7 @@ BufferImpl::~BufferImpl()
 
 	if(m_views.getSize())
 	{
-		garbage->m_viewHandles.create(U32(m_views.getSize()));
+		garbage->m_viewHandles.resize(U32(m_views.getSize()));
 
 		U32 count = 0;
 		for(auto it : m_views)

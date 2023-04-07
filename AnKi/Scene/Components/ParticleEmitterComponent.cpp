@@ -267,7 +267,7 @@ void ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	}
 	else
 	{
-		m_simpleParticles.create(m_props.m_maxNumOfParticles);
+		m_simpleParticles.resize(m_props.m_maxNumOfParticles);
 	}
 
 	// GPU scene allocations
@@ -445,7 +445,7 @@ void ParticleEmitterComponent::simulate(Second prevUpdateTime, Second crntTime, 
 	}
 }
 
-void ParticleEmitterComponent::setupRenderableQueueElements(RenderingTechnique technique, StackMemoryPool& tmpPool,
+void ParticleEmitterComponent::setupRenderableQueueElements(RenderingTechnique technique,
 															WeakArray<RenderableQueueElement>& outRenderables) const
 {
 	if(!(m_particleEmitterResource->getMaterial()->getRenderingTechniques() & RenderingTechniqueBit(1 << technique))
@@ -460,8 +460,9 @@ void ParticleEmitterComponent::setupRenderableQueueElements(RenderingTechnique t
 	ShaderProgramPtr prog;
 	m_particleEmitterResource->getRenderingInfo(key, prog);
 
-	RenderableQueueElement* el = static_cast<RenderableQueueElement*>(
-		tmpPool.allocate(sizeof(RenderableQueueElement), alignof(RenderableQueueElement)));
+	RenderableQueueElement* el =
+		static_cast<RenderableQueueElement*>(SceneGraph::getSingleton().getFrameMemoryPool().allocate(
+			sizeof(RenderableQueueElement), alignof(RenderableQueueElement)));
 
 	el->m_mergeKey = 0; // Not mergable
 	el->m_program = prog.get();

@@ -20,18 +20,19 @@ class RenderQueue;
 class App
 {
 public:
-	App();
+	App(AllocAlignedCallback allocCb = allocAligned, void* allocCbUserData = nullptr);
+
 	virtual ~App();
 
 	/// Initialize the application.
-	Error init(AllocAlignedCallback allocCb, void* allocCbUserData);
+	Error init();
 
-	const String& getSettingsDirectory() const
+	CString getSettingsDirectory() const
 	{
 		return m_settingsDir;
 	}
 
-	const String& getCacheDirectory() const
+	CString getCacheDirectory() const
 	{
 		return m_cacheDir;
 	}
@@ -65,6 +66,9 @@ private:
 	CoreString m_cacheDir; ///< This is used as a cache
 	U64 m_resourceCompletedAsyncTaskCount = 0;
 
+	void* m_originalAllocUserData = nullptr;
+	AllocAlignedCallback m_originalAllocCallback = nullptr;
+
 	class MemStats
 	{
 	public:
@@ -72,15 +76,12 @@ private:
 		Atomic<U64> m_allocCount = {0};
 		Atomic<U64> m_freeCount = {0};
 
-		void* m_originalUserData = nullptr;
-		AllocAlignedCallback m_originalAllocCallback = nullptr;
-
 		static void* allocCallback(void* userData, void* ptr, PtrSize size, PtrSize alignment);
 	} m_memStats;
 
 	void initMemoryCallbacks(AllocAlignedCallback& allocCb, void*& allocCbUserData);
 
-	Error initInternal(AllocAlignedCallback allocCb, void* allocCbUserData);
+	Error initInternal();
 
 	Error initDirs();
 	void cleanup();

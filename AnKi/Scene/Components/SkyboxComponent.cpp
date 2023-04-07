@@ -14,7 +14,6 @@ namespace anki {
 
 SkyboxComponent::SkyboxComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
-	, m_node(node)
 	, m_spatial(this)
 {
 	m_spatial.setAlwaysVisible(true);

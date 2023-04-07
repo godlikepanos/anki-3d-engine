@@ -27,12 +27,12 @@ class MeshBinaryLoader
 {
 public:
 	MeshBinaryLoader(BaseMemoryPool* pool)
-		: m_pool(pool)
+		: m_subMeshes(pool)
 	{
 		ANKI_ASSERT(pool);
 	}
 
-	~MeshBinaryLoader();
+	~MeshBinaryLoader() = default;
 
 	Error load(const ResourceFilename& filename);
 
@@ -55,12 +55,11 @@ public:
 	}
 
 private:
-	BaseMemoryPool* m_pool = nullptr;
 	ResourceFilePtr m_file;
 
 	MeshBinaryHeader m_header;
 
-	DynamicArray<MeshBinarySubMesh> m_subMeshes;
+	DynamicArray<MeshBinarySubMesh, MemoryPoolPtrWrapper<BaseMemoryPool>> m_subMeshes;
 
 	Bool isLoaded() const
 	{

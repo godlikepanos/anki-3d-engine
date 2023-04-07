@@ -4,8 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Util/Xml.h>
-#include <AnKi/Util/File.h>
-#include <AnKi/Util/Logger.h>
 
 namespace anki {
 
@@ -120,50 +118,6 @@ Error XmlElement::getAttributeTextOptional(CString name, CString& out, Bool& att
 	else
 	{
 		out = CString();
-	}
-
-	return Error::kNone;
-}
-
-Error XmlDocument::loadFile(CString filename)
-{
-	File file;
-	ANKI_CHECK(file.open(filename, FileOpenFlag::kRead));
-
-	StringRaii text(m_pool);
-	ANKI_CHECK(file.readAllText(text));
-
-	ANKI_CHECK(parse(text.toCString()));
-
-	return Error::kNone;
-}
-
-Error XmlDocument::parse(CString xmlText)
-{
-	if(m_doc.Parse(&xmlText[0]))
-	{
-		ANKI_UTIL_LOGE("Cannot parse file. Reason: %s", ((m_doc.ErrorStr() == nullptr) ? "unknown" : m_doc.ErrorStr()));
-
-		return Error::kUserData;
-	}
-
-	return Error::kNone;
-}
-
-Error XmlDocument::getChildElementOptional(CString name, XmlElement& out) const
-{
-	out = XmlElement(m_doc.FirstChildElement(&name[0]), m_pool);
-	return Error::kNone;
-}
-
-Error XmlDocument::getChildElement(CString name, XmlElement& out) const
-{
-	ANKI_CHECK(getChildElementOptional(name, out));
-
-	if(!out)
-	{
-		ANKI_UTIL_LOGE("Cannot find tag \"%s\"", &name[0]);
-		return Error::kUserData;
 	}
 
 	return Error::kNone;

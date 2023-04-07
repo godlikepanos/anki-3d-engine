@@ -29,9 +29,9 @@ public:
 		: m_threadAlloc(allocator)
 	{
 		ANKI_ASSERT(allocator);
-		for(DynamicArrayRaii<GrObjectPtr>& arr : m_objectRefs)
+		for(DynamicArray<GrObjectPtr, MemoryPoolPtrWrapper<StackMemoryPool>>& arr : m_objectRefs)
 		{
-			arr = DynamicArrayRaii<GrObjectPtr>(&m_fastPool);
+			arr = DynamicArray<GrObjectPtr, MemoryPoolPtrWrapper<StackMemoryPool>>(&m_fastPool);
 		}
 	}
 
@@ -111,7 +111,7 @@ private:
 	VkCommandBuffer m_handle = {};
 
 	MicroFencePtr m_fence;
-	Array<DynamicArrayRaii<GrObjectPtr>, U(GrObjectType::kCount)> m_objectRefs;
+	Array<DynamicArray<GrObjectPtr, MemoryPoolPtrWrapper<StackMemoryPool>>, U(GrObjectType::kCount)> m_objectRefs;
 
 	// Cacheline boundary
 
@@ -122,7 +122,7 @@ private:
 
 	void reset();
 
-	void pushToArray(DynamicArrayRaii<GrObjectPtr>& arr, GrObject* grobj)
+	void pushToArray(DynamicArray<GrObjectPtr, MemoryPoolPtrWrapper<StackMemoryPool>>& arr, GrObject* grobj)
 	{
 		ANKI_ASSERT(grobj);
 

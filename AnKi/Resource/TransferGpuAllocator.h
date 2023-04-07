@@ -193,7 +193,7 @@ private:
 	{
 	public:
 		StackAllocatorBuilder<Chunk, StackAllocatorBuilderInterface, DummyMutex> m_stackAlloc;
-		List<FencePtr> m_fences;
+		ResourceList<FencePtr> m_fences;
 		U32 m_pendingReleases = 0;
 	};
 

@@ -128,7 +128,7 @@ inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency&
 
 	if(kType == RenderPassDependency::Type::kTexture)
 	{
-		m_rtDeps.emplaceBack(*m_pool, dep);
+		m_rtDeps.emplaceBack(dep);
 		fixSubresource(m_rtDeps.getBack());
 
 		if(!!(dep.m_texture.m_usage & TextureUsageBit::kAllRead))
@@ -157,7 +157,7 @@ inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency&
 	}
 	else if(kType == RenderPassDependency::Type::kBuffer)
 	{
-		m_buffDeps.emplaceBack(*m_pool, dep);
+		m_buffDeps.emplaceBack(dep);
 
 		if(!!(dep.m_buffer.m_usage & BufferUsageBit::kAllRead))
 		{
@@ -172,7 +172,7 @@ inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency&
 	else
 	{
 		ANKI_ASSERT(kType == RenderPassDependency::Type::kAccelerationStructure);
-		m_asDeps.emplaceBack(*m_pool, dep);
+		m_asDeps.emplaceBack(dep);
 
 		if(!!(dep.m_as.m_usage & AccelerationStructureUsageBit::kAllRead))
 		{
@@ -252,27 +252,21 @@ inline RenderGraphDescription::~RenderGraphDescription()
 	{
 		deleteInstance(*m_pool, pass);
 	}
-	m_passes.destroy(*m_pool);
-	m_renderTargets.destroy(*m_pool);
-	m_buffers.destroy(*m_pool);
-	m_as.destroy(*m_pool);
 }
 
 inline GraphicsRenderPassDescription& RenderGraphDescription::newGraphicsRenderPass(CString name)
 {
-	GraphicsRenderPassDescription* pass = newInstance<GraphicsRenderPassDescription>(*m_pool, this);
-	pass->m_pool = m_pool;
+	GraphicsRenderPassDescription* pass = newInstance<GraphicsRenderPassDescription>(*m_pool, this, m_pool);
 	pass->setName(name);
-	m_passes.emplaceBack(*m_pool, pass);
+	m_passes.emplaceBack(pass);
 	return *pass;
 }
 
 inline ComputeRenderPassDescription& RenderGraphDescription::newComputeRenderPass(CString name)
 {
-	ComputeRenderPassDescription* pass = newInstance<ComputeRenderPassDescription>(*m_pool, this);
-	pass->m_pool = m_pool;
+	ComputeRenderPassDescription* pass = newInstance<ComputeRenderPassDescription>(*m_pool, this, m_pool);
 	pass->setName(name);
-	m_passes.emplaceBack(*m_pool, pass);
+	m_passes.emplaceBack(pass);
 	return *pass;
 }
 
@@ -283,7 +277,7 @@ inline RenderTargetHandle RenderGraphDescription::importRenderTarget(TexturePtr 
 		ANKI_ASSERT(rt.m_importedTex != tex && "Already imported");
 	}
 
-	RT& rt = *m_renderTargets.emplaceBack(*m_pool);
+	RT& rt = *m_renderTargets.emplaceBack();
 	rt.m_importedTex = tex;
 	rt.m_importedLastKnownUsage = usage;
 	rt.m_usageDerivedByDeps = TextureUsageBit::kNone;
@@ -306,7 +300,7 @@ inline RenderTargetHandle RenderGraphDescription::newRenderTarget(const RenderTa
 	ANKI_ASSERT(initInf.m_hash && "Forgot to call RenderTargetDescription::bake");
 	ANKI_ASSERT(initInf.m_usage == TextureUsageBit::kNone
 				&& "Don't need to supply the usage. Render grap will find it");
-	RT& rt = *m_renderTargets.emplaceBack(*m_pool);
+	RT& rt = *m_renderTargets.emplaceBack();
 	rt.m_initInfo = initInf;
 	rt.m_hash = initInf.m_hash;
 	rt.m_importedLastKnownUsage = TextureUsageBit::kNone;
@@ -339,7 +333,7 @@ inline BufferHandle RenderGraphDescription::importBuffer(BufferPtr buff, BufferU
 					&& "Range already imported");
 	}
 
-	Buffer& b = *m_buffers.emplaceBack(*m_pool);
+	Buffer& b = *m_buffers.emplaceBack();
 	b.setName(buff->getName());
 	b.m_usage = usage;
 	b.m_importedBuff = std::move(buff);
@@ -359,7 +353,7 @@ RenderGraphDescription::importAccelerationStructure(AccelerationStructurePtr as,
 		ANKI_ASSERT(a.m_importedAs != as && "Already imported");
 	}
 
-	AS& a = *m_as.emplaceBack(*m_pool);
+	AS& a = *m_as.emplaceBack();
 	a.setName(as->getName());
 	a.m_importedAs = std::move(as);
 	a.m_usage = usage;

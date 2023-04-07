@@ -43,10 +43,10 @@ public:
 		return m_castsShadow;
 	}
 
-	void setupRenderableQueueElements(U32 lod, RenderingTechnique technique, StackMemoryPool& tmpPool,
+	void setupRenderableQueueElements(U32 lod, RenderingTechnique technique,
 									  WeakArray<RenderableQueueElement>& outRenderables) const;
 
-	void setupRayTracingInstanceQueueElements(U32 lod, RenderingTechnique technique, StackMemoryPool& tmpPool,
+	void setupRayTracingInstanceQueueElements(U32 lod, RenderingTechnique technique,
 											  WeakArray<RayTracingInstanceQueueElement>& outRenderables) const;
 
 private:

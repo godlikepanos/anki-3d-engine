@@ -25,24 +25,25 @@ public:
 /// This is a generic implementation of a buddy allocator.
 /// @tparam kMaxMemoryRangeLog2 The max memory to allocate.
 /// @tparam TLock This an optional lock. Can be a Mutex or SpinLock or some dummy class.
-/// @tparam TMemPool The type of the pool to be used in internal CPU allocations.
-template<U32 kMaxMemoryRangeLog2, typename TLock, typename TMemPool = MemoryPoolPtrWrapper<HeapMemoryPool>>
+/// @tparam TMemoryPool The type of the pool to be used in internal CPU allocations.
+template<U32 kMaxMemoryRangeLog2, typename TLock, typename TMemoryPool = SingletonMemoryPoolWrapper<DefaultMemoryPool>>
 class BuddyAllocatorBuilder
 {
 public:
 	/// The type of the address.
 	using Address = std::conditional_t<(kMaxMemoryRangeLog2 > 32), PtrSize, U32>;
 
-	using InternalMemoryPool = TMemPool;
+	using InternalMemoryPool = TMemoryPool;
 
 	BuddyAllocatorBuilder()
 	{
 	}
 
 	/// @copydoc init
-	BuddyAllocatorBuilder(InternalMemoryPool pool, U32 maxMemoryRangeLog2)
+	BuddyAllocatorBuilder(U32 maxMemoryRangeLog2, const TMemoryPool& pool = TMemoryPool())
+		: m_freeLists(pool)
 	{
-		init(pool, maxMemoryRangeLog2);
+		init(maxMemoryRangeLog2);
 	}
 
 	BuddyAllocatorBuilder(const BuddyAllocatorBuilder&) = delete; // Non-copyable
@@ -55,9 +56,8 @@ public:
 	BuddyAllocatorBuilder& operator=(const BuddyAllocatorBuilder&) = delete; // Non-copyable
 
 	/// Init the allocator.
-	/// @param pool The memory pool to be used for internal structures of the BuddyAllocatorBuilder.
 	/// @param maxMemoryRangeLog2 The max memory to allocate.
-	void init(InternalMemoryPool pool, U32 maxMemoryRangeLog2);
+	void init(U32 maxMemoryRangeLog2);
 
 	/// Destroy the allocator.
 	void destroy();
@@ -94,9 +94,8 @@ private:
 		return U32(__builtin_ctzll(v));
 	}
 
-	using FreeList = DynamicArray<Address, PtrSize>;
-	InternalMemoryPool m_pool;
-	DynamicArray<FreeList> m_freeLists;
+	using FreeList = DynamicArray<Address, TMemoryPool, PtrSize>;
+	DynamicArray<FreeList, TMemoryPool, U32> m_freeLists;
 	PtrSize m_maxMemoryRange = 0;
 	PtrSize m_userAllocatedSize = 0; ///< The total ammount of memory requested by the user.
 	PtrSize m_realAllocatedSize = 0; ///< The total ammount of memory actually allocated.
@@ -111,12 +110,17 @@ private:
 	{
 		ANKI_ASSERT(m_freeLists[order].getSize() > 0);
 		const PtrSize address = m_freeLists[order].getBack();
-		m_freeLists[order].popBack(m_pool);
+		m_freeLists[order].popBack();
 		ANKI_ASSERT(address < m_maxMemoryRange);
 		return address;
 	}
 
 	void freeInternal(PtrSize address, PtrSize size);
+
+	TMemoryPool& getMemoryPool()
+	{
+		return m_freeLists.getMemoryPool();
+	}
 };
 /// @}
 

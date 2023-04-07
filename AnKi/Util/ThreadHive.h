@@ -80,7 +80,7 @@ public:
 	static constexpr U32 kMaxThreads = 32;
 
 	/// Create the hive.
-	ThreadHive(U32 threadCount, BaseMemoryPool* pool, Bool pinToCores = false);
+	ThreadHive(U32 threadCount, Bool pinToCores = false);
 
 	ThreadHive(const ThreadHive&) = delete; // Non-copyable
 
@@ -136,7 +136,6 @@ private:
 	/// Lightweight task.
 	class Task;
 
-	BaseMemoryPool* m_slowPool;
 	StackMemoryPool m_pool;
 	Thread* m_threads = nullptr;
 	U32 m_threadCount = 0;
@@ -158,6 +157,19 @@ private:
 
 	/// Get new work from the queue.
 	Task* getNewTask();
+
+	static void* stackPoolAllocate([[maybe_unused]] void* userData, void* ptr, PtrSize size, PtrSize alignment)
+	{
+		if(ptr)
+		{
+			DefaultMemoryPool::getSingleton().free(ptr);
+			return nullptr;
+		}
+		else
+		{
+			return DefaultMemoryPool::getSingleton().allocate(size, alignment);
+		}
+	}
 };
 /// @}
 

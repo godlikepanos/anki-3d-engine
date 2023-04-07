@@ -33,6 +33,8 @@ Error BinarySerializer::serializeInternal(const T& x, BaseMemoryPool& tmpPool, F
 
 	m_err = Error::kNone;
 	m_pool = &tmpPool;
+	m_pointerFilePositions = DynamicArray<PointerInfo, Pool>(m_pool);
+	m_structureFilePos = DynamicArray<PtrSize, Pool>(m_pool);
 
 	// Write the empty header (will be filled later)
 	detail::BinarySerializerHeader header = {};
@@ -47,16 +49,16 @@ Error BinarySerializer::serializeInternal(const T& x, BaseMemoryPool& tmpPool, F
 
 	// Finaly, serialize
 	ANKI_CHECK(m_file->write(&x, sizeof(T)));
-	m_structureFilePos.emplaceBack(tmpPool, dataFilePos);
+	m_structureFilePos.emplaceBack(dataFilePos);
 	doValue("root", 0, x);
-	m_structureFilePos.popBack(tmpPool);
+	m_structureFilePos.popBack();
 	if(m_err)
 	{
 		return m_err;
 	}
 
 	// Write all pointers. Do that now and not while writing the actual shader in order to avoid the file seeks
-	DynamicArrayRaii<PtrSize> pointerFilePositions(&tmpPool);
+	DynamicArray<PtrSize, Pool> pointerFilePositions(m_pool);
 	for(const PointerInfo& pointer : m_pointerFilePositions)
 	{
 		ANKI_CHECK(m_file->seek(pointer.m_filePos, FileSeekOrigin::kBeginning));
@@ -84,7 +86,7 @@ Error BinarySerializer::serializeInternal(const T& x, BaseMemoryPool& tmpPool, F
 
 	// Done
 	m_file = nullptr;
-	m_pointerFilePositions.destroy(tmpPool);
+	m_pointerFilePositions.destroy();
 	m_pool = nullptr;
 	return Error::kNone;
 }
@@ -100,14 +102,14 @@ Error BinarySerializer::doArrayComplexType(const T* arr, PtrSize size, PtrSize m
 	PtrSize structFilePos = m_structureFilePos.getBack() + memberOffset;
 	for(PtrSize i = 0; i < size; ++i)
 	{
-		m_structureFilePos.emplaceBack(*m_pool, structFilePos);
+		m_structureFilePos.emplaceBack(structFilePos);
 
 		// Serialize the pointers
 		SerializeFunctor<T>()(arr[i], *this);
 		ANKI_CHECK(m_err);
 
 		// Advance file pos
-		m_structureFilePos.popBack(*m_pool);
+		m_structureFilePos.popBack();
 		structFilePos += sizeof(T);
 	}
 
@@ -139,7 +141,7 @@ Error BinarySerializer::doDynamicArrayComplexType(const T* arr, PtrSize size, Pt
 		PointerInfo pinfo;
 		pinfo.m_filePos = structFilePos + memberOffset;
 		pinfo.m_value = arrayFilePos - m_beginOfDataFilePos;
-		m_pointerFilePositions.emplaceBack(*m_pool, pinfo);
+		m_pointerFilePositions.emplaceBack(pinfo);
 
 		// Write the structures
 		ANKI_CHECK(m_file->seek(arrayFilePos, FileSeekOrigin::kBeginning));
@@ -148,11 +150,11 @@ Error BinarySerializer::doDynamicArrayComplexType(const T* arr, PtrSize size, Pt
 		// Basically serialize pointers
 		for(PtrSize i = 0; i < size && !m_err; ++i)
 		{
-			m_structureFilePos.emplaceBack(*m_pool, arrayFilePos);
+			m_structureFilePos.emplaceBack(arrayFilePos);
 
 			SerializeFunctor<T>()(arr[i], *this);
 
-			m_structureFilePos.popBack(*m_pool);
+			m_structureFilePos.popBack();
 			arrayFilePos += sizeof(T);
 		}
 		ANKI_CHECK(m_err);

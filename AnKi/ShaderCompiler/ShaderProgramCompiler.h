@@ -23,7 +23,7 @@ class ShaderProgramBinaryWrapper
 {
 	friend Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterface& fsystem,
 											  ShaderProgramPostParseInterface* postParseCallback,
-											  ShaderProgramAsyncTaskInterface* taskManager, BaseMemoryPool& tempPool,
+											  ShaderProgramAsyncTaskInterface* taskManager,
 											  const ShaderCompilerOptions& compilerOptions,
 											  ShaderProgramBinaryWrapper& binary);
 
@@ -84,8 +84,8 @@ Error ShaderProgramBinaryWrapper::deserializeFromAnyFile(TFile& file)
 /// Takes an AnKi special shader program and spits a binary.
 Error compileShaderProgram(CString fname, ShaderProgramFilesystemInterface& fsystem,
 						   ShaderProgramPostParseInterface* postParseCallback,
-						   ShaderProgramAsyncTaskInterface* taskManager, BaseMemoryPool& tempPool,
-						   const ShaderCompilerOptions& compilerOptions, ShaderProgramBinaryWrapper& binary);
+						   ShaderProgramAsyncTaskInterface* taskManager, const ShaderCompilerOptions& compilerOptions,
+						   ShaderProgramBinaryWrapper& binary);
 /// @}
 
 } // end namespace anki

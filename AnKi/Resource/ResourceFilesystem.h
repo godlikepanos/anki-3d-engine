@@ -99,7 +99,7 @@ public:
 	{
 		for(const Path& path : m_paths)
 		{
-			for(const String& fname : path.m_files)
+			for(const ResourceString& fname : path.m_files)
 			{
 				ANKI_CHECK(func(fname.toCString()));
 			}

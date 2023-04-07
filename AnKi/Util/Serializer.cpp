@@ -29,7 +29,7 @@ Error BinarySerializer::doDynamicArrayBasicType(const void* arr, PtrSize size, U
 		PointerInfo pinfo;
 		pinfo.m_filePos = structFilePos + memberOffset;
 		pinfo.m_value = arrayFilePos - m_beginOfDataFilePos;
-		m_pointerFilePositions.emplaceBack(*m_pool, pinfo);
+		m_pointerFilePositions.emplaceBack(pinfo);
 
 		// Write the array
 		ANKI_CHECK(m_file->seek(arrayFilePos, FileSeekOrigin::kBeginning));

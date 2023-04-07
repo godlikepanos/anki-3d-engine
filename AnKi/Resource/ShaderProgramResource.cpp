@@ -47,7 +47,7 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, [[maybe_unus
 	// Create the mutators
 	if(binary.m_mutators.getSize() > 0)
 	{
-		m_mutators.create(binary.m_mutators.getSize());
+		m_mutators.resize(binary.m_mutators.getSize());
 
 		for(U32 i = 0; i < binary.m_mutators.getSize(); ++i)
 		{
@@ -89,7 +89,7 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, [[maybe_unus
 
 		// Create new one
 		ShaderProgramResourceConstant& in = *m_consts.emplaceBack();
-		in.m_name.create(name);
+		in.m_name = name;
 		in.m_index = m_consts.getSize() - 1;
 
 		if(componentCount == 1)
@@ -361,7 +361,7 @@ ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitIn
 	if(!!(m_shaderStages & (ShaderTypeBit::kAllGraphics | ShaderTypeBit::kCompute)))
 	{
 		// Create the program name
-		StringRaii progName(&ResourceMemoryPool::getSingleton());
+		String progName;
 		getFilepathFilename(getFilename(), progName);
 		char* cprogName = const_cast<char*>(progName.cstr());
 		if(progName.getLength() > kMaxGrObjectNameLength)

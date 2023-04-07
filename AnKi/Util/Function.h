@@ -17,81 +17,43 @@ namespace anki {
 /// This is almost like a re-implementation of std::function. The difference is that it has some functionality to avoid
 /// allocations. Can be used like:
 /// @code
-/// Function<Error(U32, F32), 16> func;
-/// func.init(pool, [&someInt](U32 u, F32 f) {someInt = xxx + u + f; return Error::kNone;});
+/// Function<Error(U32, F32), 16> func([&someInt](U32 u, F32 f) {someInt = xxx + u + f; return Error::kNone;});
 /// func.call(10, 1.2f);
 /// @endcode
 /// @tparam kTInlineStorageSize Optional inline storage to avoid deallocations (small object optimization)
-template<typename TReturn, typename... TArgs, PtrSize kTInlineStorageSize>
-class Function<TReturn(TArgs...), kTInlineStorageSize>
+template<typename TReturn, typename... TArgs, typename TMemoryPool, PtrSize kTInlineStorageSize>
+class Function<TReturn(TArgs...), TMemoryPool, kTInlineStorageSize>
 {
 public:
 	Function() = default;
 
-	/// Move.
-	Function(Function&& b)
+	/// Initialize.
+	template<typename TFunc>
+	Function(TFunc func, const TMemoryPool& pool = TMemoryPool())
+		: m_pool(pool)
 	{
-		*this = std::move(b);
-	}
-
-	// Non-copyable.
-	Function(const Function&) = delete;
-
-	/// Same as init().
-	template<typename TMemPool, typename T>
-	Function(TMemPool& pool, const T& func)
-	{
-		init(pool, func);
-	}
-
-	// Does nothing important.
-	~Function()
-	{
-		ANKI_ASSERT(getState() == kStateUninitialized && "Forgot to call destroy()");
-	}
-
-	// Non-copyable.
-	Function& operator=(const Function&) = delete;
-
-	/// Move.
-	Function& operator=(Function&& b)
-	{
-		ANKI_ASSERT(getState() == kStateUninitialized);
-		m_state = b.m_state;
-		b.m_state = kStateUninitialized;
-		memcpy(&m_callableInlineStorage[0], &b.m_callableInlineStorage[0], sizeof(m_callableInlineStorage));
-		return *this;
-	}
-
-	/// Initialize the function.
-	/// @param pool The memory pool (it might be used).
-	/// @param func The lambda.
-	template<typename TMemPool, typename T>
-	void init(TMemPool& pool, const T& func)
-	{
-		ANKI_ASSERT(getState() == kStateUninitialized);
-
 		// Init storage
-		constexpr Bool useInlineStorage = sizeof(T) <= kInlineStorageSize && std::is_trivially_copyable<T>::value
-										  && std::is_trivially_destructible<T>::value;
+		constexpr Bool useInlineStorage = sizeof(TFunc) <= kInlineStorageSize
+										  && std::is_trivially_copyable<TFunc>::value
+										  && std::is_trivially_destructible<TFunc>::value;
 		if(useInlineStorage)
 		{
 			setState(kStateInlineStorage);
 			memcpy(&m_callableInlineStorage[0], &func, sizeof(func));
 
 			setFunctionCallback([](const Function& self, TArgs... args) -> TReturn {
-				// Yes I know, a const_cast hack follows. If the T was in some pointer then all would be fine. Look
+				// Yes I know, a const_cast hack follows. If the TFunc was in some pointer then all would be fine. Look
 				// at the setFunctionCallback() of the kStateAllocated. Only a static_cast there. It's unfair.
-				const T* t0 = reinterpret_cast<const T*>(&self.m_callableInlineStorage[0]);
-				T* t1 = const_cast<T*>(t0);
+				const TFunc* t0 = reinterpret_cast<const TFunc*>(&self.m_callableInlineStorage[0]);
+				TFunc* t1 = const_cast<TFunc*>(t0);
 				return (*t1)(args...);
 			});
 		}
 		else
 		{
 			setState(kStateAllocated);
-			using CallableT = Callable<T>;
-			CallableT* callable = newInstance<CallableT>(pool, func);
+			using CallableT = Callable<TFunc>;
+			CallableT* callable = newInstance<CallableT>(m_pool, func);
 			m_callablePtr = callable;
 
 			callable->m_size = sizeof(CallableT);
@@ -111,15 +73,75 @@ public:
 		}
 	}
 
+	/// Move.
+	Function(Function&& b)
+	{
+		*this = std::move(b);
+	}
+
+	/// Copy.
+	Function(const Function& b)
+	{
+		*this = b;
+	}
+
+	~Function()
+	{
+		destroy();
+	}
+
+	/// Copy.
+	Function& operator=(const Function& b)
+	{
+		destroy();
+		m_pool = b.m_pool;
+
+		if(b.getState() == kStateUninitialized)
+		{
+			// Nothing to do
+		}
+		else if(b.getState() == kStateInlineStorage)
+		{
+			// It should be trivially copyable, can use memcpy then
+			m_state = b.m_state;
+			memcpy(&m_callableInlineStorage[0], &b.m_callableInlineStorage[0], sizeof(m_callableInlineStorage));
+		}
+		else
+		{
+			ANKI_ASSERT(b.getState() == kStateAllocated);
+			m_state = b.m_state;
+
+			// Allocate callable
+			ANKI_ASSERT(b.m_callablePtr && b.m_callablePtr->m_alignment > 0 && b.m_callablePtr->m_size > 0);
+			m_callablePtr =
+				static_cast<CallableBase*>(m_pool.allocate(b.m_callablePtr->m_size, b.m_callablePtr->m_alignment));
+
+			// Copy
+			b.m_callablePtr->m_copyCallback(*b.m_callablePtr, *m_callablePtr);
+		}
+
+		return *this;
+	}
+
+	/// Move.
+	Function& operator=(Function&& b)
+	{
+		destroy();
+		m_pool = b.m_pool;
+		m_state = b.m_state;
+		b.m_state = kStateUninitialized;
+		memcpy(&m_callableInlineStorage[0], &b.m_callableInlineStorage[0], sizeof(m_callableInlineStorage));
+		return *this;
+	}
+
 	/// Destroy the object.
-	template<typename TMemPool>
-	void destroy(TMemPool& pool)
+	void destroy()
 	{
 		if(getState() == kStateAllocated)
 		{
 			ANKI_ASSERT(m_callablePtr && m_callablePtr->m_destroyCallback);
 			m_callablePtr->m_destroyCallback(*m_callablePtr);
-			pool.free(m_callablePtr);
+			m_pool.free(m_callablePtr);
 		}
 
 		m_state = kStateUninitialized;
@@ -135,39 +157,6 @@ public:
 	TReturn operator()(TArgs... args) const
 	{
 		return getFunctionCallback()(*this, args...);
-	}
-
-	/// Copy from another.
-	template<typename TMemPool>
-	Function& copy(const Function& other, TMemPool& pool)
-	{
-		ANKI_ASSERT(getState() == kStateUninitialized && "Need to destroy it first");
-
-		if(other.getState() == kStateUninitialized)
-		{
-			// Nothing to do
-		}
-		else if(other.getState() == kStateInlineStorage)
-		{
-			// It should be trivially copyable, can use memcpy then
-			m_state = other.m_state;
-			memcpy(&m_callableInlineStorage[0], &other.m_callableInlineStorage[0], sizeof(m_callableInlineStorage));
-		}
-		else
-		{
-			ANKI_ASSERT(other.getState() == kStateAllocated);
-			m_state = other.m_state;
-
-			// Allocate callable
-			ANKI_ASSERT(other.m_callablePtr && other.m_callablePtr->m_alignment > 0 && other.m_callablePtr->m_size > 0);
-			m_callablePtr = static_cast<CallableBase*>(
-				pool.allocate(other.m_callablePtr->m_size, other.m_callablePtr->m_alignment));
-
-			// Copy
-			other.m_callablePtr->m_copyCallback(*other.m_callablePtr, *m_callablePtr);
-		}
-
-		return *this;
 	}
 
 private:
@@ -224,6 +213,8 @@ private:
 	}
 
 	static constexpr PtrSize kInlineStorageSize = lmax(kTInlineStorageSize, lmax(ANKI_SAFE_ALIGNMENT, sizeof(void*)));
+
+	TMemoryPool m_pool;
 
 	union
 	{

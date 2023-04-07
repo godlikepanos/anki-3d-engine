@@ -51,7 +51,7 @@ Error DownscaleBlur::initInternal()
 	// FB descr
 	if(!preferCompute)
 	{
-		m_fbDescrs.create(m_passCount);
+		m_fbDescrs.resize(m_passCount);
 		for(U32 pass = 0; pass < m_passCount; ++pass)
 		{
 			m_fbDescrs[pass].m_colorAttachmentCount = 1;

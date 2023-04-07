@@ -122,7 +122,7 @@ class GpuMemoryManager
 	friend class GpuMemoryManagerInterface;
 
 public:
-	GpuMemoryManager() = default;
+	GpuMemoryManager();
 
 	GpuMemoryManager(const GpuMemoryManager&) = delete; // Non-copyable
 
@@ -153,7 +153,8 @@ public:
 	void getStats(GpuMemoryManagerStats& stats) const;
 
 private:
-	using ClassAllocator = ClassAllocatorBuilder<GpuMemoryManagerChunk, GpuMemoryManagerInterface, Mutex>;
+	using ClassAllocator = ClassAllocatorBuilder<GpuMemoryManagerChunk, GpuMemoryManagerInterface, Mutex,
+												 SingletonMemoryPoolWrapper<GrMemoryPool>>;
 
 	GrDynamicArray<ClassAllocator> m_callocs;
 

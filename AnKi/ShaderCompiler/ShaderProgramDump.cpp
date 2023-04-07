@@ -14,7 +14,7 @@ namespace anki {
 #define ANKI_TAB "    "
 
 static void disassembleBlockInstance(const ShaderProgramBinaryBlockInstance& instance,
-									 const ShaderProgramBinaryBlock& block, StringListRaii& lines)
+									 const ShaderProgramBinaryBlock& block, StringList& lines)
 {
 	lines.pushBackSprintf(ANKI_TAB ANKI_TAB ANKI_TAB "%-32s set %4u binding %4u size %4u\n", block.m_name.getBegin(),
 						  block.m_set, block.m_binding, instance.m_size);
@@ -31,7 +31,7 @@ static void disassembleBlockInstance(const ShaderProgramBinaryBlockInstance& ins
 	}
 }
 
-static void disassembleBlock(const ShaderProgramBinaryBlock& block, StringListRaii& lines)
+static void disassembleBlock(const ShaderProgramBinaryBlock& block, StringList& lines)
 {
 	lines.pushBackSprintf(ANKI_TAB "%-32s set %4u binding %4u\n", block.m_name.getBegin(), block.m_set,
 						  block.m_binding);
@@ -43,11 +43,9 @@ static void disassembleBlock(const ShaderProgramBinaryBlock& block, StringListRa
 	}
 }
 
-void dumpShaderProgramBinary(const ShaderDumpOptions& options, const ShaderProgramBinary& binary,
-							 StringRaii& humanReadable)
+void dumpShaderProgramBinary(const ShaderDumpOptions& options, const ShaderProgramBinary& binary, String& humanReadable)
 {
-	BaseMemoryPool& pool = humanReadable.getMemoryPool();
-	StringListRaii lines(&pool);
+	StringList lines;
 
 	if(binary.m_libraryName[0])
 	{
@@ -188,9 +186,9 @@ void dumpShaderProgramBinary(const ShaderDumpOptions& options, const ShaderProgr
 			compiler.set_common_options(options);
 
 			std::string glsl = compiler.compile();
-			StringListRaii sourceLines(&pool);
+			StringList sourceLines;
 			sourceLines.splitString(glsl.c_str(), '\n');
-			StringRaii newGlsl(&pool);
+			String newGlsl;
 			sourceLines.join("\n" ANKI_TAB ANKI_TAB, newGlsl);
 
 			lines.pushBackSprintf(ANKI_TAB ANKI_TAB "%s\n", newGlsl.cstr());
@@ -210,10 +208,10 @@ void dumpShaderProgramBinary(const ShaderDumpOptions& options, const ShaderProgr
 
 			if(!error)
 			{
-				StringListRaii spvlines(&pool);
+				StringList spvlines;
 				spvlines.splitString(text->str, '\n');
 
-				StringRaii final(&pool);
+				String final;
 				spvlines.join("\n" ANKI_TAB ANKI_TAB, final);
 
 				lines.pushBackSprintf(ANKI_TAB ANKI_TAB "%s\n", final.cstr());

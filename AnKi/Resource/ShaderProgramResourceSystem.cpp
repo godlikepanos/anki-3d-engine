@@ -20,7 +20,7 @@ namespace anki {
 U64 ShaderProgramRaytracingLibrary::generateShaderGroupGroupHash(CString resourceFilename, U64 mutationHash)
 {
 	ANKI_ASSERT(resourceFilename.getLength() > 0);
-	StringRaii basename(&ResourceMemoryPool::getSingleton());
+	String basename;
 	getFilepathFilename(resourceFilename, basename);
 	const U64 hash = appendHash(basename.cstr(), basename.getLength(), mutationHash);
 	return hash;
@@ -145,7 +145,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(
 
 	ANKI_CHECK(ResourceManager::getSingleton().getFilesystem().iterateAllFilenames([&](CString filename) -> Error {
 		// Check file extension
-		StringRaii extension(&ResourceMemoryPool::getSingleton());
+		String extension;
 		getFilepathExtension(filename, extension);
 		const Char binExtension[] = "ankiprogbin";
 		if(extension.getLength() != sizeof(binExtension) - 1 || extension != binExtension)
@@ -179,7 +179,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(
 		}
 
 		// Create the program name
-		StringRaii progName(&ResourceMemoryPool::getSingleton());
+		String progName;
 		getFilepathFilename(filename, progName);
 
 		// Find or create the lib
@@ -198,7 +198,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(
 			{
 				libs.emplaceBack();
 				lib = &libs.getBack();
-				lib->m_name.create(CString(&binary.m_libraryName[0]));
+				lib->m_name = CString(&binary.m_libraryName[0]);
 			}
 		}
 
@@ -356,7 +356,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(
 	// See the ShaderProgram class for info.
 	if(libs.getSize() != 0)
 	{
-		outLibs.create(libs.getSize());
+		outLibs.resize(libs.getSize());
 
 		for(U32 libIdx = 0; libIdx < libs.getSize(); ++libIdx)
 		{
@@ -376,7 +376,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(
 				return Error::kUserData;
 			}
 
-			outLib.m_libraryName.create(inLib.m_name);
+			outLib.m_libraryName = inLib.m_name;
 			outLib.m_rayTypeCount = inLib.m_rayTypeCount;
 
 			ResourceDynamicArray<RayTracingHitGroup> initInfoHitGroups;

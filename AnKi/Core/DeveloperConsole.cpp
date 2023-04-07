@@ -134,8 +134,8 @@ void DeveloperConsole::newLogItem(const LoggerMessageInfo& inf)
 	newLogItem->m_file = inf.m_file;
 	newLogItem->m_func = inf.m_func;
 	newLogItem->m_subsystem = inf.m_subsystem;
-	newLogItem->m_threadName.create(inf.m_threadName);
-	newLogItem->m_msg.create(inf.m_msg);
+	newLogItem->m_threadName = inf.m_threadName;
+	newLogItem->m_msg = inf.m_msg;
 	newLogItem->m_line = inf.m_line;
 	newLogItem->m_type = inf.m_type;
 

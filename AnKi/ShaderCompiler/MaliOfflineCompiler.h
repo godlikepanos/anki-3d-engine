@@ -41,12 +41,12 @@ public:
 	U32 m_spilling = 0;
 	F32 m_fp16ArithmeticPercentage = 0.0f;
 
-	void toString(StringRaii& str) const;
+	String toString() const;
 };
 
 /// Run the mali offline compiler and get some info back.
 Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv, ShaderType shaderType,
-							 BaseMemoryPool& tmpPool, MaliOfflineCompilerOut& out);
+							 MaliOfflineCompilerOut& out);
 /// @}
 
 } // end namespace anki

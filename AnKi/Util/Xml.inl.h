@@ -5,6 +5,8 @@
 
 #include <AnKi/Util/Xml.h>
 #include <AnKi/Util/StringList.h>
+#include <AnKi/Util/File.h>
+#include <AnKi/Util/Logger.h>
 
 namespace anki {
 
@@ -27,8 +29,8 @@ Error XmlElement::getNumber(T& out) const
 	return Error::kNone;
 }
 
-template<typename T>
-Error XmlElement::getNumbers(DynamicArrayRaii<T>& out) const
+template<typename T, typename TMemoryPool>
+Error XmlElement::getNumbers(DynamicArray<T, TMemoryPool>& out) const
 {
 	CString txt;
 	ANKI_CHECK(getText(txt));
@@ -52,8 +54,9 @@ Error XmlElement::getNumbers(TArray& out) const
 	return parseNumbers(txt, out);
 }
 
-template<typename T>
-Error XmlElement::getAttributeNumbersOptional(CString name, DynamicArrayRaii<T>& out, Bool& attribPresent) const
+template<typename T, typename TMemoryPool>
+Error XmlElement::getAttributeNumbersOptional(CString name, DynamicArray<T, TMemoryPool>& out,
+											  Bool& attribPresent) const
 {
 	CString txtVal;
 	ANKI_CHECK(getAttributeTextOptional(name, txtVal, attribPresent));
@@ -87,7 +90,7 @@ Error XmlElement::getAttributeNumbersOptional(CString name, TArray& out, Bool& a
 template<typename T>
 Error XmlElement::getAttributeNumberOptional(CString name, T& out, Bool& attribPresent) const
 {
-	DynamicArrayRaii<T> arr(m_pool);
+	DynamicArray<T, MemoryPoolPtrWrapper<BaseMemoryPool>> arr(m_pool);
 	ANKI_CHECK(getAttributeNumbersOptional(name, arr, attribPresent));
 
 	if(attribPresent)
@@ -104,17 +107,16 @@ Error XmlElement::getAttributeNumberOptional(CString name, T& out, Bool& attribP
 	return Error::kNone;
 }
 
-template<typename T>
-Error XmlElement::parseNumbers(CString txt, DynamicArrayRaii<T>& out) const
+template<typename T, typename TMemoryPool>
+Error XmlElement::parseNumbers(CString txt, DynamicArray<T, TMemoryPool>& out) const
 {
 	ANKI_ASSERT(txt);
 	ANKI_ASSERT(m_el);
 
-	StringListRaii list(m_pool);
+	BaseStringList<MemoryPoolPtrWrapper<BaseMemoryPool>> list(m_pool);
 	list.splitString(txt, ' ');
 
-	out.destroy();
-	out.create(U32(list.getSize()));
+	out.resize(U32(list.getSize()));
 
 	Error err = Error::kNone;
 	auto it = list.getBegin();
@@ -140,7 +142,7 @@ Error XmlElement::parseNumbers(CString txt, TArray& out) const
 	ANKI_ASSERT(!txt.isEmpty());
 	ANKI_ASSERT(m_el);
 
-	StringListRaii list(m_pool);
+	BaseStringList<MemoryPoolPtrWrapper<BaseMemoryPool>> list(m_pool);
 	list.splitString(txt, ' ');
 	const PtrSize listSize = list.getSize();
 
@@ -166,6 +168,54 @@ Error XmlElement::parseNumbers(CString txt, TArray& out) const
 	}
 
 	return err;
+}
+
+template<typename TMemoryPool>
+Error XmlDocument<TMemoryPool>::loadFile(CString filename)
+{
+	File file;
+	ANKI_CHECK(file.open(filename, FileOpenFlag::kRead));
+
+	BaseString<TMemoryPool> text(m_pool);
+	ANKI_CHECK(file.readAllText(text));
+
+	ANKI_CHECK(parse(text.toCString()));
+
+	return Error::kNone;
+}
+
+template<typename TMemoryPool>
+Error XmlDocument<TMemoryPool>::parse(CString xmlText)
+{
+	if(m_doc.Parse(&xmlText[0]))
+	{
+		ANKI_UTIL_LOGE("Cannot parse file. Reason: %s", ((m_doc.ErrorStr() == nullptr) ? "unknown" : m_doc.ErrorStr()));
+
+		return Error::kUserData;
+	}
+
+	return Error::kNone;
+}
+
+template<typename TMemoryPool>
+Error XmlDocument<TMemoryPool>::getChildElementOptional(CString name, XmlElement& out) const
+{
+	out = XmlElement(m_doc.FirstChildElement(&name[0]), &m_pool);
+	return Error::kNone;
+}
+
+template<typename TMemoryPool>
+Error XmlDocument<TMemoryPool>::getChildElement(CString name, XmlElement& out) const
+{
+	ANKI_CHECK(getChildElementOptional(name, out));
+
+	if(!out)
+	{
+		ANKI_UTIL_LOGE("Cannot find tag \"%s\"", &name[0]);
+		return Error::kUserData;
+	}
+
+	return Error::kNone;
 }
 
 } // end namespace anki

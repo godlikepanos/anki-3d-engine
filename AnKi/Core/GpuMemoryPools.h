@@ -214,14 +214,14 @@ private:
 
 	class PatchHeader;
 
-	DynamicArray<PatchHeader> m_crntFramePatchHeaders;
-	DynamicArray<U32> m_crntFramePatchData;
+	DynamicArray<PatchHeader, MemoryPoolPtrWrapper<StackMemoryPool>> m_crntFramePatchHeaders;
+	DynamicArray<U32, MemoryPoolPtrWrapper<StackMemoryPool>> m_crntFramePatchData;
 	Mutex m_mtx;
 
 	ShaderProgramResourcePtr m_copyProgram;
 	ShaderProgramPtr m_grProgram;
 
-	GpuSceneMicroPatcher() = default;
+	GpuSceneMicroPatcher();
 
 	~GpuSceneMicroPatcher();
 };

@@ -139,7 +139,7 @@ const MaterialVariable* MaterialResource::tryFindVariableInternal(CString name) 
 
 Error MaterialResource::load(const ResourceFilename& filename, Bool async)
 {
-	XmlDocument doc(&ResourceMemoryPool::getSingleton());
+	ResourceXmlDocument doc;
 	XmlElement el;
 	ANKI_CHECK(openFileParseXml(filename, doc));
 
@@ -318,7 +318,7 @@ Error MaterialResource::createVars(Program& prog)
 
 				// All good, add it
 				var = m_vars.emplaceBack();
-				var->m_name.create(memberName);
+				var->m_name = memberName;
 				var->m_offsetInLocalUniforms = offsetof;
 				var->m_dataType = member.m_type;
 
@@ -409,7 +409,7 @@ Error MaterialResource::createVars(Program& prog)
 
 				// All good, add it
 				var = m_vars.emplaceBack();
-				var->m_name.create(opaqueName);
+				var->m_name = opaqueName;
 				var->m_opaqueBinding = opaque.m_binding;
 				var->m_dataType = opaque.m_type;
 			}
@@ -434,7 +434,7 @@ Error MaterialResource::parseMutators(XmlElement mutatorsEl, Program& prog)
 	ANKI_CHECK(mutatorEl.getSiblingElementsCount(mutatorCount));
 	++mutatorCount;
 	ANKI_ASSERT(mutatorCount > 0);
-	prog.m_partialMutation.create(mutatorCount);
+	prog.m_partialMutation.resize(mutatorCount);
 	mutatorCount = 0;
 
 	do

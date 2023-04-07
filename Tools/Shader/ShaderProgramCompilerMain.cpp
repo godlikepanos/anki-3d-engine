@@ -20,10 +20,9 @@ Options:
 class CmdLineArgs
 {
 public:
-	HeapMemoryPool m_pool = {allocAligned, nullptr};
-	StringRaii m_inputFname = {&m_pool};
-	StringRaii m_outFname = {&m_pool};
-	StringRaii m_includePath = {&m_pool};
+	String m_inputFname;
+	String m_outFname;
+	String m_includePath;
 	U32 m_threadCount = getCpuCoresCount();
 	Bool m_fullFpPrecision = false;
 	Bool m_mobilePlatform = false;
@@ -106,7 +105,7 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 		}
 	}
 
-	info.m_inputFname.create(argv[argc - 1]);
+	info.m_inputFname = argv[argc - 1];
 
 	return Error::kNone;
 }
@@ -122,9 +121,9 @@ static Error work(const CmdLineArgs& info)
 		CString m_includePath;
 		U32 m_fileReadCount = 0;
 
-		Error readAllTextInternal(CString filename, StringRaii& txt)
+		Error readAllTextInternal(CString filename, String& txt)
 		{
-			StringRaii fname(&txt.getMemoryPool());
+			String fname;
 
 			// The first file is the input file. Don't append the include path to it
 			if(m_fileReadCount == 0)
@@ -143,7 +142,7 @@ static Error work(const CmdLineArgs& info)
 			return Error::kNone;
 		}
 
-		Error readAllText(CString filename, StringRaii& txt) final
+		Error readAllText(CString filename, String& txt) final
 		{
 			const Error err = readAllTextInternal(filename, txt);
 			if(err)
@@ -160,8 +159,7 @@ static Error work(const CmdLineArgs& info)
 	class TaskManager : public ShaderProgramAsyncTaskInterface
 	{
 	public:
-		ThreadHive* m_hive = nullptr;
-		HeapMemoryPool* m_pool = nullptr;
+		UniquePtr<ThreadHive, SingletonMemoryPoolDeleter<DefaultMemoryPool>> m_hive;
 
 		void enqueueTask(void (*callback)(void* userData), void* userData)
 		{
@@ -169,19 +167,17 @@ static Error work(const CmdLineArgs& info)
 			{
 				void (*m_callback)(void* userData);
 				void* m_userData;
-				HeapMemoryPool* m_pool = nullptr;
 			};
-			Ctx* ctx = newInstance<Ctx>(*m_pool);
+			Ctx* ctx = newInstance<Ctx>(DefaultMemoryPool::getSingleton());
 			ctx->m_callback = callback;
 			ctx->m_userData = userData;
-			ctx->m_pool = m_pool;
 
 			m_hive->submitTask(
 				[](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
 				   [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
 					Ctx* ctx = static_cast<Ctx*>(userData);
 					ctx->m_callback(ctx->m_userData);
-					deleteInstance(*ctx->m_pool, ctx);
+					deleteInstance(DefaultMemoryPool::getSingleton(), ctx);
 				},
 				ctx);
 		}
@@ -192,9 +188,9 @@ static Error work(const CmdLineArgs& info)
 			return Error::kNone;
 		}
 	} taskManager;
-	taskManager.m_hive =
-		(info.m_threadCount) ? newInstance<ThreadHive>(pool, info.m_threadCount, &pool, true) : nullptr;
-	taskManager.m_pool = &pool;
+	taskManager.m_hive.reset((info.m_threadCount)
+								 ? newInstance<ThreadHive>(DefaultMemoryPool::getSingleton(), info.m_threadCount, true)
+								 : nullptr);
 
 	// Compiler options
 	ShaderCompilerOptions compilerOptions;
@@ -204,13 +200,10 @@ static Error work(const CmdLineArgs& info)
 	// Compile
 	ShaderProgramBinaryWrapper binary(&pool);
 	ANKI_CHECK(compileShaderProgram(info.m_inputFname, fsystem, nullptr, (info.m_threadCount) ? &taskManager : nullptr,
-									pool, compilerOptions, binary));
+									compilerOptions, binary));
 
 	// Store the binary
 	ANKI_CHECK(binary.serializeToFile(info.m_outFname));
-
-	// Cleanup
-	deleteInstance(pool, taskManager.m_hive);
 
 	return Error::kNone;
 }
@@ -218,6 +211,17 @@ static Error work(const CmdLineArgs& info)
 ANKI_MAIN_FUNCTION(myMain)
 int myMain(int argc, char** argv)
 {
+	class Dummy
+	{
+	public:
+		~Dummy()
+		{
+			DefaultMemoryPool::freeSingleton();
+		}
+	} dummy;
+
+	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
+
 	CmdLineArgs info;
 	if(parseCommandLineArgs(argc, argv, info))
 	{
@@ -228,17 +232,17 @@ int myMain(int argc, char** argv)
 	if(info.m_outFname.isEmpty())
 	{
 		getFilepathFilename(info.m_inputFname, info.m_outFname);
-		info.m_outFname.append("bin");
+		info.m_outFname += "bin";
 	}
 
 	if(info.m_includePath.isEmpty())
 	{
-		info.m_includePath.create("./");
+		info.m_includePath = "./";
 	}
 
 	if(work(info))
 	{
-		ANKI_LOGE("Failed");
+		ANKI_LOGE("Compilation failed");
 		return 1;
 	}
 

@@ -20,12 +20,10 @@ ANKI_TEST(Util, FileExists)
 
 ANKI_TEST(Util, Directory)
 {
-	HeapMemoryPool pool(allocAligned, nullptr);
-
 	// Destroy previous
 	if(directoryExists("./dir"))
 	{
-		ANKI_TEST_EXPECT_NO_ERR(removeDirectory("./dir", pool));
+		ANKI_TEST_EXPECT_NO_ERR(removeDirectory("./dir"));
 	}
 
 	// Create simple directory
@@ -35,7 +33,7 @@ ANKI_TEST(Util, Directory)
 	file.close();
 	ANKI_TEST_EXPECT_EQ(fileExists("./dir/tmp"), true);
 
-	ANKI_TEST_EXPECT_NO_ERR(removeDirectory("./dir", pool));
+	ANKI_TEST_EXPECT_NO_ERR(removeDirectory("./dir"));
 	ANKI_TEST_EXPECT_EQ(fileExists("./dir/tmp"), false);
 	ANKI_TEST_EXPECT_EQ(directoryExists("./dir"), false);
 
@@ -46,7 +44,7 @@ ANKI_TEST(Util, Directory)
 	file.close();
 	ANKI_TEST_EXPECT_EQ(fileExists("./dir/rid/tmp"), true);
 
-	ANKI_TEST_EXPECT_NO_ERR(removeDirectory("./dir", pool));
+	ANKI_TEST_EXPECT_NO_ERR(removeDirectory("./dir"));
 	ANKI_TEST_EXPECT_EQ(fileExists("./dir/rid/tmp"), false);
 	ANKI_TEST_EXPECT_EQ(directoryExists("./dir/rid"), false);
 	ANKI_TEST_EXPECT_EQ(directoryExists("./dir"), false);
@@ -54,8 +52,7 @@ ANKI_TEST(Util, Directory)
 
 ANKI_TEST(Util, HomeDir)
 {
-	HeapMemoryPool pool(allocAligned, nullptr);
-	StringRaii out(&pool);
+	String out;
 
 	ANKI_TEST_EXPECT_NO_ERR(getHomeDirectory(out));
 	printf("home dir %s\n", &out[0]);
@@ -64,8 +61,6 @@ ANKI_TEST(Util, HomeDir)
 
 ANKI_TEST(Util, WalkDir)
 {
-	HeapMemoryPool pool(allocAligned, nullptr);
-
 	class Path
 	{
 	public:
@@ -79,11 +74,9 @@ ANKI_TEST(Util, WalkDir)
 		Array<Path, 4> m_paths = {
 			{{"./data", true}, {"./data/dir", true}, {"./data/file1", false}, {"./data/dir/file2", false}}};
 		U32 m_foundMask = 0;
-		HeapMemoryPool* m_pool;
 	} ctx;
-	ctx.m_pool = &pool;
 
-	[[maybe_unused]] const Error err = removeDirectory("./data", pool);
+	[[maybe_unused]] const Error err = removeDirectory("./data");
 
 	// Create some dirs and some files
 	for(U32 i = 0; i < ctx.m_paths.getSize(); ++i)
@@ -100,10 +93,10 @@ ANKI_TEST(Util, WalkDir)
 	}
 
 	// Walk crnt dir
-	ANKI_TEST_EXPECT_NO_ERR(walkDirectoryTree("./data", pool, [&](const CString& fname, Bool isDir) -> Error {
+	ANKI_TEST_EXPECT_NO_ERR(walkDirectoryTree("./data", [&](const CString& fname, Bool isDir) -> Error {
 		for(U32 i = 0; i < ctx.m_paths.getSize(); ++i)
 		{
-			StringRaii p(ctx.m_pool);
+			String p;
 			p.sprintf("./data/%s", fname.cstr());
 			if(ctx.m_paths[i].m_path == p)
 			{
@@ -120,7 +113,7 @@ ANKI_TEST(Util, WalkDir)
 	// Test error
 	U32 count = 0;
 	ANKI_TEST_EXPECT_ERR(
-		walkDirectoryTree("./data///dir////", pool,
+		walkDirectoryTree("./data///dir////",
 						  [&count]([[maybe_unused]] const CString& fname, [[maybe_unused]] Bool isDir) -> Error {
 							  ++count;
 							  return Error::kFunctionFailed;

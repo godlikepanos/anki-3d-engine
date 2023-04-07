@@ -71,26 +71,27 @@ static CString hwUnitToStr(MaliOfflineCompilerHwUnit u)
 	return out;
 }
 
-void MaliOfflineCompilerOut::toString(StringRaii& str) const
+String MaliOfflineCompilerOut::toString() const
 {
-	str.destroy();
+	String str;
 	str.sprintf("Regs %u Spilling %u "
 				"FMA %f CVT %f SFU %f LS %f VAR %f TEX %f Bound %s "
 				"FP16 %f%%",
 				m_workRegisters, m_spilling, m_fma, m_cvt, m_sfu, m_loadStore, m_varying, m_texture,
 				hwUnitToStr(m_boundUnit).cstr(), m_fp16ArithmeticPercentage);
+	return str;
 }
 
 Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv, ShaderType shaderType,
-							 BaseMemoryPool& tmpPool, MaliOfflineCompilerOut& out)
+							 MaliOfflineCompilerOut& out)
 {
 	out = {};
 	const U32 rand = g_nextFileId.fetchAdd(1) + getCurrentProcessId();
 
 	// Create temp file to dump the spirv
-	StringRaii tmpDir(&tmpPool);
+	String tmpDir;
 	ANKI_CHECK(getTempDirectory(tmpDir));
-	StringRaii spirvFilename(&tmpPool);
+	String spirvFilename;
 	spirvFilename.sprintf("%s/AnKiMaliocInputSpirv_%u.spv", tmpDir.cstr(), rand);
 
 	File spirvFile;
@@ -101,7 +102,7 @@ Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv,
 	CleanupFile cleanupSpirvFile(spirvFilename);
 
 	// Tmp filename
-	StringRaii analysisFilename(&tmpPool);
+	String analysisFilename;
 	analysisFilename.sprintf("%s/AnKiMaliocOut_%u.txt", tmpDir.cstr(), rand);
 
 	// Set the arguments
@@ -143,7 +144,7 @@ Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv,
 	// Read the output file
 	File analysisFile;
 	ANKI_CHECK(analysisFile.open(analysisFilename, FileOpenFlag::kRead));
-	StringRaii analysisText(&tmpPool);
+	String analysisText;
 	ANKI_CHECK(analysisFile.readAllText(analysisText));
 	analysisText.replaceAll("\r", "");
 	analysisFile.close();
@@ -308,8 +309,7 @@ Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv,
 	if(false)
 	{
 		printf("%s\n", analysisText.cstr());
-		StringRaii str(&tmpPool);
-		out.toString(str);
+		String str = out.toString();
 		printf("%s\n", str.cstr());
 	}
 

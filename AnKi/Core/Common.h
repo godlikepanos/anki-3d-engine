@@ -38,8 +38,8 @@ class CoreThreadHive : public ThreadHive, public MakeSingleton<CoreThreadHive>
 	friend class MakeSingleton;
 
 public:
-	CoreThreadHive(U32 threadCount, BaseMemoryPool* pool, Bool pinToCores = false)
-		: ThreadHive(threadCount, pool, pinToCores)
+	CoreThreadHive(U32 threadCount, Bool pinToCores = false)
+		: ThreadHive(threadCount, pinToCores)
 	{
 	}
 };

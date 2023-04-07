@@ -8,7 +8,7 @@
 
 namespace anki {
 
-void getFilepathExtension(const CString& filename, StringRaii& out)
+void getFilepathExtension(const CString& filename, String& out)
 {
 	const Char* pc = std::strrchr(filename.cstr(), '.');
 
@@ -21,12 +21,12 @@ void getFilepathExtension(const CString& filename, StringRaii& out)
 		++pc;
 		if(*pc != '\0')
 		{
-			out.create(CString(pc));
+			out = pc;
 		}
 	}
 }
 
-void getFilepathFilename(const CString& filename, StringRaii& out)
+void getFilepathFilename(const CString& filename, String& out)
 {
 	const Char* pc1 = std::strrchr(filename.cstr(), '/');
 #if ANKI_OS_WINDOWS
@@ -38,19 +38,19 @@ void getFilepathFilename(const CString& filename, StringRaii& out)
 
 	if(pc == nullptr)
 	{
-		out.create(filename);
+		out = filename;
 	}
 	else
 	{
 		++pc;
 		if(*pc != '\0')
 		{
-			out.create(CString(pc));
+			out = pc;
 		}
 	}
 }
 
-void getParentFilepath(const CString& filename, StringRaii& out)
+void getParentFilepath(const CString& filename, String& out)
 {
 	const Char* pc1 = std::strrchr(filename.cstr(), '/');
 #if ANKI_OS_WINDOWS
@@ -63,11 +63,11 @@ void getParentFilepath(const CString& filename, StringRaii& out)
 
 	if(pc == nullptr)
 	{
-		out.create("");
+		out = "";
 	}
 	else
 	{
-		out.create(filename.cstr(), pc);
+		out = String(filename.cstr(), pc);
 	}
 }
 

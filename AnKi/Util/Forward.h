@@ -11,78 +11,80 @@
 
 namespace anki {
 
+class DefaultMemoryPool;
+
+template<typename TMemoryPool>
+class SingletonMemoryPoolWrapper;
+
 template<U32 kBitCount, typename TChunkType>
 class BitSet;
 
 template<typename T>
 class BitMask;
 
-template<typename, typename, typename, typename>
-class HashMap;
-
 template<typename, typename, typename, typename, typename>
-class HashMapRaii;
+class HashMap;
 
 template<typename TKey>
 class DefaultHasher;
 
 class HashMapSparseArrayConfig;
 
-template<typename T>
+template<typename T, typename TMemoryPool>
 class Hierarchy;
 
-template<typename>
+template<typename T, typename TMemoryPool>
 class List;
 
-template<typename, typename>
-class ListRaii;
-
-template<typename T, typename TConfig>
+template<typename T, typename TMemoryPool, typename TConfig>
 class SparseArray;
 
 class CString;
-class String;
 
 template<typename>
-class BaseStringRaii;
+class BaseString;
 
 template<typename>
-class BaseStringListRaii;
+class BaseStringList;
 
 class ThreadHive;
 
-template<typename, PtrSize kPreallocatedStorage = ANKI_SAFE_ALIGNMENT>
+template<typename TFunc, typename TMemoryPool = SingletonMemoryPoolWrapper<DefaultMemoryPool>,
+		 PtrSize kPreallocatedStorage = ANKI_SAFE_ALIGNMENT>
 class Function;
 
 template<typename, PtrSize>
 class Array;
 
-template<typename T, typename TSize = U32>
+template<typename T, typename TSize>
 class WeakArray;
 
-template<typename T, typename TSize = U32>
+template<typename T, typename TSize>
 class ConstWeakArray;
 
-template<typename T, typename TSize = U32>
+template<typename T, typename TMemoryPool, typename TSize>
 class DynamicArray;
 
-template<typename, typename, typename>
-class DynamicArrayRaii;
-
 class F16;
+
+template<typename TMemoryPool>
+class XmlDocument;
 
 /// This macro defines typedefs for all the common containers that take a memory pool using a singleton memory pool
 /// memory pool.
 #define ANKI_DEFINE_SUBMODULE_UTIL_CONTAINERS(submoduleName, singletonMemoryPool) \
 	using submoduleName##MemPoolWrapper = SingletonMemoryPoolWrapper<singletonMemoryPool>; \
-	using submoduleName##String = BaseStringRaii<submoduleName##MemPoolWrapper>; \
+	using submoduleName##String = BaseString<submoduleName##MemPoolWrapper>; \
 	template<typename T, typename TSize = U32> \
-	using submoduleName##DynamicArray = DynamicArrayRaii<T, TSize, submoduleName##MemPoolWrapper>; \
+	using submoduleName##DynamicArray = DynamicArray<T, submoduleName##MemPoolWrapper, TSize>; \
 	template<typename TKey, typename TValue, typename THasher = DefaultHasher<TKey>> \
 	using submoduleName##HashMap = \
-		HashMapRaii<TKey, TValue, THasher, HashMapSparseArrayConfig, submoduleName##MemPoolWrapper>; \
+		HashMap<TKey, TValue, THasher, submoduleName##MemPoolWrapper, HashMapSparseArrayConfig>; \
 	template<typename T> \
-	using submoduleName##List = ListRaii<T, submoduleName##MemPoolWrapper>; \
-	using submoduleName##StringList = BaseStringListRaii<submoduleName##MemPoolWrapper>;
+	using submoduleName##List = List<T, submoduleName##MemPoolWrapper>; \
+	using submoduleName##StringList = BaseStringList<submoduleName##MemPoolWrapper>; \
+	using submoduleName##XmlDocument = XmlDocument<submoduleName##MemPoolWrapper>; \
+	template<typename T> \
+	using submoduleName##Hierarchy = Hierarchy<T, submoduleName##MemPoolWrapper>;
 
 } // end namespace anki

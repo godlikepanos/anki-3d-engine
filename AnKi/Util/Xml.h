@@ -20,14 +20,13 @@ namespace anki {
 /// XML element.
 class XmlElement
 {
+	template<typename>
 	friend class XmlDocument;
 
 public:
-	XmlElement()
-		: m_el(nullptr)
-	{
-	}
+	XmlElement() = default;
 
+	/// Copy.
 	XmlElement(const XmlElement& b)
 		: m_el(b.m_el)
 		, m_pool(b.m_pool)
@@ -56,8 +55,8 @@ public:
 	Error getNumber(T& out) const;
 
 	/// Get a number of numbers.
-	template<typename T>
-	Error getNumbers(DynamicArrayRaii<T>& out) const;
+	template<typename T, typename TMemoryPool>
+	Error getNumbers(DynamicArray<T, TMemoryPool>& out) const;
 
 	/// Get a fixed number of numbers.
 	/// @tparam TArray A type that should have operator[] and getSize() methods implemented.
@@ -90,8 +89,8 @@ public:
 	/// @param name The name of the attribute.
 	/// @param out The value of the attribute.
 	/// @param attribPresent True if the attribute exists. If it doesn't the @a out is undefined.
-	template<typename T>
-	Error getAttributeNumbersOptional(CString name, DynamicArrayRaii<T>& out, Bool& attribPresent) const;
+	template<typename T, typename TMemoryPool>
+	Error getAttributeNumbersOptional(CString name, DynamicArray<T, TMemoryPool>& out, Bool& attribPresent) const;
 
 	/// Get the attribute's value as a series of numbers.
 	/// @tparam TArray A type that should have operator[] and getSize() methods implemented.
@@ -125,8 +124,8 @@ public:
 	/// Get the attribute's value as a series of numbers.
 	/// @param name The name of the attribute.
 	/// @param out The value of the attribute.
-	template<typename T>
-	Error getAttributeNumbers(CString name, DynamicArrayRaii<T>& out) const
+	template<typename T, typename TMemoryPool>
+	Error getAttributeNumbers(CString name, DynamicArray<T, TMemoryPool>& out) const
 	{
 		Bool found;
 		ANKI_CHECK(getAttributeNumbersOptional(name, out, found));
@@ -158,7 +157,7 @@ public:
 	/// @}
 
 private:
-	const tinyxml2::XMLElement* m_el;
+	const tinyxml2::XMLElement* m_el = nullptr;
 	BaseMemoryPool* m_pool = nullptr;
 
 	XmlElement(const tinyxml2::XMLElement* el, BaseMemoryPool* pool)
@@ -169,8 +168,8 @@ private:
 
 	Error check() const;
 
-	template<typename T>
-	Error parseNumbers(CString txt, DynamicArrayRaii<T>& out) const;
+	template<typename T, typename TMemoryPool>
+	Error parseNumbers(CString txt, DynamicArray<T, TMemoryPool>& out) const;
 
 	template<typename TArray>
 	Error parseNumbers(CString txt, TArray& out) const;
@@ -190,13 +189,13 @@ private:
 };
 
 /// XML document.
-// TODO glob: add the allocator in a template just like the other containers
+template<typename TMemoryPool>
 class XmlDocument
 {
 public:
 	static constexpr CString kXmlHeader = R"(<?xml version="1.0" encoding="UTF-8" ?>)";
 
-	XmlDocument(BaseMemoryPool* pool)
+	XmlDocument(const TMemoryPool& pool = TMemoryPool())
 		: m_pool(pool)
 	{
 	}
@@ -211,14 +210,9 @@ public:
 
 	Error getChildElementOptional(CString name, XmlElement& out) const;
 
-	BaseMemoryPool& getMemoryPool()
-	{
-		return *m_pool;
-	}
-
 private:
+	mutable TMemoryPool m_pool;
 	tinyxml2::XMLDocument m_doc;
-	BaseMemoryPool* m_pool = nullptr;
 };
 /// @}
 

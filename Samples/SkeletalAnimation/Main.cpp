@@ -11,6 +11,8 @@ using namespace anki;
 class MyApp : public SampleApp
 {
 public:
+	using SampleApp::SampleApp;
+
 	AnimationResourcePtr m_floatAnim;
 	AnimationResourcePtr m_waveAnim;
 
@@ -59,7 +61,7 @@ int main(int argc, char* argv[])
 {
 	Error err = Error::kNone;
 
-	MyApp* app = new MyApp;
+	MyApp* app = new MyApp(allocAligned, nullptr);
 	err = app->init(argc, argv, "SkeletalAnimation");
 	if(!err)
 	{

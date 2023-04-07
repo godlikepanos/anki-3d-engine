@@ -38,11 +38,6 @@ TransferGpuAllocator::TransferGpuAllocator()
 
 TransferGpuAllocator::~TransferGpuAllocator()
 {
-	for(Pool& pool : m_pools)
-	{
-		ANKI_ASSERT(pool.m_pendingReleases == 0);
-		pool.m_fences.destroy(ResourceMemoryPool::getSingleton());
-	}
 }
 
 Error TransferGpuAllocator::init(PtrSize maxSize)
@@ -97,7 +92,7 @@ Error TransferGpuAllocator::allocate(PtrSize size, TransferGpuAllocatorHandle& h
 				const Bool done = fence->clientWait(kMaxFenceWaitTime);
 				if(done)
 				{
-					pool->m_fences.popFront(ResourceMemoryPool::getSingleton());
+					pool->m_fences.popFront();
 				}
 			}
 		}
@@ -124,14 +119,14 @@ Error TransferGpuAllocator::allocate(PtrSize size, TransferGpuAllocatorHandle& h
 	// decriptors in Linux and we don't want to exceed the process' limit of max open file descriptors
 	for(Pool& p : m_pools)
 	{
-		List<FencePtr>::Iterator it = p.m_fences.getBegin();
+		ResourceList<FencePtr>::Iterator it = p.m_fences.getBegin();
 		while(it != p.m_fences.getEnd())
 		{
 			const Bool fenceDone = (*it)->clientWait(0.0);
 			if(fenceDone)
 			{
 				auto nextIt = it + 1;
-				p.m_fences.erase(ResourceMemoryPool::getSingleton(), it);
+				p.m_fences.erase(it);
 				it = nextIt;
 			}
 			else
@@ -154,7 +149,7 @@ void TransferGpuAllocator::release(TransferGpuAllocatorHandle& handle, FencePtr 
 	{
 		LockGuard<Mutex> lock(m_mtx);
 
-		pool.m_fences.pushBack(ResourceMemoryPool::getSingleton(), fence);
+		pool.m_fences.pushBack(fence);
 
 		ANKI_ASSERT(pool.m_pendingReleases > 0);
 		--pool.m_pendingReleases;

@@ -9,7 +9,8 @@
 
 namespace anki {
 
-class SegregatedListsGpuMemoryPool::Chunk : public SegregatedListsAllocatorBuilderChunkBase
+class SegregatedListsGpuMemoryPool::Chunk :
+	public SegregatedListsAllocatorBuilderChunkBase<SingletonMemoryPoolWrapper<GrMemoryPool>>
 {
 public:
 	PtrSize m_offsetInGpuBuffer;
@@ -46,11 +47,6 @@ public:
 	{
 		return 4;
 	}
-
-	BaseMemoryPool& getMemoryPool() const
-	{
-		return GrMemoryPool::getSingleton();
-	}
 	/// @}
 };
 
@@ -63,7 +59,7 @@ void SegregatedListsGpuMemoryPool::init(BufferUsageBit gpuBufferUsage, ConstWeak
 	m_bufferUsage = gpuBufferUsage;
 
 	ANKI_ASSERT(classUpperSizes.getSize() > 0);
-	m_classes.create(classUpperSizes.getSize());
+	m_classes.resize(classUpperSizes.getSize());
 	for(U32 i = 0; i < m_classes.getSize(); ++i)
 	{
 		m_classes[i] = classUpperSizes[i];
@@ -72,7 +68,7 @@ void SegregatedListsGpuMemoryPool::init(BufferUsageBit gpuBufferUsage, ConstWeak
 	ANKI_ASSERT(initialGpuBufferSize > 0);
 	m_initialBufferSize = initialGpuBufferSize;
 
-	m_bufferName.create(bufferName);
+	m_bufferName = bufferName;
 
 	m_builder = newInstance<Builder>(GrMemoryPool::getSingleton());
 	m_builder->getInterface().m_parent = this;

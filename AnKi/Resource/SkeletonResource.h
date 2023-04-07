@@ -96,7 +96,7 @@ public:
 	/// Load file
 	Error load(const ResourceFilename& filename, Bool async);
 
-	const DynamicArray<Bone>& getBones() const
+	ConstWeakArray<Bone> getBones() const
 	{
 		return m_bones;
 	}

@@ -50,55 +50,56 @@ static CString profile(ShaderType shaderType)
 	return "";
 }
 
-Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16bitTypes, BaseMemoryPool& tmpPool,
-						 DynamicArrayRaii<U8>& spirv, StringRaii& errorMessage)
+Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16bitTypes, DynamicArray<U8>& spirv,
+						 String& errorMessage)
 {
 	Array<U64, 3> toHash = {g_nextFileId.fetchAdd(1), getCurrentProcessId(), getRandom() & kMaxU32};
 	const U64 rand = computeHash(&toHash[0], sizeof(toHash));
 
-	StringRaii tmpDir(&tmpPool);
+	String tmpDir;
 	ANKI_CHECK(getTempDirectory(tmpDir));
 
 	// Store HLSL to a file
-	StringRaii hlslFilename(&tmpPool);
+	String hlslFilename;
 	hlslFilename.sprintf("%s/%" PRIu64 ".hlsl", tmpDir.cstr(), rand);
 
 	File hlslFile;
 	ANKI_CHECK(hlslFile.open(hlslFilename, FileOpenFlag::kWrite));
-	CleanupFile hlslFileCleanup(&tmpPool, hlslFilename);
+	CleanupFile hlslFileCleanup(hlslFilename);
 	ANKI_CHECK(hlslFile.writeText(src));
 	hlslFile.close();
 
 	// Call DXC
-	StringRaii spvFilename(&tmpPool);
+	String spvFilename;
 	spvFilename.sprintf("%s/%" PRIu64 ".spv", tmpDir.cstr(), rand);
 
-	DynamicArrayRaii<StringRaii> dxcArgs(&tmpPool);
-	dxcArgs.emplaceBack("-Fo", &tmpPool);
-	dxcArgs.emplaceBack(spvFilename, &tmpPool);
-	dxcArgs.emplaceBack("-Wall", &tmpPool);
-	dxcArgs.emplaceBack("-Wextra", &tmpPool);
-	dxcArgs.emplaceBack("-Wno-conversion", &tmpPool);
-	dxcArgs.emplaceBack("-Werror", &tmpPool);
-	dxcArgs.emplaceBack("-Wfatal-errors", &tmpPool);
-	dxcArgs.emplaceBack("-Wundef", &tmpPool);
-	dxcArgs.emplaceBack("-Wno-unused-const-variable", &tmpPool);
-	dxcArgs.emplaceBack("-HV", &tmpPool);
-	dxcArgs.emplaceBack("2021", &tmpPool);
-	dxcArgs.emplaceBack("-E", &tmpPool);
-	dxcArgs.emplaceBack("main", &tmpPool);
-	dxcArgs.emplaceBack("-T", &tmpPool);
-	dxcArgs.emplaceBack(profile(shaderType), &tmpPool);
-	dxcArgs.emplaceBack("-spirv", &tmpPool);
-	dxcArgs.emplaceBack("-fspv-target-env=vulkan1.1spirv1.4", &tmpPool);
+	DynamicArray<String> dxcArgs;
+	dxcArgs.emplaceBack("-Fo");
+	dxcArgs.emplaceBack(spvFilename);
+	dxcArgs.emplaceBack("-Wall");
+	dxcArgs.emplaceBack("-Wextra");
+	dxcArgs.emplaceBack("-Wno-conversion");
+	dxcArgs.emplaceBack("-Werror");
+	dxcArgs.emplaceBack("-Wfatal-errors");
+	dxcArgs.emplaceBack("-Wundef");
+	dxcArgs.emplaceBack("-Wno-unused-const-variable");
+	dxcArgs.emplaceBack("-HV");
+	dxcArgs.emplaceBack("2021");
+	dxcArgs.emplaceBack("-E");
+	dxcArgs.emplaceBack("main");
+	dxcArgs.emplaceBack("-T");
+	dxcArgs.emplaceBack(profile(shaderType));
+	dxcArgs.emplaceBack("-spirv");
+	dxcArgs.emplaceBack("-fspv-target-env=vulkan1.1spirv1.4");
 	dxcArgs.emplaceBack(hlslFilename);
 
 	if(compileWith16bitTypes)
 	{
-		dxcArgs.emplaceBack("-enable-16bit-types", &tmpPool);
+		dxcArgs.emplaceBack("-enable-16bit-types");
 	}
 
-	DynamicArrayRaii<CString> dxcArgs2(dxcArgs.getSize(), &tmpPool);
+	DynamicArray<CString> dxcArgs2;
+	dxcArgs2.resize(dxcArgs.getSize());
 	for(U32 i = 0; i < dxcArgs.getSize(); ++i)
 	{
 		dxcArgs2[i] = dxcArgs[i];
@@ -107,7 +108,7 @@ Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16b
 	while(true)
 	{
 		I32 exitCode;
-		StringRaii stdOut(&tmpPool);
+		String stdOut;
 
 #if ANKI_OS_WINDOWS
 		CString dxcBin = ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Windows64/dxc.exe";
@@ -149,7 +150,7 @@ Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16b
 		}
 	}
 
-	CleanupFile spvFileCleanup(&tmpPool, spvFilename);
+	CleanupFile spvFileCleanup(spvFilename);
 
 	// Read the spirv back
 	File spvFile;

@@ -118,7 +118,6 @@ public:
 	void setupSkyboxQueueElement(SkyboxQueueElement& queueElement) const;
 
 private:
-	SceneNode* m_node;
 	Spatial m_spatial;
 	SkyboxType m_type = SkyboxType::kSolidColor;
 	Vec3 m_color = Vec3(0.0f, 0.0f, 0.5f);

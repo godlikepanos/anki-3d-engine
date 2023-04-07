@@ -18,11 +18,9 @@ static int memvcmp(const void* memory, U8 val, PtrSize size)
 
 ANKI_TEST(Util, BuddyAllocatorBuilder)
 {
-	HeapMemoryPool pool(allocAligned, nullptr);
-
 	// Simple
 	{
-		BuddyAllocatorBuilder<32, Mutex> buddy(&pool, 32);
+		BuddyAllocatorBuilder<32, Mutex> buddy(32);
 
 		Array<U32, 2> addr;
 		const Array<U32, 2> sizes = {58, 198010775};
@@ -43,7 +41,7 @@ ANKI_TEST(Util, BuddyAllocatorBuilder)
 
 	// Fuzzy with alignment
 	{
-		BuddyAllocatorBuilder<32, Mutex> buddy(&pool, 32);
+		BuddyAllocatorBuilder<32, Mutex> buddy(32);
 		std::vector<std::tuple<U32, U32, U32, U8>> allocations;
 
 		U8* backingMemory = static_cast<U8*>(malloc(kMaxU32));

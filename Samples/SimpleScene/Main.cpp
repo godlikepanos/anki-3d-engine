@@ -11,6 +11,8 @@ using namespace anki;
 class MyApp : public SampleApp
 {
 public:
+	using SampleApp::SampleApp;
+
 	Error sampleExtraInit()
 	{
 		ScriptResourcePtr script;
@@ -26,7 +28,7 @@ int myMain(int argc, char* argv[])
 {
 	Error err = Error::kNone;
 
-	MyApp* app = new MyApp;
+	MyApp* app = new MyApp(allocAligned, nullptr);
 	err = app->init(argc, argv, "SimpleScene");
 	if(!err)
 	{

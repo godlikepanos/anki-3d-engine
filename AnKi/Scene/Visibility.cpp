@@ -116,8 +116,6 @@ void VisibilityContext::submitNewWork(const VisibilityFrustum& frustum, const Vi
 		rqueue.m_cameraFovX = rqueue.m_cameraFovY = 0.0f;
 	}
 
-	StackMemoryPool& pool = m_scene->getFrameMemoryPool();
-
 	// Check if this frc was tested before
 	{
 		LockGuard<Mutex> l(m_testedFrustumsMtx);
@@ -132,15 +130,16 @@ void VisibilityContext::submitNewWork(const VisibilityFrustum& frustum, const Vi
 		}
 
 		// Not there, push it
-		m_testedFrustums.pushBack(pool, frustum.m_frustum);
+		m_testedFrustums.pushBack(frustum.m_frustum);
 	}
 
 	// Prepare the ctx
-	FrustumVisibilityContext* frcCtx = newInstance<FrustumVisibilityContext>(pool);
+	FrustumVisibilityContext* frcCtx =
+		newInstance<FrustumVisibilityContext>(SceneGraph::getSingleton().getFrameMemoryPool());
 	frcCtx->m_visCtx = this;
 	frcCtx->m_frustum = frustum;
 	frcCtx->m_primaryFrustum = primaryFrustum;
-	frcCtx->m_queueViews.create(pool, hive.getThreadCount());
+	frcCtx->m_queueViews.resize(hive.getThreadCount());
 	frcCtx->m_visTestsSignalSem = hive.newSemaphore(1);
 	frcCtx->m_renderQueue = &rqueue;
 
@@ -152,9 +151,10 @@ void VisibilityContext::submitNewWork(const VisibilityFrustum& frustum, const Vi
 	if(frustum.m_coverageBuffer && frustum.m_frustum->hasCoverageBuffer())
 	{
 		// Gather triangles task
-		ThreadHiveTask fillDepthTask =
-			ANKI_THREAD_HIVE_TASK({ self->fill(); }, newInstance<FillRasterizerWithCoverageTask>(pool, frcCtx), nullptr,
-								  hive.newSemaphore(1));
+		ThreadHiveTask fillDepthTask = ANKI_THREAD_HIVE_TASK(
+			{ self->fill(); },
+			newInstance<FillRasterizerWithCoverageTask>(SceneGraph::getSingleton().getFrameMemoryPool(), frcCtx),
+			nullptr, hive.newSemaphore(1));
 
 		hive.submitTasks(&fillDepthTask, 1);
 
@@ -170,23 +170,23 @@ void VisibilityContext::submitNewWork(const VisibilityFrustum& frustum, const Vi
 	}
 
 	// Gather visibles from the octree. No need to signal anything because it will spawn new tasks
-	ThreadHiveTask gatherTask =
-		ANKI_THREAD_HIVE_TASK({ self->gather(hive); }, newInstance<GatherVisiblesFromOctreeTask>(pool, frcCtx),
-							  prepareRasterizerSem, nullptr);
+	ThreadHiveTask gatherTask = ANKI_THREAD_HIVE_TASK(
+		{ self->gather(hive); },
+		newInstance<GatherVisiblesFromOctreeTask>(SceneGraph::getSingleton().getFrameMemoryPool(), frcCtx),
+		prepareRasterizerSem, nullptr);
 	hive.submitTasks(&gatherTask, 1);
 
 	// Combind results task
 	ANKI_ASSERT(frcCtx->m_visTestsSignalSem);
 	ThreadHiveTask combineTask = ANKI_THREAD_HIVE_TASK(
-		{ self->combine(); }, newInstance<CombineResultsTask>(pool, frcCtx), frcCtx->m_visTestsSignalSem, nullptr);
+		{ self->combine(); }, newInstance<CombineResultsTask>(SceneGraph::getSingleton().getFrameMemoryPool(), frcCtx),
+		frcCtx->m_visTestsSignalSem, nullptr);
 	hive.submitTasks(&combineTask, 1);
 }
 
 void FillRasterizerWithCoverageTask::fill()
 {
 	ANKI_TRACE_SCOPED_EVENT(SceneVisFillDepth);
-
-	StackMemoryPool& pool = m_frcCtx->m_visCtx->m_scene->getFrameMemoryPool();
 
 	// Get the C-Buffer
 	ConstWeakArray<F32> depthBuff;
@@ -198,7 +198,7 @@ void FillRasterizerWithCoverageTask::fill()
 	// Init the rasterizer
 	if(true)
 	{
-		m_frcCtx->m_r = newInstance<SoftwareRasterizer>(pool);
+		m_frcCtx->m_r = newInstance<SoftwareRasterizer>(SceneGraph::getSingleton().getFrameMemoryPool());
 		m_frcCtx->m_r->prepare(
 			Mat4(m_frcCtx->m_frustum.m_frustum->getPreviousViewMatrix(1), Vec4(0.0f, 0.0f, 0.0f, 1.0f)),
 			m_frcCtx->m_frustum.m_frustum->getPreviousProjectionMatrix(1), width, height);
@@ -215,7 +215,7 @@ void GatherVisiblesFromOctreeTask::gather(ThreadHive& hive)
 	U32 testIdx = m_frcCtx->m_visCtx->m_testsCount.fetchAdd(1);
 
 	// Walk the tree
-	m_frcCtx->m_visCtx->m_scene->getOctree().walkTree(
+	SceneGraph::getSingleton().getOctree().walkTree(
 		testIdx,
 		[&](const Aabb& box) {
 			Bool visible = m_frcCtx->m_frustum.m_frustum->insideFrustum(box);
@@ -255,7 +255,7 @@ void GatherVisiblesFromOctreeTask::flush(ThreadHive& hive)
 	{
 		// Create the task
 		VisibilityTestTask* vis =
-			newInstance<VisibilityTestTask>(m_frcCtx->m_visCtx->m_scene->getFrameMemoryPool(), m_frcCtx);
+			newInstance<VisibilityTestTask>(SceneGraph::getSingleton().getFrameMemoryPool(), m_frcCtx);
 		memcpy(&vis->m_spatialsToTest[0], &m_spatials[0], sizeof(m_spatials[0]) * m_spatialCount);
 		vis->m_spatialToTestCount = m_spatialCount;
 
@@ -281,7 +281,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 	const FrustumFlags frustumFlags = m_frcCtx->m_frustum;
 	const Frustum& primaryFrustum = *m_frcCtx->m_primaryFrustum.m_frustum;
 
-	StackMemoryPool& pool = m_frcCtx->m_visCtx->m_scene->getFrameMemoryPool();
+	StackMemoryPool& framePool = SceneGraph::getSingleton().getFrameMemoryPool();
 
 	const Bool wantsEarlyZ = m_frcCtx->m_frustum.m_earlyZ && testedFrustum.getEarlyZDistance() > 0.0f;
 
@@ -316,40 +316,45 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 			WeakArray<RenderableQueueElement> elements;
 			modelc.setupRenderableQueueElements(
-				lod, (isShadowFrustum) ? RenderingTechnique::kShadow : RenderingTechnique::kGBuffer, pool, elements);
+				lod, (isShadowFrustum) ? RenderingTechnique::kShadow : RenderingTechnique::kGBuffer, elements);
 			for(RenderableQueueElement& el : elements)
 			{
 				el.m_distanceFromCamera = distanceFromCamera;
-				*result.m_renderables.newElement(pool) = el;
+				*result.m_renderables.newElement() = el;
 			}
 
-			modelc.setupRenderableQueueElements(lod, RenderingTechnique::kForward, pool, elements);
+			modelc.setupRenderableQueueElements(lod, RenderingTechnique::kForward, elements);
 			for(RenderableQueueElement& el : elements)
 			{
 				el.m_distanceFromCamera = distanceFromCamera;
-				*result.m_forwardShadingRenderables.newElement(pool) = el;
+				*result.m_forwardShadingRenderables.newElement() = el;
 			}
 
 			if(wantsEarlyZ && distanceFromCamera < testedFrustum.getEarlyZDistance())
 			{
-				modelc.setupRenderableQueueElements(lod, RenderingTechnique::kGBufferEarlyZ, pool, elements);
+				modelc.setupRenderableQueueElements(lod, RenderingTechnique::kGBufferEarlyZ, elements);
 				for(RenderableQueueElement& el : elements)
 				{
 					el.m_distanceFromCamera = distanceFromCamera;
-					*result.m_earlyZRenderables.newElement(pool) = el;
+					*result.m_earlyZRenderables.newElement() = el;
 				}
 			}
 
 			if(frustumFlags.m_gatherRayTracingModelComponents)
 			{
 				WeakArray<RayTracingInstanceQueueElement> rtElements;
-				modelc.setupRayTracingInstanceQueueElements(lod, RenderingTechnique::kRtShadow, pool, rtElements);
+				modelc.setupRayTracingInstanceQueueElements(lod, RenderingTechnique::kRtShadow, rtElements);
 
 				for(RayTracingInstanceQueueElement& el : rtElements)
 				{
-					*result.m_rayTracingInstances.newElement(pool) = el;
+					*result.m_rayTracingInstances.newElement() = el;
 				}
 			}
+
+			// Update timestamp
+			ANKI_ASSERT(comp.getTimestamp() > 0);
+			m_frcCtx->m_queueViews[taskId].m_timestamp =
+				max(m_frcCtx->m_queueViews[taskId].m_timestamp, comp.getTimestamp());
 		}
 		else if(comp.getClassId() == ParticleEmitterComponent::getStaticClassId())
 		{
@@ -363,19 +368,24 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			const F32 distanceFromCamera = max(0.0f, testPlane(nearPlane, aabb));
 
 			WeakArray<RenderableQueueElement> elements;
-			partemitc.setupRenderableQueueElements(RenderingTechnique::kGBuffer, pool, elements);
+			partemitc.setupRenderableQueueElements(RenderingTechnique::kGBuffer, elements);
 			for(RenderableQueueElement& el : elements)
 			{
 				el.m_distanceFromCamera = distanceFromCamera;
-				*result.m_renderables.newElement(pool) = el;
+				*result.m_renderables.newElement() = el;
 			}
 
-			partemitc.setupRenderableQueueElements(RenderingTechnique::kForward, pool, elements);
+			partemitc.setupRenderableQueueElements(RenderingTechnique::kForward, elements);
 			for(RenderableQueueElement& el : elements)
 			{
 				el.m_distanceFromCamera = distanceFromCamera;
-				*result.m_forwardShadingRenderables.newElement(pool) = el;
+				*result.m_forwardShadingRenderables.newElement() = el;
 			}
+
+			// Update timestamp
+			ANKI_ASSERT(comp.getTimestamp() > 0);
+			m_frcCtx->m_queueViews[taskId].m_timestamp =
+				max(m_frcCtx->m_queueViews[taskId].m_timestamp, comp.getTimestamp());
 		}
 		else if(comp.getClassId() == LightComponent::getStaticClassId())
 		{
@@ -407,13 +417,13 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			{
 			case LightComponentType::kPoint:
 			{
-				PointLightQueueElement* el = result.m_pointLights.newElement(pool);
+				PointLightQueueElement* el = result.m_pointLights.newElement();
 				lightc.setupPointLightQueueElement(*el);
 
 				if(castsShadow && frustumFlags.m_nonDirectionalLightsCastShadow)
 				{
-					nextQueues = WeakArray<RenderQueue>(newArray<RenderQueue>(pool, 6), 6);
-					nextFrustums = WeakArray<VisibilityFrustum>(newArray<VisibilityFrustum>(pool, 6), 6);
+					nextQueues = WeakArray<RenderQueue>(newArray<RenderQueue>(framePool, 6), 6);
+					nextFrustums = WeakArray<VisibilityFrustum>(newArray<VisibilityFrustum>(framePool, 6), 6);
 
 					for(U32 f = 0; f < 6; ++f)
 					{
@@ -431,15 +441,15 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			}
 			case LightComponentType::kSpot:
 			{
-				SpotLightQueueElement* el = result.m_spotLights.newElement(pool);
+				SpotLightQueueElement* el = result.m_spotLights.newElement();
 				lightc.setupSpotLightQueueElement(*el);
 
 				if(castsShadow && frustumFlags.m_nonDirectionalLightsCastShadow)
 				{
-					nextQueues = WeakArray<RenderQueue>(newInstance<RenderQueue>(pool), 1);
+					nextQueues = WeakArray<RenderQueue>(newInstance<RenderQueue>(framePool), 1);
 					el->m_shadowRenderQueue = &nextQueues[0];
 
-					nextFrustums = WeakArray<VisibilityFrustum>(newInstance<VisibilityFrustum>(pool), 1);
+					nextFrustums = WeakArray<VisibilityFrustum>(newInstance<VisibilityFrustum>(framePool), 1);
 					nextFrustums[0].m_frustum = &lightc.getFrustums()[0];
 					static_cast<FrustumFlags&>(nextFrustums[0]) = getLightFrustumFlags();
 				}
@@ -467,10 +477,10 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 				WeakArray<Frustum> frustums;
 				if(cascadeCount)
 				{
-					nextQueues = WeakArray<RenderQueue>(newArray<RenderQueue>(pool, cascadeCount), cascadeCount);
-					nextFrustums =
-						WeakArray<VisibilityFrustum>(newArray<VisibilityFrustum>(pool, cascadeCount), cascadeCount);
-					frustums = WeakArray<Frustum>(newArray<Frustum>(pool, cascadeCount), cascadeCount);
+					nextQueues = WeakArray<RenderQueue>(newArray<RenderQueue>(framePool, cascadeCount), cascadeCount);
+					nextFrustums = WeakArray<VisibilityFrustum>(newArray<VisibilityFrustum>(framePool, cascadeCount),
+																cascadeCount);
+					frustums = WeakArray<Frustum>(newArray<Frustum>(framePool, cascadeCount), cascadeCount);
 				}
 
 				for(U32 i = 0; i < cascadeCount; ++i)
@@ -503,7 +513,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 				continue;
 			}
 
-			LensFlareQueueElement* el = result.m_lensFlares.newElement(pool);
+			LensFlareQueueElement* el = result.m_lensFlares.newElement();
 			flarec.setupLensFlareQueueElement(*el);
 		}
 		else if(comp.getClassId() == ReflectionProbeComponent::getStaticClassId())
@@ -517,14 +527,15 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 			if(reflc.getReflectionNeedsRefresh() && m_frcCtx->m_reflectionProbesForRefreshCount.fetchAdd(1) == 0)
 			{
-				ReflectionProbeQueueElementForRefresh* el = newInstance<ReflectionProbeQueueElementForRefresh>(pool);
+				ReflectionProbeQueueElementForRefresh* el =
+					newInstance<ReflectionProbeQueueElementForRefresh>(framePool);
 				m_frcCtx->m_reflectionProbeForRefresh = el;
 
 				reflc.setupReflectionProbeQueueElementForRefresh(*el);
 				reflc.setReflectionNeedsRefresh(false);
 
-				nextQueues = WeakArray<RenderQueue>(newArray<RenderQueue>(pool, 6), 6);
-				nextFrustums = WeakArray<VisibilityFrustum>(newArray<VisibilityFrustum>(pool, 6), 6);
+				nextQueues = WeakArray<RenderQueue>(newArray<RenderQueue>(framePool, 6), 6);
+				nextFrustums = WeakArray<VisibilityFrustum>(newArray<VisibilityFrustum>(framePool, 6), 6);
 
 				for(U32 i = 0; i < 6; ++i)
 				{
@@ -536,7 +547,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			}
 			else if(!reflc.getReflectionNeedsRefresh())
 			{
-				ReflectionProbeQueueElement* el = result.m_reflectionProbes.newElement(pool);
+				ReflectionProbeQueueElement* el = result.m_reflectionProbes.newElement();
 				reflc.setupReflectionProbeQueueElement(*el);
 			}
 		}
@@ -549,7 +560,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 				continue;
 			}
 
-			DecalQueueElement* el = result.m_decals.newElement(pool);
+			DecalQueueElement* el = result.m_decals.newElement();
 			decalc.setupDecalQueueElement(*el);
 		}
 		else if(comp.getClassId() == FogDensityComponent::getStaticClassId())
@@ -561,7 +572,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 			const FogDensityComponent& fogc = static_cast<FogDensityComponent&>(comp);
 
-			FogDensityQueueElement* el = result.m_fogDensityVolumes.newElement(pool);
+			FogDensityQueueElement* el = result.m_fogDensityVolumes.newElement();
 			fogc.setupFogDensityQueueElement(*el);
 		}
 		else if(comp.getClassId() == GlobalIlluminationProbeComponent::getStaticClassId())
@@ -575,11 +586,11 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 			if(giprobec.needsRefresh() && m_frcCtx->m_giProbesForRefreshCount.fetchAdd(1) == 0)
 			{
-				nextQueues = WeakArray<RenderQueue>(newArray<RenderQueue>(pool, 6), 6);
-				nextFrustums = WeakArray<VisibilityFrustum>(newArray<VisibilityFrustum>(pool, 6), 6);
+				nextQueues = WeakArray<RenderQueue>(newArray<RenderQueue>(framePool, 6), 6);
+				nextFrustums = WeakArray<VisibilityFrustum>(newArray<VisibilityFrustum>(framePool, 6), 6);
 
 				GlobalIlluminationProbeQueueElementForRefresh* el =
-					newInstance<GlobalIlluminationProbeQueueElementForRefresh>(pool);
+					newInstance<GlobalIlluminationProbeQueueElementForRefresh>(framePool);
 
 				m_frcCtx->m_giProbeForRefresh = el;
 
@@ -594,7 +605,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 				}
 			}
 
-			GlobalIlluminationProbeQueueElement* el = result.m_giProbes.newElement(pool);
+			GlobalIlluminationProbeQueueElement* el = result.m_giProbes.newElement();
 			giprobec.setupGlobalIlluminationProbeQueueElement(*el);
 		}
 		else if(comp.getClassId() == UiComponent::getStaticClassId())
@@ -605,7 +616,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			}
 
 			const UiComponent& uic = static_cast<UiComponent&>(comp);
-			UiQueueElement* el = result.m_uis.newElement(pool);
+			UiQueueElement* el = result.m_uis.newElement();
 			uic.setupUiQueueElement(*el);
 		}
 		else if(comp.getClassId() == SkyboxComponent::getStaticClassId())
@@ -633,28 +644,13 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 				m_frcCtx->m_visCtx->submitNewWork(nextFrustums[i], m_frcCtx->m_primaryFrustum, nextQueues[i], hive);
 			}
 		}
-
-		// Update timestamp
-		ANKI_ASSERT(comp.getTimestamp() > 0);
-		m_frcCtx->m_queueViews[taskId].m_timestamp =
-			max(m_frcCtx->m_queueViews[taskId].m_timestamp, comp.getTimestamp());
 	} // end for
-
-	if(testedFrustum.getUpdatedThisFrame())
-	{
-		m_frcCtx->m_queueViews[taskId].m_timestamp = GlobalFrameIndex::getSingleton().m_value;
-	}
-	else
-	{
-		m_frcCtx->m_queueViews[taskId].m_timestamp = max<Timestamp>(m_frcCtx->m_queueViews[taskId].m_timestamp, 1);
-	}
 }
 
 void CombineResultsTask::combine()
 {
 	ANKI_TRACE_SCOPED_EVENT(SceneVisCombine);
 
-	StackMemoryPool& pool = m_frcCtx->m_visCtx->m_scene->getFrameMemoryPool();
 	RenderQueue& results = *m_frcCtx->m_renderQueue;
 
 	// Compute the timestamp
@@ -671,11 +667,16 @@ void CombineResultsTask::combine()
 
 	if(renderableCount)
 	{
-		ANKI_ASSERT(results.m_shadowRenderablesLastUpdateTimestamp);
+		ANKI_ASSERT(results.m_shadowRenderablesLastUpdateTimestamp > 0);
 	}
 	else
 	{
 		ANKI_ASSERT(results.m_shadowRenderablesLastUpdateTimestamp == 0);
+	}
+
+	if(m_frcCtx->m_frustum.m_frustum->getUpdatedThisFrame())
+	{
+		results.m_shadowRenderablesLastUpdateTimestamp = GlobalFrameIndex::getSingleton().m_value;
 	}
 
 #define ANKI_VIS_COMBINE(t_, member_) \
@@ -685,8 +686,8 @@ void CombineResultsTask::combine()
 		{ \
 			subStorages[i] = m_frcCtx->m_queueViews[i].member_; \
 		} \
-		combineQueueElements<t_>(pool, WeakArray<TRenderQueueElementStorage<t_>>(&subStorages[0], threadCount), \
-								 nullptr, results.member_, nullptr); \
+		combineQueueElements<t_>(WeakArray<TRenderQueueElementStorage<t_>>(&subStorages[0], threadCount), nullptr, \
+								 results.member_, nullptr); \
 	}
 
 	ANKI_VIS_COMBINE(RenderableQueueElement, m_renderables);
@@ -762,7 +763,7 @@ void CombineResultsTask::combine()
 				  }
 			  });
 
-	const AllGpuSceneContiguousArrays& arrays = m_frcCtx->m_visCtx->m_scene->getAllGpuSceneContiguousArrays();
+	const AllGpuSceneContiguousArrays& arrays = SceneGraph::getSingleton().getAllGpuSceneContiguousArrays();
 
 	auto setOffset = [&](ClusteredObjectType type, GpuSceneContiguousArrayType type2) {
 		results.m_clustererObjectsArrayOffsets[type] = arrays.getElementCount(type2) ? arrays.getArrayBase(type2) : 0;
@@ -784,11 +785,12 @@ void CombineResultsTask::combine()
 }
 
 template<typename T>
-void CombineResultsTask::combineQueueElements(StackMemoryPool& pool,
-											  WeakArray<TRenderQueueElementStorage<T>> subStorages,
+void CombineResultsTask::combineQueueElements(WeakArray<TRenderQueueElementStorage<T>> subStorages,
 											  WeakArray<TRenderQueueElementStorage<U32>>* ptrSubStorages,
 											  WeakArray<T>& combined, WeakArray<T*>* ptrCombined)
 {
+	StackMemoryPool& framePool = SceneGraph::getSingleton().getFrameMemoryPool();
+
 	U32 totalElCount = subStorages[0].m_elementCount;
 	U32 biggestSubStorageIdx = 0;
 	for(U32 i = 1; i < subStorages.getSize(); ++i)
@@ -821,7 +823,7 @@ void CombineResultsTask::combineQueueElements(StackMemoryPool& pool,
 		// Create the new storage
 		if(ptrTotalElCount > 0)
 		{
-			ptrIt = newArray<T*>(pool, ptrTotalElCount);
+			ptrIt = newArray<T*>(framePool, ptrTotalElCount);
 			*ptrCombined = WeakArray<T*>(ptrIt, ptrTotalElCount);
 		}
 	}
@@ -831,7 +833,7 @@ void CombineResultsTask::combineQueueElements(StackMemoryPool& pool,
 	{
 		// Can't reuse any of the existing storage, will allocate a brand new one
 
-		it = newArray<T>(pool, totalElCount);
+		it = newArray<T>(framePool, totalElCount);
 		biggestSubStorageIdx = kMaxU32;
 
 		combined = WeakArray<T>(it, totalElCount);
@@ -885,7 +887,6 @@ void SceneGraph::doVisibilityTests(SceneNode& camera, SceneGraph& scene, RenderQ
 	ThreadHive& hive = CoreThreadHive::getSingleton();
 
 	VisibilityContext ctx;
-	ctx.m_scene = &scene;
 	CameraComponent& camerac = camera.getFirstComponentOfType<CameraComponent>();
 	VisibilityFrustum visFrustum;
 	visFrustum.m_frustum = &camerac.getFrustum();
@@ -903,7 +904,6 @@ void SceneGraph::doVisibilityTests(SceneNode& camera, SceneGraph& scene, RenderQ
 	}
 
 	hive.waitAllTasks();
-	ctx.m_testedFrustums.destroy(scene.getFrameMemoryPool());
 }
 
 } // end namespace anki

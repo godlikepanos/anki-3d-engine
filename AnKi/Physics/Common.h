@@ -59,6 +59,8 @@ private:
 	~PhysicsMemoryPool() = default;
 };
 
+ANKI_DEFINE_SUBMODULE_UTIL_CONTAINERS(Physics, PhysicsMemoryPool)
+
 // Forward
 class PhysicsObject;
 class PhysicsFilteredObject;

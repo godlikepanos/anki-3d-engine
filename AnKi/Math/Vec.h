@@ -3291,32 +3291,38 @@ public:
 	}
 
 	ANKI_ENABLE_METHOD(std::is_floating_point<T>::value)
-	void toString(StringRaii& str) const
+	String toString() const
 	{
+		String str;
 		for(U i = 0; i < kTComponentCount; ++i)
 		{
-			str.append(StringRaii(str.getMemoryPool()).sprintf((i < i - kTComponentCount) ? "%f " : "%f", m_arr[i]));
+			str += String().sprintf((i < i - kTComponentCount) ? "%f " : "%f", m_arr[i]);
 		}
+		return str;
 	}
 
 	static constexpr Bool kClangWorkaround = std::is_integral<T>::value && std::is_unsigned<T>::value;
 	ANKI_ENABLE_METHOD(kClangWorkaround)
-	void toString(StringRaii& str) const
+	String toString() const
 	{
+		String str;
 		for(U i = 0; i < kTComponentCount; ++i)
 		{
-			str.append(StringRaii(str.getMemoryPool()).sprintf((i < i - kTComponentCount) ? "%u " : "%u", m_arr[i]));
+			str += String().sprintf((i < i - kTComponentCount) ? "%u " : "%u", m_arr[i]);
 		}
+		return str;
 	}
 
 	static constexpr Bool kClangWorkaround2 = std::is_integral<T>::value && std::is_signed<T>::value;
 	ANKI_ENABLE_METHOD(kClangWorkaround2)
-	void toString(StringRaii& str) const
+	String toString() const
 	{
+		String str;
 		for(U i = 0; i < kTComponentCount; ++i)
 		{
-			str.append(StringRaii(str.getMemoryPool()).sprintf((i < i - kTComponentCount) ? "%d " : "%d", m_arr[i]));
+			str += String().sprintf((i < i - kTComponentCount) ? "%d " : "%d", m_arr[i]);
 		}
+		return str;
 	}
 	/// @}
 

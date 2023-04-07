@@ -13,9 +13,8 @@ namespace {
 class Cleanup
 {
 public:
-	HeapMemoryPool m_pool = {allocAligned, nullptr};
-	DynamicArrayRaii<CString> m_inputFilenames = {&m_pool};
-	StringRaii m_outFilename = {&m_pool};
+	DynamicArray<CString> m_inputFilenames;
+	String m_outFilename;
 };
 
 } // namespace
@@ -276,7 +275,7 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 	{
 		CString infname = cleanup.m_inputFilenames[0];
 
-		StringRaii ext(&cleanup.m_pool);
+		String ext;
 		getFilepathExtension(infname, ext);
 
 		getFilepathFilename(infname, cleanup.m_outFilename);
@@ -286,7 +285,7 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 		}
 		else
 		{
-			cleanup.m_outFilename.append(".ankitex");
+			cleanup.m_outFilename += ".ankitex";
 		}
 	}
 
@@ -296,10 +295,21 @@ static Error parseCommandLineArgs(int argc, char** argv, ImageImporterConfig& co
 	return Error::kNone;
 }
 
-int main(int argc, char** argv)
+ANKI_MAIN_FUNCTION(myMain)
+int myMain(int argc, char** argv)
 {
-	HeapMemoryPool pool(allocAligned, nullptr);
+	class Cleanup2
+	{
+	public:
+		~Cleanup2()
+		{
+			DefaultMemoryPool::freeSingleton();
+		}
+	} cleanup2;
 
+	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
+
+	HeapMemoryPool pool(allocAligned, nullptr);
 	ImageImporterConfig config;
 	config.m_pool = &pool;
 	Cleanup cleanup;
@@ -309,7 +319,7 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	StringRaii tmp(&pool);
+	String tmp;
 	if(getTempDirectory(tmp))
 	{
 		ANKI_IMPORTER_LOGE("getTempDirectory() failed");

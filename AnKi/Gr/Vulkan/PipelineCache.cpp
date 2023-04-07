@@ -44,7 +44,7 @@ Error PipelineCache::init(CString cacheDir)
 			}
 			else
 			{
-				diskDump.create(diskDumpSize - VK_UUID_SIZE);
+				diskDump.resize(diskDumpSize - VK_UUID_SIZE);
 				ANKI_CHECK(file.read(&diskDump[0], diskDumpSize - VK_UUID_SIZE));
 			}
 		}
@@ -93,7 +93,7 @@ Error PipelineCache::destroyInternal()
 		{
 			// Read cache
 			GrDynamicArray<U8, PtrSize> cacheData;
-			cacheData.create(size);
+			cacheData.resize(size);
 			ANKI_VK_CHECK(vkGetPipelineCacheData(getVkDevice(), m_cacheHandle, &size, &cacheData[0]));
 
 			// Write file

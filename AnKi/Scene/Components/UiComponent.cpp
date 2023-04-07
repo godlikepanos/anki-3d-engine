@@ -14,7 +14,7 @@ UiComponent ::~UiComponent()
 	m_spatial.removeFromOctree(SceneGraph::getSingleton().getOctree());
 }
 
-Error UiComponent::updateReal([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated)
+Error UiComponent::update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated)
 {
 	updated = m_spatial.update(SceneGraph::getSingleton().getOctree());
 	return Error::kNone;

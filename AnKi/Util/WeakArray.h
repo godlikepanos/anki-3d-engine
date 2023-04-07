@@ -14,7 +14,7 @@ namespace anki {
 /// @{
 
 /// Array that doesn't own the memory.
-template<typename T, typename TSize>
+template<typename T, typename TSize = U32>
 class WeakArray
 {
 public:
@@ -46,18 +46,8 @@ public:
 	{
 	}
 
-	explicit WeakArray(DynamicArray<T, TSize>& arr)
-		: WeakArray()
-	{
-		if(arr.getSize())
-		{
-			m_data = &arr[0];
-			m_size = arr.getSize();
-		}
-	}
-
-	template<typename TMemPool>
-	explicit WeakArray(DynamicArrayRaii<T, TSize, TMemPool>& arr)
+	template<typename TMemoryPool>
+	explicit WeakArray(DynamicArray<T, TMemoryPool, TSize>& arr)
 		: WeakArray()
 	{
 		if(arr.getSize())
@@ -106,15 +96,8 @@ public:
 		return *this;
 	}
 
-	WeakArray& operator=(DynamicArray<T, TSize>& arr)
-	{
-		m_data = (arr.getSize()) ? &arr[0] : nullptr;
-		m_size = arr.getSize();
-		return *this;
-	}
-
-	template<typename TMemPool>
-	WeakArray& operator=(DynamicArrayRaii<T, TSize, TMemPool>& arr)
+	template<typename TMemoryPool>
+	WeakArray& operator=(DynamicArray<T, TMemoryPool, TSize>& arr)
 	{
 		m_data = (arr.getSize()) ? &arr[0] : nullptr;
 		m_size = arr.getSize();
@@ -234,7 +217,7 @@ private:
 };
 
 /// Array that doesn't own the memory.
-template<typename T, typename TSize>
+template<typename T, typename TSize = U32>
 class ConstWeakArray
 {
 public:
@@ -272,19 +255,8 @@ public:
 	}
 
 	/// Construct from DynamicArray.
-	ConstWeakArray(const DynamicArray<T, TSize>& arr)
-		: ConstWeakArray()
-	{
-		if(arr.getSize())
-		{
-			m_data = &arr[0];
-			m_size = arr.getSize();
-		}
-	}
-
-	/// Construct from DynamicArrayRaii.
-	template<typename TMemPool>
-	ConstWeakArray(const DynamicArrayRaii<T, TSize, TMemPool>& arr)
+	template<typename TMemoryPool>
+	ConstWeakArray(const DynamicArray<T, TMemoryPool, TSize>& arr)
 		: ConstWeakArray()
 	{
 		if(arr.getSize())
@@ -342,15 +314,8 @@ public:
 		return *this;
 	}
 
-	ConstWeakArray& operator=(const DynamicArray<T, TSize>& arr)
-	{
-		m_data = (arr.getSize()) ? &arr[0] : nullptr;
-		m_size = arr.getSize();
-		return *this;
-	}
-
-	template<typename TMemPool>
-	ConstWeakArray& operator=(const DynamicArrayRaii<T, TSize, TMemPool>& arr)
+	template<typename TMemoryPool>
+	ConstWeakArray& operator=(const DynamicArray<T, TMemoryPool, TSize>& arr)
 	{
 		m_data = (arr.getSize()) ? &arr[0] : nullptr;
 		m_size = arr.getSize();

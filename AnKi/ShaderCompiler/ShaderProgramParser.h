@@ -25,12 +25,6 @@ class ShaderProgramParserMutator
 	friend ShaderProgramParser;
 
 public:
-	ShaderProgramParserMutator(BaseMemoryPool* pool)
-		: m_name(pool)
-		, m_values(pool)
-	{
-	}
-
 	CString getName() const
 	{
 		return m_name;
@@ -42,37 +36,26 @@ public:
 	}
 
 private:
-	StringRaii m_name;
-	DynamicArrayRaii<MutatorValue> m_values;
+	String m_name;
+	DynamicArray<MutatorValue> m_values;
 };
 
 /// @memberof ShaderProgramParser
 class ShaderProgramParserMember
 {
 public:
-	StringRaii m_name;
+	String m_name;
 	ShaderVariableDataType m_type;
 	U32 m_dependentMutator = kMaxU32;
 	MutatorValue m_mutatorValue = 0;
-
-	ShaderProgramParserMember(BaseMemoryPool* pool)
-		: m_name(pool)
-	{
-	}
 };
 
 /// @memberof ShaderProgramParser
 class ShaderProgramParserGhostStruct
 {
 public:
-	DynamicArrayRaii<ShaderProgramParserMember> m_members;
-	StringRaii m_name;
-
-	ShaderProgramParserGhostStruct(BaseMemoryPool* pool)
-		: m_members(pool)
-		, m_name(pool)
-	{
-	}
+	DynamicArray<ShaderProgramParserMember> m_members;
+	String m_name;
 };
 
 /// @memberof ShaderProgramParser
@@ -81,21 +64,12 @@ class ShaderProgramParserVariant
 	friend class ShaderProgramParser;
 
 public:
-	~ShaderProgramParserVariant()
-	{
-		for(String& s : m_sources)
-		{
-			s.destroy(*m_pool);
-		}
-	}
-
 	CString getSource(ShaderType type) const
 	{
 		return m_sources[type];
 	}
 
 private:
-	BaseMemoryPool* m_pool = nullptr;
 	Array<String, U32(ShaderType::kCount)> m_sources;
 };
 
@@ -123,7 +97,7 @@ private:
 class ShaderProgramParser
 {
 public:
-	ShaderProgramParser(CString fname, ShaderProgramFilesystemInterface* fsystem, BaseMemoryPool* pool,
+	ShaderProgramParser(CString fname, ShaderProgramFilesystemInterface* fsystem,
 						const ShaderCompilerOptions& compilerOptions);
 
 	ShaderProgramParser(const ShaderProgramParser&) = delete; // Non-copyable
@@ -167,7 +141,7 @@ public:
 		return m_rayType;
 	}
 
-	const StringListRaii& getSymbolsToReflect() const
+	const StringList& getSymbolsToReflect() const
 	{
 		return m_symbolsToReflect;
 	}
@@ -184,7 +158,7 @@ public:
 
 	/// Generates the common header that will be used by all AnKi shaders.
 	static void generateAnkiShaderHeader(ShaderType shaderType, const ShaderCompilerOptions& compilerOptions,
-										 StringRaii& header);
+										 String& header);
 
 private:
 	using Mutator = ShaderProgramParserMutator;
@@ -194,57 +168,51 @@ private:
 	class PartialMutationSkip
 	{
 	public:
-		DynamicArrayRaii<MutatorValue> m_partialMutation;
-
-		PartialMutationSkip(BaseMemoryPool* pool)
-			: m_partialMutation(pool)
-		{
-		}
+		DynamicArray<MutatorValue> m_partialMutation;
 	};
 
 	static constexpr U32 kMaxIncludeDepth = 8;
 
-	BaseMemoryPool* m_pool = nullptr;
-	StringRaii m_fname;
+	String m_fname;
 	ShaderProgramFilesystemInterface* m_fsystem = nullptr;
 
-	StringListRaii m_codeLines = {m_pool}; ///< The code.
-	StringRaii m_codeSource = {m_pool};
+	StringList m_codeLines; ///< The code.
+	String m_codeSource;
 	U64 m_codeSourceHash = 0;
 
-	DynamicArrayRaii<Mutator> m_mutators = {m_pool};
-	DynamicArrayRaii<PartialMutationSkip> m_skipMutations = {m_pool};
+	DynamicArray<Mutator> m_mutators;
+	DynamicArray<PartialMutationSkip> m_skipMutations;
 
 	ShaderTypeBit m_shaderTypes = ShaderTypeBit::kNone;
 	Bool m_insideShader = false;
 	ShaderCompilerOptions m_compilerOptions;
 
-	StringRaii m_libName = {m_pool};
+	String m_libName;
 	U32 m_rayType = kMaxU32;
 
-	StringListRaii m_symbolsToReflect = {m_pool};
+	StringList m_symbolsToReflect;
 
-	DynamicArrayRaii<GhostStruct> m_ghostStructs = {m_pool};
+	DynamicArray<GhostStruct> m_ghostStructs;
 	Bool m_insideStruct = false;
 
 	Bool m_16bitTypes = false;
 
 	Error parseFile(CString fname, U32 depth);
 	Error parseLine(CString line, CString fname, Bool& foundPragmaOnce, U32 depth, U32 lineNumber);
-	Error parseInclude(const StringRaii* begin, const StringRaii* end, CString line, CString fname, U32 depth);
-	Error parsePragmaMutator(const StringRaii* begin, const StringRaii* end, CString line, CString fname);
-	Error parsePragmaStart(const StringRaii* begin, const StringRaii* end, CString line, CString fname);
-	Error parsePragmaEnd(const StringRaii* begin, const StringRaii* end, CString line, CString fname);
-	Error parsePragmaSkipMutation(const StringRaii* begin, const StringRaii* end, CString line, CString fname);
-	Error parsePragmaLibraryName(const StringRaii* begin, const StringRaii* end, CString line, CString fname);
-	Error parsePragmaRayType(const StringRaii* begin, const StringRaii* end, CString line, CString fname);
-	Error parsePragmaReflect(const StringRaii* begin, const StringRaii* end, CString line, CString fname);
-	Error parsePragmaStructBegin(const StringRaii* begin, const StringRaii* end, CString line, CString fname);
-	Error parsePragmaStructEnd(const StringRaii* begin, const StringRaii* end, CString line, CString fname);
-	Error parsePragmaMember(const StringRaii* begin, const StringRaii* end, CString line, CString fname);
-	Error parsePragma16bit(const StringRaii* begin, const StringRaii* end, CString line, CString fname);
+	Error parseInclude(const String* begin, const String* end, CString line, CString fname, U32 depth);
+	Error parsePragmaMutator(const String* begin, const String* end, CString line, CString fname);
+	Error parsePragmaStart(const String* begin, const String* end, CString line, CString fname);
+	Error parsePragmaEnd(const String* begin, const String* end, CString line, CString fname);
+	Error parsePragmaSkipMutation(const String* begin, const String* end, CString line, CString fname);
+	Error parsePragmaLibraryName(const String* begin, const String* end, CString line, CString fname);
+	Error parsePragmaRayType(const String* begin, const String* end, CString line, CString fname);
+	Error parsePragmaReflect(const String* begin, const String* end, CString line, CString fname);
+	Error parsePragmaStructBegin(const String* begin, const String* end, CString line, CString fname);
+	Error parsePragmaStructEnd(const String* begin, const String* end, CString line, CString fname);
+	Error parsePragmaMember(const String* begin, const String* end, CString line, CString fname);
+	Error parsePragma16bit(const String* begin, const String* end, CString line, CString fname);
 
-	void tokenizeLine(CString line, DynamicArrayRaii<StringRaii>& tokens) const;
+	void tokenizeLine(CString line, DynamicArray<String>& tokens) const;
 
 	static Bool tokenIsComment(CString token)
 	{

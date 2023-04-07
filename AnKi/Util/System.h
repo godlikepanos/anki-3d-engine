@@ -22,12 +22,11 @@ ANKI_PURE U32 getCpuCoresCount();
 void backtraceInternal(const Function<void(CString)>& lambda);
 
 /// Get a backtrace.
-template<typename TMemPool, typename TFunc>
-void backtrace(TMemPool& pool, TFunc func)
+template<typename TFunc>
+void backtrace(TFunc func)
 {
-	Function<void(CString)> f(pool, func);
+	Function<void(CString)> f(func);
 	backtraceInternal(f);
-	f.destroy(pool);
 }
 
 /// Return true if the engine is running from a terminal emulator.

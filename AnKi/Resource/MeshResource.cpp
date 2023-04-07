@@ -71,7 +71,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	LoadContext* ctx;
 	LoadContext localCtx(this);
 
-	StringRaii basename(&ResourceMemoryPool::getSingleton());
+	String basename;
 	getFilepathFilename(filename, basename);
 
 	const Bool rayTracingEnabled = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled;
@@ -100,7 +100,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	m_positionsTranslation = Vec3(&header.m_vertexAttributes[VertexStreamId::kPosition].m_translation[0]);
 
 	// Submeshes
-	m_subMeshes.create(header.m_subMeshCount);
+	m_subMeshes.resize(header.m_subMeshCount);
 	for(U32 i = 0; i < m_subMeshes.getSize(); ++i)
 	{
 		m_subMeshes[i].m_firstIndices = loader.getSubMeshes()[i].m_firstIndices;
@@ -110,7 +110,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	}
 
 	// LODs
-	m_lods.create(header.m_lodCount);
+	m_lods.resize(header.m_lodCount);
 	for(I32 l = I32(header.m_lodCount - 1); l >= 0; --l)
 	{
 		Lod& lod = m_lods[l];

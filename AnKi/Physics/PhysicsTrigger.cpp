@@ -42,8 +42,6 @@ PhysicsTrigger::~PhysicsTrigger()
 		}
 	}
 
-	m_pairs.destroy(PhysicsMemoryPool::getSingleton());
-
 	m_ghostShape.destroy();
 }
 
@@ -63,12 +61,13 @@ void PhysicsTrigger::processContacts()
 
 	if(m_contactCallback == nullptr)
 	{
-		m_pairs.destroy(PhysicsMemoryPool::getSingleton());
+		m_pairs.destroy();
 		return;
 	}
 
 	// Gather the new pairs
-	DynamicArrayRaii<PhysicsTriggerFilteredPair*> newPairs(&PhysicsWorld::getSingleton().getTempMemoryPool());
+	DynamicArray<PhysicsTriggerFilteredPair*, MemoryPoolPtrWrapper<StackMemoryPool>> newPairs(
+		&PhysicsWorld::getSingleton().getTempMemoryPool());
 	newPairs.resizeStorage(m_ghostShape->getOverlappingPairs().size());
 	for(U32 i = 0; i < U32(m_ghostShape->getOverlappingPairs().size()); ++i)
 	{
@@ -125,7 +124,7 @@ void PhysicsTrigger::processContacts()
 	}
 
 	// Store the new contacts
-	m_pairs.resize(PhysicsMemoryPool::getSingleton(), newPairs.getSize());
+	m_pairs.resize(newPairs.getSize());
 	if(m_pairs.getSize())
 	{
 		memcpy(&m_pairs[0], &newPairs[0], m_pairs.getSizeInBytes());

@@ -89,7 +89,7 @@ CoreTracer::~CoreTracer()
 
 Error CoreTracer::init(CString directory)
 {
-	Tracer::allocateSingleton(&CoreMemoryPool::getSingleton());
+	Tracer::allocateSingleton();
 	const Bool enableTracer = getenv("ANKI_CORE_TRACER_ENABLED") && getenv("ANKI_CORE_TRACER_ENABLED")[0] == '1';
 	Tracer::getSingleton().setEnabled(enableTracer);
 	ANKI_CORE_LOGI("Tracing is %s from the beginning", (enableTracer) ? "enabled" : "disabled");
@@ -216,7 +216,7 @@ void CoreTracer::gatherCounters(ThreadWorkItem& item)
 		const TracerCounter& counter = mergedCounters[i];
 
 		Bool found = false;
-		for(const String& name : m_counterNames)
+		for(const CoreString& name : m_counterNames)
 		{
 			if(name == counter.m_name)
 			{
@@ -295,13 +295,13 @@ void CoreTracer::flushFrame(U64 frame)
 
 			if(events.getSize() > 0)
 			{
-				item->m_events.create(events.getSize());
+				item->m_events.resize(events.getSize());
 				memcpy(&item->m_events[0], &events[0], events.getSizeInBytes());
 			}
 
 			if(counters.getSize() > 0)
 			{
-				item->m_counters.create(counters.getSize());
+				item->m_counters.resize(counters.getSize());
 				memcpy(&item->m_counters[0], &counters[0], counters.getSizeInBytes());
 			}
 

@@ -460,22 +460,4 @@ FileOpenFlag File::getMachineEndianness()
 	}
 }
 
-Error File::readAllText(BaseMemoryPool& pool, String& out)
-{
-	Error err = Error::kNone;
-	PtrSize size = getSize();
-
-	if(size != 0)
-	{
-		out.create(pool, '?', size);
-		err = read(&out[0], size);
-	}
-	else
-	{
-		err = Error::kFunctionFailed;
-	}
-
-	return err;
-}
-
 } // end namespace anki

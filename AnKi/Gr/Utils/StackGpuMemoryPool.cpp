@@ -130,7 +130,7 @@ void StackGpuMemoryPool::init(PtrSize initialSize, F64 nextChunkGrowScale, PtrSi
 	inter.m_initialSize = initialSize;
 	inter.m_scale = nextChunkGrowScale;
 	inter.m_bias = nextChunkGrowBias;
-	inter.m_bufferName.create(bufferName);
+	inter.m_bufferName = bufferName;
 	inter.m_alignment = alignment;
 	inter.m_bufferUsage = bufferUsage;
 	inter.m_bufferMap = bufferMapping;

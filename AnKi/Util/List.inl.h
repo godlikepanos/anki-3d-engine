@@ -313,15 +313,14 @@ void ListBase<T, TNode>::popFront()
 
 } // end namespace detail
 
-template<typename T>
-template<typename TMemPool>
-void List<T>::destroy(TMemPool& pool)
+template<typename T, typename TMemoryPool>
+void List<T, TMemoryPool>::destroy()
 {
 	Node* el = Base::m_head;
 	while(el)
 	{
 		Node* next = el->m_next;
-		deleteInstance(pool, el);
+		deleteInstance(m_pool, el);
 		el = next;
 	}
 

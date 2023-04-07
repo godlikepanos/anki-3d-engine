@@ -68,7 +68,7 @@ class ListIterator
 	template<typename, typename>
 	friend class ListBase;
 
-	template<typename>
+	template<typename, typename>
 	friend class anki::List;
 
 	template<typename, typename, typename, typename>
@@ -221,9 +221,20 @@ public:
 
 	ListBase() = default;
 
+	ListBase(ListBase&& b)
+	{
+		move(b);
+	}
+
 	ListBase(const ListBase&) = delete; // Non-copyable
 
 	ListBase& operator=(const ListBase&) = delete; // Non-copyable
+
+	ListBase& operator=(ListBase&& b)
+	{
+		move(b);
+		return *this;
+	}
 
 	/// Compare with another list.
 	Bool operator==(const ListBase& b) const;
@@ -333,14 +344,6 @@ protected:
 	TNode* m_head = nullptr;
 	TNode* m_tail = nullptr;
 
-	void move(ListBase& b)
-	{
-		m_head = b.m_head;
-		b.m_head = nullptr;
-		m_tail = b.m_tail;
-		b.m_tail = nullptr;
-	}
-
 	void pushBackNode(TNode* node);
 	void pushFrontNode(TNode* node);
 	void insertNode(TNode* pos, TNode* node);
@@ -351,12 +354,20 @@ protected:
 private:
 	/// Used in sort.
 	TNode* swap(TNode* one, TNode* two);
+
+	void move(ListBase& b)
+	{
+		m_head = b.m_head;
+		b.m_head = nullptr;
+		m_tail = b.m_tail;
+		b.m_tail = nullptr;
+	}
 };
 
 } // end namespace detail
 
 /// Double linked list.
-template<typename T>
+template<typename T, typename TMemoryPool = SingletonMemoryPoolWrapper<DefaultMemoryPool>>
 class List : public detail::ListBase<T, detail::ListNode<T>>
 {
 private:
@@ -365,225 +376,141 @@ private:
 
 public:
 	using typename Base::Iterator;
+	using typename Base::ConstIterator;
 
 	/// Default constructor.
-	List()
-		: Base()
+	List(const TMemoryPool& pool = TMemoryPool())
+		: m_pool(pool)
 	{
 	}
 
 	/// Move.
 	List(List&& b)
-		: List()
+		: Base(std::move(static_cast<Base&>(b)))
+		, m_pool(std::move(b))
 	{
-		move(b);
 	}
 
-	/// You need to manually destroy the list. @see List::destroy
+	/// Copy.
+	List(const List& b)
+	{
+		*this = b;
+	}
+
 	~List()
 	{
-		ANKI_ASSERT(Base::isEmpty() && "Requires manual destruction");
+		destroy();
 	}
 
 	/// Move.
 	List& operator=(List&& b)
 	{
-		move(b);
+		destroy();
+		static_cast<Base&>(*this) = std::move(static_cast<Base&>(b));
+		m_pool = std::move(b.m_pool);
+		return *this;
+	}
+
+	/// Copy.
+	List& operator=(const List& b)
+	{
+		destroy();
+		for(ConstIterator it : b)
+		{
+			pushBack(*it);
+		}
+
 		return *this;
 	}
 
 	/// Destroy the list.
-	template<typename TMemPool>
-	void destroy(TMemPool& pool);
+	void destroy();
 
 	/// Copy an element at the end of the list.
-	template<typename TMemPool>
-	Iterator pushBack(TMemPool& pool, const T& x)
+	Iterator pushBack(const T& x)
 	{
-		Node* node = newInstance<Node>(pool, x);
+		Node* node = newInstance<Node>(m_pool, x);
 		Base::pushBackNode(node);
 		return Iterator(node, this);
-	}
-
-	/// Construct an element at the end of the list.
-	template<typename TMemPool, typename... TArgs>
-	Iterator emplaceBack(TMemPool& pool, TArgs&&... args)
-	{
-		Node* node = newInstance<Node>(pool, std::forward<TArgs>(args)...);
-		Base::pushBackNode(node);
-		return Iterator(node, this);
-	}
-
-	/// Copy an element at the beginning of the list.
-	template<typename TMemPool>
-	Iterator pushFront(TMemPool& pool, const T& x)
-	{
-		Node* node = newInstance<Node>(pool, x);
-		Base::pushFrontNode(node);
-		return Iterator(node, this);
-	}
-
-	/// Construct element at the beginning of the list.
-	template<typename TMemPool, typename... TArgs>
-	Iterator emplaceFront(TMemPool& pool, TArgs&&... args)
-	{
-		Node* node = newInstance<Node>(pool, std::forward<TArgs>(args)...);
-		Base::pushFrontNode(node);
-		return Iterator(node, this);
-	}
-
-	/// Copy an element at the given position of the list.
-	template<typename TMemPool>
-	Iterator insert(TMemPool& pool, Iterator pos, const T& x)
-	{
-		Node* node = newInstance<Node>(pool, x);
-		Base::insertNode(pos.m_node, node);
-		return Iterator(node, this);
-	}
-
-	/// Construct element at the the given position.
-	template<typename TMemPool, typename... TArgs>
-	Iterator emplace(TMemPool& pool, Iterator pos, TArgs&&... args)
-	{
-		Node* node = newInstance<Node>(pool, std::forward<TArgs>(args)...);
-		Base::insertNode(pos.m_node, node);
-		return Iterator(node, this);
-	}
-
-	/// Pop a value from the back of the list.
-	template<typename TMemPool>
-	void popBack(TMemPool& pool)
-	{
-		ANKI_ASSERT(Base::m_tail);
-		Node* node = Base::m_tail;
-		Base::popBack();
-		deleteInstance(pool, node);
-	}
-
-	/// Pop a value from the front of the list.
-	template<typename TMemPool>
-	void popFront(TMemPool& pool)
-	{
-		ANKI_ASSERT(Base::m_head);
-		Node* node = Base::m_head;
-		Base::popFront();
-		deleteInstance(pool, node);
-	}
-
-	/// Erase an element.
-	template<typename TMemPool>
-	void erase(TMemPool& pool, Iterator pos)
-	{
-		ANKI_ASSERT(pos.m_node);
-		ANKI_ASSERT(pos.m_list == this);
-		Base::removeNode(pos.m_node);
-		deleteInstance(pool, pos.m_node);
-	}
-
-private:
-	void move(List& b)
-	{
-		ANKI_ASSERT(Base::isEmpty() && "Requires manual destruction");
-		Base::move(b);
-	}
-};
-
-/// List with automatic destruction.
-template<typename T, typename TMemPool = MemoryPoolPtrWrapper<BaseMemoryPool>>
-class ListRaii : public List<T>
-{
-public:
-	using Base = List<T>;
-	using Value = T;
-	using typename Base::Iterator;
-	using MemoryPool = TMemPool;
-
-	/// Construct using a mem pool.
-	ListRaii(const MemoryPool& pool = MemoryPool())
-		: Base()
-		, m_pool(pool)
-	{
-	}
-
-	/// Move.
-	ListRaii(ListRaii&& b)
-		: Base()
-	{
-		move(b);
-	}
-
-	/// Destroy.
-	~ListRaii()
-	{
-		Base::destroy(m_pool);
-	}
-
-	/// Move.
-	ListRaii& operator=(ListRaii&& b)
-	{
-		move(b);
-		return *this;
-	}
-
-	/// Copy an element at the end of the list.
-	Iterator pushBack(const Value& x)
-	{
-		return Base::pushBack(m_pool, x);
 	}
 
 	/// Construct an element at the end of the list.
 	template<typename... TArgs>
 	Iterator emplaceBack(TArgs&&... args)
 	{
-		return Base::emplaceBack(m_pool, std::forward<TArgs>(args)...);
+		Node* node = newInstance<Node>(m_pool, std::forward<TArgs>(args)...);
+		Base::pushBackNode(node);
+		return Iterator(node, this);
+	}
+
+	/// Copy an element at the beginning of the list.
+	Iterator pushFront(const T& x)
+	{
+		Node* node = newInstance<Node>(m_pool, x);
+		Base::pushFrontNode(node);
+		return Iterator(node, this);
 	}
 
 	/// Construct element at the beginning of the list.
 	template<typename... TArgs>
 	Iterator emplaceFront(TArgs&&... args)
 	{
-		return Base::emplaceFront(m_pool, std::forward<TArgs>(args)...);
+		Node* node = newInstance<Node>(m_pool, std::forward<TArgs>(args)...);
+		Base::pushFrontNode(node);
+		return Iterator(node, this);
+	}
+
+	/// Copy an element at the given position of the list.
+	Iterator insert(Iterator pos, const T& x)
+	{
+		Node* node = newInstance<Node>(m_pool, x);
+		Base::insertNode(pos.m_node, node);
+		return Iterator(node, this);
 	}
 
 	/// Construct element at the the given position.
 	template<typename... TArgs>
 	Iterator emplace(Iterator pos, TArgs&&... args)
 	{
-		return Base::emplace(m_pool, pos, std::forward(args)...);
+		Node* node = newInstance<Node>(m_pool, std::forward<TArgs>(args)...);
+		Base::insertNode(pos.m_node, node);
+		return Iterator(node, this);
 	}
 
 	/// Pop a value from the back of the list.
 	void popBack()
 	{
-		Base::popBack(m_pool);
+		ANKI_ASSERT(Base::m_tail);
+		Node* node = Base::m_tail;
+		Base::popBack();
+		deleteInstance(m_pool, node);
 	}
 
 	/// Pop a value from the front of the list.
 	void popFront()
 	{
-		Base::popFront(m_pool);
+		ANKI_ASSERT(Base::m_head);
+		Node* node = Base::m_head;
+		Base::popFront();
+		deleteInstance(m_pool, node);
 	}
 
 	/// Erase an element.
-	void erase(Iterator position)
+	void erase(Iterator pos)
 	{
-		Base::erase(m_pool, position);
+		ANKI_ASSERT(pos.m_node);
+		ANKI_ASSERT(pos.m_list == this);
+		Base::removeNode(pos.m_node);
+		deleteInstance(m_pool, pos.m_node);
 	}
 
-	/// Destroy the list.
-	void destroy()
+	TMemoryPool& getMemoryPool()
 	{
-		Base::destroy(m_pool);
+		return m_pool;
 	}
 
 private:
-	MemoryPool m_pool;
-
-	void move(ListRaii& b)
-	{
-		Base::move(b);
-		m_pool = std::move(b.m_alloc);
-	}
+	TMemoryPool m_pool;
 };
 
 /// The classes that will use the IntrusiveList need to inherit from this one.
@@ -595,9 +522,6 @@ class IntrusiveListEnabled
 
 	template<typename, typename>
 	friend class detail::ListBase;
-
-	template<typename>
-	friend class List;
 
 	template<typename>
 	friend class IntrusiveList;
@@ -673,9 +597,8 @@ public:
 
 	/// Move.
 	IntrusiveList(IntrusiveList&& b)
-		: IntrusiveList()
+		: Base(std::move(static_cast<Base&>(b)))
 	{
-		Base::move(b);
 	}
 
 	~IntrusiveList() = default;
@@ -683,7 +606,7 @@ public:
 	/// Move.
 	IntrusiveList& operator=(IntrusiveList&& b)
 	{
-		Base::move(b);
+		static_cast<Base&>(*this) = std::move(static_cast<Base&>(b));
 		return *this;
 	}
 

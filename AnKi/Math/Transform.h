@@ -224,21 +224,22 @@ public:
 		return *this;
 	}
 
-	ANKI_ENABLE_METHOD(std::is_floating_point<T>::value) void toString(StringRaii& str) const
+	ANKI_ENABLE_METHOD(std::is_floating_point<T>::value)
+	String toString() const
 	{
-		StringRaii b(str.getMemoryPool());
-		m_origin.toString(b);
-		str.append(b);
-		str.append("\n");
+		String str;
+		String b = m_origin.toString();
+		str += b;
+		str += "\n";
 
-		b.destroy();
-		m_rotation.toString(b);
-		str.append(b);
-		str.append("\n");
+		b = m_rotation.toString();
+		str += b;
+		str += "\n";
 
-		b.destroy();
-		b.sprintf("%f", m_scale);
-		str.append(b);
+		b = String().sprintf("%f", m_scale);
+		str += b;
+
+		return str;
 	}
 	/// @}
 

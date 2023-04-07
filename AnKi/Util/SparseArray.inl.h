@@ -7,9 +7,8 @@
 
 namespace anki {
 
-template<typename T, typename TConfig>
-template<typename TMemPool>
-void SparseArray<T, TConfig>::destroy(TMemPool& pool)
+template<typename T, typename TMemoryPool, typename TConfig>
+void SparseArray<T, TMemoryPool, TConfig>::destroy()
 {
 	if(m_elements)
 	{
@@ -21,35 +20,38 @@ void SparseArray<T, TConfig>::destroy(TMemPool& pool)
 			}
 		}
 
-		pool.free(m_elements);
+		m_pool.free(m_elements);
 
 		ANKI_ASSERT(m_metadata);
-		pool.free(m_metadata);
+		m_pool.free(m_metadata);
 	}
 
 	resetMembers();
-}
-
-template<typename T, typename TConfig>
-template<typename TMemPool, typename... TArgs>
-void SparseArray<T, TConfig>::emplaceInternal(TMemPool& pool, Index idx, TArgs&&... args)
-{
-	if(m_capacity == 0 || calcLoadFactor() > getMaxLoadFactor())
-	{
-		grow(pool);
-	}
-
-	Value tmp(std::forward<TArgs>(args)...);
-	m_elementCount += insert(pool, idx, tmp);
 
 	invalidateIterators();
 }
 
-template<typename T, typename TConfig>
-template<typename TMemPool, typename... TArgs>
-typename SparseArray<T, TConfig>::Iterator SparseArray<T, TConfig>::emplace(TMemPool& pool, Index idx, TArgs&&... args)
+template<typename T, typename TMemoryPool, typename TConfig>
+template<typename... TArgs>
+void SparseArray<T, TMemoryPool, TConfig>::emplaceInternal(Index idx, TArgs&&... args)
 {
-	emplaceInternal(pool, idx, std::forward<TArgs>(args)...);
+	if(m_capacity == 0 || calcLoadFactor() > getMaxLoadFactor())
+	{
+		grow();
+	}
+
+	Value tmp(std::forward<TArgs>(args)...);
+	m_elementCount += insert(idx, tmp);
+
+	invalidateIterators();
+}
+
+template<typename T, typename TMemoryPool, typename TConfig>
+template<typename... TArgs>
+typename SparseArray<T, TMemoryPool, TConfig>::Iterator SparseArray<T, TMemoryPool, TConfig>::emplace(Index idx,
+																									  TArgs&&... args)
+{
+	emplaceInternal(idx, std::forward<TArgs>(args)...);
 
 	return Iterator(this, findInternal(idx)
 #if ANKI_EXTRA_CHECKS
@@ -59,9 +61,8 @@ typename SparseArray<T, TConfig>::Iterator SparseArray<T, TConfig>::emplace(TMem
 	);
 }
 
-template<typename T, typename TConfig>
-template<typename TMemPool>
-typename TConfig::Index SparseArray<T, TConfig>::insert(TMemPool& pool, Index idx, Value& val)
+template<typename T, typename TMemoryPool, typename TConfig>
+typename TConfig::Index SparseArray<T, TMemoryPool, TConfig>::insert(Index idx, Value& val)
 {
 	while(true)
 	{
@@ -111,24 +112,23 @@ typename TConfig::Index SparseArray<T, TConfig>::insert(TMemPool& pool, Index id
 		if(pos == endPos)
 		{
 			// Didn't found an empty place, need to grow and try again
-			grow(pool);
+			grow();
 		}
 	}
 
 	return 0;
 }
 
-template<typename T, typename TConfig>
-template<typename TMemPool>
-void SparseArray<T, TConfig>::grow(TMemPool& pool)
+template<typename T, typename TMemoryPool, typename TConfig>
+void SparseArray<T, TMemoryPool, TConfig>::grow()
 {
 	if(m_capacity == 0)
 	{
 		ANKI_ASSERT(m_elementCount == 0);
 		m_capacity = getInitialStorageSize();
-		m_elements = static_cast<Value*>(pool.allocate(m_capacity * sizeof(Value), alignof(Value)));
+		m_elements = static_cast<Value*>(m_pool.allocate(m_capacity * sizeof(Value), alignof(Value)));
 
-		m_metadata = static_cast<Metadata*>(pool.allocate(m_capacity * sizeof(Metadata), alignof(Metadata)));
+		m_metadata = static_cast<Metadata*>(m_pool.allocate(m_capacity * sizeof(Metadata), alignof(Metadata)));
 
 		memset(m_metadata, 0, m_capacity * sizeof(Metadata));
 
@@ -142,8 +142,8 @@ void SparseArray<T, TConfig>::grow(TMemPool& pool)
 	[[maybe_unused]] const Index oldElementCount = m_elementCount;
 
 	m_capacity *= 2;
-	m_elements = static_cast<Value*>(pool.allocate(m_capacity * sizeof(Value), alignof(Value)));
-	m_metadata = static_cast<Metadata*>(pool.allocate(m_capacity * sizeof(Metadata), alignof(Metadata)));
+	m_elements = static_cast<Value*>(m_pool.allocate(m_capacity * sizeof(Value), alignof(Value)));
+	m_metadata = static_cast<Metadata*>(m_pool.allocate(m_capacity * sizeof(Metadata), alignof(Metadata)));
 	memset(m_metadata, 0, m_capacity * sizeof(Metadata));
 	m_elementCount = 0;
 
@@ -170,7 +170,7 @@ void SparseArray<T, TConfig>::grow(TMemPool& pool)
 	{
 		if(oldMetadata[pos].m_alive)
 		{
-			Index c = insert(pool, oldMetadata[pos].m_idx, oldElements[pos]);
+			Index c = insert(oldMetadata[pos].m_idx, oldElements[pos]);
 			ANKI_ASSERT(c > 0);
 			m_elementCount += c;
 
@@ -184,13 +184,12 @@ void SparseArray<T, TConfig>::grow(TMemPool& pool)
 	ANKI_ASSERT(oldElementCount == m_elementCount);
 
 	// Finalize
-	pool.free(oldElements);
-	pool.free(oldMetadata);
+	m_pool.free(oldElements);
+	m_pool.free(oldMetadata);
 }
 
-template<typename T, typename TConfig>
-template<typename TMemPool>
-void SparseArray<T, TConfig>::erase(TMemPool& pool, Iterator it)
+template<typename T, typename TMemoryPool, typename TConfig>
+void SparseArray<T, TMemoryPool, TConfig>::erase(Iterator it)
 {
 	ANKI_ASSERT(it.m_array == this);
 	ANKI_ASSERT(it.m_elementIdx != getMaxNumericLimit<Index>());
@@ -240,14 +239,14 @@ void SparseArray<T, TConfig>::erase(TMemPool& pool, Iterator it)
 	// If you erased everything destroy the storage
 	if(m_elementCount == 0)
 	{
-		destroy(pool);
+		destroy();
 	}
 
 	invalidateIterators();
 }
 
-template<typename T, typename TConfig>
-void SparseArray<T, TConfig>::validate() const
+template<typename T, typename TMemoryPool, typename TConfig>
+void SparseArray<T, TMemoryPool, TConfig>::validate() const
 {
 	if(m_capacity == 0)
 	{
@@ -304,8 +303,8 @@ void SparseArray<T, TConfig>::validate() const
 	ANKI_ASSERT(m_elementCount == elementCount);
 }
 
-template<typename T, typename TConfig>
-typename TConfig::Index SparseArray<T, TConfig>::findInternal(Index idx) const
+template<typename T, typename TMemoryPool, typename TConfig>
+typename TConfig::Index SparseArray<T, TMemoryPool, TConfig>::findInternal(Index idx) const
 {
 	if(m_elementCount == 0) [[unlikely]]
 	{
@@ -328,34 +327,38 @@ typename TConfig::Index SparseArray<T, TConfig>::findInternal(Index idx) const
 	return getMaxNumericLimit<Index>();
 }
 
-template<typename T, typename TConfig>
-template<typename TMemPool>
-void SparseArray<T, TConfig>::clone(TMemPool& pool, SparseArray& b) const
+template<typename T, typename TMemoryPool, typename TConfig>
+SparseArray<T, TMemoryPool, TConfig>& SparseArray<T, TMemoryPool, TConfig>::operator=(const SparseArray& b)
 {
-	ANKI_ASSERT(b.m_elements == nullptr && b.m_metadata == nullptr);
-	if(m_capacity == 0)
+	destroy();
+
+	m_pool = b.m_pool;
+
+	if(b.m_capacity == 0)
 	{
-		return;
+		return *this;
 	}
 
 	// Allocate memory
-	b.m_elements = static_cast<Value*>(pool.allocate(m_capacity * sizeof(Value), alignof(Value)));
-	b.m_metadata = static_cast<Metadata*>(pool.allocate(m_capacity * sizeof(Metadata), alignof(Metadata)));
-	memcpy(b.m_metadata, m_metadata, m_capacity * sizeof(Metadata));
+	m_elements = static_cast<Value*>(m_pool.allocate(b.m_capacity * sizeof(Value), alignof(Value)));
+	m_metadata = static_cast<Metadata*>(m_pool.allocate(b.m_capacity * sizeof(Metadata), alignof(Metadata)));
+	memcpy(m_metadata, b.m_metadata, b.m_capacity * sizeof(Metadata));
 
-	for(U i = 0; i < m_capacity; ++i)
+	for(U i = 0; i < b.m_capacity; ++i)
 	{
-		if(m_metadata[i].m_alive)
+		if(b.m_metadata[i].m_alive)
 		{
-			::new(&b.m_elements[i]) Value(m_elements[i]);
+			::new(&m_elements[i]) Value(b.m_elements[i]);
 		}
 	}
 
 	// Set the rest
-	b.m_elementCount = m_elementCount;
-	b.m_capacity = m_capacity;
-	b.m_config = m_config;
-	b.invalidateIterators();
+	m_elementCount = b.m_elementCount;
+	m_capacity = b.m_capacity;
+	m_config = b.m_config;
+	invalidateIterators();
+
+	return *this;
 }
 
 } // end namespace anki

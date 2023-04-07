@@ -65,7 +65,7 @@ private:
 };
 
 template<typename T>
-alignas(alignof(T)) U8 MakeSingleton<T>::m_global[sizeof(T)];
+alignas(ANKI_SAFE_ALIGNMENT) U8 MakeSingleton<T>::m_global[sizeof(T)];
 
 /// If class inherits that it will become a singleton.
 template<typename T>

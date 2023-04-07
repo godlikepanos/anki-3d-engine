@@ -49,7 +49,7 @@ Error MicroSwapchain::initInternal()
 						 "swapchain targeting the surface");
 			return Error::kFunctionFailed;
 		}
-		m_factory->m_gr->getNativeWindowSize(surfaceWidth, surfaceHeight);
+		getGrManagerImpl().getNativeWindowSize(surfaceWidth, surfaceHeight);
 #else
 		if(surfaceProperties.currentExtent.width == kMaxU32 || surfaceProperties.currentExtent.height == kMaxU32)
 		{
@@ -70,7 +70,7 @@ Error MicroSwapchain::initInternal()
 			vkGetPhysicalDeviceSurfaceFormatsKHR(pdev, getGrManagerImpl().getSurface(), &formatCount, nullptr));
 
 		GrDynamicArray<VkSurfaceFormatKHR> formats;
-		formats.create(formatCount);
+		formats.resize(formatCount);
 		ANKI_VK_CHECK(
 			vkGetPhysicalDeviceSurfaceFormatsKHR(pdev, getGrManagerImpl().getSurface(), &formatCount, &formats[0]));
 
@@ -220,7 +220,7 @@ Error MicroSwapchain::initInternal()
 			ANKI_VK_LOGI("Requested a swapchain with %u images but got one with %u", kMaxFramesInFlight, count);
 		}
 
-		m_textures.create(count);
+		m_textures.resize(count);
 
 		ANKI_VK_LOGI("Created a swapchain. Image count: %u, present mode: %u, size: %ux%u, vsync: %u", count,
 					 presentMode, surfaceWidth, surfaceHeight, U32(m_factory->m_vsync));

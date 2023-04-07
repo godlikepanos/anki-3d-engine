@@ -198,7 +198,7 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 	{
 		if(counts[set])
 		{
-			m_bindings[set].create(counts[set]);
+			m_bindings[set].resize(counts[set]);
 			memcpy(&m_bindings[set][0], &descriptors[set][0], counts[set] * sizeof(DescriptorBinding));
 		}
 	}

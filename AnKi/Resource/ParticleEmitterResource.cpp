@@ -26,7 +26,7 @@ Error getXmlVal(const XmlElement& el, const CString& tag, Vec3& out, Bool& found
 
 Error ParticleEmitterResource::load(const ResourceFilename& filename, Bool async)
 {
-	XmlDocument doc(&ResourceMemoryPool::getSingleton());
+	ResourceXmlDocument doc;
 	ANKI_CHECK(openFileParseXml(filename, doc));
 	XmlElement rootEl; // Root element
 	ANKI_CHECK(doc.getChildElement("particleEmitter", rootEl));

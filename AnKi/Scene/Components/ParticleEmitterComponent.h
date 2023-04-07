@@ -36,7 +36,7 @@ public:
 		return m_particleEmitterResource.isCreated();
 	}
 
-	void setupRenderableQueueElements(RenderingTechnique technique, StackMemoryPool& tmpPool,
+	void setupRenderableQueueElements(RenderingTechnique technique,
 									  WeakArray<RenderableQueueElement>& outRenderables) const;
 
 private:

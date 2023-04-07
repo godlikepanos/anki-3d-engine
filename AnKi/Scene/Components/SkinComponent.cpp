@@ -15,7 +15,6 @@ namespace anki {
 
 SkinComponent::SkinComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
-	, m_node(node)
 {
 }
 
@@ -46,9 +45,9 @@ void SkinComponent::loadSkeletonResource(CString fname)
 
 	// Create
 	const U32 boneCount = m_skeleton->getBones().getSize();
-	m_boneTrfs[0].create(boneCount, Mat3x4::getIdentity());
-	m_boneTrfs[1].create(boneCount, Mat3x4::getIdentity());
-	m_animationTrfs.create(boneCount, {Vec3(0.0f), Quat::getIdentity(), 1.0f});
+	m_boneTrfs[0].resize(boneCount, Mat3x4::getIdentity());
+	m_boneTrfs[1].resize(boneCount, Mat3x4::getIdentity());
+	m_animationTrfs.resize(boneCount, Trf{Vec3(0.0f), Quat::getIdentity(), 1.0f});
 
 	GpuSceneMemoryPool::getSingleton().allocate(sizeof(Mat4) * boneCount * 2, 4, m_boneTransformsGpuSceneOffset);
 }
@@ -75,8 +74,6 @@ void SkinComponent::playAnimation(U32 track, AnimationResourcePtr anim, const An
 
 Error SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	ANKI_ASSERT(info.m_node == m_node);
-
 	updated = false;
 	if(!m_skeleton.isCreated())
 	{
@@ -194,7 +191,8 @@ Error SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		// Update the GPU scene
 		const U32 boneCount = m_skeleton->getBones().getSize();
-		DynamicArrayRaii<Mat3x4> trfs(boneCount * 2, info.m_framePool);
+		DynamicArray<Mat3x4, MemoryPoolPtrWrapper<StackMemoryPool>> trfs(info.m_framePool);
+		trfs.resize(boneCount * 2);
 		for(U32 i = 0; i < boneCount; ++i)
 		{
 			trfs[i * 2 + 0] = getBoneTransforms()[i];

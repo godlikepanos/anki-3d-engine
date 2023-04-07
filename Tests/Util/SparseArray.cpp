@@ -118,54 +118,52 @@ public:
 
 ANKI_TEST(Util, SparseArray)
 {
-	HeapMemoryPool pool(allocAligned, nullptr);
-
 	// Set same key
 	{
 		SparseArray<PtrSize> arr;
 
-		arr.emplace(pool, 1000, 123);
-		arr.emplace(pool, 1000, 124);
+		arr.emplace(1000, 123);
+		arr.emplace(1000, 124);
 		auto it = arr.find(1000);
 		ANKI_TEST_EXPECT_EQ(*it, 124);
-		arr.erase(pool, it);
+		arr.erase(it);
 	}
 
 	// Check destroy and grow
 	{
-		SparseArray<SAFoo, Config<U32>> arr(Config<U32>{64, 2, 0.8f});
+		SparseArray<SAFoo, SingletonMemoryPoolWrapper<DefaultMemoryPool>, Config<U32>> arr(Config<U32>{64, 2, 0.8f});
 
-		arr.emplace(pool, 64 * 1, 123);
-		arr.emplace(pool, 64 * 2, 124);
-		arr.emplace(pool, 64 * 3, 125);
+		arr.emplace(64 * 1, 123);
+		arr.emplace(64 * 2, 124);
+		arr.emplace(64 * 3, 125);
 
 		ANKI_TEST_EXPECT_EQ(arr.find(64 * 1)->m_x, 123);
 		ANKI_TEST_EXPECT_EQ(arr.find(64 * 2)->m_x, 124);
 		ANKI_TEST_EXPECT_EQ(arr.find(64 * 3)->m_x, 125);
 
-		SparseArray<SAFoo, Config<U32>> arr2(std::move(arr));
+		SparseArray<SAFoo, SingletonMemoryPoolWrapper<DefaultMemoryPool>, Config<U32>> arr2(std::move(arr));
 
-		arr2.destroy(pool);
+		arr2.destroy();
 		SAFoo::checkCalls();
 	}
 
 	// Do complex insertions
 	{
-		SparseArray<SAFoo, Config<U32>> arr(Config<U32>{64, 3, 0.8f});
+		SparseArray<SAFoo, SingletonMemoryPoolWrapper<DefaultMemoryPool>, Config<U32>> arr(Config<U32>{64, 3, 0.8f});
 
-		arr.emplace(pool, 64u * 0 - 1, 1);
+		arr.emplace(64u * 0 - 1, 1);
 		// Linear probing to 0
-		arr.emplace(pool, 64 * 1 - 1, 2);
+		arr.emplace(64 * 1 - 1, 2);
 		// Linear probing to 1
-		arr.emplace(pool, 64 * 2 - 1, 3);
+		arr.emplace(64 * 2 - 1, 3);
 		// Linear probing to 2
-		arr.emplace(pool, 1, 3);
+		arr.emplace(1, 3);
 		// Swap
-		arr.emplace(pool, 64 * 1, 3);
+		arr.emplace(64 * 1, 3);
 
 		ANKI_TEST_EXPECT_EQ(arr.getSize(), 5);
 
-		arr.destroy(pool);
+		arr.destroy();
 		SAFoo::checkCalls();
 	}
 
@@ -188,7 +186,7 @@ ANKI_TEST(Util, SparseArray)
 				{
 					// Not found
 					ANKI_TEST_EXPECT_EQ(arr.find(num), arr.getEnd());
-					arr.emplace(pool, num, num);
+					arr.emplace(num, num);
 					ANKI_TEST_EXPECT_EQ(arr.getSize(), i + 1);
 
 					numbers.push_back(num);
@@ -217,7 +215,7 @@ ANKI_TEST(Util, SparseArray)
 			auto it = arr.find(num);
 			ANKI_TEST_EXPECT_NEQ(it, arr.getEnd());
 			ANKI_TEST_EXPECT_EQ(it->m_x, num);
-			arr.erase(pool, it);
+			arr.erase(it);
 
 			arr.validate();
 		}
@@ -226,7 +224,7 @@ ANKI_TEST(Util, SparseArray)
 	// Fuzzy test #2: Do random insertions and removals
 	{
 		constexpr U kMax = 10000;
-		SparseArray<SAFoo, Config<U64>> arr(Config<U64>{64, 8, 0.8f});
+		SparseArray<SAFoo, SingletonMemoryPoolWrapper<DefaultMemoryPool>, Config<U64>> arr(Config<U64>{64, 8, 0.8f});
 		using StlMap = std::unordered_map<int, int, std::hash<int>, std::equal_to<int>>;
 		StlMap map(10, std::hash<int>(), std::equal_to<int>());
 
@@ -243,7 +241,7 @@ ANKI_TEST(Util, SparseArray)
 					continue;
 				}
 
-				arr.emplace(pool, idx, idx + 1);
+				arr.emplace(idx, idx + 1);
 				map[idx] = idx + 1;
 
 				arr.validate();
@@ -260,7 +258,7 @@ ANKI_TEST(Util, SparseArray)
 				ANKI_TEST_EXPECT_EQ(it->second, it2->m_x);
 
 				map.erase(it);
-				arr.erase(pool, it2);
+				arr.erase(it2);
 
 				ANKI_TEST_EXPECT_EQ(arr.find(key), arr.getEnd());
 
@@ -286,7 +284,7 @@ ANKI_TEST(Util, SparseArray)
 			}
 		}
 
-		arr.destroy(pool);
+		arr.destroy();
 
 		// Check what the SparseArray have called
 		SAFoo::checkCalls();
@@ -350,7 +348,7 @@ ANKI_TEST(Util, SparseArrayBench)
 		std::unordered_map<int, int, std::hash<int>, std::equal_to<int>, HeapAllocator<std::pair<const int, int>>>;
 	StlMap stdMap(10, std::hash<int>(), std::equal_to<int>(), allocStl);
 
-	using AkMap = SparseArray<int, Config<U32>>;
+	using AkMap = SparseArray<int, SingletonMemoryPoolWrapper<DefaultMemoryPool>, Config<U32>>;
 	AkMap akMap(Config<U32>{256, U32(log2(256.0f)), 0.9f});
 
 	HighRezTimer timer;
@@ -383,7 +381,7 @@ ANKI_TEST(Util, SparseArrayBench)
 		timer.start();
 		for(U i = 0; i < kCount; ++i)
 		{
-			akMap.emplace(pool, vals[i], vals[i]);
+			akMap.emplace(vals[i], vals[i]);
 		}
 		timer.stop();
 		Second akTime = timer.getElapsedTime();
@@ -448,7 +446,7 @@ ANKI_TEST(Util, SparseArrayBench)
 			auto it = akMap.find(vals[i]);
 
 			timer.start();
-			akMap.erase(pool, it);
+			akMap.erase(it);
 			timer.stop();
 			akTime += timer.getElapsedTime();
 		}
@@ -468,5 +466,5 @@ ANKI_TEST(Util, SparseArrayBench)
 		ANKI_TEST_LOGI("Deleting bench: STL %f AnKi %f | %f%%", stlTime, akTime, stlTime / akTime * 100.0);
 	}
 
-	akMap.destroy(pool);
+	akMap.destroy();
 }

@@ -12,7 +12,7 @@ namespace anki {
 
 Error SkeletonResource::load(const ResourceFilename& filename, [[maybe_unused]] Bool async)
 {
-	XmlDocument doc(&ResourceMemoryPool::getSingleton());
+	ResourceXmlDocument doc;
 	ANKI_CHECK(openFileParseXml(filename, doc));
 
 	XmlElement rootEl;
@@ -28,7 +28,7 @@ Error SkeletonResource::load(const ResourceFilename& filename, [[maybe_unused]] 
 	ANKI_CHECK(boneEl.getSiblingElementsCount(boneCount));
 	++boneCount;
 
-	m_bones.create(boneCount);
+	m_bones.resize(boneCount);
 
 	ResourceStringList boneParents;
 
@@ -42,7 +42,7 @@ Error SkeletonResource::load(const ResourceFilename& filename, [[maybe_unused]] 
 		// name
 		CString name;
 		ANKI_CHECK(boneEl.getAttributeText("name", name));
-		bone.m_name.create(name);
+		bone.m_name = name;
 
 		// transform
 		ANKI_CHECK(boneEl.getAttributeNumbers("transform", bone.m_transform));

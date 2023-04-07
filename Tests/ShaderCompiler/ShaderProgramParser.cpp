@@ -8,14 +8,12 @@
 
 ANKI_TEST(ShaderCompiler, ShaderCompilerParser)
 {
-	HeapMemoryPool pool(allocAligned, nullptr);
-
 	class FilesystemInterface : public ShaderProgramFilesystemInterface
 	{
 	public:
 		U32 count = 0;
 
-		Error readAllText([[maybe_unused]] CString filename, StringRaii& txt) final
+		Error readAllText([[maybe_unused]] CString filename, String& txt) final
 		{
 			if(count == 0)
 			{
@@ -43,7 +41,7 @@ ANKI_TEST(ShaderCompiler, ShaderCompilerParser)
 		}
 	} interface;
 
-	ShaderProgramParser parser("filename0", &interface, &pool, ShaderCompilerOptions());
+	ShaderProgramParser parser("filename0", &interface, ShaderCompilerOptions());
 	ANKI_TEST_EXPECT_NO_ERR(parser.parse());
 
 	// Test a variant

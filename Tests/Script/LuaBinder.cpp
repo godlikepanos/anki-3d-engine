@@ -42,8 +42,6 @@ v3:setZ(0.1)
 
 ANKI_TEST(Script, LuaBinderThreads)
 {
-	ScriptManager& sm = ScriptManager::allocateSingleton(allocAligned, nullptr);
-
 	ScriptEnvironment env;
 
 	static const char* script = R"(
@@ -69,8 +67,6 @@ myFunc()
 
 ANKI_TEST(Script, LuaBinderSerialize)
 {
-	ScriptManager& sm = ScriptManager::allocateSingleton(allocAligned, nullptr);
-
 	ScriptEnvironment env;
 
 	static const char* script = R"(

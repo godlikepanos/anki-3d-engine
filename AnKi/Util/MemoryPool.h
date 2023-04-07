@@ -346,7 +346,6 @@ public:
 	MemoryPoolPtrWrapper(TMemPool* pool)
 		: m_pool(pool)
 	{
-		ANKI_ASSERT(pool);
 	}
 
 	TMemPool* operator&()

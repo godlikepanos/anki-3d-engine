@@ -21,6 +21,30 @@ namespace anki {
 
 constexpr U32 kMaxSpatialsPerVisTest = 48; ///< Num of spatials to test in a single ThreadHive task.
 
+class FrameMemoryPoolWrapper
+{
+public:
+	StackMemoryPool* operator&()
+	{
+		return &SceneGraph::getSingleton().getFrameMemoryPool();
+	}
+
+	operator StackMemoryPool&()
+	{
+		return SceneGraph::getSingleton().getFrameMemoryPool();
+	}
+
+	void* allocate(PtrSize size, PtrSize alignmentBytes)
+	{
+		return SceneGraph::getSingleton().getFrameMemoryPool().allocate(size, alignmentBytes);
+	}
+
+	void free(void* ptr)
+	{
+		SceneGraph::getSingleton().getFrameMemoryPool().free(ptr);
+	}
+};
+
 /// Sort objects on distance
 template<typename T>
 class DistanceSortFunctor
@@ -61,14 +85,15 @@ public:
 	U32 m_elementCount = 0;
 	U32 m_elementStorage = 0;
 
-	T* newElement(StackMemoryPool& pool)
+	T* newElement()
 	{
 		if(m_elementCount + 1 > m_elementStorage) [[unlikely]]
 		{
 			m_elementStorage = max(kInitialStorage, m_elementStorage * kStorageGrowRate);
 
 			const T* oldElements = m_elements;
-			m_elements = static_cast<T*>(pool.allocate(m_elementStorage * sizeof(T), alignof(T)));
+			m_elements = static_cast<T*>(
+				SceneGraph::getSingleton().getFrameMemoryPool().allocate(m_elementStorage * sizeof(T), alignof(T)));
 
 			if(oldElements)
 			{
@@ -142,10 +167,9 @@ public:
 class VisibilityContext
 {
 public:
-	SceneGraph* m_scene = nullptr;
 	Atomic<U32> m_testsCount = {0};
 
-	List<const Frustum*> m_testedFrustums;
+	List<const Frustum*, FrameMemoryPoolWrapper> m_testedFrustums;
 	Mutex m_testedFrustumsMtx;
 
 	void submitNewWork(const VisibilityFrustum& frustum, const VisibilityFrustum& primaryFrustum, RenderQueue& result,
@@ -164,11 +188,11 @@ public:
 
 	// S/W rasterizer members
 	SoftwareRasterizer* m_r = nullptr;
-	DynamicArray<Vec3> m_verts;
+	DynamicArray<Vec3, FrameMemoryPoolWrapper> m_verts;
 	Atomic<U32> m_rasterizedVertCount = {0}; ///< That will be used by the RasterizeTrianglesTask.
 
 	// Visibility test members
-	DynamicArray<RenderQueueView> m_queueViews; ///< Sub result. Will be combined later.
+	DynamicArray<RenderQueueView, FrameMemoryPoolWrapper> m_queueViews; ///< Sub result. Will be combined later.
 	ThreadHiveSemaphore* m_visTestsSignalSem = nullptr;
 
 	// Gather results members
@@ -263,7 +287,7 @@ public:
 
 private:
 	template<typename T>
-	static void combineQueueElements(StackMemoryPool& pool, WeakArray<TRenderQueueElementStorage<T>> subStorages,
+	static void combineQueueElements(WeakArray<TRenderQueueElementStorage<T>> subStorages,
 									 WeakArray<TRenderQueueElementStorage<U32>>* ptrSubStorage, WeakArray<T>& combined,
 									 WeakArray<T*>* ptrCombined);
 };

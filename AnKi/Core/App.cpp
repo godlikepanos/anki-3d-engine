@@ -69,42 +69,45 @@ void* App::MemStats::allocCallback(void* userData, void* ptr, PtrSize size, [[ma
 		const PtrSize newSize = sizeof(Header) + size;
 
 		// Allocate
-		MemStats* self = static_cast<MemStats*>(userData);
+		App* self = static_cast<App*>(userData);
 		Header* allocation = static_cast<Header*>(
-			self->m_originalAllocCallback(self->m_originalUserData, nullptr, newSize, newAlignment));
+			self->m_originalAllocCallback(self->m_originalAllocUserData, nullptr, newSize, newAlignment));
 		allocation->m_allocatedSize = size;
 		++allocation;
 		out = static_cast<void*>(allocation);
 
 		// Update stats
-		self->m_allocatedMem.fetchAdd(size);
-		self->m_allocCount.fetchAdd(1);
+		self->m_memStats.m_allocatedMem.fetchAdd(size);
+		self->m_memStats.m_allocCount.fetchAdd(1);
 	}
 	else
 	{
 		// Need to free
 
-		MemStats* self = static_cast<MemStats*>(userData);
+		App* self = static_cast<App*>(userData);
 
 		Header* allocation = static_cast<Header*>(ptr);
 		--allocation;
 		ANKI_ASSERT(allocation->m_allocatedSize > 0);
 
 		// Update stats
-		self->m_freeCount.fetchAdd(1);
-		self->m_allocatedMem.fetchSub(allocation->m_allocatedSize);
+		self->m_memStats.m_freeCount.fetchAdd(1);
+		self->m_memStats.m_allocatedMem.fetchSub(allocation->m_allocatedSize);
 
 		// Free
-		self->m_originalAllocCallback(self->m_originalUserData, allocation, 0, 0);
+		self->m_originalAllocCallback(self->m_originalAllocUserData, allocation, 0, 0);
 	}
 
 	return out;
 }
 
-App::App()
+App::App(AllocAlignedCallback allocCb, void* allocCbUserData)
 {
-	// Config is special
-	ConfigSet::allocateSingleton(allocAligned, nullptr);
+	m_originalAllocCallback = allocCb;
+	m_originalAllocUserData = allocCbUserData;
+
+	// Config set is a bit special so init it ASAP
+	ConfigSet::allocateSingleton(allocCb, allocCbUserData);
 }
 
 App::~App()
@@ -148,9 +151,9 @@ void App::cleanup()
 	DefaultMemoryPool::freeSingleton();
 }
 
-Error App::init(AllocAlignedCallback allocCb, void* allocCbUserData)
+Error App::init()
 {
-	const Error err = initInternal(allocCb, allocCbUserData);
+	const Error err = initInternal();
 	if(err)
 	{
 		ANKI_CORE_LOGE("App initialization failed. Shutting down");
@@ -160,23 +163,17 @@ Error App::init(AllocAlignedCallback allocCb, void* allocCbUserData)
 	return err;
 }
 
-Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
+Error App::initInternal()
 {
 	Logger::getSingleton().enableVerbosity(ConfigSet::getSingleton().getCoreVerboseLog());
 
 	setSignalHandlers();
 
+	AllocAlignedCallback allocCb = m_originalAllocCallback;
+	void* allocCbUserData = m_originalAllocUserData;
 	initMemoryCallbacks(allocCb, allocCbUserData);
 
-	if(DefaultMemoryPool::isAllocated())
-	{
-		// Re-cerate it with the new callbacks
-
-		ANKI_ASSERT(DefaultMemoryPool::getSingleton().getAllocationCount() == 0);
-		DefaultMemoryPool::freeSingleton();
-		DefaultMemoryPool::allocateSingleton(allocCb, allocCbUserData);
-	}
-
+	DefaultMemoryPool::allocateSingleton(allocCb, allocCbUserData);
 	CoreMemoryPool::allocateSingleton(allocCb, allocCbUserData);
 
 	ANKI_CHECK(initDirs());
@@ -262,8 +259,7 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	// ThreadPool
 	//
 	const Bool pinThreads = !ANKI_OS_ANDROID;
-	CoreThreadHive::allocateSingleton(ConfigSet::getSingleton().getCoreJobThreadCount(),
-									  &CoreMemoryPool::getSingleton(), pinThreads);
+	CoreThreadHive::allocateSingleton(ConfigSet::getSingleton().getCoreJobThreadCount(), pinThreads);
 
 	//
 	// Graphics API
@@ -301,13 +297,13 @@ Error App::initInternal(AllocAlignedCallback allocCb, void* allocCbUserData)
 	//
 #if !ANKI_OS_ANDROID
 	// Add the location of the executable where the shaders are supposed to be
-	StringRaii executableFname(&CoreMemoryPool::getSingleton());
+	String executableFname;
 	ANKI_CHECK(getApplicationPath(executableFname));
 	ANKI_CORE_LOGI("Executable path is: %s", executableFname.cstr());
-	StringRaii shadersPath(&CoreMemoryPool::getSingleton());
+	String shadersPath;
 	getParentFilepath(executableFname, shadersPath);
-	shadersPath.append(":");
-	shadersPath.append(ConfigSet::getSingleton().getRsrcDataPaths());
+	shadersPath += ":";
+	shadersPath += ConfigSet::getSingleton().getRsrcDataPaths();
 	ConfigSet::getSingleton().setRsrcDataPaths(shadersPath);
 #endif
 
@@ -358,7 +354,7 @@ Error App::initDirs()
 {
 	// Settings path
 #if !ANKI_OS_ANDROID
-	StringRaii home(&CoreMemoryPool::getSingleton());
+	String home;
 	ANKI_CHECK(getHomeDirectory(home));
 
 	m_settingsDir.sprintf("%s/.anki", &home[0]);
@@ -383,7 +379,7 @@ Error App::initDirs()
 	if(ConfigSet::getSingleton().getCoreClearCaches() && cacheDirExists)
 	{
 		ANKI_CORE_LOGI("Will delete the cache dir and start fresh: %s", m_cacheDir.cstr());
-		ANKI_CHECK(removeDirectory(m_cacheDir.toCString(), CoreMemoryPool::getSingleton()));
+		ANKI_CHECK(removeDirectory(m_cacheDir.toCString()));
 		ANKI_CHECK(createDirectory(m_cacheDir.toCString()));
 	}
 	else if(!cacheDirExists)
@@ -596,7 +592,7 @@ void App::injectUiElements(CoreDynamicArray<UiQueueElement>& newUiElementArr, Re
 	if(ConfigSet::getSingleton().getCoreDisplayStats() > 0 || m_consoleEnabled)
 	{
 		const U32 extraElements = (ConfigSet::getSingleton().getCoreDisplayStats() > 0) + (m_consoleEnabled != 0);
-		newUiElementArr.create(originalCount + extraElements);
+		newUiElementArr.resize(originalCount + extraElements);
 
 		if(originalCount > 0)
 		{
@@ -630,11 +626,8 @@ void App::initMemoryCallbacks(AllocAlignedCallback& allocCb, void*& allocCbUserD
 {
 	if(ConfigSet::getSingleton().getCoreDisplayStats() > 1)
 	{
-		m_memStats.m_originalAllocCallback = allocCb;
-		m_memStats.m_originalUserData = allocCbUserData;
-
 		allocCb = MemStats::allocCallback;
-		allocCbUserData = &m_memStats;
+		allocCbUserData = this;
 	}
 	else
 	{
@@ -674,8 +667,7 @@ void App::setSignalHandlers()
 
 		U32 count = 0;
 		printf("Backtrace:\n");
-		HeapMemoryPool pool(allocAligned, nullptr);
-		backtrace(pool, [&count](CString symbol) {
+		backtrace([&count](CString symbol) {
 			printf("%.2u: %s\n", count++, symbol.cstr());
 		});
 

@@ -77,7 +77,7 @@ private:
 		~ContiguousArrayAllocator()
 		{
 			ANKI_ASSERT(m_nextSlotIndex == 0 && "Forgot to deallocate");
-			for([[maybe_unused]] const DynamicArray<Index>& arr : m_garbage)
+			for([[maybe_unused]] const SceneDynamicArray<Index>& arr : m_garbage)
 			{
 				ANKI_ASSERT(arr.getSize() == 0);
 			}

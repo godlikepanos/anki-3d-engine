@@ -1453,8 +1453,9 @@ public:
 	}
 
 	ANKI_ENABLE_METHOD(std::is_floating_point<T>::value)
-	void toString(StringRaii& str) const
+	String toString() const
 	{
+		String str;
 		for(U j = 0; j < kTRowCount; ++j)
 		{
 			for(U i = 0; i < kTColumnCount; ++i)
@@ -1472,9 +1473,10 @@ public:
 				{
 					fmt = "%f ";
 				}
-				str.append(StringRaii(str.getMemoryPool()).sprintf(fmt, m_arr2[j][i]));
+				str += String().sprintf(fmt, m_arr2[j][i]);
 			}
 		}
+		return str;
 	}
 	/// @}
 

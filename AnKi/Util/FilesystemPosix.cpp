@@ -134,7 +134,7 @@ Error walkDirectoryTreeInternal(const CString& dir, const Function<Error(const C
 	return err;
 }
 
-static Error removeDirectoryInternal(const CString& dirname, BaseMemoryPool& pool)
+static Error removeDirectoryInternal(const CString& dirname)
 {
 	DIR* dir;
 	struct dirent* entry;
@@ -150,12 +150,12 @@ static Error removeDirectoryInternal(const CString& dirname, BaseMemoryPool& poo
 	{
 		if(strcmp(entry->d_name, ".") && strcmp(entry->d_name, ".."))
 		{
-			StringRaii path(&pool);
+			String path;
 			path.sprintf("%s/%s", dirname.cstr(), entry->d_name);
 
 			if(entry->d_type == DT_DIR)
 			{
-				Error err = removeDirectoryInternal(path.toCString(), pool);
+				Error err = removeDirectoryInternal(path.toCString());
 				if(err)
 				{
 					return err;
@@ -174,9 +174,9 @@ static Error removeDirectoryInternal(const CString& dirname, BaseMemoryPool& poo
 	return Error::kNone;
 }
 
-Error removeDirectory(const CString& dirname, BaseMemoryPool& pool)
+Error removeDirectory(const CString& dirname)
 {
-	return removeDirectoryInternal(dirname, pool);
+	return removeDirectoryInternal(dirname);
 }
 
 Error createDirectory(const CString& dir)
@@ -196,7 +196,7 @@ Error createDirectory(const CString& dir)
 	return err;
 }
 
-Error getHomeDirectory(StringRaii& out)
+Error getHomeDirectory(String& out)
 {
 #if ANKI_OS_LINUX
 	const char* home = getenv("HOME");
@@ -206,20 +206,20 @@ Error getHomeDirectory(StringRaii& out)
 		return Error::kFunctionFailed;
 	}
 
-	out.create(home);
+	out = home;
 #else
-	out.create(g_androidApp->activity->internalDataPath);
+	out = g_androidApp->activity->internalDataPath;
 #endif
 
 	return Error::kNone;
 }
 
-Error getTempDirectory(StringRaii& out)
+Error getTempDirectory(String& out)
 {
 #if ANKI_OS_LINUX
-	out.create("/tmp/");
+	out = "/tmp/";
 #else
-	out.create(g_androidApp->activity->internalDataPath);
+	out = g_androidApp->activity->internalDataPath;
 #endif
 	return Error::kNone;
 }
@@ -245,13 +245,14 @@ Error getFileModificationTime(CString filename, U32& year, U32& month, U32& day,
 	return Error::kNone;
 }
 
-Error getApplicationPath(StringRaii& out)
+Error getApplicationPath(String& out)
 {
 #if ANKI_OS_ANDROID
 	ANKI_ASSERT(0 && "getApplicationPath() doesn't work on Android");
 	(void)out;
 #else
-	DynamicArrayRaii<Char> buff(&out.getMemoryPool(), 1024);
+	DynamicArray<Char> buff;
+	buff.resize(1024);
 
 	const ssize_t result = readlink("/proc/self/exe", &buff[0], buff.getSize());
 	if(result < 0)
@@ -260,8 +261,7 @@ Error getApplicationPath(StringRaii& out)
 		return Error::kFunctionFailed;
 	}
 
-	out.destroy();
-	out.create('0', result);
+	out = String('0', result);
 
 	memcpy(&out[0], &buff[0], result);
 #endif

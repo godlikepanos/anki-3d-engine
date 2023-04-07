@@ -134,6 +134,10 @@ public:
 	U32 m_dstDwordOffset;
 };
 
+GpuSceneMicroPatcher::GpuSceneMicroPatcher()
+{
+}
+
 GpuSceneMicroPatcher::~GpuSceneMicroPatcher()
 {
 	static_assert(sizeof(PatchHeader) == 8);
@@ -165,11 +169,18 @@ void GpuSceneMicroPatcher::newCopy(StackMemoryPool& frameCpuPool, PtrSize gpuSce
 
 	// Break the data into multiple copies
 	LockGuard lock(m_mtx);
+
+	if(m_crntFramePatchHeaders.getSize() == 0)
+	{
+		m_crntFramePatchHeaders = DynamicArray<PatchHeader, MemoryPoolPtrWrapper<StackMemoryPool>>(&frameCpuPool);
+		m_crntFramePatchData = DynamicArray<U32, MemoryPoolPtrWrapper<StackMemoryPool>>(&frameCpuPool);
+	}
+
 	while(patchIt < patchEnd)
 	{
 		const U32 patchDwords = min(kDwordsPerPatch, U32(patchEnd - patchIt));
 
-		PatchHeader& header = *m_crntFramePatchHeaders.emplaceBack(frameCpuPool);
+		PatchHeader& header = *m_crntFramePatchHeaders.emplaceBack();
 		ANKI_ASSERT(((patchDwords - 1) & 0b111111) == (patchDwords - 1));
 		header.m_dwordCountAndSrcDwordOffsetPack = patchDwords - 1;
 		header.m_dwordCountAndSrcDwordOffsetPack <<= 26;
@@ -178,7 +189,7 @@ void GpuSceneMicroPatcher::newCopy(StackMemoryPool& frameCpuPool, PtrSize gpuSce
 		header.m_dstDwordOffset = gpuSceneDestDwordOffset;
 
 		const U32 srcOffset = m_crntFramePatchData.getSize();
-		m_crntFramePatchData.resize(frameCpuPool, srcOffset + patchDwords);
+		m_crntFramePatchData.resize(srcOffset + patchDwords);
 		memcpy(&m_crntFramePatchData[srcOffset], patchIt, patchDwords * 4);
 
 		patchIt += patchDwords;

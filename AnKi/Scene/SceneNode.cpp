@@ -31,8 +31,6 @@ SceneNode::~SceneNode()
 
 		SceneMemoryPool::getSingleton().free(comp);
 	}
-
-	Base::destroy(SceneMemoryPool::getSingleton());
 }
 
 void SceneNode::setMarkedForDeletion()

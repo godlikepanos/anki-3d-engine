@@ -85,20 +85,16 @@ public:
 	/// Read data from the file
 	Error read(void* buff, PtrSize size);
 
-	/// Read all the contents of a text file
-	/// If the file is not rewined it will probably fail
-	Error readAllText(BaseMemoryPool& pool, String& out);
-
 	/// Read all the contents of a text file. If the file is not rewined it will probably fail.
-	template<typename TMemPool = MemoryPoolPtrWrapper<BaseMemoryPool>> // TODO glob: maybe change that
-	Error readAllText(BaseStringRaii<TMemPool>& out)
+	template<typename TMemPool>
+	Error readAllText(BaseString<TMemPool>& out)
 	{
 		Error err = Error::kNone;
 		PtrSize size = getSize();
 
 		if(size != 0)
 		{
-			out.create('?', size);
+			out = BaseString<TMemPool>('?', size, out.getMemoryPool());
 			err = read(&out[0], size);
 		}
 		else

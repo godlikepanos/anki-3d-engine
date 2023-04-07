@@ -26,7 +26,7 @@ Bool directoryExists(const CString& filename)
 	return dwAttrib != INVALID_FILE_ATTRIBUTES && (dwAttrib & FILE_ATTRIBUTE_DIRECTORY);
 }
 
-Error removeDirectory(const CString& dirname, [[maybe_unused]] BaseMemoryPool& pool)
+Error removeDirectory(const CString& dirname)
 {
 	// For some reason dirname should be double null terminated
 	if(dirname.getLength() > MAX_PATH - 2)
@@ -65,7 +65,7 @@ Error createDirectory(const CString& dir)
 	return err;
 }
 
-Error getHomeDirectory(StringRaii& out)
+Error getHomeDirectory(String& out)
 {
 	char path[MAX_PATH];
 	if(SHGetFolderPathA(NULL, CSIDL_PROFILE, nullptr, 0, path) != S_OK)
@@ -74,11 +74,11 @@ Error getHomeDirectory(StringRaii& out)
 		return Error::kFunctionFailed;
 	}
 
-	out.create(path);
+	out = path;
 	return Error::kNone;
 }
 
-Error getTempDirectory(StringRaii& out)
+Error getTempDirectory(String& out)
 {
 	char path[MAX_PATH + 1];
 
@@ -89,12 +89,13 @@ Error getTempDirectory(StringRaii& out)
 		return Error::kFunctionFailed;
 	}
 
-	out.create(path);
+	out = path;
 	return Error::kNone;
 }
 
-static Error walkDirectoryTreeRecursive(const CString& dir, const Function<Error(const CString&, Bool)>& callback,
-										U baseDirLen)
+static Error walkDirectoryTreeRecursive(
+	const CString& dir,
+	const Function<Error(const CString&, Bool), SingletonMemoryPoolWrapper<DefaultMemoryPool>>& callback, U baseDirLen)
 {
 	// Append something to the path
 	if(dir.getLength() > kMaxPathLen - 2)
@@ -197,9 +198,10 @@ Error walkDirectoryTreeInternal(const CString& dir, const Function<Error(const C
 	return walkDirectoryTreeRecursive(dir, callback, baseDirLen);
 }
 
-Error getApplicationPath(StringRaii& out)
+Error getApplicationPath(String& out)
 {
-	DynamicArrayRaii<Char> buff(1024, &out.getMemoryPool());
+	DynamicArray<Char, SingletonMemoryPoolWrapper<DefaultMemoryPool>> buff;
+	buff.resize(1024);
 
 	const DWORD result = GetModuleFileNameA(nullptr, &buff[0], buff.getSize());
 	DWORD lastError = GetLastError();
@@ -210,8 +212,7 @@ Error getApplicationPath(StringRaii& out)
 		return Error::kFunctionFailed;
 	}
 
-	out.destroy();
-	out.create('0', result);
+	out = String('0', result);
 
 	memcpy(&out[0], &buff[0], result);
 	return Error::kNone;

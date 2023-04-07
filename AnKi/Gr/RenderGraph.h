@@ -319,20 +319,11 @@ class RenderPassDescriptionBase
 	friend class RenderGraphDescription;
 
 public:
-	virtual ~RenderPassDescriptionBase()
-	{
-		m_name.destroy(*m_pool); // To avoid the assertion
-		m_rtDeps.destroy(*m_pool);
-		m_buffDeps.destroy(*m_pool);
-		m_asDeps.destroy(*m_pool);
-		m_callback.destroy(*m_pool);
-	}
-
 	template<typename TFunc>
 	void setWork(U32 secondLeveCmdbCount, TFunc func)
 	{
 		ANKI_ASSERT(m_type == Type::kGraphics || secondLeveCmdbCount == 0);
-		m_callback.init(*m_pool, func);
+		m_callback = {func, m_rtDeps.getMemoryPool().m_pool};
 		m_secondLevelCmdbsCount = secondLeveCmdbCount;
 	}
 
@@ -373,15 +364,14 @@ protected:
 
 	Type m_type;
 
-	StackMemoryPool* m_pool = nullptr;
 	RenderGraphDescription* m_descr;
 
-	Function<void(RenderPassWorkContext&)> m_callback;
+	Function<void(RenderPassWorkContext&), MemoryPoolPtrWrapper<StackMemoryPool>> m_callback;
 	U32 m_secondLevelCmdbsCount = 0;
 
-	DynamicArray<RenderPassDependency> m_rtDeps;
-	DynamicArray<RenderPassDependency> m_buffDeps;
-	DynamicArray<RenderPassDependency> m_asDeps;
+	DynamicArray<RenderPassDependency, MemoryPoolPtrWrapper<StackMemoryPool>> m_rtDeps;
+	DynamicArray<RenderPassDependency, MemoryPoolPtrWrapper<StackMemoryPool>> m_buffDeps;
+	DynamicArray<RenderPassDependency, MemoryPoolPtrWrapper<StackMemoryPool>> m_asDeps;
 
 	BitSet<kMaxRenderGraphRenderTargets, U64> m_readRtMask{false};
 	BitSet<kMaxRenderGraphRenderTargets, U64> m_writeRtMask{false};
@@ -390,18 +380,22 @@ protected:
 	BitSet<kMaxRenderGraphAccelerationStructures, U32> m_readAsMask{false};
 	BitSet<kMaxRenderGraphAccelerationStructures, U32> m_writeAsMask{false};
 
-	String m_name;
+	BaseString<MemoryPoolPtrWrapper<StackMemoryPool>> m_name;
 
-	RenderPassDescriptionBase(Type t, RenderGraphDescription* descr)
+	RenderPassDescriptionBase(Type t, RenderGraphDescription* descr, StackMemoryPool* pool)
 		: m_type(t)
 		, m_descr(descr)
+		, m_rtDeps(pool)
+		, m_buffDeps(pool)
+		, m_asDeps(pool)
+		, m_name(pool)
 	{
-		ANKI_ASSERT(descr);
+		ANKI_ASSERT(descr && pool);
 	}
 
 	void setName(CString name)
 	{
-		m_name.create(*m_pool, (name.isEmpty()) ? "N/A" : name);
+		m_name = (name.isEmpty()) ? "N/A" : name;
 	}
 
 	void fixSubresource(RenderPassDependency& dep) const;
@@ -463,8 +457,8 @@ class GraphicsRenderPassDescription : public RenderPassDescriptionBase
 	friend class RenderGraph;
 
 public:
-	GraphicsRenderPassDescription(RenderGraphDescription* descr)
-		: RenderPassDescriptionBase(Type::kGraphics, descr)
+	GraphicsRenderPassDescription(RenderGraphDescription* descr, StackMemoryPool* pool)
+		: RenderPassDescriptionBase(Type::kGraphics, descr, pool)
 	{
 		memset(&m_rtHandles[0], 0xFF, sizeof(m_rtHandles));
 	}
@@ -499,8 +493,8 @@ class ComputeRenderPassDescription : public RenderPassDescriptionBase
 	friend class RenderGraphDescription;
 
 public:
-	ComputeRenderPassDescription(RenderGraphDescription* descr)
-		: RenderPassDescriptionBase(Type::kNoGraphics, descr)
+	ComputeRenderPassDescription(RenderGraphDescription* descr, StackMemoryPool* pool)
+		: RenderPassDescriptionBase(Type::kNoGraphics, descr, pool)
 	{
 	}
 };
@@ -592,10 +586,10 @@ private:
 	};
 
 	StackMemoryPool* m_pool = nullptr;
-	DynamicArray<RenderPassDescriptionBase*> m_passes;
-	DynamicArray<RT> m_renderTargets;
-	DynamicArray<Buffer> m_buffers;
-	DynamicArray<AS> m_as;
+	DynamicArray<RenderPassDescriptionBase*, MemoryPoolPtrWrapper<StackMemoryPool>> m_passes{m_pool};
+	DynamicArray<RT, MemoryPoolPtrWrapper<StackMemoryPool>> m_renderTargets{m_pool};
+	DynamicArray<Buffer, MemoryPoolPtrWrapper<StackMemoryPool>> m_buffers{m_pool};
+	DynamicArray<AS, MemoryPoolPtrWrapper<StackMemoryPool>> m_as{m_pool};
 	Bool m_gatherStatistics = false;
 
 	/// Return true if 2 buffer ranges overlap.
@@ -735,9 +729,9 @@ private:
 	[[nodiscard]] static RenderGraph* newInstance();
 
 	BakeContext* newContext(const RenderGraphDescription& descr, StackMemoryPool& pool);
-	void initRenderPassesAndSetDeps(const RenderGraphDescription& descr, StackMemoryPool& pool);
+	void initRenderPassesAndSetDeps(const RenderGraphDescription& descr);
 	void initBatches();
-	void initGraphicsPasses(const RenderGraphDescription& descr, StackMemoryPool& pool);
+	void initGraphicsPasses(const RenderGraphDescription& descr);
 	void setBatchBarriers(const RenderGraphDescription& descr);
 
 	TexturePtr getOrCreateRenderTarget(const TextureInitInfo& initInf, U64 hash);
@@ -764,9 +758,9 @@ private:
 	/// @name Dump the dependency graph into a file.
 	/// @{
 	Error dumpDependencyDotFile(const RenderGraphDescription& descr, const BakeContext& ctx, CString path) const;
-	static StringRaii textureUsageToStr(StackMemoryPool& pool, TextureUsageBit usage);
-	static StringRaii bufferUsageToStr(StackMemoryPool& pool, BufferUsageBit usage);
-	static StringRaii asUsageToStr(StackMemoryPool& pool, AccelerationStructureUsageBit usage);
+	static GrString textureUsageToStr(StackMemoryPool& pool, TextureUsageBit usage);
+	static GrString bufferUsageToStr(StackMemoryPool& pool, BufferUsageBit usage);
+	static GrString asUsageToStr(StackMemoryPool& pool, AccelerationStructureUsageBit usage);
 	/// @}
 
 	TexturePtr getTexture(RenderTargetHandle handle) const;

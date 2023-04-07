@@ -139,7 +139,7 @@ Error DepthDownscale::initInternal()
 
 	if(!preferCompute)
 	{
-		m_fbDescrs.create(m_mipCount);
+		m_fbDescrs.resize(m_mipCount);
 		for(U32 mip = 0; mip < m_mipCount; ++mip)
 		{
 			FramebufferDescription& fbDescr = m_fbDescrs[mip];

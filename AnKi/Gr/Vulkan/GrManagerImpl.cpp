@@ -234,7 +234,8 @@ Error GrManagerImpl::initInstance()
 
 		if(layerCount)
 		{
-			GrDynamicArray<VkLayerProperties> layerProps(layerCount);
+			GrDynamicArray<VkLayerProperties> layerProps;
+			layerProps.resize(layerCount);
 			vkEnumerateInstanceLayerProperties(&layerCount, &layerProps[0]);
 
 			ANKI_VK_LOGV("Found the following instance layers:");
@@ -299,8 +300,8 @@ Error GrManagerImpl::initInstance()
 	vkEnumerateInstanceExtensionProperties(nullptr, &extCount, nullptr);
 	if(extCount)
 	{
-		instExtensions.create(extCount);
-		instExtensionInf.create(extCount);
+		instExtensions.resize(extCount);
+		instExtensionInf.resize(extCount);
 		vkEnumerateInstanceExtensionProperties(nullptr, &extCount, &instExtensionInf[0]);
 
 		ANKI_VK_LOGV("Found the following instance extensions:");
@@ -429,7 +430,8 @@ Error GrManagerImpl::initInstance()
 			return Error::kFunctionFailed;
 		}
 
-		GrDynamicArray<VkPhysicalDevice> physicalDevices(count);
+		GrDynamicArray<VkPhysicalDevice> physicalDevices;
+		physicalDevices.resize(count);
 		ANKI_VK_CHECK(vkEnumeratePhysicalDevices(m_instance, &count, &physicalDevices[0]));
 
 		class Dev
@@ -439,7 +441,8 @@ Error GrManagerImpl::initInstance()
 			VkPhysicalDeviceProperties2 m_vkProps;
 		};
 
-		GrDynamicArray<Dev> devs(count);
+		GrDynamicArray<Dev> devs;
+		devs.resize(count);
 		for(U32 devIdx = 0; devIdx < count; ++devIdx)
 		{
 			devs[devIdx].m_pdev = physicalDevices[devIdx];
@@ -574,7 +577,7 @@ Error GrManagerImpl::initDevice()
 	ANKI_VK_LOGI("Number of queue families: %u", count);
 
 	GrDynamicArray<VkQueueFamilyProperties> queueInfos;
-	queueInfos.create(count);
+	queueInfos.resize(count);
 	vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &count, &queueInfos[0]);
 
 	const VkQueueFlags GENERAL_QUEUE_FLAGS = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT;
@@ -647,8 +650,8 @@ Error GrManagerImpl::initDevice()
 	GrDynamicArray<const char*> extensionsToEnable;
 	if(extCount)
 	{
-		extensionInfos.create(extCount);
-		extensionsToEnable.create(extCount);
+		extensionInfos.resize(extCount);
+		extensionsToEnable.resize(extCount);
 		U32 extensionsToEnableCount = 0;
 		vkEnumerateDeviceExtensionProperties(m_physicalDevice, nullptr, &extCount, &extensionInfos[0]);
 
@@ -1513,16 +1516,16 @@ VkBool32 GrManagerImpl::debugReportCallbackEXT(VkDebugUtilsMessageSeverityFlagBi
 		for(U32 i = 0; i < pCallbackData->objectCount; ++i)
 		{
 			const Char* name = pCallbackData->pObjects[i].pObjectName;
-			objectNames.append((name) ? name : "?");
+			objectNames += (name) ? name : "?";
 			if(i < pCallbackData->objectCount - 1)
 			{
-				objectNames.append(", ");
+				objectNames += ", ";
 			}
 		}
 	}
 	else
 	{
-		objectNames.create("N/A");
+		objectNames = "N/A";
 	}
 
 	if(messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
@@ -1590,8 +1593,8 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 			ANKI_VK_CHECK(m_pfnGetShaderInfoAMD(m_device, ppline, VkShaderStageFlagBits(convertShaderTypeBit(stage)),
 												VK_SHADER_INFO_TYPE_STATISTICS_AMD, &size, &stats));
 
-			str.append(GrString().sprintf("Stage %u: VGRPS %02u, SGRPS %02u ", U32(type),
-										  stats.resourceUsage.numUsedVgprs, stats.resourceUsage.numUsedSgprs));
+			str += GrString().sprintf("Stage %u: VGRPS %02u, SGRPS %02u ", U32(type), stats.resourceUsage.numUsedVgprs,
+									  stats.resourceUsage.numUsedSgprs);
 
 			ANKI_CHECK(m_shaderStatsFile.writeTextf((type != ShaderType::kLast) ? "%u,%u," : "%u,%u\n",
 													stats.resourceUsage.numUsedVgprs,
@@ -1613,7 +1616,8 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 		pplineInf.pipeline = ppline;
 		U32 executableCount = 0;
 		ANKI_VK_CHECK(vkGetPipelineExecutablePropertiesKHR(m_device, &pplineInf, &executableCount, nullptr));
-		GrDynamicArray<VkPipelineExecutablePropertiesKHR> executableProps(executableCount);
+		GrDynamicArray<VkPipelineExecutablePropertiesKHR> executableProps;
+		executableProps.resize(executableCount);
 		for(VkPipelineExecutablePropertiesKHR& prop : executableProps)
 		{
 			prop = {};
@@ -1635,7 +1639,8 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 			exeInf.pipeline = ppline;
 			U32 statCount = 0;
 			vkGetPipelineExecutableStatisticsKHR(m_device, &exeInf, &statCount, nullptr);
-			GrDynamicArray<VkPipelineExecutableStatisticKHR> stats(statCount);
+			GrDynamicArray<VkPipelineExecutableStatisticKHR> stats;
+			stats.resize(statCount);
 			for(VkPipelineExecutableStatisticKHR& s : stats)
 			{
 				s = {};

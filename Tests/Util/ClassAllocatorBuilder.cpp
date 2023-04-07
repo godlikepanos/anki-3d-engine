@@ -107,9 +107,8 @@ static inline U32 floorPow2(U32 v)
 
 ANKI_TEST(Util, ClassAllocatorBuilder)
 {
-	HeapMemoryPool pool(allocAligned, nullptr);
 	ClassAllocatorBuilder<Chunk, Interface, Mutex> calloc;
-	calloc.init(&pool);
+	calloc.init();
 
 	std::mt19937 gen(0);
 

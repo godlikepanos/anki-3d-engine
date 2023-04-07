@@ -24,18 +24,15 @@ public:
 	~INotify()
 	{
 		destroyInternal();
-		m_path.destroy(*m_pool);
 	}
 
 	// Non-copyable
 	INotify& operator=(const INotify&) = delete;
 
 	/// @param path Path to file or directory.
-	Error init(BaseMemoryPool* pool, CString path)
+	Error init(CString path)
 	{
-		ANKI_ASSERT(pool);
-		m_pool = pool;
-		m_path.create(*m_pool, path);
+		m_path = path;
 		return initInternal();
 	}
 
@@ -43,7 +40,6 @@ public:
 	Error pollEvents(Bool& modified);
 
 private:
-	BaseMemoryPool* m_pool = nullptr;
 	String m_path;
 #if ANKI_POSIX
 	int m_fd = -1;

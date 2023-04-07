@@ -26,7 +26,7 @@ Error ScriptEvent::init(Second startTime, Second duration, CString script)
 	Event::init(startTime, duration);
 
 	// Do the rest
-	StringRaii extension(&SceneMemoryPool::getSingleton());
+	String extension;
 	getFilepathExtension(script, extension);
 
 	if(!extension.isEmpty() && extension == "lua")

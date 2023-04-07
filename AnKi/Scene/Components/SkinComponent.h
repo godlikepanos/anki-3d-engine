@@ -101,7 +101,6 @@ private:
 		F32 m_scale;
 	};
 
-	SceneNode* m_node;
 	SkeletonResourcePtr m_skeleton;
 	Array<SceneDynamicArray<Mat3x4>, 2> m_boneTrfs;
 	SceneDynamicArray<Trf> m_animationTrfs;

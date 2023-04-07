@@ -53,7 +53,7 @@ void TileAllocator::init(U32 tileCountX, U32 tileCountY, U32 hierarchyCount, Boo
 	m_tileCountY = U16(tileCountY);
 	m_hierarchyCount = U8(hierarchyCount);
 	m_cachingEnabled = enableCaching;
-	m_firstTileIdxOfHierarchy.create(hierarchyCount + 1);
+	m_firstTileIdxOfHierarchy.resize(hierarchyCount + 1);
 
 	// Create the tile array & index ranges
 	U32 tileCount = 0;
@@ -71,7 +71,7 @@ void TileAllocator::init(U32 tileCountX, U32 tileCountY, U32 hierarchyCount, Boo
 		tileCount += hierarchyTileCountX * hierarchyTileCountY;
 	}
 	ANKI_ASSERT(tileCount >= tileCountX * tileCountY);
-	m_allTiles.create(tileCount);
+	m_allTiles.resize(tileCount);
 	m_firstTileIdxOfHierarchy[hierarchyCount] = tileCount - 1;
 
 	// Init the tiles

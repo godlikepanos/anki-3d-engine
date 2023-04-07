@@ -106,7 +106,7 @@ Error ConfigSet::loadFromFile(CString filename)
 	ANKI_ASSERT(isInitialized());
 
 	ANKI_CORE_LOGI("Loading config file %s", filename.cstr());
-	XmlDocument xml(&m_pool);
+	CoreXmlDocument xml;
 	ANKI_CHECK(xml.loadFile(filename));
 
 	XmlElement rootel;
@@ -170,7 +170,7 @@ Error ConfigSet::saveToFile(CString filename) const
 	File file;
 	ANKI_CHECK(file.open(filename, FileOpenFlag::kWrite));
 
-	ANKI_CHECK(file.writeTextf("%s\n<config>\n", XmlDocument::kXmlHeader.cstr()));
+	ANKI_CHECK(file.writeTextf("%s\n<config>\n", CoreXmlDocument::kXmlHeader.cstr()));
 
 #define ANKI_NUMERIC_UINT(name) \
 	ANKI_CHECK(file.writeTextf("\t<!-- %s -->\n", m_##name.m_description.cstr())); \

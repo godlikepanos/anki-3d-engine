@@ -628,9 +628,9 @@ void CommandBufferImpl::setPipelineBarrierInternal(
 {
 	commandCommon();
 
-	DynamicArrayRaii<VkImageMemoryBarrier> imageBarriers(m_pool);
-	DynamicArrayRaii<VkBufferMemoryBarrier> bufferBarriers(m_pool);
-	DynamicArrayRaii<VkMemoryBarrier> genericBarriers(m_pool);
+	DynamicArray<VkImageMemoryBarrier, MemoryPoolPtrWrapper<StackMemoryPool>> imageBarriers(m_pool);
+	DynamicArray<VkBufferMemoryBarrier, MemoryPoolPtrWrapper<StackMemoryPool>> bufferBarriers(m_pool);
+	DynamicArray<VkMemoryBarrier, MemoryPoolPtrWrapper<StackMemoryPool>> genericBarriers(m_pool);
 	VkPipelineStageFlags srcStageMask = 0;
 	VkPipelineStageFlags dstStageMask = 0;
 

@@ -68,6 +68,10 @@ void GpuMemoryManagerInterface::freeChunk(GpuMemoryManagerChunk* chunk)
 	deleteInstance(GrMemoryPool::getSingleton(), chunk);
 }
 
+GpuMemoryManager::GpuMemoryManager()
+{
+}
+
 GpuMemoryManager::~GpuMemoryManager()
 {
 }
@@ -116,7 +120,7 @@ void GpuMemoryManager::init(Bool exposeBufferGpuAddress)
 
 	vkGetPhysicalDeviceMemoryProperties(getGrManagerImpl().getPhysicalDevice(), &m_memoryProperties);
 
-	m_callocs.create(m_memoryProperties.memoryTypeCount);
+	m_callocs.resize(m_memoryProperties.memoryTypeCount);
 	for(U32 memTypeIdx = 0; memTypeIdx < m_callocs.getSize(); ++memTypeIdx)
 	{
 		GpuMemoryManagerInterface& iface = m_callocs[memTypeIdx].getInterface();
@@ -152,7 +156,7 @@ void GpuMemoryManager::init(Bool exposeBufferGpuAddress)
 		}
 
 		// The interface is initialized, init the builder
-		m_callocs[memTypeIdx].init(&GrMemoryPool::getSingleton());
+		m_callocs[memTypeIdx].init();
 	}
 }
 

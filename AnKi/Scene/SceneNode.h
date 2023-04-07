@@ -21,12 +21,12 @@ class SceneGraphExternalSubsystems;
 /// @{
 
 /// Interface class backbone of scene
-class SceneNode : public Hierarchy<SceneNode>, public IntrusiveListEnabled<SceneNode>
+class SceneNode : public SceneHierarchy<SceneNode>, public IntrusiveListEnabled<SceneNode>
 {
 	friend class SceneComponent;
 
 public:
-	using Base = Hierarchy<SceneNode>;
+	using Base = SceneHierarchy<SceneNode>;
 
 	/// The one and only constructor.
 	/// @param scene The owner scene.
@@ -73,7 +73,7 @@ public:
 
 	void addChild(SceneNode* obj)
 	{
-		Base::addChild(SceneMemoryPool::getSingleton(), obj);
+		Base::addChild(obj);
 	}
 
 	/// This is called by the scenegraph every frame after all component updates. By default it does nothing.

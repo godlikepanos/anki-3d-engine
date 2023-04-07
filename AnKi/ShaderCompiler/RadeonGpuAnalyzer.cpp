@@ -34,16 +34,15 @@ static CString getPipelineStageString(ShaderType shaderType)
 	return out;
 }
 
-Error runRadeonGpuAnalyzer(CString rgaExecutable, ConstWeakArray<U8> spirv, ShaderType shaderType,
-						   BaseMemoryPool& tmpPool, RgaOutput& out)
+Error runRadeonGpuAnalyzer(CString rgaExecutable, ConstWeakArray<U8> spirv, ShaderType shaderType, RgaOutput& out)
 {
 	ANKI_ASSERT(spirv.getSize() > 0);
 	const U32 rand = g_nextFileId.fetchAdd(1) + getCurrentProcessId();
 
 	// Store SPIRV
-	StringRaii tmpDir(&tmpPool);
+	String tmpDir;
 	ANKI_CHECK(getTempDirectory(tmpDir));
-	StringRaii spvFilename(&tmpPool);
+	String spvFilename;
 	spvFilename.sprintf("%s/AnKiRgaInput_%u.spv", tmpDir.cstr(), rand);
 	File spvFile;
 	ANKI_CHECK(spvFile.open(spvFilename, FileOpenFlag::kWrite | FileOpenFlag::kBinary));
@@ -52,7 +51,7 @@ Error runRadeonGpuAnalyzer(CString rgaExecutable, ConstWeakArray<U8> spirv, Shad
 	CleanupFile spvFileCleanup(spvFilename);
 
 	// Call RGA
-	StringRaii analysisFilename(&tmpPool);
+	String analysisFilename;
 	analysisFilename.sprintf("%s/AnKiRgaOutAnalysis_%u.csv", tmpDir.cstr(), rand);
 
 	Array<CString, 7> args;
@@ -74,7 +73,7 @@ Error runRadeonGpuAnalyzer(CString rgaExecutable, ConstWeakArray<U8> spirv, Shad
 	}
 
 	// Construct the output filename
-	StringRaii outFilename(&tmpPool);
+	String outFilename;
 	outFilename.sprintf("%s/gfx1030_AnKiRgaOutAnalysis_%u_%s.csv", tmpDir.cstr(), rand,
 						getPipelineStageString(shaderType).cstr());
 
@@ -83,13 +82,13 @@ Error runRadeonGpuAnalyzer(CString rgaExecutable, ConstWeakArray<U8> spirv, Shad
 	// Read the file
 	File analysisFile;
 	ANKI_CHECK(analysisFile.open(outFilename, FileOpenFlag::kRead));
-	StringRaii analysisText(&tmpPool);
+	String analysisText;
 	ANKI_CHECK(analysisFile.readAllText(analysisText));
 	analysisText.replaceAll("\r", "");
 	analysisFile.close();
 
 	// Parse the text
-	StringListRaii lines(&tmpPool);
+	StringList lines;
 	lines.splitString(analysisText, '\n');
 	if(lines.getSize() != 2)
 	{
@@ -97,10 +96,10 @@ Error runRadeonGpuAnalyzer(CString rgaExecutable, ConstWeakArray<U8> spirv, Shad
 		return Error::kFunctionFailed;
 	}
 
-	StringListRaii tokens(&tmpPool);
+	StringList tokens;
 	tokens.splitString(lines.getFront(), ',');
 
-	StringListRaii values(&tmpPool);
+	StringList values;
 	values.splitString(*(lines.getBegin() + 1), ',');
 
 	if(tokens.getSize() != tokens.getSize())

@@ -115,8 +115,8 @@ static_assert(sizeof(TempVertex) == 5 * sizeof(Vec4), "Will be hashed");
 class SubMesh
 {
 public:
-	DynamicArrayRaii<TempVertex> m_verts;
-	DynamicArrayRaii<U32> m_indices;
+	ImporterDynamicArray<TempVertex> m_verts;
+	ImporterDynamicArray<U32> m_indices;
 
 	Vec3 m_aabbMin = Vec3(kMaxF32);
 	Vec3 m_aabbMax = Vec3(kMinF32);
@@ -135,16 +135,16 @@ static void reindexSubmesh(SubMesh& submesh, BaseMemoryPool* pool)
 {
 	const U32 vertSize = sizeof(submesh.m_verts[0]);
 
-	DynamicArrayRaii<U32> remap(pool);
-	remap.create(submesh.m_verts.getSize(), 0);
+	ImporterDynamicArray<U32> remap(pool);
+	remap.resize(submesh.m_verts.getSize(), 0);
 
 	const U32 vertCount = U32(meshopt_generateVertexRemap(&remap[0], &submesh.m_indices[0], submesh.m_indices.getSize(),
 														  &submesh.m_verts[0], submesh.m_verts.getSize(), vertSize));
 
-	DynamicArrayRaii<U32> newIdxArray(pool);
-	newIdxArray.create(submesh.m_indices.getSize(), 0);
-	DynamicArrayRaii<TempVertex> newVertArray(pool);
-	newVertArray.create(vertCount);
+	ImporterDynamicArray<U32> newIdxArray(pool);
+	newIdxArray.resize(submesh.m_indices.getSize(), 0);
+	ImporterDynamicArray<TempVertex> newVertArray(pool);
+	newVertArray.resize(vertCount);
 
 	meshopt_remapIndexBuffer(&newIdxArray[0], &submesh.m_indices[0], submesh.m_indices.getSize(), &remap[0]);
 	meshopt_remapVertexBuffer(&newVertArray[0], &submesh.m_verts[0], submesh.m_verts.getSize(), vertSize, &remap[0]);
@@ -160,8 +160,8 @@ static void optimizeSubmesh(SubMesh& submesh, BaseMemoryPool* pool)
 
 	// Vert cache
 	{
-		DynamicArrayRaii<U32> newIdxArray(pool);
-		newIdxArray.create(submesh.m_indices.getSize(), 0);
+		ImporterDynamicArray<U32> newIdxArray(pool);
+		newIdxArray.resize(submesh.m_indices.getSize(), 0);
 
 		meshopt_optimizeVertexCache(&newIdxArray[0], &submesh.m_indices[0], submesh.m_indices.getSize(),
 									submesh.m_verts.getSize());
@@ -171,8 +171,8 @@ static void optimizeSubmesh(SubMesh& submesh, BaseMemoryPool* pool)
 
 	// Overdraw
 	{
-		DynamicArrayRaii<U32> newIdxArray(pool);
-		newIdxArray.create(submesh.m_indices.getSize(), 0);
+		ImporterDynamicArray<U32> newIdxArray(pool);
+		newIdxArray.resize(submesh.m_indices.getSize(), 0);
 
 		meshopt_optimizeOverdraw(&newIdxArray[0], &submesh.m_indices[0], submesh.m_indices.getSize(),
 								 &submesh.m_verts[0].m_position.x(), submesh.m_verts.getSize(), vertSize, 1.05f);
@@ -182,8 +182,8 @@ static void optimizeSubmesh(SubMesh& submesh, BaseMemoryPool* pool)
 
 	// Vert fetch
 	{
-		DynamicArrayRaii<TempVertex> newVertArray(pool);
-		newVertArray.create(submesh.m_verts.getSize());
+		ImporterDynamicArray<TempVertex> newVertArray(pool);
+		newVertArray.resize(submesh.m_verts.getSize());
 
 		const U32 newVertCount = U32(meshopt_optimizeVertexFetch(&newVertArray[0],
 																 &submesh.m_indices[0], // Inplace
@@ -211,15 +211,15 @@ static void decimateSubmesh(F32 factor, SubMesh& submesh, BaseMemoryPool* pool)
 	}
 
 	// Decimate
-	DynamicArrayRaii<U32> newIndices(submesh.m_indices.getSize(), pool);
+	ImporterDynamicArray<U32> newIndices(pool);
 	newIndices.resize(U32(meshopt_simplify(&newIndices[0], &submesh.m_indices[0], submesh.m_indices.getSize(),
 										   &submesh.m_verts[0].m_position.x(), submesh.m_verts.getSize(),
 										   sizeof(TempVertex), targetIndexCount, 1e-2f)));
 
 	// Re-pack
-	DynamicArrayRaii<U32> reindexedIndices(pool);
-	DynamicArrayRaii<TempVertex> newVerts(pool);
-	HashMapRaii<U32, U32> vertexStored(pool);
+	ImporterDynamicArray<U32> reindexedIndices(pool);
+	ImporterDynamicArray<TempVertex> newVerts(pool);
+	ImporterHashMap<U32, U32> vertexStored(pool);
 	for(U32 idx = 0; idx < newIndices.getSize(); ++idx)
 	{
 		U32 newIdx;
@@ -283,9 +283,9 @@ static void fixNormals(const F32 normalsMergeAngle, SubMesh& submesh)
 
 static void computeTangents(SubMesh& submesh)
 {
-	DynamicArrayRaii<Vec3> bitangents(&submesh.m_verts.getMemoryPool());
+	ImporterDynamicArray<Vec3> bitangents(&submesh.m_verts.getMemoryPool());
 	const U32 vertCount = submesh.m_verts.getSize();
-	bitangents.create(vertCount, Vec3(0.0f));
+	bitangents.resize(vertCount, Vec3(0.0f));
 
 	for(U32 i = 0; i < submesh.m_indices.getSize(); i += 3)
 	{
@@ -364,7 +364,7 @@ static void computeTangents(SubMesh& submesh)
 	}
 }
 
-static Bool isConvex(const List<SubMesh>& submeshes)
+static Bool isConvex(const ImporterList<SubMesh>& submeshes)
 {
 	Bool convex = true;
 	for(const SubMesh& submesh : submeshes)
@@ -444,12 +444,12 @@ U32 GltfImporter::getMeshTotalVertexCount(const cgltf_mesh& mesh)
 
 Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 {
-	StringRaii meshName = computeMeshResourceFilename(mesh);
-	StringRaii fname(m_pool);
+	ImporterString meshName = computeMeshResourceFilename(mesh);
+	ImporterString fname(m_pool);
 	fname.sprintf("%s%s", m_outDir.cstr(), meshName.cstr());
 	ANKI_IMPORTER_LOGV("Importing mesh (%s): %s", (m_optimizeMeshes) ? "optimize" : "WON'T optimize", fname.cstr());
 
-	Array<ListRaii<SubMesh>, kMaxLodCount> submeshes = {{{m_pool}, {m_pool}, {m_pool}}};
+	Array<ImporterList<SubMesh>, kMaxLodCount> submeshes = {{{m_pool}, {m_pool}, {m_pool}}};
 	Vec3 aabbMin(kMaxF32);
 	Vec3 aabbMax(kMinF32);
 	Bool hasBoneWeights = false;
@@ -482,7 +482,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 		}
 
 		U32 vertCount = U32(primitive->attributes[0].data->count);
-		submesh.m_verts.create(vertCount);
+		submesh.m_verts.resize(vertCount);
 
 		//
 		// Gather positions + normals + UVs
@@ -567,7 +567,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 				ANKI_IMPORTER_LOGE("Incorect index count: %lu", primitive->indices->count);
 				return Error::kUserData;
 			}
-			submesh.m_indices.create(U32(primitive->indices->count));
+			submesh.m_indices.resize(U32(primitive->indices->count));
 			const U8* base = static_cast<const U8*>(primitive->indices->buffer_view->buffer->data)
 							 + primitive->indices->offset + primitive->indices->buffer_view->offset;
 			for(U32 i = 0; i < primitive->indices->count; ++i)
@@ -679,7 +679,8 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 	}
 
 	// Write sub meshes
-	DynamicArrayRaii<MeshBinarySubMesh> outSubmeshes(U32(submeshes[0].getSize()), m_pool);
+	ImporterDynamicArray<MeshBinarySubMesh> outSubmeshes(m_pool);
+	outSubmeshes.resize(U32(submeshes[0].getSize()));
 
 	for(U32 submeshIdx = 0; submeshIdx < outSubmeshes.getSize(); ++submeshIdx)
 	{
@@ -714,7 +715,8 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 		U32 vertCount = 0;
 		for(const SubMesh& submesh : submeshes[lod])
 		{
-			DynamicArrayRaii<U16> indices(submesh.m_indices.getSize(), m_pool);
+			ImporterDynamicArray<U16> indices(m_pool);
+			indices.resize(submesh.m_indices.getSize());
 			for(U32 i = 0; i < indices.getSize(); ++i)
 			{
 				const U32 idx = submesh.m_indices[i] + vertCount;
@@ -734,7 +736,8 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 		// Write positions
 		for(const SubMesh& submesh : submeshes[lod])
 		{
-			DynamicArrayRaii<U16Vec4> positions(submesh.m_verts.getSize(), m_pool);
+			ImporterDynamicArray<U16Vec4> positions(m_pool);
+			positions.resize(submesh.m_verts.getSize());
 			for(U32 v = 0; v < submesh.m_verts.getSize(); ++v)
 			{
 				Vec3 localPos = (submesh.m_verts[v].m_position + posTranslation) * posScale;
@@ -750,7 +753,8 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 		// Write normals
 		for(const SubMesh& submesh : submeshes[lod])
 		{
-			DynamicArrayRaii<U32> normals(submesh.m_verts.getSize(), m_pool);
+			ImporterDynamicArray<U32> normals(m_pool);
+			normals.resize(submesh.m_verts.getSize());
 			for(U32 v = 0; v < submesh.m_verts.getSize(); ++v)
 			{
 				normals[v] = packSnorm4x8(submesh.m_verts[v].m_normal.xyz0());
@@ -762,7 +766,8 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 		// Write tangent
 		for(const SubMesh& submesh : submeshes[lod])
 		{
-			DynamicArrayRaii<U32> tangents(submesh.m_verts.getSize(), m_pool);
+			ImporterDynamicArray<U32> tangents(m_pool);
+			tangents.resize(submesh.m_verts.getSize());
 			for(U32 v = 0; v < submesh.m_verts.getSize(); ++v)
 			{
 				tangents[v] = packSnorm4x8(submesh.m_verts[v].m_tangent);
@@ -774,7 +779,8 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 		// Write UV
 		for(const SubMesh& submesh : submeshes[lod])
 		{
-			DynamicArrayRaii<Vec2> uvs(submesh.m_verts.getSize(), m_pool);
+			ImporterDynamicArray<Vec2> uvs(m_pool);
+			uvs.resize(submesh.m_verts.getSize());
 			for(U32 v = 0; v < submesh.m_verts.getSize(); ++v)
 			{
 				uvs[v] = submesh.m_verts[v].m_uv;
@@ -788,7 +794,8 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 			// Bone IDs
 			for(const SubMesh& submesh : submeshes[lod])
 			{
-				DynamicArrayRaii<U8Vec4> boneids(submesh.m_verts.getSize(), m_pool);
+				ImporterDynamicArray<U8Vec4> boneids(m_pool);
+				boneids.resize(submesh.m_verts.getSize());
 				for(U32 v = 0; v < submesh.m_verts.getSize(); ++v)
 				{
 					boneids[v] = U8Vec4(submesh.m_verts[v].m_boneIds);
@@ -800,7 +807,8 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 			// Bone weights
 			for(const SubMesh& submesh : submeshes[lod])
 			{
-				DynamicArrayRaii<U32> boneWeights(submesh.m_verts.getSize(), m_pool);
+				ImporterDynamicArray<U32> boneWeights(m_pool);
+				boneWeights.resize(submesh.m_verts.getSize());
 				for(U32 v = 0; v < submesh.m_verts.getSize(); ++v)
 				{
 					boneWeights[v] = packSnorm4x8(submesh.m_verts[v].m_boneWeights);

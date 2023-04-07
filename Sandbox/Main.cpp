@@ -42,7 +42,7 @@ Error MyApp::init(int argc, char* argv[])
 #endif
 
 	// Init super class
-	ANKI_CHECK(App::init(allocAligned, nullptr));
+	ANKI_CHECK(App::init());
 
 	// Other init
 	ResourceManager& resources = ResourceManager::getSingleton();

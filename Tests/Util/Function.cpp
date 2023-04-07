@@ -9,7 +9,7 @@
 
 namespace anki {
 
-static I32 functionAcceptingFunction(const Function<I32(F32)>& f)
+static I32 functionAcceptingFunction(const Function<I32(F32), MemoryPoolPtrWrapper<HeapMemoryPool>>& f)
 {
 	return f(1.0f) + f(2.0f);
 }
@@ -22,33 +22,32 @@ ANKI_TEST(Util, Function)
 
 	// Simple
 	{
-		Function<I32(I32, F32), 8> f;
-
 		I32 i = 0;
-		f.init(pool, [&i](U32 a, F32 b) -> I32 {
-			i += I32(a) + I32(b);
-			return i;
-		});
+		Function<I32(I32, F32), MemoryPoolPtrWrapper<HeapMemoryPool>, 8> f(
+			[&i](U32 a, F32 b) -> I32 {
+				i += I32(a) + I32(b);
+				return i;
+			},
+			&pool);
 
 		i = 1;
 
 		f(2, 10.0f);
 		ANKI_TEST_EXPECT_EQ(i, 13);
-
-		f.destroy(pool);
 	}
 
 	// No templates
 	{
 		F32 f = 1.1f;
 
-		Function<I32(F32)> func(pool, [&f](F32 ff) {
-			f += 2.0f;
-			return I32(f) + I32(ff);
-		});
+		Function<I32(F32), MemoryPoolPtrWrapper<HeapMemoryPool>> func(
+			[&f](F32 ff) {
+				f += 2.0f;
+				return I32(f) + I32(ff);
+			},
+			&pool);
 
 		const I32 o = functionAcceptingFunction(func);
-		func.destroy(pool);
 
 		ANKI_TEST_EXPECT_EQ(o, 11);
 	}
@@ -57,23 +56,25 @@ ANKI_TEST(Util, Function)
 	{
 		const Vec4 a(1.9f);
 		const Vec4 b(2.2f);
-		Function<Vec4(Vec4, Vec4), 8> f(pool, [a, b](Vec4 c, Vec4 d) mutable -> Vec4 {
-			return a + c * 2.0f + b * d;
-		});
+		Function<Vec4(Vec4, Vec4), MemoryPoolPtrWrapper<HeapMemoryPool>, 8> f(
+			[a, b](Vec4 c, Vec4 d) mutable -> Vec4 {
+				return a + c * 2.0f + b * d;
+			},
+			&pool);
 
 		const Vec4 r = f(Vec4(10.0f), Vec4(20.8f));
 		ANKI_TEST_EXPECT_EQ(r, a + Vec4(10.0f) * 2.0f + b * Vec4(20.8f));
-
-		f.destroy(pool);
 	}
 
 	// Complex
 	{
 		{
 			Foo foo, bar;
-			Function<void(Foo&)> f(pool, [foo](Foo& r) {
-				r.x += foo.x;
-			});
+			Function<void(Foo&), MemoryPoolPtrWrapper<HeapMemoryPool>> f(
+				[foo](Foo& r) {
+					r.x += foo.x;
+				},
+				&pool);
 
 			Function<void(Foo&)> ff;
 			ff = std::move(f);
@@ -81,7 +82,6 @@ ANKI_TEST(Util, Function)
 			ff(bar);
 
 			ANKI_TEST_EXPECT_EQ(bar.x, 666 * 2);
-			ff.destroy(pool);
 		}
 
 		ANKI_TEST_EXPECT_EQ(Foo::constructorCallCount, Foo::destructorCallCount);
@@ -92,18 +92,18 @@ ANKI_TEST(Util, Function)
 	{
 		{
 			Foo foo, bar;
-			Function<void(Foo&)> f(pool, [foo](Foo& r) {
-				r.x += foo.x;
-			});
+			Function<void(Foo&), MemoryPoolPtrWrapper<HeapMemoryPool>> f(
+				[foo](Foo& r) {
+					r.x += foo.x;
+				},
+				&pool);
 
-			Function<void(Foo&)> ff;
-			ff.copy(f, pool);
+			Function<void(Foo&), MemoryPoolPtrWrapper<HeapMemoryPool>> ff;
+			ff = f;
 
 			ff(bar);
 
 			ANKI_TEST_EXPECT_EQ(bar.x, 666 * 2);
-			ff.destroy(pool);
-			f.destroy(pool);
 		}
 
 		ANKI_TEST_EXPECT_EQ(Foo::constructorCallCount, Foo::destructorCallCount);

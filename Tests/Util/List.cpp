@@ -11,15 +11,13 @@
 
 ANKI_TEST(Util, List)
 {
-	HeapMemoryPool pool(allocAligned, nullptr);
-
 	// Simple
 	{
 		List<Foo> a;
 		Error err = Error::kNone;
 
-		a.emplaceBack(pool, 10);
-		a.emplaceBack(pool, 11);
+		a.emplaceBack(10);
+		a.emplaceBack(11);
 
 		U sum = 0;
 
@@ -30,8 +28,6 @@ ANKI_TEST(Util, List)
 
 		ANKI_TEST_EXPECT_EQ(err, Error::kNone);
 		ANKI_TEST_EXPECT_EQ(sum, 21);
-
-		a.destroy(pool);
 	}
 
 	// Sort
@@ -39,10 +35,10 @@ ANKI_TEST(Util, List)
 		List<I> a;
 		Error err = Error::kNone;
 
-		a.emplaceBack(pool, 10);
-		a.emplaceBack(pool, 9);
-		a.emplaceBack(pool, 11);
-		a.emplaceBack(pool, 2);
+		a.emplaceBack(10);
+		a.emplaceBack(9);
+		a.emplaceBack(11);
+		a.emplaceBack(2);
 
 		a.sort();
 
@@ -81,8 +77,6 @@ ANKI_TEST(Util, List)
 		});
 
 		ANKI_TEST_EXPECT_EQ(err, Error::kNone);
-
-		a.destroy(pool);
 	}
 
 	// Extreme sort
@@ -96,7 +90,7 @@ ANKI_TEST(Util, List)
 			I32 randVal = rand();
 			Foo f(randVal);
 
-			a.pushBack(pool, f);
+			a.pushBack(f);
 			b.push_back(f);
 		}
 
@@ -129,7 +123,6 @@ ANKI_TEST(Util, List)
 
 		ANKI_TEST_EXPECT_EQ(ait, aend);
 		ANKI_TEST_EXPECT_EQ(bit, bend);
-		a.destroy(pool);
 	}
 
 	// Iterate
@@ -137,10 +130,10 @@ ANKI_TEST(Util, List)
 		List<I> a;
 		Error err = Error::kNone;
 
-		a.emplaceBack(pool, 10);
-		a.emplaceBack(pool, 9);
-		a.emplaceBack(pool, 11);
-		a.emplaceBack(pool, 2);
+		a.emplaceBack(10);
+		a.emplaceBack(9);
+		a.emplaceBack(11);
+		a.emplaceBack(2);
 
 		Array<I, 4> arr = {{10, 9, 11, 2}};
 		U count = 0;
@@ -168,37 +161,35 @@ ANKI_TEST(Util, List)
 		}
 
 		ANKI_TEST_EXPECT_EQ(err, Error::kNone);
-
-		a.destroy(pool);
 	}
 
 	// Erase
 	{
 		List<I> a;
 
-		a.emplaceBack(pool, 10);
+		a.emplaceBack(10);
 
-		a.erase(pool, a.getBegin());
+		a.erase(a.getBegin());
 		ANKI_TEST_EXPECT_EQ(a.isEmpty(), true);
 
-		a.emplaceBack(pool, 10);
-		a.emplaceBack(pool, 20);
+		a.emplaceBack(10);
+		a.emplaceBack(20);
 
-		a.erase(pool, a.getBegin() + 1);
+		a.erase(a.getBegin() + 1);
 		ANKI_TEST_EXPECT_EQ(10, *a.getBegin());
 
-		a.emplaceFront(pool, 5);
-		a.emplaceBack(pool, 30);
+		a.emplaceFront(5);
+		a.emplaceBack(30);
 
 		ANKI_TEST_EXPECT_EQ(5, *(a.getBegin()));
 		ANKI_TEST_EXPECT_EQ(10, *(a.getEnd() - 2));
 		ANKI_TEST_EXPECT_EQ(30, *(a.getEnd() - 1));
 
-		a.erase(pool, a.getEnd() - 2);
+		a.erase(a.getEnd() - 2);
 		ANKI_TEST_EXPECT_EQ(5, *(a.getBegin()));
 		ANKI_TEST_EXPECT_EQ(30, *(a.getEnd() - 1));
 
-		a.erase(pool, a.getBegin());
-		a.erase(pool, a.getBegin());
+		a.erase(a.getBegin());
+		a.erase(a.getBegin());
 	}
 }

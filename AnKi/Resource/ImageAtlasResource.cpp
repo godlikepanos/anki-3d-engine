@@ -11,7 +11,7 @@ namespace anki {
 
 Error ImageAtlasResource::load(const ResourceFilename& filename, Bool async)
 {
-	XmlDocument doc(&ResourceMemoryPool::getSingleton());
+	ResourceXmlDocument doc;
 	ANKI_CHECK(openFileParseXml(filename, doc));
 
 	XmlElement rootel, el;
@@ -74,8 +74,8 @@ Error ImageAtlasResource::load(const ResourceFilename& filename, Bool async)
 	} while(subTexEl);
 
 	// Allocate
-	m_subTexNames.create(namesSize);
-	m_subTexes.create(subTexesCount);
+	m_subTexNames.resize(namesSize);
+	m_subTexes.resize(subTexesCount);
 
 	// Iterate again and populate
 	subTexesCount = 0;

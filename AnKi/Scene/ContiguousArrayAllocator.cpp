@@ -29,7 +29,7 @@ AllGpuSceneContiguousArrays::Index AllGpuSceneContiguousArrays::ContiguousArrayA
 		GpuSceneMemoryPool::getSingleton().allocate(m_objectSize * m_initialArraySize, alignment, m_poolToken);
 		m_nextSlotIndex = 0;
 
-		m_freeSlotStack.create(m_initialArraySize);
+		m_freeSlotStack.resize(m_initialArraySize);
 		for(U32 i = 0; i < m_initialArraySize; ++i)
 		{
 			m_freeSlotStack[i] = i;

@@ -239,8 +239,9 @@ Bool ShadowMapping::allocateAtlasTiles(U64 lightUuid, U32 faceCount, const U64* 
 	return true;
 }
 
+template<typename TMemoryPool>
 void ShadowMapping::newWorkItems(const UVec4& atlasViewport, RenderQueue* lightRenderQueue, U32 renderQueueElementsLod,
-								 DynamicArrayRaii<LightToRenderTempInfo>& workItems, U32& drawcallCount) const
+								 DynamicArray<LightToRenderTempInfo, TMemoryPool>& workItems, U32& drawcallCount) const
 {
 	LightToRenderTempInfo toRender;
 	toRender.m_renderQueue = lightRenderQueue;
@@ -258,7 +259,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForPass
 
 	// Vars
 	const Vec4 cameraOrigin = ctx.m_renderQueue->m_cameraTransform.getTranslationPart().xyz0();
-	DynamicArrayRaii<LightToRenderTempInfo> lightsToRender(ctx.m_tempPool);
+	DynamicArray<LightToRenderTempInfo, MemoryPoolPtrWrapper<StackMemoryPool>> lightsToRender(ctx.m_tempPool);
 	U32 drawcallCount = 0;
 
 	// First thing, allocate an empty tile for empty faces of point lights
@@ -513,7 +514,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForPass
 	// Split the work that will happen in the scratch buffer
 	if(lightsToRender.getSize())
 	{
-		DynamicArrayRaii<ThreadWorkItem> workItems(ctx.m_tempPool);
+		DynamicArray<ThreadWorkItem, MemoryPoolPtrWrapper<StackMemoryPool>> workItems(ctx.m_tempPool);
 		LightToRenderTempInfo* lightToRender = lightsToRender.getBegin();
 		U32 lightToRenderDrawcallCount = lightToRender->m_drawcallCount;
 		const LightToRenderTempInfo* lightToRenderEnd = lightsToRender.getEnd();

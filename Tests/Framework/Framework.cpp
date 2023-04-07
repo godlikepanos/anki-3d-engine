@@ -263,8 +263,7 @@ GrManager* createGrManager(NativeWindow* win)
 {
 	GrManagerInitInfo inf;
 	inf.m_allocCallback = allocAligned;
-	HeapMemoryPool pool(allocAligned, nullptr);
-	StringRaii home(&pool);
+	String home;
 	const Error err = getTempDirectory(home);
 	if(err)
 	{

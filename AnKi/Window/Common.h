@@ -29,6 +29,6 @@ private:
 	~WindowMemoryPool() = default;
 };
 
-using WindowString = BaseStringRaii<SingletonMemoryPoolWrapper<WindowMemoryPool>>;
+ANKI_DEFINE_SUBMODULE_UTIL_CONTAINERS(Window, WindowMemoryPool)
 
 } // end namespace anki

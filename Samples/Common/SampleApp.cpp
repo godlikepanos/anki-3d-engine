@@ -9,14 +9,13 @@ using namespace anki;
 
 Error SampleApp::init(int argc, char** argv, CString sampleName)
 {
-	HeapMemoryPool pool(allocAligned, nullptr);
-
 	// Init the super class
 	ConfigSet::getSingleton().setWindowFullscreen(true);
 
 #if !ANKI_OS_ANDROID
-	StringRaii mainDataPath(ANKI_SOURCE_DIRECTORY, &pool);
-	StringRaii assetsDataPath(&pool);
+	CString mainDataPath = ANKI_SOURCE_DIRECTORY;
+	HeapMemoryPool tmpPool(allocAligned, nullptr);
+	BaseString<MemoryPoolPtrWrapper<HeapMemoryPool>> assetsDataPath(&tmpPool);
 	assetsDataPath.sprintf("%s/Samples/%s", ANKI_SOURCE_DIRECTORY, sampleName.cstr());
 
 	if(!directoryExists(assetsDataPath))
@@ -27,13 +26,13 @@ Error SampleApp::init(int argc, char** argv, CString sampleName)
 	}
 	else
 	{
-		ConfigSet::getSingleton().setRsrcDataPaths(
-			StringRaii(&pool).sprintf("%s:%s", mainDataPath.cstr(), assetsDataPath.cstr()));
+		ConfigSet::getSingleton().setRsrcDataPaths(BaseString<MemoryPoolPtrWrapper<HeapMemoryPool>>(&tmpPool).sprintf(
+			"%s:%s", mainDataPath.cstr(), assetsDataPath.cstr()));
 	}
 #endif
 
 	ANKI_CHECK(ConfigSet::getSingleton().setFromCommandLineArguments(argc - 1, argv + 1));
-	ANKI_CHECK(App::init(allocAligned, nullptr));
+	ANKI_CHECK(App::init());
 
 	ANKI_CHECK(sampleExtraInit());
 

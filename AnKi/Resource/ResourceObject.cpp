@@ -26,7 +26,7 @@ Error ResourceObject::openFileReadAllText(const CString& filename, ResourceStrin
 	return Error::kNone;
 }
 
-Error ResourceObject::openFileParseXml(const CString& filename, XmlDocument& xml)
+Error ResourceObject::openFileParseXml(const CString& filename, ResourceXmlDocument& xml)
 {
 	ResourceString txt;
 	ANKI_CHECK(openFileReadAllText(filename, txt));

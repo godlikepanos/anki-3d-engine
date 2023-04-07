@@ -17,7 +17,8 @@ namespace anki {
 /// @tparam kTObjectAlignment The maximum alignment of the objects.
 /// @tparam kTObjectsPerChunk How much memory (in objects) will be allocated at once.
 /// @tparam TIndexType        If kTObjectsPerChunk>0xFF make it U16. If kTObjectsPerChunk>0xFFFF make it U32.
-template<PtrSize kTObjectSize, U32 kTObjectAlignment, U32 kTObjectsPerChunk = 64, typename TIndexType = U8>
+template<PtrSize kTObjectSize, U32 kTObjectAlignment, typename TMemoryPool, U32 kTObjectsPerChunk = 64,
+		 typename TIndexType = U8>
 class ObjectAllocator
 {
 public:
@@ -25,7 +26,8 @@ public:
 	static constexpr U32 kObjectAlignment = kTObjectAlignment;
 	static constexpr U32 kObjectsPerChunk = kTObjectsPerChunk;
 
-	ObjectAllocator()
+	ObjectAllocator(const TMemoryPool& pool = TMemoryPool())
+		: m_pool(pool)
 	{
 	}
 
@@ -36,13 +38,13 @@ public:
 
 	/// Allocate and construct a new object instance.
 	/// @note Not thread-safe.
-	template<typename T, typename TMemPool, typename... TArgs>
-	T* newInstance(TMemPool& pool, TArgs&&... args);
+	template<typename T, typename... TArgs>
+	T* newInstance(TArgs&&... args);
 
 	/// Delete an object.
 	/// @note Not thread-safe.
-	template<typename T, typename TMemPool>
-	void deleteInstance(TMemPool& pool, T* obj);
+	template<typename T>
+	void deleteInstance(T* obj);
 
 private:
 	/// Storage with equal properties as the object.
@@ -63,31 +65,32 @@ private:
 		Chunk* m_prev = nullptr;
 	};
 
+	TMemoryPool m_pool;
 	Chunk* m_chunksHead = nullptr;
 	Chunk* m_chunksTail = nullptr;
 };
 
 /// Convenience wrapper for ObjectAllocator.
-template<typename T, U32 kTObjectsPerChunk = 64, typename TIndexType = U8>
-class ObjectAllocatorSameType : public ObjectAllocator<sizeof(T), U32(alignof(T)), kTObjectsPerChunk, TIndexType>
+template<typename T, typename TMemoryPool, U32 kTObjectsPerChunk = 64, typename TIndexType = U8>
+class ObjectAllocatorSameType :
+	public ObjectAllocator<sizeof(T), U32(alignof(T)), TMemoryPool, kTObjectsPerChunk, TIndexType>
 {
 public:
-	using Base = ObjectAllocator<sizeof(T), U32(alignof(T)), kTObjectsPerChunk, TIndexType>;
+	using Base = ObjectAllocator<sizeof(T), U32(alignof(T)), TMemoryPool, kTObjectsPerChunk, TIndexType>;
 
 	/// Allocate and construct a new object instance.
 	/// @note Not thread-safe.
-	template<typename TMemPool, typename... TArgs>
-	T* newInstance(TMemPool& pool, TArgs&&... args)
+	template<typename... TArgs>
+	T* newInstance(TArgs&&... args)
 	{
-		return Base::template newInstance<T>(pool, std::forward(args)...);
+		return Base::template newInstance<T>(std::forward(args)...);
 	}
 
 	/// Delete an object.
 	/// @note Not thread-safe.
-	template<typename TMemPool>
-	void deleteInstance(TMemPool& pool, T* obj)
+	void deleteInstance(T* obj)
 	{
-		Base::deleteInstance(pool, obj);
+		Base::deleteInstance(obj);
 	}
 };
 /// @}

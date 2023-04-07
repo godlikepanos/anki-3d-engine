@@ -62,25 +62,6 @@ public:
 	/// @note It's thread-safe against place and remove methods.
 	void remove(OctreePlaceable& placeable);
 
-	/// Gather visible placeables.
-	/// @param frustumPlanes The frustum planes to test against.
-	/// @param testId A unique index for this test.
-	/// @param testCallback A ptr to a function that will be used to perform an additional test to the box of the
-	///                     Octree node. Can be nullptr.
-	/// @param testCallbackUserData Parameter to the testCallback. Can be nullptr.
-	/// @param out The output of the tests.
-	/// @note It's thread-safe against other gatherVisible calls.
-	void gatherVisible(const Plane frustumPlanes[6], U32 testId, OctreeNodeVisibilityTestCallback testCallback,
-					   void* testCallbackUserData, DynamicArrayRaii<void*>& out)
-	{
-		gatherVisibleRecursive(frustumPlanes, testId, testCallback, testCallbackUserData, m_rootLeaf, out);
-	}
-
-	/// Similar to gatherVisible but it spawns ThreadHive tasks.
-	void gatherVisibleParallel(const Plane frustumPlanes[6], U32 testId, OctreeNodeVisibilityTestCallback testCallback,
-							   void* testCallbackUserData, DynamicArrayRaii<void*>* out, ThreadHive& hive,
-							   ThreadHiveSemaphore* waitSemaphore, ThreadHiveSemaphore*& signalSemaphore);
-
 	/// Walk the tree.
 	/// @tparam TTestAabbFunc The lambda that will test an Aabb. Signature of lambda: Bool(*)(const Aabb& leafBox)
 	/// @tparam TNewPlaceableFunc The lambda to do something with a visible placeable.
@@ -115,9 +96,6 @@ public:
 	}
 
 private:
-	class GatherParallelCtx;
-	class GatherParallelTaskCtx;
-
 	/// List node.
 	class PlaceableNode : public IntrusiveListEnabled<PlaceableNode>
 	{
@@ -202,9 +180,9 @@ private:
 	Vec3 m_sceneAabbMax = Vec3(0.0f);
 	mutable Mutex m_globalMtx;
 
-	ObjectAllocatorSameType<Leaf, 256> m_leafAlloc;
-	ObjectAllocatorSameType<LeafNode, 128> m_leafNodeAlloc;
-	ObjectAllocatorSameType<PlaceableNode, 256> m_placeableNodeAlloc;
+	ObjectAllocatorSameType<Leaf, SingletonMemoryPoolWrapper<SceneMemoryPool>, 256> m_leafAlloc;
+	ObjectAllocatorSameType<LeafNode, SingletonMemoryPoolWrapper<SceneMemoryPool>, 128> m_leafNodeAlloc;
+	ObjectAllocatorSameType<PlaceableNode, SingletonMemoryPoolWrapper<SceneMemoryPool>, 256> m_placeableNodeAlloc;
 
 	Leaf* m_rootLeaf = nullptr;
 	U32 m_placeableCount = 0;
@@ -215,38 +193,38 @@ private:
 
 	Leaf* newLeaf()
 	{
-		return m_leafAlloc.newInstance(SceneMemoryPool::getSingleton());
+		return m_leafAlloc.newInstance();
 	}
 
 	void releaseLeaf(Leaf* leaf)
 	{
-		m_leafAlloc.deleteInstance(SceneMemoryPool::getSingleton(), leaf);
+		m_leafAlloc.deleteInstance(leaf);
 	}
 
 	PlaceableNode* newPlaceableNode(OctreePlaceable* placeable)
 	{
 		ANKI_ASSERT(placeable);
-		PlaceableNode* out = m_placeableNodeAlloc.newInstance(SceneMemoryPool::getSingleton());
+		PlaceableNode* out = m_placeableNodeAlloc.newInstance();
 		out->m_placeable = placeable;
 		return out;
 	}
 
 	void releasePlaceableNode(PlaceableNode* placeable)
 	{
-		m_placeableNodeAlloc.deleteInstance(SceneMemoryPool::getSingleton(), placeable);
+		m_placeableNodeAlloc.deleteInstance(placeable);
 	}
 
 	LeafNode* newLeafNode(Leaf* leaf)
 	{
 		ANKI_ASSERT(leaf);
-		LeafNode* out = m_leafNodeAlloc.newInstance(SceneMemoryPool::getSingleton());
+		LeafNode* out = m_leafNodeAlloc.newInstance();
 		out->m_leaf = leaf;
 		return out;
 	}
 
 	void releaseLeafNode(LeafNode* node)
 	{
-		m_leafNodeAlloc.deleteInstance(SceneMemoryPool::getSingleton(), node);
+		m_leafNodeAlloc.deleteInstance(node);
 	}
 
 	void placeRecursive(const Aabb& volume, OctreePlaceable* placeable, Leaf* parent, U32 depth);
@@ -258,16 +236,6 @@ private:
 
 	/// Remove a placeable from the tree.
 	void removeInternal(OctreePlaceable& placeable);
-
-	static void gatherVisibleRecursive(const Plane frustumPlanes[6], U32 testId,
-									   OctreeNodeVisibilityTestCallback testCallback, void* testCallbackUserData,
-									   Leaf* leaf, DynamicArrayRaii<void*>& out);
-
-	/// ThreadHive callback.
-	static void gatherVisibleTaskCallback(void* ud, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem);
-
-	void gatherVisibleParallelTask(U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem,
-								   GatherParallelTaskCtx& taskCtx);
 
 	/// Remove a leaf.
 	void cleanupRecursive(Leaf* leaf, Bool& canDeleteLeafUponReturn);

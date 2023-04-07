@@ -20,7 +20,7 @@ public:
 
 /// Create a human readable representation of the shader binary.
 void dumpShaderProgramBinary(const ShaderDumpOptions& options, const ShaderProgramBinary& binary,
-							 StringRaii& humanReadable);
+							 String& humanReadable);
 /// @}
 
 } // end namespace anki

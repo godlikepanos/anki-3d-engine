@@ -7,11 +7,17 @@
 
 #include <AnKi/AnKi.h>
 
-class SampleApp : public anki::App
+namespace anki {
+
+class SampleApp : public App
 {
 public:
-	anki::Error init(int argc, char** argv, anki::CString sampleName);
-	anki::Error userMainLoop(anki::Bool& quit, anki::Second elapsedTime) override;
+	using App::App;
 
-	virtual anki::Error sampleExtraInit() = 0;
+	Error init(int argc, char** argv, CString sampleName);
+	Error userMainLoop(Bool& quit, Second elapsedTime) override;
+
+	virtual Error sampleExtraInit() = 0;
 };
+
+} // end namespace anki

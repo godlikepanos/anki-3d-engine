@@ -7,21 +7,9 @@
 
 namespace anki {
 
-template<typename TMemPool>
-void StringList::destroy(TMemPool& pool)
-{
-	auto it = Base::getBegin();
-	auto endit = Base::getEnd();
-	for(; it != endit; ++it)
-	{
-		(*it).destroy(pool);
-	}
-
-	Base::destroy(pool);
-}
-
-template<typename TMemPool>
-void StringList::join(const CString& separator, BaseStringRaii<TMemPool>& out) const
+template<typename TMemoryPool>
+template<typename TStringMemoryPool>
+void BaseStringList<TMemoryPool>::join(const CString& separator, BaseString<TStringMemoryPool>& out) const
 {
 	if(Base::isEmpty())
 	{
@@ -31,7 +19,7 @@ void StringList::join(const CString& separator, BaseStringRaii<TMemPool>& out) c
 	// Count the characters
 	const I sepLen = separator.getLength();
 	I charCount = 0;
-	for(const String& str : *this)
+	for(const auto& str : *this)
 	{
 		charCount += str.getLength() + sepLen;
 	}
@@ -40,14 +28,14 @@ void StringList::join(const CString& separator, BaseStringRaii<TMemPool>& out) c
 	ANKI_ASSERT(charCount > 0);
 
 	// Allocate
-	out.create('?', charCount);
+	out = std::move(BaseString<TStringMemoryPool>('?', charCount, out.getMemoryPool()));
 
 	// Append to output
 	Char* to = &out[0];
 	typename Base::ConstIterator it = Base::getBegin();
 	for(; it != Base::getEnd(); it++)
 	{
-		const String& from = *it;
+		const auto& from = *it;
 		memcpy(to, &from[0], from.getLength() * sizeof(Char));
 		to += from.getLength();
 
@@ -59,8 +47,43 @@ void StringList::join(const CString& separator, BaseStringRaii<TMemPool>& out) c
 	}
 }
 
-template<typename TMemPool>
-void StringList::splitString(TMemPool& pool, const CString& s, const Char separator, Bool keepEmpty)
+template<typename TMemoryPool>
+I BaseStringList<TMemoryPool>::getIndexOf(const CString& value) const
+{
+	U pos = 0;
+
+	for(auto it = Base::getBegin(); it != Base::getEnd(); ++it)
+	{
+		if(*it == value)
+		{
+			break;
+		}
+		++pos;
+	}
+
+	return (pos == Base::getSize()) ? -1 : pos;
+}
+
+template<typename TMemoryPool>
+void BaseStringList<TMemoryPool>::sortAll(const Sort method)
+{
+	if(method == Sort::kAscending)
+	{
+		Base::sort([](const StringType& a, const StringType& b) {
+			return a < b;
+		});
+	}
+	else
+	{
+		ANKI_ASSERT(method == Sort::kDescending);
+		Base::sort([](const StringType& a, const StringType& b) {
+			return a > b;
+		});
+	}
+}
+
+template<typename TMemoryPool>
+void BaseStringList<TMemoryPool>::splitString(const CString& s, const Char separator, Bool keepEmpty)
 {
 	ANKI_ASSERT(Base::isEmpty());
 
@@ -73,11 +96,7 @@ void StringList::splitString(TMemPool& pool, const CString& s, const Char separa
 		{
 			if(begin < end)
 			{
-				Base::emplaceBack(pool);
-
-				String str;
-				str.create(pool, begin, end);
-				Base::getBack() = std::move(str);
+				Base::emplaceBack(std::move(StringType(begin, end, Base::getMemoryPool())));
 			}
 
 			break;
@@ -86,19 +105,15 @@ void StringList::splitString(TMemPool& pool, const CString& s, const Char separa
 		{
 			if(begin < end)
 			{
-				Base::emplaceBack(pool);
+				Base::emplaceBack(StringType(begin, end, Base::getMemoryPool()));
 
-				String str;
-				str.create(pool, begin, end);
-
-				Base::getBack() = std::move(str);
 				begin = end + 1;
 			}
 			else
 			{
 				if(keepEmpty)
 				{
-					Base::emplaceBack(pool);
+					Base::emplaceBack(Base::getMemoryPool());
 				}
 
 				++begin;
@@ -109,56 +124,28 @@ void StringList::splitString(TMemPool& pool, const CString& s, const Char separa
 	}
 }
 
-template<typename TMemPool>
-void StringList::pushBackSprintf(TMemPool& pool, const Char* fmt, ...)
+template<typename TMemoryPool>
+void BaseStringList<TMemoryPool>::pushBackSprintf(const Char* fmt, ...)
 {
-	String str;
+	StringType str(Base::getMemoryPool());
 	va_list args;
 	va_start(args, fmt);
-	str.sprintfInternal(pool, fmt, args);
+	str.sprintfInternal(fmt, args);
 	va_end(args);
 
-	Base::emplaceBack(pool);
-	Base::getBack() = std::move(str);
+	Base::emplaceBack(std::move(str));
 }
 
-template<typename TMemPool>
-void StringList::pushFrontSprintf(TMemPool& pool, const Char* fmt, ...)
+template<typename TMemoryPool>
+void BaseStringList<TMemoryPool>::pushFrontSprintf(const Char* fmt, ...)
 {
-	String str;
+	StringType str(Base::getMemoryPool());
 	va_list args;
 	va_start(args, fmt);
-	str.sprintfInternal(pool, fmt, args);
+	str.sprintfInternal(fmt, args);
 	va_end(args);
 
-	Base::emplaceFront(pool);
-	Base::getFront() = std::move(str);
-}
-
-template<typename TMemPool>
-void BaseStringListRaii<TMemPool>::pushBackSprintf(const Char* fmt, ...)
-{
-	String str;
-	va_list args;
-	va_start(args, fmt);
-	str.sprintfInternal(m_pool, fmt, args);
-	va_end(args);
-
-	Base::emplaceBack(m_pool);
-	Base::getBack() = std::move(str);
-}
-
-template<typename TMemPool>
-void BaseStringListRaii<TMemPool>::pushFrontSprintf(const Char* fmt, ...)
-{
-	String str;
-	va_list args;
-	va_start(args, fmt);
-	str.sprintfInternal(m_pool, fmt, args);
-	va_end(args);
-
-	Base::emplaceFront(m_pool);
-	Base::getFront() = std::move(str);
+	Base::emplaceFront(std::move(str));
 }
 
 } // end namespace anki

@@ -259,7 +259,8 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	if(!!(m_stages & ShaderTypeBit::kAllRayTracing))
 	{
 		// Create shaders
-		GrDynamicArray<VkPipelineShaderStageCreateInfo> stages(m_shaders.getSize());
+		GrDynamicArray<VkPipelineShaderStageCreateInfo> stages;
+		stages.resize(m_shaders.getSize());
 		for(U32 i = 0; i < stages.getSize(); ++i)
 		{
 			const ShaderImpl& impl = static_cast<const ShaderImpl&>(*m_shaders[i]);
@@ -284,7 +285,8 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		U32 groupCount = inf.m_rayTracingShaders.m_rayGenShaders.getSize()
 						 + inf.m_rayTracingShaders.m_missShaders.getSize()
 						 + inf.m_rayTracingShaders.m_hitGroups.getSize();
-		GrDynamicArray<VkRayTracingShaderGroupCreateInfoKHR> groups(groupCount, defaultGroup);
+		GrDynamicArray<VkRayTracingShaderGroupCreateInfoKHR> groups;
+		groups.resize(groupCount, defaultGroup);
 
 		// 1st group is the ray gen
 		groupCount = 0;
@@ -342,7 +344,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		// Get RT handles
 		const U32 handleArraySize =
 			getGrManagerImpl().getPhysicalDeviceRayTracingProperties().shaderGroupHandleSize * groupCount;
-		m_rt.m_allHandles.create(handleArraySize, 0);
+		m_rt.m_allHandles.resize(handleArraySize, 0_U8);
 		ANKI_VK_CHECK(vkGetRayTracingShaderGroupHandlesKHR(getVkDevice(), m_rt.m_ppline, 0, groupCount, handleArraySize,
 														   &m_rt.m_allHandles[0]));
 	}

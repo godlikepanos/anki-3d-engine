@@ -254,7 +254,7 @@ Error DescriptorSetFactory::BindlessDescriptorSet::init(U32 bindlessTextureCount
 
 	// Init the free arrays
 	{
-		m_freeTexIndices.create(bindlessTextureCount);
+		m_freeTexIndices.resize(bindlessTextureCount);
 		m_freeTexIndexCount = U16(m_freeTexIndices.getSize());
 
 		for(U32 i = 0; i < m_freeTexIndices.getSize(); ++i)
@@ -262,7 +262,7 @@ Error DescriptorSetFactory::BindlessDescriptorSet::init(U32 bindlessTextureCount
 			m_freeTexIndices[i] = U16(m_freeTexIndices.getSize() - i - 1);
 		}
 
-		m_freeTexelBufferIndices.create(bindlessTextureBuffers);
+		m_freeTexelBufferIndices.resize(bindlessTextureBuffers);
 		m_freeTexelBufferIndexCount = U16(m_freeTexelBufferIndices.getSize());
 
 		for(U32 i = 0; i < m_freeTexelBufferIndices.getSize(); ++i)
@@ -507,11 +507,11 @@ Error DescriptorSetFactory::DSAllocator::newSet(U64 hash,
 void DescriptorSetFactory::DSAllocator::writeSet(
 	const Array<AnyBindingExtended, kMaxBindingsPerDescriptorSet>& bindings, const DS& set, StackMemoryPool& tmpPool)
 {
-	DynamicArrayRaii<VkWriteDescriptorSet> writeInfos(&tmpPool);
-	DynamicArrayRaii<VkDescriptorImageInfo> texInfos(&tmpPool);
-	DynamicArrayRaii<VkDescriptorBufferInfo> buffInfos(&tmpPool);
-	DynamicArrayRaii<VkWriteDescriptorSetAccelerationStructureKHR> asInfos(&tmpPool);
-	DynamicArrayRaii<VkBufferView> bufferViews(&tmpPool);
+	DynamicArray<VkWriteDescriptorSet, MemoryPoolPtrWrapper<StackMemoryPool>> writeInfos(&tmpPool);
+	DynamicArray<VkDescriptorImageInfo, MemoryPoolPtrWrapper<StackMemoryPool>> texInfos(&tmpPool);
+	DynamicArray<VkDescriptorBufferInfo, MemoryPoolPtrWrapper<StackMemoryPool>> buffInfos(&tmpPool);
+	DynamicArray<VkWriteDescriptorSetAccelerationStructureKHR, MemoryPoolPtrWrapper<StackMemoryPool>> asInfos(&tmpPool);
+	DynamicArray<VkBufferView, MemoryPoolPtrWrapper<StackMemoryPool>> bufferViews(&tmpPool);
 
 	// First pass: Populate the VkDescriptorImageInfo and VkDescriptorBufferInfo
 	for(U bindingIdx = m_layoutEntry->m_minBinding; bindingIdx <= m_layoutEntry->m_maxBinding; ++bindingIdx)

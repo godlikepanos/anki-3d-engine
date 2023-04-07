@@ -38,12 +38,17 @@ public:
 ///                    void freeChunk(TChunk* out);
 ///                    @endcode
 /// @tparam TLock This an optional lock. Can be a Mutex or SpinLock or some dummy class.
-template<typename TChunk, typename TInterface, typename TLock>
+/// @tparam TMemoryPool The memory pool used in internal allocations.
+template<typename TChunk, typename TInterface, typename TLock,
+		 typename TMemoryPool = SingletonMemoryPoolWrapper<DefaultMemoryPool>>
 class ClassAllocatorBuilder
 {
 public:
 	/// Create.
-	ClassAllocatorBuilder() = default;
+	ClassAllocatorBuilder(const TMemoryPool& pool = TMemoryPool())
+		: m_classes(pool)
+	{
+	}
 
 	ClassAllocatorBuilder(const ClassAllocatorBuilder&) = delete; // Non-copyable
 
@@ -56,7 +61,7 @@ public:
 	ClassAllocatorBuilder& operator=(const ClassAllocatorBuilder&) = delete; // Non-copyable
 
 	/// Initialize it. Feel free to feedle with the TInterface before you do that.
-	void init(BaseMemoryPool* pool);
+	void init();
 
 	/// Destroy the allocator builder.
 	void destroy();
@@ -110,13 +115,11 @@ private:
 		mutable TLock m_mtx;
 	};
 
-	BaseMemoryPool* m_pool = nullptr;
-
 	/// The interface as decribed in the class docs.
 	TInterface m_interface;
 
 	/// All the classes.
-	DynamicArray<Class> m_classes;
+	DynamicArray<Class, TMemoryPool> m_classes;
 
 	Class* findClass(PtrSize size, PtrSize alignment);
 

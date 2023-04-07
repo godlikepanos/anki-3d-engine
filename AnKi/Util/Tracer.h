@@ -105,18 +105,16 @@ private:
 	class ThreadLocal;
 	class Chunk;
 
-	BaseMemoryPool* m_pool = nullptr;
-
 	static thread_local ThreadLocal* m_threadLocal;
-	DynamicArray<ThreadLocal*> m_allThreadLocal; ///< The Tracer should know about all the ThreadLocal.
+
+	/// The Tracer should know about all the ThreadLocal.
+	DynamicArray<ThreadLocal*, SingletonMemoryPoolWrapper<DefaultMemoryPool>> m_allThreadLocal;
+
 	Mutex m_allThreadLocalMtx;
 
 	Bool m_enabled = false;
 
-	Tracer(BaseMemoryPool* pool)
-		: m_pool(pool)
-	{
-	}
+	Tracer() = default;
 
 	~Tracer();
 

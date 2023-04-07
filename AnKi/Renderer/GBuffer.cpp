@@ -100,7 +100,11 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 	const U32 problemSize = ctx.m_renderQueue->m_renderables.getSize() + earlyZCount;
 	U32 start, end;
 	splitThreadedProblem(threadId, threadCount, problemSize, start, end);
-	ANKI_ASSERT(end != start);
+
+	if(end == start) [[unlikely]]
+	{
+		return;
+	}
 
 	// Set some state, leave the rest to default
 	cmdb->setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());

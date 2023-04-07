@@ -7,13 +7,10 @@
 
 namespace anki {
 
-template<typename TChunk, typename TInterface, typename TLock>
-void ClassAllocatorBuilder<TChunk, TInterface, TLock>::init(BaseMemoryPool* pool)
+template<typename TChunk, typename TInterface, typename TLock, typename TMemoryPool>
+void ClassAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::init()
 {
-	ANKI_ASSERT(pool);
-	m_pool = pool;
-
-	m_classes.create(*m_pool, m_interface.getClassCount());
+	m_classes.resize(m_interface.getClassCount());
 
 	for(U32 classIdx = 0; classIdx < m_classes.getSize(); ++classIdx)
 	{
@@ -25,20 +22,20 @@ void ClassAllocatorBuilder<TChunk, TInterface, TLock>::init(BaseMemoryPool* pool
 	}
 }
 
-template<typename TChunk, typename TInterface, typename TLock>
-void ClassAllocatorBuilder<TChunk, TInterface, TLock>::destroy()
+template<typename TChunk, typename TInterface, typename TLock, typename TMemoryPool>
+void ClassAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::destroy()
 {
 	for([[maybe_unused]] const Class& c : m_classes)
 	{
 		ANKI_ASSERT(c.m_chunkList.isEmpty() && "Forgot to deallocate");
 	}
 
-	m_classes.destroy(*m_pool);
+	m_classes.destroy();
 }
 
-template<typename TChunk, typename TInterface, typename TLock>
-typename ClassAllocatorBuilder<TChunk, TInterface, TLock>::Class*
-ClassAllocatorBuilder<TChunk, TInterface, TLock>::findClass(PtrSize size, PtrSize alignment)
+template<typename TChunk, typename TInterface, typename TLock, typename TMemoryPool>
+typename ClassAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::Class*
+ClassAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::findClass(PtrSize size, PtrSize alignment)
 {
 	ANKI_ASSERT(size > 0 && alignment > 0);
 
@@ -80,9 +77,9 @@ ClassAllocatorBuilder<TChunk, TInterface, TLock>::findClass(PtrSize size, PtrSiz
 	return nullptr;
 }
 
-template<typename TChunk, typename TInterface, typename TLock>
-Error ClassAllocatorBuilder<TChunk, TInterface, TLock>::allocate(PtrSize size, PtrSize alignment, TChunk*& chunk,
-																 PtrSize& offset)
+template<typename TChunk, typename TInterface, typename TLock, typename TMemoryPool>
+Error ClassAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::allocate(PtrSize size, PtrSize alignment,
+																			  TChunk*& chunk, PtrSize& offset)
 {
 	ANKI_ASSERT(isInitialized());
 	ANKI_ASSERT(size > 0 && alignment > 0);
@@ -143,8 +140,8 @@ Error ClassAllocatorBuilder<TChunk, TInterface, TLock>::allocate(PtrSize size, P
 	return Error::kNone;
 }
 
-template<typename TChunk, typename TInterface, typename TLock>
-void ClassAllocatorBuilder<TChunk, TInterface, TLock>::free(TChunk* chunk, PtrSize offset)
+template<typename TChunk, typename TInterface, typename TLock, typename TMemoryPool>
+void ClassAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::free(TChunk* chunk, PtrSize offset)
 {
 	ANKI_ASSERT(isInitialized());
 	ANKI_ASSERT(chunk);
@@ -169,8 +166,8 @@ void ClassAllocatorBuilder<TChunk, TInterface, TLock>::free(TChunk* chunk, PtrSi
 	}
 }
 
-template<typename TChunk, typename TInterface, typename TLock>
-void ClassAllocatorBuilder<TChunk, TInterface, TLock>::getStats(ClassAllocatorBuilderStats& stats) const
+template<typename TChunk, typename TInterface, typename TLock, typename TMemoryPool>
+void ClassAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::getStats(ClassAllocatorBuilderStats& stats) const
 {
 	stats = {};
 

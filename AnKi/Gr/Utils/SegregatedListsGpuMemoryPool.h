@@ -84,7 +84,8 @@ public:
 private:
 	class BuilderInterface;
 	class Chunk;
-	using Builder = SegregatedListsAllocatorBuilder<Chunk, BuilderInterface, DummyMutex>;
+	using Builder =
+		SegregatedListsAllocatorBuilder<Chunk, BuilderInterface, DummyMutex, SingletonMemoryPoolWrapper<GrMemoryPool>>;
 
 	BufferUsageBit m_bufferUsage = BufferUsageBit::kNone;
 	GrDynamicArray<PtrSize> m_classes;

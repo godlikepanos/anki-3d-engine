@@ -264,6 +264,11 @@ private:
 class MyApp : public App
 {
 public:
+	MyApp(AllocAlignedCallback allocCb, void* allocCbUserData)
+		: App(allocCb, allocCbUserData)
+	{
+	}
+
 	Error init(int argc, char** argv, [[maybe_unused]] CString appName)
 	{
 		if(argc < 2)
@@ -272,23 +277,20 @@ public:
 			return Error::kUserData;
 		}
 
-		HeapMemoryPool pool(allocAligned, nullptr);
-		StringRaii mainDataPath(ANKI_SOURCE_DIRECTORY, &pool);
-
 		ConfigSet::getSingleton().setWindowFullscreen(false);
-		ConfigSet::getSingleton().setRsrcDataPaths(mainDataPath);
+		ConfigSet::getSingleton().setRsrcDataPaths(ANKI_SOURCE_DIRECTORY);
 		ConfigSet::getSingleton().setGrValidation(false);
 		ConfigSet::getSingleton().setGrDebugMarkers(false);
 		ANKI_CHECK(ConfigSet::getSingleton().setFromCommandLineArguments(argc - 2, argv + 2));
 
-		ANKI_CHECK(App::init(allocAligned, nullptr));
+		ANKI_CHECK(App::init());
 
 		// Load the texture
 		ImageResourcePtr image;
 		ANKI_CHECK(ResourceManager::getSingleton().loadResource(argv[1], image, false));
 
 		// Change window name
-		StringRaii title(&pool);
+		String title;
 		title.sprintf("%s %u x %u Mips %u Format %s", argv[1], image->getWidth(), image->getHeight(),
 					  image->getTexture()->getMipmapCount(), getFormatInfo(image->getTexture()->getFormat()).m_name);
 		NativeWindow::getSingleton().setWindowTitle(title);
@@ -318,7 +320,7 @@ int myMain(int argc, char* argv[])
 {
 	Error err = Error::kNone;
 
-	MyApp* app = new MyApp;
+	MyApp* app = new MyApp(allocAligned, nullptr);
 	err = app->init(argc, argv, "Texture Viewer");
 	if(!err)
 	{

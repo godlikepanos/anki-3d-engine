@@ -7,8 +7,8 @@
 
 namespace anki {
 
-template<U32 kMaxMemoryRangeLog2, typename TLock, typename TMemPool>
-void BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock, TMemPool>::init(InternalMemoryPool pool, U32 maxMemoryRangeLog2)
+template<U32 kMaxMemoryRangeLog2, typename TLock, typename TMemoryPool>
+void BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock, TMemoryPool>::init(U32 maxMemoryRangeLog2)
 {
 	ANKI_ASSERT(maxMemoryRangeLog2 >= 1 && maxMemoryRangeLog2 <= kMaxMemoryRangeLog2);
 	ANKI_ASSERT(m_freeLists.getSize() == 0 && m_userAllocatedSize == 0 && m_realAllocatedSize == 0);
@@ -16,23 +16,22 @@ void BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock, TMemPool>::init(InternalM
 	const U32 orderCount = maxMemoryRangeLog2 + 1;
 	m_maxMemoryRange = pow2<PtrSize>(maxMemoryRangeLog2);
 
-	m_pool = pool;
-	m_freeLists.create(m_pool, orderCount);
+	m_freeLists.resize(orderCount, getMemoryPool());
 }
 
-template<U32 kMaxMemoryRangeLog2, typename TLock, typename TMemPool>
-void BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock, TMemPool>::destroy()
+template<U32 kMaxMemoryRangeLog2, typename TLock, typename TMemoryPool>
+void BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock, TMemoryPool>::destroy()
 {
 	ANKI_ASSERT(m_userAllocatedSize == 0 && "Forgot to free all memory");
-	m_freeLists.destroy(m_pool);
+	m_freeLists.destroy();
 	m_maxMemoryRange = 0;
 	m_userAllocatedSize = 0;
 	m_realAllocatedSize = 0;
 }
 
-template<U32 kMaxMemoryRangeLog2, typename TLock, typename TMemPool>
-Bool BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock, TMemPool>::allocate(PtrSize size, PtrSize alignment,
-																		   Address& outAddress)
+template<U32 kMaxMemoryRangeLog2, typename TLock, typename TMemoryPool>
+Bool BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock, TMemoryPool>::allocate(PtrSize size, PtrSize alignment,
+																			  Address& outAddress)
 {
 	ANKI_ASSERT(size > 0 && size <= m_maxMemoryRange);
 
@@ -59,7 +58,7 @@ Bool BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock, TMemPool>::allocate(PtrSi
 	if(m_userAllocatedSize == 0)
 	{
 		const Address startingAddress = 0;
-		m_freeLists.getBack().create(m_pool, 1, startingAddress);
+		m_freeLists.getBack().resize(1, startingAddress);
 	}
 
 	// Find the order to start the search
@@ -88,7 +87,7 @@ Bool BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock, TMemPool>::allocate(PtrSi
 		ANKI_ASSERT(buddyAddress < m_maxMemoryRange && buddyAddress <= getMaxNumericLimit<Address>());
 
 		ANKI_ASSERT(order > 0);
-		m_freeLists[order - 1].emplaceBack(m_pool, Address(buddyAddress));
+		m_freeLists[order - 1].emplaceBack(Address(buddyAddress));
 
 		--order;
 	}
@@ -108,8 +107,9 @@ Bool BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock, TMemPool>::allocate(PtrSi
 	return true;
 }
 
-template<U32 kMaxMemoryRangeLog2, typename TLock, typename TMemPool>
-void BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock, TMemPool>::free(Address address, PtrSize size, PtrSize alignment)
+template<U32 kMaxMemoryRangeLog2, typename TLock, typename TMemoryPool>
+void BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock, TMemoryPool>::free(Address address, PtrSize size,
+																		  PtrSize alignment)
 {
 	PtrSize alignedSize = nextPowerOfTwo(size);
 	U32 order = log2(alignedSize);
@@ -146,8 +146,8 @@ void BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock, TMemPool>::free(Address a
 	}
 }
 
-template<U32 kMaxMemoryRangeLog2, typename TLock, typename TMemPool>
-void BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock, TMemPool>::freeInternal(PtrSize address, PtrSize size)
+template<U32 kMaxMemoryRangeLog2, typename TLock, typename TMemoryPool>
+void BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock, TMemoryPool>::freeInternal(PtrSize address, PtrSize size)
 {
 	ANKI_ASSERT(size);
 	ANKI_ASSERT(isPowerOfTwo(size));
@@ -180,7 +180,7 @@ void BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock, TMemPool>::freeInternal(P
 	{
 		if(m_freeLists[order][i] == buddyAddress)
 		{
-			m_freeLists[order].erase(m_pool, m_freeLists[order].getBegin() + i);
+			m_freeLists[order].erase(m_freeLists[order].getBegin() + i);
 
 			freeInternal((buddyIsLeft) ? buddyAddress : address, size * 2);
 			buddyFound = true;
@@ -191,17 +191,17 @@ void BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock, TMemPool>::freeInternal(P
 	if(!buddyFound)
 	{
 		ANKI_ASSERT(address <= getMaxNumericLimit<Address>());
-		m_freeLists[order].emplaceBack(m_pool, Address(address));
+		m_freeLists[order].emplaceBack(Address(address));
 	}
 }
 
-template<U32 kMaxMemoryRangeLog2, typename TLock, typename TMemPool>
-void BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock, TMemPool>::debugPrint() const
+template<U32 kMaxMemoryRangeLog2, typename TLock, typename TMemoryPool>
+void BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock, TMemoryPool>::debugPrint() const
 {
 	constexpr PtrSize kMaxMemoryRange = pow2<PtrSize>(kMaxMemoryRangeLog2);
 
 	// Allocate because we can't possibly have that in the stack
-	BitSet<kMaxMemoryRange>* freeBytes = newInstance<BitSet<kMaxMemoryRange>>(m_pool, false);
+	BitSet<kMaxMemoryRange>* freeBytes = newInstance<BitSet<kMaxMemoryRange>>(getMemoryPool(), false);
 
 	LockGuard<TLock> lock(m_mutex);
 
@@ -226,11 +226,11 @@ void BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock, TMemPool>::debugPrint() c
 
 		printf("\n");
 	}
-	deleteInstance(m_pool, freeBytes);
+	deleteInstance(getMemoryPool(), freeBytes);
 }
 
-template<U32 kMaxMemoryRangeLog2, typename TLock, typename TMemPool>
-void BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock, TMemPool>::getStats(BuddyAllocatorBuilderStats& stats) const
+template<U32 kMaxMemoryRangeLog2, typename TLock, typename TMemoryPool>
+void BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock, TMemoryPool>::getStats(BuddyAllocatorBuilderStats& stats) const
 {
 	LockGuard<TLock> lock(m_mutex);
 

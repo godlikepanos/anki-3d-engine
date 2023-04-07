@@ -113,8 +113,7 @@ Error ModelResource::load(const ResourceFilename& filename, Bool async)
 {
 	// Load
 	//
-	XmlElement el;
-	XmlDocument doc(&ResourceMemoryPool::getSingleton());
+	ResourceXmlDocument doc;
 	ANKI_CHECK(openFileParseXml(filename, doc));
 
 	XmlElement rootEl;
@@ -143,7 +142,7 @@ Error ModelResource::load(const ResourceFilename& filename, Bool async)
 		return Error::kUserData;
 	}
 
-	m_modelPatches.create(count);
+	m_modelPatches.resize(count);
 
 	count = 0;
 	ANKI_CHECK(modelPatchesEl.getChildElement("modelPatch", modelPatchEl));

@@ -183,7 +183,8 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		}
 
 		// Upload the uniforms
-		DynamicArrayRaii<U32> allUniforms(U32(m_gpuSceneUniforms.m_size / 4), info.m_framePool);
+		DynamicArray<U32, MemoryPoolPtrWrapper<StackMemoryPool>> allUniforms(info.m_framePool);
+		allUniforms.resize(U32(m_gpuSceneUniforms.m_size / 4));
 		U32 count = 0;
 		for(U32 i = 0; i < modelPatchCount; ++i)
 		{
@@ -238,7 +239,7 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	return Error::kNone;
 }
 
-void ModelComponent::setupRenderableQueueElements(U32 lod, RenderingTechnique technique, StackMemoryPool& tmpPool,
+void ModelComponent::setupRenderableQueueElements(U32 lod, RenderingTechnique technique,
 												  WeakArray<RenderableQueueElement>& outRenderables) const
 {
 	ANKI_ASSERT(isEnabled());
@@ -263,8 +264,9 @@ void ModelComponent::setupRenderableQueueElements(U32 lod, RenderingTechnique te
 		return;
 	}
 
-	RenderableQueueElement* renderables = static_cast<RenderableQueueElement*>(
-		tmpPool.allocate(sizeof(RenderableQueueElement) * renderableCount, alignof(RenderableQueueElement)));
+	RenderableQueueElement* renderables =
+		static_cast<RenderableQueueElement*>(SceneGraph::getSingleton().getFrameMemoryPool().allocate(
+			sizeof(RenderableQueueElement) * renderableCount, alignof(RenderableQueueElement)));
 
 	outRenderables.setArray(renderables, renderableCount);
 
@@ -319,7 +321,6 @@ void ModelComponent::setupRenderableQueueElements(U32 lod, RenderingTechnique te
 }
 
 void ModelComponent::setupRayTracingInstanceQueueElements(U32 lod, RenderingTechnique technique,
-														  StackMemoryPool& tmpPool,
 														  WeakArray<RayTracingInstanceQueueElement>& outInstances) const
 {
 	ANKI_ASSERT(isEnabled());
@@ -344,8 +345,9 @@ void ModelComponent::setupRayTracingInstanceQueueElements(U32 lod, RenderingTech
 		return;
 	}
 
-	RayTracingInstanceQueueElement* instances = static_cast<RayTracingInstanceQueueElement*>(tmpPool.allocate(
-		sizeof(RayTracingInstanceQueueElement) * instanceCount, alignof(RayTracingInstanceQueueElement)));
+	RayTracingInstanceQueueElement* instances =
+		static_cast<RayTracingInstanceQueueElement*>(SceneGraph::getSingleton().getFrameMemoryPool().allocate(
+			sizeof(RayTracingInstanceQueueElement) * instanceCount, alignof(RayTracingInstanceQueueElement)));
 
 	outInstances.setArray(instances, instanceCount);
 

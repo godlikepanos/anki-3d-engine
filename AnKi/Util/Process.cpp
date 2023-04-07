@@ -38,8 +38,8 @@ void Process::destroy()
 #endif
 }
 
-Error Process::start(CString executable, const DynamicArray<StringRaii>& arguments,
-					 const DynamicArray<StringRaii>& environment, ProcessOptions options)
+Error Process::start(CString executable, const DynamicArray<String>& arguments, const DynamicArray<String>& environment,
+					 ProcessOptions options)
 {
 	// Set args and env
 	Array<const Char*, kMaxArgs> args;
@@ -224,7 +224,7 @@ Error Process::kill(ProcessKillSignal k)
 	return Error::kNone;
 }
 
-Error Process::readFromStdout(StringRaii& text)
+Error Process::readFromStdout(String& text)
 {
 #if !ANKI_OS_ANDROID
 	return readCommon(REPROC_STREAM_OUT, text);
@@ -233,7 +233,7 @@ Error Process::readFromStdout(StringRaii& text)
 #endif
 }
 
-Error Process::readFromStderr(StringRaii& text)
+Error Process::readFromStderr(String& text)
 {
 #if !ANKI_OS_ANDROID
 	return readCommon(REPROC_STREAM_ERR, text);
@@ -243,7 +243,7 @@ Error Process::readFromStderr(StringRaii& text)
 }
 
 #if !ANKI_OS_ANDROID
-Error Process::readCommon(I32 reprocStream, StringRaii& text)
+Error Process::readCommon(I32 reprocStream, String& text)
 {
 	ANKI_ASSERT(m_handle);
 
@@ -269,15 +269,15 @@ Error Process::readCommon(I32 reprocStream, StringRaii& text)
 		}
 
 		buff[ret] = '\0';
-		text.append(&buff[0]);
+		text += &buff[0];
 	}
 
 	return Error::kNone;
 }
 #endif
 
-Error Process::callProcess(CString executable, ConstWeakArray<CString> arguments, StringRaii* stdOut,
-						   StringRaii* stdErr, I32& exitCode)
+Error Process::callProcess(CString executable, ConstWeakArray<CString> arguments, String* stdOut, String* stdErr,
+						   I32& exitCode)
 {
 #if !ANKI_OS_ANDROID
 	if(true)

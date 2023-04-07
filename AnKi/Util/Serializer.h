@@ -84,7 +84,6 @@ public:
 
 	/// Serialize a class.
 	/// @param x What to serialize.
-	/// @param tmpPool A temp mem pool for some memory needed.
 	/// @param file The file to populate.
 	template<typename T>
 	Error serialize(const T& x, BaseMemoryPool& tmpPool, File& file)
@@ -157,12 +156,14 @@ private:
 		PtrSize m_value; ///< Where it points to. It's an offset after the header.
 	};
 
+	using Pool = MemoryPoolPtrWrapper<BaseMemoryPool>;
+
 	File* m_file = nullptr;
 	PtrSize m_eofPos; ///< A logical end of the file. Used for allocations.
 	PtrSize m_beginOfDataFilePos; ///< Where the data are located in the file.
-	BaseMemoryPool* m_pool = nullptr;
-	DynamicArray<PointerInfo> m_pointerFilePositions; ///< Array of file positions that contain pointers.
-	DynamicArray<PtrSize> m_structureFilePos;
+	Pool m_pool;
+	DynamicArray<PointerInfo, Pool> m_pointerFilePositions; ///< Array of file positions that contain pointers.
+	DynamicArray<PtrSize, Pool> m_structureFilePos;
 	Error m_err = Error::kNone;
 
 	template<typename T>

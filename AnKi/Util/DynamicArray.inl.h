@@ -7,30 +7,15 @@
 
 namespace anki {
 
-template<typename T, typename TSize>
-template<typename TMemPool>
-DynamicArray<T, TSize>& DynamicArray<T, TSize>::operator=(DynamicArrayRaii<T, TSize, TMemPool>&& b)
-{
-	ANKI_ASSERT(m_data == nullptr && m_size == 0 && "Cannot move before destroying");
-	T* data;
-	Size size, storageSize;
-	b.moveAndReset(data, size, storageSize);
-	m_data = data;
-	m_size = size;
-	m_capacity = storageSize;
-	return *this;
-}
-
-template<typename T, typename TSize>
-template<typename TMemPool>
-void DynamicArray<T, TSize>::resizeStorage(TMemPool& pool, Size newSize)
+template<typename T, typename TMemoryPool, typename TSize>
+void DynamicArray<T, TMemoryPool, TSize>::resizeStorage(Size newSize)
 {
 	if(newSize > m_capacity)
 	{
 		// Need to grow
 
 		m_capacity = (newSize > Size(F64(m_capacity) * kGrowScale)) ? newSize : Size(F64(m_capacity) * kGrowScale);
-		Value* newStorage = static_cast<Value*>(pool.allocate(m_capacity * sizeof(Value), alignof(Value)));
+		Value* newStorage = static_cast<Value*>(m_pool.allocate(m_capacity * sizeof(Value), alignof(Value)));
 
 		// Move old elements to the new storage
 		if(m_data)
@@ -41,7 +26,7 @@ void DynamicArray<T, TSize>::resizeStorage(TMemPool& pool, Size newSize)
 				m_data[i].~T();
 			}
 
-			pool.free(m_data);
+			m_pool.free(m_data);
 		}
 
 		m_data = newStorage;
@@ -67,7 +52,7 @@ void DynamicArray<T, TSize>::resizeStorage(TMemPool& pool, Size newSize)
 			m_capacity = newSize;
 			if(newSize)
 			{
-				Value* newStorage = static_cast<Value*>(pool.allocate(m_capacity * sizeof(Value), alignof(Value)));
+				Value* newStorage = static_cast<Value*>(m_pool.allocate(m_capacity * sizeof(Value), alignof(Value)));
 
 				for(Size i = 0; i < m_size; ++i)
 				{
@@ -75,66 +60,58 @@ void DynamicArray<T, TSize>::resizeStorage(TMemPool& pool, Size newSize)
 					m_data[i].~T();
 				}
 
-				pool.free(m_data);
+				m_pool.free(m_data);
 				m_data = newStorage;
 			}
 			else
 			{
-				pool.free(m_data);
+				m_pool.free(m_data);
 				m_data = nullptr;
 			}
 		}
 	}
 }
 
-template<typename T, typename TSize>
-template<typename TMemPool>
-void DynamicArray<T, TSize>::resize(TMemPool& pool, Size newSize, const Value& v)
+template<typename T, typename TMemoryPool, typename TSize>
+template<typename... TArgs>
+void DynamicArray<T, TMemoryPool, TSize>::resize(Size newSize, TArgs... args)
 {
-	const Bool willGrow = newSize > m_size;
-	resizeStorage(pool, newSize);
-
-	if(willGrow)
+	if constexpr(std::is_copy_constructible<T>::value)
 	{
-		// Fill with new values
-		for(U i = m_size; i < newSize; ++i)
-		{
-			callConstructor(m_data[i], v);
-		}
+		const Bool willGrow = newSize > m_size;
+		resizeStorage(newSize);
 
+		if(willGrow)
+		{
+			// Fill with new values
+			for(TSize i = m_size; i < newSize; ++i)
+			{
+				::new(&m_data[i]) T(args...);
+			}
+
+			m_size = newSize;
+		}
+	}
+	else
+	{
+		ANKI_ASSERT(m_size == 0 && "Cannot resize storage for non-copyable");
+		m_data = static_cast<T*>(m_pool.allocate(sizeof(T) * newSize, alignof(T)));
+		for(TSize i = 0; i < newSize; ++i)
+		{
+			::new(&m_data[i]) T(args...);
+		}
 		m_size = newSize;
+		m_capacity = newSize;
 	}
 
 	ANKI_ASSERT(m_size <= m_capacity);
 	ANKI_ASSERT(m_size == newSize);
 }
 
-template<typename T, typename TSize>
-template<typename TMemPool>
-void DynamicArray<T, TSize>::resize(TMemPool& pool, Size newSize)
-{
-	const Bool willGrow = newSize > m_size;
-	resizeStorage(pool, newSize);
-
-	if(willGrow)
-	{
-		// Fill with new values
-		for(U i = m_size; i < newSize; ++i)
-		{
-			callConstructor(m_data[i]);
-		}
-
-		m_size = newSize;
-	}
-
-	ANKI_ASSERT(m_size <= m_capacity);
-	ANKI_ASSERT(m_size == newSize);
-}
-
-template<typename T, typename TSize>
-template<typename TMemPool, typename... TArgs>
-typename DynamicArray<T, TSize>::Iterator DynamicArray<T, TSize>::emplaceAt(TMemPool& pool, ConstIterator where,
-																			TArgs&&... args)
+template<typename T, typename TMemoryPool, typename TSize>
+template<typename... TArgs>
+typename DynamicArray<T, TMemoryPool, TSize>::Iterator
+DynamicArray<T, TMemoryPool, TSize>::emplaceAt(ConstIterator where, TArgs&&... args)
 {
 	const Value* wherePtr = where;
 	Size outIdx = getMaxNumericLimit<Size>();
@@ -154,7 +131,7 @@ typename DynamicArray<T, TSize>::Iterator DynamicArray<T, TSize>::emplaceAt(TMem
 		ANKI_ASSERT(whereIdx >= 0u && whereIdx <= oldSize);
 
 		// Resize storage
-		resizeStorage(pool, oldSize + 1u);
+		resizeStorage(oldSize + 1u);
 
 		Size elementsToMoveRight = oldSize - whereIdx;
 		if(elementsToMoveRight == 0)
@@ -189,7 +166,7 @@ typename DynamicArray<T, TSize>::Iterator DynamicArray<T, TSize>::emplaceAt(TMem
 
 		ANKI_ASSERT(isEmpty());
 
-		resizeStorage(pool, 1);
+		resizeStorage(1);
 		outIdx = 0;
 	}
 
@@ -203,9 +180,8 @@ typename DynamicArray<T, TSize>::Iterator DynamicArray<T, TSize>::emplaceAt(TMem
 	return &m_data[outIdx];
 }
 
-template<typename T, typename TSize>
-template<typename TMemPool>
-void DynamicArray<T, TSize>::erase(TMemPool& pool, ConstIterator first, ConstIterator last)
+template<typename T, typename TMemoryPool, typename TSize>
+void DynamicArray<T, TMemoryPool, TSize>::erase(ConstIterator first, ConstIterator last)
 {
 	ANKI_ASSERT(first != last);
 	ANKI_ASSERT(m_data);
@@ -223,7 +199,7 @@ void DynamicArray<T, TSize>::erase(TMemPool& pool, ConstIterator first, ConstIte
 
 	// Resize storage
 	const Size newSize = m_size - Size(last - first);
-	resizeStorage(pool, newSize);
+	resizeStorage(newSize);
 }
 
 } // end namespace anki

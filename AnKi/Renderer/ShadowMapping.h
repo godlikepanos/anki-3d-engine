@@ -78,8 +78,9 @@ private:
 	void chooseDetail(const Vec4& cameraOrigin, const SpotLightQueueElement& light, U32& tileAllocatorHierarchy,
 					  U32& renderQueueElementsLod) const;
 
+	template<typename TMemoryPool>
 	void newWorkItems(const UVec4& atlasViewport, RenderQueue* lightRenderQueue, U32 renderQueueElementsLod,
-					  DynamicArrayRaii<LightToRenderTempInfo>& workItems, U32& drawcallCount) const;
+					  DynamicArray<LightToRenderTempInfo, TMemoryPool>& workItems, U32& drawcallCount) const;
 
 	void runShadowMapping(RenderPassWorkContext& rgraphCtx);
 };

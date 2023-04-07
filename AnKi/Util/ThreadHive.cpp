@@ -60,12 +60,12 @@ public:
 	ThreadHiveSemaphore* m_signalSemaphore;
 };
 
-ThreadHive::ThreadHive(U32 threadCount, BaseMemoryPool* pool, Bool pinToCores)
-	: m_slowPool(pool)
-	, m_pool(pool->getAllocationCallback(), pool->getAllocationCallbackUserData(), 4_KB)
+ThreadHive::ThreadHive(U32 threadCount, Bool pinToCores)
+	: m_pool(stackPoolAllocate, nullptr, 4_KB)
 	, m_threadCount(threadCount)
 {
-	m_threads = static_cast<Thread*>(m_slowPool->allocate(sizeof(Thread) * threadCount, alignof(Thread)));
+	m_threads =
+		static_cast<Thread*>(DefaultMemoryPool::getSingleton().allocate(sizeof(Thread) * threadCount, alignof(Thread)));
 
 	const U32 uuid = m_uuid.fetchAdd(1);
 
@@ -97,7 +97,7 @@ ThreadHive::~ThreadHive()
 			m_threads[threadCount].~Thread();
 		}
 
-		m_slowPool->free(static_cast<void*>(m_threads));
+		DefaultMemoryPool::getSingleton().free(static_cast<void*>(m_threads));
 	}
 }
 

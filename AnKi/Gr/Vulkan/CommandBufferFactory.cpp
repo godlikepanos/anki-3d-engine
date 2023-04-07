@@ -132,9 +132,9 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 		newCmdb->m_fastPool.init(GrMemoryPool::getSingleton().getAllocationCallback(),
 								 GrMemoryPool::getSingleton().getAllocationCallbackUserData(), 256_KB, 2.0f);
 
-		for(DynamicArrayRaii<GrObjectPtr>& arr : newCmdb->m_objectRefs)
+		for(DynamicArray<GrObjectPtr, MemoryPoolPtrWrapper<StackMemoryPool>>& arr : newCmdb->m_objectRefs)
 		{
-			arr = DynamicArrayRaii<GrObjectPtr>(&newCmdb->m_fastPool);
+			arr = DynamicArray<GrObjectPtr, MemoryPoolPtrWrapper<StackMemoryPool>>(&newCmdb->m_fastPool);
 		}
 
 		newCmdb->m_handle = cmdb;

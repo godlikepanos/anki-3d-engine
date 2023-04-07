@@ -16,7 +16,7 @@ Error AnimationResource::load(const ResourceFilename& filename, [[maybe_unused]]
 	Second maxTime = kMinSecond;
 
 	// Document
-	XmlDocument doc(&ResourceMemoryPool::getSingleton());
+	ResourceXmlDocument doc;
 	ANKI_CHECK(openFileParseXml(filename, doc));
 	XmlElement rootel;
 	ANKI_CHECK(doc.getChildElement("animation", rootel));
@@ -40,7 +40,7 @@ Error AnimationResource::load(const ResourceFilename& filename, [[maybe_unused]]
 		ANKI_RESOURCE_LOGE("Didn't found any channels");
 		return Error::kUserData;
 	}
-	m_channels.create(channelCount);
+	m_channels.resize(channelCount);
 
 	// For all channels
 	channelCount = 0;
@@ -51,7 +51,7 @@ Error AnimationResource::load(const ResourceFilename& filename, [[maybe_unused]]
 		// <name>
 		CString strtmp;
 		ANKI_CHECK(chEl.getAttributeText("name", strtmp));
-		ch.m_name.create(strtmp);
+		ch.m_name = strtmp;
 
 		XmlElement keysEl, keyEl;
 
@@ -64,7 +64,7 @@ Error AnimationResource::load(const ResourceFilename& filename, [[maybe_unused]]
 			U32 count = 0;
 			ANKI_CHECK(keyEl.getSiblingElementsCount(count));
 			++count;
-			ch.m_positions.create(count);
+			ch.m_positions.resize(count);
 
 			count = 0;
 			do
@@ -99,7 +99,7 @@ Error AnimationResource::load(const ResourceFilename& filename, [[maybe_unused]]
 			U32 count = 0;
 			ANKI_CHECK(keyEl.getSiblingElementsCount(count));
 			++count;
-			ch.m_rotations.create(count);
+			ch.m_rotations.resize(count);
 
 			count = 0;
 			do
@@ -134,7 +134,7 @@ Error AnimationResource::load(const ResourceFilename& filename, [[maybe_unused]]
 			U32 count = 0;
 			ANKI_CHECK(keyEl.getSiblingElementsCount(count));
 			++count;
-			ch.m_scales.create(count);
+			ch.m_scales.resize(count);
 
 			count = 0;
 			do

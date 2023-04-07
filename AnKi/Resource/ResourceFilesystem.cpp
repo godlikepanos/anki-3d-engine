@@ -136,7 +136,7 @@ public:
 	Error readAllText(ResourceString& out) override
 	{
 		ANKI_ASSERT(m_size);
-		out.create('?', m_size);
+		out = ResourceString('?', m_size);
 		return read(&out[0], m_size);
 	}
 
@@ -200,11 +200,11 @@ Error ResourceFilesystem::init()
 	// Workaround the fact that : is used in drives in Windows
 #if ANKI_OS_WINDOWS
 	ResourceStringList paths2;
-	StringListRaii::Iterator it = paths.getBegin();
+	ResourceStringList::Iterator it = paths.getBegin();
 	while(it != paths.getEnd())
 	{
-		const String& s = *it;
-		StringListRaii::Iterator it2 = it + 1;
+		const ResourceString& s = *it;
+		ResourceStringList::Iterator it2 = it + 1;
 		if(s.getLength() == 1 && (s[0] >= 'a' && s[0] <= 'z') || (s[0] >= 'A' && s[0] <= 'Z') && it2 != paths.getEnd())
 		{
 			paths2.pushBackSprintf("%s:%s", s.cstr(), it2->cstr());
@@ -249,7 +249,7 @@ Error ResourceFilesystem::addNewPath(const CString& filepath, const ResourceStri
 	constexpr CString extension(".ankizip");
 
 	auto rejectPath = [&](CString p) -> Bool {
-		for(const String& s : excludedStrings)
+		for(const ResourceString& s : excludedStrings)
 		{
 			if(p.find(s) != CString::kNpos)
 			{
@@ -310,16 +310,15 @@ Error ResourceFilesystem::addNewPath(const CString& filepath, const ResourceStri
 	{
 		// It's simple directory
 
-		ANKI_CHECK(walkDirectoryTree(filepath, ResourceMemoryPool::getSingleton(),
-									 [&](const CString& fname, Bool isDir) -> Error {
-										 if(!isDir && !rejectPath(fname))
-										 {
-											 path.m_files.pushBackSprintf("%s", fname.cstr());
-											 ++fileCount;
-										 }
+		ANKI_CHECK(walkDirectoryTree(filepath, [&](const CString& fname, Bool isDir) -> Error {
+			if(!isDir && !rejectPath(fname))
+			{
+				path.m_files.pushBackSprintf("%s", fname.cstr());
+				++fileCount;
+			}
 
-										 return Error::kNone;
-									 }));
+			return Error::kNone;
+		}));
 	}
 
 	ANKI_ASSERT(path.m_files.getSize() == fileCount);
@@ -337,7 +336,7 @@ Error ResourceFilesystem::addNewPath(const CString& filepath, const ResourceStri
 
 	if(false)
 	{
-		for(const String& s : m_paths.getFront().m_files)
+		for(const ResourceString& s : m_paths.getFront().m_files)
 		{
 			printf("%s\n", s.cstr());
 		}
@@ -372,7 +371,7 @@ Error ResourceFilesystem::openFileInternal(const ResourceFilename& filename, Res
 	// Search for the fname in reverse order
 	for(const Path& p : m_paths)
 	{
-		for(const String& pfname : p.m_files)
+		for(const ResourceString& pfname : p.m_files)
 		{
 			if(pfname != filename)
 			{

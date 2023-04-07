@@ -239,7 +239,7 @@ ANKI_TEST(Util, ThreadHiveBench)
 
 	const U32 threadCount = getCpuCoresCount();
 	HeapMemoryPool pool(allocAligned, nullptr);
-	ThreadHive hive(threadCount, &pool, true);
+	ThreadHive hive(threadCount, true);
 
 	StackAllocator<U8> salloc(allocAligned, nullptr, 1024);
 	Atomic<U64> sum = {0};
