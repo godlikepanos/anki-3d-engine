@@ -18,6 +18,9 @@ jobs:
     - name: Clone
       uses: actions/checkout@v2
 
+    - name: DXC
+      run : ${{github.workspace}}/ThirdParty/Bin/Linux64/dxc --version
+
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=ON -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCMAKE_BUILD_TYPE=Debug -DANKI_EXTRA_CHECKS=ON
 
