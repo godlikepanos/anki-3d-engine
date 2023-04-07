@@ -13,7 +13,7 @@ jobs:
 
     steps:
     - name: Clone
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DANKI_EXTRA_CHECKS=ON
@@ -27,7 +27,7 @@ jobs:
 
     steps:
     - name: Clone
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Release -DANKI_EXTRA_CHECKS=OFF
@@ -41,7 +41,7 @@ jobs:
 
     steps:
     - name: Clone
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DANKI_EXTRA_CHECKS=OFF -DANKI_DLSS=ON

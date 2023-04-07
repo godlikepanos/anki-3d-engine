@@ -16,10 +16,10 @@ jobs:
       run: sudo apt install libx11-dev libx11-xcb-dev clang gcc
 
     - name: Clone
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: DXC
-      run : ${{github.workspace}}/ThirdParty/Bin/Linux64/dxc --version
+      run : cat ${{github.workspace}}/ThirdParty/Bin/Linux64/dxc
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=ON -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCMAKE_BUILD_TYPE=Debug -DANKI_EXTRA_CHECKS=ON
@@ -36,7 +36,7 @@ jobs:
       run: sudo apt install libx11-dev libx11-xcb-dev clang gcc
 
     - name: Clone
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=ON -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCMAKE_BUILD_TYPE=Release -DANKI_EXTRA_CHECKS=OFF
@@ -54,7 +54,7 @@ jobs:
       run: sudo apt install libx11-dev libx11-xcb-dev clang gcc
 
     - name: Clone
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=ON -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Debug -DANKI_EXTRA_CHECKS=ON
@@ -71,7 +71,7 @@ jobs:
       run: sudo apt install libx11-dev libx11-xcb-dev clang gcc
 
     - name: Clone
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=ON -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Release -DANKI_EXTRA_CHECKS=OFF
@@ -88,7 +88,7 @@ jobs:
       run: sudo apt install libx11-dev libx11-xcb-dev clang gcc
 
     - name: Clone
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=OFF -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Release -DANKI_EXTRA_CHECKS=ON -DANKI_HEADLESS=ON
@@ -105,7 +105,7 @@ jobs:
       run: sudo apt install libx11-dev libx11-xcb-dev clang gcc
 
     - name: Clone
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=OFF -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Release -DANKI_EXTRA_CHECKS=ON -DANKI_DLSS=ON
