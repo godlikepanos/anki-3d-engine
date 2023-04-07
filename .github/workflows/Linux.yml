@@ -19,7 +19,7 @@ jobs:
       uses: actions/checkout@v3
 
     - name: DXC
-      run : cat ${{github.workspace}}/ThirdParty/Bin/Linux64/dxc
+      run : ${{github.workspace}}/ThirdParty/Bin/Linux64/dxc
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=ON -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCMAKE_BUILD_TYPE=Debug -DANKI_EXTRA_CHECKS=ON
