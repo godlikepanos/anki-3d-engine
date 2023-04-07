@@ -19,7 +19,9 @@ jobs:
       uses: actions/checkout@v3
 
     - name: DXC
-      run : ${{github.workspace}}/ThirdParty/Bin/Linux64/dxc -help
+      run : |
+        echo "float main() : SV_TARGET {return 0.0;}" > ${{github.workspace}}/shader
+        ${{github.workspace}}/ThirdParty/Bin/Linux64/dxc -T ps_6_0 -E main
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=ON -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCMAKE_BUILD_TYPE=Debug -DANKI_EXTRA_CHECKS=ON
