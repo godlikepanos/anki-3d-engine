@@ -13,18 +13,10 @@ jobs:
 
     steps:
     - name: Install dependencies
-      run: |
-        sudo apt update
-        sudo apt upgrade
-        sudo apt install libx11-dev libx11-xcb-dev clang gcc
+      run: sudo apt install libx11-dev libx11-xcb-dev clang gcc
 
     - name: Clone
       uses: actions/checkout@v3
-
-    - name: DXC
-      run : |
-        echo "float main() : SV_TARGET {return 0.0;}" > ${{github.workspace}}/shader
-        ${{github.workspace}}/ThirdParty/Bin/Linux64/dxc -T ps_6_0 -E main ${{github.workspace}}/shader
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=ON -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCMAKE_BUILD_TYPE=Debug -DANKI_EXTRA_CHECKS=ON
@@ -32,88 +24,87 @@ jobs:
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config Debug
 
-  # Release_GCC:
-  #   name: "GCC Release"
-  #   runs-on: ubuntu-latest
+  Release_GCC:
+    name: "GCC Release"
+    runs-on: ubuntu-latest
 
-  #   steps:
-  #   - name: Install dependencies
-  #     run: sudo apt install libx11-dev libx11-xcb-dev clang gcc
+    steps:
+    - name: Install dependencies
+      run: sudo apt install libx11-dev libx11-xcb-dev clang gcc
 
-  #   - name: Clone
-  #     uses: actions/checkout@v3
+    - name: Clone
+      uses: actions/checkout@v3
 
-  #   - name: Configure CMake
-  #     run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=ON -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCMAKE_BUILD_TYPE=Release -DANKI_EXTRA_CHECKS=OFF
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=ON -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCMAKE_BUILD_TYPE=Release -DANKI_EXTRA_CHECKS=OFF
 
-  #   - name: Build
-  #     run: cmake --build ${{github.workspace}}/build --config Release
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config Release
 
+  Debug_Clang:
+    name: "Clang Debug"
+    runs-on: ubuntu-latest
 
-  # Debug_Clang:
-  #   name: "Clang Debug"
-  #   runs-on: ubuntu-latest
+    steps:
+    - name: Install dependencies
+      run: sudo apt install libx11-dev libx11-xcb-dev clang gcc
 
-  #   steps:
-  #   - name: Install dependencies
-  #     run: sudo apt install libx11-dev libx11-xcb-dev clang gcc
+    - name: Clone
+      uses: actions/checkout@v3
 
-  #   - name: Clone
-  #     uses: actions/checkout@v3
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=ON -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Debug -DANKI_EXTRA_CHECKS=ON
 
-  #   - name: Configure CMake
-  #     run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=ON -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Debug -DANKI_EXTRA_CHECKS=ON
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config Debug
 
-  #   - name: Build
-  #     run: cmake --build ${{github.workspace}}/build --config Debug
+  Release_Clang:
+    name: "Clang Release"
+    runs-on: ubuntu-latest
 
-  # Release_Clang:
-  #   name: "Clang Release"
-  #   runs-on: ubuntu-latest
+    steps:
+    - name: Install dependencies
+      run: sudo apt install libx11-dev libx11-xcb-dev clang gcc
 
-  #   steps:
-  #   - name: Install dependencies
-  #     run: sudo apt install libx11-dev libx11-xcb-dev clang gcc
+    - name: Clone
+      uses: actions/checkout@v3
 
-  #   - name: Clone
-  #     uses: actions/checkout@v3
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=ON -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Release -DANKI_EXTRA_CHECKS=OFF
 
-  #   - name: Configure CMake
-  #     run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=ON -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Release -DANKI_EXTRA_CHECKS=OFF
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config Release
 
-  #   - name: Build
-  #     run: cmake --build ${{github.workspace}}/build --config Release
+  Headless:
+    name: "Headless"
+    runs-on: ubuntu-latest
 
-  # Headless:
-  #   name: "Headless"
-  #   runs-on: ubuntu-latest
+    steps:
+    - name: Install dependencies
+      run: sudo apt install libx11-dev libx11-xcb-dev clang gcc
 
-  #   steps:
-  #   - name: Install dependencies
-  #     run: sudo apt install libx11-dev libx11-xcb-dev clang gcc
+    - name: Clone
+      uses: actions/checkout@v3
 
-  #   - name: Clone
-  #     uses: actions/checkout@v3
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=OFF -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Release -DANKI_EXTRA_CHECKS=ON -DANKI_HEADLESS=ON
 
-  #   - name: Configure CMake
-  #     run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=OFF -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Release -DANKI_EXTRA_CHECKS=ON -DANKI_HEADLESS=ON
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config Release
 
-  #   - name: Build
-  #     run: cmake --build ${{github.workspace}}/build --config Release
+  DLSS:
+    name: "DLSS"
+    runs-on: ubuntu-latest
 
-  # DLSS:
-  #   name: "DLSS"
-  #   runs-on: ubuntu-latest
+    steps:
+    - name: Install dependencies
+      run: sudo apt install libx11-dev libx11-xcb-dev clang gcc
 
-  #   steps:
-  #   - name: Install dependencies
-  #     run: sudo apt install libx11-dev libx11-xcb-dev clang gcc
+    - name: Clone
+      uses: actions/checkout@v3
 
-  #   - name: Clone
-  #     uses: actions/checkout@v3
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=OFF -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Release -DANKI_EXTRA_CHECKS=ON -DANKI_DLSS=ON
 
-  #   - name: Configure CMake
-  #     run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=OFF -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Release -DANKI_EXTRA_CHECKS=ON -DANKI_DLSS=ON
-
-  #   - name: Build
-  #     run: cmake --build ${{github.workspace}}/build --config Release --target Sponza
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config Release --target Sponza
