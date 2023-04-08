@@ -30,7 +30,7 @@ jobs:
       run: cmake --build ${{github.workspace}}/build --config Release --target ShaderCompiler
 
     - name: Generate project
-      run: ./Samples/Sponza/GenerateAndroidProject.sh ${{github.workspace}}/build/Bin/ShaderCompiler
+      run: ./Samples/Sponza/GenerateAndroidProject.sh ${{github.workspace}}/build/Binaries/ShaderCompiler
 
     - name: local.properties
       run: |
